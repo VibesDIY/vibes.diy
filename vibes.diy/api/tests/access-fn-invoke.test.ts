@@ -134,6 +134,9 @@ describe("invokeAccessFn gate (integration — mock invoker)", { timeout: 30000 
     });
     expect(res.isErr()).toBe(true);
     expect(res.Err().error?.message).toBe("custom deny");
+    // access-function denials carry a code so the client can surface the reason
+    // verbatim in the write-fail toast (#2330) rather than the generic copy.
+    expect(res.Err().error?.code).toBe("access-denied");
     expect(recorder.calls.length).toBe(1);
   });
 

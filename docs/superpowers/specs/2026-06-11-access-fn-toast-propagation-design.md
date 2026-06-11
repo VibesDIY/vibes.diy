@@ -2,7 +2,7 @@
 
 **Date:** 2026-06-11
 **Issue:** [VibesDIY/vibes.diy#2330](https://github.com/VibesDIY/vibes.diy/issues/2330)
-**Status:** Design — awaiting review
+**Status:** Approved (Charlie review on PR #2331) — implementing
 
 ## Problem
 
@@ -108,10 +108,18 @@ Replace the toast selection
 ([:362-365](../../../vibes.diy/vibe/srv-sandbox/srv-sandbox.ts#L362-L365)):
 
 ```ts
+// App-authored reasons land directly in the toast UI; trim and cap so a long
+// access.js string can't overwhelm it (Charlie review, PR #2331).
+const ACCESS_REASON_MAX = 200;
+const capReason = (s: string): string => {
+  const trimmed = s.trim();
+  return trimmed.length > ACCESS_REASON_MAX ? `${trimmed.slice(0, ACCESS_REASON_MAX - 1)}…` : trimmed;
+};
+
 const code = typeof err === "string" ? undefined : err?.error?.code;
 const toast =
   code === "access-denied"
-    ? errMessage // custom reason / helper message, verbatim
+    ? capReason(errMessage) // custom reason / helper message, verbatim (trimmed + capped)
     : errMessage === "Access denied"
       ? "You have read-only access to this app." // platform default
       : "Failed to save your changes. Please try again."; // infra/DB fallback
@@ -122,8 +130,12 @@ sandbox.args.errorLogger(toast);
   `errMessage === "Access denied"`: the platform always emits exactly that string, and
   exact match avoids a genuine infra error that merely _contains_ "access denied" being
   mislabeled read-only.
+- Per Charlie's review: trim the verbatim reason and cap it at 200 chars (ellipsis on
+  overflow) so an app-authored string can't overwhelm the toast. Plain-string render, so
+  no HTML/XSS concern. The capping applies only to the verbatim `access-denied` branch.
 - The `console.debug("vibePutDoc failed", ...)` call and the `res-put-doc` error message
-  forwarded to the iframe (`message: errMessage`) are unchanged.
+  forwarded to the iframe (`message: errMessage`) are unchanged — the iframe still receives
+  the full, uncapped reason.
 
 ### 3. Tests — `api/tests/srv-sandbox-put-doc.test.ts`
 
@@ -132,6 +144,9 @@ sandbox.args.errorLogger(toast);
 - **new:** error `{ message: "Only the author can edit this post", error: { code: "access-denied" } }`
   → toast equals `"Only the author can edit this post"`, and the forwarded `res-put-doc`
   still carries `message: "Only the author can edit this post"`.
+- **new (cap):** a coded denial whose message exceeds 200 chars → toast is trimmed and
+  capped to 200 chars with a trailing `…`, while the forwarded `res-put-doc` still carries
+  the full uncapped message.
 - if an evento-level test covers the forbidden path, assert the emitted `res-error` now
   carries `code: "access-denied"`.
 

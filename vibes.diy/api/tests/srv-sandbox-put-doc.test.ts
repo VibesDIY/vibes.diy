@@ -99,7 +99,7 @@ describe("vibePutDoc host handler", () => {
     });
   });
 
-  it("maps access-denied style errors to read-only toast copy", async () => {
+  it("maps the bare platform 'Access denied' (uncoded) to read-only toast copy", async () => {
     const { sandbox, captured, iframe, errorLogs } = setupSandbox({
       putDocResult: Result.Err<ResPutDoc, VibesDiyError>({
         type: "vibes.diy.res-error",
@@ -133,6 +133,88 @@ describe("vibePutDoc host handler", () => {
       type: "vibes.diy.res-put-doc",
       status: "error",
       message: "Access denied",
+    });
+  });
+
+  it("shows a coded access.js denial reason verbatim in the toast", async () => {
+    const reason = "Only the author can edit this post";
+    const { sandbox, captured, iframe, errorLogs } = setupSandbox({
+      putDocResult: Result.Err<ResPutDoc, VibesDiyError>({
+        type: "vibes.diy.res-error",
+        name: "VibesDiyError",
+        message: reason,
+        error: { message: reason, code: "access-denied" },
+      } as unknown as VibesDiyError),
+    });
+
+    sandbox.handleMessage(
+      fakeMessageEvent(
+        {
+          type: "vibes.diy.req-put-doc",
+          tid: "t3",
+          appSlug: "myapp",
+          ownerHandle: "alice",
+          dbName: "notes",
+          doc: { title: "hello" },
+        },
+        "https://myapp--alice.example.com",
+        iframe
+      )
+    );
+    await new Promise((r) => setTimeout(r, 50));
+
+    expect(errorLogs).toHaveLength(1);
+    expect(errorLogs[0]).toBe(reason);
+
+    const msg = captured.find((c) => (c.data as { type?: string }).type === "vibes.diy.res-put-doc");
+    expect(msg?.data).toMatchObject({
+      tid: "t3",
+      type: "vibes.diy.res-put-doc",
+      status: "error",
+      message: reason,
+    });
+  });
+
+  it("trims and caps a long coded denial reason in the toast (iframe gets the full reason)", async () => {
+    const reason = `   ${"A".repeat(500)}   `;
+    const { sandbox, captured, iframe, errorLogs } = setupSandbox({
+      putDocResult: Result.Err<ResPutDoc, VibesDiyError>({
+        type: "vibes.diy.res-error",
+        name: "VibesDiyError",
+        message: reason,
+        error: { message: reason, code: "access-denied" },
+      } as unknown as VibesDiyError),
+    });
+
+    sandbox.handleMessage(
+      fakeMessageEvent(
+        {
+          type: "vibes.diy.req-put-doc",
+          tid: "t4",
+          appSlug: "myapp",
+          ownerHandle: "alice",
+          dbName: "notes",
+          doc: { title: "hello" },
+        },
+        "https://myapp--alice.example.com",
+        iframe
+      )
+    );
+    await new Promise((r) => setTimeout(r, 50));
+
+    expect(errorLogs).toHaveLength(1);
+    const toast = errorLogs[0] as string;
+    expect(toast).toHaveLength(200);
+    expect(toast.endsWith("…")).toBe(true);
+    expect(toast).toBe(`${"A".repeat(199)}…`);
+
+    // The iframe still receives the full, uncapped reason.
+    const msg = captured.find((c) => (c.data as { type?: string }).type === "vibes.diy.res-put-doc");
+    expect(msg?.data).toMatchObject({
+      tid: "t4",
+      type: "vibes.diy.res-put-doc",
+      status: "error",
+      message: reason,
     });
   });
 });

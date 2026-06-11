@@ -359,10 +359,25 @@ function vibePutDoc(sandbox: vibesDiySrvSandbox): EventoHandler {
       if (rRes.isErr()) {
         const err = rRes.Err();
         const errMessage = typeof err === "string" ? err : (err?.message ?? "unknown error");
-        const isAccessDenied = /access\s+denied/i.test(errMessage);
-        sandbox.args.errorLogger(
-          isAccessDenied ? "You have read-only access to this app." : "Failed to save your changes. Please try again."
-        );
+        // Access-function denials carry `code: "access-denied"` (custom forbidden(...)
+        // reasons and helper messages). Show those verbatim so app authors see why a
+        // write was rejected; the platform's bare "Access denied" keeps the friendly
+        // read-only copy, and anything else is treated as an infra/DB failure.
+        const code = typeof err === "string" ? undefined : err?.error?.code;
+        const isAccessDenied = code === "access-denied" || errMessage === "Access denied";
+        let toast: string;
+        if (code === "access-denied") {
+          // App-authored text lands directly in the toast; trim + cap so a long
+          // string can't overwhelm it (Charlie review, PR #2331). Plain-string render,
+          // so no HTML/XSS concern. The iframe still gets the full reason below.
+          const trimmed = errMessage.trim();
+          toast = trimmed.length > 200 ? `${trimmed.slice(0, 199)}…` : trimmed;
+        } else if (errMessage === "Access denied") {
+          toast = "You have read-only access to this app.";
+        } else {
+          toast = "Failed to save your changes. Please try again.";
+        }
+        sandbox.args.errorLogger(toast);
         if (!isAccessDenied) {
           console.debug("vibePutDoc failed", err);
         }

@@ -313,7 +313,9 @@ export const putDocEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqPutDoc>, 
         if ("forbidden" in invokeResult) {
           await ctx.send.send(ctx, {
             type: "vibes.diy.res-error",
-            error: { message: invokeResult.forbidden },
+            // `access-denied` lets the client surface this reason verbatim in the
+            // write-fail toast (vs. the generic "Failed to save" copy). See #2330.
+            error: { message: invokeResult.forbidden, code: "access-denied" },
           } satisfies ResError);
           return Result.Ok(EventoResult.Continue);
         }
@@ -324,7 +326,7 @@ export const putDocEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqPutDoc>, 
           const reason = err instanceof ForbiddenError ? err.forbidden : String(err);
           await ctx.send.send(ctx, {
             type: "vibes.diy.res-error",
-            error: { message: reason },
+            error: { message: reason, code: "access-denied" },
           } satisfies ResError);
           return Result.Ok(EventoResult.Continue);
         }
