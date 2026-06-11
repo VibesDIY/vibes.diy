@@ -48,6 +48,7 @@ function setupSandbox(opts: { whoAmIResult: Result<ResVibeWhoAmI, VibesDiyError>
 
   const sandbox = new vibesDiySrvSandbox({
     chatApi: fakeApi as VibesDiyApiIface,
+    vibeApi: fakeApi as VibesDiyApiIface,
     errorLogger: () => {
       /* noop */
     },
