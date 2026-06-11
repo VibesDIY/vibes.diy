@@ -94,23 +94,27 @@ export function localBroadcastCallbacks(connections: Set<WSSendProvider>, env: C
       evt: { ownerHandle: string; appSlug: string; dbName: string; docId: string; channel?: string },
       senderConnId: string
     ): Promise<void> => {
-      // Route by channel for access-fn vibes; fall back to dbName otherwise. The
+      // Fan-out keys are db-scoped. The bare db key owner/app/<dbName> identifies
+      // the db; a channel key nests UNDER it as owner/app/<dbName>/<channel>. The
       // payload keeps the REAL dbName so the client's `data.dbName === this.name`
-      // filter passes (see #2301). channel `??` only falls through on null/undefined;
-      // callers normalize channels so "" never reaches here.
-      const routingKey = evt.channel ?? evt.dbName;
-      const channelKey = `${evt.ownerHandle}/${evt.appSlug}/${routingKey}`;
-      // Also wake connections holding the bare db key. A client that subscribed
-      // before any doc materialized the channel only holds owner/app/<dbName>, so
-      // channel-routed writes would otherwise never reach it — the "join before
-      // grant" gap (#2337). Over-delivery is access-safe: evt-doc-changed carries
-      // no document content and the client re-queries through the channel/grant-
-      // gated read path, so a connection that can't read the channel simply sees
-      // nothing new. Channel-key subscribers stay narrow (they match only their
-      // own channel), so a private-channel write still doesn't fan out to
-      // unrelated channel subscriptions. When channel == dbName the two keys
-      // coincide and this is a no-op.
+      // filter passes (see #2301). callers normalize channels so "" never reaches
+      // here.
+      //
+      // Scoping channels under their db keeps db and channel names in separate
+      // path segments so they can never collide in the flat key set: a db literally
+      // named like another db's channel (owner/app/beta) is a 3-segment key that
+      // cannot equal a 4-segment channel key owner/app/alpha/beta (#2340).
       const dbKey = `${evt.ownerHandle}/${evt.appSlug}/${evt.dbName}`;
+      const channelKey = evt.channel ? `${dbKey}/${evt.channel}` : dbKey;
+      // The match below also wakes connections holding the bare db key. A client
+      // that subscribed before any doc materialized the channel only holds the bare
+      // owner/app/<dbName> key, so channel-routed writes would otherwise never reach
+      // it — the "join before grant" gap (#2337). Over-delivery is access-safe:
+      // evt-doc-changed carries no document content and the client re-queries
+      // through the channel/grant-gated read path, so a connection that can't read
+      // the channel simply sees nothing new. Channel-key subscribers stay narrow
+      // (they match only their own db's channel), so a private-channel write still
+      // doesn't fan out to unrelated channel subscriptions.
       if (shouldLog) {
         console.info("[AppSessions] notifyDocChanged key:", channelKey, "conn:", senderConnId.slice(0, 8));
         console.info("[AppSessions] docChanged fanout", "key=", channelKey, "conns=", connections.size);

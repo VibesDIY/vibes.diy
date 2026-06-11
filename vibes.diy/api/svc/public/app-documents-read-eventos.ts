@@ -461,7 +461,7 @@ export const subscribeDocsEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqSu
             }
           }
           for (const ch of normalizeChannels([...allChannels])) {
-            channelKeys.push(`${req.ownerHandle}/${req.appSlug}/${ch}`);
+            channelKeys.push(`${subscriptionKey}/${ch}`);
           }
         } else {
           const grantOutputs = await vctx.sql.db
@@ -489,7 +489,7 @@ export const subscribeDocsEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqSu
           const effectiveChannels = userHandle !== null ? reduce.resolveEffectiveChannels(userHandle) : new Set<string>();
           const rawGrantChannels = [...effectiveChannels, ...reduce.publicChannels];
           for (const ch of normalizeChannels(rawGrantChannels)) {
-            channelKeys.push(`${req.ownerHandle}/${req.appSlug}/${ch}`);
+            channelKeys.push(`${subscriptionKey}/${ch}`);
           }
         }
       }
@@ -502,11 +502,10 @@ export const subscribeDocsEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqSu
         // that ran before any channel materialized registered owner/app/<dbName>
         // (the #2337 fallback). subscribedDocKeys is additive, so without this the
         // connection keeps matching the broad bare-db wake forever and never
-        // narrows to channel scope (#2340). Keep it only when it coincides with a
-        // channel key (channel == dbName) — there it IS the channel fan-out key.
-        if (!channelKeys.includes(subscriptionKey)) {
-          wsSend.subscribedDocKeys.delete(subscriptionKey);
-        }
+        // narrows to channel scope (#2340). Channel keys nest under the db
+        // (owner/app/<dbName>/<channel>), so this can never delete a channel key —
+        // including one owned by another db's subscription on the same connection.
+        wsSend.subscribedDocKeys.delete(subscriptionKey);
       } else {
         wsSend.subscribedDocKeys.add(subscriptionKey);
       }
@@ -519,9 +518,7 @@ export const subscribeDocsEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqSu
           }
           // Mirror the narrowing in the external registry so cross-shard fan-out
           // also stops matching the dropped bare db key (#2340).
-          if (!channelKeys.includes(subscriptionKey)) {
-            vctx.deregisterDocSubscription?.(subscriptionKey).catch((e: unknown) => console.error("DocNotify error:", e));
-          }
+          vctx.deregisterDocSubscription?.(subscriptionKey).catch((e: unknown) => console.error("DocNotify error:", e));
         } else {
           vctx.registerDocSubscription(subscriptionKey).catch((e: unknown) => console.error("DocNotify error:", e));
         }
