@@ -128,15 +128,13 @@ describe("subscribeDocs channel-key registration (channel ≠ db) — #2337 good
     expect(got[0]?.ownerHandle).toBe(ownerHandle);
   });
 
-  // RED ANCHOR for #2337 — the "join before grant" gap. A connection subscribes
-  // to a public-channel db (freshfeed → channel "pulse", public grant) BEFORE any
-  // doc materializes the channel, so it registers only the bare db key
-  // owner/app/freshfeed. The first public write fans out on owner/app/pulse and
-  // never reaches it — currently no live delivery, reload-only.
-  //
-  // Marked it.fails() so it documents the bug without breaking CI; flip to it()
-  // in the fix commit once a join-before-grant subscriber receives the first post.
-  it.fails("join before grant: first public-channel write reaches a connection that subscribed while empty", async () => {
+  // #2337 fix — the "join before grant" gap. A connection subscribes to a
+  // public-channel db (freshfeed → channel "pulse") BEFORE any doc materializes
+  // the channel, so it holds only the bare db key owner/app/freshfeed. The first
+  // public write fans out on owner/app/pulse; the fan-out now also wakes bare-db-
+  // key subscribers (cf-serve.ts), so it reaches this connection live. Before the
+  // fix this was reload-only.
+  it("join before grant: first public-channel write reaches a connection that subscribed while empty", async () => {
     wsSendProvider.subscribedDocKeys.clear();
     const r = await ownerApi.subscribeDocs({ ownerHandle, appSlug, dbName: "freshfeed" });
     assert(r.isOk(), `subscribeDocs failed: ${r.isErr() ? r.Err().message : ""}`);
