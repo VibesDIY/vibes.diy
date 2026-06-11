@@ -64,8 +64,15 @@ function setupSandbox(chat: Result<LLMChat, VibesDiyError>) {
     openChat: async () => chat,
   };
 
+  // imgGen is vibe-scoped and rides vibeApi (AppSessions), not chatApi (#2306).
+  const noopChatApi: Partial<VibesDiyApiIface> = {
+    onDocChanged: () => () => {
+      /* noop */
+    },
+  };
   const sandbox = new vibesDiySrvSandbox({
-    chatApi: fakeApi as VibesDiyApiIface,
+    chatApi: noopChatApi as VibesDiyApiIface,
+    vibeApi: fakeApi as VibesDiyApiIface,
     errorLogger: () => {
       /* noop */
     },
