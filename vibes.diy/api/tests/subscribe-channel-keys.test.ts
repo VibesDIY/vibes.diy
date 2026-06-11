@@ -16,6 +16,9 @@ const ACCESS_JS = `export function quicknotes(doc, oldDoc, user) {
 }
 export function emptyroom(doc, oldDoc, user) {
   return { channels: ["whispers"], allowAnonymous: true };
+}
+export function freshfeed(doc, oldDoc, user) {
+  return { channels: ["pulse"], grant: { public: ["pulse"] }, allowAnonymous: true };
 }`;
 
 // These tests lock the GOOD path for channel ≠ db live sync (#2337): the
@@ -123,5 +126,34 @@ describe("subscribeDocs channel-key registration (channel ≠ db) — #2337 good
     expect(got[0]?.dbName).toBe("quicknotes");
     expect(got[0]?.docId).toBe("live-1");
     expect(got[0]?.ownerHandle).toBe(ownerHandle);
+  });
+
+  // RED ANCHOR for #2337 — the "join before grant" gap. A connection subscribes
+  // to a public-channel db (freshfeed → channel "pulse", public grant) BEFORE any
+  // doc materializes the channel, so it registers only the bare db key
+  // owner/app/freshfeed. The first public write fans out on owner/app/pulse and
+  // never reaches it — currently no live delivery, reload-only.
+  //
+  // Marked it.fails() so it documents the bug without breaking CI; flip to it()
+  // in the fix commit once a join-before-grant subscriber receives the first post.
+  it.fails("join before grant: first public-channel write reaches a connection that subscribed while empty", async () => {
+    wsSendProvider.subscribedDocKeys.clear();
+    const r = await ownerApi.subscribeDocs({ ownerHandle, appSlug, dbName: "freshfeed" });
+    assert(r.isOk(), `subscribeDocs failed: ${r.isErr() ? r.Err().message : ""}`);
+
+    const got: { dbName: string; docId: string }[] = [];
+    const off = ownerApi.onDocChanged((_o, _a, db, doc) => got.push({ dbName: db, docId: doc }));
+
+    // First post to the public feed: fan-out routes by channel "pulse".
+    const fanout = localBroadcastCallbacks(appCtx.vibesCtx.connections, { ENVIRONMENT: "test" } as never);
+    await fanout.notifyDocChanged(
+      { ownerHandle, appSlug, dbName: "freshfeed", docId: "first", channel: "pulse" },
+      "external-writer-conn"
+    );
+    await new Promise((res) => setTimeout(res, 150));
+    off();
+
+    expect(got.length).toBeGreaterThanOrEqual(1);
+    expect(got[0]?.dbName).toBe("freshfeed");
   });
 });
