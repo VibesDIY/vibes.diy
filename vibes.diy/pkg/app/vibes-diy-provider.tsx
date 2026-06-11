@@ -3,6 +3,8 @@ import React, { createContext, useContext } from "react";
 import { useEngagedVisit } from "./hooks/useEngagedVisit.js";
 import { useCapiCompleteRegistration } from "./hooks/useCapiCompleteRegistration.js";
 import { ClerkProvider, useClerk } from "@clerk/react";
+import { useLocation } from "react-router";
+import { vibeApiTarget } from "./vibe-api-target.js";
 import { BuildURI, exception2Result, Future, KeyedResolvOnce, Lazy, Option, Result } from "@adviser/cement";
 import { type } from "arktype";
 import { PostHogProvider } from "posthog-js/react";
@@ -131,6 +133,9 @@ export function readUsableCachedToken(args: {
 function LiveCycleVibesDiyProvider({ children, webVars }: { children: React.ReactNode; webVars: VibesDiyWebVars }) {
   const clerk = useClerk();
 
+  const location = useLocation();
+  const target = vibeApiTarget(location.pathname);
+
   realCtx.webVars = webVars;
 
   realCtx.sthis = lazySuperThis();
@@ -229,14 +234,16 @@ function LiveCycleVibesDiyProvider({ children, webVars }: { children: React.Reac
     });
   });
 
-  const vibeMatch = typeof window !== "undefined" ? window.location.pathname.match(/^\/vibe\/([^/]+)\/([^/]+)/) : null;
-  if (vibeMatch !== null) {
-    const ownerHandle = vibeMatch[1];
-    const appSlug = vibeMatch[2];
+  // Build vibeApi (→ AppSessions, which wires the doc-changed emit) for every
+  // route that renders the vibe-data iframe: the /vibe/ viewer AND the /chat/
+  // editor. Gated on a real appSlug — a chat with no app yet gets no vibeApi.
+  // Reactive via useLocation() above so a freshly-created chat (navigated to
+  // /chat/<owner>/<appSlug> after openChat) picks up its vibeApi. (#2306)
+  if (target !== undefined) {
     const appApiUrl = BuildURI.from(apiUrl)
       .pathname("/api/app")
       .cleanParams()
-      .setParam("vibe", `${ownerHandle}--${appSlug}`)
+      .setParam("vibe", `${target.ownerHandle}--${target.appSlug}`)
       .toString();
 
     const capturedGetToken = sharedGetToken ?? realCtx.getToken;
