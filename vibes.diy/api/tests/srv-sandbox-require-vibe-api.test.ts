@@ -69,4 +69,18 @@ describe("srv-sandbox vibe-data handlers require vibeApi", () => {
     expect(msg?.data).toMatchObject({ tid: "t1", type: "vibes.diy.res-put-doc", status: "error" });
     expect((msg?.data as { message?: string }).message ?? "").toMatch(/vibeApi/i);
   });
+
+  it("imgGen with no vibeApi returns a typed error", async () => {
+    const { sandbox, captured, iframe } = setupNoVibeApi();
+    sandbox.handleMessage(
+      fakeMessageEvent(
+        { type: "vibe.req.imgGen", tid: "g1", appSlug: "myapp", ownerHandle: "alice", prompt: "a cat" },
+        "https://myapp--alice.example.com",
+        iframe
+      )
+    );
+    await new Promise((r) => setTimeout(r, 50));
+    const msg = captured.find((c) => (c.data as { type?: string }).type === "vibe.res.imgGen");
+    expect(msg?.data).toMatchObject({ tid: "g1", type: "vibe.res.imgGen", status: "error" });
+  });
 });

@@ -271,7 +271,6 @@ export function getImageFiles(stream: ReadableStream<unknown>): Promise<ImgGenFi
 }
 
 function vibeImgGen(sandbox: vibesDiySrvSandbox): EventoHandler {
-  const { chatApi } = sandbox.args;
   return {
     hash: "vibe.imgGen",
     validate: (ctx: ValidateTriggerCtx<MessageEvent, unknown, unknown>) => {
@@ -305,7 +304,10 @@ function vibeImgGen(sandbox: vibesDiySrvSandbox): EventoHandler {
           files,
         } satisfies ResOkImgGen);
 
-      await chatApi
+      const api = await requireVibeApi(sandbox, ctx, "vibe.res.imgGen");
+      if (api === undefined) return Result.Ok(EventoResult.Stop);
+
+      await api
         .openChat({ ownerHandle: ctx.validated.ownerHandle, appSlug: ctx.validated.appSlug, mode: "img" })
         .then(async (rChat) => {
           if (rChat.isErr()) return sendErr(rChat.Err().message);
