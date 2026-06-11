@@ -1,12 +1,12 @@
 import { command } from "cmd-ts";
 import { type } from "arktype";
-import { Result, Option, EventoResult, BuildURI } from "@adviser/cement";
+import { Result, Option, EventoResult } from "@adviser/cement";
 import type { ValidateTriggerCtx, HandleTriggerCtx, EventoResultType, EventoHandler } from "@adviser/cement";
 import { FireflyApiAdapter } from "@vibes.diy/api-impl";
 import type { CliCtx } from "../../cli-ctx.js";
 import { cmdTsDefaultArgs } from "../../cli-ctx.js";
 import { sendProgress, WrapCmdTSMsg } from "../../cmd-evento.js";
-import { dbCommonArgs, resolveUserSlug, resolveDbVibeArgs } from "./shared.js";
+import { dbCommonArgs, openVibeDbApi, resolveDbVibeArgs } from "./shared.js";
 
 export const ReqDbSubscribe = type({
   type: "'vibes-diy.cli.db.subscribe'",
@@ -30,24 +30,9 @@ export const dbSubscribeEvento: EventoHandler<WrapCmdTSMsg<unknown>, ReqDbSubscr
   },
   handle: async (ctx: HandleTriggerCtx<WrapCmdTSMsg<unknown>, ReqDbSubscribe, never>): Promise<Result<EventoResultType>> => {
     const ectx = ctx.ctx.getOrThrow<CliCtx>("cliCtx");
-    if (ectx.vibesDiyApiFactory === undefined) {
-      return Result.Err("Not logged in. Run 'vibes-diy login' first.");
-    }
-    const bootstrapApi = ectx.vibesDiyApiFactory(ctx.validated.apiUrl);
-    let ownerHandle: string;
-    try {
-      const rUser = await resolveUserSlug(bootstrapApi, ctx.validated.ownerHandle);
-      if (rUser.isErr()) return Result.Err(rUser.Err());
-      ownerHandle = rUser.Ok();
-    } finally {
-      await bootstrapApi.close();
-    }
-    const routedUrl = BuildURI.from(ctx.validated.apiUrl)
-      .pathname("/api/app")
-      .cleanParams()
-      .setParam("vibe", `${ownerHandle}--${ctx.validated.appSlug}`)
-      .toString();
-    const api = ectx.vibesDiyApiFactory(routedUrl, { skipShard: true });
+    const rApi = await openVibeDbApi(ectx, ctx.validated.apiUrl, ctx.validated.ownerHandle, ctx.validated.appSlug);
+    if (rApi.isErr()) return Result.Err(rApi.Err());
+    const { api, ownerHandle } = rApi.Ok();
     const adapter = new FireflyApiAdapter(api, ctx.validated.appSlug, { ownerHandle });
     await adapter.enableGrantReactivity();
 

@@ -2,7 +2,7 @@ import { option, string } from "cmd-ts";
 import { basename } from "node:path";
 import type { CliCtx } from "../../cli-ctx.js";
 import type { VibesDiyApi } from "@vibes.diy/api-impl";
-import { Result } from "@adviser/cement";
+import { Result, BuildURI } from "@adviser/cement";
 import { isUserSettingDefaultHandle } from "@vibes.diy/api-types";
 import { resolveVibeArgs } from "../../parse-vibe.js";
 
@@ -71,4 +71,45 @@ export async function resolveUserSlug(api: VibesDiyApi, explicit: string): Promi
     return Result.Err("No defaultHandle — pass --handle, --vibe, or run 'vibes-diy login' first");
   }
   return Result.Ok(def.ownerHandle);
+}
+
+// Open a VibesDiyApi routed to the per-vibe AppSessions DO
+// (`/api/app?vibe=<owner>--<app>`, skipShard) so db reads, writes, and
+// subscriptions land on the same Durable Object the browser uses and
+// participate in live doc-changed fan-out. Codegen (`generate`/`edit`)
+// intentionally stays on the ChatSessions/random-shard route; only data ops
+// belong here. Routing the data commands through `/api` (ChatSessions) was the
+// #2343 bug — writes never fanned out and subscribers never received events.
+//
+// The owner handle is needed to build the `?vibe=` key, so it's resolved over a
+// short-lived bootstrap connection on the original apiUrl first.
+export async function openVibeDbApi(
+  ectx: CliCtx,
+  apiUrl: string,
+  ownerHandleArg: string,
+  appSlug: string
+): Promise<Result<{ api: VibesDiyApi; ownerHandle: string }>> {
+  if (ectx.vibesDiyApiFactory === undefined) {
+    return Result.Err("Not logged in. Run 'vibes-diy login' first.");
+  }
+  let ownerHandle = ownerHandleArg;
+  if (ownerHandle === "") {
+    // Only a default-handle lookup needs a connection; do it on a short-lived
+    // bootstrap on the original apiUrl, then close it.
+    const bootstrapApi = ectx.vibesDiyApiFactory(apiUrl);
+    try {
+      const rUser = await resolveUserSlug(bootstrapApi, "");
+      if (rUser.isErr()) return Result.Err(rUser.Err());
+      ownerHandle = rUser.Ok();
+    } finally {
+      await bootstrapApi.close();
+    }
+  }
+  const routedUrl = BuildURI.from(apiUrl)
+    .pathname("/api/app")
+    .cleanParams()
+    .setParam("vibe", `${ownerHandle}--${appSlug}`)
+    .toString();
+  const api = ectx.vibesDiyApiFactory(routedUrl, { skipShard: true });
+  return Result.Ok({ api, ownerHandle });
 }
