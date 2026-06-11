@@ -83,4 +83,30 @@ describe("srv-sandbox vibe-data handlers require vibeApi", () => {
     const msg = captured.find((c) => (c.data as { type?: string }).type === "vibe.res.imgGen");
     expect(msg?.data).toMatchObject({ tid: "g1", type: "vibe.res.imgGen", status: "error" });
   });
+
+  it("does not register a chatApi.onDocChanged forwarder (dead path)", () => {
+    let chatOnDocChangedCalls = 0;
+    let vibeOnDocChangedCalls = 0;
+    const fakeChatApi: Partial<VibesDiyApiIface> = {
+      onDocChanged: () => {
+        chatOnDocChangedCalls++;
+        return () => {};
+      },
+    };
+    const fakeVibeApi: Partial<VibesDiyApiIface> = {
+      onDocChanged: () => {
+        vibeOnDocChangedCalls++;
+        return () => {};
+      },
+    };
+    const _sandbox = new vibesDiySrvSandbox({
+      chatApi: fakeChatApi as VibesDiyApiIface,
+      vibeApi: fakeVibeApi as VibesDiyApiIface,
+      errorLogger: () => {},
+      eventListeners: { addEventListener: () => {}, removeEventListener: () => {} },
+    });
+    expect(_sandbox).toBeDefined();
+    expect(chatOnDocChangedCalls).toBe(0);
+    expect(vibeOnDocChangedCalls).toBe(1);
+  });
 });
