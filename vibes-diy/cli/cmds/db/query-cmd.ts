@@ -9,7 +9,7 @@ import charwise from "charwise";
 import type { CliCtx } from "../../cli-ctx.js";
 import { cmdTsDefaultArgs } from "../../cli-ctx.js";
 import { sendMsg, WrapCmdTSMsg } from "../../cmd-evento.js";
-import { dbCommonArgs, resolveUserSlug, resolveDbVibeArgs } from "./shared.js";
+import { dbCommonArgs, openVibeDbApi, resolveDbVibeArgs } from "./shared.js";
 
 export const ReqDbQuery = type({
   type: "'vibes-diy.cli.db.query'",
@@ -48,13 +48,10 @@ export const dbQueryEvento: EventoHandler<WrapCmdTSMsg<unknown>, ReqDbQuery, Res
   },
   handle: async (ctx: HandleTriggerCtx<WrapCmdTSMsg<unknown>, ReqDbQuery, ResDbQuery>): Promise<Result<EventoResultType>> => {
     const ectx = ctx.ctx.getOrThrow<CliCtx>("cliCtx");
-    if (ectx.vibesDiyApiFactory === undefined) {
-      return Result.Err("Not logged in. Run 'vibes-diy login' first.");
-    }
-    const api = ectx.vibesDiyApiFactory(ctx.validated.apiUrl);
-    const rUser = await resolveUserSlug(api, ctx.validated.ownerHandle);
-    if (rUser.isErr()) return Result.Err(rUser.Err());
-    const adapter = new FireflyApiAdapter(api, ctx.validated.appSlug, { ownerHandle: rUser.Ok(), adminMode: true });
+    const rApi = await openVibeDbApi(ectx, ctx.validated.apiUrl, ctx.validated.ownerHandle, ctx.validated.appSlug);
+    if (rApi.isErr()) return Result.Err(rApi.Err());
+    const { api, ownerHandle } = rApi.Ok();
+    const adapter = new FireflyApiAdapter(api, ctx.validated.appSlug, { ownerHandle, adminMode: true });
 
     const r = await adapter.queryDocs(ctx.validated.dbName);
     if (r.isErr()) return Result.Err(r.Err());
