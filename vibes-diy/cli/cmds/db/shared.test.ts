@@ -36,7 +36,9 @@ describe("openVibeDbApi – routes db ops to AppSessions (#2343)", () => {
     expect(calls).toHaveLength(2);
     expect(calls[0]).toMatchObject({ url: "https://vibes.diy/api?.stable-entry.=cli" });
     expect(calls[0].opts).toBeUndefined();
-    expect(calls[1].url).toBe("https://vibes.diy/api/app?vibe=alice--todos");
+    expect(calls[1].url).toContain("/api/app");
+    expect(calls[1].url).toContain(".stable-entry.=cli"); // backend selection preserved
+    expect(calls[1].url).toContain("vibe=alice--todos");
     expect(calls[1].opts).toMatchObject({ skipShard: true });
     expect((api as unknown as { close: ReturnType<typeof vi.fn> }).close).toHaveBeenCalled();
   });
@@ -55,7 +57,9 @@ describe("openVibeDbApi – routes db ops to AppSessions (#2343)", () => {
     expect(r.Ok().ownerHandle).toBe("bob");
     // only the routed connection — no default-handle lookup needed
     expect(calls).toHaveLength(1);
-    expect(calls[0].url).toBe("https://vibes.diy/api/app?vibe=bob--notes");
+    expect(calls[0].url).toContain("/api/app");
+    expect(calls[0].url).toContain(".stable-entry.=cli"); // backend selection preserved
+    expect(calls[0].url).toContain("vibe=bob--notes");
     expect(calls[0].opts).toMatchObject({ skipShard: true });
   });
 
