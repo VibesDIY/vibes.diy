@@ -7,13 +7,7 @@ import { fireproof } from "@fireproof/use-fireproof";
 import type { VibeDocument, ViewType, VibesTheme } from "@vibes.diy/prompts";
 import { vibesThemes, getThemeBySlug } from "@vibes.diy/prompts";
 import { type } from "arktype";
-import {
-  isPromptReq,
-  LLMChat,
-  LLMChatEntry,
-  PromptError,
-  sectionEvent,
-} from "@vibes.diy/api-types";
+import { isPromptReq, LLMChat, LLMChatEntry, PromptError, sectionEvent } from "@vibes.diy/api-types";
 import { promptReducer, HydratedCodeViewFile } from "./prompt-state.js";
 
 // Re-export so existing importers of these types from the route keep compiling.
@@ -35,6 +29,8 @@ import { useShareModal } from "../../components/ResultPreview/useShareModal.js";
 import ResultPreview from "../../components/ResultPreview/ResultPreview.js";
 import { Delayed } from "../../components/Delayed.js";
 import { useDocumentTitle } from "../../hooks/useDocumentTitle.js";
+import { useStreamWatchdog } from "../../hooks/useStreamWatchdog.js";
+import { useReconnectLoop } from "../../hooks/useReconnectLoop.js";
 import { useBuildCompletionNotifications } from "../../hooks/useBuildCompletionNotifications.js";
 import { notifyRecentVibesChanged, subscribeRecentVibesChanged } from "../../hooks/useRecentVibes.js";
 import { createPortal } from "react-dom";
@@ -211,6 +207,84 @@ export function Chat({ inConstruction = false }: { inConstruction?: boolean }) {
   });
 
   useBuildCompletionNotifications();
+
+  const attachSectionStream = useCallback(
+    (chatHandle: LLMChat) => {
+      processStream(chatHandle.sectionStream, (msg) => {
+        const se = sectionEvent(msg);
+        if (se instanceof type.errors) {
+          console.error(se.summary);
+          return;
+        }
+        for (const block of se.blocks) {
+          dispatch(block);
+        }
+      })
+        .catch((err: unknown) => {
+          console.error("section stream errored", err);
+        })
+        .finally(() => {
+          // Stream ended (transport loss closes it as of #2334). The reducer
+          // ignores this while idle; mid-prompt it starts the reconnect loop.
+          dispatch({ type: "streamDisconnected" });
+        });
+    },
+    [dispatch]
+  );
+
+  const refreshAppSettings = useCallback(() => {
+    chatApi.ensureAppSettings({ ownerHandle, appSlug }).then((rS) => {
+      if (rS.isOk()) {
+        const s = rS.Ok().settings.entry.settings;
+        if (s.title) dispatch({ type: "setTitle", title: s.title });
+        if (s.icon) dispatch({ type: "setIcon", icon: s.icon });
+        if (s.theme) {
+          const t = getThemeBySlug(s.theme);
+          if (t) dispatch({ type: "setTheme", theme: t });
+        }
+        if (s.colorTheme) {
+          dispatch({ type: "setColorTheme", colorTheme: s.colorTheme });
+        }
+      }
+    });
+  }, [chatApi, ownerHandle, appSlug, dispatch]);
+
+  const handleStreamSilent = useCallback(() => dispatch({ type: "streamDisconnected" }), [dispatch]);
+  useStreamWatchdog({
+    running: promptState.running,
+    connection: promptState.connection,
+    activityKey: promptState.blocks,
+    onSilent: handleStreamSilent,
+  });
+
+  const openChatForReconnect = useCallback(async () => {
+    const r = await chatApi.openChat({ ownerHandle, appSlug, mode: "chat" });
+    if (r.isErr()) {
+      console.error("reconnect openChat failed", r.Err());
+      return null;
+    }
+    return r.Ok();
+  }, [chatApi, ownerHandle, appSlug]);
+
+  const handleReconnectAttempt = useCallback(
+    (newChat: LLMChat) => {
+      dispatch({ type: "replayReset" });
+      setChat(newChat);
+      dispatch({ type: "initChat", chat: newChat });
+      attachSectionStream(newChat);
+      refreshAppSettings();
+    },
+    [attachSectionStream, refreshAppSettings, dispatch]
+  );
+
+  const handleReconnectGiveUp = useCallback(() => dispatch({ type: "reconnectFailed" }), [dispatch]);
+
+  useReconnectLoop({
+    connection: promptState.connection,
+    openChat: openChatForReconnect,
+    onAttempt: handleReconnectAttempt,
+    onGiveUp: handleReconnectGiveUp,
+  });
 
   useEffect(() => {
     return subscribeRecentVibesChanged((change) => {
@@ -432,9 +506,9 @@ ${rootCssBlock}
           })
           .then((r) => {
             if (r.isErr()) {
-              console.error(`PromptSend failed`, r.Ok());
+              console.error(`PromptSend failed`, r.Err());
             } else {
-              console.log(`send prompt`, sentPrompt);
+              dispatch({ type: "setInFlightStreamId", streamId: r.Ok().promptId });
               notifyRecentVibesChanged();
             }
           });
@@ -449,30 +523,8 @@ ${rootCssBlock}
       }
       setChat(rChat.Ok());
       dispatch({ type: "initChat", chat: rChat.Ok() });
-      chatApi.ensureAppSettings({ ownerHandle, appSlug }).then((rS) => {
-        if (rS.isOk()) {
-          const s = rS.Ok().settings.entry.settings;
-          if (s.title) dispatch({ type: "setTitle", title: s.title });
-          if (s.icon) dispatch({ type: "setIcon", icon: s.icon });
-          if (s.theme) {
-            const t = getThemeBySlug(s.theme);
-            if (t) dispatch({ type: "setTheme", theme: t });
-          }
-          if (s.colorTheme) {
-            dispatch({ type: "setColorTheme", colorTheme: s.colorTheme });
-          }
-        }
-      });
-      void processStream(rChat.Ok().sectionStream, (msg) => {
-        const se = sectionEvent(msg);
-        if (se instanceof type.errors) {
-          console.error(se.summary);
-          return;
-        }
-        for (const block of se.blocks) {
-          dispatch(block);
-        }
-      });
+      refreshAppSettings();
+      attachSectionStream(rChat.Ok());
       // For CLI-pushed apps with no chat history, look up the latest fsId
       if (!fsId) {
         chatApi.getAppByFsId({ appSlug, ownerHandle }).then((rApp) => {
@@ -641,6 +693,7 @@ ${rootCssBlock}
         } else {
           toast.success(`Code changes saved`);
           pendingSavePromptIdRef.current = r.Ok().promptId;
+          dispatch({ type: "setInFlightStreamId", streamId: r.Ok().promptId });
           console.log(`[CodeSave] waiting for block.end with promptId: ${r.Ok().promptId}`);
           notifyRecentVibesChanged();
         }
@@ -802,6 +855,7 @@ ${rootCssBlock}
                 ownerHandle !== "preparing" && appSlug !== "session" ? `vibes-overrides:${ownerHandle}/${appSlug}` : undefined
               }
               paletteCurrentTokens={iframeCurrentTokens}
+              connectionState={promptState.connection}
             />
           </BrutalistCard>
         }
