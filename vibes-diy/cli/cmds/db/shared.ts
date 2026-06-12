@@ -105,11 +105,11 @@ export async function openVibeDbApi(
       await bootstrapApi.close();
     }
   }
-  const routedUrl = BuildURI.from(apiUrl)
-    .pathname("/api/app")
-    .cleanParams()
-    .setParam("vibe", `${ownerHandle}--${appSlug}`)
-    .toString();
+  // Keep the existing query params — notably `.stable-entry.=cli` — so the
+  // selected backend is preserved. The CLI has no cookie fallback, so dropping
+  // the stable-entry param would silently route the AppSessions WS to the
+  // default/prod backend instead of the one the user/bootstrap targeted.
+  const routedUrl = BuildURI.from(apiUrl).pathname("/api/app").setParam("vibe", `${ownerHandle}--${appSlug}`).toString();
   const api = ectx.vibesDiyApiFactory(routedUrl, { skipShard: true });
   return Result.Ok({ api, ownerHandle });
 }

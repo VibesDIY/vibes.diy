@@ -74,15 +74,15 @@ describe("dbSubscribeEvento – canonical route", () => {
     expect(routedOpts).toMatchObject({ skipShard: true });
   });
 
-  it("builds canonical URL matching BuildURI output", () => {
+  it("builds canonical URL preserving stable-entry routing", () => {
     const apiUrl = "https://vibes.diy/api?.stable-entry.=cli";
     const ownerHandle = "alice";
     const appSlug = "todos";
-    const routedUrl = BuildURI.from(apiUrl)
-      .pathname("/api/app")
-      .cleanParams()
-      .setParam("vibe", `${ownerHandle}--${appSlug}`)
-      .toString();
-    expect(routedUrl).toBe("https://vibes.diy/api/app?vibe=alice--todos");
+    // No cleanParams: the stable-entry backend selector must survive the rewrite
+    // (the CLI has no cookie fallback). See #2343.
+    const routedUrl = BuildURI.from(apiUrl).pathname("/api/app").setParam("vibe", `${ownerHandle}--${appSlug}`).toString();
+    expect(routedUrl).toContain("/api/app");
+    expect(routedUrl).toContain(".stable-entry.=cli");
+    expect(routedUrl).toContain("vibe=alice--todos");
   });
 });
