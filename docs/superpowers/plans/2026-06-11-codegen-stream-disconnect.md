@@ -1001,10 +1001,12 @@ This validates the design's verification item: that the open-chat replay include
 
 1. Start the dev server: `pnpm dev`.
 2. Open `/chat`, submit a generation prompt for a new app.
-3. While "Planning your app…" / "Writing code..." is showing, open devtools → Network → set throttling to "Offline" for ~10 seconds, then back to "No throttling". (This kills the WebSocket; the API layer reconnects the socket, and the new loop re-opens the chat.)
+3. While "Planning your app…" / "Writing code..." is showing, kill the WebSocket with a **real socket close** — devtools Network "Offline" throttling does NOT sever an established WebSocket (long-standing Chromium limitation; verified during the 2026-06-12 qa-pr pass, where a 10 s offline window left the stream streaming). Easiest recipe: before the turn, run in the console `const O = WebSocket; window.__qaSockets = []; WebSocket = class extends O { constructor(...a){ super(...a); __qaSockets.push(this); } }` and reload; then mid-stream run `__qaSockets.filter(s => s.url.includes("/api?shard") && s.readyState === 1).forEach(s => s.close())`. (Alternatively kill the actual network interface — Wi-Fi off — rather than devtools throttling.) The API layer reconnects the socket, and the new loop re-opens the chat.
 4. Expected: button label flips to "Reconnecting...", and within ~5-15 s of the backend finishing (watch the dev server log for the icon/screenshot lines), the UI converges: the finished app renders, tabs enable, no page reload.
 5. Repeat on an edit turn (submit a follow-up prompt on the same app, kill the network mid-stream) — same convergence expected.
-6. Negative path: kill the network and leave it off. Expected: after ~2 minutes the banner "Connection lost — your app may have finished building." with a Reload button appears; the UI is not stuck on a working label.
+6. Negative path: kill the network and leave it off (a real interface kill — Wi-Fi off — not devtools throttling, per the note in step 3). Expected: after ~2 minutes the banner "Connection lost — your app may have finished building." with a Reload button appears; the UI is not stuck on a working label.
+
+> **QA status (2026-06-12):** steps 1–5 were verified against the PR #2346 preview deploy via the socket-close recipe above — "Reconnecting..." appeared and the UI auto-converged to the finished edit (no reload), with publish/remix working on the converged state ([qa-pr triage](https://gist.github.com/popmechanic/4856808f600c0a5f4e26ff5dbeb20928)). Step 6 (give-up banner) remains covered by unit tests only.
 
 If step 4 does NOT converge (replay missing the terminal block), stop and re-read `vibes.diy/api/svc/public/prompt-chat-section.ts` `handleEndMsg` — the convergence detection may need to key on a different replayed message; report findings before changing the design.
 
