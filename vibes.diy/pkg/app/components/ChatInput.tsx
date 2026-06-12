@@ -34,6 +34,10 @@ interface ChatInputProps {
   // sandbox runtime. Lets the modal show + edit + remap every custom
   // property the app has, including bespoke ones outside the canonical set.
   paletteCurrentTokens?: Record<string, string>;
+  // Section-stream health from the chat route. "reconnecting" keeps the
+  // submit path gated and swaps the working label; "failed" renders the
+  // reload affordance so the UI is never permanently stuck.
+  connectionState?: "live" | "reconnecting" | "failed";
 }
 
 export interface ChatInputRef extends HTMLTextAreaElement {
@@ -77,6 +81,7 @@ const ChatInput = forwardRef<ChatInputRef, ChatInputProps>(
       onRegeneratePalette,
       paletteStorageKey,
       paletteCurrentTokens,
+      connectionState = "live",
     },
     ref
   ) => {
@@ -87,7 +92,12 @@ const ChatInput = forwardRef<ChatInputRef, ChatInputProps>(
     const [isFocused, setIsFocused] = useState(false);
     const realTextArea = useRef<HTMLTextAreaElement>(null);
 
-    const workingMessage = useMemo(() => getWorkingMessage(hasCode, currentMsgCount), [hasCode, currentMsgCount]);
+    const busy = promptProcessing || connectionState === "reconnecting";
+
+    const workingMessage = useMemo(
+      () => (connectionState === "reconnecting" ? "Reconnecting..." : getWorkingMessage(hasCode, currentMsgCount)),
+      [connectionState, hasCode, currentMsgCount]
+    );
 
     useImperativeHandle(
       ref,
@@ -117,11 +127,11 @@ const ChatInput = forwardRef<ChatInputRef, ChatInputProps>(
     );
 
     const handleSendPrompt = useCallback(() => {
-      if (prompt && !promptProcessing) {
+      if (prompt && !busy) {
         onSubmit(prompt);
         setPrompt("");
       }
-    }, [prompt, promptProcessing, onSubmit]);
+    }, [prompt, busy, onSubmit]);
 
     const autoResizeTextarea = useCallback(() => {
       if (realTextArea.current) {
@@ -162,6 +172,14 @@ const ChatInput = forwardRef<ChatInputRef, ChatInputProps>(
     return (
       <div ref={containerRef} className="px-2 py-1">
         <div className="space-y-1">
+          {connectionState === "failed" && (
+            <div className="flex items-center justify-between gap-2 rounded border border-light-decorative-01 dark:border-dark-decorative-01 px-2 py-1.5 text-xs text-light-secondary dark:text-dark-secondary">
+              <span>Connection lost — your app may have finished building.</span>
+              <Button type="button" variant="blue" onClick={() => window.location.reload()}>
+                Reload
+              </Button>
+            </div>
+          )}
           <div className="flex flex-wrap items-center gap-1">
           {onThemeButtonClick && (
             <button
@@ -230,7 +248,7 @@ const ChatInput = forwardRef<ChatInputRef, ChatInputProps>(
                 setPrompt(e.target.value);
               }}
               onKeyDown={(e: KeyboardEvent<HTMLTextAreaElement>) => {
-                if (e.key === "Enter" && !e.shiftKey && !promptProcessing) {
+                if (e.key === "Enter" && !e.shiftKey && !busy) {
                   e.preventDefault();
                   handleSendPrompt();
                 }
@@ -264,27 +282,27 @@ const ChatInput = forwardRef<ChatInputRef, ChatInputProps>(
               style={{
                 display: "inline-flex",
                 borderRadius: 7,
-                padding: promptProcessing ? 2 : 0,
-                background: promptProcessing ? btnSnakeBorder : "transparent",
-                animation: promptProcessing ? "vibes-border-spin 2s linear infinite" : "none",
+                padding: busy ? 2 : 0,
+                background: busy ? btnSnakeBorder : "transparent",
+                animation: busy ? "vibes-border-spin 2s linear infinite" : "none",
               }}
             >
               <Button
                 ref={submitButtonRef}
                 type="button"
                 onClick={handleSendPrompt}
-                disabled={promptProcessing}
+                disabled={busy}
                 variant="blue"
                 size="fixed"
-                aria-label={promptProcessing ? "Processing" : "Send message"}
+                aria-label={busy ? "Processing" : "Send message"}
                 className={
-                  promptProcessing
+                  busy
                     ? "!border-0 !shadow-none !bg-[var(--vibes-submit-disabled-bg)] !text-[var(--vibes-submit-disabled-fg)]"
                     : ""
                 }
-                style={promptProcessing ? { opacity: 1 } : undefined}
+                style={busy ? { opacity: 1 } : undefined}
               >
-                {promptProcessing ? workingMessage : "Code"}
+                {busy ? workingMessage : "Code"}
               </Button>
             </div>
           </div>
