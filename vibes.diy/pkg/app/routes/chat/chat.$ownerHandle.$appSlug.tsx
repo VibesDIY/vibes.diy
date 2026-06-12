@@ -207,6 +207,7 @@ export function Chat({ inConstruction = false }: { inConstruction?: boolean }) {
     searchParams,
     setSearchParams,
     agentSavedBlockIds: new Set<string>(),
+    connection: "live",
   });
 
   useBuildCompletionNotifications();
