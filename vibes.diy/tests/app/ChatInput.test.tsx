@@ -166,4 +166,29 @@ describe("ChatInput Component", () => {
     );
     expect(screen.getByRole("button", { name: /ai model/i })).toBeInTheDocument();
   });
+
+  it("shows Reconnecting and keeps send disabled while reconnecting", () => {
+    render(
+      <MockThemeProvider>
+        <ChatInput promptProcessing={false} connectionState="reconnecting" onSubmit={onSubmit} />
+      </MockThemeProvider>
+    );
+    const sendButton = screen.getByLabelText("Processing");
+    expect(sendButton).toBeDisabled();
+    expect(screen.getByText("Reconnecting...")).toBeDefined();
+    fireEvent.click(sendButton);
+    expect(onSubmit).not.toHaveBeenCalled();
+  });
+
+  it("shows a reload affordance when the connection has failed", () => {
+    render(
+      <MockThemeProvider>
+        <ChatInput promptProcessing={false} connectionState="failed" onSubmit={onSubmit} />
+      </MockThemeProvider>
+    );
+    expect(screen.getByText(/Connection lost/)).toBeDefined();
+    expect(screen.getByRole("button", { name: "Reload" })).toBeDefined();
+    // Send is re-enabled so the user can also just prompt again.
+    expect(screen.getByLabelText("Send message")).toBeDefined();
+  });
 });
