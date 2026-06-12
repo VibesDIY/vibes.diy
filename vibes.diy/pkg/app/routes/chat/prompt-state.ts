@@ -4,6 +4,8 @@ import { isPromptBlockBegin, isPromptBlockEnd, LLMChatEntry, PromptAndBlockMsgs 
 import { isCodeBegin } from "@vibes.diy/call-ai-v2";
 import type { VibesTheme } from "@vibes.diy/prompts";
 
+export type StreamConnection = "live" | "reconnecting" | "failed";
+
 export interface PromptState {
   chat: LLMChatEntry;
   running: boolean;
@@ -38,6 +40,12 @@ export interface PromptState {
   // colorset's palette with the structural `theme`. Defaults to the same
   // slug as `theme` (matching today's behavior).
   colorTheme?: string | null;
+  // WebSocket section-stream health. "reconnecting" drives the re-open/replay
+  // convergence loop; "failed" surfaces the reload affordance after the loop
+  // gives up. The streamId of the turn in flight pins convergence to the right
+  // prompt — replayed ends of historical turns must not flip us back to live.
+  connection: StreamConnection;
+  inFlightStreamId?: string;
 }
 
 export interface HydratedCodeViewFile {
@@ -145,6 +153,38 @@ function isClearChat(msg: unknown): msg is ClearChat {
   return typeof msg === "object" && msg !== null && (msg as { type?: unknown }).type === "clearChat";
 }
 
+interface StreamDisconnected {
+  type: "streamDisconnected";
+}
+function isStreamDisconnected(msg: unknown): msg is StreamDisconnected {
+  return typeof msg === "object" && msg !== null && (msg as { type?: unknown }).type === "streamDisconnected";
+}
+
+// Clears stream-derived state before consuming a re-opened chat's replay so
+// replayed blocks don't double up. Settings-derived fields (title/icon/theme)
+// and inFlightStreamId survive — the replay/refresh re-deliver or consume them.
+interface ReplayReset {
+  type: "replayReset";
+}
+function isReplayReset(msg: unknown): msg is ReplayReset {
+  return typeof msg === "object" && msg !== null && (msg as { type?: unknown }).type === "replayReset";
+}
+
+interface ReconnectFailed {
+  type: "reconnectFailed";
+}
+function isReconnectFailed(msg: unknown): msg is ReconnectFailed {
+  return typeof msg === "object" && msg !== null && (msg as { type?: unknown }).type === "reconnectFailed";
+}
+
+interface SetInFlightStreamId {
+  type: "setInFlightStreamId";
+  streamId: string;
+}
+function isSetInFlightStreamId(msg: unknown): msg is SetInFlightStreamId {
+  return typeof msg === "object" && msg !== null && (msg as { type?: unknown }).type === "setInFlightStreamId";
+}
+
 export type PromptAction =
   | PromptAndBlockMsgs
   | InitChat
@@ -155,7 +195,11 @@ export type PromptAction =
   | SetHydratedSource
   | SetHydratedFileSystem
   | MarkAgentSaved
-  | ClearChat;
+  | ClearChat
+  | StreamDisconnected
+  | ReplayReset
+  | ReconnectFailed
+  | SetInFlightStreamId;
 
 export function promptReducer(state: PromptState, block: PromptAction): PromptState {
   switch (true) {
@@ -174,7 +218,22 @@ export function promptReducer(state: PromptState, block: PromptAction): PromptSt
         agentSavedBlockIds: new Set<string>(),
         hydratedSource: undefined,
         hydratedFileSystem: undefined,
+        connection: "live",
+        inFlightStreamId: undefined,
       };
+
+    case isStreamDisconnected(block):
+      if (!state.running || state.connection !== "live") return state;
+      return { ...state, connection: "reconnecting" };
+
+    case isReplayReset(block):
+      return { ...state, blocks: [], current: undefined, running: false, hasCode: false };
+
+    case isReconnectFailed(block):
+      return { ...state, connection: "failed", running: false };
+
+    case isSetInFlightStreamId(block):
+      return { ...state, inFlightStreamId: block.streamId };
 
     case isInitChat(block):
       // console.log(`initChat`, block.chat)
@@ -222,9 +281,15 @@ export function promptReducer(state: PromptState, block: PromptAction): PromptSt
       };
     }
 
-    case isPromptBlockEnd(block):
+    case isPromptBlockEnd(block): {
       // console.log(`PromptBlock-End`, block);
-      return { ...state, running: false };
+      const isInFlight = state.inFlightStreamId !== undefined && block.streamId === state.inFlightStreamId;
+      return {
+        ...state,
+        running: false,
+        ...(isInFlight ? { connection: "live" as const, inFlightStreamId: undefined } : {}),
+      };
+    }
     case isCodeBegin(block):
       if (!state.current) return state;
       return {

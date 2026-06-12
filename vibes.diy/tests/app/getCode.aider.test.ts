@@ -130,6 +130,7 @@ function makeState(blocks: PromptBlock[], hydrated?: { fsId: string; code: strin
     setSearchParams: (() => undefined) as PromptState["setSearchParams"],
     hydratedSource: hydrated,
     agentSavedBlockIds: new Set<string>(),
+    connection: "live",
   };
 }
 
