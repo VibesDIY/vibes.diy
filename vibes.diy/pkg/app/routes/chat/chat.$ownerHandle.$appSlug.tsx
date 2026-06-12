@@ -1,4 +1,4 @@
-import { SetURLSearchParams, useNavigate, useParams, useSearchParams } from "react-router";
+import { useNavigate, useParams, useSearchParams } from "react-router";
 import React, { useEffect, useState, useReducer, useRef, useCallback } from "react";
 import { useVibesDiy } from "../../vibes-diy-provider.js";
 import { useAuth } from "@clerk/react";
@@ -6,17 +6,12 @@ import { processStream, BuildURI, URI, exception2Result } from "@adviser/cement"
 import { fireproof } from "@fireproof/use-fireproof";
 import type { VibeDocument, ViewType, VibesTheme } from "@vibes.diy/prompts";
 import { vibesThemes, getThemeBySlug } from "@vibes.diy/prompts";
-import {
-  isPromptBlockBegin,
-  isPromptBlockEnd,
-  isPromptReq,
-  LLMChat,
-  LLMChatEntry,
-  PromptAndBlockMsgs,
-  PromptError,
-  sectionEvent,
-} from "@vibes.diy/api-types";
 import { type } from "arktype";
+import { isPromptReq, LLMChat, LLMChatEntry, PromptError, sectionEvent } from "@vibes.diy/api-types";
+import { promptReducer, HydratedCodeViewFile } from "./prompt-state.js";
+
+// Re-export so existing importers of these types from the route keep compiling.
+export type { PromptState, PromptBlock, HydratedCodeViewFile } from "./prompt-state.js";
 import AppLayout from "../../components/AppLayout.js";
 import { BrutalistCard } from "@vibes.diy/base";
 import SessionSidebar from "../../components/SessionSidebar.js";
@@ -34,6 +29,8 @@ import { useShareModal } from "../../components/ResultPreview/useShareModal.js";
 import ResultPreview from "../../components/ResultPreview/ResultPreview.js";
 import { Delayed } from "../../components/Delayed.js";
 import { useDocumentTitle } from "../../hooks/useDocumentTitle.js";
+import { useStreamWatchdog } from "../../hooks/useStreamWatchdog.js";
+import { useReconnectLoop } from "../../hooks/useReconnectLoop.js";
 import { useBuildCompletionNotifications } from "../../hooks/useBuildCompletionNotifications.js";
 import { notifyRecentVibesChanged, subscribeRecentVibesChanged } from "../../hooks/useRecentVibes.js";
 import { createPortal } from "react-dom";
@@ -83,249 +80,6 @@ function VibeAppContextMenu({ x, y, vibeHref, sandboxUrl, onClose }: VibeAppCont
     </div>,
     document.body
   );
-}
-
-export interface PromptState {
-  chat: LLMChatEntry;
-  running: boolean;
-  current?: PromptBlock;
-  blocks: PromptBlock[];
-  hasCode: boolean;
-  title: string;
-  searchParams: URLSearchParams;
-  setSearchParams: SetURLSearchParams;
-  // Source-of-truth code for a given fsId when no ChatSections exist for it
-  // (e.g. after a remix where the Apps row was pointer-copied without a
-  // replayed prompt). CodeEditor falls back to this when getCode returns no
-  // blocks for the current fsId.
-  hydratedSource?: { fsId: string; code: string[] };
-  // Canonical file-system snapshot for the currently-loaded fsId. The code
-  // panel renders from this structure in file-system-primary mode.
-  hydratedFileSystem?: {
-    fsId: string;
-    files: HydratedCodeViewFile[];
-  };
-  // Block IDs whose save originated from the agent autosave (end-of-aider-
-  // turn) rather than a manual editor save. Populated only for the lifetime
-  // of an open chat session — chat reload loses these tags and the MessageList
-  // falls back to "User edited code" for old auto-saves. Acceptable: the
-  // alternative would require a wire-format change.
-  agentSavedBlockIds: ReadonlySet<string>;
-  icon?: { cid: string; mime: string };
-  // The selected theme (catalog or imported). Sourced from app_settings
-  // alongside title/icon so a single dispatch updates all three.
-  theme?: VibesTheme | null;
-  // Optional colorset slug. When set, the codegen pipeline composes this
-  // colorset's palette with the structural `theme`. Defaults to the same
-  // slug as `theme` (matching today's behavior).
-  colorTheme?: string | null;
-}
-
-export interface HydratedCodeViewFile {
-  fileName: string;
-  lang: string;
-  code: string[];
-  entryPoint?: boolean;
-}
-
-export interface PromptBlock {
-  // reqs: PromptReq[]
-  msgs: PromptAndBlockMsgs[];
-}
-
-const InitChat = type({
-  type: "'initChat'",
-  chat: LLMChatEntry,
-});
-type InitChat = typeof InitChat.infer;
-
-function isInitChat(msg: unknown): msg is InitChat {
-  return !(InitChat(msg) instanceof type.errors);
-}
-
-const SetTitle = type({
-  type: "'setTitle'",
-  title: "string",
-});
-type SetTitle = typeof SetTitle.infer;
-
-function isSetTitle(msg: unknown): msg is SetTitle {
-  return !(SetTitle(msg) instanceof type.errors);
-}
-
-const SetIcon = type({
-  type: "'setIcon'",
-  icon: type({ cid: "string", mime: "string" }),
-});
-type SetIcon = typeof SetIcon.infer;
-
-function isSetIcon(msg: unknown): msg is SetIcon {
-  return !(SetIcon(msg) instanceof type.errors);
-}
-
-// SetTheme accepts a nullable theme so a single action can either set or clear
-// the selection. Imported (custom) .md themes use the same shape — they're not
-// in the catalog but the in-memory record is the same VibesTheme structure.
-interface SetTheme {
-  type: "setTheme";
-  theme: VibesTheme | null;
-}
-function isSetTheme(msg: unknown): msg is SetTheme {
-  return typeof msg === "object" && msg !== null && (msg as { type?: unknown }).type === "setTheme";
-}
-
-// SetColorTheme stores just the slug — the colorset is composed at codegen
-// time on the backend, so the frontend doesn't need the full color values
-// in state. Nullable so the same action can clear the override (falling back
-// to the colorset matching the structural theme's slug).
-interface SetColorTheme {
-  type: "setColorTheme";
-  colorTheme: string | null;
-}
-function isSetColorTheme(msg: unknown): msg is SetColorTheme {
-  return typeof msg === "object" && msg !== null && (msg as { type?: unknown }).type === "setColorTheme";
-}
-
-const SetHydratedSource = type({
-  type: "'setHydratedSource'",
-  fsId: "string",
-  code: "string[]",
-});
-type SetHydratedSource = typeof SetHydratedSource.infer;
-
-function isSetHydratedSource(msg: unknown): msg is SetHydratedSource {
-  return !(SetHydratedSource(msg) instanceof type.errors);
-}
-
-interface SetHydratedFileSystem {
-  type: "setHydratedFileSystem";
-  fsId: string;
-  files: HydratedCodeViewFile[];
-}
-
-function isSetHydratedFileSystem(msg: unknown): msg is SetHydratedFileSystem {
-  return typeof msg === "object" && msg !== null && (msg as { type?: unknown }).type === "setHydratedFileSystem";
-}
-
-const MarkAgentSaved = type({
-  type: "'markAgentSaved'",
-  blockId: "string",
-});
-type MarkAgentSaved = typeof MarkAgentSaved.infer;
-
-function isMarkAgentSaved(msg: unknown): msg is MarkAgentSaved {
-  return !(MarkAgentSaved(msg) instanceof type.errors);
-}
-
-interface ClearChat {
-  type: "clearChat";
-  appSlug: string;
-}
-
-function isClearChat(msg: unknown): msg is ClearChat {
-  return typeof msg === "object" && msg !== null && (msg as { type?: unknown }).type === "clearChat";
-}
-
-type PromptAction =
-  | PromptAndBlockMsgs
-  | InitChat
-  | SetTitle
-  | SetIcon
-  | SetTheme
-  | SetColorTheme
-  | SetHydratedSource
-  | SetHydratedFileSystem
-  | MarkAgentSaved
-  | ClearChat;
-
-function promptReducer(state: PromptState, block: PromptAction): PromptState {
-  switch (true) {
-    case isClearChat(block):
-      return {
-        ...state,
-        chat: {} as LLMChatEntry,
-        blocks: [],
-        running: false,
-        hasCode: false,
-        current: undefined,
-        title: block.appSlug,
-        icon: undefined,
-        theme: null,
-        colorTheme: null,
-        agentSavedBlockIds: new Set<string>(),
-        hydratedSource: undefined,
-        hydratedFileSystem: undefined,
-      };
-
-    case isInitChat(block):
-      // console.log(`initChat`, block.chat)
-      return { ...state, chat: block.chat };
-
-    case isSetTitle(block):
-      return { ...state, title: block.title };
-
-    case isSetIcon(block):
-      return { ...state, icon: block.icon };
-
-    case isSetTheme(block):
-      return { ...state, theme: block.theme };
-
-    case isSetColorTheme(block):
-      return { ...state, colorTheme: block.colorTheme };
-
-    case isSetHydratedSource(block):
-      return { ...state, hydratedSource: { fsId: block.fsId, code: block.code } };
-
-    case isSetHydratedFileSystem(block):
-      return { ...state, hydratedFileSystem: { fsId: block.fsId, files: block.files } };
-
-    case isMarkAgentSaved(block): {
-      const next = new Set(state.agentSavedBlockIds);
-      next.add(block.blockId);
-      return { ...state, agentSavedBlockIds: next };
-    }
-
-    // case isPromptReq(block):
-    //   if (!state.current) return state;
-    //   // console.log(`promptMsg`, block)
-    //   return { ...state,
-    //     current: { ...state.current, reqs: [...state.current.reqs, block]},
-    //     blocks: state.blocks.map((b, i) => (i === state.blocks.length - 1 ? { ...b, reqs: [...b.reqs, block] } : b)),
-    //   };
-
-    case isPromptBlockBegin(block): {
-      const newBlock: PromptBlock = { msgs: [] };
-      return {
-        ...state,
-        running: true,
-        blocks: [...state.blocks, newBlock],
-        current: newBlock,
-      };
-    }
-
-    case isPromptBlockEnd(block):
-      // console.log(`PromptBlock-End`, block);
-      return { ...state, running: false };
-    case isCodeBegin(block):
-      if (!state.current) return state;
-      return {
-        ...state,
-        hasCode: true,
-        current: { ...state.current, msgs: [...state.current.msgs, block] },
-        blocks: state.blocks.map((b, i) => (i === state.blocks.length - 1 ? { ...b, msgs: [...b.msgs, block] } : b)),
-      };
-    default:
-      if (!state.current) return state;
-      // console.log("reqs", state.current?.reqs)
-      // if (isBlockEnd(block)) {
-      //   console.log(`recv:`, block)
-      // }
-      return {
-        ...state,
-        current: { ...state.current, msgs: [...state.current.msgs, block] },
-        blocks: state.blocks.map((b, i) => (i === state.blocks.length - 1 ? { ...b, msgs: [...b.msgs, block] } : b)),
-      };
-  }
 }
 
 export function Chat({ inConstruction = false }: { inConstruction?: boolean }) {
@@ -449,9 +203,88 @@ export function Chat({ inConstruction = false }: { inConstruction?: boolean }) {
     searchParams,
     setSearchParams,
     agentSavedBlockIds: new Set<string>(),
+    connection: "live",
   });
 
   useBuildCompletionNotifications();
+
+  const attachSectionStream = useCallback(
+    (chatHandle: LLMChat) => {
+      processStream(chatHandle.sectionStream, (msg) => {
+        const se = sectionEvent(msg);
+        if (se instanceof type.errors) {
+          console.error(se.summary);
+          return;
+        }
+        for (const block of se.blocks) {
+          dispatch(block);
+        }
+      })
+        .catch((err: unknown) => {
+          console.error("section stream errored", err);
+        })
+        .finally(() => {
+          // Stream ended (transport loss closes it as of #2334). The reducer
+          // ignores this while idle; mid-prompt it starts the reconnect loop.
+          dispatch({ type: "streamDisconnected" });
+        });
+    },
+    [dispatch]
+  );
+
+  const refreshAppSettings = useCallback(() => {
+    chatApi.ensureAppSettings({ ownerHandle, appSlug }).then((rS) => {
+      if (rS.isOk()) {
+        const s = rS.Ok().settings.entry.settings;
+        if (s.title) dispatch({ type: "setTitle", title: s.title });
+        if (s.icon) dispatch({ type: "setIcon", icon: s.icon });
+        if (s.theme) {
+          const t = getThemeBySlug(s.theme);
+          if (t) dispatch({ type: "setTheme", theme: t });
+        }
+        if (s.colorTheme) {
+          dispatch({ type: "setColorTheme", colorTheme: s.colorTheme });
+        }
+      }
+    });
+  }, [chatApi, ownerHandle, appSlug, dispatch]);
+
+  const handleStreamSilent = useCallback(() => dispatch({ type: "streamDisconnected" }), [dispatch]);
+  useStreamWatchdog({
+    running: promptState.running,
+    connection: promptState.connection,
+    activityKey: promptState.blocks,
+    onSilent: handleStreamSilent,
+  });
+
+  const openChatForReconnect = useCallback(async () => {
+    const r = await chatApi.openChat({ ownerHandle, appSlug, mode: "chat" });
+    if (r.isErr()) {
+      console.error("reconnect openChat failed", r.Err());
+      return null;
+    }
+    return r.Ok();
+  }, [chatApi, ownerHandle, appSlug]);
+
+  const handleReconnectAttempt = useCallback(
+    (newChat: LLMChat) => {
+      dispatch({ type: "replayReset" });
+      setChat(newChat);
+      dispatch({ type: "initChat", chat: newChat });
+      attachSectionStream(newChat);
+      refreshAppSettings();
+    },
+    [attachSectionStream, refreshAppSettings, dispatch]
+  );
+
+  const handleReconnectGiveUp = useCallback(() => dispatch({ type: "reconnectFailed" }), [dispatch]);
+
+  useReconnectLoop({
+    connection: promptState.connection,
+    openChat: openChatForReconnect,
+    onAttempt: handleReconnectAttempt,
+    onGiveUp: handleReconnectGiveUp,
+  });
 
   useEffect(() => {
     return subscribeRecentVibesChanged((change) => {
@@ -673,9 +506,9 @@ ${rootCssBlock}
           })
           .then((r) => {
             if (r.isErr()) {
-              console.error(`PromptSend failed`, r.Ok());
+              console.error(`PromptSend failed`, r.Err());
             } else {
-              console.log(`send prompt`, sentPrompt);
+              dispatch({ type: "setInFlightStreamId", streamId: r.Ok().promptId });
               notifyRecentVibesChanged();
             }
           });
@@ -690,30 +523,8 @@ ${rootCssBlock}
       }
       setChat(rChat.Ok());
       dispatch({ type: "initChat", chat: rChat.Ok() });
-      chatApi.ensureAppSettings({ ownerHandle, appSlug }).then((rS) => {
-        if (rS.isOk()) {
-          const s = rS.Ok().settings.entry.settings;
-          if (s.title) dispatch({ type: "setTitle", title: s.title });
-          if (s.icon) dispatch({ type: "setIcon", icon: s.icon });
-          if (s.theme) {
-            const t = getThemeBySlug(s.theme);
-            if (t) dispatch({ type: "setTheme", theme: t });
-          }
-          if (s.colorTheme) {
-            dispatch({ type: "setColorTheme", colorTheme: s.colorTheme });
-          }
-        }
-      });
-      void processStream(rChat.Ok().sectionStream, (msg) => {
-        const se = sectionEvent(msg);
-        if (se instanceof type.errors) {
-          console.error(se.summary);
-          return;
-        }
-        for (const block of se.blocks) {
-          dispatch(block);
-        }
-      });
+      refreshAppSettings();
+      attachSectionStream(rChat.Ok());
       // For CLI-pushed apps with no chat history, look up the latest fsId
       if (!fsId) {
         chatApi.getAppByFsId({ appSlug, ownerHandle }).then((rApp) => {
@@ -882,6 +693,7 @@ ${rootCssBlock}
         } else {
           toast.success(`Code changes saved`);
           pendingSavePromptIdRef.current = r.Ok().promptId;
+          dispatch({ type: "setInFlightStreamId", streamId: r.Ok().promptId });
           console.log(`[CodeSave] waiting for block.end with promptId: ${r.Ok().promptId}`);
           notifyRecentVibesChanged();
         }
@@ -1043,6 +855,7 @@ ${rootCssBlock}
                 ownerHandle !== "preparing" && appSlug !== "session" ? `vibes-overrides:${ownerHandle}/${appSlug}` : undefined
               }
               paletteCurrentTokens={iframeCurrentTokens}
+              connectionState={promptState.connection}
             />
           </BrutalistCard>
         }

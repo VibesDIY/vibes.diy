@@ -1,0 +1,68 @@
+import { describe, expect, it } from "vitest";
+import { OnFunc, Result } from "@adviser/cement";
+import { ensureSuperThis } from "@fireproof/core-runtime";
+import { LLMChatImpl } from "./llm-chat.js";
+import { VibeDiyApiConnection } from "./api-connection.js";
+import { W3CWebSocketCloseEvent, W3CWebSocketErrorEvent, W3CWebSocketMessageEvent } from "@vibes.diy/api-types";
+
+function createMockConnection() {
+  const onMessage = OnFunc<(event: W3CWebSocketMessageEvent) => void>();
+  const onClose = OnFunc<(event: W3CWebSocketCloseEvent) => void>();
+  const onError = OnFunc<(event: W3CWebSocketErrorEvent) => void>();
+  const connection: VibeDiyApiConnection = {
+    ctx: {},
+    onMessage,
+    onClose,
+    onError,
+    send: () => Result.Ok(undefined),
+    close: async () => undefined,
+  };
+  return { connection, onClose, onError };
+}
+
+function stubApi(connection: VibeDiyApiConnection) {
+  return {
+    cfg: { sthis: ensureSuperThis() },
+    getReadyConnection: async () => connection,
+    send: async () => Result.Ok({} as never),
+    request: async () => Result.Ok({ chatId: "chat-1", ownerHandle: "o", appSlug: "a", mode: "chat" }),
+  };
+}
+
+async function openChat(connection: VibeDiyApiConnection) {
+  const rChat = await LLMChatImpl.open(
+    { ownerHandle: "o", appSlug: "a", mode: "chat" } as never,
+    stubApi(connection) as never
+  );
+  expect(rChat.isOk()).toBe(true);
+  return rChat.Ok();
+}
+
+describe("LLMChat section stream on transport loss", () => {
+  it("closes the section stream when the connection closes", async () => {
+    const { connection, onClose } = createMockConnection();
+    const chat = await openChat(connection);
+    const reader = chat.sectionStream.getReader();
+    const pendingRead = reader.read();
+    onClose.invoke({} as W3CWebSocketCloseEvent);
+    const { done } = await pendingRead;
+    expect(done).toBe(true);
+  });
+
+  it("closes the section stream when the connection errors", async () => {
+    const { connection, onError } = createMockConnection();
+    const chat = await openChat(connection);
+    const reader = chat.sectionStream.getReader();
+    const pendingRead = reader.read();
+    onError.invoke({} as W3CWebSocketErrorEvent);
+    const { done } = await pendingRead;
+    expect(done).toBe(true);
+  });
+
+  it("explicit close() after transport loss does not throw", async () => {
+    const { connection, onClose } = createMockConnection();
+    const chat = await openChat(connection);
+    onClose.invoke({} as W3CWebSocketCloseEvent);
+    await expect(chat.close()).resolves.toBeUndefined();
+  });
+});
