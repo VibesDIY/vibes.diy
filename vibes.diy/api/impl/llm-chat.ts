@@ -255,6 +255,6 @@ export class LLMChatImpl implements LLMChat {
   }
 
   async close(_force = false) {
-    await this.#writer.close().catch(() => undefined);
+    this.#writer.close().catch(() => undefined);
   }
 }
