@@ -137,8 +137,15 @@ export class LLMChatImpl implements LLMChat {
           sectionEventsWriter.abort();
         });
     });
-    conn.onError(unreg);
-    conn.onClose(unreg);
+    const closeOnTransportLoss = () => {
+      unreg();
+      // Close (not abort) so the route's processStream resolves cleanly and
+      // can converge on the server's durable state. Catch: the writer may
+      // already be closed (explicit close()) or aborted (evento error path).
+      sectionEventsWriter.close().catch(() => undefined);
+    };
+    conn.onError(closeOnTransportLoss);
+    conn.onClose(closeOnTransportLoss);
 
     const res = await api.request<Req<ReqOpenChat>, ResOpenChat>(open, { tid, resMatch: isResOpenChat });
     if (res.isErr()) {
@@ -248,6 +255,6 @@ export class LLMChatImpl implements LLMChat {
   }
 
   async close(_force = false) {
-    this.#writer.close();
+    await this.#writer.close().catch(() => undefined);
   }
 }
