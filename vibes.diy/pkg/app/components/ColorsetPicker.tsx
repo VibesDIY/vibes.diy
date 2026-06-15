@@ -840,6 +840,9 @@ export default function ColorsetPicker({
       return;
     }
     const mapping = `var(--${target})`;
+    // Mapping a token is an authored override — flip the live push on so the new
+    // mapping reaches the iframe even when "Map to…" is the first palette action.
+    setLiveActive(true);
     if (CANONICAL_STRUCTURAL.includes(target as (typeof CANONICAL_STRUCTURAL)[number])) {
       setEditsStructural((current) => ({ ...current, [bespokeName]: mapping }));
     } else {
