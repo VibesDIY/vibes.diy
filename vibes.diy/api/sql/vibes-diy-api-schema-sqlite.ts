@@ -300,6 +300,21 @@ export const sqlMissingVibeEvents = sqliteTable("MissingVibeEvents", {
   reqPath: text().notNull(),
 });
 
+// Direct-to-app landing events — written by ETL from Logpush NDJSON ([landing] lines).
+// Empty in dev/SQLite; populated in prod/Neon by the logpush-etl cron worker.
+// Keep columns in sync with sqlLandingEvents in vibes-diy-api-schema-pg.ts.
+export const sqlLandingEvents = sqliteTable("LandingEvents", {
+  logKey: text().notNull(),
+  lineIdx: int().notNull(),
+  ts: text().notNull(),
+  landHref: text().notNull(),
+  landHost: text().notNull(),
+  landPath: text().notNull(),
+  fbclid: text().notNull(),
+  utmCampaign: text().notNull(),
+  ua: text().notNull(),
+});
+
 // Per-vibe access function binding: maps (ownerHandle, appSlug, dbName) to a CID in Assets.
 // dbName = '*' means the access function applies to all databases for this app.
 // CID-keyed so changing access.js produces a new entry with no cache invalidation step.
