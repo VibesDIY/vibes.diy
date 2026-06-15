@@ -33,8 +33,13 @@ describe("parseLandingLine", () => {
     expect(parseLandingLine(msg, TS, "le-1", 0)).toBeNull();
   });
 
-  it("returns null on a malformed URL", () => {
+  it("returns null for a junk URL token (no fbclid)", () => {
     const msg = "[landing] not-a-url /vibe/og/foo UA";
+    expect(parseLandingLine(msg, TS, "le-1", 0)).toBeNull();
+  });
+
+  it("returns null for a non-http URL carrying fbclid (must not throw)", () => {
+    const msg = "[landing] ftp://x/p?fbclid=ZZZ&utm_campaign=c /vibe/og/foo SomeUA";
     expect(parseLandingLine(msg, TS, "le-1", 0)).toBeNull();
   });
 
