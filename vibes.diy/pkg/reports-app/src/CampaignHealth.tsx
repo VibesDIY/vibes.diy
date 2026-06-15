@@ -39,6 +39,7 @@ function costPerCtaClick(row: ResReportCampaignHealthCampaignRow): number {
 }
 
 function ctaRate(row: ResReportCampaignHealthCampaignRow): number | null {
+  if (row.directApp) return null; // direct-app has no good.vibes → app hop; Conv% is not meaningful
   if (row.ctaClicksIsShared) return null;
   const l = lpv(row);
   const c = row.ctaClicks;
@@ -466,9 +467,7 @@ export function CampaignHealth({ api }: { readonly api: VibesDiyApi }) {
             >
               {label}
             </div>
-            {sub !== undefined && (
-              <div style={{ fontSize: "0.65rem", opacity: 0.4, marginTop: "0.15rem" }}>{sub}</div>
-            )}
+            {sub !== undefined && <div style={{ fontSize: "0.65rem", opacity: 0.4, marginTop: "0.15rem" }}>{sub}</div>}
           </div>
         ))}
       </div>
@@ -552,7 +551,7 @@ export function CampaignHealth({ api }: { readonly api: VibesDiyApi }) {
               ["Cost/Landing", "Spend ÷ landings. Primary efficiency metric — drives row color coding."],
               [
                 "Unique CTA Visitors",
-                "Distinct fbclid values from Meta-attributed sessions that clicked through from good.vibes.diy to vibes.diy (date-scoped to the report window). One user clicking multiple CTAs counts once. Organic visits without fbclid are excluded. — means no destination URL is set for the campaign. ~ prefix means multiple campaigns share this landing page and utm_campaign is not yet set — the count is a page-level total, not per-campaign; add utm_campaign to the ad URL to enable per-campaign attribution.",
+                'Distinct fbclid values from Meta-attributed sessions that clicked through from good.vibes.diy to vibes.diy (date-scoped to the report window). One user clicking multiple CTAs counts once. Organic visits without fbclid are excluded. — means no destination URL is set for the campaign. ~ prefix means multiple campaigns share this landing page and utm_campaign is not yet set — the count is a page-level total, not per-campaign; add utm_campaign to the ad URL to enable per-campaign attribution. Rows badged "direct" are direct-to-app campaigns: the count is unique fbclid sessions that loaded the vibe directly (LPV-ish), not a good.vibes.diy → vibes.diy hop.',
               ],
               [
                 "Cost/Visitor",
@@ -650,6 +649,20 @@ export function CampaignHealth({ api }: { readonly api: VibesDiyApi }) {
                               }}
                             >
                               {row.effective_status}
+                            </span>
+                          )}
+                          {row.directApp && (
+                            <span
+                              style={{
+                                marginLeft: "0.5rem",
+                                fontSize: "0.65rem",
+                                fontWeight: "bold",
+                                letterSpacing: "0.08em",
+                                textTransform: "uppercase",
+                                color: "var(--gray-mid)",
+                              }}
+                            >
+                              direct
                             </span>
                           )}
                           <span style={{ marginLeft: "0.4rem", fontSize: "0.75rem", color: "var(--gray-mid)" }}>
