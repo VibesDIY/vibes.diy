@@ -109,7 +109,9 @@ describe("srv-sandbox resolves vibeApi live (issue #2348)", () => {
 
     const msg = captured.find((c) => (c.data as { type?: string }).type === "vibes.diy.res-query-docs");
     expect(msg?.data).toMatchObject({ tid: "q1", type: "vibes.diy.res-query-docs", status: "error" });
+    // Single error path, but diagnosable: names the owner/app the request carried.
     expect((msg?.data as { message?: string }).message ?? "").toMatch(/vibeApi/i);
+    expect((msg?.data as { message?: string }).message ?? "").toContain("alice/myapp");
   });
 
   it("wires onDocChanged forwarding to a vibeApi attached after construction", () => {

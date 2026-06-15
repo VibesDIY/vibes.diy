@@ -343,16 +343,22 @@ function vibeImgGen(sandbox: vibesDiySrvSandbox): EventoHandler {
 // fallback to chatApi (ChatSessions) — that fallback was the #2306 leak.
 async function requireVibeApi(
   sandbox: vibesDiySrvSandbox,
-  ctx: HandleTriggerCtx<unknown, { tid: string }, unknown>,
+  ctx: HandleTriggerCtx<unknown, { tid: string; ownerHandle?: string; appSlug?: string }, unknown>,
   resType: string
 ): Promise<VibesDiyApiIface | undefined> {
   const vibeApi = sandbox.vibeApi;
   if (vibeApi !== undefined) return vibeApi;
+  // Single error path. Now that the transient startup race is gone (vibeApi is
+  // resolved live — #2348), reaching here means the route isn't vibe-bound yet
+  // or the provider/session is mismatched — spell that out, with owner/app
+  // context when the request carried it.
+  const { ownerHandle, appSlug } = ctx.validated;
+  const where = ownerHandle !== undefined && appSlug !== undefined ? ` for ${ownerHandle}/${appSlug}` : "";
   await ctx.send.send(ctx, {
     tid: ctx.validated.tid,
     type: resType,
     status: "error",
-    message: "vibeApi unavailable — vibe data requires an app session",
+    message: `vibeApi unavailable — no active app session for this route${where} (route not vibe-bound yet or provider/session mismatch)`,
   });
   return undefined;
 }
