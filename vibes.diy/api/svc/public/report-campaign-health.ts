@@ -190,10 +190,12 @@ async function fetchCampaignHealth(
   const dateLabel = since ? `since ${since}` : `last ${days} days`;
 
   // Fetch campaign meta (URL + status) and referrer click-throughs in parallel with insights
-  const [campaignMeta, { byPath: clicksByPath, byCampaignId: clicksByCampaignId }] = await Promise.all([
-    fetchCampaignMeta(token, account),
-    fetchGoodVibesClickThroughs(vctx, sinceIso, today),
-  ]);
+  const [campaignMeta, { byPath: clicksByPath, byCampaignId: clicksByCampaignId }, { byUtmCampaign: directLandingsByUtm }] =
+    await Promise.all([
+      fetchCampaignMeta(token, account),
+      fetchGoodVibesClickThroughs(vctx, sinceIso, today),
+      fetchDirectAppLandings(vctx, sinceIso, today),
+    ]);
   console.info(
     "fetch-campaign-health: campaign meta count:",
     Object.keys(campaignMeta).length,
@@ -285,6 +287,13 @@ async function fetchCampaignHealth(
     }
   }
 
+  // Count campaigns per direct-app utm key to detect ambiguous/shared keys (#2333)
+  const directKeyCampaignCount: Record<string, number> = {};
+  for (const r of rows) {
+    const du = extractDirectUtm(campaignMeta[r.campaign_id]?.website_url);
+    if (du !== undefined) directKeyCampaignCount[du] = (directKeyCampaignCount[du] ?? 0) + 1;
+  }
+
   const ranked: ResReportCampaignHealthCampaignRow[] = [...rows]
     .sort((a, b) => costPerLpv(a) - costPerLpv(b))
     .map((r) => {
@@ -302,15 +311,23 @@ async function fetchCampaignHealth(
           // malformed URL — skip
         }
       }
-      // Prefer per-campaign attribution (utm_campaign in refHref); fall back to page-level total
+      // Direct-app fallback key (#2333): only when there's no good.vibes.diy landing path.
+      const directUtm = landingPath === undefined ? extractDirectUtm(websiteUrl) : undefined;
+      // Prefer per-campaign attribution (utm_campaign in refHref); then good.vibes path
+      // total; then direct-app landings.
       const hasCampaignAttribution = r.campaign_id in clicksByCampaignId;
+      const directApp = !hasCampaignAttribution && directUtm !== undefined;
       const ctaClicks = hasCampaignAttribution
         ? clicksByCampaignId[r.campaign_id]
         : landingPath !== undefined
           ? (clicksByPath[landingPath] ?? 0)
-          : undefined;
-      // Mark as shared when using path fallback and multiple campaigns share the landing page
-      const ctaClicksIsShared = !hasCampaignAttribution && landingPath !== undefined && (pathCampaignCount[landingPath] ?? 1) > 1;
+          : directUtm !== undefined
+            ? (directLandingsByUtm[directUtm] ?? 0)
+            : undefined;
+      // Shared when a good.vibes path is shared, OR when multiple campaigns derive the same direct key.
+      const ctaClicksIsShared =
+        (!hasCampaignAttribution && landingPath !== undefined && (pathCampaignCount[landingPath] ?? 1) > 1) ||
+        (directApp && (directKeyCampaignCount[directUtm] ?? 1) > 1);
       const costPerCtaClick = ctaClicks !== undefined && ctaClicks > 0 ? Number(r.spend) / ctaClicks : undefined;
       return {
         ...r,
@@ -318,6 +335,7 @@ async function fetchCampaignHealth(
         landingPath,
         ctaClicks,
         ctaClicksIsShared: ctaClicksIsShared || undefined,
+        directApp: directApp || undefined,
         costPerCtaClick,
         effective_status,
       };

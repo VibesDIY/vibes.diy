@@ -173,6 +173,8 @@ export const resReportCampaignHealthCampaignRow = type({
   "ctaClicks?": "number",
   // true when ctaClicks is a page-level total shared across multiple campaigns (no utm_campaign in refHref yet)
   "ctaClicksIsShared?": "boolean",
+  // true when ctaClicks is sourced from direct-to-app LandingEvents (LPV-ish), not a good.vibes.diy hop (#2333)
+  "directApp?": "boolean",
   // spend ÷ ctaClicks; undefined when ctaClicks is 0 or unavailable
   "costPerCtaClick?": "number",
   // good.vibes.diy path this campaign links to (extracted from destination URL)
