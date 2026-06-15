@@ -99,6 +99,48 @@ export async function fetchGoodVibesClickThroughs(
   };
 }
 
+export interface DirectAppLandings {
+  byUtmCampaign: Record<string, number>;
+}
+
+// Direct-to-app attribution (#2333): count unique fbclid per utm_campaign from
+// LandingEvents. Reads the parsed columns (no re-parse of landHref); landHref is
+// the audit source. Rows with empty utm_campaign (organic fbclid shares) are skipped.
+export async function fetchDirectAppLandings(vctx: VibesApiSQLCtx, sinceIso: string, untilIso: string): Promise<DirectAppLandings> {
+  const t = vctx.sql.tables;
+  const rows = await vctx.sql.db
+    .select({ fbclid: t.landingEvents.fbclid, utmCampaign: t.landingEvents.utmCampaign })
+    .from(t.landingEvents)
+    .where(and(gte(t.landingEvents.ts, sinceIso), lte(t.landingEvents.ts, untilIso)));
+  // Null-prototype object prevents user-supplied utm_campaign keys from shadowing
+  // inherited properties like "constructor" or "__proto__".
+  const byUtmCampaign: Record<string, Set<string>> = Object.create(null) as Record<string, Set<string>>;
+  for (const r of rows) {
+    if (r.fbclid === "" || r.utmCampaign === "") continue;
+    (byUtmCampaign[r.utmCampaign] ??= new Set()).add(r.fbclid);
+  }
+  return {
+    byUtmCampaign: Object.fromEntries(Object.entries(byUtmCampaign).map(([id, ids]) => [id, ids.size])),
+  };
+}
+
+// Derive the direct-app join key from a campaign's own Meta destination URL.
+// Gated on host vibes.diy + /vibe/* path + non-empty utm_campaign; never inferred
+// from slug or campaign name. good.vibes.diy destinations return undefined (that path
+// is attributed separately and takes precedence).
+export function extractDirectUtm(websiteUrl: string | undefined): string | undefined {
+  if (websiteUrl === undefined) return undefined;
+  try {
+    const u = new URL(websiteUrl);
+    if (u.hostname !== "vibes.diy") return undefined;
+    if (!u.pathname.startsWith("/vibe/")) return undefined;
+    const utm = u.searchParams.get("utm_campaign");
+    return utm !== null && utm !== "" ? utm : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
 async function fetchCampaignMeta(
   token: string,
   account: string

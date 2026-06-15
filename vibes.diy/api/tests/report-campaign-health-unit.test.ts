@@ -2,7 +2,7 @@ import { beforeAll, describe, expect, it } from "vitest";
 import { ensureSuperThis } from "@fireproof/core-runtime";
 import { createTestDeviceCA } from "@fireproof/core-device-id";
 import { createVibeDiyTestCtx } from "./vibe-diy-test-ctx.js";
-import { fetchGoodVibesClickThroughs } from "../svc/public/report-campaign-health.js";
+import { fetchGoodVibesClickThroughs, fetchDirectAppLandings, extractDirectUtm } from "../svc/public/report-campaign-health.js";
 
 describe("fetchGoodVibesClickThroughs", () => {
   const sthis = ensureSuperThis();
@@ -163,5 +163,77 @@ describe("fetchGoodVibesClickThroughs", () => {
       const result = await fetchGoodVibesClickThroughs(appCtx.vibesCtx, "2026-05-21", "2026-05-28");
       expect(result.byCampaignId["999"]).toBeUndefined();
     });
+  });
+});
+
+describe("extractDirectUtm", () => {
+  it("returns utm_campaign for a vibes.diy /vibe/ destination", () => {
+    expect(extractDirectUtm("https://vibes.diy/vibe/og/cool?utm_campaign=direct-app-cool&fbclid=X")).toBe("direct-app-cool");
+  });
+  it("returns undefined for good.vibes.diy (good.vibes path is handled separately and wins)", () => {
+    expect(extractDirectUtm("https://good.vibes.diy/page?utm_campaign=111")).toBeUndefined();
+  });
+  it("returns undefined for non-/vibe/ paths on vibes.diy", () => {
+    expect(extractDirectUtm("https://vibes.diy/about?utm_campaign=x")).toBeUndefined();
+  });
+  it("returns undefined when utm_campaign is absent or empty", () => {
+    expect(extractDirectUtm("https://vibes.diy/vibe/og/app")).toBeUndefined();
+    expect(extractDirectUtm("https://vibes.diy/vibe/og/app?utm_campaign=")).toBeUndefined();
+  });
+  it("returns undefined for a malformed or missing URL", () => {
+    expect(extractDirectUtm("not a url")).toBeUndefined();
+    expect(extractDirectUtm(undefined)).toBeUndefined();
+  });
+  it("yields the same key for two campaigns sharing a destination (basis for shared flagging)", () => {
+    const a = extractDirectUtm("https://vibes.diy/vibe/og/x?utm_campaign=direct-app-x");
+    const b = extractDirectUtm("https://vibes.diy/vibe/og/x?utm_campaign=direct-app-x&fbclid=Z");
+    expect(a).toBe(b);
+    expect(a).toBe("direct-app-x");
+  });
+});
+
+describe("fetchDirectAppLandings", () => {
+  const sthis = ensureSuperThis();
+  let appCtx: Awaited<ReturnType<typeof createVibeDiyTestCtx>>;
+
+  beforeAll(async () => {
+    const deviceCA = await createTestDeviceCA(sthis);
+    appCtx = await createVibeDiyTestCtx(sthis, deviceCA);
+    const t = appCtx.vibesCtx.sql.tables;
+    const mk = (logKey: string, lineIdx: number, ts: string, fbclid: string, utmCampaign: string) => ({
+      logKey,
+      lineIdx,
+      ts,
+      landHref: `https://vibes.diy/vibe/og/app?fbclid=${fbclid}&utm_campaign=${utmCampaign}`,
+      landHost: "vibes.diy",
+      landPath: "/vibe/og/app",
+      fbclid,
+      utmCampaign,
+      ua: "Mozilla/5.0",
+    });
+    await appCtx.vibesCtx.sql.db.insert(t.landingEvents).values([
+      mk("ld-1", 0, "2026-05-22T10:00:00Z", "AAA", "direct-app-foo"),
+      mk("ld-1", 1, "2026-05-22T10:05:00Z", "AAA", "direct-app-foo"), // dup fbclid — counts once
+      mk("ld-1", 2, "2026-05-23T09:00:00Z", "BBB", "direct-app-foo"),
+      mk("ld-1", 3, "2026-05-23T11:00:00Z", "CCC", ""), // empty utm — excluded
+      mk("ld-1", 4, "2026-06-01T00:00:00Z", "DDD", "direct-app-foo"), // after untilIso — excluded
+      mk("ld-2", 0, "2026-05-24T10:00:00Z", "EEE", "direct-remix-bar"),
+    ]);
+  }, 10000);
+
+  it("dedupes unique fbclid per utm_campaign", async () => {
+    const result = await fetchDirectAppLandings(appCtx.vibesCtx, "2026-05-21", "2026-05-28");
+    expect(result.byUtmCampaign["direct-app-foo"]).toBe(2); // AAA (once) + BBB
+    expect(result.byUtmCampaign["direct-remix-bar"]).toBe(1);
+  });
+
+  it("excludes rows with empty utm_campaign", async () => {
+    const result = await fetchDirectAppLandings(appCtx.vibesCtx, "2026-05-21", "2026-05-28");
+    expect(Object.keys(result.byUtmCampaign)).not.toContain("");
+  });
+
+  it("excludes rows after untilIso", async () => {
+    const result = await fetchDirectAppLandings(appCtx.vibesCtx, "2026-05-21", "2026-05-28");
+    expect(result.byUtmCampaign["direct-app-foo"]).toBe(2); // DDD (June 1) excluded
   });
 });
