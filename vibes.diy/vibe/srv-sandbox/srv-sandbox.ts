@@ -346,7 +346,7 @@ async function requireVibeApi(
   ctx: HandleTriggerCtx<unknown, { tid: string }, unknown>,
   resType: string
 ): Promise<VibesDiyApiIface | undefined> {
-  const { vibeApi } = sandbox.args;
+  const vibeApi = sandbox.vibeApi;
   if (vibeApi !== undefined) return vibeApi;
   await ctx.send.send(ctx, {
     tid: ctx.validated.tid,
@@ -858,6 +858,37 @@ export class vibesDiySrvSandbox implements Disposable {
   // and the new iframe's runtime.ready).
   private pendingSource: string | undefined;
 
+  // The vibe-data backing API (AppSessions). Resolved live rather than frozen
+  // at construction: the host provider builds this sandbox once (module-level
+  // Lazy) but `vibeApi` only becomes available — or changes between vibes — on
+  // later renders. Reading a frozen constructor copy meant a sandbox first
+  // built on a non-vibe render answered every vibe-data op with the
+  // "vibeApi unavailable" error forever, or kept routing to the previous
+  // vibe after navigation (#2348). Updated via setVibeApi.
+  private currentVibeApi: VibesDiyApiIface | undefined;
+  // Unsubscribe for the current vibeApi's onDocChanged forwarder, so swapping
+  // vibeApi tears down the prior subscription instead of leaking forwarders.
+  private docChangedUnsub: (() => void) | undefined;
+
+  get vibeApi(): VibesDiyApiIface | undefined {
+    return this.currentVibeApi;
+  }
+
+  // Attach (or detach) the live vibe-data API. Idempotent on the same
+  // reference. On change it rewires the doc-changed → iframe forwarder,
+  // dropping the previous subscription first.
+  setVibeApi(vibeApi: VibesDiyApiIface | undefined): void {
+    if (vibeApi === this.currentVibeApi) return;
+    this.docChangedUnsub?.();
+    this.docChangedUnsub = undefined;
+    this.currentVibeApi = vibeApi;
+    if (vibeApi !== undefined) {
+      this.docChangedUnsub = vibeApi.onDocChanged((ownerHandle, appSlug, dbName, docId) => {
+        this.forwardDocChangedToIframe(ownerHandle, appSlug, dbName, docId);
+      });
+    }
+  }
+
   readonly handleMessage = async (event: MessageEvent): Promise<void> => {
     // vibe.* prefix filters out Clerk auth / analytics iframes that postMessage first.
     const isVibeMsg = event.source && typeof event.data?.type === "string" && event.data.type.startsWith("vibe.");
@@ -988,12 +1019,9 @@ export class vibesDiySrvSandbox implements Disposable {
     this.args.eventListeners.addEventListener("message", this.handleMessage);
     this.removeEventListeners = this.args.eventListeners.removeEventListener;
 
-    // Forward doc-changed events from the API WebSocket to the iframe
-    if (this.args.vibeApi !== undefined) {
-      this.args.vibeApi.onDocChanged((ownerHandle, appSlug, dbName, docId) => {
-        this.forwardDocChangedToIframe(ownerHandle, appSlug, dbName, docId);
-      });
-    }
+    // Seed the live vibeApi (and its doc-changed → iframe forwarder) from the
+    // constructor args. Later renders refresh it via setVibeApi.
+    this.setVibeApi(args.vibeApi);
   }
 
   /** @internal — test inspection only */
@@ -1003,6 +1031,8 @@ export class vibesDiySrvSandbox implements Disposable {
 
   [Symbol.dispose](): void {
     this.removeEventListeners("message", this.handleMessage);
+    this.docChangedUnsub?.();
+    this.docChangedUnsub = undefined;
   }
 }
 

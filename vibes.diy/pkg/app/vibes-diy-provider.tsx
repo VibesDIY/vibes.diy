@@ -292,6 +292,13 @@ function LiveCycleVibesDiyProvider({ children, webVars }: { children: React.Reac
       : {}),
   });
 
+  // The sandbox is a module-level Lazy singleton — built once, on whatever
+  // route first renders this provider. Refresh its vibe-data API on every
+  // render so a sandbox first built on a non-vibe render (vibeApi undefined),
+  // or a cross-vibe navigation, routes data ops to the current vibeApi instead
+  // of the frozen constructor copy. Idempotent on an unchanged reference. (#2348)
+  realCtx.srvVibeSandbox.setVibeApi?.(realCtx.vibeApi);
+
   useEngagedVisit();
   useCapiCompleteRegistration();
   return <VibesDiyContext.Provider value={realCtx}>{children}</VibesDiyContext.Provider>;
