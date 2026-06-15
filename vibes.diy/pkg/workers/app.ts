@@ -68,6 +68,12 @@ export default {
     if (fbclid !== undefined && env.META_CAPI_TOKEN !== undefined && env.META_PIXEL_ID !== undefined) {
       ctx.waitUntil(sendCapiPageView(request as unknown as Request, env.META_CAPI_TOKEN, env.META_PIXEL_ID));
     }
+    // Direct-to-app attribution (#2333): the ad lands straight on /vibe/* with the
+    // fbclid on the request URL (no good.vibes.diy second hop). Log it so the ETL can
+    // mine fbclid + utm_campaign. UA is the free-form tail (it contains spaces).
+    if (fbclid !== undefined && parseVibePathname(url.pathname) !== undefined) {
+      console.log("[landing]", request.url, url.pathname, request.headers.get("User-Agent") ?? "");
+    }
 
     const route = routeDecision({
       hostname: url.hostname,
