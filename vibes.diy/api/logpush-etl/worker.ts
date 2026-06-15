@@ -3,6 +3,7 @@ import { exception2Result, URI } from "@adviser/cement";
 import { drizzle } from "drizzle-orm/neon-http";
 import { neon } from "@neondatabase/serverless";
 import { integer, pgTable, text, primaryKey, type AnyPgColumn } from "drizzle-orm/pg-core";
+import { parseLandingLine, type LandingRow } from "./parse-landing.js";
 
 export interface Env {
   LOGS_BUCKET: R2Bucket;
@@ -62,6 +63,23 @@ const missingVibeEvents = pgTable(
     lineIdx: integer().notNull(),
     ts: text().notNull(),
     reqPath: text().notNull(),
+  },
+  (t: Record<string, AnyPgColumn>) => [primaryKey({ columns: [t.logKey, t.lineIdx] })]
+);
+
+// Keep in sync with sqlLandingEvents in vibes-diy-api-schema-pg.ts.
+const landingEvents = pgTable(
+  "LandingEvents",
+  {
+    logKey: text().notNull(),
+    lineIdx: integer().notNull(),
+    ts: text().notNull(),
+    landHref: text().notNull(),
+    landHost: text().notNull(),
+    landPath: text().notNull(),
+    fbclid: text().notNull(),
+    utmCampaign: text().notNull(),
+    ua: text().notNull(),
   },
   (t: Record<string, AnyPgColumn>) => [primaryKey({ columns: [t.logKey, t.lineIdx] })]
 );
@@ -128,6 +146,12 @@ async function batchInsertMissingVibe(db: ReturnType<typeof drizzle>, rows: Miss
   return result.length;
 }
 
+async function batchInsertLanding(db: ReturnType<typeof drizzle>, rows: LandingRow[]): Promise<number> {
+  if (rows.length === 0) return 0;
+  const result = await db.insert(landingEvents).values(rows).onConflictDoNothing().returning({ logKey: landingEvents.logKey });
+  return result.length;
+}
+
 // CF Workers require `export default` for scheduled handlers — rules-bag exception (framework constraint).
 export default {
   async scheduled(_event: ScheduledEvent, env: Env, _ctx: ExecutionContext): Promise<void> {
@@ -143,6 +167,8 @@ export default {
     let refererSkipped = 0;
     let missingVibeInserted = 0;
     let missingVibeSkipped = 0;
+    let landingInserted = 0;
+    let landingSkipped = 0;
 
     for (const key of allKeys) {
       const obj = await env.LOGS_BUCKET.get(key);
@@ -159,6 +185,7 @@ export default {
       }
       const refererRows: RefererRow[] = [];
       const missingVibeRows: MissingVibeRow[] = [];
+      const landingRows: LandingRow[] = [];
       let lineIdx = 0;
 
       for (const rawLine of text.split("\n")) {
@@ -181,6 +208,9 @@ export default {
           } else if (message.startsWith("[missing-vibe]")) {
             const row = parseMissingVibeLine(message, ts, key, idx);
             if (row !== null) missingVibeRows.push(row);
+          } else if (message.startsWith("[landing]")) {
+            const row = parseLandingLine(message, ts, key, idx);
+            if (row !== null) landingRows.push(row);
           }
         }
       }
@@ -192,10 +222,14 @@ export default {
       const mi = await batchInsertMissingVibe(db, missingVibeRows);
       missingVibeInserted += mi;
       missingVibeSkipped += missingVibeRows.length - mi;
+
+      const li = await batchInsertLanding(db, landingRows);
+      landingInserted += li;
+      landingSkipped += landingRows.length - li;
     }
 
     console.info(
-      `[logpush-etl] processed ${allKeys.length} objects — referer: inserted ${refererInserted}, skipped ${refererSkipped} — missing-vibe: inserted ${missingVibeInserted}, skipped ${missingVibeSkipped} (already present)`
+      `[logpush-etl] processed ${allKeys.length} objects — referer: inserted ${refererInserted}, skipped ${refererSkipped} — missing-vibe: inserted ${missingVibeInserted}, skipped ${missingVibeSkipped} — landing: inserted ${landingInserted}, skipped ${landingSkipped} (already present)`
     );
   },
 };
