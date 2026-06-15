@@ -296,6 +296,30 @@ export const sqlMissingVibeEvents = pgTable(
   ]
 );
 
+// Direct-to-app landing events — written by ETL from Logpush NDJSON ([landing] lines).
+// Captures the request-URL fbclid + utm_campaign for /vibe/* ad landings (no second hop).
+// Keep in sync with sqlLandingEvents in vibes-diy-api-schema-sqlite.ts and the inline
+// landingEvents table in api/logpush-etl/worker.ts.
+export const sqlLandingEvents = pgTable(
+  "LandingEvents",
+  {
+    logKey: text().notNull(), // R2 object key (Logpush filename), part of dedup PK
+    lineIdx: integer().notNull(), // line index within the R2 object, part of dedup PK
+    ts: text().notNull(), // ISO timestamp from Logpush envelope
+    landHref: text().notNull(), // full landing URL, query intact (audit/debug source)
+    landHost: text().notNull(), // hostname only (vibes.diy)
+    landPath: text().notNull(), // path only (/vibe/<owner>/<slug>)
+    fbclid: text().notNull(), // parsed from landHref; report join column (always present)
+    utmCampaign: text().notNull(), // parsed from landHref; "" when absent; report join column
+    ua: text().notNull(), // raw User-Agent for future bot/prefetch auditing (unused in v1)
+  },
+  (table) => [
+    primaryKey({ columns: [table.logKey, table.lineIdx] }),
+    index("LandingEvents_utmCampaign_ts_idx").on(table.utmCampaign, table.ts),
+    index("LandingEvents_ts_idx").on(table.ts),
+  ]
+);
+
 // Per-doc file uploads — audit + lookup table for `_files` reads. One row
 // per put-asset call. uploadId is the public handle the client puts into
 // doc._files.<key>; the server resolves uploadId → assetURI at read time
