@@ -121,3 +121,13 @@ export const chatHandlers = [
   reportCampaignHealthEvento,
   reportCampaignAdPreviewsEvento,
 ] as const;
+
+// Stopgap (#2350): img-gen rides vibeApi → AppSessions, so the AppSessions
+// evento must serve open-chat + prompt or `req-open-chat {mode:img}` falls
+// through to the WildCard "Not Implemented". These stay in chatHandlers (their
+// canonical home); this array re-exposes only the two streaming ops the img
+// path needs on the app session, without polluting appHandlers (which the
+// parity test pins to doc/notification ops only). Remove once img streaming
+// moves to the heavy/chat session per
+// docs/superpowers/specs/2026-06-16-heavy-light-session-design.md.
+export const imgGenAppSessionStopgapHandlers = [openChat, promptChatSection] as const;

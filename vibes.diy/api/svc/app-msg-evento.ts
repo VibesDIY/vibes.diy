@@ -1,13 +1,16 @@
 import { Lazy, Evento, EventoResult, EventoType, Result } from "@adviser/cement";
 import { W3CWebSocketEventEventoEnDecoder } from "@vibes.diy/api-pkg";
 import { ResError } from "@vibes.diy/api-types";
-import { sharedHandlers, appHandlers } from "./evento-handler-manifest.js";
+import { sharedHandlers, appHandlers, imgGenAppSessionStopgapHandlers } from "./evento-handler-manifest.js";
 
 export const appMsgEvento = Lazy(() => {
   const evento = new Evento(new W3CWebSocketEventEventoEnDecoder());
   evento.push(
     ...sharedHandlers,
     ...appHandlers,
+    // Stopgap (#2350): serve open-chat + prompt here so img-gen's
+    // `req-open-chat {mode:img}` on vibeApi isn't rejected as "Not Implemented".
+    ...imgGenAppSessionStopgapHandlers,
     {
       type: EventoType.WildCard,
       hash: "app-not-msg-implemented-handler",
