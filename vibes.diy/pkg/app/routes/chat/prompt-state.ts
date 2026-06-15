@@ -222,9 +222,16 @@ export function promptReducer(state: PromptState, block: PromptAction): PromptSt
         inFlightStreamId: undefined,
       };
 
-    case isStreamDisconnected(block):
-      if (!state.running || state.connection !== "live") return state;
+    case isStreamDisconnected(block): {
+      // A turn is in flight once the prompt is acknowledged (inFlightStreamId
+      // set when chat.prompt() resolves) or the first block-begin has arrived
+      // (running). `running` flips true only on block-begin, so guarding on it
+      // alone drops a disconnect in the ack→block-begin window and the
+      // reconnect loop never starts. A bare idle disconnect (no turn) is a no-op.
+      const turnInFlight = state.running || state.inFlightStreamId !== undefined;
+      if (!turnInFlight || state.connection !== "live") return state;
       return { ...state, connection: "reconnecting" };
+    }
 
     case isReplayReset(block):
       return { ...state, blocks: [], current: undefined, running: false, hasCode: false };

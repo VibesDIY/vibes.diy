@@ -32,6 +32,15 @@ describe("promptReducer reconnect actions", () => {
     expect(promptReducer(state, { type: "streamDisconnected" })).toBe(state);
   });
 
+  it("streamDisconnected after prompt ack but before block-begin enters reconnecting", () => {
+    // The route sets inFlightStreamId as soon as chat.prompt() resolves, but
+    // `running` only flips true on the first prompt.block-begin. A transport
+    // drop in that window must still start the reconnect loop.
+    const state = baseState({ running: false, inFlightStreamId: "p-1" });
+    const next = promptReducer(state, { type: "streamDisconnected" });
+    expect(next.connection).toBe("reconnecting");
+  });
+
   it("streamDisconnected after giving up stays failed", () => {
     const state = baseState({ running: true, connection: "failed" });
     expect(promptReducer(state, { type: "streamDisconnected" })).toBe(state);
