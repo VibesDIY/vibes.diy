@@ -84,9 +84,6 @@ export const generateEvento: EventoHandler<WrapCmdTSMsg<unknown>, ReqGenerate, R
     const args = ctx.validated;
     const api = ectx.vibesDiyApiFactory(args.apiUrl);
 
-    // Resolve ownerHandle: explicit flag > default setting > first from list
-    const ownerHandle = await resolveHandle(api, args.ownerHandle === "" ? undefined : args.ownerHandle);
-
     if (args.dryRun) {
       await sendProgress(ctx, "info", "Dry-run: inspecting prompt assembly...");
       // Open a chat purely to assemble the prompt — mirror the edit dry-run.
@@ -100,6 +97,13 @@ export const generateEvento: EventoHandler<WrapCmdTSMsg<unknown>, ReqGenerate, R
       // appSlugBinding is created — so a preview leaves no sidebar clutter
       // (#2364). The synthesized owner/app ride back to the prompt handler
       // inline (LLMChatImpl forwards chat.ownerHandle/appSlug on dry-run).
+      //
+      // Do NOT run the CLI `resolveHandle` here: with no explicit handle it
+      // calls api.ensureUserSettings({...}), which inserts a userSettings row
+      // for first-time users — server-side state a dry-run must not create.
+      // Forward only an explicit handle; the server's dry-run resolver picks
+      // the default handle read-only.
+      const ownerHandle = args.ownerHandle === "" ? undefined : args.ownerHandle;
       const appSlug = args.appSlug === "" ? undefined : args.appSlug;
       const rChat = await api.openChat({ ownerHandle, appSlug, mode: "chat", dryRun: true });
       if (rChat.isErr()) {
@@ -136,6 +140,10 @@ export const generateEvento: EventoHandler<WrapCmdTSMsg<unknown>, ReqGenerate, R
     }
 
     await sendProgress(ctx, "info", "Generating...");
+
+    // Resolve ownerHandle: explicit flag > default setting > first from list.
+    // (Only the real generate path — the dry-run above stays read-only.)
+    const ownerHandle = await resolveHandle(api, args.ownerHandle === "" ? undefined : args.ownerHandle);
 
     // Open chat — pass prompt for server-side pre-allocation (title+slug)
     const appSlug = args.appSlug === "" ? undefined : args.appSlug;

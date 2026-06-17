@@ -61,7 +61,23 @@ async function dryRunResolveChatId(
 
   let ownerHandle: string;
   if (req.ownerHandle) {
-    ownerHandle = toRFC2822_32ByteLength(req.ownerHandle);
+    const sanitized = toRFC2822_32ByteLength(req.ownerHandle);
+    // Read-only ownership check: a real `ensureUserSlug` would reject a handle
+    // owned by another user (and create an unclaimed one). Dry-run can't write,
+    // but it must not preview against a handle the caller doesn't own — else
+    // `generate --dry-run --handle someone-else` would succeed where the real
+    // generate fails. An unclaimed handle is fine (the real generate would
+    // claim it).
+    const existing = await ctx.sql.db
+      .select({ userId: ctx.sql.tables.handleBinding.userId })
+      .from(ctx.sql.tables.handleBinding)
+      .where(eq(ctx.sql.tables.handleBinding.handle, sanitized))
+      .limit(1)
+      .then((r) => r[0]);
+    if (existing && existing.userId !== userId) {
+      return Result.Err(`ownerHandle "${req.ownerHandle}" is owned by another user`);
+    }
+    ownerHandle = sanitized;
   } else {
     const rDefault = await getDefaultUserSlug(ctx, userId);
     const defaultBinding = rDefault.isOk() ? rDefault.Ok() : undefined;

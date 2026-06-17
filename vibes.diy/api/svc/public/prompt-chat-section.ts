@@ -837,13 +837,30 @@ async function getResChatFromMode(
   // in-memory (no chatContexts row was inserted — see #2364), the prompt
   // request carries them inline. Synthesize the chat context from those fields
   // instead of reading chatContexts by chatId, which would not be found.
+  //
+  // Security: only take this shortcut for an ephemeral chatId that was NEVER
+  // persisted. A real chatId must still fall through to the userId-scoped
+  // ownership lookup below — otherwise a forged dry-run (mode:"chat",
+  // dryRun:true, inline slugs, someone else's chatId) would skip ownership and
+  // make assembly — which reads chatSections/promptContexts by chatId alone —
+  // reconstruct and emit another user's chat history.
   if (
     isReqCreationPromptChatSection(orig) &&
     orig.dryRun === true &&
     orig.ownerHandle !== undefined &&
     orig.appSlug !== undefined
   ) {
-    return Result.Ok({ appSlug: orig.appSlug, ownerHandle: orig.ownerHandle, mode: orig.mode });
+    const anyRow = await vctx.sql.db
+      .select({ chatId: vctx.sql.tables.chatContexts.chatId })
+      .from(vctx.sql.tables.chatContexts)
+      .where(eq(vctx.sql.tables.chatContexts.chatId, req.chatId))
+      .limit(1)
+      .then((r) => r[0]);
+    if (!anyRow) {
+      return Result.Ok({ appSlug: orig.appSlug, ownerHandle: orig.ownerHandle, mode: orig.mode });
+    }
+    // A row exists for this chatId — fall through so the (userId, chatId)
+    // lookup decides ownership and rejects chats the caller does not own.
   }
   let iResChat;
   if (isReqPromptApplicationChatSection(orig) || isReqPromptImageChatSection(orig)) {
