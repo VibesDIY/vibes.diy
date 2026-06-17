@@ -46,6 +46,27 @@ export function getPromptsFromDocument(document: PartialImageDocument | null | u
   return { prompts: {}, currentPromptKey: "" };
 }
 
+// Strip non-cloneable properties (e.g. Fireproof's hydrated `.file()`
+// accessor) from `_files` entries before re-putting. The closure can't be
+// structured-cloned across the iframe postMessage bridge — it surfaces as
+// DataCloneError. Only carry the data fields. Shared by `addNewVersion`
+// and the first-generation augment path in `useImgGen`.
+export function sanitizeFiles(files: Record<string, unknown> | undefined): Record<string, FileMeta> {
+  const sanitized: Record<string, FileMeta> = {};
+  for (const [key, value] of Object.entries(files ?? {})) {
+    if (!value || typeof value !== "object") continue;
+    const v = value as Partial<FileMeta> & { cid?: string };
+    sanitized[key] = {
+      uploadId: v.uploadId ?? "",
+      type: v.type ?? "application/octet-stream",
+      size: v.size ?? 0,
+      ...(v.lastModified !== undefined ? { lastModified: v.lastModified } : {}),
+      ...(v.url !== undefined ? { url: v.url } : {}),
+    };
+  }
+  return sanitized;
+}
+
 // Append a new version, writing the file ref into `_files.<versionId>`
 // rather than carrying a URL string on the version. The version's `id`
 // IS the fileKey — there's no separate fileKey field. Stage C's URL
@@ -73,22 +94,7 @@ export function addNewVersion(
     updatedPrompts["p1"] = { text: document.prompt, created: document.created || Date.now() };
   }
 
-  // Strip non-cloneable properties (e.g. Fireproof's hydrated `.file()`
-  // accessor) from existing `_files` entries before re-putting. The
-  // closure can't be structured-cloned across the iframe postMessage
-  // bridge — it surfaces as DataCloneError. Only carry the data fields.
-  const updatedFiles: Record<string, FileMeta> = {};
-  for (const [key, value] of Object.entries(document._files ?? {})) {
-    if (!value || typeof value !== "object") continue;
-    const v = value as Partial<FileMeta> & { cid?: string };
-    updatedFiles[key] = {
-      uploadId: v.uploadId ?? "",
-      type: v.type ?? "application/octet-stream",
-      size: v.size ?? 0,
-      ...(v.lastModified !== undefined ? { lastModified: v.lastModified } : {}),
-      ...(v.url !== undefined ? { url: v.url } : {}),
-    };
-  }
+  const updatedFiles = sanitizeFiles(document._files);
   updatedFiles[newVersionId] = fileMeta;
 
   return {
