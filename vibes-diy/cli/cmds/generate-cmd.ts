@@ -95,10 +95,13 @@ export const generateEvento: EventoHandler<WrapCmdTSMsg<unknown>, ReqGenerate, R
       // `generate --dry-run` produces no vibe metadata. Fidelity is preserved
       // by `dryRunPreAllocate` below, which runs pre-allocation in-memory at
       // assembly time so the preview matches a real generate's system prompt.
-      // (A minimal chat/app-slug bookkeeping row is still created server-side
-      // by openChat — see #2357 follow-up for a fully persistence-free path.)
+      // `dryRun: true` makes openChat fully persistence-free: owner + app-slug
+      // are resolved/synthesized in-memory and NO chatContexts row or
+      // appSlugBinding is created — so a preview leaves no sidebar clutter
+      // (#2364). The synthesized owner/app ride back to the prompt handler
+      // inline (LLMChatImpl forwards chat.ownerHandle/appSlug on dry-run).
       const appSlug = args.appSlug === "" ? undefined : args.appSlug;
-      const rChat = await api.openChat({ ownerHandle, appSlug, mode: "chat" });
+      const rChat = await api.openChat({ ownerHandle, appSlug, mode: "chat", dryRun: true });
       if (rChat.isErr()) {
         return Result.Err(`Failed to open chat: ${formatErr(rChat.Err())}`);
       }
@@ -352,7 +355,7 @@ export function generateCmd(ctx: CliCtx) {
       dryRun: flag({
         long: "dry-run",
         description:
-          "Inspect the prompt the server would dispatch; writes no files, pushes nothing, and persists no vibe metadata (a minimal server-side chat/app-slug bookkeeping row is still allocated — see #2364)",
+          "Inspect the prompt the server would dispatch; writes no files, pushes nothing, and creates nothing server-side (no vibe metadata, no chat/app-slug bookkeeping row)",
       }),
       transcript: flag({
         long: "transcript",

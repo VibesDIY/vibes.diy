@@ -833,6 +833,18 @@ async function getResChatFromMode(
   req: ReqWithVerifiedAuth<ReqPromptChatSection>,
   orig: ReqPromptChatSection
 ): Promise<Result<ResChat>> {
+  // Persistence-free dry-run: when an ephemeral openChat resolved owner/app
+  // in-memory (no chatContexts row was inserted — see #2364), the prompt
+  // request carries them inline. Synthesize the chat context from those fields
+  // instead of reading chatContexts by chatId, which would not be found.
+  if (
+    isReqCreationPromptChatSection(orig) &&
+    orig.dryRun === true &&
+    orig.ownerHandle !== undefined &&
+    orig.appSlug !== undefined
+  ) {
+    return Result.Ok({ appSlug: orig.appSlug, ownerHandle: orig.ownerHandle, mode: orig.mode });
+  }
   let iResChat;
   if (isReqPromptApplicationChatSection(orig) || isReqPromptImageChatSection(orig)) {
     iResChat = await vctx.sql.db

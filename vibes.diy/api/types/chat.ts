@@ -44,6 +44,13 @@ export const reqOpenChat = type({
   "ownerHandle?": "string",
   "chatId?": "string",
   "prompt?": "string", // when present on a new chat, triggers pre-allocation (LLM-driven title+slug+skills+theme)
+  // When true (new-chat only, i.e. no chatId): resolve/synthesize owner +
+  // app-slug entirely in-memory and DO NOT insert a chatContexts row or
+  // allocate an appSlugBinding. Backs `generate --dry-run` so a preview
+  // creates nothing server-side (no sidebar clutter). The synthesized
+  // chatId is ephemeral; pair it with `ownerHandle`/`appSlug` inline on the
+  // follow-up dry-run prompt so the prompt handler resolves without a DB read.
+  "dryRun?": "boolean",
   mode: PromptStyle,
 });
 
@@ -106,6 +113,13 @@ export const reqCreationPromptChatSection = type({
   // pre-allocation) while still creating no vibe metadata. Ignored unless
   // dryRun is also true.
   "dryRunPreAllocate?": "boolean",
+  // Dry-run only: owner + app-slug resolved by an ephemeral (persistence-free)
+  // openChat. When both are present on a dryRun request, the prompt handler
+  // synthesizes its chat context from them instead of reading chatContexts by
+  // chatId — so a `generate --dry-run` against an ephemeral chatId (one that was
+  // never inserted) still assembles. Ignored unless dryRun is also true.
+  "ownerHandle?": "string",
+  "appSlug?": "string",
   "selected?": selectedSlotInput,
   "slots?": slotConfig,
   // Optional: focus path for slot rendering. Defaults to "App.jsx" server-side.

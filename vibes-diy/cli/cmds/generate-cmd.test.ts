@@ -196,12 +196,13 @@ describe("generateEvento dry-run", () => {
 
     // dryRun + dryRunPreAllocate are forwarded so the server previews the real
     // generate-path prompt (pre-allocation runs in-memory, persists nothing);
-    // openChat omits the prompt so no pre-allocation metadata is persisted; and
-    // no push is attempted.
+    // openChat omits the prompt so no pre-allocation metadata is persisted,
+    // passes dryRun:true so it creates no chatContexts row / appSlugBinding
+    // (#2364); and no push is attempted.
     const promptOpts = (calls.prompt[0] as { opts: { dryRun?: boolean; dryRunPreAllocate?: boolean } }).opts;
     expect(promptOpts.dryRun).toBe(true);
     expect(promptOpts.dryRunPreAllocate).toBe(true);
-    expect(calls.openChat).toEqual([{ ownerHandle: "alice", appSlug: undefined, mode: "chat" }]);
+    expect(calls.openChat).toEqual([{ ownerHandle: "alice", appSlug: undefined, mode: "chat", dryRun: true }]);
     expect(calls.ensureAppSlug).toEqual([]);
 
     const res = sent.find((m) => (m as { result?: { type?: string } }).result?.type === "vibes-diy.cli.res-generate") as {

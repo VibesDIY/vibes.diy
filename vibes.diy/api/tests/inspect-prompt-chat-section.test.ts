@@ -82,6 +82,44 @@ describe("promptChatSection dry-run (chat mode)", () => {
     await chat.close();
   });
 
+  it("persistence-free openChat dry-run creates no chatContexts row and no appSlugBinding (#2364)", async () => {
+    const freshCtx = await createApiTestCtx({ seqUserIdBase: DRY_RUN_SEQ_BASE + 5000 });
+    const db = freshCtx.appCtx.vibesCtx.sql.db;
+    const tables = freshCtx.appCtx.vibesCtx.sql.tables;
+
+    const beforeChat = (await db.select().from(tables.chatContexts)).length;
+    const beforeSlug = (await db.select().from(tables.appSlugBinding)).length;
+
+    // No ownerHandle/appSlug supplied — the persistence-free path synthesizes
+    // both in-memory rather than allocating bindings.
+    const rOpen = await freshCtx.api.openChat({ mode: "chat", dryRun: true });
+    expect(rOpen.isOk()).toBe(true);
+    const chat = rOpen.Ok();
+
+    // The synthesized chatId was never inserted into chatContexts.
+    const chatRow = await db.select().from(tables.chatContexts).where(eq(tables.chatContexts.chatId, chat.chatId));
+    expect(chatRow.length).toBe(0);
+
+    // The prompt handler resolves owner/app from the inline fields the client
+    // forwards on dry-run, so the preview still assembles against no row.
+    const ack = await chat.prompt(
+      { messages: [{ role: "user", content: [{ type: "text", text: "preview please" }] }] },
+      { dryRun: true }
+    );
+    expect(ack.isOk()).toBe(true);
+
+    const payload = await readDryRunPayload(chat.sectionStream, chat.chatId);
+    expect(payload).toBeDefined();
+    if (!payload) throw new Error("no dry-run-payload block seen");
+    expect(payload.messages[0].role).toBe("system");
+    expect(firstText(payload.messages[payload.messages.length - 1])).toBe("preview please");
+
+    // The whole flow created no bookkeeping rows.
+    expect((await db.select().from(tables.chatContexts)).length).toBe(beforeChat);
+    expect((await db.select().from(tables.appSlugBinding)).length).toBe(beforeSlug);
+    await chat.close();
+  });
+
   it("rejects requests with no new user message", async () => {
     const { appSlug, ownerHandle } = await ctx.createApp();
     const rOpen = await ctx.api.openChat({ ownerHandle, appSlug, mode: "chat" });
