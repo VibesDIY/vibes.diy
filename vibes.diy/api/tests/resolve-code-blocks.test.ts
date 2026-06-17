@@ -115,6 +115,21 @@ describe("resolveCodeBlocksToFileSystem — aider seed", () => {
     expect(byName.get("/sidecar.json")).toBe('{"a":1}');
   });
 
+  it("fork-then-edit: bare block path + slashed seed key writes one file, not two (#2284)", () => {
+    // Forked/seeded app carries a leading-slash key (/App.jsx); the streamed
+    // edit block keys the same file bare (App.jsx). The resolver must treat
+    // them as one logical file so the saved filesystem holds a single /App.jsx
+    // rather than both /App.jsx and App.jsx.
+    const seed = new Map<string, string>([["/App.jsx", "<button>ADD</button>"]]);
+    const replace = makeBlock(["<<<<<<< SEARCH", "<button>ADD</button>", "=======", "<button>LIST</button>", ">>>>>>> REPLACE"]);
+    const result = resolveCodeBlocksToFileSystem([replace], seed);
+    const appFiles = result.filter((f) => f.filename === "/App.jsx" || f.filename === "App.jsx");
+    expect(appFiles).toHaveLength(1);
+    expect(appFiles[0].filename).toBe("/App.jsx");
+    expect(contentOf(appFiles[0])).toContain("<button>LIST</button>");
+    expect(contentOf(appFiles[0])).not.toContain("<button>ADD</button>");
+  });
+
   it("no seed: replace-only turn produces an empty file (regression marker)", () => {
     // Documents the dev bug we hit. Seed is required for replace turns to
     // produce the right content.
