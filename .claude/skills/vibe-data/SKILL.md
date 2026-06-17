@@ -17,6 +17,20 @@ npx vibes-diy login
 
 This creates a device certificate. All subsequent commands authenticate automatically.
 
+### Headless / CI auth (no browser)
+
+`login` opens a browser to enroll a device certificate, which is impossible in CI or remote/headless environments. For those, log in once on a machine with a browser, then carry the credential over the `VIBES_DEVICE_ID` env var:
+
+```bash
+# on a machine where you've run `vibes-diy login`:
+base64 -w0 ~/.fireproof/keybag/z3QkefAC57rcrs.json   # copy this value
+
+# in the headless environment, set it (base64 or raw JSON both work):
+export VIBES_DEVICE_ID="<paste>"
+```
+
+When set and the keybag has no certificate yet, the CLI seeds itself from this value on startup — no `login` needed. An existing interactive login always wins, so this never clobbers a real `vibes-diy login`. The value contains the device **private key**; treat it as a secret.
+
 ## Defaults
 
 Two flags appear on nearly every command but usually don't need to be passed explicitly:
