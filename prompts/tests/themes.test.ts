@@ -366,7 +366,11 @@ describe("composeDesignMd derives canonical defaults", () => {
     expect(out).toMatch(/success: "#22c55e"/);
     expect(out).toMatch(/error: "#ef4444"/);
     expect(out).toMatch(/neutral: "#6b7280"/);
-    expect(out).toMatch(/text-disabled: "#9ca3af"/);
+    // text-disabled is now DERIVED from the theme's own ink/canvas (a faded
+    // mix) rather than the generic gray fallback — keeps it theme-accurate
+    // and swap-correct. The hardcoded #9ca3af only applies when text-primary
+    // and background are both absent.
+    expect(out).toMatch(/text-disabled: "color-mix\(in srgb, var\(--text-primary\) 38%, var\(--background\)\)"/);
   });
 
   it("cross-fills primary ↔ accent when only one is defined", () => {
@@ -449,7 +453,7 @@ describe("composeDesignMd appends token-discipline block", () => {
       ].join("\n")
     );
     const out = composeDesignMd("---\nname: Broadsheet\n---\n\nBody.", cs);
-    expect(out).toContain("Required CSS variables");
+    expect(out).toContain("palette swap contract");
     expect(out).toContain("--background: #ffffff");
     expect(out).toContain("--text-primary: #111111");
     expect(out).toContain("--text-secondary: #666666");
@@ -507,12 +511,12 @@ describe("composeDesignMd appends token-discipline block", () => {
       ].join("\n")
     );
     const out = composeDesignMd("---\nname: T\n---\n\nBody.", cs);
-    const disciplineStart = out.indexOf("Required CSS variables");
+    const disciplineStart = out.indexOf("palette swap contract");
     const disciplineBlock = out.slice(disciplineStart);
     expect(disciplineBlock).not.toContain("--dial-led-active");
-    // The forbidding instruction must be in the prose so the LLM understands
-    // why and doesn't smuggle bespoke tokens back in.
-    expect(disciplineBlock).toContain("DO NOT introduce theme-specific tokens");
+    // The keep-extras-out-of-:root instruction must be in the prose so the LLM
+    // understands why and doesn't smuggle bespoke tokens back in.
+    expect(disciplineBlock).toContain("Don't add bespoke color tokens");
   });
 
   it("strips the legacy ## Colors section so it can't contradict the canonical block", () => {
@@ -558,11 +562,11 @@ describe("composeDesignMd appends token-discipline block", () => {
       ["name: T", "colors:", '  background: "#abc"'].join("\n")
     );
     const out = composeDesignMd("---\nname: T\n---\n\n## Brand\n\nProse.", cs);
-    const disciplineIdx = out.indexOf("Required CSS variables");
+    const disciplineIdx = out.indexOf("palette swap contract");
     const brandIdx = out.indexOf("## Brand");
     expect(disciplineIdx).toBeGreaterThan(brandIdx);
-    // VERBATIM enforcement language must be present.
-    expect(out).toContain("VERBATIM");
+    // The swap-contract framing must be present (replaces the old VERBATIM gag).
+    expect(out).toContain("swap contract");
   });
 
   it("explicitly forbids inventing a dark @media block when none is provided", () => {
