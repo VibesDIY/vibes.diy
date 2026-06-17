@@ -1,10 +1,15 @@
 name: Recon Grid
 colors:
   background: "oklch(0.00 0.000 0)"
-  surface: "oklch(0.00 0.000 0 / 0.8)"
+  surface: "rgba(255, 255, 255, 0.04)"
   accent: "oklch(0.64 0.24 25)"
-  text-primary: "oklch(0.97 0.003 265)"
-  text-secondary: "oklch(0.55 0.03 264)"
-  border: "oklch(0.28 0.03 257)"
+  text-primary: "rgba(255, 255, 255, 0.92)"
+  text-secondary: "rgba(255, 255, 255, 0.55)"
+  border: "rgba(255, 255, 255, 0.18)"
 extras:
   panel: "oklch(0.21 0.03 265 / 0.8)"
+  raised: "rgba(255, 255, 255, 0.06)"
+  accent-text: "#0a0a0a"
+structural:
+  font-family: "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace"
+  font-family-mono: "ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace"

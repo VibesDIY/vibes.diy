@@ -1,8 +1,11 @@
 name: Elder Codex
 colors:
   background: "oklch(0.06 0.000 0)"
-  text-primary: "oklch(0.90 0.000 0)"
-  text-secondary: "oklch(0.55 0.000 0)"
+  text-primary: "rgba(255, 255, 255, 0.92)"
+  text-secondary: "rgba(255, 255, 255, 0.55)"
+  accent: "oklch(0.17 0.000 0)"
+  border: "rgba(255, 255, 255, 0.18)"
+  surface: "rgba(255, 255, 255, 0.04)"
 extras:
   stone-dark: "oklch(0.17 0.000 0)"
   stone-light: "oklch(0.30 0.000 0)"
@@ -13,3 +16,8 @@ extras:
   crimson-dark: "oklch(0.20 0.07 22)"
   parchment: "oklch(0.78 0.05 70)"
   parchment-ink: "oklch(0.27 0.04 45)"
+  raised: "rgba(255, 255, 255, 0.06)"
+  accent-text: "#0a0a0a"
+structural:
+  font-family: "'Cinzel', serif"
+  font-family-mono: "ui-monospace, 'JetBrains Mono', Menlo, monospace"

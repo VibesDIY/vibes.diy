@@ -1,12 +1,28 @@
 name: Atelier Studio
 colors:
-  background: "oklch(0.96 0.03 70)"
-  surface: "oklch(0.95 0.03 70)"
+  background: "oklch(0.95 0.03 70)"
+  surface: "rgba(255, 255, 255, 0.85)"
   primary: "oklch(0.65 0.18 55)"
   secondary: "oklch(0.60 0.15 40)"
-  text-primary: "oklch(0.25 0.04 30)"
-  text-secondary: "oklch(0.50 0.04 30)"
-  border: "oklch(0.25 0.04 30 / 0.15)"
+  text-primary: "rgba(20, 20, 20, 0.92)"
+  text-secondary: "rgba(20, 20, 20, 0.5)"
+  border: "rgba(20, 20, 20, 0.14)"
+  accent: "oklch(0.65 0.18 55)"
+colorsDark:
+  accent: "oklch(0.35 0.18 55)"
+  border: "rgba(255, 255, 255, 0.18)"
+  background: "oklch(0.06 0.03 70)"
+  text-primary: "rgba(255, 255, 255, 0.92)"
+  text-secondary: "rgba(255, 255, 255, 0.55)"
+  surface: "rgba(255, 255, 255, 0.04)"
 extras:
   comp-accent-text: "oklch(1.00 0 0)"
   comp-golden: "oklch(0.72 0.15 80)"
+  raised: "rgba(255, 255, 255, 0.55)"
+  accent-text: "#fafafa"
+extrasDark:
+  raised: "rgba(255, 255, 255, 0.06)"
+  accent-text: "#0a0a0a"
+structural:
+  font-family: "'Playfair Display', serif"
+  font-family-mono: "ui-monospace, 'JetBrains Mono', Menlo, monospace"

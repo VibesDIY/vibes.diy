@@ -8,13 +8,6 @@ colors:
   text-secondary: "#6b6b80"
   border: "#1a1a2e"
   success: "#22c55e"
-extras:
-  on-primary: "#ffffff"
-  on-secondary: "#1a1a2e"
-  on-success: "#1a1a2e"
-  info: "#3b82f6"
-  on-info: "#ffffff"
-  primary-light: "rgba(218, 41, 28, 0.1)"
 colorsDark:
   background: "oklch(0.18 0.02 280)"
   surface: "oklch(0.22 0.02 280)"
@@ -24,6 +17,15 @@ colorsDark:
   text-secondary: "oklch(0.60 0.03 280)"
   border: "oklch(0.96 0.01 80)"
   success: "#22c55e"
+extras:
+  on-primary: "#ffffff"
+  on-secondary: "#1a1a2e"
+  on-success: "#1a1a2e"
+  info: "#3b82f6"
+  on-info: "#ffffff"
+  primary-light: "rgba(218, 41, 28, 0.1)"
+  shadow: "4px 4px 0 var(--border)"
+  shadow-sm: "3px 3px 0 var(--border)"
 extrasDark:
   on-primary: "#ffffff"
   on-secondary: "#1a1a2e"
@@ -31,3 +33,12 @@ extrasDark:
   info: "#3b82f6"
   on-info: "#ffffff"
   primary-light: "rgba(218, 41, 28, 0.18)"
+  shadow: "4px 4px 0 var(--border)"
+  shadow-sm: "3px 3px 0 var(--border)"
+structural:
+  font-family: "'Space Grotesk', sans-serif"
+  font-family-mono: "ui-monospace, 'JetBrains Mono', Menlo, monospace"
+  radius: "4px"
+  radius-sm: "4px"
+  radius-lg: "4px"
+  spacing: "8px"

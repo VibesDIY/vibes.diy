@@ -1,10 +1,14 @@
 name: Pitch
 colors:
   background: "oklch(0.22 0.05 163)"
-  surface: "oklch(0.27 0.055 163)"
+  surface: "rgba(255, 255, 255, 0.04)"
   accent: "oklch(0.86 0.18 90)"
-  text-primary: "oklch(0.95 0.01 100)"
-  text-secondary: "oklch(0.55 0.04 165)"
-  border: "oklch(0.39 0.065 165)"
+  text-primary: "rgba(255, 255, 255, 0.92)"
+  text-secondary: "rgba(255, 255, 255, 0.55)"
+  border: "rgba(255, 255, 255, 0.18)"
 extras:
-  accent-text: "oklch(0.20 0.04 163)"
+  accent-text: "#0a0a0a"
+  raised: "rgba(255, 255, 255, 0.06)"
+structural:
+  font-family: "'Space Grotesk', sans-serif"
+  font-family-mono: "ui-monospace, 'JetBrains Mono', Menlo, monospace"

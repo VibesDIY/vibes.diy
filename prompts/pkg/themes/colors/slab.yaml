@@ -1,8 +1,28 @@
 name: Slab Concrete
 colors:
-  text-primary: "oklch(0.00 0.000 0)"
+  text-primary: "rgba(20, 20, 20, 0.92)"
+  accent: "oklch(0.88 0.000 0)"
+  border: "rgba(20, 20, 20, 0.14)"
+  background: "#fff"
+  text-secondary: "rgba(20, 20, 20, 0.5)"
+  surface: "rgba(255, 255, 255, 0.85)"
+colorsDark:
+  accent: "oklch(0.12 0.000 0)"
+  border: "rgba(255, 255, 255, 0.18)"
+  background: "#0f0f0f"
+  text-primary: "rgba(255, 255, 255, 0.92)"
+  text-secondary: "rgba(255, 255, 255, 0.55)"
+  surface: "rgba(255, 255, 255, 0.04)"
 extras:
   concrete: "oklch(0.88 0.000 0)"
   acid: "oklch(0.94 0.23 110)"
   black: "oklch(0.10 0.000 0)"
   list-hover: "oklch(1.00 0.000 0 / 0.4)"
+  raised: "rgba(255, 255, 255, 0.55)"
+  accent-text: "#fafafa"
+extrasDark:
+  raised: "rgba(255, 255, 255, 0.06)"
+  accent-text: "#0a0a0a"
+structural:
+  font-family: "'Inter', sans-serif"
+  font-family-mono: "ui-monospace, 'JetBrains Mono', Menlo, monospace"

@@ -1,11 +1,18 @@
 name: NeoMario
 colors:
   background: "oklch(0.96 0.01 90)"
-  surface: "oklch(1.00 0 0)"
+  surface: "rgba(255, 255, 255, 0.85)"
   accent: "oklch(0.55 0.24 28)"
-  text-primary: "oklch(0.15 0.02 280)"
-  text-secondary: "oklch(0.50 0.02 280)"
-  border: "oklch(0.15 0.02 280)"
+  text-primary: "rgba(20, 20, 20, 0.92)"
+  text-secondary: "rgba(20, 20, 20, 0.5)"
+  border: "rgba(20, 20, 20, 0.14)"
+colorsDark:
+  accent: "oklch(0.45 0.24 28)"
+  border: "rgba(255, 255, 255, 0.18)"
+  background: "oklch(0.06 0.01 90)"
+  text-primary: "rgba(255, 255, 255, 0.92)"
+  text-secondary: "rgba(255, 255, 255, 0.55)"
+  surface: "rgba(255, 255, 255, 0.04)"
 extras:
   accent-light: "oklch(0.55 0.24 28 / 0.1)"
   yellow: "oklch(0.85 0.18 85)"
@@ -13,3 +20,12 @@ extras:
   green: "oklch(0.62 0.19 145)"
   blue: "oklch(0.52 0.18 255)"
   red: "oklch(0.55 0.24 28)"
+  raised: "rgba(255, 255, 255, 0.55)"
+  accent-text: "#fafafa"
+extrasDark:
+  raised: "rgba(255, 255, 255, 0.06)"
+  accent-text: "#0a0a0a"
+structural:
+  font-family: "'Space Grotesk', sans-serif"
+  font-family-mono: "ui-monospace, 'JetBrains Mono', Menlo, monospace"
+  radius: "4px"

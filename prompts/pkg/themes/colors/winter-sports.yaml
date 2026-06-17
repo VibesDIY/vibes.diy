@@ -1,10 +1,26 @@
 name: Winter Sports
 colors:
-  background: "oklch(0.95 0.015 230)"
-  surface: "oklch(0.99 0.003 240)"
+  background: "oklch(0.99 0.003 240)"
+  surface: "rgba(255, 255, 255, 0.85)"
   primary: "oklch(0.55 0.19 250)"
-  text-primary: "oklch(0.22 0.025 250)"
-  text-secondary: "oklch(0.55 0.02 250)"
-  border: "oklch(0.88 0.012 235)"
+  text-primary: "rgba(20, 20, 20, 0.92)"
+  text-secondary: "rgba(20, 20, 20, 0.5)"
+  border: "rgba(20, 20, 20, 0.14)"
+  accent: "oklch(0.55 0.19 250)"
+colorsDark:
+  accent: "oklch(0.45 0.19 250)"
+  border: "rgba(255, 255, 255, 0.18)"
+  background: "oklch(0.06 0.003 240)"
+  text-primary: "rgba(255, 255, 255, 0.92)"
+  text-secondary: "rgba(255, 255, 255, 0.55)"
+  surface: "rgba(255, 255, 255, 0.04)"
 extras:
   comp-accent-text: "oklch(0.99 0 0)"
+  raised: "rgba(255, 255, 255, 0.55)"
+  accent-text: "#fafafa"
+extrasDark:
+  raised: "rgba(255, 255, 255, 0.06)"
+  accent-text: "#0a0a0a"
+structural:
+  font-family: "'Inter', sans-serif"
+  font-family-mono: "ui-monospace, 'JetBrains Mono', Menlo, monospace"

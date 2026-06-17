@@ -1,11 +1,17 @@
 name: Proof Sheet
 colors:
   background: "oklch(0.14 0.000 0)"
-  surface: "oklch(0.16 0.000 0)"
-  text-primary: "oklch(1.00 0.000 0)"
-  text-secondary: "oklch(0.71 0.02 261)"
-  border: "oklch(0.28 0.03 257)"
+  surface: "rgba(255, 255, 255, 0.04)"
+  text-primary: "rgba(255, 255, 255, 0.92)"
+  text-secondary: "rgba(255, 255, 255, 0.55)"
+  border: "rgba(255, 255, 255, 0.18)"
+  accent: "oklch(1.00 0.000 0 / 0.1)"
 extras:
   fg-dim: "oklch(1.00 0.000 0 / 0.6)"
   tag-bg: "oklch(1.00 0.000 0 / 0.1)"
   card-hi: "oklch(0.21 0.03 265)"
+  raised: "rgba(255, 255, 255, 0.06)"
+  accent-text: "#0a0a0a"
+structural:
+  font-family: "'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif"
+  font-family-mono: "ui-monospace, 'JetBrains Mono', Menlo, monospace"

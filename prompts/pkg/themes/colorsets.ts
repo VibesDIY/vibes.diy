@@ -181,6 +181,14 @@ export function deriveCanonical(colors: Record<string, string>): Record<string, 
   // Interactive pair: cross-fill so a single-accent theme satisfies both slots.
   if (!out.primary && out.accent) out.primary = out.accent;
   if (!out.accent && out.primary) out.accent = out.primary;
+  // Neither defined (the theme's accent lived under a bespoke name that landed
+  // in extras, e.g. chrome's `--neon-red`): derive from a present hue so the
+  // interactive slots are never empty. The exemplar rebuild seeds these from
+  // the catalog accentColor first, so this only guards truly sparse yamls.
+  if (!out.primary && !out.accent) {
+    out.accent = out.border ?? out["text-primary"] ?? FALLBACK_VALUES.neutral;
+    out.primary = out.accent;
+  }
   // Second interactive role falls back to the primary/accent hue (Charlie's
   // call: keep `secondary` in the contract rather than invent a second hue).
   if (!out.secondary) out.secondary = out.accent ?? out.primary ?? FALLBACK_VALUES.neutral;

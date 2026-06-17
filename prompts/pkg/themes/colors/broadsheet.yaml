@@ -1,7 +1,24 @@
 name: Broadsheet
 colors:
-  background: "#ffffff"
-  accent: "#666666"
-  text-primary: "#111111"
-  text-secondary: "#666666"
-  border: "#cccccc"
+  background: "#fff"
+  accent: "#666"
+  text-primary: "rgba(20, 20, 20, 0.92)"
+  text-secondary: "rgba(20, 20, 20, 0.5)"
+  border: "rgba(20, 20, 20, 0.14)"
+  surface: "rgba(255, 255, 255, 0.85)"
+colorsDark:
+  accent: "#999999"
+  border: "rgba(255, 255, 255, 0.18)"
+  background: "#0f0f0f"
+  text-primary: "rgba(255, 255, 255, 0.92)"
+  text-secondary: "rgba(255, 255, 255, 0.55)"
+  surface: "rgba(255, 255, 255, 0.04)"
+extras:
+  raised: "rgba(255, 255, 255, 0.55)"
+  accent-text: "#fafafa"
+extrasDark:
+  raised: "rgba(255, 255, 255, 0.06)"
+  accent-text: "#0a0a0a"
+structural:
+  font-family: "'Helvetica Neue', Helvetica, Arial, sans-serif"
+  font-family-mono: "ui-monospace, 'JetBrains Mono', Menlo, monospace"

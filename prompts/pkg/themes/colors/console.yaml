@@ -1,11 +1,19 @@
 name: Console Rack
 colors:
-  background: "oklch(0.98 0 0)"
-  surface: "oklch(0.93 0.003 265)"
+  background: "oklch(0.93 0.003 265)"
+  surface: "rgba(255, 255, 255, 0.85)"
   primary: "oklch(0.58 0.20 35)"
-  text-primary: "oklch(0.28 0 0)"
-  text-secondary: "oklch(0.55 0 0)"
-  border: "oklch(0.82 0.005 265)"
+  text-primary: "rgba(20, 20, 20, 0.92)"
+  text-secondary: "rgba(20, 20, 20, 0.5)"
+  border: "rgba(20, 20, 20, 0.14)"
+  accent: "oklch(0.58 0.20 35)"
+colorsDark:
+  accent: "oklch(0.42 0.20 35)"
+  border: "rgba(255, 255, 255, 0.18)"
+  background: "oklch(0.07 0.003 265)"
+  text-primary: "rgba(255, 255, 255, 0.92)"
+  text-secondary: "rgba(255, 255, 255, 0.55)"
+  surface: "rgba(255, 255, 255, 0.04)"
 extras:
   comp-accent-text: "oklch(1.00 0 0)"
   console-cap-blue: "oklch(0.28 0.05 240)"
@@ -15,3 +23,11 @@ extras:
   console-cap-white: "oklch(0.95 0 0)"
   console-screen-bg: "oklch(0.07 0 0)"
   console-led-green: "oklch(0.85 0.30 140)"
+  raised: "rgba(255, 255, 255, 0.55)"
+  accent-text: "#fafafa"
+extrasDark:
+  raised: "rgba(255, 255, 255, 0.06)"
+  accent-text: "#0a0a0a"
+structural:
+  font-family: "system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif"
+  font-family-mono: "ui-monospace, 'JetBrains Mono', Menlo, monospace"

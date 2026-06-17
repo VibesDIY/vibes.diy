@@ -2,8 +2,23 @@ name: Industrial
 colors:
   background: "oklch(0.88 0.01 90)"
   accent: "oklch(0.90 0.20 110)"
-  text-primary: "oklch(0.05 0.01 0)"
-  text-secondary: "oklch(0.40 0.01 0)"
-  border: "oklch(0.05 0.01 0)"
+  text-primary: "rgba(20, 20, 20, 0.92)"
+  text-secondary: "rgba(20, 20, 20, 0.5)"
+  border: "rgba(20, 20, 20, 0.14)"
+  surface: "rgba(255, 255, 255, 0.85)"
+colorsDark:
+  accent: "oklch(0.10 0.20 110)"
+  border: "rgba(255, 255, 255, 0.18)"
+  background: "oklch(0.12 0.01 90)"
+  text-primary: "rgba(255, 255, 255, 0.92)"
+  text-secondary: "rgba(255, 255, 255, 0.55)"
+  surface: "rgba(255, 255, 255, 0.04)"
 extras:
-  accent-text: "oklch(0.05 0.01 0)"
+  accent-text: "#fafafa"
+  raised: "rgba(255, 255, 255, 0.55)"
+extrasDark:
+  raised: "rgba(255, 255, 255, 0.06)"
+  accent-text: "#0a0a0a"
+structural:
+  font-family: "'Inter', sans-serif"
+  font-family-mono: "ui-monospace, 'JetBrains Mono', Menlo, monospace"

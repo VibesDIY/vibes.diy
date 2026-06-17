@@ -1,10 +1,11 @@
 name: Rift Portal
 colors:
   background: "oklch(0.07 0.02 280)"
-  surface: "oklch(0.17 0.02 270 / 0.9)"
-  text-primary: "oklch(1.00 0.000 0)"
-  text-secondary: "oklch(0.70 0.02 260)"
-  border: "oklch(0.37 0.03 255)"
+  surface: "rgba(255, 255, 255, 0.04)"
+  text-primary: "rgba(255, 255, 255, 0.92)"
+  text-secondary: "rgba(255, 255, 255, 0.55)"
+  border: "rgba(255, 255, 255, 0.18)"
+  accent: "oklch(0.88 0.27 128)"
 extras:
   card: "oklch(0.13 0.000 0)"
   card-inner: "oklch(0.21 0.02 255)"
@@ -14,3 +15,8 @@ extras:
   accent-cyan: "oklch(0.87 0.14 200)"
   accent-pink: "oklch(0.58 0.32 320)"
   accent-yellow: "oklch(0.87 0.18 90)"
+  raised: "rgba(255, 255, 255, 0.06)"
+  accent-text: "#0a0a0a"
+structural:
+  font-family: "'Orbitron', sans-serif"
+  font-family-mono: "ui-monospace, 'JetBrains Mono', Menlo, monospace"

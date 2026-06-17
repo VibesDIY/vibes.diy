@@ -1,8 +1,15 @@
 name: Dossier Card
 colors:
   background: "oklch(0.16 0.000 0)"
-  surface: "oklch(0.00 0.000 0)"
-  text-primary: "oklch(1.00 0.000 0)"
-  border: "oklch(0.28 0.03 257)"
+  surface: "rgba(255, 255, 255, 0.04)"
+  text-primary: "rgba(255, 255, 255, 0.92)"
+  border: "rgba(255, 255, 255, 0.18)"
+  accent: "#666"
+  text-secondary: "rgba(255, 255, 255, 0.55)"
 extras:
   border-fg: "oklch(1.00 0.000 0)"
+  raised: "rgba(255, 255, 255, 0.06)"
+  accent-text: "#0a0a0a"
+structural:
+  font-family: "'Roboto Mono', monospace"
+  font-family-mono: "'Roboto Mono', monospace"
