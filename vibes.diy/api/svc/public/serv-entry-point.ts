@@ -1,4 +1,5 @@
 import {
+  BuildURI,
   EventoHandler,
   EventoResult,
   EventoResultType,
@@ -39,6 +40,22 @@ export interface NpmUrlCapture {
   readonly fromURL: boolean;
   readonly fromEnv: boolean;
   readonly fromDef: boolean;
+}
+
+// A bare iframe-host URL (e.g. https://app--owner.prod-v2.vibesdiy.net/) is the
+// sandbox document that is *meant* to be embedded in an <iframe> by the
+// vibes.diy viewer — never opened on its own. When a shared link turns out to
+// be that iframe src and someone opens it as a top-level page, they get the
+// sandboxed app with no vibes.diy chrome and no way to sign in (#2354).
+//
+// Browsers tag the request with `Sec-Fetch-Dest`: a top-level navigation is
+// `document`, an iframe embed is `iframe`, and asset subresources are
+// `script`/`style`/`image`/… — so keying on `document` redirects only real
+// top-level navigations and never the embedded iframe or its assets. Clients
+// that omit the header (crawlers, curl) fall through and get the page as before
+// (so social-card meta tags still resolve from the host URL).
+function isBareHostTopLevelNavigation(req: Request): boolean {
+  return req.headers.get("Sec-Fetch-Dest") === "document";
 }
 
 export function captureNpmUrl(vctx: VibesApiSQLCtx, req: Request): NpmUrlCapture {
@@ -181,6 +198,27 @@ export const servEntryPoint: EventoHandler<Request, ExtractedHostToBindings, unk
     const requestedFsId = ctx.validated.fsId;
     const isRootHtmlPath = ctx.validated.path === "/" || ctx.validated.path === "/index.html";
     const ifNoneMatch = ctx.request.headers.get("If-None-Match") ?? undefined;
+
+    // Never serve the bare iframe-host page as a standalone top-level document:
+    // redirect to the canonical viewer at /vibe/<owner>/<app> on vibes.diy so
+    // sign-in and shared-data access work (#2354). Only the entry HTML can be a
+    // top-level navigation; assets and the embedded iframe are left untouched.
+    if (isRootHtmlPath && isBareHostTopLevelNavigation(ctx.request)) {
+      const vctx = ctx.ctx.getOrThrow<VibesApiSQLCtx>("vibesApiCtx");
+      const target = BuildURI.from(vctx.params.vibes.env.VIBES_DIY_PUBLIC_BASE_URL)
+        .appendRelative(`/vibe/${ctx.validated.ownerHandle}/${ctx.validated.appSlug}`)
+        .toString();
+      await ctx.send.send(ctx, {
+        type: "http.Response.Body",
+        status: 302,
+        headers: {
+          Location: target,
+          "Cache-Control": "no-store",
+        },
+        body: "",
+      } satisfies HttpResponseBodyType);
+      return Result.Ok(EventoResult.Stop);
+    }
     // db-explorer SPA: served at /.db-explorer (and its BrowserRouter
     // sub-routes /.db-explorer/dbexplore/...). With a versioned route the
     // entry URL carries an /~<fsId>~ prefix, so the raw pathname becomes
