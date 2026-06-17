@@ -58,3 +58,14 @@ This comment tells the human: "I've addressed all feedback, the work is complete
 Don't post this comment until the work is genuinely complete, CI is green, and `pnpm run rules-bag:constructors` passes. This is the merge signal — posting it prematurely defeats its purpose.
 
 When posting the Rollout watch comment, also add the `ready-to-merge` label to the PR. The comment gives humans context; the label makes merge queue triage faster.
+
+## After ready-to-merge: pitch a blog post
+
+Right after a PR is marked ready-to-merge (Rollout watch comment posted + `ready-to-merge` label added), propose to the human **one** tech-stack blog post topic drawn from the code this PR touched. "Tech stack" = the technologies and patterns in play in the worked section (e.g. Fireproof, the keybag / device-id auth model, the CLI, `call-ai`, esm.sh, Cloudflare Durable Objects) — pick the angle the just-completed work illuminates best.
+
+- Pitch a **single concrete topic with a one-line hook**, not a menu. Tie it to what actually shipped: "How vibes-diy does browserless device auth with a Fireproof keybag" beats "a post about auth."
+- This is a **proposal, not an action** — wait for the human's yes before writing anything.
+- If the human likes it, write the post as markdown in `notes/` (e.g. `notes/blog-<slug>.md`), focused on the real engineering decisions in the diff — the trade-offs, the "why", the gotchas — not marketing. Then land it based on PR state:
+  - **PR still open:** commit it to the same PR branch so the post ships alongside the feature.
+  - **PR already merged:** land it on `main` via a short follow-up PR (never push directly to `main`).
+
