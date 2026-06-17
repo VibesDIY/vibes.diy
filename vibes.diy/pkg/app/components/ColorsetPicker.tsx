@@ -589,12 +589,28 @@ export default function ColorsetPicker({
     if (didHydrateRef.current || !storageKey || !lookupColorset || !draftSlug) return;
     const stored = readStoredOverrides(storageKey);
     if (stored && stored.colorTheme === draftSlug) {
-      if (stored.edits.light) setEditsLight(stored.edits.light);
-      if (stored.edits.dark) setEditsDark(stored.edits.dark);
-      if (stored.edits.structural) setEditsStructural(stored.edits.structural);
+      const hLight = stored.edits.light ?? {};
+      const hDark = stored.edits.dark ?? {};
+      const hStructural = stored.edits.structural ?? {};
+      const anyEdits = Object.keys(hLight).length > 0 || Object.keys(hDark).length > 0 || Object.keys(hStructural).length > 0;
+      if (stored.edits.light) setEditsLight(hLight);
+      if (stored.edits.dark) setEditsDark(hDark);
+      if (stored.edits.structural) setEditsStructural(hStructural);
       // Stored edits are a user-authored override — replay them live at boot.
-      if (stored.edits.light || stored.edits.dark || stored.edits.structural) {
-        setLiveActive(true);
+      if (anyEdits) setLiveActive(true);
+      // `lookupColorset` only resolves after the popover opens, so this
+      // hydration runs *after* the open-transition effect already snapshotted
+      // an empty baseline. Re-baseline to the hydrated state, otherwise the
+      // restored edits read as dirty and closing the picker would revert them
+      // (and the persistence effect would then wipe the saved override).
+      if (anyEdits) {
+        setBaseline({
+          slug: draftSlug,
+          editsLight: hLight,
+          editsDark: hDark,
+          editsStructural: hStructural,
+          liveActive: true,
+        });
       }
     }
     didHydrateRef.current = true;

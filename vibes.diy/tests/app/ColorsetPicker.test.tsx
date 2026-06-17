@@ -36,6 +36,7 @@ function setup(overrides: Partial<React.ComponentProps<typeof ColorsetPicker>> =
 describe("ColorsetPicker dirty + revert", () => {
   afterEach(() => {
     globalThis.document.body.innerHTML = "";
+    globalThis.localStorage.clear();
     vi.clearAllMocks();
   });
 
@@ -77,5 +78,30 @@ describe("ColorsetPicker dirty + revert", () => {
     expect(onRegenerate).toHaveBeenCalledTimes(1);
     // Saving keeps the previewed palette on screen — no empty revert push.
     expect(onApplyLive.mock.calls.at(-1)?.[0]).not.toEqual({});
+  });
+
+  it("does not treat hydrated localStorage overrides as dirty or wipe them on close", async () => {
+    const key = "vibes-palette-test-key";
+    // Seed a saved override for the active palette, as a prior session would.
+    globalThis.localStorage.setItem(
+      key,
+      JSON.stringify({ version: 1, colorTheme: "aether", edits: { light: { accent: "#ff0000" } } })
+    );
+
+    const { onApplyLive } = setup({ storageKey: key });
+
+    fireEvent.click(screen.getByRole("button", { name: /palette/i }));
+
+    // Hydration runs after the bundle loads (post-open); the baseline must be
+    // refreshed to the hydrated state so the restored override reads as clean.
+    const save = await screen.findByRole("button", { name: /^save palette$/i });
+    await waitFor(() => expect(save).toHaveAttribute("aria-label", "Save palette"));
+
+    // Closing without changes must not wipe the saved override: no empty
+    // revert push, and the localStorage entry survives.
+    fireEvent.keyDown(document.body, { key: "Escape" });
+    await waitFor(() => expect(screen.queryByRole("button", { name: /save palette/i })).toBeNull());
+    expect(onApplyLive.mock.calls.at(-1)?.[0]).not.toEqual({});
+    expect(globalThis.localStorage.getItem(key)).not.toBeNull();
   });
 });
