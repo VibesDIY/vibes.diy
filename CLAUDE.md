@@ -52,4 +52,4 @@ Full list and provenance: [`.claude/skills/README.md`](.claude/skills/README.md)
 - Never manually update version numbers in package.json
 - Don't write releases to code until they are shipped (esm.sh caches bad URLs)
 - Don't squash, rebase instead
-- **Always end a work session with a PR**, then subscribe and apply `@CharlieHelps`'s feedback autonomously. Full policy: [pr-lifecycle.md § Always end a work session with a PR](agents/pr-lifecycle.md#always-end-a-work-session-with-a-pr).
+- **Always end a work session with a PR.** Label it `agent-created`, then subscribe and apply `@CharlieHelps`'s feedback autonomously; once all feedback is resolved and CI is green, label it `ready-to-merge`. Full policy: [pr-lifecycle.md § Always end a work session with a PR](agents/pr-lifecycle.md#always-end-a-work-session-with-a-pr).
