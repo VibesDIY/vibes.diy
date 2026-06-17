@@ -34,7 +34,7 @@
     "@fireproof/use-fireproof": "0.24.19",
     "@vibes.diy/call-ai-v2": "workspace:*",
     "@vibes.diy/use-vibes-types": "workspace:*",
-    "arktype": "^2.2.0",
+    "arktype": "^2.2.1",
     "json-schema-faker": "^0.6.2"
   },
   "peerDependencies": {

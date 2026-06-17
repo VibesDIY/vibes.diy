@@ -27,7 +27,7 @@
     "@vibes.diy/prompts": "workspace:*",
     "@vibes.diy/use-vibes-types": "workspace:*",
     "@vibes.diy/vibe-runtime": "workspace:*",
-    "arktype": "^2.2.0",
+    "arktype": "^2.2.1",
     "call-ai": "workspace:*",
     "jose": "^6.2.2",
     "react-dom": "19.2.7",

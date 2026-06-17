@@ -27,7 +27,7 @@
     "@vibes.diy/vibe-runtime": "workspace:*",
     "@vibes.diy/vibe-srv-sandbox": "workspace:*",
     "@vibes.diy/vibe-types": "workspace:*",
-    "arktype": "^2.2.0",
+    "arktype": "^2.2.1",
     "drizzle-kit": "^0.31.8",
     "drizzle-orm": "^0.45.2"
   },

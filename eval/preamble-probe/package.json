@@ -9,7 +9,7 @@
   },
   "dependencies": {
     "@vibes.diy/prompts": "workspace:*",
-    "arktype": "^2.1.10",
+    "arktype": "^2.2.1",
     "call-ai": "workspace:*",
     "cmd-ts": "^0.15.0",
     "tsx": "^4.22.3"

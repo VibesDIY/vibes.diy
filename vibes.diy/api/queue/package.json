@@ -21,7 +21,7 @@
     "@vibes.diy/api-sql": "workspace:*",
     "@vibes.diy/api-svc": "workspace:*",
     "@vibes.diy/api-types": "workspace:*",
-    "arktype": "^2.2.0",
+    "arktype": "^2.2.1",
     "drizzle-orm": "^0.45.2"
   },
   "devDependencies": {

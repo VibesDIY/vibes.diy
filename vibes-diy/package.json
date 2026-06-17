@@ -45,7 +45,7 @@
     "@vibes.diy/api-types": "workspace:*",
     "@vibes.diy/call-ai-v2": "workspace:*",
     "@vibes.diy/prompts": "workspace:*",
-    "arktype": "^2.2.0",
+    "arktype": "^2.2.1",
     "charwise": "^3.0.1",
     "cmd-ts": "^0.15.0",
     "tsx": "^4.22.3",
