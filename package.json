@@ -65,7 +65,7 @@
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "@fireproof/core-cli": "0.24.19",
-    "@playwright/test": "^1.59.1",
+    "@playwright/test": "^1.61.0",
     "@types/deno": "^2.7.0",
     "@types/node": "^25.9.2",
     "@typescript/native-preview": "7.0.0-dev.20260519.1",
