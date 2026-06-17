@@ -517,7 +517,7 @@ describe("Firefly pending request on public app", { timeout: 15000 }, () => {
   });
 });
 
-describe("Firefly dev mode denies public reads", { timeout: 15000 }, () => {
+describe("Firefly dev mode allows public reads when publicAccess enabled", { timeout: 15000 }, () => {
   const sthis = ensureSuperThis();
   let ownerApi: VibesDiyApi;
   let anonApi: VibesDiyApi;
@@ -574,19 +574,23 @@ describe("Firefly dev mode denies public reads", { timeout: 15000 }, () => {
     await ownerApi.ensureAppSettings({ appSlug, ownerHandle, publicAccess: { enable: true } });
   });
 
-  it("dev mode: anonymous getDoc denied despite publicAccess", async () => {
+  // #2308: public-read grants must apply to dev apps too, so creators can
+  // exercise access control locally without a publish cycle.
+  it("dev mode: anonymous getDoc allowed with publicAccess", async () => {
     const rRes = await anonApi.getDoc({ appSlug, ownerHandle, dbName: "default", docId: "dev-doc" });
-    expect(rRes.isErr()).toBe(true);
+    expect(rRes.isOk()).toBe(true);
+    expect(rRes.Ok().status).toBe("ok");
   });
 
-  it("dev mode: anonymous queryDocs denied despite publicAccess", async () => {
+  it("dev mode: anonymous queryDocs allowed with publicAccess", async () => {
     const rRes = await anonApi.queryDocs({ appSlug, ownerHandle, dbName: "default" });
-    expect(rRes.isErr()).toBe(true);
+    expect(rRes.isOk()).toBe(true);
+    expect(rRes.Ok().docs.length).toBeGreaterThan(0);
   });
 
-  it("dev mode: anonymous subscribeDocs denied despite publicAccess", async () => {
+  it("dev mode: anonymous subscribeDocs allowed with publicAccess", async () => {
     const rRes = await anonApi.subscribeDocs({ appSlug, ownerHandle, dbName: "default" });
-    expect(rRes.isErr()).toBe(true);
+    expect(rRes.isOk()).toBe(true);
   });
 
   it("dev mode: owner can still read their own docs", async () => {

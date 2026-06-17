@@ -23,8 +23,8 @@ import { etagMatches, quoteEtag } from "./etag-utils.js";
 // AssetUploads resolution, vctx.storage.fetch, stream. CID and assetURI
 // never leak to the client.
 //
-// Public-readable apps (`publicAccess.enable && mode === "production"`)
-// serve to anonymous viewers. The auth/ACL gate (cookie + per-db ACL)
+// Public-readable apps (owner opt-in via `publicAccess.enable`, dev or
+// production — see #2308) serve to anonymous viewers. The auth/ACL gate (cookie + per-db ACL)
 // is what controls visibility; the URL itself is durable (Cool URIs
 // don't change) so the browser HTTP cache and Cache-Control headers
 // actually function.
