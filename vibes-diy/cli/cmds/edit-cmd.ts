@@ -66,7 +66,7 @@ export function isReqEdit(obj: unknown): obj is ReqEdit {
   return !(ReqEdit(obj) instanceof type.errors);
 }
 
-interface DryRunPayload {
+export interface DryRunPayload {
   readonly model: string;
   readonly messages: ChatMessage[];
 }
@@ -75,7 +75,7 @@ interface DryRunPayload {
 // arrives, or until the stream closes / msg cap is hit. The server emits
 // exactly one such block per dryRun:true request (framed by block-begin
 // and block-end), so a small msg cap is enough.
-async function readDryRunPayloadFromStream(
+export async function readDryRunPayloadFromStream(
   stream: ReadableStream<unknown>,
   chatId: string,
   maxMsgs = 32
