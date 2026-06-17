@@ -93,7 +93,11 @@ export function addNewVersion(
 
   return {
     ...document,
-    type: "image",
+    // Preserve the host doc's existing type so an image attached to a
+    // `story`/`hat`/whatever doc keeps that type (and its type-keyed
+    // access/channels). Only default to "image" for a genuinely
+    // untyped doc. See VibesDIY/vibes.diy#2362.
+    type: document.type ?? "image",
     currentVersion: versionCount - 1,
     versions: [
       ...versions,
