@@ -29,7 +29,7 @@ colorsets (#2356 has the full data):
    hardcoded defaults (`system-ui`, `0.5rem` radius, `1rem` spacing). Brutalist
    loses Space Grotesk + 4px corners; aether loses its typewriter fonts; every
    theme collapses to the same rounded sans-serif — while the prose still names
-   the real fonts, a contradiction the discipline block resolves *against* the
+   the real fonts, a contradiction the discipline block resolves _against_ the
    theme.
 3. **The `classNames` example we show the model is invalid JS.** Keys like
    `text-primary:` / `text-secondary:` / `text-disabled:` are not valid
@@ -45,7 +45,7 @@ colorsets (#2356 has the full data):
 Amber's original split #2002 deliberately "kept the LLM-facing format
 identical" and still looked good. The regression is entirely in #2199, which
 shipped the canonical-only contract for live swap but never populated the data
-behind it (the alias migration only *renamed* tokens; it never *completed* the
+behind it (the alias migration only _renamed_ tokens; it never _completed_ the
 canonical color set or authored any structural values).
 
 ## Goal
@@ -127,8 +127,8 @@ In `prompts/pkg/themes/colorsets.ts`:
     mid when either source slot is missing
   - `background`/`text-primary` get last-resort neutral fallbacks so the
     `:root` is never empty (`desktop`/`neon`-class themes).
-  This is the safety net; (1) makes it rarely fire, but it guarantees the
-  invariant the tests assert in (5).
+    This is the safety net; (1) makes it rarely fire, but it guarantees the
+    invariant the tests assert in (5).
 - **Fix the `classNames` example to be valid JS** — quote the keys (or
   camelCase them): `'text-primary': 'bg-[var(--text-primary)]'`. The example
   must `eval`/parse as valid JS (asserted in tests).
@@ -144,9 +144,9 @@ Keep the live-swap contract, drop the gag. `renderTokenDisciplineBlock`:
 - **Change:** soften "copy VERBATIM / FORBIDDEN to add any token" to a positive
   framing: the canonical `:root` is the **swap contract** — express the
   theme's core surfaces/text/actions/borders through it, and you are
-  **encouraged** to build richness *on top of* it: gradients, shadows,
+  **encouraged** to build richness _on top of_ it: gradients, shadows,
   decorative pseudo-elements, and translucency via `color-mix(... ,
-  var(--canonical) ...)`. Bespoke flourish values that don't need to swap may
+var(--canonical) ...)`. Bespoke flourish values that don't need to swap may
   be inlined locally (not in `:root`). This removes the "no legal way to
   express the theme" trap while keeping the core swappable.
 
@@ -192,8 +192,8 @@ This converts the four defects into permanent regression guards.
 
 The app's `:root` still contains **canonical + structural only**, so a
 viewmaster palette swap overrides every variable the app uses — full live
-swap, unchanged. The difference is that the canonical set is now *complete and
-theme-true*, so "swappable" no longer means "stripped of its identity." Extras
+swap, unchanged. The difference is that the canonical set is now _complete and
+theme-true_, so "swappable" no longer means "stripped of its identity." Extras
 stay out of the app `:root` (so they can't block a swap); they live in the
 theme prose as decoration the model layers via `color-mix` from canonical.
 
@@ -216,10 +216,10 @@ theme prose as decoration the model layers via `color-mix` from canonical.
    `:root` blocks the right ground truth, or is there a canonical
    palette source I'm missing (e.g. the pre-#2199 `.md` frontmatter in git
    history, or a Stitch export)? Exemplars look authoritative and re-renderable
-   but I want to confirm they aren't themselves generated *from* the current
-   (starved) yaml. *(Spot-check says no — aether's exemplar has `--bg #dcbfa6`,
+   but I want to confirm they aren't themselves generated _from_ the current
+   (starved) yaml. _(Spot-check says no — aether's exemplar has `--bg #dcbfa6`,
    which the current yaml lacks — but please confirm the exemplar generator's
-   input.)*
+   input.)_
 2. **`secondary`.** Most themes are single-accent. OK to derive
    `secondary ← accent` everywhere rather than inventing a second hue per
    theme? Or should single-accent themes drop `secondary` from the contract
@@ -249,7 +249,7 @@ theme prose as decoration the model layers via `color-mix` from canonical.
 3. **Discipline block — soften, keep hard swap-safety invariants:** core
    semantic roles route through canonical vars; no literal colors for core
    surfaces/text/actions/borders; no extra theme color tokens in `:root` beyond
-   canonical + structural; richness allowed *on top* (gradients/shadows/
+   canonical + structural; richness allowed _on top_ (gradients/shadows/
    `color-mix(... var(--canonical) ...)`/decorative pseudo-elements).
 4. **Prose — token/composer/guardrail fixes first.** Only surgical per-theme
    prose boosts in this PR if specific themes still underperform after the

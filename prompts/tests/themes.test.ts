@@ -322,12 +322,7 @@ describe("canonical token vocabulary", () => {
   });
 
   it("direct canonical wins over alias when source defines both", () => {
-    const yaml = [
-      "name: Conflict",
-      "colors:",
-      '  bg: "#111"',
-      '  background: "#222"',
-    ].join("\n");
+    const yaml = ["name: Conflict", "colors:", '  bg: "#111"', '  background: "#222"'].join("\n");
     const cs = parseColorsetYaml(yaml);
     // The canonical key wins; the alias value is preserved in extras so the
     // theme can still reference {{bg}} in prose if it wants.
@@ -336,15 +331,9 @@ describe("canonical token vocabulary", () => {
   });
 
   it("applies the same alias resolution to colorsDark", () => {
-    const yaml = [
-      "name: WithDark",
-      "colors:",
-      '  bg: "#fff"',
-      '  fg: "#111"',
-      "colorsDark:",
-      '  bg: "#000"',
-      '  fg: "#fff"',
-    ].join("\n");
+    const yaml = ["name: WithDark", "colors:", '  bg: "#fff"', '  fg: "#111"', "colorsDark:", '  bg: "#000"', '  fg: "#fff"'].join(
+      "\n"
+    );
     const cs = parseColorsetYaml(yaml);
     expect(cs.colors.background).toBe("#fff");
     expect(cs.colorsDark?.background).toBe("#000");
@@ -358,9 +347,7 @@ describe("composeDesignMd derives canonical defaults", () => {
   // either sibling tokens or hardcoded fallbacks.
 
   it("fills missing state colors with hardcoded fallbacks", () => {
-    const cs = parseColorsetYaml(
-      ["name: Sparse", "colors:", '  background: "#fff"', '  text-primary: "#111"'].join("\n")
-    );
+    const cs = parseColorsetYaml(["name: Sparse", "colors:", '  background: "#fff"', '  text-primary: "#111"'].join("\n"));
     const out = composeDesignMd("---\nname: T\n---\n\nBody.", cs);
     expect(out).toMatch(/warning: "#f59e0b"/);
     expect(out).toMatch(/success: "#22c55e"/);
@@ -374,36 +361,24 @@ describe("composeDesignMd derives canonical defaults", () => {
   });
 
   it("cross-fills primary ↔ accent when only one is defined", () => {
-    const csOnlyAccent = parseColorsetYaml(
-      ["name: A", "colors:", '  accent: "#ff0000"'].join("\n")
-    );
+    const csOnlyAccent = parseColorsetYaml(["name: A", "colors:", '  accent: "#ff0000"'].join("\n"));
     const outA = composeDesignMd("---\nname: T\n---\n\n{{primary}} {{accent}}", csOnlyAccent);
     expect(outA).toContain("#ff0000 #ff0000");
 
-    const csOnlyPrimary = parseColorsetYaml(
-      ["name: B", "colors:", '  primary: "#00ff00"'].join("\n")
-    );
+    const csOnlyPrimary = parseColorsetYaml(["name: B", "colors:", '  primary: "#00ff00"'].join("\n"));
     const outB = composeDesignMd("---\nname: T\n---\n\n{{primary}} {{accent}}", csOnlyPrimary);
     expect(outB).toContain("#00ff00 #00ff00");
   });
 
   it("derives text-disabled from text-secondary when omitted", () => {
-    const cs = parseColorsetYaml(
-      ["name: T", "colors:", '  text-primary: "#111"', '  text-secondary: "#777"'].join("\n")
-    );
+    const cs = parseColorsetYaml(["name: T", "colors:", '  text-primary: "#111"', '  text-secondary: "#777"'].join("\n"));
     const out = composeDesignMd("---\nname: T\n---\n\n{{text-disabled}}", cs);
     expect(out).toContain("#777");
   });
 
   it("emits an extras: block in the frontmatter", () => {
     const cs = parseColorsetYaml(
-      [
-        "name: Themed",
-        "colors:",
-        '  background: "#000"',
-        "extras:",
-        '  dial-chassis: "#222"',
-      ].join("\n")
+      ["name: Themed", "colors:", '  background: "#000"', "extras:", '  dial-chassis: "#222"'].join("\n")
     );
     const out = composeDesignMd("---\nname: T\n---\n\nBody.", cs);
     expect(out).toMatch(/extras:\n {2}dial-chassis: "#222"/);
@@ -413,22 +388,13 @@ describe("composeDesignMd derives canonical defaults", () => {
     // A theme.md authored against the old vocabulary keeps working: the
     // substituter falls back to the alias map when the literal name isn't
     // in either colors or extras.
-    const cs = parseColorsetYaml(
-      ["name: T", "colors:", '  background: "#abcdef"', '  text-primary: "#fedcba"'].join("\n")
-    );
-    const out = composeDesignMd(
-      "---\nname: T\n---\n\n{{bg}} on {{fg}}",
-      cs
-    );
+    const cs = parseColorsetYaml(["name: T", "colors:", '  background: "#abcdef"', '  text-primary: "#fedcba"'].join("\n"));
+    const out = composeDesignMd("---\nname: T\n---\n\n{{bg}} on {{fg}}", cs);
     expect(out).toContain("#abcdef on #fedcba");
   });
 
   it("resolves {{extra-token}} from the extras bucket", () => {
-    const cs = parseColorsetYaml(
-      ["name: T", "colors:", '  background: "#000"', "extras:", '  dial-led-active: "#0f0"'].join(
-        "\n"
-      )
-    );
+    const cs = parseColorsetYaml(["name: T", "colors:", '  background: "#000"', "extras:", '  dial-led-active: "#0f0"'].join("\n"));
     const out = composeDesignMd("---\nname: T\n---\n\nLED `{{dial-led-active}}`.", cs);
     expect(out).toContain("`#0f0`");
   });
@@ -462,9 +428,7 @@ describe("composeDesignMd appends token-discipline block", () => {
   });
 
   it("classNames example references var(--token), never hex literals", () => {
-    const cs = parseColorsetYaml(
-      ["name: T", "colors:", '  background: "#fff"', '  text-primary: "#111"'].join("\n")
-    );
+    const cs = parseColorsetYaml(["name: T", "colors:", '  background: "#fff"', '  text-primary: "#111"'].join("\n"));
     const out = composeDesignMd("---\nname: T\n---\n\nBody.", cs);
     expect(out).toContain("bg-[var(--background)]");
     expect(out).toContain("bg-[var(--text-primary)]");
@@ -474,24 +438,14 @@ describe("composeDesignMd appends token-discipline block", () => {
   });
 
   it("emits @prefers-color-scheme: dark when colorsDark is provided", () => {
-    const cs = parseColorsetYaml(
-      [
-        "name: T",
-        "colors:",
-        '  background: "#fff"',
-        "colorsDark:",
-        '  background: "#000"',
-      ].join("\n")
-    );
+    const cs = parseColorsetYaml(["name: T", "colors:", '  background: "#fff"', "colorsDark:", '  background: "#000"'].join("\n"));
     const out = composeDesignMd("---\nname: T\n---\n\nBody.", cs);
     expect(out).toContain("@media (prefers-color-scheme: dark)");
     expect(out).toContain("--background: #000");
   });
 
   it("omits the dark @media block when there is no colorsDark", () => {
-    const cs = parseColorsetYaml(
-      ["name: T", "colors:", '  background: "#fff"'].join("\n")
-    );
+    const cs = parseColorsetYaml(["name: T", "colors:", '  background: "#fff"'].join("\n"));
     const out = composeDesignMd("---\nname: T\n---\n\nBody.", cs);
     expect(out).not.toContain("prefers-color-scheme: dark");
   });
@@ -501,15 +455,7 @@ describe("composeDesignMd appends token-discipline block", () => {
     // palette swap (the new palette doesn't define those names), so the
     // discipline block emits canonical+structural only. The frontmatter
     // still surfaces the extras for theme context.
-    const cs = parseColorsetYaml(
-      [
-        "name: T",
-        "colors:",
-        '  background: "#000"',
-        "extras:",
-        '  dial-led-active: "#0f0"',
-      ].join("\n")
-    );
+    const cs = parseColorsetYaml(["name: T", "colors:", '  background: "#000"', "extras:", '  dial-led-active: "#0f0"'].join("\n"));
     const out = composeDesignMd("---\nname: T\n---\n\nBody.", cs);
     const disciplineStart = out.indexOf("palette swap contract");
     const disciplineBlock = out.slice(disciplineStart);
@@ -542,9 +488,7 @@ describe("composeDesignMd appends token-discipline block", () => {
       "",
       "Primary body font: sans-serif.",
     ].join("\n");
-    const cs = parseColorsetYaml(
-      ["name: Atelier", "colors:", '  background: "#ffefdd"'].join("\n")
-    );
+    const cs = parseColorsetYaml(["name: Atelier", "colors:", '  background: "#ffefdd"'].join("\n"));
     const out = composeDesignMd(structural, cs);
     expect(out).not.toContain("oklch(0.18 0.005 285)");
     expect(out).not.toContain("accent-amber");
@@ -558,9 +502,7 @@ describe("composeDesignMd appends token-discipline block", () => {
     // The model reads the design.md top-to-bottom; recency biases compliance.
     // The discipline block MUST be the last section so the literal :root
     // overrides any prose interpretation earlier in the body.
-    const cs = parseColorsetYaml(
-      ["name: T", "colors:", '  background: "#abc"'].join("\n")
-    );
+    const cs = parseColorsetYaml(["name: T", "colors:", '  background: "#abc"'].join("\n"));
     const out = composeDesignMd("---\nname: T\n---\n\n## Brand\n\nProse.", cs);
     const disciplineIdx = out.indexOf("palette swap contract");
     const brandIdx = out.indexOf("## Brand");
@@ -570,9 +512,7 @@ describe("composeDesignMd appends token-discipline block", () => {
   });
 
   it("explicitly forbids inventing a dark @media block when none is provided", () => {
-    const cs = parseColorsetYaml(
-      ["name: T", "colors:", '  background: "#fff"'].join("\n")
-    );
+    const cs = parseColorsetYaml(["name: T", "colors:", '  background: "#fff"'].join("\n"));
     const out = composeDesignMd("---\nname: T\n---\n\nBody.", cs);
     expect(out).toContain("Do NOT invent one");
   });
@@ -609,11 +549,7 @@ describe("renderRootCssBlock", () => {
   });
 
   it("includes extras alongside canonical variables by default (live runtime path)", () => {
-    const cs = parseColorsetYaml(
-      ["name: T", "colors:", '  background: "#000"', "extras:", '  dial-led-active: "#0f0"'].join(
-        "\n"
-      )
-    );
+    const cs = parseColorsetYaml(["name: T", "colors:", '  background: "#000"', "extras:", '  dial-led-active: "#0f0"'].join("\n"));
     const block = renderRootCssBlock(cs);
     expect(block).toContain("--background: #000;");
     expect(block).toContain("--dial-led-active: #0f0;");
@@ -684,7 +620,7 @@ describe("structural (mode-agnostic) tokens", () => {
       ].join("\n")
     );
     const block = renderRootCssBlock(cs);
-    expect(block).toContain('--font-family: Inter, sans-serif;');
+    expect(block).toContain("--font-family: Inter, sans-serif;");
     expect(block).toContain("--radius: 0.75rem;");
     // Structural must NOT appear inside the dark @media block since they
     // don't flip on theme.
@@ -711,18 +647,14 @@ describe("structural (mode-agnostic) tokens", () => {
   });
 
   it("composeDesignMd emits a structural: block in frontmatter with derived defaults", () => {
-    const cs = parseColorsetYaml(
-      ["name: T", "colors:", '  background: "#fff"'].join("\n")
-    );
+    const cs = parseColorsetYaml(["name: T", "colors:", '  background: "#fff"'].join("\n"));
     const out = composeDesignMd("---\nname: T\n---\n\nBody.", cs);
     expect(out).toMatch(/structural:\n {2}font-family:/);
     expect(out).toMatch(/structural:[\s\S]*radius: "0.5rem"/);
   });
 
   it("discipline block instructs the LLM to use structural Tailwind brackets", () => {
-    const cs = parseColorsetYaml(
-      ["name: T", "colors:", '  background: "#fff"'].join("\n")
-    );
+    const cs = parseColorsetYaml(["name: T", "colors:", '  background: "#fff"'].join("\n"));
     const out = composeDesignMd("---\nname: T\n---\n\nBody.", cs);
     expect(out).toContain("rounded-[var(--radius)]");
     expect(out).toContain("p-[var(--spacing)]");
@@ -740,10 +672,7 @@ describe("structural (mode-agnostic) tokens", () => {
         '  radius: "0.75rem"',
       ].join("\n")
     );
-    const out = composeDesignMd(
-      "---\nname: T\n---\n\nUse `{{font-family}}` and `{{radius}}`.",
-      cs
-    );
+    const out = composeDesignMd("---\nname: T\n---\n\nUse `{{font-family}}` and `{{radius}}`.", cs);
     expect(out).toContain("`Inter, sans-serif`");
     expect(out).toContain("`0.75rem`");
   });
