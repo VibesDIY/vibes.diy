@@ -52,3 +52,4 @@ Full list and provenance: [`.claude/skills/README.md`](.claude/skills/README.md)
 - Never manually update version numbers in package.json
 - Don't write releases to code until they are shipped (esm.sh caches bad URLs)
 - Don't squash, rebase instead
+- **Always end a work session with a PR.** Every session that produces commits must open (or update) a PR and post a comment tagging `@CharlieHelps` with specific review questions tailored to the change — what's unclear, what trade-offs need a second opinion. Don't use a generic template. See [pr-lifecycle.md](agents/pr-lifecycle.md).
