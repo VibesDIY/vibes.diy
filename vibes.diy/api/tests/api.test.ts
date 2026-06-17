@@ -1,6 +1,6 @@
 import { VibesDiyApi } from "@vibes.diy/api-impl";
 import { assert, beforeAll, describe, expect, inject, it, vi } from "vitest";
-import { loadAsset, processStream, Result, TestFetchPair, TestWSPair } from "@adviser/cement";
+import { BuildURI, loadAsset, processStream, Result, TestFetchPair, TestWSPair } from "@adviser/cement";
 import { ensureSuperThis } from "@fireproof/core-runtime";
 import { createTestDeviceCA, createTestUser } from "@fireproof/core-device-id";
 import {
@@ -332,18 +332,24 @@ describe("VibesDiyApi", { timeout: (inject("DB_FLAVOUR" as never) as string) ===
     if (!isResEnsureAppSlugOk(res)) {
       assert.fail("Expected ensureAppSlug to return a ResEnsureAppSlugOk");
     }
-    const url = calcEntryPointUrl({
+    const baseUrl = calcEntryPointUrl({
       hostnameBase: ".nowhere",
       protocol: "http",
       port: "4711",
       bindings: { appSlug: res.appSlug, ownerHandle: res.ownerHandle, fsId: res.fsId },
     });
+    // Mirror a real shared iframe src: invite token + iframe-internal npmUrl param.
+    const url = BuildURI.from(baseUrl).setParam("token", "invite-abc").setParam("npmUrl", "https://example/vibe-pkg/").toString();
 
     // Top-level navigation (Sec-Fetch-Dest: document) → 302 to the viewer on vibes.diy.
     const redirected = await api.cfg.fetch(url, { headers: { "Sec-Fetch-Dest": "document" } });
     expect(redirected.status).toBe(302);
-    expect(redirected.headers.get("Location")).toBe(`https://no-where/vibe/${res.ownerHandle}/${res.appSlug}`);
     expect(redirected.headers.get("Cache-Control")).toBe("no-store");
+    // Invite token is preserved so the viewer can redeem access; npmUrl plumbing is dropped.
+    const loc = new URL(redirected.headers.get("Location") ?? "");
+    expect(`${loc.origin}${loc.pathname}`).toBe(`https://no-where/vibe/${res.ownerHandle}/${res.appSlug}`);
+    expect(loc.searchParams.get("token")).toBe("invite-abc");
+    expect(loc.searchParams.has("npmUrl")).toBe(false);
 
     // Embedded in an <iframe> (Sec-Fetch-Dest: iframe) → still serves the app document.
     const embedded = await api.cfg.fetch(url, { headers: { "Sec-Fetch-Dest": "iframe" } });
