@@ -52,9 +52,7 @@ export function useImgGen(opts: Partial<UseImgGenOptions> & InjectedDeps): UseIm
     // Without this, distinct DocFileMeta objects collapse to the same
     // genKey because Blob/DocFileMeta carry no `name`/`lastModified`,
     // and `currentGenRef` would short-circuit a new image source.
-    const inputMeta = inputImage as
-      | (Partial<File> & { uploadId?: string; size?: number; type?: string })
-      | undefined;
+    const inputMeta = inputImage as (Partial<File> & { uploadId?: string; size?: number; type?: string }) | undefined;
     const inputKey = inputMeta
       ? `${inputMeta.uploadId ?? ""}|${inputMeta.name ?? ""}|${inputMeta.lastModified ?? ""}|${inputMeta.size ?? ""}|${inputMeta.type ?? ""}`
       : "";
@@ -147,11 +145,20 @@ export function useImgGen(opts: Partial<UseImgGenOptions> & InjectedDeps): UseIm
           setDocument(saved);
         } else {
           const now = Date.now();
+          // Augment the target doc instead of replacing it: spread any
+          // existing host doc so its other fields survive (#2279) and
+          // preserve its `type` so the image inherits that doc's
+          // type-keyed access/channels rather than fighting them with a
+          // force-set `type: "image"` (#2362). Only default `type` to
+          // "image" when creating a genuinely new standalone doc.
+          // `_files` is set explicitly below, so the spread never carries
+          // a non-cloneable hydrated `.file()` accessor across the bridge.
           await db.put<ImageDocumentPlain>({
+            ...(existingDoc ?? {}),
             _id,
-            type: "image",
+            type: existingDoc?.type ?? "image",
             prompt: promptText,
-            created: now,
+            created: existingDoc?.created ?? now,
             currentVersion: 0,
             versions: [{ id: "v1", created: now, promptKey: "p1", ...(model ? { model } : {}) }],
             currentPromptKey: "p1",
