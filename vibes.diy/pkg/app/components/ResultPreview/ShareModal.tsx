@@ -278,7 +278,7 @@ function AdminModeToggle({ adminMode, onToggle }: { adminMode: boolean; onToggle
       <input
         type="checkbox"
         checked={adminMode}
-        onChange={() => onToggle()}
+        onChange={() => void onToggle()}
         className="rounded border-gray-300 dark:border-gray-600"
       />
       <span>Admin mode</span>
