@@ -234,6 +234,25 @@ describe("promptChatSection dry-run (chat mode)", () => {
     await dryChat.close();
   });
 
+  it("dry-run with no --handle resolves to an owned handle (not the sentinel) and reuses its chat (#2374 review)", async () => {
+    // createApp gives the user an owned handle + a push-seeded chat. A dry-run
+    // openChat with NO ownerHandle must resolve read-only to an owned handle
+    // (default, else first owned) — never the dry-run sentinel — so the preview
+    // targets the real app and reuses its seeded chat rather than an ephemeral one.
+    const { appSlug, ownerHandle } = await ctx.createApp();
+    const db = ctx.appCtx.vibesCtx.sql.db;
+    const tables = ctx.appCtx.vibesCtx.sql.tables;
+    const seeded = await db.select().from(tables.chatContexts).where(eq(tables.chatContexts.appSlug, appSlug));
+    expect(seeded.length).toBe(1);
+
+    const rDry = await ctx.api.openChat({ appSlug, mode: "chat", dryRun: true });
+    expect(rDry.isOk()).toBe(true);
+    const dryChat = rDry.Ok();
+    expect(dryChat.ownerHandle).toBe(ownerHandle);
+    expect(dryChat.chatId).toBe(seeded[0].chatId);
+    await dryChat.close();
+  });
+
   it("rejects requests with no new user message", async () => {
     const { appSlug, ownerHandle } = await ctx.createApp();
     const rOpen = await ctx.api.openChat({ ownerHandle, appSlug, mode: "chat" });
