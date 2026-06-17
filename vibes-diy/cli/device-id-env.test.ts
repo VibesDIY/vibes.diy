@@ -36,9 +36,9 @@ function fakeDeviceIdItem(xField = "device-key-x") {
 }
 
 describe("seedDeviceIdFromEnv", () => {
-  it("is a no-op and returns false when the env var is unset", async () => {
+  it("is a no-op and returns 'unset' when the env var is unset", async () => {
     const sthis = inMemorySthis();
-    expect(await seedDeviceIdFromEnv(sthis)).toBe(false);
+    expect(await seedDeviceIdFromEnv(sthis)).toBe("unset");
     const devid = await (await getKeyBag(sthis)).getDeviceId();
     expect(devid.cert.IsNone()).toBe(true);
   });
@@ -46,7 +46,7 @@ describe("seedDeviceIdFromEnv", () => {
   it("seeds the keybag from raw JSON", async () => {
     const sthis = inMemorySthis();
     sthis.env.set(VIBES_DEVICE_ID_ENV, JSON.stringify(fakeDeviceIdItem()));
-    expect(await seedDeviceIdFromEnv(sthis)).toBe(true);
+    expect(await seedDeviceIdFromEnv(sthis)).toBe("seeded");
     const devid = await (await getKeyBag(sthis)).getDeviceId();
     expect(devid.cert.IsSome()).toBe(true);
     expect(deviceX(devid)).toBe("device-key-x");
@@ -56,7 +56,7 @@ describe("seedDeviceIdFromEnv", () => {
     const sthis = inMemorySthis();
     const b64 = Buffer.from(JSON.stringify(fakeDeviceIdItem("b64-x")), "utf8").toString("base64");
     sthis.env.set(VIBES_DEVICE_ID_ENV, b64);
-    expect(await seedDeviceIdFromEnv(sthis)).toBe(true);
+    expect(await seedDeviceIdFromEnv(sthis)).toBe("seeded");
     const devid = await (await getKeyBag(sthis)).getDeviceId();
     expect(deviceX(devid)).toBe("b64-x");
   });
@@ -64,18 +64,18 @@ describe("seedDeviceIdFromEnv", () => {
   it("accepts the bare item shape ({ deviceId, cert })", async () => {
     const sthis = inMemorySthis();
     sthis.env.set(VIBES_DEVICE_ID_ENV, JSON.stringify(fakeDeviceIdItem("bare-x").item));
-    expect(await seedDeviceIdFromEnv(sthis)).toBe(true);
+    expect(await seedDeviceIdFromEnv(sthis)).toBe("seeded");
     const devid = await (await getKeyBag(sthis)).getDeviceId();
     expect(deviceX(devid)).toBe("bare-x");
   });
 
-  it("never clobbers an existing device-id certificate", async () => {
+  it("reports 'already-authenticated' and never clobbers an existing certificate", async () => {
     const sthis = inMemorySthis();
     const kb = await getKeyBag(sthis);
     const original = fakeDeviceIdItem("original-x");
     await kb.setDeviceId(original.item.deviceId as JWKPrivate, original.item.cert as unknown as DeviceIdKeyBagItem["cert"]);
     sthis.env.set(VIBES_DEVICE_ID_ENV, JSON.stringify(fakeDeviceIdItem("replacement-x")));
-    expect(await seedDeviceIdFromEnv(sthis)).toBe(false);
+    expect(await seedDeviceIdFromEnv(sthis)).toBe("already-authenticated");
     const devid = await kb.getDeviceId();
     expect(deviceX(devid)).toBe("original-x");
   });

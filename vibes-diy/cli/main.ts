@@ -117,6 +117,11 @@ async function main(): Promise<number> {
     // A malformed env var shouldn't hard-fail commands that don't need auth
     // (e.g. `login`, `--help`), but the user should know why it was ignored.
     console.error(`Warning: ignoring ${VIBES_DEVICE_ID_ENV}: ${rSeed.Err().message}`);
+  } else if (rSeed.Ok() === "already-authenticated") {
+    // Set but skipped — tell the operator why so a stale env var isn't mistaken for the active identity.
+    console.error(
+      `Note: ${VIBES_DEVICE_ID_ENV} is set but ignored — this device is already logged in (use 'vibes-diy login --force' to re-enroll).`
+    );
   }
   const rApiFactory = await exception2Result(() => vibesDiyApiFactory(sthis));
   const ctx: CliCtx = {
