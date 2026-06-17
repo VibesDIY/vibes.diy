@@ -1,6 +1,6 @@
 ---
 id: pr-review-triage
-purpose: Keep pull request review feedback threads accurate by requiring explicit correctness triage, handling duplicate/conflicting feedback, and resolving fixed feedback safely with GitHub-only thread actions.
+purpose: Keep pull request review feedback threads accurate by requiring explicit correctness triage, checking new/changed code against the repository rules-bag, handling duplicate/conflicting feedback, and resolving fixed feedback safely with GitHub-only thread actions.
 watch:
   - Wake on every pull request review submission event from non-Charlie authors (human or bot).
   - Wake on every pull request review comment event from non-Charlie authors (human or bot).
@@ -9,6 +9,7 @@ routines:
   - Bootstrap deterministic PR review context via `.agents/daemons/pr-review-triage/scripts/bootstrap-data.ts --repo <owner/repo> --pr <number>` before any triage action.
   - Fail fast with no GitHub thread mutations when bootstrap completeness is not `complete`.
   - For every actionable review feedback thread, produce an explicit correctness triage decision (`valid`, `invalid`, or `uncertain`) with rationale.
+  - Always check that new or changed code in the triggering pull request follows the repository coding rules in [agents/rules-bag.md](../../../agents/rules-bag.md); surface any violation as `valid` review feedback with the specific rule cited.
   - Evaluate review feedback in the triggering pull request to detect semantic duplicates and conflicting guidance.
   - Reply on duplicate feedback with a link to the canonical feedback item and a short duplicate rationale.
   - Prefer hide/minimize for duplicate feedback when confidence is medium or high; if hide/minimize is unavailable, resolve instead.
@@ -96,6 +97,19 @@ For human-authored comments requesting changes, keep this classification interna
 When the actionable comment is human-authored, keep this classification internal and do not post a validation-style reply.
 
 Duplicate/conflict detection does not replace correctness triage. Every actionable comment still requires an explicit correctness classification.
+
+## Rules-bag compliance (required)
+
+Beyond triaging existing feedback, always check that new or changed code in the triggering pull request follows the repository coding rules documented in [agents/rules-bag.md](../../../agents/rules-bag.md). These rules apply to repository-authored code; prompt-generated `App.jsx` is exempt while it remains generated output (see the rules-bag `Scope` section).
+
+Required behavior:
+
+1. Evaluate the pushed diff against the rules-bag for the kinds of violations it forbids — for example `export default`/default imports, `any`, casts without justification, mocking, `try/catch` instead of `exception2Result()`, falsy `if (!x)` checks, `new URL()` instead of URI, throwing instead of `Result`, singletons instead of `ResolveOnce`/`Lazy`, `Proxy`, hand-written encoders/decoders, and functions taking more than three positional parameters. Treat the rules-bag as the source of truth and cite the specific rule.
+2. When a real violation is present in new/changed code, surface it as `valid` review feedback that names the rule and points to the offending lines. Do not flag the explicit comparisons the rules-bag marks as correct (for example `if (x === undefined)`, `if (x === false)`, `if (x.length === 0)`).
+3. Keep this scoped to code introduced or modified by the triggering pull request — do not flag pre-existing code the PR does not touch.
+4. Apply confidence and human-precedence rules as elsewhere in this daemon: when confidence is `low` or the rule's applicability is genuinely ambiguous, classify `uncertain` and explain rather than asserting a violation.
+
+The `pnpm run rules-bag:constructors` check (enforced by the pr-mergeability daemon) covers only the constructor-parameter rule; this policy covers the full rules-bag during review.
 
 ## Duplicate detection policy
 
