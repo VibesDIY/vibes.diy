@@ -4,7 +4,7 @@ import { MyAppsSection } from "./MyAppsSection.js";
 import { quickSuggestions } from "../data/quick-suggestions-data.js";
 import { useVibesDiy } from "../vibes-diy-provider.js";
 import { useTheme } from "../contexts/ThemeContext.js";
-import { useNavigate } from "react-router";
+import { useNavigate, PrefetchPageLinks } from "react-router";
 import { BuildURI } from "@adviser/cement";
 import { VibesButton, ArrowLeftIcon, ArrowRightIcon, gridBackground, cx } from "@vibes.diy/base";
 import { PillPortal, PILL_CLEARANCE_Y } from "./PillPortal.js";
@@ -48,6 +48,11 @@ export default function HomePage() {
   }, []);
   const [input, setInput] = useState("");
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  // The /chat/prompt route pulls in the heavy Chat chunk. Submitting only does a
+  // base64 encode + navigate, but the perceived lag (#2207) is that chunk loading
+  // on demand. Prefetch it on first interaction intent so navigation is instant.
+  const [prefetchChat, setPrefetchChat] = useState(false);
+  const handlePrefetchChat = useCallback(() => setPrefetchChat(true), []);
 
   const { sthis } = useVibesDiy();
   const navigate = useNavigate();
@@ -62,10 +67,14 @@ export default function HomePage() {
     );
   }, [input, navigate, sthis]);
 
-  const handleSelectSuggestion = useCallback((text: string) => {
-    setInput(text);
-    setTimeout(() => inputRef.current?.focus(), 0);
-  }, []);
+  const handleSelectSuggestion = useCallback(
+    (text: string) => {
+      setInput(text);
+      setPrefetchChat(true);
+      setTimeout(() => inputRef.current?.focus(), 0);
+    },
+    [setPrefetchChat]
+  );
 
   // Carousel state
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -162,6 +171,7 @@ export default function HomePage() {
 
   return (
     <>
+      {prefetchChat && <PrefetchPageLinks page="/chat/prompt" />}
       <PillPortal isActive={isSidebarVisible} onToggle={setIsSidebarVisible} />
       <div className={cx(gridBackground, "page-grid-background min-h-screen min-h-[100svh] min-h-[100dvh] w-full")}>
         <div className="px-6 md:px-8 pb-8 pt-0">
@@ -181,6 +191,7 @@ export default function HomePage() {
                   ref={inputRef}
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
+                  onFocus={handlePrefetchChat}
                   onKeyDown={(e) => {
                     if (e.key === "Enter" && !e.shiftKey) {
                       e.preventDefault();
@@ -190,7 +201,12 @@ export default function HomePage() {
                   placeholder="Describe your vibe to make it a shareable app."
                   style={getTextareaStyle()}
                 />
-                <button onClick={handleSubmit} disabled={!input.trim()} style={getSubmitButtonStyle()}>
+                <button
+                  onClick={handleSubmit}
+                  onMouseEnter={handlePrefetchChat}
+                  disabled={!input.trim()}
+                  style={getSubmitButtonStyle()}
+                >
                   ↑
                 </button>
               </div>
