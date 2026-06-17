@@ -1,4 +1,4 @@
-import { and, eq } from "drizzle-orm/sql/expressions";
+import { and, desc, eq } from "drizzle-orm/sql/expressions";
 import { VibesApiSQLCtx } from "../types.js";
 import { exception2Result, Result } from "@adviser/cement";
 import { ensureLogger } from "@fireproof/core-runtime";
@@ -97,13 +97,16 @@ async function dryRunResolveChatId(
       // path uses, so an `edit --dry-run` without `--handle` (e.g. on an app
       // created under an explicit handle) still previews against the real app's
       // history instead of an ephemeral chat. Only a user who owns NO handle at
-      // all falls through to the deterministic placeholder. (#2374 review)
+      // all falls through to the deterministic placeholder. Order by created
+      // DESC to match `listUserSlugAppSlug` (which the CLI's list fallback reads
+      // via `desc(handleBinding.created)`), so the chosen handle agrees with the
+      // real edit path for multi-handle/no-default users. (#2374 review)
       const rFirst = await exception2Result(() =>
         ctx.sql.db
           .select({ handle: ctx.sql.tables.handleBinding.handle })
           .from(ctx.sql.tables.handleBinding)
           .where(eq(ctx.sql.tables.handleBinding.userId, userId))
-          .orderBy(ctx.sql.tables.handleBinding.created)
+          .orderBy(desc(ctx.sql.tables.handleBinding.created))
           .limit(1)
           .then((r) => r[0])
       );
