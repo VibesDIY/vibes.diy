@@ -46,9 +46,4 @@ Full list and provenance: [`.claude/skills/README.md`](.claude/skills/README.md)
 
 ## Quick Reference
 
-- Run checks: `pnpm check` (format + build + test + lint)
-- Run tests: `cd vibes.diy/tests && pnpm test`
-- Never push to main
-- Never manually update version numbers in package.json
-- Don't write releases to code until they are shipped (esm.sh caches bad URLs)
-- Don't squash, rebase instead
+- PR lifecycle policy: see [`agents/pr-lifecycle.md`](agents/pr-lifecycle.md).

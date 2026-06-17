@@ -11,9 +11,8 @@ import {
   exception2Result,
 } from "@adviser/cement";
 import { type } from "arktype";
-import { ResEnsureAppSlug, isResError, isSectionEvent, isPromptDryRunPayload } from "@vibes.diy/api-types";
-import type { ChatMessage } from "@vibes.diy/call-ai-v2";
-import type { ResError, SectionEvent, PromptDryRunPayload, SelectedSlotInput } from "@vibes.diy/api-types";
+import { ResEnsureAppSlug, isResError, isSectionEvent } from "@vibes.diy/api-types";
+import type { ResError, SectionEvent, SelectedSlotInput } from "@vibes.diy/api-types";
 import { CliCtx, cmdTsDefaultArgs } from "../cli-ctx.js";
 import { sendMsg, sendProgress, WrapCmdTSMsg } from "../cmd-evento.js";
 import { resolveHandle } from "../resolve-handle.js";
@@ -23,6 +22,9 @@ import { resolveSectionStream } from "./resolve-section-stream.js";
 import { readProjectFiles, pushFromDir } from "./push-from-dir.js";
 import { formatErr } from "./format-err.js";
 import { formatNoFilesError } from "./format-no-files-error.js";
+import { readDryRunPayloadFromStream, formatDryRunAsText } from "./dry-run.js";
+export type { DryRunPayload } from "./dry-run.js";
+export { readDryRunPayloadFromStream, formatDryRunAsText } from "./dry-run.js";
 
 export const ResEdit = type({
   type: "'vibes-diy.cli.res-edit'",
@@ -46,10 +48,11 @@ export const ReqEdit = type({
   verbose: "boolean",
   dir: "string",
   apiUrl: "string",
-  // When true: skip file write/push, send dryRun:true to the server,
-  // and print the would-be-dispatched LLMRequest from the section stream
-  // to stdout. JSON by default; transcript renders a human-readable
-  // role-headed view of the assembled messages.
+  // When true: skip local file writes/push and vibe metadata writes, send
+  // dryRun:true to the server, and print the would-be-dispatched LLMRequest
+  // from the section stream to stdout. JSON by default; transcript renders a
+  // human-readable role-headed view. openChat still creates minimal
+  // server-side chat/app-slug bookkeeping for now.
   dryRun: "boolean",
   transcript: "boolean",
   // Optional: file path to focus first in slot rendering. Forwarded to the
@@ -64,59 +67,6 @@ export type ReqEdit = typeof ReqEdit.infer;
 
 export function isReqEdit(obj: unknown): obj is ReqEdit {
   return !(ReqEdit(obj) instanceof type.errors);
-}
-
-interface DryRunPayload {
-  readonly model: string;
-  readonly messages: ChatMessage[];
-}
-
-// Read the section stream until a prompt.dry-run-payload block for `chatId`
-// arrives, or until the stream closes / msg cap is hit. The server emits
-// exactly one such block per dryRun:true request (framed by block-begin
-// and block-end), so a small msg cap is enough.
-async function readDryRunPayloadFromStream(
-  stream: ReadableStream<unknown>,
-  chatId: string,
-  maxMsgs = 32
-): Promise<DryRunPayload | undefined> {
-  const reader = stream.getReader();
-  let seen = 0;
-  try {
-    while (seen < maxMsgs) {
-      const { value, done } = await reader.read();
-      if (done) return undefined;
-      seen++;
-      if (!isSectionEvent(value)) continue;
-      const evt = value as SectionEvent;
-      if (evt.chatId !== chatId) continue;
-      for (const block of evt.blocks) {
-        if (isPromptDryRunPayload(block)) {
-          const b = block as PromptDryRunPayload;
-          return { model: b.request.model ?? "", messages: b.request.messages as ChatMessage[] };
-        }
-      }
-    }
-    return undefined;
-  } finally {
-    reader.releaseLock();
-  }
-}
-
-// Human-readable transcript for --text mode. Preserves message order;
-// concatenates multi-part text content; renders non-text parts as
-// [type] placeholders.
-export function formatDryRunAsText(payload: DryRunPayload): string {
-  const lines: string[] = [];
-  lines.push(`# model: ${payload.model}`);
-  lines.push("");
-  for (const msg of payload.messages) {
-    lines.push(`=== ${msg.role.toUpperCase()} ===`);
-    const rendered = msg.content.map((part) => (part.type === "text" ? part.text : `[${part.type}]`)).join("");
-    lines.push(rendered);
-    lines.push("");
-  }
-  return lines.join("\n");
 }
 
 export interface PromptOpts {
@@ -186,7 +136,7 @@ export const editEvento: EventoHandler<WrapCmdTSMsg<unknown>, ReqEdit, ResEdit |
 
     if (args.dryRun) {
       await sendProgress(ctx, "info", "Dry-run: inspecting prompt assembly...");
-      const rChat = await api.openChat({ ownerHandle, appSlug: args.appSlug, mode: "chat" });
+      const rChat = await api.openChat({ ownerHandle, appSlug: args.appSlug, mode: "chat", dryRunPreAllocate: true });
       if (rChat.isErr()) {
         return Result.Err(`Failed to open chat: ${formatErr(rChat.Err())}`);
       }

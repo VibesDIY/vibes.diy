@@ -64,6 +64,7 @@ import { getRecoveryAddendum, getRecoveryStitchAddendum } from "@vibes.diy/promp
 import { ensureAppSlugItem } from "./ensure-app-slug-item.js";
 import { sqlite } from "@vibes.diy/api-sql";
 import { getModelDefaults } from "../intern/get-model-defaults.js";
+import { preAllocate } from "../intern/pre-allocate.js";
 import {
   buildRecoveryRequest,
   buildTruncatedEvent,
@@ -1933,6 +1934,36 @@ export const promptChatSection: EventoHandler<W3CWebSocketEvent, MsgBase<ReqProm
         const rDefaults = await getModelDefaults(vctx, { appSlug: resChat.appSlug, ownerHandle: resChat.ownerHandle });
         if (rDefaults.isErr()) return Result.Err(rDefaults);
         const modelId = orig.prompt.model ?? rDefaults.Ok().chat.model.id;
+
+        // Dry-run preview should use the same generated-path pre-allocation
+        // context without writing vibe metadata or enqueueing icon generation.
+        // openChat/ensureChatId still creates the minimal chat/app-slug
+        // bookkeeping row; a fully persistence-free dry-run is a follow-up.
+        const chatCtx = clientWsSend(ctx).chatIds.get(req.chatId);
+        let activeSettingsOverride: AssemblePromptPayloadArgs["activeSettingsOverride"] | undefined;
+        const firstUserText = orig.prompt.messages
+          .find((m) => m.role === "user")
+          ?.content.map((part) => (part.type === "text" ? part.text : ""))
+          .join("")
+          .trim();
+        if (orig.dryRun === true && chatCtx?.dryRunPreAllocate === true && firstUserText) {
+          const rPre = await preAllocate(vctx, { prompt: firstUserText });
+          if (rPre.isOk()) {
+            const pre = rPre.Ok();
+            activeSettingsOverride = {
+              skills: pre.skills,
+              theme: pre.theme,
+              title: pre.pairs[0]?.title,
+              enrichedPrompt: pre.enrichedPrompt,
+            };
+          } else {
+            ensureLogger(vctx.sthis, "promptChatSection")
+              .Warn()
+              .Any({ err: rPre.Err() })
+              .Msg("dryRunPreAllocate failed; falling through to persisted/default active settings");
+          }
+        }
+
         const rAssembled = await assemblePromptPayload(vctx, {
           chatId: req.chatId,
           model: modelId,
@@ -1946,6 +1977,7 @@ export const promptChatSection: EventoHandler<W3CWebSocketEvent, MsgBase<ReqProm
             SLOTS_COMPACTION: vctx.sthis.env.get("SLOTS_COMPACTION"),
           }),
           focusPath: orig.focusPath,
+          activeSettingsOverride,
         });
         if (rAssembled.isErr()) return Result.Err(rAssembled);
         preAssembled = rAssembled.Ok();

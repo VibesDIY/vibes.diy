@@ -23,6 +23,7 @@ import { resolveSectionStream } from "./resolve-section-stream.js";
 import { pushFromDir } from "./push-from-dir.js";
 import { formatErr } from "./format-err.js";
 import { formatNoFilesError } from "./format-no-files-error.js";
+import { readDryRunPayloadFromStream, formatDryRunAsText } from "./dry-run.js";
 
 export const ResGenerate = type({
   type: "'vibes-diy.cli.res-generate'",
@@ -52,6 +53,8 @@ export const ReqGenerate = type({
   // LLMRequest.model; server falls back to appSettings/userSettings/catalog
   // defaults when omitted. Not persisted.
   "model?": "string",
+  dryRun: "boolean",
+  transcript: "boolean",
 });
 export type ReqGenerate = typeof ReqGenerate.infer;
 
@@ -80,15 +83,14 @@ export const generateEvento: EventoHandler<WrapCmdTSMsg<unknown>, ReqGenerate, R
     // Resolve ownerHandle: explicit flag > default setting > first from list
     const ownerHandle = await resolveHandle(api, args.ownerHandle === "" ? undefined : args.ownerHandle);
 
-    await sendProgress(ctx, "info", "Generating...");
+    await sendProgress(ctx, "info", args.dryRun ? "Dry-run: inspecting prompt assembly..." : "Generating...");
 
-    // Open chat — pass prompt for server-side pre-allocation (title+slug)
     const appSlug = args.appSlug === "" ? undefined : args.appSlug;
     const rChat = await api.openChat({
       ownerHandle,
       appSlug,
-      prompt: args.prompt,
       mode: "chat",
+      ...(args.dryRun ? { dryRunPreAllocate: true } : {}),
     });
     if (rChat.isErr()) {
       return Result.Err(`Failed to open chat: ${formatErr(rChat.Err())}`);
@@ -101,10 +103,26 @@ export const generateEvento: EventoHandler<WrapCmdTSMsg<unknown>, ReqGenerate, R
         ...(args.model !== undefined ? { model: args.model } : {}),
         messages: [{ role: "user", content: [{ type: "text", text: args.prompt }] }],
       },
-      { ...(args.focusPath !== undefined ? { focusPath: args.focusPath } : {}) }
+      { ...(args.focusPath !== undefined ? { focusPath: args.focusPath } : {}), ...(args.dryRun ? { dryRun: true } : {}) }
     );
     if (rPrompt.isErr()) {
       return Result.Err(`Failed to send prompt: ${formatErr(rPrompt.Err())}`);
+    }
+    if (args.dryRun) {
+      const payload = await readDryRunPayloadFromStream(chat.sectionStream, chat.chatId);
+      await chat.close();
+      if (!payload) return Result.Err("Dry-run: no payload block received from server");
+      const out = args.transcript
+        ? formatDryRunAsText(payload)
+        : JSON.stringify({ model: payload.model, messages: payload.messages }, null, 2);
+      process.stdout.write(out + "\n");
+      return sendMsg(ctx, {
+        type: "vibes-diy.cli.res-generate",
+        appSlug: chat.appSlug,
+        ownerHandle: chat.ownerHandle,
+        url: "",
+        directory: "",
+      } satisfies ResGenerate);
     }
 
     // chat.sectionStream emits SectionEvent | ResError. Capture error
@@ -291,6 +309,14 @@ export function generateCmd(ctx: CliCtx) {
       instantJoin: flag({
         long: "instant-join",
         description: "[Deprecated: no-op. Auto-accept editor is now always enabled by default.]",
+      }),
+      dryRun: flag({
+        long: "dry-run",
+        description: "Print the assembled LLM request without local disk/push writes or vibe metadata writes (creates minimal chat/app-slug bookkeeping)",
+      }),
+      transcript: flag({
+        long: "text",
+        description: "With --dry-run, render a readable transcript instead of JSON",
       }),
       verbose: flag({
         long: "verbose",

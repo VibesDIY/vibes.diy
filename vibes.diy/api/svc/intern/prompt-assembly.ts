@@ -101,10 +101,17 @@ export function reconstructConversationMessages(sectionMsgs: PromptAndBlockMsgs[
   return messages;
 }
 
+export interface ActiveSettingsOverride {
+  readonly skills?: string[];
+  readonly theme?: string;
+  readonly title?: string;
+  readonly enrichedPrompt?: string;
+}
+
 async function loadActiveSettings(
   vctx: VibesApiSQLCtx,
   chatId: string
-): Promise<{ skills?: string[]; theme?: string; title?: string; enrichedPrompt?: string }> {
+): Promise<ActiveSettingsOverride> {
   const rChat = await exception2Result(() =>
     vctx.sql.db
       .select({ appSlug: vctx.sql.tables.chatContexts.appSlug, ownerHandle: vctx.sql.tables.chatContexts.ownerHandle })
@@ -152,6 +159,9 @@ export interface AssemblePromptPayloadArgs {
   // Optional: override which role slot messages are delivered as. When absent,
   // falls back to the SLOT_DELIVERY_MODE env var (defaulting to "user").
   readonly slotDeliveryMode?: "user" | "system";
+  // Optional in-memory settings for faithful dry-run assembly without
+  // persisting app_settings rows or icon-generation events.
+  readonly activeSettingsOverride?: ActiveSettingsOverride;
 }
 
 export async function assemblePromptPayload(
@@ -206,7 +216,7 @@ export async function assemblePromptPayload(
   // seeds both on new chats; legacy rows without skills fall back to
   // makeBaseSystemPrompt's getDefaultSkills(), and an unset title drops the
   // title hint line entirely.
-  const { skills, theme, title, enrichedPrompt } = await loadActiveSettings(vctx, chatId);
+  const { skills, theme, title, enrichedPrompt } = args.activeSettingsOverride ?? (await loadActiveSettings(vctx, chatId));
   const isInitial = timeline.length === 0;
 
   const systemPrompt = await exception2Result(async () => {

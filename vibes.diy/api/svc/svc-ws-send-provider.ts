@@ -6,6 +6,7 @@ export interface ChatIdCtx {
   readonly chatId: string;
   readonly promptIds: Map<string, SectionEvent>;
   readonly tids: Set<string>;
+  dryRunPreAllocate?: boolean;
 }
 
 export class WSSendProvider implements EventoSendProvider<W3CWebSocketEvent, unknown, unknown> {

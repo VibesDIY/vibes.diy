@@ -69,3 +69,13 @@ Right after a PR is marked ready-to-merge (Rollout watch comment posted + `ready
   - **PR still open:** commit it to the same PR branch so the post ships alongside the feature.
   - **PR already merged:** land it on `main` via a short follow-up PR (never push directly to `main`).
 
+
+## Always subscribe, answer questions, and apply feedback
+
+Every PR-owning agent must keep the lifecycle loop closed:
+
+1. Subscribe to the PR thread so review feedback is not missed.
+2. If the PR description or review context leaves open questions for @CharlieHelps, ask them explicitly in a PR comment instead of hiding assumptions in code.
+3. Read reviewer feedback promptly, apply straightforward requested changes, and commit them to the same branch.
+4. When a requested change would alter the product/API contract or trades off correctness, performance, or UX, pause and ask the human to choose among clearly stated options.
+5. End with an updated PR and a clear status comment; when complete, use the Rollout watch signal above.

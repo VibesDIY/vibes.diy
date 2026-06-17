@@ -62,10 +62,11 @@ export const openChat: EventoHandler<W3CWebSocketEvent, MsgBase<ReqOpenChat>, Re
       // console.log("openChat: Adding chatId to WSSendProvider", chatId, ctx.validated.tid);
       let chatCtx = wsp.chatIds.get(chatId);
       if (!chatCtx) {
-        chatCtx = { chatId, tids: new Set([ctx.validated.tid]), promptIds: new Map() };
+        chatCtx = { chatId, tids: new Set([ctx.validated.tid]), promptIds: new Map(), ...(req.dryRunPreAllocate === true ? { dryRunPreAllocate: true } : {}) };
         wsp.chatIds.set(chatId, chatCtx);
       } else {
         chatCtx.tids.add(ctx.validated.tid);
+        if (req.dryRunPreAllocate === true) chatCtx.dryRunPreAllocate = true;
       }
 
       const rReSend = await resendChatSectionsPrevMsg({

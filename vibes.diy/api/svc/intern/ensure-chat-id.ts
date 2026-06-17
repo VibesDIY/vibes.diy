@@ -26,8 +26,9 @@ import {
 export function preAllocEligible(req: {
   readonly prompt?: string;
   readonly appSlug?: string;
-}): req is { readonly prompt: string; readonly appSlug?: string } {
-  return req.prompt !== undefined && req.prompt.length > 0;
+  readonly dryRunPreAllocate?: boolean;
+}): req is { readonly prompt: string; readonly appSlug?: string; readonly dryRunPreAllocate?: boolean } {
+  return req.dryRunPreAllocate !== true && req.prompt !== undefined && req.prompt.length > 0;
 }
 
 interface EnsureChatIdPResult {

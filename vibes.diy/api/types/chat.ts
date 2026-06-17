@@ -43,7 +43,10 @@ export const reqOpenChat = type({
   "appSlug?": "string",
   "ownerHandle?": "string",
   "chatId?": "string",
-  "prompt?": "string", // when present on a new chat, triggers pre-allocation (LLM-driven title+slug+skills+theme)
+  "prompt?": "string", // when present on a new chat, triggers persisted pre-allocation (LLM-driven title+slug+skills+theme)
+  // Dry-run only: run pre-allocation in memory during prompt assembly. This
+  // keeps the preview faithful to generate without writing vibe metadata.
+  "dryRunPreAllocate?": "boolean",
   mode: PromptStyle,
 });
 
