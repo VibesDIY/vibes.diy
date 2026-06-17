@@ -2,7 +2,6 @@ import { and, eq } from "drizzle-orm/sql/expressions";
 import { VibesApiSQLCtx } from "../types.js";
 import { exception2Result, Result } from "@adviser/cement";
 import { ensureLogger } from "@fireproof/core-runtime";
-import { generate } from "random-words";
 import {
   ensureUserSlug,
   ensureAppSlug,
@@ -26,6 +25,16 @@ import {
 } from "@vibes.diy/api-types";
 
 /**
+ * Deterministic, clearly-non-real identity used only when a dry-run caller has
+ * no explicit handle and no default binding (a brand-new user). It is never
+ * persisted and owns no data, so previewing against it leaks nothing and the
+ * preview output reads as obviously synthetic. Exported so the prompt handler
+ * can skip the owner-ownership check for it (it has no owner to compare).
+ */
+export const DRY_RUN_PLACEHOLDER_HANDLE = "dry-run-preview";
+export const DRY_RUN_PLACEHOLDER_APP_SLUG = "dry-run-preview";
+
+/**
  * Returns true when a new-chat creation should trigger the pre-allocation LLM
  * call (theme + skill + slug selection). Extracted for unit-testability.
  * Acts as a type guard so callers get `prompt: string` narrowing for free.
@@ -45,9 +54,9 @@ interface EnsureChatIdPResult {
 
 /**
  * Fully persistence-free owner/app/chat resolution for `generate --dry-run`.
- * Resolves the owner handle read-only (explicit → default → in-memory random
- * placeholder) and synthesizes an app-slug (explicit → in-memory random words)
- * and an ephemeral chatId WITHOUT inserting a chatContexts row or allocating an
+ * Resolves the owner handle read-only (explicit → default → deterministic
+ * placeholder) and an app-slug (explicit → placeholder) and synthesizes an
+ * ephemeral chatId WITHOUT inserting a chatContexts row or allocating an
  * appSlugBinding. The caller threads the returned ownerHandle/appSlug back to
  * the prompt handler inline (see reqCreationPromptChatSection), so the dry-run
  * preview never needs the (non-existent) chatContexts row. (#2364)
@@ -57,39 +66,52 @@ async function dryRunResolveChatId(
   req: ReqWithVerifiedAuth<ReqOpenChat>
 ): Promise<Result<EnsureChatIdPResult>> {
   const userId = req._auth.verifiedAuth.claims.userId;
-  const randomSlug = () => generate({ exactly: 1, wordsPerString: 3, separator: "-" })[0];
 
   let ownerHandle: string;
   if (req.ownerHandle) {
     const sanitized = toRFC2822_32ByteLength(req.ownerHandle);
-    // Read-only ownership check: a real `ensureUserSlug` would reject a handle
-    // owned by another user (and create an unclaimed one). Dry-run can't write,
-    // but it must not preview against a handle the caller doesn't own — else
-    // `generate --dry-run --handle someone-else` would succeed where the real
-    // generate fails. An unclaimed handle is fine (the real generate would
-    // claim it).
-    const existing = await ctx.sql.db
-      .select({ userId: ctx.sql.tables.handleBinding.userId })
-      .from(ctx.sql.tables.handleBinding)
-      .where(eq(ctx.sql.tables.handleBinding.handle, sanitized))
-      .limit(1)
-      .then((r) => r[0]);
-    if (existing && existing.userId !== userId) {
+    const rOwned = await dryRunHandleIsForeign(ctx, sanitized, userId);
+    if (rOwned.isErr()) return Result.Err(rOwned);
+    // A real `ensureUserSlug` would reject a handle owned by another user (and
+    // create an unclaimed one). Dry-run can't write, but it must not preview
+    // against a handle the caller doesn't own — else `generate --dry-run
+    // --handle someone-else` would succeed where the real generate fails, and
+    // would expose that owner's model defaults. An unclaimed handle is fine
+    // (the real generate would claim it).
+    if (rOwned.Ok()) {
       return Result.Err(`ownerHandle "${req.ownerHandle}" is owned by another user`);
     }
     ownerHandle = sanitized;
   } else {
     const rDefault = await getDefaultUserSlug(ctx, userId);
     const defaultBinding = rDefault.isOk() ? rDefault.Ok() : undefined;
-    // Fall back to a synthesized handle when the caller has no default binding.
-    // We deliberately do NOT create one (that would persist) — a dry-run owns
-    // nothing, so a placeholder handle is sufficient to assemble the preview.
-    ownerHandle = defaultBinding?.ownerHandle ?? toRFC2822_32ByteLength(randomSlug());
+    // No default binding (brand-new user): use a deterministic, clearly-non-real
+    // placeholder rather than persisting one — a dry-run owns nothing.
+    ownerHandle = defaultBinding?.ownerHandle ?? DRY_RUN_PLACEHOLDER_HANDLE;
   }
 
-  const appSlug = req.appSlug ? toRFC2822_32ByteLength(req.appSlug) : toRFC2822_32ByteLength(randomSlug());
+  const appSlug = req.appSlug ? toRFC2822_32ByteLength(req.appSlug) : DRY_RUN_PLACEHOLDER_APP_SLUG;
   const chatId = ctx.sthis.nextId(12).str;
   return Result.Ok({ appSlug, ownerHandle, chatId });
+}
+
+/**
+ * Read-only check: does `handle` resolve to a binding owned by a *different*
+ * user than `userId`? The dry-run sentinel handle owns no data and is treated
+ * as not-foreign. Shared by the openChat resolver and the prompt handler so
+ * both reject a forged dry-run that names another user's handle. (#2364)
+ */
+export async function dryRunHandleIsForeign(ctx: VibesApiSQLCtx, handle: string, userId: string): Promise<Result<boolean>> {
+  if (handle === DRY_RUN_PLACEHOLDER_HANDLE) return Result.Ok(false);
+  return exception2Result(async () => {
+    const existing = await ctx.sql.db
+      .select({ userId: ctx.sql.tables.handleBinding.userId })
+      .from(ctx.sql.tables.handleBinding)
+      .where(eq(ctx.sql.tables.handleBinding.handle, handle))
+      .limit(1)
+      .then((r) => r[0]);
+    return !!existing && existing.userId !== userId;
+  });
 }
 
 export async function ensureChatId(

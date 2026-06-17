@@ -74,6 +74,7 @@ import {
 import { loadVersionTimeline } from "../intern/version-timeline.js";
 import { resolveSlotConfig } from "../intern/slot-assembler.js";
 import { preAllocate } from "../intern/pre-allocate.js";
+import { dryRunHandleIsForeign } from "../intern/ensure-chat-id.js";
 import { createPromptAssetFetch, promptsPkgBaseUrl, type PromptAssetFetchDeps } from "../intern/prompt-asset-fetch.js";
 import {
   resolveCodeBlocksToFileSystem,
@@ -857,6 +858,19 @@ async function getResChatFromMode(
       .limit(1)
       .then((r) => r[0]);
     if (!anyRow) {
+      // Gate the inline ownerHandle to the caller: synthesizing a ResChat from
+      // a foreign handle would let getModelDefaults/app-settings reads resolve
+      // another owner's data into the preview. An unclaimed handle (or the
+      // dry-run sentinel) owns nothing, so it's safe; a handle owned by a
+      // different user is rejected. The appSlug needs no separate check — with
+      // the owner pinned to the caller, app_settings keyed by (appSlug,
+      // ownerHandle) can only ever resolve the caller's own (or empty) rows.
+      const userId = req._auth.verifiedAuth.claims.userId;
+      const rForeign = await dryRunHandleIsForeign(vctx, orig.ownerHandle, userId);
+      if (rForeign.isErr()) return Result.Err(rForeign);
+      if (rForeign.Ok()) {
+        return Result.Err(`ownerHandle "${orig.ownerHandle}" is owned by another user`);
+      }
       return Result.Ok({ appSlug: orig.appSlug, ownerHandle: orig.ownerHandle, mode: orig.mode });
     }
     // A row exists for this chatId — fall through so the (userId, chatId)
