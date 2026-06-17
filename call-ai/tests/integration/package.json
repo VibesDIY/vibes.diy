@@ -39,7 +39,7 @@
     "@playwright/test": "^1.59.1",
     "@types/node": "^25.9.2",
     "@vitest/browser-playwright": "~4.1.8",
-    "tsx": "^4.22.3",
+    "tsx": "^4.22.4",
     "typescript": "^6.0.3",
     "vitest": "~4.1.8",
     "zx": "^8.8.4"
