@@ -176,7 +176,7 @@ export default function HomePage() {
   return (
     <>
       {prefetchChat && (
-        <Link to="/chat/prompt" prefetch="render" aria-hidden tabIndex={-1} style={{ display: "none" }}>
+        <Link to="/chat/prompt" prefetch="render" discover="render" aria-hidden tabIndex={-1} style={{ display: "none" }}>
           {""}
         </Link>
       )}
