@@ -1,6 +1,6 @@
 import { SetURLSearchParams } from "react-router";
 import { type } from "arktype";
-import { isPromptBlockBegin, isPromptBlockEnd, LLMChatEntry, PromptAndBlockMsgs } from "@vibes.diy/api-types";
+import { isPromptBlockBegin, isPromptBlockEnd, isPromptReq, LLMChatEntry, PromptAndBlockMsgs } from "@vibes.diy/api-types";
 import { isCodeBegin } from "@vibes.diy/call-ai-v2";
 import type { VibesTheme } from "@vibes.diy/prompts";
 
@@ -46,6 +46,12 @@ export interface PromptState {
   // prompt — replayed ends of historical turns must not flip us back to live.
   connection: StreamConnection;
   inFlightStreamId?: string;
+  // The just-submitted user prompt, shown immediately as an optimistic chat
+  // bubble so the message is visible the instant the user hits Code (or clicks
+  // a suggestion) — not after the server round-trips the prompt.req back. The
+  // server echo (prompt.req) clears it: the real message then renders in its
+  // place. A failed chat.prompt() also clears it (route dispatches undefined).
+  optimisticPrompt?: string;
 }
 
 export interface HydratedCodeViewFile {
@@ -185,6 +191,17 @@ function isSetInFlightStreamId(msg: unknown): msg is SetInFlightStreamId {
   return typeof msg === "object" && msg !== null && (msg as { type?: unknown }).type === "setInFlightStreamId";
 }
 
+// Set (or clear, when `text` is undefined) the optimistic prompt bubble. The
+// route dispatches this with the submitted text right before chat.prompt(),
+// and with undefined if that call errors before the server echoes prompt.req.
+interface SetOptimisticPrompt {
+  type: "setOptimisticPrompt";
+  text?: string;
+}
+function isSetOptimisticPrompt(msg: unknown): msg is SetOptimisticPrompt {
+  return typeof msg === "object" && msg !== null && (msg as { type?: unknown }).type === "setOptimisticPrompt";
+}
+
 export type PromptAction =
   | PromptAndBlockMsgs
   | InitChat
@@ -199,7 +216,8 @@ export type PromptAction =
   | StreamDisconnected
   | ReplayReset
   | ReconnectFailed
-  | SetInFlightStreamId;
+  | SetInFlightStreamId
+  | SetOptimisticPrompt;
 
 export function promptReducer(state: PromptState, block: PromptAction): PromptState {
   switch (true) {
@@ -220,6 +238,7 @@ export function promptReducer(state: PromptState, block: PromptAction): PromptSt
         hydratedFileSystem: undefined,
         connection: "live",
         inFlightStreamId: undefined,
+        optimisticPrompt: undefined,
       };
 
     case isStreamDisconnected(block): {
@@ -241,6 +260,9 @@ export function promptReducer(state: PromptState, block: PromptAction): PromptSt
 
     case isSetInFlightStreamId(block):
       return { ...state, inFlightStreamId: block.streamId };
+
+    case isSetOptimisticPrompt(block):
+      return { ...state, optimisticPrompt: block.text };
 
     case isInitChat(block):
       // console.log(`initChat`, block.chat)
@@ -302,6 +324,17 @@ export function promptReducer(state: PromptState, block: PromptAction): PromptSt
       return {
         ...state,
         hasCode: true,
+        current: { ...state.current, msgs: [...state.current.msgs, block] },
+        blocks: state.blocks.map((b, i) => (i === state.blocks.length - 1 ? { ...b, msgs: [...b.msgs, block] } : b)),
+      };
+    case isPromptReq(block):
+      // The server echoes the submitted prompt back as prompt.req. Once it
+      // lands the real <Prompt> bubble renders, so retire the optimistic one
+      // in the same dispatch — no flash, no duplicate.
+      if (!state.current) return { ...state, optimisticPrompt: undefined };
+      return {
+        ...state,
+        optimisticPrompt: undefined,
         current: { ...state.current, msgs: [...state.current.msgs, block] },
         blocks: state.blocks.map((b, i) => (i === state.blocks.length - 1 ? { ...b, msgs: [...b.msgs, block] } : b)),
       };

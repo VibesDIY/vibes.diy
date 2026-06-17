@@ -37,6 +37,10 @@ interface MessageListProps {
   // Block IDs whose save originated from the agent autosave (end-of-aider-
   // turn). Renders "Agent saved code" instead of "User edited code".
   agentSavedBlockIds?: ReadonlySet<string>;
+  // The just-submitted prompt, rendered as a user bubble at the tail of the
+  // list before the server echoes prompt.req. Cleared by the reducer once the
+  // echo lands, so the real <Prompt> bubble replaces it without a flash.
+  optimisticPrompt?: string;
   // setSelectedResponseId: (id: string) => void;
   // selectedResponseId: string;
   // setMobilePreviewShown: (shown: boolean) => void;
@@ -217,6 +221,21 @@ function Prompt({ msg }: { msg: PromptReq }) {
               }, [] as string[])
               .join("\n")}
           </ReactMarkdown>
+        </div>
+      </BrutalistCard>
+    </div>
+  );
+}
+
+// Optimistic mirror of <Prompt>: same bubble, but driven by the raw submitted
+// text instead of a server-echoed PromptReq. Shown only in the window between
+// submit and the prompt.req echo; the reducer clears optimisticPrompt on echo.
+function OptimisticPrompt({ text }: { text: string }) {
+  return (
+    <div className="mb-4 flex flex-row justify-end px-4" data-message-role="user-prompt" data-optimistic="true">
+      <BrutalistCard size="md" messageType="user" className="max-w-[85%]" style={{ fontSize: "0.8rem" }}>
+        <div className="prose prose-sm dark:prose-invert prose-ul:pl-5 prose-ul:list-disc prose-ol:pl-5 prose-ol:list-decimal prose-li:my-0 max-w-none">
+          <ReactMarkdown>{text}</ReactMarkdown>
         </div>
       </BrutalistCard>
     </div>
@@ -501,6 +520,7 @@ function MessageList({
   onRetry,
   onSelectOption,
   agentSavedBlockIds,
+  optimisticPrompt,
   // setSelectedResponseId,
   // selectedResponseId,
   // setMobilePreviewShown,
@@ -755,6 +775,13 @@ function MessageList({
     break;
   }
 
+  // Tail the list with the optimistic user bubble. It's the newest message, so
+  // it follows every server block; the reducer drops optimisticPrompt the
+  // instant the prompt.req echo arrives, swapping in the real <Prompt>.
+  if (optimisticPrompt) {
+    messageElements.push(<OptimisticPrompt key="optimistic-prompt" text={optimisticPrompt} />);
+  }
+
   useEffect(() => {
     if (lastFsRef && !selectedFsId) {
       onClick(lastFsRef);
@@ -781,5 +808,7 @@ export default memo(MessageList, (prevProps, nextProps) => {
   const msgs =
     nextProps.promptBlocks.reduce((a, i) => a + i.msgs.length, 0) === prevProps.promptBlocks.reduce((a, i) => a + i.msgs.length, 0);
 
-  return streamingStateEqual && promptBlocks && msgs;
+  const optimisticEqual = prevProps.optimisticPrompt === nextProps.optimisticPrompt;
+
+  return streamingStateEqual && promptBlocks && msgs && optimisticEqual;
 });

@@ -12,16 +12,22 @@ function ChatInterface({
   onDiffClick,
   onRetry,
   onSelectOption,
+  optimisticPrompt,
 }: {
   promptState: PromptState;
   onClick: (a: { fsId: string; appSlug: string; ownerHandle: string }) => void;
   onDiffClick?: (diff: { path: string; lines: string[] } | null) => void;
   onRetry?: (msg: PromptError) => void;
   onSelectOption?: (option: string) => void;
+  optimisticPrompt?: string;
 }) {
   const { fsId } = useParams<{ fsId?: string }>();
   const { running, blocks } = promptState;
   const messagesContainerRef = useRef<HTMLDivElement>(null);
+  // Show the message list (not the welcome screen) the instant an optimistic
+  // prompt exists, even before the first server block arrives — otherwise a
+  // brand-new chat's first message would still feel lost until round-trip.
+  const hasMessages = blocks.length > 0 || !!optimisticPrompt;
 
   // console.log(
   //   "ChatInterface",
@@ -32,7 +38,7 @@ function ChatInterface({
   // );
 
   useEffect(() => {
-    if (messagesContainerRef.current && blocks.length > 0) {
+    if (messagesContainerRef.current && hasMessages) {
       try {
         // Since we're using flex-col-reverse, we need to scroll to the top to see the latest messages
         messagesContainerRef.current.scrollTop = 0;
@@ -40,11 +46,11 @@ function ChatInterface({
         console.error("Error scrolling to bottom:", error);
       }
     }
-  }, [blocks.length, running]);
+  }, [blocks.length, running, optimisticPrompt, hasMessages]);
 
   return (
     <div className="flex h-full flex-col">
-      {blocks.length > 0 ? (
+      {hasMessages ? (
         <div ref={messagesContainerRef} className="flex flex-grow flex-col-reverse overflow-y-auto">
           <MessageList
             onClick={onClick}
@@ -53,6 +59,7 @@ function ChatInterface({
             onSelectOption={onSelectOption}
             promptBlocks={blocks}
             promptProcessing={running}
+            optimisticPrompt={optimisticPrompt}
             chatId={promptState.chat.chatId}
             selectedFsId={fsId}
             agentSavedBlockIds={promptState.agentSavedBlockIds}
