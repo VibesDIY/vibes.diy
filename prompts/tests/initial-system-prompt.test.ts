@@ -21,28 +21,29 @@ describe("system prompt templates", () => {
     }
   });
 
-  it("initial template has colored-shell + fill-then-wire markers", () => {
+  it("initial template has colored-shell + wire-each-feature markers", () => {
     // First-turn variant: one full-file colored shell (no SEARCH/REPLACE)
-    // then 4–6 fill-then-wire SEARCH/REPLACE passes with prose between.
+    // then access.js, then SEARCH/REPLACE feature edits with prose between.
     expect(systemPromptInitialTemplate).toMatch(/(?:colored shell|scaffold)/i);
-    expect(systemPromptInitialTemplate).toMatch(/feature passes/i);
-    expect(systemPromptInitialTemplate).toMatch(/fill[- ]then[- ]wire/i);
+    expect(systemPromptInitialTemplate).toMatch(/feature edits/i);
+    expect(systemPromptInitialTemplate).toMatch(/wire each feature/i);
     expect(systemPromptInitialTemplate).toMatch(/SEARCH\/REPLACE/);
     expect(systemPromptInitialTemplate).toMatch(/first turn/i);
     // Real-colors-in-shell rule (colors land in the create block, not later).
-    expect(systemPromptInitialTemplate).toMatch(/real[- ,]+final-ish Tailwind colors/i);
+    expect(systemPromptInitialTemplate).toMatch(/real Tailwind colors[\s\S]*final-ish/i);
   });
 
   it("continuation template lacks first-turn-only markers", () => {
+    // `feature edits` / `wire each feature` appear in both templates, so the
+    // discriminators are the genuinely initial-only phrases.
     expect(systemPromptTemplate).not.toMatch(/first turn/i);
-    expect(systemPromptTemplate).not.toMatch(/feature passes/i);
+    expect(systemPromptTemplate).not.toMatch(/final-ish/i);
   });
 
   it("continuation template carries the small-chunk guidance", () => {
-    // Continuation mode recommends small SEARCH/REPLACE pairs (≤25 lines).
-    // Initial mode now uses section-sized passes instead, so the 25-line
-    // ceiling no longer applies there.
-    expect(systemPromptTemplate).toMatch(/25 lines/);
+    // Continuation mode keeps feature edits small — one prose line (≤25 words)
+    // before each SEARCH/REPLACE pair.
+    expect(systemPromptTemplate).toMatch(/25 words/);
   });
 });
 
@@ -54,24 +55,24 @@ describe("makeBaseSystemPrompt variant routing", () => {
     pkgBaseUrl: "https://example.test/@vibes.diy/prompts/",
   };
 
-  it("variant=initial → output contains first-turn colored-shell + fill-then-wire markers", async () => {
+  it("variant=initial → output contains first-turn colored-shell + wire-each-feature markers", async () => {
     const result = await makeBaseSystemPrompt("test-model", { ...baseOpts, variant: "initial" });
     expect(result.systemPrompt).toMatch(/first turn/i);
-    expect(result.systemPrompt).toMatch(/feature passes/i);
-    expect(result.systemPrompt).toMatch(/fill[- ]then[- ]wire/i);
-    expect(result.systemPrompt).toMatch(/real[- ,]+final-ish Tailwind colors/i);
+    expect(result.systemPrompt).toMatch(/feature edits/i);
+    expect(result.systemPrompt).toMatch(/wire each feature/i);
+    expect(result.systemPrompt).toMatch(/real Tailwind colors[\s\S]*final-ish/i);
   });
 
   it("variant=continuation → does not", async () => {
     const result = await makeBaseSystemPrompt("test-model", { ...baseOpts, variant: "continuation" });
     expect(result.systemPrompt).not.toMatch(/first turn/i);
-    expect(result.systemPrompt).not.toMatch(/feature passes/i);
+    expect(result.systemPrompt).not.toMatch(/final-ish/i);
   });
 
   it("no variant → defaults to continuation", async () => {
     const result = await makeBaseSystemPrompt("test-model", baseOpts);
     expect(result.systemPrompt).not.toMatch(/first turn/i);
-    expect(result.systemPrompt).not.toMatch(/feature passes/i);
+    expect(result.systemPrompt).not.toMatch(/final-ish/i);
   });
 
   it("image-gen skill picks up the ImgGen docs (not legacy ImgVibes)", async () => {
