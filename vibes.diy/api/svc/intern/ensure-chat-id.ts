@@ -54,8 +54,9 @@ interface EnsureChatIdPResult {
 
 /**
  * Persistence-free owner/app/chat resolution for dry-run (`generate`/`edit
- * --dry-run`). Resolves the owner handle read-only (explicit → default →
- * deterministic placeholder) and an app-slug (explicit → placeholder). When an
+ * --dry-run`). Resolves the owner handle read-only (explicit → default → first
+ * owned handle → deterministic placeholder) and an app-slug (explicit →
+ * placeholder). When an
  * app-slug is given and the caller already has a chat for it, the REAL chatId is
  * reused so the preview assembles against the app's real history/timeline (edit
  * fidelity); otherwise an ephemeral chatId is synthesized. Either way nothing is
@@ -88,9 +89,26 @@ async function dryRunResolveChatId(
   } else {
     const rDefault = await getDefaultUserSlug(ctx, userId);
     const defaultBinding = rDefault.isOk() ? rDefault.Ok() : undefined;
-    // No default binding (brand-new user): use a deterministic, clearly-non-real
-    // placeholder rather than persisting one — a dry-run owns nothing.
-    ownerHandle = defaultBinding?.ownerHandle ?? DRY_RUN_PLACEHOLDER_HANDLE;
+    if (defaultBinding) {
+      ownerHandle = defaultBinding.ownerHandle;
+    } else {
+      // No default-handle setting: fall back read-only to the user's first owned
+      // handle — parity with the CLI `resolveHandle` list fallback the real edit
+      // path uses, so an `edit --dry-run` without `--handle` (e.g. on an app
+      // created under an explicit handle) still previews against the real app's
+      // history instead of an ephemeral chat. Only a user who owns NO handle at
+      // all falls through to the deterministic placeholder. (#2374 review)
+      const rFirst = await exception2Result(() =>
+        ctx.sql.db
+          .select({ handle: ctx.sql.tables.handleBinding.handle })
+          .from(ctx.sql.tables.handleBinding)
+          .where(eq(ctx.sql.tables.handleBinding.userId, userId))
+          .orderBy(ctx.sql.tables.handleBinding.created)
+          .limit(1)
+          .then((r) => r[0])
+      );
+      ownerHandle = rFirst.isOk() && rFirst.Ok() ? rFirst.Ok().handle : DRY_RUN_PLACEHOLDER_HANDLE;
+    }
   }
 
   const appSlug = req.appSlug ? toRFC2822_32ByteLength(req.appSlug) : DRY_RUN_PLACEHOLDER_APP_SLUG;
