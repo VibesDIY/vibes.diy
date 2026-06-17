@@ -556,3 +556,86 @@ describe("FireflyDatabase _files (Stage B Phase 8)", () => {
     expect(typeof back._files?.photo?.file).toBe("function");
   });
 });
+
+// ── read-your-writes overlay (regression: VibesDIY/vibes.diy#2272, #2271) ──
+//
+// The server's query index updates asynchronously, so an immediate same-session
+// query() can miss a doc the server already acknowledged in put(). The mock's
+// `lagQueryIndex` mode reproduces exactly that: getDoc sees a put immediately,
+// but queryDocs misses it until _commitQueryIndex() runs.
+
+describe("FireflyDatabase read-your-writes overlay (#2272)", () => {
+  let laggyApi: MockVibeApi;
+  let laggyDb: FireflyDatabase;
+
+  beforeEach(() => {
+    laggyApi = createMockVibeApi("test-app", { lagQueryIndex: true });
+    laggyDb = new FireflyDatabase("testdb", asSandboxApi(laggyApi));
+  });
+
+  it("baseline: laggy query index misses a just-put doc until committed", async () => {
+    // Documents the bug the overlay fixes — without the overlay this is what
+    // FireflyDatabase.query() would return.
+    await laggyApi.putDoc({ type: "race-test", text: "hi" }, "race-1");
+    const before = laggyApi._docs.has("race-1");
+    expect(before).toBe(true); // doc store has it (get works)
+    const res = await laggyApi.queryDocs("testdb");
+    const docs = (res.Ok() as { docs: { _id: string }[] }).docs;
+    expect(docs.find((d) => d._id === "race-1")).toBeUndefined(); // query index lags
+  });
+
+  it("query() sees a doc immediately after put() despite query-index lag", async () => {
+    await laggyDb.put({ _id: "race-1", type: "race-test", text: "hi" });
+    const res = await laggyDb.query("type", { key: "race-test" });
+    expect(res.rows.map((r) => r.value._id)).toContain("race-1");
+  });
+
+  it("query() with no mapFn includes the just-put doc", async () => {
+    await laggyDb.put({ _id: "race-2", text: "hi" });
+    const res = await laggyDb.query(undefined as never);
+    expect(res.docs.map((d) => d._id)).toContain("race-2");
+  });
+
+  it("allDocs() includes the just-put doc despite query-index lag", async () => {
+    await laggyDb.put({ _id: "race-3", text: "hi" });
+    const res = await laggyDb.allDocs();
+    expect(res.docs.map((d) => d._id)).toContain("race-3");
+  });
+
+  it("get() falls back to the overlay when the server reports not-found (commit lag)", async () => {
+    // Force a not-found from the server while the overlay still holds the write.
+    await laggyDb.put({ _id: "race-4", text: "pending" });
+    laggyApi._docs.delete("race-4"); // simulate server not yet durable for get
+    const doc = await laggyDb.get<{ text?: string }>("race-4");
+    expect(doc._id).toBe("race-4");
+    expect(doc.text).toBe("pending");
+  });
+
+  it("del() hides the doc from query() immediately even if the index still lists it", async () => {
+    // Commit a doc into the (laggy) query index, then delete it. The delete
+    // only updates the doc store, so without the tombstone the index would
+    // still surface it.
+    await laggyDb.put({ _id: "race-5", type: "race-test" });
+    laggyApi._commitQueryIndex();
+    await laggyDb.del("race-5");
+    const res = await laggyDb.query("type", { key: "race-test" });
+    expect(res.docs.map((d) => d._id)).not.toContain("race-5");
+  });
+
+  it("overlay self-evicts once the server query index reflects the write", async () => {
+    await laggyDb.put({ _id: "race-6", type: "race-test", text: "v1" });
+    // First query: served from the overlay.
+    expect((await laggyDb.query("type", { key: "race-test" })).docs.map((d) => d._id)).toContain("race-6");
+
+    // Server catches up, and a remote edit lands for the same id.
+    laggyApi._commitQueryIndex();
+    laggyApi._docs.set("race-6", { _id: "race-6", type: "race-test", text: "v2-remote" });
+    laggyApi._commitQueryIndex();
+
+    // The overlay yields to the server copy (remote edit visible), proving it
+    // no longer masks the server once the commit is seen.
+    const res = await laggyDb.query<{ text?: string }>("type", { key: "race-test" });
+    const row = res.rows.find((r) => r.value._id === "race-6");
+    expect(row?.value.text).toBe("v2-remote");
+  });
+});

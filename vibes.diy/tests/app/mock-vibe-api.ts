@@ -26,12 +26,23 @@ export interface MockVibeApi {
   _putAssetCalls: { size: number; type: string; mimeType?: string }[];
   /** Test helper: filter hints passed to queryDocs (in order) */
   _queryDocsFilterHints: unknown[];
+  /**
+   * Test helper: flush pending writes into the query index. Only relevant when
+   * created with `{ lagQueryIndex: true }` — until called, putDoc/deleteDoc
+   * update the doc store (so getDoc sees them) but NOT the query index (so
+   * queryDocs misses them), reproducing the server-side index lag of #2272.
+   */
+  _commitQueryIndex(): void;
 }
 
 let idCounter = 0;
 
-export function createMockVibeApi(appSlug = "test-app"): MockVibeApi {
+export function createMockVibeApi(appSlug = "test-app", opts: { lagQueryIndex?: boolean } = {}): MockVibeApi {
   const docs = new Map<string, Record<string, unknown>>();
+  // Secondary "query index" used only when lagQueryIndex is set: writes land in
+  // `docs` immediately (so getDoc sees them) but reach this index — and thus
+  // queryDocs — only when _commitQueryIndex() runs, reproducing #2272.
+  const queryIndex = new Map<string, Record<string, unknown>>();
   const msgListeners: MsgListener[] = [];
   const subscribeDocsCalls: string[] = [];
   const putAssetCalls: { size: number; type: string; mimeType?: string }[] = [];
@@ -65,7 +76,11 @@ export function createMockVibeApi(appSlug = "test-app"): MockVibeApi {
 
     queryDocs: async (_dbName?: string, filter?: unknown) => {
       queryDocsFilterHints.push(filter);
-      const allDocs = [...docs.values()].map((d) => ({ ...d, _id: d._id as string }));
+      // In the default (non-laggy) mode, query reads the live doc store so
+      // tests that seed docs directly via `_docs.set()` keep working. Only the
+      // lagQueryIndex mode reads the separate, deliberately-stale index.
+      const source = opts.lagQueryIndex ? queryIndex : docs;
+      const allDocs = [...source.values()].map((d) => ({ ...d, _id: d._id as string }));
       return Result.Ok({
         type: "vibes.diy.res-query-docs" as const,
         status: "ok" as const,
@@ -74,6 +89,9 @@ export function createMockVibeApi(appSlug = "test-app"): MockVibeApi {
     },
 
     deleteDoc: async (id: string) => {
+      // Removes from the doc store immediately, but in lagQueryIndex mode the
+      // query index keeps listing it until _commitQueryIndex() — so the delete
+      // races the index exactly like a put does (#2272).
       docs.delete(id);
       return Result.Ok({ type: "vibes.diy.res-delete-doc" as const, status: "ok" as const, id });
     },
@@ -109,6 +127,11 @@ export function createMockVibeApi(appSlug = "test-app"): MockVibeApi {
       for (const fn of msgListeners) {
         fn({ data: { type: "vibes.diy.evt-doc-changed", ownerHandle: "test-user", appSlug, dbName, docId } });
       }
+    },
+
+    _commitQueryIndex: () => {
+      queryIndex.clear();
+      for (const [id, doc] of docs) queryIndex.set(id, doc);
     },
 
     _docs: docs,

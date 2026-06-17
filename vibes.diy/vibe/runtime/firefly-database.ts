@@ -111,6 +111,23 @@ export class FireflyDatabase {
   private readonly listeners = new Set<ListenerFn>();
   private readonly updateListeners = new Set<ListenerFn>();
 
+  /**
+   * Read-your-writes overlay (VibesDIY/vibes.diy#2272, #2271).
+   *
+   * `put()`/`del()` are server round-trips, but the server's query index
+   * updates asynchronously — so an immediate same-session `query()` (or
+   * `allDocs()`) can miss a doc the server has already acknowledged in
+   * `put()`. `get()` reads the doc store directly and is mostly unaffected,
+   * but a not-found from commit lag is handled here too.
+   *
+   * This map holds each pending write keyed by `_id` until the server commit
+   * becomes visible. Entries self-evict the moment a server read reflects the
+   * write (the id appears in a query result, or `get()` returns it), so the
+   * overlay yields to remote edits as soon as the server catches up rather
+   * than masking them indefinitely.
+   */
+  private readonly writeCache = new Map<string, { doc: Record<string, unknown>; deleted: boolean }>();
+
   constructor(name: string, vibeApi: FireflyTransport, acl?: DbAcl) {
     this.name = name;
     this.vibeApi = vibeApi;
@@ -187,10 +204,19 @@ export class FireflyDatabase {
   async get<T extends DocTypes>(id: string): Promise<DocWithId<T>> {
     const rRes = await this.vibeApi.getDoc(id, this.name);
     if (rRes.isErr()) {
+      // Commit lag: the server hasn't made our just-written doc visible yet.
+      // Serve it from the read-your-writes overlay so `await db.put(doc)` then
+      // `await db.get(doc._id)` holds within the same session (#2272, #2271).
+      const pending = this.writeCache.get(id);
+      if (pending && !pending.deleted) {
+        return decorateFiles({ ...pending.doc, _id: id }) as DocWithId<T>;
+      }
       throw new Error(`Failed to get document: ${errMsg(rRes.Err())}`);
     }
     const res = rRes.Ok();
     if (isResGetDoc(res)) {
+      // The server now reflects this id, so drop any overlay entry for it.
+      this.writeCache.delete(res.id);
       // Stage B Phase 8: decorate _files entries with a meta.file() shim
       // so consumers can `await meta.file()` for raw bytes. Pass-through
       // when _files is absent. The server-minted meta.url is preserved.
@@ -216,6 +242,10 @@ export class FireflyDatabase {
     const res = rRes.Ok();
     if (isResPutDoc(res)) {
       const savedDoc = { ...docToPut, _id: res.id } as DocWithId<T>;
+      // Read-your-writes overlay: hold the write until a server read reflects
+      // it, so an immediate same-session query()/allDocs()/get() sees the doc
+      // even while the server's query index is still catching up (#2272).
+      this.writeCache.set(res.id, { doc: savedDoc as Record<string, unknown>, deleted: false });
       this.notifyListeners([savedDoc]);
       return { id: res.id, ok: true };
     }
@@ -229,6 +259,10 @@ export class FireflyDatabase {
     }
     const res = rRes.Ok();
     if (isResDeleteDoc(res)) {
+      // Overlay the delete as a tombstone so an immediate same-session
+      // query()/allDocs() hides the doc even if the server index still lists
+      // it (#2272). Cleared once the server read no longer returns the id.
+      this.writeCache.set(res.id, { doc: { _id: res.id }, deleted: true });
       this.notifyListeners([{ _id: res.id, _deleted: true } as DocWithId]);
       return { id: res.id, ok: true };
     }
@@ -289,10 +323,14 @@ export class FireflyDatabase {
       return { rows: [], docs: [] };
     }
 
+    // Apply the read-your-writes overlay before decoration so a just-put
+    // doc the server hasn't indexed yet still shows up in this query (#2272).
+    const mergedDocs = this.mergeWriteCache(res.docs as Record<string, unknown>[]);
+
     // Stage B Phase 8: decorate every doc's _files entries with a
     // meta.file() shim. URL is server-minted, so this only adds the
     // shim — pass-through when _files is absent.
-    const allDocs = res.docs.map((d) => decorateFiles({ ...d, _id: d._id }) as DocWithId<T>);
+    const allDocs = mergedDocs.map((d) => decorateFiles({ ...d, _id: d._id }) as DocWithId<T>);
 
     // Build index entries — keys stored as charwise-encoded strings for correct sort
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -411,8 +449,9 @@ export class FireflyDatabase {
       return { rows: [], docs: [] };
     }
 
-    // Stage B Phase 8: same _files decoration as in query().
-    let docs = res.docs.map((d) => decorateFiles({ ...d, _id: d._id }) as DocWithId<T>);
+    // Read-your-writes overlay, then Stage B Phase 8 _files decoration as in query().
+    const mergedDocs = this.mergeWriteCache(res.docs as Record<string, unknown>[]);
+    let docs = mergedDocs.map((d) => decorateFiles({ ...d, _id: d._id }) as DocWithId<T>);
 
     // Sort by _id
     docs.sort((a, b) => (a._id < b._id ? -1 : a._id > b._id ? 1 : 0));
@@ -451,6 +490,31 @@ export class FireflyDatabase {
       this.listeners.delete(fn);
       this.updateListeners.delete(fn);
     };
+  }
+
+  /**
+   * Merge the read-your-writes overlay into a set of server-returned docs
+   * (#2272). Pending puts the server hasn't indexed yet are added; pending
+   * deletes are hidden. Any overlay entry the server read already reflects
+   * (the id is present for a put, absent for a delete) self-evicts here, so
+   * the overlay stops shadowing the server — including remote edits — the
+   * moment the commit becomes visible.
+   */
+  private mergeWriteCache(serverDocs: Record<string, unknown>[]): Record<string, unknown>[] {
+    if (this.writeCache.size === 0) return serverDocs;
+    const byId = new Map<string, Record<string, unknown>>();
+    for (const d of serverDocs) byId.set(d._id as string, d);
+    for (const [id, entry] of this.writeCache) {
+      const seenByServer = byId.has(id);
+      if (entry.deleted) {
+        if (seenByServer) byId.delete(id);
+        else this.writeCache.delete(id);
+      } else {
+        if (seenByServer) this.writeCache.delete(id);
+        else byId.set(id, entry.doc);
+      }
+    }
+    return [...byId.values()];
   }
 
   // Notify subscribers after mutations
