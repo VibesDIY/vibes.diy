@@ -246,7 +246,12 @@ export class LLMChatImpl implements LLMChat {
         // dryRun and focusPath are chat-mode-only flags (per reqCreationPromptChatSection
         // type). Forward them only when mode === "chat" — for app/img the
         // server type won't carry them.
-        ...(mode === "chat" && opts?.dryRun === true ? { dryRun: true } : {}),
+        // On dry-run we also forward the resolved owner/app inline so the server
+        // can synthesize its chat context without a chatContexts read — required
+        // when openChat ran persistence-free and never inserted a row (#2364).
+        ...(mode === "chat" && opts?.dryRun === true
+          ? { dryRun: true, ownerHandle: this.res.ownerHandle, appSlug: this.res.appSlug }
+          : {}),
         ...(mode === "chat" && opts?.dryRun === true && opts?.dryRunPreAllocate === true ? { dryRunPreAllocate: true } : {}),
         ...(mode === "chat" && opts?.focusPath !== undefined ? { focusPath: opts.focusPath } : {}),
         ...(mode === "chat" && opts?.selected !== undefined ? { selected: opts.selected } : {}),

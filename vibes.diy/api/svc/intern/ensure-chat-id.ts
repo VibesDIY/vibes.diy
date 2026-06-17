@@ -2,7 +2,14 @@ import { and, eq } from "drizzle-orm/sql/expressions";
 import { VibesApiSQLCtx } from "../types.js";
 import { exception2Result, Result } from "@adviser/cement";
 import { ensureLogger } from "@fireproof/core-runtime";
-import { ensureUserSlug, ensureAppSlug, getDefaultUserSlug, persistDefaultUserSlug } from "./ensure-slug-binding.js";
+import { generate } from "random-words";
+import {
+  ensureUserSlug,
+  ensureAppSlug,
+  getDefaultUserSlug,
+  persistDefaultUserSlug,
+  toRFC2822_32ByteLength,
+} from "./ensure-slug-binding.js";
 import { preAllocate } from "./pre-allocate.js";
 import {
   ActiveEntry,
@@ -36,6 +43,39 @@ interface EnsureChatIdPResult {
   chatId: string;
 }
 
+/**
+ * Fully persistence-free owner/app/chat resolution for `generate --dry-run`.
+ * Resolves the owner handle read-only (explicit → default → in-memory random
+ * placeholder) and synthesizes an app-slug (explicit → in-memory random words)
+ * and an ephemeral chatId WITHOUT inserting a chatContexts row or allocating an
+ * appSlugBinding. The caller threads the returned ownerHandle/appSlug back to
+ * the prompt handler inline (see reqCreationPromptChatSection), so the dry-run
+ * preview never needs the (non-existent) chatContexts row. (#2364)
+ */
+async function dryRunResolveChatId(
+  ctx: VibesApiSQLCtx,
+  req: ReqWithVerifiedAuth<ReqOpenChat>
+): Promise<Result<EnsureChatIdPResult>> {
+  const userId = req._auth.verifiedAuth.claims.userId;
+  const randomSlug = () => generate({ exactly: 1, wordsPerString: 3, separator: "-" })[0];
+
+  let ownerHandle: string;
+  if (req.ownerHandle) {
+    ownerHandle = toRFC2822_32ByteLength(req.ownerHandle);
+  } else {
+    const rDefault = await getDefaultUserSlug(ctx, userId);
+    const defaultBinding = rDefault.isOk() ? rDefault.Ok() : undefined;
+    // Fall back to a synthesized handle when the caller has no default binding.
+    // We deliberately do NOT create one (that would persist) — a dry-run owns
+    // nothing, so a placeholder handle is sufficient to assemble the preview.
+    ownerHandle = defaultBinding?.ownerHandle ?? toRFC2822_32ByteLength(randomSlug());
+  }
+
+  const appSlug = req.appSlug ? toRFC2822_32ByteLength(req.appSlug) : toRFC2822_32ByteLength(randomSlug());
+  const chatId = ctx.sthis.nextId(12).str;
+  return Result.Ok({ appSlug, ownerHandle, chatId });
+}
+
 export async function ensureChatId(
   ctx: VibesApiSQLCtx,
   req: ReqWithVerifiedAuth<ReqOpenChat>
@@ -44,6 +84,12 @@ export async function ensureChatId(
   let ownerHandle = "";
   let chatId: string | undefined;
   const userId = req._auth.verifiedAuth.claims.userId;
+
+  // Persistence-free dry-run path: only for new chats (no chatId). An existing
+  // chatId is a real row, so resolution stays on the normal read path below.
+  if (req.dryRun === true && !req.chatId) {
+    return dryRunResolveChatId(ctx, req);
+  }
 
   if (req.chatId) {
     const reqChatId = req.chatId;
