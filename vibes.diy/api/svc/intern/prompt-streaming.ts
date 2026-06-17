@@ -33,24 +33,29 @@ export interface CodeBlocks {
 // Falls back to filename `/App.jsx` when a block has no `path` (back-compat
 // for blocks emitted before block-stream tracked path lines).
 export function resolveCodeBlocksToFileSystem(blocks: readonly CodeBlocks[], seed?: ReadonlyMap<string, string>): VibeFile[] {
+  // Key `byPath` by the canonical leading-slash filename (matching the DB's
+  // FileSystemItem.fileName form the seed carries). Block paths arrive bare
+  // ("App.jsx") while seed keys arrive slashed ("/App.jsx"); normalizing both
+  // to one form here is what lets the carry-forward dedup below probe a single
+  // key instead of papering over the mismatch with a dual-form lookup. See #2284.
   const byPath = new Map<string, { lang: string; lines: string[][] }>();
   for (const block of blocks) {
     if (!block.end) continue;
-    const path = block.begin.path ?? "App.jsx";
+    const filename = normalizeFilename(block.begin.path);
     const langRaw = block.begin.lang?.toLowerCase() || "";
-    const ext = path.match(/\.(\w+)$/)?.[1]?.toLowerCase() ?? "";
+    const ext = filename.match(/\.(\w+)$/)?.[1]?.toLowerCase() ?? "";
     // .js extension + "js" fence = plain JS (e.g. access.js); keep as "js".
     // .js extension + "jsx" fence = React in a .js file; promote to "jsx".
     // All other js/jsx fences default to "jsx" (original behaviour).
     const lang = ext === "js" && langRaw === "js" ? "js" : ["js", "jsx"].includes(langRaw) ? "jsx" : langRaw || "jsx";
-    const acc = byPath.get(path) ?? { lang, lines: [] };
+    const acc = byPath.get(filename) ?? { lang, lines: [] };
     acc.lines.push(block.lines.map((l) => l.line));
-    byPath.set(path, acc);
+    byPath.set(filename, acc);
   }
   const result: VibeFile[] = [];
-  for (const [path, { lang, lines }] of byPath.entries()) {
-    const filename = path.startsWith("/") ? path : `/${path}`;
-    let resolved = seed?.get(filename) ?? seed?.get(path) ?? "";
+  for (const [filename, { lang, lines }] of byPath.entries()) {
+    // Seed may be keyed slashed or bare depending on source; probe both.
+    let resolved = seed?.get(filename) ?? seed?.get(filename.slice(1)) ?? "";
     for (const blockLines of lines) {
       const parsed = parseFenceBody(blockLines);
       const r = applyEdits(resolved, parsed.edits);
@@ -66,9 +71,8 @@ export function resolveCodeBlocksToFileSystem(blocks: readonly CodeBlocks[], see
   // Carry forward seed entries for files this turn didn't touch.
   if (seed) {
     for (const [seededName, seededContent] of seed.entries()) {
-      const filename = seededName.startsWith("/") ? seededName : `/${seededName}`;
-      const path = filename.startsWith("/") ? filename.slice(1) : filename;
-      if (byPath.has(path) || byPath.has(filename)) continue;
+      const filename = normalizeFilename(seededName);
+      if (byPath.has(filename)) continue;
       const ext = filename.match(/\.(\w+)$/)?.[1]?.toLowerCase() ?? "jsx";
       const lang = ext;
       result.push({
