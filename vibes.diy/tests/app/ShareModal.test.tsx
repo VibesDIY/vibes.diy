@@ -438,5 +438,31 @@ describe("ShareModal", () => {
       expect(dialog).toHaveAttribute("aria-modal", "true");
       expect(dialog).toHaveAttribute("aria-label", "Share");
     });
+
+    it("constrains the desktop panel height so it can scroll on short viewports", () => {
+      // Force desktop mode regardless of the test browser's viewport width:
+      // useIsMobile() keys off matchMedia(max-width: 640px).
+      const matchMediaSpy = vi.spyOn(window, "matchMedia").mockReturnValue({
+        matches: false,
+        media: "",
+        onchange: null,
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+        addListener: vi.fn(),
+        removeListener: vi.fn(),
+        dispatchEvent: vi.fn(),
+      } as unknown as MediaQueryList);
+
+      render(<ShareModal modal={createMockModal()} isOwner />);
+
+      const panel = screen.getByRole("dialog").firstElementChild as HTMLElement;
+      expect(panel).toBeTruthy();
+      // The desktop popover must be scrollable and capped to the available
+      // viewport space; otherwise tall content runs off short screens.
+      expect(panel.style.overflowY).toBe("auto");
+      expect(panel.style.maxHeight).not.toBe("");
+
+      matchMediaSpy.mockRestore();
+    });
   });
 });
