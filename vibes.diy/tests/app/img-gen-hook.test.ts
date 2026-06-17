@@ -64,17 +64,15 @@ describe("ImgGen doc shape (addNewVersion)", () => {
   it("preserves the host doc's type instead of force-setting image", () => {
     // Regression for VibesDIY/vibes.diy#2362: attaching an image to a
     // type-keyed host doc (e.g. `story`) must keep that type so the
-    // write passes the app's type-keyed access function unchanged. The
-    // doc shape arrives at runtime with the host's real type even though
-    // the static `PartialImageDocument.type` is the `"image"` literal.
-    const hostDoc = { _id: "story-1", type: "story" } as unknown as Parameters<typeof addNewVersion>[0];
-    const updated = addNewVersion(hostDoc, FAKE_FILE_META_V1, "an illustration");
+    // write passes the app's type-keyed access function unchanged.
+    // `addNewVersion` accepts `ImgGenTargetDoc`, whose `type` is widened
+    // to `string` for exactly these host-attached flows.
+    const updated = addNewVersion({ _id: "story-1", type: "story" }, FAKE_FILE_META_V1, "an illustration");
     expect(updated.type).toBe("story");
   });
 
   it("defaults type to image for a genuinely untyped doc", () => {
-    const untyped = { _id: "doc-untyped" } as unknown as Parameters<typeof addNewVersion>[0];
-    const updated = addNewVersion(untyped, FAKE_FILE_META_V1, "a sunset");
+    const updated = addNewVersion({ _id: "doc-untyped" }, FAKE_FILE_META_V1, "a sunset");
     expect(updated.type).toBe("image");
   });
 

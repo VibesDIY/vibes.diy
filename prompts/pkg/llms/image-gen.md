@@ -108,6 +108,15 @@ App.jsx
 - Prev / next controls navigate between stored versions.
 - Set `showControls={false}` to hide regenerate and version navigation.
 
+## Access Functions and `doc.type`
+
+If your app defines an access function that keys on `doc.type` (the common pattern — e.g. it throws `{ forbidden: "unknown document type" }` for any unenumerated type), be aware of how ImgGen sets `type`:
+
+- **Image attached to a host doc** (`<ImgGen _id={hostDoc._id} database={db} />`): the image inherits the host doc's existing `type` (`story`, `hat`, whatever) and its access/channels. The write passes a type-keyed access function with no extra work.
+- **Standalone image** (no `_id`, or a brand-new doc): the doc is written with `type: "image"`. A type-keyed access function will **reject** this unless it explicitly permits `"image"`. Add an `"image"` branch (with the grant/channel you want image docs to live on) so the write is accepted — otherwise image generation fails silently with `Failed to put document:`.
+
+Prefer attaching images to the host doc whose access you already grant; reach for standalone image docs only when you've added an `"image"` branch to the access function.
+
 ## Choosing a Model
 
 Override the model per component: `<ImgGen prompt="An astronaut riding a horse" model="openai/gpt-5-image-mini" />`
