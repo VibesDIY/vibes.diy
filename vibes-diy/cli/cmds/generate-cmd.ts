@@ -351,7 +351,8 @@ export function generateCmd(ctx: CliCtx) {
       }),
       dryRun: flag({
         long: "dry-run",
-        description: "Inspect the prompt the server would dispatch; do not create a vibe, write files, or push",
+        description:
+          "Inspect the prompt the server would dispatch; writes no files, pushes nothing, and persists no vibe metadata (a minimal server-side chat/app-slug bookkeeping row is still allocated — see #2364)",
       }),
       transcript: flag({
         long: "transcript",
