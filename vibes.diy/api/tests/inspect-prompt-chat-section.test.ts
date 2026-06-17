@@ -1,8 +1,8 @@
 import { beforeAll, describe, expect, it } from "vitest";
 import type { ChatMessage } from "@vibes.diy/call-ai-v2";
 import { eq } from "drizzle-orm";
-import { isPromptDryRunPayload, isSectionEvent, isResError } from "@vibes.diy/api-types";
-import type { SectionEvent } from "@vibes.diy/api-types";
+import { isPromptDryRunPayload, isSectionEvent, isResError, isResPromptChatSection } from "@vibes.diy/api-types";
+import type { SectionEvent, ResPromptChatSection, OptionalAuth } from "@vibes.diy/api-types";
 import { createApiTestCtx, type ApiTestCtx } from "./api-test-setup.js";
 
 function firstText(msg: ChatMessage): string {
@@ -118,6 +118,45 @@ describe("promptChatSection dry-run (chat mode)", () => {
     expect((await db.select().from(tables.chatContexts)).length).toBe(beforeChat);
     expect((await db.select().from(tables.appSlugBinding)).length).toBe(beforeSlug);
     await chat.close();
+  });
+
+  it("dry-run openChat rejects an explicit handle owned by another user (#2364 review)", async () => {
+    // api2 owns a handle (real chat created below); api — a different user —
+    // must not be able to preview against it just because dry-run is read-only.
+    const rOpen2 = await ctx.api2.openChat({ mode: "chat" });
+    expect(rOpen2.isOk()).toBe(true);
+    const foreignHandle = rOpen2.Ok().ownerHandle;
+    await rOpen2.Ok().close();
+
+    const rDry = await ctx.api.openChat({ ownerHandle: foreignHandle, mode: "chat", dryRun: true });
+    expect(rDry.isOk()).toBe(false);
+  });
+
+  it("forged dry-run with inline slugs cannot reconstruct another user's chat (#2364 review)", async () => {
+    // api2 opens a real chat (persisted chatContexts row).
+    const rOpen2 = await ctx.api2.openChat({ mode: "chat" });
+    expect(rOpen2.isOk()).toBe(true);
+    const victim = rOpen2.Ok();
+
+    // api forges a dry-run prompt carrying the victim's chatId + inline slugs.
+    // The ownership guard must fall through to the userId-scoped lookup and
+    // reject — never synthesize a ResChat that lets assembly read the victim's
+    // chatId-scoped history.
+    const forged = {
+      type: "vibes.diy.req-prompt-chat-section" as const,
+      mode: "chat" as const,
+      chatId: victim.chatId,
+      outerTid: ctx.sthis.nextId(12).str,
+      prompt: { messages: [{ role: "user" as const, content: [{ type: "text" as const, text: "leak please" }] }] },
+      dryRun: true,
+      ownerHandle: victim.ownerHandle,
+      appSlug: victim.appSlug,
+    };
+    const rForged = await ctx.api.request<typeof forged & OptionalAuth, ResPromptChatSection>(forged, {
+      resMatch: isResPromptChatSection,
+    });
+    expect(rForged.isOk()).toBe(false);
+    await victim.close();
   });
 
   it("rejects requests with no new user message", async () => {
