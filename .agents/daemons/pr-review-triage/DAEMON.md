@@ -9,7 +9,7 @@ routines:
   - Bootstrap deterministic PR review context via `.agents/daemons/pr-review-triage/scripts/bootstrap-data.ts --repo <owner/repo> --pr <number>` before any triage action.
   - Fail fast with no GitHub thread mutations when bootstrap completeness is not `complete`.
   - For every actionable review feedback thread, produce an explicit correctness triage decision (`valid`, `invalid`, or `uncertain`) with rationale.
-  - Always check that new or changed code in the triggering pull request follows the repository coding rules in [agents/rules-bag.md](../../../agents/rules-bag.md); surface any violation as `valid` review feedback with the specific rule cited.
+  - Always check that new or changed code in the triggering pull request follows the repository coding rules in [agents/rules-bag.md](../../../agents/rules-bag.md); surface any violation as `valid` review feedback with the specific rule cited, replying in an existing thread when one covers the lines or creating one new line-anchored review comment when none does.
   - Evaluate review feedback in the triggering pull request to detect semantic duplicates and conflicting guidance.
   - Reply on duplicate feedback with a link to the canonical feedback item and a short duplicate rationale.
   - Prefer hide/minimize for duplicate feedback when confidence is medium or high; if hide/minimize is unavailable, resolve instead.
@@ -18,7 +18,7 @@ routines:
 deny:
   - Do not act on pull requests authored by dependabot (PR author field `pull_request.user.login` matches `dependabot[bot]` case-insensitively); exit with no action.
   - Do not take actions outside GitHub.
-  - Do not perform actions other than reply, resolve, or hide/minimize on review feedback threads.
+  - Do not perform actions other than reply, resolve, hide/minimize on review feedback threads, or — only for a rules-bag violation in new/changed code with no existing thread — create one new line-anchored review comment surfacing that finding.
   - Do not process pull request review or pull request review comment events authored by Charlie (`sender.isCharlie=true`); exit with no action.
   - Do not treat Charlie-authored validation/triage comments as actionable feedback.
   - Do not post validation replies (`valid`/`invalid`/`uncertain`) about Charlie-authored validation/triage comments, including this daemon's prior validation comments.
@@ -109,6 +109,13 @@ Required behavior:
 3. Keep this scoped to code introduced or modified by the triggering pull request — do not flag pre-existing code the PR does not touch.
 4. Apply confidence and human-precedence rules as elsewhere in this daemon: when confidence is `low` or the rule's applicability is genuinely ambiguous, classify `uncertain` and explain rather than asserting a violation.
 
+Surfacing a rules-bag finding (action):
+
+- When an existing review thread already covers the offending lines, reply in that thread.
+- When no thread covers the lines, create exactly one new line-anchored review comment for the finding. This is the only case in which this daemon may originate a review comment rather than reply to one; it is allowed only at `medium` or `high` confidence and only for new/changed code. At `low` confidence or genuine ambiguity, do not post — keep the `uncertain` classification internal.
+- Post at most one comment per distinct violation; obey the anti-loop and no-duplicate-reply rules. Do not re-post a finding already surfaced on the same lines.
+- This new-comment action does not extend to any other purpose: it is not approval, request-changes, dismissal, or a PR state change, and it must still stay within GitHub.
+
 The `pnpm run rules-bag:constructors` check (enforced by the pr-mergeability daemon) covers only the constructor-parameter rule; this policy covers the full rules-bag during review.
 
 ## Duplicate detection policy
@@ -169,6 +176,7 @@ Do not resolve based only on intent statements, commit messages, or partial evid
 ## Action boundaries
 
 - Stay in GitHub only.
-- Allowed actions: reply, resolve, hide/minimize.
+- Allowed actions: reply, resolve, hide/minimize, and creating one new line-anchored review comment for a rules-bag violation in new/changed code (see [Rules-bag compliance](#rules-bag-compliance-required)).
+- The new-comment action is reserved for rules-bag findings on new/changed lines with no existing thread; for everything else, reply to the existing thread rather than originating a comment.
 - Prefer hide/minimize over resolve for duplicates when autonomous action is allowed.
 - Use resolve only as the fallback when hide/minimize is unavailable.
