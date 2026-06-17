@@ -1,6 +1,6 @@
 import { VibesDiyApi } from "@vibes.diy/api-impl";
 import { assert, beforeAll, describe, expect, inject, it, vi } from "vitest";
-import { BuildURI, loadAsset, processStream, Result, TestFetchPair, TestWSPair } from "@adviser/cement";
+import { loadAsset, processStream, Result, TestFetchPair, TestWSPair } from "@adviser/cement";
 import { ensureSuperThis } from "@fireproof/core-runtime";
 import { createTestDeviceCA, createTestUser } from "@fireproof/core-device-id";
 import {
@@ -338,24 +338,27 @@ describe("VibesDiyApi", { timeout: (inject("DB_FLAVOUR" as never) as string) ===
       port: "4711",
       bindings: { appSlug: res.appSlug, ownerHandle: res.ownerHandle, fsId: res.fsId },
     });
-    // Mirror a real shared iframe src: invite token + iframe-internal plumbing params.
-    const url = BuildURI.from(baseUrl)
-      .setParam("token", "invite-abc")
-      .setParam("npmUrl", "https://example/vibe-pkg/")
-      .setParam("preview", "yes")
-      .toString();
+    // Mirror a real shared iframe src: invite token + iframe-internal plumbing
+    // params + a duplicated key (tag=a&tag=b) to pin multiplicity preservation.
+    const url =
+      `${baseUrl}?token=invite-abc` +
+      `&npmUrl=${encodeURIComponent("https://example/vibe-pkg/")}` +
+      `&preview=yes&.stable-entry.=dev&tag=a&tag=b`;
 
     // Top-level navigation (Sec-Fetch-Dest: document) → 302 to the viewer on vibes.diy.
     const redirected = await api.cfg.fetch(url, { headers: { "Sec-Fetch-Dest": "document" } });
     expect(redirected.status).toBe(302);
     expect(redirected.headers.get("Cache-Control")).toBe("no-store");
     // Share/invite params (token) are preserved so the viewer can redeem access;
-    // infra plumbing (npmUrl, preview) is stripped.
+    // infra plumbing (npmUrl, preview, .stable-entry.) is stripped.
     const loc = new URL(redirected.headers.get("Location") ?? "");
     expect(`${loc.origin}${loc.pathname}`).toBe(`https://no-where/vibe/${res.ownerHandle}/${res.appSlug}`);
     expect(loc.searchParams.get("token")).toBe("invite-abc");
     expect(loc.searchParams.has("npmUrl")).toBe(false);
     expect(loc.searchParams.has("preview")).toBe(false);
+    expect(loc.searchParams.has(".stable-entry.")).toBe(false);
+    // Repeated query keys survive the redirect (not collapsed to a single value).
+    expect(loc.searchParams.getAll("tag")).toEqual(["a", "b"]);
 
     // Embedded in an <iframe> (Sec-Fetch-Dest: iframe) → still serves the app document.
     const embedded = await api.cfg.fetch(url, { headers: { "Sec-Fetch-Dest": "iframe" } });
