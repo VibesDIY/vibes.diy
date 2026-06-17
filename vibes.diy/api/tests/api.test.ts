@@ -338,18 +338,24 @@ describe("VibesDiyApi", { timeout: (inject("DB_FLAVOUR" as never) as string) ===
       port: "4711",
       bindings: { appSlug: res.appSlug, ownerHandle: res.ownerHandle, fsId: res.fsId },
     });
-    // Mirror a real shared iframe src: invite token + iframe-internal npmUrl param.
-    const url = BuildURI.from(baseUrl).setParam("token", "invite-abc").setParam("npmUrl", "https://example/vibe-pkg/").toString();
+    // Mirror a real shared iframe src: invite token + iframe-internal plumbing params.
+    const url = BuildURI.from(baseUrl)
+      .setParam("token", "invite-abc")
+      .setParam("npmUrl", "https://example/vibe-pkg/")
+      .setParam("preview", "yes")
+      .toString();
 
     // Top-level navigation (Sec-Fetch-Dest: document) → 302 to the viewer on vibes.diy.
     const redirected = await api.cfg.fetch(url, { headers: { "Sec-Fetch-Dest": "document" } });
     expect(redirected.status).toBe(302);
     expect(redirected.headers.get("Cache-Control")).toBe("no-store");
-    // Invite token is preserved so the viewer can redeem access; npmUrl plumbing is dropped.
+    // Share/invite params (token) are preserved so the viewer can redeem access;
+    // infra plumbing (npmUrl, preview) is stripped.
     const loc = new URL(redirected.headers.get("Location") ?? "");
     expect(`${loc.origin}${loc.pathname}`).toBe(`https://no-where/vibe/${res.ownerHandle}/${res.appSlug}`);
     expect(loc.searchParams.get("token")).toBe("invite-abc");
     expect(loc.searchParams.has("npmUrl")).toBe(false);
+    expect(loc.searchParams.has("preview")).toBe(false);
 
     // Embedded in an <iframe> (Sec-Fetch-Dest: iframe) → still serves the app document.
     const embedded = await api.cfg.fetch(url, { headers: { "Sec-Fetch-Dest": "iframe" } });

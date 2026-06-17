@@ -58,6 +58,29 @@ function isBareHostTopLevelNavigation(req: Request): boolean {
   return req.headers.get("Sec-Fetch-Dest") === "document";
 }
 
+// Iframe-runtime / routing plumbing that must NOT leak onto the canonical
+// viewer URL when redirecting a bare host (#2354). Everything else is forwarded
+// verbatim so share/invite params (`token`, `intent`, …) survive — and future
+// ones survive automatically without touching this list.
+//   - npmUrl: private package origin; the viewer re-derives it from its own env.
+//   - preview: editor-preview flag that skips the SSR viewer identity.
+//   - .stable-entry.: stable-entry backend routing override.
+const BARE_HOST_REDIRECT_STRIP_PARAMS = ["npmUrl", "preview", ".stable-entry."];
+
+// Build the canonical viewer target for a bare-host redirect, forwarding the
+// original query string (preserving repeated keys) minus the infra params above.
+function bareHostRedirectTarget(baseUrl: string, ownerHandle: string, appSlug: string, uri: URI): string {
+  const params = new URLSearchParams();
+  for (const [k, v] of uri.getParams) {
+    if (!BARE_HOST_REDIRECT_STRIP_PARAMS.includes(k)) {
+      params.append(k, v);
+    }
+  }
+  const target = BuildURI.from(baseUrl).appendRelative(`/vibe/${ownerHandle}/${appSlug}`).toString();
+  const qs = params.toString();
+  return qs ? `${target}?${qs}` : target;
+}
+
 export function captureNpmUrl(vctx: VibesApiSQLCtx, req: Request): NpmUrlCapture {
   const url = URI.from(req.url).getParam("npmUrl");
   if (url) {
@@ -203,18 +226,17 @@ export const servEntryPoint: EventoHandler<Request, ExtractedHostToBindings, unk
     // redirect to the canonical viewer at /vibe/<owner>/<app> on vibes.diy so
     // sign-in and shared-data access work (#2354). Only the entry HTML can be a
     // top-level navigation; assets and the embedded iframe are left untouched.
-    //
-    // Carry the original query params across so invite/share flows survive: the
-    // viewer reads `token` (and `intent`) from the URL to redeem pending invites
-    // and verify access. Drop only `npmUrl` — it's iframe-runtime plumbing that
-    // the viewer re-derives from its own env when it rebuilds the iframe src.
+    // Share/invite query params (`token`, `intent`, …) are carried across so the
+    // viewer can redeem invites and verify access; infra plumbing is stripped
+    // (see bareHostRedirectTarget / BARE_HOST_REDIRECT_STRIP_PARAMS).
     if (isRootHtmlPath && isBareHostTopLevelNavigation(ctx.request)) {
       const vctx = ctx.ctx.getOrThrow<VibesApiSQLCtx>("vibesApiCtx");
-      const target = BuildURI.from(vctx.params.vibes.env.VIBES_DIY_PUBLIC_BASE_URL)
-        .appendRelative(`/vibe/${ctx.validated.ownerHandle}/${ctx.validated.appSlug}`)
-        .searchParams(Object.fromEntries(uri.getParams), "merge")
-        .delParam("npmUrl")
-        .toString();
+      const target = bareHostRedirectTarget(
+        vctx.params.vibes.env.VIBES_DIY_PUBLIC_BASE_URL,
+        ctx.validated.ownerHandle,
+        ctx.validated.appSlug,
+        uri
+      );
       await ctx.send.send(ctx, {
         type: "http.Response.Body",
         status: 302,
