@@ -6,6 +6,14 @@ import type { FileMeta, VersionInfo, PromptEntry, PartialImageDocument } from "@
 //   prompts[promptKey] = { text, created }; currentPromptKey points
 //   into prompts. The platform's URL minter adds `meta.url` on read.
 
+// The doc ImgGen attaches an image to. It may be a canonical standalone
+// image doc (`type: "image"`) or a host doc of any type (`story`, `hat`,
+// …) — the augment flow preserves whatever `type` is already there. This
+// internal write type widens `type` to `string` so host-attached flows
+// are represented honestly, without weakening the public
+// `ImageDocumentPlain.type` literal contract (per #2369 review).
+export type ImgGenTargetDoc = Omit<PartialImageDocument, "type"> & { type?: string };
+
 export function generateVersionId(versionNumber: number): string {
   return `v${versionNumber}`;
 }
@@ -14,7 +22,7 @@ export function generatePromptKey(promptNumber: number): string {
   return `p${promptNumber}`;
 }
 
-export function getVersionsFromDocument(document: PartialImageDocument | null | undefined): {
+export function getVersionsFromDocument(document: ImgGenTargetDoc | null | undefined): {
   versions: VersionInfo[];
   currentVersion: number;
 } {
@@ -27,7 +35,7 @@ export function getVersionsFromDocument(document: PartialImageDocument | null | 
   return { versions: [], currentVersion: 0 };
 }
 
-export function getPromptsFromDocument(document: PartialImageDocument | null | undefined): {
+export function getPromptsFromDocument(document: ImgGenTargetDoc | null | undefined): {
   prompts: Record<string, PromptEntry>;
   currentPromptKey: string;
 } {
@@ -72,11 +80,11 @@ export function sanitizeFiles(files: Record<string, unknown> | undefined): Recor
 // IS the fileKey — there's no separate fileKey field. Stage C's URL
 // minter resolves `_files.<versionId>.url` on read.
 export function addNewVersion(
-  document: PartialImageDocument,
+  document: ImgGenTargetDoc,
   fileMeta: FileMeta,
   newPrompt?: string,
   model?: string
-): PartialImageDocument & { _files: Record<string, FileMeta>; versions: VersionInfo[] } {
+): ImgGenTargetDoc & { _files: Record<string, FileMeta>; versions: VersionInfo[] } {
   const { versions } = getVersionsFromDocument(document);
   const versionCount = versions.length + 1;
   const newVersionId = generateVersionId(versionCount);
