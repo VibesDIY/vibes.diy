@@ -164,15 +164,40 @@ const FALLBACK_VALUES: Readonly<Record<string, string>> = {
   "text-disabled": "#9ca3af",
 };
 
-// Fill canonical tokens that the source colorset didn't provide. Cross-fills
-// primary ↔ accent so themes with a single interactive color satisfy both
-// Stitch slots, then layers hardcoded defaults for the rarely-defined ones.
+// Fill canonical tokens that the source colorset didn't provide so the
+// LLM-facing :root is NEVER missing a core slot (the post-#2199 regression:
+// extras-stripped + sparse canonical = a :root with no background/surface/
+// accent/border for 42/44 themes — see #2356). Derivation order matters:
+// fill the interactive pair first, then everything that depends on
+// background/text-primary being present.
+//
+// Derived text-secondary uses `color-mix()` over `var(--token)` REFERENCES
+// (not the resolved values) so it stays correct under a live palette swap —
+// when a swap overrides --text-primary/--background, :root re-resolves the
+// mix. The operands are CSS variables, so the emitted value is always a valid
+// CSS color (the guardrail test asserts this, not merely non-emptiness).
 export function deriveCanonical(colors: Record<string, string>): Record<string, string> {
   const out = { ...colors };
+  // Interactive pair: cross-fill so a single-accent theme satisfies both slots.
   if (!out.primary && out.accent) out.primary = out.accent;
   if (!out.accent && out.primary) out.accent = out.primary;
+  // Second interactive role falls back to the primary/accent hue (Charlie's
+  // call: keep `secondary` in the contract rather than invent a second hue).
+  if (!out.secondary) out.secondary = out.accent ?? out.primary ?? FALLBACK_VALUES.neutral;
+  // Last-resort canvas/ink so the :root is never empty (desktop/neon-class
+  // themes whose palette was entirely bespoke). The exemplar rebuild makes
+  // this rarely fire, but the invariant must hold for any sparse yaml.
+  if (!out.background) out.background = out.surface ?? "#ffffff";
+  if (!out["text-primary"]) out["text-primary"] = "#111111";
+  // Surface tracks the canvas; border is the ink (bold-stroke convention).
+  if (!out.surface) out.surface = out.background;
+  if (!out.border) out.border = out["text-primary"] ?? FALLBACK_VALUES.neutral;
+  // Muted text: mix ink into the canvas. var() refs keep it swap-correct.
+  if (!out["text-secondary"]) {
+    out["text-secondary"] = "color-mix(in srgb, var(--text-primary) 60%, var(--background))";
+  }
   if (!out["text-disabled"] && out["text-secondary"]) {
-    out["text-disabled"] = out["text-secondary"];
+    out["text-disabled"] = "color-mix(in srgb, var(--text-primary) 38%, var(--background))";
   }
   for (const [k, v] of Object.entries(FALLBACK_VALUES)) {
     if (!out[k]) out[k] = v;
@@ -401,50 +426,54 @@ function renderTokenDisciplineBlock(colorset: Colorset): string {
   const cssBlock = renderRootCssBlock(colorset, { includeExtras: false });
   const hasDark = colorset.colorsDark !== undefined;
 
+  // Quote every key — canonical names contain hyphens (`text-primary`), which
+  // are NOT valid unquoted JS identifiers. The unquoted form we used to emit
+  // was a SyntaxError the model was shown as the pattern to imitate (#2356).
   const tokenList = Object.keys(deriveCanonical(colorset.colors))
-    .map((k) => `  ${k}: 'bg-[var(--${k})]',`)
+    .map((k) => `  '${k}': 'bg-[var(--${k})]',`)
     .join("\n");
 
   const darkRule = hasDark
     ? "A dark-mode `@media` block IS provided below — include it verbatim."
     : "No dark-mode block is provided. Do NOT invent one. The theme is single-mode.";
 
-  return `\n\n## Required CSS variables — THIS IS THE OPERATIVE STYLING INSTRUCTION
+  return `\n\n## Theme tokens — the palette swap contract
 
-The \`<style>\` block below is the single source of truth for **every visual
-token** in the generated app — colors, font families, spacing, radius, and
-border width. Copy it **VERBATIM** into a \`<style>\` tag at the top of the
-app. Do not change values, do not round or approximate, do not "interpret"
-the palette description from the prose into your own values. Whatever this
-block says is what the app must look like.
+The \`<style>\` block below defines this theme's canonical color + structural
+tokens. Copy it into a \`<style>\` tag at the top of the app and **build the UI
+on these CSS variables**. They are the *swap contract*: every theme exposes the
+same canonical names, so the user can later swap palettes and the app restyles
+instantly — but only for the values you routed through these variables. Use the
+exact token values shown; don't round or substitute your own.
 
-**DO NOT introduce theme-specific tokens into \`:root\`.** The block below
-contains only the canonical vocabulary that every palette guarantees. If you
-add bespoke names like \`--gold-base\`, \`--stone-dark\`, \`--crimson\`,
-\`--wood-frame\`, etc., the user's palette swap can't override them and the
-app will look stuck on the original theme. Express the theme's aesthetic
-through the canonical names (\`--accent\`, \`--surface\`, \`--primary\`, etc.)
-— do not introduce new ones.
-
-Reference the variables via Tailwind's bracket notation:
-- Colors: \`bg-[var(--background)]\`, \`text-[var(--text-primary)]\`, \`border-[var(--border)]\`
+**Route the core through the canonical variables.** Backgrounds, surfaces,
+text, borders, and primary/secondary/accent actions go through the tokens via
+Tailwind bracket notation:
+- Colors: \`bg-[var(--background)]\`, \`text-[var(--text-primary)]\`, \`border-[var(--border)]\`, \`bg-[var(--primary)]\`
 - Structural: \`font-[var(--font-family)]\`, \`rounded-[var(--radius)]\`, \`p-[var(--spacing)]\`, \`border-[length:var(--border-width)]\`
 
-**FORBIDDEN — these silently break palette swaps**:
-- \`bg-[#hex]\`, \`bg-[oklch(...)]\`, \`bg-[rgba(...)]\`, \`bg-[hsl(...)]\` — any color literal in a bracket class
-- \`text-[#hex]\`, \`text-[oklch(...)]\`, \`text-[rgba(...)]\`, \`border-[#hex]\`, etc.
-- \`bg-[var(--gold-base)]\`, \`bg-[var(--stone-dark)]\` — any var() pointing to a name not in the \`:root\` block above
-- \`rounded-md\`, \`p-4\`, \`text-lg\`, \`font-mono\` — built-in Tailwind tokens for size/spacing/typography (use \`rounded-[var(--radius)]\`, \`p-[var(--spacing)]\`, etc.)
+Prefer the structural tokens over built-in Tailwind sizing
+(\`rounded-[var(--radius)]\` not \`rounded-md\`, \`p-[var(--spacing)]\` not
+\`p-4\`, \`font-[var(--font-family)]\` not \`font-sans\`) so a structural swap
+reaches them too.
 
-Translucency and gradients: when you need a translucent surface, use
-\`bg-[color-mix(in_srgb,var(--surface)_80%,transparent)]\` or stack a
-semi-transparent overlay — do NOT inline an \`oklch(... / 0.9)\` literal.
-Same for gradients: build them from \`var(--canonical)\` colors.
+**Two hard rules keep swaps working — everything else is encouraged:**
+1. No literal colors for core surfaces/text/actions/borders — never
+   \`bg-[#hex]\`, \`bg-[oklch(...)]\`, \`bg-[rgba(...)]\`, \`text-[#hex]\`,
+   \`border-[#hex]\`. A swap can't reach a baked-in literal.
+2. Don't add bespoke color tokens to \`:root\`. Keep \`:root\` to the canonical +
+   structural names below; a name a future palette won't define
+   (\`--gold-base\`, \`--wood-frame\`, …) can't be swapped.
 
-Every color and structural value in the \`classNames\` object MUST resolve to
-one of the canonical variables above. If you find yourself reaching for a
-literal hex or oklch, ask which canonical role it plays (\`accent\`,
-\`success\`, \`warning\`, \`surface\`, etc.) and use that variable instead.
+**Now make it beautiful — richness on top is welcome.** This is NOT a flat-
+design mandate. Layer gradients, hard or soft shadows, glows, textures,
+borders, and decorative pseudo-elements freely to express the theme — just
+**build them from the canonical variables** so they swap too:
+- Translucency: \`bg-[color-mix(in_srgb,var(--surface)_80%,transparent)]\`
+- Gradients/glows: compose from \`var(--primary)\`, \`var(--accent)\`, \`var(--background)\`
+- A genuinely one-off decorative value that never needs to swap may be inlined
+  on the element itself (in a \`style={{…}}\` or arbitrary class) — just keep it
+  out of \`:root\`.
 
 ${darkRule}
 

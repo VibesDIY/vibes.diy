@@ -1,7 +1,7 @@
 # Composable theme fidelity — recover pre-#2199 output quality without losing live palette swap
 
 Date: 2026-06-17
-Status: Design proposed, awaiting review
+Status: Approved — reviewed by @CharlieHelps 2026-06-17 (see "Review resolutions")
 Issue: VibesDIY/vibes.diy#2356
 
 ## Motivation
@@ -233,6 +233,37 @@ theme prose as decoration the model layers via `color-mix` from canonical.
 5. **Architecture.** Stay with "complete canonical contract in the prompt"
    (this spec), or commit to the decouple-codegen-from-runtime architecture
    instead?
+
+## Review resolutions (@CharlieHelps, 2026-06-17)
+
+1. **Data source — exemplars, confirmed.** No in-repo pipeline generates
+   exemplars from `colors/*.yaml`; chronology confirms exemplars (`f64031f35`,
+   May 8) predate the colorset split (`c54422286`, May 28), and #2199
+   canonicalized yaml without touching exemplars. Use exemplars as ground
+   truth; keep a per-slug fallback to pre-#2199 `.md` frontmatter (recoverable
+   from the union of the current yaml `colors`+`extras`, which still holds the
+   full original palette) for any exemplar that looks suspect.
+2. **`secondary` — keep in the contract**, derive `secondary ← accent (?? primary)`
+   in `deriveCanonical`. Dropping it would ripple through consumers/tests and
+   weaken the completeness guarantee.
+3. **Discipline block — soften, keep hard swap-safety invariants:** core
+   semantic roles route through canonical vars; no literal colors for core
+   surfaces/text/actions/borders; no extra theme color tokens in `:root` beyond
+   canonical + structural; richness allowed *on top* (gradients/shadows/
+   `color-mix(... var(--canonical) ...)`/decorative pseudo-elements).
+4. **Prose — token/composer/guardrail fixes first.** Only surgical per-theme
+   prose boosts in this PR if specific themes still underperform after the
+   completeness fix; broad enrichment is a follow-up.
+5. **Architecture — stay the course** in this PR (complete canonical contract +
+   better discipline). Decouple-codegen-from-runtime (Option 1+2) is a separate
+   milestone after this regression is closed and measured.
+
+**Adopted task order** (supersedes the plan's original numbering): (1) lock
+provenance + per-slug fallback; (2) `deriveCanonical` completeness +
+`classNames` parse fix + guardrail assertions; (3) pilot compose on
+`desktop`/`neon` + a few representatives; (4) bulk rebuild all colorsets
+(canonical + structural); (5) soften discipline wording; (6) full 44-theme
+completeness suite; (7) decide final prose touch-ups before merge.
 
 ## Files touched (anticipated)
 
