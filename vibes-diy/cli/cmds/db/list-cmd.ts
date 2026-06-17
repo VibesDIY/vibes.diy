@@ -55,7 +55,7 @@ export function dbListCmd(ctx: CliCtx) {
     description: "List database names for an app",
     args: {
       ...cmdTsDefaultArgs(ctx),
-      ...dbCommonArgs(ctx),
+      ...dbCommonArgs(),
     },
     handler: ctx.cliStream.enqueue((args) => {
       const resolved = resolveDbVibeArgs(ctx, {
