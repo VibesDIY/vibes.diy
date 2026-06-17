@@ -121,8 +121,10 @@ In `prompts/pkg/themes/colorsets.ts`:
   - `surface ← background`
   - `secondary ← accent ?? primary`
   - `border ← text-primary ?? neutral`
-  - `text-secondary ← color-mix(in srgb, text-primary 60%, background)` (or a
-    neutral mid when either is missing)
+  - `text-secondary ← "color-mix(in srgb, var(--text-primary) 60%, var(--background))"`
+    — a valid CSS color built from `var()` refs (not bare identifiers), so it
+    stays correct under a live palette swap; fall back to a concrete neutral
+    mid when either source slot is missing
   - `background`/`text-primary` get last-resort neutral fallbacks so the
     `:root` is never empty (`desktop`/`neon`-class themes).
   This is the safety net; (1) makes it rarely fire, but it guarantees the
