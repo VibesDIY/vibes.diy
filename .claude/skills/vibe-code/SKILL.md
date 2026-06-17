@@ -27,7 +27,7 @@ npx vibes-diy pull garden-gnome/story-crossroads --dir /tmp/story-crossroads
 
 - The positional arg takes `handle/app-slug` (or use `--vibe garden-gnome/story-crossroads`). Omit the handle to use your own.
 - `--dir` is optional; without it files land in `./<app-slug>/`.
-- Writes the source files: `App.jsx`, any components, and the access-control file **`access.js`** at the vibe root. Built/transformed assets are not pulled.
+- Writes the vibe's **top-level** source files: `App.jsx`, the access-control file **`access.js`**, and any other root files (`.jsx/.js/.ts/.tsx/.css/.html/.json/.md/.txt/.svg`). Built/transformed assets are not pulled. Vibe source is **flat** — `push` only round-trips top-level files (see step 3), so keep all editable code at the root, not in subdirectories.
 
 ### 2. Edit
 
@@ -57,7 +57,8 @@ cd /tmp/story-crossroads
 npx vibes-diy push --vibe garden-gnome/story-crossroads --mode production
 ```
 
-- `--mode` defaults to `production`; pass `dev` for the dev plane.
+- `push` reads **top-level files only** — `readProjectFiles` does not recurse, so files in subdirectories are silently skipped. Keep all editable source at the vibe root.
+- `--mode` (`production`|`dev`) sets the app's **deploy mode**, NOT the environment. It's passed to `ensureAppSlug` and does not change routing — `--mode dev` still talks to whatever `--api-url` you give (default: the cli plane). To target a specific _environment_, set `--api-url` (next section); don't reach for `--mode dev` expecting the dev worker.
 - Pushing under another handle: pass `--vibe handle/app-slug` (or `--app-slug` + `--handle`) explicitly.
 - Public access + auto-accept-editor are **on by default**. `--instant-join`/`--public` are deprecated no-ops; use `--private` to opt OUT.
 - Large pushes can hit the ~30s idle timeout — bump `--idle-timeout <ms>`.
@@ -78,8 +79,9 @@ End-to-end behavior (does the running app work?) still needs a human or `qa-pr` 
 
 The default `--api-url` is `https://vibes.diy/api?.stable-entry.=cli` — the **cli** plane, _not_ prod. cli shares the prod data plane, so for most work it's equivalent, but they are different worker deploys.
 
-- **Target prod explicitly:** `--api-url https://vibes.diy/api` (no `.stable-entry.=cli` marker → resolves to `prod-v2`).
+- **Target prod explicitly:** `--api-url https://vibes.diy/api` (no `.stable-entry.=cli` marker → resolves to `prod-v2`). `--mode production` alone does **not** do this — the plane is the `--api-url`, not the mode.
 - **Be consistent:** pull and push from the _same_ `--api-url`, or you'll edit cli's source and diff against prod's (or vice versa).
+- **Safer rollout:** stage on the cli plane first (default `--api-url`), confirm, then repeat the push with `--api-url https://vibes.diy/api` for the final prod ship.
 
 See `agents/environments.md` for the full dev/prod/cli/preview architecture.
 
@@ -89,8 +91,8 @@ See `agents/environments.md` for the full dev/prod/cli/preview architecture.
 | ------------------- | -------------------------------------------------------------------------------------- |
 | Log in              | `npx vibes-diy login`                                                                  |
 | Pull source         | `npx vibes-diy pull <handle>/<app> --dir <dir>`                                        |
+| Stage on cli first  | `cd <dir> && npx vibes-diy push --vibe <handle>/<app>` (default `--api-url` = cli)     |
 | Push to prod        | `cd <dir> && npx vibes-diy push --vibe <handle>/<app> --api-url https://vibes.diy/api` |
-| Push to dev         | `... push --vibe <handle>/<app> --mode dev`                                            |
 | AI follow-up edit   | `npx vibes-diy edit --help`                                                            |
 | Generate a new vibe | `npx vibes-diy generate --help`                                                        |
 | Coding rules        | `npx vibes-diy system`                                                                 |
@@ -99,6 +101,8 @@ See `agents/environments.md` for the full dev/prod/cli/preview architecture.
 
 - **Pushing the wrong directory** — `push` is always `cwd`; `cd` into the pulled folder first.
 - **Wrong env** — default is cli, not prod. Add `--api-url https://vibes.diy/api` for prod, and keep pull/push on the same plane.
+- **`--mode dev` is not the dev environment** — it's the app's deploy mode and does not change routing. Environment is the `--api-url` plane.
+- **Nested files don't push** — `push` reads top-level files only; subdirectories are silently skipped. Keep source flat at the vibe root.
 - **`unknown document type`** — `access.js` doesn't return for a type the app writes (e.g. ImgGen's docs). Add a branch returning `{ channels, grant }` for it.
 - **No editor grant** — pushing under another handle needs write access on that vibe.
 - **Confusing code with data** — schema/UI/access-rules = this skill; documents/queries = `vibe-data`.
