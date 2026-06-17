@@ -38,6 +38,7 @@ Claude Code looks for project-scoped skills under this path when running in this
 - [`dependabot-review/`](dependabot-review/SKILL.md) — read-only audit of every open Dependabot PR. Assigns Merge/Verify/Investigate/Hold verdicts and produces a consolidated report. Source: [VibesDIY/dependabot-review](https://github.com/VibesDIY/dependabot-review).
 - [`qa-pr/`](qa-pr/SKILL.md) — agent-driven QA pass against a PR preview URL using the kmikeym v0.01m SOP. Every run covers desktop + mobile (390×844) in one pass.
 - [`vibe-data/`](vibe-data/SKILL.md) — read/write/query/explore data in vibes via the `vibes-diy` CLI.
+- [`vibe-code/`](vibe-code/SKILL.md) — pull/edit/push a vibe's source (`App.jsx`, `access.js`) via the `vibes-diy` CLI; covers prod-vs-cli env and the access-fn contract. Sibling of `vibe-data` (code vs data).
 
 ### Vendored `superpowers` (v5.1.0, [obra/superpowers](https://github.com/obra/superpowers), MIT)
 
