@@ -94,14 +94,67 @@ describe("MCP server — tool listing", () => {
 });
 
 describe("MCP server — vibes_list_apps", () => {
-  it("returns all apps", async () => {
+  it("returns apps wrapped in { items }", async () => {
     const { client } = await setupClient();
     const result = await client.callTool({ name: "vibes_list_apps", arguments: {} });
     const text = (result.content as { type: string; text: string }[])[0].text;
-    const items = JSON.parse(text);
+    const { items } = JSON.parse(text);
     expect(items).toHaveLength(2);
     expect(items[0].appSlug).toBe("test-app");
     expect(items[1].title).toBe("Other App");
+    await client.close();
+  });
+
+  it("defaults to a page size of 50", async () => {
+    const { client, api } = await setupClient();
+    await client.callTool({ name: "vibes_list_apps", arguments: {} });
+    expect(api.listRecentVibes).toHaveBeenCalledWith({ limit: 50 });
+    await client.close();
+  });
+
+  it("clamps limit to the 200 max", async () => {
+    const { client, api } = await setupClient();
+    await client.callTool({ name: "vibes_list_apps", arguments: { limit: 10000 } });
+    // First server page is capped at 100 even when the caller asks for more.
+    expect(api.listRecentVibes).toHaveBeenCalledWith({ limit: 100 });
+    await client.close();
+  });
+
+  it("passes the cursor through to the server", async () => {
+    const { client, api } = await setupClient();
+    await client.callTool({ name: "vibes_list_apps", arguments: { cursor: "abc123" } });
+    expect(api.listRecentVibes).toHaveBeenCalledWith({ limit: 50, cursor: "abc123" });
+    await client.close();
+  });
+
+  it("surfaces nextCursor from the server response", async () => {
+    const api = makeMockApi();
+    api.listRecentVibes = vi.fn().mockResolvedValue(
+      Result.Ok({
+        items: [{ ownerHandle: "og", appSlug: "test-app", title: "Test App" }],
+        nextCursor: "next-page-cursor",
+      })
+    );
+    const server = createMcpServer({ api: api as unknown as VibesDiyApi, appSlug: "test-app", ownerHandle: "og" });
+    const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
+    const client = new Client({ name: "test-client", version: "0.1" });
+    await Promise.all([server.connect(serverTransport), client.connect(clientTransport)]);
+
+    const result = await client.callTool({ name: "vibes_list_apps", arguments: { limit: 1 } });
+    const text = (result.content as { type: string; text: string }[])[0].text;
+    const parsed = JSON.parse(text);
+    expect(parsed.nextCursor).toBe("next-page-cursor");
+    expect(parsed.items).toHaveLength(1);
+    await client.close();
+  });
+
+  it("filters items by case-insensitive search on title or slug", async () => {
+    const { client } = await setupClient();
+    const result = await client.callTool({ name: "vibes_list_apps", arguments: { search: "OTHER" } });
+    const text = (result.content as { type: string; text: string }[])[0].text;
+    const { items } = JSON.parse(text);
+    expect(items).toHaveLength(1);
+    expect(items[0].appSlug).toBe("other-app");
     await client.close();
   });
 });

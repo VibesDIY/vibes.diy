@@ -30,25 +30,70 @@ export function createMcpServer(deps: McpServerDeps): McpServer {
   });
 
   // ── vibes_list_apps ──────────────────────────────────────────────
+  // Pagination defaults. The server clamps its own page size at 100, so we
+  // fetch in chunks of at most that and accumulate until we have `limit`
+  // items (or run out). `search` is a client-side substring filter applied
+  // to the accumulated page; the returned `nextCursor` is the server's
+  // cursor, so a client can keep paging even when the filter empties a page.
+  const LIST_APPS_DEFAULT_LIMIT = 50;
+  const LIST_APPS_MAX_LIMIT = 200;
+  const LIST_APPS_SERVER_MAX_PAGE = 100;
+
+  function clampListAppsLimit(raw: number | undefined): number {
+    if (raw === undefined || !Number.isFinite(raw)) return LIST_APPS_DEFAULT_LIMIT;
+    const i = Math.floor(raw);
+    if (i < 1) return 1;
+    if (i > LIST_APPS_MAX_LIMIT) return LIST_APPS_MAX_LIMIT;
+    return i;
+  }
+
   server.tool(
     "vibes_list_apps",
-    "List all apps (vibes) owned by the authenticated user",
-    {},
+    "List apps (vibes) owned by the authenticated user, paginated. " +
+      "Pass `cursor` from a previous response's `nextCursor` to page through results.",
+    {
+      limit: z.number().optional().describe("Max items to return (default 50, max 200)"),
+      cursor: z.string().optional().describe("Pagination cursor from a previous response's nextCursor"),
+      search: z.string().optional().describe("Filter by case-insensitive substring match on title or app slug"),
+    },
     { readOnlyHint: true, destructiveHint: false, idempotentHint: true },
-    async () => {
+    async (params) => {
       try {
+        const limit = clampListAppsLimit(params.limit);
         const items: Record<string, unknown>[] = [];
-        let cursor: string | undefined;
-        do {
-          const rPage = await api.listRecentVibes({ limit: 100, ...(cursor ? { cursor } : {}) });
+        let cursor: string | undefined = params.cursor;
+        let nextCursor: string | undefined;
+        while (items.length < limit) {
+          const want = Math.min(limit - items.length, LIST_APPS_SERVER_MAX_PAGE);
+          const rPage = await api.listRecentVibes({ limit: want, ...(cursor ? { cursor } : {}) });
           if (rPage.isErr()) {
             return { content: [{ type: "text" as const, text: `Error: ${rPage.Err()}` }] };
           }
           const page = rPage.Ok();
           items.push(...page.items);
+          nextCursor = page.nextCursor;
           cursor = page.nextCursor;
-        } while (cursor);
-        return { content: [{ type: "text" as const, text: JSON.stringify(items) }] };
+          if (!page.nextCursor) break;
+        }
+
+        let result = items;
+        if (params.search !== undefined && params.search !== "") {
+          const q = params.search.toLowerCase();
+          result = items.filter((it) => {
+            const title = typeof it.title === "string" ? it.title.toLowerCase() : "";
+            const slug = typeof it.appSlug === "string" ? it.appSlug.toLowerCase() : "";
+            return title.includes(q) || slug.includes(q);
+          });
+        }
+
+        return {
+          content: [
+            {
+              type: "text" as const,
+              text: JSON.stringify({ items: result, ...(nextCursor ? { nextCursor } : {}) }),
+            },
+          ],
+        };
       } catch (e) {
         return { content: [{ type: "text" as const, text: `Error: ${e}` }] };
       }
