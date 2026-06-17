@@ -152,6 +152,12 @@ export interface AssemblePromptPayloadArgs {
   // Optional: override which role slot messages are delivered as. When absent,
   // falls back to the SLOT_DELIVERY_MODE env var (defaulting to "user").
   readonly slotDeliveryMode?: "user" | "system";
+  // Optional: in-memory active settings (skills/theme/title/enrichedPrompt)
+  // that replace the app_settings DB read. Used by the dry-run pre-allocation
+  // preview path so a fresh `generate --dry-run` can render the pre-allocated
+  // system prompt without persisting anything. When absent, settings are read
+  // from app_settings as usual.
+  readonly activeSettingsOverride?: { skills?: string[]; theme?: string; title?: string; enrichedPrompt?: string };
 }
 
 export async function assemblePromptPayload(
@@ -206,7 +212,9 @@ export async function assemblePromptPayload(
   // seeds both on new chats; legacy rows without skills fall back to
   // makeBaseSystemPrompt's getDefaultSkills(), and an unset title drops the
   // title hint line entirely.
-  const { skills, theme, title, enrichedPrompt } = await loadActiveSettings(vctx, chatId);
+  // Pre-allocation preview (dry-run) supplies these in-memory so we skip the
+  // DB read entirely and persist nothing; otherwise read from app_settings.
+  const { skills, theme, title, enrichedPrompt } = args.activeSettingsOverride ?? (await loadActiveSettings(vctx, chatId));
   const isInitial = timeline.length === 0;
 
   const systemPrompt = await exception2Result(async () => {

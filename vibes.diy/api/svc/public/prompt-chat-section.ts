@@ -73,6 +73,7 @@ import {
 } from "../intern/recovery.js";
 import { loadVersionTimeline } from "../intern/version-timeline.js";
 import { resolveSlotConfig } from "../intern/slot-assembler.js";
+import { preAllocate } from "../intern/pre-allocate.js";
 import { createPromptAssetFetch, promptsPkgBaseUrl, type PromptAssetFetchDeps } from "../intern/prompt-asset-fetch.js";
 import {
   resolveCodeBlocksToFileSystem,
@@ -813,6 +814,18 @@ interface ResChat {
   appSlug: string;
   ownerHandle: string;
   mode: PromptStyle;
+}
+
+// Concatenate the text parts of the first user message. Used to feed the
+// dry-run pre-allocation preview the same prompt a real generate pre-allocates
+// from. Returns "" when there is no user text (caller then skips pre-alloc).
+function firstUserText(messages: readonly ChatMessage[]): string {
+  const firstUser = messages.find((m) => m.role === "user");
+  if (!firstUser) return "";
+  return firstUser.content
+    .map((part) => (part.type === "text" ? part.text : ""))
+    .join("")
+    .trim();
 }
 
 async function getResChatFromMode(
@@ -1933,6 +1946,32 @@ export const promptChatSection: EventoHandler<W3CWebSocketEvent, MsgBase<ReqProm
         const rDefaults = await getModelDefaults(vctx, { appSlug: resChat.appSlug, ownerHandle: resChat.ownerHandle });
         if (rDefaults.isErr()) return Result.Err(rDefaults);
         const modelId = orig.prompt.model ?? rDefaults.Ok().chat.model.id;
+
+        // Dry-run pre-allocation preview: run the same pre-allocation LLM call
+        // a fresh generate would, but in-memory — feed {skills, theme, title,
+        // enrichedPrompt} straight into assembly without persisting. Lets
+        // `generate --dry-run` show the real generate-path system prompt while
+        // creating no vibe metadata. On pre-alloc failure we fall through to
+        // the (empty, for a fresh chat) app_settings read, same as dispatch.
+        let activeSettingsOverride: AssemblePromptPayloadArgs["activeSettingsOverride"];
+        if (orig.dryRun === true && orig.dryRunPreAllocate === true) {
+          const userText = firstUserText(orig.prompt.messages);
+          if (userText.length > 0) {
+            const rPre = await preAllocate(vctx, { prompt: userText });
+            if (rPre.isOk()) {
+              const pre = rPre.Ok();
+              activeSettingsOverride = {
+                skills: pre.skills,
+                theme: pre.theme,
+                title: pre.pairs[0]?.title,
+                enrichedPrompt: pre.enrichedPrompt,
+              };
+            } else {
+              vctx.logger.Warn().Err(rPre).Msg("dry-run pre-alloc failed; previewing without pre-allocation");
+            }
+          }
+        }
+
         const rAssembled = await assemblePromptPayload(vctx, {
           chatId: req.chatId,
           model: modelId,
@@ -1946,6 +1985,7 @@ export const promptChatSection: EventoHandler<W3CWebSocketEvent, MsgBase<ReqProm
             SLOTS_COMPACTION: vctx.sthis.env.get("SLOTS_COMPACTION"),
           }),
           focusPath: orig.focusPath,
+          ...(activeSettingsOverride ? { activeSettingsOverride } : {}),
         });
         if (rAssembled.isErr()) return Result.Err(rAssembled);
         preAssembled = rAssembled.Ok();

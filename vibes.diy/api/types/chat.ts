@@ -99,6 +99,13 @@ export const reqCreationPromptChatSection = type({
   // PromptContexts/ChatSections writes, no LLM call, no billing. Chat
   // mode only; app/img dry-run is a follow-up.
   "dryRun?": "boolean",
+  // When true (dry-run only): run pre-allocation in-memory and feed its
+  // {skills, theme, title, enrichedPrompt} into prompt assembly, WITHOUT
+  // persisting anything. Lets a fresh `generate --dry-run` preview the
+  // same system prompt a real generate would send (which depends on
+  // pre-allocation) while still creating no vibe metadata. Ignored unless
+  // dryRun is also true.
+  "dryRunPreAllocate?": "boolean",
   "selected?": selectedSlotInput,
   "slots?": slotConfig,
   // Optional: focus path for slot rendering. Defaults to "App.jsx" server-side.

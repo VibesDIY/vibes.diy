@@ -134,7 +134,13 @@ export interface LLMChat extends LLMChatEntry {
   // sectionStream blocks for the payload. Chat mode only.
   prompt(
     req: LLMRequest,
-    opts?: { inputImageBase64?: string; dryRun?: boolean; focusPath?: string; selected?: SelectedSlotInput }
+    opts?: {
+      inputImageBase64?: string;
+      dryRun?: boolean;
+      dryRunPreAllocate?: boolean;
+      focusPath?: string;
+      selected?: SelectedSlotInput;
+    }
   ): Promise<Result<ResPromptChatSection, VibesDiyError>>;
   promptFS(req: FSUpdate | VibeFile[]): Promise<Result<ResPromptChatSection, VibesDiyError>>;
 

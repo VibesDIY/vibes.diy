@@ -194,9 +194,13 @@ describe("generateEvento dry-run", () => {
     expect(out.messages).toHaveLength(2);
     expect(out.messages[0].role).toBe("system");
 
-    // dryRun:true is forwarded to the server; openChat omits prompt so no
-    // pre-allocation (vibe metadata) is produced; and no push is attempted.
-    expect((calls.prompt[0] as { opts: { dryRun?: boolean } }).opts.dryRun).toBe(true);
+    // dryRun + dryRunPreAllocate are forwarded so the server previews the real
+    // generate-path prompt (pre-allocation runs in-memory, persists nothing);
+    // openChat omits the prompt so no pre-allocation metadata is persisted; and
+    // no push is attempted.
+    const promptOpts = (calls.prompt[0] as { opts: { dryRun?: boolean; dryRunPreAllocate?: boolean } }).opts;
+    expect(promptOpts.dryRun).toBe(true);
+    expect(promptOpts.dryRunPreAllocate).toBe(true);
     expect(calls.openChat).toEqual([{ ownerHandle: "alice", appSlug: undefined, mode: "chat" }]);
     expect(calls.ensureAppSlug).toEqual([]);
 

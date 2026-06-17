@@ -2,6 +2,14 @@
 
 How PRs flow from spec to merge. The goal is to minimize cognitive overhead for the human driver — one PR per feature, clear titles, autonomous feedback handling, and an explicit ready-to-merge signal.
 
+## Always end a work session with a PR
+
+Every session that produces commits ends in an open (or updated) PR — never leave work stranded on a pushed branch with no PR. After opening or updating the PR:
+
+1. Post a comment tagging `@CharlieHelps` with specific review questions tailored to the change — what's unclear, what trade-offs need a second opinion. Don't use a generic template.
+2. **Subscribe to the PR** (so CI failures and review comments wake the session).
+3. **Apply Charlie's advice autonomously** as feedback arrives — handle it per [Handling reviewer feedback](#handling-reviewer-feedback) below, escalating to the human only when something genuinely needs more thought (API/contract changes, user-visible behavior shifts, real trade-offs).
+
 ## One PR per feature, titled for the goal
 
 A PR title is the final feature or goal, never a phase label. No `spec:`, `plan:`, `wip:`, or `draft:` prefixes. If the work starts with a spec, the PR title is still the feature the spec describes.

@@ -11,9 +11,8 @@ import {
   exception2Result,
 } from "@adviser/cement";
 import { type } from "arktype";
-import { ResEnsureAppSlug, isResError, isSectionEvent, isPromptDryRunPayload } from "@vibes.diy/api-types";
-import type { ChatMessage } from "@vibes.diy/call-ai-v2";
-import type { ResError, SectionEvent, PromptDryRunPayload, SelectedSlotInput } from "@vibes.diy/api-types";
+import { ResEnsureAppSlug, isResError, isSectionEvent } from "@vibes.diy/api-types";
+import type { ResError, SectionEvent, SelectedSlotInput } from "@vibes.diy/api-types";
 import { CliCtx, cmdTsDefaultArgs } from "../cli-ctx.js";
 import { sendMsg, sendProgress, WrapCmdTSMsg } from "../cmd-evento.js";
 import { resolveHandle } from "../resolve-handle.js";
@@ -23,6 +22,11 @@ import { resolveSectionStream } from "./resolve-section-stream.js";
 import { readProjectFiles, pushFromDir } from "./push-from-dir.js";
 import { formatErr } from "./format-err.js";
 import { formatNoFilesError } from "./format-no-files-error.js";
+import { readDryRunPayloadFromStream, formatDryRunAsText } from "./dry-run.js";
+
+// Re-exported for back-compat with importers/tests that pulled these from
+// edit-cmd before they moved to the neutral dry-run module.
+export { type DryRunPayload, readDryRunPayloadFromStream, formatDryRunAsText } from "./dry-run.js";
 
 export const ResEdit = type({
   type: "'vibes-diy.cli.res-edit'",
@@ -64,59 +68,6 @@ export type ReqEdit = typeof ReqEdit.infer;
 
 export function isReqEdit(obj: unknown): obj is ReqEdit {
   return !(ReqEdit(obj) instanceof type.errors);
-}
-
-export interface DryRunPayload {
-  readonly model: string;
-  readonly messages: ChatMessage[];
-}
-
-// Read the section stream until a prompt.dry-run-payload block for `chatId`
-// arrives, or until the stream closes / msg cap is hit. The server emits
-// exactly one such block per dryRun:true request (framed by block-begin
-// and block-end), so a small msg cap is enough.
-export async function readDryRunPayloadFromStream(
-  stream: ReadableStream<unknown>,
-  chatId: string,
-  maxMsgs = 32
-): Promise<DryRunPayload | undefined> {
-  const reader = stream.getReader();
-  let seen = 0;
-  try {
-    while (seen < maxMsgs) {
-      const { value, done } = await reader.read();
-      if (done) return undefined;
-      seen++;
-      if (!isSectionEvent(value)) continue;
-      const evt = value as SectionEvent;
-      if (evt.chatId !== chatId) continue;
-      for (const block of evt.blocks) {
-        if (isPromptDryRunPayload(block)) {
-          const b = block as PromptDryRunPayload;
-          return { model: b.request.model ?? "", messages: b.request.messages as ChatMessage[] };
-        }
-      }
-    }
-    return undefined;
-  } finally {
-    reader.releaseLock();
-  }
-}
-
-// Human-readable transcript for --text mode. Preserves message order;
-// concatenates multi-part text content; renders non-text parts as
-// [type] placeholders.
-export function formatDryRunAsText(payload: DryRunPayload): string {
-  const lines: string[] = [];
-  lines.push(`# model: ${payload.model}`);
-  lines.push("");
-  for (const msg of payload.messages) {
-    lines.push(`=== ${msg.role.toUpperCase()} ===`);
-    const rendered = msg.content.map((part) => (part.type === "text" ? part.text : `[${part.type}]`)).join("");
-    lines.push(rendered);
-    lines.push("");
-  }
-  return lines.join("\n");
 }
 
 export interface PromptOpts {
