@@ -85,7 +85,7 @@ export function dbDelCmd(ctx: CliCtx) {
       if (docId === "") {
         throw new Error("docId is required: pass as positional or --id");
       }
-      const resolved = resolveDbVibeArgs({
+      const resolved = resolveDbVibeArgs(ctx, {
         vibe: args.vibe,
         appSlug: args.appSlug,
         ownerHandle: args.ownerHandle,

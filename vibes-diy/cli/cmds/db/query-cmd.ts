@@ -170,7 +170,7 @@ export function dbQueryCmd(ctx: CliCtx) {
       }),
     },
     handler: ctx.cliStream.enqueue((args) => {
-      const resolved = resolveDbVibeArgs({
+      const resolved = resolveDbVibeArgs(ctx, {
         vibe: args.vibe,
         appSlug: args.appSlug,
         ownerHandle: args.ownerHandle,

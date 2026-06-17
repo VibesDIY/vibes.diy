@@ -1,7 +1,54 @@
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { basename } from "node:path";
 import type { CliCtx } from "../../cli-ctx.js";
 import type { VibesDiyApi } from "@vibes.diy/api-impl";
-import { openVibeDbApi } from "./shared.js";
+import { openVibeDbApi, resolveDbVibeArgs } from "./shared.js";
+
+// Minimal CliCtx stub exposing just the env lookup resolveDbVibeArgs needs.
+function ctxWithEnv(env: Record<string, string | undefined> = {}): CliCtx {
+  return { sthis: { env: { get: (k: string) => env[k] } } } as unknown as CliCtx;
+}
+
+describe("resolveDbVibeArgs", () => {
+  afterEach(() => vi.restoreAllMocks());
+
+  // #2277: --vibe must win over the cwd-inferred app-slug default. The
+  // appSlug arg is "" (the option default) when the user did not type
+  // --app-slug, so no conflict should fire even from a differently-named dir.
+  it("--vibe wins over the cwd default (no explicit --app-slug)", () => {
+    expect(
+      resolveDbVibeArgs(ctxWithEnv(), { vibe: "og/pickathon-picker", appSlug: "", ownerHandle: "", ownerHandleDeprecated: "" })
+    ).toEqual({ appSlug: "pickathon-picker", ownerHandle: "og" });
+  });
+
+  it("still conflicts when an explicit --app-slug disagrees with --vibe", () => {
+    expect(() =>
+      resolveDbVibeArgs(ctxWithEnv(), {
+        vibe: "og/pickathon-picker",
+        appSlug: "other-app",
+        ownerHandle: "",
+        ownerHandleDeprecated: "",
+      })
+    ).toThrowError('Conflicting values: --vibe "og/pickathon-picker" disagrees with --app-slug "other-app"');
+  });
+
+  it("falls back to VIBES_APP_SLUG when no vibe/app-slug is given", () => {
+    expect(
+      resolveDbVibeArgs(ctxWithEnv({ VIBES_APP_SLUG: "env-app" }), {
+        vibe: "",
+        appSlug: "",
+        ownerHandle: "alice",
+        ownerHandleDeprecated: "",
+      })
+    ).toEqual({ appSlug: "env-app", ownerHandle: "alice" });
+  });
+
+  it("falls back to basename(cwd) when neither vibe, app-slug, nor env is set", () => {
+    expect(
+      resolveDbVibeArgs(ctxWithEnv(), { vibe: "", appSlug: "", ownerHandle: "", ownerHandleDeprecated: "" })
+    ).toEqual({ appSlug: basename(process.cwd()), ownerHandle: "" });
+  });
+});
 
 // #2343: db data commands must route to the per-vibe AppSessions DO
 // (/api/app?vibe=<owner>--<app>, skipShard) so reads/writes/subscriptions share
