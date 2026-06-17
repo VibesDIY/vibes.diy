@@ -6,7 +6,7 @@ import { Result, BuildURI } from "@adviser/cement";
 import { isUserSettingDefaultHandle } from "@vibes.diy/api-types";
 import { resolveVibeArgs } from "../../parse-vibe.js";
 
-export function dbCommonArgs(_ctx: CliCtx) {
+export function dbCommonArgs() {
   return {
     vibe: option({
       long: "vibe",

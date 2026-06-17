@@ -130,7 +130,7 @@ export function dbQueryCmd(ctx: CliCtx) {
     description: "Query documents by field value with optional key/prefix/range/limit filters",
     args: {
       ...cmdTsDefaultArgs(ctx),
-      ...dbCommonArgs(ctx),
+      ...dbCommonArgs(),
       field: positional({
         type: string,
         displayName: "field",

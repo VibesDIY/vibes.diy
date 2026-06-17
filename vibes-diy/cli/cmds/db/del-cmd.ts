@@ -66,7 +66,7 @@ export function dbDelCmd(ctx: CliCtx) {
     description: "Delete a document by ID",
     args: {
       ...cmdTsDefaultArgs(ctx),
-      ...dbCommonArgs(ctx),
+      ...dbCommonArgs(),
       docIdPositional: positional({
         type: optional(string),
         displayName: "docId",

@@ -74,7 +74,7 @@ export function dbSubscribeCmd(ctx: CliCtx) {
       "Tail real-time doc-changed events for a database (Ctrl+C to exit). Reconnects mid-stream; events that fire during the gap are not backfilled.",
     args: {
       ...cmdTsDefaultArgs(ctx),
-      ...dbCommonArgs(ctx),
+      ...dbCommonArgs(),
     },
     handler: ctx.cliStream.enqueue((args) => {
       const resolved = resolveDbVibeArgs(ctx, {

@@ -75,7 +75,7 @@ export function dbPutCmd(ctx: CliCtx) {
     description: "Put (create or update) a document. Pass JSON on argv or '-' to read from stdin.",
     args: {
       ...cmdTsDefaultArgs(ctx),
-      ...dbCommonArgs(ctx),
+      ...dbCommonArgs(),
       docJson: positional({
         type: string,
         displayName: "json",
