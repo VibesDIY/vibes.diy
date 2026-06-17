@@ -269,6 +269,23 @@ function CommentsPolicyToggle({ ownerHandle, appSlug, isOpen }: { ownerHandle: s
   );
 }
 
+// Owner-only toggle between User and Admin viewing mode. The state itself is
+// lifted in the route (it also feeds the pill's badges), so this is purely the
+// control UI — flipping it calls back into the route's toggleAdmin.
+function AdminModeToggle({ adminMode, onToggle }: { adminMode: boolean; onToggle: () => void }) {
+  return (
+    <label className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+      <input
+        type="checkbox"
+        checked={adminMode}
+        onChange={() => onToggle()}
+        className="rounded border-gray-300 dark:border-gray-600"
+      />
+      <span>Admin mode</span>
+    </label>
+  );
+}
+
 interface ShareModalProps {
   modal: UseShareModalReturn;
   /** Where to position the popover relative to the trigger button. Default "below". */
@@ -278,6 +295,14 @@ interface ShareModalProps {
    * and treat the viewer as a moderator for comment deletion.
    */
   isOwner?: boolean;
+  /**
+   * Current admin-mode state (owner-only). Lifted in the route because it also
+   * drives the pill's badges. Renders the User/Admin toggle when paired with
+   * onToggleAdmin and isOwner.
+   */
+  adminMode?: boolean;
+  /** Flip admin mode; persists to localStorage and refreshes the viewer. */
+  onToggleAdmin?: () => void;
   /**
    * Viewer's role on this vibe — used to disable the comments composer up
    * front when the owner has set "Only collaborators can comment". Defaults
@@ -342,7 +367,14 @@ function OwnerSharingPanel({ ownerHandle, appSlug, enabled }: { ownerHandle: str
   );
 }
 
-export function ShareModal({ modal, placement = "below", isOwner = false, myGrant = "none" }: ShareModalProps) {
+export function ShareModal({
+  modal,
+  placement = "below",
+  isOwner = false,
+  myGrant = "none",
+  adminMode = false,
+  onToggleAdmin,
+}: ShareModalProps) {
   const isMobile = useIsMobile();
   const commentsEditorsOnly = useCommentsEditorsOnly(modal.ownerHandle, modal.appSlug, modal.isOpen);
   // Composer is disabled when the owner has restricted commenting to editors
@@ -458,6 +490,7 @@ export function ShareModal({ modal, placement = "below", isOwner = false, myGran
               : "mt-3 pt-3 border-t border-gray-200 dark:border-gray-700 space-y-3"
           }
         >
+          {isOwner && onToggleAdmin ? <AdminModeToggle adminMode={adminMode} onToggle={onToggleAdmin} /> : null}
           {isOwner ? <CommentsPolicyToggle ownerHandle={modal.ownerHandle} appSlug={modal.appSlug} isOpen={modal.isOpen} /> : null}
           <MembersSection ownerHandle={modal.ownerHandle} appSlug={modal.appSlug} />
           <CommentsSection

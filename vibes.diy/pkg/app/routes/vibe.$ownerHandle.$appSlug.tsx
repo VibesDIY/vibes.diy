@@ -696,19 +696,14 @@ export default function VibeIframeWrapper() {
                 }}
                 onLogin={authSignedIn ? undefined : () => clerk.openSignIn()}
               />
-              <ShareModal modal={shareModal} placement="above" isOwner={isOwner} myGrant={myGrant} />
-              {isOwner && (
-                <button
-                  onClick={toggleAdmin}
-                  className="mt-2 flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-medium"
-                  style={{
-                    backgroundColor: adminMode ? "var(--vibes-accent)" : "var(--vibes-bg-secondary)",
-                    color: adminMode ? "var(--vibes-bg-primary)" : "var(--vibes-text-secondary)",
-                  }}
-                >
-                  <span>{adminMode ? "Admin" : "User"}</span>
-                </button>
-              )}
+              <ShareModal
+                modal={shareModal}
+                placement="above"
+                isOwner={isOwner}
+                myGrant={myGrant}
+                adminMode={adminMode}
+                onToggleAdmin={isOwner ? toggleAdmin : undefined}
+              />
             </Delayed>
           </div>,
           document.body
