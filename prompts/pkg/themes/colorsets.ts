@@ -273,9 +273,7 @@ export function parseColorsetYaml(raw: string): Colorset {
   const rawDark = hasKey(raw, "colorsDark") ? readMap(raw, "colorsDark") : undefined;
   const explicitExtrasDark = hasKey(raw, "extrasDark") ? readMap(raw, "extrasDark") : {};
   const rawStructural = hasKey(raw, "structural") ? readMap(raw, "structural") : undefined;
-  const explicitStructuralExtras = hasKey(raw, "structuralExtras")
-    ? readMap(raw, "structuralExtras")
-    : {};
+  const explicitStructuralExtras = hasKey(raw, "structuralExtras") ? readMap(raw, "structuralExtras") : {};
 
   const light = splitCanonical(rawColors);
   const lightExtras = { ...light.extras, ...explicitExtras };
@@ -385,10 +383,7 @@ function stripLegacyColorsSection(md: string): string {
 // values and only ~30% of the UI restyles. The live runtime push still
 // includes extras (default true) so existing apps with bespoke tokens
 // remain interactive in the modal.
-export function renderRootCssBlock(
-  colorset: Colorset,
-  options: { includeExtras?: boolean } = {}
-): string {
+export function renderRootCssBlock(colorset: Colorset, options: { includeExtras?: boolean } = {}): string {
   const includeExtras = options.includeExtras !== false;
   const lightColors = deriveCanonical(colorset.colors);
   const darkColors = colorset.colorsDark ? deriveCanonical(colorset.colorsDark) : undefined;
@@ -403,15 +398,15 @@ export function renderRootCssBlock(
   // `:root` block alongside the light colors. The dark @media block only
   // overrides colors that flip on theme.
   const allLight = {
-    ...(includeExtras ? colorset.extras ?? {} : {}),
+    ...(includeExtras ? (colorset.extras ?? {}) : {}),
     ...lightColors,
     ...structural,
-    ...(includeExtras ? colorset.structuralExtras ?? {} : {}),
+    ...(includeExtras ? (colorset.structuralExtras ?? {}) : {}),
   };
   const allDark =
     darkColors || (includeExtras && colorset.extrasDark)
       ? {
-          ...(includeExtras ? colorset.extrasDark ?? {} : {}),
+          ...(includeExtras ? (colorset.extrasDark ?? {}) : {}),
           ...(darkColors ?? {}),
         }
       : undefined;
@@ -511,14 +506,10 @@ function injectColorsIntoFrontmatter(md: string, colorset: Colorset): string {
 
   // Drop any existing colors/extras/structural blocks so the colorset is the
   // sole source of truth in the composed output.
-  const stripped = [
-    "colorsDark",
-    "colors",
-    "extrasDark",
-    "extras",
-    "structuralExtras",
-    "structural",
-  ].reduce((acc, key) => stripBlock(acc, key), original);
+  const stripped = ["colorsDark", "colors", "extrasDark", "extras", "structuralExtras", "structural"].reduce(
+    (acc, key) => stripBlock(acc, key),
+    original
+  );
 
   const blocks: string[] = [];
   blocks.push(renderColorBlock("colors", colorset.colors));

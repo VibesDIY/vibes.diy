@@ -29,10 +29,12 @@ that locks all of it in.
 ## File Map
 
 **Create:**
+
 - `prompts/scripts/rebuild-colorsets-from-exemplars.mjs` — deterministic yaml rebuilder.
 - `prompts/tests/theme-completeness.test.ts` — catalog-wide guardrail suite.
 
 **Modify:**
+
 - `prompts/pkg/themes/colorsets.ts` — `deriveCanonical` backfill; valid-JS `classNames`; discipline-block reframing.
 - `prompts/pkg/themes/colors/*.yaml` — rebuilt (44 files, script output).
 - `prompts/pkg/themes/colorsets-bundle.ts` — regenerated.
@@ -48,7 +50,7 @@ that locks all of it in.
 
 **Files:** `prompts/pkg/themes/colorsets.ts`, `prompts/tests/themes.test.ts`
 
-- [ ] **Step 1 — failing tests.** In a new `describe("deriveCanonical backfills every core slot")` in `themes.test.ts`, assert that for a yaml with only `background` + `text-primary`, the composed `:root` contains `--surface`, `--secondary`, `--border`, `--text-secondary`, `--primary`, `--accent` (non-empty) **and that each value is a valid CSS color** (e.g. `CSS.supports('color', value)` under jsdom, or assert the derived `text-secondary` matches `/^color-mix\(in srgb, var\(--text-primary\)/`). A non-empty check alone is insufficient — a malformed `color-mix` would pass it while breaking `text-[var(--text-secondary)]`. Add a test that the emitted `classNames` example parses: `expect(() => new Function(exampleBlockJs)).not.toThrow()` (extract the ```js block). Run from the prompts-test workspace: `cd prompts/tests && pnpm vitest run themes.test.ts` (equivalently `pnpm --filter @vibes.diy/prompts-test exec vitest run themes.test.ts`). The `vibes.diy/tests` dir is a different workspace and has no `vitest` bin for these files. → expect FAIL.
+- [ ] **Step 1 — failing tests.** In a new `describe("deriveCanonical backfills every core slot")` in `themes.test.ts`, assert that for a yaml with only `background` + `text-primary`, the composed `:root` contains `--surface`, `--secondary`, `--border`, `--text-secondary`, `--primary`, `--accent` (non-empty) **and that each value is a valid CSS color** (e.g. `CSS.supports('color', value)` under jsdom, or assert the derived `text-secondary` matches `/^color-mix\(in srgb, var\(--text-primary\)/`). A non-empty check alone is insufficient — a malformed `color-mix` would pass it while breaking `text-[var(--text-secondary)]`. Add a test that the emitted `classNames` example parses: `expect(() => new Function(exampleBlockJs)).not.toThrow()` (extract the ```js block). Run from the prompts-test workspace: `cd prompts/tests && pnpm vitest run themes.test.ts`(equivalently`pnpm --filter @vibes.diy/prompts-test exec vitest run themes.test.ts`). The `vibes.diy/tests`dir is a different workspace and has no`vitest` bin for these files. → expect FAIL.
 - [ ] **Step 2 — implement backfill** in `deriveCanonical()`: add `surface←background`, `secondary←accent??primary`, `border←text-primary??neutral`, and `text-secondary` as a **valid CSS color expression built from `var()` refs**, not bare identifiers: `out["text-secondary"] = "color-mix(in srgb, var(--text-primary) 60%, var(--background))"` (only when both source slots exist; else fall back to a concrete neutral mid). Using `var(--…)` (rather than the resolved values) keeps the derived secondary correct under a live palette swap, since `:root` re-resolves it when `--text-primary`/`--background` change. Add last-resort `background`/`text-primary` neutrals so the `:root` is never empty. Keep existing primary↔accent + state fills. Order matters — fill `primary/accent` first, then `secondary`, then surface/border/text-secondary.
 - [ ] **Step 3 — fix `classNames` keys** in `renderTokenDisciplineBlock`'s `tokenList`: quote each key — `  '${k}': 'bg-[var(--${k})]',`. (Also fixes `container`/`body` consistency — those are already valid.)
 - [ ] **Step 4 — run** the themes test → expect PASS. Then `pnpm --filter @vibes.diy/prompts build`.
@@ -74,7 +76,7 @@ that locks all of it in.
 > Gated on spec Q3. If review wants strict-only, skip the "encourage richness"
 > reframe and instead lean on task 4.
 
-- [ ] **Step 1 — reframe** `renderTokenDisciplineBlock` prose: replace "copy VERBATIM / DO NOT introduce … FORBIDDEN to add anything" with the positive framing from the spec §3 — canonical `:root` is the swap contract; express core surfaces/text/actions/borders through it; build richness *on top* (gradients/shadows/decorative pseudo-elements/`color-mix(...,var(--canonical))`); bespoke flourish values may be inlined locally, never in `:root`. Keep the "no color literals in bracket classes" + dark-mode rules.
+- [ ] **Step 1 — reframe** `renderTokenDisciplineBlock` prose: replace "copy VERBATIM / DO NOT introduce … FORBIDDEN to add anything" with the positive framing from the spec §3 — canonical `:root` is the swap contract; express core surfaces/text/actions/borders through it; build richness _on top_ (gradients/shadows/decorative pseudo-elements/`color-mix(...,var(--canonical))`); bespoke flourish values may be inlined locally, never in `:root`. Keep the "no color literals in bracket classes" + dark-mode rules.
 - [ ] **Step 2 — update** any `themes.test.ts` assertions that pinned the old wording (e.g. checks for `"VERBATIM"` / `"DO NOT introduce theme-specific tokens"`). Replace with assertions on the new contract language; keep the structural-bracket and no-`bg-[#hex]` checks.
 - [ ] **Step 3 — run** themes test → PASS. `pnpm --filter @vibes.diy/prompts build`.
 - [ ] **Step 4 — commit:** `feat(prompts): reframe token-discipline block as swap contract, not gag (#2356)`.
