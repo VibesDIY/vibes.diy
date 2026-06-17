@@ -6,8 +6,6 @@ colors:
   text-primary: "oklch(0.20 0.02 60)"
   text-secondary: "oklch(0.50 0.02 60)"
   border: "oklch(0.88 0.01 70)"
-extras:
-  accent-text: "oklch(1.00 0 0)"
 colorsDark:
   background: "oklch(0.18 0.04 60)"
   surface: "oklch(0.22 0.04 60)"
@@ -15,5 +13,14 @@ colorsDark:
   text-primary: "oklch(0.95 0.01 80)"
   text-secondary: "oklch(0.55 0.03 60)"
   border: "oklch(0.35 0.04 60)"
+extras:
+  accent-text: "oklch(1.00 0 0)"
+  raised: "oklch(0.99 0.01 80)"
 extrasDark:
   accent-text: "oklch(0.12 0.04 60)"
+  raised: "oklch(0.20 0.04 60)"
+structural:
+  font-family: "'Inter', sans-serif"
+  font-family-mono: "ui-monospace, 'JetBrains Mono', Menlo, monospace"
+  radius: "14px"
+  radius-sm: "8px"

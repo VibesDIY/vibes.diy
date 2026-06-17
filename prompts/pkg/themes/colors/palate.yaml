@@ -1,8 +1,15 @@
 name: Palate Notes
 colors:
   background: "oklch(0.17 0.000 0)"
-  text-primary: "oklch(0.93 0.006 265)"
-  text-secondary: "oklch(0.71 0.02 261)"
-  border: "oklch(0.37 0.03 260)"
+  text-primary: "rgba(255, 255, 255, 0.92)"
+  text-secondary: "rgba(255, 255, 255, 0.55)"
+  border: "rgba(255, 255, 255, 0.18)"
+  accent: "oklch(0.93 0.006 265)"
+  surface: "rgba(255, 255, 255, 0.04)"
 extras:
   dot: "oklch(0.93 0.006 265)"
+  raised: "rgba(255, 255, 255, 0.06)"
+  accent-text: "#0a0a0a"
+structural:
+  font-family: "'Cormorant Garamond', serif"
+  font-family-mono: "ui-monospace, 'JetBrains Mono', Menlo, monospace"

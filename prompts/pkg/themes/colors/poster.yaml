@@ -1,10 +1,14 @@
 name: Poster
 colors:
   background: "oklch(0.11 0.01 270)"
-  surface: "oklch(0.13 0.01 270)"
+  surface: "rgba(255, 255, 255, 0.04)"
   accent: "oklch(0.65 0.18 290)"
-  text-primary: "oklch(0.93 0.01 270)"
-  text-secondary: "oklch(0.42 0.01 270)"
-  border: "oklch(0.22 0.01 270)"
+  text-primary: "rgba(255, 255, 255, 0.92)"
+  text-secondary: "rgba(255, 255, 255, 0.55)"
+  border: "rgba(255, 255, 255, 0.18)"
 extras:
-  accent-text: "oklch(0.10 0.01 270)"
+  accent-text: "#0a0a0a"
+  raised: "rgba(255, 255, 255, 0.06)"
+structural:
+  font-family: "'Inter', sans-serif"
+  font-family-mono: "ui-monospace, 'JetBrains Mono', Menlo, monospace"

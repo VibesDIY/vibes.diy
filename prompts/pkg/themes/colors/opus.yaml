@@ -1,10 +1,11 @@
 name: Opus Cabinet
 colors:
   background: "oklch(0.06 0.000 0)"
-  surface: "oklch(0.12 0.000 0)"
-  text-primary: "oklch(0.90 0.000 0)"
-  text-secondary: "oklch(0.57 0.000 0)"
-  border: "oklch(0.27 0.000 0)"
+  surface: "rgba(255, 255, 255, 0.04)"
+  text-primary: "rgba(255, 255, 255, 0.92)"
+  text-secondary: "rgba(255, 255, 255, 0.55)"
+  border: "rgba(255, 255, 255, 0.18)"
+  accent: "oklch(0.12 0.000 0)"
 extras:
   bg-card: "oklch(0.13 0.000 0)"
   bg-elevated: "oklch(0.15 0.000 0)"
@@ -25,3 +26,8 @@ extras:
   iron-text: "oklch(0.83 0.020 240)"
   text-muted: "oklch(0.40 0.000 0)"
   border-hover: "oklch(0.55 0.090 75)"
+  raised: "rgba(255, 255, 255, 0.06)"
+  accent-text: "#0a0a0a"
+structural:
+  font-family: "'Cinzel', serif"
+  font-family-mono: "ui-monospace, 'JetBrains Mono', Menlo, monospace"

@@ -1,12 +1,28 @@
 name: Mesh Void
 colors:
-  surface: "oklch(0.10 0.000 0)"
+  surface: "rgba(255, 255, 255, 0.85)"
   accent: "oklch(0.87 0.28 145)"
-  text-primary: "oklch(1.00 0.000 0)"
-  text-secondary: "oklch(0.49 0.000 0)"
-  border: "oklch(1.00 0.000 0 / 0.15)"
+  text-primary: "rgba(20, 20, 20, 0.92)"
+  text-secondary: "rgba(20, 20, 20, 0.5)"
+  border: "rgba(20, 20, 20, 0.14)"
+  background: "#fff"
+colorsDark:
+  accent: "oklch(0.13 0.28 145)"
+  border: "rgba(255, 255, 255, 0.18)"
+  background: "#0f0f0f"
+  text-primary: "rgba(255, 255, 255, 0.92)"
+  text-secondary: "rgba(255, 255, 255, 0.55)"
+  surface: "rgba(255, 255, 255, 0.04)"
 extras:
   void: "oklch(0.07 0.000 0)"
   fg-dim: "oklch(0.30 0.000 0)"
   hover: "oklch(0.13 0.000 0)"
   ring: "oklch(0.36 0.000 0)"
+  raised: "rgba(255, 255, 255, 0.55)"
+  accent-text: "#fafafa"
+extrasDark:
+  raised: "rgba(255, 255, 255, 0.06)"
+  accent-text: "#0a0a0a"
+structural:
+  font-family: "'Inter', -apple-system, sans-serif"
+  font-family-mono: "ui-monospace, 'JetBrains Mono', Menlo, monospace"

@@ -1,6 +1,11 @@
 name: Terminal CRT
 colors:
   background: "oklch(0.16 0.000 0)"
+  accent: "oklch(0.00 0.000 0 / 0.85)"
+  border: "rgba(255, 255, 255, 0.18)"
+  text-primary: "rgba(255, 255, 255, 0.92)"
+  text-secondary: "rgba(255, 255, 255, 0.55)"
+  surface: "rgba(255, 255, 255, 0.04)"
 extras:
   terminal: "oklch(0.00 0.000 0 / 0.85)"
   green: "oklch(0.87 0.30 142)"
@@ -8,3 +13,8 @@ extras:
   green-border: "oklch(0.87 0.30 142 / 0.3)"
   green-faint: "oklch(0.87 0.30 142 / 0.1)"
   white: "oklch(1.00 0.000 0)"
+  raised: "rgba(255, 255, 255, 0.06)"
+  accent-text: "#0a0a0a"
+structural:
+  font-family: "'VT323', monospace"
+  font-family-mono: "'VT323', monospace"

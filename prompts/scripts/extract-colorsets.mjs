@@ -262,6 +262,13 @@ function formatColorset(cs) {
 }
 
 async function main() {
+  // `--bundle-only` regenerates colorsets-bundle.ts from the current yamls
+  // without re-extracting from .md frontmatter (which is now empty post-split).
+  // Used after rebuild-colorsets-from-exemplars.mjs writes new yamls.
+  if (process.argv.includes("--bundle-only")) {
+    await buildBundle();
+    return;
+  }
   await mkdir(colorsDir, { recursive: true });
   const files = (await readdir(themesDir)).filter((f) => f.endsWith(".md"));
   for (const file of files) {

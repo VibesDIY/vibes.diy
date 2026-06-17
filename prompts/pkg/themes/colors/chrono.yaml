@@ -2,6 +2,24 @@ name: Chrono
 colors:
   background: "#dde1e7"
   accent: "#6c8ee6"
-  text-primary: "#5a6270"
+  text-primary: "rgba(20, 20, 20, 0.92)"
+  border: "rgba(20, 20, 20, 0.14)"
+  text-secondary: "rgba(20, 20, 20, 0.5)"
+  surface: "rgba(255, 255, 255, 0.85)"
+colorsDark:
+  accent: "#193b93"
+  border: "rgba(255, 255, 255, 0.18)"
+  background: "#181c22"
+  text-primary: "rgba(255, 255, 255, 0.92)"
+  text-secondary: "rgba(255, 255, 255, 0.55)"
+  surface: "rgba(255, 255, 255, 0.04)"
 extras:
   text-dark: "#3a3f4a"
+  raised: "rgba(255, 255, 255, 0.55)"
+  accent-text: "#fafafa"
+extrasDark:
+  raised: "rgba(255, 255, 255, 0.06)"
+  accent-text: "#0a0a0a"
+structural:
+  font-family: "'Inter', sans-serif"
+  font-family-mono: "ui-monospace, 'JetBrains Mono', Menlo, monospace"

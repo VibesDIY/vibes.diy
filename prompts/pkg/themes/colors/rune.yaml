@@ -1,7 +1,18 @@
 name: Rune Interface
 colors:
-  text-primary: "#b0c4cc"
-  text-secondary: "#4a6070"
+  text-primary: "rgba(20, 20, 20, 0.92)"
+  text-secondary: "rgba(20, 20, 20, 0.5)"
+  accent: "#020406"
+  border: "rgba(20, 20, 20, 0.14)"
+  background: "#fff"
+  surface: "rgba(255, 255, 255, 0.85)"
+colorsDark:
+  accent: "#ecf2f9"
+  border: "rgba(255, 255, 255, 0.18)"
+  background: "#0f0f0f"
+  text-primary: "rgba(255, 255, 255, 0.92)"
+  text-secondary: "rgba(255, 255, 255, 0.55)"
+  surface: "rgba(255, 255, 255, 0.04)"
 extras:
   abyss: "#020406"
   abyss-blue: "#05101a"
@@ -12,3 +23,11 @@ extras:
   stone: "#0d161f"
   stone-border: "#1c2b38"
   stone-light: "#162330"
+  raised: "rgba(255, 255, 255, 0.55)"
+  accent-text: "#fafafa"
+extrasDark:
+  raised: "rgba(255, 255, 255, 0.06)"
+  accent-text: "#0a0a0a"
+structural:
+  font-family: "'Cormorant Garamond', Georgia, serif"
+  font-family-mono: "ui-monospace, 'JetBrains Mono', Menlo, monospace"

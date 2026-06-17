@@ -1,12 +1,17 @@
 name: Sensor Dashboard
 colors:
   background: "oklch(0.10 0.003 264)"
-  surface: "oklch(0.16 0.003 264)"
+  surface: "rgba(255, 255, 255, 0.04)"
   accent: "oklch(0.53 0.22 25)"
-  text-primary: "oklch(0.93 0.005 264)"
-  text-secondary: "oklch(0.63 0.008 264)"
-  border: "oklch(0.24 0.003 264)"
+  text-primary: "rgba(255, 255, 255, 0.92)"
+  text-secondary: "rgba(255, 255, 255, 0.55)"
+  border: "rgba(255, 255, 255, 0.18)"
 extras:
   panel-hi: "oklch(0.19 0.003 264)"
   bar-bg: "oklch(0.20 0.005 264)"
   accent-weak: "oklch(0.45 0.19 25)"
+  raised: "rgba(255, 255, 255, 0.06)"
+  accent-text: "#0a0a0a"
+structural:
+  font-family: "'IBM Plex Mono', ui-monospace, monospace"
+  font-family-mono: "'IBM Plex Mono', ui-monospace, monospace"

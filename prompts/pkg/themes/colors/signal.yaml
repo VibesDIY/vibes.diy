@@ -1,8 +1,14 @@
 name: Signal
 colors:
   background: "#030303"
-  surface: "#0a0a0a"
+  surface: "rgba(255, 255, 255, 0.04)"
   accent: "#ffffff"
-  text-primary: "#eaeaea"
-  text-secondary: "#666"
-  border: "#1a1a1a"
+  text-primary: "rgba(255, 255, 255, 0.92)"
+  text-secondary: "rgba(255, 255, 255, 0.55)"
+  border: "rgba(255, 255, 255, 0.18)"
+extras:
+  raised: "rgba(255, 255, 255, 0.06)"
+  accent-text: "#0a0a0a"
+structural:
+  font-family: "'Inter', sans-serif"
+  font-family-mono: "ui-monospace, 'JetBrains Mono', Menlo, monospace"

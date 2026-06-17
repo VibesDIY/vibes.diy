@@ -1,11 +1,15 @@
 name: Vault
 colors:
   background: "oklch(0.08 0.03 280)"
-  surface: "oklch(0.12 0.03 280 / 0.7)"
+  surface: "rgba(255, 255, 255, 0.04)"
   accent: "oklch(0.72 0.15 75)"
-  text-primary: "oklch(0.93 0.02 80)"
-  text-secondary: "oklch(0.50 0.04 290)"
-  border: "oklch(0.65 0.15 80 / 0.12)"
+  text-primary: "rgba(255, 255, 255, 0.92)"
+  text-secondary: "rgba(255, 255, 255, 0.55)"
+  border: "rgba(255, 255, 255, 0.18)"
 extras:
-  accent-text: "oklch(0.10 0.03 280)"
+  accent-text: "#0a0a0a"
   purple: "oklch(0.55 0.18 300)"
+  raised: "rgba(255, 255, 255, 0.06)"
+structural:
+  font-family: "'Inter', sans-serif"
+  font-family-mono: "ui-monospace, 'JetBrains Mono', Menlo, monospace"

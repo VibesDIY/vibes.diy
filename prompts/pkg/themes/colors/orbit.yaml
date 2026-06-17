@@ -1,9 +1,18 @@
 name: Orbit Dashboard
 colors:
-  surface: "oklch(0.00 0.000 0)"
-  text-primary: "oklch(1.00 0.000 0)"
-  text-secondary: "oklch(0.71 0.02 261)"
-  border: "oklch(0.37 0.03 260)"
+  surface: "rgba(255, 255, 255, 0.85)"
+  text-primary: "rgba(20, 20, 20, 0.92)"
+  text-secondary: "rgba(20, 20, 20, 0.5)"
+  border: "rgba(20, 20, 20, 0.14)"
+  accent: "oklch(0.79 0.21 152)"
+  background: "#fff"
+colorsDark:
+  accent: "oklch(0.21 0.21 152)"
+  border: "rgba(255, 255, 255, 0.18)"
+  background: "#0f0f0f"
+  text-primary: "rgba(255, 255, 255, 0.92)"
+  text-secondary: "rgba(255, 255, 255, 0.55)"
+  surface: "rgba(255, 255, 255, 0.04)"
 extras:
   bg-gradient-from: "oklch(0.56 0.29 302)"
   bg-gradient-to: "oklch(0.44 0.22 304)"
@@ -14,3 +23,11 @@ extras:
   accent-blue: "oklch(0.71 0.17 255)"
   accent-yellow: "oklch(0.85 0.20 92)"
   accent-orange: "oklch(0.75 0.18 56)"
+  raised: "rgba(255, 255, 255, 0.55)"
+  accent-text: "#fafafa"
+extrasDark:
+  raised: "rgba(255, 255, 255, 0.06)"
+  accent-text: "#0a0a0a"
+structural:
+  font-family: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
+  font-family-mono: "ui-monospace, 'JetBrains Mono', Menlo, monospace"

@@ -1,6 +1,18 @@
 name: EDGE INTERFACE
 colors:
-  surface: "rgba(15, 5, 20, 0.85)"
+  surface: "rgba(255, 255, 255, 0.85)"
+  accent: "#ff0077"
+  border: "rgba(20, 20, 20, 0.14)"
+  background: "#fff"
+  text-primary: "rgba(20, 20, 20, 0.92)"
+  text-secondary: "rgba(20, 20, 20, 0.5)"
+colorsDark:
+  accent: "#ff0077"
+  border: "rgba(255, 255, 255, 0.18)"
+  background: "#0f0f0f"
+  text-primary: "rgba(255, 255, 255, 0.92)"
+  text-secondary: "rgba(255, 255, 255, 0.55)"
+  surface: "rgba(255, 255, 255, 0.04)"
 extras:
   pink: "#ff0077"
   yellow: "#fcee0a"
@@ -8,3 +20,11 @@ extras:
   void: "#0a0205"
   vignette: "#2a0a2e"
   panel-border: "rgba(255, 0, 119, 0.6)"
+  raised: "rgba(255, 255, 255, 0.55)"
+  accent-text: "#fafafa"
+extrasDark:
+  raised: "rgba(255, 255, 255, 0.06)"
+  accent-text: "#0a0a0a"
+structural:
+  font-family: "system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif"
+  font-family-mono: "ui-monospace, 'JetBrains Mono', Menlo, monospace"

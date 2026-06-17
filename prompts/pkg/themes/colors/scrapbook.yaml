@@ -1,10 +1,29 @@
 name: Scrapbook
 colors:
-  text-primary: "oklch(0.12 0.01 0)"
-  text-secondary: "oklch(0.45 0.01 0)"
+  text-primary: "rgba(20, 20, 20, 0.92)"
+  text-secondary: "rgba(20, 20, 20, 0.5)"
+  accent: "oklch(0.93 0.03 130)"
+  border: "rgba(20, 20, 20, 0.14)"
+  background: "#fff"
+  surface: "rgba(255, 255, 255, 0.85)"
+colorsDark:
+  accent: "oklch(0.07 0.03 130)"
+  border: "rgba(255, 255, 255, 0.18)"
+  background: "#0f0f0f"
+  text-primary: "rgba(255, 255, 255, 0.92)"
+  text-secondary: "rgba(255, 255, 255, 0.55)"
+  surface: "rgba(255, 255, 255, 0.04)"
 extras:
   desk: "oklch(0.93 0.03 130)"
   paper: "oklch(0.97 0.01 80)"
   yellow: "oklch(0.93 0.12 95)"
   pink: "oklch(0.90 0.06 10)"
   blue: "oklch(0.90 0.05 240)"
+  raised: "rgba(255, 255, 255, 0.55)"
+  accent-text: "#fafafa"
+extrasDark:
+  raised: "rgba(255, 255, 255, 0.06)"
+  accent-text: "#0a0a0a"
+structural:
+  font-family: "'Inter', sans-serif"
+  font-family-mono: "ui-monospace, 'JetBrains Mono', Menlo, monospace"
