@@ -4,7 +4,7 @@ import { MyAppsSection } from "./MyAppsSection.js";
 import { quickSuggestions } from "../data/quick-suggestions-data.js";
 import { useVibesDiy } from "../vibes-diy-provider.js";
 import { useTheme } from "../contexts/ThemeContext.js";
-import { useNavigate, PrefetchPageLinks } from "react-router";
+import { useNavigate, Link } from "react-router";
 import { BuildURI } from "@adviser/cement";
 import { VibesButton, ArrowLeftIcon, ArrowRightIcon, gridBackground, cx } from "@vibes.diy/base";
 import { PillPortal, PILL_CLEARANCE_Y } from "./PillPortal.js";
@@ -51,6 +51,10 @@ export default function HomePage() {
   // The /chat/prompt route pulls in the heavy Chat chunk. Submitting only does a
   // base64 encode + navigate, but the perceived lag (#2207) is that chunk loading
   // on demand. Prefetch it on first interaction intent so navigation is instant.
+  // A hidden <Link prefetch="render"> (not a bare PrefetchPageLinks) is required:
+  // lazy route discovery ("Fog of War") is on, so /chat/prompt isn't in the client
+  // manifest after a home load. The Link's data-discover anchor patches it into the
+  // manifest, and prefetch then warms the module chunk.
   const [prefetchChat, setPrefetchChat] = useState(false);
   const handlePrefetchChat = useCallback(() => setPrefetchChat(true), []);
 
@@ -171,7 +175,11 @@ export default function HomePage() {
 
   return (
     <>
-      {prefetchChat && <PrefetchPageLinks page="/chat/prompt" />}
+      {prefetchChat && (
+        <Link to="/chat/prompt" prefetch="render" aria-hidden tabIndex={-1} style={{ display: "none" }}>
+          {""}
+        </Link>
+      )}
       <PillPortal isActive={isSidebarVisible} onToggle={setIsSidebarVisible} />
       <div className={cx(gridBackground, "page-grid-background min-h-screen min-h-[100svh] min-h-[100dvh] w-full")}>
         <div className="px-6 md:px-8 pb-8 pt-0">
