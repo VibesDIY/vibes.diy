@@ -327,17 +327,26 @@ export function promptReducer(state: PromptState, block: PromptAction): PromptSt
         current: { ...state.current, msgs: [...state.current.msgs, block] },
         blocks: state.blocks.map((b, i) => (i === state.blocks.length - 1 ? { ...b, msgs: [...b.msgs, block] } : b)),
       };
-    case isPromptReq(block):
-      // The server echoes the submitted prompt back as prompt.req. Once it
-      // lands the real <Prompt> bubble renders, so retire the optimistic one
-      // in the same dispatch — no flash, no duplicate.
-      if (!state.current) return { ...state, optimisticPrompt: undefined };
+    case isPromptReq(block): {
+      // The server echoes the submitted prompt back as prompt.req; the real
+      // <Prompt> bubble then renders, so retire the optimistic one in the same
+      // dispatch — no flash, no duplicate. But a reconnect replays older turns'
+      // prompt.reqs first (replayReset keeps optimisticPrompt + inFlightStreamId),
+      // so clearing on ANY prompt.req would drop the just-submitted bubble before
+      // its own echo replays. Match this turn's echo by streamId instead.
+      // inFlightStreamId is unset only on a fresh first turn whose echo can race
+      // the prompt() ack — clearing then is safe (no replay in flight) and avoids
+      // leaving a duplicate bubble.
+      const ownEcho = state.inFlightStreamId === undefined || block.streamId === state.inFlightStreamId;
+      const optimisticPrompt = ownEcho ? undefined : state.optimisticPrompt;
+      if (!state.current) return { ...state, optimisticPrompt };
       return {
         ...state,
-        optimisticPrompt: undefined,
+        optimisticPrompt,
         current: { ...state.current, msgs: [...state.current.msgs, block] },
         blocks: state.blocks.map((b, i) => (i === state.blocks.length - 1 ? { ...b, msgs: [...b.msgs, block] } : b)),
       };
+    }
     default:
       if (!state.current) return state;
       // console.log("reqs", state.current?.reqs)

@@ -142,6 +142,35 @@ describe("promptReducer optimistic prompt", () => {
     expect(next.optimisticPrompt).toBeUndefined();
   });
 
+  it("reconnect replay: a historical prompt.req does NOT clear the in-flight optimistic bubble", () => {
+    // replayReset preserves optimisticPrompt + inFlightStreamId, then the reopened
+    // stream replays older turns first. Those non-matching echoes must not remove
+    // the just-submitted bubble before its own (p-2) echo replays.
+    const block = { msgs: [] };
+    const state = baseState({
+      optimisticPrompt: "make it blue",
+      inFlightStreamId: "p-2",
+      blocks: [block],
+      current: block,
+    });
+    const next = promptReducer(state, promptReq("p-1", "an earlier prompt"));
+    expect(next.optimisticPrompt).toBe("make it blue");
+    expect(next.blocks[0].msgs).toHaveLength(1);
+  });
+
+  it("reconnect replay: this turn's matching prompt.req clears the optimistic bubble", () => {
+    const block = { msgs: [] };
+    const state = baseState({
+      optimisticPrompt: "make it blue",
+      inFlightStreamId: "p-2",
+      blocks: [block],
+      current: block,
+    });
+    const next = promptReducer(state, promptReq("p-2", "make it blue"));
+    expect(next.optimisticPrompt).toBeUndefined();
+    expect(next.blocks[0].msgs).toHaveLength(1);
+  });
+
   it("clearChat clears the optimistic bubble", () => {
     const state = baseState({ optimisticPrompt: "make it blue" });
     const next = promptReducer(state, { type: "clearChat", appSlug: "other" });
