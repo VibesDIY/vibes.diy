@@ -185,6 +185,55 @@ describe("promptChatSection dry-run (chat mode)", () => {
     expect(rForged.isOk()).toBe(false);
   });
 
+  it("edit-style dry-run on an app-slug with no chat creates no chatContexts row (#2374)", async () => {
+    // Use a real owned handle but an app-slug that was never pushed/chatted.
+    // The old edit dry-run (openChat without dryRun) would have inserted a
+    // chatContexts row (and an appSlugBinding) for this slug; the dry-run path
+    // must not.
+    const { ownerHandle } = await ctx.createApp();
+    const db = ctx.appCtx.vibesCtx.sql.db;
+    const tables = ctx.appCtx.vibesCtx.sql.tables;
+    const appSlug = `edit-dry-${ctx.sthis.nextId(6).str}`;
+    expect((await db.select().from(tables.chatContexts).where(eq(tables.chatContexts.appSlug, appSlug))).length).toBe(0);
+
+    const rOpen = await ctx.api.openChat({ ownerHandle, appSlug, mode: "chat", dryRun: true });
+    expect(rOpen.isOk()).toBe(true);
+    const chat = rOpen.Ok();
+    // Ephemeral: the returned chatId was not inserted.
+    expect((await db.select().from(tables.chatContexts).where(eq(tables.chatContexts.chatId, chat.chatId))).length).toBe(0);
+
+    const ack = await chat.prompt(
+      { messages: [{ role: "user", content: [{ type: "text", text: "tweak the header" }] }] },
+      { dryRun: true }
+    );
+    expect(ack.isOk()).toBe(true);
+    const payload = await readDryRunPayload(chat.sectionStream, chat.chatId);
+    expect(payload).toBeDefined();
+
+    // Still no chat row (and no appSlugBinding) for the slug after the whole flow.
+    expect((await db.select().from(tables.chatContexts).where(eq(tables.chatContexts.appSlug, appSlug))).length).toBe(0);
+    expect((await db.select().from(tables.appSlugBinding).where(eq(tables.appSlugBinding.appSlug, appSlug))).length).toBe(0);
+    await chat.close();
+  });
+
+  it("dry-run reuses an app's existing (push-seeded) chat without inserting a new row (#2374)", async () => {
+    // createApp pushes files, which seeds a chat (ensurePushSeededChat).
+    const { appSlug, ownerHandle } = await ctx.createApp();
+    const db = ctx.appCtx.vibesCtx.sql.db;
+    const tables = ctx.appCtx.vibesCtx.sql.tables;
+    const seeded = await db.select().from(tables.chatContexts).where(eq(tables.chatContexts.appSlug, appSlug));
+    expect(seeded.length).toBe(1);
+
+    // A dry-run openChat for the same app reuses the seeded chatId and adds no
+    // row, so the preview assembles against the app's real history.
+    const rDry = await ctx.api.openChat({ ownerHandle, appSlug, mode: "chat", dryRun: true });
+    expect(rDry.isOk()).toBe(true);
+    const dryChat = rDry.Ok();
+    expect(dryChat.chatId).toBe(seeded[0].chatId);
+    expect((await db.select().from(tables.chatContexts).where(eq(tables.chatContexts.appSlug, appSlug))).length).toBe(1);
+    await dryChat.close();
+  });
+
   it("rejects requests with no new user message", async () => {
     const { appSlug, ownerHandle } = await ctx.createApp();
     const rOpen = await ctx.api.openChat({ ownerHandle, appSlug, mode: "chat" });
