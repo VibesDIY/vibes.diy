@@ -203,10 +203,17 @@ export const servEntryPoint: EventoHandler<Request, ExtractedHostToBindings, unk
     // redirect to the canonical viewer at /vibe/<owner>/<app> on vibes.diy so
     // sign-in and shared-data access work (#2354). Only the entry HTML can be a
     // top-level navigation; assets and the embedded iframe are left untouched.
+    //
+    // Carry the original query params across so invite/share flows survive: the
+    // viewer reads `token` (and `intent`) from the URL to redeem pending invites
+    // and verify access. Drop only `npmUrl` — it's iframe-runtime plumbing that
+    // the viewer re-derives from its own env when it rebuilds the iframe src.
     if (isRootHtmlPath && isBareHostTopLevelNavigation(ctx.request)) {
       const vctx = ctx.ctx.getOrThrow<VibesApiSQLCtx>("vibesApiCtx");
       const target = BuildURI.from(vctx.params.vibes.env.VIBES_DIY_PUBLIC_BASE_URL)
         .appendRelative(`/vibe/${ctx.validated.ownerHandle}/${ctx.validated.appSlug}`)
+        .searchParams(Object.fromEntries(uri.getParams), "merge")
+        .delParam("npmUrl")
         .toString();
       await ctx.send.send(ctx, {
         type: "http.Response.Body",
