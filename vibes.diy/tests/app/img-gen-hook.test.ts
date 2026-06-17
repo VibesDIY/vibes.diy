@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { addNewVersion, generatePromptKey, generateVersionId } from "@vibes.diy/base/hooks/img-gen/index.js";
+import { addNewVersion, generatePromptKey, generateVersionId, sanitizeFiles } from "@vibes.diy/base/hooks/img-gen/index.js";
 import type { FileMeta } from "@vibes.diy/vibe-types";
 
 // Seam G4 contract — `useImgGen` writes to `_files.<versionId>` and the
@@ -111,6 +111,40 @@ describe("ImgGen doc shape (addNewVersion)", () => {
     expect(carried.url).toBe("https://example.test/selfie");
     expect(typeof carried.file).toBe("undefined");
     expect(updated._files.v1).toEqual(FAKE_FILE_META_V1);
+  });
+
+  it("sanitizeFiles strips .file() accessors and preserves data fields", () => {
+    // Regression for #2369 review: the first-generation augment path
+    // merges `sanitizeFiles(existingDoc._files)` so a host doc's prior
+    // attachments survive, while the non-cloneable `.file()` closure is
+    // dropped before the put crosses the postMessage bridge.
+    const hostFiles = {
+      selfie: {
+        uploadId: "upl-existing",
+        type: "image/jpeg",
+        size: 4096,
+        lastModified: 1700000000000,
+        url: "https://example.test/selfie",
+        file: () => Promise.resolve(new Blob()),
+      },
+    };
+    const sanitized = sanitizeFiles(hostFiles);
+    expect(sanitized.selfie).toEqual({
+      uploadId: "upl-existing",
+      type: "image/jpeg",
+      size: 4096,
+      lastModified: 1700000000000,
+      url: "https://example.test/selfie",
+    });
+    expect((sanitized.selfie as unknown as Record<string, unknown>).file).toBeUndefined();
+    // Merging a fresh version next to the preserved host entry.
+    const merged = { ...sanitized, v1: FAKE_FILE_META_V1 };
+    expect(Object.keys(merged)).toEqual(["selfie", "v1"]);
+    expect(merged.v1).toEqual(FAKE_FILE_META_V1);
+  });
+
+  it("sanitizeFiles tolerates an undefined map", () => {
+    expect(sanitizeFiles(undefined)).toEqual({});
   });
 
   it("ID generators stay stable", () => {

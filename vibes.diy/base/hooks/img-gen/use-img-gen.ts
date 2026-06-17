@@ -12,7 +12,7 @@ import type {
   UseImgGenResult,
 } from "@vibes.diy/vibe-types";
 import { exception2Result, Result } from "@adviser/cement";
-import { addNewVersion } from "./utils.js";
+import { addNewVersion, sanitizeFiles } from "./utils.js";
 
 // Per-app Firefly-synced ImgGen hook. The runtime auto-attaches via
 // Stage B's `vibe.req.registerFPDb` so the doc lives on the per-(user,
@@ -151,8 +151,9 @@ export function useImgGen(opts: Partial<UseImgGenOptions> & InjectedDeps): UseIm
           // type-keyed access/channels rather than fighting them with a
           // force-set `type: "image"` (#2362). Only default `type` to
           // "image" when creating a genuinely new standalone doc.
-          // `_files` is set explicitly below, so the spread never carries
-          // a non-cloneable hydrated `.file()` accessor across the bridge.
+          // Merge the host doc's existing `_files` (sanitized to drop the
+          // non-cloneable hydrated `.file()` accessor) so a host doc's
+          // prior attachments aren't dropped when we add `v1`.
           await db.put<ImageDocumentPlain>({
             ...(existingDoc ?? {}),
             _id,
@@ -163,7 +164,7 @@ export function useImgGen(opts: Partial<UseImgGenOptions> & InjectedDeps): UseIm
             versions: [{ id: "v1", created: now, promptKey: "p1", ...(model ? { model } : {}) }],
             currentPromptKey: "p1",
             prompts: { p1: { text: promptText, created: now } },
-            _files: { v1: fileMeta },
+            _files: { ...sanitizeFiles(existingDoc?._files), v1: fileMeta },
           } as unknown as DocSet<ImageDocumentPlain>);
           const saved = (await db.get(_id)) as PartialImageDocument;
           setDocument(saved);
