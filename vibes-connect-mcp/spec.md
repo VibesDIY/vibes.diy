@@ -83,7 +83,7 @@ The `ownerHandle/appSlug` is fixed for the session — resolved at startup from 
 ### Input schemas
 
 ```
-vibes_list_apps:       {}
+vibes_list_apps:       { limit?: number, cursor?: string, search?: string }
 vibes_list_databases:  {}
 vibes_get:             { db: string, id: string }
 vibes_put:             { db: string, doc: Record<string, unknown> }
@@ -97,6 +97,11 @@ No `appSlug` or `userSlug` in tool schemas — they're session-level, set at sta
 ### Return format
 
 All tools return `{ content: [{ type: "text", text: JSON.stringify(result) }] }`.
+
+`vibes_list_apps` is paginated: `result` is `{ items, nextCursor? }`. Pass the
+`nextCursor` back as `cursor` to fetch the next page. `limit` defaults to 50
+and is clamped to 200; `search` filters returned items by case-insensitive
+substring match on title or app slug.
 
 ### Client config
 

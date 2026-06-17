@@ -127,10 +127,10 @@ Expected: `{"id":"<same-id>","ok":true}`.
 ### Call vibes_list_apps
 
 ```json
-{ "jsonrpc": "2.0", "id": 8, "method": "tools/call", "params": { "name": "vibes_list_apps", "arguments": {} } }
+{ "jsonrpc": "2.0", "id": 8, "method": "tools/call", "params": { "name": "vibes_list_apps", "arguments": { "limit": 50 } } }
 ```
 
-Expected: NDJSON-style array of all vibes with `ownerHandle`, `appSlug`, `title`.
+Expected: `{ "items": [...], "nextCursor"?: "..." }` — up to `limit` vibes (default 50, max 200) with `ownerHandle`, `appSlug`, `title`. Pass `nextCursor` back as `cursor` to page; pass `search` to filter by title/slug substring.
 
 Ctrl-C to exit.
 
