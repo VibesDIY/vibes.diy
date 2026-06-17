@@ -79,18 +79,26 @@ function extractDeviceId(parsed: unknown): SeededDeviceId {
 }
 
 /**
- * Seed the keybag from {@link VIBES_DEVICE_ID_ENV} when it is set and the keybag
- * has no device-id certificate yet. Returns `true` when it seeded, `false` when
- * the env var is unset or an interactive login already exists. Throws with a
- * clear message when the env var is set but malformed.
+ * Outcome of {@link seedDeviceIdFromEnv}:
+ * - `"unset"` — the env var was not set; nothing to do.
+ * - `"seeded"` — the keybag had no certificate and was seeded from the env var.
+ * - `"already-authenticated"` — the env var was set but ignored because the
+ *   keybag already holds a device-id certificate (an interactive login wins).
  */
-export async function seedDeviceIdFromEnv(sthis: SuperThis): Promise<boolean> {
+export type SeedDeviceIdResult = "unset" | "seeded" | "already-authenticated";
+
+/**
+ * Seed the keybag from {@link VIBES_DEVICE_ID_ENV} when it is set and the keybag
+ * has no device-id certificate yet. Throws with a clear message when the env var
+ * is set but malformed.
+ */
+export async function seedDeviceIdFromEnv(sthis: SuperThis): Promise<SeedDeviceIdResult> {
   const raw = sthis.env.get(VIBES_DEVICE_ID_ENV);
-  if (!raw) return false;
+  if (!raw) return "unset";
   const kb = await getKeyBag(sthis);
   const existing = await kb.getDeviceId();
-  if (existing.cert.IsSome()) return false; // an interactive `vibes-diy login` always wins
+  if (existing.cert.IsSome()) return "already-authenticated"; // an interactive `vibes-diy login` always wins
   const { deviceId, cert } = extractDeviceId(parseEnvValue(raw));
   await kb.setDeviceId(deviceId, cert);
-  return true;
+  return "seeded";
 }

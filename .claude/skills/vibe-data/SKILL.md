@@ -29,7 +29,7 @@ base64 -w0 ~/.fireproof/keybag/z3QkefAC57rcrs.json   # copy this value
 export VIBES_DEVICE_ID="<paste>"
 ```
 
-When set and the keybag has no certificate yet, the CLI seeds itself from this value on startup — no `login` needed. An existing interactive login always wins, so this never clobbers a real `vibes-diy login`. The value contains the device **private key**; treat it as a secret.
+When set and the keybag has no certificate yet, the CLI seeds itself from this value on startup — no `login` needed. An existing interactive login always wins, so this never clobbers a real `vibes-diy login`; when the var is set but skipped for that reason, the CLI prints a one-line `Note:` so operators aren't misled about which identity is active. The value contains the device **private key**; treat it as a secret.
 
 ## Defaults
 
