@@ -394,6 +394,9 @@ export function ShareModal({
   if (!modal.isOpen || !modal.buttonRef.current) return null;
 
   const buttonRect = modal.buttonRef.current.getBoundingClientRect();
+  // Leave a small gutter between the panel and the viewport edge so the panel
+  // never runs flush against the screen on short viewports.
+  const VIEWPORT_GUTTER = 16;
   const menuStyle: React.CSSProperties = isMobile
     ? {}
     : placement === "above"
@@ -401,11 +404,19 @@ export function ShareModal({
           position: "fixed",
           bottom: `${window.innerHeight - buttonRect.top + 8}px`,
           right: `${window.innerWidth - buttonRect.right}px`,
+          // Anchored to the bottom (above the button): the panel can grow up to
+          // the top of the viewport, minus the gutter.
+          maxHeight: `${Math.max(0, buttonRect.top - 8 - VIEWPORT_GUTTER)}px`,
+          overflowY: "auto",
         }
       : {
           position: "fixed",
           top: `${buttonRect.bottom + 8}px`,
           right: `${window.innerWidth - buttonRect.right}px`,
+          // Anchored to the top (below the button): the panel can grow down to
+          // the bottom of the viewport, minus the gutter.
+          maxHeight: `${Math.max(0, window.innerHeight - buttonRect.bottom - 8 - VIEWPORT_GUTTER)}px`,
+          overflowY: "auto",
         };
 
   function handleBackdropClick(e: React.MouseEvent) {
