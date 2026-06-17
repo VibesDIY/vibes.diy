@@ -316,6 +316,45 @@ describe("VibesDiyApi", { timeout: (inject("DB_FLAVOUR" as never) as string) ===
     }
   });
 
+  it("bare iframe-host URL opened top-level redirects to the canonical viewer (#2354)", async () => {
+    const rRes = await api.ensureAppSlug({
+      mode: "dev",
+      fileSystem: [
+        {
+          type: "code-block",
+          lang: "jsx",
+          filename: "/App.jsx",
+          content: `export default function App() { return <div>Shared vibe</div>; }`,
+        },
+      ],
+    });
+    const res = rRes.Ok();
+    if (!isResEnsureAppSlugOk(res)) {
+      assert.fail("Expected ensureAppSlug to return a ResEnsureAppSlugOk");
+    }
+    const url = calcEntryPointUrl({
+      hostnameBase: ".nowhere",
+      protocol: "http",
+      port: "4711",
+      bindings: { appSlug: res.appSlug, ownerHandle: res.ownerHandle, fsId: res.fsId },
+    });
+
+    // Top-level navigation (Sec-Fetch-Dest: document) → 302 to the viewer on vibes.diy.
+    const redirected = await api.cfg.fetch(url, { headers: { "Sec-Fetch-Dest": "document" } });
+    expect(redirected.status).toBe(302);
+    expect(redirected.headers.get("Location")).toBe(`https://no-where/vibe/${res.ownerHandle}/${res.appSlug}`);
+    expect(redirected.headers.get("Cache-Control")).toBe("no-store");
+
+    // Embedded in an <iframe> (Sec-Fetch-Dest: iframe) → still serves the app document.
+    const embedded = await api.cfg.fetch(url, { headers: { "Sec-Fetch-Dest": "iframe" } });
+    expect(embedded.status).toBe(200);
+    expect(await embedded.text()).toContain("import V");
+
+    // No Sec-Fetch-Dest (crawler / curl) → unchanged, serves the page so og meta still resolves.
+    const noHeader = await api.cfg.fetch(url);
+    expect(noHeader.status).toBe(200);
+  });
+
   it("multi-file app: only App.jsx is mounted, helper .js and .jsx modules are served but not default-imported", async () => {
     const rRes = await api.ensureAppSlug({
       mode: "dev",
