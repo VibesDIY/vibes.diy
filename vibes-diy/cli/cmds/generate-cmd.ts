@@ -23,6 +23,7 @@ import { resolveSectionStream } from "./resolve-section-stream.js";
 import { pushFromDir } from "./push-from-dir.js";
 import { formatErr } from "./format-err.js";
 import { formatNoFilesError } from "./format-no-files-error.js";
+import { formatDryRunAsText, readDryRunPayloadFromStream } from "./edit-cmd.js";
 
 export const ResGenerate = type({
   type: "'vibes-diy.cli.res-generate'",
@@ -45,6 +46,12 @@ export const ReqGenerate = type({
   "instantJoin?": "boolean", // kept for backward compat; fast path is now always on
   verbose: "boolean",
   apiUrl: "string",
+  // When true: skip file write/push and vibe creation, send dryRun:true to the
+  // server, and print the would-be-dispatched LLMRequest from the section
+  // stream to stdout. JSON by default; transcript renders a human-readable
+  // role-headed view of the assembled messages. Mirrors `edit --dry-run`.
+  dryRun: "boolean",
+  transcript: "boolean",
   // Optional: file path to focus first in slot rendering. Forwarded to the
   // server as focusPath on the prompt request. Defaults to "App.jsx" server-side.
   "focusPath?": "string",
@@ -79,6 +86,48 @@ export const generateEvento: EventoHandler<WrapCmdTSMsg<unknown>, ReqGenerate, R
 
     // Resolve ownerHandle: explicit flag > default setting > first from list
     const ownerHandle = await resolveHandle(api, args.ownerHandle === "" ? undefined : args.ownerHandle);
+
+    if (args.dryRun) {
+      await sendProgress(ctx, "info", "Dry-run: inspecting prompt assembly...");
+      // Open a chat purely to assemble the prompt — mirror the edit dry-run.
+      // Deliberately omit `prompt` from openChat so the server skips
+      // pre-allocation (title/slug/theme/icon LLM call + appSettings writes):
+      // a fresh `generate` dry-run should produce no vibe metadata. The prompt
+      // itself is still sent to chat.prompt below to drive the assembly.
+      const appSlug = args.appSlug === "" ? undefined : args.appSlug;
+      const rChat = await api.openChat({ ownerHandle, appSlug, mode: "chat" });
+      if (rChat.isErr()) {
+        return Result.Err(`Failed to open chat: ${formatErr(rChat.Err())}`);
+      }
+      const chat = rChat.Ok();
+      const rPrompt = await chat.prompt(
+        {
+          ...(args.model !== undefined ? { model: args.model } : {}),
+          messages: [{ role: "user", content: [{ type: "text", text: args.prompt }] }],
+        },
+        { ...(args.focusPath !== undefined ? { focusPath: args.focusPath } : {}), dryRun: true }
+      );
+      if (rPrompt.isErr()) {
+        await chat.close();
+        return Result.Err(`Dry-run failed: ${formatErr(rPrompt.Err())}`);
+      }
+      const payload = await readDryRunPayloadFromStream(chat.sectionStream, chat.chatId);
+      await chat.close();
+      if (!payload) {
+        return Result.Err("Dry-run: no payload block received from server");
+      }
+      const out = args.transcript
+        ? formatDryRunAsText(payload)
+        : JSON.stringify({ model: payload.model, messages: payload.messages }, null, 2);
+      process.stdout.write(out + "\n");
+      return sendMsg(ctx, {
+        type: "vibes-diy.cli.res-generate",
+        appSlug: chat.appSlug,
+        ownerHandle: chat.ownerHandle,
+        url: "",
+        directory: "",
+      } satisfies ResGenerate);
+    }
 
     await sendProgress(ctx, "info", "Generating...");
 
@@ -296,6 +345,14 @@ export function generateCmd(ctx: CliCtx) {
         long: "verbose",
         short: "v",
         description: "Stream AI response to stderr as it arrives",
+      }),
+      dryRun: flag({
+        long: "dry-run",
+        description: "Inspect the prompt the server would dispatch; do not create a vibe, write files, or push",
+      }),
+      transcript: flag({
+        long: "transcript",
+        description: "With --dry-run, render the payload as a human-readable transcript instead of JSON",
       }),
       focus: option({
         long: "focus",
