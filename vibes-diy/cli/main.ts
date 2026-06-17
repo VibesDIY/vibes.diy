@@ -39,6 +39,7 @@ import { pullCmd, isResPull, type ResPull } from "./cmds/pull-cmd.js";
 import { CliCtx, defaultCliOutput } from "./cli-ctx.js";
 import { cmdTsEvento, isCmdProgress, WrapCmdTSMsg } from "./cmd-evento.js";
 import { isResDeviceIdRegister } from "@fireproof/core-cli";
+import { seedDeviceIdFromEnv, VIBES_DEVICE_ID_ENV } from "./device-id-env.js";
 import { err, isErr } from "cmd-ts/dist/cjs/Result.js";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
@@ -51,7 +52,7 @@ async function vibesDiyApiFactory(sthis: SuperThis) {
     throw rDevkey.Err();
   }
   if (devid.cert.IsNone()) {
-    throw new Error("Device ID certificate is missing");
+    throw new Error(`Device ID certificate is missing — run 'vibes-diy login', or set ${VIBES_DEVICE_ID_ENV} for headless auth`);
   }
   // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
   const payload = devid.cert.Unwrap()!.certificatePayload;
@@ -111,6 +112,12 @@ async function main(): Promise<number> {
 
   const env = dotenv.loadSafe(".dev.vars", ".env");
   sthis.env.sets({ ...env } as Record<string, string>);
+  const rSeed = await exception2Result(() => seedDeviceIdFromEnv(sthis));
+  if (rSeed.isErr()) {
+    // A malformed env var shouldn't hard-fail commands that don't need auth
+    // (e.g. `login`, `--help`), but the user should know why it was ignored.
+    console.error(`Warning: ignoring ${VIBES_DEVICE_ID_ENV}: ${rSeed.Err().message}`);
+  }
   const rApiFactory = await exception2Result(() => vibesDiyApiFactory(sthis));
   const ctx: CliCtx = {
     sthis,
