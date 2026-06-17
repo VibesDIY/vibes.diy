@@ -42,4 +42,4 @@ Invokable Claude Code skills live in [`.claude/skills/README.md`](.claude/skills
 - Never manually update version numbers in package.json
 - Don't write releases to code until they are shipped (esm.sh caches bad URLs)
 - Don't squash, rebase instead
-- **Always end a work session with a PR.** Every session that produces commits must open (or update) a PR and post a comment tagging `@CharlieHelps` with specific review questions tailored to the change — what's unclear, what trade-offs need a second opinion. Don't use a generic template. Then **subscribe to the PR** and **apply Charlie's advice autonomously** — escalate to the human only when something genuinely needs more thought (API/contract changes, user-visible behavior shifts, real trade-offs). See [pr-lifecycle.md](agents/pr-lifecycle.md).
+- **Always end a work session with a PR**, then subscribe and apply `@CharlieHelps`'s feedback autonomously. Full policy: [pr-lifecycle.md § Always end a work session with a PR](agents/pr-lifecycle.md#always-end-a-work-session-with-a-pr).

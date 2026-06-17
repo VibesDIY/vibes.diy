@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatDryRunAsText } from "./edit-cmd.js";
+import { formatDryRunAsText } from "./dry-run.js";
 
 describe("formatDryRunAsText", () => {
   it("renders role headers and concatenated text content", () => {

@@ -210,6 +210,41 @@ describe("assemblePromptPayload: slot interpolation", () => {
     await chat.close();
   });
 
+  it("activeSettingsOverride injects skills/theme/title without reading app_settings (dry-run pre-alloc preview)", async () => {
+    const { appSlug, ownerHandle } = await ctx.createApp();
+    const rOpen = await ctx.api.openChat({ ownerHandle, appSlug, mode: "chat" });
+    expect(rOpen.isOk()).toBe(true);
+    const chat = rOpen.Ok();
+    const vctx = ctx.appCtx.vibesCtx;
+
+    const OVERRIDE_TITLE = "Override Title Marker 9f2c";
+    const newUserMessages: ChatMessage[] = [{ role: "user", content: [{ type: "text", text: "hi" }] }];
+
+    // Baseline: no override → the marker title is absent from the system prompt.
+    const rBaseline = await assemblePromptPayload(vctx, {
+      chatId: chat.chatId,
+      model: "anthropic/claude-sonnet-4-6",
+      newUserMessages,
+    });
+    expect(rBaseline.isOk()).toBe(true);
+    const baselineSystem = firstText(rBaseline.Ok().messages.find((m) => m.role === "system") as ChatMessage);
+    expect(baselineSystem).not.toContain(OVERRIDE_TITLE);
+
+    // With override → the in-memory title flows into the system prompt even
+    // though nothing was persisted to app_settings.
+    const rOverride = await assemblePromptPayload(vctx, {
+      chatId: chat.chatId,
+      model: "anthropic/claude-sonnet-4-6",
+      newUserMessages,
+      activeSettingsOverride: { title: OVERRIDE_TITLE, skills: [], enrichedPrompt: undefined },
+    });
+    expect(rOverride.isOk(), `override assemble failed: ${rOverride.isErr() ? String(rOverride.Err()) : ""}`).toBe(true);
+    const overrideSystem = firstText(rOverride.Ok().messages.find((m) => m.role === "system") as ChatMessage);
+    expect(overrideSystem).toContain(OVERRIDE_TITLE);
+
+    await chat.close();
+  });
+
   it("system prompt no longer contains 'CURRENT FILES (resolved so far this turn):'", async () => {
     const { appSlug, ownerHandle } = await ctx.createApp();
     const rOpen = await ctx.api.openChat({ ownerHandle, appSlug, mode: "chat" });

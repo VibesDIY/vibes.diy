@@ -23,7 +23,7 @@ import { resolveSectionStream } from "./resolve-section-stream.js";
 import { pushFromDir } from "./push-from-dir.js";
 import { formatErr } from "./format-err.js";
 import { formatNoFilesError } from "./format-no-files-error.js";
-import { formatDryRunAsText, readDryRunPayloadFromStream } from "./edit-cmd.js";
+import { formatDryRunAsText, readDryRunPayloadFromStream } from "./dry-run.js";
 
 export const ResGenerate = type({
   type: "'vibes-diy.cli.res-generate'",
@@ -90,10 +90,13 @@ export const generateEvento: EventoHandler<WrapCmdTSMsg<unknown>, ReqGenerate, R
     if (args.dryRun) {
       await sendProgress(ctx, "info", "Dry-run: inspecting prompt assembly...");
       // Open a chat purely to assemble the prompt — mirror the edit dry-run.
-      // Deliberately omit `prompt` from openChat so the server skips
-      // pre-allocation (title/slug/theme/icon LLM call + appSettings writes):
-      // a fresh `generate` dry-run should produce no vibe metadata. The prompt
-      // itself is still sent to chat.prompt below to drive the assembly.
+      // Deliberately omit `prompt` from openChat so the server skips persisting
+      // pre-allocation (title/slug/theme/icon + appSettings writes): a fresh
+      // `generate --dry-run` produces no vibe metadata. Fidelity is preserved
+      // by `dryRunPreAllocate` below, which runs pre-allocation in-memory at
+      // assembly time so the preview matches a real generate's system prompt.
+      // (A minimal chat/app-slug bookkeeping row is still created server-side
+      // by openChat — see #2357 follow-up for a fully persistence-free path.)
       const appSlug = args.appSlug === "" ? undefined : args.appSlug;
       const rChat = await api.openChat({ ownerHandle, appSlug, mode: "chat" });
       if (rChat.isErr()) {
@@ -105,7 +108,7 @@ export const generateEvento: EventoHandler<WrapCmdTSMsg<unknown>, ReqGenerate, R
           ...(args.model !== undefined ? { model: args.model } : {}),
           messages: [{ role: "user", content: [{ type: "text", text: args.prompt }] }],
         },
-        { ...(args.focusPath !== undefined ? { focusPath: args.focusPath } : {}), dryRun: true }
+        { ...(args.focusPath !== undefined ? { focusPath: args.focusPath } : {}), dryRun: true, dryRunPreAllocate: true }
       );
       if (rPrompt.isErr()) {
         await chat.close();
