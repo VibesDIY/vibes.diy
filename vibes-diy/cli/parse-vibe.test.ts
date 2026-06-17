@@ -72,6 +72,18 @@ describe("resolveVibeArgs", () => {
     });
   });
 
+  it("throws when --vibe has a handle but an empty app-slug (trailing slash)", () => {
+    expect(() => resolveVibeArgs({ vibe: "alice/", handle: "", appSlug: "", positionalAppSlug: "" })).toThrowError(
+      'Invalid --vibe "alice/": missing app-slug (expected handle/app-slug)'
+    );
+  });
+
+  it("throws when --vibe is just a slash", () => {
+    expect(() => resolveVibeArgs({ vibe: "/", handle: "", appSlug: "", positionalAppSlug: "" })).toThrowError(
+      'Invalid --vibe "/": missing app-slug (expected handle/app-slug)'
+    );
+  });
+
   it("--handle + --app-slug: uses both directly", () => {
     expect(resolveVibeArgs({ vibe: "", handle: "jchris", appSlug: "hat-smeller", positionalAppSlug: "" })).toEqual({
       handle: "jchris",

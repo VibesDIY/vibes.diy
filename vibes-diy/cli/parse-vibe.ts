@@ -10,6 +10,13 @@ export function resolveVibeArgs(args: { vibe: string; handle: string; appSlug: s
 } {
   if (args.vibe) {
     const parsed = parseVibe(args.vibe);
+    // An explicit --vibe must carry an app-slug. Without this guard a
+    // trailing-slash typo like `--vibe alice/` yields an empty appSlug that the
+    // cwd/env fallback would silently fill — routing data-modifying commands
+    // (db put/del) at the wrong app's database (#2277 review).
+    if (parsed.appSlug === "") {
+      throw new Error(`Invalid --vibe "${args.vibe}": missing app-slug (expected handle/app-slug)`);
+    }
     if (args.handle && parsed.handle && args.handle !== parsed.handle) {
       throw new Error(`Conflicting values: --vibe "${args.vibe}" disagrees with --handle "${args.handle}"`);
     }

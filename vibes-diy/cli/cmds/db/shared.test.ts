@@ -32,6 +32,19 @@ describe("resolveDbVibeArgs", () => {
     ).toThrowError('Conflicting values: --vibe "og/pickathon-picker" disagrees with --app-slug "other-app"');
   });
 
+  // A trailing-slash --vibe must NOT silently fall back to the cwd/env app-slug
+  // — that would route db put/del at a different app's database.
+  it("rejects --vibe with an empty app-slug instead of falling back to cwd", () => {
+    expect(() =>
+      resolveDbVibeArgs(ctxWithEnv({ VIBES_APP_SLUG: "env-app" }), {
+        vibe: "alice/",
+        appSlug: "",
+        ownerHandle: "",
+        ownerHandleDeprecated: "",
+      })
+    ).toThrowError('Invalid --vibe "alice/": missing app-slug (expected handle/app-slug)');
+  });
+
   it("falls back to VIBES_APP_SLUG when no vibe/app-slug is given", () => {
     expect(
       resolveDbVibeArgs(ctxWithEnv({ VIBES_APP_SLUG: "env-app" }), {
