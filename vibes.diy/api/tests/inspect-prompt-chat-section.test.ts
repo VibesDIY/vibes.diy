@@ -159,6 +159,32 @@ describe("promptChatSection dry-run (chat mode)", () => {
     await victim.close();
   });
 
+  it("forged dry-run with a fresh chatId but foreign owner is rejected (no foreign-defaults probe) (#2364 review)", async () => {
+    // api2 owns a handle/app. api forges a dry-run with a *fresh* (never
+    // persisted) chatId — so the ephemeral shortcut is taken — but names api2's
+    // owner/app inline to try to probe their model defaults. The owner-ownership
+    // gate must reject it.
+    const rOpen2 = await ctx.api2.openChat({ mode: "chat" });
+    expect(rOpen2.isOk()).toBe(true);
+    const victim = rOpen2.Ok();
+    await victim.close();
+
+    const forged = {
+      type: "vibes.diy.req-prompt-chat-section" as const,
+      mode: "chat" as const,
+      chatId: ctx.sthis.nextId(12).str, // fresh — no chatContexts row exists
+      outerTid: ctx.sthis.nextId(12).str,
+      prompt: { messages: [{ role: "user" as const, content: [{ type: "text" as const, text: "probe defaults" }] }] },
+      dryRun: true,
+      ownerHandle: victim.ownerHandle,
+      appSlug: victim.appSlug,
+    };
+    const rForged = await ctx.api.request<typeof forged & OptionalAuth, ResPromptChatSection>(forged, {
+      resMatch: isResPromptChatSection,
+    });
+    expect(rForged.isOk()).toBe(false);
+  });
+
   it("rejects requests with no new user message", async () => {
     const { appSlug, ownerHandle } = await ctx.createApp();
     const rOpen = await ctx.api.openChat({ ownerHandle, appSlug, mode: "chat" });
