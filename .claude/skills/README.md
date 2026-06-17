@@ -41,13 +41,13 @@ Claude Code looks for project-scoped skills under this path when running in this
 
 ### Vendored `superpowers` (v5.1.0, [obra/superpowers](https://github.com/obra/superpowers), MIT)
 
-Core workflow skills vendored as flat project skills so they're available to **cloud sessions** (which read `.claude/skills/` from the repo but have no globally-installed plugins). Provenance, license, and the update procedure live in [`superpowers-vendor/`](superpowers-vendor/README.md). Invoke by bare name (the `superpowers:` prefix is plugin-only and was rewritten out).
+Core workflow skills vendored as flat project skills so they're available to **cloud sessions** (which read `.claude/skills/` from the repo but have no globally-installed plugins). Provenance, license, and the update procedure live in [`superpowers-vendor/`](superpowers-vendor/README.md). Invoke by bare name (the `superpowers:` prefix is plugin-only and was rewritten out). The upstream `using-superpowers` meta-skill is intentionally **not** vendored — it's a plugin-bootstrap skill that's inert as a manual project skill; `CLAUDE.md` points sessions at the concrete workflow skills directly instead.
 
 - [`brainstorming/`](brainstorming/SKILL.md), [`writing-plans/`](writing-plans/SKILL.md), [`executing-plans/`](executing-plans/SKILL.md), [`subagent-driven-development/`](subagent-driven-development/SKILL.md), [`dispatching-parallel-agents/`](dispatching-parallel-agents/SKILL.md)
 - [`test-driven-development/`](test-driven-development/SKILL.md), [`systematic-debugging/`](systematic-debugging/SKILL.md), [`verification-before-completion/`](verification-before-completion/SKILL.md)
 - [`requesting-code-review/`](requesting-code-review/SKILL.md), [`receiving-code-review/`](receiving-code-review/SKILL.md)
 - [`using-git-worktrees/`](using-git-worktrees/SKILL.md), [`finishing-a-development-branch/`](finishing-a-development-branch/SKILL.md)
-- [`writing-skills/`](writing-skills/SKILL.md), [`using-superpowers/`](using-superpowers/SKILL.md)
+- [`writing-skills/`](writing-skills/SKILL.md)
 
 ## Distribution & upgrade path
 

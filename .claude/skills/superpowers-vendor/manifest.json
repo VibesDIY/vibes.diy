@@ -1,0 +1,21 @@
+{
+  "upstream": "https://github.com/obra/superpowers",
+  "version": "5.1.0",
+  "license": "MIT",
+  "excluded": ["using-superpowers"],
+  "skills": [
+    "brainstorming",
+    "dispatching-parallel-agents",
+    "executing-plans",
+    "finishing-a-development-branch",
+    "receiving-code-review",
+    "requesting-code-review",
+    "subagent-driven-development",
+    "systematic-debugging",
+    "test-driven-development",
+    "using-git-worktrees",
+    "verification-before-completion",
+    "writing-plans",
+    "writing-skills"
+  ]
+}
