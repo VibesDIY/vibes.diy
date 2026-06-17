@@ -6,7 +6,7 @@ import { Result, BuildURI } from "@adviser/cement";
 import { isUserSettingDefaultHandle } from "@vibes.diy/api-types";
 import { resolveVibeArgs } from "../../parse-vibe.js";
 
-export function dbCommonArgs(ctx: CliCtx) {
+export function dbCommonArgs(_ctx: CliCtx) {
   return {
     vibe: option({
       long: "vibe",
@@ -19,7 +19,10 @@ export function dbCommonArgs(ctx: CliCtx) {
       long: "app-slug",
       description: "App slug; defaults to env VIBES_APP_SLUG or basename(cwd)",
       type: string,
-      defaultValue: () => ctx.sthis.env.get("VIBES_APP_SLUG") ?? basename(process.cwd()),
+      // Default to "" here (not the cwd basename) so resolveVibeArgs can tell an
+      // explicit --app-slug from the cwd fallback. The env/cwd default is applied
+      // in resolveDbVibeArgs *after* the conflict check (#2277).
+      defaultValue: () => "",
       defaultValueIsSerializable: true,
     }),
     ownerHandle: option({
@@ -45,7 +48,10 @@ export function dbCommonArgs(ctx: CliCtx) {
   };
 }
 
-export function resolveDbVibeArgs(args: { vibe: string; appSlug: string; ownerHandle: string; ownerHandleDeprecated: string }): {
+export function resolveDbVibeArgs(
+  ctx: CliCtx,
+  args: { vibe: string; appSlug: string; ownerHandle: string; ownerHandleDeprecated: string }
+): {
   appSlug: string;
   ownerHandle: string;
 } {
@@ -58,7 +64,12 @@ export function resolveDbVibeArgs(args: { vibe: string; appSlug: string; ownerHa
     appSlug: args.appSlug,
     positionalAppSlug: "",
   });
-  return { appSlug: resolved.appSlug, ownerHandle: resolved.handle };
+  // Apply the env/cwd fallback only when neither --vibe nor an explicit
+  // --app-slug supplied a slug. Doing this after resolveVibeArgs means the cwd
+  // basename no longer masquerades as an explicit value that conflicts with
+  // --vibe (#2277).
+  const appSlug = resolved.appSlug || ctx.sthis.env.get("VIBES_APP_SLUG") || basename(process.cwd());
+  return { appSlug, ownerHandle: resolved.handle };
 }
 
 // Resolve ownerHandle: explicit override -> defaultHandle from user settings.
