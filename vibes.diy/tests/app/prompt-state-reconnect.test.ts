@@ -101,3 +101,50 @@ describe("promptReducer reconnect actions", () => {
     expect(next.inFlightStreamId).toBeUndefined();
   });
 });
+
+function promptReq(streamId: string, text: string) {
+  return {
+    type: "prompt.req" as const,
+    streamId,
+    chatId: "c1",
+    seq: 0,
+    timestamp: new Date(),
+    request: {
+      messages: [{ role: "user" as const, content: [{ type: "text" as const, text }] }],
+    },
+  };
+}
+
+describe("promptReducer optimistic prompt", () => {
+  it("setOptimisticPrompt records the submitted text", () => {
+    const next = promptReducer(baseState(), { type: "setOptimisticPrompt", text: "make it blue" });
+    expect(next.optimisticPrompt).toBe("make it blue");
+  });
+
+  it("setOptimisticPrompt with undefined clears the bubble (failed send)", () => {
+    const state = baseState({ optimisticPrompt: "make it blue" });
+    const next = promptReducer(state, { type: "setOptimisticPrompt", text: undefined });
+    expect(next.optimisticPrompt).toBeUndefined();
+  });
+
+  it("prompt.req echo retires the optimistic bubble and appends the real req", () => {
+    const block = { msgs: [] };
+    const state = baseState({ optimisticPrompt: "make it blue", blocks: [block], current: block });
+    const next = promptReducer(state, promptReq("p-1", "make it blue"));
+    expect(next.optimisticPrompt).toBeUndefined();
+    expect(next.current?.msgs).toHaveLength(1);
+    expect(next.blocks[0].msgs).toHaveLength(1);
+  });
+
+  it("prompt.req before any block still clears the optimistic bubble", () => {
+    const state = baseState({ optimisticPrompt: "make it blue" });
+    const next = promptReducer(state, promptReq("p-1", "make it blue"));
+    expect(next.optimisticPrompt).toBeUndefined();
+  });
+
+  it("clearChat clears the optimistic bubble", () => {
+    const state = baseState({ optimisticPrompt: "make it blue" });
+    const next = promptReducer(state, { type: "clearChat", appSlug: "other" });
+    expect(next.optimisticPrompt).toBeUndefined();
+  });
+});

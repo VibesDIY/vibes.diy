@@ -495,6 +495,11 @@ ${rootCssBlock}
         // Clear promptToSend BEFORE firing so any re-render of this effect
         // (e.g. searchParams change) sees null and skips the branch.
         sendPrompt(null);
+        // Show the prompt instantly as an optimistic bubble so the message is
+        // visible the moment the user hits Code / clicks a suggestion, instead
+        // of after the server round-trips prompt.req back (see #2352). The
+        // server echo clears it; the real bubble takes its place.
+        dispatch({ type: "setOptimisticPrompt", text: sentPrompt });
         chat
           .prompt({
             messages: [
@@ -507,6 +512,9 @@ ${rootCssBlock}
           .then((r) => {
             if (r.isErr()) {
               console.error(`PromptSend failed`, r.Err());
+              // No stream will arrive to retire the optimistic bubble — drop it
+              // so a failed send doesn't leave a phantom message behind.
+              dispatch({ type: "setOptimisticPrompt", text: undefined });
             } else {
               dispatch({ type: "setInFlightStreamId", streamId: r.Ok().promptId });
               notifyRecentVibesChanged();
@@ -830,6 +838,7 @@ ${rootCssBlock}
             onDiffClick={handleDiffClick}
             onRetry={handleRetry}
             onSelectOption={handleSelectOption}
+            optimisticPrompt={promptState.optimisticPrompt}
           />
         }
         previewPanel={
