@@ -33,7 +33,7 @@
   },
   "devDependencies": {
     "@fireproof/core-cli": "0.24.19",
-    "@vitest/ui": "~4.1.8",
+    "@vitest/ui": "~4.1.9",
     "vitest": "~4.1.8",
     "zx": "^8.8.5"
   },
