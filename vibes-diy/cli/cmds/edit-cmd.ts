@@ -131,13 +131,19 @@ export const editEvento: EventoHandler<WrapCmdTSMsg<unknown>, ReqEdit, ResEdit |
     const args = ctx.validated;
     const api = ectx.vibesDiyApiFactory(args.apiUrl);
 
-    // Resolve ownerHandle: explicit flag > default setting > first from list
-    const ownerHandle = await resolveHandle(api, args.ownerHandle === "" ? undefined : args.ownerHandle);
     const dir = args.dir === "" ? process.cwd() : args.dir;
 
     if (args.dryRun) {
       await sendProgress(ctx, "info", "Dry-run: inspecting prompt assembly...");
-      const rChat = await api.openChat({ ownerHandle, appSlug: args.appSlug, mode: "chat" });
+      // Read-only: pass `dryRun: true` so the server reuses the app's existing
+      // chat (real history → faithful preview) when one exists, but synthesizes
+      // an ephemeral chat — creating NO chatContexts row — for an app that has
+      // no chat yet (#2374). Do NOT call the mutating `resolveHandle` here: with
+      // no explicit handle it goes through ensureUserSettings, which inserts a
+      // userSettings row for first-time users. Forward only an explicit handle;
+      // the server's dry-run resolver picks the default read-only.
+      const dryRunHandle = args.ownerHandle === "" ? undefined : args.ownerHandle;
+      const rChat = await api.openChat({ ownerHandle: dryRunHandle, appSlug: args.appSlug, mode: "chat", dryRun: true });
       if (rChat.isErr()) {
         return Result.Err(`Failed to open chat: ${formatErr(rChat.Err())}`);
       }
@@ -185,6 +191,10 @@ export const editEvento: EventoHandler<WrapCmdTSMsg<unknown>, ReqEdit, ResEdit |
     }
 
     await sendProgress(ctx, "info", "Editing...");
+
+    // Resolve ownerHandle: explicit flag > default setting > first from list.
+    // (Only the real edit path — the dry-run above stays read-only.)
+    const ownerHandle = await resolveHandle(api, args.ownerHandle === "" ? undefined : args.ownerHandle);
 
     const rChat = await api.openChat({
       ownerHandle,

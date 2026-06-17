@@ -53,13 +53,16 @@ interface EnsureChatIdPResult {
 }
 
 /**
- * Fully persistence-free owner/app/chat resolution for `generate --dry-run`.
- * Resolves the owner handle read-only (explicit → default → deterministic
- * placeholder) and an app-slug (explicit → placeholder) and synthesizes an
- * ephemeral chatId WITHOUT inserting a chatContexts row or allocating an
- * appSlugBinding. The caller threads the returned ownerHandle/appSlug back to
- * the prompt handler inline (see reqCreationPromptChatSection), so the dry-run
- * preview never needs the (non-existent) chatContexts row. (#2364)
+ * Persistence-free owner/app/chat resolution for dry-run (`generate`/`edit
+ * --dry-run`). Resolves the owner handle read-only (explicit → default →
+ * deterministic placeholder) and an app-slug (explicit → placeholder). When an
+ * app-slug is given and the caller already has a chat for it, the REAL chatId is
+ * reused so the preview assembles against the app's real history/timeline (edit
+ * fidelity); otherwise an ephemeral chatId is synthesized. Either way nothing is
+ * written — no chatContexts row, no appSlugBinding. The caller threads the
+ * returned ownerHandle/appSlug back to the prompt handler inline (see
+ * reqCreationPromptChatSection), so a *new* dry-run never needs the
+ * (non-existent) chatContexts row. (#2364, #2374)
  */
 async function dryRunResolveChatId(
   ctx: VibesApiSQLCtx,
@@ -91,6 +94,32 @@ async function dryRunResolveChatId(
   }
 
   const appSlug = req.appSlug ? toRFC2822_32ByteLength(req.appSlug) : DRY_RUN_PLACEHOLDER_APP_SLUG;
+
+  // Reuse an existing chat (read-only) so `edit --dry-run` previews against the
+  // app's real history. Only when an app-slug was supplied; a fresh generate
+  // (no slug) skips this and goes ephemeral.
+  if (req.appSlug) {
+    const rExisting = await exception2Result(() =>
+      ctx.sql.db
+        .select({ chatId: ctx.sql.tables.chatContexts.chatId })
+        .from(ctx.sql.tables.chatContexts)
+        .where(
+          and(
+            eq(ctx.sql.tables.chatContexts.userId, userId),
+            eq(ctx.sql.tables.chatContexts.ownerHandle, ownerHandle),
+            eq(ctx.sql.tables.chatContexts.appSlug, appSlug)
+          )
+        )
+        .limit(1)
+        .then((r) => r[0])
+    );
+    if (rExisting.isOk() && rExisting.Ok()) {
+      return Result.Ok({ appSlug, ownerHandle, chatId: rExisting.Ok().chatId });
+    }
+  }
+
+  // No existing chat (e.g. a chat-less app, or a fresh generate): synthesize an
+  // ephemeral chatId and insert nothing.
   const chatId = ctx.sthis.nextId(12).str;
   return Result.Ok({ appSlug, ownerHandle, chatId });
 }
