@@ -28,6 +28,16 @@ Invokable Claude Code skills live in [`.claude/skills/README.md`](.claude/skills
 
 - [`qa-pr`](.claude/skills/qa-pr/SKILL.md) — agent-driven QA pass against a PR preview URL
 
+### Workflow skills (vendored `superpowers`)
+
+The core [`superpowers`](https://github.com/obra/superpowers) workflow skills are vendored into [`.claude/skills/`](.claude/skills/README.md) so they work in **cloud sessions** too (which have no globally-installed plugins). Consult and invoke them by their bare names — they are the default way we work, not optional extras:
+
+- Before any creative work or new feature: [`brainstorming`](.claude/skills/brainstorming/SKILL.md), then [`writing-plans`](.claude/skills/writing-plans/SKILL.md) → [`subagent-driven-development`](.claude/skills/subagent-driven-development/SKILL.md) / [`executing-plans`](.claude/skills/executing-plans/SKILL.md).
+- While implementing: [`test-driven-development`](.claude/skills/test-driven-development/SKILL.md), [`systematic-debugging`](.claude/skills/systematic-debugging/SKILL.md), [`verification-before-completion`](.claude/skills/verification-before-completion/SKILL.md).
+- Around integration: [`using-git-worktrees`](.claude/skills/using-git-worktrees/SKILL.md), [`requesting-code-review`](.claude/skills/requesting-code-review/SKILL.md), [`receiving-code-review`](.claude/skills/receiving-code-review/SKILL.md), [`finishing-a-development-branch`](.claude/skills/finishing-a-development-branch/SKILL.md).
+
+Full list and provenance: [`.claude/skills/README.md`](.claude/skills/README.md) and [`.claude/skills/superpowers-vendor/README.md`](.claude/skills/superpowers-vendor/README.md).
+
 `agents/*.md` (above) documents _how we work_; `.claude/skills/` provides _things we invoke_. See [`.claude/skills/README.md`](.claude/skills/README.md) for the boundary.
 
 ## Writing issues
