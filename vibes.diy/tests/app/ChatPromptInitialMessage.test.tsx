@@ -34,7 +34,7 @@ vi.mock("~/vibes.diy/app/vibes-diy-provider.js", () => ({
     sthis: { txt: { base64: { decode: (s: string) => s.replace(/^b64:/, "") } } },
     // getTokenClaims never resolves so the open-chat effect stays parked and
     // doesn't navigate away during the assertion window.
-    chatApi: { getTokenClaims: () => new Promise(() => {}) },
+    chatApi: { getTokenClaims: () => new Promise(() => undefined) },
   }),
 }));
 

@@ -84,18 +84,19 @@ export default function ChatPrompt() {
       {isSignedIn &&
         effectivePrompt &&
         createPortal(
-          // A bottom-anchored, non-blocking status pill rather than a full-screen
-          // scrim — the decoded prompt renders as a user bubble in the chat panel
-          // and must stay visible while this overlay is up.
+          // Full-screen layer that still intercepts pointer events (so the user
+          // can't submit into the underlying chat input — which goes nowhere
+          // while <Chat> is inConstruction) but is visually transparent, so the
+          // decoded prompt renders as a user bubble that stays visible. The
+          // "Preparing AI Session…" status sits in a bottom-anchored pill.
           <div
             style={{
               position: "fixed",
-              left: 0,
-              right: 0,
-              bottom: 24,
+              inset: 0,
               display: "flex",
+              alignItems: "flex-end",
               justifyContent: "center",
-              pointerEvents: "none",
+              paddingBottom: 24,
               zIndex: 9999,
             }}
           >
