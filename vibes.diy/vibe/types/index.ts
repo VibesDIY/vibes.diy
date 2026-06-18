@@ -486,9 +486,17 @@ export function isResVibeWhoAmI(x: unknown): x is ResVibeWhoAmI {
 // the authenticated session before calling ensureUserSettings.
 export const ReqVibeUpdateAvatarCid = type({
   type: "'vibe.req.updateAvatarCid'",
+  // ownerHandle/appSlug identify the app/iframe (from vibeApp) — the APP OWNER,
+  // NOT the viewer. They must never be used as the avatar's target handle.
   ownerHandle: "string",
   appSlug: "string",
   cid: "string",
+  // The VIEWER-selected target handle whose avatar to set. Supplied by the
+  // runtime from the viewer's identity (e.g. their default handle), distinct
+  // from ownerHandle above. The server re-validates that it belongs to the
+  // authenticated viewer, so a malicious vibe can't target a handle the viewer
+  // doesn't own. See docs/superpowers/specs/2026-06-18-per-handle-avatar-design.md.
+  handle: "string",
   // Optional content-type hint for the preview the host renders in its
   // confirm modal. NON security-critical: the host derives the preview image
   // from `cid` (the exact asset it will persist), so a forged mimeType only

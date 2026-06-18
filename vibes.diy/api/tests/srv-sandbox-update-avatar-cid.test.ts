@@ -37,21 +37,21 @@ function setupSandbox(opts: {
     postMessage: (data: unknown, origin: string) => captured.push({ data, origin }),
   } as unknown as Window;
 
-  const ensureCalls: { settings: unknown[] }[] = [];
+  const ensureCalls: { handle: string; cid: string; mime?: string }[] = [];
   const confirmCalls: { cid: string; mimeType?: string; getURL?: string }[] = [];
 
   const fakeApi = {
     onDocChanged: () => () => {
       /* noop */
     },
-    ensureUserSettings: async (req: { settings: unknown[] }) => {
+    ensureHandleAvatar: async (req: { handle: string; cid: string; mime?: string }) => {
       ensureCalls.push(req);
       return Result.Ok({
-        type: "vibes.diy.res-ensure-user-settings",
-        userId: "u1",
-        settings: req.settings,
+        type: "vibes.diy.res-ensure-handle-avatar",
+        handle: req.handle,
+        getURL: `fp:store/${req.cid}`,
+        mime: req.mime ?? "application/octet-stream",
         updated: new Date().toISOString(),
-        created: new Date().toISOString(),
       });
     },
   } as unknown as Partial<VibesDiyApiIface>;
@@ -85,7 +85,15 @@ function setupSandbox(opts: {
 function postUpdate(sandbox: vibesDiySrvSandbox, iframe: Window, extra?: Record<string, unknown>): void {
   sandbox.handleMessage(
     fakeMessageEvent(
-      { type: "vibe.req.updateAvatarCid", tid: "t1", appSlug: "myapp", ownerHandle: "alice", cid: "bafycid1", ...extra },
+      {
+        type: "vibe.req.updateAvatarCid",
+        tid: "t1",
+        appSlug: "myapp",
+        ownerHandle: "alice",
+        handle: "alice",
+        cid: "bafycid1",
+        ...extra,
+      },
       "https://myapp--alice.example.com",
       iframe
     )
@@ -103,7 +111,7 @@ describe("vibeUpdateAvatarCid host handler", () => {
 
     expect(confirmCalls).toEqual([{ cid: "bafycid1", mimeType: "image/png" }]);
     expect(ensureCalls).toHaveLength(1);
-    expect(ensureCalls[0].settings).toEqual([{ type: "profile", avatarCid: "bafycid1" }]);
+    expect(ensureCalls[0]).toEqual({ handle: "alice", cid: "bafycid1", mime: "image/png" });
     const msg = captured.find((c) => (c.data as { type?: string }).type === "vibe.res.updateAvatarCid");
     expect(msg?.data).toMatchObject({ tid: "t1", status: "ok" });
   });
@@ -121,8 +129,8 @@ describe("vibeUpdateAvatarCid host handler", () => {
     await new Promise((r) => setTimeout(r, 50));
 
     expect(confirmCalls).toEqual([{ cid: "bafycid1", mimeType: "image/png", getURL: "fp:store/bafycid1" }]);
-    // The persisted CID is unaffected by the preview URI.
-    expect(ensureCalls[0].settings).toEqual([{ type: "profile", avatarCid: "bafycid1" }]);
+    // The written handle + cid are unaffected by the preview URI.
+    expect(ensureCalls[0]).toEqual({ handle: "alice", cid: "bafycid1", mime: "image/png" });
   });
 
   it("skips the write and responds cancelled when the confirm gate declines", async () => {
