@@ -27,7 +27,7 @@
 // regex-based rewriting away from string literals and comments in the module
 // body, where false positives could mutate runtime data.
 
-import { URI } from "@adviser/cement";
+import { BuildURI, URI, exception2Result } from "@adviser/cement";
 
 const RELATIVE_OR_URL = /^(?:\.\.?\/|\/|https?:\/\/|blob:|data:)/;
 
@@ -254,14 +254,15 @@ const RELATIVE_SPEC = /^(?:\.\.?\/|\/)/;
 // do on a full page load. No base (or an unparseable specifier) leaves the code
 // as-is.
 export function rewriteRelativeSpecifiers(code: string, baseUrl: string | undefined): string {
-  if (!baseUrl) return code;
+  if (baseUrl === undefined || baseUrl.length === 0) return code;
   return rewriteImportRegion(code, (spec) => {
     if (!RELATIVE_SPEC.test(spec)) return undefined;
-    try {
-      return new URL(spec, baseUrl).href;
-    } catch {
-      return undefined;
-    }
+    // cement's BuildURI.resolve reproduces `new URL(spec, base)` RFC-3986
+    // resolution (./ → entry dir, ../ and / → origin root) without `new URL`
+    // (rules-bag), and exception2Result keeps an unresolvable specifier from
+    // throwing — it's left untouched instead.
+    const rResolved = exception2Result(() => BuildURI.from(baseUrl).resolve(spec).toString());
+    return rResolved.isErr() ? undefined : rResolved.Ok();
   });
 }
 
@@ -275,7 +276,7 @@ export function rewriteRelativeSpecifiers(code: string, baseUrl: string | undefi
 // which leaves relative specifiers untouched.
 export function entryDirBase(origin: string, pathname: string): string | undefined {
   const m = /^\/(~[^/~]+~)\/?$/.exec(pathname);
-  if (!m) return undefined;
+  if (m === null) return undefined;
   return `${origin}/${m[1]}/`;
 }
 
@@ -288,14 +289,17 @@ export function getActiveImportMap(): Record<string, string> {
   if (typeof document === "undefined") return {};
   const el = document.querySelector('script[type="importmap"]');
   const text = el?.textContent;
-  if (!text) return {};
-  try {
-    const parsed = JSON.parse(text) as { imports?: unknown };
-    if (parsed && typeof parsed === "object" && parsed.imports && typeof parsed.imports === "object") {
-      return parsed.imports as Record<string, string>;
+  if (text === null || text === undefined || text.length === 0) return {};
+  // exception2Result replaces try/catch (rules-bag): a malformed importmap
+  // surfaces as Err and we treat it as empty so the fallback still kicks in.
+  const rParsed = exception2Result(() => JSON.parse(text) as unknown);
+  if (rParsed.isErr()) return {};
+  const parsed = rParsed.Ok();
+  if (parsed !== null && typeof parsed === "object" && "imports" in parsed) {
+    const imports: unknown = parsed.imports;
+    if (imports !== null && typeof imports === "object") {
+      return imports as Record<string, string>;
     }
-  } catch {
-    // malformed importmap — treat as empty so the fallback still kicks in
   }
   return {};
 }
