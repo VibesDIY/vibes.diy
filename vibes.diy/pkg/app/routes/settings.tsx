@@ -113,7 +113,7 @@ function GrantsList() {
 }
 */
 
-function UserSlugsCard() {
+function HandlesCard() {
   const { chatApi } = useVibesDiy();
   const [items, setItems] = useState<{ ownerHandle: string; tenant: string; created: string; appSlugCount: number }[]>([]);
   const [loading, setLoading] = useState(true);
@@ -199,7 +199,7 @@ function UserSlugsCard() {
 
   return (
     <BrutalistCard size="md">
-      <h3 className="text-2xl font-bold mb-4">User Slugs</h3>
+      <h3 className="text-2xl font-bold mb-4">Handles</h3>
       <p className="mb-4" style={{ color: "var(--vibes-text-secondary)" }}>
         Human-readable identifiers linked to your account.
       </p>
@@ -212,7 +212,7 @@ function UserSlugsCard() {
             className="bg-white dark:bg-gray-900 border-2 rounded-lg p-6 max-w-sm w-full mx-4"
             style={{ borderColor: "var(--vibes-border-primary)" }}
           >
-            <h4 className="text-lg font-bold mb-2">Delete user slug?</h4>
+            <h4 className="text-lg font-bold mb-2">Delete handle?</h4>
             <p className="text-sm mb-1" style={{ color: "var(--vibes-text-secondary)" }}>
               This will delete <span className="font-mono font-bold">{pendingDelete.ownerHandle}</span> and its{" "}
               <strong>{pendingDelete.appSlugCount}</strong> connected app slug{pendingDelete.appSlugCount !== 1 ? "s" : ""}. This
@@ -259,7 +259,7 @@ function UserSlugsCard() {
           <table className="w-full text-sm">
             <thead>
               <tr className="text-left border-b-2" style={{ borderColor: "var(--vibes-border-primary)" }}>
-                <th className="pb-2 pr-4 font-semibold">Slug</th>
+                <th className="pb-2 pr-4 font-semibold">Handle</th>
                 <th className="pb-2 pr-4 font-semibold">Apps</th>
                 <th className="pb-2 pr-4 font-semibold">Created</th>
                 <th className="pb-2 pr-4 font-semibold">Default</th>
@@ -302,7 +302,7 @@ function UserSlugsCard() {
               {items.length === 0 && (
                 <tr>
                   <td colSpan={5} className="py-2" style={{ color: "var(--vibes-text-secondary)" }}>
-                    No slugs yet.
+                    No handles yet.
                   </td>
                 </tr>
               )}
@@ -313,7 +313,7 @@ function UserSlugsCard() {
       <div className="flex gap-2 items-center mt-4">
         <input
           type="text"
-          placeholder="my-slug (leave blank to generate)"
+          placeholder="my-handle (leave blank to generate)"
           value={newSlug}
           onChange={(e) => setNewSlug(e.target.value)}
           className="flex-1 border rounded px-3 py-1.5 text-sm font-mono"
@@ -430,7 +430,7 @@ function ProfileCard() {
 
   const handleAvatarUpload = async (file: File) => {
     if (!defaultHandle) {
-      setError("No user slug set — create one in User Slugs first.");
+      setError("No handle set — create one in Handles first.");
       return;
     }
     setUploading(true);
@@ -549,7 +549,7 @@ function ProfileCard() {
             />
             <p className="text-xs mt-3" style={{ color: "var(--vibes-text-secondary)" }}>
               PNG, JPG, or WebP. Displayed at /u/
-              {defaultHandle ?? "your-slug"}/avatar
+              {defaultHandle ?? "your-handle"}/avatar
             </p>
           </div>
         </div>
@@ -653,7 +653,7 @@ function SettingsContent() {
 
   return (
     <BrutalistLayout title="Settings" subtitle="Manage your account">
-      <UserSlugsCard />
+      <HandlesCard />
 
       <ProfileCard />
 
