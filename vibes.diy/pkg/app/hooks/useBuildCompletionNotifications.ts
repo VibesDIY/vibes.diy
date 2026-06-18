@@ -90,7 +90,12 @@ const TYPE_MAP: Record<
 };
 
 export function useBuildCompletionNotifications(): void {
-  const { chatApi } = useVibesDiy();
+  const { chatApi, vibeApi } = useVibesDiy();
+  // Prefer the app-API (AppSessions) connection when one exists so we don't open a
+  // second, heavier chatApi WebSocket just to receive notifications. Both connection
+  // types serve the user-notification stream and ensureUserSettings (sharedHandlers),
+  // so either can carry build notifications and read prefs.
+  const api = vibeApi ?? chatApi;
   const navigate = useNavigate();
   // The notification click fires long after render, so read navigate through a ref
   // to keep handleNotification (and the subscription) stable.
@@ -100,13 +105,13 @@ export function useBuildCompletionNotifications(): void {
   const prefsRef = useRef<UserSettingNotifications>({ type: "notifications" });
 
   useEffect(() => {
-    void chatApi.ensureUserSettings({ settings: [] }).then((res) => {
+    void api.ensureUserSettings({ settings: [] }).then((res) => {
       if (res.isOk()) {
         const saved = res.Ok().settings.find(isUserSettingNotifications);
         if (saved) prefsRef.current = saved;
       }
     });
-  }, [chatApi]);
+  }, [api]);
 
   const handleNotification = useCallback(async (evt: { notificationType: string; ownerHandle: string; appSlug: string }) => {
     const config = TYPE_MAP[evt.notificationType];
@@ -148,9 +153,15 @@ export function useBuildCompletionNotifications(): void {
   }, []);
 
   useEffect(() => {
-    if (!chatApi?.onUserNotification) return;
-    return chatApi.onUserNotification((evt) => {
+    if (!api?.onUserNotification) return;
+    // Own the subscription here (the provider no longer eagerly subscribes chatApi),
+    // so it rides whichever connection this page already has. Best-effort: the
+    // reconnect loop re-subscribes once userNotificationSubscribed is set.
+    void api.subscribeUserNotifications?.({}).catch((_e: unknown) => {
+      /* best-effort — reconnect loop will retry */
+    });
+    return api.onUserNotification((evt) => {
       void handleNotification(evt);
     });
-  }, [chatApi, handleNotification]);
+  }, [api, handleNotification]);
 }
