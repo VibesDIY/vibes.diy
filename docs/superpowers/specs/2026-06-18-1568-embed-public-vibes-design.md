@@ -235,21 +235,55 @@ small subset of the `/vibe/` component:
 
 ### Cross-origin framing policy (the critical bit)
 
-On the `/embed/` **route response only**, set headers that permit third-party
-framing:
+**`frame-ancestors` is evaluated against the entire ancestor chain, not just the
+direct parent.** For an embed the chain is
+`top (example.com) › /embed (vibes.diy) › runtime (app--owner.<host>)`. That has
+two consequences the implementation must get right:
 
-- `Content-Security-Policy: frame-ancestors *;` (or a curated allowlist if we
-  decide to gate which sites may embed — see open questions). Do **not** send
-  `X-Frame-Options` on this route (it has no allow-all value and would block).
-- Confirm the runtime subdomain (`app--owner.<host>`) returns no
-  `X-Frame-Options: DENY/SAMEORIGIN` and a `frame-ancestors` that includes the
-  vibes.diy origin, so the inner frame loads when the outer page is cross-origin.
+- The **outer** `/embed/` response is framed by `example.com` (one ancestor), so
+  it needs `frame-ancestors *` (or the allowlist).
+- The **inner** runtime response is framed with ancestors **[`example.com`,
+  `vibes.diy`]**. A naive `frame-ancestors https://vibes.diy` on the runtime
+  would still **block** the embed, because `example.com` is also an ancestor and
+  isn't listed. So when the request is for an embed, the runtime must allow the
+  third-party ancestors too (effectively `*`, or echo the allowlist) — it cannot
+  be locked to the vibes.diy origin. This is the subtlest part of the whole
+  feature.
+
+#### Header matrix (fill in measured values during impl)
+
+The implementation must land on this matrix; the cells marked *required* are
+what makes a cross-origin embed work, and the rest is what we must **measure**
+before changing anything (there are no framing headers in the repo today).
+
+| Response | prod | dev | preview | Required for embed |
+| --- | --- | --- | --- | --- |
+| Top-level app (`/vibe/`, home, etc.) | measure | measure | measure | unchanged — stays frame-protected |
+| Outer `/embed/<owner>/<app>` | `CSP: frame-ancestors *`, **no** `X-Frame-Options` | same | same | **required** |
+| Inner runtime (`app--owner.<host>`) **when serving an embed** | `frame-ancestors *` (or echo allowlist), **no** `X-Frame-Options: DENY/SAMEORIGIN` | same | same | **required** (ancestor-chain caveat above) |
+| Inner runtime when serving `/vibe/` (same-site) | measure | measure | measure | unchanged |
+
+- **Exact implementation point — outer:** set the `/embed/` response headers in
+  the route's worker handling in
+  [`pkg/workers/app.ts`](../../../vibes.diy/pkg/workers/app.ts), scoped to the
+  `/embed/*` pathname only (do not touch the global response path).
+- **Exact implementation point — inner:** the runtime/sandbox response headers
+  for `app--owner.<host>`. Determine during step zero whether the runtime can
+  tell it is being served for an embed (e.g. a query flag the `/embed/` loader
+  appends to the iframe `src`, or a separate embed entry-point) so it can widen
+  `frame-ancestors` only for embeds and keep `/vibe/` framing unchanged.
+- **Tests:** (1) outer `/embed/` response asserts `frame-ancestors *` and no
+  `X-Frame-Options`; (2) inner runtime embed response asserts the third-party
+  ancestor is permitted; (3) a cross-origin integration check (Chrome MCP)
+  loading a published embed from a throwaway third-party origin and confirming
+  *both* frames paint — this is the regression guard for the ancestor-chain
+  caveat.
 
 Because there are no framing headers in the repo today, **step zero of
-implementation is to measure the current headers** on both `/vibe/` and the
-runtime subdomain (via stable-entry routing on cli, per
-[`agents/iframe-policy.md`](../../../agents/iframe-policy.md)) and write the
-findings into the implementation plan. The whole feature hinges on this.
+implementation is to measure the current headers** on the top-level app, the
+`/vibe/` response, and the runtime subdomain (via stable-entry routing on cli,
+per [`agents/iframe-policy.md`](../../../agents/iframe-policy.md)) and fill the
+matrix into the implementation plan. The whole feature hinges on this.
 
 ### Not-published instruction card
 
@@ -268,6 +302,22 @@ inside a cross-origin frame:
 
 This card is the reason the wrapper exists; it turns a broken/empty embed into
 an actionable nudge to publish.
+
+### Performance budget for the extra frame
+
+The double-wrapper adds one iframe layer over direct-to-subdomain, so keep the
+overhead explicit and measured:
+
+- The outer `/embed/` page must SSR the inner iframe `src` in the first byte of
+  HTML (same fast-paint technique as `/vibe/`) so the extra layer adds a frame
+  boundary, **not** a hydration round-trip, before the runtime starts fetching.
+- The outer page ships no chrome (no pill/share/sidebar bundles), so its
+  document should be markedly lighter than `/vibe/`.
+- **Acceptance check:** time-to-first-runtime-byte for `/embed/<owner>/<app>` is
+  within a small budget of the `/vibe/` viewer (target: ≤ ~100 ms added by the
+  wrapper). Capture a before/after measurement in the implementation PR; if the
+  wrapper adds materially more, revisit whether the outer page can be a static
+  shell.
 
 ### Share-surface snippet UI
 
@@ -351,11 +401,12 @@ Snippet shape — a responsive wrapper plus the iframe, copy-ready:
 4. **Attribution.** Include a small "Made on vibes.diy" corner badge on the
    embed (virality / backlink) or keep it fully clean? The issue is labeled
    *Vibe Virality*, so a subtle badge may be desirable.
-5. **Live grant re-check.** The SSR `isPubliclyEmbeddable` hint is enough to
-   paint, but a client `getAppByFsId` confirming a `public-access` grant is the
-   authoritative gate — it also catches "made private after SSR cache" cases and
-   falls back to the instruction card. Recommendation: yes, cheap and
-   correctness-preserving.
+5. **Live grant re-check.** ✅ **Resolved → yes** (Charlie + author agree). The
+   SSR `isPubliclyEmbeddable` hint paints fast, and a client `getAppByFsId`
+   confirming a `public-access` grant is the authoritative gate — it also catches
+   "made private after SSR cache" cases and falls back to the instruction card.
+   Cheap and correctness-preserving; baked into the design above as the live
+   gate.
 
 ## Out of scope / possible follow-ups
 
