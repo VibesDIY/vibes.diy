@@ -84,6 +84,19 @@ export class CallAIEnv {
     return !!this.env().get("CALLAI_DEBUG");
   }
 
+  // Default model when no `options.model` is provided (non-schema calls).
+  get CALLAI_DEFAULT_MODEL() {
+    return this.env().get("CALLAI_DEFAULT_MODEL") ?? "openrouter/auto";
+  }
+  // Model used to retry when the primary model fails or is unavailable.
+  get CALLAI_FALLBACK_MODEL() {
+    return this.env().get("CALLAI_FALLBACK_MODEL") ?? "openrouter/auto";
+  }
+  // Default model when a schema is provided (structured output).
+  get CALLAI_SCHEMA_MODEL() {
+    return this.env().get("CALLAI_SCHEMA_MODEL") ?? "openai/gpt-4o";
+  }
+
   get NODE_ENV() {
     return this.env().get("NODE_ENV");
   }

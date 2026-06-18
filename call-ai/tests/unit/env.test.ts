@@ -154,6 +154,30 @@ describe("CallAIEnv window variable fallback", () => {
     });
   });
 
+  describe("model defaults (#1474)", () => {
+    it("falls back to hardcoded defaults when no env var is set", () => {
+      expect(env.CALLAI_DEFAULT_MODEL).toBe("openrouter/auto");
+      expect(env.CALLAI_FALLBACK_MODEL).toBe("openrouter/auto");
+      expect(env.CALLAI_SCHEMA_MODEL).toBe("openai/gpt-4o");
+    });
+
+    it("honors env var overrides for each model default", () => {
+      const mockEnv = vi.spyOn(env.env(), "get");
+      mockEnv.mockImplementation((key) => {
+        if (key === "CALLAI_DEFAULT_MODEL") return "anthropic/claude-sonnet-4.6";
+        if (key === "CALLAI_FALLBACK_MODEL") return "openrouter/auto-2";
+        if (key === "CALLAI_SCHEMA_MODEL") return "openai/gpt-5";
+        return undefined;
+      });
+
+      expect(env.CALLAI_DEFAULT_MODEL).toBe("anthropic/claude-sonnet-4.6");
+      expect(env.CALLAI_FALLBACK_MODEL).toBe("openrouter/auto-2");
+      expect(env.CALLAI_SCHEMA_MODEL).toBe("openai/gpt-5");
+
+      mockEnv.mockRestore();
+    });
+  });
+
   describe("backward compatibility for existing deployments", () => {
     it("should maintain exact same behavior when no window vars are set", () => {
       // This is the critical test for existing deployments
