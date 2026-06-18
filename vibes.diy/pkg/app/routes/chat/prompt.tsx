@@ -9,6 +9,10 @@ import { notifyRecentVibesChanged } from "../../hooks/useRecentVibes.js";
 
 const PENDING_PROMPT_KEY = "vibes.pendingPrompt";
 
+export function meta() {
+  return [{ title: "New Chat - Vibes DIY" }, { name: "description", content: "Describe your vibe to make it a shareable app." }];
+}
+
 export default function ChatPrompt() {
   const { chatApi, sthis } = useVibesDiy();
   const [searchParams] = useSearchParams();
