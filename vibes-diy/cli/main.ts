@@ -232,23 +232,39 @@ async function main(): Promise<number> {
             break;
           }
           case isResSkillsList(msg): {
-            for (const skill of msg.skills) {
-              console.log(`${skill.name.padEnd(12)}${skill.description}`);
+            if (wmsg.cmdTs.outputFormat === "json") {
+              console.log(JSON.stringify(msg.skills, null, 2));
+            } else {
+              for (const skill of msg.skills) {
+                console.log(`${skill.name.padEnd(12)}${skill.description}`);
+              }
             }
             break;
           }
           case isResSkillContent(msg): {
-            console.log(msg.content);
+            if (wmsg.cmdTs.outputFormat === "json") {
+              console.log(JSON.stringify({ name: msg.name, content: msg.content }, null, 2));
+            } else {
+              console.log(msg.content);
+            }
             break;
           }
           case isResThemesList(msg): {
-            for (const theme of msg.themes) {
-              console.log(`${theme.slug.padEnd(24)}${theme.name}`);
+            if (wmsg.cmdTs.outputFormat === "json") {
+              console.log(JSON.stringify(msg.themes, null, 2));
+            } else {
+              for (const theme of msg.themes) {
+                console.log(`${theme.slug.padEnd(24)}${theme.name}`);
+              }
             }
             break;
           }
           case isResThemeContent(msg): {
-            console.log(msg.content);
+            if (wmsg.cmdTs.outputFormat === "json") {
+              console.log(JSON.stringify({ slug: msg.slug, content: msg.content }, null, 2));
+            } else {
+              console.log(msg.content);
+            }
             break;
           }
           case isResSystem(msg): {
