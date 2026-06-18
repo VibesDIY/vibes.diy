@@ -429,7 +429,9 @@ export function ShareModal({
 
   const panelClassName = isMobile
     ? "fixed inset-3 flex flex-col overflow-hidden rounded-[5px] border-2 border-black bg-white shadow-[4px_4px_0px_0px_black] dark:bg-gray-900"
-    : "w-max min-w-80 max-w-[min(42rem,calc(100vw-2rem))] rounded-[5px] border-2 border-black bg-white p-4 shadow-[4px_4px_0px_0px_black] dark:bg-gray-900";
+    : // Desktop popover: extra top padding (pt-12) leaves room for the close
+      // button anchored in the top-right corner so it never overlaps content.
+      "relative w-max min-w-80 max-w-[min(42rem,calc(100vw-2rem))] rounded-[5px] border-2 border-black bg-white px-4 pb-4 pt-12 shadow-[4px_4px_0px_0px_black] dark:bg-gray-900";
 
   // Non-owner with read access can request to be added (unless they're already
   // an editor — editors don't need to request). Hidden on unpublished vibes.
@@ -444,13 +446,15 @@ export function ShareModal({
       aria-label="Share"
     >
       <div style={menuStyle} onClick={(e) => e.stopPropagation()} className={panelClassName}>
-        {isMobile && (
-          <button
-            type="button"
-            aria-label="Close"
-            onClick={modal.close}
-            className="absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-full border-2 border-black bg-white text-gray-700 hover:bg-gray-100 shadow-[2px_2px_0px_0px_black] dark:bg-gray-800 dark:text-gray-200"
-          >
+        {/* Explicit close affordance on every viewport. The trigger button is
+            covered by the backdrop while the panel is open, so without this the
+            only way out is click-outside or Escape (see #1845). */}
+        <button
+          type="button"
+          aria-label="Close"
+          onClick={modal.close}
+          className="absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-full border-2 border-black bg-white text-gray-700 hover:bg-gray-100 shadow-[2px_2px_0px_0px_black] dark:bg-gray-800 dark:text-gray-200"
+        >
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className="h-5 w-5" aria-hidden="true">
               <path
                 fillRule="evenodd"
@@ -458,8 +462,7 @@ export function ShareModal({
                 clipRule="evenodd"
               />
             </svg>
-          </button>
-        )}
+        </button>
         {modal.isPublished && modal.publishedUrl ? (
           isOwner ? (
             <>
