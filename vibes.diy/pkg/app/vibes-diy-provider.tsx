@@ -14,6 +14,8 @@ import { SuperThis } from "@fireproof/use-fireproof";
 import { ensureSuperThis } from "@fireproof/core-runtime";
 import { toast } from "react-hot-toast";
 import { ensureAssetSession, tearDownAssetSession } from "./lib/asset-session.js";
+import { avatarConfirmController } from "./lib/avatar-confirm.js";
+import { AvatarConfirmModal } from "./components/AvatarConfirmModal.js";
 import type { DashAuthType } from "@fireproof/core-types-protocols-dashboard";
 // import { PkgRepos } from "@vibes.diy/api-types";
 
@@ -278,6 +280,10 @@ function LiveCycleVibesDiyProvider({ children, webVars }: { children: React.Reac
     vibeApi: realCtx.vibeApi,
     eventListeners: globalThis.window,
     openSignIn: () => clerk.openSignIn(),
+    // Host-side consent gate (#1968): a sandboxed vibe can propose an avatar
+    // write, but the AvatarConfirmModal (mounted below) must approve it before
+    // ensureUserSettings runs.
+    confirmAvatarUpdate: (req) => avatarConfirmController.request(req),
     // Stage C: bridge the asset-host cookie before the iframe gets ack.
     // Reuses the same module-level cache as the Clerk listener — if login
     // already primed the session, this resolves instantly.
@@ -301,7 +307,12 @@ function LiveCycleVibesDiyProvider({ children, webVars }: { children: React.Reac
 
   useEngagedVisit();
   useCapiCompleteRegistration();
-  return <VibesDiyContext.Provider value={realCtx}>{children}</VibesDiyContext.Provider>;
+  return (
+    <VibesDiyContext.Provider value={realCtx}>
+      {children}
+      <AvatarConfirmModal />
+    </VibesDiyContext.Provider>
+  );
 }
 
 function ConditionalPostHog({ children, webVars }: { children: React.ReactNode; webVars: VibesDiyWebVars }) {

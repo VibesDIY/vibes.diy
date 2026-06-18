@@ -17,6 +17,7 @@ import {
 import type { AIParams, UserSettingProfile, UserSettingNotifications } from "@vibes.diy/api-types";
 import { exception2Result } from "@adviser/cement";
 import { ModelSettingsCards } from "../components/ModelSettingsCards.js";
+import { avatarConfirmController } from "../lib/avatar-confirm.js";
 
 export function meta() {
   return [{ title: "Settings - Vibes DIY" }, { name: "description", content: "Settings for AI App Builder" }];
@@ -482,6 +483,18 @@ function ProfileCard() {
     }
     const body = (await res.json()) as { cid: string; getURL: string; size: number; uploadId: string };
     const cid = body.cid;
+
+    // Same preview/confirm gate the sandbox path uses (#1968) — the user sees
+    // the cropped image and approves before it's written. Prefer the local
+    // file for an instant preview; revoke the object URL once decided.
+    const previewUrl = URL.createObjectURL(file);
+    let confirmed: boolean;
+    try {
+      confirmed = await avatarConfirmController.request({ cid, previewUrl });
+    } finally {
+      URL.revokeObjectURL(previewUrl);
+    }
+    if (!confirmed) return;
 
     const next = { ...profile, avatarCid: cid };
     setProfile(next);
