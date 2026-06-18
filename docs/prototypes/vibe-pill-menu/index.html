@@ -217,7 +217,7 @@
   .surf-close:hover { background: rgba(0,0,0,.06); }
 
   /* --- Share panel --- */
-  #share { width: 384px; }
+  #share { width: 430px; }
   .tabs { display: flex; gap: 4px; padding: 10px 12px 0; }
   .tab {
     border: none; background: transparent; font-family: var(--font); font-size: 13px; font-weight: 600;
@@ -254,12 +254,24 @@
   .person .who .name { font-size: 13.5px; font-weight: 600; color: #2c2c2c; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .person .who .sub { font-size: 11.5px; color: var(--vibes-gray); }
   .person .owner-tag { font-size: 12.5px; color: var(--vibes-gray); font-weight: 600; }
-  .data-sel {
-    height: 30px; border: 1px solid #d8d6c8; border-radius: 8px; background: #fff;
-    font-family: var(--font); font-size: 12px; color: #333; padding: 0 6px; cursor: pointer; outline: none;
-  }
-  .code-check { display: flex; align-items: center; gap: 5px; font-size: 12px; color: #555; cursor: pointer; user-select: none; }
-  .code-check input { width: 15px; height: 15px; accent-color: var(--vibes-blue); cursor: pointer; }
+  /* Per-person permission switches: Data (Read|Write) + Code (No|Yes),
+     in aligned columns with headers so the list scans at a glance. */
+  .people-head { display: flex; align-items: center; gap: 10px; padding: 2px 2px 6px; }
+  .people-head .ph-grow { flex: 1; }
+  .people-head .ph-col { flex: 0 0 auto; text-align: center; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .6px; color: var(--vibes-gray); }
+  .people-head .ph-data { width: 106px; }
+  .people-head .ph-code { width: 80px; }
+  .perm-toggle { display: inline-flex; flex: 0 0 auto; border: 1px solid var(--vibes-near-black); border-radius: 999px; background: #fff; padding: 2px; cursor: pointer; user-select: none; }
+  .perm-toggle.data { width: 106px; }
+  .perm-toggle.code { width: 80px; }
+  .perm-toggle .pseg { flex: 1; text-align: center; font-size: 11px; font-weight: 700; padding: 4px 0; border-radius: 999px; color: var(--vibes-gray); white-space: nowrap; transition: background .18s ease, color .18s ease; }
+  .perm-toggle.data[data-state="read"]  .pseg.read  { background: var(--vibes-near-black); color: var(--vibes-cream); }
+  .perm-toggle.data[data-state="write"] .pseg.write { background: var(--vibes-blue); color: var(--vibes-cream); }
+  .perm-toggle.code[data-state="no"]    .pseg.no    { background: var(--vibes-near-black); color: var(--vibes-cream); }
+  .perm-toggle.code[data-state="yes"]   .pseg.yes   { background: var(--vibes-green); color: var(--vibes-cream); }
+  .perm-toggle.write { width: 80px; }
+  .perm-toggle.write[data-state="off"] .pseg.off { background: var(--vibes-near-black); color: var(--vibes-cream); }
+  .perm-toggle.write[data-state="on"]  .pseg.on  { background: var(--vibes-blue); color: var(--vibes-cream); }
 
   .requests { margin-top: 14px; border-top: 1px solid rgba(0,0,0,.07); padding-top: 12px; }
   .req-head { display: flex; align-items: center; justify-content: space-between; cursor: pointer; }
@@ -469,6 +481,11 @@
           <button class="btn">Add</button>
         </div>
         <div class="section-label">People</div>
+        <div class="people-head">
+          <span class="ph-grow"></span>
+          <span class="ph-col ph-data">Data</span>
+          <span class="ph-col ph-code">Code</span>
+        </div>
         <div class="person">
           <span class="avatar" style="background:var(--vibes-near-black)">Y</span>
           <span class="who"><div class="name">you</div><div class="sub">marcus@vibes.diy</div></span>
@@ -477,14 +494,14 @@
         <div class="person">
           <span class="avatar" style="background:var(--vibes-purple-neon)">A</span>
           <span class="who"><div class="name">alex@friend.co</div></span>
-          <select class="data-sel"><option>Data: None</option><option selected>Data: Read/Write</option><option>Data: Read</option></select>
-          <label class="code-check"><input type="checkbox" checked /> Code</label>
+          <span class="perm-toggle data" data-state="write"><span class="pseg read" data-val="read">Read</span><span class="pseg write" data-val="write">Write</span></span>
+          <span class="perm-toggle code" data-state="yes"><span class="pseg no" data-val="no">No</span><span class="pseg yes" data-val="yes">Yes</span></span>
         </div>
         <div class="person">
           <span class="avatar" style="background:var(--vibes-green)">S</span>
           <span class="who"><div class="name">sam@friend.co</div></span>
-          <select class="data-sel"><option>Data: None</option><option>Data: Read/Write</option><option selected>Data: Read</option></select>
-          <label class="code-check"><input type="checkbox" /> Code</label>
+          <span class="perm-toggle data" data-state="read"><span class="pseg read" data-val="read">Read</span><span class="pseg write" data-val="write">Write</span></span>
+          <span class="perm-toggle code" data-state="no"><span class="pseg no" data-val="no">No</span><span class="pseg yes" data-val="yes">Yes</span></span>
         </div>
 
         <div class="requests">
@@ -516,8 +533,8 @@
           Specific people · 2 <span style="color:var(--vibes-gray);font-weight:500;">— add data / code grants</span>
         </div>
         <div class="public-data">
-          <span class="pd-label">Public visitors can:</span>
-          <select class="data-sel"><option selected>Data: None</option><option>Data: Read</option><option>Data: Read/Write</option></select>
+          <span class="pd-label">Public data writes</span>
+          <span class="perm-toggle write" data-state="off"><span class="pseg off" data-val="off">Off</span><span class="pseg on" data-val="on">On</span></span>
         </div>
       </div>
 
@@ -1008,6 +1025,16 @@
     var next = siteToggle.getAttribute("data-state") === "restricted" ? "public" : "restricted";
     siteToggle.setAttribute("data-state", next);
     document.getElementById("share").setAttribute("data-visibility", next);
+  });
+
+  // ---- Per-person permission switches (Data / Code) ----
+  document.querySelectorAll(".perm-toggle").forEach(function (tg) {
+    tg.querySelectorAll(".pseg").forEach(function (seg) {
+      seg.addEventListener("click", function (e) {
+        e.stopPropagation();
+        tg.setAttribute("data-state", seg.getAttribute("data-val"));
+      });
+    });
   });
 
   // ---- Requests collapse ----

@@ -116,13 +116,16 @@ Three independent access axes — **no role bundling**; each is its own control:
    **Restricted** (default) | **Public**.
    - Restricted → only people on the access list can open the app.
    - Public → anyone with the link can open it.
-2. **Data** — *per-user* `None / Read / Read+Write`. When the app is Public, a
-   single **public Data default** applies to everyone (starts at `None`).
-3. **Code** — *per-user* edit-via-chat on/off. **Always per-person** — there is
-   never a "let anyone edit the code" public default.
+2. **Data** — having site access already implies **read**, so the only per-user
+   question is write: a binary **Read | Write** switch. When the app is Public,
+   a single **Public data writes [ Off | On ]** toggle covers everyone (public
+   read is implied by the site being open).
+3. **Code** — a binary per-user **No | Yes** switch (edit via chat). **Always
+   per-person** — there is never a "let anyone edit the code" public default.
 
-Being on the access list implies the person can open a restricted app; the list
-then governs their Data + Code grants.
+Being on the access list implies the person can open a restricted app and read
+its data; the list then governs their write + code grants. (This retires the
+earlier "public but nobody reads data" state — site access always implies read.)
 
 ## Share surface — tabs: `Share · Comments · Settings`
 
@@ -135,10 +138,10 @@ bouncy scale/fade. One tab visible at a time.
 
 ```
 [ Invite by email…                ] [ Add ]
-People
- you           Owner
- alex@…   Data [ Read/Write ▾ ]   Code [ ✓ ]
- sam@…    Data [ Read ▾ ]         Code [   ]
+People                            DATA           CODE
+ you                                            Owner
+ alex@…                     [ Read | Write ]  [ No | Yes ]   (Write, Yes active)
+ sam@…                      [ Read | Write ]  [ No | Yes ]   (Read, No active)
 Requests · 2                                ▾
  jo@…   wants access        [ Deny ] [ Approve ]
 ──────────────────────────────────────────────
@@ -153,7 +156,7 @@ Site access            [ Restricted | Public ]   ← foundational, at the bottom
 
 ```
 ▸ Specific people · 2        (add data/code grants)   ← collapsed, still reachable
-Public visitors can:   Data [ None ▾ ]
+Public data writes                      [ Off | On ]
 ──────────────────────────────────────────────
 Site access            [ Restricted | Public ]
 🌐 Anyone with the link can open this app
@@ -162,8 +165,11 @@ Site access            [ Restricted | Public ]
 ▦ QR code                             [ Show ]
 ```
 
-- Per-person row = a **Data dropdown** (None/Read/Read+Write) + a **Code
-  checkbox**, independent, no role names.
+- Per-person row = a **Data** switch (`Read | Write`) + a **Code** switch
+  (`No | Yes`), under aligned `Data` / `Code` column headers. The active segment
+  is highlighted — Write = blue, Yes = green, Read/No = dark — so the list scans
+  at a glance (collaborators pop; read-only people stay neutral). The Share panel
+  is widened (430px) to fit the two switch columns plus full names.
 - Site toggle sits at the **bottom** as the primary/foundational control.
 
 ### Comments tab
@@ -230,7 +236,8 @@ the focus. Fills the viewport with the pill floating fixed at bottom-right.
 - Click pill → tray expands through the phase machine; click again → collapses.
 - **Share** → opens Share panel (default Restricted view). Tabs switch content.
 - Site toggle flips Restricted ⇄ Public with the progressive-disclosure change.
-- Per-person Data dropdowns and Code checkboxes are operable (visual only).
+- Per-person Data (Read|Write) and Code (No|Yes) switches are operable; in
+  Public, the Public-data-writes (Off|On) toggle is operable (visual only).
 - In Site access, **QR code** "Show/Hide" reveals a placeholder QR image.
 - **Vibe** → code-change chat; chips and composer post code-change replies.
 - **Edit** (in the Vibe chat header) → opens the full-screen chat editor;
@@ -254,10 +261,11 @@ in Comments / Settings / Account / Help.
    Share` with the correct four palette colors (Account = purple), all labels
    (incl. "ACCOUNT") fully readable.
 3. The pill carries no badges or dots — clean wordmark only.
-4. Share opens the panel; Restricted shows invite + people (Data dropdown +
-   Code checkbox) + requests + the site toggle at the bottom.
+4. Share opens the panel; Restricted shows invite + people (Data Read|Write
+   switch + Code No|Yes switch, under Data/Code headers) + requests + the site
+   toggle at the bottom.
 5. Flipping the site toggle to Public collapses the people machinery and shows
-   the single public Data default; flipping back restores it.
+   the single Public-data-writes Off|On toggle; flipping back restores it.
 6. Comments and Settings tabs switch the panel content; Site access has Site
    link / Landing page link / QR code (QR "Show" reveals the placeholder).
 7. Vibe opens a code-change chat (Vibe Coder, code-themed seed + chips +
