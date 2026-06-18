@@ -146,6 +146,7 @@ Site access            [ Restricted | Public ]   ← foundational, at the bottom
 🔒 Only invited people can open this app
 🔗 Site link                          [ Copy ]
 🔗 Landing page link                  [ Copy ]
+▦ QR code                             [ Show ]
 ```
 
 **Public — per-user machinery collapses, minimal public choice remains:**
@@ -158,6 +159,7 @@ Site access            [ Restricted | Public ]
 🌐 Anyone with the link can open this app
 🔗 Site link                          [ Copy ]
 🔗 Landing page link                  [ Copy ]
+▦ QR code                             [ Show ]
 ```
 
 - Per-person row = a **Data dropdown** (None/Read/Read+Write) + a **Code
@@ -174,10 +176,16 @@ timestamp, body; a "resolve" affordance; a "comment…" composer. Illustrative.
 Mocked app-settings form: app title, icon/screenshot, canonical slug, plus a
 destructive "Delete app" row. Illustrative.
 
-## Vibe (code menu)
+## Vibe — code-change chat
 
-Vertical sub-menu: **Edit / QR Code**. QR toggles a
-static placeholder image. Same look and motion as the shipping component.
+A chat bot for changing the app's code, same UX as the Help assistant but
+scaffolded around **making code changes**: "Vibe Coder" identity, a seeded
+exchange where the user asks for a change and the agent narrates editing the
+code (e.g. adding a `darkMode` toggle), code-change suggestion chips ("Change
+the accent color", "Add a due-date field", "Make it mobile-friendly"), and a
+"Describe a change…" composer. The single **Edit** affordance (open the full
+editor) lives as a button in the chat header. (The QR code moved to Share — see
+Site access.)
 
 ## Account
 
@@ -215,7 +223,8 @@ the focus. Fills the viewport with the pill floating fixed at bottom-right.
 - **Share** → opens Share panel (default Restricted view). Tabs switch content.
 - Site toggle flips Restricted ⇄ Public with the progressive-disclosure change.
 - Per-person Data dropdowns and Code checkboxes are operable (visual only).
-- **Vibe** → vertical code menu; **QR Code** toggles a placeholder image.
+- In Site access, **QR code** "Show/Hide" reveals a placeholder QR image.
+- **Vibe** → code-change chat; chips and composer post code-change replies.
 - **Account** → panel; in-panel switch flips logged-in/out mocks.
 - **Help** → chat modal; suggested chips and composer are clickable.
 - All outbound links (Edit, Site link, Landing page link) are inert.
@@ -239,8 +248,10 @@ in Comments / Settings / Account / Help.
    Code checkbox) + requests + the site toggle at the bottom.
 5. Flipping the site toggle to Public collapses the people machinery and shows
    the single public Data default; flipping back restores it.
-6. Comments and Settings tabs switch the panel content.
-7. Vibe opens the Edit/QR menu; QR toggles a placeholder.
+6. Comments and Settings tabs switch the panel content; Site access has Site
+   link / Landing page link / QR code (QR "Show" reveals the placeholder).
+7. Vibe opens a code-change chat (Vibe Coder, code-themed seed + chips +
+   composer) with an Edit affordance in the header.
 8. Account shows logged-in (Log out); the in-panel switch reveals the
    logged-out variant.
 9. Help opens an AI chat modal with a seeded exchange, typing indicator,

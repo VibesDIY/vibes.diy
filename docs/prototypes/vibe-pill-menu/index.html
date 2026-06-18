@@ -332,20 +332,16 @@
   .btn.danger-btn { background: transparent; border-color: #e0a0a0; color: #c0392b; }
   .btn.danger-btn:hover { background: #fdecec; }
 
-  /* --- Vibes (code menu) --- */
-  #vibes { width: 220px; padding: 8px; }
-  .vrow {
-    display: flex; align-items: center; gap: 10px; height: 33px; padding: 0 14px 0 6px; margin: 4px 0;
-    border: 1px solid var(--vibes-near-black); border-radius: 16.5px; font-size: 9.6px; font-weight: 700;
-    text-transform: uppercase; letter-spacing: 1.5px; cursor: pointer; text-decoration: none;
-  }
-  .vrow .vchip { width: 25px; height: 25px; border-radius: 50%; background: var(--vibes-near-black); color: var(--vibes-cream); display: flex; align-items: center; justify-content: center; flex: 0 0 auto; }
-  .vrow .vchip svg { width: 13px; height: 13px; }
-  .vrow.edit  { background: var(--vibes-yellow); color: var(--vibes-near-black); }
-  .vrow.clone { background: var(--vibes-blue); color: var(--vibes-cream); }
-  .vrow.remix { background: var(--vibes-green); color: var(--vibes-cream); }
-  .vrow.qr    { background: var(--vibes-cream); color: var(--vibes-near-black); }
-  .qr-img { display: none; justify-content: center; padding: 8px 0 4px; }
+  /* --- Vibe (code-change chat) --- */
+  #vibes { width: 360px; height: 520px; display: flex; flex-direction: column; }
+  .chat-head .bot.vibe-bot { background: linear-gradient(135deg, var(--vibes-yellow), var(--vibes-green)); }
+  .edit-link { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 700;
+    color: var(--vibes-near-black); text-decoration: none; padding: 5px 10px; border: 1px solid var(--vibes-near-black);
+    border-radius: 8px; background: var(--vibes-yellow); }
+  .edit-link:hover { filter: brightness(1.04); }
+
+  /* QR placeholder (shown inline in the Share → Site access section) */
+  .qr-img { display: none; justify-content: center; padding: 4px 0 2px; }
   .qr-img.show { display: flex; }
   .qr-img img { width: 150px; height: 150px; border-radius: 6px; border: 1px solid var(--vibes-near-black); }
 
@@ -377,6 +373,7 @@
   .bubble { max-width: 80%; padding: 10px 13px; font-size: 13.5px; line-height: 1.45; border-radius: 16px; }
   .bubble.agent { align-self: flex-start; background: #fff; border: 1px solid #ece9da; color: #333; border-bottom-left-radius: 5px; }
   .bubble.user { align-self: flex-end; background: var(--vibes-blue); color: #fff; border-bottom-right-radius: 5px; }
+  .bubble code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; background: rgba(0,0,0,.06); padding: 1px 5px; border-radius: 4px; font-size: 0.88em; }
   .typing { align-self: flex-start; display: none; gap: 4px; padding: 12px 14px; background: #fff; border: 1px solid #ece9da; border-radius: 16px; border-bottom-left-radius: 5px; }
   .typing.show { display: flex; }
   .typing span { width: 7px; height: 7px; border-radius: 50%; background: #bbb; animation: blink 1.2s infinite both; }
@@ -524,6 +521,13 @@
             <span class="link-name"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>Landing page link</span>
             <button class="copy-btn">Copy</button>
           </div>
+          <div class="link-row">
+            <span class="link-name"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h.01M14 17h.01M17 14h.01M17 17h.01M20 14h.01M20 17h.01M20 20h.01M17 20h.01M14 20h.01"/></svg>QR code</span>
+            <button class="copy-btn" id="qrToggleBtn">Show</button>
+          </div>
+          <div class="qr-img" id="qrImg">
+            <img alt="QR placeholder" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='150' height='150' viewBox='0 0 29 29' shape-rendering='crispEdges'%3E%3Crect width='29' height='29' fill='%23fffff0'/%3E%3Cg fill='%231a1a1a'%3E%3Crect x='2' y='2' width='7' height='7'/%3E%3Crect x='4' y='4' width='3' height='3' fill='%23fffff0'/%3E%3Crect x='20' y='2' width='7' height='7'/%3E%3Crect x='22' y='4' width='3' height='3' fill='%23fffff0'/%3E%3Crect x='2' y='20' width='7' height='7'/%3E%3Crect x='4' y='22' width='3' height='3' fill='%23fffff0'/%3E%3Crect x='11' y='2' width='1' height='1'/%3E%3Crect x='13' y='2' width='2' height='1'/%3E%3Crect x='11' y='4' width='1' height='2'/%3E%3Crect x='14' y='4' width='1' height='3'/%3E%3Crect x='16' y='3' width='1' height='1'/%3E%3Crect x='2' y='11' width='2' height='1'/%3E%3Crect x='5' y='11' width='1' height='2'/%3E%3Crect x='7' y='12' width='2' height='1'/%3E%3Crect x='11' y='9' width='7' height='7'/%3E%3Crect x='13' y='11' width='3' height='3' fill='%23fffff0'/%3E%3Crect x='20' y='11' width='1' height='2'/%3E%3Crect x='22' y='11' width='2' height='1'/%3E%3Crect x='25' y='12' width='1' height='2'/%3E%3Crect x='11' y='19' width='2' height='1'/%3E%3Crect x='14' y='20' width='1' height='2'/%3E%3Crect x='17' y='19' width='1' height='1'/%3E%3Crect x='19' y='22' width='3' height='1'/%3E%3Crect x='23' y='20' width='1' height='3'/%3E%3Crect x='25' y='22' width='2' height='1'/%3E%3Crect x='20' y='25' width='1' height='2'/%3E%3Crect x='24' y='25' width='2' height='1'/%3E%3C/g%3E%3C/svg%3E" />
+          </div>
         </div>
       </div>
     </div>
@@ -576,12 +580,28 @@
     </div>
   </div>
 
-  <!-- Vibes (code menu) -->
+  <!-- Vibe (code-change chat) -->
   <div class="surface" id="vibes">
-    <a class="vrow edit" href="#" data-inert><span class="vchip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg></span>Edit</a>
-    <div class="vrow qr" id="qrRow"><span class="vchip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h.01M14 17h.01M17 14h.01M17 17h.01M20 14h.01M20 17h.01M20 20h.01M17 20h.01M14 20h.01"/></svg></span>QR Code</div>
-    <div class="qr-img" id="qrImg">
-      <img alt="QR placeholder" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='150' height='150' viewBox='0 0 29 29' shape-rendering='crispEdges'%3E%3Crect width='29' height='29' fill='%23fffff0'/%3E%3Cg fill='%231a1a1a'%3E%3Crect x='2' y='2' width='7' height='7'/%3E%3Crect x='4' y='4' width='3' height='3' fill='%23fffff0'/%3E%3Crect x='20' y='2' width='7' height='7'/%3E%3Crect x='22' y='4' width='3' height='3' fill='%23fffff0'/%3E%3Crect x='2' y='20' width='7' height='7'/%3E%3Crect x='4' y='22' width='3' height='3' fill='%23fffff0'/%3E%3Crect x='11' y='2' width='1' height='1'/%3E%3Crect x='13' y='2' width='2' height='1'/%3E%3Crect x='11' y='4' width='1' height='2'/%3E%3Crect x='14' y='4' width='1' height='3'/%3E%3Crect x='16' y='3' width='1' height='1'/%3E%3Crect x='2' y='11' width='2' height='1'/%3E%3Crect x='5' y='11' width='1' height='2'/%3E%3Crect x='7' y='12' width='2' height='1'/%3E%3Crect x='11' y='9' width='7' height='7'/%3E%3Crect x='13' y='11' width='3' height='3' fill='%23fffff0'/%3E%3Crect x='20' y='11' width='1' height='2'/%3E%3Crect x='22' y='11' width='2' height='1'/%3E%3Crect x='25' y='12' width='1' height='2'/%3E%3Crect x='11' y='19' width='2' height='1'/%3E%3Crect x='14' y='20' width='1' height='2'/%3E%3Crect x='17' y='19' width='1' height='1'/%3E%3Crect x='19' y='22' width='3' height='1'/%3E%3Crect x='23' y='20' width='1' height='3'/%3E%3Crect x='25' y='22' width='2' height='1'/%3E%3Crect x='20' y='25' width='1' height='2'/%3E%3Crect x='24' y='25' width='2' height='1'/%3E%3C/g%3E%3C/svg%3E" />
+    <div class="chat-head">
+      <span class="bot vibe-bot"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg><span class="status"></span></span>
+      <span class="who2"><div class="n">Vibe Coder</div><div class="s">● ready to edit</div></span>
+      <a class="edit-link" href="#" data-inert>Edit<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7M7 7h10v10"/></svg></a>
+      <button class="surf-close" data-close aria-label="Close"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+    </div>
+    <div class="chat-thread" id="vibeThread">
+      <div class="bubble agent">Hi! Tell me what to change about your app and I'll edit the code — add features, fix bugs, restyle. Just describe it, or open the full editor any time.</div>
+      <div class="bubble user">Add a dark-mode toggle to the header</div>
+      <div class="bubble agent">On it — adding a theme switch to the header and wiring it to a <code>darkMode</code> state… ✓ Done, it's live in your preview. Want it to remember the choice across visits?</div>
+      <div class="typing" id="vibeTyping"><span></span><span></span><span></span></div>
+    </div>
+    <div class="chips" id="vibeChips">
+      <button class="chip-btn">Change the accent color</button>
+      <button class="chip-btn">Add a due-date field</button>
+      <button class="chip-btn">Make it mobile-friendly</button>
+    </div>
+    <div class="chat-compose">
+      <input id="vibeInput" placeholder="Describe a change to your app…" />
+      <button class="send-btn" id="vibeSend" aria-label="Send"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2 11 13"/><path d="M22 2 15 22l-4-9-9-4 20-7z"/></svg></button>
     </div>
   </div>
 
@@ -903,9 +923,11 @@
     reqList.style.display = reqList.style.display === "none" ? "" : "none";
   });
 
-  // ---- Vibes: QR toggle ----
-  document.getElementById("qrRow").addEventListener("click", function () {
-    document.getElementById("qrImg").classList.toggle("show");
+  // ---- Share: QR show/hide ----
+  var qrToggleBtn = document.getElementById("qrToggleBtn");
+  qrToggleBtn.addEventListener("click", function () {
+    var shown = document.getElementById("qrImg").classList.toggle("show");
+    qrToggleBtn.textContent = shown ? "Hide" : "Show";
   });
 
   // ---- Account: auth state ----
@@ -923,40 +945,58 @@
   });
   setAuth("in");
 
-  // ---- Help: chat ----
-  var thread = document.getElementById("chatThread");
-  var typing = document.getElementById("typing");
-  var input = document.getElementById("chatInput");
-  function agentReplyFor(text) {
+  // ---- Chat panels (Help assistant + Vibe code-change bot) ----
+  function makeChat(ids, replyFn) {
+    var thread = document.getElementById(ids.thread);
+    var typing = document.getElementById(ids.typing);
+    var input = document.getElementById(ids.input);
+    function addBubble(cls, html) {
+      var b = document.createElement("div");
+      b.className = "bubble " + cls;
+      b.innerHTML = html;
+      thread.insertBefore(b, typing);
+      thread.scrollTop = thread.scrollHeight;
+    }
+    function send(text) {
+      if (!text.trim()) return;
+      addBubble("user", text.replace(/</g, "&lt;"));
+      input.value = "";
+      typing.classList.add("show");
+      thread.scrollTop = thread.scrollHeight;
+      setTimeout(function () {
+        typing.classList.remove("show");
+        addBubble("agent", replyFn(text));
+      }, 1100);
+    }
+    document.getElementById(ids.send).addEventListener("click", function () { send(input.value); });
+    input.addEventListener("keydown", function (e) { if (e.key === "Enter") send(input.value); });
+    document.querySelectorAll("#" + ids.chips + " .chip-btn").forEach(function (c) {
+      c.addEventListener("click", function () { send(c.textContent); });
+    });
+  }
+
+  function helpReplyFor(text) {
     var t = text.toLowerCase();
     if (t.indexOf("publish") >= 0) return "To publish: open <b>Vibe → Edit</b> to make your changes, then hit publish — your latest code goes live at your app's URL.";
     if (t.indexOf("remix") >= 0) return "A <b>remix</b> forks this app into a brand-new vibe you own — same starting point, your own copy to take in any direction.";
     if (t.indexOf("invite") >= 0 || t.indexOf("friend") >= 0) return "Open <b>Share</b>, type their email under <b>Invite by email</b>, and pick what they can do — <b>Data</b> (read or read/write) and optionally <b>Code</b>. They'll get access as soon as they accept.";
     return "Great question! Open <b>Share</b> to manage who can see and edit this vibe, or <b>Vibe</b> to change the app itself. Want me to walk you through one of those?";
   }
-  function addBubble(cls, html) {
-    var b = document.createElement("div");
-    b.className = "bubble " + cls;
-    b.innerHTML = html;
-    thread.insertBefore(b, typing);
-    thread.scrollTop = thread.scrollHeight;
+  function vibeReplyFor(text) {
+    var t = text.toLowerCase();
+    if (t.indexOf("color") >= 0 || t.indexOf("theme") >= 0 || t.indexOf("dark") >= 0)
+      return "Updating the styles… ✓ I've adjusted the theme and refreshed your live preview. Want to fine-tune the palette?";
+    if (t.indexOf("field") >= 0 || t.indexOf("add") >= 0 || t.indexOf("feature") >= 0)
+      return "Got it — I'll add that to the data model and the form… ✓ Done, it's live in your preview. Anything else to wire up?";
+    if (t.indexOf("mobile") >= 0 || t.indexOf("responsive") >= 0)
+      return "Making it responsive — stacking the layout and enlarging tap targets on small screens… ✓ Updated. Resize the preview to check it.";
+    if (t.indexOf("fix") >= 0 || t.indexOf("bug") >= 0)
+      return "On it — tracing that and patching the code… ✓ Fixed and redeployed to your preview. Does it behave now?";
+    return "I'll make that change to your app's code and update the live preview. Want me to walk through the edit, or just keep going?";
   }
-  function send(text) {
-    if (!text.trim()) return;
-    addBubble("user", text.replace(/</g, "&lt;"));
-    input.value = "";
-    typing.classList.add("show");
-    thread.scrollTop = thread.scrollHeight;
-    setTimeout(function () {
-      typing.classList.remove("show");
-      addBubble("agent", agentReplyFor(text));
-    }, 1100);
-  }
-  document.getElementById("chatSend").addEventListener("click", function () { send(input.value); });
-  input.addEventListener("keydown", function (e) { if (e.key === "Enter") send(input.value); });
-  document.querySelectorAll("#chips .chip-btn").forEach(function (c) {
-    c.addEventListener("click", function () { send(c.textContent); });
-  });
+
+  makeChat({ thread: "chatThread", typing: "typing", input: "chatInput", send: "chatSend", chips: "chips" }, helpReplyFor);
+  makeChat({ thread: "vibeThread", typing: "vibeTyping", input: "vibeInput", send: "vibeSend", chips: "vibeChips" }, vibeReplyFor);
 
   // ---- Sample app: toggle todos ----
   document.querySelectorAll(".todo-row").forEach(function (r) {
