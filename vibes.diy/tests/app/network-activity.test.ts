@@ -23,10 +23,14 @@ function collectNetworkEvents(): { events: NetworkEvent[]; stop: () => void } {
       events.push(data as NetworkEvent);
     }
   };
-  window.addEventListener("message", handler);
+  // Production posts to window.parent (the host frame). Under the vitest browser
+  // runner the test executes inside an iframe, so window.parent !== window and
+  // listening on window never sees the events. window.parent === window outside
+  // an iframe, so this is correct in both contexts (#2425).
+  window.parent.addEventListener("message", handler);
   return {
     events,
-    stop: () => window.removeEventListener("message", handler),
+    stop: () => window.parent.removeEventListener("message", handler),
   };
 }
 
