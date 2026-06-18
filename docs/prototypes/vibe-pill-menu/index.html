@@ -394,6 +394,32 @@
     position: fixed; left: 14px; bottom: 14px; z-index: 40; font-size: 11.5px; color: #999;
     background: rgba(255,255,255,.7); border: 1px solid #e2e2e2; border-radius: 8px; padding: 6px 10px;
   }
+
+  /* ============================================================= */
+  /*  Chat editor view (opened from Vibe → Edit)                   */
+  /* ============================================================= */
+  #editor { position: fixed; inset: 0; z-index: 200; background: #fff; display: none; flex-direction: column; font-family: var(--font); }
+  #editor.open { display: flex; }
+  .ed-topbar { height: 56px; flex: 0 0 auto; display: flex; align-items: center; gap: 16px; padding: 0 18px; border-bottom: 1px solid #e8e8e8; background: #fff; }
+  .ed-back { display: inline-flex; align-items: center; gap: 6px; border: none; background: transparent; font-family: var(--font); font-size: 13px; font-weight: 600; color: var(--vibes-near-black); cursor: pointer; padding: 6px 8px; border-radius: 8px; }
+  .ed-back:hover { background: #f2f2f2; }
+  .ed-title { flex: 1; line-height: 1.15; }
+  .ed-title .ed-app { font-size: 14px; font-weight: 700; color: #2b2b2b; }
+  .ed-title .ed-slug { font-size: 12px; color: var(--vibes-gray); }
+  .ed-actions { display: flex; align-items: center; gap: 8px; }
+  .ed-body { flex: 1; display: flex; min-height: 0; }
+  .ed-chat { width: 38%; min-width: 320px; max-width: 480px; display: flex; flex-direction: column; border-right: 1px solid #e8e8e8; background: var(--vibes-cream); }
+  .ed-chat .chat-thread { flex: 1; }
+  .ed-chips { display: flex; flex-wrap: wrap; gap: 6px; padding: 0 14px 8px; }
+  .ed-preview { flex: 1; display: flex; flex-direction: column; min-width: 0; background: #f4f4f5; }
+  .ed-tabs { flex: 0 0 auto; display: flex; gap: 4px; padding: 10px 14px 0; border-bottom: 1px solid #e8e8e8; background: #fff; }
+  .ed-tab { border: none; background: transparent; font-family: var(--font); font-size: 13px; font-weight: 600; color: var(--vibes-gray); padding: 8px 14px; border-radius: 8px 8px 0 0; cursor: pointer; }
+  .ed-tab:hover { color: var(--vibes-near-black); }
+  .ed-tab.active { color: var(--vibes-near-black); background: #f4f4f5; }
+  .ed-pane { flex: 1; overflow: auto; padding: 28px; }
+  .ed-pane[hidden] { display: none; }
+  .ed-code { margin: 0; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12.5px; line-height: 1.65; color: #2b2b2b; white-space: pre; }
+  .ed-code .k { color: #7c3aed; } .ed-code .s { color: #059669; } .ed-code .c { color: #9ca3af; } .ed-code .f { color: #2563eb; }
 </style>
 </head>
 <body data-auth="in">
@@ -585,7 +611,7 @@
     <div class="chat-head">
       <span class="bot vibe-bot"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg><span class="status"></span></span>
       <span class="who2"><div class="n">Vibe Coder</div><div class="s">● ready to edit</div></span>
-      <a class="edit-link" href="#" data-inert>Edit<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7M7 7h10v10"/></svg></a>
+      <a class="edit-link" href="#" id="vibeEditBtn">Edit<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7M7 7h10v10"/></svg></a>
       <button class="surf-close" data-close aria-label="Close"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
     </div>
     <div class="chat-thread" id="vibeThread">
@@ -658,6 +684,73 @@
     <div class="chat-compose">
       <input id="chatInput" placeholder="Ask anything…" />
       <button class="send-btn" id="chatSend" aria-label="Send"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2 11 13"/><path d="M22 2 15 22l-4-9-9-4 20-7z"/></svg></button>
+    </div>
+  </div>
+
+  <!-- ===================== Chat editor (Vibe → Edit) ===================== -->
+  <div id="editor">
+    <div class="ed-topbar">
+      <button class="ed-back" id="edBack"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>Back to app</button>
+      <div class="ed-title"><div class="ed-app">My To-Do App</div><div class="ed-slug">marcus/my-to-do-app</div></div>
+      <div class="ed-actions">
+        <button class="btn ghost">Share</button>
+        <button class="btn">Publish</button>
+      </div>
+    </div>
+    <div class="ed-body">
+      <div class="ed-chat">
+        <div class="chat-thread" id="editorThread">
+          <div class="bubble agent">Hi! Describe a change and I'll edit the code — add features, fix bugs, restyle. I'll update the preview as I go.</div>
+          <div class="bubble user">Add a dark-mode toggle to the header</div>
+          <div class="bubble agent">Added a theme switch wired to a <code>darkMode</code> state. ✓ It's in the preview — flip to the <b>Code</b> tab to see the change. Want it to persist across visits?</div>
+          <div class="typing" id="editorTyping"><span></span><span></span><span></span></div>
+        </div>
+        <div class="ed-chips" id="editorChips">
+          <button class="chip-btn">Change the accent color</button>
+          <button class="chip-btn">Add a due-date field</button>
+          <button class="chip-btn">Make it mobile-friendly</button>
+        </div>
+        <div class="chat-compose">
+          <input id="editorInput" placeholder="Describe a change to your app…" />
+          <button class="send-btn" id="editorSend" aria-label="Send"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2 11 13"/><path d="M22 2 15 22l-4-9-9-4 20-7z"/></svg></button>
+        </div>
+      </div>
+      <div class="ed-preview">
+        <div class="ed-tabs">
+          <button class="ed-tab active" data-edtab="preview">Preview</button>
+          <button class="ed-tab" data-edtab="code">Code</button>
+        </div>
+        <div class="ed-pane" id="ed-preview-pane">
+          <section class="todo-card" style="margin:0 auto;">
+            <div class="todo-head"><h1>My Tasks</h1><input class="todo-search" placeholder="Search" /></div>
+            <div class="todo-list">
+              <div class="todo-row done"><span class="todo-box"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></span><span class="todo-text">Ship the pill prototype</span></div>
+              <div class="todo-row"><span class="todo-box"></span><span class="todo-text">Invite the team to review</span></div>
+              <div class="todo-row"><span class="todo-box"></span><span class="todo-text">Plan the weekend trip</span></div>
+            </div>
+            <div class="todo-add"><span class="plus">+</span><input placeholder="Add a task…" /></div>
+          </section>
+        </div>
+        <div class="ed-pane" id="ed-code-pane" hidden>
+<pre class="ed-code"><span class="c">// App.jsx · My To-Do App</span>
+<span class="k">import</span> { useState } <span class="k">from</span> <span class="s">"react"</span>;
+<span class="k">import</span> { useFireproof } <span class="k">from</span> <span class="s">"use-fireproof"</span>;
+
+<span class="k">export default function</span> <span class="f">App</span>() {
+  <span class="k">const</span> { useLiveQuery, database } = <span class="f">useFireproof</span>(<span class="s">"my-to-do-app"</span>);
+  <span class="k">const</span> tasks = <span class="f">useLiveQuery</span>(<span class="s">"createdAt"</span>).docs;
+  <span class="k">const</span> [text, setText] = <span class="f">useState</span>(<span class="s">""</span>);
+  <span class="k">const</span> [dark, setDark] = <span class="f">useState</span>(<span class="k">false</span>); <span class="c">// ← added</span>
+
+  <span class="k">const</span> <span class="f">addTask</span> = () =&gt; {
+    database.<span class="f">put</span>({ text, done: <span class="k">false</span>, createdAt: Date.<span class="f">now</span>() });
+    <span class="f">setText</span>(<span class="s">""</span>);
+  };
+
+  <span class="k">return</span> <span class="c">/* header + dark-mode toggle + task list */</span>;
+}</pre>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -997,6 +1090,28 @@
 
   makeChat({ thread: "chatThread", typing: "typing", input: "chatInput", send: "chatSend", chips: "chips" }, helpReplyFor);
   makeChat({ thread: "vibeThread", typing: "vibeTyping", input: "vibeInput", send: "vibeSend", chips: "vibeChips" }, vibeReplyFor);
+  makeChat({ thread: "editorThread", typing: "editorTyping", input: "editorInput", send: "editorSend", chips: "editorChips" }, vibeReplyFor);
+
+  // ---- Chat editor: open from Vibe → Edit, close via Back, Preview/Code tabs ----
+  var editor = document.getElementById("editor");
+  document.getElementById("vibeEditBtn").addEventListener("click", function (e) {
+    e.preventDefault();
+    e.stopPropagation();
+    setPhase("idle");           // reset the pill/tray behind the full-screen editor
+    editor.classList.add("open");
+  });
+  document.getElementById("edBack").addEventListener("click", function () {
+    editor.classList.remove("open");
+  });
+  document.querySelectorAll(".ed-tab").forEach(function (tab) {
+    tab.addEventListener("click", function () {
+      document.querySelectorAll(".ed-tab").forEach(function (x) { x.classList.remove("active"); });
+      tab.classList.add("active");
+      var which = tab.getAttribute("data-edtab");
+      document.getElementById("ed-preview-pane").hidden = which !== "preview";
+      document.getElementById("ed-code-pane").hidden = which !== "code";
+    });
+  });
 
   // ---- Sample app: toggle todos ----
   document.querySelectorAll(".todo-row").forEach(function (r) {

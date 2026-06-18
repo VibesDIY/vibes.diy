@@ -183,9 +183,17 @@ scaffolded around **making code changes**: "Vibe Coder" identity, a seeded
 exchange where the user asks for a change and the agent narrates editing the
 code (e.g. adding a `darkMode` toggle), code-change suggestion chips ("Change
 the accent color", "Add a due-date field", "Make it mobile-friendly"), and a
-"Describe a change…" composer. The single **Edit** affordance (open the full
-editor) lives as a button in the chat header. (The QR code moved to Share — see
-Site access.)
+"Describe a change…" composer. The **Edit** button in the chat header opens the
+**chat editor view** (below). (The QR code moved to Share — see Site access.)
+
+## Chat editor view (Vibe → Edit)
+
+Clicking **Edit** opens a full-screen mock of the vibes.diy chat editor (the
+`/chat/{slug}` destination): a top bar (**Back to app**, app title/slug, Share +
+Publish), a **code-change chat** on the left (same UX, reusing the Vibe Coder
+conversation), and a **Preview / Code** pane on the right — Preview shows the
+sample to-do app; Code shows a syntax-highlighted `App.jsx` whose `darkMode`
+edit matches the seeded chat. "Back to app" returns to the deployed-vibe view.
 
 ## Account
 
@@ -225,6 +233,8 @@ the focus. Fills the viewport with the pill floating fixed at bottom-right.
 - Per-person Data dropdowns and Code checkboxes are operable (visual only).
 - In Site access, **QR code** "Show/Hide" reveals a placeholder QR image.
 - **Vibe** → code-change chat; chips and composer post code-change replies.
+- **Edit** (in the Vibe chat header) → opens the full-screen chat editor;
+  Preview/Code tabs switch; **Back to app** returns.
 - **Account** → panel; in-panel switch flips logged-in/out mocks.
 - **Help** → chat modal; suggested chips and composer are clickable.
 - All outbound links (Edit, Site link, Landing page link) are inert.
@@ -251,7 +261,8 @@ in Comments / Settings / Account / Help.
 6. Comments and Settings tabs switch the panel content; Site access has Site
    link / Landing page link / QR code (QR "Show" reveals the placeholder).
 7. Vibe opens a code-change chat (Vibe Coder, code-themed seed + chips +
-   composer) with an Edit affordance in the header.
+   composer); the header **Edit** opens the full-screen chat editor (chat +
+   Preview/Code), and **Back to app** returns.
 8. Account shows logged-in (Log out); the in-panel switch reveals the
    logged-out variant.
 9. Help opens an AI chat modal with a seeded exchange, typing indicator,
