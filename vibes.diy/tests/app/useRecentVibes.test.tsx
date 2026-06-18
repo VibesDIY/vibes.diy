@@ -117,4 +117,51 @@ describe("useRecentVibes ensureAllLoaded", () => {
     expect(result.current.isLoadingAll).toBe(false);
     expect(result.current.items.map((item) => item.appSlug)).toEqual(["first", "second"]);
   });
+
+  it("clears shared loading when search interrupts an in-flight loadMore", async () => {
+    const inFlightLoadMore = deferred<ReturnType<typeof okRecentVibes>>();
+    let cursorOneCalls = 0;
+
+    mockListRecentVibes.mockImplementation(async ({ cursor }: { cursor?: string }) => {
+      if (!cursor) return okRecentVibes([makeItem("first")], "cursor-1");
+      if (cursor === "cursor-1") {
+        cursorOneCalls += 1;
+        // First "cursor-1" call is the in-flight loadMore (left pending so its
+        // token gets invalidated); the second is the ensureAllLoaded loop.
+        if (cursorOneCalls === 1) return inFlightLoadMore.promise;
+        return okRecentVibes([makeItem("second")], undefined);
+      }
+      throw new Error(`unexpected cursor: ${cursor}`);
+    });
+
+    const { result } = renderHook(() => useRecentVibes(1));
+
+    await waitFor(() => {
+      expect(result.current.loading).toBe(false);
+      expect(result.current.nextCursor).toBe("cursor-1");
+    });
+
+    // Kick off a loadMore that never resolves before the search starts.
+    act(() => {
+      void result.current.loadMore();
+    });
+    await waitFor(() => {
+      expect(result.current.loading).toBe(true);
+    });
+
+    // Search begins: ensureAllLoaded bumps the token, orphaning the loadMore.
+    await act(async () => {
+      await result.current.ensureAllLoaded();
+    });
+
+    // Now let the orphaned loadMore settle — it must not touch loading state.
+    inFlightLoadMore.resolve(okRecentVibes([makeItem("stale")], "cursor-stale"));
+    await act(async () => {
+      await Promise.resolve();
+    });
+
+    expect(result.current.loading).toBe(false);
+    expect(result.current.isLoadingAll).toBe(false);
+    expect(result.current.items.map((item) => item.appSlug)).toEqual(["first", "second"]);
+  });
 });

@@ -97,6 +97,12 @@ export function useRecentVibes(limit: number): UseRecentVibes {
     if (!isSignedInRef.current || !nextCursor) return;
 
     const token = ++fetchTokenRef.current;
+    // Bumping the token above orphans any in-flight refresh()/loadMore():
+    // they bail at their token check without ever reaching setLoading(false).
+    // Release the shared `loading` flag here so the grid doesn't stay stuck on
+    // a skeleton — this exhaustive load reports its own progress via
+    // `isLoadingAll`.
+    setLoading(false);
     setIsLoadingAll(true);
     setError(null);
 
