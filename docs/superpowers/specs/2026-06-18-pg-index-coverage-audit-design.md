@@ -30,17 +30,17 @@ For each query we record: WHERE columns (equality vs range), `GROUP BY`, `ORDER 
 
 These are the predicates that are **genuinely not** covered by an existing index or a PK prefix. Each is a candidate, not a decision — the EXPLAIN step below confirms or kills it.
 
-| # | Table | Query predicate / sort | Covering index today | Gap | Hotness | File:line |
-|---|---|---|---|---|---|---|
-| C1 | `Apps` | `WHERE ownerHandle=? AND appSlug=? AND mode=?` `ORDER BY releaseSeq DESC LIMIT 1` | none — PK `(appSlug,userId,releaseSeq)` only covers `appSlug`; `ownerHandle`/`mode` filtered in-row | **the #1530 gap**, now in the SSR hot path | **HOT** | `intern/get-vibe-route-hints.ts:69`, `public/serv-entry-point.ts:~300` |
-| C2 | `Apps` | `WHERE ownerHandle=? AND appSlug=?` `GROUP BY mode` + `max(created)` | same as C1 | sibling of C1 (older viewer RPC) | HOT | `public/get-app-by-fsid.ts:116` |
-| C3 | `Apps` | `WHERE userId=?` `ORDER BY created` | none — `userId` is the **2nd** PK col, not a usable prefix → seq scan | `checkMaxAppsPerUser` runs inside `ensureApps`, which fires on **every append-turn write** (not just new-app create), so this seq scan is on the chat-turn hot path | **HOT** | `intern/write-apps.ts:30` (via `write-apps.ts:344` ← `intern/append-turn-to-chat.ts`) |
-| C4 | `ChatContexts` | `WHERE userId=? AND ownerHandle=? AND appSlug=? LIMIT 1` | none — only PK is `chatId` → seq scan | chat-id resolution on generate/seed | HOT | `intern/ensure-chat-id.ts:127`, `intern/ensure-push-seeded-chat.ts:~90` |
-| C5 | `ChatSections` | `WHERE chatId=?` `ORDER BY created[, promptId, blockSeq]` | `ChatSections_chatId_idx (chatId)` finds rows but the sort is a filesort | sort-only; cheap if rows-per-chat is small | MED | `intern/resend-prev-msg.ts:22`, `prompt-assembly.ts:175` |
-| C6 | `AccessFnOutputs` | `WHERE ownerHandle=? AND appSlug=? AND hasGrants=?` | PK `(ownerHandle,appSlug,dbName,docId)` covers the `(ownerHandle,appSlug)` prefix then filters `hasGrants` across all docs of the app | scan width = all output rows for the app | HOT | `intern/who-am-i.ts:62,87` |
-| C7 | `RequestGrants` / `InviteGrants` | `RequestGrants WHERE foreignUserId=? AND ownerHandle=? AND appSlug=?`; `InviteGrants WHERE tokenOrGrantUserId=? AND ownerHandle=? AND appSlug=?` | the single-column idx (`RequestGrants_foreignUserId_idx` / `InviteGrants_tokenOrGrantUserId_idx`) covers only the lead column; `ownerHandle`/`appSlug` are post-filters | viewer-access checks — scan width = all grants for that foreign user / token | **MED** (per Charlie review) | `request-flow.ts:152`, `invite-flow.ts:235` |
-| C8 | `AppDocuments` | `WHERE userId=?` `GROUP BY ownerHandle, appSlug` | none — `userId` not in PK prefix `(ownerHandle,appSlug,…)` → seq scan | **user-facing** membership list (not pure batch — elevated per Charlie review) | MED | `list-memberships.ts:169` |
-| C9 | batch/report scans | `RequestGrants WHERE state`, `InviteGrants WHERE state`, `AppDocuments WHERE created`, `AppSlugBindings WHERE created` | none for the leading predicate | reports tolerate seq scans today | BATCH | low | `usage-report/*`, `report-*.ts` |
+| #   | Table                            | Query predicate / sort                                                                                                                           | Covering index today                                                                                                                                                    | Gap                                                                                                                                                                 | Hotness                      | File:line                                                                             |
+| --- | -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------- | ------------------------------------------------------------------------------------- | ------------------------------- |
+| C1  | `Apps`                           | `WHERE ownerHandle=? AND appSlug=? AND mode=?` `ORDER BY releaseSeq DESC LIMIT 1`                                                                | none — PK `(appSlug,userId,releaseSeq)` only covers `appSlug`; `ownerHandle`/`mode` filtered in-row                                                                     | **the #1530 gap**, now in the SSR hot path                                                                                                                          | **HOT**                      | `intern/get-vibe-route-hints.ts:69`, `public/serv-entry-point.ts:~300`                |
+| C2  | `Apps`                           | `WHERE ownerHandle=? AND appSlug=?` `GROUP BY mode` + `max(created)`                                                                             | same as C1                                                                                                                                                              | sibling of C1 (older viewer RPC)                                                                                                                                    | HOT                          | `public/get-app-by-fsid.ts:116`                                                       |
+| C3  | `Apps`                           | `WHERE userId=?` `ORDER BY created`                                                                                                              | none — `userId` is the **2nd** PK col, not a usable prefix → seq scan                                                                                                   | `checkMaxAppsPerUser` runs inside `ensureApps`, which fires on **every append-turn write** (not just new-app create), so this seq scan is on the chat-turn hot path | **HOT**                      | `intern/write-apps.ts:30` (via `write-apps.ts:344` ← `intern/append-turn-to-chat.ts`) |
+| C4  | `ChatContexts`                   | `WHERE userId=? AND ownerHandle=? AND appSlug=? LIMIT 1`                                                                                         | none — only PK is `chatId` → seq scan                                                                                                                                   | chat-id resolution on generate/seed                                                                                                                                 | HOT                          | `intern/ensure-chat-id.ts:127`, `intern/ensure-push-seeded-chat.ts:~90`               |
+| C5  | `ChatSections`                   | `WHERE chatId=?` `ORDER BY created[, promptId, blockSeq]`                                                                                        | `ChatSections_chatId_idx (chatId)` finds rows but the sort is a filesort                                                                                                | sort-only; cheap if rows-per-chat is small                                                                                                                          | MED                          | `intern/resend-prev-msg.ts:22`, `prompt-assembly.ts:175`                              |
+| C6  | `AccessFnOutputs`                | `WHERE ownerHandle=? AND appSlug=? AND hasGrants=?`                                                                                              | PK `(ownerHandle,appSlug,dbName,docId)` covers the `(ownerHandle,appSlug)` prefix then filters `hasGrants` across all docs of the app                                   | scan width = all output rows for the app                                                                                                                            | HOT                          | `intern/who-am-i.ts:62,87`                                                            |
+| C7  | `RequestGrants` / `InviteGrants` | `RequestGrants WHERE foreignUserId=? AND ownerHandle=? AND appSlug=?`; `InviteGrants WHERE tokenOrGrantUserId=? AND ownerHandle=? AND appSlug=?` | the single-column idx (`RequestGrants_foreignUserId_idx` / `InviteGrants_tokenOrGrantUserId_idx`) covers only the lead column; `ownerHandle`/`appSlug` are post-filters | viewer-access checks — scan width = all grants for that foreign user / token                                                                                        | **MED** (per Charlie review) | `request-flow.ts:152`, `invite-flow.ts:235`                                           |
+| C8  | `AppDocuments`                   | `WHERE userId=?` `GROUP BY ownerHandle, appSlug`                                                                                                 | none — `userId` not in PK prefix `(ownerHandle,appSlug,…)` → seq scan                                                                                                   | **user-facing** membership list (not pure batch — elevated per Charlie review)                                                                                      | MED                          | `list-memberships.ts:169`                                                             |
+| C9  | batch/report scans               | `RequestGrants WHERE state`, `InviteGrants WHERE state`, `AppDocuments WHERE created`, `AppSlugBindings WHERE created`                           | none for the leading predicate                                                                                                                                          | reports tolerate seq scans today                                                                                                                                    | BATCH                        | low                                                                                   | `usage-report/*`, `report-*.ts` |
 
 ### Proposed index shapes (to test, not to merge blindly)
 
@@ -131,10 +131,12 @@ Confirm the **before** plan shows a `Seq Scan` or a wide PK scan with a `Filter:
 -- invocation 1 (MUST be alone — see note)
 CREATE INDEX CONCURRENTLY <name> ON "<Table>" (<cols>);
 ```
+
 ```sql
 -- invocation 2
 ANALYZE "<Table>";
 ```
+
 ```sql
 -- invocation 3 — expect Index Scan, lower cost + actual time
 EXPLAIN (ANALYZE, BUFFERS) SELECT ... ;
@@ -162,3 +164,95 @@ A candidate that wins Step 3 but is on a write-hot table still has to clear this
 ## Deliverable of the validation pass
 
 A short report appended here (or in the follow-up PR) with, per candidate: the `pg_stat_statements` rank, before/after EXPLAIN cost + actual time, the chosen index shape, and a keep/drop verdict. That turns "Needs validation" into a decision with evidence behind it.
+
+---
+
+# Validation results — run against prod Neon `vibes-diy` (2026-06-18)
+
+Ran Steps 0–3 read-only via `pnpm --dir vibes.diy/api/svc run db:inspect sql "EXPLAIN …"`. No schema change made. **Headline: at current scale and data distribution, none of C1–C8 justify a new index — and #1530's own gap (C1) is validated as harmless. The one genuinely actionable finding is the opposite of the spec's hypothesis: five _dead_ indexes that only tax the write path and should be dropped.**
+
+Column-name note: the deployed schema uses `userSlug` where this spec wrote `ownerHandle` (same column, aspirational naming) — EXPLAINs below use the deployed names.
+
+## Step 0 — scale reality (the result that reframes everything)
+
+Only two tables are large enough for an index to matter; the rest fit in a few pages and the planner prefers seq scans for them regardless of indexes.
+
+| Table                  | est rows | total size |
+| ---------------------- | -------- | ---------- |
+| Assets                 | 10,202   | 405 MB     |
+| ChatSections           | 40,841   | 165 MB     |
+| AppDocuments           | 91,800   | 74 MB      |
+| Apps                   | 6,202    | 13 MB      |
+| AppSettings            | 3,237    | 6.3 MB     |
+| ChatContexts           | 3,288    | 648 kB     |
+| AccessFnOutputs        | 1,557    | 600 kB     |
+| RequestGrants          | 256      | 448 kB     |
+| UserSlugBindings       | 190      | 144 kB     |
+| AccessFunctionBindings | 157      | 128 kB     |
+| InviteGrants           | ~2       | 64 kB      |
+
+## Step 1 — `pg_stat_statements` unavailable
+
+`relation "pg_stat_statements" does not exist` for the `vibes-diy-app` role on this Neon connection. Couldn't rank by query exec time. Substituted `pg_stat_user_tables` / `pg_stat_user_indexes` (Step 2) as the hotness signal. Enabling the extension (or granting the app role access) would let a future pass rank by real exec time — worth doing, but not a blocker for the verdicts below.
+
+## Step 2 — seq-scan reality (cumulative since last stats reset)
+
+Ranked by `seq_tup_read`:
+
+| Table            | seq_scan      | seq_tup_read    | idx_scan  | live rows |
+| ---------------- | ------------- | --------------- | --------- | --------- |
+| AppDocuments     | 19,585        | **430,304,853** | 649       | 87,879    |
+| AppSettings      | 259,950       | 327,444,585     | 7,681,137 | 3,290     |
+| UserSlugBindings | **1,625,535** | 84,258,559      | 157,198   | 193       |
+| AppSlugBindings  | 8,521         | 20,971,541      | 22,886    | 3,672     |
+| ChatContexts     | 7,235         | 14,213,879      | 7,140     | 3,288     |
+| Apps             | 2,214         | 7,150,156       | 778,321   | 6,274     |
+| ChatSections     | **17**        | 434,186         | 12,650    | 41,447    |
+
+Two of the top-three seq-scanners (AppSettings, UserSlugBindings) were on the spec's **"already covered — do not add"** list. Step 3 below shows that classification was correct — they seq-scan because the planner _chooses_ to on small / in-memory tables, not because an index is missing. Conversely **ChatSections — the biggest table by query-relevant size — has had 17 seq scans, ever** (12,650 index scans): **C5 is a non-issue, killed.**
+
+## Step 3 — per-candidate EXPLAIN (ANALYZE) verdicts
+
+| #      | Table                                                    | Observed plan                                                                                                       | Time               | Verdict                                                                                                                                                                              |
+| ------ | -------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- | ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **C1** | Apps viewer `userSlug,appSlug,mode ORDER BY releaseSeq`  | Bitmap Index Scan on PK via `appSlug`, filters `userSlug`+`mode` in-row (1 row rechecked)                           | **0.063 ms**       | **DROP.** `appSlug` is selective enough on its own; the in-row filter touches ~1 row. **This is the #1530 gap — validated as not needed.** Answers "Needs validation": don't add it. |
+| C2     | Apps `GROUP BY mode` (older RPC)                         | same PK access path as C1                                                                                           | sub-ms             | **DROP** (same reasoning as C1).                                                                                                                                                     |
+| C3     | Apps `WHERE userId ORDER BY created`                     | Index Scan on PK (`userId` as non-leading cond) — already avoids a heap seq scan                                    | 0.5 ms             | **DROP.** Planner uses the PK index, not a heap scan; 6k rows.                                                                                                                       |
+| **C4** | ChatContexts `userId,userSlug,appSlug LIMIT 1`           | Seq Scan, 3,287 rows filtered                                                                                       | 0.29 ms            | **WATCH.** Genuine seq scan but trivially cheap at 3k rows; cost grows linearly with the table. Revisit if ChatContexts passes ~100k rows. No action now.                            |
+| C5     | ChatSections sort                                        | n/a — 17 lifetime seq scans, fully index-served                                                                     | —                  | **DROP.** Not a real workload.                                                                                                                                                       |
+| C6     | AccessFnOutputs `userSlug,appSlug,hasGrants`             | Bitmap Index Scan on `AccessFnOutputs_grants_idx` `(userSlug,appSlug)` prefix, `hasGrants` filtered in-row (6 rows) | 0.066 ms           | **DROP.** Per-app output counts are tiny; adding `hasGrants` saves microseconds.                                                                                                     |
+| C7     | RequestGrants / InviteGrants composites                  | single-page tables (256 / ~2 rows)                                                                                  | sub-ms             | **DROP.** Planner prefers seq scan on single-page tables; an index would be ignored.                                                                                                 |
+| **C8** | AppDocuments membership list (`list-memberships.ts:170`) | **see below — split verdict**                                                                                       | 0.056 ms / 50.9 ms | **DROP** (with a caveat).                                                                                                                                                            |
+
+### C8 in detail — the spec's top-ranked gap, debunked
+
+The real query is **not** a bare `WHERE userId GROUP BY` (that shape seq-scans, 21 ms — but it doesn't exist in the code). The actual call (`list-memberships.ts:165-171`) is `WHERE userId = ? AND ((userSlug,appSlug) OR …) GROUP BY userSlug,appSlug` — and the `(userSlug,appSlug)` pairs **are** a PK prefix. Two regimes:
+
+- **Normal user** (e.g. 15 docs in one app): **Index Scan on the PK**, `Index Cond: (userSlug,appSlug)`, 18 buffers, **0.056 ms**. The PK already covers it perfectly.
+- **Whale user** (`joshuakrasn` owns **66,184 of 91,817 rows = 72% of the table**): Parallel Seq Scan, ~62 MB, **50.9 ms** — because their own `(userSlug,appSlug)` sets match ~21k rows each, so no index on `userId`/`(userSlug,appSlug)` is selective _for them_. A `(userId,…)` index would be ignored here too.
+
+So the 430 M `seq_tup_read` on AppDocuments is a **power-law data-distribution artifact** (one whale's membership-list loads), not a missing-index problem. **No index proposed in this spec fixes it.** If the whale path becomes a measured problem, the fix is a covering `(userSlug, appSlug, created)` index to enable an index-only `MAX(created)` per group — a different shape from C8's proposal, and still only worth it if that one user's loads actually hurt. Logged here rather than acted on.
+
+## Actual actionable finding — dead indexes to DROP (the audit cuts both ways)
+
+`pg_stat_user_indexes` with `idx_scan = 0` since the last stats reset. Each is pure write-amplification with zero read benefit on a live table:
+
+| Table          | Index                                               | Note                                             |
+| -------------- | --------------------------------------------------- | ------------------------------------------------ |
+| AssetUploads   | `AssetUploads_app_idx` `(userSlug,appSlug,created)` | unused; AssetUploads is on the upload write path |
+| AssetUploads   | `AssetUploads_user_idx` `(userId,created)`          | unused                                           |
+| InviteGrants   | `InviteGrants_cursor` `(created)`                   | unused                                           |
+| LandingEvents  | `LandingEvents_utmCampaign_ts_idx`                  | unused                                           |
+| PromptContexts | `PromptContext_nethash_idx` `(nethash)`             | unused; PromptContexts inserts every chat turn   |
+
+(`MissingVibeEvents_*` also show 0 scans but the table is empty — ignore.) Before dropping, confirm no low-frequency/admin query depends on them since the last stats reset window; `DROP INDEX CONCURRENTLY` via `db:admin` in a follow-up PR.
+
+## Bottom line
+
+- **#1530 (C1): validated → do NOT add the index.** EXPLAIN shows `appSlug` alone resolves the viewer query in 0.063 ms. #1530 can be closed as "validated, not needed" rather than by merging an index.
+- **C2, C3, C5, C6, C7: drop** — already index-served or on tables too small for an index to change the plan.
+- **C4 (ChatContexts): watch**, no action now; revisit past ~100k rows.
+- **C8 (AppDocuments): the heavy seq scans are one whale's data distribution, not a missing index** — normal users already hit the PK at 0.056 ms.
+- **Real follow-up work is removal, not addition**: drop 5 dead indexes (above). Optionally enable `pg_stat_statements` for the app role so the next pass can rank by real exec time.
+
+All measurements are read-only `EXPLAIN (ANALYZE, BUFFERS)` against prod on 2026-06-18; representative params pulled from live rows.
