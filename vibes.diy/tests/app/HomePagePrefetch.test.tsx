@@ -32,6 +32,10 @@ vi.mock("~/vibes.diy/app/contexts/ThemeContext.js", () => ({
   useTheme: () => ({ isDarkMode: false }),
 }));
 
+vi.mock("@clerk/react", () => ({
+  useAuth: () => ({ isSignedIn: false, isLoaded: true }),
+}));
+
 // Stub heavy children so the test doesn't pull in data hooks / the design system.
 vi.mock("~/vibes.diy/app/components/SessionSidebar.js", () => ({ default: () => null }));
 vi.mock("~/vibes.diy/app/components/MyAppsSection.js", () => ({ MyAppsSection: () => null }));

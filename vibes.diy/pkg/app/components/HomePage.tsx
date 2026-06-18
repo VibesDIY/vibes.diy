@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
+import { useAuth } from "@clerk/react";
 import SessionSidebar from "./SessionSidebar.js";
 import { MyAppsSection } from "./MyAppsSection.js";
 import { quickSuggestions } from "../data/quick-suggestions-data.js";
@@ -32,11 +33,17 @@ import {
 export default function HomePage() {
   const [isSidebarVisible, setIsSidebarVisible] = useState(false);
   const closeSidebar = useCallback(() => setIsSidebarVisible(false), []);
+  const { isSignedIn, isLoaded } = useAuth();
 
+  // Auto-open the slide-out only for signed-out visitors as a sign-in nudge.
+  // Wait for Clerk to resolve (isLoaded) before deciding so we don't pop it
+  // open during hydration and leave it open once auth settles to signed-in
+  // (#1892). Authenticated sessions never auto-open; they open it explicitly.
   useEffect(() => {
+    if (!isLoaded || isSignedIn) return;
     const t = setTimeout(() => setIsSidebarVisible(true), 1000);
     return () => clearTimeout(t);
-  }, []);
+  }, [isLoaded, isSignedIn]);
 
   const [isMobile, setIsMobile] = useState<boolean | null>(null);
 
