@@ -134,14 +134,14 @@ bouncy scale/fade. One tab visible at a time.
 
 ### Share tab — progressive disclosure driven by the site toggle
 
-**Restricted (default) — per-user machinery visible:**
+**Restricted (default) — invite + owner + requests visible:**
 
 ```
 [ Invite by email…                ] [ Add ]
-People                            DATA           CODE
- you                                            Owner
- alex@…                     [ Read | Write ]  [ No | Yes ]   (Write, Yes active)
- sam@…                      [ Read | Write ]  [ No | Yes ]   (Read, No active)
+People
+ you                                                  Owner
+ alex@…   DATA [ Read | Write ]   CODE [ No | Yes ]   (Write, Yes active)
+ sam@…    DATA [ Read | Write ]   CODE [ No | Yes ]   (Read, No active)
 Requests · 2                                ▾
  jo@…   wants access        [ Deny ] [ Approve ]
 ──────────────────────────────────────────────
@@ -152,10 +152,13 @@ Site access            [ Restricted | Public ]   ← foundational, at the bottom
 ▦ QR code                             [ Show ]
 ```
 
-**Public — per-user machinery collapses, minimal public choice remains:**
+**Public — the people list stays (now "Specific people"), invite/owner/requests
+drop, and a public write toggle appears:**
 
 ```
-▸ Specific people · 2        (add data/code grants)   ← collapsed, still reachable
+Specific people · 2
+ alex@…   DATA [ Read | Write ]   CODE [ No | Yes ]
+ sam@…    DATA [ Read | Write ]   CODE [ No | Yes ]
 Public data writes                      [ Off | On ]
 ──────────────────────────────────────────────
 Site access            [ Restricted | Public ]
@@ -166,10 +169,12 @@ Site access            [ Restricted | Public ]
 ```
 
 - Per-person row = a **Data** switch (`Read | Write`) + a **Code** switch
-  (`No | Yes`), under aligned `Data` / `Code` column headers. The active segment
-  is highlighted — Write = blue, Yes = green, Read/No = dark — so the list scans
-  at a glance (collaborators pop; read-only people stay neutral). The Share panel
-  is widened (430px) to fit the two switch columns plus full names.
+  (`No | Yes`), each with its own small inline `DATA` / `CODE` label (no distant
+  column headers). The active segment is highlighted — Write = blue, Yes = green,
+  Read/No = dark — so the list scans at a glance (collaborators pop; read-only
+  people stay neutral). The people list is the same in both states (just
+  relabeled "Specific people" when Public); only invite/owner/requests toggle.
+  The Share panel is 452px wide to fit the labels, switches, and full names.
 - Site toggle sits at the **bottom** as the primary/foundational control.
 
 ### Comments tab
@@ -268,10 +273,11 @@ in Comments / Settings / Account / Help.
    (incl. "ACCOUNT") fully readable.
 3. The pill carries no badges or dots — clean wordmark only.
 4. Share opens the panel; Restricted shows invite + people (Data Read|Write
-   switch + Code No|Yes switch, under Data/Code headers) + requests + the site
-   toggle at the bottom.
-5. Flipping the site toggle to Public collapses the people machinery and shows
-   the single Public-data-writes Off|On toggle; flipping back restores it.
+   switch + Code No|Yes switch, each with an inline DATA/CODE label) + requests
+   + the site toggle at the bottom.
+5. Flipping the site toggle to Public keeps the people list (relabeled
+   "Specific people"), drops invite/owner/requests, and shows the single
+   Public-data-writes Off|On toggle; flipping back restores it.
 6. Comments and Settings tabs switch the panel content; Site access has Site
    link / Landing page link / QR code (QR "Show" reveals the placeholder).
 7. Vibe opens a code-change chat (Vibe Coder, code-themed seed + chips +

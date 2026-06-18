@@ -217,7 +217,7 @@
   .surf-close:hover { background: rgba(0,0,0,.06); }
 
   /* --- Share panel --- */
-  #share { width: 430px; }
+  #share { width: 452px; }
   .tabs { display: flex; gap: 4px; padding: 10px 12px 0; }
   .tab {
     border: none; background: transparent; font-family: var(--font); font-size: 13px; font-weight: 600;
@@ -254,16 +254,13 @@
   .person .who .name { font-size: 13.5px; font-weight: 600; color: #2c2c2c; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .person .who .sub { font-size: 11.5px; color: var(--vibes-gray); }
   .person .owner-tag { font-size: 12.5px; color: var(--vibes-gray); font-weight: 600; }
-  /* Per-person permission switches: Data (Read|Write) + Code (No|Yes),
-     in aligned columns with headers so the list scans at a glance. */
-  .people-head { display: flex; align-items: center; gap: 10px; padding: 2px 2px 6px; }
-  .people-head .ph-grow { flex: 1; }
-  .people-head .ph-col { flex: 0 0 auto; text-align: center; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .6px; color: var(--vibes-gray); }
-  .people-head .ph-data { width: 106px; }
-  .people-head .ph-code { width: 80px; }
+  /* Per-person permission switches: each switch carries its own small label
+     (Data / Code) so its purpose is clear right beside it. */
+  .perm-group { display: inline-flex; align-items: center; gap: 6px; flex: 0 0 auto; }
+  .perm-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; color: var(--vibes-gray); }
   .perm-toggle { display: inline-flex; flex: 0 0 auto; border: 1px solid var(--vibes-near-black); border-radius: 999px; background: #fff; padding: 2px; cursor: pointer; user-select: none; }
-  .perm-toggle.data { width: 106px; }
-  .perm-toggle.code { width: 80px; }
+  .perm-toggle.data { width: 96px; }
+  .perm-toggle.code { width: 72px; }
   .perm-toggle .pseg { flex: 1; text-align: center; font-size: 11px; font-weight: 700; padding: 4px 0; border-radius: 999px; color: var(--vibes-gray); white-space: nowrap; transition: background .18s ease, color .18s ease; }
   .perm-toggle.data[data-state="read"]  .pseg.read  { background: var(--vibes-near-black); color: var(--vibes-cream); }
   .perm-toggle.data[data-state="write"] .pseg.write { background: var(--vibes-blue); color: var(--vibes-cream); }
@@ -311,12 +308,7 @@
   /* Public-vs-restricted disclosure */
   [data-visibility="restricted"] .when-public { display: none; }
   [data-visibility="public"]     .when-restricted { display: none; }
-  .specific-people {
-    display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--vibes-near-black);
-    font-weight: 600; cursor: pointer; padding: 6px 0;
-  }
-  .specific-people .chev { color: var(--vibes-gray); }
-  .public-data { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 0 4px; }
+  .public-data { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 12px; padding-top: 12px; border-top: 1px solid rgba(0,0,0,.08); }
   .public-data .pd-label { font-size: 13px; color: #444; }
 
   /* --- Comments tab --- */
@@ -485,67 +477,58 @@
 
     <!-- Share tab -->
     <div class="tab-body active" id="t-share">
-      <div class="when-restricted">
-        <div class="invite-row">
-          <input placeholder="Invite by email…" />
-          <button class="btn">Add</button>
-        </div>
-        <div class="section-label">People</div>
-        <div class="people-head">
-          <span class="ph-grow"></span>
-          <span class="ph-col ph-data">Data</span>
-          <span class="ph-col ph-code">Code</span>
-        </div>
-        <div class="person">
-          <span class="avatar" style="background:var(--vibes-near-black)">Y</span>
-          <span class="who"><div class="name">you</div><div class="sub">marcus@vibes.diy</div></span>
-          <span class="owner-tag">Owner</span>
-        </div>
-        <div class="person">
-          <span class="avatar" style="background:var(--vibes-purple-neon)">A</span>
-          <span class="who"><div class="name">alex@friend.co</div></span>
-          <span class="perm-toggle data" data-state="write"><span class="pseg read" data-val="read">Read</span><span class="pseg write" data-val="write">Write</span></span>
-          <span class="perm-toggle code" data-state="yes"><span class="pseg no" data-val="no">No</span><span class="pseg yes" data-val="yes">Yes</span></span>
-        </div>
-        <div class="person">
-          <span class="avatar" style="background:var(--vibes-green)">S</span>
-          <span class="who"><div class="name">sam@friend.co</div></span>
-          <span class="perm-toggle data" data-state="read"><span class="pseg read" data-val="read">Read</span><span class="pseg write" data-val="write">Write</span></span>
-          <span class="perm-toggle code" data-state="no"><span class="pseg no" data-val="no">No</span><span class="pseg yes" data-val="yes">Yes</span></span>
-        </div>
+      <!-- Invite (restricted only) -->
+      <div class="invite-row when-restricted">
+        <input placeholder="Invite by email…" />
+        <button class="btn">Add</button>
+      </div>
 
-        <div class="requests">
-          <div class="req-head" data-toggle-requests>
-            <span class="section-label">Requests <span class="req-count">2</span></span>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#999" stroke-width="2.2" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>
+      <!-- People / Specific people — always shown (unfolded) -->
+      <div class="section-label"><span class="when-restricted">People</span><span class="when-public">Specific people · 2</span></div>
+      <div class="person when-restricted">
+        <span class="avatar" style="background:var(--vibes-near-black)">Y</span>
+        <span class="who"><div class="name">you</div><div class="sub">marcus@vibes.diy</div></span>
+        <span class="owner-tag">Owner</span>
+      </div>
+      <div class="person">
+        <span class="avatar" style="background:var(--vibes-purple-neon)">A</span>
+        <span class="who"><div class="name">alex@friend.co</div></span>
+        <span class="perm-group"><span class="perm-label">Data</span><span class="perm-toggle data" data-state="write"><span class="pseg read" data-val="read">Read</span><span class="pseg write" data-val="write">Write</span></span></span>
+        <span class="perm-group"><span class="perm-label">Code</span><span class="perm-toggle code" data-state="yes"><span class="pseg no" data-val="no">No</span><span class="pseg yes" data-val="yes">Yes</span></span></span>
+      </div>
+      <div class="person">
+        <span class="avatar" style="background:var(--vibes-green)">S</span>
+        <span class="who"><div class="name">sam@friend.co</div></span>
+        <span class="perm-group"><span class="perm-label">Data</span><span class="perm-toggle data" data-state="read"><span class="pseg read" data-val="read">Read</span><span class="pseg write" data-val="write">Write</span></span></span>
+        <span class="perm-group"><span class="perm-label">Code</span><span class="perm-toggle code" data-state="no"><span class="pseg no" data-val="no">No</span><span class="pseg yes" data-val="yes">Yes</span></span></span>
+      </div>
+
+      <!-- Requests (restricted only) -->
+      <div class="requests when-restricted">
+        <div class="req-head" data-toggle-requests>
+          <span class="section-label">Requests <span class="req-count">2</span></span>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#999" stroke-width="2.2" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>
+        </div>
+        <div id="reqList">
+          <div class="req-row">
+            <span class="avatar" style="background:var(--vibes-blue)">J</span>
+            <span class="who"><div class="name" style="font-size:13px;font-weight:600">jo@maybe.com</div><div class="sub" style="font-size:11.5px;color:var(--vibes-gray)">wants access</div></span>
+            <button class="mini-btn deny">Deny</button>
+            <button class="mini-btn approve">Approve</button>
           </div>
-          <div id="reqList">
-            <div class="req-row">
-              <span class="avatar" style="background:var(--vibes-blue)">J</span>
-              <span class="who"><div class="name" style="font-size:13px;font-weight:600">jo@maybe.com</div><div class="sub" style="font-size:11.5px;color:var(--vibes-gray)">wants access</div></span>
-              <button class="mini-btn deny">Deny</button>
-              <button class="mini-btn approve">Approve</button>
-            </div>
-            <div class="req-row">
-              <span class="avatar" style="background:var(--vibes-orange-neon)">P</span>
-              <span class="who"><div class="name" style="font-size:13px;font-weight:600">pat@maybe.com</div><div class="sub" style="font-size:11.5px;color:var(--vibes-gray)">wants access</div></span>
-              <button class="mini-btn deny">Deny</button>
-              <button class="mini-btn approve">Approve</button>
-            </div>
+          <div class="req-row">
+            <span class="avatar" style="background:var(--vibes-orange-neon)">P</span>
+            <span class="who"><div class="name" style="font-size:13px;font-weight:600">pat@maybe.com</div><div class="sub" style="font-size:11.5px;color:var(--vibes-gray)">wants access</div></span>
+            <button class="mini-btn deny">Deny</button>
+            <button class="mini-btn approve">Approve</button>
           </div>
         </div>
       </div>
 
-      <!-- Public state: collapsed people + single public default -->
-      <div class="when-public">
-        <div class="specific-people">
-          <svg class="chev" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>
-          Specific people · 2 <span style="color:var(--vibes-gray);font-weight:500;">— add data / code grants</span>
-        </div>
-        <div class="public-data">
-          <span class="pd-label">Public data writes</span>
-          <span class="perm-toggle write" data-state="off"><span class="pseg off" data-val="off">Off</span><span class="pseg on" data-val="on">On</span></span>
-        </div>
+      <!-- Public data writes (public only) -->
+      <div class="public-data when-public">
+        <span class="pd-label">Public data writes</span>
+        <span class="perm-toggle write" data-state="off"><span class="pseg off" data-val="off">Off</span><span class="pseg on" data-val="on">On</span></span>
       </div>
 
       <!-- Site access (visibility + shareable links) — foundational, at the bottom -->
