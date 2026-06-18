@@ -165,8 +165,8 @@ describe("report-attribution-referrers", { timeout: TIMEOUT }, () => {
     it("no attribution grant → not authorized", async () => {
       const r = await apiEmpty.reportAttributionReferrers({});
       expect(r.isErr()).toBe(true);
-      const err = r.Err() as { code?: string };
-      expect(err.code).toBe("report-not-authorized");
+      const err = r.Err() as { error?: { code?: string } };
+      expect(err.error?.code).toBe("report-not-authorized");
     });
   });
 
