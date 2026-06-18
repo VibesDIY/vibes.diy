@@ -302,7 +302,13 @@ const ChatInput = forwardRef<ChatInputRef, ChatInputProps>(
                 }
                 style={busy ? { opacity: 1 } : undefined}
               >
-                {busy ? workingMessage : "Code"}
+                {busy ? (
+                  workingMessage
+                ) : (
+                  <span aria-hidden="true" className="text-lg leading-none">
+                    ↑
+                  </span>
+                )}
               </Button>
             </div>
           </div>
