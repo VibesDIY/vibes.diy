@@ -18,7 +18,7 @@
     "@vibes.diy/api-types": "workspace:*",
     "@vibes.diy/call-ai-v2": "workspace:*",
     "@vibes.diy/vibe-types": "workspace:*",
-    "arktype": "^2.2.0",
+    "arktype": "^2.2.1",
     "ws": "^8.21.0"
   },
   "devDependencies": {

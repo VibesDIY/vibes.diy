@@ -12,7 +12,7 @@
     "@adviser/cement": "^0.5.34",
     "@vibes.diy/base": "workspace:*",
     "@vibes.diy/vibe-types": "workspace:*",
-    "arktype": "^2.2.0",
+    "arktype": "^2.2.1",
     "charwise": "^3.0.1",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",

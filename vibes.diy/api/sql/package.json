@@ -9,7 +9,7 @@
   },
   "dependencies": {
     "@adviser/cement": "^0.5.34",
-    "@cloudflare/workers-types": "^4.20260610.1",
+    "@cloudflare/workers-types": "^4.20260617.1",
     "@fireproof/core-protocols-dashboard": "0.24.19",
     "@fireproof/core-runtime": "0.24.19",
     "@fireproof/core-types-base": "0.24.19",
@@ -20,7 +20,7 @@
     "@vibes.diy/api-pkg": "workspace:*",
     "@vibes.diy/api-types": "workspace:*",
     "@vibes.diy/call-ai-v2": "workspace:*",
-    "arktype": "^2.2.0",
+    "arktype": "^2.2.1",
     "drizzle-orm": "^0.45.2",
     "multiformats": "^13.4.2",
     "ws": "^8.21.0"
