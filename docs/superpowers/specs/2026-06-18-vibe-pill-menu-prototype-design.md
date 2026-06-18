@@ -94,6 +94,20 @@ Order left → right (Share nearest the pill):
 Buttons are widened (124px expanded) so the longest label ("ACCOUNT") fits with
 right-side padding.
 
+### Panel-to-tab connection (folder metaphor)
+
+An open panel must read as a folder whose **tab is the nav button that opened
+it**, so the user never loses track of which item they're inside:
+
+- The panel anchors **directly above its source button**, right edges aligned,
+  with its bottom sitting **right on top of the coloured nav row** (covering the
+  mostly-empty cream area above the buttons — no tall gap).
+- A short **coloured seam** in the button's colour joins the active button to
+  the panel's bottom edge, opening a "mouth" so they read as one piece.
+- The active button keeps full colour; the **other buttons recede** (dimmed).
+- Positioning is computed from the button's live `getBoundingClientRect`, so it
+  tracks each button's spot across the tray.
+
 ## Permissions model (the core of the redesign)
 
 Three independent access axes — **no role bundling**; each is its own control:

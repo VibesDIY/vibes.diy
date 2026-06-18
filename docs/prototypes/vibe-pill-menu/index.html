@@ -191,6 +191,18 @@
   }
   .surface.open { transform: scale(1); opacity: 1; pointer-events: auto; }
 
+  /* Folder-tab connection: the open panel anchors above its nav button, a
+     colored "neck" of that button's colour joins them, and the other buttons
+     recede — so the panel reads as a folder whose tab is the active button. */
+  .pbtn.active { position: relative; z-index: 2; }
+  .tray-buttons.has-active .pbtn:not(.active) { opacity: 0.4; transition: opacity .15s ease; }
+  .tray.panel-open .meta-strip { opacity: 0 !important; }
+  .tab-connector {
+    position: fixed; z-index: 61; pointer-events: none;
+    opacity: 0; transition: opacity .1s ease;
+  }
+  .tab-connector.show { opacity: 1; }
+
   .surf-head {
     display: flex; align-items: center; justify-content: space-between; gap: 10px;
     padding: 14px 16px; border-bottom: 1px solid rgba(0,0,0,.08);
@@ -407,6 +419,9 @@
   <div class="proto-note">Prototype · vibe pill menu redesign · not functional</div>
 
   <!-- ===================== Surfaces ===================== -->
+
+  <!-- Folder-tab neck joining the open panel to its nav button -->
+  <div class="tab-connector" id="tabConnector"></div>
 
   <!-- Share -->
   <div class="surface" id="share" data-visibility="restricted">
@@ -775,12 +790,51 @@
     help: document.getElementById("help")
   };
   var openSurface = null;
+  var connector = document.getElementById("tabConnector");
+  var trayButtons = document.getElementById("trayButtons");
+
+  function clearTabState() {
+    connector.classList.remove("show");
+    var a = trayButtons.querySelector(".pbtn.active");
+    if (a) a.classList.remove("active");
+    trayButtons.classList.remove("has-active");
+    tray.classList.remove("panel-open");
+  }
+
+  // Anchor the panel above its source button and draw a coloured neck from the
+  // button (the tab) up to the panel's bottom (the folder), so the open panel
+  // visibly belongs to that nav item.
+  function anchorToButton(panel, id) {
+    var btn = trayButtons.querySelector('.pbtn[data-surface="' + id + '"]');
+    var br = btn.getBoundingClientRect();
+    var vw = window.innerWidth, vh = window.innerHeight;
+    // Panel sits right on top of the coloured nav row, covering the (mostly
+    // empty) cream area above it; right edge aligned with the button's right.
+    panel.style.left = "auto";
+    panel.style.right = Math.max(8, vw - br.right) + "px";
+    panel.style.bottom = (vh - br.top) + "px";
+    // Short coloured seam joining the active button straight into the panel's
+    // bottom edge — no tall neck.
+    connector.style.background = getComputedStyle(btn).backgroundColor;
+    connector.style.left = br.left + "px";
+    connector.style.width = br.width + "px";
+    connector.style.top = (br.top - 3) + "px";
+    connector.style.height = "6px";
+    // Active / receding states.
+    btn.classList.add("active");
+    trayButtons.classList.add("has-active");
+    tray.classList.add("panel-open");
+    connector.classList.add("show");
+  }
+
   function closeSurface() {
     if (openSurface) { surfaces[openSurface].classList.remove("open"); openSurface = null; }
+    clearTabState();
   }
   function showSurface(id) {
     if (openSurface === id) { closeSurface(); return; }
     closeSurface();
+    anchorToButton(surfaces[id], id);
     surfaces[id].classList.add("open");
     openSurface = id;
   }
@@ -794,7 +848,7 @@
     e.stopPropagation();
     if (e.target.closest(".pbtn")) return; // handled by button
     if (phase === "idle") setPhase("bubble");
-    else if (phase === "open") { setPhase("collapsing"); }
+    else if (phase === "open") { closeSurface(); setPhase("collapsing"); }
   });
 
   // Tray buttons open surfaces
