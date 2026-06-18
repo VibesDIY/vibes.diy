@@ -58,7 +58,9 @@ describe("cfServe referer logging", { timeout: TIMEOUT }, () => {
   });
 
   beforeEach(() => {
-    consoleSpy = vi.spyOn(console, "log");
+    // cfServe logs referers via console.info (see cf-serve.ts); spy on the
+    // method the code actually calls — console.info !== console.log in Node.
+    consoleSpy = vi.spyOn(console, "info");
   });
 
   afterEach(() => {
