@@ -3,13 +3,14 @@
  */
 import { Schema, SchemaStrategy } from "../types.js";
 import { claudeStrategy, defaultStrategy, geminiStrategy, openAIStrategy, systemMessageStrategy } from "./model-strategies.js";
+import { callAiEnv } from "../env.js";
 
 /**
  * Choose the appropriate schema strategy based on model and schema
  */
 export function chooseSchemaStrategy(model: string | undefined, schema: Schema | null): SchemaStrategy {
-  // Default model if not provided
-  const resolvedModel = model || (schema ? "openai/gpt-4o" : "openrouter/auto");
+  // Default model if not provided (overridable via env — see #1474)
+  const resolvedModel = model || (schema ? callAiEnv.CALLAI_SCHEMA_MODEL : callAiEnv.CALLAI_DEFAULT_MODEL);
 
   // No schema case - use default strategy
   if (!schema) {

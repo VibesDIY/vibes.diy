@@ -40,7 +40,8 @@ export { getMeta };
 // Import package version for debugging
 
 // Default fallback model when the primary model fails or is unavailable
-const FALLBACK_MODEL = "openrouter/auto";
+// (overridable via CALLAI_FALLBACK_MODEL — see #1474)
+const FALLBACK_MODEL = callAiEnv.CALLAI_FALLBACK_MODEL;
 
 /**
  * Make an AI API call with the given options
