@@ -517,6 +517,11 @@ export const ReqVibeUpdateAvatarCid = type({
   ownerHandle: "string",
   appSlug: "string",
   cid: "string",
+  // Optional URL the host can display in the preview/confirm modal before
+  // committing the write. The runtime forwards the freshly-uploaded asset's
+  // getURL here; it's used for display only — the write is keyed on `cid`,
+  // which the host re-validates against the authenticated session.
+  "previewUrl?": "string",
 }).and(Base);
 
 export type ReqVibeUpdateAvatarCid = typeof ReqVibeUpdateAvatarCid.infer;
@@ -525,10 +530,12 @@ export function isReqVibeUpdateAvatarCid(x: unknown): x is ReqVibeUpdateAvatarCi
   return !(ReqVibeUpdateAvatarCid(x) instanceof type.errors);
 }
 
-// Host → sandbox response.
+// Host → sandbox response. `cancelled` is distinct from `error`: the host
+// showed its preview/confirm modal and the user dismissed it, so nothing was
+// written — but that's not a failure the vibe should surface as broken.
 export const ResVibeUpdateAvatarCid = type({
   type: "'vibe.res.updateAvatarCid'",
-  status: "'ok' | 'error'",
+  status: "'ok' | 'error' | 'cancelled'",
   "message?": "string",
 }).and(Base);
 

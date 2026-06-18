@@ -344,14 +344,18 @@ export class VibeSandboxApi {
     });
   }
 
-  updateAvatarCid(cid: string): Promise<Result<ResVibeUpdateAvatarCid>> {
+  // `previewUrl` (the uploaded asset's getURL) lets the host render a
+  // preview in its confirm modal before persisting. Display-only; the write
+  // is keyed on `cid`.
+  updateAvatarCid(cid: string, previewUrl?: string): Promise<Result<ResVibeUpdateAvatarCid>> {
     return this.request<ReqVibeUpdateAvatarCid, ResVibeUpdateAvatarCid>(
       {
         type: "vibe.req.updateAvatarCid",
         ...this.svc.vibeApp,
         cid,
+        ...(previewUrl ? { previewUrl } : {}),
       },
-      { wait: isResVibeUpdateAvatarCid, timeout: 10000 }
+      { wait: isResVibeUpdateAvatarCid, timeout: 60000 }
     );
   }
 }

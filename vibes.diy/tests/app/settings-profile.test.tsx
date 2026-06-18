@@ -148,6 +148,7 @@ let mockFetch = vi.fn();
 
 // Import the component AFTER all vi.mock() calls
 import Settings from "~/vibes.diy/app/routes/settings.js";
+import { AvatarConfirmModal } from "~/vibes.diy/app/components/AvatarConfirmModal.js";
 
 // ---- tests ----
 
@@ -162,6 +163,13 @@ describe("Settings ProfileCard", () => {
       text: () => Promise.resolve(""),
     });
     vi.stubGlobal("fetch", mockFetch);
+    // jsdom doesn't implement object URLs; the avatar preview flow needs them.
+    if (!URL.createObjectURL) {
+      Object.defineProperty(URL, "createObjectURL", { configurable: true, writable: true, value: () => "blob:preview" });
+    }
+    if (!URL.revokeObjectURL) {
+      Object.defineProperty(URL, "revokeObjectURL", { configurable: true, writable: true, value: () => undefined });
+    }
   });
 
   afterEach(() => {
@@ -191,11 +199,18 @@ describe("Settings ProfileCard", () => {
     });
   });
 
-  it("calls requestAssetUploadGrant then fetch then ensureUserSettings with avatarCid on file upload", async () => {
-    render(<Settings />);
+  it("calls requestAssetUploadGrant then fetch then (after confirm) ensureUserSettings with avatarCid", async () => {
+    render(
+      <>
+        <Settings />
+        <AvatarConfirmModal />
+      </>
+    );
 
+    // Wait for the loaded defaultHandle to surface in the avatar help text —
+    // the upload bails early until it's set, so firing on the input alone races.
     await waitFor(() => {
-      expect(screen.getByPlaceholderText("Your display name")).toBeInTheDocument();
+      expect(screen.getByText(/Displayed at/)).toHaveTextContent("/u/test-user/avatar");
     });
 
     const fileInput = document.getElementById("avatar-upload") as HTMLInputElement;
@@ -226,6 +241,18 @@ describe("Settings ProfileCard", () => {
     expect((fetchInit.headers as Record<string, string>)["X-Asset-Grant"]).toBe("mock-jwt-grant");
     expect(fetchInit.body).toBe(file);
 
+    // The write is gated on the confirm modal — nothing is persisted yet.
+    expect(chatApiStub.ensureUserSettings).not.toHaveBeenCalledWith(
+      expect.objectContaining({
+        settings: expect.arrayContaining([expect.objectContaining({ type: "profile", avatarCid: "bafy123" })]),
+      })
+    );
+
+    const confirm = await screen.findByText("Set as avatar");
+    await act(async () => {
+      fireEvent.click(confirm);
+    });
+
     await waitFor(() => {
       expect(chatApiStub.ensureUserSettings).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -233,6 +260,45 @@ describe("Settings ProfileCard", () => {
         })
       );
     });
+  });
+
+  it("does NOT call ensureUserSettings when the avatar confirm modal is cancelled", async () => {
+    render(
+      <>
+        <Settings />
+        <AvatarConfirmModal />
+      </>
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText(/Displayed at/)).toHaveTextContent("/u/test-user/avatar");
+    });
+
+    const fileInput = document.getElementById("avatar-upload") as HTMLInputElement;
+    const file = new File(["(png data)"], "avatar.png", { type: "image/png" });
+
+    await act(async () => {
+      fireEvent.change(fileInput, { target: { files: [file] } });
+    });
+
+    await waitFor(() => {
+      expect(mockFetch).toHaveBeenCalledTimes(1);
+    });
+
+    const cancel = await screen.findByText("Cancel");
+    await act(async () => {
+      fireEvent.click(cancel);
+    });
+
+    // Modal dismissed and no profile write happened.
+    await waitFor(() => {
+      expect(screen.queryByText("Set as avatar")).not.toBeInTheDocument();
+    });
+    expect(chatApiStub.ensureUserSettings).not.toHaveBeenCalledWith(
+      expect.objectContaining({
+        settings: expect.arrayContaining([expect.objectContaining({ type: "profile", avatarCid: "bafy123" })]),
+      })
+    );
   });
 
   it("shows the avatar img at /u/<slug>/avatar after successful upload", async () => {
