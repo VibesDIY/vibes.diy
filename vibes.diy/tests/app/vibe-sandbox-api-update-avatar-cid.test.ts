@@ -14,7 +14,8 @@ describe("VibeSandboxApi.updateAvatarCid", () => {
     // Ack the host so requests can flow.
     listeners.forEach((h) => h({ data: { type: "vibe.evt.runtime.ack" } } as MessageEvent));
 
-    const promise = api.updateAvatarCid("bafycid123");
+    // Self-edit: target the viewer's own handle (distinct from the app owner).
+    const promise = api.updateAvatarCid("bafycid123", "viewerhandle");
 
     await Promise.resolve();
     await Promise.resolve();
@@ -25,11 +26,14 @@ describe("VibeSandboxApi.updateAvatarCid", () => {
       ownerHandle: string;
       appSlug: string;
       cid: string;
+      handle: string;
     };
     expect(req).toBeDefined();
     expect(req.ownerHandle).toBe("alice");
     expect(req.appSlug).toBe("myapp");
     expect(req.cid).toBe("bafycid123");
+    // The viewer-selected target handle travels separately from ownerHandle.
+    expect(req.handle).toBe("viewerhandle");
 
     // Reply ok.
     listeners.forEach((h) => h({ data: { type: "vibe.res.updateAvatarCid", tid: req.tid, status: "ok" } } as MessageEvent));
@@ -50,7 +54,7 @@ describe("VibeSandboxApi.updateAvatarCid", () => {
 
     listeners.forEach((h) => h({ data: { type: "vibe.evt.runtime.ack" } } as MessageEvent));
 
-    const promise = api.updateAvatarCid("bafycid456");
+    const promise = api.updateAvatarCid("bafycid456", "viewerhandle");
     await Promise.resolve();
     await Promise.resolve();
 

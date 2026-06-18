@@ -354,17 +354,20 @@ export class VibeSandboxApi {
     });
   }
 
-  // `mimeType` is an optional content-type hint for the host's confirm-modal
-  // preview. The host previews the trusted storage URL it recorded when it
-  // proxied this CID's upload — never a value the vibe supplies — so this hint
-  // only sets the Content-Type header and can't change which image the user is
-  // consenting to.
-  updateAvatarCid(cid: string, mimeType?: string): Promise<Result<ResVibeUpdateAvatarCid>> {
+  // `handle` is the viewer-selected target handle whose avatar to set (the
+  // caller passes the viewer's own handle, NOT the app owner's). The server
+  // re-validates ownership. `mimeType` is an optional content-type hint for the
+  // host's confirm-modal preview — the host previews the trusted storage URL it
+  // recorded when it proxied this CID's upload, never a value the vibe supplies,
+  // so this hint only sets the Content-Type header and can't change which image
+  // the user is consenting to.
+  updateAvatarCid(cid: string, handle: string, mimeType?: string): Promise<Result<ResVibeUpdateAvatarCid>> {
     return this.request<ReqVibeUpdateAvatarCid, ResVibeUpdateAvatarCid>(
       {
         type: "vibe.req.updateAvatarCid",
         ...this.svc.vibeApp,
         cid,
+        handle,
         ...(mimeType ? { mimeType } : {}),
       },
       // error/cancelled are normal outcomes the caller inspects, not failures.

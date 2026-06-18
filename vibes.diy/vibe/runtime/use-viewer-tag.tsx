@@ -90,6 +90,10 @@ export function ViewerTagImpl({ _viewer, style, ...props }: ViewerTagImplProps):
     if (!api) return;
     setUploading(true);
     try {
+      // Target the VIEWER's own handle (self-edit), never the app owner's.
+      // Without a viewer identity there's no handle to write to.
+      const viewerHandle = _viewer?.userHandle;
+      if (!viewerHandle) return;
       const rUpload = await api.putAsset(file, file.type);
       if (rUpload.isErr()) return;
       const uploadRes = rUpload.Ok();
@@ -97,7 +101,7 @@ export function ViewerTagImpl({ _viewer, style, ...props }: ViewerTagImplProps):
       // Pass the upload's mime as a hint. The host previews the trusted getURL
       // it recorded for this CID when it proxied the putAsset above, so this
       // only labels the Content-Type.
-      await api.updateAvatarCid(uploadRes.cid, file.type);
+      await api.updateAvatarCid(uploadRes.cid, viewerHandle, file.type);
     } finally {
       setUploading(false);
       // Reset so the same file can be selected again

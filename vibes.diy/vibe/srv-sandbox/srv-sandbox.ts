@@ -817,7 +817,7 @@ function vibeUpdateAvatarCid(sandbox: vibesDiySrvSandbox): EventoHandler {
       return Promise.resolve(Result.Ok(Option.None()));
     },
     handle: async (ctx: HandleTriggerCtx<MessageEvent, ReqVibeUpdateAvatarCid, unknown>): Promise<Result<EventoResultType>> => {
-      const { tid, cid, mimeType } = ctx.validated;
+      const { tid, cid, mimeType, handle } = ctx.validated;
 
       // Host-side consent gate (#1968): a sandbox can't silently overwrite the
       // viewer's avatar. The provider shows a preview/confirm modal and only an
@@ -846,8 +846,14 @@ function vibeUpdateAvatarCid(sandbox: vibesDiySrvSandbox): EventoHandler {
         }
       }
 
-      const rRes = await chatApi.ensureUserSettings({
-        settings: [{ type: "profile", avatarCid: cid }],
+      // Write the avatar to the VIEWER-selected handle (per-handle store). The
+      // server re-validates that `handle` belongs to the authenticated viewer
+      // and resolves `cid` to the authoritative storage URL — so neither the app
+      // owner (vibeApp.ownerHandle) nor a forged URL can be used here.
+      const rRes = await chatApi.ensureHandleAvatar({
+        handle,
+        cid,
+        ...(mimeType ? { mime: mimeType } : {}),
       });
       if (rRes.isErr()) {
         await ctx.send.send(ctx, {
