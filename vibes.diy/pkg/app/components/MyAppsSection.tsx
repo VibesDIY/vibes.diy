@@ -45,6 +45,8 @@ if (typeof document !== "undefined" && !document.getElementById("my-apps-settle"
 // Module-level cache so re-opening the detail panel for the same app skips
 // the network round-trip.
 const screenshotCache = new Map<string, MetaScreenShot | null>();
+// null means fetched but the app has no display name; absent means not yet fetched.
+const ownerDisplayNameCache = new Map<string, string | null>();
 
 function screenshotSrc(shot: MetaScreenShot): string {
   return `/assets/cid/?url=${encodeURIComponent(shot.assetUrl)}&mime=${encodeURIComponent(shot.mime)}`;
@@ -340,23 +342,27 @@ interface AppDetailPanelProps {
   onClose: () => void;
 }
 
-function AppDetailPanel({ item, appHostBaseUrl, onClose }: AppDetailPanelProps) {
+export function AppDetailPanel({ item, appHostBaseUrl, onClose }: AppDetailPanelProps) {
   const open = item !== null;
   const label = item?.title ?? item?.appSlug ?? "";
   const iconUrl = item?.icon ? cidAssetUrl(item.icon.cid, item.icon.mime, appHostBaseUrl) : undefined;
   const cacheKey = item ? `${item.ownerHandle}/${item.appSlug}` : "";
   const [screenshot, setScreenshot] = useState<MetaScreenShot | null>(item ? (screenshotCache.get(cacheKey) ?? null) : null);
+  const [ownerDisplayName, setOwnerDisplayName] = useState<string | undefined>(
+    item ? (ownerDisplayNameCache.get(cacheKey) ?? undefined) : undefined,
+  );
   const { chatApi } = useVibesDiy();
   const previewUrl = screenshot ? screenshotSrc(screenshot) : iconUrl;
-  const mockCreator = "@amber-macias";
-  const mockDescription =
-    "Generated with vibes.diy. A shareable mini-app you can remix, fork, and make your own. (placeholder copy)";
+  // Always known synchronously from the list row; upgraded to the display name
+  // once the fetch below resolves.
+  const creatorHandle = ownerDisplayName ?? (item ? `@${item.ownerHandle}` : "");
 
   useEffect(() => {
     if (!item) return;
     const cached = screenshotCache.get(cacheKey);
     if (cached !== undefined) {
       setScreenshot(cached);
+      setOwnerDisplayName(ownerDisplayNameCache.get(cacheKey) ?? undefined);
       return;
     }
     let cancelled = false;
@@ -366,9 +372,12 @@ function AppDetailPanel({ item, appHostBaseUrl, onClose }: AppDetailPanelProps) 
         screenshotCache.set(cacheKey, null);
         return;
       }
-      const shot = res.Ok().meta.find(isMetaScreenShot) ?? null;
+      const app = res.Ok();
+      const shot = app.meta.find(isMetaScreenShot) ?? null;
       screenshotCache.set(cacheKey, shot);
+      ownerDisplayNameCache.set(cacheKey, app.ownerDisplayName ?? null);
       if (shot) setScreenshot(shot);
+      if (app.ownerDisplayName) setOwnerDisplayName(app.ownerDisplayName);
     });
     return () => {
       cancelled = true;
@@ -436,11 +445,9 @@ function AppDetailPanel({ item, appHostBaseUrl, onClose }: AppDetailPanelProps) 
               <div>
                 <h3 className="text-light-primary dark:text-dark-primary text-xl font-bold">{label}</h3>
                 <p className="text-light-primary/60 dark:text-dark-primary/60 text-xs uppercase tracking-widest mt-1">
-                  Created by {mockCreator}
+                  Created by {creatorHandle}
                 </p>
               </div>
-
-              <p className="text-light-primary dark:text-dark-primary text-sm leading-relaxed">{mockDescription}</p>
 
               <div className="flex flex-col gap-3 mt-auto pt-4">
                 <Link
@@ -450,16 +457,6 @@ function AppDetailPanel({ item, appHostBaseUrl, onClose }: AppDetailPanelProps) 
                 >
                   Enter
                 </Link>
-                <button
-                  type="button"
-                  onClick={() => {
-                    // TODO: wire to actual unsubscribe action.
-                    onClose();
-                  }}
-                  className="flex items-center justify-center px-4 py-3 bg-light-background-01 dark:bg-dark-background-01 hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600 dark:text-red-400 text-sm font-bold uppercase tracking-widest border-2 border-red-500 rounded-md transition-colors"
-                >
-                  Unsubscribe
-                </button>
               </div>
             </div>
           </div>
