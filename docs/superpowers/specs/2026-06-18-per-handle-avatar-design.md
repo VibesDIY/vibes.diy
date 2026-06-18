@@ -32,13 +32,13 @@ So two different handles owned by the same user resolve to the same `userId` →
 
 ## The two extensibility shapes
 
-| | `userSettings` | `appSettings` |
-|---|---|---|
-| Row key | `userId` | `(ownerHandle, appSlug)` |
-| Payload | `UserSettingItem[]` discriminated union (`settings.ts:73`) | structured `entry.settings` **+** `entries: ActiveEntry[]` (`settings.ts:306`) |
-| Merge | singleton **by `type`** (`ensure-user-settings.ts:46`) | per-entry upsert with version history |
-| Image support | bare CID string, resolved later via `assetUploads` + 302 | `active.icon` entry, `versions[] + currentCid`, getURL-in-`cid`, served directly |
-| Versioning | none | yes (`versions[]`) |
+|               | `userSettings`                                             | `appSettings`                                                                    |
+| ------------- | ---------------------------------------------------------- | -------------------------------------------------------------------------------- |
+| Row key       | `userId`                                                   | `(ownerHandle, appSlug)`                                                         |
+| Payload       | `UserSettingItem[]` discriminated union (`settings.ts:73`) | structured `entry.settings` **+** `entries: ActiveEntry[]` (`settings.ts:306`)   |
+| Merge         | singleton **by `type`** (`ensure-user-settings.ts:46`)     | per-entry upsert with version history                                            |
+| Image support | bare CID string, resolved later via `assetUploads` + 302   | `active.icon` entry, `versions[] + currentCid`, getURL-in-`cid`, served directly |
+| Versioning    | none                                                       | yes (`versions[]`)                                                               |
 
 **Decision:** model `handleSettings` on **`appSettings`**. An avatar is an image attached to an entity (a handle), exactly like an icon is an image attached to an app. Reusing the `ActiveEntry`/versions pattern gives version history for free, inherits the getURL-in-`cid` convention, and **collapses the serve path onto the icon path** — eliminating the bare-CID→`assetURI` resolution and (optionally) the 302 indirection that made avatars awkward and that #2418 had to work around host-side.
 
@@ -70,7 +70,7 @@ The path stays — it is the ergonomic contract (Cool URIs don't change; apps `<
 
 The per-handle avatar write goes through a new **`ensureHandleSettings`** handler (Decision 4) carrying the **viewer-selected** target `handle`, gated on the authenticated viewer owning that handle (the `handleBinding` `(handle, userId)` row proves it). The host-side preview/confirm gate from #2418 stays; it becomes keyed on `(viewer, handle)` and the modal copy names the handle being changed.
 
-> ⚠️ **The target handle must be passed explicitly by the viewer and must NOT be inferred from `vibeApp.ownerHandle`.** In the sandbox flow `vibeApp.ownerHandle` is the *app owner's* handle — both published and preview iframe URLs are built from the route's `ownerHandle` — not the viewer's, and `VibeSandboxApi.updateAvatarCid` currently just spreads `...this.svc.vibeApp` into the request (`vibes.diy/vibe/runtime/register-dependencies.ts:361`) while the host handler ignores it and writes the signed-in user's profile. If a viewer edits their avatar from *someone else's* vibe, gating a handle-scoped write on `vibeApp.ownerHandle` would target the app owner's handle or fail the ownership check. So the protocol needs a **new viewer-supplied handle field** (distinct from `vibeApp`, defaulting to the viewer's default handle), validated by the host against the authenticated viewer's bindings — the plumbing does **not** already exist; adding it is part of this work (see Q4). Settings, by contrast, already runs as the viewer and knows the selected handle.
+> ⚠️ **The target handle must be passed explicitly by the viewer and must NOT be inferred from `vibeApp.ownerHandle`.** In the sandbox flow `vibeApp.ownerHandle` is the _app owner's_ handle — both published and preview iframe URLs are built from the route's `ownerHandle` — not the viewer's, and `VibeSandboxApi.updateAvatarCid` currently just spreads `...this.svc.vibeApp` into the request (`vibes.diy/vibe/runtime/register-dependencies.ts:361`) while the host handler ignores it and writes the signed-in user's profile. If a viewer edits their avatar from _someone else's_ vibe, gating a handle-scoped write on `vibeApp.ownerHandle` would target the app owner's handle or fail the ownership check. So the protocol needs a **new viewer-supplied handle field** (distinct from `vibeApp`, defaulting to the viewer's default handle), validated by the host against the authenticated viewer's bindings — the plumbing does **not** already exist; adding it is part of this work (see Q4). Settings, by contrast, already runs as the viewer and knows the selected handle.
 
 ## Non-goals
 
