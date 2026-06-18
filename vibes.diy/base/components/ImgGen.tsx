@@ -122,7 +122,12 @@ export function ImgGen({
 
   return (
     <div style={{ position: "relative", display: "inline-block" }}>
-      <img src={displayUrl} alt={alt || prompt || ""} className={className} style={style ?? { maxWidth: "100%", height: "auto" }} />
+      <img
+        src={displayUrl}
+        alt={alt || prompt || document?.prompt || ""}
+        className={className}
+        style={style ?? { maxWidth: "100%", height: "auto" }}
+      />
       {loading && (
         <div
           style={{
