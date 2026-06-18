@@ -4,7 +4,6 @@ import { getLlmCatalog, getLlmCatalogNames, LlmCatalogEntry } from "./json-docs.
 import { composeDesignMd, getColorsetCatalogNames, getThemeCatalogNames, parseColorsetYaml, vibesThemes } from "./themes/index.js";
 import { type } from "arktype";
 
-// import { getTexts } from "./txt-docs.js";
 import { defaultStylePrompt } from "./style-prompts.js";
 
 // Single source of truth for the default coding model used across the repo.
@@ -18,14 +17,6 @@ function normalizeModelIdInternal(id: unknown): string | undefined {
   if (typeof id !== "string") return undefined;
   const trimmed = id.trim();
   return trimmed.length > 0 ? trimmed : undefined;
-}
-
-export function normalizeModelId(id: unknown): string | undefined {
-  return normalizeModelIdInternal(id);
-}
-
-export function isPermittedModelId(id: unknown): id is string {
-  return typeof normalizeModelIdInternal(id) === "string";
 }
 
 export async function resolveEffectiveModel(
@@ -163,34 +154,6 @@ export interface SystemPromptResult {
   model: string;
 }
 
-// function escapeRegExp(str: string): string {
-//   return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-// }
-
-// const llmImportRegexes = Lazy(() => {
-//   return getJsonDocs().then((docs) =>
-//     Object.values(docs)
-//       .map((d) => d.obj)
-//       .filter((l) => l.importModule && l.importName)
-//       .map((l) => {
-//         const mod = escapeRegExp(l.importModule);
-//         const name = escapeRegExp(l.importName);
-//         const importType = l.importType || "named";
-
-//         return {
-//           name: l.name,
-//           // Matches: import { ..., <name>, ... } from '<module>'
-//           named: new RegExp(`import\\s*\\{[^}]*\\b${name}\\b[^}]*\\}\\s*from\\s*['\\"]${mod}['\\"]`),
-//           // Matches: import <name> from '<module>'
-//           def: new RegExp(`import\\s+${name}\\s+from\\s*['\\"]${mod}['\\"]`),
-//           // Matches: import * as <name> from '<module>'
-//           namespace: new RegExp(`import\\s*\\*\\s*as\\s+${name}\\s+from\\s*['\\"]${mod}['\\"]`),
-//           importType,
-//         } as const;
-//       })
-//   );
-// });
-
 export function generateImportStatements(llms: LlmCatalogEntry[]) {
   const seen = new Set<string>();
   return llms
@@ -288,11 +251,6 @@ export async function makeBaseSystemPrompt(
       console.warn(`Failed to load text for LLM ${llm.name} at path ${import.meta.dirname}/./llms/${llm.name}.md:`, rText.Err());
       continue;
     }
-    // const text = await getTexts(llm.name, sessionDoc.fallBackUrl);
-    // if (!text) {
-    //   console.warn("Failed to load raw LLM text for:", llm.name, sessionDoc.fallBackUrl);
-    //   continue;
-    // }
     concatenatedLlmsTxts.push(`<${llm.label}-docs>`);
     concatenatedLlmsTxts.push(rText.Ok() ?? "");
     // console.log(`Loaded text for LLM ${llm.name}, length:`, llm.label, rText.Ok().slice(0, 100), "...");

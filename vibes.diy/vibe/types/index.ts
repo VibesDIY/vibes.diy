@@ -70,18 +70,10 @@ export const EvtVibeNetworkActive = type({
 });
 export type EvtVibeNetworkActive = typeof EvtVibeNetworkActive.infer;
 
-export function isEvtVibeNetworkActive(x: unknown): x is EvtVibeNetworkActive {
-  return !(EvtVibeNetworkActive(x) instanceof type.errors);
-}
-
 export const EvtVibeNetworkIdle = type({
   type: "'vibe.evt.network.idle'",
 });
 export type EvtVibeNetworkIdle = typeof EvtVibeNetworkIdle.infer;
-
-export function isEvtVibeNetworkIdle(x: unknown): x is EvtVibeNetworkIdle {
-  return !(EvtVibeNetworkIdle(x) instanceof type.errors);
-}
 
 // JSONSchema — recursive fields use unknown to avoid arktype cyclic-type constraints
 export const JSONSchema = type({
@@ -126,10 +118,6 @@ export const JSONSchema = type({
 
 export type JSONSchema = typeof JSONSchema.infer;
 
-export function isJSONSchema(x: unknown): x is JSONSchema {
-  return !(JSONSchema(x) instanceof type.errors);
-}
-
 export const ReqCallAI = type({
   type: "'vibe.req.callAI'",
   ownerHandle: "string",
@@ -167,10 +155,6 @@ export type ResCallAI = typeof ResCallAI.infer;
 
 export function isResCallAI(x: unknown): x is ResCallAI {
   return !(ResCallAI(x) instanceof type.errors);
-}
-
-export function isResOkCallAI(x: unknown): x is ResOkCallAI {
-  return !(ResOkCallAI(x) instanceof type.errors);
 }
 
 export function isResErrorCallAI(x: unknown): x is ResErrorCallAI {
@@ -226,10 +210,6 @@ export type ResImgGen = typeof ResImgGen.infer;
 
 export function isResImgGen(x: unknown): x is ResImgGen {
   return !(ResImgGen(x) instanceof type.errors);
-}
-
-export function isResOkImgGen(x: unknown): x is ResOkImgGen {
-  return !(ResOkImgGen(x) instanceof type.errors);
 }
 
 export function isResErrorImgGen(x: unknown): x is ResErrorImgGen {
@@ -435,10 +415,6 @@ export function isResVibePutAsset(x: unknown): x is ResVibePutAsset {
   return !(ResVibePutAsset(x) instanceof type.errors);
 }
 
-export function isResOkVibePutAsset(x: unknown): x is ResOkVibePutAsset {
-  return !(ResOkVibePutAsset(x) instanceof type.errors);
-}
-
 // Heartbeat emitted by the host while a put-asset upload is in flight.
 // Keeps the sandbox-side request's idle-reset timer alive across slow
 // uploads. Receivers reset their timer on any matching tid; only
@@ -449,10 +425,6 @@ export const EvtVibePutAssetProgress = type({
 }).and(Base);
 
 export type EvtVibePutAssetProgress = typeof EvtVibePutAssetProgress.infer;
-
-export function isEvtVibePutAssetProgress(x: unknown): x is EvtVibePutAssetProgress {
-  return !(EvtVibePutAssetProgress(x) instanceof type.errors);
-}
 
 // ── Viewer identity & capabilities ───────────────────────────────────
 // Sandbox-facing surface for who is viewing this vibe and what they can

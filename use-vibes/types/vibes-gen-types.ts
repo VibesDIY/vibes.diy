@@ -9,23 +9,14 @@ export type GeneratedComponentProps = Record<string, unknown>;
  * Options for the useVibes hook
  */
 export interface UseVibesOptions {
-  /** Database name to use for storing vibes (default: 'vibes') */
-  database?: string;
-
   /** AI model to use for generation */
   model?: string;
 
   /** Skip generation if true */
   skip?: boolean;
 
-  /** Force regeneration even if cached version exists */
-  regenerate?: boolean;
-
   /** Helper libraries/dependencies to include in the generation */
   dependencies?: string[];
-
-  /** Load existing vibe by document ID instead of generating new */
-  _id?: string;
 
   /** Authentication token for API calls within the generated component */
   authToken?: string;

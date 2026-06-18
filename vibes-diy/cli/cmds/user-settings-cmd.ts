@@ -40,8 +40,8 @@ export const userSettingsEvento: EventoHandler<WrapCmdTSMsg<unknown>, ReqUserSet
 
 export function userSettingsCmd(ctx: CliCtx) {
   return command({
-    name: "create",
-    description: "Generate a new device ID key pair and store it.",
+    name: "user-settings",
+    description: "Ensure/refresh user settings for the logged-in device.",
     args: {
       ...cmdTsDefaultArgs(ctx),
     },

@@ -32,13 +32,6 @@ export class VibeMetadataValidationError extends Error {
   }
 }
 
-// export interface MountVibeParams {
-//   readonly appSlug: string;
-//   readonly titleId: string;
-//   readonly installId: string;
-//   readonly env: VibesEnv;
-// }
-
 export interface Vibe extends VibesDiyMountParams {
   // readonly dashApi: DashboardApiImpl<unknown>;
   readonly clerk: ReturnType<typeof useClerk>;
@@ -99,61 +92,17 @@ export interface VibeContextProviderProps {
   readonly children: ReactNode;
 }
 
-// class UseVibesStrategie implements TokenStrategie {
-//   readonly ctx: Vibe //, "dashApi" | "env">;
-//   constructor(ctx: Vibe) { //, "dashApi" | "env">) {
-//     this.ctx = ctx;
-//   }
-
-//   hash(): string {
-//     return this.ctx.env.DASHBOARD_URL;
-//   }
-
-//   open(): void {
-//     /* */
-//   }
-//   tryToken(): Promise<TokenAndClaims | undefined> {
-//     return Promise.resolve(undefined);
-//   }
-
-//   async waitForToken(sthis: SuperThis, logger: Logger, deviceId: string, opts: ToCloudOpts): Promise<TokenAndClaims | undefined> {
-//     const rRes = await this.ctx.dashApi.ensureCloudToken({
-//       appId: opts.context.get("UseVibes.AppId") || deviceId,
-//     });
-//     if (rRes.isErr()) {
-//       logger.Error().Err(rRes).Msg();
-//       return undefined;
-//     }
-//     const res = rRes.Ok();
-//     return {
-//       token: res.cloudToken,
-//       ...res,
-//     };
-//   }
-//   stop(): void {
-//     throw new Error("Method not implemented.");
-//   }
-// }
-
-// const lazyFpCloudStrategie = Lazy((ctx: Vibe) => new UseVibesStrategie(ctx));
-
 function LiveCycleVibeContextProvider({ mountParams, children }: VibeContextProviderProps) {
-  console.log("LiveCycleVibeContextProvider", mountParams);
   const clerk = useClerk();
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const dashApi = clerkDashApi(clerk as any, {
     apiUrl: mountParams.env.DASHBOARD_URL,
   });
 
-  // const fpCloudStrategie = lazyFpCloudStrategie({
-  //   ...mountParams,
-  //   dashApi,
-  // });
   const onDatabaseOpen = OnFunc<(_db: Database) => unknown>();
   const ctx = {
     dashApi,
     clerk,
-    // fpCloudStrategie: () => fpCloudStrategie,
     onDatabaseOpen,
     sessionReady: () => {
       return clerk.session?.status === "active";
@@ -202,23 +151,6 @@ export type VibeMetadata = typeof VibeMetadataSchema.infer;
 export function validateVibeMetadata(metadata: unknown): asserts metadata is VibeMetadata {
   const result = VibeMetadataSchema(metadata);
   if (result instanceof type.errors) {
-    // Map ArkType errors to our custom error codes for backward compatibility
-    // const firstError = result
-    // const path = firstError.path.toString();
-    // let code: string;
-
-    // if (path === 'titleId') {
-    //   code = firstError.code === 'missing'
-    //     ? VIBE_METADATA_ERROR_CODES.TITLEID_EMPTY
-    //     : VIBE_METADATA_ERROR_CODES.TITLEID_INVALID_CHARS;
-    // } else if (path === 'installId') {
-    //   code = firstError.code === 'missing'
-    //     ? VIBE_METADATA_ERROR_CODES.INSTALLID_EMPTY
-    //     : VIBE_METADATA_ERROR_CODES.INSTALLID_INVALID_CHARS;
-    // } else {
-    //   code = 'UNKNOWN_ERROR';
-    // }
-
     throw new VibeMetadataValidationError(result.toLocaleString(), VIBE_METADATA_ERROR_CODES.TITLEID_EMPTY);
   }
 }

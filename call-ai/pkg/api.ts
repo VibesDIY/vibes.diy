@@ -31,10 +31,6 @@ import { callAiEnv } from "./env.js";
 
 // refreshApiKey is imported from key-management.ts
 
-// getHashFromKey is imported from key-management.ts
-
-// storeKeyMetadata is imported from key-management.ts
-
 // Response metadata is now imported from ./response-metadata
 
 // boxString and getMeta functions are now imported from ./response-metadata

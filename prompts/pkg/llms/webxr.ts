@@ -3,7 +3,6 @@ import type { LlmConfig } from "./types.js";
 export const webxrConfig: LlmConfig = {
   name: "webxr",
   label: "Babylon.js WebXR",
-  module: "webxr",
   description:
     "Babylon.js 3D engine with first-class WebXR: immersive VR and AR passthrough, " +
     "hit-testing, surface anchors, particle systems, SolidParticleSystem, custom GLSL shaders, " +

@@ -85,7 +85,6 @@ export class PostMsgSendProvider implements EventoSendProvider<MessageEvent, unk
   }
 
   send<IS, OS>(trigger: HandleTriggerCtx<MessageEvent<unknown>, unknown, unknown>, data: IS): Promise<Result<OS, Error>> {
-    // console.log("PostMsgSendProvider sending data", data, "to", this.event.origin);
     (this.event.source as Window).postMessage(data, this.event.origin);
     return Promise.resolve(Result.Ok(data as unknown as OS));
   }
@@ -127,7 +126,6 @@ function vibeRuntimeReady(sandbox: vibesDiySrvSandbox): EventoHandler {
     },
     handle: async (ctx: HandleTriggerCtx<MessageEvent, EvtRuntimeReady, unknown>): Promise<Result<EventoResultType>> => {
       sandbox.onRuntimeReady.invoke(ctx.validated);
-      // console.log(`Received vibe.runtime.ready event`, ctx);
       return Result.Ok(EventoResult.Continue);
     },
   };
@@ -1043,7 +1041,6 @@ export class vibesDiySrvSandbox implements Disposable {
 }
 
 export const VibesDiySrvSandbox = Lazy((ctx: VibesDiySrvSandboxArgs) => {
-  // console.log(`Start VibesDiySrvSandbox`, { dashApi, el });
   if (!ctx.eventListeners) {
     return {} as vibesDiySrvSandbox;
   }

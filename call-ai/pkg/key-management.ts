@@ -13,15 +13,6 @@ export interface EnvLike {
   readonly CALLAI_DEBUG?: unknown;
 }
 
-export interface KeyMetadata {
-  key: string;
-  hash: string;
-  created: Date;
-  expires: Date;
-  remaining: number;
-  limit: number;
-}
-
 // Internal key store to keep track of the latest key
 const _keyStore = {
   // Default key from environment or config
@@ -34,8 +25,6 @@ const _keyStore = {
   isRefreshing: false,
   // Timestamp of last refresh attempt (to prevent too frequent refreshes)
   lastRefreshAttempt: 0,
-  // Storage for key metadata (useful for future top-up implementation)
-  metadata: {} as Record<string, Partial<KeyMetadata>>,
 };
 
 export function keyStore() {
@@ -133,30 +122,4 @@ function isNewKeyError(ierror: unknown, debug = false): boolean {
   return needsNewKey;
 }
 
-/**
- * Helper function to extract hash from key (implementation depends on how you store metadata)
- */
-function getHashFromKey(key: string): string | null {
-  if (!key) return null;
-  // Simple implementation: just look up in our metadata store
-  const metaKey = Object.keys(keyStore().metadata).find((k) => k === key);
-  return metaKey ? keyStore().metadata[metaKey].hash || null : null;
-}
-
-/**
- * Helper function to store key metadata for future reference
- */
-function storeKeyMetadata(data: KeyMetadata): void {
-  if (!data || !data.key) return;
-
-  // Store metadata with the key as the dictionary key
-  keyStore().metadata[data.key] = {
-    hash: data.hash,
-    created: data.created || new Date(),
-    expires: data.expires,
-    remaining: data.remaining,
-    limit: data.limit,
-  };
-}
-
-export { globalDebug, initKeyStore, isNewKeyError, getHashFromKey, storeKeyMetadata };
+export { globalDebug, initKeyStore, isNewKeyError };
