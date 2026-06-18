@@ -19,7 +19,6 @@ export interface DocRecord {
 interface DocDBViewerProps {
   docs: DocRecord[];
   docById: Map<string, DocRecord>;
-  loading: boolean;
   dbName: string;
   docId?: string;
   navigate: NavigateFunction;
@@ -35,7 +34,6 @@ interface DocDBViewerProps {
 export function DocDBViewer({
   docs,
   docById,
-  loading,
   dbName,
   docId,
   navigate,
@@ -127,24 +125,6 @@ export function DocDBViewer({
       });
     }
   }, [onCreate, navigate, dbPath]);
-
-  if (loading && docs.length === 0) {
-    return (
-      <div
-        style={{
-          fontFamily: S.sans,
-          background: S.bg,
-          color: S.text,
-          height: "100vh",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-        }}
-      >
-        <span style={{ fontFamily: S.mono, fontSize: 12, color: S.textDim }}>Loading {dbName}...</span>
-      </div>
-    );
-  }
 
   return (
     <div
@@ -393,21 +373,7 @@ export function DocDBViewer({
           <JsonEditor key={docId} doc={doc as Record<string, unknown>} onSave={saveDoc} onDiscard={navigateHome} />
         )}
 
-        {scope === "doc" && !doc && loading && (
-          <div
-            style={{
-              textAlign: "center",
-              padding: 40,
-              color: S.textMuted,
-              fontFamily: S.mono,
-              fontSize: 12,
-            }}
-          >
-            Loading document...
-          </div>
-        )}
-
-        {scope === "doc" && !doc && !loading && (
+        {scope === "doc" && !doc && (
           <div
             style={{
               textAlign: "center",

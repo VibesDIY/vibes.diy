@@ -40,7 +40,7 @@ function ExplorerWithDB({
   databases: string[];
   onDbChange: (db: string) => void;
 }) {
-  const { docs, docById, loading, totalDocs, putDoc, deleteDoc, createDoc, seedData } = useFireproofDB(dbname);
+  const { docs, docById, totalDocs, putDoc, deleteDoc, createDoc, seedData } = useFireproofDB(dbname);
   const navigate = useNavigate();
 
   return (
@@ -48,7 +48,6 @@ function ExplorerWithDB({
       <DocDBViewer
         docs={docs as DocRecord[]}
         docById={docById as Map<string, DocRecord>}
-        loading={loading}
         dbName={dbname}
         docId={docId}
         navigate={navigate}
