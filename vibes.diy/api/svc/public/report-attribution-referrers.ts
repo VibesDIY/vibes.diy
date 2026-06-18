@@ -11,7 +11,7 @@ import {
   resReportAttributionReferrers,
 } from "@vibes.diy/api-types";
 import { type } from "arktype";
-import { sql, desc, eq, notInArray, and } from "drizzle-orm";
+import { sql, desc, eq, notInArray, and, like, notLike, not, type SQL, type AnyColumn } from "drizzle-orm";
 import { unwrapMsgBase } from "../unwrap-msg-base.js";
 import { checkAuth } from "../check-auth.js";
 import { VibesApiSQLCtx } from "../types.js";
@@ -33,13 +33,21 @@ const OWNED_HOSTS = [
   "www.vibes.software",
 ];
 
-const LEGACY_VIBE_PATH_RE = sql`'^/vibe/[^/]+$'`;
+// Legacy vibe paths are the owner-only `/vibe/<segment>` form (no app slug),
+// i.e. the POSIX-regex `^/vibe/[^/]+$`. Expressed with portable LIKE operators
+// so it runs on both Postgres (prod) and the SQLite test DB — Postgres `~`/`!~`
+// are not valid on SQLite. `/vibe/_%` requires at least one char after the
+// slash; `NOT LIKE /vibe/%/%` rejects any further path segment.
+function legacyVibePath(reqPath: AnyColumn): SQL {
+  // both operands are always present, so `and` never returns undefined here
+  return and(like(reqPath, "/vibe/_%"), notLike(reqPath, "/vibe/%/%")) as SQL;
+}
 
 async function computeAttributionReferrers(vctx: VibesApiSQLCtx, reqPathFilter?: string): Promise<ResReportAttributionReferrers> {
   const t = vctx.sql.tables;
 
   const ownedFilter = notInArray(t.refererEvents.refHost, OWNED_HOSTS);
-  const notLegacyVibeFilter = sql`${t.refererEvents.reqPath} !~ ${LEGACY_VIBE_PATH_RE}`;
+  const notLegacyVibeFilter = not(legacyVibePath(t.refererEvents.reqPath));
 
   const baseQuery = vctx.sql.db
     .select({
@@ -69,7 +77,7 @@ async function computeAttributionReferrers(vctx: VibesApiSQLCtx, reqPathFilter?:
             total: sql<number>`cast(count(*) as int)`,
           })
           .from(t.refererEvents)
-          .where(sql`${t.refererEvents.reqPath} ~ ${LEGACY_VIBE_PATH_RE}`)
+          .where(legacyVibePath(t.refererEvents.reqPath))
           .groupBy(t.refererEvents.reqPath)
           .orderBy(desc(sql`count(*)`))
           .limit(200)

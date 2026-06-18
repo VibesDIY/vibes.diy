@@ -565,7 +565,7 @@ describe("VibesDiyApi", { timeout: (inject("DB_FLAVOUR" as never) as string) ===
     });
     expect(res.isErr()).toBe(true);
     expect(res.Err()).toMatchObject({
-      code: "app-slug-invalid",
+      error: { code: "app-slug-invalid" },
     });
   });
 
@@ -576,7 +576,7 @@ describe("VibesDiyApi", { timeout: (inject("DB_FLAVOUR" as never) as string) ===
     });
     expect(res.isErr()).toBe(true);
     expect(res.Err()).toMatchObject({
-      code: "app-slug-invalid",
+      error: { code: "app-slug-invalid" },
     });
   });
 
