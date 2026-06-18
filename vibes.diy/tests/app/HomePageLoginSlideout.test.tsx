@@ -99,4 +99,19 @@ describe("HomePage login slide-out auto-open (#1892)", () => {
     await new Promise((r) => setTimeout(r, AFTER_DELAY_MS));
     expect(sidebarVisible()).toBe(false);
   });
+
+  // The auto-open is a one-time initial-load decision. An authenticated user
+  // clicking Logout flips isSignedIn true→false; that transition must NOT
+  // re-trigger the timer and reopen the panel they just closed (Codex review).
+  it("does NOT reopen after an authenticated user logs out", async () => {
+    authState.isSignedIn = true;
+    authState.isLoaded = true;
+    const { rerender } = render(<HomePage />);
+    await waitFor(() => screen.getByPlaceholderText(PLACEHOLDER));
+    // Simulate logout: auth resolves to signed-out on the same mounted instance.
+    authState.isSignedIn = false;
+    rerender(<HomePage />);
+    await new Promise((r) => setTimeout(r, AFTER_DELAY_MS));
+    expect(sidebarVisible()).toBe(false);
+  });
 });
