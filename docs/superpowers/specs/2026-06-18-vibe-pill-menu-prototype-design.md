@@ -1,182 +1,231 @@
 # Vibe Pill Menu Prototype — Design
 
 - **Date:** 2026-06-18
-- **Status:** Approved (baseline). This is a starting point; proposed menu changes will be layered on top in a later pass.
+- **Status:** Approved — building.
 - **Author:** popmechanic
 
 ## Goal
 
-Build a static, self-contained HTML page that reproduces the current vibe pill
-menu — the floating control that appears at the lower-right of a deployed vibe —
-pixel- and motion-faithfully, sitting over a sample vibe app. The page is a
-discussion prop for walking the team through proposed changes. It must look
-right and be clickable; it need not be functional (no real navigation, auth,
-data, or QR generation).
+Build a static, self-contained, clickable HTML page prototyping a **proposed
+permissions-first redesign** of the vibe pill menu — the floating control at the
+lower-right of a deployed vibe — sitting over a sample vibe app. It's a
+discussion prop for the team. It must look right and be clickable; it need not
+be functional (no real navigation, auth, data, QR, or AI).
 
-## Non-goals
+The collapsed pill, palette, sizing, and open/close motion stay faithful to the
+shipping component. The menu's **contents and surfaces are redesigned** around
+sharing and per-user access control.
 
-- No real navigation, authentication, sharing, or community/DM data.
-- No build step, framework, or dependencies — one file you can open or host.
-- No live QR generation (show a static placeholder image).
-- No multiple viewer states / persona switcher. One state only (see below).
-- No responsive "narrow" layout mode. Target the wide (≥640px) layout where all
-  action-button labels are visible. (Mentioned only so it's an explicit cut.)
+## The redesign in one line
+
+The pill stops being `Home · Group · Vibe` and becomes sharing-first:
+`Share · Vibes · Account · Help`.
 
 ## Approach
 
-**Single self-contained `index.html`** with inline CSS and vanilla JS. Read the
-real component and translate its exact style values, easing, and phase machine
-into plain JS. The sample vibe lives in the same file behind the pill.
+**Single self-contained `index.html`** — inline CSS + vanilla JS, no build, no
+deps. The shipping pill's exact values, easing, and phase machine are hand-ported
+from the real component; the new surfaces are built to match the vibes aesthetic
+(cream surfaces, near-black 1px borders, Inter, bouncy easing).
 
-Rejected alternatives: mounting the real React component in a Vite/sandbox
-harness (drags in a build step and heavy prop/dependency mocking, stops being a
-"just open it" artifact); a rough static mock (undershoots the requested
-pixel + motion fidelity).
+Rejected: mounting the real React component in a build harness (drags in
+build + prop mocking, stops being "just open it"); a rough static mock
+(undershoots the requested pixel + motion fidelity).
 
 ## Artifact location
 
-`docs/prototypes/vibe-pill-menu/index.html`
+`docs/prototypes/vibe-pill-menu/index.html` — open directly or host statically.
 
-Open directly in a browser or host the folder statically.
+## Source of truth (lift exact values from these)
 
-## Source of truth (files to lift values from)
+- Component: `vibes.diy/base/components/ExpandedVibesPill.tsx` (SVG paths,
+  phase-machine timings, geometry formulas, badge logic)
+- Pill SVG fills: `vibes.diy/base/components/VibesSwitch.styles.ts`
+- Canonical palette: `vibes.diy/base/theme/tokens.ts`
+- Production mount/props: `vibes.diy/pkg/app/routes/vibe.$ownerHandle.$appSlug.tsx`
+  (portal into `document.body`, `fixed bottom-4 right-4 z-50`, 1000ms `<Delayed>`,
+  `size={60}`)
 
-- Component: `vibes.diy/base/components/ExpandedVibesPill.tsx`
-- Pill SVG fill colors: `vibes.diy/base/components/VibesSwitch.styles.ts`
-  (`switchColors.primary = var(--vibes-black)`, `secondary = var(--vibes-cream)`)
-- Canonical palette: `vibes.diy/base/theme/tokens.ts` (generates the
-  `--vibes-*` CSS variables the viewer page defines)
-- Production props / mount: `vibes.diy/pkg/app/routes/vibe.$ownerHandle.$appSlug.tsx`
-  (portal into `document.body`, wrapped in `fixed bottom-4 right-4 z-50`, 1000ms
-  `<Delayed>`, `size={60}`)
-
-## Fidelity reference
+## Fidelity reference (unchanged pill base)
 
 ### Size
 
-Pill renders at `size = 60` (matching production), so:
+`size = 60` (production value): `height = 60`, `scale = 0.2`,
+`pillWidth = 120`, `btnWidth = 45` (closed), `btnExpandedWidth = 108` (open),
+`btnPadding = 10`. The tray now shows **4** buttons (was 3); recompute
+`trayExtra`, the metadata-strip width, and badge open-positions accordingly.
 
-- `height = 60`, `scale = height / 300 = 0.2`
-- `pillWidth = 600 * scale = 120px` (SVG viewBox `0 0 600 300`, so 120×60)
-- `btnWidth = height * 0.75 = 45px` (closed action button)
-- `btnExpandedWidth = height * 1.8 = 108px` (open action button, with label)
-- `btnPadding = 10` (cream gap between buttons and pill)
-- `visibleButtons = 3`
+### Palette (define as `:root` CSS variables — canonical token values)
 
-### Palette (canonical token values — define these as CSS variables)
+| Variable | Value | Use |
+| --- | --- | --- |
+| `--vibes-blue` | `#3b82f6` | Share button |
+| `--vibes-yellow` | `#eab308` | Vibes button |
+| `--vibes-green` | `#51cf66` | Help button |
+| `--vibes-purple-neon` | `#c084fc` | **Account button (new)** |
+| `--vibes-orange-neon` | `#fb923c` | badges |
+| `--vibes-black` | `#000000` | pill outer / wordmark |
+| `--vibes-near-black` | `#1a1a1a` | borders, labels |
+| `--vibes-cream` | `#fffff0` | surfaces, labels |
+| `--vibes-text-primary` | `#333333` | body text |
 
-The prototype must define `:root` variables so the pill renders the colors that
-actually ship (the component's inline `var(--x, fallback)` fallbacks are NOT
-what production shows, and `switchColors` has no fallbacks):
+### Phase machine (exact timings — bouncy easing `cubic-bezier(0.34,1.56,0.64,1)`)
 
-| Variable | Value |
-| --- | --- |
-| `--vibes-blue` | `#3b82f6` |
-| `--vibes-green` | `#51cf66` |
-| `--vibes-yellow` | `#eab308` |
-| `--vibes-black` | `#000000` |
-| `--vibes-near-black` | `#1a1a1a` |
-| `--vibes-cream` | `#fffff0` |
-| `--vibes-orange-neon` | `#fb923c` |
-| `--vibes-text-primary` | `#333333` |
+`idle → bubble → expanding → open` (open); `open → collapsing → shrinking → idle`
+(close). `bubble`→`expanding` 120ms; `expanding`→`open` 250ms;
+`collapsing`→`shrinking` 200ms; `shrinking`→`idle` 150ms. Tray width/top/height
+0.5s bouncy (expand) / 0.4s ease (collapse); `bubble` scale 0.25s bouncy;
+`shrinking` scale 0.12s ease. Action-button width/label 0.2s bouncy. 1000ms
+entrance delay. Long-press-to-hide is **out of scope**.
 
-### Structure (back to front, all within a `position: relative` wrapper)
+## Top-level tray (replaces `Home · Group · Vibe`)
 
-1. **Bubble tray** — cream, 1px near-black border, `border-radius: 87*scale+4`.
-   Sits behind/beside the pill; width animates from `trayCollapsed` (covers the
-   pill) to `trayExpanded` (reveals the buttons), `overflow: hidden` so the
-   bouncy width reveal clips rather than slides the buttons.
-2. **Metadata strip** — appears in extra space at the top of the bubble when
-   expanded and metadata exists: app icon (screenshot), title line, slug line.
-   Fades in `opacity 0.2s ease`.
-3. **Horizontal action buttons** (bottom-anchored, right-aligned against the
-   pill): **Home** (blue, cream label), **Group** (green, cream label),
-   **Vibe** (yellow, near-black label). Each button: circular near-black icon
-   chip + uppercase 700 label, `letter-spacing 1.5px`, Inter.
-4. **Vertical sub-menu** — opens above the pill, aligned to the Vibe button's
-   right edge, when Vibe is clicked (`subMode === "change"`). Cream, near-black
-   border, `border-radius: 12`, scales in from `bottom right` with bouncy
-   easing. Rows: **Edit** (yellow), **Clone** (blue), **Remix** (green),
-   **QR Code** (cream). QR Code toggles a static QR placeholder image.
-5. **Pill SVG** — `viewBox 0 0 600 300`, height 60, always on top (z-index 2).
-   Black outer pill; "diy"/"vibes" wordmark paths cross-fade and the cream
-   wordmark slides `translateX(3px)` when the tray opens (`creamSlid`).
-6. **Badges** (owner, fully-loaded — all shown):
-   - **Pending-access count** — orange, top-right; translates onto the Group
-     button when expanded (`transform 0.2s` bouncy).
-   - **Unread-DM count** — blue, top-left.
-   - **Unpublished-changes dot** — orange dot, top-left.
+Four buttons, all colors from the brand palette. **No Home button** (dropped).
 
-### Phase machine (exact timings)
+| Button | Color | Opens |
+| --- | --- | --- |
+| **Share** | blue `#3b82f6`, cream label | full Share panel (tabs) |
+| **Vibes** | yellow `#eab308`, near-black label | vertical code menu |
+| **Account** | purple `#c084fc`, near-black label | account panel |
+| **Help** | green `#51cf66`, cream label | AI agent chat modal |
 
-`idle → bubble → expanding → open` on open; `open → collapsing → shrinking →
-idle` on close.
+## Permissions model (the core of the redesign)
 
-- click pill in `idle` → `bubble`
-- `bubble` → `expanding` after **120ms**
-- `expanding` → `open` after **250ms**
-- click pill in `open` → `collapsing`
-- `collapsing` → `shrinking` after **200ms**
-- `shrinking` → `idle` after **150ms**
-- on `idle`: reset sub-menu to `default`, hide QR
+Three independent access axes — **no role bundling**; each is its own control:
 
-Tray transitions by phase:
-- `bubble`: `transform 0.25s cubic-bezier(0.34,1.56,0.64,1)`
-- `expanding`/`open`: `width/top/height 0.5s cubic-bezier(0.34,1.56,0.64,1)`
-- `collapsing`: `width/top/height 0.4s ease`
-- `shrinking`: `transform 0.12s ease` (scale to 0)
+1. **Site visibility** — an *app-level* toggle (clearly labeled, not a dropdown):
+   **Restricted** (default) | **Public**.
+   - Restricted → only people on the access list can open the app.
+   - Public → anyone with the link can open it.
+2. **Data** — *per-user* `None / Read / Read+Write`. When the app is Public, a
+   single **public Data default** applies to everyone (starts at `None`).
+3. **Code** — *per-user* edit-via-chat on/off. **Always per-person** — there is
+   never a "let anyone edit the code" public default.
 
-Action-button width/label: `0.2s cubic-bezier(0.34,1.56,0.64,1)`.
-Sub-menu: `transform 0.12s cubic-bezier(0.34,1.56,0.64,1), opacity 0.08s ease`.
+Being on the access list implies the person can open a restricted app; the list
+then governs their Data + Code grants.
 
-Easing constant throughout: `cubic-bezier(0.34, 1.56, 0.64, 1)` (bouncy).
+## Share surface — tabs: `Share · Comments · Settings`
 
-Entrance: 1000ms delay before the pill appears, then it's interactive.
+A cream card with a near-black border, anchored above the pill, opening with a
+bouncy scale/fade. One tab visible at a time.
 
-Long-press-to-hide (500ms) is **out of scope** for the prototype — it's an
-easily-missed gesture that doesn't aid the design discussion.
+### Share tab — progressive disclosure driven by the site toggle
+
+**Restricted (default) — per-user machinery visible:**
+
+```
+[ Invite by email…                ] [ Add ]
+People
+ you           Owner
+ alex@…   Data [ Read/Write ▾ ]   Code [ ✓ ]
+ sam@…    Data [ Read ▾ ]         Code [   ]
+Requests · 2                                ▾
+ jo@…   wants access        [ Deny ] [ Approve ]
+🔗 Copy link              Landing page ↗
+──────────────────────────────────────────────
+Site access     [ Restricted ●——○ Public ]   ← foundational, at the bottom
+🔒 Only invited people can open this app
+```
+
+**Public — per-user machinery collapses, minimal public choice remains:**
+
+```
+▸ Specific people · 2        (add data/code grants)   ← collapsed, still reachable
+Public visitors can:   Data [ None ▾ ]
+🔗 Copy link              Landing page ↗
+──────────────────────────────────────────────
+Site access     [ Restricted ○——● Public ]
+🌐 Anyone with the link can open this app
+```
+
+- Per-person row = a **Data dropdown** (None/Read/Read+Write) + a **Code
+  checkbox**, independent, no role names.
+- Site toggle sits at the **bottom** as the primary/foundational control.
+
+### Comments tab
+
+A Google-Docs-style comment thread (mocked): a few comments with avatar, name,
+timestamp, body; a "resolve" affordance; a "comment…" composer. Illustrative.
+
+### Settings tab
+
+Mocked app-settings form: app title, icon/screenshot, canonical slug, plus a
+destructive "Delete app" row. Illustrative.
+
+## Vibes (code menu) — unchanged
+
+Today's vertical sub-menu: **Edit / Clone / Remix / QR Code**. QR toggles a
+static placeholder image. Same look and motion as the shipping component.
+
+## Account
+
+Primarily an auth affordance, by sign-in state. The prototype's base state is
+owner-logged-in, so it shows the **logged-in** variant (avatar + email +
+**Log out**). A **logged-out** variant (**Log in** / **Create account**) is also
+mocked so the team can see both; a tiny in-panel switch flips between them (this
+is the only persona toggle, scoped to the Account panel).
+
+## Help — AI agent chat modal
+
+Best-practice assistant chat UX, styled to match: clear agent identity (name +
+avatar + "online" status), a seeded sample exchange (user question → agent
+answer), a typing/streaming indicator, a row of suggested-prompt chips, and a
+clickable composer (sending echoes the message into the thread; no real AI).
+Cream surface, near-black border, anchored bottom-right, taller than the Share
+panel.
 
 ## State shown
 
-**Owner, logged in, fully-loaded.** Everything the menu can contain is on
-screen: Home / Group / Vibe horizontal tray; Edit / Clone / Remix / QR Code
-vertical sub-menu; all three badges (pending-access count, unread-DM count,
-unpublished-changes dot); metadata strip with icon, title, and slug.
-
-(Note: production wires different subsets per real state — e.g. a logged-out
-visitor gets a Login button instead of Group/Vibe, and some states omit Remix.
-The prototype deliberately shows the maximal owner menu so the team can see and
-discuss every affordance in one view.)
+**Owner, logged in, fully loaded.** All affordances present; all three pill
+badges shown (pending-access count — animates onto the **Share** button when the
+tray expands; an unread count badge on the left; the unpublished-changes dot).
+Badges are illustrative decoration in the prototype.
 
 ## Sample vibe (backdrop)
 
-A simple, real-looking generated vibe: a to-do app — header with a title and a
-search field, a few checkable task rows (mixed checked/unchecked), and an "add
-task" input. Static and visually muted so the pill stays the focus. Page chrome
-fills the viewport; the pill floats fixed at bottom-right over it.
+A muted, real-looking to-do app: header with title + search, several checkable
+task rows (mixed checked/unchecked), an "add task" input. Static; keeps the pill
+the focus. Fills the viewport with the pill floating fixed at bottom-right.
 
 ## Interactions
 
 - Click pill → tray expands through the phase machine; click again → collapses.
-- Click **Vibe** → vertical sub-menu opens/closes (toggles `subMode`).
-- Click **QR Code** → toggles a static QR placeholder image.
-- All links (Home, Edit, Clone, Remix) are clickable but inert (`href="#"`,
-  `preventDefault`).
-- To-do rows: checkboxes toggle visually; no persistence.
+- **Share** → opens Share panel (default Restricted view). Tabs switch content.
+- Site toggle flips Restricted ⇄ Public with the progressive-disclosure change.
+- Per-person Data dropdowns and Code checkboxes are operable (visual only).
+- **Vibes** → vertical code menu; **QR Code** toggles a placeholder image.
+- **Account** → panel; in-panel switch flips logged-in/out mocks.
+- **Help** → chat modal; suggested chips and composer are clickable.
+- All outbound links (Edit, Clone, Remix, Copy link, Landing page) are inert.
+- To-do checkboxes toggle visually; nothing persists.
+- Clicking outside an open surface closes it.
 
-## Acceptance (how we eyeball fidelity)
+## Out of scope
 
-Open the file and compare against a live deployed vibe's pill:
+Real navigation/auth/data/QR/AI; long-press-to-hide; narrow/mobile layout;
+multi-persona switching beyond the Account panel's two mocks; final copy/content
+in Comments / Settings / Account / Help.
 
-1. Collapsed pill matches the wordmark, colors, and 120×60 size.
-2. Click expands the tray with the bouncy reveal; Home/Group/Vibe show labels.
-3. Pending-access badge animates from top-right onto the Group button.
-4. Vibe opens the vertical Edit/Clone/Remix/QR menu above the pill.
-5. QR Code toggles a QR image placeholder.
-6. Closing runs collapse → shrink back to the bare pill.
-7. Metadata strip (icon/title/slug) is visible when expanded.
+## Acceptance (eyeball checklist)
+
+1. Collapsed pill matches the wordmark, colors, and 120×60 size; 1s entrance.
+2. Click expands the tray (bouncy reveal) showing `Share · Vibes · Account ·
+   Help` with the correct four palette colors (Account = purple).
+3. Pending-access badge animates from top-right onto the Share button.
+4. Share opens the panel; Restricted shows invite + people (Data dropdown +
+   Code checkbox) + requests + the site toggle at the bottom.
+5. Flipping the site toggle to Public collapses the people machinery and shows
+   the single public Data default; flipping back restores it.
+6. Comments and Settings tabs switch the panel content.
+7. Vibes opens the Edit/Clone/Remix/QR menu; QR toggles a placeholder.
+8. Account shows logged-in (Log out); the in-panel switch reveals the
+   logged-out variant.
+9. Help opens an AI chat modal with a seeded exchange, typing indicator,
+   suggested chips, and a clickable composer.
+10. Closing runs collapse → shrink back to the bare pill.
 
 ## Iteration note
 
-This baseline exists to anchor the proposed changes. Expect to edit this single
-file to mock each change as the team works through it.
+This is the discussion baseline for the redesign. Expect to edit this single
+file to mock each refinement as the team works through it.
