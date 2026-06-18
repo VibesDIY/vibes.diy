@@ -84,33 +84,18 @@ export default function ChatPrompt() {
       {isSignedIn &&
         effectivePrompt &&
         createPortal(
-          // Full-screen layer that still intercepts pointer events (so the user
-          // can't submit into the underlying chat input — which goes nowhere
-          // while <Chat> is inConstruction) but is visually transparent, so the
-          // decoded prompt renders as a user bubble that stays visible. The
-          // "Preparing AI Session…" status sits in a bottom-anchored pill.
           <div
             style={{
               position: "fixed",
               inset: 0,
+              background: "rgba(0,0,0,0.5)",
               display: "flex",
-              alignItems: "flex-end",
+              alignItems: "center",
               justifyContent: "center",
-              paddingBottom: 24,
               zIndex: 9999,
             }}
           >
-            <div
-              style={{
-                background: "rgba(0,0,0,0.75)",
-                color: "#fff",
-                padding: "0.5rem 1rem",
-                borderRadius: 9999,
-                fontSize: "0.85rem",
-              }}
-            >
-              Preparing AI Session…
-            </div>
+            Preparing AI Session…
           </div>,
           document.body
         )}
