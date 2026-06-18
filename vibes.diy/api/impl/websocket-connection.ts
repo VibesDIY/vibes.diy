@@ -44,7 +44,7 @@ export function getVibesDiyWebSocketConnection(url: string, presetWs?: WebSocket
     .protocol(["https", "wss"].find((i) => URI.from(url).protocol.startsWith(i)) ? "wss:" : "ws:")
     .toString();
   const slot = vibesDiyApiPerConnection.get(wsSocketUrl);
-  return slot.once(async ({ ctx }) => {
+  const connection = slot.once(async ({ ctx }) => {
     const url = ctx.givenKey;
     const ws = presetWs ?? (await createWebSocket(wsSocketUrl, ca));
     const waitOpen = new Future<WebSocket>();
@@ -116,4 +116,10 @@ export function getVibesDiyWebSocketConnection(url: string, presetWs?: WebSocket
       },
     }));
   });
+  // A connection can be created eagerly (e.g. a db opened with a bad apiUrl)
+  // and fail before any caller awaits it, which Node surfaces as an unhandled
+  // rejection that fails the whole test run. Mark the cached promise handled;
+  // real callers still await `connection` and receive the error. (#2425)
+  connection.catch(() => undefined);
+  return connection;
 }
