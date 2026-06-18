@@ -48,7 +48,6 @@ function CodeEditorWrapper({
 }: {
   promptState: PromptState;
   onCode: (event: EditorState) => void;
-  currentView: string;
   diffOverlay?: { path: string; lines: string[] } | null;
 }) {
   return (
@@ -59,21 +58,6 @@ function CodeEditorWrapper({
     </ClientOnly>
   );
 }
-
-// const MemoCodeEditor = memo(CodeEditorWrapper, (prevProps, nextProps) => {
-//   // console.log("xxxx", nextProps.promptState.running)
-//   if (
-//     nextProps.promptState.running &&
-//     nextProps.currentView === "code" &&
-//     prevProps.currentView === "code" &&
-//     prevProps.promptState.blocks.length === nextProps.promptState.blocks.length
-//   ) {
-//     // console.log(`Memo check for CodeEditor:`, { prevView: prevProps.currentView, nextView: nextProps.currentView });
-//     return false; // re-render if still in code view to reflect changes in promptState.blocks
-//   }
-
-//   return nextProps.currentView === "code";
-// });
 
 function ResultPreview({
   promptState,
@@ -98,7 +82,7 @@ function ResultPreview({
   const showWelcome = !fsId && !promptState.running && !promptState.hasCode;
 
   const codeEditor = (
-    <CodeEditorWrapper promptState={promptState} onCode={onCode} currentView={currentView} diffOverlay={diffOverlay} />
+    <CodeEditorWrapper promptState={promptState} onCode={onCode} diffOverlay={diffOverlay} />
   );
 
   // PreviewApp slot is mounted whenever the active view is "preview", whether

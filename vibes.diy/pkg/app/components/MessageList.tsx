@@ -1,5 +1,4 @@
 import React, { memo, useEffect, useRef } from "react";
-// import type { ChatMessageDocument, ViewType } from "@vibes.diy/prompts";
 import { PromptBlock } from "../routes/chat/chat.$ownerHandle.$appSlug.js";
 import { parseOptionLines } from "../utils/option-lines.js";
 import { OptionButtons } from "./OptionButtons.js";
@@ -41,10 +40,6 @@ interface MessageListProps {
   // list before the server echoes prompt.req. Cleared by the reducer once the
   // echo lands, so the real <Prompt> bubble replaces it without a flash.
   optimisticPrompt?: string;
-  // setSelectedResponseId: (id: string) => void;
-  // selectedResponseId: string;
-  // setMobilePreviewShown: (shown: boolean) => void;
-  // navigateToView: (view: ViewType) => void;
 }
 
 // Chat debug surface — three ways to inspect runtime evolution of the
@@ -521,10 +516,6 @@ function MessageList({
   onSelectOption,
   agentSavedBlockIds,
   optimisticPrompt,
-  // setSelectedResponseId,
-  // selectedResponseId,
-  // setMobilePreviewShown,
-  // navigateToView,
 }: MessageListProps) {
   // console.log(
   //   "MessageList",
