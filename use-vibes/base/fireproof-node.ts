@@ -109,7 +109,11 @@ let sharedAdapter = Lazy((resolved: ResolvedOpts): FireflyApiAdapter => {
     resolved.appSlug,
     resolved.userHandle ? { ownerHandle: resolved.userHandle } : undefined
   );
-  void adapter.enableGrantReactivity(); // headless consumers get live grant updates by default
+  // headless consumers get live grant updates by default. Best-effort: a failed
+  // connection (e.g. a bad apiUrl) must not surface as an unhandled rejection
+  // that crashes the process — next activity retries. Mirrors the connection
+  // triggers in VibesDiyApi (#2444).
+  adapter.enableGrantReactivity().catch(() => undefined);
   return adapter;
 });
 
@@ -163,7 +167,11 @@ export function __resetFireproofForTesting(): void {
       resolved.appSlug,
       resolved.userHandle ? { ownerHandle: resolved.userHandle } : undefined
     );
-    void adapter.enableGrantReactivity(); // headless consumers get live grant updates by default
+    // headless consumers get live grant updates by default. Best-effort: a failed
+    // connection (e.g. a bad apiUrl) must not surface as an unhandled rejection
+    // that crashes the process — next activity retries. Mirrors the connection
+    // triggers in VibesDiyApi (#2444).
+    adapter.enableGrantReactivity().catch(() => undefined);
     return adapter;
   });
   databasesByName = new KeyedResolvOnce<FireflyDatabase>();

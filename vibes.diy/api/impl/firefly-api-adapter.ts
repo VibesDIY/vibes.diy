@@ -194,7 +194,12 @@ export class FireflyApiAdapter {
     if (typeof this.apiArg !== "function") {
       register(this.apiArg);
     } else {
-      void this.getApi().then(register);
+      // Best-effort: getApi() can reject when the connection fails (e.g. a bad
+      // apiUrl). Swallow so this fire-and-forget registration never becomes an
+      // unhandled rejection that crashes the process (#2444).
+      this.getApi()
+        .then(register)
+        .catch(() => undefined);
     }
   }
 }
