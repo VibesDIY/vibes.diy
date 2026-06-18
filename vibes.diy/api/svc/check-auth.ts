@@ -52,7 +52,6 @@ export function corercedVerifiedAuthUser(ver: VerifiedClaimsResult): Result<Veri
 export async function verifyAuth(
   ctx: VibesApiSQLCtx,
   req: { readonly auth: DashAuthType }
-  // status: UserStatus[] = ["active"],
 ): Promise<Result<VerifiedResult>> {
   const rvec = await verifyExtractClaims(ctx, req);
   if (rvec.isErr()) {
@@ -62,26 +61,10 @@ export async function verifyAuth(
   if (rVerifiedAuth.isErr()) {
     return Result.Err(rVerifiedAuth.Err());
   }
-  // console.log("verifyAuth", rVerifiedAuth.Ok());
-  // const rExisting = await getUser(ctx.db, rVerifiedAuth.Ok().claims.userId);
-  // if (rExisting.isErr()) {
-  //   if (isUserNotFound(rExisting)) {
-  //     return Result.Ok({
-  //       type: "VerifiedAuthResult",
-  //       inDashAuth: req.auth,
-  //       verifiedAuth: rVerifiedAuth.Ok(),
-  //     });
-  //   }
-  //   return Result.Err(rExisting);
-  // }
-  // if (!status.includes(rExisting.Ok().status)) {
-  //   return Result.Err(`user status invalid: ${rExisting.Ok().status}`);
-  // }
   return Result.Ok({
     type: "VerifiedAuthResult",
     inDashAuth: req.auth,
     verifiedAuth: rVerifiedAuth.Ok(),
-    // user: rExisting.Ok(),
   });
 }
 

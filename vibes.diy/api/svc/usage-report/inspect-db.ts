@@ -107,7 +107,7 @@ async function resolveTable(pool: Pool, requestedName: string): Promise<Result<T
   }
 
   return Result.Err(
-    `unknown table: ${requestedName}. Run 'pnpm --dir vibes.diy/api/svc run inspect:db tables' to see actual tables in this database`
+    `unknown table: ${requestedName}. Run 'pnpm --dir vibes.diy/api/svc run db:inspect tables' to see actual tables in this database`
   );
 }
 
