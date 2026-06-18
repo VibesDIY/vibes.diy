@@ -90,12 +90,14 @@ const TYPE_MAP: Record<
 };
 
 export function useBuildCompletionNotifications(): void {
-  const { chatApi, vibeApi } = useVibesDiy();
-  // Prefer the app-API (AppSessions) connection when one exists so we don't open a
-  // second, heavier chatApi WebSocket just to receive notifications. Both connection
-  // types serve the user-notification stream and ensureUserSettings (sharedHandlers),
-  // so either can carry build notifications and read prefs.
-  const api = vibeApi ?? chatApi;
+  const { vibeApi, notifyApi } = useVibesDiy();
+  // Prefer the app-API (AppSessions) connection when one exists, otherwise use the
+  // dedicated per-user notification connection (notifyApi). We deliberately never use
+  // the heavy codegen chatApi here. Both vibeApi and notifyApi serve the
+  // user-notification stream and ensureUserSettings (sharedHandlers), and notifyApi
+  // registers a stable per-user shard so the subscriber set stays bounded. notifyApi
+  // is undefined until the user is signed in, so api may be undefined.
+  const api = vibeApi ?? notifyApi;
   const navigate = useNavigate();
   // The notification click fires long after render, so read navigate through a ref
   // to keep handleNotification (and the subscription) stable.
@@ -105,6 +107,7 @@ export function useBuildCompletionNotifications(): void {
   const prefsRef = useRef<UserSettingNotifications>({ type: "notifications" });
 
   useEffect(() => {
+    if (!api) return;
     void api.ensureUserSettings({ settings: [] }).then((res) => {
       if (res.isOk()) {
         const saved = res.Ok().settings.find(isUserSettingNotifications);

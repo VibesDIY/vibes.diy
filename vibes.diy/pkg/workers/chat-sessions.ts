@@ -12,7 +12,7 @@ import { CfCacheIf, cfServe } from "@vibes.diy/api-svc";
 import { WSSendProvider } from "@vibes.diy/api-svc/svc-ws-send-provider.js";
 import { CFInjectMutable, cfServeAppCtx } from "@vibes.diy/api-svc/cf-serve.js";
 import { chatMsgEvento } from "@vibes.diy/api-svc/chat-msg-evento.js";
-import { CFEnv, isBuildNotification } from "@vibes.diy/api-types";
+import { CFEnv, isBuildNotification, isUserNotifyShard } from "@vibes.diy/api-types";
 import { exception2Result, URI } from "@adviser/cement";
 import { type } from "arktype";
 
@@ -40,6 +40,38 @@ function cfWebSocketPair(): { client: WebSocket; server: WebSocket } {
   // console.log("cfWebSocketPair called-2", WebSocketPair);
   const [client, server] = Object.values(webSocketPair) as [CFWebSocket, CFWebSocket];
   return { client: client as unknown as WebSocket, server: server as unknown as WebSocket };
+}
+
+// Lets a ChatSessions connection register itself as a user-notification subscriber so
+// it receives fanned-out notifications. Only the dedicated per-user notification
+// connection (stable `notify-user-<userId>` shard) is allowed to register — codegen
+// chat connections use random-UUID shards, and registering those would leak unbounded
+// dead shards into UserNotify, which never prunes a shard that still resolves to a DO.
+// Note: only the receive-side subscription is wired here (no notifyUser); build
+// emission stays owned by the AppSessions path, unchanged.
+function userNotifyCallbacksForChatSessions(shard: string, env: CFEnv) {
+  if (!isUserNotifyShard(shard)) return {};
+
+  function fetchUserNotify(userId: string, body: Record<string, unknown>): Promise<CFResponse> {
+    const id = env.USER_NOTIFY.idFromName(userId);
+    const stub = env.USER_NOTIFY.get(id);
+    return stub.fetch(
+      new Request("https://internal/user-notify", {
+        method: "POST",
+        body: JSON.stringify(body),
+        headers: { "Content-Type": "application/json" },
+      }) as unknown as CFRequest
+    );
+  }
+
+  return {
+    registerUserSubscription: async (userId: string): Promise<void> => {
+      await fetchUserNotify(userId, { action: "register", shardId: shard });
+    },
+    deregisterUserSubscription: async (userId: string): Promise<void> => {
+      await fetchUserNotify(userId, { action: "deregister", shardId: shard });
+    },
+  };
 }
 
 export class ChatSessions implements DurableObject {
@@ -106,7 +138,9 @@ export class ChatSessions implements DurableObject {
       connections: this.connections,
       webSocketPair: cfWebSocketPair,
     };
-    cctx.appCtx = (await cfServeAppCtx(request, this.env, cctx)).appCtx;
+    const shard = URI.from(request.url).getParam("shard");
+    const userCbs = shard !== undefined ? userNotifyCallbacksForChatSessions(shard, this.env) : {};
+    cctx.appCtx = (await cfServeAppCtx(request, this.env, cctx, { ...userCbs })).appCtx;
     return cfServe(request, cctx, chatMsgEvento);
   }
 }
