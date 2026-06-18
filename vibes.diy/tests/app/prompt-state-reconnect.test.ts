@@ -21,6 +21,10 @@ function blockEnd(streamId: string) {
   return { type: "prompt.block-end" as const, streamId, chatId: "c1", seq: 9, timestamp: new Date() };
 }
 
+function promptError(streamId: string, error = "boom") {
+  return { type: "prompt.error" as const, streamId, chatId: "c1", seq: 9, timestamp: new Date(), error };
+}
+
 describe("promptReducer reconnect actions", () => {
   it("streamDisconnected while running enters reconnecting", () => {
     const next = promptReducer(baseState({ running: true }), { type: "streamDisconnected" });
@@ -85,6 +89,41 @@ describe("promptReducer reconnect actions", () => {
     expect(next.running).toBe(false);
     expect(next.connection).toBe("reconnecting");
     expect(next.inFlightStreamId).toBe("p-1");
+  });
+
+  it("prompt.error is terminal: running false and the error block is appended (#2057)", () => {
+    // A generation that writes block-begin then errors leaves the client
+    // running:true until a terminal event arrives. The persisted prompt.error,
+    // replayed on every reconnect, must flip running off and render so the
+    // input re-enables instead of staying stuck in "Writing code...".
+    const block = { msgs: [] };
+    const state = baseState({ running: true, blocks: [block], current: block });
+    const next = promptReducer(state, promptError("p-1"));
+    expect(next.running).toBe(false);
+    expect(next.current?.msgs).toHaveLength(1);
+    expect(next.blocks[0].msgs).toHaveLength(1);
+  });
+
+  it("prompt.error matching inFlightStreamId converges to live and clears the id", () => {
+    const state = baseState({ running: true, connection: "reconnecting", inFlightStreamId: "p-1" });
+    const next = promptReducer(state, promptError("p-1"));
+    expect(next.running).toBe(false);
+    expect(next.connection).toBe("live");
+    expect(next.inFlightStreamId).toBeUndefined();
+  });
+
+  it("historical prompt.error with a different streamId stops running but does not converge", () => {
+    const state = baseState({ running: true, connection: "reconnecting", inFlightStreamId: "p-1" });
+    const next = promptReducer(state, promptError("old-turn"));
+    expect(next.running).toBe(false);
+    expect(next.connection).toBe("reconnecting");
+    expect(next.inFlightStreamId).toBe("p-1");
+  });
+
+  it("prompt.error with no current block still stops running", () => {
+    const state = baseState({ running: true });
+    const next = promptReducer(state, promptError("p-1"));
+    expect(next.running).toBe(false);
   });
 
   it("reconnectFailed enters failed and stops running", () => {
