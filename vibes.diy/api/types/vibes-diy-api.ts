@@ -36,6 +36,8 @@ import {
 import {
   ReqEnsureUserSettings,
   ResEnsureUserSettings,
+  ReqEnsureHandleAvatar,
+  ResEnsureHandleAvatar,
   ReqListApplicationChats,
   ResListApplicationChats,
   ReqEnsureAppSettings,
@@ -168,6 +170,7 @@ export interface VibesDiyApiIface<_T = unknown> {
   getAppByFsId(req: Req<ReqGetAppByFsId>): Promise<Result<ResGetAppByFsId, VibesDiyError>>;
   openChat(req: Req<ReqOpenChat>): Promise<Result<LLMChat>>;
   ensureUserSettings(req: Req<ReqEnsureUserSettings>): Promise<Result<ResEnsureUserSettings, VibesDiyError>>;
+  ensureHandleAvatar(req: Req<ReqEnsureHandleAvatar>): Promise<Result<ResEnsureHandleAvatar, VibesDiyError>>;
   ensureAppSettings(req: Req<ReqEnsureAppSettings>): Promise<Result<ResEnsureAppSettings, VibesDiyError>>;
   listApplicationChats(req: Req<ReqListApplicationChats>): Promise<Result<ResListApplicationChats, VibesDiyError>>;
 

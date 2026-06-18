@@ -7,6 +7,7 @@ import { pinRecentVibeEvento } from "./public/pin-recent-vibe.js";
 import { getChatDetailsEvento } from "./public/get-chat-details.js";
 import { getAppByFsIdEvento } from "./public/get-app-by-fsid.js";
 import { ensureUserSettingsEvento } from "./public/ensure-user-settings.js";
+import { ensureHandleAvatarEvento } from "./public/ensure-handle-avatar.js";
 import { listApplicationChats } from "./public/list-application-chats.js";
 import { ensureAppSettingsEvento } from "./public/ensure-app-settings.js";
 import { setModeFsIdEvento } from "./public/set-mode-fsid.js";
@@ -62,6 +63,7 @@ export const sharedHandlers = [
   getAppByFsIdEvento,
   ensureAppSettingsEvento,
   ensureUserSettingsEvento,
+  ensureHandleAvatarEvento,
   listModelsEvento,
   // Grants, invites, membership — stateless D1 queries called from parent app
   // on chatApi (chat connection). Registered on both DOs until client routing

@@ -98,6 +98,36 @@ export function isResEnsureUserSettings(obj: unknown): obj is ResEnsureUserSetti
   return !(resEnsureUserSettings(obj) instanceof type.errors);
 }
 
+// Per-handle avatar write (spec: docs/superpowers/specs/2026-06-18-per-handle-avatar-design.md).
+// `handle` is the VIEWER-selected target handle — the server validates it
+// belongs to the authenticated user (never trusts an app/iframe-derived handle).
+// `cid` is the bare content CID from putAsset; the server resolves it to the
+// authoritative storage getURL via the AssetUploads audit table (scoped to the
+// caller), so a client cannot forge the stored URL.
+export const reqEnsureHandleAvatar = type({
+  type: "'vibes.diy.req-ensure-handle-avatar'",
+  auth: dashAuthType,
+  handle: "string",
+  cid: "string",
+  "mime?": "string",
+});
+export type ReqEnsureHandleAvatar = typeof reqEnsureHandleAvatar.infer;
+export function isReqEnsureHandleAvatar(obj: unknown): obj is ReqEnsureHandleAvatar {
+  return !(reqEnsureHandleAvatar(obj) instanceof type.errors);
+}
+
+export const resEnsureHandleAvatar = type({
+  type: "'vibes.diy.res-ensure-handle-avatar'",
+  handle: "string",
+  getURL: "string",
+  mime: "string",
+  updated: "string",
+});
+export type ResEnsureHandleAvatar = typeof resEnsureHandleAvatar.infer;
+export function isResEnsureHandleAvatar(obj: unknown): obj is ResEnsureHandleAvatar {
+  return !(resEnsureHandleAvatar(obj) instanceof type.errors);
+}
+
 export const reqEnsureAppSettingsBase = type({
   type: "'vibes.diy.req-ensure-app-settings'",
   "auth?": dashAuthType,
