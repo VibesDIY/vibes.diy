@@ -76,6 +76,11 @@ interface RequestOpts {
   // putAsset for a 100 MiB upload) where the host emits periodic progress
   // events to keep the request alive.
   idleTimeout?: number;
+  // When set, a response with `status: "error"` resolves as Result.Ok(response)
+  // so the caller can inspect the status, instead of being converted to
+  // Result.Err. Used by RPCs (e.g. updateAvatarCid) where an "error"/"cancelled"
+  // status is a normal outcome, not a broken request.
+  surfaceStatus?: boolean;
   wait(x: unknown): boolean;
 }
 
@@ -137,7 +142,7 @@ export class VibeSandboxApi {
       );
       if (res.isSuccess()) {
         const v = res.value as { status?: string; message?: string };
-        if (v.status === "error") {
+        if (v.status === "error" && !opts.surfaceStatus) {
           return Result.Err(v.message ?? "request rejected");
         }
         return Result.Ok(res.value as S);
@@ -362,7 +367,8 @@ export class VibeSandboxApi {
         cid,
         ...(mimeType ? { mimeType } : {}),
       },
-      { wait: isResVibeUpdateAvatarCid, timeout: 60000 }
+      // error/cancelled are normal outcomes the caller inspects, not failures.
+      { wait: isResVibeUpdateAvatarCid, timeout: 60000, surfaceStatus: true }
     );
   }
 }
