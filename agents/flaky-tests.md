@@ -34,5 +34,7 @@ It now:
 
 Gating is controlled by one env var, `VIBES_CI_GATE_TESTS`, in that step:
 
-- `"false"` (current) — failures are surfaced loudly but do **not** fail the job. Keeps PRs unblocked while the deterministic failures in [#2425](https://github.com/VibesDIY/vibes.diy/issues/2425) are outstanding.
+- `"false"` (current) — real **test** failures (vitest exit `1` with a parsed summary) are surfaced loudly but do **not** fail the job. Keeps PRs unblocked while the deterministic failures in [#2425](https://github.com/VibesDIY/vibes.diy/issues/2425) are outstanding.
 - `"true"` — test failures fail the job. **Flip to this once #2425 is closed** — that is the final close-out of #2426.
+
+The switch only governs _test_ failures. **Harness/setup failures always fail the job** regardless of the switch — a non-`1` exit (docker `125`/`126`/`127`, `timeout` `124`) or any exit with no test summary means the suite never ran, so it is never suppressed. The Playwright image tag is derived from `pnpm exec playwright --version` (not `pnpm why`, whose JSON shape changed under pnpm 10 and silently produced an invalid `:v-noble` tag); an unresolved version fails fast before `docker run`.

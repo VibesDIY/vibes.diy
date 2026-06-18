@@ -44,7 +44,18 @@ runs:
         # is the final close-out of #2426. See agents/flaky-tests.md.
         VIBES_CI_GATE_TESTS: "false"
       run: |
-        PLAYWRIGHT_VERSION=$(pnpm why playwright --json | jq -r '.[0].devDependencies.playwright.version // empty')
+        # Resolve the Playwright version that vitest actually loads, so the
+        # docker image's bundled browsers match. `pnpm exec playwright --version`
+        # is the source of truth (the old `pnpm why … --json` path returned empty
+        # under pnpm 10, producing a `:v-noble` tag that 125'd before any test
+        # ran — #2426). Fail fast on an empty value rather than docker-pull a
+        # malformed tag.
+        PLAYWRIGHT_VERSION=$(pnpm exec playwright --version 2>/dev/null | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -n1)
+        if [ -z "$PLAYWRIGHT_VERSION" ]; then
+          echo "::error title=Playwright version unresolved::Could not determine the Playwright version; refusing to run docker with a malformed image tag (would be ':v-noble'). See #2426."
+          exit 1
+        fi
+        echo "Using Playwright image mcr.microsoft.com/playwright:v${PLAYWRIGHT_VERSION}-noble"
         # No more `|| true`: the suite's exit code is captured, never discarded.
         # Timeout raised from 120s (which SIGKILLed the ~240s suite mid-run) to
         # 30m so the suite actually runs to completion. See #2426.
@@ -91,9 +102,18 @@ runs:
 
         if [ "$TEST_EXIT" -ne 0 ]; then
           echo "::warning title=Test suite failing::npm run test exited ${TEST_EXIT}. See the job summary for details. Tracking: #2426 (gating) / #2425 (deterministic failures)."
+          # Only a clean vitest test-failure exit (1) WITH a parsed summary is
+          # eligible for non-blocking surfacing. A harness/setup/timeout error
+          # (docker 125/126/127, timeout 124, config crash with no summary) means
+          # the suite never ran — that must ALWAYS fail the job, regardless of the
+          # gate switch, otherwise we'd be back to the #2426 false-green.
+          if [ "$TEST_EXIT" != "1" ] || [ -z "$TOTALS" ]; then
+            echo "::error title=Test harness failure::npm run test exited ${TEST_EXIT} without a test summary — treating as a harness/setup error and failing the job (not suppressed by VIBES_CI_GATE_TESTS)."
+            exit "$TEST_EXIT"
+          fi
           if [ "${VIBES_CI_GATE_TESTS}" = "true" ]; then
             echo "VIBES_CI_GATE_TESTS=true → failing the job on test failures."
             exit "$TEST_EXIT"
           fi
-          echo "VIBES_CI_GATE_TESTS=false → surfacing failures without blocking (see #2426)."
+          echo "VIBES_CI_GATE_TESTS=false → surfacing test failures without blocking (see #2426)."
         fi
