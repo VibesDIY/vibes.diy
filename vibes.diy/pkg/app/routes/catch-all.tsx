@@ -1,7 +1,8 @@
-import React from "react";
+import React, { useCallback, useState } from "react";
 import { Link } from "react-router-dom";
 import { gridBackground, cx } from "@vibes.diy/base";
-import VibesDIYLogo from "../components/VibesDIYLogo.js";
+import { PillPortal } from "../components/PillPortal.js";
+import SessionSidebar from "../components/SessionSidebar.js";
 
 export function meta({ location }: { location: { pathname: string } }) {
   const path = location.pathname;
@@ -42,28 +43,20 @@ export default function CatchAll() {
 }
 
 function NotFoundPage() {
+  // Match the main page: the top-left pill toggles the nav/sidebar in place
+  // rather than navigating away.
+  const [isSidebarVisible, setIsSidebarVisible] = useState(false);
+  const closeSidebar = useCallback(() => setIsSidebarVisible(false), []);
+
   return (
     <div className={cx(gridBackground, "flex min-h-screen flex-col items-center justify-center")}>
-      {/* Film strip holes */}
-      <div className="absolute top-0 bottom-0 left-4 flex w-6 flex-col justify-center space-y-4">
-        {Array.from({ length: 20 }).map((_, i) => (
-          <div key={i} className="h-4 w-4 rounded-sm border border-gray-600 bg-black"></div>
-        ))}
-      </div>
-      <div className="absolute top-0 right-4 bottom-0 flex w-6 flex-col justify-center space-y-4">
-        {Array.from({ length: 20 }).map((_, i) => (
-          <div key={i} className="h-4 w-4 rounded-sm border border-gray-600 bg-black"></div>
-        ))}
-      </div>
+      {/* Top-left nav pill — same component, position, size, and toggle
+          behavior as the main page header. */}
+      <PillPortal isActive={isSidebarVisible} onToggle={setIsSidebarVisible} />
+      <SessionSidebar isVisible={isSidebarVisible} onClose={closeSidebar} sessionId="" />
 
       {/* Main content */}
       <div className="text-center">
-        <div className="mb-12">
-          <Link to="/">
-            <VibesDIYLogo height={60} />
-          </Link>
-        </div>
-
         {/* Film frame style container */}
         <div
           className="relative mx-8 p-12"
@@ -120,10 +113,9 @@ function NotFoundPage() {
         <div className="mt-12">
           <Link
             to="/"
-            className="text-lg tracking-wide text-gray-300 transition-colors duration-300 hover:text-white"
+            className="inline-block rounded-md border-2 border-[var(--vibes-near-black)] bg-white px-6 py-3 text-lg font-bold tracking-wide text-[var(--vibes-near-black)] shadow-[3px_3px_0_var(--vibes-near-black)] transition-all duration-150 hover:translate-x-[1px] hover:translate-y-[1px] hover:shadow-[2px_2px_0_var(--vibes-near-black)]"
             style={{
               fontFamily: "Courier New, monospace",
-              textShadow: "1px 1px 2px rgba(0, 0, 0, 0.5)",
             }}
           >
             → HOME
