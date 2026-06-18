@@ -94,8 +94,9 @@ export function ViewerTagImpl({ _viewer, style, ...props }: ViewerTagImplProps):
       if (rUpload.isErr()) return;
       const uploadRes = rUpload.Ok();
       if (uploadRes.status !== "ok") return;
-      // Pass the upload's mime as a hint; the host previews the image it
-      // derives from the cid, so this only labels the Content-Type.
+      // Pass the upload's mime as a hint. The host previews the trusted getURL
+      // it recorded for this CID when it proxied the putAsset above, so this
+      // only labels the Content-Type.
       await api.updateAvatarCid(uploadRes.cid, file.type);
     } finally {
       setUploading(false);
