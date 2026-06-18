@@ -31,8 +31,8 @@ It now:
 
 Gating is controlled by one env var, `VIBES_CI_GATE_TESTS`, in that step:
 
-- `"false"` (current) — real **test** failures (vitest exit `1` with a parsed summary) are surfaced loudly but do **not** fail the job. Keeps PRs unblocked while the deterministic failures in [#2425](https://github.com/VibesDIY/vibes.diy/issues/2425) are outstanding.
-- `"true"` — test failures fail the job. **Flip to this once #2425 is closed** — that is the final close-out of #2426.
+- `"true"` (**current**) — real **test** failures (vitest exit `1` with a parsed summary) fail the job, so a red suite blocks the PR. Enabled once the deterministic failures ([#2425](https://github.com/VibesDIY/vibes.diy/issues/2425)) were fixed and `pnpm test` exits 0 ([#2444](https://github.com/VibesDIY/vibes.diy/issues/2444)) — the close-out of #2426. There is **no** retry-on-flake wrapper: if a known flake (see #1515) reds CI, rerun the job to clear it.
+- `"false"` — failures are surfaced (job summary + `::warning::`) but do **not** fail the job. Use only as a temporary escape hatch if flakes become disruptive.
 
 The switch only governs _test_ failures. **Harness/setup failures always fail the job** regardless of the switch — a non-`1` exit (docker `125`/`126`/`127`, `timeout` `124`) or any exit with no test summary means the suite never ran, so it is never suppressed. The summary is parsed from an ANSI-stripped copy of the output (vitest colorizes the `Test Files` / `Tests` lines), so a real test failure is never misread as a harness failure.
 
