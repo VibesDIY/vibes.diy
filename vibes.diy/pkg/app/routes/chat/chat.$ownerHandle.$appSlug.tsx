@@ -2,11 +2,10 @@ import { useNavigate, useParams, useSearchParams } from "react-router";
 import React, { useEffect, useState, useReducer, useRef, useCallback } from "react";
 import { useVibesDiy } from "../../vibes-diy-provider.js";
 import { useAuth } from "@clerk/react";
-import { processStream, BuildURI, URI } from "@adviser/cement";
+import { BuildURI, URI } from "@adviser/cement";
 import type { ViewType, VibesTheme } from "@vibes.diy/prompts";
 import { vibesThemes, getThemeBySlug } from "@vibes.diy/prompts";
-import { type } from "arktype";
-import { isPromptReq, LLMChat, LLMChatEntry, PromptError, sectionEvent } from "@vibes.diy/api-types";
+import { isPromptReq, LLMChatEntry, PromptError } from "@vibes.diy/api-types";
 import { promptReducer } from "./prompt-state.js";
 
 // Re-export so existing importers of these types from the route keep compiling.
@@ -31,8 +30,7 @@ import { useShareModal } from "../../components/ResultPreview/useShareModal.js";
 import ResultPreview from "../../components/ResultPreview/ResultPreview.js";
 import { Delayed } from "../../components/Delayed.js";
 import { useDocumentTitle } from "../../hooks/useDocumentTitle.js";
-import { useStreamWatchdog } from "../../hooks/useStreamWatchdog.js";
-import { useReconnectLoop } from "../../hooks/useReconnectLoop.js";
+import { useChatSession } from "../../hooks/useChatSession.js";
 import { notifyRecentVibesChanged, subscribeRecentVibesChanged } from "../../hooks/useRecentVibes.js";
 import { createPortal } from "react-dom";
 import { toast } from "react-hot-toast";
@@ -86,13 +84,6 @@ export function Chat({ inConstruction = false }: { inConstruction?: boolean }) {
   useDocumentTitle(`${ownerHandle} - ${appSlug} - vibes.diy`);
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
-  const [chat, setChat] = useState<LLMChat | null>(null);
-  const openingRef = useRef(false);
-  const prevSlugsRef = useRef(`${ownerHandle}/${appSlug}`);
-  if (`${ownerHandle}/${appSlug}` !== prevSlugsRef.current) {
-    openingRef.current = false;
-    prevSlugsRef.current = `${ownerHandle}/${appSlug}`;
-  }
   const { chatApi, webVars: svcVars, srvVibeSandbox } = useVibesDiy();
   const shareModal = useShareModal({ ownerHandle, appSlug, fsId, chatApi });
   const { isSignedIn } = useAuth();
@@ -113,11 +104,6 @@ export function Chat({ inConstruction = false }: { inConstruction?: boolean }) {
   );
   const chatInput = useRef<ChatInputRef>(null);
   const [themeModalOpen, setThemeModalOpen] = useState(false);
-  // Hold latest fsId in a ref so the prompt-firing effect can preserve it in
-  // the navigation URL without retriggering on every autosave fsId change
-  // (which would re-fire the same prompt — classic loop).
-  const fsIdRef = useRef<string | undefined>(fsId);
-  fsIdRef.current = fsId;
 
   const [promptState, dispatch] = useReducer(promptReducer, {
     chat: {} as LLMChatEntry,
@@ -145,82 +131,18 @@ export function Chat({ inConstruction = false }: { inConstruction?: boolean }) {
   // "remix of" indicator + code-view file-system hydration for the current fsId.
   const { remixOf } = useChatHydration({ ownerHandle, appSlug, fsId, chatApi, dispatch });
 
-  const attachSectionStream = useCallback(
-    (chatHandle: LLMChat) => {
-      processStream(chatHandle.sectionStream, (msg) => {
-        const se = sectionEvent(msg);
-        if (se instanceof type.errors) {
-          console.error(se.summary);
-          return;
-        }
-        for (const block of se.blocks) {
-          dispatch(block);
-        }
-      })
-        .catch((err: unknown) => {
-          console.error("section stream errored", err);
-        })
-        .finally(() => {
-          // Stream ended (transport loss closes it as of #2334). The reducer
-          // ignores this while idle; mid-prompt it starts the reconnect loop.
-          dispatch({ type: "streamDisconnected" });
-        });
-    },
-    [dispatch]
-  );
-
-  const refreshAppSettings = useCallback(() => {
-    chatApi.ensureAppSettings({ ownerHandle, appSlug }).then((rS) => {
-      if (rS.isOk()) {
-        const s = rS.Ok().settings.entry.settings;
-        if (s.title) dispatch({ type: "setTitle", title: s.title });
-        if (s.icon) dispatch({ type: "setIcon", icon: s.icon });
-        if (s.theme) {
-          const t = getThemeBySlug(s.theme);
-          if (t) dispatch({ type: "setTheme", theme: t });
-        }
-        if (s.colorTheme) {
-          dispatch({ type: "setColorTheme", colorTheme: s.colorTheme });
-        }
-      }
-    });
-  }, [chatApi, ownerHandle, appSlug, dispatch]);
-
-  const handleStreamSilent = useCallback(() => dispatch({ type: "streamDisconnected" }), [dispatch]);
-  useStreamWatchdog({
-    running: promptState.running,
-    connection: promptState.connection,
-    activityKey: promptState.blocks,
-    onSilent: handleStreamSilent,
-  });
-
-  const openChatForReconnect = useCallback(async () => {
-    const r = await chatApi.openChat({ ownerHandle, appSlug, mode: "chat" });
-    if (r.isErr()) {
-      console.error("reconnect openChat failed", r.Err());
-      return null;
-    }
-    return r.Ok();
-  }, [chatApi, ownerHandle, appSlug]);
-
-  const handleReconnectAttempt = useCallback(
-    (newChat: LLMChat) => {
-      dispatch({ type: "replayReset" });
-      setChat(newChat);
-      dispatch({ type: "initChat", chat: newChat });
-      attachSectionStream(newChat);
-      refreshAppSettings();
-    },
-    [attachSectionStream, refreshAppSettings, dispatch]
-  );
-
-  const handleReconnectGiveUp = useCallback(() => dispatch({ type: "reconnectFailed" }), [dispatch]);
-
-  useReconnectLoop({
-    connection: promptState.connection,
-    openChat: openChatForReconnect,
-    onAttempt: handleReconnectAttempt,
-    onGiveUp: handleReconnectGiveUp,
+  // Chat handle + open/fire lifecycle + reconnect/watchdog (see useChatSession).
+  const { chat } = useChatSession({
+    ownerHandle,
+    appSlug,
+    fsId,
+    inConstruction,
+    chatApi,
+    promptState,
+    dispatch,
+    promptToSend,
+    sendPrompt,
+    navigateToFsId,
   });
 
   useEffect(() => {
@@ -359,78 +281,6 @@ ${rootCssBlock}
       void chatApi.ensureAppSettings({ ownerHandle, appSlug, colorTheme: null });
     }
   }, [chatApi, ownerHandle, appSlug, srvVibeSandbox]);
-
-  useEffect(() => {
-    if (inConstruction) return;
-    if (openingRef.current) {
-      if (chat && promptToSend?.trim().length) {
-        // Default to preview so the user sees the iframe hot-swap as edits
-        // stream. Brand-new vibes show a placeholder until end-of-turn
-        // autosave creates the first fsId; the iframe then mounts and hot-
-        // swap fills in subsequent edits.
-        //
-        // Preserve fsId on follow-ups so PreviewApp keeps the iframe mounted
-        // and the hot-swap useEffect has the prior buffer to resolve against.
-        // Read fsId from the ref so future autosave-driven fsId changes don't
-        // re-trigger this effect with the same promptToSend (loop bug).
-        navigateToFsId(fsIdRef.current);
-        const sentPrompt = promptToSend;
-        // Clear promptToSend BEFORE firing so any re-render of this effect
-        // (e.g. searchParams change) sees null and skips the branch.
-        sendPrompt(null);
-        // Show the prompt instantly as an optimistic bubble so the message is
-        // visible the moment the user hits Code / clicks a suggestion, instead
-        // of after the server round-trips prompt.req back (see #2352). The
-        // server echo clears it; the real bubble takes its place.
-        dispatch({ type: "setOptimisticPrompt", text: sentPrompt });
-        chat
-          .prompt({
-            messages: [
-              {
-                role: "user",
-                content: [{ type: "text", text: sentPrompt }],
-              },
-            ],
-          })
-          .then((r) => {
-            if (r.isErr()) {
-              console.error(`PromptSend failed`, r.Err());
-              // No stream will arrive to retire the optimistic bubble — drop it
-              // so a failed send doesn't leave a phantom message behind.
-              dispatch({ type: "setOptimisticPrompt", text: undefined });
-            } else {
-              dispatch({ type: "setInFlightStreamId", streamId: r.Ok().promptId });
-              notifyRecentVibesChanged();
-            }
-          });
-      }
-      return; // Already opened or opening
-    }
-    openingRef.current = true;
-    chatApi.openChat({ ownerHandle, appSlug, mode: "chat" }).then((rChat) => {
-      if (rChat.isErr()) {
-        console.error("CHAT-Error", rChat.Err(), ownerHandle, appSlug);
-        return;
-      }
-      setChat(rChat.Ok());
-      dispatch({ type: "initChat", chat: rChat.Ok() });
-      refreshAppSettings();
-      attachSectionStream(rChat.Ok());
-      // For CLI-pushed apps with no chat history, look up the latest fsId
-      if (!fsId) {
-        chatApi.getAppByFsId({ appSlug, ownerHandle }).then((rApp) => {
-          if (rApp.isOk() && rApp.Ok().fsId) {
-            navigateToFsId(rApp.Ok().fsId);
-          }
-        });
-      }
-    });
-    return () => {
-      if (chat) {
-        (chat as LLMChat).close();
-      }
-    };
-  }, [ownerHandle, appSlug, chat, openingRef, chatApi, promptToSend]);
 
   const [isSidebarVisible, setIsSidebarVisible] = useState(false);
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
