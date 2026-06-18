@@ -20,6 +20,22 @@ export function isBuildNotification(notificationType: string): boolean {
   return notificationType === "build-complete" || notificationType === "build-failed";
 }
 
+// Pages without a vibe connection (My Vibes, Memberships, Messages, Settings) open a
+// dedicated, lightweight notification connection pinned to a STABLE per-user shard so
+// the UserNotify subscriber set stays bounded (one shard per user). Regular chat
+// (codegen) connections use random-UUID shards; only shards with this prefix are
+// allowed to register as user-notification subscribers, so an ephemeral codegen shard
+// can never leak into the fan-out set.
+export const USER_NOTIFY_SHARD_PREFIX = "notify-user-";
+
+export function userNotifyShardFor(userId: string): string {
+  return `${USER_NOTIFY_SHARD_PREFIX}${userId}`;
+}
+
+export function isUserNotifyShard(shard: string): boolean {
+  return shard.startsWith(USER_NOTIFY_SHARD_PREFIX);
+}
+
 export const ReqSubscribeUserNotificationsRaw = type({
   type: "'vibes.diy.req-subscribe-user-notifications'",
 });

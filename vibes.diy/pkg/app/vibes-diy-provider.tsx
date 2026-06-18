@@ -8,7 +8,7 @@ import { vibeApiTarget } from "./vibe-api-target.js";
 import { BuildURI, exception2Result, Future, KeyedResolvOnce, Lazy, Option, Result } from "@adviser/cement";
 import { type } from "arktype";
 import { PostHogProvider } from "posthog-js/react";
-import { PkgRepos, VibesDiyApiIface } from "@vibes.diy/api-types";
+import { PkgRepos, VibesDiyApiIface, userNotifyShardFor } from "@vibes.diy/api-types";
 import { vibesDiySrvSandbox, VibesDiySrvSandbox } from "@vibes.diy/vibe-srv-sandbox";
 import { SuperThis } from "@fireproof/use-fireproof";
 import { ensureSuperThis } from "@fireproof/core-runtime";
@@ -48,6 +48,9 @@ export interface VibesDiyCtx {
   // dashApi: FPApiInterface;
   chatApi: VibesDiyApiIface;
   vibeApi?: VibesDiyApiIface;
+  // Lightweight notification connection (stable per-user shard) used by the notifier on
+  // pages without a vibeApi, so we don't open the heavy codegen chatApi just for notifications.
+  notifyApi?: VibesDiyApiIface;
   webVars: VibesDiyWebVars;
   srvVibeSandbox: vibesDiySrvSandbox;
   getToken?: () => Promise<Result<DashAuthType>>;
@@ -256,6 +259,27 @@ function LiveCycleVibesDiyProvider({ children, webVars }: { children: React.Reac
     });
   } else {
     realCtx.vibeApi = undefined;
+  }
+
+  // Dedicated notification connection for pages without a vibeApi (My Vibes, Memberships,
+  // Messages, Settings). Pinned to a STABLE per-user shard so the UserNotify subscriber set
+  // stays bounded (one shard per user); a per-connection random shard would leak. The notifier
+  // prefers vibeApi and only falls back to this, so vibe pages are unaffected. Lazy — it only
+  // opens a socket once the notifier subscribes on a non-vibe page.
+  const notifyUserId = clerk.user?.id;
+  if (notifyUserId) {
+    const notifyShard = userNotifyShardFor(notifyUserId);
+    const notifyApiUrl = BuildURI.from(apiUrl).setParam("shard", notifyShard).toString();
+    const capturedGetToken = sharedGetToken ?? realCtx.getToken;
+    realCtx.notifyApi = vibesDiyApis.get(notifyApiUrl).once(() => {
+      return new VibesDiyApi({
+        apiUrl,
+        shardKey: notifyShard,
+        getToken: capturedGetToken ?? (() => Promise.resolve(Result.Err("token not available"))),
+      });
+    });
+  } else {
+    realCtx.notifyApi = undefined;
   }
 
   const sandboxHostnameBase = realCtx.webVars.env.VIBES_SVC_HOSTNAME_BASE;
