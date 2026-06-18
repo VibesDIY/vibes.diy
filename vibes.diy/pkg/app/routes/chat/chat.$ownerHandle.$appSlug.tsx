@@ -77,7 +77,7 @@ function VibeAppContextMenu({ x, y, vibeHref, sandboxUrl, onClose }: VibeAppCont
   );
 }
 
-export function Chat({ inConstruction = false }: { inConstruction?: boolean }) {
+export function Chat({ inConstruction = false, initialPrompt }: { inConstruction?: boolean; initialPrompt?: string }) {
   const {
     ownerHandle = "preparing",
     appSlug = "session",
@@ -229,6 +229,15 @@ export function Chat({ inConstruction = false }: { inConstruction?: boolean }) {
       dispatch({ type: "setTitle", title: change.title.length > 0 ? change.title : appSlug });
     });
   }, [ownerHandle, appSlug]);
+
+  // Render the construction-time prompt (e.g. the decoded ?prompt64 from
+  // /chat/prompt) as an optimistic user bubble immediately, so the message is
+  // visible while the "Preparing AI Session…" overlay is still up — before any
+  // chat is opened or the server echoes prompt.req back.
+  useEffect(() => {
+    if (!initialPrompt) return;
+    dispatch({ type: "setOptimisticPrompt", text: initialPrompt });
+  }, [initialPrompt, dispatch]);
 
   // Clear stale messages immediately when navigating to a different chat so
   // the old conversation is not visible while the new one loads.

@@ -80,22 +80,36 @@ export default function ChatPrompt() {
 
   return (
     <>
-      <Chat inConstruction />
+      <Chat inConstruction initialPrompt={effectivePrompt} />
       {isSignedIn &&
         effectivePrompt &&
         createPortal(
+          // A bottom-anchored, non-blocking status pill rather than a full-screen
+          // scrim — the decoded prompt renders as a user bubble in the chat panel
+          // and must stay visible while this overlay is up.
           <div
             style={{
               position: "fixed",
-              inset: 0,
-              background: "rgba(0,0,0,0.5)",
+              left: 0,
+              right: 0,
+              bottom: 24,
               display: "flex",
-              alignItems: "center",
               justifyContent: "center",
+              pointerEvents: "none",
               zIndex: 9999,
             }}
           >
-            Preparing AI Session…
+            <div
+              style={{
+                background: "rgba(0,0,0,0.75)",
+                color: "#fff",
+                padding: "0.5rem 1rem",
+                borderRadius: 9999,
+                fontSize: "0.85rem",
+              }}
+            >
+              Preparing AI Session…
+            </div>
           </div>,
           document.body
         )}
