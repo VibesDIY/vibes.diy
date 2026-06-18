@@ -2,7 +2,7 @@
 
 **Date:** 2026-06-18
 **Scope:** `vibes.diy/pkg/app/routes/chat/chat.$ownerHandle.$appSlug.tsx` — the open-chat / fire-prompt effect and its surrounding stream-lifecycle state.
-**Status:** **Approved** — all five review questions resolved (see "Resolved decisions"). Implementation plan: `docs/superpowers/plans/2026-06-18-chat-stream-lifecycle-extraction.md`.
+**Status:** **Implemented in this PR** — all five review questions resolved (see "Resolved decisions"); the extraction (gates (a) + (b)) landed alongside this spec. Plan: `docs/superpowers/plans/2026-06-18-chat-stream-lifecycle-extraction.md`. The #1972/#1842 nav-flash + unmount-leak fix (gate (c)) remains a follow-up.
 **Parent:** #2015 (chat god-component decomposition). Follow-up to PR #2420, which extracted `useChatNavigation` / `useChatOwnership` / `useChatHydration` / `useMobilePreviewFlip` and deliberately left this cluster for a dedicated PR.
 
 ## Problem
