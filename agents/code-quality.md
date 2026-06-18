@@ -49,7 +49,7 @@ grep -B2 -A20 'specific-test-name' /tmp/check.log                               
 
 For low-risk changes (docs, copy tweaks, comment edits, isolated UI text), use `pnpm fast-check` before committing. It runs prettier on changed/untracked files plus `pnpm build` — fast and catches the formatting issues CI's `prettier --check` will fail on.
 
-For higher-risk changes (logic, refactors, anything touching tests), run the full `pnpm check` (build + lint + test + hosting-tests) as the pre-commit gate.
+For higher-risk changes (logic, refactors, anything touching tests), run the full `pnpm check` (build + lint + test) as the pre-commit gate.
 
 Default to `pnpm fast-check` for trivial/text-only commits. Escalate to `pnpm check` when the change could plausibly break tests or lint — anything touching code paths that have test coverage.
 
