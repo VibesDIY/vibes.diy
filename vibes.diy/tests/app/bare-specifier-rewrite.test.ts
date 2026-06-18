@@ -51,6 +51,15 @@ describe("rewriteBareSpecifiers", () => {
     expect(rewriteBareSpecifiers(code, {})).toBe(code);
   });
 
+  it("leaves CDN URLs with an esm.sh-incompatible path layout (cdnjs) untouched", () => {
+    // cdnjs uses `/ajax/libs/<lib>/<version>/<file>`, which does not map onto
+    // esm.sh's `/<pkg>[@<version>]/<subpath>` layout, so it must not be swapped.
+    const code = `import x from "https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js";`;
+    const out = rewriteBareSpecifiers(code, {});
+    expect(out).toBe(code);
+    expect(out).not.toContain("esm.sh");
+  });
+
   it("honors the trailing-slash prefix rule in the import map", () => {
     const code = `import x from "ag-grid-community/styles/ag-grid.css";`;
     const out = rewriteBareSpecifiers(code, {
