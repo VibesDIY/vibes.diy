@@ -35,10 +35,65 @@ runs:
 
     - name: test
       shell: bash
+      env:
+        # Single switch that flips the test suite from "surfaced" to "blocking".
+        # While the deterministic failures tracked in #2425 are unfixed, keep this
+        # "false": the suite still runs to completion and its result is surfaced
+        # loudly (job summary + annotation), but a red suite does not fail the job.
+        # Once #2425 is closed, set this to "true" to make CI gate on tests — that
+        # is the final close-out of #2426. See agents/flaky-tests.md.
+        VIBES_CI_GATE_TESTS: "false"
       run: |
         PLAYWRIGHT_VERSION=$(pnpm why playwright --json | jq -r '.[0].devDependencies.playwright.version // empty')
-        timeout 120 docker run --rm \
+        # No more `|| true`: the suite's exit code is captured, never discarded.
+        # Timeout raised from 120s (which SIGKILLed the ~240s suite mid-run) to
+        # 30m so the suite actually runs to completion. See #2426.
+        set +e
+        timeout 1800 docker run --rm \
           -v $(pwd):/work \
           -w /work \
           mcr.microsoft.com/playwright:v${PLAYWRIGHT_VERSION}-noble \
-          bash -c "npm run test" || true
+          bash -c "npm run test" 2>&1 | tee test-output.log
+        TEST_EXIT=${PIPESTATUS[0]}
+        set -e
+
+        # Surface the result regardless of gating mode, so regressions are
+        # visible on the PR even while the suite is non-blocking.
+        TOTALS=$(grep -E '^[[:space:]]*(Test Files|Tests)[[:space:]]' test-output.log | tail -n 4 || true)
+        FAILED=$(grep -E '(^|[[:space:]])FAIL ' test-output.log || true)
+        {
+          echo "## Test suite result"
+          echo ""
+          if [ "$TEST_EXIT" -eq 0 ]; then
+            echo "✅ All tests passed."
+          elif [ "$TEST_EXIT" -eq 124 ]; then
+            echo "⏱️ Test suite timed out (exit 124) before completing."
+          else
+            echo "❌ Test suite exited with code \`$TEST_EXIT\`."
+          fi
+          if [ -n "$TOTALS" ]; then
+            echo ""
+            echo '```'
+            echo "$TOTALS"
+            echo '```'
+          fi
+          if [ -n "$FAILED" ]; then
+            echo ""
+            echo "<details><summary>Failed tests</summary>"
+            echo ""
+            echo '```'
+            echo "$FAILED"
+            echo '```'
+            echo ""
+            echo "</details>"
+          fi
+        } >> "${GITHUB_STEP_SUMMARY:-/dev/stdout}"
+
+        if [ "$TEST_EXIT" -ne 0 ]; then
+          echo "::warning title=Test suite failing::npm run test exited ${TEST_EXIT}. See the job summary for details. Tracking: #2426 (gating) / #2425 (deterministic failures)."
+          if [ "${VIBES_CI_GATE_TESTS}" = "true" ]; then
+            echo "VIBES_CI_GATE_TESTS=true → failing the job on test failures."
+            exit "$TEST_EXIT"
+          fi
+          echo "VIBES_CI_GATE_TESTS=false → surfacing failures without blocking (see #2426)."
+        fi
