@@ -59,13 +59,13 @@ const TYPE_MAP: Record<
     prefKey: "buildComplete",
     title: "Build completed",
     body: (u, a) => `${u}/${a} build completed.`,
-    path: (u, a) => `/chat/${u}/${a}`,
+    path: (u, a) => `/vibe/${u}/${a}`,
   },
   "build-failed": {
     prefKey: "buildFailed",
     title: "Build failed",
     body: (u, a) => `${u}/${a} build failed.`,
-    path: (u, a) => `/chat/${u}/${a}`,
+    path: (u, a) => `/vibe/${u}/${a}`,
   },
   "vibe-published": {
     prefKey: "vibePublished",

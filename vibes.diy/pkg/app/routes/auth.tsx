@@ -4,6 +4,7 @@ import { SignIn, useAuth } from "@clerk/react";
 import { createPortal } from "react-dom";
 import SessionSidebar from "../components/SessionSidebar.js";
 import { Delayed } from "../components/Delayed.js";
+import { useBuildCompletionNotifications } from "../hooks/useBuildCompletionNotifications.js";
 
 /**
  * Auth layout route - wraps all protected routes.
@@ -14,6 +15,11 @@ export default function AuthLayout() {
   const location = useLocation();
   const [isSidebarVisible, setIsSidebarVisible] = useState(!isSignedIn);
   const closeSidebar = useCallback(() => setIsSidebarVisible(false), []);
+
+  // Surface build/user notifications on every authenticated page, not just the
+  // chat editor, so a notification can arrive (and route to the vibe) wherever
+  // the user is. Mounted here, above the early return, so the hook order is stable.
+  useBuildCompletionNotifications();
 
   useEffect(() => {
     if (isSignedIn) {
