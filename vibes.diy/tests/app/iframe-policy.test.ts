@@ -25,6 +25,7 @@ describe("runtime/preview iframe policy", () => {
     expect(allowTokens).toEqual([
       "autoplay",
       "camera",
+      "clipboard-write",
       "encrypted-media",
       "microphone",
     ]);
