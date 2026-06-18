@@ -15,11 +15,17 @@
 import { OnFunc } from "@adviser/cement";
 
 export interface AvatarConfirmRequest {
+  // The content CID that will be persisted as the avatar on confirm.
   readonly cid: string;
-  // Optional content-type hint. The modal derives the preview image from
-  // `cid` (the exact asset that will be persisted), so this only labels the
-  // request's Content-Type — it can't change which image is shown.
+  // Optional content-type hint for the preview's Content-Type — it can't
+  // change which bytes are shown.
   readonly mimeType?: string;
+  // Trusted storage URI for the asset, supplied by the host (the put-asset
+  // response for the sandbox path, the upload response for Settings) — never by
+  // a sandboxed vibe. The modal previews this exact URI, so a vibe can't show
+  // one image while a different CID is saved (#2418). Absent when the host has
+  // no recorded URI for `cid`, in which case the modal shows no preview.
+  readonly getURL?: string;
 }
 
 export interface PendingAvatarConfirm extends AvatarConfirmRequest {
@@ -49,6 +55,7 @@ class AvatarConfirmController {
       const pending: PendingAvatarConfirm = {
         cid: req.cid,
         ...(req.mimeType ? { mimeType: req.mimeType } : {}),
+        ...(req.getURL ? { getURL: req.getURL } : {}),
         resolve: (confirmed: boolean) => {
           if (settled) return;
           settled = true;
