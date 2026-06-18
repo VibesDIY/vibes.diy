@@ -33,7 +33,6 @@ import { Delayed } from "../../components/Delayed.js";
 import { useDocumentTitle } from "../../hooks/useDocumentTitle.js";
 import { useStreamWatchdog } from "../../hooks/useStreamWatchdog.js";
 import { useReconnectLoop } from "../../hooks/useReconnectLoop.js";
-import { useBuildCompletionNotifications } from "../../hooks/useBuildCompletionNotifications.js";
 import { notifyRecentVibesChanged, subscribeRecentVibesChanged } from "../../hooks/useRecentVibes.js";
 import { createPortal } from "react-dom";
 import { toast } from "react-hot-toast";
@@ -131,8 +130,6 @@ export function Chat({ inConstruction = false }: { inConstruction?: boolean }) {
     agentSavedBlockIds: new Set<string>(),
     connection: "live",
   });
-
-  useBuildCompletionNotifications();
 
   // Single owner of "navigate to fsId" plus the post-save / first-paint
   // block-scanning navigation effects (and their guard refs).
