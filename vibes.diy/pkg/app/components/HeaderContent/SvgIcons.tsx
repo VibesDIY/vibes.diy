@@ -178,39 +178,6 @@ export const BackArrowIcon: React.FC<SvgIconProps> = ({ className = "h-5 w-5" })
   );
 };
 
-export const UserIcon: React.FC<SvgIconProps & { isVerifying?: boolean; isUserAuthenticated?: boolean }> = ({
-  className = "h-3.5 w-3.5 sm:h-4 sm:w-4 ml-1",
-  isVerifying,
-  isUserAuthenticated,
-}) => {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      className={`${className} ${isVerifying ? "animate-pulse" : ""}`}
-      fill="none"
-      viewBox="0 0 24 24"
-      stroke="currentColor"
-    >
-      {isUserAuthenticated ? (
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth={2}
-          fill="currentColor"
-          d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-        />
-      ) : (
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth={2}
-          d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
-        />
-      )}
-    </svg>
-  );
-};
-
 export const PublishIcon: React.FC<SvgIconProps> = ({ className = "h-5 w-5" }) => {
   return (
     <svg
