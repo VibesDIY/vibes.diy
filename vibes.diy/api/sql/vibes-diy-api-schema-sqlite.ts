@@ -72,16 +72,25 @@ export const sqlApps = sqliteTable(
     primaryKey({ columns: [table.appSlug, table.userId, table.releaseSeq] }),
     index("Apps_fsId").on(table.fsId, table.userId),
     index("created_idx").on(table.created),
+    // C3 — mirrors the Postgres schema (no dev/prod divergence).
+    index("Apps_userId_created").on(table.userId, table.created),
   ]
 );
 
-export const sqlChatContexts = sqliteTable("ChatContexts", {
-  chatId: text().notNull().primaryKey(), // uuid v4
-  userId: text().notNull(),
-  appSlug: text().notNull(),
-  ownerHandle: text("userSlug").notNull(),
-  created: text().notNull(),
-});
+export const sqlChatContexts = sqliteTable(
+  "ChatContexts",
+  {
+    chatId: text().notNull().primaryKey(), // uuid v4
+    userId: text().notNull(),
+    appSlug: text().notNull(),
+    ownerHandle: text("userSlug").notNull(),
+    created: text().notNull(),
+  },
+  (table) => [
+    // C4 — mirrors the Postgres schema (no dev/prod divergence).
+    index("ChatContexts_userId_userSlug_appSlug").on(table.userId, table.ownerHandle, table.appSlug),
+  ]
+);
 
 export const sqlChatSections = sqliteTable(
   "ChatSections",
@@ -209,7 +218,12 @@ export const sqlAppDocuments = sqliteTable(
     deleted: int().notNull().default(0), // 1 = tombstone
     created: text().notNull(), // ISO timestamp of this revision
   },
-  (table) => [primaryKey({ columns: [table.ownerHandle, table.appSlug, table.dbName, table.docId, table.seq] })]
+  (table) => [
+    primaryKey({ columns: [table.ownerHandle, table.appSlug, table.dbName, table.docId, table.seq] }),
+    // C8 — mirrors the Postgres schema (no dev/prod divergence). Serves the
+    // per-pair scalar MAX(created) in list-memberships.ts.
+    index("AppDocuments_userSlug_appSlug_created").on(table.ownerHandle, table.appSlug, table.created),
+  ]
 );
 
 export const sqlDirectChannelIndex = sqliteTable(

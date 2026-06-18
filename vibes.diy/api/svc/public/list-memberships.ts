@@ -28,7 +28,7 @@ import { unwrapMsgBase } from "../unwrap-msg-base.js";
 import { VibesApiSQLCtx } from "../types.js";
 import { checkAuth } from "../check-auth.js";
 import { eq, and, or } from "drizzle-orm/sql/expressions";
-import { sql } from "drizzle-orm";
+import { max } from "drizzle-orm";
 
 const DEFAULT_LIMIT = 20;
 const MAX_LIMIT = 100;
@@ -154,25 +154,32 @@ export const listMembershipsEvento: EventoHandler<
       const lastWriteMap = new Map<string, string>();
       if (merged.length > 0) {
         const appKeys = merged.map((m) => ({ ownerHandle: m.ownerUserSlug, appSlug: m.appSlug }));
-        const conditions = appKeys.map((k) =>
-          and(eq(t.appDocuments.ownerHandle, k.ownerHandle), eq(t.appDocuments.appSlug, k.appSlug))
+        // One bare MAX(created) per (ownerHandle, appSlug). A scalar max() with no
+        // GROUP BY lets Postgres serve each lookup as an Index Scan Backward on
+        // AppDocuments_userSlug_appSlug_created (the newest row wins on the first
+        // probe) instead of seq-scanning every doc the user ever wrote for that app.
+        // A GROUP BY or an OR-batched predicate defeats that fast path — for an owner
+        // with tens of thousands of docs in one app it is the difference between a
+        // ~0.1ms index probe and a ~50ms full table scan (see the PR's EXPLAIN
+        // evidence). Run the per-pair probes concurrently and re-key by position.
+        const lastWrites = await Promise.all(
+          appKeys.map((k) =>
+            vctx.sql.db
+              .select({ lastWrite: max(t.appDocuments.created) })
+              .from(t.appDocuments)
+              .where(
+                and(
+                  eq(t.appDocuments.userId, myUserId),
+                  eq(t.appDocuments.ownerHandle, k.ownerHandle),
+                  eq(t.appDocuments.appSlug, k.appSlug)
+                )
+              )
+          )
         );
-        const [firstCondition, ...otherConditions] = conditions;
-        if (firstCondition) {
-          const orCondition = otherConditions.length === 0 ? firstCondition : or(firstCondition, ...otherConditions);
-          const docRows = await vctx.sql.db
-            .select({
-              ownerUserSlug: t.appDocuments.ownerHandle,
-              appSlug: t.appDocuments.appSlug,
-              lastWrite: sql<string>`MAX(${t.appDocuments.created})`,
-            })
-            .from(t.appDocuments)
-            .where(and(eq(t.appDocuments.userId, myUserId), orCondition))
-            .groupBy(t.appDocuments.ownerHandle, t.appDocuments.appSlug);
-          for (const row of docRows) {
-            if (row.lastWrite) lastWriteMap.set(`${row.ownerUserSlug}/${row.appSlug}`, row.lastWrite);
-          }
-        }
+        appKeys.forEach((k, i) => {
+          const lastWrite = lastWrites[i]?.[0]?.lastWrite;
+          if (lastWrite) lastWriteMap.set(`${k.ownerHandle}/${k.appSlug}`, lastWrite);
+        });
       }
 
       // Compute activityAt = max(grantUpdated, lastDocWrite).
