@@ -7,7 +7,7 @@
 
 ## Summary
 
-Today a user has **one** avatar, stored per-user, shown for **every** handle they own. We want avatars to be **per-handle**: a user with `alice` and `alice-dev` can present a different face on each. We keep the ergonomic serve path `/u/<handle>/avatar` unchanged (apps reference the image by URL without ever seeing a CID), and we model the new per-handle store on the **`appSettings` shape** (versioned `ActiveEntry`), not the `userSettings` shape — because an avatar is, structurally, a handle's icon, and the app-icon machinery already solves the content-addressed-image problem cleanly.
+Today a user has **one** avatar, stored per-user, shown for **every** handle they own. We want avatars to be **per-handle**: a user with `alice` and `alice-dev` can present a different face on each — and, critically, the two must be **visually unlinkable** so a shared image can't correlate the personas to one person (see Privacy invariant). We keep the ergonomic serve path `/u/<handle>/avatar` unchanged (apps reference the image by URL without ever seeing a CID), and we model the new per-handle store on the **`appSettings` shape** (versioned `ActiveEntry`), not the `userSettings` shape — because an avatar is, structurally, a handle's icon, and the app-icon machinery already solves the content-addressed-image problem cleanly.
 
 ## Current state (what we're changing)
 
@@ -64,7 +64,7 @@ The path stays — it is the ergonomic contract (Cool URIs don't change; apps `<
 
 1. Look up the handle's own avatar entry in `handleSettings`.
 2. **Hit** → serve/redirect using the entry's getURL (`cidAssetUrl`), same as app icons.
-3. **Miss** → fall back to the user's account-default avatar (today's `userSettings.profile.avatarCid` path). `404` only when neither exists (Decision 3).
+3. **Miss** → **`404`** (client renders initials/placeholder). **No fallback to the user's account avatar** — see Decision 3 and the Privacy invariant below.
 
 ### 3. Write path + consent gate
 
@@ -72,21 +72,26 @@ The per-handle avatar write goes through a new **`ensureHandleSettings`** handle
 
 > ⚠️ **The target handle must be passed explicitly by the viewer and must NOT be inferred from `vibeApp.ownerHandle`.** In the sandbox flow `vibeApp.ownerHandle` is the _app owner's_ handle — both published and preview iframe URLs are built from the route's `ownerHandle` — not the viewer's, and `VibeSandboxApi.updateAvatarCid` currently just spreads `...this.svc.vibeApp` into the request (`vibes.diy/vibe/runtime/register-dependencies.ts:361`) while the host handler ignores it and writes the signed-in user's profile. If a viewer edits their avatar from _someone else's_ vibe, gating a handle-scoped write on `vibeApp.ownerHandle` would target the app owner's handle or fail the ownership check. So the protocol needs a **new viewer-supplied handle field** (distinct from `vibeApp`, defaulting to the viewer's default handle), validated by the host against the authenticated viewer's bindings — the plumbing does **not** already exist; adding it is part of this work (Decision 4). Settings, by contrast, already runs as the viewer and knows the selected handle.
 
+## Privacy invariant
+
+**`/u/<handle>/avatar` must never serve bytes that are shared across a user's handles.** Handles are independent public personas; two handles owned by the same user must be visually unlinkable. Serving the same account-default avatar for `alice` and `alice-dev` would render byte-identical images (same CID, same `ETag`) and let any observer correlate the two handles to one person — a deanonymization breach.
+
+Note this is a bug in the **current** per-user model too: today every handle a user owns serves the same avatar. The per-handle design must **fix** this, not preserve it via a fallback. Hence: a handle's avatar is either its own `active.avatar` or nothing (`404`). The account-scoped `userSettings.profile.avatarCid` is never a public fallback.
+
 ## Non-goals
 
 - No change to the `/u/<handle>/avatar` URL contract or its consumers.
-- No removal of the account-default avatar (it becomes the fallback).
 - No crop/scale UI (still deferred, as in #2418).
 
 ## Design decisions (resolved 2026-06-18 with `@CharlieHelps`)
 
 1. **Storage home → new `handleSettings` table keyed by `handle`** (and linked to `userId`), modeled on the `appSettings` entry pattern. Rejected: `userSettings` (singleton-by-`type` merge fights per-handle entries) and `handleBinding` (identity plumbing — coupling presentation there blocks future handle-level settings).
 2. **Entry type → a parallel `active.avatar`** sharing `active.icon`'s `{ versions[], currentCid }` mechanics, **not** `active.icon` verbatim — `active.icon` carries icon-generation semantics (e.g. `descriptionAt`) that don't fit person avatars.
-3. **Fallback → handle avatar first, then the user's account-default avatar; `404` only when neither exists.**
+3. **No cross-handle fallback → handle's own `active.avatar`, else `404`** (client renders initials/placeholder). **Superseded the earlier "fall back to account default" call** ([@jchris](https://github.com/jchris)): a shared fallback serves byte-identical avatars for two handles of the same user, correlating the personas — a deanonymization breach (see Privacy invariant). The account-scoped `userSettings.profile.avatarCid` is never served at a handle URL.
 4. **Write surface → new `ensureHandleSettings` handler.** `displayName` **stays in `userSettings.profile` for this phase** (smaller blast radius); only the avatar moves per-handle now. The `vibe.req.updateAvatarCid` protocol gains a **viewer-supplied target-handle field** (distinct from `vibeApp.ownerHandle` — see the ⚠️ in §3), defaulting to the viewer's default handle and validated against the viewer's `handleBinding` rows.
-5. **Migration → lazy population** of `handleSettings` (only when a user sets a per-handle avatar). No eager backfill; `userSettings.profile.avatarCid` remains the account default and fallback.
+5. **Migration → lazy population** of `handleSettings` (only when a user sets a per-handle avatar). `userSettings.profile.avatarCid` is **no longer a public fallback** (Decision 3) — its role narrows to an account-private value / legacy seed. **Back-compat sub-decision (needs confirmation):** because there is no fallback, existing handles show `404` until their owner sets a per-handle avatar. To preserve continuity for the user's primary persona we can one-time seed **only the user's default handle** (`userSettingDefaultHandle`) with the legacy avatar — this touches exactly one handle, so it creates no cross-handle correlation — while all other handles start blank. _Recommended: seed the default handle only. Alternative: start every handle blank._
 6. **getURL-in-`cid` convention → adopt it**, dropping the `assetUploads` lookup from avatar resolution (avatar resolution only needs `assetUploads` today because profile storage is a bare CID; the app-icon flow already proves getURL-backed `cidAssetUrl`). Keep `/u/<handle>/avatar` as the stable URL indirection for compatibility/caching; **redirect-vs-stream is a separable optimization**, decided at implementation time.
-7. **Caching → split model.** `must-revalidate` + `ETag` on the stable `/u/<handle>/avatar` URL; immutable long-cache on the underlying `/assets/cid` bytes. The ETag includes **both the source (`handle` vs `fallback`) and the resolved asset identity**, so a fallback→own-avatar transition (or vice versa) busts the cache.
+7. **Caching → split model.** `must-revalidate` + `ETag` on the stable `/u/<handle>/avatar` URL; immutable long-cache on the underlying `/assets/cid` bytes. The ETag is keyed on the handle's resolved `active.avatar` identity (its `currentCid`); a `404` (no avatar) carries no `ETag`. With the cross-handle fallback removed (Decision 3) there is no "source" axis left to encode — the handle either has its own avatar or none.
 
 ## Edge cases to lock in (before/within planning)
 
@@ -95,4 +100,4 @@ The per-handle avatar write goes through a new **`ensureHandleSettings`** handle
 
 ## Next step
 
-Design is decision-complete. This becomes a `writing-plans` implementation plan under `docs/superpowers/plans/`, roughly: types (`active.avatar`, `handleSettings`) → store + `ensureHandleSettings` handler with ownership check → retargeted `get-user-avatar` resolver with fallback + source-aware ETag → `updateAvatarCid` protocol field + host validation + consent wiring → handle delete/rename lifecycle → Settings + ViewerTag UI to choose the handle being edited.
+Design is decision-complete except the Decision 5 back-compat sub-decision (seed default handle vs. start blank). This becomes a `writing-plans` implementation plan under `docs/superpowers/plans/`, roughly: types (`active.avatar`, `handleSettings`) → store + `ensureHandleSettings` handler with ownership check → retargeted `get-user-avatar` resolver (own avatar or `404`, no cross-handle fallback) + handle-identity ETag → `updateAvatarCid` protocol field + host validation + consent wiring → migration (per Decision 5) → handle delete/rename lifecycle → Settings + ViewerTag UI to choose the handle being edited.
