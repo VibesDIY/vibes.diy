@@ -1,0 +1,204 @@
+import { useCallback, useEffect, useRef, useState } from "react";
+import type { Dispatch } from "react";
+import { processStream } from "@adviser/cement";
+import { type } from "arktype";
+import { sectionEvent } from "@vibes.diy/api-types";
+import type { LLMChat, VibesDiyApiIface } from "@vibes.diy/api-types";
+import { getThemeBySlug } from "@vibes.diy/prompts";
+import { useStreamWatchdog } from "./useStreamWatchdog.js";
+import { useReconnectLoop } from "./useReconnectLoop.js";
+import { notifyRecentVibesChanged } from "./useRecentVibes.js";
+import type { PromptState, PromptAction } from "../routes/chat/prompt-state.js";
+import type { ChatNavigation } from "./useChatNavigation.js";
+
+export interface ChatSessionOpts {
+  readonly ownerHandle: string;
+  readonly appSlug: string;
+  readonly fsId: string | undefined;
+  readonly inConstruction: boolean;
+  readonly chatApi: VibesDiyApiIface;
+  readonly promptState: PromptState;
+  readonly dispatch: Dispatch<PromptAction>;
+  readonly promptToSend: string | null;
+  readonly sendPrompt: (value: string | null) => void;
+  readonly navigateToFsId: ChatNavigation["navigateToFsId"];
+}
+
+export interface ChatSession {
+  readonly chat: LLMChat | null;
+}
+
+/**
+ * Single owner of the chat handle and its lifecycle: opening the chat, firing
+ * queued prompts, the section-stream attach, app-settings refresh, the
+ * reconnect/watchdog loops, and the loop-guard refs (openingRef/prevSlugsRef/
+ * fsIdRef). Behavior-preserving extraction from the Chat component
+ * (VibesDIY/vibes.diy#2015). See the design spec for the invariants and the
+ * known unmount cleanup quirk (the live handle is intentionally NOT closed on
+ * unmount — a latent leak preserved here and fixed in a follow-up).
+ */
+export function useChatSession(opts: ChatSessionOpts): ChatSession {
+  const { ownerHandle, appSlug, fsId, inConstruction, chatApi, promptState, dispatch, promptToSend, sendPrompt, navigateToFsId } =
+    opts;
+
+  const [chat, setChat] = useState<LLMChat | null>(null);
+
+  // Open-once latch, reset when the slug pair changes so cross-vibe nav re-opens.
+  const openingRef = useRef(false);
+  const prevSlugsRef = useRef(`${ownerHandle}/${appSlug}`);
+  if (`${ownerHandle}/${appSlug}` !== prevSlugsRef.current) {
+    openingRef.current = false;
+    prevSlugsRef.current = `${ownerHandle}/${appSlug}`;
+  }
+
+  // Hold latest fsId in a ref so the prompt-firing effect can preserve it in
+  // the navigation URL without retriggering on every autosave fsId change
+  // (which would re-fire the same prompt — classic loop).
+  const fsIdRef = useRef<string | undefined>(fsId);
+  fsIdRef.current = fsId;
+
+  const attachSectionStream = useCallback(
+    (chatHandle: LLMChat) => {
+      processStream(chatHandle.sectionStream, (msg) => {
+        const se = sectionEvent(msg);
+        if (se instanceof type.errors) {
+          console.error(se.summary);
+          return;
+        }
+        for (const block of se.blocks) {
+          dispatch(block);
+        }
+      })
+        .catch((err: unknown) => {
+          console.error("section stream errored", err);
+        })
+        .finally(() => {
+          // Stream ended (transport loss closes it as of #2334). The reducer
+          // ignores this while idle; mid-prompt it starts the reconnect loop.
+          dispatch({ type: "streamDisconnected" });
+        });
+    },
+    [dispatch]
+  );
+
+  const refreshAppSettings = useCallback(() => {
+    chatApi.ensureAppSettings({ ownerHandle, appSlug }).then((rS) => {
+      if (rS.isOk()) {
+        const s = rS.Ok().settings.entry.settings;
+        if (s.title) dispatch({ type: "setTitle", title: s.title });
+        if (s.icon) dispatch({ type: "setIcon", icon: s.icon });
+        if (s.theme) {
+          const t = getThemeBySlug(s.theme);
+          if (t) dispatch({ type: "setTheme", theme: t });
+        }
+        if (s.colorTheme) {
+          dispatch({ type: "setColorTheme", colorTheme: s.colorTheme });
+        }
+      }
+    });
+  }, [chatApi, ownerHandle, appSlug, dispatch]);
+
+  const handleStreamSilent = useCallback(() => dispatch({ type: "streamDisconnected" }), [dispatch]);
+  useStreamWatchdog({
+    running: promptState.running,
+    connection: promptState.connection,
+    activityKey: promptState.blocks,
+    onSilent: handleStreamSilent,
+  });
+
+  const openChatForReconnect = useCallback(async () => {
+    const r = await chatApi.openChat({ ownerHandle, appSlug, mode: "chat" });
+    if (r.isErr()) {
+      console.error("reconnect openChat failed", r.Err());
+      return null;
+    }
+    return r.Ok();
+  }, [chatApi, ownerHandle, appSlug]);
+
+  const handleReconnectAttempt = useCallback(
+    (newChat: LLMChat) => {
+      dispatch({ type: "replayReset" });
+      setChat(newChat);
+      dispatch({ type: "initChat", chat: newChat });
+      attachSectionStream(newChat);
+      refreshAppSettings();
+    },
+    [attachSectionStream, refreshAppSettings, dispatch]
+  );
+
+  const handleReconnectGiveUp = useCallback(() => dispatch({ type: "reconnectFailed" }), [dispatch]);
+
+  useReconnectLoop({
+    connection: promptState.connection,
+    openChat: openChatForReconnect,
+    onAttempt: handleReconnectAttempt,
+    onGiveUp: handleReconnectGiveUp,
+  });
+
+  useEffect(() => {
+    if (inConstruction) return;
+    if (openingRef.current) {
+      if (chat && promptToSend?.trim().length) {
+        // Default to preview so the user sees the iframe hot-swap as edits
+        // stream. Preserve fsId on follow-ups; read it from the ref so future
+        // autosave-driven fsId changes don't re-trigger this effect with the
+        // same promptToSend (loop bug).
+        navigateToFsId(fsIdRef.current);
+        const sentPrompt = promptToSend;
+        // Clear promptToSend BEFORE firing so any re-render of this effect
+        // (e.g. searchParams change) sees null and skips the branch.
+        sendPrompt(null);
+        // Show the prompt instantly as an optimistic bubble (see #2352). The
+        // server echo clears it; a failed send drops it.
+        dispatch({ type: "setOptimisticPrompt", text: sentPrompt });
+        chat
+          .prompt({
+            messages: [
+              {
+                role: "user",
+                content: [{ type: "text", text: sentPrompt }],
+              },
+            ],
+          })
+          .then((r) => {
+            if (r.isErr()) {
+              console.error(`PromptSend failed`, r.Err());
+              dispatch({ type: "setOptimisticPrompt", text: undefined });
+            } else {
+              dispatch({ type: "setInFlightStreamId", streamId: r.Ok().promptId });
+              notifyRecentVibesChanged();
+            }
+          });
+      }
+      return; // Already opened or opening
+    }
+    openingRef.current = true;
+    chatApi.openChat({ ownerHandle, appSlug, mode: "chat" }).then((rChat) => {
+      if (rChat.isErr()) {
+        console.error("CHAT-Error", rChat.Err(), ownerHandle, appSlug);
+        return;
+      }
+      setChat(rChat.Ok());
+      dispatch({ type: "initChat", chat: rChat.Ok() });
+      refreshAppSettings();
+      attachSectionStream(rChat.Ok());
+      // For CLI-pushed apps with no chat history, look up the latest fsId
+      if (!fsId) {
+        chatApi.getAppByFsId({ appSlug, ownerHandle }).then((rApp) => {
+          if (rApp.isOk() && rApp.Ok().fsId) {
+            navigateToFsId(rApp.Ok().fsId);
+          }
+        });
+      }
+    });
+    return () => {
+      if (chat) {
+        (chat as LLMChat).close();
+      }
+    };
+    // Dep array preserved verbatim from the route — the self-referential `chat`
+    // dependency is what flips this effect from the open path to the fire path.
+  }, [ownerHandle, appSlug, chat, openingRef, chatApi, promptToSend]);
+
+  return { chat };
+}
