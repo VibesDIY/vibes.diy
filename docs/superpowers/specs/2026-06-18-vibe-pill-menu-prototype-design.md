@@ -179,8 +179,12 @@ timestamp, body; a "resolve" affordance; a "comment…" composer. Illustrative.
 
 ### Settings tab
 
-Mocked app-settings form: app title, icon/screenshot, canonical slug, plus a
-destructive "Delete app" row. Illustrative.
+Mirrors the vibes.diy settings page (mocked, scrolls within the panel): **Title**
+(text), **Theme** (dropdown), **Icon** (preview + Regenerate) alongside
+**Description** (text), **Chat Model** (dropdown), then **Model**, **App Model**,
+and **Imaging Model** each as a dropdown paired with an **API Key** field, an
+**Environment Variables** section (KEY / Value rows + "Add variable"), and a
+destructive "Delete app" row. Illustrative values; dropdowns are native selects.
 
 ## Vibe — code-change chat
 
