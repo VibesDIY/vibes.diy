@@ -411,6 +411,12 @@ function ProfileCard() {
   const [uploading, setUploading] = useState(false);
   const [savingName, setSavingName] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // Avatar now lives in the per-handle store and is served at /u/<handle>/avatar.
+  // We don't track a per-user avatarCid; instead we render the handle URL and
+  // bump a cache-buster after a successful upload, falling back to "None" when
+  // the handle has no avatar (the URL 404s → onError).
+  const [avatarVersion, setAvatarVersion] = useState(0);
+  const [avatarBroken, setAvatarBroken] = useState(false);
 
   useEffect(() => {
     void chatApi.ensureUserSettings({ settings: [] }).then((res) => {
@@ -490,12 +496,15 @@ function ProfileCard() {
     const confirmed = await avatarConfirmController.request({ cid, mimeType: file.type, getURL: body.getURL });
     if (!confirmed) return;
 
-    const next = { ...profile, avatarCid: cid };
-    setProfile(next);
-    const rSave = await chatApi.ensureUserSettings({ settings: [{ type: "profile", ...next }] });
+    // Write the avatar to the per-handle store for the user's default handle.
+    // The server re-validates ownership and resolves the cid to its storage URL.
+    const rSave = await chatApi.ensureHandleAvatar({ handle: defaultHandle, cid, mime: file.type });
     if (rSave.isErr()) {
       setError(`Failed to save avatar: ${rSave.Err()}`);
+      return;
     }
+    setAvatarBroken(false);
+    setAvatarVersion((v) => v + 1);
   };
 
   const handleDisplayNameBlur = async () => {
@@ -519,12 +528,13 @@ function ProfileCard() {
       <div className="mb-6">
         <h4 className="text-sm font-semibold mb-2">Avatar</h4>
         <div className="flex items-center gap-4">
-          {profile.avatarCid && defaultHandle ? (
+          {defaultHandle && !avatarBroken ? (
             <img
-              src={`/u/${defaultHandle}/avatar`}
+              src={`/u/${defaultHandle}/avatar?v=${avatarVersion}`}
               alt="Current avatar"
               className="h-16 w-16 rounded-full object-cover border-2"
               style={{ borderColor: "var(--vibes-border-primary)" }}
+              onError={() => setAvatarBroken(true)}
             />
           ) : (
             <div

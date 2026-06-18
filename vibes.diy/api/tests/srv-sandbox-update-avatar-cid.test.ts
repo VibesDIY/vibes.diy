@@ -29,7 +29,7 @@ function setupSandbox(opts: {
   sandbox: vibesDiySrvSandbox;
   captured: CapturedMsg[];
   iframe: Window;
-  ensureCalls: { settings: unknown[] }[];
+  ensureCalls: { handle: string; cid: string; mime?: string }[];
   confirmCalls: { cid: string; mimeType?: string; getURL?: string }[];
 } {
   const captured: CapturedMsg[] = [];

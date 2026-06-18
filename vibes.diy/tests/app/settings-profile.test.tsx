@@ -120,6 +120,16 @@ function makeVibeDiyApi(overrides?: {
     });
   });
 
+  const ensureHandleAvatar = vi.fn().mockImplementation((req: { handle: string; cid: string; mime?: string }) =>
+    makeOkResult({
+      type: "vibes.diy.res-ensure-handle-avatar" as const,
+      handle: req.handle,
+      getURL: `s3://r2/${req.cid}`,
+      mime: req.mime ?? "application/octet-stream",
+      updated: new Date().toISOString(),
+    })
+  );
+
   const listHandleBindings = vi.fn().mockImplementation(() => makeOkResult({ items: handleItems }));
 
   const deleteHandleBinding = vi.fn().mockImplementation(() => makeOkResult({ ownerHandle: "deleted" }));
@@ -128,6 +138,7 @@ function makeVibeDiyApi(overrides?: {
 
   return {
     ensureUserSettings,
+    ensureHandleAvatar,
     requestAssetUploadGrant,
     listHandleBindings,
     deleteHandleBinding,
@@ -200,7 +211,7 @@ describe("Settings ProfileCard", () => {
     });
   });
 
-  it("calls requestAssetUploadGrant then fetch then (after confirm) ensureUserSettings with avatarCid", async () => {
+  it("calls requestAssetUploadGrant then fetch then (after confirm) ensureHandleAvatar", async () => {
     render(
       <>
         <Settings />
@@ -243,27 +254,23 @@ describe("Settings ProfileCard", () => {
     expect(fetchInit.body).toBe(file);
 
     // The write is gated on the confirm modal — nothing is persisted yet.
-    expect(chatApiStub.ensureUserSettings).not.toHaveBeenCalledWith(
-      expect.objectContaining({
-        settings: expect.arrayContaining([expect.objectContaining({ type: "profile", avatarCid: "bafy123" })]),
-      })
-    );
+    expect(chatApiStub.ensureHandleAvatar).not.toHaveBeenCalled();
 
     const confirm = await screen.findByText("Set as avatar");
     await act(async () => {
       fireEvent.click(confirm);
     });
 
+    // On confirm the avatar is written per-handle (the viewer's default handle),
+    // not to a per-user profile setting.
     await waitFor(() => {
-      expect(chatApiStub.ensureUserSettings).toHaveBeenCalledWith(
-        expect.objectContaining({
-          settings: expect.arrayContaining([expect.objectContaining({ type: "profile", avatarCid: "bafy123" })]),
-        })
+      expect(chatApiStub.ensureHandleAvatar).toHaveBeenCalledWith(
+        expect.objectContaining({ handle: "test-user", cid: "bafy123", mime: "image/png" })
       );
     });
   });
 
-  it("does NOT call ensureUserSettings when the avatar confirm modal is cancelled", async () => {
+  it("does NOT call ensureHandleAvatar when the avatar confirm modal is cancelled", async () => {
     render(
       <>
         <Settings />
@@ -291,15 +298,11 @@ describe("Settings ProfileCard", () => {
       fireEvent.click(cancel);
     });
 
-    // Modal dismissed and no profile write happened.
+    // Modal dismissed and no avatar write happened.
     await waitFor(() => {
       expect(screen.queryByText("Set as avatar")).not.toBeInTheDocument();
     });
-    expect(chatApiStub.ensureUserSettings).not.toHaveBeenCalledWith(
-      expect.objectContaining({
-        settings: expect.arrayContaining([expect.objectContaining({ type: "profile", avatarCid: "bafy123" })]),
-      })
-    );
+    expect(chatApiStub.ensureHandleAvatar).not.toHaveBeenCalled();
   });
 
   it("shows the avatar img at /u/<slug>/avatar after successful upload", async () => {
