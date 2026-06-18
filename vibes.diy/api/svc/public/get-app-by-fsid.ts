@@ -390,6 +390,10 @@ export const getAppByFsIdEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqGet
             meta: [],
             created: new Date().toISOString(),
           } satisfies ResGetAppByFsId);
+          // Terminal fallback: without an early return we'd fall through and
+          // send a second response below with `grant: undefined`, which fails
+          // the res-get-app-by-fsid schema (#2425).
+          return Result.Ok(EventoResult.Continue);
         }
       }
       // Inject the displayable title (from AppSettings.active.title) into the

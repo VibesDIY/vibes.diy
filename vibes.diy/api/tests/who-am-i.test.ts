@@ -134,7 +134,10 @@ describe("resolveWhoAmI", { timeout: 30000 }, () => {
     expect(res.isOk()).toBe(true);
     const r = res.Ok();
     expect(r.viewer?.userHandle).toBe(ownerHandle);
-    expect(r.access).toBe("override");
+    // A plain owner gets "editor"; "override" is reserved for adminMode
+    // (opt-in via the adminMode=yes URL param, see checkDocAccess).
+    expect(r.access).toBe("editor");
+    expect(r.isOwner).toBe(true);
   });
 
   it("returns viewer ownerHandle + 'editor' access for an invited editor", async () => {

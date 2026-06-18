@@ -122,7 +122,11 @@ export function ensureStorage(...args: [EnsureStorageOptions | StoragePeer, ...S
             const cider = new Cider(lag1);
             return teeWriter(
               peers.map((i) => i.factory(cider, factoryOpts)),
-              lag2
+              lag2,
+              // Arm the cement teeWriter per-op timeout (patches/@adviser__cement.patch).
+              // Without this options arg the timeout is undefined and a hung peer
+              // (e.g. a stalled S3 put) wedges the whole pipeline — #2425.
+              { peerTimeout }
             ).then(async (rTee) => {
               if (rTee.isErr()) {
                 return Result.Err(rTee);
