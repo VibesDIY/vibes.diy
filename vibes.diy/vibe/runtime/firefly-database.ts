@@ -174,11 +174,20 @@ export class FireflyDatabase {
    * become readable. Safe to call repeatedly; subscribeDocs dedupes by key.
    */
   resubscribe(): void {
-    this.vibeApi.subscribeDocs(this.name).then((rRes) => {
-      if (rRes.isErr()) {
-        console.error(`Failed to subscribe to docs for db "${this.name}":`, rRes.Err());
-      }
-    });
+    // Best-effort: subscribeDocs can reject (not just return Err) when the
+    // underlying connection fails — e.g. a db opened with a bad apiUrl. Handle
+    // both so a fire-and-forget resubscribe never becomes an unhandled
+    // rejection that crashes the process; next activity retries (#2444).
+    this.vibeApi
+      .subscribeDocs(this.name)
+      .then((rRes) => {
+        if (rRes.isErr()) {
+          console.error(`Failed to subscribe to docs for db "${this.name}":`, rRes.Err());
+        }
+      })
+      .catch((e: unknown) => {
+        console.error(`Failed to subscribe to docs for db "${this.name}":`, e);
+      });
   }
 
   applyAcl(acl: DbAcl): void {
