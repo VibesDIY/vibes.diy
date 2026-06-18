@@ -34,11 +34,13 @@ These are the predicates that are **genuinely not** covered by an existing index
 |---|---|---|---|---|---|---|
 | C1 | `Apps` | `WHERE ownerHandle=? AND appSlug=? AND mode=?` `ORDER BY releaseSeq DESC LIMIT 1` | none — PK `(appSlug,userId,releaseSeq)` only covers `appSlug`; `ownerHandle`/`mode` filtered in-row | **the #1530 gap**, now in the SSR hot path | **HOT** | `intern/get-vibe-route-hints.ts:69`, `public/serv-entry-point.ts:~300` |
 | C2 | `Apps` | `WHERE ownerHandle=? AND appSlug=?` `GROUP BY mode` + `max(created)` | same as C1 | sibling of C1 (older viewer RPC) | HOT | `public/get-app-by-fsid.ts:116` |
-| C3 | `Apps` | `WHERE userId=?` `ORDER BY created` | none — `userId` is the **2nd** PK col, not a usable prefix → seq scan | runs on **every new-app create** (max-apps-per-user check) | HOT | `intern/write-apps.ts:30` |
+| C3 | `Apps` | `WHERE userId=?` `ORDER BY created` | none — `userId` is the **2nd** PK col, not a usable prefix → seq scan | `checkMaxAppsPerUser` runs inside `ensureApps`, which fires on **every append-turn write** (not just new-app create), so this seq scan is on the chat-turn hot path | **HOT** | `intern/write-apps.ts:30` (via `write-apps.ts:344` ← `intern/append-turn-to-chat.ts`) |
 | C4 | `ChatContexts` | `WHERE userId=? AND ownerHandle=? AND appSlug=? LIMIT 1` | none — only PK is `chatId` → seq scan | chat-id resolution on generate/seed | HOT | `intern/ensure-chat-id.ts:127`, `intern/ensure-push-seeded-chat.ts:~90` |
 | C5 | `ChatSections` | `WHERE chatId=?` `ORDER BY created[, promptId, blockSeq]` | `ChatSections_chatId_idx (chatId)` finds rows but the sort is a filesort | sort-only; cheap if rows-per-chat is small | MED | `intern/resend-prev-msg.ts:22`, `prompt-assembly.ts:175` |
 | C6 | `AccessFnOutputs` | `WHERE ownerHandle=? AND appSlug=? AND hasGrants=?` | PK `(ownerHandle,appSlug,dbName,docId)` covers the `(ownerHandle,appSlug)` prefix then filters `hasGrants` across all docs of the app | scan width = all output rows for the app | HOT | `intern/who-am-i.ts:62,87` |
-| C7 | `Apps` `created_idx` exists; **batch** gaps: `RequestGrants WHERE state`, `InviteGrants WHERE state`, `AppDocuments WHERE userId`, `AppDocuments WHERE created`, `AppSlugBindings WHERE created` | various report/ETL scans | none for the leading predicate | BATCH | low | `usage-report/*`, `report-*.ts`, `list-memberships.ts:169` |
+| C7 | `RequestGrants` / `InviteGrants` | `RequestGrants WHERE foreignUserId=? AND ownerHandle=? AND appSlug=?`; `InviteGrants WHERE tokenOrGrantUserId=? AND ownerHandle=? AND appSlug=?` | the single-column idx (`RequestGrants_foreignUserId_idx` / `InviteGrants_tokenOrGrantUserId_idx`) covers only the lead column; `ownerHandle`/`appSlug` are post-filters | viewer-access checks — scan width = all grants for that foreign user / token | **MED** (per Charlie review) | `request-flow.ts:152`, `invite-flow.ts:235` |
+| C8 | `AppDocuments` | `WHERE userId=?` `GROUP BY ownerHandle, appSlug` | none — `userId` not in PK prefix `(ownerHandle,appSlug,…)` → seq scan | **user-facing** membership list (not pure batch — elevated per Charlie review) | MED | `list-memberships.ts:169` |
+| C9 | batch/report scans | `RequestGrants WHERE state`, `InviteGrants WHERE state`, `AppDocuments WHERE created`, `AppSlugBindings WHERE created` | none for the leading predicate | reports tolerate seq scans today | BATCH | low | `usage-report/*`, `report-*.ts` |
 
 ### Proposed index shapes (to test, not to merge blindly)
 
@@ -47,7 +49,9 @@ These are the predicates that are **genuinely not** covered by an existing index
 - **C4** — `index("ChatContexts_userId_userSlug_appSlug").on(userId, ownerHandle, appSlug)`.
 - **C5** — `index("ChatSections_chatId_created").on(chatId, created)` — only if EXPLAIN shows a meaningful sort cost.
 - **C6** — `index("AccessFnOutputs_app_hasGrants").on(ownerHandle, appSlug, hasGrants)` — only if per-app output-row counts are large.
-- **C7** — defer; revisit when those tables grow. Reports tolerate seq scans today.
+- **C7** — extend the existing single-column grant indexes to composites: `(foreignUserId, ownerHandle, appSlug)` on `RequestGrants`, `(tokenOrGrantUserId, ownerHandle, appSlug)` on `InviteGrants`. Prefer extending the current index over adding a near-twin; validate that the per-foreign-user / per-token scan width is large enough to matter.
+- **C8** — `index("AppDocuments_userId").on(userId)` — validate the membership-list path's real row counts before committing.
+- **C9** — defer; revisit when those tables grow. Reports tolerate seq scans today.
 
 ## Explicitly NOT gaps (already covered — do not add indexes)
 
