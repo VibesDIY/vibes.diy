@@ -26,6 +26,7 @@ claude-browse-vibes/*.png
 *.sse
 # CI test transcript captured by actions/base test step (see #2426)
 test-output.log
+test-output.clean.log
 test-results/
 playwright-report/
 playwright/.cache/
