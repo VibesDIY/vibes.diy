@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { avatarConfirmController, type PendingAvatarConfirm } from "../lib/avatar-confirm.js";
+import { cidAssetUrl, getAppHostBaseUrl } from "../utils/vibeUrls.js";
 import { Button } from "./ui/button.js";
 
 // Platform-host preview/confirm modal shown before any avatar write (#1968).
@@ -11,6 +12,11 @@ import { Button } from "./ui/button.js";
 // proposed image cropped to the circular avatar shape and must click
 // "Set as avatar" to approve; dismissing — button, backdrop, or Escape —
 // cancels the write.
+//
+// SECURITY: the preview is derived from the request's `cid` via the
+// content-addressed asset endpoint — the same CID the host persists on
+// confirm. A sandbox cannot supply a preview URL of its own, so it can't show
+// one image while a different one gets saved (bait-and-switch on consent).
 export function AvatarConfirmModal(): React.ReactElement | null {
   const [pending, setPending] = useState<PendingAvatarConfirm | undefined>(() => avatarConfirmController.current);
   const [brokenPreview, setBrokenPreview] = useState(false);
@@ -33,7 +39,11 @@ export function AvatarConfirmModal(): React.ReactElement | null {
 
   if (!pending) return null;
 
-  const hasPreview = Boolean(pending.previewUrl) && !brokenPreview;
+  // Always the asset addressed by the CID we'll persist — never a value the
+  // sandbox controls. mimeType only labels the Content-Type; the bytes are
+  // fixed by the CID.
+  const previewUrl = cidAssetUrl(pending.cid, pending.mimeType ?? "application/octet-stream", getAppHostBaseUrl());
+  const hasPreview = !brokenPreview;
 
   return createPortal(
     <div
@@ -54,7 +64,7 @@ export function AvatarConfirmModal(): React.ReactElement | null {
         >
           {hasPreview ? (
             <img
-              src={pending.previewUrl}
+              src={previewUrl}
               alt="Proposed avatar"
               className="h-full w-full object-cover"
               onError={() => setBrokenPreview(true)}

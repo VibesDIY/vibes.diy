@@ -163,13 +163,6 @@ describe("Settings ProfileCard", () => {
       text: () => Promise.resolve(""),
     });
     vi.stubGlobal("fetch", mockFetch);
-    // jsdom doesn't implement object URLs; the avatar preview flow needs them.
-    if (!URL.createObjectURL) {
-      Object.defineProperty(URL, "createObjectURL", { configurable: true, writable: true, value: () => "blob:preview" });
-    }
-    if (!URL.revokeObjectURL) {
-      Object.defineProperty(URL, "revokeObjectURL", { configurable: true, writable: true, value: () => undefined });
-    }
   });
 
   afterEach(() => {

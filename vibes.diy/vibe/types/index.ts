@@ -517,11 +517,14 @@ export const ReqVibeUpdateAvatarCid = type({
   ownerHandle: "string",
   appSlug: "string",
   cid: "string",
-  // Optional URL the host can display in the preview/confirm modal before
-  // committing the write. The runtime forwards the freshly-uploaded asset's
-  // getURL here; it's used for display only — the write is keyed on `cid`,
-  // which the host re-validates against the authenticated session.
-  "previewUrl?": "string",
+  // Optional content-type hint for the preview the host renders in its
+  // confirm modal. NON security-critical: the host derives the preview image
+  // from `cid` (the exact asset it will persist), so a forged mimeType only
+  // affects the response Content-Type header, never which bytes are shown.
+  // A previewUrl is deliberately NOT accepted — letting the sandbox supply
+  // the preview separately from `cid` would allow a bait-and-switch on the
+  // consent UI (show image A, persist image B).
+  "mimeType?": "string",
 }).and(Base);
 
 export type ReqVibeUpdateAvatarCid = typeof ReqVibeUpdateAvatarCid.infer;

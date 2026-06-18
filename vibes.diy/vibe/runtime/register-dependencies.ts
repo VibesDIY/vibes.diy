@@ -344,16 +344,17 @@ export class VibeSandboxApi {
     });
   }
 
-  // `previewUrl` (the uploaded asset's getURL) lets the host render a
-  // preview in its confirm modal before persisting. Display-only; the write
-  // is keyed on `cid`.
-  updateAvatarCid(cid: string, previewUrl?: string): Promise<Result<ResVibeUpdateAvatarCid>> {
+  // `mimeType` is an optional content-type hint for the host's confirm-modal
+  // preview. The host renders the preview from `cid` (the exact asset it will
+  // persist), so this only sets the Content-Type header — it can't change
+  // which image the user is consenting to.
+  updateAvatarCid(cid: string, mimeType?: string): Promise<Result<ResVibeUpdateAvatarCid>> {
     return this.request<ReqVibeUpdateAvatarCid, ResVibeUpdateAvatarCid>(
       {
         type: "vibe.req.updateAvatarCid",
         ...this.svc.vibeApp,
         cid,
-        ...(previewUrl ? { previewUrl } : {}),
+        ...(mimeType ? { mimeType } : {}),
       },
       { wait: isResVibeUpdateAvatarCid, timeout: 60000 }
     );
