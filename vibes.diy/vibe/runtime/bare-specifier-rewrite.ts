@@ -27,6 +27,8 @@
 // regex-based rewriting away from string literals and comments in the module
 // body, where false positives could mutate runtime data.
 
+import { URI } from "@adviser/cement";
+
 const RELATIVE_OR_URL = /^(?:\.\.?\/|\/|https?:\/\/|blob:|data:)/;
 
 // CDN hosts whose path layout (`/<pkg>[@<version>]/<subpath>`) is esm.sh
@@ -43,19 +45,20 @@ function isMappedByImportMap(spec: string, imports: Record<string, string>): boo
 }
 
 // Host-swap a fully-qualified CDN URL onto esm.sh when its layout is
-// compatible; otherwise return null so the URL is left verbatim.
+// compatible; otherwise return null so the URL is left verbatim. Uses cement's
+// URI (not `new URL`, which is not stable across runtimes per rules-bag) and
+// its `fromResult` parser so an unparseable specifier surfaces as a Result
+// rather than a throw. `URI.hostname` only reads on http(s)-style protocols, so
+// the protocol guard must run before touching the host.
 function rewriteCdnUrl(spec: string): string | null {
-  let url: URL;
-  try {
-    url = new URL(spec);
-  } catch {
-    return null;
-  }
-  if (url.protocol !== "https:" && url.protocol !== "http:") return null;
-  if (!CDN_HOST_REWRITES.has(url.hostname)) return null;
-  const path = url.pathname.replace(/^\/+/, "");
-  if (!path) return null;
-  return `https://esm.sh/${path}${url.search}${url.hash}`;
+  const rUri = URI.fromResult(spec);
+  if (rUri.isErr()) return null;
+  const uri = rUri.Ok();
+  if (uri.protocol !== "https:" && uri.protocol !== "http:") return null;
+  if (!CDN_HOST_REWRITES.has(uri.hostname)) return null;
+  const path = uri.pathname.replace(/^\/+/, "");
+  if (path.length === 0) return null;
+  return `https://esm.sh/${path}${uri.search}${uri.hash}`;
 }
 
 // Resolve a specifier to its rewritten form, or null when it should be left
