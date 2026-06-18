@@ -220,9 +220,10 @@ export const sqlAppDocuments = sqliteTable(
   },
   (table) => [
     primaryKey({ columns: [table.ownerHandle, table.appSlug, table.dbName, table.docId, table.seq] }),
-    // C8 — mirrors the Postgres schema (no dev/prod divergence). Serves the
-    // per-pair scalar MAX(created) in list-memberships.ts.
-    index("AppDocuments_userSlug_appSlug_created").on(table.ownerHandle, table.appSlug, table.created),
+    // C8 — mirrors the Postgres schema (no dev/prod divergence). userId leads
+    // created so the per-pair scalar MAX(created) in list-memberships.ts stays a
+    // single index probe even for a member who isn't the app's latest writer.
+    index("AppDocuments_userSlug_appSlug_userId_created").on(table.ownerHandle, table.appSlug, table.userId, table.created),
   ]
 );
 

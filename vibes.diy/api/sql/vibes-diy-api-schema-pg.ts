@@ -232,11 +232,15 @@ export const sqlAppDocuments = pgTable(
   },
   (table) => [
     primaryKey({ columns: [table.ownerHandle, table.appSlug, table.dbName, table.docId, table.seq] }),
-    // C8: membership list reads MAX(created) per (userSlug, appSlug). Postgres
-    // can't loose-scan a GROUP BY, so the list query issues one bare scalar
-    // MAX() per pair (see list-memberships.ts), which this index serves as an
-    // Index Scan Backward. Validated on the heaviest user: 53ms seq scan -> 0.09ms.
-    index("AppDocuments_userSlug_appSlug_created").on(table.ownerHandle, table.appSlug, table.created),
+    // C8: membership list reads MAX(created) per (userSlug, appSlug) FOR A GIVEN
+    // userId. Postgres can't loose-scan a GROUP BY, so the list query issues one
+    // bare scalar MAX() per pair (see list-memberships.ts). userId is part of the
+    // predicate and must lead `created` in the index, otherwise a member who
+    // isn't the latest writer (or never wrote) makes Postgres scan the whole
+    // owner/app range filtering userId row-by-row (measured: 25ms / 32k buffers
+    // on a 53k-row shared app). With userId before created it's a full-equality
+    // prefix + ordered created -> single Index Scan Backward probe (0.04ms).
+    index("AppDocuments_userSlug_appSlug_userId_created").on(table.ownerHandle, table.appSlug, table.userId, table.created),
   ]
 );
 
