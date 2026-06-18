@@ -77,8 +77,17 @@ so it is the correct shared home and needs **no new import-map entries**.
 
 - `last30DaysUTC` → one shared report-dates util; import in the three report files. Fold in
   `inspect-db-report.ts`'s near-identical `last30Days` only if shapes match exactly.
-- `loadDevVars` / `formatError` → one shared util under `api/svc/usage-report/`; import in
-  `admin-db.ts`, `inspect-db.ts`, `inspect-db-report.ts`.
+- `loadDevVars` → one shared util under `api/svc/usage-report/`; import in `admin-db.ts`,
+  `inspect-db.ts`, `inspect-db-report.ts` (the three bodies are identical — pure de-dup).
+- `formatError` → **not a pure de-dup; the two copies have drifted.** `inspect-db.ts:275`
+  also unwraps a nested `error.message` (handles `{ error: { message } }`); `admin-db.ts:99`
+  only checks the top-level `message`. Adopt the **superset** (the `inspect-db` body) as the
+  single shared helper. This preserves `inspect-db` exactly and is strictly additive for
+  `admin-db` — it only changes output for inputs `admin-db` currently passes to `String(error)`
+  (nested-`error.message`-shaped values). That is a (tiny, strictly-better) behavior change for
+  `admin-db`, so under the no-behavior-change contract it must be **called out and accepted
+  explicitly**, not landed silently. See **Q7**. (Do not adopt the `admin-db` body — that would
+  regress `inspect-db` for nested errors.)
 - `deriveDisplayName` / `deriveAuthorDisplay` → one exported helper (single name); update the
   three call sites and drop the now-obsolete "keep aligned with X" comments.
 
@@ -130,3 +139,8 @@ no `any`, no casts to bridge package boundaries — unify the types instead.
    assert both package exports resolve to the **same function reference**?
 6. **Packaging.** One PR with three reviewable commits, or three separate PRs (issue calls the
    promotions "safe to split")?
+7. **`formatError` superset (raised by Codex review).** The two copies have drifted —
+   `inspect-db` unwraps nested `error.message`, `admin-db` does not. Plan adopts the `inspect-db`
+   superset, a strictly-additive change to `admin-db`'s output for nested-shaped errors. Accept
+   that as within the "no behavior change" spirit, or keep two helpers to preserve `admin-db`
+   byte-for-byte?
