@@ -381,4 +381,105 @@ describe("resolveSectionStream", () => {
     expect(snapshots).toEqual(["create:App.jsx"]);
     expect(errors).toEqual(["App.jsx"]);
   });
+
+  it("recovers snapshot files and captures prompt.error on an abnormal turn end (#2048)", async () => {
+    // gpt-5 signature: code streams and applies (a snapshot is emitted), but the
+    // upstream stream dies before `block.end`, so no `fs.turn.end` fires. The
+    // server's `finally`/`onCatch` still emit `prompt.error` + `prompt.block-end`.
+    // Pre-fix this discarded the resolved file and bottomed out as "No files
+    // resolved from AI response." despite a complete App.jsx having streamed.
+    const codeBlock = codeBlockMessages({
+      blockId: "b1",
+      blockNr: 1,
+      sectionId: "s1",
+      path: "App.jsx",
+      lines: ["export default () => <h1>recovered</h1>;"],
+    });
+    // Drop the trailing block.end (last element) to simulate the abnormal end.
+    const blocks: unknown[] = [
+      ...codeBlock.slice(0, -1),
+      {
+        type: "prompt.error",
+        chatId: "chat-1",
+        error: "Upstream connection closed mid-stream",
+        ...blockBase({ blockId: "b1", seq: 998, blockNr: 1 }),
+      },
+      {
+        type: "prompt.block-end",
+        chatId: "chat-1",
+        ...blockBase({ blockId: "b1", seq: 999, blockNr: 1 }),
+      },
+    ];
+    const stream = new ReadableStream<SectionEvent>({
+      start(controller) {
+        controller.enqueue({
+          type: "vibes.diy.section-event",
+          chatId: "chat-1",
+          promptId: streamId,
+          blockSeq: 0,
+          timestamp: new Date(),
+          blocks: blocks as SectionEvent["blocks"],
+        });
+        controller.close();
+      },
+    });
+
+    const r = await resolveSectionStream({ sectionStream: stream, streamId });
+    expect(r.isOk()).toBe(true);
+    const ok = r.Ok();
+    expect(ok.turnEndSeen).toBe(false);
+    expect(ok.snapshotCount).toBe(1);
+    expect(ok.files["App.jsx"]).toBe("export default () => <h1>recovered</h1>;");
+    expect(ok.promptErrors).toEqual(["Upstream connection closed mid-stream"]);
+  });
+
+  it("ignores prompt.error from a different streamId (historical chat replay)", async () => {
+    // Same streamId-filtering concern as the prompt.block-end break (#1682):
+    // replayed historical sections carry the prior turn's prompt.error, which
+    // must not be attributed to the in-flight turn.
+    const newStreamId = "stream-new";
+    const historicalStreamId = "stream-historical";
+    const stream = new ReadableStream<SectionEvent>({
+      start(controller) {
+        controller.enqueue({
+          type: "vibes.diy.section-event",
+          chatId: "chat-1",
+          promptId: historicalStreamId,
+          blockSeq: 0,
+          timestamp: new Date(),
+          blocks: [
+            {
+              type: "prompt.error",
+              chatId: "chat-1",
+              error: "stale error from a prior turn",
+              streamId: historicalStreamId,
+              seq: 0,
+              timestamp: new Date(),
+            },
+          ] as SectionEvent["blocks"],
+        });
+        controller.enqueue({
+          type: "vibes.diy.section-event",
+          chatId: "chat-1",
+          promptId: newStreamId,
+          blockSeq: 1,
+          timestamp: new Date(),
+          blocks: [
+            {
+              type: "prompt.block-end",
+              chatId: "chat-1",
+              streamId: newStreamId,
+              seq: 0,
+              timestamp: new Date(),
+            },
+          ] as SectionEvent["blocks"],
+        });
+        controller.close();
+      },
+    });
+
+    const r = await resolveSectionStream({ sectionStream: stream, streamId: newStreamId });
+    expect(r.isOk()).toBe(true);
+    expect(r.Ok().promptErrors).toEqual([]);
+  });
 });

@@ -9,8 +9,8 @@ import {
   type FsApplyErrorMsg,
   type FsFileSnapshotMsg,
 } from "@vibes.diy/call-ai-v2";
-import { isPromptBlockEnd } from "@vibes.diy/api-types";
-import type { SectionEvent } from "@vibes.diy/api-types";
+import { isPromptBlockEnd, isPromptError } from "@vibes.diy/api-types";
+import type { PromptError, SectionEvent } from "@vibes.diy/api-types";
 
 export interface ResolveSectionStreamOpts {
   readonly sectionStream: ReadableStream<SectionEvent>;
@@ -33,6 +33,14 @@ export interface ResolveSectionStreamResult {
   readonly applyErrorCount: number;
   /** Whether at least one `fs.turn.end` fired for the new turn. */
   readonly turnEndSeen: boolean;
+  /** Human-readable `prompt.error` messages the server emitted for THIS
+   *  streamId. Populated when the codegen turn ended abnormally — the server
+   *  wraps the LLM action in an `onCatch` that emits `prompt.error` and a
+   *  `finally` that always emits `prompt.block-end`, so an upstream
+   *  disconnect/provider error never produces a `block.end` → `fs.turn.end`
+   *  (see issue #2048 / #2334). The CLI surfaces these so an abnormal end
+   *  reports *why* instead of looking like an empty response. */
+  readonly promptErrors: readonly string[];
 }
 
 /**
@@ -66,6 +74,15 @@ export function resolveSectionStream(opts: ResolveSectionStreamOpts): Promise<Re
     const reader = opts.sectionStream.pipeThrough(flatten).pipeThrough(fsStream).getReader();
     let files: Readonly<Record<string, string>> = {};
     const errors: string[] = [];
+    const promptErrors: string[] = [];
+    // Running latest-snapshot-per-path, seeded with any on-disk seed. Used as a
+    // fallback when no `fs.turn.end` fires (abnormal stream end): each snapshot
+    // carries the fully-resolved content for its path after a completed code
+    // block, so the latest per path is the best-effort final filesystem.
+    // Recovers files that would otherwise be discarded when the codegen turn
+    // disconnects after the code streamed but before clean completion (#2048).
+    const recovered: Record<string, string> = {};
+    if (opts.seed) for (const [k, v] of opts.seed) recovered[k] = v;
     let snapshotCount = 0;
     let applyErrorCount = 0;
     let turnEndSeen = false;
@@ -74,6 +91,7 @@ export function resolveSectionStream(opts: ResolveSectionStreamOpts): Promise<Re
       if (done) break;
       if (isFsFileSnapshot(value)) {
         snapshotCount += 1;
+        recovered[value.path] = value.content;
         opts.onSnapshot?.(value);
         continue;
       }
@@ -92,6 +110,13 @@ export function resolveSectionStream(opts: ResolveSectionStreamOpts): Promise<Re
         turnEndSeen = true;
         continue;
       }
+      // Capture the server's abnormal-end signal for THIS streamId. Filtered by
+      // streamId for the same reason the break below is (#1682): historical
+      // replay on `edit` carries the prior turn's prompt.error too.
+      if (isPromptError(value) && (value as PromptError).streamId === opts.streamId) {
+        promptErrors.push((value as PromptError).error);
+        continue;
+      }
       // The source (chat.sectionStream) does not close at end-of-turn — it
       // stays open until chat.close() is called. Break on prompt.block-end
       // for THIS streamId — the LLM-turn-complete signal for the current
@@ -105,6 +130,17 @@ export function resolveSectionStream(opts: ResolveSectionStreamOpts): Promise<Re
       }
     }
     reader.releaseLock();
-    return { files, errors, snapshotCount, applyErrorCount, turnEndSeen };
+    // Authoritative source is `fs.turn.end`. If it never fired (abnormal end),
+    // fall back to the recovered snapshot map so already-resolved files aren't
+    // thrown away — the difference between "no files" and a deployable app
+    // when a gpt-5-style turn disconnects late (#2048).
+    return {
+      files: turnEndSeen ? files : recovered,
+      errors,
+      snapshotCount,
+      applyErrorCount,
+      turnEndSeen,
+      promptErrors,
+    };
   });
 }
