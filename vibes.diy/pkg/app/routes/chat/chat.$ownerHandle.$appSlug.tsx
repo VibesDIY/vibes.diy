@@ -2,13 +2,12 @@ import { useNavigate, useParams, useSearchParams } from "react-router";
 import React, { useEffect, useState, useReducer, useRef, useCallback } from "react";
 import { useVibesDiy } from "../../vibes-diy-provider.js";
 import { useAuth } from "@clerk/react";
-import { processStream, BuildURI, URI, exception2Result } from "@adviser/cement";
-import { fireproof } from "@fireproof/use-fireproof";
-import type { VibeDocument, ViewType, VibesTheme } from "@vibes.diy/prompts";
+import { processStream, BuildURI, URI } from "@adviser/cement";
+import type { ViewType, VibesTheme } from "@vibes.diy/prompts";
 import { vibesThemes, getThemeBySlug } from "@vibes.diy/prompts";
 import { type } from "arktype";
 import { isPromptReq, LLMChat, LLMChatEntry, PromptError, sectionEvent } from "@vibes.diy/api-types";
-import { promptReducer, HydratedCodeViewFile } from "./prompt-state.js";
+import { promptReducer } from "./prompt-state.js";
 
 // Re-export so existing importers of these types from the route keep compiling.
 export type { PromptState, PromptBlock, HydratedCodeViewFile } from "./prompt-state.js";
@@ -20,7 +19,10 @@ import ThemePickerModal from "../../components/ThemePickerModal.js";
 import { isMobileViewport, useViewState } from "../../utils/ViewState.js";
 import { useIframeCurrentTokens } from "../../hooks/useIframeCurrentTokens.js";
 import { useFreshFirstCodegen } from "../../utils/freshFirstCodegen.js";
-import { isCodeBegin, isBlockEnd } from "@vibes.diy/call-ai-v2";
+import { useChatNavigation } from "../../hooks/useChatNavigation.js";
+import { useChatOwnership } from "../../hooks/useChatOwnership.js";
+import { useChatHydration } from "../../hooks/useChatHydration.js";
+import { useMobilePreviewFlip } from "../../hooks/useMobilePreviewFlip.js";
 import { calcEntryPointUrl } from "@vibes.diy/api-pkg";
 import ChatHeaderContent from "../../components/ChatHeaderContent.js";
 import ChatInterface from "../../components/ChatInterface.js";
@@ -36,13 +38,7 @@ import { notifyRecentVibesChanged, subscribeRecentVibesChanged } from "../../hoo
 import { createPortal } from "react-dom";
 import { toast } from "react-hot-toast";
 import { EditorState, isEditorStateEdit } from "../../types/code-editor.js";
-import {
-  inferCodeViewLanguage,
-  isCodeViewFileCandidate,
-  normalizeCodeViewPath,
-  pickDefaultCodeViewFile,
-  sortCodeViewFiles,
-} from "../../components/ResultPreview/code-view-files.js";
+import { inferCodeViewLanguage, normalizeCodeViewPath } from "../../components/ResultPreview/code-view-files.js";
 
 interface VibeAppContextMenuProps {
   x: number;
@@ -101,64 +97,13 @@ export function Chat({ inConstruction = false }: { inConstruction?: boolean }) {
   const { chatApi, webVars: svcVars, srvVibeSandbox } = useVibesDiy();
   const shareModal = useShareModal({ ownerHandle, appSlug, fsId, chatApi });
   const { isSignedIn } = useAuth();
-  const [isOwner, setIsOwner] = useState(false);
-  const [pendingCount, setPendingCount] = useState(0);
-  const [pendingBump, setPendingBump] = useState(0);
-
-  useEffect(() => {
-    if (!isSignedIn || !ownerHandle) {
-      setIsOwner(false);
-      return;
-    }
-    let cancelled = false;
-    void chatApi.listHandleBindings({}).then((res) => {
-      if (cancelled) return;
-      if (res.isErr()) {
-        setIsOwner(false);
-        return;
-      }
-      setIsOwner(res.Ok().items.some((item) => item.ownerHandle === ownerHandle));
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, [isSignedIn, ownerHandle, chatApi]);
-
-  useEffect(() => {
-    if (!isOwner || !ownerHandle || !appSlug) {
-      setPendingCount(0);
-      return;
-    }
-    let cancelled = false;
-    void chatApi.listRequestGrants({ appSlug, ownerHandle, pager: { limit: 100 } }).then((res) => {
-      if (cancelled || res.isErr()) return;
-      setPendingCount(res.Ok().items.filter((r) => r.state === "pending").length);
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, [isOwner, ownerHandle, appSlug, chatApi, pendingBump]);
-
-  useEffect(() => {
-    if (!isOwner || !ownerHandle || !appSlug) {
-      return;
-    }
-    void chatApi.subscribeRequestGrants({ appSlug, ownerHandle });
-    const unsubscribe = chatApi.onRequestGrant((evt) => {
-      if (evt.grant.ownerHandle === ownerHandle && evt.grant.appSlug === appSlug) {
-        setPendingBump((n) => n + 1);
-      }
-    });
-    return unsubscribe;
-  }, [isOwner, ownerHandle, appSlug, chatApi]);
-
-  const prevShareOpenRef = useRef(shareModal.isOpen);
-  useEffect(() => {
-    if (prevShareOpenRef.current && !shareModal.isOpen) {
-      setPendingBump((n) => n + 1);
-    }
-    prevShareOpenRef.current = shareModal.isOpen;
-  }, [shareModal.isOpen]);
+  const { isOwner, pendingCount } = useChatOwnership({
+    ownerHandle,
+    appSlug,
+    isSignedIn,
+    chatApi,
+    shareModalOpen: shareModal.isOpen,
+  });
 
   const [promptToSend, sendPrompt] = useState<string | null>(null);
   const handleSelectOption = useCallback(
@@ -175,25 +120,6 @@ export function Chat({ inConstruction = false }: { inConstruction?: boolean }) {
   const fsIdRef = useRef<string | undefined>(fsId);
   fsIdRef.current = fsId;
 
-  // Read the local VibeDocument (seeded by the remix route) to show the
-  // "remix of" indicator in the header. Best-effort: if the doc is missing
-  // or malformed we just render the plain title.
-  const [remixOf, setRemixOf] = useState<string | undefined>(undefined);
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      const r = await exception2Result(async () => {
-        const db = fireproof(`vibe-${appSlug}`);
-        return (await db.get("vibe")) as VibeDocument;
-      });
-      if (cancelled) return;
-      if (r.isOk() && r.Ok().remixOf) setRemixOf(r.Ok().remixOf);
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [appSlug]);
-
   const [promptState, dispatch] = useReducer(promptReducer, {
     chat: {} as LLMChatEntry,
     running: false,
@@ -207,6 +133,20 @@ export function Chat({ inConstruction = false }: { inConstruction?: boolean }) {
   });
 
   useBuildCompletionNotifications();
+
+  // Single owner of "navigate to fsId" plus the post-save / first-paint
+  // block-scanning navigation effects (and their guard refs).
+  const { navigateToFsId, onSaveQueued } = useChatNavigation({
+    ownerHandle,
+    appSlug,
+    fsId,
+    promptState,
+    searchParams,
+    navigate,
+  });
+
+  // "remix of" indicator + code-view file-system hydration for the current fsId.
+  const { remixOf } = useChatHydration({ ownerHandle, appSlug, fsId, chatApi, dispatch });
 
   const attachSectionStream = useCallback(
     (chatHandle: LLMChat) => {
@@ -423,74 +363,20 @@ ${rootCssBlock}
     }
   }, [chatApi, ownerHandle, appSlug, srvVibeSandbox]);
 
-  // Hydrate code-view files from the canonical Apps.fileSystem for the
-  // current fsId. The code panel renders from this snapshot (file-system-
-  // primary mode) while chat chunk reconstruction remains secondary context.
-  const hydratedFsIdsRef = useRef<Set<string>>(new Set());
-  useEffect(() => {
-    if (!fsId || !ownerHandle || !appSlug) return;
-    if (hydratedFsIdsRef.current.has(fsId)) return;
-    hydratedFsIdsRef.current.add(fsId);
-    (async () => {
-      const rApp = await chatApi.getAppByFsId({ appSlug, ownerHandle, fsId });
-      if (rApp.isErr()) return;
-      const app = rApp.Ok();
-      const sourceFiles = sortCodeViewFiles(
-        app.fileSystem
-          .filter((file) => isCodeViewFileCandidate(file.fileName, file.mimeType))
-          .map((file) => ({ ...file, fileName: normalizeCodeViewPath(file.fileName) }))
-      );
-      if (sourceFiles.length === 0) return;
-
-      const hydratedFiles = (
-        await Promise.all(
-          sourceFiles.map(async (file): Promise<HydratedCodeViewFile | null> => {
-            const rRes = await exception2Result(() =>
-              fetch(`/assets/cid/?url=${encodeURIComponent(file.assetURI)}&mime=${encodeURIComponent(file.mimeType)}`)
-            );
-            if (rRes.isErr() || !rRes.Ok().ok) return null;
-            const text = await rRes.Ok().text();
-            return {
-              fileName: file.fileName,
-              lang: inferCodeViewLanguage(file.fileName, file.mimeType),
-              code: text.split("\n"),
-              ...(file.entryPoint ? { entryPoint: true } : {}),
-            };
-          })
-        )
-      ).filter((file): file is HydratedCodeViewFile => file !== null);
-
-      if (hydratedFiles.length === 0) return;
-      const sortedHydrated = sortCodeViewFiles(hydratedFiles);
-      dispatch({ type: "setHydratedFileSystem", fsId, files: sortedHydrated });
-
-      // Keep getCode's legacy fallback seeded to the default file for the fsId.
-      const defaultFile = pickDefaultCodeViewFile(sortedHydrated);
-      if (defaultFile) {
-        dispatch({ type: "setHydratedSource", fsId, code: defaultFile.code });
-      }
-    })();
-  }, [fsId, ownerHandle, appSlug, chatApi]);
-
   useEffect(() => {
     if (inConstruction) return;
     if (openingRef.current) {
       if (chat && promptToSend?.trim().length) {
-        const newSearch = new URLSearchParams(searchParams);
         // Default to preview so the user sees the iframe hot-swap as edits
         // stream. Brand-new vibes show a placeholder until end-of-turn
         // autosave creates the first fsId; the iframe then mounts and hot-
         // swap fills in subsequent edits.
-        if (!newSearch.has("view")) {
-          newSearch.set("view", "preview");
-        }
+        //
         // Preserve fsId on follow-ups so PreviewApp keeps the iframe mounted
         // and the hot-swap useEffect has the prior buffer to resolve against.
         // Read fsId from the ref so future autosave-driven fsId changes don't
         // re-trigger this effect with the same promptToSend (loop bug).
-        const currentFsId = fsIdRef.current;
-        const pathname = currentFsId ? `/chat/${ownerHandle}/${appSlug}/${currentFsId}` : `/chat/${ownerHandle}/${appSlug}`;
-        navigate({ pathname, search: newSearch.toString() }, { replace: true });
+        navigateToFsId(fsIdRef.current);
         const sentPrompt = promptToSend;
         // Clear promptToSend BEFORE firing so any re-render of this effect
         // (e.g. searchParams change) sees null and skips the branch.
@@ -537,9 +423,7 @@ ${rootCssBlock}
       if (!fsId) {
         chatApi.getAppByFsId({ appSlug, ownerHandle }).then((rApp) => {
           if (rApp.isOk() && rApp.Ok().fsId) {
-            const sp = new URLSearchParams(searchParams);
-            if (!sp.has("view")) sp.set("view", "preview");
-            navigate({ pathname: `/chat/${ownerHandle}/${appSlug}/${rApp.Ok().fsId}`, search: sp.toString() }, { replace: true });
+            navigateToFsId(rApp.Ok().fsId);
           }
         });
       }
@@ -671,8 +555,6 @@ ${rootCssBlock}
     // }
   }, []);
 
-  const pendingSavePromptIdRef = useRef<string | null>(null);
-
   const handleOnCodeSave = useCallback(() => {
     console.log(`Saving code changes...`, editorState);
     if (!chat) return;
@@ -700,71 +582,13 @@ ${rootCssBlock}
           setEditorState(editorState); // restore unsaved state
         } else {
           toast.success(`Code changes saved`);
-          pendingSavePromptIdRef.current = r.Ok().promptId;
+          onSaveQueued(r.Ok().promptId);
           dispatch({ type: "setInFlightStreamId", streamId: r.Ok().promptId });
           console.log(`[CodeSave] waiting for block.end with promptId: ${r.Ok().promptId}`);
           notifyRecentVibesChanged();
         }
       });
-  }, [editorState, chat]);
-
-  // Navigate to new fsId after save by watching promptState for the block.end matching the save's promptId
-  useEffect(() => {
-    if (!pendingSavePromptIdRef.current) return;
-    const targetPromptId = pendingSavePromptIdRef.current;
-    for (const block of [...promptState.blocks].reverse()) {
-      for (const msg of block.msgs) {
-        if (isBlockEnd(msg) && msg.streamId === targetPromptId && msg.fsRef) {
-          pendingSavePromptIdRef.current = null;
-          const sp = new URLSearchParams(searchParams);
-          if (!sp.has("view")) sp.set("view", "preview");
-          console.log(`[CodeSave] navigating to new fsId: ${msg.fsRef.fsId} (promptId: ${targetPromptId})`);
-          navigate({ pathname: `/chat/${ownerHandle}/${appSlug}/${msg.fsRef.fsId}`, search: sp.toString() }, { replace: true });
-          return;
-        }
-      }
-    }
-  }, [promptState.blocks, searchParams, navigate, ownerHandle, appSlug, fsId]);
-
-  // Clear pending save when switching chats
-  useEffect(() => {
-    pendingSavePromptIdRef.current = null;
-  }, [ownerHandle, appSlug]);
-
-  // Brand-new app first-paint: when the server persists the first (create-only)
-  // scaffold block it emits block.end with fsRef.fsId. If we still have no fsId
-  // in the URL, navigate to it so the iframe can load immediately rather than
-  // waiting for end-of-turn autosave (which only fires for SEARCH/REPLACE
-  // turns). The server-side resolver merges and persists App.jsx on each LLM
-  // turn's block.end and stamps fsRef on that block, so at end-of-stream we
-  // point the URL at the most recent fsRef.
-  //
-  // Only fires on a running:true→false transition. Without that gate, the
-  // effect would run for every promptState.blocks mutation — including the
-  // initial server-replay of an old chat — and yank the user off whatever
-  // historical fsId they intentionally opened.
-  const lastNavigatedFsIdRef = useRef<string | undefined>(fsId);
-  const navWasRunningRef = useRef(false);
-  useEffect(() => {
-    const justEnded = navWasRunningRef.current && !promptState.running;
-    navWasRunningRef.current = promptState.running;
-    if (!justEnded) return;
-    for (let i = promptState.blocks.length - 1; i >= 0; i -= 1) {
-      const block = promptState.blocks[i];
-      for (const msg of block.msgs) {
-        if (isBlockEnd(msg) && msg.fsRef) {
-          const newFsId = msg.fsRef.fsId;
-          if (newFsId !== lastNavigatedFsIdRef.current) {
-            lastNavigatedFsIdRef.current = newFsId;
-            const sp = new URLSearchParams(searchParams);
-            if (!sp.has("view")) sp.set("view", "preview");
-            navigate({ pathname: `/chat/${ownerHandle}/${appSlug}/${newFsId}`, search: sp.toString() }, { replace: true });
-          }
-          return;
-        }
-      }
-    }
-  }, [promptState.running, promptState.blocks, searchParams, navigate, ownerHandle, appSlug]);
+  }, [editorState, chat, onSaveQueued]);
 
   // Clear the chat input when a stream ends so a new prompt starts blank.
   useEffect(() => {
@@ -774,28 +598,9 @@ ${rootCssBlock}
     }
   }, [promptState.running, inConstruction]);
 
-  // On mobile (chat and preview not visible simultaneously), stay on chat
-  // view while the LLM is planning so the user can watch the explanation
-  // stream in, then auto-flip to preview when the FIRST code block of the
-  // current stream begins. Resets per running cycle so follow-up prompts
-  // also see the chat→preview transition (hasCode would stay true forever
-  // once first set, and miss the second turn's code-begin entirely).
-  const sawCodeBeginThisRunRef = useRef(false);
-  useEffect(() => {
-    if (inConstruction) return;
-    if (!promptState.running) {
-      sawCodeBeginThisRunRef.current = false;
-      return;
-    }
-    if (sawCodeBeginThisRunRef.current) return;
-    const last = promptState.blocks[promptState.blocks.length - 1];
-    if (last === undefined) return;
-    if (!last.msgs.some((m) => isCodeBegin(m))) return;
-    sawCodeBeginThisRunRef.current = true;
-    if (isMobileViewport()) {
-      setMobilePreviewShown(true);
-    }
-  }, [promptState.running, promptState.blocks, inConstruction]);
+  // On mobile, auto-flip from chat to preview when the first code block of the
+  // current stream begins (see useMobilePreviewFlip).
+  useMobilePreviewFlip({ promptState, inConstruction, setMobilePreviewShown });
 
   // console.log(`Rendering Chat with state:`, { currentView, editorState: editorState.state });
 
