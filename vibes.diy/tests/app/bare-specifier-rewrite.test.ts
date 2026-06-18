@@ -39,9 +39,9 @@ describe("rewriteBareSpecifiers", () => {
   });
 
   it("preserves query and hash when host-swapping unpkg URLs", () => {
-    const code = `import x from "https://unpkg.com/pkg@1.0.0/dist/x.js?module#frag";`;
+    const code = `import x from "https://unpkg.com/pkg@1.0.0/dist/x.js?v=2#frag";`;
     const out = rewriteBareSpecifiers(code, {});
-    expect(out).toContain('from "https://esm.sh/pkg@1.0.0/dist/x.js?module#frag"');
+    expect(out).toContain('from "https://esm.sh/pkg@1.0.0/dist/x.js?v=2#frag"');
   });
 
   it("leaves CORS-friendly CDN URLs (jsdelivr, esm.sh) untouched", () => {
