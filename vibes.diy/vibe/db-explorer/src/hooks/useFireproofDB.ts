@@ -4,7 +4,6 @@ import { useFireproof, type DocWithId } from "@vibes.diy/vibe-runtime";
 interface UseFireproofDBResult {
   docs: DocWithId[];
   docById: Map<string, DocWithId>;
-  loading: boolean;
   totalDocs: number;
   putDoc: (doc: Record<string, unknown>) => Promise<void>;
   deleteDoc: (id: string) => Promise<void>;
@@ -15,7 +14,6 @@ interface UseFireproofDBResult {
 export function useFireproofDB(dbName: string): UseFireproofDBResult {
   const { database, useLiveQuery } = useFireproof(dbName);
   const { docs: allDocs } = useLiveQuery("_id");
-  const loading = false;
 
   const dbRef = useRef(database);
   dbRef.current = database;
@@ -86,7 +84,6 @@ export function useFireproofDB(dbName: string): UseFireproofDBResult {
   return {
     docs: allDocs,
     docById,
-    loading,
     totalDocs,
     putDoc,
     deleteDoc,
