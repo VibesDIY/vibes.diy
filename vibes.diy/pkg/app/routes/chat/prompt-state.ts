@@ -1,6 +1,6 @@
 import { SetURLSearchParams } from "react-router";
 import { type } from "arktype";
-import { isPromptBlockBegin, isPromptBlockEnd, isPromptReq, LLMChatEntry, PromptAndBlockMsgs } from "@vibes.diy/api-types";
+import { isPromptBlockBegin, isPromptBlockEnd, isPromptError, isPromptReq, LLMChatEntry, PromptAndBlockMsgs } from "@vibes.diy/api-types";
 import { isCodeBegin } from "@vibes.diy/call-ai-v2";
 import type { VibesTheme } from "@vibes.diy/prompts";
 
@@ -317,6 +317,26 @@ export function promptReducer(state: PromptState, block: PromptAction): PromptSt
         ...state,
         running: false,
         ...(isInFlight ? { connection: "live" as const, inFlightStreamId: undefined } : {}),
+      };
+    }
+    case isPromptError(block): {
+      // A generation that errors is terminal, exactly like block-end: flip
+      // `running` off so the input re-enables, and (when this is the in-flight
+      // turn) release it so the reconnect loop settles back to "live". The
+      // server persists prompt.error on any thrown generation error, so this
+      // also recovers chats already stuck in "Writing code..." — a prompt.error
+      // replayed after an orphaned block-begin would otherwise leave `running`
+      // true forever (#2057). The error block is still appended so MessageList
+      // renders it (with its retry affordance).
+      const isInFlight = state.inFlightStreamId !== undefined && block.streamId === state.inFlightStreamId;
+      const connectionPatch = isInFlight ? { connection: "live" as const, inFlightStreamId: undefined } : {};
+      if (!state.current) return { ...state, running: false, ...connectionPatch };
+      return {
+        ...state,
+        running: false,
+        ...connectionPatch,
+        current: { ...state.current, msgs: [...state.current.msgs, block] },
+        blocks: state.blocks.map((b, i) => (i === state.blocks.length - 1 ? { ...b, msgs: [...b.msgs, block] } : b)),
       };
     }
     case isCodeBegin(block):
