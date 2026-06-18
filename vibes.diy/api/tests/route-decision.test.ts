@@ -187,6 +187,21 @@ describe("worker routeDecision", () => {
     expect(decide({ pathname: "/vibe/alice/myapp" })).toBe("ssr");
     expect(decide({ pathname: "/vibe/og/satie/more" })).toBe("ssr");
   });
+
+  it("/vibe/<user>/<slug>/ (trailing slash) → vibe-trailing-slash-redirect (#1428)", () => {
+    expect(decide({ pathname: "/vibe/alice/myapp/" })).toBe("vibe-trailing-slash-redirect");
+    expect(decide({ pathname: "/vibe/og/satie-trumpet-8293/" })).toBe("vibe-trailing-slash-redirect");
+    expect(decide({ pathname: "/vibe/alice/myapp/some-fs-id/" })).toBe("vibe-trailing-slash-redirect");
+  });
+
+  it("regression: canonical slash-free /vibe/<user>/<slug> stays on SSR (no redirect loop)", () => {
+    expect(decide({ pathname: "/vibe/alice/myapp" })).toBe("ssr");
+    expect(decide({ pathname: "/vibe/alice/myapp/some-fs-id" })).toBe("ssr");
+  });
+
+  it("/vibe/ alone (nothing to strip) → ssr, not a trailing-slash redirect", () => {
+    expect(decide({ pathname: "/vibe/" })).toBe("ssr");
+  });
 });
 
 describe("worker routeDecision — PR preview base (pr-<N>.vibespreview.dev)", () => {

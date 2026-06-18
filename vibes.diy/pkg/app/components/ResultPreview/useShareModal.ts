@@ -139,7 +139,7 @@ export function useShareModal({ ownerHandle, appSlug, fsId, chatApi }: UseShareM
           if (app.mode === "production" && app.fsId) {
             setIsPublished(true);
             setProductionFsId(app.fsId);
-            setPublishedUrl(`${window.location.origin}/vibe/${ownerHandle}/${appSlug}/`);
+            setPublishedUrl(`${window.location.origin}/vibe/${ownerHandle}/${appSlug}`);
           } else {
             setIsPublished(false);
             setProductionFsId(undefined);
@@ -208,7 +208,7 @@ export function useShareModal({ ownerHandle, appSlug, fsId, chatApi }: UseShareM
           setAutoAcceptRoleState(autoJoin ? role : undefined);
         }
 
-        const url = `${window.location.origin}/vibe/${ownerHandle}/${appSlug}/`;
+        const url = `${window.location.origin}/vibe/${ownerHandle}/${appSlug}`;
         setPublishedUrl(url);
         setProductionFsId(fsId);
         setIsPublished(true);
