@@ -56,6 +56,16 @@ runs:
           exit 1
         fi
         echo "Using Playwright image mcr.microsoft.com/playwright:v${PLAYWRIGHT_VERSION}-noble"
+        # The vitest globalSetup shells out to `pnpm exec drizzle-kit` from inside
+        # the container, but the Playwright image ships only node/npm — so the
+        # suite died at setup with `pnpm: command not found` (exit 127). The
+        # host's pnpm doesn't cross into docker; activate a matching pnpm via
+        # corepack inside the container. See #2426.
+        PNPM_VERSION=$(pnpm --version)
+        if [ -z "$PNPM_VERSION" ]; then
+          echo "::error title=pnpm version unresolved::Could not determine the host pnpm version to activate inside the container. See #2426."
+          exit 1
+        fi
         # No more `|| true`: the suite's exit code is captured, never discarded.
         # Timeout raised from 120s (which SIGKILLed the ~240s suite mid-run) to
         # 30m so the suite actually runs to completion. See #2426.
@@ -64,14 +74,18 @@ runs:
           -v $(pwd):/work \
           -w /work \
           mcr.microsoft.com/playwright:v${PLAYWRIGHT_VERSION}-noble \
-          bash -c "npm run test" 2>&1 | tee test-output.log
+          bash -c "corepack enable && corepack prepare pnpm@${PNPM_VERSION} --activate && npm run test" 2>&1 | tee test-output.log
         TEST_EXIT=${PIPESTATUS[0]}
         set -e
 
         # Surface the result regardless of gating mode, so regressions are
-        # visible on the PR even while the suite is non-blocking.
-        TOTALS=$(grep -E '^[[:space:]]*(Test Files|Tests)[[:space:]]' test-output.log | tail -n 4 || true)
-        FAILED=$(grep -E '(^|[[:space:]])FAIL ' test-output.log || true)
+        # visible on the PR even while the suite is non-blocking. vitest's
+        # summary is ANSI-colored, so strip escape codes before parsing —
+        # otherwise the `^…` anchor never matches and a real test failure would
+        # be misread as a harness failure (empty TOTALS) and wrongly block.
+        sed -r 's/\x1b\[[0-9;]*[a-zA-Z]//g' test-output.log > test-output.clean.log
+        TOTALS=$(grep -E '^[[:space:]]*(Test Files|Tests)[[:space:]]' test-output.clean.log | tail -n 4 || true)
+        FAILED=$(grep -E '(^|[[:space:]])FAIL ' test-output.clean.log || true)
         {
           echo "## Test suite result"
           echo ""
