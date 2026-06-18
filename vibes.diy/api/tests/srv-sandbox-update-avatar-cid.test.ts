@@ -23,12 +23,14 @@ function fakeMessageEvent(data: unknown, origin: string, source: Window): Messag
   return { data, origin, source } as unknown as MessageEvent;
 }
 
-function setupSandbox(opts: { confirmAvatarUpdate?: (req: { cid: string; mimeType?: string }) => Promise<boolean> }): {
+function setupSandbox(opts: {
+  confirmAvatarUpdate?: (req: { cid: string; mimeType?: string; getURL?: string }) => Promise<boolean>;
+}): {
   sandbox: vibesDiySrvSandbox;
   captured: CapturedMsg[];
   iframe: Window;
   ensureCalls: { settings: unknown[] }[];
-  confirmCalls: { cid: string; mimeType?: string }[];
+  confirmCalls: { cid: string; mimeType?: string; getURL?: string }[];
 } {
   const captured: CapturedMsg[] = [];
   const iframe = {
@@ -36,7 +38,7 @@ function setupSandbox(opts: { confirmAvatarUpdate?: (req: { cid: string; mimeTyp
   } as unknown as Window;
 
   const ensureCalls: { settings: unknown[] }[] = [];
-  const confirmCalls: { cid: string; mimeType?: string }[] = [];
+  const confirmCalls: { cid: string; mimeType?: string; getURL?: string }[] = [];
 
   const fakeApi = {
     onDocChanged: () => () => {
@@ -70,7 +72,7 @@ function setupSandbox(opts: { confirmAvatarUpdate?: (req: { cid: string; mimeTyp
     },
     ...(opts.confirmAvatarUpdate
       ? {
-          confirmAvatarUpdate: ((decide) => (req: { cid: string; mimeType?: string }) => {
+          confirmAvatarUpdate: ((decide) => (req: { cid: string; mimeType?: string; getURL?: string }) => {
             confirmCalls.push(req);
             return decide(req);
           })(opts.confirmAvatarUpdate),
@@ -104,6 +106,23 @@ describe("vibeUpdateAvatarCid host handler", () => {
     expect(ensureCalls[0].settings).toEqual([{ type: "profile", avatarCid: "bafycid1" }]);
     const msg = captured.find((c) => (c.data as { type?: string }).type === "vibe.res.updateAvatarCid");
     expect(msg?.data).toMatchObject({ tid: "t1", status: "ok" });
+  });
+
+  it("forwards the host-recorded getURL to the confirm gate", async () => {
+    const { sandbox, iframe, ensureCalls, confirmCalls } = setupSandbox({
+      confirmAvatarUpdate: async () => true,
+    });
+
+    // Simulate the put-asset proxy having learned this CID's storage URI from
+    // the (trusted) server response.
+    sandbox.recordAssetGetURL("bafycid1", "fp:store/bafycid1");
+
+    postUpdate(sandbox, iframe, { mimeType: "image/png" });
+    await new Promise((r) => setTimeout(r, 50));
+
+    expect(confirmCalls).toEqual([{ cid: "bafycid1", mimeType: "image/png", getURL: "fp:store/bafycid1" }]);
+    // The persisted CID is unaffected by the preview URI.
+    expect(ensureCalls[0].settings).toEqual([{ type: "profile", avatarCid: "bafycid1" }]);
   });
 
   it("skips the write and responds cancelled when the confirm gate declines", async () => {

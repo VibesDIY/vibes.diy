@@ -484,10 +484,10 @@ function ProfileCard() {
     const body = (await res.json()) as { cid: string; getURL: string; size: number; uploadId: string };
     const cid = body.cid;
 
-    // Same preview/confirm gate the sandbox path uses (#1968) — the modal
-    // previews the asset addressed by `cid` and the user approves before it's
-    // written.
-    const confirmed = await avatarConfirmController.request({ cid, mimeType: file.type });
+    // Same preview/confirm gate the sandbox path uses (#1968). The getURL comes
+    // straight from this upload's server response, so the modal previews the
+    // exact bytes that will be persisted — no sandbox-supplied URL involved.
+    const confirmed = await avatarConfirmController.request({ cid, mimeType: file.type, getURL: body.getURL });
     if (!confirmed) return;
 
     const next = { ...profile, avatarCid: cid };

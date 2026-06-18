@@ -13,10 +13,12 @@ import { Button } from "./ui/button.js";
 // "Set as avatar" to approve; dismissing — button, backdrop, or Escape —
 // cancels the write.
 //
-// SECURITY: the preview is derived from the request's `cid` via the
-// content-addressed asset endpoint — the same CID the host persists on
-// confirm. A sandbox cannot supply a preview URL of its own, so it can't show
-// one image while a different one gets saved (bait-and-switch on consent).
+// SECURITY: the preview is derived from the request's `getURL` — the storage
+// URI the host itself recorded when it proxied the upload for the CID it will
+// persist (#2418). A sandbox never supplies this URL, so it can't show one
+// image while a different one gets saved (bait-and-switch on consent). When the
+// host has no recorded URI for the CID, no preview is shown rather than a
+// sandbox-controlled one.
 export function AvatarConfirmModal(): React.ReactElement | null {
   const [pending, setPending] = useState<PendingAvatarConfirm | undefined>(() => avatarConfirmController.current);
   const [brokenPreview, setBrokenPreview] = useState(false);
@@ -39,11 +41,14 @@ export function AvatarConfirmModal(): React.ReactElement | null {
 
   if (!pending) return null;
 
-  // Always the asset addressed by the CID we'll persist — never a value the
-  // sandbox controls. mimeType only labels the Content-Type; the bytes are
-  // fixed by the CID.
-  const previewUrl = cidAssetUrl(pending.cid, pending.mimeType ?? "application/octet-stream", getAppHostBaseUrl());
-  const hasPreview = !brokenPreview;
+  // Preview the host-recorded storage URI for the CID we'll persist — never a
+  // value the sandbox controls. mimeType only labels the Content-Type. When the
+  // host has no URI for this CID (`getURL` absent) we show no image rather than
+  // guessing, so the consent UI can't be tricked.
+  const previewUrl = pending.getURL
+    ? cidAssetUrl(pending.getURL, pending.mimeType ?? "application/octet-stream", getAppHostBaseUrl())
+    : undefined;
+  const hasPreview = previewUrl !== undefined && !brokenPreview;
 
   return createPortal(
     <div

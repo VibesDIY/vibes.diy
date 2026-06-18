@@ -108,13 +108,20 @@ interface VibesDiySrvSandboxArgs {
   openSignIn?: () => void;
   // Host-side consent gate for sandbox-initiated avatar writes. Called with
   // the proposed CID (and an optional mime hint) BEFORE ensureUserSettings
-  // runs; the host shows a preview/confirm modal — rendering the image it
-  // derives from `cid`, never a sandbox-supplied URL — and resolves `true`
-  // only when the user explicitly approves. Resolving `false` cancels the
-  // write. Optional: if absent the write proceeds (server/test paths that
-  // have no UI); the browser provider always wires it, so production gets the
-  // gate. See #1968.
-  confirmAvatarUpdate?: (req: { cid: string; mimeType?: string }) => Promise<boolean>;
+  // runs; the host shows a preview/confirm modal and resolves `true` only when
+  // the user explicitly approves. Resolving `false` cancels the write.
+  //
+  // `getURL` is the storage URI the host itself learned when it proxied the
+  // `putAsset` that produced this CID — server-supplied, never sandbox-
+  // supplied — so the modal can preview the exact bytes that will be persisted
+  // without trusting a value the vibe could forge (the #2418 bait-and-switch).
+  // It is absent when the CID wasn't uploaded through this host session, in
+  // which case the modal shows "preview unavailable" but the consent gate and
+  // the persisted CID are unaffected.
+  //
+  // Optional: if absent the write proceeds (server/test paths that have no UI);
+  // the browser provider always wires it, so production gets the gate. See #1968.
+  confirmAvatarUpdate?: (req: { cid: string; mimeType?: string; getURL?: string }) => Promise<boolean>;
   // Stage C: hook the asset-host cookie bridge into the iframe boot
   // handshake. Called BEFORE we post vibe.evt.runtime.ack — the iframe
   // gates every RPC on that ack, so any meta.url the iframe ever sees
@@ -734,6 +741,11 @@ function vibePutAsset(sandbox: vibesDiySrvSandbox): EventoHandler {
           return Result.Ok(EventoResult.Stop);
         }
         const body = (await res.json()) as { cid: string; getURL: string; size: number; uploadId: string };
+        // Remember the server-supplied storage URI for this CID so a later
+        // avatar-confirm gate can preview the exact bytes without trusting a
+        // sandbox-supplied URL (#2418). The getURL here came from the put-asset
+        // response, not the iframe.
+        sandbox.recordAssetGetURL(body.cid, body.getURL);
         await ctx.send.send(ctx, {
           tid,
           type: "vibe.res.putAsset",
@@ -810,12 +822,22 @@ function vibeUpdateAvatarCid(sandbox: vibesDiySrvSandbox): EventoHandler {
       const { tid, cid, mimeType } = ctx.validated;
 
       // Host-side consent gate (#1968): a sandbox can't silently overwrite the
-      // viewer's avatar. The provider shows a preview/confirm modal — previewing
-      // the asset derived from `cid` — and only an explicit approval lets the
-      // write through. No handler (server/test paths with no UI) proceeds,
-      // matching the optional openSignIn pattern.
+      // viewer's avatar. The provider shows a preview/confirm modal and only an
+      // explicit approval lets the write through. No handler (server/test paths
+      // with no UI) proceeds, matching the optional openSignIn pattern.
+      //
+      // The preview is driven by the storage URI the host recorded when it
+      // proxied the upload for this CID (server-supplied, #2418) — never a value
+      // the vibe passed in. If the CID wasn't uploaded through this host session
+      // the getURL is absent and the modal shows "preview unavailable"; the
+      // consent gate and the persisted CID are unchanged.
       if (sandbox.args.confirmAvatarUpdate) {
-        const confirmed = await sandbox.args.confirmAvatarUpdate({ cid, ...(mimeType ? { mimeType } : {}) });
+        const getURL = sandbox.getAssetGetURL(cid);
+        const confirmed = await sandbox.args.confirmAvatarUpdate({
+          cid,
+          ...(mimeType ? { mimeType } : {}),
+          ...(getURL ? { getURL } : {}),
+        });
         if (!confirmed) {
           await ctx.send.send(ctx, {
             tid,
@@ -882,6 +904,16 @@ export class vibesDiySrvSandbox implements Disposable {
   // Captured iframe postMessage target — set on first message from iframe
   private iframeSource: Window | undefined;
   private iframeOrigin: string | undefined;
+
+  // cid → storage getURL for assets this host uploaded on the vibe's behalf.
+  // Populated from the (server-trusted) put-asset response in vibePutAsset and
+  // read by the avatar-confirm gate so the modal can preview the exact bytes a
+  // CID resolves to without trusting a sandbox-supplied URL (#2418). Bounded so
+  // a long-lived session can't grow it without limit; eviction is FIFO (Map
+  // preserves insertion order) and only ever drops stale entries — a missing
+  // entry just means "no preview", never an incorrect one.
+  private readonly assetGetURLByCid = new Map<string, string>();
+  private static readonly ASSET_GETURL_CACHE_MAX = 64;
   // Latest source we've ever attempted to push. Replayed on every runtime.ready
   // so the iframe is rehydrated whether the ready fires from a brand-new boot,
   // an HMR reload, or a cross-vibe navigation that destroyed the previous
@@ -920,6 +952,25 @@ export class vibesDiySrvSandbox implements Disposable {
         this.forwardDocChangedToIframe(ownerHandle, appSlug, dbName, docId);
       });
     }
+  }
+
+  // Record the server-supplied storage URI for a CID this host just uploaded.
+  // Re-recording a CID refreshes its position so it survives eviction; once the
+  // cache is full the oldest entry is dropped.
+  recordAssetGetURL(cid: string, getURL: string): void {
+    if (this.assetGetURLByCid.has(cid)) this.assetGetURLByCid.delete(cid);
+    this.assetGetURLByCid.set(cid, getURL);
+    if (this.assetGetURLByCid.size > vibesDiySrvSandbox.ASSET_GETURL_CACHE_MAX) {
+      const oldest = this.assetGetURLByCid.keys().next().value;
+      if (oldest !== undefined) this.assetGetURLByCid.delete(oldest);
+    }
+  }
+
+  // The recorded storage URI for a CID, or undefined if this host never
+  // uploaded it (e.g. a CID from a prior session). Callers must treat undefined
+  // as "no preview", not as an error.
+  getAssetGetURL(cid: string): string | undefined {
+    return this.assetGetURLByCid.get(cid);
   }
 
   readonly handleMessage = async (event: MessageEvent): Promise<void> => {
