@@ -21,3 +21,18 @@ Not a regression in the changes under test.
 - A test whose failure mode matches your code change (e.g., you touched the resolver and resolver tests fail). Even if it's "usually" flaky, the change might be real.
 
 The issue exists so we can ignore known flakes during day-to-day work _and_ periodically batch-fix them with full context.
+
+## CI test gating switch (#2426)
+
+The `test` step in [`actions/base/action.yaml`](actions/base/action.yaml) used to end in `|| true` with a 120s `timeout`, so the ~240s suite was SIGKILLed mid-run and any failure was silently swallowed — `compile_test` was a "does the container start" check, not a test gate ([#2426](https://github.com/VibesDIY/vibes.diy/issues/2426)).
+
+It now:
+
+- runs the suite to completion (timeout raised to 30m),
+- captures the real exit code (no `|| true`), and
+- **surfaces** the result into the GitHub job summary plus a `::warning::` annotation on every run.
+
+Gating is controlled by one env var, `VIBES_CI_GATE_TESTS`, in that step:
+
+- `"false"` (current) — failures are surfaced loudly but do **not** fail the job. Keeps PRs unblocked while the deterministic failures in [#2425](https://github.com/VibesDIY/vibes.diy/issues/2425) are outstanding.
+- `"true"` — test failures fail the job. **Flip to this once #2425 is closed** — that is the final close-out of #2426.
