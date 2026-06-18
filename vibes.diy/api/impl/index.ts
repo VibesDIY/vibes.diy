@@ -30,6 +30,9 @@ import {
   ReqEnsureUserSettings,
   ResEnsureUserSettings,
   isResEnsureUserSettings,
+  ReqEnsureHandleAvatar,
+  ResEnsureHandleAvatar,
+  isResEnsureHandleAvatar,
   ReqListApplicationChats,
   ResListApplicationChats,
   isResListApplicationChats,
@@ -438,6 +441,15 @@ export class VibesDiyApi implements VibesDiyApiIface<{
       { ...req, type: "vibes.diy.req-ensure-user-settings" },
       {
         resMatch: isResEnsureUserSettings,
+      }
+    );
+  }
+
+  ensureHandleAvatar(req: Req<ReqEnsureHandleAvatar>): Promise<Result<ResEnsureHandleAvatar, VibesDiyError>> {
+    return this.request(
+      { ...req, type: "vibes.diy.req-ensure-handle-avatar" },
+      {
+        resMatch: isResEnsureHandleAvatar,
       }
     );
   }
