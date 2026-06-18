@@ -34,13 +34,19 @@ export default function HomePage() {
   const [isSidebarVisible, setIsSidebarVisible] = useState(false);
   const closeSidebar = useCallback(() => setIsSidebarVisible(false), []);
   const { isSignedIn, isLoaded } = useAuth();
+  const autoOpenDecidedRef = useRef(false);
 
-  // Auto-open the slide-out only for signed-out visitors as a sign-in nudge.
-  // Wait for Clerk to resolve (isLoaded) before deciding so we don't pop it
-  // open during hydration and leave it open once auth settles to signed-in
-  // (#1892). Authenticated sessions never auto-open; they open it explicitly.
+  // Auto-open the slide-out only for signed-out visitors as a sign-in nudge,
+  // and only once — the first time Clerk resolves auth (isLoaded). Waiting for
+  // isLoaded avoids popping it open during hydration / leaving it open once
+  // auth settles to signed-in (#1892). Deciding only once means a later auth
+  // transition — e.g. an authenticated user clicking Logout, which flips
+  // isSignedIn true→false — does NOT re-trigger the timer and reopen the panel
+  // the user just closed. Authenticated sessions never auto-open.
   useEffect(() => {
-    if (!isLoaded || isSignedIn) return;
+    if (!isLoaded || autoOpenDecidedRef.current) return;
+    autoOpenDecidedRef.current = true;
+    if (isSignedIn) return;
     const t = setTimeout(() => setIsSidebarVisible(true), 1000);
     return () => clearTimeout(t);
   }, [isLoaded, isSignedIn]);
