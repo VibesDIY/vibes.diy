@@ -29,6 +29,13 @@ function clerkFrontendHostFromKey(key: string | undefined): string | undefined {
   return rDecoded.Ok().replace(/\$+$/, "") || undefined;
 }
 
+// Default page metadata. React Router falls back to the nearest parent route's
+// meta when a leaf route doesn't export its own, so this guarantees every page
+// has a non-empty <title> even if a route forgets to set one.
+export function meta() {
+  return [{ title: "Vibes DIY" }, { name: "description", content: "Describe your vibe to make it a shareable app." }];
+}
+
 // Loader for root route
 export async function loader(loaderCtx: { context: { vibeDiyAppParams: VibesFPApiParameters } }) {
   // const env = await fetch("/api/clientEnv")
