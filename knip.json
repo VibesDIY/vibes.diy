@@ -3,13 +3,11 @@
   "ignore": [
     "**/*.d.ts",
     "**/notes/**",
-    "vibesbox/**",
     "claude-browse-vibes/**",
     "dist/**",
     "build/**",
     ".netlify/**",
-    ".react-router/**",
-    "call-ai/tests-new/**"
+    ".react-router/**"
   ],
   "ignoreDependencies": ["prettier-plugin-tailwindcss"],
   "ignoreWorkspaces": ["use-vibes/examples/**"]
