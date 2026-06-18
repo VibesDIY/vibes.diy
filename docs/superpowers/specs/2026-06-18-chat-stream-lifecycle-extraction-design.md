@@ -2,7 +2,7 @@
 
 **Date:** 2026-06-18
 **Scope:** `vibes.diy/pkg/app/routes/chat/chat.$ownerHandle.$appSlug.tsx` — the open-chat / fire-prompt effect and its surrounding stream-lifecycle state.
-**Status:** Draft — open questions for review (see "Questions for review"). Not yet ready for an implementation plan.
+**Status:** **Approved** — all five review questions resolved (see "Resolved decisions"). Implementation plan: `docs/superpowers/plans/2026-06-18-chat-stream-lifecycle-extraction.md`.
 **Parent:** #2015 (chat god-component decomposition). Follow-up to PR #2420, which extracted `useChatNavigation` / `useChatOwnership` / `useChatHydration` / `useMobilePreviewFlip` and deliberately left this cluster for a dedicated PR.
 
 ## Problem
@@ -107,6 +107,18 @@ Assert invariants 1–6. Mirror the mutation-testing discipline used on `ChatNav
 3. **The self-referential effect.** Preserve the single open-or-fire effect with its exact `[…, chat, …, promptToSend]` dep array verbatim (lowest risk) — confirming we do **not** split it into separate open/fire effects in this PR? (Splitting is cleaner but a behavior change; I'd defer it.)
 4. **Chat test double.** Is there an existing fake/mocked `LLMChat` in the test suite to reuse, or should this PR introduce one (and where should it live so future chat-route tests share it)?
 5. **Sequencing vs. #1972/#1842 (and the cleanup leak).** Confirm this PR stays strictly behavior-preserving and the nav-flash fix lands as the immediately-following PR on top of these tests? And the unmount cleanup leak (invariant 6) — fold it into that follow-up, give it its own tiny PR, or leave it as documented known-behavior for now?
+
+## Resolved decisions
+
+Reviewed by `@CharlieHelps` (2026-06-18). All five questions settled:
+
+1. **Hook boundary → consolidated `useChatSession`.** It owns the open/fire lifecycle + loop-guard refs + reconnect/watchdog + the shared `attachSectionStream` / `refreshAppSettings` callbacks. Blast radius is controlled by landing characterization tests first, then an extraction with no intended behavior change.
+2. **`chat` ownership → hook-internal.** `chat`/`setChat` move inside the hook; it returns `chat` (a small save-facing facade is acceptable) for `handleOnCodeSave`. Keeping `chat` in the route just to pass `setChat` would leave lifecycle coupling split.
+3. **Self-referential effect → preserve verbatim.** Keep one open-or-fire effect with the same dep shape `[ownerHandle, appSlug, chat, openingRef, chatApi, promptToSend]`. Do not split open/fire until after the extraction has stabilized.
+4. **Chat test double → introduce a shared helper.** No reusable `LLMChat` fake exists in `vibes.diy/tests/app` yet (only ad hoc doubles in `useReconnectLoop.test.tsx` and `api/tests/srv-sandbox-img-gen.test.ts`). New home: `vibes.diy/tests/app/helpers/makeFakeLLMChat.ts` so future chat-route tests share one shape.
+5. **Sequencing → strictly behavior-preserving here; #1972/#1842 fix is the immediate next PR** built on top of these tests. The unmount cleanup leak (invariant 6) rides with that follow-up.
+
+Gating (per review): **(a)** tests for the 6 invariants → **(b)** extraction-only commit → **(c)** follow-up bugfix PR.
 
 ## Risk & rollout
 
