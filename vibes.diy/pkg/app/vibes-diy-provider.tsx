@@ -218,13 +218,11 @@ function LiveCycleVibesDiyProvider({ children, webVars }: { children: React.Reac
           // the cookie's already in the jar.
           void ensureAssetSession({ getToken, hostnameBase });
         }
-        if (clerk.isSignedIn) {
-          // Auto-subscribe this WS shard to the user's notification stream.
-          // Fire-and-forget; reconnect loop will retry on connection failure.
-          void realCtx.chatApi.subscribeUserNotifications({}).catch((_e: unknown) => {
-            /* best-effort — reconnect loop will retry */
-          });
-        }
+        // Note: the user-notification subscription is owned by
+        // useBuildCompletionNotifications (mounted in the auth layout), which
+        // subscribes whichever connection the current page already has —
+        // preferring vibeApi (AppSessions) so we don't open a heavier chatApi
+        // socket just for notifications when an app connection exists.
       }
     });
     realCtx.getToken = getToken;
