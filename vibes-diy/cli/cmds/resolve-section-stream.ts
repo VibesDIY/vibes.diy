@@ -133,9 +133,14 @@ export function resolveSectionStream(opts: ResolveSectionStreamOpts): Promise<Re
     // Authoritative source is `fs.turn.end`. If it never fired (abnormal end),
     // fall back to the recovered snapshot map so already-resolved files aren't
     // thrown away — the difference between "no files" and a deployable app
-    // when a gpt-5-style turn disconnects late (#2048).
+    // when a gpt-5-style turn disconnects late (#2048). But only when at least
+    // one snapshot actually landed: with zero snapshots the recovered map is
+    // just the unchanged seed, and returning it would make `edit` push a
+    // byte-identical app while claiming to have "recovered" it. With no
+    // snapshots the fallback is empty so callers hit the no-files path (which
+    // surfaces any `prompt.error`) instead.
     return {
-      files: turnEndSeen ? files : recovered,
+      files: turnEndSeen ? files : snapshotCount > 0 ? recovered : {},
       errors,
       snapshotCount,
       applyErrorCount,

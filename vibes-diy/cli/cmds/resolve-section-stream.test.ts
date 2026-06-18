@@ -433,6 +433,55 @@ describe("resolveSectionStream", () => {
     expect(ok.promptErrors).toEqual(["Upstream connection closed mid-stream"]);
   });
 
+  it("does not recover seed files when an abnormal end produced zero snapshots (#2442 review)", async () => {
+    // edit seeds the resolver from disk. If the provider disconnects before any
+    // completed code block (0 snapshots, no fs.turn.end), the only thing in the
+    // recovered map is the unchanged seed — returning it would push a
+    // byte-identical app while claiming recovery. The abnormal-end-with-no-code
+    // case must surface as empty so callers hit the no-files/prompt.error path.
+    const seed = new Map([
+      ["App.jsx", "export default () => <h1>unchanged</h1>;"],
+      ["Helpers.jsx", "// untouched helper"],
+    ]);
+    const stream = new ReadableStream<SectionEvent>({
+      start(controller) {
+        controller.enqueue({
+          type: "vibes.diy.section-event",
+          chatId: "chat-1",
+          promptId: streamId,
+          blockSeq: 0,
+          timestamp: new Date(),
+          blocks: [
+            {
+              type: "prompt.error",
+              chatId: "chat-1",
+              error: "Upstream connection closed before any code",
+              streamId,
+              seq: 0,
+              timestamp: new Date(),
+            },
+            {
+              type: "prompt.block-end",
+              chatId: "chat-1",
+              streamId,
+              seq: 1,
+              timestamp: new Date(),
+            },
+          ] as SectionEvent["blocks"],
+        });
+        controller.close();
+      },
+    });
+
+    const r = await resolveSectionStream({ sectionStream: stream, streamId, seed });
+    expect(r.isOk()).toBe(true);
+    const ok = r.Ok();
+    expect(ok.turnEndSeen).toBe(false);
+    expect(ok.snapshotCount).toBe(0);
+    expect(ok.files).toEqual({});
+    expect(ok.promptErrors).toEqual(["Upstream connection closed before any code"]);
+  });
+
   it("ignores prompt.error from a different streamId (historical chat replay)", async () => {
     // Same streamId-filtering concern as the prompt.block-end break (#1682):
     // replayed historical sections carry the prior turn's prompt.error, which
