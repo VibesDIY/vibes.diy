@@ -87,6 +87,28 @@ describe("AppDetailPanel (issue #2011)", () => {
     expect(screen.queryByText(/Unsubscribe/)).toBeNull();
   });
 
+  it("clears a previous app's display name when switching to one without it", async () => {
+    // First app resolves with a display name.
+    getAppByFsId.mockResolvedValueOnce(okResult({ meta: [], ownerDisplayName: "Ada Lovelace" }));
+    const first = makeItem({ ownerHandle: "ada", appSlug: "app-e1" });
+    const { rerender } = render(
+      <AppDetailPanel item={first} appHostBaseUrl="https://example.com" onClose={vi.fn()} />,
+    );
+    await waitFor(() => expect(screen.getByText(/Created by/)).toHaveTextContent("Created by Ada Lovelace"));
+
+    // Switch to a different, uncached app whose response carries no display name.
+    getAppByFsId.mockResolvedValueOnce(okResult({ meta: [] }));
+    const second = makeItem({ ownerHandle: "grace", appSlug: "app-e2" });
+    rerender(<AppDetailPanel item={second} appHostBaseUrl="https://example.com" onClose={vi.fn()} />);
+
+    // The old name must never show — the slug fallback takes over immediately
+    // and stays after the second fetch resolves with no display name.
+    expect(screen.queryByText(/Ada Lovelace/)).toBeNull();
+    expect(screen.getByText(/Created by/)).toHaveTextContent("Created by @grace");
+    await waitFor(() => expect(getAppByFsId).toHaveBeenCalledTimes(2));
+    expect(screen.getByText(/Created by/)).toHaveTextContent("Created by @grace");
+  });
+
   it("still renders the Enter link to the chat route", () => {
     getAppByFsId.mockResolvedValue(okResult({ meta: [] }));
     const item = makeItem({ ownerHandle: "owner-d", appSlug: "app-d" });
