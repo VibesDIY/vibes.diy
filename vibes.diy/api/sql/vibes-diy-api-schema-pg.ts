@@ -128,7 +128,6 @@ export const sqlPromptContexts = pgTable(
     index("PromptContext_chatId_idx").on(table.chatId),
     uniqueIndex("PromptContext_promptId_idx").on(table.promptId),
     index("PromptContext_created_idx").on(table.created),
-    index("PromptContext_nethash_idx").on(table.nethash),
   ]
 );
 
@@ -256,7 +255,6 @@ export const sqlInviteGrants = pgTable(
   },
   (table) => [
     primaryKey({ columns: [table.userId, table.appSlug, table.ownerHandle, table.emailKey] }),
-    index("InviteGrants_cursor").on(table.created),
     index("InviteGrants_tokenOrGrantUserId_idx").on(table.tokenOrGrantUserId),
   ]
 );
@@ -315,7 +313,6 @@ export const sqlLandingEvents = pgTable(
   },
   (table) => [
     primaryKey({ columns: [table.logKey, table.lineIdx] }),
-    index("LandingEvents_utmCampaign_ts_idx").on(table.utmCampaign, table.ts),
     index("LandingEvents_ts_idx").on(table.ts),
   ]
 );
@@ -340,8 +337,6 @@ export const sqlAssetUploads = pgTable(
     created: text().notNull(),
   },
   (table) => [
-    index("AssetUploads_app_idx").on(table.ownerHandle, table.appSlug, table.created),
-    index("AssetUploads_user_idx").on(table.userId, table.created),
     index("AssetUploads_cid_idx").on(table.cid),
   ]
 );
