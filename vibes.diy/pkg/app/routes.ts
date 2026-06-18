@@ -23,6 +23,9 @@ export default [
 
   route("vibe/:ownerHandle/:appSlug/:fsId?", "./routes/vibe.$ownerHandle.$appSlug.tsx"),
 
+  // Chrome-free, authless embed surface for third-party sites (see #1568).
+  route("embed/:ownerHandle/:appSlug", "./routes/embed.$ownerHandle.$appSlug.tsx"),
+
   route("about", "./routes/about.tsx", { id: "about" }),
   route("help", "./routes/help.tsx", { id: "help" }),
   // route("sso-callback", "./routes/sso-callback.tsx", { id: "sso-callback" }),

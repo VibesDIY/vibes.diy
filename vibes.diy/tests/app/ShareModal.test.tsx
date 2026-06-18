@@ -117,6 +117,10 @@ function createMockModal(overrides: Partial<UseShareModalReturn> = {}): UseShare
     isUpToDate: false,
     hasUnpublishedChanges: false,
     settingsLoaded: true,
+    isPubliclyEmbeddable: false,
+    embedSnippet: undefined,
+    embedCopied: false,
+    handleCopyEmbed: vi.fn().mockResolvedValue(undefined),
     ...overrides,
   };
 }
@@ -262,6 +266,25 @@ describe("ShareModal", () => {
       expect(screen.getByDisplayValue("https://vibes.diy/vibe/testuser/testapp")).toBeInTheDocument();
       expect(screen.getByRole("button", { name: "Update" })).toBeInTheDocument();
       expect(screen.getByText("Copy Link")).toBeInTheDocument();
+    });
+
+    it("hides the embed snippet when the vibe is not publicly embeddable", () => {
+      render(<ShareModal modal={publishedModal({ isPubliclyEmbeddable: false })} isOwner />);
+      expect(screen.queryByText("Copy Embed Code")).not.toBeInTheDocument();
+    });
+
+    it("shows the embed snippet and copies it when publicly embeddable", async () => {
+      const modal = publishedModal({
+        isPubliclyEmbeddable: true,
+        embedSnippet: '<iframe src="https://vibes.diy/embed/testuser/testapp"></iframe>',
+      });
+      render(<ShareModal modal={modal} isOwner />);
+
+      expect(screen.getByDisplayValue(/embed\/testuser\/testapp/)).toBeInTheDocument();
+      await act(async () => {
+        fireEvent.click(screen.getByRole("button", { name: "Copy Embed Code" }));
+      });
+      expect(modal.handleCopyEmbed).toHaveBeenCalledTimes(1);
     });
 
     it("Update preserves autoJoinEnabled and the current role", async () => {

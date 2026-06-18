@@ -20,7 +20,12 @@ import { vibePkgCacheControl } from "./vibe-pkg-cache.js";
 import { sendCapiPageView, sendCapiViewContent } from "./meta-capi.js";
 import { sendCapiCompleteRegistration } from "./capi-complete-registration.js";
 import { verifyClerkWebhookSignature, postSignupToDiscord, ClerkUserCreatedData } from "./clerk-webhook.js";
-import { getVibeRouteHints, parseVibePathname, vibePathnameHasFsId } from "@vibes.diy/api-svc/intern/get-vibe-route-hints.js";
+import {
+  getVibeRouteHints,
+  parseEmbedPathname,
+  parseVibePathname,
+  vibePathnameHasFsId,
+} from "@vibes.diy/api-svc/intern/get-vibe-route-hints.js";
 
 export { ChatSessions } from "./chat-sessions.js";
 export { AppSessions } from "./app-sessions.js";
@@ -356,15 +361,18 @@ export default {
       }
     }
 
-    // For /vibe/:ownerHandle/:appSlug routes, look up the real app title so SSR
-    // can embed it in OG/Twitter meta tags before the page reaches crawlers.
+    // For /vibe/:ownerHandle/:appSlug and /embed/:ownerHandle/:appSlug routes,
+    // look up the real app title (OG/Twitter meta) plus the world-readable /
+    // publicly-embeddable hints so SSR can paint the iframe before the async
+    // grant check completes.
     const vibeSlugPair = parseVibePathname(url.pathname);
+    const embedSlugPair = parseEmbedPathname(url.pathname);
+    const hintSlugPair = vibeSlugPair ?? embedSlugPair;
+    const defaultHints = { ogTitle: undefined, isWorldReadable: false, isPubliclyEmbeddable: false };
     const vibeHints =
-      vibeSlugPair !== undefined
-        ? await getVibeRouteHints(cfCtx.vibesCtx, vibeSlugPair).then((r) =>
-            r.isOk() ? r.Ok() : { ogTitle: undefined, isWorldReadable: false }
-          )
-        : { ogTitle: undefined, isWorldReadable: false };
+      hintSlugPair !== undefined
+        ? await getVibeRouteHints(cfCtx.vibesCtx, hintSlugPair).then((r) => (r.isOk() ? r.Ok() : defaultHints))
+        : defaultHints;
 
     // Suppress the fast-paint optimisation for explicit-fsId URLs
     // (/vibe/:ownerHandle/:appSlug/:fsId). getVibeRouteHints queries the latest
@@ -377,6 +385,7 @@ export default {
       vibeDiyAppParams: cfCtx.vibesCtx.params,
       vibeOgTitle: vibeHints.ogTitle,
       isWorldReadable: hasFsId ? false : vibeHints.isWorldReadable,
+      isPubliclyEmbeddable: vibeHints.isPubliclyEmbeddable,
     })) as unknown as CFResponse;
 
     // Log missing vibe paths so the ETL pipeline can surface them for reanimation triage.
@@ -384,6 +393,20 @@ export default {
     // already handled by the 301 redirect above and never reaches SSR.
     if (ssrResponse.status === 404 && vibeSlugPair !== undefined) {
       console.log("[missing-vibe]", url.pathname);
+    }
+
+    // Cross-origin framing: the embed route is meant to be framed by arbitrary
+    // third-party sites, so relax frame-ancestors for /embed/* responses ONLY
+    // (the rest of the app stays frame-protected). frame-ancestors is checked
+    // against the whole ancestor chain — see the #1568 design doc.
+    if (embedSlugPair !== undefined) {
+      const headers = new Headers(Object.fromEntries((ssrResponse.headers as unknown as Headers).entries()));
+      headers.set("Content-Security-Policy", "frame-ancestors *");
+      headers.delete("X-Frame-Options");
+      return new Response(ssrResponse.body as unknown as BodyInit, {
+        status: ssrResponse.status,
+        headers,
+      }) as unknown as CFResponse;
     }
 
     return ssrResponse;
