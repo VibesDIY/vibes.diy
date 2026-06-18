@@ -3,9 +3,10 @@
  */
 import { AIResult, SchemaStrategy, APIResponse } from "./types.js";
 import { PACKAGE_VERSION } from "./version.js";
+import { callAiEnv } from "./env.js";
 
-// Import package version for debugging
-const FALLBACK_MODEL = "openrouter/auto";
+// Default fallback model (overridable via CALLAI_FALLBACK_MODEL — see #1474)
+const FALLBACK_MODEL = callAiEnv.CALLAI_FALLBACK_MODEL;
 
 // Extract content from API response accounting for different formats
 function extractContent(result: AIResult, schemaStrategy: SchemaStrategy): string {
