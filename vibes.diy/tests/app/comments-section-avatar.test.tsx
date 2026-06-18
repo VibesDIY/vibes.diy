@@ -80,7 +80,9 @@ describe("CommentsSection avatar behavior", () => {
     whoAmI.mockResolvedValue(
       Result.Ok({
         viewer: {
-          ownerHandle: "commenter-resolved-slug",
+          // Canonical field is userHandle (see resolveWhoAmI / ResolvedWhoAmI);
+          // the component reads viewer.userHandle (#2425).
+          userHandle: "commenter-resolved-slug",
           displayName: "Commenter",
         },
         access: "viewer",
