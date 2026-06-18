@@ -11,7 +11,7 @@ import {
 import { CfCacheIf, cfServe } from "@vibes.diy/api-svc";
 import { WSSendProvider } from "@vibes.diy/api-svc/svc-ws-send-provider.js";
 import { CFInjectMutable, cfServeAppCtx, localBroadcastCallbacks, localInvokeAccessFn } from "@vibes.diy/api-svc/cf-serve.js";
-import { CFEnv, type EvtUserNotification } from "@vibes.diy/api-types";
+import { CFEnv, isBuildNotification, type EvtUserNotification } from "@vibes.diy/api-types";
 import { exception2Result, URI } from "@adviser/cement";
 import { type } from "arktype";
 import { appMsgEvento } from "@vibes.diy/api-svc/app-msg-evento.js";
@@ -98,7 +98,10 @@ export class AppSessions implements DurableObject {
         let delivered = 0;
         for (const conn of this.connections) {
           if (conn.subscribedUserKey !== targetUserId) continue;
-          if (conn.connId === senderConnId) continue;
+          // Build notifications fan out to every connection, including the originating
+          // tab/device, so the click can focus that device and route to the vibe. Other
+          // notification types still skip the originator.
+          if (!isBuildNotification(evt.notificationType) && conn.connId === senderConnId) continue;
           exception2Result(() =>
             conn.ws.send(
               conn.ende.uint8ify({
