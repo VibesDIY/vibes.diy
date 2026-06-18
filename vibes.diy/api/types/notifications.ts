@@ -12,6 +12,14 @@ export function isEvtUserNotification(obj: unknown): obj is EvtUserNotification 
   return !(EvtUserNotification(obj) instanceof type.errors);
 }
 
+// Build notifications (`build-complete` / `build-failed`) fan out to every one of
+// the user's connections — including the originating tab/device — so clicking the
+// browser notification can focus whichever device it was clicked on and route it to
+// the vibe. Other notification types still skip the originator on fan-out.
+export function isBuildNotification(notificationType: string): boolean {
+  return notificationType === "build-complete" || notificationType === "build-failed";
+}
+
 export const ReqSubscribeUserNotificationsRaw = type({
   type: "'vibes.diy.req-subscribe-user-notifications'",
 });

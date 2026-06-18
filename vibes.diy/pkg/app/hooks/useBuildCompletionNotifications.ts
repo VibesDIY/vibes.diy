@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef } from "react";
+import { useNavigate } from "react-router";
 import { isUserSettingNotifications } from "@vibes.diy/api-types";
 import type { UserSettingNotifications } from "@vibes.diy/api-types";
 import { useVibesDiy } from "../vibes-diy-provider.js";
@@ -43,16 +44,28 @@ const maybeRequestPermission = async (): Promise<NotificationPermission | null> 
 
 type NotificationType = keyof Omit<UserSettingNotifications, "type">;
 
-const TYPE_MAP: Record<string, { prefKey: NotificationType; title: string; body: (u: string, a: string) => string }> = {
+const TYPE_MAP: Record<
+  string,
+  {
+    prefKey: NotificationType;
+    title: string;
+    body: (u: string, a: string) => string;
+    // Optional in-app path to open when the notification is clicked. Lets a click
+    // on any device route to the relevant vibe instead of just focusing the window.
+    path?: (u: string, a: string) => string;
+  }
+> = {
   "build-complete": {
     prefKey: "buildComplete",
     title: "Build completed",
     body: (u, a) => `${u}/${a} build completed.`,
+    path: (u, a) => `/chat/${u}/${a}`,
   },
   "build-failed": {
     prefKey: "buildFailed",
     title: "Build failed",
     body: (u, a) => `${u}/${a} build failed.`,
+    path: (u, a) => `/chat/${u}/${a}`,
   },
   "vibe-published": {
     prefKey: "vibePublished",
@@ -78,6 +91,11 @@ const TYPE_MAP: Record<string, { prefKey: NotificationType; title: string; body:
 
 export function useBuildCompletionNotifications(): void {
   const { chatApi } = useVibesDiy();
+  const navigate = useNavigate();
+  // The notification click fires long after render, so read navigate through a ref
+  // to keep handleNotification (and the subscription) stable.
+  const navigateRef = useRef(navigate);
+  navigateRef.current = navigate;
   const permissionRequestedRef = useRef(false);
   const prefsRef = useRef<UserSettingNotifications>({ type: "notifications" });
 
@@ -111,6 +129,15 @@ export function useBuildCompletionNotifications(): void {
 
     notification.onclick = () => {
       window.focus();
+      const path = config.path?.(evt.ownerHandle, evt.appSlug);
+      if (path) {
+        try {
+          navigateRef.current(path);
+        } catch {
+          // Fall back to a full navigation if the SPA router isn't reachable.
+          window.location.assign(path);
+        }
+      }
       notification.close();
     };
   }, []);
