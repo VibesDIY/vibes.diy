@@ -175,7 +175,9 @@ Site access            [ Restricted | Public ]
 ### Comments tab
 
 A Google-Docs-style comment thread (mocked): a few comments with avatar, name,
-timestamp, body; a "resolve" affordance; a "comment…" composer. Illustrative.
+timestamp, body; a "resolve" affordance; a "comment…" composer; and an **Only
+collaborators can comment** `[ Off | On ]` switch at the bottom (mirrors the
+Site-access toggle). Illustrative.
 
 ### Settings tab
 
@@ -183,8 +185,8 @@ Mirrors the vibes.diy settings page (mocked, scrolls within the panel): **Title*
 (text), **Theme** (dropdown), **Icon** (preview + Regenerate) alongside
 **Description** (text), **Chat Model** (dropdown), then **Model**, **App Model**,
 and **Imaging Model** each as a dropdown paired with an **API Key** field, an
-**Environment Variables** section (KEY / Value rows + "Add variable"), and a
-destructive "Delete app" row. Illustrative values; dropdowns are native selects.
+**Environment Variables** section (KEY / Value rows + "Add variable").
+Illustrative values; dropdowns are native selects.
 
 ## Vibe — code-change chat
 

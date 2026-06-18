@@ -329,6 +329,8 @@
   .comment .resolve { font-size: 11.5px; color: var(--vibes-green); font-weight: 600; cursor: pointer; margin-top: 4px; display: inline-block; }
   .comment-compose { display: flex; gap: 8px; margin-top: 12px; padding-top: 12px; border-top: 1px solid rgba(0,0,0,.07); }
   .comment-compose input { flex: 1; height: 38px; border: 1px solid #d8d6c8; border-radius: 999px; padding: 0 14px; font-family: var(--font); font-size: 13.5px; background: #fff; outline: none; }
+  .comment-setting { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 14px; padding-top: 12px; border-top: 1px solid rgba(0,0,0,.12); }
+  .comment-setting .cs-label { font-size: 13.5px; font-weight: 600; color: var(--vibes-near-black); }
 
   /* --- Settings tab --- */
   .field { margin-bottom: 16px; }
@@ -339,10 +341,6 @@
   }
   .icon-field { display: flex; align-items: center; gap: 12px; }
   .icon-field .preview { width: 44px; height: 44px; border-radius: 10px; background: var(--vibes-near-black); color: var(--vibes-cream); display: flex; align-items: center; justify-content: center; font-size: 22px; }
-  .danger { margin-top: 18px; padding-top: 14px; border-top: 1px solid rgba(0,0,0,.1); display: flex; align-items: center; justify-content: space-between; }
-  .danger .d-label { font-size: 13px; color: #444; }
-  .btn.danger-btn { background: transparent; border-color: #e0a0a0; color: #c0392b; }
-  .btn.danger-btn:hover { background: #fdecec; }
   #t-settings { max-height: 62vh; overflow-y: auto; }
   .field select { width: 100%; height: 38px; border: 1px solid #d8d6c8; border-radius: 10px; padding: 0 10px; font-family: var(--font); font-size: 13.5px; background: #fff; color: #333; outline: none; cursor: pointer; }
   .field-row { display: flex; gap: 12px; align-items: flex-start; }
@@ -609,6 +607,10 @@
         <input placeholder="Add a comment…" />
         <button class="btn">Send</button>
       </div>
+      <div class="comment-setting">
+        <span class="cs-label">Only collaborators can comment</span>
+        <span class="perm-toggle write" data-state="on"><span class="pseg off" data-val="off">Off</span><span class="pseg on" data-val="on">On</span></span>
+      </div>
     </div>
 
     <!-- Settings tab -->
@@ -657,10 +659,6 @@
           <div class="env-row"><input class="env-key" placeholder="KEY" /><input class="env-val" placeholder="Value" /></div>
         </div>
         <button class="btn ghost sm">+ Add variable</button>
-      </div>
-      <div class="danger">
-        <span class="d-label">Delete this app permanently</span>
-        <button class="btn danger-btn">Delete app</button>
       </div>
     </div>
   </div>
