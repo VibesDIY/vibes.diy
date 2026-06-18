@@ -14,10 +14,26 @@ const PLACEHOLDERS = [
 ];
 
 describe("system prompt templates", () => {
+  const CSS_IMPORT_GUIDANCE_SNIPPETS = [
+    "raw ES modules",
+    "local `.css` file imports are unsupported",
+    "Tailwind utility classes",
+    "`classNames` object",
+    "inline `style={{ ... }}` or a `<style>` tag",
+  ];
+
   it("both templates contain every placeholder", () => {
     for (const p of PLACEHOLDERS) {
       expect(systemPromptTemplate).toContain(p);
       expect(systemPromptInitialTemplate).toContain(p);
+    }
+  });
+
+  it("both templates include CSS import mitigation guidance and alternatives", () => {
+    for (const template of [systemPromptTemplate, systemPromptInitialTemplate]) {
+      for (const snippet of CSS_IMPORT_GUIDANCE_SNIPPETS) {
+        expect(template).toContain(snippet);
+      }
     }
   });
 
