@@ -123,16 +123,18 @@
     position: absolute; bottom: 0; right: 138px; /* pillWidth + btnPadding + 8 */
     height: 43px; display: flex; gap: 0;
   }
+  /* Overshoot strip — fills the bouncy reveal's overshoot with the leftmost
+     button's colour (Help / green) so it doesn't flash cream. */
   .blue-strip {
-    position: absolute; bottom: 0; right: 570px; width: 200px; height: 43px;
-    background: var(--vibes-blue); pointer-events: none;
+    position: absolute; bottom: 0; right: 634px; width: 200px; height: 43px;
+    background: var(--vibes-green); pointer-events: none;
   }
 
   /* Pill action button (horizontal tray) */
   .pbtn {
     display: flex; align-items: center; justify-content: flex-start;
     height: 100%; border: none; cursor: pointer; overflow: hidden; padding: 0;
-    border-radius: 0; width: 108px; flex-shrink: 0; font-family: var(--font);
+    border-radius: 0; width: 124px; flex-shrink: 0; font-family: var(--font);
   }
   .pbtn .chip {
     width: 45px; height: 100%; display: flex; align-items: center; justify-content: center; flex-shrink: 0;
@@ -157,7 +159,7 @@
 
   /* Metadata strip */
   .meta-strip {
-    position: absolute; top: 0; right: 138px; width: 432px; /* btnExpandedWidth*4 */
+    position: absolute; top: 0; right: 138px; width: 496px; /* btnExpandedWidth*4 */
     display: flex; align-items: center; gap: 10px; padding: 0 14px 0 18px;
     opacity: 0; transition: opacity .2s ease; pointer-events: none; overflow: hidden;
   }
@@ -174,17 +176,7 @@
   .pill-svg .big { transition: d .2s ease, transform .2s ease; }
   .pill-svg.cream-slid .big { transform: translateX(3px); }
 
-  /* Badges */
-  .badge {
-    position: absolute; min-width: 21.6px; height: 21.6px; padding: 0 6px;
-    border-radius: 10.8px; border: 1px solid var(--vibes-near-black);
-    color: var(--vibes-cream); font-family: var(--font); font-size: 12px; font-weight: 700;
-    line-height: 1; display: flex; align-items: center; justify-content: center;
-    box-shadow: 0 1px 3px rgba(0,0,0,.25); pointer-events: none; z-index: 4;
-  }
-  .badge.pending { top: 9px; right: -6px; background: var(--vibes-orange-neon);
-    transition: transform .3s var(--bounce); }
-  .badge.unread { top: 9px; left: -6px; background: var(--vibes-blue); }
+  /* Unpublished-changes dot (the only pill indicator) */
   .dot {
     position: absolute; bottom: 6px; left: -6px; width: 13.2px; height: 13.2px;
     border-radius: 50%; border: 1px solid var(--vibes-near-black);
@@ -653,10 +645,10 @@
           <span><div class="mtitle">My To-Do App</div><div class="mslug">marcus/my-to-do-app</div></span>
         </div>
         <div class="tray-buttons" id="trayButtons">
-          <button class="pbtn share" data-surface="share" id="shareBtn"><span class="chip"><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></i></span><span class="lbl">Share</span></button>
-          <button class="pbtn vibes" data-surface="vibes"><span class="chip"><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></i></span><span class="lbl">Vibes</span></button>
-          <button class="pbtn account" data-surface="account"><span class="chip"><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></i></span><span class="lbl">Account</span></button>
           <button class="pbtn help" data-surface="help"><span class="chip"><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></i></span><span class="lbl">Help</span></button>
+          <button class="pbtn account" data-surface="account"><span class="chip"><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></i></span><span class="lbl">Account</span></button>
+          <button class="pbtn vibes" data-surface="vibes"><span class="chip"><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></i></span><span class="lbl">Vibes</span></button>
+          <button class="pbtn share" data-surface="share"><span class="chip"><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></i></span><span class="lbl">Share</span></button>
         </div>
       </div>
 
@@ -668,8 +660,6 @@
         <g id="diyLetters"></g>
       </svg>
 
-      <div class="badge pending" id="pendingBadge">2</div>
-      <div class="badge unread">3</div>
       <div class="dot" title="Unpublished changes"></div>
     </div>
   </div>
@@ -727,7 +717,7 @@
   // ---- Geometry (size = 60) ----
   var H = 60, scale = H / 300;
   var pillWidth = 600 * scale;          // 120
-  var btnExpandedWidth = H * 1.8;       // 108
+  var btnExpandedWidth = 124;           // widened so "ACCOUNT" fits with right padding
   var btnPadding = 10;
   var visibleButtons = 4;
   var trayExtra = btnExpandedWidth * visibleButtons + btnPadding;   // 442
@@ -740,8 +730,6 @@
   var metaStrip = document.getElementById("metaStrip");
   var pillSvg = document.getElementById("pillSvg");
   var bigPath = document.getElementById("bigPath");
-  var pendingBadge = document.getElementById("pendingBadge");
-  var shareBtn = document.getElementById("shareBtn");
   var pillWrap = document.getElementById("pillWrap");
 
   var phase = "idle";
@@ -777,20 +765,6 @@
     paintWordmark(creamSlid);
   }
 
-  function flyBadge() {
-    if (phase === "open") {
-      var b = pendingBadge.getBoundingClientRect();
-      var s = shareBtn.getBoundingClientRect();
-      // Sit as a corner notification at the Share button's top-left, so it
-      // doesn't cover the "SHARE" label.
-      var dx = (s.left + 6) - (b.left + b.width / 2);
-      var dy = (s.top + 6) - (b.top + b.height / 2);
-      pendingBadge.style.transform = "translate(" + dx + "px," + dy + "px)";
-    } else {
-      pendingBadge.style.transform = "translate(0,0)";
-    }
-  }
-
   function setPhase(p) {
     phase = p;
     applyTray();
@@ -800,7 +774,6 @@
     else if (p === "collapsing") timer = setTimeout(function () { setPhase("shrinking"); }, 200);
     else if (p === "shrinking") timer = setTimeout(function () { setPhase("idle"); }, 150);
     if (p === "idle") closeSurface();
-    flyBadge();
   }
 
   // ---- Surfaces ----

@@ -18,8 +18,9 @@ sharing and per-user access control.
 
 ## The redesign in one line
 
-The pill stops being `Home · Group · Vibe` and becomes sharing-first:
-`Share · Vibes · Account · Help`.
+The pill stops being `Home · Group · Vibe` and becomes sharing-first. Tray
+order, left to right: `Help · Account · Vibes · Share` (Share on the far right,
+nearest the pill).
 
 ## Approach
 
@@ -81,13 +82,17 @@ entrance delay. Long-press-to-hide is **out of scope**.
 ## Top-level tray (replaces `Home · Group · Vibe`)
 
 Four buttons, all colors from the brand palette. **No Home button** (dropped).
+Order left → right (Share nearest the pill):
 
 | Button | Color | Opens |
 | --- | --- | --- |
-| **Share** | blue `#3b82f6`, cream label | full Share panel (tabs) |
-| **Vibes** | yellow `#eab308`, near-black label | vertical code menu |
-| **Account** | purple `#c084fc`, near-black label | account panel |
 | **Help** | green `#51cf66`, cream label | AI agent chat modal |
+| **Account** | purple `#c084fc`, near-black label | account panel |
+| **Vibes** | yellow `#eab308`, near-black label | vertical code menu |
+| **Share** | blue `#3b82f6`, cream label | full Share panel (tabs) |
+
+Buttons are widened (124px expanded) so the longest label ("ACCOUNT") fits with
+right-side padding.
 
 ## Permissions model (the core of the redesign)
 
@@ -177,10 +182,10 @@ panel.
 
 ## State shown
 
-**Owner, logged in, fully loaded.** All affordances present; all three pill
-badges shown (pending-access count — animates onto the **Share** button when the
-tray expands; an unread count badge on the left; the unpublished-changes dot).
-Badges are illustrative decoration in the prototype.
+**Owner, logged in, fully loaded.** All affordances present. The pill carries
+**only** the unpublished-changes dot — the numbered count badges (pending-access,
+unread) were removed as visual clutter. Pending requests still surface inside the
+Share panel's Requests section.
 
 ## Sample vibe (backdrop)
 
@@ -210,9 +215,10 @@ in Comments / Settings / Account / Help.
 ## Acceptance (eyeball checklist)
 
 1. Collapsed pill matches the wordmark, colors, and 120×60 size; 1s entrance.
-2. Click expands the tray (bouncy reveal) showing `Share · Vibes · Account ·
-   Help` with the correct four palette colors (Account = purple).
-3. Pending-access badge animates from top-right onto the Share button.
+2. Click expands the tray (bouncy reveal) showing `Help · Account · Vibes ·
+   Share` with the correct four palette colors (Account = purple), all labels
+   (incl. "ACCOUNT") fully readable.
+3. The pill shows only the unpublished-changes dot — no numbered count badges.
 4. Share opens the panel; Restricted shows invite + people (Data dropdown +
    Code checkbox) + requests + the site toggle at the bottom.
 5. Flipping the site toggle to Public collapses the people machinery and shows
