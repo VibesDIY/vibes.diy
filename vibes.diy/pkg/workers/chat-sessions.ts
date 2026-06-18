@@ -70,7 +70,13 @@ function userNotifyCallbacksForChatSessions(shard: string, env: CFEnv) {
       // connection register the shard that belongs to its OWN authenticated user. This
       // ties the (otherwise arbitrary) shard to the verified userId and keeps the bound
       // at one shard per user — a client can't inflate UserNotify with forged shards.
-      if (shard !== userNotifyShardFor(userId)) return;
+      if (shard !== userNotifyShardFor(userId)) {
+        // Expected only on a forged shard, or if the client's DO-name id (clerk.user.id)
+        // ever drifts from the server's claims.userId — in which case notification
+        // registration silently no-ops, so surface it for telemetry.
+        console.warn("[ChatSessions] skip user-notify register: shard does not match authenticated user", shard.slice(0, 16));
+        return;
+      }
       await fetchUserNotify(userId, { action: "register", shardId: shard });
     },
     deregisterUserSubscription: async (userId: string): Promise<void> => {
