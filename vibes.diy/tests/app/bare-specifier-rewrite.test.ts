@@ -1,5 +1,5 @@
 import { describe, it, expect, afterEach } from "vitest";
-import { rewriteBareSpecifiers, rewriteRelativeSpecifiers, getActiveImportMap, getDocumentBaseUrl } from "@vibes.diy/vibe-runtime";
+import { rewriteBareSpecifiers, rewriteRelativeSpecifiers, getActiveImportMap, entryDirBase } from "@vibes.diy/vibe-runtime";
 
 describe("rewriteBareSpecifiers", () => {
   it("rewrites a bare specifier not in the import map to esm.sh", () => {
@@ -155,9 +155,30 @@ describe("rewriteRelativeSpecifiers (#1889)", () => {
   });
 });
 
-describe("getDocumentBaseUrl", () => {
-  it("returns the document base URI in a DOM environment", () => {
-    expect(getDocumentBaseUrl()).toBe(document.baseURI);
+describe("entryDirBase (#1889)", () => {
+  const origin = "https://app--user.cli-v2.vibesdiy.net";
+
+  it("turns the trailing-slash-less /~fsId~ entry path into the fsId directory", () => {
+    // calcEntryPointUrl emits /~fsId~ with NO trailing slash, so this is the
+    // exact case Codex flagged: resolving against the raw path would drop the
+    // fsId. entryDirBase must yield the /~fsId~/ directory instead.
+    expect(entryDirBase(origin, "/~zABCDEFGH~")).toBe(`${origin}/~zABCDEFGH~/`);
+  });
+
+  it("accepts an already-trailing-slash entry path", () => {
+    expect(entryDirBase(origin, "/~zABCDEFGH~/")).toBe(`${origin}/~zABCDEFGH~/`);
+  });
+
+  it("returns undefined for a non-fsId path (e.g. the pending bare-host shell)", () => {
+    expect(entryDirBase(origin, "/")).toBeUndefined();
+  });
+
+  it("resolves a sibling against the /~fsId~ entry path to the fsId directory, not the origin root", () => {
+    // End-to-end of the Codex scenario: pinned-fsId iframe, raw entry path.
+    const base = entryDirBase(origin, "/~zABCDEFGH~");
+    const out = rewriteRelativeSpecifiers(`import Badge from "./Badge.jsx";`, base);
+    expect(out).toContain(`from "${origin}/~zABCDEFGH~/Badge.jsx"`);
+    expect(out).not.toContain(`from "${origin}/Badge.jsx"`);
   });
 });
 

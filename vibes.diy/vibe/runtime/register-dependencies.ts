@@ -50,7 +50,7 @@ import { registerFirefly } from "./use-firefly.js";
 import { getActiveProps, mountVibe } from "./mount-vibes.js";
 import {
   getActiveImportMap,
-  getDocumentBaseUrl,
+  getHotSwapBaseUrl,
   rewriteBareSpecifiers,
   rewriteRelativeSpecifiers,
 } from "./bare-specifier-rewrite.js";
@@ -537,9 +537,10 @@ async function applyHotSwap(source: string): Promise<Result<void>> {
   // (issue #1595).
   const rewritten = rewriteBareSpecifiers(rTransform.Ok().code, getActiveImportMap());
   // Rewrite relative specifiers (`./Badge.jsx`) to absolute URLs against the
-  // iframe's entry base, since the blob: URL we import below is non-hierarchical
-  // and the browser can't resolve relative imports against it (issue #1889).
-  const resolved = rewriteRelativeSpecifiers(rewritten, getDocumentBaseUrl());
+  // iframe's `/~fsId~/` entry directory, since the blob: URL we import below is
+  // non-hierarchical and the browser can't resolve relative imports against it
+  // (issue #1889).
+  const resolved = rewriteRelativeSpecifiers(rewritten, getHotSwapBaseUrl());
   const blob = new Blob([resolved], { type: "application/javascript" });
   const blobUrl = URL.createObjectURL(blob);
   try {

@@ -202,9 +202,10 @@ const RELATIVE_SPEC = /^(?:\.\.?\/|\/)/;
 // Hot-swap injects the entry module via a `blob:` URL, against which the browser
 // cannot resolve relative imports like `./Badge.jsx` — blob URLs aren't
 // hierarchical (issue #1889). Rewrite each relative specifier to an absolute URL
-// resolved against `baseUrl` (the iframe's document.baseURI = the `/~fsId~/`
-// entry URL), so siblings load from the sandbox origin exactly as they do on a
-// full page load. No base (or an unparseable specifier) leaves the code as-is.
+// resolved against `baseUrl` (the `/~fsId~/` entry directory, see
+// getHotSwapBaseUrl), so siblings load from the sandbox origin exactly as they
+// do on a full page load. No base (or an unparseable specifier) leaves the code
+// as-is.
 export function rewriteRelativeSpecifiers(code: string, baseUrl: string | undefined): string {
   if (!baseUrl) return code;
   return rewriteImportRegion(code, (spec) => {
@@ -217,9 +218,23 @@ export function rewriteRelativeSpecifiers(code: string, baseUrl: string | undefi
   });
 }
 
-export function getDocumentBaseUrl(): string | undefined {
-  if (typeof document === "undefined") return undefined;
-  return document.baseURI;
+// Derive the base URL relative imports must resolve against from the iframe's
+// own location. The preview iframe loads the entry at `/~<fsId>~` with NO
+// trailing slash (calcEntryPointUrl), so on a full load the entry MODULE URL is
+// `/~<fsId>~/App.jsx` and its `./Badge.jsx` resolves to `/~<fsId>~/Badge.jsx`.
+// We must reproduce that directory base — NOT document.baseURI, whose directory
+// is the origin root (`new URL("./Badge.jsx", "https://h/~fs~")` → `https://h/Badge.jsx`).
+// Returns undefined for non-fsId locations (e.g. the bare-host pending shell),
+// which leaves relative specifiers untouched.
+export function entryDirBase(origin: string, pathname: string): string | undefined {
+  const m = /^\/(~[^/~]+~)\/?$/.exec(pathname);
+  if (!m) return undefined;
+  return `${origin}/${m[1]}/`;
+}
+
+export function getHotSwapBaseUrl(): string | undefined {
+  if (typeof window === "undefined" || !window.location) return undefined;
+  return entryDirBase(window.location.origin, window.location.pathname);
 }
 
 export function getActiveImportMap(): Record<string, string> {

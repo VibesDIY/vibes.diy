@@ -6,7 +6,8 @@ export {
   rewriteBareSpecifiers,
   rewriteRelativeSpecifiers,
   getActiveImportMap,
-  getDocumentBaseUrl,
+  entryDirBase,
+  getHotSwapBaseUrl,
 } from "./bare-specifier-rewrite.js";
 export * from "./VibeContext.js";
 export * from "./call-ai.js";
