@@ -183,8 +183,10 @@
     position: fixed; right: 14px; bottom: 80px; z-index: 60;
     background: var(--vibes-cream);
     border: 1px solid var(--vibes-near-black);
-    border-radius: 16px;
-    box-shadow: 0 14px 44px rgba(0,0,0,0.22);
+    /* Square-ish bottom so the panel reads as resting on the nav row and the
+       tab connector aligns cleanly (no rounded-corner notch). */
+    border-radius: 16px 16px 2px 2px;
+    box-shadow: 0 6px 22px rgba(0,0,0,0.12);
     transform-origin: bottom right; transform: scale(0); opacity: 0; pointer-events: none;
     transition: transform .15s var(--bounce), opacity .1s ease;
     font-family: var(--font);
@@ -813,13 +815,13 @@
     panel.style.left = "auto";
     panel.style.right = Math.max(8, vw - br.right) + "px";
     panel.style.bottom = (vh - br.top) + "px";
-    // Short coloured seam joining the active button straight into the panel's
-    // bottom edge — no tall neck.
+    // Short coloured seam covering just the panel's bottom border at the tab,
+    // so the button colour meets the panel cleanly without spilling above it.
     connector.style.background = getComputedStyle(btn).backgroundColor;
     connector.style.left = br.left + "px";
     connector.style.width = br.width + "px";
-    connector.style.top = (br.top - 3) + "px";
-    connector.style.height = "6px";
+    connector.style.top = (br.top - 1) + "px";
+    connector.style.height = "4px";
     // Active / receding states.
     btn.classList.add("active");
     trayButtons.classList.add("has-active");
