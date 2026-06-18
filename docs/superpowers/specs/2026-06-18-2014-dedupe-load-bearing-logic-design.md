@@ -2,7 +2,7 @@
 
 **Date:** 2026-06-18
 **Tracking:** #2014 ([P1] de-duplicate copy-paste-synced logic), related #1953 (rules-bag audit)
-**Status:** draft design — open questions for review (see end)
+**Status:** approved design — all open questions resolved by @CharlieHelps 2026-06-18; ready for writing-plans (PR 1 first)
 
 ## Problem
 
@@ -49,10 +49,14 @@ which is exactly what the local-copy comment in `db-acl-allows.ts` was avoiding.
 `@vibes.diy/api-svc` and `@vibes.diy/vibe-runtime` already depend on `@vibes.diy/vibe-types`,
 so it is the correct shared home and needs **no new import-map entries**.
 
-- **New:** `vibes.diy/vibe/types/db-acl-eval.ts` exporting `DbAcl`, `DbAclSubject`,
+- **New leaf module:** `vibes.diy/vibe/types/db-acl-eval.ts` exporting `DbAcl`, `DbAclSubject`,
   `canRead`, `canWrite`, `inGroup`, `aclAllows`, typed against `DocAccessLevel` (already in
   vibe-types). Use the existing bodies **verbatim** (the host copies are what the parity test
-  pins to; the runtime bodies are identical). Re-export from the vibe-types index.
+  pins to; the runtime bodies are identical). **This module must import nothing from api-types**
+  (keep it a leaf — Q2 guardrail). Re-export it from the vibe-types index for runtime consumers,
+  **but** the api-types arktype schema must `import type` the structural types from the leaf
+  module path directly, **not** through the vibe-types root barrel (the barrel already touches
+  api-types, so routing through it risks a cycle).
 - **`vibe/runtime/db-acl-allows.ts`:** re-export from the shared module (keep the public
   `aclAllows` / `DbAcl` export paths so `@vibes.diy/vibe-runtime` consumers and the parity
   test are undisturbed). Delete the local bodies.
@@ -113,34 +117,35 @@ no `any`, no casts to bridge package boundaries — unify the types instead.
 
 - **No behavior change is the contract.** The ACL parity, comments-acl, who-am-i, and
   get-app/fork tests already characterize the surfaces. Never bundle a behavior change.
-- **Safe to split:** the three promotions (ACL, query, P2 helpers) are independent — land as
-  separate commits so a regression bisects cleanly. P2 helpers are lowest-risk and go first.
+- **Three separate PRs** (decision Q6): PR 1 ACL/type unification + parity-test update (highest
+  risk — security/cycle-sensitive), PR 2 latest-app query helper, PR 3 P2 helper dedupes. Keeping
+  the low-risk dedupes off the ACL PR lets them land independently and bisect cleanly.
 - The semantic-risk item (event-schema reconciliation) is **already resolved** and out of scope.
 
-## Open questions for review (Charlie)
+## Open questions for review (Charlie) — RESOLVED 2026-06-18
 
-1. **Event schemas — confirm dropped.** Item 1 of the issue is already gone (DocNotify
-   retirement). Agree we strike it from the acceptance criteria rather than re-introducing a
-   shared `DocNotifyEvt`?
-2. **ACL structural-type single source of truth.** Host `db-acl-resolver.ts` imports
-   `DbAcl`/`DbAclSubject` from the api-types **arktype** schema (`db-acls.ts`); runtime keeps
-   local structural copies. To avoid a 3rd/4th copy without a cycle: should the **structural**
-   `DbAcl`/`DbAclSubject` live in the new `vibe-types/db-acl-eval.ts` and have the api-types
-   arktype schema `import type` them (safe — api-types already depends on vibe-types)? Or keep
-   the arktype schema fully self-describing and derive the structural type from it via
-   `typeof schema.infer`, re-exported from vibe-types?
-3. **`canRead`/`canWrite` ownership.** Today runtime defines them and host imports them from
-   `access-helpers.js`. Plan: shared `db-acl-eval.ts` becomes the single definition and
-   `access-helpers.ts` re-exports them. Any reason `access-helpers` must keep owning these?
-4. **Query helper home.** `selectLatestAppPerSlug` under `api/svc/public/select-app.ts`, or
-   `api/svc/intern/`? (Both callers are in `public/`; the helper is pure DB selection.)
-5. **Parity test fate.** Once both `aclAllows` resolve to one shared impl, the parity test
-   compares the impl to itself. Keep it verbatim as a cheap regression guard, or convert it to
-   assert both package exports resolve to the **same function reference**?
-6. **Packaging.** One PR with three reviewable commits, or three separate PRs (issue calls the
-   promotions "safe to split")?
-7. **`formatError` superset (raised by Codex review).** The two copies have drifted —
-   `inspect-db` unwraps nested `error.message`, `admin-db` does not. Plan adopts the `inspect-db`
-   superset, a strictly-additive change to `admin-db`'s output for nested-shaped errors. Accept
-   that as within the "no behavior change" spirit, or keep two helpers to preserve `admin-db`
-   byte-for-byte?
+All resolved by @CharlieHelps (validated against current `main`). Decisions are now folded
+into the design above; recorded here for traceability.
+
+1. **Event schemas — ✅ dropped from scope.** Already gone from `pkg/workers/`; re-introducing a
+   shared `DocNotifyEvt` would be churn.
+2. **ACL structural-type source of truth — ✅ structural types in vibe-types, with a guardrail.**
+   Put structural `DbAcl`/`DbAclSubject` in a **leaf** module under `vibe-types`
+   (`db-acl-eval.ts`) that imports **nothing from api-types**, and have the api-types arktype
+   schema `import type` from that **leaf module path directly — not the `vibe-types` root barrel**
+   (the barrel already touches api-types, so going through it risks a cycle).
+3. **`canRead`/`canWrite` ownership — ✅ shared module owns them**; `access-helpers.ts` becomes a
+   re-export shim for compatibility.
+4. **Query helper home — ✅ `api/svc/public/select-app.ts`.** Both callers are in `public/`;
+   matches existing helper-placement patterns.
+5. **Parity test — ✅ convert to a same-function-reference assertion** (optionally + a tiny smoke
+   call); behavior semantics stay covered by the existing ACL behavior/integration tests.
+6. **Packaging — ✅ split into three PRs** (Charlie flipped my one-PR lean):
+   - **PR 1:** ACL/type unification + parity-test intent update (highest risk — security/cycle-sensitive).
+   - **PR 2:** latest-app query helper extraction.
+   - **PR 3:** P2 helper dedupes (incl. the `formatError` superset, Q7).
+   Rationale: ACL changes shouldn't block low-risk dedupes from landing independently.
+7. **`formatError` superset — adopt the `inspect-db` superset** (preserves `inspect-db` exactly;
+   strictly-additive for `admin-db`), landing in PR 3 with the change called out explicitly. Not
+   separately contested by Charlie; folded into the PR-3 dedupes.
+
