@@ -26,7 +26,6 @@ export interface ExtractedHostToBindings {
   ownerHandle: string;
   appSlug: string;
   fsId?: string;
-  groupId?: string;
   path: string; // path after given template
 }
 

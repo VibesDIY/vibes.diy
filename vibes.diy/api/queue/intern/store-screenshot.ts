@@ -1,14 +1,11 @@
 import { Result, uint8array2stream } from "@adviser/cement";
 import { eq } from "drizzle-orm/sql/expressions";
-// import { VibesSqlite } from "@vibes.diy/api-svc/create-handler.ts";
 import { createSQLPeer } from "@vibes.diy/api-sql";
 import { isMetaScreenShot, MetaItem, parseArrayWarning } from "@vibes.diy/api-types";
 import { ensureLogger } from "@fireproof/core-runtime";
 import { ensureStorage, StoragePeer } from "@vibes.diy/api-pkg";
 import { createS3Peer } from "@vibes.diy/api-svc";
 import { QueueCtx } from "../queue-ctx.js";
-// import { ensureStorage } from "@vibes.diy/api-svc/intern/ensure-storage.ts";
-// import { DBFlavour } from "@vibes.diy/api-svc/sql/tables.ts";
 
 // Define MetaItem array type
 export interface StoreScreenshotResult {

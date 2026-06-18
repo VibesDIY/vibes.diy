@@ -30,10 +30,6 @@ import { renderToReadableStream } from "react-dom/server";
 import { renderDBExplorer } from "../intern/render-db-explorer.js";
 import { etagMatches, quoteEtag } from "./etag-utils.js";
 
-// function pairReqRes(key: CoerceURI, content: BodyInit, item: FileSystemItem, headers: HeadersInit): [Request, Response] {
-//   return [new Request(URI.from(key).toString()), new Response(content as BodyInit, { headers })];
-// }
-
 export interface NpmUrlCapture {
   readonly npmURL: string;
   readonly fromCookie: boolean;
@@ -92,83 +88,6 @@ export function captureNpmUrl(vctx: VibesApiSQLCtx, req: Request): NpmUrlCapture
   }
   return { npmURL: vctx.params.pkgRepos.workspace, fromCookie: false, fromURL: false, fromEnv: true, fromDef: false };
 }
-
-// async function renderFromFs(ctx: HandleTriggerCtx<Request, ExtractedHostToBindings, unknown>): Promise<FetchResult> {
-//   const foundPath = pred();
-//   if (foundPath) {
-//     const vctx = ctx.ctx.getOrThrow<VibesApiSQLCtx>("vibesApiCtx");
-//     return vctx.storage.fetch(foundPath.assetURI);
-//     // const headers: HeadersInit = {
-//     //   "content-type": foundPath.mimeType,
-//     //   "content-length": foundPath.size.toString(),
-//     // };
-//   }
-//   return {
-//     type: "fetch.notfound",
-//     url: "none://",
-//   };
-
-//   //   switch (true) {
-//   //     case isFetchErrResult(rContent):
-//   //       await ctx.send.send(ctx, {
-//   //         type: "http.Response.JSON",
-//   //         status: 500,
-//   //         headers: {
-//   //           ...headers,
-//   //           "Cache-Control": "public, max-age=60",
-//   //         },
-//   //         json: {
-//   //           type: "error",
-//   //           message: `Error fetching content for ${ctx.validated.path}: ${rContent.error.message}`,
-//   //         },
-//   //       } satisfies HttpResponseJsonType);
-//   //       break;
-
-//   //     case isFetchNotFoundResult(rContent):
-//   //       await ctx.send.send(ctx, {
-//   //         type: "http.Response.JSON",
-//   //         status: 404,
-//   //         headers: {
-//   //           ...headers,
-//   //           "Cache-Control": "public, max-age=86400",
-//   //         },
-//   //         json: {
-//   //           type: "error",
-//   //           message: `AssetNotFound not found for ${ctx.validated.path}`,
-//   //         },
-//   //       } satisfies HttpResponseJsonType);
-//   //       break;
-
-//   //     case isFetchOkResult(rContent):
-//   //       await ctx.send.send(ctx, {
-//   //         type: "http.Response.Body",
-//   //         status: 200,
-//   //         headers: {
-//   //           ...headers,
-//   //           "Cache-Control": "public, max-age=31536000, immutable",
-//   //           ETag: foundPath.assetId,
-//   //         },
-//   //         body: rContent.data,
-//   //       } satisfies HttpResponseBodyType);
-//   //       break;
-//   //     default:
-//   //       throw new Error(`Unexpected fetch result type for ${ctx.validated.path}`);
-//   //   }
-//   // } else {
-//   //   await ctx.send.send(ctx, {
-//   //     type: "http.Response.JSON",
-//   //     status: 404,
-//   //     headers: {
-//   //       "Cache-Control": "public, max-age=86400",
-//   //     },
-//   //     json: {
-//   //       type: "error",
-//   //       message: `Content not found for ${ctx.validated.path}`,
-//   //     },
-//   //   } satisfies HttpResponseJsonType);
-//   // }
-//   // return Result.Ok(EventoResult.Continue);
-// }
 
 async function sendFetchOk(
   ctx: HandleTriggerCtx<Request, ExtractedHostToBindings, unknown>,
@@ -291,9 +210,7 @@ export const servEntryPoint: EventoHandler<Request, ExtractedHostToBindings, unk
       return Result.Ok(EventoResult.Continue);
     }
 
-    // console.log("-1servEntryPoint triggered with URL:", uri.toString())
     const vctx = ctx.ctx.getOrThrow<VibesApiSQLCtx>("vibesApiCtx");
-    // console.log("-2servEntryPoint triggered with URL:", uri.toString())
     let fs: typeof vctx.sql.tables.apps.$inferSelect | undefined;
     if (ctx.validated.fsId) {
       fs = await vctx.sql.db
@@ -325,7 +242,6 @@ export const servEntryPoint: EventoHandler<Request, ExtractedHostToBindings, unk
       // inject fsId into validated for further use
       ctx.validated.fsId = fs?.fsId;
     }
-    // console.log("-3servEntryPoint triggered with URL:", uri.toString())
     if (!fs) {
       // No apps row yet for this slug pair. If the request is for the entry
       // point HTML, return a "pending" iframe shell that boots the runtime
@@ -373,7 +289,6 @@ export const servEntryPoint: EventoHandler<Request, ExtractedHostToBindings, unk
       return Result.Ok(EventoResult.Stop);
     }
 
-    // console.log("-4servEntryPoint triggered with URL:", uri.toString())
     const fileSystem = type([fileSystemItem, "[]"])(fs.fileSystem);
     if (fileSystem instanceof type.errors) {
       return Result.Err(`Invalid filesystem data ${ctx.validated.fsId}`);
@@ -431,7 +346,6 @@ export const servEntryPoint: EventoHandler<Request, ExtractedHostToBindings, unk
       return Result.Ok(EventoResult.Stop);
     }
 
-    // console.log("-6servEntryPoint triggered with URL:", uri.toString())
     const selectedEntryPoint = fileSystem.find((i) => i.entryPoint);
     if (selectedEntryPoint) {
       const entryPointPath = await vctx.storage.fetch(selectedEntryPoint.assetURI);
@@ -442,7 +356,6 @@ export const servEntryPoint: EventoHandler<Request, ExtractedHostToBindings, unk
         return sendFetchOk(ctx, selectedEntryPoint, entryPointPath);
       }
     }
-    // console.log("-7servEntryPoint triggered with URL:", uri.toString())
     if (ctx.validated.path === "/" || ctx.validated.path === "/index.html") {
       const npmUrl = captureNpmUrl(vctx, ctx.request);
       const rVibesEntryPoint = await renderVibe({
@@ -455,7 +368,6 @@ export const servEntryPoint: EventoHandler<Request, ExtractedHostToBindings, unk
           private: npmUrl,
         },
       });
-      // console.log("3-servEntryPoint triggered with URL:", ctx.validated.url, rVibesEntryPoint);
       if (rVibesEntryPoint.isErr()) {
         return rVibesEntryPoint;
       }
