@@ -89,7 +89,7 @@ Expected result: `Chat` loses ~120 lines and ends with no bare `useEffect` relat
 3. `sendPrompt(null)` happens **before** `chat.prompt(...)` so a mid-fire re-render skips the branch.
 4. A failed `chat.prompt()` clears the optimistic bubble (`setOptimisticPrompt(undefined)`); a success sets `inFlightStreamId` + `notifyRecentVibesChanged()`.
 5. CLI-pushed app with no `fsId` and no history → `getAppByFsId` lookup → `navigateToFsId`.
-6. Effect cleanup closes the previous `chat` handle.
+6. **Cleanup quirk — preserve, do not "fix".** The effect's cleanup (`return () => chat?.close()`) is registered **only on the open-path render**, when `chat` is still `null`; the render after `setChat(...)` re-runs the effect, takes the `openingRef.current` early `return`, and registers **no** cleanup. So under current code the **active chat handle is never closed on unmount** — the only cleanup ever installed captured `chat === null` and is a no-op. The extraction must reproduce this exactly; the hook must **not** start closing the live handle, or it changes lifecycle semantics and is no longer behavior-preserving. The characterization test should therefore assert that unmount **does not** call `chat.close()` (pinning current behavior). Closing the handle on unmount is a real latent leak, but fixing it is a candidate follow-up (see Q5), not part of this PR.
 
 ## Test strategy
 
@@ -106,7 +106,7 @@ Assert invariants 1–6. Mirror the mutation-testing discipline used on `ChatNav
 2. **Ownership of `chat`.** OK for `chat`/`setChat` to become hook-internal and be returned for `handleOnCodeSave`? Or keep `chat` in the component and pass `setChat` into the hook?
 3. **The self-referential effect.** Preserve the single open-or-fire effect with its exact `[…, chat, …, promptToSend]` dep array verbatim (lowest risk) — confirming we do **not** split it into separate open/fire effects in this PR? (Splitting is cleaner but a behavior change; I'd defer it.)
 4. **Chat test double.** Is there an existing fake/mocked `LLMChat` in the test suite to reuse, or should this PR introduce one (and where should it live so future chat-route tests share it)?
-5. **Sequencing vs. #1972/#1842.** Confirm this PR stays strictly behavior-preserving and the nav-flash fix lands as the immediately-following PR on top of these tests?
+5. **Sequencing vs. #1972/#1842 (and the cleanup leak).** Confirm this PR stays strictly behavior-preserving and the nav-flash fix lands as the immediately-following PR on top of these tests? And the unmount cleanup leak (invariant 6) — fold it into that follow-up, give it its own tiny PR, or leave it as documented known-behavior for now?
 
 ## Risk & rollout
 
