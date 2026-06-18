@@ -295,13 +295,28 @@ export const editEvento: EventoHandler<WrapCmdTSMsg<unknown>, ReqEdit, ResEdit |
           sectionEventCount,
           blockCount,
           streamedBytes,
-          upstreamErrors: upstreamErrors.map((e) => ({
-            code: e.error?.code,
-            message: e.error?.message ?? "(no message)",
-          })),
+          upstreamErrors: [
+            ...upstreamErrors.map((e) => ({
+              code: e.error?.code,
+              message: e.error?.message ?? "(no message)",
+            })),
+            // `prompt.error` envelopes the server emits on an abnormal turn end
+            // (not `vibes.diy.res-error`); fold in so the reason isn't dropped (#2048).
+            ...resolved.promptErrors.map((message) => ({ message })),
+          ],
           applyErrors: resolved.errors,
           noChanges,
         })
+      );
+    }
+    // Files resolved but the turn never completed cleanly — recovered from
+    // snapshots after an abnormal stream end (#2048).
+    if (!resolved.turnEndSeen) {
+      const reason = resolved.promptErrors.length > 0 ? `: ${resolved.promptErrors.join("; ")}` : "";
+      await sendProgress(
+        ctx,
+        "warn",
+        `Stream ended before the turn completed${reason}. Recovered ${Object.keys(resolved.files).length} file(s) from snapshots; the result may be incomplete.`
       );
     }
     if (upstreamErrors.length > 0 && !args.verbose) {

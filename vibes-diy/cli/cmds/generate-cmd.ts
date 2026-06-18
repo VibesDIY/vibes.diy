@@ -235,12 +235,29 @@ export const generateEvento: EventoHandler<WrapCmdTSMsg<unknown>, ReqGenerate, R
           sectionEventCount,
           blockCount,
           streamedBytes,
-          upstreamErrors: upstreamErrors.map((e) => ({
-            code: e.error?.code,
-            message: e.error?.message ?? "(no message)",
-          })),
+          upstreamErrors: [
+            ...upstreamErrors.map((e) => ({
+              code: e.error?.code,
+              message: e.error?.message ?? "(no message)",
+            })),
+            // Fold in `prompt.error` envelopes: the server emits these (not
+            // `vibes.diy.res-error`) when the codegen turn ends abnormally, so
+            // without this the real upstream reason was silently dropped (#2048).
+            ...resolved.promptErrors.map((message) => ({ message })),
+          ],
           applyErrors: resolved.errors,
         })
+      );
+    }
+    // Files resolved but the turn never completed cleanly — recovered from
+    // snapshots after an abnormal stream end (#2048). Tell the user we wrote a
+    // best-effort result and why, instead of silently shipping a partial app.
+    if (!resolved.turnEndSeen) {
+      const reason = resolved.promptErrors.length > 0 ? `: ${resolved.promptErrors.join("; ")}` : "";
+      await sendProgress(
+        ctx,
+        "warn",
+        `Stream ended before the turn completed${reason}. Recovered ${Object.keys(resolved.files).length} file(s) from snapshots; the result may be incomplete.`
       );
     }
     if (upstreamErrors.length > 0 && !args.verbose) {
