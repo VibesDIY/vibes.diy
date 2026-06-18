@@ -257,29 +257,31 @@ function LiveCycleVibesDiyProvider({ children, webVars }: { children: React.Reac
         getToken: capturedGetToken ?? (() => Promise.resolve(Result.Err("token not available"))),
       });
     });
+    // Vibe pages deliver notifications over vibeApi; don't open a second notify socket here.
+    realCtx.notifyApi = undefined;
   } else {
     realCtx.vibeApi = undefined;
-  }
 
-  // Dedicated notification connection for pages without a vibeApi (My Vibes, Memberships,
-  // Messages, Settings). Pinned to a STABLE per-user shard so the UserNotify subscriber set
-  // stays bounded (one shard per user); a per-connection random shard would leak. The notifier
-  // prefers vibeApi and only falls back to this, so vibe pages are unaffected. Lazy — it only
-  // opens a socket once the notifier subscribes on a non-vibe page.
-  const notifyUserId = clerk.user?.id;
-  if (notifyUserId) {
-    const notifyShard = userNotifyShardFor(notifyUserId);
-    const notifyApiUrl = BuildURI.from(apiUrl).setParam("shard", notifyShard).toString();
-    const capturedGetToken = sharedGetToken ?? realCtx.getToken;
-    realCtx.notifyApi = vibesDiyApis.get(notifyApiUrl).once(() => {
-      return new VibesDiyApi({
-        apiUrl,
-        shardKey: notifyShard,
-        getToken: capturedGetToken ?? (() => Promise.resolve(Result.Err("token not available"))),
+    // Dedicated notification connection for pages without a vibeApi (My Vibes, Memberships,
+    // Messages, Settings). Pinned to a STABLE per-user shard so the UserNotify subscriber set
+    // stays bounded (one shard per user); a per-connection random shard would leak.
+    // Constructed only on non-vibe pages because the VibesDiyApi constructor opens its socket
+    // eagerly — gating here keeps vibe pages from opening an unused notification connection.
+    const notifyUserId = clerk.user?.id;
+    if (notifyUserId) {
+      const notifyShard = userNotifyShardFor(notifyUserId);
+      const notifyApiUrl = BuildURI.from(apiUrl).setParam("shard", notifyShard).toString();
+      const capturedGetToken = sharedGetToken ?? realCtx.getToken;
+      realCtx.notifyApi = vibesDiyApis.get(notifyApiUrl).once(() => {
+        return new VibesDiyApi({
+          apiUrl,
+          shardKey: notifyShard,
+          getToken: capturedGetToken ?? (() => Promise.resolve(Result.Err("token not available"))),
+        });
       });
-    });
-  } else {
-    realCtx.notifyApi = undefined;
+    } else {
+      realCtx.notifyApi = undefined;
+    }
   }
 
   const sandboxHostnameBase = realCtx.webVars.env.VIBES_SVC_HOSTNAME_BASE;

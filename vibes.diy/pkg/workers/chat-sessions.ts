@@ -12,7 +12,7 @@ import { CfCacheIf, cfServe } from "@vibes.diy/api-svc";
 import { WSSendProvider } from "@vibes.diy/api-svc/svc-ws-send-provider.js";
 import { CFInjectMutable, cfServeAppCtx } from "@vibes.diy/api-svc/cf-serve.js";
 import { chatMsgEvento } from "@vibes.diy/api-svc/chat-msg-evento.js";
-import { CFEnv, isBuildNotification, isUserNotifyShard } from "@vibes.diy/api-types";
+import { CFEnv, isBuildNotification, isUserNotifyShard, userNotifyShardFor } from "@vibes.diy/api-types";
 import { exception2Result, URI } from "@adviser/cement";
 import { type } from "arktype";
 
@@ -66,9 +66,15 @@ function userNotifyCallbacksForChatSessions(shard: string, env: CFEnv) {
 
   return {
     registerUserSubscription: async (userId: string): Promise<void> => {
+      // The `?shard=` param is client-supplied on the public /api path, so only let a
+      // connection register the shard that belongs to its OWN authenticated user. This
+      // ties the (otherwise arbitrary) shard to the verified userId and keeps the bound
+      // at one shard per user — a client can't inflate UserNotify with forged shards.
+      if (shard !== userNotifyShardFor(userId)) return;
       await fetchUserNotify(userId, { action: "register", shardId: shard });
     },
     deregisterUserSubscription: async (userId: string): Promise<void> => {
+      if (shard !== userNotifyShardFor(userId)) return;
       await fetchUserNotify(userId, { action: "deregister", shardId: shard });
     },
   };
