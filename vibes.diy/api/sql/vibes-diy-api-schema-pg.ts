@@ -75,16 +75,29 @@ export const sqlApps = pgTable(
     primaryKey({ columns: [table.appSlug, table.userId, table.releaseSeq] }),
     index("Apps_fsId").on(table.fsId, table.userId),
     index("created_idx").on(table.created),
+    // C3: checkMaxAppsPerUser scans a user's apps on every append-turn write.
+    // PK leads with appSlug, so WHERE userId can't use it. Validated: collapses
+    // an 89-buffer full-index scan to a 3-buffer index scan (0.5ms -> 0.04ms).
+    index("Apps_userId_created").on(table.userId, table.created),
   ]
 );
 
-export const sqlChatContexts = pgTable("ChatContexts", {
-  chatId: text().notNull().primaryKey(), // uuid v4
-  userId: text().notNull(),
-  appSlug: text().notNull(),
-  ownerHandle: text("userSlug").notNull(),
-  created: text().notNull(),
-});
+export const sqlChatContexts = pgTable(
+  "ChatContexts",
+  {
+    chatId: text().notNull().primaryKey(), // uuid v4
+    userId: text().notNull(),
+    appSlug: text().notNull(),
+    ownerHandle: text("userSlug").notNull(),
+    created: text().notNull(),
+  },
+  (table) => [
+    // C4: chat-id resolution filters (userId, userSlug, appSlug) but the only
+    // index was the chatId PK -> seq scan. Validated: 55-buffer seq scan ->
+    // 3-buffer index scan (0.29ms -> 0.03ms), and scale-flat as the table grows.
+    index("ChatContexts_userId_userSlug_appSlug").on(table.userId, table.ownerHandle, table.appSlug),
+  ]
+);
 
 export const sqlChatSections = pgTable(
   "ChatSections",
@@ -217,7 +230,14 @@ export const sqlAppDocuments = pgTable(
     deleted: integer().notNull().default(0), // 1 = tombstone
     created: text().notNull(), // ISO timestamp of this revision
   },
-  (table) => [primaryKey({ columns: [table.ownerHandle, table.appSlug, table.dbName, table.docId, table.seq] })]
+  (table) => [
+    primaryKey({ columns: [table.ownerHandle, table.appSlug, table.dbName, table.docId, table.seq] }),
+    // C8: membership list reads MAX(created) per (userSlug, appSlug). Postgres
+    // can't loose-scan a GROUP BY, so the list query issues one bare scalar
+    // MAX() per pair (see list-memberships.ts), which this index serves as an
+    // Index Scan Backward. Validated on the heaviest user: 53ms seq scan -> 0.09ms.
+    index("AppDocuments_userSlug_appSlug_created").on(table.ownerHandle, table.appSlug, table.created),
+  ]
 );
 
 export const sqlDirectChannelIndex = pgTable(
