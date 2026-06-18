@@ -51,7 +51,13 @@ below reuses rather than reinvents it.
   `deriveIsWorldReadable()` scans `AppSettings` and returns `true` when
   `publicAccess.enable === true` **or** `request.enable && autoAcceptRole` is
   set; `getVibeRouteHints()` additionally requires the app row to be in
-  `mode: "production"`.
+  `mode: "production"`. **Caveat (load-bearing for embeds):** `isWorldReadable`
+  is broader than "an anonymous visitor can view." The `autoAcceptRole` branch
+  is true for request-enabled apps that auto-promote *signed-in* users —
+  `getAppByFsId` sends an anonymous request (no `reqUserId`) down the
+  `req-login.request` path, so such an app is **not** anonymously viewable. Embeds
+  must therefore gate on public access specifically, not on `isWorldReadable`
+  (see "Embeddability predicate" below).
   [`pkg/workers/app.ts`](../../../vibes.diy/pkg/workers/app.ts) (≈L347-368) calls
   this for `/vibe/*` pathnames and passes `isWorldReadable` into the loader
   context so the iframe paints before the async grant check completes. Explicit
@@ -116,9 +122,9 @@ without loosening framing for the rest of the app.
 ### A. Dedicated `/embed/:ownerHandle/:appSlug` wrapper route — **recommended**
 
 The snippet points at `https://vibes.diy/embed/<owner>/<app>`. That page is a
-thin, chrome-free sibling of the `/vibe/` route: SSR computes `isWorldReadable`,
-renders the runtime `<iframe>` via `calcEntryPointUrl` + the shared sandbox
-policy, and — when the vibe is not world-readable — renders an instruction card
+thin, chrome-free sibling of the `/vibe/` route: SSR computes whether the vibe
+is `isPubliclyEmbeddable`, renders the runtime `<iframe>` via `calcEntryPointUrl`
++ the shared sandbox policy, and — when it isn't — renders an instruction card
 instead. We scope a cross-origin `frame-ancestors` policy to this route only.
 
 - **Pros:** stable public contract (snippet URLs don't leak the `--` subdomain
@@ -157,6 +163,25 @@ isolated to one route, and maximizes reuse of the proven runner path.
 
 ## Design (Approach A)
 
+### Embeddability predicate (not `isWorldReadable`)
+
+Define a single predicate, **`isPubliclyEmbeddable`**, used by both the Share-tab
+gate and the embed route:
+
+> `isPubliclyEmbeddable` ⇔ the app is in `mode: "production"` **and**
+> `publicAccess.enable === true`.
+
+This is strictly narrower than the fast-paint `isWorldReadable` hint, which also
+flips true for auto-accept request apps that only signed-in users can enter. An
+embed is always anonymous, so it must use this stricter signal — otherwise the
+Share UI would hand out an embed code, and the embed route would SSR an iframe,
+for a vibe whose anonymous grant is actually `req-login.request`. Implementation
+options (decide in the plan): add a dedicated `isPubliclyEmbeddable` SSR hint
+alongside `isWorldReadable` in `get-vibe-route-hints.ts`, or keep the SSR paint
+on `isWorldReadable` but require the client live grant re-check to return
+`public-access` (anything else ⇒ instruction card). The two compose; the live
+re-check (open question 5) is the authoritative gate.
+
 ### Routing
 
 Add to [`pkg/app/routes.ts`](../../../vibes.diy/pkg/app/routes.ts), **outside**
@@ -167,7 +192,7 @@ route("embed/:ownerHandle/:appSlug", "./routes/embed.$ownerHandle.$appSlug.tsx")
 ```
 
 No `:fsId?` segment — embeds always serve the latest production build. (An
-explicit fsId would defeat `isWorldReadable` and let drafts leak; omit it.)
+explicit fsId would defeat the public-access gate and let drafts leak; omit it.)
 
 ### The `/embed/` component
 
@@ -175,34 +200,37 @@ A new, focused `routes/embed.$ownerHandle.$appSlug.tsx`. It is a deliberately
 small subset of the `/vibe/` component:
 
 - **Loader** mirrors the `/vibe/` loader: compute the runtime `iframeUrl` via
-  `calcEntryPointUrl` (+ `npmUrl`), and surface `isWorldReadable`. Reuse, don't
-  duplicate, by extracting the shared URL-building helper if the two loaders
-  diverge only in chrome.
+  `calcEntryPointUrl` (+ `npmUrl`), and surface the `isPubliclyEmbeddable` signal
+  (see above). Reuse, don't duplicate, by extracting the shared URL-building
+  helper if the two loaders diverge only in chrome.
 - **Render:**
-  - If `isWorldReadable`: render a single full-bleed `<iframe>` using
+  - If `isPubliclyEmbeddable`: render a single full-bleed `<iframe>` using
     `RUNTIME_PREVIEW_IFRAME_SANDBOX` / `RUNTIME_PREVIEW_IFRAME_ALLOW` from the
     shared policy module. No pill, no ShareModal, no SessionSidebar, no landing
     card, no login overlay.
-  - If **not** world-readable: render the **instruction card** (below) instead
-    of the iframe.
+  - If **not** publicly embeddable: render the **instruction card** (below)
+    instead of the iframe.
   - Optional: a tiny, non-interactive "Made on vibes.diy" attribution corner
     (open question — see below).
 - **No grant card / no auth-intent flow.** Because the embed is anonymous, we do
-  *not* run the `getAppByFsId` → request/invite/login state machine. The single
-  signal we need is "is this world-readable right now?" If we want a live
-  (non-SSR) confirmation we can still call `getAppByFsId` and treat anything
-  other than `public-access` as "show instruction card", but we must **never**
+  *not* run the request/invite/login state machine. The authoritative live
+  signal is `getAppByFsId` returning grant `public-access`; treat **anything
+  else** (including the `req-login.request` an auto-accept-but-not-public app
+  returns for an anonymous caller) as "show instruction card." We must **never**
   open a Clerk `SignIn` inside the embed frame.
 
 ### Worker SSR wiring
 
 [`pkg/workers/app.ts`](../../../vibes.diy/pkg/workers/app.ts) currently derives
-`isWorldReadable` only for `/vibe/*` pathnames (via `parseVibePathname`).
-Generalize so `/embed/*` gets the same hint:
+`isWorldReadable` only for `/vibe/*` pathnames (via `parseVibePathname`). For
+`/embed/*` we need the narrower `isPubliclyEmbeddable` signal:
 
 - Add an `/embed/`-aware path parser (or generalize `parseVibePathname` to
-  accept both prefixes) and feed `isWorldReadable` into the loader context for
-  embed routes too.
+  accept both prefixes).
+- Extend `get-vibe-route-hints.ts` to also derive `isPubliclyEmbeddable`
+  (`mode: "production"` + `publicAccess.enable === true`) and feed it into the
+  embed loader context. Do **not** reuse the broader `isWorldReadable` value for
+  embeds (see the caveat in Background).
 - Embeds have no fsId, so the `vibePathnameHasFsId` suppression doesn't apply.
 
 ### Cross-origin framing policy (the critical bit)
@@ -225,7 +253,7 @@ findings into the implementation plan. The whole feature hinges on this.
 
 ### Not-published instruction card
 
-When the embedded vibe is not world-readable, render a self-contained card
+When the embedded vibe is not publicly embeddable, render a self-contained card
 (styled to read well at small embed sizes) that explains the situation to the
 **owner** who set up the embed, since we cannot reliably identify the viewer
 inside a cross-origin frame:
@@ -244,9 +272,11 @@ an actionable nudge to publish.
 ### Share-surface snippet UI
 
 Add an **Embed** affordance to the Share surface, gated on the vibe being
-embeddable (`isPublished` **and** public access enabled — i.e. the same
-condition as `isWorldReadable`; reuse/extend `useShareModal` rather than
-recomputing). Per #1568 acceptance criteria, when the vibe is *not* embeddable,
+`isPubliclyEmbeddable` (`isPublished` **and** `publicAccess.enable === true`) —
+**not** the broader `isWorldReadable`, which would offer an embed code for an
+auto-accept app that an anonymous visitor can't actually open. Reuse/extend
+`useShareModal` rather than recomputing. Per #1568 acceptance criteria, when the
+vibe is *not* embeddable,
 either omit the snippet or show short guidance ("Publish and enable public
 access to get an embed code").
 
@@ -283,18 +313,21 @@ Snippet shape — a responsive wrapper plus the iframe, copy-ready:
 - **Sandbox:** reuse the audited shared tokens; do not widen them for embeds.
 - **Anonymous only:** the embed must behave exactly like an anonymous public
   visitor (`viewer: null`). No JWT, no third-party-cookie auth attempts.
-- **Draft/private leakage:** no `fsId` segment and a strict world-readable gate
-  prevent embedding unpublished builds.
+- **Draft/private leakage:** no `fsId` segment and a strict public-access gate
+  (not the broader `isWorldReadable`) prevent embedding unpublished or
+  non-anonymously-viewable builds.
 
 ## Testing
 
 - **SSR/route tests** mirroring
   [`tests/app/vibe-route-ssr.test.tsx`](../../../vibes.diy/tests/app/ssr/vibe-route-ssr.test.tsx)
   and [`tests/app/vibe-fast-paint.test.tsx`](../../../vibes.diy/tests/app/vibe-fast-paint.test.tsx):
-  `/embed/` SSR's the iframe `src` when world-readable, and renders the
-  instruction card (no iframe) when not.
-- **`deriveIsWorldReadable` / path-parser unit tests** extended to cover the
-  `/embed/` prefix.
+  `/embed/` SSR's the iframe `src` when publicly embeddable, and renders the
+  instruction card (no iframe) when not — **including** the regression case of an
+  auto-accept request app with public access off (world-readable but not
+  anonymously viewable), which must show the card, not the iframe.
+- **`isPubliclyEmbeddable` derivation / path-parser unit tests** covering the
+  `/embed/` prefix and the public-access-vs-world-readable distinction.
 - **Snippet generation unit test:** the produced sandbox/allow attributes equal
   the shared policy tokens (guards against drift).
 - **Manual/Chrome MCP cross-origin check:** serve a throwaway HTML page on a
@@ -318,9 +351,10 @@ Snippet shape — a responsive wrapper plus the iframe, copy-ready:
 4. **Attribution.** Include a small "Made on vibes.diy" corner badge on the
    embed (virality / backlink) or keep it fully clean? The issue is labeled
    *Vibe Virality*, so a subtle badge may be desirable.
-5. **Live grant re-check.** SSR `isWorldReadable` is enough to paint, but do we
-   also want a client `getAppByFsId` to catch "made private after SSR cache"
-   cases, falling back to the instruction card? Recommendation: yes, cheap and
+5. **Live grant re-check.** The SSR `isPubliclyEmbeddable` hint is enough to
+   paint, but a client `getAppByFsId` confirming a `public-access` grant is the
+   authoritative gate — it also catches "made private after SSR cache" cases and
+   falls back to the instruction card. Recommendation: yes, cheap and
    correctness-preserving.
 
 ## Out of scope / possible follow-ups
