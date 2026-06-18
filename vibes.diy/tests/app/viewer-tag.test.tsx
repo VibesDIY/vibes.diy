@@ -1,6 +1,10 @@
 import React from "react";
-import { describe, it, expect } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { describe, it, expect, afterEach } from "vitest";
+import { render, screen, cleanup } from "@testing-library/react";
+
+// This project has no global auto-cleanup; unmount between tests so prior
+// renders' DOM (e.g. a self-view file input) don't leak into later queries (#2425).
+afterEach(cleanup);
 import { VibeContextProvider, type ViewerEnv } from "@vibes.diy/vibe-runtime";
 import { useViewer } from "@vibes.diy/use-vibes-base";
 
