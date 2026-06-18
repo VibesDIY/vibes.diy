@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import type { VibesDiyApiIface } from "@vibes.diy/api-types";
+import { buildEmbedSnippet } from "../../lib/iframe-policy.js";
 
 interface UseShareModalParams {
   ownerHandle: string;
@@ -34,6 +35,16 @@ interface UseShareModalReturn {
   handleCopyUrl: () => Promise<void>;
   canPublish: boolean;
   settingsLoaded: boolean;
+  /**
+   * True only when the vibe is anonymously viewable — published (production)
+   * AND public access enabled. Deliberately stricter than the world-readable
+   * hint: auto-accept request apps are NOT anonymously embeddable.
+   */
+  isPubliclyEmbeddable: boolean;
+  /** Copy-ready `<iframe>` markup for the /embed/ route, or undefined when not embeddable. */
+  embedSnippet: string | undefined;
+  embedCopied: boolean;
+  handleCopyEmbed: () => Promise<void>;
 }
 
 export type { UseShareModalReturn };
@@ -50,8 +61,12 @@ export function useShareModal({ ownerHandle, appSlug, fsId, chatApi }: UseShareM
   const [settingsLoaded, setSettingsLoaded] = useState(false);
   const [isTogglingAutoJoin, setIsTogglingAutoJoin] = useState(false);
   const [urlCopied, setUrlCopied] = useState(false);
+  const [publicAccessEnabled, setPublicAccessEnabled] = useState(false);
+  const [embedSnippet, setEmbedSnippet] = useState<string | undefined>(undefined);
+  const [embedCopied, setEmbedCopied] = useState(false);
   const buttonRef = useRef<HTMLButtonElement | null>(null);
   const copyTimeoutRef = useRef<number | null>(null);
+  const embedCopyTimeoutRef = useRef<number | null>(null);
 
   const canPublish = fsId !== undefined && fsId !== "";
   const isUpToDate = isPublished && productionFsId === fsId;
@@ -61,6 +76,9 @@ export function useShareModal({ ownerHandle, appSlug, fsId, chatApi }: UseShareM
   // trivially true).
   const hasUnpublishedChanges =
     isPublished && fsId !== undefined && fsId !== "" && productionFsId !== undefined && productionFsId !== fsId;
+  // Anonymously embeddable iff published AND public access is on. Stricter than
+  // the world-readable hint (which also covers auto-accept request apps).
+  const isPubliclyEmbeddable = isPublished && publicAccessEnabled;
 
   // Proactively fetch the production fsId once per (appSlug, ownerHandle) so the
   // Share button can show an "unpublished changes" badge before the modal is
@@ -100,6 +118,13 @@ export function useShareModal({ ownerHandle, appSlug, fsId, chatApi }: UseShareM
     }
   }
 
+  function clearEmbedCopyTimeout() {
+    if (embedCopyTimeoutRef.current !== null) {
+      window.clearTimeout(embedCopyTimeoutRef.current);
+      embedCopyTimeoutRef.current = null;
+    }
+  }
+
   function open() {
     setIsOpen(true);
   }
@@ -125,7 +150,11 @@ export function useShareModal({ ownerHandle, appSlug, fsId, chatApi }: UseShareM
     setAutoJoinEnabled(false);
     setAutoAcceptRoleState(undefined);
     setSettingsLoaded(false);
+    setPublicAccessEnabled(false);
+    setEmbedSnippet(undefined);
+    setEmbedCopied(false);
     clearCopyTimeout();
+    clearEmbedCopyTimeout();
 
     // Check if app has a production version. Always normalize state from the
     // fetch result (both branches) so a transition from "was published" to
@@ -140,10 +169,17 @@ export function useShareModal({ ownerHandle, appSlug, fsId, chatApi }: UseShareM
             setIsPublished(true);
             setProductionFsId(app.fsId);
             setPublishedUrl(`${window.location.origin}/vibe/${ownerHandle}/${appSlug}`);
+            setEmbedSnippet(
+              buildEmbedSnippet({
+                embedUrl: `${window.location.origin}/embed/${ownerHandle}/${appSlug}`,
+                title: `${appSlug} — made on vibes.diy`,
+              })
+            );
           } else {
             setIsPublished(false);
             setProductionFsId(undefined);
             setPublishedUrl(undefined);
+            setEmbedSnippet(undefined);
           }
         }
       })
@@ -157,10 +193,12 @@ export function useShareModal({ ownerHandle, appSlug, fsId, chatApi }: UseShareM
       .then((res) => {
         if (cancelled) return;
         if (res.isOk()) {
-          const role = res.Ok().settings.entry.enableRequest?.autoAcceptRole;
+          const entry = res.Ok().settings.entry;
+          const role = entry.enableRequest?.autoAcceptRole;
           const validRole = role === "editor" || role === "viewer" ? role : undefined;
           setAutoJoinEnabled(!!validRole);
           setAutoAcceptRoleState(validRole);
+          setPublicAccessEnabled(entry.publicAccess?.enable === true);
         }
       })
       .catch(() => {
@@ -275,6 +313,18 @@ export function useShareModal({ ownerHandle, appSlug, fsId, chatApi }: UseShareM
     }
   }, [publishedUrl]);
 
+  const handleCopyEmbed = useCallback(async () => {
+    if (!embedSnippet) return;
+    try {
+      await navigator.clipboard.writeText(embedSnippet);
+      setEmbedCopied(true);
+      clearEmbedCopyTimeout();
+      embedCopyTimeoutRef.current = window.setTimeout(() => setEmbedCopied(false), 2000);
+    } catch {
+      setPublishError("Could not copy embed code.");
+    }
+  }, [embedSnippet]);
+
   return {
     ownerHandle,
     appSlug,
@@ -298,5 +348,9 @@ export function useShareModal({ ownerHandle, appSlug, fsId, chatApi }: UseShareM
     handleCopyUrl,
     canPublish,
     settingsLoaded,
+    isPubliclyEmbeddable,
+    embedSnippet,
+    embedCopied,
+    handleCopyEmbed,
   };
 }

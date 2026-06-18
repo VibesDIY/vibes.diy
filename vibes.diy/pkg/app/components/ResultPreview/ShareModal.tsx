@@ -133,6 +133,29 @@ function CopyLinkRow({ url, copied, onCopy }: { url: string; copied: boolean; on
   );
 }
 
+// Copy-ready embed snippet for public vibes. Only rendered when the vibe is
+// anonymously embeddable (published + public access on). Lets a viewer drop the
+// vibe onto a blog/doc without hand-crafting an iframe.
+function EmbedSnippetRow({ snippet, copied, onCopy }: { snippet: string; copied: boolean; onCopy: () => void }) {
+  return (
+    <div className="space-y-1">
+      <div className="flex items-center justify-between">
+        <span className="text-xs font-semibold text-gray-700 dark:text-gray-300">Embed</span>
+        <Button variant="blue" size="default" onClick={onCopy}>
+          <span className="text-xs">{copied ? "Copied!" : "Copy Embed Code"}</span>
+        </Button>
+      </div>
+      <textarea
+        readOnly
+        rows={3}
+        value={snippet}
+        onFocus={(e) => e.currentTarget.select()}
+        className="w-full resize-none rounded border border-gray-300 px-2 py-1.5 font-mono text-[11px] leading-snug dark:border-gray-600 dark:bg-gray-800 dark:text-gray-200"
+      />
+    </div>
+  );
+}
+
 // Lightweight Request Access button for non-owners. Loads pending state from
 // hasAccessRequest on mount so a returning viewer sees "Request pending"
 // instead of being able to spam new requests.
@@ -483,6 +506,13 @@ export function ShareModal({
             <>
               <div className={isMobile ? "flex-none space-y-2 p-4 pt-14" : "space-y-2"}>
                 <CopyLinkRow url={modal.publishedUrl} copied={modal.urlCopied} onCopy={() => void modal.handleCopyUrl()} />
+                {modal.isPubliclyEmbeddable && modal.embedSnippet ? (
+                  <EmbedSnippetRow
+                    snippet={modal.embedSnippet}
+                    copied={modal.embedCopied}
+                    onCopy={() => void modal.handleCopyEmbed()}
+                  />
+                ) : null}
                 {modal.publishError ? <p className="text-xs text-red-600 dark:text-red-400">{modal.publishError}</p> : null}
                 <Button
                   variant={modal.isUpToDate ? "cool" : "blue"}
@@ -502,6 +532,13 @@ export function ShareModal({
           ) : (
             <div className={isMobile ? "flex-none space-y-2 p-4 pt-14" : "space-y-2"}>
               <CopyLinkRow url={modal.publishedUrl} copied={modal.urlCopied} onCopy={() => void modal.handleCopyUrl()} />
+              {modal.isPubliclyEmbeddable && modal.embedSnippet ? (
+                <EmbedSnippetRow
+                  snippet={modal.embedSnippet}
+                  copied={modal.embedCopied}
+                  onCopy={() => void modal.handleCopyEmbed()}
+                />
+              ) : null}
               {showRequestAccess ? <RequestAccessButton ownerHandle={modal.ownerHandle} appSlug={modal.appSlug} /> : null}
             </div>
           )

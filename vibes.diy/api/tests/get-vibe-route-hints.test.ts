@@ -3,8 +3,10 @@ import { ensureSuperThis } from "@fireproof/core-runtime";
 import { createTestDeviceCA } from "@fireproof/core-device-id";
 import type { VibesApiSQLCtx } from "@vibes.diy/api-svc";
 import {
+  deriveIsPubliclyEmbeddable,
   deriveIsWorldReadable,
   getVibeRouteHints,
+  parseEmbedPathname,
   parseVibePathname,
   vibePathnameHasFsId,
 } from "@vibes.diy/api-svc/intern/get-vibe-route-hints.js";
@@ -71,6 +73,43 @@ describe("deriveIsWorldReadable", () => {
   });
 });
 
+describe("deriveIsPubliclyEmbeddable", () => {
+  it("returns false for null/undefined/non-array/empty", () => {
+    expect(deriveIsPubliclyEmbeddable(null)).toBe(false);
+    expect(deriveIsPubliclyEmbeddable(undefined)).toBe(false);
+    expect(deriveIsPubliclyEmbeddable("string")).toBe(false);
+    expect(deriveIsPubliclyEmbeddable([])).toBe(false);
+  });
+
+  it("returns true only when public access is explicitly enabled", () => {
+    expect(deriveIsPubliclyEmbeddable([{ type: "app.public.access", enable: true }])).toBe(true);
+    expect(deriveIsPubliclyEmbeddable([{ type: "app.public.access", enable: false }])).toBe(false);
+  });
+
+  // The headline distinction from isWorldReadable: an auto-accept request app is
+  // world-readable for signed-in users but NOT anonymously embeddable.
+  it("returns false for auto-accept request apps (unlike isWorldReadable)", () => {
+    const settings = [{ type: "app.request", enable: true, autoAcceptRole: "viewer" }];
+    expect(deriveIsWorldReadable(settings)).toBe(true);
+    expect(deriveIsPubliclyEmbeddable(settings)).toBe(false);
+  });
+
+  it("latest public-access entry wins", () => {
+    expect(
+      deriveIsPubliclyEmbeddable([
+        { type: "app.public.access", enable: true },
+        { type: "app.public.access", enable: false },
+      ])
+    ).toBe(false);
+    expect(
+      deriveIsPubliclyEmbeddable([
+        { type: "app.public.access", enable: false },
+        { type: "app.public.access", enable: true },
+      ])
+    ).toBe(true);
+  });
+});
+
 // Minimal valid Apps row — only the fields needed for getVibeRouteHints.
 function makeAppsRow(overrides: {
   appSlug: string;
@@ -130,6 +169,7 @@ describe("getVibeRouteHints", { timeout: (inject("DB_FLAVOUR" as never) as strin
     const result = await getVibeRouteHints(vibesCtx, { ownerHandle, appSlug });
     expect(result.isOk()).toBe(true);
     expect(result.Ok().isWorldReadable).toBe(true);
+    expect(result.Ok().isPubliclyEmbeddable).toBe(true);
   });
 
   it("returns isWorldReadable:true when AppSettings has enableRequest autoAcceptRole", async () => {
@@ -148,6 +188,8 @@ describe("getVibeRouteHints", { timeout: (inject("DB_FLAVOUR" as never) as strin
     const result = await getVibeRouteHints(vibesCtx, { ownerHandle, appSlug });
     expect(result.isOk()).toBe(true);
     expect(result.Ok().isWorldReadable).toBe(true);
+    // Auto-accept app: world-readable but NOT anonymously embeddable.
+    expect(result.Ok().isPubliclyEmbeddable).toBe(false);
   });
 
   it("returns isWorldReadable:false when enableRequest has no autoAcceptRole", async () => {
@@ -196,6 +238,24 @@ describe("parseVibePathname", () => {
     expect(parseVibePathname("/vibe/")).toBeUndefined();
     expect(parseVibePathname("/vibe/jchris")).toBeUndefined();
     expect(parseVibePathname("/vibe/jchris/")).toBeUndefined();
+  });
+});
+
+describe("parseEmbedPathname", () => {
+  it("extracts slugs from a canonical /embed/:user/:app path", () => {
+    expect(parseEmbedPathname("/embed/jchris/my-cool-app")).toEqual({ ownerHandle: "jchris", appSlug: "my-cool-app" });
+  });
+
+  it("returns undefined for non-embed paths", () => {
+    expect(parseEmbedPathname("/vibe/jchris/my-cool-app")).toBeUndefined();
+    expect(parseEmbedPathname("/")).toBeUndefined();
+  });
+
+  it("returns undefined for /embed with missing slugs", () => {
+    expect(parseEmbedPathname("/embed")).toBeUndefined();
+    expect(parseEmbedPathname("/embed/")).toBeUndefined();
+    expect(parseEmbedPathname("/embed/jchris")).toBeUndefined();
+    expect(parseEmbedPathname("/embed/jchris/")).toBeUndefined();
   });
 });
 

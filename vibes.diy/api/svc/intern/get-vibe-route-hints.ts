@@ -12,6 +12,11 @@ export interface VibeSlugPair {
 export interface VibeRouteHints {
   readonly ogTitle: string | undefined;
   readonly isWorldReadable: boolean;
+  // Stricter than isWorldReadable: true only when an *anonymous* visitor can
+  // view the app (publicAccess.enable). Auto-accept request apps are
+  // world-readable for signed-in users but NOT anonymously viewable, so embeds
+  // must gate on this, not on isWorldReadable. See the #1568 design doc.
+  readonly isPubliclyEmbeddable: boolean;
 }
 
 // Pure derivation — no I/O. Scans the raw AppSettings entries array (as stored
@@ -28,6 +33,19 @@ export function deriveIsWorldReadable(rawSettings: unknown): boolean {
   return publicAccess === true || autoAcceptRole === true;
 }
 
+// Pure derivation — no I/O. True only when public access is explicitly enabled,
+// i.e. an anonymous visitor gets a `public-access` grant. Deliberately ignores
+// the auto-accept-request path (which only promotes signed-in users), so an
+// embed never offers a code for a vibe an anonymous frame can't actually open.
+export function deriveIsPubliclyEmbeddable(rawSettings: unknown): boolean {
+  if (!Array.isArray(rawSettings)) return false;
+  let publicAccess: boolean | undefined;
+  for (const e of rawSettings) {
+    if (isEnablePublicAccess(e)) publicAccess = e.enable;
+  }
+  return publicAccess === true;
+}
+
 // Pure pathname parser — no I/O, safe to call before any async work.
 // Extracts the (ownerHandle, appSlug) pair from /vibe/:ownerHandle/:appSlug[/...].
 export function parseVibePathname(pathname: string): VibeSlugPair | undefined {
@@ -35,6 +53,19 @@ export function parseVibePathname(pathname: string): VibeSlugPair | undefined {
   const ownerHandle = parts[2];
   const appSlug = parts[3];
   if (parts[1] !== "vibe" || ownerHandle === undefined || ownerHandle === "" || appSlug === undefined || appSlug === "") {
+    return undefined;
+  }
+  return { ownerHandle, appSlug };
+}
+
+// Pure pathname parser for the embed route — no I/O. Extracts the
+// (ownerHandle, appSlug) pair from /embed/:ownerHandle/:appSlug. Embeds have no
+// fsId segment (they always serve the latest production build).
+export function parseEmbedPathname(pathname: string): VibeSlugPair | undefined {
+  const parts = pathname.split("/");
+  const ownerHandle = parts[2];
+  const appSlug = parts[3];
+  if (parts[1] !== "embed" || ownerHandle === undefined || ownerHandle === "" || appSlug === undefined || appSlug === "") {
     return undefined;
   }
   return { ownerHandle, appSlug };
@@ -77,7 +108,7 @@ export async function getVibeRouteHints(ctx: VibesApiSQLCtx, slugs: VibeSlugPair
       .limit(1)
       .then((r) => r[0]);
 
-    if (row === undefined) return Result.Ok({ ogTitle: undefined, isWorldReadable: false });
+    if (row === undefined) return Result.Ok({ ogTitle: undefined, isWorldReadable: false, isPubliclyEmbeddable: false });
 
     const { filtered: metaItems, warning } = parseArrayWarning(row.meta, MetaItem);
     if (warning.length > 0) {
@@ -88,6 +119,7 @@ export async function getVibeRouteHints(ctx: VibesApiSQLCtx, slugs: VibeSlugPair
     return Result.Ok({
       ogTitle: titleItem === undefined ? undefined : titleItem.title,
       isWorldReadable: deriveIsWorldReadable(row.settings),
+      isPubliclyEmbeddable: deriveIsPubliclyEmbeddable(row.settings),
     });
   });
 }
