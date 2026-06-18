@@ -37,12 +37,13 @@ runs:
       shell: bash
       env:
         # Single switch that flips the test suite from "surfaced" to "blocking".
-        # While the deterministic failures tracked in #2425 are unfixed, keep this
-        # "false": the suite still runs to completion and its result is surfaced
-        # loudly (job summary + annotation), but a red suite does not fail the job.
-        # Once #2425 is closed, set this to "true" to make CI gate on tests — that
-        # is the final close-out of #2426. See agents/flaky-tests.md.
-        VIBES_CI_GATE_TESTS: "false"
+        # "true" → a red suite fails the job (CI gates on tests). This is the
+        # close-out of #2426, enabled once the deterministic failures (#2425)
+        # were fixed and `pnpm test` exits 0 (#2444). A failing test now blocks
+        # the PR — rerun to clear a flake (no retry-on-flake wrapper). Harness/
+        # setup/timeout errors always block regardless of this switch.
+        # See agents/flaky-tests.md.
+        VIBES_CI_GATE_TESTS: "true"
       run: |
         # Resolve the Playwright version that vitest actually loads, so the
         # docker image's bundled browsers match. `pnpm exec playwright --version`
