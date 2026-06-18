@@ -30,6 +30,7 @@ export interface CFEnv {
   LLM_BACKEND_URL: string;
   LLM_BACKEND_API_KEY: string;
   PRODIA_TOKEN?: string;
+  ICON_FALLBACK_MODEL?: string;
 
   CHAT_SESSIONS: DurableObjectNamespace;
   APP_SESSIONS: DurableObjectNamespace;
