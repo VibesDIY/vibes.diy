@@ -431,6 +431,17 @@ describe("ShareModal", () => {
       expect(modal.close).not.toHaveBeenCalled();
     });
 
+    it("renders a Close button that calls modal.close (desktop and mobile)", () => {
+      const modal = createMockModal();
+      render(<ShareModal modal={modal} isOwner />);
+
+      const closeButton = screen.getByRole("button", { name: "Close" });
+      expect(closeButton).toBeInTheDocument();
+
+      fireEvent.click(closeButton);
+      expect(modal.close).toHaveBeenCalledTimes(1);
+    });
+
     it("has proper dialog accessibility attributes", () => {
       render(<ShareModal modal={createMockModal()} isOwner />);
 
