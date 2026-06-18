@@ -114,13 +114,18 @@ export function useBuildCompletionNotifications(): void {
     if (prefsRef.current[config.prefKey] === false) return;
     if (!notificationsAvailable()) return;
 
+    // Bail before requesting permission when this tab is visible and focused: we won't
+    // show a notification anyway, and since build events are now delivered back to the
+    // originating tab, prompting here would nag a user who is actively watching the build
+    // (and a dismissed prompt gets permanently suppressed via writeSuppressed()).
+    if (!document.hidden && document.hasFocus()) return;
+
     if (!permissionRequestedRef.current && Notification.permission === "default" && !readSuppressed()) {
       permissionRequestedRef.current = true;
       await maybeRequestPermission();
     }
 
     if (Notification.permission !== "granted") return;
-    if (!document.hidden && document.hasFocus()) return;
 
     const notification = new Notification(config.title, {
       body: config.body(evt.ownerHandle, evt.appSlug),
