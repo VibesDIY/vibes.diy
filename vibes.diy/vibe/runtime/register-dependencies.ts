@@ -48,7 +48,12 @@ import { CallAIOpts, registerCallAI } from "./call-ai.js";
 import { registerImgGen } from "./img-gen.js";
 import { registerFirefly } from "./use-firefly.js";
 import { getActiveProps, mountVibe } from "./mount-vibes.js";
-import { getActiveImportMap, rewriteBareSpecifiers } from "./bare-specifier-rewrite.js";
+import {
+  getActiveImportMap,
+  getDocumentBaseUrl,
+  rewriteBareSpecifiers,
+  rewriteRelativeSpecifiers,
+} from "./bare-specifier-rewrite.js";
 
 export interface VibeApp {
   readonly appSlug: string;
@@ -531,7 +536,11 @@ async function applyHotSwap(source: string): Promise<Result<void>> {
   // URLs so hot-swap doesn't fail before the fsId-bound import map activates
   // (issue #1595).
   const rewritten = rewriteBareSpecifiers(rTransform.Ok().code, getActiveImportMap());
-  const blob = new Blob([rewritten], { type: "application/javascript" });
+  // Rewrite relative specifiers (`./Badge.jsx`) to absolute URLs against the
+  // iframe's entry base, since the blob: URL we import below is non-hierarchical
+  // and the browser can't resolve relative imports against it (issue #1889).
+  const resolved = rewriteRelativeSpecifiers(rewritten, getDocumentBaseUrl());
+  const blob = new Blob([resolved], { type: "application/javascript" });
   const blobUrl = URL.createObjectURL(blob);
   try {
     const rImport = await exception2Result<{ default?: unknown }>(() => import(/* @vite-ignore */ blobUrl));

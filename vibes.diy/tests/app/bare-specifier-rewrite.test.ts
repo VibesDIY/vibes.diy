@@ -1,5 +1,5 @@
 import { describe, it, expect, afterEach } from "vitest";
-import { rewriteBareSpecifiers, getActiveImportMap } from "@vibes.diy/vibe-runtime";
+import { rewriteBareSpecifiers, rewriteRelativeSpecifiers, getActiveImportMap, getDocumentBaseUrl } from "@vibes.diy/vibe-runtime";
 
 describe("rewriteBareSpecifiers", () => {
   it("rewrites a bare specifier not in the import map to esm.sh", () => {
@@ -98,6 +98,66 @@ describe("rewriteBareSpecifiers", () => {
     expect(out).toContain('from "https://esm.sh/three"');
     expect(out).toContain('import "./styles.css"');
     expect(out).toContain('import "https://esm.sh/tone"');
+  });
+});
+
+describe("rewriteRelativeSpecifiers (#1889)", () => {
+  const base = "https://app--user.cli-v2.vibesdiy.net/~abc123~/";
+
+  it("rewrites ./Sibling.jsx to an absolute URL against the entry base", () => {
+    const code = `import Badge from "./Badge.jsx";\nexport default () => null;`;
+    const out = rewriteRelativeSpecifiers(code, base);
+    expect(out).toContain(`from "https://app--user.cli-v2.vibesdiy.net/~abc123~/Badge.jsx"`);
+    expect(out).not.toContain(`from "./Badge.jsx"`);
+  });
+
+  it("resolves ../ and / specifiers against the base origin", () => {
+    const code = [`import a from "../shared/a.js";`, `import b from "/helpers.js";`, `export default () => null;`].join("\n");
+    const out = rewriteRelativeSpecifiers(code, base);
+    expect(out).toContain(`from "https://app--user.cli-v2.vibesdiy.net/shared/a.js"`);
+    expect(out).toContain(`from "https://app--user.cli-v2.vibesdiy.net/helpers.js"`);
+  });
+
+  it("rewrites side-effect and dynamic relative imports in the import region", () => {
+    const code = [`import "./styles.css";`, `import("./lazy.js");`, `export default () => null;`].join("\n");
+    const out = rewriteRelativeSpecifiers(code, base);
+    expect(out).toContain(`import "https://app--user.cli-v2.vibesdiy.net/~abc123~/styles.css"`);
+    expect(out).toContain(`import("https://app--user.cli-v2.vibesdiy.net/~abc123~/lazy.js")`);
+  });
+
+  it("leaves bare specifiers and absolute URLs untouched", () => {
+    const code = [
+      `import { useState } from "react";`,
+      `import x from "https://esm.sh/three";`,
+      `import e from "blob:https://x/uuid";`,
+      `export default () => null;`,
+    ].join("\n");
+    expect(rewriteRelativeSpecifiers(code, base)).toBe(code);
+  });
+
+  it("is a no-op when no base URL is available", () => {
+    const code = `import Badge from "./Badge.jsx";`;
+    expect(rewriteRelativeSpecifiers(code, undefined)).toBe(code);
+  });
+
+  it("does not touch relative-looking text in the module body", () => {
+    const code = [
+      `import Badge from "./Badge.jsx";`,
+      ``,
+      `function App() {`,
+      `  const href = "./not-an-import";`,
+      `  return href;`,
+      `}`,
+    ].join("\n");
+    const out = rewriteRelativeSpecifiers(code, base);
+    expect(out).toContain(`from "https://app--user.cli-v2.vibesdiy.net/~abc123~/Badge.jsx"`);
+    expect(out).toContain(`"./not-an-import"`);
+  });
+});
+
+describe("getDocumentBaseUrl", () => {
+  it("returns the document base URI in a DOM environment", () => {
+    expect(getDocumentBaseUrl()).toBe(document.baseURI);
   });
 });
 

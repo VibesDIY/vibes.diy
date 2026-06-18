@@ -157,7 +157,12 @@ function skipString(code: string, start: number, quote: string): number {
   return i;
 }
 
-export function rewriteBareSpecifiers(code: string, imports: Record<string, string>): string {
+// Rewrites the module specifiers inside the top-of-file import region using
+// `mapSpec`. For each specifier, `mapSpec` returns the replacement string, or
+// `undefined` to leave it untouched. Shared by rewriteBareSpecifiers (bare →
+// esm.sh) and rewriteRelativeSpecifiers (relative → absolute URL) so both walk
+// the same import region and use the same statement-shape regexes.
+function rewriteImportRegion(code: string, mapSpec: (spec: string) => string | undefined): string {
   const regionEnd = findImportRegionEnd(code);
   if (regionEnd === 0) return code;
   const head = code.slice(0, regionEnd);
@@ -170,14 +175,51 @@ export function rewriteBareSpecifiers(code: string, imports: Record<string, stri
   // side-effect `import "spec"` at statement start (no `(` after `import`)
   const sideEffectRe = /(^|[\s;{}])import(\s*)(['"])([^'"\n]+)\3/g;
 
-  let out = head.replace(dynRe, (m, ws1, ws2, q, spec) =>
-    shouldRewrite(spec, imports) ? `import${ws1}(${ws2}${q}${fallbackUrl(spec)}${q}` : m
-  );
-  out = out.replace(fromRe, (m, ws, q, spec) => (shouldRewrite(spec, imports) ? `from${ws}${q}${fallbackUrl(spec)}${q}` : m));
-  out = out.replace(sideEffectRe, (m, pre, ws, q, spec) =>
-    shouldRewrite(spec, imports) ? `${pre}import${ws}${q}${fallbackUrl(spec)}${q}` : m
-  );
+  let out = head.replace(dynRe, (m, ws1, ws2, q, spec) => {
+    const next = mapSpec(spec);
+    return next === undefined ? m : `import${ws1}(${ws2}${q}${next}${q}`;
+  });
+  out = out.replace(fromRe, (m, ws, q, spec) => {
+    const next = mapSpec(spec);
+    return next === undefined ? m : `from${ws}${q}${next}${q}`;
+  });
+  out = out.replace(sideEffectRe, (m, pre, ws, q, spec) => {
+    const next = mapSpec(spec);
+    return next === undefined ? m : `${pre}import${ws}${q}${next}${q}`;
+  });
   return out + tail;
+}
+
+export function rewriteBareSpecifiers(code: string, imports: Record<string, string>): string {
+  return rewriteImportRegion(code, (spec) => (shouldRewrite(spec, imports) ? fallbackUrl(spec) : undefined));
+}
+
+// Relative specifiers only: `./x`, `../x`, `/x`, and protocol-relative `//host`.
+// Absolute URL forms (http(s):, blob:, data:) and bare names are excluded —
+// bare names are handled by rewriteBareSpecifiers, absolute URLs need no change.
+const RELATIVE_SPEC = /^(?:\.\.?\/|\/)/;
+
+// Hot-swap injects the entry module via a `blob:` URL, against which the browser
+// cannot resolve relative imports like `./Badge.jsx` — blob URLs aren't
+// hierarchical (issue #1889). Rewrite each relative specifier to an absolute URL
+// resolved against `baseUrl` (the iframe's document.baseURI = the `/~fsId~/`
+// entry URL), so siblings load from the sandbox origin exactly as they do on a
+// full page load. No base (or an unparseable specifier) leaves the code as-is.
+export function rewriteRelativeSpecifiers(code: string, baseUrl: string | undefined): string {
+  if (!baseUrl) return code;
+  return rewriteImportRegion(code, (spec) => {
+    if (!RELATIVE_SPEC.test(spec)) return undefined;
+    try {
+      return new URL(spec, baseUrl).href;
+    } catch {
+      return undefined;
+    }
+  });
+}
+
+export function getDocumentBaseUrl(): string | undefined {
+  if (typeof document === "undefined") return undefined;
+  return document.baseURI;
 }
 
 export function getActiveImportMap(): Record<string, string> {

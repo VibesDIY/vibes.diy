@@ -2,7 +2,12 @@ export * from "./db-acl-allows.js";
 export * from "./vibe.js";
 export * from "./mount-vibes.js";
 export * from "./register-dependencies.js";
-export { rewriteBareSpecifiers, getActiveImportMap } from "./bare-specifier-rewrite.js";
+export {
+  rewriteBareSpecifiers,
+  rewriteRelativeSpecifiers,
+  getActiveImportMap,
+  getDocumentBaseUrl,
+} from "./bare-specifier-rewrite.js";
 export * from "./VibeContext.js";
 export * from "./call-ai.js";
 export * from "./img-gen.js";
