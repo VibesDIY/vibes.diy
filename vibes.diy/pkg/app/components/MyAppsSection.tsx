@@ -357,6 +357,18 @@ export function AppDetailPanel({ item, appHostBaseUrl, onClose }: AppDetailPanel
   // once the fetch below resolves.
   const creatorHandle = ownerDisplayName ?? (item ? `@${item.ownerHandle}` : "");
 
+  // The panel is a single persistent instance whose `item` prop changes, so
+  // state survives switching apps. Reset it from the cache the moment the app
+  // changes (React's "adjust state during render" pattern) so a previously
+  // fetched owner name / screenshot never bleeds into a different app while the
+  // new fetch is in flight — or permanently, if the new app has none.
+  const prevCacheKeyRef = useRef(cacheKey);
+  if (prevCacheKeyRef.current !== cacheKey) {
+    prevCacheKeyRef.current = cacheKey;
+    setScreenshot(item ? (screenshotCache.get(cacheKey) ?? null) : null);
+    setOwnerDisplayName(item ? (ownerDisplayNameCache.get(cacheKey) ?? undefined) : undefined);
+  }
+
   useEffect(() => {
     if (!item) return;
     const cached = screenshotCache.get(cacheKey);
@@ -376,8 +388,8 @@ export function AppDetailPanel({ item, appHostBaseUrl, onClose }: AppDetailPanel
       const shot = app.meta.find(isMetaScreenShot) ?? null;
       screenshotCache.set(cacheKey, shot);
       ownerDisplayNameCache.set(cacheKey, app.ownerDisplayName ?? null);
-      if (shot) setScreenshot(shot);
-      if (app.ownerDisplayName) setOwnerDisplayName(app.ownerDisplayName);
+      setScreenshot(shot);
+      setOwnerDisplayName(app.ownerDisplayName ?? undefined);
     });
     return () => {
       cancelled = true;
