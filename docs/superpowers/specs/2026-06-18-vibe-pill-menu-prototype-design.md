@@ -182,10 +182,10 @@ panel.
 
 ## State shown
 
-**Owner, logged in, fully loaded.** All affordances present. The pill carries
-**only** the unpublished-changes dot — the numbered count badges (pending-access,
-unread) were removed as visual clutter. Pending requests still surface inside the
-Share panel's Requests section.
+**Owner, logged in, fully loaded.** All affordances present. The pill itself
+carries **no badges or dots** — the numbered count badges (pending-access,
+unread) and the unpublished-changes dot were all removed as visual clutter.
+Pending requests still surface inside the Share panel's Requests section.
 
 ## Sample vibe (backdrop)
 
@@ -218,7 +218,7 @@ in Comments / Settings / Account / Help.
 2. Click expands the tray (bouncy reveal) showing `Help · Account · Vibes ·
    Share` with the correct four palette colors (Account = purple), all labels
    (incl. "ACCOUNT") fully readable.
-3. The pill shows only the unpublished-changes dot — no numbered count badges.
+3. The pill carries no badges or dots — clean wordmark only.
 4. Share opens the panel; Restricted shows invite + people (Data dropdown +
    Code checkbox) + requests + the site toggle at the bottom.
 5. Flipping the site toggle to Public collapses the people machinery and shows
