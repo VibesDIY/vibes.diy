@@ -45,18 +45,18 @@
     "@vibes.diy/api-types": "workspace:*",
     "@vibes.diy/call-ai-v2": "workspace:*",
     "@vibes.diy/prompts": "workspace:*",
-    "arktype": "^2.2.0",
+    "arktype": "^2.2.1",
     "charwise": "^3.0.1",
     "cmd-ts": "^0.15.0",
-    "tsx": "^4.22.3",
+    "tsx": "^4.22.4",
     "ws": "^8.21.0",
     "zod": "^3.25.67",
     "zx": "^8.8.5"
   },
   "devDependencies": {
     "@types/ws": "^8.18.1",
-    "@vitest/browser-playwright": "~4.1.8",
-    "vitest": "~4.1.8"
+    "@vitest/browser-playwright": "~4.1.9",
+    "vitest": "~4.1.9"
   },
   "repository": {
     "type": "git",

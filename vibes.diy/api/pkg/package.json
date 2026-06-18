@@ -20,7 +20,7 @@
     "@noble/hashes": "^2.2.0",
     "@vibes.diy/api-types": "workspace:*",
     "acorn": "^8.15.0",
-    "arktype": "^2.2.0",
+    "arktype": "^2.2.1",
     "multiformats": "^13.4.2",
     "random-words": "^2.0.1",
     "react": "^19.2.7",

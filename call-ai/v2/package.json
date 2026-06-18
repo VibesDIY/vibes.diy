@@ -18,18 +18,18 @@
   "dependencies": {
     "@adviser/cement": "^0.5.34",
     "@fireproof/core-runtime": "0.24.19",
-    "arktype": "^2.2.0",
+    "arktype": "^2.2.1",
     "cmd-ts": "^0.15.0",
     "mime": "^4.1.0",
     "zx": "^8.8.5"
   },
   "devDependencies": {
-    "@vitest/browser": "~4.1.8",
-    "@vitest/browser-playwright": "~4.1.8",
+    "@vitest/browser": "~4.1.9",
+    "@vitest/browser-playwright": "~4.1.9",
     "eslint": "^10.0.3",
-    "playwright": "^1.59.1",
-    "tsx": "^4.22.3",
-    "vitest": "~4.1.8"
+    "playwright": "^1.61.0",
+    "tsx": "^4.22.4",
+    "vitest": "~4.1.9"
   },
   "repository": {
     "type": "git",
