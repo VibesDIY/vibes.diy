@@ -1,6 +1,12 @@
 import React from "react";
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { render, screen, waitFor, cleanup, configure } from "@testing-library/react";
+
+// Unmount between tests (no global auto-cleanup) and give the async firefly
+// doc-read chain (db.get → decorateFiles → re-render) headroom past waitFor's
+// 1000ms default in the browser runner (#2425).
+afterEach(cleanup);
+configure({ asyncUtilTimeout: 5000 });
 import { ImgGen } from "@vibes.diy/base";
 import { Result } from "@adviser/cement";
 import { registerFirefly } from "../../vibe/runtime/use-firefly.js";
