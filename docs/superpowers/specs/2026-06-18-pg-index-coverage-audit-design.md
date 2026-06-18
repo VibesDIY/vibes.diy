@@ -121,13 +121,22 @@ EXPLAIN (ANALYZE, BUFFERS, VERBOSE)
 SELECT ... ;   -- the exact query from the file:line above
 ```
 
-Confirm the **before** plan shows a `Seq Scan` or a wide PK scan with a `Filter:` discarding many rows. Then:
+Confirm the **before** plan shows a `Seq Scan` or a wide PK scan with a `Filter:` discarding many rows. Then build the index, re-`ANALYZE`, and re-plan — **each as its own `db:admin sql` invocation**:
 
 ```sql
+-- invocation 1 (MUST be alone — see note)
 CREATE INDEX CONCURRENTLY <name> ON "<Table>" (<cols>);
-ANALYZE "<Table>";
-EXPLAIN (ANALYZE, BUFFERS) SELECT ... ;   -- expect Index Scan, lower cost + actual time
 ```
+```sql
+-- invocation 2
+ANALYZE "<Table>";
+```
+```sql
+-- invocation 3 — expect Index Scan, lower cost + actual time
+EXPLAIN (ANALYZE, BUFFERS) SELECT ... ;
+```
+
+> `CREATE INDEX CONCURRENTLY` cannot run inside a transaction block. `db:admin`/`admin-db.ts` hands the whole SQL string to a single `pool.query`, and Postgres runs a semicolon-separated batch as one implicit transaction — so combining the three statements above into one `db:admin sql "..."` call fails with `CREATE INDEX CONCURRENTLY cannot run inside a transaction block`. Run the concurrent build by itself, then `ANALYZE` and `EXPLAIN` in separate calls.
 
 Keep the index only if the **after** plan switches to an index scan **and** the measured time drops materially. Record before/after `cost` and `actual time` in the follow-up PR description, mirroring #1530's "EXPLAIN ANALYZE before/after" ask.
 
