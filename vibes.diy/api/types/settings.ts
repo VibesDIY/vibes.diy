@@ -42,6 +42,11 @@ export function isUserSettingDefaultHandle(obj: unknown): obj is UserSettingDefa
 
 export const userSettingProfile = type({
   type: "'profile'",
+  // DEPRECATED (#2434): the per-user avatar has been replaced by per-handle
+  // avatars in HandleSettings (`/u/<handle>/avatar`). No code writes this field
+  // anymore; it is retained read-only so the one-time `migrateLegacyAvatar` seed
+  // can carry an existing user's avatar onto their default handle. Remove the
+  // field once the backfill is complete across all environments.
   "avatarCid?": "string",
   "displayName?": "string",
 });
