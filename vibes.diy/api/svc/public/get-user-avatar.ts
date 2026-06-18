@@ -8,9 +8,9 @@ import {
   EventoResult,
   URI,
 } from "@adviser/cement";
-import { HttpResponseBodyType, HttpResponseJsonType, isUserSettingProfile } from "@vibes.diy/api-types";
-import { eq } from "drizzle-orm";
+import { HttpResponseBodyType, HttpResponseJsonType } from "@vibes.diy/api-types";
 import { VibesApiSQLCtx } from "../types.js";
+import { readHandleAvatar } from "./handle-settings.js";
 
 export interface AvatarHttpResult {
   status: 200 | 302 | 304 | 404;
@@ -18,39 +18,27 @@ export interface AvatarHttpResult {
   body?: string;
 }
 
-// Spec §1a — content-addressed URL behind a stable per-ownerHandle
-// indirection so embedded references update when the user uploads a
-// new avatar.
+// Per-handle avatar (spec: docs/superpowers/specs/2026-06-18-per-handle-avatar-design.md).
+// `/u/<handle>/avatar` is a stable indirection; it resolves the handle's OWN
+// `active.avatar` from HandleSettings and 302s to the content-addressed bytes.
+//
+// PRIVACY INVARIANT: there is NO fallback to a user-level avatar. A handle with
+// no avatar of its own returns 404 (the client renders initials) — serving a
+// shared account avatar would render byte-identical images for two handles of
+// the same user and correlate the personas.
+//
+// `active.avatar.currentCid` holds the storage getURL (app-icon convention), so
+// resolution is a direct redirect with no assetUploads lookup. The ETag is keyed
+// on that identity; a new upload changes it and busts the cache.
 export async function handleGetUserAvatar(
   vctx: VibesApiSQLCtx,
   ownerHandle: string,
   ifNoneMatch: string | undefined
 ): Promise<AvatarHttpResult> {
-  const binding = await vctx.sql.db
-    .select({ userId: vctx.sql.tables.handleBinding.userId })
-    .from(vctx.sql.tables.handleBinding)
-    .where(eq(vctx.sql.tables.handleBinding.handle, ownerHandle))
-    .limit(1)
-    .then((r) => r[0]);
-  if (!binding) return { status: 404, headers: {} };
+  const avatar = await readHandleAvatar(vctx, ownerHandle);
+  if (!avatar) return { status: 404, headers: {} };
 
-  const settingsRow = await vctx.sql.db
-    .select({ settings: vctx.sql.tables.userSettings.settings })
-    .from(vctx.sql.tables.userSettings)
-    .where(eq(vctx.sql.tables.userSettings.userId, binding.userId))
-    .limit(1)
-    .then((r) => r[0]);
-
-  let avatarCid: string | undefined;
-  for (const item of (settingsRow?.settings as unknown[]) ?? []) {
-    if (isUserSettingProfile(item) && item.avatarCid) {
-      avatarCid = item.avatarCid;
-      break;
-    }
-  }
-  if (!avatarCid) return { status: 404, headers: {} };
-
-  const etag = `"${avatarCid}"`;
+  const etag = `"${avatar.getURL}"`;
   if (ifNoneMatch === etag) {
     return {
       status: 304,
@@ -61,23 +49,7 @@ export async function handleGetUserAvatar(
     };
   }
 
-  // Resolve the bare CID to the stored assetURI so we can proxy via the
-  // existing cid-asset endpoint (/assets/cid/?url=...&mime=...).
-  // The AssetUploads audit table is the only way to recover assetURI from
-  // a bare CID without peer-probing — see put-asset.ts for the rationale.
-  const uploadsT = vctx.sql.tables.assetUploads;
-  const upload = await vctx.sql.db
-    .select({ assetURI: uploadsT.assetURI, mimeType: uploadsT.mimeType })
-    .from(uploadsT)
-    .where(eq(uploadsT.cid, avatarCid))
-    .limit(1)
-    .then((r) => r[0]);
-
-  if (!upload) return { status: 404, headers: {} };
-
-  const mime = upload.mimeType ?? "application/octet-stream";
-  const target = `/assets/cid/?url=${encodeURIComponent(upload.assetURI)}&mime=${encodeURIComponent(mime)}`;
-
+  const target = `/assets/cid/?url=${encodeURIComponent(avatar.getURL)}&mime=${encodeURIComponent(avatar.mime)}`;
   return {
     status: 302,
     headers: {
