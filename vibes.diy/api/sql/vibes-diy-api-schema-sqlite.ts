@@ -187,6 +187,23 @@ export const sqlAppSettings = sqliteTable(
   ]
 );
 
+// Per-handle settings (currently just the avatar). Keyed by `handle` so each
+// handle a user owns has its own row — the privacy invariant requires that two
+// handles of the same user never share avatar bytes. `userId` is the owner, for
+// write-time ownership checks and handle delete/rename lifecycle.
+// See docs/superpowers/specs/2026-06-18-per-handle-avatar-design.md.
+export const sqlHandleSettings = sqliteTable(
+  "HandleSettings",
+  {
+    handle: text().notNull(),
+    userId: text().notNull(), // from Clerk
+    settings: text({ mode: "json" }).notNull(), // ActiveEntry[] (e.g. active.avatar)
+    updated: text().notNull(),
+    created: text().notNull(),
+  },
+  (table) => [primaryKey({ columns: [table.handle] }), index("HandleSettings_userId_idx").on(table.userId)]
+);
+
 export const sqlRequestGrants = sqliteTable(
   "RequestGrants",
   {

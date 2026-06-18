@@ -341,6 +341,33 @@ export function isActiveIcon(obj: unknown): obj is ActiveIcon {
   return !(ActiveIcon(obj) instanceof type.errors);
 }
 
+export const ActiveAvatarVersion = type({
+  // `cid` holds the storage getURL (not a bare content hash), matching the
+  // app-icon convention so the avatar serves via a direct cidAssetUrl with no
+  // assetUploads lookup. See docs/superpowers/specs/2026-06-18-per-handle-avatar-design.md.
+  cid: "string",
+  mime: "string",
+  created: "string",
+});
+export type ActiveAvatarVersion = typeof ActiveAvatarVersion.infer;
+export function isActiveAvatarVersion(obj: unknown): obj is ActiveAvatarVersion {
+  return !(ActiveAvatarVersion(obj) instanceof type.errors);
+}
+
+// Per-handle avatar. Parallel to ActiveIcon (same versions[] + currentCid
+// mechanics) but a distinct type — ActiveIcon carries icon-generation
+// semantics (descriptionAt) that don't fit a person avatar. Lives in the
+// per-handle HandleSettings store; `/u/<handle>/avatar` resolves it.
+export const ActiveAvatar = type({
+  type: "'active.avatar'",
+  versions: ActiveAvatarVersion.array(),
+  currentCid: "string",
+});
+export type ActiveAvatar = typeof ActiveAvatar.infer;
+export function isActiveAvatar(obj: unknown): obj is ActiveAvatar {
+  return !(ActiveAvatar(obj) instanceof type.errors);
+}
+
 export const ActiveIconDescription = type({
   type: "'active.icon-description'",
   description: "string",
@@ -416,6 +443,7 @@ export const ActiveEntry = EnablePublicAccess.or(ActiveRequest)
   .or(ActiveTheme)
   .or(ActiveColorTheme)
   .or(ActiveIcon)
+  .or(ActiveAvatar)
   .or(ActiveIconDescription)
   .or(ActiveEnrichedPrompt)
   .or(ActiveModelSetting)
