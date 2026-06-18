@@ -48,6 +48,24 @@ export interface FireflyTransport {
 // @ts-expect-error "charwise" has no types
 import charwise from "charwise";
 
+// charwise encodes primitives and arrays but throws "can only encode arrays"
+// on plain objects. Fall back to a stable JSON form so object-valued keys/fields
+// still sort and filter deterministically client-side instead of crashing (#2425).
+function stableStringify(v: unknown): string {
+  if (v === null || typeof v !== "object") return JSON.stringify(v) ?? "null";
+  if (Array.isArray(v)) return "[" + v.map(stableStringify).join(",") + "]";
+  const obj = v as Record<string, unknown>;
+  return "{" + Object.keys(obj).sort().map((k) => JSON.stringify(k) + ":" + stableStringify(obj[k])).join(",") + "}";
+}
+function encodeKey(v: unknown): string {
+  try {
+    return charwise.encode(v) as string;
+  } catch {
+    // Prefix with a high code point so object keys never collide with charwise output.
+    return "￿obj:" + stableStringify(v);
+  }
+}
+
 // Types matching the use-fireproof Database interface.
 // Exported for use by consumers (img-vibes, db-explorer, etc.)
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -303,7 +321,7 @@ export class FireflyDatabase {
       encodedRows = allDocs
         .filter((doc) => doc[mapFn] !== undefined)
         .map((doc) => ({
-          encodedKey: charwise.encode(doc[mapFn]) as string,
+          encodedKey: encodeKey(doc[mapFn]) as string,
           decodedKey: doc[mapFn],
           value: doc,
           doc: opts.includeDocs ? doc : undefined,
@@ -318,7 +336,7 @@ export class FireflyDatabase {
             emitCalled = true;
             if (typeof key === "undefined") return;
             encodedRows.push({
-              encodedKey: charwise.encode(key) as string,
+              encodedKey: encodeKey(key) as string,
               decodedKey: key,
               value: doc,
               doc: opts.includeDocs ? doc : undefined,
@@ -332,7 +350,7 @@ export class FireflyDatabase {
           // If emit was never called and return value is defined, use return as key
           if (!emitCalled && typeof mapReturn !== "undefined") {
             encodedRows.push({
-              encodedKey: charwise.encode(mapReturn) as string,
+              encodedKey: encodeKey(mapReturn) as string,
               decodedKey: mapReturn,
               value: doc,
               doc: opts.includeDocs ? doc : undefined,
@@ -345,7 +363,7 @@ export class FireflyDatabase {
     } else {
       // No mapFn — return all docs keyed by _id
       encodedRows = allDocs.map((doc) => ({
-        encodedKey: charwise.encode(doc._id) as string,
+        encodedKey: encodeKey(doc._id) as string,
         decodedKey: doc._id,
         value: doc,
         doc: opts.includeDocs ? doc : undefined,
@@ -354,21 +372,21 @@ export class FireflyDatabase {
 
     // Apply query filters using charwise-encoded comparisons
     if (opts.key !== undefined) {
-      const encodedKey = charwise.encode(opts.key) as string;
+      const encodedKey = encodeKey(opts.key) as string;
       encodedRows = encodedRows.filter((r) => r.encodedKey === encodedKey);
     }
     if (opts.keys !== undefined) {
-      const encodedKeys = new Set(opts.keys.map((k: unknown) => charwise.encode(k) as string));
+      const encodedKeys = new Set(opts.keys.map((k: unknown) => encodeKey(k) as string));
       encodedRows = encodedRows.filter((r) => encodedKeys.has(r.encodedKey));
     }
     if (opts.range) {
-      const encodedStart = charwise.encode(opts.range[0]) as string;
-      const encodedEnd = charwise.encode(opts.range[1]) as string;
+      const encodedStart = encodeKey(opts.range[0]) as string;
+      const encodedEnd = encodeKey(opts.range[1]) as string;
       encodedRows = encodedRows.filter((r) => r.encodedKey >= encodedStart && r.encodedKey <= encodedEnd);
     }
     if (opts.prefix !== undefined) {
       // For array prefixes, strip the trailing "!" so [2024,11] matches [2024,11,15]
-      let encodedPrefix = charwise.encode(opts.prefix) as string;
+      let encodedPrefix = encodeKey(opts.prefix) as string;
       if (Array.isArray(opts.prefix) && encodedPrefix.endsWith("!")) {
         encodedPrefix = encodedPrefix.slice(0, -1);
       }
