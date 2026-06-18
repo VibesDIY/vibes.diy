@@ -17,6 +17,7 @@ export type Route =
   | "capi-complete-registration" // POST|OPTIONS /capi/complete-registration → Meta CAPI CompleteRegistration relay
   | "clerk-webhook" // POST /webhooks/clerk → Svix-verified Clerk event handler
   | "legacy-vibe-redirect" // /vibe/<slug> (exactly two segments) → 301 to /vibe/og/<slug>
+  | "vibe-trailing-slash-redirect" // /vibe/<…>/ (trailing slash) → 301 to the slash-stripped path
   | "ssr"; // everything else → React Router
 
 export interface RouteInput {
@@ -89,6 +90,15 @@ export function routeDecision(req: RouteInput): Route {
 
   if (pathname === "/webhooks/clerk" && method === "POST") {
     return "clerk-webhook";
+  }
+
+  // Canonical vibe URLs carry no trailing slash (#1428). Any /vibe/<…>/ form
+  // (e.g. the published /vibe/<user>/<slug>/ that older Share modals emitted)
+  // 301s to the slash-stripped path so copied links, canonical tags, and
+  // redirects all converge on one convention. `/vibe/` alone is left to fall
+  // through — there is nothing to strip to.
+  if (/^\/vibe\/.+\/$/.test(pathname)) {
+    return "vibe-trailing-slash-redirect";
   }
 
   // Legacy two-segment vibe paths: /vibe/<slug> → redirect to /vibe/og/<slug>.

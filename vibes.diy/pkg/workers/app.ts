@@ -95,6 +95,15 @@ export default {
       }) as unknown as CFResponse;
     }
 
+    if (route === "vibe-trailing-slash-redirect") {
+      // Strip any trailing slash(es) and 301 to the canonical, slash-free path.
+      const canonical = url.pathname.replace(/\/+$/, "");
+      return new Response(null, {
+        status: 301,
+        headers: { Location: `${canonical}${url.search}` },
+      }) as unknown as CFResponse;
+    }
+
     if (route === "app-api") {
       const vibe = url.getParam("vibe");
       if (vibe === undefined) {

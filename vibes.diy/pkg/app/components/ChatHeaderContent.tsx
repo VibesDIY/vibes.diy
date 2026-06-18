@@ -27,7 +27,7 @@ function ChatHeaderContent({ title, promptProcessing, codeReady, remixOf, icon }
         {remixOf ? (
           <span>
             <a
-              href={`/vibe/${remixOf}/`}
+              href={`/vibe/${remixOf}`}
               target="_blank"
               rel="noopener noreferrer"
               className="text-accent-02-light dark:text-accent-02-dark hover:underline"

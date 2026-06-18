@@ -240,14 +240,14 @@ describe("ShareModal", () => {
     const publishedModal = (overrides: Partial<UseShareModalReturn> = {}) =>
       createMockModal({
         isPublished: true,
-        publishedUrl: "https://vibes.diy/vibe/testuser/testapp/",
+        publishedUrl: "https://vibes.diy/vibe/testuser/testapp",
         ...overrides,
       });
 
     it("shows the published URL, Copy Link, and Update button", () => {
       render(<ShareModal modal={publishedModal()} isOwner />);
 
-      expect(screen.getByDisplayValue("https://vibes.diy/vibe/testuser/testapp/")).toBeInTheDocument();
+      expect(screen.getByDisplayValue("https://vibes.diy/vibe/testuser/testapp")).toBeInTheDocument();
       expect(screen.getByRole("button", { name: "Update" })).toBeInTheDocument();
       expect(screen.getByText("Copy Link")).toBeInTheDocument();
     });
@@ -352,7 +352,7 @@ describe("ShareModal", () => {
     const publishedModal = (overrides: Partial<UseShareModalReturn> = {}) =>
       createMockModal({
         isPublished: true,
-        publishedUrl: "https://vibes.diy/vibe/testuser/testapp/",
+        publishedUrl: "https://vibes.diy/vibe/testuser/testapp",
         ...overrides,
       });
 
