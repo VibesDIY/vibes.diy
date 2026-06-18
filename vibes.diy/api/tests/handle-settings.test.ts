@@ -1,7 +1,15 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { ensureSuperThis } from "@fireproof/core-runtime";
 import { createTestDeviceCA } from "@fireproof/core-device-id";
-import { readHandleAvatar, writeHandleAvatar, deleteHandleSettings, type VibesApiSQLCtx } from "@vibes.diy/api-svc";
+import {
+  readHandleAvatar,
+  writeHandleAvatar,
+  deleteHandleSettings,
+  seedDefaultHandleAvatar,
+  writeHandleBinding,
+  type VibesApiSQLCtx,
+} from "@vibes.diy/api-svc";
+import { string2stream } from "@adviser/cement";
 import { createVibeDiyTestCtx } from "./vibe-diy-test-ctx.js";
 import { eq } from "drizzle-orm";
 
@@ -57,6 +65,67 @@ describe("HandleSettings store", { timeout: 30000 }, () => {
     expect(await readHandleAvatar(vctx, "alice")).toBeDefined();
     // Correct owner deletes.
     await deleteHandleSettings(vctx, "alice", "u_alice");
+    expect(await readHandleAvatar(vctx, "alice")).toBeUndefined();
+  });
+});
+
+describe("seedDefaultHandleAvatar (legacy migration)", { timeout: 30000 }, () => {
+  const sthis = ensureSuperThis();
+  let vctx: VibesApiSQLCtx;
+  let legacyCid: string;
+  let legacyGetURL: string;
+
+  beforeEach(async () => {
+    const deviceCA = await createTestDeviceCA(sthis);
+    const appCtx = await createVibeDiyTestCtx(sthis, deviceCA);
+    vctx = appCtx.vibesCtx;
+
+    const r = await writeHandleBinding(vctx, "user_alice", "alice");
+    if (r.isErr()) throw new Error(`seed alice: ${r.Err().message}`);
+
+    const [rStore] = await vctx.storage.ensure(string2stream("legacy-avatar-bytes"));
+    if (rStore.isErr()) throw new Error(`store: ${rStore.Err()}`);
+    legacyCid = rStore.Ok().cid;
+    legacyGetURL = rStore.Ok().getURL;
+    await vctx.sql.db.insert(vctx.sql.tables.assetUploads).values({
+      uploadId: `up-${Date.now()}`,
+      userId: "user_alice",
+      ownerHandle: "alice",
+      appSlug: "profile",
+      cid: legacyCid,
+      assetURI: legacyGetURL,
+      size: 1,
+      mimeType: "image/png",
+      created: new Date().toISOString(),
+    });
+  });
+
+  it("seeds the default handle from the legacy avatarCid", async () => {
+    await seedDefaultHandleAvatar(vctx, { userId: "user_alice", defaultHandle: "alice", avatarCid: legacyCid });
+    expect(await readHandleAvatar(vctx, "alice")).toEqual({ getURL: legacyGetURL, mime: "image/png" });
+  });
+
+  it("is idempotent — a second seed does not overwrite a newer avatar", async () => {
+    await seedDefaultHandleAvatar(vctx, { userId: "user_alice", defaultHandle: "alice", avatarCid: legacyCid });
+    // User sets a new avatar after migration.
+    await writeHandleAvatar(vctx, { handle: "alice", userId: "user_alice", getURL: "fp:store/new", mime: "image/jpeg" });
+    // Re-running the seed must NOT revert it.
+    await seedDefaultHandleAvatar(vctx, { userId: "user_alice", defaultHandle: "alice", avatarCid: legacyCid });
+    expect(await readHandleAvatar(vctx, "alice")).toEqual({ getURL: "fp:store/new", mime: "image/jpeg" });
+  });
+
+  it("skips when there is no default handle (guardrail 4)", async () => {
+    await seedDefaultHandleAvatar(vctx, { userId: "user_alice", defaultHandle: undefined, avatarCid: legacyCid });
+    expect(await readHandleAvatar(vctx, "alice")).toBeUndefined();
+  });
+
+  it("skips when the user does not own the default handle (guardrail 2)", async () => {
+    await seedDefaultHandleAvatar(vctx, { userId: "user_mallory", defaultHandle: "alice", avatarCid: legacyCid });
+    expect(await readHandleAvatar(vctx, "alice")).toBeUndefined();
+  });
+
+  it("skips when the legacy cid was not uploaded by the user", async () => {
+    await seedDefaultHandleAvatar(vctx, { userId: "user_alice", defaultHandle: "alice", avatarCid: "bafyNOTMINE" });
     expect(await readHandleAvatar(vctx, "alice")).toBeUndefined();
   });
 });

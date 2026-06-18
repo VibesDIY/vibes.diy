@@ -1,6 +1,13 @@
 import { Result, exception2Result } from "@adviser/cement";
 import { and, eq } from "drizzle-orm";
-import { ActiveAvatar, ActiveEntry, isActiveAvatar, parseArrayWarning } from "@vibes.diy/api-types";
+import {
+  ActiveAvatar,
+  ActiveEntry,
+  isActiveAvatar,
+  isUserSettingDefaultHandle,
+  isUserSettingProfile,
+  parseArrayWarning,
+} from "@vibes.diy/api-types";
 import { VibesApiSQLCtx } from "../types.js";
 
 // Per-handle settings store (HandleSettings table). Currently holds just the
@@ -83,6 +90,63 @@ export async function writeHandleAvatar(
   });
   if (rUpsert.isErr()) return Result.Err(rUpsert.Err());
   return Result.Ok({ getURL: args.getURL, mime: args.mime });
+}
+
+// One-time migration: seed a user's DEFAULT handle avatar from the legacy
+// per-user `userSettings.profile.avatarCid`, then leave every other handle
+// blank. Touches exactly one handle, so it creates no cross-handle correlation.
+// Best-effort and idempotent — safe to call on every settings load.
+//
+// Guardrails (all must hold, per spec Decision 5):
+//   1. a legacy `avatarCid` exists (the caller passes it from the profile);
+//   2. the default handle is currently owned by the user;
+//   3. the default handle has no `active.avatar` yet (idempotent);
+//   4. no valid default handle ⇒ skip (the caller passes undefined → no-op).
+export async function seedDefaultHandleAvatar(
+  vctx: VibesApiSQLCtx,
+  args: { userId: string; defaultHandle: string | undefined; avatarCid: string | undefined }
+): Promise<void> {
+  if (!args.avatarCid || !args.defaultHandle) return; // guardrails 1 + 4
+  await exception2Result(async () => {
+    // guardrail 2: ownership
+    const hb = vctx.sql.tables.handleBinding;
+    const owns = await vctx.sql.db
+      .select({ handle: hb.handle })
+      .from(hb)
+      .where(and(eq(hb.handle, args.defaultHandle as string), eq(hb.userId, args.userId)))
+      .limit(1)
+      .then((r) => r[0]);
+    if (!owns) return;
+
+    // guardrail 3: idempotent
+    if (await readHandleAvatar(vctx, args.defaultHandle as string)) return;
+
+    // resolve the legacy bare CID to the storage URI, scoped to this user's uploads
+    const au = vctx.sql.tables.assetUploads;
+    const upload = await vctx.sql.db
+      .select({ assetURI: au.assetURI, mimeType: au.mimeType })
+      .from(au)
+      .where(and(eq(au.cid, args.avatarCid as string), eq(au.userId, args.userId)))
+      .limit(1)
+      .then((r) => r[0]);
+    if (!upload) return;
+
+    await writeHandleAvatar(vctx, {
+      handle: args.defaultHandle as string,
+      userId: args.userId,
+      getURL: upload.assetURI,
+      mime: upload.mimeType ?? "application/octet-stream",
+    });
+  });
+}
+
+// Extract the legacy avatarCid + default handle from a userSettings array and
+// run the one-time default-handle seed. Called from ensureUserSettings so the
+// migration happens lazily on the next settings load — no batch runner.
+export async function migrateLegacyAvatar(vctx: VibesApiSQLCtx, userId: string, settings: unknown[]): Promise<void> {
+  const profile = settings.find(isUserSettingProfile);
+  const def = settings.find(isUserSettingDefaultHandle);
+  await seedDefaultHandleAvatar(vctx, { userId, defaultHandle: def?.ownerHandle, avatarCid: profile?.avatarCid });
 }
 
 // Delete a handle's settings row (handle-delete lifecycle). Scoped by userId so

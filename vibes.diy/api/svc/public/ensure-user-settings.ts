@@ -14,6 +14,7 @@ import { ensureLogger } from "@fireproof/core-runtime";
 import { unwrapMsgBase } from "../unwrap-msg-base.js";
 import { VibesApiSQLCtx } from "../types.js";
 import { checkAuth } from "../check-auth.js";
+import { migrateLegacyAvatar } from "./handle-settings.js";
 import { eq } from "drizzle-orm/sql/expressions";
 import { type } from "arktype";
 
@@ -55,6 +56,12 @@ export async function ensureUserSettings(
       updated: now,
     })
     .where(eq(vctx.sql.tables.userSettings.userId, userId));
+
+  // One-time, best-effort migration: seed the user's default handle avatar from
+  // the legacy per-user avatarCid (idempotent). Per-handle avatars (#2434) are
+  // the going-forward home; this carries existing users' primary persona over
+  // without a batch job. Never blocks or fails the settings write.
+  await migrateLegacyAvatar(vctx, userId, settings);
 
   return Result.Ok({
     type: "vibes.diy.res-ensure-user-settings",

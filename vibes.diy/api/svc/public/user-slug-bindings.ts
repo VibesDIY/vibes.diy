@@ -217,7 +217,14 @@ export const deleteHandleBindingEvento: EventoHandler<
       // 9. AppSlugBindings
       await vctx.sql.db.delete(t.appSlugBinding).where(eq(t.appSlugBinding.ownerHandle, ownerHandle));
 
-      // 10. HandleBindings
+      // 10. HandleSettings — the per-handle avatar lives here; remove it so a
+      //     deleted handle doesn't leave an orphaned avatar row behind (scoped
+      //     by userId, so it only touches this user's row).
+      await vctx.sql.db
+        .delete(t.handleSettings)
+        .where(and(eq(t.handleSettings.userId, userId), eq(t.handleSettings.handle, ownerHandle)));
+
+      // 11. HandleBindings
       await vctx.sql.db
         .delete(t.handleBinding)
         .where(and(eq(t.handleBinding.userId, userId), eq(t.handleBinding.handle, ownerHandle)));
