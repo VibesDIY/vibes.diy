@@ -9,15 +9,13 @@ import { useVibesDiy } from "../vibes-diy-provider.js";
 import {
   isUserSettingDefaultHandle,
   isUserSettingProfile,
-  isResAssetUploadGrant,
   isUserSettingNotifications,
   parseArray,
   userSettingModelDefaults,
 } from "@vibes.diy/api-types";
 import type { AIParams, UserSettingProfile, UserSettingNotifications } from "@vibes.diy/api-types";
-import { exception2Result } from "@adviser/cement";
 import { ModelSettingsCards } from "../components/ModelSettingsCards.js";
-import { avatarConfirmController } from "../lib/avatar-confirm.js";
+import { HandleAvatarEditor } from "../components/HandleAvatarEditor.js";
 
 export function meta() {
   return [{ title: "Settings - Vibes DIY" }, { name: "description", content: "Settings for AI App Builder" }];
@@ -408,18 +406,15 @@ function ProfileCard() {
   const { chatApi } = useVibesDiy();
   const [profile, setProfile] = useState<Omit<UserSettingProfile, "type">>({});
   const [defaultHandle, setDefaultHandle] = useState<string | null>(null);
-  const [uploading, setUploading] = useState(false);
+  // All handles the user owns — avatars are per-handle, so the editor targets a
+  // selected one (defaulting to the default handle).
+  const [handles, setHandles] = useState<string[]>([]);
+  const [selectedHandle, setSelectedHandle] = useState<string | null>(null);
   const [savingName, setSavingName] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  // Avatar now lives in the per-handle store and is served at /u/<handle>/avatar.
-  // We don't track a per-user avatarCid; instead we render the handle URL and
-  // bump a cache-buster after a successful upload, falling back to "None" when
-  // the handle has no avatar (the URL 404s → onError).
-  const [avatarVersion, setAvatarVersion] = useState(0);
-  const [avatarBroken, setAvatarBroken] = useState(false);
 
   useEffect(() => {
-    void chatApi.ensureUserSettings({ settings: [] }).then((res) => {
+    void Promise.all([chatApi.ensureUserSettings({ settings: [] }), chatApi.listHandleBindings({})]).then(([res, slugRes]) => {
       if (res.isErr()) {
         setError(`Failed to load profile: ${res.Err()}`);
         return;
@@ -429,83 +424,15 @@ function ProfileCard() {
         setProfile({ avatarCid: prof.avatarCid, displayName: prof.displayName });
       }
       const def = res.Ok().settings.find(isUserSettingDefaultHandle);
-      if (def) {
-        setDefaultHandle(def.ownerHandle);
-      }
+      const defHandle = def?.ownerHandle ?? null;
+      setDefaultHandle(defHandle);
+
+      const ownedHandles = slugRes.isOk() ? slugRes.Ok().items.map((i) => i.ownerHandle) : [];
+      setHandles(ownedHandles);
+      // Prefer the default handle; fall back to the first owned handle.
+      setSelectedHandle(defHandle && ownedHandles.includes(defHandle) ? defHandle : (ownedHandles[0] ?? null));
     });
   }, [chatApi]);
-
-  const handleAvatarUpload = async (file: File) => {
-    if (!defaultHandle) {
-      setError("No handle set — create one in Handles first.");
-      return;
-    }
-    setUploading(true);
-    setError(null);
-
-    // Step 1: mint a short-lived upload grant via WS
-    const rGrant = await chatApi.requestAssetUploadGrant({
-      ownerHandle: defaultHandle,
-      appSlug: "_profile",
-      mimeType: file.type || "application/octet-stream",
-    });
-    if (rGrant.isErr()) {
-      setUploading(false);
-      setError(`Upload failed: ${rGrant.Err().message}`);
-      return;
-    }
-    const grantRes = rGrant.Ok();
-    if (!isResAssetUploadGrant(grantRes)) {
-      setUploading(false);
-      setError("Upload failed: unexpected grant response shape");
-      return;
-    }
-
-    // Step 2: POST the file bytes using the grant
-    const uploadUrl = /^https?:\/\//i.test(grantRes.uploadUrl)
-      ? grantRes.uploadUrl
-      : `${window.location.origin}${grantRes.uploadUrl}`;
-
-    const rUpload = await exception2Result(() =>
-      fetch(uploadUrl, {
-        method: "POST",
-        headers: {
-          "X-Asset-Grant": grantRes.grant,
-          "Content-Type": file.type || "application/octet-stream",
-        },
-        body: file,
-      })
-    );
-    setUploading(false);
-    if (rUpload.isErr()) {
-      setError(`Upload failed: ${rUpload.Err().message}`);
-      return;
-    }
-    const res = rUpload.Ok();
-    if (!res.ok) {
-      const text = await res.text().catch(() => "");
-      setError(`Upload failed: POST /assets returned ${res.status}: ${text}`);
-      return;
-    }
-    const body = (await res.json()) as { cid: string; getURL: string; size: number; uploadId: string };
-    const cid = body.cid;
-
-    // Same preview/confirm gate the sandbox path uses (#1968). The getURL comes
-    // straight from this upload's server response, so the modal previews the
-    // exact bytes that will be persisted — no sandbox-supplied URL involved.
-    const confirmed = await avatarConfirmController.request({ cid, mimeType: file.type, getURL: body.getURL });
-    if (!confirmed) return;
-
-    // Write the avatar to the per-handle store for the user's default handle.
-    // The server re-validates ownership and resolves the cid to its storage URL.
-    const rSave = await chatApi.ensureHandleAvatar({ handle: defaultHandle, cid, mime: file.type });
-    if (rSave.isErr()) {
-      setError(`Failed to save avatar: ${rSave.Err()}`);
-      return;
-    }
-    setAvatarBroken(false);
-    setAvatarVersion((v) => v + 1);
-  };
 
   const handleDisplayNameBlur = async () => {
     setSavingName(true);
@@ -527,49 +454,36 @@ function ProfileCard() {
 
       <div className="mb-6">
         <h4 className="text-sm font-semibold mb-2">Avatar</h4>
-        <div className="flex items-center gap-4">
-          {defaultHandle && !avatarBroken ? (
-            <img
-              src={`/u/${defaultHandle}/avatar?v=${avatarVersion}`}
-              alt="Current avatar"
-              className="h-16 w-16 rounded-full object-cover border-2"
-              style={{ borderColor: "var(--vibes-border-primary)" }}
-              onError={() => setAvatarBroken(true)}
-            />
-          ) : (
-            <div
-              className="h-16 w-16 rounded-full flex items-center justify-center text-xs border-2"
-              style={{
-                borderColor: "var(--vibes-border-primary)",
-                color: "var(--vibes-text-secondary)",
-                background: "var(--vibes-bg-secondary, #f3f4f6)",
-              }}
-            >
-              None
-            </div>
-          )}
-          <div>
-            <label className="cursor-pointer inline-block" htmlFor="avatar-upload">
-              <VibesButton variant="blue" disabled={uploading} onClick={() => document.getElementById("avatar-upload")?.click()}>
-                {uploading ? "Uploading…" : "Upload image"}
-              </VibesButton>
-            </label>
-            <input
-              id="avatar-upload"
-              type="file"
-              accept="image/png,image/jpeg,image/webp"
-              className="hidden"
-              onChange={(e) => {
-                const f = e.target.files?.[0];
-                if (f) void handleAvatarUpload(f);
-              }}
-            />
-            <p className="text-xs mt-3" style={{ color: "var(--vibes-text-secondary)" }}>
-              PNG, JPG, or WebP. Displayed at /u/
-              {defaultHandle ?? "your-handle"}/avatar
-            </p>
-          </div>
-        </div>
+        {handles.length === 0 ? (
+          <p className="text-sm" style={{ color: "var(--vibes-text-secondary)" }}>
+            Create a handle first to set an avatar.
+          </p>
+        ) : (
+          <>
+            {handles.length > 1 && (
+              <div className="mb-3">
+                <label className="text-xs mr-2" style={{ color: "var(--vibes-text-secondary)" }} htmlFor="avatar-handle">
+                  Editing avatar for
+                </label>
+                <select
+                  id="avatar-handle"
+                  className="text-sm border-2 rounded px-2 py-1 bg-transparent"
+                  style={{ borderColor: "var(--vibes-border-primary)" }}
+                  value={selectedHandle ?? ""}
+                  onChange={(e) => setSelectedHandle(e.target.value)}
+                >
+                  {handles.map((h) => (
+                    <option key={h} value={h}>
+                      {h}
+                      {h === defaultHandle ? " (default)" : ""}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+            {selectedHandle && <HandleAvatarEditor chatApi={chatApi} handle={selectedHandle} />}
+          </>
+        )}
       </div>
 
       <div>
