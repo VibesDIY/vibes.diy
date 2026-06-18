@@ -107,12 +107,14 @@ interface VibesDiySrvSandboxArgs {
   // sign-in UI. Optional: if absent the request is silently ignored.
   openSignIn?: () => void;
   // Host-side consent gate for sandbox-initiated avatar writes. Called with
-  // the proposed CID (and an optional preview URL) BEFORE ensureUserSettings
-  // runs; the host shows a preview/confirm modal and resolves `true` only when
-  // the user explicitly approves. Resolving `false` cancels the write. Optional:
-  // if absent the write proceeds (server/test paths that have no UI); the
-  // browser provider always wires it, so production gets the gate. See #1968.
-  confirmAvatarUpdate?: (req: { cid: string; previewUrl?: string }) => Promise<boolean>;
+  // the proposed CID (and an optional mime hint) BEFORE ensureUserSettings
+  // runs; the host shows a preview/confirm modal — rendering the image it
+  // derives from `cid`, never a sandbox-supplied URL — and resolves `true`
+  // only when the user explicitly approves. Resolving `false` cancels the
+  // write. Optional: if absent the write proceeds (server/test paths that
+  // have no UI); the browser provider always wires it, so production gets the
+  // gate. See #1968.
+  confirmAvatarUpdate?: (req: { cid: string; mimeType?: string }) => Promise<boolean>;
   // Stage C: hook the asset-host cookie bridge into the iframe boot
   // handshake. Called BEFORE we post vibe.evt.runtime.ack — the iframe
   // gates every RPC on that ack, so any meta.url the iframe ever sees
@@ -805,14 +807,15 @@ function vibeUpdateAvatarCid(sandbox: vibesDiySrvSandbox): EventoHandler {
       return Promise.resolve(Result.Ok(Option.None()));
     },
     handle: async (ctx: HandleTriggerCtx<MessageEvent, ReqVibeUpdateAvatarCid, unknown>): Promise<Result<EventoResultType>> => {
-      const { tid, cid, previewUrl } = ctx.validated;
+      const { tid, cid, mimeType } = ctx.validated;
 
       // Host-side consent gate (#1968): a sandbox can't silently overwrite the
-      // viewer's avatar. The provider shows a preview/confirm modal; only an
-      // explicit approval lets the write through. No handler (server/test
-      // paths with no UI) proceeds, matching the optional openSignIn pattern.
+      // viewer's avatar. The provider shows a preview/confirm modal — previewing
+      // the asset derived from `cid` — and only an explicit approval lets the
+      // write through. No handler (server/test paths with no UI) proceeds,
+      // matching the optional openSignIn pattern.
       if (sandbox.args.confirmAvatarUpdate) {
-        const confirmed = await sandbox.args.confirmAvatarUpdate({ cid, ...(previewUrl ? { previewUrl } : {}) });
+        const confirmed = await sandbox.args.confirmAvatarUpdate({ cid, ...(mimeType ? { mimeType } : {}) });
         if (!confirmed) {
           await ctx.send.send(ctx, {
             tid,

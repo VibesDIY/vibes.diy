@@ -23,12 +23,12 @@ function fakeMessageEvent(data: unknown, origin: string, source: Window): Messag
   return { data, origin, source } as unknown as MessageEvent;
 }
 
-function setupSandbox(opts: { confirmAvatarUpdate?: (req: { cid: string; previewUrl?: string }) => Promise<boolean> }): {
+function setupSandbox(opts: { confirmAvatarUpdate?: (req: { cid: string; mimeType?: string }) => Promise<boolean> }): {
   sandbox: vibesDiySrvSandbox;
   captured: CapturedMsg[];
   iframe: Window;
   ensureCalls: { settings: unknown[] }[];
-  confirmCalls: { cid: string; previewUrl?: string }[];
+  confirmCalls: { cid: string; mimeType?: string }[];
 } {
   const captured: CapturedMsg[] = [];
   const iframe = {
@@ -36,7 +36,7 @@ function setupSandbox(opts: { confirmAvatarUpdate?: (req: { cid: string; preview
   } as unknown as Window;
 
   const ensureCalls: { settings: unknown[] }[] = [];
-  const confirmCalls: { cid: string; previewUrl?: string }[] = [];
+  const confirmCalls: { cid: string; mimeType?: string }[] = [];
 
   const fakeApi = {
     onDocChanged: () => () => {
@@ -70,7 +70,7 @@ function setupSandbox(opts: { confirmAvatarUpdate?: (req: { cid: string; preview
     },
     ...(opts.confirmAvatarUpdate
       ? {
-          confirmAvatarUpdate: ((decide) => (req: { cid: string; previewUrl?: string }) => {
+          confirmAvatarUpdate: ((decide) => (req: { cid: string; mimeType?: string }) => {
             confirmCalls.push(req);
             return decide(req);
           })(opts.confirmAvatarUpdate),
@@ -96,10 +96,10 @@ describe("vibeUpdateAvatarCid host handler", () => {
       confirmAvatarUpdate: async () => true,
     });
 
-    postUpdate(sandbox, iframe, { previewUrl: "https://assets.example/bafycid1" });
+    postUpdate(sandbox, iframe, { mimeType: "image/png" });
     await new Promise((r) => setTimeout(r, 50));
 
-    expect(confirmCalls).toEqual([{ cid: "bafycid1", previewUrl: "https://assets.example/bafycid1" }]);
+    expect(confirmCalls).toEqual([{ cid: "bafycid1", mimeType: "image/png" }]);
     expect(ensureCalls).toHaveLength(1);
     expect(ensureCalls[0].settings).toEqual([{ type: "profile", avatarCid: "bafycid1" }]);
     const msg = captured.find((c) => (c.data as { type?: string }).type === "vibe.res.updateAvatarCid");

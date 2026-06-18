@@ -9,7 +9,7 @@ describe("avatarConfirmController", () => {
     const seen: (string | undefined)[] = [];
     const unsub = avatarConfirmController.onChange((p) => seen.push(p?.cid)) as () => void;
 
-    const decision = avatarConfirmController.request({ cid: "cidA", previewUrl: "u" });
+    const decision = avatarConfirmController.request({ cid: "cidA", mimeType: "image/png" });
     expect(avatarConfirmController.current?.cid).toBe("cidA");
     avatarConfirmController.current?.resolve(true);
 

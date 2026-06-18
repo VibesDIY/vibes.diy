@@ -94,8 +94,9 @@ export function ViewerTagImpl({ _viewer, style, ...props }: ViewerTagImplProps):
       if (rUpload.isErr()) return;
       const uploadRes = rUpload.Ok();
       if (uploadRes.status !== "ok") return;
-      // Pass getURL so the host can preview the image in its confirm modal.
-      await api.updateAvatarCid(uploadRes.cid, uploadRes.getURL);
+      // Pass the upload's mime as a hint; the host previews the image it
+      // derives from the cid, so this only labels the Content-Type.
+      await api.updateAvatarCid(uploadRes.cid, file.type);
     } finally {
       setUploading(false);
       // Reset so the same file can be selected again

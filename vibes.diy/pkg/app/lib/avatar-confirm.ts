@@ -16,9 +16,10 @@ import { OnFunc } from "@adviser/cement";
 
 export interface AvatarConfirmRequest {
   readonly cid: string;
-  // Display-only preview URL. May be absent (e.g. a settings upload that hasn't
-  // resolved a URL yet); the modal falls back to a neutral placeholder.
-  readonly previewUrl?: string;
+  // Optional content-type hint. The modal derives the preview image from
+  // `cid` (the exact asset that will be persisted), so this only labels the
+  // request's Content-Type — it can't change which image is shown.
+  readonly mimeType?: string;
 }
 
 export interface PendingAvatarConfirm extends AvatarConfirmRequest {
@@ -47,7 +48,7 @@ class AvatarConfirmController {
       let settled = false;
       const pending: PendingAvatarConfirm = {
         cid: req.cid,
-        ...(req.previewUrl ? { previewUrl: req.previewUrl } : {}),
+        ...(req.mimeType ? { mimeType: req.mimeType } : {}),
         resolve: (confirmed: boolean) => {
           if (settled) return;
           settled = true;

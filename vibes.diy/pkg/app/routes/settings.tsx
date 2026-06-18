@@ -484,16 +484,10 @@ function ProfileCard() {
     const body = (await res.json()) as { cid: string; getURL: string; size: number; uploadId: string };
     const cid = body.cid;
 
-    // Same preview/confirm gate the sandbox path uses (#1968) — the user sees
-    // the cropped image and approves before it's written. Prefer the local
-    // file for an instant preview; revoke the object URL once decided.
-    const previewUrl = URL.createObjectURL(file);
-    let confirmed: boolean;
-    try {
-      confirmed = await avatarConfirmController.request({ cid, previewUrl });
-    } finally {
-      URL.revokeObjectURL(previewUrl);
-    }
+    // Same preview/confirm gate the sandbox path uses (#1968) — the modal
+    // previews the asset addressed by `cid` and the user approves before it's
+    // written.
+    const confirmed = await avatarConfirmController.request({ cid, mimeType: file.type });
     if (!confirmed) return;
 
     const next = { ...profile, avatarCid: cid };
