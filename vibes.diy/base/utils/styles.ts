@@ -396,34 +396,3 @@ export const imgVibesStyles = {
     textOverflow: "ellipsis" as const,
   },
 } as const;
-
-// Helper function to merge styles with theme variants
-export function createStyledVariant(
-  baseStyle: Record<string, unknown>,
-  variants: Record<string, unknown> = {}
-): Record<string, unknown> {
-  return { ...baseStyle, ...variants };
-}
-
-// Utility functions for common style patterns
-export const styleUtils = {
-  // Create hover state styles (for use with CSS-in-JS)
-  hover: (styles: Record<string, unknown>) => ({
-    "&:hover": styles,
-  }),
-
-  // Create disabled state styles
-  disabled: (styles: Record<string, unknown>) => ({
-    "&:disabled": styles,
-  }),
-
-  // Create media query styles
-  mediaQuery: (query: string, styles: Record<string, unknown>) => ({
-    [`@media ${query}`]: styles,
-  }),
-
-  // Common transitions
-  transition: (properties: string[], duration: string = imgVibesTheme.effects.transitionSpeed) => ({
-    transition: properties.map((prop) => `${prop} ${duration} ease`).join(", "),
-  }),
-};

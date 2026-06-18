@@ -21,15 +21,10 @@ function exec(cmd, args) {
   });
 }
 
-// import { fileURLToPath } from "url";
-// const runDirectory = path.dirname(fileURLToPath(import.meta.url));
-
 const idxRunIdx = process.argv.findIndex((i) => i.endsWith("run.js") || i.endsWith("vibes-diy"));
 const runDirectory = path.dirname(fs.realpathSync(process.argv[idxRunIdx]));
 
 const mainJs = path.join(runDirectory, "main.js");
-//const mainWithDistJs = path.join(runDirectory, "dist", "npm", "main.js");
-//const mainJs = fs.existsSync(mainPublishedJs) ? mainPublishedJs : fs.existsSync(mainWithDistJs) ? mainWithDistJs : undefined;
 if (fs.existsSync(mainJs)) {
   // make windows happy file://
   const addFile = `file://${mainJs}`;
@@ -38,7 +33,5 @@ if (fs.existsSync(mainJs)) {
 } else {
   const tsxPath = fs.existsSync("./node_modules/.bin/tsx") ? "./node_modules/.bin/tsx" : "tsx";
   const restArgv = process.argv.slice(2);
-  // console.log(">>>>>", restArgv, runDirectory)
   exec(tsxPath, [path.join(runDirectory, "main.ts"), ...restArgv], runDirectory);
 }
-// }
