@@ -10,6 +10,16 @@
 // trailing-slash prefix rule) are left untouched, so the fsId-bound map keeps
 // taking precedence once it activates.
 //
+// Legacy vibes (issue #1735) sometimes hardcode a fully-qualified CDN URL such
+// as `https://unpkg.com/call-ai@latest/dist/call-ai.js`. unpkg 302-redirects
+// `@latest` → `@x.y.z`, and that redirect response carries no
+// `Access-Control-Allow-Origin` header, so the cross-origin script fetch from
+// `*.vibesdiy.net` is CORS-blocked and the hot-swap iframe never loads. unpkg's
+// path layout (`/<pkg>[@<version>]/<subpath>`) maps 1:1 onto esm.sh, which does
+// send CORS headers, so we host-swap those URLs to `https://esm.sh/<same-path>`.
+// We only touch hosts whose path layout is esm.sh-compatible — other CDNs
+// (e.g. cdnjs's `/ajax/libs/...`) are left untouched.
+//
 // Scope: we only rewrite the top-of-file import region — the prefix made up of
 // blank lines, comments, and lines whose first non-whitespace token is
 // `import`. The first non-blank, non-comment line that does not start with
@@ -19,6 +29,11 @@
 
 const RELATIVE_OR_URL = /^(?:\.\.?\/|\/|https?:\/\/|blob:|data:)/;
 
+// CDN hosts whose path layout (`/<pkg>[@<version>]/<subpath>`) is esm.sh
+// compatible, but which don't reliably send CORS headers on redirects. Their
+// fully-qualified URLs are host-swapped to esm.sh.
+const CDN_HOST_REWRITES = new Set(["unpkg.com", "www.unpkg.com"]);
+
 function isMappedByImportMap(spec: string, imports: Record<string, string>): boolean {
   if (Object.prototype.hasOwnProperty.call(imports, spec)) return true;
   for (const key of Object.keys(imports)) {
@@ -27,13 +42,42 @@ function isMappedByImportMap(spec: string, imports: Record<string, string>): boo
   return false;
 }
 
-function shouldRewrite(spec: string, imports: Record<string, string>): boolean {
-  if (RELATIVE_OR_URL.test(spec)) return false;
-  if (isMappedByImportMap(spec, imports)) return false;
-  return true;
+// Host-swap a fully-qualified CDN URL onto esm.sh when its layout is
+// compatible; otherwise return null so the URL is left verbatim.
+function rewriteCdnUrl(spec: string): string | null {
+  let url: URL;
+  try {
+    url = new URL(spec);
+  } catch {
+    return null;
+  }
+  if (url.protocol !== "https:" && url.protocol !== "http:") return null;
+  if (!CDN_HOST_REWRITES.has(url.hostname)) return null;
+  const path = url.pathname.replace(/^\/+/, "");
+  if (!path) return null;
+  return `https://esm.sh/${path}${url.search}${url.hash}`;
 }
 
-function fallbackUrl(spec: string): string {
+// Resolve a specifier to its rewritten form, or null when it should be left
+// untouched. Bare names go to `https://esm.sh/<name>`; known CORS-unfriendly
+// CDN URLs are host-swapped to esm.sh; everything else (mapped specifiers,
+// relative paths, other absolute URLs) is left alone.
+function resolveSpecifier(spec: string, imports: Record<string, string>): string | null {
+  if (isMappedByImportMap(spec, imports)) return null;
+  if (RELATIVE_OR_URL.test(spec)) {
+    const swapped = rewriteCdnUrl(spec);
+    if (swapped) {
+      // Breadcrumb (#1735): the host-swap is the surprising rewrite — the user
+      // wrote a unpkg URL but will see esm.sh in the network tab. Without this
+      // log, an esm.sh load failure surfaces as a generic "[hot-swap iframe]
+      // failed" with no link back to the original URL or this rewrite. Bare
+      // specifiers (the common #1595 path) stay quiet to avoid console noise.
+      if (typeof console !== "undefined") {
+        console.info(`[hot-swap] rewrote CDN URL to esm.sh for CORS (issue #1735): ${spec} -> ${swapped}`);
+      }
+    }
+    return swapped;
+  }
   return `https://esm.sh/${spec}`;
 }
 
@@ -191,7 +235,7 @@ function rewriteImportRegion(code: string, mapSpec: (spec: string) => string | u
 }
 
 export function rewriteBareSpecifiers(code: string, imports: Record<string, string>): string {
-  return rewriteImportRegion(code, (spec) => (shouldRewrite(spec, imports) ? fallbackUrl(spec) : undefined));
+  return rewriteImportRegion(code, (spec) => resolveSpecifier(spec, imports) ?? undefined);
 }
 
 // Relative specifiers only: `./x`, `../x`, `/x`, and protocol-relative `//host`.

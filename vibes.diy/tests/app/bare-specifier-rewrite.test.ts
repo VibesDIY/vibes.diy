@@ -25,6 +25,32 @@ describe("rewriteBareSpecifiers", () => {
     expect(rewriteBareSpecifiers(code, {})).toBe(code);
   });
 
+  it("host-swaps a hardcoded unpkg URL to esm.sh (issue #1735)", () => {
+    const code = `import { callAI } from "https://unpkg.com/call-ai@latest/dist/call-ai.js";\nexport default () => null;`;
+    const out = rewriteBareSpecifiers(code, {});
+    expect(out).toContain('from "https://esm.sh/call-ai@latest/dist/call-ai.js"');
+    expect(out).not.toContain("unpkg.com");
+  });
+
+  it("host-swaps a side-effect unpkg import", () => {
+    const code = `import "https://unpkg.com/some-lib/dist/style.css";\nconsole.log("ok");`;
+    const out = rewriteBareSpecifiers(code, {});
+    expect(out).toContain('import "https://esm.sh/some-lib/dist/style.css"');
+  });
+
+  it("preserves query and hash when host-swapping unpkg URLs", () => {
+    const code = `import x from "https://unpkg.com/pkg@1.0.0/dist/x.js?module#frag";`;
+    const out = rewriteBareSpecifiers(code, {});
+    expect(out).toContain('from "https://esm.sh/pkg@1.0.0/dist/x.js?module#frag"');
+  });
+
+  it("leaves CORS-friendly CDN URLs (jsdelivr, esm.sh) untouched", () => {
+    const code = [`import a from "https://cdn.jsdelivr.net/npm/pkg@1/dist/a.js";`, `import b from "https://esm.sh/three";`].join(
+      "\n"
+    );
+    expect(rewriteBareSpecifiers(code, {})).toBe(code);
+  });
+
   it("honors the trailing-slash prefix rule in the import map", () => {
     const code = `import x from "ag-grid-community/styles/ag-grid.css";`;
     const out = rewriteBareSpecifiers(code, {
