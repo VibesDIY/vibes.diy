@@ -84,7 +84,8 @@ function makeVibeDiyApi(overrides?: {
     grantCid = "bafy123",
     requestGrantFail,
     ensureSettingsFail,
-    handleItems = [],
+    // Default to owning the default handle so the per-handle avatar editor renders.
+    handleItems = [{ ownerHandle: "test-user", tenant: "t", created: "2020-01-01T00:00:00Z", appSlugCount: 0 }],
   } = overrides ?? {};
 
   const ensureUserSettings = vi.fn().mockImplementation((req: { settings: SettingsItem[] }) => {
@@ -225,7 +226,7 @@ describe("Settings ProfileCard", () => {
       expect(screen.getByText(/Displayed at/)).toHaveTextContent("/u/test-user/avatar");
     });
 
-    const fileInput = document.getElementById("avatar-upload") as HTMLInputElement;
+    const fileInput = document.getElementById("avatar-upload-test-user") as HTMLInputElement;
     expect(fileInput).not.toBeNull();
 
     const file = new File(["(png data)"], "avatar.png", { type: "image/png" });
@@ -282,7 +283,7 @@ describe("Settings ProfileCard", () => {
       expect(screen.getByText(/Displayed at/)).toHaveTextContent("/u/test-user/avatar");
     });
 
-    const fileInput = document.getElementById("avatar-upload") as HTMLInputElement;
+    const fileInput = document.getElementById("avatar-upload-test-user") as HTMLInputElement;
     const file = new File(["(png data)"], "avatar.png", { type: "image/png" });
 
     await act(async () => {
@@ -316,9 +317,52 @@ describe("Settings ProfileCard", () => {
     render(<Settings />);
 
     await waitFor(() => {
-      const img = screen.getByRole("img", { name: "Current avatar" }) as HTMLImageElement;
+      const img = screen.getByRole("img", { name: "Avatar for test-user" }) as HTMLImageElement;
       expect(img.src).toContain("/u/test-user/avatar");
     });
+  });
+
+  it("targets the handle picked in the selector when the user owns multiple handles", async () => {
+    chatApiStub = makeVibeDiyApi({
+      initialSettings: [{ type: "defaultHandle", ownerHandle: "test-user" }],
+      handleItems: [
+        { ownerHandle: "test-user", tenant: "t", created: "2020-01-01T00:00:00Z", appSlugCount: 0 },
+        { ownerHandle: "alter-ego", tenant: "t", created: "2020-01-01T00:00:00Z", appSlugCount: 0 },
+      ],
+    });
+
+    render(
+      <>
+        <Settings />
+        <AvatarConfirmModal />
+      </>
+    );
+
+    // The picker appears for >1 handle.
+    const select = (await screen.findByLabelText("Editing avatar for")) as HTMLSelectElement;
+
+    // Switch to the second handle.
+    await act(async () => {
+      fireEvent.change(select, { target: { value: "alter-ego" } });
+    });
+
+    const fileInput = document.getElementById("avatar-upload-alter-ego") as HTMLInputElement;
+    expect(fileInput).not.toBeNull();
+    const file = new File(["(png data)"], "avatar.png", { type: "image/png" });
+    await act(async () => {
+      fireEvent.change(fileInput, { target: { files: [file] } });
+    });
+
+    const confirm = await screen.findByText("Set as avatar");
+    await act(async () => {
+      fireEvent.click(confirm);
+    });
+
+    // The write targets the SELECTED handle, not the default.
+    await waitFor(() => {
+      expect(chatApiStub.ensureHandleAvatar).toHaveBeenCalledWith(expect.objectContaining({ handle: "alter-ego", cid: "bafy123" }));
+    });
+    expect(chatApiStub.requestAssetUploadGrant).toHaveBeenCalledWith(expect.objectContaining({ ownerHandle: "alter-ego" }));
   });
 
   it("calls ensureUserSettings with updated displayName on blur", async () => {
@@ -406,7 +450,7 @@ describe("Settings ProfileCard", () => {
       expect(chatApiStub.ensureUserSettings).toHaveBeenCalled();
     });
 
-    const fileInput = document.getElementById("avatar-upload") as HTMLInputElement;
+    const fileInput = document.getElementById("avatar-upload-test-user") as HTMLInputElement;
     const file = new File(["x"], "avatar.png", { type: "image/png" });
 
     await act(async () => {
