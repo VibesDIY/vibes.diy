@@ -1,4 +1,4 @@
-import { describe, it, expect, afterEach } from "vitest";
+import { describe, it, expect, afterEach, vi } from "vitest";
 import { rewriteBareSpecifiers, rewriteRelativeSpecifiers, getActiveImportMap, entryDirBase } from "@vibes.diy/vibe-runtime";
 
 describe("rewriteBareSpecifiers", () => {
@@ -49,6 +49,30 @@ describe("rewriteBareSpecifiers", () => {
       "\n"
     );
     expect(rewriteBareSpecifiers(code, {})).toBe(code);
+  });
+
+  it("logs a breadcrumb when it host-swaps a CDN URL (issue #1735)", () => {
+    const info = vi.spyOn(console, "info").mockImplementation(() => undefined);
+    try {
+      rewriteBareSpecifiers(`import x from "https://unpkg.com/call-ai@latest/dist/call-ai.js";`, {});
+      expect(info).toHaveBeenCalledTimes(1);
+      const msg = String(info.mock.calls[0]?.[0]);
+      expect(msg).toContain("#1735");
+      expect(msg).toContain("https://unpkg.com/call-ai@latest/dist/call-ai.js");
+      expect(msg).toContain("https://esm.sh/call-ai@latest/dist/call-ai.js");
+    } finally {
+      info.mockRestore();
+    }
+  });
+
+  it("does not log a breadcrumb for ordinary bare-specifier rewrites", () => {
+    const info = vi.spyOn(console, "info").mockImplementation(() => undefined);
+    try {
+      rewriteBareSpecifiers(`import * as THREE from "three";`, {});
+      expect(info).not.toHaveBeenCalled();
+    } finally {
+      info.mockRestore();
+    }
   });
 
   it("leaves CDN URLs with an esm.sh-incompatible path layout (cdnjs) untouched", () => {
