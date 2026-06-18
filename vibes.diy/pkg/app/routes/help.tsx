@@ -67,8 +67,8 @@ const faqs: { q: string; a: React.ReactNode }[] = [
         <a href="/settings" style={link}>
           Settings
         </a>{" "}
-        and delete the user slug that owns that app. This permanently deletes that user slug and all apps connected to it,
-        and cannot be undone. There is currently no in-app &ldquo;Delete account&rdquo; button. For account deletion help, email{" "}
+        and delete the handle that owns that app. This permanently deletes that handle and all apps connected to it, and cannot be
+        undone. There is currently no in-app &ldquo;Delete account&rdquo; button. For account deletion help, email{" "}
         <a href="mailto:help@vibes.diy" style={link}>
           help@vibes.diy
         </a>

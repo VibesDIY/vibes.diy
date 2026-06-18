@@ -177,6 +177,14 @@ describe("Settings ProfileCard", () => {
     });
   });
 
+  it("renders the Handles section heading (renamed from User Slugs)", async () => {
+    render(<Settings />);
+    await waitFor(() => {
+      expect(screen.getByText("Handles")).toBeInTheDocument();
+    });
+    expect(screen.queryByText("User Slugs")).not.toBeInTheDocument();
+  });
+
   it("renders the avatar upload button", async () => {
     render(<Settings />);
     await waitFor(() => {
