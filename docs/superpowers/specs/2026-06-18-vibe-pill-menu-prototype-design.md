@@ -19,7 +19,7 @@ sharing and per-user access control.
 ## The redesign in one line
 
 The pill stops being `Home · Group · Vibe` and becomes sharing-first. Tray
-order, left to right: `Help · Account · Vibes · Share` (Share on the far right,
+order, left to right: `Help · Account · Vibe · Share` (Share on the far right,
 nearest the pill).
 
 ## Approach
@@ -61,7 +61,7 @@ build + prop mocking, stops being "just open it"); a rough static mock
 | Variable | Value | Use |
 | --- | --- | --- |
 | `--vibes-blue` | `#3b82f6` | Share button |
-| `--vibes-yellow` | `#eab308` | Vibes button |
+| `--vibes-yellow` | `#eab308` | Vibe button |
 | `--vibes-green` | `#51cf66` | Help button |
 | `--vibes-purple-neon` | `#c084fc` | **Account button (new)** |
 | `--vibes-orange-neon` | `#fb923c` | badges |
@@ -88,7 +88,7 @@ Order left → right (Share nearest the pill):
 | --- | --- | --- |
 | **Help** | green `#51cf66`, cream label | AI agent chat modal |
 | **Account** | purple `#c084fc`, near-black label | account panel |
-| **Vibes** | yellow `#eab308`, near-black label | vertical code menu |
+| **Vibe** | yellow `#eab308`, near-black label | vertical code menu |
 | **Share** | blue `#3b82f6`, cream label | full Share panel (tabs) |
 
 Buttons are widened (124px expanded) so the longest label ("ACCOUNT") fits with
@@ -141,10 +141,11 @@ People
  sam@…    Data [ Read ▾ ]         Code [   ]
 Requests · 2                                ▾
  jo@…   wants access        [ Deny ] [ Approve ]
-🔗 Copy link              Landing page ↗
 ──────────────────────────────────────────────
-Site access     [ Restricted ●——○ Public ]   ← foundational, at the bottom
+Site access            [ Restricted | Public ]   ← foundational, at the bottom
 🔒 Only invited people can open this app
+🔗 Site link                          [ Copy ]
+🔗 Landing page link                  [ Copy ]
 ```
 
 **Public — per-user machinery collapses, minimal public choice remains:**
@@ -152,10 +153,11 @@ Site access     [ Restricted ●——○ Public ]   ← foundational, at the bo
 ```
 ▸ Specific people · 2        (add data/code grants)   ← collapsed, still reachable
 Public visitors can:   Data [ None ▾ ]
-🔗 Copy link              Landing page ↗
 ──────────────────────────────────────────────
-Site access     [ Restricted ○——● Public ]
+Site access            [ Restricted | Public ]
 🌐 Anyone with the link can open this app
+🔗 Site link                          [ Copy ]
+🔗 Landing page link                  [ Copy ]
 ```
 
 - Per-person row = a **Data dropdown** (None/Read/Read+Write) + a **Code
@@ -172,9 +174,9 @@ timestamp, body; a "resolve" affordance; a "comment…" composer. Illustrative.
 Mocked app-settings form: app title, icon/screenshot, canonical slug, plus a
 destructive "Delete app" row. Illustrative.
 
-## Vibes (code menu) — unchanged
+## Vibe (code menu)
 
-Today's vertical sub-menu: **Edit / Clone / Remix / QR Code**. QR toggles a
+Vertical sub-menu: **Edit / QR Code**. QR toggles a
 static placeholder image. Same look and motion as the shipping component.
 
 ## Account
@@ -213,10 +215,10 @@ the focus. Fills the viewport with the pill floating fixed at bottom-right.
 - **Share** → opens Share panel (default Restricted view). Tabs switch content.
 - Site toggle flips Restricted ⇄ Public with the progressive-disclosure change.
 - Per-person Data dropdowns and Code checkboxes are operable (visual only).
-- **Vibes** → vertical code menu; **QR Code** toggles a placeholder image.
+- **Vibe** → vertical code menu; **QR Code** toggles a placeholder image.
 - **Account** → panel; in-panel switch flips logged-in/out mocks.
 - **Help** → chat modal; suggested chips and composer are clickable.
-- All outbound links (Edit, Clone, Remix, Copy link, Landing page) are inert.
+- All outbound links (Edit, Site link, Landing page link) are inert.
 - To-do checkboxes toggle visually; nothing persists.
 - Clicking outside an open surface closes it.
 
@@ -229,7 +231,7 @@ in Comments / Settings / Account / Help.
 ## Acceptance (eyeball checklist)
 
 1. Collapsed pill matches the wordmark, colors, and 120×60 size; 1s entrance.
-2. Click expands the tray (bouncy reveal) showing `Help · Account · Vibes ·
+2. Click expands the tray (bouncy reveal) showing `Help · Account · Vibe ·
    Share` with the correct four palette colors (Account = purple), all labels
    (incl. "ACCOUNT") fully readable.
 3. The pill carries no badges or dots — clean wordmark only.
@@ -238,7 +240,7 @@ in Comments / Settings / Account / Help.
 5. Flipping the site toggle to Public collapses the people machinery and shows
    the single public Data default; flipping back restores it.
 6. Comments and Settings tabs switch the panel content.
-7. Vibes opens the Edit/Clone/Remix/QR menu; QR toggles a placeholder.
+7. Vibe opens the Edit/QR menu; QR toggles a placeholder.
 8. Account shows logged-in (Log out); the in-panel switch reveals the
    logged-out variant.
 9. Help opens an AI chat modal with a seeded exchange, typing indicator,

@@ -272,9 +272,6 @@
   .mini-btn.deny { background: transparent; border-color: #d8d6c8; color: #777; }
   .mini-btn.approve { background: var(--vibes-green); border-color: var(--vibes-green); color: #fff; }
 
-  .share-foot { display: flex; align-items: center; gap: 16px; margin-top: 16px; padding-top: 12px; border-top: 1px solid rgba(0,0,0,.07); }
-  .link-act { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; color: var(--vibes-blue); cursor: pointer; text-decoration: none; }
-  .link-act:hover { text-decoration: underline; }
 
   /* General access (site toggle) — at the bottom */
   .general-access { margin-top: 14px; padding-top: 14px; border-top: 1px solid rgba(0,0,0,.12); }
@@ -282,18 +279,22 @@
   .ga-label { font-size: 13.5px; font-weight: 700; color: var(--vibes-near-black); }
   .ga-help { display: flex; align-items: center; gap: 7px; font-size: 12.5px; color: var(--vibes-gray); margin-top: 8px; }
   .site-toggle {
-    position: relative; display: inline-flex; border: 1px solid var(--vibes-near-black); border-radius: 999px;
+    display: inline-flex; gap: 2px; border: 1px solid var(--vibes-near-black); border-radius: 999px;
     background: #fff; padding: 3px; cursor: pointer; font-family: var(--font); user-select: none;
   }
-  .site-toggle .seg { position: relative; z-index: 1; font-size: 12px; font-weight: 700; padding: 5px 13px; border-radius: 999px;
-    color: var(--vibes-gray); transition: color .25s ease; }
-  .site-toggle .knob {
-    position: absolute; top: 3px; bottom: 3px; border-radius: 999px; transition: all .25s var(--bounce); z-index: 0;
-  }
-  .site-toggle[data-state="restricted"] .seg.restricted { color: var(--vibes-cream); }
-  .site-toggle[data-state="public"]     .seg.public     { color: var(--vibes-near-black); }
-  .site-toggle[data-state="restricted"] .knob { left: 3px; width: 88px; background: var(--vibes-near-black); }
-  .site-toggle[data-state="public"]     .knob { left: 91px; width: 70px; background: var(--vibes-yellow); }
+  .site-toggle .seg { font-size: 12px; font-weight: 700; padding: 6px 14px; border-radius: 999px;
+    color: var(--vibes-gray); transition: background .2s ease, color .2s ease; }
+  .site-toggle[data-state="restricted"] .seg.restricted { background: var(--vibes-near-black); color: var(--vibes-cream); }
+  .site-toggle[data-state="public"]     .seg.public     { background: var(--vibes-yellow); color: var(--vibes-near-black); }
+
+  /* Site link / Landing page link rows inside the Site access section */
+  .ga-links { margin-top: 14px; display: flex; flex-direction: column; gap: 9px; }
+  .link-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+  .link-name { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; color: var(--vibes-near-black); }
+  .link-name svg { color: var(--vibes-gray); flex: 0 0 auto; }
+  .copy-btn { height: 28px; padding: 0 13px; border-radius: 8px; border: 1px solid #d8d6c8; background: #fff;
+    font-family: var(--font); font-size: 12px; font-weight: 600; color: var(--vibes-near-black); cursor: pointer; }
+  .copy-btn:hover { background: #f3f1e4; }
 
   /* Public-vs-restricted disclosure */
   [data-visibility="restricted"] .when-public { display: none; }
@@ -497,23 +498,11 @@
         </div>
       </div>
 
-      <div class="share-foot">
-        <a class="link-act" href="#" data-inert>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
-          Copy link
-        </a>
-        <a class="link-act" href="#" data-inert>
-          Landing page
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7M7 7h10v10"/></svg>
-        </a>
-      </div>
-
-      <!-- General access (site visibility) — foundational, at the bottom -->
+      <!-- Site access (visibility + shareable links) — foundational, at the bottom -->
       <div class="general-access">
         <div class="ga-row">
           <span class="ga-label">Site access</span>
           <div class="site-toggle" data-state="restricted" id="siteToggle">
-            <span class="knob"></span>
             <span class="seg restricted">Restricted</span>
             <span class="seg public">Public</span>
           </div>
@@ -525,6 +514,16 @@
         <div class="ga-help when-public">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15 15 0 0 1 0 20 15 15 0 0 1 0-20"/></svg>
           Anyone with the link can open this app
+        </div>
+        <div class="ga-links">
+          <div class="link-row">
+            <span class="link-name"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>Site link</span>
+            <button class="copy-btn">Copy</button>
+          </div>
+          <div class="link-row">
+            <span class="link-name"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>Landing page link</span>
+            <button class="copy-btn">Copy</button>
+          </div>
         </div>
       </div>
     </div>
@@ -580,8 +579,6 @@
   <!-- Vibes (code menu) -->
   <div class="surface" id="vibes">
     <a class="vrow edit" href="#" data-inert><span class="vchip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg></span>Edit</a>
-    <a class="vrow clone" href="#" data-inert><span class="vchip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg></span>Clone</a>
-    <a class="vrow remix" href="#" data-inert><span class="vchip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></span>Remix</a>
     <div class="vrow qr" id="qrRow"><span class="vchip"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h.01M14 17h.01M17 14h.01M17 17h.01M20 14h.01M20 17h.01M20 20h.01M17 20h.01M14 20h.01"/></svg></span>QR Code</div>
     <div class="qr-img" id="qrImg">
       <img alt="QR placeholder" src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='150' height='150' viewBox='0 0 29 29' shape-rendering='crispEdges'%3E%3Crect width='29' height='29' fill='%23fffff0'/%3E%3Cg fill='%231a1a1a'%3E%3Crect x='2' y='2' width='7' height='7'/%3E%3Crect x='4' y='4' width='3' height='3' fill='%23fffff0'/%3E%3Crect x='20' y='2' width='7' height='7'/%3E%3Crect x='22' y='4' width='3' height='3' fill='%23fffff0'/%3E%3Crect x='2' y='20' width='7' height='7'/%3E%3Crect x='4' y='22' width='3' height='3' fill='%23fffff0'/%3E%3Crect x='11' y='2' width='1' height='1'/%3E%3Crect x='13' y='2' width='2' height='1'/%3E%3Crect x='11' y='4' width='1' height='2'/%3E%3Crect x='14' y='4' width='1' height='3'/%3E%3Crect x='16' y='3' width='1' height='1'/%3E%3Crect x='2' y='11' width='2' height='1'/%3E%3Crect x='5' y='11' width='1' height='2'/%3E%3Crect x='7' y='12' width='2' height='1'/%3E%3Crect x='11' y='9' width='7' height='7'/%3E%3Crect x='13' y='11' width='3' height='3' fill='%23fffff0'/%3E%3Crect x='20' y='11' width='1' height='2'/%3E%3Crect x='22' y='11' width='2' height='1'/%3E%3Crect x='25' y='12' width='1' height='2'/%3E%3Crect x='11' y='19' width='2' height='1'/%3E%3Crect x='14' y='20' width='1' height='2'/%3E%3Crect x='17' y='19' width='1' height='1'/%3E%3Crect x='19' y='22' width='3' height='1'/%3E%3Crect x='23' y='20' width='1' height='3'/%3E%3Crect x='25' y='22' width='2' height='1'/%3E%3Crect x='20' y='25' width='1' height='2'/%3E%3Crect x='24' y='25' width='2' height='1'/%3E%3C/g%3E%3C/svg%3E" />
@@ -656,7 +653,7 @@
         <div class="tray-buttons" id="trayButtons">
           <button class="pbtn help" data-surface="help"><span class="chip"><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></i></span><span class="lbl">Help</span></button>
           <button class="pbtn account" data-surface="account"><span class="chip"><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></i></span><span class="lbl">Account</span></button>
-          <button class="pbtn vibes" data-surface="vibes"><span class="chip"><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></i></span><span class="lbl">Vibes</span></button>
+          <button class="pbtn vibes" data-surface="vibes"><span class="chip"><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></i></span><span class="lbl">Vibe</span></button>
           <button class="pbtn share" data-surface="share"><span class="chip"><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></i></span><span class="lbl">Share</span></button>
         </div>
       </div>
@@ -932,10 +929,10 @@
   var input = document.getElementById("chatInput");
   function agentReplyFor(text) {
     var t = text.toLowerCase();
-    if (t.indexOf("publish") >= 0) return "To publish: open <b>Vibes → Edit</b> to make your changes, then hit publish. Your latest code goes live at your app's URL, and the orange dot on the pill clears.";
-    if (t.indexOf("remix") >= 0) return "A <b>remix</b> forks this app into a brand-new vibe you own — same starting point, your own copy to take in any direction. Find it under <b>Vibes → Remix</b>.";
+    if (t.indexOf("publish") >= 0) return "To publish: open <b>Vibe → Edit</b> to make your changes, then hit publish — your latest code goes live at your app's URL.";
+    if (t.indexOf("remix") >= 0) return "A <b>remix</b> forks this app into a brand-new vibe you own — same starting point, your own copy to take in any direction.";
     if (t.indexOf("invite") >= 0 || t.indexOf("friend") >= 0) return "Open <b>Share</b>, type their email under <b>Invite by email</b>, and pick what they can do — <b>Data</b> (read or read/write) and optionally <b>Code</b>. They'll get access as soon as they accept.";
-    return "Great question! Open <b>Share</b> to manage who can see and edit this vibe, or <b>Vibes</b> to change the app itself. Want me to walk you through one of those?";
+    return "Great question! Open <b>Share</b> to manage who can see and edit this vibe, or <b>Vibe</b> to change the app itself. Want me to walk you through one of those?";
   }
   function addBubble(cls, html) {
     var b = document.createElement("div");
