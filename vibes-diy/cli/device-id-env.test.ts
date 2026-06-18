@@ -15,6 +15,10 @@ function inMemorySthis(): SuperThis {
   // In-memory keybag so the test never touches the real ~/.fireproof/.
   const sthis = ensureSuperThis();
   sthis.env.set("FP_KEYBAG_URL", `memory://test-${sthis.nextId().str}`);
+  // Hermetic: ensureSuperThis seeds env from process.env, where VIBES_DEVICE_ID
+  // may be set (CI/deploy secret). Clear it so the "unset" case doesn't inherit
+  // the ambient value; seeding tests set it explicitly anyway (#2425).
+  sthis.env.delete(VIBES_DEVICE_ID_ENV);
   return sthis;
 }
 
