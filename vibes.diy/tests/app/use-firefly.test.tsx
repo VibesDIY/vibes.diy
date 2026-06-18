@@ -1,6 +1,6 @@
 import React from "react";
-import { renderHook, waitFor, act } from "@testing-library/react";
-import { beforeAll, beforeEach, describe, expect, it } from "vitest";
+import { renderHook, waitFor, act, cleanup } from "@testing-library/react";
+import { afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { useFireproof, registerFirefly } from "../../vibe/runtime/use-firefly.js";
 import { FireflyDatabase } from "../../vibe/runtime/firefly-database.js";
 import { VibeContextProvider } from "../../vibe/runtime/VibeContext.js";
@@ -19,6 +19,12 @@ beforeAll(async () => {
   mockApi = createMockVibeApi("test-app");
   await registerFirefly(asSandboxApi(mockApi));
 });
+
+// Unmount each test's hooks/providers. Without this, a prior test's mounted
+// VibeContextProvider still reacts to a later test's dispatched
+// vibe.evt.viewerChanged — its db drops out of the new grants, the signature
+// changes, and it fires a stray query on the shared mock (#2425).
+afterEach(cleanup);
 
 // ── useFireproof basics ─────────────────────────────────────────────
 
