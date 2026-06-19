@@ -20,5 +20,10 @@ export default defineConfig({
         },
       ],
     },
+    // Reuse the browser context across files within a worker instead of tearing
+    // it down per file. The two files that module-mocked @vibes.diy/prompts
+    // (which would bleed across files in a shared worker) now test the real
+    // implementation, so there's no cross-file mock bleed surface. See #2457.
+    isolate: false,
   },
 });
