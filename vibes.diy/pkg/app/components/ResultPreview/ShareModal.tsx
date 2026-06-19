@@ -310,6 +310,13 @@ interface ShareModalProps {
    * to "none" so missing prop = no preemptive disable.
    */
   myGrant?: "owner" | "editor" | "viewer" | "submitter" | "public" | "none";
+  /**
+   * DI seam for the comments/members sections. Defaults to the real components;
+   * tests inject lightweight stubs so they don't have to module-mock these
+   * shared components (which bleeds into their own tests under isolate:false).
+   */
+  MembersSectionComponent?: typeof MembersSection;
+  CommentsSectionComponent?: typeof CommentsSection;
 }
 
 function useIsMobile(breakpoint = 640) {
@@ -375,6 +382,8 @@ export function ShareModal({
   myGrant = "none",
   adminMode = false,
   onToggleAdmin,
+  MembersSectionComponent = MembersSection,
+  CommentsSectionComponent = CommentsSection,
 }: ShareModalProps) {
   const isMobile = useIsMobile();
   const portalRoot = usePortalRoot();
@@ -508,8 +517,8 @@ export function ShareModal({
         >
           {isOwner && onToggleAdmin ? <AdminModeToggle adminMode={adminMode} onToggle={onToggleAdmin} /> : null}
           {isOwner ? <CommentsPolicyToggle ownerHandle={modal.ownerHandle} appSlug={modal.appSlug} isOpen={modal.isOpen} /> : null}
-          <MembersSection ownerHandle={modal.ownerHandle} appSlug={modal.appSlug} />
-          <CommentsSection
+          <MembersSectionComponent ownerHandle={modal.ownerHandle} appSlug={modal.appSlug} />
+          <CommentsSectionComponent
             ownerHandle={modal.ownerHandle}
             appSlug={modal.appSlug}
             canModerate={isOwner}
