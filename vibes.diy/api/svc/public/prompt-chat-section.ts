@@ -2028,6 +2028,9 @@ export const promptChatSection: EventoHandler<W3CWebSocketEvent, MsgBase<ReqProm
             SLOTS_COMPACTION: vctx.sthis.env.get("SLOTS_COMPACTION"),
           }),
           focusPath: orig.focusPath,
+          // Attach the latest preview screenshot only on real dispatch — keep
+          // dry-run prompt previews deterministic and free of large base64 blobs.
+          attachScreenshot: orig.dryRun !== true,
           ...(activeSettingsOverride ? { activeSettingsOverride } : {}),
         });
         if (rAssembled.isErr()) return Result.Err(rAssembled);
