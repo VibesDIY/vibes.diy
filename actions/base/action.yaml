@@ -18,11 +18,11 @@ runs:
       shell: bash
       run: pnpm run format --check
 
-    - name: rules-bag-check
-      shell: bash
-      run: pnpm run rules-bag:constructors
-
-    # Lint temporarily disabled due to memory issues
+    # No standalone rules-bag step: `pnpm run lint` already runs
+    # check-rules-bag-constructors.mjs as its first action (see the root
+    # package.json "lint" script), so a dedicated step here just re-ran the
+    # same check. Local PR-readiness still uses `pnpm run rules-bag:constructors`
+    # per CLAUDE.md; CI enforcement lives in the lint step below.
     - name: lint
       shell: bash
       run: |
