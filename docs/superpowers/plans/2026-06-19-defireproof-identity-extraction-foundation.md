@@ -15,7 +15,7 @@
 - `createTestDeviceCA(sthis)` → `DeviceIdCA` with `.processCSR(csrJWS, clerkClaim)`, `.caCertificate(): Promise<Result<CACertResult>>`, `.getCAKey()`.
 - `createTestUser({sthis, deviceCA, session, seqUserId})` → `{ devkey: DeviceIdKey, deviceIdSigner: DeviceIdSignMsg, getDashBoardToken(): Promise<DashAuthType> }`.
 - A minted device-id token: header `{alg:"ES256", typ:"JWT", kid, x5c, x5t, x5t#S256}`; payload keys `{iss, sub, deviceId, seq, exp, nbf, iat, jti}` (= `FPDeviceIDSession`).
-- `new DeviceIdVerifyMsg(sthis.txt.base64, [caCertResult], {}).verifyWithCertificate(jwt)` → `{ valid: boolean, payload, header, certificate, verificationTimestamp }` (NOT a cement `Result`).
+- `new DeviceIdVerifyMsg(sthis.txt.base64, [caCertResult], { clockTolerance, deviceIdCA }).verifyWithCertificate(jwt)` → a `valid`-discriminated union: success `{ valid: true, payload, header, certificate, verificationTimestamp }` or error `{ valid: false, error, errorCode, ... }` (NOT a cement `Result`; narrow on `vr.valid` before reading `payload`/`header`, which are typed `unknown`).
 - `DeviceIdKey.create()` / `.createFromJWK(jwk)` / `.exportPrivateJWK()` / `.publicKey()` / `.fingerPrint()`.
 - The harness lives in `vibes.diy/api/tests` (already deps `@fireproof/core-device-id`, `core-runtime`, `core-types-base`, `core-types-device-id`, `@adviser/cement`; runner `vitest --run`).
 
@@ -64,7 +64,7 @@ describe("identity wire-compat (baseline: @fireproof/* 0.24.19)", { timeout: 300
     ca = await createTestDeviceCA(sthis);
     user = await createTestUser({ sthis, deviceCA: ca, session: "wire-compat", seqUserId: 1 });
     const caCert = (await ca.caCertificate()).Ok();
-    verifier = new DeviceIdVerifyMsg(sthis.txt.base64, [caCert], {});
+    verifier = new DeviceIdVerifyMsg(sthis.txt.base64, [caCert], { clockTolerance: 0, deviceIdCA: ca });
   });
 
   it("device-id token header is ES256/JWT with cert-chain headers", async () => {
@@ -87,8 +87,9 @@ describe("identity wire-compat (baseline: @fireproof/* 0.24.19)", { timeout: 300
     const tok = await user.getDashBoardToken();
     const vr = await verifier.verifyWithCertificate(tok.token);
     expect(vr.valid).toBe(true);
-    expect(vr.payload.sub).toBe("device-id");
-    expect(vr.header.alg).toBe("ES256");
+    if (!vr.valid) throw new Error(String(vr.error));
+    expect((vr.payload as { sub?: string }).sub).toBe("device-id");
+    expect((vr.header as { alg?: string }).alg).toBe("ES256");
   });
 
   it("JWT header+payload segments are byte-stable for fixed claims (only the signature varies)", async () => {
