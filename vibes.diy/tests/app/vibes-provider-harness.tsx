@@ -1,15 +1,9 @@
-// DI harness for vibes-diy-provider.
-//
-// Under isolate:false a per-file vi.mock("…/vibes-diy-provider.js") bleeds: the
-// first file's factory wins the shared module cache, so divergent useVibesDiy
-// shapes leak between files (and a global mock can't be used because some tests
-// render against the REAL provider). Instead of mocking, tests inject a context
-// value through the real (exported) VibesDiyContext — no module mock, no bleed.
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { MemoryRouter } from "react-router";
 import { VibesDiyContext } from "~/vibes.diy/app/vibes-diy-provider.js";
 import type { VibesDiyCtx } from "~/vibes.diy/app/vibes-diy-provider.js";
 import { ThemeProvider } from "~/vibes.diy/app/contexts/ThemeContext.js";
+import { PortalRootProvider } from "~/vibes.diy/app/contexts/PortalRootContext.js";
 
 interface VibesWrapperOptions {
   /** initialEntries for the real MemoryRouter (defaults to ["/"]). */
@@ -17,11 +11,31 @@ interface VibesWrapperOptions {
 }
 
 /**
- * Returns a wrapper that provides the real MemoryRouter + ThemeProvider and
- * injects a (partial) VibesDiy context, for use as the `wrapper` option of
- * @testing-library/react render()/renderHook(). Replaces module-mocking the
- * provider, ThemeContext, and react-router — real modules can't bleed across
- * files under isolate:false.
+ * Provides a per-test portal container so components that createPortal() mount
+ * into an element that unmounts deterministically with the test tree. Under
+ * isolate:false the shared document otherwise accumulates portal DOM across
+ * files and their cleanup races (removeChild NotFoundError).
+ */
+export function PortalRootWrapper({ children }: { children: React.ReactNode }) {
+  const [root] = useState(() => {
+    const el = document.createElement("div");
+    el.setAttribute("data-test-portal-root", "");
+    return el;
+  });
+  useEffect(() => {
+    document.body.appendChild(root);
+    return () => {
+      root.remove();
+    };
+  }, [root]);
+  return <PortalRootProvider value={root}>{children}</PortalRootProvider>;
+}
+
+/**
+ * Returns a wrapper that provides the real MemoryRouter + ThemeProvider + a
+ * per-test portal root and injects a (partial) VibesDiy context, for use as the
+ * `wrapper` option of @testing-library/react render()/renderHook(). Replaces
+ * module-mocking the provider, ThemeContext, and react-router.
  */
 export function vibesWrapper(ctx: Partial<VibesDiyCtx> | Record<string, unknown>, options: VibesWrapperOptions = {}) {
   const { initialEntries = ["/"] } = options;
@@ -29,7 +43,9 @@ export function vibesWrapper(ctx: Partial<VibesDiyCtx> | Record<string, unknown>
     return (
       <MemoryRouter initialEntries={initialEntries}>
         <ThemeProvider>
-          <VibesDiyContext.Provider value={ctx as VibesDiyCtx}>{children}</VibesDiyContext.Provider>
+          <PortalRootWrapper>
+            <VibesDiyContext.Provider value={ctx as VibesDiyCtx}>{children}</VibesDiyContext.Provider>
+          </PortalRootWrapper>
         </ThemeProvider>
       </MemoryRouter>
     );

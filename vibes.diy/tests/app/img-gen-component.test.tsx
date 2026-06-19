@@ -12,9 +12,13 @@ import { Result } from "@adviser/cement";
 import { registerFirefly } from "../../vibe/runtime/use-firefly.js";
 import { createMockVibeApi, asSandboxApi, type MockVibeApi } from "./mock-vibe-api.js";
 
-vi.mock("@fireproof/use-fireproof", async () => {
+vi.mock("@fireproof/use-fireproof", async (importOriginal) => {
+  // Spread the real module so co-exports (ImgFile, etc.) survive — a partial
+  // mock here poisons files importing them under isolate:false, and ImgGen
+  // itself renders via ImgFile. Only override useFireproof with the test runtime.
+  const actual = await importOriginal<Record<string, unknown>>();
   const { useFireproof } = await import("../../vibe/runtime/use-firefly.js");
-  return { useFireproof };
+  return { ...actual, useFireproof };
 });
 
 let mockApi: MockVibeApi;

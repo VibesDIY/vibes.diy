@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useVibesDiy } from "../../vibes-diy-provider.js";
+import { usePortalRoot } from "../../contexts/PortalRootContext.js";
 import { useNavigate, useSearchParams } from "react-router";
 import { Chat } from "./chat.$ownerHandle.$appSlug.js";
 import { toast } from "react-hot-toast";
@@ -19,6 +20,7 @@ export default function ChatPrompt() {
   const navigate = useNavigate();
   const hasRun = useRef(false);
   const { isSignedIn, isLoaded } = useAuth();
+  const portalRoot = usePortalRoot();
 
   const prompt64 = searchParams.get("prompt64");
 
@@ -97,7 +99,7 @@ export default function ChatPrompt() {
           >
             Preparing AI Session…
           </div>,
-          document.body
+          portalRoot
         )}
     </>
   );
