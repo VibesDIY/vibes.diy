@@ -1,6 +1,6 @@
 import { command, flag, option, string } from "cmd-ts";
 import { BuildURI } from "@adviser/cement";
-import type { ReqDeviceIdRegister } from "@fireproof/core-cli";
+import type { ReqDeviceIdRegister } from "@vibes.diy/identity/node";
 import { CliCtx, cmdTsDefaultArgs } from "../cli-ctx.js";
 
 export function loginCmd(ctx: CliCtx) {

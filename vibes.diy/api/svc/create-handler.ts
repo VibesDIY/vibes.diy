@@ -2,7 +2,7 @@
 import { Result, param, AppContext, TriggerResult, EventoSendProvider, Logger } from "@adviser/cement";
 import { ensureLogger, SuperThis } from "@vibes.diy/identity";
 // import { VerifiedClaimsResult } from "@vibes.diy/identity";
-import { deviceIdCAFromEnv, getCloudPubkeyFromEnv, tokenApi } from "@vibes.diy/identity/node";
+import { deviceIdCAFromEnv, getCloudPubkeyFromEnv, tokenApi } from "@vibes.diy/identity/server";
 import { defaultFetchPkgVersion, ResolveFunction } from "./npm-package-version.js";
 import { vibesReqResEvento } from "./vibes-req-res-evento.js";
 import { HTTPSendProvider } from "./svc-http-send-provider.js";

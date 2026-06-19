@@ -1,6 +1,6 @@
 import { VibesDiyApi } from "@vibes.diy/api-impl";
 import { cmd_tsStream } from "./cmd-ts-stream.js";
-import { SuperThis } from "@fireproof/core";
+import { SuperThis } from "@vibes.diy/identity";
 import { flag, option, string } from "cmd-ts";
 
 export const DEFAULT_API_URL = "https://vibes.diy/api?.stable-entry.=cli";

@@ -5,6 +5,7 @@
   "main": "./index.js",
   "exports": {
     ".": "./index.js",
+    "./server": "./server.js",
     "./node": "./node.js"
   },
   "scripts": {
