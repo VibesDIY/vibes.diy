@@ -24,9 +24,9 @@ qa-reports/
 ## Debug and test files
 claude-browse-vibes/*.png
 *.sse
-# CI test transcript captured by actions/base test step (see #2426)
-test-output.log
-test-output.clean.log
+# CI per-file/per-test timing report written by actions/base test step
+# (vitest --reporter=json --outputFile); uploaded as the test-timing artifact
+test-timing.json
 test-results/
 playwright-report/
 playwright/.cache/
@@ -41,3 +41,7 @@ coverage/
 # Local scratch: stray tool worktrees. Root-anchored so vibes.diy/ and
 # use-vibes/ are unaffected. vibes/ is tracked but excluded from ESLint.
 /.claire/
+
+# Python bytecode
+__pycache__/
+*.pyc
