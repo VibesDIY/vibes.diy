@@ -9,8 +9,8 @@ import type { Model } from "@vibes.diy/api-types";
 // (e.g. deepseek/*, qwen/*) would turn an ordinary follow-up into a hard
 // failure rather than a plain text turn.
 //
-// The catalog is not yet exhaustively tagged (see VibesDIY/vibes.diy#1743
-// follow-up); until it is, only the known vision families carry the flag.
+// The catalog is not yet exhaustively tagged (see VibesDIY/vibes.diy#2462);
+// until it is, only the known vision families carry the flag.
 export function modelSupportsImageInput(models: readonly Model[], modelId: string): boolean {
   return models.find((m) => m.id === modelId)?.imageInput === true;
 }
