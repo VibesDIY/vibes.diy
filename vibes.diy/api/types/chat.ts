@@ -36,7 +36,7 @@ export const Model = type({
   // Whether the model accepts image (vision) input in its chat messages.
   // Distinct from `supports` (which lists session modes). Absent/false means
   // text-only: callers must not send image_url content parts to it. Not
-  // exhaustively tagged yet — see follow-up issue.
+  // exhaustively tagged yet — see VibesDIY/vibes.diy#2462.
   "imageInput?": "boolean",
 });
 
