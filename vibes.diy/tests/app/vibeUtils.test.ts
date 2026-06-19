@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach, afterEach, Mock } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach, afterAll, Mock } from "vitest";
 import { listLocalVibes, deleteVibeDatabase } from "~/vibes.diy/app/utils/vibeUtils.js";
 import type { LocalVibe } from "~/vibes.diy/app/utils/vibeUtils.js";
 
@@ -20,6 +20,16 @@ const mockIndexedDB = {
   deleteDatabase: vi.fn().mockImplementation(() => Promise.resolve()),
 };
 vi.stubGlobal("indexedDB", mockIndexedDB);
+
+// This stub is module-scoped (used by every test in this file), so it must be
+// torn down once — after the whole file, not per-test. Under isolate:false
+// (#2457) the browser context is reused across files on a worker, so without
+// this the mock indexedDB would bleed into later files (e.g. real
+// IndexedDB-backed Fireproof tests) and pass/fail by scheduling. Caught by
+// Codex review on #2457.
+afterAll(() => {
+  vi.unstubAllGlobals();
+});
 
 // Set up test data
 const mockVibes: LocalVibe[] = [
