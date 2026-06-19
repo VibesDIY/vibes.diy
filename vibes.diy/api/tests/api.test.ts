@@ -483,6 +483,52 @@ describe("VibesDiyApi", { timeout: (inject("DB_FLAVOUR" as never) as string) ===
     expect(await helpersRes.text()).toContain("formatAge");
   });
 
+  it("fully-qualified CDN URL imports are passed through, never re-prefixed onto esm.sh", async () => {
+    // Regression for the garden-gnome/canary-import-regression misfire: an
+    // `import x from "https://esm.sh/canvas-confetti"` was being captured as a
+    // package and fed to render_esm_sh, which prepended `https://esm.sh/` again
+    // → `https://esm.sh/https:/esm.sh/canvas-confetti` (400). Absolute-URL
+    // specifiers must NOT land in the import map at all — the browser fetches
+    // them directly.
+    const rRes = await api.ensureAppSlug({
+      mode: "dev",
+      fileSystem: [
+        {
+          type: "code-block",
+          lang: "jsx",
+          filename: "/App.jsx",
+          content: `import confetti from "https://esm.sh/canvas-confetti"; export default function App() { return <button onClick={() => confetti()}>go</button>; }`,
+        },
+      ],
+    });
+    const res = rRes.Ok();
+    if (!isResEnsureAppSlugOk(res)) {
+      assert.fail("Expected ensureAppSlug to return ResEnsureAppSlugOk");
+    }
+    const url = calcEntryPointUrl({
+      hostnameBase: ".nowhere",
+      protocol: "http",
+      port: "4711",
+      bindings: { appSlug: res.appSlug, ownerHandle: res.ownerHandle, fsId: res.fsId },
+    });
+    const resIframe = await api.cfg.fetch(url);
+    expect(resIframe.status).toBe(200);
+    const iframeText = await resIframe.text();
+
+    const importMapMatch = iframeText.match(/<script type="importmap">([\s\S]*?)<\/script>/);
+    if (!importMapMatch) {
+      assert.fail("iframe HTML must contain an importmap script tag");
+    }
+    const importMap = JSON.parse(importMapMatch[1]) as { imports: Record<string, string> };
+    // The absolute URL must not appear as an import-map key …
+    expect(
+      importMap.imports,
+      `absolute-URL import must not be captured as a package; got: ${JSON.stringify(importMap.imports)}`
+    ).not.toHaveProperty("https://esm.sh/canvas-confetti");
+    // … and the doubled-prefix URL must never be emitted as a value.
+    expect(JSON.stringify(importMap.imports)).not.toContain("esm.sh/https:");
+  });
+
   it("revalidates unversioned published root html when metadata changes for the same fsId", async () => {
     const rRes = await api.ensureAppSlug({
       mode: "production",

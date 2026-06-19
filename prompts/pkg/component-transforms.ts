@@ -23,6 +23,18 @@ export function transformImports(code: string): string {
       if (coreImportMap.includes(importPath)) {
         return match;
       }
+      // Only bare specifiers get rewritten to esm.sh. Leave everything else
+      // untouched:
+      //  • Relative paths (`./Badge.jsx`, `../x`) are sibling modules — the
+      //    regex's `[^/]` guard excludes leading `/` but NOT leading `.`, so
+      //    without this they'd become `https://esm.sh/./Badge.jsx` (404).
+      //  • Fully-qualified URLs (`https://esm.sh/canvas-confetti`, `blob:`,
+      //    `data:`) are already absolute; re-prefixing yields
+      //    `https://esm.sh/https://esm.sh/…`, which 400s
+      //    (garden-gnome/canary-import-regression).
+      if (importPath.startsWith(".") || /^[a-zA-Z][a-zA-Z\d+\-.]*:/.test(importPath)) {
+        return match;
+      }
       return match.replace(`"${importPath}"`, `"https://esm.sh/${importPath}"`);
     }
   );

@@ -98,6 +98,21 @@ export function importsFromJS(js: string): string[] {
   return [...new Set(imports)];
 }
 
+// A specifier belongs in the generated esm.sh import map only when it is a bare
+// package name (`clsx`, `@scope/pkg`, `react-dom/client`). Relative paths and
+// fully-qualified URLs must be left out: relative paths are served from the vibe
+// origin, and absolute URLs (`https://esm.sh/canvas-confetti`, `blob:`, `data:`,
+// protocol-relative `//host`) are fetched by the browser as-is. Capturing the
+// latter would feed the URL to render_esm_sh, which prepends `https://esm.sh/`
+// onto it — producing `https://esm.sh/https:/esm.sh/canvas-confetti` and a 400.
+export function isBareImportSpecifier(spec: string): boolean {
+  // Relative (`./`, `../`), root-absolute (`/x`) and protocol-relative (`//host`).
+  if (spec.startsWith("/") || spec.startsWith("./") || spec.startsWith("../")) return false;
+  // Any URL scheme: `https:`, `http:`, `blob:`, `data:`, etc.
+  if (/^[a-zA-Z][a-zA-Z\d+\-.]*:/.test(spec)) return false;
+  return true;
+}
+
 interface GivenFsItem {
   vibeFileItem: VibeFile;
   fsItem: FileSystemItem;
@@ -138,7 +153,7 @@ async function transformJSXAndImports(
           return;
         }
         rImports.Ok().forEach((imp) => {
-          if (imp.startsWith("./") || imp.startsWith("../")) return;
+          if (!isBareImportSpecifier(imp)) return;
           if (!imports.has(imp)) {
             imports.set(imp, []);
           }
@@ -180,7 +195,7 @@ async function transformJSXAndImports(
           return;
         }
         rImports.Ok().forEach((imp) => {
-          if (imp.startsWith("./") || imp.startsWith("../")) return;
+          if (!isBareImportSpecifier(imp)) return;
           if (!imports.has(imp)) {
             imports.set(imp, []);
           }
