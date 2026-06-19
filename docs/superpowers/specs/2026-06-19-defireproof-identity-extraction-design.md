@@ -223,6 +223,41 @@ open question — see Q2.
 - **Q6 — Upstream tracking.** After extraction, do we keep pulling security fixes
   from upstream fireproof `0.24.x` into the lifted crypto, or hard-fork and own it outright?
 
+## Resolutions (from `@CharlieHelps` review — pending owner go-ahead)
+
+Recorded so the spec stays the source of truth. **Not yet ratified** — holding for
+owner sign-off before any plan.
+
+1. **`SuperThis` (Q1)** → a **thin in-repo runtime-context module** (small
+   `SuperThis`/`ensureSuperThis`/env-codec-`nextId` surface); identity and other
+   consumers depend on _that_. Optionally upstream the thin surface into
+   `@adviser/cement` later, once stable. Avoids burying generic plumbing in identity.
+2. **Extraction (Q2)** → **lift-verbatim first** for cert/CSR/token sign+verify;
+   reimplement only clearly-standard primitives (HKDF) behind compat tests. Gated by a
+   golden wire-compat harness built **first** (real cert/token fixtures + byte-equality).
+3. **Keybag (Q3)** → keep `~/.fireproof/keybag` as the default for this initiative; any
+   `~/.vibes` move is a **separate, reversible** step (explicit migration / dual-read),
+   never a silent default flip during extraction.
+4. **Publish (Q4)** → **internal workspace package first**; stabilize API/security
+   posture before any public npm commitment. If external need is urgent, publish a
+   narrow pre-1.0 surface with explicit compatibility guarantees.
+5. **Bucket D (Q5)** → explicitly **out of scope**; its own firefly-migration track
+   with separate acceptance criteria.
+6. **Upstream (Q6)** → **managed fork**, not an immediate hard fork: a lightweight
+   upstream-sync lane for fireproof `0.24.x` security fixes, documenting source SHAs +
+   local deltas.
+
+### Gates before spec → plan
+
+- **Type-patch parity in phase 1.** Port the `core-types-base` patch behavior (the
+  `ClerkClaimSchema` `.catch()` semantics) as part of type ownership so auth/type
+  semantics don't drift mid-extraction.
+- **Compatibility matrix as a release gate.** Existing keybag certs, deployed
+  CA/cloud-token env material, and Clerk + device-id token verification must all pass
+  before _any_ runtime path is switched over.
+- **Sequencing.** Build the wire-compat harness and the thin runtime-context boundary
+  **before** broad file churn — the biggest risk reducers.
+
 ## Non-goals (this spec)
 
 - No implementation, no step-by-step plan yet (awaiting go-ahead).
