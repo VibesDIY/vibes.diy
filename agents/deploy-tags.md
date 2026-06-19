@@ -5,8 +5,31 @@
 | Prefix         | Environment | Job          | Queue deploys?            |
 | -------------- | ----------- | ------------ | ------------------------- |
 | `vibes-diy@p*` | prodv2      | compile_test | Yes (CLOUDFLARE_ENV=prod) |
-| `vibes-diy@c*` | cli         | deploy_cli   | No (shared prod queue)    |
+| `vibes-diy@c*` | cli         | compile_test | No (shared prod queue)    |
 | `vibes-diy@d*` | dev         | compile_test | No                        |
+
+All four targets (dev / staging / prodv2 / cli) run the **same** `compile_test`
+job; the environment is picked by ref prefix. The cli-vs-prod behavioural
+difference (e.g. the queue consumer only deploys when `CLOUDFLARE_ENV=prod`)
+lives in `vibes.diy/actions/deploy`, gated on `CLOUDFLARE_ENV` — not in a
+separate job. (There was a duplicate `deploy_cli` job; it was folded back in.)
+
+### Test reuse across deploys
+
+`actions/base` runs the full ~5-min suite, and a single commit can be tested
+many times (PR CI → merge-to-main dev deploy → `@s` → `@p` → `@c`). To avoid
+re-running tests on a SHA that's already green, the deploy job passes
+`skip-tests-if-sha-green: "true"` to `actions/base`: if the **exact** commit
+SHA already has a successful `compile_test` check, the test step is skipped.
+
+- ✅ Tagging `@c`/`@p`/`@s` at a commit that was tested as-is (e.g. **`@c` from a
+  PR head**, which already ran `ci.yaml`'s `compile_test` on that head SHA) →
+  tests are skipped.
+- ⚠️ A SHA with no green check (a rebased main commit, a fresh prod tag pointing
+  at a commit no PR tested directly) → the suite runs in full. Coverage is never
+  silently dropped — the skip only fires on a positive green-check match.
+
+This needs `checks: read` on the job (already granted in `vibes-diy-deploy.yaml`).
 
 ## Package publish (`package-deploy.yaml`)
 

@@ -1,7 +1,17 @@
 name: "setup-runtime"
 description: "setup  runtime"
-# inputs:
-# your inputs here
+inputs:
+  skip-tests-if-sha-green:
+    description: >-
+      When "true", skip the ~5-min Docker test step if this exact commit SHA
+      already has a successful `compile_test` check (i.e. it was tested
+      "upstream" — e.g. a deploy tag cut from an already-green PR head). ci.yaml
+      leaves this "false" because it IS the source of truth; deploy jobs set it
+      "true". Requires the job to grant `checks: read`. Falls back to running the
+      full suite whenever the SHA has no green check (rebased main commit, a
+      fresh prod tag, etc.), so coverage is never silently dropped.
+    required: false
+    default: "false"
 runs:
   using: composite
   steps:
@@ -33,7 +43,43 @@ runs:
       shell: bash
       run: pnpm run build
 
+    # Decide whether the test step below can be skipped because this exact SHA
+    # was already tested upstream. Only acts when the caller opts in via
+    # skip-tests-if-sha-green=true (deploy jobs). Matches on a *successful*
+    # check named `compile_test` (the in-progress self-check has conclusion
+    # null, so it never matches itself); both ci.yaml and the deploy jobs run
+    # the same suite under that job name, so a green check is faithful coverage.
+    - name: check-sha-tested
+      id: gate
+      shell: bash
+      env:
+        GH_TOKEN: ${{ github.token }}
+        SKIP_IF_GREEN: ${{ inputs.skip-tests-if-sha-green }}
+        SHA: ${{ github.sha }}
+        REPO: ${{ github.repository }}
+      run: |
+        echo "skip_tests=false" >> "$GITHUB_OUTPUT"
+        if [ "$SKIP_IF_GREEN" != "true" ]; then
+          echo "skip-tests-if-sha-green not set — running the full suite."
+          exit 0
+        fi
+        # gh is preinstalled on GitHub-hosted runners. Count successful
+        # compile_test checks on this commit; tolerate API hiccups by treating
+        # an error as "no green check" (fail safe → run the tests).
+        GREEN=$(gh api "repos/${REPO}/commits/${SHA}/check-runs" --paginate \
+          --jq '[.check_runs[] | select(.name=="compile_test" and .conclusion=="success")] | length' \
+          2>/dev/null | awk '{s+=$1} END {print s+0}')
+        if [ "${GREEN:-0}" -ge 1 ]; then
+          echo "skip_tests=true" >> "$GITHUB_OUTPUT"
+          echo "✅ ${SHA} already has a green compile_test check — skipping the test re-run." \
+            >> "${GITHUB_STEP_SUMMARY:-/dev/stdout}"
+          echo "Found a green compile_test check on ${SHA} — skipping the test re-run."
+        else
+          echo "No green compile_test check on ${SHA} — running the full suite."
+        fi
+
     - name: test
+      if: ${{ steps.gate.outputs.skip_tests != 'true' }}
       shell: bash
       env:
         # Single switch that flips the test suite from "surfaced" to "blocking".
@@ -78,6 +124,16 @@ runs:
           bash -c "corepack enable && corepack prepare pnpm@${PNPM_VERSION} --activate && npm run test" 2>&1 | tee test-output.log
         TEST_EXIT=${PIPESTATUS[0]}
         set -e
+
+        # The container above runs as root and bind-mounts the host checkout, so
+        # it writes root-owned files into the workspace (node_modules/.vite-temp,
+        # test-output.log, vitest globalSetup's drizzle-kit artifacts). When this
+        # same checkout is reused by a later non-root step in the same job — the
+        # deploy jobs' `pnpm run build` → vite writing node_modules/.vite-temp —
+        # that step hits EACCES. Restore ownership to the runner user so the
+        # build can write. (Tag deploy run 27803874292 / vibes-diy@c2.5.9 failed
+        # exactly here; PR CI never saw it because the build is deploy-only.)
+        sudo chown -R "$(id -u):$(id -g)" "$(pwd)" || true
 
         # Surface the result regardless of gating mode, so regressions are
         # visible on the PR even while the suite is non-blocking. vitest's

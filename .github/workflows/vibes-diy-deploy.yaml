@@ -16,58 +16,28 @@ on:
 jobs:
   compile_test:
     runs-on: ubuntu-latest
-    if: ${{ !contains(github.event.head_commit.message || '', '[skip ci]') && !startsWith(github.ref, 'refs/tags/vibes-diy@c') }}
-    environment: ${{ startsWith(github.ref, 'refs/tags/vibes-diy@s') && 'staging' || startsWith(github.ref, 'refs/tags/vibes-diy@p') && 'prodv2' || 'dev' }}
+    # @c (cli) tags used to run in a separate `deploy_cli` job, but the body was
+    # identical — the only real difference is the environment (the cli-vs-prod
+    # divergence, e.g. the queue consumer, lives in vibes.diy/actions/deploy
+    # gated on CLOUDFLARE_ENV). So @c now folds into the ternary below instead of
+    # duplicating the whole job. See agents/deploy-tags.md.
+    if: ${{ !contains(github.event.head_commit.message || '', '[skip ci]') }}
+    environment: ${{ startsWith(github.ref, 'refs/tags/vibes-diy@s') && 'staging' || startsWith(github.ref, 'refs/tags/vibes-diy@p') && 'prodv2' || startsWith(github.ref, 'refs/tags/vibes-diy@c') && 'cli' || 'dev' }}
+    # checks: read lets actions/base look up whether this exact SHA already has a
+    # green compile_test check (skip-tests-if-sha-green below). The deploy action
+    # uses Cloudflare tokens, not GITHUB_TOKEN, so read-only scoping is safe.
+    permissions:
+      contents: read
+      checks: read
     steps:
       - uses: actions/checkout@v5
 
       - uses: ./actions/base
-
-      - uses: ./vibes.diy/actions/deploy
         with:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
-          CLOUDFLARE_ENV: ${{ vars.CLOUDFLARE_ENV }}
-          CLOUD_SESSION_TOKEN_PUBLIC: ${{ vars.CLOUD_SESSION_TOKEN_PUBLIC }}
-          CLERK_PUBLISHABLE_KEY: ${{ vars.CLERK_PUBLISHABLE_KEY }}
-          DEVICE_ID_CA_PRIV_KEY: ${{ secrets.DEVICE_ID_CA_PRIV_KEY }}
-          DEVICE_ID_CA_CERT: ${{ vars.DEVICE_ID_CA_CERT }}
-          FP_VERSION: ${{ vars.FP_VERSION }}
-          FPCLOUD_URL: ${{ vars.FPCLOUD_URL }}
-          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
-          VIBES_DIY_PUBLIC_BASE_URL: ${{ vars.VIBES_DIY_PUBLIC_BASE_URL }}
-          CLOUD_SESSION_TOKEN_SECRET: ${{ secrets.CLOUD_SESSION_TOKEN_SECRET }}
-          CLOUD_SESSION_TOKEN_ISSUER: ${{ vars.CLOUD_SESSION_TOKEN_ISSUER }}
-          VIBES_DIY_FROM_EMAIL: ${{ vars.VIBES_DIY_FROM_EMAIL }}
-          VIBES_SVC_HOSTNAME_BASE: ${{ vars.VIBES_SVC_HOSTNAME_BASE }}
-          VIBES_SVC_PROTOCOL: ${{ vars.VIBES_SVC_PROTOCOL }}
-          LLM_BACKEND_API_KEY: ${{ secrets.LLM_BACKEND_API_KEY }}
-          LLM_BACKEND_URL: ${{ vars.LLM_BACKEND_URL }}
-          CLERK_PUB_JWT_URL: ${{ vars.CLERK_PUB_JWT_URL }}
-          DB_FLAVOUR: ${{ vars.DB_FLAVOUR }}
-          NEON_DATABASE_URL: ${{ secrets.NEON_DATABASE_URL }}
-          NEON_DATABASE_ADMIN_URL: ${{ secrets.NEON_DATABASE_ADMIN_URL }}
-          MAX_APP_SLUG_PER_USER_ID: ${{ vars.MAX_APP_SLUG_PER_USER_ID }}
-          WORKSPACE_NPM_URL: ${{ vars.WORKSPACE_NPM_URL }}
-          VIBES_DIY_API_URL: ${{ vars.VIBES_DIY_API_URL }}
-          PRODIA_TOKEN: ${{ secrets.PRODIA_TOKEN }}
-          DISCORD_WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK_URL }}
-          META_CAPI_TOKEN: ${{ secrets.META_CAPI_TOKEN }}
-          META_PIXEL_ID: ${{ vars.META_PIXEL_ID }}
-          META_ACCESS_TOKEN: ${{ secrets.META_ACCESS_TOKEN }}
-          META_AD_ACCOUNT_ID: ${{ vars.META_AD_ACCOUNT_ID }}
-          CLERK_WEBHOOK_SECRET: ${{ secrets.CLERK_WEBHOOK_SECRET }}
-          POSTHOG_KEY: ${{ vars.POSTHOG_KEY }}
-          POSTHOG_HOST: ${{ vars.POSTHOG_HOST }}
-
-  deploy_cli:
-    runs-on: ubuntu-latest
-    if: startsWith(github.ref, 'refs/tags/vibes-diy@c')
-    environment: cli
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: ./actions/base
+          # A deploy tag cut from an already-tested commit (e.g. @c from a PR
+          # head) skips the ~5-min suite; any SHA without a green check still
+          # runs it. See agents/deploy-tags.md § "Test reuse across deploys".
+          skip-tests-if-sha-green: "true"
 
       - uses: ./vibes.diy/actions/deploy
         with:
