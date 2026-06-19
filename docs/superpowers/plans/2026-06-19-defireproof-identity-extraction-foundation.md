@@ -32,7 +32,7 @@
 
 - Create: `vibes.diy/api/tests/identity-wire-compat.test.ts`
 
-- [ ] **Step 1: Write the harness test file**
+- [x] **Step 1: Write the harness test file**
 
 ```ts
 // Golden wire-compat harness. Pins the CURRENT (@fireproof/* 0.24.19) device-id
@@ -137,12 +137,12 @@ describe("identity wire-compat (baseline: @fireproof/* 0.24.19)", { timeout: 300
 > cert — the latter depends on fireproof-internal `ClerkClaim` semantics not central
 > to the gate. Cross-verification of extracted-vs-fireproof tokens is added in Plan 3.
 
-- [ ] **Step 2: Run the harness, confirm it passes against the current impl**
+- [x] **Step 2: Run the harness, confirm it passes against the current impl**
 
 Run: `cd vibes.diy/api/tests && pnpm exec vitest --run identity-wire-compat`
 Expected: PASS (5 tests). This is the baseline the extracted impl must reproduce.
 
-- [ ] **Step 3: Commit**
+- [x] **Step 3: Commit**
 
 ```bash
 git add vibes.diy/api/tests/identity-wire-compat.test.ts
@@ -160,7 +160,7 @@ git commit -m "test: golden wire-compat harness pinning the device-id/cert contr
 - Create: `vibes.diy/identity/runtime-context.test.ts`
 - Create: `vibes.diy/identity/vitest.config.ts`
 
-- [ ] **Step 1: Write `runtime-context.test.ts` (failing — module absent)**
+- [x] **Step 1: Write `runtime-context.test.ts` (failing — module absent)**
 
 ```ts
 import { describe, it, expect } from "vitest";
@@ -177,12 +177,12 @@ describe("ensureRuntimeContext", () => {
 });
 ```
 
-- [ ] **Step 2: Run it, confirm it fails**
+- [x] **Step 2: Run it, confirm it fails**
 
 Run: `cd vibes.diy/identity && pnpm exec vitest --run runtime-context`
 Expected: FAIL — cannot resolve `./runtime-context.js`.
 
-- [ ] **Step 3: Implement the thin runtime-context seam**
+- [x] **Step 3: Implement the thin runtime-context seam**
 
 `runtime-context.ts` — the in-repo boundary that later replaces `ensureSuperThis` at identity call sites. v1 delegates to the existing `SuperThis` so behavior is identical; Plan 4 narrows the surface and (optionally) drops the fireproof backing.
 
@@ -201,7 +201,7 @@ export function ensureRuntimeContext(): RuntimeContext {
 }
 ```
 
-- [ ] **Step 4: Add `index.ts`, `package.json`, `tsconfig.json`, `vitest.config.ts`**
+- [x] **Step 4: Add `index.ts`, `package.json`, `tsconfig.json`, `vitest.config.ts`**
 
 `index.ts`:
 
@@ -236,17 +236,17 @@ import { defineConfig } from "vitest/config";
 export default defineConfig({ test: { include: ["**/*.test.ts"] } });
 ```
 
-- [ ] **Step 5: Install + run the package test**
+- [x] **Step 5: Install + run the package test**
 
 Run: `pnpm install && cd vibes.diy/identity && pnpm exec vitest --run`
 Expected: PASS (1 test). `pnpm install` wires the new workspace.
 
-- [ ] **Step 6: Typecheck the new package compiles in the monorepo**
+- [x] **Step 6: Typecheck the new package compiles in the monorepo**
 
 Run: `cd vibes.diy/identity && pnpm exec tsc --noEmit`
 Expected: no errors.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add vibes.diy/identity pnpm-lock.yaml
