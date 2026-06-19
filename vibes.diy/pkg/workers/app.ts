@@ -171,12 +171,13 @@ export default {
       headers.set("Access-Control-Allow-Origin", "*");
       headers.set("Access-Control-Allow-Methods", "GET, OPTIONS");
       headers.set("Access-Control-Allow-Headers", "Content-Type");
-      // Stamped URLs (?v=<commit-sha>, injected at deploy time) are immutable
-      // per deploy, so cache them for a year — a new deploy mints a fresh ?v=
-      // and thus a guaranteed-cache-miss URL for instant cutover. Unstamped
-      // requests (e.g. trailing-slash subpath imports) keep a 60s fallback so
-      // deploys still propagate predictably. See vibe-pkg-cache.ts.
-      headers.set("Cache-Control", vibePkgCacheControl(request.url));
+      // Stamped URLs whose ?v= matches THIS worker's own deploy stamp are
+      // immutable per deploy, so cache them for a year — a new deploy mints a
+      // fresh ?v= and thus a guaranteed-cache-miss URL for instant cutover.
+      // Everything else (unstamped subpath imports, rollout-race/stale-import-map
+      // stamp mismatches, dev) keeps a 60s fallback so we never cache stale
+      // bytes under a future deploy's URL for a year. See vibe-pkg-cache.ts.
+      headers.set("Cache-Control", vibePkgCacheControl(request.url, env.WORKSPACE_NPM_URL));
       const response = new Response(assetResponse.body as unknown as BodyInit, {
         status: assetResponse.status,
         headers,
