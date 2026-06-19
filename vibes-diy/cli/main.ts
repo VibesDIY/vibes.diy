@@ -1,5 +1,5 @@
 import { ensureSuperThis, type SuperThis } from "@vibes.diy/identity";
-import { createDeviceIdGetToken , isResDeviceIdRegister } from "@vibes.diy/identity/node";
+import { createDeviceIdGetToken, isResDeviceIdRegister } from "@vibes.diy/identity/node";
 import { AppContext, EventoSendProvider, exception2Result, HandleTriggerCtx, processStream, Result } from "@adviser/cement";
 import { VibesDiyApi } from "@vibes.diy/api-impl";
 import { dotenv } from "zx";
@@ -41,7 +41,10 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 
 async function vibesDiyApiFactory(sthis: SuperThis) {
-  const getToken = await createDeviceIdGetToken(sthis, { iss: "use-vibes/cli" });
+  const getToken = await createDeviceIdGetToken(sthis, {
+    iss: "use-vibes/cli",
+    missingCertMessage: `Device ID certificate is missing — run 'vibes-diy login', or set ${VIBES_DEVICE_ID_ENV} for headless auth`,
+  });
   return (apiUrl: string, opts?: { idleTimeoutMs?: number; skipShard?: boolean }) => {
     return new VibesDiyApi({
       apiUrl,
