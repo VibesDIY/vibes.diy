@@ -1,6 +1,7 @@
 import React, { useEffect, useId, useRef, useState, useMemo } from "react";
 import { createPortal } from "react-dom";
 import { trackEvent } from "../utils/analytics.js";
+import { usePortalRoot } from "../contexts/PortalRootContext.js";
 
 export interface ModelOption {
   id: string;
@@ -26,6 +27,7 @@ export default function ModelPicker({ currentModel, onModelChange, models, globa
   const menuId = `model-menu-${buttonId}`;
   const [open, setOpen] = useState(false);
   const [updating, setUpdating] = useState(false);
+  const portalRoot = usePortalRoot();
   const buttonRef = useRef<HTMLButtonElement | null>(null);
   const menuRef = useRef<HTMLDivElement | null>(null);
 
@@ -217,7 +219,7 @@ export default function ModelPicker({ currentModel, onModelChange, models, globa
               </div>
             </div>
           </div>,
-          document.body
+          portalRoot
         )}
     </div>
   );

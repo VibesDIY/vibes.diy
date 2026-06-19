@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { avatarConfirmController, type PendingAvatarConfirm } from "../lib/avatar-confirm.js";
+import { usePortalRoot } from "../contexts/PortalRootContext.js";
 import { cidAssetUrl, getAppHostBaseUrl } from "../utils/vibeUrls.js";
 import { Button } from "./ui/button.js";
 
@@ -38,6 +39,8 @@ export function AvatarConfirmModal(): React.ReactElement | null {
     document.addEventListener("keydown", handler);
     return () => document.removeEventListener("keydown", handler);
   }, [pending]);
+
+  const portalRoot = usePortalRoot();
 
   if (!pending) return null;
 
@@ -93,6 +96,6 @@ export function AvatarConfirmModal(): React.ReactElement | null {
         </div>
       </div>
     </div>,
-    document.body
+    portalRoot
   );
 }

@@ -1,8 +1,14 @@
 import React from "react";
-import { render, screen, act, cleanup, waitFor } from "@testing-library/react";
+import { render as rtlRender, screen, act, cleanup, waitFor } from "@testing-library/react";
 import { describe, it, expect, afterEach } from "vitest";
 import { AvatarConfirmModal } from "~/vibes.diy/app/components/AvatarConfirmModal.js";
 import { avatarConfirmController } from "~/vibes.diy/app/lib/avatar-confirm.js";
+import { PortalRootWrapper } from "./vibes-provider-harness.js";
+
+// Render the modal's portal into a per-test container so it unmounts cleanly
+// under isolate:false (see PortalRootWrapper).
+const render = (ui: React.ReactElement, options?: Parameters<typeof rtlRender>[1]) =>
+  rtlRender(ui, { wrapper: PortalRootWrapper, ...options });
 
 // Security regression for #2418 review: the confirm modal must preview the
 // host-supplied storage URI (getURL) for the CID it will persist — never a URL

@@ -1,8 +1,14 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render as rtlRender, screen, waitFor } from "@testing-library/react";
 import React from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import ModelPicker from "~/vibes.diy/app/components/ModelPicker.js";
 import { MockThemeProvider } from "./utils/MockThemeProvider.js";
+import { PortalRootWrapper } from "./vibes-provider-harness.js";
+
+// Render ModelPicker's menu portal into a per-test container so it unmounts
+// cleanly under isolate:false (see PortalRootWrapper).
+const render = (ui: React.ReactElement, options?: Parameters<typeof rtlRender>[1]) =>
+  rtlRender(ui, { wrapper: PortalRootWrapper, ...options });
 
 const MODELS = [
   {

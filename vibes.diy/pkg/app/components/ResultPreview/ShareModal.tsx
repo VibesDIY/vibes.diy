@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { Button } from "../ui/button.js";
+import { usePortalRoot } from "../../contexts/PortalRootContext.js";
 import { PublicSharingSection } from "../mine/sharing-tab/PublicSharingSection.js";
 import { RequestsSection } from "../mine/sharing-tab/RequestsSection.js";
 import { EmailInvitationsSection } from "../mine/sharing-tab/EmailInvitationsSection.js";
@@ -376,6 +377,7 @@ export function ShareModal({
   onToggleAdmin,
 }: ShareModalProps) {
   const isMobile = useIsMobile();
+  const portalRoot = usePortalRoot();
   const commentsEditorsOnly = useCommentsEditorsOnly(modal.ownerHandle, modal.appSlug, modal.isOpen);
   // Composer is disabled when the owner has restricted commenting to editors
   // and the viewer isn't owner or editor. Server is still the authority — this
@@ -516,6 +518,6 @@ export function ShareModal({
         </div>
       </div>
     </div>,
-    document.body
+    portalRoot
   );
 }
