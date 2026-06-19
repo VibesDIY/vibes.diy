@@ -17,9 +17,11 @@ describe("transformImports", () => {
     expect(out).toContain(`from "https://esm.sh/chart.js/auto"`);
   });
 
-  it("leaves node: builtin imports untouched", () => {
-    const src = `import fs from "node:fs";`;
-    expect(transformImports(src)).toBe(src);
+  it("rewrites node: builtins through esm.sh (browser-polyfillable)", () => {
+    // esm.sh serves node builtins at https://esm.sh/node:buffer, matching the
+    // hot-swap fallback's treatment — so node: stays bare (Codex review on #2471).
+    const out = transformImports(`import { Buffer } from "node:buffer";`);
+    expect(out).toContain(`from "https://esm.sh/node:buffer"`);
   });
 
   it("leaves core import-map packages untouched", () => {
