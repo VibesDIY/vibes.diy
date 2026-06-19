@@ -1,6 +1,6 @@
 # Removing the `@fireproof/*` dependency — extracting the identity/PKI core
 
-Status: **APPROVED — IN PROGRESS.** Owner gave go-ahead; resolutions ratified. Plan 1 (foundation) landed; phase-1 type ownership underway. Plan: [`2026-06-19-defireproof-identity-extraction-foundation.md`](../plans/2026-06-19-defireproof-identity-extraction-foundation.md).
+Status: **APPROVED — IN PROGRESS.** Owner gave go-ahead; resolutions ratified. Plan 1 (foundation) landed. **Encapsulation boundary ("far shore") reached:** every identity-relevant `@fireproof/*` import in source now routes through `@vibes.diy/identity` (browser-safe `.`, worker-safe `./server`, Node-only `./node`); the three duplicated device-id signers are DRY'd into `createDeviceIdGetToken`; the package is still fireproof-backed internally. Remaining `@fireproof/*` in source: `@fireproof/use-fireproof` + `core-types-protocols-cloud` (Bucket D, legacy IndexedDB/cloud-attach) and the generic `core-cli` cmd-ts streaming primitives (CLI-framework / Bucket F) — both deferred by design. Plan: [`2026-06-19-defireproof-identity-extraction-foundation.md`](../plans/2026-06-19-defireproof-identity-extraction-foundation.md).
 
 Related:
 
