@@ -43,6 +43,17 @@ def main() -> int:
     passed = data.get("numPassedTests", 0)
     failed = data.get("numFailedTests", 0)
     skipped = data.get("numPendingTests", 0) + data.get("numTodoTests", 0)
+    failed_suites = data.get("numFailedTestSuites", 0)
+    total_suites = data.get("numTotalTestSuites", len(results))
+
+    # Failure detection must NOT rely on numFailedTests alone: a module that
+    # fails to import/setup registers zero tests, so numFailedTests stays 0 even
+    # though the suite failed (numFailedTestSuites > 0, a testResults entry with
+    # status "failed", and success: false). Treat any of those as a failure,
+    # otherwise the summary would print "All tests passed" over a red run.
+    failed_result_entries = sum(1 for r in results if r.get("status") == "failed")
+    bad_suites = failed_suites or failed_result_entries
+    suite_failed = data.get("success") is False or failed > 0 or bad_suites > 0
 
     durations = []
     for r in results:
@@ -51,12 +62,23 @@ def main() -> int:
             durations.append(((end - start) / 1000.0, rel(r.get("name", "?"))))
     durations.sort(reverse=True)
 
+    if not suite_failed:
+        headline = "✅ All tests passed."
+    else:
+        parts = []
+        if failed:
+            parts.append(f"{failed} test(s)")
+        if bad_suites:
+            parts.append(f"{bad_suites} suite(s)")
+        headline = "❌ " + (" and ".join(parts) if parts else "suite") + " failed."
+
     out = []
     out.append("## Test suite result")
     out.append("")
-    out.append("✅ All tests passed." if failed == 0 else f"❌ {failed} test file(s)/case(s) failed.")
+    out.append(headline)
     out.append("")
-    out.append(f"- Files: **{len(results)}**  •  Tests: **{total}** (✅ {passed} / ❌ {failed} / ⊘ {skipped})")
+    files_note = f"❌ {bad_suites} failed" if bad_suites else "all passed"
+    out.append(f"- Suites: **{total_suites}** ({files_note})  •  Tests: **{total}** (✅ {passed} / ❌ {failed} / ⊘ {skipped})")
     if durations:
         out.append(f"- Sum of per-file wall time: **{sum(d for d, _ in durations):.1f}s** (runs parallelized across workers)")
     out.append("")
@@ -74,15 +96,21 @@ def main() -> int:
     for r in results:
         bad = [a.get("title", "?") for a in r.get("assertionResults", []) if a.get("status") == "failed"]
         if bad or r.get("status") == "failed":
-            failures.append((rel(r.get("name", "?")), bad))
+            # A suite that fails to import/setup has no failed assertions — its
+            # error lives in the file-level message. Surface it so the summary
+            # shows the actual setup/import failure context, not a bare filename.
+            msg = (r.get("message") or r.get("failureMessage") or "").strip()
+            failures.append((rel(r.get("name", "?")), bad, msg))
     if failures:
         out.append("")
-        out.append("<details><summary>Failed tests</summary>")
+        out.append("<details><summary>Failed tests / suites</summary>")
         out.append("")
-        for name, bad in failures:
+        for name, bad, msg in failures:
             out.append(f"- `{name}`")
             for title in bad:
                 out.append(f"  - {title}")
+            if not bad and msg:
+                out.append(f"  - _suite error:_ {msg.splitlines()[0][:300]}")
         out.append("")
         out.append("</details>")
 
