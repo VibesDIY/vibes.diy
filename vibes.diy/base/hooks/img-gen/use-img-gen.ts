@@ -2,6 +2,13 @@ import { useState, useEffect, useRef } from "react";
 import { useFireproof } from "@fireproof/use-fireproof";
 import { imgGen as defaultImgGen } from "@vibes.diy/vibe-runtime";
 import type { DocSet } from "@fireproof/use-fireproof";
+
+// The Fireproof hook ImgGen binds to. Defaults to @fireproof/use-fireproof, but
+// is injectable so callers (and tests) can supply the firefly-backed drop-in
+// without globally module-mocking @fireproof/use-fireproof — which bleeds across
+// files under isolate:false. Firefly-first: the sandbox/runtime can inject its
+// own useFireproof here too.
+export type UseFireproofHook = typeof useFireproof;
 import type {
   FileMeta,
   ImageDocumentPlain,
@@ -24,10 +31,23 @@ interface InjectedDeps {
   // Hook-test hatch: allow the test to swap in a synthetic generator
   // without reaching into the iframe runtime.
   imgGen?: (prompt: string, inputImage?: ImgGenInputImage, model?: string) => Promise<Result<ImgGenFile[]>>;
+  // Injectable Fireproof hook (defaults to @fireproof/use-fireproof). See
+  // UseFireproofHook above.
+  useFireproof?: UseFireproofHook;
 }
 
 export function useImgGen(opts: Partial<UseImgGenOptions> & InjectedDeps): UseImgGenResult {
-  const { prompt, _id, database = "ImgGen", skip = false, generationId, inputImage, model, imgGen = defaultImgGen } = opts;
+  const {
+    prompt,
+    _id,
+    database = "ImgGen",
+    skip = false,
+    generationId,
+    inputImage,
+    model,
+    imgGen = defaultImgGen,
+    useFireproof: useFireproofImpl = useFireproof,
+  } = opts;
   const [loading, setLoading] = useState(false);
   const [progress, setProgress] = useState(0);
   const [error, setError] = useState<Error | null>(null);
@@ -39,7 +59,7 @@ export function useImgGen(opts: Partial<UseImgGenOptions> & InjectedDeps): UseIm
   // sandbox postMessage bridge as `subscribeDocs(<object>)` and trips
   // DataCloneError. Normalize to the name first.
   const dbName = typeof database === "string" ? database : ((database as { name?: string } | undefined)?.name ?? "ImgGen");
-  const { database: db } = useFireproof(dbName);
+  const { database: db } = useFireproofImpl(dbName);
   const currentGenRef = useRef<string | null>(null);
 
   useEffect(() => {

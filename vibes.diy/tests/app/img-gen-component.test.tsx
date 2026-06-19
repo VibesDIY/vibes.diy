@@ -7,19 +7,17 @@ import { render, screen, waitFor, cleanup, configure } from "@testing-library/re
 // 1000ms default in the browser runner (#2425).
 afterEach(cleanup);
 configure({ asyncUtilTimeout: 5000 });
-import { ImgGen } from "@vibes.diy/base";
+import { ImgGen as BaseImgGen } from "@vibes.diy/base";
 import { Result } from "@adviser/cement";
-import { registerFirefly } from "../../vibe/runtime/use-firefly.js";
+import { registerFirefly, useFireproof as fireflyUseFireproof } from "../../vibe/runtime/use-firefly.js";
 import { createMockVibeApi, asSandboxApi, type MockVibeApi } from "./mock-vibe-api.js";
 
-vi.mock("@fireproof/use-fireproof", async (importOriginal) => {
-  // Spread the real module so co-exports (ImgFile, etc.) survive — a partial
-  // mock here poisons files importing them under isolate:false, and ImgGen
-  // itself renders via ImgFile. Only override useFireproof with the test runtime.
-  const actual = await importOriginal<Record<string, unknown>>();
-  const { useFireproof } = await import("../../vibe/runtime/use-firefly.js");
-  return { ...actual, useFireproof };
-});
+// Inject the firefly-backed useFireproof via ImgGen's DI prop instead of
+// module-mocking @fireproof/use-fireproof — a global mock bleeds the firefly
+// backend into real-fireproof files (e.g. ShareModal) under isolate:false.
+const ImgGen = (props: React.ComponentProps<typeof BaseImgGen>) => (
+  <BaseImgGen useFireproof={fireflyUseFireproof as never} {...props} />
+);
 
 let mockApi: MockVibeApi;
 let dbCounter = 0;

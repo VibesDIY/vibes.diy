@@ -2,7 +2,7 @@ import React, { useState, useCallback, useMemo } from "react";
 import type { Database } from "@fireproof/use-fireproof";
 import type { FileMeta, ImgGenFile, ImgGenInputImage } from "@vibes.diy/vibe-types";
 import type { Result } from "@adviser/cement";
-import { useImgGen } from "../hooks/img-gen/use-img-gen.js";
+import { useImgGen, type UseFireproofHook } from "../hooks/img-gen/use-img-gen.js";
 
 export interface ImgGenProps {
   prompt?: string;
@@ -18,6 +18,10 @@ export interface ImgGenProps {
   showControls?: boolean;
   model?: string;
   imgGen?: (prompt: string, inputImage?: ImgGenInputImage, model?: string) => Promise<Result<ImgGenFile[]>>;
+  // Injectable Fireproof hook (defaults to @fireproof/use-fireproof). Lets the
+  // firefly runtime / tests supply a backend without globally module-mocking
+  // @fireproof/use-fireproof.
+  useFireproof?: UseFireproofHook;
 }
 
 function promptToId(prompt: string): string {
@@ -43,6 +47,7 @@ export function ImgGen({
   showControls = true,
   model,
   imgGen,
+  useFireproof,
 }: ImgGenProps) {
   const inputImage = images?.[0];
   const imageKey = inputImage
@@ -64,6 +69,7 @@ export function ImgGen({
     inputImage,
     model,
     imgGen,
+    useFireproof,
   });
 
   const versions = document?.versions ?? [];
