@@ -18,11 +18,13 @@ vi.mock("react-router-dom", () => ({
   ),
 }));
 
-vi.mock("@vibes.diy/base", () => ({
-  TexturedPattern: () => null,
-}));
+// Use the real @vibes.diy/base design system (no mock) — partial base mocks
+// poison files that import other base exports under isolate:false.
 
-vi.mock("~/vibes.diy/app/hooks/useRecentVibes.js", () => ({
+// Spread the real module so other exports (e.g. notifyRecentVibesChanged) stay
+// available to files that import them; only override the hook itself.
+vi.mock("~/vibes.diy/app/hooks/useRecentVibes.js", async (importOriginal) => ({
+  ...(await importOriginal<Record<string, unknown>>()),
   useRecentVibes: () => ({ items: [], loadMore: vi.fn(), hasMore: false, loading: false }),
 }));
 

@@ -18,14 +18,8 @@ vi.mock("react-router-dom", async (importOriginal) => {
 });
 
 // Stub layout / card components so the test doesn't need the full design system
-vi.mock("@vibes.diy/base", () => ({
-  BrutalistCard: ({ children }: { children: React.ReactNode }) => <div data-testid="brutalist-card">{children}</div>,
-  VibesButton: ({ children, onClick, disabled }: { children: React.ReactNode; onClick?: () => void; disabled?: boolean }) => (
-    <button type="button" onClick={onClick} disabled={disabled}>
-      {children}
-    </button>
-  ),
-}));
+// Use the real @vibes.diy/base design system (no mock) — partial base mocks
+// poison files that import other base exports under isolate:false.
 
 vi.mock("~/vibes.diy/app/components/LoggedOutView.js", () => ({
   default: () => <div>Logged out</div>,

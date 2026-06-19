@@ -44,17 +44,8 @@ vi.mock("~/vibes.diy/app/components/PillPortal.js", () => ({
   PILL_CLEARANCE_Y: 0,
 }));
 
-vi.mock("@vibes.diy/base", () => ({
-  VibesButton: ({ children, onClick }: { children: React.ReactNode; onClick?: () => void }) => (
-    <button type="button" onClick={onClick}>
-      {children}
-    </button>
-  ),
-  ArrowLeftIcon: () => <span />,
-  ArrowRightIcon: () => <span />,
-  gridBackground: "",
-  cx: (...args: unknown[]) => args.filter(Boolean).join(" "),
-}));
+// Use the real @vibes.diy/base design system (no mock) — partial base mocks
+// poison files that import other base exports under isolate:false.
 
 // Import the component AFTER all vi.mock() calls.
 import HomePage from "~/vibes.diy/app/components/HomePage.js";
