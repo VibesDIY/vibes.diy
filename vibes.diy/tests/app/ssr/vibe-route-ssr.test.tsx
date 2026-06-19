@@ -12,7 +12,7 @@
 import React from "react";
 import { describe, it, expect, vi } from "vitest";
 import { renderToString } from "react-dom/server";
-import { MemoryRouter, Routes, Route } from "react-router";
+import { MemoryRouter, Routes, Route, RouterContextProvider } from "react-router";
 
 vi.mock("@clerk/react", () => ({
   useAuth: () => ({ isSignedIn: false, isLoaded: true }),
@@ -68,7 +68,6 @@ import VibeIframeWrapper, {
   meta as vibeRouteMeta,
 } from "../../../pkg/app/routes/vibe.$ownerHandle.$appSlug.js";
 import { URI } from "@adviser/cement";
-import { RouterContextProvider } from "react-router";
 import { vibeLoadContext, type VibeLoadContext } from "../../../pkg/app/lib/vibe-load-context.js";
 
 describe("viewer route SSR safety", () => {
