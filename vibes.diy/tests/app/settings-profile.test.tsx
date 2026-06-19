@@ -14,14 +14,7 @@ const render = (ui: React.ReactElement, options?: Parameters<typeof rtlRender>[1
 // Clerk auth/clerk come from the shared singleton mock (clerk-test-mock.ts);
 // set in beforeEach below.
 
-vi.mock("react-router-dom", async (importOriginal) => {
-  const actual = (await importOriginal()) as Record<string, unknown>;
-  return {
-    ...actual,
-    useNavigate: () => vi.fn(),
-    Link: ({ children, to }: { children: React.ReactNode; to: string }) => <a href={to}>{children}</a>,
-  };
-});
+// react-router-dom is provided for real by MemoryRouter in vibesWrapper.
 
 // Stub layout / card components so the test doesn't need the full design system
 // Use the real @vibes.diy/base design system (no mock) — partial base mocks

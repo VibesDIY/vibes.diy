@@ -14,14 +14,7 @@ const render = (ui: React.ReactElement, options?: Parameters<typeof rtlRender>[1
 // "Unsubscribe" button.
 
 // ---- dependency mocks (must be declared before importing the component) ----
-
-vi.mock("react-router-dom", () => ({
-  Link: ({ to, children, onClick }: { to: string; children?: React.ReactNode; onClick?: () => void }) => (
-    <a href={to} onClick={onClick}>
-      {children}
-    </a>
-  ),
-}));
+// react-router-dom is provided for real by MemoryRouter in vibesWrapper.
 
 // Use the real @vibes.diy/base design system (no mock) — partial base mocks
 // poison files that import other base exports under isolate:false.
