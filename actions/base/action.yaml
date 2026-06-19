@@ -44,17 +44,23 @@ runs:
     # Persist the eslint/prettier caches across CI runs so incremental PRs only
     # re-lint / re-check the files that actually changed. Both tools run with the
     # content-hash strategy (the root "lint" and "format" scripts), so the caches
-    # survive fresh checkouts where file mtimes always differ. Rolling key: save
-    # per-SHA, restore the latest prefix match.
+    # survive fresh checkouts where file mtimes always differ.
+    #
+    # The key (and restore prefix) include a hash of the lockfile + lint/format
+    # config so a dependency or config change starts from a cold cache. eslint's
+    # --cache only re-checks changed *files*, not changed rule implementations, so
+    # restoring a cache built against an older eslint/plugin/config set could miss
+    # new lint failures on a deps-only PR (false green). Same dep+config set →
+    # incremental hit; deps/config change → full re-lint.
     - name: restore-lint-caches
       uses: actions/cache@v4
       with:
         path: |
           .eslintcache
           .prettiercache
-        key: lint-cache-${{ runner.os }}-${{ github.sha }}
+        key: lint-cache-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml', 'eslint.config.mjs', '.prettierrc', 'package.json') }}-${{ github.sha }}
         restore-keys: |
-          lint-cache-${{ runner.os }}-
+          lint-cache-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml', 'eslint.config.mjs', '.prettierrc', 'package.json') }}-
 
     # Pre-pull the Playwright test image in the background so its ~24s download
     # overlaps with format-check + lint + build instead of blocking the test
