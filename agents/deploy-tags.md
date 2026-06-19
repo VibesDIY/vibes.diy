@@ -111,18 +111,37 @@ When the background-task notification fires, read the final `gh run list` output
 
 The same rule applies to npm publishes, package releases, queue drains — anything where the action you triggered runs asynchronously somewhere else.
 
-## vibe-pkg cache and `pkg@*` publishes
+## vibe-pkg vs `pkg@*` publishes — two independent distribution channels
 
-Browser-side `/vibe/` routes load runtime packages (call-ai-v2, vibe-runtime, etc.) from `/vibe-pkg/` URLs with a `?v=<commit-hash>` query param. The hash is the **app's deploy commit** baked into the worker at `@c`/`@p` tag time — NOT the npm package version. Cloudflare caches these responses (`cf-cache-status: HIT`, `max-age=60`).
+These are often conflated. They are not coupled.
 
-**Consequence:** a `pkg@p*` publish alone does NOT update what browsers load. The worker still serves the old `?v=` hash, and Cloudflare serves the cached response for that hash. To pick up a new npm version in the browser:
+**Browser `/vibe-pkg/` is build-local — it does NOT come from npm.** The `@vibes.diy/*`
+runtime packages (vibe-runtime, vibe-types, etc.) that `/vibe/` routes load are
+**built from the monorepo workspace source at the worker's deploy commit** and
+emitted into the worker's own static assets. At build time
+`vite-plugin-workspace-packages.ts` (`generateBundle`) compiles each workspace
+package from source into `_vibe-pkg/<pkg>/index.js`; at runtime the worker serves
+`/vibe-pkg/*` from `env.ASSETS` (`vibes.diy/pkg/workers/app.ts`). There is **no
+npm fetch** in that path. So what browsers load is determined entirely by the
+**source at the `@c`/`@p` deploy commit**, and a `pkg@p*` npm publish has **zero
+effect** on it. (Prod `/vibe-pkg/` URLs are unversioned — freshness is bounded by
+a ~60s Cloudflare edge TTL after each worker deploy, not a `?v=` cache-buster.
+The `?v=<sha>` param only appears in the PR-preview `WORKSPACE_NPM_URL`.)
 
-1. Push `pkg@p*` → wait for npm publish to succeed
-2. Push `vibes-diy@c*` and/or `vibes-diy@p*` → new worker build generates a fresh `?v=` hash → Cloudflare cache miss → `/vibe-pkg/` fetches the new npm version
+**`pkg@p*` (npm publish) matters only for npm consumers**, not the website:
 
-If you only do step 1, `/vibe/` routes keep serving the old package until the next worker deploy. If the old package is broken (e.g. missing import map entry), the site stays broken until step 2.
+- the `vibes-diy` CLI (`npx vibes-diy`) and `use-vibes`
+- anyone importing `@vibes.diy/*` / `call-ai` / Fireproof in their **own** Node /
+  server code (e.g. server-side `fireproof()`)
 
-**Always pair `pkg@p*` fixes with `@c`/`@p` retags when the fix is browser-facing.**
+**Implications:**
+
+- A **browser-facing** fix ships by deploying `@c`/`@p` (rebuilds `/vibe-pkg/` from
+  source). You do **not** need a `pkg@p*` publish for the website to pick it up.
+- A **CLI / external-consumer** fix ships via `pkg@p*`. You do **not** need an
+  `@c`/`@p` retag for npm users to get it.
+- If a fix needs to reach **both** audiences, cut both tags — but neither is a
+  prerequisite for the other; each channel updates its own audience independently.
 
 ## Pending changes
 
