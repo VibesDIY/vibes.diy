@@ -12,7 +12,7 @@ import {
   type SlotConfig,
 } from "@vibes.diy/api-types";
 import { ChatMessage, isCodeBegin, isCodeEnd, isCodeLine, isToplevelLine } from "@vibes.diy/call-ai-v2";
-import { ensureLogger } from "@fireproof/core-runtime";
+import { ensureLogger } from "@vibes.diy/identity";
 import { and, eq } from "drizzle-orm/sql/expressions";
 import { makeBaseSystemPrompt, resolveEffectiveModel } from "@vibes.diy/prompts";
 import type { VibesApiSQLCtx } from "../types.js";

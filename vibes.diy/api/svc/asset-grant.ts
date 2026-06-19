@@ -8,7 +8,7 @@
 // "vibes.diy.asset-session.v1") so a token signed for one cannot be
 // verified by the other.
 import { Result, exception2Result } from "@adviser/cement";
-import { SuperThis } from "@fireproof/core-types-base";
+import { SuperThis } from "@vibes.diy/identity";
 import { SignJWT, jwtVerify } from "jose";
 import { type AssetGrantClaims } from "@vibes.diy/api-types";
 import { deriveHkdfHmacKey } from "./hkdf-key.js";

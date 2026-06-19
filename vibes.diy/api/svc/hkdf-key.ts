@@ -12,7 +12,7 @@
 // `vibes.diy.foo.v2` produces an unrelated derived key without touching
 // the env secret.
 
-import { SuperThis } from "@fireproof/core-types-base";
+import { SuperThis } from "@vibes.diy/identity";
 import { base64url } from "jose";
 
 interface ParsedJwk {

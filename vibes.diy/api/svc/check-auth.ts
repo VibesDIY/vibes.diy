@@ -1,12 +1,12 @@
 import { EventoResult, EventoResultType, HandleTriggerCtx, Result } from "@adviser/cement";
 import {
+  ClerkClaimSchema,
   DashAuthType,
   VerifiedAuthResult,
   VerifiedClaimsResult,
   VerifiedResult,
   WithAuth,
-} from "@fireproof/core-types-protocols-dashboard";
-import { ClerkClaimSchema } from "@vibes.diy/identity";
+} from "@vibes.diy/identity";
 import { VibesApiSQLCtx } from "./types.js";
 import { MsgBase, ReqWithOptionalAuth, ReqWithVerifiedAuth } from "@vibes.diy/api-types";
 import { wrapMsgBase } from "./unwrap-msg-base.js";

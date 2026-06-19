@@ -1,7 +1,5 @@
-import { SuperThis } from "@fireproof/core-types-base";
-import { FPApiToken } from "@fireproof/core-types-protocols-dashboard";
+import { SuperThis, FPApiToken, DeviceIdCAIf } from "@vibes.diy/identity";
 import { WSSendProvider } from "./svc-ws-send-provider.js";
-import { DeviceIdCAIf } from "@fireproof/core-types-device-id";
 import { Logger, Result } from "@adviser/cement";
 import { LLMRequest } from "@vibes.diy/call-ai-v2";
 import {

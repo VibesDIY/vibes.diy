@@ -9,7 +9,7 @@ import {
   URI,
 } from "@adviser/cement";
 import { HttpResponseBodyType } from "@vibes.diy/api-types";
-import { DashAuthType } from "@fireproof/core-types-protocols-dashboard";
+import { DashAuthType } from "@vibes.diy/identity";
 import { VibesApiSQLCtx } from "../types.js";
 import { verifyAuth } from "../check-auth.js";
 

@@ -1,7 +1,7 @@
 // Should be compatible with FP Dashboard's auth types
 import { Result } from "@adviser/cement";
 import { type } from "arktype";
-import type { DashAuthType } from "@fireproof/core-types-protocols-dashboard";
+import type { DashAuthType } from "@vibes.diy/identity";
 export const ClerkClaimParams = type({
   "nick?": "string",
   email: "string",

@@ -162,12 +162,18 @@ import {
   isResSubscribeUserNotifications,
 } from "@vibes.diy/api-types";
 import { Result, Lazy, BuildURI } from "@adviser/cement";
-import { ClerkClaim, SuperThis } from "@fireproof/core-types-base";
-import { ensureSuperThis } from "@fireproof/core-runtime";
+import {
+  ClerkClaim,
+  SuperThis,
+  ensureSuperThis,
+  ClerkApiToken,
+  DashAuthType,
+  ReqCertFromCsr,
+  ResCertFromCsr,
+  VerifiedClaimsResult,
+} from "@vibes.diy/identity";
 import { VibeDiyApiConnection } from "./api-connection.js";
 import { getVibesDiyWebSocketConnection } from "./websocket-connection.js";
-import { ClerkApiToken } from "@fireproof/core-protocols-dashboard";
-import { DashAuthType, ReqCertFromCsr, ResCertFromCsr, VerifiedClaimsResult } from "@fireproof/core-types-protocols-dashboard";
 import { ReqVibeWhoAmI, ResVibeWhoAmI, isResVibeWhoAmI } from "@vibes.diy/vibe-types";
 import { LLMChatImpl } from "./llm-chat.js";
 import {

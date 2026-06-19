@@ -1,7 +1,7 @@
 import { Result, exception2Result } from "@adviser/cement";
 import { callAI } from "call-ai";
 import { type } from "arktype";
-import { ensureLogger } from "@fireproof/core-runtime";
+import { ensureLogger } from "@vibes.diy/identity";
 import {
   getLlmCatalogNames,
   getThemeCatalogNames,

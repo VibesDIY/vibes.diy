@@ -3,7 +3,7 @@ import { VibesApiSQLCtx } from "../types.js";
 import { MsgBase, ReqWithVerifiedAuth, VibesDiyError, W3CWebSocketEvent } from "@vibes.diy/api-types";
 import { checkAuth } from "../check-auth.js";
 import { unwrapMsgBase } from "../unwrap-msg-base.js";
-import { ReqCertFromCsr, ResCertFromCsr } from "@fireproof/core-types-protocols-dashboard";
+import { ReqCertFromCsr, ResCertFromCsr } from "@vibes.diy/identity";
 
 /**
  * Get certificate from CSR

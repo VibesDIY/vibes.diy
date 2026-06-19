@@ -40,7 +40,7 @@ import {
 import { type } from "arktype";
 import { W3CWebSocketEventEventoEnDecoder } from "@vibes.diy/api-pkg";
 import { LLMRequest } from "@vibes.diy/call-ai-v2";
-import { DashAuthType } from "@fireproof/core-types-protocols-dashboard";
+import { DashAuthType } from "@vibes.diy/identity";
 import { VibeDiyApiConnection } from "./api-connection.js";
 import { ReqType, VibesDiyApiConfig, WithAuth } from "./vibes-diy-api-types.js";
 

@@ -1,6 +1,6 @@
 import { exception2Result, Result, URI } from "@adviser/cement";
 import type { R2GetOptions, R2MultipartUpload, R2Object, R2ObjectBody, R2UploadedPart } from "@cloudflare/workers-types";
-import type { SuperThis } from "@fireproof/core-types-base";
+import type { SuperThis } from "@vibes.diy/identity";
 import type { FetchResult, S3Api, S3PutOptions, S3RenameOptions, StorageProgressFn } from "@vibes.diy/api-types";
 
 // Subset of R2Bucket actually used by R2ToS3Api. Production passes a real

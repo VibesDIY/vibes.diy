@@ -1,7 +1,6 @@
 import { MsgBaseCfg, OptionalAuth } from "@vibes.diy/api-types";
 import { Result } from "@adviser/cement";
-import { SuperThis } from "@fireproof/core-types-base";
-import { DashAuthType } from "@fireproof/core-types-protocols-dashboard";
+import { SuperThis, DashAuthType } from "@vibes.diy/identity";
 
 export interface VibesDiyApiParam {
   readonly apiUrl: string;

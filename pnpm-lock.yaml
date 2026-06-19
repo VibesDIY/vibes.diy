@@ -881,6 +881,9 @@ importers:
       '@vibes.diy/call-ai-v2':
         specifier: workspace:*
         version: link:../../../call-ai/v2
+      '@vibes.diy/identity':
+        specifier: workspace:*
+        version: link:../../identity
       '@vibes.diy/vibe-types':
         specifier: workspace:*
         version: link:../../vibe/types
@@ -1010,6 +1013,9 @@ importers:
       '@vibes.diy/api-types':
         specifier: workspace:*
         version: link:../types
+      '@vibes.diy/identity':
+        specifier: workspace:*
+        version: link:../../identity
       arktype:
         specifier: ^2.2.1
         version: 2.2.1
@@ -1326,6 +1332,9 @@ importers:
       '@vibes.diy/call-ai-v2':
         specifier: workspace:*
         version: link:../../../call-ai/v2
+      '@vibes.diy/identity':
+        specifier: workspace:*
+        version: link:../../identity
       '@vibes.diy/vibe-types':
         specifier: workspace:*
         version: link:../../vibe/types

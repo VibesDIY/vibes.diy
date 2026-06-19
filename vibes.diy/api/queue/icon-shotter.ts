@@ -1,7 +1,7 @@
 import { Result, exception2Result } from "@adviser/cement";
 import { and, eq } from "drizzle-orm/sql/expressions";
 import { ActiveEntry, EvtIconGen, isActiveIcon, isActiveIconDescription, parseArrayWarning } from "@vibes.diy/api-types";
-import { ensureLogger } from "@fireproof/core-runtime";
+import { ensureLogger } from "@vibes.diy/identity";
 import { QueueCtx } from "./queue-ctx.js";
 import { generateIcon } from "./intern/generate-icon.js";
 import { storeIcon } from "./intern/store-icon.js";

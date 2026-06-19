@@ -3,7 +3,7 @@ import { RawEmailWithoutFrom, S3Api } from "@vibes.diy/api-types";
 import { D1Database, DurableObjectNamespace, Fetcher, R2Bucket } from "@cloudflare/workers-types";
 import { createVibesApiTables, cfDrizzle, CreateSQLPeerParams, toDBFlavour, VibesApiTables } from "@vibes.diy/api-sql";
 import { R2ToS3Api } from "@vibes.diy/api-svc";
-import { SuperThis } from "@fireproof/core-types-base";
+import { SuperThis } from "@vibes.diy/identity";
 
 export interface QueueCtxParams {
   sthis: SuperThis;

@@ -2,7 +2,7 @@ import { Result, uint8array2stream } from "@adviser/cement";
 import { eq } from "drizzle-orm/sql/expressions";
 import { createSQLPeer } from "@vibes.diy/api-sql";
 import { isMetaScreenShot, MetaItem, parseArrayWarning } from "@vibes.diy/api-types";
-import { ensureLogger } from "@fireproof/core-runtime";
+import { ensureLogger } from "@vibes.diy/identity";
 import { ensureStorage, StoragePeer } from "@vibes.diy/api-pkg";
 import { createS3Peer } from "@vibes.diy/api-svc";
 import { QueueCtx } from "../queue-ctx.js";

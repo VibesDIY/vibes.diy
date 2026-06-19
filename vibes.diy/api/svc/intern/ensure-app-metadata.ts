@@ -1,6 +1,6 @@
 import { exception2Result, Result } from "@adviser/cement";
 import { and, eq } from "drizzle-orm/sql/expressions";
-import { ensureLogger } from "@fireproof/core-runtime";
+import { ensureLogger } from "@vibes.diy/identity";
 import {
   ActiveEnrichedPrompt,
   ActiveEntry,

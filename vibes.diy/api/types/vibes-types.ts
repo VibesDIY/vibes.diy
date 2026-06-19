@@ -1,5 +1,5 @@
 import { type } from "arktype";
-import { FPApiParameters } from "@fireproof/core-types-protocols-dashboard";
+import { FPApiParameters } from "@vibes.diy/identity";
 import { VibesSvcEnv } from "./vibes-diy-serv-ctx.js";
 
 export interface PkgRepos {
