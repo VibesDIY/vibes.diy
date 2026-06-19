@@ -14,7 +14,7 @@ import {
   userSettingItem,
   parseArrayWarning,
 } from "@vibes.diy/api-types";
-import { ensureLogger } from "@fireproof/core-runtime";
+import { ensureLogger } from "@vibes.diy/identity";
 
 export type AppSlugBindingParam = Partial<NeedOneAppSlugUserSlug> & {
   userId: string;

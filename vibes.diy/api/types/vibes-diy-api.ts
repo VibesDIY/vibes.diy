@@ -117,8 +117,7 @@ import {
 } from "./report.js";
 import { type } from "arktype";
 import { LLMRequest } from "@vibes.diy/call-ai-v2";
-import { DashAuthType, ReqCertFromCsr, ResCertFromCsr, VerifiedClaimsResult } from "@fireproof/core-types-protocols-dashboard";
-import { ClerkClaim } from "@fireproof/core-types-base";
+import { DashAuthType, ReqCertFromCsr, ResCertFromCsr, VerifiedClaimsResult, ClerkClaim } from "@vibes.diy/identity";
 
 export const LLMChatEntry = type({
   tid: "string",

@@ -1,7 +1,7 @@
 import { exception2Result, stream2uint8array } from "@adviser/cement";
 import { inArray } from "drizzle-orm/sql/expressions";
 import { isFetchOkResult, isMetaScreenShot, MetaItem, parseArrayWarning } from "@vibes.diy/api-types";
-import { ensureLogger } from "@fireproof/core-runtime";
+import { ensureLogger } from "@vibes.diy/identity";
 import type { VibesApiSQLCtx } from "../types.js";
 
 export interface LatestScreenshot {

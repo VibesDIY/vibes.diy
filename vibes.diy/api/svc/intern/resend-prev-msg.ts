@@ -1,5 +1,5 @@
 import { Result, SendStatItem } from "@adviser/cement";
-import { ensureLogger } from "@fireproof/core-runtime";
+import { ensureLogger } from "@vibes.diy/identity";
 import { VibesApiSQLCtx } from "../types.js";
 import { eq } from "drizzle-orm/sql/expressions";
 import { MsgBase, parseArrayWarning, PromptAndBlockMsgs, SectionEvent } from "@vibes.diy/api-types";

@@ -10,7 +10,7 @@
 // `(ownerHandle, appSlug, dbName)` at read time — identity goes via cookie,
 // authorization goes via the existing ACL machinery.
 import { Result, exception2Result } from "@adviser/cement";
-import { SuperThis } from "@fireproof/core-types-base";
+import { SuperThis } from "@vibes.diy/identity";
 import { SignJWT, jwtVerify } from "jose";
 import { deriveHkdfHmacKey } from "./hkdf-key.js";
 

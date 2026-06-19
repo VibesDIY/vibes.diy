@@ -12,7 +12,7 @@ import { unwrapMsgBase } from "../unwrap-msg-base.js";
 import { VibesApiSQLCtx } from "../types.js";
 import { checkAuth } from "../check-auth.js";
 import { WSSendProvider } from "../svc-ws-send-provider.js";
-import { DashAuthType } from "@fireproof/core-types-protocols-dashboard";
+import { DashAuthType } from "@vibes.diy/identity";
 
 // Access the raw WSSendProvider from Evento's wrapped ctx.send.
 // Evento wraps the send provider — the raw instance is at .provider.

@@ -32,7 +32,7 @@ import {
   InviteGrantItem,
   parseArrayWarning,
 } from "@vibes.diy/api-types";
-import { ensureLogger } from "@fireproof/core-runtime";
+import { ensureLogger } from "@vibes.diy/identity";
 import { unwrapMsgBase } from "../unwrap-msg-base.js";
 import { VibesApiSQLCtx } from "../types.js";
 import { checkAuth } from "../check-auth.js";

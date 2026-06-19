@@ -1,8 +1,8 @@
 // import { auth } from "./better-auth.js";
 import { Result, param, AppContext, TriggerResult, EventoSendProvider, Logger } from "@adviser/cement";
-import { ensureLogger } from "@fireproof/core-runtime";
-// import { VerifiedClaimsResult } from "@fireproof/core-types-protocols-dashboard";
-import { deviceIdCAFromEnv, getCloudPubkeyFromEnv, tokenApi } from "@fireproof/core-protocols-dashboard";
+import { ensureLogger, SuperThis } from "@vibes.diy/identity";
+// import { VerifiedClaimsResult } from "@vibes.diy/identity";
+import { deviceIdCAFromEnv, getCloudPubkeyFromEnv, tokenApi } from "@vibes.diy/identity/node";
 import { defaultFetchPkgVersion, ResolveFunction } from "./npm-package-version.js";
 import { vibesReqResEvento } from "./vibes-req-res-evento.js";
 import { HTTPSendProvider } from "./svc-http-send-provider.js";
@@ -23,7 +23,6 @@ import {
   VibesFPApiParameters,
 } from "@vibes.diy/api-types";
 import { createSQLPeer, CreateSQLPeerParams, createVibesApiTables, DBFlavour, VibesSqlite } from "@vibes.diy/api-sql";
-import { SuperThis } from "@fireproof/core-types-base";
 import { ensureStorage } from "@vibes.diy/api-pkg";
 import { createS3Peer } from "./peers/s3.js";
 import { createAssetGrantSigner } from "./asset-grant.js";

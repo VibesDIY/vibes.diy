@@ -22,7 +22,7 @@ import { optAuth } from "../check-auth.js";
 import { checkDocAccess } from "./access-helpers.js";
 import { ensureAppSettings } from "./ensure-app-settings.js";
 import { resolveActiveHandle } from "./resolve-active-handle.js";
-import { VerifiedResult } from "@fireproof/core-types-protocols-dashboard";
+import { VerifiedResult } from "@vibes.diy/identity";
 
 // Same precedence as list-members.ts:deriveAuthorDisplay.
 function deriveDisplayName(claims: ClerkClaim): string {

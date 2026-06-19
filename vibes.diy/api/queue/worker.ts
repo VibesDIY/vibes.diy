@@ -4,7 +4,7 @@ import { CFEnv } from "@vibes.diy/api-types";
 import { vibesQueueEvento } from "./queue-evento.js";
 import { QueueCtx } from "./queue-ctx.js";
 import { toDBFlavour } from "@vibes.diy/api-sql";
-import { ensureSuperThis } from "@fireproof/core-runtime";
+import { ensureSuperThis } from "@vibes.diy/identity";
 
 class NoopQueueSendProvider implements EventoSendProvider<unknown, unknown, unknown> {
   async send<T>(_ctx: HandleTriggerCtx<unknown, unknown, unknown>, _data: unknown): Promise<Result<T>> {

@@ -11,7 +11,7 @@ import { WSSendProvider } from "./svc-ws-send-provider.js";
 import { vibesMsgEvento } from "./vibes-msg-evento.js";
 import { LLMRequest } from "@vibes.diy/call-ai-v2";
 import { AppContext, exception2Result, Lazy, LoggerImpl, Result, URI } from "@adviser/cement";
-import { ensureSuperThis, hashObjectSync } from "@fireproof/core-runtime";
+import { ensureSuperThis, hashObjectSync, SuperThis } from "@vibes.diy/identity";
 import { CfCacheIf, type VibesApiSQLCtx } from "./types.js";
 import {
   type AccessDescriptor,
@@ -21,7 +21,6 @@ import {
   type EvtRequestGrant,
   MsgBase,
 } from "@vibes.diy/api-types";
-import { SuperThis } from "@fireproof/core-types-base";
 import { cfDrizzle, createVibesApiTables, toDBFlavour, VibesSqlite } from "@vibes.diy/api-sql";
 import { R2ToS3Api } from "./peers/r2-to-s3api.js";
 import { getQuickJSWASMModule, type QuickJSWASMModule } from "@cf-wasm/quickjs";

@@ -24,7 +24,7 @@ import {
 } from "@adviser/cement";
 import { W3CWebSocketEventEventoEnDecoder } from "@vibes.diy/api-pkg";
 import { type } from "arktype";
-import { DashAuthType } from "@fireproof/core-types-protocols-dashboard";
+import { DashAuthType } from "@vibes.diy/identity";
 import { VibeDiyApiConnection } from "./api-connection.js";
 import { VibesDiyApiConfig, WithAuth } from "./vibes-diy-api-types.js";
 

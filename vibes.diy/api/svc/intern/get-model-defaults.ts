@@ -10,7 +10,7 @@ import {
   userSettingItem,
   parseArrayWarning,
 } from "@vibes.diy/api-types";
-import { ensureLogger } from "@fireproof/core-runtime";
+import { ensureLogger } from "@vibes.diy/identity";
 import { eq, and } from "drizzle-orm/sql/expressions";
 import { VibesApiSQLCtx } from "../types.js";
 import { loadModels } from "../public/list-models.js";

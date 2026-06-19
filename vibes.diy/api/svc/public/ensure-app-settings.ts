@@ -50,7 +50,7 @@ import {
   VibesDiyError,
   W3CWebSocketEvent,
 } from "@vibes.diy/api-types";
-import { ensureLogger } from "@fireproof/core-runtime";
+import { ensureLogger } from "@vibes.diy/identity";
 import { unwrapMsgBase } from "../unwrap-msg-base.js";
 import { VibesApiSQLCtx } from "../types.js";
 import { optAuth } from "../check-auth.js";

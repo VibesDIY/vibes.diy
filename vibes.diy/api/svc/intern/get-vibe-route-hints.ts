@@ -1,5 +1,5 @@
 import { exception2Result, Result } from "@adviser/cement";
-import { ensureLogger } from "@fireproof/core-runtime";
+import { ensureLogger } from "@vibes.diy/identity";
 import { and, desc, eq } from "drizzle-orm/sql/expressions";
 import { isMetaTitle, MetaItem, parseArrayWarning, isEnablePublicAccess, isEnableRequest } from "@vibes.diy/api-types";
 import { VibesApiSQLCtx } from "../types.js";
