@@ -124,9 +124,12 @@ package from source into `_vibe-pkg/<pkg>/index.js`; at runtime the worker serve
 `/vibe-pkg/*` from `env.ASSETS` (`vibes.diy/pkg/workers/app.ts`). There is **no
 npm fetch** in that path. So what browsers load is determined entirely by the
 **source at the `@c`/`@p` deploy commit**, and a `pkg@p*` npm publish has **zero
-effect** on it. (Prod `/vibe-pkg/` URLs are unversioned — freshness is bounded by
-a ~60s Cloudflare edge TTL after each worker deploy, not a `?v=` cache-buster.
-The `?v=<sha>` param only appears in the PR-preview `WORKSPACE_NPM_URL`.)
+effect** on it. (Prod `/vibe-pkg/` URLs carry a per-deploy `?v=<commit-sha>` stamp
+— appended to `WORKSPACE_NPM_URL` in `actions/deploy/action.yaml`, matching the
+PR-preview. Stamped responses are served immutably (`max-age=31536000, immutable`)
+for instant per-deploy cutover with aggressive edge caching between deploys;
+unstamped subpath imports keep a 60s fallback. The stamp + cache-control logic
+lives in `vibes.diy/pkg/workers/vibe-pkg-cache.ts`.)
 
 **`pkg@p*` (npm publish) matters only for npm consumers**, not the website:
 
