@@ -35,9 +35,9 @@ vi.mock("~/vibes.diy/app/components/SessionSidebar.js", () => ({
 }));
 vi.mock("~/vibes.diy/app/components/MyAppsSection.js", () => ({ MyAppsSection: () => null }));
 vi.mock("~/vibes.diy/app/components/NewSessionContent/VibeGallery.js", () => ({ default: () => null }));
-vi.mock("~/vibes.diy/app/components/PillPortal.js", () => ({
+vi.mock("~/vibes.diy/app/components/PillPortal.js", async (importOriginal) => ({
+  ...(await importOriginal<Record<string, unknown>>()),
   PillPortal: () => null,
-  PILL_CLEARANCE_Y: 0,
 }));
 
 // Use the real @vibes.diy/base design system (no mock) — partial base mocks

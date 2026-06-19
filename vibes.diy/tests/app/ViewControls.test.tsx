@@ -3,8 +3,10 @@ import { render, screen, fireEvent } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { ViewControls } from "~/vibes.diy/app/components/ResultPreview/ViewControls.js";
 
-// Mock the SVG icons
-vi.mock("~/vibes.diy/app/components/HeaderContent/SvgIcons", () => ({
+// Mock the SVG icons — spread the real module so co-exports (e.g. MinidiscIcon)
+// stay available to other files under isolate:false; only override what we assert.
+vi.mock("~/vibes.diy/app/components/HeaderContent/SvgIcons", async (importOriginal) => ({
+  ...(await importOriginal<Record<string, unknown>>()),
   PreviewIcon: ({ className }: { className: string; isLoading?: boolean; title?: string }) => (
     <span data-testid="preview-icon" className={className}>
       Preview Icon

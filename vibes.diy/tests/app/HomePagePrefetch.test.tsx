@@ -37,12 +37,18 @@ vi.mock("react-router", async (importOriginal) => {
 // signed-out default (isSignedIn:false, isLoaded:true) is what these tests need.
 
 // Stub heavy children so the test doesn't pull in data hooks / the design system.
-vi.mock("~/vibes.diy/app/components/SessionSidebar.js", () => ({ default: () => null }));
+// SessionSidebar stub mirrors HomePageLoginSlideout's (identical factories don't
+// bleed under isolate:false); it reflects isVisible but these tests ignore it.
+vi.mock("~/vibes.diy/app/components/SessionSidebar.js", () => ({
+  default: ({ isVisible }: { isVisible: boolean }) => (
+    <div data-testid="session-sidebar" data-visible={isVisible ? "true" : "false"} />
+  ),
+}));
 vi.mock("~/vibes.diy/app/components/MyAppsSection.js", () => ({ MyAppsSection: () => null }));
 vi.mock("~/vibes.diy/app/components/NewSessionContent/VibeGallery.js", () => ({ default: () => null }));
-vi.mock("~/vibes.diy/app/components/PillPortal.js", () => ({
+vi.mock("~/vibes.diy/app/components/PillPortal.js", async (importOriginal) => ({
+  ...(await importOriginal<Record<string, unknown>>()),
   PillPortal: () => null,
-  PILL_CLEARANCE_Y: 0,
 }));
 
 // Use the real @vibes.diy/base design system (no mock) — partial base mocks
