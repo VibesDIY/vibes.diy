@@ -1,6 +1,11 @@
 import React from "react";
-import { render, screen, cleanup, waitFor } from "@testing-library/react";
+import { render as rtlRender, screen, cleanup, waitFor } from "@testing-library/react";
 import { describe, it, expect, vi, afterEach } from "vitest";
+import { vibesWrapper } from "./vibes-provider-harness.js";
+
+// Inject the VibesDiy context via the real provider instead of mocking it.
+const render = (ui: React.ReactElement, options?: Parameters<typeof rtlRender>[1]) =>
+  rtlRender(ui, { wrapper: vibesWrapper({ chatApi: { getAppByFsId } }), ...options });
 
 // These tests cover the app detail panel (right-hand drawer) rendered by
 // MyAppsSection. They assert the regression fix for #2011: the panel must show
@@ -29,9 +34,7 @@ vi.mock("~/vibes.diy/app/hooks/useRecentVibes.js", async (importOriginal) => ({
 }));
 
 const getAppByFsId = vi.fn();
-vi.mock("~/vibes.diy/app/vibes-diy-provider.js", () => ({
-  useVibesDiy: () => ({ chatApi: { getAppByFsId } }),
-}));
+// VibesDiy context is injected via vibesWrapper (see local render above).
 
 // Import the component AFTER all vi.mock() calls.
 import { AppDetailPanel } from "~/vibes.diy/app/components/MyAppsSection.js";

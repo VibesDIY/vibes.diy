@@ -1,5 +1,6 @@
 import React from "react";
-import { render, screen, fireEvent, act, cleanup, waitFor } from "@testing-library/react";
+import { render as rtlRender, screen, fireEvent, act, cleanup, waitFor } from "@testing-library/react";
+import { vibesWrapper } from "./vibes-provider-harness.js";
 import { describe, it, expect, vi, afterEach, beforeEach } from "vitest";
 import { ShareModal } from "~/vibes.diy/app/components/ResultPreview/ShareModal.js";
 import type { UseShareModalReturn } from "~/vibes.diy/app/components/ResultPreview/useShareModal.js";
@@ -70,9 +71,10 @@ const chatApiStub = {
   hasAccessRequest: hasAccessRequestMock,
 };
 
-vi.mock("~/vibes.diy/app/vibes-diy-provider.js", () => ({
-  useVibesDiy: () => ({ chatApi: chatApiStub }),
-}));
+// Inject the VibesDiy context via the real provider instead of mocking it
+// (chatApiStub is (re)assigned in beforeEach and read here at render time).
+const render = (ui: React.ReactElement, options?: Parameters<typeof rtlRender>[1]) =>
+  rtlRender(ui, { wrapper: vibesWrapper({ chatApi: chatApiStub }), ...options });
 
 let mockButtonEl: HTMLButtonElement | undefined;
 

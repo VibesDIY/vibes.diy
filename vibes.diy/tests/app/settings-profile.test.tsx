@@ -1,8 +1,14 @@
 import React from "react";
-import { render, screen, fireEvent, act, cleanup, waitFor } from "@testing-library/react";
+import { render as rtlRender, screen, fireEvent, act, cleanup, waitFor } from "@testing-library/react";
 import { describe, it, expect, vi, afterEach, beforeEach } from "vitest";
 import { Result } from "@adviser/cement";
 import { setTestAuth, setTestClerk } from "./clerk-test-mock.js";
+import { vibesWrapper } from "./vibes-provider-harness.js";
+
+// Inject the VibesDiy context via the real provider instead of mocking it
+// (chatApiStub is (re)assigned in beforeEach and read here at render time).
+const render = (ui: React.ReactElement, options?: Parameters<typeof rtlRender>[1]) =>
+  rtlRender(ui, { wrapper: vibesWrapper({ chatApi: chatApiStub }), ...options });
 
 // ---- dependency mocks (must be declared before importing the component) ----
 // Clerk auth/clerk come from the shared singleton mock (clerk-test-mock.ts);
@@ -134,9 +140,7 @@ function makeVibeDiyApi(overrides?: {
 
 let chatApiStub = makeVibeDiyApi();
 
-vi.mock("~/vibes.diy/app/vibes-diy-provider.js", () => ({
-  useVibesDiy: () => ({ chatApi: chatApiStub }),
-}));
+// VibesDiy context is injected via vibesWrapper (see local render above).
 
 // Stub global fetch so the HTTP POST doesn't escape the test
 let mockFetch = vi.fn();

@@ -1,7 +1,12 @@
 import React from "react";
-import { render, screen, cleanup, waitFor } from "@testing-library/react";
+import { render as rtlRender, screen, cleanup, waitFor } from "@testing-library/react";
 import { describe, it, expect, vi, afterEach } from "vitest";
 import { setTestAuth } from "./clerk-test-mock.js";
+import { vibesWrapper } from "./vibes-provider-harness.js";
+
+// Inject the VibesDiy context via the real provider instead of mocking it.
+const render = (ui: React.ReactElement, options?: Parameters<typeof rtlRender>[1]) =>
+  rtlRender(ui, { wrapper: vibesWrapper({ sthis: { txt: { base64: { encode: (s: string) => `b64:${s}` } } } }), ...options });
 
 // Regression coverage for #1892: the login slide-out (SessionSidebar) auto-opens
 // after a short delay on the homepage. It must only do that for signed-out
@@ -16,13 +21,9 @@ vi.mock("react-router", async (importOriginal) => {
   };
 });
 
-vi.mock("~/vibes.diy/app/vibes-diy-provider.js", () => ({
-  useVibesDiy: () => ({ sthis: { txt: { base64: { encode: (s: string) => `b64:${s}` } } } }),
-}));
+// VibesDiy context is injected via vibesWrapper (see local render above).
 
-vi.mock("~/vibes.diy/app/contexts/ThemeContext.js", () => ({
-  useTheme: () => ({ isDarkMode: false }),
-}));
+// ThemeContext is provided by the real ThemeProvider in vibesWrapper.
 
 // Clerk auth comes from the shared singleton mock (clerk-test-mock.ts).
 
