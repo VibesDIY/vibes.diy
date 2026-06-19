@@ -5,6 +5,11 @@ Reads the Jest-compatible json produced by `vitest --reporter=json`, and appends
 a Markdown block to $GITHUB_STEP_SUMMARY: totals, the Top-20 slowest files (by
 wall duration), and any failures. Exits non-zero only when the report is missing
 or unparseable, which the caller (actions/base) treats as a harness failure.
+
+If test-phase-timing.json (from tools/vitest-phase-reporter.mjs) is present, also
+appends a best-effort "pre-run phase costs" section (collect/setup/environment/
+prepare per file) — that report is instrumentation, so any problem reading it is
+ignored rather than failing the summary.
 """
 
 import json
@@ -12,7 +17,16 @@ import os
 import sys
 
 REPORT = "test-timing.json"
+PHASE_REPORT = "test-phase-timing.json"
 TOP_N = 20
+PHASES = ["collect", "setup", "environment", "prepare", "test"]
+PHASE_LABELS = {
+    "collect": "collect/import",
+    "setup": "setupFiles",
+    "environment": "environment",
+    "prepare": "prepare",
+    "test": "test exec",
+}
 
 
 def rel(path: str) -> str:
@@ -24,6 +38,47 @@ def rel(path: str) -> str:
     if path.startswith(cwd):
         path = path[len(cwd):]
     return path
+
+
+def phase_lines() -> list:
+    """Summarize test-phase-timing.json (per-file pre-run phases) if present.
+
+    Best-effort: any read/parse problem yields no section rather than failing
+    the summary (the phase report is instrumentation, not a gate)."""
+    try:
+        with open(PHASE_REPORT, encoding="utf-8") as fh:
+            data = json.load(fh)
+    except (OSError, ValueError):
+        return []
+    files = data.get("files") or []
+    if not files:
+        return []
+    totals = data.get("totals") or {}
+
+    lines = ["", "### Pre-run phase costs (aggregate ms, parallelized across workers)", ""]
+    lines.append("| phase | seconds |")
+    lines.append("| --- | --: |")
+    for key in PHASES:
+        lines.append(f"| {PHASE_LABELS[key]} | {totals.get(key, 0) / 1000:.1f} |")
+
+    # "pre-run" = everything before a file's tests execute. Surfaces dumb work
+    # in module import / setup that the wall-clock per-file view hides.
+    pre = []
+    for f in files:
+        prerun = (f.get("collect", 0) + f.get("setup", 0) + f.get("environment", 0) + f.get("prepare", 0)) / 1000.0
+        pre.append((prerun, f.get("test", 0) / 1000.0, rel(f.get("name", "?"))))
+    pre.sort(reverse=True)
+    shown = min(15, len(pre))
+    lines.append("")
+    lines.append(f"<details><summary>Top {shown} files by pre-run (collect+setup+env+prepare) time</summary>")
+    lines.append("")
+    lines.append("| # | pre-run s | test s | file |")
+    lines.append("| --: | --: | --: | --- |")
+    for i, (prerun, texec, name) in enumerate(pre[:15], 1):
+        lines.append(f"| {i} | {prerun:.2f} | {texec:.2f} | `{name}` |")
+    lines.append("")
+    lines.append("</details>")
+    return lines
 
 
 def main() -> int:
@@ -91,6 +146,8 @@ def main() -> int:
             out.append(f"| {i} | {dur:.2f} | `{name}` |")
         out.append("")
         out.append("</details>")
+
+    out += phase_lines()
 
     failures = []
     for r in results:
