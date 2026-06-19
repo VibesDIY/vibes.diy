@@ -9,6 +9,14 @@
 
 export const coreImportMap = ["react", "react-dom", "react-dom/client", "call-ai", "use-vibes"];
 
+// Relative paths and real absolute URLs — kept in sync with the hot-swap
+// fallback's RELATIVE_OR_URL (vibe/runtime/bare-specifier-rewrite.ts). The
+// scheme list is `https?://|blob:|data:`, NOT a generic `scheme:`: `node:`
+// builtins are browser-polyfillable and esm.sh serves them at
+// `https://esm.sh/node:buffer`, so they must stay bare and be rewritten through
+// esm.sh like any other bare specifier.
+const RELATIVE_OR_URL = /^(?:\.\.?\/|\/|https?:\/\/|blob:|data:)/;
+
 export function transformImports(code: string): string {
   // First, rewrite use-fireproof to use-vibes for user code
   const codeWithFireproofRewrite = code.replace(
@@ -32,7 +40,7 @@ export function transformImports(code: string): string {
       //    `data:`) are already absolute; re-prefixing yields
       //    `https://esm.sh/https://esm.sh/…`, which 400s
       //    (garden-gnome/canary-import-regression).
-      if (importPath.startsWith(".") || /^[a-zA-Z][a-zA-Z\d+\-.]*:/.test(importPath)) {
+      if (RELATIVE_OR_URL.test(importPath)) {
         return match;
       }
       return match.replace(`"${importPath}"`, `"https://esm.sh/${importPath}"`);

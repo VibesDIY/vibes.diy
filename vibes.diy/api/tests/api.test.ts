@@ -529,6 +529,48 @@ describe("VibesDiyApi", { timeout: (inject("DB_FLAVOUR" as never) as string) ===
     expect(JSON.stringify(importMap.imports)).not.toContain("esm.sh/https:");
   });
 
+  it("node: builtin imports are mapped through esm.sh, not dropped", async () => {
+    // Codex review on #2471: a browser-polyfillable builtin like
+    // `import { Buffer } from "node:buffer"` must stay in the import map mapped
+    // to https://esm.sh/node:buffer (esm.sh polyfills it) — same as the hot-swap
+    // fallback. Dropping it would leave an unresolved `node:` specifier that
+    // fails browser module resolution.
+    const rRes = await api.ensureAppSlug({
+      mode: "dev",
+      fileSystem: [
+        {
+          type: "code-block",
+          lang: "jsx",
+          filename: "/App.jsx",
+          content: `import { Buffer } from "node:buffer"; export default function App() { return <div>{Buffer.from("hi").toString()}</div>; }`,
+        },
+      ],
+    });
+    const res = rRes.Ok();
+    if (!isResEnsureAppSlugOk(res)) {
+      assert.fail("Expected ensureAppSlug to return ResEnsureAppSlugOk");
+    }
+    const url = calcEntryPointUrl({
+      hostnameBase: ".nowhere",
+      protocol: "http",
+      port: "4711",
+      bindings: { appSlug: res.appSlug, ownerHandle: res.ownerHandle, fsId: res.fsId },
+    });
+    const resIframe = await api.cfg.fetch(url);
+    expect(resIframe.status).toBe(200);
+    const iframeText = await resIframe.text();
+
+    const importMapMatch = iframeText.match(/<script type="importmap">([\s\S]*?)<\/script>/);
+    if (!importMapMatch) {
+      assert.fail("iframe HTML must contain an importmap script tag");
+    }
+    const importMap = JSON.parse(importMapMatch[1]) as { imports: Record<string, string> };
+    expect(
+      importMap.imports,
+      `node:buffer must be mapped through esm.sh; got: ${JSON.stringify(importMap.imports)}`
+    ).toHaveProperty("node:buffer", "https://esm.sh/node:buffer");
+  });
+
   it("revalidates unversioned published root html when metadata changes for the same fsId", async () => {
     const rRes = await api.ensureAppSlug({
       mode: "production",

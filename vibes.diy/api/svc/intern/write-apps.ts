@@ -98,19 +98,26 @@ export function importsFromJS(js: string): string[] {
   return [...new Set(imports)];
 }
 
+// Relative paths and real absolute URLs — kept byte-identical to the hot-swap
+// fallback's RELATIVE_OR_URL (vibe/runtime/bare-specifier-rewrite.ts) so the
+// deploy-time scanner and the in-iframe resolver classify specifiers the same
+// way. NOTE the scheme list is deliberately `https?://|blob:|data:` and NOT a
+// generic `scheme:` match: `node:buffer` & friends are browser-polyfillable
+// builtins that esm.sh serves at `https://esm.sh/node:buffer`, so they must
+// stay bare and flow into the import map — exactly as the hot-swap path treats
+// them. (Codex review on #2471.)
+const RELATIVE_OR_URL = /^(?:\.\.?\/|\/|https?:\/\/|blob:|data:)/;
+
 // A specifier belongs in the generated esm.sh import map only when it is a bare
-// package name (`clsx`, `@scope/pkg`, `react-dom/client`). Relative paths and
-// fully-qualified URLs must be left out: relative paths are served from the vibe
-// origin, and absolute URLs (`https://esm.sh/canvas-confetti`, `blob:`, `data:`,
-// protocol-relative `//host`) are fetched by the browser as-is. Capturing the
-// latter would feed the URL to render_esm_sh, which prepends `https://esm.sh/`
-// onto it — producing `https://esm.sh/https:/esm.sh/canvas-confetti` and a 400.
+// package name (`clsx`, `@scope/pkg`, `react-dom/client`, `node:buffer`).
+// Relative paths and fully-qualified URLs must be left out: relative paths are
+// served from the vibe origin, and absolute URLs (`https://esm.sh/canvas-confetti`,
+// `blob:`, `data:`, protocol-relative `//host`) are fetched by the browser as-is.
+// Capturing the latter would feed the URL to render_esm_sh, which prepends
+// `https://esm.sh/` onto it — producing `https://esm.sh/https:/esm.sh/canvas-confetti`
+// and a 400.
 export function isBareImportSpecifier(spec: string): boolean {
-  // Relative (`./`, `../`), root-absolute (`/x`) and protocol-relative (`//host`).
-  if (spec.startsWith("/") || spec.startsWith("./") || spec.startsWith("../")) return false;
-  // Any URL scheme: `https:`, `http:`, `blob:`, `data:`, etc.
-  if (/^[a-zA-Z][a-zA-Z\d+\-.]*:/.test(spec)) return false;
-  return true;
+  return !RELATIVE_OR_URL.test(spec);
 }
 
 interface GivenFsItem {

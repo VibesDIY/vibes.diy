@@ -20,6 +20,10 @@ describe("isBareImportSpecifier", () => {
       "chart.js/auto",
       // Version-pinned bare specifier (the `@` is not at the start).
       "react@18.2.0",
+      // node: builtins are browser-polyfillable — esm.sh serves them at
+      // https://esm.sh/node:buffer, so they stay bare (Codex review on #2471).
+      "node:buffer",
+      "node:fs",
     ]) {
       expect(isBareImportSpecifier(spec), spec).toBe(true);
     }
@@ -39,8 +43,6 @@ describe("isBareImportSpecifier", () => {
       "https://unpkg.com/three",
       "blob:https://host/abc",
       "data:text/javascript,export default 1",
-      // Node builtin scheme — must not be rewritten to https://esm.sh/node:fs.
-      "node:fs",
     ]) {
       expect(isBareImportSpecifier(spec), spec).toBe(false);
     }
