@@ -1,4 +1,4 @@
-import type { DocTypes } from "@fireproof/core-types-base";
+import type { DocTypes } from "@vibes.diy/identity";
 import type { RuntimeError } from "@vibes.diy/use-vibes-types";
 import { ViewType } from "./view-state.js";
 

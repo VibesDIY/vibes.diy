@@ -1,7 +1,6 @@
-import type { SuperThis } from "@fireproof/core";
-import type { JWKPrivate, DeviceIdKeyBagItem } from "@fireproof/core-types-base";
-import { JWKPrivateSchema } from "@fireproof/core-types-base";
-import { getKeyBag } from "@fireproof/core-keybag";
+import type { SuperThis , JWKPrivate, DeviceIdKeyBagItem } from "@vibes.diy/identity";
+import { JWKPrivateSchema } from "@vibes.diy/identity";
+import { getKeyBag } from "@vibes.diy/identity/node";
 import { Buffer } from "node:buffer";
 
 /**

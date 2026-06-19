@@ -11,15 +11,8 @@ import { chatsEvento } from "./cmds/chats-cmd.js";
 import { editEvento } from "./cmds/edit-cmd.js";
 import { listEvento } from "./cmds/list-cmd.js";
 import { pullEvento } from "./cmds/pull-cmd.js";
-import {
-  deviceIdRegisterEvento,
-  isCmdProgress,
-  isCmdTSMsg,
-  sendProgress,
-  type CmdProgress,
-  type CmdTSMsg,
-  type WrapCmdTSMsg,
-} from "@fireproof/core-cli";
+import { deviceIdRegisterEvento } from "@vibes.diy/identity/node";
+import { isCmdProgress, isCmdTSMsg, sendProgress, type CmdProgress, type CmdTSMsg, type WrapCmdTSMsg } from "@fireproof/core-cli";
 
 export type { CmdTSMsg, WrapCmdTSMsg, CmdProgress };
 export { isCmdProgress, sendProgress };

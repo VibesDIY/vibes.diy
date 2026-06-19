@@ -33,6 +33,7 @@
     "@fireproof/core-types-protocols-cloud": "0.24.19",
     "@fireproof/use-fireproof": "0.24.19",
     "@vibes.diy/call-ai-v2": "workspace:*",
+    "@vibes.diy/identity": "workspace:*",
     "@vibes.diy/use-vibes-types": "workspace:*",
     "arktype": "^2.2.1",
     "json-schema-faker": "^0.6.2"

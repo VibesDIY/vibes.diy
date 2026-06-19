@@ -32,7 +32,7 @@ import {
   isBlockEnd,
   isBlockBegin,
 } from "./index.js";
-import { ensureSuperThis } from "@fireproof/core-runtime";
+import { ensureSuperThis } from "@vibes.diy/identity";
 import mime from "mime";
 import { createUtf8StreamDecoder } from "./utf8-stream.js";
 

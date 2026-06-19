@@ -1,9 +1,6 @@
-import { FPDeviceIDSession, SuperThis } from "@fireproof/core";
-import { AppContext, EventoSendProvider, exception2Result, HandleTriggerCtx, Lazy, processStream, Result } from "@adviser/cement";
-import { ensureSuperThis } from "@fireproof/core-runtime";
-import { getKeyBag } from "@fireproof/core-keybag";
-import { DeviceIdKey, DeviceIdSignMsg } from "@fireproof/core-device-id";
-import { DashAuthType } from "@fireproof/core-types-protocols-dashboard";
+import { ensureSuperThis, type SuperThis } from "@vibes.diy/identity";
+import { createDeviceIdGetToken , isResDeviceIdRegister } from "@vibes.diy/identity/node";
+import { AppContext, EventoSendProvider, exception2Result, HandleTriggerCtx, processStream, Result } from "@adviser/cement";
 import { VibesDiyApi } from "@vibes.diy/api-impl";
 import { dotenv } from "zx";
 import { cmd_tsStream } from "./cmd-ts-stream.js";
@@ -38,49 +35,13 @@ import { mcpCmd } from "./cmds/mcp-cmd.js";
 import { pullCmd, isResPull, type ResPull } from "./cmds/pull-cmd.js";
 import { CliCtx, defaultCliOutput } from "./cli-ctx.js";
 import { cmdTsEvento, isCmdProgress, WrapCmdTSMsg } from "./cmd-evento.js";
-import { isResDeviceIdRegister } from "@fireproof/core-cli";
 import { seedDeviceIdFromEnv, VIBES_DEVICE_ID_ENV } from "./device-id-env.js";
 import { err, isErr } from "cmd-ts/dist/cjs/Result.js";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
 
 async function vibesDiyApiFactory(sthis: SuperThis) {
-  const kb = await getKeyBag(sthis);
-  const devid = await kb.getDeviceId();
-  const rDevkey = await DeviceIdKey.createFromJWK(devid.deviceId.Unwrap());
-  if (rDevkey.isErr()) {
-    throw rDevkey.Err();
-  }
-  if (devid.cert.IsNone()) {
-    throw new Error(`Device ID certificate is missing — run 'vibes-diy login', or set ${VIBES_DEVICE_ID_ENV} for headless auth`);
-  }
-  // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-  const payload = devid.cert.Unwrap()!.certificatePayload;
-  const deviceIdSigner = new DeviceIdSignMsg(sthis.txt.base64, rDevkey.Ok(), payload);
-  let seq = 0;
-  const getToken = Lazy(
-    async (): Promise<Result<DashAuthType>> => {
-      const now = Math.floor(Date.now() / 1000);
-      const token = await deviceIdSigner.sign(
-        {
-          iss: "use-vibes/cli",
-          sub: "device-id",
-          deviceId: await rDevkey.Ok().fingerPrint(),
-          seq: ++seq,
-          exp: now + 120,
-          nbf: now - 2,
-          iat: now,
-          jti: sthis.nextId().str,
-        } satisfies FPDeviceIDSession,
-        "ES256"
-      );
-      return Result.Ok({
-        type: "device-id",
-        token,
-      });
-    },
-    { resetAfter: 60, skipUnref: true }
-  );
+  const getToken = await createDeviceIdGetToken(sthis, { iss: "use-vibes/cli" });
   return (apiUrl: string, opts?: { idleTimeoutMs?: number; skipShard?: boolean }) => {
     return new VibesDiyApi({
       apiUrl,

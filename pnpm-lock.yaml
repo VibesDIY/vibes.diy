@@ -193,6 +193,9 @@ importers:
       '@fireproof/core-runtime':
         specifier: 0.24.19
         version: 0.24.19(typescript@6.0.3)
+      '@vibes.diy/identity':
+        specifier: workspace:*
+        version: link:../../vibes.diy/identity
       arktype:
         specifier: ^2.2.1
         version: 2.2.1
@@ -254,6 +257,9 @@ importers:
       '@vibes.diy/call-ai-v2':
         specifier: workspace:*
         version: link:../../call-ai/v2
+      '@vibes.diy/identity':
+        specifier: workspace:*
+        version: link:../../vibes.diy/identity
       cmd-ts:
         specifier: ^0.15.0
         version: 0.15.0
@@ -311,6 +317,9 @@ importers:
       '@vibes.diy/call-ai-v2':
         specifier: workspace:*
         version: link:../../call-ai/v2
+      '@vibes.diy/identity':
+        specifier: workspace:*
+        version: link:../../vibes.diy/identity
       '@vibes.diy/use-vibes-types':
         specifier: workspace:*
         version: link:../../use-vibes/types
@@ -820,6 +829,9 @@ importers:
       '@vibes.diy/call-ai-v2':
         specifier: workspace:*
         version: link:../call-ai/v2
+      '@vibes.diy/identity':
+        specifier: workspace:*
+        version: link:../vibes.diy/identity
       '@vibes.diy/prompts':
         specifier: workspace:*
         version: link:../prompts/pkg

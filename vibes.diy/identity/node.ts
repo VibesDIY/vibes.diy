@@ -11,10 +11,15 @@ import { getKeyBag } from "@fireproof/core-keybag";
 import { DeviceIdKey, DeviceIdSignMsg } from "@fireproof/core-device-id";
 
 // --- Re-exported fireproof crypto/keybag (the seam; swap internals later) ---
+// Node-CLI only: core-keybag pulls in `find-up` (fs config lookup), which is
+// NOT bundleable for Cloudflare Workers. Worker code must use "./server" for
+// the CA/token API, never this module.
 export { getKeyBag } from "@fireproof/core-keybag";
 export { DeviceIdKey, DeviceIdSignMsg, DeviceIdCSR, DeviceIdCA } from "@fireproof/core-device-id";
-export { deviceIdCAFromEnv, getCloudPubkeyFromEnv, tokenApi } from "@fireproof/core-protocols-dashboard";
-export { isResDeviceIdRegister } from "@fireproof/core-cli";
+// Login device-id-register flow (the localhost cert handler — Bucket C / #1616).
+// Generic cmd-ts streaming primitives (isCmdProgress/sendProgress/…) are NOT
+// re-exported here: they're CLI-framework, not identity, and stay on core-cli.
+export { deviceIdRegisterEvento, isResDeviceIdRegister } from "@fireproof/core-cli";
 export type { ReqDeviceIdRegister } from "@fireproof/core-cli";
 
 /**
