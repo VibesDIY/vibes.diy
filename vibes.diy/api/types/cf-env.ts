@@ -9,6 +9,10 @@ export interface CFEnv {
   VIBES_SVC_HOSTNAME_BASE: string;
   VIBES_SVC_PROTOCOL: string;
   VIBES_SVC_PORT?: string;
+
+  // Self-hosted workspace npm URL, carries this deploy's ?v=<commit-sha> stamp
+  // (appended in actions/deploy/action.yaml). Used to decide /vibe-pkg/ caching.
+  WORKSPACE_NPM_URL?: string;
   // Add more bindings here as needed
   MAX_TENANTS?: number;
   MAX_ADMIN_USERS?: number;
