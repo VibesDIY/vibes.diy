@@ -1,16 +1,12 @@
 import React from "react";
 import { render, screen, cleanup } from "@testing-library/react";
-import { describe, it, expect, vi, afterEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { setTestAuth } from "./clerk-test-mock.js";
 
 // Regression coverage: on /chat/prompt?prompt64=INPUT the decoded INPUT must be
 // shown immediately as the initial user message (handed to <Chat initialPrompt>)
 // while the "Preparing AI Session…" overlay is still up — not only after the
 // server round-trips the prompt back.
-
-const authState: { isSignedIn: boolean; isLoaded: boolean } = {
-  isSignedIn: true,
-  isLoaded: true,
-};
 
 // Mutable search params + sessionStorage fallback per test.
 let currentSearch = new URLSearchParams();
@@ -24,9 +20,7 @@ vi.mock("react-router", async (importOriginal) => {
   };
 });
 
-vi.mock("@clerk/react", () => ({
-  useAuth: () => authState,
-}));
+// Clerk auth comes from the shared singleton mock (clerk-test-mock.ts).
 
 vi.mock("~/vibes.diy/app/vibes-diy-provider.js", () => ({
   useVibesDiy: () => ({
@@ -58,12 +52,14 @@ import ChatPrompt from "~/vibes.diy/app/routes/chat/prompt.js";
 const PENDING_PROMPT_KEY = "vibes.pendingPrompt";
 
 describe("/chat/prompt initial user message", () => {
+  beforeEach(() => {
+    setTestAuth({ isSignedIn: true, isLoaded: true });
+  });
+
   afterEach(() => {
     cleanup();
     currentSearch = new URLSearchParams();
     sessionStorage.removeItem(PENDING_PROMPT_KEY);
-    authState.isSignedIn = true;
-    authState.isLoaded = true;
   });
 
   it("passes the decoded prompt64 to Chat as initialPrompt", () => {

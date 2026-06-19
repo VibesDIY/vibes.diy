@@ -2,22 +2,11 @@ import React from "react";
 import { render, screen, fireEvent, act, cleanup, waitFor } from "@testing-library/react";
 import { describe, it, expect, vi, afterEach, beforeEach } from "vitest";
 import { Result } from "@adviser/cement";
+import { setTestAuth, setTestClerk } from "./clerk-test-mock.js";
 
 // ---- dependency mocks (must be declared before importing the component) ----
-
-vi.mock("@clerk/react", async (importOriginal) => {
-  const actual = (await importOriginal()) as Record<string, unknown>;
-  return {
-    ...actual,
-    useAuth: () => ({ isSignedIn: true, isLoaded: true }),
-    useClerk: () => ({
-      signOut: vi.fn(),
-      addListener: vi.fn(),
-      loaded: true,
-      isSignedIn: true,
-    }),
-  };
-});
+// Clerk auth/clerk come from the shared singleton mock (clerk-test-mock.ts);
+// set in beforeEach below.
 
 vi.mock("react-router-dom", async (importOriginal) => {
   const actual = (await importOriginal()) as Record<string, unknown>;
@@ -166,6 +155,8 @@ import { AvatarConfirmModal } from "~/vibes.diy/app/components/AvatarConfirmModa
 
 describe("Settings ProfileCard", () => {
   beforeEach(() => {
+    setTestAuth({ isSignedIn: true, isLoaded: true });
+    setTestClerk({ addListener: vi.fn(), loaded: true, isSignedIn: true });
     chatApiStub = makeVibeDiyApi({
       initialSettings: [{ type: "defaultHandle", ownerHandle: "test-user" }],
     });
