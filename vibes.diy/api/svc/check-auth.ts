@@ -6,7 +6,7 @@ import {
   VerifiedResult,
   WithAuth,
 } from "@fireproof/core-types-protocols-dashboard";
-import { ClerkClaimSchema } from "@fireproof/core-types-base";
+import { ClerkClaimSchema } from "@vibes.diy/identity";
 import { VibesApiSQLCtx } from "./types.js";
 import { MsgBase, ReqWithOptionalAuth, ReqWithVerifiedAuth } from "@vibes.diy/api-types";
 import { wrapMsgBase } from "./unwrap-msg-base.js";
@@ -49,10 +49,7 @@ export function corercedVerifiedAuthUser(ver: VerifiedClaimsResult): Result<Veri
   }
 }
 
-export async function verifyAuth(
-  ctx: VibesApiSQLCtx,
-  req: { readonly auth: DashAuthType }
-): Promise<Result<VerifiedResult>> {
+export async function verifyAuth(ctx: VibesApiSQLCtx, req: { readonly auth: DashAuthType }): Promise<Result<VerifiedResult>> {
   const rvec = await verifyExtractClaims(ctx, req);
   if (rvec.isErr()) {
     return Result.Err(rvec.Err());

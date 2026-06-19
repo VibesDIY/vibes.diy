@@ -1147,6 +1147,9 @@ importers:
       '@vibes.diy/call-ai-v2':
         specifier: workspace:*
         version: link:../../../call-ai/v2
+      '@vibes.diy/identity':
+        specifier: workspace:*
+        version: link:../../identity
       '@vibes.diy/prompts':
         specifier: workspace:*
         version: link:../../../prompts/pkg
@@ -1388,6 +1391,9 @@ importers:
       '@fireproof/core-types-base':
         specifier: 0.24.19
         version: 0.24.19(patch_hash=87735b1c6573dc1bcdb012fddea99c13737c6467b8d195b0655aa2e6f8eb88f3)(typescript@6.0.3)
+      zod:
+        specifier: ^4.1.12
+        version: 4.4.3
     devDependencies:
       '@fireproof/core-cli':
         specifier: 0.24.19

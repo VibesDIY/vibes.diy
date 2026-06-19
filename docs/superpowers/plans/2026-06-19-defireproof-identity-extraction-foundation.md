@@ -260,7 +260,7 @@ git commit -m "feat(identity): scaffold @vibes.diy/identity + thin runtime-conte
 
 Per the spec's risk-ordered phasing. These are **not** detailed here; each gets its own `writing-plans` pass when its predecessor lands and the harness stays green.
 
-- **Plan 2 — Type ownership (spec phase 1).** Re-home Bucket B auth wire-types into `@vibes.diy/identity`; inline the `ClerkClaimSchema` `.catch()` patch; delete `patches/@fireproof__core-types-base@0.24.19.patch`. Extend the harness with type-level parity assertions. (Mechanical, erasable, low blast radius.)
+- **Plan 2 — Type ownership (spec phase 1).** Re-home Bucket B auth wire-types into `@vibes.diy/identity` (single seam); add a vibes-owned `ClerkClaimSchema` with `.catch()` **parity** + a parity test; migrate consumers (`check-auth.ts`) to it. **Retain** `patches/@fireproof__core-types-base@0.24.19.patch` — it also relaxes fireproof's internal `tokenApi.verify`, so it's deleted only in Plan 3 once our verifier replaces fireproof's. (Mechanical, low blast radius.)
 - **Plan 3 — Identity runtime extraction (spec phase 2 + Clerk dash-api).** Lift-verbatim device-id signer / keybag / CA-verify + the `core-protocols-dashboard` runtime client behind one `createDeviceIdGetToken()` API; collapse the 3 duplicated client signers. **Gate:** extend Task 1's harness with cross-verification (extracted-mints ⇄ fireproof-verifies).
 - **Plan 4 — Own the login localhost server (spec phase 3 → closes #1616).** Replace the `core-cli` device-id-register dependency with our `login-server` + a styled `/cert` success page.
 - **Plan 5 — `SuperThis` decision (spec phase 4).** Narrow `RuntimeContext` and migrate the ~30 `ensureSuperThis` call sites onto it; optionally upstream into `@adviser/cement`.

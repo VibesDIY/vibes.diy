@@ -31,6 +31,7 @@
     "@vibes.diy/api-sql": "workspace:*",
     "@vibes.diy/api-types": "workspace:*",
     "@vibes.diy/call-ai-v2": "workspace:*",
+    "@vibes.diy/identity": "workspace:*",
     "@vibes.diy/prompts": "workspace:*",
     "@vibes.diy/use-vibes-base": "workspace:*",
     "@vibes.diy/vibe-db-explorer": "workspace:*",
