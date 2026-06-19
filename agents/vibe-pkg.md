@@ -25,7 +25,12 @@ esm.sh caches aggressively and the `privateNpm:` flag in `grouped-vibe-import-ma
 - In prod: must be explicitly set (e.g. `https://prod-v2.vibesdiy.net/vibe-pkg/`)
 - Without it, prod falls back to `PUBLIC_NPM_URL` → `https://esm.sh` which caches old versions
 
+## Caching
+
+`WORKSPACE_NPM_URL` carries a per-deploy `?v=<commit-sha>` stamp (appended in `vibes.diy/actions/deploy/action.yaml` and the PR-preview workflow), so the `/vibe-pkg/` import-map URLs are versioned per deploy. The worker serves stamped requests immutably (`max-age=31536000, immutable`) and unstamped ones with a 60s fallback — see `vibes.diy/pkg/workers/vibe-pkg-cache.ts`. A new deploy mints a fresh `?v=`, so it's a guaranteed cache miss and cuts over instantly.
+
 ## Key files
 
 - Config: `vibes.diy/api/svc/create-handler.ts`
 - Import map: `vibes.diy/api/svc/intern/grouped-vibe-import-map.ts` — `privateNpm:` entries use this URL
+- Cache policy: `vibes.diy/pkg/workers/vibe-pkg-cache.ts` — immutable-vs-fallback decision for the route

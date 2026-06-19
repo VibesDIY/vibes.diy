@@ -16,6 +16,7 @@ import { CFInjectMutable, cfServeAppCtx, isInternalReferer } from "@vibes.diy/ap
 import { BuildURI, NPMPackage, URI } from "@adviser/cement";
 import { CFEnv } from "@vibes.diy/api-types";
 import { routeDecision } from "./route-decision.js";
+import { vibePkgCacheControl } from "./vibe-pkg-cache.js";
 import { sendCapiPageView, sendCapiViewContent } from "./meta-capi.js";
 import { sendCapiCompleteRegistration } from "./capi-complete-registration.js";
 import { verifyClerkWebhookSignature, postSignupToDiscord, ClerkUserCreatedData } from "./clerk-webhook.js";
@@ -170,11 +171,12 @@ export default {
       headers.set("Access-Control-Allow-Origin", "*");
       headers.set("Access-Control-Allow-Methods", "GET, OPTIONS");
       headers.set("Access-Control-Allow-Headers", "Content-Type");
-      // 60s TTL: /vibe-pkg/ URLs aren't versioned, so a longer cache window
-      // strands prompt/package edits at the CDN edge for that long after
-      // each deploy. Until URLs carry a per-deploy version stamp, cap stale-
-      // ness at one minute so deploys propagate predictably.
-      headers.set("Cache-Control", "public, max-age=60");
+      // Stamped URLs (?v=<commit-sha>, injected at deploy time) are immutable
+      // per deploy, so cache them for a year — a new deploy mints a fresh ?v=
+      // and thus a guaranteed-cache-miss URL for instant cutover. Unstamped
+      // requests (e.g. trailing-slash subpath imports) keep a 60s fallback so
+      // deploys still propagate predictably. See vibe-pkg-cache.ts.
+      headers.set("Cache-Control", vibePkgCacheControl(request.url));
       const response = new Response(assetResponse.body as unknown as BodyInit, {
         status: assetResponse.status,
         headers,
