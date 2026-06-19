@@ -160,6 +160,7 @@ export default function ModelPicker({ currentModel, onModelChange, models, globa
       </button>
 
       {open &&
+        portalRoot &&
         createPortal(
           <div className="fixed inset-0 z-[9998]" onClick={() => setOpen(false)}>
             <div

@@ -42,7 +42,7 @@ export function AvatarConfirmModal(): React.ReactElement | null {
 
   const portalRoot = usePortalRoot();
 
-  if (!pending) return null;
+  if (!pending || !portalRoot) return null;
 
   // Preview the host-recorded storage URI for the CID we'll persist — never a
   // value the sandbox controls. mimeType only labels the Content-Type. When the
