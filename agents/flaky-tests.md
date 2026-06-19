@@ -29,11 +29,13 @@ It now:
 - captures the real exit code (no `|| true`), and
 - **surfaces** the result into the GitHub job summary plus a `::warning::` annotation on every run.
 
+vitest runs with **only** the json reporter (`--reporter=json --outputFile=test-timing.json`) — the pretty reporter is gone; raw stdout still streams to the Actions log for live debugging. [`parse-test-timing.py`](actions/base/parse-test-timing.py) turns that report into the job summary (totals, **Top-20 slowest files**, and any failures), and the raw `test-timing.json` is uploaded as the `test-timing` artifact (30-day retention) for offline / cross-run timing analysis.
+
 Gating is controlled by one env var, `VIBES_CI_GATE_TESTS`, in that step:
 
 - `"true"` (**current**) — real **test** failures (vitest exit `1` with a parsed summary) fail the job, so a red suite blocks the PR. Enabled once the deterministic failures ([#2425](https://github.com/VibesDIY/vibes.diy/issues/2425)) were fixed and `pnpm test` exits 0 ([#2444](https://github.com/VibesDIY/vibes.diy/issues/2444)) — the close-out of #2426. There is **no** retry-on-flake wrapper: if a known flake (see #1515) reds CI, rerun the job to clear it.
 - `"false"` — failures are surfaced (job summary + `::warning::`) but do **not** fail the job. Use only as a temporary escape hatch if flakes become disruptive.
 
-The switch only governs _test_ failures. **Harness/setup failures always fail the job** regardless of the switch — a non-`1` exit (docker `125`/`126`/`127`, `timeout` `124`) or any exit with no test summary means the suite never ran, so it is never suppressed. The summary is parsed from an ANSI-stripped copy of the output (vitest colorizes the `Test Files` / `Tests` lines), so a real test failure is never misread as a harness failure.
+The switch only governs _test_ failures. **Harness/setup failures always fail the job** regardless of the switch — a non-`1` exit (docker `125`/`126`/`127`, `timeout` `124`) or any exit with no valid `test-timing.json` report means the suite never ran, so it is never suppressed. "Did the suite actually report" is now decided by the presence of a parseable json report (the `HAVE_JSON` check), not by scraping the human output, so a real test failure is never misread as a harness failure.
 
 Two image gotchas the masking hid for ages: the Playwright image tag is derived from `pnpm exec playwright --version` (not `pnpm why`, whose JSON shape changed under pnpm 10 and silently produced an invalid `:v-noble` tag), and `pnpm` is activated **inside** the container via `corepack` (the image ships only node/npm, but the vitest globalSetup runs `pnpm exec drizzle-kit`). Both fail fast on an unresolved version before `docker run`.

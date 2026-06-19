@@ -116,18 +116,26 @@ runs:
         # No more `|| true`: the suite's exit code is captured, never discarded.
         # Timeout raised from 120s (which SIGKILLed the ~240s suite mid-run) to
         # 30m so the suite actually runs to completion. See #2426.
+        #
+        # vitest runs with ONLY the json reporter (--reporter=json), writing
+        # per-file/per-test timing to test-timing.json. We don't keep the pretty
+        # reporter: raw stdout (corepack + any test console output + uncaught
+        # errors) still streams to the Actions log for live debugging, and the
+        # machine-readable report drives both the job summary and the uploaded
+        # artifact (accurate per-file durations — no more scraping ANSI output).
+        rm -f test-timing.json
         set +e
         timeout 1800 docker run --rm \
           -v $(pwd):/work \
           -w /work \
           mcr.microsoft.com/playwright:v${PLAYWRIGHT_VERSION}-noble \
-          bash -c "corepack enable && corepack prepare pnpm@${PNPM_VERSION} --activate && npm run test" 2>&1 | tee test-output.log
-        TEST_EXIT=${PIPESTATUS[0]}
+          bash -c "corepack enable && corepack prepare pnpm@${PNPM_VERSION} --activate && npm run test -- --reporter=json --outputFile=test-timing.json"
+        TEST_EXIT=$?
         set -e
 
         # The container above runs as root and bind-mounts the host checkout, so
         # it writes root-owned files into the workspace (node_modules/.vite-temp,
-        # test-output.log, vitest globalSetup's drizzle-kit artifacts). When this
+        # test-timing.json, vitest globalSetup's drizzle-kit artifacts). When this
         # same checkout is reused by a later non-root step in the same job — the
         # deploy jobs' `pnpm run build` → vite writing node_modules/.vite-temp —
         # that step hits EACCES. Restore ownership to the runner user so the
@@ -135,51 +143,32 @@ runs:
         # exactly here; PR CI never saw it because the build is deploy-only.)
         sudo chown -R "$(id -u):$(id -g)" "$(pwd)" || true
 
-        # Surface the result regardless of gating mode, so regressions are
-        # visible on the PR even while the suite is non-blocking. vitest's
-        # summary is ANSI-colored, so strip escape codes before parsing —
-        # otherwise the `^…` anchor never matches and a real test failure would
-        # be misread as a harness failure (empty TOTALS) and wrongly block.
-        sed -r 's/\x1b\[[0-9;]*[a-zA-Z]//g' test-output.log > test-output.clean.log
-        TOTALS=$(grep -E '^[[:space:]]*(Test Files|Tests)[[:space:]]' test-output.clean.log | tail -n 4 || true)
-        FAILED=$(grep -E '(^|[[:space:]])FAIL ' test-output.clean.log || true)
-        {
-          echo "## Test suite result"
-          echo ""
-          if [ "$TEST_EXIT" -eq 0 ]; then
-            echo "✅ All tests passed."
-          elif [ "$TEST_EXIT" -eq 124 ]; then
-            echo "⏱️ Test suite timed out (exit 124) before completing."
-          else
-            echo "❌ Test suite exited with code \`$TEST_EXIT\`."
-          fi
-          if [ -n "$TOTALS" ]; then
+        # Parse test-timing.json into the job summary (totals + Top-20 slowest
+        # files + any failures). HAVE_JSON=0 means the suite produced no report
+        # — treated as a harness/setup error below, exactly like the old "empty
+        # TOTALS" check that guards against the #2426 false-green. The parser
+        # never fails the step itself (it only writes the summary); gating stays
+        # driven by TEST_EXIT + HAVE_JSON.
+        HAVE_JSON=0
+        if [ -s test-timing.json ] && python3 "${GITHUB_ACTION_PATH}/parse-test-timing.py"; then
+          HAVE_JSON=1
+        else
+          {
+            echo "## Test suite result"
             echo ""
-            echo '```'
-            echo "$TOTALS"
-            echo '```'
-          fi
-          if [ -n "$FAILED" ]; then
-            echo ""
-            echo "<details><summary>Failed tests</summary>"
-            echo ""
-            echo '```'
-            echo "$FAILED"
-            echo '```'
-            echo ""
-            echo "</details>"
-          fi
-        } >> "${GITHUB_STEP_SUMMARY:-/dev/stdout}"
+            echo "⚠️ No machine-readable timing report (\`test-timing.json\` missing or empty) — the suite likely failed before reporting."
+          } >> "${GITHUB_STEP_SUMMARY:-/dev/stdout}"
+        fi
 
         if [ "$TEST_EXIT" -ne 0 ]; then
           echo "::warning title=Test suite failing::npm run test exited ${TEST_EXIT}. See the job summary for details. Tracking: #2426 (gating) / #2425 (deterministic failures)."
-          # Only a clean vitest test-failure exit (1) WITH a parsed summary is
+          # Only a clean vitest test-failure exit (1) WITH a parsed report is
           # eligible for non-blocking surfacing. A harness/setup/timeout error
-          # (docker 125/126/127, timeout 124, config crash with no summary) means
+          # (docker 125/126/127, timeout 124, config crash with no report) means
           # the suite never ran — that must ALWAYS fail the job, regardless of the
           # gate switch, otherwise we'd be back to the #2426 false-green.
-          if [ "$TEST_EXIT" != "1" ] || [ -z "$TOTALS" ]; then
-            echo "::error title=Test harness failure::npm run test exited ${TEST_EXIT} without a test summary — treating as a harness/setup error and failing the job (not suppressed by VIBES_CI_GATE_TESTS)."
+          if [ "$TEST_EXIT" != "1" ] || [ "$HAVE_JSON" != "1" ]; then
+            echo "::error title=Test harness failure::npm run test exited ${TEST_EXIT} without a valid timing report — treating as a harness/setup error and failing the job (not suppressed by VIBES_CI_GATE_TESTS)."
             exit "$TEST_EXIT"
           fi
           if [ "${VIBES_CI_GATE_TESTS}" = "true" ]; then
@@ -188,3 +177,15 @@ runs:
           fi
           echo "VIBES_CI_GATE_TESTS=false → surfacing test failures without blocking (see #2426)."
         fi
+
+    # Persist the raw per-file/per-test timing for offline analysis and trend
+    # tracking across runs. always() so a failing run's partial timing is kept
+    # too; skipped when the test step was short-circuited (skip-tests-if-sha-green).
+    - name: upload-test-timing
+      if: ${{ always() && steps.gate.outputs.skip_tests != 'true' }}
+      uses: actions/upload-artifact@v4
+      with:
+        name: test-timing
+        path: test-timing.json
+        if-no-files-found: ignore
+        retention-days: 30
