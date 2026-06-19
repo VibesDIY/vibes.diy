@@ -5,6 +5,15 @@ on:
     branches: [main]
   workflow_dispatch:
 
+# Cancel superseded runs: a new push to the same PR (or re-dispatch on the
+# same ref) supersedes the in-flight run, so let it die instead of burning
+# the full ~7.5-min suite on a commit nobody is waiting on. Pure speed/cost
+# win — only the latest commit's result matters. Keyed per ref so distinct
+# PRs never cancel each other. (The pr-preview workflow already does this.)
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   compile_test:
     runs-on: ubuntu-latest
