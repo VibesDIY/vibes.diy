@@ -37,6 +37,7 @@ coverage/
 .DS_Store
 
 .eslintcache
+.prettiercache
 
 **/_wildcard.localhost.vibesdiy.net*
 

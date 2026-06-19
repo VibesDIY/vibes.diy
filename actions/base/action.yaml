@@ -41,10 +41,46 @@ runs:
         pnpm dedupe --check
         printf 'install\t%s\n' "$(( $(date +%s) - _t0 ))" >> "$RUNNER_TEMP/pretest-timings.tsv"
 
+    # Persist the eslint/prettier caches across CI runs so incremental PRs only
+    # re-lint / re-check the files that actually changed. Both tools run with the
+    # content-hash strategy (the root "lint" and "format" scripts), so the caches
+    # survive fresh checkouts where file mtimes always differ. Rolling key: save
+    # per-SHA, restore the latest prefix match.
+    - name: restore-lint-caches
+      uses: actions/cache@v4
+      with:
+        path: |
+          .eslintcache
+          .prettiercache
+        key: lint-cache-${{ runner.os }}-${{ github.sha }}
+        restore-keys: |
+          lint-cache-${{ runner.os }}-
+
+    # Pre-pull the Playwright test image in the background so its ~24s download
+    # overlaps with format-check + lint + build instead of blocking the test
+    # step's `docker run`. The tag matches the resolved Playwright version (same
+    # source of truth as the test step). Best-effort: failures here are harmless
+    # — the test step pulls synchronously if the image isn't ready yet.
+    - name: prepull-playwright-image
+      shell: bash
+      run: |
+        PW=$(pnpm exec playwright --version 2>/dev/null | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -n1 || true)
+        if [ -n "$PW" ]; then
+          IMG="mcr.microsoft.com/playwright:v${PW}-noble"
+          echo "Pre-pulling ${IMG} in the background"
+          nohup docker pull "$IMG" >"$RUNNER_TEMP/pw-prepull.log" 2>&1 &
+          disown || true
+        else
+          echo "Playwright version unresolved; skipping pre-pull (test step will pull)."
+        fi
+
     - name: format-check
       shell: bash
       run: |
         _t0=$(date +%s)
+        # Unchanged behavior; the `format` script now passes --cache (content
+        # strategy, .prettiercache restored above) so unchanged files are skipped
+        # on incremental runs.
         pnpm run format --check
         printf 'format-check\t%s\n' "$(( $(date +%s) - _t0 ))" >> "$RUNNER_TEMP/pretest-timings.tsv"
 
