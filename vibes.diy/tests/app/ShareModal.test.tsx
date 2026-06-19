@@ -2,8 +2,20 @@ import React from "react";
 import { render as rtlRender, screen, fireEvent, act, cleanup, waitFor } from "@testing-library/react";
 import { vibesWrapper } from "./vibes-provider-harness.js";
 import { describe, it, expect, vi, afterEach, beforeEach } from "vitest";
-import { ShareModal } from "~/vibes.diy/app/components/ResultPreview/ShareModal.js";
+import { ShareModal as BaseShareModal } from "~/vibes.diy/app/components/ResultPreview/ShareModal.js";
 import type { UseShareModalReturn } from "~/vibes.diy/app/components/ResultPreview/useShareModal.js";
+
+// Inject lightweight section stubs via ShareModal's DI props instead of
+// module-mocking MembersSection/CommentsSection — those are rendered for real by
+// their own tests (e.g. comments-section-avatar), and a global mock bleeds the
+// stub into them (and the real component back into here) under isolate:false.
+const ShareModal = (props: React.ComponentProps<typeof BaseShareModal>) => (
+  <BaseShareModal
+    MembersSectionComponent={() => <div data-testid="members-section" />}
+    CommentsSectionComponent={() => <div data-testid="comments-section" />}
+    {...props}
+  />
+);
 
 // Use the real react-dom/createPortal — portals render into document.body,
 // which RTL's screen still queries. Mocking createPortal to render inline bled
@@ -25,14 +37,9 @@ vi.mock("~/vibes.diy/app/components/mine/sharing-tab/EmailInvitationsSection.js"
   EmailInvitationsSection: () => <div data-testid="email-invitations-section" />,
 }));
 
-// Members + Comments sections call useVibesDiy / Clerk; stub them out — these
-// tests are focused on the publish/sharing flow.
-vi.mock("~/vibes.diy/app/components/ResultPreview/MembersSection.js", () => ({
-  MembersSection: () => <div data-testid="members-section" />,
-}));
-vi.mock("~/vibes.diy/app/components/ResultPreview/CommentsSection.js", () => ({
-  CommentsSection: () => <div data-testid="comments-section" />,
-}));
+// Members + Comments sections are injected as stubs via ShareModal's DI props
+// (see the ShareModal wrapper above) — no module mock, so they don't bleed into
+// the tests that render the real components under isolate:false.
 
 const okSettings = (entry: Record<string, unknown> = {}) =>
   Promise.resolve({
