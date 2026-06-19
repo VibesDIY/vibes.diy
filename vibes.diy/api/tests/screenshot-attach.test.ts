@@ -95,6 +95,27 @@ describe("assemblePromptPayload: screenshot attachment", () => {
     expect(Array.from(decoded)).toEqual(Array.from(bytes));
     // The original text part is preserved alongside the image.
     expect(lastUserMessage(r.Ok().messages).content.some((c) => c.type === "text")).toBe(true);
+    // A caption frames the image as the current rendered state.
+    const texts = lastUserMessage(r.Ok().messages)
+      .content.filter((c) => c.type === "text")
+      .map((c) => (c.type === "text" ? c.text : ""));
+    expect(texts).toContain("make the card smaller");
+    expect(texts.some((t) => t.toLowerCase().includes("screenshot"))).toBe(true);
+  });
+
+  it("does not attach a screenshot for a text-only model even on a follow-up", async () => {
+    const { chatId, fsId } = await followUpChat();
+    await seedScreenshot(fsId, new Uint8Array([0xff, 0xd8, 0xff, 1, 2, 3]));
+
+    const r = await assemblePromptPayload(ctx.appCtx.vibesCtx, {
+      chatId,
+      // Text-only chat model present in models.json — must not receive image content.
+      model: "deepseek/deepseek-chat-v3.1",
+      newUserMessages: [{ role: "user", content: [{ type: "text", text: "make it bigger" }] }],
+      attachScreenshot: true,
+    });
+    expect(r.isOk()).toBe(true);
+    expect(imageUrls(lastUserMessage(r.Ok().messages)).length).toBe(0);
   });
 
   it("does not attach a screenshot when attachScreenshot is omitted", async () => {
