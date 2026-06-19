@@ -18,12 +18,18 @@ import { makeBaseSystemPrompt, resolveEffectiveModel } from "@vibes.diy/prompts"
 import type { VibesApiSQLCtx } from "../types.js";
 import { createPromptAssetFetch, promptsPkgBaseUrl } from "./prompt-asset-fetch.js";
 import { loadLatestScreenshotDataUrl } from "./latest-screenshot.js";
+import { modelSupportsImageInput } from "./model-vision.js";
 import { assembleSlotMessages, renderSlotMessagesAs } from "./slot-assembler.js";
 import { loadLatestPromptId, loadVersionTimeline, selectSlotSources } from "./version-timeline.js";
 
 export interface ReconstructOpts {
   readonly keepFullTurnStreamId?: string;
 }
+
+// Caption attached alongside the screenshot image so the model reads it as the
+// current rendered state of the app rather than a content asset to embed.
+const SCREENSHOT_CAPTION =
+  "Attached is a screenshot of the app as it currently renders, for visual reference. Use it to ground layout, spacing, color, and alignment edits.";
 
 /**
  * Reconstruct conversation messages (user + assistant) from stored section blocks.
@@ -290,9 +296,11 @@ export async function assemblePromptPayload(
 
   // On follow-up turns, ground the model in the current rendered UI by attaching
   // the most recent stored screenshot to the new user message. Skipped on the
-  // initial turn (nothing has rendered) and best-effort otherwise.
+  // initial turn (nothing has rendered), for text-only models (a provider 4xx
+  // on image content is non-retryable in the fallback path), and best-effort
+  // otherwise.
   let finalNewUser = newUserOnly;
-  if (args.attachScreenshot === true && !isInitial) {
+  if (args.attachScreenshot === true && !isInitial && modelSupportsImageInput(model)) {
     const fsIdsNewestFirst = timeline.map((t) => t.fsId).reverse();
     const shot = await loadLatestScreenshotDataUrl(vctx, fsIdsNewestFirst);
     if (shot) {
@@ -304,9 +312,19 @@ export async function assemblePromptPayload(
       })();
       if (lastUserIdx >= 0) {
         const target = finalNewUser[lastUserIdx];
+        // A short caption co-located with the image (rather than a static
+        // system-prompt line) keeps the framing truthful: it is only present
+        // when an image was actually attached, never on a best-effort skip.
         finalNewUser = [
           ...finalNewUser.slice(0, lastUserIdx),
-          { ...target, content: [...target.content, { type: "image_url" as const, image_url: { url: shot.dataUrl } }] },
+          {
+            ...target,
+            content: [
+              ...target.content,
+              { type: "text" as const, text: SCREENSHOT_CAPTION },
+              { type: "image_url" as const, image_url: { url: shot.dataUrl } },
+            ],
+          },
           ...finalNewUser.slice(lastUserIdx + 1),
         ];
       }
