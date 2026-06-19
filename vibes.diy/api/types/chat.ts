@@ -33,6 +33,11 @@ export const Model = type({
   "preSelected?": ModelCapability.array(),
   "fallbackFor?": ModelCapability.array(),
   "supports?": ModelCapability.array(),
+  // Whether the model accepts image (vision) input in its chat messages.
+  // Distinct from `supports` (which lists session modes). Absent/false means
+  // text-only: callers must not send image_url content parts to it. Not
+  // exhaustively tagged yet — see follow-up issue.
+  "imageInput?": "boolean",
 });
 
 export type Model = typeof Model.infer;
