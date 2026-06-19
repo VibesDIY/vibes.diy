@@ -57,9 +57,32 @@ export function useChatSession(opts: ChatSessionOpts): ChatSession {
   const fsIdRef = useRef<string | undefined>(fsId);
   fsIdRef.current = fsId;
 
+  // The chat handle whose section stream is currently feeding the reducer.
+  // Tracked so a reconnect can tear down the stream it supersedes (the
+  // reconnect loop only closes its own prior *attempt*, not the original
+  // pre-reconnect chat).
+  const activeChatRef = useRef<LLMChat | null>(null);
+
+  // Monotonic attach generation. Only the most-recently-attached section
+  // stream may feed the reducer. The watchdog flips to "reconnecting" on a
+  // *silent* turn even when the socket is still half-open (laggy connection);
+  // the reconnect loop then attaches a fresh stream while the original is
+  // still alive. If that original later flushes its buffered bytes — or the
+  // server keeps emitting the in-flight turn on the old tid — its blocks would
+  // interleave with the new stream's into the same reducer, with no dedup,
+  // duplicating prompts, code lines, and option chips. Fencing on generation
+  // makes that structurally impossible: a superseded stream's events are
+  // dropped instead of merged.
+  const streamGenerationRef = useRef(0);
+
   const attachSectionStream = useCallback(
     (chatHandle: LLMChat) => {
+      const myGeneration = (streamGenerationRef.current += 1);
+      const isActiveStream = () => myGeneration === streamGenerationRef.current;
       processStream(chatHandle.sectionStream, (msg) => {
+        // A later attach has superseded this stream — drop its events so they
+        // can't double up with the active stream's.
+        if (!isActiveStream()) return;
         const se = sectionEvent(msg);
         if (se instanceof type.errors) {
           console.error(se.summary);
@@ -75,6 +98,9 @@ export function useChatSession(opts: ChatSessionOpts): ChatSession {
         .finally(() => {
           // Stream ended (transport loss closes it as of #2334). The reducer
           // ignores this while idle; mid-prompt it starts the reconnect loop.
+          // A superseded stream ending is not *our* disconnect — its successor
+          // is already live — so don't let it (re)start the reconnect loop.
+          if (!isActiveStream()) return;
           dispatch({ type: "streamDisconnected" });
         });
     },
@@ -117,6 +143,13 @@ export function useChatSession(opts: ChatSessionOpts): ChatSession {
 
   const handleReconnectAttempt = useCallback(
     (newChat: LLMChat) => {
+      // Tear down the stream we're superseding before replaying onto a fresh
+      // one. Without this the original (possibly still-alive, just-silent)
+      // chat keeps its socket subscription open and its processStream draining
+      // forever. The generation fence already stops its events from reaching
+      // the reducer; closing it stops the leak at the source.
+      void activeChatRef.current?.close();
+      activeChatRef.current = newChat;
       dispatch({ type: "replayReset" });
       setChat(newChat);
       dispatch({ type: "initChat", chat: newChat });
@@ -178,6 +211,7 @@ export function useChatSession(opts: ChatSessionOpts): ChatSession {
         console.error("CHAT-Error", rChat.Err(), ownerHandle, appSlug);
         return;
       }
+      activeChatRef.current = rChat.Ok();
       setChat(rChat.Ok());
       dispatch({ type: "initChat", chat: rChat.Ok() });
       refreshAppSettings();

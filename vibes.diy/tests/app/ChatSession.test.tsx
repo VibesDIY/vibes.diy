@@ -3,7 +3,9 @@ import { renderHook, waitFor } from "@testing-library/react";
 import { Result } from "@adviser/cement";
 import { useChatSession } from "~/vibes.diy/app/hooks/useChatSession.js";
 import type { PromptState } from "~/vibes.diy/app/routes/chat/prompt-state.js";
+import type { PromptAndBlockMsgs } from "@vibes.diy/api-types";
 import { makeFakeLLMChat } from "./helpers/makeFakeLLMChat.js";
+import { makeControllableLLMChat } from "./helpers/makeControllableLLMChat.js";
 
 function baseState(over: Partial<PromptState> = {}): PromptState {
   return { running: false, connection: "live", blocks: [], ...over } as unknown as PromptState;
@@ -103,5 +105,85 @@ describe("useChatSession", () => {
     view.unmount();
     await new Promise((r) => setTimeout(r, 50));
     expect(fakeChat.close).not.toHaveBeenCalled();
+  });
+});
+
+// Regression: a laggy/half-open connection makes the watchdog flip the chat to
+// "reconnecting" while the original section stream is still alive. The reconnect
+// loop attaches a fresh stream — but the original must be (a) closed and (b)
+// fenced out of the reducer, or its late-flushed bytes interleave with the new
+// stream's and duplicate prompts, code lines, and option chips (the two-stream
+// gremlin). These tests pin both halves of the fix.
+describe("useChatSession reconnect stream isolation", () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  function blockBegin(streamId: string): PromptAndBlockMsgs {
+    return { type: "prompt.block-begin", streamId, chatId: "c1", seq: 1, timestamp: new Date() } as unknown as PromptAndBlockMsgs;
+  }
+
+  function setupReconnect() {
+    const original = makeControllableLLMChat({ chatId: "chat-original" });
+    const reconnected = makeControllableLLMChat({ chatId: "chat-reconnected" });
+    const chats = [original, reconnected];
+    let opened = 0;
+    const openChat = vi.fn(async () => Result.Ok(chats[Math.min(opened++, chats.length - 1)].chat));
+    const ensureAppSettings = vi.fn(async () => Result.Err("no settings"));
+    const chatApi = { openChat, ensureAppSettings } as unknown as Parameters<typeof useChatSession>[0]["chatApi"];
+    const dispatch = vi.fn();
+
+    function props(connection: PromptState["connection"]): { promptState: PromptState } {
+      return { promptState: { running: true, connection, blocks: [] } as unknown as PromptState };
+    }
+
+    const view = renderHook(
+      ({ promptState }: { promptState: PromptState }) =>
+        useChatSession({
+          ownerHandle: "owner",
+          appSlug: "app",
+          fsId: "FS-1",
+          inConstruction: false,
+          chatApi,
+          promptState,
+          dispatch,
+          promptToSend: null,
+          sendPrompt: vi.fn(),
+          navigateToFsId: vi.fn(),
+        }),
+      { initialProps: props("live") }
+    );
+    return { view, props, openChat, dispatch, original, reconnected };
+  }
+
+  it("closes the superseded chat when the reconnect loop takes over", async () => {
+    const { view, props, openChat, original } = setupReconnect();
+    // Mount opens the original chat and attaches its stream.
+    await waitFor(() => expect(openChat).toHaveBeenCalledTimes(1));
+    expect(original.chat.close).not.toHaveBeenCalled();
+
+    // Watchdog/transport loss flips to reconnecting → loop opens a new chat.
+    view.rerender(props("reconnecting"));
+    await waitFor(() => expect(openChat).toHaveBeenCalledTimes(2));
+    // The original handle is torn down rather than leaked.
+    await waitFor(() => expect(original.chat.close).toHaveBeenCalled());
+  });
+
+  it("fences the superseded stream out of the reducer (no double-dispatch)", async () => {
+    const { view, props, openChat, dispatch, original, reconnected } = setupReconnect();
+    await waitFor(() => expect(openChat).toHaveBeenCalledTimes(1));
+
+    view.rerender(props("reconnecting"));
+    await waitFor(() => expect(openChat).toHaveBeenCalledTimes(2));
+    await waitFor(() => expect(original.chat.close).toHaveBeenCalled());
+
+    // The original stream is still alive (close() is a logical no-op on the
+    // in-memory stream, exactly like a half-open socket that hasn't torn down
+    // delivery yet). Its late blocks must be dropped; the new stream's flow.
+    original.pushBlocks([blockBegin("from-original")]);
+    reconnected.pushBlocks([blockBegin("from-reconnected")]);
+
+    await waitFor(() =>
+      expect(dispatch).toHaveBeenCalledWith(expect.objectContaining({ type: "prompt.block-begin", streamId: "from-reconnected" }))
+    );
+    expect(dispatch).not.toHaveBeenCalledWith(expect.objectContaining({ streamId: "from-original" }));
   });
 });
