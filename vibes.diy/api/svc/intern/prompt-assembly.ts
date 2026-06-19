@@ -17,6 +17,7 @@ import { and, eq } from "drizzle-orm/sql/expressions";
 import { makeBaseSystemPrompt, resolveEffectiveModel } from "@vibes.diy/prompts";
 import type { VibesApiSQLCtx } from "../types.js";
 import { createPromptAssetFetch, promptsPkgBaseUrl } from "./prompt-asset-fetch.js";
+import { loadLatestScreenshotDataUrl } from "./latest-screenshot.js";
 import { assembleSlotMessages, renderSlotMessagesAs } from "./slot-assembler.js";
 import { loadLatestPromptId, loadVersionTimeline, selectSlotSources } from "./version-timeline.js";
 
@@ -158,6 +159,14 @@ export interface AssemblePromptPayloadArgs {
   // system prompt without persisting anything. When absent, settings are read
   // from app_settings as usual.
   readonly activeSettingsOverride?: { skills?: string[]; theme?: string; title?: string; enrichedPrompt?: string };
+  // Optional: on follow-up turns, attach the most recent stored preview
+  // screenshot to the new user message as an image_url content part, so a
+  // vision-capable model can ground visual edits ("center this", "the colors
+  // clash") in what the user is actually looking at. No-op on the initial turn
+  // (nothing has rendered yet) and best-effort — a missing or unfetchable
+  // screenshot is silently skipped. We never trigger or wait for a fresh
+  // capture; only the already-stored screenshot is used (issue #1743).
+  readonly attachScreenshot?: boolean;
 }
 
 export async function assemblePromptPayload(
@@ -279,6 +288,31 @@ export async function assemblePromptPayload(
     args.slotDeliveryMode ?? (vctx.sthis.env.get("SLOT_DELIVERY_MODE") === "system" ? "system" : "user");
   const slotChatMessages = renderSlotMessagesAs(slotMessages, slotDeliveryMode);
 
+  // On follow-up turns, ground the model in the current rendered UI by attaching
+  // the most recent stored screenshot to the new user message. Skipped on the
+  // initial turn (nothing has rendered) and best-effort otherwise.
+  let finalNewUser = newUserOnly;
+  if (args.attachScreenshot === true && !isInitial) {
+    const fsIdsNewestFirst = timeline.map((t) => t.fsId).reverse();
+    const shot = await loadLatestScreenshotDataUrl(vctx, fsIdsNewestFirst);
+    if (shot) {
+      const lastUserIdx = (() => {
+        for (let i = finalNewUser.length - 1; i >= 0; i--) {
+          if (finalNewUser[i].role === "user") return i;
+        }
+        return -1;
+      })();
+      if (lastUserIdx >= 0) {
+        const target = finalNewUser[lastUserIdx];
+        finalNewUser = [
+          ...finalNewUser.slice(0, lastUserIdx),
+          { ...target, content: [...target.content, { type: "image_url" as const, image_url: { url: shot.dataUrl } }] },
+          ...finalNewUser.slice(lastUserIdx + 1),
+        ];
+      }
+    }
+  }
+
   return Result.Ok({
     model,
     messages: [
@@ -293,7 +327,7 @@ export async function assemblePromptPayload(
       },
       ...reconstructed,
       ...slotChatMessages,
-      ...newUserOnly,
+      ...finalNewUser,
     ],
   });
 }
