@@ -46,7 +46,9 @@ function num(v: unknown): number {
 export default class PhaseReporter {
   private bestTotal = -1;
 
-  // Legacy reporter API (vitest <= 3, still invoked in 4.x compat paths).
+  // Backward-compat shim for vitest <= v3 (onFinished). v4 removed this hook in
+  // favour of onTestRunEnd below; it's harmless on v4 (never called) and keeps
+  // the reporter working if run under an older vitest.
   onFinished(files: VitestFile[] = []): void {
     const rows: PhaseRow[] = (files || []).map((f) => ({
       name: f.filepath || f.name || "?",

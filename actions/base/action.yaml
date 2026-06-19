@@ -142,12 +142,12 @@ runs:
         # Timeout raised from 120s (which SIGKILLed the ~240s suite mid-run) to
         # 30m so the suite actually runs to completion. See #2426.
         #
-        # vitest runs with ONLY the json reporter (--reporter=json), writing
-        # per-file/per-test timing to test-timing.json. We don't keep the pretty
-        # reporter: raw stdout (corepack + any test console output + uncaught
-        # errors) still streams to the Actions log for live debugging, and the
-        # machine-readable report drives both the job summary and the uploaded
-        # artifact (accurate per-file durations — no more scraping ANSI output).
+        # vitest runs with machine-readable reporters only (no pretty reporter):
+        # the json reporter is the baseline report (test-timing.json), plus the
+        # phase reporter added below (test-phase-timing.json). Raw stdout (corepack
+        # + any test console output + uncaught errors) still streams to the Actions
+        # log for live debugging, and those reports drive both the job summary and
+        # the uploaded artifact (accurate per-file durations — no scraping ANSI).
         # A second reporter (tools/vitest-phase-reporter.ts, transformed by
         # vitest on load) writes test-phase-timing.json with per-file PRE-RUN
         # phase costs (collect / setup / environment / prepare) — the json
