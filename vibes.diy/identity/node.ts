@@ -33,15 +33,17 @@ export type { ReqDeviceIdRegister } from "@fireproof/core-cli";
  *
  * `iss` is the informational JWT issuer (not value-verified server-side); each
  * caller passes its own (`use-vibes/cli`, `use-vibes/standalone`, …).
+ * `missingCertMessage` overrides the not-yet-enrolled error so CLI callers can
+ * surface environment-specific guidance (e.g. the `VIBES_DEVICE_ID` headless hint).
  */
 export async function createDeviceIdGetToken(
   sthis: SuperThis,
-  opts: { readonly iss: string }
+  opts: { readonly iss: string; readonly missingCertMessage?: string }
 ): Promise<() => Promise<Result<DashAuthType>>> {
   const kb = await getKeyBag(sthis);
   const devid = await kb.getDeviceId();
   if (devid.cert.IsNone()) {
-    throw new Error("Run 'npx vibes-diy login' to authenticate this device");
+    throw new Error(opts.missingCertMessage ?? "Run 'npx vibes-diy login' to authenticate this device");
   }
   const rDevkey = await DeviceIdKey.createFromJWK(devid.deviceId.Unwrap());
   if (rDevkey.isErr()) {
