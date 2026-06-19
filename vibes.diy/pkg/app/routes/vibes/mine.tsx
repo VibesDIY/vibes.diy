@@ -1,6 +1,6 @@
 import type { ReactElement } from "react";
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router";
 import BrutalistLayout from "../../components/BrutalistLayout.js";
 import { VibesButton } from "@vibes.diy/base";
 import { useVibesDiy } from "../../vibes-diy-provider.js";
@@ -24,14 +24,7 @@ export default function VibesMine(): ReactElement {
     tab: paramTab,
   } = useParams<{ ownerHandle?: string; appSlug?: string; tab?: string }>();
   const { chatApi } = useVibesDiy();
-  const {
-    items: vibeItems,
-    loading: isLoading,
-    isLoadingAll,
-    nextCursor,
-    loadMore,
-    ensureAllLoaded,
-  } = useRecentVibes(30);
+  const { items: vibeItems, loading: isLoading, isLoadingAll, nextCursor, loadMore, ensureAllLoaded } = useRecentVibes(30);
   const [searchQuery, setSearchQuery] = useState("");
 
   const [chatDetails, setChatDetails] = useState<ResGetChatDetails | null>(null);

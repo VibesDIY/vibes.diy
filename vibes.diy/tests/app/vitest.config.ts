@@ -5,7 +5,7 @@ import { playwright } from "@vitest/browser-playwright";
 export default defineConfig({
   plugins: [tsconfigPaths({ configNames: ["tsconfig.test.json"] }) as never],
   optimizeDeps: {
-    include: ["react", "react-dom", "react/jsx-runtime", "@testing-library/react", "react-markdown", "react-router-dom"],
+    include: ["react", "react-dom", "react/jsx-runtime", "@testing-library/react", "react-markdown", "react-router"],
     exclude: ["fsevents", "lightningcss"],
   },
   // cacheDir: "./node_modules/.vibes.diy-vite-cache",

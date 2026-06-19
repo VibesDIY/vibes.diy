@@ -1,7 +1,7 @@
 import { useAuth } from "@clerk/react";
 import type { ResRecentVibesItem } from "@vibes.diy/api-types";
 import React, { useRef, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link } from "react-router";
 import { useRecentVibes, notifyRecentVibesChanged } from "../hooks/useRecentVibes.js";
 import { useVibesDiy } from "../vibes-diy-provider.js";
 import { cidAssetUrl, getAppHostBaseUrl } from "../utils/vibeUrls.js";

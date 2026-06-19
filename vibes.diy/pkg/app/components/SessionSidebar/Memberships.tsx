@@ -1,5 +1,5 @@
 import React from "react";
-import { Link } from "react-router-dom";
+import { Link } from "react-router";
 import { useMemberships } from "../../hooks/useMemberships.js";
 
 const SIDEBAR_LIMIT = 10;

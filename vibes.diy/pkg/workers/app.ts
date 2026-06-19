@@ -7,7 +7,8 @@ import {
   Response as CFResponse,
   CacheStorage,
 } from "@cloudflare/workers-types";
-import { createRequestHandler } from "react-router";
+import { createRequestHandler, RouterContextProvider } from "react-router";
+import { vibeLoadContext } from "../app/lib/vibe-load-context.js";
 
 // @ts-expect-error - virtual module provided by React Router
 import * as serverBuild from "virtual:react-router/server-build";
@@ -372,12 +373,19 @@ export default {
     // a dev/draft build whose grant check won't confirm public access.
     const hasFsId = vibePathnameHasFsId(url.pathname);
 
-    // Delegate to React Router for SSR
-    const ssrResponse = (await getRequestHandler()(request as unknown as Parameters<ReturnType<typeof createRequestHandler>>[0], {
+    // Delegate to React Router for SSR. React Router v8 expects loader context
+    // as a RouterContextProvider, so seed the typed vibeLoadContext key here
+    // instead of passing a plain object.
+    const loadContext = new RouterContextProvider();
+    loadContext.set(vibeLoadContext, {
       vibeDiyAppParams: cfCtx.vibesCtx.params,
       vibeOgTitle: vibeHints.ogTitle,
       isWorldReadable: hasFsId ? false : vibeHints.isWorldReadable,
-    })) as unknown as CFResponse;
+    });
+    const ssrResponse = (await getRequestHandler()(
+      request as unknown as Parameters<ReturnType<typeof createRequestHandler>>[0],
+      loadContext
+    )) as unknown as CFResponse;
 
     // Log missing vibe paths so the ETL pipeline can surface them for reanimation triage.
     // Only log /vibe/<user>/<slug> (and deeper) paths — the two-segment legacy form is

@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router";
 import type { ResGetChatDetails, MetaScreenShot } from "@vibes.diy/api-types";
 
 interface PromptsTabProps {

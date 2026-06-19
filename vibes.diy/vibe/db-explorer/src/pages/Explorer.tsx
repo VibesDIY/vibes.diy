@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router";
 import { DocDBViewer, DocRecord } from "../components/DocDBViewer.js";
 import { MobileProvider } from "../components/MobileProvider.js";
 import { useFireproofDB } from "../hooks/useFireproofDB.js";

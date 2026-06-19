@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
-import { useMatches, useNavigate, useParams, useSearchParams } from "react-router";
+import { useMatches, useNavigate, useParams, useSearchParams, type RouterContextProvider } from "react-router";
+import { vibeLoadContext } from "../lib/vibe-load-context.js";
 import { useVibesDiy } from "../vibes-diy-provider.js";
 import { BuildURI, URI } from "@adviser/cement";
 import { SignIn, useAuth, useClerk } from "@clerk/react";
@@ -13,7 +14,7 @@ import { useIframeApiInFlight } from "../hooks/useIframeApiInFlight.js";
 import { ShareModal } from "../components/ResultPreview/ShareModal.js";
 import { useDocumentTitle } from "../hooks/useDocumentTitle.js";
 import { toast } from "react-hot-toast";
-import { isMetaScreenShot, isMetaTitle, type ResGetAppByFsId, type VibesFPApiParameters } from "@vibes.diy/api-types";
+import { isMetaScreenShot, isMetaTitle, type ResGetAppByFsId } from "@vibes.diy/api-types";
 import { computeCardVariant } from "./vibe-card-variant.js";
 import { readIntent, withIntent, withoutIntent } from "./vibe-intent.js";
 import { adminModeStorageKey } from "../lib/admin-mode.js";
@@ -23,12 +24,6 @@ import { RUNTIME_PREVIEW_IFRAME_ALLOW, RUNTIME_PREVIEW_IFRAME_SANDBOX } from "..
 // first byte of HTML. Without this, the browser can't start fetching the
 // iframe document until React has hydrated and a useEffect has run — adding
 // hundreds of ms to perceived load time on viewer pages.
-interface VibeLoaderCtx {
-  readonly vibeDiyAppParams: VibesFPApiParameters;
-  readonly vibeOgTitle?: string;
-  readonly isWorldReadable?: boolean;
-}
-
 interface VibeLoaderData {
   readonly iframeUrl: string | undefined;
   readonly vibeOgTitle: string | undefined;
@@ -42,16 +37,17 @@ function isWriterCapableGrant(grant: ResGetAppByFsId["grant"]): boolean {
 export async function loader(loaderCtx: {
   params: Record<string, string | undefined>;
   request: Request;
-  context: VibeLoaderCtx;
+  context: RouterContextProvider;
 }): Promise<VibeLoaderData> {
   const { ownerHandle, appSlug, fsId } = loaderCtx.params;
   if (!ownerHandle || !appSlug) {
     return { iframeUrl: undefined, vibeOgTitle: undefined, isWorldReadable: false };
   }
+  const ctx = loaderCtx.context.get(vibeLoadContext);
   const reqUrl = URI.from(loaderCtx.request.url);
   const protocol = reqUrl.protocol === "https:" ? "https" : "http";
   const port = reqUrl.port && reqUrl.port !== "80" && reqUrl.port !== "443" ? reqUrl.port : undefined;
-  const params = loaderCtx.context.vibeDiyAppParams;
+  const params = ctx.vibeDiyAppParams;
   const baseUrl = calcEntryPointUrl({
     hostnameBase: params.vibes.svc.hostnameBase,
     protocol,
@@ -65,8 +61,8 @@ export async function loader(loaderCtx: {
     .toString();
   return {
     iframeUrl,
-    vibeOgTitle: loaderCtx.context.vibeOgTitle,
-    isWorldReadable: loaderCtx.context.isWorldReadable ?? false,
+    vibeOgTitle: ctx.vibeOgTitle,
+    isWorldReadable: ctx.isWorldReadable ?? false,
   };
 }
 
@@ -77,10 +73,10 @@ export function meta({
 }: {
   data: VibeLoaderData;
   params: Record<string, string>;
-  matches: { data: unknown }[];
+  matches: { loaderData: unknown }[];
 }) {
   const { ownerHandle, appSlug } = params;
-  const rootData = matches[0]?.data as { env?: { VIBES_SVC_HOSTNAME_BASE?: string } } | undefined;
+  const rootData = matches[0]?.loaderData as { env?: { VIBES_SVC_HOSTNAME_BASE?: string } } | undefined;
   const hostnameBase = rootData?.env?.VIBES_SVC_HOSTNAME_BASE?.replace(/^\./, "") ?? "vibes.diy";
   const imageUrl = `https://${appSlug}--${ownerHandle}.${hostnameBase}/screenshot.jpg`;
   const title = data?.vibeOgTitle ?? appSlug ?? "Vibe";
@@ -114,7 +110,7 @@ export default function VibeIframeWrapper() {
   // so this works in non-data routers (the test) without throwing. Render
   // must remain SSR-safe: no synchronous window access.
   const matches = useMatches();
-  const loaderData = matches[matches.length - 1]?.data as { iframeUrl?: string; isWorldReadable?: boolean } | undefined;
+  const loaderData = matches[matches.length - 1]?.loaderData as { iframeUrl?: string; isWorldReadable?: boolean } | undefined;
   const isWorldReadable = (loaderData as { isWorldReadable?: boolean } | undefined)?.isWorldReadable ?? false;
   const [iframeUrl, setIframeUrl] = useState<string | undefined>(loaderData?.iframeUrl);
   const isNetworkActive = useIframeApiInFlight();

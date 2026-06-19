@@ -1,7 +1,8 @@
 /// <reference types="vite/client" />
 
 import React from "react";
-import { Links, Meta, Outlet, Scripts, ScrollRestoration, useLoaderData } from "react-router";
+import { Links, Meta, Outlet, Scripts, ScrollRestoration, useLoaderData, type RouterContextProvider } from "react-router";
+import { vibeLoadContext } from "./lib/vibe-load-context.js";
 import ClientOnly from "./components/ClientOnly.js";
 import CookieBanner from "./components/CookieBanner.js";
 import { CookieConsentProvider } from "./contexts/CookieConsentContext.js";
@@ -9,7 +10,6 @@ import { ThemeProvider } from "./contexts/ThemeContext.js";
 import { ErrorBoundary as AppErrorBoundary } from "./ErrorBoundary.js";
 import GtmNoScript from "./components/GtmNoScript.js";
 import { VibesDiyProvider, VibesDiyWebVars } from "./vibes-diy-provider.js";
-import { VibesFPApiParameters } from "@vibes.diy/api-types";
 import { getVibesGlobalCSS } from "@vibes.diy/base";
 import "./app.css";
 import { Toaster } from "react-hot-toast";
@@ -37,10 +37,10 @@ export function meta() {
 }
 
 // Loader for root route
-export async function loader(loaderCtx: { context: { vibeDiyAppParams: VibesFPApiParameters } }) {
+export async function loader(loaderCtx: { context: RouterContextProvider }) {
   // const env = await fetch("/api/clientEnv")
-  // console.log(`loader-invoke from root.tsx`, loaderCtx.context.vibeDiyAppParams.vibes.env);
-  const params = loaderCtx.context.vibeDiyAppParams;
+  // console.log(`loader-invoke from root.tsx`, loaderCtx.context.get(vibeLoadContext).vibeDiyAppParams.vibes.env);
+  const params = loaderCtx.context.get(vibeLoadContext).vibeDiyAppParams;
   return new Response(
     JSON.stringify({
       // pkgRepos: params.pkgRepos,

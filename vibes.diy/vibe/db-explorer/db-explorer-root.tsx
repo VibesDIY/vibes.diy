@@ -1,5 +1,5 @@
 import React from "react";
-import { BrowserRouter } from "react-router-dom";
+import { BrowserRouter } from "react-router";
 import { App } from "./src/App.js";
 
 export function DBExplorerRoot({ base }: { base: string }) {
