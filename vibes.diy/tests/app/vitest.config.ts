@@ -6,7 +6,10 @@ export default defineConfig({
   plugins: [tsconfigPaths({ configNames: ["tsconfig.test.json"] }) as never],
   optimizeDeps: {
     include: ["react", "react-dom", "react/jsx-runtime", "@testing-library/react", "react-markdown", "react-router-dom"],
-    exclude: ["fsevents", "lightningcss"],
+    // `find-up` (Node-only keybag chain behind @vibes.diy/identity/node, reached
+    // via fireproof-node's dynamic import) imports `unicorn-magic`'s `toPath`,
+    // which esbuild can't pre-bundle; the keybag path never runs in-browser.
+    exclude: ["fsevents", "lightningcss", "find-up"],
   },
   // cacheDir: "./node_modules/.vibes.diy-vite-cache",
   test: {

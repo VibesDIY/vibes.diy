@@ -4,6 +4,11 @@ import { playwright } from "@vitest/browser-playwright";
 export default defineConfig({
   optimizeDeps: {
     include: ["react", "react-dom", "react/jsx-runtime", "@testing-library/react"],
+    // `find-up` (pulled in by the Node-only keybag chain behind
+    // @vibes.diy/identity/node, reached via fireproof-node's dynamic import)
+    // imports `unicorn-magic`'s `toPath`, which esbuild can't pre-bundle.
+    // The keybag path never executes in-browser, so externalize it.
+    exclude: ["find-up"],
   },
   test: {
     name: "use-vibes",
