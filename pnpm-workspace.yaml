@@ -11,6 +11,7 @@ packages:
   - "use-vibes/examples/hosted-dev"
   - "vibes-diy"
   - "vibes.diy/base"
+  - "vibes.diy/identity"
   - "vibes.diy/stories"
   - "vibes.diy/pkg"
   - "vibes.diy/vibe/*"

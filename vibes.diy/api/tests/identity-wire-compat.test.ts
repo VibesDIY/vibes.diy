@@ -28,7 +28,7 @@ describe("identity wire-compat (baseline: @fireproof/* 0.24.19)", { timeout: 300
     ca = await createTestDeviceCA(sthis);
     user = await createTestUser({ sthis, deviceCA: ca, session: "wire-compat", seqUserId: 1 });
     const caCert = (await ca.caCertificate()).Ok();
-    verifier = new DeviceIdVerifyMsg(sthis.txt.base64, [caCert], {});
+    verifier = new DeviceIdVerifyMsg(sthis.txt.base64, [caCert], { clockTolerance: 0, deviceIdCA: ca });
   });
 
   it("device-id token header is ES256/JWT with cert-chain headers", async () => {
@@ -51,8 +51,9 @@ describe("identity wire-compat (baseline: @fireproof/* 0.24.19)", { timeout: 300
     const tok = await user.getDashBoardToken();
     const vr = await verifier.verifyWithCertificate(tok.token);
     expect(vr.valid).toBe(true);
-    expect(vr.payload.sub).toBe("device-id");
-    expect(vr.header.alg).toBe("ES256");
+    if (!vr.valid) throw new Error(String(vr.error));
+    expect((vr.payload as { sub?: string }).sub).toBe("device-id");
+    expect((vr.header as { alg?: string }).alg).toBe("ES256");
   });
 
   it("JWT header+payload segments are byte-stable for fixed claims (only the signature varies)", async () => {
