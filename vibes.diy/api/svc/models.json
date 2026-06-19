@@ -5,14 +5,16 @@
     "description": "Claude Opus 4.6 Fast is Anthropic's most capable model with faster output, ideal for complex coding and creative tasks",
     "featured": true,
     "preSelected": ["app"],
-    "supports": ["chat", "app"]
+    "supports": ["chat", "app"],
+    "imageInput": true
   },
   {
     "id": "anthropic/claude-opus-4.5",
     "name": "Claude Opus 4.5",
     "description": "Claude Opus 4.5 is Anthropic's most powerful model, offering the best performance for complex reasoning, coding, and creative tasks",
     "featured": true,
-    "supports": ["chat", "app"]
+    "supports": ["chat", "app"],
+    "imageInput": true
   },
   {
     "id": "anthropic/claude-sonnet-4.6",
@@ -20,14 +22,16 @@
     "description": "Claude Sonnet 4.6 is Anthropic's most advanced Sonnet model to date, optimized for real-world agents and coding workflows",
     "featured": true,
     "preSelected": ["chat"],
-    "supports": ["chat", "app"]
+    "supports": ["chat", "app"],
+    "imageInput": true
   },
   {
     "id": "x-ai/grok-4-fast",
     "name": "Grok 4 Fast (free)",
     "description": "Grok 4 Fast is xAI's latest multimodal model with SOTA cost-efficiency and a 2M token context window",
     "featured": true,
-    "supports": ["chat", "app"]
+    "supports": ["chat", "app"],
+    "imageInput": true
   },
   {
     "id": "google/gemini-3.1-pro-preview",
@@ -35,14 +39,16 @@
     "description": "Gemini 3.1 Pro is Google's frontier reasoning model for software engineering and agentic tasks",
     "featured": true,
     "fallbackFor": ["chat", "app"],
-    "supports": ["chat", "app"]
+    "supports": ["chat", "app"],
+    "imageInput": true
   },
   {
     "id": "openai/gpt-5",
     "name": "GPT-5",
     "description": "GPT-5 is OpenAI's most advanced model, offering major improvements in reasoning, code quality, and user experience",
     "featured": true,
-    "supports": ["chat", "app"]
+    "supports": ["chat", "app"],
+    "imageInput": true
   },
   {
     "id": "prodia/flux-2.klein.9b",
@@ -57,7 +63,8 @@
     "name": "GPT-5 Image Mini",
     "description": "OpenAI's GPT-5 Image Mini model for fast image generation",
     "featured": false,
-    "supports": ["img"]
+    "supports": ["img"],
+    "imageInput": true
   },
   {
     "id": "z-ai/glm-4.6",
@@ -92,7 +99,8 @@
     "name": "Gemini 2.5 Flash",
     "description": "Gemini 2.5 Flash is Google's state-of-the-art workhorse model, specifically designed for advanced reasoning, coding, mathematics, and scientific tasks",
     "featured": false,
-    "supports": ["chat", "app"]
+    "supports": ["chat", "app"],
+    "imageInput": true
   },
   {
     "id": "deepseek/deepseek-chat-v3.1",
@@ -106,14 +114,16 @@
     "name": "Gemini 2.0 Flash",
     "description": "Gemini Flash 2.0 offers a significantly faster time to first token (TTFT) compared to Gemini Flash 1.5, while maintaining quality on par with larger models like Gemini Pro 1.5",
     "featured": false,
-    "supports": ["chat", "app"]
+    "supports": ["chat", "app"],
+    "imageInput": true
   },
   {
     "id": "openai/gpt-4.1-mini",
     "name": "GPT-4.1 Mini",
     "description": "GPT-4.1 Mini is a mid-sized model delivering performance competitive with GPT-4o at substantially lower latency and cost",
     "featured": false,
-    "supports": ["chat", "app"]
+    "supports": ["chat", "app"],
+    "imageInput": true
   },
   {
     "id": "deepseek/deepseek-chat-v3-0324",
@@ -127,14 +137,16 @@
     "name": "Gemini 2.5 Flash Lite",
     "description": "Gemini 2.5 Flash-Lite is a lightweight reasoning model in the Gemini 2.5 family, optimized for ultra-low latency and cost efficiency",
     "featured": false,
-    "supports": ["chat", "app"]
+    "supports": ["chat", "app"],
+    "imageInput": true
   },
   {
     "id": "google/gemma-3-12b-it",
     "name": "Gemma 3 12B",
     "description": "Gemma 3 introduces multimodality, supporting vision-language input and text outputs",
     "featured": false,
-    "supports": ["chat", "app"]
+    "supports": ["chat", "app"],
+    "imageInput": true
   },
   {
     "id": "openai/gpt-oss-20b",
@@ -148,7 +160,8 @@
     "name": "GPT-4o-mini",
     "description": "GPT-4o mini is OpenAI's newest model after GPT-4 Omni, supporting both text and image inputs with text outputs",
     "featured": false,
-    "supports": ["chat", "app"]
+    "supports": ["chat", "app"],
+    "imageInput": true
   },
   {
     "id": "openai/gpt-oss-120b",
@@ -162,14 +175,16 @@
     "name": "GPT-5 Mini",
     "description": "GPT-5 Mini is a compact version of GPT-5, designed to handle lighter-weight reasoning tasks",
     "featured": false,
-    "supports": ["chat", "app"]
+    "supports": ["chat", "app"],
+    "imageInput": true
   },
   {
     "id": "openai/gpt-5.4-mini",
     "name": "GPT-5.4 Mini",
     "description": "GPT-5.4 Mini is OpenAI's latest compact model optimized for fast, cost-efficient structured output",
     "featured": false,
-    "supports": ["chat", "app"]
+    "supports": ["chat", "app"],
+    "imageInput": true
   },
   {
     "id": "z-ai/glm-4.5",
@@ -211,7 +226,8 @@
     "name": "GPT-4.1",
     "description": "GPT-4.1 is a flagship large language model optimized for advanced instruction following, real-world software engineering, and long-context reasoning",
     "featured": false,
-    "supports": ["chat", "app"]
+    "supports": ["chat", "app"],
+    "imageInput": true
   },
   {
     "id": "moonshotai/kimi-k2-0905",
@@ -225,35 +241,40 @@
     "name": "Claude Opus 4.7",
     "description": "Claude Opus 4.7 is the next generation of Anthropic's Opus family, built for long-running, asynchronous agents",
     "featured": true,
-    "supports": ["chat", "app"]
+    "supports": ["chat", "app"],
+    "imageInput": true
   },
   {
     "id": "openai/gpt-5.4",
     "name": "GPT-5.4",
     "description": "GPT-5.4 is OpenAI's flagship model, building on GPT-5 with unified architecture and improved reasoning",
     "featured": true,
-    "supports": ["chat", "app"]
+    "supports": ["chat", "app"],
+    "imageInput": true
   },
   {
     "id": "openai/gpt-5.4-pro",
     "name": "GPT-5.4 Pro",
     "description": "GPT-5.4 Pro is OpenAI's most advanced model, building on GPT-5.4's unified architecture with enhanced reasoning capabilities",
     "featured": false,
-    "supports": ["chat", "app"]
+    "supports": ["chat", "app"],
+    "imageInput": true
   },
   {
     "id": "openai/gpt-5.5",
     "name": "GPT-5.5",
     "description": "GPT-5.5 is OpenAI's frontier model for complex professional workloads, with stronger reasoning, higher reliability, and a 1M+ token context window",
     "featured": true,
-    "supports": ["chat", "app"]
+    "supports": ["chat", "app"],
+    "imageInput": true
   },
   {
     "id": "x-ai/grok-4.20",
     "name": "Grok 4.20",
     "description": "Grok 4.20 is xAI's latest flagship model with industry-leading speed and agentic tool calling",
     "featured": true,
-    "supports": ["chat", "app"]
+    "supports": ["chat", "app"],
+    "imageInput": true
   },
   {
     "id": "z-ai/glm-5.1",
@@ -288,7 +309,8 @@
     "name": "Gemini 3.5 Flash",
     "description": "Gemini 3.5 Flash is Google's fast, cost-efficient model for everyday coding and assistant workflows",
     "featured": false,
-    "supports": ["chat", "app"]
+    "supports": ["chat", "app"],
+    "imageInput": true
   },
   {
     "id": "openai/gpt-5.4-image-2",
@@ -296,34 +318,39 @@
     "description": "GPT-5.4 Image 2 combines OpenAI's GPT-5.4 with state-of-the-art image generation, enabling multimodal workflows across reasoning, code, and visual output (default image-edit backend)",
     "featured": true,
     "preSelected": ["img-edit"],
-    "supports": ["img", "img-edit"]
+    "supports": ["img", "img-edit"],
+    "imageInput": true
   },
   {
     "id": "google/gemini-3.1-flash-image-preview",
     "name": "Nano Banana 2",
     "description": "Google's latest image generation and editing model (Gemini 3.1 Flash Image Preview) delivering professional visual quality at fast speed",
     "featured": true,
-    "supports": ["img"]
+    "supports": ["img"],
+    "imageInput": true
   },
   {
     "id": "google/gemini-3-pro-image-preview",
     "name": "Nano Banana Pro",
     "description": "Google's Gemini 3 Pro Image Preview for highest-quality image generation and editing",
     "featured": false,
-    "supports": ["img"]
+    "supports": ["img"],
+    "imageInput": true
   },
   {
     "id": "openai/gpt-5-image",
     "name": "GPT-5 Image",
     "description": "OpenAI's GPT-5 Image model for high-quality image generation",
     "featured": false,
-    "supports": ["img"]
+    "supports": ["img"],
+    "imageInput": true
   },
   {
     "id": "google/gemini-2.5-flash-image",
     "name": "Nano Banana",
     "description": "Google's Gemini 2.5 Flash Image model for image generation and editing",
     "featured": false,
-    "supports": ["img"]
+    "supports": ["img"],
+    "imageInput": true
   }
 ]

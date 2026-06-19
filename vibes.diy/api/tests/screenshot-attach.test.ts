@@ -80,7 +80,7 @@ describe("assemblePromptPayload: screenshot attachment", () => {
 
     const r = await assemblePromptPayload(ctx.appCtx.vibesCtx, {
       chatId,
-      model: "anthropic/claude-sonnet-4-6",
+      model: "anthropic/claude-opus-4.5",
       newUserMessages: [{ role: "user", content: [{ type: "text", text: "make the card smaller" }] }],
       attachScreenshot: true,
     });
@@ -124,7 +124,7 @@ describe("assemblePromptPayload: screenshot attachment", () => {
 
     const r = await assemblePromptPayload(ctx.appCtx.vibesCtx, {
       chatId,
-      model: "anthropic/claude-sonnet-4-6",
+      model: "anthropic/claude-opus-4.5",
       newUserMessages: [{ role: "user", content: [{ type: "text", text: "no image please" }] }],
     });
     expect(r.isOk()).toBe(true);
@@ -136,7 +136,7 @@ describe("assemblePromptPayload: screenshot attachment", () => {
 
     const r = await assemblePromptPayload(ctx.appCtx.vibesCtx, {
       chatId,
-      model: "anthropic/claude-sonnet-4-6",
+      model: "anthropic/claude-opus-4.5",
       newUserMessages: [{ role: "user", content: [{ type: "text", text: "still works" }] }],
       attachScreenshot: true,
     });
@@ -152,7 +152,7 @@ describe("assemblePromptPayload: screenshot attachment", () => {
 
     const r = await assemblePromptPayload(ctx.appCtx.vibesCtx, {
       chatId: chat.chatId,
-      model: "anthropic/claude-sonnet-4-6",
+      model: "anthropic/claude-opus-4.5",
       newUserMessages: [{ role: "user", content: [{ type: "text", text: "make a hello world app" }] }],
       attachScreenshot: true,
     });
@@ -195,7 +195,7 @@ describe("assemblePromptPayload: screenshot attachment", () => {
 
     const r = await assemblePromptPayload(vctx, {
       chatId: chat.chatId,
-      model: "anthropic/claude-sonnet-4-6",
+      model: "anthropic/claude-opus-4.5",
       newUserMessages: [{ role: "user", content: [{ type: "text", text: "tweak it" }] }],
       attachScreenshot: true,
     });

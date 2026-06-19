@@ -17,6 +17,7 @@ import { and, eq } from "drizzle-orm/sql/expressions";
 import { makeBaseSystemPrompt, resolveEffectiveModel } from "@vibes.diy/prompts";
 import type { VibesApiSQLCtx } from "../types.js";
 import { createPromptAssetFetch, promptsPkgBaseUrl } from "./prompt-asset-fetch.js";
+import { loadModels } from "../public/list-models.js";
 import { loadLatestScreenshotDataUrl } from "./latest-screenshot.js";
 import { modelSupportsImageInput } from "./model-vision.js";
 import { assembleSlotMessages, renderSlotMessagesAs } from "./slot-assembler.js";
@@ -175,6 +176,18 @@ export interface AssemblePromptPayloadArgs {
   readonly attachScreenshot?: boolean;
 }
 
+// Resolve image-input capability from the model catalog. Best-effort: a failed
+// catalog load means we can't confirm capability, so we default-deny (no
+// screenshot) rather than risk a 4xx on a text-only model.
+async function modelSupportsImageInputViaCatalog(vctx: VibesApiSQLCtx, modelId: string): Promise<boolean> {
+  const rModels = await loadModels(vctx);
+  if (rModels.isErr()) {
+    ensureLogger(vctx.sthis, "assemblePromptPayload").Warn().Err(rModels).Msg("models load failed; skipping screenshot");
+    return false;
+  }
+  return modelSupportsImageInput(rModels.Ok().models, modelId);
+}
+
 export async function assemblePromptPayload(
   vctx: VibesApiSQLCtx,
   args: AssemblePromptPayloadArgs
@@ -300,7 +313,7 @@ export async function assemblePromptPayload(
   // on image content is non-retryable in the fallback path), and best-effort
   // otherwise.
   let finalNewUser = newUserOnly;
-  if (args.attachScreenshot === true && !isInitial && modelSupportsImageInput(model)) {
+  if (args.attachScreenshot === true && !isInitial && (await modelSupportsImageInputViaCatalog(vctx, model))) {
     const fsIdsNewestFirst = timeline.map((t) => t.fsId).reverse();
     const shot = await loadLatestScreenshotDataUrl(vctx, fsIdsNewestFirst);
     if (shot) {

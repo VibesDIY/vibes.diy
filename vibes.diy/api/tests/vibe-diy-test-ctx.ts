@@ -140,6 +140,7 @@ export async function createVibeDiyTestCtx(
         "Claude Opus 4.5 is Anthropic's most powerful model, offering the best performance for complex reasoning, coding, and creative tasks",
       featured: true,
       preSelected: ["chat", "app", "img"],
+      imageInput: true,
     },
     {
       id: "anthropic/claude-sonnet-4.6",
@@ -147,6 +148,7 @@ export async function createVibeDiyTestCtx(
       description: "Claude Sonnet 4.6 is Anthropic's most advanced Sonnet model to date",
       featured: true,
       supports: ["chat", "app"],
+      imageInput: true,
     },
     {
       id: "google/gemini-3.1-pro-preview",
@@ -154,6 +156,13 @@ export async function createVibeDiyTestCtx(
       description: "Gemini 3.1 Pro is Google's frontier reasoning model for software engineering and agentic tasks",
       featured: true,
       fallbackFor: ["chat", "app"],
+      supports: ["chat", "app"],
+      imageInput: true,
+    },
+    {
+      id: "deepseek/deepseek-chat-v3.1",
+      name: "DeepSeek V3.1",
+      description: "DeepSeek V3.1 is a text-only chat model (no image input).",
       supports: ["chat", "app"],
     },
   ];
