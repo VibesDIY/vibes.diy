@@ -1385,19 +1385,34 @@ importers:
       '@adviser/cement':
         specifier: ^0.5.34
         version: 0.5.34(patch_hash=2f6391e0a56fe610ad9ae72430b603360ee9c00812af21a792562791454613c7)(typescript@6.0.3)
+      '@fireproof/core-cli':
+        specifier: 0.24.19
+        version: 0.24.19(@pnpm/logger@5.2.0)(typescript@6.0.3)
+      '@fireproof/core-device-id':
+        specifier: 0.24.19
+        version: 0.24.19(typescript@6.0.3)
+      '@fireproof/core-keybag':
+        specifier: 0.24.19
+        version: 0.24.19(typescript@6.0.3)
+      '@fireproof/core-protocols-dashboard':
+        specifier: 0.24.19
+        version: 0.24.19(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(typescript@6.0.3)
       '@fireproof/core-runtime':
         specifier: 0.24.19
         version: 0.24.19(typescript@6.0.3)
       '@fireproof/core-types-base':
         specifier: 0.24.19
         version: 0.24.19(patch_hash=87735b1c6573dc1bcdb012fddea99c13737c6467b8d195b0655aa2e6f8eb88f3)(typescript@6.0.3)
+      '@fireproof/core-types-device-id':
+        specifier: 0.24.19
+        version: 0.24.19(typescript@6.0.3)
+      '@fireproof/core-types-protocols-dashboard':
+        specifier: 0.24.19
+        version: 0.24.19(typescript@6.0.3)
       zod:
         specifier: ^4.1.12
         version: 4.4.3
     devDependencies:
-      '@fireproof/core-cli':
-        specifier: 0.24.19
-        version: 0.24.19(@pnpm/logger@5.2.0)(typescript@6.0.3)
       vitest:
         specifier: ~4.1.9
         version: 4.1.9(@opentelemetry/api@1.9.1)(@types/node@25.9.3)(@vitest/browser-playwright@4.1.9)(@vitest/coverage-v8@4.1.9)(@vitest/ui@4.1.9)(vite@7.3.5(@types/node@25.9.3)(jiti@2.7.0)(lightningcss@1.32.0)(terser@5.46.1)(tsx@4.22.4)(yaml@2.9.0))
