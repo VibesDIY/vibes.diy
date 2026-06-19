@@ -67,7 +67,10 @@ export class LLMChatImpl implements LLMChat {
 
   readonly sectionStream: ReadableStream<OnResponseTypes>;
 
-  readonly #writer: WritableStreamDefaultWriter<OnResponseTypes>;
+  // Idempotent subscription teardown: unregisters the connection's onMessage
+  // listener and closes the section-stream writer. Shared with transport-loss
+  // handlers so explicit close() fully tears down a still-alive socket.
+  readonly #teardown: () => void;
   // promptId?: string
   // onResponse = OnFunc<(msg: OnResponseTypes) => void>();
   // onError = OnFunc<(err: VibesDiyError) => void>();
@@ -137,22 +140,32 @@ export class LLMChatImpl implements LLMChat {
           sectionEventsWriter.abort();
         });
     });
-    const closeOnTransportLoss = () => {
+    // Single idempotent teardown shared by transport loss (onError/onClose)
+    // and explicit close(). Unregistering the onMessage listener is the
+    // load-bearing part: without it a still-alive socket that later flushes a
+    // message for this tid — exactly the half-open reconnect case — would keep
+    // invoking the evento handler, which writes into an already-closed
+    // TransformStream and produces rejected writes. Closing the writer alone
+    // (the old close() behavior) does not stop that.
+    let toredown = false;
+    const teardown = () => {
+      if (toredown) return;
+      toredown = true;
       unreg();
       // Close (not abort) so the route's processStream resolves cleanly and
       // can converge on the server's durable state. Catch: the writer may
       // already be closed (explicit close()) or aborted (evento error path).
       sectionEventsWriter.close().catch(() => undefined);
     };
-    conn.onError(closeOnTransportLoss);
-    conn.onClose(closeOnTransportLoss);
+    conn.onError(teardown);
+    conn.onClose(teardown);
 
     const res = await api.request<Req<ReqOpenChat>, ResOpenChat>(open, { tid, resMatch: isResOpenChat });
     if (res.isErr()) {
       return Result.Err<LLMChat>(res.Err());
     }
     // console.log("LLMChat open succeeded for chatId:", res.Ok());
-    const llmChat = new LLMChatImpl(api, tid, res.Ok(), sectionEvents.readable, sectionEventsWriter);
+    const llmChat = new LLMChatImpl(api, tid, res.Ok(), sectionEvents.readable, teardown);
     return Result.Ok(llmChat);
   }
 
@@ -162,13 +175,13 @@ export class LLMChatImpl implements LLMChat {
     tid: string,
     res: ResOpenChat,
     sectionEvents: ReadableStream<OnResponseTypes>,
-    writer: WritableStreamDefaultWriter<OnResponseTypes>
+    teardown: () => void
   ) {
     this.api = api;
     this.tid = tid;
     this.res = res;
     this.sectionStream = sectionEvents;
-    this.#writer = writer;
+    this.#teardown = teardown;
     // this.#activePromptIds = activePromptIds;
   }
 
@@ -267,6 +280,10 @@ export class LLMChatImpl implements LLMChat {
   }
 
   async close(_force = false) {
-    this.#writer.close().catch(() => undefined);
+    // Full teardown (unregister listener + close writer), not just the writer:
+    // a still-alive socket must stop reaching the evento handler so it can't
+    // write into the closed stream. Idempotent, so racing a transport-loss
+    // close is safe.
+    this.#teardown();
   }
 }

@@ -30,10 +30,7 @@ function stubApi(connection: VibeDiyApiConnection) {
 }
 
 async function openChat(connection: VibeDiyApiConnection) {
-  const rChat = await LLMChatImpl.open(
-    { ownerHandle: "o", appSlug: "a", mode: "chat" } as never,
-    stubApi(connection) as never
-  );
+  const rChat = await LLMChatImpl.open({ ownerHandle: "o", appSlug: "a", mode: "chat" } as never, stubApi(connection) as never);
   expect(rChat.isOk()).toBe(true);
   return rChat.Ok();
 }
@@ -64,5 +61,27 @@ describe("LLMChat section stream on transport loss", () => {
     const chat = await openChat(connection);
     onClose.invoke({} as W3CWebSocketCloseEvent);
     await expect(chat.close()).resolves.toBeUndefined();
+  });
+
+  it("explicit close() unregisters the connection message listener", async () => {
+    // Regression (#2473 review): close() must tear down the onMessage
+    // subscription, not just close the writer. Otherwise a still-alive socket
+    // that later flushes a message for this tid — the half-open reconnect case
+    // — keeps invoking the evento handler, which writes into the already-closed
+    // section stream (rejected writes / unhandled rejections).
+    const { connection } = createMockConnection();
+    let unregistered = false;
+    const register = connection.onMessage;
+    (connection as { onMessage: (cb: (e: W3CWebSocketMessageEvent) => void) => () => void }).onMessage = (cb) => {
+      const unreg = register(cb);
+      return () => {
+        unregistered = true;
+        unreg();
+      };
+    };
+    const chat = await openChat(connection);
+    expect(unregistered).toBe(false);
+    await chat.close();
+    expect(unregistered).toBe(true);
   });
 });
