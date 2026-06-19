@@ -1,10 +1,22 @@
 # Self-Hosted Package Serving (/vibe-pkg/)
 
-The `@vibes.diy/*` packages (vibe-runtime, vibe-types, base, etc.) are served by the vibes.diy worker itself at `/vibe-pkg/<npm-path>`, not fetched from esm.sh. This keeps versions consistent with the deployed code.
+The `@vibes.diy/*` packages (vibe-runtime, vibe-types, base, etc.) are **built
+from the monorepo workspace source at deploy time** and served by the vibes.diy
+worker itself at `/vibe-pkg/<npm-path>` — not fetched from esm.sh or any npm
+registry. `vite-plugin-workspace-packages.ts` compiles each workspace package
+from source into the worker's static assets (`_vibe-pkg/<pkg>/index.js`); at
+runtime the worker serves `/vibe-pkg/*` from `env.ASSETS` (`pkg/workers/app.ts`).
+This keeps the browser packages consistent with the deployed code.
+
+**npm-independent.** Because `/vibe-pkg/` is built from source, a `pkg@p*` npm
+publish has **no effect** on what browsers load — that's controlled solely by the
+`vibes-diy@c*`/`@p*` deploy commit. The npm packages are a separate channel for
+external consumers (the `vibes-diy` CLI, `use-vibes`, `@vibes.diy/*` imported in
+users' own Node/server code). See [deploy-tags.md § vibe-pkg vs `pkg@*` publishes](deploy-tags.md#vibe-pkg-vs-pkg-publishes--two-independent-distribution-channels).
 
 ## Why
 
-esm.sh caches aggressively and the `privateNpm:` flag in `grouped-vibe-import-map.ts` doesn't pin versions. Serving from `/vibe-pkg/` means the packages always match what was built at deploy time.
+esm.sh caches aggressively and the `privateNpm:` flag in `grouped-vibe-import-map.ts` doesn't pin versions. Building from source and serving from `/vibe-pkg/` means the packages always match what was built at deploy time. (Only when `WORKSPACE_NPM_URL` is unset does prod fall back to esm.sh — see Configuration below.)
 
 ## Configuration
 
