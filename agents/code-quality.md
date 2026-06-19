@@ -2,6 +2,18 @@
 
 The linter enforces no `any`, no unused vars, no unused imports, `import type` for type-only imports. Run `pnpm check` before submitting — it runs format, build, test, and lint.
 
+## Root tooling (lint/typecheck scope)
+
+Root-level tooling — `vitest.config.ts`, the `scripts/` checks, and custom helpers in `tools/` (e.g. `tools/vitest-phase-reporter.ts`) — is **not** part of a package `tsconfig`, so the typed-lint **project service** can't parse it. eslint surfaces this as `Parsing error: <file> was not found by the project service`.
+
+The house style is to **exclude these dirs from lint** rather than wire them into a tsconfig: `eslint.config.mjs` already ignores `scripts/`, `tools/`, and `vitest.config.ts`. Their _runner_ handles them — vitest transforms a `.ts` reporter/config on load; node runs `.mjs` check scripts — so they're transpiled, not typechecked by `core-cli tsc`.
+
+Conventions when adding a root tool:
+
+- **Prefer `.ts`** (house style) over `.mjs`; vitest/tsx transform it at load. Put it in `tools/` (or `scripts/`) — both are eslint-ignored.
+- **Don't** add the file to a tsconfig (or flip `allowDefaultProject`) just to satisfy lint — add/keep the dir in eslint `ignores`, matching `vitest.config.ts`.
+- Because such files are neither linted nor typechecked, **keep them small and defensive**, and validate with `node --check` (plain JS) and the CI run rather than relying on the gate.
+
 ## Dependencies
 
 When updating any dependency version, always update it across **all** workspace packages — never bump a single package in isolation. CI runs `pnpm dedupe --check` and will fail on version splits.

@@ -25,7 +25,7 @@ qa-reports/
 claude-browse-vibes/*.png
 *.sse
 # CI per-file/per-test timing reports written by actions/base test step
-# (vitest --reporter=json + tools/vitest-phase-reporter.mjs); uploaded as the
+# (vitest --reporter=json + tools/vitest-phase-reporter.ts); uploaded as the
 # test-timing artifact
 test-timing.json
 test-phase-timing.json

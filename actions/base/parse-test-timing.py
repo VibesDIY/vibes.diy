@@ -6,7 +6,7 @@ a Markdown block to $GITHUB_STEP_SUMMARY: totals, the Top-20 slowest files (by
 wall duration), and any failures. Exits non-zero only when the report is missing
 or unparseable, which the caller (actions/base) treats as a harness failure.
 
-If test-phase-timing.json (from tools/vitest-phase-reporter.mjs) is present, also
+If test-phase-timing.json (from tools/vitest-phase-reporter.ts) is present, also
 appends a best-effort "pre-run phase costs" section (collect/setup/environment/
 prepare per file) — that report is instrumentation, so any problem reading it is
 ignored rather than failing the summary.
