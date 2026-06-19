@@ -24,6 +24,7 @@
     "@fireproof/use-fireproof": "0.24.19",
     "@vibes.diy/api-impl": "workspace:*",
     "@vibes.diy/base": "workspace:*",
+    "@vibes.diy/identity": "workspace:*",
     "@vibes.diy/prompts": "workspace:*",
     "@vibes.diy/use-vibes-types": "workspace:*",
     "@vibes.diy/vibe-runtime": "workspace:*",

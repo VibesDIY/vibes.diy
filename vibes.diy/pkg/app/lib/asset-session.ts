@@ -18,7 +18,7 @@
 
 import { BuildURI, exception2Result, KeyedResolvOnce, Result } from "@adviser/cement";
 import { type } from "arktype";
-import type { DashAuthType } from "@fireproof/core-types-protocols-dashboard";
+import type { DashAuthType } from "@vibes.diy/identity";
 
 const ResAuthSession = type({
   type: "'vibes.diy.res-auth-session'",
@@ -57,7 +57,9 @@ function bridgeUrl(hostnameBase: string, path: string): string {
   // In dev, every virtual host (`<app>--<user>.<base>`, `assets.<base>`) is
   // served by a single Vite listener on a non-standard port, so reuse the
   // current window port for the asset host. Empty in prod (default 443).
-  const buri = BuildURI.from("https://template").hostname(`assets.${hostnameBase.replace(/^\./, "")}`).pathname(path);
+  const buri = BuildURI.from("https://template")
+    .hostname(`assets.${hostnameBase.replace(/^\./, "")}`)
+    .pathname(path);
   const p = runtimePort();
   if (p) buri.port(p);
   return buri.toString();
