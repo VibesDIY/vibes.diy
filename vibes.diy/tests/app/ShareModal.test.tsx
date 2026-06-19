@@ -5,9 +5,9 @@ import { describe, it, expect, vi, afterEach, beforeEach } from "vitest";
 import { ShareModal } from "~/vibes.diy/app/components/ResultPreview/ShareModal.js";
 import type { UseShareModalReturn } from "~/vibes.diy/app/components/ResultPreview/useShareModal.js";
 
-vi.mock("react-dom", () => ({
-  createPortal: (children: React.ReactNode) => children,
-}));
+// Use the real react-dom/createPortal — portals render into document.body,
+// which RTL's screen still queries. Mocking createPortal to render inline bled
+// across files under isolate:false and broke portal cleanup (removeChild).
 
 // Sharing-tab section components hit useSharingPanel under the hood and bring
 // in @tanstack/react-table; stub them so these tests stay focused on modal

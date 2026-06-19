@@ -12,26 +12,22 @@ import { setTestAuth } from "./clerk-test-mock.js";
 // Mutable search params + sessionStorage fallback per test.
 let currentSearch = new URLSearchParams();
 
-vi.mock("react-router", async (importOriginal) => {
-  const actual = (await importOriginal()) as Record<string, unknown>;
-  return {
-    ...actual,
-    useNavigate: () => vi.fn(),
-    useSearchParams: () => [currentSearch, vi.fn()] as const,
-  };
-});
-
 // Clerk auth comes from the shared singleton mock (clerk-test-mock.ts).
-
+// react-router is real (MemoryRouter in vibesWrapper); the search params come
+// from initialEntries built from currentSearch at render time.
+//
 // Inject the VibesDiy context via the real provider instead of mocking it.
 // decode just strips the "b64:" prefix our encode/decode stub uses; getTokenClaims
 // never resolves so the open-chat effect stays parked during the assertion window.
 const render = (ui: React.ReactElement, options?: Parameters<typeof rtlRender>[1]) =>
   rtlRender(ui, {
-    wrapper: vibesWrapper({
-      sthis: { txt: { base64: { decode: (s: string) => s.replace(/^b64:/, "") } } },
-      chatApi: { getTokenClaims: () => new Promise(() => undefined) },
-    }),
+    wrapper: vibesWrapper(
+      {
+        sthis: { txt: { base64: { decode: (s: string) => s.replace(/^b64:/, "") } } },
+        chatApi: { getTokenClaims: () => new Promise(() => undefined) },
+      },
+      { initialEntries: [`/chat/prompt?${currentSearch.toString()}`] },
+    ),
     ...options,
   });
 

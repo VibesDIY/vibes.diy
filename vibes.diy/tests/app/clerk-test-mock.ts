@@ -36,7 +36,13 @@ function defaults() {
   };
 }
 
-const state = { current: defaults() };
+// This file is registered as a setupFile AND imported by test files; under
+// isolate:false those two load paths can produce two module instances. Anchor
+// the mutable state on globalThis so the mock factory (which reads it) and the
+// setTest* helpers (which tests call) always share one object.
+const globalKey = "__VIBES_CLERK_TEST_STATE__";
+const g = globalThis as unknown as Record<string, { current: ReturnType<typeof defaults> }>;
+const state = (g[globalKey] ??= { current: defaults() });
 
 /** Override the auth state returned by useAuth()/useUser() for the current test. */
 export function setTestAuth(auth: Partial<TestAuthState>): void {

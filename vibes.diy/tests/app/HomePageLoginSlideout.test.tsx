@@ -12,14 +12,7 @@ const render = (ui: React.ReactElement, options?: Parameters<typeof rtlRender>[1
 // after a short delay on the homepage. It must only do that for signed-out
 // visitors — an authenticated session should never see it pop open on load.
 
-vi.mock("react-router", async (importOriginal) => {
-  const actual = (await importOriginal()) as Record<string, unknown>;
-  return {
-    ...actual,
-    useNavigate: () => vi.fn(),
-    Link: ({ to, children }: { to: string; children?: React.ReactNode }) => <a href={to}>{children}</a>,
-  };
-});
+// react-router is provided for real by MemoryRouter in vibesWrapper.
 
 // VibesDiy context is injected via vibesWrapper (see local render above).
 
@@ -33,7 +26,10 @@ vi.mock("~/vibes.diy/app/components/SessionSidebar.js", () => ({
     <div data-testid="session-sidebar" data-visible={isVisible ? "true" : "false"} />
   ),
 }));
-vi.mock("~/vibes.diy/app/components/MyAppsSection.js", () => ({ MyAppsSection: () => null }));
+vi.mock("~/vibes.diy/app/components/MyAppsSection.js", async (importOriginal) => ({
+  ...(await importOriginal<Record<string, unknown>>()),
+  MyAppsSection: () => null,
+}));
 vi.mock("~/vibes.diy/app/components/NewSessionContent/VibeGallery.js", () => ({ default: () => null }));
 vi.mock("~/vibes.diy/app/components/PillPortal.js", async (importOriginal) => ({
   ...(await importOriginal<Record<string, unknown>>()),

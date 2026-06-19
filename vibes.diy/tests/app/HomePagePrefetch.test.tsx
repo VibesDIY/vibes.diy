@@ -10,24 +10,13 @@ const render = (ui: React.ReactElement, options?: Parameters<typeof rtlRender>[1
 // The chat route chunk is warmed on interaction intent via a hidden
 // <Link to="/chat/prompt" prefetch="render">. These tests assert that
 // behavior at the component level: the link is absent until the user shows
-// intent, then appears pointing at /chat/prompt. We deliberately do NOT
-// exercise the real React Router prefetch/discovery internals — Link is
-// stubbed to a plain anchor so the test stays behavior-level.
+// intent, then appears pointing at /chat/prompt. react-router is real
+// (MemoryRouter in vibesWrapper), so we assert on the rendered anchor's href.
 
 // ---- dependency mocks (must be declared before importing the component) ----
 
-vi.mock("react-router", async (importOriginal) => {
-  const actual = (await importOriginal()) as Record<string, unknown>;
-  return {
-    ...actual,
-    useNavigate: () => vi.fn(),
-    Link: ({ to, children }: { to: string; children?: React.ReactNode }) => (
-      <a href={to} data-testid="prefetch-link">
-        {children}
-      </a>
-    ),
-  };
-});
+// Locates the prefetch <Link> by its destination once it renders.
+const prefetchLink = () => document.querySelector('a[href="/chat/prompt"]');
 
 // VibesDiy context is injected via vibesWrapper (see local render above).
 
@@ -44,7 +33,10 @@ vi.mock("~/vibes.diy/app/components/SessionSidebar.js", () => ({
     <div data-testid="session-sidebar" data-visible={isVisible ? "true" : "false"} />
   ),
 }));
-vi.mock("~/vibes.diy/app/components/MyAppsSection.js", () => ({ MyAppsSection: () => null }));
+vi.mock("~/vibes.diy/app/components/MyAppsSection.js", async (importOriginal) => ({
+  ...(await importOriginal<Record<string, unknown>>()),
+  MyAppsSection: () => null,
+}));
 vi.mock("~/vibes.diy/app/components/NewSessionContent/VibeGallery.js", () => ({ default: () => null }));
 vi.mock("~/vibes.diy/app/components/PillPortal.js", async (importOriginal) => ({
   ...(await importOriginal<Record<string, unknown>>()),
@@ -74,20 +66,21 @@ describe("HomePage chat-route prefetch", () => {
 
   it("does not prefetch the chat route before any interaction", async () => {
     await renderHomePage();
-    expect(screen.queryByTestId("prefetch-link")).toBeNull();
+    expect(prefetchLink()).toBeNull();
   });
 
   it("prefetches the chat route on textarea focus", async () => {
     const textarea = await renderHomePage();
     fireEvent.focus(textarea);
-    const link = screen.getByTestId("prefetch-link");
-    expect(link).toHaveAttribute("href", "/chat/prompt");
+    await waitFor(() => expect(prefetchLink()).not.toBeNull());
+    expect(prefetchLink()).toHaveAttribute("href", "/chat/prompt");
   });
 
   it("prefetches the chat route when a suggestion is selected", async () => {
     await renderHomePage();
-    expect(screen.queryByTestId("prefetch-link")).toBeNull();
+    expect(prefetchLink()).toBeNull();
     fireEvent.click(screen.getAllByText(quickSuggestions[0].label)[0]);
-    expect(screen.getByTestId("prefetch-link")).toHaveAttribute("href", "/chat/prompt");
+    await waitFor(() => expect(prefetchLink()).not.toBeNull());
+    expect(prefetchLink()).toHaveAttribute("href", "/chat/prompt");
   });
 });
