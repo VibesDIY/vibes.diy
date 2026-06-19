@@ -2,6 +2,7 @@ import React from "react";
 import { render, screen, fireEvent, waitFor, cleanup } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { Result } from "@adviser/cement";
+import { setTestAuth, setTestUser } from "./clerk-test-mock.js";
 
 const queryDocs = vi.fn();
 const putDoc = vi.fn();
@@ -10,24 +11,8 @@ const subscribeDocs = vi.fn();
 const onDocChanged = vi.fn();
 const whoAmI = vi.fn();
 
-let mockAuth: { isSignedIn: boolean; userId: string | null } = { isSignedIn: true, userId: "viewer-1" };
-let mockUser: {
-  username?: string;
-  fullName?: string;
-  firstName?: string;
-  lastName?: string;
-  primaryEmailAddress?: { emailAddress?: string };
-  imageUrl?: string;
-} | null = {
-  username: "commenter-slug",
-  fullName: "Commenter",
-  imageUrl: "https://img.clerk.com/avatar.png",
-};
-
-vi.mock("@clerk/react", () => ({
-  useAuth: () => mockAuth,
-  useUser: () => ({ user: mockUser }),
-}));
+// Clerk auth/user come from the shared singleton mock (clerk-test-mock.ts);
+// each test sets the state it needs via setTestAuth()/setTestUser().
 
 vi.mock("~/vibes.diy/app/vibes-diy-provider.js", () => ({
   useVibesDiy: () => ({
@@ -51,12 +36,12 @@ describe("CommentsSection avatar behavior", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    mockAuth = { isSignedIn: true, userId: "viewer-1" };
-    mockUser = {
+    setTestAuth({ isSignedIn: true, userId: "viewer-1" });
+    setTestUser({
       username: "commenter-slug",
       fullName: "Commenter",
       imageUrl: "https://img.clerk.com/avatar.png",
-    };
+    });
 
     queryDocs.mockResolvedValue(
       Result.Ok({
@@ -106,11 +91,11 @@ describe("CommentsSection avatar behavior", () => {
     // Clerk username and the Vibes-resolved slug can diverge (sanitization,
     // settings overrides, email-derived defaults). The component must trust
     // whoAmI, not user.username.
-    mockUser = {
+    setTestUser({
       username: "clerk-username-that-isnt-the-vibes-slug",
       fullName: "Commenter",
       imageUrl: "https://img.clerk.com/avatar.png",
-    };
+    });
 
     render(<CommentsSection ownerHandle="owner" appSlug="my-app" canModerate={false} composerDisabled={false} />);
 
@@ -131,10 +116,10 @@ describe("CommentsSection avatar behavior", () => {
     // Codex P2 regression: previously authorHandle was derived from
     // user.username, so signed-in users without a Clerk username got
     // undefined and lost their avatar entirely.
-    mockUser = {
+    setTestUser({
       fullName: "No-Username User",
       primaryEmailAddress: { emailAddress: "no-username@example.com" },
-    };
+    });
 
     render(<CommentsSection ownerHandle="owner" appSlug="my-app" canModerate={false} composerDisabled={false} />);
 

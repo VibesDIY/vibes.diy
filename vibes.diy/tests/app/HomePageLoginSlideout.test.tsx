@@ -1,16 +1,11 @@
 import React from "react";
 import { render, screen, cleanup, waitFor } from "@testing-library/react";
 import { describe, it, expect, vi, afterEach } from "vitest";
+import { setTestAuth } from "./clerk-test-mock.js";
 
 // Regression coverage for #1892: the login slide-out (SessionSidebar) auto-opens
 // after a short delay on the homepage. It must only do that for signed-out
 // visitors — an authenticated session should never see it pop open on load.
-
-// Controllable auth state, mutated per-test before render.
-const authState: { isSignedIn: boolean; isLoaded: boolean } = {
-  isSignedIn: false,
-  isLoaded: true,
-};
 
 vi.mock("react-router", async (importOriginal) => {
   const actual = (await importOriginal()) as Record<string, unknown>;
@@ -29,9 +24,7 @@ vi.mock("~/vibes.diy/app/contexts/ThemeContext.js", () => ({
   useTheme: () => ({ isDarkMode: false }),
 }));
 
-vi.mock("@clerk/react", () => ({
-  useAuth: () => authState,
-}));
+// Clerk auth comes from the shared singleton mock (clerk-test-mock.ts).
 
 // SessionSidebar stub reflects its isVisible prop so we can assert open/closed.
 vi.mock("~/vibes.diy/app/components/SessionSidebar.js", () => ({
@@ -77,24 +70,21 @@ describe("HomePage login slide-out auto-open (#1892)", () => {
   });
 
   it("auto-opens the slide-out for signed-out visitors", async () => {
-    authState.isSignedIn = false;
-    authState.isLoaded = true;
+    setTestAuth({ isSignedIn: false, isLoaded: true });
     await renderHomePage();
     expect(sidebarVisible()).toBe(false);
     await waitFor(() => expect(sidebarVisible()).toBe(true), { timeout: 3000 });
   });
 
   it("does NOT auto-open the slide-out when already authenticated", async () => {
-    authState.isSignedIn = true;
-    authState.isLoaded = true;
+    setTestAuth({ isSignedIn: true, isLoaded: true });
     await renderHomePage();
     await new Promise((r) => setTimeout(r, AFTER_DELAY_MS));
     expect(sidebarVisible()).toBe(false);
   });
 
   it("does NOT auto-open while auth is still loading", async () => {
-    authState.isSignedIn = false;
-    authState.isLoaded = false;
+    setTestAuth({ isSignedIn: false, isLoaded: false });
     await renderHomePage();
     await new Promise((r) => setTimeout(r, AFTER_DELAY_MS));
     expect(sidebarVisible()).toBe(false);
@@ -104,12 +94,11 @@ describe("HomePage login slide-out auto-open (#1892)", () => {
   // clicking Logout flips isSignedIn true→false; that transition must NOT
   // re-trigger the timer and reopen the panel they just closed (Codex review).
   it("does NOT reopen after an authenticated user logs out", async () => {
-    authState.isSignedIn = true;
-    authState.isLoaded = true;
+    setTestAuth({ isSignedIn: true, isLoaded: true });
     const { rerender } = render(<HomePage />);
     await waitFor(() => screen.getByPlaceholderText(PLACEHOLDER));
     // Simulate logout: auth resolves to signed-out on the same mounted instance.
-    authState.isSignedIn = false;
+    setTestAuth({ isSignedIn: false });
     rerender(<HomePage />);
     await new Promise((r) => setTimeout(r, AFTER_DELAY_MS));
     expect(sidebarVisible()).toBe(false);

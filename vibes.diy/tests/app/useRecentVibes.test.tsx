@@ -2,18 +2,14 @@ import { act, renderHook, waitFor } from "@testing-library/react";
 import type { ResRecentVibesItem } from "@vibes.diy/api-types";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { useRecentVibes } from "~/vibes.diy/app/hooks/useRecentVibes.js";
+import { setTestAuth, setTestUser } from "./clerk-test-mock.js";
 
-const mockAuth = { isLoaded: true, isSignedIn: true };
-const mockUser = { id: "user-1" };
 const mockListRecentVibes = vi.fn();
 const mockVibeDiyApi = {
   listRecentVibes: mockListRecentVibes,
 };
 
-vi.mock("@clerk/react", () => ({
-  useAuth: () => mockAuth,
-  useUser: () => ({ user: mockUser }),
-}));
+// Clerk auth/user come from the shared singleton mock (clerk-test-mock.ts).
 
 vi.mock("~/vibes.diy/app/vibes-diy-provider.js", () => ({
   useVibesDiy: () => ({
@@ -50,9 +46,8 @@ function deferred<T>() {
 describe("useRecentVibes ensureAllLoaded", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockAuth.isLoaded = true;
-    mockAuth.isSignedIn = true;
-    mockUser.id = "user-1";
+    setTestAuth({ isLoaded: true, isSignedIn: true });
+    setTestUser({ id: "user-1" });
   });
 
   it("loads all cursor pages when requested for search", async () => {

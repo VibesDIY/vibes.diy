@@ -5,6 +5,7 @@ import { useVibes } from "~/vibes.diy/app/hooks/useVibes.js";
 import type { VibeDocument } from "@vibes.diy/prompts";
 import type { LocalVibe } from "~/vibes.diy/app/utils/vibeUtils.js";
 import { deleteVibeDatabase, listLocalVibeIds, listLocalVibes, toggleVibeFavorite } from "~/vibes.diy/app/utils/vibeUtils.js";
+import { setTestAuth, setTestUser } from "./clerk-test-mock.js";
 
 // Mock vibeUtils
 vi.mock("~/vibes.diy/app/utils/vibeUtils.js", () => ({
@@ -15,26 +16,8 @@ vi.mock("~/vibes.diy/app/utils/vibeUtils.js", () => ({
   loadVibeDocument: vi.fn(),
 }));
 
-// Mock @clerk/react
-vi.mock("@clerk/react", async (importOriginal) => {
-  const actual = (await importOriginal()) as Record<string, unknown>;
-  return {
-    ...actual,
-    useAuth: () => ({
-      userId: "test-user-id",
-      isLoaded: true,
-      isSignedIn: true,
-    }),
-    useUser: () => ({
-      user: {
-        id: "test-user-id",
-        primaryEmailAddress: { emailAddress: "test@example.com" },
-      },
-      isLoaded: true,
-      isSignedIn: true,
-    }),
-  };
-});
+// Clerk auth/user come from the shared singleton mock (clerk-test-mock.ts);
+// set in beforeEach below.
 
 describe("useVibes", () => {
   const mockVibes: Partial<LocalVibe>[] = [
@@ -68,6 +51,8 @@ describe("useVibes", () => {
 
   beforeEach(() => {
     vi.resetAllMocks();
+    setTestAuth({ userId: "test-user-id", isLoaded: true, isSignedIn: true });
+    setTestUser({ id: "test-user-id", primaryEmailAddress: { emailAddress: "test@example.com" } });
     // Setup vibeUtils mocks
     vi.mocked(listLocalVibes).mockResolvedValue(mockVibes as LocalVibe[]);
     vi.mocked(listLocalVibeIds).mockResolvedValue(["test-vibe-1", "test-vibe-2"]);

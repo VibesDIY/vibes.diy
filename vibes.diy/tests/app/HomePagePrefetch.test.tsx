@@ -32,9 +32,8 @@ vi.mock("~/vibes.diy/app/contexts/ThemeContext.js", () => ({
   useTheme: () => ({ isDarkMode: false }),
 }));
 
-vi.mock("@clerk/react", () => ({
-  useAuth: () => ({ isSignedIn: false, isLoaded: true }),
-}));
+// Clerk auth comes from the shared singleton mock (clerk-test-mock.ts); its
+// signed-out default (isSignedIn:false, isLoaded:true) is what these tests need.
 
 // Stub heavy children so the test doesn't pull in data hooks / the design system.
 vi.mock("~/vibes.diy/app/components/SessionSidebar.js", () => ({ default: () => null }));

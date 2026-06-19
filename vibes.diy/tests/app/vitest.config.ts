@@ -10,7 +10,7 @@ export default defineConfig({
   },
   // cacheDir: "./node_modules/.vibes.diy-vite-cache",
   test: {
-    // setupFiles: ["./moduleSetup.ts", "./setup.ts"],
+    setupFiles: ["./clerk-test-mock.ts"],
     name: "vibes.diy",
     exclude: ["dist/**", "node_modules/**", "ssr/**"],
     include: ["**/*test.?(c|m)[jt]s?(x)"],
