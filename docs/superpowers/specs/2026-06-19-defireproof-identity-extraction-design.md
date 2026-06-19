@@ -25,7 +25,7 @@ specific portions we use into our own module(s)** with a clean target
 architecture — possibly a new public npm package — so that:
 
 1. The login/cert/token surface (including #1616's success page) is ours to style and evolve.
-2. `pnpm` stops resolving `@fireproof/*` for anything except, at most, a clearly-scoped legacy shim.
+2. `pnpm` stops resolving `@fireproof/*` for **runtime** code, except at most a clearly-scoped legacy shim. (The **build toolchain** — `core-cli` as `core-cli tsc`/`build`/`pack`/`publish` — is a separate dep with its own migration; see Bucket F. "Zero `@fireproof/*`" is only true once both runtime *and* tooling are addressed.)
 3. The auth wire-format (device-id certs already in users' keybags, deployed CA keys, cloud token format) stays **byte-compatible** — no forced re-login, no key rotation.
 
 `@adviser/cement` is explicitly **out of scope as a removal target**: it's a
@@ -51,8 +51,18 @@ and `eval/codegen-edit/src/auth.ts`.
 | `DeviceIdKey` | `core-device-id` | Load ES256 P-256 signing key from JWK; `.fingerPrint()` |
 | `DeviceIdSignMsg` | `core-device-id` | Sign `FPDeviceIDSession` JWT claims with ES256 (the per-request device token) |
 | `deviceIdCAFromEnv`, `getCloudPubkeyFromEnv`, `tokenApi` | `core-protocols-dashboard` | **Server** side: load CA priv key + cloud pubkey from env; `tokenApi[type].verify(token)`; CA `.processCSR(csr, claims)` issues the cert ([`get-cert-from-csr.ts:14`](../../../vibes.diy/api/svc/public/get-cert-from-csr.ts), [`create-handler.ts:143-149`](../../../vibes.diy/api/svc/create-handler.ts)) |
+| `ClerkApiToken` | `core-protocols-dashboard` | **Runtime** Clerk token signer/verifier — `new ClerkApiToken(sthis)` ([`api/impl/index.ts:169,301`](../../../vibes.diy/api/impl/index.ts)) |
+| `clerkDashApi`, `DashboardApiImpl` | `core-protocols-dashboard` | **Runtime** browser-side dashboard API client — `clerkDashApi(clerk, …)` returning a `DashboardApiImpl` used as `dashApi` in the React context ([`use-vibes/base/contexts/VibeContext.tsx:4,69,98`](../../../use-vibes/base/contexts/VibeContext.tsx)) |
 | `DeviceIdCAIf` | `core-types-device-id` | CA interface on the service ctx ([`svc/types.ts:37`](../../../vibes.diy/api/svc/types.ts)) |
 | `JWKPrivate`, `JWKPrivateSchema`, `DeviceIdKeyBagItem` | `core-types-base` | Keybag item shapes; headless-auth env seeding ([`cli/device-id-env.ts`](../../../vibes-diy/cli/device-id-env.ts)) |
+
+> **Note on the Clerk dashboard-API client.** `ClerkApiToken` (server) and
+> `clerkDashApi`/`DashboardApiImpl` (browser) are a **live runtime client**, not
+> cert/CA code, so `core-protocols-dashboard` stays required by normal app/client
+> code even after the cert/login work. `@vibes.diy/identity` must therefore own
+> this Clerk-auth client surface too (or it lands in a sibling `@vibes.diy/dash-api`
+> package) — otherwise the "zero `@fireproof/*`" goal is false regardless of the
+> cert extraction.
 
 ### Bucket B — Auth wire-types
 
@@ -92,9 +102,28 @@ _not_ part of the firefly cloud migration and _not_ a deep library op.
 `SuperThis` is the crux of "can we ever reach _zero_ `@fireproof/*`": it's generic
 runtime plumbing, not database code, but it lives in `@fireproof/core-runtime`.
 
+### Bucket F — Build toolchain (not runtime)
+
+`@fireproof/core-cli` is also a **build tool**, independent of the Bucket C login
+handler: package scripts run `core-cli tsc` / `core-cli build` / `core-cli build
+--doPack` for compile/pack/publish, and it's a `devDependency` across many
+workspaces.
+
+| Usage | Where |
+| --- | --- |
+| `"build": "core-cli tsc"` | root [`package.json:20`](../../../package.json), e.g. [`api/svc/package.json:7`](../../../vibes.diy/api/svc/package.json) |
+| `"pack"` / `"publish": "core-cli build …"` | per-package scripts (e.g. `api/svc/package.json:11-12`) |
+| `@fireproof/core-cli` devDep | root + ~15 workspaces |
+
+So even after Buckets A–E, `pnpm` still resolves `@fireproof/core-cli` for builds.
+Reaching true zero needs this swapped for a plain `tsc`/`tsup`/in-repo build wrapper —
+a mechanical but repo-wide change, tracked as its own bucket.
+
 ## Target architecture
 
-A new package — working name **`@vibes.diy/identity`** — owns Buckets A + B + C.
+A new package — working name **`@vibes.diy/identity`** — owns Buckets A + B + C +
+the Clerk dash-api client (the `core-protocols-dashboard` runtime surface; could
+alternatively be a sibling `@vibes.diy/dash-api`).
 It is the single home for "how a vibes device authenticates and how the cloud
 issues/verifies its credentials." Unidirectional deps; built on `@adviser/cement`
 + standard primitives, **never** on `@fireproof/*`.
@@ -105,6 +134,8 @@ issues/verifies its credentials." Unidirectional deps; built on `@adviser/cement
                  ├── device-id     ES256 key + JWT session signer (client)
                  ├── ca            CSR -> cert issuance + token verify (server)
                  ├── login-server  localhost device-id-register + STYLED /cert page  (#1616)
+                 ├── dash-api      Clerk token signer/verifier (ClerkApiToken) +
+                 │                 browser dashboard client (clerkDashApi/DashboardApiImpl)
                  └── types         DashAuthType, FPDeviceIDSession, ReqCertFromCsr/Res,
                                    VerifiedAuth*, JWKPrivate*, ClerkClaimSchema(+patch inlined)
                        ▲                    ▲                         ▲
@@ -145,10 +176,13 @@ open question — see Q2.
    `@vibes.diy/identity` and re-export. Inline the `ClerkClaimSchema` `.catch()`
    patch as source. Deletes the `core-types-base` patch and the `core-types-*`
    runtime deps. Mostly erasable; large but low-blast-radius diff.
-2. **Identity runtime extraction (Bucket A).** Move keybag + device-id signer
-   (client) + CA/verify (server) into the package; collapse the three duplicated
-   client signers behind one `createDeviceIdGetToken()` API. Golden-vector tests
-   that assert byte-compat with existing certs/tokens gate this step.
+2. **Identity runtime extraction (Bucket A + Clerk dash-api client).** Move keybag +
+   device-id signer (client) + CA/verify (server) into the package; collapse the
+   three duplicated client signers behind one `createDeviceIdGetToken()` API. Also
+   re-home the `core-protocols-dashboard` runtime client (`ClerkApiToken`,
+   `clerkDashApi`/`DashboardApiImpl`) — without it the package stays required by
+   normal app/client code. Golden-vector tests that assert byte-compat with existing
+   certs/tokens gate this step.
 3. **Own the login localhost server (Bucket C → fixes #1616).** Replace the
    `core-cli` device-id-register dependency with our `login-server`, and ship the
    styled "Certificate received" page (grid background / branding). Drops
@@ -160,6 +194,10 @@ open question — see Q2.
    vibe-card metadata off classic local fireproof (onto firefly or a small in-repo
    local store). Largest app-surface change; gated independently. Until done, a
    single narrowly-scoped `@fireproof/use-fireproof` dep may legitimately remain.
+6. **Build-toolchain swap (Bucket F) — separate track.** Replace `core-cli
+   tsc`/`build`/`pack`/`publish` with a plain `tsc`/`tsup`/in-repo wrapper and drop
+   the `@fireproof/core-cli` devDep repo-wide. Mechanical but touches every
+   workspace; only after this does `pnpm` resolve **zero** `@fireproof/*`.
 
 ### Wire-compatibility constraints (hard requirements)
 
