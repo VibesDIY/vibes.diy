@@ -1,5 +1,5 @@
 import React from "react";
-import { Link } from "react-router-dom";
+import { Link } from "react-router";
 import { gridBackground, cx } from "@vibes.diy/base";
 import VibesDIYLogo from "../components/VibesDIYLogo.js";
 

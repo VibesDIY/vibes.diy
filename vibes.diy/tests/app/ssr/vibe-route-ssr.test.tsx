@@ -12,7 +12,7 @@
 import React from "react";
 import { describe, it, expect, vi } from "vitest";
 import { renderToString } from "react-dom/server";
-import { MemoryRouter, Routes, Route } from "react-router";
+import { MemoryRouter, Routes, Route, RouterContextProvider } from "react-router";
 
 vi.mock("@clerk/react", () => ({
   useAuth: () => ({ isSignedIn: false, isLoaded: true }),
@@ -68,6 +68,7 @@ import VibeIframeWrapper, {
   meta as vibeRouteMeta,
 } from "../../../pkg/app/routes/vibe.$ownerHandle.$appSlug.js";
 import { URI } from "@adviser/cement";
+import { vibeLoadContext, type VibeLoadContext } from "../../../pkg/app/lib/vibe-load-context.js";
 
 describe("viewer route SSR safety", () => {
   it("globalThis.window is undefined in this test (node env)", () => {
@@ -108,16 +109,24 @@ describe("viewer route — iframe + meta track the configured hostname base", ()
   // i.e. on the PR's own worker, not the merged dev worker.
   const PREVIEW_BASE = "pr-7.vibespreview.dev";
 
+  // React Router v8 hands loaders their context as a RouterContextProvider, so
+  // seed the vibeLoadContext key the same way workers/app.ts does in prod.
+  const mkCtx = (): RouterContextProvider => {
+    const ctx = new RouterContextProvider();
+    ctx.set(vibeLoadContext, {
+      vibeDiyAppParams: {
+        vibes: { svc: { hostnameBase: PREVIEW_BASE } },
+        pkgRepos: { workspace: "https://pr-7.vibespreview.dev/vibe-pkg/?v=deadbeef" },
+      },
+    } as unknown as VibeLoadContext);
+    return ctx;
+  };
+
   it("loader builds the iframe URL on the configured base, carrying fsId + npmUrl", async () => {
     const { iframeUrl } = await vibeRouteLoader({
       params: { ownerHandle: "alice", appSlug: "myapp", fsId: "zabc12345678" },
       request: new Request("https://pr-7-vibes-diy-v2.jchris.workers.dev/vibe/alice/myapp/zabc12345678"),
-      context: {
-        vibeDiyAppParams: {
-          vibes: { svc: { hostnameBase: PREVIEW_BASE } },
-          pkgRepos: { workspace: "https://pr-7.vibespreview.dev/vibe-pkg/?v=deadbeef" },
-        },
-      } as unknown as Parameters<typeof vibeRouteLoader>[0]["context"],
+      context: mkCtx(),
     });
     expect(iframeUrl).toBeDefined();
     const u = URI.from(iframeUrl as string);
@@ -130,12 +139,7 @@ describe("viewer route — iframe + meta track the configured hostname base", ()
     const { iframeUrl } = await vibeRouteLoader({
       params: { ownerHandle: "alice", appSlug: "myapp" },
       request: new Request("https://pr-7-vibes-diy-v2.jchris.workers.dev/vibe/alice/myapp"),
-      context: {
-        vibeDiyAppParams: {
-          vibes: { svc: { hostnameBase: PREVIEW_BASE } },
-          pkgRepos: { workspace: "https://pr-7.vibespreview.dev/vibe-pkg/?v=deadbeef" },
-        },
-      } as unknown as Parameters<typeof vibeRouteLoader>[0]["context"],
+      context: mkCtx(),
     });
     const u = URI.from(iframeUrl as string);
     expect(u.hostname).toBe("myapp--alice.pr-7.vibespreview.dev");
@@ -144,12 +148,25 @@ describe("viewer route — iframe + meta track the configured hostname base", ()
 
   it("meta() og:image / twitter:image point at the configured base", () => {
     const tags = vibeRouteMeta({
-      data: { iframeUrl: undefined, vibeOgTitle: undefined, isWorldReadable: false },
+      loaderData: { iframeUrl: undefined, vibeOgTitle: undefined, isWorldReadable: false },
       params: { ownerHandle: "alice", appSlug: "myapp" },
-      matches: [{ data: { env: { VIBES_SVC_HOSTNAME_BASE: PREVIEW_BASE } } }],
+      matches: [{ loaderData: { env: { VIBES_SVC_HOSTNAME_BASE: PREVIEW_BASE } } }],
     }) as { property?: string; name?: string; content?: string }[];
     const expected = "https://myapp--alice.pr-7.vibespreview.dev/screenshot.jpg";
     expect(tags.find((t) => t.property === "og:image")?.content).toBe(expected);
     expect(tags.find((t) => t.name === "twitter:image")?.content).toBe(expected);
+  });
+
+  it("meta() title comes from the loader's vibeOgTitle (React Router v8 loaderData)", () => {
+    // Regression: React Router v8 exposes the loader result to meta() as
+    // `loaderData`, not the deprecated `data`. Reading `data` would silently
+    // drop the worker-fetched OG title and fall back to the slug.
+    const tags = vibeRouteMeta({
+      loaderData: { iframeUrl: undefined, vibeOgTitle: "My Real Title", isWorldReadable: false },
+      params: { ownerHandle: "alice", appSlug: "myapp" },
+      matches: [{ loaderData: { env: { VIBES_SVC_HOSTNAME_BASE: PREVIEW_BASE } } }],
+    }) as { property?: string; name?: string; content?: string; title?: string }[];
+    expect(tags.find((t) => t.title !== undefined)?.title).toBe("My Real Title - vibes.diy");
+    expect(tags.find((t) => t.property === "og:title")?.content).toBe("My Real Title");
   });
 });

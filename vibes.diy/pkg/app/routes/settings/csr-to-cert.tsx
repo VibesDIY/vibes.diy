@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams } from "react-router";
 import { BuildURI } from "@adviser/cement";
 import { useAuth as useClerkAuth } from "@clerk/react";
 import { BrutalistCard, VibesButton } from "@vibes.diy/base";

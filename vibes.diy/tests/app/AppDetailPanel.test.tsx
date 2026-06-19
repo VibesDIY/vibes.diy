@@ -10,13 +10,17 @@ import { describe, it, expect, vi, afterEach } from "vitest";
 
 // ---- dependency mocks (must be declared before importing the component) ----
 
-vi.mock("react-router-dom", () => ({
-  Link: ({ to, children, onClick }: { to: string; children?: React.ReactNode; onClick?: () => void }) => (
-    <a href={to} onClick={onClick}>
-      {children}
-    </a>
-  ),
-}));
+vi.mock("react-router", async (importOriginal) => {
+  const actual = (await importOriginal()) as Record<string, unknown>;
+  return {
+    ...actual,
+    Link: ({ to, children, onClick }: { to: string; children?: React.ReactNode; onClick?: () => void }) => (
+      <a href={to} onClick={onClick}>
+        {children}
+      </a>
+    ),
+  };
+});
 
 vi.mock("@vibes.diy/base", () => ({
   TexturedPattern: () => null,
@@ -91,9 +95,7 @@ describe("AppDetailPanel (issue #2011)", () => {
     // First app resolves with a display name.
     getAppByFsId.mockResolvedValueOnce(okResult({ meta: [], ownerDisplayName: "Ada Lovelace" }));
     const first = makeItem({ ownerHandle: "ada", appSlug: "app-e1" });
-    const { rerender } = render(
-      <AppDetailPanel item={first} appHostBaseUrl="https://example.com" onClose={vi.fn()} />,
-    );
+    const { rerender } = render(<AppDetailPanel item={first} appHostBaseUrl="https://example.com" onClose={vi.fn()} />);
     await waitFor(() => expect(screen.getByText(/Created by/)).toHaveTextContent("Created by Ada Lovelace"));
 
     // Switch to a different, uncached app whose response carries no display name.

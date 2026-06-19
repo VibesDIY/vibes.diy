@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router";
 import { MyVibeCard } from "./MyVibeCard.js";
 import { loadVibeDocument, loadVibeScreenshot } from "../utils/vibeUtils.js";
 import type { LocalVibe } from "../utils/vibeUtils.js";

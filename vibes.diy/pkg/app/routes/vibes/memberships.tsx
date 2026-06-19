@@ -1,6 +1,6 @@
 import type { ReactElement } from "react";
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router";
 import BrutalistLayout from "../../components/BrutalistLayout.js";
 import type { ResRecentVibesItem } from "@vibes.diy/api-types";
 import { isMetaScreenShot } from "@vibes.diy/api-types";

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useParams, useLocation, Navigate } from "react-router-dom";
+import { useParams, useLocation, Navigate } from "react-router";
 import { useVibesDiy } from "../vibes-diy-provider.js";
 import { DmThread } from "../components/DmThread.js";
 
