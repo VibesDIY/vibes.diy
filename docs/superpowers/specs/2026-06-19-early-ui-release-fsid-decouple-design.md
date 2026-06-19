@@ -6,9 +6,11 @@
 (`pkg/app/routes/chat/prompt-state.ts`), and the consumers of `block.end.fsRef`
 (`useChatNavigation`, `PreviewApp` repoint, `get-code`, `MessageList`).
 **Status:** Proposed — spec-first, awaiting review before tests + implementation.
-**Revision:** v2 (2026-06-19) — corrects v1's mechanism after Codex review. v1
-wrongly claimed `running` flips on `block.end`; it actually flips on the
-separate `prompt.block-end` event. See "Corrected mechanism" below.
+**Revision:** v3 (2026-06-19) — incorporates `@CharlieHelps`'s review. v2
+corrected v1's core mechanism (`running` flips on `prompt.block-end`, not
+`block.end`); v3 fixes a second v2 error — the reconnect settle lives on
+`prompt.block-end` too — and splits "flip running" (early) from "settle
+connection/fsRef" (post-persist). See "Corrected mechanism" + "Reducer".
 **Related:** stream-lifecycle extraction (#2015 / `2026-06-18-chat-stream-lifecycle-extraction-design.md`), nav-flash (#1972), edit-apply reliability (the streamingResolver / recovery work this builds on).
 
 ## Problem
@@ -86,12 +88,24 @@ consumers must be rewired to trigger on **`fsRef` arrival**, not the running edg
 ## Decision (from review)
 
 - **Spec + characterization tests first**, then a reviewed implementation.
-- v1's "new `prompt.fsref` event after a bare `block.end`" is **dropped**: it
-  targeted the wrong event and is unnecessary. `block.end` already carries
-  `fsRef` and already arrives right after the persist. The fix is (a) emit
-  `prompt.block-end` early and (b) rewire the two running-edge consumers onto
-  `block.end.fsRef` arrival. (A dedicated "persist done" event remains a possible
-  alternative — see Q4 — but is not the primary plan.)
+- **Split the two responsibilities of `prompt.block-end`** (Charlie Q3):
+  - `prompt.block-end`, emitted **early** (when generation ends, before persist)
+    → flips `running` false **only**. Drop the `connection`/`inFlightStreamId`
+    settle from this case.
+  - `block.end`-with-`fsRef`, emitted **after persist** (live, unchanged) → the
+    canonical signal that settles `connection: "live"` + clears
+    `inFlightStreamId` **and** drives nav/repoint. Stream-scoped via `streamId`.
+- **No new `prompt.fsref` wire event** (refines Charlie Q4). Charlie's reason for
+  keeping it was "avoid dual-`block.end`" — but v2/v3 already avoid that: there is
+  exactly **one** `block.end` (live, post-persist), and the early event is the
+  distinct `prompt.block-end`. So `block.end`-with-`fsRef` already *is* the
+  explicit post-persist anchor Charlie wants for the settle; a separate event
+  would be redundant. Consumers read `block.end.fsRef` uniformly for live + replay
+  (Charlie Q2: source-agnostic value, stream-scoped side effects). **Flagging this
+  one divergence from Charlie's literal Q4 for confirmation** — if an explicit
+  `prompt.fsref` is still preferred for clarity, it's a small additive change.
+- **Apply the same split to the `promptFS` / manual-save path** (Charlie Q5),
+  phaseable, so normal + manual-save semantics match.
 
 ## Proposed design
 
@@ -112,23 +126,38 @@ Cover all terminal paths consistently:
   reducer already flips `running` false on `prompt.error` (`:322`), so the error
   path is already early; only the success path needs the move.
 
-### Client — reducer
+### Client — reducer (the split)
 
-No new event. `prompt.block-end` continues to flip `running` false; it just
-arrives earlier. The reducer's `block.end` handling (default-case append) is
-unchanged.
+Today the `isPromptBlockEnd` case (`prompt-state.ts:313-320`) does **both** jobs:
+flips `running` false **and** settles `connection: "live"` + clears
+`inFlightStreamId` when `block.streamId === inFlightStreamId`. Moving
+`prompt.block-end` early would move the settle early too — so a disconnect in the
+**gap** between early `prompt.block-end` and the post-persist `block.end` would
+flip `running` off (watchdog stops) yet never settle/repoint, orphaning the
+canonical fsId until a reload (Charlie Q3). Split it:
 
-**Open Q3:** today `prompt.block-end` does not settle `connection`/`inFlightStreamId`
-— that settle lives on the `block.end` handling path. Confirm the reconnect
-watchdog still behaves when `running` flips before the persist completes (the
-watchdog keys on `running`; releasing early stops it earlier, which is fine since
-generation is done, but verify the ack→persist window can't strand a reconnect).
+- **`prompt.block-end`** (now early): `running: false` **only**. Remove the
+  `connection`/`inFlightStreamId` settle.
+- **`block.end`** (`BlockEndMsg`): add an explicit reducer case (it currently
+  falls to `default`). When `fsRef` is present and `streamId === inFlightStreamId`,
+  settle `connection: "live"` + clear `inFlightStreamId`. It must still append to
+  `current.msgs` exactly as the default case does, so the fsRef consumers keep
+  finding it in `blocks`.
+
+Net effect on the reconnect gap: if the stream drops after the early
+`prompt.block-end` but before `block.end`, `inFlightStreamId` is still set, so the
+reconnect loop can still re-open and the replayed `block.end`-with-`fsRef` (or the
+in-flight turn's) settles + navigates on arrival. `running` being already false is
+acceptable — generation *is* done; only persistence is outstanding.
 
 ### Client — the fsRef consumers (rewire off the running edge)
 
 Introduce one helper — `latestFsRef(blocks)` — returning the newest
 `block.end.fsRef`. Route the two **running-edge-gated** consumers through it,
-triggering on a *new* fsRef appearing in `blocks` rather than the `running` edge:
+triggering on a *new* fsRef appearing in `blocks` rather than the `running` edge.
+Per Charlie Q1/Q2 the value is source-agnostic (live vs replay) but the side
+effects stay **stream-scoped** — match the in-flight `streamId` and dedupe by
+fsId so a replayed historical turn can't trigger a navigation:
 
 - `useChatNavigation` first-paint (`:104-123`): fire when `latestFsRef` changes
   to a value `!== lastNavigatedFsIdRef.current` (still seeded from the URL fsId,
@@ -143,18 +172,25 @@ directly (not the running edge) and need no change.
 ## Invariants that MUST be preserved (test targets)
 
 1. `running` flips `false` as soon as generation ends — **before** the R2/DB
-   persist (not after).
-2. The persisted `chatSections` `block.end` still carries `fsRef`; reload/replay
+   persist (not after) — and `prompt.block-end` no longer settles
+   `connection`/`inFlightStreamId`.
+2. `connection: "live"` + `inFlightStreamId` cleared happens on the post-persist
+   `block.end`-with-`fsRef` for the matching `streamId` (the canonical anchor),
+   not on the early `prompt.block-end`.
+3. The persisted `chatSections` `block.end` still carries `fsRef`; reload/replay
    reconstruction is unchanged (single `block.end`-with-`fsRef`, no new event).
-3. First-paint navigation still lands on the canonical fsId and still does **not**
+4. First-paint navigation still lands on the canonical fsId and still does **not**
    yank a user off a historical fsId they intentionally opened (#1972).
-4. Post-save navigation still matches by promptId/streamId.
-5. The iframe repoint for existing-chat iterations still fires (now on fsRef
+5. Post-save navigation still matches by promptId/streamId.
+6. The iframe repoint for existing-chat iterations still fires (now on fsRef
    arrival).
-6. `▸ I'm done for now` and option chips render as soon as `running` is false
+7. `▸ I'm done for now` and option chips render as soon as `running` is false
    (the `option-lines` streaming guard already does this at `streaming: false`).
-7. `prompt.block-end` is emitted exactly once per turn (no double-emit from the
+8. `prompt.block-end` is emitted exactly once per turn (no double-emit from the
    early path + the finally).
+9. **Reconnect-gap:** a disconnect after the early `prompt.block-end` but before
+   `block.end` still re-opens (inFlightStreamId is still set) and settles +
+   navigates when the canonical `block.end`-with-`fsRef` arrives via replay.
 
 ## Old-client / deploy compatibility (Codex P2)
 
@@ -185,44 +221,56 @@ Recommend (a) + (c). Call this out explicitly in the implementation PR.
 
 ## Test strategy (tests land first)
 
+The set Charlie asked to lock before implementation:
+
+- **Event-semantic test for `running` release:** `prompt.block-end` flips
+  `running` false; `block.end` (`BlockEndMsg`) does **not**. And the inverse:
+  `prompt.block-end` no longer settles `connection`/`inFlightStreamId`; the
+  post-persist `block.end`-with-`fsRef` (matching `streamId`) does.
+- **Emit-order test (server):** the early completion event (`prompt.block-end`)
+  is emitted **before** the persist (`handlePromptContext`) resolves;
+  `block.end`-with-`fsRef` after; exactly once each; on the natural /
+  exhausted-recovery / error paths; persisted `block.end.fsRef` still present.
+- **Reconnect-gap test:** disconnect after the early completion event but before
+  `fsRef` arrives → reconnect re-opens and the replayed/late
+  `block.end`-with-`fsRef` settles + navigates (invariant 9).
+- **Nav-guard regression (#1972):** historical URLs don't re-navigate; first-paint
+  fires on fsRef arrival + streamId match + fsId dedupe. Mutation-test the guard
+  (break it → red).
+- **Dual-source fsRef consumer tests:** `PreviewApp` repoint, `get-code`
+  snapshot, `MessageList` pill resolve from `block.end.fsRef` for both live and
+  replay timing.
 - `option-lines` / `OptionButtons`: pin that the trailing marker renders at
   `streaming: false` (already covered; add an explicit assertion).
-- `prompt-state` reducer: `running` flips on `prompt.block-end`; `block.end`
-  (BlockEndMsg) does not; ordering of a `block.end` then `prompt.block-end`
-  leaves `running` false with `fsRef` in `blocks`.
-- `ChatNavigation.test.tsx`: first-paint fires on `block.end.fsRef` arrival (new
-  ordering: fsRef after the running edge) and still dedupes against the URL fsId
-  (#1972 guard); mutation-test the guard (break it → red).
-- `PreviewApp` / `get-code`: repoint + snapshot resolve from `block.end.fsRef`
-  regardless of running timing.
-- Server: a `prompt-chat-section` test asserting `prompt.block-end` is emitted
-  **before** the persist (`handlePromptContext`) resolves, exactly once, on the
-  natural / exhausted-recovery / error paths; and that the persisted `block.end`
-  retains `fsRef`.
 
 Gate with `pnpm check` and `pnpm run rules-bag:constructors`.
 
 ## Questions for review
 
-1. **First-paint nav trigger.** Confirm replacing the `running`-edge trigger with
-   a "new fsRef in blocks" trigger (dedup via `lastNavigatedFsIdRef` seeded from
-   the URL) preserves the #1972 historical-fsId guard — or do we keep the edge
-   *and* additionally react to fsRef arrival (option (c) above)?
-2. **Reconnect/replay.** Historical turns replay `block.end`-with-`fsRef`. The
-   post-save effect matches by promptId; first-paint dedupes by fsId. Believed
-   safe — confirm no consumer needs to distinguish the in-flight turn's fsRef
-   from a replayed older turn's.
-3. **Connection settle timing.** With `running` flipping before the persist, does
-   the reconnect watchdog / `inFlightStreamId` settle need any adjustment, or is
-   "generation done" the right moment to stop the watchdog regardless of persist?
-4. **Dedicated "persist done" event?** We dropped the v1 `prompt.fsref`. Do we
-   want an explicit persist-complete signal anyway (clearer than overloading
-   `block.end.fsRef` arrival), or is keying off `block.end.fsRef` arrival fine?
-5. **Old-client policy.** Accept the transient stale-tab skew (a), or
-   capability-gate the early emit (b)? (See compatibility section.)
-6. **`promptFS` / manual-save path.** `handleFSPrompt` builds its own block.end;
-   the manual-save turn skips the LLM so the persist is essentially the whole
-   turn. Apply the same early `prompt.block-end` there, or leave as-is?
+Resolved with `@CharlieHelps` (2026-06-19):
+
+1. **Q1 First-paint nav trigger → resolved.** Drop the `running`-edge trigger;
+   navigate on fsRef arrival for the active stream, with `streamId` matching +
+   fsId dedupe so the #1972 historical-URL protections stay intact.
+2. **Q2 Reconnect/replay → resolved.** fsRef *value* is source-agnostic
+   (`block.end.fsRef` live or replay); nav/repoint *side effects* stay
+   stream-scoped (match in-flight `streamId`).
+3. **Q3 Connection settle → resolved.** Settle `connection`/`inFlightStreamId` on
+   the canonical post-persist `block.end`-with-`fsRef`, **not** on the early
+   `prompt.block-end`, so a disconnect in the gap can't orphan repoint/nav.
+4. **Q4 Dedicated "persist done" event → resolved (with one divergence to
+   confirm).** Charlie recommended keeping an additive `prompt.fsref`; v3 instead
+   reuses the single post-persist `block.end`-with-`fsRef` as the anchor, since
+   v2/v3 already avoid the dual-`block.end` that motivated `prompt.fsref`. Net
+   behavior is identical; flagging for a thumbs-up that reuse is acceptable vs an
+   explicit event.
+5. **Q5 `promptFS` / manual-save → resolved.** Apply the same split there too
+   (phaseable) for consistent semantics.
+
+Still open:
+
+6. **Old-client policy.** Accept the transient stale-tab skew (a), or
+   capability-gate the early emit (b)? (See compatibility section — leaning (a)+(c).)
 
 ## Risk & rollout
 
