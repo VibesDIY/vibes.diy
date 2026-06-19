@@ -39,3 +39,11 @@ Gating is controlled by one env var, `VIBES_CI_GATE_TESTS`, in that step:
 The switch only governs _test_ failures. **Harness/setup failures always fail the job** regardless of the switch — a non-`1` exit (docker `125`/`126`/`127`, `timeout` `124`) or any exit with no valid `test-timing.json` report means the suite never ran, so it is never suppressed. "Did the suite actually report" is now decided by the presence of a parseable json report (the `HAVE_JSON` check), not by scraping the human output, so a real test failure is never misread as a harness failure.
 
 Two image gotchas the masking hid for ages: the Playwright image tag is derived from `pnpm exec playwright --version` (not `pnpm why`, whose JSON shape changed under pnpm 10 and silently produced an invalid `:v-noble` tag), and `pnpm` is activated **inside** the container via `corepack` (the image ships only node/npm, but the vitest globalSetup runs `pnpm exec drizzle-kit`). Both fail fast on an unresolved version before `docker run`.
+
+## Pre-run instrumentation
+
+To find "dumb work" before tests actually execute, `actions/base` also captures:
+
+- **Per-file pre-run phases.** A second reporter, [`tools/vitest-phase-reporter.mjs`](tools/vitest-phase-reporter.mjs), writes `test-phase-timing.json` with per-file `collect`/`setup`/`environment`/`prepare`/`test` durations (the json reporter only exposes start/end, hiding the dominant import phase). `parse-test-timing.py` adds a "Pre-run phase costs" table + Top-15 files by pre-run time to the job summary; the file rides along in the `test-timing` artifact. The reporter never throws out of a hook (a thrown reporter aborts the run) and supports both the legacy `onFinished` and v4 `onTestRunEnd` APIs.
+- **Per-step CI timings.** Each pre-test step (`runtime-setup`, `install`, `format-check`, `lint`, `build`) appends `<label>\t<seconds>` to `$RUNNER_TEMP/pretest-timings.tsv`; the final `pre-test-step-timings` step renders a table into the job summary — so wasted time in install/lint/build is visible without scraping the collapsed composite-step logs.
+- **globalSetup cost.** [`globalSetup.libsql.ts`](vibes.diy/api/tests/globalSetup.libsql.ts) logs the `drizzle-kit push` and total time (the one-time, once-per-project DB schema setup) to stdout.

@@ -15,18 +15,38 @@ inputs:
 runs:
   using: composite
   steps:
+    # Pre-test step timings: each step appends "<label>\t<seconds>" to a shared
+    # TSV in $RUNNER_TEMP; the "pre-test step timings" step at the end renders
+    # them into the job summary. Lets us see dumb work in install/lint/build
+    # without scraping the composite step's collapsed logs.
+    - name: mark-runtime-start
+      shell: bash
+      run: date +%s > "$RUNNER_TEMP/_runtime_t0"
+
     - uses: ./actions/runtime
+
+    - name: record-runtime-timing
+      shell: bash
+      run: |
+        if [ -f "$RUNNER_TEMP/_runtime_t0" ]; then
+          printf 'runtime-setup\t%s\n' "$(( $(date +%s) - $(cat "$RUNNER_TEMP/_runtime_t0") ))" >> "$RUNNER_TEMP/pretest-timings.tsv"
+        fi
 
     - name: install
       shell: bash
       run: |
+        _t0=$(date +%s)
         pnpm remove -r playwright-chromium
         pnpm install
         pnpm dedupe --check
+        printf 'install\t%s\n' "$(( $(date +%s) - _t0 ))" >> "$RUNNER_TEMP/pretest-timings.tsv"
 
     - name: format-check
       shell: bash
-      run: pnpm run format --check
+      run: |
+        _t0=$(date +%s)
+        pnpm run format --check
+        printf 'format-check\t%s\n' "$(( $(date +%s) - _t0 ))" >> "$RUNNER_TEMP/pretest-timings.tsv"
 
     # No standalone rules-bag step: `pnpm run lint` already runs
     # check-rules-bag-constructors.mjs as its first action (see the root
@@ -36,12 +56,17 @@ runs:
     - name: lint
       shell: bash
       run: |
+        _t0=$(date +%s)
         NODE_OPTIONS=--max-old-space-size=4096 pnpm run lint
+        printf 'lint\t%s\n' "$(( $(date +%s) - _t0 ))" >> "$RUNNER_TEMP/pretest-timings.tsv"
 
     # Build temporarily disabled due to pre-existing TypeScript errors in hosting/pkg and vibes.diy/pkg
     - name: build
       shell: bash
-      run: pnpm run build
+      run: |
+        _t0=$(date +%s)
+        pnpm run build
+        printf 'build\t%s\n' "$(( $(date +%s) - _t0 ))" >> "$RUNNER_TEMP/pretest-timings.tsv"
 
     # Decide whether the test step below can be skipped because this exact SHA
     # was already tested upstream. Only acts when the caller opts in via
@@ -123,19 +148,23 @@ runs:
         # errors) still streams to the Actions log for live debugging, and the
         # machine-readable report drives both the job summary and the uploaded
         # artifact (accurate per-file durations — no more scraping ANSI output).
-        rm -f test-timing.json
+        # A second reporter (tools/vitest-phase-reporter.mjs) writes
+        # test-phase-timing.json with per-file PRE-RUN phase costs (collect /
+        # setup / environment / prepare) — the json reporter only exposes
+        # start/end, which hides where the dominant import phase goes.
+        rm -f test-timing.json test-phase-timing.json
         set +e
         timeout 1800 docker run --rm \
           -v $(pwd):/work \
           -w /work \
           mcr.microsoft.com/playwright:v${PLAYWRIGHT_VERSION}-noble \
-          bash -c "corepack enable && corepack prepare pnpm@${PNPM_VERSION} --activate && npm run test -- --reporter=json --outputFile=test-timing.json"
+          bash -c "corepack enable && corepack prepare pnpm@${PNPM_VERSION} --activate && npm run test -- --reporter=json --outputFile=test-timing.json --reporter=./tools/vitest-phase-reporter.mjs"
         TEST_EXIT=$?
         set -e
 
         # The container above runs as root and bind-mounts the host checkout, so
         # it writes root-owned files into the workspace (node_modules/.vite-temp,
-        # test-timing.json, vitest globalSetup's drizzle-kit artifacts). When this
+        # test-timing.json, test-phase-timing.json, drizzle-kit artifacts). When this
         # same checkout is reused by a later non-root step in the same job — the
         # deploy jobs' `pnpm run build` → vite writing node_modules/.vite-temp —
         # that step hits EACCES. Restore ownership to the runner user so the
@@ -186,6 +215,25 @@ runs:
       uses: actions/upload-artifact@v4
       with:
         name: test-timing
-        path: test-timing.json
+        path: |
+          test-timing.json
+          test-phase-timing.json
         if-no-files-found: ignore
         retention-days: 30
+
+    # Render the per-step pre-test timings (see mark-runtime-start above) into
+    # the job summary. always() so it reports even when a later step failed.
+    - name: pre-test-step-timings
+      if: ${{ always() }}
+      shell: bash
+      run: |
+        TSV="$RUNNER_TEMP/pretest-timings.tsv"
+        [ -f "$TSV" ] || { echo "no pre-test timings recorded"; exit 0; }
+        {
+          echo "## Pre-test step timings (seconds)"
+          echo ""
+          echo "| step | seconds |"
+          echo "| --- | --: |"
+          sort -k2 -nr "$TSV" | awk -F'\t' '{printf "| %s | %s |\n", $1, $2}'
+          awk -F'\t' '{s+=$2} END{printf "| **total** | **%s** |\n", s}' "$TSV"
+        } >> "${GITHUB_STEP_SUMMARY:-/dev/stdout}"

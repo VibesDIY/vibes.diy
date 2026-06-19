@@ -24,9 +24,11 @@ qa-reports/
 ## Debug and test files
 claude-browse-vibes/*.png
 *.sse
-# CI per-file/per-test timing report written by actions/base test step
-# (vitest --reporter=json --outputFile); uploaded as the test-timing artifact
+# CI per-file/per-test timing reports written by actions/base test step
+# (vitest --reporter=json + tools/vitest-phase-reporter.mjs); uploaded as the
+# test-timing artifact
 test-timing.json
+test-phase-timing.json
 test-results/
 playwright-report/
 playwright/.cache/
