@@ -64,8 +64,9 @@ const realCtx: VibesDiyCtx = {
   srvVibeSandbox: {} as VibesDiyCtx["srvVibeSandbox"],
 };
 
-// Exported so tests can inject a context value via <VibesDiyContext.Provider>
-// instead of module-mocking this provider (which bleeds under isolate:false).
+// @internal Exported so tests can inject a context value via
+// <VibesDiyContext.Provider> instead of module-mocking this provider (which
+// bleeds under isolate:false). App code should use useVibesDiy(), not this.
 export const VibesDiyContext = createContext<VibesDiyCtx>(realCtx as Readonly<VibesDiyCtx>);
 
 const vibesDiyApis = new KeyedResolvOnce();

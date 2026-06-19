@@ -10,7 +10,13 @@ const PortalRootContext = createContext<HTMLElement | null>(null);
 
 export const PortalRootProvider = PortalRootContext.Provider;
 
-/** Container for portal content; defaults to document.body when no provider. */
-export function usePortalRoot(): HTMLElement {
-  return useContext(PortalRootContext) ?? document.body;
+/**
+ * Container for portal content; defaults to document.body on the client and
+ * null during SSR (where document is undefined). Callers must guard the
+ * createPortal() render when this returns null.
+ */
+export function usePortalRoot(): HTMLElement | null {
+  const injected = useContext(PortalRootContext);
+  if (injected) return injected;
+  return typeof document !== "undefined" ? document.body : null;
 }

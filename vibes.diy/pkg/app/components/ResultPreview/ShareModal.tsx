@@ -311,11 +311,13 @@ interface ShareModalProps {
    */
   myGrant?: "owner" | "editor" | "viewer" | "submitter" | "public" | "none";
   /**
-   * DI seam for the comments/members sections. Defaults to the real components;
-   * tests inject lightweight stubs so they don't have to module-mock these
-   * shared components (which bleeds into their own tests under isolate:false).
+   * @internal Test-only DI seam for the comments/members sections. Defaults to
+   * the real components; tests inject lightweight stubs so they don't have to
+   * module-mock these shared components (which bleeds under isolate:false). Not
+   * part of the product API.
    */
   MembersSectionComponent?: typeof MembersSection;
+  /** @internal See MembersSectionComponent. */
   CommentsSectionComponent?: typeof CommentsSection;
 }
 
@@ -447,6 +449,8 @@ export function ShareModal({
   // Non-owner with read access can request to be added (unless they're already
   // an editor — editors don't need to request). Hidden on unpublished vibes.
   const showRequestAccess = !isOwner && myGrant !== "editor" && modal.isPublished && !!modal.publishedUrl;
+
+  if (!portalRoot) return null;
 
   return createPortal(
     <div

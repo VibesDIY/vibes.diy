@@ -85,6 +85,7 @@ export default function ChatPrompt() {
       <Chat inConstruction initialPrompt={effectivePrompt} />
       {isSignedIn &&
         effectivePrompt &&
+        portalRoot &&
         createPortal(
           <div
             style={{
