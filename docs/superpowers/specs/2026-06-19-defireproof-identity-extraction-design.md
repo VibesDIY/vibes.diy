@@ -1,6 +1,6 @@
 # Removing the `@fireproof/*` dependency — extracting the identity/PKI core
 
-Status: **DESIGN / DISCUSSION** — not yet a plan. Do not start implementation.
+Status: **APPROVED — IN PROGRESS.** Owner gave go-ahead; resolutions ratified. Plan 1 (foundation) landed; phase-1 type ownership underway. Plan: [`2026-06-19-defireproof-identity-extraction-foundation.md`](../plans/2026-06-19-defireproof-identity-extraction-foundation.md).
 
 Related:
 
@@ -25,7 +25,7 @@ specific portions we use into our own module(s)** with a clean target
 architecture — possibly a new public npm package — so that:
 
 1. The login/cert/token surface (including #1616's success page) is ours to style and evolve.
-2. `pnpm` stops resolving `@fireproof/*` for **runtime** code, except at most a clearly-scoped legacy shim. (The **build toolchain** — `core-cli` as `core-cli tsc`/`build`/`pack`/`publish` — is a separate dep with its own migration; see Bucket F. "Zero `@fireproof/*`" is only true once both runtime *and* tooling are addressed.)
+2. `pnpm` stops resolving `@fireproof/*` for **runtime** code, except at most a clearly-scoped legacy shim. (The **build toolchain** — `core-cli` as `core-cli tsc`/`build`/`pack`/`publish` — is a separate dep with its own migration; see Bucket F. "Zero `@fireproof/*`" is only true once both runtime _and_ tooling are addressed.)
 3. The auth wire-format (device-id certs already in users' keybags, deployed CA keys, cloud token format) stays **byte-compatible** — no forced re-login, no key rotation.
 
 `@adviser/cement` is explicitly **out of scope as a removal target**: it's a
@@ -45,16 +45,16 @@ exist today and should be DRY'd as part of extraction:
 [`use-vibes/base/firefly-defaults.node.ts:20`](../../../use-vibes/base/firefly-defaults.node.ts) (`loadDeviceIdGetToken`),
 and `eval/codegen-edit/src/auth.ts`.
 
-| Symbol | Package | Role |
-| --- | --- | --- |
-| `getKeyBag` | `core-keybag` | Open/read/write the local device keystore at `~/.fireproof/keybag/<id>.json` (a fireproof DB) — `.getDeviceId()` / `.setDeviceId()` |
-| `DeviceIdKey` | `core-device-id` | Load ES256 P-256 signing key from JWK; `.fingerPrint()` |
-| `DeviceIdSignMsg` | `core-device-id` | Sign `FPDeviceIDSession` JWT claims with ES256 (the per-request device token) |
+| Symbol                                                   | Package                    | Role                                                                                                                                                                                                                                                                                                        |
+| -------------------------------------------------------- | -------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `getKeyBag`                                              | `core-keybag`              | Open/read/write the local device keystore at `~/.fireproof/keybag/<id>.json` (a fireproof DB) — `.getDeviceId()` / `.setDeviceId()`                                                                                                                                                                         |
+| `DeviceIdKey`                                            | `core-device-id`           | Load ES256 P-256 signing key from JWK; `.fingerPrint()`                                                                                                                                                                                                                                                     |
+| `DeviceIdSignMsg`                                        | `core-device-id`           | Sign `FPDeviceIDSession` JWT claims with ES256 (the per-request device token)                                                                                                                                                                                                                               |
 | `deviceIdCAFromEnv`, `getCloudPubkeyFromEnv`, `tokenApi` | `core-protocols-dashboard` | **Server** side: load CA priv key + cloud pubkey from env; `tokenApi[type].verify(token)`; CA `.processCSR(csr, claims)` issues the cert ([`get-cert-from-csr.ts:14`](../../../vibes.diy/api/svc/public/get-cert-from-csr.ts), [`create-handler.ts:143-149`](../../../vibes.diy/api/svc/create-handler.ts)) |
-| `ClerkApiToken` | `core-protocols-dashboard` | **Runtime** Clerk token signer/verifier — `new ClerkApiToken(sthis)` ([`api/impl/index.ts:169,301`](../../../vibes.diy/api/impl/index.ts)) |
-| `clerkDashApi`, `DashboardApiImpl` | `core-protocols-dashboard` | **Runtime** browser-side dashboard API client — `clerkDashApi(clerk, …)` returning a `DashboardApiImpl` used as `dashApi` in the React context ([`use-vibes/base/contexts/VibeContext.tsx:4,69,98`](../../../use-vibes/base/contexts/VibeContext.tsx)) |
-| `DeviceIdCAIf` | `core-types-device-id` | CA interface on the service ctx ([`svc/types.ts:37`](../../../vibes.diy/api/svc/types.ts)) |
-| `JWKPrivate`, `JWKPrivateSchema`, `DeviceIdKeyBagItem` | `core-types-base` | Keybag item shapes; headless-auth env seeding ([`cli/device-id-env.ts`](../../../vibes-diy/cli/device-id-env.ts)) |
+| `ClerkApiToken`                                          | `core-protocols-dashboard` | **Runtime** Clerk token signer/verifier — `new ClerkApiToken(sthis)` ([`api/impl/index.ts:169,301`](../../../vibes.diy/api/impl/index.ts))                                                                                                                                                                  |
+| `clerkDashApi`, `DashboardApiImpl`                       | `core-protocols-dashboard` | **Runtime** browser-side dashboard API client — `clerkDashApi(clerk, …)` returning a `DashboardApiImpl` used as `dashApi` in the React context ([`use-vibes/base/contexts/VibeContext.tsx:4,69,98`](../../../use-vibes/base/contexts/VibeContext.tsx))                                                      |
+| `DeviceIdCAIf`                                           | `core-types-device-id`     | CA interface on the service ctx ([`svc/types.ts:37`](../../../vibes.diy/api/svc/types.ts))                                                                                                                                                                                                                  |
+| `JWKPrivate`, `JWKPrivateSchema`, `DeviceIdKeyBagItem`   | `core-types-base`          | Keybag item shapes; headless-auth env seeding ([`cli/device-id-env.ts`](../../../vibes-diy/cli/device-id-env.ts))                                                                                                                                                                                           |
 
 > **Note on the Clerk dashboard-API client.** `ClerkApiToken` (server) and
 > `clerkDashApi`/`DashboardApiImpl` (browser) are a **live runtime client**, not
@@ -66,21 +66,21 @@ and `eval/codegen-edit/src/auth.ts`.
 
 ### Bucket B — Auth wire-types
 
-| Symbol | Package | Role |
-| --- | --- | --- |
-| `DashAuthType` | `core-types-protocols-dashboard` | **The** auth token union (`device-id` \| `clerk`) threaded through every request (~21 files) |
-| `ReqCertFromCsr`, `ResCertFromCsr` | `core-types-protocols-dashboard` | CSR→cert exchange shapes |
-| `VerifiedAuthResult`, `VerifiedClaimsResult`, `VerifiedResult`, `WithAuth` | `core-types-protocols-dashboard` | Post-verify result shapes ([`check-auth.ts`](../../../vibes.diy/api/svc/check-auth.ts)) |
-| `FPDeviceIDSession` | `core` / `core-types-base` | Device JWT claim shape (type-only) |
-| `ClerkClaim`, `ClerkClaimSchema` | `core-types-base` | Zod schema validating Clerk JWTs — **carries the load-bearing patch** (`.catch("")` on optional fields) |
+| Symbol                                                                     | Package                          | Role                                                                                                                                                                                                                                                                              |
+| -------------------------------------------------------------------------- | -------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `DashAuthType`                                                             | `core-types-protocols-dashboard` | **The** auth token union (`device-id` \| `clerk`) threaded through every request (~21 files)                                                                                                                                                                                      |
+| `ReqCertFromCsr`, `ResCertFromCsr`                                         | `core-types-protocols-dashboard` | CSR→cert exchange shapes                                                                                                                                                                                                                                                          |
+| `VerifiedAuthResult`, `VerifiedClaimsResult`, `VerifiedResult`, `WithAuth` | `core-types-protocols-dashboard` | Post-verify result shapes ([`check-auth.ts`](../../../vibes.diy/api/svc/check-auth.ts))                                                                                                                                                                                           |
+| `FPDeviceIDSession`                                                        | `core` / `core-types-base`       | Device JWT claim shape (type-only)                                                                                                                                                                                                                                                |
+| `ClerkClaim`, `ClerkClaimSchema`                                           | `core-types-base`                | Zod schema validating Clerk JWTs — **carries the load-bearing patch** (`.catch("")` on optional fields). The patch also relaxes fireproof's _internal_ verify (`core-protocols-dashboard/token.js` imports it), so it can't be dropped until the verifier is extracted (phase 2). |
 
 These are (almost) all erasable types. The exceptions that carry runtime values are
 `JWKPrivateSchema` and `ClerkClaimSchema` (Zod), which is also where the patch lives.
 
 ### Bucket C — The login localhost server (#1616)
 
-| Symbol | Package | Role |
-| --- | --- | --- |
+| Symbol                                         | Package    | Role                                                                                                                                                                                                                                                                                |
+| ---------------------------------------------- | ---------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `ReqDeviceIdRegister`, `isResDeviceIdRegister` | `core-cli` | [`login-cmd.ts:40`](../../../vibes-diy/cli/cmds/login-cmd.ts) builds a `core-cli.device-id-register` DTO; the fireproof handler spins up the localhost Hono server, opens the browser to `/settings/csr-to-cert`, and **renders the unstyled `/cert` success page we can't touch**. |
 
 ### Bucket D — Legacy in-browser IndexedDB (NOT "deep ops")
@@ -88,16 +88,16 @@ These are (almost) all erasable types. The exceptions that carry runtime values 
 This is the original **local** fireproof database, still used in the browser — it is
 _not_ part of the firefly cloud migration and _not_ a deep library op.
 
-| Symbol | Package | Where |
-| --- | --- | --- |
+| Symbol                                                                                       | Package                                      | Where                                                                                                                                                                                                                                                                                          |
+| -------------------------------------------------------------------------------------------- | -------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `useFireproof`, `fireproof`, `Database`, `DocFileMeta`, `DocSet`, `DocResponse`, `DocWithId` | `use-fireproof` / `@fireproof/use-fireproof` | ImgGen image metadata ([`base/hooks/img-gen/use-img-gen.ts`](../../../vibes.diy/base/hooks/img-gen/use-img-gen.ts), [`base/components/ImgGen.tsx`](../../../vibes.diy/base/components/ImgGen.tsx)), vibe-card file metadata, `databaseManager`, `useAllGroups`, `useChatHydration` (~15 files) |
 
 ### Bucket E — Runtime glue (the pervasive bottleneck)
 
-| Symbol | Package | Role |
-| --- | --- | --- |
-| `ensureSuperThis`, `ensureLogger`, `runtimeFn`, `hashObjectSync` | `core-runtime` | Init the global `SuperThis` context + logger at every CLI/service entry (~30 files) |
-| `SuperThis` | `core` / `core-types-base` | Platform-abstraction context: `env`, `txt` (base58/base64/utf8 codecs), `nextId()`, crypto. Threaded almost everywhere identity/crypto code runs. |
+| Symbol                                                           | Package                    | Role                                                                                                                                              |
+| ---------------------------------------------------------------- | -------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `ensureSuperThis`, `ensureLogger`, `runtimeFn`, `hashObjectSync` | `core-runtime`             | Init the global `SuperThis` context + logger at every CLI/service entry (~30 files)                                                               |
+| `SuperThis`                                                      | `core` / `core-types-base` | Platform-abstraction context: `env`, `txt` (base58/base64/utf8 codecs), `nextId()`, crypto. Threaded almost everywhere identity/crypto code runs. |
 
 `SuperThis` is the crux of "can we ever reach _zero_ `@fireproof/*`": it's generic
 runtime plumbing, not database code, but it lives in `@fireproof/core-runtime`.
@@ -109,11 +109,11 @@ handler: package scripts run `core-cli tsc` / `core-cli build` / `core-cli build
 --doPack` for compile/pack/publish, and it's a `devDependency` across many
 workspaces.
 
-| Usage | Where |
-| --- | --- |
-| `"build": "core-cli tsc"` | root [`package.json:20`](../../../package.json), e.g. [`api/svc/package.json:7`](../../../vibes.diy/api/svc/package.json) |
-| `"pack"` / `"publish": "core-cli build …"` | per-package scripts (e.g. `api/svc/package.json:11-12`) |
-| `@fireproof/core-cli` devDep | root + ~15 workspaces |
+| Usage                                      | Where                                                                                                                     |
+| ------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------- |
+| `"build": "core-cli tsc"`                  | root [`package.json:20`](../../../package.json), e.g. [`api/svc/package.json:7`](../../../vibes.diy/api/svc/package.json) |
+| `"pack"` / `"publish": "core-cli build …"` | per-package scripts (e.g. `api/svc/package.json:11-12`)                                                                   |
+| `@fireproof/core-cli` devDep               | root + ~15 workspaces                                                                                                     |
 
 So even after Buckets A–E, `pnpm` still resolves `@fireproof/core-cli` for builds.
 Reaching true zero needs this swapped for a plain `tsc`/`tsup`/in-repo build wrapper —
@@ -126,7 +126,8 @@ the Clerk dash-api client (the `core-protocols-dashboard` runtime surface; could
 alternatively be a sibling `@vibes.diy/dash-api`).
 It is the single home for "how a vibes device authenticates and how the cloud
 issues/verifies its credentials." Unidirectional deps; built on `@adviser/cement`
-+ standard primitives, **never** on `@fireproof/*`.
+
+- standard primitives, **never** on `@fireproof/*`.
 
 ```
                  @vibes.diy/identity   (NEW — publishable?)
@@ -173,9 +174,14 @@ open question — see Q2.
 ### Phasing (risk-ordered, each independently shippable)
 
 1. **Type ownership (mechanical, low-risk).** Re-home Bucket B types into
-   `@vibes.diy/identity` and re-export. Inline the `ClerkClaimSchema` `.catch()`
-   patch as source. Deletes the `core-types-base` patch and the `core-types-*`
-   runtime deps. Mostly erasable; large but low-blast-radius diff.
+   `@vibes.diy/identity` and re-export — the single seam later phases invert. Add a
+   vibes-owned `ClerkClaimSchema` carrying the `.catch()` semantics (parity artifact)
+   and migrate our own consumer (`check-auth.ts`) to it. Drops the `core-types-*`
+   _type_ deps from source. **The upstream `core-types-base` patch is retained**, not
+   deleted: it also relaxes fireproof's _internal_ `tokenApi.verify` (which imports
+   `ClerkClaimSchema` in `core-protocols-dashboard/token.js`), so the patch can only
+   be removed in phase 2 once our extracted verifier replaces fireproof's. Mostly
+   erasable; low-blast-radius diff.
 2. **Identity runtime extraction (Bucket A + Clerk dash-api client).** Move keybag +
    device-id signer (client) + CA/verify (server) into the package; collapse the
    three duplicated client signers behind one `createDeviceIdGetToken()` API. Also
@@ -195,7 +201,7 @@ open question — see Q2.
    local store). Largest app-surface change; gated independently. Until done, a
    single narrowly-scoped `@fireproof/use-fireproof` dep may legitimately remain.
 6. **Build-toolchain swap (Bucket F) — separate track.** Replace `core-cli
-   tsc`/`build`/`pack`/`publish` with a plain `tsc`/`tsup`/in-repo wrapper and drop
+tsc`/`build`/`pack`/`publish` with a plain `tsc`/`tsup`/in-repo wrapper and drop
    the `@fireproof/core-cli` devDep repo-wide. Mechanical but touches every
    workspace; only after this does `pnpm` resolve **zero** `@fireproof/*`.
 
