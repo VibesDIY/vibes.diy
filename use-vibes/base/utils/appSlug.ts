@@ -7,7 +7,7 @@
  */
 
 import { Lazy } from "@adviser/cement";
-import { ensureSuperThis, runtimeFn } from "@fireproof/core-runtime";
+import { ensureSuperThis, runtimeFn } from "@vibes.diy/identity";
 
 const sthis = Lazy(() => ensureSuperThis());
 

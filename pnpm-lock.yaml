@@ -448,6 +448,9 @@ importers:
       '@vibes.diy/base':
         specifier: workspace:*
         version: link:../../vibes.diy/base
+      '@vibes.diy/identity':
+        specifier: workspace:*
+        version: link:../../vibes.diy/identity
       '@vibes.diy/prompts':
         specifier: workspace:*
         version: link:../../prompts/pkg
@@ -1512,6 +1515,9 @@ importers:
       '@vibes.diy/call-ai-v2':
         specifier: workspace:*
         version: link:../../call-ai/v2
+      '@vibes.diy/identity':
+        specifier: workspace:*
+        version: link:../identity
       '@vibes.diy/prompts':
         specifier: workspace:*
         version: link:../../prompts/pkg

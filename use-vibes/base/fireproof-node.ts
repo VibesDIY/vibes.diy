@@ -22,8 +22,8 @@
 import { Lazy, KeyedResolvOnce, BuildURI, type Result } from "@adviser/cement";
 import { VibesDiyApi, FireflyApiAdapter } from "@vibes.diy/api-impl";
 import { FireflyDatabase } from "@vibes.diy/vibe-runtime";
-import { ensureSuperThis } from "@fireproof/core-runtime";
-import type { DashAuthType } from "@fireproof/core-types-protocols-dashboard";
+import { ensureSuperThis } from "@vibes.diy/identity";
+import type { DashAuthType } from "@vibes.diy/identity";
 
 export interface FireproofOpts {
   apiUrl?: string;
