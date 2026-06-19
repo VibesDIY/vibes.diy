@@ -1,6 +1,11 @@
 import React from "react";
-import { render, screen, fireEvent, cleanup, waitFor } from "@testing-library/react";
+import { render as rtlRender, screen, fireEvent, cleanup, waitFor } from "@testing-library/react";
 import { describe, it, expect, vi, afterEach } from "vitest";
+import { vibesWrapper } from "./vibes-provider-harness.js";
+
+// Inject the VibesDiy context via the real provider instead of mocking it.
+const render = (ui: React.ReactElement, options?: Parameters<typeof rtlRender>[1]) =>
+  rtlRender(ui, { wrapper: vibesWrapper({ sthis: { txt: { base64: { encode: (s: string) => `b64:${s}` } } } }), ...options });
 
 // The chat route chunk is warmed on interaction intent via a hidden
 // <Link to="/chat/prompt" prefetch="render">. These tests assert that
@@ -24,13 +29,9 @@ vi.mock("react-router", async (importOriginal) => {
   };
 });
 
-vi.mock("~/vibes.diy/app/vibes-diy-provider.js", () => ({
-  useVibesDiy: () => ({ sthis: { txt: { base64: { encode: (s: string) => `b64:${s}` } } } }),
-}));
+// VibesDiy context is injected via vibesWrapper (see local render above).
 
-vi.mock("~/vibes.diy/app/contexts/ThemeContext.js", () => ({
-  useTheme: () => ({ isDarkMode: false }),
-}));
+// ThemeContext is provided by the real ThemeProvider in vibesWrapper.
 
 // Clerk auth comes from the shared singleton mock (clerk-test-mock.ts); its
 // signed-out default (isSignedIn:false, isLoaded:true) is what these tests need.

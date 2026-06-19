@@ -1,5 +1,6 @@
 import React from "react";
-import { render, screen, cleanup } from "@testing-library/react";
+import { render as rtlRender, screen, cleanup } from "@testing-library/react";
+import { vibesWrapper } from "./vibes-provider-harness.js";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { setTestAuth } from "./clerk-test-mock.js";
 
@@ -22,15 +23,17 @@ vi.mock("react-router", async (importOriginal) => {
 
 // Clerk auth comes from the shared singleton mock (clerk-test-mock.ts).
 
-vi.mock("~/vibes.diy/app/vibes-diy-provider.js", () => ({
-  useVibesDiy: () => ({
-    // Decode just strips the "b64:" prefix our encode/decode stub uses.
-    sthis: { txt: { base64: { decode: (s: string) => s.replace(/^b64:/, "") } } },
-    // getTokenClaims never resolves so the open-chat effect stays parked and
-    // doesn't navigate away during the assertion window.
-    chatApi: { getTokenClaims: () => new Promise(() => undefined) },
-  }),
-}));
+// Inject the VibesDiy context via the real provider instead of mocking it.
+// decode just strips the "b64:" prefix our encode/decode stub uses; getTokenClaims
+// never resolves so the open-chat effect stays parked during the assertion window.
+const render = (ui: React.ReactElement, options?: Parameters<typeof rtlRender>[1]) =>
+  rtlRender(ui, {
+    wrapper: vibesWrapper({
+      sthis: { txt: { base64: { decode: (s: string) => s.replace(/^b64:/, "") } } },
+      chatApi: { getTokenClaims: () => new Promise(() => undefined) },
+    }),
+    ...options,
+  });
 
 // Spread the real module so other exports (e.g. the useRecentVibes hook) stay
 // available to files that import them; only override the notifier.

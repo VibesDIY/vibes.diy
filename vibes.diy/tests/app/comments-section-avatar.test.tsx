@@ -1,5 +1,6 @@
 import React from "react";
-import { render, screen, fireEvent, waitFor, cleanup } from "@testing-library/react";
+import { render as rtlRender, screen, fireEvent, waitFor, cleanup } from "@testing-library/react";
+import { vibesWrapper } from "./vibes-provider-harness.js";
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { Result } from "@adviser/cement";
 import { setTestAuth, setTestUser } from "./clerk-test-mock.js";
@@ -14,18 +15,12 @@ const whoAmI = vi.fn();
 // Clerk auth/user come from the shared singleton mock (clerk-test-mock.ts);
 // each test sets the state it needs via setTestAuth()/setTestUser().
 
-vi.mock("~/vibes.diy/app/vibes-diy-provider.js", () => ({
-  useVibesDiy: () => ({
-    chatApi: {
-      queryDocs,
-      putDoc,
-      deleteDoc,
-      subscribeDocs,
-      onDocChanged,
-      whoAmI,
-    },
-  }),
-}));
+// Inject the VibesDiy context via the real provider instead of mocking it.
+const render = (ui: React.ReactElement, options?: Parameters<typeof rtlRender>[1]) =>
+  rtlRender(ui, {
+    wrapper: vibesWrapper({ chatApi: { queryDocs, putDoc, deleteDoc, subscribeDocs, onDocChanged, whoAmI } }),
+    ...options,
+  });
 
 import { CommentsSection } from "~/vibes.diy/app/components/ResultPreview/CommentsSection.js";
 

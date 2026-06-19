@@ -1,8 +1,9 @@
-import { act, renderHook, waitFor } from "@testing-library/react";
+import { act, renderHook as rtlRenderHook, waitFor } from "@testing-library/react";
 import type { ResRecentVibesItem } from "@vibes.diy/api-types";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { useRecentVibes } from "~/vibes.diy/app/hooks/useRecentVibes.js";
 import { setTestAuth, setTestUser } from "./clerk-test-mock.js";
+import { vibesWrapper } from "./vibes-provider-harness.js";
 
 const mockListRecentVibes = vi.fn();
 const mockVibeDiyApi = {
@@ -10,12 +11,9 @@ const mockVibeDiyApi = {
 };
 
 // Clerk auth/user come from the shared singleton mock (clerk-test-mock.ts).
-
-vi.mock("~/vibes.diy/app/vibes-diy-provider.js", () => ({
-  useVibesDiy: () => ({
-    chatApi: mockVibeDiyApi,
-  }),
-}));
+// Inject the VibesDiy context via the real provider instead of mocking it.
+const renderHook: typeof rtlRenderHook = (cb, options) =>
+  rtlRenderHook(cb, { wrapper: vibesWrapper({ chatApi: mockVibeDiyApi }), ...(options as object) });
 
 function okRecentVibes(items: ResRecentVibesItem[], nextCursor?: string) {
   return {
