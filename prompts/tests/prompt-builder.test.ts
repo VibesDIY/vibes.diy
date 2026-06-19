@@ -6,7 +6,7 @@ import {
   makeBaseSystemPrompt,
   defaultStylePrompt,
 } from "@vibes.diy/prompts";
-import { describe, it, expect, beforeAll, beforeEach, vi } from "vitest";
+import { describe, it, expect, afterAll, beforeAll, beforeEach, vi } from "vitest";
 import { Result } from "@adviser/cement";
 import { createMockFetchFromPkgFiles } from "./helpers/load-mock-data.js";
 
@@ -19,9 +19,11 @@ function mockFetchText(_pkg: string, path: string): Promise<Result<string>> {
   });
 }
 
-// Mock global fetch for the tests
+// Mock global fetch for the tests. stubGlobal (not a bare assignment) so
+// unstubAllGlobals restores the real fetch after this file — under isolate:false
+// a leaked fetch mock corrupts later files that fetch real fixtures.
 const mockFetch = vi.fn();
-globalThis.fetch = mockFetch;
+vi.stubGlobal("fetch", mockFetch);
 // await import("~/vibes.diy/app/llms/catalog.js");
 
 // import * as mod from "~/vibes.diy/app/prompts.js";
@@ -101,6 +103,10 @@ beforeAll(async () => {
 
 beforeEach(() => {
   mockFetch.mockClear();
+});
+
+afterAll(() => {
+  vi.unstubAllGlobals();
 });
 
 describe("prompt builder (real implementation)", () => {
