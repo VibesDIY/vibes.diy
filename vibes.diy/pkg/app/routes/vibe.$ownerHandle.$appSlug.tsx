@@ -67,11 +67,11 @@ export async function loader(loaderCtx: {
 }
 
 export function meta({
-  data,
+  loaderData,
   params,
   matches,
 }: {
-  data: VibeLoaderData;
+  loaderData: VibeLoaderData | undefined;
   params: Record<string, string>;
   matches: { loaderData: unknown }[];
 }) {
@@ -79,7 +79,7 @@ export function meta({
   const rootData = matches[0]?.loaderData as { env?: { VIBES_SVC_HOSTNAME_BASE?: string } } | undefined;
   const hostnameBase = rootData?.env?.VIBES_SVC_HOSTNAME_BASE?.replace(/^\./, "") ?? "vibes.diy";
   const imageUrl = `https://${appSlug}--${ownerHandle}.${hostnameBase}/screenshot.jpg`;
-  const title = data?.vibeOgTitle ?? appSlug ?? "Vibe";
+  const title = loaderData?.vibeOgTitle ?? appSlug ?? "Vibe";
 
   return [
     { title: `${title} - vibes.diy` },

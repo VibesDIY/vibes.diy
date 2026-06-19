@@ -149,12 +149,25 @@ describe("viewer route — iframe + meta track the configured hostname base", ()
 
   it("meta() og:image / twitter:image point at the configured base", () => {
     const tags = vibeRouteMeta({
-      data: { iframeUrl: undefined, vibeOgTitle: undefined, isWorldReadable: false },
+      loaderData: { iframeUrl: undefined, vibeOgTitle: undefined, isWorldReadable: false },
       params: { ownerHandle: "alice", appSlug: "myapp" },
       matches: [{ loaderData: { env: { VIBES_SVC_HOSTNAME_BASE: PREVIEW_BASE } } }],
     }) as { property?: string; name?: string; content?: string }[];
     const expected = "https://myapp--alice.pr-7.vibespreview.dev/screenshot.jpg";
     expect(tags.find((t) => t.property === "og:image")?.content).toBe(expected);
     expect(tags.find((t) => t.name === "twitter:image")?.content).toBe(expected);
+  });
+
+  it("meta() title comes from the loader's vibeOgTitle (React Router v8 loaderData)", () => {
+    // Regression: React Router v8 exposes the loader result to meta() as
+    // `loaderData`, not the deprecated `data`. Reading `data` would silently
+    // drop the worker-fetched OG title and fall back to the slug.
+    const tags = vibeRouteMeta({
+      loaderData: { iframeUrl: undefined, vibeOgTitle: "My Real Title", isWorldReadable: false },
+      params: { ownerHandle: "alice", appSlug: "myapp" },
+      matches: [{ loaderData: { env: { VIBES_SVC_HOSTNAME_BASE: PREVIEW_BASE } } }],
+    }) as { property?: string; name?: string; content?: string; title?: string }[];
+    expect(tags.find((t) => t.title !== undefined)?.title).toBe("My Real Title - vibes.diy");
+    expect(tags.find((t) => t.property === "og:title")?.content).toBe("My Real Title");
   });
 });
