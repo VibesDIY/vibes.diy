@@ -14,7 +14,10 @@ vi.mock("react-dom", () => ({
 vi.mock("~/vibes.diy/app/components/mine/sharing-tab/PublicSharingSection.js", () => ({
   PublicSharingSection: () => <div data-testid="public-sharing-section" />,
 }));
-vi.mock("~/vibes.diy/app/components/mine/sharing-tab/RequestsSection.js", () => ({
+// Spread the real module so other exports (e.g. renderRequestUser) stay
+// available to files that import them; only override the section component.
+vi.mock("~/vibes.diy/app/components/mine/sharing-tab/RequestsSection.js", async (importOriginal) => ({
+  ...(await importOriginal<Record<string, unknown>>()),
   RequestsSection: () => <div data-testid="requests-section" />,
 }));
 vi.mock("~/vibes.diy/app/components/mine/sharing-tab/EmailInvitationsSection.js", () => ({

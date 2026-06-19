@@ -32,7 +32,10 @@ vi.mock("~/vibes.diy/app/vibes-diy-provider.js", () => ({
   }),
 }));
 
-vi.mock("~/vibes.diy/app/hooks/useRecentVibes.js", () => ({
+// Spread the real module so other exports (e.g. the useRecentVibes hook) stay
+// available to files that import them; only override the notifier.
+vi.mock("~/vibes.diy/app/hooks/useRecentVibes.js", async (importOriginal) => ({
+  ...(await importOriginal<Record<string, unknown>>()),
   notifyRecentVibesChanged: vi.fn(),
 }));
 
