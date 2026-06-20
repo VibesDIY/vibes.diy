@@ -51,29 +51,54 @@ imgGenAppSessionStopgapHandlers`. Built only on routes where
 Two more eventos exist:
 
 - **`vibesMsgEvento`** = `sharedHandlers + appHandlers + chatHandlers`. This is
-  `cfServe`'s **default** when no `eventoFactory` is passed
-  (`cf-serve.ts:530`). Both production DOs pass an explicit evento, so in prod
-  this default is effectively the test-harness evento — but Track A must
-  **verify** no production entrypoint serves it before relying on that.
+  `cfServe`'s **default** when no `eventoFactory` is passed (`cf-serve.ts:530`).
+  The two DOs pass an explicit evento, **but the default is a live production
+  path**, not test-only: the top-level worker handles the `cf-serve` route (app
+  subdomain `*--*.host` + asset host, `route-decision.ts:62`) by calling
+  `cfServe(request, cctx)` with **no** `eventoFactory` and `cfServeAppCtx(...)`
+  with **no** override (`app.ts:305,309`). Deployed-vibe doc writes (the iframe
+  runtime → its own app subdomain) therefore run **in the worker** under
+  `vibesMsgEvento` + the default `invokeAccessFn`. (Caught in review — thanks
+  @chatgpt-codex-connector.)
 
 Handler manifest (`api/svc/evento-handler-manifest.ts`) is the single source of
 truth; a parity test pins no-overlap.
 
 ### How `AccessFnDO` is still reached
 
-`env.ACCESS_FN_DO` is invoked in exactly one place: the **default**
-`invokeAccessFn` in `cf-serve.ts:445`. It runs when a doc-write handler
-(`putDocEvento` → `process-access-bindings`) executes on a DO whose `appCtx`
-has **no** `invokeAccessFn` override.
+`env.ACCESS_FN_DO` is invoked in one place: the **default** `invokeAccessFn` in
+`cf-serve.ts:445`. It runs when a doc-write handler (`putDocEvento`) executes in
+an `appCtx` with **no** `invokeAccessFn` override. There are **two** live
+consumers of that default (the second was missed in the first draft and caught
+in review):
 
-- **AppSessions** overrides it with `localInvokeAccessFn` (local QuickJS,
-  `app-sessions.ts:156`) → never touches `env.ACCESS_FN_DO`.
 - **ChatSessions** does **not** override → its doc-write handlers (from
   `appHandlers` in `chatMsgEvento`) fall through to `env.ACCESS_FN_DO`.
+- **The worker `cf-serve` route** (app subdomain + asset host, `app.ts:308`)
+  calls `cfServeAppCtx`/`cfServe` with no overrides → deployed-vibe doc writes
+  run under the default `invokeAccessFn` → `env.ACCESS_FN_DO`. This path runs in
+  the worker (no DO instance, no cached QuickJS), so it cannot simply reuse
+  AppSessions' `localInvokeAccessFn`.
 
-So `AccessFnDO` dies the moment no doc-write handler runs on a non-overriding
-DO. That means: get all doc ops off `chatApi`/ChatSessions, then remove
-`appHandlers` from the chat plane.
+By contrast **AppSessions** overrides it with `localInvokeAccessFn` (local
+QuickJS, `app-sessions.ts:156`) → never touches `env.ACCESS_FN_DO`.
+
+> **Fail-open hazard (review P1).** Removing the default invoker is **not** safe
+> on its own. `putDocEvento` gates access enforcement on
+> `if (afbRow?.accessFnCid && vctx.invokeAccessFn)`
+> (`app-documents-write-eventos.ts:217`): when `invokeAccessFn` is `undefined`
+> the whole block — including the `forbidden` rejection — is **skipped and the
+> write proceeds**. So a missing invoker fails **open**, not loud. Any context
+> that still serves a doc-write handler must either keep a real invoker or gain
+> an explicit fail-closed guard (reject when `accessFnCid` is set but no invoker
+> is available).
+
+So retiring `AccessFnDO` requires **both**: (1) get all doc writes off
+ChatSessions (remove `appHandlers` from the chat plane), **and** (2) give the
+worker `cf-serve` path a local access-fn evaluator (or route its doc-ops
+WebSocket to AppSessions) so deployed vibes stop reaching `env.ACCESS_FN_DO` —
+with a fail-closed guard in `putDocEvento` as the backstop. Only then is the
+default invoker (and the class) safe to delete.
 
 ### What still routes doc ops through `chatApi`
 
@@ -95,7 +120,8 @@ leave the chat plane (Track A §2).
 source (`pkg/workers/access-fn.ts`), and env type. Unblocks the last open
 #2265 §1 / #2264 §4 item.
 
-Three dependency-ordered PRs:
+Four dependency-ordered PRs (the worker `cf-serve` path, A2b, was added after
+review surfaced it as a second live `env.ACCESS_FN_DO` consumer):
 
 ### A1 — Route vibe-scoped doc ops through `vibeApi`
 
@@ -120,22 +146,42 @@ no vibe page. Open an AppSessions connection keyed by the DM pseudo-vibe
 instead of `chatApi`. This reuses the existing AppSessions data plane — no new
 DO — and gives DMs local broadcast + local access fn for free.
 
-Then:
+Then move `appHandlers` **out of** `chatMsgEvento` so ChatSessions becomes
+chat-only (`sharedHandlers + chatHandlers`), and update the
+`evento-handler-parity` test and the now-resolved
+`// until client routing is fully split (#2263)` manifest comments.
 
-1. Move `appHandlers` **out of** `chatMsgEvento` (and `vibesMsgEvento` if it is
-   confirmed to be a live production path; otherwise treat as test-only and
-   leave it, documenting why). ChatSessions becomes chat-only:
-   `sharedHandlers + chatHandlers`.
-2. Remove the default `invokeAccessFn` that calls `env.ACCESS_FN_DO` from
-   `cf-serve.ts`, replacing it with an absent override (so any unexpected
-   doc-write on a non-overriding DO fails loudly rather than silently routing
-   to a soon-deleted DO).
-3. Update the `evento-handler-parity` test and the manifest comments (the
-   `// until client routing is fully split (#2263)` notes are now resolved).
+> **Do not** remove the default `invokeAccessFn` in this PR — `vibesMsgEvento`
+> (which still has `appHandlers`) is live on the worker `cf-serve` path, and a
+> missing invoker fails **open** (see the fail-open hazard above). The default
+> stays until A2b moves that path; A2b adds the fail-closed guard.
 
-**Gate:** grep proves zero `env.ACCESS_FN_DO` references in non-test code; full
-`pnpm check` green; manual smoke that doc ops, comments, DMs, and access-fn
-gating still work against a preview deploy.
+**Gate:** parity test green; `pnpm check` green; preview smoke that doc ops,
+comments, DMs, and access-fn gating still work.
+
+### A2b — Migrate the worker `cf-serve` path off `env.ACCESS_FN_DO`
+
+The app-subdomain / asset-host `cf-serve` route (`app.ts:308`) is the second
+live consumer. Resolve it by **either**:
+
+- **(preferred) route its doc-ops WebSocket to AppSessions** — have deployed
+  vibes' iframe runtime connect through `/api/app?vibe=…` (AppSessions, with
+  `localInvokeAccessFn`) like the editor does, leaving the worker `cf-serve`
+  route for non-doc traffic (assets) only; **or**
+- **give the worker path a local invoker** — pass an `invokeAccessFn` override
+  into `cfServeAppCtx` at `app.ts:305` that evaluates access fns in-worker
+  (cold QuickJS per request — simpler but less efficient than the DO's cached
+  module).
+
+Whichever path: also add a **fail-closed guard** in `putDocEvento` — when
+`afbRow?.accessFnCid` is set but no `invokeAccessFn` is available, **reject**
+the write instead of falling through. Then remove the default `invokeAccessFn`
+from `cf-serve.ts`.
+
+**Gate:** grep proves zero `env.ACCESS_FN_DO` references in non-test code; a test
+asserting a doc-write with an access binding but no invoker is **rejected** (not
+written); preview smoke of a **deployed** vibe's gated writes on its app
+subdomain.
 
 ### A3 — Delete the AccessFnDO class (wrangler migration)
 
@@ -219,11 +265,16 @@ write it as part of C's brainstorm).
 ```
 A1 (route doc ops → vibeApi)
    └─> A2 (DM home + remove appHandlers from chat plane)
-          └─> A3 (delete AccessFnDO class)        ← closes #2265 §1 / #2264 §4
+          └─> A2b (migrate worker cf-serve path off env.ACCESS_FN_DO
+                    + fail-closed guard in putDocEvento)
+                 └─> A3 (delete AccessFnDO class)  ← closes #2265 §1 / #2264 §4
 
 B (SharedSessions + lazy ChatSessions)             ← closes #2265 §2
    └─> C (/chat/ deprecation)                      ← closes #2265 §3
 ```
+
+Both ChatSessions (A2) **and** the worker `cf-serve` path (A2b) must stop
+reaching `env.ACCESS_FN_DO` before A3 can delete the class.
 
 A and B are independent and can run in parallel. C requires B. A3 should land
 before B starts touching `sharedHandlers`/ChatSessions to keep each connection

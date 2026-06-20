@@ -26,15 +26,21 @@ already shipped"). The first PR in this effort should:
 | ----- | ------------------------------------------------------------------------------------ | ----- | -------------------- | ------------------ |
 | A1    | [01-route-vibe-doc-ops-to-vibeapi.md](01-route-vibe-doc-ops-to-vibeapi.md)           | 1     | full TDD plan        | —                  |
 | A2    | [02-remove-apphandlers-from-chat-plane.md](02-remove-apphandlers-from-chat-plane.md) | 1     | full TDD plan        | —                  |
+| A2b   | [02b-migrate-cf-serve-path.md](02b-migrate-cf-serve-path.md)                         | 1     | guard TDD + decision | —                  |
 | A3    | [03-accessfn-do-class-deletion.md](03-accessfn-do-class-deletion.md)                 | 1     | full plan (wrangler) | #2265 §1, #2264 §4 |
 | B     | [04-shared-sessions-do.md](04-shared-sessions-do.md)                                 | chain | design + outline     | #2265 §2           |
 | C     | [05-chat-route-deprecation.md](05-chat-route-deprecation.md)                         | chain | design + outline     | #2265 §3           |
 
+> **A2b was added after review** (@chatgpt-codex-connector on #2492): the worker
+> `cf-serve` route (deployed-vibe app subdomains) is a **second live consumer**
+> of `env.ACCESS_FN_DO`, and removing the default invoker without migrating it
+> would fail **open**. A3 is blocked until **both** A2 and A2b land.
+
 ## Dependency order
 
 ```
-A1 ──> A2 ──> A3        (each its own PR; A3 has a wrangler dry-run gate)
-B ───────────> C        (C needs B's lazy ChatSessions)
+A1 ──> A2 ──> A2b ──> A3   (each its own PR; A3 has a wrangler dry-run gate)
+B ────────────────> C      (C needs B's lazy ChatSessions)
 ```
 
 A and B are independent. Land A3 before B starts editing `sharedHandlers` /
@@ -49,9 +55,10 @@ ChatSessions to keep connection-role changes isolated.
 3. **`wrangler deploy --dry-run` per env is the authoritative gate** for any
    wrangler.toml change. If any env errors, stop and apply the documented
    contingency.
-4. **No doc-write handler may run on a non-overriding DO once A2 lands** — that
-   is the whole point (it is what makes `env.ACCESS_FN_DO` dead). Verify with
-   the parity test and a grep gate.
+4. **Both** ChatSessions (A2) **and** the worker `cf-serve` path (A2b) must stop
+   reaching `env.ACCESS_FN_DO` before A3 deletes the class — and a missing access
+   invoker must **fail closed** (A2b Task 1), never fall through to a write.
+   Verify with the parity test, the fail-closed test, and a grep gate.
 
 ## Done when
 

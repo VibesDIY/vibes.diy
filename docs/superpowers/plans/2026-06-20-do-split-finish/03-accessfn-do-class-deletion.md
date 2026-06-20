@@ -1,6 +1,6 @@
 # A3 — Delete the AccessFnDO class
 
-> **For agentic workers:** REQUIRED SUB-SKILL: subagent-driven-development or executing-plans. **Deploy/verify gate:** A2 must be merged and deployed (so no live path invokes `env.ACCESS_FN_DO`) before this PR deploys.
+> **For agentic workers:** REQUIRED SUB-SKILL: subagent-driven-development or executing-plans. **Deploy/verify gate:** **both A2 and A2b** must be merged and deployed (so no live path — neither ChatSessions nor the worker `cf-serve` route — invokes `env.ACCESS_FN_DO`) before this PR deploys.
 
 **Goal:** Remove the `AccessFnDO` Durable Object from every environment — its
 bindings, source (`pkg/workers/access-fn.ts`), export, env type — and append a
@@ -52,13 +52,15 @@ All six append `v7 deleted_classes = ["AccessFnDO"]`. Keep every `v1..v6`.
 rg -n "env\.ACCESS_FN_DO" vibes.diy --type ts -g '!**/tests/**'
 ```
 
-Expected: **zero** matches (A2 removed the only invoker). If any remain, stop —
-A2 is incomplete.
+Expected: **zero** matches (A2 removed the ChatSessions consumer; A2b removed the
+worker `cf-serve` consumer and the default invoker). If any remain, stop — A2 or
+A2b is incomplete.
 
-- [ ] **Step 2: Confirm A2 is live**
+- [ ] **Step 2: Confirm A2 and A2b are live**
 
-Verify A2's PR is merged and deployed to prod (check the deploy tag / CI). Do
-not proceed against an environment still running the old code path.
+Verify **both** A2's and A2b's PRs are merged and deployed to prod (check the
+deploy tags / CI). Do not proceed against an environment still running either old
+code path — the worker `cf-serve` path is easy to forget because it is not a DO.
 
 ---
 
