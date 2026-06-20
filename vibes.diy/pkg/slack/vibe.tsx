@@ -28,7 +28,7 @@ export default function VibePage(props: VibesDiyServCtx) {
         <link rel="stylesheet" href="/serve/vibes-controls/styles.css" />
         <script type="module" src="https://esm.sh/@tailwindcss/browser@4" />
       </head>
-      <body className="grid-background">
+      <body className="vibe-app-surface">
         <div id={appSlug} className="vibe-app-container" />
         <MountVibe {...props} />
         <VibeControls {...props} />
