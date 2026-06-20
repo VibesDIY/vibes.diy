@@ -1,28 +1,14 @@
 import { Result } from "@adviser/cement";
-import { COMMENTS_DB_NAME, COMMENTS_DEFAULT_ACL, DbAcl, DbAclSubject, directChannelParticipants } from "@vibes.diy/api-types";
+import { COMMENTS_DB_NAME, COMMENTS_DEFAULT_ACL, DbAcl, directChannelParticipants } from "@vibes.diy/api-types";
 import { VibesApiSQLCtx } from "../types.js";
-import { DocAccessLevel, canRead, canWrite } from "./access-helpers.js";
 import { ensureAppSettings } from "./ensure-app-settings.js";
 import { and, eq, inArray } from "drizzle-orm";
 
-// Built-in groups projected from existing role grants.
-//
-// Override is implicitly in every group, so the resolver never requires
-// override-level access to appear in an ACL. Each non-override case maps
-// directly to a single role, since DocAccessLevel = Role | "override" | "none".
-export function inGroup(level: DocAccessLevel, group: DbAclSubject): boolean {
-  if (level === "override") return true;
-  switch (group) {
-    case "members":
-      return level === "editor" || level === "viewer" || level === "submitter";
-    case "editors":
-      return level === "editor";
-    case "submitters":
-      return level === "submitter";
-    case "readers":
-      return level === "editor" || level === "viewer";
-  }
-}
+// ACL evaluation (inGroup / aclAllows / canRead / canWrite) is defined once in
+// the shared @vibes.diy/vibe-types/db-acl-eval module. Re-export aclAllows so
+// this module's consumers (app-documents-*, files-asset, the parity test) keep
+// importing it from here unchanged.
+export { aclAllows } from "@vibes.diy/vibe-types";
 
 // Resolve the per-(ownerHandle, appSlug, dbName) ACL.
 //
@@ -79,15 +65,4 @@ export async function checkDirectChannelAccess(
     .from(t)
     .where(and(eq(t.userId, userId), inArray(t.handle, [ownerHandleA, ownerHandleB])));
   return Result.Ok(matches.length > 0);
-}
-
-// Decide whether `access` may exercise `cap` against `acl`. When the ACL
-// does not list the capability, fall back to today's role gate (canRead for
-// reads, canWrite for writes/deletes).
-export function aclAllows(acl: DbAcl | undefined, cap: "read" | "write" | "delete", access: DocAccessLevel): boolean {
-  const subjects = acl?.[cap];
-  if (subjects === undefined) {
-    return cap === "read" ? canRead(access) : canWrite(access);
-  }
-  return subjects.some((g) => inGroup(access, g));
 }
