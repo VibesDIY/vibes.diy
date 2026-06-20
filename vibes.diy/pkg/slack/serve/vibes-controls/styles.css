@@ -92,13 +92,22 @@
    mode, near-black in dark mode. The panel-open rule below intentionally
    out-specifies this to show the grid while the controls panel is open (a
    platform state, not the app).
+
+   `.grid-background` is the legacy body class this replaced. It is kept in the
+   selector ONLY for the rollout window: versioned vibe HTML is cached up to a
+   day (`rootHtmlCacheControl: public, max-age=86400`), so a pre-deploy document
+   still carrying `<body class="grid-background">` would otherwise fetch this
+   newer stylesheet and render the bare grid until its HTML cache expires. No
+   live element uses the plain class anymore, so styling it is a harmless alias.
    ============================================ */
-.vibe-app-surface {
+.vibe-app-surface,
+.grid-background {
   background-color: var(--vibes-white);
 }
 
 @media (prefers-color-scheme: dark) {
-  .vibe-app-surface {
+  .vibe-app-surface,
+  .grid-background {
     background-color: var(--vibes-near-black);
   }
 }
