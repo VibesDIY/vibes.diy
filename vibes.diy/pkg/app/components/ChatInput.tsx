@@ -1,7 +1,8 @@
 import type { ChangeEvent, KeyboardEvent } from "react";
-import React, { useEffect, useCallback, useRef, forwardRef, useImperativeHandle, useState, useMemo } from "react";
+import React, { useEffect, useCallback, useRef, forwardRef, useImperativeHandle, useState } from "react";
 import ModelPicker, { type ModelOption } from "./ModelPicker.js";
 import { Button } from "./ui/button.js";
+import { ChatInputStatus } from "./ChatInputStatus.js";
 import type { VibesTheme } from "@vibes.diy/prompts";
 import ColorsetPicker from "./ColorsetPicker.js";
 
@@ -52,14 +53,6 @@ export interface ChatInputRef extends HTMLTextAreaElement {
   setSelection: (start: number, end: number) => void;
 }
 
-function getWorkingMessage(hasCode: boolean, msgCount: number): string {
-  if (!hasCode && msgCount === 0) return "Thinking about your vibe...";
-  if (!hasCode && msgCount > 0) return "Planning your app...";
-  if (hasCode && msgCount < 20) return "Writing code...";
-  if (hasCode && msgCount < 50) return "Building components...";
-  return "Finishing up...";
-}
-
 const ChatInput = forwardRef<ChatInputRef, ChatInputProps>(
   (
     {
@@ -94,10 +87,13 @@ const ChatInput = forwardRef<ChatInputRef, ChatInputProps>(
 
     const busy = promptProcessing || connectionState === "reconnecting";
 
-    const workingMessage = useMemo(
-      () => (connectionState === "reconnecting" ? "Reconnecting..." : getWorkingMessage(hasCode, currentMsgCount)),
-      [connectionState, hasCode, currentMsgCount]
-    );
+    // Track latest values in refs so handleSendPrompt can stay identity-stable
+    // across keystrokes (its deps no longer include prompt/busy), which lets
+    // ChatInputStatus's React.memo actually hold.
+    const promptRef = useRef(prompt);
+    promptRef.current = prompt;
+    const busyRef = useRef(busy);
+    busyRef.current = busy;
 
     useImperativeHandle(
       ref,
@@ -127,20 +123,22 @@ const ChatInput = forwardRef<ChatInputRef, ChatInputProps>(
     );
 
     const handleSendPrompt = useCallback(() => {
-      if (prompt && !busy) {
-        onSubmit(prompt);
+      const p = promptRef.current;
+      if (p && !busyRef.current) {
+        onSubmit(p);
         setPrompt("");
       }
-    }, [prompt, busy, onSubmit]);
+    }, [onSubmit]);
 
     const autoResizeTextarea = useCallback(() => {
-      if (realTextArea.current) {
-        realTextArea.current.style.height = "auto";
-        const maxHeight = 200;
-        const minHeight = 90;
-        realTextArea.current.style.height = `${Math.max(minHeight, Math.min(maxHeight, realTextArea.current.scrollHeight))}px`;
-      }
-    }, [ref]);
+      const el = realTextArea.current;
+      if (!el) return;
+      el.style.height = "auto";
+      const maxHeight = 200;
+      const minHeight = 90;
+      const next = `${Math.max(minHeight, Math.min(maxHeight, el.scrollHeight))}px`;
+      if (el.style.height !== next) el.style.height = next;
+    }, []);
 
     useEffect(() => {
       autoResizeTextarea();
@@ -161,8 +159,6 @@ const ChatInput = forwardRef<ChatInputRef, ChatInputProps>(
     const focusBottomBar =
       "linear-gradient(90deg, var(--vibes-red, #DA291C) 0% 25%, var(--vibes-yellow, #fedd00) 25% 50%, var(--vibes-green, #22c55e) 50% 75%, var(--vibes-blue, #3b82f6) 75% 100%)";
     const innerBg = "linear-gradient(var(--chat-input-bg), var(--chat-input-bg))";
-
-    const btnSnakeBorder = `conic-gradient(from var(--border-angle, 0deg), ${borderColor} 0deg 180deg, var(--vibes-red, #DA291C) 180deg 205deg, var(--vibes-yellow, #fedd00) 205deg 230deg, var(--vibes-green, #22c55e) 230deg 255deg, var(--vibes-blue, #3b82f6) 255deg 280deg, ${borderColor} 280deg 360deg)`;
 
     // Two states: focused (color bar at bottom), idle (neutral) — no animation on textarea
     const borderBackground = isFocused
@@ -278,37 +274,14 @@ const ChatInput = forwardRef<ChatInputRef, ChatInputProps>(
             ) : (
               <span aria-hidden="true" />
             )}
-            <div
-              style={{
-                display: "inline-flex",
-                borderRadius: 7,
-                padding: busy ? 2 : 0,
-                background: busy ? btnSnakeBorder : "transparent",
-                animation: busy ? "vibes-border-spin 2s linear infinite" : "none",
-              }}
-            >
-              <Button
-                ref={submitButtonRef}
-                type="button"
-                onClick={handleSendPrompt}
-                disabled={busy}
-                variant="blue"
-                size="fixed"
-                aria-label={busy ? "Processing" : "Send message"}
-                className={
-                  busy ? "!border-0 !shadow-none !bg-[var(--vibes-submit-disabled-bg)] !text-[var(--vibes-submit-disabled-fg)]" : ""
-                }
-                style={busy ? { opacity: 1 } : undefined}
-              >
-                {busy ? (
-                  workingMessage
-                ) : (
-                  <span aria-hidden="true" className="text-lg leading-none">
-                    ↑
-                  </span>
-                )}
-              </Button>
-            </div>
+            <ChatInputStatus
+              promptProcessing={promptProcessing}
+              connectionState={connectionState}
+              hasCode={hasCode}
+              currentMsgCount={currentMsgCount}
+              onSend={handleSendPrompt}
+              buttonRef={submitButtonRef}
+            />
           </div>
         </div>
 

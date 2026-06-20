@@ -24,6 +24,8 @@ import { BrutalistCard } from "@vibes.diy/base";
 import ReactMarkdown from "react-markdown";
 import { PromptError, PromptReq, isPromptError, isPromptReq } from "@vibes.diy/api-types";
 
+type OptionSelectHandler = (option: string) => boolean | undefined | Promise<boolean | undefined>;
+
 interface MessageListProps {
   promptBlocks: PromptBlock[];
   promptProcessing: boolean;
@@ -32,7 +34,7 @@ interface MessageListProps {
   onClick: (fsRes: { ownerHandle: string; appSlug: string; fsId: string }) => void;
   onDiffClick?: (diff: { path: string; lines: string[] } | null) => void;
   onRetry?: (msg: PromptError) => void;
-  onSelectOption?: (option: string) => void;
+  onSelectOption?: OptionSelectHandler;
   // Block IDs whose save originated from the agent autosave (end-of-aider-
   // turn). Renders "Agent saved code" instead of "User edited code".
   agentSavedBlockIds?: ReadonlySet<string>;
@@ -153,7 +155,7 @@ function TopLevelMsg({
    * applies when the message is genuinely mid-stream. Default false.
    */
   streaming?: boolean;
-  onSelectOption?: (option: string) => void;
+  onSelectOption?: OptionSelectHandler;
 }) {
   const fullText = lines.map((i) => i.line).join("\n");
   const { prose, options } = parseOptionLines(fullText, { streaming: streaming === true });
@@ -737,7 +739,7 @@ function MessageList({
         messageElements[i] = React.cloneElement(el as React.ReactElement<{ streaming?: boolean }>, { streaming: true });
       } else {
         messageElements[i] = React.cloneElement(
-          el as React.ReactElement<{ isLast: boolean; onSelectOption?: (o: string) => void }>,
+          el as React.ReactElement<{ isLast: boolean; onSelectOption?: OptionSelectHandler }>,
           { isLast: true, onSelectOption }
         );
       }
@@ -758,7 +760,7 @@ function MessageList({
     const { options } = parseOptionLines(fullText);
     if (options.length === 0) continue;
     messageElements[i] = React.cloneElement(
-      el as React.ReactElement<{ isLast: boolean; isFirstWithOptions?: boolean; onSelectOption?: (o: string) => void }>,
+      el as React.ReactElement<{ isLast: boolean; isFirstWithOptions?: boolean; onSelectOption?: OptionSelectHandler }>,
       {
         isFirstWithOptions: true,
       }
