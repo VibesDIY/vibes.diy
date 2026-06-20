@@ -22,19 +22,20 @@ hand it to the DM components. With doc ops (A1) and DMs both off `chatApi`,
 
 ## File Map
 
-| File | Change |
-| --- | --- |
-| `vibes.diy/pkg/app/vibes-diy-provider.tsx` | add a `dmApi` factory (or generalize `vibeApi` builder) keyed by `<channelUserSlug>--dm` |
-| `vibes.diy/pkg/app/components/DmThread.tsx`, `DmInbox.tsx` | accept the DM AppSessions connection instead of `chatApi` |
-| `vibes.diy/pkg/app/routes/messages.tsx`, `messages.$ownerHandleA.$ownerHandleB.tsx` | pass the DM connection |
-| `vibes.diy/api/svc/chat-msg-evento.ts` | drop `...appHandlers` → `sharedHandlers + chatHandlers` |
-| `vibes.diy/api/svc/cf-serve.ts` | remove the default `invokeAccessFn` that calls `env.ACCESS_FN_DO` |
-| `vibes.diy/api/svc/evento-handler-manifest.ts` | update the "until #2263" comments on `appHandlers`/`sharedHandlers` |
-| `vibes.diy/api/tests/evento-handler-parity.test.ts` | assert `appHandlers` no longer in the chat evento set |
+| File                                                                                | Change                                                                                   |
+| ----------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| `vibes.diy/pkg/app/vibes-diy-provider.tsx`                                          | add a `dmApi` factory (or generalize `vibeApi` builder) keyed by `<channelUserSlug>--dm` |
+| `vibes.diy/pkg/app/components/DmThread.tsx`, `DmInbox.tsx`                          | accept the DM AppSessions connection instead of `chatApi`                                |
+| `vibes.diy/pkg/app/routes/messages.tsx`, `messages.$ownerHandleA.$ownerHandleB.tsx` | pass the DM connection                                                                   |
+| `vibes.diy/api/svc/chat-msg-evento.ts`                                              | drop `...appHandlers` → `sharedHandlers + chatHandlers`                                  |
+| `vibes.diy/api/svc/cf-serve.ts`                                                     | remove the default `invokeAccessFn` that calls `env.ACCESS_FN_DO`                        |
+| `vibes.diy/api/svc/evento-handler-manifest.ts`                                      | update the "until #2263" comments on `appHandlers`/`sharedHandlers`                      |
+| `vibes.diy/api/tests/evento-handler-parity.test.ts`                                 | assert `appHandlers` no longer in the chat evento set                                    |
 
 > **Decide first — `vibesMsgEvento`.** It also bundles `appHandlers` and is
 > `cfServe`'s default (`cf-serve.ts:530`). Confirm whether any **production**
 > entrypoint serves it (grep the worker `fetch` handlers + `processRequest`).
+>
 > - If test-only: leave it (tests rely on the combined evento) and document
 >   that in a comment; the default `invokeAccessFn` removal below still applies.
 >   To keep tests passing, give test setups an explicit `invokeAccessFn` mock
@@ -77,8 +78,14 @@ spy DM connection and assert `queryDocs`/`putDoc` target it, not `chatApi`.
 it("DmThread uses the AppSessions DM connection for doc ops", async () => {
   const calls: string[] = [];
   const dmApi = {
-    queryDocs: async () => { calls.push("queryDocs"); return Result.Ok({ docs: [] }); },
-    putDoc: async () => { calls.push("putDoc"); return Result.Ok({}); },
+    queryDocs: async () => {
+      calls.push("queryDocs");
+      return Result.Ok({ docs: [] });
+    },
+    putDoc: async () => {
+      calls.push("putDoc");
+      return Result.Ok({});
+    },
     markDmRead: async () => Result.Ok({}),
   } as unknown as VibesDiyApiIface;
   render(<DmThread myUserSlug="me" otherUserSlug="you" chatApi={dmApi} />);
@@ -87,7 +94,7 @@ it("DmThread uses the AppSessions DM connection for doc ops", async () => {
 ```
 
 (`DmThread` already takes its connection as a prop named `chatApi`. The minimal
-change is the *prop value the route passes*; rename the prop to `dmApi` for
+change is the _prop value the route passes_; rename the prop to `dmApi` for
 clarity in Step 3.)
 
 - [ ] **Step 2: Run it to confirm it fails or passes-by-accident**
@@ -109,9 +116,16 @@ messages routes can call (or build a `dmApi` when the route matches
 const buildAppApi = (vibeKey: string) => {
   const url = BuildURI.from(apiUrl).pathname("/api/app").cleanParams().setParam("vibe", vibeKey).toString();
   const tok = sharedGetToken ?? realCtx.getToken;
-  return vibesDiyApis.get(url).once(
-    () => new VibesDiyApi({ apiUrl: url, skipShard: true, getToken: tok ?? (() => Promise.resolve(Result.Err("token not available"))) }),
-  );
+  return vibesDiyApis
+    .get(url)
+    .once(
+      () =>
+        new VibesDiyApi({
+          apiUrl: url,
+          skipShard: true,
+          getToken: tok ?? (() => Promise.resolve(Result.Err("token not available"))),
+        })
+    );
 };
 ```
 

@@ -21,11 +21,11 @@ soon-to-be-deleted `AccessFnDO`. Moving them to `vibeApi` fixes both.
 
 ## File Map
 
-| File | Change |
-| --- | --- |
-| `vibes.diy/pkg/app/components/ResultPreview/CommentsSection.tsx` | use `vibeApi ?? chatApi` for `queryDocs`/`subscribeDocs`/`onDocChanged`/`putDoc`/`whoAmI` |
-| `vibes.diy/pkg/app/routes/vibe.$ownerHandle.$appSlug.tsx` | use `vibeApi ?? chatApi` for `subscribeViewerGrants`/`onViewerGrantsChanged` and any doc ops; keep chat/grant-RPC calls as-is for now |
-| `vibes.diy/tests/app/comments-section-avatar.test.tsx` (and any CommentsSection test) | inject a `vibeApi` and assert ops target it |
+| File                                                                                  | Change                                                                                                                                |
+| ------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| `vibes.diy/pkg/app/components/ResultPreview/CommentsSection.tsx`                      | use `vibeApi ?? chatApi` for `queryDocs`/`subscribeDocs`/`onDocChanged`/`putDoc`/`whoAmI`                                             |
+| `vibes.diy/pkg/app/routes/vibe.$ownerHandle.$appSlug.tsx`                             | use `vibeApi ?? chatApi` for `subscribeViewerGrants`/`onViewerGrantsChanged` and any doc ops; keep chat/grant-RPC calls as-is for now |
+| `vibes.diy/tests/app/comments-section-avatar.test.tsx` (and any CommentsSection test) | inject a `vibeApi` and assert ops target it                                                                                           |
 
 > Note: grant/invite/membership RPCs (`createInvite`, `listMembers`,
 > `requestAccess`, …) are `sharedHandlers`, not doc ops — they do **not** reach
@@ -65,11 +65,17 @@ it("routes comment doc ops through vibeApi when present", async () => {
         return Result.Ok({});
       },
     }) as unknown as VibesDiyApiIface;
-  const ctx = { sthis: {}, chatApi: mkApi("chat"), vibeApi: mkApi("vibe"), webVars: {}, srvVibeSandbox: {} } as unknown as VibesDiyCtx;
+  const ctx = {
+    sthis: {},
+    chatApi: mkApi("chat"),
+    vibeApi: mkApi("vibe"),
+    webVars: {},
+    srvVibeSandbox: {},
+  } as unknown as VibesDiyCtx;
   render(
     <VibesDiyContext.Provider value={ctx}>
       <CommentsSection ownerHandle="o" appSlug="a" canModerate={false} composerDisabled={false} />
-    </VibesDiyContext.Provider>,
+    </VibesDiyContext.Provider>
   );
   await waitFor(() => expect(calls).toContain("vibe:queryDocs"));
   expect(calls).not.toContain("chat:queryDocs");
