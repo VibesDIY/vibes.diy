@@ -1,4 +1,4 @@
-import type { DocAccessLevel } from "./index.js";
+import type { DocAccessLevel } from "./doc-access-level.js";
 
 // Single source of truth for db-ACL evaluation, shared by @vibes.diy/api-svc
 // (host) and @vibes.diy/vibe-runtime (client). Lives in @vibes.diy/vibe-types

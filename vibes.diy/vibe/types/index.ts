@@ -1,6 +1,7 @@
 import { dbAcl, queryFilter } from "@vibes.diy/api-types";
 export type { AccessDescriptor, AccessFunction, Helpers, UserContext } from "@vibes.diy/api-types";
 import { type } from "arktype";
+import { docAccessLevel } from "./doc-access-level.js";
 
 export * from "./img-gen.js";
 
@@ -443,8 +444,10 @@ export const viewerPayload = type({
 });
 export type ViewerPayload = typeof viewerPayload.infer;
 
-export const docAccessLevel = type("'override' | 'editor' | 'viewer' | 'submitter' | 'none'");
-export type DocAccessLevel = typeof docAccessLevel.infer;
+// docAccessLevel / DocAccessLevel live in their own leaf module so db-acl-eval
+// (and any other leaf) can import them without depending on this barrel.
+export { docAccessLevel };
+export type { DocAccessLevel } from "./doc-access-level.js";
 
 // Request: sandbox → host. Carries (appSlug, ownerHandle) so the host
 // handler can compute access against the right app — same pattern as
