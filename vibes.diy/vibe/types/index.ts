@@ -11,6 +11,12 @@ export * from "./img-gen.js";
 export type { DbAcl, DbAclSubject } from "./db-acl-eval.js";
 export { canRead, canWrite, inGroup, aclAllows } from "./db-acl-eval.js";
 
+// The api-types `dbAcl` arktype validator, re-exported so browser-side runtime
+// code (vibe.ts) can validate the viewer-env wire shape without keeping its own
+// inline copy. The arktype value is dependency-free — re-exporting it pulls no
+// server-side (cloudflare/fireproof) deps into a browser consumer.
+export { dbAcl };
+
 const Base = type({
   tid: "string",
 });
