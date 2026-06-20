@@ -7,39 +7,10 @@ import { Pool } from "@neondatabase/serverless";
 import { drizzle } from "drizzle-orm/neon-serverless";
 import { count, countDistinct, eq, lte, desc, asc, and, sql } from "drizzle-orm";
 import { pg } from "@vibes.diy/api-sql";
+import { loadDevVars } from "./usage-report-util.js";
 
 const scriptDir = path.dirname(fileURLToPath(import.meta.url));
 const outDir = path.join(scriptDir, "../dist/inspect-db-report");
-
-function loadDevVars(): void {
-  const candidatePaths = [path.join(scriptDir, "..", ".dev.vars"), path.join(process.cwd(), ".dev.vars")];
-
-  for (const candidatePath of candidatePaths) {
-    if (!fs.existsSync(candidatePath)) {
-      continue;
-    }
-
-    const content = fs.readFileSync(candidatePath, "utf8");
-    for (const rawLine of content.split(/\r?\n/)) {
-      const line = rawLine.trim();
-      if (line === "" || line.startsWith("#")) {
-        continue;
-      }
-      const separator = line.indexOf("=");
-      if (separator <= 0) {
-        continue;
-      }
-      const key = line.slice(0, separator).trim();
-      let value = line.slice(separator + 1).trim();
-      if ((value.startsWith('"') && value.endsWith('"')) || (value.startsWith("'") && value.endsWith("'"))) {
-        value = value.slice(1, -1);
-      }
-      if (!(key in process.env)) {
-        process.env[key] = value;
-      }
-    }
-  }
-}
 
 function last30Days(): string[] {
   const days: string[] = [];
