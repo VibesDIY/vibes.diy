@@ -116,30 +116,29 @@ messages routes can call (or build a `dmApi` when the route matches
 const buildAppApi = (vibeKey: string) => {
   const url = BuildURI.from(apiUrl).pathname("/api/app").cleanParams().setParam("vibe", vibeKey).toString();
   const tok = sharedGetToken ?? realCtx.getToken;
-  return vibesDiyApis
-    .get(url)
-    .once(
-      () =>
-        new VibesDiyApi({
-          apiUrl: url,
-          skipShard: true,
-          getToken: tok ?? (() => Promise.resolve(Result.Err("token not available"))),
-        })
-    );
+  return vibesDiyApis.get(url).once(
+    () =>
+      new VibesDiyApi({
+        apiUrl: url,
+        skipShard: true,
+        getToken: tok ?? (() => Promise.resolve(Result.Err("token not available"))),
+      })
+  );
 };
 ```
 
-Use `buildAppApi(`${target.ownerHandle}--${target.appSlug}`)` for `vibeApi`,
-and expose `buildAppApi` (or a memoized `dmApi`) for the messages routes via the
-context. DM vibe key is `${channelUserSlug}--dm`.
+Call `buildAppApi` with the vibe key `<owner>--<appSlug>` for `vibeApi`, and
+expose `buildAppApi` (or a memoized `dmApi`) for the messages routes via the
+context. The DM vibe key is `<channelUserSlug>--dm`.
 
 - [ ] **Step 4: Rename the DM prop and wire the routes**
 
 Rename `DmThread`/`DmInbox`'s `chatApi` prop to `dmApi`. In
 `messages.$ownerHandleA.$ownerHandleB.tsx` compute
 `channelUserSlug = directChannelUserSlug(ownerHandleA, ownerHandleB)` and pass
-`dmApi={buildAppApi(`${channelUserSlug}--dm`)}`. Update the route test to assert
-the DM connection's `apiUrl` contains `/api/app` and `vibe=…--dm`.
+`dmApi` built from `buildAppApi` with the `<channelUserSlug>--dm` key. Update the
+route test to assert the DM connection's `apiUrl` contains `/api/app` and
+`vibe=…--dm`.
 
 - [ ] **Step 5: Build + test**
 
