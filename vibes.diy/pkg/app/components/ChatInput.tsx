@@ -130,12 +130,23 @@ const ChatInput = forwardRef<ChatInputRef, ChatInputProps>(
       }
     }, [onSubmit]);
 
+    // Tracks the textarea's value length across resizes so we only pay the
+    // "reset to auto" reflow when the text could have gotten shorter — the one
+    // case where scrollHeight needs a reset to report a smaller height.
+    const lastValueLengthRef = useRef(0);
     const autoResizeTextarea = useCallback(() => {
       const el = realTextArea.current;
       if (!el) return;
-      el.style.height = "auto";
       const maxHeight = 200;
       const minHeight = 90;
+      const len = el.value.length;
+      const couldShrink = len < lastValueLengthRef.current;
+      lastValueLengthRef.current = len;
+      // When growing or unchanged, scrollHeight already reflects the content,
+      // so el.style.height still holds the prior explicit height — the guard
+      // below then genuinely skips the write on a no-op resize. Only the shrink
+      // path resets to "auto" (making the compare against "auto" intentional).
+      if (couldShrink) el.style.height = "auto";
       const next = `${Math.max(minHeight, Math.min(maxHeight, el.scrollHeight))}px`;
       if (el.style.height !== next) el.style.height = next;
     }, []);
