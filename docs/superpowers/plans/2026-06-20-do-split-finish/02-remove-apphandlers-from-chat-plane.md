@@ -131,19 +131,51 @@ context. The DM vibe key is `<channelUserSlug>--dm`.
 
 - [ ] **Step 4: Rename the DM prop and wire the routes**
 
-Rename `DmThread`/`DmInbox`'s `chatApi` prop to `dmApi`. In
-`messages.$ownerHandleA.$ownerHandleB.tsx` compute
-`channelUserSlug = directChannelUserSlug(ownerHandleA, ownerHandleB)` and pass
-`dmApi` built from `buildAppApi` with the `<channelUserSlug>--dm` key. Update the
-route test to assert the DM connection's `apiUrl` contains `/api/app` and
-`vibe=…--dm`.
+Per @CharlieHelps's A2 plumbing checklist — DMs stay on the standalone
+`buildAppApi` path; **do not widen `vibeApiTarget`** (it is scoped to
+iframe-facing `/vibe/*` + `/chat/*`, and DMs use a synthetic key, so an explicit
+app-API builder is the right fit and keeps `/messages/*` from inheriting
+iframe-route behavior).
 
-- [ ] **Step 5: Build + test**
+1. Rename `DmThread`/`DmInbox`'s connection prop `chatApi` → `dmApi`.
+2. In `messages.$ownerHandleA.$ownerHandleB.tsx`: derive
+   `channelUserSlug = directChannelUserSlug(ownerHandleA, ownerHandleB)`, build
+   `buildAppApi` with the `<channelUserSlug>--dm` key, and pass it as `dmApi` to
+   `DmThread`.
+3. In `messages.tsx`: keep `chatApi` **only** for the handle-binding lookup; pass
+   the DM app API to `DmInbox` as `dmApi` for DM-thread/doc ops.
+4. Update the route test to assert the DM connection's `apiUrl` is
+   `/api/app?vibe=<directChannelUserSlug>--dm`.
 
-Run: `pnpm build && cd vibes.diy/tests && pnpm test dm -- --run`
-Expected: clean build; DM tests pass.
+- [ ] **Step 5: Add the iframe-coupling guard test**
 
-- [ ] **Step 6: Commit**
+Add a test asserting `/messages/*` does **not** resolve through `vibeApiTarget`
+(prevents a future refactor from re-coupling DM routes to iframe-route behavior):
+
+```ts
+import { vibeApiTarget } from "../../pkg/app/vibe-api-target.js";
+it("/messages/* is not a vibeApiTarget route", () => {
+  expect(vibeApiTarget("/messages/alice/bob")).toBeUndefined();
+  expect(vibeApiTarget("/messages")).toBeUndefined();
+});
+```
+
+**Edge checks (bake into the implementation, not just review):**
+
+- Always canonicalize the channel via `directChannelUserSlug(a, b)` — never key
+  by URL argument order, or A→B and B→A get different DOs.
+- Do **not** construct the DM API with an empty/placeholder slug before identity
+  resolves (guard on a real `channelUserSlug`), mirroring how `notifyApi` gates
+  on `clerk.user?.id`.
+- Keep instance reuse via `vibesDiyApis.get(url).once(...)` so route rerenders
+  reuse the WS connection instead of churning a new socket per render.
+
+- [ ] **Step 6: Build + test**
+
+Run: `pnpm build && cd vibes.diy/tests && pnpm test dm messages -- --run`
+Expected: clean build; DM + messages-route tests pass, incl. the guard test.
+
+- [ ] **Step 7: Commit**
 
 ```bash
 git add vibes.diy/pkg/app/vibes-diy-provider.tsx vibes.diy/pkg/app/components/DmThread.tsx vibes.diy/pkg/app/components/DmInbox.tsx vibes.diy/pkg/app/routes/messages.tsx vibes.diy/pkg/app/routes/messages.\$ownerHandleA.\$ownerHandleB.tsx vibes.diy/tests/app/dm-thread-vibeapi.test.tsx
