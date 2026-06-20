@@ -16,16 +16,7 @@ import { unwrapMsgBase } from "../unwrap-msg-base.js";
 import { checkAuth } from "../check-auth.js";
 import { VibesApiSQLCtx } from "../types.js";
 import { cachedReport, hasReport } from "./report-cache.js";
-
-function last30DaysUTC(): string[] {
-  const days: string[] = [];
-  const now = new Date();
-  for (let i = 29; i >= 0; i--) {
-    const d = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() - i));
-    days.push(d.toISOString().slice(0, 10));
-  }
-  return days;
-}
+import { last30DaysUTC } from "./report-dates.js";
 
 async function computeActiveMembers(vctx: VibesApiSQLCtx): Promise<ResReportActiveMembers> {
   const t = vctx.sql.tables;
