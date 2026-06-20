@@ -6,7 +6,6 @@ import {
   VibesDiyError,
   ResError,
   W3CWebSocketEvent,
-  ClerkClaim,
   isUserSettingProfile,
   type DbAcl,
   type AccessDescriptor,
@@ -23,16 +22,7 @@ import { checkDocAccess } from "./access-helpers.js";
 import { ensureAppSettings } from "./ensure-app-settings.js";
 import { resolveActiveHandle } from "./resolve-active-handle.js";
 import { VerifiedResult } from "@vibes.diy/identity";
-
-// Same precedence as list-members.ts:deriveAuthorDisplay.
-function deriveDisplayName(claims: ClerkClaim): string {
-  const p = claims.params;
-  if (p.nick !== undefined && p.nick.trim() !== "") return p.nick.trim();
-  if (p.name !== null && p.name.trim() !== "") return p.name.trim();
-  const composed = `${p.first} ${p.last}`.trim();
-  if (composed !== "") return composed;
-  return p.email;
-}
+import { deriveDisplayName } from "./derive-display-name.js";
 
 export interface ResolveWhoAmIArgs {
   auth: VerifiedResult | undefined;

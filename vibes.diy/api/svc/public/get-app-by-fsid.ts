@@ -24,6 +24,7 @@ import { VibesApiSQLCtx } from "../types.js";
 import { optAuth } from "../check-auth.js";
 import { and, eq } from "drizzle-orm/sql/expressions";
 import { selectLatestAppPerSlug } from "./select-app.js";
+import { deriveDisplayName } from "./derive-display-name.js";
 import { ensureAppSettings } from "./ensure-app-settings.js";
 import { hasAccessInvite, redeemInvite } from "./invite-flow.js";
 import { hasAccessRequest, requestAccess } from "./request-flow.js";
@@ -40,16 +41,6 @@ function grantedAccess(role: "editor" | "viewer" | "submitter") {
   }
 }
 
-// Keep precedence aligned with list-members.ts:deriveAuthorDisplay.
-function deriveAuthorDisplay(claims: ClerkClaim): string {
-  const p = claims.params;
-  if (p.nick !== undefined && p.nick.trim() !== "") return p.nick.trim();
-  if (p.name !== null && p.name.trim() !== "") return p.name.trim();
-  const composed = `${p.first} ${p.last}`.trim();
-  if (composed !== "") return composed;
-  return p.email;
-}
-
 function resolveOwnerDisplayName(ownerSettings: unknown[] | undefined, ownerClaims: ClerkClaim | undefined): string | undefined {
   for (const item of ownerSettings ?? []) {
     if (!isUserSettingProfile(item)) continue;
@@ -57,7 +48,7 @@ function resolveOwnerDisplayName(ownerSettings: unknown[] | undefined, ownerClai
     if (displayName) return displayName;
   }
   if (ownerClaims) {
-    const derived = deriveAuthorDisplay(ownerClaims).trim();
+    const derived = deriveDisplayName(ownerClaims).trim();
     if (derived !== "") return derived;
   }
   return undefined;
