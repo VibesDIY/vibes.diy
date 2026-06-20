@@ -142,6 +142,26 @@ describe("makeBaseSystemPrompt theme injection", () => {
     expect((match?.[1] ?? "").trim().length).toBeGreaterThan(0);
   });
 
+  it("ships a retheme guard (no copy changes, no theme name in UI) alongside the theme", async () => {
+    const result = await makeBaseSystemPrompt("test-model", {
+      skills: ["fireproof"],
+      theme: "atlas",
+      fetch: fetchAsResponse,
+    });
+    // The guard must follow the theme design block so the model never rewrites
+    // app copy or leaks the theme name into the UI on a retheme.
+    expect(result.systemPrompt).toContain("Theme names are designer vocabulary, not user-facing copy.");
+    expect(result.systemPrompt).toMatch(/restyles the app; it must NEVER rewrite it/);
+  });
+
+  it("omits the retheme guard when no theme is supplied", async () => {
+    const result = await makeBaseSystemPrompt("test-model", {
+      skills: ["fireproof"],
+      fetch: fetchAsResponse,
+    });
+    expect(result.systemPrompt).not.toContain("Theme names are designer vocabulary, not user-facing copy.");
+  });
+
   it("drops unknown theme slugs silently", async () => {
     const result = await makeBaseSystemPrompt("test-model", {
       skills: ["fireproof"],

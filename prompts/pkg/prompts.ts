@@ -306,7 +306,14 @@ export async function makeBaseSystemPrompt(
           designMd = composeDesignMd(designMd, parseColorsetYaml(rColorset.Ok() ?? ""));
         }
       }
-      themeDesignSection = `<theme-design-md>\n${designMd}\n</theme-design-md>`;
+      themeDesignSection =
+        `<theme-design-md>\n${designMd}\n</theme-design-md>\n\n` +
+        "The theme above defines ONLY visual styling — colors, typography, spacing, borders, and other appearance. " +
+        "Applying or switching a theme restyles the app; it must NEVER rewrite it. Change only styling (the classNames/`c` object, " +
+        "the `:root` token block, and CSS) and leave the app's copy, wording, labels, headings, feature set, and behavior exactly as they are. " +
+        "NEVER write the theme's name — or any design-system, palette, or color-scheme name from the frontmatter or headings above " +
+        "(e.g. \"Atlas Reference\", \"Matrix Status\") — into the app's UI, headings, labels, content, or comments. " +
+        "Theme names are designer vocabulary, not user-facing copy.";
     }
   }
 
