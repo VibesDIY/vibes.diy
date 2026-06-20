@@ -27,6 +27,7 @@
 The route file `chat.$ownerHandle.$appSlug.tsx` is 1075 lines; the reducer (~240 lines) must be unit-testable without importing the whole route (which drags in Clerk, react-router, Fireproof). Pure move, no behavior change. Re-export from the route so existing importers of `PromptState` keep working.
 
 **Files:**
+
 - Create: `vibes.diy/pkg/app/routes/chat/prompt-state.ts`
 - Modify: `vibes.diy/pkg/app/routes/chat/chat.$ownerHandle.$appSlug.tsx`
 
@@ -80,6 +81,7 @@ git commit -m "refactor(chat): extract prompt reducer into prompt-state.ts (#233
 ### Task 2: Connection state + disconnect/replay actions in the reducer
 
 **Files:**
+
 - Modify: `vibes.diy/pkg/app/routes/chat/prompt-state.ts`
 - Modify: `vibes.diy/pkg/app/routes/chat/chat.$ownerHandle.$appSlug.tsx` (initial state only)
 - Test: `vibes.diy/tests/app/prompt-state-reconnect.test.ts`
@@ -294,6 +296,7 @@ git commit -m "feat(chat): connection state + reconnect actions in prompt reduce
 ### Task 3: Close the section stream on transport loss (`llm-chat.ts`)
 
 **Files:**
+
 - Modify: `vibes.diy/api/impl/llm-chat.ts:140-141, 250-252`
 - Test: `vibes.diy/api/impl/llm-chat-disconnect.test.ts`
 
@@ -334,10 +337,7 @@ function stubApi(connection: VibeDiyApiConnection) {
 }
 
 async function openChat(connection: VibeDiyApiConnection) {
-  const rChat = await LLMChatImpl.open(
-    { ownerHandle: "o", appSlug: "a", mode: "chat" } as never,
-    stubApi(connection) as never
-  );
+  const rChat = await LLMChatImpl.open({ ownerHandle: "o", appSlug: "a", mode: "chat" } as never, stubApi(connection) as never);
   expect(rChat.isOk()).toBe(true);
   return rChat.Ok();
 }
@@ -382,22 +382,22 @@ Expected: FAIL — the first two tests time out or hang-then-fail because `reade
 In `vibes.diy/api/impl/llm-chat.ts`, replace lines 140-141:
 
 ```ts
-    conn.onError(unreg);
-    conn.onClose(unreg);
+conn.onError(unreg);
+conn.onClose(unreg);
 ```
 
 with:
 
 ```ts
-    const closeOnTransportLoss = () => {
-      unreg();
-      // Close (not abort) so the route's processStream resolves cleanly and
-      // can converge on the server's durable state. Catch: the writer may
-      // already be closed (explicit close()) or aborted (evento error path).
-      sectionEventsWriter.close().catch(() => undefined);
-    };
-    conn.onError(closeOnTransportLoss);
-    conn.onClose(closeOnTransportLoss);
+const closeOnTransportLoss = () => {
+  unreg();
+  // Close (not abort) so the route's processStream resolves cleanly and
+  // can converge on the server's durable state. Catch: the writer may
+  // already be closed (explicit close()) or aborted (evento error path).
+  sectionEventsWriter.close().catch(() => undefined);
+};
+conn.onError(closeOnTransportLoss);
+conn.onClose(closeOnTransportLoss);
 ```
 
 And make `close()` (line 250-252) tolerant of a writer already closed by transport loss:
@@ -430,6 +430,7 @@ git commit -m "fix(api): close LLM chat section stream on websocket close/error 
 Catches half-open connections that never fire a close event: if a prompt is running on a live connection and no stream message arrives for 45 s, signal a disconnect. "Activity" is observed via `activityKey` — pass `promptState.blocks`, which gets a fresh array reference on every received message.
 
 **Files:**
+
 - Create: `vibes.diy/pkg/app/hooks/useStreamWatchdog.ts`
 - Test: `vibes.diy/tests/app/useStreamWatchdog.test.tsx`
 
@@ -473,9 +474,12 @@ describe("useStreamWatchdog", () => {
 
   it("resets the timer when activityKey changes", () => {
     const onSilent = vi.fn();
-    const { rerender } = renderHook(({ key }) => useStreamWatchdog({ running: true, connection: "live", activityKey: key, onSilent }), {
-      initialProps: { key: [1] as unknown },
-    });
+    const { rerender } = renderHook(
+      ({ key }) => useStreamWatchdog({ running: true, connection: "live", activityKey: key, onSilent }),
+      {
+        initialProps: { key: [1] as unknown },
+      }
+    );
     vi.advanceTimersByTime(STREAM_WATCHDOG_TIMEOUT_MS - 1000);
     rerender({ key: [2] as unknown });
     vi.advanceTimersByTime(STREAM_WATCHDOG_TIMEOUT_MS - 1000);
@@ -552,6 +556,7 @@ git commit -m "feat(chat): stream inactivity watchdog hook (#2334)"
 While `connection === "reconnecting"`, repeatedly: close the previous attempt's chat handle, re-open the chat, hand it to `onAttempt` (the route resets state and consumes the replay), and wait 5 s. The loop exits when the reducer flips `connection` to `"live"` (a replayed `prompt.block-end` matched `inFlightStreamId`) or calls `onGiveUp` after 2 minutes.
 
 **Files:**
+
 - Create: `vibes.diy/pkg/app/hooks/useReconnectLoop.ts`
 - Test: `vibes.diy/tests/app/useReconnectLoop.test.tsx`
 
@@ -580,9 +585,7 @@ describe("useReconnectLoop", () => {
 
   it("does nothing while connection is live", async () => {
     const openChat = vi.fn(async () => fakeChat());
-    renderHook(() =>
-      useReconnectLoop({ connection: "live", openChat, onAttempt: vi.fn(), onGiveUp: vi.fn() })
-    );
+    renderHook(() => useReconnectLoop({ connection: "live", openChat, onAttempt: vi.fn(), onGiveUp: vi.fn() }));
     await vi.advanceTimersByTimeAsync(30_000);
     expect(openChat).not.toHaveBeenCalled();
   });
@@ -746,6 +749,7 @@ git commit -m "feat(chat): reconnect convergence loop hook (#2334)"
 ### Task 6: ChatInput reconnecting/failed UI
 
 **Files:**
+
 - Modify: `vibes.diy/pkg/app/components/ChatInput.tsx`
 - Test: `vibes.diy/tests/app/ChatInput.test.tsx` (extend)
 
@@ -754,30 +758,30 @@ git commit -m "feat(chat): reconnect convergence loop hook (#2334)"
 Append to the `describe("ChatInput Component", ...)` block in `vibes.diy/tests/app/ChatInput.test.tsx`:
 
 ```tsx
-  it("shows Reconnecting and keeps send disabled while reconnecting", () => {
-    render(
-      <MockThemeProvider>
-        <ChatInput promptProcessing={false} connectionState="reconnecting" onSubmit={onSubmit} />
-      </MockThemeProvider>
-    );
-    const sendButton = screen.getByLabelText("Processing");
-    expect(sendButton).toBeDisabled();
-    expect(screen.getByText("Reconnecting...")).toBeDefined();
-    fireEvent.click(sendButton);
-    expect(onSubmit).not.toHaveBeenCalled();
-  });
+it("shows Reconnecting and keeps send disabled while reconnecting", () => {
+  render(
+    <MockThemeProvider>
+      <ChatInput promptProcessing={false} connectionState="reconnecting" onSubmit={onSubmit} />
+    </MockThemeProvider>
+  );
+  const sendButton = screen.getByLabelText("Processing");
+  expect(sendButton).toBeDisabled();
+  expect(screen.getByText("Reconnecting...")).toBeDefined();
+  fireEvent.click(sendButton);
+  expect(onSubmit).not.toHaveBeenCalled();
+});
 
-  it("shows a reload affordance when the connection has failed", () => {
-    render(
-      <MockThemeProvider>
-        <ChatInput promptProcessing={false} connectionState="failed" onSubmit={onSubmit} />
-      </MockThemeProvider>
-    );
-    expect(screen.getByText(/Connection lost/)).toBeDefined();
-    expect(screen.getByRole("button", { name: "Reload" })).toBeDefined();
-    // Send is re-enabled so the user can also just prompt again.
-    expect(screen.getByLabelText("Send message")).toBeDefined();
-  });
+it("shows a reload affordance when the connection has failed", () => {
+  render(
+    <MockThemeProvider>
+      <ChatInput promptProcessing={false} connectionState="failed" onSubmit={onSubmit} />
+    </MockThemeProvider>
+  );
+  expect(screen.getByText(/Connection lost/)).toBeDefined();
+  expect(screen.getByRole("button", { name: "Reload" })).toBeDefined();
+  // Send is re-enabled so the user can also just prompt again.
+  expect(screen.getByLabelText("Send message")).toBeDefined();
+});
 ```
 
 - [ ] **Step 2: Run tests to verify they fail**
@@ -803,23 +807,25 @@ Destructure `connectionState = "live"` in the component. Then:
 2. Change the working-message memo:
 
 ```ts
-    const workingMessage = useMemo(
-      () => (connectionState === "reconnecting" ? "Reconnecting..." : getWorkingMessage(hasCode, currentMsgCount)),
-      [connectionState, hasCode, currentMsgCount]
-    );
+const workingMessage = useMemo(
+  () => (connectionState === "reconnecting" ? "Reconnecting..." : getWorkingMessage(hasCode, currentMsgCount)),
+  [connectionState, hasCode, currentMsgCount]
+);
 ```
 
 3. Render the failure banner as the first child inside the `space-y-1` div (above the theme/palette row):
 
 ```tsx
-          {connectionState === "failed" && (
-            <div className="flex items-center justify-between gap-2 rounded border border-light-decorative-01 dark:border-dark-decorative-01 px-2 py-1.5 text-xs text-light-secondary dark:text-dark-secondary">
-              <span>Connection lost — your app may have finished building.</span>
-              <Button type="button" variant="blue" onClick={() => window.location.reload()}>
-                Reload
-              </Button>
-            </div>
-          )}
+{
+  connectionState === "failed" && (
+    <div className="flex items-center justify-between gap-2 rounded border border-light-decorative-01 dark:border-dark-decorative-01 px-2 py-1.5 text-xs text-light-secondary dark:text-dark-secondary">
+      <span>Connection lost — your app may have finished building.</span>
+      <Button type="button" variant="blue" onClick={() => window.location.reload()}>
+        Reload
+      </Button>
+    </div>
+  );
+}
 ```
 
 - [ ] **Step 4: Run tests to verify they pass**
@@ -839,6 +845,7 @@ git commit -m "feat(chat): reconnecting + connection-failed states in ChatInput 
 ### Task 7: Wire it all up in the chat route
 
 **Files:**
+
 - Modify: `vibes.diy/pkg/app/routes/chat/chat.$ownerHandle.$appSlug.tsx`
 
 No new unit test — the pieces are covered by Tasks 2-6; this task is mechanical wiring verified by build + full app suite + the manual QA in Task 8.
@@ -848,46 +855,46 @@ No new unit test — the pieces are covered by Tasks 2-6; this task is mechanica
 Add above the open-chat effect (after the `promptState`/`dispatch` declaration):
 
 ```ts
-  const attachSectionStream = useCallback(
-    (chatHandle: LLMChat) => {
-      processStream(chatHandle.sectionStream, (msg) => {
-        const se = sectionEvent(msg);
-        if (se instanceof type.errors) {
-          console.error(se.summary);
-          return;
-        }
-        for (const block of se.blocks) {
-          dispatch(block);
-        }
-      })
-        .catch((err: unknown) => {
-          console.error("section stream errored", err);
-        })
-        .finally(() => {
-          // Stream ended (transport loss closes it as of #2334). The reducer
-          // ignores this while idle; mid-prompt it starts the reconnect loop.
-          dispatch({ type: "streamDisconnected" });
-        });
-    },
-    [dispatch]
-  );
-
-  const refreshAppSettings = useCallback(() => {
-    chatApi.ensureAppSettings({ ownerHandle, appSlug }).then((rS) => {
-      if (rS.isOk()) {
-        const s = rS.Ok().settings.entry.settings;
-        if (s.title) dispatch({ type: "setTitle", title: s.title });
-        if (s.icon) dispatch({ type: "setIcon", icon: s.icon });
-        if (s.theme) {
-          const t = getThemeBySlug(s.theme);
-          if (t) dispatch({ type: "setTheme", theme: t });
-        }
-        if (s.colorTheme) {
-          dispatch({ type: "setColorTheme", colorTheme: s.colorTheme });
-        }
+const attachSectionStream = useCallback(
+  (chatHandle: LLMChat) => {
+    processStream(chatHandle.sectionStream, (msg) => {
+      const se = sectionEvent(msg);
+      if (se instanceof type.errors) {
+        console.error(se.summary);
+        return;
       }
-    });
-  }, [chatApi, ownerHandle, appSlug, dispatch]);
+      for (const block of se.blocks) {
+        dispatch(block);
+      }
+    })
+      .catch((err: unknown) => {
+        console.error("section stream errored", err);
+      })
+      .finally(() => {
+        // Stream ended (transport loss closes it as of #2334). The reducer
+        // ignores this while idle; mid-prompt it starts the reconnect loop.
+        dispatch({ type: "streamDisconnected" });
+      });
+  },
+  [dispatch]
+);
+
+const refreshAppSettings = useCallback(() => {
+  chatApi.ensureAppSettings({ ownerHandle, appSlug }).then((rS) => {
+    if (rS.isOk()) {
+      const s = rS.Ok().settings.entry.settings;
+      if (s.title) dispatch({ type: "setTitle", title: s.title });
+      if (s.icon) dispatch({ type: "setIcon", icon: s.icon });
+      if (s.theme) {
+        const t = getThemeBySlug(s.theme);
+        if (t) dispatch({ type: "setTheme", theme: t });
+      }
+      if (s.colorTheme) {
+        dispatch({ type: "setColorTheme", colorTheme: s.colorTheme });
+      }
+    }
+  });
+}, [chatApi, ownerHandle, appSlug, dispatch]);
 ```
 
 In the open-chat effect (currently lines 686-727): replace the inline `chatApi.ensureAppSettings(...)` block (lines 693-706) with `refreshAppSettings();` and replace the `void processStream(rChat.Ok().sectionStream, ...)` block (lines 707-716) with `attachSectionStream(rChat.Ok());`.
@@ -910,7 +917,7 @@ In the prompt-send `.then` (lines 674-681), record the turn's streamId on succes
 In `handleOnCodeSave`'s success branch (after `pendingSavePromptIdRef.current = r.Ok().promptId;` around line 884), add:
 
 ```ts
-          dispatch({ type: "setInFlightStreamId", streamId: r.Ok().promptId });
+dispatch({ type: "setInFlightStreamId", streamId: r.Ok().promptId });
 ```
 
 - [ ] **Step 2: Mount the watchdog and reconnect loop**
@@ -925,42 +932,42 @@ import { useReconnectLoop } from "../../hooks/useReconnectLoop.js";
 Add after the `attachSectionStream`/`refreshAppSettings` callbacks:
 
 ```ts
-  const handleStreamSilent = useCallback(() => dispatch({ type: "streamDisconnected" }), [dispatch]);
-  useStreamWatchdog({
-    running: promptState.running,
-    connection: promptState.connection,
-    activityKey: promptState.blocks,
-    onSilent: handleStreamSilent,
-  });
+const handleStreamSilent = useCallback(() => dispatch({ type: "streamDisconnected" }), [dispatch]);
+useStreamWatchdog({
+  running: promptState.running,
+  connection: promptState.connection,
+  activityKey: promptState.blocks,
+  onSilent: handleStreamSilent,
+});
 
-  const openChatForReconnect = useCallback(async () => {
-    const r = await chatApi.openChat({ ownerHandle, appSlug, mode: "chat" });
-    if (r.isErr()) {
-      console.error("reconnect openChat failed", r.Err());
-      return null;
-    }
-    return r.Ok();
-  }, [chatApi, ownerHandle, appSlug]);
+const openChatForReconnect = useCallback(async () => {
+  const r = await chatApi.openChat({ ownerHandle, appSlug, mode: "chat" });
+  if (r.isErr()) {
+    console.error("reconnect openChat failed", r.Err());
+    return null;
+  }
+  return r.Ok();
+}, [chatApi, ownerHandle, appSlug]);
 
-  const handleReconnectAttempt = useCallback(
-    (newChat: LLMChat) => {
-      dispatch({ type: "replayReset" });
-      setChat(newChat);
-      dispatch({ type: "initChat", chat: newChat });
-      attachSectionStream(newChat);
-      refreshAppSettings();
-    },
-    [attachSectionStream, refreshAppSettings, dispatch]
-  );
+const handleReconnectAttempt = useCallback(
+  (newChat: LLMChat) => {
+    dispatch({ type: "replayReset" });
+    setChat(newChat);
+    dispatch({ type: "initChat", chat: newChat });
+    attachSectionStream(newChat);
+    refreshAppSettings();
+  },
+  [attachSectionStream, refreshAppSettings, dispatch]
+);
 
-  const handleReconnectGiveUp = useCallback(() => dispatch({ type: "reconnectFailed" }), [dispatch]);
+const handleReconnectGiveUp = useCallback(() => dispatch({ type: "reconnectFailed" }), [dispatch]);
 
-  useReconnectLoop({
-    connection: promptState.connection,
-    openChat: openChatForReconnect,
-    onAttempt: handleReconnectAttempt,
-    onGiveUp: handleReconnectGiveUp,
-  });
+useReconnectLoop({
+  connection: promptState.connection,
+  openChat: openChatForReconnect,
+  onAttempt: handleReconnectAttempt,
+  onGiveUp: handleReconnectGiveUp,
+});
 ```
 
 - [ ] **Step 3: Pass `connectionState` to ChatInput**

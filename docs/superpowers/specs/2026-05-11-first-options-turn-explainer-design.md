@@ -29,7 +29,7 @@ After the auto-interview ships, every assistant message in a chat ends with one 
 
 A single line:
 
-> *"These are optional. Pick one to suggest the next improvement, or type your own change."*
+> _"These are optional. Pick one to suggest the next improvement, or type your own change."_
 
 Plain text, no markdown. Renders above the `▸ ` buttons inside the same container that already wraps the buttons in `OptionButtons`.
 

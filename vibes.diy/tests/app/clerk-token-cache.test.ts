@@ -11,11 +11,7 @@ import {
 // Build a JWT-shaped string whose payload decodes to {exp}. The cache helpers
 // only inspect `exp`, so header + signature can be arbitrary.
 function makeJwt(exp: number): string {
-  const b64url = (obj: unknown) =>
-    btoa(JSON.stringify(obj))
-      .replace(/=+$/, "")
-      .replace(/\+/g, "-")
-      .replace(/\//g, "_");
+  const b64url = (obj: unknown) => btoa(JSON.stringify(obj)).replace(/=+$/, "").replace(/\+/g, "-").replace(/\//g, "_");
   return `${b64url({ alg: "none", typ: "JWT" })}.${b64url({ exp })}.sig`;
 }
 

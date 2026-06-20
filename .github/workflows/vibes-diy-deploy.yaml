@@ -37,7 +37,7 @@ jobs:
           # A deploy tag cut from an already-tested commit (e.g. @c from a PR
           # head) skips the ~5-min suite; any SHA without a green check still
           # runs it. See agents/deploy-tags.md § "Test reuse across deploys".
-          skip-tests-if-sha-green: "true"
+          skip-tests-if-sha-green: 'true'
 
       - uses: ./vibes.diy/actions/deploy
         with:

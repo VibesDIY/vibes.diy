@@ -349,7 +349,7 @@ export function AppDetailPanel({ item, appHostBaseUrl, onClose }: AppDetailPanel
   const cacheKey = item ? `${item.ownerHandle}/${item.appSlug}` : "";
   const [screenshot, setScreenshot] = useState<MetaScreenShot | null>(item ? (screenshotCache.get(cacheKey) ?? null) : null);
   const [ownerDisplayName, setOwnerDisplayName] = useState<string | undefined>(
-    item ? (ownerDisplayNameCache.get(cacheKey) ?? undefined) : undefined,
+    item ? (ownerDisplayNameCache.get(cacheKey) ?? undefined) : undefined
   );
   const { chatApi } = useVibesDiy();
   const previewUrl = screenshot ? screenshotSrc(screenshot) : iconUrl;

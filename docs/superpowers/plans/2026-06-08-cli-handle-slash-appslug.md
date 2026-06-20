@@ -15,6 +15,7 @@
 ### Task 1: Add `parseVibe` utility and `resolveVibeArgs` helper
 
 **Files:**
+
 - Create: `vibes-diy/cli/parse-vibe.ts`
 - Create: `vibes-diy/cli/parse-vibe.test.ts`
 
@@ -57,48 +58,63 @@ describe("parseVibe", () => {
 
 describe("resolveVibeArgs", () => {
   it("--vibe wins: extracts both handle and appSlug", () => {
-    expect(resolveVibeArgs({ vibe: "jchris/hat-smeller", handle: "", appSlug: "", positionalAppSlug: "" }))
-      .toEqual({ handle: "jchris", appSlug: "hat-smeller" });
+    expect(resolveVibeArgs({ vibe: "jchris/hat-smeller", handle: "", appSlug: "", positionalAppSlug: "" })).toEqual({
+      handle: "jchris",
+      appSlug: "hat-smeller",
+    });
   });
 
   it("--vibe bare slug: sets appSlug only", () => {
-    expect(resolveVibeArgs({ vibe: "hat-smeller", handle: "", appSlug: "", positionalAppSlug: "" }))
-      .toEqual({ handle: "", appSlug: "hat-smeller" });
+    expect(resolveVibeArgs({ vibe: "hat-smeller", handle: "", appSlug: "", positionalAppSlug: "" })).toEqual({
+      handle: "",
+      appSlug: "hat-smeller",
+    });
   });
 
   it("--handle + --app-slug: uses both directly", () => {
-    expect(resolveVibeArgs({ vibe: "", handle: "jchris", appSlug: "hat-smeller", positionalAppSlug: "" }))
-      .toEqual({ handle: "jchris", appSlug: "hat-smeller" });
+    expect(resolveVibeArgs({ vibe: "", handle: "jchris", appSlug: "hat-smeller", positionalAppSlug: "" })).toEqual({
+      handle: "jchris",
+      appSlug: "hat-smeller",
+    });
   });
 
   it("positional handle/app-slug: splits when no explicit flags", () => {
-    expect(resolveVibeArgs({ vibe: "", handle: "", appSlug: "", positionalAppSlug: "jchris/hat-smeller" }))
-      .toEqual({ handle: "jchris", appSlug: "hat-smeller" });
+    expect(resolveVibeArgs({ vibe: "", handle: "", appSlug: "", positionalAppSlug: "jchris/hat-smeller" })).toEqual({
+      handle: "jchris",
+      appSlug: "hat-smeller",
+    });
   });
 
   it("positional bare app-slug: handle stays empty", () => {
-    expect(resolveVibeArgs({ vibe: "", handle: "", appSlug: "", positionalAppSlug: "hat-smeller" }))
-      .toEqual({ handle: "", appSlug: "hat-smeller" });
+    expect(resolveVibeArgs({ vibe: "", handle: "", appSlug: "", positionalAppSlug: "hat-smeller" })).toEqual({
+      handle: "",
+      appSlug: "hat-smeller",
+    });
   });
 
   it("explicit --handle overrides handle parsed from positional", () => {
-    expect(resolveVibeArgs({ vibe: "", handle: "other-user", appSlug: "", positionalAppSlug: "jchris/hat-smeller" }))
-      .toEqual({ handle: "other-user", appSlug: "hat-smeller" });
+    expect(resolveVibeArgs({ vibe: "", handle: "other-user", appSlug: "", positionalAppSlug: "jchris/hat-smeller" })).toEqual({
+      handle: "other-user",
+      appSlug: "hat-smeller",
+    });
   });
 
   it("--app-slug overrides appSlug parsed from positional", () => {
-    expect(resolveVibeArgs({ vibe: "", handle: "", appSlug: "override-slug", positionalAppSlug: "jchris/hat-smeller" }))
-      .toEqual({ handle: "jchris", appSlug: "override-slug" });
+    expect(resolveVibeArgs({ vibe: "", handle: "", appSlug: "override-slug", positionalAppSlug: "jchris/hat-smeller" })).toEqual({
+      handle: "jchris",
+      appSlug: "override-slug",
+    });
   });
 
   it("--vibe overrides positional entirely", () => {
-    expect(resolveVibeArgs({ vibe: "alice/cool-app", handle: "", appSlug: "", positionalAppSlug: "jchris/hat-smeller" }))
-      .toEqual({ handle: "alice", appSlug: "cool-app" });
+    expect(resolveVibeArgs({ vibe: "alice/cool-app", handle: "", appSlug: "", positionalAppSlug: "jchris/hat-smeller" })).toEqual({
+      handle: "alice",
+      appSlug: "cool-app",
+    });
   });
 
   it("all empty: returns empty strings", () => {
-    expect(resolveVibeArgs({ vibe: "", handle: "", appSlug: "", positionalAppSlug: "" }))
-      .toEqual({ handle: "", appSlug: "" });
+    expect(resolveVibeArgs({ vibe: "", handle: "", appSlug: "", positionalAppSlug: "" })).toEqual({ handle: "", appSlug: "" });
   });
 });
 ```
@@ -118,12 +134,10 @@ export function parseVibe(raw: string): { handle: string | undefined; appSlug: s
   return { handle: raw.slice(0, slashIdx), appSlug: raw.slice(slashIdx + 1) };
 }
 
-export function resolveVibeArgs(args: {
-  vibe: string;
+export function resolveVibeArgs(args: { vibe: string; handle: string; appSlug: string; positionalAppSlug: string }): {
   handle: string;
   appSlug: string;
-  positionalAppSlug: string;
-}): { handle: string; appSlug: string } {
+} {
   // --vibe wins over everything
   if (args.vibe) {
     const parsed = parseVibe(args.vibe);
@@ -158,6 +172,7 @@ git commit -m "feat(cli): add parseVibe and resolveVibeArgs utilities"
 ### Task 2: Wire `--vibe` and positional parsing into `pull` command
 
 **Files:**
+
 - Modify: `vibes-diy/cli/cmds/pull-cmd.ts:145-189`
 - Modify: `vibes-diy/cli/cmds/pull-cmd.test.ts`
 
@@ -314,6 +329,7 @@ git commit -m "feat(cli): pull accepts --vibe and handle/app-slug positional —
 ### Task 3: Wire `--vibe` and positional parsing into `edit` command
 
 **Files:**
+
 - Modify: `vibes-diy/cli/cmds/edit-cmd.ts:385-463`
 - Modify: `vibes-diy/cli/cmds/edit-cmd.test.ts`
 
@@ -434,6 +450,7 @@ git commit -m "feat(cli): edit accepts --vibe and handle/app-slug positional"
 ### Task 4: Wire `--vibe` and positional parsing into `chats` command
 
 **Files:**
+
 - Modify: `vibes-diy/cli/cmds/chats-cmd.ts:114-143`
 
 - [ ] **Step 1: Update the chats command**
@@ -498,6 +515,7 @@ git commit -m "feat(cli): chats accepts --vibe and handle/app-slug positional"
 ### Task 5: Wire `--vibe` into `dbCommonArgs` (covers all 6 db subcommands)
 
 **Files:**
+
 - Modify: `vibes-diy/cli/cmds/db/shared.ts`
 - Modify: `vibes-diy/cli/cmds/db/list-cmd.ts`
 - Modify: `vibes-diy/cli/cmds/db/get-cmd.ts`
@@ -560,12 +578,10 @@ export function dbCommonArgs(ctx: CliCtx) {
 Add a helper that all 6 db command handlers call:
 
 ```typescript
-export function resolveDbVibeArgs(args: {
-  vibe: string;
+export function resolveDbVibeArgs(args: { vibe: string; appSlug: string; ownerHandle: string; ownerHandleDeprecated: string }): {
   appSlug: string;
   ownerHandle: string;
-  ownerHandleDeprecated: string;
-}): { appSlug: string; ownerHandle: string } {
+} {
   if (args.ownerHandleDeprecated) {
     process.stderr.write("[deprecated] --user-slug is deprecated, use --handle or --vibe instead\n");
   }
@@ -612,6 +628,7 @@ const resolved = resolveDbVibeArgs(args);
 ```
 
 **`db/list-cmd.ts`** handler (line 63):
+
 ```typescript
     handler: ctx.cliStream.enqueue((args) => {
       const resolved = resolveDbVibeArgs(args);
@@ -645,6 +662,7 @@ git commit -m "feat(cli): db commands accept --vibe, add --handle alias, depreca
 These commands take `--app-slug` as a named option (no positional app arg). Add `--vibe` and wire through `resolveVibeArgs`.
 
 **Files:**
+
 - Modify: `vibes-diy/cli/cmds/push-cmd.ts:63-123`
 - Modify: `vibes-diy/cli/cmds/generate-cmd.ts:250-313`
 - Modify: `vibes-diy/cli/cmds/put-asset-cmd.ts:197-256`
@@ -823,11 +841,11 @@ git commit -m "fix(cli): address lint/type issues from --vibe refactor"
 
 After this work, every command supports three ways to identify a vibe:
 
-| Flag | Meaning | Example |
-|------|---------|---------|
-| `--vibe` | Combined handle/app-slug | `--vibe jchris/hat-smeller` |
-| `--handle` | Owner handle only | `--handle jchris` |
-| `--app-slug` | App slug only | `--app-slug hat-smeller` |
+| Flag         | Meaning                  | Example                     |
+| ------------ | ------------------------ | --------------------------- |
+| `--vibe`     | Combined handle/app-slug | `--vibe jchris/hat-smeller` |
+| `--handle`   | Owner handle only        | `--handle jchris`           |
+| `--app-slug` | App slug only            | `--app-slug hat-smeller`    |
 
 For commands with a positional arg (`pull`, `edit`, `chats`), the positional also accepts `handle/app-slug`.
 

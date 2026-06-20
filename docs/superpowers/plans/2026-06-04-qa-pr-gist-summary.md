@@ -13,10 +13,12 @@
 **Branch:** `popmechanic/qa-pr-gist-summary` (already created off `origin-https/main`, which holds the merged skill — local `main` is stale). All tasks commit to this branch.
 
 **Files touched (whole plan):**
+
 - Modify: `.claude/skills/qa-pr/SKILL.md` — frontmatter description, intro line, Authorization, Step 2 run-log line, Step 6 note, Step 7 rewrite, Failure modes.
 - Modify: `.claude/skills/qa-pr/assets/triage-template.md` — Evidence column on the P0/P1/P2 tables, footer line.
 
 **Conventions used below:**
+
 - `<N>` = PR number; `{run_id}` = `pr-{N}-{YYYYMMDD-HHmm}`.
 - The dedup marker string, used verbatim everywhere, is exactly: `<!-- qa-pr-triage-comment -->`.
 
@@ -25,6 +27,7 @@
 ## Task 1: Frontmatter description + intro line
 
 **Files:**
+
 - Modify: `.claude/skills/qa-pr/SKILL.md` (frontmatter `description:`, line ~3; intro paragraph, line ~8)
 
 - [ ] **Step 1: Update the frontmatter `description` tail**
@@ -58,12 +61,14 @@ It captures friction the way a first-time user would, writes a [P0/P1/P2 triage]
 - [ ] **Step 3: Verify the edits landed and the old phrasing is gone**
 
 Run:
+
 ```bash
 cd /Users/marcusestes/Websites/vibes.diy
 grep -c "posts it as a PR comment\|posts it as a comment on the PR" .claude/skills/qa-pr/SKILL.md
 grep -c "publishes it (with inline screenshots) as a public GitHub gist" .claude/skills/qa-pr/SKILL.md
 grep -c "publishes that triage as a public gist" .claude/skills/qa-pr/SKILL.md
 ```
+
 Expected: first line prints `0`; second and third lines each print `1`.
 
 - [ ] **Step 4: Commit**
@@ -78,6 +83,7 @@ git commit -m "docs(qa-pr): describe gist + concise-comment output in frontmatte
 ## Task 2: Rewrite the Authorization section
 
 **Files:**
+
 - Modify: `.claude/skills/qa-pr/SKILL.md` (`## Authorization`, lines ~30-34)
 
 - [ ] **Step 1: Replace the entire Authorization section body**
@@ -104,12 +110,14 @@ The skill is **not** authorized to: open issues, edit PR titles or descriptions,
 - [ ] **Step 2: Verify**
 
 Run:
+
 ```bash
 cd /Users/marcusestes/Websites/vibes.diy
 grep -c "exactly \*\*one\*\* GitHub write operation" .claude/skills/qa-pr/SKILL.md
 grep -c "Publish the triage gist" .claude/skills/qa-pr/SKILL.md
 grep -c "Post or update the summary comment" .claude/skills/qa-pr/SKILL.md
 ```
+
 Expected: first line prints `0` (old "exactly one" wording removed); second and third each print `1`.
 
 - [ ] **Step 3: Commit**
@@ -124,6 +132,7 @@ git commit -m "docs(qa-pr): authorize gist publish + sticky comment edit"
 ## Task 3: Add Evidence column + footer note to the triage template
 
 **Files:**
+
 - Modify: `.claude/skills/qa-pr/assets/triage-template.md`
 
 - [ ] **Step 1: Add an Evidence column to the P0 table**
@@ -209,12 +218,14 @@ Replace with:
 - [ ] **Step 5: Verify the three tables and footer**
 
 Run:
+
 ```bash
 cd /Users/marcusestes/Websites/vibes.diy
 grep -c "| # | Issue | Viewport | Evidence | Why it matters |" .claude/skills/qa-pr/assets/triage-template.md
 grep -c "| # | Issue | Viewport | Evidence |" .claude/skills/qa-pr/assets/triage-template.md
 grep -c "embedded inline in the Evidence column above" .claude/skills/qa-pr/assets/triage-template.md
 ```
+
 Expected: first line prints `2` (P0 + P1), second line prints `3` (matches P0, P1, and the P2 header as a substring), third line prints `1`.
 
 - [ ] **Step 6: Commit**
@@ -229,6 +240,7 @@ git commit -m "docs(qa-pr): add Evidence column for inline gist screenshots"
 ## Task 4: Note inline-embedding in the Step 6 output schema
 
 **Files:**
+
 - Modify: `.claude/skills/qa-pr/SKILL.md` (`## Step 6 — Output schema`, the `findings[].screenshots` comment in the `QAResult` type block)
 
 - [ ] **Step 1: Annotate the `screenshots` field**
@@ -248,10 +260,12 @@ Replace with:
 - [ ] **Step 2: Verify**
 
 Run:
+
 ```bash
 cd /Users/marcusestes/Websites/vibes.diy
 grep -c "embedded inline in the finding's Evidence cell at Step 7" .claude/skills/qa-pr/SKILL.md
 ```
+
 Expected: `1`.
 
 - [ ] **Step 3: Commit**
@@ -266,6 +280,7 @@ git commit -m "docs(qa-pr): note evidence screenshots embed inline in gist (Step
 ## Task 5: Add `gist_url`/`comment_id` to the run-log record (Step 2)
 
 **Files:**
+
 - Modify: `.claude/skills/qa-pr/SKILL.md` (`## Step 2 — Run setup`, the `runs.jsonl` bullet)
 
 - [ ] **Step 1: Clarify the Step 2 run-log bullet**
@@ -285,10 +300,12 @@ Replace with:
 - [ ] **Step 2: Verify**
 
 Run:
+
 ```bash
 cd /Users/marcusestes/Websites/vibes.diy
 grep -c "Step 7 appends a second completion record for this \`run_id\`" .claude/skills/qa-pr/SKILL.md
 ```
+
 Expected: `1`.
 
 - [ ] **Step 3: Commit**
@@ -305,13 +322,14 @@ git commit -m "docs(qa-pr): record gist_url + comment_id in runs.jsonl (Step 2)"
 This is the core task. It replaces the body of `## Step 7 — Render and post` (everything from the line `When both phases are complete` down to — but **not** including — the next heading `## Failure modes`).
 
 **Files:**
+
 - Modify: `.claude/skills/qa-pr/SKILL.md` (`## Step 7 — Render and post`)
 
 - [ ] **Step 1: Replace the Step 7 body**
 
 Find this exact block:
 
-```
+````
 When both phases are complete (or aborted under a documented failure mode):
 
 1. Finalize all placeholders in `qa-reports/{run_id}/triage.md`. Verify by running `grep -oE '\{[A-Z0-9_]+\}' qa-reports/{run_id}/triage.md` — the output must be empty.
@@ -319,17 +337,19 @@ When both phases are complete (or aborted under a documented failure mode):
 
 ```bash
 gh pr comment <PR-NUMBER> --body-file qa-reports/{run_id}/triage.md
-```
+````
 
-This is the single authorized GitHub write operation for the skill. Run it directly, without a confirmation prompt — the authorization is documented in this skill's *Authorization* section above.
+This is the single authorized GitHub write operation for the skill. Run it directly, without a confirmation prompt — the authorization is documented in this skill's _Authorization_ section above.
 
 3. Print the comment URL (`gh` prints it on success) and a one-line summary of the verdict to the session.
 4. **Sign out of Vibes** to leave the chrome-devtools profile in a "Google signed in, Vibes signed out" state for the next run. Navigate to the account / settings area in the Vibes UI and click Sign out — or if a `/sign-out` route exists, navigate to it directly. Verify via `evaluate_script` that the `__session` cookie is gone (or set to expired). Skipping this leaves Vibes session state in the profile and the next run's preflight will abort on a dirty profile.
+
 ```
 
 Replace it with:
 
-````
+```
+
 When both phases are complete (or aborted under a documented failure mode), publish the full triage to a public gist, post a concise summary comment that links to it, then sign out. The full triage never goes in the PR comment — long comments pollute a reviewer's working context; the gist holds the detail and the comment is a scannable pointer.
 
 **7.1 — Finalize the triage.** Fill every placeholder in `qa-reports/{run_id}/triage.md`, including each finding's **Evidence** cell. For a finding that has no screenshot, put a literal `—` in its Evidence cell. For a finding **with** screenshot(s), leave a placeholder token `{{EVIDENCE:<basename>.png}}` in the Evidence cell for each shot (e.g. `{{EVIDENCE:remix-live-mobile.png}}`) — Step 7.3 rewrites these into inline image tags once the gist exists. Then verify no schema placeholders remain:
@@ -349,6 +369,7 @@ gh gist create --public \
 ```
 
 `gh gist create` prints the gist's web URL on its last line, of the form `https://gist.github.com/<owner>/<gist_id>`. Capture it. Derive:
+
 - `<gist_url>` = that full web URL (goes in the comment).
 - `<owner>` = the second-to-last path segment.
 - `<gist_id>` = the last path segment.
@@ -367,7 +388,7 @@ Then jump straight to **7.5** (sticky post) with this `comment.md`, and skip 7.3
 **7.3 — Embed evidence + git-push the images (pass 2).** `gh gist create` cannot carry binaries, but a gist is a git repo that accepts them — so the PNGs and the URL-rewritten triage go in together via one git push. First, for every `{{EVIDENCE:<basename>.png}}` token in `qa-reports/{run_id}/triage.md`, replace it with a sized, click-through thumbnail pointing at the raw gist URL:
 
 ```html
-<a href="<raw_base><basename>.png"><img src="<raw_base><basename>.png" width="240"></a>
+<a href="<raw_base><basename>.png"><img src="<raw_base><basename>.png" width="240" /></a>
 ```
 
 (If a finding has multiple shots, emit one `<a><img></a>` per token, space-separated, in the same Evidence cell.) Then clone the gist's git repo, drop in the evidence PNGs and the rewritten triage, and push:
@@ -390,11 +411,12 @@ One commit carries both the evidence images and the rewritten markdown; the raw 
 
 ```markdown
 <!-- qa-pr-triage-comment -->
+
 ## QA: <PR title> — <verdict>
 
 <one-sentence narrative: how the PR's change held up across desktop + mobile>
 
-**<x> P0 · <y> P1 · <z> P2** across desktop + mobile · [Full triage ↗](<gist_url>)
+**<x> P0 · <y> P1 · <z> P2** across desktop + mobile · [Full triage ↗](gist_url)
 ```
 
 - `<PR title>` comes from `gh pr view <N> --json title --jq .title`.
@@ -416,7 +438,7 @@ else
 fi
 ```
 
-Both branches are authorized writes (see *Authorization*); run without a confirmation prompt. The edit branch only ever targets the skill's own marked comment on this PR.
+Both branches are authorized writes (see _Authorization_); run without a confirmation prompt. The edit branch only ever targets the skill's own marked comment on this PR.
 
 **7.6 — Record + report.** Append a completion record to the run log and print the URLs:
 
@@ -428,6 +450,7 @@ printf '{"run_id":"%s","gist_url":"%s","comment_id":"%s","finished_at":"%s"}\n' 
 (`<comment_id>` is `$prior` when editing, or parsed from the `gh pr comment` output URL when creating; empty string in the gist-failure fallback if no gist exists.) Print the comment URL, the `<gist_url>`, and a one-line verdict summary to the session.
 
 **7.7 — Sign out of Vibes** to leave the chrome-devtools profile in a "Google signed in, Vibes signed out" state for the next run. Navigate to the account / settings area in the Vibes UI and click Sign out — or if a `/sign-out` route exists, navigate to it directly. Verify via `evaluate_script` that the `__session` cookie is gone (or set to expired). Skipping this leaves Vibes session state in the profile and the next run's preflight will abort on a dirty profile.
+
 ````
 
 - [ ] **Step 1b: Correct the Authorization gist wording (committed in Task 2)**
@@ -632,3 +655,4 @@ git commit -m "docs(qa-pr): consistency sweep for gist + sticky-comment flow"
 **Placeholder scan:** No `TBD`/`TODO`/"handle edge cases" — every step has exact find/replace text or a runnable command. The `{{EVIDENCE:…}}` and `<…>` tokens are deliberate template placeholders the skill resolves at runtime, defined where introduced.
 
 **Type/string consistency:** The marker `<!-- qa-pr-triage-comment -->` is byte-identical across Tasks 2, 6, 7 and asserted by Task 8/Step 2. The repo path `VibesDIY/vibes.diy` matches the existing skill. `<gist_id>`/`<owner>`/`<raw_base>` are defined once in Step 7.2 and reused in 7.3.
+````

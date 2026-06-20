@@ -18,9 +18,7 @@ describe("useReconnectLoop", () => {
 
   it("does nothing while connection is live", async () => {
     const openChat = vi.fn(async () => fakeChat());
-    renderHook(() =>
-      useReconnectLoop({ connection: "live", openChat, onAttempt: vi.fn(), onGiveUp: vi.fn() })
-    );
+    renderHook(() => useReconnectLoop({ connection: "live", openChat, onAttempt: vi.fn(), onGiveUp: vi.fn() }));
     await vi.advanceTimersByTimeAsync(30_000);
     expect(openChat).not.toHaveBeenCalled();
   });

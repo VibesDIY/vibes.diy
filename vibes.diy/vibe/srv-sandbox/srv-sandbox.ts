@@ -34,12 +34,7 @@ import {
   vibeSetDbAcl,
   vibeListDbNames,
 } from "./srv-sandbox-firefly-doc-handlers.js";
-import {
-  vibePutAsset,
-  vibeWhoAmI,
-  vibeUpdateAvatarCid,
-  vibeRequestLogin,
-} from "./srv-sandbox-asset-identity-auth-handlers.js";
+import { vibePutAsset, vibeWhoAmI, vibeUpdateAvatarCid, vibeRequestLogin } from "./srv-sandbox-asset-identity-auth-handlers.js";
 import type { VibesDiySrvSandboxArgs } from "./srv-sandbox-types.js";
 
 export { getCodeBlock, getImageFiles } from "./srv-sandbox-ai-image-handlers.js";

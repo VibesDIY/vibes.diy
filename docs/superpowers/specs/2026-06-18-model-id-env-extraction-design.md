@@ -27,7 +27,7 @@ a code change and redeploy.
 - Consistent cross-provider naming / a model-naming scheme.
 - Changing the 3-tier per-user/per-app resolution in
   `vibes.diy/api/svc/intern/get-model-defaults.ts` (app → user → `preSelected`).
-  This spec only touches *hardcoded literals*, not that resolution chain.
+  This spec only touches _hardcoded literals_, not that resolution chain.
 
 The dynamic-fetch + naming proposal raised by @popmechanic / Marcus is explicitly
 deferred to a separate spec.
@@ -42,17 +42,17 @@ deferred to a separate spec.
 
 ## Verified inventory
 
-| Suggested env var | Current value | File:line | Package | Notes |
-|---|---|---|---|---|
-| `CALLAI_DEFAULT_MODEL` | `openai/gpt-3.5-turbo` | `call-ai/pkg/non-streaming.ts:32` | call-ai | **stale** |
-| `CALLAI_DEFAULT_MODEL` | `openai/gpt-3.5-turbo` | `call-ai/pkg/streaming.ts:432` | call-ai | **stale** — streaming path (added per review) |
-| `CALLAI_DEFAULT_MODEL` | `openai/gpt-3.5-turbo` | `call-ai/pkg/api-core.ts:46,65` | call-ai | **stale** |
-| `CALLAI_FALLBACK_MODEL` | `openrouter/auto` | `call-ai/pkg/non-streaming.ts:20` | call-ai | intentionally generic |
-| `CALLAI_FALLBACK_MODEL` | `openrouter/auto` | `call-ai/pkg/api.ts:47` | call-ai | intentionally generic |
-| `CALLAI_SCHEMA_MODEL` | `openai/gpt-4o` | `call-ai/pkg/strategies/strategy-selector.ts:12` | call-ai | **stale** |
-| `LLM_BACKEND_MODEL` | `anthropic/claude-sonnet-4.6` | `vibes.diy/api/svc/create-handler.ts:106` | api | **already env-shaped** via `sthis.env.gets()` |
-| `ICON_FALLBACK_MODEL` | `openai/gpt-5-image-mini` | `vibes.diy/api/queue/icon-shotter.ts:10` | api | (issue mislocated this in `prompt-chat-section.ts:1245`) |
-| `DEFAULT_CODING_MODEL` | `anthropic/claude-opus-4.5` | `prompts/pkg/prompts.ts:11` | prompts | already a named constant |
+| Suggested env var         | Current value                 | File:line                                             | Package   | Notes                                                             |
+| ------------------------- | ----------------------------- | ----------------------------------------------------- | --------- | ----------------------------------------------------------------- |
+| `CALLAI_DEFAULT_MODEL`    | `openai/gpt-3.5-turbo`        | `call-ai/pkg/non-streaming.ts:32`                     | call-ai   | **stale**                                                         |
+| `CALLAI_DEFAULT_MODEL`    | `openai/gpt-3.5-turbo`        | `call-ai/pkg/streaming.ts:432`                        | call-ai   | **stale** — streaming path (added per review)                     |
+| `CALLAI_DEFAULT_MODEL`    | `openai/gpt-3.5-turbo`        | `call-ai/pkg/api-core.ts:46,65`                       | call-ai   | **stale**                                                         |
+| `CALLAI_FALLBACK_MODEL`   | `openrouter/auto`             | `call-ai/pkg/non-streaming.ts:20`                     | call-ai   | intentionally generic                                             |
+| `CALLAI_FALLBACK_MODEL`   | `openrouter/auto`             | `call-ai/pkg/api.ts:47`                               | call-ai   | intentionally generic                                             |
+| `CALLAI_SCHEMA_MODEL`     | `openai/gpt-4o`               | `call-ai/pkg/strategies/strategy-selector.ts:12`      | call-ai   | **stale**                                                         |
+| `LLM_BACKEND_MODEL`       | `anthropic/claude-sonnet-4.6` | `vibes.diy/api/svc/create-handler.ts:106`             | api       | **already env-shaped** via `sthis.env.gets()`                     |
+| `ICON_FALLBACK_MODEL`     | `openai/gpt-5-image-mini`     | `vibes.diy/api/queue/icon-shotter.ts:10`              | api       | (issue mislocated this in `prompt-chat-section.ts:1245`)          |
+| `DEFAULT_CODING_MODEL`    | `anthropic/claude-opus-4.5`   | `prompts/pkg/prompts.ts:11`                           | prompts   | already a named constant                                          |
 | `USE_VIBES_DEFAULT_MODEL` | `anthropic/claude-sonnet-4.5` | `use-vibes/base/hooks/vibes-gen/use-vibes.ts:124,137` | use-vibes | browser hook fallback — **deferred** (left hardcoded, per review) |
 
 Corrections vs. the issue body: the image fallback lives in
@@ -135,7 +135,7 @@ hook in this pass. The browser fallback stays hardcoded; env-ifying it (via the 
 
 ## Rollout
 
-Single PR touching three packages (call-ai, api, prompts; use-vibes deferred). No env vars need to be *set* anywhere on day one —
+Single PR touching three packages (call-ai, api, prompts; use-vibes deferred). No env vars need to be _set_ anywhere on day one —
 every default is preserved as the in-code fallback, so behavior is identical until an
 operator chooses to override. Document the new vars in the relevant `.env.example` /
 deploy config.

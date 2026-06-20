@@ -131,8 +131,7 @@ export function createMockFetchFromPkgFiles(): (url: CoerceURI) => Promise<Respo
       const slug = colorsetMatch[1];
       return Promise.resolve({
         ok: true,
-        text: () =>
-          Promise.resolve(`name: ${slug}\ncolors:\n  primary: "#abc123"\n  background: "#fafafa"\n`),
+        text: () => Promise.resolve(`name: ${slug}\ncolors:\n  primary: "#abc123"\n  background: "#fafafa"\n`),
       } as Response);
     }
 
@@ -145,10 +144,7 @@ export function createMockFetchFromPkgFiles(): (url: CoerceURI) => Promise<Respo
       const slug = themeMatch[1];
       return Promise.resolve({
         ok: true,
-        text: () =>
-          Promise.resolve(
-            `---\nname: ${slug}\n---\n\n# Theme ${slug}\nMock design tokens for ${slug}.`
-          ),
+        text: () => Promise.resolve(`---\nname: ${slug}\n---\n\n# Theme ${slug}\nMock design tokens for ${slug}.`),
       } as Response);
     }
 

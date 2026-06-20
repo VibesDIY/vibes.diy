@@ -81,9 +81,7 @@ function ResultPreview({
 
   const showWelcome = !fsId && !promptState.running && !promptState.hasCode;
 
-  const codeEditor = (
-    <CodeEditorWrapper promptState={promptState} onCode={onCode} diffOverlay={diffOverlay} />
-  );
+  const codeEditor = <CodeEditorWrapper promptState={promptState} onCode={onCode} diffOverlay={diffOverlay} />;
 
   // PreviewApp slot is mounted whenever the active view is "preview", whether
   // visible or pre-warming. Visibility flips off during the override window.

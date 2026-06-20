@@ -4,7 +4,7 @@
 **Date:** 2026-06-18
 **Status: decision-of-record (validated against prod Neon 2026-06-18).** This PR stays docs-only.
 
-> **Conclusion — the audit inverted its own hypothesis.** At current scale and data distribution, **none of C1–C8 justify a new index**: #1530's own gap (C1) resolves via the `appSlug` PK prefix in 0.063 ms, C4 is watch-only, and C8's heavy seq scans are one whale's data distribution, not a missing index. The single actionable finding is the opposite of "add an index" — **drop 5 dead, never-scanned indexes** that only tax the write path (handled in a separate, tightly-scoped schema PR). #1530 is closed as *validated, not needed*. Full evidence: [Validation results](#validation-results--run-against-prod-neon-vibes-diy-2026-06-18) below. The sections between here and there are the original pre-validation plan, kept for the methodology.
+> **Conclusion — the audit inverted its own hypothesis.** At current scale and data distribution, **none of C1–C8 justify a new index**: #1530's own gap (C1) resolves via the `appSlug` PK prefix in 0.063 ms, C4 is watch-only, and C8's heavy seq scans are one whale's data distribution, not a missing index. The single actionable finding is the opposite of "add an index" — **drop 5 dead, never-scanned indexes** that only tax the write path (handled in a separate, tightly-scoped schema PR). #1530 is closed as _validated, not needed_. Full evidence: [Validation results](#validation-results--run-against-prod-neon-vibes-diy-2026-06-18) below. The sections between here and there are the original pre-validation plan, kept for the methodology.
 
 ## Problem
 
@@ -163,7 +163,7 @@ A candidate that wins Step 3 but is on a write-hot table still has to clear this
 - The schema is the source of truth across prod/dev/preview/cli, so every index that survives validation **must** land in `vibes-diy-api-schema-pg.ts` (not just in prod) or the next `push` to another env will drift.
 - One follow-up PR per validated index (or one small batch), each carrying its before/after EXPLAIN evidence.
 
-> **Superseded by the validation pass (2026-06-18):** no index survived validation, so there is no index-adding follow-up. The only schema follow-up is the inverse — a small PR dropping the 5 dead indexes listed in [Validation results](#validation-results--run-against-prod-neon-vibes-diy-2026-06-18). #1530 is closed as *validated, not needed* (not by merging an index). The same `CONCURRENTLY` caveat applies to `DROP INDEX CONCURRENTLY`.
+> **Superseded by the validation pass (2026-06-18):** no index survived validation, so there is no index-adding follow-up. The only schema follow-up is the inverse — a small PR dropping the 5 dead indexes listed in [Validation results](#validation-results--run-against-prod-neon-vibes-diy-2026-06-18). #1530 is closed as _validated, not needed_ (not by merging an index). The same `CONCURRENTLY` caveat applies to `DROP INDEX CONCURRENTLY`.
 
 ## Deliverable of the validation pass
 

@@ -8,7 +8,7 @@
 
 **Tech Stack:** TypeScript, React Router v7 (framework mode), `@adviser/cement` (`Result`/`Option`), arktype, Cloudflare Durable Objects, Vitest (browser + node).
 
-**Scope note — deferred to follow-ups (NOT in this plan):** Spec step 4 (a static/shared-shard handler so `ChatSessions` connects only when chatting — a connection-topology change for home/settings pages) and spec step 5 (flipping the `ChatSessions` emit from a runtime no-op to a *compile-time* type error). Per CharlieHelps' review, the type-error flip is explicitly gated on full migration being complete (zero `vibeApi ?? chatApi` callsites, no `chatApi.onDocChanged` forwarding, `chatMsgEvento` no longer including `appHandlers`, all `chatApi` doc-op callsites migrated). This plan delivers the first three of those preconditions; the flip and the static handler are separate PRs. Per CharlieHelps: `callAI` and `updateAvatarCid` **stay on `chatApi`** (LLM/billing and user-settings scoped); only `imgGen` moves to `vibeApi`.
+**Scope note — deferred to follow-ups (NOT in this plan):** Spec step 4 (a static/shared-shard handler so `ChatSessions` connects only when chatting — a connection-topology change for home/settings pages) and spec step 5 (flipping the `ChatSessions` emit from a runtime no-op to a _compile-time_ type error). Per CharlieHelps' review, the type-error flip is explicitly gated on full migration being complete (zero `vibeApi ?? chatApi` callsites, no `chatApi.onDocChanged` forwarding, `chatMsgEvento` no longer including `appHandlers`, all `chatApi` doc-op callsites migrated). This plan delivers the first three of those preconditions; the flip and the static handler are separate PRs. Per CharlieHelps: `callAI` and `updateAvatarCid` **stay on `chatApi`** (LLM/billing and user-settings scoped); only `imgGen` moves to `vibeApi`.
 
 **Reference spec:** `docs/superpowers/specs/2026-06-11-vibe-data-on-appsessions-design.md` (in this branch). Issue/PR: #2329, root cause #2306.
 
@@ -16,17 +16,18 @@
 
 ## File Structure
 
-| File | Responsibility | Change |
-| --- | --- | --- |
-| `vibes.diy/pkg/app/vibe-api-target.ts` | Pure function mapping a pathname → the `{ ownerHandle, appSlug }` that should own a `vibeApi`, for both `/vibe/` and `/chat/` editor routes (placeholder-guarded). | **Create** |
-| `vibes.diy/tests/app/vibe-api-target.test.ts` | Unit tests for the pathname matcher. | **Create** |
-| `vibes.diy/pkg/app/vibes-diy-provider.tsx` | Build `vibeApi` for every iframe-rendering route, reactively. | **Modify** (`vibeMatch` block ~232-252, add `useLocation`) |
-| `vibes.diy/vibe/srv-sandbox/srv-sandbox.ts` | Firefly handlers require `vibeApi`; `imgGen` moves to `vibeApi`; dead `chatApi.onDocChanged` removed. | **Modify** (9 data handlers, `imgGen` L273, constructor L931-964) |
-| `vibes.diy/api/tests/srv-sandbox-put-doc.test.ts` | Existing handler test — update to pass `vibeApi`, add missing-`vibeApi` error case. | **Modify** |
-| `vibes.diy/api/tests/srv-sandbox-set-db-acl.test.ts` | Existing handler test — update to pass `vibeApi`. | **Modify** |
-| `vibes.diy/api/tests/srv-sandbox-require-vibe-api.test.ts` | New: the typed-error path for each migrated data handler when `vibeApi` is absent. | **Create** |
+| File                                                       | Responsibility                                                                                                                                                     | Change                                                            |
+| ---------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------- |
+| `vibes.diy/pkg/app/vibe-api-target.ts`                     | Pure function mapping a pathname → the `{ ownerHandle, appSlug }` that should own a `vibeApi`, for both `/vibe/` and `/chat/` editor routes (placeholder-guarded). | **Create**                                                        |
+| `vibes.diy/tests/app/vibe-api-target.test.ts`              | Unit tests for the pathname matcher.                                                                                                                               | **Create**                                                        |
+| `vibes.diy/pkg/app/vibes-diy-provider.tsx`                 | Build `vibeApi` for every iframe-rendering route, reactively.                                                                                                      | **Modify** (`vibeMatch` block ~232-252, add `useLocation`)        |
+| `vibes.diy/vibe/srv-sandbox/srv-sandbox.ts`                | Firefly handlers require `vibeApi`; `imgGen` moves to `vibeApi`; dead `chatApi.onDocChanged` removed.                                                              | **Modify** (9 data handlers, `imgGen` L273, constructor L931-964) |
+| `vibes.diy/api/tests/srv-sandbox-put-doc.test.ts`          | Existing handler test — update to pass `vibeApi`, add missing-`vibeApi` error case.                                                                                | **Modify**                                                        |
+| `vibes.diy/api/tests/srv-sandbox-set-db-acl.test.ts`       | Existing handler test — update to pass `vibeApi`.                                                                                                                  | **Modify**                                                        |
+| `vibes.diy/api/tests/srv-sandbox-require-vibe-api.test.ts` | New: the typed-error path for each migrated data handler when `vibeApi` is absent.                                                                                 | **Create**                                                        |
 
 **How to run tests referenced below:**
+
 - srv-sandbox handler tests (node): from `vibes.diy/api/tests/` run `pnpm test -- <file>` (vitest project name `api-tests`).
 - provider/app tests (browser): from `vibes.diy/tests/app/` run `pnpm test -- <file>` (vitest project name `vibes.diy`, playwright/chromium).
 - Full gate before any PR push: `pnpm check` from repo root (format + build + test + lint). Run `npx prettier --write` on changed files first.
@@ -36,6 +37,7 @@
 ## Task 1: Pathname → vibeApi target matcher (pure function)
 
 **Files:**
+
 - Create: `vibes.diy/pkg/app/vibe-api-target.ts`
 - Test: `vibes.diy/tests/app/vibe-api-target.test.ts`
 
@@ -132,6 +134,7 @@ git commit -m "feat(provider): pure vibeApi-target matcher for /vibe/ and /chat/
 ## Task 2: Provider builds vibeApi for the /chat/ editor, reactively
 
 **Files:**
+
 - Modify: `vibes.diy/pkg/app/vibes-diy-provider.tsx` (imports; `LiveCycleVibesDiyProvider` body — the `vibeMatch` block at lines ~232-252; `chatApi` shardKey at line ~158-159)
 
 `LiveCycleVibesDiyProvider` ([`vibes-diy-provider.tsx:131`](../../../vibes.diy/pkg/app/vibes-diy-provider.tsx)) reads `window.location.pathname` imperatively, so it does **not** re-evaluate on SPA navigation. After `openChat`, the app navigates from `chat/prompt` → `/chat/<owner>/<appSlug>` without remounting the provider, so `vibeApi` would never be built for a freshly-created chat. The provider is the root route element's child ([`root.tsx:92`](../../../vibes.diy/pkg/app/root.tsx)) and therefore sits inside the Router context, so `useLocation()` makes it reactive. Per CharlieHelps: hook `vibeApi` creation off route params becoming available in the provider — not in `AppPreview` mount.
@@ -152,8 +155,8 @@ import { vibeApiTarget } from "./vibe-api-target.js";
 Immediately after `const clerk = useClerk();` ([line 132](../../../vibes.diy/pkg/app/vibes-diy-provider.tsx)), add:
 
 ```ts
-  const location = useLocation();
-  const target = vibeApiTarget(location.pathname);
+const location = useLocation();
+const target = vibeApiTarget(location.pathname);
 ```
 
 - [ ] **Step 3: Replace the `/vibe/`-only vibeApi block with a target-driven block**
@@ -161,55 +164,55 @@ Immediately after `const clerk = useClerk();` ([line 132](../../../vibes.diy/pkg
 Replace the existing block at lines ~232-252:
 
 ```ts
-  const vibeMatch = typeof window !== "undefined" ? window.location.pathname.match(/^\/vibe\/([^/]+)\/([^/]+)/) : null;
-  if (vibeMatch !== null) {
-    const ownerHandle = vibeMatch[1];
-    const appSlug = vibeMatch[2];
-    const appApiUrl = BuildURI.from(apiUrl)
-      .pathname("/api/app")
-      .cleanParams()
-      .setParam("vibe", `${ownerHandle}--${appSlug}`)
-      .toString();
+const vibeMatch = typeof window !== "undefined" ? window.location.pathname.match(/^\/vibe\/([^/]+)\/([^/]+)/) : null;
+if (vibeMatch !== null) {
+  const ownerHandle = vibeMatch[1];
+  const appSlug = vibeMatch[2];
+  const appApiUrl = BuildURI.from(apiUrl)
+    .pathname("/api/app")
+    .cleanParams()
+    .setParam("vibe", `${ownerHandle}--${appSlug}`)
+    .toString();
 
-    const capturedGetToken = sharedGetToken ?? realCtx.getToken;
-    realCtx.vibeApi = vibesDiyApis.get(appApiUrl).once(() => {
-      return new VibesDiyApi({
-        apiUrl: appApiUrl,
-        skipShard: true,
-        getToken: capturedGetToken ?? (() => Promise.resolve(Result.Err("token not available"))),
-      });
+  const capturedGetToken = sharedGetToken ?? realCtx.getToken;
+  realCtx.vibeApi = vibesDiyApis.get(appApiUrl).once(() => {
+    return new VibesDiyApi({
+      apiUrl: appApiUrl,
+      skipShard: true,
+      getToken: capturedGetToken ?? (() => Promise.resolve(Result.Err("token not available"))),
     });
-  } else {
-    realCtx.vibeApi = undefined;
-  }
+  });
+} else {
+  realCtx.vibeApi = undefined;
+}
 ```
 
 with:
 
 ```ts
-  // Build vibeApi (→ AppSessions, which wires the doc-changed emit) for every
-  // route that renders the vibe-data iframe: the /vibe/ viewer AND the /chat/
-  // editor. Gated on a real appSlug — a chat with no app yet gets no vibeApi.
-  // Reactive via useLocation() above so a freshly-created chat (navigated to
-  // /chat/<owner>/<appSlug> after openChat) picks up its vibeApi. (#2306)
-  if (target !== undefined) {
-    const appApiUrl = BuildURI.from(apiUrl)
-      .pathname("/api/app")
-      .cleanParams()
-      .setParam("vibe", `${target.ownerHandle}--${target.appSlug}`)
-      .toString();
+// Build vibeApi (→ AppSessions, which wires the doc-changed emit) for every
+// route that renders the vibe-data iframe: the /vibe/ viewer AND the /chat/
+// editor. Gated on a real appSlug — a chat with no app yet gets no vibeApi.
+// Reactive via useLocation() above so a freshly-created chat (navigated to
+// /chat/<owner>/<appSlug> after openChat) picks up its vibeApi. (#2306)
+if (target !== undefined) {
+  const appApiUrl = BuildURI.from(apiUrl)
+    .pathname("/api/app")
+    .cleanParams()
+    .setParam("vibe", `${target.ownerHandle}--${target.appSlug}`)
+    .toString();
 
-    const capturedGetToken = sharedGetToken ?? realCtx.getToken;
-    realCtx.vibeApi = vibesDiyApis.get(appApiUrl).once(() => {
-      return new VibesDiyApi({
-        apiUrl: appApiUrl,
-        skipShard: true,
-        getToken: capturedGetToken ?? (() => Promise.resolve(Result.Err("token not available"))),
-      });
+  const capturedGetToken = sharedGetToken ?? realCtx.getToken;
+  realCtx.vibeApi = vibesDiyApis.get(appApiUrl).once(() => {
+    return new VibesDiyApi({
+      apiUrl: appApiUrl,
+      skipShard: true,
+      getToken: capturedGetToken ?? (() => Promise.resolve(Result.Err("token not available"))),
     });
-  } else {
-    realCtx.vibeApi = undefined;
-  }
+  });
+} else {
+  realCtx.vibeApi = undefined;
+}
 ```
 
 - [ ] **Step 4: Keep the chatApi shard hint consistent (no behavior change required)**
@@ -233,6 +236,7 @@ git commit -m "feat(provider): build vibeApi for the /chat/ editor route, reacti
 ## Task 3: srv-sandbox data handlers require vibeApi (typed error, no chatApi fallback)
 
 **Files:**
+
 - Modify: `vibes.diy/vibe/srv-sandbox/srv-sandbox.ts` (9 handlers; add a `requireVibeApi` helper)
 - Modify: `vibes.diy/api/tests/srv-sandbox-put-doc.test.ts`
 - Modify: `vibes.diy/api/tests/srv-sandbox-set-db-acl.test.ts`
@@ -267,7 +271,12 @@ interface CapturedMsg {
 }
 
 // chatApi is present (chat/codegen still needs it); vibeApi is intentionally absent.
-function setupNoVibeApi(): { sandbox: vibesDiySrvSandbox; captured: CapturedMsg[]; iframe: Window; putDocCalls: { count: number } } {
+function setupNoVibeApi(): {
+  sandbox: vibesDiySrvSandbox;
+  captured: CapturedMsg[];
+  iframe: Window;
+  putDocCalls: { count: number };
+} {
   const captured: CapturedMsg[] = [];
   const iframe = { postMessage: (data: unknown, origin: string) => captured.push({ data, origin }) } as unknown as Window;
   const putDocCalls = { count: 0 };
@@ -405,6 +414,7 @@ git commit -m "fix(srv-sandbox): vibe data requires vibeApi, no silent ChatSessi
 ## Task 4: Move imgGen to vibeApi
 
 **Files:**
+
 - Modify: `vibes.diy/vibe/srv-sandbox/srv-sandbox.ts` (`vibeImgGen`, L273-335)
 - Modify: `vibes.diy/api/tests/srv-sandbox-require-vibe-api.test.ts` (add imgGen case)
 
@@ -466,6 +476,7 @@ git commit -m "fix(srv-sandbox): route imgGen through vibeApi (AppSessions) (#23
 ## Task 5: Remove the dead chatApi.onDocChanged registration
 
 **Files:**
+
 - Modify: `vibes.diy/vibe/srv-sandbox/srv-sandbox.ts` (constructor, L931-964)
 
 The constructor registers `this.args.chatApi.onDocChanged(...)` **unconditionally**, then conditionally registers `vibeApi.onDocChanged(...)` ([srv-sandbox.ts:956-962](../../../vibes.diy/vibe/srv-sandbox/srv-sandbox.ts)). ChatSessions never emits doc-changed, so the `chatApi` registration is dead — and keeping it forwards nothing while implying live sync works. Remove it; keep only the `vibeApi` registration. This is also one of CharlieHelps' five preconditions for the eventual compile-time flip ("no `chatApi.onDocChanged` forwarding remains").

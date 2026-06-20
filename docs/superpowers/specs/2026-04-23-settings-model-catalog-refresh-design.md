@@ -38,13 +38,14 @@ export const Model = type({
   description: "string",
   "featured?": "boolean",
   "preSelected?": PromptStyle.array(),
-  "supports?": PromptLLMStyle.array(),   // NEW: "chat" | "app" | "img"
+  "supports?": PromptLLMStyle.array(), // NEW: "chat" | "app" | "img"
 });
 ```
 
 **Semantics:**
-- `supports` — which usages this model is *eligible* for (shown in dropdown).
-- `preSelected` — which usages this model is the *default* for (pre-filled on first load).
+
+- `supports` — which usages this model is _eligible_ for (shown in dropdown).
+- `preSelected` — which usages this model is the _default_ for (pre-filled on first load).
 - These are independent: a model can support multiple usages; at most one model per usage is pre-selected.
 
 ### 2. UI filter
@@ -52,9 +53,7 @@ export const Model = type({
 In `vibes.diy/pkg/app/components/ModelSettingsCards.tsx`, the `ModelSection` component accepts a `usage: "chat" | "app" | "img"` prop. After fetching models via `vibeDiyApi.listModels({})`, filter before rendering:
 
 ```ts
-const eligible = res.Ok().models.filter((m) =>
-  (m.supports ?? ["chat", "app"]).includes(usage)
-);
+const eligible = res.Ok().models.filter((m) => (m.supports ?? ["chat", "app"]).includes(usage));
 setModels(eligible);
 ```
 
@@ -65,39 +64,44 @@ The existing preSelected loop iterates only the filtered `eligible` set, so a mo
 ### 3. models.json edits
 
 #### Fix stale IDs
+
 - `google/gemini-3-pro-preview` → rename to `google/gemini-3.1-pro-preview`, refresh description.
 - `google/gemini-2.5-flash-lite-preview-06-17` → **remove** (duplicate of `google/gemini-2.5-flash-lite`, which is kept).
 - `openai/gpt-5.4-mini` → remove the duplicate `"featured": false` key (current bug at [models.json:141-142](vibes.diy/api/svc/models.json:141)).
 
 #### Add latest-generation entries (keep older versions alongside)
-| ID | Name | Featured | Notes |
-|---|---|---|---|
-| `anthropic/claude-opus-4.7` | Claude Opus 4.7 | yes | next-gen Opus for long-running agents |
-| `openai/gpt-5.4` | GPT-5.4 | yes | flagship replaces GPT-5 as featured |
-| `x-ai/grok-4.20` | Grok 4.20 | yes | newer Grok |
-| `z-ai/glm-5.1` | GLM 5.1 | no | newer GLM |
-| `moonshotai/kimi-k2.6` | Kimi K2.6 | no | newer Kimi |
-| `deepseek/deepseek-v3.2` | DeepSeek V3.2 | no | stable V3.2, alongside existing `-exp` |
-| `openai/gpt-5.3-codex` | GPT-5.3 Codex | no | newer Codex alongside `gpt-5-codex` |
+
+| ID                          | Name            | Featured | Notes                                  |
+| --------------------------- | --------------- | -------- | -------------------------------------- |
+| `anthropic/claude-opus-4.7` | Claude Opus 4.7 | yes      | next-gen Opus for long-running agents  |
+| `openai/gpt-5.4`            | GPT-5.4         | yes      | flagship replaces GPT-5 as featured    |
+| `x-ai/grok-4.20`            | Grok 4.20       | yes      | newer Grok                             |
+| `z-ai/glm-5.1`              | GLM 5.1         | no       | newer GLM                              |
+| `moonshotai/kimi-k2.6`      | Kimi K2.6       | no       | newer Kimi                             |
+| `deepseek/deepseek-v3.2`    | DeepSeek V3.2   | no       | stable V3.2, alongside existing `-exp` |
+| `openai/gpt-5.3-codex`      | GPT-5.3 Codex   | no       | newer Codex alongside `gpt-5-codex`    |
 
 All non-image additions get `"supports": ["chat", "app"]`.
 
 #### Image models — full OpenRouter image-output set
+
 Every entry gets `"supports": ["img"]` **only** (excluded from chat/app).
 
-| ID | Name | Featured | preSelected |
-|---|---|---|---|
-| `openai/gpt-5.4-image-2` | GPT-5.4 Image 2 | yes | `["img"]` (NEW default) |
-| `google/gemini-3.1-flash-image-preview` | Nano Banana 2 | yes | — |
-| `google/gemini-3-pro-image-preview` | Nano Banana Pro | no | — |
-| `openai/gpt-5-image-mini` | GPT-5 Image Mini | no | — (was `["img"]`, moved) |
-| `openai/gpt-5-image` | GPT-5 Image | no | — |
-| `google/gemini-2.5-flash-image` | Nano Banana | no | — |
+| ID                                      | Name             | Featured | preSelected              |
+| --------------------------------------- | ---------------- | -------- | ------------------------ |
+| `openai/gpt-5.4-image-2`                | GPT-5.4 Image 2  | yes      | `["img"]` (NEW default)  |
+| `google/gemini-3.1-flash-image-preview` | Nano Banana 2    | yes      | —                        |
+| `google/gemini-3-pro-image-preview`     | Nano Banana Pro  | no       | —                        |
+| `openai/gpt-5-image-mini`               | GPT-5 Image Mini | no       | — (was `["img"]`, moved) |
+| `openai/gpt-5-image`                    | GPT-5 Image      | no       | —                        |
+| `google/gemini-2.5-flash-image`         | Nano Banana      | no       | —                        |
 
 #### Existing non-image entries
+
 Every existing entry gets `"supports": ["chat", "app"]` added. No other changes to their fields.
 
 ### 4. Default model shifts
+
 - `preSelected: ["app"]`: stays on `anthropic/claude-opus-4.6-fast` (no change).
 - `preSelected: ["chat"]`: stays on `anthropic/claude-sonnet-4.6` (still latest Sonnet).
 - `preSelected: ["img"]`: **moves** from `openai/gpt-5-image-mini` → `openai/gpt-5.4-image-2`.
@@ -109,6 +113,7 @@ Every existing entry gets `"supports": ["chat", "app"]` added. No other changes 
 3. [vibes.diy/pkg/app/components/ModelSettingsCards.tsx](vibes.diy/pkg/app/components/ModelSettingsCards.tsx) — filter models by `usage` in `ModelSection` (~3 lines).
 
 No changes to:
+
 - `vibes.diy/api/svc/public/list-models.ts` — API continues to return full catalog.
 - `vibes.diy/pkg/app/routes/settings.tsx` — no UI structural change.
 - `ModelPicker.tsx` — per-chat picker is out of scope; if it needs filtering later it can read the same `supports` field.

@@ -89,9 +89,7 @@ describe("AppDetailPanel (issue #2011)", () => {
     // First app resolves with a display name.
     getAppByFsId.mockResolvedValueOnce(okResult({ meta: [], ownerDisplayName: "Ada Lovelace" }));
     const first = makeItem({ ownerHandle: "ada", appSlug: "app-e1" });
-    const { rerender } = render(
-      <AppDetailPanel item={first} appHostBaseUrl="https://example.com" onClose={vi.fn()} />,
-    );
+    const { rerender } = render(<AppDetailPanel item={first} appHostBaseUrl="https://example.com" onClose={vi.fn()} />);
     await waitFor(() => expect(screen.getByText(/Created by/)).toHaveTextContent("Created by Ada Lovelace"));
 
     // Switch to a different, uncached app whose response carries no display name.

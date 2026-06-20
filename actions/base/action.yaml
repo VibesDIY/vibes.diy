@@ -84,10 +84,13 @@ runs:
       shell: bash
       run: |
         _t0=$(date +%s)
-        # Unchanged behavior; the `format` script now passes --cache (content
-        # strategy, .prettiercache restored above) so unchanged files are skipped
-        # on incremental runs.
-        pnpm run format --check
+        # `format:check` runs prettier in --check mode (read-only) so formatting
+        # drift actually fails CI. The old step ran `pnpm run format --check`,
+        # but the `format` script already passes --write, so prettier reformatted
+        # the ephemeral checkout and exited 0 regardless of drift — a no-op. Both
+        # scripts share --cache (content strategy, .prettiercache restored above)
+        # so unchanged files are skipped on incremental runs. See #2464.
+        pnpm run format:check
         printf 'format-check\t%s\n' "$(( $(date +%s) - _t0 ))" >> "$RUNNER_TEMP/pretest-timings.tsv"
 
     # No standalone rules-bag step: `pnpm run lint` already runs

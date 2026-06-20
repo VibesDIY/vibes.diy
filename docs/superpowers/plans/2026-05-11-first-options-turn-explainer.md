@@ -19,13 +19,16 @@
 ## File Structure
 
 **Modify:**
+
 - `vibes.diy/pkg/app/components/OptionButtons.tsx` — add `isFirst?: boolean` prop, render helper line conditionally.
 - `vibes.diy/pkg/app/components/MessageList.tsx` — add `isFirstWithOptions?: boolean` prop on `TopLevelMsg`, forward to `OptionButtons` as `isFirst`, add the "first-with-options" scan pass in the rendering epilogue.
 
 **Create:**
+
 - `vibes.diy/tests/app/OptionButtons.test.tsx` — new component test file with two assertions (helper visible when `isFirst=true`, absent otherwise).
 
 **Unchanged:**
+
 - `vibes.diy/pkg/app/utils/option-lines.ts` and `vibes.diy/tests/app/option-lines.test.ts` — `parseOptionLines` already returns `{ prose, options }`. No change.
 
 ---
@@ -33,6 +36,7 @@
 ## Task 1: TDD-failing component test for `OptionButtons` helper
 
 **Files:**
+
 - Create: `vibes.diy/tests/app/OptionButtons.test.tsx`
 
 This test asserts the helper line appears when `isFirst={true}` and is absent otherwise. It will fail until Task 2 lands.
@@ -108,6 +112,7 @@ git -C /Users/marcusestes/Websites/vibes.diy-chat-button commit -m "test(option-
 ## Task 2: Add `isFirst` prop + helper line to `OptionButtons`
 
 **Files:**
+
 - Modify: `vibes.diy/pkg/app/components/OptionButtons.tsx`
 
 - [ ] **Step 1: Open the file.**
@@ -249,6 +254,7 @@ git -C /Users/marcusestes/Websites/vibes.diy-chat-button commit -m "feat(option-
 ## Task 3: Plumb `isFirstWithOptions` through `TopLevelMsg`
 
 **Files:**
+
 - Modify: `vibes.diy/pkg/app/components/MessageList.tsx`
 
 This task adds the `isFirstWithOptions` prop on `TopLevelMsg` and forwards it to `OptionButtons` as `isFirst`. The orchestrator-side scan pass that actually SETS `isFirstWithOptions: true` on the right element comes in Task 4 — until Task 4 lands, every `TopLevelMsg` invocation in this file passes `isFirstWithOptions: false` (or omits it, defaulting to false), so the user-visible behavior doesn't change yet.
@@ -302,18 +308,13 @@ function TopLevelMsg({
 Find:
 
 ```tsx
-        <OptionButtons options={options} disabled={!isLast} onSelect={isLast ? onSelectOption : undefined} />
+<OptionButtons options={options} disabled={!isLast} onSelect={isLast ? onSelectOption : undefined} />
 ```
 
 Replace with:
 
 ```tsx
-        <OptionButtons
-          options={options}
-          disabled={!isLast}
-          isFirst={isFirstWithOptions}
-          onSelect={isLast ? onSelectOption : undefined}
-        />
+<OptionButtons options={options} disabled={!isLast} isFirst={isFirstWithOptions} onSelect={isLast ? onSelectOption : undefined} />
 ```
 
 - [ ] **Step 4: Build to confirm the type changes compile.**
@@ -344,6 +345,7 @@ git -C /Users/marcusestes/Websites/vibes.diy-chat-button commit -m "feat(message
 ## Task 4: Mark the first `TopLevelMsg` with options via post-render scan
 
 **Files:**
+
 - Modify: `vibes.diy/pkg/app/components/MessageList.tsx`
 
 This task adds the second post-render scan pass that locates the first `TopLevelMsg` in `messageElements` whose `lines` contain options, and clones that element with `isFirstWithOptions: true`. The pattern mirrors the existing "mark last TopLevelMsg as interactive" pass (lines 682–695 in the file).
@@ -353,20 +355,20 @@ This task adds the second post-render scan pass that locates the first `TopLevel
 Find the block (around lines 682–695):
 
 ```tsx
-  // Mark the most recent TopLevelMsg as the active one — its option buttons
-  // are clickable; older ones are visual history.
-  if (!promptProcessing) {
-    for (let i = messageElements.length - 1; i >= 0; i--) {
-      const el = messageElements[i];
-      if (React.isValidElement(el) && el.type === TopLevelMsg) {
-        messageElements[i] = React.cloneElement(el as React.ReactElement<{ isLast: boolean; onSelectOption?: (o: string) => void }>, {
-          isLast: true,
-          onSelectOption,
-        });
-        break;
-      }
+// Mark the most recent TopLevelMsg as the active one — its option buttons
+// are clickable; older ones are visual history.
+if (!promptProcessing) {
+  for (let i = messageElements.length - 1; i >= 0; i--) {
+    const el = messageElements[i];
+    if (React.isValidElement(el) && el.type === TopLevelMsg) {
+      messageElements[i] = React.cloneElement(el as React.ReactElement<{ isLast: boolean; onSelectOption?: (o: string) => void }>, {
+        isLast: true,
+        onSelectOption,
+      });
+      break;
     }
   }
+}
 ```
 
 This pass walks the array backwards and stops at the most recent `TopLevelMsg`. We add a second pass that walks forward and stops at the first `TopLevelMsg` whose `lines` contain options.
@@ -386,45 +388,45 @@ Expected output should include the existing import line (`import { parseOptionLi
 Find the closing of the "mark most recent TopLevelMsg" block (the `  }` that closes the outer `if (!promptProcessing) {`):
 
 ```tsx
-  // Mark the most recent TopLevelMsg as the active one — its option buttons
-  // are clickable; older ones are visual history.
-  if (!promptProcessing) {
-    for (let i = messageElements.length - 1; i >= 0; i--) {
-      const el = messageElements[i];
-      if (React.isValidElement(el) && el.type === TopLevelMsg) {
-        messageElements[i] = React.cloneElement(el as React.ReactElement<{ isLast: boolean; onSelectOption?: (o: string) => void }>, {
-          isLast: true,
-          onSelectOption,
-        });
-        break;
-      }
+// Mark the most recent TopLevelMsg as the active one — its option buttons
+// are clickable; older ones are visual history.
+if (!promptProcessing) {
+  for (let i = messageElements.length - 1; i >= 0; i--) {
+    const el = messageElements[i];
+    if (React.isValidElement(el) && el.type === TopLevelMsg) {
+      messageElements[i] = React.cloneElement(el as React.ReactElement<{ isLast: boolean; onSelectOption?: (o: string) => void }>, {
+        isLast: true,
+        onSelectOption,
+      });
+      break;
     }
   }
+}
 ```
 
 Immediately after that closing brace, add:
 
 ```tsx
-  // Mark the FIRST TopLevelMsg with options as the chat's introductory
-  // interview turn — its OptionButtons render a one-line explainer above
-  // the buttons telling the user the options are optional. Only the first
-  // such message in chat order gets the helper; subsequent options-turns
-  // omit it (the user only needs to learn the affordance once).
-  for (let i = 0; i < messageElements.length; i++) {
-    const el = messageElements[i];
-    if (!React.isValidElement(el) || el.type !== TopLevelMsg) continue;
-    const elProps = el.props as { lines: LineMsg[] };
-    const fullText = elProps.lines.map((l) => l.line).join("\n");
-    const { options } = parseOptionLines(fullText);
-    if (options.length === 0) continue;
-    messageElements[i] = React.cloneElement(
-      el as React.ReactElement<{ isLast: boolean; isFirstWithOptions?: boolean; onSelectOption?: (o: string) => void }>,
-      {
-        isFirstWithOptions: true,
-      }
-    );
-    break;
-  }
+// Mark the FIRST TopLevelMsg with options as the chat's introductory
+// interview turn — its OptionButtons render a one-line explainer above
+// the buttons telling the user the options are optional. Only the first
+// such message in chat order gets the helper; subsequent options-turns
+// omit it (the user only needs to learn the affordance once).
+for (let i = 0; i < messageElements.length; i++) {
+  const el = messageElements[i];
+  if (!React.isValidElement(el) || el.type !== TopLevelMsg) continue;
+  const elProps = el.props as { lines: LineMsg[] };
+  const fullText = elProps.lines.map((l) => l.line).join("\n");
+  const { options } = parseOptionLines(fullText);
+  if (options.length === 0) continue;
+  messageElements[i] = React.cloneElement(
+    el as React.ReactElement<{ isLast: boolean; isFirstWithOptions?: boolean; onSelectOption?: (o: string) => void }>,
+    {
+      isFirstWithOptions: true,
+    }
+  );
+  break;
+}
 ```
 
 Note the `el.props as { lines: LineMsg[] }` cast. The existing "isLast" pass casts to a different shape (`{ isLast: boolean; onSelectOption?: ... }`). Both casts narrow the unknown `el.props` to access specific fields — the same loose typing pattern the existing pass uses. The `LineMsg` type is already imported at the top of this file (search to confirm if it appears in the import block).
@@ -473,6 +475,7 @@ cd /Users/marcusestes/Websites/vibes.diy-chat-button && pnpm check 2>&1 | tail -
 ```
 
 Expected outcomes per stage:
+
 - `pnpm build` — green.
 - `pnpm lint` — same pre-existing 1 error + 1 warning in `vibes.diy/base/hooks/img-gen/use-img-gen.ts` and `vibes.diy/vibe/runtime/firefly-database.ts`. Both untouched by this branch. NOT blockers.
 - `pnpm test` — pass. One documented flaky test (see `agents/flaky-tests.md`); rerun once if it appears. There should be 4 new tests from Task 1 included in the count.
@@ -499,7 +502,7 @@ Take the run id and watch it to completion, or poll with `gh run view <id>`. Wai
 
 Open `https://pr-1642-vibes-diy-v2.jchris.workers.dev/` in a fresh chat. Walk through:
 
-1. Type an initial prompt like "todo list app" and click **Code**. After streaming, the assistant message should contain a trailing `▸ ` question with 2–4 options, plus **the new helper line** appearing immediately above the buttons: *"These are optional. Pick one to suggest the next improvement, or type your own change."*
+1. Type an initial prompt like "todo list app" and click **Code**. After streaming, the assistant message should contain a trailing `▸ ` question with 2–4 options, plus **the new helper line** appearing immediately above the buttons: _"These are optional. Pick one to suggest the next improvement, or type your own change."_
 2. Click an option that's not the escape hatch. The next assistant turn lands with edits + a fresh `▸ ` question. **The helper line should NOT appear above this second options block** — it only shows on the first.
 3. Click `▸ I'm done for now`. The next assistant turn should be a one-line acknowledgment with no edits and no question.
 4. Type a fresh prompt and click **Code**. Edits land + a new `▸ ` question appears. **The helper line should still NOT appear** — the loop has resumed, but it's not a "first time" anymore.
@@ -521,6 +524,7 @@ Expected: clean working tree.
 ## Self-Review Notes
 
 **Spec coverage:**
+
 - §1 Copy → Task 2 Step 3 (exact string `"These are optional. Pick one to suggest the next improvement, or type your own change."` embedded in the component).
 - §2 Detection — "first" message → Task 4 (forward scan pass over `messageElements`).
 - §3 Plumbing → Task 3 (TopLevelMsg gains `isFirstWithOptions?`, forwards to OptionButtons as `isFirst`).
@@ -529,10 +533,12 @@ Expected: clean working tree.
 - §6 Testing → Task 1 (four unit-level assertions on `OptionButtons` in a new dedicated test file).
 
 **Open-question resolutions from the spec:**
+
 - Test file placement → new dedicated `vibes.diy/tests/app/OptionButtons.test.tsx` (Task 1).
 - Tailwind token names → `text-light-secondary dark:text-dark-secondary` confirmed via grep against the codebase (used in `ModelPicker.tsx:155`, `MyVibeCard.tsx:54`, `ChatInput.tsx:139`, etc.).
 
 **Type consistency:**
+
 - `OptionButtons.isFirst?: boolean` (Task 2) matches the `isFirst` prop passed in Task 3.
 - `TopLevelMsg.isFirstWithOptions?: boolean` (Task 3) matches the `isFirstWithOptions` set via `cloneElement` in Task 4.
 - The cast `el.props as { lines: LineMsg[] }` (Task 4) accesses the same `lines: LineMsg[]` field declared in `TopLevelMsg`'s props (Task 3 didn't change that field — it was always there).
@@ -540,6 +546,7 @@ Expected: clean working tree.
 **Placeholder scan:** No TBDs, no TODOs. Every step has either an explicit code edit, an explicit shell command, or an explicit verification.
 
 **Architecture note:** The two scan passes (last-with-options, first-with-options) are independent — one walks backward, one walks forward. They could in principle be combined into a single pass that tracks both `lastTopLevelIdx` and `firstWithOptionsIdx`. I left them separate because:
+
 1. The existing "last" pass is intentionally conditional on `!promptProcessing` (don't make the message interactive while it's still streaming); the new "first" pass should run unconditionally (the helper should appear as soon as the streamed message has its first option line). Combining them would force conditionals inside the loop.
 2. Separate passes match the existing code style (small, focused, single-purpose blocks).
 3. Both passes early-exit on first match, so the total cost is at most `O(messageElements.length)` even combined.

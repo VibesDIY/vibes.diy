@@ -28,11 +28,11 @@ was on and is preserved through the proxy.
 
 Suppress when the referer's hostname is any of:
 
-| Pattern | Rationale |
-|---|---|
-| `vibes.diy` (exact) | Main app making CORS auth/API calls |
-| `*.vibesdiy.net` | All worker subdomains: prod-v2, cli-v2, dev-v2, assets.*, sandbox iframes |
-| `*.workers.dev` | PR preview environments |
+| Pattern             | Rationale                                                                  |
+| ------------------- | -------------------------------------------------------------------------- |
+| `vibes.diy` (exact) | Main app making CORS auth/API calls                                        |
+| `*.vibesdiy.net`    | All worker subdomains: prod-v2, cli-v2, dev-v2, assets.\*, sandbox iframes |
+| `*.workers.dev`     | PR preview environments                                                    |
 
 Keep everything else: `good.vibes.diy`, `links.vibes.diy`, external sites,
 and any future landing domains.
@@ -47,10 +47,7 @@ const INTERNAL_REFERER_SUFFIXES = [".vibesdiy.net", ".workers.dev"];
 const INTERNAL_REFERER_EXACT = new Set(["vibes.diy"]);
 
 function isInternalReferer(hostname: string): boolean {
-  return (
-    INTERNAL_REFERER_EXACT.has(hostname) ||
-    INTERNAL_REFERER_SUFFIXES.some((s) => hostname.endsWith(s))
-  );
+  return INTERNAL_REFERER_EXACT.has(hostname) || INTERNAL_REFERER_SUFFIXES.some((s) => hostname.endsWith(s));
 }
 ```
 

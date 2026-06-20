@@ -57,9 +57,10 @@ describe("resolveDbVibeArgs", () => {
   });
 
   it("falls back to basename(cwd) when neither vibe, app-slug, nor env is set", () => {
-    expect(
-      resolveDbVibeArgs(ctxWithEnv(), { vibe: "", appSlug: "", ownerHandle: "", ownerHandleDeprecated: "" })
-    ).toEqual({ appSlug: basename(process.cwd()), ownerHandle: "" });
+    expect(resolveDbVibeArgs(ctxWithEnv(), { vibe: "", appSlug: "", ownerHandle: "", ownerHandleDeprecated: "" })).toEqual({
+      appSlug: basename(process.cwd()),
+      ownerHandle: "",
+    });
   });
 });
 

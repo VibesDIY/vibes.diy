@@ -36,9 +36,9 @@ Fetched from `https://pickathon.com/wp-content/plugins/pickathon/schedule.php` a
 
 ## Common edits
 
-| Task | Where |
-|------|-------|
-| Change festival dates | `FESTIVAL_2026.dates` |
-| Change logo | `LOGO_URL` constant |
-| Add a new view/tab | Add to the `["browse", "favorites", "shifts", "schedule"]` array in nav, add `{view === "newview" && ...}` section in the body |
-| Change colors | `c` object near bottom of component |
+| Task                  | Where                                                                                                                          |
+| --------------------- | ------------------------------------------------------------------------------------------------------------------------------ |
+| Change festival dates | `FESTIVAL_2026.dates`                                                                                                          |
+| Change logo           | `LOGO_URL` constant                                                                                                            |
+| Add a new view/tab    | Add to the `["browse", "favorites", "shifts", "schedule"]` array in nav, add `{view === "newview" && ...}` section in the body |
+| Change colors         | `c` object near bottom of component                                                                                            |

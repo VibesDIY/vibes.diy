@@ -11,7 +11,7 @@ PR #2420 took `Chat` from 848→702 lines by extracting four low/medium-risk eff
 
 This effect is hard to reason about and untested because it does several things at once and is wired to state it also mutates:
 
-- It is **two effects in one body**, switched on `openingRef.current`: the *open* path (first run) and the *fire* path (subsequent runs once a prompt is queued).
+- It is **two effects in one body**, switched on `openingRef.current`: the _open_ path (first run) and the _fire_ path (subsequent runs once a prompt is queued).
 - Its dependency array is **self-referential**: `[ownerHandle, appSlug, chat, openingRef, chatApi, promptToSend]` — it calls `setChat(...)` in the open path and depends on `chat` to take the fire path on the next render.
 - It owns three guard refs whose entire reason for existing is to break loops: `openingRef` (open-once latch, reset inline in the render body at `:93–96` when the slug pair changes), `prevSlugsRef` (the slug-change detector for that reset), and `fsIdRef` (read so autosave-driven `fsId` changes don't re-fire the same prompt — the classic loop documented at `:117–119`).
 - It enforces a **`sendPrompt(null)`-before-fire ordering** (`:381–383`) so a re-render mid-fire sees `null` and skips the branch.
@@ -28,7 +28,7 @@ There is no component-level test for `Chat` and no test exercising these guards,
 
 ## Non-goals
 
-- Fixing #1972 / #1842. Those are the *next* PR, built on top once this surface is testable. Bundling them would make the refactor unprovable.
+- Fixing #1972 / #1842. Those are the _next_ PR, built on top once this surface is testable. Bundling them would make the refactor unprovable.
 - Re-architecting the reconnect/watchdog hooks or the reducer.
 - Splitting the single open/fire effect into two genuinely separate effects (tempting, but that is a behavior change — see Q3).
 
@@ -36,18 +36,18 @@ There is no component-level test for `Chat` and no test exercising these guards,
 
 The "stream lifecycle" surface, as it stands on `main` today:
 
-| Piece | Location | Read by | Written by |
-|---|---|---|---|
-| `chat` / `setChat` | `:90` | `handleOnCodeSave`, open/fire effect, cleanup | open effect, `handleReconnectAttempt` |
-| `promptToSend` / `sendPrompt` | `:108` | open/fire effect | `handleSelectOption`, `handleRetry`, `ChatInput.onSubmit` |
-| `openingRef` + inline reset | `:91`, `:93–96` | open/fire effect | render body, open effect |
-| `prevSlugsRef` | `:92` | render body | render body |
-| `fsIdRef` | `:120–121` | open/fire effect | every render |
-| `attachSectionStream` | `:151–173` | open effect, `handleReconnectAttempt` | — |
-| `refreshAppSettings` | `:175–190` | open effect, `handleReconnectAttempt` | — |
-| open/fire effect | `:366–436` | — | `chat`, `promptToSend`, optimistic prompt, navigation |
-| `useStreamWatchdog` | `:193–198` | — | — |
-| `useReconnectLoop` + callbacks | `:200–227` | — | `chat` |
+| Piece                          | Location        | Read by                                       | Written by                                                |
+| ------------------------------ | --------------- | --------------------------------------------- | --------------------------------------------------------- |
+| `chat` / `setChat`             | `:90`           | `handleOnCodeSave`, open/fire effect, cleanup | open effect, `handleReconnectAttempt`                     |
+| `promptToSend` / `sendPrompt`  | `:108`          | open/fire effect                              | `handleSelectOption`, `handleRetry`, `ChatInput.onSubmit` |
+| `openingRef` + inline reset    | `:91`, `:93–96` | open/fire effect                              | render body, open effect                                  |
+| `prevSlugsRef`                 | `:92`           | render body                                   | render body                                               |
+| `fsIdRef`                      | `:120–121`      | open/fire effect                              | every render                                              |
+| `attachSectionStream`          | `:151–173`      | open effect, `handleReconnectAttempt`         | —                                                         |
+| `refreshAppSettings`           | `:175–190`      | open effect, `handleReconnectAttempt`         | —                                                         |
+| open/fire effect               | `:366–436`      | —                                             | `chat`, `promptToSend`, optimistic prompt, navigation     |
+| `useStreamWatchdog`            | `:193–198`      | —                                             | —                                                         |
+| `useReconnectLoop` + callbacks | `:200–227`      | —                                             | `chat`                                                    |
 
 The key observation: **`chat`, `setChat`, `attachSectionStream`, and `refreshAppSettings` are shared between the open/fire effect and the reconnect path.** Any extraction has to decide where that shared core lives.
 
@@ -62,7 +62,7 @@ export interface ChatSessionOpts {
   readonly fsId: string | undefined;
   readonly inConstruction: boolean;
   readonly chatApi: VibesDiyApiIface;
-  readonly promptState: PromptState;          // for connection (reconnect) + running
+  readonly promptState: PromptState; // for connection (reconnect) + running
   readonly dispatch: Dispatch<PromptAction>;
   readonly promptToSend: string | null;
   readonly sendPrompt: (v: string | null) => void;
@@ -70,7 +70,7 @@ export interface ChatSessionOpts {
 }
 
 export interface ChatSession {
-  readonly chat: LLMChat | null;              // consumed by handleOnCodeSave
+  readonly chat: LLMChat | null; // consumed by handleOnCodeSave
 }
 
 export function useChatSession(opts: ChatSessionOpts): ChatSession;
@@ -94,6 +94,7 @@ Expected result: `Chat` loses ~120 lines and ends with no bare `useEffect` relat
 ## Test strategy
 
 Add `pkg/app/.../useChatSession.test.tsx` (or `tests/app/ChatSession.test.tsx`) **before** the refactor commit, using `renderHook` with:
+
 - a fake `LLMChat` (`{ prompt, promptFS, close, sectionStream }`) — **Q4: is there an existing chat test double, or do we hand-roll one?**
 - a mocked `chatApi` (`openChat`, `getAppByFsId`, `ensureAppSettings`) returning `Result`s,
 - spies for `navigateToFsId`, `sendPrompt`, `dispatch`.

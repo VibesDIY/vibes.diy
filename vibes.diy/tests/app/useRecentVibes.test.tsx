@@ -78,12 +78,11 @@ describe("useRecentVibes ensureAllLoaded", () => {
   it("exposes loading-all state while exhausting pages", async () => {
     const page2 = deferred<ReturnType<typeof okRecentVibes>>();
 
-    mockListRecentVibes
-      .mockImplementation(async ({ cursor }: { cursor?: string }) => {
-        if (!cursor) return okRecentVibes([makeItem("first")], "cursor-1");
-        if (cursor === "cursor-1") return page2.promise;
-        throw new Error(`unexpected cursor: ${cursor}`);
-      });
+    mockListRecentVibes.mockImplementation(async ({ cursor }: { cursor?: string }) => {
+      if (!cursor) return okRecentVibes([makeItem("first")], "cursor-1");
+      if (cursor === "cursor-1") return page2.promise;
+      throw new Error(`unexpected cursor: ${cursor}`);
+    });
 
     const { result } = renderHook(() => useRecentVibes(1));
 

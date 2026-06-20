@@ -1,9 +1,9 @@
-import React from "react"
-import { callAI } from "call-ai"
-import { useFireproof } from "use-fireproof"
-import { useViewer } from "use-vibes"
-import ListItem from "./ListItem.jsx"
-import { formatDate, sortByCreated } from "./helper.js"
+import React from "react";
+import { callAI } from "call-ai";
+import { useFireproof } from "use-fireproof";
+import { useViewer } from "use-vibes";
+import ListItem from "./ListItem.jsx";
+import { formatDate, sortByCreated } from "./helper.js";
 
 export default function App() {
   const { viewer, can } = useViewer();
@@ -16,11 +16,10 @@ export default function App() {
   async function suggestNext() {
     setIsSuggesting(true);
     try {
-      const existing = todos.map(t => t.text).join(", ") || "nothing yet";
-      const response = await callAI(
-        `Existing todos: ${existing}. Suggest ONE short follow-up task (under 8 words).`,
-        { schema: { properties: { task: { type: "string" } } } }
-      );
+      const existing = todos.map((t) => t.text).join(", ") || "nothing yet";
+      const response = await callAI(`Existing todos: ${existing}. Suggest ONE short follow-up task (under 8 words).`, {
+        schema: { properties: { task: { type: "string" } } },
+      });
       const { task } = JSON.parse(response);
       if (task) merge({ text: task });
     } finally {
@@ -36,7 +35,8 @@ export default function App() {
     main: "max-w-xl mx-auto px-4 py-6 space-y-6",
     section: "bg-white rounded-2xl border border-[#e8dcc4] shadow-sm p-5",
     h2: "text-lg font-semibold text-[#2a2418] mb-3",
-    input: "w-full px-4 py-3 rounded-xl border border-[#e8dcc4] bg-[#fdfaf3] focus:outline-none focus:border-[#c9a35e] min-h-[44px]",
+    input:
+      "w-full px-4 py-3 rounded-xl border border-[#e8dcc4] bg-[#fdfaf3] focus:outline-none focus:border-[#c9a35e] min-h-[44px]",
     btn: "px-4 py-3 rounded-xl bg-[#c9a35e] text-white font-medium min-h-[44px] hover:bg-[#b08d4a] disabled:opacity-50",
     btnGhost: "px-3 py-2 rounded-lg border border-[#e8dcc4] text-sm text-[#6b5d42] hover:bg-[#fdfaf3]",
     row: "flex items-center gap-3 py-3 border-b border-[#f0e6d2] last:border-0",
@@ -61,13 +61,23 @@ export default function App() {
                 onChange={(e) => merge({ text: e.target.value })}
               />
               <div className="flex gap-2">
-                <button type="submit" className={c.btn} disabled={!doc.text.trim()}>Add</button>
+                <button type="submit" className={c.btn} disabled={!doc.text.trim()}>
+                  Add
+                </button>
                 <button type="button" className={c.btnGhost} onClick={suggestNext} disabled={isSuggesting}>
                   {isSuggesting ? (
-                    <svg className="animate-spin w-4 h-4 inline" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <svg
+                      className="animate-spin w-4 h-4 inline"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                    >
                       <circle cx="12" cy="12" r="9" strokeDasharray="40 20" />
                     </svg>
-                  ) : "Suggest"}
+                  ) : (
+                    "Suggest"
+                  )}
                 </button>
               </div>
             </form>

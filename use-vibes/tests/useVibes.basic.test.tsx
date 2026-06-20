@@ -135,12 +135,9 @@ describe("useVibes - Basic Structure", () => {
         })
     );
 
-    const { result, rerender } = renderHook(
-      ({ prompt }) => useVibes(prompt, { dependencies: ["useFireproof"] }, mockCallAI),
-      {
-        initialProps: { prompt: "create a button" },
-      }
-    );
+    const { result, rerender } = renderHook(({ prompt }) => useVibes(prompt, { dependencies: ["useFireproof"] }, mockCallAI), {
+      initialProps: { prompt: "create a button" },
+    });
 
     await waitFor(() => expect(mockCallAI).toHaveBeenCalledTimes(1), {
       timeout: 2000,

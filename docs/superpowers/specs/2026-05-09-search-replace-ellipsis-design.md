@@ -52,16 +52,16 @@ preserved. Matching proceeds as follows:
   tolerance), prefix lines use `startsWith`.
 - Enumerate **all** tuples `(start_1, …, start_n)` such that each
   `seg_i` matches starting at line `start_i`, with `start_{i+1} ≥ start_i +
-  len(seg_i)` (skip length ≥ 0).
+len(seg_i)` (skip length ≥ 0).
 - Require exactly one tuple across the whole source.
   - 0 tuples → `no-match`
-  - >1 tuples → `multiple-match`
+  - > 1 tuples → `multiple-match`
   - 1 tuple → success; replace the source character range from the start of
     `seg_1`'s first line through the end of `seg_n`'s last line with the
     REPLACE string. **The lines consumed by middle skips are inside this
     range and are removed**; the REPLACE content stands in for the entire
     span including those skipped lines (which is the point — `function Foo
-    / ... / }` replaces the whole function body).
+/ ... / }` replaces the whole function body).
 
 This guarantees that any SEARCH whose ellipses introduce structural
 ambiguity is rejected rather than silently picking a guess.
@@ -131,7 +131,7 @@ falls into the new line-pattern matcher described above.
 The result type gains a new `matchKind` value:
 
 ```ts
-matchKind: "exact" | "trailing-ws" | "ellipsis"
+matchKind: "exact" | "trailing-ws" | "ellipsis";
 ```
 
 The error reasons (`no-match`, `multiple-match`) are unchanged.

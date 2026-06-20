@@ -30,6 +30,7 @@ npx vibes-diy@latest pull --handle jchris shared-notes
 ```
 
 Both sandbox environments return "Filesystem not found":
+
 ```
 curl "https://shared-notes--jchris.cli-v2.vibesdiy.net/access.js?source=true"
 # → HTTP 404, {"type":"error","message":"Filesystem not found ..."}
@@ -59,6 +60,7 @@ Meanwhile, the pull command calls `getAppByFsId` which DOES find the app's fileS
 ### The real problem: pull fetches from sandbox, not from storage
 
 The pull command (`pull-cmd.ts:113-131`) does this:
+
 1. `api.getAppByFsId()` → gets the fileSystem array with file names, CIDs, URIs
 2. For each file, constructs `https://{appSlug}--{ownerHandle}.{hostnameBase}/{fileName}?source=true`
 3. Fetches from the SANDBOX via HTTP
@@ -100,6 +102,7 @@ npx vibes-diy@latest pull --handle jchris shared-notes
 The issue title says "access.js should be in fileSystem" — but access.js IS in fileSystem. The real bug is: **pull fetches file content from the sandbox via HTTP, and the sandbox can't serve dev-mode vibes.** This affects ALL files, not just access.js. Publishing (promoting to production mode) fixes it.
 
 The fix should either:
+
 1. Make pull fetch from storage directly (using `assetURI` from the FileSystemItem), or
 2. Make pull work for dev-mode vibes by fixing sandbox routing
 

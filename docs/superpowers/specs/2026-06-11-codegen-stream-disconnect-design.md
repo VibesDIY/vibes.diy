@@ -58,7 +58,7 @@ Confirm the open-chat replay includes the terminal block once `handleEndMsg` per
 
 - Re-open attempt itself fails (network still down): counts as a retry; loop continues with the 5 s backoff until the 2-minute cap.
 - Duplicate block dispatch on replay: prevented by resetting section state before consuming the replay (same as mount).
-- Disconnect while *not* running: close/cleanup only; no convergence loop, no UI change beyond normal reconnect of the API connection.
+- Disconnect while _not_ running: close/cleanup only; no convergence loop, no UI change beyond normal reconnect of the API connection.
 - User submits a new prompt while reconnecting: input stays disabled until convergence or the 2-minute failure state (matches existing `promptProcessing` gating).
 
 ## Testing

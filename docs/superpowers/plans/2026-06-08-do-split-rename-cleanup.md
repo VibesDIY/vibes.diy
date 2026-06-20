@@ -15,15 +15,15 @@
 
 ## File Map
 
-| File | Change | Task |
-|------|--------|------|
-| `vibes.diy/pkg/app/vibes-diy-provider.tsx` | Rename `vibeDiyApi` → `chatApi`, `appDiyApi` → `vibeApi` in interface + implementation | 1 |
-| `vibes.diy/vibe/srv-sandbox/srv-sandbox.ts` | Rename all `vibeDiyApi`/`appDiyApi` destructures | 1 |
-| ~35 component/hook/route/test files | Rename `vibeDiyApi` → `chatApi` in destructures and usage | 1 |
-| `vibes.diy/api/impl/index.ts` | Add `skipShard` option to `VibesDiyApi` constructor | 2 |
-| `vibes.diy/pkg/app/vibes-diy-provider.tsx` | Pass `skipShard: true` for app connection | 2 |
-| `vibes.diy/api/tests/resolve-shard-do.test.ts` | New test file — 5 edge case tests | 3 |
-| N/A (GitHub) | File follow-up issue for deferred #2264 items | 4 |
+| File                                           | Change                                                                                 | Task |
+| ---------------------------------------------- | -------------------------------------------------------------------------------------- | ---- |
+| `vibes.diy/pkg/app/vibes-diy-provider.tsx`     | Rename `vibeDiyApi` → `chatApi`, `appDiyApi` → `vibeApi` in interface + implementation | 1    |
+| `vibes.diy/vibe/srv-sandbox/srv-sandbox.ts`    | Rename all `vibeDiyApi`/`appDiyApi` destructures                                       | 1    |
+| ~35 component/hook/route/test files            | Rename `vibeDiyApi` → `chatApi` in destructures and usage                              | 1    |
+| `vibes.diy/api/impl/index.ts`                  | Add `skipShard` option to `VibesDiyApi` constructor                                    | 2    |
+| `vibes.diy/pkg/app/vibes-diy-provider.tsx`     | Pass `skipShard: true` for app connection                                              | 2    |
+| `vibes.diy/api/tests/resolve-shard-do.test.ts` | New test file — 5 edge case tests                                                      | 3    |
+| N/A (GitHub)                                   | File follow-up issue for deferred #2264 items                                          | 4    |
 
 ---
 
@@ -32,6 +32,7 @@
 This is a mechanical rename across the entire codebase. No logic changes.
 
 **Files:**
+
 - Modify: `vibes.diy/pkg/app/vibes-diy-provider.tsx` (interface definition + implementation)
 - Modify: `vibes.diy/vibe/srv-sandbox/srv-sandbox.ts` (26 references)
 - Modify: ~35 component/hook/route/test files (see full list below)
@@ -39,10 +40,12 @@ This is a mechanical rename across the entire codebase. No logic changes.
 **Full file list** (all under `vibes.diy/`):
 
 Provider + sandbox:
+
 - `pkg/app/vibes-diy-provider.tsx`
 - `vibe/srv-sandbox/srv-sandbox.ts`
 
 Components:
+
 - `pkg/app/components/DmThread.tsx`
 - `pkg/app/components/DmInbox.tsx`
 - `pkg/app/components/ModelSettingsCards.tsx`
@@ -60,12 +63,14 @@ Components:
 - `pkg/app/components/mine/settings-tab/index.tsx`
 
 Hooks:
+
 - `pkg/app/hooks/useBuildCompletionNotifications.ts`
 - `pkg/app/hooks/useRecentVibes.ts`
 - `pkg/app/hooks/useMemberships.ts`
 - `pkg/app/hooks/useIframeCurrentTokens.ts`
 
 Routes:
+
 - `pkg/app/routes/vibe.$ownerHandle.$appSlug.tsx`
 - `pkg/app/routes/remix.$ownerHandle.$appSlug.tsx`
 - `pkg/app/routes/chat/chat.$ownerHandle.$appSlug.tsx`
@@ -78,9 +83,11 @@ Routes:
 - `pkg/app/routes/settings/csr-to-cert.tsx`
 
 Utils:
+
 - `pkg/app/utils/titleGenerator.ts`
 
 Tests:
+
 - `tests/app/settings-profile.test.tsx`
 - `tests/app/ShareModal.test.tsx`
 - `tests/app/comments-section-avatar.test.tsx`
@@ -99,6 +106,7 @@ Tests:
 In `vibes.diy/pkg/app/vibes-diy-provider.tsx`:
 
 1. Rename the interface fields:
+
 ```typescript
 // Before
 export interface VibesDiyCtx {
@@ -128,6 +136,7 @@ export interface VibesDiyCtx {
 - [ ] **Step 2: Rename in srv-sandbox**
 
 In `vibes.diy/vibe/srv-sandbox/srv-sandbox.ts`, find-replace:
+
 - `vibeDiyApi` → `chatApi` (all occurrences)
 - `appDiyApi` → `vibeApi` (all occurrences)
 
@@ -137,10 +146,12 @@ The pattern `const api = appDiyApi ?? vibeDiyApi;` becomes `const api = vibeApi 
 - [ ] **Step 3: Rename across all component, hook, route, and test files**
 
 For every file listed above (components, hooks, routes, utils, tests), do a global find-replace:
+
 - `vibeDiyApi` → `chatApi`
 - `appDiyApi` → `vibeApi`
 
 Most files only have `vibeDiyApi` (the chat connection). The pattern is:
+
 ```typescript
 // Before
 const { vibeDiyApi } = useVibesDiy();
@@ -185,6 +196,7 @@ connection is now chatApi, the vibe-scoped data connection is vibeApi."
 The `VibesDiyApi` constructor (in `vibes.diy/api/impl/index.ts`, line ~249) always appends `?shard=<uuid>` to the connection URL. For the app connection (`/api/app?vibe=...`), AppSessions ignores this param. It's cosmetic noise in logs/devtools.
 
 **Files:**
+
 - Modify: `vibes.diy/api/impl/index.ts` (~line 188-250) — add `skipShard` config option
 - Modify: `vibes.diy/pkg/app/vibes-diy-provider.tsx` (~line 243) — pass `skipShard: true` for app connection
 
@@ -211,9 +223,12 @@ const shard = cfg.shardKey ?? crypto.randomUUID();
 const apiUrl = cfg.ws ? cfg.apiUrl : BuildURI.from(cfg.apiUrl).setParam("shard", shard).toString();
 
 // After
-const apiUrl = cfg.ws || cfg.skipShard
-  ? cfg.apiUrl
-  : BuildURI.from(cfg.apiUrl).setParam("shard", cfg.shardKey ?? crypto.randomUUID()).toString();
+const apiUrl =
+  cfg.ws || cfg.skipShard
+    ? cfg.apiUrl
+    : BuildURI.from(cfg.apiUrl)
+        .setParam("shard", cfg.shardKey ?? crypto.randomUUID())
+        .toString();
 ```
 
 - [ ] **Step 2: Pass `skipShard: true` for the app connection**
@@ -267,6 +282,7 @@ Add skipShard option to suppress it for app connections."
 `resolveShardDO` routes shard IDs to the correct DO namespace by prefix. It's 18 lines in `vibes.diy/pkg/workers/resolve-shard-do.ts`. Charlie's review requested edge case coverage.
 
 **Files:**
+
 - Create: `vibes.diy/api/tests/resolve-shard-do.test.ts`
 - Reference: `vibes.diy/pkg/workers/resolve-shard-do.ts`
 - Reference: `vibes.diy/api/tests/route-decision.test.ts` (for test structure conventions)

@@ -1,4 +1,4 @@
-import React from "react"
+import React from "react";
 
 export default function ListItem({ todo, canWrite, onToggle, onDelete, formatDate }) {
   const c = {
@@ -23,7 +23,15 @@ export default function ListItem({ todo, canWrite, onToggle, onDelete, formatDat
       </div>
       {canWrite && (
         <button className={c.btn} onClick={onDelete} aria-label="Delete task">
-          <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <svg
+            className="w-4 h-4"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
             <line x1="18" y1="6" x2="6" y2="18" />
             <line x1="6" y1="6" x2="18" y2="18" />
           </svg>

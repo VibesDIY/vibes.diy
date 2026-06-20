@@ -73,6 +73,7 @@ mcp__chrome-devtools__get_console_message
 ```
 
 Look for:
+
 - What WS messages the client SENDS (confirms the message type/payload are correct)
 - What WS messages the client RECEIVES (confirms whether the server response is delivered)
 - Any client-side errors (schema parse fail, unhandled rejection, etc.)
@@ -143,5 +144,5 @@ Branch: `worktree-jchris+ws-close-fail-fast`
 | c2.4.5 | AbortSignal.timeout(15s) on metaGet + progress indicator + typed errors                     |
 | c2.4.6 | fire-and-forget cache.put + rules-bag cleanup (exception2Result, explicit undefined checks) |
 | c2.4.7 | server logging at every checkpoint in handler + cachedReport + fetchCampaignHealth          |
-| c2.4.8 | log before and after ctx.send.send() — `calling send` / `send complete`                    |
-| c2.4.9 | (next) version stamp + progress ping before cachedReport, or Chrome MCP inspection         |
+| c2.4.8 | log before and after ctx.send.send() — `calling send` / `send complete`                     |
+| c2.4.9 | (next) version stamp + progress ping before cachedReport, or Chrome MCP inspection          |

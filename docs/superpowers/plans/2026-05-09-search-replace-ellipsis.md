@@ -25,6 +25,7 @@ No new files. No changes to consumers (`CodeEditor.tsx`, recovery code, etc.) â€
 ### Task 1: Add ellipsis detection and route to stub
 
 **Files:**
+
 - Modify: `call-ai/v2/apply-edits.ts`
 - Modify: `call-ai/v2/apply-edits.test.ts`
 
@@ -109,11 +110,7 @@ if (hasEllipsisToken(search)) {
 And add the stub at the bottom of the file:
 
 ```ts
-function applyReplaceEllipsis(
-  _source: string,
-  _search: string,
-  _replace: string,
-): ApplyEditResult {
+function applyReplaceEllipsis(_source: string, _search: string, _replace: string): ApplyEditResult {
   return { ok: false, reason: "no-match", matchCount: 0 };
 }
 ```
@@ -135,6 +132,7 @@ git commit -m "feat(apply-edits): scaffold ellipsis matchKind and dispatch"
 ### Task 2: Single-line and multi-line prefix matching
 
 **Files:**
+
 - Modify: `call-ai/v2/apply-edits.ts`
 - Modify: `call-ai/v2/apply-edits.test.ts`
 
@@ -204,7 +202,7 @@ function lineMatches(searchLine: ClassifiedLine, sourceText: string): boolean {
 function findSegmentMatches(
   segment: readonly ClassifiedLine[],
   sourceLines: readonly LineSpan[],
-  startFrom: number,
+  startFrom: number
 ): readonly number[] {
   const hits: number[] = [];
   if (segment.length === 0) return hits;
@@ -225,11 +223,7 @@ function findSegmentMatches(
 Replace the stub `applyReplaceEllipsis` with the no-skip implementation:
 
 ```ts
-function applyReplaceEllipsis(
-  source: string,
-  search: string,
-  replace: string,
-): ApplyEditResult {
+function applyReplaceEllipsis(source: string, search: string, replace: string): ApplyEditResult {
   const searchLines = search.split("\n").map(classifyLine);
   const sourceLines = lineSpans(source);
 
@@ -237,8 +231,7 @@ function applyReplaceEllipsis(
   if (searchLines.every((l) => l.kind !== "skip")) {
     const hits = findSegmentMatches(searchLines, sourceLines, 0);
     if (hits.length === 0) return { ok: false, reason: "no-match", matchCount: 0 };
-    if (hits.length > 1)
-      return { ok: false, reason: "multiple-match", matchCount: hits.length };
+    if (hits.length > 1) return { ok: false, reason: "multiple-match", matchCount: hits.length };
     const start = sourceLines[hits[0]].start;
     const lastIdx = hits[0] + searchLines.length - 1;
     const end = sourceLines[lastIdx].end;
@@ -270,13 +263,7 @@ it("matches a block with a prefix line among anchors", () => {
     "  </div>;",
     "}",
   ].join("\n");
-  const search = [
-    "function FeatureOne() {",
-    '  return <div className="rounded...',
-    "    Hello",
-    "  </div>;",
-    "}",
-  ].join("\n");
+  const search = ["function FeatureOne() {", '  return <div className="rounded...', "    Hello", "  </div>;", "}"].join("\n");
   const replace = "function FeatureOne() {\n  return <div>NEW</div>;\n}";
   const r = applyReplace({ source, search, replace });
   expect(r.ok).toBe(true);
@@ -319,6 +306,7 @@ git commit -m "feat(apply-edits): support trailing ... prefix line matches"
 ### Task 3: Skip lines (zero-or-more) with segment enumeration
 
 **Files:**
+
 - Modify: `call-ai/v2/apply-edits.ts`
 - Modify: `call-ai/v2/apply-edits.test.ts`
 
@@ -385,10 +373,7 @@ interface MatchTuple {
   readonly starts: readonly number[]; // segment start line indexes
 }
 
-function enumerateTuples(
-  segments: readonly Segment[],
-  sourceLines: readonly LineSpan[],
-): readonly MatchTuple[] {
+function enumerateTuples(segments: readonly Segment[], sourceLines: readonly LineSpan[]): readonly MatchTuple[] {
   const tuples: MatchTuple[] = [];
   if (segments.length === 0) return tuples;
   const recurse = (segIdx: number, fromLine: number, acc: number[]): void => {
@@ -412,11 +397,7 @@ function enumerateTuples(
 Replace the body of `applyReplaceEllipsis`:
 
 ```ts
-function applyReplaceEllipsis(
-  source: string,
-  search: string,
-  replace: string,
-): ApplyEditResult {
+function applyReplaceEllipsis(source: string, search: string, replace: string): ApplyEditResult {
   const searchLines = search.split("\n").map(classifyLine);
   const sourceLines = lineSpans(source);
   const { segments, leadingSkip, trailingSkip } = splitIntoSegments(searchLines);
@@ -427,8 +408,7 @@ function applyReplaceEllipsis(
 
   const tuples = enumerateTuples(segments, sourceLines);
   if (tuples.length === 0) return { ok: false, reason: "no-match", matchCount: 0 };
-  if (tuples.length > 1)
-    return { ok: false, reason: "multiple-match", matchCount: tuples.length };
+  if (tuples.length > 1) return { ok: false, reason: "multiple-match", matchCount: tuples.length };
 
   const t = tuples[0];
   const firstSegStart = t.starts[0];
@@ -536,6 +516,7 @@ git commit -m "feat(apply-edits): support multi-line skip with leading ..."
 ### Task 4: Anchor edge cases (mid-line `...` literal, REPLACE literal)
 
 **Files:**
+
 - Modify: `call-ai/v2/apply-edits.test.ts`
 
 Goal: lock in two correctness properties that follow from the design but deserve explicit tests: `...` in the middle of a SEARCH line is literal (anchor match), and `...` in REPLACE is literal text.
@@ -609,6 +590,7 @@ git commit -m "test(apply-edits): pin literal semantics for mid-line and REPLACE
 ### Task 5: Prompt addendum
 
 **Files:**
+
 - Modify: `prompts/pkg/system-prompt.md`
 
 Goal: teach the model the two shortcuts in one short paragraph + one example, placed near the existing SEARCH/REPLACE section.
@@ -623,7 +605,7 @@ Identify a location after the existing rule "If a single SEARCH/REPLACE grows be
 
 After the existing line containing `If a single SEARCH/REPLACE grows beyond ~25 lines, split it.`, insert these new paragraphs (preserve a blank line before and after):
 
-```markdown
+````markdown
 **Two `...` shortcuts on the SEARCH side keep edits compact:**
 
 - A line ending in `...` is a single-line **prefix match** â€” the source line must begin with what's before the `...`; the rest is ignored. Use this to skip long Tailwind class strings or other noisy line tails.
@@ -643,9 +625,11 @@ function CardHeader() {
 }
 >>>>>>> REPLACE
 ```
+````
 
 The matcher still requires exactly one match in the file; if the `...` shortcuts make the SEARCH ambiguous, add a surrounding anchor line to disambiguate.
-```
+
+````
 
 - [ ] **Step 3: Verify the prompt-tests still pass**
 
@@ -662,7 +646,7 @@ Expected: format / build / test / lint all green. Per [agents/flaky-tests.md](..
 ```bash
 git add prompts/pkg/system-prompt.md prompts/tests
 git commit -m "docs(prompt): teach SEARCH/REPLACE ... prefix and skip shortcuts"
-```
+````
 
 ---
 

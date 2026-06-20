@@ -14,22 +14,23 @@
 
 ## File structure
 
-| File | Responsibility |
-|------|---------------|
-| `pkg/workers/route-decision.ts` | Modify: add `"app-api"` route type for `/api/app` |
-| `api/types/cf-env.ts` | Modify: add `APP_SESSIONS: DurableObjectNamespace` |
-| `pkg/wrangler.toml` | Modify: add APP_SESSIONS binding + v5 migration (all envs) |
-| `api/svc/app-msg-evento.ts` | Create: Evento instance with vibe-scoped + shared handlers only |
-| `api/svc/cf-serve.ts` | Modify: add `localBroadcastCallbacks` + `localInvokeAccessFn` factories |
-| `pkg/workers/app-sessions.ts` | Create: the new DO class — WebSocket handling, local broadcast, local QuickJS |
-| `pkg/workers/app.ts` | Modify: add `"app-api"` routing + export AppSessions |
-| `pkg/app/vibes-diy-provider.tsx` | Modify: create second VibesDiyApi for `/api/app?vibe=...` |
+| File                             | Responsibility                                                                |
+| -------------------------------- | ----------------------------------------------------------------------------- |
+| `pkg/workers/route-decision.ts`  | Modify: add `"app-api"` route type for `/api/app`                             |
+| `api/types/cf-env.ts`            | Modify: add `APP_SESSIONS: DurableObjectNamespace`                            |
+| `pkg/wrangler.toml`              | Modify: add APP_SESSIONS binding + v5 migration (all envs)                    |
+| `api/svc/app-msg-evento.ts`      | Create: Evento instance with vibe-scoped + shared handlers only               |
+| `api/svc/cf-serve.ts`            | Modify: add `localBroadcastCallbacks` + `localInvokeAccessFn` factories       |
+| `pkg/workers/app-sessions.ts`    | Create: the new DO class — WebSocket handling, local broadcast, local QuickJS |
+| `pkg/workers/app.ts`             | Modify: add `"app-api"` routing + export AppSessions                          |
+| `pkg/app/vibes-diy-provider.tsx` | Modify: create second VibesDiyApi for `/api/app?vibe=...`                     |
 
 ---
 
 ### Task 1: Route decision — add "app-api" route type
 
 **Files:**
+
 - Modify: `pkg/workers/route-decision.ts`
 - Test: `api/tests/route-decision.test.ts`
 
@@ -69,10 +70,10 @@ In `pkg/workers/route-decision.ts`, add `"app-api"` to the Route type and add th
 
 ```typescript
 export type Route =
-  | "app-api"  // /api/app → AppSessions DO (vibe-scoped WebSocket)
-  | "api-do"   // /api/* → ChatSessions DO (WebSocket + DocNotify)
-  | "vibe-pkg"
-  // ... rest unchanged
+  | "app-api" // /api/app → AppSessions DO (vibe-scoped WebSocket)
+  | "api-do" // /api/* → ChatSessions DO (WebSocket + DocNotify)
+  | "vibe-pkg";
+// ... rest unchanged
 ```
 
 In `routeDecision()`, add the `/api/app` check before the `/api` catch-all:
@@ -105,6 +106,7 @@ git commit -m "feat(routing): add app-api route for /api/app → AppSessions DO"
 ### Task 2: CFEnv type + wrangler.toml bindings
 
 **Files:**
+
 - Modify: `api/types/cf-env.ts`
 - Modify: `pkg/wrangler.toml`
 
@@ -180,6 +182,7 @@ git commit -m "feat(infra): add APP_SESSIONS DO binding + v5 migration to all en
 ### Task 3: AppSessions Evento — vibe-scoped handler set
 
 **Files:**
+
 - Create: `api/svc/app-msg-evento.ts`
 
 The AppSessions DO needs its own Evento instance that includes only vibe-scoped handlers + shared stateless handlers. ChatSessions' `vibesMsgEvento` stays unchanged.
@@ -346,6 +349,7 @@ git commit -m "feat(evento): add appMsgEvento with vibe-scoped + shared handler 
 ### Task 4: cf-serve.ts — local broadcast + local access fn callback factories
 
 **Files:**
+
 - Modify: `api/svc/cf-serve.ts`
 
 Add two new factory functions that provide the same callback interface as `docNotifyCallbacks` and `invokeAccessFn` but operate locally — no DO-to-DO subrequests. These are used by AppSessions; ChatSessions continues using the existing DocNotify-based callbacks unchanged.
@@ -539,8 +543,7 @@ export async function localInvokeAccessFn(
 
     const cleanSource = source.replace(/export\s+/g, "").replace(/^default\s+/, "");
     const fnNameMatch = cleanSource.match(/^function\s+(\w+)\s*\(/);
-    const isAnonymousFnOrArrow =
-      /^function\s*\(/.test(cleanSource) || /^\(/.test(cleanSource) || /^\w+\s*=>/.test(cleanSource);
+    const isAnonymousFnOrArrow = /^function\s*\(/.test(cleanSource) || /^\(/.test(cleanSource) || /^\w+\s*=>/.test(cleanSource);
     const evalSource = fnNameMatch
       ? `${cleanSource}\n;${fnNameMatch[1]}(doc, oldDoc, user, ctx)`
       : isAnonymousFnOrArrow
@@ -592,6 +595,7 @@ git commit -m "feat(cf-serve): add localBroadcastCallbacks + localInvokeAccessFn
 Depends on: Task 2 (CFEnv type), Task 3 (appMsgEvento), Task 4 (local callbacks)
 
 **Files:**
+
 - Create: `pkg/workers/app-sessions.ts`
 
 This is the core new DO. It handles WebSocket connections for vibe-scoped operations with zero DO-to-DO subrequests for putDoc. Notifications use local broadcast; access function evaluation uses local QuickJS.
@@ -779,7 +783,7 @@ export async function cfServeAppCtx(
   env: CFEnv,
   ctx: ExecutionContext & Omit<CFInject, "appCtx">,
   callbackOverrides?: Record<string, unknown>
-)
+);
 ```
 
 Then in the `createAppContext` call, spread overrides after (or instead of) the docNotify callbacks:
@@ -827,6 +831,7 @@ git commit -m "feat(do): add AppSessions DO with local broadcast + local QuickJS
 Depends on: Task 1 (route type), Task 2 (CFEnv), Task 5 (AppSessions class)
 
 **Files:**
+
 - Modify: `pkg/workers/app.ts`
 
 - [ ] **Step 1: Export AppSessions from the worker entry**
@@ -881,9 +886,11 @@ git commit -m "feat(worker): route /api/app → AppSessions DO, export new DO cl
 Depends on: Task 6 (server endpoint available)
 
 **Files:**
+
 - Modify: `pkg/app/vibes-diy-provider.tsx`
 
 The web app needs two WebSocket connections when viewing a vibe:
+
 1. **Chat API** (`/api?shard=...`) — for chat operations (openChat, promptChatSection). Opens on demand.
 2. **App API** (`/api/app?vibe=ownerHandle--appSlug`) — for data operations (putDoc, subscribeDocs, grants). Opens on page load.
 

@@ -12,9 +12,9 @@
 
 ## File map
 
-| File | Change |
-|------|--------|
-| `vibes.diy/base/package.json` | Add `qrcode` + `@types/qrcode` deps |
+| File                                              | Change                                                                      |
+| ------------------------------------------------- | --------------------------------------------------------------------------- |
+| `vibes.diy/base/package.json`                     | Add `qrcode` + `@types/qrcode` deps                                         |
 | `vibes.diy/base/components/ExpandedVibesPill.tsx` | Add `qrDataUri`/`showQr` state, QR generation effect, QR button, QR display |
 
 ---
@@ -33,6 +33,7 @@
   ```bash
   git branch --show-current
   ```
+
   Expected output: `jchris/qr-restore-1765`
 
 ---
@@ -40,15 +41,19 @@
 ### Task 2: Add `qrcode` dependency
 
 **Files:**
+
 - Modify: `vibes.diy/base/package.json`
 
 - [ ] **Step 1: Add deps to `vibes.diy/base/package.json`**
 
   In the `"dependencies"` object add:
+
   ```json
   "qrcode": "^1.5.4"
   ```
+
   In the `"devDependencies"` object add:
+
   ```json
   "@types/qrcode": "^1.5.5"
   ```
@@ -58,6 +63,7 @@
   ```bash
   pnpm install
   ```
+
   Expected: installs without errors, `pnpm-lock.yaml` updated.
 
 ---
@@ -65,11 +71,13 @@
 ### Task 3: Add QR state and generation to `ExpandedVibesPill`
 
 **Files:**
+
 - Modify: `vibes.diy/base/components/ExpandedVibesPill.tsx`
 
 - [ ] **Step 1: Add the `qrcode` import at the top of the file**
 
   After the existing imports, add:
+
   ```ts
   import QRCode from "qrcode";
   ```
@@ -77,6 +85,7 @@
 - [ ] **Step 2: Add `qrDataUri` and `showQr` state inside `ExpandedVibesPill`**
 
   After the existing state declarations (after `const [isWide, setIsWide] = useState(true);`), add:
+
   ```ts
   const [qrDataUri, setQrDataUri] = useState<string | null>(null);
   const [showQr, setShowQr] = useState(false);
@@ -85,6 +94,7 @@
 - [ ] **Step 3: Add QR generation effect**
 
   After the `isWide` useEffect block, add:
+
   ```ts
   useEffect(() => {
     if (subMode !== "change" || typeof window === "undefined") return;
@@ -95,6 +105,7 @@
 - [ ] **Step 4: Reset `showQr` when sub-menu closes**
 
   In the existing `useEffect` that watches `phase` (the one with `if (phase === "idle") setSubMode("default")`), add the reset:
+
   ```ts
   if (phase === "idle") {
     setSubMode("default");
@@ -103,12 +114,18 @@
   ```
 
   The existing line reads:
+
   ```ts
   if (phase === "idle") setSubMode("default");
   ```
+
   Change it to:
+
   ```ts
-  if (phase === "idle") { setSubMode("default"); setShowQr(false); }
+  if (phase === "idle") {
+    setSubMode("default");
+    setShowQr(false);
+  }
   ```
 
 - [ ] **Step 5: Add QR button and display in the vertical sub-menu**
@@ -172,18 +189,22 @@
 - [ ] **Step 1: Type-check**
 
   From `vibes.diy/base/`:
+
   ```bash
   cd vibes.diy/base && npx tsc --noEmit
   ```
+
   Expected: no errors.
 
 - [ ] **Step 2: Run full pnpm check**
 
   From repo root:
+
   ```bash
   pnpm check 2>&1 | tee /tmp/qr-check.log
   grep -E "error|FAIL|✗" /tmp/qr-check.log | head -30
   ```
+
   Expected: no errors. If flaky tests, check `agents/flaky-tests.md`.
 
 - [ ] **Step 3: Format changed files**
@@ -199,6 +220,7 @@
 - [ ] **Step 1: Stage and commit the spec/plan docs (on main worktree)**
 
   In the main worktree:
+
   ```bash
   git add docs/superpowers/specs/2026-05-16-qr-code-restore-design.md docs/superpowers/plans/2026-05-16-qr-code-restore.md
   git commit -m "docs: QR code restore spec and plan for #1765"
@@ -207,6 +229,7 @@
 - [ ] **Step 2: Stage and commit the feature in the worktree**
 
   In `.worktrees/qr-restore-1765/`:
+
   ```bash
   git add vibes.diy/base/package.json vibes.diy/base/components/ExpandedVibesPill.tsx pnpm-lock.yaml
   git commit -m "feat(pill): add QR code button to vibe sub-menu (#1765)"

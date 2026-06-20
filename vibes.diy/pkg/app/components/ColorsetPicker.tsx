@@ -210,13 +210,13 @@ function CurrentTokenRow({
   scope: Record<string, string>;
 }) {
   const isMapping = /^\s*var\(--[\w-]+\)\s*$/.test(value);
-  const mappedTo = isMapping ? value.match(/^\s*var\(--([\w-]+)\)\s*$/)?.[1] ?? "" : "";
+  const mappedTo = isMapping ? (value.match(/^\s*var\(--([\w-]+)\)\s*$/)?.[1] ?? "") : "";
   const resolved = resolveCssValue(value, scope);
   // Heuristic: if the resolved value parses as a color (hex/rgba/oklch/hsl/
   // named), show a swatch + color picker. Otherwise it's structural — text
   // input only.
-  const looksLikeColor = /^(#[0-9a-fA-F]{3,8}|rgb|hsl|oklch|oklab|color\(|var\()/i.test(resolved.trim()) ||
-    /^[a-z]+$/i.test(resolved.trim());
+  const looksLikeColor =
+    /^(#[0-9a-fA-F]{3,8}|rgb|hsl|oklch|oklab|color\(|var\()/i.test(resolved.trim()) || /^[a-z]+$/i.test(resolved.trim());
   const hexValue = looksLikeColor ? cssToHex(resolved) : "#000000";
   return (
     <div className="flex items-center gap-2 text-[0.7rem]">
@@ -238,9 +238,7 @@ function CurrentTokenRow({
       <span className="w-[100px] shrink-0 truncate text-gray-800 dark:text-gray-200" title={name}>
         {name}
         {!isCanonical && (
-          <span className="ml-1 text-[0.55rem] font-semibold uppercase text-amber-600 dark:text-amber-400">
-            bespoke
-          </span>
+          <span className="ml-1 text-[0.55rem] font-semibold uppercase text-amber-600 dark:text-amber-400">bespoke</span>
         )}
       </span>
       {/* Structural / non-color tokens get a text input so the user can type
@@ -302,9 +300,7 @@ function StructuralRow({
   return (
     <label
       className={
-        dim
-          ? "flex items-center gap-2 text-[0.7rem] opacity-60 hover:opacity-100"
-          : "flex items-center gap-2 text-[0.7rem]"
+        dim ? "flex items-center gap-2 text-[0.7rem] opacity-60 hover:opacity-100" : "flex items-center gap-2 text-[0.7rem]"
       }
     >
       <span className="w-[110px] shrink-0 truncate text-gray-800 dark:text-gray-200" title={token}>
@@ -351,9 +347,7 @@ function TokenRow({
   return (
     <label
       className={
-        dim
-          ? "flex items-center gap-2 text-[0.7rem] opacity-60 hover:opacity-100"
-          : "flex items-center gap-2 text-[0.7rem]"
+        dim ? "flex items-center gap-2 text-[0.7rem] opacity-60 hover:opacity-100" : "flex items-center gap-2 text-[0.7rem]"
       }
     >
       <span
@@ -370,10 +364,7 @@ function TokenRow({
         />
       </span>
       <span className="min-w-0 flex-1 truncate text-gray-800 dark:text-gray-200">{token}</span>
-      <span
-        className="max-w-[12ch] truncate font-mono text-[0.6rem] text-gray-500 dark:text-gray-400"
-        title={tooltip}
-      >
+      <span className="max-w-[12ch] truncate font-mono text-[0.6rem] text-gray-500 dark:text-gray-400" title={tooltip}>
         {current}
       </span>
     </label>
@@ -508,10 +499,7 @@ export default function ColorsetPicker({
   // `--my-bespoke: var(--accent-weak)` and the target has to exist somewhere
   // in the cascade for the var() to resolve.
   const mergedLight = useMemo(
-    () =>
-      draftColorset
-        ? { ...(draftColorset.extras ?? {}), ...draftColorset.colors, ...editsLight }
-        : undefined,
+    () => (draftColorset ? { ...(draftColorset.extras ?? {}), ...draftColorset.colors, ...editsLight } : undefined),
     [draftColorset, editsLight]
   );
   const mergedDark = useMemo(() => {
@@ -578,9 +566,7 @@ export default function ColorsetPicker({
       return;
     }
     const hasAny =
-      Object.keys(editsLight).length > 0 ||
-      Object.keys(editsDark).length > 0 ||
-      Object.keys(editsStructural).length > 0;
+      Object.keys(editsLight).length > 0 || Object.keys(editsDark).length > 0 || Object.keys(editsStructural).length > 0;
     try {
       if (!hasAny) {
         localStorage.removeItem(storageKey);
@@ -689,14 +675,9 @@ export default function ColorsetPicker({
   const darkEditCount = Object.keys(editsDark).length;
   const sections = useMemo(() => {
     if (!draftColorset) return null;
-    const sourceCanonical =
-      mode === "light" ? draftColorset.colors : draftColorset.colorsDark ?? {};
-    const fallbackBase =
-      mode === "light"
-        ? draftColorset.colors
-        : draftColorset.colorsDark ?? draftColorset.colors;
-    const sourceExtras =
-      mode === "light" ? draftColorset.extras : draftColorset.extrasDark;
+    const sourceCanonical = mode === "light" ? draftColorset.colors : (draftColorset.colorsDark ?? {});
+    const fallbackBase = mode === "light" ? draftColorset.colors : (draftColorset.colorsDark ?? draftColorset.colors);
+    const sourceExtras = mode === "light" ? draftColorset.extras : draftColorset.extrasDark;
     const derived = deriveCanonical(fallbackBase);
 
     const defined: [string, string][] = [];
@@ -732,9 +713,7 @@ export default function ColorsetPicker({
         unused.push([token, derived[token] ?? ""]);
       }
     }
-    const extras: [string, string][] = draftColorset.structuralExtras
-      ? Object.entries(draftColorset.structuralExtras)
-      : [];
+    const extras: [string, string][] = draftColorset.structuralExtras ? Object.entries(draftColorset.structuralExtras) : [];
     return { defined, unused, extras };
   }, [draftColorset]);
   const structuralEditCount = Object.keys(editsStructural).length;
@@ -780,15 +759,10 @@ export default function ColorsetPicker({
     ];
     for (const name of Object.keys(merged)) {
       const value = merged[name];
-      const isCanonicalColor = CANONICAL_TOKENS.includes(
-        name as (typeof CANONICAL_TOKENS)[number]
-      );
-      const isCanonicalStructural = CANONICAL_STRUCTURAL.includes(
-        name as (typeof CANONICAL_STRUCTURAL)[number]
-      );
+      const isCanonicalColor = CANONICAL_TOKENS.includes(name as (typeof CANONICAL_TOKENS)[number]);
+      const isCanonicalStructural = CANONICAL_STRUCTURAL.includes(name as (typeof CANONICAL_STRUCTURAL)[number]);
       const isCanonical = isCanonicalColor || isCanonicalStructural;
-      const isStructural =
-        isCanonicalStructural || STRUCTURAL_HINTS.some((hint) => name.includes(hint));
+      const isStructural = isCanonicalStructural || STRUCTURAL_HINTS.some((hint) => name.includes(hint));
       const row: Row = { name, value, isCanonical };
       if (isStructural) {
         if (isCanonicalStructural) canonicalStructuralRows.push(row);
@@ -859,9 +833,7 @@ export default function ColorsetPicker({
             className="fixed z-[10000] flex flex-col gap-2 rounded-md border-2 border-black bg-white p-3 shadow-[3px_3px_0px_0px_black] dark:border-gray-700 dark:bg-gray-900"
           >
             <div className="flex items-baseline justify-between gap-3 border-b-2 border-black pb-2 dark:border-gray-700">
-              <span className="text-[0.65rem] font-bold uppercase tracking-wider text-gray-900 dark:text-gray-100">
-                Palette
-              </span>
+              <span className="text-[0.65rem] font-bold uppercase tracking-wider text-gray-900 dark:text-gray-100">Palette</span>
               {onRegenerate && draftColorset && (
                 <button
                   type="button"
@@ -888,12 +860,7 @@ export default function ColorsetPicker({
                 {options
                   .filter((t) => t.slug !== themeSlug)
                   .map((t) => (
-                    <Swatch
-                      key={t.slug}
-                      theme={t}
-                      isSelected={t.slug === draftSlug}
-                      onClick={() => handleSwatchClick(t.slug)}
-                    />
+                    <Swatch key={t.slug} theme={t} isSelected={t.slug === draftSlug} onClick={() => handleSwatchClick(t.slug)} />
                   ))}
               </div>
 
@@ -941,9 +908,7 @@ export default function ColorsetPicker({
                             />
                           )}
                           {mode === "dark" && draftColorset.colorsDark === undefined && darkEditCount === 0 && (
-                            <span className="ml-1 normal-case text-[0.55rem] font-normal text-gray-400">
-                              (none defined)
-                            </span>
+                            <span className="ml-1 normal-case text-[0.55rem] font-normal text-gray-400">(none defined)</span>
                           )}
                         </button>
                       </div>
@@ -1038,10 +1003,7 @@ export default function ColorsetPicker({
                         )}
                         {sections.unused.length > 0 && (
                           <>
-                            <SectionHeader
-                              label="Standard (not defined — using fallback)"
-                              subtle
-                            />
+                            <SectionHeader label="Standard (not defined — using fallback)" subtle />
                             {sections.unused.map(([token, fallback]) => (
                               <TokenRow
                                 key={`unused-${token}`}
@@ -1078,11 +1040,7 @@ export default function ColorsetPicker({
                         {structuralSections.defined.length > 0 && (
                           <>
                             <SectionHeader
-                              label={
-                                structuralEditCount > 0
-                                  ? "Structural (mode-agnostic) •"
-                                  : "Structural (mode-agnostic)"
-                              }
+                              label={structuralEditCount > 0 ? "Structural (mode-agnostic) •" : "Structural (mode-agnostic)"}
                             />
                             {structuralSections.defined.map(([token, baseline]) => (
                               <StructuralRow
@@ -1097,10 +1055,7 @@ export default function ColorsetPicker({
                         )}
                         {structuralSections.unused.length > 0 && (
                           <>
-                            <SectionHeader
-                              label="Structural (not defined — using fallback)"
-                              subtle
-                            />
+                            <SectionHeader label="Structural (not defined — using fallback)" subtle />
                             {structuralSections.unused.map(([token, fallback]) => (
                               <StructuralRow
                                 key={`struct-unused-${token}`}
@@ -1152,7 +1107,16 @@ export default function ColorsetPicker({
         aria-label={buttonTheme ? `Palette: ${buttonTheme.name}` : "Pick a palette"}
         aria-expanded={open}
       >
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <svg
+          width="14"
+          height="14"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
           <circle cx="12" cy="12" r="10" />
           <circle cx="12" cy="6" r="1.5" fill="currentColor" stroke="none" />
           <circle cx="6.5" cy="11" r="1.5" fill="currentColor" stroke="none" />
@@ -1161,10 +1125,7 @@ export default function ColorsetPicker({
         </svg>
         {buttonTheme ? (
           <>
-            <span
-              className="inline-block h-2.5 w-2.5 shrink-0 rounded-full"
-              style={{ backgroundColor: buttonTheme.accentColor }}
-            />
+            <span className="inline-block h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: buttonTheme.accentColor }} />
             <span className="max-w-[100px] truncate">Palette</span>
           </>
         ) : (

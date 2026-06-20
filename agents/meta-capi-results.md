@@ -4,11 +4,11 @@ How to query, read, and interpret data from the Meta Conversions API (CAPI) pipe
 
 ## What fires and when
 
-| Event | Trigger | Client or Server | Gate |
-|---|---|---|---|
-| `PageView` | Worker fetch handler | Server-side | `?fbclid=` in URL |
-| `ViewContent` | `useEngagedVisit` hook → `/capi/engaged` | Client relay | `fbclid` in sessionStorage + engagement threshold |
-| `CompleteRegistration` | `useCapiCompleteRegistration` hook → `/capi/complete-registration` | Client relay | `fbclid` in sessionStorage + `user.createdAt` within 120 s |
+| Event                  | Trigger                                                            | Client or Server | Gate                                                       |
+| ---------------------- | ------------------------------------------------------------------ | ---------------- | ---------------------------------------------------------- |
+| `PageView`             | Worker fetch handler                                               | Server-side      | `?fbclid=` in URL                                          |
+| `ViewContent`          | `useEngagedVisit` hook → `/capi/engaged`                           | Client relay     | `fbclid` in sessionStorage + engagement threshold          |
+| `CompleteRegistration` | `useCapiCompleteRegistration` hook → `/capi/complete-registration` | Client relay     | `fbclid` in sessionStorage + `user.createdAt` within 120 s |
 
 All three events require an active Facebook click ID (`fbclid`) in the URL or sessionStorage. They are never fired for organic traffic.
 
@@ -27,6 +27,7 @@ curl "https://graph.facebook.com/v19.0/{PIXEL_ID}/diagnostics?access_token={TOKE
 ```
 
 **What to look for:**
+
 - `last_fired_time` — if more than 6 hours ago, no fbclid traffic has hit prod recently
 - `stats.data[].data` — expect `PageView` on any day with Facebook ad traffic; `ViewContent` after engaged sessions; `CompleteRegistration` only when new users sign up via ad click
 - `ViewContent` without any `CompleteRegistration` is normal — most engaged visitors don't sign up
@@ -38,6 +39,7 @@ wrangler tail vibes-diy-v2-prod --format pretty 2>&1 | grep "\[capi\]"
 ```
 
 Log lines to watch:
+
 - `[capi] network error sending ...` — Meta API unreachable
 - `[capi] non-ok ... response` + status code — Meta rejected the payload (check `fbc` format, `access_token`)
 - `[referer] https://good.vibes.diy/path GET /vibe/...` — external navigation from marketing site; full path should be present (was broken pre-p2.3.17, fixed)
@@ -49,6 +51,7 @@ No log lines for CAPI means either no fbclid traffic or events are firing silent
 The logpush-etl worker (separate from the CAPI worker) reads Cloudflare Workers Trace Events from R2 and writes to `RefererEvents`. See [`agents/attribution-pipeline.md`](attribution-pipeline.md) for setup status — **as of 2026-05-19 the Logpush job and Neon secret have not been configured yet**, so this table may be empty.
 
 When operational:
+
 ```sql
 SELECT referer_host, referer_path, req_pathname, COUNT(*) as hits
 FROM "RefererEvents"
@@ -71,10 +74,12 @@ PageView (every fbclid visit)
 ```
 
 **Normal ratios:**
+
 - ViewContent / PageView ≈ 10–40% (depends on ad targeting quality)
 - CompleteRegistration / PageView < 5% (most visitors don't sign up on first visit)
 
 **Red flags:**
+
 - `PageView` firing but no `ViewContent` — `useEngagedVisit` may not be wiring sessionStorage correctly, or engagement threshold not being crossed (users bouncing immediately)
 - `CompleteRegistration` firing for users with old `createdAt` — the 120 s window guard in `useCapiCompleteRegistration` is broken
 - Events show in Meta Test Events but not in production stats — likely using test event code in prod; remove it
@@ -103,13 +108,13 @@ All events use server-side CAPI (no browser pixel). Key fields:
 
 ## Common issues
 
-| Symptom | Likely cause | Check |
-|---|---|---|
-| No events at all | No fbclid traffic hitting prod | Confirm active Facebook ad campaign with `?fbclid=` URLs |
-| `PageView` only, nothing else | sessionStorage not persisting across navigation | Test manually: visit `/?fbclid=test`, stay on page, check sessionStorage in DevTools |
-| Match quality warning in Meta | `fbc` format wrong or `client_ip_address` empty | Check CF-Connecting-IP header is populated; check `fbc` format in Worker logs |
-| Duplicate events | `capi_engaged_fired` / `capi_cr_fired` sessionStorage keys not being set | Check hook logic; sessionStorage resets per tab, not per session |
-| `CompleteRegistration` not firing | User signed up > 120 s after fbclid landing, or `createdAt` null (OAuth) defaults to `Date.now()` | Increase `NEW_USER_WINDOW_MS` or add cross-session persistence if needed |
+| Symptom                           | Likely cause                                                                                      | Check                                                                                |
+| --------------------------------- | ------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------ |
+| No events at all                  | No fbclid traffic hitting prod                                                                    | Confirm active Facebook ad campaign with `?fbclid=` URLs                             |
+| `PageView` only, nothing else     | sessionStorage not persisting across navigation                                                   | Test manually: visit `/?fbclid=test`, stay on page, check sessionStorage in DevTools |
+| Match quality warning in Meta     | `fbc` format wrong or `client_ip_address` empty                                                   | Check CF-Connecting-IP header is populated; check `fbc` format in Worker logs        |
+| Duplicate events                  | `capi_engaged_fired` / `capi_cr_fired` sessionStorage keys not being set                          | Check hook logic; sessionStorage resets per tab, not per session                     |
+| `CompleteRegistration` not firing | User signed up > 120 s after fbclid landing, or `createdAt` null (OAuth) defaults to `Date.now()` | Increase `NEW_USER_WINDOW_MS` or add cross-session persistence if needed             |
 
 ## Source files
 

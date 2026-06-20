@@ -15,15 +15,18 @@
 ## File Map
 
 **Modified:**
+
 - `vibes.diy/api/types/chat.ts` — add `"supports?"` to `Model` arktype schema (1 line).
 - `vibes.diy/api/svc/models.json` — data refresh (~60 edits; described below).
 - `vibes.diy/pkg/app/components/ModelSettingsCards.tsx` — apply `filterModelsByUsage` in `ModelSection`.
 
 **Created:**
+
 - `vibes.diy/pkg/app/components/filterModelsByUsage.ts` — pure helper.
 - `vibes.diy/tests/app/filterModelsByUsage.test.ts` — unit tests for the helper.
 
 **Unchanged:**
+
 - `vibes.diy/api/svc/public/list-models.ts` — API returns full catalog; filtering stays in UI.
 - `vibes.diy/pkg/app/routes/settings.tsx` — no structural change.
 
@@ -32,6 +35,7 @@
 ## Task 1: Add `supports` field to `Model` arktype schema
 
 **Files:**
+
 - Modify: `vibes.diy/api/types/chat.ts:21-27`
 
 - [ ] **Step 1: Add the `supports?` property to the `Model` arktype definition**
@@ -95,6 +99,7 @@ git commit -m "feat(api-types): add supports field to Model schema"
 ## Task 2: Create and test `filterModelsByUsage` helper
 
 **Files:**
+
 - Create: `vibes.diy/pkg/app/components/filterModelsByUsage.ts`
 - Create: `vibes.diy/tests/app/filterModelsByUsage.test.ts`
 
@@ -214,6 +219,7 @@ git commit -m "feat(settings): add filterModelsByUsage helper with tests"
 ## Task 3: Apply filter in `ModelSection`
 
 **Files:**
+
 - Modify: `vibes.diy/pkg/app/components/ModelSettingsCards.tsx:1-76`
 
 - [ ] **Step 1: Add the import**
@@ -309,6 +315,7 @@ git commit -m "feat(settings): filter ModelSection dropdowns by usage"
 ## Task 4: Add `supports` field to every existing entry in `models.json`
 
 **Files:**
+
 - Modify: `vibes.diy/api/svc/models.json` (all 30 entries get `"supports": ["chat", "app"]`)
 
 - [ ] **Step 1: Add `"supports": ["chat", "app"]` to every existing entry**
@@ -402,6 +409,7 @@ git commit -m "fix(models): tag supports on all entries, dedupe featured key"
 ## Task 5: Replace stale Google Gemini entries
 
 **Files:**
+
 - Modify: `vibes.diy/api/svc/models.json`
 
 - [ ] **Step 1: Rename `google/gemini-3-pro-preview` → `google/gemini-3.1-pro-preview`**
@@ -442,6 +450,7 @@ git commit -m "fix(models): replace stale gemini-3-pro-preview, remove dead flas
 ## Task 6: Add latest-generation chat/app entries
 
 **Files:**
+
 - Modify: `vibes.diy/api/svc/models.json`
 
 - [ ] **Step 1: Append the seven new chat/app entries to the array**
@@ -527,6 +536,7 @@ git commit -m "feat(models): add latest-generation chat/app entries (Opus 4.7, G
 ## Task 7: Replace image generation entries
 
 **Files:**
+
 - Modify: `vibes.diy/api/svc/models.json`
 
 - [ ] **Step 1: Update the existing `openai/gpt-5-image-mini` entry**
@@ -652,6 +662,7 @@ pnpm check
 Expected: format, build, test, and lint all pass. Exit code 0.
 
 If any step fails:
+
 - **Format errors:** run `pnpm format` and amend the most recent commit.
 - **Build/typecheck errors:** fix the reported files; if the error is in code this plan changed, re-examine the changes.
 - **Lint errors:** fix inline (no `--fix` shortcuts that mask real issues).
@@ -666,6 +677,7 @@ pnpm --filter @vibes.diy/pkg dev
 ```
 
 In the browser, log in, navigate to `/settings`, scroll to the "Default Models" card:
+
 - **Chat Model** dropdown: contains all chat/app-tagged entries (featured models at top if ordered). Does NOT contain any model whose id contains `image`.
 - **App Model** dropdown: same as Chat.
 - **Imaging Model** dropdown: contains exactly 6 entries — `gpt-5.4-image-2`, Nano Banana 2, Nano Banana Pro, gpt-5-image-mini, gpt-5-image, Nano Banana. First load pre-selects `GPT-5.4 Image 2`.

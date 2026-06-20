@@ -24,15 +24,7 @@
     "skipLibCheck": true,
     "types": ["node", "deno"]
   },
-  "include": [
-    "call-ai/**/*",
-    "img-vibes/**/*",
-    "vibes-diy/**/*",
-    "use-vibes/**/*",
-    "vibes.diy/**/*",
-    "prompts/**/*",
-    "eval/**/*"
-  ],
+  "include": ["call-ai/**/*", "img-vibes/**/*", "vibes-diy/**/*", "use-vibes/**/*", "vibes.diy/**/*", "prompts/**/*", "eval/**/*"],
   "exclude": [
     "vibes.diy/api/logpush-etl/**",
     "vibes.diy/tempo/**",

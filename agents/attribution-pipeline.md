@@ -8,20 +8,21 @@ Full setup instructions: [`vibes.diy/api/logpush-etl/SETUP.md`](../vibes.diy/api
 
 ## Status (2026-05-25)
 
-| Step | Status |
-|---|---|
-| R2 buckets (`vibes-diy-workers-logs`, `vibes-diy-workers-logs-dev`) | ✅ Created |
-| `RefererEvents` schema in Neon | ✅ Landed via c2.2.97 `drizzle:neon` |
-| CI wiring (`vibes.diy/actions/deploy/action.yaml`) | ✅ commit 820e1f80 |
-| Logpush job in CF dashboard (Workers Trace Events → R2) | ✅ Delivering — `logpush = true` at env root in wrangler.toml (not inside observability.logs) |
-| `NEON_DATABASE_URL` secret on ETL worker | ✅ In GH env |
-| Clerk `"attribution"` access grant | ✅ Skip=true for all @vibes.diy accounts |
+| Step                                                                | Status                                                                                        |
+| ------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- |
+| R2 buckets (`vibes-diy-workers-logs`, `vibes-diy-workers-logs-dev`) | ✅ Created                                                                                    |
+| `RefererEvents` schema in Neon                                      | ✅ Landed via c2.2.97 `drizzle:neon`                                                          |
+| CI wiring (`vibes.diy/actions/deploy/action.yaml`)                  | ✅ commit 820e1f80                                                                            |
+| Logpush job in CF dashboard (Workers Trace Events → R2)             | ✅ Delivering — `logpush = true` at env root in wrangler.toml (not inside observability.logs) |
+| `NEON_DATABASE_URL` secret on ETL worker                            | ✅ In GH env                                                                                  |
+| Clerk `"attribution"` access grant                                  | ✅ Skip=true for all @vibes.diy accounts                                                      |
 
 ## Remaining steps
 
 ### 1. Configure Logpush job (CF dashboard, one-time)
 
 Account Home → Analytics & Logs → Logpush → Create a job:
+
 - Dataset: **Workers Trace Events**
 - Filter: `ScriptName eq "vibes-diy-v2-cli"`
 - Destination: R2, bucket `vibes-diy-workers-logs`, path prefix `{DATE}/`

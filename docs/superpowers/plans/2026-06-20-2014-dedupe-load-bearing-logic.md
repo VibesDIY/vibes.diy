@@ -9,7 +9,8 @@
 **Tech Stack:** TypeScript, pnpm workspaces, arktype, drizzle-orm, vitest.
 
 **Ground-truth notes (verified on `main` @ 2b9cd59, 2026-06-20):**
-- `@vibes.diy/api-types` and `@vibes.diy/vibe-types` **depend on each other** (`api/types/package.json:21` ↔ `vibe/types/package.json:13`); `vibe/types/index.ts:1` imports the *values* `dbAcl`/`queryFilter` from api-types. So vibe-runtime (→ vibe-types → api-types) already transitively pulls api-types at runtime; the "kept local to avoid api-types dep" comment in `db-acl-allows.ts:3-4` is already moot.
+
+- `@vibes.diy/api-types` and `@vibes.diy/vibe-types` **depend on each other** (`api/types/package.json:21` ↔ `vibe/types/package.json:13`); `vibe/types/index.ts:1` imports the _values_ `dbAcl`/`queryFilter` from api-types. So vibe-runtime (→ vibe-types → api-types) already transitively pulls api-types at runtime; the "kept local to avoid api-types dep" comment in `db-acl-allows.ts:3-4` is already moot.
 - `vibe/types/index.ts:7` re-exports api-types' `DbAcl`. The shared leaf must become the single origin of structural `DbAcl`/`DbAclSubject`, with api-types re-exporting from it (Charlie Q2). Watch for a duplicate-`DbAcl`-export collision in the barrel.
 - The current `inGroup`/`aclAllows`/`canRead`/`canWrite` bodies in `vibe/runtime/db-acl-allows.ts` and `api/svc/public/db-acl-resolver.ts` are byte-identical; `access-helpers.ts:10-11` holds the host `canRead`/`canWrite`.
 
@@ -23,7 +24,7 @@
 
 - **Create** `vibes.diy/vibe/types/db-acl-eval.ts` — leaf module: structural `DbAcl`/`DbAclSubject` + `canRead`/`canWrite`/`inGroup`/`aclAllows`. Imports nothing from `@vibes.diy/api-types`.
 - **Modify** `vibes.diy/vibe/types/index.ts` — re-export the leaf; resolve the `DbAcl` re-export so there is exactly one `DbAcl` exported.
-- **Modify** `vibes.diy/api/types/db-acls.ts` — keep the `dbAcl`/`dbAclSubject` arktype *validators*; make the exported structural `DbAcl`/`DbAclSubject` types re-exports of the leaf (single origin).
+- **Modify** `vibes.diy/api/types/db-acls.ts` — keep the `dbAcl`/`dbAclSubject` arktype _validators_; make the exported structural `DbAcl`/`DbAclSubject` types re-exports of the leaf (single origin).
 - **Modify** `vibes.diy/vibe/runtime/db-acl-allows.ts` — delete local bodies; re-export from the shared module (preserve current export surface for `@vibes.diy/vibe-runtime` consumers + the parity test).
 - **Modify** `vibes.diy/api/svc/public/db-acl-resolver.ts` — import `inGroup`/`aclAllows` from the shared module; delete local copies. Keep `resolveDbAcl`/`checkDirectChannelAccess`.
 - **Modify** `vibes.diy/api/svc/public/access-helpers.ts` — re-export `canRead`/`canWrite` from the shared module (shim) instead of defining them.
@@ -61,8 +62,7 @@ export interface DbAcl {
 
 export const canRead = (level: DocAccessLevel): boolean => level === "override" || level === "editor" || level === "viewer";
 
-export const canWrite = (level: DocAccessLevel): boolean =>
-  level === "override" || level === "editor" || level === "submitter";
+export const canWrite = (level: DocAccessLevel): boolean => level === "override" || level === "editor" || level === "submitter";
 
 export function inGroup(level: DocAccessLevel, group: DbAclSubject): boolean {
   if (level === "override") return true;
@@ -106,9 +106,9 @@ git commit -m "refactor(acl): add shared db-acl-eval leaf module in vibe-types"
 export type { DbAcl, DbAclSubject } from "@vibes.diy/vibe-types/db-acl-eval";
 ```
 
-Resolve the leaf import path: if `@vibes.diy/vibe-types/db-acl-eval` does not already resolve (check `vibe/types/package.json` `exports`), prefer adding the leaf to the existing barrel and importing `from "@vibes.diy/vibe-types"` **only if** that does not reintroduce the duplicate-`DbAcl` export. If a subpath export entry is unavoidable, add the minimal `exports` map entry and note it in the PR (the spec's import-map constraint says verify it resolves without *new* entries — if one is required, call it out).
+Resolve the leaf import path: if `@vibes.diy/vibe-types/db-acl-eval` does not already resolve (check `vibe/types/package.json` `exports`), prefer adding the leaf to the existing barrel and importing `from "@vibes.diy/vibe-types"` **only if** that does not reintroduce the duplicate-`DbAcl` export. If a subpath export entry is unavoidable, add the minimal `exports` map entry and note it in the PR (the spec's import-map constraint says verify it resolves without _new_ entries — if one is required, call it out).
 
-- [ ] **Step 2: vibe-types barrel exposes the leaf without colliding.** In `vibe/types/index.ts`, the line `import { dbAcl, queryFilter, type DbAcl } from "@vibes.diy/api-types";` + `export type { DbAcl };` currently re-exports api-types' `DbAcl`. Since api-types' `DbAcl` now *originates* from the leaf, re-export `DbAcl`/`DbAclSubject` from the leaf instead and drop the `type DbAcl` from the api-types import:
+- [ ] **Step 2: vibe-types barrel exposes the leaf without colliding.** In `vibe/types/index.ts`, the line `import { dbAcl, queryFilter, type DbAcl } from "@vibes.diy/api-types";` + `export type { DbAcl };` currently re-exports api-types' `DbAcl`. Since api-types' `DbAcl` now _originates_ from the leaf, re-export `DbAcl`/`DbAclSubject` from the leaf instead and drop the `type DbAcl` from the api-types import:
 
 ```ts
 import { dbAcl, queryFilter } from "@vibes.diy/api-types";
@@ -221,6 +221,7 @@ Expected: format + build + test + lint PASS (rerun any flaky suite in isolation 
 ```bash
 rg -ln "export function inGroup|export (const|function) aclAllows" vibes.diy --glob '*.ts' --glob '!*node_modules*' --glob '!*.test.*'
 ```
+
 Expected: only `vibes.diy/vibe/types/db-acl-eval.ts`.
 
 - [ ] **Step 3: Push + open PR**, label `agent-created`, comment @-mention `@CharlieHelps`, subscribe.
@@ -256,7 +257,7 @@ import { VibesApiSQLCtx } from "../types.js";
 export async function selectLatestAppPerSlug(
   vctx: VibesApiSQLCtx,
   req: { readonly userSlug: string; readonly appSlug: string }
-): Promise<typeof rows[number] | undefined> {
+): Promise<(typeof rows)[number] | undefined> {
   // ...moved query body verbatim; return rows[rows.length - 1];
 }
 ```

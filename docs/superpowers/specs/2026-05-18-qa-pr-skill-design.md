@@ -17,14 +17,14 @@ and tracked separately.
 
 ## Decisions captured during brainstorm
 
-| Decision | Choice |
-|---|---|
-| Trigger | Manual: dev runs `/qa-pr <PR#>` in a Claude Code session |
-| SOP coverage | Full spine, steps 1–7 (sign-up → in-app → edit → publish → live URL → remix) |
-| Cold-account strategy | Gmail plus-aliasing against a dedicated mailbox, OTP polled via Gmail API |
-| Browser driver | `mcp__chrome-devtools__*` only — no Playwright, no `claude-in-chrome` |
-| Output | Triage report file + auto-posted PR comment (no confirmation prompt) |
-| Issue filing | Stays manual; the skill never opens GH issues |
+| Decision              | Choice                                                                       |
+| --------------------- | ---------------------------------------------------------------------------- |
+| Trigger               | Manual: dev runs `/qa-pr <PR#>` in a Claude Code session                     |
+| SOP coverage          | Full spine, steps 1–7 (sign-up → in-app → edit → publish → live URL → remix) |
+| Cold-account strategy | Gmail plus-aliasing against a dedicated mailbox, OTP polled via Gmail API    |
+| Browser driver        | `mcp__chrome-devtools__*` only — no Playwright, no `claude-in-chrome`        |
+| Output                | Triage report file + auto-posted PR comment (no confirmation prompt)         |
+| Issue filing          | Stays manual; the skill never opens GH issues                                |
 
 ## Canonical location for team-shared Claude Code skills
 
@@ -56,7 +56,7 @@ stay ignored while team-shared skills are checked in.
 + !.claude/skills/
 ```
 
-The `.claude/*` form ignores the *contents* of `.claude/` while keeping the
+The `.claude/*` form ignores the _contents_ of `.claude/` while keeping the
 directory tracked, which is the only pattern that allows un-ignoring
 subdirectories.
 
@@ -66,7 +66,7 @@ subdirectories.
 context by reference from [`CLAUDE.md`](../../../CLAUDE.md)). `.claude/skills/`
 is for invokable, Claude-Code-discovered skills with frontmatter and
 optional bundled resources. The two are deliberately distinct: `agents/`
-documents *how we work*; `.claude/skills/` provides *things we invoke*.
+documents _how we work_; `.claude/skills/` provides _things we invoke_.
 
 ### Onboarding
 
@@ -102,7 +102,7 @@ description: Run an agent-driven QA pass against a PR preview URL using the kmik
 ---
 ```
 
-The description is intentionally pushy on the *when-to-trigger* side. After
+The description is intentionally pushy on the _when-to-trigger_ side. After
 the skill is validated on a real PR, the skill-creator description
 optimizer (see [skill-creator description optimization](https://github.com/anthropics/skills))
 is run against eval queries to refine it.
@@ -127,74 +127,74 @@ is run against eval queries to refine it.
    first and treat it as source-of-truth for the spine and disciplines.
 5. **Spine.** Restate each of the 7 steps as one-paragraph imperative
    orchestration, pointing the agent back at the SOP for full context.
-   Each step ends: *before moving on, capture screenshot, console
-   messages, failed network requests, one-line state note.*
-6. **Agent-specific discipline rules** — each rule includes its *why*:
-   - *Use read-only chrome-devtools tools to inspect before interacting.*
+   Each step ends: _before moving on, capture screenshot, console
+   messages, failed network requests, one-line state note._
+6. **Agent-specific discipline rules** — each rule includes its _why_:
+   - _Use read-only chrome-devtools tools to inspect before interacting._
      Reading state before clicking surfaces errors a click would mask.
-   - *Reproduce before recording a finding.* LLMs hallucinate transient
+   - _Reproduce before recording a finding._ LLMs hallucinate transient
      errors; one reload before filing kills the majority of those.
-   - *If a CTA's outcome is ambiguous, click it and wait — don't trust
-     surrounding copy.* This is literally
+   - _If a CTA's outcome is ambiguous, click it and wait — don't trust
+     surrounding copy._ This is literally
      [#1704](https://github.com/VibesDIY/vibes.diy/issues/1704); the skill
      must not commit the exact failure the SOP is designed to catch.
-   - *After 3+ findings on a single panel, write one cross-cutting pattern
-     finding instead.* Matches kmikeym discipline #4.
-   - *Use `vibes.diy/...` URLs, never `cli-v2.vibesdiy.net/...` directly.*
+   - _After 3+ findings on a single panel, write one cross-cutting pattern
+     finding instead._ Matches kmikeym discipline #4.
+   - _Use `vibes.diy/...` URLs, never `cli-v2.vibesdiy.net/...` directly._
      Stable-entry routing relies on `vibes.diy`-host cookies
      ([`agents/chrome-mcp-debug.md`](../../../agents/chrome-mcp-debug.md),
      [`agents/environments.md`](../../../agents/environments.md)).
-   - *Pick a fresh prompt every run* from `references/demo-prompts.md` —
+   - _Pick a fresh prompt every run_ from `references/demo-prompts.md` —
      reusing prompts narrows coverage to the happy path the product has
      been tuned against (kmikeym's note in the SOP).
 7. **Output schema.** The agent populates a TypeScript-shaped object by
    editing the working triage file as it goes. Fields:
    ```ts
    type QAResult = {
-     pr_number: number
-     preview_url: string
-     pr_verdict: "pass" | "fail" | "pass-with-caveats"
-     pr_verdict_reasoning: string
+     pr_number: number;
+     preview_url: string;
+     pr_verdict: "pass" | "fail" | "pass-with-caveats";
+     pr_verdict_reasoning: string;
      test_scope: {
-       account_alias: string
-       browser_profile: "clean-chrome-devtools-mcp"
-       build_commit_sha: string
-       path_tested: string[]
-       path_not_tested: string[]
-       models_in_play: { chat: string; app: string }
-       notable_conditions: string[]
-     }
+       account_alias: string;
+       browser_profile: "clean-chrome-devtools-mcp";
+       build_commit_sha: string;
+       path_tested: string[];
+       path_not_tested: string[];
+       models_in_play: { chat: string; app: string };
+       notable_conditions: string[];
+     };
      findings: Array<{
-       severity: "P0" | "P1" | "P2"
-       title: string
-       description: string
-       why_it_matters: string
-       repro_steps: string[]
-       screenshots: string[]   // file paths inside qa-reports/{run_id}/
-       related_existing_issues?: string[]
-     }>
+       severity: "P0" | "P1" | "P2";
+       title: string;
+       description: string;
+       why_it_matters: string;
+       repro_steps: string[];
+       screenshots: string[]; // file paths inside qa-reports/{run_id}/
+       related_existing_issues?: string[];
+     }>;
      cross_cutting_patterns: Array<{
-       theme: string
-       findings: string[]
-       suggested_root_cause: string
-     }>
-     recommended_fix_order: string[]
-     methodology_notes: { session_length_min: number; notable_conditions: string[] }
-   }
+       theme: string;
+       findings: string[];
+       suggested_root_cause: string;
+     }>;
+     recommended_fix_order: string[];
+     methodology_notes: { session_length_min: number; notable_conditions: string[] };
+   };
    ```
 8. **Render & post.** Agent finalizes `qa-reports/{run_id}/triage.md` from
    the schema, then runs
    `gh pr comment {N} --body-file qa-reports/{run_id}/triage.md` directly.
    No confirmation prompt — see "Authorization" below.
 9. **Failure-mode handling.** One paragraph each:
-   - *Preview URL not ready:* poll `gh pr view` for up to 10 minutes.
-   - *Sign-up OTP times out:* abort the run, post a triage with
+   - _Preview URL not ready:_ poll `gh pr view` for up to 10 minutes.
+   - _Sign-up OTP times out:_ abort the run, post a triage with
      `pr_verdict = "fail"` and the abort reason as the single P0 finding.
-   - *Generation never completes (>5 min):* file as P0 and continue with
+   - _Generation never completes (>5 min):_ file as P0 and continue with
      a partial run, marking remaining steps unreached.
-   - *Model degraded mid-run:* record under `notable_conditions` and
+   - _Model degraded mid-run:_ record under `notable_conditions` and
      continue (matches the SOP's stated discipline).
-   - *chrome-devtools MCP crashes:* surface the tool error, abort the
+   - _chrome-devtools MCP crashes:_ surface the tool error, abort the
      run, do not post a partial triage.
 10. **Cleanup.** Append the alias used to
     `qa-reports/aliases.jsonl`. v1 does not auto-wipe accounts on the
@@ -215,7 +215,7 @@ exception:
 
 The authorization is documented in `SKILL.md` body and again in
 [`.claude/skills/qa-pr/SKILL.md`](.claude/skills/qa-pr/SKILL.md)'s
-*Authorization* section, so it is durably visible to anyone reviewing the
+_Authorization_ section, so it is durably visible to anyone reviewing the
 skill.
 
 ### Gmail OTP helper

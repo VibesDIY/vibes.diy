@@ -381,18 +381,17 @@
   <strong>What this is.</strong> Firefly is the database and sync layer built into vibes.diy. Access functions live in
   <code>/access.js</code>, a separate file in the vibe's filesystem alongside <code>/App.jsx</code>. Each
   <strong>named export</strong> maps to a database name — <code>export function chat(...)</code> gates
-  <code>useFireproof("chat")</code>. An <code>export default</code> function acts as a catch-all, gating any database
-  without its own named export; named exports always take precedence. The server
-  discovers <code>/access.js</code> automatically and runs the matching export on every write — including deletes — before storing
-  the document. It is the single checkpoint for validation, routing, and access grants. This document specifies the access function
-  API and its return type, <code>AccessDescriptor</code>.
+  <code>useFireproof("chat")</code>. An <code>export default</code> function acts as a catch-all, gating any database without its
+  own named export; named exports always take precedence. The server discovers <code>/access.js</code> automatically and runs the
+  matching export on every write — including deletes — before storing the document. It is the single checkpoint for validation,
+  routing, and access grants. This document specifies the access function API and its return type, <code>AccessDescriptor</code>.
   <br /><br />
-  <strong>The door and the room.</strong> Access functions are <em>the room</em> — they govern what members can do with data
-  once inside the app. The per-vibe membership system is <em>the door</em> — it decides who can see the app at all. Once a user
-  is approved as a member (through the door), the access function is the sole authority for data permissions. The door's only
-  job is: are you in or out? <code>grant.public</code> means "any member can read this channel" — no specific channel grant
-  needed beyond membership. Whether the door itself is open to the world (public toggle ON) or requires approval (public toggle
-  OFF) is a separate, app-level decision.
+  <strong>The door and the room.</strong> Access functions are <em>the room</em> — they govern what members can do with data once
+  inside the app. The per-vibe membership system is <em>the door</em> — it decides who can see the app at all. Once a user is
+  approved as a member (through the door), the access function is the sole authority for data permissions. The door's only job is:
+  are you in or out? <code>grant.public</code> means "any member can read this channel" — no specific channel grant needed beyond
+  membership. Whether the door itself is open to the world (public toggle ON) or requires approval (public toggle OFF) is a
+  separate, app-level decision.
 </div>
 
 <p class="prose">
@@ -1000,7 +999,8 @@
 
     <div class="doc invite">
       <div class="doc-type">
-        survey-response <span style="font-weight: 400; font-size: 10px">(anonymous submit via allowAnonymous, owner + feedback-team read)</span>
+        survey-response
+        <span style="font-weight: 400; font-size: 10px">(anonymous submit via allowAnonymous, owner + feedback-team read)</span>
       </div>
       <div class="doc-field">type: <span>"survey-response"</span></div>
       <div class="doc-field">answers: <span>[…]</span></div>
@@ -1118,9 +1118,7 @@
       <span class="icon">👤</span><span class="label">admin writes</span><span class="value">survey-questions</span>
     </div>
     <div class="arrow green">→</div>
-    <div class="step">
-      <span class="icon">⚡</span><span class="label">isOwner check</span><span class="value">owner ✓</span>
-    </div>
+    <div class="step"><span class="icon">⚡</span><span class="label">isOwner check</span><span class="value">owner ✓</span></div>
     <div class="arrow green">→</div>
     <div class="step">
       <span class="icon">📥</span><span class="label">routed to</span><span class="value">inbound-responses</span>
@@ -1275,10 +1273,9 @@
 
 <p class="prose">
   <strong>Why <code>doc.open</code> on the question doc is trustworthy.</strong> The access function dispatches on
-  <code>doc.type</code> and derives the grant shape from <code>doc.open</code>. This field is set by the writer — but only the
-  owner can write question docs (<code>user.isOwner</code> enforces this). A non-owner cannot write a
-  question doc at all, so they cannot spoof <code>doc.open</code>. The security property follows from the write gate, not from
-  trusting the field in isolation.
+  <code>doc.type</code> and derives the grant shape from <code>doc.open</code>. This field is set by the writer — but only the owner
+  can write question docs (<code>user.isOwner</code> enforces this). A non-owner cannot write a question doc at all, so they cannot
+  spoof <code>doc.open</code>. The security property follows from the write gate, not from trusting the field in isolation.
 </p>
 
 <!-- Full access function -->
@@ -1381,10 +1378,10 @@
   grant fields reduce by union across current docs. Deletion is automatic revocation. <code>user</code> is null for anonymous
   requests; the runtime rejects null-user writes unless the return value explicitly sets <code>allowAnonymous: true</code> — this
   prevents the common footgun where a function returns without inspecting <code>user</code> and inadvertently opens anonymous
-  writes. <code>grant.public</code> makes channels readable by any member (anyone through the door) without a specific channel
-  grant — whether non-members can also read depends on the app-level public toggle (the door). Anonymous write is always governed
-  by <code>allowAnonymous</code> independently. Role and channel names should be scoped to application-level identifiers (survey
-  ID, team ID) to prevent cross-namespace leakage in shared databases.
+  writes. <code>grant.public</code> makes channels readable by any member (anyone through the door) without a specific channel grant
+  — whether non-members can also read depends on the app-level public toggle (the door). Anonymous write is always governed by
+  <code>allowAnonymous</code> independently. Role and channel names should be scoped to application-level identifiers (survey ID,
+  team ID) to prevent cross-namespace leakage in shared databases.
 </div>
 
 <hr style="border: none; border-top: 2px solid #e2e8f0; margin: 40px 0 32px" />

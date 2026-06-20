@@ -1,4 +1,4 @@
-import type { SuperThis , JWKPrivate, DeviceIdKeyBagItem } from "@vibes.diy/identity";
+import type { SuperThis, JWKPrivate, DeviceIdKeyBagItem } from "@vibes.diy/identity";
 import { JWKPrivateSchema } from "@vibes.diy/identity";
 import { getKeyBag } from "@vibes.diy/identity/node";
 import { Buffer } from "node:buffer";
