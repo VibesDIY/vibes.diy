@@ -105,6 +105,11 @@ export default function VibeIframeWrapper() {
   useDocumentTitle(`${ownerHandle} - ${appSlug} - vibes.diy`);
   // const [searchParam] = useSearchParams();
   const vctx = useVibesDiy();
+  // Vibe-scoped doc-plane ops (e.g. subscribeViewerGrants) run on AppSessions
+  // (vibeApi) so doc-changed fan-out + local access-fn eval happen locally;
+  // chatApi fallback for safety. sharedHandlers RPCs stay on chatApi until
+  // Track B (SharedSessions). (#2265 A1)
+  const dataApi = vctx.vibeApi ?? vctx.chatApi;
   // Iframe URL: prefer the SSR-computed value from the loader so the
   // <iframe src=...> ships in the first byte of HTML and the browser can
   // start fetching the iframe document without waiting for React hydration.
@@ -458,13 +463,13 @@ export default function VibeIframeWrapper() {
 
   useEffect(() => {
     if (!authSignedIn || !ownerHandle || !appSlug) return;
-    void vctx.chatApi.subscribeViewerGrants({ appSlug, ownerHandle });
-    const unsubscribe = vctx.chatApi.onViewerGrantsChanged((evt) => {
+    void dataApi.subscribeViewerGrants({ appSlug, ownerHandle });
+    const unsubscribe = dataApi.onViewerGrantsChanged((evt) => {
       if (evt.ownerHandle !== ownerHandle || evt.appSlug !== appSlug) return;
       void refreshViewerFromWhoAmI();
     });
     return unsubscribe;
-  }, [authSignedIn, ownerHandle, appSlug, refreshViewerFromWhoAmI, vctx.chatApi]);
+  }, [authSignedIn, ownerHandle, appSlug, refreshViewerFromWhoAmI, dataApi]);
 
   const shareModal = useShareModal({
     ownerHandle: ownerHandle ?? "",
