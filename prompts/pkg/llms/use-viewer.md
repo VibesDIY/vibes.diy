@@ -40,6 +40,29 @@ export default function App() {
 - `can(action, dbName?)` — `true`/`false` for `"read"`, `"write"`, `"delete"`. Checks app-level ACLs. In most apps `viewer` and `access.hasRole()`/`access.hasChannel()` are the right gates instead.
 - `ViewerTag` — ready-made user pill; see the ViewerTag section below.
 
+## The "it says log in but I already am" bug
+
+The most common gating mistake ships a write surface that is permanently stuck on the signed-out message, so a signed-in user — often the owner — is told to log in. Two ways it happens:
+
+1. **Gating on the wrong condition.** If `access.js` only lets the owner write (`if (!user.isOwner) throw { forbidden: "owner only" }`), gate the write UI on `isOwner`, not on `viewer`. Gating on `viewer` is still wrong copy for a signed-in non-owner, and "Sign in to…" is flat-out false for the signed-in owner. Make the fallback copy match the real requirement ("Only the curator can add tiles"), not a generic "Sign in".
+
+2. **A child component that ignores its props.** Extracting the gate into a child (`<PromptBar viewer={viewer} isOwner={isOwner} />`) only works if the child declares those props in its signature **and** branches on them:
+
+   ```jsx
+   // ❌ ignores everything passed in — renders the signed-out copy forever
+   function PromptBar() {
+     return <div>Sign in to compose a board.</div>;
+   }
+
+   // ✅ declares the access state and renders BOTH branches
+   function PromptBar({ isOwner, database }) {
+     if (!isOwner) return <div>Only the curator can add to this board.</div>;
+     return <ComposeForm database={database} />;
+   }
+   ```
+
+   A write-surface component whose only output is a `Sign in…` string is an unwired stub. Before finishing, scan every gated component: it must declare the access state it reads and render the granted branch too.
+
 ## Gating UI
 
 Add a "commenting as" label and a gated form. The ViewerTag handles sign-in/identity display:
