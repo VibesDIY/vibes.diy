@@ -21,7 +21,7 @@ jobs:
 
       - name: format-check
         shell: bash
-        run: pnpm run format --check
+        run: pnpm run format:check
 
       - name: lint
         shell: bash
