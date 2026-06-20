@@ -15,7 +15,7 @@ import {
 } from "@vibes.diy/api-types";
 import { type } from "arktype";
 import { and, eq } from "drizzle-orm/sql/expressions";
-import { max } from "drizzle-orm/sql";
+import { selectLatestAppPerSlug } from "./select-app.js";
 import { generate } from "random-words";
 import { unwrapMsgBase } from "../unwrap-msg-base.js";
 import { VibesApiSQLCtx } from "../types.js";
@@ -77,37 +77,7 @@ export async function forkApp(
       .limit(1)
       .then((r) => r[0]);
   } else {
-    const maxCreatedSub = vctx.sql.db
-      .select({ mode: vctx.sql.tables.apps.mode, maxCreated: max(vctx.sql.tables.apps.created).as("max_created") })
-      .from(vctx.sql.tables.apps)
-      .where(and(eq(vctx.sql.tables.apps.ownerHandle, req.srcUserSlug), eq(vctx.sql.tables.apps.appSlug, req.srcAppSlug)))
-      .groupBy(vctx.sql.tables.apps.mode)
-      .as("mc");
-    const rows = await vctx.sql.db
-      .select({
-        appSlug: vctx.sql.tables.apps.appSlug,
-        userId: vctx.sql.tables.apps.userId,
-        ownerHandle: vctx.sql.tables.apps.ownerHandle,
-        releaseSeq: vctx.sql.tables.apps.releaseSeq,
-        fsId: vctx.sql.tables.apps.fsId,
-        env: vctx.sql.tables.apps.env,
-        fileSystem: vctx.sql.tables.apps.fileSystem,
-        meta: vctx.sql.tables.apps.meta,
-        mode: vctx.sql.tables.apps.mode,
-        created: vctx.sql.tables.apps.created,
-      })
-      .from(vctx.sql.tables.apps)
-      .innerJoin(
-        maxCreatedSub,
-        and(
-          eq(vctx.sql.tables.apps.mode, maxCreatedSub.mode),
-          eq(vctx.sql.tables.apps.created, maxCreatedSub.maxCreated),
-          eq(vctx.sql.tables.apps.ownerHandle, req.srcUserSlug),
-          eq(vctx.sql.tables.apps.appSlug, req.srcAppSlug)
-        )
-      )
-      .orderBy(vctx.sql.tables.apps.mode);
-    src = rows[rows.length - 1];
+    src = await selectLatestAppPerSlug(vctx, { ownerHandle: req.srcUserSlug, appSlug: req.srcAppSlug });
   }
   if (!src) {
     return Result.Err("app-not-found");
