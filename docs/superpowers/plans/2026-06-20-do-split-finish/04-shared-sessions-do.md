@@ -19,6 +19,19 @@ Independent of Tracks A1–A3 otherwise.
 
 ---
 
+## Routing note (review correction, @chatgpt-codex-connector)
+
+`/api/shared` must be dispatched by the **top-level worker**, not via
+`resolveShardDO`. Today `route-decision.ts:36` matches `/api` and `/api/*`
+(including `/api/shared`) as the generic `api-do` route, and `app.ts:126` sends
+that to `env.CHAT_SESSIONS`. `resolveShardDO` is only used by `UserNotify`'s
+fan-out (`user-notify.ts:109`), **not** by the fetch router. So Track B must add
+a dedicated `/api/shared` Route (e.g. `shared-do`) in `route-decision.ts`
+**before** the generic `/api/` branch, and a matching
+`env.SHARED_SESSIONS.idFromName("global")` dispatch in `app.ts` — otherwise,
+once `sharedHandlers` leave `chatMsgEvento`, these calls land on ChatSessions and
+fail.
+
 ## Open decisions (resolve in brainstorm before planning)
 
 1. **Singleton hot-shard contention.** One DO instance for _all_ read traffic.
@@ -46,7 +59,8 @@ Independent of Tracks A1–A3 otherwise.
 | `vibes.diy/pkg/workers/app.ts`                                                                      | export `SharedSessions`                                                                                     |
 | `vibes.diy/api/types/cf-env.ts`                                                                     | add `SHARED_SESSIONS: DurableObjectNamespace`                                                               |
 | `vibes.diy/pkg/wrangler.toml` (6 blocks)                                                            | bind `SHARED_SESSIONS` + `v8 new_classes = ["SharedSessions"]`; cli cross-script → prod (like APP_SESSIONS) |
-| `vibes.diy/pkg/workers/resolve-shard-do.ts`                                                         | add `shared:` prefix routing → `SHARED_SESSIONS`                                                            |
+| `vibes.diy/pkg/workers/route-decision.ts` + `app.ts`                                                | **route `/api/shared` → `SHARED_SESSIONS`** (see routing note below) — new `shared-do` Route + dispatch     |
+| `vibes.diy/pkg/workers/resolve-shard-do.ts`                                                         | add `shared:` prefix (only for `UserNotify` fan-out, **not** top-level request routing)                     |
 | `vibes.diy/pkg/app/vibes-diy-provider.tsx`                                                          | add `sharedApi` to `VibesDiyCtx`, opened on every page → `/api/shared`                                      |
 | `useRecentVibes.ts`, `useMemberships.ts`, settings routes, `list-models` callers, non-vibe `whoAmI` | move from `chatApi` → `sharedApi`                                                                           |
 | `vibes.diy/api/svc/chat-msg-evento.ts`                                                              | drop `...sharedHandlers` (chat plane → `chatHandlers` only)                                                 |
@@ -63,8 +77,12 @@ Independent of Tracks A1–A3 otherwise.
 2. **wrangler: bind + `v8` migration in all six envs** (cli cross-script-binds
    prod like APP_SESSIONS/USER_NOTIFY). Per-env `--dry-run` gate. Deploy
    prod-before-cli.
-3. **`resolveShardDO` prefix.** Add `shared:` → `SHARED_SESSIONS`; extend
-   `resolve-shard-do.test.ts` with the new prefix case.
+3. **Top-level routing for `/api/shared`.** Add a `shared-do` Route in
+   `route-decision.ts` (before the generic `/api/` branch) + an
+   `env.SHARED_SESSIONS.idFromName("global")` dispatch in `app.ts`; extend
+   `route-decision`'s tests. Also add the `shared:` prefix to `resolveShardDO`
+   (for `UserNotify` fan-out) with a `resolve-shard-do.test.ts` case — these are
+   two distinct mechanisms; do not conflate them.
 4. **Client: `sharedApi` connection.** Add to context, open on every page to
    `/api/shared` with `skipShard: true` (singleton — no per-client shard).
 5. **Client: migrate `sharedHandler` call sites** off `chatApi`/`notifyApi`

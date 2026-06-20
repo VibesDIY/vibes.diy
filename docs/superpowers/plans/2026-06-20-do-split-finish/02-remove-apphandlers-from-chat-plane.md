@@ -3,10 +3,11 @@
 > **For agentic workers:** REQUIRED SUB-SKILL: subagent-driven-development or executing-plans. Steps use checkbox (`- [ ]`) syntax. **Deploy/verify gate:** A1 must be merged and (ideally) preview-smoked before this.
 
 **Goal:** Give DMs an AppSessions home, then make ChatSessions chat-only by
-removing `appHandlers` from `chatMsgEvento`, and remove the default
-`invokeAccessFn` that calls `env.ACCESS_FN_DO`. After this PR, no doc-write
-handler runs on a non-overriding DO, so `env.ACCESS_FN_DO` is dead code —
-clearing the way for A3 to delete the class.
+removing `appHandlers` from `chatMsgEvento`. After this PR, ChatSessions no
+longer reaches `env.ACCESS_FN_DO`. The **default** `invokeAccessFn` in
+`cf-serve.ts` stays live — the worker `cf-serve` path (deployed-vibe app
+subdomains) still uses it, and is migrated separately in **A2b** before A3 can
+delete the class. (Scope split after review caught the second consumer.)
 
 **Architecture:** DMs (`owner=channelUserSlug`, `appSlug="dm"`) are vibe-style
 doc ops with no vibe page, so they currently use `chatApi`. We open an
@@ -28,36 +29,33 @@ hand it to the DM components. With doc ops (A1) and DMs both off `chatApi`,
 | `vibes.diy/pkg/app/components/DmThread.tsx`, `DmInbox.tsx`                          | accept the DM AppSessions connection instead of `chatApi`                                |
 | `vibes.diy/pkg/app/routes/messages.tsx`, `messages.$ownerHandleA.$ownerHandleB.tsx` | pass the DM connection                                                                   |
 | `vibes.diy/api/svc/chat-msg-evento.ts`                                              | drop `...appHandlers` → `sharedHandlers + chatHandlers`                                  |
-| `vibes.diy/api/svc/cf-serve.ts`                                                     | remove the default `invokeAccessFn` that calls `env.ACCESS_FN_DO`                        |
 | `vibes.diy/api/svc/evento-handler-manifest.ts`                                      | update the "until #2263" comments on `appHandlers`/`sharedHandlers`                      |
 | `vibes.diy/api/tests/evento-handler-parity.test.ts`                                 | assert `appHandlers` no longer in the chat evento set                                    |
 
-> **Decide first — `vibesMsgEvento`.** It also bundles `appHandlers` and is
-> `cfServe`'s default (`cf-serve.ts:530`). Confirm whether any **production**
-> entrypoint serves it (grep the worker `fetch` handlers + `processRequest`).
->
-> - If test-only: leave it (tests rely on the combined evento) and document
->   that in a comment; the default `invokeAccessFn` removal below still applies.
->   To keep tests passing, give test setups an explicit `invokeAccessFn` mock
->   (most already do — see `api/tests/*` `invokeAccessFn:` stubs).
-> - If live: it must lose `appHandlers` too, and its consumer needs an explicit
->   `invokeAccessFn` override. Resolve this in Step 0 before coding.
+> **`vibesMsgEvento` IS live (review correction).** It bundles `appHandlers`
+> and is `cfServe`'s default (`cf-serve.ts:530`). The worker `cf-serve` route
+> (app subdomain + asset host) serves it via `cfServe(request, cctx)` with no
+> `eventoFactory` (`app.ts:309`) and no `invokeAccessFn` override
+> (`app.ts:305`). So deployed-vibe doc writes run under `vibesMsgEvento` + the
+> default `env.ACCESS_FN_DO` invoker. **This PR does NOT touch that path** — it
+> only makes ChatSessions chat-only. The worker path and the default invoker
+> are handled in **A2b** (`02b-migrate-cf-serve-path.md`), because removing the
+> default invoker without migrating that path would **fail open** (see below).
+> `vibesMsgEvento` itself keeps `appHandlers` until A2b/Track C retire it.
 
 ---
 
-## Task 0: Resolve the `vibesMsgEvento` question
+## Task 0: Confirm scope (do not remove the default invoker here)
 
-- [ ] **Step 1: Determine if `vibesMsgEvento` is a live production path**
+- [ ] **Step 1: Re-confirm the `cf-serve` path before editing**
 
 ```bash
-rg -n "vibesMsgEvento|eventoFactory" vibes.diy/pkg vibes.diy/api/svc --type ts
+rg -n "vibesMsgEvento|eventoFactory|cfServeAppCtx|cfServe\(" vibes.diy/pkg/workers/app.ts vibes.diy/pkg/workers/route-decision.ts
 ```
 
-Confirm the only non-test consumers are the two DOs (which pass `chatMsgEvento`
-/ `appMsgEvento` explicitly) and `cfServe`'s default. If the default is reached
-only by tests, record that finding in the PR description and proceed treating
-`vibesMsgEvento` as the test harness evento. If a production `fetch` serves it,
-stop and extend this plan (give that path an explicit evento + access override).
+Expected: the `route === "cf-serve"` branch calls `cfServe(request, cctx)` with
+no factory and `cfServeAppCtx(request, env, cctx)` with no override. Confirms the
+default invoker must stay live this PR. Record in the PR description.
 
 ---
 
@@ -159,9 +157,11 @@ git commit -m "feat(dm): route DM doc ops through an AppSessions connection (#22
 **Files:**
 
 - Modify: `vibes.diy/api/svc/chat-msg-evento.ts`
-- Modify: `vibes.diy/api/svc/cf-serve.ts`
 - Modify: `vibes.diy/api/svc/evento-handler-manifest.ts`
 - Test: `vibes.diy/api/tests/evento-handler-parity.test.ts`
+
+> `cf-serve.ts` (the default invoker) is **not** touched here — it stays live for
+> the worker `cf-serve` path until A2b. This PR is scoped to ChatSessions only.
 
 - [ ] **Step 1: Write/extend the failing parity test**
 
@@ -195,19 +195,13 @@ evento.push(...sharedHandlers, ...appHandlers, ...chatHandlers, { …WildCard },
 evento.push(...sharedHandlers, ...chatHandlers, { …WildCard }, { …Error });
 ```
 
-Remove the now-unused `appHandlers` import.
+Remove the now-unused `appHandlers` import. **Leave `cf-serve.ts`'s default
+`invokeAccessFn` in place** — the worker `cf-serve` path still needs it (A2b
+removes it, with a fail-closed guard, after migrating that path). Removing it
+here would fail **open** on deployed-vibe writes (`putDocEvento` skips its
+access block when `invokeAccessFn` is undefined — `app-documents-write-eventos.ts:217`).
 
-- [ ] **Step 4: Remove the default `env.ACCESS_FN_DO` invoker**
-
-In `cf-serve.ts`, delete the default `invokeAccessFn` block (the one calling
-`env.ACCESS_FN_DO.idFromName(...)`, ~lines 430–462) so it is **not** part of
-`callbackOverrides`-less app contexts. AppSessions already supplies its own
-`localInvokeAccessFn`; leaving the default would keep a live reference to a DO
-A3 deletes. With it gone, a stray doc-write on a non-overriding DO simply has
-no access invoker (`process-access-bindings` already early-returns when
-`invokeAccessFn === undefined`, see `process-access-bindings.ts:131`).
-
-- [ ] **Step 5: Update manifest comments**
+- [ ] **Step 4: Update manifest comments**
 
 In `evento-handler-manifest.ts`, replace the
 `// Registered on both DOs until client routing is fully split (#2263).`
@@ -215,31 +209,31 @@ comments on `appHandlers` (and the grants block in `sharedHandlers`) with a note
 that `appHandlers` now lives only on AppSessions (`appMsgEvento`) and the chat
 plane is chat-only (#2265 Track A2).
 
-- [ ] **Step 6: Run the suite**
+- [ ] **Step 5: Run the suite**
 
 Run: `cd vibes.diy/tests && pnpm test evento app-documents access-fn dm -- --run`
 Expected: parity test passes; doc/access/dm tests pass (they use
 `vibesMsgEvento` + explicit `invokeAccessFn` mocks, unaffected).
 
-- [ ] **Step 7: Commit**
+- [ ] **Step 6: Commit**
 
 ```bash
-git add vibes.diy/api/svc/chat-msg-evento.ts vibes.diy/api/svc/cf-serve.ts vibes.diy/api/svc/evento-handler-manifest.ts vibes.diy/api/tests/evento-handler-parity.test.ts
-git commit -m "refactor(do-split): make ChatSessions chat-only; drop default AccessFnDO invoker (#2265)"
+git add vibes.diy/api/svc/chat-msg-evento.ts vibes.diy/api/svc/evento-handler-manifest.ts vibes.diy/api/tests/evento-handler-parity.test.ts
+git commit -m "refactor(do-split): make ChatSessions chat-only (#2265)"
 ```
 
 ---
 
 ## Task 3: Gate, check, PR
 
-- [ ] **Step 1: Grep gate — no live `env.ACCESS_FN_DO`**
+- [ ] **Step 1: Confirm the remaining `env.ACCESS_FN_DO` consumer is only the worker path**
 
 ```bash
-rg -n "env\.ACCESS_FN_DO|ACCESS_FN_DO\b" vibes.diy --type ts -g '!**/tests/**'
+rg -n "env\.ACCESS_FN_DO" vibes.diy --type ts -g '!**/tests/**'
 ```
 
-Expected: only the binding in `api/types/cf-env.ts` (deleted in A3) and
-wrangler.toml. No call sites.
+Expected after this PR: only the default invoker in `cf-serve.ts` (still live for
+the worker `cf-serve` path — removed in A2b). ChatSessions no longer reaches it.
 
 - [ ] **Step 2: `pnpm check`**
 
@@ -250,4 +244,5 @@ Expected: green (rerun flaky per `agents/flaky-tests.md`).
 
 Open the PR (label, @-mention `@CharlieHelps`, subscribe). Run `qa-pr` against
 the preview: doc ops, comments live-update, DMs send/receive, access-gated
-writes all still work — this is the behavioral gate before A3 deletes the DO.
+writes all still work. **Next: A2b** (`02b-migrate-cf-serve-path.md`) before A3
+can delete the class.
