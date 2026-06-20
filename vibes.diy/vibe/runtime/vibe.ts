@@ -4,10 +4,12 @@ import { viewerPayload, docAccessLevel } from "@vibes.diy/vibe-types";
 // the vibe'd react website
 export const vibeEnv = type({});
 
-// `dbAcl` shape — matches @vibes.diy/api-types' DbAcl, defined locally
-// for the same reason db-acl-allows.ts redefines it: api-types pulls
-// cloudflare/fireproof server-side deps that don't belong in a browser
-// runtime bundle. Schema kept in lockstep with api-types/db-acls.ts.
+// `dbAcl` runtime validator for the viewer-env wire shape. The structural
+// DbAcl type is now defined once in @vibes.diy/vibe-types (db-acl-eval); this
+// inline arktype value is kept local only as a browser-safe validator, since
+// api-types' `dbAcl` schema is not re-exported from vibe-types. Kept in lockstep
+// with that shape. TODO(#2014 follow-up): export the arktype from vibe-types and
+// import it here to retire this last copy.
 const dbAcl = type({
   "read?": "('members' | 'editors' | 'submitters' | 'readers')[]",
   "write?": "('members' | 'editors' | 'submitters' | 'readers')[]",
