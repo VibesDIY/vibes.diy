@@ -7,8 +7,10 @@ import { ensureAppSettings } from "./ensure-app-settings.js";
 
 export type DocAccessLevel = Role | "override" | "none";
 
-export const canRead = (level: DocAccessLevel) => level === "override" || level === "editor" || level === "viewer";
-export const canWrite = (level: DocAccessLevel) => level === "override" || level === "editor" || level === "submitter";
+// canRead / canWrite are defined once in the shared @vibes.diy/vibe-types
+// db-acl-eval module; re-exported here so existing importers (db-acl-resolver
+// and friends) keep their import paths unchanged.
+export { canRead, canWrite } from "@vibes.diy/vibe-types";
 
 export async function checkDocAccess(
   vctx: VibesApiSQLCtx,
