@@ -5,7 +5,10 @@
 (`vibes.diy/api/svc/public/prompt-chat-section.ts`), the client reducer
 (`pkg/app/routes/chat/prompt-state.ts`), and the consumers of `block.end.fsRef`
 (`useChatNavigation`, `PreviewApp` repoint, `get-code`, `MessageList`).
-**Status:** Proposed — spec-first, awaiting review before tests + implementation.
+**Status:** Implemented (v3 design) — Charlie-approved; tests-first build landed in
+this PR. Client (reducer split + nav/repoint arm-on-fsRef) and server (early
+emit-only `prompt.block-end`, store-only persist last) with reducer/nav/emit-order
+tests; full api suite (910) + affected app tests green.
 **Revision:** v3 (2026-06-19) — incorporates `@CharlieHelps`'s review. v2
 corrected v1's core mechanism (`running` flips on `prompt.block-end`, not
 `block.end`); v3 fixes a second v2 error — the reconnect settle lives on
@@ -29,12 +32,13 @@ and persists the new fsId before the UI is allowed to unblock.
 
 There are **two distinct terminal events** with confusingly similar names:
 
-| Event | Wire `type` | Source | Role |
-|---|---|---|---|
-| `block.end` | `"block.end"` (`BlockEndMsg`, call-ai-v2) | emitted inside `handleEndMsg` **after** the R2 persist | carries `fsRef.fsId`; drives navigation / iframe repoint / snapshots |
-| `prompt.block-end` | `"prompt.block-end"` (`PromptMsgs`, api-types) | emitted in the handler's `.finally()` **after** `prompSectionAction` returns | flips `running` off |
+| Event              | Wire `type`                                    | Source                                                                       | Role                                                                 |
+| ------------------ | ---------------------------------------------- | ---------------------------------------------------------------------------- | -------------------------------------------------------------------- |
+| `block.end`        | `"block.end"` (`BlockEndMsg`, call-ai-v2)      | emitted inside `handleEndMsg` **after** the R2 persist                       | carries `fsRef.fsId`; drives navigation / iframe repoint / snapshots |
+| `prompt.block-end` | `"prompt.block-end"` (`PromptMsgs`, api-types) | emitted in the handler's `.finally()` **after** `prompSectionAction` returns | flips `running` off                                                  |
 
 The reducer flips `running`:
+
 - `true` on `isPromptBlockBegin` = `prompt.block-begin` (`prompt-state.ts:303-307`)
 - `false` on `isPromptBlockEnd` = `prompt.block-end` (`prompt-state.ts:313-318`)
 
@@ -49,9 +53,9 @@ On the server (`prompt-chat-section.ts`):
 2. `prompSectionAction` runs the whole LLM stream. When the stream ends, the
    read loop's `block.end` branch (`:1587`) calls `handleEndMsg → handlePromptContext`
    which **synchronously** `loadVersionTimeline` + `resolveCodeBlocksToFileSystem`
-   + `ensureAppSlugItem` (**writes every file to R2** via `vctx.storage.ensure`,
-   writes `Apps`, processes access bindings, inserts `promptContexts` +
-   `chatSections`), then emits `block.end`-with-`fsRef` live (`:1324-1332`).
+   - `ensureAppSlugItem` (**writes every file to R2** via `vctx.storage.ensure`,
+     writes `Apps`, processes access bindings, inserts `promptContexts` +
+     `chatSections`), then emits `block.end`-with-`fsRef` live (`:1324-1332`).
 3. After `prompSectionAction` returns, the `.finally()` (`:2312-2327`) emits
    `prompt.block-end` → client `running` = false.
 
@@ -98,7 +102,7 @@ consumers must be rewired to trigger on **`fsRef` arrival**, not the running edg
 - **No new `prompt.fsref` wire event** (refines Charlie Q4). Charlie's reason for
   keeping it was "avoid dual-`block.end`" — but v2/v3 already avoid that: there is
   exactly **one** `block.end` (live, post-persist), and the early event is the
-  distinct `prompt.block-end`. So `block.end`-with-`fsRef` already *is* the
+  distinct `prompt.block-end`. So `block.end`-with-`fsRef` already _is_ the
   explicit post-persist anchor Charlie wants for the settle; a separate event
   would be redundant. Consumers read `block.end.fsRef` uniformly for live + replay
   (Charlie Q2: source-agnostic value, stream-scoped side effects). **Flagging this
@@ -109,22 +113,39 @@ consumers must be rewired to trigger on **`fsRef` arrival**, not the running edg
 
 ## Proposed design
 
-### Server — emit `prompt.block-end` when generation ends
+### Server — emit `prompt.block-end` early, persist it last (as built)
 
-Emit `prompt.block-end` from inside `prompSectionAction` the moment the terminal
-`block.end` is observed in the read loop (`:1587`) — i.e. **before**
-`handleEndMsg` runs the persist — and make the outer `.finally()` idempotent so
-it does not double-emit (guard on a "already emitted" flag, or move the
-`build-complete` notify alongside the early emit). The persist + the live
-`block.end`-with-`fsRef` then run after, exactly as today.
+`handleEndMsg` is the single terminal chokepoint (LLM, FS, and exhausted-recovery
+all funnel through it). It emits `prompt.block-end` **emit-only** as its first
+step — **before** `handlePromptContext` runs the R2/DB persist — so the client
+flips `running` off and releases the UI immediately. The post-persist
+`block.end`-with-`fsRef` still follows.
 
-Cover all terminal paths consistently:
+**Persistence constraint discovered during impl:** `prompt.block-end` must remain
+**persisted as the terminal block** for replay (`seed-chat-section` asserts the
+last replayed block is `prompt.block-end`; the reopen flow waits for it). The
+early emit is `emit-only` (not persisted), so the outer `.finally()` still
+persists it — but **store-only** (no duplicate live emit) once the early emit
+fired. This required a new `appendBlockEvent` `emitMode: "store-only"` and a
+`terminal: { promptBlockEndEmitted }` flag threaded from the handler's outer
+scope through `handleLlmResponse`/`handleFSPrompt` into `handleEndMsg`. Net wire
+result: **exactly one** live `prompt.block-end` (early), and the persisted record
+is unchanged in shape/order.
+
+Terminal paths covered consistently (all reach `handleEndMsg`):
+
 - natural end (read-loop `block.end` branch, `:1587`)
 - recovery-exhausted synthetic `block.end` (`:1636-1666`)
-- error path (`catch` → `prompt.error`, `:2250-2267`): keep emitting
-  `prompt.block-end` in the finally (running must release on error too). The
-  reducer already flips `running` false on `prompt.error` (`:322`), so the error
-  path is already early; only the success path needs the move.
+- `promptFS` / manual-save terminal (Charlie Q5)
+
+Paths that never reach `handleEndMsg` keep today's behavior — the `.finally()`
+emits `prompt.block-end` `store` (store+emit) as the safety net:
+
+- the image/Prodia path
+- an empty stream (no `block.end` terminal) — preserves `emptySectorStream`
+- the error path (`catch` → `prompt.error`, `:2250-2267`): the reducer already
+  flips `running` false on `prompt.error` (`:322`), so release is already early;
+  the finally's `prompt.block-end` persists the terminal as before.
 
 ### Client — reducer (the split)
 
@@ -148,13 +169,13 @@ Net effect on the reconnect gap: if the stream drops after the early
 `prompt.block-end` but before `block.end`, `inFlightStreamId` is still set, so the
 reconnect loop can still re-open and the replayed `block.end`-with-`fsRef` (or the
 in-flight turn's) settles + navigates on arrival. `running` being already false is
-acceptable — generation *is* done; only persistence is outstanding.
+acceptable — generation _is_ done; only persistence is outstanding.
 
 ### Client — the fsRef consumers (rewire off the running edge)
 
 Introduce one helper — `latestFsRef(blocks)` — returning the newest
 `block.end.fsRef`. Route the two **running-edge-gated** consumers through it,
-triggering on a *new* fsRef appearing in `blocks` rather than the `running` edge.
+triggering on a _new_ fsRef appearing in `blocks` rather than the `running` edge.
 Per Charlie Q1/Q2 the value is source-agnostic (live vs replay) but the side
 effects stay **stream-scoped** — match the in-flight `streamId` and dedupe by
 fsId so a replayed historical turn can't trigger a navigation:
@@ -205,16 +226,16 @@ deploy**, and there is no purely additive wire shape that avoids it:
   would finish the turn without navigating/repointing to the persisted fsId
   until a reload or a reconnect replay.
 
-Impact is bounded: it only affects tabs opened *before* the deploy (new page
+Impact is bounded: it only affects tabs opened _before_ the deploy (new page
 loads get the new client, served by the same deploy), it self-heals on reload,
 and existing-chat iterations already carry an fsId in the URL — the main
 casualty is brand-new-chat first paint in a stale tab. Options:
 
 - **(a) Accept + document** the transient skew (recommended for the web app,
-  where client and server ship together and the window is short). 
+  where client and server ship together and the window is short).
 - **(b) Capability-gate** the early emit on a client-advertised version so old
   clients keep the late `prompt.block-end` until they reload.
-- **(c) Belt-and-suspenders:** keep navigation reacting to *both* the running
+- **(c) Belt-and-suspenders:** keep navigation reacting to _both_ the running
   edge and fsRef arrival on the new client, and accept (a) for old clients.
 
 Recommend (a) + (c). Call this out explicitly in the implementation PR.
@@ -252,8 +273,8 @@ Resolved with `@CharlieHelps` (2026-06-19):
 1. **Q1 First-paint nav trigger → resolved.** Drop the `running`-edge trigger;
    navigate on fsRef arrival for the active stream, with `streamId` matching +
    fsId dedupe so the #1972 historical-URL protections stay intact.
-2. **Q2 Reconnect/replay → resolved.** fsRef *value* is source-agnostic
-   (`block.end.fsRef` live or replay); nav/repoint *side effects* stay
+2. **Q2 Reconnect/replay → resolved.** fsRef _value_ is source-agnostic
+   (`block.end.fsRef` live or replay); nav/repoint _side effects_ stay
    stream-scoped (match in-flight `streamId`).
 3. **Q3 Connection settle → resolved.** Settle `connection`/`inFlightStreamId` on
    the canonical post-persist `block.end`-with-`fsRef`, **not** on the early
@@ -275,7 +296,7 @@ Still open:
 ## Risk & rollout
 
 - **Medium-high** behavior-change risk: same delicate end-of-turn surface as
-  #1972/#2015, and it intentionally changes *when* `running` flips. Mitigation:
+  #1972/#2015, and it intentionally changes _when_ `running` flips. Mitigation:
   tests-first pinning invariants 1–7; the persisted record is untouched so
   reload/historical paths can't regress.
 - **Not** purely additive (unlike v1's mistaken framing) — there is a real

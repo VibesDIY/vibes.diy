@@ -1,7 +1,14 @@
 import { SetURLSearchParams } from "react-router";
 import { type } from "arktype";
-import { isPromptBlockBegin, isPromptBlockEnd, isPromptError, isPromptReq, LLMChatEntry, PromptAndBlockMsgs } from "@vibes.diy/api-types";
-import { isCodeBegin } from "@vibes.diy/call-ai-v2";
+import {
+  isPromptBlockBegin,
+  isPromptBlockEnd,
+  isPromptError,
+  isPromptReq,
+  LLMChatEntry,
+  PromptAndBlockMsgs,
+} from "@vibes.diy/api-types";
+import { isBlockEnd, isCodeBegin } from "@vibes.diy/call-ai-v2";
 import type { VibesTheme } from "@vibes.diy/prompts";
 
 export type StreamConnection = "live" | "reconnecting" | "failed";
@@ -311,12 +318,30 @@ export function promptReducer(state: PromptState, block: PromptAction): PromptSt
     }
 
     case isPromptBlockEnd(block): {
-      // console.log(`PromptBlock-End`, block);
-      const isInFlight = state.inFlightStreamId !== undefined && block.streamId === state.inFlightStreamId;
+      // `prompt.block-end` is emitted EARLY — when generation finishes, before
+      // the server's R2/DB persist (VibesDIY/vibes.diy#2472). It flips `running`
+      // off so the overlay drops / chips render / submit re-enables the instant
+      // generation is done. It intentionally does NOT settle
+      // connection/inFlightStreamId: a disconnect in the gap before the canonical
+      // post-persist `block.end` would otherwise be left without a convergence
+      // anchor. The settle moves to the `block.end` case below.
+      return { ...state, running: false };
+    }
+    case isBlockEnd(block): {
+      // The canonical post-persist terminal (BlockStreamMsg) carries fsRef and is
+      // the event replayed on reconnect-after-completion — so it, not the early
+      // `prompt.block-end`, owns convergence: settle `connection: "live"` + clear
+      // `inFlightStreamId` for the in-flight turn (matched by streamId, gated on a
+      // present fsRef). It must still be appended for the fsRef consumers
+      // (first-paint nav / iframe repoint / code snapshots) to find it in blocks.
+      const isInFlight = state.inFlightStreamId !== undefined && block.streamId === state.inFlightStreamId && !!block.fsRef;
+      const connectionPatch = isInFlight ? { connection: "live" as const, inFlightStreamId: undefined } : {};
+      if (!state.current) return { ...state, ...connectionPatch };
       return {
         ...state,
-        running: false,
-        ...(isInFlight ? { connection: "live" as const, inFlightStreamId: undefined } : {}),
+        ...connectionPatch,
+        current: { ...state.current, msgs: [...state.current.msgs, block] },
+        blocks: state.blocks.map((b, i) => (i === state.blocks.length - 1 ? { ...b, msgs: [...b.msgs, block] } : b)),
       };
     }
     case isPromptError(block): {

@@ -117,7 +117,11 @@ interface AppendBlockEventParams {
   promptId: string;
   blockSeq: number;
   evt: PromptAndBlockMsgs;
-  emitMode?: "store" | "emit-only";
+  // "store": persist + emit live (default). "emit-only": emit live, don't
+  // persist. "store-only": persist without a live emit — used to persist the
+  // canonical prompt.block-end for replay AFTER it was already emitted live early
+  // (#2472), so the live wire gets exactly one prompt.block-end.
+  emitMode?: "store" | "emit-only" | "store-only";
   // Required for the base64 image branch (LLM-streamed data: URLs) so the
   // bytes go through storeAndAuditAsset with the right (ownerHandle, appSlug).
   // Non-image events may omit this.
@@ -656,15 +660,17 @@ async function appendBlockEvent({
     tid: req.outerTid,
     src: "promptChatSection",
   } satisfies InMsgBase<SectionEvent>);
-  for (const conn of vctx.connections) {
-    const chatCtx = conn.chatIds.get(req.chatId);
-    if (chatCtx) {
-      for (const tid of chatCtx.tids) {
-        await conn.send(ctx, { ...msgBase, tid });
+  if (emitMode !== "store-only") {
+    for (const conn of vctx.connections) {
+      const chatCtx = conn.chatIds.get(req.chatId);
+      if (chatCtx) {
+        for (const tid of chatCtx.tids) {
+          await conn.send(ctx, { ...msgBase, tid });
+        }
       }
     }
   }
-  if (emitMode === "store") {
+  if (emitMode === "store" || emitMode === "store-only") {
     // Store block in DB
     const rUpdate = await exception2Result(() =>
       vctx.sql.db.insert(vctx.sql.tables.chatSections).values({
@@ -1295,6 +1301,13 @@ async function handleProdiaImageRequest({
   return Result.Ok(blockSeq);
 }
 
+// Threaded from the prompt handler's outer scope into every terminal path so the
+// turn's single prompt.block-end (emitted EARLY by handleEndMsg, before the
+// persist — #2472) isn't duplicated by the outer .finally() safety-net emit.
+interface PromptTerminalSignal {
+  promptBlockEndEmitted: boolean;
+}
+
 async function handleEndMsg({
   collectedMsgs,
   vctx,
@@ -1305,6 +1318,7 @@ async function handleEndMsg({
   value,
   blockSeq,
   fileSystem,
+  terminal,
 }: {
   collectedMsgs: PromptAndBlockMsgs[];
   vctx: VibesApiSQLCtx;
@@ -1315,7 +1329,32 @@ async function handleEndMsg({
   value: BlockEndMsg;
   blockSeq: number;
   fileSystem?: VibeFile[];
+  // Shared with the handler's outer .finally(): handleEndMsg emits the turn's
+  // single prompt.block-end EARLY (below) and flips this flag so the finally
+  // doesn't emit a second one. See PromptTerminalSignal.
+  terminal: PromptTerminalSignal;
 }): Promise<Result<number>> {
+  // Early UI release (#2472): emit prompt.block-end BEFORE the persist so the
+  // client flips `running` off — dropping the click-blocking overlay, rendering
+  // the suggestion chips, re-enabling submit — the instant generation ends,
+  // rather than after the R2/DB write in handlePromptContext below. The canonical
+  // block.end (with fsRef) still follows post-persist to drive navigation/repoint
+  // and settle the reconnect convergence.
+  const endSeq = blockSeq++;
+  const rEnd = await appendBlockEvent({
+    ctx,
+    vctx,
+    req,
+    promptId,
+    blockSeq: endSeq,
+    evt: { type: "prompt.block-end", streamId: promptId, chatId: req.chatId, seq: endSeq, timestamp: new Date() },
+    emitMode: "emit-only",
+  });
+  if (rEnd.isErr()) {
+    return Result.Err(rEnd);
+  }
+  terminal.promptBlockEndEmitted = true;
+
   const r = await handlePromptContext({ vctx, req, promptId, resChat, value, blockSeq, collectedMsgs, fileSystem });
   if (r.isErr()) {
     return Result.Err(r);
@@ -1354,6 +1393,7 @@ async function handleLlmResponse({
   blockSeq,
   llmReq,
   abort,
+  terminal,
 }: {
   scope: Scope;
   ctx: HandleTriggerCtx<W3CWebSocketEvent, MsgBase<ReqWithVerifiedAuth<ReqPromptChatSection>>, never | VibesDiyError>;
@@ -1365,6 +1405,7 @@ async function handleLlmResponse({
   blockSeq: number;
   llmReq: LLMRequestWithHeaders;
   abort: AbortController;
+  terminal: PromptTerminalSignal;
 }): Promise<number> {
   await scope
     .evalResult(async () => {
@@ -1586,7 +1627,7 @@ async function handleLlmResponse({
             }
           } else {
             collectedMsgs.push(value);
-            const x = await handleEndMsg({ collectedMsgs, vctx, req, ctx, resChat, promptId, value, blockSeq });
+            const x = await handleEndMsg({ collectedMsgs, vctx, req, ctx, resChat, promptId, value, blockSeq, terminal });
             if (x.isErr()) return Result.Err(x);
             blockSeq = x.Ok();
             collectedMsgs.splice(0, collectedMsgs.length);
@@ -1661,6 +1702,7 @@ async function handleLlmResponse({
             promptId,
             value: exhaustedEnd,
             blockSeq,
+            terminal,
           });
           if (xEnd.isErr()) return Result.Err(xEnd);
           return Result.Ok();
@@ -1790,6 +1832,7 @@ export async function handleFSPrompt({
   req,
   ctx,
   promptId,
+  terminal,
 }: {
   scope: Scope;
   vctx: VibesApiSQLCtx;
@@ -1798,6 +1841,7 @@ export async function handleFSPrompt({
   resChat: ResChat;
   promptId: string;
   blockSeq: number;
+  terminal: PromptTerminalSignal;
 }): Promise<Result<number>> {
   let fileSystem!: VibeFile[];
   if (isReqPromptFSSetChatSection(req)) {
@@ -1941,6 +1985,7 @@ export async function handleFSPrompt({
         value,
         blockSeq,
         fileSystem,
+        terminal,
       });
     })
     .do();
@@ -2143,6 +2188,11 @@ export const promptChatSection: EventoHandler<W3CWebSocketEvent, MsgBase<ReqProm
       }
       const useProdia = !!(isReqPromptImageChatSection(orig) && vctx.prodiaToken && resolvedImgModel?.startsWith("prodia/"));
 
+      // Shared terminal signal: the LLM/FS terminal paths emit prompt.block-end
+      // early (in handleEndMsg) and set this; the outer .finally() below only
+      // emits its safety-net prompt.block-end when they didn't (e.g. the image
+      // path, or a turn that ends without ever reaching a block.end terminal).
+      const terminal: PromptTerminalSignal = { promptBlockEndEmitted: false };
       let prompSectionAction!: (scope: Scope, blockSeq: number) => Promise<Result<number>>;
       if (isReqPromptImageChatSection(orig) && useProdia) {
         prompSectionAction = async (scope: Scope, blockSeq: number) => {
@@ -2185,6 +2235,7 @@ export const promptChatSection: EventoHandler<W3CWebSocketEvent, MsgBase<ReqProm
             blockSeq: res.blockSeq,
             llmReq: res.llmReq,
             abort: res.abort,
+            terminal,
           });
           return Result.Ok(finalBlockSeq);
         };
@@ -2199,6 +2250,7 @@ export const promptChatSection: EventoHandler<W3CWebSocketEvent, MsgBase<ReqProm
             resChat,
             promptId,
             blockSeq,
+            terminal,
           });
           return r;
         };
@@ -2311,6 +2363,14 @@ export const promptChatSection: EventoHandler<W3CWebSocketEvent, MsgBase<ReqProm
           })
           .finally(async () => {
             if (seq.val === 0) return;
+            // Persist the turn's canonical prompt.block-end LAST (after block.end)
+            // so replay reconstructs it as the terminal block (seed-chat-section).
+            // The LLM/FS terminal paths already emitted it live EARLY (in
+            // handleEndMsg) to release the UI before the persist (#2472) — so here
+            // we only persist it (store-only), no duplicate live emit. Paths that
+            // never reached a block.end terminal (the image path, an empty stream,
+            // or an error before the terminal) didn't emit it, so we store+emit it
+            // here as the safety net that flips `running` off.
             await appendBlockEvent({
               ctx,
               vctx,
@@ -2324,6 +2384,7 @@ export const promptChatSection: EventoHandler<W3CWebSocketEvent, MsgBase<ReqProm
                 seq: seq.val,
                 timestamp: new Date(),
               },
+              emitMode: terminal.promptBlockEndEmitted ? "store-only" : "store",
             });
             if (vctx.notifyUser) {
               const userId = req._auth.verifiedAuth.claims.userId;

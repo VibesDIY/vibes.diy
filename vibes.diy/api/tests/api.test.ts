@@ -882,6 +882,44 @@ describe("VibesDiyApi", { timeout: (inject("DB_FLAVOUR" as never) as string) ===
     expect(replayedBlocks[0]).toHaveProperty("type", "prompt.block-begin");
   });
 
+  // Early UI release (#2472): for a code-producing turn, the live wire emits
+  // prompt.block-end (which flips the client's `running` off, releasing the
+  // overlay) BEFORE the post-persist block.end that carries fsRef — and exactly
+  // one prompt.block-end is emitted live. The persisted record still keeps the
+  // fsRef-bearing block.end AND a terminal prompt.block-end for replay (covered
+  // by the promptFS replay assertions above + seed-chat-section).
+  it("emits prompt.block-end before the fsRef-bearing block.end (early UI release)", async () => {
+    const chat = (await api.openChat({ mode: "chat" })).Ok();
+    const rPrompt = await chat.promptFS([
+      {
+        type: "code-block",
+        filename: "/App.jsx",
+        lang: "jsx",
+        content: `export default function App() { return <div>early release</div>; }`,
+      } satisfies VibeFile,
+    ]);
+    expect(rPrompt.isOk()).toBe(true);
+
+    const liveBlocks: { type: string; fsRef?: unknown }[] = [];
+    await processStream(chat.sectionStream, async (msg) => {
+      if (!("blocks" in msg)) return;
+      for (const b of msg.blocks as { type: string; fsRef?: unknown }[]) liveBlocks.push(b);
+      // The fsRef-bearing block.end is the last live event of the terminal path.
+      if (msg.blocks.some((b: { type: string; fsRef?: unknown }) => b.type === "block.end" && b.fsRef)) {
+        await chat.close();
+      }
+    });
+
+    const promptEndIdxs = liveBlocks.map((b, i) => (b.type === "prompt.block-end" ? i : -1)).filter((i) => i >= 0);
+    const fsBlockEndIdx = liveBlocks.findIndex((b) => b.type === "block.end" && b.fsRef);
+    // Exactly one prompt.block-end on the live wire (early emit; the finally's
+    // persist is store-only and must not duplicate the live event).
+    expect(promptEndIdxs).toHaveLength(1);
+    // The fsRef-bearing block.end exists and arrives AFTER prompt.block-end.
+    expect(fsBlockEndIdx).toBeGreaterThanOrEqual(0);
+    expect(promptEndIdxs[0]).toBeLessThan(fsBlockEndIdx);
+  });
+
   describe("ensureAppSettings", () => {
     let appSlug: string;
     let ownerHandle: string;

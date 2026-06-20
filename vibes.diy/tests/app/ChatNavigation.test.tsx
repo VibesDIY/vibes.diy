@@ -123,7 +123,11 @@ describe("useChatNavigation", () => {
       const sp = new URLSearchParams();
       const { rerender } = renderNav(navigate, { fsId: "FS9", promptState: makeState({ running: false }), searchParams: sp });
       rerender({ fsId: "FS9", promptState: makeState({ running: true }), searchParams: sp });
-      rerender({ fsId: "FS9", promptState: makeState({ running: false, blocks: [makeBlock([blockEnd("PX", "FS9")])] }), searchParams: sp });
+      rerender({
+        fsId: "FS9",
+        promptState: makeState({ running: false, blocks: [makeBlock([blockEnd("PX", "FS9")])] }),
+        searchParams: sp,
+      });
       expect(navigate).not.toHaveBeenCalled();
     });
 
@@ -133,6 +137,49 @@ describe("useChatNavigation", () => {
       // Blocks arrive (replay of an old chat) but running never went true→false.
       rerender({ promptState: makeState({ running: false, blocks: [makeBlock([blockEnd("PX", "FS9")])] }), searchParams: sp });
       expect(navigate).not.toHaveBeenCalled();
+    });
+
+    // Decoupled ordering (VibesDIY/vibes.diy#2472): with prompt.block-end emitted
+    // early, `running` flips false BEFORE the canonical block.end (with fsRef)
+    // arrives. The first-paint effect must arm on the running edge and then
+    // navigate when the fsRef lands a render later — not require both in the same
+    // tick.
+    it("navigates when fsRef arrives in a later render than the running:true→false edge", () => {
+      const sp = new URLSearchParams();
+      const { rerender } = renderNav(navigate, { promptState: makeState({ running: false }), searchParams: sp });
+      // running true → false with NO block.end yet (early prompt.block-end).
+      rerender({ promptState: makeState({ running: true }), searchParams: sp });
+      rerender({ promptState: makeState({ running: false, blocks: [] }), searchParams: sp });
+      expect(navigate).not.toHaveBeenCalled();
+      // canonical block.end (with fsRef) arrives a render later, running still false.
+      rerender({ promptState: makeState({ running: false, blocks: [makeBlock([blockEnd("PX", "FS9")])] }), searchParams: sp });
+      expect(navigate).toHaveBeenCalledWith({ pathname: "/chat/owner/app/FS9", search: "view=preview" }, { replace: true });
+    });
+
+    // The arm must not be consumed by a stale (already-navigated) fsRef from a
+    // prior turn — it should wait for the NEW turn's fsRef. Each turn is its own
+    // PromptBlock (block-begin opens a new one), so turn 2's block is empty until
+    // its block.end lands.
+    it("waits past a stale fsRef and navigates to the new turn's fsRef", () => {
+      const sp = new URLSearchParams();
+      const turn1 = makeBlock([blockEnd("P1", "FS1")]);
+      // Seed first turn: arm + navigate to FS1.
+      const { rerender } = renderNav(navigate, { promptState: makeState({ running: false }), searchParams: sp });
+      rerender({ promptState: makeState({ running: true }), searchParams: sp });
+      rerender({ promptState: makeState({ running: false, blocks: [turn1] }), searchParams: sp });
+      expect(navigate).toHaveBeenLastCalledWith({ pathname: "/chat/owner/app/FS1", search: "view=preview" }, { replace: true });
+      // Second turn: block-begin opens an empty block; running flips early before
+      // turn 2's block.end arrives. Only turn 1's (stale) FS1 is present.
+      rerender({ promptState: makeState({ running: true, blocks: [turn1, makeBlock([])] }), searchParams: sp });
+      rerender({ promptState: makeState({ running: false, blocks: [turn1, makeBlock([])] }), searchParams: sp });
+      // No new navigation yet — FS1 is stale, turn 2's fsRef hasn't landed.
+      expect(navigate).toHaveBeenCalledTimes(1);
+      // Turn 2's block.end arrives.
+      rerender({
+        promptState: makeState({ running: false, blocks: [turn1, makeBlock([blockEnd("P2", "FS2")])] }),
+        searchParams: sp,
+      });
+      expect(navigate).toHaveBeenLastCalledWith({ pathname: "/chat/owner/app/FS2", search: "view=preview" }, { replace: true });
     });
   });
 });
