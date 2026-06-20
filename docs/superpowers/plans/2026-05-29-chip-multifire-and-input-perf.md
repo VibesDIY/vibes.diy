@@ -4,7 +4,7 @@
 
 **Goal:** Stop suggestion chips (and the text input) from firing duplicate turns during the click→first-block window, and stop the chat textarea from lagging while a turn streams.
 
-**Architecture:** A single guarded `submitPrompt(text)` entry point in the chat route backed by a `submitting` flag closes the duplicate-send race for *every* caller. `OptionButtons` gains local `selected` state for instant per-message disable + a pressed indicator. Passing `promptProcessing={submitting || running}` to `ChatInput` gives the send button instant feedback too. Separately, the streaming-driven "working" status is split out of `ChatInput` so per-block re-renders stop hitting the textarea, and `autoResize` skips redundant reflows.
+**Architecture:** A single guarded `submitPrompt(text)` entry point in the chat route backed by a `submitting` flag closes the duplicate-send race for _every_ caller. `OptionButtons` gains local `selected` state for instant per-message disable + a pressed indicator. Passing `promptProcessing={submitting || running}` to `ChatInput` gives the send button instant feedback too. Separately, the streaming-driven "working" status is split out of `ChatInput` so per-block re-renders stop hitting the textarea, and `autoResize` skips redundant reflows.
 
 **Tech Stack:** React 18, TypeScript, Vitest (browser mode via Playwright/Chromium), @testing-library/react. Tests live in `vibes.diy/tests/app/`, run with `cd vibes.diy/tests/app && pnpm test`.
 
@@ -30,6 +30,7 @@
 ### Task 1: Pure submit-guard helper
 
 **Files:**
+
 - Create: `vibes.diy/pkg/app/utils/submit-guard.ts`
 - Test: `vibes.diy/tests/app/submit-guard.test.ts`
 
@@ -109,6 +110,7 @@ Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>"
 ### Task 2: OptionButtons instant disable + pressed indicator
 
 **Files:**
+
 - Modify: `vibes.diy/pkg/app/components/OptionButtons.tsx`
 - Test: `vibes.diy/tests/app/OptionButtons.test.tsx`
 
@@ -246,6 +248,7 @@ Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>"
 ### Task 3: Route — single guarded submit entry point
 
 **Files:**
+
 - Modify: `vibes.diy/pkg/app/routes/chat/chat.$userSlug.$appSlug.tsx`
 
 This component is large and not unit-rendered in the suite; correctness of the decision is covered by Task 1's helper tests, and end-to-end behavior is covered by manual verification (Task 6). Each step below is a precise edit.
@@ -401,6 +404,7 @@ Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>"
 ### Task 5: Split streaming status out of ChatInput + memoize + autoResize guard
 
 **Files:**
+
 - Create: `vibes.diy/pkg/app/components/ChatInputStatus.tsx`
 - Modify: `vibes.diy/pkg/app/components/ChatInput.tsx`
 - Test: `vibes.diy/tests/app/ChatInput.test.tsx`
@@ -564,6 +568,7 @@ Co-Authored-By: Claude Opus 4.8 <noreply@anthropic.com>"
 **Only do this task if Task 4/Step 3 found `MessageList` re-rendering every message item per streamed block.** Otherwise skip it (YAGNI) and note in the PR that profiling did not justify it.
 
 **Files:**
+
 - Modify: `vibes.diy/pkg/app/components/MessageList.tsx`
 
 - [ ] **Step 1: Confirm the trigger**
