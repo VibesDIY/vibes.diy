@@ -21,13 +21,13 @@ execution.
 Most of #2264 and the DocNotify half of #2265 landed but the checkboxes were
 never ticked. Verified in `origin/main`:
 
-| Item | Status | Evidence |
-| --- | --- | --- |
-| #2264 §1 stale `?shard=` param | ✅ done | `skipShard` in `api/impl/index.ts`; passed for app conn in `vibes-diy-provider.tsx:259` |
-| #2264 §2 `resolveShardDO` edge tests | ✅ done | `api/tests/resolve-shard-do.test.ts` (5 cases) |
-| #2264 §3 dead `docNotifyCallbacks` | ✅ done | removed in #2253 (`86ba7c32c`); no refs in `cf-serve.ts` |
-| #2264 §4 / #2265 §1 — DocNotify | ✅ done | #2297 (cli unbind) + #2298 (class deletion, `v6 deleted_classes`) |
-| #2263 rename `vibeDiyApi`→`chatApi` | ✅ done | issue closed; no source refs to old names |
+| Item                                 | Status  | Evidence                                                                                |
+| ------------------------------------ | ------- | --------------------------------------------------------------------------------------- |
+| #2264 §1 stale `?shard=` param       | ✅ done | `skipShard` in `api/impl/index.ts`; passed for app conn in `vibes-diy-provider.tsx:259` |
+| #2264 §2 `resolveShardDO` edge tests | ✅ done | `api/tests/resolve-shard-do.test.ts` (5 cases)                                          |
+| #2264 §3 dead `docNotifyCallbacks`   | ✅ done | removed in #2253 (`86ba7c32c`); no refs in `cf-serve.ts`                                |
+| #2264 §4 / #2265 §1 — DocNotify      | ✅ done | #2297 (cli unbind) + #2298 (class deletion, `v6 deleted_classes`)                       |
+| #2263 rename `vibeDiyApi`→`chatApi`  | ✅ done | issue closed; no source refs to old names                                               |
 
 Remaining open work, this spec:
 
@@ -44,7 +44,7 @@ Two WebSocket connections from the client (`vibes-diy-provider.tsx`):
   `sharedHandlers + appHandlers + chatHandlers`.
 - **`vibeApi`** → `AppSessions` DO (`/api/app?vibe=owner--slug`, sharded by vibe
   key). Serves `appMsgEvento` = `sharedHandlers + appHandlers +
-  imgGenAppSessionStopgapHandlers`. Built only on routes where
+imgGenAppSessionStopgapHandlers`. Built only on routes where
   `vibeApiTarget(pathname)` matches (`/vibe/…` and `/chat/…` with a real
   appSlug). Otherwise `undefined`; a lightweight `notifyApi` is used instead.
 
@@ -79,11 +79,11 @@ DO. That means: get all doc ops off `chatApi`/ChatSessions, then remove
 
 From a full client audit (`pkg/app/`):
 
-| Call site | Ops on `chatApi` | Has `vibeApi` on its route? |
-| --- | --- | --- |
-| `components/ResultPreview/CommentsSection.tsx` | `queryDocs`, `subscribeDocs`, `onDocChanged`, `putDoc`, `whoAmI` | yes (`/vibe/`, `/chat/`) |
-| `routes/vibe.$ownerHandle.$appSlug.tsx` | `subscribeViewerGrants`, `onViewerGrantsChanged`, `listDmThreads`, doc ops | yes |
-| `components/DmThread.tsx`, `DmInbox.tsx`, `routes/messages*.tsx` | `queryDocs`, `putDoc`, `markDmRead`, `listDmThreads` (db `…--dm`) | **no** — non-vibe pages |
+| Call site                                                        | Ops on `chatApi`                                                           | Has `vibeApi` on its route? |
+| ---------------------------------------------------------------- | -------------------------------------------------------------------------- | --------------------------- |
+| `components/ResultPreview/CommentsSection.tsx`                   | `queryDocs`, `subscribeDocs`, `onDocChanged`, `putDoc`, `whoAmI`           | yes (`/vibe/`, `/chat/`)    |
+| `routes/vibe.$ownerHandle.$appSlug.tsx`                          | `subscribeViewerGrants`, `onViewerGrantsChanged`, `listDmThreads`, doc ops | yes                         |
+| `components/DmThread.tsx`, `DmInbox.tsx`, `routes/messages*.tsx` | `queryDocs`, `putDoc`, `markDmRead`, `listDmThreads` (db `…--dm`)          | **no** — non-vibe pages     |
 
 DMs are the load-bearing edge case: they are doc ops with no vibe page in
 context, so they have no `vibeApi`. They need a home before `appHandlers` can
@@ -147,7 +147,7 @@ the 10061 ordering trap that forced DocNotify's two-deploy cli-first sequence
 
 - In **all six** env blocks (top-level/test, local, dev, preview, prod, cli):
   remove the `ACCESS_FN_DO` binding and append `v7 deleted_classes =
-  ["AccessFnDO"]`. Keep every historical `v1..v6`.
+["AccessFnDO"]`. Keep every historical `v1..v6`.
 - Remove `export { AccessFnDO }` from `pkg/workers/app.ts`; delete
   `pkg/workers/access-fn.ts`; remove `ACCESS_FN_DO: DurableObjectNamespace`
   from `api/types/cf-env.ts`; delete the default `invokeAccessFn` remnant if any

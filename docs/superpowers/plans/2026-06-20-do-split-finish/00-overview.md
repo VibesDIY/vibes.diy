@@ -22,13 +22,13 @@ already shipped"). The first PR in this effort should:
 
 ## The tracks
 
-| Track | File | PR(s) | Status | Closes |
-| --- | --- | --- | --- | --- |
-| A1 | [01-route-vibe-doc-ops-to-vibeapi.md](01-route-vibe-doc-ops-to-vibeapi.md) | 1 | full TDD plan | — |
-| A2 | [02-remove-apphandlers-from-chat-plane.md](02-remove-apphandlers-from-chat-plane.md) | 1 | full TDD plan | — |
-| A3 | [03-accessfn-do-class-deletion.md](03-accessfn-do-class-deletion.md) | 1 | full plan (wrangler) | #2265 §1, #2264 §4 |
-| B | [04-shared-sessions-do.md](04-shared-sessions-do.md) | chain | design + outline | #2265 §2 |
-| C | [05-chat-route-deprecation.md](05-chat-route-deprecation.md) | chain | design + outline | #2265 §3 |
+| Track | File                                                                                 | PR(s) | Status               | Closes             |
+| ----- | ------------------------------------------------------------------------------------ | ----- | -------------------- | ------------------ |
+| A1    | [01-route-vibe-doc-ops-to-vibeapi.md](01-route-vibe-doc-ops-to-vibeapi.md)           | 1     | full TDD plan        | —                  |
+| A2    | [02-remove-apphandlers-from-chat-plane.md](02-remove-apphandlers-from-chat-plane.md) | 1     | full TDD plan        | —                  |
+| A3    | [03-accessfn-do-class-deletion.md](03-accessfn-do-class-deletion.md)                 | 1     | full plan (wrangler) | #2265 §1, #2264 §4 |
+| B     | [04-shared-sessions-do.md](04-shared-sessions-do.md)                                 | chain | design + outline     | #2265 §2           |
+| C     | [05-chat-route-deprecation.md](05-chat-route-deprecation.md)                         | chain | design + outline     | #2265 §3           |
 
 ## Dependency order
 

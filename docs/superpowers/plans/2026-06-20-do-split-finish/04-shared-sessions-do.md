@@ -21,7 +21,7 @@ Independent of Tracks A1–A3 otherwise.
 
 ## Open decisions (resolve in brainstorm before planning)
 
-1. **Singleton hot-shard contention.** One DO instance for *all* read traffic.
+1. **Singleton hot-shard contention.** One DO instance for _all_ read traffic.
    Cloudflare singleton DOs are single-threaded — measure expected QPS. If it
    saturates, shard `global:0..k` by a stable hash of userId and route in the
    client. Decide k (or "1 for now, instrument first").
@@ -39,19 +39,19 @@ Independent of Tracks A1–A3 otherwise.
 
 ## File map (provisional)
 
-| File | Change |
-| --- | --- |
-| Create `vibes.diy/pkg/workers/shared-sessions.ts` | singleton DO; serves `sharedMsgEvento` |
-| Create `vibes.diy/api/svc/shared-msg-evento.ts` | `sharedHandlers + WildCard/Error` only |
-| `vibes.diy/pkg/workers/app.ts` | export `SharedSessions` |
-| `vibes.diy/api/types/cf-env.ts` | add `SHARED_SESSIONS: DurableObjectNamespace` |
-| `vibes.diy/pkg/wrangler.toml` (6 blocks) | bind `SHARED_SESSIONS` + `v8 new_classes = ["SharedSessions"]`; cli cross-script → prod (like APP_SESSIONS) |
-| `vibes.diy/pkg/workers/resolve-shard-do.ts` | add `shared:` prefix routing → `SHARED_SESSIONS` |
-| `vibes.diy/pkg/app/vibes-diy-provider.tsx` | add `sharedApi` to `VibesDiyCtx`, opened on every page → `/api/shared` |
-| `useRecentVibes.ts`, `useMemberships.ts`, settings routes, `list-models` callers, non-vibe `whoAmI` | move from `chatApi` → `sharedApi` |
-| `vibes.diy/api/svc/chat-msg-evento.ts` | drop `...sharedHandlers` (chat plane → `chatHandlers` only) |
-| `vibes.diy/pkg/workers/chat-sessions.ts` + provider | make ChatSessions **lazy** (open on first prompt focus) |
-| `vibes.diy/api/tests/evento-handler-parity.test.ts` | assert `sharedHandlers` only in `sharedMsgEvento` |
+| File                                                                                                | Change                                                                                                      |
+| --------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| Create `vibes.diy/pkg/workers/shared-sessions.ts`                                                   | singleton DO; serves `sharedMsgEvento`                                                                      |
+| Create `vibes.diy/api/svc/shared-msg-evento.ts`                                                     | `sharedHandlers + WildCard/Error` only                                                                      |
+| `vibes.diy/pkg/workers/app.ts`                                                                      | export `SharedSessions`                                                                                     |
+| `vibes.diy/api/types/cf-env.ts`                                                                     | add `SHARED_SESSIONS: DurableObjectNamespace`                                                               |
+| `vibes.diy/pkg/wrangler.toml` (6 blocks)                                                            | bind `SHARED_SESSIONS` + `v8 new_classes = ["SharedSessions"]`; cli cross-script → prod (like APP_SESSIONS) |
+| `vibes.diy/pkg/workers/resolve-shard-do.ts`                                                         | add `shared:` prefix routing → `SHARED_SESSIONS`                                                            |
+| `vibes.diy/pkg/app/vibes-diy-provider.tsx`                                                          | add `sharedApi` to `VibesDiyCtx`, opened on every page → `/api/shared`                                      |
+| `useRecentVibes.ts`, `useMemberships.ts`, settings routes, `list-models` callers, non-vibe `whoAmI` | move from `chatApi` → `sharedApi`                                                                           |
+| `vibes.diy/api/svc/chat-msg-evento.ts`                                                              | drop `...sharedHandlers` (chat plane → `chatHandlers` only)                                                 |
+| `vibes.diy/pkg/workers/chat-sessions.ts` + provider                                                 | make ChatSessions **lazy** (open on first prompt focus)                                                     |
+| `vibes.diy/api/tests/evento-handler-parity.test.ts`                                                 | assert `sharedHandlers` only in `sharedMsgEvento`                                                           |
 
 ---
 

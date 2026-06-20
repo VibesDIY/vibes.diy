@@ -31,14 +31,14 @@ applies. `wrangler deploy --dry-run` per env remains the authoritative gate.
 
 ## Environment map (wrangler.toml, `vibes.diy/pkg/`)
 
-| Env | block | `ACCESS_FN_DO` binding | `v4 new_classes` | highest tag |
-| --- | --- | --- | --- | --- |
-| top-level (test) | L23 | local | yes | v6 |
-| `env.local` | L82 | local | yes | v6 |
-| `env.dev` | L144 | local | yes | v6 |
-| `env.preview` | L208 | local | yes | v6 |
-| `env.prod` | L271 | local | yes | v6 |
-| `env.cli` | L343 | local | yes | v6 |
+| Env              | block | `ACCESS_FN_DO` binding | `v4 new_classes` | highest tag |
+| ---------------- | ----- | ---------------------- | ---------------- | ----------- |
+| top-level (test) | L23   | local                  | yes              | v6          |
+| `env.local`      | L82   | local                  | yes              | v6          |
+| `env.dev`        | L144  | local                  | yes              | v6          |
+| `env.preview`    | L208  | local                  | yes              | v6          |
+| `env.prod`       | L271  | local                  | yes              | v6          |
+| `env.cli`        | L343  | local                  | yes              | v6          |
 
 All six append `v7 deleted_classes = ["AccessFnDO"]`. Keep every `v1..v6`.
 
@@ -163,7 +163,7 @@ git commit -m "chore(wrangler): delete AccessFnDO class via v7 deleted_classes (
 
 - [ ] **Step 1: `pnpm check`**
 
-Run: `pnpm check`  → green.
+Run: `pnpm check` → green.
 
 - [ ] **Step 2: PR**
 

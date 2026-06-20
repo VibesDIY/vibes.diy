@@ -38,16 +38,16 @@ prompt UI. Simplifies routing and finishes the target architecture in
 
 ## File map (provisional)
 
-| File | Change |
-| --- | --- |
-| `vibes.diy/pkg/app/routes/vibe.$ownerHandle.$appSlug.tsx` | render prompt/chat UI inline behind an edit affordance; lazy-open `chatApi` on first prompt focus |
-| `vibes.diy/pkg/app/routes/chat/chat.$ownerHandle.$appSlug.tsx` | retire (logic merged into the vibe route) |
-| `vibes.diy/pkg/app/routes/chat/prompt.tsx` | keep new-vibe entry until replaced; eventually redirect into the vibe route |
-| router config | `301`/`302` `/chat/:o/:s` → `/vibe/:o/:s` per decision 1 |
-| `vibes.diy/pkg/app/vibe-api-target.ts` | simplify once `/chat/` no longer needs a `vibeApi` target |
-| `vibes.diy/api/svc/evento-handler-manifest.ts` | remove `imgGenAppSessionStopgapHandlers` after img-gen moves (decision 3) |
-| `vibes.diy/api/svc/app-msg-evento.ts` | drop the stopgap spread |
-| `vibes.diy/api/svc/vibes-msg-evento.ts` | delete if unused (decision 4) |
+| File                                                           | Change                                                                                            |
+| -------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| `vibes.diy/pkg/app/routes/vibe.$ownerHandle.$appSlug.tsx`      | render prompt/chat UI inline behind an edit affordance; lazy-open `chatApi` on first prompt focus |
+| `vibes.diy/pkg/app/routes/chat/chat.$ownerHandle.$appSlug.tsx` | retire (logic merged into the vibe route)                                                         |
+| `vibes.diy/pkg/app/routes/chat/prompt.tsx`                     | keep new-vibe entry until replaced; eventually redirect into the vibe route                       |
+| router config                                                  | `301`/`302` `/chat/:o/:s` → `/vibe/:o/:s` per decision 1                                          |
+| `vibes.diy/pkg/app/vibe-api-target.ts`                         | simplify once `/chat/` no longer needs a `vibeApi` target                                         |
+| `vibes.diy/api/svc/evento-handler-manifest.ts`                 | remove `imgGenAppSessionStopgapHandlers` after img-gen moves (decision 3)                         |
+| `vibes.diy/api/svc/app-msg-evento.ts`                          | drop the stopgap spread                                                                           |
+| `vibes.diy/api/svc/vibes-msg-evento.ts`                        | delete if unused (decision 4)                                                                     |
 
 ---
 
