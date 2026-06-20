@@ -83,6 +83,26 @@
   }
 }
 
+/* ============================================
+   VIBE APP SURFACE
+   The vibe document's own backdrop. Apps — including ones with a transparent
+   body — must render over a solid platform background, never the gray grid.
+   The grid means "platform fallback / hard error" and is reserved for platform
+   chrome, so it must never sit directly behind a live app. Near-white in light
+   mode, near-black in dark mode. The panel-open rule below intentionally
+   out-specifies this to show the grid while the controls panel is open (a
+   platform state, not the app).
+   ============================================ */
+.vibe-app-surface {
+  background-color: var(--vibes-white);
+}
+
+@media (prefers-color-scheme: dark) {
+  .vibe-app-surface {
+    background-color: var(--vibes-near-black);
+  }
+}
+
 body:has([data-vibe-controls-container] [data-vibe-switch].active) {
   background-color: #d4d4d4;
   background-image:

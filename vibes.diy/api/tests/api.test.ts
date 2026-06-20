@@ -302,6 +302,11 @@ describe("VibesDiyApi", { timeout: (inject("DB_FLAVOUR" as never) as string) ===
     const resIframe = await api.cfg.fetch(url);
     expect(resIframe.status).toBe(200);
     const iframeText = await resIframe.text();
+    // The vibe document must render on a solid platform surface, never the gray
+    // grid (which means platform fallback / hard error). A transparent app body
+    // would otherwise let the grid show through.
+    expect(iframeText).toContain('class="vibe-app-surface"');
+    expect(iframeText).not.toContain('class="grid-background"');
     // Mount JS now imports by original filename (e.g. /~fsId~/App.jsx), and
     // serv-entry-point serves the transformed JS transparently.
     const imports = [...iframeText.matchAll(/import V\d+ from "([^"]*\/App\.jsx)"/gm)];
