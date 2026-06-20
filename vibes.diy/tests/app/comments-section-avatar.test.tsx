@@ -166,7 +166,7 @@ describe("CommentsSection connection routing (#2265 A1)", () => {
     };
   }
 
-  it("routes doc ops + whoAmI through vibeApi when present, not chatApi", async () => {
+  it("routes doc ops through vibeApi but keeps whoAmI on chatApi", async () => {
     const calls: string[] = [];
     const wrapper = vibesWrapper({ chatApi: mkApi("chat", calls), vibeApi: mkApi("vibe", calls) });
     rtlRender(<CommentsSection ownerHandle="owner" appSlug="my-app" canModerate={false} composerDisabled={false} />, {
@@ -174,14 +174,19 @@ describe("CommentsSection connection routing (#2265 A1)", () => {
     });
 
     await waitFor(() => expect(calls).toContain("vibe:queryDocs"));
-    await waitFor(() => expect(calls).toContain("vibe:whoAmI"));
 
     fireEvent.change(screen.getByPlaceholderText("Write a comment…"), { target: { value: "hi" } });
     fireEvent.click(screen.getByRole("button", { name: "Post" }));
     await waitFor(() => expect(calls).toContain("vibe:putDoc"));
 
-    // Nothing should have gone to the chat connection.
-    expect(calls.some((c) => c.startsWith("chat:"))).toBe(false);
+    // Doc-plane ops go to AppSessions...
+    expect(calls).toContain("vibe:subscribeDocs");
+    // ...but whoAmI stays on chatApi: it writes a sticky per-connection adminMode
+    // flag and must not reset the shared AppSessions connection. (Codex #2494)
+    expect(calls).toContain("chat:whoAmI");
+    expect(calls).not.toContain("vibe:whoAmI");
+    expect(calls).not.toContain("chat:queryDocs");
+    expect(calls).not.toContain("chat:putDoc");
   });
 
   it("falls back to chatApi when vibeApi is absent", async () => {
