@@ -55,10 +55,17 @@ function formatTime(iso?: string): string {
 
 export function CommentsSection({ ownerHandle, appSlug, canModerate, composerDisabled }: CommentsSectionProps) {
   const { chatApi, vibeApi } = useVibesDiy();
-  // Vibe-scoped doc ops + whoAmI run on AppSessions (vibeApi): that connection
-  // does local broadcast + local QuickJS access-fn eval. Fall back to chatApi
-  // defensively — on /vibe/ and /chat/ routes vibeApi is always present. (#2265 A1)
+  // Vibe-scoped doc ops run on AppSessions (vibeApi): that connection does local
+  // broadcast + local QuickJS access-fn eval. Fall back to chatApi defensively —
+  // on /vibe/ and /chat/ routes vibeApi is always present. (#2265 A1)
   const dataApi = vibeApi ?? chatApi;
+  // whoAmI deliberately stays on chatApi. The server's whoAmI handler writes a
+  // sticky per-connection adminMode flag (who-am-i.ts: rawSend.adminMode), and
+  // owner-override doc writes read it via connectionAdminMode(). The vibeApi
+  // (AppSessions) connection is shared with the iframe's owner-mode doc ops, so
+  // a non-admin whoAmI here would reset that shared connection to non-admin.
+  // whoAmI is a stateless identity lookup (no access-fn eval), so it has no
+  // reason to ride vibeApi anyway. (Codex review, PR #2494)
   const { isSignedIn, userId: viewerUserId } = useAuth();
   const { user } = useUser();
   const [comments, setComments] = useState<CommentDoc[]>([]);
@@ -80,14 +87,14 @@ export function CommentsSection({ ownerHandle, appSlug, canModerate, composerDis
     let cancelled = false;
     // tid is overwritten by the impl's request() — we just need to satisfy the
     // type since ReqVibeWhoAmI extends the postMessage Base shape.
-    void dataApi.whoAmI({ tid: crypto.randomUUID(), ownerHandle, appSlug }).then((res) => {
+    void chatApi.whoAmI({ tid: crypto.randomUUID(), ownerHandle, appSlug }).then((res) => {
       if (cancelled) return;
       if (res.isOk()) setViewerUserSlug(res.Ok().viewer?.userHandle);
     });
     return () => {
       cancelled = true;
     };
-  }, [dataApi, isSignedIn, ownerHandle, appSlug]);
+  }, [chatApi, isSignedIn, ownerHandle, appSlug]);
 
   const reload = useCallback(async () => {
     const res = await dataApi.queryDocs({ ownerHandle, appSlug, dbName: COMMENTS_DB_NAME });
