@@ -55,6 +55,21 @@ Rule of thumb: **escalate whenever reviewer disagreement is plausible.**
 
 The human should only need to weigh in on actual decisions. Everything else is noise that the agent should absorb.
 
+## File cleanup issues as you notice them
+
+While a PR is in flight — waiting on CI, waiting on a review, between feedback rounds — you have idle cycles. Spend them filing the cleanup/tech-debt observations you accumulated while working, instead of letting them evaporate in chat.
+
+**When you notice it, file it.** Duplication, dead/legacy code, drift risk (hand-synced copies, CSS that mirrors TS tokens), a missing test seam, a foot-gun you had to work around — open a GitHub issue the moment you spot it, rather than only mentioning it in a reply and moving on. Chat observations vanish when the session ends; an issue is durable — the same reasoning as [Always end a work session with a PR](#always-end-a-work-session-with-a-pr). Spurious issues are cheap to close; lost context is not.
+
+Keep each issue scoped and linked:
+
+- Lead with a one/two-sentence plain-language summary (see [CLAUDE.md § Writing issues](../CLAUDE.md)), then the detail and concrete file paths.
+- Label `agent-created`, plus `technical-debt` when it's cleanup/dead code.
+- **Search existing issues first and cross-link related ones both ways** — don't open a near-duplicate; if a sibling issue exists, comment on each pointing at the other and note any sequencing dependency.
+- Don't fix it inline in the current PR unless it's already in scope — the issue is the durable record, and the current PR stays focused on its one goal.
+
+Filing the issue, then re-checking CI, is the canonical use of the waiting-for-CI window — not a detour from it.
+
 ## Ready-to-merge signal
 
 A PR is ready for the human to consider merging when there's a comment at the bottom of the PR thread with this structure:

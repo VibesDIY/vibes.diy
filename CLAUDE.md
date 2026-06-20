@@ -43,6 +43,7 @@ Full list and provenance: [`.claude/skills/README.md`](.claude/skills/README.md)
 ## Writing issues
 
 - Lead every issue with a one or two sentence plain-language summary of the problem, before any technical detail, file paths, or repro steps. A teammate triaging the backlog should be able to tell what an issue is without decoding it.
+- File cleanup/tech-debt issues the moment you notice them — don't just mention them in chat. Idle time while a PR waits on CI or review is the canonical window for this. See [pr-lifecycle.md § File cleanup issues as you notice them](agents/pr-lifecycle.md#file-cleanup-issues-as-you-notice-them).
 
 ## Quick Reference
 
