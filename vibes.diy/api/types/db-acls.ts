@@ -17,15 +17,21 @@ import { type } from "arktype";
 // blob (one entry per dbName). No new SQL table; reads happen via the
 // regular ensureAppSettings flow.
 
+// Structural DbAcl / DbAclSubject types are defined once in the shared leaf
+// (@vibes.diy/vibe-types/db-acl-eval, re-exported from its barrel) so the host
+// resolver and vibe-runtime share one definition. The arktype validators below
+// describe the same shape for runtime validation. Type-only import + re-export —
+// adds no runtime edge.
+import type { DbAcl, DbAclSubject } from "@vibes.diy/vibe-types";
+export type { DbAcl, DbAclSubject };
+
 export const dbAclSubject = type("'members' | 'editors' | 'submitters' | 'readers'");
-export type DbAclSubject = typeof dbAclSubject.infer;
 
 export const dbAcl = type({
   "read?": dbAclSubject.array(),
   "write?": dbAclSubject.array(),
   "delete?": dbAclSubject.array(),
 });
-export type DbAcl = typeof dbAcl.infer;
 export function isDbAcl(obj: unknown): obj is DbAcl {
   return !(dbAcl(obj) instanceof type.errors);
 }
