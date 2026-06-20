@@ -44,6 +44,11 @@ export function useChatNavigation(opts: ChatNavigationOpts): ChatNavigation {
   // seeds from the URL fsId so reloading an old chat doesn't re-navigate.
   const lastNavigatedFsIdRef = useRef<string | undefined>(fsId);
   const navWasRunningRef = useRef(false);
+  // Armed by the running:true→false edge of a LIVE turn; consumed when that
+  // turn's fsRef arrives. Decouples "generation done" from "fsId persisted":
+  // `running` now flips on the early prompt.block-end, before the canonical
+  // block.end (with fsRef) lands (VibesDIY/vibes.diy#2472).
+  const navArmedRef = useRef(false);
 
   // NOTE: intentionally NOT memoized. Each render captures the current
   // searchParams/navigate, matching the former inline `new URLSearchParams(
@@ -97,21 +102,29 @@ export function useChatNavigation(opts: ChatNavigationOpts): ChatNavigation {
   // turn's block.end and stamps fsRef on that block, so at end-of-stream we
   // point the URL at the most recent fsRef.
   //
-  // Only fires on a running:true→false transition. Without that gate, the
-  // effect would run for every promptState.blocks mutation — including the
-  // initial server-replay of an old chat — and yank the user off whatever
-  // historical fsId they intentionally opened.
+  // The running:true→false edge ARMS navigation; we navigate when the in-flight
+  // turn's fsRef arrives — which, since prompt.block-end is emitted early, is
+  // typically a render or two AFTER the edge (#2472). Arming (rather than firing
+  // on the edge) preserves the historical-fsId guard: the initial server-replay
+  // of an old chat carries block.end-with-fsRef but NO prompt.block-end, so
+  // `running` never goes true→false on replay → never armed → no navigation
+  // (#1972). lastNavigatedFsIdRef (seeded from the URL fsId) dedupes, so a stale
+  // fsRef from a prior turn doesn't consume the arm — we wait for the new one.
   useEffect(() => {
     const justEnded = navWasRunningRef.current && !promptState.running;
     navWasRunningRef.current = promptState.running;
-    if (!justEnded) return;
+    if (justEnded) navArmedRef.current = true;
+    if (!navArmedRef.current) return;
     for (let i = promptState.blocks.length - 1; i >= 0; i -= 1) {
       const block = promptState.blocks[i];
       for (const msg of block.msgs) {
         if (isBlockEnd(msg) && msg.fsRef) {
+          // Most-recent fsRef. If it's stale (already navigated) stay armed and
+          // wait for the new turn's; otherwise navigate and consume the arm.
           const newFsId = msg.fsRef.fsId;
           if (newFsId !== lastNavigatedFsIdRef.current) {
             lastNavigatedFsIdRef.current = newFsId;
+            navArmedRef.current = false;
             navigateToFsId(newFsId);
           }
           return;

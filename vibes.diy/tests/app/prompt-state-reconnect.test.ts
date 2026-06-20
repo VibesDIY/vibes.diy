@@ -21,6 +21,28 @@ function blockEnd(streamId: string) {
   return { type: "prompt.block-end" as const, streamId, chatId: "c1", seq: 9, timestamp: new Date() };
 }
 
+// A full BlockStreamMsg `block.end` (call-ai-v2 `isBlockEnd` demands BlockBase +
+// stats + usage, plus a normalizable fsRef). This is the persisted, replayed
+// terminal that carries fsRef — after the split it owns connection convergence.
+function fsBlockEnd(streamId: string, fsId?: string) {
+  return {
+    type: "block.end" as const,
+    blockId: `b-${streamId}`,
+    streamId,
+    seq: 1,
+    blockNr: 1,
+    timestamp: new Date(),
+    stats: {
+      toplevel: { lines: 0, bytes: 0 },
+      code: { lines: 0, bytes: 0 },
+      image: { lines: 0, bytes: 0 },
+      total: { lines: 0, bytes: 0 },
+    },
+    usage: { given: [], calculated: { prompt_tokens: 0, completion_tokens: 0, total_tokens: 0 } },
+    ...(fsId ? { fsRef: { appSlug: "app", ownerHandle: "owner", mode: "dev" as const, fsId } } : {}),
+  };
+}
+
 function promptError(streamId: string, error = "boom") {
   return { type: "prompt.error" as const, streamId, chatId: "c1", seq: 9, timestamp: new Date(), error };
 }
@@ -75,20 +97,68 @@ describe("promptReducer reconnect actions", () => {
     expect(next.title).toBe("kept-title");
   });
 
-  it("block-end matching inFlightStreamId converges: running false, connection live, id cleared", () => {
+  // The split (VibesDIY/vibes.diy#2472): prompt.block-end is emitted early (when
+  // generation ends, before the persist), so it flips `running` off ONLY. It must
+  // NOT settle connection/inFlightStreamId — otherwise a disconnect in the gap
+  // before the canonical block.end would orphan the convergence.
+  it("prompt.block-end flips running off but no longer settles connection/inFlightStreamId", () => {
     const state = baseState({ running: true, connection: "reconnecting", inFlightStreamId: "p-1" });
     const next = promptReducer(state, blockEnd("p-1"));
     expect(next.running).toBe(false);
-    expect(next.connection).toBe("live");
-    expect(next.inFlightStreamId).toBeUndefined();
-  });
-
-  it("historical block-end with a different streamId does not converge", () => {
-    const state = baseState({ running: true, connection: "reconnecting", inFlightStreamId: "p-1" });
-    const next = promptReducer(state, blockEnd("old-turn"));
-    expect(next.running).toBe(false);
     expect(next.connection).toBe("reconnecting");
     expect(next.inFlightStreamId).toBe("p-1");
+  });
+
+  // The canonical post-persist block.end (BlockStreamMsg, carries fsRef) now owns
+  // convergence — and is the one event replayed on reconnect-after-completion.
+  it("block.end (BlockStreamMsg) matching inFlightStreamId with fsRef converges and appends", () => {
+    const block = { msgs: [] };
+    const state = baseState({
+      running: false,
+      connection: "reconnecting",
+      inFlightStreamId: "p-1",
+      blocks: [block],
+      current: block,
+    });
+    const next = promptReducer(state, fsBlockEnd("p-1", "FS1"));
+    expect(next.connection).toBe("live");
+    expect(next.inFlightStreamId).toBeUndefined();
+    // still appended for the fsRef consumers (nav / repoint / snapshots)
+    expect(next.blocks[0].msgs).toHaveLength(1);
+  });
+
+  it("historical block.end with a different streamId appends but does not converge", () => {
+    const block = { msgs: [] };
+    const state = baseState({
+      running: false,
+      connection: "reconnecting",
+      inFlightStreamId: "p-1",
+      blocks: [block],
+      current: block,
+    });
+    const next = promptReducer(state, fsBlockEnd("old-turn", "FS1"));
+    expect(next.connection).toBe("reconnecting");
+    expect(next.inFlightStreamId).toBe("p-1");
+    expect(next.blocks[0].msgs).toHaveLength(1);
+  });
+
+  // Reconnect-gap (spec invariant 9): a disconnect after the early prompt.block-end
+  // but before the canonical block.end leaves inFlightStreamId set, so the
+  // reconnect loop can still re-open; a block.end with no fsRef (e.g. a synthetic
+  // exhausted-recovery end) must not prematurely converge.
+  it("block.end without fsRef appends but does not converge", () => {
+    const block = { msgs: [] };
+    const state = baseState({
+      running: false,
+      connection: "reconnecting",
+      inFlightStreamId: "p-1",
+      blocks: [block],
+      current: block,
+    });
+    const next = promptReducer(state, fsBlockEnd("p-1"));
+    expect(next.connection).toBe("reconnecting");
+    expect(next.inFlightStreamId).toBe("p-1");
+    expect(next.blocks[0].msgs).toHaveLength(1);
   });
 
   it("prompt.error is terminal: running false and the error block is appended (#2057)", () => {

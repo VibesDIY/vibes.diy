@@ -157,16 +157,25 @@ export function PreviewApp({ promptState }: { promptState: PromptState }) {
   // navigation in chat.tsx still records the new fsId so reload behaves
   // correctly. Mid-stream we always skip — a reload would discard the
   // in-progress hot-swapped DOM.
+  // The running:true→false edge ARMS the repoint; we repoint when the canonical
+  // block.end (with fsRef) arrives — which, with the early prompt.block-end, now
+  // lands after `running` already flipped (#2472). Arming preserves the
+  // mid-stream/replay guards: replay carries no prompt.block-end so `running`
+  // never edges → never armed. The fsId !== pinnedFsId check already dedupes a
+  // stale fsRef, so the arm survives until the new turn's fsRef appears.
   const streamingRef = useRef(false);
+  const repointArmedRef = useRef(false);
   useEffect(() => {
     const justEnded = streamingRef.current && !promptState.running;
     streamingRef.current = promptState.running;
-    if (!justEnded) return;
+    if (justEnded) repointArmedRef.current = true;
+    if (!repointArmedRef.current) return;
     if (pinnedFsId === undefined) return;
     for (let i = promptState.blocks.length - 1; i >= 0; i -= 1) {
       const block = promptState.blocks[i];
       for (const msg of block.msgs) {
         if (isBlockEnd(msg) && msg.fsRef && msg.fsRef.fsId !== pinnedFsId) {
+          repointArmedRef.current = false;
           setPinnedFsId(msg.fsRef.fsId);
           return;
         }
