@@ -1149,7 +1149,7 @@ async function handleProdiaImageRequest({
       "job.json"
     );
     formData.append("input", new Blob([bytes], { type: "image/jpeg" }), "input.jpg");
-    prodiaRes = await fetch("https://inference.prodia.com/v2/job", {
+    prodiaRes = await vctx.inferenceFetch("https://inference.prodia.com/v2/job", {
       method: "POST",
       headers: {
         Authorization: `Bearer ${prodiaToken}`,
@@ -1158,7 +1158,7 @@ async function handleProdiaImageRequest({
       body: formData,
     });
   } else {
-    prodiaRes = await fetch("https://inference.prodia.com/v2/job", {
+    prodiaRes = await vctx.inferenceFetch("https://inference.prodia.com/v2/job", {
       method: "POST",
       headers: {
         Authorization: `Bearer ${prodiaToken}`,

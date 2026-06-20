@@ -47,6 +47,9 @@ export interface CreateHandlerParams<T extends VibesSqlite> {
   fetchAsset(url: string): Promise<Result<ReadableStream<Uint8Array>>>;
   fetchPkgVersion?: ResolveFunction;
   llmRequest?(prompt: LLMRequest & { headers: LLMHeaders }, opts?: { readonly signal?: AbortSignal }): Promise<Response>;
+  // Injectable fetch seam for non-LLM inference (Prodia) and call-ai's network.
+  // Defaults to the platform `fetch` when omitted (see #2481).
+  inferenceFetch?: typeof fetch;
   notifyDocChanged?(
     evt: { ownerHandle: string; appSlug: string; dbName: string; docId: string; channel?: string },
     senderConnId: string
@@ -287,6 +290,10 @@ export async function createAppContext<T extends VibesSqlite>(
       url: envVals.LLM_BACKEND_URL,
       apiKey: envVals.LLM_BACKEND_API_KEY,
     }),
+    // Default to the platform `fetch`. Wrapped in an arrow (rather than passing
+    // `globalThis.fetch` directly) so the bound receiver is correct across
+    // runtimes (undici throws "Illegal invocation" on an unbound fetch).
+    inferenceFetch: params.inferenceFetch ?? ((input, init) => fetch(input, init)),
     prodiaToken: envVals.PRODIA_TOKEN,
     metaAccessToken: envVals.META_ACCESS_TOKEN,
     metaAdAccountId: envVals.META_AD_ACCOUNT_ID,

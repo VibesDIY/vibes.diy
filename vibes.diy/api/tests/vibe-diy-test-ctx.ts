@@ -25,6 +25,17 @@ import { $ } from "zx";
 
 let isolationCounter = 0;
 
+/**
+ * Fail-closed default for `inferenceFetch` in tests: any un-mocked external
+ * inference request throws a clear, actionable error naming the host instead of
+ * hitting the wire. Mirrors the `fetchAsset` precedent below. Tests that need a
+ * real response inject `inferenceFetch` via opts. See VibesDIY/vibes.diy#2481.
+ */
+const failClosedInferenceFetch: typeof fetch = (input) => {
+  const url = typeof input === "string" ? input : input instanceof URL ? input.toString() : input.url;
+  return Promise.reject(new Error(`network request in test — inject a mock or add a fixture: ${url}`));
+};
+
 async function createIsolatedSqliteDB(): Promise<string> {
   const root = path.dirname(new URL(import.meta.url).pathname);
   const distDir = path.join(root, "dist");
@@ -59,6 +70,10 @@ export interface CreateVibeDiyTestCtxOpts {
   s3?: S3Api;
   models?: Model[];
   llmRequest?(prompt: LLMRequest & { headers: LLMHeaders }, opts?: { readonly signal?: AbortSignal }): Promise<Response>;
+  // Injectable inference fetch seam (Prodia + call-ai). When omitted the test
+  // ctx installs a fail-closed default that throws on any call, so an un-mocked
+  // external request in a test is a loud, deterministic error (#2481).
+  inferenceFetch?: typeof fetch;
   // Override teeWriter peerTimeout for tests (default 30s in production).
   // Canary tests set this small (e.g. 200ms) so deadlines fire fast.
   peerTimeout?: number;
@@ -199,6 +214,7 @@ export async function createVibeDiyTestCtx(
         }
         return new Response("", { status: 200 });
       }),
+    inferenceFetch: opts.inferenceFetch ?? failClosedInferenceFetch,
     netHash: () => "test-hash",
     connections: new Set(),
     env,

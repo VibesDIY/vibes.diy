@@ -49,6 +49,15 @@ export interface VibesApiSQLCtx {
   assetGrantSigner: AssetGrantSigner;
   assetSessionSigner: AssetSessionSigner;
   llmRequest(prompt: LLMRequest & { headers: LLMHeaders }, opts?: { readonly signal?: AbortSignal }): Promise<Response>;
+  /**
+   * Injectable fetch seam for non-LLM inference HTTP (Prodia image generation)
+   * and for routing call-ai's network (pre-allocation) through a mockable
+   * boundary. The default impl in `create-handler` is the platform `fetch`; the
+   * test ctx supplies a fail-closed default that throws so an un-mocked external
+   * request in a test becomes a loud, deterministic error instead of flaky CI.
+   * See VibesDIY/vibes.diy#2481.
+   */
+  inferenceFetch: typeof fetch;
   prodiaToken?: string;
   metaAccessToken?: string;
   metaAdAccountId?: string;
