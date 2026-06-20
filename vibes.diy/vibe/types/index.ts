@@ -1,10 +1,14 @@
-import { dbAcl, queryFilter, type DbAcl } from "@vibes.diy/api-types";
+import { dbAcl, queryFilter } from "@vibes.diy/api-types";
 export type { AccessDescriptor, AccessFunction, Helpers, UserContext } from "@vibes.diy/api-types";
 import { type } from "arktype";
 
 export * from "./img-gen.js";
 
-export type { DbAcl };
+// db-ACL structural types + evaluation live in the shared leaf (single source
+// of truth, shared by api-svc and vibe-runtime). Re-exported here so the public
+// @vibes.diy/vibe-types surface is unchanged.
+export type { DbAcl, DbAclSubject } from "./db-acl-eval.js";
+export { canRead, canWrite, inGroup, aclAllows } from "./db-acl-eval.js";
 
 const Base = type({
   tid: "string",
