@@ -212,11 +212,18 @@ small subset of the `/vibe/` component:
     instead of the iframe.
   - Optional: a tiny, non-interactive "Made on vibes.diy" attribution corner
     (open question — see below).
-- **No grant card / no auth-intent flow.** Because the embed is anonymous, we do
-  *not* run the request/invite/login state machine. The authoritative live
-  signal is `getAppByFsId` returning grant `public-access`; treat **anything
-  else** (including the `req-login.request` an auto-accept-but-not-public app
-  returns for an anonymous caller) as "show instruction card." We must **never**
+- **No grant card / no auth-intent flow.** Because the embed has no chrome, we do
+  *not* run the request/invite/login state machine. The live signal is
+  `getAppByFsId`, mapped through the same `computeCardVariant` the `/vibe/` viewer
+  uses: a grant in the **viewable** set (`public-access`, `owner`,
+  `granted-access.*`, `accepted-email-invite`) keeps the iframe; everything else
+  (`req-login.*`, `pending-request`, `revoked-access`, `not-grant`,
+  `not-found`) shows the instruction card. Gating on the literal `public-access`
+  grant would be wrong: a signed-in owner loading their own public embed gets
+  grant `owner` and would be flipped to the card. The client check is allowed to
+  **upgrade** the SSR paint (card→iframe) as well as downgrade it, so a viewer
+  who can actually see the vibe is never stuck on the card even if the SSR
+  `isPubliclyEmbeddable` hint lags a freshly-toggled setting. We must **never**
   open a Clerk `SignIn` inside the embed frame.
 
 ### Worker SSR wiring

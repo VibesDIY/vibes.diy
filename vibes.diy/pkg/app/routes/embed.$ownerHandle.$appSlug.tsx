@@ -6,6 +6,7 @@ import type { VibesFPApiParameters } from "@vibes.diy/api-types";
 import { useVibesDiy } from "../vibes-diy-provider.js";
 import { useDocumentTitle } from "../hooks/useDocumentTitle.js";
 import { RUNTIME_PREVIEW_IFRAME_ALLOW, RUNTIME_PREVIEW_IFRAME_SANDBOX } from "../lib/iframe-policy.js";
+import { computeCardVariant } from "./vibe-card-variant.js";
 
 // The embed route is a deliberately small, chrome-free sibling of the /vibe/
 // viewer. A third-party page frames this route; this route in turn frames the
@@ -125,9 +126,14 @@ export default function EmbedRoute() {
   const ssrEmbeddable = loaderData?.isPubliclyEmbeddable ?? false;
   const [iframeUrl, setIframeUrl] = useState<string | undefined>(loaderData?.iframeUrl);
 
-  // grantOk is the authoritative live gate. undefined = not yet resolved (use
-  // the SSR hint to paint); true/false = confirmed public-access or not.
-  const [grantOk, setGrantOk] = useState<boolean | undefined>(undefined);
+  // Live gate: can THIS viewer see the vibe? undefined = not yet resolved (use
+  // the SSR public-access hint to paint). Once resolved we mirror the /vibe/
+  // viewer's "iframe" variant — owner / granted / accepted-invite / public-access
+  // all count as viewable, so a signed-in owner loading their own public embed
+  // keeps the iframe instead of flipping to the not-published card. Anonymous
+  // visitors to a non-public (or newly-private) vibe resolve to a request/login
+  // variant and correctly fall back to the card.
+  const [viewerCanView, setViewerCanView] = useState<boolean | undefined>(undefined);
 
   const ssrIframeUrl = loaderData?.iframeUrl;
   useEffect(() => {
@@ -150,22 +156,21 @@ export default function EmbedRoute() {
     );
   }, [ssrIframeUrl, appSlug, ownerHandle, vctx.webVars.env.VIBES_SVC_HOSTNAME_BASE, vctx.webVars.pkgRepos.workspace]);
 
-  // Authoritative anonymous-access check: confirm a public-access grant.
-  // Anything else (req-login.request from an auto-accept app, revoked, private,
-  // not-found) falls back to the instruction card. Never prompts sign-in.
+  // Resolve the current viewer's access. Mirrors the /vibe/ viewer's grant→card
+  // mapping; "iframe" means viewable. Never prompts sign-in in-frame.
   useEffect(() => {
     if (!appSlug || !ownerHandle) return;
     let cancelled = false;
     vctx.chatApi.getAppByFsId({ appSlug, ownerHandle }).then((rRes) => {
       if (cancelled || rRes.isErr()) return;
-      setGrantOk(rRes.Ok().grant === "public-access");
+      setViewerCanView(computeCardVariant(rRes.Ok().grant) === "iframe");
     });
     return () => {
       cancelled = true;
     };
   }, [appSlug, ownerHandle, vctx.chatApi]);
 
-  const showIframe = grantOk === undefined ? ssrEmbeddable : grantOk;
+  const showIframe = viewerCanView === undefined ? ssrEmbeddable : viewerCanView;
 
   if (showIframe && iframeUrl) {
     return (
