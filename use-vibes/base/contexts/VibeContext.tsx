@@ -7,6 +7,8 @@ import { TokenStrategie } from "@fireproof/core-types-protocols-cloud";
 import { Database } from "@fireproof/use-fireproof";
 import { OnFunc, OnFuncReturn, ReturnOnFunc } from "@adviser/cement";
 
+type ClerkDashApiClerk = Parameters<typeof clerkDashApi>[0];
+
 /**
  * Error codes for VibeMetadata validation failures.
  * Preserved for backward compatibility.
@@ -94,8 +96,7 @@ export interface VibeContextProviderProps {
 
 function LiveCycleVibeContextProvider({ mountParams, children }: VibeContextProviderProps) {
   const clerk = useClerk();
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const dashApi = clerkDashApi(clerk as any, {
+  const dashApi = clerkDashApi(clerk as unknown as ClerkDashApiClerk, {
     apiUrl: mountParams.env.DASHBOARD_URL,
   });
 

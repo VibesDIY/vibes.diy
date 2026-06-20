@@ -208,7 +208,8 @@ export function getDependencyTree(
   }
 
   // If not a workspace package, check regular packages
-  if (!lockfile.packages) {
+  const lockfilePackages = lockfile.packages;
+  if (!lockfilePackages) {
     return null;
   }
 
@@ -216,7 +217,7 @@ export function getDependencyTree(
   let packageKey: string | null = null;
   let packageVersion: string | null = null;
 
-  for (const [key] of Object.entries(lockfile.packages)) {
+  for (const [key] of Object.entries(lockfilePackages)) {
     const cleanKey = key.split("(")[0].replace(":", "");
     let pkgName: string;
     let pkgVersion: string;
@@ -274,18 +275,18 @@ export function getDependencyTree(
     visited.add(pkgKey);
 
     // Get the package entry
-    const pkgEntry = (lockfile.packages as Record<string, any>)?.[pkgKey];
+    const pkgEntry = lockfilePackages[pkgKey];
     if (!pkgEntry) {
       return node;
     }
 
     // Get all dependencies
     const allDeps = {
-      ...pkgEntry.dependencies,
-      ...pkgEntry.optionalDependencies,
+      ...(pkgEntry.dependencies ?? {}),
+      ...(pkgEntry.optionalDependencies ?? {}),
     };
 
-    if (!allDeps) {
+    if (Object.keys(allDeps).length === 0) {
       return node;
     }
 
@@ -294,7 +295,7 @@ export function getDependencyTree(
       if (typeof depVersion !== "string") continue;
 
       // Find the dependency in the lockfile packages
-      for (const [key] of Object.entries(lockfile.packages || {})) {
+      for (const [key] of Object.entries(lockfilePackages)) {
         const cleanKey = key.split("(")[0].replace(":", "");
         let keyPkgName: string;
         let keyPkgVersion: string;
