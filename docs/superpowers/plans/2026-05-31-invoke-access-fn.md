@@ -7,6 +7,7 @@
 Tasks 1–5 are committed on branch `worktree-jchris+invoke-access-fn` (PR #2089). The `new Function()` approach fails at runtime in DO fetch handlers — `allow_eval_during_startup` only covers startup scope. Deploy-preview CI is blocked by the startup CPU limit caused by the flag itself.
 
 **Canary results (2026-05-31):**
+
 1. `new Function()` in DO fetch → `EvalError: Code generation from strings disallowed`
 2. Module-scope eval → works but can't eval per-request user code
 3. `@cf-wasm/quickjs` in DO fetch → ✅ works, no compat flags needed, 258KB gzipped
@@ -27,7 +28,7 @@ Paste this to a fresh agent session after Prompt 1 is merged:
 
 ## Handoff Prompt 1: Switch AccessFnDO to QuickJS WASM
 
-```
+````
 ## Task: Replace `new Function()` with QuickJS WASM in AccessFnDO
 
 ### Context
@@ -50,17 +51,19 @@ Enter the worktree, then work from `vibes.diy/` subdirectory.
 
 ```bash
 cd vibes.diy/pkg && pnpm add @cf-wasm/quickjs
-```
+````
 
 **2. Rewrite `vibes.diy/pkg/workers/access-fn.ts`**
 
 Replace the `new Function()` eval with QuickJS WASM. The current file:
+
 - Receives `source` in the POST body (access function JS source code)
 - Lazy-compiles it with `new Function("doc", "oldDoc", "user", "ctx", source)` on first request
 - Caches the compiled function for the DO instance lifetime
 - Calls it with `(doc, oldDoc, user, helpers)` and returns the result
 
 New approach using `@cf-wasm/quickjs`:
+
 - Import `getQuickJSWASMModule` from `@cf-wasm/quickjs`
 - On each invoke request, create a QuickJS context via `QuickJS.newContext()`
 - Use `vm.evalCode()` to evaluate the access function source wrapped as an IIFE
@@ -69,6 +72,7 @@ New approach using `@cf-wasm/quickjs`:
 - Dispose the VM context
 
 Key API usage (verified by canary):
+
 ```typescript
 import { getQuickJSWASMModule } from "@cf-wasm/quickjs";
 
@@ -131,6 +135,7 @@ vm.dispose();
 ```
 
 **Important**: The `makeHelpers()` function returns an object with methods (like `forbid()`). Methods can't be serialized into QuickJS. Two options:
+
 - (a) Only pass serializable helper data (user info) and skip method helpers — simplest
 - (b) Register helper functions as QuickJS globals via `vm.newFunction()` — more complete but complex
 
@@ -139,6 +144,7 @@ Start with (a). The access function gets `doc`, `oldDoc`, `user` as data. The `c
 **3. Keep the caching behavior**
 
 The current code caches the compiled function for the DO instance lifetime. With QuickJS, compilation is cheap (~1ms), so you can either:
+
 - Cache the source string and create a fresh VM per request (simpler, better isolation)
 - Cache nothing — source comes in the POST body every time (current architecture already does this)
 
@@ -155,6 +161,7 @@ cd /path/to/worktree && pnpm fast-check
 ```
 
 Fix any TypeScript errors. The main things to watch for:
+
 - Import of `getQuickJSWASMModule` resolves correctly
 - No type errors from the QuickJS API
 - Existing tests still pass (the integration tests in `access-fn-invoke.test.ts` use a mock `invokeAccessFn`, not the real DO)
@@ -169,11 +176,13 @@ new Function() doesn't work at runtime in DO fetch handlers —
 allow_eval_during_startup only covers startup scope. QuickJS WASM
 evaluates JS strings via a WASM sandbox, no compat flags needed."
 ```
+
 ```
 
 ## Handoff Prompt 2: Remove allow_eval_during_startup + Fix Deploy
 
 ```
+
 ## Task: Remove `allow_eval_during_startup` and verify deploy-preview passes
 
 ### Context
@@ -193,11 +202,13 @@ PR: #2089
 **1. Remove `allow_eval_during_startup` from `vibes.diy/pkg/wrangler.toml`**
 
 Line 4 currently reads:
+
 ```toml
 compatibility_flags = ["nodejs_compat", "allow_eval_during_startup"]
 ```
 
 Change to:
+
 ```toml
 compatibility_flags = ["nodejs_compat"]
 ```
@@ -234,4 +245,7 @@ If it still fails, check the error — it may be the QuickJS WASM bundle size (6
 **5. Post PR comment confirming deploy-preview is green**
 
 Once CI passes, comment on PR #2089 confirming the deploy blocker is resolved.
+
+```
+
 ```

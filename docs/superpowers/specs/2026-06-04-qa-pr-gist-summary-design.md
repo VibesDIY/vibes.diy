@@ -25,15 +25,15 @@ Three changes follow from that feedback:
 
 ## Design decisions (locked)
 
-| Decision | Choice |
-|---|---|
-| PR comment body | Concise narrative title of the PR + verdict + P0/P1/P2 counts + gist link. Slightly over two lines is fine; no findings inline. |
-| Gist visibility | **Public** (`gh gist create --public`). |
-| Gist-create failure | **Fall back to full inline comment** (current behavior) + a one-line "gist upload failed" note. The report is never lost. |
-| Screenshots | **Inline-embedded via two-pass publish.** Only the screenshots that findings reference (evidence); per-step working captures stay local. |
-| Screenshot transport | `gh gist create` refuses binaries, so PNGs are pushed into the gist's **git repo** (`gh gist clone` + `git push`), which renders them inline via raw URLs. |
+| Decision                  | Choice                                                                                                                                                                                   |
+| ------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| PR comment body           | Concise narrative title of the PR + verdict + P0/P1/P2 counts + gist link. Slightly over two lines is fine; no findings inline.                                                          |
+| Gist visibility           | **Public** (`gh gist create --public`).                                                                                                                                                  |
+| Gist-create failure       | **Fall back to full inline comment** (current behavior) + a one-line "gist upload failed" note. The report is never lost.                                                                |
+| Screenshots               | **Inline-embedded via two-pass publish.** Only the screenshots that findings reference (evidence); per-step working captures stay local.                                                 |
+| Screenshot transport      | `gh gist create` refuses binaries, so PNGs are pushed into the gist's **git repo** (`gh gist clone` + `git push`), which renders them inline via raw URLs.                               |
 | Pass-2 (git push) failure | Do **not** fall back to inline comment — the gist already holds the triage text (screenshot tokens left as literal placeholders, no images). Post the comment with the gist link anyway. |
-| Comment dedup | **Sticky edit-in-place** via a hidden HTML marker. One qa-pr comment per PR, always current. |
+| Comment dedup             | **Sticky edit-in-place** via a hidden HTML marker. One qa-pr comment per PR, always current.                                                                                             |
 
 ## What changes, section by section
 
@@ -43,7 +43,7 @@ Today Step 7 finalizes `triage.md`, greps for leftover placeholders, then runs o
 `gh pr comment`. The new flow:
 
 1. **Finalize** `qa-reports/{run_id}/triage.md` — unchanged placeholder-grep gate.
-2. **Publish the gist (two-pass).** See *Screenshots* below. Result: a public gist URL.
+2. **Publish the gist (two-pass).** See _Screenshots_ below. Result: a public gist URL.
    - If **pass 1** (`gh gist create`) fails → **gist-failure fallback**: post the full
      `triage.md` inline exactly as the skill does today, body prefixed with
      `> ⚠️ Gist upload failed; full triage inline below.`, carrying the dedup marker.
@@ -56,14 +56,15 @@ Today Step 7 finalizes `triage.md`, greps for leftover placeholders, then runs o
 
    ```markdown
    <!-- qa-pr-triage-comment -->
+
    ## QA: <PR title> — <verdict>
 
    <one-sentence narrative: how the PR's change held up across desktop + mobile>
 
-   **<x> P0 · <y> P1 · <z> P2** across desktop + mobile · [Full triage ↗](<gist-url>)
+   **<x> P0 · <y> P1 · <z> P2** across desktop + mobile · [Full triage ↗](gist-url)
    ```
 
-4. **Post or update (sticky).** See *Comment dedup* below.
+4. **Post or update (sticky).** See _Comment dedup_ below.
 5. **Print** the comment URL and the gist URL to the session.
 6. **Sign-out cleanup** — unchanged.
 
@@ -84,12 +85,12 @@ from its raw URL and renders inline.
    ```
    Only `triage.md` (no PNG args). Parse stdout for the gist URL → derive `<owner>` and
    `<gist_id>` (last path segment) and `<raw_base> =
-   https://gist.githubusercontent.com/<owner>/<gist_id>/raw/`.
+https://gist.githubusercontent.com/<owner>/<gist_id>/raw/`.
    `<desc>` = `qa-pr triage — PR #<N> — <verdict> (<run_id>)`.
 2. **Rewrite `triage.md`:** replace each `{{EVIDENCE:<basename>.png}}` token with a sized,
    click-through thumbnail at the raw gist URL:
    ```html
-   <a href="<raw_base><basename>.png"><img src="<raw_base><basename>.png" width="240"></a>
+   <a href="<raw_base><basename>.png"><img src="<raw_base><basename>.png" width="240" /></a>
    ```
    The thumbnail lands in the finding's **Evidence** slot (template change below).
 3. **Pass 2 — git-push the PNGs + rewritten triage:**
@@ -104,6 +105,7 @@ from its raw URL and renders inline.
    push replaces it.)
 
 **Edge cases:**
+
 - **Zero evidence screenshots** (clean pass, or capture failed) → no images to embed,
   the flow collapses to a single text-only `gh gist create`, no rewrite, no git push.
 - **Pass-2 failure** (clone/commit/push) → degrade as described in Step 7: the gist exists
@@ -141,7 +143,7 @@ preserved off-thread in `runs.jsonl` (below).
 ### Authorization section rewrite
 
 Today: authorizes **exactly one** GitHub write (`gh pr comment`). New: authorizes three
-write *operations*, all no-confirmation:
+write _operations_, all no-confirmation:
 
 1. **Gist publish** — `gh gist create --public …`, then (when there are evidence images)
    `gh gist clone <id>` + a `git commit`/`git push` into that gist's own repo to add the
@@ -170,7 +172,7 @@ wording is replaced; the forbidden list is otherwise preserved.
 - **Triage template** (`assets/triage-template.md`): the P0/P1 finding tables (and P2 if
   it carries evidence) gain an **Evidence** column (or a per-finding image beneath the
   table) where the two-pass rewrite injects the thumbnail `<img>`. The footer line
-  "*Raw run artifacts … are not attached to this comment.*" updates to note that evidence
+  "_Raw run artifacts … are not attached to this comment._" updates to note that evidence
   screenshots now live in the gist; non-evidence artifacts remain local.
 
 ### Run log (`runs.jsonl`)

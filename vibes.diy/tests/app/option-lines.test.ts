@@ -9,7 +9,9 @@ describe("parseOptionLines", () => {
   });
 
   it("extracts a trailing options group and removes it from the prose", () => {
-    const text = ["What's the vibe?", "", "▸ Calm and focused", "▸ Playful and weird", "▸ That's enough — let's build it!"].join("\n");
+    const text = ["What's the vibe?", "", "▸ Calm and focused", "▸ Playful and weird", "▸ That's enough — let's build it!"].join(
+      "\n"
+    );
     const r = parseOptionLines(text);
     expect(r.prose).toBe(["What's the vibe?", ""].join("\n"));
     expect(r.options).toEqual(["Calm and focused", "Playful and weird", "That's enough — let's build it!"]);

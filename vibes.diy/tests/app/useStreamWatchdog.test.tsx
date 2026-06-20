@@ -33,9 +33,12 @@ describe("useStreamWatchdog", () => {
 
   it("resets the timer when activityKey changes", () => {
     const onSilent = vi.fn();
-    const { rerender } = renderHook(({ key }) => useStreamWatchdog({ running: true, connection: "live", activityKey: key, onSilent }), {
-      initialProps: { key: [1] as unknown },
-    });
+    const { rerender } = renderHook(
+      ({ key }) => useStreamWatchdog({ running: true, connection: "live", activityKey: key, onSilent }),
+      {
+        initialProps: { key: [1] as unknown },
+      }
+    );
     vi.advanceTimersByTime(STREAM_WATCHDOG_TIMEOUT_MS - 1000);
     rerender({ key: [2] as unknown });
     vi.advanceTimersByTime(STREAM_WATCHDOG_TIMEOUT_MS - 1000);

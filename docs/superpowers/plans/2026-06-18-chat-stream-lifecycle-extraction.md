@@ -201,9 +201,7 @@ describe("useChatSession", () => {
     const { view, fakeChat, dispatch } = setup();
     view.rerender({ ownerHandle: "owner", appSlug: "app", promptToSend: "FAIL" });
     await waitFor(() => expect(fakeChat.prompt).toHaveBeenCalled());
-    await waitFor(() =>
-      expect(dispatch).toHaveBeenCalledWith({ type: "setOptimisticPrompt", text: undefined })
-    );
+    await waitFor(() => expect(dispatch).toHaveBeenCalledWith({ type: "setOptimisticPrompt", text: undefined }));
   });
 
   it("invariant 1: fire path does not re-fire on an fsId-only change", async () => {
@@ -478,6 +476,7 @@ Line numbers below are against `main` as of this plan; re-confirm with a read be
 - [ ] **Step 1: Delete the now-duplicated lifecycle code from the route**
 
 Remove these regions (each now lives in the hook):
+
 - `:90` — `const [chat, setChat] = useState<LLMChat | null>(null);`
 - `:91-96` — the `openingRef` / `prevSlugsRef` declarations + inline reset.
 - `:117-121` — the `fsIdRef` comment + `useRef` + `fsIdRef.current = fsId;`.
@@ -489,24 +488,25 @@ Remove these regions (each now lives in the hook):
 Immediately after the `useChatHydration({ ... })` call (`:149`), insert:
 
 ```tsx
-  // Chat handle + open/fire lifecycle + reconnect/watchdog (see useChatSession).
-  const { chat } = useChatSession({
-    ownerHandle,
-    appSlug,
-    fsId,
-    inConstruction,
-    chatApi,
-    promptState,
-    dispatch,
-    promptToSend,
-    sendPrompt,
-    navigateToFsId,
-  });
+// Chat handle + open/fire lifecycle + reconnect/watchdog (see useChatSession).
+const { chat } = useChatSession({
+  ownerHandle,
+  appSlug,
+  fsId,
+  inConstruction,
+  chatApi,
+  promptState,
+  dispatch,
+  promptToSend,
+  sendPrompt,
+  navigateToFsId,
+});
 ```
 
 - [ ] **Step 3: Remove now-unused imports from the route**
 
 After deletion, these are no longer referenced in the route — remove each only if a `grep` confirms zero remaining uses:
+
 - `processStream` and `sectionEvent` (used only by `attachSectionStream`).
 - `useStreamWatchdog`, `useReconnectLoop` hook imports.
 - `getThemeBySlug` **only if** no other route code uses it (it is also used by `handleThemeSelect`/`handlePaletteSelect` — likely **keep**).

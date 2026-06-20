@@ -13,7 +13,7 @@ route that renders a published vibe stripped of vibes.diy chrome and safe to
 frame cross-origin, and (2) a **copy-ready embed snippet** in the Share surface
 that points at that route.
 
-The headline insight from #1568 triage: the embed is *bigger than it looks*
+The headline insight from #1568 triage: the embed is _bigger than it looks_
 because the iframe runner is non-trivial. The embed route is a **double
 wrapper** — the third-party page frames our `/embed/` page, and that page in
 turn frames the vibe runtime (`appSlug--ownerHandle.<host>`). That extra layer
@@ -29,7 +29,7 @@ below reuses rather than reinvents it.
 
 - **Public viewer route** —
   [`pkg/app/routes/vibe.$ownerHandle.$appSlug.tsx`](../../../vibes.diy/pkg/app/routes/vibe.$ownerHandle.$appSlug.tsx).
-  It is registered *outside* the auth layout in
+  It is registered _outside_ the auth layout in
   [`pkg/app/routes.ts`](../../../vibes.diy/pkg/app/routes.ts) (`vibe/:ownerHandle/:appSlug/:fsId?`),
   so it is reachable without sign-in. The component renders a single `<iframe>`
   whose `src` is computed by the loader and SSR'd into the first byte of HTML
@@ -53,7 +53,7 @@ below reuses rather than reinvents it.
   set; `getVibeRouteHints()` additionally requires the app row to be in
   `mode: "production"`. **Caveat (load-bearing for embeds):** `isWorldReadable`
   is broader than "an anonymous visitor can view." The `autoAcceptRole` branch
-  is true for request-enabled apps that auto-promote *signed-in* users —
+  is true for request-enabled apps that auto-promote _signed-in_ users —
   `getAppByFsId` sends an anonymous request (no `reqUserId`) down the
   `req-login.request` path, so such an app is **not** anonymously viewable. Embeds
   must therefore gate on public access specifically, not on `isWorldReadable`
@@ -84,7 +84,7 @@ below reuses rather than reinvents it.
 There are **no** `X-Frame-Options` or `Content-Security-Policy: frame-ancestors`
 headers set anywhere in the repo today (grep is clean). That means current
 framing behavior is whatever the platform/Cloudflare default is, and it is
-*unverified* for third-party embedding. Two distinct framing relationships must
+_unverified_ for third-party embedding. Two distinct framing relationships must
 both succeed for an embed to render on `example.com`:
 
 1. `example.com` frames `vibes.diy/embed/owner/app` — our `/embed/` response
@@ -124,14 +124,15 @@ without loosening framing for the rest of the app.
 The snippet points at `https://vibes.diy/embed/<owner>/<app>`. That page is a
 thin, chrome-free sibling of the `/vibe/` route: SSR computes whether the vibe
 is `isPubliclyEmbeddable`, renders the runtime `<iframe>` via `calcEntryPointUrl`
-+ the shared sandbox policy, and — when it isn't — renders an instruction card
-instead. We scope a cross-origin `frame-ancestors` policy to this route only.
 
-- **Pros:** stable public contract (snippet URLs don't leak the `--` subdomain
+- the shared sandbox policy, and — when it isn't — renders an instruction card
+  instead. We scope a cross-origin `frame-ancestors` policy to this route only.
+
+* **Pros:** stable public contract (snippet URLs don't leak the `--` subdomain
   scheme and survive internal hostname changes); we own the framing policy on a
   single route; graceful not-published fallback; reuses the runner, SSR hint,
   and sandbox policy almost verbatim.
-- **Cons:** double-framing (page-in-iframe-in-iframe) adds a layer; new route +
+* **Cons:** double-framing (page-in-iframe-in-iframe) adds a layer; new route +
   worker wiring + framing headers to get right; small perf overhead vs. direct.
 
 ### B. Snippet points directly at the runtime subdomain (`app--owner.<host>`)
@@ -213,7 +214,7 @@ small subset of the `/vibe/` component:
   - Optional: a tiny, non-interactive "Made on vibes.diy" attribution corner
     (open question — see below).
 - **No grant card / no auth-intent flow.** Because the embed has no chrome, we do
-  *not* run the request/invite/login state machine. The live signal is
+  _not_ run the request/invite/login state machine. The live signal is
   `getAppByFsId`, mapped through the same `computeCardVariant` the `/vibe/` viewer
   uses: a grant in the **viewable** set (`public-access`, `owner`,
   `granted-access.*`, `accepted-email-invite`) keeps the iframe; everything else
@@ -259,16 +260,16 @@ two consequences the implementation must get right:
 
 #### Header matrix (fill in measured values during impl)
 
-The implementation must land on this matrix; the cells marked *required* are
+The implementation must land on this matrix; the cells marked _required_ are
 what makes a cross-origin embed work, and the rest is what we must **measure**
 before changing anything (there are no framing headers in the repo today).
 
-| Response | prod | dev | preview | Required for embed |
-| --- | --- | --- | --- | --- |
-| Top-level app (`/vibe/`, home, etc.) | measure | measure | measure | unchanged — stays frame-protected |
-| Outer `/embed/<owner>/<app>` | `CSP: frame-ancestors *`, **no** `X-Frame-Options` | same | same | **required** |
-| Inner runtime (`app--owner.<host>`) **when serving an embed** | `frame-ancestors *` (or echo allowlist), **no** `X-Frame-Options: DENY/SAMEORIGIN` | same | same | **required** (ancestor-chain caveat above) |
-| Inner runtime when serving `/vibe/` (same-site) | measure | measure | measure | unchanged |
+| Response                                                      | prod                                                                               | dev     | preview | Required for embed                         |
+| ------------------------------------------------------------- | ---------------------------------------------------------------------------------- | ------- | ------- | ------------------------------------------ |
+| Top-level app (`/vibe/`, home, etc.)                          | measure                                                                            | measure | measure | unchanged — stays frame-protected          |
+| Outer `/embed/<owner>/<app>`                                  | `CSP: frame-ancestors *`, **no** `X-Frame-Options`                                 | same    | same    | **required**                               |
+| Inner runtime (`app--owner.<host>`) **when serving an embed** | `frame-ancestors *` (or echo allowlist), **no** `X-Frame-Options: DENY/SAMEORIGIN` | same    | same    | **required** (ancestor-chain caveat above) |
+| Inner runtime when serving `/vibe/` (same-site)               | measure                                                                            | measure | measure | unchanged                                  |
 
 - **Exact implementation point — outer:** set the `/embed/` response headers in
   the route's worker handling in
@@ -283,7 +284,7 @@ before changing anything (there are no framing headers in the repo today).
   `X-Frame-Options`; (2) inner runtime embed response asserts the third-party
   ancestor is permitted; (3) a cross-origin integration check (Chrome MCP)
   loading a published embed from a throwaway third-party origin and confirming
-  *both* frames paint — this is the regression guard for the ancestor-chain
+  _both_ frames paint — this is the regression guard for the ancestor-chain
   caveat.
 
 Because there are no framing headers in the repo today, **step zero of
@@ -333,7 +334,7 @@ Add an **Embed** affordance to the Share surface, gated on the vibe being
 **not** the broader `isWorldReadable`, which would offer an embed code for an
 auto-accept app that an anonymous visitor can't actually open. Reuse/extend
 `useShareModal` rather than recomputing. Per #1568 acceptance criteria, when the
-vibe is *not* embeddable,
+vibe is _not_ embeddable,
 either omit the snippet or show short guidance ("Publish and enable public
 access to get an embed code").
 
@@ -365,7 +366,7 @@ Snippet shape — a responsive wrapper plus the iframe, copy-ready:
   runtime subdomain minimally needs), never globally. The rest of the app stays
   frame-protected.
 - **Clickjacking of vibes.diy auth:** because `/embed/` never renders auth UI and
-  links sign-in *out* to a top-level tab, there's no in-frame Clerk surface to
+  links sign-in _out_ to a top-level tab, there's no in-frame Clerk surface to
   clickjack. Keep it that way.
 - **Sandbox:** reuse the audited shared tokens; do not widen them for embeds.
 - **Anonymous only:** the embed must behave exactly like an anonymous public
@@ -407,7 +408,7 @@ Snippet shape — a responsive wrapper plus the iframe, copy-ready:
    presets?
 4. **Attribution.** Include a small "Made on vibes.diy" corner badge on the
    embed (virality / backlink) or keep it fully clean? The issue is labeled
-   *Vibe Virality*, so a subtle badge may be desirable.
+   _Vibe Virality_, so a subtle badge may be desirable.
 5. **Live grant re-check.** ✅ **Resolved → yes** (Charlie + author agree). The
    SSR `isPubliclyEmbeddable` hint paints fast, and a client `getAppByFsId`
    confirming a `public-access` grant is the authoritative gate — it also catches

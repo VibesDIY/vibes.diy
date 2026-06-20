@@ -59,8 +59,7 @@ export function RecentVibeRowMenu({ isPinned, open, onClose, onPinToggle, onRena
     }
   }
 
-  const itemBase =
-    "block w-full px-3 py-3 text-left text-sm sm:py-2 pointer-coarse:py-3.5 touch-manipulation";
+  const itemBase = "block w-full px-3 py-3 text-left text-sm sm:py-2 pointer-coarse:py-3.5 touch-manipulation";
 
   return (
     <div

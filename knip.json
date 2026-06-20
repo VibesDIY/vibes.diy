@@ -1,14 +1,6 @@
 {
   "$schema": "https://unpkg.com/knip@6/schema.json",
-  "ignore": [
-    "**/*.d.ts",
-    "**/notes/**",
-    "claude-browse-vibes/**",
-    "dist/**",
-    "build/**",
-    ".netlify/**",
-    ".react-router/**"
-  ],
+  "ignore": ["**/*.d.ts", "**/notes/**", "claude-browse-vibes/**", "dist/**", "build/**", ".netlify/**", ".react-router/**"],
   "ignoreDependencies": ["prettier-plugin-tailwindcss"],
   "ignoreWorkspaces": ["use-vibes/examples/**"]
 }

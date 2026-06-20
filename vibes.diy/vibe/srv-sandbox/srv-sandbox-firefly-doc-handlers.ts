@@ -1,4 +1,12 @@
-import { EventoHandler, HandleTriggerCtx, Result, ValidateTriggerCtx, Option, EventoResultType, EventoResult } from "@adviser/cement";
+import {
+  EventoHandler,
+  HandleTriggerCtx,
+  Result,
+  ValidateTriggerCtx,
+  Option,
+  EventoResultType,
+  EventoResult,
+} from "@adviser/cement";
 import {
   isReqPutDoc,
   type ReqPutDoc,

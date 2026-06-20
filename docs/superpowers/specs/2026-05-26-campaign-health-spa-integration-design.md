@@ -28,6 +28,7 @@ integrates as a query-param-selected view within this same SPA — no sub-path r
 to `app.ts` or `route-decision.ts`.
 
 URL scheme:
+
 - `/reports` or `/reports?report=growth` → Growth Report (existing behavior)
 - `/reports?report=campaign-health` → Campaign Health view
 
@@ -41,6 +42,7 @@ and which WS request to make.
 Add arktype schemas and inferred types for the new WS message pair:
 
 **Request:**
+
 ```
 reqReportCampaignHealth — {
   type: 'vibes.diy.req-report-campaign-health',
@@ -51,6 +53,7 @@ reqReportCampaignHealth — {
 ```
 
 **Response** (structured JSON, not HTML — the SPA renders it):
+
 ```
 resReportCampaignHealth — {
   type: 'vibes.diy.res-report-campaign-health',
@@ -130,6 +133,7 @@ return <App getClerkToken={...} report={report} />;
 Receives `api: VibesDiyApi` and calls `api.reportCampaignHealth({})`.
 
 Renders using existing CSS classes from `index.html`:
+
 - Hero card with "Campaign Health" label + date range
 - Campaigns table card: rows sorted by cost-per-LPV, color-coded (green < $0.30, yellow
   $0.30–$0.50, red > $0.50), columns: Campaign, CTR, CPC, LPVs, Cost/LPV, Spend, Reach

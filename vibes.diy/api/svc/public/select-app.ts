@@ -9,7 +9,10 @@ import { VibesApiSQLCtx } from "../types.js";
 // Returns undefined when no app matches. Shared by get-app-by-fsid and
 // fork-app so the "which app version did the viewer see" selection stays
 // identical across both paths.
-export async function selectLatestAppPerSlug(vctx: VibesApiSQLCtx, req: { readonly ownerHandle: string; readonly appSlug: string }) {
+export async function selectLatestAppPerSlug(
+  vctx: VibesApiSQLCtx,
+  req: { readonly ownerHandle: string; readonly appSlug: string }
+) {
   const maxCreatedSub = vctx.sql.db
     .select({ mode: vctx.sql.tables.apps.mode, maxCreated: max(vctx.sql.tables.apps.created).as("max_created") })
     .from(vctx.sql.tables.apps)

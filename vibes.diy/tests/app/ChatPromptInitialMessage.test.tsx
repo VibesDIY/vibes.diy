@@ -26,7 +26,7 @@ const render = (ui: React.ReactElement, options?: Parameters<typeof rtlRender>[1
         sthis: { txt: { base64: { decode: (s: string) => s.replace(/^b64:/, "") } } },
         chatApi: { getTokenClaims: () => new Promise(() => undefined) },
       },
-      { initialEntries: [`/chat/prompt?${currentSearch.toString()}`] },
+      { initialEntries: [`/chat/prompt?${currentSearch.toString()}`] }
     ),
     ...options,
   });

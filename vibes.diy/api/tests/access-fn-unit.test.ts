@@ -114,20 +114,14 @@ describe("extractExportSource", () => {
   });
 
   it("export-as with single quotes works", () => {
-    const source = [
-      "function errorLog(doc, oldDoc, user, ctx) { return {}; }",
-      "export { errorLog as 'error-log' }",
-    ].join("\n");
+    const source = ["function errorLog(doc, oldDoc, user, ctx) { return {}; }", "export { errorLog as 'error-log' }"].join("\n");
     const result = extractExportSource(source, "error-log");
     expect(result).toBeDefined();
     expect(result).toContain("function errorLog(");
   });
 
   it("returns undefined for export-as with wrong db name", () => {
-    const source = [
-      'function crewChat(doc, oldDoc, user, ctx) { return {}; }',
-      'export { crewChat as "crew-chat" }',
-    ].join("\n");
+    const source = ["function crewChat(doc, oldDoc, user, ctx) { return {}; }", 'export { crewChat as "crew-chat" }'].join("\n");
     expect(extractExportSource(source, "other-db")).toBeUndefined();
   });
 });

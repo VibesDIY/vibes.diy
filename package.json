@@ -30,6 +30,7 @@
     "playwright:claude": "playwright test -c claude-browse-vibes/playwright.config.js",
     "test:screenshot:local": "node claude-browse-vibes/test-screenshot-api.js",
     "format": "prettier --write --log-level silent --cache --cache-strategy content --cache-location .prettiercache .",
+    "format:check": "prettier --check --cache --cache-strategy content --cache-location .prettiercache .",
     "wrangler:types": "cd vibes.diy/pkg && npx wrangler types && cd ../.. && pnpm format",
     "dev": "cd vibes.diy/pkg && pnpm run dev",
     "dev:router": "cd vibes.diy/pkg && pnpm run dev:router",

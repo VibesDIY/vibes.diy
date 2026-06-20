@@ -268,12 +268,7 @@ if (isBlockStats(msg)) console.log("Block stats:", msg.stats);
 ## Filesystem stage usage
 
 ```typescript
-import {
-  createSectionsStream,
-  createFileSystemStream,
-  isFsFileSnapshot,
-  isFsTurnEnd,
-} from "call-ai/v2";
+import { createSectionsStream, createFileSystemStream, isFsFileSnapshot, isFsTurnEnd } from "call-ai/v2";
 
 const seed = new Map([["App.jsx", priorAppJsx]]);
 

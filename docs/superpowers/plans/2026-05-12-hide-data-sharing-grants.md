@@ -16,8 +16,8 @@
 
 Only one file is touched. No new files, no test files.
 
-| File | Status | Responsibility |
-|------|--------|----------------|
+| File                                                                                      | Status | Responsibility                                                                                               |
+| ----------------------------------------------------------------------------------------- | ------ | ------------------------------------------------------------------------------------------------------------ |
 | [`vibes.diy/pkg/app/routes/settings.tsx`](../../../vibes.diy/pkg/app/routes/settings.tsx) | Modify | Renders the `/settings` route. After this plan: hides the Data Sharing Grants card and updates the subtitle. |
 
 There are no test files to modify — confirmed via `grep -rn "GrantsList\|Data Sharing Grants" vibes.diy` that no test references the symbol or heading. We will verify the absence of the section by running the existing checks (`pnpm check`) and manually loading `/settings` in the dev server.
@@ -27,6 +27,7 @@ There are no test files to modify — confirmed via `grep -rn "GrantsList\|Data 
 ## Task 1: Hide the Data Sharing Grants card in the rendered output
 
 **Files:**
+
 - Modify: `vibes.diy/pkg/app/routes/settings.tsx` (the `<BrutalistCard>` block currently around lines 603-609 inside `SettingsContent`)
 
 - [ ] **Step 1: Confirm current state**
@@ -40,19 +41,20 @@ Expected: exactly one match, on the `<h3>` line inside `SettingsContent`. If the
 In `vibes.diy/pkg/app/routes/settings.tsx`, locate this exact block inside the `SettingsContent` function:
 
 ```tsx
-      <BrutalistCard size="md">
-        <h3 className="text-2xl font-bold mb-4">Data Sharing Grants</h3>
-        <p className="mb-4" style={{ color: "var(--vibes-text-secondary)" }}>
-          Apps that have been allowed or denied access to share your data
-        </p>
-        <GrantsList />
-      </BrutalistCard>
+<BrutalistCard size="md">
+  <h3 className="text-2xl font-bold mb-4">Data Sharing Grants</h3>
+  <p className="mb-4" style={{ color: "var(--vibes-text-secondary)" }}>
+    Apps that have been allowed or denied access to share your data
+  </p>
+  <GrantsList />
+</BrutalistCard>
 ```
 
 Replace it with this JSX comment wrapping the identical content (every original line preserved verbatim inside the comment):
 
 ```tsx
-      {/* Hidden per VibesDIY/vibes.diy#1692 — restore by uncommenting and reinstating the GrantsList function and imports.
+{
+  /* Hidden per VibesDIY/vibes.diy#1692 — restore by uncommenting and reinstating the GrantsList function and imports.
       <BrutalistCard size="md">
         <h3 className="text-2xl font-bold mb-4">Data Sharing Grants</h3>
         <p className="mb-4" style={{ color: "var(--vibes-text-secondary)" }}>
@@ -60,10 +62,12 @@ Replace it with this JSX comment wrapping the identical content (every original 
         </p>
         <GrantsList />
       </BrutalistCard>
-      */}
+      */
+}
 ```
 
 Notes:
+
 - The `{/* ... */}` wrapper is a JSX expression containing a JS block comment — required because plain HTML comments (`<!-- -->`) are not valid JSX.
 - Do not touch the surrounding cards (`UserSlugsCard`, `ProfileCard`, `ModelDefaultsCard`, Security, Account).
 - Surrounding indentation must remain consistent with the other cards (6 spaces matching the existing block).
@@ -101,6 +105,7 @@ Leaving the file half-edited would leave unused-symbol warnings in the tree. The
 ## Task 2: Comment out the now-unused `GrantsList` function
 
 **Files:**
+
 - Modify: `vibes.diy/pkg/app/routes/settings.tsx` (the `function GrantsList()` definition currently around lines 25-112)
 
 - [ ] **Step 1: Wrap the `GrantsList` function in a block comment**
@@ -135,6 +140,7 @@ Expected: no parse errors. There may still be unused-import warnings for `isUser
 ## Task 3: Remove the two unused imports and the subtitle finalization
 
 **Files:**
+
 - Modify: `vibes.diy/pkg/app/routes/settings.tsx` (import statements at the top of the file, currently lines 8-17)
 
 - [ ] **Step 1: Remove `isUserSettingSharing` from the named-value import**

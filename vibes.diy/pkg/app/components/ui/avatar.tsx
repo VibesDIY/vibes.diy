@@ -2,10 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { cn } from "../../lib/utils.js";
 
 function monogramFromName(name?: string | null, defaultMonogram = "?"): string {
-  const parts = (name ?? "")
-    .trim()
-    .split(/\s+/)
-    .filter(Boolean);
+  const parts = (name ?? "").trim().split(/\s+/).filter(Boolean);
 
   if (parts.length === 0) {
     return (defaultMonogram.trim() || "?").slice(0, 2).toUpperCase();
@@ -49,7 +46,7 @@ export function Avatar({
     <span
       className={cn(
         "inline-flex h-7 w-7 shrink-0 items-center justify-center overflow-hidden rounded-full bg-gray-200 text-gray-600 dark:bg-gray-700 dark:text-gray-300",
-        className,
+        className
       )}
     >
       {src && !avatarError ? (

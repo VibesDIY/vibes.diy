@@ -49,13 +49,7 @@ describe("shouldAgentAutosave", () => {
   });
 
   it("does not trigger for a manual save block (no prompt.req)", () => {
-    const msgs = [
-      codeLine("<<<<<<< SEARCH"),
-      codeLine("x"),
-      codeLine("======="),
-      codeLine("y"),
-      codeLine(">>>>>>> REPLACE"),
-    ];
+    const msgs = [codeLine("<<<<<<< SEARCH"), codeLine("x"), codeLine("======="), codeLine("y"), codeLine(">>>>>>> REPLACE")];
     expect(shouldAgentAutosave(msgs as never)).toBe(false);
   });
 

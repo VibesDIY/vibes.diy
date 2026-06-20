@@ -16,9 +16,7 @@ export function useIframeCurrentTokens(): Record<string, string> {
     if (typeof window === "undefined") return;
 
     const onMessage = (event: MessageEvent) => {
-      const data = event.data as
-        | { type?: string; tokens?: Record<string, string> }
-        | undefined;
+      const data = event.data as { type?: string; tokens?: Record<string, string> } | undefined;
       if (!data || data.type !== "vibe.evt.tokens-discovered") return;
       const next = data.tokens;
       if (!next || typeof next !== "object") return;

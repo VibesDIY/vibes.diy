@@ -13,12 +13,14 @@
 One function: `processAccessBindings` → `Promise<Result<void>>`
 
 Accepts a typed options object:
+
 - `vctx: VibesApiSQLCtx`
 - `ownerHandle: string`
 - `appSlug: string`
 - `fullFileSystem: Array<{ vibeFileItem: VibeFile; storage: StorageResult }>`
 
 The function handles both cases:
+
 - **access.js present** → parse exports, upsert bindings, backfill outputs on CID change
 - **access.js absent** → delete all bindings for this app
 

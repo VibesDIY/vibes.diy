@@ -1,4 +1,4 @@
- [![Join our
+[![Join our
   Discord](https://discord-badge.selem.workers.dev/i/weSgWt684k.svg)](https://discord.gg/weSgWt684k)
 
 # ✨ Build Mini Apps with AI Magic

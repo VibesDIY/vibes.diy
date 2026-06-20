@@ -25,6 +25,7 @@ Changes: Add `data-action="qr"` button to default mode. Add new `<div data-panel
 - `vibes.diy/pkg/slack/serve/vibes-controls/scripts.ts`
 
 Changes:
+
 1. Import/inline `qrcodegen` to generate QR as canvas data URI
 2. On panel open: call `drawQR(window.location.href)` → set `img[data-qr-img].src`
 3. `data-action="qr"` handler: hide default mode, show qr mode

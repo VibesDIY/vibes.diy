@@ -29,6 +29,7 @@ sendCapiPageView(request: Request, capiToken: string): Promise<void>
 ```
 
 Behaviour:
+
 1. Read `fbclid` from URL via `URI.from(request.url).getParam("fbclid")`.
 2. Return early if `fbclid === undefined` (no event to fire).
 3. Build `fbc = "fb.1." + Date.now() + "." + fbclid` — the format Meta uses to match server-side events back to browser clicks.
@@ -40,16 +41,18 @@ CAPI payload:
 
 ```json
 {
-  "data": [{
-    "event_name": "PageView",
-    "event_time": 1234567890,
-    "event_source_url": "https://vibes.diy/",
-    "user_data": {
-      "fbc": "fb.1.<timestamp>.<fbclid>",
-      "client_ip_address": "<CF-Connecting-IP header>",
-      "client_user_agent": "<User-Agent header>"
+  "data": [
+    {
+      "event_name": "PageView",
+      "event_time": 1234567890,
+      "event_source_url": "https://vibes.diy/",
+      "user_data": {
+        "fbc": "fb.1.<timestamp>.<fbclid>",
+        "client_ip_address": "<CF-Connecting-IP header>",
+        "client_user_agent": "<User-Agent header>"
+      }
     }
-  }],
+  ],
   "access_token": "<META_CAPI_TOKEN>"
 }
 ```
@@ -98,8 +101,8 @@ And added as a GitHub Actions environment variable (`META_CAPI_TOKEN`) in both `
 
 ## Files changed
 
-| File | Change |
-|------|--------|
-| `vibes.diy/pkg/workers/meta-capi.ts` | New: CAPI sender |
-| `vibes.diy/pkg/workers/app.ts` | Add fbclid check + `waitUntil` call |
-| `vibes.diy/api/types/cf-env.ts` | Add `META_CAPI_TOKEN?: string` |
+| File                                 | Change                              |
+| ------------------------------------ | ----------------------------------- |
+| `vibes.diy/pkg/workers/meta-capi.ts` | New: CAPI sender                    |
+| `vibes.diy/pkg/workers/app.ts`       | Add fbclid check + `waitUntil` call |
+| `vibes.diy/api/types/cf-env.ts`      | Add `META_CAPI_TOKEN?: string`      |

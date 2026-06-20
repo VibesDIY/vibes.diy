@@ -4,11 +4,11 @@
 
 Three Durable Object types handle WebSocket connections:
 
-| DO | Sharded by | Opens when | Handles |
-|----|-----------|------------|---------|
-| **AppSessions** | `ownerHandle--appSlug` | Vibe page load (`/api/app?vibe=...`) | Doc ops (putDoc, subscribeDocs, etc.), local broadcast, local QuickJS access fn eval |
-| **ChatSessions** | Random UUID or vibe key | Page load (`/api?shard=...`) | Chat streaming (openChat, promptChatSection) |
-| **UserNotify** | userId | On subscription | Cross-vibe user notifications, fan-out via `resolveShardDO` prefix routing |
+| DO               | Sharded by              | Opens when                           | Handles                                                                              |
+| ---------------- | ----------------------- | ------------------------------------ | ------------------------------------------------------------------------------------ |
+| **AppSessions**  | `ownerHandle--appSlug`  | Vibe page load (`/api/app?vibe=...`) | Doc ops (putDoc, subscribeDocs, etc.), local broadcast, local QuickJS access fn eval |
+| **ChatSessions** | Random UUID or vibe key | Page load (`/api?shard=...`)         | Chat streaming (openChat, promptChatSection)                                         |
+| **UserNotify**   | userId                  | On subscription                      | Cross-vibe user notifications, fan-out via `resolveShardDO` prefix routing           |
 
 **Transitional state:** all handlers registered on both AppSessions and ChatSessions (`appHandlers` in `chatMsgEvento`). Parent app React components still call everything on `vibeDiyApi` (chat connection). Doc notification callbacks are guarded — they broadcast on AppSessions, no-op on ChatSessions.
 
@@ -18,11 +18,11 @@ Three Durable Object types handle WebSocket connections:
 
 Three connections per session, each with a clear scope:
 
-| Connection | DO | Sharded by | Opens when | Handles |
-|-----------|-----|-----------|------------|---------|
-| **vibeApi** | AppSessions | `ownerHandle--appSlug` | Any page with a vibe in context | Doc ops, grants, invites, membership, access control, local broadcast, local QuickJS |
-| **chatApi** | ChatSessions | Random UUID | First prompt focus (lazy) | openChat, promptChatSection, streaming only |
-| **sharedApi** | SharedSessions | `"global"` (singleton) | Page load (always) | Sidebar queries, settings, models — stateless D1 reads |
+| Connection    | DO             | Sharded by             | Opens when                      | Handles                                                                              |
+| ------------- | -------------- | ---------------------- | ------------------------------- | ------------------------------------------------------------------------------------ |
+| **vibeApi**   | AppSessions    | `ownerHandle--appSlug` | Any page with a vibe in context | Doc ops, grants, invites, membership, access control, local broadcast, local QuickJS |
+| **chatApi**   | ChatSessions   | Random UUID            | First prompt focus (lazy)       | openChat, promptChatSection, streaming only                                          |
+| **sharedApi** | SharedSessions | `"global"` (singleton) | Page load (always)              | Sidebar queries, settings, models — stateless D1 reads                               |
 
 ### Migration path (tracked in #2263)
 

@@ -24,14 +24,7 @@ export default function VibesMine(): ReactElement {
     tab: paramTab,
   } = useParams<{ ownerHandle?: string; appSlug?: string; tab?: string }>();
   const { chatApi } = useVibesDiy();
-  const {
-    items: vibeItems,
-    loading: isLoading,
-    isLoadingAll,
-    nextCursor,
-    loadMore,
-    ensureAllLoaded,
-  } = useRecentVibes(30);
+  const { items: vibeItems, loading: isLoading, isLoadingAll, nextCursor, loadMore, ensureAllLoaded } = useRecentVibes(30);
   const [searchQuery, setSearchQuery] = useState("");
 
   const [chatDetails, setChatDetails] = useState<ResGetChatDetails | null>(null);

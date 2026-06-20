@@ -26,13 +26,13 @@ The issue was filed 2026-05-28. One item has since been resolved by unrelated wo
 
 The remaining duplications all survive and are in scope:
 
-| # | Duplication | Copies (current line refs) | Priority |
-|---|---|---|---|
-| 1 | ACL eval (`inGroup`/`aclAllows`/`canRead`/`canWrite`) | runtime `vibe/runtime/db-acl-allows.ts:12-36` (canRead 12, canWrite 14, inGroup 16, aclAllows 30); host `api/svc/public/db-acl-resolver.ts:13` (inGroup) + `:87` (aclAllows), with `canRead`/`canWrite` from `api/svc/public/access-helpers.ts:10-11` | P1 (security) |
-| 2 | "latest app per slug" query | `api/svc/public/get-app-by-fsid.ts:116-146`, `api/svc/public/fork-app.ts:80-110` (both contain `max_created`) | P1 (correctness) |
-| 3 | `last30DaysUTC` ×3 | `report-growth-memberships.ts:20`, `report-growth-vibes-with-data.ts:19`, `report-active-members.ts:20` | P2 |
-| 4 | `loadDevVars` ×3, `formatError` ×2 | `usage-report/admin-db.ts:22,99`, `usage-report/inspect-db.ts:114,275`, `usage-report/inspect-db-report.ts:14`; near-identical `last30Days` at `inspect-db-report.ts:44` | P2 |
-| 5 | `deriveDisplayName`/`deriveAuthorDisplay` ×3 | `who-am-i.ts:28`, `list-members.ts:23`, `get-app-by-fsid.ts:44` | P2 |
+| #   | Duplication                                           | Copies (current line refs)                                                                                                                                                                                                                            | Priority         |
+| --- | ----------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------- |
+| 1   | ACL eval (`inGroup`/`aclAllows`/`canRead`/`canWrite`) | runtime `vibe/runtime/db-acl-allows.ts:12-36` (canRead 12, canWrite 14, inGroup 16, aclAllows 30); host `api/svc/public/db-acl-resolver.ts:13` (inGroup) + `:87` (aclAllows), with `canRead`/`canWrite` from `api/svc/public/access-helpers.ts:10-11` | P1 (security)    |
+| 2   | "latest app per slug" query                           | `api/svc/public/get-app-by-fsid.ts:116-146`, `api/svc/public/fork-app.ts:80-110` (both contain `max_created`)                                                                                                                                         | P1 (correctness) |
+| 3   | `last30DaysUTC` ×3                                    | `report-growth-memberships.ts:20`, `report-growth-vibes-with-data.ts:19`, `report-active-members.ts:20`                                                                                                                                               | P2               |
+| 4   | `loadDevVars` ×3, `formatError` ×2                    | `usage-report/admin-db.ts:22,99`, `usage-report/inspect-db.ts:114,275`, `usage-report/inspect-db-report.ts:14`; near-identical `last30Days` at `inspect-db-report.ts:44`                                                                              | P2               |
+| 5   | `deriveDisplayName`/`deriveAuthorDisplay` ×3          | `who-am-i.ts:28`, `list-members.ts:23`, `get-app-by-fsid.ts:44`                                                                                                                                                                                       | P2               |
 
 (The issue's code snippets are also slightly stale: `inGroup` now tests `level === "override"`,
 not `"owner"`, after the owner→override / userSlug→handle renames. The current bodies in the
@@ -72,14 +72,14 @@ so it is the correct shared home and needs **no new import-map entries**.
   `DbAcl`/`DbAclSubject` from `@vibes.diy/api-types` — see **Q2/Q3** for how to converge those
   onto the shared module without a 3rd/4th copy.
 - The arktype **value** schema `DbAcl` in `api-types/db-acls.ts` (server validation surface)
-  stays; the shared *eval* module only needs the **structural** `DbAcl`/`DbAclSubject` types.
+  stays; the shared _eval_ module only needs the **structural** `DbAcl`/`DbAclSubject` types.
 
 ### 2. "latest app per slug" query → one helper
 
 - **New:** `selectLatestAppPerSlug(vctx, { userSlug, appSlug })` (location TBD — see **Q4**),
   returning the production-winning row or `undefined`. Move the `maxCreatedSub` + `innerJoin`
-  + `orderBy(mode)` + `rows[rows.length-1]` block verbatim. Keep the
-  `// "dev" < "production" → last wins` comment on the helper.
+  - `orderBy(mode)` + `rows[rows.length-1]` block verbatim. Keep the
+    `// "dev" < "production" → last wins` comment on the helper.
 - Update `get-app-by-fsid.ts` and `fork-app.ts` to call it. **Preserve each caller's
   `fsId`-present fast path inline** — that branch differs per caller and stays.
 
@@ -150,8 +150,7 @@ into the design above; recorded here for traceability.
    - **PR 1:** ACL/type unification + parity-test intent update (highest risk — security/cycle-sensitive).
    - **PR 2:** latest-app query helper extraction.
    - **PR 3:** P2 helper dedupes (incl. the `formatError` superset, Q7).
-   Rationale: ACL changes shouldn't block low-risk dedupes from landing independently.
+     Rationale: ACL changes shouldn't block low-risk dedupes from landing independently.
 7. **`formatError` superset — adopt the `inspect-db` superset** (preserves `inspect-db` exactly;
    strictly-additive for `admin-db`), landing in PR 3 with the change called out explicitly. Not
    separately contested by Charlie; folded into the PR-3 dedupes.
-

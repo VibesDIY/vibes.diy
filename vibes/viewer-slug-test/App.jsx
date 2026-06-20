@@ -48,10 +48,7 @@ export default function ViewerSlugTest() {
       </table>
 
       {canWrite && (
-        <button
-          onClick={writePing}
-          style={{ marginTop: 16, padding: "8px 16px", fontSize: 16, cursor: "pointer" }}
-        >
+        <button onClick={writePing} style={{ marginTop: 16, padding: "8px 16px", fontSize: 16, cursor: "pointer" }}>
           Write a ping doc
         </button>
       )}

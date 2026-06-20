@@ -135,12 +135,8 @@ export function generateTailwindRemapCss(): string {
   }
 
   // ────────────── Font family
-  out.push(
-    `.font-sans { font-family: var(--font-family, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif) !important; }`
-  );
-  out.push(
-    `.font-mono { font-family: var(--font-family-mono, ui-monospace, 'JetBrains Mono', Menlo, monospace) !important; }`
-  );
+  out.push(`.font-sans { font-family: var(--font-family, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif) !important; }`);
+  out.push(`.font-mono { font-family: var(--font-family-mono, ui-monospace, 'JetBrains Mono', Menlo, monospace) !important; }`);
   // font-serif preserved (no canonical token for serifs).
 
   // ────────────── Border width (single, unitless default)

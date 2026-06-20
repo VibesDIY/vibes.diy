@@ -2,8 +2,7 @@ import { describe, expect, it } from "vitest";
 import { resizeImageToBase64 } from "@vibes.diy/vibe-runtime";
 
 // 1x1 red PNG.
-const RED_PNG_BASE64 =
-  "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg==";
+const RED_PNG_BASE64 = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg==";
 
 function decodeBase64ToBytes(b64: string): Uint8Array {
   const bin = atob(b64);

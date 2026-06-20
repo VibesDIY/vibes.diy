@@ -16,12 +16,12 @@ All three are wrapped in a `try/catch` that swallows errors into `console.warn` 
 
 ### Existing test coverage
 
-| File | Tests | Seeds bindings via |
-|---|---|---|
-| `access-fn-backfill.test.ts` | Backfill on push, idempotent skip, CID change, forbidden skip | `ensureAppSlug` (front door) |
-| `access-fn-invoke.test.ts` | putDoc gate, forbidden, doc._id, grant propagation | Manual DB insert |
-| `access-fn-channel-read.test.ts` | Channel filtering, no-binding fallback | Manual DB insert |
-| `resolve-code-blocks.test.ts` | VibeFile production for access.js | N/A (unit test) |
+| File                             | Tests                                                         | Seeds bindings via           |
+| -------------------------------- | ------------------------------------------------------------- | ---------------------------- |
+| `access-fn-backfill.test.ts`     | Backfill on push, idempotent skip, CID change, forbidden skip | `ensureAppSlug` (front door) |
+| `access-fn-invoke.test.ts`       | putDoc gate, forbidden, doc.\_id, grant propagation           | Manual DB insert             |
+| `access-fn-channel-read.test.ts` | Channel filtering, no-binding fallback                        | Manual DB insert             |
+| `resolve-code-blocks.test.ts`    | VibeFile production for access.js                             | N/A (unit test)              |
 
 ### Gaps
 
@@ -55,6 +55,7 @@ Using the fsId from test 1, hit `serv-entry-point` with `/access.js?source=true`
 #### Test 3: access.js carries forward in version timeline
 
 Simulate a two-turn flow:
+
 - Turn 1: push App.jsx + access.js → get fsId1
 - Turn 2: call `loadVersionTimeline`, get seed, call `resolveCodeBlocksToFileSystem` with only an App.jsx edit block + seed
 - Assert the resolved VibeFile array includes `/access.js` carried forward from seed

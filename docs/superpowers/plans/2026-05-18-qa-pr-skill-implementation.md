@@ -9,6 +9,7 @@
 **Tech Stack:** Markdown (SKILL.md + references + assets), Node.js ESM (`.mjs` helper scripts), Google Gmail API (REST + OAuth2 desktop client), `gh` CLI for GitHub interactions, the existing `mcp__chrome-devtools__*` MCP server already wired into this repo.
 
 **Reference for engineers picking this up cold:**
+
 - Spec: [`docs/superpowers/specs/2026-05-18-qa-pr-skill-design.md`](../specs/2026-05-18-qa-pr-skill-design.md)
 - SOP source: [VibesDIY/vibes.diy#1694 comment IC_kwDON82qYM8AAAABCFLLbg](https://github.com/VibesDIY/vibes.diy/issues/1694#issuecomment-4434611054)
 - Chrome MCP usage in this repo: [`agents/chrome-mcp-debug.md`](../../../agents/chrome-mcp-debug.md)
@@ -19,6 +20,7 @@
 ## Task 1: Establish `.claude/skills/` as the team-shared skills location
 
 **Files:**
+
 - Modify: `.gitignore`
 - Create: `.claude/skills/README.md`
 - Modify: `CLAUDE.md` (Agent Rules section)
@@ -73,13 +75,14 @@ This directory is the canonical location for **invokable** Claude Code skills sh
 ## Convention
 
 Each skill lives in its own subdirectory:
-
 ```
+
 .claude/skills/<skill-name>/
-├── SKILL.md          # required: YAML frontmatter (name, description) + body
-├── references/       # optional: markdown loaded on demand from SKILL.md
-├── assets/           # optional: templates / output scaffolds the skill copies
-└── scripts/          # optional: executable helpers the skill invokes via Bash
+├── SKILL.md # required: YAML frontmatter (name, description) + body
+├── references/ # optional: markdown loaded on demand from SKILL.md
+├── assets/ # optional: templates / output scaffolds the skill copies
+└── scripts/ # optional: executable helpers the skill invokes via Bash
+
 ```
 
 Claude Code auto-discovers skills under this path. Inside a session, the dev triggers a skill either by typing its slash-command form (`/<skill-name> ...`) or by describing the task in a way that matches the skill's `description` field.
@@ -115,7 +118,7 @@ Invokable Claude Code skills live in [`.claude/skills/`](.claude/skills/README.m
 
 - [qa-pr](.claude/skills/qa-pr/SKILL.md) — agent-driven QA pass against a PR preview URL
 
-`agents/*.md` (above) documents *how we work*; `.claude/skills/` provides *things we invoke*. See [`.claude/skills/README.md`](.claude/skills/README.md) for the boundary.
+`agents/*.md` (above) documents _how we work_; `.claude/skills/` provides _things we invoke_. See [`.claude/skills/README.md`](.claude/skills/README.md) for the boundary.
 ```
 
 - [ ] **Step 5: Verify the README is trackable**
@@ -140,6 +143,7 @@ git commit -m "docs(skills): add team-shared .claude/skills/ convention"
 ## Task 2: Lift the QA v0.01m SOP into `references/sop-v0.01m.md`
 
 **Files:**
+
 - Create: `.claude/skills/qa-pr/references/sop-v0.01m.md`
 
 The SOP is the agent's source-of-truth. Subsequent tasks reference it; getting it right is foundational.
@@ -162,7 +166,7 @@ The content below is the SOP as proposed by @kmikeym in [#1694 comment IC_kwDON8
 ## Setup
 
 - **Cold account.** Fresh email, never used on Vibes. No prior projects, no saved settings, no muscle memory. You are testing the experience of someone who's never seen the product.
-- **Incognito / private window**, no extensions. (For font/perf-loading PRs this matters *more*, not less — the failure modes those PRs fix only show on a cold cache.)
+- **Incognito / private window**, no extensions. (For font/perf-loading PRs this matters _more_, not less — the failure modes those PRs fix only show on a cold cache.)
 - **Note what's in play** at the start: default Chat Model + App Model, and whether either upstream is degraded that day. (A transient outage mid-pass is itself a finding about error UX.)
 - **Screenshot every friction point.** Minimum one per issue.
 
@@ -170,7 +174,7 @@ The content below is the SOP as proposed by @kmikeym in [#1694 comment IC_kwDON8
 
 Run the whole chain on the preview URL. Don't skip ahead; bugs cluster at the seams between steps.
 
-1. **Sign-up** from a cold link. Watch what happens to a prompt typed *before* login (it shouldn't get eaten). Watch which auth tab a brand-new user lands on.
+1. **Sign-up** from a cold link. Watch what happens to a prompt typed _before_ login (it shouldn't get eaten). Watch which auth tab a brand-new user lands on.
 2. **First prompt → app generation.** Use a real-feeling goal (see prompt library below). Watch the build-in-progress feedback, and where the user lands when it finishes.
 3. **In-app exploration.** Actually use the generated app the way a user would. Does the core CTA work, or does the agent claim it's "fully wired" while something hangs?
 4. **Follow-up edit / theme change.** Ask for a substantial change — a full reskin and/or pick 2-3 named themes. Watch the chrome hold up; watch text repaint behavior on each switch (relevant to any font/loading PR).
@@ -186,7 +190,7 @@ Run the whole chain on the preview URL. Don't skip ahead; bugs cluster at the se
 2. **Reproduce before filing.** Every bug at least once, ideally more.
 3. **Retest the other path before naming a bug.** If you scope something narrowly ("editors role fails"), retest the alternate case (readers, the unpublished case, the already-published case) before writing it up.
 4. **Stop logging individual findings once they stop adding signal.** By the seventh broken button on one panel, the eighth isn't news — wrap the cluster with one summary finding and move on. Volume of duplicate-shaped findings is noise, not thoroughness.
-5. **File / comment as you go**, not in a batch at the end. Triage each P0/P1/P2 in your head as you file it. And if the PR is narrow (e.g. a font change), keep the PR-thread verdict scoped to *that change* — route unrelated pre-existing bugs to their own issues rather than dumping them on the PR.
+5. **File / comment as you go**, not in a batch at the end. Triage each P0/P1/P2 in your head as you file it. And if the PR is narrow (e.g. a font change), keep the PR-thread verdict scoped to _that change_ — route unrelated pre-existing bugs to their own issues rather than dumping them on the PR.
 
 ## The output
 
@@ -194,7 +198,7 @@ A short writeup, structured roughly:
 
 - **Summary** — what flow, what was tested, headline verdict, which bug(s) block the most.
 - **Test scope** — account, browser, build, path tested, path NOT tested, models used.
-- **PR verdict** (if it's a PR-scoped pass) — pass/fail on *this PR's change*, plus any caveats for the author.
+- **PR verdict** (if it's a PR-scoped pass) — pass/fail on _this PR's change_, plus any caveats for the author.
 - **Findings, triaged P0 / P1 / P2** — issue link, one-line description, "why it matters."
 - **Cross-cutting patterns** — group symptoms by shared root cause; engineering fixes themes cheaper than individual tickets.
 - **Recommended action / fix order** — biggest unlock per dollar first.
@@ -236,6 +240,7 @@ git commit -m "docs(qa-pr): import v0.01m SOP from #1694"
 ## Task 3: Seed the demo prompt library
 
 **Files:**
+
 - Create: `.claude/skills/qa-pr/references/demo-prompts.md`
 
 - [ ] **Step 1: Write `.claude/skills/qa-pr/references/demo-prompts.md`**
@@ -247,18 +252,18 @@ Pick **one fresh prompt set per run**. Reusing prompts narrows coverage to the h
 
 The agent picks a row by index `floor(run_minute % N)` so consecutive runs cycle through. Add new rows as you discover prompts that stress new surfaces; never remove a row — it's still a valid choice for older PRs.
 
-| Stage | Prompt | Stress-tests |
-|---|---|---|
-| Build | *"a protein picker to help me mix up my boring eating habits"* | generic-utility-app generation |
-| Edit  | *"let's change the look, can we make this have a more Windows 95 look?"* | chrome fidelity (Vibes nails Win95 incl. taskbar/Start button — good reskin canary) |
-| Remix | *"make this a vegan protein picking app with lots of options already filled out for the library"* | AI interpretation of an ambiguous seed-data ask |
+| Stage | Prompt                                                                                            | Stress-tests                                                                        |
+| ----- | ------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------- |
+| Build | _"a protein picker to help me mix up my boring eating habits"_                                    | generic-utility-app generation                                                      |
+| Edit  | _"let's change the look, can we make this have a more Windows 95 look?"_                          | chrome fidelity (Vibes nails Win95 incl. taskbar/Start button — good reskin canary) |
+| Remix | _"make this a vegan protein picking app with lots of options already filled out for the library"_ | AI interpretation of an ambiguous seed-data ask                                     |
 
 ## Adding new prompts
 
 A good prompt is:
 
 - **Real-feeling.** Something a human would actually type to a tool they just found. No "test app 1." No "Lorem ipsum."
-- **Tied to a stress target.** The third column is not decoration — it answers *why this prompt and not another*. If you can't fill it in, the prompt isn't pulling its weight.
+- **Tied to a stress target.** The third column is not decoration — it answers _why this prompt and not another_. If you can't fill it in, the prompt isn't pulling its weight.
 - **Stable in difficulty.** Don't add prompts so demanding that the App Model can't reasonably succeed — the QA pass is for surfacing Vibes-level issues, not eval-style model capability tests.
 ```
 
@@ -281,6 +286,7 @@ git commit -m "docs(qa-pr): seed demo prompt library"
 ## Task 4: Excerpt Chrome-MCP ground rules into the skill
 
 **Files:**
+
 - Create: `.claude/skills/qa-pr/references/chrome-mcp-rules.md`
 
 This file pulls together the parts of [`agents/chrome-mcp-debug.md`](../../../agents/chrome-mcp-debug.md) that apply directly to a QA run, so the agent loads them once at the start of a session without having to wade through the full debugging loop document.
@@ -343,6 +349,7 @@ git commit -m "docs(qa-pr): chrome-mcp ground rules for QA runs"
 ## Task 5: Write the triage-report template
 
 **Files:**
+
 - Create: `.claude/skills/qa-pr/assets/triage-template.md`
 
 The agent fills this in as it walks the spine and posts the rendered result as the PR comment.
@@ -374,20 +381,23 @@ The agent fills this in as it walks the spine and posts the rendered result as t
 
 ## Critical (P0)
 
-| # | Issue | Why it matters |
-|---|---|---|
+| #   | Issue | Why it matters |
+| --- | ----- | -------------- |
+
 {P0_ROWS}
 
 ## High-impact (P1)
 
-| # | Issue | Why it matters |
-|---|---|---|
+| #   | Issue | Why it matters |
+| --- | ----- | -------------- |
+
 {P1_ROWS}
 
 ## Polish (P2)
 
-| # | Issue |
-|---|---|
+| #   | Issue |
+| --- | ----- |
+
 {P2_ROWS}
 
 ## Cross-cutting patterns
@@ -407,7 +417,7 @@ The agent fills this in as it walks the spine and posts the rendered result as t
 
 ---
 
-*Raw run artifacts (screenshots, network logs, console messages) live in `qa-reports/{RUN_ID}/` on the developer's machine and are not attached to this comment.*
+_Raw run artifacts (screenshots, network logs, console messages) live in `qa-reports/{RUN_ID}/` on the developer's machine and are not attached to this comment._
 ```
 
 - [ ] **Step 2: Verify the template has every placeholder needed for the schema**
@@ -448,6 +458,7 @@ git commit -m "docs(qa-pr): triage report template"
 ## Task 6: Gmail OAuth setup helper
 
 **Files:**
+
 - Create: `.claude/skills/qa-pr/scripts/setup-gmail.mjs`
 - Test (smoke): inline via `node` invocation
 
@@ -458,6 +469,7 @@ The helper walks the operator through a one-time OAuth flow against a Google Clo
 This is a shell-level smoke test. Save the command to run; the implementation in Step 3 must make it pass.
 
 Smoke test command:
+
 ```bash
 node .claude/skills/qa-pr/scripts/setup-gmail.mjs --help
 ```
@@ -467,6 +479,7 @@ node .claude/skills/qa-pr/scripts/setup-gmail.mjs --help
 ```bash
 node .claude/skills/qa-pr/scripts/setup-gmail.mjs --help ; echo "exit=$?"
 ```
+
 Expected output: `Error: Cannot find module ...` and `exit=1`.
 
 - [ ] **Step 3: Write `.claude/skills/qa-pr/scripts/setup-gmail.mjs`**
@@ -515,9 +528,7 @@ if (argv.includes("--help") || argv.includes("-h")) {
   exit(0);
 }
 
-const CRED_PATH =
-  env.QA_GMAIL_CREDENTIALS ??
-  join(homedir(), ".config", "vibes-qa", "gmail-credentials.json");
+const CRED_PATH = env.QA_GMAIL_CREDENTIALS ?? join(homedir(), ".config", "vibes-qa", "gmail-credentials.json");
 const PORT = Number(env.QA_GMAIL_PORT ?? 53682);
 const REDIRECT = `http://127.0.0.1:${PORT}/oauth2callback`;
 const SCOPE = "https://www.googleapis.com/auth/gmail.readonly";
@@ -548,11 +559,9 @@ const code = await new Promise((resolve, reject) => {
       return;
     }
     const c = url.searchParams.get("code");
-    res.writeHead(200, { "content-type": "text/plain" }).end(
-      c
-        ? "OK — you can close this tab and return to the terminal."
-        : "Missing ?code in callback URL.",
-    );
+    res
+      .writeHead(200, { "content-type": "text/plain" })
+      .end(c ? "OK — you can close this tab and return to the terminal." : "Missing ?code in callback URL.");
     server.close();
     if (c) resolve(c);
     else reject(new Error("OAuth callback arrived without ?code"));
@@ -591,9 +600,9 @@ await writeFile(
       saved_at: new Date().toISOString(),
     },
     null,
-    2,
+    2
   ),
-  { mode: 0o600 },
+  { mode: 0o600 }
 );
 stdout.write(`\nSaved credentials to ${CRED_PATH} (mode 0600).\n`);
 ```
@@ -603,6 +612,7 @@ stdout.write(`\nSaved credentials to ${CRED_PATH} (mode 0600).\n`);
 ```bash
 node .claude/skills/qa-pr/scripts/setup-gmail.mjs --help ; echo "exit=$?"
 ```
+
 Expected output: the `Usage: ...` block followed by `exit=0`.
 
 - [ ] **Step 5: Confirm script is executable-as-a-module (no top-level syntax errors)**
@@ -624,6 +634,7 @@ git commit -m "feat(qa-pr): gmail OAuth setup helper"
 ## Task 7: Gmail OTP poller
 
 **Files:**
+
 - Create: `.claude/skills/qa-pr/scripts/gmail-otp.mjs`
 - Test (smoke): inline via `node` invocation
 
@@ -634,6 +645,7 @@ The skill invokes this with the plus-alias for the run. The script polls the ded
 The script must support two smoke modes that work without real Gmail credentials:
 
 Smoke test commands:
+
 ```bash
 node .claude/skills/qa-pr/scripts/gmail-otp.mjs --help
 node .claude/skills/qa-pr/scripts/gmail-otp.mjs vibes-qa+demo@gmail.com --dry-run
@@ -720,9 +732,7 @@ if (dryRun) {
   exit(0);
 }
 
-const credPath =
-  env.QA_GMAIL_CREDENTIALS ??
-  join(homedir(), ".config", "vibes-qa", "gmail-credentials.json");
+const credPath = env.QA_GMAIL_CREDENTIALS ?? join(homedir(), ".config", "vibes-qa", "gmail-credentials.json");
 const creds = JSON.parse(await readFile(credPath, "utf8"));
 
 async function getAccessToken() {
@@ -834,13 +844,14 @@ git commit -m "feat(qa-pr): gmail OTP poller"
 ## Task 8: Write the `SKILL.md` orchestration body
 
 **Files:**
+
 - Create: `.claude/skills/qa-pr/SKILL.md`
 
 This is the agent's playbook. It must be complete on its own — references load on demand, but SKILL.md is what Claude Code reads when the skill triggers.
 
 - [ ] **Step 1: Write `.claude/skills/qa-pr/SKILL.md`**
 
-```markdown
+````markdown
 ---
 name: qa-pr
 description: Run an agent-driven QA pass against a PR preview URL using the kmikeym v0.01m SOP. Drives chrome-devtools MCP through cold sign-up, first prompt, in-app exploration, edit/theme change, publish, live URL test, and remix the way a first-time user would. Writes a P0/P1/P2 triage with cross-cutting patterns and posts it as a PR comment. Trigger this whenever the user wants to QA a PR, validate a preview deploy, walk a preview URL, do a pre-merge browser review, or asks for an SOP-style QA pass — even if they don't explicitly say "qa-pr".
@@ -892,9 +903,9 @@ If a degraded-upstream banner is visible, record it under `notable_conditions`.
 
 ## Step 4 — The spine
 
-Walk the seven steps from [`references/sop-v0.01m.md`](references/sop-v0.01m.md), in order. The summary below is operational orchestration only — the SOP file is source of truth for *what to watch for* at each step.
+Walk the seven steps from [`references/sop-v0.01m.md`](references/sop-v0.01m.md), in order. The summary below is operational orchestration only — the SOP file is source of truth for _what to watch for_ at each step.
 
-1. **Sign-up from cold link.** Type a prompt into the homepage form *before* signing in (note whether it gets eaten). Click sign-up. When Clerk prompts for an OTP, call `node .claude/skills/qa-pr/scripts/gmail-otp.mjs <alias>` via Bash with a 60-second timeout, then enter the returned code. Note which auth tab a brand-new user lands on.
+1. **Sign-up from cold link.** Type a prompt into the homepage form _before_ signing in (note whether it gets eaten). Click sign-up. When Clerk prompts for an OTP, call `node .claude/skills/qa-pr/scripts/gmail-otp.mjs <alias>` via Bash with a 60-second timeout, then enter the returned code. Note which auth tab a brand-new user lands on.
 2. **First prompt → app generation.** Use the **Build** row from [`references/demo-prompts.md`](references/demo-prompts.md). Watch the build-in-progress feedback. Watch where the user lands when generation completes.
 3. **In-app exploration.** Click the generated app's core CTA. If the outcome is ambiguous (does it work or hang?), click it and wait at least 10 seconds before forming a conclusion — do not rely on the surrounding chat copy ("fully wired" claims are a known failure mode; see [#1704](https://github.com/VibesDIY/vibes.diy/issues/1704)).
 4. **Follow-up edit / theme change.** Use the **Edit** row from the prompt library. Watch the chrome, watch text repaint behavior on theme switches.
@@ -906,7 +917,7 @@ At every step, before moving on, capture: a screenshot to `qa-reports/{run_id}/`
 
 ## Step 5 — Discipline rules
 
-These are non-negotiable. Each one names *why* — read it, then apply it.
+These are non-negotiable. Each one names _why_ — read it, then apply it.
 
 - **Use read-only chrome-devtools tools to inspect before interacting.** Reading state before clicking surfaces errors a click would mask.
 - **Reproduce before recording a finding.** LLMs hallucinate transient errors. One reload before filing kills the majority of those.
@@ -921,38 +932,39 @@ The triage's working file at `qa-reports/{run_id}/triage.md` is the agent's note
 
 ```ts
 type QAResult = {
-  pr_number: number
-  preview_url: string
-  summary: string               // one paragraph; the lead of the triage (kmikeym's "Summary" section)
-  pr_verdict: "pass" | "fail" | "pass-with-caveats"
-  pr_verdict_reasoning: string  // one paragraph
+  pr_number: number;
+  preview_url: string;
+  summary: string; // one paragraph; the lead of the triage (kmikeym's "Summary" section)
+  pr_verdict: "pass" | "fail" | "pass-with-caveats";
+  pr_verdict_reasoning: string; // one paragraph
   test_scope: {
-    account_alias: string
-    browser_profile: "clean-chrome-devtools-mcp"
-    build_commit_sha: string
-    path_tested: string[]       // bullet strings
-    path_not_tested: string[]   // bullet strings; copy from the SOP "Not yet in scope" section
-    models_in_play: { chat: string; app: string }
-    notable_conditions: string[]
-  }
+    account_alias: string;
+    browser_profile: "clean-chrome-devtools-mcp";
+    build_commit_sha: string;
+    path_tested: string[]; // bullet strings
+    path_not_tested: string[]; // bullet strings; copy from the SOP "Not yet in scope" section
+    models_in_play: { chat: string; app: string };
+    notable_conditions: string[];
+  };
   findings: Array<{
-    severity: "P0" | "P1" | "P2"
-    title: string
-    description: string
-    why_it_matters: string
-    repro_steps: string[]
-    screenshots: string[]   // file paths inside qa-reports/{run_id}/
-    related_existing_issues?: string[]   // gh issue numbers
-  }>
+    severity: "P0" | "P1" | "P2";
+    title: string;
+    description: string;
+    why_it_matters: string;
+    repro_steps: string[];
+    screenshots: string[]; // file paths inside qa-reports/{run_id}/
+    related_existing_issues?: string[]; // gh issue numbers
+  }>;
   cross_cutting_patterns: Array<{
-    theme: string
-    findings: string[]   // titles of findings included in the theme
-    suggested_root_cause: string
-  }>
-  recommended_fix_order: string[]  // ordered bullet list
-  methodology_notes: { session_length_min: number; notable_conditions: string[] }
-}
+    theme: string;
+    findings: string[]; // titles of findings included in the theme
+    suggested_root_cause: string;
+  }>;
+  recommended_fix_order: string[]; // ordered bullet list
+  methodology_notes: { session_length_min: number; notable_conditions: string[] };
+};
 ```
+````
 
 Keep the working file editable as you go — append findings into the relevant table as each is reproduced; revise `pr_verdict_reasoning` at the end.
 
@@ -967,7 +979,7 @@ When the spine is complete (or aborted under a documented failure mode):
 gh pr comment <PR-NUMBER> --body-file qa-reports/{run_id}/triage.md
 ```
 
-This is the single authorized GitHub write operation for the skill. Run it directly, without a confirmation prompt — the authorization is documented in this skill's *Authorization* section above.
+This is the single authorized GitHub write operation for the skill. Run it directly, without a confirmation prompt — the authorization is documented in this skill's _Authorization_ section above.
 
 3. Print the comment URL (`gh` prints it on success) and a one-line summary of the verdict to the session.
 
@@ -977,21 +989,22 @@ This is the single authorized GitHub write operation for the skill. Run it direc
 - **Sign-up OTP times out.** `gmail-otp.mjs` exits 2 with `TIMEOUT`. Set `pr_verdict = "fail"`, file a single P0 finding ("Cold sign-up flow blocked: OTP did not arrive in 60s"), fill in the triage as far as it got, and post it. The signal that sign-up failed at all is itself a real QA finding.
 - **Generation never completes (>5 min on step 2).** File a P0 finding, mark steps 3–7 as `unreached` in `path_not_tested`, post the partial triage.
 - **Model degraded mid-run** (visible banner, 5xx response from model). Record under `notable_conditions` and continue (matches SOP discipline).
-- **chrome-devtools MCP crashes or returns persistent tool errors.** Stop. Surface the error to the operator. Do *not* post a partial triage — the data is not trustworthy.
+- **chrome-devtools MCP crashes or returns persistent tool errors.** Stop. Surface the error to the operator. Do _not_ post a partial triage — the data is not trustworthy.
 
 ## Cleanup notes
 
 - The `qa-reports/{run_id}/` directory stays on the operator's machine. It is gitignored.
 - The Vibes account, projects, published apps, and remix created during the run are **not** auto-deleted. Accept the clutter for v1; cleanup tooling is tracked as a follow-up.
 - The aliases log at `qa-reports/aliases.jsonl` is the single source of truth for which Clerk identities the QA skill has created. Future cleanup tooling will read from it.
-```
+
+````
 
 - [ ] **Step 2: Verify SKILL.md has valid frontmatter**
 
 ```bash
 head -4 .claude/skills/qa-pr/SKILL.md
 # Expected: starts with ---, has `name:` and `description:` keys, closes with ---
-```
+````
 
 - [ ] **Step 3: Verify every referenced file exists**
 
@@ -1055,7 +1068,7 @@ Check each of:
 - The agent's P0 findings overlap with the SOP-run P0s ([#1713](https://github.com/VibesDIY/vibes.diy/issues/1713), [#1707](https://github.com/VibesDIY/vibes.diy/issues/1707), [#1712](https://github.com/VibesDIY/vibes.diy/issues/1712)) where the spine would plausibly catch them.
 - The agent's cross-cutting patterns identify at least one of: "errors and progress states are under-treated," "Share is overloaded," "sibling controls without explanation," or "save handling is unreliable."
 
-Score honestly. If overlap is poor *and* the failures look like prompt issues (the agent misread an obvious failure, hallucinated a finding, or skipped a step), iterate on the relevant SOP / SKILL.md text. If overlap is poor *and* the failures look like infrastructure issues (Chrome MCP flaked, OTP polling timed out spuriously), file those as follow-up issues and re-run before judging the skill.
+Score honestly. If overlap is poor _and_ the failures look like prompt issues (the agent misread an obvious failure, hallucinated a finding, or skipped a step), iterate on the relevant SOP / SKILL.md text. If overlap is poor _and_ the failures look like infrastructure issues (Chrome MCP flaked, OTP polling timed out spuriously), file those as follow-up issues and re-run before judging the skill.
 
 - [ ] **Step 5: Decide ship-or-iterate**
 

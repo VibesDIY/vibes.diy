@@ -41,7 +41,6 @@ export interface VibesDiySrvSandboxArgs {
   ensureAssetSession?: () => Promise<void>;
 }
 
-
 export interface VibeApiCapableSandbox {
   readonly args: VibesDiySrvSandboxArgs;
   readonly vibeApi: VibesDiyApiIface | undefined;

@@ -11,10 +11,10 @@ Follow-up to the AppSessions DO split (PR #2253). One PR with four commits: mech
 
 282 references across 39 files. Pure find-replace.
 
-| Old name | New name | What it is |
-|----------|----------|------------|
-| `vibeDiyApi` | `chatApi` | Chat streaming connection (`/api`) |
-| `appDiyApi` | `vibeApi` | Vibe-scoped data connection (`/api/app?vibe=...`) |
+| Old name     | New name  | What it is                                        |
+| ------------ | --------- | ------------------------------------------------- |
+| `vibeDiyApi` | `chatApi` | Chat streaming connection (`/api`)                |
+| `appDiyApi`  | `vibeApi` | Vibe-scoped data connection (`/api/app?vibe=...`) |
 
 ### Renamed symbols
 
@@ -52,13 +52,13 @@ Tests: `settings-profile.test.tsx`, `ShareModal.test.tsx`, `comments-section-ava
 
 New test file alongside existing `route-decision.test.ts`:
 
-| Input | Expected ns | Expected name | Reason |
-|-------|------------|---------------|--------|
-| `"app:foo"` | APP_SESSIONS | `"foo"` | Basic prefix routing |
-| `"foo"` | CHAT_SESSIONS | `"foo"` | No prefix — default |
-| `"foo:bar"` | CHAT_SESSIONS | `"foo:bar"` | Unknown prefix — falls through to default |
-| `"app:foo:bar"` | APP_SESSIONS | `"foo:bar"` | Only first colon is the delimiter |
-| `"app:"` | APP_SESSIONS | `""` | Empty suffix — degenerate but valid |
+| Input           | Expected ns   | Expected name | Reason                                    |
+| --------------- | ------------- | ------------- | ----------------------------------------- |
+| `"app:foo"`     | APP_SESSIONS  | `"foo"`       | Basic prefix routing                      |
+| `"foo"`         | CHAT_SESSIONS | `"foo"`       | No prefix — default                       |
+| `"foo:bar"`     | CHAT_SESSIONS | `"foo:bar"`   | Unknown prefix — falls through to default |
+| `"app:foo:bar"` | APP_SESSIONS  | `"foo:bar"`   | Only first colon is the delimiter         |
+| `"app:"`        | APP_SESSIONS  | `""`          | Empty suffix — degenerate but valid       |
 
 Tests mock `env.APP_SESSIONS` and `env.CHAT_SESSIONS` as distinct sentinel objects.
 
@@ -75,6 +75,7 @@ These functions were already removed as part of PR #2253's refactor commit (`86b
 ## Follow-up issue
 
 File a follow-up issue for items deferred from #2264:
+
 - DocNotify/AccessFnDO DO class deletion migration
 - SharedSessions singleton DO for sidebar/settings/models queries
 - `/chat/` route deprecation
