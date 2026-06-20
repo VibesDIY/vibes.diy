@@ -28,15 +28,21 @@ The remaining duplications all survive and are in scope:
 
 | # | Duplication | Copies (current line refs) | Priority |
 |---|---|---|---|
-| 1 | ACL eval (`inGroup`/`aclAllows`/`canRead`/`canWrite`) | `vibe/runtime/db-acl-allows.ts:15-36`, `api/svc/public/db-acl-resolver.ts:15-26` (+ `aclAllows`) | P1 (security) |
-| 2 | "latest app per slug" query | `api/svc/public/get-app-by-fsid.ts`, `api/svc/public/fork-app.ts` (both contain `max_created`) | P1 (correctness) |
+| 1 | ACL eval (`inGroup`/`aclAllows`/`canRead`/`canWrite`) | runtime `vibe/runtime/db-acl-allows.ts:12-36` (canRead 12, canWrite 14, inGroup 16, aclAllows 30); host `api/svc/public/db-acl-resolver.ts:13` (inGroup) + `:87` (aclAllows), with `canRead`/`canWrite` from `api/svc/public/access-helpers.ts:10-11` | P1 (security) |
+| 2 | "latest app per slug" query | `api/svc/public/get-app-by-fsid.ts:116-146`, `api/svc/public/fork-app.ts:80-110` (both contain `max_created`) | P1 (correctness) |
 | 3 | `last30DaysUTC` ×3 | `report-growth-memberships.ts:20`, `report-growth-vibes-with-data.ts:19`, `report-active-members.ts:20` | P2 |
-| 4 | `loadDevVars` ×3, `formatError` ×2 | `usage-report/admin-db.ts:22,99`, `usage-report/inspect-db.ts:114,275`, `usage-report/inspect-db-report.ts:14` | P2 |
+| 4 | `loadDevVars` ×3, `formatError` ×2 | `usage-report/admin-db.ts:22,99`, `usage-report/inspect-db.ts:114,275`, `usage-report/inspect-db-report.ts:14`; near-identical `last30Days` at `inspect-db-report.ts:44` | P2 |
 | 5 | `deriveDisplayName`/`deriveAuthorDisplay` ×3 | `who-am-i.ts:28`, `list-members.ts:23`, `get-app-by-fsid.ts:44` | P2 |
 
 (The issue's code snippets are also slightly stale: `inGroup` now tests `level === "override"`,
 not `"owner"`, after the owner→override / userSlug→handle renames. The current bodies in the
 two ACL files are byte-identical to each other — verified.)
+
+> **Ground-truth re-check (2026-06-18, branch rebased onto `main` @ `486239c`):** line refs
+> above re-verified against current `main`; none of the affected files were touched by main's
+> recent commits, so all duplications and the event-schema removal still hold exactly as
+> described. Note `db-acl-resolver.ts` sources `canRead`/`canWrite` from `access-helpers.ts`
+> (not a third local copy) — the resolver no longer defines them inline.
 
 ## Design
 
