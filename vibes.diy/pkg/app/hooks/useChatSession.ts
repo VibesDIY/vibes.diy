@@ -22,6 +22,13 @@ export interface ChatSessionOpts {
   readonly promptToSend: string | null;
   readonly sendPrompt: (value: string | null) => void;
   readonly navigateToFsId: ChatNavigation["navigateToFsId"];
+  /**
+   * Called when a fired prompt settles: `true` once the server accepts the
+   * send, `false` on any failure path (open error, send error, throw). Lets
+   * the route's submit guard release `submitting` / resolve the pending submit
+   * promise so the composer never stays wedged on a failed send.
+   */
+  readonly onSendSettled?: (ok: boolean) => void;
 }
 
 export interface ChatSession {
@@ -38,8 +45,19 @@ export interface ChatSession {
  * unmount — a latent leak preserved here and fixed in a follow-up).
  */
 export function useChatSession(opts: ChatSessionOpts): ChatSession {
-  const { ownerHandle, appSlug, fsId, inConstruction, chatApi, promptState, dispatch, promptToSend, sendPrompt, navigateToFsId } =
-    opts;
+  const {
+    ownerHandle,
+    appSlug,
+    fsId,
+    inConstruction,
+    chatApi,
+    promptState,
+    dispatch,
+    promptToSend,
+    sendPrompt,
+    navigateToFsId,
+    onSendSettled,
+  } = opts;
 
   const [chat, setChat] = useState<LLMChat | null>(null);
 
@@ -197,10 +215,17 @@ export function useChatSession(opts: ChatSessionOpts): ChatSession {
             if (r.isErr()) {
               console.error(`PromptSend failed`, r.Err());
               dispatch({ type: "setOptimisticPrompt", text: undefined });
+              onSendSettled?.(false);
             } else {
               dispatch({ type: "setInFlightStreamId", streamId: r.Ok().promptId });
               notifyRecentVibesChanged();
+              onSendSettled?.(true);
             }
+          })
+          .catch((err: unknown) => {
+            console.error(`PromptSend threw`, err);
+            dispatch({ type: "setOptimisticPrompt", text: undefined });
+            onSendSettled?.(false);
           });
       }
       return; // Already opened or opening
@@ -209,6 +234,7 @@ export function useChatSession(opts: ChatSessionOpts): ChatSession {
     chatApi.openChat({ ownerHandle, appSlug, mode: "chat" }).then((rChat) => {
       if (rChat.isErr()) {
         console.error("CHAT-Error", rChat.Err(), ownerHandle, appSlug);
+        onSendSettled?.(false);
         return;
       }
       activeChatRef.current = rChat.Ok();
@@ -232,7 +258,9 @@ export function useChatSession(opts: ChatSessionOpts): ChatSession {
     };
     // Dep array preserved verbatim from the route — the self-referential `chat`
     // dependency is what flips this effect from the open path to the fire path.
-  }, [ownerHandle, appSlug, chat, openingRef, chatApi, promptToSend]);
+    // `onSendSettled` is identity-stable in the route (memoized), so listing it
+    // here does not re-fire the effect.
+  }, [ownerHandle, appSlug, chat, openingRef, chatApi, promptToSend, onSendSettled]);
 
   return { chat };
 }

@@ -111,6 +111,29 @@ describe("ChatInput Component", () => {
     expect(onSubmit).not.toHaveBeenCalled();
   });
 
+  it("shows the working message on the send button while processing", () => {
+    render(
+      <MockThemeProvider>
+        <ChatInput promptProcessing={true} onSubmit={onSubmit} hasCode={false} currentMsgCount={0} />
+      </MockThemeProvider>
+    );
+    // getWorkingMessage(false, 0) === "Thinking about your vibe..."
+    expect(screen.getByLabelText("Processing").textContent).toContain("Thinking about your vibe...");
+  });
+
+  it("keeps the textarea typeable when idle", () => {
+    render(
+      <MockThemeProvider>
+        <ChatInput promptProcessing={false} onSubmit={onSubmit} />
+      </MockThemeProvider>
+    );
+    // Idle composer exposes the send affordance and an editable textarea.
+    expect(screen.getByLabelText("Send message")).toBeDefined();
+    const textArea = screen.getByPlaceholderText("I want to build...");
+    fireEvent.change(textArea, { target: { value: "abc" } });
+    expect((textArea as HTMLTextAreaElement).value).toBe("abc");
+  });
+
   it("does not render the model picker when models are missing or empty", () => {
     const { rerender } = render(
       <MockThemeProvider>

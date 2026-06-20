@@ -18,6 +18,7 @@ import ThemePickerModal from "../../components/ThemePickerModal.js";
 import { isMobileViewport, useViewState } from "../../utils/ViewState.js";
 import { useIframeCurrentTokens } from "../../hooks/useIframeCurrentTokens.js";
 import { useFreshFirstCodegen } from "../../utils/freshFirstCodegen.js";
+import { shouldAcceptPrompt } from "../../utils/submit-guard.js";
 import { useChatNavigation } from "../../hooks/useChatNavigation.js";
 import { useChatOwnership } from "../../hooks/useChatOwnership.js";
 import { useChatHydration } from "../../hooks/useChatHydration.js";
@@ -96,12 +97,11 @@ export function Chat({ inConstruction = false, initialPrompt }: { inConstruction
   });
 
   const [promptToSend, sendPrompt] = useState<string | null>(null);
-  const handleSelectOption = useCallback(
-    (option: string) => {
-      sendPrompt(option);
-    },
-    [sendPrompt]
-  );
+  // True from the moment a turn is accepted until the stream's first block
+  // flips promptState.running true (or the send settles/errors). Closes the
+  // click→first-block window where neither promptToSend nor running is truthy.
+  const [submitting, setSubmitting] = useState(false);
+  const pendingSubmitResolveRef = useRef<((ok: boolean) => void) | null>(null);
   const chatInput = useRef<ChatInputRef>(null);
   const [themeModalOpen, setThemeModalOpen] = useState(false);
 
@@ -116,6 +116,51 @@ export function Chat({ inConstruction = false, initialPrompt }: { inConstruction
     agentSavedBlockIds: new Set<string>(),
     connection: "live",
   });
+
+  const settlePendingSubmit = useCallback((ok: boolean) => {
+    const resolvePending = pendingSubmitResolveRef.current;
+    if (!resolvePending) return;
+    pendingSubmitResolveRef.current = null;
+    resolvePending(ok);
+  }, []);
+
+  // Single guarded entry point shared by the suggestion chips and the text
+  // input. Sets `submitting` on accept so the composer reports busy instantly,
+  // before the stream's first block flips promptState.running true.
+  const submitPrompt = useCallback(
+    (text: string): Promise<boolean> => {
+      if (inConstruction) return Promise.resolve(false);
+      if (!shouldAcceptPrompt({ text, submitting, running: promptState.running })) return Promise.resolve(false);
+      // Best effort safety: if a previous submit promise is somehow still
+      // pending, resolve it as failed before replacing it.
+      settlePendingSubmit(false);
+      return new Promise<boolean>((resolve) => {
+        pendingSubmitResolveRef.current = resolve;
+        setSubmitting(true);
+        sendPrompt(text);
+      });
+    },
+    [inConstruction, submitting, promptState.running, sendPrompt, settlePendingSubmit]
+  );
+
+  const handleSelectOption = useCallback((option: string) => submitPrompt(option), [submitPrompt]);
+
+  // Primary reset: once the stream starts, `running` carries the busy signal.
+  useEffect(() => {
+    if (promptState.running) setSubmitting(false);
+  }, [promptState.running]);
+
+  // Bridge the chat-session firing result back into the submit guard: success
+  // keeps `submitting` latched until `running` flips (via the effect above);
+  // failure releases it immediately and resolves the pending submit promise so
+  // a clicked chip can unlock.
+  const onSendSettled = useCallback(
+    (ok: boolean) => {
+      settlePendingSubmit(ok);
+      if (!ok) setSubmitting(false);
+    },
+    [settlePendingSubmit]
+  );
 
   // Single owner of "navigate to fsId" plus the post-save / first-paint
   // block-scanning navigation effects (and their guard refs).
@@ -143,6 +188,7 @@ export function Chat({ inConstruction = false, initialPrompt }: { inConstruction
     promptToSend,
     sendPrompt,
     navigateToFsId,
+    onSendSettled,
   });
 
   useEffect(() => {
@@ -393,10 +439,10 @@ ${rootCssBlock}
       }
       if (promptText) {
         chatInput.current?.setPrompt(promptText);
-        sendPrompt(promptText);
+        void submitPrompt(promptText);
       }
     },
-    [promptState.blocks, chatInput]
+    [promptState.blocks, chatInput, submitPrompt]
   );
 
   const [editorState, setEditorState] = useState<EditorState>({
@@ -509,8 +555,8 @@ ${rootCssBlock}
           <BrutalistCard size="md" style={{ margin: "0 1rem 1rem 1rem" }}>
             <ChatInput
               ref={chatInput}
-              onSubmit={sendPrompt}
-              promptProcessing={promptState.running}
+              onSubmit={submitPrompt}
+              promptProcessing={submitting || promptState.running}
               hasCode={promptState.hasCode}
               currentMsgCount={promptState.current?.msgs.length ?? 0}
               selectedTheme={promptState.theme ?? null}
