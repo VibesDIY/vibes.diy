@@ -2,7 +2,7 @@
 
 `useViewer()` is a **read-only window** into runtime-managed access control. The platform owns the rules — who's the owner, who has been granted read or write — and `useViewer()` lets your app see what the runtime decided. You cannot grant or revoke access from code; you can only reflect the runtime's verdict in your UI.
 
-The contract: **every write surface (form, submit button, edit input, delete button) must check `viewer`** (signed in?) and render a read-only fallback when null. For apps with access functions, gate further with `access.hasRole()` or `access.hasChannel()` from `useFireproof()`. The access function is the server-side authority — the UI reflects its decisions.
+The contract: **every write surface (form, submit button, edit input, delete button) gates on the condition `access.js` actually enforces** and renders a read-only fallback otherwise. That condition is `viewer` (any signed-in user) when writes are open to all signed-in users, `isOwner` when only the owner may write, or `access.hasRole()` / `access.hasChannel()` (from `useFireproof()`) for role/channel apps. Resolve every gated surface in one canonical order: signed-out fallback (`!viewer`) → requirement-not-met fallback (e.g. `!isOwner`, which must NOT say "Sign in") → the compose/edit UI. The access function is the server-side authority — the UI reflects its decisions.
 
 ## Basic Usage
 
