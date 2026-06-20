@@ -60,6 +60,13 @@ export async function preAllocate(vctx: VibesApiSQLCtx, { prompt }: { prompt: st
           model: appDefault.id,
           endpoint: vctx.params.llm.url,
           apiKey: vctx.params.llm.apiKey,
+          // Route call-ai's network through the injectable inference seam so the
+          // actual wire request is mockable/fail-closed in tests (#2481). call-ai
+          // owns the model-specific structured-output strategy (response_format /
+          // tool_choice), so we keep call-ai rather than rebuilding the request
+          // by hand on `vctx.llmRequest`; `endpoint`/`apiKey` are config handed to
+          // the seam, not a second network boundary.
+          mock: { fetch: vctx.inferenceFetch },
           // preAllocSchema is `as const`, so its `required` is readonly. call-ai's
           // Schema expects mutable string[] — copy at the boundary.
           schema: { ...preAllocSchema, required: [...preAllocSchema.required] },

@@ -38,6 +38,7 @@ export interface CreateApiTestCtxOpts {
   notifyViewerGrantsChanged?(evt: EvtViewerGrantsChanged, senderConnId: string): Promise<void>;
   models?: CreateVibeDiyTestCtxOpts["models"];
   llmRequest?: CreateVibeDiyTestCtxOpts["llmRequest"];
+  inferenceFetch?: CreateVibeDiyTestCtxOpts["inferenceFetch"];
   /**
    * Inject a SuperThis (e.g. built with a MockLogger via
    * `ensureSuperThis({ logger })`) so a test can capture the structured logs
@@ -91,6 +92,7 @@ export async function createApiTestCtx(opts: CreateApiTestCtxOpts = {}): Promise
     notifyViewerGrantsChanged: opts.notifyViewerGrantsChanged,
     models: opts.models,
     llmRequest: opts.llmRequest,
+    inferenceFetch: opts.inferenceFetch,
   });
   const seqUserIdBase = opts.seqUserIdBase ?? nextSeqUserIdBase();
   const testUser = await createTestUser({ sthis, deviceCA, seqUserId: seqUserIdBase + 1 });
