@@ -2,7 +2,7 @@
 
 Issue: [#2470](https://github.com/VibesDIY/vibes.diy/issues/2470) (follow-up from [#2459](https://github.com/VibesDIY/vibes.diy/pull/2459), the identity-extraction far shore).
 
-Status: **DESIGN — approved, pending spec review.**
+Status: **DESIGN — reviewed and approved by `@CharlieHelps`; ready for an implementation plan pending owner go-ahead.**
 
 ## Problem
 
@@ -20,7 +20,9 @@ a stable boundary.
 
 ## Inventory (verified against current `origin/main`)
 
-The entire **runtime** CLI-framework coupling is **6 symbols imported in one file**:
+The coupling is **6 symbols imported in one file** — of which only **3 are runtime
+coupling** (the values, which actually link `core-cli`); the other 3 are type-level
+and erase at build:
 
 | Symbol                                        | Kind           | Imported in                                                              |
 | --------------------------------------------- | -------------- | ------------------------------------------------------------------------ |
@@ -98,14 +100,13 @@ for a one-file surface (see the brainstorm: local module chosen over
 - No change to the login/identity seam or the `core-cli` build tooling.
 - No reimplementation of the `cmd-ts` glue.
 
-## Open questions (for spec review / `@CharlieHelps`)
+## Resolutions (from `@CharlieHelps` review)
 
-- **(a) Filename.** `cli-kit.ts` (chosen) vs `cmd-ts-kit.ts` vs `core-cli-seam.ts`.
-  `cli-kit` reads as "the CLI's framework kit"; open to a rename.
-- **(b) Smoke test or typecheck-only?** For a pure re-export, `pnpm build` +
-  existing CLI tests already prove it. A 3-line test asserting `cli-kit` re-exports
-  the expected names is cheap insurance against an accidental drop during a future
-  internals swap — include it or skip?
-- **(c) Boundary confirmation.** Login symbols staying in `@vibes.diy/identity`
-  (rather than also flowing through this CLI seam) is intended — confirm that's the
-  right split.
+- **(a) Filename → `cli-kit.ts`.** Names the local abstraction; `cmd-ts-kit.ts` would
+  leak today's internals and `core-cli-seam.ts` hard-codes the current backing dep.
+- **(b) Typecheck/build-only — no smoke test.** A dropped symbol in a pure re-export
+  with one local consumer fails `pnpm build` immediately. Add a seam-contract test
+  only if `cli-kit` gains multiple consumers or evolves independently during a future
+  internals swap.
+- **(c) Boundary confirmed.** Login/device-id symbols stay identity-owned in
+  `@vibes.diy/identity`; this seam stays focused on CLI-framework glue only.
