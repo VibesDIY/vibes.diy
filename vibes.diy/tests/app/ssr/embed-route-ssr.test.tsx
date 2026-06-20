@@ -29,6 +29,7 @@ import EmbedRoute, {
   loader as embedLoader,
   meta as embedMeta,
 } from "../../../pkg/app/routes/embed.$ownerHandle.$appSlug.js";
+import { computeCardVariant } from "../../../pkg/app/routes/vibe-card-variant.js";
 import { URI } from "@adviser/cement";
 
 const PREVIEW_BASE = "pr-7.vibespreview.dev";
@@ -42,6 +43,29 @@ function makeContext(overrides?: { isPubliclyEmbeddable?: boolean }) {
     ...(overrides ?? {}),
   } as unknown as Parameters<typeof embedLoader>[0]["context"];
 }
+
+// The embed route's live gate uses computeCardVariant(grant) === "iframe" so a
+// signed-in owner (grant "owner") keeps the iframe instead of flipping to the
+// not-published card after the access check resolves. Pin that contract.
+describe("embed viewable-grant contract", () => {
+  it("treats owner / granted / public-access as viewable (iframe)", () => {
+    for (const grant of [
+      "owner",
+      "public-access",
+      "granted-access.editor",
+      "granted-access.viewer",
+      "accepted-email-invite",
+    ] as const) {
+      expect(computeCardVariant(grant)).toBe("iframe");
+    }
+  });
+
+  it("treats anonymous request/login states as not viewable (→ card)", () => {
+    for (const grant of ["req-login.request", "req-login.invite", "pending-request", "revoked-access", "not-grant"] as const) {
+      expect(computeCardVariant(grant)).not.toBe("iframe");
+    }
+  });
+});
 
 describe("embed route loader", () => {
   it("builds the runtime iframe URL on the configured base with npmUrl, no fsId segment", async () => {
