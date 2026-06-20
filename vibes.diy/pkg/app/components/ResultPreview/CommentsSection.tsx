@@ -54,7 +54,11 @@ function formatTime(iso?: string): string {
 }
 
 export function CommentsSection({ ownerHandle, appSlug, canModerate, composerDisabled }: CommentsSectionProps) {
-  const { chatApi } = useVibesDiy();
+  const { chatApi, vibeApi } = useVibesDiy();
+  // Vibe-scoped doc ops + whoAmI run on AppSessions (vibeApi): that connection
+  // does local broadcast + local QuickJS access-fn eval. Fall back to chatApi
+  // defensively — on /vibe/ and /chat/ routes vibeApi is always present. (#2265 A1)
+  const dataApi = vibeApi ?? chatApi;
   const { isSignedIn, userId: viewerUserId } = useAuth();
   const { user } = useUser();
   const [comments, setComments] = useState<CommentDoc[]>([]);
@@ -76,23 +80,23 @@ export function CommentsSection({ ownerHandle, appSlug, canModerate, composerDis
     let cancelled = false;
     // tid is overwritten by the impl's request() — we just need to satisfy the
     // type since ReqVibeWhoAmI extends the postMessage Base shape.
-    void chatApi.whoAmI({ tid: crypto.randomUUID(), ownerHandle, appSlug }).then((res) => {
+    void dataApi.whoAmI({ tid: crypto.randomUUID(), ownerHandle, appSlug }).then((res) => {
       if (cancelled) return;
       if (res.isOk()) setViewerUserSlug(res.Ok().viewer?.userHandle);
     });
     return () => {
       cancelled = true;
     };
-  }, [chatApi, isSignedIn, ownerHandle, appSlug]);
+  }, [dataApi, isSignedIn, ownerHandle, appSlug]);
 
   const reload = useCallback(async () => {
-    const res = await chatApi.queryDocs({ ownerHandle, appSlug, dbName: COMMENTS_DB_NAME });
+    const res = await dataApi.queryDocs({ ownerHandle, appSlug, dbName: COMMENTS_DB_NAME });
     if (res.isOk()) {
       const docs = res.Ok().docs as unknown as CommentDoc[];
       docs.sort((a, b) => (a.createdAt ?? "").localeCompare(b.createdAt ?? ""));
       setComments(docs);
     }
-  }, [chatApi, ownerHandle, appSlug]);
+  }, [dataApi, ownerHandle, appSlug]);
 
   useEffect(() => {
     let cancelled = false;
@@ -109,21 +113,21 @@ export function CommentsSection({ ownerHandle, appSlug, canModerate, composerDis
   // open/close cycle of the parent modal doesn't accumulate live listeners
   // (otherwise every doc change fires reload() N times per session).
   useEffect(() => {
-    void chatApi.subscribeDocs({ ownerHandle, appSlug, dbName: COMMENTS_DB_NAME });
-    const unsubscribe = chatApi.onDocChanged((evtUserSlug, evtAppSlug, evtDbName) => {
+    void dataApi.subscribeDocs({ ownerHandle, appSlug, dbName: COMMENTS_DB_NAME });
+    const unsubscribe = dataApi.onDocChanged((evtUserSlug, evtAppSlug, evtDbName) => {
       if (evtUserSlug === ownerHandle && evtAppSlug === appSlug && evtDbName === COMMENTS_DB_NAME) {
         void reload();
       }
     });
     return unsubscribe;
-  }, [chatApi, ownerHandle, appSlug, reload]);
+  }, [dataApi, ownerHandle, appSlug, reload]);
 
   async function handlePost() {
     const text = body.trim();
     if (!text || posting) return;
     setPosting(true);
     setError(undefined);
-    const res = await chatApi.putDoc({
+    const res = await dataApi.putDoc({
       ownerHandle,
       appSlug,
       dbName: COMMENTS_DB_NAME,
@@ -149,7 +153,7 @@ export function CommentsSection({ ownerHandle, appSlug, canModerate, composerDis
   }
 
   async function handleDelete(c: CommentDoc) {
-    const res = await chatApi.deleteDoc({ ownerHandle, appSlug, dbName: COMMENTS_DB_NAME, docId: c._id });
+    const res = await dataApi.deleteDoc({ ownerHandle, appSlug, dbName: COMMENTS_DB_NAME, docId: c._id });
     if (res.isOk()) {
       void reload();
     } else {

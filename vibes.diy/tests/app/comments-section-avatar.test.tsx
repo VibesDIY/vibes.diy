@@ -130,3 +130,67 @@ describe("CommentsSection avatar behavior", () => {
     expect(request.doc.authorHandle).toBe("commenter-resolved-slug");
   });
 });
+
+describe("CommentsSection connection routing (#2265 A1)", () => {
+  // Vibe-scoped doc ops must run on AppSessions (vibeApi) when present — that is
+  // the connection with local broadcast + local QuickJS access-fn eval. When
+  // vibeApi is absent (no vibe in context) the component falls back to chatApi.
+  afterEach(() => cleanup());
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    setTestAuth({ isSignedIn: true, userId: "viewer-1" });
+    setTestUser({ username: "commenter-slug", fullName: "Commenter" });
+  });
+
+  function mkApi(tag: string, sink: string[]) {
+    return {
+      whoAmI: vi.fn(async () => {
+        sink.push(`${tag}:whoAmI`);
+        return Result.Ok({ viewer: { userHandle: "commenter-resolved-slug" }, access: "viewer" });
+      }),
+      queryDocs: vi.fn(async () => {
+        sink.push(`${tag}:queryDocs`);
+        return Result.Ok({ docs: [] });
+      }),
+      subscribeDocs: vi.fn(async () => {
+        sink.push(`${tag}:subscribeDocs`);
+        return Result.Ok({});
+      }),
+      onDocChanged: vi.fn(() => () => undefined),
+      putDoc: vi.fn(async () => {
+        sink.push(`${tag}:putDoc`);
+        return Result.Ok({});
+      }),
+      deleteDoc: vi.fn(async () => Result.Ok({})),
+    };
+  }
+
+  it("routes doc ops + whoAmI through vibeApi when present, not chatApi", async () => {
+    const calls: string[] = [];
+    const wrapper = vibesWrapper({ chatApi: mkApi("chat", calls), vibeApi: mkApi("vibe", calls) });
+    rtlRender(<CommentsSection ownerHandle="owner" appSlug="my-app" canModerate={false} composerDisabled={false} />, {
+      wrapper,
+    });
+
+    await waitFor(() => expect(calls).toContain("vibe:queryDocs"));
+    await waitFor(() => expect(calls).toContain("vibe:whoAmI"));
+
+    fireEvent.change(screen.getByPlaceholderText("Write a comment…"), { target: { value: "hi" } });
+    fireEvent.click(screen.getByRole("button", { name: "Post" }));
+    await waitFor(() => expect(calls).toContain("vibe:putDoc"));
+
+    // Nothing should have gone to the chat connection.
+    expect(calls.some((c) => c.startsWith("chat:"))).toBe(false);
+  });
+
+  it("falls back to chatApi when vibeApi is absent", async () => {
+    const calls: string[] = [];
+    const wrapper = vibesWrapper({ chatApi: mkApi("chat", calls) });
+    rtlRender(<CommentsSection ownerHandle="owner" appSlug="my-app" canModerate={false} composerDisabled={false} />, {
+      wrapper,
+    });
+
+    await waitFor(() => expect(calls).toContain("chat:queryDocs"));
+  });
+});
