@@ -18,8 +18,8 @@ This is a **race**, not just missing CSS:
 
 - A chip click calls `handleSelectOption(option)` → `sendPrompt(option)`, which sets
   the `promptToSend` state ([chat.$userSlug.$appSlug.tsx:340-345](../../../vibes.diy/pkg/app/routes/chat/chat.$userSlug.$appSlug.tsx)).
-- The firing `useEffect` *clears `promptToSend` back to `null` before it calls
-  `chat.prompt()`* ([:484-487](../../../vibes.diy/pkg/app/routes/chat/chat.$userSlug.$appSlug.tsx)).
+- The firing `useEffect` _clears `promptToSend` back to `null` before it calls
+  `chat.prompt()`_ ([:484-487](../../../vibes.diy/pkg/app/routes/chat/chat.$userSlug.$appSlug.tsx)).
 - `promptState.running` does not flip to `true` until the **first streamed block
   arrives** seconds later (reducer on `isPromptBlockBegin`).
 
@@ -27,7 +27,7 @@ So between the click and the first block there is a window where **no state says
 "busy"** — `promptToSend` is already null again and `running` is still false.
 Guarding on either flag alone does not close the window. The chip's only current
 disable condition is `disabled={!isLast}` ([MessageList.tsx:189](../../../vibes.diy/pkg/app/components/MessageList.tsx)),
-which only trips once a *newer* message exists — i.e. after the turn lands, too late.
+which only trips once a _newer_ message exists — i.e. after the turn lands, too late.
 
 The text input submit path (Enter / "Code" button) has the same gap: it guards on
 `promptProcessing` (= `promptState.running`) only ([ChatInput.tsx:92-97, 191](../../../vibes.diy/pkg/app/components/ChatInput.tsx)).
@@ -50,6 +50,7 @@ causes:
 ## Goals / Non-goals
 
 **Goals**
+
 - A chip click can never fire more than one turn, regardless of how fast/often the
   user clicks during the in-flight window.
 - The same guarantee for the text-input submit path.
@@ -58,6 +59,7 @@ causes:
 - Typing in the chat textarea stays responsive while a turn is streaming.
 
 **Non-goals**
+
 - No new "pending AI reply" placeholder bubble in the transcript. The existing
   "working" button state covers latency visibility (per product decision).
 - No store/`useSyncExternalStore` refactor of the route's streaming state (approach
@@ -99,6 +101,7 @@ const handleSelectOption = useCallback((option: string) => submitPrompt(option),
 
   `submitting` covers the click→first-block gap; `running` covers first-block→end.
   The combined `submitting || running` is true for the entire in-flight period.
+
 - **Failure path:** the `chat.prompt()` promise's error branch
   ([:498](../../../vibes.diy/pkg/app/routes/chat/chat.$userSlug.$appSlug.tsx)) must
   `setSubmitting(false)` so a send that errors before any block cannot wedge the
