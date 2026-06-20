@@ -19,19 +19,11 @@ import { unwrapMsgBase } from "../unwrap-msg-base.js";
 import { VibesApiSQLCtx } from "../types.js";
 import { optAuth } from "../check-auth.js";
 import { checkDocAccess, canRead, isPublicReadable, type DocAccessLevel } from "./access-helpers.js";
-
-function deriveAuthorDisplay(claims: ClerkClaim): string {
-  const p = claims.params;
-  if (p.nick !== undefined && p.nick.trim() !== "") return p.nick.trim();
-  if (p.name !== null && p.name.trim() !== "") return p.name.trim();
-  const composed = `${p.first} ${p.last}`.trim();
-  if (composed !== "") return composed;
-  return p.email;
-}
+import { deriveDisplayName } from "./derive-display-name.js";
 
 function safeDisplay(foreignInfo: unknown, fallbackEmail?: string): string {
   const fi = foreignInfo as ForeignInfo | undefined;
-  if (fi?.claims) return deriveAuthorDisplay(fi.claims as ClerkClaim);
+  if (fi?.claims) return deriveDisplayName(fi.claims as ClerkClaim);
   if (fi?.givenEmail) return fi.givenEmail;
   if (fallbackEmail) return fallbackEmail;
   return "anonymous";
