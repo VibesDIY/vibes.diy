@@ -61,6 +61,12 @@
 
   /* Shadow */
   --vibes-shadow-color: var(--vibes-near-black);
+
+  /* Clearance reserved below app content so the app can always be scrolled
+     clear of the fixed vibes switch in the bottom-right corner. The switch is
+     80px tall with a 20px inset (~100px footprint); we reserve a little more so
+     the last row of content can be pulled up above the switch. See #1771. */
+  --vibes-switch-clearance: 124px;
 }
 
 /* Dark mode - neon variant colors */
@@ -153,6 +159,14 @@ body:has([data-vibe-controls-container] [data-vibe-switch].active) .vibe-app-con
   transition:
     filter 0.3s ease,
     transform 0.3s ease;
+}
+
+/* Switch clearance: keep a scrollable strip below the app so its bottom
+   content can always be pulled up above the fixed switch overlay (#1771).
+   Apps that intentionally pin content to the bottom will sit above this strip;
+   that trade-off is accepted for now. */
+.vibe-app-container {
+  padding-bottom: var(--vibes-switch-clearance);
 }
 
 /* Container - Fixed position lower right */
