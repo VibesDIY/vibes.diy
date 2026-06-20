@@ -215,8 +215,15 @@ export function Chat({ inConstruction = false, initialPrompt }: { inConstruction
     if (key !== prevChatKeyRef.current) {
       prevChatKeyRef.current = key;
       dispatch({ type: "clearChat", appSlug });
+      // A submit accepted in the previous chat but not yet handed off to
+      // `running` would otherwise leave `submitting` latched on this (persisted)
+      // component — the success-path reset only fires when running flips true,
+      // which the old turn never does here once we've navigated away. Release
+      // it on chat change so the new chat's composer stays interactive.
+      settlePendingSubmit(false);
+      setSubmitting(false);
     }
-  }, [ownerHandle, appSlug, dispatch]);
+  }, [ownerHandle, appSlug, dispatch, settlePendingSubmit]);
 
   const handleThemeSelect = useCallback(
     (theme: VibesTheme) => {
