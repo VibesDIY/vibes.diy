@@ -2,6 +2,13 @@ import { describe, it, expect } from "vitest";
 import { extractExportSource } from "../../vibe/runtime/access-extract.js";
 import { makeClientCtx, evaluateWrite, canSeeDoc } from "../../vibe/runtime/access-runner.js";
 
+function forbiddenOf(err: unknown): string | undefined {
+  if (err && typeof err === "object" && "forbidden" in err) {
+    return String((err as { forbidden: unknown }).forbidden);
+  }
+  return undefined;
+}
+
 describe("extractExportSource (runtime port)", () => {
   it("extracts a named export by db name", () => {
     const src = `export function notes(doc, oldDoc, user, ctx) { return { channels: ["n"] }; }`;
@@ -28,8 +35,8 @@ describe("makeClientCtx", () => {
     expect(() => ctx.requireAccess("eng")).toThrow();
     try {
       ctx.requireAccess("eng");
-    } catch (e: any) {
-      expect(e.forbidden).toBe("authentication required");
+    } catch (e: unknown) {
+      expect(forbiddenOf(e)).toBe("authentication required");
     }
   });
 
@@ -38,8 +45,8 @@ describe("makeClientCtx", () => {
     expect(() => ctx.requireAccess("ops")).toThrow();
     try {
       ctx.requireAccess("ops");
-    } catch (e: any) {
-      expect(e.forbidden).toBe("not in channel: ops");
+    } catch (e: unknown) {
+      expect(forbiddenOf(e)).toBe("not in channel: ops");
     }
   });
 
