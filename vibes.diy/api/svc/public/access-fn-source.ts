@@ -24,8 +24,12 @@ export interface ResolveAccessFnSourceArgs {
 // Resolves a vibe's full access.js source bytes for a content-addressed CID.
 // Primary path: read the binding's accessFnAssetUri via the storage abstraction
 // (handles SQL and R2). Fallback (legacy rows with a null URI): the CID *is* the
-// Assets.assetId, so read the content blob directly. Returns { cid, source: null }
-// when nothing is found — callers treat that as "unknown", never a hard deny.
+// Assets.assetId, so read the content blob directly. Both paths require a
+// matching AccessFunctionBindings row for (ownerHandle, appSlug, cid) — the
+// fallback is NOT a global Assets lookup, so a caller can't pair a CID it learned
+// elsewhere (e.g. a private upload) with arbitrary app identifiers to read it.
+// Returns { cid, source: null } when nothing is bound — callers treat that as
+// "unknown", never a hard deny.
 export async function resolveAccessFnSource(
   vctx: VibesApiSQLCtx,
   args: ResolveAccessFnSourceArgs
@@ -38,6 +42,10 @@ export async function resolveAccessFnSource(
       .from(tAfb)
       .where(and(eq(tAfb.ownerHandle, ownerHandle), eq(tAfb.appSlug, appSlug), eq(tAfb.accessFnCid, cid)));
 
+    // The CID must be bound to THIS app. No matching binding → not authorized to
+    // read it; do not fall through to a global Assets lookup.
+    if (rows.length === 0) return { cid, source: null };
+
     const assetUri = rows.find((r) => r.accessFnAssetUri !== null && r.accessFnAssetUri !== undefined)?.accessFnAssetUri;
     if (assetUri !== null && assetUri !== undefined) {
       const rFetch = await vctx.storage.fetch(assetUri);
@@ -47,7 +55,8 @@ export async function resolveAccessFnSource(
       }
     }
 
-    // Fallback: content-addressed Assets row keyed by assetId === cid.
+    // Legacy fallback (binding exists but accessFnAssetUri is null): the CID is
+    // the Assets.assetId. Reached only because a matching binding was found above.
     const tAssets = vctx.sql.tables.assets;
     const assetRows = await vctx.sql.db.select({ content: tAssets.content }).from(tAssets).where(eq(tAssets.assetId, cid));
     const content = assetRows[0]?.content;
