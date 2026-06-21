@@ -40,7 +40,7 @@ Both `requireAccess` and `requireRole` are membership checks, and `whoAmI` alrea
 ## Non-goals
 
 - **Replacing server enforcement.** The server stays the only authority. The client `can` is a UX predictor; every write still authorizes server-side. A wrong client verdict is a cosmetic bug, never a security hole.
-- **A new policy DSL.** We keep imperative `access.js`. No migration of existing apps.
+- **A new policy DSL.** We keep imperative `access.js` — no migration of the access model. (Migrating existing vibes' _client gating code_ off the old primitives and retiring the old surface is in scope, but as a sequenced **follow-up** — see "Follow-up" below.)
 - **Live grant push.** `can` reads the same cached `grants` as everything else; staleness between an owner editing an ACL and the viewer remounting is pre-existing and unchanged (see [prior spec Non-goals](./2026-05-09-vibe-viewer-identity-capabilities-design.md)).
 - **Removing `ViewerTag` / identity.** Identity rendering is unchanged; this spec only rationalizes _gating_.
 
@@ -213,6 +213,25 @@ Low install base — innovate forward rather than preserve the primitives:
 2. Repoint the prompts: one gating rule (`can.*` + `reason`), demote raw `viewer`/`isOwner` to identity/display only. (This is the real version of the reverted #2495 wording patch — fix the surface, then the wording is trivial.)
 3. Fix the stale `user.userSlug` in `jchris/pickathon-v2` (tiny, unrelated cleanup surfaced by the audit).
 
+Steps 1–3 are this spec. Retiring the old surface and migrating the 197 live vibes is a deliberate next phase, scoped below.
+
+## Follow-up (separate effort): retire the old gating surface & migrate existing vibes
+
+Decision: we are willing to **retire** the old gating primitives and **migrate** existing vibes rather than carry both surfaces forever — the install base is small enough to innovate forward. This is split into its own plan so the core helper can ship and bake first; the helper is additive and non-breaking on its own, so this phase carries all the breakage risk and deserves its own review.
+
+Scope of the follow-up:
+
+- **Define "retired".** `useViewer().viewer` / `isOwner` remain for **identity/display** (`ViewerTag`, attribution), but stop being a documented **gate**. `useViewer().can(action, dbName)` (the app-level-ACL checker) and `useFireproof().access.hasRole()/.hasChannel()` as gating calls are superseded by `can.*`. Decide whether superseded members are removed, soft-deprecated (warn in dev), or frozen.
+- **Migrate the 197 live vibes.** Two viable mechanisms, to be chosen in the plan:
+  - _Codemod_ — AST-rewrite `App.jsx`: replace `!viewer && …` / `isOwner ? … :` / `access.hasChannel(x)` gating branches with `can.create/edit/delete/see` calls. Fast, but each app's gating intent must be inferred from its `access.js`, and the audit shows bespoke functions — so the codemod needs the same dry-run runner to know what each gate _should_ be.
+  - _Regeneration_ — re-run codegen for each vibe against the new prompt. Higher fidelity to intent, but re-generates more than gating and needs per-app diffing/QA.
+  - Likely: codemod for the mechanical 90%, flag the residue for regeneration.
+- **Safety net makes this low-risk.** Because the server stays authoritative and writes are optimistic-with-rollback, a mis-migrated gate is a cosmetic regression caught by the existing rejection path, not data loss. Still: snapshot each app's pre/post gating behavior across the §parity matrix before/after.
+- **Sequencing & rollback.** Ship helper (additive) → repoint prompt → migrate in batches behind a per-app flag, owner-only/test apps first (`jchris/*`) → verify → widen. Keep the old surface importable until the migration batch completes, then remove.
+- **Done = old gating surface removed from `use-vibes` exports + prompt docs, all live vibes pass the parity snapshot on `can.*`.**
+
+This follow-up gets its own plan doc under [`docs/superpowers/plans/`](../plans/) once the open questions below are settled (the migration mechanism depends on answers to Q2 and Q6).
+
 ## Open questions for review (@CharlieHelps)
 
 1. **Delivery of `access.js` source to the iframe** (§6): inline in `mountParams`, attach to `whoAmI`, or fetch over the bridge post-`runtime.ready`? Which fits the existing caching / hot-swap plumbing best, and how does it interact with the `vibe.evt.viewerChanged` refresh path in [`VibeContext.tsx`](../../../vibes.diy/vibe/runtime/VibeContext.tsx)?
@@ -220,4 +239,5 @@ Low install base — innovate forward rather than preserve the primitives:
 3. **Frozen `ctx` contract (§2):** OK to hard-freeze to `requireAccess` / `requireRole`, with anything else → `unknown` → optimistic? Or do you foresee a near-term `ctx` member that the client genuinely couldn't satisfy from materialized grants (which would change the fallback rate)?
 4. **Read semantics (§3):** confirm the exact `can.see` rule — channel ∩ (grants.channels ∪ publicChannels), and whether the owner has any read bypass the client must mirror.
 5. **Reason shape:** pass the raw thrown `forbidden` string through as `reason` (what makes the copy fix work today), or move access functions toward structured `{ forbidden, code }` so the UI can map codes reliably without matching English?
-6. **Surface naming / deprecation:** new `useVibe()` returning `{ me, can, ready }`, or graft `can` onto the existing `useViewer()` and keep one hook name? Given the install base, how aggressively do we demote `viewer`/`isOwner`-as-gate in the prompts?
+6. **Surface naming:** new `useVibe()` returning `{ me, can, ready }`, or graft `can` onto the existing `useViewer()` and keep one hook name? (Retiring the old gating members is decided — see Follow-up — so this is about the _target_ shape we migrate toward, not whether.)
+7. **Migration mechanism (gates the Follow-up plan):** codemod the 197 vibes' gating branches, regenerate them, or codemod-most / regenerate-the-residue? And do we remove the old gating members outright, soft-deprecate with a dev warning, or freeze them?
