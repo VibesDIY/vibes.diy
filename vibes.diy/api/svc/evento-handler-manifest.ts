@@ -85,12 +85,19 @@ export const sharedHandlers = [
   listMembershipsEvento,
   whoAmIEvento,
   subscribeUserNotificationsEvento,
+  // listDmThreads is a user-scoped DM-inbox read (not tied to any vibe shard),
+  // called from the parent app (DmInbox, vibe route) on chatApi. It belongs with
+  // the other stateless user-scoped queries here, not in appHandlers — that's
+  // what lets the chat plane drop appHandlers while keeping the inbox working.
+  // (#2265 A2; will land on SharedSessions in Track B.)
+  listDmThreadsEvento,
 ] as const;
 
 export const appHandlers = [
-  // Doc ops use notification callbacks (local broadcast on AppSessions,
-  // guarded no-op on ChatSessions). Registered on both DOs until client
-  // routing is fully split (#2263).
+  // Vibe/channel-scoped doc ops. These ride AppSessions (vibeApi) only —
+  // local broadcast + local QuickJS access-fn eval — and are NO LONGER served
+  // by the chat plane (#2265 A2: chatMsgEvento dropped appHandlers). DM message
+  // docs reach these via the channel-keyed dmApi (`<channelUserSlug>--dm`).
   putDocEvento,
   getDocEvento,
   queryDocsEvento,
@@ -98,7 +105,6 @@ export const appHandlers = [
   subscribeDocsEvento,
   subscribeViewerGrantsEvento,
   listDbNamesEvento,
-  listDmThreadsEvento,
   markDmReadEvento,
   assetUploadGrantEvento,
 ] as const;

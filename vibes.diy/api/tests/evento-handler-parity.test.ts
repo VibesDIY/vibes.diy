@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { sharedHandlers, appHandlers, chatHandlers } from "../svc/evento-handler-manifest.js";
+import { chatPlaneHandlers } from "../svc/chat-msg-evento.js";
 
 function hashes(handlers: readonly { readonly hash: string }[]): Set<string> {
   return new Set(handlers.map((h) => h.hash));
@@ -58,6 +59,19 @@ describe("evento handler manifest parity", () => {
 
     expect(chat.has("put-doc")).toBe(false);
     expect(chat.has("list-request-grants")).toBe(false);
+  });
+
+  it("chat plane (chatMsgEvento) excludes appHandlers — doc ops live on AppSessions (#2265 A2)", () => {
+    const chatPlane = hashes(chatPlaneHandlers);
+    for (const h of hashes(appHandlers)) {
+      expect(chatPlane.has(h), `appHandler "${h}" must not be served by ChatSessions`).toBe(false);
+    }
+    // Doc writes in particular must never reach the chat plane (AccessFnDO gate).
+    expect(chatPlane.has("put-doc")).toBe(false);
+    expect(chatPlane.has("subscribe-docs")).toBe(false);
+    // But the chat plane still serves chat streaming + shared queries.
+    expect(chatPlane.has("open-chat-handler")).toBe(true);
+    expect(chatPlane.has("vibe.whoAmI")).toBe(true);
   });
 
   it("shared handlers include grants/membership (transition: called from parent app on chat connection)", () => {
