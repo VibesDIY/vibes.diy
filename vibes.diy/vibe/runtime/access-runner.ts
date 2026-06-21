@@ -110,3 +110,21 @@ export function evaluateWrite(args: EvaluateWriteArgs): WriteVerdict {
 
   return { ok: true };
 }
+
+export interface CanSeeArgs {
+  doc: { _id: string };
+  // Stored access-fn output channels by docId (NOT a field on the doc).
+  outputChannels: Map<string, string[]> | undefined;
+  grants: AccessGrants;
+  adminOverride: boolean;
+}
+
+// Mirrors filterDocsByChannel (channel-read-filter.ts): admin sees all; else a
+// doc is visible iff its STORED output channels intersect effective ∪ public.
+// A doc with no stored channels is invisible. No owner read bypass.
+export function canSeeDoc({ doc, outputChannels, grants, adminOverride }: CanSeeArgs): boolean {
+  if (adminOverride) return true;
+  const channels = outputChannels?.get(doc._id);
+  if (!channels) return false;
+  return channels.some((ch) => grants.channels.includes(ch) || grants.publicChannels.includes(ch));
+}

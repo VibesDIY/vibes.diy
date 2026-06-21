@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { extractExportSource } from "../../vibe/runtime/access-extract.js";
-import { makeClientCtx, evaluateWrite } from "../../vibe/runtime/access-runner.js";
+import { makeClientCtx, evaluateWrite, canSeeDoc } from "../../vibe/runtime/access-runner.js";
 
 describe("extractExportSource (runtime port)", () => {
   it("extracts a named export by db name", () => {
@@ -147,5 +147,30 @@ describe("evaluateWrite", () => {
       adminMode: false,
     });
     expect(v).toEqual({ unknown: true, reason: "async access function" });
+  });
+});
+
+describe("canSeeDoc", () => {
+  const grants = { channels: ["board"], publicChannels: ["news"], roles: [] };
+  const outputs = new Map<string, string[]>([
+    ["d1", ["board"]],
+    ["d2", ["secret"]],
+    ["d3", ["news"]],
+  ]);
+
+  it("true when a stored channel is in effective grants", () => {
+    expect(canSeeDoc({ doc: { _id: "d1" }, outputChannels: outputs, grants, adminOverride: false })).toBe(true);
+  });
+  it("true via public channel", () => {
+    expect(canSeeDoc({ doc: { _id: "d3" }, outputChannels: outputs, grants, adminOverride: false })).toBe(true);
+  });
+  it("false when no stored channel intersects", () => {
+    expect(canSeeDoc({ doc: { _id: "d2" }, outputChannels: outputs, grants, adminOverride: false })).toBe(false);
+  });
+  it("false when the doc has no stored channels", () => {
+    expect(canSeeDoc({ doc: { _id: "dX" }, outputChannels: outputs, grants, adminOverride: false })).toBe(false);
+  });
+  it("true under adminOverride regardless of channels", () => {
+    expect(canSeeDoc({ doc: { _id: "dX" }, outputChannels: outputs, grants, adminOverride: true })).toBe(true);
   });
 });
