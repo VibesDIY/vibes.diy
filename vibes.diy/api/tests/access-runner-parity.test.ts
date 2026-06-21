@@ -3,7 +3,7 @@ import { extractExportSource as serverExtract } from "../svc/public/access-funct
 import { extractExportSource as clientExtract } from "../../vibe/runtime/access-extract.js";
 import { evaluateWrite } from "../../vibe/runtime/access-runner.js";
 
-const SOURCES: Array<[string, string]> = [
+const SOURCES: [string, string][] = [
   [`export function notes(doc, oldDoc, user, ctx) { return { channels: ["n"] }; }`, "notes"],
   [`export default function (doc) { return {}; }`, "*"],
   [`export default (doc) => { return { channels: ["c"] }; }`, "*"],

@@ -61,7 +61,6 @@ function buildInvoker(extracted: string): Invoker {
     : isAnonymousFnOrArrow
       ? `const __accessFn = ${cleanSource}\n; return __accessFn(doc, oldDoc, user, ctx);`
       : `return (function () { ${cleanSource} })();`;
-  // eslint-disable-next-line @typescript-eslint/no-implied-eval, no-new-func
   return new Function("doc", "oldDoc", "user", "ctx", body) as Invoker;
 }
 
