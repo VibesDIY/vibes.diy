@@ -48,6 +48,10 @@ export interface VibesDiyCtx {
   // dashApi: FPApiInterface;
   chatApi: VibesDiyApiIface;
   vibeApi?: VibesDiyApiIface;
+  // Build (or fetch the cached) AppSessions connection for an arbitrary vibe
+  // key. For vibe-data that isn't the page's primary vibe — e.g. DM threads
+  // keyed by `<channelUserSlug>--dm`. Same data plane as vibeApi, no new DO.
+  appApiFor?: (vibeKey: string) => VibesDiyApiIface;
   // Lightweight notification connection (stable per-user shard) used by the notifier on
   // pages without a vibeApi, so we don't open the heavy codegen chatApi just for notifications.
   notifyApi?: VibesDiyApiIface;
@@ -240,26 +244,32 @@ function LiveCycleVibesDiyProvider({ children, webVars }: { children: React.Reac
     });
   });
 
+  // AppSessions connection factory, keyed by an arbitrary vibe key. Same data
+  // plane as vibeApi (skipShard, shared getToken); the module-level
+  // vibesDiyApis.once() cache makes repeated calls for the same key return the
+  // same instance, so callers can invoke this every render without churning a
+  // WebSocket. Used for the primary vibeApi below and for DM threads (keyed
+  // `<channelUserSlug>--dm`) on the /messages routes.
+  const buildAppApi = (vibeKey: string): VibesDiyApiIface => {
+    const appApiUrl = BuildURI.from(apiUrl).pathname("/api/app").cleanParams().setParam("vibe", vibeKey).toString();
+    const capturedGetToken = sharedGetToken ?? realCtx.getToken;
+    return vibesDiyApis.get(appApiUrl).once(() => {
+      return new VibesDiyApi({
+        apiUrl: appApiUrl,
+        skipShard: true,
+        getToken: capturedGetToken ?? (() => Promise.resolve(Result.Err("token not available"))),
+      });
+    }) as VibesDiyApiIface;
+  };
+  realCtx.appApiFor = buildAppApi;
+
   // Build vibeApi (→ AppSessions, which wires the doc-changed emit) for every
   // route that renders the vibe-data iframe: the /vibe/ viewer AND the /chat/
   // editor. Gated on a real appSlug — a chat with no app yet gets no vibeApi.
   // Reactive via useLocation() above so a freshly-created chat (navigated to
   // /chat/<owner>/<appSlug> after openChat) picks up its vibeApi. (#2306)
   if (target !== undefined) {
-    const appApiUrl = BuildURI.from(apiUrl)
-      .pathname("/api/app")
-      .cleanParams()
-      .setParam("vibe", `${target.ownerHandle}--${target.appSlug}`)
-      .toString();
-
-    const capturedGetToken = sharedGetToken ?? realCtx.getToken;
-    realCtx.vibeApi = vibesDiyApis.get(appApiUrl).once(() => {
-      return new VibesDiyApi({
-        apiUrl: appApiUrl,
-        skipShard: true,
-        getToken: capturedGetToken ?? (() => Promise.resolve(Result.Err("token not available"))),
-      });
-    });
+    realCtx.vibeApi = buildAppApi(`${target.ownerHandle}--${target.appSlug}`);
     // Vibe pages deliver notifications over vibeApi; don't open a second notify socket here.
     realCtx.notifyApi = undefined;
   } else {

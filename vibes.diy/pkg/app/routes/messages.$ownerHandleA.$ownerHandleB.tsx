@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useLocation, Navigate } from "react-router-dom";
+import { directChannelUserSlug } from "@vibes.diy/api-types";
 import { useVibesDiy } from "../vibes-diy-provider.js";
 import { DmThread } from "../components/DmThread.js";
 
@@ -10,7 +11,8 @@ export function meta() {
 export default function MessageThreadRoute() {
   const { ownerHandleA, ownerHandleB } = useParams<{ ownerHandleA: string; ownerHandleB: string }>();
   const location = useLocation();
-  const { chatApi } = useVibesDiy();
+  const vctx = useVibesDiy();
+  const { chatApi } = vctx;
   const [mySlugSet, setMySlugSet] = useState<Set<string> | undefined>(undefined);
 
   useEffect(() => {
@@ -43,6 +45,13 @@ export default function MessageThreadRoute() {
     // ownsA (with or without ownsB): already canonical
   }
 
+  // DM message docs ride AppSessions (local broadcast + writes off ChatSessions),
+  // keyed by the canonical channel slug so A→B and B→A share one DO. The channel
+  // slug is order-independent (directChannelUserSlug sorts), so it's stable even
+  // before the canonical-URL redirect above settles. (#2265 A2)
+  const channelUserSlug = directChannelUserSlug(ownerHandleA, ownerHandleB);
+  const dmApi = vctx.appApiFor?.(`${channelUserSlug}--dm`) ?? chatApi;
+
   // ownerHandleA is the sender (current user); ownerHandleB is the other participant.
   return (
     <div className="max-w-xl mx-auto h-[calc(100vh-4rem)] flex flex-col pt-0">
@@ -54,7 +63,7 @@ export default function MessageThreadRoute() {
           </span>
         )}
       </div>
-      <DmThread myUserSlug={ownerHandleA} otherUserSlug={ownerHandleB} vibeRef={vibeRef} chatApi={chatApi} />
+      <DmThread myUserSlug={ownerHandleA} otherUserSlug={ownerHandleB} vibeRef={vibeRef} dmApi={dmApi} />
     </div>
   );
 }
