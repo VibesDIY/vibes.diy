@@ -1,4 +1,13 @@
-import { EventoHandler, Result, Option, EventoResultType, HandleTriggerCtx, EventoResult } from "@adviser/cement";
+import {
+  EventoHandler,
+  Result,
+  Option,
+  EventoResultType,
+  HandleTriggerCtx,
+  EventoResult,
+  exception2Result,
+  stream2uint8array,
+} from "@adviser/cement";
 import { MsgBase, ReqWithOptionalAuth, VibesDiyError, ResError, W3CWebSocketEvent } from "@vibes.diy/api-types";
 import { ReqVibeAccessFnSource, ResVibeAccessFnSource, isReqVibeAccessFnSource } from "@vibes.diy/vibe-types";
 import { and, eq } from "drizzle-orm";
@@ -12,24 +21,6 @@ export interface ResolveAccessFnSourceArgs {
   cid: string;
 }
 
-async function streamToString(stream: ReadableStream<Uint8Array>): Promise<string> {
-  const reader = stream.getReader();
-  const chunks: Uint8Array[] = [];
-  for (;;) {
-    const { done, value } = await reader.read();
-    if (done) break;
-    if (value) chunks.push(value);
-  }
-  const total = chunks.reduce((sum, c) => sum + c.length, 0);
-  const merged = new Uint8Array(total);
-  let offset = 0;
-  for (const chunk of chunks) {
-    merged.set(chunk, offset);
-    offset += chunk.length;
-  }
-  return new TextDecoder().decode(merged);
-}
-
 // Resolves a vibe's full access.js source bytes for a content-addressed CID.
 // Primary path: read the binding's accessFnAssetUri via the storage abstraction
 // (handles SQL and R2). Fallback (legacy rows with a null URI): the CID *is* the
@@ -40,38 +31,32 @@ export async function resolveAccessFnSource(
   args: ResolveAccessFnSourceArgs
 ): Promise<Result<{ cid: string; source: string | null }>> {
   const { ownerHandle, appSlug, cid } = args;
+  return exception2Result(async () => {
+    const tAfb = vctx.sql.tables.accessFunctionBindings;
+    const rows = await vctx.sql.db
+      .select({ accessFnAssetUri: tAfb.accessFnAssetUri })
+      .from(tAfb)
+      .where(and(eq(tAfb.ownerHandle, ownerHandle), eq(tAfb.appSlug, appSlug), eq(tAfb.accessFnCid, cid)));
 
-  const tAfb = vctx.sql.tables.accessFunctionBindings;
-  const rows = await vctx.sql.db
-    .select({ accessFnAssetUri: tAfb.accessFnAssetUri })
-    .from(tAfb)
-    .where(and(eq(tAfb.ownerHandle, ownerHandle), eq(tAfb.appSlug, appSlug), eq(tAfb.accessFnCid, cid)));
-
-  const assetUri = rows.find((r) => r.accessFnAssetUri !== null && r.accessFnAssetUri !== undefined)?.accessFnAssetUri;
-  if (assetUri !== null && assetUri !== undefined) {
-    const rFetch = await vctx.storage.fetch(assetUri);
-    if (rFetch.type === "fetch.ok") {
-      return Result.Ok({ cid, source: await streamToString(rFetch.data) });
+    const assetUri = rows.find((r) => r.accessFnAssetUri !== null && r.accessFnAssetUri !== undefined)?.accessFnAssetUri;
+    if (assetUri !== null && assetUri !== undefined) {
+      const rFetch = await vctx.storage.fetch(assetUri);
+      if (rFetch.type === "fetch.ok") {
+        const bytes = await stream2uint8array(rFetch.data);
+        return { cid, source: vctx.sthis.txt.decode(bytes) };
+      }
     }
-  }
 
-  // Fallback: content-addressed Assets row keyed by assetId === cid.
-  const tAssets = vctx.sql.tables.assets;
-  const assetRows = await vctx.sql.db.select({ content: tAssets.content }).from(tAssets).where(eq(tAssets.assetId, cid));
-  const content = assetRows[0]?.content;
-  if (content !== undefined && content !== null) {
-    let bytes: Uint8Array;
-    if (content instanceof Uint8Array) {
-      bytes = content;
-    } else if (Buffer.isBuffer(content)) {
-      bytes = new Uint8Array(content.buffer, content.byteOffset, content.byteLength);
-    } else {
-      bytes = new Uint8Array(content as ArrayBufferLike);
+    // Fallback: content-addressed Assets row keyed by assetId === cid.
+    const tAssets = vctx.sql.tables.assets;
+    const assetRows = await vctx.sql.db.select({ content: tAssets.content }).from(tAssets).where(eq(tAssets.assetId, cid));
+    const content = assetRows[0]?.content;
+    if (content !== undefined && content !== null) {
+      return { cid, source: vctx.sthis.txt.decode(content as Uint8Array) };
     }
-    return Result.Ok({ cid, source: new TextDecoder().decode(bytes) });
-  }
 
-  return Result.Ok({ cid, source: null });
+    return { cid, source: null };
+  });
 }
 
 // Evento handler — used by the WS bridge to serve vibe.req.accessFnSource.
