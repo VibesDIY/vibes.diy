@@ -1,6 +1,10 @@
-import { Result } from "@adviser/cement";
+import { EventoHandler, Result, Option, EventoResultType, HandleTriggerCtx, EventoResult } from "@adviser/cement";
+import { MsgBase, ReqWithOptionalAuth, VibesDiyError, ResError, W3CWebSocketEvent } from "@vibes.diy/api-types";
+import { ReqVibeAccessFnSource, ResVibeAccessFnSource, isReqVibeAccessFnSource } from "@vibes.diy/vibe-types";
 import { and, eq } from "drizzle-orm";
-import type { VibesApiSQLCtx } from "../types.js";
+import { unwrapMsgBase } from "../unwrap-msg-base.js";
+import { VibesApiSQLCtx } from "../types.js";
+import { optAuth } from "../check-auth.js";
 
 export interface ResolveAccessFnSourceArgs {
   ownerHandle: string;
@@ -69,3 +73,51 @@ export async function resolveAccessFnSource(
 
   return Result.Ok({ cid, source: null });
 }
+
+// Evento handler — used by the WS bridge to serve vibe.req.accessFnSource.
+// Uses optAuth for framework consistency (same as whoAmIEvento); auth is not
+// required to retrieve source bytes — the CID is content-addressed and the
+// bytes are already available to the running iframe anyway.
+export const accessFnSourceEvento: EventoHandler<
+  W3CWebSocketEvent,
+  MsgBase<ReqVibeAccessFnSource>,
+  ResVibeAccessFnSource | VibesDiyError
+> = {
+  hash: "vibe.accessFnSource",
+  validate: unwrapMsgBase(async (msg: MsgBase) => {
+    if (!isReqVibeAccessFnSource(msg.payload)) return Result.Ok(Option.None());
+    return Result.Ok(Option.Some({ ...msg, payload: msg.payload as ReqVibeAccessFnSource }));
+  }),
+  handle: optAuth(
+    async (
+      ctx: HandleTriggerCtx<
+        W3CWebSocketEvent,
+        MsgBase<ReqWithOptionalAuth<ReqVibeAccessFnSource>>,
+        ResVibeAccessFnSource | VibesDiyError
+      >
+    ): Promise<Result<EventoResultType>> => {
+      const req = ctx.validated.payload;
+      const vctx = ctx.ctx.getOrThrow<VibesApiSQLCtx>("vibesApiCtx");
+      const rRes = await resolveAccessFnSource(vctx, {
+        ownerHandle: req.ownerHandle,
+        appSlug: req.appSlug,
+        cid: req.cid,
+      });
+      if (rRes.isErr()) {
+        await ctx.send.send(ctx, {
+          type: "vibes.diy.res-error",
+          error: { message: rRes.Err().message },
+        } satisfies ResError);
+        return Result.Ok(EventoResult.Continue);
+      }
+      const r = rRes.Ok();
+      await ctx.send.send(ctx, {
+        type: "vibe.res.accessFnSource",
+        tid: req.tid,
+        cid: r.cid,
+        source: r.source,
+      } satisfies ResVibeAccessFnSource);
+      return Result.Ok(EventoResult.Continue);
+    }
+  ),
+};

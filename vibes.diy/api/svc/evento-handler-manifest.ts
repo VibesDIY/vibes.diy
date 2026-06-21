@@ -46,6 +46,7 @@ import {
 import { listMembersEvento } from "./public/list-members.js";
 import { listMembershipsEvento } from "./public/list-memberships.js";
 import { whoAmIEvento } from "./public/who-am-i.js";
+import { accessFnSourceEvento } from "./public/access-fn-source.js";
 import { assetUploadGrantEvento } from "./public/asset-upload-grant.js";
 import { subscribeUserNotificationsEvento } from "./public/subscribe-user-notifications.js";
 import { reportGrowthMembershipsEvento } from "./public/report-growth-memberships.js";
@@ -84,6 +85,7 @@ export const sharedHandlers = [
   listMembersEvento,
   listMembershipsEvento,
   whoAmIEvento,
+  accessFnSourceEvento,
   subscribeUserNotificationsEvento,
   // User/identity-scoped reads + grant ops that are NOT tied to any vibe shard
   // and are called from the parent app (and srv-sandbox) on chatApi. They belong
