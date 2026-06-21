@@ -174,7 +174,14 @@ import {
 } from "@vibes.diy/identity";
 import { VibeDiyApiConnection } from "./api-connection.js";
 import { getVibesDiyWebSocketConnection } from "./websocket-connection.js";
-import { ReqVibeWhoAmI, ResVibeWhoAmI, isResVibeWhoAmI } from "@vibes.diy/vibe-types";
+import {
+  ReqVibeWhoAmI,
+  ResVibeWhoAmI,
+  isResVibeWhoAmI,
+  ReqVibeAccessFnSource,
+  ResVibeAccessFnSource,
+  isResVibeAccessFnSource,
+} from "@vibes.diy/vibe-types";
 import { LLMChatImpl } from "./llm-chat.js";
 import {
   attachDocChangedToConnection as attachDocChangedToConnectionImpl,
@@ -666,6 +673,10 @@ export class VibesDiyApi implements VibesDiyApiIface<{
 
   whoAmI(req: Req<ReqVibeWhoAmI>): Promise<Result<ResVibeWhoAmI, VibesDiyError>> {
     return this.request({ ...req, type: "vibe.req.whoAmI" }, { resMatch: isResVibeWhoAmI });
+  }
+
+  accessFnSource(req: Req<ReqVibeAccessFnSource>): Promise<Result<ResVibeAccessFnSource, VibesDiyError>> {
+    return this.request({ ...req, type: "vibe.req.accessFnSource" }, { resMatch: isResVibeAccessFnSource });
   }
 
   requestAssetUploadGrant(req: Req<ReqAssetUploadGrant>): Promise<Result<ResAssetUploadGrant, VibesDiyError>> {
