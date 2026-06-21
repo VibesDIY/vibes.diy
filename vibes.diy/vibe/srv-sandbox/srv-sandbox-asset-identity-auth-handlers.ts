@@ -21,6 +21,9 @@ import {
   isReqVibeUpdateAvatarCid,
   isReqVibeLogin,
   type ReqVibeLogin,
+  isReqVibeAccessFnSource,
+  type ReqVibeAccessFnSource,
+  type ResVibeAccessFnSource,
 } from "@vibes.diy/vibe-types";
 import { requireVibeApi } from "./srv-sandbox-firefly-doc-handlers.js";
 import type { VibeApiCapableSandbox } from "./srv-sandbox-types.js";
@@ -227,6 +230,42 @@ export function vibeUpdateAvatarCid(sandbox: VibeApiCapableSandbox): EventoHandl
         type: "vibe.res.updateAvatarCid",
         status: "ok",
       } satisfies ResVibeUpdateAvatarCid);
+      return Result.Ok(EventoResult.Stop);
+    },
+  };
+}
+
+export function vibeAccessFnSource(sandbox: VibeApiCapableSandbox): EventoHandler {
+  return {
+    hash: "vibe.accessFnSource",
+    validate: (ctx: ValidateTriggerCtx<MessageEvent, unknown, unknown>) => {
+      const { request: req } = ctx;
+      if (isReqVibeAccessFnSource(req?.data)) {
+        return Promise.resolve(Result.Ok(Option.Some(req.data)));
+      }
+      return Promise.resolve(Result.Ok(Option.None()));
+    },
+    handle: async (ctx: HandleTriggerCtx<MessageEvent, ReqVibeAccessFnSource, unknown>): Promise<Result<EventoResultType>> => {
+      const api = await requireVibeApi(sandbox, ctx, "vibe.res.accessFnSource");
+      if (api === undefined) return Result.Ok(EventoResult.Stop);
+      const { tid, appSlug, ownerHandle, cid } = ctx.validated;
+      const rRes = await api.accessFnSource({ tid, appSlug, ownerHandle, cid });
+      if (rRes.isErr()) {
+        await ctx.send.send(ctx, {
+          tid,
+          type: "vibe.res.accessFnSource",
+          cid,
+          source: null,
+        } satisfies ResVibeAccessFnSource);
+        return Result.Ok(EventoResult.Stop);
+      }
+      const r = rRes.Ok();
+      await ctx.send.send(ctx, {
+        tid,
+        type: "vibe.res.accessFnSource",
+        cid: r.cid,
+        source: r.source,
+      } satisfies ResVibeAccessFnSource);
       return Result.Ok(EventoResult.Stop);
     },
   };
