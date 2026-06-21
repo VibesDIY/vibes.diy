@@ -56,7 +56,11 @@ async function ensureTemplate(distDir: string): Promise<string> {
     throw new Error("VIBES_DIY_TEST_SQL_URL not provided — globalSetup.libsql.ts must run before sqlite tests");
   }
   const sourcePath = new URL(provided).pathname;
-  const templatePath = path.join(distDir, `template-${process.pid}.sqlite`);
+  // Include the Vitest worker id alongside the pid: under the default forks
+  // pool each worker is its own process (pid suffices), but threads share a
+  // pid — the worker id keeps the template path collision-free either way.
+  const workerId = process.env.VITEST_POOL_ID ?? process.env.VITEST_WORKER_ID ?? "0";
+  const templatePath = path.join(distDir, `template-${process.pid}-${workerId}.sqlite`);
   await Promise.all([
     fs.rm(templatePath, { force: true }),
     fs.rm(`${templatePath}-wal`, { force: true }),
@@ -66,7 +70,13 @@ async function ensureTemplate(distDir: string): Promise<string> {
   // even if globalSetup left an un-checkpointed WAL behind.
   await fs.copyFile(sourcePath, templatePath);
   for (const ext of ["-wal", "-shm"]) {
-    await fs.copyFile(`${sourcePath}${ext}`, `${templatePath}${ext}`).catch(() => undefined);
+    try {
+      await fs.copyFile(`${sourcePath}${ext}`, `${templatePath}${ext}`);
+    } catch (err) {
+      // A missing sidecar is expected (globalSetup typically checkpoints on
+      // close); ignore only that. Any other I/O error is real — rethrow.
+      if ((err as NodeJS.ErrnoException).code !== "ENOENT") throw err;
+    }
   }
   const client = createClient({ url: `file://${templatePath}` });
   try {
@@ -83,7 +93,12 @@ async function createIsolatedSqliteDB(): Promise<string> {
   const distDir = path.join(root, "dist");
   await fs.mkdir(distDir, { recursive: true });
 
-  templatePromise ??= ensureTemplate(distDir);
+  // Don't memoize a rejection forever: if the one-time template build fails
+  // transiently, clear the cached promise so the next context can retry.
+  templatePromise ??= ensureTemplate(distDir).catch((err) => {
+    templatePromise = undefined;
+    throw err;
+  });
   const templatePath = await templatePromise;
 
   const name = `test-${process.pid}-${++isolationCounter}`;
