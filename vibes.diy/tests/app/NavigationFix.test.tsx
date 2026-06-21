@@ -3,7 +3,12 @@ import { render, screen, fireEvent } from "@testing-library/react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { ViewControls } from "~/vibes.diy/app/components/ResultPreview/ViewControls.js";
 
-// Mock the SVG icons
+// Mock the SVG icons. This module is also mocked by ViewControls.test.tsx; under
+// vitest's isolate:false the module registry is shared across files in a worker,
+// so whichever file's factory wins must override the SAME set of icons. Keep this
+// factory in sync with ViewControls.test.tsx (including SettingsIcon) — omitting
+// one here let the real inline <svg> leak into ViewControls' assertions, a
+// scheduling-dependent flake that turned unrelated PRs red. See #2425/#2426.
 
 vi.mock("~/vibes.diy/app/components/HeaderContent/SvgIcons.js", async (original) => {
   const actual = await original<typeof import("~/vibes.diy/app/components/HeaderContent/SvgIcons.js")>();
@@ -22,6 +27,11 @@ vi.mock("~/vibes.diy/app/components/HeaderContent/SvgIcons.js", async (original)
     DataIcon: ({ className }: { className: string }) => (
       <span data-testid="data-icon" className={className}>
         Data Icon
+      </span>
+    ),
+    SettingsIcon: ({ className }: { className: string }) => (
+      <span data-testid="settings-icon" className={className}>
+        Settings Icon
       </span>
     ),
   };

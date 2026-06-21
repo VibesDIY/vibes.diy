@@ -18,6 +18,7 @@ import sys
 
 REPORT = "test-timing.json"
 PHASE_REPORT = "test-phase-timing.json"
+ERROR_REPORT = "test-unhandled-errors.json"
 TOP_N = 20
 PHASES = ["collect", "setup", "environment", "prepare", "test"]
 PHASE_LABELS = {
@@ -38,6 +39,39 @@ def rel(path: str) -> str:
     if path.startswith(cwd):
         path = path[len(cwd):]
     return path
+
+
+def unhandled_error_lines() -> list:
+    """Surface vitest's unhandled errors/rejections (test-unhandled-errors.json,
+    written by tools/vitest-phase-reporter.ts) if present.
+
+    These make vitest exit non-zero while marking ZERO tests failed, so without
+    this section the summary would say "All tests passed" over a red job. Best
+    effort: any read/parse problem yields no section."""
+    try:
+        with open(ERROR_REPORT, encoding="utf-8") as fh:
+            data = json.load(fh)
+    except (OSError, ValueError):
+        return []
+    errors = data.get("errors") or []
+    if not errors:
+        return []
+    lines = [
+        "",
+        f"### ⚠️ {len(errors)} unhandled error(s) / rejection(s)",
+        "",
+        "These failed the run **without** failing any individual test (the suite "
+        "reports 0 failed tests but vitest still exits non-zero). Usually an async "
+        "operation — a promise that rejects, or a network call — that settles after "
+        "its test finished. Fix the leak; do not just re-run.",
+        "",
+    ]
+    for e in errors[:20]:
+        name = e.get("name", "Error")
+        msg = (e.get("message") or "").strip().splitlines()
+        first = msg[0][:300] if msg else ""
+        lines.append(f"- **{name}**: {first}")
+    return lines
 
 
 def phase_lines() -> list:
@@ -108,7 +142,14 @@ def main() -> int:
     # otherwise the summary would print "All tests passed" over a red run.
     failed_result_entries = sum(1 for r in results if r.get("status") == "failed")
     bad_suites = failed_suites or failed_result_entries
-    suite_failed = data.get("success") is False or failed > 0 or bad_suites > 0
+
+    # Unhandled errors/rejections (from the phase reporter) fail the run without
+    # failing any test — fold them into the headline so a red job with "0 failed"
+    # is explained rather than rendered as "All tests passed".
+    error_lines = unhandled_error_lines()
+    has_unhandled = bool(error_lines)
+
+    suite_failed = data.get("success") is False or failed > 0 or bad_suites > 0 or has_unhandled
 
     durations = []
     for r in results:
@@ -125,6 +166,8 @@ def main() -> int:
             parts.append(f"{failed} test(s)")
         if bad_suites:
             parts.append(f"{bad_suites} suite(s)")
+        if has_unhandled:
+            parts.append("unhandled error(s)")
         headline = "❌ " + (" and ".join(parts) if parts else "suite") + " failed."
 
     out = []
@@ -147,6 +190,7 @@ def main() -> int:
         out.append("")
         out.append("</details>")
 
+    out += error_lines
     out += phase_lines()
 
     failures = []
@@ -179,10 +223,11 @@ def main() -> int:
     else:
         print(text)
 
-    print(
-        f"parse-test-timing: {len(results)} files, {total} tests, {failed} failed",
-        file=sys.stderr,
-    )
+    unhandled_count = sum(1 for line in error_lines if line.startswith("- **"))
+    summary_line = f"parse-test-timing: {len(results)} files, {total} tests, {failed} failed"
+    if has_unhandled:
+        summary_line += f", {unhandled_count} unhandled error(s)"
+    print(summary_line, file=sys.stderr)
     return 0
 
 
