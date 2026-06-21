@@ -5,8 +5,26 @@ import { setTestAuth } from "./clerk-test-mock.js";
 import { vibesWrapper } from "./vibes-provider-harness.js";
 
 // Inject the VibesDiy context via the real provider instead of mocking it.
+// Provide a benign recent-vibes API too: if the MyAppsSection mock loses the
+// isolate:false race on a shared worker, HomePage can still mount without
+// leaking unhandled rejections from useRecentVibes.
+function emptyRecentVibesResult() {
+  return {
+    isOk: () => true,
+    isErr: () => false,
+    Ok: () => ({ items: [], nextCursor: undefined }),
+    Err: () => ({ message: "unexpected error" }),
+  };
+}
+
 const render = (ui: React.ReactElement, options?: Parameters<typeof rtlRender>[1]) =>
-  rtlRender(ui, { wrapper: vibesWrapper({ sthis: { txt: { base64: { encode: (s: string) => `b64:${s}` } } } }), ...options });
+  rtlRender(ui, {
+    wrapper: vibesWrapper({
+      sthis: { txt: { base64: { encode: (s: string) => `b64:${s}` } } },
+      chatApi: { listRecentVibes: async () => emptyRecentVibesResult() },
+    }),
+    ...options,
+  });
 
 // Regression coverage for #1892: the login slide-out (SessionSidebar) auto-opens
 // after a short delay on the homepage. It must only do that for signed-out

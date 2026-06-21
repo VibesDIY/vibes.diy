@@ -19,13 +19,9 @@ const render = (ui: React.ReactElement, options?: Parameters<typeof rtlRender>[1
 // Use the real @vibes.diy/base design system (no mock) — partial base mocks
 // poison files that import other base exports under isolate:false.
 
-// Spread the real module so other exports (e.g. notifyRecentVibesChanged) stay
-// available to files that import them; only override the hook itself.
-vi.mock("~/vibes.diy/app/hooks/useRecentVibes.js", async (importOriginal) => ({
-  ...(await importOriginal<Record<string, unknown>>()),
-  useRecentVibes: () => ({ items: [], loadMore: vi.fn(), hasMore: false, loading: false }),
-}));
-
+// AppDetailPanel itself does not execute MyAppsSection's useRecentVibes hook.
+// Avoid mocking that shared module here: under isolate:false the first mock can
+// leak across later files on the same worker and break the real hook tests.
 const getAppByFsId = vi.fn();
 // VibesDiy context is injected via vibesWrapper (see local render above).
 
