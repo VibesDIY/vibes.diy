@@ -31,3 +31,82 @@ export function makeClientCtx(user: AccessUser | null, grants: AccessGrants, adm
     },
   };
 }
+
+export type WriteVerdict =
+  | { ok: true }
+  | { ok: false; reason: string; code: "access-denied" | "unreadable" }
+  | { unknown: true; reason: string };
+
+export interface EvaluateWriteArgs {
+  source: string;
+  dbName: string;
+  doc: unknown;
+  oldDoc: unknown;
+  user: AccessUser | null;
+  grants: AccessGrants;
+  adminMode: boolean;
+}
+
+type Invoker = (doc: unknown, oldDoc: unknown, user: AccessUser | null, ctx: AccessCtx) => unknown;
+
+// Mirrors workers/access-fn.ts:150-158 — named fn / anon fn / arrow / legacy body.
+function buildInvoker(extracted: string): Invoker {
+  const cleanSource = extracted.replace(/export\s+/g, "").replace(/^default\s+/, "");
+  const fnNameMatch = cleanSource.match(/^function\s+(\w+)\s*\(/);
+  const isAnonymousFnOrArrow = /^function\s*\(/.test(cleanSource) || /^\(/.test(cleanSource) || /^\w+\s*=>/.test(cleanSource);
+  const body = fnNameMatch
+    ? `${cleanSource}\n; return ${fnNameMatch[1]}(doc, oldDoc, user, ctx);`
+    : isAnonymousFnOrArrow
+      ? `const __accessFn = ${cleanSource}\n; return __accessFn(doc, oldDoc, user, ctx);`
+      : `return (function () { ${cleanSource} })();`;
+  // eslint-disable-next-line @typescript-eslint/no-implied-eval, no-new-func
+  return new Function("doc", "oldDoc", "user", "ctx", body) as Invoker;
+}
+
+function forbiddenReason(err: unknown): string | null {
+  if (err && typeof err === "object" && "forbidden" in err) return String((err as Record<string, unknown>).forbidden);
+  if (typeof err === "string") return err;
+  return null;
+}
+
+export function evaluateWrite(args: EvaluateWriteArgs): WriteVerdict {
+  const { source, dbName, doc, oldDoc, user, grants, adminMode } = args;
+
+  const extracted = extractExportSource(source, dbName);
+  if (extracted === undefined) return { unknown: true, reason: "access function not found" };
+
+  let invoker: Invoker;
+  try {
+    invoker = buildInvoker(extracted);
+  } catch {
+    return { unknown: true, reason: "access function did not compile" };
+  }
+
+  const ctx = makeClientCtx(user, grants, adminMode);
+  let result: unknown;
+  try {
+    result = invoker(doc, oldDoc, user, ctx);
+  } catch (err) {
+    const reason = forbiddenReason(err);
+    if (reason === null) return { unknown: true, reason: "access function threw a non-forbidden error" };
+    return { ok: false, reason, code: "access-denied" };
+  }
+
+  if (result && typeof (result as { then?: unknown }).then === "function") {
+    return { unknown: true, reason: "async access function" };
+  }
+
+  const descriptor = (result ?? {}) as { channels?: unknown; allowAnonymous?: unknown };
+
+  // enforceAllowAnonymous (access-function.ts:29-33)
+  if (user === null && !descriptor.allowAnonymous) {
+    return { ok: false, reason: "authentication required", code: "access-denied" };
+  }
+
+  // isReadableResult (access-function.ts:45-47)
+  if (!(Array.isArray(descriptor.channels) && descriptor.channels.length > 0)) {
+    return { ok: false, reason: "unreadable write", code: "unreadable" };
+  }
+
+  return { ok: true };
+}

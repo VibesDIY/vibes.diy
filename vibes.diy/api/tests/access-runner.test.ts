@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { extractExportSource } from "../../vibe/runtime/access-extract.js";
-import { makeClientCtx } from "../../vibe/runtime/access-runner.js";
+import { makeClientCtx, evaluateWrite } from "../../vibe/runtime/access-runner.js";
 
 describe("extractExportSource (runtime port)", () => {
   it("extracts a named export by db name", () => {
@@ -52,5 +52,100 @@ describe("makeClientCtx", () => {
     const ctx = makeClientCtx(null, { channels: [], publicChannels: [], roles: [] }, true);
     expect(() => ctx.requireAccess("anything")).not.toThrow();
     expect(() => ctx.requireRole("anything")).not.toThrow();
+  });
+});
+
+const G = { channels: ["board"], publicChannels: [], roles: [] };
+const ownerOnly = `export function db(doc, oldDoc, user, ctx) {
+  if (!user) throw { forbidden: "sign in" };
+  if (!user.isOwner) throw { forbidden: "owner only" };
+  return { channels: ["board"], grant: { public: ["board"] } };
+}`;
+
+describe("evaluateWrite", () => {
+  it("owner → ok", () => {
+    const v = evaluateWrite({
+      source: ownerOnly,
+      dbName: "db",
+      doc: { type: "tile" },
+      oldDoc: null,
+      user: { userHandle: "o", isOwner: true },
+      grants: G,
+      adminMode: false,
+    });
+    expect(v).toEqual({ ok: true });
+  });
+
+  it("signed-in non-owner → owner only", () => {
+    const v = evaluateWrite({
+      source: ownerOnly,
+      dbName: "db",
+      doc: { type: "tile" },
+      oldDoc: null,
+      user: { userHandle: "x", isOwner: false },
+      grants: G,
+      adminMode: false,
+    });
+    expect(v).toEqual({ ok: false, reason: "owner only", code: "access-denied" });
+  });
+
+  it("anon → sign in (the access fn's own throw)", () => {
+    const v = evaluateWrite({
+      source: ownerOnly,
+      dbName: "db",
+      doc: { type: "tile" },
+      oldDoc: null,
+      user: null,
+      grants: G,
+      adminMode: false,
+    });
+    expect(v).toEqual({ ok: false, reason: "sign in", code: "access-denied" });
+  });
+
+  it("anon + no allowAnonymous → authentication required (enforceAllowAnonymous)", () => {
+    const src = `export function db(doc, oldDoc, user, ctx) { return { channels: ["c"] }; }`;
+    const v = evaluateWrite({ source: src, dbName: "db", doc: {}, oldDoc: null, user: null, grants: G, adminMode: false });
+    expect(v).toEqual({ ok: false, reason: "authentication required", code: "access-denied" });
+  });
+
+  it("zero-channel result → unreadable", () => {
+    const src = `export function db(doc, oldDoc, user, ctx) { return {}; }`;
+    const v = evaluateWrite({
+      source: src,
+      dbName: "db",
+      doc: {},
+      oldDoc: null,
+      user: { userHandle: "x", isOwner: false },
+      grants: G,
+      adminMode: false,
+    });
+    expect(v).toEqual({ ok: false, reason: "unreadable write", code: "unreadable" });
+  });
+
+  it("missing export → unknown", () => {
+    const v = evaluateWrite({
+      source: `export function other(){}`,
+      dbName: "db",
+      doc: {},
+      oldDoc: null,
+      user: { userHandle: "x", isOwner: false },
+      grants: G,
+      adminMode: false,
+    });
+    expect(v).toEqual({ unknown: true, reason: "access function not found" });
+  });
+
+  it("async access fn → unknown", () => {
+    const src = `export function db(doc, oldDoc, user, ctx) { return Promise.resolve({ channels: ["c"] }); }`;
+    const v = evaluateWrite({
+      source: src,
+      dbName: "db",
+      doc: {},
+      oldDoc: null,
+      user: { userHandle: "x", isOwner: false },
+      grants: G,
+      adminMode: false,
+    });
+    expect(v).toEqual({ unknown: true, reason: "async access function" });
   });
 });
