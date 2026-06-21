@@ -72,6 +72,11 @@ describe("evento handler manifest parity", () => {
     // But the chat plane still serves chat streaming + shared queries.
     expect(chatPlane.has("open-chat-handler")).toBe(true);
     expect(chatPlane.has("vibe.whoAmI")).toBe(true);
+    // User-scoped reads/grants that the parent app calls on chatApi must stay
+    // reachable on the chat plane (they were reclassified out of appHandlers).
+    // Regression guard: dropping appHandlers must not strand these callers.
+    expect(chatPlane.has("list-dm-threads")).toBe(true); // DmInbox / vibe-route badge
+    expect(chatPlane.has("asset-upload-grant")).toBe(true); // HandleAvatarEditor / srv-sandbox putAsset
   });
 
   it("shared handlers include grants/membership (transition: called from parent app on chat connection)", () => {

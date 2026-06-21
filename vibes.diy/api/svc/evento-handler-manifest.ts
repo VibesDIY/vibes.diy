@@ -85,12 +85,16 @@ export const sharedHandlers = [
   listMembershipsEvento,
   whoAmIEvento,
   subscribeUserNotificationsEvento,
-  // listDmThreads is a user-scoped DM-inbox read (not tied to any vibe shard),
-  // called from the parent app (DmInbox, vibe route) on chatApi. It belongs with
-  // the other stateless user-scoped queries here, not in appHandlers — that's
-  // what lets the chat plane drop appHandlers while keeping the inbox working.
-  // (#2265 A2; will land on SharedSessions in Track B.)
+  // User/identity-scoped reads + grant ops that are NOT tied to any vibe shard
+  // and are called from the parent app (and srv-sandbox) on chatApi. They belong
+  // with the other stateless user-scoped handlers here, not in appHandlers —
+  // that's what lets the chat plane drop appHandlers while these keep working:
+  //   - listDmThreads: the DM inbox read (DmInbox, vibe-route badge).
+  //   - assetUploadGrant: issues an R2 upload grant for handle-avatar uploads
+  //     (HandleAvatarEditor) and srv-sandbox putAsset — no broadcast/access-fn.
+  // (#2265 A2; these land on SharedSessions in Track B.)
   listDmThreadsEvento,
+  assetUploadGrantEvento,
 ] as const;
 
 export const appHandlers = [
@@ -106,7 +110,6 @@ export const appHandlers = [
   subscribeViewerGrantsEvento,
   listDbNamesEvento,
   markDmReadEvento,
-  assetUploadGrantEvento,
 ] as const;
 
 export const chatHandlers = [
