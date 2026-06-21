@@ -224,15 +224,25 @@ For each of a sample of real deployed `access.js` files, assert **client runner 
 
 Drive the client shim and the **production QuickJS path** ([`cf-serve.ts`](../../../vibes.diy/api/svc/cf-serve.ts#L282) / [`workers/access-fn.ts`](../../../vibes.diy/pkg/workers/access-fn.ts#L107)) from the same fixtures so they can't silently diverge — and include a fixture that pins the anon reason (`authentication required`, not `not in channel`) so the three-copies divergence can't regress parity.
 
-## Rollout
+## Rollout — Phase A is a reversible, new-apps-only experiment
 
-Low install base — innovate forward rather than preserve the primitives:
+The key strategy: **Phase A includes the prompt/guidance update, but touches no existing app.** New generations start authoring against `useVibe().can`; the 197 live vibes keep running on the old surface (which we keep fully working). That lets us evaluate the new system end-to-end on real new apps **before** committing to any migration — and because the prompt is just guidance, the whole experiment is reversible.
 
-1. Ship the runner + `can` over today's `grants` (additive; `useViewer` untouched).
-2. Repoint the prompts: one gating rule (`can.*` + `reason`), demote raw `viewer`/`isOwner` to identity/display only. (This is the real version of the reverted #2495 wording patch — fix the surface, then the wording is trivial.)
-3. Fix the stale `user.userSlug` in `jchris/pickathon-v2` (tiny, unrelated cleanup surfaced by the audit).
+Phase A steps (all additive / non-destructive):
 
-Steps 1–3 are this spec. Retiring the old surface and migrating the 197 live vibes is a deliberate next phase, scoped below.
+1. **Ship the helper.** Runner + `useVibe().can` over today's `grants`, bridge-delivered `access.js`, parity fixture matrix, `unknown` telemetry. `useViewer()` and the old gating members stay exactly as-is.
+2. **Update the prompts/guidance** to teach the single rule — gate on `can.*`, render its `reason` — and stop teaching `viewer`/`isOwner` as gates. This is what makes new apps exercise the new path. (It's the coherent version of the reverted #2495 wording patch: change the surface first, then the guidance is one rule, not a contradiction.)
+3. **Fix the stale `user.userSlug`** in `jchris/pickathon-v2` (tiny, unrelated cleanup surfaced by the audit).
+
+**Why this is safe and abandonable:**
+
+- **No destructive change to old apps.** Old vibes never re-render their gating code; they keep using the old surface, which remains exported and supported throughout Phase A. The only runtime change they see is `access.js` now being delivered to the iframe — inert unless the app calls `can`.
+- **Reversible kill-switch.** If the approach turns out surprisingly bad (poor generation quality, high `unknown` rate, parity surprises), **revert the prompt change** and new apps go back to the old surface immediately. The dormant helper can stay shipped (additive, unused) or be removed; either way nothing breaks.
+- **Evaluate forward.** Telemetry + the parity matrix + eyeballing freshly generated apps tells us whether the new surface actually reduces gating bugs in practice. Only if it proves out do we greenlight Phase B.
+
+**Gate from A → B (migration):** proceed only when (a) generated new apps gate correctly and read cleanly, (b) `unknown` telemetry stays near the audit's ~0%, and (c) the parity matrix is green against the production QuickJS path. If any of these disappoint, we pause at A — old apps were never touched, so there's nothing to roll back beyond the prompt.
+
+Retiring the old surface and migrating the 197 live vibes (Phase B) is a deliberate next phase, scoped below — and is **only** entered after the A→B gate.
 
 ## Follow-up (separate effort): retire the old gating surface & migrate existing vibes
 
@@ -264,5 +274,5 @@ All six open questions were resolved in review. Recorded here as the contract th
 
 ### Resulting splits
 
-- **Plan A — implement the helper** (this spec): runner + `useVibe().can` + bridge delivery + parity fixture matrix + `unknown` telemetry. Additive, non-breaking.
-- **Plan B — migration & retirement** (the Follow-up): hybrid codemod/regeneration over the 197 vibes, phased batches with rollback, then remove the old gating surface. Charlie offered to draft this as a plan doc with phases, success metrics, and rollback criteria.
+- **Plan A — implement the helper + flip the guidance** (this spec): runner + `useVibe().can` + bridge delivery + parity fixture matrix + `unknown` telemetry, **and the prompt/guidance update** so new apps author against `can.*`. Additive and non-destructive — old apps untouched, fully reversible by reverting the prompt. This is the experiment that decides whether the approach is worth migrating to (see the A→B gate in Rollout).
+- **Plan B — migration & retirement** (the Follow-up): hybrid codemod/regeneration over the 197 vibes, phased batches with rollback, then remove the old gating surface. **Entered only after the A→B gate passes.** Charlie offered to draft this as a plan doc with phases, success metrics, and rollback criteria.
