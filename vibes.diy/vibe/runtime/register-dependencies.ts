@@ -32,6 +32,9 @@ import {
   ReqVibeWhoAmI,
   ResVibeWhoAmI,
   isResVibeWhoAmI,
+  type ReqVibeAccessFnSource,
+  type ResVibeAccessFnSource,
+  isResVibeAccessFnSource,
   type ReqVibeUpdateAvatarCid,
   type ResVibeUpdateAvatarCid,
   isResVibeUpdateAvatarCid,
@@ -322,6 +325,18 @@ export class VibeSandboxApi {
         ...(this.svc.vibeApp.adminMode ? { adminMode: true } : {}),
       },
       { wait: isResVibeWhoAmI, timeout: 10000 }
+    );
+  }
+
+  accessFnSource(cid: string): Promise<Result<ResVibeAccessFnSource>> {
+    return this.request<ReqVibeAccessFnSource, ResVibeAccessFnSource>(
+      {
+        type: "vibe.req.accessFnSource",
+        appSlug: this.svc.vibeApp.appSlug,
+        ownerHandle: this.svc.vibeApp.ownerHandle,
+        cid,
+      },
+      { wait: isResVibeAccessFnSource, timeout: 10000 }
     );
   }
 
