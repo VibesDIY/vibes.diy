@@ -26,4 +26,12 @@ describe("vibeApiTarget", () => {
     expect(vibeApiTarget("/")).toBeUndefined();
     expect(vibeApiTarget("/settings")).toBeUndefined();
   });
+
+  it("returns undefined for /messages routes (DMs ride a standalone appApiFor connection, not the iframe vibeApi target) (#2265 A2)", () => {
+    // Guard against re-coupling DM routes to iframe-route behavior: DMs build
+    // their AppSessions connection via appApiFor(`<channelUserSlug>--dm`), not by
+    // being treated as a vibe-iframe route.
+    expect(vibeApiTarget("/messages")).toBeUndefined();
+    expect(vibeApiTarget("/messages/alice/bob")).toBeUndefined();
+  });
 });
