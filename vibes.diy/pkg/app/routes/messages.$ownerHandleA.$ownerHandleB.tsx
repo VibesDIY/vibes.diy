@@ -50,7 +50,12 @@ export default function MessageThreadRoute() {
   // slug is order-independent (directChannelUserSlug sorts), so it's stable even
   // before the canonical-URL redirect above settles. (#2265 A2)
   const channelUserSlug = directChannelUserSlug(ownerHandleA, ownerHandleB);
-  const dmApi = vctx.appApiFor?.(`${channelUserSlug}--dm`) ?? chatApi;
+  // No chatApi fallback: ChatSessions no longer serves DM doc ops (appHandlers
+  // left the chat plane in #2265 A2), so falling back would only yield a wildcard
+  // "Not Implemented". appApiFor is always present from the real provider; if it
+  // were ever missing, DmThread degrades to a no-op rather than silently routing
+  // DM writes to a plane that can't serve them. (Charlie review, PR #2502)
+  const dmApi = vctx.appApiFor?.(`${channelUserSlug}--dm`);
 
   // ownerHandleA is the sender (current user); ownerHandleB is the other participant.
   return (

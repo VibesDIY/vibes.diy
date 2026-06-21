@@ -45,7 +45,10 @@ describe("DM thread route connection routing", () => {
     await waitFor(() => expect(queryDocs).toHaveBeenCalled());
   });
 
-  it("falls back to chatApi when appApiFor is absent (defensive)", async () => {
+  it("does NOT route DM doc ops to chatApi when appApiFor is absent (no stale fallback)", async () => {
+    // ChatSessions no longer serves appHandlers (#2265 A2), so DM doc ops must
+    // never fall back to chatApi — that would only hit the wildcard handler.
+    // Without appApiFor, DmThread degrades to a no-op instead.
     const queryDocs = vi.fn(async () => Result.Ok({ docs: [] }));
     const listHandleBindings = vi.fn(async () => Result.Ok({ items: [{ ownerHandle: "alice" }] }));
 
@@ -53,6 +56,8 @@ describe("DM thread route connection routing", () => {
       chatApi: { listHandleBindings, queryDocs, markDmRead: vi.fn(async () => Result.Ok({})) } as unknown as VibesDiyCtx["chatApi"],
     });
 
-    await waitFor(() => expect(queryDocs).toHaveBeenCalled());
+    // Let effects flush; the DM thread must not have queried docs over chatApi.
+    await waitFor(() => expect(listHandleBindings).toHaveBeenCalled());
+    expect(queryDocs).not.toHaveBeenCalled();
   });
 });
