@@ -494,6 +494,36 @@ export function isResVibeWhoAmI(x: unknown): x is ResVibeWhoAmI {
   return !(ResVibeWhoAmI(x) instanceof type.errors);
 }
 
+// Request: sandbox → host. Fetches the raw access.js source for a
+// content-addressed CID so the in-iframe runner can dry-run it.
+export const ReqVibeAccessFnSource = type({
+  type: "'vibe.req.accessFnSource'",
+  appSlug: "string",
+  ownerHandle: "string",
+  cid: "string",
+}).and(Base);
+
+export type ReqVibeAccessFnSource = typeof ReqVibeAccessFnSource.infer;
+
+export function isReqVibeAccessFnSource(x: unknown): x is ReqVibeAccessFnSource {
+  return !(ReqVibeAccessFnSource(x) instanceof type.errors);
+}
+
+// Response: host → sandbox. source is the raw full access.js text, or null
+// when no binding/asset is found for the CID (callers treat null as "unknown",
+// never as a hard deny).
+export const ResVibeAccessFnSource = type({
+  type: "'vibe.res.accessFnSource'",
+  cid: "string",
+  source: "string | null",
+}).and(Base);
+
+export type ResVibeAccessFnSource = typeof ResVibeAccessFnSource.infer;
+
+export function isResVibeAccessFnSource(x: unknown): x is ResVibeAccessFnSource {
+  return !(ResVibeAccessFnSource(x) instanceof type.errors);
+}
+
 // Sandbox → host: persist a freshly-uploaded avatar CID to the viewer's
 // platform profile. The host enforces that the sandbox ownerHandle matches
 // the authenticated session before calling ensureUserSettings.
