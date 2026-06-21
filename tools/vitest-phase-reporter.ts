@@ -54,6 +54,7 @@ function num(v: unknown): number {
 
 export default class PhaseReporter {
   private bestTotal = -1;
+  private capturedUnhandledOnce = false;
 
   // Backward-compat shim for vitest <= v3 (onFinished). v4 removed this hook in
   // favour of onTestRunEnd below; it's harmless on v4 (never called) and keeps
@@ -98,11 +99,14 @@ export default class PhaseReporter {
   // Serialize vitest's unhandled errors so a "0 failed but red" run is
   // diagnosable: print each to the Actions log (the only place the text appears
   // under json-only reporters) and persist them for the job summary. Both
-  // reporter hooks may fire, so de-dupe by writing only when there is something
-  // to write — and never throw (a thrown reporter aborts the run).
+  // reporter hooks (onFinished + onTestRunEnd) can fire on legacy/mixed setups,
+  // so guard with a once-flag to avoid double-logging and rewriting ERR_OUT.
+  // Never throw (a thrown reporter aborts the run).
   private captureErrors(errors: unknown[] = []): void {
     try {
+      if (this.capturedUnhandledOnce) return;
       if (!Array.isArray(errors) || errors.length === 0) return;
+      this.capturedUnhandledOnce = true;
       const serialized = errors.map((e) => {
         const err = e as { message?: unknown; stack?: unknown; name?: unknown } | undefined;
         return {
