@@ -99,7 +99,7 @@ import {
 } from "./app-documents.js";
 import { ReqListMembers, ResListMembers } from "./members.js";
 import { ReqListMemberships, ResListMemberships } from "./memberships.js";
-import { ReqVibeWhoAmI, ResVibeWhoAmI } from "@vibes.diy/vibe-types";
+import { ReqVibeWhoAmI, ResVibeWhoAmI, ReqVibeAccessFnSource, ResVibeAccessFnSource } from "@vibes.diy/vibe-types";
 import { ReqAssetUploadGrant, ResAssetUploadGrant } from "./asset.js";
 import {
   ReqReportGrowthMemberships,
@@ -222,6 +222,10 @@ export interface VibesDiyApiIface<_T = unknown> {
 
   // Viewer identity — who is the caller, their access level, and db ACLs for this vibe
   whoAmI(req: Req<ReqVibeWhoAmI>): Promise<Result<ResVibeWhoAmI, VibesDiyError>>;
+
+  // Raw access.js source bytes for a content-addressed CID. Returns source: null
+  // when no binding/asset is found — callers treat null as "unknown", never a deny.
+  accessFnSource(req: Req<ReqVibeAccessFnSource>): Promise<Result<ResVibeAccessFnSource, VibesDiyError>>;
 
   // Stage A put-asset producer — mints a short-lived signed grant for HTTP
   // POST /assets. Auth attached automatically by send().
