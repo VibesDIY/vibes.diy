@@ -5,7 +5,10 @@ import { ViewControls } from "~/vibes.diy/app/components/ResultPreview/ViewContr
 
 // Mock the SVG icons — spread the real module so co-exports (e.g. MinidiscIcon)
 // stay available to other files under isolate:false; only override what we assert.
-vi.mock("~/vibes.diy/app/components/HeaderContent/SvgIcons", async (importOriginal) => ({
+// Keep this factory (and the specifier string) in sync with NavigationFix.test.tsx:
+// under isolate:false both files share one SvgIcons module, so a divergent override
+// set or a mismatched specifier reopens the settings-icon leak. See #2425/#2426.
+vi.mock("~/vibes.diy/app/components/HeaderContent/SvgIcons.js", async (importOriginal) => ({
   ...(await importOriginal<Record<string, unknown>>()),
   PreviewIcon: ({ className }: { className: string; isLoading?: boolean; title?: string }) => (
     <span data-testid="preview-icon" className={className}>
