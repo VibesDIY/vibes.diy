@@ -10,11 +10,12 @@ import {
 } from "@cloudflare/workers-types";
 import { CfCacheIf, cfServe } from "@vibes.diy/api-svc";
 import { WSSendProvider } from "@vibes.diy/api-svc/svc-ws-send-provider.js";
-import { CFInjectMutable, cfServeAppCtx } from "@vibes.diy/api-svc/cf-serve.js";
+import { CFInjectMutable, cfServeAppCtx, localInvokeAccessFn } from "@vibes.diy/api-svc/cf-serve.js";
 import { chatMsgEvento } from "@vibes.diy/api-svc/chat-msg-evento.js";
 import { CFEnv, isBuildNotification, isUserNotifyShard, userNotifyShardFor } from "@vibes.diy/api-types";
 import { exception2Result, URI } from "@adviser/cement";
 import { type } from "arktype";
+import type { QuickJSWASMModule } from "@cf-wasm/quickjs";
 
 const UserNotifyEvtShape = type({
   type: "'vibes.diy.evt-user-notification'",
@@ -89,6 +90,12 @@ function userNotifyCallbacksForChatSessions(shard: string, env: CFEnv) {
 export class ChatSessions implements DurableObject {
   private connections: Set<WSSendProvider> = new Set<WSSendProvider>();
   private env: CFEnv;
+  // Lazy-cached QuickJS module for local access-fn eval. ChatSessions evaluates
+  // access fns locally (like AppSessions) for the one chat-plane path that needs
+  // it: ensureAppSlugItem's access-binding backfill at app-creation time. This
+  // replaces the cross-DO env.ACCESS_FN_DO call so AccessFnDO can be retired
+  // (#2265 A2b). Lazy — the module only loads on the first access-bound app.
+  private quickjsModule: { module: QuickJSWASMModule | null } = { module: null };
 
   constructor(_state: DurableObjectState, env: CFEnv) {
     this.env = env;
@@ -152,7 +159,15 @@ export class ChatSessions implements DurableObject {
     };
     const shard = URI.from(request.url).getParam("shard");
     const userCbs = shard !== undefined ? userNotifyCallbacksForChatSessions(shard, this.env) : {};
-    cctx.appCtx = (await cfServeAppCtx(request, this.env, cctx, { ...userCbs })).appCtx;
+    const quickjsRef = this.quickjsModule;
+    cctx.appCtx = (
+      await cfServeAppCtx(request, this.env, cctx, {
+        ...userCbs,
+        // Local QuickJS eval, not env.ACCESS_FN_DO. Used by ensureAppSlugItem's
+        // access-binding backfill (the last chat-plane consumer). (#2265 A2b)
+        invokeAccessFn: (params: Parameters<typeof localInvokeAccessFn>[1]) => localInvokeAccessFn(quickjsRef, params),
+      })
+    ).appCtx;
     return cfServe(request, cctx, chatMsgEvento);
   }
 }

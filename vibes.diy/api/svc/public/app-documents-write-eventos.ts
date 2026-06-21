@@ -214,6 +214,20 @@ export const putDocEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqPutDoc>, 
 
       const docId = req.docId ?? vctx.sthis.timeOrderedNextId().str;
 
+      // Fail closed: a doc bound to an access function must NOT be written if no
+      // invoker is available — otherwise a missing/misconfigured invoker would
+      // silently bypass access enforcement (the `&& vctx.invokeAccessFn` guard
+      // below would just skip the whole check). Every production context that can
+      // run this handler supplies a local invoker; this is defense in depth so a
+      // future regression fails safe rather than open. (#2265 A2b)
+      if (afbRow?.accessFnCid && !vctx.invokeAccessFn) {
+        await ctx.send.send(ctx, {
+          type: "vibes.diy.res-error",
+          error: { message: "Access function unavailable" },
+        } satisfies ResError);
+        return Result.Ok(EventoResult.Continue);
+      }
+
       if (afbRow?.accessFnCid && vctx.invokeAccessFn) {
         const fnCid = afbRow.accessFnCid;
         // Resolve writer's ACTIVE handle from userId — req.ownerHandle is the DB
