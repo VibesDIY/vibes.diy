@@ -27,4 +27,14 @@ export {
 } from "./firefly-database.js";
 export type { FireflyTransport } from "./firefly-database.js";
 export type { ViewerTagProps } from "./use-viewer-tag.js";
-export { evaluateWrite, canSeeDoc, makeClientCtx, type AccessUser, type AccessGrants, type WriteVerdict } from "./access-runner.js";
+export {
+  evaluateWrite,
+  canSeeDoc,
+  makeClientCtx,
+  type AccessUser,
+  type AccessGrants,
+  type AccessCtx,
+  type WriteVerdict,
+  type EvaluateWriteArgs,
+  type CanSeeArgs,
+} from "./access-runner.js";

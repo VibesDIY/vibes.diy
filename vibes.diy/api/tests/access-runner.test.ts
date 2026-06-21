@@ -35,6 +35,7 @@ describe("makeClientCtx", () => {
 
   it("signed-in non-member fails with 'not in channel: X'", () => {
     const ctx = makeClientCtx({ userHandle: "a", isOwner: false }, grants, false);
+    expect(() => ctx.requireAccess("ops")).toThrow();
     try {
       ctx.requireAccess("ops");
     } catch (e: any) {
