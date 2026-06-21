@@ -92,6 +92,14 @@ describe("resolveAccessFnSource", { timeout: 30000 }, () => {
     expect(r.isOk()).toBe(true);
     expect(r.Ok().source).toBeNull();
   });
+
+  it("returns source: null when the cid is real but not bound to the given app (no cross-app Assets leak)", async () => {
+    // accessFnCid exists in the global Assets store, but is NOT bound to this
+    // (ownerHandle, wrong-appSlug). The legacy fallback must not serve it.
+    const r = await resolveAccessFnSource(vibesCtx, { ownerHandle, appSlug: `${appSlug}-not-mine`, cid: accessFnCid });
+    expect(r.isOk()).toBe(true);
+    expect(r.Ok().source).toBeNull();
+  });
 });
 
 // ── host-handler end-to-end bridge test ────────────────────────────────────
