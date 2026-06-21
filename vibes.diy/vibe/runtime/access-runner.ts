@@ -51,6 +51,8 @@ type Invoker = (doc: unknown, oldDoc: unknown, user: AccessUser | null, ctx: Acc
 
 // Mirrors workers/access-fn.ts:150-158 — named fn / anon fn / arrow / legacy body.
 function buildInvoker(extracted: string): Invoker {
+  // extractExportSource already strips leading export/default; these guards
+  // mirror the DO's redundant strip (access-fn.ts:150) so behavior matches exactly.
   const cleanSource = extracted.replace(/export\s+/g, "").replace(/^default\s+/, "");
   const fnNameMatch = cleanSource.match(/^function\s+(\w+)\s*\(/);
   const isAnonymousFnOrArrow = /^function\s*\(/.test(cleanSource) || /^\(/.test(cleanSource) || /^\w+\s*=>/.test(cleanSource);
