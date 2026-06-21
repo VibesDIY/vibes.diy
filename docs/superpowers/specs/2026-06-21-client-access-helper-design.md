@@ -58,33 +58,49 @@ The verdict for a write is **not** "did `access.js` throw." The server wraps the
 
 ### 2. The `ctx` shim (frozen contract)
 
+**Parity caveat — mirror the QuickJS write path, not `makeHelpers`.** There are three copies of these helpers in the tree and they **disagree on the anonymous message**: `makeHelpers` in [`access-function.ts`](../../../vibes.diy/api/svc/public/access-function.ts) throws `not in channel: X` for an anon caller, but the **production write path** — the QuickJS host functions in [`cf-serve.ts`](../../../vibes.diy/api/svc/cf-serve.ts#L282) and [`workers/access-fn.ts`](../../../vibes.diy/pkg/workers/access-fn.ts#L107) — returns **`authentication required`** for anon (before any membership check) and **no-ops entirely when `adminMode` is set**. The client shim must mirror the QuickJS path, because that is what actually enforces writes:
+
 ```ts
-// Mirrors makeHelpers(), backed by whoAmI's materialized grants[dbName].
-function makeClientCtx(user, grants) {
+// Mirrors the QuickJS ctx (cf-serve.ts / workers/access-fn.ts), backed by
+// whoAmI's materialized grants[dbName] plus the viewer's adminMode flag.
+function makeClientCtx(user, grants, adminMode) {
   return {
     requireAccess(channelId) {
-      if (!user) throw { forbidden: `not in channel: ${channelId}` };
+      if (adminMode) return; // admin bypass — matches server
+      if (!user) throw { forbidden: "authentication required" }; // anon FIRST, before membership
       if (!grants.channels.includes(channelId)) throw { forbidden: `not in channel: ${channelId}` };
     },
     requireRole(roleName) {
-      if (!user) throw { forbidden: `not in role: ${roleName}` };
+      if (adminMode) return;
+      if (!user) throw { forbidden: "authentication required" };
       if (!grants.roles.includes(roleName)) throw { forbidden: `not in role: ${roleName}` };
     },
   };
 }
 ```
 
-Throw messages are copied verbatim from the server so client and server reasons match. **The `ctx` contract is frozen to these two members.** Any access function that touches a `ctx` member the shim doesn't implement, goes `async`, or otherwise can't be evaluated, makes the runner return `{ unknown: true }` (see §4) — never a guess.
+`adminMode` is already known to the viewer payload (the route passes it through `whoAmI`); the shim needs it as a third input. Throw messages are copied verbatim from the QuickJS helpers so client and server reasons match. **The `ctx` contract is frozen to these two members.** Any access function that touches a `ctx` member the shim doesn't implement, goes `async`, or otherwise can't be evaluated, makes the runner return `{ unknown: true }` (see §4) — never a guess.
 
-### 3. Read (`can.see`) is a different, simpler check
+> **Cleanup surfaced:** three diverging copies of `requireAccess`/`requireRole` is a latent bug regardless of this feature — the non-QuickJS `makeHelpers` would report the wrong anon reason if any path uses it. Worth collapsing to one shared implementation that both the server eval and the client shim import, which would also make parity structural rather than test-enforced. Filed as a follow-up cleanup.
 
-Reads are **not** governed by `access.js`. A doc is visible iff its channels intersect the viewer's grants ([`channel-read-filter.ts`](../../../vibes.diy/api/svc/public/channel-read-filter.ts)):
+### 3. Read (`can.see`) uses the stored access-fn output, not the doc body
+
+Reads are **not** governed by re-running `access.js`, and — critically — **a doc's channels are not a field on the doc**. The access function _assigns_ channels at write time; the server stores them in `accessFnOutputs` and the read gate intersects those **stored output channels** (keyed by `docId`) with the viewer's effective ∪ public channels ([`channel-read-filter.ts`](../../../vibes.diy/api/svc/public/channel-read-filter.ts), [`app-documents-read-eventos.ts`](../../../vibes.diy/api/svc/public/app-documents-read-eventos.ts#L176)). A doc with no stored output channels is invisible (`return false`), and there's an `adminOverride` bypass.
+
+So the naïve `doc.channels?.some(...)` is **wrong** — `doc.channels` is almost always `undefined` (channels live in the access output, not the doc body), and any user-authored `channels` property could disagree with the server. The client cannot recompute the channels by re-running the access function either: they were assigned with the **author's** user context at write time, which a different viewer can't reproduce (e.g. a private `user:${author}` channel). The correct shape:
 
 ```ts
-can.see(doc) === doc.channels?.some((ch) => grants.channels.includes(ch) || grants.publicChannels.includes(ch));
+// outputChannels: Map<docId, string[]> — the stored access-fn output channels,
+// delivered to the client alongside the docs (see open question on delivery).
+function canSee(doc, outputChannels, grants, adminOverride) {
+  if (adminOverride) return true;
+  const channels = outputChannels.get(doc._id);
+  if (!channels) return false;
+  return channels.some((ch) => grants.channels.includes(ch) || grants.publicChannels.includes(ch));
+}
 ```
 
-Do **not** route `can.see` through `access.js`. (Owner-bypass-on-read semantics to confirm against the read gate — see open questions.)
+**Open design tension:** reads are _already_ server-filtered — the client only receives docs it may see — so `can.see` is largely redundant in v1, and shipping per-doc output channels to the client adds wire cost. Options: (a) drop `can.see` from v1 and lean on the fact that held docs are visible by construction; (b) ship the stored output channels only where a finer client-side predicate is actually needed. Flagged in open questions.
 
 ### 4. `unknown` → optimistic fallback
 
@@ -195,15 +211,18 @@ For each of a sample of real deployed `access.js` files, assert **client runner 
 | ------------------- | ---------------------------------- | ------------------------- |
 | anon                | type with `allowAnonymous`         | allowed                   |
 | anon                | type without `allowAnonymous`      | `authentication required` |
+| anon                | channel type (calls requireAccess) | `authentication required` |
 | signed-in non-owner | owner-only type                    | `owner only`              |
 | owner               | owner-only type                    | allowed                   |
 | member              | channel type, in channel           | allowed                   |
 | non-member          | channel type, not in channel       | `not in channel: X`       |
 | signed-in           | role-gated, lacks role             | `not in role: X`          |
+| `adminMode` viewer  | any gated type                     | allowed (bypass)          |
 | any                 | result with zero channels          | `unreadable write`        |
 | any                 | fn using unimplemented `ctx`/async | `unknown` → optimistic    |
+| reader (member)     | `can.see` over stored output chans | matches read gate         |
 
-Drive both the client shim and the server [`makeHelpers`](../../../vibes.diy/api/svc/public/access-function.ts) path from the same fixtures so they can't silently diverge.
+Drive the client shim and the **production QuickJS path** ([`cf-serve.ts`](../../../vibes.diy/api/svc/cf-serve.ts#L282) / [`workers/access-fn.ts`](../../../vibes.diy/pkg/workers/access-fn.ts#L107)) from the same fixtures so they can't silently diverge — and include a fixture that pins the anon reason (`authentication required`, not `not in channel`) so the three-copies divergence can't regress parity.
 
 ## Rollout
 
@@ -237,7 +256,7 @@ This follow-up gets its own plan doc under [`docs/superpowers/plans/`](../plans/
 1. **Delivery of `access.js` source to the iframe** (§6): inline in `mountParams`, attach to `whoAmI`, or fetch over the bridge post-`runtime.ready`? Which fits the existing caching / hot-swap plumbing best, and how does it interact with the `vibe.evt.viewerChanged` refresh path in [`VibeContext.tsx`](../../../vibes.diy/vibe/runtime/VibeContext.tsx)?
 2. **Eval mechanism client-side:** the server isolates `access.js` in QuickJS. Client-side it's the app's own code already in the sandbox — is a plain `new Function` / module eval acceptable, or do we want QuickJS in the iframe too for semantic parity and to keep a misbehaving function from touching the host? (Weight vs. fidelity.)
 3. **Frozen `ctx` contract (§2):** OK to hard-freeze to `requireAccess` / `requireRole`, with anything else → `unknown` → optimistic? Or do you foresee a near-term `ctx` member that the client genuinely couldn't satisfy from materialized grants (which would change the fallback rate)?
-4. **Read semantics (§3):** confirm the exact `can.see` rule — channel ∩ (grants.channels ∪ publicChannels), and whether the owner has any read bypass the client must mirror.
+4. **Read semantics (§3):** `can.see` must intersect the **stored access-fn output channels** (from `accessFnOutputs`, keyed by `docId`) with `grants.channels ∪ publicChannels` — not `doc.channels`. Since reads are already server-filtered, do we ship per-doc output channels to the client at all in v1, or drop `can.see` and rely on "held docs are visible by construction"? If we ship them, what's the delivery/cost story (and the `adminOverride` bypass)?
 5. **Reason shape:** pass the raw thrown `forbidden` string through as `reason` (what makes the copy fix work today), or move access functions toward structured `{ forbidden, code }` so the UI can map codes reliably without matching English?
 6. **Surface naming:** new `useVibe()` returning `{ me, can, ready }`, or graft `can` onto the existing `useViewer()` and keep one hook name? (Retiring the old gating members is decided — see Follow-up — so this is about the _target_ shape we migrate toward, not whether.)
 7. **Migration mechanism (gates the Follow-up plan):** codemod the 197 vibes' gating branches, regenerate them, or codemod-most / regenerate-the-residue? And do we remove the old gating members outright, soft-deprecate with a dev warning, or freeze them?
