@@ -2,7 +2,7 @@
 
 **Date:** 2026-06-21
 **Scope:** Give generated vibe code one canonical, hard-to-misuse way to ask "can the current viewer read / write / delete this?" by running the app's own `access.js` **in the client** as a dry-run, instead of asking authors to re-derive the server's verdict by hand from `viewer` / `isOwner` / `access.hasChannel()` primitives.
-**Status:** Drafted, awaiting review (questions for @CharlieHelps at the end)
+**Status:** Reviewed — all six open questions resolved (see Decisions); ready to split into Plan A (implement helper) + Plan B (migration & retirement)
 **Related:** [`2026-05-09-vibe-viewer-identity-capabilities-design.md`](./2026-05-09-vibe-viewer-identity-capabilities-design.md) (the surface this supersedes the gating half of), VibesDIY/vibes.diy#2495 (the prompt-wording patch this replaces)
 
 ## Problem
@@ -249,14 +249,20 @@ Scope of the follow-up:
 - **Sequencing & rollback.** Ship helper (additive) → repoint prompt → migrate in batches behind a per-app flag, owner-only/test apps first (`jchris/*`) → verify → widen. Keep the old surface importable until the migration batch completes, then remove.
 - **Done = old gating surface removed from `use-vibes` exports + prompt docs, all live vibes pass the parity snapshot on `can.*`.**
 
-This follow-up gets its own plan doc under [`docs/superpowers/plans/`](../plans/) once the open questions below are settled (the migration mechanism depends on answers to Q2 and Q6).
+This follow-up gets its own plan doc under [`docs/superpowers/plans/`](../plans/). The mechanism is now decided (hybrid codemod-first + regeneration-residue — see Decisions), so the plan is unblocked.
 
-## Open questions for review (@CharlieHelps)
+## Decisions (locked in review — 2026-06-21)
 
-1. **Delivery of `access.js` source to the iframe** (§6): inline in `mountParams`, attach to `whoAmI`, or fetch over the bridge post-`runtime.ready`? Which fits the existing caching / hot-swap plumbing best, and how does it interact with the `vibe.evt.viewerChanged` refresh path in [`VibeContext.tsx`](../../../vibes.diy/vibe/runtime/VibeContext.tsx)?
-2. **Eval mechanism client-side:** the server isolates `access.js` in QuickJS. Client-side it's the app's own code already in the sandbox — is a plain `new Function` / module eval acceptable, or do we want QuickJS in the iframe too for semantic parity and to keep a misbehaving function from touching the host? (Weight vs. fidelity.)
-3. **Frozen `ctx` contract (§2):** OK to hard-freeze to `requireAccess` / `requireRole`, with anything else → `unknown` → optimistic? Or do you foresee a near-term `ctx` member that the client genuinely couldn't satisfy from materialized grants (which would change the fallback rate)?
-4. **Read semantics (§3):** `can.see` must intersect the **stored access-fn output channels** (from `accessFnOutputs`, keyed by `docId`) with `grants.channels ∪ publicChannels` — not `doc.channels`. Since reads are already server-filtered, do we ship per-doc output channels to the client at all in v1, or drop `can.see` and rely on "held docs are visible by construction"? If we ship them, what's the delivery/cost story (and the `adminOverride` bypass)?
-5. **Reason shape:** pass the raw thrown `forbidden` string through as `reason` (what makes the copy fix work today), or move access functions toward structured `{ forbidden, code }` so the UI can map codes reliably without matching English?
-6. **Surface naming:** new `useVibe()` returning `{ me, can, ready }`, or graft `can` onto the existing `useViewer()` and keep one hook name? (Retiring the old gating members is decided — see Follow-up — so this is about the _target_ shape we migrate toward, not whether.)
-7. **Migration mechanism (gates the Follow-up plan):** codemod the 197 vibes' gating branches, regenerate them, or codemod-most / regenerate-the-residue? And do we remove the old gating members outright, soft-deprecate with a dev warning, or freeze them?
+All six open questions were resolved in review. Recorded here as the contract the implementation + migration plans build against:
+
+1. **Delivery of `access.js` into the iframe** → **bridge delivery after `runtime.ready`**, with replay on reconnect. Put an `accessFnCid`/hash in mount params; the runtime requests source only when it's missing or changed. Keeps `vibe.evt.viewerChanged` focused on grants refresh, not code transfer; reuses the existing ready/ack + source-replay plumbing. (Not bundled into `whoAmI`.)
+2. **Client eval mechanism** → **plain JS eval in the iframe** for v1 (compile the extracted export via `new Function` / module eval) with the frozen helpers. No QuickJS-in-iframe — it's substantial weight for little gain on the app's own already-sandboxed, sync, deterministic code. Parity held by running one shared fixture matrix against **both** the server runner and the client runner.
+3. **Frozen `ctx`** → freeze to `requireAccess` / `requireRole`. Unknown `ctx` usage → `unknown` → optimistic (server remains source of truth). **Add telemetry on `unknown`** so we can detect if new `ctx` members start appearing in generated functions.
+4. **Read semantics (`can.see`)** → intersection model as corrected in §3: `true` on admin override, else non-empty `stored-output-channels ∩ (effective grant channels ∪ publicChannels)`. **No owner read bypass** — owner maps to `editor`, not `override`, so the owner gets no special read path the client must mirror.
+5. **Reason shape** → adopt a forward-compatible **`{ forbidden, code? }`** now. Keep passing the raw `forbidden` text through as `reason` for copy compatibility, and add a stable `code` as the taxonomy firms up. The runner returns `{ ok, reason, code? }`.
+6. **Surface + migration** → **`useVibe()` is the new canonical gating surface** (`{ me, can, ready }`); `useViewer()` stays for back-compat + identity. Migration is **hybrid**: codemod the deterministic patterns first (the majority), regenerate only the ambiguous/outlier apps. Sequencing: ship the additive helper + parity tests → phased migration batches → retire the old gating guidance/surface.
+
+### Resulting splits
+
+- **Plan A — implement the helper** (this spec): runner + `useVibe().can` + bridge delivery + parity fixture matrix + `unknown` telemetry. Additive, non-breaking.
+- **Plan B — migration & retirement** (the Follow-up): hybrid codemod/regeneration over the 197 vibes, phased batches with rollback, then remove the old gating surface. Charlie offered to draft this as a plan doc with phases, success metrics, and rollback criteria.
