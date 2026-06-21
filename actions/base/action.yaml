@@ -197,7 +197,7 @@ runs:
         # vitest on load) writes test-phase-timing.json with per-file PRE-RUN
         # phase costs (collect / setup / environment / prepare) — the json
         # reporter only exposes start/end, which hides where the import phase goes.
-        rm -f test-timing.json test-phase-timing.json
+        rm -f test-timing.json test-phase-timing.json test-unhandled-errors.json
         set +e
         timeout 1800 docker run --rm \
           -v $(pwd):/work \
@@ -236,6 +236,13 @@ runs:
 
         if [ "$TEST_EXIT" -ne 0 ]; then
           echo "::warning title=Test suite failing::npm run test exited ${TEST_EXIT}. See the job summary for details. Tracking: #2426 (gating) / #2425 (deterministic failures)."
+          # A non-zero exit with NO failed tests means vitest hit an unhandled
+          # error/rejection (a promise that settled after its test finished). The
+          # phase reporter dumps those to test-unhandled-errors.json (and the log
+          # above); surface a pointed hint so "0 failed but red" isn't baffling.
+          if [ -s test-unhandled-errors.json ]; then
+            echo "::error title=Unhandled error(s) in test run::vitest exited ${TEST_EXIT} with unhandled error(s)/rejection(s) and no failed tests — see the job summary and test-unhandled-errors.json artifact. Fix the async leak (re-running won't help)."
+          fi
           # Only a clean vitest test-failure exit (1) WITH a parsed report is
           # eligible for non-blocking surfacing. A harness/setup/timeout error
           # (docker 125/126/127, timeout 124, config crash with no report) means
@@ -263,6 +270,7 @@ runs:
         path: |
           test-timing.json
           test-phase-timing.json
+          test-unhandled-errors.json
         if-no-files-found: ignore
         retention-days: 30
 
