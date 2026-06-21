@@ -21,7 +21,6 @@ import { drizzle as drizzleNeon } from "drizzle-orm/neon-serverless";
 import { Pool } from "@neondatabase/serverless";
 import fs from "fs/promises";
 import path from "node:path";
-import { $ } from "zx";
 
 let isolationCounter = 0;
 
@@ -36,10 +35,57 @@ const failClosedInferenceFetch: typeof fetch = (input) => {
   return Promise.reject(new Error(`network request in test — inject a mock or add a fixture: ${url}`));
 };
 
+// Per-process, WAL-checkpointed copy of the schema'd DB that
+// globalSetup.libsql.ts builds once per run. Memoized so the work happens at
+// most once per worker; every isolated test DB is stamped out from it.
+let templatePromise: Promise<string> | undefined;
+
+/**
+ * Make a pristine, self-contained template to copy per-test from.
+ *
+ * The source is `dist/dash-backend.sqlite`, which globalSetup.libsql.ts rebuilds
+ * with a real `drizzle-kit push` at the start of every run — so it is the
+ * retained push canary AND can never be stale relative to the schema (no
+ * hashing/cache-invalidation needed). We never mutate that shared file: we copy
+ * it once per worker and `wal_checkpoint(TRUNCATE)` the copy so a plain
+ * `copyFile` of just the `.sqlite` is a consistent snapshot.
+ */
+async function ensureTemplate(distDir: string): Promise<string> {
+  const provided = inject("VIBES_DIY_TEST_SQL_URL" as never) as string | undefined;
+  if (provided === undefined) {
+    throw new Error("VIBES_DIY_TEST_SQL_URL not provided — globalSetup.libsql.ts must run before sqlite tests");
+  }
+  const sourcePath = new URL(provided).pathname;
+  const templatePath = path.join(distDir, `template-${process.pid}.sqlite`);
+  await Promise.all([
+    fs.rm(templatePath, { force: true }),
+    fs.rm(`${templatePath}-wal`, { force: true }),
+    fs.rm(`${templatePath}-shm`, { force: true }),
+  ]);
+  // Copy the source plus any WAL/SHM sidecars so the snapshot is consistent
+  // even if globalSetup left an un-checkpointed WAL behind.
+  await fs.copyFile(sourcePath, templatePath);
+  for (const ext of ["-wal", "-shm"]) {
+    await fs.copyFile(`${sourcePath}${ext}`, `${templatePath}${ext}`).catch(() => undefined);
+  }
+  const client = createClient({ url: `file://${templatePath}` });
+  try {
+    await client.execute("PRAGMA wal_checkpoint(TRUNCATE)");
+  } finally {
+    client.close();
+  }
+  await Promise.all([fs.rm(`${templatePath}-wal`, { force: true }), fs.rm(`${templatePath}-shm`, { force: true })]);
+  return templatePath;
+}
+
 async function createIsolatedSqliteDB(): Promise<string> {
   const root = path.dirname(new URL(import.meta.url).pathname);
   const distDir = path.join(root, "dist");
   await fs.mkdir(distDir, { recursive: true });
+
+  templatePromise ??= ensureTemplate(distDir);
+  const templatePath = await templatePromise;
+
   const name = `test-${process.pid}-${++isolationCounter}`;
   const basePath = path.join(distDir, `dash-backend-${name}.sqlite`);
   await Promise.all([
@@ -47,9 +93,11 @@ async function createIsolatedSqliteDB(): Promise<string> {
     fs.rm(`${basePath}-wal`, { force: true }),
     fs.rm(`${basePath}-shm`, { force: true }),
   ]);
-  const url = `file://${basePath}`;
-  await $`(cd ${root} && VIBES_DIY_TEST_SQL_URL=${url} pnpm exec drizzle-kit push --config ./drizzle.libsql.config.ts)`;
-  return url;
+  // Copy the prebuilt template instead of re-running drizzle-kit: each test
+  // still gets a fully isolated, fresh database (guardrail: isolation
+  // preserved), just without paying the subprocess cost per context.
+  await fs.copyFile(templatePath, basePath);
+  return `file://${basePath}`;
 }
 
 async function createDrizzleDB(): Promise<VibesSqlite> {
