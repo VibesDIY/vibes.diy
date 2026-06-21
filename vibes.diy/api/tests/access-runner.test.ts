@@ -181,4 +181,10 @@ describe("canSeeDoc", () => {
   it("true under adminOverride regardless of channels", () => {
     expect(canSeeDoc({ doc: { _id: "dX" }, outputChannels: outputs, grants, adminOverride: true })).toBe(true);
   });
+  it("true when there are NO outputs at all (undefined) — server cold-start pass-through", () => {
+    expect(canSeeDoc({ doc: { _id: "dX" }, outputChannels: undefined, grants, adminOverride: false })).toBe(true);
+  });
+  it("true when the output map is empty — server cold-start pass-through", () => {
+    expect(canSeeDoc({ doc: { _id: "dX" }, outputChannels: new Map(), grants, adminOverride: false })).toBe(true);
+  });
 });

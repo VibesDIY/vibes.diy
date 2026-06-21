@@ -1,3 +1,4 @@
+import { exception2Result } from "@adviser/cement";
 import { extractExportSource } from "./access-extract.js";
 
 export interface AccessUser {
@@ -21,12 +22,12 @@ export function makeClientCtx(user: AccessUser | null, grants: AccessGrants, adm
   return {
     requireAccess(channelId: string): void {
       if (adminMode) return;
-      if (!user) throw { forbidden: "authentication required" };
+      if (user === null) throw { forbidden: "authentication required" };
       if (!grants.channels.includes(channelId)) throw { forbidden: `not in channel: ${channelId}` };
     },
     requireRole(roleName: string): void {
       if (adminMode) return;
-      if (!user) throw { forbidden: "authentication required" };
+      if (user === null) throw { forbidden: "authentication required" };
       if (!grants.roles.includes(roleName)) throw { forbidden: `not in role: ${roleName}` };
     },
   };
@@ -65,7 +66,7 @@ function buildInvoker(extracted: string): Invoker {
 }
 
 function forbiddenReason(err: unknown): string | null {
-  if (err && typeof err === "object" && "forbidden" in err) return String((err as Record<string, unknown>).forbidden);
+  if (typeof err === "object" && err !== null && "forbidden" in err) return String((err as Record<string, unknown>).forbidden);
   if (typeof err === "string") return err;
   return null;
 }
@@ -76,14 +77,17 @@ export function evaluateWrite(args: EvaluateWriteArgs): WriteVerdict {
   const extracted = extractExportSource(source, dbName);
   if (extracted === undefined) return { unknown: true, reason: "access function not found" };
 
-  let invoker: Invoker;
-  try {
-    invoker = buildInvoker(extracted);
-  } catch {
-    return { unknown: true, reason: "access function did not compile" };
-  }
+  const rInvoker = exception2Result(() => buildInvoker(extracted));
+  if (rInvoker.isErr()) return { unknown: true, reason: "access function did not compile" };
+  const invoker = rInvoker.Ok();
 
   const ctx = makeClientCtx(user, grants, adminMode);
+  // Intentional try/catch (not exception2Result): the runner must stay
+  // synchronous so `can.*` returns a verdict without awaiting, and it must
+  // (a) detect a *returned* Promise to report `unknown: "async"` — which
+  // exception2Result would auto-await, forcing this function async — and (b)
+  // preserve the raw thrown value so a non-Error `{ forbidden }` (and the
+  // server's rarer thrown-string path) survives intact for forbiddenReason.
   let result: unknown;
   try {
     result = invoker(doc, oldDoc, user, ctx);
@@ -93,14 +97,14 @@ export function evaluateWrite(args: EvaluateWriteArgs): WriteVerdict {
     return { ok: false, reason, code: "access-denied" };
   }
 
-  if (result && typeof (result as { then?: unknown }).then === "function") {
+  if (result !== null && result !== undefined && typeof (result as { then?: unknown }).then === "function") {
     return { unknown: true, reason: "async access function" };
   }
 
   const descriptor = (result ?? {}) as { channels?: unknown; allowAnonymous?: unknown };
 
-  // enforceAllowAnonymous (access-function.ts:29-33)
-  if (user === null && !descriptor.allowAnonymous) {
+  // enforceAllowAnonymous (access-function.ts:29-33): only allowAnonymous === true opts in.
+  if (user === null && descriptor.allowAnonymous !== true) {
     return { ok: false, reason: "authentication required", code: "access-denied" };
   }
 
@@ -120,12 +124,22 @@ export interface CanSeeArgs {
   adminOverride: boolean;
 }
 
-// Mirrors filterDocsByChannel (channel-read-filter.ts): admin sees all; else a
-// doc is visible iff its STORED output channels intersect effective ∪ public.
-// A doc with no stored channels is invisible. No owner read bypass.
+// Mirrors filterDocsByChannel (channel-read-filter.ts): admin sees all; when
+// there are NO access-fn outputs at all, the server passes every doc through
+// (`outputRows.length === 0 → return docs`), so we do too — hiding everything on
+// cold/backfill would diverge from production reads. Otherwise a doc is visible
+// iff its STORED output channels intersect effective ∪ public; a doc absent from
+// the output map is invisible. No owner read bypass.
+//
+// `outputChannels === undefined` here means the server-side "no outputs" cold
+// start, NOT "not delivered to the client yet". Delivery-pending is a distinct
+// state the slice-2 hook must model with a readiness flag — it must not pass
+// `undefined` to mean "still loading" (that would read as cold-start = show
+// all). Keep "not ready" as unknown/pending at the hook, never a verdict here.
 export function canSeeDoc({ doc, outputChannels, grants, adminOverride }: CanSeeArgs): boolean {
   if (adminOverride) return true;
-  const channels = outputChannels?.get(doc._id);
-  if (!channels) return false;
+  if (outputChannels === undefined || outputChannels.size === 0) return true;
+  const channels = outputChannels.get(doc._id);
+  if (channels === undefined) return false;
   return channels.some((ch) => grants.channels.includes(ch) || grants.publicChannels.includes(ch));
 }
