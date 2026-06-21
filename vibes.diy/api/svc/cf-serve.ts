@@ -427,39 +427,12 @@ export async function cfServeAppCtx(
     netHash,
     llmRequest: ctx.llmRequest,
     env: env as unknown as Record<string, string>,
-    invokeAccessFn: async (params: {
-      cid: string;
-      doc: unknown;
-      oldDoc: unknown | null;
-      user: UserContext | null;
-      source?: string;
-      grantState?: {
-        members: Record<string, string[]>;
-        roleGrants: Record<string, string[]>;
-        userGrants: Record<string, string[]>;
-      };
-      adminMode?: boolean;
-    }): Promise<AccessDescriptor | { forbidden: string }> => {
-      // Source is resolved upstream by app-documents.ts via vctx.storage.fetch(assetURI).
-      // If it's undefined here, the DO handles the missing-source case by returning forbidden.
-      const id = env.ACCESS_FN_DO.idFromName(params.cid);
-      const stub = env.ACCESS_FN_DO.get(id);
-      const res = await stub.fetch(
-        new Request("https://internal/invoke", {
-          method: "POST",
-          body: JSON.stringify({
-            doc: params.doc,
-            oldDoc: params.oldDoc,
-            user: params.user,
-            source: params.source,
-            grantState: params.grantState,
-            adminMode: params.adminMode,
-          }),
-          headers: { "Content-Type": "application/json" },
-        }) as unknown as CFRequest
-      );
-      return res.json() as Promise<AccessDescriptor | { forbidden: string }>;
-    },
+    // No default invokeAccessFn. Access-fn evaluation runs LOCALLY (QuickJS) on
+    // the DOs that need it — AppSessions and ChatSessions both pass a
+    // localInvokeAccessFn override below. env.ACCESS_FN_DO has been retired
+    // (#2265 A2b); a context without an override has no invoker, and the
+    // doc-write path fails closed when an access binding has no invoker (see
+    // app-documents-write-eventos.ts).
     ...(callbackOverrides ?? {}),
   });
 }
