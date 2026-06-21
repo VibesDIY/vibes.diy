@@ -236,12 +236,14 @@ runs:
 
         if [ "$TEST_EXIT" -ne 0 ]; then
           echo "::warning title=Test suite failing::npm run test exited ${TEST_EXIT}. See the job summary for details. Tracking: #2426 (gating) / #2425 (deterministic failures)."
-          # A non-zero exit with NO failed tests means vitest hit an unhandled
-          # error/rejection (a promise that settled after its test finished). The
-          # phase reporter dumps those to test-unhandled-errors.json (and the log
-          # above); surface a pointed hint so "0 failed but red" isn't baffling.
+          # Unhandled errors/rejections (a promise that settled after its test
+          # finished) make vitest exit non-zero, and on their own produce the
+          # baffling "0 failed but red" run. The phase reporter dumps them to
+          # test-unhandled-errors.json (and the log above); surface a pointed
+          # hint. This can also fire alongside genuine test failures, so the
+          # wording doesn't claim there were none.
           if [ -s test-unhandled-errors.json ]; then
-            echo "::error title=Unhandled error(s) in test run::vitest exited ${TEST_EXIT} with unhandled error(s)/rejection(s) and no failed tests — see the job summary and test-unhandled-errors.json artifact. Fix the async leak (re-running won't help)."
+            echo "::error title=Unhandled error(s) in test run::vitest exited ${TEST_EXIT} with unhandled error(s)/rejection(s) — see the job summary and test-unhandled-errors.json artifact. These fail the run even with no failed tests; fix the async leak (re-running won't help)."
           fi
           # Only a clean vitest test-failure exit (1) WITH a parsed report is
           # eligible for non-blocking surfacing. A harness/setup/timeout error
