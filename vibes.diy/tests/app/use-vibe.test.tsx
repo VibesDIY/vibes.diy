@@ -21,9 +21,7 @@ const CID = "cid-team";
 // type has no Base/tid: { type, cid, source }. Dispatch AFTER render so the
 // provider's message listener is attached; waitFor() absorbs the state update.
 function seedSource(cid: string, source: string | null) {
-  window.dispatchEvent(
-    new MessageEvent("message", { data: { type: "vibe.evt.accessFnSource", cid, source } })
-  );
+  window.dispatchEvent(new MessageEvent("message", { data: { type: "vibe.evt.accessFnSource", cid, source } }));
 }
 
 function Probe({ dbName, onResult }: { dbName: string; onResult: (r: ReturnType<typeof useVibe>) => void }) {
@@ -35,9 +33,7 @@ function Probe({ dbName, onResult }: { dbName: string; onResult: (r: ReturnType<
 function mount(viewerEnv: unknown, bindings?: { dbName: string; accessFnCid: string }[]) {
   let last: ReturnType<typeof useVibe> | undefined;
   render(
-    <VibeContextProvider
-      mountParams={{ usrEnv: {}, viewerEnv: viewerEnv as never, accessFnBindings: bindings }}
-    >
+    <VibeContextProvider mountParams={{ usrEnv: {}, viewerEnv: viewerEnv as never, accessFnBindings: bindings }}>
       <Probe dbName="aestheticBoard" onResult={(r) => (last = r)} />
     </VibeContextProvider>
   );
@@ -56,7 +52,12 @@ afterEach(() => __resetGraceForTest());
 describe("useVibe", () => {
   it("owner+member → can.create allowed", async () => {
     const get = mount(
-      { viewer: { userHandle: "owner" }, access: "override", isOwner: true, grants: { aestheticBoard: { channels: ["team"], publicChannels: [], roles: [] } } },
+      {
+        viewer: { userHandle: "owner" },
+        access: "override",
+        isOwner: true,
+        grants: { aestheticBoard: { channels: ["team"], publicChannels: [], roles: [] } },
+      },
       [{ dbName: "aestheticBoard", accessFnCid: CID }]
     );
     seedSource(CID, TEAM_SRC);
@@ -76,7 +77,11 @@ describe("useVibe", () => {
 
   it("non-member signed-in → denied with channel reason", async () => {
     const get = mount(
-      { viewer: { userHandle: "bob" }, access: "viewer", grants: { aestheticBoard: { channels: [], publicChannels: [], roles: [] } } },
+      {
+        viewer: { userHandle: "bob" },
+        access: "viewer",
+        grants: { aestheticBoard: { channels: [], publicChannels: [], roles: [] } },
+      },
       [{ dbName: "aestheticBoard", accessFnCid: CID }]
     );
     seedSource(CID, TEAM_SRC);
@@ -88,7 +93,13 @@ describe("useVibe", () => {
 
   it("adminMode bypasses the gate for a non-member owner", async () => {
     const get = mount(
-      { viewer: { userHandle: "owner" }, access: "override", isOwner: true, adminMode: true, grants: { aestheticBoard: { channels: [], publicChannels: [], roles: [] } } },
+      {
+        viewer: { userHandle: "owner" },
+        access: "override",
+        isOwner: true,
+        adminMode: true,
+        grants: { aestheticBoard: { channels: [], publicChannels: [], roles: [] } },
+      },
       [{ dbName: "aestheticBoard", accessFnCid: CID }]
     );
     seedSource(CID, TEAM_SRC);
@@ -148,7 +159,12 @@ describe("useVibe", () => {
 
   it("adminMode flip via viewerChanged flips can.* without remount", async () => {
     const get = mount(
-      { viewer: { userHandle: "owner" }, access: "override", isOwner: true, grants: { aestheticBoard: { channels: [], publicChannels: [], roles: [] } } },
+      {
+        viewer: { userHandle: "owner" },
+        access: "override",
+        isOwner: true,
+        grants: { aestheticBoard: { channels: [], publicChannels: [], roles: [] } },
+      },
       [{ dbName: "aestheticBoard", accessFnCid: CID }]
     );
     seedSource(CID, TEAM_SRC);
