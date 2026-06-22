@@ -188,7 +188,7 @@ server-side SharedSessions invocation is added.
 - Per-env `wrangler deploy --dry-run` gate. **Deploy prod before cli** (cli's
   cross-script binding requires the prod class to exist first).
 
-## Open question — `whoAmI` admin-mode connection coupling (resolve in TDD)
+## `whoAmI` admin-mode — settled: admin is a doc-plane concern, not chat
 
 `whoAmI` is in `sharedHandlers`, but it is **not** a pure read: `who-am-i.ts:209-211`
 sets a **sticky per-connection** `rawSend.adminMode` flag on the WSSendProvider,
@@ -196,23 +196,33 @@ and `putDoc`/doc ops consume it via `connectionAdminMode(ctx)` (see
 [`2026-06-09-owner-mode-data-tab-cli-design.md`](2026-06-09-owner-mode-data-tab-cli-design.md)).
 On a vibe page the admin-mode `whoAmI` is issued today on **`chatApi`**
 (`vibe.$ownerHandle.$appSlug.tsx:281`, via `refreshViewerFromWhoAmI`), while the
-doc ops it gates run on `vibeApi`/AppSessions. So "make `chatApi` lazy" and
-"migrate `whoAmI` to `sharedApi`" both intersect a connection-coupled,
-**access-control-correctness** path — exactly what the blanket "move
-`sharedHandler` call sites to `sharedApi`" rule must not flatten. (Raised by
-`@CharlieHelps` in review.)
+doc ops it gates run on `vibeApi`/AppSessions. (Raised by `@CharlieHelps` in
+review.)
 
-This needs dedicated analysis + regression coverage **before** the lazy/migration
-steps, not a default route swap. Options to evaluate in the plan:
+**Decision (jchris): admin mode is not a chat thing.** The admin-mode `whoAmI`
+must ride the **same connection as the doc ops it gates** — `vibeApi`/AppSessions
+on a vibe page — so the sticky `adminMode` flag is set on the connection that
+`putDoc` actually reads it from. Today's `chatApi.whoAmI` at
+`vibe.$ownerHandle.$appSlug.tsx:281` is a **mis-coupling to correct** as part of
+this work, not a constraint to preserve. The "make admin toggle a lazy-`chatApi`
+trigger" alternative is **rejected** — it would re-couple admin mode to the chat
+plane, which is exactly backwards.
 
-- Pin the admin-mode `whoAmI` to the **same connection as the doc ops it gates**
-  (vibe page → `vibeApi`), leaving only the plain/non-admin `whoAmI` free to ride
-  `sharedApi` on non-vibe routes; or
-- Make `refreshViewerFromWhoAmI` a deliberate lazy-`chatApi` trigger (accept that
-  toggling admin on a vibe page opens a ChatSessions connection).
+Consequences:
 
-Either way, a `whoAmI`/admin-mode regression test is a merge gate. Do **not**
-auto-route `whoAmI` in the call-site migration until this is settled.
+- Repoint `refreshViewerFromWhoAmI` from `chatApi` → `vibeApi` (the doc-op
+  connection). Setting `adminMode` on the chat connection while reading it on the
+  vibe connection is a **latent correctness bug today**; Phase 1 verifies with a
+  failing test first (admin toggle → `putDoc` sees `connectionAdminMode === true`
+  on the same connection), then makes it green.
+- This **de-risks lazy `chatApi`**: admin mode no longer touches the chat plane
+  at all, so making `chatApi` lazy has zero interaction with admin-mode
+  authorization.
+- The plain/non-admin `whoAmI` (identity read, no `adminMode`) still rides
+  `sharedApi` on non-vibe routes like any other shared read. Only the
+  admin-mode-bearing call is pinned to the doc-op connection.
+
+A `whoAmI`/admin-mode regression test remains a merge gate.
 
 ## Test contracts to lock before TDD expansion
 
@@ -228,7 +238,9 @@ Per `@CharlieHelps`'s review, the plan must red/green these before touching wiri
    (AppSessions) and a `shared:` subscriber (SharedSessions) receives one
    delivery per plane; `shared:` prefix resolution + subscriber
    validation/pruning parity with the existing session DOs.
-5. `whoAmI` / admin-mode regression (see open question above).
+5. `whoAmI` / admin-mode regression: admin toggle sets `adminMode` on the
+   **doc-op connection** (`vibeApi`) and `putDoc` reads `connectionAdminMode ===
+true` on that same connection (see decision above).
 
 ## Execution phases (red/green)
 
@@ -238,12 +250,12 @@ review). Each phase is test-first: write the failing test, then implement.
 - [ ] **Phase 0 — lock contracts before any wiring change.** Land the 5 test
       contracts above as enforceable behavioral tests (not smoke), wired into CI
       before migration starts.
-- [ ] **Phase 1 — decide & lock `whoAmI` admin-mode semantics.** Failing test
-      for the chosen admin-toggle + doc-op authorization behavior, then implement
-      exactly one path (pin admin `whoAmI` to the doc-op connection, **or** make
-      the admin toggle a deliberate lazy-`chatApi` trigger). **Exit gate:**
-      `whoAmI` stays excluded from the blanket shared-handler migration until
-      this passes.
+- [ ] **Phase 1 — lock `whoAmI` admin-mode on the doc-op connection.** Failing
+      test that an admin toggle sets `adminMode` on `vibeApi` and `putDoc` reads
+      `connectionAdminMode === true` on the same connection; then repoint
+      `refreshViewerFromWhoAmI` from `chatApi` → `vibeApi` (corrects the latent
+      mis-coupling). **Exit gate:** admin-mode `whoAmI` stays excluded from the
+      blanket shared-handler migration; the plain `whoAmI` read migrates normally.
 - [ ] **Phase 2 — re-home prerequisites for lazy chat.** Failing tests for the
       non-prompt identity/settings/message paths that must work without eager
       chat, then move the required handlers `chatHandlers → sharedHandlers`
@@ -273,6 +285,10 @@ review). Each phase is test-first: write the failing test, then implement.
 3. **Connection count** → `chatApi` lazy everywhere, ChatSessions chat-only;
    `notifyApi` removed; every page is one eager WebSocket.
 4. **SSR** → no server-side path needed.
+5. **`whoAmI` admin-mode** → admin mode is a doc-plane concern, not chat. The
+   admin-mode `whoAmI` rides the doc-op connection (`vibeApi`), correcting
+   today's `chatApi` mis-coupling; only the plain `whoAmI` read migrates to
+   `sharedApi`.
 
 ## Risks
 
@@ -280,8 +296,8 @@ review). Each phase is test-first: write the failing test, then implement.
   re-bucket seam is designed in. Authed traffic is already sharded, so this is
   bounded to logged-out browsing.
 - **Broad call-site migration** — route-by-route with per-route
-  connection-target tests, not one mega-commit. `whoAmI` is excepted (see open
-  question) — not a blanket route swap.
+  connection-target tests, not one mega-commit. The admin-mode `whoAmI` is
+  excepted (pinned to `vibeApi`, see decision) — not a blanket route swap.
 - **Lazy `chatApi` needs a real construction seam**, not only call-site swaps —
   `chatApi` is eagerly constructed today, so the provider needs a deferred
   builder that the first remaining chat-handler call (incl. iframe AI/avatar
