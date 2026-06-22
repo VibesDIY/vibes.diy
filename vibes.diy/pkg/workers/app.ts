@@ -30,7 +30,6 @@ import {
 export { ChatSessions } from "./chat-sessions.js";
 export { AppSessions } from "./app-sessions.js";
 export { UserNotify } from "./user-notify.js";
-export { AccessFnDO } from "./access-fn.js";
 // import { cfServe } from "@vibes.diy/api-svc";
 // import { CfCacheIf } from "@vibes.diy/api-svc/api.js";
 
