@@ -6,6 +6,7 @@ import { ClerkProvider, useClerk } from "@clerk/react";
 import { useLocation } from "react-router";
 import { vibeApiTarget } from "./vibe-api-target.js";
 import { sharedReadShardFor, sharedApiUrl } from "./shared-read-shard.js";
+import { makeLazyChatApi } from "./lazy-chat-api.js";
 import { BuildURI, exception2Result, Future, KeyedResolvOnce, Lazy, Option, Result } from "@adviser/cement";
 import { type } from "arktype";
 import { PostHogProvider } from "posthog-js/react";
@@ -239,41 +240,26 @@ function LiveCycleVibesDiyProvider({ children, webVars }: { children: React.Reac
   const sharedGetToken = clerkTokenSetup;
   realCtx.getToken = clerkTokenSetup;
 
-  // chatApi is now a lazy proxy: constructing this object does NOT open a
-  // WebSocket. The real VibesDiyApi (and its ChatSessions socket) is built
-  // on the first method access. This prevents the heavy ChatSessions WS from
-  // opening on non-chat pages like /settings, /vibes/mine, etc.
-  // (#2265 B Phase 5 — Option C)
-  //
-  // vibesDiyApis.get(apiUrl).once(factory) is called inside the get trap so
-  // the module-level cache persists the instance across re-renders; the proxy
-  // shell itself can be re-created each render.
-  const chatApiProxy = new Proxy({} as VibesDiyApiIface, {
-    get(_target, prop) {
-      // Perf hint: if the user is landing on a viewer route, pin this WS to a
-      // deterministic per-vibe DO shard so they join whatever DO is already
-      // warm for that vibe. The shard is decided once at construction; SPA
-      // navigation does not change it (the WS lives the lifetime of the page).
-      // For non-vibe routes (chat, explore, root) we omit shardKey so codegen
-      // traffic keeps its random-UUID load-balancing.
-      const instance = vibesDiyApis.get(apiUrl).once(() => {
+  // chatApi is a lazy proxy (makeLazyChatApi): constructing it does NOT open a
+  // WebSocket — the real VibesDiyApi (and its ChatSessions socket) is built on
+  // first property access, so the heavy ChatSessions WS never opens on non-chat
+  // pages (/settings, /vibes/mine, …) that only touch sharedApi/vibeApi.
+  // (#2265 Track B, Phase 5 — Option C)
+  realCtx.chatApi = makeLazyChatApi(
+    // vibesDiyApis.get(apiUrl).once(factory): module-level cache persists the
+    // instance across re-renders even though the proxy shell is recreated.
+    () =>
+      vibesDiyApis.get(apiUrl).once(() => {
+        // Perf hint: on a viewer route, pin this WS to a deterministic per-vibe
+        // DO shard so the user joins whatever DO is already warm for that vibe.
+        // The shard is decided once at construction; SPA navigation does not
+        // change it. For non-vibe routes we omit shardKey so codegen traffic
+        // keeps its random-UUID load-balancing.
         const vibeMatch = typeof window !== "undefined" ? window.location.pathname.match(/^\/vibe\/([^/]+)\/([^/]+)/) : null;
         const shardKey = vibeMatch ? `${vibeMatch[1]}--${vibeMatch[2]}` : undefined;
-        return new VibesDiyApi({
-          apiUrl,
-          shardKey,
-          getToken: clerkTokenSetup,
-        });
-      }) as VibesDiyApiIface;
-      // Bind methods to the real instance: VibesDiyApi's methods are regular
-      // (not arrow-bound) and rely on `this` (this.currentConnection, etc.).
-      // Without binding, `chatApi.openChat()` would run with `this` = the proxy
-      // (no set trap → state writes would land on the empty proxy target).
-      const val = (instance as unknown as Record<string | symbol, unknown>)[prop];
-      return typeof val === "function" ? (val as (...args: unknown[]) => unknown).bind(instance) : val;
-    },
-  });
-  realCtx.chatApi = chatApiProxy;
+        return new VibesDiyApi({ apiUrl, shardKey, getToken: clerkTokenSetup });
+      }) as VibesDiyApiIface
+  );
 
   // AppSessions connection factory, keyed by an arbitrary vibe key. Same data
   // plane as vibeApi (skipShard, shared getToken); the module-level

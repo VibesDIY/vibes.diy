@@ -1,116 +1,62 @@
-// Tests that chatApi is NOT constructed (no VibesDiyApi instantiation, no
-// ChatSessions socket) until the first chat-plane method is called.
+// Tests the REAL lazy-chat proxy (makeLazyChatApi) shipped by the provider:
+// the proxy must not build the VibesDiyApi instance until a property is
+// accessed, must build at most once, and must bind methods to the instance so
+// `this`-reliant methods (VibesDiyApi uses this.currentConnection etc.) work.
+// (#2265 Track B, Phase 5)
 //
-// APPROACH: test the proxy mechanism directly at the seam level rather than
-// mounting the full provider (which requires real Clerk, window.location, etc.).
-//
-// The proxy pattern (Phase 5, #2265 B Option C) is:
-//   const proxy = new Proxy({} as VibesDiyApiIface, {
-//     get(_target, prop) {
-//       if (!instance) instance = buildRealApi();
-//       return instance[prop];
-//     }
-//   });
-// Destructuring (`const { openChat } = proxy`) triggers get for "openChat",
-// so we must confirm that the CALL of the returned function—not the
-// destructuring itself—triggers construction. (In the real proxy, `instance`
-// persists via the module-level vibesDiyApis cache, not a local closure.)
+// The live "no ChatSessions socket on a non-chat page" count is verified at
+// runtime in Phase 6; here we pin the construct-on-access + binding contract.
 
 import { describe, it, expect, vi } from "vitest";
+import { makeLazyChatApi } from "~/vibes.diy/app/lazy-chat-api.js";
+import type { VibesDiyApiIface } from "@vibes.diy/api-types";
 
-describe("lazy chatApi proxy", () => {
-  it("does not construct VibesDiyApi until a method is called", () => {
-    let constructCount = 0;
-    const fakeApi = {
-      openChat: vi.fn().mockResolvedValue({ isOk: () => true }),
-      getChatDetails: vi.fn().mockResolvedValue({ isOk: () => true }),
-    };
-    const buildChatApi = vi.fn(() => {
-      constructCount++;
-      return fakeApi;
-    });
+describe("makeLazyChatApi", () => {
+  it("does not build the instance until a property is accessed", () => {
+    const build = vi.fn(() => ({ openChat: vi.fn() }) as unknown as VibesDiyApiIface);
+    const proxy = makeLazyChatApi(build);
+    expect(build).not.toHaveBeenCalled(); // constructing the proxy opens nothing
 
-    // Mimic the module-level cache (vibesDiyApis.get(apiUrl).once) by using
-    // a simple flag — the key property is that the factory runs at most once.
-    let chatApiInstance: typeof fakeApi | undefined;
-    const chatApiProxy = new Proxy({} as typeof fakeApi, {
-      get(_target, prop) {
-        if (!chatApiInstance) chatApiInstance = buildChatApi();
-        return (chatApiInstance as unknown as Record<string | symbol, unknown>)[prop];
-      },
-    });
-
-    // Destructuring at render time (like mine.tsx does) should NOT build yet —
-    // but actually: destructuring DOES trigger the get trap for each key.
-    // This test documents the actual behavior: the proxy DOES fire on
-    // destructuring, not just on the subsequent method call. The real benefit
-    // is that on non-chat pages neither destructuring nor method calls happen
-    // for the chatApi (those pages only use sharedApi/vibeApi), so the
-    // WebSocket is never opened.
-
-    // Simulate a non-chat page that never touches chatApi at all.
-    expect(constructCount).toBe(0); // not constructed before any access
-
-    // First method access triggers construction.
-    void chatApiProxy.openChat({ ownerHandle: "a", appSlug: "b", mode: "chat" } as Parameters<typeof chatApiProxy.openChat>[0]);
-    expect(constructCount).toBe(1);
-    expect(buildChatApi).toHaveBeenCalledOnce();
-
-    // Subsequent accesses reuse the cached instance.
-    void chatApiProxy.getChatDetails({ ownerHandle: "a", appSlug: "b" } as Parameters<typeof chatApiProxy.getChatDetails>[0]);
-    expect(constructCount).toBe(1); // still 1 — instance reused
+    void (proxy as unknown as { openChat: () => void }).openChat();
+    expect(build).toHaveBeenCalledOnce();
   });
 
-  it("proxy methods delegate to the real instance after first access", () => {
-    const callLog: string[] = [];
-    const fakeApi = {
-      openChat: vi.fn(() => {
-        callLog.push("openChat");
-        return Promise.resolve(null);
-      }),
-    };
-    let instance: typeof fakeApi | undefined;
-    const proxy = new Proxy({} as typeof fakeApi, {
-      get(_target, prop) {
-        if (!instance) instance = fakeApi;
-        return (instance as unknown as Record<string | symbol, unknown>)[prop];
-      },
-    });
+  it("builds at most once and reuses the instance across accesses", () => {
+    const api = { openChat: vi.fn(), getChatDetails: vi.fn() } as unknown as VibesDiyApiIface;
+    const build = vi.fn(() => api);
+    const proxy = makeLazyChatApi(build) as unknown as { openChat: () => void; getChatDetails: () => void };
 
-    // Not yet called — no method invocation happened.
-    expect(callLog).toEqual([]);
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    void (proxy as any).openChat({});
-    expect(callLog).toEqual(["openChat"]);
+    proxy.openChat();
+    proxy.getChatDetails();
+    proxy.openChat();
+    expect(build).toHaveBeenCalledOnce();
   });
 
-  it("non-chat pages never access chatApi and so never trigger construction", () => {
-    let constructed = false;
-    const buildChatApi = () => {
-      constructed = true;
-      return { openChat: vi.fn() };
-    };
+  it("binds methods to the instance so `this`-reliant methods keep their state", () => {
+    // A `this`-reliant class like VibesDiyApi: regular methods, real fields, no
+    // arrow binding. Without method binding the proxy would call setState with
+    // `this` = proxy; since the proxy has no set trap, the write would land on
+    // the empty proxy target and getState would read undefined from the instance.
+    class StatefulApi {
+      private value = 0;
+      setValue(v: number): void {
+        this.value = v;
+      }
+      getValue(): number {
+        return this.value;
+      }
+    }
+    const instance = new StatefulApi();
+    const proxy = makeLazyChatApi(() => instance as unknown as VibesDiyApiIface) as unknown as StatefulApi;
 
-    let chatApiInstance: ReturnType<typeof buildChatApi> | undefined;
-    const chatApiProxy = new Proxy({} as ReturnType<typeof buildChatApi>, {
-      get(_target, prop) {
-        if (!chatApiInstance) chatApiInstance = buildChatApi();
-        return (chatApiInstance as unknown as Record<string | symbol, unknown>)[prop];
-      },
-    });
+    proxy.setValue(42);
+    expect(proxy.getValue()).toBe(42); // fails if methods aren't bound to `instance`
+    expect(instance.getValue()).toBe(42); // the write reached the real instance
+  });
 
-    // Simulate a non-chat page: the ctx object is created with chatApi set to
-    // the proxy, but the page only uses sharedApi (not shown here).
-    const ctx = { chatApi: chatApiProxy, sharedApi: { getShared: vi.fn() } };
-
-    // Accessing sharedApi should not trigger chatApi construction.
-    void ctx.sharedApi.getShared();
-    expect(constructed).toBe(false);
-
-    // Only when something actually touches ctx.chatApi do we build it.
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    void (ctx.chatApi as any).openChat({});
-    expect(constructed).toBe(true);
+  it("returns non-function properties directly (no binding)", () => {
+    const api = { ready: true, openChat: vi.fn() } as unknown as VibesDiyApiIface;
+    const proxy = makeLazyChatApi(() => api) as unknown as { ready: boolean };
+    expect(proxy.ready).toBe(true);
   });
 });
