@@ -23,7 +23,7 @@ export function meta() {
 
 /* Hidden per VibesDIY/vibes.diy#1692 — restore alongside the JSX block in SettingsContent and the imports above.
 function GrantsList() {
-  const { chatApi } = useVibesDiy();
+  const { sharedApi } = useVibesDiy();
   const [grants, setGrants] = useState<SharingGrantItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -31,7 +31,7 @@ function GrantsList() {
 
   useEffect(() => {
     setLoading(true);
-    void chatApi.ensureUserSettings({ settings: [] }).then((res) => {
+    void sharedApi.ensureUserSettings({ settings: [] }).then((res) => {
       setLoading(false);
       if (res.isErr()) {
         setError(`Failed to load grants: ${res.Err()}`);
@@ -40,7 +40,7 @@ function GrantsList() {
       const sharing = res.Ok().settings.find(isUserSettingSharing);
       setGrants(sharing?.grants ?? []);
     });
-  }, [chatApi]);
+  }, [sharedApi]);
 
   const toggleGrant = (index: number) => {
     const updated = grants.map((g, i) =>
@@ -48,7 +48,7 @@ function GrantsList() {
     );
     setGrants(updated);
     setSavingIndex(index);
-    void chatApi.ensureUserSettings({ settings: [{ type: "sharing", grants: updated }] }).then((res) => {
+    void sharedApi.ensureUserSettings({ settings: [{ type: "sharing", grants: updated }] }).then((res) => {
       setSavingIndex(null);
       if (res.isErr()) {
         setError(`Failed to save: ${res.Err()}`);
@@ -113,7 +113,7 @@ function GrantsList() {
 */
 
 function HandlesCard() {
-  const { chatApi } = useVibesDiy();
+  const { sharedApi } = useVibesDiy();
   const [items, setItems] = useState<{ ownerHandle: string; tenant: string; created: string; appSlugCount: number }[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -128,7 +128,7 @@ function HandlesCard() {
 
   const load = () => {
     setLoading(true);
-    void Promise.all([chatApi.listHandleBindings({}), chatApi.ensureUserSettings({ settings: [] })]).then(
+    void Promise.all([sharedApi.listHandleBindings({}), sharedApi.ensureUserSettings({ settings: [] })]).then(
       ([slugRes, settingsRes]) => {
         setLoading(false);
         if (slugRes.isErr()) {
@@ -144,7 +144,7 @@ function HandlesCard() {
           } else if (slugItems.length > 0) {
             const firstSlug = slugItems[0].ownerHandle;
             setSettingDefault(true);
-            void chatApi.ensureUserSettings({ settings: [{ type: "defaultHandle", ownerHandle: firstSlug }] }).then((res) => {
+            void sharedApi.ensureUserSettings({ settings: [{ type: "defaultHandle", ownerHandle: firstSlug }] }).then((res) => {
               setSettingDefault(false);
               if (res.isOk()) setDefaultSlug(firstSlug);
             });
@@ -156,7 +156,7 @@ function HandlesCard() {
 
   const handleSetDefault = (ownerHandle: string) => {
     setSettingDefault(true);
-    void chatApi.ensureUserSettings({ settings: [{ type: "defaultHandle", ownerHandle }] }).then((res) => {
+    void sharedApi.ensureUserSettings({ settings: [{ type: "defaultHandle", ownerHandle }] }).then((res) => {
       setSettingDefault(false);
       if (res.isErr()) {
         setError(`Failed to set default: ${res.Err()}`);
@@ -166,11 +166,11 @@ function HandlesCard() {
     });
   };
 
-  useEffect(load, [chatApi]);
+  useEffect(load, [sharedApi]);
 
   const handleCreate = () => {
     setSaving(true);
-    void chatApi.createHandleBinding({ ownerHandle: newSlug || undefined }).then((res) => {
+    void sharedApi.createHandleBinding({ ownerHandle: newSlug || undefined }).then((res) => {
       setSaving(false);
       if (res.isErr()) {
         setError(`Failed to create: ${res.Err()}`);
@@ -184,7 +184,7 @@ function HandlesCard() {
   const handleDeleteConfirm = () => {
     if (!pendingDelete) return;
     setDeleting(true);
-    void chatApi.deleteHandleBinding({ ownerHandle: pendingDelete.ownerHandle }).then((res) => {
+    void sharedApi.deleteHandleBinding({ ownerHandle: pendingDelete.ownerHandle }).then((res) => {
       setDeleting(false);
       setPendingDelete(null);
       setConfirmInput("");
@@ -327,7 +327,7 @@ function HandlesCard() {
 }
 
 function ModelDefaultsCard() {
-  const { chatApi } = useVibesDiy();
+  const { sharedApi } = useVibesDiy();
   const [chatConfig, setChatConfig] = useState<Partial<AIParams>>({});
   const [appConfig, setAppConfig] = useState<Partial<AIParams>>({});
   const [imgConfig, setImgConfig] = useState<Partial<AIParams>>({});
@@ -337,7 +337,7 @@ function ModelDefaultsCard() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    void chatApi.ensureUserSettings({ settings: [] }).then((res) => {
+    void sharedApi.ensureUserSettings({ settings: [] }).then((res) => {
       if (res.isErr()) {
         setError(`Failed to load: ${res.Err()}`);
         return;
@@ -350,7 +350,7 @@ function ModelDefaultsCard() {
         setImgConfig(def.img ?? {});
       }
     });
-  }, [chatApi]);
+  }, [sharedApi]);
 
   const save = (patch: Partial<{ chat: AIParams; app: AIParams; img: AIParams }>, setSaving: (v: boolean) => void) => {
     setSaving(true);
@@ -361,7 +361,7 @@ function ModelDefaultsCard() {
       ...(merged.app?.model ? { app: merged.app } : {}),
       ...(merged.img?.model ? { img: merged.img } : {}),
     };
-    void chatApi.ensureUserSettings({ settings: [setting] }).then((res) => {
+    void sharedApi.ensureUserSettings({ settings: [setting] }).then((res) => {
       setSaving(false);
       if (res.isErr()) {
         setError(`Failed to save: ${res.Err()}`);
@@ -403,7 +403,7 @@ function ModelDefaultsCard() {
 }
 
 function ProfileCard() {
-  const { chatApi } = useVibesDiy();
+  const { sharedApi } = useVibesDiy();
   const [profile, setProfile] = useState<Omit<UserSettingProfile, "type">>({});
   const [defaultHandle, setDefaultHandle] = useState<string | null>(null);
   // All handles the user owns — avatars are per-handle, so the editor targets a
@@ -414,7 +414,7 @@ function ProfileCard() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    void Promise.all([chatApi.ensureUserSettings({ settings: [] }), chatApi.listHandleBindings({})]).then(([res, slugRes]) => {
+    void Promise.all([sharedApi.ensureUserSettings({ settings: [] }), sharedApi.listHandleBindings({})]).then(([res, slugRes]) => {
       if (res.isErr()) {
         setError(`Failed to load profile: ${res.Err()}`);
         return;
@@ -432,12 +432,12 @@ function ProfileCard() {
       // Prefer the default handle; fall back to the first owned handle.
       setSelectedHandle(defHandle && ownedHandles.includes(defHandle) ? defHandle : (ownedHandles[0] ?? null));
     });
-  }, [chatApi]);
+  }, [sharedApi]);
 
   const handleDisplayNameBlur = async () => {
     setSavingName(true);
     setError(null);
-    const rSave = await chatApi.ensureUserSettings({ settings: [{ type: "profile", ...profile }] });
+    const rSave = await sharedApi.ensureUserSettings({ settings: [{ type: "profile", ...profile }] });
     setSavingName(false);
     if (rSave.isErr()) {
       setError(`Failed to save display name: ${rSave.Err()}`);
@@ -481,7 +481,7 @@ function ProfileCard() {
                 </select>
               </div>
             )}
-            {selectedHandle && <HandleAvatarEditor chatApi={chatApi} handle={selectedHandle} />}
+            {selectedHandle && <HandleAvatarEditor sharedApi={sharedApi} handle={selectedHandle} />}
           </>
         )}
       </div>
@@ -510,7 +510,7 @@ function ProfileCard() {
 }
 
 function NotificationSettingsCard() {
-  const { chatApi } = useVibesDiy();
+  const { sharedApi } = useVibesDiy();
   const [prefs, setPrefs] = useState<UserSettingNotifications>({
     type: "notifications",
     buildComplete: true,
@@ -524,19 +524,19 @@ function NotificationSettingsCard() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    void chatApi.ensureUserSettings({ settings: [] }).then((res) => {
+    void sharedApi.ensureUserSettings({ settings: [] }).then((res) => {
       if (res.isOk()) {
         const saved = res.Ok().settings.find(isUserSettingNotifications);
         if (saved) setPrefs(saved);
       }
       setLoaded(true);
     });
-  }, [chatApi]);
+  }, [sharedApi]);
 
   function toggle(key: keyof Omit<UserSettingNotifications, "type">) {
     const updated = { ...prefs, [key]: !prefs[key] };
     setPrefs(updated);
-    void chatApi.ensureUserSettings({ settings: [updated] }).then((res) => {
+    void sharedApi.ensureUserSettings({ settings: [updated] }).then((res) => {
       if (res.isErr()) {
         setError(`Failed to save: ${res.Err()}`);
       }

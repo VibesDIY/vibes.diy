@@ -16,11 +16,11 @@ import { avatarConfirmController } from "../lib/avatar-confirm.js";
 // which re-validates ownership server-side.
 
 interface HandleAvatarEditorProps {
-  readonly chatApi: VibesDiyApiIface;
+  readonly sharedApi: VibesDiyApiIface;
   readonly handle: string;
 }
 
-export function HandleAvatarEditor({ chatApi, handle }: HandleAvatarEditorProps): React.ReactElement {
+export function HandleAvatarEditor({ sharedApi, handle }: HandleAvatarEditorProps): React.ReactElement {
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [version, setVersion] = useState(0);
@@ -40,7 +40,7 @@ export function HandleAvatarEditor({ chatApi, handle }: HandleAvatarEditorProps)
     setError(null);
 
     // 1. Mint a short-lived upload grant.
-    const rGrant = await chatApi.requestAssetUploadGrant({
+    const rGrant = await sharedApi.requestAssetUploadGrant({
       ownerHandle: handle,
       appSlug: "_profile",
       mimeType: file.type || "application/octet-stream",
@@ -89,7 +89,7 @@ export function HandleAvatarEditor({ chatApi, handle }: HandleAvatarEditorProps)
     if (!confirmed) return;
 
     // 4. Write per-handle; the server re-validates ownership of `handle`.
-    const rSave = await chatApi.ensureHandleAvatar({ handle, cid: body.cid, mime: file.type });
+    const rSave = await sharedApi.ensureHandleAvatar({ handle, cid: body.cid, mime: file.type });
     if (rSave.isErr()) {
       setError(`Failed to save avatar: ${rSave.Err()}`);
       return;
