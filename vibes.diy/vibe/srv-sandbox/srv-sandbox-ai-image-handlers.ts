@@ -58,7 +58,6 @@ export function getCodeBlock(stream: ReadableStream<unknown>): Promise<{
 }
 
 export function vibeCallAI(sandbox: VibeApiCapableSandbox): EventoHandler {
-  const { chatApi } = sandbox.args;
   return {
     hash: "vibe.callAI",
     validate: (ctx: ValidateTriggerCtx<MessageEvent, unknown, unknown>) => {
@@ -69,6 +68,10 @@ export function vibeCallAI(sandbox: VibeApiCapableSandbox): EventoHandler {
       return Promise.resolve(Result.Ok(Option.None()));
     },
     handle: async (ctx: HandleTriggerCtx<Request, ReqCallAI, unknown>): Promise<Result<EventoResultType>> => {
+      // Access chatApi lazily inside handle so the proxy's get trap (which
+      // constructs the real VibesDiyApi) only fires when a chat action is
+      // actually needed — not during sandbox setup on non-chat pages. (#2265 B Phase 5)
+      const { chatApi } = sandbox.args;
       await chatApi
         .openChat({ ownerHandle: ctx.validated.ownerHandle, appSlug: ctx.validated.appSlug, mode: "app" })
         .then(async (rChat) => {

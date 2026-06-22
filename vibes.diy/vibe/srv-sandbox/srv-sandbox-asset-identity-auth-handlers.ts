@@ -167,7 +167,6 @@ export function vibeWhoAmI(sandbox: VibeApiCapableSandbox): EventoHandler {
 }
 
 export function vibeUpdateAvatarCid(sandbox: VibeApiCapableSandbox): EventoHandler {
-  const { chatApi } = sandbox.args;
   return {
     hash: "vibe.updateAvatarCid",
     validate: (ctx: ValidateTriggerCtx<MessageEvent, unknown, unknown>) => {
@@ -178,6 +177,10 @@ export function vibeUpdateAvatarCid(sandbox: VibeApiCapableSandbox): EventoHandl
       return Promise.resolve(Result.Ok(Option.None()));
     },
     handle: async (ctx: HandleTriggerCtx<MessageEvent, ReqVibeUpdateAvatarCid, unknown>): Promise<Result<EventoResultType>> => {
+      // Access chatApi lazily inside handle so the proxy's get trap (which
+      // constructs the real VibesDiyApi) only fires when an avatar write is
+      // actually requested — not during sandbox setup on non-chat pages. (#2265 B Phase 5)
+      const { chatApi } = sandbox.args;
       const { tid, cid, mimeType, handle } = ctx.validated;
 
       // Host-side consent gate (#1968): a sandbox can't silently overwrite the
