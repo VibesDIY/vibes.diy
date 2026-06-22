@@ -43,10 +43,10 @@ The access function lives in a dedicated `access.js` file alongside `App.jsx` in
 **Evaluation path:**
 
 1. `putDoc` handler looks up the current `access.js` CID for the target database (D1 query).
-2. Routes to `ACCESS_FN_DO` Durable Object named by that CID.
-3. DO cold-starts on a new CID: loads `access.js` source from storage, evals once with `new Function()`, caches the function object in memory.
-4. Subsequent writes call the cached function — no re-eval, no re-fetch.
-5. DO goes dormant when no databases use that CID; Cloudflare evicts it naturally.
+2. Calls the running DO's local `invokeAccessFn` — eval is **in-process** on whichever DO serves the write (AppSessions, or ChatSessions for app-create backfill); both supply a `localInvokeAccessFn` override. There is no separate access-fn Durable Object. (The original design used a dedicated `AccessFnDO`; it was retired in #2265 — see `do-session-split.md`.)
+3. Loads `access.js` source from storage by CID and evaluates it in QuickJS — a WASM module cached per DO instance (lazy init), with a fresh VM context per eval.
+4. The WASM module stays cached on the instance; subsequent evals reuse it (re-fetching source only when the CID changes).
+5. A doc bound to an access fn with no invoker available **fails closed** rather than writing unchecked (`app-documents-write-eventos.ts`).
 
 **Why CID-keyed (not database-keyed):** databases sharing the same access function share one DO. When `access.js` changes, new CID → new DO, no invalidation step needed.
 

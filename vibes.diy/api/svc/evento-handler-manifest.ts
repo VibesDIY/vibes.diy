@@ -66,9 +66,10 @@ export const sharedHandlers = [
   ensureUserSettingsEvento,
   ensureHandleAvatarEvento,
   listModelsEvento,
-  // Grants, invites, membership — stateless D1 queries called from parent app
-  // on chatApi (chat connection). Registered on both DOs until client routing
-  // is fully split (#2263).
+  // Grants, invites, membership — stateless D1 queries called from the parent
+  // app on chatApi. They ride sharedHandlers (served on both the chat plane and
+  // AppSessions) until SharedSessions lands them on their own singleton DO
+  // (#2265 §2 Track B).
   createInviteEvento,
   revokeInviteEvento,
   redeemInviteEvento,

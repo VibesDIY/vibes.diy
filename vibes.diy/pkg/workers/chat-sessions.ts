@@ -93,8 +93,8 @@ export class ChatSessions implements DurableObject {
   // Lazy-cached QuickJS module for local access-fn eval. ChatSessions evaluates
   // access fns locally (like AppSessions) for the one chat-plane path that needs
   // it: ensureAppSlugItem's access-binding backfill at app-creation time. This
-  // replaces the cross-DO env.ACCESS_FN_DO call so AccessFnDO can be retired
-  // (#2265 A2b). Lazy — the module only loads on the first access-bound app.
+  // replaced the cross-DO env.ACCESS_FN_DO call (AccessFnDO retired in #2265
+  // A2b/A3). Lazy — the module only loads on the first access-bound app.
   private quickjsModule: { module: QuickJSWASMModule | null } = { module: null };
 
   constructor(_state: DurableObjectState, env: CFEnv) {
