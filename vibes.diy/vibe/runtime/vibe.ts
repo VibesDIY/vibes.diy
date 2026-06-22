@@ -20,6 +20,7 @@ export type ViewerEnv = typeof viewerEnv.infer;
 export const vibeMountParams = type({
   usrEnv: vibeEnv,
   "viewerEnv?": viewerEnv,
+  "accessFnBindings?": type({ dbName: "string", accessFnCid: "string" }).array(),
 });
 
 export type VibeMountParams = typeof vibeMountParams.infer;
