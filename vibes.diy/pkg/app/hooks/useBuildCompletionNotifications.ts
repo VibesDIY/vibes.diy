@@ -90,14 +90,13 @@ const TYPE_MAP: Record<
 };
 
 export function useBuildCompletionNotifications(): void {
-  const { vibeApi, notifyApi } = useVibesDiy();
+  const { vibeApi, sharedApi } = useVibesDiy();
   // Prefer the app-API (AppSessions) connection when one exists, otherwise use the
-  // dedicated per-user notification connection (notifyApi). We deliberately never use
-  // the heavy codegen chatApi here. Both vibeApi and notifyApi serve the
-  // user-notification stream and ensureUserSettings (sharedHandlers), and notifyApi
-  // registers a stable per-user shard so the subscriber set stays bounded. notifyApi
-  // is undefined until the user is signed in, so api may be undefined.
-  const api = vibeApi ?? notifyApi;
+  // shared-plane connection (sharedApi). We deliberately never use the heavy codegen
+  // chatApi here. On vibe routes sharedApi === vibeApi; on non-vibe routes sharedApi
+  // is a SharedSessions WS at /api/shared (per-user shard for authed, global for anon).
+  // Both serve the user-notification stream and ensureUserSettings (sharedHandlers).
+  const api = vibeApi ?? sharedApi;
   const navigate = useNavigate();
   // The notification click fires long after render, so read navigate through a ref
   // to keep handleNotification (and the subscription) stable.

@@ -5,10 +5,11 @@ import { useCapiCompleteRegistration } from "./hooks/useCapiCompleteRegistration
 import { ClerkProvider, useClerk } from "@clerk/react";
 import { useLocation } from "react-router";
 import { vibeApiTarget } from "./vibe-api-target.js";
+import { sharedReadShardFor } from "./shared-read-shard.js";
 import { BuildURI, exception2Result, Future, KeyedResolvOnce, Lazy, Option, Result } from "@adviser/cement";
 import { type } from "arktype";
 import { PostHogProvider } from "posthog-js/react";
-import { PkgRepos, VibesDiyApiIface, userNotifyShardFor } from "@vibes.diy/api-types";
+import { PkgRepos, VibesDiyApiIface } from "@vibes.diy/api-types";
 import { vibesDiySrvSandbox, VibesDiySrvSandbox } from "@vibes.diy/vibe-srv-sandbox";
 import { SuperThis } from "@fireproof/use-fireproof";
 import { ensureSuperThis } from "@vibes.diy/identity";
@@ -48,12 +49,14 @@ export interface VibesDiyCtx {
   // dashApi: FPApiInterface;
   chatApi: VibesDiyApiIface;
   vibeApi?: VibesDiyApiIface;
+  // Non-vibe-plane shared reads (+ notify on non-vibe pages). On vibe routes
+  // this is vibeApi; otherwise a SharedSessions connection (per-user or global).
+  sharedApi: VibesDiyApiIface;
   // Build (or fetch the cached) AppSessions connection for an arbitrary vibe
   // key. For vibe-data that isn't the page's primary vibe — e.g. DM threads
   // keyed by `<channelUserSlug>--dm`. Same data plane as vibeApi, no new DO.
   appApiFor?: (vibeKey: string) => VibesDiyApiIface;
-  // Lightweight notification connection (stable per-user shard) used by the notifier on
-  // pages without a vibeApi, so we don't open the heavy codegen chatApi just for notifications.
+  // Kept for backward compatibility during migration; set to undefined — notify now rides sharedApi.
   notifyApi?: VibesDiyApiIface;
   webVars: VibesDiyWebVars;
   srvVibeSandbox: vibesDiySrvSandbox;
@@ -64,6 +67,7 @@ const realCtx: VibesDiyCtx = {
   sthis: {} as SuperThis,
   // dashApi: {} as FPApiInterface,
   chatApi: {} as VibesDiyApi,
+  sharedApi: {} as VibesDiyApiIface,
   webVars: {} as VibesDiyCtx["webVars"],
   srvVibeSandbox: {} as VibesDiyCtx["srvVibeSandbox"],
 };
@@ -263,6 +267,23 @@ function LiveCycleVibesDiyProvider({ children, webVars }: { children: React.Reac
   };
   realCtx.appApiFor = buildAppApi;
 
+  // SharedSessions connection factory: targets /api/shared?shard=<x>.
+  // skipShard: true preserves the ?shard param already embedded in the URL
+  // (same pattern as buildAppApi with ?vibe= — see api/impl/index.ts:272-276
+  // where skipShard || cfg.ws → use cfg.apiUrl as-is, no ?shard= appended).
+  const buildSharedApi = (shard: string): VibesDiyApiIface => {
+    const sharedUrl = BuildURI.from(apiUrl).pathname("/api/shared").cleanParams().setParam("shard", shard).toString();
+    const capturedGetToken = sharedGetToken ?? realCtx.getToken;
+    return vibesDiyApis.get(sharedUrl).once(
+      () =>
+        new VibesDiyApi({
+          apiUrl: sharedUrl,
+          skipShard: true, // shard is already embedded in the URL above; do not append a random one
+          getToken: capturedGetToken ?? (() => Promise.resolve(Result.Err("token not available"))),
+        })
+    ) as VibesDiyApiIface;
+  };
+
   // Build vibeApi (→ AppSessions, which wires the doc-changed emit) for every
   // route that renders the vibe-data iframe: the /vibe/ viewer AND the /chat/
   // editor. Gated on a real appSlug — a chat with no app yet gets no vibeApi.
@@ -270,31 +291,14 @@ function LiveCycleVibesDiyProvider({ children, webVars }: { children: React.Reac
   // /chat/<owner>/<appSlug> after openChat) picks up its vibeApi. (#2306)
   if (target !== undefined) {
     realCtx.vibeApi = buildAppApi(`${target.ownerHandle}--${target.appSlug}`);
-    // Vibe pages deliver notifications over vibeApi; don't open a second notify socket here.
-    realCtx.notifyApi = undefined;
+    realCtx.sharedApi = realCtx.vibeApi; // vibeApi already serves sharedHandlers
+    realCtx.notifyApi = undefined; // notify rides sharedApi now
   } else {
     realCtx.vibeApi = undefined;
-
-    // Dedicated notification connection for pages without a vibeApi (My Vibes, Memberships,
-    // Messages, Settings). Pinned to a STABLE per-user shard so the UserNotify subscriber set
-    // stays bounded (one shard per user); a per-connection random shard would leak.
-    // Constructed only on non-vibe pages because the VibesDiyApi constructor opens its socket
-    // eagerly — gating here keeps vibe pages from opening an unused notification connection.
-    const notifyUserId = clerk.user?.id;
-    if (notifyUserId) {
-      const notifyShard = userNotifyShardFor(notifyUserId);
-      const notifyApiUrl = BuildURI.from(apiUrl).setParam("shard", notifyShard).toString();
-      const capturedGetToken = sharedGetToken ?? realCtx.getToken;
-      realCtx.notifyApi = vibesDiyApis.get(notifyApiUrl).once(() => {
-        return new VibesDiyApi({
-          apiUrl,
-          shardKey: notifyShard,
-          getToken: capturedGetToken ?? (() => Promise.resolve(Result.Err("token not available"))),
-        });
-      });
-    } else {
-      realCtx.notifyApi = undefined;
-    }
+    // SharedSessions WS: authed → per-user shard (same as notifications);
+    // anon → global singleton. Handles shared reads + user notify on non-vibe pages.
+    realCtx.sharedApi = buildSharedApi(sharedReadShardFor(clerk.user?.id));
+    realCtx.notifyApi = undefined; // notify rides sharedApi now
   }
 
   const sandboxHostnameBase = realCtx.webVars.env.VIBES_SVC_HOSTNAME_BASE;
