@@ -1,8 +1,9 @@
 import { DurableObjectNamespace } from "@cloudflare/workers-types";
 import { CFEnv } from "@vibes.diy/api-types";
 
-const SHARD_PREFIX_BINDINGS: Record<string, keyof Pick<CFEnv, "APP_SESSIONS">> = {
+const SHARD_PREFIX_BINDINGS: Record<string, keyof Pick<CFEnv, "APP_SESSIONS" | "SHARED_SESSIONS">> = {
   app: "APP_SESSIONS",
+  shared: "SHARED_SESSIONS",
 };
 
 export function resolveShardDO(shardId: string, env: CFEnv): { ns: DurableObjectNamespace; name: string } {

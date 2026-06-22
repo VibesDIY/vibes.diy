@@ -4,8 +4,9 @@ import type { CFEnv } from "@vibes.diy/api-types";
 
 const APP_SESSIONS = { sentinel: "APP_SESSIONS" } as unknown as CFEnv["APP_SESSIONS"];
 const CHAT_SESSIONS = { sentinel: "CHAT_SESSIONS" } as unknown as CFEnv["CHAT_SESSIONS"];
+const SHARED_SESSIONS = { sentinel: "SHARED_SESSIONS" } as unknown as CFEnv["SHARED_SESSIONS"];
 
-const env = { APP_SESSIONS, CHAT_SESSIONS } as unknown as CFEnv;
+const env = { APP_SESSIONS, CHAT_SESSIONS, SHARED_SESSIONS } as unknown as CFEnv;
 
 describe("resolveShardDO", () => {
   it("app:foo → APP_SESSIONS with name 'foo'", () => {
@@ -36,5 +37,17 @@ describe("resolveShardDO", () => {
     const result = resolveShardDO("app:", env);
     expect(result.ns).toBe(APP_SESSIONS);
     expect(result.name).toBe("");
+  });
+
+  it("shared:foo → SHARED_SESSIONS with name 'foo'", () => {
+    const result = resolveShardDO("shared:foo", env);
+    expect(result.ns).toBe(SHARED_SESSIONS);
+    expect(result.name).toBe("foo");
+  });
+
+  it("shared:notify-user-abc → SHARED_SESSIONS with the user shard name", () => {
+    const result = resolveShardDO("shared:notify-user-abc", env);
+    expect(result.ns).toBe(SHARED_SESSIONS);
+    expect(result.name).toBe("notify-user-abc");
   });
 });
