@@ -435,6 +435,15 @@ export async function registerDependencies(vibeApp: VibeApp): Promise<void> {
   bootstrapViewer(ctxVibeApi).catch((e) => {
     console.warn("[viewer] bootstrap whoAmI failed", e);
   });
+
+  // Fire-and-forget fetch of each vibe's access.js source. render-vibe.ts
+  // inlines the {dbName, accessFnCid} manifest into the mount params; once
+  // the WS bridge is live we fetch the source bytes over the RPC and dispatch
+  // vibe.evt.accessFnSource per CID so VibeContext can cache them. api.request()
+  // already awaits ackReady, so no extra gating is needed here.
+  bootstrapAccessFnSources(ctxVibeApi, vibeApp.accessFnBindings).catch((e) => {
+    console.warn("[accessFn] bootstrap source fetch failed", e);
+  });
 }
 
 function sendRuntimeReadyWithRetry(api: VibeSandboxApi): void {
@@ -550,6 +559,37 @@ export async function bootstrapViewer(api: VibeSandboxApi): Promise<void> {
         ...(r.dbAcls ? { dbAcls: r.dbAcls } : {}),
         ...(r.grants ? { grants: r.grants } : {}),
       },
+    })
+  );
+}
+
+// Fetches the raw access.js source for each distinct CID in the bindings
+// manifest and dispatches a vibe.evt.accessFnSource event per CID so
+// VibeContext can cache it. Many dbNames can share one access.js file, so
+// CIDs are deduplicated before fetching (one RPC per distinct CID).
+// Dispatches even when source === null so the cache can distinguish
+// "resolved-unknown" (cid → null) from "not delivered yet" (cid absent).
+// On a transient RPC error the CID is left absent (pending); a later iframe
+// boot will retry via a fresh registerDependencies call.
+export async function bootstrapAccessFnSources(
+  api: VibeSandboxApi,
+  bindings: readonly { dbName: string; accessFnCid: string }[] | undefined
+): Promise<void> {
+  if (bindings === undefined) return;
+  // Many dbNames can share one access.js file → dedupe by CID before fetching.
+  const cids = [...new Set(bindings.map((b) => b.accessFnCid))];
+  await Promise.all(
+    cids.map(async (cid) => {
+      const res = await api.accessFnSource(cid);
+      if (res.isErr()) return; // transient — leave the CID pending; a later boot retries
+      const r = res.Ok();
+      // Dispatch even when source === null so the cache can distinguish
+      // "resolved-unknown" from "not delivered yet" (the slice-3 readiness contract).
+      window.dispatchEvent(
+        new MessageEvent("message", {
+          data: { type: "vibe.evt.accessFnSource", cid: r.cid, source: r.source },
+        })
+      );
     })
   );
 }
