@@ -34,27 +34,29 @@ The current system uses a **coarse role-group ACL** (`members | editors | submit
 
 The write gate in `putDocEvento` currently calls `aclAllows(acl, "write", access)` — this is where the access function evaluation needs to happen **after** the coarse ACL check passes.
 
-## Function Serialization — Decision (resolved)
+## Function Serialization — as built
 
-**Chosen: `access.js` file in the vibe filesystem, evaluated in a CID-keyed Durable Object.**
+> **Note (2026-06): this was the original kickoff prompt; the feature shipped.**
+> The runtime evolved past the CID-keyed-DO design described in early drafts.
+> The current topology is below; for the live DO architecture see
+> `agents/do-session-split.md`, and for source resolution see
+> `vibes.diy/api/svc/public/access-fn-source.ts`.
+
+**`access.js` file in the vibe filesystem, evaluated in-process via QuickJS WASM on the live Durable Object.**
 
 The access function lives in a dedicated `access.js` file alongside `App.jsx` in the vibe's multi-file filesystem. It is not serialized from a client-side closure — it is stored as source text, content-addressed by CID.
 
 **Evaluation path:**
 
 1. `putDoc` handler looks up the current `access.js` CID for the target database (D1 query).
-2. Calls the running DO's local `invokeAccessFn` — eval is **in-process** on whichever DO serves the write (AppSessions, or ChatSessions for app-create backfill); both supply a `localInvokeAccessFn` override. There is no separate access-fn Durable Object. (The original design used a dedicated `AccessFnDO`; it was retired in #2265 — see `do-session-split.md`.)
-3. Loads `access.js` source from storage by CID and evaluates it in QuickJS — a WASM module cached per DO instance (lazy init), with a fresh VM context per eval.
+2. Calls the running DO's local `invokeAccessFn` — eval is **in-process** on whichever DO serves the write (AppSessions, or ChatSessions for app-create backfill); both supply a `localInvokeAccessFn` override (`cf-serve.ts`). There is **no separate access-fn Durable Object** — the dedicated `AccessFnDO` was retired in #2265 (see `do-session-split.md`).
+3. Loads `access.js` source from storage by CID and evaluates it in **QuickJS (WASM)** — `getQuickJSWASMModule()` cached per DO instance (lazy init), with a fresh `QuickJS.newContext()` per eval.
 4. The WASM module stays cached on the instance; subsequent evals reuse it (re-fetching source only when the CID changes).
 5. A doc bound to an access fn with no invoker available **fails closed** rather than writing unchecked (`app-documents-write-eventos.ts`).
 
-**Why CID-keyed (not database-keyed):** databases sharing the same access function share one DO. When `access.js` changes, new CID → new DO, no invalidation step needed.
+**Security model:** eval runs **inside the QuickJS WASM sandbox** — a JS-level VM isolated from the Worker runtime — so developer-authored policy code cannot touch host globals. `unsafe_eval` is **not** required and is **not** set (`compatibility_flags = ["nodejs_compat"]`); there is no worker-level `new Function()`/`eval()` on this path. Do **not** add `unsafe_eval` or reintroduce a CID-keyed access-fn DO.
 
-**`unsafe_eval` flag required:** add `"unsafe_eval"` to `compatibility_flags` in `vibes.diy/pkg/wrangler.toml`. Document in code that this enables `new Function()` for the access function DO only; the isolation boundary is the Cloudflare Worker process (not a JS-level VM), which is the honest security model for developer-authored policy code.
-
-**Migration path:** when the coordinator DO is implemented for Phase 3 channel routing, the CID-keyed eval cache merges into that DO. The interface `(doc, oldDoc, user) → AccessDescriptor | forbidden` stays the same.
-
-See spec section "Runtime Architecture — Function Serialization" for full detail.
+The interface `(doc, oldDoc, user) → AccessDescriptor | forbidden` is stable. See spec section "Runtime Architecture — Function Serialization" for the original design rationale.
 
 ## Implementation Scope (do these in order, stop at the first blocker)
 
