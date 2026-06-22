@@ -25,7 +25,7 @@ export default function App() {
       <header>
         <ViewerTag />
       </header>
-      {!viewer && <p>Sign in to post.</p>}
+      {!viewer && <p>Sign in.</p>}
       {viewer && <p>Welcome back!</p>}
     </div>
   );
@@ -42,25 +42,54 @@ export default function App() {
 
 ## Gating UI
 
-Add a "commenting as" label and a gated form. The ViewerTag handles sign-in/identity display:
+Add a "commenting as" label and a write-gated form. Use `useVibe("comments").can` to gate the form; `ViewerTag` handles sign-in/identity display:
 
 App.jsx
 
 ```jsx
 <<<<<<< SEARCH
-      {!viewer && <p>Sign in to post.</p>}
+import { useViewer } from "use-vibes";
+=======
+import { useViewer, useVibe } from "use-vibes";
+>>>>>>> REPLACE
+```
+
+App.jsx
+
+```jsx
+<<<<<<< SEARCH
+  const { viewer, isViewerPending, ViewerTag } = useViewer();
+=======
+  const { viewer, isViewerPending, ViewerTag } = useViewer();
+  const { can, ready, me } = useVibe("comments");
+>>>>>>> REPLACE
+```
+
+App.jsx
+
+```jsx
+<<<<<<< SEARCH
+      {!viewer && <p>Sign in.</p>}
       {viewer && <p>Welcome back!</p>}
 =======
+      {/* identity display */}
       <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
         {viewer && <span style={{ fontSize: 13, color: "var(--muted, #888)" }}>commenting as</span>}
         <ViewerTag />
       </div>
 
-      {!viewer && <p>Sign in to post.</p>}
-      {viewer && <form>
-        <input placeholder="Add a comment..." />
-        <button type="submit">Post</button>
-      </form>}
+      {/* write gate: useVibe().can, not viewer */}
+      {!ready ? null : (() => {
+        const v = can.create({ type: "comment", authorHandle: me?.userHandle });
+        return v.ok ? (
+          <form>
+            <input placeholder="Add a comment..." />
+            <button type="submit">Post</button>
+          </form>
+        ) : (
+          <p>{v.reason}</p>
+        );
+      })()}
 >>>>>>> REPLACE
 ```
 
@@ -74,50 +103,41 @@ App.jsx
 
 ```jsx
 <<<<<<< SEARCH
-export default function App() {
-  const { viewer, isViewerPending, ViewerTag } = useViewer();
-
-  if (isViewerPending) return null;
-
-  return (
-    <div>
-      <header>
-        <ViewerTag />
-      </header>
-      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-        {viewer && <span style={{ fontSize: 13, color: "var(--muted, #888)" }}>commenting as</span>}
-        <ViewerTag />
-      </div>
-
-      {!viewer && <p>Sign in to post.</p>}
-      {viewer && <form>
-        <input placeholder="Add a comment..." />
-        <button type="submit">Post</button>
-      </form>}
-    </div>
-  );
-}
+import { useViewer, useVibe } from "use-vibes";
 =======
-export default function App() {
+import { useViewer, useVibe } from "use-vibes";
+import { useFireproof } from "use-fireproof";
+>>>>>>> REPLACE
+```
+
+```jsx
+<<<<<<< SEARCH
   const { viewer, isViewerPending, ViewerTag } = useViewer();
+  const { can, ready, me } = useVibe("comments");
+=======
+  const { viewer, isViewerPending, ViewerTag } = useViewer();
+  const { can, ready, me } = useVibe("comments");
   const { useLiveQuery, database } = useFireproof("comments");
   const { docs: comments } = useLiveQuery("createdAt");
   const [body, setBody] = React.useState("");
+>>>>>>> REPLACE
+```
 
-  async function post() {
-    if (!viewer || !body.trim()) return;
-    await database.put({
-      body: body.trim(),
-      createdAt: Date.now(),
-      authorHandle: viewer.userHandle,
-    });
-    setBody("");
-  }
-
-  if (isViewerPending) return null;
-
-  return (
-    <div>
+```jsx
+<<<<<<< SEARCH
+      {/* write gate: useVibe().can, not viewer */}
+      {!ready ? null : (() => {
+        const v = can.create({ type: "comment", authorHandle: me?.userHandle });
+        return v.ok ? (
+          <form>
+            <input placeholder="Add a comment..." />
+            <button type="submit">Post</button>
+          </form>
+        ) : (
+          <p>{v.reason}</p>
+        );
+      })()}
+=======
       <ul>
         {comments.map((c) => (
           <li key={c._id}>
@@ -127,20 +147,44 @@ export default function App() {
         ))}
       </ul>
 
+      {/* identity display */}
       <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
         {viewer && <span style={{ fontSize: 13, color: "var(--muted, #888)" }}>commenting as</span>}
         <ViewerTag />
       </div>
-      {!viewer && <p>Sign in to post.</p>}
-      {viewer && (
-        <form onSubmit={(e) => { e.preventDefault(); post(); }}>
-          <input value={body} onChange={(e) => setBody(e.target.value)} />
-          <button type="submit">Post</button>
-        </form>
-      )}
-    </div>
-  );
-}
+
+      {/* write gate: useVibe().can, not viewer */}
+      {!ready ? null : (() => {
+        const v = can.create({ type: "comment", authorHandle: me?.userHandle });
+        return v.ok ? (
+          <form onSubmit={(e) => { e.preventDefault(); post(); }}>
+            <input value={body} onChange={(e) => setBody(e.target.value)} placeholder="Add a comment..." />
+            <button type="submit">Post</button>
+          </form>
+        ) : (
+          <p>{v.reason}</p>
+        );
+      })()}
+>>>>>>> REPLACE
+```
+
+Also add the `post` handler before `if (isViewerPending)`:
+
+```jsx
+<<<<<<< SEARCH
+  if (isViewerPending) return null;
+=======
+  async function post() {
+    if (!body.trim()) return;
+    await database.put({
+      body: body.trim(),
+      createdAt: Date.now(),
+      authorHandle: me?.userHandle,
+    });
+    setBody("");
+  }
+
+  if (isViewerPending) return null;
 >>>>>>> REPLACE
 ```
 

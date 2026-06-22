@@ -341,11 +341,23 @@ App.jsx
 
 ```jsx
 <<<<<<< SEARCH
+import { useFireproof } from "use-fireproof";
+=======
+import { useFireproof } from "use-fireproof";
+import { useVibe } from "use-vibes";
+>>>>>>> REPLACE
+```
+
+App.jsx
+
+```jsx
+<<<<<<< SEARCH
   const { useLiveQuery, database } = useFireproof("announcements", {
     acl: { write: ["members"], delete: ["editors"] },
   });
 =======
   const { database, useLiveQuery, access } = useFireproof("comments");
+  const { can, me } = useVibe("comments");
 >>>>>>> REPLACE
 ```
 
@@ -366,7 +378,7 @@ App.jsx
       </ul>
 =======
       {/* gate writes with useVibe().can, not access.* — and gate the SAME db you write to */}
-      {useVibe("comments").can.create({ type: "comment" }).ok && <CommentForm database={database} />}
+      {can.create({ type: "comment", authorHandle: me?.userHandle }).ok && <CommentForm database={database} />}
       {access.hasRole("moderator") && <ModToolsBadge />}
       {access.hasChannel("announcements") && <Announcements />}
 >>>>>>> REPLACE
@@ -720,7 +732,7 @@ function crewChat(doc, oldDoc, user, ctx) {
   ctx.requireAccess(doc.channelId);
   return { channels: [doc.channelId] };
 }
-export { crewChat as "crew-chat" }
+export { crewChat as "crew-chat" };
 ```
 
 ### Catch-all with `export default`
