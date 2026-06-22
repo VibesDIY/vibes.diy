@@ -59,4 +59,29 @@ describe("VibeContextProvider", () => {
     });
     expect(captured?.mountParams.viewerEnv?.access).toBe("viewer");
   });
+
+  it("copies adminMode through on viewerChanged", async () => {
+    let captured: Vibe | undefined;
+    render(
+      <VibeContextProvider mountParams={{ usrEnv: {}, viewerEnv: { viewer: null, access: "none" } }}>
+        <Probe onCtx={(c) => (captured = c)} />
+      </VibeContextProvider>
+    );
+
+    window.dispatchEvent(
+      new MessageEvent("message", {
+        data: {
+          type: "vibe.evt.viewerChanged",
+          viewer: { userHandle: "owner" },
+          access: "override",
+          isOwner: true,
+          adminMode: true,
+        },
+      })
+    );
+
+    await waitFor(() => {
+      expect(captured?.mountParams.viewerEnv?.adminMode).toBe(true);
+    });
+  });
 });

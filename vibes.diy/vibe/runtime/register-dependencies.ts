@@ -574,6 +574,7 @@ export async function bootstrapViewer(api: VibeSandboxApi): Promise<void> {
         ...(r.isOwner !== undefined ? { isOwner: r.isOwner } : {}),
         ...(r.dbAcls ? { dbAcls: r.dbAcls } : {}),
         ...(r.grants ? { grants: r.grants } : {}),
+        ...(r.adminMode !== undefined ? { adminMode: r.adminMode } : {}),
       },
     })
   );
