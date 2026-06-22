@@ -35,7 +35,7 @@ export async function resolveEffectiveModel(
 }
 
 export async function getDefaultSkills(): Promise<string[]> {
-  return ["fireproof", "callai", "image-gen", "web-audio"];
+  return ["fireproof", "callai", "image-gen", "web-audio", "use-vibe"];
 }
 
 /**
@@ -217,6 +217,14 @@ export async function makeBaseSystemPrompt(
     : [];
   if (selectedNames.length === 0) {
     selectedNames = [...(await getDefaultSkills())];
+  }
+  // Gating + identity are universal, so both docs must reach EVERY assembled
+  // prompt — including when a caller supplies a skills list that omits them
+  // (a provided list bypasses the defaults above). Force-add and dedup.
+  for (const required of ["use-vibe", "use-viewer"]) {
+    if (llmsCatalogNames.has(required) && !selectedNames.includes(required)) {
+      selectedNames.push(required);
+    }
   }
   const includeDemoData = sessionDoc?.demoData === true;
 

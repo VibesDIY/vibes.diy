@@ -337,4 +337,17 @@ describe("prompt builder (real implementation)", () => {
     expect(useVibe?.importModule).toBe("use-vibes");
     expect(useVibe?.importName).toBe("useVibe");
   });
+
+  it("makeBaseSystemPrompt force-injects use-vibe and use-viewer even when a skills list omits them", async () => {
+    const result = await makeBaseSystemPrompt("test-model", {
+      ...opts,
+      skills: ["fireproof"],
+    } as never);
+    // Both docs injected — their label-docs blocks appear (labels from the configs):
+    expect(result.systemPrompt).toContain("Vibe Write Gating-docs>");
+    expect(result.systemPrompt).toContain("Viewer Identity-docs>");
+    // And both imports are emitted:
+    expect(result.systemPrompt).toContain('import { useVibe } from "use-vibes"');
+    expect(result.systemPrompt).toContain('import { useViewer } from "use-vibes"');
+  });
 });
