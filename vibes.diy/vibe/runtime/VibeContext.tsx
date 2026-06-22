@@ -145,6 +145,21 @@ function LiveCycleVibeContextProvider({ mountParams, children }: VibeContextProv
       });
     };
     window.addEventListener("message", onMsg);
+    // Resync the baseline now that the listener is attached. A source that
+    // resolved in the gap between the useState initializer (above) reading the
+    // baseline and this effect running would have dispatched its event into a
+    // void and written _accessFnSources after the initial read — merge any such
+    // CIDs in so the render→effect window can't strand them for the session.
+    setAccessFnSources((prev) => {
+      const baseline = getRegisteredAccessFnSources();
+      let next: Map<string, string | null> | undefined;
+      for (const [cid, source] of baseline) {
+        if (prev.has(cid)) continue;
+        next = next ?? new Map(prev);
+        next.set(cid, source);
+      }
+      return next ?? prev;
+    });
     return () => window.removeEventListener("message", onMsg);
   }, []);
 

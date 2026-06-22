@@ -1,7 +1,7 @@
 import React from "react";
 import { describe, it, expect } from "vitest";
 import { render, waitFor } from "@testing-library/react";
-import { VibeContextProvider, useVibeContext, type Vibe } from "@vibes.diy/vibe-runtime";
+import { VibeContextProvider, useVibeContext, VibeSandboxApi, bootstrapAccessFnSources, type Vibe } from "@vibes.diy/vibe-runtime";
 
 function Probe({ onCtx }: { onCtx: (ctx: ReturnType<typeof useVibeContext>) => void }) {
   const ctx = useVibeContext();
@@ -99,6 +99,45 @@ describe("VibeContextProvider — accessFnSources cache", () => {
       // After dispatch — CID is present with null (resolved-unknown).
       expect(captured?.accessFnSources.has("bafy2")).toBe(true);
       expect(captured?.accessFnSources.get("bafy2")).toBeNull();
+    });
+  });
+
+  // Must run last: it seeds the module-level baseline, which a freshly-mounted
+  // provider reads. Sources already in the baseline at mount (or arriving in the
+  // render→effect gap, resynced by the effect) must reach the context even
+  // though no live event is dispatched to this provider.
+  it("delivers a source already present in the module baseline at mount (no live event)", async () => {
+    const posts: unknown[] = [];
+    const listeners: ((e: MessageEvent) => void)[] = [];
+    const api = new VibeSandboxApi({
+      vibeApp: { appSlug: "myapp", ownerHandle: "alice", fsId: "fs1" },
+      addEventListener: ((_t: string, h: (e: MessageEvent) => void) => listeners.push(h)) as typeof window.addEventListener,
+      postMessage: ((msg: unknown) => posts.push(msg)) as typeof window.postMessage,
+    });
+    listeners.forEach((h) => h({ data: { type: "vibe.evt.runtime.ack" } } as MessageEvent));
+
+    const bootstrapPromise = bootstrapAccessFnSources(api, [{ dbName: "*", accessFnCid: "baseline-cid-xyz" }]);
+    await Promise.resolve();
+    await Promise.resolve();
+    const sentTid = (posts[0] as { tid: string }).tid;
+    listeners.forEach((h) =>
+      h({
+        data: { type: "vibe.res.accessFnSource", tid: sentTid, cid: "baseline-cid-xyz", source: "export function base(){}" },
+      } as MessageEvent)
+    );
+    await bootstrapPromise;
+
+    // Now the baseline holds baseline-cid-xyz. A provider mounting afterward must
+    // expose it without any vibe.evt.accessFnSource being dispatched to it.
+    let captured: Vibe | undefined;
+    render(
+      <VibeContextProvider mountParams={{ usrEnv: {}, accessFnBindings: [{ dbName: "*", accessFnCid: "baseline-cid-xyz" }] }}>
+        <Probe onCtx={(c) => (captured = c)} />
+      </VibeContextProvider>
+    );
+
+    await waitFor(() => {
+      expect(captured?.accessFnSources.get("baseline-cid-xyz")).toBe("export function base(){}");
     });
   });
 });
