@@ -89,4 +89,26 @@ describe("evento handler manifest parity", () => {
     expect(shared.has("put-doc")).toBe(false);
     expect(shared.has("open-chat-handler")).toBe(false);
   });
+
+  it("identity/settings/report handlers are shared, not chat (Track B re-home)", () => {
+    const shared = hashes(sharedHandlers);
+    const chat = hashes(chatHandlers);
+    const reHomed = [
+      "list-user-slug-bindings",
+      "create-user-slug-binding",
+      "delete-user-slug-binding",
+      "get-cert-from-csr",
+      "vibes.diy.req-report-growth-memberships",
+      "vibes.diy.req-report-growth-vibes-with-data",
+      "vibes.diy.req-report-active-members",
+      "vibes.diy.req-report-top-vibes-by-members",
+      "vibes.diy.req-report-attribution-referrers",
+      "vibes.diy.req-report-campaign-health",
+      "vibes.diy.req-report-campaign-ad-previews",
+    ];
+    for (const h of reHomed) {
+      expect(shared.has(h), `${h} must be a sharedHandler`).toBe(true);
+      expect(chat.has(h), `${h} must NOT be a chatHandler`).toBe(false);
+    }
+  });
 });
