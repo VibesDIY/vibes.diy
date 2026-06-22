@@ -40,7 +40,7 @@ function ModelSection({
   saving: boolean;
   onSave: (cfg: AIParams) => void;
 }) {
-  const { chatApi } = useVibesDiy();
+  const { sharedApi } = useVibesDiy();
 
   const [models, setModels] = useState<AIParams["model"][]>([]);
 
@@ -58,7 +58,7 @@ function ModelSection({
   useEffect(() => {
     if (viewState.current === "start") {
       viewState.current = "loading";
-      chatApi.listModels({}).then((res) => {
+      sharedApi.listModels({}).then((res) => {
         toastError(res, (data) => {
           viewState.current = "loaded";
           const eligible = filterModelsByUsage(data.models, usage);
@@ -76,7 +76,7 @@ function ModelSection({
       });
       return;
     }
-  }, [chatApi, usage]);
+  }, [sharedApi, usage]);
 
   useEffect(() => {
     setAIParam({
