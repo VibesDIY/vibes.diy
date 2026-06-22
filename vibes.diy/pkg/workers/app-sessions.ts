@@ -79,6 +79,12 @@ export class AppSessions implements DurableObject {
   private env: CFEnv;
   private vibeKey: string | undefined;
   private quickjsModule: { module: QuickJSWASMModule | null } = { module: null };
+  // Per-DO cache of access.js source bytes keyed by access-fn CID. The source is
+  // content-addressed/immutable per CID, so a hit never goes stale; this removes
+  // the per-write storage (R2) round-trip on access-bound vibes. The DO is
+  // sharded per vibe, so only a handful of CIDs ever land here (one per access.js
+  // edit). Mirrors quickjsModule above. See #2512.
+  private accessFnSourceCache: Map<string, string> = new Map<string, string>();
 
   constructor(_state: DurableObjectState, env: CFEnv) {
     this.env = env;
@@ -146,6 +152,7 @@ export class AppSessions implements DurableObject {
     };
     const broadcastCbs = localBroadcastCallbacks(this.connections, this.env);
     const quickjsRef = this.quickjsModule;
+    const accessFnSourceCache = this.accessFnSourceCache;
     const currentVibeKey = this.vibeKey;
     const userCbs = currentVibeKey !== undefined ? userNotifyCallbacksForAppSessions(currentVibeKey, this.env) : {};
 
@@ -154,6 +161,7 @@ export class AppSessions implements DurableObject {
         ...broadcastCbs,
         ...userCbs,
         invokeAccessFn: (params: Parameters<typeof localInvokeAccessFn>[1]) => localInvokeAccessFn(quickjsRef, params),
+        accessFnSourceCache,
       })
     ).appCtx;
 

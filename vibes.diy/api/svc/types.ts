@@ -90,6 +90,15 @@ export interface VibesApiSQLCtx {
     };
     adminMode?: boolean;
   }): Promise<AccessDescriptor | { forbidden: string }>;
+  /**
+   * Per-DO cache of `access.js` source bytes keyed by access-fn CID. The source
+   * is content-addressed and immutable per CID, so a hit can never go stale; the
+   * write path uses it to avoid re-fetching the source from storage (R2) on
+   * every write to an access-bound vibe. Mirrors the per-DO QuickJS module cache
+   * (`localInvokeAccessFn`). Supplied by the DOs that own the cache lifetime
+   * (AppSessions); contexts without it simply fetch every time. See #2512.
+   */
+  accessFnSourceCache?: Map<string, string>;
 }
 
 export const HandleBinding = type({
