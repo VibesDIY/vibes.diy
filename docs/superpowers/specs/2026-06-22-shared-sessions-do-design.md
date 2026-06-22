@@ -188,6 +188,48 @@ server-side SharedSessions invocation is added.
 - Per-env `wrangler deploy --dry-run` gate. **Deploy prod before cli** (cli's
   cross-script binding requires the prod class to exist first).
 
+## Open question — `whoAmI` admin-mode connection coupling (resolve in TDD)
+
+`whoAmI` is in `sharedHandlers`, but it is **not** a pure read: `who-am-i.ts:209-211`
+sets a **sticky per-connection** `rawSend.adminMode` flag on the WSSendProvider,
+and `putDoc`/doc ops consume it via `connectionAdminMode(ctx)` (see
+[`2026-06-09-owner-mode-data-tab-cli-design.md`](2026-06-09-owner-mode-data-tab-cli-design.md)).
+On a vibe page the admin-mode `whoAmI` is issued today on **`chatApi`**
+(`vibe.$ownerHandle.$appSlug.tsx:281`, via `refreshViewerFromWhoAmI`), while the
+doc ops it gates run on `vibeApi`/AppSessions. So "make `chatApi` lazy" and
+"migrate `whoAmI` to `sharedApi`" both intersect a connection-coupled,
+**access-control-correctness** path — exactly what the blanket "move
+`sharedHandler` call sites to `sharedApi`" rule must not flatten. (Raised by
+`@CharlieHelps` in review.)
+
+This needs dedicated analysis + regression coverage **before** the lazy/migration
+steps, not a default route swap. Options to evaluate in the plan:
+
+- Pin the admin-mode `whoAmI` to the **same connection as the doc ops it gates**
+  (vibe page → `vibeApi`), leaving only the plain/non-admin `whoAmI` free to ride
+  `sharedApi` on non-vibe routes; or
+- Make `refreshViewerFromWhoAmI` a deliberate lazy-`chatApi` trigger (accept that
+  toggling admin on a vibe page opens a ChatSessions connection).
+
+Either way, a `whoAmI`/admin-mode regression test is a merge gate. Do **not**
+auto-route `whoAmI` in the call-site migration until this is settled.
+
+## Test contracts to lock before TDD expansion
+
+Per `@CharlieHelps`'s review, the plan must red/green these before touching wiring:
+
+1. `/api/shared` route + shard resolution (incl. anon `global` fallback,
+   `idFromName(userNotifyShardFor(userId))` for authed).
+2. Provider connection-matrix: exact **eager socket count by route × auth**
+   (the table above is the assertion).
+3. Lazy-init: chat socket opens **only** on a remaining chat-handler call —
+   including the iframe AI/avatar entry paths and `srvVibeSandbox`.
+4. Cross-plane fan-out integration: same user with both an `app:` subscriber
+   (AppSessions) and a `shared:` subscriber (SharedSessions) receives one
+   delivery per plane; `shared:` prefix resolution + subscriber
+   validation/pruning parity with the existing session DOs.
+5. `whoAmI` / admin-mode regression (see open question above).
+
 ## Decisions (settled)
 
 1. **Singleton vs. shard** → reads shard by user (`userNotifyShardFor`);
@@ -205,10 +247,16 @@ server-side SharedSessions invocation is added.
   re-bucket seam is designed in. Authed traffic is already sharded, so this is
   bounded to logged-out browsing.
 - **Broad call-site migration** — route-by-route with per-route
-  connection-target tests, not one mega-commit.
-- **Lazy ChatSessions regressing warm-connection assumers** — audit
-  `srvVibeSandbox`, `titleGenerator`, `useBuildCompletionNotifications` (the last
-  already off `chatApi`).
+  connection-target tests, not one mega-commit. `whoAmI` is excepted (see open
+  question) — not a blanket route swap.
+- **Lazy `chatApi` needs a real construction seam**, not only call-site swaps —
+  `chatApi` is eagerly constructed today, so the provider needs a deferred
+  builder that the first remaining chat-handler call (incl. iframe AI/avatar
+  entry paths, `srvVibeSandbox`) triggers. Audit
+  `useBuildCompletionNotifications` (already off `chatApi`). There is **no**
+  `titleGenerator` module in-tree (earlier draft named one in error); the
+  title-sensitive runtime paths are `ensure-chat-id`, app-metadata generation,
+  and the client `openChat` refresh — all genuinely chat-plane, so lazy is fine.
 
 ## Out of scope
 
