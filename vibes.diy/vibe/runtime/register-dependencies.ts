@@ -579,7 +579,7 @@ export async function bootstrapViewer(api: VibeSandboxApi): Promise<void> {
 // VibeContext can cache it. Many dbNames can share one access.js file, so
 // CIDs are deduplicated before fetching (one RPC per distinct CID).
 // Dispatches even when source === null so the cache can distinguish
-// "resolved-unknown" (cid → null) from "not delivered yet" (cid absent).
+// resolved-unknown (cid → null) versus not-yet-delivered (cid absent).
 // On a transient RPC error the CID is left absent (pending); a later iframe
 // boot will retry via a fresh registerDependencies call.
 export async function bootstrapAccessFnSources(
@@ -598,7 +598,7 @@ export async function bootstrapAccessFnSources(
       // the hook looks up), not r.cid, so a server-side CID normalization can't
       // desync the cache key from the binding. Record the baseline before
       // dispatching, then dispatch even when source === null so the cache can
-      // distinguish "resolved-unknown" from "not delivered yet" (slice-3 readiness).
+      // distinguish resolved-unknown versus not-yet-delivered (slice-3 readiness).
       _accessFnSources.set(cid, r.source);
       window.dispatchEvent(
         new MessageEvent("message", {
