@@ -1,27 +1,27 @@
 # Fireproof Database API Guide
 
-Fireproof is a lightweight embedded document database with encrypted live sync, designed to make browser apps easy. Use it in any JavaScript environment with a unified API that works both in React (with hooks) and as a standalone core API.
+Fireproof is a document database with encrypted live sync, designed to make browser apps easy. On vibes.diy it runs against Firefly, a cloud-centralized backend: writes are sent to a server that validates them with your `access.js`, persists them, and streams them live to every viewer. Use it in any JavaScript environment with a unified API that works both in React (with hooks) and as a standalone core API.
 
 ## Key Features
 
 - **Apps run anywhere:** Bundle UI, data, and logic together.
-- **Real-Time & Offline-First:** Automatic persistence and live queries, runs in the browser - no loading or error states.
+- **Real-Time, cloud-backed:** Writes are validated and persisted server-side, then streamed live to every viewer. Data shows up instantly from a local cache, so you rarely need loading states — but writes can fail (access denied, conflicts, network), so handle write rejections.
 - **Unified API:** TypeScript works with Deno, Bun, Node.js, and the browser.
 - **React Hooks:** Leverage `useLiveQuery` and `useDocument` for live collaboration. Note: these are NOT top-level exports — they are returned by the `useFireproof()` hook. Always destructure from `const { useLiveQuery, useDocument, database } = useFireproof("dbName")`.
 
 **File structure:** A vibe's source is one or more files. `/App.jsx` is the entry point (React component). `/access.js` is optional — include it when the app needs per-document write validation or channel-based read isolation. Both files are pushed together and the server discovers `/access.js` automatically.
 
-Fireproof enforces cryptographic causal consistency and ledger integrity using hash history, providing git-like versioning with lightweight blockchain-style verification. Data is stored and replicated as content-addressed encrypted blobs, making it safe and easy to sync via commodity object storage providers.
+Fireproof enforces cryptographic causal consistency and ledger integrity using hash history, providing git-like versioning with lightweight blockchain-style verification. On vibes.diy, the Firefly server is the authority for every write: it stores each document in a per-document append-only sequence, runs your `access.js` to validate and route it, and then syncs it to viewers. Because writes go through the server, they are subject to access rules and can be rejected.
 
 ## Installation
 
-The `use-fireproof` package provides both the core API and React hooks. React hooks are the recommended way to use Fireproof in LLM code generation contexts. Fireproof databases store data across sessions and can sync in real-time. Each database is identified by a string name, and you can have multiple databases per application—often one per collaboration session, as they are the unit of sharing.
+The `use-fireproof` package provides both the core API and React hooks. React hooks are the recommended way to use Fireproof in LLM code generation contexts. Fireproof databases persist data through the Firefly server and sync it live to every viewer. Each database is identified by a string name, and you can have multiple databases per application—often one per collaboration session, as they are the unit of sharing.
 
-Each document has an `_id`, which can be auto-generated or set explicitly. Auto-generation is recommended to ensure uniqueness and avoid conflicts. If multiple replicas update the same database, Fireproof merges them via CRDTs, deterministically choosing the winner for each `_id`.
+Each document has an `_id`, which can be auto-generated or set explicitly. Auto-generation is recommended to ensure uniqueness and avoid conflicts. The server keeps a per-document sequence, so two clients writing the same `_id` at the same time can collide and one write will be rejected — see the note on continuous updates below. Prefer one document per event over many rapid writes to a single hot document.
 
 Use granular documents, e.g. one document per user action, so saving a form or clicking a button should typically create or update a single document, or just a few documents. Avoid patterns that require a single document to grow without bound.
 
-Fireproof is a local database, no loading states required, just empty data states.
+Fireproof reads from a local cache, so queries return synchronously and you usually render empty states rather than loading spinners. Writes, however, go to the server and can fail — wrap `put()`/`save()`/`del()` in `try/catch` (or attach a `.catch`) so a rejected write surfaces to the user instead of becoming an unhandled promise rejection.
 
 ### Basic Example
 
@@ -120,6 +120,44 @@ App.jsx
 ```
 
 Never call hooks inside handlers — `const { doc, save } = useDocument({ _id: id })` inside an onClick BREAKS the Rules of Hooks.
+
+### Continuous Controls — `merge()` on every event, `save()` once on commit
+
+A continuous control (slider, drag, color picker, live-typed text bound to one doc) fires many events in quick succession. **Never call `database.put()` or `save()` on every `onChange`** — that floods the server with rapid concurrent writes to the same `_id`, which collide on the per-document sequence and get rejected (`Failed to put document …`). Instead, `merge()` locally on each event to keep the UI live, and `save()` once when the interaction commits (`onPointerUp`, `onBlur`, `onChange` for a range input's final value, or a debounced trailing call). Editing a single doc with a slider:
+
+App.jsx
+
+```jsx
+<<<<<<< SEARCH
+  const { useDocument, useLiveQuery, database } = useFireproof("myLedger");
+=======
+  const { useDocument, useLiveQuery, database } = useFireproof("myLedger");
+
+  // One shared mix doc; slider updates the UI on every event, persists on commit
+  const { doc: mix, merge: mergeMix, save: saveMix } = useDocument({ _id: "mix:current", level: 50 });
+>>>>>>> REPLACE
+```
+
+App.jsx
+
+```jsx
+<<<<<<< SEARCH
+      <h3>Recent Documents</h3>
+=======
+      <input
+        type="range"
+        min="0"
+        max="100"
+        value={mix.level}
+        onChange={(e) => mergeMix({ level: Number(e.target.value) })} // live, no write
+        onPointerUp={() => saveMix().catch((err) => console.error("save failed", err))} // one write on commit
+      />
+
+      <h3>Recent Documents</h3>
+>>>>>>> REPLACE
+```
+
+If you genuinely need to persist mid-drag, debounce the `save()` so at most one write is in flight, and still `.catch()` the rejection. Better yet, prefer one document per event (see the Counter Pattern) over hammering a single hot document.
 
 ### Query Data
 
@@ -765,7 +803,7 @@ Other common `oldDoc` patterns: `if (oldDoc === null) { /* create-only logic */ 
 
 ## Architecture: Where's My Data?
 
-Data is stored in the browser, and is automatically synced with all invited users.
+Data lives on the Firefly server, which is the source of truth. The browser keeps a local cache for instant reads, but every write is sent to the server, validated by your `access.js`, persisted, and then synced to all users who have read access. A write that fails validation, hits a conflict, or loses the network is rejected — handle those rejections rather than assuming the write always lands.
 
 ## Using Fireproof in JavaScript
 
@@ -785,12 +823,17 @@ import { fireproof } from "use-fireproof";
 
 const database = fireproof("myLedger");
 
-// The document API is async, but doesn't require loading states or error handling.
+// The document API is async. Reads come from the local cache so they rarely
+// need loading states, but writes go to the server and can fail — wrap them.
 async function main() {
-  const ok = await database.put({ text: "Sample Data" });
-  const doc = await database.get(ok.id);
-  const latest = await database.query("_id", { limit: 10, descending: true });
-  console.log("Latest documents:", latest.docs);
+  try {
+    const ok = await database.put({ text: "Sample Data" });
+    const doc = await database.get(ok.id);
+    const latest = await database.query("_id", { limit: 10, descending: true });
+    console.log("Latest documents:", latest.docs);
+  } catch (err) {
+    console.error("write failed (access denied, conflict, or network):", err);
+  }
 }
 >>>>>>> REPLACE
 ```
