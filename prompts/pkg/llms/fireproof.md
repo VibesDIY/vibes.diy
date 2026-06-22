@@ -610,7 +610,7 @@ All fields are optional, but a stored document must be routed to at least one ch
 
 **Grant/member/meta docs need a channel too.** A role grant, membership, or config singleton that returns only `members`/`grant` with **no `channels`** is refused exactly like any other channel-less write — so the owner can't even create it. Route these to an owner-readable **admin channel** (e.g. `channels: ["admin:grants"]` with `grant: { users: { [user.userHandle]: ["admin:grants"] } }`), not a public channel. The `members`/`grant` still take effect globally; the channel just makes the doc persist and lets the owner read the roster back.
 
-**Preserve the author on updates.** For an author-owned doc, checking the new `doc.authorHandle` is not enough — also check `oldDoc` so a writer can't overwrite someone else's doc or reassign its author: `if (oldDoc && oldDoc.authorHandle !== user.userHandle) throw { forbidden: "not author" }`. (Write-once docs can simply `if (oldDoc) throw`.)
+**Preserve the author on updates.** For an author-owned doc, checking the new author field is not enough — also check `oldDoc` so a writer can't overwrite someone else's doc or reassign its author: `if (oldDoc && oldDoc.<authorField> !== user.userHandle) throw { forbidden: "not author" }`, where `<authorField>` is whatever your doc uses (`authorHandle`, `userHandle`, `senderHandle`, …). (Write-once docs can simply `if (oldDoc) throw`.)
 
 ```ts
 type AccessDescriptor = {
@@ -677,6 +677,7 @@ export function chat(doc, oldDoc, user, ctx) {
 
   if (doc.type === "channel-invite") {
     if (doc.senderHandle !== user.userHandle) throw { forbidden: "not sender" };
+    if (oldDoc && oldDoc.senderHandle !== user.userHandle) throw { forbidden: "not sender" };
     ctx.requireAccess(doc.channelId);
     return {
       channels: [doc.channelId],
