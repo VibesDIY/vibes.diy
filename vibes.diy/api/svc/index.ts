@@ -22,3 +22,4 @@ export * from "./public/ensure-handle-avatar.js";
 export * from "./public/convert-image-evt.js";
 export * from "./public/access-function.js";
 export * from "./public/normalize-channels.js";
+export * from "./public/seq-allocation.js";

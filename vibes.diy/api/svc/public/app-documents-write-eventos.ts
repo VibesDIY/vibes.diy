@@ -23,7 +23,6 @@ import { unwrapMsgBase } from "../unwrap-msg-base.js";
 import { VibesApiSQLCtx } from "../types.js";
 import { checkAuth, optAuth } from "../check-auth.js";
 import { eq, and, sql, inArray, desc } from "drizzle-orm";
-import { max } from "drizzle-orm/sql";
 import { type } from "arktype";
 import { checkDocAccess } from "./access-helpers.js";
 import {
@@ -38,6 +37,8 @@ import { GrantReduce, extractContribution } from "./grant-reduce.js";
 import { isFileMeta } from "./files-url-mint.js";
 import { clientWsSend, connectionAdminMode } from "./app-documents-shared.js";
 import { normalizeChannels } from "./normalize-channels.js";
+import { allocateAndInsertRevision, SeqConflictError } from "./seq-allocation.js";
+import type { VibesSqlite } from "@vibes.diy/api-sql";
 import { resolveActiveHandle } from "./resolve-active-handle.js";
 
 function grantsUsers(reduce: GrantReduce): Set<string> {
@@ -358,26 +359,89 @@ export const putDocEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqPutDoc>, 
       const dbName = req.dbName;
       const t = vctx.sql.tables.appDocuments;
 
-      // Get current max seq for this doc
-      const maxSeqResult = await vctx.sql.db
-        .select({ maxSeq: max(t.seq) })
-        .from(t)
-        .where(and(eq(t.ownerHandle, req.ownerHandle), eq(t.appSlug, req.appSlug), eq(t.dbName, dbName), eq(t.docId, docId)))
-        .then((r) => r[0]);
+      // Store-access-fn-output sidecar: keyed only by (owner, app, db, docId)
+      // with no seq, so it must run inside the same critical section as the seq
+      // insert (under the pg advisory lock) or concurrent same-doc writes can
+      // leave grants reflecting the losing revision (#2506, Codex P1).
+      const storeAccessOutput =
+        accessResult && !("forbidden" in accessResult) && afbRow?.accessFnCid
+          ? {
+              tOutputs: vctx.sql.tables.accessFnOutputs,
+              fnCid: afbRow.accessFnCid,
+              descriptor: accessResult,
+              outputHasGrants:
+                (accessResult.members && Object.keys(accessResult.members).length > 0) ||
+                (accessResult.grant?.users && Object.keys(accessResult.grant.users).length > 0) ||
+                (accessResult.grant?.roles && Object.keys(accessResult.grant.roles).length > 0) ||
+                (accessResult.grant?.public && accessResult.grant.public.length > 0)
+                  ? 1
+                  : 0,
+            }
+          : undefined;
 
-      const nextSeq = (maxSeqResult?.maxSeq ?? 0) + 1;
+      let grantUpsertErr: Error | undefined;
+      const sidecar = storeAccessOutput
+        ? async (_seq: number, exec: VibesSqlite) => {
+            const rUpsert = await exception2Result(() =>
+              exec
+                .insert(storeAccessOutput.tOutputs)
+                .values({
+                  ownerHandle: req.ownerHandle,
+                  appSlug: req.appSlug,
+                  dbName: req.dbName,
+                  docId,
+                  fnCid: storeAccessOutput.fnCid,
+                  output: JSON.stringify(storeAccessOutput.descriptor),
+                  hasGrants: storeAccessOutput.outputHasGrants,
+                })
+                .onConflictDoUpdate({
+                  target: [
+                    storeAccessOutput.tOutputs.ownerHandle,
+                    storeAccessOutput.tOutputs.appSlug,
+                    storeAccessOutput.tOutputs.dbName,
+                    storeAccessOutput.tOutputs.docId,
+                  ],
+                  set: {
+                    fnCid: storeAccessOutput.fnCid,
+                    output: JSON.stringify(storeAccessOutput.descriptor),
+                    hasGrants: storeAccessOutput.outputHasGrants,
+                  },
+                })
+            );
+            if (rUpsert.isErr()) grantUpsertErr = rUpsert.Err();
+          }
+        : undefined;
 
-      await vctx.sql.db.insert(t).values({
-        ownerHandle: req.ownerHandle,
-        appSlug: req.appSlug,
-        dbName,
-        docId,
-        seq: nextSeq,
-        userId: userId ?? "unknown",
-        data: req.doc,
-        deleted: 0,
-        created: now,
-      });
+      // Allocate seq + insert atomically. On a (near-impossible) exhausted-retry
+      // conflict, surface a typed error instead of a raw SQL string.
+      let nextSeq: number;
+      try {
+        nextSeq = await allocateAndInsertRevision({
+          db: vctx.sql.db,
+          flavour: vctx.sql.flavour,
+          table: t,
+          row: {
+            ownerHandle: req.ownerHandle,
+            appSlug: req.appSlug,
+            dbName,
+            docId,
+            userId: userId ?? "unknown",
+            data: req.doc,
+            deleted: 0,
+            created: now,
+          },
+          sidecar,
+        });
+      } catch (err) {
+        if (err instanceof SeqConflictError) {
+          await ctx.send.send(ctx, {
+            type: "vibes.diy.res-error",
+            error: { code: "conflict", message: `write conflict: head is at seq ${err.currentHeadSeq}, retry the write` },
+          } satisfies ResError);
+          return Result.Ok(EventoResult.Continue);
+        }
+        throw err;
+      }
 
       // Upsert DirectChannelIndex so both participants appear in listDmThreads
       if (isDirectChannel(req.ownerHandle)) {
@@ -475,55 +539,27 @@ export const putDocEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqPutDoc>, 
         }
       }
 
-      // Store access fn output for future reduce queries
-      if (accessResult && !("forbidden" in accessResult) && afbRow?.accessFnCid) {
-        const tOutputs = vctx.sql.tables.accessFnOutputs;
-        const outputHasGrants =
-          (accessResult.members && Object.keys(accessResult.members).length > 0) ||
-          (accessResult.grant?.users && Object.keys(accessResult.grant.users).length > 0) ||
-          (accessResult.grant?.roles && Object.keys(accessResult.grant.roles).length > 0) ||
-          (accessResult.grant?.public && accessResult.grant.public.length > 0)
-            ? 1
-            : 0;
-
+      // Grant-state bookkeeping for the access-fn output written by the sidecar
+      // above (inside the seq critical section). The notify fan-out stays here,
+      // outside the lock/txn.
+      if (storeAccessOutput) {
         let effectiveViewerGrantsChanged = false;
         if (grantsReduceBefore) {
           const grantsReduceAfter = new GrantReduce();
           for (const [storedDocId, contribution] of grantsReduceBefore.docContributions) {
             grantsReduceAfter.addDoc(storedDocId, contribution);
           }
-          if (outputHasGrants === 1) {
-            grantsReduceAfter.addDoc(docId, extractContribution(accessResult));
+          if (storeAccessOutput.outputHasGrants === 1) {
+            grantsReduceAfter.addDoc(docId, extractContribution(storeAccessOutput.descriptor));
           } else {
             grantsReduceAfter.removeDoc(docId);
           }
           effectiveViewerGrantsChanged = hasEffectiveViewerGrantDelta(grantsReduceBefore, grantsReduceAfter);
         }
 
-        const rUpsert = await exception2Result(() =>
-          vctx.sql.db
-            .insert(tOutputs)
-            .values({
-              ownerHandle: req.ownerHandle,
-              appSlug: req.appSlug,
-              dbName: req.dbName,
-              docId,
-              fnCid: afbRow.accessFnCid,
-              output: JSON.stringify(accessResult),
-              hasGrants: outputHasGrants,
-            })
-            .onConflictDoUpdate({
-              target: [tOutputs.ownerHandle, tOutputs.appSlug, tOutputs.dbName, tOutputs.docId],
-              set: {
-                fnCid: afbRow.accessFnCid,
-                output: JSON.stringify(accessResult),
-                hasGrants: outputHasGrants,
-              },
-            })
-        );
-        if (rUpsert.isErr()) {
-          console.error("AccessFnOutputs upsert failed:", rUpsert.Err());
-          if (outputHasGrants === 1) {
+        if (grantUpsertErr) {
+          console.error("AccessFnOutputs upsert failed:", grantUpsertErr);
+          if (storeAccessOutput.outputHasGrants === 1) {
             await ctx.send.send(ctx, {
               type: "vibes.diy.res-error",
               error: { message: "grant storage failed — retry the write" },
@@ -593,26 +629,34 @@ export const deleteDocEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqDelete
 
       const dbName = req.dbName;
 
-      // Insert tombstone
-      const maxSeqResult = await vctx.sql.db
-        .select({ maxSeq: max(t.seq) })
-        .from(t)
-        .where(and(eq(t.ownerHandle, req.ownerHandle), eq(t.appSlug, req.appSlug), eq(t.dbName, dbName), eq(t.docId, req.docId)))
-        .then((r) => r[0]);
-
-      const nextSeq = (maxSeqResult?.maxSeq ?? 0) + 1;
-
-      await vctx.sql.db.insert(t).values({
-        ownerHandle: req.ownerHandle,
-        appSlug: req.appSlug,
-        dbName,
-        docId: req.docId,
-        seq: nextSeq,
-        userId: req._auth.verifiedAuth.claims.userId,
-        data: {},
-        deleted: 1,
-        created: now,
-      });
+      // Insert tombstone. Shares the same per-doc lock key as putDoc (derived
+      // from owner/app/db/docId) so a delete cannot interleave a put (#2506).
+      try {
+        await allocateAndInsertRevision({
+          db: vctx.sql.db,
+          flavour: vctx.sql.flavour,
+          table: t,
+          row: {
+            ownerHandle: req.ownerHandle,
+            appSlug: req.appSlug,
+            dbName,
+            docId: req.docId,
+            userId: req._auth.verifiedAuth.claims.userId,
+            data: {},
+            deleted: 1,
+            created: now,
+          },
+        });
+      } catch (err) {
+        if (err instanceof SeqConflictError) {
+          await ctx.send.send(ctx, {
+            type: "vibes.diy.res-error",
+            error: { code: "conflict", message: `write conflict: head is at seq ${err.currentHeadSeq}, retry the delete` },
+          } satisfies ResError);
+          return Result.Ok(EventoResult.Continue);
+        }
+        throw err;
+      }
 
       // Notify subscribers of the doc change via per-vibe local fan-out. On access-fn vibes,
       // fan out per stored channel so channel-subscribed connections receive the
