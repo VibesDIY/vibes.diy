@@ -17,8 +17,10 @@ Generated `2026-06-22` with `vibes-diy@2.5.13` under handle `garden-gnome`.
 | `trip-planner`   | 6 · multi-database        | PASS (collapsed to one db)                      |
 | `task-list`      | 7 · per-doc edit/delete   | FAIL (stubbed create surface)                   |
 
-Roll-up: **3 PASS / 1 SOFT-FAIL / 3 FAIL**, `unknown` rate 0, **2 hidden-write
-regressions** (team-board, photo-wall). Verdict: **DO NOT FLIP YET** — the can-flip
+Roll-up (raw, all 7 rows): **3 PASS / 1 SOFT-FAIL / 3 FAIL**. For the gate decision,
+`task-list` is excluded as a generation flake (stub composer; re-gen also truncated),
+so the **flip denominator is 6: 3 PASS / 1 SOFT-FAIL / 2 FAIL**. `unknown` rate 0,
+**2 hidden-write regressions** (team-board, photo-wall). Verdict: **DO NOT FLIP YET** — the can-flip
 hook is wired correctly everywhere, but the generated `access.js` in 2/7 grants a
 channel `public` READ and then gates writes on `ctx.requireAccess(thatChannel)`, which
 requires effective membership that public read never confers — so non-owner writes are

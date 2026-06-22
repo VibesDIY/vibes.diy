@@ -398,29 +398,29 @@ Example streamed output for a team board app:
 > }
 > ```
 >
-> Access function — owner manages channels, members post to channels they have access to.
+> Access function — owner manages channels; any signed-in member posts to these open channels.
 >
 > access.js
 >
 > ```js
-> // Each channel doc grants public read access to that channel.
-> // Posts require channel access — the server enforces this via ctx.requireAccess.
-> // Only the owner can create channels or grant roles.
+> // Each channel doc grants public READ to that channel; only the owner creates channels.
+> // OPEN board: any signed-in user posts. Do NOT gate posts on ctx.requireAccess —
+> // grant.public is read-only and never satisfies it, so it would block every
+> // non-owner. (Members-only channel instead? grant a role + requireAccess it.)
 > export function crewBoard(doc, oldDoc, user, ctx) {
 >   if (!user) throw { forbidden: "sign in" };
 >
 >   if (doc.type === "channel") {
 >     if (!user.isOwner) throw { forbidden: "owner only" };
->     return { channels: [doc.name], grant: { public: [doc.name] } };
+>     return { channels: [doc._id], grant: { public: [doc._id] } };
 >   }
 >
 >   if (doc.type === "post") {
 >     if (doc.authorHandle !== user.userHandle) throw { forbidden: "not author" };
->     ctx.requireAccess(doc.channelId);
 >     return { channels: [doc.channelId] };
 >   }
 >
->   return {};
+>   throw { forbidden: "unknown document type" };
 > }
 > ```
 >

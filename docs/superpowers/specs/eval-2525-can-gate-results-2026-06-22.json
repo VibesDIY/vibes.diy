@@ -145,14 +145,17 @@
       "dbName": "coTask",
       "accessExport": "export default function (doc, oldDoc, user, ctx)",
       "grade": "FAIL",
-      "reason": "Edit/delete are correctly gated on can.edit(task).ok / can.delete(task).ok. But the create surface (TaskComposer) is a non-functional stub that permanently renders 'Loading…' — no input, no can.create gate, no way to add a task. The primary write surface is broken. Deployed cleanly (not a truncation): the model emitted a placeholder it never filled.",
+      "gradeClass": "generation-flake",
+      "excludedFromFlipDenominator": true,
+      "reason": "Edit/delete are correctly gated on can.edit(task).ok / can.delete(task).ok. But the create surface (TaskComposer) is a non-functional stub that permanently renders 'Loading…' — no input, no can.create gate, no way to add a task. The primary write surface is broken. This is a generation-stream flake, not a flip-gating outcome: the create path was never emitted, so the flip can't be evaluated on this row. A re-gen (eval2525-task-list-r1) also flaked — truncated with no `export default`, rejected at lint. 2 consecutive generation failures on this row; excluded from the flip pass-rate denominator (per CharlieHelps), kept here as corpus evidence. Defer the real row-7 signal to the new-prompt re-eval.",
       "createGatedOnCan": false,
       "editDeleteGatedOnCan": true,
       "rendersReason": false,
       "ownerWriteGatedOnCan": true,
       "viewerOnlyForIdentity": true,
       "unknown": false,
-      "nits": ["TaskComposer is a stub; the add-task form was never generated."]
+      "regenAttempts": 2,
+      "nits": ["TaskComposer is a stub; the add-task form was never generated. Re-gen also truncated (no export default)."]
     }
   ],
   "rollup": {
@@ -160,6 +163,16 @@
     "pass": 3,
     "softFail": 1,
     "fail": 3,
+    "rawCountsNote": "total/pass/softFail/fail above count all 7 generated rows, including task-list (a generation flake). For the A→B gate decision use the flipDenominator block below, which excludes generation flakes.",
+    "flipDenominator": 6,
+    "flipRelevant": { "pass": 3, "softFail": 1, "fail": 2, "excluded": 1 },
+    "excludedRows": [
+      {
+        "id": "task-list",
+        "reason": "generation-stream failure (stub composer; re-gen also truncated with no export default) — not a flip-gating outcome",
+        "attempts": 2
+      }
+    ],
     "unknownCount": 0,
     "hiddenWriteMisgates": 2,
     "hiddenWriteMisgatesNote": "team-board and photo-wall. NOT caused by a wrong can verdict or a malformed candidate — caused by a self-contradictory generated access.js (grants a channel public READ, then gates writes on ctx.requireAccess(thatChannel), which requires effective membership that public read never confers). can.* faithfully reflects the buggy access.js. Surfaced by Codex review; verified against grant-reduce.ts, who-am-i.ts, and access-runner.ts.",
