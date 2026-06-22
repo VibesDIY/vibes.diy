@@ -232,6 +232,7 @@ export const whoAmIEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqVibeWhoAm
         ...(r.isOwner ? { isOwner: r.isOwner } : {}),
         ...(r.dbAcls !== undefined ? { dbAcls: r.dbAcls } : {}),
         ...(r.grants !== undefined ? { grants: r.grants } : {}),
+        ...(adminMode === true ? { adminMode: true } : {}),
       } satisfies ResVibeWhoAmI);
       return Result.Ok(EventoResult.Continue);
     }

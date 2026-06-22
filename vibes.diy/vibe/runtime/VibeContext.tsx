@@ -120,6 +120,7 @@ function LiveCycleVibeContextProvider({ mountParams, children }: VibeContextProv
         ...(event.data.isOwner !== undefined ? { isOwner: event.data.isOwner } : {}),
         ...(event.data.dbAcls ? { dbAcls: event.data.dbAcls } : {}),
         ...(event.data.grants ? { grants: event.data.grants } : {}),
+        ...(event.data.adminMode !== undefined ? { adminMode: event.data.adminMode } : {}),
       });
     };
     window.addEventListener("message", onMsg);
