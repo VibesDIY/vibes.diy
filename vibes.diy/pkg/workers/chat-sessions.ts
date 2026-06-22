@@ -12,7 +12,7 @@ import { CfCacheIf, cfServe } from "@vibes.diy/api-svc";
 import { WSSendProvider } from "@vibes.diy/api-svc/svc-ws-send-provider.js";
 import { CFInjectMutable, cfServeAppCtx, localInvokeAccessFn } from "@vibes.diy/api-svc/cf-serve.js";
 import { chatMsgEvento } from "@vibes.diy/api-svc/chat-msg-evento.js";
-import { CFEnv, isBuildNotification, isUserNotifyShard, userNotifyShardFor } from "@vibes.diy/api-types";
+import { CFEnv, isBuildNotification, isUserNotifyShard, userNotifyShardFor, type EvtUserNotification } from "@vibes.diy/api-types";
 import { exception2Result, URI } from "@adviser/cement";
 import { type } from "arktype";
 import type { QuickJSWASMModule } from "@cf-wasm/quickjs";
@@ -43,16 +43,22 @@ function cfWebSocketPair(): { client: WebSocket; server: WebSocket } {
   return { client: client as unknown as WebSocket, server: server as unknown as WebSocket };
 }
 
-// Lets a ChatSessions connection register itself as a user-notification subscriber so
-// it receives fanned-out notifications. Only the dedicated per-user notification
-// connection (stable `notify-user-<userId>` shard) is allowed to register — codegen
-// chat connections use random-UUID shards, and registering those would leak unbounded
-// dead shards into UserNotify, which never prunes a shard that still resolves to a DO.
-// Note: only the receive-side subscription is wired here (no notifyUser); build
-// emission stays owned by the AppSessions path, unchanged.
-function userNotifyCallbacksForChatSessions(shard: string, env: CFEnv) {
-  if (!isUserNotifyShard(shard)) return {};
-
+// Wires user-notification callbacks for a ChatSessions connection.
+//
+// `notifyUser` (the EMITTER) is wired UNCONDITIONALLY. Codegen runs on this chat
+// plane and finishes here — prompt-chat-section's `.finally` emits build-complete /
+// build-failed via `vctx.notifyUser`. But a codegen connection uses a random-UUID
+// shard (not a stable `notify-user-<userId>` shard), so gating the emitter on
+// isUserNotifyShard (as registration is) would drop every build notification —
+// `vctx.notifyUser` would be undefined and the emit silently skipped. Emitting is
+// safe from any shard; it only POSTs to the target user's UserNotify DO. (#2265 B)
+//
+// Registration (receive-side) stays bounded to the stable per-user notify shard:
+// codegen chat connections use random-UUID shards, and registering those would leak
+// unbounded dead shards into UserNotify, which never prunes a shard that still
+// resolves to a DO.
+// Exported for testability (chat-sessions-notify.test.ts).
+export function userNotifyCallbacksForChatSessions(shard: string, env: CFEnv) {
   function fetchUserNotify(userId: string, body: Record<string, unknown>): Promise<CFResponse> {
     const id = env.USER_NOTIFY.idFromName(userId);
     const stub = env.USER_NOTIFY.get(id);
@@ -65,7 +71,22 @@ function userNotifyCallbacksForChatSessions(shard: string, env: CFEnv) {
     );
   }
 
+  const notifyUser = async (userId: string, evt: EvtUserNotification, senderConnId: string): Promise<void> => {
+    await fetchUserNotify(userId, {
+      action: "notify",
+      targetUserId: userId,
+      senderShardId: `chat:${shard}`,
+      senderConnId,
+      evt,
+    });
+  };
+
+  // Non-notify shard (e.g. a random-UUID codegen connection): emit only, no
+  // registration. This is the path that delivers build-complete from codegen.
+  if (!isUserNotifyShard(shard)) return { notifyUser };
+
   return {
+    notifyUser,
     registerUserSubscription: async (userId: string): Promise<void> => {
       // The `?shard=` param is client-supplied on the public /api path, so only let a
       // connection register the shard that belongs to its OWN authenticated user. This
