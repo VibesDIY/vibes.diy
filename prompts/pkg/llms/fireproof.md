@@ -5,7 +5,7 @@ Fireproof is a document database with live sync, designed to make browser apps e
 ## Key Features
 
 - **Apps run anywhere:** Bundle UI, data, and logic together.
-- **Real-Time, cloud-backed:** Writes are validated and persisted server-side, then streamed live to every viewer. Data shows up instantly from a local cache, so you rarely need loading states — but writes can fail (access denied, conflicts, network), so handle write rejections.
+- **Real-Time, cloud-backed:** Writes are validated and persisted server-side, then streamed live to every viewer. `useLiveQuery` keeps the UI in sync as data arrives, so you render empty states rather than loading spinners — but writes can fail (access denied, conflicts, network), so handle write rejections.
 - **Unified API:** TypeScript works with Deno, Bun, Node.js, and the browser.
 - **React Hooks:** Leverage `useLiveQuery` and `useDocument` for live collaboration. Note: these are NOT top-level exports — they are returned by the `useFireproof()` hook. Always destructure from `const { useLiveQuery, useDocument, database } = useFireproof("dbName")`.
 
@@ -21,7 +21,7 @@ Each document has an `_id`, which can be auto-generated or set explicitly. Auto-
 
 Use granular documents, e.g. one document per user action, so saving a form or clicking a button should typically create or update a single document, or just a few documents. Avoid patterns that require a single document to grow without bound.
 
-Fireproof reads from a local cache, so queries return synchronously and you usually render empty states rather than loading spinners. Writes, however, go to the server and can fail — wrap `put()`/`save()`/`del()` in `try/catch` (or attach a `.catch`) so a rejected write surfaces to the user instead of becoming an unhandled promise rejection.
+`useLiveQuery` populates and refreshes the UI reactively as data arrives, so you usually render empty states rather than loading spinners. Writes, however, go to the server and can fail — wrap `put()`/`save()`/`del()` in `try/catch` (or attach a `.catch`) so a rejected write surfaces to the user instead of becoming an unhandled promise rejection.
 
 ### Basic Example
 
@@ -823,8 +823,8 @@ import { fireproof } from "use-fireproof";
 
 const database = fireproof("myLedger");
 
-// The document API is async. Reads come from the local cache so they rarely
-// need loading states, but writes go to the server and can fail — wrap them.
+// The document API is async — reads and writes both await the server.
+// Writes can fail (access denied, conflict, network), so wrap them.
 async function main() {
   try {
     const ok = await database.put({ text: "Sample Data" });
