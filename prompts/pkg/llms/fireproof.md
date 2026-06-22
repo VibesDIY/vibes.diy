@@ -706,6 +706,25 @@ export function survey(doc, oldDoc, user, ctx) {
 
 Key patterns: `allowAnonymous: true` on survey-response lets unauthenticated visitors submit, `grant.public` on final-results makes them readable by any member without a specific channel grant, and the **singleton grant doc** pattern (survey-config) wires role-to-channel access in one place.
 
+### Example: Public guestbook / contact form (anonymous writes)
+
+When the prompt says **anyone can sign / submit without logging in** (a guestbook, a contact form, an RSVP), do **not** throw on `!user` — return `allowAnonymous: true` so the write is accepted for anonymous visitors. `useVibe().can.create(...)` then returns `ok` for an anonymous viewer, and the form shows instead of a sign-in wall. Stamp `authorHandle` only when there is a user.
+
+access.js
+
+```js
+export function guestbook(doc, oldDoc, user, ctx) {
+  if (doc.type === "entry") {
+    if (oldDoc) throw { forbidden: "entries are write-once" };
+    // No `if (!user) throw` — anyone may sign. allowAnonymous opts the write in.
+    return { channels: ["public"], grant: { public: ["public"] }, allowAnonymous: true };
+  }
+  throw { forbidden: "unknown document type" };
+}
+```
+
+In `App.jsx`, gate the form on `useVibe("guestbook").can.create({ type: "entry" }).ok` (true for anon here) and stamp `authorHandle: me?.userHandle` only when signed in. Without `allowAnonymous: true` the runtime rejects the null-user write even though the function didn't throw — so the guestbook would silently require login, the exact miss to avoid.
+
 ### Multiple databases in one file
 
 Each named export gates its own database. A single `/access.js` can gate all databases the app uses:

@@ -51,28 +51,30 @@ Target ~40–60 lines. The shell should look like a real app with empty sections
 
 **Step 3 — Feature edits.** Wire each feature with SEARCH/REPLACE edits. Each edit gets exactly one prose line (≤25 words) before it. Wire hooks, data, handlers, and `useFireproof` with `access` in these edits. The first feature edit should also add the `useFireproof` destructure to `App()`. Keep edits focused — one feature per edit, fully working after it lands.
 
-> Access function — owner manages channels, authenticated users post to channels they have access to.
+> Access function — owner manages channels; any signed-in member posts to these open channels.
 >
 > access.js
 >
 > ```js
-> // Each channel doc grants public read access to that channel.
-> // Posts require channel access — the server enforces this via ctx.requireAccess.
-> // Only the owner can create channels.
+> // Each channel doc grants public READ; only the owner creates channels.
+> // OPEN board: any signed-in user posts — do NOT gate posts on ctx.requireAccess
+> // (grant.public is read-only and never satisfies it, so it would block everyone
+> // but the owner). Members-only channel instead? grant a role + requireAccess it.
 > export function chat(doc, oldDoc, user, ctx) {
 >   if (!user) throw { forbidden: "sign in" };
 >   if (doc.type === "channel") {
 >     if (!user.isOwner) throw { forbidden: "owner only" };
->     return { channels: [doc.name], grant: { public: [doc.name] } };
+>     return { channels: [doc._id], grant: { public: [doc._id] } };
 >   }
 >   if (doc.type === "message") {
 >     if (doc.authorHandle !== user.userHandle) throw { forbidden: "not author" };
->     ctx.requireAccess(doc.channelId);
 >     return { channels: [doc.channelId] };
 >   }
 >   throw { forbidden: "unknown document type" };
 > }
 > ```
+
+`ctx.requireAccess(channel)` gates on **membership** (a `grant.users`/`grant.roles` grant), not `grant.public` (read-only) — so an open channel anyone signed-in may post to must not gate writes on it; check the author and route the doc. For writes needing no sign-in ("anyone can sign/submit"), return `allowAnonymous: true` instead of throwing on `!user`.
 
 **Never put access function code inside an `App.jsx` block** — it will overwrite the React component. The filename line (`access.js` vs `App.jsx`) is how the system knows which file to write.
 
