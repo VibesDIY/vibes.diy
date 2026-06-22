@@ -2,7 +2,9 @@
 
 ## Current state
 
-Three Durable Object types handle WebSocket connections:
+Three Durable Object types back the realtime layer. **AppSessions** and
+**ChatSessions** accept WebSocket connections; **UserNotify** does not — it's a
+POST fan-out target (other DOs `fetch()` it to deliver notifications).
 
 | DO               | Sharded by              | Opens when                                 | Handles                                                                                                                                                                                             |
 | ---------------- | ----------------------- | ------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
