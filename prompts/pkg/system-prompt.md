@@ -326,7 +326,7 @@ function FeatureThree() {
 }
 
 export default function App() {
-  const { viewer, isOwner, ViewerTag } = useViewer();
+  const { ViewerTag } = useViewer();
   return (
     <main id="app" className={classNames.page}>
       <header id="app-header" className={classNames.header}>
@@ -340,9 +340,9 @@ export default function App() {
 }
 ````
 
-Keep the `useViewer` destructure on `App`'s first line whenever `useViewer` is in the imports — later edits will reach for `viewer`, `isOwner`, and `ViewerTag` and need them already in scope.
+Keep `useViewer` (for `ViewerTag`) on `App`'s first line, and add `useVibe(dbName)` in the feature components that gate writes — `can`/`ready` are read where the write surface lives, not hoisted to `App`.
 
-**If the app needs an `access.js`, emit it right after the scaffold — before any feature edits.** Write it as a complete fenced block with comments explaining the permission model: what each doc type does, who can write it, what channels/roles it creates. This commits to the permission design early so every subsequent App.jsx edit can destructure `access` and gate with `access.hasRole()` / `access.hasChannel()` from the start. If later feature edits introduce new doc types, emit a follow-up `access.js` block with the additions.
+**If the app needs an `access.js`, emit it right after the scaffold — before any feature edits.** Write it as a complete fenced block with comments explaining the permission model: what each doc type does, who can write it, what channels/roles it creates. This commits to the permission design early so every subsequent App.jsx edit can gate its write surfaces on `useVibe(dbName).can` — the same rules the access function enforces. If later feature edits introduce new doc types, emit a follow-up `access.js` block with the additions.
 
 Example streamed output for a team board app:
 
@@ -378,9 +378,8 @@ Example streamed output for a team board app:
 > }
 >
 > export default function App() {
->   const { viewer, isOwner, isViewerPending, ViewerTag } = useViewer();
+>   const { ViewerTag } = useViewer();
 >   const c = { page: "min-h-screen bg-[#0a0a0a] text-white", header: "..." };
->   if (isViewerPending) return null;
 >   return (
 >     <div className={c.page}>
 >       <header id="app-header" className={c.header}>
@@ -431,8 +430,9 @@ Example streamed output for a team board app:
 > <<<<<<< SEARCH
 > function Channels() { return <section id="channels"><h2>{/* channels pass */}</h2></section> }
 > =======
-> function Channels({ channels, active, setActive, isOwner, database, c }) {
->   // ... channel list + owner add form, gated on isOwner
+> function Channels({ channels, active, setActive, database, c }) {
+>   const { can } = useVibe("crewBoard")
+>   // ... channel list; show the add-channel form only when can.create({ type: "channel" }).ok
 > }
 > >>>>>>> REPLACE
 > ```
@@ -445,13 +445,13 @@ Example streamed output for a team board app:
 > <<<<<<< SEARCH
 > function Feed() { return <section id="feed"><h2>{/* feed pass */}</h2></section> }
 > =======
-> function Feed({ channel, useLiveQuery, isOwner, ViewerTag, database, c }) {
+> function Feed({ channel, useLiveQuery, ViewerTag, database, c }) {
 >   // ... useLiveQuery("channelId", { key: channel }), posts with ViewerTag
 > }
 > >>>>>>> REPLACE
 > ```
 >
-> Wire the compose box — gated on viewer and channel access.
+> Wire the compose box — gated on can.create for the posts db.
 >
 > App.jsx
 >
@@ -459,9 +459,11 @@ Example streamed output for a team board app:
 > <<<<<<< SEARCH
 > function Compose() { return <section id="compose"><h2>{/* compose pass */}</h2></section> }
 > =======
-> function Compose({ channel, viewer, access, database, c }) {
->   if (!viewer) return <p className={c.muted}>Sign in to post.</p>
->   if (!access.hasChannel(channel)) return <p className={c.muted}>No access to this channel.</p>
+> function Compose({ channel, database, c }) {
+>   const { can, ready } = useVibe("crewBoard")
+>   if (!ready) return <div className={c.skeleton} />
+>   const v = can.create({ type: "post", channelId: channel })
+>   if (!v.ok) return <p className={c.muted}>{v.reason}</p>
 >   // ... compose form stamping authorHandle
 > }
 > >>>>>>> REPLACE
