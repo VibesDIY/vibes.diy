@@ -33,12 +33,19 @@ async function buildViewerEnvForRender(vctx: VibesApiSQLCtx, args: { appSlug: st
   return { viewer, access, ...(isOwner ? { isOwner } : {}), ...(dbAcls ? { dbAcls } : {}), ...(grants ? { grants } : {}) };
 }
 
-async function buildAccessFnBindingsForRender(vctx: VibesApiSQLCtx, args: { appSlug: string; ownerUserSlug: string }) {
+export async function buildAccessFnBindingsForRender(vctx: VibesApiSQLCtx, args: { appSlug: string; ownerUserSlug: string }) {
   const tAfb = vctx.sql.tables.accessFunctionBindings;
-  const rows = await vctx.sql.db
-    .select({ dbName: tAfb.dbName, accessFnCid: tAfb.accessFnCid })
-    .from(tAfb)
-    .where(and(eq(tAfb.ownerHandle, args.ownerUserSlug), eq(tAfb.appSlug, args.appSlug)));
+  // Never throw out of renderVibe: a DB blip here must degrade to "no manifest"
+  // (the iframe falls back to optimistic writes + server authority), not a
+  // failed HTTP response. rules-bag: our implementation returns Result.
+  const r = await exception2Result(async () =>
+    vctx.sql.db
+      .select({ dbName: tAfb.dbName, accessFnCid: tAfb.accessFnCid })
+      .from(tAfb)
+      .where(and(eq(tAfb.ownerHandle, args.ownerUserSlug), eq(tAfb.appSlug, args.appSlug)))
+  );
+  if (r.isErr()) return undefined;
+  const rows = r.Ok();
   return rows.length > 0 ? rows : undefined;
 }
 
@@ -157,22 +164,17 @@ export async function renderVibe({
   // and pushes vibe.evt.viewerChanged eagerly after the sandbox is ready.
   // Embedding access:"none" here would cause a read-only flash before the
   // bridge resolves, since auth is unavailable on this HTTP path.
-  const viewerEnv =
+  //
+  // The {dbName, accessFnCid} manifest is tiny (CID strings only — not source
+  // bytes) and inlined into BOTH registerDependencies (drives the runtime
+  // fetch) and mountVibe params (feeds VibeContext so the hook knows the
+  // dbName→cid map). The two queries are independent — run them in parallel.
+  const [viewerEnv, accessFnBindings] = await Promise.all([
     requestUrl.searchParams.get("preview") === "yes"
-      ? undefined
-      : await buildViewerEnvForRender(vctx, {
-          appSlug: fs.appSlug,
-          ownerUserSlug: fs.ownerHandle,
-        });
-
-  // Query the {dbName, accessFnCid} manifest for this vibe. The manifest is
-  // tiny (CID strings only — not source bytes) and is computed once per render.
-  // Inlined into BOTH registerDependencies (drives the runtime fetch) and
-  // mountVibe params (feeds VibeContext so the hook knows the dbName→cid map).
-  const accessFnBindings = await buildAccessFnBindingsForRender(vctx, {
-    appSlug: fs.appSlug,
-    ownerUserSlug: fs.ownerHandle,
-  });
+      ? Promise.resolve(undefined)
+      : buildViewerEnvForRender(vctx, { appSlug: fs.appSlug, ownerUserSlug: fs.ownerHandle }),
+    buildAccessFnBindingsForRender(vctx, { appSlug: fs.appSlug, ownerUserSlug: fs.ownerHandle }),
+  ]);
 
   let imageUrl: string | undefined;
   if (metaScreenShot) {

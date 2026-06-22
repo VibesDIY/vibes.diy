@@ -2,6 +2,7 @@ import React, { createContext, useContext, useEffect, useState, type ReactNode }
 import type { VibeMountParams, ViewerEnv } from "./vibe.js";
 import { isEvtVibeAccessFnSource, isEvtVibeColorOverride, isEvtVibeViewerChanged } from "@vibes.diy/vibe-types";
 import { generateTailwindRemapCss } from "./tailwindRemap.js";
+import { getRegisteredAccessFnSources } from "./register-dependencies.js";
 
 // Style element id used to install/replace the parent-pushed palette override.
 // Kept stable so multiple overrides replace each other rather than stacking.
@@ -128,7 +129,10 @@ function LiveCycleVibeContextProvider({ mountParams, children }: VibeContextProv
   // Cache of cid → source | null. A CID absent from the map means the source
   // has not been delivered yet (pending). A CID mapped to null means the host
   // resolved but found no source (resolved-unknown). A string means ready.
-  const [accessFnSources, setAccessFnSources] = useState<Map<string, string | null>>(new Map());
+  // Seed from the module-level baseline so sources fetched before this provider
+  // mounted (and attached the listener below) are not lost; the listener then
+  // applies any that arrive afterward.
+  const [accessFnSources, setAccessFnSources] = useState<Map<string, string | null>>(() => getRegisteredAccessFnSources());
 
   useEffect(() => {
     const onMsg = (event: MessageEvent) => {
