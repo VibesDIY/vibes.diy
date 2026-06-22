@@ -132,6 +132,13 @@ Different docs never contend. The lock auto-releases at transaction end. SQLite
 needs nothing for the seq insert itself — it serializes writes — but note the
 **D1 limitation** below for sidecar ordering.
 
+**Keep queue/notify side effects _outside_ the lock/transaction.** The critical
+section is only the seq insert + the `AccessFnOutputs` sidecar. The
+`postQueue(...)` enqueues and `notifyDocChanged(...)` / `notifyViewerGrantsChanged(...)`
+fan-out are network/async work — running them while holding the advisory lock
+would stretch the critical section across I/O and serialize unrelated writers.
+Acquire lock → insert → sidecar upsert → commit/release, _then_ notify.
+
 **D1 / SQLite sidecar ordering (known gap):** D1 has no multi-statement
 interactive transaction spanning the insert and the `AccessFnOutputs` upsert, so
 on D1 the sidecar can still reorder under true concurrency. We accept this as
