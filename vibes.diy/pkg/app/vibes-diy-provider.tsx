@@ -165,19 +165,11 @@ function LiveCycleVibesDiyProvider({ children, webVars }: { children: React.Reac
       .toString();
   // console.log(`apiUrl`, apiUrl, realCtx.webVars.env.VIBES_DIY_API_URL)
 
-  // Shared token-getter captured by both chatApi and vibeApi closures.
-  // Set synchronously inside the chatApi .once() call below.
-  let sharedGetToken: (() => Promise<Result<DashAuthType>>) | undefined;
-
-  realCtx.chatApi = vibesDiyApis.get(apiUrl).once(() => {
-    // Perf hint: if the user is landing on a viewer route, pin this WS to a
-    // deterministic per-vibe DO shard so they join whatever DO is already warm
-    // for that vibe. The shard is decided once at construction; SPA navigation
-    // does not change it (the WS lives the lifetime of the page). For non-vibe
-    // routes (chat, explore, root) we omit shardKey so codegen traffic keeps
-    // its random-UUID load-balancing.
-    const vibeMatch = typeof window !== "undefined" ? window.location.pathname.match(/^\/vibe\/([^/]+)\/([^/]+)/) : null;
-    const shardKey = vibeMatch ? `${vibeMatch[1]}--${vibeMatch[2]}` : undefined;
+  // clerkTokenSetup: runs ONCE per apiUrl (module-level cache). Hoisted out of
+  // the chatApi factory so the token getter and Clerk listener are wired even
+  // when the chatApi WebSocket has not been opened yet — i.e. on non-chat pages
+  // like /vibes/mine, /settings, etc. (#2265 B Phase 5)
+  const clerkTokenSetup = vibesDiyApis.get(`__clerk__${apiUrl}`).once(() => {
     let clerkReady: undefined | Future<void> = new Future();
     const hostnameBase = realCtx.webVars.env.VIBES_SVC_HOSTNAME_BASE;
     const getToken = async (): Promise<Result<DashAuthType>> => {
@@ -239,14 +231,49 @@ function LiveCycleVibesDiyProvider({ children, webVars }: { children: React.Reac
         // socket just for notifications when an app connection exists.
       }
     });
-    realCtx.getToken = getToken;
-    sharedGetToken = getToken;
-    return new VibesDiyApi({
-      apiUrl,
-      shardKey,
-      getToken,
-    });
+    return getToken;
+  }) as () => Promise<Result<DashAuthType>>;
+
+  // Shared token-getter captured by both chatApi and vibeApi closures.
+  // Assigned once here and used by buildSharedApi / buildAppApi below.
+  const sharedGetToken = clerkTokenSetup;
+  realCtx.getToken = clerkTokenSetup;
+
+  // chatApi is now a lazy proxy: constructing this object does NOT open a
+  // WebSocket. The real VibesDiyApi (and its ChatSessions socket) is built
+  // on the first method access. This prevents the heavy ChatSessions WS from
+  // opening on non-chat pages like /settings, /vibes/mine, etc.
+  // (#2265 B Phase 5 — Option C)
+  //
+  // vibesDiyApis.get(apiUrl).once(factory) is called inside the get trap so
+  // the module-level cache persists the instance across re-renders; the proxy
+  // shell itself can be re-created each render.
+  const chatApiProxy = new Proxy({} as VibesDiyApiIface, {
+    get(_target, prop) {
+      // Perf hint: if the user is landing on a viewer route, pin this WS to a
+      // deterministic per-vibe DO shard so they join whatever DO is already
+      // warm for that vibe. The shard is decided once at construction; SPA
+      // navigation does not change it (the WS lives the lifetime of the page).
+      // For non-vibe routes (chat, explore, root) we omit shardKey so codegen
+      // traffic keeps its random-UUID load-balancing.
+      const instance = vibesDiyApis.get(apiUrl).once(() => {
+        const vibeMatch = typeof window !== "undefined" ? window.location.pathname.match(/^\/vibe\/([^/]+)\/([^/]+)/) : null;
+        const shardKey = vibeMatch ? `${vibeMatch[1]}--${vibeMatch[2]}` : undefined;
+        return new VibesDiyApi({
+          apiUrl,
+          shardKey,
+          getToken: clerkTokenSetup,
+        });
+      }) as VibesDiyApiIface;
+      // Bind methods to the real instance: VibesDiyApi's methods are regular
+      // (not arrow-bound) and rely on `this` (this.currentConnection, etc.).
+      // Without binding, `chatApi.openChat()` would run with `this` = the proxy
+      // (no set trap → state writes would land on the empty proxy target).
+      const val = (instance as unknown as Record<string | symbol, unknown>)[prop];
+      return typeof val === "function" ? (val as (...args: unknown[]) => unknown).bind(instance) : val;
+    },
   });
+  realCtx.chatApi = chatApiProxy;
 
   // AppSessions connection factory, keyed by an arbitrary vibe key. Same data
   // plane as vibeApi (skipShard, shared getToken); the module-level
