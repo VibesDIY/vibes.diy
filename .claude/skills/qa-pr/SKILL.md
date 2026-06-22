@@ -163,7 +163,7 @@ type QAResult = {
   pr_number: number;
   preview_url: string;
   summary: string; // one paragraph; the lead of the triage (kmikeym's "Summary" section). MUST cover both desktop and mobile.
-  pr_verdict: "pass" | "fail" | "pass-with-caveats"; // single verdict over BOTH phases; if mobile-only regressions block, that lowers the verdict
+  pr_verdict: "pass" | "pass-with-caveats" | "fail" | "not tested"; // single verdict over BOTH phases; if mobile-only regressions block, that lowers the verdict. "not tested" = the PR's change couldn't be exercised (e.g. blocked by an upstream outage); Step 7.4 renders the four states as Looks good ✅ / Works, with caveats 🟡 / Broken ❌ / Couldn't test ⛔
   pr_verdict_reasoning: string; // one paragraph; call out separately how the PR's change held up at desktop vs mobile
   test_scope: {
     account_alias: string;
