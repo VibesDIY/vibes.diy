@@ -29,7 +29,7 @@ const { me, can, ready } = useVibe(dbName: string);
 
 - `dbName` is the Fireproof database name. It is both the `accessFnBindings` key (→ `accessFnCid`) and the export-name selector `extractExportSource(source, dbName)` uses to pick the right access function out of a multi-db `access.js`.
 - **`can.see` is omitted this slice.** Per-doc stored output channels are not delivered to the client yet; reads are already server-filtered, so held docs are visible by construction. `can.see` lands in a later slice once per-doc output channels are delivered.
-- Identity/display (`ViewerTag`, `viewer`, `isOwner` as *display*) stays on `useViewer()`. `useViewer()` is unchanged and stays for back-compat.
+- Identity/display (`ViewerTag`, `viewer`, `isOwner` as _display_) stays on `useViewer()`. `useViewer()` is unchanged and stays for back-compat.
 
 ### Usage examples
 
@@ -51,12 +51,14 @@ function Comments() {
 }
 
 // Per-row edit/delete affordances.
-{messages.map((m) => (
-  <Row key={m._id}>
-    {can.edit(m).ok && <EditButton doc={m} />}
-    {can.delete(m).ok && <DeleteButton doc={m} />}
-  </Row>
-))}
+{
+  messages.map((m) => (
+    <Row key={m._id}>
+      {can.edit(m).ok && <EditButton doc={m} />}
+      {can.delete(m).ok && <DeleteButton doc={m} />}
+    </Row>
+  ));
+}
 ```
 
 ## Architecture
@@ -73,24 +75,24 @@ useVibe(dbName)
 
 ### Data derivation
 
-| Hook value | Source |
-|---|---|
-| `me` | `viewerEnv.viewer` (`{ userHandle, displayName? }`) + `viewerEnv.isOwner` → `{ userHandle, displayName?, isOwner } \| null` |
-| `grants` | `viewerEnv.grants?.[dbName] ?? { channels: [], publicChannels: [], roles: [] }` |
-| `adminMode` | `viewerEnv.adminMode ?? false` (newly threaded — see below) |
-| `cid` | `accessFnBindings.find((b) => b.dbName === dbName)?.accessFnCid` |
-| `source` | `accessFnSources.get(cid)` (string = ready, null = resolved-unknown, absent = pending) |
+| Hook value  | Source                                                                                                                      |
+| ----------- | --------------------------------------------------------------------------------------------------------------------------- |
+| `me`        | `viewerEnv.viewer` (`{ userHandle, displayName? }`) + `viewerEnv.isOwner` → `{ userHandle, displayName?, isOwner } \| null` |
+| `grants`    | `viewerEnv.grants?.[dbName] ?? { channels: [], publicChannels: [], roles: [] }`                                             |
+| `adminMode` | `viewerEnv.adminMode ?? false` (newly threaded — see below)                                                                 |
+| `cid`       | `accessFnBindings.find((b) => b.dbName === dbName)?.accessFnCid`                                                            |
+| `source`    | `accessFnSources.get(cid)` (string = ready, null = resolved-unknown, absent = pending)                                      |
 
 ## Readiness contract
 
 Three input states combine into `ready` and the `can.*` behavior. This is the whole point of slice 2c's three-state cache, plus a grace timeout so a never-arriving source can't strand the app.
 
-- **`identityReady = viewerEnv !== undefined`.** `viewer === null` is *resolved* (anonymous), still ready. `undefined` is the pending gap behind the original flash bug.
+- **`identityReady = viewerEnv !== undefined`.** `viewer === null` is _resolved_ (anonymous), still ready. `undefined` is the pending gap behind the original flash bug.
 - **`sourceReady`** for the dbName's `cid`:
   - no binding for dbName → no access function → no gate → `sourceReady = true`.
   - `cid → string` → ready, real verdict.
-  - `cid → null` (resolved-unknown: host found no source) → ready, **optimistic**. *Interactive, never wait forever.*
-  - `cid` absent (pending) → not ready **until a grace timeout (`SOURCE_GRACE_MS`, default 4000ms) elapses**, after which the hook degrades to `sourceReady = true` + optimistic. This guards against an RPC failure that leaves the cid absent for the session (slice 2c leaves it absent on transient error). *Interactive, never wait forever.*
+  - `cid → null` (resolved-unknown: host found no source) → ready, **optimistic**. _Interactive, never wait forever._
+  - `cid` absent (pending) → not ready **until a grace timeout (`SOURCE_GRACE_MS`, default 4000ms) elapses**, after which the hook degrades to `sourceReady = true` + optimistic. This guards against an RPC failure that leaves the cid absent for the session (slice 2c leaves it absent on transient error). _Interactive, never wait forever._
 - **`ready = identityReady && sourceReady`.**
 
 The grace timeout is per-hook-instance local state: a `useEffect` arms a `setTimeout` on mount; when it fires (and the source is still absent) it flips a `degraded` flag, triggering a re-render that resolves `sourceReady`. If the source arrives first, the flag is moot.
@@ -99,22 +101,22 @@ The grace timeout is per-hook-instance local state: a `useEffect` arms a `setTim
 
 `can.create/edit/delete` call `evaluateWrite` and normalize the slice-1 `WriteVerdict` to `{ ok, reason? }`:
 
-| Action | `evaluateWrite` args |
-|---|---|
+| Action               | `evaluateWrite` args                |
+| -------------------- | ----------------------------------- |
 | `create(partialDoc)` | `doc = partialDoc`, `oldDoc = null` |
-| `edit(doc)` | `doc = doc`, `oldDoc = doc` |
-| `delete(doc)` | `doc = doc`, `oldDoc = doc` |
+| `edit(doc)`          | `doc = doc`, `oldDoc = doc`         |
+| `delete(doc)`        | `doc = doc`, `oldDoc = doc`         |
 
 `oldDoc` mirrors `doc` for edit/delete because the production corpus is membership-only (the access function gates on the viewer's channel/role, not the doc delta), so `oldDoc`'s body is irrelevant. A richer `oldDoc` is a later refinement if a real function needs it; it would surface as `unknown` → optimistic, never a wrong deny.
 
 Verdict normalization:
 
-| Runner result | Condition | `can.*` returns |
-|---|---|---|
-| not ready | `ready === false` | `{ ok: false, reason: "pending" }` |
-| `{ ok: true }` | allowed | `{ ok: true }` |
-| `{ ok: false, reason, code }` | denied | `{ ok: false, reason }` |
-| `{ unknown: true, reason }` | uneval­uable | `{ ok: true, reason }` — **optimistic**, server stays source of truth |
+| Runner result                 | Condition         | `can.*` returns                                                       |
+| ----------------------------- | ----------------- | --------------------------------------------------------------------- |
+| not ready                     | `ready === false` | `{ ok: false, reason: "pending" }`                                    |
+| `{ ok: true }`                | allowed           | `{ ok: true }`                                                        |
+| `{ ok: false, reason, code }` | denied            | `{ ok: false, reason }`                                               |
+| `{ unknown: true, reason }`   | uneval­uable      | `{ ok: true, reason }` — **optimistic**, server stays source of truth |
 
 The optimistic-unknown path keeps a stale/old client from ever lying: it renders the surface and defers to the existing optimistic-write + server-rejection + rollback pattern. `0%` of today's corpus hits it.
 
