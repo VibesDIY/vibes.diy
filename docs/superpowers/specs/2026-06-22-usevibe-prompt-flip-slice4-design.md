@@ -38,24 +38,32 @@ Decisions baked in (from brainstorming):
    - `access.js` is the source of truth `can.*` runs; owner-only management → encode it in `access.js`, gate UI on `can.*`.
    - Server stays authoritative — handle write rejection/rollback even when `can.*` is `ok`.
 2. **New `prompts/pkg/llms/use-vibe.ts`** — `LlmConfig` (`name: "use-vibe"`, `label`, `description`, `importModule: "use-vibes"`, `importName: "useVibe"`). Registered in `prompts/pkg/llms/index.ts` (`allConfigs`).
-3. **`getDefaultSkills()`** — add `"use-vibe"` so the doc is always injected (gating "applies to every app", same rationale that keeps `use-viewer` default). `use-viewer` stays in the defaults (identity is still universal).
-4. **`prompts/pkg/system-prompt.md`** — rewrite:
+3. **Skill injection — `use-vibe` + `use-viewer` must be force-injected on every generation** (`prompts/pkg/prompts.ts`). Gating and identity are universal, so both docs must always reach the assembled prompt. Two facts make this non-trivial:
+   - `getDefaultSkills()` currently returns only `["fireproof", "callai", "image-gen", "web-audio"]` — **`use-viewer` is _not_ a default skill** (it is normally selected by the pre-allocation LLM via `active.skills`). So "add `use-vibe` to the defaults" is insufficient.
+   - When a session provides a skills list, `selectedNames` is that list and the defaults are **bypassed** (`makeBaseSystemPrompt`: defaults apply only when `selectedNames.length === 0`). So a doc that must always appear cannot rely on the defaults path.
+     Therefore: unconditionally include `use-vibe` and `use-viewer` in `selectedNames` (force-add after selection, dedup) so both the no-skills path and the pre-alloc path always inject the gating + identity docs and emit `import { useVibe, useViewer } from "use-vibes"`. Also add `use-vibe` to `getDefaultSkills()` for completeness.
+4. **`prompts/pkg/llms/fireproof.md`** — a default skill, **always injected**, and it currently teaches the retired gate directly: "Write surfaces are gated with `viewer` (signed in?), `access.hasChannel()` (channel access), or `isOwner` (management)" plus `access.hasRole()` / `access.hasChannel()` UI-gating examples (the `Comments` example ~368–378, the summary ~387). Rewrite the **client UI write-gating** guidance here to the single `useVibe().can` rule, the same as `system-prompt.md`. Distinctions to preserve:
+   - The **`access.js` examples are server-side code** (e.g. `if (!user.isOwner) throw { forbidden: "owner only" }`) — those stay; they are where the owner-only/channel rules are _authored_, which is exactly what `can.*` then runs.
+   - The **`useFireproof().access` object stays a documented, available API** (it is not being removed from the runtime) — but it is no longer _taught as the write-surface gate_; write gating redirects to `useVibe().can`, with a one-line pointer.
+5. **`prompts/pkg/system-prompt.md`** — rewrite:
    - the main gating rule (line ~20),
    - the scaffold / output-format guidance (lines ~52–56, ~344) — keep the `useViewer` destructure for `ViewerTag`/identity, add the `useVibe` gate, drop "gate with `access.hasRole()` / `access.hasChannel()`",
    - the worked examples (lines ~328–432) — flip `Compose`/`Feed` gating from `if (!viewer)` / `access.hasRole()` to `can.create(...)`, keeping `ViewerTag` from `useViewer`.
-5. **`prompts/pkg/prompts.ts`** — update the pre-allocation vocabulary (line ~50) and the enrichment sentences (lines ~125, ~141) that currently teach `useViewer().can('write')` (the old ACL boolean) → `useVibe().can`.
-6. **`prompts/pkg/llms/use-viewer.md`** — trim gating guidance to identity/`ViewerTag`; add a one-line pointer: for write gating, see use-vibe.
-7. **`prompts/pkg/system-prompt-initial.md`** and **`notes/vibes-app-jsx.md`** — align any gating guidance to the single rule (scan-and-fix; both are author-facing).
+6. **`prompts/pkg/prompts.ts`** — update the pre-allocation vocabulary (line ~50) and the enrichment sentences (lines ~125, ~141) that currently teach `useViewer().can('write')` (the old ACL boolean) → `useVibe().can` (in addition to the force-inject change in item 3).
+7. **`prompts/pkg/llms/use-viewer.md`** — trim gating guidance to identity/`ViewerTag`; add a one-line pointer: for write gating, see use-vibe.
+8. **`prompts/pkg/system-prompt-initial.md`** and **`notes/vibes-app-jsx.md`** — align any gating guidance to the single rule (scan-and-fix; both are author-facing).
+
+(Items 1–2 add the `use-vibe` doc + its `LlmConfig`; item 3 makes it — and `use-viewer` — always injected; item 4 stops `fireproof.md` from re-teaching the old gate.)
 
 ## Testing
 
 Prompt assembly is deterministic and there are existing tests in `prompts/tests/` (`prompt-builder.test.ts`, `initial-system-prompt.test.ts`). Add assertions that the assembled base system prompt:
 
 - **contains** the new rule surface — `useVibe(` and the `can.create` / `.reason` gating phrasing;
-- **injects the use-vibe doc by default** — when no skills are selected (default-skills path), the concatenated llms text includes the `use-vibe` doc block (e.g. its `<…-docs>` label), proving `getDefaultSkills()` carries it;
-- **no longer contains** the retired gating text — the literal "Gate write surfaces on `viewer`" and `useViewer().can('write')` strings are gone (a regression guard against the old guidance creeping back).
+- **always injects both the `use-vibe` and `use-viewer` docs** — assert it on **both** the no-skills path (`getDefaultSkills()`) **and** a provided-skills path (a non-empty `skills` list that omits them), proving the force-inject (item 3), not just the default. Check for both `<…-docs>` blocks and the generated `import { useVibe, useViewer } from "use-vibes"`;
+- **no longer contains the retired gating text** anywhere in the assembled default prompt — a regression guard for the literals: "Gate write surfaces on `viewer`", `useViewer().can('write')`, **and `fireproof.md`'s "Write surfaces are gated with `viewer`…"** (this last one is the catch Codex flagged — `fireproof.md` is always injected, so the test must assert against the _assembled_ prompt, not just `system-prompt.md`).
 
-Plus a small unit assertion that `useVibeConfig` is present in `allConfigs` / the catalog with the right `importModule`/`importName`, so the generated import statement (`import { useVibe } from "use-vibes"`) is emitted.
+Plus a small unit assertion that `useVibeConfig` is present in `allConfigs` / the catalog with the right `importModule`/`importName`, so the generated import statement is emitted.
 
 ## Scope / non-goals
 
