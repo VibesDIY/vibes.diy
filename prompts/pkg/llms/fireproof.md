@@ -333,7 +333,7 @@ Other `acl` variants: `useFireproof("drafts", { acl: { read: ["editors"], write:
 
 ## Reading Resolved Grants (`access`)
 
-`useFireproof()` returns an `access` property — the viewer's resolved roles and channels for that database, computed server-side from the access function's `members` and `grant` declarations. Use `access.roles` (ReadonlySet), `access.channels` (ReadonlySet), `access.hasRole(name)`, and `access.hasChannel(name)`.
+`useFireproof()` returns an `access` property — the viewer's resolved roles and channels for that database, computed server-side from the access function's `members` and `grant` declarations. Use `access.roles` (ReadonlySet), `access.channels` (ReadonlySet), `access.hasRole(name)`, and `access.hasChannel(name)`. Use these to reflect roles/channels in the UI; gate writes with `useVibe(dbName).can`.
 
 For databases without an access function export, `access` has empty roles and channels. No separate pending flag — grants arrive alongside the viewer identity, so `useViewer().isViewerPending` covers both.
 
@@ -365,17 +365,18 @@ App.jsx
         ))}
       </ul>
 =======
-      {access.hasRole("poster") && <CommentForm database={database} />}
-      {access.hasRole("moderator") && <ModTools database={database} />}
+      {/* gate writes with useVibe().can, not access.* */}
+      {useVibe("announcements").can.create({ type: "comment" }).ok && <CommentForm database={database} />}
+      {access.hasRole("moderator") && <ModToolsBadge />}
       {access.hasChannel("announcements") && <Announcements />}
 >>>>>>> REPLACE
 ```
 
 The AI agent writes the access function (so it knows the role names) and writes the UI (so it knows which roles gate which components). The `access` object is the bridge — it lets the UI reflect server-enforced permissions without duplicating the logic.
 
-The access function is the single source of truth for permissions. The UI reads its verdict from `access` — gate with `access.hasChannel(name)` and `access.hasRole(name)`. Grants may reflect logic the UI can't see (other documents, role memberships, owner state), so `access` is always the right check.
+The access function is the single source of truth for permissions. Gate write surfaces with `useVibe(dbName).can`, which runs this same access function. The `access` object (`access.hasRole(name)`, `access.hasChannel(name)`) reflects the viewer's resolved roles/channels for DISPLAY — role badges, showing/hiding read-only sections — not as the write gate.
 
-`access.hasChannel()` covers every grant path — public channels, restricted channels, role-expanded channels. The access function decides who gets access and how; the UI just asks `access.hasChannel(name)`.
+`access.hasChannel()` covers every grant path — public channels, restricted channels, role-expanded channels. The access function decides who gets access and how; the UI uses `access.hasChannel(name)` to reflect membership for display.
 
 ### Complete example: Team announcements with channels
 
@@ -384,7 +385,7 @@ This example shows the full round-trip — access.js declares channels and grant
 - **Owner bootstrap:** `user.isOwner` gates management operations (channel setup, role grants, moderation). No bootstrap problem — the owner can always manage without needing a role granted first.
 - **Channel identity:** Channel docs use `_id: "ch:" + name` so names are unique. The `_id` is the channel identifier everywhere — in `channels`, `grant`, and `ctx.requireAccess()`.
 - **Channel grant:** A channel document grants the creator (`grant.users`), adds `grant.public` so all members can read, and `grant.roles` so posters can write.
-- **Write surfaces** are gated with `viewer` (signed in?), `access.hasChannel()` (channel access), or `isOwner` (management).
+- **Write surfaces** are gated with `useVibe(dbName).can.create/edit/delete` — it runs this same access function, so the UI verdict matches the server. Render `.reason` when denied. (See use-vibe docs.)
 - **`ViewerTag`** takes `userHandle` when rendering another user.
 
 access.js
@@ -420,16 +421,17 @@ export function announcements(doc, oldDoc, user, ctx) {
 }
 ```
 
-App.jsx — `isOwner` and `access.hasChannel()` gate the UI based on what the access function declared:
+App.jsx — `useVibe().can` gates write surfaces; `access.hasChannel()` reflects display-only membership; `isOwner` gates management:
 
 ```jsx
 import React from "react";
 import { useFireproof } from "use-fireproof";
-import { useViewer } from "use-vibes";
+import { useViewer, useVibe } from "use-vibes";
 
 export default function App() {
   const { viewer, isOwner, isViewerPending, ViewerTag } = useViewer();
   const { database, useLiveQuery, access } = useFireproof("announcements");
+  const canPost = useVibe("announcements").can.create({ type: "post" });
 
   const { docs: posts } = useLiveQuery("type", { key: "post" });
   const [draft, setDraft] = React.useState("");
@@ -453,8 +455,8 @@ export default function App() {
     <div>
       <ViewerTag />
 
-      {/* access.hasChannel covers public + restricted — the access function handles the distinction */}
-      {viewer && access.hasChannel(channel) && (
+      {/* gate the write surface on useVibe().can — it runs the access function */}
+      {canPost.ok ? (
         <form
           onSubmit={(e) => {
             e.preventDefault();
@@ -464,6 +466,8 @@ export default function App() {
           <textarea value={draft} onChange={(e) => setDraft(e.target.value)} />
           <button type="submit">Post</button>
         </form>
+      ) : (
+        viewer && <p style={{ color: "var(--muted, #888)" }}>{canPost.reason}</p>
       )}
 
       {/* owner-only management */}
@@ -485,11 +489,11 @@ export default function App() {
 }
 ```
 
-The pattern: `viewer` checks sign-in, `access.hasChannel()` checks what the access function granted, `isOwner` gates management. The access function is the server-side authority — the UI just reflects its decisions. Real apps can graduate to `access.hasRole("moderator")` when they need to delegate management to non-owners.
+The pattern: `useVibe().can` gates write surfaces (running the same access function the server uses), `access.hasChannel()` reflects display-only membership, `isOwner` gates management. The access function is the server-side authority — `useVibe().can` is how the UI reflects its decisions for writes.
 
 ### Example: Channel board with restricted channels
 
-Some channels are open to all members, others are restricted. The access function decides — the UI just asks `access.hasChannel()`.
+Some channels are open to all members, others are restricted. The access function decides — the UI uses `access.hasChannel()` to filter which channels to display, and `useVibe().can` to gate writes.
 
 access.js
 
@@ -518,7 +522,7 @@ export function chat(doc, oldDoc, user, ctx) {
 }
 ```
 
-App.jsx — the UI uses `access.hasChannel()` for everything. It has no idea which channels are restricted — that's the access function's job:
+App.jsx — `access.hasChannel()` filters which channels are visible (display); `useVibe().can` gates the write surface:
 
 ```jsx
 <<<<<<< SEARCH
@@ -526,6 +530,7 @@ App.jsx — the UI uses `access.hasChannel()` for everything. It has no idea whi
 =======
   const { database, useLiveQuery, access } = useFireproof("chat");
   const { docs: channels } = useLiveQuery("type", { key: "channel" });
+  const canPost = useVibe("chat").can.create({ type: "post" });
 >>>>>>> REPLACE
 ```
 
@@ -533,13 +538,13 @@ App.jsx — the UI uses `access.hasChannel()` for everything. It has no idea whi
 <<<<<<< SEARCH
       {viewer && access.hasChannel(channel) && (
 =======
-      {/* filter to channels the viewer can see — use _id as channel identifier */}
+      {/* filter to channels the viewer can see — use _id as channel identifier (display only) */}
       {channels.filter((ch) => isOwner || access.hasChannel(ch._id)).map((ch) => (
         <button key={ch._id} onClick={() => setChannel(ch._id)}>{ch.name}</button>
       ))}
 
-      {/* can post? just check channel access */}
-      {viewer && (isOwner || access.hasChannel(channel)) && (
+      {/* gate the write surface on useVibe().can */}
+      {canPost.ok ? (
 >>>>>>> REPLACE
 ```
 

@@ -1,8 +1,8 @@
 # useViewer Hook
 
-`useViewer()` is a **read-only window** into runtime-managed access control. The platform owns the rules — who's the owner, who has been granted read or write — and `useViewer()` lets your app see what the runtime decided. You cannot grant or revoke access from code; you can only reflect the runtime's verdict in your UI.
+`useViewer()` is a **read-only window** into viewer identity. The platform owns the rules — who's the owner, who has been granted read or write — and `useViewer()` lets your app see who's signed in and render their identity. You cannot grant or revoke access from code; you can only reflect the runtime's verdict in your UI.
 
-The contract: **every write surface (form, submit button, edit input, delete button) must check `viewer`** (signed in?) and render a read-only fallback when null. For apps with access functions, gate further with `access.hasRole()` or `access.hasChannel()` from `useFireproof()`. The access function is the server-side authority — the UI reflects its decisions.
+Use `useViewer()` for identity and display only — `ViewerTag`, avatars, and showing who's signed in. **Write surfaces are gated with `useVibe(dbName).can`** (see use-vibe docs), not with `viewer`/`isOwner`/`access.*`.
 
 ## Basic Usage
 
@@ -37,7 +37,7 @@ export default function App() {
 - `viewer` — `{ userHandle, displayName? }` or `null` for anonymous visitors. Avatars are not on the payload — render them with `<ViewerTag userHandle={...} />`, which resolves the avatar from the handle. Don't build avatar URLs yourself.
 - `isViewerPending` — `true` while the platform is still resolving the viewer identity (e.g. on first render before the parent shell has pushed the identity update). **Gate any auth-dependent UI on `!isViewerPending`** to avoid flashing the wrong state. Once it becomes `false`, `viewer` is either populated or definitively `null`.
 - `isOwner` — `true` when the viewer owns this vibe. Use it for management UI (settings, role grants, moderation).
-- `can(action, dbName?)` — `true`/`false` for `"read"`, `"write"`, `"delete"`. Checks app-level ACLs. In most apps `viewer` and `access.hasRole()`/`access.hasChannel()` are the right gates instead.
+- `can(action, dbName?)` — legacy ACL boolean for `"read"`/`"write"`/`"delete"`. Prefer `useVibe(dbName).can.create/edit/delete` for write gating; it runs the app's access function and returns a `reason`.
 - `ViewerTag` — ready-made user pill; see the ViewerTag section below.
 
 ## Gating UI
@@ -154,7 +154,7 @@ Key points:
 
 - Never use Clerk user IDs. Only `userHandle` crosses into vibe code.
 - Avatar URLs are stable indirection URLs — when a user changes their avatar, the URL stays the same and the bytes update. Treat them as opaque strings.
-- For per-database permissions (roles and channels), use `access` from `useFireproof()`: `access.hasRole("moderator")`, `access.hasChannel("engineering")`. The access function (access.js) is the server-side authority; `access` in the UI reflects its decisions.
+- To reflect a viewer's roles/channels for display, use `access` from `useFireproof()`: `access.hasRole("moderator")`, `access.hasChannel("engineering")`. To gate a write surface, use `useVibe(dbName).can` (it runs the same access.js). The access function is the server-side authority either way.
 
 ## ViewerTag
 

@@ -112,27 +112,27 @@ const response = await callAI("Generate data", {
 ```jsx
 import { useViewer } from "use-vibes";
 
-const { viewer, can } = useViewer();
+const { viewer, isOwner, ViewerTag } = useViewer();
 ```
 
 - `viewer` — `{ userHandle, displayName?, avatarUrl }` or `null` for anonymous visitors. `avatarUrl` is a stable opaque URL — use it directly in `<img src>`, don't construct it yourself.
-- `can(action, dbName?)` — `"read" | "write" | "delete"`. With a `dbName`, checks that db; without, allowed-everywhere.
+- Use `useViewer()` for identity and display: `ViewerTag`, showing who's signed in, `isOwner` for management UI. **Do not use `viewer`/`isOwner`/`access.*` as write gates.**
+- **Write surfaces** are gated with `useVibe(dbName).can.create/edit/delete` — it runs the app's access function and returns `{ ok, reason }`. Render `.reason` when denied.
 
 Stamp `authorHandle: viewer.userHandle` on docs at write time. Render with `<ViewerTag userHandle={doc.authorHandle} />` — it resolves display name and avatar automatically. Only persist the handle, not displayName or avatarUrl.
 
 ## Channels (multi-group / Slack-style apps)
 
-Each named Fireproof database is a **channel** — an isolated data space with its own access policy. App.jsx reads permissions via `access` from `useFireproof()`:
+Each named Fireproof database is a **channel** — an isolated data space with its own access policy. App.jsx reads display-only permissions via `access` from `useFireproof()`; write surfaces are gated with `useVibe(dbName).can`.
 
 Store available channels in a registry database, then filter by `access.hasChannel(name)` so each user only sees channels they have access to:
 
 ```jsx
 function App() {
-  const { can } = useViewer()
   const { useLiveQuery, access } = useFireproof('channelRegistry')
   const { docs: channels } = useLiveQuery('name')
   const [active, setActive] = useState(null)
-  const visible = channels.filter(ch => access.hasChannel(ch.name))
+  const visible = channels.filter(ch => access.hasChannel(ch.name))  // display filter only
 
   return (
     <div style={{ display: 'flex' }}>
@@ -149,10 +149,11 @@ function App() {
 }
 
 function ChannelView({ name }) {
-  const { viewer, can } = useViewer()
+  const { viewer } = useViewer()
   const { useLiveQuery, useDocument, database } = useFireproof(name)
   const { docs: messages } = useLiveQuery('timestamp', { descending: true, limit: 50 })
   const { doc, merge } = useDocument({ text: '' })
+  const canPost = useVibe(name).can.create({ type: 'message' })  // write gate
 
   async function handleSubmit(e) {
     e.preventDefault()
@@ -176,11 +177,13 @@ function ChannelView({ name }) {
           </li>
         ))}
       </ul>
-      {viewer && access.hasChannel(name) && (
+      {canPost.ok ? (
         <form onSubmit={handleSubmit}>
           <input value={doc.text} onChange={e => merge({ text: e.target.value })} />
           <button type="submit">Send</button>
         </form>
+      ) : (
+        viewer && <p style={{ color: 'var(--muted, #888)' }}>{canPost.reason}</p>
       )}
     </div>
   )
@@ -189,8 +192,8 @@ function ChannelView({ name }) {
 
 Key rules:
 - Channel name = database name. Use descriptive names (`general`, `dev`, `announcements`).
-- `access.hasChannel(channelName)` — hide channels the user cannot access.
-- `viewer && access.hasChannel(channelName)` — hide compose UI for channels the user can't write to.
+- `access.hasChannel(channelName)` — hide channels the user cannot access (display reflection, not write gate).
+- **Write surfaces** are gated with `useVibe(dbName).can.create/edit/delete` — it runs the access function and returns `{ ok, reason }`.
 - `isOwner` from `useViewer()` — gate the owner's "add channel" form.
 - Channel access policies are set in app settings, not in App.jsx.
 - For private channels (where members shouldn't know they exist), only add them to the registry after the owner grants access.
