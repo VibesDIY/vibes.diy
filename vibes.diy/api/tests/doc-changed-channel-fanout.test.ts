@@ -132,9 +132,7 @@ describe("doc-changed channel fan-out carries real dbName (#2301)", { timeout: 3
     const rows = await ctx.vibesCtx.sql.db
       .select({ docId: tOut.docId })
       .from(tOut)
-      .where(
-        and(eq(tOut.ownerHandle, ownerHandle), eq(tOut.appSlug, appSlug), eq(tOut.dbName, "default"), eq(tOut.docId, "d5"))
-      );
+      .where(and(eq(tOut.ownerHandle, ownerHandle), eq(tOut.appSlug, appSlug), eq(tOut.dbName, "default"), eq(tOut.docId, "d5")));
     expect(rows).toHaveLength(0);
   });
 });
