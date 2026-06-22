@@ -655,6 +655,56 @@ export const deleteDocEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqDelete
 
       const dbName = req.dbName;
 
+      // Read this doc's stored access-fn output BEFORE the tombstone insert.
+      // We need it for two things: (1) the per-channel delete fan-out below,
+      // and (2) deciding whether removing the doc's grant contribution changes
+      // any viewer's effective grants (so we can push EvtViewerGrantsChanged).
+      // The put path stores grants via an AccessFnOutputs sidecar; the delete
+      // path must clear that sidecar or the grant lingers after the doc is
+      // "deleted" — revocation-by-deletion (#2531).
+      const tOutputs = vctx.sql.tables.accessFnOutputs;
+      const outRowBefore = await vctx.sql.db
+        .select({ output: tOutputs.output, hasGrants: tOutputs.hasGrants })
+        .from(tOutputs)
+        .where(
+          and(
+            eq(tOutputs.ownerHandle, req.ownerHandle),
+            eq(tOutputs.appSlug, req.appSlug),
+            eq(tOutputs.dbName, dbName),
+            eq(tOutputs.docId, req.docId)
+          )
+        )
+        .limit(1)
+        .then((r) => r[0]);
+      const deletedDocHadGrants = outRowBefore?.hasGrants === 1;
+      let channels: string[] = [];
+      if (outRowBefore?.output) {
+        try {
+          const parsed = JSON.parse(outRowBefore.output) as { channels?: string[] };
+          channels = normalizeChannels(parsed.channels ?? []);
+        } catch (e: unknown) {
+          console.error("DocNotify delete channel parse error:", e);
+        }
+      }
+
+      // Sidecar: drop this doc's AccessFnOutputs row in the SAME critical
+      // section as the tombstone insert (under the pg advisory lock / sqlite
+      // write lock), mirroring the put path's sidecar. This is what actually
+      // revokes the grant: resolveGrants in who-am-i reduces over stored
+      // outputs, so once the row is gone the grant stops applying (#2531).
+      const deleteOutputSidecar = async (_seq: number, exec: VibesSqlite) => {
+        await exec
+          .delete(tOutputs)
+          .where(
+            and(
+              eq(tOutputs.ownerHandle, req.ownerHandle),
+              eq(tOutputs.appSlug, req.appSlug),
+              eq(tOutputs.dbName, dbName),
+              eq(tOutputs.docId, req.docId)
+            )
+          );
+      };
+
       // Insert tombstone. Shares the same per-doc lock key as putDoc (derived
       // from owner/app/db/docId) so a delete cannot interleave a put (#2506).
       try {
@@ -672,6 +722,7 @@ export const deleteDocEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqDelete
             deleted: 1,
             created: now,
           },
+          sidecar: deleteOutputSidecar,
         });
       } catch (err) {
         if (err instanceof SeqConflictError) {
@@ -686,45 +737,12 @@ export const deleteDocEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqDelete
 
       // Notify subscribers of the doc change via per-vibe local fan-out. On access-fn vibes,
       // fan out per stored channel so channel-subscribed connections receive the
-      // delete. Best-effort: if there's no binding or stored output row, fall back
-      // to a single real-dbName notify (correct for no-access-fn vibes). Never block
-      // the delete on this lookup.
+      // delete. `channels` was read from the doc's stored output BEFORE the
+      // tombstone insert (the sidecar has since dropped that row). Fall back to a
+      // single real-dbName notify when there was no stored output (no-access-fn
+      // vibes, or a doc that never carried channels).
       if (vctx.notifyDocChanged) {
         const senderConnId = clientWsSend(ctx).connId;
-        let channels: string[] = [];
-        try {
-          const tAfb = vctx.sql.tables.accessFunctionBindings;
-          const afbRow = await vctx.sql.db
-            .select({ accessFnCid: tAfb.accessFnCid })
-            .from(tAfb)
-            .where(and(eq(tAfb.ownerHandle, req.ownerHandle), eq(tAfb.appSlug, req.appSlug), inArray(tAfb.dbName, [dbName, "*"])))
-            .orderBy(sql`CASE WHEN ${tAfb.dbName} = ${dbName} THEN 0 ELSE 1 END`)
-            .limit(1)
-            .then((r) => r[0]);
-          if (afbRow?.accessFnCid) {
-            const tOut = vctx.sql.tables.accessFnOutputs;
-            const outRow = await vctx.sql.db
-              .select({ output: tOut.output })
-              .from(tOut)
-              .where(
-                and(
-                  eq(tOut.ownerHandle, req.ownerHandle),
-                  eq(tOut.appSlug, req.appSlug),
-                  eq(tOut.dbName, dbName),
-                  eq(tOut.docId, req.docId)
-                )
-              )
-              .limit(1)
-              .then((r) => r[0]);
-            if (outRow?.output) {
-              const parsed = JSON.parse(outRow.output) as { channels?: string[] };
-              channels = normalizeChannels(parsed.channels ?? []);
-            }
-          }
-        } catch (e: unknown) {
-          console.error("DocNotify delete channel lookup error:", e);
-        }
-
         if (channels.length) {
           for (const channel of channels) {
             vctx
@@ -739,6 +757,23 @@ export const deleteDocEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqDelete
             .notifyDocChanged({ ownerHandle: req.ownerHandle, appSlug: req.appSlug, dbName, docId: req.docId }, senderConnId)
             .catch((e: unknown) => console.error("DocNotify error:", e));
         }
+      }
+
+      // If the deleted doc was carrying grants, removing it changes effective
+      // grants — push EvtViewerGrantsChanged so connected viewers re-resolve
+      // who-am-i and drop the now-revoked role/channel (#2531). Mirrors the put
+      // path's notify. Best-effort: never block the delete on the fan-out.
+      if (deletedDocHadGrants && vctx.notifyViewerGrantsChanged) {
+        vctx
+          .notifyViewerGrantsChanged(
+            {
+              type: "vibes.diy.evt-viewer-grants-changed",
+              ownerHandle: req.ownerHandle,
+              appSlug: req.appSlug,
+            } satisfies EvtViewerGrantsChanged,
+            clientWsSend(ctx).connId
+          )
+          .catch((e: unknown) => console.error("Viewer grants notify error:", e));
       }
 
       await ctx.send.send(ctx, {
