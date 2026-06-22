@@ -16,6 +16,14 @@ export { resizeImageToBase64 } from "./resize-image.js";
 export { useFireproof, fireproof, listDbNames, type DatabaseAccess } from "./use-firefly.js";
 export { useViewer, type UseViewerResult } from "./use-viewer.js";
 export {
+  useGraceDegraded,
+  armGrace,
+  isGraceDegraded,
+  subscribeGrace,
+  setGraceMsForTest,
+  __resetGraceForTest,
+} from "./use-vibe-grace.js";
+export {
   FireflyDatabase,
   FireflyDatabase as Database,
   type DocTypes,
