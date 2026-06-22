@@ -13,7 +13,7 @@ import {
   VibesAssetStorage,
   VibesFPApiParameters,
 } from "@vibes.diy/api-types";
-import { VibesApiTables, VibesSqlite } from "@vibes.diy/api-sql";
+import { DBFlavour, VibesApiTables, VibesSqlite } from "@vibes.diy/api-sql";
 import { type } from "arktype";
 import type { AssetGrantSigner } from "./asset-grant.js";
 import type { AssetSessionSigner } from "./asset-session.js";
@@ -29,6 +29,7 @@ export interface VibesApiSQLCtx {
   sql: {
     db: VibesSqlite;
     tables: VibesApiTables;
+    flavour: DBFlavour;
   };
   tokenApi: Record<string, FPApiToken>;
   connections: Set<WSSendProvider>;

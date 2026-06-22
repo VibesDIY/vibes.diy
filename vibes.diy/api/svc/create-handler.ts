@@ -22,7 +22,7 @@ import {
   S3Api,
   VibesFPApiParameters,
 } from "@vibes.diy/api-types";
-import { createSQLPeer, CreateSQLPeerParams, createVibesApiTables, DBFlavour, VibesSqlite } from "@vibes.diy/api-sql";
+import { createSQLPeer, CreateSQLPeerParams, createVibesApiTables, DBFlavour, toDBFlavour, VibesSqlite } from "@vibes.diy/api-sql";
 import { ensureStorage } from "@vibes.diy/api-pkg";
 import { createS3Peer } from "./peers/s3.js";
 import { createAssetGrantSigner } from "./asset-grant.js";
@@ -262,7 +262,7 @@ export async function createAppContext<T extends VibesSqlite>(
   const vibesCtx = {
     sthis,
     logger: params.logger ?? ensureLogger(sthis, "VibesApiSQLCtx"),
-    sql: { db: params.db, tables },
+    sql: { db: params.db, tables, flavour: toDBFlavour(envVals.DB_FLAVOUR) },
     netHash: params.netHash,
     cache: params.cache,
     connections: params.connections,
