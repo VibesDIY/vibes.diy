@@ -46,7 +46,7 @@ The service runs **two** backends, selected by `DB_FLAVOUR`
 so both race today.
 
 - **D1 / SQLite:** all writes are globally serialized by SQLite's single
-  write lock. The race exists *only* because the read and the write are two
+  write lock. The race exists _only_ because the read and the write are two
   separate round-trips.
 - **Neon Postgres (READ COMMITTED):** a naive "on PK conflict, re-read max,
   bump, re-insert" loop **storms** under a burst. N near-simultaneous writes
@@ -167,7 +167,7 @@ decide whether to take the advisory lock.
   `ReqPutDoc` + `database.put` runtime threading. Deferred.
 - **`AppDocumentHead` redesign** — a separate head row with PK
   `(owner, app, db, docId)` upserted via `ON CONFLICT DO UPDATE SET seq =
-  head.seq + 1` (atomic increment, row-locked, no collision ever, LWW for
+head.seq + 1` (atomic increment, row-locked, no collision ever, LWW for
   free) is the cleanest long-term shape but needs a migration and read-path
   changes. **File as a follow-up issue.**
 - **#2501** — prompt guidance that writes need no error handling stays
