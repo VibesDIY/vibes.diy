@@ -278,7 +278,8 @@ export default function VibeIframeWrapper() {
       inRefreshViewerFromWhoAmIRef.current = true;
 
       try {
-        const rRes = await vctx.chatApi.whoAmI({
+        const conn = vctx.vibeApi ?? vctx.chatApi; // admin mode is a doc-plane concern → ride vibeApi
+        const rRes = await conn.whoAmI({
           tid: crypto.randomUUID(),
           appSlug,
           ownerHandle,
@@ -310,7 +311,7 @@ export default function VibeIframeWrapper() {
         inRefreshViewerFromWhoAmIRef.current = false;
       }
     },
-    [appSlug, ownerHandle, srvVibeSandbox, vctx.chatApi]
+    [appSlug, ownerHandle, srvVibeSandbox, vctx.vibeApi, vctx.chatApi]
   );
 
   const flushPendingWriterViewerRefresh = useCallback(async (): Promise<void> => {
