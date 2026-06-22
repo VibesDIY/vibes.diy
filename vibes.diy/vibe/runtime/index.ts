@@ -46,3 +46,4 @@ export {
   type EvaluateWriteArgs,
   type CanSeeArgs,
 } from "./access-runner.js";
+export { useVibe, type UseVibeResult, type CanVerdict, type UseVibeMe } from "./use-vibe.js";
