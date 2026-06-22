@@ -37,7 +37,10 @@ describe("admin whoAmI + putDoc share one connection", { timeout: 30000 }, () =>
   beforeAll(async () => {
     const deviceCA = await createTestDeviceCA(sthis);
     const appCtx = await createVibeDiyTestCtx(sthis, deviceCA);
-    const ownerUser = await createTestUser({ sthis, deviceCA, seqUserId: 1 });
+
+    // Fixed session string so userId is deterministic per seqUserId.
+    const session = "admin-connection-test";
+    const ownerUser = await createTestUser({ sthis, deviceCA, session, seqUserId: 1 });
 
     // Single WSSendProvider — the doc-op connection.
     // All tests in this describe share this one connection to verify the
@@ -94,9 +97,15 @@ describe("admin whoAmI + putDoc share one connection", { timeout: 30000 }, () =>
   });
 
   it("putDoc on the same connection succeeds when adminMode is set (connection-scoped contract)", async () => {
-    // The previous test set wsSendProvider.adminMode = true via whoAmI.
-    // putDoc on the same connection must succeed — connectionAdminMode(ctx) returns true,
-    // checkDocAccess returns "override" for the owner, and the write is authorized.
+    // Set adminMode:true explicitly so this test is self-contained and not
+    // dependent on the ordering of previous tests.
+    const rWho = await ownerApi.whoAmI({
+      tid: crypto.randomUUID(),
+      appSlug,
+      ownerHandle,
+      adminMode: true,
+    });
+    assert(rWho.isOk(), `whoAmI should succeed: ${rWho.isErr() ? JSON.stringify(rWho.Err()) : ""}`);
     expect(wsSendProvider.adminMode).toBe(true);
 
     const rPut = await ownerApi.putDoc({
@@ -111,7 +120,18 @@ describe("admin whoAmI + putDoc share one connection", { timeout: 30000 }, () =>
   });
 
   it("whoAmI with adminMode:false clears the connection adminMode flag", async () => {
-    // Confirm the flag can be toggled back off.
+    // First set adminMode:true so this test is self-contained and not
+    // dependent on the ordering of previous tests.
+    const rWhoTrue = await ownerApi.whoAmI({
+      tid: crypto.randomUUID(),
+      appSlug,
+      ownerHandle,
+      adminMode: true,
+    });
+    assert(rWhoTrue.isOk(), `whoAmI(true) should succeed: ${rWhoTrue.isErr() ? JSON.stringify(rWhoTrue.Err()) : ""}`);
+    expect(wsSendProvider.adminMode).toBe(true);
+
+    // Now confirm the flag can be toggled back off.
     const rWho = await ownerApi.whoAmI({
       tid: crypto.randomUUID(),
       appSlug,
