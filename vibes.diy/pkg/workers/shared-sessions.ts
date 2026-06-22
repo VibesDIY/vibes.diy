@@ -42,7 +42,8 @@ function cfWebSocketPair(): { client: WebSocket; server: WebSocket } {
 // Same bounded-registration gate as ChatSessions, but registers under a
 // `shared:` shardId so UserNotify fan-out resolves back to SHARED_SESSIONS via
 // resolveShardDO. Only the stable per-user notify shard may register.
-function userNotifyCallbacksForSharedSessions(shard: string, env: CFEnv) {
+// Exported for testability (shared-sessions-register.test.ts).
+export function userNotifyCallbacksForSharedSessions(shard: string, env: CFEnv) {
   if (!isUserNotifyShard(shard)) return {};
 
   // Register under a `shared:` prefix so resolveShardDO routes fan-out to
