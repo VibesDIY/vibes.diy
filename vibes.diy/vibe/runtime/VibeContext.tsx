@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import type { VibeMountParams, ViewerEnv } from "./vibe.js";
-import { isEvtVibeColorOverride, isEvtVibeViewerChanged } from "@vibes.diy/vibe-types";
+import { isEvtVibeAccessFnSource, isEvtVibeColorOverride, isEvtVibeViewerChanged } from "@vibes.diy/vibe-types";
 import { generateTailwindRemapCss } from "./tailwindRemap.js";
 
 // Style element id used to install/replace the parent-pushed palette override.
@@ -91,10 +91,12 @@ function publishRootTokens(): void {
 
 export interface Vibe {
   readonly mountParams: VibeMountParams;
+  readonly accessFnSources: Map<string, string | null>;
 }
 
 const VibeContext = createContext<Vibe>({
   mountParams: { usrEnv: {} },
+  accessFnSources: new Map(),
 });
 
 export interface VibeContextProviderProps {
@@ -117,6 +119,25 @@ function LiveCycleVibeContextProvider({ mountParams, children }: VibeContextProv
         ...(event.data.isOwner !== undefined ? { isOwner: event.data.isOwner } : {}),
         ...(event.data.dbAcls ? { dbAcls: event.data.dbAcls } : {}),
         ...(event.data.grants ? { grants: event.data.grants } : {}),
+      });
+    };
+    window.addEventListener("message", onMsg);
+    return () => window.removeEventListener("message", onMsg);
+  }, []);
+
+  // Cache of cid → source | null. A CID absent from the map means the source
+  // has not been delivered yet (pending). A CID mapped to null means the host
+  // resolved but found no source (resolved-unknown). A string means ready.
+  const [accessFnSources, setAccessFnSources] = useState<Map<string, string | null>>(new Map());
+
+  useEffect(() => {
+    const onMsg = (event: MessageEvent) => {
+      if (!isEvtVibeAccessFnSource(event.data)) return;
+      const { cid, source } = event.data;
+      setAccessFnSources((prev) => {
+        const next = new Map(prev);
+        next.set(cid, source);
+        return next;
       });
     };
     window.addEventListener("message", onMsg);
@@ -174,6 +195,7 @@ function LiveCycleVibeContextProvider({ mountParams, children }: VibeContextProv
 
   const ctx: Vibe = {
     mountParams: { ...mountParams, viewerEnv },
+    accessFnSources,
   };
   return <VibeContext.Provider value={ctx}>{children}</VibeContext.Provider>;
 }
