@@ -655,44 +655,51 @@ export const deleteDocEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqDelete
 
       const dbName = req.dbName;
 
-      // Read this doc's stored access-fn output BEFORE the tombstone insert.
-      // We need it for two things: (1) the per-channel delete fan-out below,
-      // and (2) deciding whether removing the doc's grant contribution changes
-      // any viewer's effective grants (so we can push EvtViewerGrantsChanged).
-      // The put path stores grants via an AccessFnOutputs sidecar; the delete
-      // path must clear that sidecar or the grant lingers after the doc is
-      // "deleted" — revocation-by-deletion (#2531).
+      // This doc's stored access-fn output drives two post-delete decisions:
+      // (1) the per-channel delete fan-out, and (2) whether removing the doc's
+      // grant contribution changes any viewer's effective grants (so we push
+      // EvtViewerGrantsChanged). The put path stores grants via an
+      // AccessFnOutputs sidecar; the delete path must clear that sidecar or the
+      // grant lingers after the doc is "deleted" — revocation-by-deletion
+      // (#2531). Both the read and the clear happen in the sidecar below so they
+      // observe the revision actually being tombstoned (see comment there).
       const tOutputs = vctx.sql.tables.accessFnOutputs;
-      const outRowBefore = await vctx.sql.db
-        .select({ output: tOutputs.output, hasGrants: tOutputs.hasGrants })
-        .from(tOutputs)
-        .where(
-          and(
-            eq(tOutputs.ownerHandle, req.ownerHandle),
-            eq(tOutputs.appSlug, req.appSlug),
-            eq(tOutputs.dbName, dbName),
-            eq(tOutputs.docId, req.docId)
-          )
-        )
-        .limit(1)
-        .then((r) => r[0]);
-      const deletedDocHadGrants = outRowBefore?.hasGrants === 1;
+      let deletedDocHadGrants = false;
       let channels: string[] = [];
-      if (outRowBefore?.output) {
-        try {
-          const parsed = JSON.parse(outRowBefore.output) as { channels?: string[] };
-          channels = normalizeChannels(parsed.channels ?? []);
-        } catch (e: unknown) {
-          console.error("DocNotify delete channel parse error:", e);
-        }
-      }
 
-      // Sidecar: drop this doc's AccessFnOutputs row in the SAME critical
-      // section as the tombstone insert (under the pg advisory lock / sqlite
-      // write lock), mirroring the put path's sidecar. This is what actually
-      // revokes the grant: resolveGrants in who-am-i reduces over stored
-      // outputs, so once the row is gone the grant stops applying (#2531).
+      // Sidecar: read THEN drop this doc's AccessFnOutputs row in the SAME
+      // critical section as the tombstone insert (under the pg advisory lock /
+      // sqlite write lock), mirroring the put path's sidecar. Reading here —
+      // rather than before allocateAndInsertRevision — means a racing same-doc
+      // put has already serialized on the lock, so `channels` and
+      // `deletedDocHadGrants` reflect the output left by the revision this
+      // delete is tombstoning, not a stale pre-lock snapshot (Codex P2).
+      // Dropping the row is what actually revokes the grant: resolveGrants in
+      // who-am-i reduces over stored outputs, so once it's gone the grant stops
+      // applying.
       const deleteOutputSidecar = async (_seq: number, exec: VibesSqlite) => {
+        const outRow = await exec
+          .select({ output: tOutputs.output, hasGrants: tOutputs.hasGrants })
+          .from(tOutputs)
+          .where(
+            and(
+              eq(tOutputs.ownerHandle, req.ownerHandle),
+              eq(tOutputs.appSlug, req.appSlug),
+              eq(tOutputs.dbName, dbName),
+              eq(tOutputs.docId, req.docId)
+            )
+          )
+          .limit(1)
+          .then((r) => r[0]);
+        deletedDocHadGrants = outRow?.hasGrants === 1;
+        if (outRow?.output) {
+          try {
+            const parsed = JSON.parse(outRow.output) as { channels?: string[] };
+            channels = normalizeChannels(parsed.channels ?? []);
+          } catch (e: unknown) {
+            console.error("DocNotify delete channel parse error:", e);
+          }
+        }
         await exec
           .delete(tOutputs)
           .where(
