@@ -7,6 +7,7 @@ interface UseShareModalParams {
   appSlug: string;
   fsId: string | undefined;
   chatApi: VibesDiyApiIface;
+  sharedApi: VibesDiyApiIface;
 }
 
 interface UseShareModalReturn {
@@ -49,7 +50,7 @@ interface UseShareModalReturn {
 
 export type { UseShareModalReturn };
 
-export function useShareModal({ ownerHandle, appSlug, fsId, chatApi }: UseShareModalParams): UseShareModalReturn {
+export function useShareModal({ ownerHandle, appSlug, fsId, chatApi, sharedApi }: UseShareModalParams): UseShareModalReturn {
   const [isOpen, setIsOpen] = useState(false);
   const [isPublished, setIsPublished] = useState(false);
   const [isPublishing, setIsPublishing] = useState(false);
@@ -88,7 +89,7 @@ export function useShareModal({ ownerHandle, appSlug, fsId, chatApi }: UseShareM
   // handlePublish via setProductionFsId) or when the modal is reopened.
   useEffect(() => {
     let cancelled = false;
-    chatApi
+    sharedApi
       .getAppByFsId({ appSlug, ownerHandle })
       .then((res) => {
         if (cancelled) return;
@@ -109,7 +110,7 @@ export function useShareModal({ ownerHandle, appSlug, fsId, chatApi }: UseShareM
     return () => {
       cancelled = true;
     };
-  }, [appSlug, ownerHandle, chatApi]);
+  }, [appSlug, ownerHandle, sharedApi]);
 
   function clearCopyTimeout() {
     if (copyTimeoutRef.current !== null) {
@@ -159,7 +160,7 @@ export function useShareModal({ ownerHandle, appSlug, fsId, chatApi }: UseShareM
     // Check if app has a production version. Always normalize state from the
     // fetch result (both branches) so a transition from "was published" to
     // "no longer published" doesn't leave the badge state stale.
-    chatApi
+    sharedApi
       .getAppByFsId({ appSlug, ownerHandle })
       .then((res) => {
         if (cancelled) return;
@@ -188,7 +189,7 @@ export function useShareModal({ ownerHandle, appSlug, fsId, chatApi }: UseShareM
       });
 
     // Fetch sharing settings
-    chatApi
+    sharedApi
       .ensureAppSettings({ appSlug, ownerHandle })
       .then((res) => {
         if (cancelled) return;
@@ -211,7 +212,7 @@ export function useShareModal({ ownerHandle, appSlug, fsId, chatApi }: UseShareM
     return () => {
       cancelled = true;
     };
-  }, [isOpen, appSlug, ownerHandle, chatApi]);
+  }, [isOpen, appSlug, ownerHandle, sharedApi]);
 
   const handlePublish = useCallback(
     async (autoJoin: boolean, role: "editor" | "viewer" = "editor") => {
@@ -233,7 +234,7 @@ export function useShareModal({ ownerHandle, appSlug, fsId, chatApi }: UseShareM
           return;
         }
 
-        const settingsResult = await chatApi.ensureAppSettings({
+        const settingsResult = await sharedApi.ensureAppSettings({
           appSlug,
           ownerHandle,
           request: { enable: true, autoAcceptRole: autoJoin ? role : undefined },
@@ -260,14 +261,14 @@ export function useShareModal({ ownerHandle, appSlug, fsId, chatApi }: UseShareM
         setIsPublishing(false);
       }
     },
-    [canPublish, settingsLoaded, isPublished, fsId, appSlug, ownerHandle, chatApi]
+    [canPublish, settingsLoaded, isPublished, fsId, appSlug, ownerHandle, chatApi, sharedApi]
   );
 
   const handleToggleAutoJoin = useCallback(async () => {
     setIsTogglingAutoJoin(true);
     const nextValue = !autoJoinEnabled;
     try {
-      const result = await chatApi.ensureAppSettings({
+      const result = await sharedApi.ensureAppSettings({
         appSlug,
         ownerHandle,
         request: { enable: true, autoAcceptRole: nextValue ? "editor" : undefined },
@@ -279,13 +280,13 @@ export function useShareModal({ ownerHandle, appSlug, fsId, chatApi }: UseShareM
     } finally {
       setIsTogglingAutoJoin(false);
     }
-  }, [autoJoinEnabled, appSlug, ownerHandle, chatApi]);
+  }, [autoJoinEnabled, appSlug, ownerHandle, sharedApi]);
 
   const handleSetAutoAccept = useCallback(
     async (autoAccept: boolean, role: "editor" | "viewer") => {
       setIsTogglingAutoJoin(true);
       try {
-        const result = await chatApi.ensureAppSettings({
+        const result = await sharedApi.ensureAppSettings({
           appSlug,
           ownerHandle,
           request: { enable: true, autoAcceptRole: autoAccept ? role : undefined },
@@ -298,7 +299,7 @@ export function useShareModal({ ownerHandle, appSlug, fsId, chatApi }: UseShareM
         setIsTogglingAutoJoin(false);
       }
     },
-    [appSlug, ownerHandle, chatApi]
+    [appSlug, ownerHandle, sharedApi]
   );
 
   const handleCopyUrl = useCallback(async () => {

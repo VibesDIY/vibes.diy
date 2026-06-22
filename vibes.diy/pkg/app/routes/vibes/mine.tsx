@@ -23,7 +23,7 @@ export default function VibesMine(): ReactElement {
     appSlug: paramAppSlug,
     tab: paramTab,
   } = useParams<{ ownerHandle?: string; appSlug?: string; tab?: string }>();
-  const { chatApi } = useVibesDiy();
+  const { chatApi, sharedApi } = useVibesDiy();
   const { items: vibeItems, loading: isLoading, isLoadingAll, nextCursor, loadMore, ensureAllLoaded } = useRecentVibes(30);
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -101,7 +101,7 @@ export default function VibesMine(): ReactElement {
     }
     setScreenshots(new Map());
     for (const p of chatDetails.prompts) {
-      chatApi.getAppByFsId({ fsId: p.fsId, appSlug: chatDetails.appSlug, ownerHandle: chatDetails.ownerHandle }).then((res) => {
+      sharedApi.getAppByFsId({ fsId: p.fsId, appSlug: chatDetails.appSlug, ownerHandle: chatDetails.ownerHandle }).then((res) => {
         if (res.isErr()) return;
         const app = res.Ok();
         setScreenshots((prev) =>
@@ -112,7 +112,7 @@ export default function VibesMine(): ReactElement {
         );
       });
     }
-  }, [chatDetails, chatApi]);
+  }, [chatDetails, sharedApi]);
 
   // Head screenshot for each tile in the grid. We track requested keys in a
   // ref so subsequent `loadMore` pages only fetch the new items and the
@@ -122,7 +122,7 @@ export default function VibesMine(): ReactElement {
       const key = `${item.ownerHandle}/${item.appSlug}`;
       if (requestedHeadKeysRef.current.has(key)) continue;
       requestedHeadKeysRef.current.add(key);
-      chatApi.getAppByFsId({ ownerHandle: item.ownerHandle, appSlug: item.appSlug }).then((res) => {
+      sharedApi.getAppByFsId({ ownerHandle: item.ownerHandle, appSlug: item.appSlug }).then((res) => {
         setAppHeadInfo((prev) => {
           // Resolve the per-row skeleton even on failure by always seeding
           // an entry (empty object) — otherwise the row would stay pulsing.
@@ -135,7 +135,7 @@ export default function VibesMine(): ReactElement {
         });
       });
     }
-  }, [vibeItems, chatApi]);
+  }, [vibeItems, sharedApi]);
 
   const filteredItems = useMemo(() => {
     const q = searchTerm.toLowerCase();

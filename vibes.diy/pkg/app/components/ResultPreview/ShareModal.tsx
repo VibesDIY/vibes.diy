@@ -160,14 +160,14 @@ function EmbedSnippetRow({ snippet, copied, onCopy }: { snippet: string; copied:
 // hasAccessRequest on mount so a returning viewer sees "Request pending"
 // instead of being able to spam new requests.
 function RequestAccessButton({ ownerHandle, appSlug }: { ownerHandle: string; appSlug: string }) {
-  const { chatApi } = useVibesDiy();
+  const { sharedApi } = useVibesDiy();
   const [state, setState] = useState<"unknown" | "none" | "pending" | "approved" | "revoked" | "submitting">("unknown");
   const [role, setRole] = useState<"editor" | "viewer" | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
-    void chatApi.hasAccessRequest({ appSlug, ownerHandle }).then((res) => {
+    void sharedApi.hasAccessRequest({ appSlug, ownerHandle }).then((res) => {
       if (cancelled) return;
       if (res.isErr()) {
         setState("none");
@@ -184,12 +184,12 @@ function RequestAccessButton({ ownerHandle, appSlug }: { ownerHandle: string; ap
     return () => {
       cancelled = true;
     };
-  }, [chatApi, ownerHandle, appSlug]);
+  }, [sharedApi, ownerHandle, appSlug]);
 
   async function submit() {
     setState("submitting");
     setError(null);
-    const res = await chatApi.requestAccess({ appSlug, ownerHandle });
+    const res = await sharedApi.requestAccess({ appSlug, ownerHandle });
     if (res.isErr()) {
       setError(res.Err().message);
       setState("none");
@@ -232,12 +232,12 @@ function RequestAccessButton({ ownerHandle, appSlug }: { ownerHandle: string; ap
 // Read-only hook returning whether the comments dbAcl is pinned to "editors-only".
 // Returns null while the initial fetch is in flight or the modal is closed.
 function useCommentsEditorsOnly(ownerHandle: string, appSlug: string, isOpen: boolean): boolean | null {
-  const { chatApi } = useVibesDiy();
+  const { sharedApi } = useVibesDiy();
   const [editorsOnly, setEditorsOnly] = useState<boolean | null>(null);
   useEffect(() => {
     if (!isOpen) return;
     let cancelled = false;
-    void chatApi.ensureAppSettings({ ownerHandle, appSlug }).then((res) => {
+    void sharedApi.ensureAppSettings({ ownerHandle, appSlug }).then((res) => {
       if (cancelled || res.isErr()) return;
       const stored = res.Ok().settings.entry.dbAcls?.[COMMENTS_DB_NAME];
       setEditorsOnly(stored?.write?.length === 1 && stored.write[0] === "editors");
@@ -245,7 +245,7 @@ function useCommentsEditorsOnly(ownerHandle: string, appSlug: string, isOpen: bo
     return () => {
       cancelled = true;
     };
-  }, [chatApi, ownerHandle, appSlug, isOpen]);
+  }, [sharedApi, ownerHandle, appSlug, isOpen]);
   return editorsOnly;
 }
 
@@ -253,7 +253,7 @@ function useCommentsEditorsOnly(ownerHandle: string, appSlug: string, isOpen: bo
 // (members write/delete) and editors-only via the regular ensureAppSettings
 // flow. Toggling off removes the entry, falling back to the resolver default.
 function CommentsPolicyToggle({ ownerHandle, appSlug, isOpen }: { ownerHandle: string; appSlug: string; isOpen: boolean }) {
-  const { chatApi } = useVibesDiy();
+  const { sharedApi } = useVibesDiy();
   const editorsOnlyInitial = useCommentsEditorsOnly(ownerHandle, appSlug, isOpen);
   const [editorsOnly, setEditorsOnly] = useState<boolean | null>(null);
   const [busy, setBusy] = useState(false);
@@ -266,7 +266,7 @@ function CommentsPolicyToggle({ ownerHandle, appSlug, isOpen }: { ownerHandle: s
     if (editorsOnly === null || busy) return;
     setBusy(true);
     const next = !editorsOnly;
-    const res = await chatApi.ensureAppSettings(
+    const res = await sharedApi.ensureAppSettings(
       next
         ? {
             ownerHandle,

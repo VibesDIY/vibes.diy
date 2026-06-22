@@ -8,7 +8,7 @@ import { useAuth } from "@clerk/react";
 
 export function DataView({ promptState: _p }: { promptState: PromptState }) {
   const { ownerHandle, appSlug, fsId } = useParams<{ ownerHandle: string; appSlug: string; fsId?: string }>();
-  const { webVars: svcVars, chatApi } = useVibesDiy();
+  const { webVars: svcVars, sharedApi } = useVibesDiy();
   const { isSignedIn } = useAuth();
   const [isOwner, setIsOwner] = useState(false);
 
@@ -18,7 +18,7 @@ export function DataView({ promptState: _p }: { promptState: PromptState }) {
       return;
     }
     let cancelled = false;
-    void chatApi.listHandleBindings({}).then((res) => {
+    void sharedApi.listHandleBindings({}).then((res) => {
       if (cancelled) return;
       if (res.isErr()) {
         setIsOwner(false);
@@ -29,7 +29,7 @@ export function DataView({ promptState: _p }: { promptState: PromptState }) {
     return () => {
       cancelled = true;
     };
-  }, [isSignedIn, ownerHandle, chatApi]);
+  }, [isSignedIn, ownerHandle, sharedApi]);
 
   const previewUrl = useMemo(() => {
     if (fsId && appSlug && ownerHandle) {

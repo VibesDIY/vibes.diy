@@ -161,14 +161,14 @@ export default function EmbedRoute() {
   useEffect(() => {
     if (!appSlug || !ownerHandle) return;
     let cancelled = false;
-    vctx.chatApi.getAppByFsId({ appSlug, ownerHandle }).then((rRes) => {
+    vctx.sharedApi.getAppByFsId({ appSlug, ownerHandle }).then((rRes) => {
       if (cancelled || rRes.isErr()) return;
       setViewerCanView(computeCardVariant(rRes.Ok().grant) === "iframe");
     });
     return () => {
       cancelled = true;
     };
-  }, [appSlug, ownerHandle, vctx.chatApi]);
+  }, [appSlug, ownerHandle, vctx.sharedApi]);
 
   const showIframe = viewerCanView === undefined ? ssrEmbeddable : viewerCanView;
 

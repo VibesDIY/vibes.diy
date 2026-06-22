@@ -85,14 +85,14 @@ export function Chat({ inConstruction = false, initialPrompt }: { inConstruction
   useDocumentTitle(`${ownerHandle} - ${appSlug} - vibes.diy`);
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
-  const { chatApi, webVars: svcVars, srvVibeSandbox } = useVibesDiy();
-  const shareModal = useShareModal({ ownerHandle, appSlug, fsId, chatApi });
+  const { chatApi, sharedApi, webVars: svcVars, srvVibeSandbox } = useVibesDiy();
+  const shareModal = useShareModal({ ownerHandle, appSlug, fsId, chatApi, sharedApi });
   const { isSignedIn } = useAuth();
   const { isOwner, pendingCount } = useChatOwnership({
     ownerHandle,
     appSlug,
     isSignedIn,
-    chatApi,
+    sharedApi,
     shareModalOpen: shareModal.isOpen,
   });
 
@@ -174,7 +174,7 @@ export function Chat({ inConstruction = false, initialPrompt }: { inConstruction
   });
 
   // "remix of" indicator + code-view file-system hydration for the current fsId.
-  const { remixOf } = useChatHydration({ ownerHandle, appSlug, fsId, chatApi, dispatch });
+  const { remixOf } = useChatHydration({ ownerHandle, appSlug, fsId, sharedApi, dispatch });
 
   // Chat handle + open/fire lifecycle + reconnect/watchdog (see useChatSession).
   const { chat } = useChatSession({
@@ -183,6 +183,7 @@ export function Chat({ inConstruction = false, initialPrompt }: { inConstruction
     fsId,
     inConstruction,
     chatApi,
+    sharedApi,
     promptState,
     dispatch,
     promptToSend,
@@ -246,7 +247,7 @@ export function Chat({ inConstruction = false, initialPrompt }: { inConstruction
         // and an existing draft means the user is mid-thought — in either
         // case let the user hit submit themselves.
         if (canPersist) {
-          void chatApi.ensureAppSettings({ ownerHandle, appSlug, theme: theme.slug });
+          void sharedApi.ensureAppSettings({ ownerHandle, appSlug, theme: theme.slug });
         }
         return;
       }
@@ -254,7 +255,7 @@ export function Chat({ inConstruction = false, initialPrompt }: { inConstruction
       // restyle turn — the server builds the prompt by reading the active
       // theme, so submitting while ensureAppSettings is in flight can
       // process the turn against the previous theme.
-      void chatApi.ensureAppSettings({ ownerHandle, appSlug, theme: theme.slug }).then((res) => {
+      void sharedApi.ensureAppSettings({ ownerHandle, appSlug, theme: theme.slug }).then((res) => {
         if (res.isErr()) return;
         chatInput.current?.clickSubmit();
       });
@@ -270,7 +271,7 @@ export function Chat({ inConstruction = false, initialPrompt }: { inConstruction
     (colorTheme: string) => {
       dispatch({ type: "setColorTheme", colorTheme });
       if (ownerHandle !== "preparing" && appSlug !== "session") {
-        void chatApi.ensureAppSettings({ ownerHandle, appSlug, colorTheme });
+        void sharedApi.ensureAppSettings({ ownerHandle, appSlug, colorTheme });
       }
     },
     [chatApi, ownerHandle, appSlug]
@@ -318,11 +319,11 @@ ${rootCssBlock}
       chatInput.current?.setFocus();
       if (!canPersist || !prefilled) {
         if (canPersist) {
-          void chatApi.ensureAppSettings({ ownerHandle, appSlug, colorTheme: paletteSlug });
+          void sharedApi.ensureAppSettings({ ownerHandle, appSlug, colorTheme: paletteSlug });
         }
         return;
       }
-      void chatApi.ensureAppSettings({ ownerHandle, appSlug, colorTheme: paletteSlug }).then((res) => {
+      void sharedApi.ensureAppSettings({ ownerHandle, appSlug, colorTheme: paletteSlug }).then((res) => {
         if (res.isErr()) return;
         chatInput.current?.clickSubmit();
       });
@@ -340,7 +341,7 @@ ${rootCssBlock}
       srvVibeSandbox.pushColorOverride({ type: "vibe.evt.color-override", colors: {} });
     }
     if (ownerHandle !== "preparing" && appSlug !== "session") {
-      void chatApi.ensureAppSettings({ ownerHandle, appSlug, colorTheme: null });
+      void sharedApi.ensureAppSettings({ ownerHandle, appSlug, colorTheme: null });
     }
   }, [chatApi, ownerHandle, appSlug, srvVibeSandbox]);
 

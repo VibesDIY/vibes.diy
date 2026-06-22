@@ -17,7 +17,7 @@ export interface ChatHydrationOpts {
   readonly ownerHandle: string;
   readonly appSlug: string;
   readonly fsId: string | undefined;
-  readonly chatApi: VibesDiyApiIface;
+  readonly sharedApi: VibesDiyApiIface;
   readonly dispatch: Dispatch<PromptAction>;
 }
 
@@ -33,7 +33,7 @@ export interface ChatHydration {
  * (VibesDIY/vibes.diy#2015).
  */
 export function useChatHydration(opts: ChatHydrationOpts): ChatHydration {
-  const { ownerHandle, appSlug, fsId, chatApi, dispatch } = opts;
+  const { ownerHandle, appSlug, fsId, sharedApi, dispatch } = opts;
 
   // Read the local VibeDocument (seeded by the remix route) to show the
   // "remix of" indicator in the header. Best-effort: if the doc is missing
@@ -63,7 +63,7 @@ export function useChatHydration(opts: ChatHydrationOpts): ChatHydration {
     if (hydratedFsIdsRef.current.has(fsId)) return;
     hydratedFsIdsRef.current.add(fsId);
     (async () => {
-      const rApp = await chatApi.getAppByFsId({ appSlug, ownerHandle, fsId });
+      const rApp = await sharedApi.getAppByFsId({ appSlug, ownerHandle, fsId });
       if (rApp.isErr()) return;
       const app = rApp.Ok();
       const sourceFiles = sortCodeViewFiles(
@@ -101,7 +101,7 @@ export function useChatHydration(opts: ChatHydrationOpts): ChatHydration {
         dispatch({ type: "setHydratedSource", fsId, code: defaultFile.code });
       }
     })();
-  }, [fsId, ownerHandle, appSlug, chatApi]);
+  }, [fsId, ownerHandle, appSlug, sharedApi]);
 
   return { remixOf };
 }

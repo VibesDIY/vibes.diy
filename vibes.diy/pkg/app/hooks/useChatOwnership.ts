@@ -5,7 +5,7 @@ export interface ChatOwnershipOpts {
   readonly ownerHandle: string;
   readonly appSlug: string;
   readonly isSignedIn: boolean | undefined;
-  readonly chatApi: VibesDiyApiIface;
+  readonly sharedApi: VibesDiyApiIface;
   // The share modal's open state — closing it re-fetches the pending count so a
   // grant approved inside the modal is reflected in the header badge.
   readonly shareModalOpen: boolean;
@@ -23,7 +23,7 @@ export interface ChatOwnership {
  * extraction from the Chat component (VibesDIY/vibes.diy#2015).
  */
 export function useChatOwnership(opts: ChatOwnershipOpts): ChatOwnership {
-  const { ownerHandle, appSlug, isSignedIn, chatApi, shareModalOpen } = opts;
+  const { ownerHandle, appSlug, isSignedIn, sharedApi, shareModalOpen } = opts;
   const [isOwner, setIsOwner] = useState(false);
   const [pendingCount, setPendingCount] = useState(0);
   const [pendingBump, setPendingBump] = useState(0);
@@ -34,7 +34,7 @@ export function useChatOwnership(opts: ChatOwnershipOpts): ChatOwnership {
       return;
     }
     let cancelled = false;
-    void chatApi.listHandleBindings({}).then((res) => {
+    void sharedApi.listHandleBindings({}).then((res) => {
       if (cancelled) return;
       if (res.isErr()) {
         setIsOwner(false);
@@ -45,7 +45,7 @@ export function useChatOwnership(opts: ChatOwnershipOpts): ChatOwnership {
     return () => {
       cancelled = true;
     };
-  }, [isSignedIn, ownerHandle, chatApi]);
+  }, [isSignedIn, ownerHandle, sharedApi]);
 
   useEffect(() => {
     if (!isOwner || !ownerHandle || !appSlug) {
@@ -53,27 +53,27 @@ export function useChatOwnership(opts: ChatOwnershipOpts): ChatOwnership {
       return;
     }
     let cancelled = false;
-    void chatApi.listRequestGrants({ appSlug, ownerHandle, pager: { limit: 100 } }).then((res) => {
+    void sharedApi.listRequestGrants({ appSlug, ownerHandle, pager: { limit: 100 } }).then((res) => {
       if (cancelled || res.isErr()) return;
       setPendingCount(res.Ok().items.filter((r) => r.state === "pending").length);
     });
     return () => {
       cancelled = true;
     };
-  }, [isOwner, ownerHandle, appSlug, chatApi, pendingBump]);
+  }, [isOwner, ownerHandle, appSlug, sharedApi, pendingBump]);
 
   useEffect(() => {
     if (!isOwner || !ownerHandle || !appSlug) {
       return;
     }
-    void chatApi.subscribeRequestGrants({ appSlug, ownerHandle });
-    const unsubscribe = chatApi.onRequestGrant((evt) => {
+    void sharedApi.subscribeRequestGrants({ appSlug, ownerHandle });
+    const unsubscribe = sharedApi.onRequestGrant((evt) => {
       if (evt.grant.ownerHandle === ownerHandle && evt.grant.appSlug === appSlug) {
         setPendingBump((n) => n + 1);
       }
     });
     return unsubscribe;
-  }, [isOwner, ownerHandle, appSlug, chatApi]);
+  }, [isOwner, ownerHandle, appSlug, sharedApi]);
 
   const prevShareOpenRef = useRef(shareModalOpen);
   useEffect(() => {
