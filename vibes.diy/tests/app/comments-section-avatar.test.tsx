@@ -166,9 +166,15 @@ describe("CommentsSection connection routing (#2265 A1)", () => {
     };
   }
 
-  it("routes doc ops through vibeApi but keeps whoAmI on chatApi", async () => {
+  it("routes doc ops and whoAmI through the vibe/shared connection, leaving chat untouched", async () => {
     const calls: string[] = [];
-    const wrapper = vibesWrapper({ chatApi: mkApi("chat", calls), vibeApi: mkApi("vibe", calls) });
+    // On a vibe page the provider aliases sharedApi === vibeApi, so both the
+    // doc ops and the plain whoAmI ride the AppSessions connection. The plain
+    // whoAmI no longer mutates the sticky adminMode flag (who-am-i.ts guard),
+    // so it's safe there — and the heavy chat connection is never opened for
+    // comments. (#2265 Track B)
+    const vibeApi = mkApi("vibe", calls);
+    const wrapper = vibesWrapper({ chatApi: mkApi("chat", calls), vibeApi, sharedApi: vibeApi });
     rtlRender(<CommentsSection ownerHandle="owner" appSlug="my-app" canModerate={false} composerDisabled={false} />, {
       wrapper,
     });
@@ -181,10 +187,12 @@ describe("CommentsSection connection routing (#2265 A1)", () => {
 
     // Doc-plane ops go to AppSessions...
     expect(calls).toContain("vibe:subscribeDocs");
-    // ...but whoAmI stays on chatApi: it writes a sticky per-connection adminMode
-    // flag and must not reset the shared AppSessions connection. (Codex #2494)
-    expect(calls).toContain("chat:whoAmI");
-    expect(calls).not.toContain("vibe:whoAmI");
+    // ...and whoAmI now rides sharedApi, which === vibeApi on a vibe page. The
+    // plain whoAmI no longer writes the sticky adminMode flag (who-am-i.ts
+    // guard), so it's safe on the AppSessions connection. (#2265 Track B)
+    expect(calls).toContain("vibe:whoAmI");
+    expect(calls).not.toContain("chat:whoAmI");
+    // The heavy chat connection is never touched when rendering comments.
     expect(calls).not.toContain("chat:queryDocs");
     expect(calls).not.toContain("chat:putDoc");
   });
