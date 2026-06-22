@@ -54,18 +54,17 @@ function formatTime(iso?: string): string {
 }
 
 export function CommentsSection({ ownerHandle, appSlug, canModerate, composerDisabled }: CommentsSectionProps) {
-  const { chatApi, vibeApi } = useVibesDiy();
+  const { chatApi, vibeApi, sharedApi } = useVibesDiy();
   // Vibe-scoped doc ops run on AppSessions (vibeApi): that connection does local
   // broadcast + local QuickJS access-fn eval. Fall back to chatApi defensively —
   // on /vibe/ and /chat/ routes vibeApi is always present. (#2265 A1)
   const dataApi = vibeApi ?? chatApi;
-  // whoAmI deliberately stays on chatApi. The server's whoAmI handler writes a
-  // sticky per-connection adminMode flag (who-am-i.ts: rawSend.adminMode), and
-  // owner-override doc writes read it via connectionAdminMode(). The vibeApi
-  // (AppSessions) connection is shared with the iframe's owner-mode doc ops, so
-  // a non-admin whoAmI here would reset that shared connection to non-admin.
-  // whoAmI is a stateless identity lookup (no access-fn eval), so it has no
-  // reason to ride vibeApi anyway. (Codex review, PR #2494)
+  // Plain whoAmI (no adminMode field) now rides sharedApi instead of chatApi.
+  // who-am-i.ts:211 used to unconditionally write rawSend.adminMode = (adminMode === true),
+  // so an omitted adminMode field would evaluate undefined === true → false and stomp a
+  // previously-elevated admin flag on the vibeApi connection. After the fix in who-am-i.ts
+  // (adminMode !== undefined gate), a plain whoAmI no longer mutates the flag, so it safely
+  // rides sharedApi (= vibeApi on vibe routes) — no need for the heavy chatApi. (#2265 B)
   const { isSignedIn, userId: viewerUserId } = useAuth();
   const { user } = useUser();
   const [comments, setComments] = useState<CommentDoc[]>([]);
@@ -87,14 +86,14 @@ export function CommentsSection({ ownerHandle, appSlug, canModerate, composerDis
     let cancelled = false;
     // tid is overwritten by the impl's request() — we just need to satisfy the
     // type since ReqVibeWhoAmI extends the postMessage Base shape.
-    void chatApi.whoAmI({ tid: crypto.randomUUID(), ownerHandle, appSlug }).then((res) => {
+    void sharedApi.whoAmI({ tid: crypto.randomUUID(), ownerHandle, appSlug }).then((res) => {
       if (cancelled) return;
       if (res.isOk()) setViewerUserSlug(res.Ok().viewer?.userHandle);
     });
     return () => {
       cancelled = true;
     };
-  }, [chatApi, isSignedIn, ownerHandle, appSlug]);
+  }, [sharedApi, isSignedIn, ownerHandle, appSlug]);
 
   const reload = useCallback(async () => {
     const res = await dataApi.queryDocs({ ownerHandle, appSlug, dbName: COMMENTS_DB_NAME });
