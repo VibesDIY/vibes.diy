@@ -398,6 +398,17 @@ export function getRegisteredVibeApi(): VibeSandboxApi | undefined {
   return _registeredApi;
 }
 
+// Module-level baseline of cid → access.js source | null, written by
+// bootstrapAccessFnSources before it dispatches. VibeContext seeds its initial
+// state from this on mount, so sources are not lost if the fetch resolves
+// before VibeContext attaches its `vibe.evt.accessFnSource` listener. The
+// dispatched event still drives live updates; the cache is the no-loss baseline.
+const _accessFnSources = new Map<string, string | null>();
+
+export function getRegisteredAccessFnSources(): Map<string, string | null> {
+  return new Map(_accessFnSources);
+}
+
 export const vibeApi = Lazy((svc: VibeSandboxApiOptions) => new VibeSandboxApi(svc));
 
 export async function registerDependencies(vibeApp: VibeApp): Promise<void> {
@@ -583,11 +594,15 @@ export async function bootstrapAccessFnSources(
       const res = await api.accessFnSource(cid);
       if (res.isErr()) return; // transient — leave the CID pending; a later boot retries
       const r = res.Ok();
-      // Dispatch even when source === null so the cache can distinguish
-      // "resolved-unknown" from "not delivered yet" (the slice-3 readiness contract).
+      // Key by the requested `cid` (what mountParams.accessFnBindings holds and
+      // the hook looks up), not r.cid, so a server-side CID normalization can't
+      // desync the cache key from the binding. Record the baseline before
+      // dispatching, then dispatch even when source === null so the cache can
+      // distinguish "resolved-unknown" from "not delivered yet" (slice-3 readiness).
+      _accessFnSources.set(cid, r.source);
       window.dispatchEvent(
         new MessageEvent("message", {
-          data: { type: "vibe.evt.accessFnSource", cid: r.cid, source: r.source },
+          data: { type: "vibe.evt.accessFnSource", cid, source: r.source },
         })
       );
     })

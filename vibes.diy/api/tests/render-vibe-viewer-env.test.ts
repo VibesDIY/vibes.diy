@@ -25,6 +25,7 @@ import { isResEnsureAppSlugOk } from "@vibes.diy/api-types";
 import { Result, TestWSPair } from "@adviser/cement";
 import { createVibeDiyTestCtx } from "./vibe-diy-test-ctx.js";
 import { resolveWhoAmI } from "../svc/public/who-am-i.js";
+import { buildAccessFnBindingsForRender } from "../svc/intern/render-vibe.js";
 import type { VibesApiSQLCtx } from "@vibes.diy/api-svc";
 
 describe("render-vibe viewerEnv embedding", { timeout: 30000 }, () => {
@@ -66,6 +67,12 @@ describe("render-vibe viewerEnv embedding", { timeout: 30000 }, () => {
           filename: "/App.jsx",
           content: `function App() { return <div>RenderVibe ViewerEnv Test</div>; } App();`,
         },
+        {
+          type: "code-block",
+          lang: "js",
+          filename: "/access.js",
+          content: `export function db(doc, oldDoc, user, ctx) { return { channels: ["c"] }; }`,
+        },
       ],
     });
     const res = rRes.Ok();
@@ -86,6 +93,24 @@ describe("render-vibe viewerEnv embedding", { timeout: 30000 }, () => {
     const v = rViewer.Ok();
     expect(v.viewer).toBeNull();
     expect(v.access).toBe("none");
+  });
+
+  it("buildAccessFnBindingsForRender returns the {dbName, accessFnCid} manifest for an app with access.js", async () => {
+    // Real query against the binding row that ensureAppSlug created from /access.js.
+    const bindings = await buildAccessFnBindingsForRender(vibesCtx, { appSlug, ownerUserSlug: ownerHandle });
+    expect(bindings).toBeDefined();
+    expect(Array.isArray(bindings)).toBe(true);
+    expect(bindings?.length).toBeGreaterThan(0);
+    for (const b of bindings ?? []) {
+      expect(typeof b.dbName).toBe("string");
+      expect(typeof b.accessFnCid).toBe("string");
+      expect(b.accessFnCid.length).toBeGreaterThan(0);
+    }
+  });
+
+  it("buildAccessFnBindingsForRender returns undefined for an app+owner with no bindings", async () => {
+    const bindings = await buildAccessFnBindingsForRender(vibesCtx, { appSlug: `${appSlug}-nope`, ownerUserSlug: ownerHandle });
+    expect(bindings).toBeUndefined();
   });
 
   it("mountJS JSON fragment contains viewer:null and access:none", () => {

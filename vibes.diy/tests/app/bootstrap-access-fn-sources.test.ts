@@ -1,5 +1,5 @@
 import { describe, it, expect, afterEach } from "vitest";
-import { VibeSandboxApi, bootstrapAccessFnSources } from "@vibes.diy/vibe-runtime";
+import { VibeSandboxApi, bootstrapAccessFnSources, getRegisteredAccessFnSources } from "@vibes.diy/vibe-runtime";
 
 describe("bootstrapAccessFnSources", () => {
   let capturedEvents: MessageEvent[] = [];
@@ -60,6 +60,10 @@ describe("bootstrapAccessFnSources", () => {
     expect(evt.data.type).toBe("vibe.evt.accessFnSource");
     expect(evt.data.cid).toBe("bafy1");
     expect(evt.data.source).toBe("export function mydb(){}");
+
+    // Also recorded in the module baseline so a late-mounting VibeContext that
+    // missed the event still seeds this source (the dispatch-before-listener guard).
+    expect(getRegisteredAccessFnSources().get("bafy1")).toBe("export function mydb(){}");
   });
 
   it("dispatches vibe.evt.accessFnSource with source: null when the host has no source", async () => {
