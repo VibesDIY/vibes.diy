@@ -420,11 +420,22 @@ export function announcements(doc, oldDoc, user, ctx) {
 
   if (doc.type === "roleGrant") {
     if (!user.isOwner) throw { forbidden: "owner only" };
-    return { members: { [doc.role]: [doc.userHandle] } };
+    // A grant doc must ALSO route to a channel — a result with no `channels`
+    // (only `members`/`grant`) is rejected as an "unreadable write". Route it to
+    // an owner-readable admin channel (not a public one) so the grant persists
+    // and the owner can read the roster back; the membership then applies.
+    return {
+      channels: ["admin:grants"],
+      members: { [doc.role]: [doc.userHandle] },
+      grant: { users: { [user.userHandle]: ["admin:grants"] } },
+    };
   }
 
   if (doc.type === "post") {
     if (doc.authorHandle !== user.userHandle) throw { forbidden: "not author" };
+    // On update, the original author must be preserved — never let a writer
+    // overwrite someone else's doc or reassign its author.
+    if (oldDoc && oldDoc.authorHandle !== user.userHandle) throw { forbidden: "not author" };
     ctx.requireAccess(doc.channel);
     return { channels: [doc.channel] };
   }
@@ -529,6 +540,7 @@ export function chat(doc, oldDoc, user, ctx) {
 
   if (doc.type === "post") {
     if (doc.authorHandle !== user.userHandle) throw { forbidden: "not author" };
+    if (oldDoc && oldDoc.authorHandle !== user.userHandle) throw { forbidden: "not author" };
     // Any signed-in author may post to this open channel. Do NOT call
     // ctx.requireAccess(doc.channel) here: the channel is grant.public
     // (read-only), which never satisfies requireAccess, so gating on it would
@@ -589,12 +601,16 @@ Access functions live in `/access.js`, a separate file in the vibe's filesystem 
 
 **`requireAccess` checks _membership_, not public read — don't gate an open channel's writes on it.** `ctx.requireAccess(channelId)` passes only for a channel the user is a member of: granted directly through `grant.users[handle]`, or through a `grant.roles` role they hold. **`grant.public` does NOT satisfy `requireAccess`** — public is read-only ("anyone through the door can _read_"), it never confers write membership. So a channel that is only `grant.public` and gated on `ctx.requireAccess` can be written by **nobody** but the owner-in-admin-mode — every other write returns `not in channel`, silently hiding the form (`useVibe().can` faithfully reflects this). Choose by intent:
 
-- **Open channel — any signed-in user may post** (public board, guestbook, comment wall): do **not** call `ctx.requireAccess`. Route the doc to the channel and check the author — `if (doc.authorHandle !== user.userHandle) throw { forbidden: "not author" }; return { channels: [doc.channelId] }`. `grant.public` on the channel doc gives everyone read; the write is open to any author.
+- **Open channel — any signed-in user may post** (public board, guestbook, comment wall): do **not** call `ctx.requireAccess`. Route the doc to the channel and check the author — `if (doc.authorHandle !== user.userHandle) throw { forbidden: "not author" }; if (oldDoc && oldDoc.authorHandle !== user.userHandle) throw { forbidden: "not author" }; return { channels: [doc.channelId] }`. `grant.public` on the channel doc gives everyone read; the write is open to any author.
 - **Restricted channel — only members may post**: gate the write on `ctx.requireAccess(doc.channelId)` **and** grant writers membership explicitly — `grant.users` (direct) or `grant.roles` + a `members`/role-grant doc. `public` alongside is read-only and is fine for letting non-members read, but it is never what lets a member write.
 
 ### AccessDescriptor return type
 
-All fields are optional, but a stored document must be routed to at least one channel (`channels`) to be readable — a result with no channels is refused at write time. To reject a write outright, `throw { forbidden: "reason" }`.
+All fields are optional, but a stored document must be routed to at least one channel (`channels`) to be readable — a result with no channels is refused at write time ("unreadable write"). To reject a write outright, `throw { forbidden: "reason" }`.
+
+**Grant/member/meta docs need a channel too.** A role grant, membership, or config singleton that returns only `members`/`grant` with **no `channels`** is refused exactly like any other channel-less write — so the owner can't even create it. Route these to an owner-readable **admin channel** (e.g. `channels: ["admin:grants"]` with `grant: { users: { [user.userHandle]: ["admin:grants"] } }`), not a public channel. The `members`/`grant` still take effect globally; the channel just makes the doc persist and lets the owner read the roster back.
+
+**Preserve the author on updates.** For an author-owned doc, checking the new `doc.authorHandle` is not enough — also check `oldDoc` so a writer can't overwrite someone else's doc or reassign its author: `if (oldDoc && oldDoc.authorHandle !== user.userHandle) throw { forbidden: "not author" }`. (Write-once docs can simply `if (oldDoc) throw`.)
 
 ```ts
 type AccessDescriptor = {
@@ -654,6 +670,7 @@ export function chat(doc, oldDoc, user, ctx) {
 
   if (doc.type === "message") {
     if (doc.userHandle !== user.userHandle) throw { forbidden: "not author" };
+    if (oldDoc && oldDoc.userHandle !== user.userHandle) throw { forbidden: "not author" };
     ctx.requireAccess(doc.channelId);
     return { channels: [doc.channelId] };
   }
@@ -686,11 +703,13 @@ export function survey(doc, oldDoc, user, ctx) {
 
   if (doc.type === "survey-config") {
     if (!user.isOwner) throw { forbidden: "owner only" };
+    // Route this grant/config doc to an owner-readable admin channel — a
+    // grant-only result (no `channels`) is rejected as an "unreadable write".
     return {
+      channels: ["admin:grants"],
       grant: {
-        roles: {
-          "feedback-team": ["inbound-responses"],
-        },
+        users: { [user.userHandle]: ["admin:grants"] },
+        roles: { "feedback-team": ["inbound-responses"] },
       },
     };
   }
@@ -801,16 +820,24 @@ export function chat(doc, oldDoc, user, ctx) {
 export function chat(doc, oldDoc, user, ctx) {
   if (!user) throw { forbidden: "authentication required" };
 
+  // Grant/meta docs must also route to a channel — a channel-less result is
+  // rejected as "unreadable write". Route them to an owner-readable admin channel.
   if (doc.type === "team-meta") {
     if (!user.isOwner) throw { forbidden: "owner only" };
     return {
+      channels: ["admin:grants"],
       members: { [doc.teamId]: doc.memberHandles },
-      grant: { roles: { [doc.teamId]: doc.channels } },
+      grant: { users: { [user.userHandle]: ["admin:grants"] }, roles: { [doc.teamId]: doc.channels } },
     };
   }
 
   if (doc.type === "membership") {
-    return { members: { [doc.role]: [doc.userHandle] } };
+    if (!user.isOwner) throw { forbidden: "owner only" };
+    return {
+      channels: ["admin:grants"],
+      members: { [doc.role]: [doc.userHandle] },
+      grant: { users: { [user.userHandle]: ["admin:grants"] } },
+    };
   }
 
   ctx.requireAccess(doc.channelId);

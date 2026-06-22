@@ -68,13 +68,14 @@ Target ~40–60 lines. The shell should look like a real app with empty sections
 >   }
 >   if (doc.type === "message") {
 >     if (doc.authorHandle !== user.userHandle) throw { forbidden: "not author" };
+>     if (oldDoc && oldDoc.authorHandle !== user.userHandle) throw { forbidden: "not author" };
 >     return { channels: [doc.channelId] };
 >   }
 >   throw { forbidden: "unknown document type" };
 > }
 > ```
 
-`ctx.requireAccess(channel)` gates on **membership** (a `grant.users`/`grant.roles` grant), not `grant.public` (read-only) — so an open channel anyone signed-in may post to must not gate writes on it; check the author and route the doc. For writes needing no sign-in ("anyone can sign/submit"), return `allowAnonymous: true` instead of throwing on `!user`.
+`ctx.requireAccess(channel)` gates on **membership** (a `grant.users`/`grant.roles` grant), not `grant.public` (read-only) — so an open channel anyone signed-in may post to must not gate writes on it; check the author and route the doc. For writes needing no sign-in ("anyone can sign/submit"), return `allowAnonymous: true` instead of throwing on `!user`. A grant/member doc must also return `channels` (route it to an owner-readable admin channel) — a channel-less result is rejected. On updates, also check `oldDoc.authorHandle` so a writer can't overwrite or re-author someone else's doc.
 
 **Never put access function code inside an `App.jsx` block** — it will overwrite the React component. The filename line (`access.js` vs `App.jsx`) is how the system knows which file to write.
 

@@ -282,7 +282,7 @@ When the app uses channel-based read isolation or per-document write validation,
 > }
 > ```
 
-`ctx.requireAccess(channel)` gates on channel **membership** (a `grant.users`/`grant.roles` grant), NOT on `grant.public`, which is read-only — so a channel anyone signed-in should post to must **not** gate writes on `requireAccess` (it would block every non-owner); just check the author and route the doc. Reserve `requireAccess` for members-only channels whose writers you granted membership. For writes that need no sign-in at all ("anyone can sign/submit"), return `allowAnonymous: true` instead of throwing on `!user`. See the fireproof access docs.
+`ctx.requireAccess(channel)` gates on channel **membership** (a `grant.users`/`grant.roles` grant), NOT on `grant.public`, which is read-only — so a channel anyone signed-in should post to must **not** gate writes on `requireAccess` (it would block every non-owner); just check the author and route the doc. Reserve `requireAccess` for members-only channels whose writers you granted membership. For writes that need no sign-in at all ("anyone can sign/submit"), return `allowAnonymous: true` instead of throwing on `!user`. A grant/member/role doc must also return `channels` (route it to an owner-readable admin channel like `["admin:grants"]`) — a channel-less result is rejected as "unreadable write". On updates, also check `oldDoc` (`if (oldDoc && oldDoc.authorHandle !== user.userHandle) throw`) so a writer can't overwrite or re-author someone else's doc. See the fireproof access docs.
 
 **Never put access function code inside an `App.jsx` block** — it will overwrite the React component. The filename line (`access.js` vs `App.jsx`) is how the system knows which file to write.
 
@@ -417,6 +417,7 @@ Example streamed output for a team board app:
 >
 >   if (doc.type === "post") {
 >     if (doc.authorHandle !== user.userHandle) throw { forbidden: "not author" };
+>     if (oldDoc && oldDoc.authorHandle !== user.userHandle) throw { forbidden: "not author" };
 >     return { channels: [doc.channelId] };
 >   }
 >
