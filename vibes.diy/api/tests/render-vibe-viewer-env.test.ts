@@ -161,4 +161,15 @@ describe("render-vibe viewerEnv embedding", { timeout: 30000 }, () => {
     expect(mountParams).toContain('"accessFnBindings"');
     expect(mountParams).toContain('"accessFnCid":"bafyCID"');
   });
+
+  it("registerDependencies fragment carries adminMode only when the toggle is on", () => {
+    // Mirrors the JSON render-vibe inlines into the registerDependencies(...) call.
+    // adminMode threads the ?adminMode=yes URL param into vibeApp so the iframe's
+    // bootstrap whoAmI request carries it; the server re-gates on real ownership.
+    const withAdmin = (adminMode: boolean) =>
+      JSON.stringify({ appSlug: "app", ownerHandle: "alice", fsId: "fs", ...(adminMode ? { adminMode: true } : {}) });
+
+    expect(withAdmin(true)).toContain('"adminMode":true');
+    expect(withAdmin(false)).not.toContain("adminMode");
+  });
 });

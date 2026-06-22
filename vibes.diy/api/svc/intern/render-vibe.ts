@@ -59,6 +59,11 @@ export interface RenderVibesOpts {
     private: NpmUrlCapture;
     public?: string; // default to esm.sh
   };
+  // Owner admin-toggle (from the ?adminMode=yes URL param). Threaded into
+  // vibeApp so the iframe's bootstrap whoAmI request carries it; the server
+  // only echoes it back for an effective owner (who-am-i.ts), so useVibe's
+  // admin bypass reflects real server authority.
+  adminMode?: boolean;
 }
 
 export async function renderVibe({
@@ -68,6 +73,7 @@ export async function renderVibe({
   entryPointEtag,
   entryPointCacheControl,
   pkgRepos,
+  adminMode,
 }: RenderVibesOpts): Promise<Result<EventoResultType>> {
   // console.log("renderVibe-8")
   const fsIportMap = fsItems.find((i) => i.transform?.type === "import-map");
@@ -202,7 +208,7 @@ export async function renderVibe({
     mountJS: [
       `import { mountVibe, registerDependencies } from '@vibes.diy/vibe-runtime';`,
       ...imports.map((i) => i.importStmt),
-      `registerDependencies(${JSON.stringify({ appSlug: fs.appSlug, ownerHandle: fs.ownerHandle, fsId: fs.fsId, ...(accessFnBindings ? { accessFnBindings } : {}) })})`,
+      `registerDependencies(${JSON.stringify({ appSlug: fs.appSlug, ownerHandle: fs.ownerHandle, fsId: fs.fsId, ...(accessFnBindings ? { accessFnBindings } : {}), ...(adminMode ? { adminMode: true } : {}) })})`,
       `  .then(() => mountVibe([${imports.map((i) => i.var).join(",")}], ${JSON.stringify({
         usrEnv,
         ...(viewerEnv ? { viewerEnv } : {}),
@@ -247,6 +253,8 @@ export interface RenderPendingVibesOpts {
     private: NpmUrlCapture;
     public?: string;
   };
+  // See RenderVibesOpts.adminMode — same owner admin-toggle threading.
+  adminMode?: boolean;
 }
 
 /**
@@ -261,6 +269,7 @@ export async function renderPendingVibe({
   appSlug,
   ownerHandle,
   pkgRepos,
+  adminMode,
 }: RenderPendingVibesOpts): Promise<Result<EventoResultType>> {
   const vctx = ctx.ctx.getOrThrow<VibesApiSQLCtx>("vibesApiCtx");
 
@@ -301,7 +310,7 @@ export async function renderPendingVibe({
     },
     mountJS: [
       `import { mountVibe, registerDependencies } from '@vibes.diy/vibe-runtime';`,
-      `registerDependencies(${JSON.stringify({ appSlug, ownerHandle, fsId: "pending" })})`,
+      `registerDependencies(${JSON.stringify({ appSlug, ownerHandle, fsId: "pending", ...(adminMode ? { adminMode: true } : {}) })})`,
       `  .then(() => mountVibe([], ${JSON.stringify({
         usrEnv: {},
         ...(viewerEnv ? { viewerEnv } : {}),
