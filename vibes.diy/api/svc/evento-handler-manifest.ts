@@ -98,6 +98,20 @@ export const sharedHandlers = [
   // (#2265 A2; these land on SharedSessions in Track B.)
   listDmThreadsEvento,
   assetUploadGrantEvento,
+  // Re-homed from chatHandlers (#2265 Track B): stateless identity/settings/
+  // analytics D1 ops called from non-chat pages (settings, messages, reporting
+  // dashboard). Moving them here lets chatApi go lazy without stranding callers.
+  listHandleBindingsEvento,
+  createHandleBindingEvento,
+  deleteHandleBindingEvento,
+  getCertFromCsrEvento,
+  reportGrowthMembershipsEvento,
+  reportGrowthVibesWithDataEvento,
+  reportActiveMembersEvento,
+  reportTopVibesByMembersEvento,
+  reportAttributionReferrersEvento,
+  reportCampaignHealthEvento,
+  reportCampaignAdPreviewsEvento,
 ] as const;
 
 export const appHandlers = [
@@ -123,17 +137,6 @@ export const chatHandlers = [
   listApplicationChats,
   forkAppEvento,
   setModeFsIdEvento,
-  getCertFromCsrEvento,
-  listHandleBindingsEvento,
-  createHandleBindingEvento,
-  deleteHandleBindingEvento,
-  reportGrowthMembershipsEvento,
-  reportGrowthVibesWithDataEvento,
-  reportActiveMembersEvento,
-  reportTopVibesByMembersEvento,
-  reportAttributionReferrersEvento,
-  reportCampaignHealthEvento,
-  reportCampaignAdPreviewsEvento,
 ] as const;
 
 // Stopgap (#2350): img-gen rides vibeApi → AppSessions, so the AppSessions
