@@ -43,8 +43,10 @@ describe("userNotifyCallbacksForSharedSessions — registration payload", () => 
   it("registerUserSubscription posts { action: register, shardId: shared:<shard> }", async () => {
     const { env, capturedBodies } = buildFakeEnv();
     const cbs = userNotifyCallbacksForSharedSessions(shard, env);
+    const registerUserSubscription = cbs.registerUserSubscription;
 
-    await cbs.registerUserSubscription!(userId);
+    expect(registerUserSubscription).toBeDefined();
+    await registerUserSubscription?.(userId);
 
     expect(capturedBodies).toHaveLength(1);
     expect(capturedBodies[0]).toEqual({ action: "register", shardId: expectedShardId });
@@ -53,8 +55,10 @@ describe("userNotifyCallbacksForSharedSessions — registration payload", () => 
   it("deregisterUserSubscription posts { action: deregister, shardId: shared:<shard> }", async () => {
     const { env, capturedBodies } = buildFakeEnv();
     const cbs = userNotifyCallbacksForSharedSessions(shard, env);
+    const deregisterUserSubscription = cbs.deregisterUserSubscription;
 
-    await cbs.deregisterUserSubscription!(userId);
+    expect(deregisterUserSubscription).toBeDefined();
+    await deregisterUserSubscription?.(userId);
 
     expect(capturedBodies).toHaveLength(1);
     expect(capturedBodies[0]).toEqual({ action: "deregister", shardId: expectedShardId });
@@ -64,9 +68,13 @@ describe("userNotifyCallbacksForSharedSessions — registration payload", () => 
     const { env, fakeStub } = buildFakeEnv();
     // shard is built for userId="user_x" but we call with userId="user_y" — mismatch
     const cbs = userNotifyCallbacksForSharedSessions(shard, env);
+    const registerUserSubscription = cbs.registerUserSubscription;
+    const deregisterUserSubscription = cbs.deregisterUserSubscription;
 
-    await cbs.registerUserSubscription!("user_y");
-    await cbs.deregisterUserSubscription!("user_y");
+    expect(registerUserSubscription).toBeDefined();
+    expect(deregisterUserSubscription).toBeDefined();
+    await registerUserSubscription?.("user_y");
+    await deregisterUserSubscription?.("user_y");
 
     expect(fakeStub.fetch).not.toHaveBeenCalled();
   });
