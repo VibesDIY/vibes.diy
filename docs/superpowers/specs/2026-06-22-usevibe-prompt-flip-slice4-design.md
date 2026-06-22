@@ -17,9 +17,14 @@ The root-cause bug (a signed-in owner told "Sign in to compose") came from `App.
 
 ## The single rule
 
-Replaces the gating clause at `system-prompt.md:20` ("Gate write surfaces on `viewer`…"). Canonical wording (final text tuned during implementation):
+Replaces the gating clause at `system-prompt.md:20` ("Gate write surfaces on `viewer`…"). Expressed as a hard rule (per review — final text tuned during implementation), anchored to one worked line `const { me, can, ready } = useVibe("comments")` (pass the Fireproof db you're writing to):
 
-> **Gate every write surface on `useVibe(dbName).can`.** `const { me, can, ready } = useVibe("comments")` — pass the Fireproof database name you're writing to. Show the editor/compose UI when `can.create(draft).ok` (or `can.edit(doc)` / `can.delete(doc)`); otherwise render its `.reason` as the fallback copy (e.g. the sign-in or join prompt). `can.*` runs the app's own `access.js` — the same function the server enforces — so never re-derive permissions from `viewer`, `isOwner`, or document fields. Gate access-sensitive UI on `ready` to avoid a half-resolved flash. Use `useViewer()` only for identity display: `ViewerTag`, avatars, and showing who's signed in. Writes can still be rejected server-side even when `can.*` allows — keep the optimistic-write + rollback handling.
+- **Gate every write affordance/action on `useVibe(dbName).can.*`** — show the editor/compose UI when `can.create(draft).ok` (or `can.edit(doc)` / `can.delete(doc)`).
+- **While `ready` is false, show neutral skeleton/disabled UI** (avoid a half-resolved flash).
+- **If denied, render `reason` as the fallback copy** (e.g. the sign-in or join prompt).
+- **Never derive write auth from `viewer` / `isOwner` / `access.*` in UI gates** — `can.*` runs the app's own `access.js`, the same function the server enforces.
+- **`useViewer()` is identity/display-only** — `ViewerTag`, avatars, showing who's signed in.
+- Writes can still be rejected server-side even when `can.*` allows — keep the optimistic-write + rollback handling.
 
 Decisions baked in (from brainstorming):
 
@@ -64,6 +69,8 @@ Prompt assembly is deterministic and there are existing tests in `prompts/tests/
 - **no longer contains the retired gating text** anywhere in the assembled default prompt — a regression guard for the literals: "Gate write surfaces on `viewer`", `useViewer().can('write')`, **and `fireproof.md`'s "Write surfaces are gated with `viewer`…"** (this last one is the catch Codex flagged — `fireproof.md` is always injected, so the test must assert against the _assembled_ prompt, not just `system-prompt.md`).
 
 Plus a small unit assertion that `useVibeConfig` is present in `allConfigs` / the catalog with the right `importModule`/`importName`, so the generated import statement is emitted.
+
+_Optional (per review), deferred:_ a single smoke/golden generation check that real generated code uses `useVibe(...).can` + `reason` and does not emit `useViewer().can('write')`. Deferred because it requires a live model call (slow, non-deterministic) — better suited to the A→B evaluation gate (where generation-quality is the actual signal) than to this slice's deterministic prompt-assembly tests.
 
 ## Scope / non-goals
 
