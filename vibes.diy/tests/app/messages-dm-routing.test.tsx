@@ -15,8 +15,12 @@ import MessageThreadRoute from "~/vibes.diy/app/routes/messages.$ownerHandleA.$o
 afterEach(() => cleanup());
 
 function renderThread(ctx: Partial<VibesDiyCtx>) {
+  // Shared-plane reads moved from chatApi → sharedApi (#2265 Track B). Default
+  // sharedApi to chatApi so tests that only stub chatApi still work.
+  const merged: Partial<VibesDiyCtx> = { ...ctx };
+  if (merged.sharedApi === undefined) merged.sharedApi = merged.chatApi;
   return render(
-    <VibesDiyContext.Provider value={ctx as VibesDiyCtx}>
+    <VibesDiyContext.Provider value={merged as VibesDiyCtx}>
       <MemoryRouter initialEntries={["/messages/alice/bob"]}>
         <Routes>
           <Route path="/messages/:ownerHandleA/:ownerHandleB" element={<MessageThreadRoute />} />
