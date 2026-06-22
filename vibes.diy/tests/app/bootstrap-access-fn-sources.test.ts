@@ -140,7 +140,9 @@ describe("bootstrapAccessFnSources", () => {
     await Promise.resolve();
 
     // Only one RPC should have been posted.
-    const accessFnPosts = (posts as { type: string }[]).filter((p) => p.type === "vibe.req.accessFnSource");
+    const accessFnPosts = (posts as { type: string; cid: string; tid: string }[]).filter(
+      (p) => p.type === "vibe.req.accessFnSource"
+    );
     expect(accessFnPosts).toHaveLength(1);
     expect((accessFnPosts[0] as { cid: string }).cid).toBe("sharedCid");
 
