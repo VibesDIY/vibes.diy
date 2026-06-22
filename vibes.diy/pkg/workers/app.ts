@@ -29,6 +29,7 @@ import {
 
 export { ChatSessions } from "./chat-sessions.js";
 export { AppSessions } from "./app-sessions.js";
+export { SharedSessions } from "./shared-sessions.js";
 export { UserNotify } from "./user-notify.js";
 // import { cfServe } from "@vibes.diy/api-svc";
 // import { CfCacheIf } from "@vibes.diy/api-svc/api.js";
@@ -120,6 +121,12 @@ export default {
       const id = env.APP_SESSIONS.idFromName(vibe);
       const obj = env.APP_SESSIONS.get(id);
       return obj.fetch(request);
+    }
+
+    if (route === "shared-do") {
+      const shard = url.getParam("shard");
+      const id = shard ? env.SHARED_SESSIONS.idFromName(shard) : env.SHARED_SESSIONS.idFromName("global");
+      return env.SHARED_SESSIONS.get(id).fetch(request);
     }
 
     if (route === "api-do") {
