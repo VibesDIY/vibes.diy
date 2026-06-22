@@ -7,6 +7,7 @@
 
 export type Route =
   | "app-api" // /api/app → AppSessions DO (vibe-scoped WebSocket)
+  | "shared-do" // /api/shared → SharedSessions DO (singleton/per-user shared-plane WS)
   | "api-do" // /api/* → ChatSessions DO (WebSocket)
   | "vibe-pkg" // /vibe-pkg/* → npm package serving
   | "cf-serve" // app subdomain *--*.host, /assets/cid, POST/OPTIONS /assets
@@ -32,6 +33,9 @@ export function routeDecision(req: RouteInput): Route {
 
   if (pathname === "/api/app" || pathname.startsWith("/api/app/")) {
     return "app-api";
+  }
+  if (pathname === "/api/shared" || pathname.startsWith("/api/shared/")) {
+    return "shared-do";
   }
   if (pathname === "/api" || pathname.startsWith("/api/")) {
     return "api-do";
