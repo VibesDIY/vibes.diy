@@ -40,15 +40,18 @@
       "url": "https://vibes.diy/vibe/garden-gnome/eval2525-team-board",
       "dbName": "board",
       "accessExport": "export function board(doc, oldDoc, user, ctx)",
-      "grade": "PASS",
-      "reason": "Channel create gated on can.create({type:'channel'}) (owner-management via can, not isOwner); message compose gated on can.create({type:'message', channelId, authorHandle}) with reason rendered; ctx.requireAccess membership; isViewerPending drives a skeleton.",
+      "grade": "FAIL",
+      "reason": "App.jsx wiring is correct (channel create on can.create({type:'channel'}) not isOwner; message compose on can.create({type:'message', channelId, authorHandle}) with reason; isViewerPending skeleton). But the generated access.js is self-contradictory: the channel doc grants the channel `public` READ (grant:{public:[id]}) while a message requires ctx.requireAccess(channelId), which checks effective user/role channel membership (grants.channels), NOT public read (grants.publicChannels). A public grant never confers membership, so can.create({type:'message'}) returns `not in channel` for every non-admin user — no one but the owner-in-admin-mode can ever post. The primary write flow is broken (confirmed by Codex review and verified against grant-reduce.ts/who-am-i.ts + access-runner.ts requireAccess). This is a hidden-write regression caused by the access.js, faithfully reflected by can.*.",
       "createGatedOnCan": true,
       "editDeleteGatedOnCan": true,
       "rendersReason": true,
       "ownerWriteGatedOnCan": true,
       "viewerOnlyForIdentity": true,
       "unknown": false,
-      "nits": []
+      "writeFlowBroken": true,
+      "nits": [
+        "access.js grants public READ but gates writes on ctx.requireAccess(channel) — public read does not satisfy requireAccess, so non-owner posts are denied."
+      ]
     },
     {
       "id": "forum-mods",
@@ -98,15 +101,19 @@
       "url": "https://vibes.diy/vibe/garden-gnome/eval2525-photo-wall",
       "dbName": "snapshotWall",
       "accessExport": "export function snapshotWall(doc, oldDoc, user, ctx)",
-      "grade": "SOFT-FAIL",
-      "reason": "Posts and comments gate on can.create with proper candidates (authorHandle, channelId) and render reason — the canonical comment case is correct. But the channel-bootstrap write is gated on useViewer().isOwner (if (!isOwner) return; database.put({type:'channel'...})) instead of can.create({type:'channel'}).ok — the 'isOwner gating a write' red flag, though it is an auto-bootstrap effect rather than a user-facing form.",
+      "grade": "FAIL",
+      "reason": "App.jsx gates posts and comments on can.create with proper candidates (authorHandle, channelId) and renders reason — the wiring looks right. But the same public-read-vs-membership bug as team-board breaks it: posts/comments require ctx.requireAccess('ch:wall'), while ch:wall is only granted public READ (grant:{public:['ch:wall']}). requireAccess checks grants.channels (effective membership), not grants.publicChannels, so can.create returns `not in channel` for every non-admin — the canonical comment flow is broken for all non-owner visitors. My earlier 'canonical comment case is correct' was wrong (caught by Codex review). Secondary issue: the channel-bootstrap write is gated on useViewer().isOwner instead of can.create({type:'channel'}).",
       "createGatedOnCan": true,
       "editDeleteGatedOnCan": false,
       "rendersReason": true,
       "ownerWriteGatedOnCan": false,
       "viewerOnlyForIdentity": false,
       "unknown": false,
-      "nits": ["Channel-bootstrap effect gated on isOwner instead of can.create({type:'channel'})."]
+      "writeFlowBroken": true,
+      "nits": [
+        "access.js grants ch:wall public READ but gates post/comment writes on ctx.requireAccess('ch:wall') — non-owner posts and comments are denied.",
+        "Channel-bootstrap effect gated on isOwner instead of can.create({type:'channel'})."
+      ]
     },
     {
       "id": "trip-planner",
@@ -150,18 +157,21 @@
   ],
   "rollup": {
     "total": 7,
-    "pass": 4,
-    "softFail": 2,
-    "fail": 1,
+    "pass": 3,
+    "softFail": 1,
+    "fail": 3,
     "unknownCount": 0,
-    "hiddenWriteMisgates": 0,
+    "hiddenWriteMisgates": 2,
+    "hiddenWriteMisgatesNote": "team-board and photo-wall. NOT caused by a wrong can verdict or a malformed candidate — caused by a self-contradictory generated access.js (grants a channel public READ, then gates writes on ctx.requireAccess(thatChannel), which requires effective membership that public read never confers). can.* faithfully reflects the buggy access.js. Surfaced by Codex review; verified against grant-reduce.ts, who-am-i.ts, and access-runner.ts.",
+    "correctionNote": "Initial grading (4 PASS / 2 SOFT-FAIL / 1 FAIL, 0 hidden-write mis-gates) missed the public-read-vs-requireAccess-membership bug in team-board (was PASS) and photo-wall (was SOFT-FAIL). Both corrected to FAIL after Codex review.",
     "commonAntiPatterns": [
+      "PUBLIC-READ vs WRITE-MEMBERSHIP CONFUSION (most important): access fn grants a channel `grant:{public:[ch]}` (read) and then gates writes on ctx.requireAccess(ch). requireAccess checks effective membership (grants.channels), not public read (grants.publicChannels), so non-owner writes are silently denied. The fix the model needs: either don't requireAccess for an open public channel, or grant write-membership explicitly (grant:{users|roles}) / use a public-write descriptor. Affected team-board and photo-wall (2/7).",
       "No reason fallback on denied write surfaces — the form is silently hidden instead of rendering can.*().reason as sign-in/join copy (recipe-journal, trip-planner).",
       "Owner-bootstrap/management write gated on useViewer().isOwner instead of can.create({type:'channel'}) (photo-wall).",
       "Anonymous-write prompt produced a login-required access fn instead of allowAnonymous:true (guestbook).",
       "Generation-stream reliability: 2 of 8 generation attempts truncated mid-stream; one failed the server push entirely and needed a re-gen; another shipped a stubbed composer. Infra signal, not can-flip, but it threatens the eval."
     ],
-    "verdict": "CONDITIONAL PASS",
-    "verdictRationale": "The can-flip mechanic itself holds: 0 hidden-write mis-gates from a wrong verdict, 0 unknowns, owner-management correctly routed through can.* (forum is a textbook example), and useViewer used for identity only in 5/7. Every failure is either a prompt-comprehension miss (anonymous, multi-db), a missing reason fallback, an isOwner-bootstrap shortcut, or generation-stream flakiness — none are a can verdict gating writes wrong. Recommend shipping two prompt tweak-spots before migrating the ~197 existing vibes: (1) always render can.*().reason on denied surfaces; (2) teach allowAnonymous for 'anyone can' prompts; and steer owner-bootstrap writes through can.create. Then re-run."
+    "verdict": "DO NOT FLIP YET",
+    "verdictRationale": "The can-flip HOOK is doing its job — App.jsx gates every write on can.* with proper candidates, useViewer is identity-only in 5/7, unknown rate is 0, and owner-management is correctly routed through can.* (forum is a textbook example). But the eval surfaced a real generation-quality bug in the access.js the hook depends on: the model conflates public READ with channel write-MEMBERSHIP, emitting grant:{public:[ch]} + ctx.requireAccess(ch), which denies all non-owner writes. That is exactly the 'hidden write form' bug class this effort targets — present in 2/7 — so it fails pass-criterion #2. The flip is reversible and we should stay at A. Prompt tweak-spots before re-running: (1) PRIMARY — teach that ctx.requireAccess gates on membership, so a public channel anyone can post to must not be behind requireAccess (or must grant write-membership explicitly); (2) always render can.*().reason on denial; (3) teach allowAnonymous for 'anyone can' prompts; (4) steer owner-bootstrap writes through can.create. Re-run the matrix after (1); I'd expect team-board + photo-wall to recover."
   }
 }

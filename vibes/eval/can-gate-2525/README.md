@@ -10,12 +10,21 @@ Generated `2026-06-22` with `vibes-diy@2.5.13` under handle `garden-gnome`.
 | dir              | matrix row · dimension    | grade                                           |
 | ---------------- | ------------------------- | ----------------------------------------------- |
 | `recipe-journal` | 1 · single-author / owner | PASS                                            |
-| `team-board`     | 2 · channel membership    | PASS                                            |
+| `team-board`     | 2 · channel membership    | FAIL (public read ≠ `requireAccess` membership) |
 | `forum-mods`     | 3 · owner-managed roles   | PASS (best example)                             |
 | `guestbook`      | 4 · anonymous writes      | SOFT-FAIL (login-required, no `allowAnonymous`) |
-| `photo-wall`     | 5 · comments              | SOFT-FAIL (channel bootstrap on `isOwner`)      |
+| `photo-wall`     | 5 · comments              | FAIL (public read ≠ `requireAccess` membership) |
 | `trip-planner`   | 6 · multi-database        | PASS (collapsed to one db)                      |
 | `task-list`      | 7 · per-doc edit/delete   | FAIL (stubbed create surface)                   |
+
+Roll-up: **3 PASS / 1 SOFT-FAIL / 3 FAIL**, `unknown` rate 0, **2 hidden-write
+regressions** (team-board, photo-wall). Verdict: **DO NOT FLIP YET** — the can-flip
+hook is wired correctly everywhere, but the generated `access.js` in 2/7 grants a
+channel `public` READ and then gates writes on `ctx.requireAccess(thatChannel)`, which
+requires effective membership that public read never confers — so non-owner writes are
+silently denied (the exact "hidden write form" bug class the effort targets). Surfaced
+by Codex review on PR #2526; verified against `grant-reduce.ts` / `who-am-i.ts` /
+`access-runner.ts`.
 
 Full per-vibe grades, criteria, and the roll-up:
 [`docs/superpowers/specs/eval-2525-can-gate-results-2026-06-22.json`](../../../docs/superpowers/specs/eval-2525-can-gate-results-2026-06-22.json).
