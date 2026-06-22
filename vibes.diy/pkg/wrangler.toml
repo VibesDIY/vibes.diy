@@ -20,7 +20,6 @@ bindings = [
   { name = "CHAT_SESSIONS", class_name = "ChatSessions" },
   { name = "APP_SESSIONS", class_name = "AppSessions" },
   { name = "USER_NOTIFY", class_name = "UserNotify" },
-  { name = "ACCESS_FN_DO", class_name = "AccessFnDO" },
 ]
 
 [[migrations]]
@@ -49,6 +48,14 @@ new_classes = ["AppSessions"]
 [[migrations]]
 tag = "v6"
 deleted_classes = ["DocNotify"]
+
+# v7: AccessFnDO retired — access-fn eval runs locally on the DOs (AppSessions +
+# ChatSessions localInvokeAccessFn); no code references env.ACCESS_FN_DO after
+# #2265 A2b. Local binding in every env (no cross-script script_name), so unlike
+# DocNotify there's no 10061 ordering trap — one PR, prod before cli. (#2265)
+[[migrations]]
+tag = "v7"
+deleted_classes = ["AccessFnDO"]
 
 [[d1_databases]]
 binding = "DB"
@@ -79,7 +86,6 @@ bindings = [
   { name = "CHAT_SESSIONS", class_name = "ChatSessions" },
   { name = "APP_SESSIONS", class_name = "AppSessions" },
   { name = "USER_NOTIFY", class_name = "UserNotify" },
-  { name = "ACCESS_FN_DO", class_name = "AccessFnDO" },
 ]
 
 [[env.local.migrations]]
@@ -105,6 +111,11 @@ new_classes = ["AppSessions"]
 [[env.local.migrations]]
 tag = "v6"
 deleted_classes = ["DocNotify"]
+
+# v7: AccessFnDO retired — see top-level v7. Local binding, no 10061 trap. (#2265)
+[[env.local.migrations]]
+tag = "v7"
+deleted_classes = ["AccessFnDO"]
 
 [[env.local.d1_databases]]
 binding = "DB"
@@ -141,7 +152,6 @@ bindings = [
   { name = "CHAT_SESSIONS", class_name = "ChatSessions" },
   { name = "APP_SESSIONS", class_name = "AppSessions" },
   { name = "USER_NOTIFY", class_name = "UserNotify" },
-  { name = "ACCESS_FN_DO", class_name = "AccessFnDO" },
 ]
 
 [[env.dev.migrations]]
@@ -167,6 +177,11 @@ new_classes = ["AppSessions"]
 [[env.dev.migrations]]
 tag = "v6"
 deleted_classes = ["DocNotify"]
+
+# v7: AccessFnDO retired — see top-level v7. Local binding, no 10061 trap. (#2265)
+[[env.dev.migrations]]
+tag = "v7"
+deleted_classes = ["AccessFnDO"]
 
 [[env.dev.d1_databases]]
 binding = "DB"
@@ -205,7 +220,6 @@ bindings = [
   { name = "CHAT_SESSIONS", class_name = "ChatSessions" },
   { name = "APP_SESSIONS", class_name = "AppSessions" },
   { name = "USER_NOTIFY", class_name = "UserNotify" },
-  { name = "ACCESS_FN_DO", class_name = "AccessFnDO" },
 ]
 
 [[env.preview.migrations]]
@@ -231,6 +245,11 @@ new_classes = ["AppSessions"]
 [[env.preview.migrations]]
 tag = "v6"
 deleted_classes = ["DocNotify"]
+
+# v7: AccessFnDO retired — see top-level v7. Local binding, no 10061 trap. (#2265)
+[[env.preview.migrations]]
+tag = "v7"
+deleted_classes = ["AccessFnDO"]
 
 [[env.preview.d1_databases]]
 binding = "DB"
@@ -268,7 +287,6 @@ bindings = [
   { name = "CHAT_SESSIONS", class_name = "ChatSessions" },
   { name = "APP_SESSIONS", class_name = "AppSessions" },
   { name = "USER_NOTIFY", class_name = "UserNotify" },
-  { name = "ACCESS_FN_DO", class_name = "AccessFnDO" },
 ]
 
 [[env.prod.migrations]]
@@ -294,6 +312,11 @@ new_classes = ["AppSessions"]
 [[env.prod.migrations]]
 tag = "v6"
 deleted_classes = ["DocNotify"]
+
+# v7: AccessFnDO retired — see top-level v7. Local binding, no 10061 trap. (#2265)
+[[env.prod.migrations]]
+tag = "v7"
+deleted_classes = ["AccessFnDO"]
 
 [[env.prod.d1_databases]]
 binding = "DB"
@@ -340,7 +363,6 @@ bindings = [
   { name = "CHAT_SESSIONS", class_name = "ChatSessions" },
   { name = "APP_SESSIONS", class_name = "AppSessions", script_name = "vibes-diy-v2-prod" },
   { name = "USER_NOTIFY", class_name = "UserNotify", script_name = "vibes-diy-v2-prod" },
-  { name = "ACCESS_FN_DO", class_name = "AccessFnDO" },
 ]
 
 [[env.cli.migrations]]
@@ -384,6 +406,13 @@ new_classes = ["AppSessions"]
 [[env.cli.migrations]]
 tag = "v6"
 deleted_classes = ["DocNotify"]
+
+# v7: AccessFnDO retired. cli's AccessFnDO is a LOCAL class (v4 new_classes; the
+# binding had no script_name), so deleting it here has no cross-script 10061
+# dependency on prod — unlike DocNotify. (#2265)
+[[env.cli.migrations]]
+tag = "v7"
+deleted_classes = ["AccessFnDO"]
 
 [[env.cli.d1_databases]]
 binding = "DB"
