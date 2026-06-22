@@ -208,7 +208,13 @@ export const whoAmIEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqVibeWhoAm
       const { appSlug, ownerHandle: ownerUserSlug, adminMode } = req;
       const rawSend = (ctx.send as unknown as { provider?: WSSendProvider }).provider;
       if (rawSend instanceof WSSendProvider) {
-        rawSend.adminMode = adminMode === true;
+        // Only write the sticky per-connection flag when the request explicitly
+        // carries adminMode. An omitted field (adminMode === undefined) preserves
+        // whatever the flag was set to by a prior admin whoAmI on this connection —
+        // a plain identity-lookup whoAmI must not stomp an already-elevated flag.
+        if (adminMode !== undefined) {
+          rawSend.adminMode = adminMode === true;
+        }
       }
       const rRes = await resolveWhoAmI(vctx, {
         auth: req._auth,

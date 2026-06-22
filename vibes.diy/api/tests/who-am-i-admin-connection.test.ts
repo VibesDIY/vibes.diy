@@ -143,4 +143,53 @@ describe("admin whoAmI + putDoc share one connection", { timeout: 30000 }, () =>
     // adminMode === false → rawSend.adminMode = false (who-am-i.ts:211)
     expect(wsSendProvider.adminMode).toBe(false);
   });
+
+  // Regression tests for the "plain whoAmI omits adminMode" fix (who-am-i.ts).
+  //
+  // Before the fix, `rawSend.adminMode = adminMode === true` was unconditional —
+  // a plain whoAmI (no adminMode field, so adminMode === undefined) would evaluate
+  // `undefined === true` → false and STOMP the flag. After the fix, the write is
+  // gated on `adminMode !== undefined` so an omitted field preserves prior state.
+
+  it("plain whoAmI (no adminMode field) preserves a previously-set adminMode:true flag", async () => {
+    // Set the flag to true first.
+    const rSet = await ownerApi.whoAmI({
+      tid: crypto.randomUUID(),
+      appSlug,
+      ownerHandle,
+      adminMode: true,
+    });
+    assert(rSet.isOk(), `whoAmI(true) should succeed: ${rSet.isErr() ? JSON.stringify(rSet.Err()) : ""}`);
+    expect(wsSendProvider.adminMode).toBe(true);
+
+    // Plain whoAmI — adminMode field absent entirely.
+    // Before the fix this would set adminMode = false (stomping the flag).
+    // After the fix, the flag must remain true.
+    const rPlain = await ownerApi.whoAmI({
+      tid: crypto.randomUUID(),
+      appSlug,
+      ownerHandle,
+      // adminMode intentionally omitted
+    });
+    assert(rPlain.isOk(), `plain whoAmI should succeed: ${rPlain.isErr() ? JSON.stringify(rPlain.Err()) : ""}`);
+
+    expect(wsSendProvider.adminMode).toBe(true); // must NOT be cleared
+  });
+
+  it("explicit adminMode:false after plain whoAmI still clears the flag", async () => {
+    // Set the flag to true.
+    const rSet = await ownerApi.whoAmI({ tid: crypto.randomUUID(), appSlug, ownerHandle, adminMode: true });
+    assert(rSet.isOk());
+    expect(wsSendProvider.adminMode).toBe(true);
+
+    // Plain whoAmI preserves it.
+    const rPlain = await ownerApi.whoAmI({ tid: crypto.randomUUID(), appSlug, ownerHandle });
+    assert(rPlain.isOk());
+    expect(wsSendProvider.adminMode).toBe(true);
+
+    // Explicit false must still clear it.
+    const rClear = await ownerApi.whoAmI({ tid: crypto.randomUUID(), appSlug, ownerHandle, adminMode: false });
+    assert(rClear.isOk());
+    expect(wsSendProvider.adminMode).toBe(false);
+  });
 });
