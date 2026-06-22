@@ -232,7 +232,12 @@ export const whoAmIEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqVibeWhoAm
         ...(r.isOwner ? { isOwner: r.isOwner } : {}),
         ...(r.dbAcls !== undefined ? { dbAcls: r.dbAcls } : {}),
         ...(r.grants !== undefined ? { grants: r.grants } : {}),
-        ...(adminMode === true ? { adminMode: true } : {}),
+        // Only echo an EFFECTIVE owner-admin session. The server write path
+        // enables the admin override solely for `isOwner && connectionAdminMode`
+        // (app-documents-write-eventos.ts), so echoing adminMode for a non-owner
+        // who merely requested it would let useVibe locally allow writes the
+        // server still rejects. Gate on r.isOwner to stay in lockstep.
+        ...(adminMode === true && r.isOwner ? { adminMode: true } : {}),
       } satisfies ResVibeWhoAmI);
       return Result.Ok(EventoResult.Continue);
     }

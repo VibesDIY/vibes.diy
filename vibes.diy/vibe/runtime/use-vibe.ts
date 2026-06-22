@@ -41,7 +41,16 @@ export function useVibe(dbName: string): UseVibeResult {
   const env = mountParams.viewerEnv;
 
   const identityReady = env !== undefined;
-  const cid = mountParams.accessFnBindings?.find((b) => b.dbName === dbName)?.accessFnCid;
+  // Effective binding: exact dbName match, else the wildcard "*" (a default-export
+  // access.js applies to every db). Mirrors the server's `namedCids.get(dbName) ??
+  // wildcardCid` (who-am-i.ts resolveGrants) so a default-export app is actually
+  // gated, not optimistically allowed. `bindingName` is what the runner extracts
+  // by ("*" → default export, else the named export); grants stay keyed by the
+  // concrete dbName below (the server stores outputs under concrete names).
+  const bindings = mountParams.accessFnBindings;
+  const binding = bindings?.find((b) => b.dbName === dbName) ?? bindings?.find((b) => b.dbName === "*");
+  const cid = binding?.accessFnCid;
+  const bindingName = binding?.dbName ?? dbName;
   const hasBinding = cid !== undefined;
   const sourcePresent = hasBinding && accessFnSources.has(cid);
   const pending = hasBinding && !sourcePresent;
@@ -67,7 +76,7 @@ export function useVibe(dbName: string): UseVibeResult {
     function verdict(doc: unknown, oldDoc: unknown): CanVerdict {
       if (!ready) return { ok: false, reason: "pending" };
       if (typeof source !== "string") return { ok: true }; // optimistic
-      const v = evaluateWrite({ source, dbName, doc, oldDoc, user, grants, adminMode });
+      const v = evaluateWrite({ source, dbName: bindingName, doc, oldDoc, user, grants, adminMode });
       if ("unknown" in v) {
         if (typeof process !== "undefined" && process.env?.NODE_ENV !== "production") {
           // Telemetry seam (spec): full unknown-rate metric is a later item.
@@ -82,7 +91,7 @@ export function useVibe(dbName: string): UseVibeResult {
       edit: (doc: unknown) => verdict(doc, doc),
       delete: (doc: unknown) => verdict(doc, doc),
     };
-  }, [ready, source, dbName, me, grants, adminMode]);
+  }, [ready, source, bindingName, me, grants, adminMode]);
 
   return { me, ready, can };
 }
