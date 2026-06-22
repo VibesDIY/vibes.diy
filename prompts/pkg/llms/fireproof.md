@@ -510,9 +510,9 @@ export default function App() {
 
 The pattern: `useVibe().can` gates every write surface — including owner-only management, which the access function enforces via `if (!user.isOwner) throw` so `can.create({ type: "roleGrant", … })` is false for non-owners. `access.hasChannel()` reflects display-only membership, and `isOwner` is a display hint only, never the write gate. The access function is the server-side authority — `useVibe().can` is how the UI reflects its decisions for writes.
 
-### Example: Channel board with restricted channels
+### Example: Channel board with open channels (any member posts)
 
-Some channels are open to all members, others are restricted. The access function decides — the UI uses `access.hasChannel()` to filter which channels to display, and `useVibe().can` to gate writes.
+Channels everyone can read, and any signed-in user can post to. The channel doc is `grant.public` (read for everyone) and the post rule checks only the author — **no `ctx.requireAccess`**, because public is read-only and would block every non-owner. (For a members-only board where the owner appoints who can post, grant a poster role and `requireAccess` it, as in the announcements example above.) The UI uses `access.hasChannel()` to filter which channels to display, and `useVibe().can` to gate writes.
 
 access.js
 
@@ -522,18 +522,18 @@ export function chat(doc, oldDoc, user, ctx) {
 
   if (doc.type === "channel") {
     if (!user.isOwner) throw { forbidden: "owner only" };
-    return {
-      channels: [doc._id],
-      grant: {
-        users: { [user.userHandle]: [doc._id] },
-        public: [doc._id],
-      },
-    };
+    // Open channel: public READ for everyone. No write-membership grant is
+    // needed — any signed-in user may post (see the post rule below).
+    return { channels: [doc._id], grant: { public: [doc._id] } };
   }
 
   if (doc.type === "post") {
     if (doc.authorHandle !== user.userHandle) throw { forbidden: "not author" };
-    ctx.requireAccess(doc.channel);
+    // Any signed-in author may post to this open channel. Do NOT call
+    // ctx.requireAccess(doc.channel) here: the channel is grant.public
+    // (read-only), which never satisfies requireAccess, so gating on it would
+    // block every non-owner from posting. requireAccess is for members-only
+    // channels whose writers were granted membership (see announcements above).
     return { channels: [doc.channel] };
   }
 
@@ -549,7 +549,9 @@ App.jsx — `access.hasChannel()` filters which channels are visible (display); 
 =======
   const { database, useLiveQuery, access } = useFireproof("chat");
   const { docs: channels } = useLiveQuery("type", { key: "channel" });
-  const canPost = useVibe("chat").can.create({ type: "post" });
+  // Build the candidate from the doc you'll write — the access fn checks
+  // authorHandle, so a bare { type: "post" } would be denied and hide the form.
+  const canPost = useVibe("chat").can.create({ type: "post", channel, authorHandle: viewer?.userHandle });
 >>>>>>> REPLACE
 ```
 
@@ -584,6 +586,11 @@ Access functions live in `/access.js`, a separate file in the vibe's filesystem 
 **UserContext:** `{ userHandle: string, displayName?: string }` — `userHandle` is stable unique id (use for all auth checks), `displayName` is display only (never use for identity checks).
 
 **Helpers (`ctx`):** Opaque closures over the materialized grant state. They throw or pass — you cannot enumerate channels, list members, or iterate grants. Both helpers also throw when `user` is null: `ctx.requireAccess(channelId)` throws if user is not in the channel, `ctx.requireRole(roleName)` throws if user is not in the role.
+
+**`requireAccess` checks _membership_, not public read — don't gate an open channel's writes on it.** `ctx.requireAccess(channelId)` passes only for a channel the user is a member of: granted directly through `grant.users[handle]`, or through a `grant.roles` role they hold. **`grant.public` does NOT satisfy `requireAccess`** — public is read-only ("anyone through the door can _read_"), it never confers write membership. So a channel that is only `grant.public` and gated on `ctx.requireAccess` can be written by **nobody** but the owner-in-admin-mode — every other write returns `not in channel`, silently hiding the form (`useVibe().can` faithfully reflects this). Choose by intent:
+
+- **Open channel — any signed-in user may post** (public board, guestbook, comment wall): do **not** call `ctx.requireAccess`. Route the doc to the channel and check the author — `if (doc.authorHandle !== user.userHandle) throw { forbidden: "not author" }; return { channels: [doc.channelId] }`. `grant.public` on the channel doc gives everyone read; the write is open to any author.
+- **Restricted channel — only members may post**: gate the write on `ctx.requireAccess(doc.channelId)` **and** grant writers membership explicitly — `grant.users` (direct) or `grant.roles` + a `members`/role-grant doc. `public` alongside is read-only and is fine for letting non-members read, but it is never what lets a member write.
 
 ### AccessDescriptor return type
 
