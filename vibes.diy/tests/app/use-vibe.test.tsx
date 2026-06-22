@@ -17,6 +17,13 @@ const TEAM_SRC = `export function aestheticBoard(doc, oldDoc, user, ctx) {
 
 const CID = "cid-team";
 
+// Same membership gate, but as a DEFAULT export — the form a wildcard "*"
+// binding (one access.js for every db) uses.
+const TEAM_SRC_DEFAULT = `export default function (doc, oldDoc, user, ctx) {
+  ctx.requireAccess("team");
+  return { channels: ["team"] };
+}`;
+
 // Sources reach VibeContext via vibe.evt.accessFnSource events (slice 2c). The
 // type has no Base/tid: { type, cid, source }. Dispatch AFTER render so the
 // provider's message listener is attached; waitFor() absorbs the state update.
@@ -155,6 +162,38 @@ describe("useVibe", () => {
       },
       { timeout: 500 }
     );
+  });
+
+  it("wildcard '*' binding (default-export access.js) is gated, not optimistically allowed", async () => {
+    // dbName "aestheticBoard" has NO named binding — only the wildcard. The hook
+    // must fall back to "*", evaluate the default export, and deny the anon write
+    // (mirrors the server's named-else-wildcard resolution). Without the fallback
+    // this would optimistically allow.
+    const get = mount({ viewer: null, access: "none" }, [{ dbName: "*", accessFnCid: "cid-wild" }]);
+    seedSource("cid-wild", TEAM_SRC_DEFAULT);
+    await waitFor(() => expect(get().ready).toBe(true));
+    expect(get().can.create({ type: "tile" })).toEqual({ ok: false, reason: "authentication required" });
+  });
+
+  it("named binding takes precedence over a wildcard for the same db", async () => {
+    // Both a named binding for aestheticBoard and a wildcard exist; the named one
+    // wins (server: namedCids.get(dbName) ?? wildcardCid). Member is allowed.
+    const get = mount(
+      {
+        viewer: { userHandle: "owner" },
+        access: "override",
+        isOwner: true,
+        grants: { aestheticBoard: { channels: ["team"], publicChannels: [], roles: [] } },
+      },
+      [
+        { dbName: "aestheticBoard", accessFnCid: CID },
+        { dbName: "*", accessFnCid: "cid-wild" },
+      ]
+    );
+    seedSource(CID, TEAM_SRC);
+    seedSource("cid-wild", TEAM_SRC_DEFAULT);
+    await waitFor(() => expect(get().ready).toBe(true));
+    expect(get().can.create({ type: "tile" })).toEqual({ ok: true });
   });
 
   it("adminMode flip via viewerChanged flips can.* without remount", async () => {
