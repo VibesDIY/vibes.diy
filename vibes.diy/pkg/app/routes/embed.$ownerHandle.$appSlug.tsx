@@ -159,7 +159,11 @@ export default function EmbedRoute() {
   // Resolve the current viewer's access. Mirrors the /vibe/ viewer's grant→card
   // mapping; "iframe" means viewable. Never prompts sign-in in-frame.
   useEffect(() => {
-    if (!appSlug || !ownerHandle) return;
+    // sharedApi is undefined until Clerk finishes loading (the provider defers
+    // the shared socket so it opens exactly once on the final shard). Embed is
+    // authless and not behind the auth layout, so guard here; the effect re-runs
+    // when sharedApi materializes (it's in the dep array). (#2265 Track B)
+    if (!appSlug || !ownerHandle || !vctx.sharedApi) return;
     let cancelled = false;
     vctx.sharedApi.getAppByFsId({ appSlug, ownerHandle }).then((rRes) => {
       if (cancelled || rRes.isErr()) return;

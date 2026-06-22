@@ -5,7 +5,7 @@ import { useCapiCompleteRegistration } from "./hooks/useCapiCompleteRegistration
 import { ClerkProvider, useClerk } from "@clerk/react";
 import { useLocation } from "react-router";
 import { vibeApiTarget } from "./vibe-api-target.js";
-import { sharedReadShardFor, sharedApiUrl } from "./shared-read-shard.js";
+import { deferredSharedReadShard, sharedApiUrl } from "./shared-read-shard.js";
 import { makeLazyChatApi } from "./lazy-chat-api.js";
 import { BuildURI, exception2Result, Future, KeyedResolvOnce, Lazy, Option, Result } from "@adviser/cement";
 import { type } from "arktype";
@@ -308,9 +308,20 @@ function LiveCycleVibesDiyProvider({ children, webVars }: { children: React.Reac
     realCtx.notifyApi = undefined; // notify rides sharedApi now
   } else {
     realCtx.vibeApi = undefined;
-    // SharedSessions WS: authed → per-user shard (same as notifications);
-    // anon → global singleton. Handles shared reads + user notify on non-vibe pages.
-    realCtx.sharedApi = buildSharedApi(sharedReadShardFor(clerk.user?.id));
+    // SharedSessions WS: authed → per-user shard (same as notifications); anon →
+    // global singleton. Handles shared reads + user notify on non-vibe pages.
+    // Deferred until Clerk has loaded (deferredSharedReadShard) so a signed-in
+    // page opens exactly ONE socket — the user shard — instead of a pre-hydration
+    // shard=global socket that then lingers beside the post-hydration notify-user
+    // one. While Clerk is still loading, sharedApi is undefined; the auth layout
+    // gates its routes on `isLoaded` so they never observe that window, and the
+    // notification hook / embed route guard against it. (#2265 Track B)
+    const sharedShard = deferredSharedReadShard(clerk.loaded, clerk.user?.id);
+    // Cast mirrors the context default (`{} as VibesDiyApiIface`, above): sharedApi
+    // is typed non-optional for the loaded case that all its consumers run in, but
+    // it is genuinely undefined during the brief pre-load window. Consumers that
+    // can run then (the embed route, the notification hook) guard against it.
+    realCtx.sharedApi = (sharedShard === undefined ? undefined : buildSharedApi(sharedShard)) as VibesDiyApiIface;
     realCtx.notifyApi = undefined; // notify rides sharedApi now
   }
 
