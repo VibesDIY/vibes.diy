@@ -7,15 +7,15 @@ pulled here so a regression is a diff. Each dir holds the generated `App.jsx` +
 
 Generated `2026-06-22` with `vibes-diy@2.5.13` under handle `garden-gnome`.
 
-| dir | matrix row · dimension | grade |
-|---|---|---|
-| `recipe-journal` | 1 · single-author / owner | PASS |
-| `team-board` | 2 · channel membership | PASS |
-| `forum-mods` | 3 · owner-managed roles | PASS (best example) |
-| `guestbook` | 4 · anonymous writes | SOFT-FAIL (login-required, no `allowAnonymous`) |
-| `photo-wall` | 5 · comments | SOFT-FAIL (channel bootstrap on `isOwner`) |
-| `trip-planner` | 6 · multi-database | PASS (collapsed to one db) |
-| `task-list` | 7 · per-doc edit/delete | FAIL (stubbed create surface) |
+| dir              | matrix row · dimension    | grade                                           |
+| ---------------- | ------------------------- | ----------------------------------------------- |
+| `recipe-journal` | 1 · single-author / owner | PASS                                            |
+| `team-board`     | 2 · channel membership    | PASS                                            |
+| `forum-mods`     | 3 · owner-managed roles   | PASS (best example)                             |
+| `guestbook`      | 4 · anonymous writes      | SOFT-FAIL (login-required, no `allowAnonymous`) |
+| `photo-wall`     | 5 · comments              | SOFT-FAIL (channel bootstrap on `isOwner`)      |
+| `trip-planner`   | 6 · multi-database        | PASS (collapsed to one db)                      |
+| `task-list`      | 7 · per-doc edit/delete   | FAIL (stubbed create surface)                   |
 
 Full per-vibe grades, criteria, and the roll-up:
 [`docs/superpowers/specs/eval-2525-can-gate-results-2026-06-22.json`](../../../docs/superpowers/specs/eval-2525-can-gate-results-2026-06-22.json).
