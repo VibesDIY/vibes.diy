@@ -361,4 +361,13 @@ describe("prompt builder (real implementation)", () => {
     expect(result.systemPrompt).toContain("can.create");
     expect(result.systemPrompt).not.toContain("Gate write surfaces on `viewer`");
   });
+
+  it("pre-allocation vocabulary no longer teaches useViewer().can('write')", async () => {
+    const result = await makeBaseSystemPrompt("test-model", {
+      stylePrompt: undefined,
+      userPrompt: undefined,
+      ...opts,
+    } as never);
+    expect(result.systemPrompt).not.toContain("useViewer().can('write')");
+  });
 });

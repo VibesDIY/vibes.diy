@@ -47,7 +47,7 @@ export async function getDefaultSkills(): Promise<string[]> {
  * already read.
  */
 const PRE_ALLOC_PLATFORM_PARAGRAPH =
-  "Platform stack: a vibe is a single-file React app that runs in the user's browser. Fireproof is a cloud-backed document database — `useFireproof(name)` returns a database handle and `useLiveQuery(field)` keeps every viewer's UI in lockstep with the underlying docs in real time; writes are validated and persisted server-side and can fail, so handle write rejections. callAI is a typed call to a hosted LLM that returns JSON matching a schema the app declares; the JSON is saved as a Fireproof doc so it persists and shows up live for every viewer. useViewer is a read-only window into runtime-managed access control: the platform owns who can read and who can write, and `useViewer().can('write')` lets the app reflect that verdict in its UI without ever setting it. ImgGen renders a generated illustration tile when imagery is naturally part of the experience, not as decoration.";
+  "Platform stack: a vibe is a single-file React app that runs in the user's browser. Fireproof is a cloud-backed document database — `useFireproof(name)` returns a database handle and `useLiveQuery(field)` keeps every viewer's UI in lockstep with the underlying docs in real time; writes are validated and persisted server-side and can fail, so handle write rejections. callAI is a typed call to a hosted LLM that returns JSON matching a schema the app declares; the JSON is saved as a Fireproof doc so it persists and shows up live for every viewer. useViewer surfaces the signed-in viewer's identity for display (avatars, who's posting). Write surfaces are gated with `useVibe(dbName).can`, which runs the app's own access function and tells the UI whether a create/edit/delete is allowed — the app reflects that verdict, it never sets it. ImgGen renders a generated illustration tile when imagery is naturally part of the experience, not as decoration.";
 
 /**
  * Builds the user-message body for the pre-allocation LLM call. Includes a
@@ -122,7 +122,7 @@ export const preAllocSchema = {
         "REQUIRED. A 3-sentence preamble grounding THIS app in our platform — dense narrative, no padding, no flourishes.",
         "Sentence 1: what users see and do in this app, and that Fireproof's live sync shares the activity with every viewer in real time.",
         "Sentence 2: name the callAI role that fits this app's central activity. Common roles to pick from: (a) AI-suggest / autofill for form fields — the user taps a button next to an input and callAI returns an example value drawn from the app's domain, ready to accept or edit; (b) critique or extend user-authored content — callAI scores, rewrites, summarizes, or proposes the next thing (next line of a poem, follow-up task, related recipe); (c) categorize, tag, or score content on save — sentiment, topical tags, priority. Pick ONE role that genuinely fits this app. Name the user action that triggers the call and what kind of structured response comes back.",
-        "Sentence 3: name the write actions in this app, and that non-owners see a read-only view because the runtime's access control hides the write surfaces — useViewer reflects that verdict, the app never sets it. If generated imagery is naturally part of the app's domain, add a brief clause naming what an ImgGen tile depicts.",
+        "Sentence 3: name the write actions in this app, and that non-owners see a read-only view because the runtime's access control hides the write surfaces — useVibe().can reflects that verdict (and useViewer shows identity), the app never sets it. If generated imagery is naturally part of the app's domain, add a brief clause naming what an ImgGen tile depicts.",
         'Do NOT include code: no function names like `useLiveQuery` or `database.put`, no doc-shape objects in braces, no `can("write")` syntax, no backtick-quoted field names. Plain narrative, not a code spec.',
         "Do NOT invent imagery features when the app's domain wouldn't naturally include them.",
       ].join(" "),
@@ -137,8 +137,9 @@ export const preAllocSchema = {
  * schema's `required` array isn't strictly enforced, so the model occasionally
  * omits enrichedPrompt. When it does, we'd rather accept the response with
  * just skills + pairs + iconDescription than reject the whole turn — losing
- * `active.skills` (which carries `use-viewer`) means the generated app never
- * imports `useViewer` and every viewer's `can("write")` defaults to false. */
+ * `active.skills` no longer needs to carry `use-viewer`/`use-vibe` — both are
+ * force-injected into every prompt (see makeBaseSystemPrompt) so the generated
+ * app always has identity (`useViewer`) and write gating (`useVibe().can`). */
 export const preAllocParsed = type({
   skills: type("string").array(),
   pairs: type({ title: "string", slug: "string" }).array(),
