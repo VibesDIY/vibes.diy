@@ -86,12 +86,15 @@
       "recoveredLocal": true,
       "dbName": "snapwall",
       "accessExport": "export function snapwall(doc, oldDoc, user, ctx)",
-      "reason": "FIXED. Posts and comments (type 'post'/'message') check authorHandle and route to channelId with NO ctx.requireAccess — the open-channel pattern, with an explanatory comment. Post and comment surfaces gate on can.create({..., channelId, authorHandle}) with reason. Channel creation is now gated on can.create({type:'channel', _id}) (no more useViewer().isOwner write-gate). The canonical comment flow works for any signed-in viewer.",
+      "reason": "FIXED for the can-flip. Posts and comments (type 'post'/'message') check authorHandle and route to channelId with NO ctx.requireAccess — the open-channel pattern, with an explanatory comment. Post and comment surfaces gate on can.create({..., channelId, authorHandle}) with reason. Channel creation is now gated on can.create({type:'channel', _id}) (no more useViewer().isOwner write-gate). The canonical comment flow works for any signed-in viewer.",
       "createGatedOnCan": true,
       "rendersReason": true,
       "ownerWriteGatedOnCan": true,
       "viewerOnlyForIdentity": true,
-      "unknown": false
+      "unknown": false,
+      "nits": [
+        "Author-preservation gap (Codex P2, separate from the can-flip): the post AND message rules check only doc.authorHandle, not oldDoc.authorHandle, so on an update a signed-in user can PUT over another user's doc _id and reassign authorHandle to themselves. team-board/task-list/forum guard this with an `if (oldDoc && oldDoc.authorHandle !== user.userHandle) throw`; photo-wall does not. Doesn't change the can-flip PASS, but it's a real generated-access.js correctness gap."
+      ]
     },
     {
       "id": "trip-planner",
@@ -107,7 +110,10 @@
       "createGatedOnCan": true,
       "rendersReason": true,
       "unknown": false,
-      "newBug": "requireAccess on a channel whose writers hold only public read + an ungranted role; roleGrant doc unreadable (no channel) and no grant UI → writes blocked for everyone in normal mode."
+      "newBug": "requireAccess on a channel whose writers hold only public read + an ungranted role; roleGrant doc unreadable (no channel) and no grant UI → writes blocked for everyone in normal mode.",
+      "nits": [
+        "Also has the author-preservation gap: activity/packing check only doc.authorHandle, not oldDoc.authorHandle (moot here since writes are already blocked, but the pattern is present)."
+      ]
     },
     {
       "id": "task-list",
@@ -131,6 +137,14 @@
     "priorFlipRelevant": { "denominator": 6, "pass": 3, "softFail": 1, "fail": 2 },
     "unknownCount": 0,
     "hiddenWriteMisgatesFromTargetedBug": 0,
+    "crossCuttingFindings": [
+      {
+        "id": "author-preservation-on-update",
+        "severity": "P2",
+        "source": "Codex review on PR #2527",
+        "summary": "Editable author-owned docs check only doc.authorHandle, not oldDoc.authorHandle, so a signed-in user can overwrite another user's doc _id and reassign authorship. Present in photo-wall (post, message) and trip-planner (activity, packing); correctly guarded in team-board, task-list, forum, guestbook (write-once). A candidate 3rd prompt tweak-spot: teach 'on update, also verify oldDoc.authorHandle — never let an author be reassigned.'"
+      }
+    ],
     "deltaVsPriorRun": [
       "team-board FAIL → PASS (open-channel fix)",
       "photo-wall FAIL → PASS (open-channel fix)",
