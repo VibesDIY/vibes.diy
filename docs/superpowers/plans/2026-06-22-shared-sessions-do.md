@@ -865,9 +865,41 @@ git add vibes.diy/pkg/app/vibes-diy-provider.tsx
 git commit -m "feat: construct chatApi lazily on first chat action"
 ```
 
-### Task 5.3: Verify the eager-connection invariant end to end
+### Task 5.3: Sandbox-specific lazy-chat regression (`srvVibeSandbox`)
 
-- [ ] **Step 1: Run the connection-matrix + lazy-chat + notification tests together.** Run: `pnpm check`. Expected: PASS, with the matrix proving exactly one eager socket per route × auth and zero ChatSessions on non-chat pages.
+The `srvVibeSandbox` is the most likely path to silently re-introduce an eager `chatApi` (it is constructed on every render at `:301`, today with `chatApi: realCtx.chatApi`). Lock it with its own test so a future change to the sandbox wiring can't regress the invariant. (Suggested by `@CharlieHelps`.)
+
+**Files:**
+
+- Create/extend: `vibes.diy/tests/app/lazy-chat-sandbox.test.tsx`
+
+- [ ] **Step 1: Write the failing-then-green test.** Render the provider on a non-chat, non-vibe route so `srvVibeSandbox` is constructed, and assert that constructing the sandbox does **not** force a ChatSessions socket open — i.e. no `/api` (chat) URL is handed to `vibesDiyApis.get(...)` until a sandbox-driven chat action fires.
+
+```ts
+it("constructing srvVibeSandbox on a non-chat page opens no chat socket", async () => {
+  const { ctorUrls, sandbox } = renderProviderAt("/settings"); // same harness as lazy-chat.test
+  expect(sandbox).toBeDefined();
+  expect(ctorUrls.some((u) => /\/api(\?|$)/.test(u))).toBe(false); // no ChatSessions socket
+  // and a sandbox path that needs chat cold-opens exactly one:
+  await sandbox.someChatDrivenAction?.(); // pick a real sandbox chat entrypoint
+  expect(ctorUrls.filter((u) => /\/api(\?|$)/.test(u)).length).toBeLessThanOrEqual(1);
+});
+```
+
+Confirm the sandbox's chat entrypoint name from `VibesDiySrvSandbox` (the one that previously used the eager `chatApi`); if the sandbox needs no chat at all on these routes, the second assertion becomes `=== 0`.
+
+- [ ] **Step 2: Run, iterate to green** (this passes once Task 5.2 Step 2 makes the sandbox take chat lazily). Run: `cd vibes.diy/tests && pnpm vitest run lazy-chat-sandbox`. Expected: PASS.
+
+- [ ] **Step 3: Commit.**
+
+```bash
+git add vibes.diy/tests/app/lazy-chat-sandbox.test.tsx
+git commit -m "test: srvVibeSandbox opens no eager ChatSessions on non-chat pages"
+```
+
+### Task 5.4: Verify the eager-connection invariant end to end
+
+- [ ] **Step 1: Run the connection-matrix + lazy-chat + sandbox + notification tests together.** Run: `pnpm check`. Expected: PASS, with the matrix proving exactly one eager socket per route × auth and zero ChatSessions on non-chat pages.
 
 - [ ] **Step 2: Update the living architecture doc.** Append a short note to `agents/do-session-split.md` recording that Track B shipped: SharedSessions DO, lazy chatApi, chat-only ChatSessions, admin whoAmI on vibeApi. Commit.
 
@@ -878,9 +910,35 @@ git commit -m "docs: record Track B (SharedSessions) in do-session-split"
 
 ---
 
+## Phase 6 — Runtime verification gate (real routes, network-level)
+
+Unit tests assert which URLs the provider _constructs_; this phase proves the eager-connection matrix on a **real deployed preview** at the network layer — the only place that catches a socket opened by something outside the provider's construction path (an effect, a third-party hook, a redirect). Run after Phase 4/5 land and the PR has a preview URL. (Suggested by `@CharlieHelps`.)
+
+**Tooling:** the `chrome-devtools` MCP (network inspection) — or the `qa-pr` skill, which already drives it. Drive an actual browser against the preview; do not infer from source.
+
+### Task 6.1: Prove the matrix per route on the preview
+
+- [ ] **Step 1: Capture WebSocket opens per route.** For each cell, load the route on the preview, list network requests, and filter to WebSocket upgrades whose URL path is `/api`, `/api/app`, or `/api/shared`. Use `list_network_requests` (or `qa-pr`).
+
+- [ ] **Step 2: Assert exactly one eager socket per route × auth:**
+
+| Route                         | Auth       | Expected eager WS                                | Must be ABSENT                       |
+| ----------------------------- | ---------- | ------------------------------------------------ | ------------------------------------ |
+| `/settings` (non-vibe)        | signed-in  | one `/api/shared?shard=<userNotifyShardFor(id)>` | any `/api` (chat), any `/api/app`    |
+| `/` or `/settings` (non-vibe) | signed-out | one `/api/shared?shard=global`                   | any `/api` (chat)                    |
+| `/vibe/<owner>/<slug>`        | any        | one `/api/app?vibe=…`                            | any `/api` (chat), any `/api/shared` |
+
+- [ ] **Step 3: Prove lazy chat cold-opens on demand.** On `/settings` signed-in, confirm zero `/api` (chat) sockets at rest, then trigger a chat action (navigate into a chat / start a prompt) and confirm exactly one `/api` chat socket opens.
+
+- [ ] **Step 4: Prove notifications still deliver.** With only the `/api/shared` socket open on a non-vibe page, trigger a build-completion notification for the signed-in user (or replay one) and confirm the client receives it over the shared-plane socket — verifying the `shared:` fan-out prefix resolves end to end.
+
+- [ ] **Step 5: Record the result on the PR.** Post a short pass/fail summary (with the per-route socket list) as a PR comment. If any cell fails, capture the offending opener (initiator stack) and open a follow-up before claiming the matrix holds.
+
+---
+
 ## Self-review checklist (run before handing off)
 
-- **Spec coverage:** singleton/per-user sharding (4.1 + seam), `global` anon fallback (4.1), notify rides shared-plane (4.1 step 6), UserNotify fan-out unchanged + `shared:` prefix (3.2, 3.5), chat-only + re-home (Phase 2), lazy chat (Phase 5), no SSR path (nothing added — confirm `app.ts` SSR untouched), whoAmI admin-mode (Phase 1), wrangler/rollout (3.7). ✅
+- **Spec coverage:** singleton/per-user sharding (4.1 + seam), `global` anon fallback (4.1), notify rides shared-plane (4.1 step 6), UserNotify fan-out unchanged + `shared:` prefix (3.2, 3.5), chat-only + re-home (Phase 2), lazy chat (Phase 5, incl. sandbox regression 5.3), runtime network-level matrix gate (Phase 6), no SSR path (nothing added — confirm `app.ts` SSR untouched), whoAmI admin-mode (Phase 1), wrangler/rollout (3.7). ✅
 - **Placeholder scan:** every code step shows real code; test bodies are concrete; harness-dependent steps explicitly say "adapt from <named existing test>" rather than inventing an unknown API.
 - **Type consistency:** `sharedApi: VibesDiyApiIface` (4.1) used consistently; `sharedReadShardFor(userId)` signature matches its test; `SHARED_SESSIONS` name identical across cf-env, resolve-shard-do, route dispatch, wrangler; evento accessor `sharedMsgEvento()` matches `chatMsgEvento()` usage.
 - **Open risk to flag at execution:** the `skipShard` ↔ URL-`shard` interaction (4.1 step 4) and the `cfServeAppCtx` required-callback set for a no-broadcast/no-access-fn DO (3.5 step 2) are the two spots most likely to need a small adjustment against the real types — both are called out inline.
