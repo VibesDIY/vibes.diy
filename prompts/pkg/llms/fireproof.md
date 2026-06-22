@@ -1,6 +1,6 @@
 # Fireproof Database API Guide
 
-Fireproof is a document database with encrypted live sync, designed to make browser apps easy. On vibes.diy it runs against Firefly, a cloud-centralized backend: writes are sent to a server that validates them with your `access.js`, persists them, and streams them live to every viewer. Use it in any JavaScript environment with a unified API that works both in React (with hooks) and as a standalone core API.
+Fireproof is a document database with live sync, designed to make browser apps easy. On vibes.diy it runs against Firefly, a cloud-centralized backend: writes are sent to a server that validates them with your `access.js`, persists them, and streams them live to every viewer. Use it in any JavaScript environment with a unified API that works both in React (with hooks) and as a standalone core API.
 
 ## Key Features
 
