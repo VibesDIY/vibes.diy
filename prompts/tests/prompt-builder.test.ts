@@ -350,4 +350,15 @@ describe("prompt builder (real implementation)", () => {
     expect(result.systemPrompt).toContain('import { useVibe } from "use-vibes"');
     expect(result.systemPrompt).toContain('import { useViewer } from "use-vibes"');
   });
+
+  it("assembled default prompt teaches useVibe().can and drops the viewer gate", async () => {
+    const result = await makeBaseSystemPrompt("test-model", {
+      stylePrompt: undefined,
+      userPrompt: undefined,
+      ...opts,
+    } as never);
+    expect(result.systemPrompt).toContain("useVibe(");
+    expect(result.systemPrompt).toContain("can.create");
+    expect(result.systemPrompt).not.toContain("Gate write surfaces on `viewer`");
+  });
 });
