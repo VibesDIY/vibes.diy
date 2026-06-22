@@ -486,6 +486,7 @@ export const ResVibeWhoAmI = type({
   "isOwner?": "boolean",
   "dbAcls?": type({ "[string]": dbAcl }),
   "grants?": type({ "[string]": type({ channels: "string[]", publicChannels: "string[]", roles: "string[]" }) }),
+  "adminMode?": "boolean",
 }).and(Base);
 
 export type ResVibeWhoAmI = typeof ResVibeWhoAmI.infer;
@@ -593,6 +594,7 @@ export const EvtVibeViewerChanged = type({
   "isOwner?": "boolean",
   "dbAcls?": type({ "[string]": dbAcl }),
   "grants?": type({ "[string]": type({ channels: "string[]", publicChannels: "string[]", roles: "string[]" }) }),
+  "adminMode?": "boolean",
 });
 
 export type EvtVibeViewerChanged = typeof EvtVibeViewerChanged.infer;

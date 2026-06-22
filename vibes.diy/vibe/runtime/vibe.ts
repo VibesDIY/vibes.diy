@@ -14,6 +14,7 @@ export const viewerEnv = type({
   "isOwner?": "boolean",
   "dbAcls?": type({ "[string]": dbAcl }),
   "grants?": type({ "[string]": type({ channels: "string[]", publicChannels: "string[]", roles: "string[]" }) }),
+  "adminMode?": "boolean",
 });
 export type ViewerEnv = typeof viewerEnv.infer;
 
