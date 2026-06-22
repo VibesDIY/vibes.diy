@@ -86,6 +86,37 @@ relocate the fan-out one hop.
 > shared infra on the vibe/doc path, so that is a separate, larger-blast-radius
 > change — file as follow-up, not here.
 
+### Re-home the non-prompt `chatHandlers` first (prerequisite)
+
+`chatHandlers` is not all prompt/codegen. It still holds **stateless,
+identity/settings-scoped** ops that non-chat pages call on load/save:
+
+- `listHandleBindingsEvento` / `createHandleBindingEvento` /
+  `deleteHandleBindingEvento` — user-slug bindings. Called on `chatApi` from
+  `settings.tsx` (load + the create/delete save paths), `messages.tsx`,
+  `messages.$ownerHandleA.$ownerHandleB.tsx`, `useChatOwnership.ts`,
+  `DataView.tsx`, and the vibe route.
+- `getCertFromCsrEvento` — custom-domain cert issuance, called from
+  `settings/csr-to-cert.tsx`.
+- `report*Evento` (×7, growth/analytics) — called from the reporting dashboard,
+  also a non-chat page.
+
+If `chatApi` is lazy and `SharedSessions` serves only `sharedHandlers`, these
+calls have **no usable connection** on a settings/messages page; conversely, if
+the page keeps opening `chatApi` to reach them, the "zero ChatSessions on
+non-chat pages" invariant is false. (Caught in review — Codex P2.)
+
+Resolution: **move these handlers from `chatHandlers` → `sharedHandlers`**, the
+same factoring A2 already did for `listDmThreads` + `assetUploadGrant` (manifest
+comment, `evento-handler-manifest.ts:91-98`). They are stateless D1 ops with no
+per-chat-session/QuickJS state and are user/identity-scoped — the exact
+`sharedHandlers` category — so SharedSessions (and AppSessions) serve them
+unchanged, and the parity tests move with them. This lands **before** making
+`chatApi` lazy, so the lazy step never strands a caller. After the move, what
+remains in `chatHandlers` is genuinely chat-only: `openChat`, `promptChatSection`,
+`ensureAppSlugItem`, `getChatDetails`, `listApplicationChats`, `forkApp`,
+`setModeFsId`.
+
 ### ChatSessions → chat-only + lazy
 
 - `chat-msg-evento.ts`: `chatPlaneHandlers` becomes `[...chatHandlers]` only
@@ -93,9 +124,13 @@ relocate the fan-out one hop.
   contract is "`sharedHandlers` never in the chat plane" (it already asserts
   `appHandlers` never re-enters the chat plane). ChatSessions keeps its local
   QuickJS for the app-create access-binding backfill (that is `chatHandlers`).
-- Provider stops constructing `chatApi` eagerly; build it lazily on first prompt
-  focus. `srvVibeSandbox` (today fed `chatApi`) takes it through a lazy getter.
-  Verify non-chat pages open **zero** ChatSessions connections.
+- Provider stops constructing `chatApi` eagerly; build it lazily on the first
+  **remaining chat-handler** call (`openChat`/`promptChatSection`/app-create),
+  not merely on prompt focus — a belt-and-suspenders guard so any overlooked
+  chat-handler caller still triggers connection setup rather than erroring.
+  `srvVibeSandbox` (today fed `chatApi`) takes it through the same lazy getter.
+  Verify non-chat pages (settings, messages, reporting) open **zero**
+  ChatSessions connections — which the re-homing above is what makes true.
 
 ## Server-side pieces
 
@@ -139,7 +174,10 @@ server-side SharedSessions invocation is added.
   route, each with a test asserting the target connection**: `useRecentVibes`,
   `useMemberships`, `listModels` callers, settings routes, `whoAmI`,
   `listDmThreads` (messages inbox), `assetUploadGrant` (HandleAvatarEditor),
-  grants/invites/membership RPCs, `accessFnSource`.
+  grants/invites/membership RPCs, `accessFnSource`, and the newly re-homed
+  `listHandleBindings`/`createHandleBinding`/`deleteHandleBinding` (settings,
+  messages, `useChatOwnership`, `DataView`), `getCertFromCsr`
+  (`settings/csr-to-cert`), and the `report*` analytics calls.
 
 ## wrangler / migration
 
