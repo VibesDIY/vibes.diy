@@ -255,6 +255,7 @@ export const servEntryPoint: EventoHandler<Request, ExtractedHostToBindings, unk
           appSlug: ctx.validated.appSlug,
           ownerHandle: ctx.validated.ownerHandle,
           pkgRepos: { private: npmUrl },
+          adminMode: uri.getParam("adminMode") === "yes",
         });
         if (rPending.isErr()) return rPending;
         return Result.Ok(EventoResult.Stop);
@@ -367,6 +368,7 @@ export const servEntryPoint: EventoHandler<Request, ExtractedHostToBindings, unk
         pkgRepos: {
           private: npmUrl,
         },
+        adminMode: uri.getParam("adminMode") === "yes",
       });
       if (rVibesEntryPoint.isErr()) {
         return rVibesEntryPoint;

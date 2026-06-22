@@ -212,6 +212,9 @@ export function PreviewApp({ promptState }: { promptState: PromptState }) {
         viewer: null,
         access: storedAdmin ? "override" : "editor",
         isOwner: true,
+        // Owner preview: surface the admin toggle so useVibe's bypass matches the
+        // "override" access already sent above (the server still re-authorizes).
+        ...(storedAdmin ? { adminMode: true } : {}),
       };
       srvVibeSandbox.pushViewerChanged(msg);
     }) as () => void;
