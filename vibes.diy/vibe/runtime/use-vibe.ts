@@ -8,6 +8,9 @@ export interface CanVerdict {
   readonly reason?: string;
 }
 
+// Structurally identical to AccessUser (access-runner.ts): `me` is returned as
+// UseVibeMe and also passed straight into evaluateWrite as AccessUser. Keep the
+// two shapes in lockstep — if AccessUser gains a field, mirror it here.
 export interface UseVibeMe {
   readonly userHandle: string;
   readonly displayName?: string;
@@ -28,6 +31,9 @@ export interface UseVibeResult {
   };
 }
 
+// Must stay a module constant: `grants` (below) uses it as the no-grants
+// fallback and is a dependency of the `can` useMemo. Inlining this as a literal
+// would mint a fresh object every render and silently defeat that memo.
 const EMPTY_GRANTS: AccessGrants = { channels: [], publicChannels: [], roles: [] };
 
 export function useVibe(dbName: string): UseVibeResult {
