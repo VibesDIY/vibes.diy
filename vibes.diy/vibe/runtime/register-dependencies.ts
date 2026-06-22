@@ -409,6 +409,11 @@ export function getRegisteredAccessFnSources(): Map<string, string | null> {
   return new Map(_accessFnSources);
 }
 
+/** @internal — for tests only. Resets the module-level access.js source baseline. */
+export function __resetRegisteredAccessFnSourcesForTests(): void {
+  _accessFnSources.clear();
+}
+
 export const vibeApi = Lazy((svc: VibeSandboxApiOptions) => new VibeSandboxApi(svc));
 
 export async function registerDependencies(vibeApp: VibeApp): Promise<void> {
