@@ -601,6 +601,22 @@ export function isEvtVibeViewerChanged(x: unknown): x is EvtVibeViewerChanged {
   return !(EvtVibeViewerChanged(x) instanceof type.errors);
 }
 
+// Event: runtime → VibeContext. Dispatched once per distinct access.js CID
+// after bootstrapAccessFnSources fetches the source over the bridge RPC.
+// source is null when no source is available for the CID (resolved-unknown,
+// never a hard deny). Events carry no tid — they are not responses to a
+// specific caller, they fan-out to all listeners.
+export const EvtVibeAccessFnSource = type({
+  type: "'vibe.evt.accessFnSource'",
+  cid: "string",
+  source: "string | null",
+});
+export type EvtVibeAccessFnSource = typeof EvtVibeAccessFnSource.infer;
+
+export function isEvtVibeAccessFnSource(x: unknown): x is EvtVibeAccessFnSource {
+  return !(EvtVibeAccessFnSource(x) instanceof type.errors);
+}
+
 // Event: parent posts a fresh colorset palette so the running app can re-skin
 // without a codegen roundtrip. Runtime injects a <style> on document.head
 // that sets CSS variables for every key in `colors` (and mirrors `colorsDark`
