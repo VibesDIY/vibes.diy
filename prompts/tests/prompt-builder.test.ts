@@ -1,6 +1,7 @@
 import {
   generateImportStatements,
   getJsonDocs,
+  getLlmCatalog,
   JsonDocs,
   LlmCatalogEntry,
   makeBaseSystemPrompt,
@@ -327,5 +328,13 @@ describe("prompt builder (real implementation)", () => {
     });
     expect(r.systemPrompt).toContain("▸ I'm done for now");
     expect(r.systemPrompt).toContain("End every turn with one improvement question");
+  });
+
+  it("use-vibe config is in the catalog with the right import metadata", async () => {
+    const catalog = await getLlmCatalog();
+    const useVibe = catalog.find((c) => c.name === "use-vibe");
+    expect(useVibe).toBeDefined();
+    expect(useVibe?.importModule).toBe("use-vibes");
+    expect(useVibe?.importName).toBe("useVibe");
   });
 });
