@@ -3,23 +3,23 @@ import { Link } from "react-router-dom";
 import type { DmThreadItem, VibesDiyApiIface } from "@vibes.diy/api-types";
 
 interface DmInboxProps {
-  chatApi?: VibesDiyApiIface | null;
+  sharedApi?: VibesDiyApiIface | null;
   myUserSlug?: string;
 }
 
-export function DmInbox({ chatApi, myUserSlug }: DmInboxProps) {
+export function DmInbox({ sharedApi, myUserSlug }: DmInboxProps) {
   const [threads, setThreads] = useState<DmThreadItem[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!chatApi) return;
+    if (!sharedApi) return;
     setLoading(true);
-    chatApi.listDmThreads({}).then((res) => {
+    sharedApi.listDmThreads({}).then((res) => {
       if (res.isErr()) return;
       setThreads(res.Ok().items);
       setLoading(false);
     });
-  }, [chatApi]);
+  }, [sharedApi]);
 
   if (loading) return <div className="p-4 text-sm">Loading…</div>;
 

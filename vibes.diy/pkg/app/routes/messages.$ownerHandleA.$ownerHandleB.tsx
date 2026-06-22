@@ -12,15 +12,15 @@ export default function MessageThreadRoute() {
   const { ownerHandleA, ownerHandleB } = useParams<{ ownerHandleA: string; ownerHandleB: string }>();
   const location = useLocation();
   const vctx = useVibesDiy();
-  const { chatApi } = vctx;
+  const { sharedApi } = vctx;
   const [mySlugSet, setMySlugSet] = useState<Set<string> | undefined>(undefined);
 
   useEffect(() => {
-    chatApi.listHandleBindings({}).then((res) => {
+    sharedApi.listHandleBindings({}).then((res) => {
       if (res.isErr()) return;
       setMySlugSet(new Set(res.Ok().items.map((i) => i.ownerHandle)));
     });
-  }, [chatApi]);
+  }, [sharedApi]);
 
   const vibeRef = (location.state as { vibeRef?: { ownerHandle: string; appSlug: string } } | null)?.vibeRef;
 
