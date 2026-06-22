@@ -370,4 +370,21 @@ describe("prompt builder (real implementation)", () => {
     } as never);
     expect(result.systemPrompt).not.toContain("useViewer().can('write')");
   });
+
+  it("assembled default prompt contains none of the retired gating phrasings", async () => {
+    const result = await makeBaseSystemPrompt("test-model", {
+      stylePrompt: undefined,
+      userPrompt: undefined,
+      ...opts,
+    } as never);
+    for (const retired of [
+      "Gate write surfaces on `viewer`",
+      "useViewer().can('write')",
+      "Write surfaces are gated with `viewer`",
+    ]) {
+      expect(result.systemPrompt).not.toContain(retired);
+    }
+    expect(result.systemPrompt).toContain("useVibe(");
+    expect(result.systemPrompt).toContain(".reason");
+  });
 });
