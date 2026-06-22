@@ -7,21 +7,21 @@ export function meta() {
 }
 
 export default function MessagesRoute() {
-  const { chatApi } = useVibesDiy();
+  const { sharedApi } = useVibesDiy();
   const [myUserSlug, setMyUserSlug] = useState<string | undefined>(undefined);
 
   useEffect(() => {
-    chatApi.listHandleBindings({}).then((res) => {
+    sharedApi.listHandleBindings({}).then((res) => {
       if (res.isErr()) return;
       const items = res.Ok().items;
       if (items.length > 0) setMyUserSlug(items[0].ownerHandle);
     });
-  }, [chatApi]);
+  }, [sharedApi]);
 
   return (
     <div className="max-w-xl mx-auto pt-8">
       <h1 className="text-xl font-semibold px-4 pb-4">Messages</h1>
-      <DmInbox chatApi={chatApi} myUserSlug={myUserSlug} />
+      <DmInbox sharedApi={sharedApi} myUserSlug={myUserSlug} />
     </div>
   );
 }
