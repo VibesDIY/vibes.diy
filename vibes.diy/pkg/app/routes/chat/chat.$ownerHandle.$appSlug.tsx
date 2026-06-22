@@ -260,7 +260,7 @@ export function Chat({ inConstruction = false, initialPrompt }: { inConstruction
         chatInput.current?.clickSubmit();
       });
     },
-    [chatApi, ownerHandle, appSlug]
+    [sharedApi, ownerHandle, appSlug]
   );
 
   // Persist a palette choice (slug only) so future codegen turns and page
@@ -274,7 +274,7 @@ export function Chat({ inConstruction = false, initialPrompt }: { inConstruction
         void sharedApi.ensureAppSettings({ ownerHandle, appSlug, colorTheme });
       }
     },
-    [chatApi, ownerHandle, appSlug]
+    [sharedApi, ownerHandle, appSlug]
   );
 
   // Live-only push: postMessage to the iframe so the runtime injects CSS
@@ -328,7 +328,7 @@ ${rootCssBlock}
         chatInput.current?.clickSubmit();
       });
     },
-    [chatApi, ownerHandle, appSlug]
+    [sharedApi, ownerHandle, appSlug]
   );
 
   // Reset reverts the override: pushing empty `colors` tells the runtime to
@@ -343,7 +343,7 @@ ${rootCssBlock}
     if (ownerHandle !== "preparing" && appSlug !== "session") {
       void sharedApi.ensureAppSettings({ ownerHandle, appSlug, colorTheme: null });
     }
-  }, [chatApi, ownerHandle, appSlug, srvVibeSandbox]);
+  }, [sharedApi, ownerHandle, appSlug, srvVibeSandbox]);
 
   const [isSidebarVisible, setIsSidebarVisible] = useState(false);
   const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
