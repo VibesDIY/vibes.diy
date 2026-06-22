@@ -66,7 +66,9 @@
       "ownerWriteGatedOnCan": true,
       "viewerOnlyForIdentity": true,
       "unknown": false,
-      "nits": ["First generation truncated mid-stream and the server push failed; needed a re-generation (infra flakiness, not a model-quality issue)."]
+      "nits": [
+        "First generation truncated mid-stream and the server push failed; needed a re-generation (infra flakiness, not a model-quality issue)."
+      ]
     },
     {
       "id": "guestbook",
@@ -84,7 +86,9 @@
       "ownerWriteGatedOnCan": true,
       "viewerOnlyForIdentity": true,
       "unknown": false,
-      "nits": ["Model defaulted to login-required even though the prompt explicitly invites anonymous writes; should emit allowAnonymous:true."]
+      "nits": [
+        "Model defaulted to login-required even though the prompt explicitly invites anonymous writes; should emit allowAnonymous:true."
+      ]
     },
     {
       "id": "photo-wall",
