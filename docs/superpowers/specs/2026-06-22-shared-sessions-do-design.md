@@ -12,7 +12,7 @@ so the shell can run a handful of stateless page-load queries (recent vibes,
 memberships, model list, settings, grants, the messages inbox). That DO also
 carries the full codegen/streaming machinery and a QuickJS isolate the page
 never touches. This track adds a lightweight **`SharedSessions`** DO that serves
-*only* `sharedHandlers`, moves the page-load reads onto it, makes `chatApi`
+_only_ `sharedHandlers`, moves the page-load reads onto it, makes `chatApi`
 **lazy** (opens on first prompt), and turns `ChatSessions` chat-only. Net result:
 **every page drops to a single eager WebSocket**, and the heavy chat connection
 is gone until the user actually starts a chat.
@@ -39,11 +39,11 @@ serves them in isolation is behaviourally identical — the parity tests in
 The client exposes a single `sharedApi` handle that the call sites use without
 caring how it is backed; the provider resolves it by route + auth:
 
-| Route | Auth | `sharedApi` backing | Eager connections (chat lazy) |
-| ----- | ---- | ------------------- | ----------------------------- |
-| Vibe (`/vibe/…`, `/chat/…` w/ appSlug) | any | `vibeApi` (AppSessions) — reads + notify, unchanged | **1** — `vibeApi` |
-| Non-vibe | authed | `SharedSessions` per-user shard `idFromName(userNotifyShardFor(userId))` — reads + notify | **1** — per-user shard |
-| Non-vibe | anon | `SharedSessions` singleton `idFromName("global")` — reads only | **1** — `global` |
+| Route                                  | Auth   | `sharedApi` backing                                                                       | Eager connections (chat lazy) |
+| -------------------------------------- | ------ | ----------------------------------------------------------------------------------------- | ----------------------------- |
+| Vibe (`/vibe/…`, `/chat/…` w/ appSlug) | any    | `vibeApi` (AppSessions) — reads + notify, unchanged                                       | **1** — `vibeApi`             |
+| Non-vibe                               | authed | `SharedSessions` per-user shard `idFromName(userNotifyShardFor(userId))` — reads + notify | **1** — per-user shard        |
+| Non-vibe                               | anon   | `SharedSessions` singleton `idFromName("global")` — reads only                            | **1** — `global`              |
 
 Compared with today (`chatApi` heavy on every page, plus `vibeApi`/`notifyApi`),
 every page collapses to one eager WebSocket and the heavy `chatApi` is deferred.
@@ -51,7 +51,7 @@ every page collapses to one eager WebSocket and the heavy `chatApi` is deferred.
 ### Sharding: authed reads ride the user's own shard
 
 `global` is **not** a hot singleton for everyone — it is the **anonymous
-fallback only**. Authed reads shard by user via the *same* shard the user's
+fallback only**. Authed reads shard by user via the _same_ shard the user's
 notifications already use (`userNotifyShardFor(userId)`), so a signed-in user
 does all shared-plane traffic (reads **and** notify) over a **single** per-user
 connection with natural load distribution and read/notify locality on one DO
@@ -105,7 +105,7 @@ relocate the fan-out one hop.
   `/api/` branch (`pathname === "/api/shared" || startsWith("/api/shared/")`).
   New `route-decision` test.
 - `app.ts`: dispatch `shared-do` → `shard ? SHARED_SESSIONS.idFromName(shard) :
-  SHARED_SESSIONS.idFromName("global")`. Export `SharedSessions` from `app.ts`.
+SHARED_SESSIONS.idFromName("global")`. Export `SharedSessions` from `app.ts`.
 - `resolve-shard-do.ts`: add a `shared:` prefix → `SHARED_SESSIONS` **for
   UserNotify fan-out only** (non-vibe delivery). SharedSessions'
   `registerUserSubscription` registers `shared:<shard>` so UserNotify routes
