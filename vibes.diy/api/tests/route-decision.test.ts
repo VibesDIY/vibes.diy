@@ -38,6 +38,18 @@ describe("worker routeDecision", () => {
     expect(decide({ pathname: "/api/foo/bar" })).toBe("api-do");
   });
 
+  it("/api/shared → shared-do", () => {
+    expect(decide({ pathname: "/api/shared", method: "GET" })).toBe("shared-do");
+  });
+
+  it("/api/shared/x → shared-do", () => {
+    expect(decide({ pathname: "/api/shared/x", method: "GET" })).toBe("shared-do");
+  });
+
+  it("/api/other still → api-do", () => {
+    expect(decide({ pathname: "/api/other", method: "GET" })).toBe("api-do");
+  });
+
   it("/vibe-pkg/* → npm package serving", () => {
     expect(decide({ pathname: "/vibe-pkg/foo" })).toBe("vibe-pkg");
     expect(decide({ pathname: "/vibe-pkg/" })).toBe("vibe-pkg");
