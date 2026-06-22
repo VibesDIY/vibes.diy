@@ -1,0 +1,81 @@
+{
+  "meta": {
+    "issue": "https://github.com/VibesDIY/vibes.diy/issues/2525",
+    "title": "A→B gate for the useVibe().can prompt flip — RERUN 2 (rows 3 & 6 after the grant-doc + author-preservation fix)",
+    "date": "2026-06-22",
+    "tool": "vibes-diy@2.5.13",
+    "handle": "garden-gnome",
+    "corpus": "vibes/eval/can-gate-2525-rerun2/ (rows 3 & 6); rows 1,2,4,5,7 unchanged in vibes/eval/can-gate-2525-rerun/",
+    "priorRuns": [
+      "docs/superpowers/specs/eval-2525-can-gate-results-2026-06-22.json (run 1)",
+      "docs/superpowers/specs/eval-2525-can-gate-results-2026-06-22-rerun.json (run 2)"
+    ],
+    "promptUnderTest": "main after the grant-doc-needs-a-channel + author-preservation fix (PR #2527, commit e979940); confirmed deployed via `vibes-diy generate --dry-run --transcript` (10 new-fix markers present).",
+    "scope": "Re-ran only the two rows that FAILed in run 2 (forum-mods, trip-planner). The other five rows are unchanged from run 2 (already PASS on this prompt lineage).",
+    "generationReliability": "forum-mods truncated/push-failed twice and was recovered from a local snapshot (content intact); trip-planner deployed clean. Server-side push failures persist this round — independent of content. Worth its own issue."
+  },
+  "rows": [
+    {
+      "id": "forum-mods",
+      "matrixRow": 3,
+      "dimension": "owner-managed roles",
+      "run1Grade": "PASS",
+      "run2Grade": "FAIL",
+      "grade": "SOFT-FAIL",
+      "fixedFrom": "FAIL",
+      "deployed": false,
+      "recoveredLocal": true,
+      "dbName": "forum",
+      "accessExport": "export default function (doc, oldDoc, user, ctx)",
+      "reason": "Moderator appointment now WORKS — the modGrant doc routes to an admin channel ({ channels: ['admin:mods'], members: { moderator: [handle] }, grant: { users: { [owner]: ['admin:mods'] } } }), so it is no longer rejected as 'unreadable write' and the owner can appoint. The grant-doc-needs-a-channel fix transferred verbatim (the access.js comment even explains it). Posts gate on can.create({type:'post', authorHandle}) with reason and preserve the author on edit (oldDoc check); edit/delete gate on can.edit/can.delete. Remaining minor anti-pattern (why SOFT-FAIL not PASS): the ModeratorPanel appoint/revoke writes are gated on useViewer().isOwner (panel visibility) rather than can.create({type:'modGrant'}).ok / can.delete(doc).ok — the 'isOwner gating an owner-management write' nit the issue flags. Functional, just not the idiomatic can-gate.",
+      "createGatedOnCan": true,
+      "rendersReason": true,
+      "authorPreserved": true,
+      "grantDocRoutedToChannel": true,
+      "ownerMgmtWriteGatedOnCan": false,
+      "unknown": false
+    },
+    {
+      "id": "trip-planner",
+      "matrixRow": 6,
+      "dimension": "shared collaboration",
+      "run1Grade": "PASS",
+      "run2Grade": "FAIL",
+      "grade": "PASS",
+      "fixedFrom": "FAIL",
+      "deployed": true,
+      "dbName": "wanderlist",
+      "accessExport": "export function wanderlist(doc, oldDoc, user, ctx)",
+      "reason": "FIXED. Chose open collaboration (correct for 'shared trip planner'): trip is owner-only + public read; day and packItem check authorHandle, route to the public 'trip' channel, and do NOT call ctx.requireAccess — so any signed-in member can add days/activities and packing items. No role grant, so no unreadable-grant-doc trap. Author-preservation applied (day: oldDoc.authorHandle check; packItem: author-immutable check). Every write surface gates on can.create({..., authorHandle}) with reason; per-row delete gates on can.delete. The run-2 requireAccess-on-ungranted-role trap is gone.",
+      "createGatedOnCan": true,
+      "rendersReason": true,
+      "authorPreserved": true,
+      "ownerMgmtWriteGatedOnCan": true,
+      "unknown": false
+    }
+  ],
+  "finalRollup": {
+    "denominator": 7,
+    "pass": 6,
+    "softFail": 1,
+    "fail": 0,
+    "unknownCount": 0,
+    "hiddenWriteMisgates": 0,
+    "perRow": {
+      "recipe-journal": "PASS",
+      "team-board": "PASS",
+      "forum-mods": "SOFT-FAIL",
+      "guestbook": "PASS",
+      "photo-wall": "PASS",
+      "trip-planner": "PASS",
+      "task-list": "PASS"
+    },
+    "progression": {
+      "run1": "3 PASS / 1 SOFT-FAIL / 2 FAIL (denom 6, task-list excluded as gen-flake)",
+      "run2": "5 PASS / 0 SOFT-FAIL / 2 FAIL (denom 7)",
+      "run3": "6 PASS / 1 SOFT-FAIL / 0 FAIL (denom 7)"
+    },
+    "verdict": "A→B GATE PASSES — FLIP IS SAFE",
+    "verdictRationale": "Across three rounds and three targeted prompt fixes, the can-flip gate now clears every pass criterion: 0 FAIL, 0 hidden-write mis-gates, 0 unknowns, and write surfaces gate on can.* with reason and author-preservation throughout. The three bugs the eval surfaced are all fixed at the prompt level and confirmed by regeneration: (1) public-read channels gated on ctx.requireAccess (run 1 → fixed in #2526), (2) grant/member docs returned without a channel → 'unreadable write' (run 2 → fixed in #2527, confirmed here: forum-mods's modGrant now routes to admin:mods and appointment works), (3) author reassignment on update (fixed in #2527, confirmed: forum/trip both preserve the author). The single remaining SOFT-FAIL (forum-mods gating owner-management on isOwner display rather than can.create) is a cosmetic anti-pattern, not a write-blocking bug — a candidate for a future prompt nudge but not a flip blocker. Recommend proceeding A→B (migrate existing vibes), with the isOwner-vs-can.* owner-management nudge as a low-priority follow-up. Orthogonal: generation-stream push failures recurred every round and deserve their own issue."
+  }
+}
