@@ -1,5 +1,4 @@
-import { useEffect } from "react";
-import { useSyncExternalStore } from "react";
+import { useEffect, useSyncExternalStore } from "react";
 
 // Default "interactive, never wait forever" window. A source that never
 // arrives (RPC failure leaving the cid absent) degrades to optimistic after

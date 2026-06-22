@@ -41,7 +41,10 @@ function mount(viewerEnv: unknown, bindings?: { dbName: string; accessFnCid: str
       <Probe dbName="aestheticBoard" onResult={(r) => (last = r)} />
     </VibeContextProvider>
   );
-  return () => last!;
+  return () => {
+    if (last === undefined) throw new Error("probe not rendered");
+    return last;
+  };
 }
 
 beforeEach(() => {
@@ -132,12 +135,12 @@ describe("useVibe", () => {
         <Probe dbName="aestheticBoard" onResult={(r) => (b = r)} />
       </VibeContextProvider>
     );
-    expect(a!.ready).toBe(false);
-    expect(b!.ready).toBe(false);
+    expect(a?.ready).toBe(false);
+    expect(b?.ready).toBe(false);
     await waitFor(
       () => {
-        expect(a!.ready).toBe(true);
-        expect(b!.ready).toBe(true);
+        expect(a?.ready).toBe(true);
+        expect(b?.ready).toBe(true);
       },
       { timeout: 500 }
     );
