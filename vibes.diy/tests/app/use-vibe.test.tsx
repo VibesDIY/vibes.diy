@@ -115,4 +115,56 @@ describe("useVibe", () => {
     await waitFor(() => expect(get().ready).toBe(true), { timeout: 500 });
     expect(get().can.create({ type: "tile" })).toEqual({ ok: true });
   });
+
+  it("two hooks on the same db flip to interactive together (shared grace)", async () => {
+    setGraceMsForTest(20);
+    let a: ReturnType<typeof useVibe> | undefined;
+    let b: ReturnType<typeof useVibe> | undefined;
+    render(
+      <VibeContextProvider
+        mountParams={{
+          usrEnv: {},
+          viewerEnv: { viewer: { userHandle: "x" }, access: "viewer" },
+          accessFnBindings: [{ dbName: "aestheticBoard", accessFnCid: "cid-shared-never" }],
+        }}
+      >
+        <Probe dbName="aestheticBoard" onResult={(r) => (a = r)} />
+        <Probe dbName="aestheticBoard" onResult={(r) => (b = r)} />
+      </VibeContextProvider>
+    );
+    expect(a!.ready).toBe(false);
+    expect(b!.ready).toBe(false);
+    await waitFor(
+      () => {
+        expect(a!.ready).toBe(true);
+        expect(b!.ready).toBe(true);
+      },
+      { timeout: 500 }
+    );
+  });
+
+  it("adminMode flip via viewerChanged flips can.* without remount", async () => {
+    const get = mount(
+      { viewer: { userHandle: "owner" }, access: "override", isOwner: true, grants: { aestheticBoard: { channels: [], publicChannels: [], roles: [] } } },
+      [{ dbName: "aestheticBoard", accessFnCid: CID }]
+    );
+    seedSource(CID, TEAM_SRC);
+    await waitFor(() => expect(get().ready).toBe(true));
+    expect(get().can.create({ type: "tile" }).ok).toBe(false); // non-member, not admin
+
+    window.dispatchEvent(
+      new MessageEvent("message", {
+        data: {
+          type: "vibe.evt.viewerChanged",
+          viewer: { userHandle: "owner" },
+          access: "override",
+          isOwner: true,
+          adminMode: true,
+          grants: { aestheticBoard: { channels: [], publicChannels: [], roles: [] } },
+        },
+      })
+    );
+
+    await waitFor(() => expect(get().can.create({ type: "tile" })).toEqual({ ok: true }));
+  });
 });
