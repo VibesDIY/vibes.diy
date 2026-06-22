@@ -95,7 +95,14 @@ Three input states combine into `ready` and the `can.*` behavior. This is the wh
   - `cid` absent (pending) → not ready **until a grace timeout (`SOURCE_GRACE_MS`, default 4000ms) elapses**, after which the hook degrades to `sourceReady = true` + optimistic. This guards against an RPC failure that leaves the cid absent for the session (slice 2c leaves it absent on transient error). _Interactive, never wait forever._
 - **`ready = identityReady && sourceReady`.**
 
-The grace timeout is per-hook-instance local state: a `useEffect` arms a `setTimeout` on mount; when it fires (and the source is still absent) it flips a `degraded` flag, triggering a re-render that resolves `sourceReady`. If the source arrives first, the flag is moot.
+**Grace-timeout state is keyed by `cid`, not purely per-hook-instance (per review).** Two components mounting `useVibe` on the same db must agree on when the source "gives up" — independent per-instance timers could flip them to interactive at slightly different times. The implementation uses a small shared registry keyed by `cid` (module-level alongside `accessFnSources`, or on `VibeContext`): the first hook to observe `cid` pending arms one `setTimeout(SOURCE_GRACE_MS)`; on expiry it records the `cid` as grace-degraded and notifies subscribers, so every hook for that db resolves `sourceReady` together. A `cid` that resolves (string or null) before expiry cancels/voids the timer.
+
+Acceptance criteria for the timer:
+
+- arms **only** while the source is truly pending (`cid` absent from `accessFnSources`); never armed for a resolved (`string`/`null`) or unbound db.
+- resets when the hook's `dbName` (hence `cid`) changes.
+- cleans up on unmount and survives React StrictMode double-mount without leaking timers or double-degrading.
+- a real source arriving after grace-degradation still takes effect (real verdict supersedes the optimistic degrade on the next render).
 
 ### `can.*` verdict mapping
 
@@ -107,7 +114,9 @@ The grace timeout is per-hook-instance local state: a `useEffect` arms a `setTim
 | `edit(doc)`          | `doc = doc`, `oldDoc = doc`         |
 | `delete(doc)`        | `doc = doc`, `oldDoc = doc`         |
 
-`oldDoc` mirrors `doc` for edit/delete because the production corpus is membership-only (the access function gates on the viewer's channel/role, not the doc delta), so `oldDoc`'s body is irrelevant. A richer `oldDoc` is a later refinement if a real function needs it; it would surface as `unknown` → optimistic, never a wrong deny.
+`oldDoc` mirrors `doc` for edit/delete because the production corpus is membership-only (the access function gates on the viewer's channel/role, not the doc delta), so `oldDoc`'s body is irrelevant and `oldDoc = doc` is **exact** for those functions.
+
+**Caveat (per review):** the runner passes `oldDoc` straight through to the invoked function (`invoker(doc, oldDoc, ...)`), so `oldDoc = doc` does _not_ become `unknown` — a **transition-sensitive** policy (one that compares the new doc against its prior version, e.g. "allow edit only if `status` didn't change") would evaluate against `oldDoc === doc` and could return a **concrete but divergent** verdict, not `unknown`. This is an accepted v1 approximation for today's membership-only corpus; it is _not_ a silent-safe fallback. Server enforcement remains authoritative, so a client-side over-allow is still rejected + rolled back at write time. Supplying a real prior-doc (the stored version) to `edit`/`delete` is the follow-up that removes the approximation; `unknown` telemetry would not flag this divergence, so it is called out here explicitly.
 
 Verdict normalization:
 
@@ -124,11 +133,14 @@ The optimistic-unknown path keeps a stale/old client from ever lying: it renders
 
 `adminMode` (the owner-admin-toggle) makes the runner's `requireAccess`/`requireRole` no-op. It is currently passed to the `whoAmI` request but is **not** on the `viewerEnv` that reaches the iframe, so the hook can't see it. Without it, an owner in admin mode who isn't a literal channel member would get a client deny the server would allow — reintroducing the flash-of-wrong-gate the helper exists to kill.
 
-Threading (small, additive, no behavior change for non-admins):
+Today `adminMode` rides only on _requests_ (`ReqGetDoc` / `ReqQueryDocs` / `ReqVibeWhoAmI`, sandbox→host) — the client already knows its own toggle via `vibeApp.adminMode`. It is absent from every _inbound_ identity path, so it can be silently dropped on a refresh (admin toggle without reload) unless every producer forwards it. **Explicit propagation checklist (per review) — all four must carry `adminMode` or the toggle desyncs:**
 
-1. `viewerEnv` type (`vibe.ts`) gains `"adminMode?": "boolean"`.
-2. `EvtVibeViewerChanged` (`types/index.ts`) gains `"adminMode?": "boolean"`; `VibeContext`'s viewerChanged handler copies it through (same spread pattern as `isOwner`/`grants`).
-3. `render-vibe.ts` populates `adminMode` into the server-rendered `viewerEnv` (it already resolves admin state for the route).
+1. **whoAmI response / resolver payload** — add `adminMode` to the whoAmI _response_ (it is currently request-only) so the inbound identity refresh carries it. (The producer also holds it locally via `vibeApp.adminMode`; the response field makes it authoritative end-to-end.)
+2. **sandbox bridge passthrough** — the runtime's whoAmI→viewer plumbing forwards `adminMode` rather than discarding it.
+3. **runtime bootstrap + `viewerChanged` producers** — both the initial bootstrap viewer and every `vibe.evt.viewerChanged` emitter include `adminMode`. `EvtVibeViewerChanged` (`types/index.ts`) gains `"adminMode?": "boolean"`; `VibeContext`'s handler copies it through (same spread pattern as `isOwner`/`grants`).
+4. **render-time `viewerEnv`** — `viewerEnv` type (`vibe.ts`) gains `"adminMode?": "boolean"`; `render-vibe.ts` populates it into the server-rendered `viewerEnv` (it already resolves admin state for the route).
+
+**E2E acceptance criterion:** an owner toggles admin mode and `can.*` verdicts flip **without a reload** (the `viewerChanged` refresh path carries the new `adminMode` and the hook re-evaluates). Non-admin behavior is unchanged (`adminMode` absent/`false`).
 
 ## Telemetry
 
@@ -144,8 +156,11 @@ Browser tests (real Chromium, `vibes.diy/tests/app/`) for `use-vibe`:
 - **unknown→optimistic** — async / unimplemented-`ctx` source → `{ ok: true, reason }`.
 - **pending→skeleton** — cid absent, within grace window → `ready === false`.
 - **grace-timeout→interactive** — cid still absent past `SOURCE_GRACE_MS` → `ready === true`, `can.*` optimistic.
+- **shared-grace agreement** — two `useVibe` hooks on the same db flip to interactive together off one shared per-`cid` timer, not two independent ones.
+- **timer hygiene** — timer arms only while `cid` is absent, resets on `dbName` change, and a StrictMode double-mount leaks no timers / doesn't double-degrade.
 - **no-binding→optimistic** — dbName not in `accessFnBindings` → `ready === true`, `can.*` optimistic.
 - **adminMode-bypass** — `viewerEnv.adminMode === true`, non-member owner, `requireAccess` fn → allowed.
+- **adminMode flips without reload** — a `vibe.evt.viewerChanged` carrying `adminMode: true` makes a previously-denied `can.*` flip to allowed with no remount (the refresh-path E2E criterion).
 
 Plus a small unit assertion that the verdict normalization maps each `WriteVerdict` variant correctly.
 
