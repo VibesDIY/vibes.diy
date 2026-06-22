@@ -5,7 +5,7 @@ import { useCapiCompleteRegistration } from "./hooks/useCapiCompleteRegistration
 import { ClerkProvider, useClerk } from "@clerk/react";
 import { useLocation } from "react-router";
 import { vibeApiTarget } from "./vibe-api-target.js";
-import { sharedReadShardFor } from "./shared-read-shard.js";
+import { sharedReadShardFor, sharedApiUrl } from "./shared-read-shard.js";
 import { BuildURI, exception2Result, Future, KeyedResolvOnce, Lazy, Option, Result } from "@adviser/cement";
 import { type } from "arktype";
 import { PostHogProvider } from "posthog-js/react";
@@ -272,7 +272,7 @@ function LiveCycleVibesDiyProvider({ children, webVars }: { children: React.Reac
   // (same pattern as buildAppApi with ?vibe= — see api/impl/index.ts:272-276
   // where skipShard || cfg.ws → use cfg.apiUrl as-is, no ?shard= appended).
   const buildSharedApi = (shard: string): VibesDiyApiIface => {
-    const sharedUrl = BuildURI.from(apiUrl).pathname("/api/shared").cleanParams().setParam("shard", shard).toString();
+    const sharedUrl = sharedApiUrl(apiUrl, shard);
     const capturedGetToken = sharedGetToken ?? realCtx.getToken;
     return vibesDiyApis.get(sharedUrl).once(
       () =>
