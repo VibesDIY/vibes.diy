@@ -5,6 +5,7 @@ import { createTestDeviceCA, createTestUser } from "@fireproof/core-device-id";
 import { VibesDiyApi } from "@vibes.diy/api-impl";
 import { vibesMsgEvento, WSSendProvider } from "@vibes.diy/api-svc";
 import { isResEnsureAppSlugOk } from "@vibes.diy/api-types";
+import { and, eq } from "drizzle-orm";
 import { createVibeDiyTestCtx } from "./vibe-diy-test-ctx.js";
 
 const ACCESS_JS = `export default function(doc, oldDoc, user) {
@@ -103,5 +104,37 @@ describe("doc-changed channel fan-out carries real dbName (#2301)", { timeout: 3
     expect(notifies).toHaveLength(1);
     expect(notifies[0].evt.dbName).toBe("default");
     expect(notifies[0].evt.channel).toBeUndefined();
+  });
+
+  // Keep LAST: this test removes the access-fn binding, which would break the
+  // channelized assertions above. processAccessBindings drops the binding when
+  // /access.js is deleted but leaves AccessFnOutputs rows behind, so a delete
+  // after removal must NOT fan out on the now-stale stored channel — it has to
+  // fall back to the bare dbName notify current subscribers use (#2531, Charlie).
+  it("delete after access.js removed (stale output row, no live binding) falls back to dbName notify", async () => {
+    access.result = { channels: ["stale-chan"], allowAnonymous: true };
+    await ownerApi.putDoc({ ownerHandle, appSlug, dbName: "default", docId: "d5", doc: { _id: "d5", n: 5 } });
+
+    // Simulate /access.js removal: drop the binding row, leave the output behind.
+    const tAfb = ctx.vibesCtx.sql.tables.accessFunctionBindings;
+    await ctx.vibesCtx.sql.db.delete(tAfb).where(and(eq(tAfb.ownerHandle, ownerHandle), eq(tAfb.appSlug, appSlug)));
+
+    notifies.length = 0;
+    const res = await ownerApi.deleteDoc({ ownerHandle, appSlug, dbName: "default", docId: "d5" });
+    expect(res.Ok().status).toBe("ok");
+    // No live binding → the stale stored channel must NOT be used.
+    expect(notifies).toHaveLength(1);
+    expect(notifies[0].evt.channel).toBeUndefined();
+    expect(notifies[0].evt.dbName).toBe("default");
+
+    // The stale output row is still cleaned up by the unconditional delete sidecar.
+    const tOut = ctx.vibesCtx.sql.tables.accessFnOutputs;
+    const rows = await ctx.vibesCtx.sql.db
+      .select({ docId: tOut.docId })
+      .from(tOut)
+      .where(
+        and(eq(tOut.ownerHandle, ownerHandle), eq(tOut.appSlug, appSlug), eq(tOut.dbName, "default"), eq(tOut.docId, "d5"))
+      );
+    expect(rows).toHaveLength(0);
   });
 });

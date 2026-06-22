@@ -655,14 +655,26 @@ export const deleteDocEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqDelete
 
       const dbName = req.dbName;
 
-      // This doc's stored access-fn output drives two post-delete decisions:
-      // (1) the per-channel delete fan-out, and (2) whether removing the doc's
-      // grant contribution changes any viewer's effective grants (so we push
-      // EvtViewerGrantsChanged). The put path stores grants via an
-      // AccessFnOutputs sidecar; the delete path must clear that sidecar or the
-      // grant lingers after the doc is "deleted" — revocation-by-deletion
-      // (#2531). Both the read and the clear happen in the sidecar below so they
-      // observe the revision actually being tombstoned (see comment there).
+      // Resolve the EFFECTIVE access-fn binding for this db (named dbName beats
+      // the wildcard '*'). Stored AccessFnOutputs rows are NOT cleaned up when a
+      // binding goes away — processAccessBindings drops AccessFunctionBindings
+      // when /access.js is deleted but leaves the output rows behind. So a doc's
+      // stored output can be stale (no live binding, or a superseded fnCid). We
+      // gate the notify decisions below on a live binding whose fnCid matches the
+      // stored row, mirroring resolveGrants in who-am-i; otherwise the delete is
+      // treated as non-channelized and falls back to the bare dbName notify that
+      // current subscribers use (Charlie). The row itself is still dropped
+      // unconditionally — that is the actual revocation (#2531).
+      const tAfb = vctx.sql.tables.accessFunctionBindings;
+      const afbRow = await vctx.sql.db
+        .select({ accessFnCid: tAfb.accessFnCid })
+        .from(tAfb)
+        .where(and(eq(tAfb.ownerHandle, req.ownerHandle), eq(tAfb.appSlug, req.appSlug), inArray(tAfb.dbName, [dbName, "*"])))
+        .orderBy(sql`CASE WHEN ${tAfb.dbName} = ${dbName} THEN 0 ELSE 1 END`)
+        .limit(1)
+        .then((r) => r[0]);
+      const effectiveFnCid = afbRow?.accessFnCid;
+
       const tOutputs = vctx.sql.tables.accessFnOutputs;
       let deletedDocHadGrants = false;
       let channels: string[] = [];
@@ -679,7 +691,7 @@ export const deleteDocEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqDelete
       // applying.
       const deleteOutputSidecar = async (_seq: number, exec: VibesSqlite) => {
         const outRow = await exec
-          .select({ output: tOutputs.output, hasGrants: tOutputs.hasGrants })
+          .select({ output: tOutputs.output, hasGrants: tOutputs.hasGrants, fnCid: tOutputs.fnCid })
           .from(tOutputs)
           .where(
             and(
@@ -691,13 +703,19 @@ export const deleteDocEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqDelete
           )
           .limit(1)
           .then((r) => r[0]);
-        deletedDocHadGrants = outRow?.hasGrants === 1;
-        if (outRow?.output) {
-          try {
-            const parsed = JSON.parse(outRow.output) as { channels?: string[] };
-            channels = normalizeChannels(parsed.channels ?? []);
-          } catch (e: unknown) {
-            console.error("DocNotify delete channel parse error:", e);
+        // Only trust the stored output for notify decisions when it belongs to
+        // the live binding; a stale row (binding removed, or superseded fnCid)
+        // must not channelize the delete or fire a spurious grants-changed.
+        const outputIsLive = effectiveFnCid !== undefined && outRow?.fnCid === effectiveFnCid;
+        if (outputIsLive) {
+          deletedDocHadGrants = outRow.hasGrants === 1;
+          if (outRow.output) {
+            try {
+              const parsed = JSON.parse(outRow.output) as { channels?: string[] };
+              channels = normalizeChannels(parsed.channels ?? []);
+            } catch (e: unknown) {
+              console.error("DocNotify delete channel parse error:", e);
+            }
           }
         }
         await exec
