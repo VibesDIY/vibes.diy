@@ -230,6 +230,39 @@ Per `@CharlieHelps`'s review, the plan must red/green these before touching wiri
    validation/pruning parity with the existing session DOs.
 5. `whoAmI` / admin-mode regression (see open question above).
 
+## Execution phases (red/green)
+
+Phase outline to carry into `writing-plans` (drafted by `@CharlieHelps` in
+review). Each phase is test-first: write the failing test, then implement.
+
+- [ ] **Phase 0 — lock contracts before any wiring change.** Land the 5 test
+      contracts above as enforceable behavioral tests (not smoke), wired into CI
+      before migration starts.
+- [ ] **Phase 1 — decide & lock `whoAmI` admin-mode semantics.** Failing test
+      for the chosen admin-toggle + doc-op authorization behavior, then implement
+      exactly one path (pin admin `whoAmI` to the doc-op connection, **or** make
+      the admin toggle a deliberate lazy-`chatApi` trigger). **Exit gate:**
+      `whoAmI` stays excluded from the blanket shared-handler migration until
+      this passes.
+- [ ] **Phase 2 — re-home prerequisites for lazy chat.** Failing tests for the
+      non-prompt identity/settings/message paths that must work without eager
+      chat, then move the required handlers `chatHandlers → sharedHandlers`
+      (`listHandleBindings*`, `getCertFromCsr`, `report*`).
+- [ ] **Phase 3 — server shared-plane plumbing.** Failing integration tests for
+      `SharedSessions` routing + subscription/fan-out, then land the DO +
+      `/api/shared` route + `shared:` subscriber handling with parity guarantees.
+- [ ] **Phase 4 — client wiring migration (route-by-route).** For each route
+      class (vibe authed/anon, non-vibe authed/anon), fail on wrong connection
+      target or extra eager sockets; then add `sharedApi`, remove standalone
+      `notifyApi`, migrate call sites to `vibeApi ?? sharedApi` (except `whoAmI`
+      until Phase 1 lands).
+- [ ] **Phase 5 — true lazy-chat seam + rollout gates.** Fail when a non-chat
+      page instantiates `chatApi` eagerly or when the first chat action can't
+      cold-open chat; implement the construction seam; verify first-chat
+      cold-open and the title-sensitive flows (`ensure-chat-id`, app-metadata
+      generation, `openChat` refresh). **Release gate:** per-env
+      `wrangler deploy --dry-run`, then prod-before-cli deploy ordering.
+
 ## Decisions (settled)
 
 1. **Singleton vs. shard** → reads shard by user (`userNotifyShardFor`);
