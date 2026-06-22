@@ -3,7 +3,7 @@
 **Date:** 2026-06-20
 **Tracking:** #2264 (cleanup remainder), #2265 (deferred items 1–3)
 **Parent:** #2253 (AppSessions DO split, merged), #2263 (rename, merged), #2297/#2298 (DocNotify retired)
-**Status:** design for review
+**Status:** Track A shipped (A1 #2494, A2 #2502, A2b #2504, A3 #2511 — `AccessFnDO` retired). Tracks B (SharedSessions) + C (`/chat/` deprecation) pending. Living architecture doc: [`agents/do-session-split.md`](../../../agents/do-session-split.md). This spec is kept as the original design record.
 
 ## Plain-language summary
 

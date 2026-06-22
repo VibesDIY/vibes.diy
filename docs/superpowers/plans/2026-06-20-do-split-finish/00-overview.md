@@ -1,5 +1,10 @@
 # Finish the AppSessions DO split — plan overview
 
+> **Status (2026-06-22):** Track A shipped — A1 (#2494), A2 (#2502), A2b (#2504),
+> A3 (#2511): `AccessFnDO` retired, doc ops on AppSessions, ChatSessions
+> chat-only + local QuickJS. Tracks **B** (SharedSessions) and **C** (`/chat/`
+> deprecation) remain. Living architecture doc: [`agents/do-session-split.md`](../../../../agents/do-session-split.md).
+
 > **For agentic workers:** REQUIRED SUB-SKILL: subagent-driven-development (recommended) or executing-plans. Each track below is its own PR (or PR chain). Tracks A1→A2→A3 are deploy/verify-ordered. Tracks B and C are design-level here — run `brainstorming` then `writing-plans` to expand each into a full TDD plan before executing.
 
 **Goal:** Close the remaining open items in #2264 and #2265 by finishing the DO

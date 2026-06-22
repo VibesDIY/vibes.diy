@@ -5,10 +5,10 @@ import { sharedHandlers, chatHandlers } from "./evento-handler-manifest.js";
 
 // ChatSessions is chat-only: it serves chat streaming + the stateless shared
 // queries the parent app still calls on chatApi. Vibe-scoped doc ops
-// (`appHandlers`) live on AppSessions (vibeApi); they are deliberately NOT
-// spread here so doc writes never reach ChatSessions' default invokeAccessFn
-// path (the AccessFnDO retirement gate, #2265). Exported as a named array so a
-// parity test can assert `appHandlers` never re-enters the chat plane.
+// (`appHandlers`) live on AppSessions (vibeApi) and are deliberately NOT spread
+// here — keeping doc writes off the chat plane is what let AccessFnDO be
+// retired (#2265). Exported as a named array so a parity test can assert
+// `appHandlers` never re-enters the chat plane.
 export const chatPlaneHandlers = [...sharedHandlers, ...chatHandlers] as const;
 
 export const chatMsgEvento = Lazy(() => {

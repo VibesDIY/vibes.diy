@@ -37,13 +37,28 @@ tag = "v2"
 new_classes = ["DocNotify"]
 ```
 
-**Do not add `deleted_classes = ["DocNotify"]`.** Cloudflare blocks it with error 10061:
+**You cannot add `deleted_classes = ["DocNotify"]` while a (even cross-script) binding still names the class** — Cloudflare blocks it with error 10061:
 
 > Cannot apply --delete-class migration to class 'DocNotify' without also removing the binding that references it.
 
-Cloudflare's validator counts the `class_name = "DocNotify"` field on the cross-script binding as a live reference to the local class, regardless of `script_name`. The class can't be both bound (even cross-script) and deleted in the same deploy.
+Cloudflare's validator counts the `class_name = "DocNotify"` field on the cross-script binding as a live reference to the local class, regardless of `script_name`. Leaving the class dormant is fine if you never need it back — zero new DO instances are created locally (the binding routes elsewhere), so the orphan never grows.
 
-To actually delete the dormant class you'd need a three-step rollout — drop the `DOC_NOTIFY` binding entirely, deploy, append a `deleted_classes` migration, deploy, restore the binding with `script_name`, deploy — across three tagged releases. Almost never worth it. Leaving the class dormant is the canonical approach: zero new DO instances are created locally (the binding routes elsewhere), so the orphan never grows.
+### Delete a DO class for real
+
+Both legacy DOs from the session split (`DocNotify`, `AccessFnDO`) were ultimately deleted. The two cases show the two shapes — the ordering constraint depends entirely on whether any **cross-script** binding names the class:
+
+**Case A — cross-script binding exists (DocNotify): deploy-ordered, cli-first.**
+cli cross-script-bound prod's `DocNotify`, so prod could not `deleted_classes` it while cli's binding referenced it (10061). Sequence across two PRs:
+
+1. **cli unbind (deploy FIRST):** drop the cross-script `DOC_NOTIFY` binding from cli (#2297). Now nothing external references prod's class.
+2. **class deletion (deploy AFTER cli is live):** remove the local `DOC_NOTIFY` binding + append `deleted_classes = ["DocNotify"]` in every env (#2298). cli also needed its own `deleted_classes` for the dormant local class once the source was removed.
+
+This is the **reverse** of the usual prod-before-cli order — call it out in the deploy PR.
+
+**Case B — local binding only, no cross-script (AccessFnDO): single PR, standard order.**
+`AccessFnDO` was a **local** class in every env (no `script_name` anywhere), so no env's binding referenced another env's class — no 10061 dependency between cli and prod. One PR (#2511): drop the `ACCESS_FN_DO` binding + append `v7 deleted_classes = ["AccessFnDO"]` in all six env blocks, delete source/export/type. Standard prod-before-cli deploy; either order is actually safe.
+
+**In both cases:** the worker code must stop invoking the class **before** the deletion deploys — `deleted_classes` is irreversible and destroys all instances/state for the class. Gate the delete on a prior deploy that removed the last code reference. (Safe for these two only because they stored transient/recomputable state, never user data.)
 
 ### Add a new DO class
 
