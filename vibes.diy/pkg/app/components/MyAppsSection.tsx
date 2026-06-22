@@ -351,7 +351,7 @@ export function AppDetailPanel({ item, appHostBaseUrl, onClose }: AppDetailPanel
   const [ownerDisplayName, setOwnerDisplayName] = useState<string | undefined>(
     item ? (ownerDisplayNameCache.get(cacheKey) ?? undefined) : undefined
   );
-  const { chatApi } = useVibesDiy();
+  const { sharedApi } = useVibesDiy();
   const previewUrl = screenshot ? screenshotSrc(screenshot) : iconUrl;
   // Always known synchronously from the list row; upgraded to the display name
   // once the fetch below resolves.
@@ -378,7 +378,7 @@ export function AppDetailPanel({ item, appHostBaseUrl, onClose }: AppDetailPanel
       return;
     }
     let cancelled = false;
-    chatApi.getAppByFsId({ ownerHandle: item.ownerHandle, appSlug: item.appSlug }).then((res) => {
+    sharedApi.getAppByFsId({ ownerHandle: item.ownerHandle, appSlug: item.appSlug }).then((res) => {
       if (cancelled) return;
       if (res.isErr()) {
         screenshotCache.set(cacheKey, null);
@@ -394,7 +394,7 @@ export function AppDetailPanel({ item, appHostBaseUrl, onClose }: AppDetailPanel
     return () => {
       cancelled = true;
     };
-  }, [item, cacheKey, chatApi]);
+  }, [item, cacheKey, sharedApi]);
 
   return (
     <>

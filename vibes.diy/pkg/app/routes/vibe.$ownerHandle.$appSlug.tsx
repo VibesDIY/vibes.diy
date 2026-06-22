@@ -209,13 +209,13 @@ export default function VibeIframeWrapper() {
       setMyUserSlug(undefined);
       return;
     }
-    vctx.chatApi.listHandleBindings({}).then((res) => {
+    vctx.sharedApi.listHandleBindings({}).then((res) => {
       if (res.isErr()) return;
       const items = res.Ok().items;
       setIsOwner(items.some((item) => item.ownerHandle === ownerHandle));
       if (items.length > 0) setMyUserSlug(items[0].ownerHandle);
     });
-  }, [authSignedIn, ownerHandle, vctx.chatApi]);
+  }, [authSignedIn, ownerHandle, vctx.sharedApi]);
 
   useEffect(() => {
     if (!isOwner || !ownerHandle || !appSlug) {
@@ -223,35 +223,35 @@ export default function VibeIframeWrapper() {
       return;
     }
     let cancelled = false;
-    vctx.chatApi.listRequestGrants({ appSlug, ownerHandle, pager: { limit: 100 } }).then((res) => {
+    vctx.sharedApi.listRequestGrants({ appSlug, ownerHandle, pager: { limit: 100 } }).then((res) => {
       if (cancelled || res.isErr()) return;
       setPendingCount(res.Ok().items.filter((r) => r.state === "pending").length);
     });
     return () => {
       cancelled = true;
     };
-  }, [isOwner, ownerHandle, appSlug, vctx.chatApi, pendingBump]);
+  }, [isOwner, ownerHandle, appSlug, vctx.sharedApi, pendingBump]);
 
   useEffect(() => {
     if (!isOwner || !ownerHandle || !appSlug) {
       return;
     }
-    void vctx.chatApi.subscribeRequestGrants({ appSlug, ownerHandle });
-    const unsubscribe = vctx.chatApi.onRequestGrant((evt) => {
+    void vctx.sharedApi.subscribeRequestGrants({ appSlug, ownerHandle });
+    const unsubscribe = vctx.sharedApi.onRequestGrant((evt) => {
       if (evt.grant.ownerHandle === ownerHandle && evt.grant.appSlug === appSlug) {
         setPendingBump((n) => n + 1);
       }
     });
     return unsubscribe;
-  }, [isOwner, ownerHandle, appSlug, vctx.chatApi]);
+  }, [isOwner, ownerHandle, appSlug, vctx.sharedApi]);
 
   useEffect(() => {
-    if (!vctx.chatApi || !authSignedIn) {
+    if (!vctx.sharedApi || !authSignedIn) {
       setDmUnreadCount(0);
       return;
     }
     let cancelled = false;
-    vctx.chatApi.listDmThreads({}).then((res) => {
+    vctx.sharedApi.listDmThreads({}).then((res) => {
       if (cancelled || res.isErr()) return;
       const total = res.Ok().items.reduce((sum, t) => sum + t.unreadCount, 0);
       setDmUnreadCount(total);
@@ -259,7 +259,7 @@ export default function VibeIframeWrapper() {
     return () => {
       cancelled = true;
     };
-  }, [vctx.chatApi, authSignedIn]);
+  }, [vctx.sharedApi, authSignedIn]);
 
   useEffect(() => {
     if (authSignedIn) {
@@ -428,7 +428,7 @@ export default function VibeIframeWrapper() {
     inGetAppByFsIdRef.current = true;
     lastFiredKeyRef.current = paramsKey;
     toast.loading("Verifying access…", { id: "vibe-access" });
-    vctx.chatApi.getAppByFsId({ fsId, appSlug, ownerHandle, token }).then((rRes) => {
+    vctx.sharedApi.getAppByFsId({ fsId, appSlug, ownerHandle, token }).then((rRes) => {
       inGetAppByFsIdRef.current = false;
       if (rRes.isErr()) {
         toast.error(`getAppByFsId failed with: ${rRes.Err().message}`, { id: "vibe-access" });
@@ -438,7 +438,7 @@ export default function VibeIframeWrapper() {
       cachedResRef.current = res;
       applyResToUI(res);
     });
-  }, [ownerHandle, appSlug, fsId, searchParam, retryCount, vctx.chatApi, flushPendingWriterViewerRefresh]);
+  }, [ownerHandle, appSlug, fsId, searchParam, retryCount, vctx.sharedApi, flushPendingWriterViewerRefresh]);
 
   useEffect(() => {
     if (authSignedIn !== true) return;
@@ -478,6 +478,7 @@ export default function VibeIframeWrapper() {
     appSlug: appSlug ?? "",
     fsId,
     chatApi: vctx.chatApi,
+    sharedApi: vctx.sharedApi,
   });
 
   const prevShareOpenRef = useRef(shareModal.isOpen);
@@ -507,7 +508,7 @@ export default function VibeIframeWrapper() {
 
   async function fireJoin() {
     if (appSlug === undefined || ownerHandle === undefined) return;
-    const r = await vctx.chatApi.requestAccess({ appSlug, ownerHandle });
+    const r = await vctx.sharedApi.requestAccess({ appSlug, ownerHandle });
     if (r.isErr()) {
       toast.error(`Request failed: ${r.Err().message}`);
       return;

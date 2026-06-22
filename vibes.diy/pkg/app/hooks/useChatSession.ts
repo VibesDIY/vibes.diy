@@ -17,6 +17,7 @@ export interface ChatSessionOpts {
   readonly fsId: string | undefined;
   readonly inConstruction: boolean;
   readonly chatApi: VibesDiyApiIface;
+  readonly sharedApi: VibesDiyApiIface;
   readonly promptState: PromptState;
   readonly dispatch: Dispatch<PromptAction>;
   readonly promptToSend: string | null;
@@ -51,6 +52,7 @@ export function useChatSession(opts: ChatSessionOpts): ChatSession {
     fsId,
     inConstruction,
     chatApi,
+    sharedApi,
     promptState,
     dispatch,
     promptToSend,
@@ -126,7 +128,7 @@ export function useChatSession(opts: ChatSessionOpts): ChatSession {
   );
 
   const refreshAppSettings = useCallback(() => {
-    chatApi.ensureAppSettings({ ownerHandle, appSlug }).then((rS) => {
+    sharedApi.ensureAppSettings({ ownerHandle, appSlug }).then((rS) => {
       if (rS.isOk()) {
         const s = rS.Ok().settings.entry.settings;
         if (s.title) dispatch({ type: "setTitle", title: s.title });
@@ -140,7 +142,7 @@ export function useChatSession(opts: ChatSessionOpts): ChatSession {
         }
       }
     });
-  }, [chatApi, ownerHandle, appSlug, dispatch]);
+  }, [sharedApi, ownerHandle, appSlug, dispatch]);
 
   const handleStreamSilent = useCallback(() => dispatch({ type: "streamDisconnected" }), [dispatch]);
   useStreamWatchdog({
@@ -244,7 +246,7 @@ export function useChatSession(opts: ChatSessionOpts): ChatSession {
       attachSectionStream(rChat.Ok());
       // For CLI-pushed apps with no chat history, look up the latest fsId
       if (!fsId) {
-        chatApi.getAppByFsId({ appSlug, ownerHandle }).then((rApp) => {
+        sharedApi.getAppByFsId({ appSlug, ownerHandle }).then((rApp) => {
           if (rApp.isOk() && rApp.Ok().fsId) {
             navigateToFsId(rApp.Ok().fsId);
           }
@@ -260,7 +262,7 @@ export function useChatSession(opts: ChatSessionOpts): ChatSession {
     // dependency is what flips this effect from the open path to the fire path.
     // `onSendSettled` is identity-stable in the route (memoized), so listing it
     // here does not re-fire the effect.
-  }, [ownerHandle, appSlug, chat, openingRef, chatApi, promptToSend, onSendSettled]);
+  }, [ownerHandle, appSlug, chat, openingRef, chatApi, sharedApi, promptToSend, onSendSettled]);
 
   return { chat };
 }

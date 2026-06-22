@@ -20,7 +20,7 @@ export default function VibesMemberships(): ReactElement {
   const { ownerHandle: paramUserSlug, appSlug: paramAppSlug } = useParams<{ ownerHandle?: string; appSlug?: string }>();
   const [searchQuery, setSearchQuery] = useState("");
 
-  const { chatApi } = useVibesDiy();
+  const { sharedApi } = useVibesDiy();
   const { items: rawItems, loading, nextCursor, loadMore } = useMemberships(PAGE_SIZE);
 
   // Map ResMembershipItem → ResRecentVibesItem for VibesGrid (activityAt drives updated display).
@@ -44,7 +44,7 @@ export default function VibesMemberships(): ReactElement {
       const key = `${item.ownerHandle}/${item.appSlug}`;
       if (requestedKeysRef.current.has(key)) continue;
       requestedKeysRef.current.add(key);
-      chatApi.getAppByFsId({ ownerHandle: item.ownerHandle, appSlug: item.appSlug }).then((res) => {
+      sharedApi.getAppByFsId({ ownerHandle: item.ownerHandle, appSlug: item.appSlug }).then((res) => {
         setAppHeadInfo((prev) => {
           if (res.isErr()) return new Map(prev).set(key, {});
           const app = res.Ok();
@@ -52,7 +52,7 @@ export default function VibesMemberships(): ReactElement {
         });
       });
     }
-  }, [items, chatApi]);
+  }, [items, sharedApi]);
 
   const filteredItems = useMemo(() => {
     const q = searchQuery.trim().toLowerCase();

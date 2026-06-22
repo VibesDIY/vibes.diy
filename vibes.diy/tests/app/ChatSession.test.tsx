@@ -24,7 +24,8 @@ function setup(over: Props & { promptErr?: boolean } = {}) {
   const openChat = vi.fn(async () => Result.Ok(fakeChat));
   const getAppByFsId = vi.fn(async () => Result.Ok({ fsId: "FS-cli" }));
   const ensureAppSettings = vi.fn(async () => Result.Err("no settings"));
-  const chatApi = { openChat, getAppByFsId, ensureAppSettings } as unknown as Parameters<typeof useChatSession>[0]["chatApi"];
+  const chatApi = { openChat } as unknown as Parameters<typeof useChatSession>[0]["chatApi"];
+  const sharedApi = { getAppByFsId, ensureAppSettings } as unknown as Parameters<typeof useChatSession>[0]["sharedApi"];
   const dispatch = vi.fn();
   const sendPrompt = vi.fn();
   const navigateToFsId = vi.fn();
@@ -38,6 +39,7 @@ function setup(over: Props & { promptErr?: boolean } = {}) {
         fsId: p.fsId,
         inConstruction: false,
         chatApi,
+        sharedApi,
         promptState: p.promptState ?? baseState(),
         dispatch,
         promptToSend: p.promptToSend ?? null,
@@ -128,7 +130,8 @@ describe("useChatSession reconnect stream isolation", () => {
     let opened = 0;
     const openChat = vi.fn(async () => Result.Ok(chats[Math.min(opened++, chats.length - 1)].chat));
     const ensureAppSettings = vi.fn(async () => Result.Err("no settings"));
-    const chatApi = { openChat, ensureAppSettings } as unknown as Parameters<typeof useChatSession>[0]["chatApi"];
+    const chatApi = { openChat } as unknown as Parameters<typeof useChatSession>[0]["chatApi"];
+    const sharedApi = { ensureAppSettings } as unknown as Parameters<typeof useChatSession>[0]["sharedApi"];
     const dispatch = vi.fn();
 
     function props(connection: PromptState["connection"]): { promptState: PromptState } {
@@ -143,6 +146,7 @@ describe("useChatSession reconnect stream isolation", () => {
           fsId: "FS-1",
           inConstruction: false,
           chatApi,
+          sharedApi,
           promptState,
           dispatch,
           promptToSend: null,

@@ -42,7 +42,7 @@ export interface UseSharingPanelReturn {
  * mutates them so the two surfaces stay in lockstep.
  */
 export function useSharingPanel({ ownerHandle, appSlug, enabled = true }: UseSharingPanelArgs): UseSharingPanelReturn {
-  const { chatApi } = useVibesDiy();
+  const { sharedApi } = useVibesDiy();
   const [settings, setSettings] = useState<AppSettings | null>(null);
   const [invites, setInvites] = useState<InviteGrantItem[]>([]);
   const [requests, setRequests] = useState<RequestGrantItem[]>([]);
@@ -55,9 +55,9 @@ export function useSharingPanel({ ownerHandle, appSlug, enabled = true }: UseSha
     if (!enabled) return;
     setLoading(true);
     Promise.all([
-      chatApi.ensureAppSettings({ appSlug, ownerHandle }),
-      chatApi.listInviteGrants({ appSlug, ownerHandle, pager: PAGER }),
-      chatApi.listRequestGrants({ appSlug, ownerHandle, pager: PAGER }),
+      sharedApi.ensureAppSettings({ appSlug, ownerHandle }),
+      sharedApi.listInviteGrants({ appSlug, ownerHandle, pager: PAGER }),
+      sharedApi.listRequestGrants({ appSlug, ownerHandle, pager: PAGER }),
     ])
       .then(([rSettings, rInvites, rRequests]) => {
         toastError(rSettings, (s) => setSettings(s.settings));
@@ -65,7 +65,7 @@ export function useSharingPanel({ ownerHandle, appSlug, enabled = true }: UseSha
         toastError(rRequests, (s) => setRequests(s.items));
       })
       .finally(() => setLoading(false));
-  }, [enabled, chatApi, appSlug, ownerHandle]);
+  }, [enabled, sharedApi, appSlug, ownerHandle]);
 
   useEffect(() => {
     refetch();
@@ -76,123 +76,123 @@ export function useSharingPanel({ ownerHandle, appSlug, enabled = true }: UseSha
       const email = inviteEmail.trim();
       if (!email) return;
       setInviting(true);
-      const res = await chatApi.createInvite({ appSlug, ownerHandle, invitedEmail: email, role });
+      const res = await sharedApi.createInvite({ appSlug, ownerHandle, invitedEmail: email, role });
       setInviting(false);
       toastError(res, () => {
         setInviteEmail("");
-        void chatApi
+        void sharedApi
           .listInviteGrants({ appSlug, ownerHandle, pager: PAGER })
           .then((r) => toastError(r, (s) => setInvites(s.items)));
       });
     },
-    [chatApi, appSlug, ownerHandle, inviteEmail]
+    [sharedApi, appSlug, ownerHandle, inviteEmail]
   );
 
   const deleteInvite = useCallback(
     async (inv: InviteGrantItem) => {
-      const res = await chatApi.revokeInvite({ appSlug, ownerHandle, emailKey: inv.emailKey, delete: true });
+      const res = await sharedApi.revokeInvite({ appSlug, ownerHandle, emailKey: inv.emailKey, delete: true });
       toastError(res, () => {
         setInvites((prev) => prev.filter((i) => i.emailKey !== inv.emailKey));
       });
     },
-    [chatApi, appSlug, ownerHandle]
+    [sharedApi, appSlug, ownerHandle]
   );
 
   const revokeInvite = useCallback(
     async (inv: InviteGrantItem) => {
-      const res = await chatApi.revokeInvite({ appSlug, ownerHandle, emailKey: inv.emailKey });
+      const res = await sharedApi.revokeInvite({ appSlug, ownerHandle, emailKey: inv.emailKey });
       toastError(res, () => {
         setInvites((prev) => prev.map((i) => (i.emailKey === inv.emailKey ? { ...i, state: "revoked" as const } : i)));
       });
     },
-    [chatApi, appSlug, ownerHandle]
+    [sharedApi, appSlug, ownerHandle]
   );
 
   const changeInviteRole = useCallback(
     async (inv: InviteGrantItem, newRole: "editor" | "viewer") => {
       if (inv.role === newRole) return;
-      const res = await chatApi.inviteSetRole({ appSlug, ownerHandle, emailKey: inv.emailKey, role: newRole });
+      const res = await sharedApi.inviteSetRole({ appSlug, ownerHandle, emailKey: inv.emailKey, role: newRole });
       toastError(res, () => {
         setInvites((prev) => prev.map((i) => (i.emailKey === inv.emailKey ? { ...i, role: newRole } : i)));
       });
     },
-    [chatApi, appSlug, ownerHandle]
+    [sharedApi, appSlug, ownerHandle]
   );
 
   const approveRequest = useCallback(
     async (r: RequestGrantItem, role: "editor" | "viewer") => {
-      const res = await chatApi.approveRequest({ appSlug, ownerHandle, foreignUserId: r.foreignUserId, role });
+      const res = await sharedApi.approveRequest({ appSlug, ownerHandle, foreignUserId: r.foreignUserId, role });
       toastError(res, () => {
         setRequests((prev) =>
           prev.map((x) => (x.foreignUserId === r.foreignUserId ? { ...x, state: "approved" as const, role } : x))
         );
       });
     },
-    [chatApi, appSlug, ownerHandle]
+    [sharedApi, appSlug, ownerHandle]
   );
 
   const revokeRequest = useCallback(
     async (r: RequestGrantItem) => {
-      const res = await chatApi.revokeRequest({ appSlug, ownerHandle, foreignUserId: r.foreignUserId });
+      const res = await sharedApi.revokeRequest({ appSlug, ownerHandle, foreignUserId: r.foreignUserId });
       toastError(res, () => {
         setRequests((prev) => prev.map((x) => (x.foreignUserId === r.foreignUserId ? { ...x, state: "revoked" as const } : x)));
       });
     },
-    [chatApi, appSlug, ownerHandle]
+    [sharedApi, appSlug, ownerHandle]
   );
 
   const switchRequestRole = useCallback(
     async (r: RequestGrantItem, newRole: "editor" | "viewer") => {
-      const res = await chatApi.requestSetRole({ appSlug, ownerHandle, foreignUserId: r.foreignUserId, role: newRole });
+      const res = await sharedApi.requestSetRole({ appSlug, ownerHandle, foreignUserId: r.foreignUserId, role: newRole });
       toastError(res, () => {
         setRequests((prev) => prev.map((x) => (x.foreignUserId === r.foreignUserId ? { ...x, role: newRole } : x)));
       });
     },
-    [chatApi, appSlug, ownerHandle]
+    [sharedApi, appSlug, ownerHandle]
   );
 
   const removeRequest = useCallback(
     async (r: RequestGrantItem) => {
-      const res = await chatApi.revokeRequest({ appSlug, ownerHandle, foreignUserId: r.foreignUserId, delete: true });
+      const res = await sharedApi.revokeRequest({ appSlug, ownerHandle, foreignUserId: r.foreignUserId, delete: true });
       toastError(res, () => {
         setRequests((prev) => prev.filter((x) => x.foreignUserId !== r.foreignUserId));
       });
     },
-    [chatApi, appSlug, ownerHandle]
+    [sharedApi, appSlug, ownerHandle]
   );
 
   const togglePublicAccess = useCallback(
     async (currentlyEnabled: boolean) => {
       setToggling("public");
-      const res = await chatApi.ensureAppSettings({ appSlug, ownerHandle, publicAccess: { enable: !currentlyEnabled } });
+      const res = await sharedApi.ensureAppSettings({ appSlug, ownerHandle, publicAccess: { enable: !currentlyEnabled } });
       setToggling(null);
       toastError(res, (s) => setSettings(s.settings));
     },
-    [chatApi, appSlug, ownerHandle]
+    [sharedApi, appSlug, ownerHandle]
   );
 
   const toggleEnableRequest = useCallback(
     async (currentlyEnabled: boolean) => {
       setToggling("request");
-      const res = await chatApi.ensureAppSettings({ appSlug, ownerHandle, request: { enable: !currentlyEnabled } });
+      const res = await sharedApi.ensureAppSettings({ appSlug, ownerHandle, request: { enable: !currentlyEnabled } });
       setToggling(null);
       toastError(res, (s) => setSettings(s.settings));
     },
-    [chatApi, appSlug, ownerHandle]
+    [sharedApi, appSlug, ownerHandle]
   );
 
   const toggleAutoAcceptRole = useCallback(async () => {
     if (!settings?.entry.enableRequest) return;
     setToggling("autoAcceptRole");
     const currentRole = settings.entry.enableRequest.autoAcceptRole;
-    const res = await chatApi.ensureAppSettings({
+    const res = await sharedApi.ensureAppSettings({
       appSlug,
       ownerHandle,
       request: { enable: true, autoAcceptRole: currentRole ? undefined : "editor" },
     });
     setToggling(null);
     toastError(res, (s) => setSettings(s.settings));
-  }, [chatApi, appSlug, ownerHandle, settings]);
+  }, [sharedApi, appSlug, ownerHandle, settings]);
 
   return {
     settings,
