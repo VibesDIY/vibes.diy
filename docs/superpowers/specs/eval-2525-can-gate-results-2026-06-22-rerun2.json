@@ -75,6 +75,26 @@
       "run2": "5 PASS / 0 SOFT-FAIL / 2 FAIL (denom 7)",
       "run3": "6 PASS / 1 SOFT-FAIL / 0 FAIL (denom 7)"
     },
+    "codexReviewFindings": [
+      {
+        "severity": "P1",
+        "scope": "platform (surfaced via forum-mods corpus)",
+        "summary": "Deleting a grant/member doc does NOT revoke the grant. The delete path inserts a tombstone into appDocuments (app-documents-write-eventos.ts:660-675) but never removes or recomputes the doc's accessFnOutputs sidecar (which is only ever inserted/upserted — write path :413, process-access-bindings :244), and resolveWhoAmI rebuilds roles/channels from all hasGrants=1 outputs without excluding tombstoned docs (who-am-i.ts:74-112). So a deleted modGrant's `members:{moderator:[...]}` keeps granting after the chip disappears. Verified statically; contradicts the documented 'delete to revoke' behavior in fireproof.md ('deleting a document drops its contribution… revocation trivial'). Filed as its own platform issue.",
+        "action": "opened a platform issue; not a prompt or corpus fix"
+      },
+      {
+        "severity": "P2",
+        "scope": "generated access.js (forum-mods)",
+        "summary": "Moderator/owner edits skip author-immutability (`oldDoc.authorHandle !== doc.authorHandle && !isMod`), so a moderator can reassign authorHandle on another user's post — re-introducing author reassignment for privileged editors. Author-preservation should hold even for mods (the edit UI never needs to change the author). Candidate prompt nudge.",
+        "action": "recorded; corpus left as evidence; candidate for the author-preservation prompt guidance"
+      },
+      {
+        "severity": "P2",
+        "scope": "generated access.js (trip-planner)",
+        "summary": "packItem updates only check that authorHandle is unchanged, so any collaborator can PUT another user's item with a different label/createdAt — not just toggle `packed`. The UI happens to toggle only `packed`, but access.js is the authoritative policy. Over-permissive collaborative update.",
+        "action": "recorded; corpus left as evidence"
+      }
+    ],
     "verdict": "A→B GATE PASSES — FLIP IS SAFE",
     "verdictRationale": "Across three rounds and three targeted prompt fixes, the can-flip gate now clears every pass criterion: 0 FAIL, 0 hidden-write mis-gates, 0 unknowns, and write surfaces gate on can.* with reason and author-preservation throughout. The three bugs the eval surfaced are all fixed at the prompt level and confirmed by regeneration: (1) public-read channels gated on ctx.requireAccess (run 1 → fixed in #2526), (2) grant/member docs returned without a channel → 'unreadable write' (run 2 → fixed in #2527, confirmed here: forum-mods's modGrant now routes to admin:mods and appointment works), (3) author reassignment on update (fixed in #2527, confirmed: forum/trip both preserve the author). The single remaining SOFT-FAIL (forum-mods gating owner-management on isOwner display rather than can.create) is a cosmetic anti-pattern, not a write-blocking bug — a candidate for a future prompt nudge but not a flip blocker. Recommend proceeding A→B (migrate existing vibes), with the isOwner-vs-can.* owner-management nudge as a low-priority follow-up. Orthogonal: generation-stream push failures recurred every round and deserve their own issue."
   }
