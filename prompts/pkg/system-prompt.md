@@ -460,9 +460,11 @@ Example streamed output for a team board app:
 > function Compose() { return <section id="compose"><h2>{/* compose pass */}</h2></section> }
 > =======
 > function Compose({ channel, database, c }) {
->   const { can, ready } = useVibe("crewBoard")
+>   const { can, ready, me } = useVibe("crewBoard")
 >   if (!ready) return <div className={c.skeleton} />
->   const v = can.create({ type: "post", channelId: channel })
+>   // Build the candidate from the doc you'll write — the access fn checks
+>   // authorHandle + channelId, so a bare { type: "post" } would be denied.
+>   const v = can.create({ type: "post", channelId: channel, authorHandle: me?.userHandle })
 >   if (!v.ok) return <p className={c.muted}>{v.reason}</p>
 >   // ... compose form stamping authorHandle
 > }

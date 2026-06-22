@@ -365,8 +365,8 @@ App.jsx
         ))}
       </ul>
 =======
-      {/* gate writes with useVibe().can, not access.* */}
-      {useVibe("announcements").can.create({ type: "comment" }).ok && <CommentForm database={database} />}
+      {/* gate writes with useVibe().can, not access.* — and gate the SAME db you write to */}
+      {useVibe("comments").can.create({ type: "comment" }).ok && <CommentForm database={database} />}
       {access.hasRole("moderator") && <ModToolsBadge />}
       {access.hasChannel("announcements") && <Announcements />}
 >>>>>>> REPLACE
@@ -431,11 +431,18 @@ import { useViewer, useVibe } from "use-vibes";
 export default function App() {
   const { viewer, isOwner, isViewerPending, ViewerTag } = useViewer();
   const { database, useLiveQuery, access } = useFireproof("announcements");
-  const canPost = useVibe("announcements").can.create({ type: "post" });
 
   const { docs: posts } = useLiveQuery("type", { key: "post" });
   const [draft, setDraft] = React.useState("");
   const [channel, setChannel] = React.useState("general");
+  // Build the candidate from the doc you'll actually write — the access function
+  // checks authorHandle and channel, so a bare { type: "post" } would be denied
+  // ("not author") and hide the form even from users who can post.
+  const canPost = useVibe("announcements").can.create({
+    type: "post",
+    channel,
+    authorHandle: viewer?.userHandle,
+  });
 
   if (isViewerPending) return null;
 
