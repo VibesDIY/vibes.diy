@@ -39,12 +39,17 @@ export function PortalRootWrapper({ children }: { children: React.ReactNode }) {
  */
 export function vibesWrapper(ctx: Partial<VibesDiyCtx> | Record<string, unknown>, options: VibesWrapperOptions = {}) {
   const { initialEntries = ["/"] } = options;
+  const typedCtx = ctx as Partial<VibesDiyCtx>;
+  // Most app tests only stub chatApi; mirror it into sharedApi by default so
+  // shared-handler migrations do not require every legacy test to inject both.
+  const value =
+    (typedCtx.sharedApi ?? typedCtx.chatApi) ? { ...typedCtx, sharedApi: typedCtx.sharedApi ?? typedCtx.chatApi } : typedCtx;
   return function VibesProviderWrapper({ children }: { children: React.ReactNode }) {
     return (
       <MemoryRouter initialEntries={initialEntries}>
         <ThemeProvider>
           <PortalRootWrapper>
-            <VibesDiyContext.Provider value={ctx as VibesDiyCtx}>{children}</VibesDiyContext.Provider>
+            <VibesDiyContext.Provider value={value as VibesDiyCtx}>{children}</VibesDiyContext.Provider>
           </PortalRootWrapper>
         </ThemeProvider>
       </MemoryRouter>
