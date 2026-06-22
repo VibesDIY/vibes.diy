@@ -261,9 +261,15 @@ export const putDocEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqPutDoc>, 
           oldDoc = existing?.data ?? null;
         }
 
-        // Fetch source using the stored assetURI (handles SQL and R2 transparently).
+        // Resolve the access.js source. The source is content-addressed and
+        // immutable per CID, so cache the raw bytes on the DO keyed by CID — a
+        // hit can never go stale. Only the first write for a given CID pays the
+        // storage (R2) round-trip (handles SQL and R2 transparently); subsequent
+        // writes reuse it, removing the per-write access tax. Mirrors the per-DO
+        // QuickJS module cache (localInvokeAccessFn). See #2512.
         let accessFnSource: string | undefined;
-        if (afbRow.accessFnAssetUri) {
+        let rawSource = vctx.accessFnSourceCache?.get(fnCid);
+        if (rawSource === undefined && afbRow.accessFnAssetUri) {
           const rFetch = await vctx.storage.fetch(afbRow.accessFnAssetUri);
           if (rFetch.type === "fetch.ok") {
             // Collect stream to Uint8Array, decode to UTF-8
@@ -281,9 +287,15 @@ export const putDocEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqPutDoc>, 
               merged.set(chunk, offset);
               offset += chunk.length;
             }
-            const rawSource = new TextDecoder().decode(merged);
-            accessFnSource = extractExportSource(rawSource, afbRow.dbName) ?? rawSource;
+            rawSource = new TextDecoder().decode(merged);
+            vctx.accessFnSourceCache?.set(fnCid, rawSource);
           }
+        }
+        // extractExportSource is dbName-dependent (cheap, in-memory string work),
+        // so it runs per write against the cached raw source rather than caching
+        // the extracted result — the CID-keyed cache only elides the R2 fetch.
+        if (rawSource !== undefined) {
+          accessFnSource = extractExportSource(rawSource, afbRow.dbName) ?? rawSource;
         }
 
         // Build reduce from stored outputs for grant state

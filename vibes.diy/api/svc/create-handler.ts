@@ -73,6 +73,8 @@ export interface CreateHandlerParams<T extends VibesSqlite> {
     source?: string;
     adminMode?: boolean;
   }): Promise<AccessDescriptor | { forbidden: string }>;
+  // Per-DO cache of access.js source bytes keyed by CID. See VibesApiSQLCtx.
+  accessFnSourceCache?: Map<string, string>;
   // waitUntil?<T>(promise: Promise<T>): void;
 }
 
@@ -313,6 +315,7 @@ export async function createAppContext<T extends VibesSqlite>(
     registerUserSubscription: params.registerUserSubscription,
     deregisterUserSubscription: params.deregisterUserSubscription,
     invokeAccessFn: params.invokeAccessFn,
+    accessFnSourceCache: params.accessFnSourceCache,
   } satisfies VibesApiSQLCtx;
 
   return {
