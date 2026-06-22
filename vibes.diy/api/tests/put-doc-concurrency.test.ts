@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { ensureSuperThis } from "@fireproof/core-runtime";
 import { createTestDeviceCA } from "@fireproof/core-device-id";
 import { and, eq } from "drizzle-orm";
-import { allocateAndInsertRevision, docLockKey, SeqConflictError } from "@vibes.diy/api-svc";
+import { allocateAndInsertRevision, docLockKey, isRetryableConflict, SeqConflictError } from "@vibes.diy/api-svc";
 import { createVibeDiyTestCtx } from "./vibe-diy-test-ctx.js";
 
 // Regression + design coverage for issue #2506: concurrent allocations to the
@@ -101,5 +101,71 @@ describe("seq allocation concurrency (issue #2506)", { timeout: 20000 }, () => {
     expect(e).toBeInstanceOf(Error);
     expect(e.name).toBe("SeqConflictError");
     expect(e.currentHeadSeq).toBe(7);
+  });
+
+  it("classifies a REAL drizzle PK-violation error as retryable (not just message text)", async () => {
+    const { db, t } = await ctx();
+    const [owner, app, dbName, docId] = ["cls-owner", "cls-app", "cls", "d"];
+    const base = {
+      ownerHandle: owner,
+      appSlug: app,
+      dbName,
+      docId,
+      seq: 1,
+      userId: "u",
+      data: { n: 0 },
+      deleted: 0,
+      created: new Date().toISOString(),
+    };
+    await db.insert(t).values(base);
+    // Same PK again -> drizzle throws "Failed query: ..." with the real libsql
+    // constraint error on .cause; the classifier must see through the wrapper.
+    let caught: unknown;
+    try {
+      await db.insert(t).values(base);
+    } catch (err) {
+      caught = err;
+    }
+    expect(caught).toBeDefined();
+    expect(String((caught as { message?: string }).message)).toContain("Failed query"); // wrapper text has no "constraint"
+    expect(isRetryableConflict(caught)).toBe(true); // ...but the cause chain does
+  });
+
+  it("does NOT classify unrelated errors as retryable", () => {
+    expect(isRetryableConflict(new Error("connection refused"))).toBe(false);
+    expect(isRetryableConflict(new Error("syntax error at or near"))).toBe(false);
+    expect(isRetryableConflict(undefined)).toBe(false);
+  });
+
+  it("surfaces a typed SeqConflictError when every insert attempt conflicts", async () => {
+    const { db, flavour, t } = await ctx();
+    const conflictErr = Object.assign(new Error("Failed query: insert ..."), {
+      cause: Object.assign(new Error("UNIQUE constraint failed: AppDocuments.seq"), { code: "SQLITE_CONSTRAINT_PRIMARYKEY" }),
+    });
+    // Stub a db whose atomic insert always conflicts but whose head read works.
+    const stubDb = {
+      run: () => Promise.reject(conflictErr),
+      execute: () => Promise.reject(conflictErr),
+      select: db.select.bind(db),
+    } as unknown as typeof db;
+
+    await expect(
+      allocateAndInsertRevision({
+        db: stubDb,
+        flavour,
+        table: t,
+        row: {
+          ownerHandle: "x",
+          appSlug: "x",
+          dbName: "x",
+          docId: "x",
+          userId: "u",
+          data: {},
+          deleted: 0,
+          created: new Date().toISOString(),
+        },
+        maxAttempts: 2,
+      })
+    ).rejects.toBeInstanceOf(SeqConflictError);
   });
 });
