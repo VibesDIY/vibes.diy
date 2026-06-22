@@ -51,7 +51,7 @@ Both legacy DOs from the session split (`DocNotify`, `AccessFnDO`) were ultimate
 cli cross-script-bound prod's `DocNotify`, so prod could not `deleted_classes` it while cli's binding referenced it (10061). Sequence across two PRs:
 
 1. **cli unbind (deploy FIRST):** drop the cross-script `DOC_NOTIFY` binding from cli (#2297). Now nothing external references prod's class.
-2. **class deletion (deploy AFTER cli is live):** remove the local `DOC_NOTIFY` binding + append `deleted_classes = ["DocNotify"]` in every env (#2298). cli also needed its own `deleted_classes` for the dormant local class once the source was removed.
+2. **class deletion (deploy AFTER cli is live):** cli's cross-script binding was already dropped in step 1, so now remove the remaining **non-cli** local `DOC_NOTIFY` bindings and append `deleted_classes = ["DocNotify"]` in **all** env blocks (#2298). cli still needs its own `deleted_classes` entry for its now-dormant local class once the source is removed (otherwise the worker rejects the deploy for a missing exported class).
 
 This is the **reverse** of the usual prod-before-cli order — call it out in the deploy PR.
 
