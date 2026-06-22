@@ -266,15 +266,24 @@ One commit carries both the evidence images and the rewritten markdown; the raw 
 ```markdown
 <!-- qa-pr-triage-comment -->
 
-## QA: <PR title> — <verdict>
+<status emoji> **In plain terms:** <1–3 plain-English sentences a busy teammate can grasp in one glance — what the PR does, whether it works, and the single most important caveat or blocker, in plain words.>
+
+---
+
+## QA: <PR title> — <plain verdict>
 
 <one-sentence narrative: how the PR's change held up across desktop + mobile>
 
 **<x> P0 · <y> P1 · <z> P2** across desktop + mobile · [Full triage ↗](gist_url)
 ```
 
+- **The `In plain terms:` lead is the whole point of this comment — write it _last_, after the triage is finished, by distilling what you actually found.** Lead with the bottom line (does it work?), then the one caveat or blocker that matters most. Keep it to 1–3 sentences. Assume a software-developer reader, but strip out jargon, file paths, endpoint/host names, and severity codes (`P0`/`P1`) — all of that lives below the `---`. If the blocker is environmental (not the PR's fault), say so in plain words ("the AI model that builds apps is out of credits — a shared limit, not a bug in this PR"). **Start the line with a single status emoji** that matches the verdict below, so the bottom line registers before a word is read: ✅ pass · 🟡 pass-with-caveats · ❌ fail · ⛔ couldn't test / blocked.
+- `<plain verdict>` — translate the triage's `pr_verdict` into plain words; do **not** print the raw token in the heading:
+  - `pass` → **Looks good ✅**
+  - `pass-with-caveats` → **Works, with caveats 🟡**
+  - `fail` → **Broken — needs fixes ❌**
+  - `not tested` / blocked → **Couldn't test ⛔**
 - `<PR title>` comes from `gh pr view <N> --json title --jq .title`.
-- `<verdict>` is the triage's `pr_verdict` (`pass` / `fail` / `pass-with-caveats`).
 - `<x>/<y>/<z>` are the counts of P0/P1/P2 findings.
 - If Phase B was skipped, write `desktop only` instead of `across desktop + mobile` in both lines.
 
