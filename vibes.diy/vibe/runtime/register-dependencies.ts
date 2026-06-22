@@ -63,6 +63,7 @@ export interface VibeApp {
   readonly ownerHandle: string;
   readonly fsId: string;
   readonly adminMode?: boolean;
+  readonly accessFnBindings?: readonly { dbName: string; accessFnCid: string }[];
 }
 
 export interface VibeSandboxApiOptions {
