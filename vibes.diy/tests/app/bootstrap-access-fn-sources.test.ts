@@ -1,15 +1,25 @@
-import { describe, it, expect, afterEach } from "vitest";
-import { VibeSandboxApi, bootstrapAccessFnSources, getRegisteredAccessFnSources } from "@vibes.diy/vibe-runtime";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import {
+  __resetRegisteredAccessFnSourcesForTests,
+  bootstrapAccessFnSources,
+  getRegisteredAccessFnSources,
+  VibeSandboxApi,
+} from "@vibes.diy/vibe-runtime";
 
 describe("bootstrapAccessFnSources", () => {
   let capturedEvents: MessageEvent[] = [];
   let originalDispatch: typeof window.dispatchEvent;
+
+  beforeEach(() => {
+    __resetRegisteredAccessFnSourcesForTests();
+  });
 
   afterEach(() => {
     if (originalDispatch) {
       window.dispatchEvent = originalDispatch;
     }
     capturedEvents = [];
+    __resetRegisteredAccessFnSourcesForTests();
   });
 
   it("fetches and dispatches vibe.evt.accessFnSource for a single binding", async () => {

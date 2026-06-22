@@ -1,7 +1,14 @@
 import React from "react";
-import { describe, it, expect } from "vitest";
-import { render, waitFor } from "@testing-library/react";
-import { VibeContextProvider, useVibeContext, VibeSandboxApi, bootstrapAccessFnSources, type Vibe } from "@vibes.diy/vibe-runtime";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { cleanup, render, waitFor } from "@testing-library/react";
+import {
+  __resetRegisteredAccessFnSourcesForTests,
+  bootstrapAccessFnSources,
+  VibeContextProvider,
+  useVibeContext,
+  VibeSandboxApi,
+  type Vibe,
+} from "@vibes.diy/vibe-runtime";
 
 function Probe({ onCtx }: { onCtx: (ctx: ReturnType<typeof useVibeContext>) => void }) {
   const ctx = useVibeContext();
@@ -10,6 +17,14 @@ function Probe({ onCtx }: { onCtx: (ctx: ReturnType<typeof useVibeContext>) => v
 }
 
 describe("VibeContextProvider — accessFnSources cache", () => {
+  beforeEach(() => {
+    __resetRegisteredAccessFnSourcesForTests();
+  });
+
+  afterEach(() => {
+    cleanup();
+    __resetRegisteredAccessFnSourcesForTests();
+  });
   it("exposes mountParams.accessFnBindings on the context", () => {
     let captured: Vibe | undefined;
     render(
