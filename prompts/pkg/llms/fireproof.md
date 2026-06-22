@@ -433,7 +433,7 @@ export function announcements(doc, oldDoc, user, ctx) {
 }
 ```
 
-App.jsx — `useVibe().can` gates write surfaces; `access.hasChannel()` reflects display-only membership; `isOwner` gates management:
+App.jsx — `useVibe().can` gates every write surface (posts AND owner-only management); `access.hasChannel()` reflects display-only membership; `isOwner` is a display hint only:
 
 ```jsx
 import React from "react";
@@ -441,20 +441,20 @@ import { useFireproof } from "use-fireproof";
 import { useViewer, useVibe } from "use-vibes";
 
 export default function App() {
-  const { viewer, isOwner, isViewerPending, ViewerTag } = useViewer();
+  const { viewer, isViewerPending, ViewerTag } = useViewer();
   const { database, useLiveQuery, access } = useFireproof("announcements");
+  const { can } = useVibe("announcements");
 
   const { docs: posts } = useLiveQuery("type", { key: "post" });
   const [draft, setDraft] = React.useState("");
   const [channel, setChannel] = React.useState("general");
-  // Build the candidate from the doc you'll actually write — the access function
-  // checks authorHandle and channel, so a bare { type: "post" } would be denied
-  // ("not author") and hide the form even from users who can post.
-  const canPost = useVibe("announcements").can.create({
-    type: "post",
-    channel,
-    authorHandle: viewer?.userHandle,
-  });
+  // Build each candidate from the doc you'll actually write — the access function
+  // checks authorHandle/channel (and owner-only for roleGrant), so a bare partial
+  // would be denied and hide the control even from users who can act.
+  const canPost = can.create({ type: "post", channel, authorHandle: viewer?.userHandle });
+  // Owner-only management gates on can.* too — the access fn throws "owner only"
+  // for non-owners, so this verdict is false for everyone but the owner.
+  const canGrant = can.create({ type: "roleGrant", role: "poster", userHandle: "newUser" });
 
   if (isViewerPending) return null;
 
@@ -489,8 +489,8 @@ export default function App() {
         viewer && <p style={{ color: "var(--muted, #888)" }}>{canPost.reason}</p>
       )}
 
-      {/* owner-only management */}
-      {isOwner && (
+      {/* owner-only management — gated on can.*, not isOwner */}
+      {canGrant.ok && (
         <button onClick={() => database.put({ type: "roleGrant", role: "poster", userHandle: "newUser" })}>
           Grant poster role
         </button>
@@ -500,7 +500,7 @@ export default function App() {
         <div key={p._id}>
           <ViewerTag userHandle={p.authorHandle} />
           <p>{p.body}</p>
-          {isOwner && <button onClick={() => database.del(p._id)}>Delete</button>}
+          {can.delete(p).ok && <button onClick={() => database.del(p._id)}>Delete</button>}
         </div>
       ))}
     </div>
@@ -508,7 +508,7 @@ export default function App() {
 }
 ```
 
-The pattern: `useVibe().can` gates write surfaces (running the same access function the server uses), `access.hasChannel()` reflects display-only membership, `isOwner` gates management. The access function is the server-side authority — `useVibe().can` is how the UI reflects its decisions for writes.
+The pattern: `useVibe().can` gates every write surface — including owner-only management, which the access function enforces via `if (!user.isOwner) throw` so `can.create({ type: "roleGrant", … })` is false for non-owners. `access.hasChannel()` reflects display-only membership, and `isOwner` is a display hint only, never the write gate. The access function is the server-side authority — `useVibe().can` is how the UI reflects its decisions for writes.
 
 ### Example: Channel board with restricted channels
 
