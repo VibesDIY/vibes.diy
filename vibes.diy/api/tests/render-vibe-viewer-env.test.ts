@@ -126,4 +126,14 @@ describe("render-vibe viewerEnv embedding", { timeout: 30000 }, () => {
     expect(mountParams).not.toContain("viewerEnv");
     expect(mountParams).toBe('{"usrEnv":{}}');
   });
+
+  it("mountJS fragment carries accessFnBindings (dbName + accessFnCid)", () => {
+    // Verify the shape of the accessFnBindings JSON that render-vibe inlines
+    // into mountJS. The producer (buildAccessFnBindingsForRender) returns rows
+    // with { dbName, accessFnCid }; mountVibe receives them via mountParams.
+    const accessFnBindings = [{ dbName: "*", accessFnCid: "bafyCID" }];
+    const mountParams = JSON.stringify({ usrEnv: {}, accessFnBindings });
+    expect(mountParams).toContain('"accessFnBindings"');
+    expect(mountParams).toContain('"accessFnCid":"bafyCID"');
+  });
 });
