@@ -1,11 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach } from "vitest";
-import {
-  armGrace,
-  isGraceDegraded,
-  subscribeGrace,
-  setGraceMsForTest,
-  __resetGraceForTest,
-} from "@vibes.diy/vibe-runtime";
+import { armGrace, isGraceDegraded, subscribeGrace, setGraceMsForTest, __resetGraceForTest } from "@vibes.diy/vibe-runtime";
 
 beforeEach(() => {
   __resetGraceForTest();

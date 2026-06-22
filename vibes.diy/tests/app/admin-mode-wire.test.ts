@@ -35,11 +35,7 @@ describe("adminMode on identity wire types", () => {
   // would be an ignored extra), so this case is what actually fails if the
   // type addition is reverted.
   it("rejects a non-boolean adminMode", () => {
-    expect(
-      isEvtVibeViewerChanged({ type: "vibe.evt.viewerChanged", viewer: null, access: "none", adminMode: "yes" })
-    ).toBe(false);
-    expect(
-      isResVibeWhoAmI({ type: "vibe.res.whoAmI", tid: "t1", viewer: null, access: "none", adminMode: 1 })
-    ).toBe(false);
+    expect(isEvtVibeViewerChanged({ type: "vibe.evt.viewerChanged", viewer: null, access: "none", adminMode: "yes" })).toBe(false);
+    expect(isResVibeWhoAmI({ type: "vibe.res.whoAmI", tid: "t1", viewer: null, access: "none", adminMode: 1 })).toBe(false);
   });
 });
