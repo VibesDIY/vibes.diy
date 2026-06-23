@@ -48,7 +48,7 @@ const screenshotCache = new Map<string, MetaScreenShot | null>();
 // null means fetched but the app has no display name; absent means not yet fetched.
 const ownerDisplayNameCache = new Map<string, string | null>();
 
-function screenshotSrc(shot: MetaScreenShot): string {
+export function screenshotSrc(shot: MetaScreenShot): string {
   return `/assets/cid/?url=${encodeURIComponent(shot.assetUrl)}&mime=${encodeURIComponent(shot.mime)}`;
 }
 

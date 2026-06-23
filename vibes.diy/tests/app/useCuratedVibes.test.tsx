@@ -15,9 +15,13 @@ interface OkAppArgs {
   grant: string;
   title?: string;
   icon?: { cid: string; mime: string };
+  screenshot?: { assetUrl: string; mime: string };
 }
 
-function okApp({ ownerHandle, appSlug, grant, title, icon }: OkAppArgs) {
+function okApp({ ownerHandle, appSlug, grant, title, icon, screenshot }: OkAppArgs) {
+  const meta: unknown[] = [];
+  if (title) meta.push({ type: "title", title });
+  if (screenshot) meta.push({ type: "screen-shot-ref", assetUrl: screenshot.assetUrl, mime: screenshot.mime });
   return {
     isOk: () => true,
     isErr: () => false,
@@ -27,7 +31,7 @@ function okApp({ ownerHandle, appSlug, grant, title, icon }: OkAppArgs) {
       appSlug,
       grant,
       error: undefined,
-      meta: title ? [{ type: "title", title }] : [],
+      meta,
       ...(icon ? { icon } : {}),
     }),
     Err: () => ({ message: "unexpected error" }),
@@ -59,6 +63,7 @@ describe("useCuratedVibes", () => {
           grant: "public-access",
           title: "Melodle",
           icon: { cid: "sql://icon", mime: "image/png" },
+          screenshot: { assetUrl: "sql://shot", mime: "image/png" },
         });
       }
       if (appSlug === "emoji-connections") {
@@ -84,6 +89,7 @@ describe("useCuratedVibes", () => {
       appSlug: "melodle",
       title: "Melodle",
       icon: { cid: "sql://icon", mime: "image/png" },
+      screenshot: { type: "screen-shot-ref", assetUrl: "sql://shot", mime: "image/png" },
     });
   });
 

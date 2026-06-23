@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { isMetaTitle } from "@vibes.diy/api-types";
+import { isMetaTitle, isMetaScreenShot, type MetaScreenShot } from "@vibes.diy/api-types";
 import type { AppItem } from "../components/MyAppsSection.js";
 import { useVibesDiy } from "../vibes-diy-provider.js";
 import curatedData from "../data/curated-vibes.json" with { type: "json" };
@@ -18,9 +18,14 @@ interface CuratedConfig {
   groups: CuratedGroupConfig[];
 }
 
+// The showcase cards render the app screenshot (with the icon overlapping the
+// top-left corner), so each curated item carries the live screenshot alongside
+// the fields a normal AppItem has.
+export type CuratedAppItem = AppItem & { screenshot?: MetaScreenShot };
+
 export interface CuratedGroup {
   category: string;
-  items: AppItem[];
+  items: CuratedAppItem[];
 }
 
 export interface UseCuratedVibes {
@@ -55,29 +60,31 @@ export function useCuratedVibes(): UseCuratedVibes {
       const resolvedGroups = await Promise.all(
         config.groups.map(async (group) => {
           const items = await Promise.all(
-            group.vibes.map(async (ref): Promise<AppItem | null> => {
+            group.vibes.map(async (ref): Promise<CuratedAppItem | null> => {
               // A single bad app must never take down the whole showcase, so any
               // unexpected throw (network, missing app) just drops that card.
               try {
-                // summary: this path only reads grant/title/icon, so skip the
-                // heavy fileSystem/env payloads.
+                // summary: this path only reads grant/title/icon/screenshot (all
+                // in meta), so skip the heavy fileSystem/env payloads.
                 const res = await sharedApi.getAppByFsId({ ownerHandle: ref.ownerHandle, appSlug: ref.appSlug, summary: true });
                 if (res.isErr()) return null;
                 const app = res.Ok();
                 if (app.error || !isViewable(app.grant)) return null;
                 const title = app.meta.find(isMetaTitle)?.title ?? app.appSlug;
+                const screenshot = app.meta.find(isMetaScreenShot);
                 return {
                   ownerHandle: app.ownerHandle,
                   appSlug: app.appSlug,
                   title,
                   ...(app.icon ? { icon: app.icon } : {}),
+                  ...(screenshot ? { screenshot } : {}),
                 };
               } catch {
                 return null;
               }
             })
           );
-          return { category: group.category, items: items.filter((i): i is AppItem => i !== null) };
+          return { category: group.category, items: items.filter((i): i is CuratedAppItem => i !== null) };
         })
       );
 
