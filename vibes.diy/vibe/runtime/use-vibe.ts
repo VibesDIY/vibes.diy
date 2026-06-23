@@ -68,7 +68,11 @@ export function useVibe(dbName: string): UseVibeResult {
     () => (env?.viewer ? { ...env.viewer, isOwner: env.isOwner ?? false } : null),
     [env?.viewer, env?.isOwner]
   );
-  const grants: AccessGrants = env?.grants?.[dbName] ?? EMPTY_GRANTS;
+  // Fall back to the wildcard `*` entry when this db has no concrete grants yet
+  // (a fresh vibe under a default-export access fn): the server emits a
+  // seed-only grants["*"] carrying the owner's seed roles, so the owner's first
+  // create/edit is predicted correctly. A concrete grants[dbName] always wins.
+  const grants: AccessGrants = env?.grants?.[dbName] ?? env?.grants?.["*"] ?? EMPTY_GRANTS;
   const adminMode = env?.adminMode ?? false;
 
   const can = useMemo(() => {
