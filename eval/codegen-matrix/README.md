@@ -40,6 +40,10 @@ adds `cell.score.json`; `report` joins them.
 ## Notes
 
 - Runs are sequential to avoid rate-limit noise in results.
+- **Generate is retried up to 3 attempts per cell** (each in its own clean cwd).
+  The first success wins; only after it fails more than twice is the cell a
+  model failure (`exitState: "generate-failed"`). The attempt count is recorded
+  on `cell.json` and in `index.jsonl`.
 - The rubric's rules each declare a `promptAnchor`; a vitest drift guard fails
   if an anchor stops appearing in `prompts/pkg/system-prompt.md`, so a reworded
   system prompt can't silently invalidate adherence scores.

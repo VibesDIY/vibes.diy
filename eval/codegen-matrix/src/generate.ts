@@ -56,6 +56,65 @@ function subdirs(dir: string): string[] {
   });
 }
 
+/** Max generate attempts per cell: a failure is retried, and only after it
+ * fails more than twice (all 3 attempts fail) is the cell a model failure. */
+export const MAX_GENERATE_ATTEMPTS = 3;
+
+/** Outcome of a single generate attempt. */
+export interface AttemptResult {
+  readonly status: number | null;
+  readonly appSlug: string | undefined;
+  readonly directory: string;
+  readonly latencyMs: number;
+  readonly stderrTail: string;
+}
+
+/** Aggregate outcome of a cell after retries. */
+export interface CellOutcome {
+  readonly ok: boolean;
+  readonly attempts: number;
+  readonly appSlug: string;
+  readonly directory: string;
+  readonly latencyMs: number;
+  readonly stderrTail: string;
+}
+
+/**
+ * Run `runOnce` until an attempt succeeds (exit 0 + a discovered appSlug), up to
+ * `maxAttempts`. A generate failure is retried; only after it fails more than
+ * twice (all attempts fail) does the cell become a model failure. On success
+ * returns that attempt's metrics; on giving up, the last failed attempt's. Pure
+ * (the per-attempt side effects live in the injected `runOnce`) so it's testable
+ * without spawning the CLI.
+ */
+export function runWithRetries(
+  runOnce: (attempt: number) => AttemptResult,
+  maxAttempts: number = MAX_GENERATE_ATTEMPTS
+): CellOutcome {
+  let last: AttemptResult = { status: null, appSlug: undefined, directory: "", latencyMs: 0, stderrTail: "" };
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    last = runOnce(attempt);
+    if (last.status === 0 && last.appSlug !== undefined) {
+      return {
+        ok: true,
+        attempts: attempt,
+        appSlug: last.appSlug,
+        directory: last.directory,
+        latencyMs: last.latencyMs,
+        stderrTail: last.stderrTail,
+      };
+    }
+  }
+  return {
+    ok: false,
+    attempts: maxAttempts,
+    appSlug: last.appSlug ?? "",
+    directory: last.directory,
+    latencyMs: last.latencyMs,
+    stderrTail: last.stderrTail,
+  };
+}
+
 function runCell(args: {
   readonly cfg: MatrixConfig;
   readonly model: ModelEntry;
@@ -73,34 +132,47 @@ function runCell(args: {
     ...buildGenerateArgs({ model: model.id, handle: cfg.handle, apiUrl: cfg.apiUrl, prompt: prompt.prompt }),
   ];
 
-  const t0 = Date.now();
-  const res = spawnSync(cmd, cliArgs, { cwd: cellDir, encoding: "utf-8", maxBuffer: 64 * 1024 * 1024 });
-  const latencyMs = Date.now() - t0;
+  // Each attempt runs in its own empty cwd so appSlug discovery stays
+  // unambiguous (sole subdir = appSlug) and failed attempts are preserved.
+  const outcome = runWithRetries((attempt) => {
+    const attemptDir = join(cellDir, `attempt-${attempt}`);
+    mkdirSync(attemptDir, { recursive: true });
+    const t0 = Date.now();
+    const res = spawnSync(cmd, cliArgs, { cwd: attemptDir, encoding: "utf-8", maxBuffer: 64 * 1024 * 1024 });
+    const latencyMs = Date.now() - t0;
+    const appSlug = discoverAppSlug(subdirs(attemptDir));
+    return {
+      status: res.status,
+      appSlug,
+      directory: appSlug ? join(attemptDir, appSlug) : "",
+      latencyMs,
+      stderrTail: (res.stderr ?? "").split("\n").slice(-20).join("\n"),
+    };
+  });
 
-  const created = subdirs(cellDir);
-  const appSlug = discoverAppSlug(created);
-  const stderrTail = (res.stderr ?? "").split("\n").slice(-20).join("\n");
-  const exitState: CellJson["exitState"] = res.status === 0 && appSlug !== undefined ? "ok" : "generate-failed";
-
+  const exitState: CellJson["exitState"] = outcome.ok ? "ok" : "generate-failed";
   const cell: CellJson = {
     promptId: prompt.id,
     model: model.id,
     class: model.class,
     tier: model.tier,
     rep,
-    appSlug: appSlug ?? "",
+    appSlug: outcome.appSlug,
     ownerHandle: cfg.handle,
-    directory: appSlug ? join(cellDir, appSlug) : "",
-    latencyMs,
+    directory: outcome.directory,
+    latencyMs: outcome.latencyMs,
     exitState,
-    stderrTail,
+    attempts: outcome.attempts,
+    stderrTail: outcome.stderrTail,
     apiUrl: cfg.apiUrl,
     runtimeHostBase: cfg.runtimeHostBase,
     cliVersion,
     promptHash: promptHash(prompt.prompt),
   };
   writeCellJson(cellDir, cell);
-  stderr.write(`  ${prompt.id} ${model.id} r${rep}: ${exitState} ${latencyMs}ms ${appSlug ?? "(no app)"}\n`);
+  stderr.write(
+    `  ${prompt.id} ${model.id} r${rep}: ${exitState} after ${outcome.attempts} attempt(s) ${outcome.latencyMs}ms ${outcome.appSlug || "(no app)"}\n`
+  );
 }
 
 function parseFlag(flag: string): string | undefined {

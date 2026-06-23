@@ -141,16 +141,19 @@ instrumentation.
 - _Deterministic rubric_ (`src/rubric.ts`) over the generated files. Each rule
   is a boolean derived statically from the codegen system prompt
   (`prompts/pkg/system-prompt.md`):
-  - `App.jsx` present and contains `export default function App(`
-  - ES module imports at top; no bare `React.`/library globals
-  - a classNames/`c` object is used and no raw `bg-[#…]`/`text-[#…]` bracket
-    colors appear directly in JSX
-  - no component (function returning JSX) defined inside `App`
-  - `callAI(...)` used with a `{ schema: { properties } }` shape when the prompt
-    calls for AI
-  - no emoji codepoints in the UI (inline SVG only)
-  - if an access function is present it is a separate `access.js`, never inline
-    in `App.jsx`
+  The five rules shipped in `src/rubric.ts` (each with a `promptAnchor`):
+  - `export-default-app` — `App.jsx` contains `export default function App(`
+  - `es-imports-no-globals` — ES `import` at top; no `window.React` global
+  - `no-raw-bracket-colors` — no raw `bg-[#…]`/`text-[#…]`/`border-[#…]` bracket
+    color directly inside a `className` (must go through the classNames object)
+  - `no-emoji` — no `\p{Extended_Pictographic}` codepoints (inline SVG only)
+  - `access-in-separate-file` — `App.jsx` declares no access function (access
+    logic lives only in `access.js`)
+
+  (Two further heuristics considered during design — "no component defined
+  inside `App`" and "callAI uses a `{ schema: { properties } }` shape" — are
+  deliberately deferred; they're noisier to detect statically and can be added
+  as rules later without changing the harness.)
 
   Each rule contributes to a rubric score `passed / total`. The rule set lives
   in one file so it tracks the system prompt as that evolves.
@@ -246,11 +249,18 @@ eval/codegen-matrix/
 
 ## Error handling
 
-- A `generate` non-zero exit or no created `<appSlug>/` directory → `cell.json`
-  is written with `exitState: "generate-failed"` and `stderrTail`, but no
-  `cell.score.json`. Stage 4 joins on `cell.json`, so the failed cell still
-  appears in the report with empty score columns (a model that can't produce
-  output is signal).
+- **Generate is retried.** A generate failure (non-zero exit or no created
+  `<appSlug>/` directory) is retried, each attempt in its own clean cwd. Only
+  after it fails more than twice (all `MAX_GENERATE_ATTEMPTS` = 3 attempts fail)
+  is the cell a model failure → `cell.json` with `exitState: "generate-failed"`,
+  the last attempt's `stderrTail`, and `attempts: 3`, and no `cell.score.json`.
+  The first successful attempt wins (`exitState: "ok"`, `attempts` = that try's
+  number, `latencyMs` = that attempt's time so retries don't inflate the speed
+  signal). `attempts` is recorded on `cell.json` and surfaced in `index.jsonl`.
+  Stage 4 joins on `cell.json`, so a failed cell still appears in the report
+  with empty score columns (a model that can't produce output is signal).
+  (This retries _any_ failure; narrowing to disconnect-signature-only retries is
+  a possible future refinement.)
 - Judge transport failure → that score recorded as `null`; other scores still
   land.
 - Screenshot timeout → `design.available: false`; cell otherwise scored.

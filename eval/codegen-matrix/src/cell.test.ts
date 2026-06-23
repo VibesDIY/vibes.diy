@@ -51,6 +51,7 @@ describe("cell.json round-trip", () => {
       directory: "/some/dir",
       latencyMs: 4200,
       exitState: "ok",
+      attempts: 1,
       stderrTail: "",
       apiUrl: "https://vibes.diy/api",
       runtimeHostBase: "vibes.diy",
