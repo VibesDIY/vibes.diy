@@ -49,6 +49,22 @@ The `pkg` tags publish the CLI (`vibes-diy` / `use-vibes` npm packages) and rela
 
 When you tag the **same commit at the same time** across `vibes-diy@p*`, `vibes-diy@c*`, and `pkg@p*`, use the **same `X.Y.Z`** for all three (e.g. `vibes-diy@p2.5.25` + `vibes-diy@c2.5.25` + `pkg@p2.5.25`) — even though the three streams have drifted to different numbers historically. Pick the **highest** next-patch across the three streams and apply it to all of them. Skipping numbers in a stream is fine — tags are immutable and version-ordering only needs to stay monotonic within each stream. A shared number makes a coordinated deploy legible at a glance ("everything's on 2.5.25") and trivial to cross-reference later. Only fall back to per-stream numbering when the streams genuinely ship different commits at different times.
 
+## `ship@` one-tag fan-out (`ship-fanout.yaml`)
+
+Shipping a release normally means cutting three tags at the same commit (`vibes-diy@p<ver>`, `vibes-diy@c<ver>`, `pkg@p<ver>`). The `ship@<ver>` meta-tag collapses that to **one**:
+
+| You create  | Fans out to                                            |
+| ----------- | ------------------------------------------------------ |
+| `ship@1.2.3` | `vibes-diy@p1.2.3` + `vibes-diy@c1.2.3` + `pkg@p1.2.3` |
+
+`ship-fanout.yaml` triggers on `push: tags: ['ship@*']`, validates the version is bare semver, creates the three canonical tags **at the same commit the `ship@` tag points to**, and pushes them. The existing `vibes-diy-deploy` / `package-deploy` workflows then run unchanged — so the per-stream tags this runbook's pending-changes tooling and rollback depend on still exist. The `ship@` tag itself triggers nothing else.
+
+This is the easiest path from a phone: create `ship@<ver>` once via the GitHub **Releases** UI (target `main`), and all three deploys go.
+
+⚠️ **Requires the `DEPLOY_TAG_PAT` secret.** The fan-out pushes the child tags with a fine-grained PAT (Contents: read/write on this repo), **not** the default `GITHUB_TOKEN`. GitHub suppresses workflow runs for events created by `GITHUB_TOKEN`, so a `GITHUB_TOKEN` push would create the child tags but the deploys would silently never fire. The workflow hard-fails up front if `DEPLOY_TAG_PAT` is missing rather than half-shipping. A GitHub App token (`actions/create-github-app-token`) is a more auditable alternative if you'd rather not maintain a long-lived PAT.
+
+The child tags remain immutable: if any of the three already exist, the fan-out aborts — bump the `ship@` version instead of moving a tag.
+
 ## Tagging procedure
 
 ### Cloudflare deploys (`vibes-diy@*`)
