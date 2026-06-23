@@ -45,14 +45,15 @@ export function FlagToggle({
 }) {
   // A real switch (state shown by knob position) rather than a status word next
   // to an action pill — the old "disabled [Enable]" pairing read ambiguously as
-  // either the current state or the action that flips it (#2235). The explicit
-  // action lives in aria-label for assistive tech; sighted users read position.
+  // either the current state or the action that flips it (#2235). Per ARIA/APG
+  // the accessible name stays constant and on/off is carried by aria-checked, so
+  // screen readers announce one stable control rather than two different ones.
   return (
     <button
       type="button"
       role="switch"
       aria-checked={enabled}
-      aria-label={`${enabled ? "Disable" : "Enable"} ${label}`}
+      aria-label={label}
       disabled={toggling}
       onClick={onToggle}
       className="flex items-center gap-2 disabled:opacity-50"
