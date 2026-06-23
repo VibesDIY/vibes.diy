@@ -521,10 +521,11 @@ export default function App() {
 
 The pattern: `useVibe().can` gates every write surface — including owner-only management, which the access function enforces via `if (!user.isOwner) throw` so `can.create({ type: "roleGrant", … })` is false for non-owners. `access.hasChannel()` reflects display-only membership, and `isOwner` is a display hint only, never the write gate. The access function is the server-side authority — `useVibe().can` is how the UI reflects its decisions for writes.
 
-**Owner-management panels (appoint/revoke moderators, grant/revoke roles) gate on `can.*`, not `isOwner`.** It's tempting to wrap an admin panel in `{isOwner && <ModeratorPanel />}` and have its buttons call `database.put`/`database.del` directly — it works, because the access function still throws "owner only" server-side. But `isOwner` is the same display hint as everywhere else: use it to *show* the panel if you like, then gate each mutating control on the verdict from the doc you'll actually write — appoint on `can.create({ type: "modGrant", role: "moderator", userHandle }).ok`, revoke on `can.delete(grantDoc).ok` — and render `.reason` when denied. That keeps the enabled state and the denial message coming from `access.js` (which may later allow more than just the owner — a delegated admin role, say), instead of drifting from it.
+**Owner-management panels (appoint/revoke moderators, grant/revoke roles) gate on `can.*`, not `isOwner`.** It's tempting to wrap an admin panel in `{isOwner && <ModeratorPanel />}` and have its buttons call `database.put`/`database.del` directly. Don't let `isOwner` be what decides a write — it's the same display hint as everywhere else. Gate each mutating control on the verdict from the doc you'll actually write — appoint on `can.create({ type: "modGrant", role: "moderator", userHandle }).ok`, revoke on `can.delete(grantDoc).ok` — and render `.reason` when denied. `can.*` runs the app's own `access.js` to produce the verdict, so the control's enabled state and message track what the access function decides and stay correct as it grows beyond owner-only (a delegated admin role, say). Gate the panel's *visibility* on those same verdicts too, not `isOwner` alone — otherwise a delegated admin the access function now allows never reaches the controls or their reason.
 
 ```jsx
-// Don't: visibility AND the write both keyed off isOwner, write is ungated
+// Don't: isOwner decides visibility AND the writes are ungated — a non-owner the
+// access function would allow never reaches the controls, and isOwner drifts from access.js
 {isOwner && (
   <ModeratorPanel>
     <button onClick={() => database.put({ type: "modGrant", role: "moderator", userHandle })}>Appoint</button>
@@ -532,14 +533,18 @@ The pattern: `useVibe().can` gates every write surface — including owner-only 
   </ModeratorPanel>
 )}
 
-// Do: isOwner may show the panel, but can.* gates each write and supplies the reason
-{isOwner && (
+// Do: can.* decides visibility AND gates each write, and supplies the denial reason
+const canAppoint = can.create({ type: "modGrant", role: "moderator", userHandle });
+const canRevoke = can.delete(grantDoc);
+{(canAppoint.ok || canRevoke.ok) && (
   <ModeratorPanel>
-    {can.create({ type: "modGrant", role: "moderator", userHandle }).ok && (
+    {canAppoint.ok && (
       <button onClick={() => database.put({ type: "modGrant", role: "moderator", userHandle })}>Appoint</button>
     )}
-    {can.delete(grantDoc).ok && (
+    {canRevoke.ok ? (
       <button onClick={() => database.del(grantDoc._id)}>Revoke</button>
+    ) : (
+      <p>{canRevoke.reason}</p>
     )}
   </ModeratorPanel>
 )}
