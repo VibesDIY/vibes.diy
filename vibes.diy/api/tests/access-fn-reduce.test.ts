@@ -150,7 +150,7 @@ describe("seedOwnerGrants", () => {
     expect(gr.hasRole("garden-gnome", RESERVED_OWNER_ROLE)).toBe(true);
   });
 
-  it("survives a rebuild triggered by a later real doc (stored as a contribution, not mutated)", () => {
+  it("survives a rebuild triggered by a later real doc (stored outside docContributions)", () => {
     const gr = new GrantReduce();
     seedOwnerGrants(gr, "garden-gnome", ["editor"]);
     // A later doc UPDATE forces a full rebuild from docContributions.
@@ -161,6 +161,23 @@ describe("seedOwnerGrants", () => {
     expect(gr.hasRole("garden-gnome", "editor")).toBe(true);
     expect(gr.hasRole("garden-gnome", RESERVED_OWNER_ROLE)).toBe(true);
     expect(gr.resolveEffectiveChannels("alice")).toEqual(new Set(["list", "extra"]));
+  });
+
+  it("does not collide with a user doc whose _id equals the old reserved seed key", () => {
+    const gr = new GrantReduce();
+    seedOwnerGrants(gr, "garden-gnome", ["editor"]);
+    // A real doc could carry any explicit _id, including the former seed key.
+    // The seed lives outside docContributions, so neither clobbers the other.
+    gr.addDoc("__vibes_owner_seed__", extractContribution({ grant: { users: { alice: ["list"] } } }));
+
+    expect(gr.hasRole("garden-gnome", "editor")).toBe(true);
+    expect(gr.hasRole("garden-gnome", RESERVED_OWNER_ROLE)).toBe(true);
+    expect(gr.resolveEffectiveChannels("alice")).toEqual(new Set(["list"]));
+
+    // Removing that real doc must not disturb the seed.
+    gr.removeDoc("__vibes_owner_seed__");
+    expect(gr.hasRole("garden-gnome", "editor")).toBe(true);
+    expect(gr.resolveEffectiveChannels("alice")).toEqual(new Set());
   });
 
   it("unions with role-channel grants so the owner resolves the role's channels", () => {
