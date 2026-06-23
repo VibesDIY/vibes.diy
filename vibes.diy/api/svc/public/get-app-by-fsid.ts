@@ -367,11 +367,16 @@ export const getAppByFsIdEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqGet
         titleStr !== undefined && baseMeta.some((m) => m.type === "title") === false
           ? [...baseMeta, { type: "title", title: titleStr }]
           : baseMeta;
+      // The active icon is already projected onto settings.entry.settings.icon
+      // (head version cid+mime); pass it through so callers get the icon without
+      // a separate authed list-recent-vibes round-trip.
+      const icon = settings.entry.settings.icon;
       await ctx.send.send(ctx, {
         type: "vibes.diy.res-get-app-by-fsid",
         appSlug: app.appSlug,
         ownerHandle: app.ownerHandle,
         ...(ownerDisplayName ? { ownerDisplayName } : {}),
+        ...(icon ? { icon } : {}),
         fsId: app.fsId,
         grant,
         mode: app.mode as "production" | "dev",

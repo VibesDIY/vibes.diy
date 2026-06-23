@@ -52,7 +52,7 @@ function screenshotSrc(shot: MetaScreenShot): string {
   return `/assets/cid/?url=${encodeURIComponent(shot.assetUrl)}&mime=${encodeURIComponent(shot.mime)}`;
 }
 
-type AppItem = Pick<ResRecentVibesItem, "ownerHandle" | "appSlug" | "title" | "icon">;
+export type AppItem = Pick<ResRecentVibesItem, "ownerHandle" | "appSlug" | "title" | "icon">;
 
 interface MyAppsSectionProps {
   isMobile: boolean;
@@ -169,7 +169,7 @@ interface AppIconCardProps {
   onOpenInfo: () => void;
 }
 
-function AppIconCard({ item, appHostBaseUrl, isMobile, index, onOpenInfo }: AppIconCardProps) {
+export function AppIconCard({ item, appHostBaseUrl, isMobile, index, onOpenInfo }: AppIconCardProps) {
   const label = item.title ?? item.appSlug;
   const iconUrl = item.icon ? cidAssetUrl(item.icon.cid, item.icon.mime, appHostBaseUrl) : undefined;
   const iconSize = isMobile ? 64 : 100;

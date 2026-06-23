@@ -126,6 +126,10 @@ export const resGetAppByFsId = type({
   appSlug: "string",
   ownerHandle: "string",
   "ownerDisplayName?": "string",
+  // Content-addressed app icon (head version of the settings ActiveIcon),
+  // surfaced so non-owner views (e.g. the curated homepage showcase) can render
+  // the same icon the owner sees in "My Apps" without a separate authed call.
+  "icon?": type({ cid: "string", mime: "string" }),
   "fsId?": "string",
   mode: "'production'|'dev'",
   grant:
