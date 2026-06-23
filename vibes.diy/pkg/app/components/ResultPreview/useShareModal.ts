@@ -90,6 +90,14 @@ export function useShareModal({ ownerHandle, appSlug, fsId, chatApi, sharedApi }
   // handlePublish via setProductionFsId) or when the modal is reopened.
   useEffect(() => {
     let cancelled = false;
+    // This hook persists across (ownerHandle, appSlug) changes when the user
+    // navigates between vibes on the /chat/* and /vibe/* routes. Since we no
+    // longer clear publishedUrl on modal-open, clear the eager published state
+    // here whenever the params change so a fast Share-open can't surface or copy
+    // the previous vibe's URL before this fetch resolves for the new vibe.
+    setIsPublished(false);
+    setProductionFsId(undefined);
+    setPublishedUrl(undefined);
     sharedApi
       .getAppByFsId({ appSlug, ownerHandle })
       .then((res) => {
