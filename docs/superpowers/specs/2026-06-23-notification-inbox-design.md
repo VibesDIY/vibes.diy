@@ -31,20 +31,32 @@ are offline is lost forever.
   (`DirectChannelReads` watermark) — derived from DM _content_ in Firefly, not from
   the notification system.
 
-## Core principle: a notification is a pointer, not content
+## Core principle: a notification is self-contained
 
-A notification is a small, durable **signal** that references content living
-elsewhere. The content — DM message bodies, comment docs, the remixed app — stays
-in its own vibe / Firefly db, gated by that db's access rules (see #2290, which
-moves DM gating onto an access function). The inbox renders the pointer and
-deep-links into the content.
+Each notification row carries **everything the basic inbox list needs to render
+itself** — a human-readable message captured at emit time — so the default list
+view reads straight from the `Notifications` table with **no joins and no second
+query**. The notification content lives on the table.
+
+**Linking to another persisted object is the special case.** Some types also
+reference a separate persisted object — a DM thread, a remixed app, a vibe — via an
+optional `targetRef`. The **type-specific renderer MAY do a second query** to
+hydrate richer or live detail (current vibe title, a screenshot, a thread
+preview), but the base list never depends on it; if the linked object is gone or
+inaccessible, the row still renders from its own stored content.
 
 Consequences:
 
-- The notifications store **never holds message/comment bodies** — at most a short
-  `snippet` for preview. A "you have a new DM" notification is **not** the DM.
-- This keeps #2544 from overlapping the "DMs / content are vibes + Firefly"
-  direction. Notifications are platform signal infrastructure; content is vibes.
+- The row stores its own rendered `body` (e.g. "@alice remixed your vibe Foo", or a
+  short DM snippet) — that is the source of truth for the list view.
+- It does **not** become the source of truth for the linked object's full content:
+  DM message bodies, comment docs, and app source still live in their vibe / Firefly
+  db, gated by that db's access rules (see #2290). The notification holds a snapshot
+  message + an optional pointer, not the canonical record. A "new DM" notification
+  is still not the DM thread itself.
+- So the inbox is self-contained and fast by default, and progressive-enhancement
+  hydration is opt-in per type — without overlapping the "content is vibes + Firefly"
+  direction.
 
 ## Substrate decision
 
@@ -57,23 +69,25 @@ which deliberately avoided schema for one stream).
 
 ### Unit 1 — `Notifications` table (`api/sql/vibes-diy-api-schema-{sqlite,pg}.ts`)
 
-| Column             | Type        | Notes                                                                                                                                                    |
-| ------------------ | ----------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `id`               | text PK     | ULID — sortable by creation                                                                                                                              |
-| `userId`           | text        | recipient (Clerk id)                                                                                                                                     |
-| `notificationType` | text        | `vibe-remixed` \| `comment-posted` \| `vibe-published` \| `dm-received` \| `request-approved` \| `request-revoked` \| `build-complete` \| `build-failed` |
-| `ownerHandle`      | text        | subject vibe owner (usually the recipient)                                                                                                               |
-| `appSlug`          | text        | subject vibe                                                                                                                                             |
-| `actorHandle`      | text (null) | who caused it (remixer, commenter, sender)                                                                                                               |
-| `actorUserId`      | text (null) | actor Clerk id                                                                                                                                           |
-| `targetRef`        | JSON (null) | pointer payload, e.g. `{ remixOwnerHandle, remixAppSlug }` or `{ threadHandle, docId }`                                                                  |
-| `snippet`          | text (null) | short preview only (never full body)                                                                                                                     |
-| `created`          | text        | ISO timestamp                                                                                                                                            |
-| `readAt`           | text (null) | unread when empty                                                                                                                                        |
-| `dedupeKey`        | text        | idempotency key, e.g. `vibe-remixed:{remixOwner}/{remixSlug}`                                                                                            |
+| Column             | Type        | Notes                                                                                                                                                      |
+| ------------------ | ----------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `id`               | text PK     | ULID — sortable by creation                                                                                                                                |
+| `userId`           | text        | recipient (Clerk id)                                                                                                                                       |
+| `notificationType` | text        | `vibe-remixed` \| `comment-posted` \| `vibe-published` \| `dm-received` \| `request-approved` \| `request-revoked` \| `build-complete` \| `build-failed`   |
+| `ownerHandle`      | text        | subject vibe owner (usually the recipient)                                                                                                                 |
+| `appSlug`          | text        | subject vibe                                                                                                                                               |
+| `body`             | text        | **self-contained rendered message** for the list view (e.g. "@alice remixed your vibe Foo"); captured at emit time so the row renders with no second query |
+| `actorHandle`      | text (null) | who caused it (remixer, commenter, sender) — for icon/structured rendering                                                                                 |
+| `actorUserId`      | text (null) | actor Clerk id                                                                                                                                             |
+| `targetRef`        | JSON (null) | **optional** link to a separate persisted object a renderer may hydrate, e.g. `{ remixOwnerHandle, remixAppSlug }` or `{ threadHandle, docId }`            |
+| `created`          | text        | ISO timestamp                                                                                                                                              |
+| `readAt`           | text (null) | unread when empty                                                                                                                                          |
+| `dedupeKey`        | text        | idempotency key, e.g. `vibe-remixed:{remixOwner}/{remixSlug}`                                                                                              |
 
-Indexes: `(userId, created)` for the inbox feed; `(userId, readAt)` for unread
-count; **unique `(userId, dedupeKey)`** for idempotent emit.
+`body` makes each row renderable standalone; `targetRef` is only for the
+special-case second-query hydration. Indexes: `(userId, created)` for the inbox
+feed; `(userId, readAt)` for unread count; **unique `(userId, dedupeKey)`** for
+idempotent emit.
 
 ### Unit 2 — `emitNotification()` (`api/queue/intern/emit-notification.ts`)
 
@@ -95,8 +109,9 @@ the same emit so they are consistent and pref-gated.
 Move `evt-new-fs-id` (`vibe-published`), `evt-comment-posted`,
 `evt-request-grant` (`request-approved`/`-revoked`), and `evt-dm-received`
 (`dm-received`) onto `emitNotification`, so all notification types persist and
-appear in the inbox — not only new ones. Each supplies a stable `dedupeKey` and a
-`targetRef` pointer (e.g. comment → `{docId}`, dm → `{threadHandle, docId, snippet}`).
+appear in the inbox — not only new ones. Each supplies a self-contained `body`, a
+stable `dedupeKey`, and (where it links to a persisted object) an optional
+`targetRef` (e.g. comment → `{docId}`, dm → `{threadHandle, docId}`).
 
 ### Unit 4 — Read API (`api/svc/public/`)
 
@@ -117,12 +132,15 @@ plan; default: skip entirely when muted).
 
 ### Unit 6 — Inbox UI (`pkg/app/`)
 
-- A notifications/inbox page listing rows newest-first with read/unread styling and
-  deep-links from `targetRef`.
+- A notifications/inbox page listing rows newest-first with read/unread styling.
+  The base list renders directly from each row's stored `body` — **no per-row
+  second query**. A row deep-links via `targetRef` when present.
 - A global bell + unread counter, live-updated by the existing WebSocket fan-out.
-- Per-type render map extended from today's `TYPE_MAP`
-  (`pkg/app/hooks/useBuildCompletionNotifications.ts`), kept in sync with the
-  backend union (all duplicated guards/maps updated together).
+- Per-type renderers may optionally hydrate richer/live detail from `targetRef`
+  (e.g. the remix's current screenshot, a DM thread preview) as progressive
+  enhancement — never required for the base list. The per-type map extends today's
+  `TYPE_MAP` (`pkg/app/hooks/useBuildCompletionNotifications.ts`), kept in sync with
+  the backend union (all duplicated guards/maps updated together).
 
 ## First consumer: remix (folds in the remix spec)
 
@@ -130,9 +148,11 @@ The remix spec's units map directly onto this store, dropping its interim hacks:
 
 - **Notify**: `emitNotification({ userId: srcUserId, notificationType: "vibe-remixed",
 ownerHandle: srcOwnerHandle, appSlug: srcAppSlug, actorHandle: remixOwnerHandle,
+body: "@" + remixOwnerHandle + " remixed your vibe " + srcAppSlug,
 targetRef: { remixOwnerHandle, remixAppSlug }, dedupeKey:
-"vibe-remixed:" + remixOwnerHandle + "/" + remixAppSlug })`. The unique
-  `dedupeKey` replaces the `AppSettings.remixNotifiedAt` flag.
+"vibe-remixed:" + remixOwnerHandle + "/" + remixAppSlug })`. The self-contained
+  `body` renders the list row with no second query; the unique `dedupeKey` replaces
+  the `AppSettings.remixNotifiedAt` flag.
 - **Source identity**: still captured at fork time in `remix-of` meta
   (`srcUserId`/`srcOwnerHandle`/`srcAppSlug`, optional) — the shared/non-unique
   `fsId` problem is unchanged. Shared trigger helper still covers the clone path.
@@ -155,7 +175,10 @@ targetRef: { remixOwnerHandle, remixAppSlug }, dedupeKey:
   no-op (no row, no fan-out).
 - Offline recipient: event persists; appears in `listNotifications` on next load
   (the durability gap that exists today).
-- Each migrated emitter writes the right row + pointer; live bell still fires.
+- Each migrated emitter writes a self-contained `body` (+ optional `targetRef`);
+  live bell still fires.
+- Base list renders from `body` alone — a row whose `targetRef` object is
+  deleted/inaccessible still renders correctly (no second query required).
 - `markNotificationsRead` flips `readAt`; unread count reflects it.
 - Pref-muted type → no row / no fan-out (per Unit 5 decision).
 - Remix first-consumer: publish remix → one `vibe-remixed` row; republish → no
