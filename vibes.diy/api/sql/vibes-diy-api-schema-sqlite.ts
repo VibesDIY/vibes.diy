@@ -358,6 +358,7 @@ export const sqlAccessFunctionBindings = sqliteTable(
     dbName: text().notNull(), // specific dbName or '*' for app-wide
     accessFnCid: text().notNull(), // CID in Assets table
     accessFnAssetUri: text(), // nullable — full storage URI, e.g. s3://r2/<cid> or pg://Assets/<cid>
+    ownerRoles: text(), // nullable — JSON string[] of declared owner seed roles (owner-role-seeding)
     updated: text().notNull(),
   },
   (table) => [
