@@ -191,6 +191,34 @@ This work is forward-only and lands cleanly without bricking anything:
    `isOwner` from the access-fn `user` context. `me.isOwner` (chrome) stays
    forever.
 
+### 4b. The owner admin-mode bypass is unchanged (and is the real overload)
+
+This whole design only concerns the **implicit** `user.isOwner` field that
+`access.js` logic branches on. It does **not** touch the **explicit** owner
+admin-mode bypass, which stays exactly as-is and is the legitimate out-of-vibe
+overload for data:
+
+- In the live runtime, `requireRole` and `requireAccess` both **no-op under admin
+  mode** — `if (adminMode) return;` (`vibe/runtime/access-runner.ts:21-29`). So
+  an owner in admin mode passes every role/channel check regardless of grants.
+- `adminMode` is computed server-side as `isOwner && connectionAdminMode(ctx)`
+  (`app-documents-write-eventos.ts:329`) and is an **explicit, opt-in** per-app
+  owner toggle (`pkg/app/lib/admin-mode.ts`), surfaced through who-am-i — not an
+  ambient default. It is **independent of the `user.isOwner` field** the access
+  fn sees, so removing that field in phase 3 leaves the bypass fully intact.
+
+Two consequences worth stating:
+
+- **By default the owner is a normal, role-gated user** (admin mode off) — which
+  is exactly the "owners are normal users" goal. The bypass is a deliberate
+  switch for management/repair, not the everyday write path.
+- **The owner can never be permanently locked out.** Even if a seed is
+  misconfigured and the reserved `owner` role somehow absent, the owner flips
+  admin mode and writes. This de-risks the entire seed/reserved-role mechanism:
+  the worst case is "owner must toggle admin mode," never "owner is stuck." (It
+  is also why aegina, though broken for normal saves, was never truly
+  unrecoverable.)
+
 ### 5. Prompt changes (the cheapest lever for new vibes)
 
 We do **not** care about old vibes (see after-task). The generator stops emitting
