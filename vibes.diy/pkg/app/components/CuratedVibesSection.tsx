@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { screenshotSrc, type AppItem } from "./MyAppsSection.js";
-import { useCuratedVibes, type CuratedAppItem } from "../hooks/useCuratedVibes.js";
+import { useCuratedVibes, type CuratedAppItem, type CuratedGroup } from "../hooks/useCuratedVibes.js";
 import { cidAssetUrl, getAppHostBaseUrl } from "../utils/vibeUrls.js";
 import {
   getGalleryContainerStyle,
@@ -17,11 +17,26 @@ interface CuratedVibesSectionProps {
 /**
  * Logged-out counterpart to MyAppsSection: instead of the visitor's own apps it
  * shows a curated, category-grouped showcase sourced from curated-vibes.json.
- * Each card leads with the app screenshot, overlaps its icon on the top-left
- * corner, and captions it with the LLM-enriched description.
+ * Thin wrapper that fetches the curated data and hands it to the presentational
+ * gallery (which is what tests render directly, with fixed groups).
  */
 export function CuratedVibesSection({ isMobile }: CuratedVibesSectionProps) {
   const { groups, loading } = useCuratedVibes();
+  return <CuratedVibesGallery groups={groups} loading={loading} isMobile={isMobile} />;
+}
+
+interface CuratedVibesGalleryProps {
+  groups: CuratedGroup[];
+  loading: boolean;
+  isMobile: boolean;
+}
+
+/**
+ * Pure presentation: renders the curated groups. Each card leads with the app
+ * screenshot, overlaps its icon on the top-left corner, and captions it with
+ * the LLM-enriched description.
+ */
+export function CuratedVibesGallery({ groups, loading, isMobile }: CuratedVibesGalleryProps) {
   const appHostBaseUrl = getAppHostBaseUrl();
 
   // Signed-out visitors must land on the authless public viewer (/vibe), not
