@@ -398,6 +398,7 @@ export const sqlAccessFunctionBindings = pgTable(
     dbName: text().notNull(),
     accessFnCid: text().notNull(),
     accessFnAssetUri: text(), // nullable — full storage URI, e.g. s3://r2/<cid> or pg://Assets/<cid>
+    ownerRoles: text(), // nullable — JSON string[] of declared owner seed roles (owner-role-seeding)
     updated: text().notNull(),
   },
   (table) => [

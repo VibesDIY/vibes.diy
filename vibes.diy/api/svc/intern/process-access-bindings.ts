@@ -8,11 +8,17 @@ export interface ProcessAccessBindingsOpts {
   readonly ownerHandle: string;
   readonly appSlug: string;
   readonly fullFileSystem: readonly { readonly vibeFileItem: VibeFile; readonly storage: StorageResult }[];
+  // Declared owner seed roles (owner-role-seeding). Persisted as JSON on every
+  // AccessFunctionBindings row for this app so each reduce site can seed the
+  // owner without a second query. Undefined/empty stores NULL (reserved `owner`
+  // role is still always seeded at read time).
+  readonly ownerRoles?: readonly string[];
 }
 
 export async function processAccessBindings(vctx: VibesApiSQLCtx, opts: ProcessAccessBindingsOpts): Promise<Result<void>> {
   return exception2Result(async () => {
     const { ownerHandle, appSlug, fullFileSystem } = opts;
+    const ownerRolesJson = opts.ownerRoles && opts.ownerRoles.length > 0 ? JSON.stringify(opts.ownerRoles) : null;
     const tAfb = vctx.sql.tables.accessFunctionBindings;
 
     const accessJsEntry = fullFileSystem.find(
@@ -52,6 +58,7 @@ export async function processAccessBindings(vctx: VibesApiSQLCtx, opts: ProcessA
             dbName,
             accessFnCid: cid,
             accessFnAssetUri: accessJsEntry.storage.getURL,
+            ownerRoles: ownerRolesJson,
             updated: new Date().toISOString(),
           })
           .onConflictDoUpdate({
@@ -59,6 +66,7 @@ export async function processAccessBindings(vctx: VibesApiSQLCtx, opts: ProcessA
             set: {
               accessFnCid: cid,
               accessFnAssetUri: accessJsEntry.storage.getURL,
+              ownerRoles: ownerRolesJson,
               updated: new Date().toISOString(),
             },
           });
