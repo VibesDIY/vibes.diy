@@ -1,6 +1,16 @@
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
+/** One generate attempt's outcome, retained so retries are auditable. */
+export interface AttemptLogEntry {
+  readonly attempt: number;
+  readonly ok: boolean;
+  readonly status: number | null;
+  readonly latencyMs: number;
+  /** "ok" on success, else a concise reason extracted from the CLI's stderr. */
+  readonly reason: string;
+}
+
 export interface CellJson {
   readonly promptId: string;
   readonly model: string;
@@ -14,6 +24,8 @@ export interface CellJson {
   readonly exitState: "ok" | "generate-failed";
   /** How many generate attempts ran (1 = succeeded first try; up to the retry cap). */
   readonly attempts: number;
+  /** Per-attempt outcomes (status, latency, reason) — the failure reasons for each retry. */
+  readonly attemptLog: readonly AttemptLogEntry[];
   readonly stderrTail: string;
   readonly apiUrl: string;
   readonly runtimeHostBase: string;
