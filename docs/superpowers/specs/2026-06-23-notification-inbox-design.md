@@ -125,10 +125,12 @@ stable `dedupeKey`, and (where it links to a persisted object) an optional
 
 ### Unit 5 — Preferences
 
-Per-type mute, reusing the existing notification-preference enum (one key per
-type, default on). Emit checks the recipient's pref before the live/email/Discord
-fan-out (the persisted row may still be written for the inbox, or skipped — TBD in
-plan; default: skip entirely when muted).
+Reuse the existing `UserSettingNotifications` toggles (`settings.tsx`; one boolean
+per type, default on) and add a `vibeRemixed` key. "Muted" = the user turned a
+type off. **Muting suppresses only the interruption** — the live bell / push /
+email / Discord ping is skipped when muted, but **the inbox row is still
+persisted**, so the inbox remains a complete history and muting just means "don't
+ping me." (Existing per-type toggles already gate today's browser/push pings.)
 
 ### Unit 6 — Inbox UI (`pkg/app/`)
 
@@ -159,15 +161,18 @@ targetRef: { remixOwnerHandle, remixAppSlug }, dedupeKey:
 - **"Who remixed my vibe" list**: `listNotifications` filtered to
   `type='vibe-remixed' AND appSlug=X` — durable, indexed, one row per remix
   (dedupeKey), no `meta` scan.
-- **Backfill history** (the earlier "show existing remixes" decision): a one-time
-  migration scans existing `remix-of` meta and inserts `vibe-remixed` rows
-  (best-effort attribution, no live notifications).
+- **Forward-only — no backfill.** Existing pre-feature remixes are **not**
+  migrated into the table; only remixes published after this ships produce a
+  `vibe-remixed` row (and therefore appear in the per-vibe list). A historical
+  backfill is explicitly out of scope.
 
 ## Out of scope
 
 - Changing how content (DMs, comments) is stored or gated — that's #2290 / Firefly.
 - Cross-device notification _delivery_ semantics beyond the existing fan-out.
 - Aggregations/digests/email batching.
+- **Backfilling pre-existing events** (remixes, comments, etc.) into the table —
+  forward-only.
 
 ## Testing
 
@@ -180,8 +185,9 @@ targetRef: { remixOwnerHandle, remixAppSlug }, dedupeKey:
 - Base list renders from `body` alone — a row whose `targetRef` object is
   deleted/inaccessible still renders correctly (no second query required).
 - `markNotificationsRead` flips `readAt`; unread count reflects it.
-- Pref-muted type → no row / no fan-out (per Unit 5 decision).
+- Pref-muted type → row still persisted (appears in inbox), but no live bell /
+  push / email / Discord ping.
 - Remix first-consumer: publish remix → one `vibe-remixed` row; republish → no
-  second row; clone path → row from `forkApp`; list filter returns it; backfill
-  migration populates historical remixes.
+  second row; clone path → row from `forkApp`; list filter returns it. Pre-feature
+  remixes do not appear (forward-only, no backfill).
 - Dual-dialect: identical behavior on sqlite + pg.
