@@ -168,6 +168,7 @@ import { parseMatrixConfig, parsePromptsJsonl } from "./config.js";
 const goodMatrix = {
   cliCommand: "npx vibes-diy@latest",
   apiUrl: "https://vibes.diy/api?.stable-entry.=cli",
+  runtimeHostBase: "vibes.diy",
   handle: "eval",
   judgeModel: "anthropic/claude-opus-4.5",
   reps: 3,
@@ -180,6 +181,12 @@ describe("parseMatrixConfig", () => {
     const cfg = parseMatrixConfig(JSON.stringify(goodMatrix));
     expect(cfg.reps).toBe(3);
     expect(cfg.models[0].tier).toBe("cheap");
+    expect(cfg.runtimeHostBase).toBe("vibes.diy");
+  });
+
+  it("rejects a missing runtimeHostBase", () => {
+    const { runtimeHostBase, ...rest } = goodMatrix;
+    expect(() => parseMatrixConfig(JSON.stringify(rest))).toThrow(/runtimeHostBase/i);
   });
 
   it("rejects an empty models array", () => {
@@ -228,6 +235,12 @@ export interface ModelEntry {
 export interface MatrixConfig {
   readonly cliCommand: string;
   readonly apiUrl: string;
+  /**
+   * Runtime hostname base for the deployed vibe (NOT the API host — they differ
+   * in preview). Screenshot host is `<appSlug>--<ownerHandle>.<runtimeHostBase>`.
+   * Prod: "vibes.diy". Preview: "pr-<N>.vibespreview.dev".
+   */
+  readonly runtimeHostBase: string;
   readonly handle: string;
   readonly judgeModel: string;
   readonly reps: number;
@@ -260,6 +273,7 @@ export function parseMatrixConfig(text: string): MatrixConfig {
   const obj = JSON.parse(text) as Record<string, unknown>;
   const cliCommand = reqString(obj, "cliCommand");
   const apiUrl = reqString(obj, "apiUrl");
+  const runtimeHostBase = reqString(obj, "runtimeHostBase");
   const handle = reqString(obj, "handle");
   const judgeModel = reqString(obj, "judgeModel");
   const reps = reqPositiveNumber(obj, "reps");
@@ -276,7 +290,7 @@ export function parseMatrixConfig(text: string): MatrixConfig {
     }
     return { id: reqString(e, "id"), class: reqString(e, "class"), tier };
   });
-  return { cliCommand, apiUrl, handle, judgeModel, reps, screenshotTimeoutMs, models };
+  return { cliCommand, apiUrl, runtimeHostBase, handle, judgeModel, reps, screenshotTimeoutMs, models };
 }
 
 export function parsePromptsJsonl(text: string): PromptEntry[] {
@@ -341,9 +355,12 @@ describe("cellDirName", () => {
 });
 
 describe("screenshotUrl", () => {
-  it("derives the runtime screenshot host from the api host", () => {
-    expect(screenshotUrl("https://vibes.diy/api?.stable-entry.=cli", "my-app", "eval")).toBe(
-      "https://my-app--eval.vibes.diy/screenshot.jpg"
+  it("builds the runtime screenshot host from an explicit hostname base (prod)", () => {
+    expect(screenshotUrl("vibes.diy", "my-app", "eval")).toBe("https://my-app--eval.vibes.diy/screenshot.jpg");
+  });
+  it("works for a preview host base", () => {
+    expect(screenshotUrl("pr-42.vibespreview.dev", "my-app", "eval")).toBe(
+      "https://my-app--eval.pr-42.vibespreview.dev/screenshot.jpg"
     );
   });
 });
@@ -374,6 +391,7 @@ describe("cell.json round-trip", () => {
       exitState: "ok",
       stderrTail: "",
       apiUrl: "https://vibes.diy/api",
+      runtimeHostBase: "vibes.diy",
       cliVersion: "1.2.3",
       promptHash: "abc123",
     };
@@ -407,6 +425,7 @@ export interface CellJson {
   readonly exitState: "ok" | "generate-failed";
   readonly stderrTail: string;
   readonly apiUrl: string;
+  readonly runtimeHostBase: string;
   readonly cliVersion: string;
   readonly promptHash: string;
 }
@@ -467,11 +486,13 @@ export function cellDirName(promptId: string, model: string, rep: number): strin
 
 /**
  * Runtime screenshot URL. The deployed vibe is served at
- * `<appSlug>--<ownerHandle>.<host>`; `<host>` is the api host (prod: vibes.diy).
+ * `<appSlug>--<ownerHandle>.<runtimeHostBase>`. The runtime host base is an
+ * explicit config value (NOT derived from the API host — they differ in
+ * preview, where the API is on *.workers.dev but the runtime is on
+ * pr-<N>.vibespreview.dev).
  */
-export function screenshotUrl(apiUrl: string, appSlug: string, ownerHandle: string): string {
-  const host = new URL(apiUrl).hostname.replace(/^api\./, "");
-  return `https://${appSlug}--${ownerHandle}.${host}/screenshot.jpg`;
+export function screenshotUrl(runtimeHostBase: string, appSlug: string, ownerHandle: string): string {
+  return `https://${appSlug}--${ownerHandle}.${runtimeHostBase}/screenshot.jpg`;
 }
 
 /** The sole subdirectory the CLI creates in the (empty) per-cell cwd is the appSlug. */
@@ -1132,6 +1153,7 @@ function runCell(args: {
     exitState,
     stderrTail,
     apiUrl: cfg.apiUrl,
+    runtimeHostBase: cfg.runtimeHostBase,
     cliVersion,
     promptHash: promptHash(prompt.prompt),
   };
@@ -1297,7 +1319,7 @@ async function scoreCell(args: {
   const rubric = runRubric(files);
   const feature = await judgeFeature(userPrompt, files, judgeDeps);
 
-  const shotUrl = screenshotUrl(cell.apiUrl, cell.appSlug, cell.ownerHandle);
+  const shotUrl = screenshotUrl(cell.runtimeHostBase, cell.appSlug, cell.ownerHandle);
   const readiness = await waitForScreenshot(shotUrl, { timeoutMs: screenshotTimeoutMs });
   let design: CellScore["design"];
   if (!readiness.ready) {
@@ -1649,6 +1671,7 @@ Expected: PASS.
 {
   "cliCommand": "npx vibes-diy@latest",
   "apiUrl": "https://vibes.diy/api?.stable-entry.=cli",
+  "runtimeHostBase": "vibes.diy",
   "handle": "eval",
   "judgeModel": "anthropic/claude-opus-4.5",
   "reps": 3,
@@ -1712,8 +1735,11 @@ adds `cell.score.json`; `report` joins them.
 ## Config
 
 - `config/matrix.json` — `cliCommand`, `apiUrl` (target env; run most iterations
-  non-prod, a confirmation set on prod), `handle`, `judgeModel`, `reps`,
-  `screenshotTimeoutMs`, and the `models` list (cheapest + priciest per class).
+  non-prod, a confirmation set on prod), `runtimeHostBase` (the deployed vibe's
+  hostname base — `vibes.diy` for prod, `pr-<N>.vibespreview.dev` for preview;
+  kept explicit because the API and runtime hosts differ in preview), `handle`,
+  `judgeModel`, `reps`, `screenshotTimeoutMs`, and the `models` list (cheapest +
+  priciest per class).
 - `config/prompts.jsonl` — one `{id, prompt}` per line.
 
 ## Notes

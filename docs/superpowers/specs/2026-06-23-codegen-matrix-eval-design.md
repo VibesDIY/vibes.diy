@@ -50,6 +50,7 @@ Two checked-in files under `eval/codegen-matrix/config/`:
 {
   "cliCommand": "npx vibes-diy@latest", // the generate mechanism; pinnable
   "apiUrl": "https://vibes.diy/api?.stable-entry.=cli", // target env; NOT prod-hardcoded
+  "runtimeHostBase": "vibes.diy", // deployed vibe host base; preview differs from apiUrl host
   "handle": "eval", // publish namespace
   "judgeModel": "anthropic/claude-opus-4.5",
   "reps": 3, // runs per cell; report median/mean
@@ -172,9 +173,12 @@ instrumentation.
 **Design** — fetch the deployed screenshot and vision-judge it:
 
 1. Build the screenshot URL from the cell's `appSlug`/`ownerHandle`
-   (`https://<appSlug>--<ownerHandle>.<hostnameBase>/screenshot.jpg`, the same
-   image the `/vibe/` viewer exposes as `og:image`). `hostnameBase` is derived
-   from the run's `apiUrl`, not hardcoded.
+   (`https://<appSlug>--<ownerHandle>.<runtimeHostBase>/screenshot.jpg`, the same
+   image the `/vibe/` viewer exposes as `og:image`). `runtimeHostBase` is an
+   **explicit config field**, not derived from `apiUrl` — in preview the API
+   host (`*.workers.dev`) and the runtime host (`pr-<N>.vibespreview.dev`)
+   differ, so deriving one from the other would break non-prod runs (per
+   Charlie's review). Prod: `vibes.diy`.
 2. **Readiness via the `screen-shot-ref` projection** (per Charlie's review).
    Screenshot capture lags the deploy: `/screenshot.jpg` 404s until the
    server has stored a `screen-shot-ref` in the app's meta
