@@ -49,10 +49,11 @@ Two checked-in files under `eval/codegen-matrix/config/`:
 ```jsonc
 {
   "cliCommand": "npx vibes-diy@latest", // the generate mechanism; pinnable
+  "apiUrl": "https://vibes.diy/api?.stable-entry.=cli", // target env; NOT prod-hardcoded
   "handle": "eval", // publish namespace
   "judgeModel": "anthropic/claude-opus-4.5",
   "reps": 3, // runs per cell; report median/mean
-  "screenshotTimeoutMs": 120000, // poll budget for screenshot.jpg
+  "screenshotTimeoutMs": 120000, // readiness-poll budget
   "models": [
     { "id": "anthropic/claude-opus-4.6-fast", "class": "anthropic", "tier": "expensive" },
     { "id": "anthropic/claude-sonnet-4.6", "class": "anthropic", "tier": "cheap" },
@@ -62,6 +63,14 @@ Two checked-in files under `eval/codegen-matrix/config/`:
   ],
 }
 ```
+
+`apiUrl` is an explicit field, not hardcoded to prod (per Charlie's review).
+The intended workflow is to run most iterations against a non-prod env
+(cli/preview) and a smaller confirmation set against prod before decisions.
+`generate` threads `--api-url` through to the deploy/push path
+(`vibes-diy/cli/cmds/generate-cmd.ts`), and the resolved `apiUrl` is persisted
+into every output (see "Run provenance") so a run's target env is never
+ambiguous after the fact.
 
 `prompts.jsonl` — three entries spanning distinct capability surfaces:
 
@@ -84,8 +93,8 @@ The create loop is _only_ calls to the published CLI's `generate`, one per
 
 1. Make a per-cell working dir `runs/<ts>/<promptId>__<modelSlug>__r<rep>/`,
    empty before the run.
-2. Run `<cliCommand> generate --model <id> --handle <handle> "<prompt>"` in
-   that dir.
+2. Run `<cliCommand> generate --model <id> --handle <handle> --api-url <apiUrl> "<prompt>"`
+   in that dir.
 3. Record wall-clock latency (spawn → exit) and exit state.
 4. Discover the result from the **filesystem, not stdout.** The CLI's
    `res-generate` envelope is _not_ printed — `main.ts` handles `isResGenerate`
@@ -95,8 +104,9 @@ The create loop is _only_ calls to the published CLI's `generate`, one per
    `<appSlug>/`, so `appSlug` is that directory name and `<directory>` is its
    path. `ownerHandle` is the `--handle` we passed. The generated `README.md`
    in that directory also carries the live vibe URL as a cross-check.
-5. Write `cell.json`: `{ promptId, model, class, tier, rep, appSlug,
-ownerHandle, directory, latencyMs, exitState, stderrTail }`.
+5. Write `cell.json` with the cell result **and run provenance**:
+   `{ promptId, model, class, tier, rep, appSlug, ownerHandle, directory,
+latencyMs, exitState, stderrTail, apiUrl, cliVersion, promptHash }`.
 
 `appSlug` and `ownerHandle` are all the design needs — the screenshot URL in
 stage 3 is built from them, so no stdout parsing is required.
@@ -104,9 +114,19 @@ stage 3 is built from them, so no stdout parsing is required.
 Runs are **sequential** — parallelizing risks rate-limit errors that pollute
 results with infrastructure noise (same rationale as `codegen-edit`).
 
-`generate` deploys to production under the `eval` handle and the platform
-captures a screenshot asynchronously; the harness does not render anything
-itself.
+`generate` deploys to the configured `apiUrl` under the `eval` handle and the
+platform captures a screenshot asynchronously; the harness does not render
+anything itself.
+
+#### Run provenance
+
+So a result set is interpretable months later (and across env/model churn),
+each run writes a `runs/<ts>/run.json` capturing: resolved `apiUrl`,
+`cliCommand` + resolved `cliVersion` (`npx vibes-diy@latest` is pinned to the
+concrete version that actually ran), the harness git commit SHA, `judgeModel`,
+`reps`, and a content hash of `prompts.jsonl`. Each `cell.json` additionally
+carries its own `apiUrl`, `cliVersion`, and per-prompt `promptHash` so a single
+cell is self-describing even if lifted out of its run dir.
 
 ### Stage 3 — Scoring (`src/score.ts`)
 
@@ -134,6 +154,14 @@ instrumentation.
   Each rule contributes to a rubric score `passed / total`. The rule set lives
   in one file so it tracks the system prompt as that evolves.
 
+  **Drift guard** (per Charlie's review): each rule declares a `promptAnchor`
+  — a short quoted phrase from `prompts/pkg/system-prompt.md` that the rule is
+  derived from (e.g. `export default function App()`, `Never use emojis`). A
+  test asserts every anchor still appears verbatim in the current system
+  prompt and fails fast with the offending rule name when one disappears. This
+  is the cheap insurance against a stale rubric silently producing misleading
+  adherence scores after the prompt is reworded.
+
 - _LLM feature-completeness judge_ (`src/judge.ts`) — did the app actually
   build what the prompt asked? Sends the prompt + generated `App.jsx`
   (+ `access.js`) to `judgeModel` via the `call-ai` direct-call path, asking for
@@ -145,12 +173,26 @@ instrumentation.
 
 1. Build the screenshot URL from the cell's `appSlug`/`ownerHandle`
    (`https://<appSlug>--<ownerHandle>.<hostnameBase>/screenshot.jpg`, the same
-   image the `/vibe/` viewer exposes as `og:image`).
-2. Poll it (capture lags the deploy) up to `screenshotTimeoutMs`; on success,
-   pass the image to `judgeModel` as an image input with a design rubric
-   (layout, hierarchy, contrast, polish, no-emoji adherence) → 1–5 + one line.
-3. On timeout, record `design: { available: false }` rather than failing the
+   image the `/vibe/` viewer exposes as `og:image`). `hostnameBase` is derived
+   from the run's `apiUrl`, not hardcoded.
+2. **Readiness via the `screen-shot-ref` projection** (per Charlie's review).
+   Screenshot capture lags the deploy: `/screenshot.jpg` 404s until the
+   server has stored a `screen-shot-ref` in the app's meta
+   (`vibes.diy/api/svc/public/serv-entry-point.ts`,
+   `vibes.diy/api/queue/intern/store-screenshot.ts`). So poll the screenshot
+   URL treating **404 = not ready, 200 = ready** — i.e. we observe the meta ref
+   through its public projection rather than guessing a fixed delay — up to
+   `screenshotTimeoutMs`. (If a CLI/public path to read app meta directly lands
+   later, switch to polling the ref itself; the projection is equivalent for
+   now and needs no extra auth.)
+3. On ready, pass the image to `judgeModel` as an image input with a design
+   rubric (layout, hierarchy, contrast, polish, no-emoji adherence) → 1–5 + one
+   line.
+4. On timeout, record `design: { available: false }` rather than failing the
    cell.
+
+Both judges write their `judgeModel` id into `cell.score.json` (provenance), so
+a re-judge with a different model is distinguishable in the output.
 
 ### Stage 4 — Report (`src/report.ts`)
 
@@ -216,6 +258,9 @@ eval/codegen-matrix/
 - `rubric.ts`: unit tests with fixture `App.jsx` files — one that passes every
   rule, and targeted failures (inline component, raw bracket color, emoji,
   missing `export default`, access logic inside `App.jsx`).
+- **Rubric drift guard**: a test that loads the live `prompts/pkg/system-prompt.md`
+  and asserts every rule's `promptAnchor` still appears in it; fails with the
+  rule name when an anchor goes missing.
 - `cell.ts`: path/slug derivation and artifact round-trip.
 - `generate.ts`/`judge.ts`: network-dependent; covered by a manual smoke run,
   not unit tests (mirrors how `codegen-edit`/`preamble-probe` treat their
