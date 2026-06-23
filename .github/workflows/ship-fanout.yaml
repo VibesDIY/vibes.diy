@@ -1,0 +1,98 @@
+name: ship fan-out
+
+# One tag to ship everywhere. Creating `ship@<ver>` (e.g. via the GitHub
+# Releases UI, which works from a phone) fans out into the three canonical
+# deploy tags at the SAME commit:
+#
+#   ship@1.2.3  ->  vibes-diy@p1.2.3   (prodv2 — vibes-diy-deploy.yaml)
+#                   vibes-diy@c1.2.3   (cli    — vibes-diy-deploy.yaml)
+#                   pkg@p1.2.3         (npm    — package-deploy.yaml)
+#
+# The existing deploy workflows then run unchanged, and the per-stream tags that
+# agents/deploy-tags.md's pending-changes tooling + rollback depend on are still
+# created. The `ship@` tag itself triggers nothing but this workflow.
+#
+# IMPORTANT: the child tags are pushed with a PAT (secrets.DEPLOY_TAG_PAT), NOT
+# the default GITHUB_TOKEN. GitHub suppresses workflow runs for events created by
+# GITHUB_TOKEN, so a GITHUB_TOKEN push would create the tags but never trigger
+# the deploys. The PAT must be a fine-grained token with Contents: read/write on
+# this repo. See agents/deploy-tags.md § ship@ one-tag fan-out.
+
+on:
+  push:
+    tags:
+      - 'ship@*'
+
+# Process ship@ tags one at a time; never cancel an in-flight fan-out.
+concurrency:
+  group: ship-fanout-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  fanout:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require deploy PAT
+        env:
+          PAT: ${{ secrets.DEPLOY_TAG_PAT }}
+        run: |
+          if [ -z "$PAT" ]; then
+            echo "::error::DEPLOY_TAG_PAT is not set. Child tags pushed with GITHUB_TOKEN do NOT trigger the deploy workflows, so the deploys would silently never run. Add a fine-grained PAT (Contents: read/write on this repo) as the DEPLOY_TAG_PAT secret."
+            exit 1
+          fi
+
+      - name: Checkout ship commit
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+          fetch-tags: true
+          token: ${{ secrets.DEPLOY_TAG_PAT }}
+          persist-credentials: true
+
+      - name: Create and push canonical deploy tags
+        env:
+          SHIP_REF: ${{ github.ref }}
+          SHIP_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+
+          VER="${SHIP_REF#refs/tags/ship@}"
+          if [[ ! "$VER" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::ship tag version '$VER' is not bare semver (expected ship@X.Y.Z)"
+            exit 1
+          fi
+          echo "Fanning out ship@$VER at $SHIP_SHA"
+
+          CHILD_TAGS=("vibes-diy@p$VER" "vibes-diy@c$VER" "pkg@p$VER")
+
+          # Refuse to move existing tags — deploy tags are immutable.
+          for t in "${CHILD_TAGS[@]}"; do
+            if git rev-parse -q --verify "refs/tags/$t" >/dev/null; then
+              echo "::error::tag $t already exists — tags are immutable, bump the ship@ version instead"
+              exit 1
+            fi
+          done
+
+          git config user.name  "vibes-ship-bot"
+          git config user.email "vibes-ship-bot@users.noreply.github.com"
+
+          MSG="ship@$VER fan-out"
+          for t in "${CHILD_TAGS[@]}"; do
+            git tag -a "$t" "$SHIP_SHA" -m "$MSG"
+            echo "created $t -> $SHIP_SHA"
+          done
+
+          git push origin "${CHILD_TAGS[@]}"
+
+          {
+            echo "### ship@$VER fanned out :rocket:"
+            echo ""
+            echo "Commit \`$SHIP_SHA\` tagged as:"
+            for t in "${CHILD_TAGS[@]}"; do echo "- \`$t\`"; done
+            echo ""
+            echo "vibes-diy-deploy (prodv2 + cli) and package-deploy (npm prod) will pick these up."
+          } >> "$GITHUB_STEP_SUMMARY"
