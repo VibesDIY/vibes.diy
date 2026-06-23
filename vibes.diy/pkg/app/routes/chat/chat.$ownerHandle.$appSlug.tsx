@@ -86,7 +86,14 @@ export function Chat({ inConstruction = false, initialPrompt }: { inConstruction
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
   const { chatApi, sharedApi, webVars: svcVars, srvVibeSandbox } = useVibesDiy();
-  const shareModal = useShareModal({ ownerHandle, appSlug, fsId, chatApi, sharedApi });
+  const shareModal = useShareModal({
+    ownerHandle,
+    appSlug,
+    fsId,
+    chatApi,
+    sharedApi,
+    hostnameBase: svcVars.env.VIBES_SVC_HOSTNAME_BASE,
+  });
   const { isSignedIn } = useAuth();
   const { isOwner, pendingCount } = useChatOwnership({
     ownerHandle,

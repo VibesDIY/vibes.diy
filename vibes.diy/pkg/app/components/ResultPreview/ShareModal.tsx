@@ -156,6 +156,25 @@ function EmbedSnippetRow({ snippet, copied, onCopy }: { snippet: string; copied:
   );
 }
 
+// "Save to Pinterest" link, collocated with the embed row. Pinterest pins are
+// image-first, so this only renders for publicly-embeddable vibes (same gate as
+// the embed snippet) where the public screenshot is fetchable. Opens Pinterest's
+// own pin-create dialog — no Pinterest API or login on our side. Rendered as an
+// anchor (via Button's asChild) so it's a real link the browser opens in a new
+// tab, not a scripted popup.
+function PinterestShareRow({ shareUrl }: { shareUrl: string }) {
+  return (
+    <div className="flex items-center justify-between">
+      <span className="text-xs font-semibold text-gray-700 dark:text-gray-300">Pinterest</span>
+      <Button asChild variant="blue" size="default">
+        <a href={shareUrl} target="_blank" rel="noopener noreferrer">
+          <span className="text-xs">Save to Pinterest</span>
+        </a>
+      </Button>
+    </div>
+  );
+}
+
 // Lightweight Request Access button for non-owners. Loads pending state from
 // hasAccessRequest on mount so a returning viewer sees "Request pending"
 // instead of being able to spam new requests.
@@ -513,6 +532,9 @@ export function ShareModal({
                     onCopy={() => void modal.handleCopyEmbed()}
                   />
                 ) : null}
+                {modal.isPubliclyEmbeddable && modal.pinterestShareUrl ? (
+                  <PinterestShareRow shareUrl={modal.pinterestShareUrl} />
+                ) : null}
                 {modal.publishError ? <p className="text-xs text-red-600 dark:text-red-400">{modal.publishError}</p> : null}
                 <Button
                   variant={modal.isUpToDate ? "cool" : "blue"}
@@ -538,6 +560,9 @@ export function ShareModal({
                   copied={modal.embedCopied}
                   onCopy={() => void modal.handleCopyEmbed()}
                 />
+              ) : null}
+              {modal.isPubliclyEmbeddable && modal.pinterestShareUrl ? (
+                <PinterestShareRow shareUrl={modal.pinterestShareUrl} />
               ) : null}
               {showRequestAccess ? <RequestAccessButton ownerHandle={modal.ownerHandle} appSlug={modal.appSlug} /> : null}
             </div>

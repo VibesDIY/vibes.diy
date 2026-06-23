@@ -479,6 +479,7 @@ export default function VibeIframeWrapper() {
     fsId,
     chatApi: vctx.chatApi,
     sharedApi: vctx.sharedApi,
+    hostnameBase: vctx.webVars.env.VIBES_SVC_HOSTNAME_BASE,
   });
 
   const prevShareOpenRef = useRef(shareModal.isOpen);

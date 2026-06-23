@@ -121,6 +121,7 @@ function createMockModal(overrides: Partial<UseShareModalReturn> = {}): UseShare
     embedSnippet: undefined,
     embedCopied: false,
     handleCopyEmbed: vi.fn().mockResolvedValue(undefined),
+    pinterestShareUrl: undefined,
     ...overrides,
   };
 }
@@ -287,6 +288,29 @@ describe("ShareModal", () => {
       expect(modal.handleCopyEmbed).toHaveBeenCalledTimes(1);
     });
 
+    it("shows a Save to Pinterest link pointing at the pin-create URL when publicly embeddable", () => {
+      const modal = publishedModal({
+        isPubliclyEmbeddable: true,
+        pinterestShareUrl: "https://www.pinterest.com/pin/create/button/?url=https%3A%2F%2Fvibes.diy%2Fvibe%2Ftestuser%2Ftestapp",
+      });
+      render(<ShareModal modal={modal} isOwner />);
+
+      const link = screen.getByRole("link", { name: "Save to Pinterest" });
+      expect(link).toHaveAttribute("href", expect.stringContaining("pinterest.com/pin/create/button/"));
+      expect(link).toHaveAttribute("target", "_blank");
+      expect(link).toHaveAttribute("rel", expect.stringContaining("noopener"));
+    });
+
+    it("hides the Save to Pinterest link when the vibe is not publicly embeddable", () => {
+      render(
+        <ShareModal
+          modal={publishedModal({ isPubliclyEmbeddable: false, pinterestShareUrl: "https://www.pinterest.com/pin/create/button/" })}
+          isOwner
+        />
+      );
+      expect(screen.queryByRole("link", { name: "Save to Pinterest" })).not.toBeInTheDocument();
+    });
+
     it("Update preserves autoJoinEnabled and the current role", async () => {
       const modal = publishedModal({ autoJoinEnabled: true, autoAcceptRole: "editor" });
       render(<ShareModal modal={modal} isOwner />);
@@ -433,6 +457,19 @@ describe("ShareModal", () => {
       render(<ShareModal modal={publishedModal()} myGrant="editor" />);
       expect(screen.queryByRole("button", { name: /Request Access|Request pending/ })).not.toBeInTheDocument();
       expect(screen.getByText("Copy Link")).toBeInTheDocument();
+    });
+
+    it("shows the Save to Pinterest link to non-owners when publicly embeddable", () => {
+      render(
+        <ShareModal
+          modal={publishedModal({
+            isPubliclyEmbeddable: true,
+            pinterestShareUrl: "https://www.pinterest.com/pin/create/button/?url=x",
+          })}
+          myGrant="viewer"
+        />
+      );
+      expect(screen.getByRole("link", { name: "Save to Pinterest" })).toBeInTheDocument();
     });
   });
 
