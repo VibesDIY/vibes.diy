@@ -39,15 +39,16 @@ export async function getDefaultSkills(): Promise<string[]> {
 }
 
 /**
- * Single-paragraph description of the platform stack — Fireproof, callAI,
- * useViewer, ImgGen — so the pre-allocation LLM has the platform vocabulary
- * in hand when it writes the enrichedPrompt preamble. Lives next to the
- * schema so the description's references to "Fireproof live sync" / "callAI"
- * / "useViewer" / "ImgGen" stay anchored to a real definition the model has
- * already read.
+ * Single-paragraph description of the platform's capabilities — in plain,
+ * user-facing feature language rather than API names — so the pre-allocation
+ * LLM has the right vocabulary in hand when it writes the enrichedPrompt
+ * preamble. The preamble is meant to read like a product description for a
+ * non-technical person, so this paragraph deliberately avoids developer terms
+ * (library names, function names); the technical "how" is taught separately by
+ * the skill docs in the generation system prompt.
  */
 const PRE_ALLOC_PLATFORM_PARAGRAPH =
-  "Platform stack: a vibe is a single-file React app that runs in the user's browser. Fireproof is a cloud-backed document database — `useFireproof(name)` returns a database handle and `useLiveQuery(field)` keeps every viewer's UI in lockstep with the underlying docs in real time; writes are validated and persisted server-side and can fail, so handle write rejections. callAI is a typed call to a hosted LLM that returns JSON matching a schema the app declares; the JSON is saved as a Fireproof doc so it persists and shows up live for every viewer. useViewer surfaces the signed-in viewer's identity for display (avatars, who's posting). Write surfaces are gated with `useVibe(dbName).can`, which runs the app's own access function and tells the UI whether a create/edit/delete is allowed — the app reflects that verdict, it never sets it. ImgGen renders a generated illustration tile when imagery is naturally part of the experience, not as decoration.";
+  "Platform capabilities: every app is a small web app that anyone can open in a browser. Its data is saved automatically in the cloud and stays in sync for everyone at once, so when one person adds or changes something, everyone else viewing the app sees it update right away. Apps can call on a built-in AI assistant that returns a structured result the app saves and displays — for example suggesting or filling in a value, rewriting or extending something someone wrote, or tagging and scoring content as it's added. Apps know who is signed in, so they can show people's names and avatars next to their contributions. By default only the app's owner can make changes; everyone else sees a read-only view, and any editing controls are hidden automatically for people who aren't allowed to use them. When pictures are a natural part of the experience, an app can show a generated illustration instead of requiring an upload.";
 
 /**
  * Builds the user-message body for the pre-allocation LLM call. Includes a
@@ -66,7 +67,7 @@ export async function makePreAllocUserMessage(userPrompt: string): Promise<strin
   return [
     PRE_ALLOC_PLATFORM_PARAGRAPH,
     "",
-    "Pick skills from this catalog that fit the user's app request, propose 3 title/slug pairs for naming, propose a one-line icon subject, pick a theme that matches the app's mood, and write a 3-sentence enriched-prompt preamble that grounds the build in our core platform features for THIS specific app.",
+    "Pick skills from this catalog that fit the user's app request, propose 3 title/slug pairs for naming, propose a one-line icon subject, pick a theme that matches the app's mood, and write a 3-sentence enriched-prompt preamble that shapes THIS specific app around our platform's capabilities, described in plain user-friendly language.",
     "",
     "Skill catalog:",
     catalogText,
@@ -119,12 +120,12 @@ export const preAllocSchema = {
     enrichedPrompt: {
       type: "string",
       description: [
-        "REQUIRED. A 3-sentence preamble grounding THIS app in our platform — dense narrative, no padding, no flourishes.",
-        "Sentence 1: what users see and do in this app, and that Fireproof's live sync shares the activity with every viewer in real time.",
-        "Sentence 2: name the callAI role that fits this app's central activity. Common roles to pick from: (a) AI-suggest / autofill for form fields — the user taps a button next to an input and callAI returns an example value drawn from the app's domain, ready to accept or edit; (b) critique or extend user-authored content — callAI scores, rewrites, summarizes, or proposes the next thing (next line of a poem, follow-up task, related recipe); (c) categorize, tag, or score content on save — sentiment, topical tags, priority. Pick ONE role that genuinely fits this app. Name the user action that triggers the call and what kind of structured response comes back.",
-        "Sentence 3: name the write actions in this app, and that non-owners see a read-only view because the runtime's access control hides the write surfaces — useVibe().can reflects that verdict (and useViewer shows identity), the app never sets it. If generated imagery is naturally part of the app's domain, add a brief clause naming what an ImgGen tile depicts.",
-        'Do NOT include code: no function names like `useLiveQuery` or `database.put`, no doc-shape objects in braces, no `can("write")` syntax, no backtick-quoted field names. Plain narrative, not a code spec.',
-        "Do NOT invent imagery features when the app's domain wouldn't naturally include them.",
+        "REQUIRED. A 3-sentence preamble that shapes THIS app around our platform's capabilities, written in plain user-friendly language a non-technical person would understand — dense narrative, no padding, no flourishes.",
+        "Sentence 1: what users see and do in this app, and that what they add or change is saved and shared so everyone viewing the app sees the updates right away.",
+        "Sentence 2: name the AI role that fits this app's central activity. Common roles to pick from: (a) suggest or autofill a field — the user taps a button next to an input and the built-in AI returns an example value drawn from the app's subject, ready to accept or edit; (b) critique or extend what someone wrote — the AI scores, rewrites, summarizes, or proposes the next thing (next line of a poem, follow-up task, related recipe); (c) tag, categorize, or score content as it's added — sentiment, topical tags, priority. Pick ONE role that genuinely fits this app. Name the user action that triggers it and what kind of result comes back.",
+        "Sentence 3: name the things people can add or change in this app, and that only the owner (and anyone they allow) can make those changes while everyone else sees a read-only view, with the editing controls hidden automatically for people who aren't allowed to use them. If generated pictures are naturally part of the app, add a brief clause naming what a generated illustration would depict.",
+        "Do NOT include developer language: no library names, no function or feature names, no field names in backticks, no code or data-shape objects. Write it the way you'd describe the finished product to someone who will use it, not build it.",
+        "Do NOT invent imagery features when the app's subject wouldn't naturally include them.",
       ].join(" "),
     },
   },
