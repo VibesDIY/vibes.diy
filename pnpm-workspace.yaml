@@ -25,6 +25,7 @@ packages:
   - "prompts/tests"
   - "eval/codegen-edit"
   - "eval/preamble-probe"
+  - "eval/codegen-matrix"
 
 # Override sharp version to avoid build failures with 0.34.x
 overrides:

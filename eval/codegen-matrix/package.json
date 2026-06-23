@@ -1,0 +1,17 @@
+{
+  "name": "@vibes.diy/eval-codegen-matrix",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Cross-model codegen eval: run fixed prompts across models via the published CLI and score speed, adherence, and design.",
+  "scripts": {
+    "generate": "tsx src/generate.ts",
+    "score": "tsx src/score.ts",
+    "report": "tsx src/report.ts",
+    "test": "vitest --run"
+  },
+  "dependencies": {
+    "call-ai": "workspace:*",
+    "tsx": "^4.22.4"
+  }
+}

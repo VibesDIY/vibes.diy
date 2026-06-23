@@ -267,6 +267,15 @@ importers:
         specifier: ^4.22.4
         version: 4.22.4
 
+  eval/codegen-matrix:
+    dependencies:
+      call-ai:
+        specifier: workspace:*
+        version: link:../../call-ai/pkg
+      tsx:
+        specifier: ^4.22.4
+        version: 4.22.4
+
   eval/preamble-probe:
     dependencies:
       '@vibes.diy/prompts':
