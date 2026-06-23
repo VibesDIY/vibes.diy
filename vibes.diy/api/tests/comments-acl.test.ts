@@ -285,6 +285,41 @@ describe("comments ACL: 'Only collaborators' (editors-only write/delete)", { tim
   });
 });
 
+describe("listMembers visibility on public vs restricted vibes (#2550)", { timeout: 20000 }, () => {
+  let ctx: Awaited<ReturnType<typeof setupApp>>;
+
+  beforeAll(async () => {
+    ctx = await setupApp(3000);
+  });
+
+  it("restricted vibe: a non-owner member can list members", async () => {
+    const res = await ctx.viewerApi.listMembers({ appSlug: ctx.appSlug, ownerHandle: ctx.ownerHandle });
+    expect(res.isOk()).toBe(true);
+    expect(res.Ok().members.length).toBeGreaterThan(0);
+  });
+
+  it("public vibe: only the owner can list members", async () => {
+    // Flip the vibe to public (anyone can use). Now the member list would leak
+    // collaborator names to the world, so only the owner may see it.
+    await ctx.ownerApi.ensureAppSettings({
+      appSlug: ctx.appSlug,
+      ownerHandle: ctx.ownerHandle,
+      publicAccess: { enable: true },
+    });
+
+    const ownerRes = await ctx.ownerApi.listMembers({ appSlug: ctx.appSlug, ownerHandle: ctx.ownerHandle });
+    expect(ownerRes.isOk()).toBe(true);
+
+    // A member who is not the owner is now denied.
+    const viewerRes = await ctx.viewerApi.listMembers({ appSlug: ctx.appSlug, ownerHandle: ctx.ownerHandle });
+    expect(viewerRes.isErr()).toBe(true);
+
+    // A non-member is denied too.
+    const otherRes = await ctx.otherApi.listMembers({ appSlug: ctx.appSlug, ownerHandle: ctx.ownerHandle });
+    expect(otherRes.isErr()).toBe(true);
+  });
+});
+
 describe("default db (no ACL): unchanged from today", { timeout: 20000 }, () => {
   let ctx: Awaited<ReturnType<typeof setupApp>>;
 

@@ -45,19 +45,21 @@ export const listMembersEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqList
       const req = ctx.validated.payload;
       const vctx = ctx.ctx.getOrThrow<VibesApiSQLCtx>("vibesApiCtx");
 
-      // Read-access gate: any reader (or public-readable) can list members.
-      const { access } = req._auth
+      // Read-access gate. On public vibes (anyone can use), the member list
+      // would otherwise leak collaborator names to the whole world, so only the
+      // owner may see it. On restricted vibes any reader can list members — the
+      // members are a known, trusted group (see VibesDIY/vibes.diy#2550).
+      const { access, isOwner } = req._auth
         ? await checkDocAccess(vctx, req._auth.verifiedAuth.claims.userId, req.appSlug, req.ownerHandle)
-        : { access: "none" as DocAccessLevel };
-      if (!canRead(access)) {
-        const pub = await isPublicReadable(vctx, req.appSlug, req.ownerHandle);
-        if (!pub) {
-          await ctx.send.send(ctx, {
-            type: "vibes.diy.res-error",
-            error: { message: "Access denied" },
-          } satisfies ResError);
-          return Result.Ok(EventoResult.Continue);
-        }
+        : { access: "none" as DocAccessLevel, isOwner: false };
+      const pub = await isPublicReadable(vctx, req.appSlug, req.ownerHandle);
+      const allowed = pub ? isOwner : canRead(access);
+      if (!allowed) {
+        await ctx.send.send(ctx, {
+          type: "vibes.diy.res-error",
+          error: { message: "Access denied" },
+        } satisfies ResError);
+        return Result.Ok(EventoResult.Continue);
       }
 
       // Find the owner's userId — grants are keyed by it.
