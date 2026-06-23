@@ -272,7 +272,7 @@ export default function HomePage() {
               <div style={getGalleryLabelStyle(mobile)}>Gallery</div>
               <div style={getGalleryContentStyle()}>
                 <VibeGallery count={4} isMobile={mobile} onSelectPrompt={handleSelectSuggestion} />
-                <p style={getGalleryDescriptionStyle()}>See what people are building — every one is live, and yours to remix.</p>
+                <p style={getGalleryDescriptionStyle()}>See what people are building — each one is live, and yours to remix.</p>
               </div>
             </div>
 
