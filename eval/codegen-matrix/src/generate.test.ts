@@ -39,9 +39,9 @@ describe("buildGenerateArgs", () => {
 });
 
 describe("runWithRetries", () => {
-  it("returns on first success without extra attempts", () => {
+  it("returns on first success without extra attempts", async () => {
     let calls = 0;
-    const out = runWithRetries(() => {
+    const out = await runWithRetries(() => {
       calls++;
       return ok("a");
     });
@@ -51,10 +51,10 @@ describe("runWithRetries", () => {
     expect(out.appSlug).toBe("a");
   });
 
-  it("retries a failure then succeeds, logging the failed attempt's reason", () => {
+  it("retries a failure then succeeds, logging the failed attempt's reason", async () => {
     const seq = [fail(), ok("b")];
     let i = 0;
-    const out = runWithRetries(() => seq[i++]);
+    const out = await runWithRetries(() => seq[i++]);
     expect(out.ok).toBe(true);
     expect(out.attempts).toBe(2);
     expect(out.appSlug).toBe("b");
@@ -64,9 +64,9 @@ describe("runWithRetries", () => {
     expect(out.attemptLog[1]).toMatchObject({ attempt: 2, ok: true, reason: "ok" });
   });
 
-  it("gives up as a model failure after failing more than twice, logging each reason", () => {
+  it("gives up as a model failure after failing more than twice, logging each reason", async () => {
     let calls = 0;
-    const out = runWithRetries(() => {
+    const out = await runWithRetries(() => {
       calls++;
       return fail();
     });

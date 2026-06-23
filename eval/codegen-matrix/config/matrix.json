@@ -6,6 +6,7 @@
   "judgeModel": "anthropic/claude-opus-4.5",
   "reps": 3,
   "screenshotTimeoutMs": 120000,
+  "concurrency": 8,
   "models": [
     { "id": "anthropic/claude-opus-4.6-fast", "class": "anthropic", "tier": "expensive" },
     { "id": "anthropic/claude-sonnet-4.6", "class": "anthropic", "tier": "cheap" },
