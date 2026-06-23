@@ -1,6 +1,13 @@
 import { describe, it, expect } from "vitest";
 import type { AccessDescriptor } from "@vibes.diy/api-types";
-import { GrantReduce, extractContribution, seedOwnerGrants, RESERVED_OWNER_ROLE } from "../svc/public/grant-reduce.js";
+import {
+  GrantReduce,
+  extractContribution,
+  seedOwnerGrants,
+  RESERVED_OWNER_ROLE,
+  parseOwnerRoles,
+  newSeededReduce,
+} from "../svc/public/grant-reduce.js";
 
 describe("extractContribution", () => {
   it("extracts members from AccessDescriptor", () => {
@@ -193,5 +200,38 @@ describe("seedOwnerGrants", () => {
     const gr = new GrantReduce();
     seedOwnerGrants(gr, undefined, ["editor"]);
     expect(gr.effectiveMembers.size).toBe(0);
+  });
+});
+
+describe("parseOwnerRoles", () => {
+  it("parses a JSON string[] column value", () => {
+    expect(parseOwnerRoles('["editor","admin"]')).toEqual(["editor", "admin"]);
+  });
+
+  it("tolerates null / undefined / malformed / non-array → []", () => {
+    expect(parseOwnerRoles(null)).toEqual([]);
+    expect(parseOwnerRoles(undefined)).toEqual([]);
+    expect(parseOwnerRoles("")).toEqual([]);
+    expect(parseOwnerRoles("not json")).toEqual([]);
+    expect(parseOwnerRoles('{"a":1}')).toEqual([]);
+  });
+
+  it("drops non-string entries", () => {
+    expect(parseOwnerRoles('["editor", 3, null, "admin"]')).toEqual(["editor", "admin"]);
+  });
+});
+
+describe("newSeededReduce", () => {
+  it("returns a reduce pre-seeded with the owner roles + reserved owner", () => {
+    const gr = newSeededReduce("garden-gnome", ["editor"]);
+    expect(gr.hasRole("garden-gnome", "editor")).toBe(true);
+    expect(gr.hasRole("garden-gnome", RESERVED_OWNER_ROLE)).toBe(true);
+  });
+
+  it("accepts stored docs on top of the seed", () => {
+    const gr = newSeededReduce("garden-gnome", ["editor"]);
+    gr.addDoc("d", extractContribution({ grant: { users: { alice: ["list"] } } }));
+    expect(gr.hasRole("garden-gnome", RESERVED_OWNER_ROLE)).toBe(true);
+    expect(gr.resolveEffectiveChannels("alice")).toEqual(new Set(["list"]));
   });
 });

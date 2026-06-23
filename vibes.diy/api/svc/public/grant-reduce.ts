@@ -289,3 +289,31 @@ export function seedOwnerGrants(reduce: GrantReduce, ownerHandle: string | undef
     grantPublic: new Set(),
   });
 }
+
+/**
+ * Parse the JSON `ownerRoles` column off an AccessFunctionBindings row into a
+ * string[]. Tolerant: null/undefined/malformed → []. (The reserved `owner` role
+ * is seeded regardless, so [] still seeds the owner into `owner`.)
+ */
+export function parseOwnerRoles(json: string | null | undefined): string[] {
+  if (!json) return [];
+  try {
+    const v: unknown = JSON.parse(json);
+    return Array.isArray(v) ? v.filter((x): x is string => typeof x === "string") : [];
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Construct a GrantReduce pre-seeded with the owner's roles. This is the single
+ * entry point every reduce site uses (write gate, read reduces, who-am-i, and
+ * the write-delta clone) so server enforcement and the client `can.*` predictor
+ * agree on the owner's roles. Add stored access-fn outputs afterward with
+ * `addDoc` — the seed lives outside `docContributions` and survives rebuilds.
+ */
+export function newSeededReduce(ownerHandle: string | undefined, ownerRoles: readonly string[] = []): GrantReduce {
+  const reduce = new GrantReduce();
+  seedOwnerGrants(reduce, ownerHandle, ownerRoles);
+  return reduce;
+}
