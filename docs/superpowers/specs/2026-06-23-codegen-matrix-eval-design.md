@@ -10,7 +10,7 @@ The defining constraint: **adding a future model is a one-line edit to a JSON
 config — no code change.** The harness is meant to be re-run as new models land
 on the platform.
 
-Cost is deliberately *not* a factor the harness computes. It is a post-eval
+Cost is deliberately _not_ a factor the harness computes. It is a post-eval
 filter the operator applies to the result table (cheapest model that clears an
 adherence/design bar). See "Out of scope".
 
@@ -49,17 +49,17 @@ Two checked-in files under `eval/codegen-matrix/config/`:
 ```jsonc
 {
   "cliCommand": "npx vibes-diy@latest", // the generate mechanism; pinnable
-  "handle": "eval",                      // publish namespace
+  "handle": "eval", // publish namespace
   "judgeModel": "anthropic/claude-opus-4.5",
-  "reps": 3,                             // runs per cell; report median/mean
-  "screenshotTimeoutMs": 120000,         // poll budget for screenshot.jpg
+  "reps": 3, // runs per cell; report median/mean
+  "screenshotTimeoutMs": 120000, // poll budget for screenshot.jpg
   "models": [
     { "id": "anthropic/claude-opus-4.6-fast", "class": "anthropic", "tier": "expensive" },
-    { "id": "anthropic/claude-sonnet-4.6",    "class": "anthropic", "tier": "cheap" },
-    { "id": "google/gemini-3.1-pro-preview",  "class": "google",    "tier": "expensive" },
-    { "id": "google/gemini-2.5-flash-lite",   "class": "google",    "tier": "cheap" }
+    { "id": "anthropic/claude-sonnet-4.6", "class": "anthropic", "tier": "cheap" },
+    { "id": "google/gemini-3.1-pro-preview", "class": "google", "tier": "expensive" },
+    { "id": "google/gemini-2.5-flash-lite", "class": "google", "tier": "cheap" },
     // …cheapest + priciest per class; add a future model = add a line
-  ]
+  ],
 }
 ```
 
@@ -79,7 +79,7 @@ rules neither other prompt touches.
 
 ### Stage 2 — Create loop (`src/generate.ts`)
 
-The create loop is *only* calls to the published CLI's `generate`, one per
+The create loop is _only_ calls to the published CLI's `generate`, one per
 `model × prompt × rep`. For each cell:
 
 1. Make a per-cell working dir `runs/<ts>/<promptId>__<modelSlug>__r<rep>/`.
@@ -90,7 +90,7 @@ The create loop is *only* calls to the published CLI's `generate`, one per
 4. The CLI writes the generated files into `<directory>` (`<cwd>/<appSlug>/`);
    leave them in place for the rubric.
 5. Write `cell.json`: `{ promptId, model, class, tier, rep, appSlug,
-   ownerHandle, url, directory, latencyMs, exitState, stderrTail }`.
+ownerHandle, url, directory, latencyMs, exitState, stderrTail }`.
 
 Runs are **sequential** — parallelizing risks rate-limit errors that pollute
 results with infrastructure noise (same rationale as `codegen-edit`).
@@ -108,7 +108,7 @@ instrumentation.
 
 **Adherence** — two layers, both written to `cell.score.json`:
 
-- *Deterministic rubric* (`src/rubric.ts`) over the generated files. Each rule
+- _Deterministic rubric_ (`src/rubric.ts`) over the generated files. Each rule
   is a boolean derived statically from the codegen system prompt
   (`prompts/pkg/system-prompt.md`):
   - `App.jsx` present and contains `export default function App(`
@@ -125,7 +125,7 @@ instrumentation.
   Each rule contributes to a rubric score `passed / total`. The rule set lives
   in one file so it tracks the system prompt as that evolves.
 
-- *LLM feature-completeness judge* (`src/judge.ts`) — did the app actually
+- _LLM feature-completeness judge_ (`src/judge.ts`) — did the app actually
   build what the prompt asked? Sends the prompt + generated `App.jsx`
   (+ `access.js`) to `judgeModel` via the `call-ai` direct-call path, asking for
   a 1–5 score and a one-line justification. Uses the same `LLM_BACKEND_URL` /
