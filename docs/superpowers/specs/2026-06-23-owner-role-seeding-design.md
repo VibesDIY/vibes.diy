@@ -2,7 +2,8 @@
 
 **Date:** 2026-06-23
 **Branch:** `claude/vibe-save-permissions-zehx4d`
-**Status:** proposed design, pending review
+**Status:** design reviewed (Charlie + Codex), decisions resolved; ready for
+phase-1 implementation
 
 ## Problem
 
@@ -75,9 +76,14 @@ should hold at deploy time. Two viable homes (decision below):
   (`extractExportSource`), so reading a named export is in-band — but it mixes a
   data declaration into the executable module.
 
-Recommendation: **sidecar field on the push/ensureAppSlug payload**, schema-
-validated, because it is read with zero code evaluation and is trivially
-inspectable. Open to the export form if single-file ergonomics win.
+**Resolved (review): sidecar field on the push/`ensureAppSlug` payload.** It is
+read with zero code evaluation and is trivially inspectable, and the contract
+already validates request-payload shape (`ReqEnsureAppSlug` /
+`ensureAppSlugItemEvento`), so `ownerRoles` is explicit and type-checked there.
+The export form is rejected: the current extraction path is function-oriented
+(`parseExportNames` + `extractExportSource`) and would need new const/data
+parsing machinery for `export const ownerRoles`. Net: declarative deploy metadata
+stays cleanly separated from executable policy code.
 
 ### 2. The seed — deploy-time grant injected into the reducer
 
@@ -96,7 +102,9 @@ There are **three** independent `GrantReduce` construction sites, and the seed
 must reach **all three** or the system desyncs:
 
 1. **Write path** — `app-documents-write-eventos.ts:303-327` (server write gate).
-2. **Read path** — `app-documents-read-eventos.ts` (server read gate).
+2. **Read path** — `app-documents-read-eventos.ts`, which is itself **three**
+   independent reduces: `getDoc`, `queryDocs`, and `subscribeDocs` (server read
+   gate).
 3. **who-am-i / `resolveGrants`** — `who-am-i.ts:42` builds its own
    `GrantReduce` from `accessFnOutputs` (`who-am-i.ts:96`) and emits
    `grants[dbName] = { channels, publicChannels, roles }` (`who-am-i.ts:111`),
@@ -107,9 +115,11 @@ must reach **all three** or the system desyncs:
    (Caught in review; verified — `resolveGrants` is a separate reducer from the
    read/write paths.)
 
-Because there are three call sites, the injection belongs in **one shared
-helper** they all call, not three copies. This is **the one piece of real
-plumbing** in the design; everything else is a generator/prompt change.
+Counting the read fan-out that is **five** reduce call sites (1 write + 3 read +
+1 who-am-i), with no shared chokepoint today (confirmed in review). The injection
+therefore belongs in **one shared helper** every site calls, not five copies.
+This is **the one piece of real plumbing** in the design; everything else is a
+generator/prompt change.
 
 Properties:
 
@@ -136,6 +146,13 @@ Then:
 This may look like `isOwner` reborn, but the difference is the entire point: it
 is now a **normal, visible, revocable, transferable grant** in the member list,
 not an ambient boolean evaluated through three fragile code paths.
+
+**Guardrail (review):** the reserved role only stays clean if it is a real
+`members.owner` entry in computed grant state — **never** a special-case branch
+in auth evaluation. Enforcement stays strictly roles-only; the seed is the _only_
+thing that knows "owner," and it expresses that as a grant. Keep it visible in
+the computed grants (it shows up in who-am-i / the member list) and assert
+server/client parity in tests, so it can't quietly diverge into a bypass.
 
 ### 4. Split `isOwner`: keep the chrome bit, drop the access-fn bit
 
@@ -218,18 +235,18 @@ generation, new vibes are correct by construction.
 - A platform owner-panel UI for granting arbitrary in-vibe roles to other users
   (the in-app grant-doc pattern already covers this).
 
-## Decisions to confirm
+## Decisions (resolved in review)
 
-1. **Manifest home:** sidecar push-payload field (preferred) vs. `export const
-ownerRoles` in `access.js`.
-2. **Reserved role name:** `owner` vs. `admin` vs. configurable. Recommendation:
-   `owner`, reserved and always seeded.
-3. **Per-db vs. flat `ownerRoles`.** Access fns are selected per `dbName`; a
-   `Record<dbName, string[]>` is the precise form, a flat list the simple one.
-   Recommendation: flat list applied to all of the app's dbs unless a real case
-   needs per-db.
-4. **Re-deploy reconciliation:** additive-only (recommended) vs. reconcile-to-
-   declared.
+1. **Manifest home → sidecar push-payload field.** Validated via
+   `ReqEnsureAppSlug` / `ensureAppSlugItemEvento`; the `export const` form is
+   rejected (function-oriented `parseExportNames`/`extractExportSource` would need
+   new const-parsing). See §1.
+2. **Reserved role name → `owner`**, reserved and always seeded — as a normal
+   `members.owner` grant entry, never an auth bypass (§3 guardrail).
+3. **`ownerRoles` shape → flat `string[]`** applied to all of the app's dbs;
+   revisit a per-`dbName` `Record` only if a real case needs it.
+4. **Re-deploy reconciliation → additive-only.** Never auto-revoke roles no
+   longer declared; a shrink is a separate explicit action.
 
 ## After-tasks (separate PRs, not this one)
 
