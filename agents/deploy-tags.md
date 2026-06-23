@@ -53,8 +53,8 @@ When you tag the **same commit at the same time** across `vibes-diy@p*`, `vibes-
 
 Shipping a release normally means cutting three tags at the same commit (`vibes-diy@p<ver>`, `vibes-diy@c<ver>`, `pkg@p<ver>`). The `ship@<ver>` meta-tag collapses that to **one**:
 
-| You create  | Fans out to                                            |
-| ----------- | ------------------------------------------------------ |
+| You create   | Fans out to                                            |
+| ------------ | ------------------------------------------------------ |
 | `ship@1.2.3` | `vibes-diy@p1.2.3` + `vibes-diy@c1.2.3` + `pkg@p1.2.3` |
 
 `ship-fanout.yaml` triggers on `push: tags: ['ship@*']`, validates the version is bare semver, creates the three canonical tags **at the same commit the `ship@` tag points to**, and pushes them. The existing `vibes-diy-deploy` / `package-deploy` workflows then run unchanged — so the per-stream tags this runbook's pending-changes tooling and rollback depend on still exist. The `ship@` tag itself triggers nothing else.
