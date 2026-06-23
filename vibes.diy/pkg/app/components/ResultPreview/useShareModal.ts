@@ -1,4 +1,5 @@
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect, useCallback, createElement } from "react";
+import { toast } from "react-hot-toast";
 import type { VibesDiyApiIface } from "@vibes.diy/api-types";
 import { buildEmbedSnippet } from "../../lib/iframe-policy.js";
 
@@ -98,9 +99,15 @@ export function useShareModal({ ownerHandle, appSlug, fsId, chatApi, sharedApi }
           if (app.mode === "production" && app.fsId) {
             setIsPublished(true);
             setProductionFsId(app.fsId);
+            // Resolve the share URL eagerly (it's deterministic from owner/slug)
+            // so the published view is ready the instant the modal opens, rather
+            // than rendering the publish form first and swapping once the
+            // modal-open fetch resolves (the #2236 compact→full flash).
+            setPublishedUrl(`${window.location.origin}/vibe/${ownerHandle}/${appSlug}`);
           } else {
             setIsPublished(false);
             setProductionFsId(undefined);
+            setPublishedUrl(undefined);
           }
         }
       })
@@ -142,10 +149,10 @@ export function useShareModal({ ownerHandle, appSlug, fsId, chatApi, sharedApi }
     let cancelled = false;
 
     // Reset transient UI state before re-fetching. We intentionally do NOT
-    // reset isPublished / productionFsId here — those are sourced by both the
-    // proactive mount-effect (drives the badge) and this modal-open effect.
-    // Resetting them would cause the badge to flash off → on each open.
-    setPublishedUrl(undefined);
+    // reset isPublished / productionFsId / publishedUrl here — those are sourced
+    // by both the proactive mount-effect (drives the badge + eager URL) and this
+    // modal-open effect. Resetting them would flash the badge off → on and swap
+    // the published view for the publish form on each open (the #2236 flash).
     setUrlCopied(false);
     setPublishError(undefined);
     setAutoJoinEnabled(false);
@@ -252,8 +259,33 @@ export function useShareModal({ ownerHandle, appSlug, fsId, chatApi, sharedApi }
         setProductionFsId(fsId);
         setIsPublished(true);
 
+        // On the first publish, don't hijack the user into a new tab (#2234).
+        // Their mental model is "Publish makes the link" — so copy it to the
+        // clipboard and surface an inline toast with a "View live" link, letting
+        // them choose when to switch context.
         if (isInitialPublish) {
-          window.open(url, "_blank");
+          try {
+            await navigator.clipboard.writeText(url);
+            setUrlCopied(true);
+            clearCopyTimeout();
+            copyTimeoutRef.current = window.setTimeout(() => setUrlCopied(false), 2000);
+          } catch {
+            // Clipboard can reject (permissions/focus); the link is still shown
+            // in the panel's Copy Link row, so this is non-fatal.
+          }
+          toast.success(
+            createElement(
+              "span",
+              null,
+              "Published — link copied. ",
+              createElement(
+                "a",
+                { href: url, target: "_blank", rel: "noreferrer", className: "font-medium underline" },
+                "View live →"
+              )
+            ),
+            { duration: 6000 }
+          );
         }
       } catch {
         setPublishError("Failed to publish. Please try again.");
