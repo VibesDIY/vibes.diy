@@ -117,9 +117,24 @@ must reach **all three** or the system desyncs:
 
 Counting the read fan-out that is **five** reduce call sites (1 write + 3 read +
 1 who-am-i), with no shared chokepoint today (confirmed in review). The injection
-therefore belongs in **one shared helper** every site calls, not five copies.
-This is **the one piece of real plumbing** in the design; everything else is a
-generator/prompt change.
+therefore belongs in **one shared helper** (`seedOwnerGrants` / a
+`newSeededReduce(ownerHandle, ownerRoles)` wrapper) every site calls, not five
+copies. This is **the one piece of real plumbing** in the design; everything
+else is a generator/prompt change.
+
+**A 6th seed-sensitive spot (review):** the write path's effective-grant delta
+check builds `grantsReduceAfter` by **replaying `grantsReduceBefore`'s
+`docContributions`** (`app-documents-write-eventos.ts:574-576`). Because the
+implementation stores the seed _outside_ `docContributions` (so its reserved key
+can't collide with a user doc `_id`), that clone does **not** inherit the seed.
+`grantsReduceBefore` and `grantsReduceAfter` must be seeded **symmetrically** —
+seed both identically so the owner seed cancels in the before/after diff and
+never spuriously trips `hasEffectiveViewerGrantDelta`. (Seed both or neither;
+the bug is asymmetry.)
+
+**Precedence:** `ownerRoles` resolution must mirror existing binding resolution —
+a db-specific binding wins over the `*` wildcard — so the seed can't diverge
+between the write, read, and who-am-i paths.
 
 Properties:
 
