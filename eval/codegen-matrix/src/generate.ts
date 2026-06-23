@@ -35,7 +35,10 @@ function splitCli(cliCommand: string): { cmd: string; prefix: string[] } {
 function resolveCliVersion(cliCommand: string): string {
   const { cmd, prefix } = splitCli(cliCommand);
   const r = spawnSync(cmd, [...prefix, "--version"], { encoding: "utf-8" });
-  return (r.stdout ?? "").trim() || "unknown";
+  // The CLI prints its version to stderr (and npx adds its own warn lines), so
+  // scan both streams for the first semver rather than trusting stdout.
+  const combined = `${r.stdout ?? ""}\n${r.stderr ?? ""}`;
+  return combined.match(/\d+\.\d+\.\d+/)?.[0] ?? "unknown";
 }
 
 function gitCommitSha(): string {
