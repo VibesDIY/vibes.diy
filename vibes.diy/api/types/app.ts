@@ -114,6 +114,10 @@ export const reqGetAppByFsId = type({
   appSlug: "string",
   ownerHandle: "string",
   "token?": "string",
+  // When true the response omits the heavy fileSystem/env payloads (returns
+  // them empty) — for callers that only need grant/title/icon/meta, e.g. the
+  // curated homepage showcase which fetches one app per card on first load.
+  "summary?": "boolean",
 });
 export type ReqGetAppByFsId = typeof reqGetAppByFsId.infer;
 export function isReqGetAppByFsId(obj: unknown): obj is ReqGetAppByFsId {

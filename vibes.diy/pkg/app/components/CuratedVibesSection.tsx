@@ -23,6 +23,10 @@ export function CuratedVibesSection({ isMobile }: CuratedVibesSectionProps) {
   const [detailItem, setDetailItem] = useState<AppItem | null>(null);
   const appHostBaseUrl = getAppHostBaseUrl();
 
+  // Signed-out visitors must land on the authless public viewer (/vibe), not
+  // the /chat editor which lives behind the auth layout.
+  const publicHref = (item: AppItem) => `/vibe/${item.ownerHandle}/${item.appSlug}`;
+
   // ESC closes the detail panel (mirrors MyAppsSection).
   useEffect(() => {
     if (!detailItem) return;
@@ -68,6 +72,7 @@ export function CuratedVibesSection({ isMobile }: CuratedVibesSectionProps) {
                         isMobile={isMobile}
                         index={index}
                         onOpenInfo={() => setDetailItem(item)}
+                        hrefFor={publicHref}
                       />
                     ))}
                   </div>
@@ -79,7 +84,7 @@ export function CuratedVibesSection({ isMobile }: CuratedVibesSectionProps) {
         </div>
       </div>
 
-      <AppDetailPanel item={detailItem} appHostBaseUrl={appHostBaseUrl} onClose={() => setDetailItem(null)} />
+      <AppDetailPanel item={detailItem} appHostBaseUrl={appHostBaseUrl} onClose={() => setDetailItem(null)} hrefFor={publicHref} />
     </section>
   );
 }

@@ -59,7 +59,9 @@ export function useCuratedVibes(): UseCuratedVibes {
               // A single bad app must never take down the whole showcase, so any
               // unexpected throw (network, missing app) just drops that card.
               try {
-                const res = await sharedApi.getAppByFsId({ ownerHandle: ref.ownerHandle, appSlug: ref.appSlug });
+                // summary: this path only reads grant/title/icon, so skip the
+                // heavy fileSystem/env payloads.
+                const res = await sharedApi.getAppByFsId({ ownerHandle: ref.ownerHandle, appSlug: ref.appSlug, summary: true });
                 if (res.isErr()) return null;
                 const app = res.Ok();
                 if (app.error || !isViewable(app.grant)) return null;

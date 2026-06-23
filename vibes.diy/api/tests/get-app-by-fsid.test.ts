@@ -244,4 +244,23 @@ describe("getAppByFsId grant flow", { timeout: (inject("DB_FLAVOUR" as never) as
     }
     expect(rApp.Ok().icon).toEqual({ cid: "sql://Assets/icon-head", mime: "image/png" });
   });
+
+  it("summary mode drops fileSystem/env but keeps grant and meta", async () => {
+    const { appSlug, ownerHandle } = await createApp();
+    await api.ensureAppSettings({ appSlug, ownerHandle, title: "Summary App" });
+
+    // Full fetch carries the app's files.
+    const rFull = await api.getAppByFsId({ appSlug, ownerHandle });
+    if (rFull.isErr()) assert.fail("Expected full getAppByFsId to succeed: " + JSON.stringify(rFull.Err()));
+    expect(rFull.Ok().fileSystem.length).toBeGreaterThan(0);
+
+    // Summary fetch keeps grant + title meta but omits the heavy payloads.
+    const rSummary = await api.getAppByFsId({ appSlug, ownerHandle, summary: true });
+    if (rSummary.isErr()) assert.fail("Expected summary getAppByFsId to succeed: " + JSON.stringify(rSummary.Err()));
+    const summary = rSummary.Ok();
+    expect(summary.grant).toBe("owner");
+    expect(summary.fileSystem).toEqual([]);
+    expect(summary.env).toEqual({});
+    expect(summary.meta.find((m) => m.type === "title")).toEqual({ type: "title", title: "Summary App" });
+  });
 });

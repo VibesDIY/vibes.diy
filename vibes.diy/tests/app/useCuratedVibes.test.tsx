@@ -103,4 +103,18 @@ describe("useCuratedVibes", () => {
     expect(item.title).toBe("melodle");
     expect(item.icon).toBeUndefined();
   });
+
+  it("requests the lightweight summary payload", async () => {
+    mockGetAppByFsId.mockImplementation(async ({ ownerHandle, appSlug }: { ownerHandle: string; appSlug: string }) =>
+      okApp({ ownerHandle, appSlug, grant: "not-grant" })
+    );
+
+    const { result } = renderHook(() => useCuratedVibes());
+    await waitFor(() => expect(result.current.loading).toBe(false));
+
+    expect(mockGetAppByFsId).toHaveBeenCalled();
+    for (const call of mockGetAppByFsId.mock.calls) {
+      expect(call[0]).toMatchObject({ summary: true });
+    }
+  });
 });

@@ -371,6 +371,10 @@ export const getAppByFsIdEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqGet
       // (head version cid+mime); pass it through so callers get the icon without
       // a separate authed list-recent-vibes round-trip.
       const icon = settings.entry.settings.icon;
+      // Summary callers only need grant/title/icon/meta; drop the heavy
+      // fileSystem + env so the public landing path doesn't transfer full app
+      // payloads once per curated card.
+      const summary = req.summary === true;
       await ctx.send.send(ctx, {
         type: "vibes.diy.res-get-app-by-fsid",
         appSlug: app.appSlug,
@@ -381,8 +385,8 @@ export const getAppByFsIdEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqGet
         grant,
         mode: app.mode as "production" | "dev",
         releaseSeq: app.releaseSeq,
-        env: app.env as Record<string, string>,
-        fileSystem: app.fileSystem as FileSystemItem[],
+        env: summary ? {} : (app.env as Record<string, string>),
+        fileSystem: summary ? [] : (app.fileSystem as FileSystemItem[]),
         meta,
         created: app.created,
       } satisfies ResGetAppByFsId);
