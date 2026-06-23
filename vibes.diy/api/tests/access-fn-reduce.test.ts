@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import type { AccessDescriptor } from "@vibes.diy/api-types";
-import { GrantReduce, extractContribution } from "../svc/public/grant-reduce.js";
+import { GrantReduce, extractContribution, seedOwnerGrants, RESERVED_OWNER_ROLE } from "../svc/public/grant-reduce.js";
 
 describe("extractContribution", () => {
   it("extracts members from AccessDescriptor", () => {
@@ -129,5 +129,52 @@ describe("GrantReduce", () => {
     expect(gr.hasRole("bob", "admin")).toBe(true);
     expect(gr.hasRole("carol", "admin")).toBe(false);
     expect(gr.hasRole("alice", "editor")).toBe(false);
+  });
+});
+
+describe("seedOwnerGrants", () => {
+  it("always seeds the reserved owner role, even with no declared ownerRoles", () => {
+    const gr = new GrantReduce();
+    seedOwnerGrants(gr, "garden-gnome");
+
+    expect(gr.hasRole("garden-gnome", RESERVED_OWNER_ROLE)).toBe(true);
+    expect(gr.hasRole("someone-else", RESERVED_OWNER_ROLE)).toBe(false);
+  });
+
+  it("seeds every declared ownerRole plus the reserved owner role", () => {
+    const gr = new GrantReduce();
+    seedOwnerGrants(gr, "garden-gnome", ["editor", "admin"]);
+
+    expect(gr.hasRole("garden-gnome", "editor")).toBe(true);
+    expect(gr.hasRole("garden-gnome", "admin")).toBe(true);
+    expect(gr.hasRole("garden-gnome", RESERVED_OWNER_ROLE)).toBe(true);
+  });
+
+  it("survives a rebuild triggered by a later real doc (stored as a contribution, not mutated)", () => {
+    const gr = new GrantReduce();
+    seedOwnerGrants(gr, "garden-gnome", ["editor"]);
+    // A later doc UPDATE forces a full rebuild from docContributions.
+    gr.addDoc("doc1", extractContribution({ grant: { users: { alice: ["list"] } } }));
+    gr.addDoc("doc1", extractContribution({ grant: { users: { alice: ["list", "extra"] } } }));
+
+    // Seed must still be present after the rebuild.
+    expect(gr.hasRole("garden-gnome", "editor")).toBe(true);
+    expect(gr.hasRole("garden-gnome", RESERVED_OWNER_ROLE)).toBe(true);
+    expect(gr.resolveEffectiveChannels("alice")).toEqual(new Set(["list", "extra"]));
+  });
+
+  it("unions with role-channel grants so the owner resolves the role's channels", () => {
+    const gr = new GrantReduce();
+    // App doc grants the editor role a channel; owner is seeded into editor.
+    gr.addDoc("role-doc", extractContribution({ grant: { roles: { editor: ["list"] } } }));
+    seedOwnerGrants(gr, "garden-gnome", ["editor"]);
+
+    expect(gr.resolveEffectiveChannels("garden-gnome")).toEqual(new Set(["list"]));
+  });
+
+  it("is a no-op when ownerHandle is falsy", () => {
+    const gr = new GrantReduce();
+    seedOwnerGrants(gr, undefined, ["editor"]);
+    expect(gr.effectiveMembers.size).toBe(0);
   });
 });

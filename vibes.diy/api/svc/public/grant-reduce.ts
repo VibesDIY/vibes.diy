@@ -218,3 +218,56 @@ export class GrantReduce {
     }
   }
 }
+
+/**
+ * Reserved role the vibe owner is ALWAYS seeded into at deploy time.
+ *
+ * This is the backstop for the owner-role-seeding design (spec
+ * docs/superpowers/specs/2026-06-23-owner-role-seeding-design.md §3): even when
+ * a vibe declares no `ownerRoles`, the owner holds `owner`, so an `access.js`
+ * that gates management docs on `ctx.requireRole("owner")` can never be a
+ * forgotten brick. It is a NORMAL members entry — visible in computed grants,
+ * revocable, transferable — never a special-case bypass in auth evaluation.
+ */
+export const RESERVED_OWNER_ROLE = "owner";
+
+/**
+ * Synthetic docId under which the deploy-time owner seed is injected into a
+ * GrantReduce. Using a reserved docId (rather than mutating effectiveMembers
+ * directly) means the seed is stored as a contribution and therefore survives a
+ * `rebuild()` triggered by a later real doc — direct mutation would be wiped.
+ */
+export const OWNER_SEED_DOC_ID = "__vibes_owner_seed__";
+
+/**
+ * Inject the deploy-time owner seed into a reduce: the owner handle becomes a
+ * member of the reserved `owner` role plus every declared `ownerRoles` role.
+ *
+ * This is the single shared helper every grant-reduce site calls (write gate,
+ * the read reduces, and who-am-i's resolveGrants) so server enforcement and the
+ * client `can.*` predictor agree on the owner's roles. The seed is the ONLY
+ * thing that knows "owner" — it expresses that purely as grant state, keeping
+ * enforcement roles-only (no `user.isOwner` branch).
+ *
+ * No-op when `ownerHandle` is falsy. `ownerRoles` defaults to empty (reserved
+ * role only).
+ */
+export function seedOwnerGrants(reduce: GrantReduce, ownerHandle: string | undefined, ownerRoles: readonly string[] = []): void {
+  if (!ownerHandle) return;
+  const members = new Map<string, Set<string>>();
+  members.set(RESERVED_OWNER_ROLE, new Set([ownerHandle]));
+  for (const role of ownerRoles) {
+    let set = members.get(role);
+    if (!set) {
+      set = new Set();
+      members.set(role, set);
+    }
+    set.add(ownerHandle);
+  }
+  reduce.addDoc(OWNER_SEED_DOC_ID, {
+    members,
+    grantRoles: new Map(),
+    grantUsers: new Map(),
+    grantPublic: new Set(),
+  });
+}
