@@ -200,8 +200,8 @@ export default function HomePage() {
 
           <div style={getContainerStyle(mobile)}>
             <h1 style={getTitle(mobile, isDarkMode)}>
-              Customize a web app by&nbsp;
-              <span style={{ textDecoration: "underline" }}>talking</span>.
+              Remix apps with&nbsp;
+              <span style={{ textDecoration: "underline" }}>words</span>.
             </h1>
 
             {/* Chat input form */}
