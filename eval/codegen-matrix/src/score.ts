@@ -44,7 +44,7 @@ async function scoreCell(args: {
   readonly userPrompt: string;
   readonly judgeDeps: JudgeDeps;
   readonly screenshotTimeoutMs: number;
-}): Promise<void> {
+}): Promise<CellScore> {
   const { cellDir, cell, userPrompt, judgeDeps, screenshotTimeoutMs } = args;
   const files = collectSourceFiles(cell.directory);
   const rubric = runRubric(files);
@@ -67,6 +67,7 @@ async function scoreCell(args: {
   stderr.write(
     `  scored ${cell.promptId} ${cell.model} r${cell.rep}: rubric=${rubric.passed}/${rubric.total} feature=${feature.score} design=${design.score}\n`
   );
+  return score;
 }
 
 function parseFlag(flag: string): string | undefined {
@@ -112,6 +113,8 @@ async function main(): Promise<void> {
 
   const cellDirs = readdirSync(runDir).filter((n) => existsSync(join(runDir, n, CELL_JSON)));
   stderr.write(`scoring ${cellDirs.length} cell(s) in ${runDir}, concurrency=${concurrency}\n`);
+  let scored = 0;
+  let nullJudge = 0; // cells where a judge score came back null (transient backend failure, etc.)
   await mapWithConcurrency(cellDirs, concurrency, async (name) => {
     const cellDir = join(runDir, name);
     const cell = readCellJson(cellDir);
@@ -120,8 +123,18 @@ async function main(): Promise<void> {
       return;
     }
     const userPrompt = promptText.get(cell.promptId) ?? "";
-    await scoreCell({ cellDir, cell, userPrompt, judgeDeps, screenshotTimeoutMs: matrix.screenshotTimeoutMs });
+    const score = await scoreCell({ cellDir, cell, userPrompt, judgeDeps, screenshotTimeoutMs: matrix.screenshotTimeoutMs });
+    scored++;
+    if (score.feature.score === null || score.design.score === null) nullJudge++;
   });
+  // Surface degraded signal: if many cells couldn't be judged, the run's scores
+  // are weaker than they look (e.g. judge-backend rate limiting under concurrency).
+  if (scored > 0 && nullJudge / scored > 0.2) {
+    stderr.write(
+      `WARNING: ${nullJudge}/${scored} scored cells have a null judge score (${Math.round((100 * nullJudge) / scored)}%). ` +
+        `Judge signal is degraded — consider lowering --concurrency or re-running score.\n`
+    );
+  }
   stderr.write(`done scoring ${runDir}\n`);
 }
 

@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { parseDevVars, buildFeaturePrompt, buildDesignPrompt } from "./judge.js";
+import { parseDevVars, resolveDevVars, buildFeaturePrompt, buildDesignPrompt } from "./judge.js";
 
 describe("parseDevVars", () => {
   it("extracts the LLM url + key", () => {
@@ -8,6 +8,32 @@ describe("parseDevVars", () => {
   });
   it("throws when missing", () => {
     expect(() => parseDevVars("FOO=bar")).toThrow(/LLM_BACKEND/);
+  });
+});
+
+describe("resolveDevVars", () => {
+  const fileText = "LLM_BACKEND_URL=https://file.example\nLLM_BACKEND_API_KEY=sk-file";
+
+  it("uses env vars when set (cloud agent env, no .dev.vars file)", () => {
+    const env = { LLM_BACKEND_URL: "https://env.example", LLM_BACKEND_API_KEY: "sk-env" };
+    expect(resolveDevVars(env, undefined)).toEqual({ llmUrl: "https://env.example", llmKey: "sk-env" });
+  });
+
+  it("prefers env vars over the file when both are present", () => {
+    const env = { LLM_BACKEND_URL: "https://env.example", LLM_BACKEND_API_KEY: "sk-env" };
+    expect(resolveDevVars(env, fileText).llmUrl).toBe("https://env.example");
+  });
+
+  it("falls back to the file when env vars are absent (local dev)", () => {
+    expect(resolveDevVars({}, fileText)).toEqual({ llmUrl: "https://file.example", llmKey: "sk-file" });
+  });
+
+  it("ignores a partial env (only one of the two set) and falls back to the file", () => {
+    expect(resolveDevVars({ LLM_BACKEND_URL: "https://env.example" }, fileText).llmUrl).toBe("https://file.example");
+  });
+
+  it("throws a clear error when neither env nor file provides the keys", () => {
+    expect(() => resolveDevVars({}, undefined)).toThrow(/environment variables.*\.dev\.vars/s);
   });
 });
 

@@ -11,8 +11,10 @@ it's a post-eval filter you apply to `summary.md` using OpenRouter pricing.
 ## Prerequisites
 
 - Logged-in `vibes-diy` CLI (`vibes-diy login`) with access to the `eval` handle.
-- `vibes.diy/pkg/.dev.vars` populated with `LLM_BACKEND_URL` + `LLM_BACKEND_API_KEY`
-  (the judge transport, same file `eval/preamble-probe` reads).
+- The judge transport (`LLM_BACKEND_URL` + `LLM_BACKEND_API_KEY`), provided
+  either as **environment variables** (e.g. a cloud agent env — these take
+  precedence) or in `vibes.diy/pkg/.dev.vars` for local dev. The `score` stage
+  needs them; `generate` does not.
 
 ## Run (three stages)
 

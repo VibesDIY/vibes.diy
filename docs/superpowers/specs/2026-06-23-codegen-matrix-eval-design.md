@@ -178,9 +178,12 @@ instrumentation.
 - _LLM feature-completeness judge_ (`src/judge.ts`) — did the app actually
   build what the prompt asked? Sends the prompt + generated `App.jsx`
   (+ `access.js`) to `judgeModel` via the `call-ai` direct-call path, asking for
-  a 1–5 score and a one-line justification. Uses the same `LLM_BACKEND_URL` /
-  `LLM_BACKEND_API_KEY` transport `preamble-probe` reads from
-  `vibes.diy/pkg/.dev.vars`.
+  a 1–5 score and a one-line justification. The `LLM_BACKEND_URL` /
+  `LLM_BACKEND_API_KEY` transport is resolved from environment variables first
+  (cloud agent env) and falls back to `vibes.diy/pkg/.dev.vars` for local dev
+  (the same file `preamble-probe` reads). Transient judge failures (429/5xx/
+  network) are retried with exponential backoff; a persistent failure degrades
+  to a `null` score, and `score` warns if the null-score rate is high.
 
 **Design** — fetch the deployed screenshot and vision-judge it:
 

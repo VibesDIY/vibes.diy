@@ -16,11 +16,12 @@ codegen system prompt), and **design quality**.
    ```sh
    npx vibes-diy@latest login
    ```
-2. **Judge transport** — `vibes.diy/pkg/.dev.vars` must contain
-   `LLM_BACKEND_URL` and `LLM_BACKEND_API_KEY` (same file the dev server and
-   `eval/preamble-probe` read). The `score` stage needs this; `generate` does
-   not. See [`worktree-setup.md`](./worktree-setup.md) if you haven't set up
-   local dev.
+2. **Judge transport** — `LLM_BACKEND_URL` and `LLM_BACKEND_API_KEY`. The `score`
+   stage resolves them from **environment variables first** (how the cloud agent
+   env provides them — these win), then falls back to `vibes.diy/pkg/.dev.vars`
+   for local dev (same file the dev server and `eval/preamble-probe` read).
+   `generate` doesn't need them. See [`worktree-setup.md`](./worktree-setup.md)
+   for local dev setup.
 3. `pnpm install` at the repo root.
 
 > **Run from a stable network, not an ephemeral cloud session.** The `generate`
@@ -168,7 +169,7 @@ bar.
 | Symptom                                                                                  | Cause / fix                                                                                                                                |
 | ---------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
 | All cells `generate-failed`, `attemptLog` shows "Stream ended before the turn completed" | Flaky network from this environment. Run from a stable connection; the retries already gave it 3 tries.                                    |
-| `score` throws about `LLM_BACKEND_URL` / `LLM_BACKEND_API_KEY`                           | `vibes.diy/pkg/.dev.vars` is missing the judge keys (see Prerequisites).                                                                   |
+| `score` throws about `LLM_BACKEND_URL` / `LLM_BACKEND_API_KEY`                           | Provide them as env vars (cloud agent env) or in `vibes.diy/pkg/.dev.vars` (local); env wins. See Prerequisites.                           |
 | `design.available: false` on a cell                                                      | Screenshot wasn't ready within `screenshotTimeoutMs` (capture lags the deploy). Raise the timeout or re-`score`.                           |
 | `cliVersion: "unknown"` in `run.json`                                                    | The CLI prints its version to stderr; the harness scans both streams — if still unknown, `npx vibes-diy@latest --version` isn't resolving. |
 | Want to score an old run                                                                 | `pnpm run score -- --run runs/<ts>` then `pnpm run report -- --run runs/<ts>`.                                                             |
