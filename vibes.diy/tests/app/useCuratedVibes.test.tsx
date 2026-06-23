@@ -54,9 +54,9 @@ describe("useCuratedVibes", () => {
     vi.clearAllMocks();
   });
 
-  it("keeps only publicly-viewable apps, builds title/icon, and drops empty groups", async () => {
-    // "melodle" (first group, Mind games) is public with a title + icon.
-    // Everything else is gated or errors, so its group collapses away.
+  it("keeps only publicly-viewable apps in one flat list and builds title/icon/screenshot/description", async () => {
+    // "melodle" is public with full metadata; everything else is gated or
+    // errors, so the flat list contains only melodle.
     mockGetAppByFsId.mockImplementation(async ({ ownerHandle, appSlug }: { ownerHandle: string; appSlug: string }) => {
       if (appSlug === "melodle") {
         return okApp({
@@ -82,12 +82,9 @@ describe("useCuratedVibes", () => {
 
     await waitFor(() => expect(result.current.loading).toBe(false));
 
-    // Only the Mind games group survives, with just the viewable app.
-    expect(result.current.groups).toHaveLength(1);
-    const group = result.current.groups[0];
-    expect(group.category).toBe("Mind games");
-    expect(group.items).toHaveLength(1);
-    expect(group.items[0]).toMatchObject({
+    // Only the one viewable app survives, as a flat list.
+    expect(result.current.items).toHaveLength(1);
+    expect(result.current.items[0]).toMatchObject({
       ownerHandle: "jchris",
       appSlug: "melodle",
       title: "Melodle",
@@ -109,7 +106,7 @@ describe("useCuratedVibes", () => {
 
     await waitFor(() => expect(result.current.loading).toBe(false));
 
-    const item = result.current.groups[0].items[0];
+    const item = result.current.items[0];
     expect(item.title).toBe("melodle");
     expect(item.icon).toBeUndefined();
   });
