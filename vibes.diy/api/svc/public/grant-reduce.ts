@@ -85,12 +85,30 @@ export class GrantReduce {
 
   _hydrated = false;
 
+  /**
+   * A synthetic contribution kept OUTSIDE `docContributions` so its reserved
+   * identity cannot collide with a user document `_id` (docIds are caller-
+   * supplied and may be any string). Unioned on every (re)build. See `setSeed`.
+   */
+  private seedContribution: DocContribution | undefined;
+
   get isHydrated(): boolean {
     return this._hydrated;
   }
 
   markHydrated(): void {
     this._hydrated = true;
+  }
+
+  /**
+   * Installs (or clears) the synthetic seed contribution — e.g. the deploy-time
+   * owner-role seed (see `seedOwnerGrants`). Stored separately from
+   * `docContributions` so it can never share a Map key with a real document,
+   * and re-applied on every `rebuild()` so a later doc update can't drop it.
+   */
+  setSeed(contribution: DocContribution | undefined): void {
+    this.seedContribution = contribution && hasContent(contribution) ? contribution : undefined;
+    this.rebuild();
   }
 
   /**
@@ -171,6 +189,9 @@ export class GrantReduce {
     this.userGrants = new Map();
     this.publicChannels = new Set();
 
+    if (this.seedContribution) {
+      this.unionContribution(this.seedContribution);
+    }
     for (const contribution of this.docContributions.values()) {
       this.unionContribution(contribution);
     }
@@ -232,14 +253,6 @@ export class GrantReduce {
 export const RESERVED_OWNER_ROLE = "owner";
 
 /**
- * Synthetic docId under which the deploy-time owner seed is injected into a
- * GrantReduce. Using a reserved docId (rather than mutating effectiveMembers
- * directly) means the seed is stored as a contribution and therefore survives a
- * `rebuild()` triggered by a later real doc — direct mutation would be wiped.
- */
-export const OWNER_SEED_DOC_ID = "__vibes_owner_seed__";
-
-/**
  * Inject the deploy-time owner seed into a reduce: the owner handle becomes a
  * member of the reserved `owner` role plus every declared `ownerRoles` role.
  *
@@ -248,6 +261,11 @@ export const OWNER_SEED_DOC_ID = "__vibes_owner_seed__";
  * client `can.*` predictor agree on the owner's roles. The seed is the ONLY
  * thing that knows "owner" — it expresses that purely as grant state, keeping
  * enforcement roles-only (no `user.isOwner` branch).
+ *
+ * The seed is installed via `setSeed` (a dedicated slot OUTSIDE
+ * `docContributions`), so its reserved identity can never collide with a user
+ * document `_id`, and it is re-unioned on every `rebuild()` so a later doc
+ * update can't drop it.
  *
  * No-op when `ownerHandle` is falsy. `ownerRoles` defaults to empty (reserved
  * role only).
@@ -264,7 +282,7 @@ export function seedOwnerGrants(reduce: GrantReduce, ownerHandle: string | undef
     }
     set.add(ownerHandle);
   }
-  reduce.addDoc(OWNER_SEED_DOC_ID, {
+  reduce.setSeed({
     members,
     grantRoles: new Map(),
     grantUsers: new Map(),
