@@ -12,6 +12,8 @@ export interface CellJson {
   readonly directory: string;
   readonly latencyMs: number;
   readonly exitState: "ok" | "generate-failed";
+  /** How many generate attempts ran (1 = succeeded first try; up to the retry cap). */
+  readonly attempts: number;
   readonly stderrTail: string;
   readonly apiUrl: string;
   readonly runtimeHostBase: string;

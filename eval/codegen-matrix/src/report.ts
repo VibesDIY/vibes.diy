@@ -15,6 +15,7 @@ export interface JoinedCell {
   readonly rep: number;
   readonly latencyMs: number;
   readonly exitState: "ok" | "generate-failed";
+  readonly attempts: number;
   readonly rubricRatio: number | null;
   readonly featureScore: number | null;
   readonly designScore: number | null;
@@ -101,6 +102,7 @@ function joinCells(runDir: string): JoinedCell[] {
       rep: cell.rep,
       latencyMs: cell.latencyMs,
       exitState: cell.exitState,
+      attempts: cell.attempts,
       rubricRatio: score ? score.rubric.passed / score.rubric.total : null,
       featureScore: score?.feature.score ?? null,
       designScore: score?.design.score ?? null,
