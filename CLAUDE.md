@@ -21,6 +21,7 @@ Team-shared agent instructions live in the [`agents/`](agents/) directory. These
 - [dev-state.md](agents/dev-state.md) — Which caches are safe to delete, and which destroy local dev data
 - [flaky-tests.md](agents/flaky-tests.md) — Rerun (or run the suite in isolation) before treating a `pnpm check` failure as real; log to VibesDIY/vibes.diy#1515
 - [pr-lifecycle.md](agents/pr-lifecycle.md) — Spec-first workflow, feature-goal PR titles, autonomous feedback handling, ready-to-merge signal
+- [codegen-matrix-eval.md](agents/codegen-matrix-eval.md) — Running the cross-model codegen eval harness (generate → score → report), trimmed first run, config & cost filter
 
 ## Team-shared skills
 
