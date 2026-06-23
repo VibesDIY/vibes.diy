@@ -18,6 +18,7 @@ export default defineConfig({
       "prompts/tests/vitest.node.config.ts",
       "prompts/tests/vitest.browser.config.ts",
       "vibes-diy/vitest.config.ts",
+      "eval/codegen-matrix/vitest.config.ts",
     ],
   },
 });
