@@ -56,7 +56,7 @@ emitted alongside the code. Declaration preserves knowledge the model already
 has; extraction tries to recover it after the fact. Declaration wins.
 
 This eliminates both the role-name extraction step **and** the owner-panel
-grant UI for the seeding problem. Granting roles to *other* users continues to
+grant UI for the seeding problem. Granting roles to _other_ users continues to
 happen through the vibe's own in-app grant docs (the existing `editorGrant`
 pattern) — no platform UI required.
 
@@ -86,14 +86,30 @@ doc writes). A deploy-time owner seed is not a doc write, so it needs a syntheti
 grant source folded into `GrantReduce` next to the stored outputs.
 
 At deploy (push / `ensureAppSlug`), the platform records a seed binding
-`ownerHandle → ownerRoles` for the vibe's databases, and the write/read grant
-reducer includes it when building `grantState.members`. Concretely: extend the
-reduce that produces `gs.members` so that, for `(ownerHandle, appSlug, dbName)`,
-the declared `ownerRoles` are unioned into `members[role]` before the access fn
-runs. This reuses the existing enforcement path — `requireRole` needs no change.
+`ownerHandle → ownerRoles` for the vibe's databases, and every grant reducer
+includes it when building `members`. Concretely: a shared seed-injection helper
+unions the declared `ownerRoles` (plus the reserved `owner` role) into
+`members[role]` for `(ownerHandle, appSlug, dbName)` before the access fn runs.
+This reuses the existing enforcement path — `requireRole` needs no change.
 
-This is **the one piece of real plumbing** in the design; everything else is a
-generator/prompt change.
+There are **three** independent `GrantReduce` construction sites, and the seed
+must reach **all three** or the system desyncs:
+
+1. **Write path** — `app-documents-write-eventos.ts:303-327` (server write gate).
+2. **Read path** — `app-documents-read-eventos.ts` (server read gate).
+3. **who-am-i / `resolveGrants`** — `who-am-i.ts:42` builds its own
+   `GrantReduce` from `accessFnOutputs` (`who-am-i.ts:96`) and emits
+   `grants[dbName] = { channels, publicChannels, roles }` (`who-am-i.ts:111`),
+   which is what the client `can.*` predictor (`use-vibe.ts`) evaluates against.
+   **Miss this one and the owner passes the server `requireRole("owner")` gate
+   but `can.create/edit/delete` returns `not in role: owner` — owner-only UI is
+   hidden / writes disabled client-side even though the server would allow.**
+   (Caught in review; verified — `resolveGrants` is a separate reducer from the
+   read/write paths.)
+
+Because there are three call sites, the injection belongs in **one shared
+helper** they all call, not three copies. This is **the one piece of real
+plumbing** in the design; everything else is a generator/prompt change.
 
 Properties:
 
@@ -125,12 +141,25 @@ not an ambient boolean evaluated through three fragile code paths.
 
 - **Keep `me.isOwner`** (the client identity bit exposed by `useVibe`/who-am-i,
   `prompts/pkg/llms/use-vibe.md:13`) for app-shell chrome ("you own this") and
-  the owner panel / code-update control. This *is* the out-of-vibe overload and
+  the owner panel / code-update control. This _is_ the out-of-vibe overload and
   stays.
-- **Remove `isOwner` from the access function's `user` context.** The access fn
-  no longer receives or branches on it. Data authority is roles-only. Stop
-  populating it server-side (`app-documents-write-eventos.ts:242` user context)
-  and stop teaching it.
+- **Remove `isOwner` from the access function's `user` context** — but **only as
+  the final step, gated on the back-catalog migration (after-task) landing
+  first.** The access fn stops receiving/branching on it; data authority is
+  roles-only. Stop populating it server-side
+  (`app-documents-write-eventos.ts:242` user context) and stop teaching it.
+
+  **Sequencing constraint (raised in review, P1).** `user.isOwner` is read by
+  ~62 deployed/example vibes as `if (!user.isOwner) …`. The moment the field is
+  absent, JS reads it as `undefined`, so those branches **deny the owner** — and
+  the seeded reserved `owner` role does **not** save them, because the old
+  functions never call `ctx.requireRole("owner")`. So removing the field before
+  migrating is a breaking owner-lockout for every un-migrated vibe. Therefore the
+  field removal is **not** part of the forward-only platform/generator change
+  that lands first; it is the _last_ step, and the back-catalog migration is its
+  hard prerequisite. Until migration completes, **keep `isOwner` populated** (the
+  new generator simply stops emitting code that reads it, so new vibes don't
+  depend on it regardless).
 
 ### 5. Prompt changes (the cheapest lever for new vibes)
 
@@ -153,8 +182,10 @@ generation, new vibes are correct by construction.
 
 - Manifest format for `ownerRoles` (generator output + push/ensureAppSlug
   payload field, schema-validated).
-- Deploy-time seed binding `ownerHandle → roles` and its injection into the
-  `GrantReduce` that builds `grantState.members` for read + write.
+- Deploy-time seed binding `ownerHandle → roles` and its injection — via one
+  shared helper — into **all three** `GrantReduce` sites: the write gate, the
+  read gate, **and** `who-am-i.ts`'s `resolveGrants` that feeds the client
+  `can.*` predictor.
 - Reserved `owner` role always seeded.
 - Remove `isOwner` from the access-fn `user` context (server) and from the
   access-fn authoring prompts; keep `me.isOwner` for chrome.
@@ -165,9 +196,10 @@ generation, new vibes are correct by construction.
 **Out of scope (explicit after-task):**
 
 - **Full clean-up / migration of existing deployed vibes.** We are not migrating
-  the back catalog in this work. Old vibes that branch on `user.isOwner` will see
-  it become absent; that is acceptable and handled separately. Tracked as the
-  after-task below.
+  the back catalog in this work. **This migration is a hard prerequisite for the
+  `isOwner` field removal** (see §4 sequencing constraint): the field stays
+  populated until the migration lands, so existing vibes are not bricked in the
+  interim. Tracked as the after-task below.
 - Unbricking `garden-gnome/aegina-checklist` specifically (one-line editor
   grant) — intentionally deferred; not part of this change.
 - A platform owner-panel UI for granting arbitrary in-vibe roles to other users
@@ -176,7 +208,7 @@ generation, new vibes are correct by construction.
 ## Decisions to confirm
 
 1. **Manifest home:** sidecar push-payload field (preferred) vs. `export const
-   ownerRoles` in `access.js`.
+ownerRoles` in `access.js`.
 2. **Reserved role name:** `owner` vs. `admin` vs. configurable. Recommendation:
    `owner`, reserved and always seeded.
 3. **Per-db vs. flat `ownerRoles`.** Access fns are selected per `dbName`; a
@@ -198,11 +230,14 @@ forward-only change to the platform + generator.
 ## Risks
 
 - **Reducer injection is the only non-trivial code.** Getting the seed folded
-  into `grantState.members` for *both* the read and write paths (they build the
+  into `grantState.members` for _both_ the read and write paths (they build the
   reduce separately) is where a regression would hide. Cover both with tests.
 - **Forgotten declaration → lockout** is mitigated by the always-seeded reserved
   `owner` role; without that backstop, a generator miss reproduces the aegina
   bug universally.
 - **Stale client predictor.** `can.*` must reflect the seeded roles too, or the
-  UI hides write affordances the server would allow. The seed must reach the
-  client grant state the predictor evaluates against, not just the server.
+  UI hides write affordances the server would allow. The client grant state is
+  built by a **separate** reducer — `who-am-i.ts`'s `resolveGrants` — so the seed
+  must reach it, not just the server read/write paths. This is the easiest of the
+  three sites to forget; cover it with a test that asserts `can.create` is `ok`
+  for an owner whose only path to the role is the seed.
