@@ -33,6 +33,10 @@ permissions:
 
 jobs:
   fanout:
+    # A tag *deletion* (`git push origin --delete ship@x.y.z`) also fires this
+    # push event, with no commit to deploy. Skip those so a cleanup never fans
+    # out a bogus release.
+    if: ${{ !github.event.deleted }}
     runs-on: ubuntu-latest
     steps:
       - name: Require deploy PAT
