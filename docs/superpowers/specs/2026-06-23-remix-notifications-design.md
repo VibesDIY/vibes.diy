@@ -36,6 +36,13 @@ These were settled during brainstorming and are fixed for this work:
   shares the source's content-addressed filesystem and writes
   `meta: [..., { type: "remix-of", srcFsId: src.fsId }]`. The source's display
   slugs are **not** stored — only `srcFsId`, the immutable content anchor.
+- **Critical: a remix row's own `fsId` is set to `src.fsId`** (`fork-app.ts:168`
+  inserts `fsId: src.fsId`), and `Apps.fsId` is **indexed but not unique**. So the
+  source row, every remix of it, and every clone all share the same `fsId` value.
+  This means `srcFsId` **cannot** identify "the source row" by itself —
+  `WHERE fsId = srcFsId LIMIT 1` may return a fork instead of the source (or
+  nothing, if the source was deleted). The source owner's identity must therefore
+  be captured at fork time, not reverse-resolved from `fsId` later.
 - A classic remix lands in `mode: "dev"`; a clone (`skipChat`) lands in
   `mode: "production"`.
 - Publishing to production flows through the `evt-new-fs-id` queue handler
@@ -53,6 +60,25 @@ fsId, meta, mode, ...)`, so a single vibe accrues multiple `fsId`s over its
   release history.
 
 ## Architecture
+
+### Unit 0 — Capture source identity in `remix-of` meta (`vibes.diy/api/types/types.ts`, `fork-app.ts`)
+
+Because the source row cannot be reliably found from `srcFsId` alone (shared,
+non-unique `fsId` — see context above), record the source's **stable** identity
+at fork time, when `forkApp` still holds the full `src` row:
+
+- Extend `MetaRemixOf` from `{ type: "remix-of", srcFsId }` to also carry
+  `srcUserId` (the source owner's Clerk user id — stable across renames) and,
+  for display/back-reference, `srcOwnerHandle` and `srcAppSlug` (resolved live on
+  read when shown, but stored as a snapshot so we always know which vibe was the
+  source). `srcFsId` stays as the immutable content anchor used by the list query.
+- `forkApp` already reads `src.userId`, `src.ownerHandle`, `src.appSlug` — write
+  them into the new `remix-of` entry (`fork-app.ts:158`).
+- **Backfill / migration:** remixes created before this change have only
+  `srcFsId`. The notification trigger (Unit 2) requires `srcUserId`, so it simply
+  skips entries lacking it (no notification for legacy remixes — acceptable, the
+  feature is forward-looking). The list query (Unit 3) still works for legacy rows
+  via `srcFsId` matching.
 
 ### Unit 1 — Notification type (`vibes.diy/api/types/notifications.ts`)
 
@@ -75,18 +101,24 @@ Extend the existing production-publish branch in
 1. Load the just-published app's `meta` (the handler already queries this row for
    `releaseSeq`; extend the select to include `meta`). If `meta` has no
    `remix-of` entry, do nothing further.
-2. Resolve the **source** vibe from `srcFsId`:
-   `SELECT ownerHandle, appSlug, userId FROM apps WHERE fsId = srcFsId LIMIT 1`.
-   Because `srcFsId` is content-addressed, this resolves the source even if it
-   was later renamed. If no source row is found (e.g. source deleted), skip.
-3. **Skip self-remix:** if the source owner's `userId` equals the remixer's
-   `userId` (the publishing app's owner), do nothing.
-4. **De-dupe to first publish:** only notify if this is the remix app's first
-   production release. Determine this from the remix app's release history — if a
-   production release with a lower `releaseSeq` already exists for
-   `(remix ownerHandle, remix appSlug)`, skip. (Implementation detail to confirm
-   in the plan: whether "first production publish" is best derived from
-   `releaseSeq`/`mode` history or a persisted marker on the app.)
+2. Read the **source owner directly from the remix's own `remix-of` meta**
+   (`srcUserId`, captured at fork time in Unit 0). No reverse `fsId` lookup —
+   `srcFsId` is shared across the source and all its forks, so a row lookup is
+   ambiguous (it could return a fork instead of the source, sending the
+   notification to the wrong owner or misfiring the self-remix check). If the
+   entry has no `srcUserId` (legacy remix predating Unit 0), skip. `srcOwnerHandle`
+   /`srcAppSlug` from the meta supply the "which of my vibes" display fields.
+3. **Skip self-remix:** if `srcUserId` equals the remixer's `userId` (the
+   publishing app's owner), do nothing.
+4. **De-dupe with a persisted marker, not current rows.** Do **not** infer "first
+   production publish" from release-history/mode: `setModeFsId` demotes the prior
+   production row to `dev` before queuing `evt-new-fs-id`
+   (`vibes.diy/api/svc/public/set-mode-fsid.ts`), so a "lower `releaseSeq` with
+   `mode = production`" check sees no prior prod row and treats **every** publish
+   as the first — duplicate notifications. Instead, persist an idempotent marker
+   the first time we notify for a given remix app (e.g. a `remix-notified` flag in
+   the remix app's `meta`, or a dedicated record), and skip if it is already set.
+   Setting the marker and sending must be safe under repeated/concurrent delivery.
 5. Notify the source owner across all three channels:
    - In-app: `qctx.notifyUser(sourceUserId, { type: "vibes.diy.evt-user-notification", notificationType: "vibe-remixed", ownerHandle: <source ownerHandle>, appSlug: <source appSlug>, remixerHandle: <remix ownerHandle>, remixAppSlug: <remix appSlug> })`.
    - Email: reuse `send-email` (new `vibe-remixed` template; requires the source
@@ -129,10 +161,16 @@ New owner-only public service handler.
 
 - **Privacy:** only `production` remixes are ever surfaced or notified; drafts and
   private forks stay invisible. (Matches decision 1.)
-- **Self-remix:** never notify when remixer === source owner.
-- **De-dupe:** notify once, on first production publish (decision 5).
-- **Source renamed:** resolution via immutable `srcFsId` follows renames.
-- **Source deleted:** if the source row is gone, skip the notification silently.
+- **Self-remix:** never notify when `srcUserId` === remixer's `userId`.
+- **De-dupe:** notify once, enforced by a persisted marker that survives the
+  prod→dev row demotion done by `setModeFsId` (decision 5).
+- **Shared/non-unique `fsId`:** the source owner is read from the remix's
+  `remix-of.srcUserId` (captured at fork time), never by an ambiguous
+  `WHERE fsId = srcFsId` lookup.
+- **Source renamed:** `srcUserId` is stable across renames; `srcOwnerHandle`
+  /`srcAppSlug` display fields are re-resolved live when shown.
+- **Source deleted / legacy remix without `srcUserId`:** skip the notification
+  silently (no target). Legacy remixes still appear in the list via `srcFsId`.
 - **Cross-version:** the list matches against every `fsId` the source vibe has
   ever had, so remixes of any past release are included.
 - **Durability gap:** the in-app bell is transient and can be missed if the owner
@@ -145,9 +183,15 @@ Backend integration tests, following `vibes.diy/api/tests/fork-app.test.ts` and
 the patterns in `agents/testing-access-fn.md`:
 
 - Fork → publish remix → source owner notified exactly once (in-app), with the
-  correct source vibe + remixer fields.
-- Republish the remix → no second notification.
+  correct source vibe + remixer fields, resolved from `remix-of.srcUserId`.
+- Republish the remix **through the real `setModeFsId` flow** (which demotes the
+  prior prod row to `dev`) → still no second notification (persisted-marker
+  de-dupe, the P2 regression).
+- Source vibe has other remixes/clones sharing the same `fsId` → notification
+  still targets the true source owner, not a fork (the P1 regression).
 - Self-remix (owner remixes own vibe) → no notification.
+- Legacy remix whose `remix-of` lacks `srcUserId` → no notification, but still
+  appears in the list API.
 - Private/dev remix (never published) → not surfaced, no notification.
 - List API returns published remixes, including remixes of an earlier release
   (cross-version matching), newest first; rejects non-owner callers.
