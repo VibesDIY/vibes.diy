@@ -20,10 +20,16 @@ export interface MatrixConfig {
   readonly reps: number;
   readonly screenshotTimeoutMs: number;
   /**
-   * Max cells run in parallel per stage (generate + score). Generate deploys
-   * tolerate high concurrency; raise this to cut wall-clock time. Defaults to 8.
+   * Max cells run in parallel during `generate`. Generate deploys tolerate high
+   * concurrency; raise this to cut wall-clock time. Defaults to 8.
    */
   readonly concurrency: number;
+  /**
+   * Max cells scored in parallel during `score`. Lower than `concurrency` by
+   * default (4) because the judge LLM backend is more rate-limit-sensitive and
+   * transient judge failures currently degrade to null scores.
+   */
+  readonly scoreConcurrency: number;
   readonly models: readonly ModelEntry[];
 }
 
@@ -59,6 +65,8 @@ export function parseMatrixConfig(text: string): MatrixConfig {
   const screenshotTimeoutMs = reqPositiveNumber(obj, "screenshotTimeoutMs");
   // Optional; defaults to 8. Generate deploys tolerate high concurrency.
   const concurrency = obj.concurrency === undefined ? 8 : reqPositiveNumber(obj, "concurrency");
+  // Optional; defaults to 4 — judge backend is more rate-limit-sensitive than generate.
+  const scoreConcurrency = obj.scoreConcurrency === undefined ? 4 : reqPositiveNumber(obj, "scoreConcurrency");
   const rawModels = obj.models;
   if (!Array.isArray(rawModels) || rawModels.length === 0) {
     throw new Error("config: must list at least one model");
@@ -71,7 +79,18 @@ export function parseMatrixConfig(text: string): MatrixConfig {
     }
     return { id: reqString(e, "id"), class: reqString(e, "class"), tier };
   });
-  return { cliCommand, apiUrl, runtimeHostBase, handle, judgeModel, reps, screenshotTimeoutMs, concurrency, models };
+  return {
+    cliCommand,
+    apiUrl,
+    runtimeHostBase,
+    handle,
+    judgeModel,
+    reps,
+    screenshotTimeoutMs,
+    concurrency,
+    scoreConcurrency,
+    models,
+  };
 }
 
 export function parsePromptsJsonl(text: string): PromptEntry[] {

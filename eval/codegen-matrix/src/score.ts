@@ -96,17 +96,19 @@ async function main(): Promise<void> {
     const e = JSON.parse(line) as { id: string; prompt: string };
     promptText.set(e.id, e.prompt);
   }
-  // screenshotTimeoutMs + judgeModel + concurrency come from the matrix config.
+  // screenshotTimeoutMs + judgeModel + scoreConcurrency come from the matrix config.
   const matrix = JSON.parse(readFileSync(resolve(__dirname, "..", "config/matrix.json"), "utf-8")) as {
     screenshotTimeoutMs: number;
     judgeModel: string;
-    concurrency?: number;
+    scoreConcurrency?: number;
   };
   const judgeDeps: JudgeDeps = {
     devVars: readDevVars(),
     judgeModel: judgeModelOverride ?? matrix.judgeModel,
   };
-  const concurrency = Math.max(1, Math.floor(Number(parseFlag("--concurrency") ?? matrix.concurrency ?? 8)) || 1);
+  // Score concurrency defaults lower than generate (judge backend is more
+  // rate-limit-sensitive); --concurrency still overrides per run.
+  const concurrency = Math.max(1, Math.floor(Number(parseFlag("--concurrency") ?? matrix.scoreConcurrency ?? 4)) || 1);
 
   const cellDirs = readdirSync(runDir).filter((n) => existsSync(join(runDir, n, CELL_JSON)));
   stderr.write(`scoring ${cellDirs.length} cell(s) in ${runDir}, concurrency=${concurrency}\n`);
