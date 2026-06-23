@@ -78,6 +78,7 @@ describe("renderSummary", () => {
           rep: 0,
           latencyMs: 1000,
           exitState: "ok",
+          attempts: 1,
           rubricRatio: 1,
           featureScore: 5,
           designScore: 4,
