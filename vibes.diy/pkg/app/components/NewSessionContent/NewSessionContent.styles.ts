@@ -61,11 +61,13 @@ export const getSuggestionsInnerStyle = (offset: number, isAnimating: boolean): 
 
 // Title style - responsive
 export const getTitle = (isMobile: boolean, isDarkMode: boolean): CSSProperties => ({
-  fontSize: isMobile ? "24px" : "65px",
+  fontSize: isMobile ? "22px" : "44px",
   fontFamily: "Alte Haas Grotesk, Inter, sans-serif",
   color: isDarkMode ? "var(--color-dark-primary)" : "var(--vibes-near-black)",
-  display: "flex",
-  justifyContent: "center",
+  // Plain centered block (not flex): the hero mixes a text node, an underlined
+  // <span>, and a trailing period. Under display:flex those become separate flex
+  // items that reflow out of order once the line wraps (e.g. "…easy share." / "to"),
+  // so keep normal inline flow and let the text wrap as one run.
   textAlign: "center",
   width: "100%",
   padding: isMobile ? "0 8px" : "0",
