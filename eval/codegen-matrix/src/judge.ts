@@ -1,11 +1,15 @@
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { callAi, type CallAIOptions, type Message } from "call-ai";
 import type { JudgeResult, DesignResult } from "./cell.js";
+import { isTransientError, retryWithBackoff } from "./backoff.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const DEV_VARS = resolve(__dirname, "../../../vibes.diy/pkg/.dev.vars");
+
+/** Retries transient judge-backend errors (429/5xx/network) with exponential backoff. */
+const JUDGE_RETRIES = 3;
 
 export interface DevVars {
   readonly llmUrl: string;
@@ -21,8 +25,25 @@ export function parseDevVars(text: string): DevVars {
   return { llmUrl, llmKey };
 }
 
+/**
+ * Resolve the judge transport from env vars first (how the cloud agent env
+ * provides them), falling back to a local `.dev.vars` file. Pure, so the
+ * precedence is unit-testable. `fileText` is undefined when no file exists.
+ */
+export function resolveDevVars(env: NodeJS.ProcessEnv, fileText: string | undefined): DevVars {
+  const llmUrl = env.LLM_BACKEND_URL?.trim();
+  const llmKey = env.LLM_BACKEND_API_KEY?.trim();
+  if (llmUrl && llmKey) return { llmUrl, llmKey };
+  if (fileText !== undefined) return parseDevVars(fileText);
+  throw new Error(
+    "LLM_BACKEND_URL / LLM_BACKEND_API_KEY not found — set them as environment variables " +
+      "(cloud agent env) or in vibes.diy/pkg/.dev.vars (local dev)"
+  );
+}
+
 export function readDevVars(): DevVars {
-  return parseDevVars(readFileSync(DEV_VARS, "utf-8"));
+  const fileText = existsSync(DEV_VARS) ? readFileSync(DEV_VARS, "utf-8") : undefined;
+  return resolveDevVars(process.env, fileText);
 }
 
 const JUDGE_SCHEMA = {
@@ -90,7 +111,10 @@ export async function judgeFeature(
     schema: { ...JUDGE_SCHEMA, required: [...JUDGE_SCHEMA.required] },
   };
   try {
-    const raw = await callAi(buildFeaturePrompt(userPrompt, files), opts);
+    const raw = await retryWithBackoff(() => callAi(buildFeaturePrompt(userPrompt, files), opts), {
+      retries: JUDGE_RETRIES,
+      isRetryable: isTransientError,
+    });
     const { score, reason } = parseJudge(raw);
     return { score, reason, judgeModel: deps.judgeModel };
   } catch (e) {
@@ -116,7 +140,10 @@ export async function judgeDesign(userPrompt: string, imageDataUrl: string, deps
     },
   ];
   try {
-    const raw = await callAi(messages, opts);
+    const raw = await retryWithBackoff(() => callAi(messages, opts), {
+      retries: JUDGE_RETRIES,
+      isRetryable: isTransientError,
+    });
     const { score, reason } = parseJudge(raw);
     return { available: true, score, reason, judgeModel: deps.judgeModel };
   } catch (e) {
