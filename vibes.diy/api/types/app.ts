@@ -115,8 +115,8 @@ export const reqGetAppByFsId = type({
   ownerHandle: "string",
   "token?": "string",
   // When true the response omits the heavy fileSystem/env payloads (returns
-  // them empty) — for callers that only need grant/title/icon/meta, e.g. the
-  // curated homepage showcase which fetches one app per card on first load.
+  // them empty) — for callers that only need grant/title/icon/enrichedPrompt/meta,
+  // e.g. the curated homepage showcase which fetches one app per card on first load.
   "summary?": "boolean",
 });
 export type ReqGetAppByFsId = typeof reqGetAppByFsId.infer;
@@ -134,6 +134,10 @@ export const resGetAppByFsId = type({
   // surfaced so non-owner views (e.g. the curated homepage showcase) can render
   // the same icon the owner sees in "My Apps" without a separate authed call.
   "icon?": type({ cid: "string", mime: "string" }),
+  // The LLM-enriched 3-sentence product description (settings
+  // active.enriched-prompt). Surfaced so the curated showcase can caption each
+  // screenshot. Optional: absent on older vibes and any where pre-alloc timed out.
+  "enrichedPrompt?": "string",
   "fsId?": "string",
   mode: "'production'|'dev'",
   grant:

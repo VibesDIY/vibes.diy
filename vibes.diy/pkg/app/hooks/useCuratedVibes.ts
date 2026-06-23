@@ -19,9 +19,9 @@ interface CuratedConfig {
 }
 
 // The showcase cards render the app screenshot (with the icon overlapping the
-// top-left corner), so each curated item carries the live screenshot alongside
-// the fields a normal AppItem has.
-export type CuratedAppItem = AppItem & { screenshot?: MetaScreenShot };
+// top-left corner) captioned by the enriched-prompt description, so each curated
+// item carries the live screenshot + description alongside a normal AppItem.
+export type CuratedAppItem = AppItem & { screenshot?: MetaScreenShot; description?: string };
 
 export interface CuratedGroup {
   category: string;
@@ -78,6 +78,7 @@ export function useCuratedVibes(): UseCuratedVibes {
                   title,
                   ...(app.icon ? { icon: app.icon } : {}),
                   ...(screenshot ? { screenshot } : {}),
+                  ...(app.enrichedPrompt ? { description: app.enrichedPrompt } : {}),
                 };
               } catch {
                 return null;

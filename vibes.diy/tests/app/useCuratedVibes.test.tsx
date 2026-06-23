@@ -16,9 +16,10 @@ interface OkAppArgs {
   title?: string;
   icon?: { cid: string; mime: string };
   screenshot?: { assetUrl: string; mime: string };
+  enrichedPrompt?: string;
 }
 
-function okApp({ ownerHandle, appSlug, grant, title, icon, screenshot }: OkAppArgs) {
+function okApp({ ownerHandle, appSlug, grant, title, icon, screenshot, enrichedPrompt }: OkAppArgs) {
   const meta: unknown[] = [];
   if (title) meta.push({ type: "title", title });
   if (screenshot) meta.push({ type: "screen-shot-ref", assetUrl: screenshot.assetUrl, mime: screenshot.mime });
@@ -33,6 +34,7 @@ function okApp({ ownerHandle, appSlug, grant, title, icon, screenshot }: OkAppAr
       error: undefined,
       meta,
       ...(icon ? { icon } : {}),
+      ...(enrichedPrompt ? { enrichedPrompt } : {}),
     }),
     Err: () => ({ message: "unexpected error" }),
   };
@@ -64,6 +66,7 @@ describe("useCuratedVibes", () => {
           title: "Melodle",
           icon: { cid: "sql://icon", mime: "image/png" },
           screenshot: { assetUrl: "sql://shot", mime: "image/png" },
+          enrichedPrompt: "A daily melody guessing game.",
         });
       }
       if (appSlug === "emoji-connections") {
@@ -90,6 +93,7 @@ describe("useCuratedVibes", () => {
       title: "Melodle",
       icon: { cid: "sql://icon", mime: "image/png" },
       screenshot: { type: "screen-shot-ref", assetUrl: "sql://shot", mime: "image/png" },
+      description: "A daily melody guessing game.",
     });
   });
 

@@ -1,6 +1,6 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { Link } from "react-router-dom";
-import { AppDetailPanel, screenshotSrc, type AppItem } from "./MyAppsSection.js";
+import { screenshotSrc, type AppItem } from "./MyAppsSection.js";
 import { useCuratedVibes, type CuratedAppItem } from "../hooks/useCuratedVibes.js";
 import { cidAssetUrl, getAppHostBaseUrl } from "../utils/vibeUrls.js";
 import {
@@ -17,27 +17,16 @@ interface CuratedVibesSectionProps {
 /**
  * Logged-out counterpart to MyAppsSection: instead of the visitor's own apps it
  * shows a curated, category-grouped showcase sourced from curated-vibes.json.
- * Each card leads with the app screenshot and overlaps its icon on the
- * top-left corner; opening the info panel reuses My Apps' detail panel.
+ * Each card leads with the app screenshot, overlaps its icon on the top-left
+ * corner, and captions it with the LLM-enriched description.
  */
 export function CuratedVibesSection({ isMobile }: CuratedVibesSectionProps) {
   const { groups, loading } = useCuratedVibes();
-  const [detailItem, setDetailItem] = useState<AppItem | null>(null);
   const appHostBaseUrl = getAppHostBaseUrl();
 
   // Signed-out visitors must land on the authless public viewer (/vibe), not
   // the /chat editor which lives behind the auth layout.
   const publicHref = (item: AppItem) => `/vibe/${item.ownerHandle}/${item.appSlug}`;
-
-  // ESC closes the detail panel (mirrors MyAppsSection).
-  useEffect(() => {
-    if (!detailItem) return;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === "Escape") setDetailItem(null);
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [detailItem]);
 
   return (
     <section className="mt-6" style={{ width: "100%", display: "flex", justifyContent: "center" }}>
@@ -72,7 +61,6 @@ export function CuratedVibesSection({ isMobile }: CuratedVibesSectionProps) {
                         item={item}
                         appHostBaseUrl={appHostBaseUrl}
                         isMobile={isMobile}
-                        onOpenInfo={() => setDetailItem(item)}
                         hrefFor={publicHref}
                       />
                     ))}
@@ -84,8 +72,6 @@ export function CuratedVibesSection({ isMobile }: CuratedVibesSectionProps) {
           <p style={getGalleryDescriptionStyle()}>A few of our favorite vibes to remix.</p>
         </div>
       </div>
-
-      <AppDetailPanel item={detailItem} appHostBaseUrl={appHostBaseUrl} onClose={() => setDetailItem(null)} hrefFor={publicHref} />
     </section>
   );
 }
@@ -94,16 +80,15 @@ interface CuratedVibeCardProps {
   item: CuratedAppItem;
   appHostBaseUrl: string;
   isMobile: boolean;
-  onOpenInfo: () => void;
   hrefFor: (item: AppItem) => string;
 }
 
 /**
- * Screenshot-forward showcase card: the screenshot fills the card and the app
- * icon sits on the top-left corner, three-quarters overlapping the screenshot
- * with the remaining quarter poking past the corner.
+ * Screenshot-forward showcase card: the screenshot fills the card with the app
+ * icon three-quarters overlapping the top-left corner, and the enriched-prompt
+ * description sits underneath as a caption.
  */
-function CuratedVibeCard({ item, appHostBaseUrl, isMobile, onOpenInfo, hrefFor }: CuratedVibeCardProps) {
+function CuratedVibeCard({ item, appHostBaseUrl, isMobile, hrefFor }: CuratedVibeCardProps) {
   const label = item.title ?? item.appSlug;
   const iconUrl = item.icon ? cidAssetUrl(item.icon.cid, item.icon.mime, appHostBaseUrl) : undefined;
   const shotUrl = item.screenshot ? screenshotSrc(item.screenshot) : undefined;
@@ -116,18 +101,17 @@ function CuratedVibeCard({ item, appHostBaseUrl, isMobile, onOpenInfo, hrefFor }
   const iconRadius = isMobile ? 12 : 14;
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 8, width: "100%" }}>
-      <div
-        className="group"
-        style={{ position: "relative", width: "100%" }}
-        onMouseEnter={() => setIsHovered(true)}
-        onMouseLeave={() => setIsHovered(false)}
-      >
-        <Link
-          to={hrefFor(item)}
-          aria-label={`Open ${label}`}
+    <Link
+      to={hrefFor(item)}
+      aria-label={`Open ${label}`}
+      className="group"
+      style={{ display: "flex", flexDirection: "column", gap: 8, width: "100%", textDecoration: "none" }}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
+      <div style={{ position: "relative", width: "100%" }}>
+        <div
           style={{
-            display: "block",
             position: "relative",
             width: "100%",
             aspectRatio: "16 / 10",
@@ -163,7 +147,7 @@ function CuratedVibeCard({ item, appHostBaseUrl, isMobile, onOpenInfo, hrefFor }
               </span>
             </div>
           )}
-        </Link>
+        </div>
 
         {/* App icon, overlapping the top-left corner. */}
         <div
@@ -184,7 +168,6 @@ function CuratedVibeCard({ item, appHostBaseUrl, isMobile, onOpenInfo, hrefFor }
             overflow: "hidden",
             padding: 6,
             zIndex: 2,
-            pointerEvents: "none",
           }}
         >
           {iconUrl ? (
@@ -202,24 +185,6 @@ function CuratedVibeCard({ item, appHostBaseUrl, isMobile, onOpenInfo, hrefFor }
             </span>
           )}
         </div>
-
-        {/* Info button — top-right of the card, fades in on hover; on touch
-            (no hover) stays faintly visible. */}
-        <button
-          type="button"
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            onOpenInfo();
-          }}
-          aria-label={`Info about ${label}`}
-          style={{ top: -8, right: -8 }}
-          className="absolute z-[3] flex items-center justify-center w-6 h-6 rounded-full bg-[var(--vibes-near-black)] text-[var(--vibes-cream)] border-2 border-[var(--vibes-cream)] opacity-0 group-hover:opacity-100 transition-opacity duration-150 [@media(hover:none)]:opacity-60"
-        >
-          <span className="text-[11px] font-bold italic leading-none" style={{ fontFamily: "Georgia, serif" }}>
-            i
-          </span>
-        </button>
       </div>
 
       <div
@@ -234,6 +199,25 @@ function CuratedVibeCard({ item, appHostBaseUrl, isMobile, onOpenInfo, hrefFor }
       >
         {label}
       </div>
-    </div>
+
+      {/* Caption: the enriched-prompt description, clamped so a long blurb never
+          unbalances the grid. Hidden entirely when an app has no description. */}
+      {item.description ? (
+        <div
+          style={{
+            fontSize: 13,
+            lineHeight: 1.4,
+            color: "var(--vibes-near-black)",
+            opacity: 0.7,
+            display: "-webkit-box",
+            WebkitLineClamp: 3,
+            WebkitBoxOrient: "vertical",
+            overflow: "hidden",
+          }}
+        >
+          {item.description}
+        </div>
+      ) : null}
+    </Link>
   );
 }

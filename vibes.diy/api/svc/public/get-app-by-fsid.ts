@@ -11,6 +11,7 @@ import {
   MetaItem,
   ReqWithOptionalAuth,
   isUserSettingProfile,
+  isActiveEnrichedPrompt,
   isResHasAccessInviteAccepted,
   isResHasAccessInvitePending,
   isResHasAccessRequestApproved,
@@ -371,6 +372,10 @@ export const getAppByFsIdEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqGet
       // (head version cid+mime); pass it through so callers get the icon without
       // a separate authed list-recent-vibes round-trip.
       const icon = settings.entry.settings.icon;
+      // The LLM-enriched product description lives in the raw entries array
+      // (active.enriched-prompt); surface it so the curated showcase can caption
+      // each screenshot. Optional — absent on older/pre-alloc-timed-out vibes.
+      const enrichedPrompt = settings.entries.find(isActiveEnrichedPrompt)?.enrichedPrompt;
       // Summary callers only need grant/title/icon/meta; drop the heavy
       // fileSystem + env so the public landing path doesn't transfer full app
       // payloads once per curated card.
@@ -381,6 +386,7 @@ export const getAppByFsIdEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqGet
         ownerHandle: app.ownerHandle,
         ...(ownerDisplayName ? { ownerDisplayName } : {}),
         ...(icon ? { icon } : {}),
+        ...(enrichedPrompt ? { enrichedPrompt } : {}),
         fsId: app.fsId,
         grant,
         mode: app.mode as "production" | "dev",

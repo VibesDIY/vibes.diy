@@ -245,6 +245,37 @@ describe("getAppByFsId grant flow", { timeout: (inject("DB_FLAVOUR" as never) as
     expect(rApp.Ok().icon).toEqual({ cid: "sql://Assets/icon-head", mime: "image/png" });
   });
 
+  it("getAppByFsId surfaces the enriched-prompt description", async () => {
+    const { appSlug, ownerHandle } = await createApp();
+    // A settings mutation creates the appSettings row; we then seed an
+    // active.enriched-prompt entry directly (normally written by pre-alloc).
+    await api.ensureAppSettings({ appSlug, ownerHandle, title: "Described App" });
+
+    const db = appCtx.vibesCtx.sql.db;
+    const tables = appCtx.vibesCtx.sql.tables;
+    const row = await db
+      .select()
+      .from(tables.appSettings)
+      .where(and(eq(tables.appSettings.ownerHandle, ownerHandle), eq(tables.appSettings.appSlug, appSlug)))
+      .limit(1)
+      .then((r: { settings: unknown }[]) => r[0]);
+    assert.ok(row, "expected an appSettings row after ensureAppSettings");
+
+    const now = new Date().toISOString();
+    const entries = Array.isArray(row.settings) ? (row.settings as unknown[]) : [];
+    const enrichedEntry = { type: "active.enriched-prompt", enrichedPrompt: "A short three-sentence product description." };
+    await db
+      .update(tables.appSettings)
+      .set({ settings: [...entries, enrichedEntry], updated: now })
+      .where(and(eq(tables.appSettings.ownerHandle, ownerHandle), eq(tables.appSettings.appSlug, appSlug)));
+
+    const rApp = await api.getAppByFsId({ appSlug, ownerHandle, summary: true });
+    if (rApp.isErr()) {
+      assert.fail("Expected getAppByFsId to succeed: " + JSON.stringify(rApp.Err()));
+    }
+    expect(rApp.Ok().enrichedPrompt).toBe("A short three-sentence product description.");
+  });
+
   it("summary mode drops fileSystem/env but keeps grant and meta", async () => {
     const { appSlug, ownerHandle } = await createApp();
     await api.ensureAppSettings({ appSlug, ownerHandle, title: "Summary App" });

@@ -14,9 +14,10 @@ interface OkAppArgs {
   title?: string;
   icon?: { cid: string; mime: string };
   screenshot?: { assetUrl: string; mime: string };
+  enrichedPrompt?: string;
 }
 
-function okApp({ ownerHandle, appSlug, grant, title, icon, screenshot }: OkAppArgs) {
+function okApp({ ownerHandle, appSlug, grant, title, icon, screenshot, enrichedPrompt }: OkAppArgs) {
   const meta: unknown[] = [];
   if (title) meta.push({ type: "title", title });
   if (screenshot) meta.push({ type: "screen-shot-ref", assetUrl: screenshot.assetUrl, mime: screenshot.mime });
@@ -31,6 +32,7 @@ function okApp({ ownerHandle, appSlug, grant, title, icon, screenshot }: OkAppAr
       error: undefined,
       meta,
       ...(icon ? { icon } : {}),
+      ...(enrichedPrompt ? { enrichedPrompt } : {}),
     }),
     Err: () => ({ message: "unexpected error" }),
   };
@@ -86,5 +88,26 @@ describe("CuratedVibesSection", () => {
     // The overlapping corner icon is built from the app's icon cid ("sql://icon");
     // the cid survives whatever URL-encoding the asset helper applies.
     expect(srcs.some((s) => s.includes("icon"))).toBe(true);
+  });
+
+  // The enriched-prompt description is surfaced as a caption under the card.
+  it("captions the card with the enriched-prompt description", async () => {
+    mockGetAppByFsId.mockImplementation(async ({ ownerHandle, appSlug }: { ownerHandle: string; appSlug: string }) => {
+      if (appSlug === "melodle")
+        return okApp({
+          ownerHandle,
+          appSlug,
+          grant: "public-access",
+          title: "Melodle",
+          enrichedPrompt: "Guess the hidden melody one note at a time.",
+        });
+      return okApp({ ownerHandle, appSlug, grant: "not-grant" });
+    });
+
+    render(<CuratedVibesSection isMobile={false} />, {
+      wrapper: vibesWrapper({ chatApi: mockVibeDiyApi }),
+    });
+
+    await waitFor(() => screen.getByText("Guess the hidden melody one note at a time."));
   });
 });
