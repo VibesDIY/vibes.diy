@@ -201,7 +201,7 @@ export default function HomePage() {
           <div style={getContainerStyle(mobile)}>
             <h1 style={getTitle(mobile, isDarkMode)}>
               Customize a web app by&nbsp;
-              <span style={{ textDecoration: "underline" }}>talking to it</span>.
+              <span style={{ textDecoration: "underline" }}>talking</span>.
             </h1>
 
             {/* Chat input form */}
@@ -219,7 +219,7 @@ export default function HomePage() {
                       handleSubmit();
                     }
                   }}
-                  placeholder="Describe your app — get a live link to share."
+                  placeholder="Describe your app, share the link."
                   style={getTextareaStyle()}
                 />
                 <button
@@ -272,7 +272,7 @@ export default function HomePage() {
               <div style={getGalleryLabelStyle(mobile)}>Gallery</div>
               <div style={getGalleryContentStyle()}>
                 <VibeGallery count={4} isMobile={mobile} onSelectPrompt={handleSelectSuggestion} />
-                <p style={getGalleryDescriptionStyle()}>See what people are building — each one is live, and yours to remix.</p>
+                <p style={getGalleryDescriptionStyle()}>See what people are building — yours to remix.</p>
               </div>
             </div>
 
