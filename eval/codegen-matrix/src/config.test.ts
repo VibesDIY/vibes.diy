@@ -20,12 +20,16 @@ describe("parseMatrixConfig", () => {
     expect(cfg.runtimeHostBase).toBe("vibes.diy");
   });
 
-  it("defaults concurrency to 8 when omitted", () => {
-    expect(parseMatrixConfig(JSON.stringify(goodMatrix)).concurrency).toBe(8);
+  it("defaults concurrency to 8 and scoreConcurrency to 4 when omitted", () => {
+    const cfg = parseMatrixConfig(JSON.stringify(goodMatrix));
+    expect(cfg.concurrency).toBe(8);
+    expect(cfg.scoreConcurrency).toBe(4);
   });
 
-  it("accepts an explicit concurrency", () => {
-    expect(parseMatrixConfig(JSON.stringify({ ...goodMatrix, concurrency: 16 })).concurrency).toBe(16);
+  it("accepts explicit concurrency and scoreConcurrency", () => {
+    const cfg = parseMatrixConfig(JSON.stringify({ ...goodMatrix, concurrency: 16, scoreConcurrency: 6 }));
+    expect(cfg.concurrency).toBe(16);
+    expect(cfg.scoreConcurrency).toBe(6);
   });
 
   it("rejects a non-positive concurrency", () => {

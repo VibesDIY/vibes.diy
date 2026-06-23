@@ -44,16 +44,16 @@ Each stage auto-targets the most recent `runs/<ts>/`. Override with `--run`.
 
 ### Flags
 
-| Stage    | Flag                 | Default                  | Purpose                  |
-| -------- | -------------------- | ------------------------ | ------------------------ |
-| generate | `--matrix <path>`    | `config/matrix.json`     | model/judge/env config   |
-| generate | `--prompts <path>`   | `config/prompts.jsonl`   | prompt corpus            |
-| generate | `--concurrency <n>`  | `matrix.concurrency` (8) | cells run in parallel    |
-| score    | `--run <dir>`        | latest `runs/<ts>/`      | which run to score       |
-| score    | `--prompts <path>`   | `config/prompts.jsonl`   | prompt text for judges   |
-| score    | `--judge-model <id>` | `matrix.judgeModel`      | override the judge model |
-| score    | `--concurrency <n>`  | `matrix.concurrency` (8) | cells scored in parallel |
-| report   | `--run <dir>`        | latest `runs/<ts>/`      | which run to report      |
+| Stage    | Flag                 | Default                       | Purpose                  |
+| -------- | -------------------- | ----------------------------- | ------------------------ |
+| generate | `--matrix <path>`    | `config/matrix.json`          | model/judge/env config   |
+| generate | `--prompts <path>`   | `config/prompts.jsonl`        | prompt corpus            |
+| generate | `--concurrency <n>`  | `matrix.concurrency` (8)      | cells run in parallel    |
+| score    | `--run <dir>`        | latest `runs/<ts>/`           | which run to score       |
+| score    | `--prompts <path>`   | `config/prompts.jsonl`        | prompt text for judges   |
+| score    | `--judge-model <id>` | `matrix.judgeModel`           | override the judge model |
+| score    | `--concurrency <n>`  | `matrix.scoreConcurrency` (4) | cells scored in parallel |
+| report   | `--run <dir>`        | latest `runs/<ts>/`           | which run to report      |
 
 Pass flags through the pnpm script with `--`, e.g.
 `pnpm run generate -- --matrix /tmp/my-matrix.json`.
@@ -127,8 +127,10 @@ columns.
   `pr-<N>.vibespreview.dev`. The screenshot URL is
   `https://<appSlug>--<ownerHandle>.<runtimeHostBase>/screenshot.jpg`.
 - `handle` — publish namespace (`eval`).
-- `concurrency` — cells run in parallel per stage (default 8). Raise it to cut
+- `concurrency` — generate cells run in parallel (default 8). Raise it to cut
   wall-clock time; `generate` deploys tolerate high concurrency.
+- `scoreConcurrency` — score cells run in parallel (default 4, lower because the
+  judge backend is more rate-limit-sensitive).
 - `judgeModel`, `reps`, `screenshotTimeoutMs`, and the `models` list (cheapest +
   priciest per class).
 
@@ -136,11 +138,13 @@ columns.
 
 ## Behaviour to know
 
-- **Parallel cells** — both `generate` and `score` run up to `concurrency`
-  cells at once (config field, default 8; override per stage with
-  `--concurrency <n>`). `generate` deploys tolerate high concurrency, so this is
-  the main lever on wall-clock time — raise it to run the full matrix fast.
-  Within a cell, the up-to-3 generate attempts stay sequential.
+- **Parallel cells** — `generate` runs up to `concurrency` cells at once
+  (default 8); `score` runs up to `scoreConcurrency` (default 4, lower because
+  the judge backend is more rate-limit-sensitive and transient judge failures
+  degrade to null scores). `--concurrency <n>` overrides the relevant stage per
+  run. `generate` deploys tolerate high concurrency, so it's the main lever on
+  wall-clock time — raise it to run the full matrix fast. Within a cell, the
+  up-to-3 generate attempts stay sequential.
 - **Generate retries** — a failure is retried, each attempt in its own clean
   cwd. Only after it fails **more than twice** (all 3 attempts) is the cell a
   model failure. First success wins, recorded with that attempt's latency.
