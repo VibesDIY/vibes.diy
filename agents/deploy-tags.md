@@ -63,6 +63,8 @@ This is the easiest path from a phone: create `ship@<ver>` once via the GitHub *
 
 ⚠️ **Requires the `DEPLOY_TAG_PAT` secret.** The fan-out pushes the child tags with a fine-grained PAT (Contents: read/write on this repo), **not** the default `GITHUB_TOKEN`. GitHub suppresses workflow runs for events created by `GITHUB_TOKEN`, so a `GITHUB_TOKEN` push would create the child tags but the deploys would silently never fire. The workflow hard-fails up front if `DEPLOY_TAG_PAT` is missing rather than half-shipping. A GitHub App token (`actions/create-github-app-token`) is a more auditable alternative if you'd rather not maintain a long-lived PAT.
 
+The fan-out only ships **merged code**: if the `ship@` target commit isn't on `main` (an ancestor of `origin/main`), the job aborts before tagging — so a stray `ship@` on a feature branch can't push a prod/cli/npm deploy.
+
 The child tags remain immutable: if any of the three already exist, the fan-out aborts — bump the `ship@` version instead of moving a tag.
 
 ## Tagging procedure
