@@ -12,9 +12,7 @@ describe("modelSlug", () => {
 
 describe("cellDirName", () => {
   it("joins promptId, model slug, and rep", () => {
-    expect(cellDirName("collab-lists", "google/gemini-2.5-flash-lite", 2)).toBe(
-      "collab-lists__google-gemini-2-5-flash-lite__r2"
-    );
+    expect(cellDirName("collab-lists", "google/gemini-2.5-flash-lite", 2)).toBe("collab-lists__google-gemini-2-5-flash-lite__r2");
   });
 });
 

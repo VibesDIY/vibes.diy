@@ -98,11 +98,7 @@ export async function judgeFeature(
   }
 }
 
-export async function judgeDesign(
-  userPrompt: string,
-  imageDataUrl: string,
-  deps: JudgeDeps
-): Promise<DesignResult> {
+export async function judgeDesign(userPrompt: string, imageDataUrl: string, deps: JudgeDeps): Promise<DesignResult> {
   const opts: CallAIOptions = {
     model: deps.judgeModel,
     endpoint: deps.devVars.llmUrl,

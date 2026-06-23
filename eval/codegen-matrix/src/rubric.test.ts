@@ -36,7 +36,7 @@ describe("runRubric", () => {
   });
 
   it("fails on a raw bracket color in JSX className", () => {
-    const r = runRubric({ "App.jsx": passing.replace('className={c.page}', 'className="bg-[#f1f5f9]"') });
+    const r = runRubric({ "App.jsx": passing.replace("className={c.page}", 'className="bg-[#f1f5f9]"') });
     expect(r.failedRules).toContain("no-raw-bracket-colors");
   });
 
