@@ -44,3 +44,47 @@ export function constructVibeIconUrl(slug: string, appHostBaseUrl: string): stri
 export function cidAssetUrl(cid: string, mime: string, appHostBaseUrl: string): string {
   return BuildURI.from(appHostBaseUrl).pathname("/assets/cid").setParam("url", cid).setParam("mime", mime).toString();
 }
+
+/**
+ * Public preview image for a published vibe, served by the runtime host
+ * (`appSlug--ownerHandle.<hostnameBase>`). This is the same URL the /vibe/
+ * viewer exposes as its `og:image`, so it's the canonical image to hand to
+ * social-share surfaces (e.g. Pinterest pins, which are image-first).
+ */
+export function vibeScreenshotImageUrl({
+  ownerHandle,
+  appSlug,
+  hostnameBase,
+}: {
+  ownerHandle: string;
+  appSlug: string;
+  hostnameBase: string;
+}): string {
+  // The env-supplied base may carry a leading dot (".vibes.diy"); drop it so the
+  // host matches the viewer's og:image construction.
+  const base = hostnameBase.replace(/^\./, "");
+  return `https://${appSlug}--${ownerHandle}.${base}/screenshot.jpg`;
+}
+
+/**
+ * Build a Pinterest "Save"/pin-create URL. Opening it pops Pinterest's own
+ * save dialog so the viewer can pin the vibe to one of their boards — no
+ * Pinterest API key or login on our side. Pins are image-first, so this only
+ * makes sense for published, publicly-viewable vibes (the `media` image must be
+ * publicly fetchable).
+ */
+export function buildPinterestShareUrl({
+  pageUrl,
+  imageUrl,
+  description,
+}: {
+  pageUrl: string;
+  imageUrl: string;
+  description: string;
+}): string {
+  return BuildURI.from("https://www.pinterest.com/pin/create/button/")
+    .setParam("url", pageUrl)
+    .setParam("media", imageUrl)
+    .setParam("description", description)
+    .toString();
+}

@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import type { VibesDiyApiIface } from "@vibes.diy/api-types";
 import { buildEmbedSnippet } from "../../lib/iframe-policy.js";
+import { buildPinterestShareUrl, vibeScreenshotImageUrl } from "../../utils/vibeUrls.js";
 
 interface UseShareModalParams {
   ownerHandle: string;
@@ -8,6 +9,11 @@ interface UseShareModalParams {
   fsId: string | undefined;
   chatApi: VibesDiyApiIface;
   sharedApi: VibesDiyApiIface;
+  /**
+   * Runtime host base (`VIBES_SVC_HOSTNAME_BASE`). Used to build the public
+   * preview-image URL for social shares (Pinterest). May carry a leading dot.
+   */
+  hostnameBase: string;
 }
 
 interface UseShareModalReturn {
@@ -46,11 +52,24 @@ interface UseShareModalReturn {
   embedSnippet: string | undefined;
   embedCopied: boolean;
   handleCopyEmbed: () => Promise<void>;
+  /**
+   * Pinterest pin-create URL for sharing the vibe to a board, or undefined when
+   * the vibe isn't published. Gated for display by `isPubliclyEmbeddable` (the
+   * pin image must be publicly fetchable), mirroring the embed snippet.
+   */
+  pinterestShareUrl: string | undefined;
 }
 
 export type { UseShareModalReturn };
 
-export function useShareModal({ ownerHandle, appSlug, fsId, chatApi, sharedApi }: UseShareModalParams): UseShareModalReturn {
+export function useShareModal({
+  ownerHandle,
+  appSlug,
+  fsId,
+  chatApi,
+  sharedApi,
+  hostnameBase,
+}: UseShareModalParams): UseShareModalReturn {
   const [isOpen, setIsOpen] = useState(false);
   const [isPublished, setIsPublished] = useState(false);
   const [isPublishing, setIsPublishing] = useState(false);
@@ -65,6 +84,7 @@ export function useShareModal({ ownerHandle, appSlug, fsId, chatApi, sharedApi }
   const [publicAccessEnabled, setPublicAccessEnabled] = useState(false);
   const [embedSnippet, setEmbedSnippet] = useState<string | undefined>(undefined);
   const [embedCopied, setEmbedCopied] = useState(false);
+  const [pinterestShareUrl, setPinterestShareUrl] = useState<string | undefined>(undefined);
   const buttonRef = useRef<HTMLButtonElement | null>(null);
   const copyTimeoutRef = useRef<number | null>(null);
   const embedCopyTimeoutRef = useRef<number | null>(null);
@@ -154,6 +174,7 @@ export function useShareModal({ ownerHandle, appSlug, fsId, chatApi, sharedApi }
     setPublicAccessEnabled(false);
     setEmbedSnippet(undefined);
     setEmbedCopied(false);
+    setPinterestShareUrl(undefined);
     clearCopyTimeout();
     clearEmbedCopyTimeout();
 
@@ -169,11 +190,19 @@ export function useShareModal({ ownerHandle, appSlug, fsId, chatApi, sharedApi }
           if (app.mode === "production" && app.fsId) {
             setIsPublished(true);
             setProductionFsId(app.fsId);
-            setPublishedUrl(`${window.location.origin}/vibe/${ownerHandle}/${appSlug}`);
+            const vibeUrl = `${window.location.origin}/vibe/${ownerHandle}/${appSlug}`;
+            setPublishedUrl(vibeUrl);
             setEmbedSnippet(
               buildEmbedSnippet({
                 embedUrl: `${window.location.origin}/embed/${ownerHandle}/${appSlug}`,
                 title: `${appSlug} — made on vibes.diy`,
+              })
+            );
+            setPinterestShareUrl(
+              buildPinterestShareUrl({
+                pageUrl: vibeUrl,
+                imageUrl: vibeScreenshotImageUrl({ ownerHandle, appSlug, hostnameBase }),
+                description: `${appSlug} — made on vibes.diy`,
               })
             );
           } else {
@@ -181,6 +210,7 @@ export function useShareModal({ ownerHandle, appSlug, fsId, chatApi, sharedApi }
             setProductionFsId(undefined);
             setPublishedUrl(undefined);
             setEmbedSnippet(undefined);
+            setPinterestShareUrl(undefined);
           }
         }
       })
@@ -212,7 +242,7 @@ export function useShareModal({ ownerHandle, appSlug, fsId, chatApi, sharedApi }
     return () => {
       cancelled = true;
     };
-  }, [isOpen, appSlug, ownerHandle, sharedApi]);
+  }, [isOpen, appSlug, ownerHandle, sharedApi, hostnameBase]);
 
   const handlePublish = useCallback(
     async (autoJoin: boolean, role: "editor" | "viewer" = "editor") => {
@@ -353,5 +383,6 @@ export function useShareModal({ ownerHandle, appSlug, fsId, chatApi, sharedApi }
     embedSnippet,
     embedCopied,
     handleCopyEmbed,
+    pinterestShareUrl,
   };
 }
