@@ -5,7 +5,15 @@ import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { argv, stderr } from "node:process";
 import { parseMatrixConfig, parsePromptsJsonl, type MatrixConfig, type ModelEntry, type PromptEntry } from "./config.js";
-import { cellDirName, discoverAppSlug, writeCellJson, type CellJson, type RunJson, RUN_JSON } from "./cell.js";
+import {
+  cellDirName,
+  discoverAppSlug,
+  writeCellJson,
+  type AttemptLogEntry,
+  type CellJson,
+  type RunJson,
+  RUN_JSON,
+} from "./cell.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(__dirname, "..");
@@ -77,31 +85,57 @@ export interface CellOutcome {
   readonly directory: string;
   readonly latencyMs: number;
   readonly stderrTail: string;
+  readonly attemptLog: readonly AttemptLogEntry[];
+}
+
+/**
+ * Extract a concise failure reason from a CLI stderr tail: the first line that
+ * looks like an error/disconnect signature, else the last non-empty line.
+ */
+export function summarizeReason(stderrTail: string): string {
+  const lines = stderrTail
+    .split("\n")
+    .map((l) => l.trim())
+    .filter((l) => l.length > 0);
+  if (lines.length === 0) return "unknown failure (no stderr)";
+  const signature = lines.find((l) => /error|fail|stream ended|forbidden|timeout|export default/i.test(l));
+  return (signature ?? lines[lines.length - 1]).slice(0, 200);
 }
 
 /**
  * Run `runOnce` until an attempt succeeds (exit 0 + a discovered appSlug), up to
  * `maxAttempts`. A generate failure is retried; only after it fails more than
  * twice (all attempts fail) does the cell become a model failure. On success
- * returns that attempt's metrics; on giving up, the last failed attempt's. Pure
- * (the per-attempt side effects live in the injected `runOnce`) so it's testable
+ * returns that attempt's metrics; on giving up, the last failed attempt's. Every
+ * attempt is recorded in `attemptLog` with its failure reason. Pure (the
+ * per-attempt side effects live in the injected `runOnce`) so it's testable
  * without spawning the CLI.
  */
 export function runWithRetries(
   runOnce: (attempt: number) => AttemptResult,
   maxAttempts: number = MAX_GENERATE_ATTEMPTS
 ): CellOutcome {
+  const attemptLog: AttemptLogEntry[] = [];
   let last: AttemptResult = { status: null, appSlug: undefined, directory: "", latencyMs: 0, stderrTail: "" };
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
     last = runOnce(attempt);
-    if (last.status === 0 && last.appSlug !== undefined) {
+    const ok = last.status === 0 && last.appSlug !== undefined;
+    attemptLog.push({
+      attempt,
+      ok,
+      status: last.status,
+      latencyMs: last.latencyMs,
+      reason: ok ? "ok" : summarizeReason(last.stderrTail),
+    });
+    if (ok) {
       return {
         ok: true,
         attempts: attempt,
-        appSlug: last.appSlug,
+        appSlug: last.appSlug as string,
         directory: last.directory,
         latencyMs: last.latencyMs,
         stderrTail: last.stderrTail,
+        attemptLog,
       };
     }
   }
@@ -112,6 +146,7 @@ export function runWithRetries(
     directory: last.directory,
     latencyMs: last.latencyMs,
     stderrTail: last.stderrTail,
+    attemptLog,
   };
 }
 
@@ -163,6 +198,7 @@ function runCell(args: {
     latencyMs: outcome.latencyMs,
     exitState,
     attempts: outcome.attempts,
+    attemptLog: outcome.attemptLog,
     stderrTail: outcome.stderrTail,
     apiUrl: cfg.apiUrl,
     runtimeHostBase: cfg.runtimeHostBase,
@@ -173,6 +209,10 @@ function runCell(args: {
   stderr.write(
     `  ${prompt.id} ${model.id} r${rep}: ${exitState} after ${outcome.attempts} attempt(s) ${outcome.latencyMs}ms ${outcome.appSlug || "(no app)"}\n`
   );
+  // Log the reason for every failed attempt so retries are visible in the run output.
+  for (const a of outcome.attemptLog) {
+    if (!a.ok) stderr.write(`      attempt ${a.attempt} failed (${a.latencyMs}ms): ${a.reason}\n`);
+  }
 }
 
 function parseFlag(flag: string): string | undefined {

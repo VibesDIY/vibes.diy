@@ -257,6 +257,9 @@ eval/codegen-matrix/
   The first successful attempt wins (`exitState: "ok"`, `attempts` = that try's
   number, `latencyMs` = that attempt's time so retries don't inflate the speed
   signal). `attempts` is recorded on `cell.json` and surfaced in `index.jsonl`.
+  Every attempt's outcome — including a **concise failure reason** extracted
+  from the CLI stderr — is captured in `cell.json.attemptLog` and printed to the
+  run log, so retries are auditable.
   Stage 4 joins on `cell.json`, so a failed cell still appears in the report
   with empty score columns (a model that can't produce output is signal).
   (This retries _any_ failure; narrowing to disconnect-signature-only retries is
