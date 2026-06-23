@@ -59,7 +59,7 @@ vi.mock("~/vibes.diy/app/components/PillPortal.js", async (importOriginal) => ({
 
 import HomePage from "~/vibes.diy/app/components/HomePage.js";
 
-const PLACEHOLDER = "Describe your vibe to make it a shareable app.";
+const PLACEHOLDER = "Describe your app — get a live link to share.";
 // Auto-open delay in HomePage is 1000ms; give the negative cases headroom.
 const AFTER_DELAY_MS = 1500;
 

@@ -200,8 +200,8 @@ export default function HomePage() {
 
           <div style={getContainerStyle(mobile)}>
             <h1 style={getTitle(mobile, isDarkMode)}>
-              What's the&nbsp;
-              <span style={{ textDecoration: "underline" }}>vibe</span>? Try it.
+              Make a web app by&nbsp;
+              <span style={{ textDecoration: "underline" }}>talking to it</span>.
             </h1>
 
             {/* Chat input form */}
@@ -219,7 +219,7 @@ export default function HomePage() {
                       handleSubmit();
                     }
                   }}
-                  placeholder="Describe your vibe to make it a shareable app."
+                  placeholder="Describe your app — get a live link to share."
                   style={getTextareaStyle()}
                 />
                 <button
@@ -272,7 +272,7 @@ export default function HomePage() {
               <div style={getGalleryLabelStyle(mobile)}>Gallery</div>
               <div style={getGalleryContentStyle()}>
                 <VibeGallery count={4} isMobile={mobile} onSelectPrompt={handleSelectSuggestion} />
-                <p style={getGalleryDescriptionStyle()}>The vibes are strong with these four top picks.</p>
+                <p style={getGalleryDescriptionStyle()}>See what people are building — every one is live, and yours to remix.</p>
               </div>
             </div>
 
