@@ -143,23 +143,36 @@ not an ambient boolean evaluated through three fragile code paths.
   `prompts/pkg/llms/use-vibe.md:13`) for app-shell chrome ("you own this") and
   the owner panel / code-update control. This _is_ the out-of-vibe overload and
   stays.
-- **Remove `isOwner` from the access function's `user` context** — but **only as
-  the final step, gated on the back-catalog migration (after-task) landing
-  first.** The access fn stops receiving/branching on it; data authority is
-  roles-only. Stop populating it server-side
-  (`app-documents-write-eventos.ts:242` user context) and stop teaching it.
+- **Stop _teaching_ `isOwner` now; remove the _field_ later.** These are two
+  separate steps, deliberately split across the phases below. Now: the prompts
+  stop emitting code that reads `user.isOwner` (§5), so new vibes don't depend on
+  it. Later (after migration): stop populating the field in the access-fn `user`
+  context (`app-documents-write-eventos.ts:242`) so data authority is strictly
+  roles-only.
 
-  **Sequencing constraint (raised in review, P1).** `user.isOwner` is read by
-  ~62 deployed/example vibes as `if (!user.isOwner) …`. The moment the field is
-  absent, JS reads it as `undefined`, so those branches **deny the owner** — and
-  the seeded reserved `owner` role does **not** save them, because the old
-  functions never call `ctx.requireRole("owner")`. So removing the field before
-  migrating is a breaking owner-lockout for every un-migrated vibe. Therefore the
-  field removal is **not** part of the forward-only platform/generator change
-  that lands first; it is the _last_ step, and the back-catalog migration is its
-  hard prerequisite. Until migration completes, **keep `isOwner` populated** (the
-  new generator simply stops emitting code that reads it, so new vibes don't
-  depend on it regardless).
+  **Why the field can't be removed in the same change (P1, from review).**
+  `user.isOwner` is read by ~62 deployed/example vibes as `if (!user.isOwner) …`.
+  The moment the field is absent, JS reads it as `undefined`, so those branches
+  **deny the owner** — and the seeded reserved `owner` role does **not** save
+  them, because the old functions never call `ctx.requireRole("owner")`. So the
+  field removal must come **after** every still-served vibe has been migrated off
+  it. Until then, `isOwner` stays populated; it is simply no longer _taught_.
+
+### 4a. Phasing
+
+This work is forward-only and lands cleanly without bricking anything:
+
+1. **Phase 1 — this PR's implementation (additive).** Add the new surface
+   (`ownerRoles` manifest + deploy-time seed into all three reducers + reserved
+   `owner` role) **and** remove `isOwner` from the prompts (§5). `me.isOwner` and
+   the access-fn `isOwner` field both stay populated. Nothing breaks: old vibes
+   still read the field; new vibes are role-only by construction.
+2. **Phase 2 — migrate the back catalog (after-task A).** Codemod/regenerate
+   every still-served vibe off `user.isOwner` onto role checks + `ownerRoles`
+   seeds; unbrick the ones currently relying on it (incl. `aegina-checklist`).
+3. **Phase 3 — remove the field (after-task B).** Once nothing reads it, drop
+   `isOwner` from the access-fn `user` context. `me.isOwner` (chrome) stays
+   forever.
 
 ### 5. Prompt changes (the cheapest lever for new vibes)
 
@@ -187,21 +200,21 @@ generation, new vibes are correct by construction.
   read gate, **and** `who-am-i.ts`'s `resolveGrants` that feeds the client
   `can.*` predictor.
 - Reserved `owner` role always seeded.
-- Remove `isOwner` from the access-fn `user` context (server) and from the
-  access-fn authoring prompts; keep `me.isOwner` for chrome.
+- Remove `isOwner` from the access-fn authoring **prompts** (§5). Keep both
+  `me.isOwner` (chrome) and the access-fn `isOwner` field **populated** — the
+  field is removed only in phase 3, after migration.
 - Tests: seed appears in `grantState`; `requireRole("owner")` passes for owner;
   owner-write works with **no** `isOwner` in the fn; multi-handle owner behaves
   as "not a member" when acting under a non-owner handle.
 
-**Out of scope (explicit after-task):**
+**Out of scope (explicit after-tasks — see Phasing §4a):**
 
-- **Full clean-up / migration of existing deployed vibes.** We are not migrating
-  the back catalog in this work. **This migration is a hard prerequisite for the
-  `isOwner` field removal** (see §4 sequencing constraint): the field stays
-  populated until the migration lands, so existing vibes are not bricked in the
-  interim. Tracked as the after-task below.
+- **Phase 2 — back-catalog migration.** Migrating existing deployed/example
+  vibes off `user.isOwner`. A hard prerequisite for phase 3.
+- **Phase 3 — remove the `isOwner` field** from the access-fn `user` context.
+  Cannot land until phase 2 is complete (else owner-lockout, P1).
 - Unbricking `garden-gnome/aegina-checklist` specifically (one-line editor
-  grant) — intentionally deferred; not part of this change.
+  grant) — folds into phase 2; not part of this change.
 - A platform owner-panel UI for granting arbitrary in-vibe roles to other users
   (the in-app grant-doc pattern already covers this).
 
@@ -218,14 +231,22 @@ ownerRoles` in `access.js`.
 4. **Re-deploy reconciliation:** additive-only (recommended) vs. reconcile-to-
    declared.
 
-## After-task (separate PR, not this one)
+## After-tasks (separate PRs, not this one)
 
-**Full clean-up of old vibes.** A sweep of the back catalog to remove
+**Phase 2 — migrate old vibes.** A sweep of the back catalog to remove
 `user.isOwner` dependence: codemod/regenerate the 62 affected example vibes (and
-any deployed vibes we choose to touch) to role-gated `access.js` + `ownerRoles`
-seeds, and unbrick the ones currently relying on `isOwner` (including
-`aegina-checklist`). Filed as a follow-up so this design PR stays a clean,
-forward-only change to the platform + generator.
+any still-served deployed vibes) to role-gated `access.js` + `ownerRoles` seeds,
+and unbrick the ones currently relying on `isOwner` (including
+`aegina-checklist`). Runs against the surface phase 1 ships, so it's a pure
+data/source migration with no platform changes.
+
+**Phase 3 — remove the `isOwner` field.** Once phase 2 confirms nothing reads
+`user.isOwner`, drop it from the access-fn `user` context (server) and the
+viewer payload that feeds it. `me.isOwner` (app-shell chrome / out-of-vibe
+overload) stays. Small change, but gated entirely on phase 2 being complete.
+
+This phasing keeps the present PR a clean, forward-only, additive change to the
+platform + generator — nothing it ships can break an existing vibe.
 
 ## Risks
 
