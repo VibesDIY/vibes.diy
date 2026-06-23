@@ -33,7 +33,7 @@ import {
   type AccessDescriptor,
 } from "./access-function.js";
 import { aclAllows, resolveDbAcl, checkDirectChannelAccess } from "./db-acl-resolver.js";
-import { GrantReduce, extractContribution } from "./grant-reduce.js";
+import { GrantReduce, extractContribution, newSeededReduce, parseOwnerRoles } from "./grant-reduce.js";
 import { isFileMeta } from "./files-url-mint.js";
 import { clientWsSend, connectionAdminMode } from "./app-documents-shared.js";
 import { normalizeChannels } from "./normalize-channels.js";
@@ -197,12 +197,22 @@ export const putDocEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqPutDoc>, 
       let grantsReduceBefore: GrantReduce | undefined;
       const tAfb = vctx.sql.tables.accessFunctionBindings;
       const afbRow = await vctx.sql.db
-        .select({ accessFnCid: tAfb.accessFnCid, accessFnAssetUri: tAfb.accessFnAssetUri, dbName: tAfb.dbName })
+        .select({
+          accessFnCid: tAfb.accessFnCid,
+          accessFnAssetUri: tAfb.accessFnAssetUri,
+          dbName: tAfb.dbName,
+          ownerRoles: tAfb.ownerRoles,
+        })
         .from(tAfb)
         .where(and(eq(tAfb.ownerHandle, req.ownerHandle), eq(tAfb.appSlug, req.appSlug), inArray(tAfb.dbName, [req.dbName, "*"])))
         .orderBy(sql`CASE WHEN ${tAfb.dbName} = ${req.dbName} THEN 0 ELSE 1 END`)
         .limit(1)
         .then((r) => r[0]);
+      // Owner seed roles for this (ownerHandle, appSlug, dbName), precedence
+      // already resolved by the afbRow query above (db-specific over '*').
+      // Used to seed BOTH grantsReduceBefore and grantsReduceAfter symmetrically
+      // so the seed cancels in the effective-grant delta check.
+      const seedOwnerRoles = parseOwnerRoles(afbRow?.ownerRoles);
 
       // Anonymous write with no access function → deny
       if (!userId && !afbRow?.accessFnCid) {
@@ -314,7 +324,7 @@ export const putDocEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqPutDoc>, 
             )
           );
 
-        const reduce = new GrantReduce();
+        const reduce = newSeededReduce(req.ownerHandle, seedOwnerRoles);
         for (const row of storedOutputs) {
           reduce.addDoc(row.docId, extractContribution(JSON.parse(row.output) as AccessDescriptor));
         }
@@ -571,7 +581,12 @@ export const putDocEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqPutDoc>, 
       if (storeAccessOutput) {
         let effectiveViewerGrantsChanged = false;
         if (grantsReduceBefore) {
-          const grantsReduceAfter = new GrantReduce();
+          // Seed grantsReduceAfter with the SAME owner seed as grantsReduceBefore
+          // (which was built via newSeededReduce). The seed lives outside
+          // docContributions, so replaying only the contributions below would
+          // drop it — leaving before seeded and after not would make the owner's
+          // seed roles look like they vanished and spuriously trip the delta.
+          const grantsReduceAfter = newSeededReduce(req.ownerHandle, seedOwnerRoles);
           for (const [storedDocId, contribution] of grantsReduceBefore.docContributions) {
             grantsReduceAfter.addDoc(storedDocId, contribution);
           }

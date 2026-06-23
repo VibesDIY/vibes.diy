@@ -3,6 +3,7 @@ import { and, eq, notInArray, sql } from "drizzle-orm";
 import type { AccessDescriptor, StorageResult, VibeFile } from "@vibes.diy/api-types";
 import type { VibesApiSQLCtx } from "../types.js";
 import { extractExportSource } from "../public/access-function.js";
+import { parseOwnerRoles } from "../public/grant-reduce.js";
 
 export interface ProcessAccessBindingsOpts {
   readonly ownerHandle: string;
@@ -18,7 +19,6 @@ export interface ProcessAccessBindingsOpts {
 export async function processAccessBindings(vctx: VibesApiSQLCtx, opts: ProcessAccessBindingsOpts): Promise<Result<void>> {
   return exception2Result(async () => {
     const { ownerHandle, appSlug, fullFileSystem } = opts;
-    const ownerRolesJson = opts.ownerRoles && opts.ownerRoles.length > 0 ? JSON.stringify(opts.ownerRoles) : null;
     const tAfb = vctx.sql.tables.accessFunctionBindings;
 
     const accessJsEntry = fullFileSystem.find(
@@ -43,10 +43,22 @@ export async function processAccessBindings(vctx: VibesApiSQLCtx, opts: ProcessA
     const exportNames = parseExportNames(accessJsSource);
 
     const existingBindings = await vctx.sql.db
-      .select({ dbName: tAfb.dbName, accessFnCid: tAfb.accessFnCid })
+      .select({ dbName: tAfb.dbName, accessFnCid: tAfb.accessFnCid, ownerRoles: tAfb.ownerRoles })
       .from(tAfb)
       .where(and(eq(tAfb.ownerHandle, ownerHandle), eq(tAfb.appSlug, appSlug)));
     const oldCids = new Map(existingBindings.map((b) => [b.dbName, b.accessFnCid]));
+
+    // Additive-only redeploy (spec decision #4): never shrink the owner's seeded
+    // roles. Union any previously-stored ownerRoles with the newly declared set,
+    // so a repush that omits the field (or declares fewer) can't lock the owner
+    // out of an access fn still requiring a previously-seeded domain role.
+    // Shrinking is a separate explicit action, out of scope here.
+    const mergedOwnerRoles = new Set<string>();
+    for (const b of existingBindings) {
+      for (const r of parseOwnerRoles(b.ownerRoles)) mergedOwnerRoles.add(r);
+    }
+    for (const r of opts.ownerRoles ?? []) mergedOwnerRoles.add(r);
+    const ownerRolesJson = mergedOwnerRoles.size > 0 ? JSON.stringify(Array.from(mergedOwnerRoles)) : null;
 
     if (exportNames.length > 0) {
       for (const dbName of exportNames) {

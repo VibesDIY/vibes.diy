@@ -14,7 +14,7 @@ import {
 } from "@vibes.diy/api-types";
 import { ReqVibeWhoAmI, ResVibeWhoAmI, ViewerPayload, DocAccessLevel, isReqVibeWhoAmI } from "@vibes.diy/vibe-types";
 import { and, eq } from "drizzle-orm";
-import { GrantReduce, extractContribution } from "./grant-reduce.js";
+import { GrantReduce, extractContribution, newSeededReduce, parseOwnerRoles } from "./grant-reduce.js";
 import { unwrapMsgBase } from "../unwrap-msg-base.js";
 import { VibesApiSQLCtx } from "../types.js";
 import { optAuth } from "../check-auth.js";
@@ -47,25 +47,32 @@ async function resolveGrants(
 ): Promise<Record<string, { channels: string[]; publicChannels: string[]; roles: string[] }> | undefined> {
   const tAfb = vctx.sql.tables.accessFunctionBindings;
   const afbRows = await vctx.sql.db
-    .select({ dbName: tAfb.dbName, accessFnCid: tAfb.accessFnCid })
+    .select({ dbName: tAfb.dbName, accessFnCid: tAfb.accessFnCid, ownerRoles: tAfb.ownerRoles })
     .from(tAfb)
     .where(and(eq(tAfb.ownerHandle, ownerUserSlug), eq(tAfb.appSlug, appSlug)));
 
   if (afbRows.length === 0) return undefined;
 
   // Build fnCid lookup: named bindings take precedence over wildcard ('*').
-  // Collect all distinct fnCids for the single batched outputs query.
+  // Collect all distinct fnCids for the single batched outputs query. Owner seed
+  // roles are tracked with the same precedence so the client `can.*` predictor
+  // agrees with the owner roles the write/read paths seed server-side.
   let wildcardCid: string | undefined;
+  let wildcardOwnerRoles: string[] = [];
   const namedCids = new Map<string, string>();
+  const namedOwnerRoles = new Map<string, string[]>();
   const allCids = new Set<string>();
   for (const afb of afbRows) {
     allCids.add(afb.accessFnCid);
     if (afb.dbName === "*") {
       wildcardCid = afb.accessFnCid;
+      wildcardOwnerRoles = parseOwnerRoles(afb.ownerRoles);
     } else {
       namedCids.set(afb.dbName, afb.accessFnCid);
+      namedOwnerRoles.set(afb.dbName, parseOwnerRoles(afb.ownerRoles));
     }
   }
+  const ownerRolesFor = (dbName: string): string[] => namedOwnerRoles.get(dbName) ?? wildcardOwnerRoles;
 
   // Single batched query: fetch all grant-bearing outputs for this app
   // across all relevant fnCids. Outputs are stored under concrete dbNames
@@ -92,23 +99,37 @@ async function resolveGrants(
 
   const grants: Record<string, { channels: string[]; publicChannels: string[]; roles: string[] }> = {};
 
-  for (const [dbName, rows] of outputsByDb) {
-    const reduce = new GrantReduce();
-    for (const row of rows) {
-      reduce.addDoc(row.docId, extractContribution(JSON.parse(row.output) as AccessDescriptor));
-    }
-
+  const buildEntry = (reduce: GrantReduce) => {
     const channels = viewerSlug ? Array.from(reduce.resolveEffectiveChannels(viewerSlug)) : [];
     const publicChannels = Array.from(reduce.publicChannels);
-
     const roles: string[] = [];
     if (viewerSlug) {
       for (const [roleName, members] of reduce.effectiveMembers) {
         if (members.has(viewerSlug)) roles.push(roleName);
       }
     }
+    return { channels, publicChannels, roles };
+  };
 
-    grants[dbName] = { channels, publicChannels, roles };
+  for (const [dbName, rows] of outputsByDb) {
+    const reduce = newSeededReduce(ownerUserSlug, ownerRolesFor(dbName));
+    for (const row of rows) {
+      reduce.addDoc(row.docId, extractContribution(JSON.parse(row.output) as AccessDescriptor));
+    }
+    grants[dbName] = buildEntry(reduce);
+  }
+
+  // Parity: a named-binding db with NO stored grant outputs yet (e.g. a fresh
+  // vibe before its first grant doc) still needs the owner's seed roles in the
+  // client `can.*` state, or the owner sees role-gated create/edit UI hidden
+  // while the server would allow the write. Emit a seed-only entry for each
+  // named binding the output loop didn't cover.
+  // (The '*' binding with zero outputs has no concrete dbName to key here; the
+  //  server write/read paths still seed correctly, so that narrow first-create
+  //  case is server-safe — tracked as a follow-up.)
+  for (const dbName of namedCids.keys()) {
+    if (grants[dbName]) continue;
+    grants[dbName] = buildEntry(newSeededReduce(ownerUserSlug, ownerRolesFor(dbName)));
   }
 
   return Object.keys(grants).length > 0 ? grants : undefined;

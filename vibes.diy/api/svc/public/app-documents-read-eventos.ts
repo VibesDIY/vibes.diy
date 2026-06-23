@@ -29,10 +29,10 @@ import { VibesApiSQLCtx } from "../types.js";
 import { checkAuth, optAuth } from "../check-auth.js";
 import { eq, and, sql, inArray } from "drizzle-orm";
 import { type } from "arktype";
-import { checkDocAccess, DocAccessLevel, canRead, isPublicReadable } from "./access-helpers.js";
+import { checkDocAccess, DocAccessLevel, canRead, isPublicReadable, loadEffectiveOwnerRoles } from "./access-helpers.js";
 import type { AccessDescriptor } from "./access-function.js";
 import { resolveDbAcl, checkDirectChannelAccess } from "./db-acl-resolver.js";
-import { GrantReduce, extractContribution } from "./grant-reduce.js";
+import { extractContribution, newSeededReduce } from "./grant-reduce.js";
 import { normalizeChannels } from "./normalize-channels.js";
 import { filterDocsByChannel } from "./channel-read-filter.js";
 import { mintFilesUrls } from "./files-url-mint.js";
@@ -161,7 +161,10 @@ export const getDocEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqGetDoc>, 
             )
           );
 
-        const reduce = new GrantReduce();
+        const reduce = newSeededReduce(
+          req.ownerHandle,
+          await loadEffectiveOwnerRoles(vctx, req.ownerHandle, req.appSlug, req.dbName)
+        );
         for (const r of grantOutputs) {
           reduce.addDoc(r.docId, extractContribution(JSON.parse(r.output) as AccessDescriptor));
         }
@@ -326,7 +329,10 @@ export const queryDocsEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqQueryD
           );
         });
 
-        const reduce = new GrantReduce();
+        const reduce = newSeededReduce(
+          req.ownerHandle,
+          await loadEffectiveOwnerRoles(vctx, req.ownerHandle, req.appSlug, req.dbName)
+        );
         for (const row of grantOutputs) {
           reduce.addDoc(row.docId, extractContribution(JSON.parse(row.output) as AccessDescriptor));
         }
@@ -477,7 +483,10 @@ export const subscribeDocsEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqSu
               )
             );
 
-          const reduce = new GrantReduce();
+          const reduce = newSeededReduce(
+            req.ownerHandle,
+            await loadEffectiveOwnerRoles(vctx, req.ownerHandle, req.appSlug, req.dbName)
+          );
           for (const row of grantOutputs) {
             reduce.addDoc(row.docId, extractContribution(JSON.parse(row.output) as AccessDescriptor));
           }
