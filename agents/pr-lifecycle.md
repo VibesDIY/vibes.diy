@@ -90,12 +90,12 @@ When posting the Rollout watch comment, also add the `ready-to-merge` label to t
 
 ## Every PR: drop a blog post seed
 
-Every PR you open should include **one** bullet-point blog post seed in [`notes/blog-seeds/README.md`](../notes/blog-seeds/README.md), committed on the PR branch alongside the feature work. Don't ask first and don't wait for a yes — the seed is a lightweight capture, not a commitment to publish. The team mines `notes/blog-seeds/` later and promotes the good ones into full posts.
+Every PR you open should add **one** blog post seed as its own file under [`notes/blog-seeds/`](../notes/blog-seeds/), committed on the PR branch alongside the feature work. Don't ask first and don't wait for a yes — the seed is a lightweight capture, not a commitment to publish. The team mines `notes/blog-seeds/` later and promotes the good ones into full posts.
 
-A seed is a single bullet drawn from the code this PR touched. "Tech stack" = the technologies and patterns in play in the worked section (e.g. Fireproof, the keybag / device-id auth model, the CLI, `call-ai`, esm.sh, Cloudflare Durable Objects) — pick the angle the just-completed work illuminates best.
+A seed is drawn from the code this PR touched. "Tech stack" = the technologies and patterns in play in the worked section (e.g. Fireproof, the keybag / device-id auth model, the CLI, `call-ai`, esm.sh, Cloudflare Durable Objects) — pick the angle the just-completed work illuminates best.
 
 - **One concrete topic with a one-line hook**, not a menu. Tie it to what actually shipped: "How vibes-diy does browserless device auth with a Fireproof keybag" beats "a post about auth."
-- Use the bullet format documented in [`notes/blog-seeds/README.md`](../notes/blog-seeds/README.md): the hook, plus a short parenthetical pointing at the PR and the trade-off / "why" / gotcha worth expanding on.
-- Insert your seed under the `<!-- newest at the top -->` marker so the list stays newest-first; never rewrite or delete other people's seeds.
+- Add a new file `notes/blog-seeds/<YYYY-MM-DD>-<slug>.md` using the format documented in [`notes/blog-seeds/README.md`](../notes/blog-seeds/README.md): the hook, the source PR/branch, and the trade-off / "why" / gotcha worth expanding on.
+- One file per seed means no shared list to edit: only ever add your own file, never touch the README or anyone else's seed.
 
 When the team decides to promote a seed into a full post, write it as markdown in `notes/` (e.g. `notes/blog-<slug>.md`), focused on the real engineering decisions in the diff — the trade-offs, the "why", the gotchas — not marketing, and land it via a normal PR (never push directly to `main`).
