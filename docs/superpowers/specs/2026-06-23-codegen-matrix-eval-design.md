@@ -82,15 +82,24 @@ rules neither other prompt touches.
 The create loop is _only_ calls to the published CLI's `generate`, one per
 `model × prompt × rep`. For each cell:
 
-1. Make a per-cell working dir `runs/<ts>/<promptId>__<modelSlug>__r<rep>/`.
+1. Make a per-cell working dir `runs/<ts>/<promptId>__<modelSlug>__r<rep>/`,
+   empty before the run.
 2. Run `<cliCommand> generate --model <id> --handle <handle> "<prompt>"` in
-   that dir, capturing stdout. The CLI emits a `vibes-diy.cli.res-generate`
-   event with `{ appSlug, ownerHandle, url, directory }`.
+   that dir.
 3. Record wall-clock latency (spawn → exit) and exit state.
-4. The CLI writes the generated files into `<directory>` (`<cwd>/<appSlug>/`);
-   leave them in place for the rubric.
+4. Discover the result from the **filesystem, not stdout.** The CLI's
+   `res-generate` envelope is _not_ printed — `main.ts` handles `isResGenerate`
+   with a bare `break` ("already reported via sendProgress"), and `--json` does
+   not change that, so stdout carries only human progress text. Instead: the
+   only subdirectory the CLI creates in the (empty) per-cell cwd is
+   `<appSlug>/`, so `appSlug` is that directory name and `<directory>` is its
+   path. `ownerHandle` is the `--handle` we passed. The generated `README.md`
+   in that directory also carries the live vibe URL as a cross-check.
 5. Write `cell.json`: `{ promptId, model, class, tier, rep, appSlug,
-ownerHandle, url, directory, latencyMs, exitState, stderrTail }`.
+ownerHandle, directory, latencyMs, exitState, stderrTail }`.
+
+`appSlug` and `ownerHandle` are all the design needs — the screenshot URL in
+stage 3 is built from them, so no stdout parsing is required.
 
 Runs are **sequential** — parallelizing risks rate-limit errors that pollute
 results with infrastructure noise (same rationale as `codegen-edit`).
@@ -145,7 +154,10 @@ instrumentation.
 
 ### Stage 4 — Report (`src/report.ts`)
 
-Joins all `cell.score.json` into:
+The join spine is the set of `cell.json` files (one per cell, always written in
+stage 2), **left-joined** with `cell.score.json` where present. This keeps
+cells that never scored — generate failures, skipped cells — visible in the
+report with empty score columns, rather than silently dropping them. Produces:
 
 - `runs/<ts>/index.jsonl` — one row per cell (machine-readable).
 - `runs/<ts>/summary.md` — a matrix table: rows = model (with class/tier),
@@ -188,9 +200,11 @@ eval/codegen-matrix/
 
 ## Error handling
 
-- A `generate` non-zero exit or empty `directory` → cell marked
-  `exitState: "generate-failed"` with `stderrTail`; scoring skips it but the
-  report still lists the cell (a model that can't produce output is signal).
+- A `generate` non-zero exit or no created `<appSlug>/` directory → `cell.json`
+  is written with `exitState: "generate-failed"` and `stderrTail`, but no
+  `cell.score.json`. Stage 4 joins on `cell.json`, so the failed cell still
+  appears in the report with empty score columns (a model that can't produce
+  output is signal).
 - Judge transport failure → that score recorded as `null`; other scores still
   land.
 - Screenshot timeout → `design.available: false`; cell otherwise scored.
