@@ -302,20 +302,23 @@ export function useShareModal({
         // clipboard and surface an inline toast with a "View live" link, letting
         // them choose when to switch context.
         if (isInitialPublish) {
+          let copied = false;
           try {
             await navigator.clipboard.writeText(url);
+            copied = true;
             setUrlCopied(true);
             clearCopyTimeout();
             copyTimeoutRef.current = window.setTimeout(() => setUrlCopied(false), 2000);
           } catch {
             // Clipboard can reject (permissions/focus); the link is still shown
-            // in the panel's Copy Link row, so this is non-fatal.
+            // in the panel's Copy Link row, so this is non-fatal. Don't claim it
+            // was copied in that case.
           }
           toast.success(
             createElement(
               "span",
               null,
-              "Published — link copied. ",
+              copied ? "Published — link copied. " : "Published — use Copy Link to copy. ",
               createElement(
                 "a",
                 { href: url, target: "_blank", rel: "noreferrer", className: "font-medium underline" },
