@@ -1,38 +1,9 @@
-import { and, eq, inArray, sql } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { Role, isResHasAccessInviteAccepted, isResHasAccessRequestApproved } from "@vibes.diy/api-types";
 import { VibesApiSQLCtx } from "../types.js";
 import { hasAccessInvite } from "./invite-flow.js";
 import { hasAccessRequest } from "./request-flow.js";
 import { ensureAppSettings } from "./ensure-app-settings.js";
-import { parseOwnerRoles } from "./grant-reduce.js";
-
-/**
- * Effective declared `ownerRoles` for (ownerHandle, appSlug, dbName), with the
- * db-specific AccessFunctionBindings row winning over the `*` wildcard — the
- * same precedence access-fn binding resolution uses, so the owner seed can't
- * diverge between the write, read, and who-am-i paths. Returns [] when no
- * binding/column is set (the reserved `owner` role is seeded regardless).
- *
- * Used by the read reduces, which load access-fn outputs but not the afb row;
- * the write and who-am-i paths already load afb and read `ownerRoles` from it
- * directly (no extra query).
- */
-export async function loadEffectiveOwnerRoles(
-  vctx: VibesApiSQLCtx,
-  ownerHandle: string,
-  appSlug: string,
-  dbName: string
-): Promise<string[]> {
-  const tAfb = vctx.sql.tables.accessFunctionBindings;
-  const row = await vctx.sql.db
-    .select({ ownerRoles: tAfb.ownerRoles })
-    .from(tAfb)
-    .where(and(eq(tAfb.ownerHandle, ownerHandle), eq(tAfb.appSlug, appSlug), inArray(tAfb.dbName, [dbName, "*"])))
-    .orderBy(sql`CASE WHEN ${tAfb.dbName} = ${dbName} THEN 0 ELSE 1 END`)
-    .limit(1)
-    .then((r) => r[0]);
-  return parseOwnerRoles(row?.ownerRoles);
-}
 
 export type DocAccessLevel = Role | "override" | "none";
 

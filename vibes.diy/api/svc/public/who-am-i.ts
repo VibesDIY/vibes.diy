@@ -119,17 +119,22 @@ async function resolveGrants(
     grants[dbName] = buildEntry(reduce);
   }
 
-  // Parity: a named-binding db with NO stored grant outputs yet (e.g. a fresh
-  // vibe before its first grant doc) still needs the owner's seed roles in the
-  // client `can.*` state, or the owner sees role-gated create/edit UI hidden
-  // while the server would allow the write. Emit a seed-only entry for each
-  // named binding the output loop didn't cover.
-  // (The '*' binding with zero outputs has no concrete dbName to key here; the
-  //  server write/read paths still seed correctly, so that narrow first-create
-  //  case is server-safe — tracked as a follow-up.)
+  // Parity: a db with NO stored grant outputs yet (a fresh vibe before its
+  // first grant doc) still needs the owner's seed roles in the client `can.*`
+  // state, or the owner sees role-gated create/edit UI hidden while the server
+  // would allow the write. Emit a seed-only entry for each named binding the
+  // output loop didn't cover.
   for (const dbName of namedCids.keys()) {
     if (grants[dbName]) continue;
     grants[dbName] = buildEntry(newSeededReduce(ownerUserSlug, ownerRolesFor(dbName)));
+  }
+
+  // For a `*` (default-export) binding there is no concrete dbName to key when
+  // it has no outputs yet, so emit a seed-only `grants["*"]` fallback. The
+  // client reads `grants[dbName] ?? grants["*"]`, so a brand-new vibe's first
+  // create is predicted correctly while named/concrete entries still win.
+  if (wildcardCid !== undefined && !grants["*"]) {
+    grants["*"] = buildEntry(newSeededReduce(ownerUserSlug, wildcardOwnerRoles));
   }
 
   return Object.keys(grants).length > 0 ? grants : undefined;

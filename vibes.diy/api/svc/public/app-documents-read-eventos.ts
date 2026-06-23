@@ -29,10 +29,10 @@ import { VibesApiSQLCtx } from "../types.js";
 import { checkAuth, optAuth } from "../check-auth.js";
 import { eq, and, sql, inArray } from "drizzle-orm";
 import { type } from "arktype";
-import { checkDocAccess, DocAccessLevel, canRead, isPublicReadable, loadEffectiveOwnerRoles } from "./access-helpers.js";
+import { checkDocAccess, DocAccessLevel, canRead, isPublicReadable } from "./access-helpers.js";
 import type { AccessDescriptor } from "./access-function.js";
 import { resolveDbAcl, checkDirectChannelAccess } from "./db-acl-resolver.js";
-import { extractContribution, newSeededReduce } from "./grant-reduce.js";
+import { extractContribution, newSeededReduce, parseOwnerRoles } from "./grant-reduce.js";
 import { normalizeChannels } from "./normalize-channels.js";
 import { filterDocsByChannel } from "./channel-read-filter.js";
 import { mintFilesUrls } from "./files-url-mint.js";
@@ -110,7 +110,7 @@ export const getDocEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqGetDoc>, 
       // Channel-gated read: if access fn binding exists, verify doc is in user's channels
       const tAfbG = vctx.sql.tables.accessFunctionBindings;
       const afbRowG = await vctx.sql.db
-        .select({ accessFnCid: tAfbG.accessFnCid })
+        .select({ accessFnCid: tAfbG.accessFnCid, ownerRoles: tAfbG.ownerRoles })
         .from(tAfbG)
         .where(
           and(eq(tAfbG.ownerHandle, req.ownerHandle), eq(tAfbG.appSlug, req.appSlug), inArray(tAfbG.dbName, [req.dbName, "*"]))
@@ -161,10 +161,7 @@ export const getDocEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqGetDoc>, 
             )
           );
 
-        const reduce = newSeededReduce(
-          req.ownerHandle,
-          await loadEffectiveOwnerRoles(vctx, req.ownerHandle, req.appSlug, req.dbName)
-        );
+        const reduce = newSeededReduce(req.ownerHandle, parseOwnerRoles(afbRowG.ownerRoles));
         for (const r of grantOutputs) {
           reduce.addDoc(r.docId, extractContribution(JSON.parse(r.output) as AccessDescriptor));
         }
@@ -295,7 +292,7 @@ export const queryDocsEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqQueryD
       // filter docs to only those in the user's effective channels or public channels.
       const tAfbQ = vctx.sql.tables.accessFunctionBindings;
       const afbRowQ = await vctx.sql.db
-        .select({ accessFnCid: tAfbQ.accessFnCid })
+        .select({ accessFnCid: tAfbQ.accessFnCid, ownerRoles: tAfbQ.ownerRoles })
         .from(tAfbQ)
         .where(
           and(eq(tAfbQ.ownerHandle, req.ownerHandle), eq(tAfbQ.appSlug, req.appSlug), inArray(tAfbQ.dbName, [req.dbName, "*"]))
@@ -329,10 +326,7 @@ export const queryDocsEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqQueryD
           );
         });
 
-        const reduce = newSeededReduce(
-          req.ownerHandle,
-          await loadEffectiveOwnerRoles(vctx, req.ownerHandle, req.appSlug, req.dbName)
-        );
+        const reduce = newSeededReduce(req.ownerHandle, parseOwnerRoles(afbRowQ.ownerRoles));
         for (const row of grantOutputs) {
           reduce.addDoc(row.docId, extractContribution(JSON.parse(row.output) as AccessDescriptor));
         }
@@ -426,7 +420,7 @@ export const subscribeDocsEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqSu
       // only channel-subscribed connections receive the doc-changed event.
       const tAfbS = vctx.sql.tables.accessFunctionBindings;
       const afbRowS = await vctx.sql.db
-        .select({ accessFnCid: tAfbS.accessFnCid })
+        .select({ accessFnCid: tAfbS.accessFnCid, ownerRoles: tAfbS.ownerRoles })
         .from(tAfbS)
         .where(
           and(eq(tAfbS.ownerHandle, req.ownerHandle), eq(tAfbS.appSlug, req.appSlug), inArray(tAfbS.dbName, [req.dbName, "*"]))
@@ -483,10 +477,7 @@ export const subscribeDocsEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqSu
               )
             );
 
-          const reduce = newSeededReduce(
-            req.ownerHandle,
-            await loadEffectiveOwnerRoles(vctx, req.ownerHandle, req.appSlug, req.dbName)
-          );
+          const reduce = newSeededReduce(req.ownerHandle, parseOwnerRoles(afbRowS.ownerRoles));
           for (const row of grantOutputs) {
             reduce.addDoc(row.docId, extractContribution(JSON.parse(row.output) as AccessDescriptor));
           }
