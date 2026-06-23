@@ -200,7 +200,7 @@ export default function HomePage() {
 
           <div style={getContainerStyle(mobile)}>
             <h1 style={getTitle(mobile, isDarkMode)}>
-              Make a web app by&nbsp;
+              Customize a web app by&nbsp;
               <span style={{ textDecoration: "underline" }}>talking to it</span>.
             </h1>
 
