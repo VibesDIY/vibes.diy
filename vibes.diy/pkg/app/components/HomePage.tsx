@@ -200,8 +200,8 @@ export default function HomePage() {
 
           <div style={getContainerStyle(mobile)}>
             <h1 style={getTitle(mobile, isDarkMode)}>
-              Remix apps with&nbsp;
-              <span style={{ textDecoration: "underline" }}>words</span>.
+              Instant apps — easy to&nbsp;
+              <span style={{ textDecoration: "underline" }}>share</span>.
             </h1>
 
             {/* Chat input form */}
@@ -219,7 +219,7 @@ export default function HomePage() {
                       handleSubmit();
                     }
                   }}
-                  placeholder="Describe your app, share the link."
+                  placeholder="Describe your app in plain words — it builds instantly and changes as you type."
                   style={getTextareaStyle()}
                 />
                 <button
@@ -231,6 +231,19 @@ export default function HomePage() {
                   ↑
                 </button>
               </div>
+            </div>
+
+            {/* "Fun, done, and alive." — brand tagline directly beneath the prompt input */}
+            <div
+              style={{
+                textAlign: "center",
+                fontFamily: "Alte Haas Grotesk, Inter, sans-serif",
+                fontWeight: 600,
+                fontSize: mobile ? "16px" : "22px",
+                color: isDarkMode ? "var(--color-dark-primary)" : "var(--vibes-near-black)",
+              }}
+            >
+              Fun, done, and alive.
             </div>
 
             {/* Carousel */}

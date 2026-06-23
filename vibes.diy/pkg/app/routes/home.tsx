@@ -4,7 +4,10 @@ import React from "react";
 export function meta() {
   return [
     { title: "Vibes DIY — Easy custom apps, securely share with friends." },
-    { name: "description", content: "Remix apps with words. Describe your app, share the link." },
+    {
+      name: "description",
+      content: "Instant apps, easy to share. Describe your app in plain words — it builds instantly and changes as you type.",
+    },
   ];
 }
 
