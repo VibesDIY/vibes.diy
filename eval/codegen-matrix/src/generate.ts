@@ -1,10 +1,11 @@
-import { spawnSync } from "node:child_process";
+import { spawn, spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import { mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { argv, stderr } from "node:process";
 import { parseMatrixConfig, parsePromptsJsonl, type MatrixConfig, type ModelEntry, type PromptEntry } from "./config.js";
+import { mapWithConcurrency } from "./pool.js";
 import {
   cellDirName,
   discoverAppSlug,
@@ -111,14 +112,14 @@ export function summarizeReason(stderrTail: string): string {
  * per-attempt side effects live in the injected `runOnce`) so it's testable
  * without spawning the CLI.
  */
-export function runWithRetries(
-  runOnce: (attempt: number) => AttemptResult,
+export async function runWithRetries(
+  runOnce: (attempt: number) => AttemptResult | Promise<AttemptResult>,
   maxAttempts: number = MAX_GENERATE_ATTEMPTS
-): CellOutcome {
+): Promise<CellOutcome> {
   const attemptLog: AttemptLogEntry[] = [];
   let last: AttemptResult = { status: null, appSlug: undefined, directory: "", latencyMs: 0, stderrTail: "" };
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-    last = runOnce(attempt);
+    last = await runOnce(attempt);
     const ok = last.status === 0 && last.appSlug !== undefined;
     attemptLog.push({
       attempt,
@@ -150,14 +151,33 @@ export function runWithRetries(
   };
 }
 
-function runCell(args: {
+/**
+ * Run one `generate` to completion without blocking the event loop (so many
+ * cells can run concurrently). Drains stdout and keeps a bounded tail of stderr.
+ */
+function execGenerate(cmd: string, args: string[], cwd: string): Promise<{ status: number | null; stderrTail: string }> {
+  return new Promise((resolve) => {
+    const child = spawn(cmd, args, { cwd });
+    let stderrBuf = "";
+    const cap = 256 * 1024; // bound memory under high concurrency
+    child.stderr.on("data", (d: Buffer) => {
+      stderrBuf += d.toString();
+      if (stderrBuf.length > cap) stderrBuf = stderrBuf.slice(stderrBuf.length - cap);
+    });
+    child.stdout.on("data", () => undefined); // drain so the pipe never fills and stalls
+    child.on("error", (e) => resolve({ status: 1, stderrTail: `${stderrBuf}\n${String(e)}` }));
+    child.on("close", (code) => resolve({ status: code, stderrTail: stderrBuf }));
+  });
+}
+
+async function runCell(args: {
   readonly cfg: MatrixConfig;
   readonly model: ModelEntry;
   readonly prompt: PromptEntry;
   readonly rep: number;
   readonly runDir: string;
   readonly cliVersion: string;
-}): void {
+}): Promise<void> {
   const { cfg, model, prompt, rep, runDir, cliVersion } = args;
   const cellDir = join(runDir, cellDirName(prompt.id, model.id, rep));
   mkdirSync(cellDir, { recursive: true });
@@ -169,11 +189,11 @@ function runCell(args: {
 
   // Each attempt runs in its own empty cwd so appSlug discovery stays
   // unambiguous (sole subdir = appSlug) and failed attempts are preserved.
-  const outcome = runWithRetries((attempt) => {
+  const outcome = await runWithRetries(async (attempt) => {
     const attemptDir = join(cellDir, `attempt-${attempt}`);
     mkdirSync(attemptDir, { recursive: true });
     const t0 = Date.now();
-    const res = spawnSync(cmd, cliArgs, { cwd: attemptDir, encoding: "utf-8", maxBuffer: 64 * 1024 * 1024 });
+    const res = await execGenerate(cmd, cliArgs, attemptDir);
     const latencyMs = Date.now() - t0;
     const appSlug = discoverAppSlug(subdirs(attemptDir));
     return {
@@ -181,7 +201,7 @@ function runCell(args: {
       appSlug,
       directory: appSlug ? join(attemptDir, appSlug) : "",
       latencyMs,
-      stderrTail: (res.stderr ?? "").split("\n").slice(-20).join("\n"),
+      stderrTail: res.stderrTail.split("\n").slice(-20).join("\n"),
     };
   });
 
@@ -242,16 +262,21 @@ export async function main(): Promise<void> {
   };
   writeFileSync(join(runDir, RUN_JSON), JSON.stringify(run, null, 2), "utf-8");
 
-  const total = cfg.models.length * prompts.length * cfg.reps;
-  stderr.write(`codegen-matrix: ${total} cells -> ${runDir}\n`);
-  // Sequential: parallelizing risks rate-limit noise in results.
+  // Build the full cell list, then run up to `concurrency` in parallel. Generate
+  // deploys tolerate high concurrency; this is the main wall-clock lever.
+  const jobs: { model: ModelEntry; prompt: PromptEntry; rep: number }[] = [];
   for (const model of cfg.models) {
     for (const prompt of prompts) {
       for (let rep = 0; rep < cfg.reps; rep++) {
-        runCell({ cfg, model, prompt, rep, runDir, cliVersion });
+        jobs.push({ model, prompt, rep });
       }
     }
   }
+  const concurrency = Math.max(1, Math.floor(Number(parseFlag("--concurrency") ?? cfg.concurrency)) || 1);
+  stderr.write(`codegen-matrix: ${jobs.length} cells, concurrency=${concurrency} -> ${runDir}\n`);
+  await mapWithConcurrency(jobs, concurrency, async (job) => {
+    await runCell({ cfg, model: job.model, prompt: job.prompt, rep: job.rep, runDir, cliVersion });
+  });
   stderr.write(`done. run dir: ${runDir}\n`);
 }
 

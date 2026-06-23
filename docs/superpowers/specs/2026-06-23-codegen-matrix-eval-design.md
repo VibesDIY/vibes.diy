@@ -55,6 +55,7 @@ Two checked-in files under `eval/codegen-matrix/config/`:
   "judgeModel": "anthropic/claude-opus-4.5",
   "reps": 3, // runs per cell; report median/mean
   "screenshotTimeoutMs": 120000, // readiness-poll budget
+  "concurrency": 8, // cells run in parallel per stage (default 8)
   "models": [
     { "id": "anthropic/claude-opus-4.6-fast", "class": "anthropic", "tier": "expensive" },
     { "id": "anthropic/claude-sonnet-4.6", "class": "anthropic", "tier": "cheap" },
@@ -112,8 +113,13 @@ latencyMs, exitState, stderrTail, apiUrl, cliVersion, promptHash }`.
 `appSlug` and `ownerHandle` are all the design needs — the screenshot URL in
 stage 3 is built from them, so no stdout parsing is required.
 
-Runs are **sequential** — parallelizing risks rate-limit errors that pollute
-results with infrastructure noise (same rationale as `codegen-edit`).
+Cells run **concurrently** — up to `concurrency` (config, default 8) at a time
+via a bounded worker pool, using async `spawn` (not blocking `spawnSync`).
+`generate` deploys tolerate high concurrency, so this is the primary wall-clock
+lever. (The original design ran sequentially to avoid rate-limit noise; that was
+relaxed once we confirmed `generate` parallelizes safely. The up-to-3 retry
+attempts within a single cell stay sequential.) The same pool runs the score
+stage.
 
 `generate` deploys to the configured `apiUrl` under the `eval` handle and the
 platform captures a screenshot asynchronously; the harness does not render

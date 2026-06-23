@@ -6,6 +6,7 @@ import { readCellJson, writeCellScore, screenshotUrl, type CellJson, type CellSc
 import { runRubric } from "./rubric.js";
 import { readDevVars, judgeFeature, judgeDesign, type JudgeDeps } from "./judge.js";
 import { waitForScreenshot } from "./readiness.js";
+import { mapWithConcurrency } from "./pool.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const RUNS_DIR = resolve(__dirname, "..", "runs");
@@ -95,28 +96,30 @@ async function main(): Promise<void> {
     const e = JSON.parse(line) as { id: string; prompt: string };
     promptText.set(e.id, e.prompt);
   }
-  // screenshotTimeoutMs + judgeModel come from the matrix config.
+  // screenshotTimeoutMs + judgeModel + concurrency come from the matrix config.
   const matrix = JSON.parse(readFileSync(resolve(__dirname, "..", "config/matrix.json"), "utf-8")) as {
     screenshotTimeoutMs: number;
     judgeModel: string;
+    concurrency?: number;
   };
   const judgeDeps: JudgeDeps = {
     devVars: readDevVars(),
     judgeModel: judgeModelOverride ?? matrix.judgeModel,
   };
+  const concurrency = Math.max(1, Math.floor(Number(parseFlag("--concurrency") ?? matrix.concurrency ?? 8)) || 1);
 
   const cellDirs = readdirSync(runDir).filter((n) => existsSync(join(runDir, n, CELL_JSON)));
-  stderr.write(`scoring ${cellDirs.length} cell(s) in ${runDir}\n`);
-  for (const name of cellDirs) {
+  stderr.write(`scoring ${cellDirs.length} cell(s) in ${runDir}, concurrency=${concurrency}\n`);
+  await mapWithConcurrency(cellDirs, concurrency, async (name) => {
     const cellDir = join(runDir, name);
     const cell = readCellJson(cellDir);
     if (!cell || cell.exitState !== "ok") {
       stderr.write(`  skip ${name}: ${cell?.exitState ?? "no cell.json"}\n`);
-      continue;
+      return;
     }
     const userPrompt = promptText.get(cell.promptId) ?? "";
     await scoreCell({ cellDir, cell, userPrompt, judgeDeps, screenshotTimeoutMs: matrix.screenshotTimeoutMs });
-  }
+  });
   stderr.write(`done scoring ${runDir}\n`);
 }
 

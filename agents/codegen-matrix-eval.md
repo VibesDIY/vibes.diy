@@ -46,12 +46,14 @@ Each stage auto-targets the most recent `runs/<ts>/`. Override with `--run`.
 
 | Stage    | Flag                 | Default                | Purpose                  |
 | -------- | -------------------- | ---------------------- | ------------------------ |
-| generate | `--matrix <path>`    | `config/matrix.json`   | model/judge/env config   |
-| generate | `--prompts <path>`   | `config/prompts.jsonl` | prompt corpus            |
-| score    | `--run <dir>`        | latest `runs/<ts>/`    | which run to score       |
-| score    | `--prompts <path>`   | `config/prompts.jsonl` | prompt text for judges   |
-| score    | `--judge-model <id>` | `matrix.judgeModel`    | override the judge model |
-| report   | `--run <dir>`        | latest `runs/<ts>/`    | which run to report      |
+| generate | `--matrix <path>`    | `config/matrix.json`   | model/judge/env config        |
+| generate | `--prompts <path>`   | `config/prompts.jsonl` | prompt corpus                 |
+| generate | `--concurrency <n>`  | `matrix.concurrency` (8) | cells run in parallel       |
+| score    | `--run <dir>`        | latest `runs/<ts>/`    | which run to score            |
+| score    | `--prompts <path>`   | `config/prompts.jsonl` | prompt text for judges        |
+| score    | `--judge-model <id>` | `matrix.judgeModel`    | override the judge model      |
+| score    | `--concurrency <n>`  | `matrix.concurrency` (8) | cells scored in parallel    |
+| report   | `--run <dir>`        | latest `runs/<ts>/`    | which run to report           |
 
 Pass flags through the pnpm script with `--`, e.g.
 `pnpm run generate -- --matrix /tmp/my-matrix.json`.
@@ -59,8 +61,10 @@ Pass flags through the pnpm script with `--`, e.g.
 ## Quick start (trimmed first run)
 
 The default `config/matrix.json` is **11 models × 3 prompts × 3 reps = 99
-cells**, sequential, each generate up to 3 attempts at ~40–90s — potentially
-many hours and a lot of deploys. For a first pass, point at trimmed configs:
+cells**. They run `concurrency` at a time (default 8), each generate up to 3
+attempts at ~40–90s — so the full matrix is roughly `99 / concurrency` waves.
+Raise `concurrency` (or `--concurrency`) to go faster. For a first pass, point
+at trimmed configs:
 
 ```sh
 cd eval/codegen-matrix
@@ -123,6 +127,8 @@ columns.
   `pr-<N>.vibespreview.dev`. The screenshot URL is
   `https://<appSlug>--<ownerHandle>.<runtimeHostBase>/screenshot.jpg`.
 - `handle` — publish namespace (`eval`).
+- `concurrency` — cells run in parallel per stage (default 8). Raise it to cut
+  wall-clock time; `generate` deploys tolerate high concurrency.
 - `judgeModel`, `reps`, `screenshotTimeoutMs`, and the `models` list (cheapest +
   priciest per class).
 
@@ -130,7 +136,11 @@ columns.
 
 ## Behaviour to know
 
-- **Sequential runs** — parallelizing risks rate-limit noise in results.
+- **Parallel cells** — both `generate` and `score` run up to `concurrency`
+  cells at once (config field, default 8; override per stage with
+  `--concurrency <n>`). `generate` deploys tolerate high concurrency, so this is
+  the main lever on wall-clock time — raise it to run the full matrix fast.
+  Within a cell, the up-to-3 generate attempts stay sequential.
 - **Generate retries** — a failure is retried, each attempt in its own clean
   cwd. Only after it fails **more than twice** (all 3 attempts) is the cell a
   model failure. First success wins, recorded with that attempt's latency.

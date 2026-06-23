@@ -33,13 +33,18 @@ adds `cell.score.json`; `report` joins them.
   non-prod, a confirmation set on prod), `runtimeHostBase` (the deployed vibe's
   hostname base — `vibes.diy` for prod, `pr-<N>.vibespreview.dev` for preview;
   kept explicit because the API and runtime hosts differ in preview), `handle`,
-  `judgeModel`, `reps`, `screenshotTimeoutMs`, and the `models` list (cheapest +
-  priciest per class).
+  `judgeModel`, `reps`, `screenshotTimeoutMs`, `concurrency` (cells run in
+  parallel per stage; default 8 — raise it to cut wall-clock time), and the
+  `models` list (cheapest + priciest per class).
 - `config/prompts.jsonl` — one `{id, prompt}` per line.
 
 ## Notes
 
-- Runs are sequential to avoid rate-limit noise in results.
+- **Cells run in parallel** — both `generate` and `score` run up to
+  `concurrency` cells at once (default 8; override with `--concurrency <n>`).
+  `generate` deploys tolerate high concurrency, so this is the main lever on
+  wall-clock time. Within a cell, the up-to-3 generate attempts are still
+  sequential.
 - **Generate is retried up to 3 attempts per cell** (each in its own clean cwd).
   The first success wins; only after it fails more than twice is the cell a
   model failure (`exitState: "generate-failed"`). The attempt count and each
