@@ -44,16 +44,16 @@ Each stage auto-targets the most recent `runs/<ts>/`. Override with `--run`.
 
 ### Flags
 
-| Stage    | Flag                 | Default                | Purpose                  |
-| -------- | -------------------- | ---------------------- | ------------------------ |
-| generate | `--matrix <path>`    | `config/matrix.json`   | model/judge/env config        |
-| generate | `--prompts <path>`   | `config/prompts.jsonl` | prompt corpus                 |
-| generate | `--concurrency <n>`  | `matrix.concurrency` (8) | cells run in parallel       |
-| score    | `--run <dir>`        | latest `runs/<ts>/`    | which run to score            |
-| score    | `--prompts <path>`   | `config/prompts.jsonl` | prompt text for judges        |
-| score    | `--judge-model <id>` | `matrix.judgeModel`    | override the judge model      |
-| score    | `--concurrency <n>`  | `matrix.concurrency` (8) | cells scored in parallel    |
-| report   | `--run <dir>`        | latest `runs/<ts>/`    | which run to report           |
+| Stage    | Flag                 | Default                  | Purpose                  |
+| -------- | -------------------- | ------------------------ | ------------------------ |
+| generate | `--matrix <path>`    | `config/matrix.json`     | model/judge/env config   |
+| generate | `--prompts <path>`   | `config/prompts.jsonl`   | prompt corpus            |
+| generate | `--concurrency <n>`  | `matrix.concurrency` (8) | cells run in parallel    |
+| score    | `--run <dir>`        | latest `runs/<ts>/`      | which run to score       |
+| score    | `--prompts <path>`   | `config/prompts.jsonl`   | prompt text for judges   |
+| score    | `--judge-model <id>` | `matrix.judgeModel`      | override the judge model |
+| score    | `--concurrency <n>`  | `matrix.concurrency` (8) | cells scored in parallel |
+| report   | `--run <dir>`        | latest `runs/<ts>/`      | which run to report      |
 
 Pass flags through the pnpm script with `--`, e.g.
 `pnpm run generate -- --matrix /tmp/my-matrix.json`.
