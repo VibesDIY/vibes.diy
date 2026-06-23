@@ -49,7 +49,7 @@ These were settled during brainstorming and are fixed for this work:
 - Email is sent via `vibes.diy/api/queue/intern/send-email.ts`; Discord embeds
   via `vibes.diy/api/queue/intern/post-to-discord.ts`.
 - The Apps table holds one row per release `(ownerHandle, appSlug, releaseSeq,
-  fsId, meta, mode, ...)`, so a single vibe accrues multiple `fsId`s over its
+fsId, meta, mode, ...)`, so a single vibe accrues multiple `fsId`s over its
   release history.
 
 ## Architecture
@@ -59,7 +59,7 @@ These were settled during brainstorming and are fixed for this work:
 - Add `'vibe-remixed'` to the `EvtUserNotification.notificationType` union.
 - Extend `EvtUserNotification` with two optional fields: `remixerHandle?` and
   `remixAppSlug?`.
-- **Field semantics for `vibe-remixed`:** the recipient is the *source* owner, so
+- **Field semantics for `vibe-remixed`:** the recipient is the _source_ owner, so
   `ownerHandle`/`appSlug` identify **which of the owner's vibes** was remixed,
   and `remixerHandle`/`remixAppSlug` identify the remixer and their published
   remix. This lets the UI render "@{remixerHandle} remixed your vibe {appSlug}"
@@ -98,7 +98,7 @@ Extend the existing production-publish branch in
 New owner-only public service handler.
 
 - **Request** (new type in `vibes.diy/api/types/app.ts`): `{ type:
-  "vibes.diy.req-list-remixes", auth, ownerHandle, appSlug }`.
+"vibes.diy.req-list-remixes", auth, ownerHandle, appSlug }`.
 - **Auth/authorization:** caller must be the owner of `(ownerHandle, appSlug)`.
 - **Query:**
   1. Gather every `fsId` the vibe has had:
@@ -110,7 +110,7 @@ New owner-only public service handler.
      dialects must work, matching the dual schema in `vibes.diy/api/sql/`.)
   3. For each match, resolve the remixer's current display `ownerHandle`.
 - **Response** (new type): `{ type: "vibes.diy.res-list-remixes", remixes:
-  [{ remixerHandle, remixAppSlug, created }] }`, newest first.
+[{ remixerHandle, remixAppSlug, created }] }`, newest first.
 - This is **query-derived**, so it is durable regardless of whether the owner was
   online when the notification fired.
 
