@@ -6,7 +6,7 @@ function statusFetcher(statuses: number[]): (url: string) => Promise<{ status: n
   return async () => ({ status: statuses[Math.min(i++, statuses.length - 1)] });
 }
 
-const noSleep = async () => {};
+const noSleep = (): Promise<void> => Promise.resolve();
 
 describe("waitForScreenshot", () => {
   it("resolves ready once a 200 is seen", async () => {

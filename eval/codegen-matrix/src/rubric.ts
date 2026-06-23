@@ -13,8 +13,9 @@ function app(files: Readonly<Record<string, string>>): string {
   return files["App.jsx"] ?? files["/App.jsx"] ?? "";
 }
 
-// Emoji detection: pictographic ranges + variation selectors. Plain SVG/text passes.
-const EMOJI_RE = /[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{FE0F}\u{1F1E6}-\u{1F1FF}]/u;
+// Emoji detection via the Unicode Extended_Pictographic property — covers the
+// pictographic emoji the no-emoji rule cares about. Plain SVG/text passes.
+const EMOJI_RE = /\p{Extended_Pictographic}/u;
 
 // A raw bracket color (bg-[#hex] / text-[#hex] / border-[#hex]) appearing inside a
 // className attribute. The system prompt requires these to go through a classNames object.
