@@ -21,7 +21,7 @@ describe("parseMatrixConfig", () => {
   });
 
   it("rejects a missing runtimeHostBase", () => {
-    const { runtimeHostBase, ...rest } = goodMatrix;
+    const { runtimeHostBase: _omit, ...rest } = goodMatrix;
     expect(() => parseMatrixConfig(JSON.stringify(rest))).toThrow(/runtimeHostBase/i);
   });
 
