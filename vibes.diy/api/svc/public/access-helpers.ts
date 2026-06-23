@@ -64,3 +64,22 @@ export async function isPublicReadable(vctx: VibesApiSQLCtx, appSlug: string, ow
   if (rSettings.isErr()) return false;
   return rSettings.Ok().settings.entry.publicAccess?.enable === true;
 }
+
+// "World-readable" = any visitor can gain read access without owner action.
+// That's broader than `isPublicReadable` (anonymous publicAccess): it also
+// covers auto-accept request apps (`enableRequest.enable` + `autoAcceptRole`),
+// where any signed-in user self-approves into membership. Both are "anyone can
+// use" vibes for the purposes of the member-list visibility gate (#2550). Kept
+// in sync with `deriveIsWorldReadable` in get-vibe-route-hints.ts.
+export async function isWorldReadable(vctx: VibesApiSQLCtx, appSlug: string, ownerHandle: string): Promise<boolean> {
+  const rSettings = await ensureAppSettings(vctx, {
+    type: "vibes.diy.req-ensure-app-settings",
+    appSlug,
+    ownerHandle,
+    env: [],
+  });
+  if (rSettings.isErr()) return false;
+  const entry = rSettings.Ok().settings.entry;
+  if (entry.publicAccess?.enable === true) return true;
+  return entry.enableRequest?.enable === true && entry.enableRequest.autoAcceptRole !== undefined;
+}

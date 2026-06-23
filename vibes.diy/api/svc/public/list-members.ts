@@ -18,7 +18,7 @@ import { type } from "arktype";
 import { unwrapMsgBase } from "../unwrap-msg-base.js";
 import { VibesApiSQLCtx } from "../types.js";
 import { optAuth } from "../check-auth.js";
-import { checkDocAccess, canRead, isPublicReadable, type DocAccessLevel } from "./access-helpers.js";
+import { checkDocAccess, canRead, isWorldReadable, type DocAccessLevel } from "./access-helpers.js";
 import { deriveDisplayName } from "./derive-display-name.js";
 
 function safeDisplay(foreignInfo: unknown, fallbackEmail?: string): string {
@@ -45,15 +45,17 @@ export const listMembersEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqList
       const req = ctx.validated.payload;
       const vctx = ctx.ctx.getOrThrow<VibesApiSQLCtx>("vibesApiCtx");
 
-      // Read-access gate. On public vibes (anyone can use), the member list
-      // would otherwise leak collaborator names to the whole world, so only the
-      // owner may see it. On restricted vibes any reader can list members — the
-      // members are a known, trusted group (see VibesDIY/vibes.diy#2550).
+      // Read-access gate. On world-readable vibes (anyone can use — anonymous
+      // publicAccess OR auto-accept requests where any signed-in user
+      // self-approves) the member list would otherwise leak collaborator names
+      // broadly, so only the owner may see it. On restricted vibes any reader
+      // can list members — the members are a known, trusted group
+      // (see VibesDIY/vibes.diy#2550).
       const { access, isOwner } = req._auth
         ? await checkDocAccess(vctx, req._auth.verifiedAuth.claims.userId, req.appSlug, req.ownerHandle)
         : { access: "none" as DocAccessLevel, isOwner: false };
-      const pub = await isPublicReadable(vctx, req.appSlug, req.ownerHandle);
-      const allowed = pub ? isOwner : canRead(access);
+      const worldReadable = await isWorldReadable(vctx, req.appSlug, req.ownerHandle);
+      const allowed = worldReadable ? isOwner : canRead(access);
       if (!allowed) {
         await ctx.send.send(ctx, {
           type: "vibes.diy.res-error",

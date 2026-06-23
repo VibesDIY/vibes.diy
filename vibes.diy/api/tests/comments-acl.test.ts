@@ -179,7 +179,9 @@ describe("comments ACL: lazy default (members can write/delete)", { timeout: 200
   });
 
   it("listMembers returns approved members with display name + role only", async () => {
-    const res = await ctx.viewerApi.listMembers({ appSlug: ctx.appSlug, ownerHandle: ctx.ownerHandle });
+    // This vibe is auto-accept (world-readable), so only the owner may list
+    // members — see the #2550 visibility gate below.
+    const res = await ctx.ownerApi.listMembers({ appSlug: ctx.appSlug, ownerHandle: ctx.ownerHandle });
     expect(res.isOk()).toBe(true);
     const members = res.Ok().members;
     expect(members.length).toBeGreaterThan(0);
@@ -285,7 +287,7 @@ describe("comments ACL: 'Only collaborators' (editors-only write/delete)", { tim
   });
 });
 
-describe("listMembers visibility on public vs restricted vibes (#2550)", { timeout: 20000 }, () => {
+describe("listMembers visibility on world-readable vs restricted vibes (#2550)", { timeout: 20000 }, () => {
   let ctx: Awaited<ReturnType<typeof setupApp>>;
 
   beforeAll(async () => {
@@ -293,14 +295,40 @@ describe("listMembers visibility on public vs restricted vibes (#2550)", { timeo
   });
 
   it("restricted vibe: a non-owner member can list members", async () => {
+    // Flip off auto-accept so the vibe is no longer "anyone can use": requests
+    // still open, but each one needs manual owner approval. Existing member
+    // grants persist, so the viewer remains a member and may see the list.
+    await ctx.ownerApi.ensureAppSettings({
+      appSlug: ctx.appSlug,
+      ownerHandle: ctx.ownerHandle,
+      request: { enable: true },
+    });
+
     const res = await ctx.viewerApi.listMembers({ appSlug: ctx.appSlug, ownerHandle: ctx.ownerHandle });
     expect(res.isOk()).toBe(true);
     expect(res.Ok().members.length).toBeGreaterThan(0);
   });
 
-  it("public vibe: only the owner can list members", async () => {
-    // Flip the vibe to public (anyone can use). Now the member list would leak
-    // collaborator names to the world, so only the owner may see it.
+  it("auto-accept vibe (world-readable): only the owner can list members", async () => {
+    // Auto-accept = any signed-in user self-approves into membership, so the
+    // member list would leak broadly. Only the owner may see it.
+    await ctx.ownerApi.ensureAppSettings({
+      appSlug: ctx.appSlug,
+      ownerHandle: ctx.ownerHandle,
+      request: { enable: true, autoAcceptRole: "viewer" },
+    });
+
+    const ownerRes = await ctx.ownerApi.listMembers({ appSlug: ctx.appSlug, ownerHandle: ctx.ownerHandle });
+    expect(ownerRes.isOk()).toBe(true);
+
+    const viewerRes = await ctx.viewerApi.listMembers({ appSlug: ctx.appSlug, ownerHandle: ctx.ownerHandle });
+    expect(viewerRes.isErr()).toBe(true);
+
+    const otherRes = await ctx.otherApi.listMembers({ appSlug: ctx.appSlug, ownerHandle: ctx.ownerHandle });
+    expect(otherRes.isErr()).toBe(true);
+  });
+
+  it("publicAccess vibe (world-readable): only the owner can list members", async () => {
     await ctx.ownerApi.ensureAppSettings({
       appSlug: ctx.appSlug,
       ownerHandle: ctx.ownerHandle,
@@ -310,7 +338,7 @@ describe("listMembers visibility on public vs restricted vibes (#2550)", { timeo
     const ownerRes = await ctx.ownerApi.listMembers({ appSlug: ctx.appSlug, ownerHandle: ctx.ownerHandle });
     expect(ownerRes.isOk()).toBe(true);
 
-    // A member who is not the owner is now denied.
+    // A member who is not the owner is denied.
     const viewerRes = await ctx.viewerApi.listMembers({ appSlug: ctx.appSlug, ownerHandle: ctx.ownerHandle });
     expect(viewerRes.isErr()).toBe(true);
 
