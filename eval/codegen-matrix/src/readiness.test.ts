@@ -13,7 +13,10 @@ describe("waitForScreenshot", () => {
     const r = await waitForScreenshot("http://x/screenshot.jpg", {
       timeoutMs: 10_000,
       intervalMs: 1,
-      now: (() => { let t = 0; return () => (t += 1000); })(),
+      now: (() => {
+        let t = 0;
+        return () => (t += 1000);
+      })(),
       fetchStatus: statusFetcher([404, 404, 200]),
       sleep: noSleep,
     });
@@ -25,7 +28,10 @@ describe("waitForScreenshot", () => {
     const r = await waitForScreenshot("http://x/screenshot.jpg", {
       timeoutMs: 3000,
       intervalMs: 1,
-      now: (() => { let t = 0; return () => (t += 1000); })(),
+      now: (() => {
+        let t = 0;
+        return () => (t += 1000);
+      })(),
       fetchStatus: statusFetcher([404]),
       sleep: noSleep,
     });
