@@ -68,7 +68,7 @@ vi.mock("~/vibes.diy/app/components/PillPortal.js", async (importOriginal) => ({
 import HomePage from "~/vibes.diy/app/components/HomePage.js";
 import { quickSuggestions } from "~/vibes.diy/app/data/quick-suggestions-data.js";
 
-const PLACEHOLDER = "Describe your app — get a live link to share.";
+const PLACEHOLDER = "Describe your app, share the link.";
 
 async function renderHomePage() {
   render(<HomePage />);
