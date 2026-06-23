@@ -244,48 +244,82 @@ channels, owner grants roles, others wait to be let in (the "Crew Board" example
 case. It should be the _advanced_ case.
 
 **The default a vibe should ship with: any signed-in user is a first-class
-participant in their own data — no role grant required.** A random passerby can
-**create** objects and **edit their own** objects out of the box. At minimum
-those objects are **private to their author** (visible only to them); depending
-on the vibe, the generator may instead make them **public-read** (a shared list,
-a public wall). The owner is just another author. Roles, owner-managed channels,
-and `ownerRoles` seeding are reserved for vibes that genuinely need shared
-admin/moderation surfaces — not a prerequisite for basic interaction.
+participant in its data — no role grant required.** A random passerby can
+**create** objects and **edit their own** objects out of the box. The owner is
+just another author. Roles, owner-managed channels, and `ownerRoles` seeding are
+reserved for vibes that genuinely need shared admin/moderation surfaces — not a
+prerequisite for basic interaction.
 
-This is the **author-owned** pattern, and it needs no owner, no roles, no seed:
+**Public vs private is NOT an access.js (or generator) decision.** Whether the
+vibe is open to anyone or restricted to an approved list is a **platform ACL
+envelope** the owner toggles in sharing settings — entirely outside the vibe
+code:
+
+- The owner flips the vibe between public and private (`publicAccess.enable`;
+  `enableRequest` + `autoAcceptRole`; see `isPublicReadable` / `isWorldReadable`
+  in `access-helpers.ts`).
+- When **private**, the owner approves _who_ may enter — the allow-list of
+  editor/viewer grants minted via invites/requests (the sharing tab,
+  `EmailInvitationsSection` / `RequestsSection`).
+- That envelope is enforced **before** `access.js` ever runs: the outer ACL gate
+  (`aclAllows(acl, "write", access)`, `app-documents-write-eventos.ts:176`, and
+  the read-side `canRead`) decides whether a visitor reaches the access function
+  at all.
+
+So `access.js` is **always written for the accessible-to-anyone case.** Its role
+and channel dynamics are correct whether the vibe runs open or wrapped in a
+private envelope: if public, everyone reaches the function and author-owned
+routing gives each person their own objects; if private, only the owner-approved
+set reaches it, and the _same_ routing is correct for that smaller audience. The
+generator never branches on public/private — it can't see the envelope and
+doesn't need to.
+
+This is the **author-owned** pattern, and it needs no owner, no roles, no seed,
+and no awareness of the envelope:
 
 ```js
 export default function (doc, oldDoc, user, ctx) {
   if (!user) throw { forbidden: "sign in to create" };
-  // Author-owned: anyone signed in creates; only the author edits their own.
-  // Check oldDoc on updates so no one can re-author or overwrite another's doc.
+  // Author-owned: anyone who reaches this fn creates; only the author edits
+  // their own. Check oldDoc on updates so no one can re-author or overwrite
+  // someone else's doc.
   const author = oldDoc ? oldDoc.authorHandle : doc.authorHandle;
   if (author !== user.userHandle) throw { forbidden: "not your object" };
 
-  // Default visibility — private to the author:
-  return { channels: [`u:${user.userHandle}`], grant: { users: { [user.userHandle]: [`u:${user.userHandle}`] } } };
-
-  // …or, when the vibe is inherently shared, public-read instead:
-  // return { channels: ["all"], grant: { public: ["all"],
-  //          users: { [user.userHandle]: ["all"] } } };
+  // Written for the open case: route the doc into the shared channel. The
+  // public/private *audience* is the owner's ACL envelope, not this code.
+  return {
+    channels: ["all"],
+    grant: { public: ["all"], users: { [user.userHandle]: ["all"] } },
+  };
 }
 ```
 
-Note what is **absent**: no `isOwner`, no `requireRole`, no `ownerRoles`. The
-two seeding mechanisms in this spec are the escalation path, not the baseline.
+Note what is **absent**: no `isOwner`, no `requireRole`, no `ownerRoles`, and no
+public/private branching. The two seeding mechanisms in this spec are the
+escalation path; the ACL envelope is a separate outer layer; the baseline
+`access.js` is just author-owned routing.
+
+(Per-object read scoping — e.g. a journal where each user sees only their own
+entries — is still a legitimate _in-`access.js`_ choice when the app calls for
+it: route to a per-author channel granted only to that author. That is an
+app-semantics axis, distinct from the owner's public/private envelope.)
 
 **Prompt work for this section:**
 
-- Make the author-owned function (private-default, with the public-read variant
-  called out) the **canonical default** the generator reaches for, and the model
-  described first in `use-vibe.md` / `system-prompt.md`.
+- Make the author-owned function (written for the open case) the **canonical
+  default** the generator reaches for, and the model described first in
+  `use-vibe.md` / `system-prompt.md`.
+- Teach explicitly that **public/private and the allow-list are the owner's ACL
+  envelope, not `access.js`** — the generator must not emit visibility toggles or
+  branch on who's allowed in.
 - **Demote** the owner-managed-channels / role-gated examples to an explicitly
   "advanced / shared-admin" framing — keep them, but stop presenting them as the
   default shape.
 - Reinforce the existing "anyone signed-in can post" guidance
   (`system-prompt.md:286,408-410`: do **not** gate open writes on
   `requireAccess`, since `grant.public` is read-only) — author-owned writes route
-  by author + visibility, never behind a membership the owner must grant.
+  by author, never behind a membership the owner must grant.
 
 This is **prompt-only** and lands in phase 1 alongside the `isOwner` prompt
 removal; it changes no runtime code.
@@ -306,8 +340,10 @@ removal; it changes no runtime code.
   field is removed only in phase 3, after migration.
 - Make **author-owned the default permission model** in the prompts (§6): the
   generator's baseline is "any signed-in user creates and edits their own
-  objects" (private-default, public-read variant per vibe); owner/role-gated
-  models are demoted to the explicit advanced case. Prompt-only.
+  objects," written for the open/accessible-to-anyone case. Teach that
+  public/private and the allow-list are the owner's **ACL envelope**, not
+  `access.js`; owner/role-gated models are demoted to the explicit advanced case.
+  Prompt-only.
 - Tests: seed appears in `grantState`; `requireRole("owner")` passes for owner;
   owner-write works with **no** `isOwner` in the fn; multi-handle owner behaves
   as "not a member" when acting under a non-owner handle.
