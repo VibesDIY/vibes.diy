@@ -96,6 +96,6 @@ A seed is a single bullet drawn from the code this PR touched. "Tech stack" = th
 
 - **One concrete topic with a one-line hook**, not a menu. Tie it to what actually shipped: "How vibes-diy does browserless device auth with a Fireproof keybag" beats "a post about auth."
 - Use the bullet format documented in [`notes/blog-seeds/README.md`](../notes/blog-seeds/README.md): the hook, plus a short parenthetical pointing at the PR and the trade-off / "why" / gotcha worth expanding on.
-- Append your seed to the running list; never rewrite or delete other people's seeds.
+- Insert your seed under the `<!-- newest at the top -->` marker so the list stays newest-first; never rewrite or delete other people's seeds.
 
 When the team decides to promote a seed into a full post, write it as markdown in `notes/` (e.g. `notes/blog-<slug>.md`), focused on the real engineering decisions in the diff — the trade-offs, the "why", the gotchas — not marketing, and land it via a normal PR (never push directly to `main`).

@@ -11,16 +11,17 @@ mines this list periodically and promotes the good ones into full posts under
 
 ## How to add a seed
 
-- Append one bullet to the list below. Don't rewrite or delete other people's seeds.
+- Insert your bullet directly under the `<!-- newest at the top -->` marker, so
+  the list stays newest-first. Don't rewrite or delete other people's seeds.
 - Lead with a **concrete hook**, not a topic label: "How vibes-diy does
   browserless device auth with a Fireproof keybag" beats "a post about auth."
-- Add a short parenthetical pointing at the PR (number or branch) and the
-  trade-off / "why" / gotcha worth expanding on.
+- Add a short parenthetical pointing at the PR (its number, or the branch name
+  if the PR isn't open yet) and the trade-off / "why" / gotcha worth expanding on.
 
 Format:
 
 ```
-- <one-line hook> — (#<PR>, <the angle / why it's interesting>)
+- <one-line hook> — (#<PR> | `<branch>`, <the angle / why it's interesting>)
 ```
 
 ## Seeds
