@@ -233,18 +233,8 @@ export default function HomePage() {
               </div>
             </div>
 
-            {/* "Fun, done, and alive." — brand tagline directly beneath the prompt input */}
-            <div
-              style={{
-                textAlign: "center",
-                fontFamily: "Alte Haas Grotesk, Inter, sans-serif",
-                fontWeight: 600,
-                fontSize: mobile ? "16px" : "22px",
-                color: isDarkMode ? "var(--color-dark-primary)" : "var(--vibes-near-black)",
-              }}
-            >
-              Fun, done, and alive.
-            </div>
+            {/* Brand line beneath the prompt input — matches the hero ("Instant apps") typography */}
+            <div style={getTitle(mobile, isDarkMode)}>Vibes are fun, done, and alive.</div>
 
             {/* Carousel */}
             <div style={getCarouselWrapperStyle(mobile)}>
