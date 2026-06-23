@@ -521,6 +521,30 @@ export default function App() {
 
 The pattern: `useVibe().can` gates every write surface — including owner-only management, which the access function enforces via `if (!user.isOwner) throw` so `can.create({ type: "roleGrant", … })` is false for non-owners. `access.hasChannel()` reflects display-only membership, and `isOwner` is a display hint only, never the write gate. The access function is the server-side authority — `useVibe().can` is how the UI reflects its decisions for writes.
 
+**Owner-management panels (appoint/revoke moderators, grant/revoke roles) gate on `can.*`, not `isOwner`.** It's tempting to wrap an admin panel in `{isOwner && <ModeratorPanel />}` and have its buttons call `database.put`/`database.del` directly — it works, because the access function still throws "owner only" server-side. But `isOwner` is the same display hint as everywhere else: use it to *show* the panel if you like, then gate each mutating control on the verdict from the doc you'll actually write — appoint on `can.create({ type: "modGrant", role: "moderator", userHandle }).ok`, revoke on `can.delete(grantDoc).ok` — and render `.reason` when denied. That keeps the enabled state and the denial message coming from `access.js` (which may later allow more than just the owner — a delegated admin role, say), instead of drifting from it.
+
+```jsx
+// Don't: visibility AND the write both keyed off isOwner, write is ungated
+{isOwner && (
+  <ModeratorPanel>
+    <button onClick={() => database.put({ type: "modGrant", role: "moderator", userHandle })}>Appoint</button>
+    <button onClick={() => database.del(grantDoc._id)}>Revoke</button>
+  </ModeratorPanel>
+)}
+
+// Do: isOwner may show the panel, but can.* gates each write and supplies the reason
+{isOwner && (
+  <ModeratorPanel>
+    {can.create({ type: "modGrant", role: "moderator", userHandle }).ok && (
+      <button onClick={() => database.put({ type: "modGrant", role: "moderator", userHandle })}>Appoint</button>
+    )}
+    {can.delete(grantDoc).ok && (
+      <button onClick={() => database.del(grantDoc._id)}>Revoke</button>
+    )}
+  </ModeratorPanel>
+)}
+```
+
 ### Example: Channel board with open channels (any member posts)
 
 Channels everyone can read, and any signed-in user can post to. The channel doc is `grant.public` (read for everyone) and the post rule checks only the author — **no `ctx.requireAccess`**, because public is read-only and would block every non-owner. (For a members-only board where the owner appoints who can post, grant a poster role and `requireAccess` it, as in the announcements example above.) The UI uses `access.hasChannel()` to filter which channels to display, and `useVibe().can` to gate writes.
