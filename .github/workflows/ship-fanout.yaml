@@ -71,6 +71,14 @@ jobs:
           fi
           echo "Fanning out ship@$VER at $SHIP_SHA"
 
+          # Only ever fan out a commit that's already on main. A prod/cli/npm
+          # deploy must come from merged code, never an arbitrary off-main ref.
+          git fetch --no-tags --quiet origin main
+          if ! git merge-base --is-ancestor "$SHIP_SHA" FETCH_HEAD; then
+            echo "::error::ship@$VER target $SHIP_SHA is not on main (not an ancestor of origin/main). Only merged commits can be shipped — re-tag a commit that's on main."
+            exit 1
+          fi
+
           CHILD_TAGS=("vibes-diy@p$VER" "vibes-diy@c$VER" "pkg@p$VER")
 
           # Refuse to move existing tags — deploy tags are immutable.
