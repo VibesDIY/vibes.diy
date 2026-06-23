@@ -1,31 +1,34 @@
 # Blog post seeds
 
-A running list of lightweight, one-line blog post ideas captured as work ships.
+Lightweight, one-line blog post ideas captured as work ships — **one file per seed**.
 
-Every PR drops **one** seed here on its branch — a single bullet drawn from the
+Every PR drops **one** seed here on its branch: a new markdown file drawn from the
 code that PR touched (see
 [`agents/pr-lifecycle.md` § Every PR: drop a blog post seed](../../agents/pr-lifecycle.md#every-pr-drop-a-blog-post-seed)).
 Seeds are captures, not commitments: nobody has to write the post. The team
-mines this list periodically and promotes the good ones into full posts under
-`notes/blog-<slug>.md`.
+mines this directory periodically and promotes the good ones into full posts
+under `notes/blog-<slug>.md`.
+
+One file per seed means no shared list to edit and no merge conflicts between
+PRs — you only ever add your own file, never touch anyone else's.
 
 ## How to add a seed
 
-- Insert your bullet directly under the `<!-- newest at the top -->` marker, so
-  the list stays newest-first. Don't rewrite or delete other people's seeds.
+- Create a new file `notes/blog-seeds/<YYYY-MM-DD>-<slug>.md` (date keeps the
+  directory roughly chronological; `<slug>` is a few words from the hook).
+- Don't edit this README or anyone else's seed file — just add yours.
 - Lead with a **concrete hook**, not a topic label: "How vibes-diy does
   browserless device auth with a Fireproof keybag" beats "a post about auth."
-- Add a short parenthetical pointing at the PR (its number, or the branch name
-  if the PR isn't open yet) and the trade-off / "why" / gotcha worth expanding on.
+- Point at the source PR (its number, or the branch name if the PR isn't open
+  yet) and name the trade-off / "why" / gotcha worth expanding on.
 
-Format:
+Each seed file is short — a hook plus a sentence or two:
 
+```markdown
+# <one-line hook>
+
+Source: #<PR> (or `<branch>` if not open yet)
+
+<The angle / why it's interesting — the trade-off, the "why", or the gotcha
+worth expanding into a full post.>
 ```
-- <one-line hook> — (#<PR> | `<branch>`, <the angle / why it's interesting>)
-```
-
-## Seeds
-
-<!-- newest at the top -->
-
-- How we turned "pitch a blog post after each PR" into an always-on seed list — (`claude/pr-blog-post-seeds`, capturing ideas as bullets in a directory beats asking-and-waiting; promotion stays a separate human decision)
