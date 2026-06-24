@@ -94,6 +94,19 @@ describe("seq allocation concurrency (issue #2506)", { timeout: 20000 }, () => {
   it("docLockKey is identical for the same doc tuple (put/delete share the lock)", () => {
     expect(docLockKey("o", "a", "d", "x")).toBe(docLockKey("o", "a", "d", "x"));
     expect(docLockKey("o", "a", "d", "x")).not.toBe(docLockKey("o", "a", "d", "y"));
+    // Distinct tuples must never collide on one lock even at component boundaries.
+    expect(docLockKey("ab", "c", "d", "x")).not.toBe(docLockKey("a", "bc", "d", "x"));
+  });
+
+  it("docLockKey never emits a raw NUL byte — Postgres rejects 0x00 in a text param (#2557)", () => {
+    // The key is bound into `hashtextextended($1, 0)`; a 0x00 byte makes pg throw
+    // SQLSTATE 22021 ("invalid byte sequence for encoding UTF8: 0x00"), which made
+    // every pg putDoc/deleteDoc fail. The encoded key must stay NUL-free even when
+    // an identifier itself contains a NUL.
+    const NUL = String.fromCharCode(0);
+    expect(docLockKey("o", "a", "d", "x")).not.toContain(NUL);
+    expect(docLockKey("bestboy", "atari-tetris", "db", "doc-id")).not.toContain(NUL);
+    expect(docLockKey("o", "a", "d", `has${NUL}nul`)).not.toContain(NUL);
   });
 
   it("exposes a typed SeqConflictError carrying the current head seq", () => {
