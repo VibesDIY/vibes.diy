@@ -1,6 +1,7 @@
 import type { AccessMatrix } from "./config.js";
 
-export type Capability = "app" | "chat" | "img" | "img-edit";
+// Canonical catalog model-usage names per #2619 (chat->codegen, app->runtime).
+export type Capability = "codegen" | "runtime" | "img" | "img-edit";
 export interface CatalogModel {
   readonly id: string;
   readonly preSelected?: readonly string[];
@@ -16,7 +17,7 @@ export function pickPreSelected(models: readonly CatalogModel[], cap: Capability
 export interface ResolveDeps {
   // Resolves what the TARGET env + handle actually defaults codegen to.
   // Real impl: query the models/defaults endpoint for `handle` (which applies the
-  // user/app overrides), else fetch `${apiBase}/.../models.json` and pickPreSelected(_, "app").
+  // user/app overrides), else fetch `${apiBase}/.../models.json` and pickPreSelected(_, "codegen").
   readonly fetchDefault: (matrix: AccessMatrix) => Promise<string>;
 }
 

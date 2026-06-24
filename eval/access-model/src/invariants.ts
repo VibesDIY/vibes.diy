@@ -35,10 +35,16 @@ const RE = {
   grantUsers: /grant\s*:\s*\{[^}]*\busers\b/s,
   grantPublic: /grant\s*:\s*\{[^}]*\bpublic\b/s,
   requireAccess: /requireAccess\(/,
-  // oldDoc author comparison (immutable author on update). Keep the gap small so we only
-  // match an oldDoc.<author-ish> dereference, not a far-away unrelated `.author`.
-  oldDocAuthor: /oldDoc\s*(&&|\?\.|\.)\s*[^;{}]*?\.(authorHandle|author|userHandle|createdBy|owner)\b/,
-  authorCreate: /\bdoc\.(authorHandle|author|userHandle)\b[^;{}]*?(!==|===)\s*user\.(userHandle|handle)/,
+  // oldDoc author comparison (immutable author on update). Require an adjacent
+  // comparison operator (either side) in the same statement so a read-only mention
+  // like `const prev = oldDoc.author` is NOT counted as an immutability check
+  // (Codex/Charlie review #2621).
+  oldDocAuthor:
+    /(oldDoc\b[^;{}]*\.(?:authorHandle|author|userHandle|createdBy|owner)\b[^;{}]*(?:!==|===)|(?:!==|===)[^;{}]*oldDoc\b[^;{}]*\.(?:authorHandle|author|userHandle|createdBy|owner)\b)/,
+  // Author-on-create check, order-insensitive: `doc.author === user.handle` OR the
+  // reversed `user.handle === doc.author` (Codex/Charlie review #2621).
+  authorCreate:
+    /(\bdoc\.(?:authorHandle|author|userHandle)\b[^;{}]*?(?:!==|===)\s*user\.(?:userHandle|handle)|\buser\.(?:userHandle|handle)\b[^;{}]*?(?:!==|===)\s*doc\.(?:authorHandle|author|userHandle))/,
   shareBranch: /\b(type\s*===\s*["'`](share|invite|member|join)["'`]|doc\.(invitee|inviteHandle|memberHandle))\b/,
   joinBranch: /\b(type\s*===\s*["'`](join|request)["'`]|requestToJoin|joinRequest)\b/,
   // A `members: { ... }` map (role/channel -> users) — the membership construct.

@@ -71,5 +71,13 @@ export function gradeRow(input: RowGradeInput): RowGrade {
     reasons.push(...input.files.reasons);
     return { grade: "SOFT", modelOk, reasons }; // correct model, app won't render -> SOFT, not PASS
   }
+
+  // A multiplayer row needs the second-visitor judge to confirm a clean PASS. If
+  // the judge was required but unavailable (null), we cannot confirm — so SOFT, not
+  // PASS, to keep judge outages from inflating the metric (Codex/Charlie review #2621).
+  if (multiplayer && input.judge === null) {
+    reasons.push("judge unavailable — second-visitor access unconfirmed");
+    return { grade: "SOFT", modelOk, reasons };
+  }
   return { grade: "PASS", modelOk, reasons };
 }

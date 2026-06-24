@@ -79,4 +79,25 @@ describe("gradeRow", () => {
     });
     expect(g.grade).toBe("FAIL");
   });
+  it("SOFT (not PASS) when a multiplayer model is statically clean but the judge was unavailable", () => {
+    // judge === null on a multiplayer dim means the second-visitor check could not run;
+    // must not inflate to a clean PASS (Codex/Charlie review #2621).
+    const g = gradeRow({
+      expect: "per-visitor",
+      analysis: clean({ perVisitorClean: true }),
+      files: { twoFile: true, renderable: true, reasons: [] },
+      judge: null,
+    });
+    expect(g.grade).toBe("SOFT");
+    expect(g.reasons.some((r) => r.includes("judge unavailable"))).toBe(true);
+  });
+  it("PASS for owner-published (single-player) with no judge — judge not required", () => {
+    const g = gradeRow({
+      expect: "owner-published",
+      analysis: clean({ ownerPublished: true, publicRead: true }),
+      files: { twoFile: true, renderable: true, reasons: [] },
+      judge: null,
+    });
+    expect(g.grade).toBe("PASS");
+  });
 });
