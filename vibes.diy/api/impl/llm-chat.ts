@@ -10,6 +10,7 @@ import {
   ResultVibesDiy,
   VibesDiyError,
   W3CWebSocketEvent,
+  canonicalModelUsage,
   isPromptLLMStyle,
   isResOpenChat,
   isResPromptChatSection,
@@ -248,6 +249,12 @@ export class LLMChatImpl implements LLMChat {
     if (!isPromptLLMStyle(mode)) {
       return Result.Err(mkResError(`Chat mode ${this.res.mode} does not support prompting`, "unsupported-chat-mode"));
     }
+    // `mode` is echoed back by openChat and may be a legacy (`chat`/`app`) or
+    // canonical (`codegen`/`runtime`) token (#2618). Gate flag-forwarding on the
+    // canonical form so a server that has flipped its echo to canonical doesn't
+    // silently drop dry-run/focus. We still SEND the original `mode` verbatim so
+    // an old server keeps recognizing it.
+    const canonicalMode = canonicalModelUsage(mode);
     const res = await this.api.request<ReqType<ReqPromptLLMChatSection>, ResPromptChatSection>(
       {
         type: "vibes.diy.req-prompt-chat-section",
@@ -255,19 +262,21 @@ export class LLMChatImpl implements LLMChat {
         chatId: this.res.chatId,
         outerTid: this.tid, //leaking but necessary streaming
         prompt: msg,
-        ...(mode === "img" && opts?.inputImageBase64 ? { inputImageBase64: opts.inputImageBase64 } : {}),
-        // dryRun and focusPath are chat-mode-only flags (per reqCreationPromptChatSection
-        // type). Forward them only when mode === "chat" — for app/img the
-        // server type won't carry them.
+        ...(canonicalMode === "img" && opts?.inputImageBase64 ? { inputImageBase64: opts.inputImageBase64 } : {}),
+        // dryRun and focusPath are codegen-mode-only flags (per
+        // reqCreationPromptChatSection type). Forward them only for codegen — for
+        // runtime/img the server type won't carry them.
         // On dry-run we also forward the resolved owner/app inline so the server
         // can synthesize its chat context without a chatContexts read — required
         // when openChat ran persistence-free and never inserted a row (#2364).
-        ...(mode === "chat" && opts?.dryRun === true
+        ...(canonicalMode === "codegen" && opts?.dryRun === true
           ? { dryRun: true, ownerHandle: this.res.ownerHandle, appSlug: this.res.appSlug }
           : {}),
-        ...(mode === "chat" && opts?.dryRun === true && opts?.dryRunPreAllocate === true ? { dryRunPreAllocate: true } : {}),
-        ...(mode === "chat" && opts?.focusPath !== undefined ? { focusPath: opts.focusPath } : {}),
-        ...(mode === "chat" && opts?.selected !== undefined ? { selected: opts.selected } : {}),
+        ...(canonicalMode === "codegen" && opts?.dryRun === true && opts?.dryRunPreAllocate === true
+          ? { dryRunPreAllocate: true }
+          : {}),
+        ...(canonicalMode === "codegen" && opts?.focusPath !== undefined ? { focusPath: opts.focusPath } : {}),
+        ...(canonicalMode === "codegen" && opts?.selected !== undefined ? { selected: opts.selected } : {}),
       },
       {
         resMatch: isResPromptChatSection,

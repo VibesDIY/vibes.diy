@@ -3,39 +3,45 @@ import { BlockMsgs, CoercedDate, LLMRequest } from "@vibes.diy/call-ai-v2";
 import { dashAuthType, vibeFile } from "./common.js";
 import { PromptMsgs } from "./prompt.js";
 
-// Model-usage / model-capability vocabulary (#2608).
+// Model-usage / model-capability vocabulary (#2608, wire follow-up #2618).
 //
 // Canonical names — `codegen` (building/editing a vibe) and `runtime` (a
 // deployed vibe's own AI calls) — replace the pre-#2608 names `chat` and `app`,
-// which read as the opposite of what they meant. This rename covers the model
-// *catalog* tags (`ModelCapability`: preSelected/supports/fallbackFor) and the
-// persisted model-usage *settings* (`ActiveModelSetting.usage`,
-// `userSettingModelDefaults`). The on-the-wire session `mode`
-// (`PromptLLMStyle` below + the req discriminators) is intentionally left on
-// the legacy `chat`/`app`/`img` tokens for now and migrated separately — see
-// the wire-rename follow-up issue — because the openChat response echoes the
-// caller's `mode` back and old CLI builds gate dry-run/focus flags on
-// `mode === "chat"`.
+// which read as the opposite of what they meant. #2608 renamed the model
+// *catalog* tags (`ModelCapability`) and the persisted *settings*
+// (`ActiveModelSetting.usage`, `userSettingModelDefaults`).
 //
-// Legacy tokens stay ACCEPTED wherever they may already be stored (e.g. a
+// This is the EXPAND phase of the on-the-wire session `mode` migration (#2618):
+// the wire now ACCEPTS both the legacy `chat`/`app` and canonical
+// `codegen`/`runtime` tokens, and every server consumer normalizes via
+// `canonicalModelUsage()` before branching — but nothing changes what it
+// EMITS yet. Producers (CLI, sandbox) still send legacy, and `openChat` still
+// echoes the caller's `mode` back verbatim, so an old CLI that gates
+// dry-run/focus flags on `mode === "chat"` is unaffected. The client SDK
+// (`llm-chat.ts`) also normalizes the echoed `mode` before gating, so once a
+// client carrying this change is the dominant build, a later CONTRACT step can
+// safely flip the echo + producers to canonical without breaking anyone.
+//
+// Legacy tokens also stay ACCEPTED wherever they may already be stored (e.g. a
 // persisted `AIParams.model` embeds a catalog `Model` with `supports` tags
 // written before this rename), so old rows keep parsing; we only ever WRITE
-// canonical names. Where a wire `mode` is compared against a now-canonical
-// catalog tag, bridge it through `canonicalModelMode()`.
+// canonical names there.
 export const LEGACY_CAPABILITY_ALIASES = { chat: "codegen", app: "runtime" } as const;
 
-// Wire session mode — still on the legacy tokens (see note above).
-export const PromptLLMStyle = type("'chat' | 'app' | 'img'");
+// Wire session mode — accepts both legacy and canonical tokens (expand phase).
+export const PromptLLMStyle = type("'codegen' | 'runtime' | 'img' | 'chat' | 'app'");
 export type PromptLLMStyle = typeof PromptLLMStyle.infer;
 export function isPromptLLMStyle(obj: unknown): obj is PromptLLMStyle {
   return !(PromptLLMStyle(obj) instanceof type.errors);
 }
 
-// Canonical model-usage names — what catalog/settings logic switches on.
+// Canonical model-usage names — what server logic switches on after normalizing.
 export type CanonicalModelUsage = "codegen" | "runtime" | "img";
 
-// Normalize a mode-or-usage token to its canonical name. Maps the legacy
-// `chat`/`app` aliases and passes canonical names (and `img`) through unchanged.
+// Normalize a wire/stored mode-or-usage token to its canonical name. Maps the
+// legacy `chat`/`app` aliases and passes canonical names (and `img`) through
+// unchanged. Always normalize a wire `mode` through this before branching or
+// comparing it against a canonical catalog/settings token.
 export function canonicalModelUsage<T extends string>(usage: T): CanonicalModelUsage | T {
   return (LEGACY_CAPABILITY_ALIASES as Record<string, CanonicalModelUsage>)[usage] ?? usage;
 }
@@ -137,7 +143,8 @@ export type SlotConfig = typeof slotConfig.infer;
 
 export const reqCreationPromptChatSection = type({
   type: "'vibes.diy.req-prompt-chat-section'",
-  mode: "'chat'",
+  // Codegen mode — accepts canonical `codegen` and legacy `chat` (#2618 expand).
+  mode: "'codegen' | 'chat'",
   auth: dashAuthType,
   chatId: "string",
   outerTid: "string", // this is used to emit events to the current chat session
@@ -173,7 +180,8 @@ export function isReqCreationPromptChatSection(obj: unknown): obj is typeof reqC
 
 export const reqPromptApplicationChatSection = type({
   type: "'vibes.diy.req-prompt-chat-section'",
-  mode: "'app'",
+  // Runtime mode — accepts canonical `runtime` and legacy `app` (#2618 expand).
+  mode: "'runtime' | 'app'",
   auth: dashAuthType,
   chatId: "string",
   outerTid: "string", // this is used to emit events to the current chat session

@@ -1,5 +1,6 @@
 import { EventoHandler, Result, Option, EventoResultType, HandleTriggerCtx, EventoResult } from "@adviser/cement";
 import {
+  canonicalModelUsage,
   MsgBase,
   ReqOpenChat,
   reqOpenChat,
@@ -40,11 +41,13 @@ export const openChat: EventoHandler<W3CWebSocketEvent, MsgBase<ReqOpenChat>, Re
       const req = ctx.validated.payload;
       const vctx = ctx.ctx.getOrThrow<VibesApiSQLCtx>("vibesApiCtx");
       let chatPromise: Promise<Result<{ appSlug: string; ownerHandle: string; chatId: string }>>;
-      switch (req.mode) {
-        case "chat":
+      // Normalize the wire mode (legacy or canonical) before routing; the
+      // response below still echoes the caller's original `req.mode` (#2618).
+      switch (canonicalModelUsage(req.mode)) {
+        case "codegen":
           chatPromise = ensureChatId(vctx, req);
           break;
-        case "app":
+        case "runtime":
         case "img":
           chatPromise = ensureApplicationChatId({ ctx: vctx, req });
           break;
