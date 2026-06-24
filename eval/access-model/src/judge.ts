@@ -1,9 +1,8 @@
 import { callAi, type CallAIOptions } from "call-ai";
 import { isTransientError, retryWithBackoff } from "../../codegen-matrix/src/backoff.js";
 import { readDevVars } from "../../codegen-matrix/src/judge.js";
-import type { Dimension } from "./config.js";
+import type { AccessMatrix, Dimension } from "./config.js";
 import type { JudgeVerdict } from "./grade.js";
-import type { AccessMatrix } from "./config.js";
 
 export interface JudgeDeps {
   readonly call: (args: {

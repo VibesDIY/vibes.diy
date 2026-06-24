@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
-import { buildResults, renderMetricLine } from "./report.js";
+import { buildResults, renderMetricLine, type ScoredRow } from "./report.js";
 
-const scored = [
+const scored: readonly ScoredRow[] = [
   {
     id: "todo",
     expect: "per-visitor",
@@ -12,7 +12,6 @@ const scored = [
     formABroad: false,
     isOwnerWriteGate: false,
     ok: true,
-    reps: [{}],
   },
   {
     id: "habit",
@@ -24,20 +23,19 @@ const scored = [
     formABroad: false,
     isOwnerWriteGate: false,
     ok: true,
-    reps: [{}],
   },
-] as any;
+];
 
 describe("buildResults", () => {
   it("emits rollup with metric + form-A rate and a row per prompt", () => {
     const r = buildResults(scored);
     expect(r.rollup.metric).toBeCloseTo(0.5, 5);
     expect(r.rollup.formAStrictRate).toBeCloseTo(0.5, 5);
-    expect(r.rows.map((x: any) => x.id)).toEqual(["todo", "habit"]);
+    expect(r.rows.map((x) => x.id)).toEqual(["todo", "habit"]);
   });
 
   it("aggregates reps of the same prompt into one row with PASS/SOFT/FAIL counts", () => {
-    const cells = [
+    const cells: readonly ScoredRow[] = [
       {
         id: "todo",
         expect: "per-visitor",
@@ -71,10 +69,11 @@ describe("buildResults", () => {
         isOwnerWriteGate: false,
         ok: true,
       },
-    ] as any;
+    ];
     const r = buildResults(cells);
-    expect(r.rows.length).toBe(1);
-    const row = r.rows[0] as any;
+    expect(r.rows).toHaveLength(1);
+    const row = r.rows[0];
+    if (!row) throw new Error("expected aggregated row");
     expect(row.id).toBe("todo");
     expect(row.pass).toBe(1);
     expect(row.soft_fail).toBe(1);
