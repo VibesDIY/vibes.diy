@@ -51,9 +51,17 @@ export function appReleaseLockKey(userId: string, appSlug: string): string {
   return JSON.stringify(["app-release-seq", userId, appSlug]);
 }
 
-// jsonb binding diverges: pg takes the object, sqlite takes serialized text.
+// jsonb binding: serialize to JSON text on both flavours, casting to ::jsonb on
+// pg. We must NOT interpolate a bare JS value as `sql`${value}`` here, because
+// `fileSystem` and `meta` are ARRAYS and drizzle expands an interpolated array
+// into a parenthesized parameter list — `($1,$2,...)` for a populated array and
+// `()` for an empty one. That `()` produced a pg "syntax error at or near ')'"
+// on every new-app INSERT (an empty `meta` array is the common case). The
+// AppDocuments sibling (`seq-allocation.ts`) never hit this only because its
+// jsonb value (`row.data`) is a single object, never an array. SQLite was
+// unaffected because it already serialized via JSON.stringify. (#2612)
 function jsonParam(flavour: DBFlavour, value: unknown) {
-  return flavour === "pg" ? sql`${value}` : sql`${JSON.stringify(value)}`;
+  return flavour === "pg" ? sql`${JSON.stringify(value)}::jsonb` : sql`${JSON.stringify(value)}`;
 }
 
 // Match the row whose existence makes a new release a duplicate: same
@@ -73,7 +81,7 @@ function existsByFsId(row: AppReleaseRow) {
  * global write lock (sqlite) a duplicate-fsId release can never be appended.
  * When it does insert, `COALESCE(MAX("releaseSeq"),0)+1` allocates the next seq.
  */
-function buildInsertIfAbsent(p: AllocateAppParams) {
+export function buildInsertIfAbsent(p: AllocateAppParams) {
   const { row, flavour } = p;
   return sql`
     INSERT INTO ${TABLE} ("appSlug","userId","userSlug","releaseSeq","fsId","env","fileSystem","meta","mode","created")
