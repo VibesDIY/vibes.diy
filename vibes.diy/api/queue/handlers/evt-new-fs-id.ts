@@ -5,7 +5,7 @@ import { and, desc, eq } from "drizzle-orm/sql/expressions";
 import { QueueCtx } from "../queue-ctx.js";
 import { processScreenShotEvent } from "../screen-shotter.js";
 import { buildPublishEmbed, postEmbed } from "../intern/post-to-discord.js";
-import { notifyRemixSourceOwner } from "@vibes.diy/api-svc";
+import { notifyRemixSourceOwner, notifyVibePublished } from "@vibes.diy/api-svc";
 
 export const evtNewFsIdEvento: EventoHandler<unknown, MsgBase<EvtNewFsId>, void> = {
   hash: "evt-new-fs-id",
@@ -57,23 +57,10 @@ export const evtNewFsIdEvento: EventoHandler<unknown, MsgBase<EvtNewFsId>, void>
         await notifyRemixSourceOwner(qctx, publishedRow);
       }
 
-      // Resolve ownerHandle → userId to notify the vibe owner
-      const usb = qctx.sql.tables.handleBinding;
-      const ownerRow = await qctx.sql.db
-        .select({ userId: usb.userId })
-        .from(usb)
-        .where(eq(usb.handle, payload.ownerHandle))
-        .limit(1)
-        .then((r) => r[0] ?? null);
-
-      if (ownerRow?.userId) {
-        await qctx.notifyUser(ownerRow.userId, {
-          type: "vibes.diy.evt-user-notification",
-          notificationType: "vibe-published",
-          ownerHandle: payload.ownerHandle,
-          appSlug: payload.appSlug,
-        });
-      }
+      // Persist a vibe-published notification for the owner (and fan out the
+      // live bell). Dedupe is per-release (fsId), so re-delivery of the same
+      // publish event does not double-notify.
+      await notifyVibePublished(qctx, payload);
     }
     return Result.Ok(EventoResult.Continue);
   },
