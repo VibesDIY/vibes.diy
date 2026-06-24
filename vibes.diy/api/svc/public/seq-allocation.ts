@@ -66,6 +66,32 @@ export function isRetryableConflict(err: unknown): boolean {
   return false;
 }
 
+/**
+ * Render a drizzle error's full cause-chain into one human-readable line.
+ *
+ * drizzle wraps the driver error as `DrizzleQueryError("Failed query: insert
+ * into ...")` and hangs the REAL pg/sqlite error — the one carrying the SQLSTATE
+ * code (`23505`), constraint name, and reason ("duplicate key value violates
+ * unique constraint") — off `.cause`. Both `String(err)` and `JSON.stringify(err)`
+ * drop that cause, so a unique-violation reached the CLI as an opaque "Failed
+ * query: insert into Apps ..." with no reason at all (#2612). Walk the chain and
+ * append each layer's code + message + constraint so the real cause is visible.
+ */
+export function formatDbErrorChain(err: unknown): string {
+  const parts: string[] = [];
+  let cur: unknown = err;
+  for (let depth = 0; cur && depth < 6; depth++) {
+    const e = cur as { code?: unknown; message?: unknown; cause?: unknown; constraint?: unknown };
+    const code = e.code != null && e.code !== "" ? `[${String(e.code)}] ` : "";
+    const constraint = e.constraint != null && e.constraint !== "" ? ` (constraint: ${String(e.constraint)})` : "";
+    const msg = typeof e.message === "string" ? e.message : depth === 0 ? String(cur) : "";
+    const line = `${code}${msg}${constraint}`.trim();
+    if (line) parts.push(line);
+    cur = e.cause;
+  }
+  return parts.length > 0 ? parts.join(" <- ") : String(err);
+}
+
 /** Normalize the RETURNING result row across drivers into the allocated seq. */
 export function extractReturnedSeq(result: unknown): number {
   const rows = (result as { rows?: { seq: unknown }[] } | undefined)?.rows ?? (result as { seq: unknown }[] | undefined);
