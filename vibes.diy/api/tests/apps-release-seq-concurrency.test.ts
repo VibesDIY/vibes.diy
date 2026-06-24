@@ -65,6 +65,63 @@ describe("Apps releaseSeq allocation concurrency (issue #2612)", { timeout: 2000
     expect(seqA2).toBe(2);
   });
 
+  it("concurrent writers with the SAME fsId persist exactly ONE row (no duplicate dev+prod pair, Codex P2)", async () => {
+    const { db, flavour, t } = await ctx();
+    const [appSlug, userId, ownerHandle] = ["dup-fsid", "user_dup", "gnome"];
+    const N = 12;
+
+    // Every writer shares one fsId (the clean-stream case: server dev publish +
+    // CLI production push resolve identical files). Mixed dev/production modes.
+    const sharedRow = (mode: string) => ({ ...row(appSlug, userId, ownerHandle, 0), fsId: "same-fs", mode });
+    const seqs = await Promise.all(
+      Array.from({ length: N }, (_, i) => allocateAndInsertApp({ db, flavour, row: sharedRow(i % 2 ? "production" : "dev") }))
+    );
+
+    // All callers resolve to the same single release...
+    expect(new Set(seqs)).toEqual(new Set([1]));
+    // ...and exactly one row exists for that fsId.
+    const rows = await db
+      .select({ releaseSeq: t.releaseSeq, mode: t.mode })
+      .from(t)
+      .where(and(eq(t.appSlug, appSlug), eq(t.userId, userId), eq(t.fsId, "same-fs")));
+    expect(rows.length).toBe(1);
+    // A production writer in the burst promoted the row off dev.
+    expect(rows[0].mode).toBe("production");
+  });
+
+  it("a production push for an existing dev fsId upgrades it in place (no new release)", async () => {
+    const { db, flavour, t } = await ctx();
+    const [appSlug, userId, ownerHandle] = ["upgrade-fsid", "user_up", "gnome"];
+    const devRow = { ...row(appSlug, userId, ownerHandle, 0), fsId: "fs-up", mode: "dev" };
+
+    const devSeq = await allocateAndInsertApp({ db, flavour, row: devRow });
+    const prodSeq = await allocateAndInsertApp({ db, flavour, row: { ...devRow, mode: "production" } });
+
+    expect(devSeq).toBe(1);
+    expect(prodSeq).toBe(1); // same release, not a 2nd
+    const rows = await db
+      .select({ releaseSeq: t.releaseSeq, mode: t.mode })
+      .from(t)
+      .where(and(eq(t.appSlug, appSlug), eq(t.userId, userId)));
+    expect(rows.length).toBe(1);
+    expect(rows[0].mode).toBe("production");
+  });
+
+  it("a DIFFERENT fsId for the same app still appends a new release (provenance preserved)", async () => {
+    const { db, flavour, t } = await ctx();
+    const [appSlug, userId, ownerHandle] = ["diverge-fsid", "user_dv", "gnome"];
+    const s1 = await allocateAndInsertApp({ db, flavour, row: { ...row(appSlug, userId, ownerHandle, 0), fsId: "fs-A", mode: "dev" } });
+    const s2 = await allocateAndInsertApp({
+      db,
+      flavour,
+      row: { ...row(appSlug, userId, ownerHandle, 0), fsId: "fs-B", mode: "production" },
+    });
+    expect(s1).toBe(1);
+    expect(s2).toBe(2);
+    const rows = await db.select({ releaseSeq: t.releaseSeq }).from(t).where(and(eq(t.appSlug, appSlug), eq(t.userId, userId)));
+    expect(rows.length).toBe(2);
+  });
+
   it("appReleaseLockKey is stable per (user,app), never collides across boundaries, and is NUL-free", () => {
     const NUL = String.fromCharCode(0);
     expect(appReleaseLockKey("u", "a")).toBe(appReleaseLockKey("u", "a"));

@@ -56,8 +56,24 @@ function jsonParam(flavour: DBFlavour, value: unknown) {
   return flavour === "pg" ? sql`${value}` : sql`${JSON.stringify(value)}`;
 }
 
-/** Build the atomic INSERT … SELECT MAX("releaseSeq")+1 … RETURNING releaseSeq statement. */
-function buildAtomicInsert(p: AllocateAppParams) {
+// Match the row whose existence makes a new release a duplicate: same
+// (appSlug, userId, ownerHandle, fsId). This is the fsId-dedup key the pre-lock
+// `exist` check in ensureApps uses — rechecked here INSIDE the lock so a racing
+// writer can't append a second row for an fsId the first writer just committed.
+function existsByFsId(row: AppReleaseRow) {
+  return sql`SELECT 1 FROM ${TABLE}
+    WHERE "appSlug"=${row.appSlug} AND "userId"=${row.userId}
+      AND "userSlug"=${row.ownerHandle} AND "fsId"=${row.fsId}`;
+}
+
+/**
+ * Atomic INSERT-if-fsId-absent. `HAVING NOT EXISTS(...)` suppresses the single
+ * aggregate result row (and thus the insert + RETURNING) when a row already
+ * carries this fsId, so under the per-(user,app) advisory lock (pg) or the
+ * global write lock (sqlite) a duplicate-fsId release can never be appended.
+ * When it does insert, `COALESCE(MAX("releaseSeq"),0)+1` allocates the next seq.
+ */
+function buildInsertIfAbsent(p: AllocateAppParams) {
   const { row, flavour } = p;
   return sql`
     INSERT INTO ${TABLE} ("appSlug","userId","userSlug","releaseSeq","fsId","env","fileSystem","meta","mode","created")
@@ -67,8 +83,35 @@ function buildAtomicInsert(p: AllocateAppParams) {
            ${jsonParam(flavour, row.meta)}, ${row.mode}, ${row.created}
     FROM ${TABLE}
     WHERE "appSlug"=${row.appSlug} AND "userId"=${row.userId}
+    HAVING NOT EXISTS (${existsByFsId(row)})
     RETURNING "releaseSeq"
   `;
+}
+
+/** Read the existing release for this fsId (to report its seq / decide an upgrade). */
+function buildSelectByFsId(row: AppReleaseRow) {
+  return sql`SELECT "releaseSeq", "mode" FROM ${TABLE}
+    WHERE "appSlug"=${row.appSlug} AND "userId"=${row.userId}
+      AND "userSlug"=${row.ownerHandle} AND "fsId"=${row.fsId}
+    LIMIT 1`;
+}
+
+/**
+ * Upgrade an existing dev release for this fsId to production. Idempotent (the
+ * `"mode"='dev'` guard makes a repeat a no-op). Closes the Codex P2: without it,
+ * a racing production push that finds a committed dev row for the same fsId would
+ * leave the app stuck in dev, and get-app-by-fsid would deny public readers.
+ */
+function buildUpgradeToProduction(row: AppReleaseRow) {
+  return sql`UPDATE ${TABLE} SET "mode"='production'
+    WHERE "appSlug"=${row.appSlug} AND "userId"=${row.userId}
+      AND "userSlug"=${row.ownerHandle} AND "fsId"=${row.fsId} AND "mode"='dev'`;
+}
+
+function normalizeRows(result: unknown): Record<string, unknown>[] {
+  const rows = (result as { rows?: unknown } | undefined)?.rows ?? result;
+  if (Array.isArray(rows)) return rows as Record<string, unknown>[];
+  return rows ? [rows as Record<string, unknown>] : [];
 }
 
 function runReturning(db: VibesSqlite, flavour: DBFlavour, stmt: ReturnType<typeof sql>): Promise<unknown> {
@@ -79,29 +122,47 @@ function runReturning(db: VibesSqlite, flavour: DBFlavour, stmt: ReturnType<type
   return (db as unknown as { run: (s: unknown) => Promise<unknown> }).run(stmt);
 }
 
-/** Normalize the RETURNING result row across drivers into the allocated releaseSeq. */
-export function extractReturnedReleaseSeq(result: unknown): number {
-  const rows =
-    (result as { rows?: { releaseSeq: unknown }[] } | undefined)?.rows ?? (result as { releaseSeq: unknown }[] | undefined);
-  const raw = Array.isArray(rows) ? rows[0]?.releaseSeq : (rows as { releaseSeq?: unknown } | undefined)?.releaseSeq;
-  const seq = Number(raw);
+/**
+ * Insert-if-fsId-absent, else dedup (and promote dev→production). Runs on the
+ * passed executor — `tx` inside the pg advisory-locked transaction, or `db`
+ * under sqlite's global write lock — so the recheck and insert are atomic on
+ * both flavours without a duplicate-fsId row escaping.
+ *
+ * Returns the releaseSeq of the row this generate operation resolves to: the
+ * freshly inserted release when the fsId was new, or the existing release's seq
+ * when an earlier writer already committed this fsId.
+ */
+async function dedupOrInsert(exec: VibesSqlite, flavour: DBFlavour, p: AllocateAppParams): Promise<number> {
+  // 1. Append a fresh release only if no row carries this fsId yet.
+  const inserted = normalizeRows(await runReturning(exec, flavour, buildInsertIfAbsent(p)));
+  if (inserted.length > 0 && inserted[0].releaseSeq != null) {
+    return Number(inserted[0].releaseSeq);
+  }
+  // 2. fsId already present -> dedup. A production push that finds a committed
+  //    dev row for the same fsId promotes it in place (fsId-keyed promotion),
+  //    rather than appending a duplicate dev+production pair (Codex P2).
+  if (p.row.mode === "production") {
+    await runReturning(exec, flavour, buildUpgradeToProduction(p.row));
+  }
+  const existing = normalizeRows(await runReturning(exec, flavour, buildSelectByFsId(p.row)));
+  const seq = Number(existing[0]?.releaseSeq);
   if (!Number.isFinite(seq)) {
-    throw new Error(`could not extract returned releaseSeq from result: ${JSON.stringify(result)}`);
+    throw new Error(`app dedup: fsId insert suppressed but no existing row found for ${p.row.appSlug}/${p.row.fsId}`);
   }
   return seq;
 }
 
 /**
- * SQLite/D1 path: the single atomic statement runs under SQLite's global write
- * lock, so MAX(releaseSeq) always sees committed rows and the insert never
- * collides. The bounded retry is a safety net for any driver that does not
- * serialize.
+ * SQLite/D1 path: the dedup+insert runs under SQLite's global write lock, so the
+ * recheck always sees committed rows and a duplicate-fsId release can't be
+ * appended. The bounded retry is a safety net for any driver that does not
+ * serialize (and absorbs a PK collision between distinct-fsId concurrent writers).
  */
 async function allocateSqlite(p: AllocateAppParams): Promise<number> {
   const attempts = p.maxAttempts ?? 5;
   for (let i = 0; i < attempts; i++) {
     try {
-      return extractReturnedReleaseSeq(await runReturning(p.db, p.flavour, buildAtomicInsert(p)));
+      return await dedupOrInsert(p.db, p.flavour, p);
     } catch (err) {
       if (!isRetryableConflict(err)) throw err;
       await new Promise((r) => setTimeout(r, Math.floor(Math.random() * (8 << i)))); // jittered backoff
@@ -112,8 +173,8 @@ async function allocateSqlite(p: AllocateAppParams): Promise<number> {
 
 /**
  * Postgres path: a per-(user, app) advisory lock serializes concurrent release
- * writers, so under the lock the COALESCE(MAX+1) insert never collides and no
- * retry loop is needed.
+ * writers, so under the lock the recheck-then-insert never races — neither a PK
+ * collision (distinct fsId) nor a duplicate-fsId pair can occur, so no retry.
  */
 async function allocatePg(p: AllocateAppParams): Promise<number> {
   const key = appReleaseLockKey(p.row.userId, p.row.appSlug);
@@ -122,11 +183,15 @@ async function allocatePg(p: AllocateAppParams): Promise<number> {
     await (tx as unknown as { execute: (s: unknown) => Promise<unknown> }).execute(
       sql`SELECT pg_advisory_xact_lock(hashtextextended(${key}, 0))`
     );
-    return extractReturnedReleaseSeq(await runReturning(tx, "pg", buildAtomicInsert(p)));
+    return dedupOrInsert(tx, "pg", p);
   });
 }
 
-/** Allocate the next releaseSeq for this (appSlug, userId) and insert the row atomically. */
+/**
+ * Allocate the release for this (appSlug, userId): append the next releaseSeq
+ * when the fsId is new, or dedup/promote in place when an earlier writer already
+ * committed this fsId. Returns the resolved releaseSeq.
+ */
 export async function allocateAndInsertApp(p: AllocateAppParams): Promise<number> {
   return p.flavour === "pg" ? allocatePg(p) : allocateSqlite(p);
 }
