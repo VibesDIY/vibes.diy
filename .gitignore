@@ -5,6 +5,7 @@ node_modules
 **/dist/
 .claude/*
 !.claude/skills/
+!.claude/commands/
 .superpowers/
 
 # QA agent run artifacts (triage drafts, screenshots, alias log) — local-only.

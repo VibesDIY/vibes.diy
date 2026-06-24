@@ -50,6 +50,10 @@ Core workflow skills vendored as flat project skills so they're available to **c
 - [`using-git-worktrees/`](using-git-worktrees/SKILL.md), [`finishing-a-development-branch/`](finishing-a-development-branch/SKILL.md)
 - [`writing-skills/`](writing-skills/SKILL.md)
 
+### Vendored `autoresearch` (v2.2.1, [uditgoenka/autoresearch](https://github.com/uditgoenka/autoresearch), MIT)
+
+[`autoresearch/`](autoresearch/SKILL.md) — autonomous goal-directed iteration: set a GOAL, run a **modify → verify → keep/discard → repeat** loop against a measurable metric, auto-keeping wins and reverting regressions. Bare `/autoresearch` routes to 13 subcommands (`plan`, `debug`, `fix`, `security`, `ship`, `scenario`, `predict`, `learn`, `reason`, `probe`, `improve`, `evals`, `regression`) under [`.claude/commands/autoresearch/`](../commands/autoresearch/). Vendored as a flat project skill + commands so it works in **cloud sessions** (no global plugin install). The upstream's 9 safety **hooks are intentionally not vendored** — they'd collide with this repo's `settings.json` hook setup; the skill degrades gracefully without them. Provenance, license, and what was excluded live in [`autoresearch-vendor/`](autoresearch-vendor/README.md).
+
 ## Distribution & upgrade path
 
 **Current model: project-scoped skills.** These skills are _not_ packaged as a plugin. Claude Code auto-discovers them under `.claude/skills/` whenever a session runs inside a clone of this repo, so the only "install" step for an engineer is cloning `vibes.diy`. They're invoked by their bare name (`/qa-pr`). This is a fully supported distribution method and is the right fit while the skills are used **inside this repo**.
