@@ -71,8 +71,14 @@ export async function ensureAppMetadata(
 
   const rPre = await preAllocate(ctx, { prompt: args.prompt });
   if (rPre.isErr()) {
-    ensureLogger(ctx.sthis, "ensureAppMetadata")
-      .Warn()
+    // In tests the inference fetch seam is fail-closed (#2481), so preAllocate
+    // reliably errors here — that's the designed behavior, not a signal worth
+    // surfacing. Drop the log to Debug under ENVIRONMENT=test so it stops
+    // flooding test output; keep it at Warn everywhere else, where a
+    // preAllocate failure genuinely means metadata generation got skipped.
+    const log = ensureLogger(ctx.sthis, "ensureAppMetadata");
+    const line = ctx.sthis.env.get("ENVIRONMENT") === "test" ? log.Debug() : log.Warn();
+    line
       .Any({ err: rPre.Err(), ownerHandle: args.ownerHandle, appSlug: args.appSlug })
       .Msg("preAllocate failed; skipping metadata generation");
     return Result.Ok({ generated: false });
