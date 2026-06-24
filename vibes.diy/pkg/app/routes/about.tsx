@@ -144,8 +144,8 @@ export default function About() {
                   Private by default&mdash;or open to the world. You choose.
                 </p>
                 <p style={{ marginTop: 10, fontSize: 13, opacity: 0.85 }}>
-                  Keep it to the people you invite, or publish it so anyone can use and remix it. You set who can read,
-                  write, and open it.
+                  Keep it to the people you invite, or publish it so anyone can use and remix it. You set who can read, write, and
+                  open it.
                 </p>
               </div>
             </div>
