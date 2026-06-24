@@ -27,7 +27,7 @@ const PROBE_ROOT = resolve(__dirname, "..");
 const DEFAULT_PROMPTS = resolve(PROBE_ROOT, "prompts/seed.jsonl");
 const DEFAULT_OUT_DIR = resolve(PROBE_ROOT, "runs");
 const DEV_VARS = resolve(PROBE_ROOT, "../../vibes.diy/pkg/.dev.vars");
-// Match production's pre-alloc model selection (preSelected: ["app"] in
+// Match production's pre-alloc model selection (preSelected: ["runtime"] in
 // vibes.diy/api/svc/models.json). Override with --model if needed.
 const DEFAULT_MODEL = "anthropic/claude-opus-4.6-fast";
 const PRE_ALLOC_TIMEOUT_MS = 30_000;

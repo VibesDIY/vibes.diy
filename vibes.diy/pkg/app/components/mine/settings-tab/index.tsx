@@ -204,8 +204,8 @@ type SettingsUpdate =
   | { kind: "theme"; appSlug: string; ownerHandle: string; theme: string }
   | { kind: "iconDescription"; appSlug: string; ownerHandle: string; iconDescription: string }
   | { kind: "iconRegen"; appSlug: string; ownerHandle: string }
-  | { kind: "chat"; appSlug: string; ownerHandle: string; chat: AIParams }
-  | { kind: "app"; appSlug: string; ownerHandle: string; app: AIParams }
+  | { kind: "codegen"; appSlug: string; ownerHandle: string; codegen: AIParams }
+  | { kind: "runtime"; appSlug: string; ownerHandle: string; runtime: AIParams }
   | { kind: "img"; appSlug: string; ownerHandle: string; img: AIParams }
   | { kind: "env"; appSlug: string; ownerHandle: string; env: Record<string, string> };
 
@@ -223,16 +223,16 @@ export function SettingsTab({ ownerHandle, appSlug }: SettingsTabProps) {
   const [theme, setTheme] = useState("");
   const [iconDescription, setIconDescription] = useState("");
   const [icon, setIcon] = useState<{ cid: string; mime: string } | undefined>(undefined);
-  const [chatConfig, setChatConfig] = useState<Partial<AIParams>>({});
-  const [appConfig, setAppConfig] = useState<Partial<AIParams>>({});
+  const [codegenConfig, setCodegenConfig] = useState<Partial<AIParams>>({});
+  const [runtimeConfig, setRuntimeConfig] = useState<Partial<AIParams>>({});
   const [imgConfig, setImgConfig] = useState<Partial<AIParams>>({});
   const [env, setEnv] = useState<Record<string, string>>({});
 
   const [pending, setPending] = useState<SettingsUpdate>({ kind: "fetch", appSlug, ownerHandle });
   const [savingTitle, setSavingTitle] = useState(false);
   const [savingTheme, setSavingTheme] = useState(false);
-  const [savingChat, setSavingChat] = useState(false);
-  const [savingApp, setSavingApp] = useState(false);
+  const [savingCodegen, setSavingCodegen] = useState(false);
+  const [savingRuntime, setSavingRuntime] = useState(false);
   const [savingImg, setSavingImg] = useState(false);
   const [savingEnv, setSavingEnv] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -251,8 +251,8 @@ export function SettingsTab({ ownerHandle, appSlug }: SettingsTabProps) {
 
     if (pending.kind === "title") setSavingTitle(true);
     else if (pending.kind === "theme") setSavingTheme(true);
-    else if (pending.kind === "chat") setSavingChat(true);
-    else if (pending.kind === "app") setSavingApp(true);
+    else if (pending.kind === "codegen") setSavingCodegen(true);
+    else if (pending.kind === "runtime") setSavingRuntime(true);
     else if (pending.kind === "img") setSavingImg(true);
     else if (pending.kind === "env") setSavingEnv(true);
     else if (pending.kind === "iconDescription" || pending.kind === "iconRegen") {
@@ -271,10 +271,10 @@ export function SettingsTab({ ownerHandle, appSlug }: SettingsTabProps) {
             ? { ...base, iconDescription: pending.iconDescription }
             : pending.kind === "iconRegen"
               ? { ...base, iconRegen: true }
-              : pending.kind === "chat"
-                ? { ...base, chat: pending.chat }
-                : pending.kind === "app"
-                  ? { ...base, app: pending.app }
+              : pending.kind === "codegen"
+                ? { ...base, codegen: pending.codegen }
+                : pending.kind === "runtime"
+                  ? { ...base, runtime: pending.runtime }
                   : pending.kind === "img"
                     ? { ...base, img: pending.img }
                     : pending.kind === "env"
@@ -286,8 +286,8 @@ export function SettingsTab({ ownerHandle, appSlug }: SettingsTabProps) {
 
       if (pending.kind === "title") setSavingTitle(false);
       else if (pending.kind === "theme") setSavingTheme(false);
-      else if (pending.kind === "chat") setSavingChat(false);
-      else if (pending.kind === "app") setSavingApp(false);
+      else if (pending.kind === "codegen") setSavingCodegen(false);
+      else if (pending.kind === "runtime") setSavingRuntime(false);
       else if (pending.kind === "img") setSavingImg(false);
       else if (pending.kind === "env") setSavingEnv(false);
       else if (pending.kind !== "iconDescription" && pending.kind !== "iconRegen") setLoading(false);
@@ -305,8 +305,8 @@ export function SettingsTab({ ownerHandle, appSlug }: SettingsTabProps) {
       setTheme(s.entry.settings.theme ?? "");
       setIconDescription(s.entry.settings.iconDescription ?? "");
       setIcon(s.entry.settings.icon);
-      setChatConfig(s.entry.settings.chat ?? {});
-      setAppConfig(s.entry.settings.app ?? {});
+      setCodegenConfig(s.entry.settings.codegen ?? {});
+      setRuntimeConfig(s.entry.settings.runtime ?? {});
       setImgConfig(s.entry.settings.img ?? {});
       setEnv(fromKVString(s.entry.settings.env ?? []));
 
@@ -477,14 +477,14 @@ export function SettingsTab({ ownerHandle, appSlug }: SettingsTabProps) {
       </Card>
 
       <ModelSettingsCards
-        chatConfig={chatConfig}
-        appConfig={appConfig}
+        codegenConfig={codegenConfig}
+        runtimeConfig={runtimeConfig}
         imgConfig={imgConfig}
-        savingChat={savingChat}
-        savingApp={savingApp}
+        savingCodegen={savingCodegen}
+        savingRuntime={savingRuntime}
         savingImg={savingImg}
-        onSaveChat={(cfg) => setPending({ kind: "chat", appSlug, ownerHandle, chat: cfg })}
-        onSaveApp={(cfg) => setPending({ kind: "app", appSlug, ownerHandle, app: cfg })}
+        onSaveCodegen={(cfg) => setPending({ kind: "codegen", appSlug, ownerHandle, codegen: cfg })}
+        onSaveRuntime={(cfg) => setPending({ kind: "runtime", appSlug, ownerHandle, runtime: cfg })}
         onSaveImg={(cfg) => setPending({ kind: "img", appSlug, ownerHandle, img: cfg })}
       />
 

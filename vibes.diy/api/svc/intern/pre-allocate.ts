@@ -34,7 +34,7 @@ const PRE_ALLOC_TIMEOUT_MS = 8000;
  * ensureAppSlug as preferredPairs, and persists the chosen title + skills
  * into app_settings.
  *
- * Model: resolved via loadModels → `preSelected: ["app"]` entry in
+ * Model: resolved via loadModels → `preSelected: ["runtime"]` entry in
  * models.json (currently openai/gpt-5.4-mini). No user/app overrides;
  * pre-alloc stays deterministic across users.
  *
@@ -46,8 +46,8 @@ export async function preAllocate(vctx: VibesApiSQLCtx, { prompt }: { prompt: st
   return exception2Result(async (): Promise<Result<PreAllocateResult>> => {
     const rModels = await loadModels(vctx);
     if (rModels.isErr()) return Result.Err(rModels);
-    const appDefault = rModels.Ok().models.find((m) => m.preSelected?.includes("app"));
-    if (!appDefault) return Result.Err("no preSelected app model in catalog");
+    const appDefault = rModels.Ok().models.find((m) => m.preSelected?.includes("runtime"));
+    if (!appDefault) return Result.Err("no preSelected runtime model in catalog");
 
     const userMessage = await makePreAllocUserMessage(prompt);
 

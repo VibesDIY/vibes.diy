@@ -2,11 +2,11 @@ import { describe, expect, it } from "vitest";
 import { filterModelsByUsage } from "~/vibes.diy/app/components/filterModelsByUsage.js";
 import type { Model } from "@vibes.diy/api-types";
 
-const CHAT_ONLY: Model = {
+const CODEGEN_ONLY: Model = {
   id: "anthropic/claude-sonnet-4.6",
   name: "Sonnet 4.6",
-  description: "chat",
-  supports: ["chat", "app"],
+  description: "codegen",
+  supports: ["codegen", "runtime"],
 };
 
 const IMG_ONLY: Model = {
@@ -25,34 +25,34 @@ const UNTAGGED: Model = {
 const MULTI: Model = {
   id: "multi/model",
   name: "Multi",
-  description: "supports chat and img",
-  supports: ["chat", "img"],
+  description: "supports codegen and img",
+  supports: ["codegen", "img"],
 };
 
 describe("filterModelsByUsage", () => {
   it("returns only models that list the usage in supports", () => {
-    const result = filterModelsByUsage([CHAT_ONLY, IMG_ONLY], "img");
+    const result = filterModelsByUsage([CODEGEN_ONLY, IMG_ONLY], "img");
     expect(result).toEqual([IMG_ONLY]);
   });
 
   it("includes a model in multiple usage dropdowns when supports has multiple entries", () => {
-    const chat = filterModelsByUsage([MULTI], "chat");
+    const codegen = filterModelsByUsage([MULTI], "codegen");
     const img = filterModelsByUsage([MULTI], "img");
-    const app = filterModelsByUsage([MULTI], "app");
-    expect(chat).toEqual([MULTI]);
+    const runtime = filterModelsByUsage([MULTI], "runtime");
+    expect(codegen).toEqual([MULTI]);
     expect(img).toEqual([MULTI]);
-    expect(app).toEqual([]);
+    expect(runtime).toEqual([]);
   });
 
-  it("treats missing supports as ['chat','app'] — never image", () => {
-    expect(filterModelsByUsage([UNTAGGED], "chat")).toEqual([UNTAGGED]);
-    expect(filterModelsByUsage([UNTAGGED], "app")).toEqual([UNTAGGED]);
+  it("treats missing supports as ['codegen','runtime'] — never image", () => {
+    expect(filterModelsByUsage([UNTAGGED], "codegen")).toEqual([UNTAGGED]);
+    expect(filterModelsByUsage([UNTAGGED], "runtime")).toEqual([UNTAGGED]);
     expect(filterModelsByUsage([UNTAGGED], "img")).toEqual([]);
   });
 
   it("preserves input order", () => {
-    const input = [IMG_ONLY, CHAT_ONLY, MULTI];
-    const result = filterModelsByUsage(input, "chat");
-    expect(result).toEqual([CHAT_ONLY, MULTI]);
+    const input = [IMG_ONLY, CODEGEN_ONLY, MULTI];
+    const result = filterModelsByUsage(input, "codegen");
+    expect(result).toEqual([CODEGEN_ONLY, MULTI]);
   });
 });

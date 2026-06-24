@@ -36,7 +36,7 @@ function ModelSection({
   onSave,
 }: {
   config?: Partial<AIParams>;
-  usage: "chat" | "app" | "img";
+  usage: "codegen" | "runtime" | "img";
   saving: boolean;
   onSave: (cfg: AIParams) => void;
 }) {
@@ -138,35 +138,35 @@ function ModelSection({
 }
 
 export interface ModelSettingsCardsProps {
-  chatConfig?: Partial<AIParams>;
-  appConfig?: Partial<AIParams>;
+  codegenConfig?: Partial<AIParams>;
+  runtimeConfig?: Partial<AIParams>;
   imgConfig?: Partial<AIParams>;
-  savingChat: boolean;
-  savingApp: boolean;
+  savingCodegen: boolean;
+  savingRuntime: boolean;
   savingImg: boolean;
-  onSaveChat: (cfg: AIParams) => void;
-  onSaveApp: (cfg: AIParams) => void;
+  onSaveCodegen: (cfg: AIParams) => void;
+  onSaveRuntime: (cfg: AIParams) => void;
   onSaveImg: (cfg: AIParams) => void;
 }
 
 export function ModelSettingsCards({
-  chatConfig,
-  appConfig,
+  codegenConfig,
+  runtimeConfig,
   imgConfig,
-  savingChat,
-  savingApp,
+  savingCodegen,
+  savingRuntime,
   savingImg,
-  onSaveChat,
-  onSaveApp,
+  onSaveCodegen,
+  onSaveRuntime,
   onSaveImg,
 }: ModelSettingsCardsProps) {
   return (
     <>
-      <Card title="Chat Model">
-        <ModelSection config={chatConfig} usage="chat" saving={savingChat} onSave={onSaveChat} />
+      <Card title="Codegen Model">
+        <ModelSection config={codegenConfig} usage="codegen" saving={savingCodegen} onSave={onSaveCodegen} />
       </Card>
-      <Card title="App Model">
-        <ModelSection config={appConfig} usage="app" saving={savingApp} onSave={onSaveApp} />
+      <Card title="App Runtime Model">
+        <ModelSection config={runtimeConfig} usage="runtime" saving={savingRuntime} onSave={onSaveRuntime} />
       </Card>
       <Card title="Imaging Model">
         <ModelSection config={imgConfig} usage="img" saving={savingImg} onSave={onSaveImg} />

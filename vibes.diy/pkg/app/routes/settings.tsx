@@ -328,11 +328,11 @@ function HandlesCard() {
 
 function ModelDefaultsCard() {
   const { sharedApi } = useVibesDiy();
-  const [chatConfig, setChatConfig] = useState<Partial<AIParams>>({});
-  const [appConfig, setAppConfig] = useState<Partial<AIParams>>({});
+  const [codegenConfig, setCodegenConfig] = useState<Partial<AIParams>>({});
+  const [runtimeConfig, setRuntimeConfig] = useState<Partial<AIParams>>({});
   const [imgConfig, setImgConfig] = useState<Partial<AIParams>>({});
-  const [savingChat, setSavingChat] = useState(false);
-  const [savingApp, setSavingApp] = useState(false);
+  const [savingCodegen, setSavingCodegen] = useState(false);
+  const [savingRuntime, setSavingRuntime] = useState(false);
   const [savingImg, setSavingImg] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -345,20 +345,22 @@ function ModelDefaultsCard() {
       const def = parseArray(res.Ok().settings, userSettingModelDefaults)[0];
       console.log("Loaded user settings:", res.Ok().settings, def);
       if (def) {
-        setChatConfig(def.chat ?? {});
-        setAppConfig(def.app ?? {});
+        // Prefer canonical keys; fall back to legacy chat/app for rows written
+        // before the #2608 rename.
+        setCodegenConfig(def.codegen ?? def.chat ?? {});
+        setRuntimeConfig(def.runtime ?? def.app ?? {});
         setImgConfig(def.img ?? {});
       }
     });
   }, [sharedApi]);
 
-  const save = (patch: Partial<{ chat: AIParams; app: AIParams; img: AIParams }>, setSaving: (v: boolean) => void) => {
+  const save = (patch: Partial<{ codegen: AIParams; runtime: AIParams; img: AIParams }>, setSaving: (v: boolean) => void) => {
     setSaving(true);
-    const merged = { chat: chatConfig, app: appConfig, img: imgConfig, ...patch };
+    const merged = { codegen: codegenConfig, runtime: runtimeConfig, img: imgConfig, ...patch };
     const setting = {
       type: "modelDefaults" as const,
-      ...(merged.chat?.model ? { chat: merged.chat } : {}),
-      ...(merged.app?.model ? { app: merged.app } : {}),
+      ...(merged.codegen?.model ? { codegen: merged.codegen } : {}),
+      ...(merged.runtime?.model ? { runtime: merged.runtime } : {}),
       ...(merged.img?.model ? { img: merged.img } : {}),
     };
     void sharedApi.ensureUserSettings({ settings: [setting] }).then((res) => {
@@ -378,19 +380,19 @@ function ModelDefaultsCard() {
       {error && <p className="text-red-600 font-medium mb-3">{error}</p>}
       <ol className="space-y-5 text-sm">
         <ModelSettingsCards
-          chatConfig={chatConfig}
-          appConfig={appConfig}
+          codegenConfig={codegenConfig}
+          runtimeConfig={runtimeConfig}
           imgConfig={imgConfig}
-          savingChat={savingChat}
-          savingApp={savingApp}
+          savingCodegen={savingCodegen}
+          savingRuntime={savingRuntime}
           savingImg={savingImg}
-          onSaveChat={(cfg) => {
-            setChatConfig(cfg);
-            save({ chat: cfg }, setSavingChat);
+          onSaveCodegen={(cfg) => {
+            setCodegenConfig(cfg);
+            save({ codegen: cfg }, setSavingCodegen);
           }}
-          onSaveApp={(cfg) => {
-            setAppConfig(cfg);
-            save({ app: cfg }, setSavingApp);
+          onSaveRuntime={(cfg) => {
+            setRuntimeConfig(cfg);
+            save({ runtime: cfg }, setSavingRuntime);
           }}
           onSaveImg={(cfg) => {
             setImgConfig(cfg);
