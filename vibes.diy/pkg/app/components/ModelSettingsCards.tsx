@@ -152,7 +152,13 @@ function ModelSection({
                 {isPinned ? (
                   <>
                     Pinned to <span className="font-medium">{config?.model?.name}</span>
-                    {defaultModel && ` · Default: ${defaultModel.name}`}
+                    {/* `defaultModel` is the catalog preselected model. For the
+                        user-level page (no `pinned` prop) it is also the reset
+                        target, so "Default" is accurate. For app settings reset
+                        falls back to the effective inherited model (possibly a
+                        user pin) which we don't have here, so we label this the
+                        neutral "Catalog default" rather than overclaiming. */}
+                    {defaultModel && ` · ${pinned === undefined ? "Default" : "Catalog default"}: ${defaultModel.name}`}
                   </>
                 ) : (
                   // The effective model when following the default: prefer the
