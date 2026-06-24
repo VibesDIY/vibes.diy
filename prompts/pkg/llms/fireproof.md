@@ -654,7 +654,46 @@ export default function (doc, oldDoc, user, ctx) {
 }
 ```
 
-To invite someone who isn't a member yet without knowing their handle in advance, invert the flow with a request doc: a `request` type takes **no** `ctx.requireAccess` (any signed-in user may create one — their handle is `user.userHandle`, unforgeable) and routes to the list channel `ch(doc.listId)`, where current members read it (the requester can't read their own request back — they aren't a member yet — which is fine; they just wait to be granted). A member then writes the `share` above to approve. The UI gates each surface with `useVibe("lists").can` and reflects which lists the viewer can see with `access.hasChannel(...)`.
+To invite someone who isn't a member yet without knowing their handle in advance, invert the flow with a request doc: a `request` type takes **no** `ctx.requireAccess` (any signed-in user may create one — their handle is `user.userHandle`, unforgeable) and routes to the list channel `ch(doc.listId)`, where current members read it (the requester can't read their own request back — they aren't a member yet — which is fine; they just wait to be granted). A member then writes the `share` above to approve.
+
+App.jsx — `access.hasChannel()` shows only the lists the viewer belongs to; `useVibe("lists").can` gates each write surface (create list, add item, invite peer):
+
+```jsx
+<<<<<<< SEARCH
+  const { database, useLiveQuery, access } = useFireproof("notes");
+=======
+  const { database, useLiveQuery, access } = useFireproof("lists");
+  const { me, can } = useVibe("lists");
+  const { docs: lists } = useLiveQuery("type", { key: "list" });
+  const visible = lists.filter((l) => access.hasChannel(`list:${l._id}`));
+  // Each member edits any item — items gate on requireAccess(list:<id>), not authorHandle.
+  const canAddItem = (list) => can.create({ type: "item", listId: list._id, authorHandle: me?.userHandle }).ok;
+  const canShare = (list) => can.create({ type: "share", listId: list._id, invitee: "x" }).ok;
+>>>>>>> REPLACE
+```
+
+```jsx
+<<<<<<< SEARCH
+      {viewer && <button onClick={addNote}>+ note</button>}
+=======
+      {/* create list — any signed-in visitor can start their own */}
+      {can.create({ type: "list", author: me?.userHandle }).ok && (
+        <button onClick={() => database.put({ type: "list", author: me.userHandle, name: "new list" })}>
+          + new list
+        </button>
+      )}
+
+      {visible.map((list) => (
+        <section key={list._id}>
+          <h3>{list.name}</h3>
+          {/* add-item form is shown only when the access fn would accept the write */}
+          {canAddItem(list) && <AddItemForm listId={list._id} />}
+          {/* invite peer — only shown to members of this list */}
+          {canShare(list) && <ShareForm listId={list._id} />}
+        </section>
+      ))}
+>>>>>>> REPLACE
+```
 
 ---
 
@@ -764,6 +803,42 @@ export function chat(doc, oldDoc, user, ctx) {
 
 This single access function handles three document types: **channel-meta** — owner creates a channel and grants access to listed members, **message** — only the author can post, must already have channel access, **channel-invite** — any channel member can invite others; deleting the invite revokes the grant.
 
+App.jsx — show only channels the viewer is in (`access.hasChannel`), gate the compose box and invite form on `useVibe().can`:
+
+```jsx
+<<<<<<< SEARCH
+  const { database, useLiveQuery, access } = useFireproof("notes");
+=======
+  const { database, useLiveQuery, access } = useFireproof("chat");
+  const { me, can } = useVibe("chat");
+  const { docs: channels } = useLiveQuery("type", { key: "channel-meta" });
+  // Filter to channels the viewer has been granted into — non-members never see them in the list.
+  const myChannels = channels.filter((ch) => access.hasChannel(ch._id));
+  const [channelId, setChannelId] = React.useState(null);
+  const canPost = can.create({ type: "message", channelId, userHandle: me?.userHandle });
+  const canInvite = can.create({ type: "channel-invite", channelId, senderHandle: me?.userHandle, inviteeHandle: "x" });
+>>>>>>> REPLACE
+```
+
+```jsx
+<<<<<<< SEARCH
+      {viewer && <Compose onSend={send} />}
+=======
+      {/* sidebar lists only the channels the viewer is in */}
+      <nav>{myChannels.map((ch) => <button key={ch._id} onClick={() => setChannelId(ch._id)}>{ch.name}</button>)}</nav>
+
+      {/* compose is shown only when the viewer is a member of the selected channel */}
+      {channelId && canPost.ok ? (
+        <Compose onSend={(text) => database.put({ type: "message", channelId, userHandle: me.userHandle, text })} />
+      ) : (
+        <p>{canPost.reason || "Pick a channel"}</p>
+      )}
+
+      {/* any member of this channel may invite a peer */}
+      {channelId && canInvite.ok && <InviteForm channelId={channelId} senderHandle={me.userHandle} />}
+>>>>>>> REPLACE
+```
+
 ### Example: Anonymous survey with role-gated results
 
 access.js
@@ -799,6 +874,45 @@ export function survey(doc, oldDoc, user, ctx) {
 
 Key patterns: `allowAnonymous: true` on survey-response lets unauthenticated visitors submit, `grant.public` on final-results makes them readable by any member without a specific channel grant, and the **singleton grant doc** pattern (survey-config) wires role-to-channel access in one place.
 
+App.jsx — anonymous-friendly submit form, owner-only config panel, role-gated results view:
+
+```jsx
+<<<<<<< SEARCH
+  const { database } = useFireproof("notes");
+=======
+  const { database, useLiveQuery, access } = useFireproof("survey");
+  const { me, can } = useVibe("survey");
+  // Submit form is shown for anyone — allowAnonymous makes this can.create return ok for null user.
+  const canSubmit = can.create({ type: "survey-response", question: "q1", answer: "" });
+  // Owner-only — survey-config rule calls ctx.requireRole("owner").
+  const canConfigure = can.create({ type: "survey-config" });
+  const { docs: results } = useLiveQuery("type", { key: "final-results" });
+>>>>>>> REPLACE
+```
+
+```jsx
+<<<<<<< SEARCH
+      <input value={answer} onChange={(e) => setAnswer(e.target.value)} />
+=======
+      {/* anyone (signed in OR anonymous) can submit — only stamp authorHandle when present */}
+      {canSubmit.ok ? (
+        <form onSubmit={(e) => {
+          e.preventDefault();
+          database.put({ type: "survey-response", question: "q1", answer, ...(me && { authorHandle: me.userHandle }) });
+        }}>
+          <input value={answer} onChange={(e) => setAnswer(e.target.value)} />
+          <button type="submit">Submit</button>
+        </form>
+      ) : <p>{canSubmit.reason}</p>}
+
+      {/* owner-only admin to wire up the feedback-team role */}
+      {canConfigure.ok && <ConfigPanel />}
+
+      {/* results render only for users with the feedback-team role — access.hasChannel filters them in */}
+      {results.filter((r) => access.hasChannel(r._id)).map((r) => <ResultCard key={r._id} doc={r} />)}
+>>>>>>> REPLACE
+```
+
 ### Example: Public guestbook / contact form (anonymous writes)
 
 When the prompt says **anyone can sign / submit without logging in** (a guestbook, a contact form, an RSVP), do **not** throw on `!user` — return `allowAnonymous: true` so the write is accepted for anonymous visitors. `useVibe().can.create(...)` then returns `ok` for an anonymous viewer, and the form shows instead of a sign-in wall. Stamp `authorHandle` only when there is a user.
@@ -817,6 +931,43 @@ export function guestbook(doc, oldDoc, user, ctx) {
 ```
 
 In `App.jsx`, gate the form on `useVibe("guestbook").can.create({ type: "entry" }).ok` (true for anon here) and stamp `authorHandle: me?.userHandle` only when signed in. Without `allowAnonymous: true` the runtime rejects the null-user write even though the function didn't throw — so the guestbook would silently require login, the exact miss to avoid.
+
+App.jsx — gate the form on `can.create({ type: "entry" }).ok`, which is true even when nobody is signed in:
+
+```jsx
+<<<<<<< SEARCH
+  const { database } = useFireproof("notes");
+=======
+  const { database, useLiveQuery } = useFireproof("guestbook");
+  const { me, can } = useVibe("guestbook");
+  const { docs: entries } = useLiveQuery("type", { key: "entry" });
+  // allowAnonymous: true on the access fn → this returns ok for an anon viewer.
+  // The form is visible from first load, no sign-in wall.
+  const canSign = can.create({ type: "entry", message: "" });
+>>>>>>> REPLACE
+```
+
+```jsx
+<<<<<<< SEARCH
+      <SignInGate>
+        <input value={message} onChange={(e) => setMessage(e.target.value)} />
+      </SignInGate>
+=======
+      {canSign.ok ? (
+        <form onSubmit={(e) => {
+          e.preventDefault();
+          // Stamp authorHandle only when signed in — anon entries simply omit it.
+          database.put({ type: "entry", message, createdAt: Date.now(), ...(me && { authorHandle: me.userHandle }) });
+          setMessage("");
+        }}>
+          <input value={message} onChange={(e) => setMessage(e.target.value)} placeholder="Leave a note" />
+          <button type="submit">Sign</button>
+        </form>
+      ) : <p>{canSign.reason}</p>}
+
+      {entries.map((e) => <li key={e._id}>{e.message} — {e.authorHandle || "anonymous"}</li>)}
+>>>>>>> REPLACE
+```
 
 ### Multiple databases in one file
 
