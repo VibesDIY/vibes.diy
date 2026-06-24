@@ -63,7 +63,7 @@ Target ~40–60 lines. The shell should look like a real app with empty sections
 > export function chat(doc, oldDoc, user, ctx) {
 >   if (!user) throw { forbidden: "sign in" };
 >   if (doc.type === "channel") {
->     if (!user.isOwner) throw { forbidden: "owner only" };
+>     ctx.requireRole("owner"); // owner is auto-seeded into the reserved `owner` role
 >     return { channels: [doc._id], grant: { public: [doc._id] } };
 >   }
 >   if (doc.type === "message") {

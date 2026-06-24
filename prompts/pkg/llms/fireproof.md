@@ -394,7 +394,7 @@ The access function is the single source of truth for permissions. Gate write su
 
 This example shows the full round-trip — access.js declares channels and grants; App.jsx reads them back via `access`. Key details:
 
-- **Owner bootstrap:** `user.isOwner` gates management operations (channel setup, role grants, moderation). No bootstrap problem — the owner can always manage without needing a role granted first.
+- **Owner bootstrap:** the vibe owner is auto-seeded into the reserved `owner` role, so gate management operations (channel setup, role grants, moderation) on `ctx.requireRole("owner")` — **never `user.isOwner`** (`isOwner` is being retired from the access-fn `user`). No bootstrap problem — the seed means the owner can manage without a prior grant. Default content, though, should be author-owned (anyone signed-in creates and edits their own); reserve owner-gating for shared admin surfaces.
 - **Channel identity:** Channel docs use `_id: "ch:" + name` so names are unique. The `_id` is the channel identifier everywhere — in `channels`, `grant`, and `ctx.requireAccess()`.
 - **Channel grant:** A channel document grants the creator (`grant.users`), adds `grant.public` so all members can read, and `grant.roles` so posters can write.
 - **Write surfaces** are gated with `useVibe(dbName).can.create/edit/delete` — it runs this same access function, so the UI verdict matches the server. Render `.reason` when denied. (See use-vibe docs.)
@@ -407,7 +407,7 @@ export function announcements(doc, oldDoc, user, ctx) {
   if (!user) throw { forbidden: "sign in" };
 
   if (doc.type === "channel") {
-    if (!user.isOwner) throw { forbidden: "owner only" };
+    ctx.requireRole("owner");
     return {
       channels: [doc._id],
       grant: {
@@ -419,7 +419,7 @@ export function announcements(doc, oldDoc, user, ctx) {
   }
 
   if (doc.type === "roleGrant") {
-    if (!user.isOwner) throw { forbidden: "owner only" };
+    ctx.requireRole("owner");
     // A grant doc must ALSO route to a channel — a result with no `channels`
     // (only `members`/`grant`) is rejected as an "unreadable write". Route it to
     // an owner-readable admin channel (not a public one) so the grant persists
@@ -463,8 +463,8 @@ export default function App() {
   // checks authorHandle/channel (and owner-only for roleGrant), so a bare partial
   // would be denied and hide the control even from users who can act.
   const canPost = can.create({ type: "post", channel, authorHandle: viewer?.userHandle });
-  // Owner-only management gates on can.* too — the access fn throws "owner only"
-  // for non-owners, so this verdict is false for everyone but the owner.
+  // Owner-only management gates on can.* too — the access fn calls
+  // ctx.requireRole("owner"), so this verdict is false for everyone but the owner.
   const canGrant = can.create({ type: "roleGrant", role: "poster", userHandle: "newUser" });
 
   if (isViewerPending) return null;
@@ -519,7 +519,7 @@ export default function App() {
 }
 ```
 
-The pattern: `useVibe().can` gates every write surface — including owner-only management, which the access function enforces via `if (!user.isOwner) throw` so `can.create({ type: "roleGrant", … })` is false for non-owners. `access.hasChannel()` reflects display-only membership, and `isOwner` is a display hint only, never the write gate. The access function is the server-side authority — `useVibe().can` is how the UI reflects its decisions for writes.
+The pattern: `useVibe().can` gates every write surface — including owner-only management, which the access function enforces via `ctx.requireRole("owner")` so `can.create({ type: "roleGrant", … })` is false for non-owners. `access.hasChannel()` reflects display-only membership, and `isOwner` is a display hint only, never the write gate. The access function is the server-side authority — `useVibe().can` is how the UI reflects its decisions for writes.
 
 **Owner-management panels (appoint/revoke moderators, grant/revoke roles) gate on `can.*`, not `isOwner`.** It's tempting to wrap an admin panel in `{isOwner && <ModeratorPanel />}` and have its buttons call `database.put`/`database.del` directly. Don't let `isOwner` be what decides a write — it's the same display hint as everywhere else. Gate each mutating control on the verdict from the doc you'll actually write — appoint on `can.create({ type: "modGrant", role: "moderator", userHandle }).ok`, revoke on `can.delete(grantDoc).ok` — and render `.reason` when denied. `can.*` runs the app's own `access.js` to produce the verdict, so the control's enabled state and message track what the access function decides and stay correct as it grows beyond owner-only (a delegated admin role, say). Gate the panel's *visibility* on those same verdicts too, not `isOwner` alone — otherwise a delegated admin the access function now allows never reaches the controls or their reason.
 
@@ -561,7 +561,7 @@ export function chat(doc, oldDoc, user, ctx) {
   if (!user) throw { forbidden: "sign in" };
 
   if (doc.type === "channel") {
-    if (!user.isOwner) throw { forbidden: "owner only" };
+    ctx.requireRole("owner");
     // Open channel: public READ for everyone. No write-membership grant is
     // needed — any signed-in user may post (see the post rule below).
     return { channels: [doc._id], grant: { public: [doc._id] } };
@@ -732,7 +732,7 @@ export function survey(doc, oldDoc, user, ctx) {
   }
 
   if (doc.type === "survey-config") {
-    if (!user.isOwner) throw { forbidden: "owner only" };
+    ctx.requireRole("owner");
     // Route this grant/config doc to an owner-readable admin channel — a
     // grant-only result (no `channels`) is rejected as an "unreadable write".
     return {
@@ -853,7 +853,7 @@ export function chat(doc, oldDoc, user, ctx) {
   // Grant/meta docs must also route to a channel — a channel-less result is
   // rejected as "unreadable write". Route them to an owner-readable admin channel.
   if (doc.type === "team-meta") {
-    if (!user.isOwner) throw { forbidden: "owner only" };
+    ctx.requireRole("owner");
     return {
       channels: ["admin:grants"],
       members: { [doc.teamId]: doc.memberHandles },
@@ -862,7 +862,7 @@ export function chat(doc, oldDoc, user, ctx) {
   }
 
   if (doc.type === "membership") {
-    if (!user.isOwner) throw { forbidden: "owner only" };
+    ctx.requireRole("owner");
     return {
       channels: ["admin:grants"],
       members: { [doc.role]: [doc.userHandle] },
@@ -887,11 +887,11 @@ access.js
 ```js
 <<<<<<< SEARCH
   if (doc.type === "team-meta") {
-    if (!user.isOwner) throw { forbidden: "owner only" };
+    ctx.requireRole("owner");
     return {
 =======
   if (doc.type === "team-meta") {
-    if (!user.isOwner) throw { forbidden: "owner only" };
+    ctx.requireRole("owner");
     // Immutable-after-create fields
     if (oldDoc && doc.createdBy !== oldDoc.createdBy) {
       throw { forbidden: "createdBy is immutable" };
