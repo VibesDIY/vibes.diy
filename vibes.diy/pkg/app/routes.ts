@@ -17,6 +17,7 @@ export default [
     route("memberships/:ownerHandle?/:appSlug?", "./routes/vibes/memberships.tsx"),
     route("messages", "./routes/messages.tsx"),
     route("messages/:ownerHandleA/:ownerHandleB", "./routes/messages.$ownerHandleA.$ownerHandleB.tsx"),
+    route("notifications", "./routes/notifications.tsx", { id: "notifications" }),
     route("settings", "./routes/settings.tsx", { id: "settings" }),
     route("settings/csr-to-cert", "./routes/settings/csr-to-cert.tsx", { id: "settings-csr-to-cert" }),
   ]),
