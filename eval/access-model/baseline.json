@@ -1,16 +1,18 @@
 {
   "commit": "3fac49eb9832bb31634ef029e119b28a6f70763f",
+  "note": "Multi-batch mean of 2 baseline-prompt batches (base-run1 + base-run2). Single-batch noise is large (~0.06 eval / ~0.17 holdout), so the frozen reference is averaged rather than a single lucky draw. See prompts/AUTORESEARCH-2602.md and VibesDIY/vibes.diy#2637.",
+  "batches": 2,
   "eval": {
-    "scored": 64,
+    "scored": 128,
     "platformFailed": 0,
-    "metric": 0.59375,
+    "metric": 0.5625,
     "formAStrictRate": 0.34375,
-    "formABroadRate": 0,
+    "formABroadRate": 0.0078125,
     "isOwnerCount": 0,
     "twoFileRate": 1,
     "renderableRate": 1
   },
   "holdout": {
-    "metric": 0.484375
+    "metric": 0.3984375
   }
 }

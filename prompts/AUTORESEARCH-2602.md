@@ -2,10 +2,15 @@
 
 ## Iteration ledger
 
-Frozen baseline (commit `3fac49e`, preview env, 128 apps @ concurrency 16):
-**eval = 0.594** (Form-A strict 34.4%, two-file 100%, renderable 100%), **holdout = 0.484**.
-Keep rule: eval gain > 0.05 noise band with gates green (two-file ≥ 0.95, renderable ≥ 0.95,
-holdout ≥ baseline − 0.05 = 0.434), then a confirmation batch.
+Frozen baseline — **calibrated** (`baseline.json`, 2-batch mean of base-run1 + base-run2, preview
+env, 128 apps @ concurrency 16 each): **eval = 0.5625** (Form-A strict 34.4%, two-file 100%,
+renderable 100%), **holdout = 0.3984**. The kickoff single-batch draw (eval 0.594 / holdout 0.484)
+is preserved in the rows below as "base"; its holdout was a high outlier — see the noise section
+and #2637.
+
+Keep rule (calibrated, #2637): keep only when the eval gain exceeds the measured **eval band ≈0.06**
+with all gates green — two-file/renderable ≥ baseline − 0.05, holdout ≥ baseline − **0.17** (the
+measured holdout jitter, now the `gates.ts` default `holdoutBand`) — then a confirmation batch.
 
 | iter | edit                                                                                                      | eval  | Δeval             | holdout | verdict                                                                                                                                                                                                                  |
 | ---- | --------------------------------------------------------------------------------------------------------- | ----- | ----------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
