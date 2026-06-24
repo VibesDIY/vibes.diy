@@ -17,6 +17,7 @@ export * from "./intern/emit-notification.js";
 export * from "./intern/notify-remix.js";
 export * from "./intern/notify-vibe-published.js";
 export * from "./intern/notify-comment-posted.js";
+export * from "./intern/notify-request-grant.js";
 export * from "./intern/recovery.js";
 export * from "./asset-grant.js";
 export * from "./asset-session.js";
