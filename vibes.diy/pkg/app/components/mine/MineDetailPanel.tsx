@@ -4,17 +4,19 @@ import { PromptsTab } from "./PromptsTab.js";
 import { AppChatsTab } from "./AppChatsTab.js";
 import { SharingTab } from "./sharing-tab/SharingTab.js";
 import { SettingsTab } from "./settings-tab/index.js";
+import { RemixesTab } from "./RemixesTab.js";
 
-export type MineDetailTab = "prompts" | "chats" | "sharing" | "settings";
+export type MineDetailTab = "prompts" | "chats" | "remixes" | "sharing" | "settings";
 
 export function toMineDetailTab(s: string | undefined): MineDetailTab {
-  if (s === "chats" || s === "sharing" || s === "settings") return s;
+  if (s === "chats" || s === "remixes" || s === "sharing" || s === "settings") return s;
   return "prompts";
 }
 
 const TABS: { id: MineDetailTab; label: string }[] = [
   { id: "prompts", label: "Prompts" },
   { id: "chats", label: "Application Chats" },
+  { id: "remixes", label: "Remixes" },
   { id: "sharing", label: "Sharing" },
   { id: "settings", label: "Settings" },
 ];
@@ -155,6 +157,8 @@ export function MineDetailPanel({
             />
           ) : activeTab === "chats" ? (
             <AppChatsTab ownerHandle={ownerHandle ?? ""} appSlug={appSlug ?? ""} />
+          ) : activeTab === "remixes" ? (
+            <RemixesTab ownerHandle={ownerHandle ?? ""} appSlug={appSlug ?? ""} />
           ) : activeTab === "sharing" ? (
             <SharingTab ownerHandle={ownerHandle ?? ""} appSlug={appSlug ?? ""} />
           ) : (

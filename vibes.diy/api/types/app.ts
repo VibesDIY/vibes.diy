@@ -2,6 +2,7 @@ import { type } from "arktype";
 import { FileSystemRefFields } from "@vibes.diy/call-ai-v2";
 import { fileSystemItem, MetaItem } from "./types.js";
 import { dashAuthType, vibeUserEnv, vibeFile, FSMode, NeedOneAppSlugUserSlug } from "./common.js";
+import { notificationRow, notificationTypeEnum } from "./notifications.js";
 
 export const ReqEnsureAppSlug = type({
   type: "'vibes.diy.req-ensure-app-slug'",
@@ -383,4 +384,54 @@ export const ResDeleteHandleBinding = type({
 export type ResDeleteHandleBinding = typeof ResDeleteHandleBinding.infer;
 export function isResDeleteHandleBinding(obj: unknown): obj is ResDeleteHandleBinding {
   return !(ResDeleteHandleBinding(obj) instanceof type.errors);
+}
+
+// Notification inbox read API. Owner-only: the server scopes every read/write
+// to the authenticated caller's userId. The list returns self-contained rows
+// (each carries its own `body`) newest-first, folding the unread count into the
+// same response. Optional `appSlug`/`type` filters power per-vibe views.
+export const reqListNotifications = type({
+  type: "'vibes.diy.req-list-notifications'",
+  auth: dashAuthType,
+  "appSlug?": "string",
+  "ownerHandle?": "string",
+  "notificationType?": notificationTypeEnum,
+  "cursor?": "string",
+  "limit?": "number",
+});
+export type ReqListNotifications = typeof reqListNotifications.infer;
+export function isReqListNotifications(obj: unknown): obj is ReqListNotifications {
+  return !(reqListNotifications(obj) instanceof type.errors);
+}
+
+export const resListNotifications = type({
+  type: "'vibes.diy.res-list-notifications'",
+  items: notificationRow.array(),
+  "nextCursor?": "string",
+  unreadCount: "number",
+});
+export type ResListNotifications = typeof resListNotifications.infer;
+export function isResListNotifications(obj: unknown): obj is ResListNotifications {
+  return !(resListNotifications(obj) instanceof type.errors);
+}
+
+// Mark notifications read. Omitting `ids` marks ALL of the caller's unread
+// notifications read. `ok` is the row count touched.
+export const reqMarkNotificationsRead = type({
+  type: "'vibes.diy.req-mark-notifications-read'",
+  auth: dashAuthType,
+  "ids?": "string[]",
+});
+export type ReqMarkNotificationsRead = typeof reqMarkNotificationsRead.infer;
+export function isReqMarkNotificationsRead(obj: unknown): obj is ReqMarkNotificationsRead {
+  return !(reqMarkNotificationsRead(obj) instanceof type.errors);
+}
+
+export const resMarkNotificationsRead = type({
+  type: "'vibes.diy.res-mark-notifications-read'",
+  ok: "number",
+});
+export type ResMarkNotificationsRead = typeof resMarkNotificationsRead.infer;
+export function isResMarkNotificationsRead(obj: unknown): obj is ResMarkNotificationsRead {
+  return !(resMarkNotificationsRead(obj) instanceof type.errors);
 }

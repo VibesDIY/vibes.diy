@@ -93,6 +93,12 @@ import {
   ReqDeleteHandleBinding,
   ResDeleteHandleBinding,
   isResDeleteHandleBinding,
+  ReqListNotifications,
+  ResListNotifications,
+  isResListNotifications,
+  ReqMarkNotificationsRead,
+  ResMarkNotificationsRead,
+  isResMarkNotificationsRead,
   ReqListModels,
   ResListModels,
   isResListModels,
@@ -607,6 +613,14 @@ export class VibesDiyApi implements VibesDiyApiIface<{
 
   deleteHandleBinding(req: Req<ReqDeleteHandleBinding>): Promise<Result<ResDeleteHandleBinding, VibesDiyError>> {
     return this.request({ ...req, type: "vibes.diy.req-delete-user-slug-binding" }, { resMatch: isResDeleteHandleBinding });
+  }
+
+  listNotifications(req: Req<ReqListNotifications>): Promise<Result<ResListNotifications, VibesDiyError>> {
+    return this.request({ ...req, type: "vibes.diy.req-list-notifications" }, { resMatch: isResListNotifications });
+  }
+
+  markNotificationsRead(req: Req<ReqMarkNotificationsRead>): Promise<Result<ResMarkNotificationsRead, VibesDiyError>> {
+    return this.request({ ...req, type: "vibes.diy.req-mark-notifications-read" }, { resMatch: isResMarkNotificationsRead });
   }
 
   listModels = Lazy(

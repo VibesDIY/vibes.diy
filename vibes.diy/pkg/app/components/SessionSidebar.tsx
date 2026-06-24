@@ -7,6 +7,7 @@ import { GearIcon } from "./SessionSidebar/GearIcon.js";
 import { InfoIcon } from "./SessionSidebar/InfoIcon.js";
 import { Memberships } from "./SessionSidebar/Memberships.js";
 import { RecentVibes } from "./RecentVibes.js";
+import { NotificationBell } from "./NotificationBell.js";
 
 type SidebarSection = "apps" | "memberships";
 
@@ -140,6 +141,7 @@ function SessionSidebar({ isVisible, onClose }: SessionSidebarProps) {
             <InfoIcon className="text-accent-01 mr-3 h-5 w-5" />
             <span>About</span>
           </Link>
+          {isAuthenticated && <NotificationBell onNavigate={() => onClose()} />}
           {isAuthenticated && (
             <Link
               to="/settings"

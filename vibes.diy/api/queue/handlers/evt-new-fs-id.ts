@@ -5,6 +5,7 @@ import { and, desc, eq } from "drizzle-orm/sql/expressions";
 import { QueueCtx } from "../queue-ctx.js";
 import { processScreenShotEvent } from "../screen-shotter.js";
 import { buildPublishEmbed, postEmbed } from "../intern/post-to-discord.js";
+import { notifyRemixSourceOwner, notifyVibePublished } from "@vibes.diy/api-svc";
 
 export const evtNewFsIdEvento: EventoHandler<unknown, MsgBase<EvtNewFsId>, void> = {
   hash: "evt-new-fs-id",
@@ -28,7 +29,13 @@ export const evtNewFsIdEvento: EventoHandler<unknown, MsgBase<EvtNewFsId>, void>
     }
     if (payload.mode === "production") {
       const rows = await qctx.sql.db
-        .select({ releaseSeq: qctx.sql.tables.apps.releaseSeq })
+        .select({
+          releaseSeq: qctx.sql.tables.apps.releaseSeq,
+          userId: qctx.sql.tables.apps.userId,
+          ownerHandle: qctx.sql.tables.apps.ownerHandle,
+          appSlug: qctx.sql.tables.apps.appSlug,
+          meta: qctx.sql.tables.apps.meta,
+        })
         .from(qctx.sql.tables.apps)
         .where(
           and(
@@ -42,23 +49,18 @@ export const evtNewFsIdEvento: EventoHandler<unknown, MsgBase<EvtNewFsId>, void>
       const publishCount = rows[0]?.releaseSeq;
       await postEmbed(qctx, buildPublishEmbed(qctx, payload, publishCount));
 
-      // Resolve ownerHandle → userId to notify the vibe owner
-      const usb = qctx.sql.tables.handleBinding;
-      const ownerRow = await qctx.sql.db
-        .select({ userId: usb.userId })
-        .from(usb)
-        .where(eq(usb.handle, payload.ownerHandle))
-        .limit(1)
-        .then((r) => r[0] ?? null);
-
-      if (ownerRow?.userId) {
-        await qctx.notifyUser(ownerRow.userId, {
-          type: "vibes.diy.evt-user-notification",
-          notificationType: "vibe-published",
-          ownerHandle: payload.ownerHandle,
-          appSlug: payload.appSlug,
-        });
+      // Classic-remix path: a remix is forked in dev and surfaces to the
+      // source owner only on its first production publish. Dedupe is handled
+      // by emitNotification, so re-publishes are naturally once-only.
+      const publishedRow = rows[0];
+      if (publishedRow) {
+        await notifyRemixSourceOwner(qctx, publishedRow);
       }
+
+      // Persist a vibe-published notification for the owner (and fan out the
+      // live bell). Dedupe is per-release (fsId), so re-delivery of the same
+      // publish event does not double-notify.
+      await notifyVibePublished(qctx, payload);
     }
     return Result.Ok(EventoResult.Continue);
   },

@@ -9,6 +9,7 @@ import {
   W3CWebSocketEvent,
   MetaItem,
   FileSystemItem,
+  EvtRemixCloneNotify,
   isResHasAccessInviteAccepted,
   isResHasAccessRequestApproved,
   isFetchOkResult,
@@ -155,7 +156,16 @@ export async function forkApp(
   //    read so renames of srcUserSlug/srcAppSlug are followed automatically.
   //    Mode: dev for classic remix (chat editor), production for clone
   //    (lands straight on /vibe/ published URL).
-  const destMeta: MetaItem[] = [...srcMeta.filter((m) => m.type !== "remix-of"), { type: "remix-of", srcFsId: src.fsId }];
+  const destMeta: MetaItem[] = [
+    ...srcMeta.filter((m) => m.type !== "remix-of"),
+    {
+      type: "remix-of",
+      srcFsId: src.fsId,
+      srcUserId: src.userId,
+      srcOwnerHandle: src.ownerHandle,
+      srcAppSlug: src.appSlug,
+    },
+  ];
   const destMode = skipChat ? "production" : "dev";
   const rIns = await exception2Result(() =>
     vctx.sql.db.insert(vctx.sql.tables.apps).values({
@@ -245,6 +255,32 @@ export async function forkApp(
       userId
     );
     if (rPubSet.isErr()) return Result.Err(`Failed to disable clone public access: ${rPubSet.Err().message}`);
+
+    // Clone-path remix notification (#2544): a clone (skipChat) is born straight
+    // in production and never emits an evt-new-fs-id, so the classic-remix
+    // notification wired into that queue handler (call site A) does NOT cover
+    // clones. ENQUEUE an evt-remix-clone-notify so the notification gets the same
+    // at-least-once retry as the classic-remix publish path — emitting it inline
+    // would let a transient failure permanently drop it. The handler re-loads the
+    // clone row + `remix-of` meta and dedupes on (userId, dedupeKey), so delivery
+    // is once-only and a self-clone is a no-op. The enqueue itself must not break
+    // the fork — log and continue, like bumpAppRecency above.
+    const rNotify = await exception2Result(() =>
+      vctx.postQueue({
+        payload: {
+          type: "vibes.diy.evt-remix-clone-notify",
+          ownerHandle: destUserSlug,
+          appSlug: destAppSlug,
+        },
+        tid: "queue-event",
+        src: "forkApp",
+        dst: "vibes-service",
+        ttl: 1,
+      } satisfies MsgBase<EvtRemixCloneNotify>)
+    );
+    if (rNotify.isErr()) {
+      vctx.logger.Warn().Err(rNotify).Msg("enqueue evt-remix-clone-notify (clone path) failed");
+    }
   }
 
   return Result.Ok({

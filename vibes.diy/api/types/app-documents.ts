@@ -240,6 +240,25 @@ export function isEvtCommentPosted(obj: unknown): obj is EvtCommentPosted {
   return !(evtCommentPosted(obj) instanceof type.errors);
 }
 
+// ── remixCloneNotify event (queue → vibe-remixed notification) ──────
+//
+// A clone (forkApp skipChat) is born straight in production and never emits
+// evt-new-fs-id, so the classic-remix notification wired into that queue
+// handler does NOT cover clones. forkApp enqueues this event with the clone's
+// (ownerHandle, appSlug); the handler re-loads the clone row + meta and calls
+// notifyRemixSourceOwner, giving the clone-path notification the same
+// at-least-once retry as the classic-remix publish path. Dedupe is handled by
+// emitNotification's unique (userId, dedupeKey), so redelivery is once-only.
+export const evtRemixCloneNotify = type({
+  type: "'vibes.diy.evt-remix-clone-notify'",
+  ownerHandle: "string",
+  appSlug: "string",
+});
+export type EvtRemixCloneNotify = typeof evtRemixCloneNotify.infer;
+export function isEvtRemixCloneNotify(obj: unknown): obj is EvtRemixCloneNotify {
+  return !(evtRemixCloneNotify(obj) instanceof type.errors);
+}
+
 // ── dmReceived event (queue → Discord notification) ─────────────────
 
 export const evtDmReceived = type({

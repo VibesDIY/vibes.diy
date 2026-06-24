@@ -541,6 +541,8 @@ function NotificationSettingsCard() {
     commentPosted: true,
     requestApproved: true,
     requestRevoked: true,
+    vibeRemixed: true,
+    dmReceived: true,
   });
   const [loaded, setLoaded] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -574,6 +576,8 @@ function NotificationSettingsCard() {
     { key: "commentPosted", label: "New comment on my vibe" },
     { key: "requestApproved", label: "Access request approved" },
     { key: "requestRevoked", label: "Access request revoked" },
+    { key: "vibeRemixed", label: "Someone remixed my vibe" },
+    { key: "dmReceived", label: "New direct message" },
   ];
 
   return (

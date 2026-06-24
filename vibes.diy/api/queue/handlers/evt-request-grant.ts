@@ -4,6 +4,7 @@ import { type } from "arktype";
 import { QueueCtx } from "../queue-ctx.js";
 import { sendEmailOpts } from "../intern/send-email.js";
 import { buildRequestApprovedEmbed, buildRequestPendingEmbed, postEmbed } from "../intern/post-to-discord.js";
+import { notifyRequestGrant } from "@vibes.diy/api-svc";
 
 export const evtRequestGrantEvento: EventoHandler<unknown, MsgBase<EvtRequestGrant>, void> = {
   hash: "evt-request-grant",
@@ -37,24 +38,11 @@ export const evtRequestGrantEvento: EventoHandler<unknown, MsgBase<EvtRequestGra
     //     token: payload.grant.tokenOrGrantUserId,
     //   }]);
     // }
-    // Notify the requester when their access request is decided
-    const requesterUserId = payload.grant.foreignUserId;
-    if (payload.grant.state === "approved") {
-      await qctx.notifyUser(requesterUserId, {
-        type: "vibes.diy.evt-user-notification",
-        notificationType: "request-approved",
-        ownerHandle: payload.grant.ownerHandle,
-        appSlug: payload.grant.appSlug,
-      });
-    }
-    if (payload.grant.state === "revoked") {
-      await qctx.notifyUser(requesterUserId, {
-        type: "vibes.diy.evt-user-notification",
-        notificationType: "request-revoked",
-        ownerHandle: payload.grant.ownerHandle,
-        appSlug: payload.grant.appSlug,
-      });
-    }
+    // Persist a request-approved / request-revoked notification for the
+    // requester (and fan out the live bell). Dedupe carries the grant's
+    // `updated` timestamp so re-delivery does not double-notify and a re-grant
+    // (a new decision) notifies distinctly.
+    await notifyRequestGrant(qctx, payload.grant);
 
     if (!(payload.grant.foreignInfo.claims?.params.email && payload.grant.foreignInfo.givenEmail)) {
       return Result.Ok(EventoResult.Continue);

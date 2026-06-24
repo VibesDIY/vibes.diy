@@ -366,6 +366,35 @@ export const sqlAccessFunctionBindings = sqliteTable(
   ]
 );
 
+// Unified notification inbox — durable, self-contained rows. Each row carries
+// its own rendered `body` so the inbox list renders with no joins / second
+// query. `targetRef` is the optional pointer a per-type renderer MAY hydrate.
+// Unique (userId, dedupeKey) makes emit idempotent.
+// See docs/superpowers/specs/2026-06-23-notification-inbox-design.md.
+export const sqlNotifications = sqliteTable(
+  "Notifications",
+  {
+    id: text().notNull().primaryKey(), // ULID — sortable by creation
+    userId: text().notNull(), // recipient (Clerk id)
+    notificationType: text().notNull(),
+    ownerHandle: text("userSlug").notNull(), // subject vibe owner
+    appSlug: text().notNull(), // subject vibe
+    body: text().notNull(), // self-contained rendered message
+    actorHandle: text(), // who caused it (nullable)
+    actorUserId: text(), // actor Clerk id (nullable)
+    targetRef: text({ mode: "json" }), // optional link payload (nullable)
+    dedupeKey: text().notNull(), // idempotency key
+    created: text().notNull(), // ISO timestamp
+    readAt: text(), // unread when null
+  },
+  (table) => [
+    index("Notifications_userId_created").on(table.userId, table.created),
+    index("Notifications_userId_readAt").on(table.userId, table.readAt),
+    index("Notifications_userId_ownerHandle_appSlug").on(table.userId, table.ownerHandle, table.appSlug),
+    uniqueIndex("Notifications_userId_dedupeKey").on(table.userId, table.dedupeKey),
+  ]
+);
+
 export const sqlAccessFnOutputs = sqliteTable(
   "AccessFnOutputs",
   {
