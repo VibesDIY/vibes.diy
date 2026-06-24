@@ -23,6 +23,7 @@ import { readProjectFiles, pushFromDir } from "./push-from-dir.js";
 import { formatErr } from "./format-err.js";
 import { formatNoFilesError } from "./format-no-files-error.js";
 import { readDryRunPayloadFromStream, formatDryRunAsText } from "./dry-run.js";
+import { modelFromSectionEvent } from "./resolved-model.js";
 
 // Re-exported for back-compat with importers/tests that pulled these from
 // edit-cmd before they moved to the neutral dry-run module.
@@ -190,7 +191,11 @@ export const editEvento: EventoHandler<WrapCmdTSMsg<unknown>, ReqEdit, ResEdit |
       return Result.Err(rSeed.Err());
     }
 
-    await sendProgress(ctx, "info", "Editing...");
+    // Name the model up front when the run carries an explicit override;
+    // otherwise the server resolves the default and we surface it from the
+    // prompt.req block as soon as it streams back (see the transform below).
+    let announcedModel = args.model;
+    await sendProgress(ctx, "info", announcedModel ? `Editing with ${announcedModel}...` : "Editing...");
 
     // Resolve ownerHandle: explicit flag > default setting > first from list.
     // (Only the real edit path — the dry-run above stays read-only.)
@@ -241,6 +246,17 @@ export const editEvento: EventoHandler<WrapCmdTSMsg<unknown>, ReqEdit, ResEdit |
             sectionEventCount += 1;
             blockCount += msg.blocks.length;
             streamedBytes += JSON.stringify(msg).length;
+            // Surface the model the server actually resolved (default path,
+            // no --model override) the first time a prompt.req block arrives.
+            if (announcedModel === undefined) {
+              const resolved = modelFromSectionEvent(msg);
+              if (resolved) {
+                announcedModel = resolved;
+                sendProgress(ctx, "info", `Editing with ${announcedModel}...`).catch(() => {
+                  /* progress is best-effort */
+                });
+              }
+            }
             controller.enqueue(msg);
             return;
           }

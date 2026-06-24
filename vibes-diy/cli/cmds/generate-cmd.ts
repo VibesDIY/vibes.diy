@@ -24,6 +24,7 @@ import { pushFromDir } from "./push-from-dir.js";
 import { formatErr } from "./format-err.js";
 import { formatNoFilesError } from "./format-no-files-error.js";
 import { formatDryRunAsText, readDryRunPayloadFromStream } from "./dry-run.js";
+import { modelFromSectionEvent } from "./resolved-model.js";
 
 export const ResGenerate = type({
   type: "'vibes-diy.cli.res-generate'",
@@ -139,7 +140,11 @@ export const generateEvento: EventoHandler<WrapCmdTSMsg<unknown>, ReqGenerate, R
       } satisfies ResGenerate);
     }
 
-    await sendProgress(ctx, "info", "Generating...");
+    // Name the model up front when the run carries an explicit override;
+    // otherwise the server resolves the default and we surface it from the
+    // prompt.req block as soon as it streams back (see the transform below).
+    let announcedModel = args.model;
+    await sendProgress(ctx, "info", announcedModel ? `Generating with ${announcedModel}...` : "Generating...");
 
     // Resolve ownerHandle: explicit flag > default setting > first from list.
     // (Only the real generate path — the dry-run above stays read-only.)
@@ -186,6 +191,17 @@ export const generateEvento: EventoHandler<WrapCmdTSMsg<unknown>, ReqGenerate, R
             sectionEventCount += 1;
             blockCount += msg.blocks.length;
             streamedBytes += JSON.stringify(msg).length;
+            // Surface the model the server actually resolved (default path,
+            // no --model override) the first time a prompt.req block arrives.
+            if (announcedModel === undefined) {
+              const resolved = modelFromSectionEvent(msg);
+              if (resolved) {
+                announcedModel = resolved;
+                sendProgress(ctx, "info", `Generating with ${announcedModel}...`).catch(() => {
+                  /* progress is best-effort */
+                });
+              }
+            }
             controller.enqueue(msg);
             return;
           }
