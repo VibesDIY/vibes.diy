@@ -12,19 +12,26 @@ that **do not** mention access control. Each row dir holds the pulled
 Grades and the roll-up live in
 [`docs/superpowers/specs/eval-2588-access-model-results-2026-06-24.json`](../../../docs/superpowers/specs/eval-2588-access-model-results-2026-06-24.json).
 
-| #   | dir          | prompt                                            | grade                                                          |
-| --- | ------------ | ------------------------------------------------- | -------------------------------------------------------------- |
-| 1   | `row1-todo`  | A todo list app                                   | PASS — per-user-private (`user:` channel)                      |
-| 2   | `row2-habit` | A daily habit tracker                             | **FAIL** — Form-A (`requireRole("owner")` core write)          |
-| 3   | `row3-shop`  | A shared shopping list I can invite my partner to | SOFT-FAIL — missed per-object (one global public list)         |
-| 4   | `row4-board` | A collaborative whiteboard people can join        | **FAIL** — visitor locked out (owner-only membership, no join) |
-| 5   | `row5-blog`  | My personal blog                                  | PASS — owner-published                                         |
-| 6   | `row6-guest` | A public guestbook anyone can sign                | PASS — anonymous author-owned + public read                    |
-| 7   | `row7-photo` | A photo wall where people comment on posts        | PASS — author-owned comments, public read                      |
-| 8   | `row8-team`  | A team workspace with channels and roles          | PASS — clunky-but-reachable administered workspace             |
+| #   | dir          | prompt                                            | grade                                                                                             |
+| --- | ------------ | ------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| 1   | `row1-todo`  | A todo list app                                   | SOFT-FAIL — model textbook per-user-private, but App.jsx won't render (dup `useFireproof` import) |
+| 2   | `row2-habit` | A daily habit tracker                             | **FAIL** — Form-A (`requireRole("owner")` core write)                                             |
+| 3   | `row3-shop`  | A shared shopping list I can invite my partner to | **FAIL** — mutable author (no `oldDoc` check) + partner can't edit others' items; no per-object   |
+| 4   | `row4-board` | A collaborative whiteboard people can join        | **FAIL** — visitor locked out (owner-only membership, no join)                                    |
+| 5   | `row5-blog`  | My personal blog                                  | PASS — owner-published                                                                            |
+| 6   | `row6-guest` | A public guestbook anyone can sign                | PASS — anonymous author-owned + public read                                                       |
+| 7   | `row7-photo` | A photo wall where people comment on posts        | PASS — author-owned comments, public read                                                         |
+| 8   | `row8-team`  | A team workspace with channels and roles          | **FAIL** — model correct but App non-interactive (`ChannelSidebar` stub)                          |
 
-**Roll-up:** 5 PASS / 1 SOFT-FAIL / 2 FAIL · Form-A rate 25% strict (1/4) – 50% broad (2/4),
-target 0% · `unknown` 0% · `isOwner` write-gates 0.
+**Roll-up (revised after Codex review on PR #2593):** 3 PASS / 1 SOFT-FAIL / 4 FAIL · Form-A rate
+25% strict (1/4) – 50% broad (2/4), target 0% · `unknown` 0% · `isOwner` write-gates 0.
+
+> **Two grading axes:** each row is graded on both (a) `access.js` MODEL correctness and
+> (b) `App.jsx` gating + renderability. Rows 1 and 8 have correct/reachable models but
+> fail axis (b) — a duplicate import and a stubbed component respectively — generation
+> completeness failures orthogonal to the access-model prompt. The MODEL-level gaps the
+> prompt owns are rows 2, 3, 4 (Form-A, mutable-author/broken-collab, owner-lockout) plus
+> no per-object anywhere. Original roll-up was 5/1/2; see the results JSON `revision_note`.
 
 > Row 1's first server-assigned slug differs (`balloon-believed-single`) because the
 > fixed-slug `eval-2588-todo` truncated on its first generate and same-slug retries
