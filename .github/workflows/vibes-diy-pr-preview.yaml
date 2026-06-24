@@ -5,6 +5,7 @@ on:
     types: [opened, synchronize, reopened]
     paths:
       - 'vibes.diy/**/*'
+      - 'prompts/**/*'
       - '.github/workflows/vibes-diy-pr-preview.yaml'
 
 concurrency:

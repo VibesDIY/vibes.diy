@@ -614,7 +614,7 @@ Channel `_id` is the channel identifier everywhere. The access function uses `do
 
 ### Example: Per-object sharing (collaborate on your own objects, no admin)
 
-A list app where every signed-in user makes their own lists, sees only their own, and can invite anyone to collaborate on a specific list — peer to peer, with no app admin in the loop. The pattern: **a channel per object** (`list:<id>`); the creator grants themselves that channel at creation; child docs (items) gate on `ctx.requireAccess` of the list's channel; any current member shares the list by granting another user the same channel. Membership is direct `grant.users`, so each viewer's access scales with their own memberships.
+Reach for this whenever the prompt says **invite, join, collaborate, share with, together, with my partner/team** — a shared shopping list you invite a partner to, a whiteboard people can join, a trip a group plans together. A list app where every signed-in user makes their own lists, sees only their own, and can invite anyone to collaborate on a specific list — peer to peer, with no app admin in the loop. The pattern: **a channel per object** (`list:<id>`); the creator grants themselves that channel at creation; child docs (items) gate on `ctx.requireAccess` of the list's channel — so **any member edits any item** (a per-member shared list, not author-locked); any current member shares the list by granting another user the same channel. Membership is direct `grant.users`, so each viewer's access scales with their own memberships. Don't collapse this into a single global list (everyone editing one list) or an owner-administered one (only the owner admits collaborators) — both miss what "invite my partner" asks for.
 
 access.js
 
