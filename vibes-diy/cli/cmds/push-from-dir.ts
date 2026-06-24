@@ -65,6 +65,26 @@ export interface PushFromDirOk {
   publicUrl: string;
 }
 
+/**
+ * Render a push error without burying the reason. The server returns a
+ * `vibes.diy.res-error` envelope `{ error: { message, code } }`; dumping the raw
+ * object as JSON nests the real message behind escapes. Surface `error.message`
+ * (+ code) directly so a DB cause like a unique-violation is readable (#2612).
+ */
+function formatPushError(err: unknown): string {
+  if (err && typeof err === "object") {
+    const e = err as { error?: { message?: unknown; code?: unknown }; message?: unknown };
+    const inner = e.error;
+    if (inner && typeof inner.message === "string") {
+      const code = inner.code != null && inner.code !== "" ? ` [${String(inner.code)}]` : "";
+      return `${inner.message}${code}`;
+    }
+    if (typeof e.message === "string") return e.message;
+    return JSON.stringify(err);
+  }
+  return String(err);
+}
+
 export async function pushFromDir(opts: PushFromDirOptions): Promise<Result<PushFromDirOk>> {
   const rFiles = await exception2Result(() => readProjectFiles(opts.dir));
   if (rFiles.isErr()) {
@@ -91,8 +111,7 @@ export async function pushFromDir(opts: PushFromDirOptions): Promise<Result<Push
     fileSystem: files,
   });
   if (rResult.isErr()) {
-    const pushErr = rResult.Err();
-    return Result.Err(`Push failed: ${typeof pushErr === "object" ? JSON.stringify(pushErr) : String(pushErr)}`);
+    return Result.Err(`Push failed: ${formatPushError(rResult.Err())}`);
   }
 
   const result = resEnsureAppSlug(rResult.Ok());

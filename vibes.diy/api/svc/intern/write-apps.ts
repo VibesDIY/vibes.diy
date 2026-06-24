@@ -21,6 +21,8 @@ import mime from "mime";
 import { transform } from "sucrase";
 import { ExportAllDeclaration, ExportNamedDeclaration, ImportDeclaration, parse } from "acorn";
 import { AppHandleBinding, VibesApiSQLCtx } from "../types.js";
+import { allocateAndInsertApp } from "../public/app-seq-allocation.js";
+import { formatDbErrorChain } from "../public/seq-allocation.js";
 
 async function checkMaxAppsPerUser(
   ctx: VibesApiSQLCtx,
@@ -406,22 +408,32 @@ export async function ensureApps(
   }
   const carriedMeta: MetaItem[] = priorMeta.filter(isCrossReleaseMetaItem);
 
-  const sqlVal = {
-    appSlug: binding.appSlug.appSlug,
-    userId: binding.ownerHandle.userId,
-    ownerHandle: binding.ownerHandle.ownerHandle,
-    releaseSeq: maxSeq + 1,
-    fsId,
-    env: opts.env,
-    fileSystem: rFileSystems.map((item) => item.Ok()),
-    meta: carriedMeta,
-    mode: opts.mode,
-    created: new Date().toISOString(),
-  };
-  const rIns = await exception2Result(() => ctx.sql.db.insert(ctx.sql.tables.apps).values(sqlVal));
-  // console.log("Inserted app record into database with values:", sqlVal);
+  // Allocate releaseSeq atomically. `maxSeq` above is only the soft max-apps
+  // limit signal — the actual seq is computed inside the INSERT (COALESCE(MAX+1)
+  // under a per-(user,app) advisory lock on pg) so the two concurrent writers a
+  // single `generate` produces (server dev-publish + CLI production-push) can't
+  // both land releaseSeq=1 and collide on the PK. See app-seq-allocation.ts (#2612).
+  const rIns = await exception2Result(() =>
+    allocateAndInsertApp({
+      db: ctx.sql.db,
+      flavour: ctx.sql.flavour,
+      row: {
+        appSlug: binding.appSlug.appSlug,
+        userId: binding.ownerHandle.userId,
+        ownerHandle: binding.ownerHandle.ownerHandle,
+        fsId,
+        env: opts.env,
+        fileSystem: rFileSystems.map((item) => item.Ok()),
+        meta: carriedMeta,
+        mode: opts.mode,
+        created: new Date().toISOString(),
+      },
+    })
+  );
   if (rIns.isErr()) {
-    return Result.Err(rIns);
+    // Surface the full driver cause-chain (SQLSTATE + constraint) instead of the
+    // opaque drizzle "Failed query: insert into Apps ..." wrapper (#2612).
+    return Result.Err(`ensureApps: failed to allocate Apps release: ${formatDbErrorChain(rIns.Err())}`);
   }
   return Result.Ok({
     type: "vibes.diy.res-ensure-app-slug",
