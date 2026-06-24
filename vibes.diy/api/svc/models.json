@@ -1,5 +1,14 @@
 [
   {
+    "id": "anthropic/claude-opus-4.8",
+    "name": "Claude Opus 4.8",
+    "description": "Claude Opus 4.8 is Anthropic's most capable model, ideal for complex coding and creative tasks",
+    "featured": true,
+    "preSelected": ["chat"],
+    "supports": ["chat", "app"],
+    "imageInput": true
+  },
+  {
     "id": "anthropic/claude-opus-4.6-fast",
     "name": "Claude Opus 4.6 Fast",
     "description": "Claude Opus 4.6 Fast is Anthropic's most capable model with faster output, ideal for complex coding and creative tasks",
@@ -21,7 +30,6 @@
     "name": "Claude Sonnet 4.6",
     "description": "Claude Sonnet 4.6 is Anthropic's most advanced Sonnet model to date, optimized for real-world agents and coding workflows",
     "featured": true,
-    "preSelected": ["chat"],
     "supports": ["chat", "app"],
     "imageInput": true
   },
