@@ -18,7 +18,7 @@ import { createClient } from "@libsql/client/node";
 import { inject } from "vitest";
 import { drizzle as drizzleLibsql } from "drizzle-orm/libsql";
 import { drizzle as drizzleNeon } from "drizzle-orm/neon-serverless";
-import { Pool } from "@neondatabase/serverless";
+import { neonConfig, Pool } from "@neondatabase/serverless";
 import fs from "fs/promises";
 import path from "node:path";
 
@@ -119,8 +119,27 @@ async function createDrizzleDB(): Promise<VibesSqlite> {
   const flavour = (inject("DB_FLAVOUR" as never) as string) ?? "sqlite";
 
   if (flavour === "pg") {
-    const neonUrl = inject("VIBES_DIY_TEST_NEON_URL" as never) as string;
-    const pool = new Pool({ connectionString: neonUrl });
+    const pgUrl =
+      (inject("VIBES_DIY_TEST_PG_URL" as never) as string | undefined) ??
+      (inject("VIBES_DIY_TEST_NEON_URL" as never) as string | undefined);
+    if (!pgUrl) {
+      throw new Error("VIBES_DIY_TEST_PG_URL (or VIBES_DIY_TEST_NEON_URL) must be provided for pg tests");
+    }
+
+    // Local proxy hooks for ephemeral Postgres CI: when set, route Pool
+    // WebSockets through the configured proxy endpoint instead of Neon's /v2.
+    const wsProxy = process.env.VIBES_DIY_TEST_PG_WS_PROXY;
+    if (wsProxy) {
+      neonConfig.wsProxy = () => wsProxy;
+    }
+    const useSecureWs = process.env.VIBES_DIY_TEST_PG_USE_SECURE_WS;
+    if (useSecureWs === "0") {
+      neonConfig.useSecureWebSocket = false;
+    } else if (useSecureWs === "1") {
+      neonConfig.useSecureWebSocket = true;
+    }
+
+    const pool = new Pool({ connectionString: pgUrl });
     return drizzleNeon(pool) as unknown as VibesSqlite;
   }
 

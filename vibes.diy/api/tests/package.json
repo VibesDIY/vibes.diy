@@ -6,6 +6,7 @@
     "build": "core-cli tsc",
     "test": "vitest --run",
     "test:neon": "vitest --run --config ./vitest.config.neon.ts",
+    "test:pg:concurrency": "node ./scripts/run-pg-concurrency-tests.mjs",
     "pack": "echo core-cli build --doPack",
     "publish": "echo core-cli build"
   },
