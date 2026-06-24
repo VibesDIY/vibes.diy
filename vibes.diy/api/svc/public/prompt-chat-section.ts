@@ -1050,7 +1050,12 @@ async function handlerLlmRequest({
           streamId: promptId,
           chatId: req.chatId,
           seq: blockSeq,
-          request: req.prompt,
+          // Record the resolved model id (not just the optional client-supplied
+          // override) so clients can surface "Generating with <model>" and audit
+          // which model actually ran. Reconstruction (prompt-assembly,
+          // get-chat-details) only reads request.messages, so populating model
+          // here is informational and does not affect later turns.
+          request: { ...req.prompt, model: modelId },
           timestamp: new Date(),
         },
       });
