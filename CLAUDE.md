@@ -23,6 +23,7 @@ Team-shared agent instructions live in the [`agents/`](agents/) directory. These
 - [pr-lifecycle.md](agents/pr-lifecycle.md) — Spec-first workflow, feature-goal PR titles, autonomous feedback handling, ready-to-merge signal
 - [codegen-matrix-eval.md](agents/codegen-matrix-eval.md) — Running the cross-model codegen eval harness (generate → score → report), trimmed first run, config & cost filter
 - [autoresearch-outer-loop.md](agents/autoresearch-outer-loop.md) — Running the vendored autoresearch loop unattended: goal + success predicate, per-iteration state/branch persistence, resume, guardrails, scheduling caveats
+- [access-model-autoresearch.md](agents/access-model-autoresearch.md) — Autoresearch config + loop discipline for the access-model codegen eval (`eval/access-model`): Goal/Metric/Verify/Modify surface, frozen grader/baseline, predict-gate before each 64-app batch
 
 ## Team-shared skills
 
