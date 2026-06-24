@@ -1055,6 +1055,33 @@ describe("VibesDiyApi", { timeout: (inject("DB_FLAVOUR" as never) as string) ===
       });
     });
 
+    it("ensureAppSettings clears one app-level model override without touching the others (#2622)", async () => {
+      const { appSlug, ownerHandle } = await createApp();
+
+      await api.ensureAppSettings({ appSlug, ownerHandle, codegen: { model: m("override-codegen"), apiKey: "k" } });
+      const pinned = await api.ensureAppSettings({ appSlug, ownerHandle, runtime: { model: m("override-runtime") } });
+
+      const codegenRows = (res: Awaited<ReturnType<typeof api.ensureAppSettings>>) =>
+        res.Ok().settings.entries.filter((e) => e.type === "active.model" && (e.usage === "codegen" || e.usage === "chat"));
+      const runtimeRows = (res: Awaited<ReturnType<typeof api.ensureAppSettings>>) =>
+        res.Ok().settings.entries.filter((e) => e.type === "active.model" && (e.usage === "runtime" || e.usage === "app"));
+
+      expect(codegenRows(pinned)).toHaveLength(1);
+      expect(runtimeRows(pinned)).toHaveLength(1);
+
+      // Clearing codegen removes its active.model row and the usage falls back to
+      // the resolved default (no longer the override) while runtime stays pinned.
+      const cleared = await api.ensureAppSettings({ appSlug, ownerHandle, codegen: null });
+      expect(codegenRows(cleared)).toHaveLength(0);
+      expect(cleared.Ok().settings.entry.settings.codegen?.model?.id).not.toBe("override-codegen");
+      expect(runtimeRows(cleared)).toHaveLength(1);
+      expect(cleared.Ok().settings.entry.settings.runtime).toEqual({ model: m("override-runtime") });
+
+      // A repeated clear when nothing is pinned is a safe no-op.
+      const clearedAgain = await api.ensureAppSettings({ appSlug, ownerHandle, codegen: null });
+      expect(codegenRows(clearedAgain)).toHaveLength(0);
+    });
+
     it("ensureAppSettings canonicalizes duplicate + legacy-named codegen model entries on save (#2608)", async () => {
       const { appSlug, ownerHandle } = await createApp();
       const seed = await api.ensureAppSettings({ appSlug, ownerHandle, codegen: { model: m("seed-chat"), apiKey: "seed-key" } });

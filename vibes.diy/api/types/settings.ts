@@ -246,8 +246,12 @@ export function isReqEnsureAppSettingsIconRegen(obj: unknown): obj is ReqEnsureA
   return !(reqEnsureAppSettingsIconRegen(obj) instanceof type.errors);
 }
 
+// A model-usage value of `null` clears the app-level override for that usage
+// (mirrors the `colorTheme: null` → sqlRemove pattern). Once removed, the usage
+// falls back to the user/catalog default resolved by getModelDefaults. A partial
+// AIParams object (the usual case) upserts/merges the override.
 export const reqEnsureAppSettingsRuntime = type({
-  runtime: AIParams.partial(),
+  runtime: AIParams.partial().or("null"),
 }).and(reqEnsureAppSettingsBase);
 
 export type ReqEnsureAppSettingsRuntime = typeof reqEnsureAppSettingsRuntime.infer;
@@ -256,7 +260,7 @@ export function isReqEnsureAppSettingsRuntime(obj: unknown): obj is ReqEnsureApp
 }
 
 export const reqEnsureAppSettingsCodegen = type({
-  codegen: AIParams.partial(),
+  codegen: AIParams.partial().or("null"),
 }).and(reqEnsureAppSettingsBase);
 
 export type ReqEnsureAppSettingsCodegen = typeof reqEnsureAppSettingsCodegen.infer;
@@ -265,7 +269,7 @@ export function isReqEnsureAppSettingsCodegen(obj: unknown): obj is ReqEnsureApp
 }
 
 export const reqEnsureAppSettingsImg = type({
-  img: AIParams.partial(),
+  img: AIParams.partial().or("null"),
 }).and(reqEnsureAppSettingsBase);
 
 export type ReqEnsureAppSettingsImg = typeof reqEnsureAppSettingsImg.infer;
