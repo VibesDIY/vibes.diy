@@ -97,6 +97,66 @@ describe("ModelSettingsCards reset / default affordance", () => {
     expect(onResetCodegen).toHaveBeenCalledTimes(1);
   });
 
+  // App-level cards always backfill `config` with the resolved default, so they
+  // pass an explicit `pinned` flag (derived from the raw override entries) rather
+  // than inferring pinned state from config presence.
+  it("treats a backfilled config as an explicit override when pinned is true", async () => {
+    const api = makeApi();
+    const onResetCodegen = vi.fn();
+    render(
+      <ModelSettingsCards
+        codegenConfig={{ model: MODELS[1] }}
+        codegenPinned={true}
+        savingCodegen={false}
+        savingRuntime={false}
+        savingImg={false}
+        onSaveCodegen={noop}
+        onSaveRuntime={noop}
+        onSaveImg={noop}
+        onResetCodegen={onResetCodegen}
+        onResetRuntime={noop}
+        onResetImg={noop}
+      />,
+      api
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText(/Pinned to/)).toBeInTheDocument();
+    });
+    const resetBtn = screen.getByText("Use default");
+    await act(async () => {
+      fireEvent.click(resetBtn);
+    });
+    expect(onResetCodegen).toHaveBeenCalledTimes(1);
+  });
+
+  it("treats a backfilled config as inherited when pinned is false (no reset offered)", async () => {
+    const api = makeApi();
+    render(
+      <ModelSettingsCards
+        codegenConfig={{ model: MODELS[1] }}
+        codegenPinned={false}
+        savingCodegen={false}
+        savingRuntime={false}
+        savingImg={false}
+        onSaveCodegen={noop}
+        onSaveRuntime={noop}
+        onSaveImg={noop}
+        onResetCodegen={noop}
+        onResetRuntime={noop}
+        onResetImg={noop}
+      />,
+      api
+    );
+
+    await waitFor(() => {
+      expect(screen.getAllByText(/Following default \(currently Claude Sonnet 4.6\)/).length).toBeGreaterThan(0);
+    });
+    // Even though codegenConfig carries a model, it is the inherited default, so
+    // no per-usage reset control appears for any card.
+    expect(screen.queryByText("Use default")).not.toBeInTheDocument();
+  });
+
   // Regression: clearing the API Key field must send apiKey: "" (not drop it),
   // otherwise the per-app SettingsTab path merges params field-by-field and the
   // old key stays stored even though the UI shows it cleared.

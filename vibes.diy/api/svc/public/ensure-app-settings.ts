@@ -418,55 +418,72 @@ export async function ensureAppSettings(
       }
       break;
     case isReqEnsureAppSettingsRuntime(req):
-      [res.settings, res.error] = await sqlUpsert(
-        vctx,
-        res,
-        settings,
-        isActiveModelSettingRuntime,
-        (prev: ActiveModelSetting) =>
-          ({
-            type: "active.model",
-            usage: "runtime",
-            param: {
-              ...prev.param,
-              ...req.runtime,
-            },
-          }) satisfies ActiveModelSetting
-      );
+      // `runtime: null` clears the app-level override so the usage falls back to
+      // the user/catalog default (mirrors the colorTheme/dbAclRemove remove path).
+      if (req.runtime === null) {
+        [res.settings, res.error] = await sqlRemove(vctx, res, settings, isActiveModelSettingRuntime);
+      } else {
+        const runtime = req.runtime;
+        [res.settings, res.error] = await sqlUpsert(
+          vctx,
+          res,
+          settings,
+          isActiveModelSettingRuntime,
+          (prev: ActiveModelSetting) =>
+            ({
+              type: "active.model",
+              usage: "runtime",
+              param: {
+                ...prev.param,
+                ...runtime,
+              },
+            }) satisfies ActiveModelSetting
+        );
+      }
       break;
     case isReqEnsureAppSettingsCodegen(req):
-      [res.settings, res.error] = await sqlUpsert(
-        vctx,
-        res,
-        settings,
-        isActiveModelSettingCodegen,
-        (prev: ActiveModelSetting) =>
-          ({
-            type: "active.model",
-            usage: "codegen",
-            param: {
-              ...prev.param,
-              ...req.codegen,
-            },
-          }) satisfies ActiveModelSetting
-      );
+      if (req.codegen === null) {
+        [res.settings, res.error] = await sqlRemove(vctx, res, settings, isActiveModelSettingCodegen);
+      } else {
+        const codegen = req.codegen;
+        [res.settings, res.error] = await sqlUpsert(
+          vctx,
+          res,
+          settings,
+          isActiveModelSettingCodegen,
+          (prev: ActiveModelSetting) =>
+            ({
+              type: "active.model",
+              usage: "codegen",
+              param: {
+                ...prev.param,
+                ...codegen,
+              },
+            }) satisfies ActiveModelSetting
+        );
+      }
       break;
     case isReqEnsureAppSettingsImg(req):
-      [res.settings, res.error] = await sqlUpsert(
-        vctx,
-        res,
-        settings,
-        isActiveModelSettingImg,
-        (prev: ActiveModelSetting) =>
-          ({
-            type: "active.model",
-            usage: "img",
-            param: {
-              ...prev.param,
-              ...req.img,
-            },
-          }) satisfies ActiveModelSetting
-      );
+      if (req.img === null) {
+        [res.settings, res.error] = await sqlRemove(vctx, res, settings, isActiveModelSettingImg);
+      } else {
+        const img = req.img;
+        [res.settings, res.error] = await sqlUpsert(
+          vctx,
+          res,
+          settings,
+          isActiveModelSettingImg,
+          (prev: ActiveModelSetting) =>
+            ({
+              type: "active.model",
+              usage: "img",
+              param: {
+                ...prev.param,
+                ...img,
+              },
+            }) satisfies ActiveModelSetting
+        );
+      }
       break;
     case isReqEnsureAppSettingsEnv(req):
       [res.settings, res.error] = await sqlUpsert(

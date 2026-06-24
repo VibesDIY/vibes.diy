@@ -54,15 +54,22 @@ function ModelSection({
   saving,
   onSave,
   onReset,
+  pinned,
 }: {
   config?: Partial<AIParams>;
   usage: "codegen" | "runtime" | "img";
   saving: boolean;
   onSave: (cfg: AIParams) => void;
   // When provided, the card shows pinned-vs-default state and a "Use default"
-  // control that clears the pin. Omitted by callers (e.g. per-app overrides)
-  // that don't have follow-the-default semantics.
+  // control that clears the pin.
   onReset?: () => void;
+  // Explicit override flag. The user-level Settings page leaves this undefined
+  // and lets `!!config?.model` decide (its config is empty when following the
+  // default). The per-app SettingsTab always backfills `config` with the
+  // resolved default via withModelDefaults, so it can't use config presence to
+  // tell "explicit override" from "inherited default" — it passes `pinned`
+  // computed from the raw active.model entries instead.
+  pinned?: boolean;
 }) {
   const { sharedApi } = useVibesDiy();
 
@@ -74,10 +81,11 @@ function ModelSection({
 
   const viewState = useRef<"start" | "loading" | "loaded">("start");
 
-  // A usage is "pinned" when the saved user setting carries a model for it.
-  // Following the default means there is no entry (config has no model), so
-  // resolution falls through to the live catalog default.
-  const isPinned = !!config?.model;
+  // A usage is "pinned" when there is an explicit override. Callers that backfill
+  // `config` with the resolved default pass `pinned` directly; otherwise we infer
+  // it from whether the saved config carries a model (following the default means
+  // no entry, so resolution falls through to the live catalog default).
+  const isPinned = pinned ?? !!config?.model;
 
   // Local editing state: the model the user has currently selected (may differ
   // from the saved config until Save), plus the optional per-usage API key.
@@ -147,7 +155,13 @@ function ModelSection({
                     {defaultModel && ` · Default: ${defaultModel.name}`}
                   </>
                 ) : (
-                  <>Following default{defaultModel && ` (currently ${defaultModel.name})`}</>
+                  // The effective model when following the default: prefer the
+                  // backfilled config (app-level inherited value, which may be a
+                  // user pin) and fall back to the live catalog default.
+                  <>
+                    Following default
+                    {(config?.model ?? defaultModel) && ` (currently ${(config?.model ?? defaultModel)?.name})`}
+                  </>
                 )}
               </p>
             </div>
@@ -191,6 +205,12 @@ export interface ModelSettingsCardsProps {
   onResetCodegen?: () => void;
   onResetRuntime?: () => void;
   onResetImg?: () => void;
+  // Explicit override flags for callers whose config is always backfilled with
+  // the resolved default (per-app SettingsTab). Left undefined by the user-level
+  // page, which derives pinned state from config presence.
+  codegenPinned?: boolean;
+  runtimePinned?: boolean;
+  imgPinned?: boolean;
 }
 
 export function ModelSettingsCards({
@@ -206,6 +226,9 @@ export function ModelSettingsCards({
   onResetCodegen,
   onResetRuntime,
   onResetImg,
+  codegenPinned,
+  runtimePinned,
+  imgPinned,
 }: ModelSettingsCardsProps) {
   return (
     <>
@@ -216,6 +239,7 @@ export function ModelSettingsCards({
           saving={savingCodegen}
           onSave={onSaveCodegen}
           onReset={onResetCodegen}
+          pinned={codegenPinned}
         />
       </Card>
       <Card title="App Runtime Model">
@@ -225,10 +249,18 @@ export function ModelSettingsCards({
           saving={savingRuntime}
           onSave={onSaveRuntime}
           onReset={onResetRuntime}
+          pinned={runtimePinned}
         />
       </Card>
       <Card title="Imaging Model">
-        <ModelSection config={imgConfig} usage="img" saving={savingImg} onSave={onSaveImg} onReset={onResetImg} />
+        <ModelSection
+          config={imgConfig}
+          usage="img"
+          saving={savingImg}
+          onSave={onSaveImg}
+          onReset={onResetImg}
+          pinned={imgPinned}
+        />
       </Card>
     </>
   );
