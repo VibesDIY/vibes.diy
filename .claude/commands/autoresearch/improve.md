@@ -9,6 +9,7 @@ EXECUTE IMMEDIATELY.
 ## Parse Arguments
 
 Extract from $ARGUMENTS:
+
 - `Goal:` — product area to improve (or full $ARGUMENTS if no keyword)
 - `--icp` or `ICP:` — ideal customer profile description
 - `--discover` — force inline codebase scan even when context exists
@@ -20,6 +21,7 @@ Extract from $ARGUMENTS:
 - `--evals`, `--evals-interval N`
 
 If upstream `handoff.json` exists in CWD → read it. Map source findings to default seed categories:
+
 - probe → ICP challenges, UX & experience
 - predict → Competitor gaps, Revenue & growth
 - debug/security → Competitor gaps, ICP challenges
@@ -28,16 +30,17 @@ If upstream `handoff.json` exists in CWD → read it. Map source findings to def
 ## Setup (if Goal or ICP missing)
 
 AskUserQuestion (single batch):
-  Q1 (Goal): "What product area to improve?" — open text
-  Q2 (ICP): "Who is your ideal customer?" — open text describing target buyer/user
-  Q3 (Pain points): "Top 3 pain points your customers face?" — open text
-  Q4 (Competitors): "Key competitors?" — open text, or "skip"
-  Q5 (Depth): "How deep?" — shallow (5 iterations, quick scan), standard (15, recommended), deep (30+, exhaustive)
+Q1 (Goal): "What product area to improve?" — open text
+Q2 (ICP): "Who is your ideal customer?" — open text describing target buyer/user
+Q3 (Pain points): "Top 3 pain points your customers face?" — open text
+Q4 (Competitors): "Key competitors?" — open text, or "skip"
+Q5 (Depth): "How deep?" — shallow (5 iterations, quick scan), standard (15, recommended), deep (30+, exhaustive)
 If all provided inline → skip.
 
 ## Phase 1: Product Context
 
 Resolve product context (priority chain):
+
 1. Learn summary (`autoresearch/learn-*/summary.md`, most recent) → read it
 2. README.md (≥500 chars, non-boilerplate) → extract product description
 3. `package.json` / `pyproject.toml` / `Cargo.toml` description (≥10 chars) → use it
@@ -52,6 +55,7 @@ TSV header: `# metric_direction: higher_is_better`
 Columns: `iteration|timestamp|category|research_question|status|source|insight_problem|insight_mechanism|confidence|classification`
 
 **5 research categories:**
+
 1. ICP challenges — pain points, jobs-to-be-done, unmet needs
 2. Competitor gaps — weaknesses, missing features, technical differentiators
 3. Market trends — timing signals, emerging patterns, regulatory shifts
@@ -59,6 +63,7 @@ Columns: `iteration|timestamp|category|research_question|status|source|insight_p
 5. Revenue & growth — pricing, acquisition, monetization, upsell/expansion
 
 **Iteration protocol:**
+
 - Reserve first 5 iterations: one per category (forced breadth)
 - Remaining iterations: target categories with richest signal
 - Per iteration: form research question → WebSearch → synthesize → normalize to canonical insight schema → classify (new/extension/duplicate) → tag confidence (HIGH: 3+ sources, MEDIUM: 2, LOW: 1) → cross-check against codebase → log
@@ -69,6 +74,7 @@ Columns: `iteration|timestamp|category|research_question|status|source|insight_p
 **Classification:** New = novel {problem, persona} pair. Extension = same pair, different mechanism. Duplicate = same pair + mechanism → skip.
 
 ### Eval Checkpoint
+
 If --evals: check if current_iteration % interval == 0 → run checkpoint.
 Print: `--- Eval Checkpoint (iterations {X}-{Y}) ---\nInsights: {total} (+{new}) | Categories: {covered}/5 | Saturation: {window}/3\n{recommendation}\n---`
 
@@ -88,6 +94,7 @@ If `--features` provided → pre-select matching items, still show for confirmat
 ## Phase 4: PRD Generation
 
 Per selected feature, write `prd-{feature-slug}.md`:
+
 - Top disclaimer: "Auto-generated from research findings. DECISION NEEDED items and LOW-confidence sections require your judgment."
 - Problem statement (from research evidence chain)
 - User stories (from ICP + persona data)

@@ -9,6 +9,7 @@ EXECUTE IMMEDIATELY.
 ## Parse Arguments
 
 Extract from $ARGUMENTS:
+
 - `Topic:` — strip keyword, remaining text is topic (or full $ARGUMENTS if no keyword)
 - `Scope:` or `--scope` — file globs for codebase grounding
 - `Depth:` or `--depth` — shallow (5 rounds), standard (15), deep (30)
@@ -22,24 +23,24 @@ Extract from $ARGUMENTS:
 ## Setup (if Topic missing)
 
 AskUserQuestion (single batch):
-  Q1 (Topic): "What to probe?" — open text describing feature, requirement, or design
-  Q2 (Scope): "Which files for context?" — suggested globs + entire codebase
-  Q3 (Depth): "How deep?" — shallow (5 rounds), standard (15), deep (30), unlimited
-  Q4 (Mode): "How to answer persona questions?" — interactive (you answer), autonomous (agent infers from code)
+Q1 (Topic): "What to probe?" — open text describing feature, requirement, or design
+Q2 (Scope): "Which files for context?" — suggested globs + entire codebase
+Q3 (Depth): "How deep?" — shallow (5 rounds), standard (15), deep (30), unlimited
+Q4 (Mode): "How to answer persona questions?" — interactive (you answer), autonomous (agent infers from code)
 If all provided → skip.
 
 ## 8 Personas
 
-| # | Persona | Focus |
-|---|---|---|
-| 1 | Domain Expert | Business rules, domain constraints, terminology |
-| 2 | End User | Usability, expectations, error recovery |
-| 3 | Skeptic | Assumptions that might be wrong |
-| 4 | Edge-Case Hunter | Boundary conditions, rare scenarios |
-| 5 | Ops Engineer | Deployment, monitoring, scaling, failure modes |
-| 6 | Security Reviewer | Attack vectors, data protection, auth |
-| 7 | Contradiction Finder | Conflicts between requirements |
-| 8 | Scope Guardian | Feature creep, unnecessary complexity |
+| #   | Persona              | Focus                                           |
+| --- | -------------------- | ----------------------------------------------- |
+| 1   | Domain Expert        | Business rules, domain constraints, terminology |
+| 2   | End User             | Usability, expectations, error recovery         |
+| 3   | Skeptic              | Assumptions that might be wrong                 |
+| 4   | Edge-Case Hunter     | Boundary conditions, rare scenarios             |
+| 5   | Ops Engineer         | Deployment, monitoring, scaling, failure modes  |
+| 6   | Security Reviewer    | Attack vectors, data protection, auth           |
+| 7   | Contradiction Finder | Conflicts between requirements                  |
+| 8   | Scope Guardian       | Feature creep, unnecessary complexity           |
 
 If --adversarial: rotate Skeptic + Contradiction Finder + Edge-Case Hunter to front.
 
@@ -52,38 +53,47 @@ If --adversarial: rotate Skeptic + Contradiction Finder + Edge-Case Hunter to fr
 ## Round Loop
 
 ### Phase 2: Persona Activation
+
 - Select 2-3 personas for this round (rotate through all 8)
 - Each persona generates 3-5 probing questions from their perspective
 
 ### Phase 3: Codebase Grounding
+
 - Check questions against existing code for evidence
 - Annotate questions with: relevant file:line, existing behavior, gaps
 
 ### Phase 4: Answer Capture
+
 - **Interactive mode:** present questions via AskUserQuestion, collect answers
 - **Autonomous mode:** infer answers from codebase context, label confidence (high/medium/low)
 
 ### Phase 5: Constraint Extraction
+
 - Parse answers into atomic constraints
 - Each constraint: id, source persona, description, confidence, evidence
 - Deduplicate against existing registry
 
 ### Phase 6: Cross-Check
+
 - Check new constraints against existing for conflicts
 - Flag contradictions for resolution (interactive → ask user, autonomous → note uncertainty)
 
 ### Phase 7: Saturation Check
+
 - Count net-new constraints this round
 - If net-new < saturation_threshold for 3 consecutive rounds → SATURATED, exit loop
 - Track: total constraints, new this round, saturation window
 
 ### Phase 8: Log
+
 Append to output: round number, personas active, questions asked, constraints extracted, net-new count
 
 ### Eval Checkpoint
+
 If --evals: check if current_round % interval == 0 → run checkpoint.
 
 ### Bounded Check
+
 If bounded: current_round >= max_iterations → exit loop.
 
 ## Phase 9: Synthesize & Output
@@ -105,6 +115,7 @@ Print: total rounds, total constraints, net-new trend, saturation status, top 5 
 ## Eval Checkpoint (--evals flag)
 
 If --evals present:
+
 - Compute interval: floor(max_iterations / 3), min 1. Fixed 10 if unbounded.
 - Print: `--- Eval Checkpoint (rounds {X}-{Y}) ---\nConstraints: {total} (+{new}) | Saturation: {window_count}/3\n{recommendation}\n---`
 - If saturated 3+ checkpoints → recommend early stop.

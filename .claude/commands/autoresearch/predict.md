@@ -9,6 +9,7 @@ EXECUTE IMMEDIATELY.
 ## Parse Arguments
 
 Extract from $ARGUMENTS:
+
 - `Scope:` or `--scope` — file globs to analyze
 - `Goal:` or `--goal` — focus area for analysis
 - `Depth:` or `--depth` — shallow (3 personas, 1 round), standard (5, 2), deep (8, 3)
@@ -25,15 +26,16 @@ Remaining text not matching flags = goal description.
 ## Setup (if Scope or Goal missing)
 
 AskUserQuestion (single batch):
-  Q1 (Scope): "Which files to analyze?" — suggested globs + entire codebase
-  Q2 (Goal): "What should personas focus on?" — code quality, security, performance, architecture, all
-  Q3 (Depth): "How deep?" — shallow (3 personas, 1 round), standard (5, 2 — recommended), deep (8, 3)
-  Q4 (Chain): "After analysis, chain to?" — debug, security, fix, ship, scenario, no chain
+Q1 (Scope): "Which files to analyze?" — suggested globs + entire codebase
+Q2 (Goal): "What should personas focus on?" — code quality, security, performance, architecture, all
+Q3 (Depth): "How deep?" — shallow (3 personas, 1 round), standard (5, 2 — recommended), deep (8, 3)
+Q4 (Chain): "After analysis, chain to?" — debug, security, fix, ship, scenario, no chain
 If all provided → skip.
 
 ## Phase 1: Reconnaissance
 
 Scan all in-scope files. Build structured knowledge:
+
 - File inventory with purpose annotations
 - Dependency graph (imports/exports)
 - API surface (routes, handlers, types)
@@ -53,6 +55,7 @@ Personas are isolated — no shared context between them.
 ## Phase 3: Independent Analysis
 
 Each persona analyzes the codebase independently:
+
 - Read relevant code through their lens
 - Produce findings with: title, severity, confidence (0-100%), file:line, recommendation
 - Max findings per persona: budget / persona_count
@@ -60,6 +63,7 @@ Each persona analyzes the codebase independently:
 ## Phase 4: Debate (per round)
 
 For each debate round:
+
 1. Present all personas' findings to each other
 2. Each persona can: challenge findings, raise new issues, change confidence
 3. Cross-examination: personas must respond to challenges with evidence
@@ -68,6 +72,7 @@ For each debate round:
 ## Phase 5: Consensus
 
 Synthesizer aggregates all findings:
+
 1. Deduplicate (same file:line + same issue = merge, keep highest severity)
 2. Resolve conflicts (if personas disagree, note dissent)
 3. **Anti-herd check:** if all personas agree on everything, synthesizer MUST find at least 1 counter-argument
@@ -78,6 +83,7 @@ Synthesizer aggregates all findings:
 Create output directory: `autoresearch/predict-{YYMMDD}-{HHMM}/`
 
 Write:
+
 - `summary.md` — top findings, consensus view, risk assessment
 - `debate.md` — full persona analysis + debate transcript
 - Per-persona sections with individual findings

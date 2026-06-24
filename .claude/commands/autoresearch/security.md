@@ -9,6 +9,7 @@ EXECUTE IMMEDIATELY.
 ## Parse Arguments
 
 Extract from $ARGUMENTS:
+
 - `Scope:` or `--scope` — file globs to audit
 - `Focus:` — specific area (auth, API, data handling, etc.)
 - `Depth:` or `--depth` — quick (5 iterations), standard (15), deep (30+)
@@ -21,12 +22,13 @@ Extract from $ARGUMENTS:
 ## Setup (if required context missing)
 
 If Scope missing and no --diff:
+
 1. Scan codebase for tech stack, frameworks, API routes
 2. AskUserQuestion (single batch):
    Q1 (Scope): "What to audit?" — entire codebase, API + middleware, auth, external-facing
    Q2 (Depth): "How thorough?" — quick (5), standard (15), deep (30+), unlimited
    Q3 (Action): "What to do with findings?" — report only, report + auto-fix, report + CI gate
-If all provided → skip.
+   If all provided → skip.
 
 ## Setup Phase (once, before loop)
 
@@ -44,34 +46,41 @@ TSV header: `# metric_direction: higher_is_better\niteration\ttimestamp\tfinding
 ## Iteration Loop
 
 ### Phase 1: Review
+
 - Read results TSV + coverage tracking
 - Identify untested attack vectors from threat model
 - Prioritize: untested OWASP categories → untested STRIDE → depth on existing
 
 ### Phase 2: Attack
+
 - Adopt red-team persona for this vector (rotate: Security Adversary, Supply Chain, Insider Threat, Infra Attacker)
 - Deep-dive into relevant code with adversarial mindset
 - Look for: code paths, input handling, auth checks, data flows
 
 ### Phase 3: Validate
+
 - Construct proof: file:line + specific attack scenario
 - Every finding MUST have code evidence — no theoretical fluff
 - Classify severity: Critical/High/Medium/Low/Info
 - Map to OWASP (A01-A10) and STRIDE (S/T/R/I/D/E)
 
 ### Phase 4: Log
+
 - Append finding to TSV
 - Update coverage tracking
 - Print coverage every 5 iterations:
   `OWASP: [A01✓ A02✓ A03✗ ...] X/10 | STRIDE: [S✓ T✓ R✗ ...] Y/6 | Score: Z`
 
 ### Composite Metric
+
 `score = (owasp_tested/10)*50 + (stride_tested/6)*30 + min(findings, 20)`
 
 ### Eval Checkpoint
+
 If --evals: check if current_iteration % interval == 0 → run checkpoint.
 
 ### Bounded Check
+
 If bounded: current_iteration >= max_iterations → exit loop.
 
 ## After Loop
@@ -89,6 +98,7 @@ Print: total findings by severity, OWASP coverage X/10, STRIDE coverage Y/6, com
 ## Eval Checkpoint (--evals flag)
 
 If --evals present:
+
 - Compute interval: floor(max_iterations / 3), min 1. Fixed 10 if unbounded. Override: --evals-interval N.
 - Every {interval} iterations, analyze results TSV.
 - Print: `--- Eval Checkpoint (iterations {X}-{Y}) ---\nScore: {start} → {end} | New findings: {n} | Coverage: OWASP {x}/10, STRIDE {y}/6\n{recommendation}\n---`
