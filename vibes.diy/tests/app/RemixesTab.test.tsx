@@ -49,7 +49,11 @@ describe("RemixesTab", () => {
     mockListNotifications.mockResolvedValue(okList([makeRemix("a")]));
     render(<RemixesTab ownerHandle="alice" appSlug="cool-app" />);
     await waitFor(() =>
-      expect(mockListNotifications).toHaveBeenCalledWith({ notificationType: "vibe-remixed", appSlug: "cool-app" })
+      expect(mockListNotifications).toHaveBeenCalledWith({
+        notificationType: "vibe-remixed",
+        appSlug: "cool-app",
+        ownerHandle: "alice",
+      })
     );
   });
 
