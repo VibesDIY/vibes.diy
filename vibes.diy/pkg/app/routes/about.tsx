@@ -15,12 +15,6 @@ const link: React.CSSProperties = {
   cursor: "pointer",
 };
 
-const whiteLink: React.CSSProperties = {
-  color: "white",
-  textDecoration: "underline",
-  cursor: "pointer",
-};
-
 export default function About() {
   const [isSidebarVisible, setIsSidebarVisible] = useState(false);
   const closeSidebar = useCallback(() => setIsSidebarVisible(false), []);
@@ -145,16 +139,13 @@ export default function About() {
                 }}
               />
               <div style={{ padding: "24px 16px", backgroundColor: "rgb(218, 41, 28)", color: "white" }}>
-                <h2 style={{ fontWeight: "bold", fontSize: 32, lineHeight: "34px" }}>Yours, not theirs.</h2>
+                <h2 style={{ fontWeight: "bold", fontSize: 32, lineHeight: "34px" }}>Yours to control.</h2>
                 <p style={{ marginTop: 12, fontWeight: "bold", fontSize: 18, lineHeight: "24px" }}>
-                  Your data lives in your vibe. Private by default. You approve who gets in.
+                  Your app&rsquo;s data is private by default. Only the people you let in can open it.
                 </p>
                 <p style={{ marginTop: 10, fontSize: 13, opacity: 0.85 }}>
-                  No algorithm, no feed, no platform deciding what happens to your stuff. Our{" "}
-                  <a href="https://use-fireproof.com" target="_blank" rel="noopener noreferrer" style={whiteLink}>
-                    vibe coding database
-                  </a>{" "}
-                  encrypts everything. The group chat stays local, portable, and safe.
+                  No algorithm, no feed&mdash;just your app and the people you share it with. You set the rules for who can read and
+                  write.
                 </p>
               </div>
             </div>
@@ -170,12 +161,12 @@ export default function About() {
                 }}
               />
               <div style={{ padding: "24px 16px", backgroundColor: "rgb(0, 154, 206)", color: "white" }}>
-                <h2 style={{ fontWeight: "bold", fontSize: 32, lineHeight: "34px" }}>One file. One push.</h2>
+                <h2 style={{ fontWeight: "bold", fontSize: 32, lineHeight: "34px" }}>One push, it&rsquo;s live.</h2>
                 <p style={{ marginTop: 12, fontWeight: "bold", fontSize: 18, lineHeight: "24px" }}>
-                  A live URL with real persistent state. No bundler, no backend, no environment drift.
+                  Your app gets a real link and remembers everything&mdash;automatically.
                 </p>
                 <p style={{ marginTop: 10, fontSize: 13, opacity: 0.85 }}>
-                  Constrained app shape. Open module ecosystem. Agents skip the entire stack negotiation, ship instantly.
+                  Nothing to deploy, nothing to wire up. Describe a change and ship it again in seconds.
                 </p>
               </div>
             </div>
@@ -215,7 +206,7 @@ export default function About() {
             </p>
           </div>
 
-          {/* Powered by Fireproof — orange header, cream body, offset left */}
+          {/* Open source — orange header, cream body, offset left */}
           <div style={{ maxWidth: 550, marginBottom: 80, boxShadow: "0 2px 4px rgba(0,0,0,0.1)" }}>
             <div
               style={{
@@ -236,21 +227,8 @@ export default function About() {
                 padding: "24px 24px",
               }}
             >
-              <h2 style={{ fontWeight: "bold", fontSize: 32, lineHeight: "34px", color: "rgb(200, 100, 0)" }}>
-                Powered by{" "}
-                <a
-                  href="https://use-fireproof.com"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  style={{ color: "rgb(200, 100, 0)", textDecoration: "underline", cursor: "pointer" }}
-                >
-                  Fireproof
-                </a>
-                .
-              </h2>
-              <p style={{ marginTop: 10, fontSize: 15 }}>
-                Open source, local-first, encrypted. Read the code, open an issue, send a PR.
-              </p>
+              <h2 style={{ fontWeight: "bold", fontSize: 32, lineHeight: "34px", color: "rgb(200, 100, 0)" }}>Open source.</h2>
+              <p style={{ marginTop: 10, fontSize: 15 }}>Read the code, open an issue, send a PR.</p>
               <p style={{ marginTop: 14, fontSize: 14 }}>
                 <a href="https://discord.gg/vnpWycj4Ta" target="_blank" rel="noopener noreferrer" style={link}>
                   Discord

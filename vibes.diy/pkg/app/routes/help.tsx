@@ -94,7 +94,7 @@ const faqs: { q: string; a: React.ReactNode }[] = [
   },
   {
     q: "Is my data private?",
-    a: "Your app data lives in your vibe, encrypted by Fireproof. It's private by default — you approve who gets in. No algorithm or platform decides what happens to your stuff.",
+    a: "Your app's data is private by default — only the people you let in can open it, and you control who can read and write. There's no algorithm or feed deciding what happens to your app.",
   },
   {
     q: "How do I use Vibes from the command line?",
