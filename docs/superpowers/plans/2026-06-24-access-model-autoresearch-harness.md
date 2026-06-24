@@ -164,7 +164,7 @@ The `expect` field tags each prompt with its dimension so the grader knows which
   "apiUrl": "https://vibes.diy/api?.stable-entry.=cli",
   "runtimeHostBase": "vibes.diy",
   "handle": "eval",
-  "model": "anthropic/claude-opus-4.7",
+  "model": "anthropic/claude-opus-4.8",
   "judgeModel": "anthropic/claude-opus-4.5",
   "reps": 8,
   "concurrency": 32,
@@ -282,7 +282,7 @@ git commit -m "eval(access-model): matrix + prompt config (eval + holdout)"
 
 > **Critical correction (investigated 2026-06-24).** The default `vibes-diy generate` uses is **NOT** `DEFAULT_CODING_MODEL` from `prompts/pkg/prompts.ts` (that constant, `anthropic/claude-opus-4.5`, is a different code path and nothing in-repo sets its env var). The deployed **API** resolves an unspecified model server-side in `getModelDefaults` (`vibes.diy/api/svc/intern/get-model-defaults.ts`) with a 3-tier fallback **per capability**: (1) app-level setting → (2) the **handle's** user-level `modelDefaults` → (3) the catalog `preSelected` model in `vibes.diy/api/svc/models.json`. For codegen (`app` mode) that floor is `preSelected:["app"]` = **`anthropic/claude-opus-4.6-fast`** (`chat` mode floor = `anthropic/claude-sonnet-4.6`). The catalog is fetched **per environment** (`loadModels` → `pkgRepos.workspace/@vibes.diy/api-svc/models.json`, `list-models.ts:35`), and the per-handle/per-app overrides live in **each env's DB** — so the resolved id can differ across dev/prod/cli/preview and depends on the `eval` handle's settings in the target env.
 
-**Confirmed value (2026-06-24, per #2606 + a live cli dry-run):** `generate` empirically dispatches **`anthropic/claude-opus-4.7`** on cli/prod (dev resolves identically — catalog is bundled in code). So `matrix.json` pins `model: "anthropic/claude-opus-4.7"` explicitly. `resolveDefaultModel` returns that verbatim, AND a kickoff sanity-check runs `vibes-diy generate --dry-run --json` against the target env and **fails loudly if the live dispatched model ≠ the pin** (catches a silent default bump). The issue requires recording the resolved id per iteration; record it in `run.json` and pass it as `--model` so every iteration is byte-identical on the model axis. A later default-model bump must explicitly invalidate `baseline.json` (Task 13), never silently move it.
+**Pin (2026-06-24, validated via live cli dry-run):** the eval explicitly pins **`anthropic/claude-opus-4.8`** — `matrix.json` sets `model: "anthropic/claude-opus-4.8"` and the driver passes it as `--model`. A dry-run with `--model anthropic/claude-opus-4.8` against the cli env dispatched `"model": "anthropic/claude-opus-4.8"`, confirming the env accepts and routes it. (Note: the env's *unspecified* `generate` default is `anthropic/claude-opus-4.7` per #2606; the eval deliberately overrides to 4.8.) `resolveDefaultModel` returns the explicit pin verbatim, AND a kickoff sanity-check runs `vibes-diy generate --dry-run --json --model <pin>` against the target env and **fails loudly if the live dispatched model ≠ the pin** (catches an env that silently rejects/substitutes the id). The issue requires recording the resolved id per iteration; record it in `run.json` and pass it as `--model` so every iteration is byte-identical on the model axis. A later default-model bump must explicitly invalidate `baseline.json` (Task 13), never silently move it.
 
 **Files:**
 - Create: `eval/access-model/src/model.ts`
