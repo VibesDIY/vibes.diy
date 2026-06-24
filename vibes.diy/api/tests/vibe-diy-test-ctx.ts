@@ -23,6 +23,8 @@ import fs from "fs/promises";
 import path from "node:path";
 
 let isolationCounter = 0;
+const defaultNeonWsProxy = neonConfig.wsProxy;
+const defaultNeonUseSecureWebSocket = neonConfig.useSecureWebSocket;
 
 /**
  * Fail-closed default for `inferenceFetch` in tests: any un-mocked external
@@ -129,14 +131,15 @@ async function createDrizzleDB(): Promise<VibesSqlite> {
     // Local proxy hooks for ephemeral Postgres CI: when set, route Pool
     // WebSockets through the configured proxy endpoint instead of Neon's /v2.
     const wsProxy = process.env.VIBES_DIY_TEST_PG_WS_PROXY;
-    if (wsProxy) {
-      neonConfig.wsProxy = () => wsProxy;
-    }
+    neonConfig.wsProxy = wsProxy ? () => wsProxy : defaultNeonWsProxy;
+
     const useSecureWs = process.env.VIBES_DIY_TEST_PG_USE_SECURE_WS;
     if (useSecureWs === "0") {
       neonConfig.useSecureWebSocket = false;
     } else if (useSecureWs === "1") {
       neonConfig.useSecureWebSocket = true;
+    } else {
+      neonConfig.useSecureWebSocket = defaultNeonUseSecureWebSocket;
     }
 
     const pool = new Pool({ connectionString: pgUrl });
