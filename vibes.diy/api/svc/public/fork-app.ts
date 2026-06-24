@@ -26,6 +26,7 @@ import { ensureAppSettings } from "./ensure-app-settings.js";
 import { hasAccessInvite } from "./invite-flow.js";
 import { hasAccessRequest } from "./request-flow.js";
 import { seedChatSection } from "../intern/seed-chat-section.js";
+import { notifyRemixSourceOwner } from "../intern/notify-remix.js";
 
 function sanitizeSlug(raw: string): string {
   return raw
@@ -255,18 +256,27 @@ export async function forkApp(
     );
     if (rPubSet.isErr()) return Result.Err(`Failed to disable clone public access: ${rPubSet.Err().message}`);
 
-    // TODO(#2544 — remix-notification clone path): a clone (skipChat) is born
-    // straight in production and never emits an evt-new-fs-id, so the
-    // classic-remix notification wired into that queue handler does NOT cover
-    // clones. The natural fix is to call notifyRemixSourceOwner here with the
-    // freshly-inserted clone row. It is intentionally NOT wired yet because the
-    // helper lives in @vibes.diy/api-queue and @vibes.diy/api-queue already
-    // depends on @vibes.diy/api-svc (this package) — importing the helper here
-    // would create a CIRCULAR package dependency. Cleanly wiring it needs the
-    // shared emit/notify-remix helpers to move to a package that both svc and
-    // queue can depend on (e.g. api-types or a new api-notify package), which
-    // is larger plumbing out of scope for this phase. See notify-remix.test.ts
-    // (it.todo "clone path notifies the source owner") for the gap.
+    // Clone-path remix notification (#2544): a clone (skipChat) is born straight
+    // in production and never emits an evt-new-fs-id, so the classic-remix
+    // notification wired into that queue handler (call site A) does NOT cover
+    // clones. Notify the source owner inline here from the freshly-inserted
+    // clone row. The helper resolves the source owner from the `remix-of` meta
+    // and dedupes on (userId, dedupeKey), so this is once-only and a self-clone
+    // is a no-op. VibesApiSQLCtx has no compatible 2-arg notifyUser, so the
+    // durable inbox row is persisted but the live bell is skipped here (the
+    // source owner sees it on next listNotifications). A notify failure must not
+    // break the fork — log and continue, like bumpAppRecency above.
+    const rNotify = await exception2Result(() =>
+      notifyRemixSourceOwner(vctx, {
+        userId,
+        ownerHandle: destUserSlug,
+        appSlug: destAppSlug,
+        meta: destMeta,
+      })
+    );
+    if (rNotify.isErr()) {
+      vctx.logger.Warn().Err(rNotify).Msg("notifyRemixSourceOwner (clone path) failed");
+    }
   }
 
   return Result.Ok({

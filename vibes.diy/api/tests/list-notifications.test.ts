@@ -1,7 +1,7 @@
 import { describe, expect, it, inject, assert } from "vitest";
 import { eq } from "drizzle-orm";
 import { createApiTestCtx, type ApiTestCtx } from "./api-test-setup.js";
-import { emitNotification, EmitNotificationCtx } from "../queue/intern/emit-notification.js";
+import { emitNotification, EmitNotificationCtx } from "@vibes.diy/api-svc";
 
 // listNotifications + markNotificationsRead are owner-only reads/writes scoped
 // to the authenticated caller's userId. The list returns self-contained rows

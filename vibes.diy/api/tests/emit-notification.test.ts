@@ -3,7 +3,7 @@ import { eq } from "drizzle-orm";
 import { ensureSuperThis } from "@fireproof/core-runtime";
 import { createTestDeviceCA } from "@fireproof/core-device-id";
 import { createVibeDiyTestCtx } from "./vibe-diy-test-ctx.js";
-import { emitNotification, EmitNotificationCtx } from "../queue/intern/emit-notification.js";
+import { emitNotification, EmitNotificationCtx } from "@vibes.diy/api-svc";
 
 // emitNotification is the single durable-emit path: it inserts a self-contained
 // Notifications row idempotently on (userId, dedupeKey) and only fans out the

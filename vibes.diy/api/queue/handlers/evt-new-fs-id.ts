@@ -5,7 +5,7 @@ import { and, desc, eq } from "drizzle-orm/sql/expressions";
 import { QueueCtx } from "../queue-ctx.js";
 import { processScreenShotEvent } from "../screen-shotter.js";
 import { buildPublishEmbed, postEmbed } from "../intern/post-to-discord.js";
-import { notifyRemixSourceOwner } from "../intern/notify-remix.js";
+import { notifyRemixSourceOwner } from "@vibes.diy/api-svc";
 
 export const evtNewFsIdEvento: EventoHandler<unknown, MsgBase<EvtNewFsId>, void> = {
   hash: "evt-new-fs-id",

@@ -3,16 +3,21 @@ import { EmitNotificationInput } from "@vibes.diy/api-types";
 import type { cfDrizzle, VibesApiTables } from "@vibes.diy/api-sql";
 import type { SuperThis } from "@vibes.diy/identity";
 
-// Structural slice of QueueCtx that emitNotification needs. Typing the param
+// Structural slice of the ctx that emitNotification needs. Typing the param
 // this way keeps the helper testable with a hand-built ctx while still
-// accepting a real QueueCtx (which satisfies this shape).
+// accepting a real QueueCtx OR a VibesApiSQLCtx (both satisfy this shape).
+//
+// `notifyUser` is OPTIONAL: the queue ctx supplies a live-bell fan-out, but the
+// svc ctx (VibesApiSQLCtx) does not expose a compatible 2-arg notifyUser, so
+// the clone path in forkApp passes a ctx without it. When it is absent, the
+// durable row is STILL inserted — only the live ping is skipped.
 export interface EmitNotificationCtx {
   readonly sthis: SuperThis;
   readonly sql: {
     db: ReturnType<typeof cfDrizzle>["db"];
     tables: VibesApiTables;
   };
-  notifyUser(
+  notifyUser?: (
     userId: string,
     evt: {
       type: "vibes.diy.evt-user-notification";
@@ -20,7 +25,7 @@ export interface EmitNotificationCtx {
       ownerHandle: string;
       appSlug: string;
     }
-  ): Promise<void>;
+  ) => Promise<void>;
 }
 
 /**
@@ -28,7 +33,9 @@ export interface EmitNotificationCtx {
  *
  * 1. Insert a self-contained row, idempotent on (userId, dedupeKey) via
  *    onConflictDoNothing.
- * 2. If a row was actually inserted, fan out the live bell via notifyUser.
+ * 2. If a row was actually inserted, fan out the live bell via notifyUser
+ *    when the ctx provides one (the durable insert always happens regardless;
+ *    a ctx without notifyUser persists the row but skips the live ping).
  * 3. If it was a duplicate (existing (userId, dedupeKey)), do nothing —
  *    neither persist nor re-ping — and return the existing row's id.
  *
@@ -74,7 +81,7 @@ export async function emitNotification(
     return { inserted: false, id: existing?.id ?? id };
   }
 
-  await qctx.notifyUser(input.userId, {
+  await qctx.notifyUser?.(input.userId, {
     type: "vibes.diy.evt-user-notification",
     notificationType: input.notificationType,
     ownerHandle: input.ownerHandle,

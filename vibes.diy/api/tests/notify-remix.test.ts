@@ -2,10 +2,10 @@ import { describe, expect, it, inject } from "vitest";
 import { eq } from "drizzle-orm";
 import { ensureSuperThis } from "@fireproof/core-runtime";
 import { createTestDeviceCA } from "@fireproof/core-device-id";
-import { MetaItem } from "@vibes.diy/api-types";
+import { MetaItem, isResEnsureAppSlugOk } from "@vibes.diy/api-types";
 import { createVibeDiyTestCtx } from "./vibe-diy-test-ctx.js";
-import { EmitNotificationCtx } from "../queue/intern/emit-notification.js";
-import { notifyRemixSourceOwner } from "../queue/intern/notify-remix.js";
+import { EmitNotificationCtx, notifyRemixSourceOwner } from "@vibes.diy/api-svc";
+import { createApiTestCtx } from "./api-test-setup.js";
 
 // notifyRemixSourceOwner resolves the source vibe owner from the remix app's
 // remix-of meta (captured at fork time) and emits exactly one durable
@@ -133,15 +133,69 @@ describe("notifyRemixSourceOwner", { timeout: (inject("DB_FLAVOUR" as never) as 
     expect(notifyCalls).toHaveLength(0);
   });
 
-  // Clone-path (skipChat) gap: a clone is born straight in production and
-  // never emits evt-new-fs-id, so call site B should notify the source owner
-  // inline from forkApp. It is NOT wired because notifyRemixSourceOwner lives
-  // in @vibes.diy/api-queue and api-queue depends on api-svc (where forkApp
-  // lives) — importing the helper into svc would create a circular package
-  // dependency. Wiring it cleanly needs the shared notify helpers to move to a
-  // package both svc and queue can depend on (larger plumbing, deferred). See
-  // the TODO in fork-app.ts.
-  it.todo("clone path (forkApp skipChat) notifies the source owner once");
+  // Clone-path (skipChat): a clone is born straight in production and never
+  // emits evt-new-fs-id, so the classic-remix queue handler (call site A) does
+  // not cover it. forkApp wires call site B inline — it calls
+  // notifyRemixSourceOwner on the freshly-inserted clone row. A clone by a
+  // non-owner of a published source must leave exactly one durable
+  // `vibe-remixed` inbox row for the SOURCE owner. (The live bell is skipped on
+  // this path — VibesApiSQLCtx has no compatible 2-arg notifyUser — but the
+  // durable row is what the source owner reads via listNotifications.)
+  it("clone path (forkApp skipChat) notifies the source owner once", async () => {
+    const ctx = await createApiTestCtx({ seqUserIdBase: 1_900_100, apiUrlPort: 19101 });
+
+    // Resolve a test user's stable userId via the handle binding it writes when
+    // it first creates an app (mirrors list-notifications.test.ts).
+    async function userIdOf(api: typeof ctx.api): Promise<string> {
+      const rRes = await api.ensureAppSlug({
+        mode: "dev",
+        fileSystem: [{ type: "code-block", lang: "jsx", filename: "/App.jsx", content: `function App(){return null} App();` }],
+      });
+      const res = rRes.Ok();
+      if (!isResEnsureAppSlugOk(res)) throw new Error(`ensureAppSlug failed: ${JSON.stringify(res)}`);
+      const usb = ctx.appCtx.vibesCtx.sql.tables.handleBinding;
+      const row = await ctx.appCtx.vibesCtx.sql.db
+        .select({ userId: usb.userId })
+        .from(usb)
+        .where(eq(usb.handle, res.ownerHandle))
+        .limit(1)
+        .then((r) => r[0]);
+      if (!row) throw new Error(`no handle binding for ${res.ownerHandle}`);
+      return row.userId;
+    }
+
+    const ownerUserId = await userIdOf(ctx.api);
+
+    // Owner publishes a production app with public access so a non-owner may clone.
+    const rSrc = await ctx.api.ensureAppSlug({
+      mode: "production",
+      fileSystem: [
+        { type: "code-block", lang: "jsx", filename: "/App.jsx", content: `function App(){return <div>clone-notify</div>} App();` },
+      ],
+    });
+    const src = rSrc.Ok();
+    if (!isResEnsureAppSlugOk(src)) throw new Error(`source ensureAppSlug failed: ${JSON.stringify(src)}`);
+    await ctx.api.ensureAppSettings({ appSlug: src.appSlug, ownerHandle: src.ownerHandle, publicAccess: { enable: true } });
+
+    // Non-owner clones (skipChat) — lands directly in production, no evt-new-fs-id.
+    const rFork = await ctx.api2.forkApp({ srcUserSlug: src.ownerHandle, srcAppSlug: src.appSlug, skipChat: true });
+    if (rFork.isErr()) throw new Error(`forkApp(skipChat) failed: ${JSON.stringify(rFork.Err())}`);
+    const fork = rFork.Ok();
+
+    // Exactly one durable vibe-remixed row for the SOURCE owner.
+    const t = ctx.appCtx.vibesCtx.sql.tables.notifications;
+    const rows = await ctx.appCtx.vibesCtx.sql.db
+      .select()
+      .from(t)
+      .where(eq(t.userId, ownerUserId))
+      .then((rs) => rs.filter((r) => r.notificationType === "vibe-remixed"));
+    expect(rows).toHaveLength(1);
+    const row = rows[0];
+    expect(row.ownerHandle).toBe(src.ownerHandle);
+    expect(row.appSlug).toBe(src.appSlug);
+    expect(row.actorHandle).toBe(fork.ownerHandle);
+    expect(row.dedupeKey).toBe(`vibe-remixed:${fork.ownerHandle}/${fork.appSlug}`);
+  });
 
   it("no remix-of entry at all emits no row", async () => {
     const { appCtx, qctx, notifyCalls } = await makeCtx();
