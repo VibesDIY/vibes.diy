@@ -1,5 +1,5 @@
 import { and, eq } from "drizzle-orm/sql/expressions";
-import { EmitNotificationInput } from "@vibes.diy/api-types";
+import { EmitNotificationInput, NotificationType } from "@vibes.diy/api-types";
 import type { cfDrizzle, VibesApiTables } from "@vibes.diy/api-sql";
 import type { SuperThis } from "@vibes.diy/identity";
 
@@ -7,10 +7,13 @@ import type { SuperThis } from "@vibes.diy/identity";
 // this way keeps the helper testable with a hand-built ctx while still
 // accepting a real QueueCtx OR a VibesApiSQLCtx (both satisfy this shape).
 //
-// `notifyUser` is OPTIONAL: the queue ctx supplies a live-bell fan-out, but the
-// svc ctx (VibesApiSQLCtx) does not expose a compatible 2-arg notifyUser, so
-// the clone path in forkApp passes a ctx without it. When it is absent, the
-// durable row is STILL inserted — only the live ping is skipped.
+// `notifyUser` is OPTIONAL and uses the 3-arg shape (`senderConnId` last) so
+// that BOTH a `QueueCtx` (2-arg notifyUser — assignable because a function with
+// fewer params satisfies a type expecting more) and a `VibesApiSQLCtx` (3-arg
+// notifyUser, `senderConnId` required) match this structural slice. When the ctx
+// has no notifyUser, the durable row is STILL inserted — only the live ping is
+// skipped. `notificationType` uses the shared `NotificationType` enum so the
+// VibesApiSQLCtx signature (which is enum-typed) assigns without widening.
 export interface EmitNotificationCtx {
   readonly sthis: SuperThis;
   readonly sql: {
@@ -21,10 +24,11 @@ export interface EmitNotificationCtx {
     userId: string,
     evt: {
       type: "vibes.diy.evt-user-notification";
-      notificationType: string;
+      notificationType: NotificationType;
       ownerHandle: string;
       appSlug: string;
-    }
+    },
+    senderConnId: string
   ) => Promise<void>;
 }
 
@@ -81,12 +85,19 @@ export async function emitNotification(
     return { inserted: false, id: existing?.id ?? id };
   }
 
-  await qctx.notifyUser?.(input.userId, {
-    type: "vibes.diy.evt-user-notification",
-    notificationType: input.notificationType,
-    ownerHandle: input.ownerHandle,
-    appSlug: input.appSlug,
-  });
+  // Empty senderConnId = no originating connection to skip, so the live bell
+  // fans out to all of the recipient's connections (correct for a
+  // server-originated notification). A 2-arg QueueCtx.notifyUser ignores it.
+  await qctx.notifyUser?.(
+    input.userId,
+    {
+      type: "vibes.diy.evt-user-notification",
+      notificationType: input.notificationType,
+      ownerHandle: input.ownerHandle,
+      appSlug: input.appSlug,
+    },
+    ""
+  );
 
   return { inserted: true, id };
 }
