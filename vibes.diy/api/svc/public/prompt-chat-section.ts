@@ -761,6 +761,7 @@ export async function handlePromptContext({
     const rFs = await ensureAppSlugItem(vctx, {
       type: "vibes.diy.req-ensure-app-slug",
       mode: "dev",
+      runId: promptId,
       // chatId: req.chatId,
       appSlug: resChat.appSlug,
       ownerHandle: resChat.ownerHandle,

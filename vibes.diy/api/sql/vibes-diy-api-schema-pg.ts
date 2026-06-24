@@ -65,6 +65,7 @@ export const sqlApps = pgTable(
     releaseSeq: integer().notNull(), // incremented on each publish
     // appId: text().notNull(), // FP app id
     fsId: text().notNull(), // CID of filenames+mimetypes+cid
+    runId: text(),
     env: jsonb().notNull(), // serialized env key-values
     fileSystem: jsonb().notNull(), // [FileSystemItem]
     meta: jsonb().notNull(), // [MetaItem]

@@ -38,6 +38,7 @@ export interface PushFromDirOptions {
   mode: "production" | "dev";
   appSlug: string;
   ownerHandle: string | undefined;
+  runId?: string;
   /** Opt out of fast-path defaults (public access + auto-accept editor). */
   private?: boolean;
   apiUrl: string;
@@ -46,6 +47,7 @@ export interface PushFromDirOptions {
       mode: "production" | "dev";
       appSlug: string;
       ownerHandle: string | undefined;
+      runId?: string;
       fileSystem: VibeFile[];
     }) => Promise<Result<unknown>>;
     ensureAppSettings: (req: {
@@ -108,6 +110,7 @@ export async function pushFromDir(opts: PushFromDirOptions): Promise<Result<Push
     mode: opts.mode,
     appSlug: opts.appSlug,
     ownerHandle: opts.ownerHandle,
+    runId: opts.runId,
     fileSystem: files,
   });
   if (rResult.isErr()) {
