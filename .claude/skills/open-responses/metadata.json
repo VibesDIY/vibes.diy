@@ -1,0 +1,12 @@
+{
+  "version": "1.0.0",
+  "organization": "Open Responses",
+  "date": "April 2026",
+  "abstract": "Complete reference for the Open Responses specification — an open API standard for multi-provider LLM interoperability. Covers the stateless HTTP protocol, polymorphic item system, state machines with lifecycle transitions, streaming events (SSE with delta and lifecycle events), externally-hosted and internally-hosted tool architecture, the agentic loop pattern, extension framework (custom items, custom events, schema extensions), error handling, and conversation continuation via previous_response_id. Designed for AI agent consumption to implement compliant servers or clients.",
+  "references": [
+    "https://www.openresponses.org/",
+    "https://www.openresponses.org/specification",
+    "https://www.openresponses.org/specification#extending-open-responses",
+    "https://www.openresponses.org/specification#state-machines"
+  ]
+}
