@@ -612,6 +612,42 @@ App.jsx — `access.hasChannel()` filters which channels are visible (display); 
 
 Channel `_id` is the channel identifier everywhere. The access function uses `doc._id` for routing and grants. A deterministic `_id` like `"ch:" + name` enforces uniqueness — two users can't create duplicate channels.
 
+### Example: Per-object sharing (collaborate on your own objects, no admin)
+
+A list app where every signed-in user makes their own lists, sees only their own, and can invite anyone to collaborate on a specific list — peer to peer, with no app admin in the loop. The pattern: **a channel per object** (`list:<id>`); the creator grants themselves that channel at creation; child docs (items) gate on `ctx.requireAccess` of the list's channel; any current member shares the list by granting another user the same channel. Membership is direct `grant.users`, so each viewer's access scales with their own memberships.
+
+access.js
+
+```js
+export default function (doc, oldDoc, user, ctx) {
+  if (!user) throw { forbidden: "sign in" };
+  const ch = (id) => `list:${id}`;
+
+  if (doc.type === "list") {
+    // Creator owns the list doc; route it to its own channel and grant self.
+    const author = oldDoc ? oldDoc.author : doc.author;
+    if (author !== user.userHandle) throw { forbidden: "not your list" };
+    return { channels: [ch(doc._id)], grant: { users: { [user.userHandle]: [ch(doc._id)] } } };
+  }
+
+  if (doc.type === "item") {
+    // Any member of the list may add/edit items in it.
+    ctx.requireAccess(ch(doc.listId));
+    return { channels: [ch(doc.listId)] };
+  }
+
+  if (doc.type === "share") {
+    // Any current member invites a peer by handle — grants them the list channel.
+    ctx.requireAccess(ch(doc.listId));
+    return { channels: [`${ch(doc.listId)}:meta`], grant: { users: { [doc.invitee]: [ch(doc.listId)] } } };
+  }
+
+  throw { forbidden: "unknown document type" };
+}
+```
+
+To invite someone who isn't a member yet without knowing their handle in advance, invert the flow with a request doc: a `request` type takes **no** `ctx.requireAccess` (any signed-in user may create one — their handle is `user.userHandle`, unforgeable), routed to a meta channel a member reads; a member then writes the `share` above to approve. The UI gates each surface with `useVibe("lists").can` and reflects which lists the viewer can see with `access.hasChannel(...)`.
+
 ---
 
 ## Access Function (`/access.js`)
