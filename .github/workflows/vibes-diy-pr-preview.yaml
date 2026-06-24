@@ -185,10 +185,16 @@ jobs:
           # we don't want PRs that ignore the schema to disturb it. If we
           # can't compute the diff against base (shallow checkout edge
           # cases), fail open and push — failing closed reintroduces #2601.
+          # Two-arg `git diff A B` (not `A...B`) so the symmetric merge-base
+          # isn't required — depth-1 fetches of base + HEAD don't share
+          # ancestors. Capture stdout via $(...) so we read git diff's exit
+          # code directly instead of letting grep's exit code (with no
+          # pipefail) silently turn a 128 into a "no schema changes" skip.
           BASE_SHA="${{ github.event.pull_request.base.sha }}"
           SCHEMA_CHANGED=1
-          if git fetch --no-tags --depth=1 origin "$BASE_SHA" 2>/dev/null; then
-            if ! git diff --name-only "$BASE_SHA"...HEAD \
+          if git fetch --no-tags --depth=1 origin "$BASE_SHA" 2>/dev/null \
+            && CHANGED_FILES=$(git diff --name-only "$BASE_SHA" HEAD 2>/dev/null); then
+            if ! printf '%s\n' "$CHANGED_FILES" \
               | grep -qE '^vibes\.diy/api/sql/|^vibes\.diy/pkg/drizzle\.[^/]*\.config\.ts$'; then
               SCHEMA_CHANGED=0
             fi
