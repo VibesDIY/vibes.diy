@@ -5,7 +5,15 @@ const cells = [
   { grade: "PASS", twoFile: true, renderable: true, formAStrict: false, formABroad: false, isOwnerWriteGate: false, ok: true },
   { grade: "SOFT", twoFile: true, renderable: false, formAStrict: false, formABroad: false, isOwnerWriteGate: false, ok: true },
   { grade: "FAIL", twoFile: true, renderable: true, formAStrict: true, formABroad: false, isOwnerWriteGate: false, ok: true },
-  { grade: "GENERATE_FAILED", twoFile: false, renderable: false, formAStrict: false, formABroad: false, isOwnerWriteGate: false, ok: false },
+  {
+    grade: "GENERATE_FAILED",
+    twoFile: false,
+    renderable: false,
+    formAStrict: false,
+    formABroad: false,
+    isOwnerWriteGate: false,
+    ok: false,
+  },
 ] as const;
 
 describe("compositeMetric", () => {

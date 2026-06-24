@@ -33,18 +33,7 @@ export function buildAccessGenerateArgs(o: {
   readonly appSlug: string;
   readonly prompt: string;
 }): string[] {
-  return [
-    "generate",
-    "--model",
-    o.model,
-    "--handle",
-    o.handle,
-    "--api-url",
-    o.apiUrl,
-    "--app-slug",
-    o.appSlug,
-    o.prompt,
-  ];
+  return ["generate", "--model", o.model, "--handle", o.handle, "--api-url", o.apiUrl, "--app-slug", o.appSlug, o.prompt];
 }
 
 /** Split "npx vibes-diy@latest" into [cmd, ...prefixArgs] (mirrors codegen-matrix). */
@@ -83,11 +72,7 @@ function subdirs(dir: string): string[] {
  * not exported — so it can't be imported; this is a verbatim copy with a comment
  * rather than editing codegen-matrix). Drains stdout and keeps a bounded stderr tail.
  */
-function execGenerate(
-  cmd: string,
-  args: string[],
-  cwd: string
-): Promise<{ status: number | null; stderrTail: string }> {
+function execGenerate(cmd: string, args: string[], cwd: string): Promise<{ status: number | null; stderrTail: string }> {
   return new Promise((res) => {
     const child = spawn(cmd, args, { cwd });
     let stderrBuf = "";
@@ -247,11 +232,9 @@ function hasSwitch(flag: string): boolean {
 function crossCheckModel(matrix: AccessMatrix, model: string, prompt: string): void {
   const { cmd, prefix } = splitCli(matrix.cliCommand);
   try {
-    const r = spawnSync(
-      cmd,
-      [...prefix, "generate", "--dry-run", "--json", "--model", model, "--api-url", matrix.apiUrl, prompt],
-      { encoding: "utf-8" }
-    );
+    const r = spawnSync(cmd, [...prefix, "generate", "--dry-run", "--json", "--model", model, "--api-url", matrix.apiUrl, prompt], {
+      encoding: "utf-8",
+    });
     const combined = `${r.stdout ?? ""}\n${r.stderr ?? ""}`;
     const match = combined.match(/\{[\s\S]*\}/);
     if (!match) {
@@ -276,8 +259,7 @@ export async function main(): Promise<void> {
 
   // Pin the model once. matrix.model is pinned (anthropic/claude-opus-4.8) so the live
   // fetch won't be hit; the fetchDefault stub stays as-is.
-  const model =
-    matrix.model && matrix.model.trim() ? matrix.model.trim() : await resolveDefaultModel(matrix, { fetchDefault });
+  const model = matrix.model && matrix.model.trim() ? matrix.model.trim() : await resolveDefaultModel(matrix, { fetchDefault });
   stderr.write(`access-model: pinned model = ${model}\n`);
 
   if (prompts.length > 0) crossCheckModel(matrix, model, prompts[0].prompt);
@@ -286,10 +268,7 @@ export async function main(): Promise<void> {
   const runDir = parseFlag("--run") ? resolve(parseFlag("--run") as string) : join(RUNS_DIR, ts);
   mkdirSync(runDir, { recursive: true });
 
-  const concurrency = Math.max(
-    1,
-    Math.floor(Number(parseFlag("--concurrency") ?? matrix.concurrency)) || 1
-  );
+  const concurrency = Math.max(1, Math.floor(Number(parseFlag("--concurrency") ?? matrix.concurrency)) || 1);
   const cliVersion = resolveCliVersion(matrix.cliCommand);
 
   const run: AccessRunJson = {

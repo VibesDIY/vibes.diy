@@ -34,12 +34,7 @@ export interface ScoredCell {
   readonly reasons: string[];
 }
 
-const MULTIPLAYER: ReadonlySet<Dimension> = new Set<Dimension>([
-  "per-visitor",
-  "per-object",
-  "author-owned",
-  "multi-tier",
-]);
+const MULTIPLAYER: ReadonlySet<Dimension> = new Set<Dimension>(["per-visitor", "per-object", "author-owned", "multi-tier"]);
 
 /**
  * Score one cell: static `analyzeAccess` + `checkFiles` always; the second-visitor
@@ -48,12 +43,8 @@ const MULTIPLAYER: ReadonlySet<Dimension> = new Set<Dimension>([
 export async function scoreCell(
   input: { readonly expect: Dimension; readonly prompt: string; readonly files: Record<string, string> },
   deps: {
-    readonly judge: (a: {
-      prompt: string;
-      expect: Dimension;
-      files: Record<string, string>;
-    }) => Promise<JudgeVerdict | null>;
-  },
+    readonly judge: (a: { prompt: string; expect: Dimension; files: Record<string, string> }) => Promise<JudgeVerdict | null>;
+  }
 ): Promise<ScoredCell> {
   const analysis = analyzeAccess(input.files["access.js"] ?? "", input.expect);
   const files = checkFiles(input.files);
@@ -146,18 +137,14 @@ export async function main(): Promise<void> {
   stderr.write(`access-model score: ${dirs.length} cells in ${runDir} (concurrency=${matrix.scoreConcurrency})\n`);
 
   const judgeDeps: JudgeDeps = realJudgeDeps(matrix);
-  const judge = (a: { prompt: string; expect: Dimension; files: Record<string, string> }) =>
-    judgeSecondVisitor(a, judgeDeps);
+  const judge = (a: { prompt: string; expect: Dimension; files: Record<string, string> }) => judgeSecondVisitor(a, judgeDeps);
 
   await mapWithConcurrency(dirs, matrix.scoreConcurrency, async (dir) => {
     const cell: AccessCellJson = JSON.parse(readFileSync(join(dir, CELL_JSON), "utf-8"));
     const scored =
       cell.exitState === "generate-failed"
         ? generateFailedCell()
-        : await scoreCell(
-            { expect: cell.expect as Dimension, prompt: cell.prompt, files: cell.files },
-            { judge },
-          );
+        : await scoreCell({ expect: cell.expect as Dimension, prompt: cell.prompt, files: cell.files }, { judge });
     writeFileSync(join(dir, SCORE_JSON), JSON.stringify(scored, null, 2), "utf-8");
     stderr.write(`  ${cell.promptId} r${cell.rep}: ${scored.grade}\n`);
   });

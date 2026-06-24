@@ -59,7 +59,10 @@ describe("analyzeAccess", () => {
     expect(a.perObjectRecipe).toBe(true);
   });
   it("flags an isOwner write-gate anywhere in access.js", () => {
-    const a = analyzeAccess(`export default function access(doc, oldDoc, user){ if(!user.isOwner) throw {forbidden:true}; return {channels:["x"]}; }`, "per-visitor");
+    const a = analyzeAccess(
+      `export default function access(doc, oldDoc, user){ if(!user.isOwner) throw {forbidden:true}; return {channels:["x"]}; }`,
+      "per-visitor"
+    );
     expect(a.isOwnerWriteGate).toBe(true);
   });
 });

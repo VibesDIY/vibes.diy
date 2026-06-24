@@ -19,31 +19,10 @@ describe("gate1Commands", () => {
   it("includes the prompts build+test steps AND the codegen-matrix rubric drift-guard", () => {
     const cmds = gate1Commands();
     // prompts build + test, scoped to both prompts workspaces
-    expect(cmds).toContainEqual([
-      "run",
-      "--filter",
-      "@vibes.diy/prompts",
-      "--filter",
-      "@vibes.diy/prompts-test",
-      "build",
-    ]);
-    expect(cmds).toContainEqual([
-      "run",
-      "--filter",
-      "@vibes.diy/prompts",
-      "--filter",
-      "@vibes.diy/prompts-test",
-      "test",
-    ]);
+    expect(cmds).toContainEqual(["run", "--filter", "@vibes.diy/prompts", "--filter", "@vibes.diy/prompts-test", "build"]);
+    expect(cmds).toContainEqual(["run", "--filter", "@vibes.diy/prompts", "--filter", "@vibes.diy/prompts-test", "test"]);
     // the promptAnchor rubric drift-guard lives in codegen-matrix, not the prompts pkgs
-    expect(cmds).toContainEqual([
-      "--filter",
-      "@vibes.diy/eval-codegen-matrix",
-      "exec",
-      "vitest",
-      "--run",
-      "src/rubric.test.ts",
-    ]);
+    expect(cmds).toContainEqual(["--filter", "@vibes.diy/eval-codegen-matrix", "exec", "vitest", "--run", "src/rubric.test.ts"]);
   });
 });
 

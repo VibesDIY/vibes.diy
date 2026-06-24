@@ -6,7 +6,10 @@ describe("checkFiles", () => {
     expect(checkFiles({ "App.jsx": "export default function App(){return null}" }).twoFile).toBe(false);
   });
   it("twoFile=true when both present and non-trivial", () => {
-    const r = checkFiles({ "App.jsx": "export default function App(){return <div/>}", "access.js": "export default function access(d,o,u){return {channels:['x']}}" });
+    const r = checkFiles({
+      "App.jsx": "export default function App(){return <div/>}",
+      "access.js": "export default function access(d,o,u){return {channels:['x']}}",
+    });
     expect(r.twoFile).toBe(true);
   });
   it("renderable=false on duplicate import (ESM redeclaration)", () => {

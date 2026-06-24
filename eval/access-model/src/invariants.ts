@@ -84,8 +84,7 @@ export function analyzeAccess(src: string, expect: Dimension): AccessAnalysis {
     !isOwnerWriteGate;
   const perObjectRecipe =
     expect === "per-object" && objectChannel && selfGrant && memberAuthoredShare && requireAccessChild && authorImmutable;
-  const authorOwned =
-    expect === "author-owned" && authorCheckCreate && publicRead && !requireRoleOwnerWrite && !isOwnerWriteGate;
+  const authorOwned = expect === "author-owned" && authorCheckCreate && publicRead && !requireRoleOwnerWrite && !isOwnerWriteGate;
 
   return {
     isOwnerWriteGate,
