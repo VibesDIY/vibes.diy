@@ -2,10 +2,9 @@ import { describe, expect, it, inject } from "vitest";
 import { eq } from "drizzle-orm";
 import { ensureSuperThis } from "@fireproof/core-runtime";
 import { createTestDeviceCA } from "@fireproof/core-device-id";
-import { MetaItem, isResEnsureAppSlugOk } from "@vibes.diy/api-types";
+import { MetaItem, isResEnsureAppSlugOk, isEvtRemixCloneNotify, MsgBase } from "@vibes.diy/api-types";
 import { createVibeDiyTestCtx } from "./vibe-diy-test-ctx.js";
 import { EmitNotificationCtx, notifyRemixCloneOwner, notifyRemixSourceOwner } from "@vibes.diy/api-svc";
-import { isEvtRemixCloneNotify, MsgBase } from "@vibes.diy/api-types";
 import { createApiTestCtx } from "./api-test-setup.js";
 
 // notifyRemixSourceOwner resolves the source vibe owner from the remix app's
