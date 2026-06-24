@@ -11,7 +11,10 @@ export interface JudgeDeps {
     apiKey: string;
     prompt: string;
     schema: object;
-  }) => Promise<JudgeVerdict>;
+    // Returns the model's raw structured output; each caller parses it into its
+    // OWN verdict shape (judgeSecondVisitor -> JudgeVerdict, guardrail -> {affirmative}).
+    // Returning JudgeVerdict here would force the second-visitor shape on every caller.
+  }) => Promise<unknown>;
   readonly model: string;
   readonly endpoint: string;
   readonly apiKey: string;
@@ -46,13 +49,15 @@ export async function judgeSecondVisitor(
   let lastErr: unknown;
   for (let attempt = 1; attempt <= max; attempt++) {
     try {
-      return await deps.call({
-        model: deps.model,
-        endpoint: deps.endpoint,
-        apiKey: deps.apiKey,
-        prompt: buildJudgePrompt(input),
-        schema: SCHEMA,
-      });
+      return parseVerdict(
+        await deps.call({
+          model: deps.model,
+          endpoint: deps.endpoint,
+          apiKey: deps.apiKey,
+          prompt: buildJudgePrompt(input),
+          schema: SCHEMA,
+        })
+      );
     } catch (e) {
       lastErr = e;
     }
@@ -89,7 +94,7 @@ async function realCall(args: {
   apiKey: string;
   prompt: string;
   schema: object;
-}): Promise<JudgeVerdict> {
+}): Promise<unknown> {
   const opts: CallAIOptions = {
     model: args.model,
     endpoint: args.endpoint,
@@ -100,7 +105,8 @@ async function realCall(args: {
     retries: JUDGE_RETRIES,
     isRetryable: isTransientError,
   });
-  return parseVerdict(raw);
+  // Return the parsed object verbatim; the caller coerces to its own verdict shape.
+  return typeof raw === "string" ? JSON.parse(raw) : raw;
 }
 
 /**

@@ -76,7 +76,11 @@ export async function guardrail(diff: string, judgeDeps: JudgeDeps): Promise<Gua
         prompt: buildGuardrailPrompt(diff),
         schema: JUDGE_SCHEMA,
       });
-      verdict = raw as unknown as GuardrailJudgeVerdict;
+      const obj = (raw ?? {}) as { affirmative?: unknown; reason?: unknown };
+      verdict = {
+        affirmative: obj.affirmative === true,
+        reason: typeof obj.reason === "string" ? obj.reason : "",
+      };
       break;
     } catch {
       verdict = null;
