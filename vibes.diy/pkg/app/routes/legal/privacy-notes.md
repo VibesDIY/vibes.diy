@@ -65,6 +65,7 @@ In addition to the uses described above, we may collect and use personal informa
 - For our business activities, including operating the Service and providing you with its features and functionality;
 - To communicate with you and respond to your requests;
 - To send you first-party product updates and communications about features and changes, which you can opt out of at any time;
+- To measure and attribute the effectiveness of our own advertising (see "Selling and sharing your personal information");
 - For analytics and research purposes;
 - To enforce our Terms of Service, resolve disputes, and protect our business interests and the interests and rights of third parties;
 - To comply with contractual and legal obligations and requirements;
@@ -83,9 +84,11 @@ The Service uses AI to help you generate applications, and we know that "do you 
 
 This section is consistent with the "AI and Model Use" section of our [Terms of Service](/legal/tos).
 
-## We do not sell your personal information
+## Selling and sharing your personal information
 
-We do not sell your personal information, and we do not "share" it for cross-context behavioral advertising as those terms are defined under the California Consumer Privacy Act (CCPA/CPRA). We do not use third-party advertising networks to target you based on your activity on the Service.
+We do not sell your personal information for money.
+
+**Advertising attribution.** We measure the effectiveness of our own advertising. If you arrive at the Service from an advertisement on a third-party platform — for example, by following a link that carries a Meta/Facebook click identifier (`fbclid`) — we send a limited set of data to Meta through its Conversions API so we can attribute the visit to that ad. That data consists of the click identifier and the IP address and browser user-agent string of your request. This happens only when you arrive with such an identifier and the relevant integration is configured for the deployment; we do not send it for ordinary visits. Under the California Consumer Privacy Act (CCPA/CPRA), this attribution activity may be considered "sharing" for cross-context behavioral advertising. We do not otherwise use third-party advertising networks to build profiles of you or to target you based on your activity within the Service. To limit this, you can avoid ad links, use your browser's or device's tracking controls, or contact us using the details below.
 
 ## How we share personal information
 
@@ -119,7 +122,7 @@ To exercise any of these rights, contact us using the details in "How to Contact
 
 ### California Privacy Rights (CCPA/CPRA)
 
-If you are a California resident, you have the rights described above, including the right to know what Personal Data we collect, to request deletion, and to correct inaccurate information. As stated above, **we do not sell or share your personal information**, so no "Do Not Sell or Share My Personal Information" mechanism is required; if this ever changes, we will provide one. You may exercise your rights, including through an authorized agent, by contacting us below.
+If you are a California resident, you have the rights described above, including the right to know what Personal Data we collect, to request deletion, and to correct inaccurate information. **We do not sell your personal information for money.** As described under "Selling and sharing your personal information," we may "share" a limited set of identifiers with Meta for advertising attribution; you may exercise your choices regarding that sharing, including the right to opt out and the use of an authorized agent, by contacting us below.
 
 ### European Privacy Rights (GDPR)
 
