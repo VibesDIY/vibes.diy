@@ -234,7 +234,7 @@ export default function About() {
                   Discord
                 </a>
                 {" · "}
-                <a href="https://github.com/fireproof-storage/vibes.diy" target="_blank" rel="noopener noreferrer" style={link}>
+                <a href="https://github.com/VibesDIY/vibes.diy" target="_blank" rel="noopener noreferrer" style={link}>
                   GitHub
                 </a>
                 {" · "}
