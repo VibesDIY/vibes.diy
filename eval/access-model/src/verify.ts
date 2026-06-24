@@ -164,17 +164,28 @@ export async function main(): Promise<void> {
     });
   }
 
-  // The frozen reference the ≥-baseline gates compare against.
+  // The frozen reference the ≥-baseline gates compare against. A fresh checkout has
+  // no baseline.json yet; rather than hard-fail (which makes `pnpm run verify`
+  // unrunnable — Charlie review #2621), degrade gracefully: warn loudly and compare
+  // against a zero floor so check + guardrail still gate, but the regression gates
+  // (two-file, renderable, holdout) can't fire until a real baseline is captured.
   const baseline = readBaseline();
-  if (!baseline) throw new Error(`no baseline.json under ${ROOT} — run capture-baseline first`);
+  if (!baseline) {
+    stderr.write(
+      `WARNING: no baseline.json under ${ROOT} — the ≥baseline gates (two-file, renderable, holdout) ` +
+        `are NOT enforced this run. Capture one (\`pnpm exec tsx src/baseline.ts\`) before trusting discard decisions.\n`
+    );
+  }
+  const evalBaseline = baseline ? baseline.eval : { twoFileRate: 0, renderableRate: 0, metric: 0 };
+  const holdoutBaseline = baseline ? baseline.holdout : { metric: 0 };
 
   const gates: GatesResult = evaluateGates({
     checkGreen,
     guardrail: guardrailResult,
     current: evalSummary.rate,
-    baseline: baseline.eval,
+    baseline: evalBaseline,
     holdoutCurrent: holdoutSummary.holdout,
-    holdoutBaseline: baseline.holdout,
+    holdoutBaseline: holdoutBaseline,
   });
 
   const decision = decideVerify({ metric: currentEvalMetric, gates });

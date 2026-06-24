@@ -65,6 +65,25 @@ describe("analyzeAccess", () => {
     );
     expect(a.isOwnerWriteGate).toBe(true);
   });
+  it("detects the author-on-create check in the reversed `user === doc` order (#2621)", () => {
+    const reversed = `export default function access(doc, oldDoc, user) {
+      if (user.userHandle !== doc.authorHandle) throw { forbidden: true };
+      if (oldDoc && user.userHandle !== oldDoc.authorHandle) throw { forbidden: true };
+      return { channels: [\`user:\${user.userHandle}\`], grant: { users: { [user.userHandle]: [\`user:\${user.userHandle}\`] } } };
+    }`;
+    const a = analyzeAccess(reversed, "per-visitor");
+    expect(a.authorCheckCreate).toBe(true);
+    expect(a.authorImmutable).toBe(true);
+    expect(a.perVisitorClean).toBe(true);
+  });
+  it("does NOT treat a read-only oldDoc.author mention as an immutability check (#2621)", () => {
+    const readonlyMention = `export default function access(doc, oldDoc, user) {
+      const previousAuthor = oldDoc.authorHandle; // read-only, no comparison
+      return { channels: ["notes"], audit: previousAuthor };
+    }`;
+    const a = analyzeAccess(readonlyMention, "per-visitor");
+    expect(a.authorImmutable).toBe(false);
+  });
 });
 
 // --- Corpus regression: the real hand-graded #2588 corpus is ground truth. ---
