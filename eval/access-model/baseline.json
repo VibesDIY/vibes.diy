@@ -1,0 +1,16 @@
+{
+  "commit": "3fac49eb9832bb31634ef029e119b28a6f70763f",
+  "eval": {
+    "scored": 64,
+    "platformFailed": 0,
+    "metric": 0.59375,
+    "formAStrictRate": 0.34375,
+    "formABroadRate": 0,
+    "isOwnerCount": 0,
+    "twoFileRate": 1,
+    "renderableRate": 1
+  },
+  "holdout": {
+    "metric": 0.484375
+  }
+}
