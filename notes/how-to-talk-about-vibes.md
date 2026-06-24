@@ -27,8 +27,9 @@ Do not repeat the old claims.
 **What's still true and safe to say:**
 
 - **You control your app's data.** (Lead with this — it can't be wrong.)
-- **Private by default — from other users.** A new app's data isn't public; other
-  people can't open it unless you let them in, and you set who can read and write.
+- **Private by default — yours to publish.** A new app starts private to the people
+  you invite; publish it when you're ready and anyone can use and remix it. You set
+  who can read, write, and open it.
 - **Open source.** Anyone can look under the hood.
 
 **The guardrail:** "private" means *access-gated from other users* — NOT encrypted,
@@ -38,6 +39,7 @@ secrecy from Vibes:
 
 - ✅ "Other people can't open your app unless you let them in."
 - ✅ "You choose who can read, write, and open your app."
+- ✅ "Private by default — publish to the world when you're ready."
 - ❌ "Encrypted." / "We can't see your data." / unqualified "Private." / "Local-first." / "Lives on your device." / "Portable."
 
 **Don't promise "no algorithm" or "no feed."** Discovery is on the roadmap — curated,
