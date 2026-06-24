@@ -1,5 +1,20 @@
 import { describe, it, expect } from "vitest";
-import { median, buildRows, renderSummary, type JoinedCell } from "./report.js";
+import { median, buildRows, renderSummary, buildStructureRows, renderStructure, type JoinedCell } from "./report.js";
+import type { StructureSignals } from "./structure.js";
+
+const ZERO_STRUCT: StructureSignals = {
+  hasAccessJs: false,
+  accessInAppJsx: false,
+  usesUseVibe: false,
+  gatesOnCan: false,
+  usesUseViewer: false,
+  usesRequireAccess: false,
+  usesRequireRole: false,
+  perObjectChannel: false,
+  usesFireproof: false,
+  usesCallAi: false,
+  usesCallAiSchema: false,
+};
 
 describe("median", () => {
   it("handles odd and even counts", () => {
@@ -63,6 +78,73 @@ describe("buildRows", () => {
     const m2 = rows.find((r) => r.model === "m2");
     expect(m2?.medianLatencyMs).toBe(5000);
     expect(m2?.meanFeature).toBeNull();
+  });
+});
+
+describe("buildStructureRows", () => {
+  const cells: JoinedCell[] = [
+    {
+      promptId: "collab",
+      model: "m1",
+      class: "c",
+      tier: "cheap",
+      rep: 0,
+      latencyMs: 1,
+      exitState: "ok",
+      attempts: 1,
+      rubricRatio: 1,
+      featureScore: 4,
+      designScore: 3,
+      hadNoFilesAttempt: false,
+      structure: { ...ZERO_STRUCT, hasAccessJs: true, usesRequireAccess: true, gatesOnCan: true },
+    },
+    {
+      promptId: "collab",
+      model: "m1",
+      class: "c",
+      tier: "cheap",
+      rep: 1,
+      latencyMs: 1,
+      exitState: "ok",
+      attempts: 1,
+      rubricRatio: 1,
+      featureScore: 1,
+      designScore: 1,
+      hadNoFilesAttempt: false,
+      structure: { ...ZERO_STRUCT, hasAccessJs: false },
+    },
+    {
+      promptId: "collab",
+      model: "m1",
+      class: "c",
+      tier: "cheap",
+      rep: 2,
+      latencyMs: 1,
+      exitState: "generate-failed",
+      attempts: 3,
+      rubricRatio: null,
+      featureScore: null,
+      designScore: null,
+      hadNoFilesAttempt: true,
+      structure: null,
+    },
+  ];
+
+  it("computes parse-fail over all cells and protocol rates over ok cells", () => {
+    const [r] = buildStructureRows(cells);
+    expect(r.total).toBe(3);
+    expect(r.ok).toBe(2);
+    expect(r.parseFailRate).toBeCloseTo(1 / 3); // 1 of 3 cells had a no-files attempt
+    expect(r.accessJsRate).toBeCloseTo(0.5); // 1 of 2 ok cells emitted access.js
+    expect(r.dslRate).toBeCloseTo(0.5);
+    expect(r.canGateRate).toBeCloseTo(0.5);
+  });
+
+  it("renders a markdown table with the structural header", () => {
+    const md = renderStructure(buildStructureRows(cells));
+    expect(md).toContain("Structural signals (per model)");
+    expect(md).toContain("parse-fail");
+    expect(md).toContain("m1");
   });
 });
 

@@ -4,6 +4,7 @@ import { fileURLToPath } from "node:url";
 import { argv, stderr } from "node:process";
 import { readCellJson, writeCellScore, screenshotUrl, type CellJson, type CellScore, CELL_JSON } from "./cell.js";
 import { runRubric } from "./rubric.js";
+import { computeStructure } from "./structure.js";
 import { readDevVars, judgeFeature, judgeDesign, type JudgeDeps } from "./judge.js";
 import { waitForScreenshot } from "./readiness.js";
 import { mapWithConcurrency } from "./pool.js";
@@ -48,6 +49,7 @@ async function scoreCell(args: {
   const { cellDir, cell, userPrompt, judgeDeps, screenshotTimeoutMs } = args;
   const files = collectSourceFiles(cell.directory);
   const rubric = runRubric(files);
+  const structure = computeStructure(files);
   const feature = await judgeFeature(userPrompt, files, judgeDeps);
 
   const shotUrl = screenshotUrl(cell.runtimeHostBase, cell.appSlug, cell.ownerHandle);
@@ -62,10 +64,11 @@ async function scoreCell(args: {
       : { available: false, score: null, reason: "screenshot fetch failed", judgeModel: judgeDeps.judgeModel };
   }
 
-  const score: CellScore = { promptId: cell.promptId, model: cell.model, rep: cell.rep, rubric, feature, design };
+  const score: CellScore = { promptId: cell.promptId, model: cell.model, rep: cell.rep, rubric, feature, design, structure };
   writeCellScore(cellDir, score);
   stderr.write(
-    `  scored ${cell.promptId} ${cell.model} r${cell.rep}: rubric=${rubric.passed}/${rubric.total} feature=${feature.score} design=${design.score}\n`
+    `  scored ${cell.promptId} ${cell.model} r${cell.rep}: rubric=${rubric.passed}/${rubric.total} feature=${feature.score} design=${design.score}` +
+      ` [access.js=${structure.hasAccessJs ? "y" : "n"} can=${structure.gatesOnCan ? "y" : "n"} reqAccess=${structure.usesRequireAccess ? "y" : "n"}]\n`
   );
   return score;
 }
