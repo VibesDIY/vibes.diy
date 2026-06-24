@@ -10,6 +10,30 @@ codegen system prompt), and **design quality**.
 - Adding a model is a **one-line edit** to `config/matrix.json` — no code change.
 - Cost is **not** scored; it's a post-eval filter you apply to the result table.
 
+## One-shot invariant — eval (and fix) the **initial** template
+
+**Most app generations are one-shot: a single first turn, never followed up.** This is
+an invariant of how people use the platform — we can't force multi-turn — so the first turn
+is where generation quality is won or lost.
+
+A first turn is the **`initial`** variant: `assemblePromptPayload` sets
+`variant: isInitial ? "initial" : "continuation"` with `isInitial = timeline.length === 0`
+(`vibes.diy/api/svc/intern/prompt-assembly.ts`), and `makeBaseSystemPrompt` maps
+`variant === "initial"` → **`prompts/pkg/system-prompt-initial.md`**, everything else →
+`system-prompt.md` (`prompts/pkg/prompts.ts`). The two are **separate files**.
+
+Consequences, both load-bearing:
+
+- **Prompt-quality changes must land in `system-prompt-initial.md`** (or a shared partial both
+  templates include). A change made only in `system-prompt.md` (continuation) is invisible to
+  nearly every real generation — and to any eval that generates fresh vibes. Keep the two in
+  sync for anything that should shape first-turn output.
+- **Generation-QA evals are exercising the initial template.** Every `vibes-diy generate` of a
+  brand-new vibe is a first turn → initial variant. When validating that a prompt change is
+  live, check the **initial** prompt: `vibes-diy generate --api-url <env> --dry-run --transcript
+  "<prompt>"` renders the first-turn payload (no existing vibe → initial), so grep that for your
+  change. Grading the continuation template tells you nothing about what real users get.
+
 ## Prerequisites (one-time)
 
 1. **Logged-in CLI** with access to the `eval` handle:
