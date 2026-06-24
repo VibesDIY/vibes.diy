@@ -9,6 +9,7 @@ import {
   W3CWebSocketEvent,
   MetaItem,
   FileSystemItem,
+  EvtRemixCloneNotify,
   isResHasAccessInviteAccepted,
   isResHasAccessRequestApproved,
   isFetchOkResult,
@@ -26,7 +27,6 @@ import { ensureAppSettings } from "./ensure-app-settings.js";
 import { hasAccessInvite } from "./invite-flow.js";
 import { hasAccessRequest } from "./request-flow.js";
 import { seedChatSection } from "../intern/seed-chat-section.js";
-import { notifyRemixSourceOwner } from "../intern/notify-remix.js";
 
 function sanitizeSlug(raw: string): string {
   return raw
@@ -259,23 +259,27 @@ export async function forkApp(
     // Clone-path remix notification (#2544): a clone (skipChat) is born straight
     // in production and never emits an evt-new-fs-id, so the classic-remix
     // notification wired into that queue handler (call site A) does NOT cover
-    // clones. Notify the source owner inline here from the freshly-inserted
-    // clone row. The helper resolves the source owner from the `remix-of` meta
-    // and dedupes on (userId, dedupeKey), so this is once-only and a self-clone
-    // is a no-op. VibesApiSQLCtx has no compatible 2-arg notifyUser, so the
-    // durable inbox row is persisted but the live bell is skipped here (the
-    // source owner sees it on next listNotifications). A notify failure must not
-    // break the fork — log and continue, like bumpAppRecency above.
+    // clones. ENQUEUE an evt-remix-clone-notify so the notification gets the same
+    // at-least-once retry as the classic-remix publish path — emitting it inline
+    // would let a transient failure permanently drop it. The handler re-loads the
+    // clone row + `remix-of` meta and dedupes on (userId, dedupeKey), so delivery
+    // is once-only and a self-clone is a no-op. The enqueue itself must not break
+    // the fork — log and continue, like bumpAppRecency above.
     const rNotify = await exception2Result(() =>
-      notifyRemixSourceOwner(vctx, {
-        userId,
-        ownerHandle: destUserSlug,
-        appSlug: destAppSlug,
-        meta: destMeta,
-      })
+      vctx.postQueue({
+        payload: {
+          type: "vibes.diy.evt-remix-clone-notify",
+          ownerHandle: destUserSlug,
+          appSlug: destAppSlug,
+        },
+        tid: "queue-event",
+        src: "forkApp",
+        dst: "vibes-service",
+        ttl: 1,
+      } satisfies MsgBase<EvtRemixCloneNotify>)
     );
     if (rNotify.isErr()) {
-      vctx.logger.Warn().Err(rNotify).Msg("notifyRemixSourceOwner (clone path) failed");
+      vctx.logger.Warn().Err(rNotify).Msg("enqueue evt-remix-clone-notify (clone path) failed");
     }
   }
 

@@ -4,7 +4,8 @@ import { ensureSuperThis } from "@fireproof/core-runtime";
 import { createTestDeviceCA } from "@fireproof/core-device-id";
 import { MetaItem, isResEnsureAppSlugOk } from "@vibes.diy/api-types";
 import { createVibeDiyTestCtx } from "./vibe-diy-test-ctx.js";
-import { EmitNotificationCtx, notifyRemixSourceOwner } from "@vibes.diy/api-svc";
+import { EmitNotificationCtx, notifyRemixCloneOwner, notifyRemixSourceOwner } from "@vibes.diy/api-svc";
+import { isEvtRemixCloneNotify, MsgBase } from "@vibes.diy/api-types";
 import { createApiTestCtx } from "./api-test-setup.js";
 
 // notifyRemixSourceOwner resolves the source vibe owner from the remix app's
@@ -135,14 +136,23 @@ describe("notifyRemixSourceOwner", { timeout: (inject("DB_FLAVOUR" as never) as 
 
   // Clone-path (skipChat): a clone is born straight in production and never
   // emits evt-new-fs-id, so the classic-remix queue handler (call site A) does
-  // not cover it. forkApp wires call site B inline — it calls
-  // notifyRemixSourceOwner on the freshly-inserted clone row. A clone by a
-  // non-owner of a published source must leave exactly one durable
-  // `vibe-remixed` inbox row for the SOURCE owner. (The live bell is skipped on
-  // this path — VibesApiSQLCtx has no compatible 2-arg notifyUser — but the
-  // durable row is what the source owner reads via listNotifications.)
-  it("clone path (forkApp skipChat) notifies the source owner once", async () => {
-    const ctx = await createApiTestCtx({ seqUserIdBase: 1_900_100, apiUrlPort: 19101 });
+  // not cover it. Rather than notify inline (where a transient failure would
+  // permanently drop the notification), forkApp ENQUEUES an
+  // evt-remix-clone-notify so it gets the same at-least-once retry as the
+  // classic-remix publish path. The test ctx does not run the queue worker, so
+  // this splits into two parts: (1) forkApp enqueues the message carrying the
+  // clone's (ownerHandle, appSlug); (2) given that message, notifyRemixCloneOwner
+  // (the handler core) re-loads the clone row + meta and leaves exactly one
+  // durable vibe-remixed row for the SOURCE owner — and redelivery is once-only.
+  it("clone path (forkApp skipChat) enqueues, then the handler notifies the source owner once", async () => {
+    const enqueued: MsgBase[] = [];
+    const ctx = await createApiTestCtx({
+      seqUserIdBase: 1_900_100,
+      apiUrlPort: 19101,
+      postQueue: async (msg) => {
+        enqueued.push(msg);
+      },
+    });
 
     // Resolve a test user's stable userId via the handle binding it writes when
     // it first creates an app (mirrors list-notifications.test.ts).
@@ -182,8 +192,29 @@ describe("notifyRemixSourceOwner", { timeout: (inject("DB_FLAVOUR" as never) as 
     if (rFork.isErr()) throw new Error(`forkApp(skipChat) failed: ${JSON.stringify(rFork.Err())}`);
     const fork = rFork.Ok();
 
-    // Exactly one durable vibe-remixed row for the SOURCE owner.
+    // (1) forkApp enqueued exactly one evt-remix-clone-notify for the clone.
     const t = ctx.appCtx.vibesCtx.sql.tables.notifications;
+    const cloneMsgs = enqueued.filter((m) => isEvtRemixCloneNotify(m.payload));
+    expect(cloneMsgs).toHaveLength(1);
+    const payload = cloneMsgs[0].payload;
+    if (!isEvtRemixCloneNotify(payload)) throw new Error("expected evt-remix-clone-notify payload");
+    expect(payload.ownerHandle).toBe(fork.ownerHandle);
+    expect(payload.appSlug).toBe(fork.appSlug);
+
+    // No durable row yet — the queue worker has not run.
+    const beforeRows = await ctx.appCtx.vibesCtx.sql.db
+      .select()
+      .from(t)
+      .where(eq(t.userId, ownerUserId))
+      .then((rs) => rs.filter((r) => r.notificationType === "vibe-remixed"));
+    expect(beforeRows).toHaveLength(0);
+
+    // (2) Drive the handler core with the enqueued message: re-loads the clone
+    //     row + meta and leaves exactly one durable vibe-remixed row for the
+    //     SOURCE owner.
+    const qctx: EmitNotificationCtx = { sthis: ctx.sthis, sql: ctx.appCtx.vibesCtx.sql };
+    await notifyRemixCloneOwner(qctx, payload);
+
     const rows = await ctx.appCtx.vibesCtx.sql.db
       .select()
       .from(t)
@@ -195,6 +226,74 @@ describe("notifyRemixSourceOwner", { timeout: (inject("DB_FLAVOUR" as never) as 
     expect(row.appSlug).toBe(src.appSlug);
     expect(row.actorHandle).toBe(fork.ownerHandle);
     expect(row.dedupeKey).toBe(`vibe-remixed:${fork.ownerHandle}/${fork.appSlug}`);
+
+    // Redelivery is once-only: processing the same message again adds no row.
+    await notifyRemixCloneOwner(qctx, payload);
+    const afterRows = await ctx.appCtx.vibesCtx.sql.db
+      .select()
+      .from(t)
+      .where(eq(t.userId, ownerUserId))
+      .then((rs) => rs.filter((r) => r.notificationType === "vibe-remixed"));
+    expect(afterRows).toHaveLength(1);
+  });
+
+  // Queued clone-path (notifyRemixCloneOwner) re-loads the clone row by
+  // (ownerHandle, appSlug) and delegates to notifyRemixSourceOwner, so the
+  // self-clone and legacy-no-srcUserId guards must hold through the queued path
+  // too: no vibe-remixed row is produced.
+  async function insertCloneRow(
+    appCtx: Awaited<ReturnType<typeof makeCtx>>["appCtx"],
+    opts: { userId: string; ownerHandle: string; appSlug: string; meta: MetaItem[] }
+  ): Promise<void> {
+    const t = appCtx.vibesCtx.sql.tables.apps;
+    await appCtx.vibesCtx.sql.db.insert(t).values({
+      appSlug: opts.appSlug,
+      userId: opts.userId,
+      ownerHandle: opts.ownerHandle,
+      releaseSeq: 1,
+      fsId: "fs-clone",
+      env: [],
+      fileSystem: [],
+      meta: opts.meta,
+      mode: "production",
+      created: new Date().toISOString(),
+    });
+  }
+
+  it("queued clone path: self-clone emits no row", async () => {
+    const { appCtx, qctx } = await makeCtx();
+    const selfId = `self-${sthis.nextId().str}`;
+    const handle = `self-clone-${sthis.nextId().str}`;
+    await insertCloneRow(appCtx, {
+      userId: selfId,
+      ownerHandle: handle,
+      appSlug: "self-clone-app",
+      meta: [{ type: "remix-of", srcFsId: "fs-src", srcUserId: selfId, srcOwnerHandle: handle, srcAppSlug: "self-src" }],
+    });
+
+    await notifyRemixCloneOwner(qctx, { ownerHandle: handle, appSlug: "self-clone-app" });
+
+    const t = qctx.sql.tables.notifications;
+    const rows = await appCtx.vibesCtx.sql.db.select().from(t).where(eq(t.userId, selfId));
+    expect(rows).toHaveLength(0);
+  });
+
+  it("queued clone path: legacy remix lacking srcUserId emits no row", async () => {
+    const { appCtx, qctx } = await makeCtx();
+    const userId = `cloner-${sthis.nextId().str}`;
+    const handle = `legacy-clone-${sthis.nextId().str}`;
+    await insertCloneRow(appCtx, {
+      userId,
+      ownerHandle: handle,
+      appSlug: "legacy-clone-app",
+      meta: [{ type: "remix-of", srcFsId: "fs-legacy" }],
+    });
+
+    await notifyRemixCloneOwner(qctx, { ownerHandle: handle, appSlug: "legacy-clone-app" });
+
+    const t = qctx.sql.tables.notifications;
+    const rows = await appCtx.vibesCtx.sql.db.select().from(t);
+    expect(rows.filter((r) => r.notificationType === "vibe-remixed")).toHaveLength(0);
   });
 
   it("no remix-of entry at all emits no row", async () => {

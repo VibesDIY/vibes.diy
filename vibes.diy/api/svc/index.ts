@@ -15,6 +15,7 @@ export * from "./noop-cache.js";
 export * from "./intern/ensure-slug-binding.js";
 export * from "./intern/emit-notification.js";
 export * from "./intern/notify-remix.js";
+export * from "./intern/notify-remix-clone.js";
 export * from "./intern/notify-vibe-published.js";
 export * from "./intern/notify-comment-posted.js";
 export * from "./intern/notify-request-grant.js";

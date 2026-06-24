@@ -39,6 +39,8 @@ export interface CreateApiTestCtxOpts {
   models?: CreateVibeDiyTestCtxOpts["models"];
   llmRequest?: CreateVibeDiyTestCtxOpts["llmRequest"];
   inferenceFetch?: CreateVibeDiyTestCtxOpts["inferenceFetch"];
+  // Capture/override messages enqueued via ctx.postQueue (default no-op).
+  postQueue?: CreateVibeDiyTestCtxOpts["postQueue"];
   /**
    * Inject a SuperThis (e.g. built with a MockLogger via
    * `ensureSuperThis({ logger })`) so a test can capture the structured logs
@@ -93,6 +95,7 @@ export async function createApiTestCtx(opts: CreateApiTestCtxOpts = {}): Promise
     models: opts.models,
     llmRequest: opts.llmRequest,
     inferenceFetch: opts.inferenceFetch,
+    postQueue: opts.postQueue,
   });
   const seqUserIdBase = opts.seqUserIdBase ?? nextSeqUserIdBase();
   const testUser = await createTestUser({ sthis, deviceCA, seqUserId: seqUserIdBase + 1 });

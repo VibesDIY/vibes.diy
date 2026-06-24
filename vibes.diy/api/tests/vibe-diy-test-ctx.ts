@@ -140,6 +140,10 @@ export interface CreateVibeDiyTestCtxOpts {
   // Override teeWriter peerTimeout for tests (default 30s in production).
   // Canary tests set this small (e.g. 200ms) so deadlines fire fast.
   peerTimeout?: number;
+  // Capture/override messages enqueued via ctx.postQueue. The default is a
+  // no-op (the test ctx does not run the queue worker), so a test that asserts
+  // a producer enqueues a message injects a capturing impl here.
+  postQueue?(msg: MsgBase): Promise<void>;
   notifyRequestGrantChanged?(evt: EvtRequestGrant, senderConnId: string): Promise<void>;
   notifyViewerGrantsChanged?(evt: EvtViewerGrantsChanged, senderConnId: string): Promise<void>;
   notifyDocChanged?(
@@ -265,9 +269,11 @@ export async function createVibeDiyTestCtx(
       }
       throw new Error(`fetchAsset not implemented in test for url: ${url}`);
     },
-    postQueue: async (_msg: MsgBase) => {
-      // throw new Error(`postQueue not implemented in test for msg: ${JSON.stringify(msg)}`);
-    },
+    postQueue:
+      opts.postQueue ??
+      (async (_msg: MsgBase) => {
+        // throw new Error(`postQueue not implemented in test for msg: ${JSON.stringify(msg)}`);
+      }),
     llmRequest:
       opts.llmRequest ??
       (async (prompt: LLMRequest & { headers: LLMHeaders }) => {
