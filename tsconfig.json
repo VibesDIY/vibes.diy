@@ -16,6 +16,7 @@
     "allowSyntheticDefaultImports": true,
     "sourceMap": true,
     "outDir": "./dist",
+    "rootDir": ".",
     "removeComments": true,
     "noEmit": true,
     "forceConsistentCasingInFileNames": true,
