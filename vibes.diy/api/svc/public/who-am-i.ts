@@ -14,7 +14,7 @@ import {
 } from "@vibes.diy/api-types";
 import { ReqVibeWhoAmI, ResVibeWhoAmI, ViewerPayload, DocAccessLevel, isReqVibeWhoAmI } from "@vibes.diy/vibe-types";
 import { and, eq } from "drizzle-orm";
-import { GrantReduce, extractContribution, newSeededReduce, parseOwnerRoles } from "./grant-reduce.js";
+import { GrantReduce, extractContribution, newSeededReduce } from "./grant-reduce.js";
 import { unwrapMsgBase } from "../unwrap-msg-base.js";
 import { VibesApiSQLCtx } from "../types.js";
 import { optAuth } from "../check-auth.js";
@@ -47,32 +47,25 @@ async function resolveGrants(
 ): Promise<Record<string, { channels: string[]; publicChannels: string[]; roles: string[] }> | undefined> {
   const tAfb = vctx.sql.tables.accessFunctionBindings;
   const afbRows = await vctx.sql.db
-    .select({ dbName: tAfb.dbName, accessFnCid: tAfb.accessFnCid, ownerRoles: tAfb.ownerRoles })
+    .select({ dbName: tAfb.dbName, accessFnCid: tAfb.accessFnCid })
     .from(tAfb)
     .where(and(eq(tAfb.ownerHandle, ownerUserSlug), eq(tAfb.appSlug, appSlug)));
 
   if (afbRows.length === 0) return undefined;
 
   // Build fnCid lookup: named bindings take precedence over wildcard ('*').
-  // Collect all distinct fnCids for the single batched outputs query. Owner seed
-  // roles are tracked with the same precedence so the client `can.*` predictor
-  // agrees with the owner roles the write/read paths seed server-side.
+  // Collect all distinct fnCids for the single batched outputs query.
   let wildcardCid: string | undefined;
-  let wildcardOwnerRoles: string[] = [];
   const namedCids = new Map<string, string>();
-  const namedOwnerRoles = new Map<string, string[]>();
   const allCids = new Set<string>();
   for (const afb of afbRows) {
     allCids.add(afb.accessFnCid);
     if (afb.dbName === "*") {
       wildcardCid = afb.accessFnCid;
-      wildcardOwnerRoles = parseOwnerRoles(afb.ownerRoles);
     } else {
       namedCids.set(afb.dbName, afb.accessFnCid);
-      namedOwnerRoles.set(afb.dbName, parseOwnerRoles(afb.ownerRoles));
     }
   }
-  const ownerRolesFor = (dbName: string): string[] => namedOwnerRoles.get(dbName) ?? wildcardOwnerRoles;
 
   // Single batched query: fetch all grant-bearing outputs for this app
   // across all relevant fnCids. Outputs are stored under concrete dbNames
@@ -112,7 +105,7 @@ async function resolveGrants(
   };
 
   for (const [dbName, rows] of outputsByDb) {
-    const reduce = newSeededReduce(ownerUserSlug, ownerRolesFor(dbName));
+    const reduce = newSeededReduce(ownerUserSlug);
     for (const row of rows) {
       reduce.addDoc(row.docId, extractContribution(JSON.parse(row.output) as AccessDescriptor));
     }
@@ -126,7 +119,7 @@ async function resolveGrants(
   // output loop didn't cover.
   for (const dbName of namedCids.keys()) {
     if (grants[dbName]) continue;
-    grants[dbName] = buildEntry(newSeededReduce(ownerUserSlug, ownerRolesFor(dbName)));
+    grants[dbName] = buildEntry(newSeededReduce(ownerUserSlug));
   }
 
   // For a `*` (default-export) binding there is no concrete dbName to key when
@@ -134,7 +127,7 @@ async function resolveGrants(
   // client reads `grants[dbName] ?? grants["*"]`, so a brand-new vibe's first
   // create is predicted correctly while named/concrete entries still win.
   if (wildcardCid !== undefined && !grants["*"]) {
-    grants["*"] = buildEntry(newSeededReduce(ownerUserSlug, wildcardOwnerRoles));
+    grants["*"] = buildEntry(newSeededReduce(ownerUserSlug));
   }
 
   return Object.keys(grants).length > 0 ? grants : undefined;

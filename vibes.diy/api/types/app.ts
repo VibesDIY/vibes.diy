@@ -8,11 +8,6 @@ export const ReqEnsureAppSlug = type({
   auth: dashAuthType,
   mode: FSMode,
   "env?": vibeUserEnv,
-  // Roles the generator declares the owner should be seeded into at deploy time
-  // (owner-role-seeding, spec 2026-06-23). A sidecar to access.js, not parsed
-  // from it. The reserved `owner` role is always seeded regardless; these are
-  // additional declared roles. Persisted onto the AccessFunctionBindings row.
-  "ownerRoles?": "string[]",
   fileSystem: [vibeFile, "[]"],
 }).and(NeedOneAppSlugUserSlug);
 

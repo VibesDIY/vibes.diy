@@ -139,7 +139,6 @@ export async function ensureAppSlugItem(
     ownerHandle: ensured.ownerHandle,
     appSlug: ensured.appSlug,
     fullFileSystem,
-    ownerRoles: req.ownerRoles,
   });
   if (rAccessBindings.isErr()) {
     console.warn(
