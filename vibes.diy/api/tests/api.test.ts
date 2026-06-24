@@ -1027,9 +1027,9 @@ describe("VibesDiyApi", { timeout: (inject("DB_FLAVOUR" as never) as string) ===
     });
 
     it("ensureAppSettings update chat", async () => {
-      const x1 = await api.ensureAppSettings({ appSlug, ownerHandle, chat: { model: m("x") } });
-      const x2 = await api.ensureAppSettings({ appSlug, ownerHandle, chat: { model: m("x") } });
-      const x3 = await api.ensureAppSettings({ appSlug, ownerHandle, chat: { model: m("x1"), apiKey: "x" } });
+      const x1 = await api.ensureAppSettings({ appSlug, ownerHandle, codegen: { model: m("x") } });
+      const x2 = await api.ensureAppSettings({ appSlug, ownerHandle, codegen: { model: m("x") } });
+      const x3 = await api.ensureAppSettings({ appSlug, ownerHandle, codegen: { model: m("x1"), apiKey: "x" } });
       expect(x1.Ok().settings.entries).toEqual(x2.Ok().settings.entries);
       expect(x3.Ok().settings.entries.length).toBe(x1.Ok().settings.entries.length);
       expect(x3.Ok().settings.entries).toEqual(
@@ -1040,21 +1040,23 @@ describe("VibesDiyApi", { timeout: (inject("DB_FLAVOUR" as never) as string) ===
               model: m("x1"),
             },
             type: "active.model",
-            usage: "chat",
+            usage: "codegen",
           }),
         ])
       );
-      expect(x3.Ok().settings.entry.settings.chat).toEqual({
+      expect(x3.Ok().settings.entry.settings.codegen).toEqual({
         model: m("x1"),
         apiKey: "x",
       });
     });
 
-    it("ensureAppSettings canonicalizes duplicate chat model entries on save", async () => {
+    it("ensureAppSettings canonicalizes duplicate + legacy-named codegen model entries on save (#2608)", async () => {
       const { appSlug, ownerHandle } = await createApp();
-      const seed = await api.ensureAppSettings({ appSlug, ownerHandle, chat: { model: m("seed-chat"), apiKey: "seed-key" } });
+      const seed = await api.ensureAppSettings({ appSlug, ownerHandle, codegen: { model: m("seed-chat"), apiKey: "seed-key" } });
       const appSettings = appCtx.vibesCtx.sql.tables.appSettings;
 
+      // Seed rows using the pre-#2608 legacy `usage` tokens ("chat" → codegen,
+      // "app" → runtime) directly so we exercise back-compat reads.
       await appCtx.vibesCtx.sql.db
         .update(appSettings)
         .set({
@@ -1080,18 +1082,28 @@ describe("VibesDiyApi", { timeout: (inject("DB_FLAVOUR" as never) as string) ===
           and(eq(appSettings.userId, seed.Ok().userId), eq(appSettings.appSlug, appSlug), eq(appSettings.ownerHandle, ownerHandle))
         );
 
-      const selectedChat = { model: m("saved-chat"), apiKey: "saved-key" };
-      const save = await api.ensureAppSettings({ appSlug, ownerHandle, chat: selectedChat });
-      const saveChatEntries = save.Ok().settings.entries.filter((entry) => entry.type === "active.model" && entry.usage === "chat");
+      const selectedCodegen = { model: m("saved-chat"), apiKey: "saved-key" };
+      const save = await api.ensureAppSettings({ appSlug, ownerHandle, codegen: selectedCodegen });
+      // The guard matches both legacy "chat" and canonical "codegen", so the two
+      // seeded legacy rows collapse into a single canonical entry.
+      const saveCodegenEntries = save
+        .Ok()
+        .settings.entries.filter((entry) => entry.type === "active.model" && (entry.usage === "codegen" || entry.usage === "chat"));
 
-      expect(saveChatEntries).toHaveLength(1);
-      expect(save.Ok().settings.entry.settings.chat).toEqual(selectedChat);
+      expect(saveCodegenEntries).toHaveLength(1);
+      expect(saveCodegenEntries[0]).toMatchObject({ usage: "codegen" });
+      expect(save.Ok().settings.entry.settings.codegen).toEqual(selectedCodegen);
 
       const read = await api.ensureAppSettings({ appSlug, ownerHandle });
-      const readChatEntries = read.Ok().settings.entries.filter((entry) => entry.type === "active.model" && entry.usage === "chat");
+      const readCodegenEntries = read
+        .Ok()
+        .settings.entries.filter((entry) => entry.type === "active.model" && (entry.usage === "codegen" || entry.usage === "chat"));
 
-      expect(readChatEntries).toHaveLength(1);
-      expect(read.Ok().settings.entry.settings.chat).toEqual(selectedChat);
+      expect(readCodegenEntries).toHaveLength(1);
+      expect(read.Ok().settings.entry.settings.codegen).toEqual(selectedCodegen);
+      // The legacy "app" (runtime) row is untouched and still resolves into the
+      // canonical runtime bucket on read.
+      expect(read.Ok().settings.entry.settings.runtime).toEqual({ model: m("app-model") });
       expect(read.Ok().settings.entries).toEqual(
         expect.arrayContaining([
           expect.objectContaining({
@@ -1173,10 +1185,10 @@ describe("VibesDiyApi", { timeout: (inject("DB_FLAVOUR" as never) as string) ===
       expect(settings.env).toEqual([{ key: "NEW", value: "v" }]);
     });
 
-    it("ensureAppSettings update app", async () => {
-      const x1 = await api.ensureAppSettings({ appSlug, ownerHandle, app: { model: m("x") } });
-      const x2 = await api.ensureAppSettings({ appSlug, ownerHandle, app: { model: m("x") } });
-      const x3 = await api.ensureAppSettings({ appSlug, ownerHandle, app: { model: m("x1"), apiKey: "x" } });
+    it("ensureAppSettings update runtime", async () => {
+      const x1 = await api.ensureAppSettings({ appSlug, ownerHandle, runtime: { model: m("x") } });
+      const x2 = await api.ensureAppSettings({ appSlug, ownerHandle, runtime: { model: m("x") } });
+      const x3 = await api.ensureAppSettings({ appSlug, ownerHandle, runtime: { model: m("x1"), apiKey: "x" } });
       expect(x1.Ok().settings.entries).toEqual(x2.Ok().settings.entries);
       expect(x3.Ok().settings.entries.length).toBe(x1.Ok().settings.entries.length);
       expect(x3.Ok().settings.entries).toEqual(
@@ -1187,11 +1199,11 @@ describe("VibesDiyApi", { timeout: (inject("DB_FLAVOUR" as never) as string) ===
               model: m("x1"),
             },
             type: "active.model",
-            usage: "app",
+            usage: "runtime",
           }),
         ])
       );
-      expect(x3.Ok().settings.entry.settings.app).toEqual({
+      expect(x3.Ok().settings.entry.settings.runtime).toEqual({
         model: m("x1"),
         apiKey: "x",
       });

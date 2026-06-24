@@ -19,8 +19,8 @@ import {
   isActiveEnv,
   isActiveIcon,
   isActiveIconDescription,
-  isActiveModelSettingApp,
-  isActiveModelSettingChat,
+  isActiveModelSettingRuntime,
+  isActiveModelSettingCodegen,
   isActiveModelSettingImg,
   isActiveColorTheme,
   isActiveSkills,
@@ -35,8 +35,8 @@ import {
   isEnablePublicAccess,
   isEnableRequest,
   isReqEnsureAppSettings,
-  isReqEnsureAppSettingsApp,
-  isReqEnsureAppSettingsChat,
+  isReqEnsureAppSettingsRuntime,
+  isReqEnsureAppSettingsCodegen,
   isReqEnsureAppSettingsDbAcl,
   isReqEnsureAppSettingsDbAclRemove,
   isReqEnsureAppSettingsEnv,
@@ -120,11 +120,11 @@ export function buildEnsureEntryResult(entries: ActiveEntry[]): AppSettings {
         }
         break;
       }
-      case isActiveModelSettingChat(e):
-        result.entry.settings.chat = e.param;
+      case isActiveModelSettingCodegen(e):
+        result.entry.settings.codegen = e.param;
         break;
-      case isActiveModelSettingApp(e):
-        result.entry.settings.app = e.param;
+      case isActiveModelSettingRuntime(e):
+        result.entry.settings.runtime = e.param;
         break;
       case isActiveModelSettingImg(e):
         result.entry.settings.img = e.param;
@@ -145,7 +145,7 @@ export function buildEnsureEntryResult(entries: ActiveEntry[]): AppSettings {
 // (Lazy cache resets every 10s, asset fetch goes over the network) can't
 // stall the response *after* the actual D1 write has already succeeded.
 // On timeout we return res unchanged — the client already has the write
-// confirmation it needs; chat/app/img defaults are best-effort metadata.
+// confirmation it needs; codegen/runtime/img defaults are best-effort metadata.
 const MODEL_DEFAULTS_TIMEOUT_MS = 3000;
 
 async function withModelDefaults(vctx: VibesApiSQLCtx, res: ResEnsureAppSettings): Promise<ResEnsureAppSettings> {
@@ -158,8 +158,8 @@ async function withModelDefaults(vctx: VibesApiSQLCtx, res: ResEnsureAppSettings
   if (raced.isErr()) return res;
   const defaults = raced.Ok();
   const s = res.settings.entry.settings;
-  if (!s.chat) s.chat = defaults.chat;
-  if (!s.app) s.app = defaults.app;
+  if (!s.codegen) s.codegen = defaults.codegen;
+  if (!s.runtime) s.runtime = defaults.runtime;
   if (!s.img) s.img = defaults.img;
   return res;
 }
@@ -417,36 +417,36 @@ export async function ensureAppSettings(
         );
       }
       break;
-    case isReqEnsureAppSettingsApp(req):
+    case isReqEnsureAppSettingsRuntime(req):
       [res.settings, res.error] = await sqlUpsert(
         vctx,
         res,
         settings,
-        isActiveModelSettingApp,
+        isActiveModelSettingRuntime,
         (prev: ActiveModelSetting) =>
           ({
             type: "active.model",
-            usage: "app",
+            usage: "runtime",
             param: {
               ...prev.param,
-              ...req.app,
+              ...req.runtime,
             },
           }) satisfies ActiveModelSetting
       );
       break;
-    case isReqEnsureAppSettingsChat(req):
+    case isReqEnsureAppSettingsCodegen(req):
       [res.settings, res.error] = await sqlUpsert(
         vctx,
         res,
         settings,
-        isActiveModelSettingChat,
+        isActiveModelSettingCodegen,
         (prev: ActiveModelSetting) =>
           ({
             type: "active.model",
-            usage: "chat",
+            usage: "codegen",
             param: {
               ...prev.param,
-              ...req.chat,
+              ...req.codegen,
             },
           }) satisfies ActiveModelSetting
       );

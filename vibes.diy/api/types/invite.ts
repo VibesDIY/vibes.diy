@@ -391,23 +391,26 @@ export const ActiveModelSettingBase = type({
   param: AIParams,
 });
 
-export const ActiveModelSettingChat = type({
-  usage: "'chat'",
+// Persisted per-app model override. `usage` is canonical (#2608: codegen /
+// runtime / img); the legacy `chat`/`app` tokens stay accepted so rows written
+// before the rename still match their guard. We only ever WRITE canonical.
+export const ActiveModelSettingCodegen = type({
+  usage: "'codegen' | 'chat'",
 }).and(ActiveModelSettingBase);
 
-export type ActiveModelSettingChat = typeof ActiveModelSettingChat.infer;
+export type ActiveModelSettingCodegen = typeof ActiveModelSettingCodegen.infer;
 
-export function isActiveModelSettingChat(obj: unknown): obj is typeof ActiveModelSettingChat.infer {
-  return !(ActiveModelSettingChat(obj) instanceof type.errors);
+export function isActiveModelSettingCodegen(obj: unknown): obj is typeof ActiveModelSettingCodegen.infer {
+  return !(ActiveModelSettingCodegen(obj) instanceof type.errors);
 }
 
-export const ActiveModelSettingApp = type({
-  usage: "'app'",
+export const ActiveModelSettingRuntime = type({
+  usage: "'runtime' | 'app'",
 }).and(ActiveModelSettingBase);
 
-export type ActiveModelSettingApp = typeof ActiveModelSettingApp.infer;
-export function isActiveModelSettingApp(obj: unknown): obj is typeof ActiveModelSettingApp.infer {
-  return !(ActiveModelSettingApp(obj) instanceof type.errors);
+export type ActiveModelSettingRuntime = typeof ActiveModelSettingRuntime.infer;
+export function isActiveModelSettingRuntime(obj: unknown): obj is typeof ActiveModelSettingRuntime.infer {
+  return !(ActiveModelSettingRuntime(obj) instanceof type.errors);
 }
 
 export const ActiveModelSettingImg = type({
@@ -419,7 +422,7 @@ export function isActiveModelSettingImg(obj: unknown): obj is ActiveModelSetting
   return !(ActiveModelSettingImg(obj) instanceof type.errors);
 }
 
-export const ActiveModelSetting = ActiveModelSettingChat.or(ActiveModelSettingApp).or(ActiveModelSettingImg);
+export const ActiveModelSetting = ActiveModelSettingCodegen.or(ActiveModelSettingRuntime).or(ActiveModelSettingImg);
 
 export type ActiveModelSetting = typeof ActiveModelSetting.infer;
 export function isActiveModelSetting(obj: unknown): obj is ActiveModelSetting {

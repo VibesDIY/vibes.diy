@@ -3,10 +3,41 @@ import { BlockMsgs, CoercedDate, LLMRequest } from "@vibes.diy/call-ai-v2";
 import { dashAuthType, vibeFile } from "./common.js";
 import { PromptMsgs } from "./prompt.js";
 
+// Model-usage / model-capability vocabulary (#2608).
+//
+// Canonical names — `codegen` (building/editing a vibe) and `runtime` (a
+// deployed vibe's own AI calls) — replace the pre-#2608 names `chat` and `app`,
+// which read as the opposite of what they meant. This rename covers the model
+// *catalog* tags (`ModelCapability`: preSelected/supports/fallbackFor) and the
+// persisted model-usage *settings* (`ActiveModelSetting.usage`,
+// `userSettingModelDefaults`). The on-the-wire session `mode`
+// (`PromptLLMStyle` below + the req discriminators) is intentionally left on
+// the legacy `chat`/`app`/`img` tokens for now and migrated separately — see
+// the wire-rename follow-up issue — because the openChat response echoes the
+// caller's `mode` back and old CLI builds gate dry-run/focus flags on
+// `mode === "chat"`.
+//
+// Legacy tokens stay ACCEPTED wherever they may already be stored (e.g. a
+// persisted `AIParams.model` embeds a catalog `Model` with `supports` tags
+// written before this rename), so old rows keep parsing; we only ever WRITE
+// canonical names. Where a wire `mode` is compared against a now-canonical
+// catalog tag, bridge it through `canonicalModelMode()`.
+export const LEGACY_CAPABILITY_ALIASES = { chat: "codegen", app: "runtime" } as const;
+
+// Wire session mode — still on the legacy tokens (see note above).
 export const PromptLLMStyle = type("'chat' | 'app' | 'img'");
 export type PromptLLMStyle = typeof PromptLLMStyle.infer;
 export function isPromptLLMStyle(obj: unknown): obj is PromptLLMStyle {
   return !(PromptLLMStyle(obj) instanceof type.errors);
+}
+
+// Canonical model-usage names — what catalog/settings logic switches on.
+export type CanonicalModelUsage = "codegen" | "runtime" | "img";
+
+// Normalize a mode-or-usage token to its canonical name. Maps the legacy
+// `chat`/`app` aliases and passes canonical names (and `img`) through unchanged.
+export function canonicalModelUsage<T extends string>(usage: T): CanonicalModelUsage | T {
+  return (LEGACY_CAPABILITY_ALIASES as Record<string, CanonicalModelUsage>)[usage] ?? usage;
 }
 
 export const PromptFSStyle = type("'fs-update' | 'fs-set'");
@@ -22,7 +53,12 @@ export type PromptStyle = typeof PromptStyle.infer;
 // (img2img) is not a chat-session mode — it's a per-request branch
 // driven by the presence of an input image, but models still declare
 // support and a preSelected default for it.
-export const ModelCapability = type("'chat' | 'app' | 'img' | 'img-edit'");
+//
+// Canonical tags are `codegen`/`runtime`/`img`/`img-edit` (#2608). The legacy
+// `chat`/`app` tokens stay accepted (never written) so a persisted
+// `AIParams.model` whose embedded catalog `Model` was tagged before the rename
+// still parses instead of being silently dropped on read.
+export const ModelCapability = type("'codegen' | 'runtime' | 'img' | 'img-edit' | 'chat' | 'app'");
 export type ModelCapability = typeof ModelCapability.infer;
 
 export const Model = type({

@@ -14,6 +14,7 @@ import {
   isReqPromptLLMChatSection,
   LLMHeaders,
   type PromptStyle,
+  canonicalModelUsage,
   MsgBase,
   PromptAndBlockMsgs,
   ReqPromptChatSection,
@@ -442,8 +443,11 @@ async function findFallbackModel(vctx: VibesApiSQLCtx, mode: PromptStyle, failed
     vctx.logger.Warn().Err(rModels).Msg("llm-fallback-model-load-failed");
     return Result.Err(`Failed to load fallback model catalog: ${String(rModels.Err())}`);
   }
+  // `mode` is the (still-legacy) wire token; catalog `fallbackFor` tags are
+  // canonical (#2608), so bridge before matching.
+  const canonicalMode = canonicalModelUsage(mode);
   for (const model of rModels.Ok().models) {
-    if (model.id !== failedModel && Array.isArray(model.fallbackFor) && model.fallbackFor.includes(mode)) {
+    if (model.id !== failedModel && Array.isArray(model.fallbackFor) && model.fallbackFor.includes(canonicalMode)) {
       return Result.Ok(model.id);
     }
   }
@@ -952,11 +956,13 @@ async function handlerLlmRequest({
       if (r.isErr()) {
         return Result.Err(r);
       }
+      // `req.mode` is the (still-legacy) wire token; map it to the canonical
+      // ModelDefaults bucket (#2608).
       switch (req.mode) {
         case "chat":
-          return Result.Ok(req.prompt.model ?? r.Ok().chat.model.id);
+          return Result.Ok(req.prompt.model ?? r.Ok().codegen.model.id);
         case "app":
-          return Result.Ok(req.prompt.model ?? r.Ok().app.model.id);
+          return Result.Ok(req.prompt.model ?? r.Ok().runtime.model.id);
         case "img":
           return Result.Ok(req.prompt.model ?? r.Ok().img.model.id);
         default:
@@ -2061,7 +2067,8 @@ export const promptChatSection: EventoHandler<W3CWebSocketEvent, MsgBase<ReqProm
         }
         const rDefaults = await getModelDefaults(vctx, { appSlug: resChat.appSlug, ownerHandle: resChat.ownerHandle });
         if (rDefaults.isErr()) return Result.Err(rDefaults);
-        const modelId = orig.prompt.model ?? rDefaults.Ok().chat.model.id;
+        // Creation requests are codegen mode (#2608).
+        const modelId = orig.prompt.model ?? rDefaults.Ok().codegen.model.id;
 
         // Dry-run pre-allocation preview: run the same pre-allocation LLM call
         // a fresh generate would, but in-memory — feed {skills, theme, title,

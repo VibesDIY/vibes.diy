@@ -20,11 +20,18 @@ export function isUserSettingSharing(obj: unknown): obj is UserSettingSharing {
   return !(userSettingShareing(obj) instanceof type.errors);
 }
 
+// Canonical keys are `codegen`/`runtime`/`img` (#2608). The legacy `chat`/`app`
+// keys stay readable so user rows written before the rename still load; new
+// writes use the canonical keys. Consumers should prefer `codegen ?? chat` and
+// `runtime ?? app`.
 export const userSettingModelDefaults = type({
   type: "'modelDefaults'",
+  "codegen?": AIParams.partial(),
+  "runtime?": AIParams.partial(),
+  "img?": AIParams.partial(),
+  // legacy (pre-#2608), read-only back-compat
   "chat?": AIParams.partial(),
   "app?": AIParams.partial(),
-  "img?": AIParams.partial(),
 });
 export type UserSettingModelDefaults = typeof userSettingModelDefaults.infer;
 export function isUserSettingModelDefaults(obj: unknown): obj is UserSettingModelDefaults {
@@ -239,22 +246,22 @@ export function isReqEnsureAppSettingsIconRegen(obj: unknown): obj is ReqEnsureA
   return !(reqEnsureAppSettingsIconRegen(obj) instanceof type.errors);
 }
 
-export const reqEnsureAppSettingsApp = type({
-  app: AIParams.partial(),
+export const reqEnsureAppSettingsRuntime = type({
+  runtime: AIParams.partial(),
 }).and(reqEnsureAppSettingsBase);
 
-export type ReqEnsureAppSettingsApp = typeof reqEnsureAppSettingsApp.infer;
-export function isReqEnsureAppSettingsApp(obj: unknown): obj is ReqEnsureAppSettingsApp {
-  return !(reqEnsureAppSettingsApp(obj) instanceof type.errors);
+export type ReqEnsureAppSettingsRuntime = typeof reqEnsureAppSettingsRuntime.infer;
+export function isReqEnsureAppSettingsRuntime(obj: unknown): obj is ReqEnsureAppSettingsRuntime {
+  return !(reqEnsureAppSettingsRuntime(obj) instanceof type.errors);
 }
 
-export const reqEnsureAppSettingsChat = type({
-  chat: AIParams.partial(),
+export const reqEnsureAppSettingsCodegen = type({
+  codegen: AIParams.partial(),
 }).and(reqEnsureAppSettingsBase);
 
-export type ReqEnsureAppSettingsChat = typeof reqEnsureAppSettingsChat.infer;
-export function isReqEnsureAppSettingsChat(obj: unknown): obj is ReqEnsureAppSettingsChat {
-  return !(reqEnsureAppSettingsChat(obj) instanceof type.errors);
+export type ReqEnsureAppSettingsCodegen = typeof reqEnsureAppSettingsCodegen.infer;
+export function isReqEnsureAppSettingsCodegen(obj: unknown): obj is ReqEnsureAppSettingsCodegen {
+  return !(reqEnsureAppSettingsCodegen(obj) instanceof type.errors);
 }
 
 export const reqEnsureAppSettingsImg = type({
@@ -311,8 +318,8 @@ export type ReqEnsureAppSettings =
   | ReqEnsureAppSettingsColorTheme
   | ReqEnsureAppSettingsIconDescription
   | ReqEnsureAppSettingsIconRegen
-  | ReqEnsureAppSettingsApp
-  | ReqEnsureAppSettingsChat
+  | ReqEnsureAppSettingsRuntime
+  | ReqEnsureAppSettingsCodegen
   | ReqEnsureAppSettingsImg
   | ReqEnsureAppSettingsEnv
   | ReqEnsureAppSettingsDbAcl
@@ -328,8 +335,8 @@ export function isReqEnsureAppSettings(obj: unknown): obj is ReqEnsureAppSetting
     isReqEnsureAppSettingsColorTheme(obj) ||
     isReqEnsureAppSettingsIconDescription(obj) ||
     isReqEnsureAppSettingsIconRegen(obj) ||
-    isReqEnsureAppSettingsApp(obj) ||
-    isReqEnsureAppSettingsChat(obj) ||
+    isReqEnsureAppSettingsRuntime(obj) ||
+    isReqEnsureAppSettingsCodegen(obj) ||
     isReqEnsureAppSettingsImg(obj) ||
     isReqEnsureAppSettingsEnv(obj) ||
     isReqEnsureAppSettingsDbAcl(obj) ||
@@ -348,8 +355,8 @@ export const AppSettings = type({
       "colorTheme?": "string",
       "iconDescription?": "string",
       "icon?": type({ cid: "string", mime: "string" }),
-      "app?": AIParams.partial(),
-      "chat?": AIParams.partial(),
+      "runtime?": AIParams.partial(),
+      "codegen?": AIParams.partial(),
       "img?": AIParams.partial(),
       env: KVString.array(),
     },
