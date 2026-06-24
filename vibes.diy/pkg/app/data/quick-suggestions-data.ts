@@ -8,6 +8,22 @@ export interface Suggestion {
 
 export const quickSuggestions: Suggestion[] = [
   {
+    label: "Character Bot",
+    text: "Create a chat app where I design a character — name, personality, and speaking style — then have a conversation with them. Let me edit the character's style anytime and save my favorites.",
+  },
+  {
+    label: "Neighborhood Map",
+    text: "Create a community resource tracker where I add local resources (food banks, shelters, free wifi) with name, address, hours, and category, shown in a filterable list anyone can browse.",
+  },
+  {
+    label: "Workout Log",
+    text: "Create a workout tracker where I log exercises, sets, reps, and weight each session, see my progress over time, and can share my routine for others to copy.",
+  },
+  {
+    label: "Chord Maker",
+    text: "Create a chord progression generator for songwriting — pick a key and mood, hear it play back with the Web Audio API, tweak each chord, and save the progressions you like.",
+  },
+  {
     label: "Event Tracker",
     text: "Create an event schedule app where you add acts with stage and time, and star your favorites. Include a text area to paste and parse any schedule.",
   },
