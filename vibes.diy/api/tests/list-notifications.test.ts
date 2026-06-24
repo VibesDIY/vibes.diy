@@ -19,9 +19,7 @@ describe("notification read API", { timeout: (inject("DB_FLAVOUR" as never) as s
   async function userIdOf(c: ApiTestCtx, api: ApiTestCtx["api"]): Promise<string> {
     const rRes = await api.ensureAppSlug({
       mode: "dev",
-      fileSystem: [
-        { type: "code-block", lang: "jsx", filename: "/App.jsx", content: `function App(){return null} App();` },
-      ],
+      fileSystem: [{ type: "code-block", lang: "jsx", filename: "/App.jsx", content: `function App(){return null} App();` }],
     });
     const res = rRes.Ok();
     if (res.type !== "vibes.diy.res-ensure-app-slug") assert.fail(`ensureAppSlug failed: ${JSON.stringify(res)}`);
@@ -151,7 +149,12 @@ describe("notification read API", { timeout: (inject("DB_FLAVOUR" as never) as s
     // appSlug filter only.
     const rByApp = await ctx.api.listNotifications({ appSlug: "vibe-x" });
     if (rByApp.isErr()) assert.fail(`listNotifications(appSlug) failed: ${rByApp.Err().message}`);
-    expect(rByApp.Ok().items.map((i) => i.body).sort()).toEqual(["published x", "remix of x"]);
+    expect(
+      rByApp
+        .Ok()
+        .items.map((i) => i.body)
+        .sort()
+    ).toEqual(["published x", "remix of x"]);
 
     // appSlug + notificationType filter (the "who remixed my vibe" query).
     const rByType = await ctx.api.listNotifications({ appSlug: "vibe-x", notificationType: "vibe-remixed" });
@@ -160,6 +163,67 @@ describe("notification read API", { timeout: (inject("DB_FLAVOUR" as never) as s
     expect(rByType.Ok().items[0].body).toBe("remix of x");
     // unreadCount is the total unread for the user, not the filtered subset.
     expect(rByType.Ok().unreadCount).toBe(3);
+  });
+
+  // The per-vibe "who remixed my vibe" view: the owner of a vibe lists only the
+  // vibe-remixed notifications for that one vibe (appSlug) and sees a row per
+  // remixer, never another vibe's remixes nor unrelated notification types.
+  it("per-vibe remixes filter: owner sees only that vibe's vibe-remixed rows", async () => {
+    ctx = await createApiTestCtx({ seqUserIdBase: 1_700_400, apiUrlPort: 18704 });
+    const qctx = emitCtx(ctx);
+    const owner = await userIdOf(ctx, ctx.api);
+
+    // Two remixers of the owner's vibe-alpha.
+    await emitNotification(qctx, {
+      userId: owner,
+      notificationType: "vibe-remixed",
+      ownerHandle: "owner",
+      appSlug: "vibe-alpha",
+      actorHandle: "remixer-one",
+      body: "@remixer-one remixed your vibe vibe-alpha",
+      targetRef: { remixOwnerHandle: "remixer-one", remixAppSlug: "vibe-alpha-remix" },
+      dedupeKey: "vibe-remixed:remixer-one/vibe-alpha-remix",
+    });
+    await emitNotification(qctx, {
+      userId: owner,
+      notificationType: "vibe-remixed",
+      ownerHandle: "owner",
+      appSlug: "vibe-alpha",
+      actorHandle: "remixer-two",
+      body: "@remixer-two remixed your vibe vibe-alpha",
+      targetRef: { remixOwnerHandle: "remixer-two", remixAppSlug: "vibe-alpha-remix-2" },
+      dedupeKey: "vibe-remixed:remixer-two/vibe-alpha-remix-2",
+    });
+    // A remix of a DIFFERENT vibe (vibe-beta) and a non-remix notification on
+    // vibe-alpha — both must be excluded by the per-vibe remixes filter.
+    await emitNotification(qctx, {
+      userId: owner,
+      notificationType: "vibe-remixed",
+      ownerHandle: "owner",
+      appSlug: "vibe-beta",
+      actorHandle: "remixer-three",
+      body: "@remixer-three remixed your vibe vibe-beta",
+      dedupeKey: "vibe-remixed:remixer-three/vibe-beta-remix",
+    });
+    await emitNotification(qctx, {
+      userId: owner,
+      notificationType: "vibe-published",
+      ownerHandle: "owner",
+      appSlug: "vibe-alpha",
+      body: "vibe-alpha was published",
+      dedupeKey: "vibe-published:owner/vibe-alpha:fs1",
+    });
+
+    const rRemixes = await ctx.api.listNotifications({ appSlug: "vibe-alpha", notificationType: "vibe-remixed" });
+    if (rRemixes.isErr()) assert.fail(`listNotifications(remixes) failed: ${rRemixes.Err().message}`);
+    const remixes = rRemixes.Ok();
+    expect(remixes.items).toHaveLength(2);
+    expect(remixes.items.every((i) => i.notificationType === "vibe-remixed")).toBe(true);
+    expect(remixes.items.every((i) => i.appSlug === "vibe-alpha")).toBe(true);
+    expect(remixes.items.map((i) => i.actorHandle).sort()).toEqual(["remixer-one", "remixer-two"]);
+    // The cross-vibe remix and the same-vibe non-remix row are excluded.
+    expect(remixes.items.map((i) => i.body)).not.toContain("@remixer-three remixed your vibe vibe-beta");
+    expect(remixes.items.map((i) => i.body)).not.toContain("vibe-alpha was published");
   });
 
   it("requires auth", async () => {
