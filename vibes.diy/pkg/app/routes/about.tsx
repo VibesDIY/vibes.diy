@@ -39,7 +39,7 @@ const useCases: { title: string; body: string }[] = [
     body: "A workout tracker each client makes their own — and a whole gym starts swapping routines.",
   },
   {
-    title: "Fans become makers",
+    title: "Listeners become makers",
     body: "Tweak a chord-progression vibe to your style; fans remix their own and feed your next track.",
   },
 ];
