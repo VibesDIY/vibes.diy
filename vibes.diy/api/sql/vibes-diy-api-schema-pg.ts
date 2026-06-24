@@ -406,6 +406,34 @@ export const sqlAccessFunctionBindings = pgTable(
   ]
 );
 
+// Unified notification inbox — durable, self-contained rows. Mirrors
+// sqlNotifications in vibes-diy-api-schema-sqlite.ts exactly (same table name,
+// column names, index names); only `targetRef` differs in storage type
+// (jsonb here vs text json-mode on sqlite).
+// See docs/superpowers/specs/2026-06-23-notification-inbox-design.md.
+export const sqlNotifications = pgTable(
+  "Notifications",
+  {
+    id: text().notNull().primaryKey(), // ULID — sortable by creation
+    userId: text().notNull(), // recipient (Clerk id)
+    notificationType: text().notNull(),
+    ownerHandle: text("userSlug").notNull(), // subject vibe owner
+    appSlug: text().notNull(), // subject vibe
+    body: text().notNull(), // self-contained rendered message
+    actorHandle: text(), // who caused it (nullable)
+    actorUserId: text(), // actor Clerk id (nullable)
+    targetRef: jsonb(), // optional link payload (nullable)
+    dedupeKey: text().notNull(), // idempotency key
+    created: text().notNull(), // ISO timestamp
+    readAt: text(), // unread when null
+  },
+  (table) => [
+    index("Notifications_userId_created").on(table.userId, table.created),
+    index("Notifications_userId_readAt").on(table.userId, table.readAt),
+    uniqueIndex("Notifications_userId_dedupeKey").on(table.userId, table.dedupeKey),
+  ]
+);
+
 export const sqlAccessFnOutputs = pgTable(
   "AccessFnOutputs",
   {
