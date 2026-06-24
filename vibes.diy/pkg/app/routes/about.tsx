@@ -310,7 +310,7 @@ export default function About() {
 
           {/* Footer — quiet */}
           <div className="text-gray-600 dark:text-gray-300" style={{ textAlign: "center", fontSize: 12 }}>
-            Copyright &copy; 2026{" "}
+            Copyright &copy; {new Date().getFullYear()}{" "}
             <a href="https://vibes.diy" style={link}>
               Vibes DIY
             </a>
