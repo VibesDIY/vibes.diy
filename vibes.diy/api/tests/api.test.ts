@@ -73,6 +73,11 @@ function emptySectorStream(chatId: string, promptId: string, index: number) {
       streamId: expect.any(String),
       timestamp: expect.any(Date),
       request: {
+        // The server records the resolved model id on the streamed/persisted
+        // prompt.req block (the default it dispatched with, since no override
+        // was sent). Matched loosely — the concrete default comes from the
+        // model catalog and is not what this test pins.
+        model: expect.any(String),
         messages: [{ content: [{ type: "text", text: `Hello world ${index}` }], role: "user" }],
       },
       type: "prompt.req",
