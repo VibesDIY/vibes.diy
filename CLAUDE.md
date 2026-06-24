@@ -22,6 +22,7 @@ Team-shared agent instructions live in the [`agents/`](agents/) directory. These
 - [flaky-tests.md](agents/flaky-tests.md) — Rerun (or run the suite in isolation) before treating a `pnpm check` failure as real; log to VibesDIY/vibes.diy#1515
 - [pr-lifecycle.md](agents/pr-lifecycle.md) — Spec-first workflow, feature-goal PR titles, autonomous feedback handling, ready-to-merge signal
 - [codegen-matrix-eval.md](agents/codegen-matrix-eval.md) — Running the cross-model codegen eval harness (generate → score → report), trimmed first run, config & cost filter
+- [codegen-agentic-eval.md](agents/codegen-agentic-eval.md) — Two-mode (one-shot vs agentic) tenability eval: isolates the tool-loop to measure open-weight viability + real $/acceptable
 - [autoresearch-outer-loop.md](agents/autoresearch-outer-loop.md) — Running the vendored autoresearch loop unattended: goal + success predicate, per-iteration state/branch persistence, resume, guardrails, scheduling caveats
 - [access-model-autoresearch.md](agents/access-model-autoresearch.md) — Autoresearch config + loop discipline for the access-model codegen eval (`eval/access-model`): Goal/Metric/Verify/Modify surface, frozen grader/baseline, predict-gate before each 64-app batch
 
