@@ -627,26 +627,34 @@ export default function (doc, oldDoc, user, ctx) {
     // Creator owns the list doc; route it to its own channel and grant self.
     const author = oldDoc ? oldDoc.author : doc.author;
     if (author !== user.userHandle) throw { forbidden: "not your list" };
+    // author is write-once: an update must not re-author the list (which would
+    // change who can edit it and hand control to someone never granted).
+    if (oldDoc && doc.author !== oldDoc.author) throw { forbidden: "cannot change author" };
     return { channels: [ch(doc._id)], grant: { users: { [user.userHandle]: [ch(doc._id)] } } };
   }
 
   if (doc.type === "item") {
-    // Any member of the list may add/edit items in it.
+    // Any member of the list may add/edit items in it. listId is immutable —
+    // without this, a member of list X could re-point an existing item from a
+    // list they don't belong to into X (it would still pass requireAccess(X)).
+    if (oldDoc && oldDoc.listId !== doc.listId) throw { forbidden: "cannot move item" };
     ctx.requireAccess(ch(doc.listId));
     return { channels: [ch(doc.listId)] };
   }
 
   if (doc.type === "share") {
     // Any current member invites a peer by handle — grants them the list channel.
+    // Route the share doc to the list channel itself (every member already holds
+    // it), so members see who was added without a second channel to grant.
     ctx.requireAccess(ch(doc.listId));
-    return { channels: [`${ch(doc.listId)}:meta`], grant: { users: { [doc.invitee]: [ch(doc.listId)] } } };
+    return { channels: [ch(doc.listId)], grant: { users: { [doc.invitee]: [ch(doc.listId)] } } };
   }
 
   throw { forbidden: "unknown document type" };
 }
 ```
 
-To invite someone who isn't a member yet without knowing their handle in advance, invert the flow with a request doc: a `request` type takes **no** `ctx.requireAccess` (any signed-in user may create one — their handle is `user.userHandle`, unforgeable), routed to a meta channel a member reads; a member then writes the `share` above to approve. The UI gates each surface with `useVibe("lists").can` and reflects which lists the viewer can see with `access.hasChannel(...)`.
+To invite someone who isn't a member yet without knowing their handle in advance, invert the flow with a request doc: a `request` type takes **no** `ctx.requireAccess` (any signed-in user may create one — their handle is `user.userHandle`, unforgeable) and routes to the list channel `ch(doc.listId)`, where current members read it (the requester can't read their own request back — they aren't a member yet — which is fine; they just wait to be granted). A member then writes the `share` above to approve. The UI gates each surface with `useVibe("lists").can` and reflects which lists the viewer can see with `access.hasChannel(...)`.
 
 ---
 
