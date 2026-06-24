@@ -151,7 +151,10 @@ describe("seq allocation concurrency (issue #2506)", { timeout: 20000 }, () => {
   });
 
   it("surfaces a typed SeqConflictError when every insert attempt conflicts", async () => {
-    const { db, flavour, t } = await ctx();
+    const { db, t } = await ctx();
+    // This exercises the bounded retry path, which is the sqlite/libsql branch.
+    // The pg path serializes same-doc writers with an advisory lock instead.
+    const flavour = "sqlite" as const;
     const conflictErr = Object.assign(new Error("Failed query: insert ..."), {
       cause: Object.assign(new Error("UNIQUE constraint failed: AppDocuments.seq"), { code: "SQLITE_CONSTRAINT_PRIMARYKEY" }),
     });

@@ -4,7 +4,8 @@ import path from "node:path";
 import fs from "node:fs/promises";
 
 async function hashHex(content: Uint8Array): Promise<string> {
-  const hashBuffer = await globalThis.crypto.subtle.digest("SHA-256", content);
+  const bytes = Uint8Array.from(content);
+  const hashBuffer = await globalThis.crypto.subtle.digest("SHA-256", bytes);
   return Array.from(new Uint8Array(hashBuffer))
     .map((b) => b.toString(16).padStart(2, "0"))
     .join("");
