@@ -12,6 +12,7 @@ import { listApplicationChats } from "./public/list-application-chats.js";
 import { ensureAppSettingsEvento } from "./public/ensure-app-settings.js";
 import { setModeFsIdEvento } from "./public/set-mode-fsid.js";
 import { forkAppEvento } from "./public/fork-app.js";
+import { listNotificationsEvento, markNotificationsReadEvento } from "./public/list-notifications.js";
 import { getCertFromCsrEvento } from "./public/get-cert-from-csr.js";
 import {
   createInviteEvento,
@@ -137,6 +138,8 @@ export const chatHandlers = [
   listApplicationChats,
   forkAppEvento,
   setModeFsIdEvento,
+  listNotificationsEvento,
+  markNotificationsReadEvento,
 ] as const;
 
 // Stopgap (#2350): img-gen rides vibeApi → AppSessions, so the AppSessions

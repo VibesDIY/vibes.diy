@@ -23,6 +23,10 @@ import {
   ResCreateHandleBinding,
   ReqDeleteHandleBinding,
   ResDeleteHandleBinding,
+  ReqListNotifications,
+  ResListNotifications,
+  ReqMarkNotificationsRead,
+  ResMarkNotificationsRead,
 } from "./app.js";
 import {
   ReqOpenChat,
@@ -198,6 +202,10 @@ export interface VibesDiyApiIface<_T = unknown> {
   listHandleBindings(req: Req<ReqListHandleBindings>): Promise<Result<ResListHandleBindings, VibesDiyError>>;
   createHandleBinding(req: Req<ReqCreateHandleBinding>): Promise<Result<ResCreateHandleBinding, VibesDiyError>>;
   deleteHandleBinding(req: Req<ReqDeleteHandleBinding>): Promise<Result<ResDeleteHandleBinding, VibesDiyError>>;
+
+  // Notification inbox — owner-only reads/writes scoped to the caller's userId.
+  listNotifications(req: Req<ReqListNotifications>): Promise<Result<ResListNotifications, VibesDiyError>>;
+  markNotificationsRead(req: Req<ReqMarkNotificationsRead>): Promise<Result<ResMarkNotificationsRead, VibesDiyError>>;
 
   listModels(req: Req<ReqListModels>): Promise<Result<ResListModels, VibesDiyError>>;
 

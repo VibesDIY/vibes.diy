@@ -1,7 +1,6 @@
 import { and, eq } from "drizzle-orm/sql/expressions";
 import { EmitNotificationInput } from "@vibes.diy/api-types";
-import type { cfDrizzle } from "@vibes.diy/api-sql";
-import type { VibesApiTables } from "@vibes.diy/api-sql";
+import type { cfDrizzle, VibesApiTables } from "@vibes.diy/api-sql";
 import type { SuperThis } from "@vibes.diy/identity";
 
 // Structural slice of QueueCtx that emitNotification needs. Typing the param
