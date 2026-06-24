@@ -58,12 +58,12 @@ jobs:
         run: |
           set -euo pipefail
           for _ in $(seq 1 30); do
-            if (echo > /dev/tcp/db.localtest.me/4444) >/dev/null 2>&1; then
+            if (echo > /dev/tcp/127.0.0.1/4444) >/dev/null 2>&1; then
               exit 0
             fi
             sleep 1
           done
-          echo "::error::local Neon proxy did not open db.localtest.me:4444"
+          echo "::error::local Neon proxy did not open 127.0.0.1:4444"
           exit 1
 
       - name: Run PG advisory-lock concurrency suites
@@ -72,8 +72,8 @@ jobs:
           # Use an ephemeral in-job postgres + local Neon-compatible proxy
           # instead of shared dev Neon. This keeps the lane secret-free while
           # still exercising the pg Pool/advisory-lock path.
-          VIBES_DIY_TEST_PG_URL: postgresql://postgres:postgres@db.localtest.me:5432/vibes_diy_pg_concurrency
-          VIBES_DIY_TEST_PG_WS_PROXY: db.localtest.me:4444/v2
+          VIBES_DIY_TEST_PG_URL: postgresql://postgres:postgres@127.0.0.1:5432/vibes_diy_pg_concurrency
+          VIBES_DIY_TEST_PG_WS_PROXY: 127.0.0.1:4444/v2
           VIBES_DIY_TEST_PG_USE_SECURE_WS: '0'
           # This lane always points at a fresh service DB. Force a push so schema
           # setup never depends on a stale local hash artifact.
