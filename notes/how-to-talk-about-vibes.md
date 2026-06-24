@@ -75,6 +75,52 @@ For a **developer** audience only (keep out of consumer copy):
 - "No gatekeeping, no walled garden — your code, your app."
 - "Vibes are for everyone. You and your friends aren't users anymore. You're makers."
 
+## Who it's for (use cases)
+
+These look like eight different audiences, but they're the same move eight times — and
+that shape *is* the whole thesis:
+
+> **Start with someone else's vibe → change it to fit you → share it → the people you
+> share it with change *their* version too.**
+
+Nobody starts from a blank page. Nobody calls themselves a coder. It spreads by being
+remixed. That's the medium: seeing a vibe makes you want to change it.
+
+**People**
+
+- **Fan-fiction writer (high schooler).** Starts from someone's character bot, tweaks
+  it to respond in her voice, and ends up running a shared interactive story with
+  friends. She never called herself a coder — she's just having fun.
+- **Community organizer.** Copies a neighborhood-resource tracker, adapts it to her
+  city, and shares a live tool at town meetings. No grant funding, no dev team.
+- **Retiree, classic cars.** Finds a restoration-log vibe, tweaks it for his garage,
+  shares it with his car club — now they all log progress on the same tool. No "tech
+  skills" required.
+- **Teacher.** Remixes a flashcard vibe into a collaborative trivia game; students jump
+  in and change the questions live.
+- **Fitness instructor.** Shares a workout-tracker vibe; each client tweaks their own
+  version; soon the whole gym is sharing and remixing routines.
+- **Indie musician.** Tweaks a chord-progression vibe to match her style; fans remix
+  their own versions — listeners become co-creators of the next track.
+
+**Distribution wedges (how it spreads through a community)**
+
+- **Music festivals.** A little schedule app where people star their favorite acts and
+  share with friends. Starts with one festival, but the cost/complexity advantage means
+  it can spread through the festival community like wildfire.
+- **Radio stations.** One vibe per DJ — shows, songs, playlists, live-audience chat,
+  plus their own MySpace-style flair on the page. (Vibe as personal homepage/identity.)
+
+**Why this matters for messaging**
+
+- Every example is **remix-first** — the onramp is "start with one that exists," not
+  "build from scratch." (Aligns with the Instant Starter Stack direction.)
+- Every example turns **users into makers** — the payoff of the "publish to the world"
+  control. Private-by-default is the start; the magic is what happens once it's shared.
+- The homepage use-case strip should pull from *these* — a character bot, a neighborhood
+  tracker, a trivia game, a festival schedule — concrete and community-shaped, not SaaS
+  categories.
+
 ## The test for any homepage/marketing section
 
 > **Seeing should imply changing.**
