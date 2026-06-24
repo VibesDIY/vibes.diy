@@ -1,3 +1,5 @@
+import { mkdtemp, rm } from "fs/promises";
+import { join } from "path";
 import { AppContext, Result } from "@adviser/cement";
 import type { SectionEvent } from "@vibes.diy/api-types";
 import { run } from "cmd-ts";
@@ -6,8 +8,13 @@ import { cmd_tsStream } from "../cmd-ts-stream.js";
 import type { CliCtx } from "../cli-ctx.js";
 import { ReqGenerate, generateCmd, generateEvento, isReqGenerate } from "./generate-cmd.js";
 
-afterEach(() => {
+const tempDirs: string[] = [];
+
+afterEach(async () => {
   vi.restoreAllMocks();
+  for (const dir of tempDirs.splice(0)) {
+    await rm(dir, { recursive: true, force: true });
+  }
 });
 
 function makeCtx(): CliCtx {
@@ -44,6 +51,83 @@ function dryRunPayloadStream(opts: {
             seq: 0,
             timestamp: new Date(),
             request: { model: opts.model, messages: opts.messages },
+          },
+        ] as unknown as SectionEvent["blocks"],
+      });
+      controller.close();
+    },
+  });
+}
+
+function generatedCodeStream(opts: {
+  chatId: string;
+  streamId: string;
+  path: string;
+  lines: string[];
+}): ReadableStream<SectionEvent> {
+  const bytes = opts.lines.join("\n").length;
+  return new ReadableStream<SectionEvent>({
+    start(controller) {
+      controller.enqueue({
+        type: "vibes.diy.section-event",
+        chatId: opts.chatId,
+        promptId: opts.streamId,
+        blockSeq: 0,
+        timestamp: new Date(),
+        blocks: [
+          {
+            type: "block.code.begin",
+            sectionId: "s1",
+            lang: "jsx",
+            path: opts.path,
+            blockId: "b1",
+            streamId: opts.streamId,
+            seq: 0,
+            blockNr: 1,
+            timestamp: new Date(),
+          },
+          ...opts.lines.map((line, idx) => ({
+            type: "block.code.line",
+            sectionId: "s1",
+            lang: "jsx",
+            path: opts.path,
+            lineNr: idx + 1,
+            line,
+            blockId: "b1",
+            streamId: opts.streamId,
+            seq: idx + 1,
+            blockNr: 1,
+            timestamp: new Date(),
+          })),
+          {
+            type: "block.code.end",
+            sectionId: "s1",
+            lang: "jsx",
+            path: opts.path,
+            stats: { lines: opts.lines.length, bytes },
+            blockId: "b1",
+            streamId: opts.streamId,
+            seq: opts.lines.length + 1,
+            blockNr: 1,
+            timestamp: new Date(),
+          },
+          {
+            type: "block.end",
+            stats: {
+              toplevel: { lines: 0, bytes: 0 },
+              code: { lines: opts.lines.length, bytes },
+              image: { lines: 0, bytes: 0 },
+              total: { lines: opts.lines.length, bytes },
+            },
+            usage: {
+              given: [],
+              calculated: { prompt_tokens: 0, completion_tokens: 0, total_tokens: 0 },
+            },
+            blockId: "b1",
+            streamId: opts.streamId,
+            seq: opts.lines.length + 2,
+            blockNr: 1,
+            timestamp: new Date(),
           },
         ] as unknown as SectionEvent["blocks"],
       });
@@ -236,5 +320,83 @@ describe("generateEvento dry-run", () => {
     expect(out).toContain("=== SYSTEM ===");
     expect(out).toContain("=== USER ===");
     expect(out).toContain("a todo app");
+  });
+});
+
+describe("generateEvento runId threading", () => {
+  it("passes promptId to production push as runId", async () => {
+    const promptId = "prompt-run-123";
+    const stream = generatedCodeStream({
+      chatId: "chat-live",
+      streamId: promptId,
+      path: "App.jsx",
+      lines: ["export default function App() {", "  return <div>Hello run id</div>;", "}"],
+    });
+    const ensureAppSlug = vi.fn().mockResolvedValue(
+      Result.Ok({
+        type: "vibes.diy.res-ensure-app-slug",
+        fsId: "fs-123",
+        ownerHandle: "alice",
+        appSlug: "todo-app",
+        mode: "production",
+        env: {},
+        fileSystem: [],
+      })
+    );
+    const ensureAppSettings = vi.fn().mockResolvedValue(
+      Result.Ok({
+        settings: {
+          entry: {
+            enableRequest: { autoAcceptRole: "editor" },
+            publicAccess: { enable: true },
+          },
+        },
+      })
+    );
+    const chat = {
+      chatId: "chat-live",
+      appSlug: "todo-app",
+      ownerHandle: "alice",
+      sectionStream: stream,
+      prompt: async () => Result.Ok({ promptId }),
+      close: async () => undefined,
+    };
+    const api = {
+      openChat: async () => Result.Ok(chat),
+      ensureAppSlug,
+      ensureAppSettings,
+    };
+
+    const tempRoot = await mkdtemp(join("/tmp", "generate-runid-"));
+    tempDirs.push(tempRoot);
+    vi.spyOn(process, "cwd").mockReturnValue(tempRoot);
+
+    const r = await generateEvento.handle(
+      buildTrigger(
+        {
+          type: "vibes-diy.cli.generate",
+          prompt: "make an app",
+          appSlug: "",
+          ownerHandle: "alice",
+          instantJoin: false,
+          verbose: false,
+          apiUrl: "https://vibes.diy/api?.stable-entry.=cli",
+          dryRun: false,
+          transcript: false,
+        },
+        api,
+        []
+      )
+    );
+
+    expect(r.isOk()).toBe(true);
+    expect(ensureAppSlug).toHaveBeenCalledWith(
+      expect.objectContaining({
+        mode: "production",
+        appSlug: "todo-app",
+        ownerHandle: "alice",
+        runId: promptId,
+      })
+    );
   });
 });

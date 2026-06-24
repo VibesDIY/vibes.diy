@@ -60,6 +60,7 @@ export const sqlApps = sqliteTable(
     releaseSeq: int().notNull(), // incremented on each publish
     // appId: text().notNull(), // FP app id
     fsId: text().notNull(), // CID of filenames+mimetypes+cid
+    runId: text(),
     env: text({ mode: "json" }).notNull(), // serialized env key-values
     fileSystem: text({ mode: "json" }).notNull(), // [FileSystemItem]
 

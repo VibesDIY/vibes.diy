@@ -268,6 +268,122 @@ describe("VibesDiyApi", { timeout: (inject("DB_FLAVOUR" as never) as string) ===
     expect(res.ownerHandle).toBe(res.ownerHandle);
   });
 
+  it("reconciles same runId dev->production in place even when fsId drifts", async () => {
+    const id = sthis.nextId(8).str.toLocaleLowerCase();
+    const appSlug = `runid-app-${id}`;
+    const ownerHandle = `runid-owner-${id}`;
+    const runId = `prompt-${id}`;
+
+    const rDev = await api.ensureAppSlug({
+      mode: "dev",
+      appSlug,
+      ownerHandle,
+      runId,
+      fileSystem: [
+        {
+          type: "code-block",
+          lang: "jsx",
+          filename: "/App.jsx",
+          content: "export default function App() { return <div>dev version</div>; }",
+        },
+      ],
+    });
+    const dev = rDev.Ok();
+    if (!isResEnsureAppSlugOk(dev)) {
+      assert.fail("Expected dev ensureAppSlug to return ResEnsureAppSlugOk");
+    }
+
+    const rProd = await api.ensureAppSlug({
+      mode: "production",
+      appSlug,
+      ownerHandle,
+      runId,
+      fileSystem: [
+        {
+          type: "code-block",
+          lang: "jsx",
+          filename: "/App.jsx",
+          content: "export default function App() { return <div>production version</div>; }",
+        },
+      ],
+    });
+    const prod = rProd.Ok();
+    if (!isResEnsureAppSlugOk(prod)) {
+      assert.fail("Expected production ensureAppSlug to return ResEnsureAppSlugOk");
+    }
+
+    expect(dev.fsId).not.toBe(prod.fsId);
+
+    const rows = await appCtx.vibesCtx.sql.db
+      .select()
+      .from(appCtx.vibesCtx.sql.tables.apps)
+      .where(
+        and(
+          eq(appCtx.vibesCtx.sql.tables.apps.appSlug, appSlug),
+          eq(appCtx.vibesCtx.sql.tables.apps.ownerHandle, ownerHandle)
+        )
+      )
+      .orderBy(appCtx.vibesCtx.sql.tables.apps.releaseSeq);
+
+    expect(rows).toHaveLength(1);
+    expect(rows[0].mode).toBe("production");
+    expect(rows[0].runId).toBe(runId);
+    expect(rows[0].fsId).toBe(prod.fsId);
+  });
+
+  it("keeps fsId dedup fallback when runId is absent", async () => {
+    const id = sthis.nextId(8).str.toLocaleLowerCase();
+    const appSlug = `fsid-fallback-app-${id}`;
+    const ownerHandle = `fsid-fallback-owner-${id}`;
+    const fileSystem: VibeFile[] = [
+      {
+        type: "code-block",
+        lang: "jsx",
+        filename: "/App.jsx",
+        content: "export default function App() { return <div>same content</div>; }",
+      },
+    ];
+
+    const rDev = await api.ensureAppSlug({
+      mode: "dev",
+      appSlug,
+      ownerHandle,
+      fileSystem,
+    });
+    const dev = rDev.Ok();
+    if (!isResEnsureAppSlugOk(dev)) {
+      assert.fail("Expected dev ensureAppSlug to return ResEnsureAppSlugOk");
+    }
+
+    const rProd = await api.ensureAppSlug({
+      mode: "production",
+      appSlug,
+      ownerHandle,
+      fileSystem,
+    });
+    const prod = rProd.Ok();
+    if (!isResEnsureAppSlugOk(prod)) {
+      assert.fail("Expected production ensureAppSlug to return ResEnsureAppSlugOk");
+    }
+
+    expect(prod.fsId).toBe(dev.fsId);
+
+    const rows = await appCtx.vibesCtx.sql.db
+      .select()
+      .from(appCtx.vibesCtx.sql.tables.apps)
+      .where(
+        and(
+          eq(appCtx.vibesCtx.sql.tables.apps.appSlug, appSlug),
+          eq(appCtx.vibesCtx.sql.tables.apps.ownerHandle, ownerHandle)
+        )
+      )
+      .orderBy(appCtx.vibesCtx.sql.tables.apps.releaseSeq);
+
+    expect(rows).toHaveLength(1);
+    expect(rows[0].mode).toBe("production");
+    expect(rows[0].fsId).toBe(dev.fsId);
+  });
+
   it("render iframe content page", async () => {
     // this is the iframe content page
     const rRes = await api.ensureAppSlug({
@@ -1393,6 +1509,7 @@ describe("VibesDiyApi", { timeout: (inject("DB_FLAVOUR" as never) as string) ===
         meta: [],
         mode: "dev",
         releaseSeq: 1,
+        runId: promptId,
         userId: "testUserId",
         ownerHandle: "example-user",
       });

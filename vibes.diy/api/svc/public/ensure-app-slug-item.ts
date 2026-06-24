@@ -120,7 +120,7 @@ export async function ensureAppSlugItem(
 
   const rEnsure = await ensureApps(
     vctx,
-    { env: req.env ?? {}, mode: req.mode, userId: req._auth.verifiedAuth.claims.userId },
+    { env: req.env ?? {}, mode: req.mode, userId: req._auth.verifiedAuth.claims.userId, runId: req.runId },
     rAppSlugBinding.Ok(),
     fullFileSystem
   );
