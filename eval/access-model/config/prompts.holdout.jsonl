@@ -1,0 +1,8 @@
+{"id":"h-notes","prompt":"A quick notes app","dimension":"Form-A test","expect":"per-visitor"}
+{"id":"h-water","prompt":"A water-intake tracker","dimension":"per-visitor private","expect":"per-visitor"}
+{"id":"h-trip","prompt":"A trip packing list I can share with my travel buddy","dimension":"per-object collaboration","expect":"per-object"}
+{"id":"h-mood","prompt":"A shared mood board a group can contribute to","dimension":"per-object membership + join path","expect":"per-object"}
+{"id":"h-portfolio","prompt":"My photography portfolio","dimension":"owner-published","expect":"owner-published"}
+{"id":"h-wishes","prompt":"A public wish wall anyone can post to","dimension":"author-owned + public read","expect":"author-owned"}
+{"id":"h-recipes","prompt":"A recipe site where people leave reviews","dimension":"author-owned comments","expect":"author-owned"}
+{"id":"h-club","prompt":"A club site with members and organizers","dimension":"the 3+ tier edge","expect":"multi-tier"}

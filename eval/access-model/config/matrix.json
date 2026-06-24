@@ -1,0 +1,12 @@
+{
+  "cliCommand": "npx vibes-diy@latest",
+  "apiUrl": "https://vibes.diy/api?.stable-entry.=cli",
+  "runtimeHostBase": "vibes.diy",
+  "handle": "eval",
+  "model": "anthropic/claude-opus-4.8",
+  "judgeModel": "anthropic/claude-opus-4.5",
+  "reps": 8,
+  "concurrency": 32,
+  "scoreConcurrency": 8,
+  "screenshotTimeoutMs": 120000
+}
