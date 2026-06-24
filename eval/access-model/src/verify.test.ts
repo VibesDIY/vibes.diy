@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { decideVerify, summaryFromResults } from "./verify.js";
+import { decideVerify, gate1Commands, summaryFromResults } from "./verify.js";
 
 describe("decideVerify", () => {
   it("exit 0 and prints metric when all gates pass", () => {
@@ -12,6 +12,38 @@ describe("decideVerify", () => {
     const r = decideVerify({ metric: 0.9, gates: { pass: false, failed: ["two-file-emission"] } });
     expect(r.exitCode).toBe(1);
     expect(r.lines.some((l) => l.includes("two-file-emission"))).toBe(true);
+  });
+});
+
+describe("gate1Commands", () => {
+  it("includes the prompts build+test steps AND the codegen-matrix rubric drift-guard", () => {
+    const cmds = gate1Commands();
+    // prompts build + test, scoped to both prompts workspaces
+    expect(cmds).toContainEqual([
+      "run",
+      "--filter",
+      "@vibes.diy/prompts",
+      "--filter",
+      "@vibes.diy/prompts-test",
+      "build",
+    ]);
+    expect(cmds).toContainEqual([
+      "run",
+      "--filter",
+      "@vibes.diy/prompts",
+      "--filter",
+      "@vibes.diy/prompts-test",
+      "test",
+    ]);
+    // the promptAnchor rubric drift-guard lives in codegen-matrix, not the prompts pkgs
+    expect(cmds).toContainEqual([
+      "--filter",
+      "@vibes.diy/eval-codegen-matrix",
+      "exec",
+      "vitest",
+      "--run",
+      "src/rubric.test.ts",
+    ]);
   });
 });
 

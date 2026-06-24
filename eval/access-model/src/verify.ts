@@ -56,20 +56,34 @@ export function summaryFromResults(results: StageResults): { rate: RateSummary; 
 }
 
 /**
+ * The exact `pnpm <args>` invocations gate 1 runs (from REPO_ROOT), in order:
+ *   1. `pnpm --filter @vibes.diy/prompts --filter @vibes.diy/prompts-test run build`
+ *   2. `pnpm --filter @vibes.diy/prompts --filter @vibes.diy/prompts-test run test`
+ *   3. `pnpm --filter @vibes.diy/eval-codegen-matrix exec vitest --run src/rubric.test.ts`
+ * Step 3 is the `promptAnchor` rubric drift-guard (`eval/codegen-matrix/src/rubric.test.ts`
+ * asserts every rule's `promptAnchor` still appears in the system prompt) — that guard
+ * lives in codegen-matrix, NOT in the prompts/prompts-test workspaces, so it needs its
+ * own scoped step. Kept pure so the command list is unit-testable without spawning.
+ */
+export function gate1Commands(): readonly (readonly string[])[] {
+  const promptsFilters = ["--filter", "@vibes.diy/prompts", "--filter", "@vibes.diy/prompts-test"];
+  return [
+    ["run", ...promptsFilters, "build"],
+    ["run", ...promptsFilters, "test"],
+    ["--filter", "@vibes.diy/eval-codegen-matrix", "exec", "vitest", "--run", "src/rubric.test.ts"],
+  ];
+}
+
+/**
  * Gate 1: run the prompts package's own build + tests (the rubric drift-guard lives
- * among `prompts/tests` — `initial-system-prompt`/`default-coding-model` anchors). The
- * whole-repo `pnpm check` (build+lint+test across the monorepo) is far too heavy to run
- * every iteration, so this scopes to the two prompts workspaces via `pnpm --filter`.
- * Command run: `pnpm --filter @vibes.diy/prompts --filter @vibes.diy/prompts-test build`
- * then `... test`. Returns true only when every scoped step exits 0.
+ * among `prompts/tests` — `initial-system-prompt`/`default-coding-model` anchors) PLUS
+ * the codegen-matrix `promptAnchor` rubric drift-guard. The whole-repo `pnpm check`
+ * (build+lint+test across the monorepo) is far too heavy to run every iteration, so this
+ * scopes to the relevant workspaces via `pnpm --filter`. See `gate1Commands` for the exact
+ * invocations. Returns true only when every scoped step exits 0.
  */
 function runPromptsCheck(): boolean {
-  const filters = ["--filter", "@vibes.diy/prompts", "--filter", "@vibes.diy/prompts-test"];
-  const steps: string[][] = [
-    ["run", ...filters, "build"],
-    ["run", ...filters, "test"],
-  ];
-  for (const args of steps) {
+  for (const args of gate1Commands()) {
     const r = spawnSync("pnpm", args, { cwd: REPO_ROOT, encoding: "utf-8", stdio: "inherit" });
     if (r.status !== 0) {
       stderr.write(`gate1 (prompts check): \`pnpm ${args.join(" ")}\` failed (exit ${r.status})\n`);
