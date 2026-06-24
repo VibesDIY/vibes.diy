@@ -54,9 +54,9 @@ export default function Legal_Privacy() {
           </div>
         </div>
         <p className="text-light-secondary dark:text-dark-secondary text-center text-xs">
-          Copyright © 2025{" "}
-          <a href="https://fireproof.storage" target="_blank" className="text-blue-600 hover:underline dark:text-blue-400">
-            Fireproof
+          Copyright © {new Date().getFullYear()}{" "}
+          <a href="https://vibes.diy" className="text-blue-600 hover:underline dark:text-blue-400">
+            Vibes DIY
           </a>
         </p>
       </div>
