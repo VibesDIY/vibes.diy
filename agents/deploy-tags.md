@@ -45,6 +45,10 @@ Convention for dev iterations: `pkg@d<next-prod-ver>-dev.<N>` — e.g. with prod
 
 The `pkg` tags publish the CLI (`vibes-diy` / `use-vibes` npm packages) and related workspace packages. Use `pkg@p*` for production releases.
 
+### Align the version number across streams when shipping one commit to all three
+
+When you tag the **same commit at the same time** across `vibes-diy@p*`, `vibes-diy@c*`, and `pkg@p*`, use the **same `X.Y.Z`** for all three (e.g. `vibes-diy@p2.5.25` + `vibes-diy@c2.5.25` + `pkg@p2.5.25`) — even though the three streams have drifted to different numbers historically. Pick the **highest** next-patch across the three streams and apply it to all of them. Skipping numbers in a stream is fine — tags are immutable and version-ordering only needs to stay monotonic within each stream. A shared number makes a coordinated deploy legible at a glance ("everything's on 2.5.25") and trivial to cross-reference later. Only fall back to per-stream numbering when the streams genuinely ship different commits at different times.
+
 ## Tagging procedure
 
 ### Cloudflare deploys (`vibes-diy@*`)
