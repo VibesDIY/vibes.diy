@@ -31,7 +31,7 @@ Consequences, both load-bearing:
 - **Generation-QA evals are exercising the initial template.** Every `vibes-diy generate` of a
   brand-new vibe is a first turn → initial variant. When validating that a prompt change is
   live, check the **initial** prompt: `vibes-diy generate --api-url <env> --dry-run --transcript
-  "<prompt>"` renders the first-turn payload (no existing vibe → initial), so grep that for your
+"<prompt>"` renders the first-turn payload (no existing vibe → initial), so grep that for your
   change. Grading the continuation template tells you nothing about what real users get.
 
 ## Prerequisites (one-time)
