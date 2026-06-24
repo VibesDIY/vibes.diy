@@ -1,0 +1,147 @@
+name: 'Push schema to dev Neon (one-off)'
+
+# Manual admin action for re-syncing the shared dev Neon
+# (dev-vibes-diy-v2) to current main's drizzle schema. Lives here so the
+# NEON_DATABASE_ADMIN_URL secret never leaves the dev environment —
+# operators can't dump it locally, only this workflow can use it.
+#
+# The PR-preview workflow's schema-push step (#2604) hard-fails when
+# drizzle would truncate tables; this action is the manual escape valve
+# for those destructive cases. Use it sparingly and only after reading
+# the dry-run output.
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: 'dry-run prints SQL + aborts; apply executes the push'
+        required: true
+        default: 'dry-run'
+        type: choice
+        options:
+          - dry-run
+          - apply
+      confirm:
+        description: 'Required to authorize destructive (--force) pushes. Must equal: I-UNDERSTAND-DATA-LOSS'
+        required: false
+        default: ''
+        type: string
+      ref:
+        description: 'Branch or SHA whose schema to push (default: main)'
+        required: false
+        default: 'main'
+        type: string
+
+concurrency:
+  # One push at a time against the shared dev DB. Cancel-in-progress is
+  # off — half-applied destructive pushes would be worse than queueing.
+  group: dev-schema-push
+  cancel-in-progress: false
+
+jobs:
+  push-schema:
+    runs-on: ubuntu-latest
+    environment: dev
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout requested ref
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ inputs.ref }}
+
+      - name: Setup runtime environment
+        uses: ./actions/runtime
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Validate inputs
+        run: |
+          set -euo pipefail
+          echo "mode=${{ inputs.mode }}"
+          echo "ref=${{ inputs.ref }}"
+          if [ "${{ inputs.mode }}" = "apply" ] && [ -z "${{ inputs.confirm }}" ]; then
+            echo "::warning::confirm token empty — destructive changes will be refused; additive-only push will proceed."
+          fi
+
+      - name: Dry-run (always)
+        id: dryrun
+        working-directory: vibes.diy/pkg
+        env:
+          NEON_DATABASE_ADMIN_URL: ${{ secrets.NEON_DATABASE_ADMIN_URL }}
+        run: |
+          set -euo pipefail
+          # Close stdin so the interactive prompt resolves to "No, abort"
+          # deterministically. --verbose prints the proposed SQL diff to
+          # stdout regardless of the abort path, so the operator always
+          # has the full picture in this run's logs.
+          DRY_LOG=$(mktemp)
+          NEON_DATABASE_URL="$NEON_DATABASE_ADMIN_URL" \
+            pnpm exec drizzle-kit push --config ./drizzle.neon.config.ts --verbose \
+            < /dev/null > "$DRY_LOG" 2>&1 || true
+          cat "$DRY_LOG"
+          # Surface whether the diff is destructive so the apply step can
+          # gate on it. "Found data-loss statements" is drizzle-kit's exact
+          # phrasing; widen the regex if a future version reworms it.
+          if grep -qiE 'data[- ]loss|DATA LOSS' "$DRY_LOG"; then
+            echo "has_data_loss=true" >> "$GITHUB_OUTPUT"
+            echo "::warning::dry-run detected data-loss statements — apply step will require confirm token."
+          else
+            echo "has_data_loss=false" >> "$GITHUB_OUTPUT"
+          fi
+          # Heuristic for "nothing to do": drizzle-kit prints
+          # "No changes detected" when the live schema already matches.
+          if grep -qiE 'No changes detected|Changes applied' "$DRY_LOG"; then
+            echo "has_changes=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_changes=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Apply (additive only)
+        if: ${{ inputs.mode == 'apply' && steps.dryrun.outputs.has_data_loss == 'false' && steps.dryrun.outputs.has_changes == 'true' }}
+        working-directory: vibes.diy/pkg
+        env:
+          NEON_DATABASE_ADMIN_URL: ${{ secrets.NEON_DATABASE_ADMIN_URL }}
+        run: |
+          set -euo pipefail
+          NEON_DATABASE_URL="$NEON_DATABASE_ADMIN_URL" \
+            pnpm exec drizzle-kit push --config ./drizzle.neon.config.ts --verbose < /dev/null
+
+      - name: Apply (destructive, --force)
+        if: ${{ inputs.mode == 'apply' && steps.dryrun.outputs.has_data_loss == 'true' }}
+        working-directory: vibes.diy/pkg
+        env:
+          NEON_DATABASE_ADMIN_URL: ${{ secrets.NEON_DATABASE_ADMIN_URL }}
+        run: |
+          set -euo pipefail
+          if [ "${{ inputs.confirm }}" != "I-UNDERSTAND-DATA-LOSS" ]; then
+            echo "::error::Destructive push refused: confirm input must equal I-UNDERSTAND-DATA-LOSS."
+            echo "::error::Re-dispatch this workflow with that exact value after reviewing the dry-run SQL above."
+            exit 1
+          fi
+          echo "::warning::Applying drizzle-kit push --force to dev Neon. Destructive statements will execute."
+          NEON_DATABASE_URL="$NEON_DATABASE_ADMIN_URL" \
+            pnpm exec drizzle-kit push --config ./drizzle.neon.config.ts --verbose --force < /dev/null
+
+      - name: Verify post-push (no further changes)
+        if: ${{ inputs.mode == 'apply' }}
+        working-directory: vibes.diy/pkg
+        env:
+          NEON_DATABASE_ADMIN_URL: ${{ secrets.NEON_DATABASE_ADMIN_URL }}
+        run: |
+          set -euo pipefail
+          # A clean re-run should report no changes; if it still wants to
+          # change something, the push didn't fully converge (e.g.
+          # drizzle-kit aborted mid-way) and the operator needs to look.
+          VERIFY_LOG=$(mktemp)
+          NEON_DATABASE_URL="$NEON_DATABASE_ADMIN_URL" \
+            pnpm exec drizzle-kit push --config ./drizzle.neon.config.ts --verbose \
+            < /dev/null > "$VERIFY_LOG" 2>&1 || true
+          cat "$VERIFY_LOG"
+          if ! grep -qiE 'No changes detected' "$VERIFY_LOG"; then
+            echo "::error::Verify re-run still reports pending changes — push did not converge."
+            exit 1
+          fi
+          echo "Verified: dev Neon matches target schema."
