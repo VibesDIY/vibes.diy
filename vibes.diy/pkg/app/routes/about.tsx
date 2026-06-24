@@ -141,10 +141,11 @@ export default function About() {
               <div style={{ padding: "24px 16px", backgroundColor: "rgb(218, 41, 28)", color: "white" }}>
                 <h2 style={{ fontWeight: "bold", fontSize: 32, lineHeight: "34px" }}>Yours to control.</h2>
                 <p style={{ marginTop: 12, fontWeight: "bold", fontSize: 18, lineHeight: "24px" }}>
-                  Private by default&mdash;other people can&rsquo;t open your app unless you let them in.
+                  Private by default&mdash;or open to the world. You choose.
                 </p>
                 <p style={{ marginTop: 10, fontSize: 13, opacity: 0.85 }}>
-                  You set the rules for who can read, write, and open your app.
+                  Keep it to the people you invite, or publish it so anyone can use and remix it. You set who can read,
+                  write, and open it.
                 </p>
               </div>
             </div>
