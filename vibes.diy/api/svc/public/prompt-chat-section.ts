@@ -1051,10 +1051,14 @@ async function handlerLlmRequest({
           chatId: req.chatId,
           seq: blockSeq,
           // Record the resolved model id (not just the optional client-supplied
-          // override) so clients can surface "Generating with <model>" and audit
-          // which model actually ran. Reconstruction (prompt-assembly,
-          // get-chat-details) only reads request.messages, so populating model
-          // here is informational and does not affect later turns.
+          // override) so clients can surface "Generating with <model>". This is
+          // the model the turn is dispatched WITH; a downstream catalog fallback
+          // (dispatchLlmRequestWithFallback, below) can swap in a different model
+          // after retryable primary failures, and that substitution is NOT
+          // reflected here — prompt.req is the pre-dispatch request echo, already
+          // streamed by the time any fallback runs. Reconstruction
+          // (prompt-assembly, get-chat-details) only reads request.messages, so
+          // populating model here is informational and does not affect later turns.
           request: { ...req.prompt, model: modelId },
           timestamp: new Date(),
         },
