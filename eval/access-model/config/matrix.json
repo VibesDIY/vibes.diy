@@ -6,7 +6,7 @@
   "model": "anthropic/claude-opus-4.8",
   "judgeModel": "anthropic/claude-opus-4.5",
   "reps": 8,
-  "concurrency": 32,
+  "concurrency": 16,
   "scoreConcurrency": 8,
   "screenshotTimeoutMs": 120000
 }
