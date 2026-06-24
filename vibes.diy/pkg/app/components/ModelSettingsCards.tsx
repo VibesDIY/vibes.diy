@@ -43,7 +43,7 @@ function ResetBtn({ saving, onClick }: { saving: boolean; onClick: () => void })
       onClick={onClick}
       className="rounded border border-transparent bg-transparent px-2 py-1 text-xs font-medium text-gray-500 dark:text-gray-400 underline outline-none disabled:opacity-50 focus-visible:ring-2 focus-visible:ring-[rgba(128,128,128,0.3)]"
     >
-      Use default
+      Reset to inherited
     </button>
   );
 }
@@ -53,15 +53,14 @@ function ModelSection({
   usage,
   saving,
   onSave,
+  isOverridden,
   onReset,
 }: {
   config?: Partial<AIParams>;
   usage: "codegen" | "runtime" | "img";
   saving: boolean;
   onSave: (cfg: AIParams) => void;
-  // When provided, the card shows pinned-vs-default state and a "Use default"
-  // control that clears the pin. Omitted by callers (e.g. per-app overrides)
-  // that don't have follow-the-default semantics.
+  isOverridden?: boolean;
   onReset?: () => void;
 }) {
   const { sharedApi } = useVibesDiy();
@@ -74,10 +73,9 @@ function ModelSection({
 
   const viewState = useRef<"start" | "loading" | "loaded">("start");
 
-  // A usage is "pinned" when the saved user setting carries a model for it.
-  // Following the default means there is no entry (config has no model), so
-  // resolution falls through to the live catalog default.
-  const isPinned = !!config?.model;
+  // If the caller supplies explicit override state, trust that instead of
+  // inferring from `config`, because `config` may contain inherited defaults.
+  const isPinned = isOverridden ?? !!config?.model;
 
   // Local editing state: the model the user has currently selected (may differ
   // from the saved config until Save), plus the optional per-usage API key.
@@ -108,9 +106,10 @@ function ModelSection({
   }, [config]);
 
   const loaded = viewState.current === "loaded";
-  // The model shown/selected: the user's local pick, else the saved pin, else
-  // the catalog default (when following the default).
+  // The model shown/selected: the user's local pick, else the saved model,
+  // else the catalog default.
   const selectedModel = models.find((m) => m.id === selectedId) ?? config?.model ?? defaultModel ?? LOADING_MODEL;
+  const currentModelName = config?.model?.name ?? defaultModel?.name ?? "(none)";
 
   const handleSave = () => {
     const model = models.find((m) => m.id === selectedModel.id) ?? selectedModel;
@@ -119,6 +118,9 @@ function ModelSection({
     // so omitting a cleared key would leave the old one stored and in use.
     onSave({ model, apiKey });
   };
+
+  const showLegacyResetHint = isOverridden === undefined && !!onReset;
+  const showReset = !!onReset && isPinned;
 
   return (
     <div className="space-y-2">
@@ -135,9 +137,25 @@ function ModelSection({
           </select>
         )}
       </div>
+      {isOverridden !== undefined && (
+        <div className="flex items-center gap-2">
+          <div className="w-24 flex-shrink-0" />
+          <span
+            className={
+              "rounded-full border px-2 py-0.5 text-[11px] " +
+              (isOverridden
+                ? "border-blue-300 text-blue-700 dark:border-blue-700 dark:text-blue-300"
+                : "border-gray-300 text-gray-600 dark:border-gray-600 dark:text-gray-300")
+            }
+          >
+            {isOverridden ? "Pinned override" : "Inherited default"}
+          </span>
+          <span className="text-xs text-gray-400 dark:text-gray-500 truncate">Current: {currentModelName}</span>
+        </div>
+      )}
       {loaded && (
         <>
-          {onReset && (
+          {showLegacyResetHint && (
             <div className="flex items-center gap-3">
               <div className="w-24 flex-shrink-0" />
               <p className="flex-1 text-xs text-gray-400 dark:text-gray-500 italic truncate">
@@ -169,7 +187,7 @@ function ModelSection({
             />
           </div>
           <div className="flex justify-end gap-2">
-            {onReset && isPinned && <ResetBtn saving={saving} onClick={onReset} />}
+            {showReset && <ResetBtn saving={saving} onClick={onReset} />}
             <SaveBtn saving={saving} onClick={handleSave} />
           </div>
         </>
@@ -188,6 +206,9 @@ export interface ModelSettingsCardsProps {
   onSaveCodegen: (cfg: AIParams) => void;
   onSaveRuntime: (cfg: AIParams) => void;
   onSaveImg: (cfg: AIParams) => void;
+  codegenIsOverridden?: boolean;
+  runtimeIsOverridden?: boolean;
+  imgIsOverridden?: boolean;
   onResetCodegen?: () => void;
   onResetRuntime?: () => void;
   onResetImg?: () => void;
@@ -203,6 +224,9 @@ export function ModelSettingsCards({
   onSaveCodegen,
   onSaveRuntime,
   onSaveImg,
+  codegenIsOverridden,
+  runtimeIsOverridden,
+  imgIsOverridden,
   onResetCodegen,
   onResetRuntime,
   onResetImg,
@@ -215,6 +239,7 @@ export function ModelSettingsCards({
           usage="codegen"
           saving={savingCodegen}
           onSave={onSaveCodegen}
+          isOverridden={codegenIsOverridden}
           onReset={onResetCodegen}
         />
       </Card>
@@ -224,11 +249,19 @@ export function ModelSettingsCards({
           usage="runtime"
           saving={savingRuntime}
           onSave={onSaveRuntime}
+          isOverridden={runtimeIsOverridden}
           onReset={onResetRuntime}
         />
       </Card>
       <Card title="Imaging Model">
-        <ModelSection config={imgConfig} usage="img" saving={savingImg} onSave={onSaveImg} onReset={onResetImg} />
+        <ModelSection
+          config={imgConfig}
+          usage="img"
+          saving={savingImg}
+          onSave={onSaveImg}
+          isOverridden={imgIsOverridden}
+          onReset={onResetImg}
+        />
       </Card>
     </>
   );

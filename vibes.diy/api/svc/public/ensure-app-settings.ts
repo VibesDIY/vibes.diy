@@ -29,6 +29,7 @@ import {
   isReqEnsureAppSettingsIconDescription,
   isReqEnsureAppSettingsIconRegen,
   isReqEnsureAppSettingsImg,
+  isReqEnsureAppSettingsImgRemove,
   isReqEnsureAppSettingsSkills,
   isReqEnsureAppSettingsTheme,
   isActiveTitle,
@@ -36,7 +37,9 @@ import {
   isEnableRequest,
   isReqEnsureAppSettings,
   isReqEnsureAppSettingsRuntime,
+  isReqEnsureAppSettingsRuntimeRemove,
   isReqEnsureAppSettingsCodegen,
+  isReqEnsureAppSettingsCodegenRemove,
   isReqEnsureAppSettingsDbAcl,
   isReqEnsureAppSettingsDbAclRemove,
   isReqEnsureAppSettingsEnv,
@@ -417,6 +420,9 @@ export async function ensureAppSettings(
         );
       }
       break;
+    case isReqEnsureAppSettingsRuntimeRemove(req):
+      [res.settings, res.error] = await sqlRemove(vctx, res, settings, isActiveModelSettingRuntime);
+      break;
     case isReqEnsureAppSettingsRuntime(req):
       [res.settings, res.error] = await sqlUpsert(
         vctx,
@@ -434,6 +440,9 @@ export async function ensureAppSettings(
           }) satisfies ActiveModelSetting
       );
       break;
+    case isReqEnsureAppSettingsCodegenRemove(req):
+      [res.settings, res.error] = await sqlRemove(vctx, res, settings, isActiveModelSettingCodegen);
+      break;
     case isReqEnsureAppSettingsCodegen(req):
       [res.settings, res.error] = await sqlUpsert(
         vctx,
@@ -450,6 +459,9 @@ export async function ensureAppSettings(
             },
           }) satisfies ActiveModelSetting
       );
+      break;
+    case isReqEnsureAppSettingsImgRemove(req):
+      [res.settings, res.error] = await sqlRemove(vctx, res, settings, isActiveModelSettingImg);
       break;
     case isReqEnsureAppSettingsImg(req):
       [res.settings, res.error] = await sqlUpsert(

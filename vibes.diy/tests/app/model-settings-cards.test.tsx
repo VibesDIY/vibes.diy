@@ -62,7 +62,7 @@ describe("ModelSettingsCards reset / default affordance", () => {
     await waitFor(() => {
       expect(screen.getAllByText(/Following default \(currently Claude Opus 4.8\)/).length).toBeGreaterThan(0);
     });
-    expect(screen.queryByText("Use default")).not.toBeInTheDocument();
+    expect(screen.queryByText("Reset to inherited")).not.toBeInTheDocument();
   });
 
   it("shows the pinned model and a reset control when a pin is set, and reset calls onReset", async () => {
@@ -90,7 +90,7 @@ describe("ModelSettingsCards reset / default affordance", () => {
     // pinned label names the pinned model and shows the live default alongside
     expect(screen.getByText(/Pinned to/)).toHaveTextContent("Pinned to Claude Sonnet 4.6 · Default: Claude Opus 4.8");
 
-    const resetBtn = screen.getByText("Use default");
+    const resetBtn = screen.getByText("Reset to inherited");
     await act(async () => {
       fireEvent.click(resetBtn);
     });

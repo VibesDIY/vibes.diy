@@ -255,6 +255,15 @@ export function isReqEnsureAppSettingsRuntime(obj: unknown): obj is ReqEnsureApp
   return !(reqEnsureAppSettingsRuntime(obj) instanceof type.errors);
 }
 
+export const reqEnsureAppSettingsRuntimeRemove = type({
+  runtime: "null",
+}).and(reqEnsureAppSettingsBase);
+
+export type ReqEnsureAppSettingsRuntimeRemove = typeof reqEnsureAppSettingsRuntimeRemove.infer;
+export function isReqEnsureAppSettingsRuntimeRemove(obj: unknown): obj is ReqEnsureAppSettingsRuntimeRemove {
+  return !(reqEnsureAppSettingsRuntimeRemove(obj) instanceof type.errors);
+}
+
 export const reqEnsureAppSettingsCodegen = type({
   codegen: AIParams.partial(),
 }).and(reqEnsureAppSettingsBase);
@@ -264,6 +273,15 @@ export function isReqEnsureAppSettingsCodegen(obj: unknown): obj is ReqEnsureApp
   return !(reqEnsureAppSettingsCodegen(obj) instanceof type.errors);
 }
 
+export const reqEnsureAppSettingsCodegenRemove = type({
+  codegen: "null",
+}).and(reqEnsureAppSettingsBase);
+
+export type ReqEnsureAppSettingsCodegenRemove = typeof reqEnsureAppSettingsCodegenRemove.infer;
+export function isReqEnsureAppSettingsCodegenRemove(obj: unknown): obj is ReqEnsureAppSettingsCodegenRemove {
+  return !(reqEnsureAppSettingsCodegenRemove(obj) instanceof type.errors);
+}
+
 export const reqEnsureAppSettingsImg = type({
   img: AIParams.partial(),
 }).and(reqEnsureAppSettingsBase);
@@ -271,6 +289,15 @@ export const reqEnsureAppSettingsImg = type({
 export type ReqEnsureAppSettingsImg = typeof reqEnsureAppSettingsImg.infer;
 export function isReqEnsureAppSettingsImg(obj: unknown): obj is ReqEnsureAppSettingsImg {
   return !(reqEnsureAppSettingsImg(obj) instanceof type.errors);
+}
+
+export const reqEnsureAppSettingsImgRemove = type({
+  img: "null",
+}).and(reqEnsureAppSettingsBase);
+
+export type ReqEnsureAppSettingsImgRemove = typeof reqEnsureAppSettingsImgRemove.infer;
+export function isReqEnsureAppSettingsImgRemove(obj: unknown): obj is ReqEnsureAppSettingsImgRemove {
+  return !(reqEnsureAppSettingsImgRemove(obj) instanceof type.errors);
 }
 
 export const reqEnsureAppSettingsEnv = type({
@@ -319,8 +346,11 @@ export type ReqEnsureAppSettings =
   | ReqEnsureAppSettingsIconDescription
   | ReqEnsureAppSettingsIconRegen
   | ReqEnsureAppSettingsRuntime
+  | ReqEnsureAppSettingsRuntimeRemove
   | ReqEnsureAppSettingsCodegen
+  | ReqEnsureAppSettingsCodegenRemove
   | ReqEnsureAppSettingsImg
+  | ReqEnsureAppSettingsImgRemove
   | ReqEnsureAppSettingsEnv
   | ReqEnsureAppSettingsDbAcl
   | ReqEnsureAppSettingsDbAclRemove
@@ -336,8 +366,11 @@ export function isReqEnsureAppSettings(obj: unknown): obj is ReqEnsureAppSetting
     isReqEnsureAppSettingsIconDescription(obj) ||
     isReqEnsureAppSettingsIconRegen(obj) ||
     isReqEnsureAppSettingsRuntime(obj) ||
+    isReqEnsureAppSettingsRuntimeRemove(obj) ||
     isReqEnsureAppSettingsCodegen(obj) ||
+    isReqEnsureAppSettingsCodegenRemove(obj) ||
     isReqEnsureAppSettingsImg(obj) ||
+    isReqEnsureAppSettingsImgRemove(obj) ||
     isReqEnsureAppSettingsEnv(obj) ||
     isReqEnsureAppSettingsDbAcl(obj) ||
     isReqEnsureAppSettingsDbAclRemove(obj) ||

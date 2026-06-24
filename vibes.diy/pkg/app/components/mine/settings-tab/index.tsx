@@ -1,7 +1,14 @@
 import React, { useEffect, useState } from "react";
 import { useVibesDiy } from "../../../vibes-diy-provider.js";
 import { notifyRecentVibesChanged } from "../../../hooks/useRecentVibes.js";
-import { fromKVString, toKVString, AIParams } from "@vibes.diy/api-types";
+import {
+  fromKVString,
+  toKVString,
+  AIParams,
+  isActiveModelSettingCodegen,
+  isActiveModelSettingRuntime,
+  isActiveModelSettingImg,
+} from "@vibes.diy/api-types";
 import { toast } from "react-hot-toast";
 import { ModelSettingsCards } from "../../ModelSettingsCards.js";
 import { cidAssetUrl, getAppHostBaseUrl } from "../../../utils/vibeUrls.js";
@@ -205,8 +212,11 @@ type SettingsUpdate =
   | { kind: "iconDescription"; appSlug: string; ownerHandle: string; iconDescription: string }
   | { kind: "iconRegen"; appSlug: string; ownerHandle: string }
   | { kind: "codegen"; appSlug: string; ownerHandle: string; codegen: AIParams }
+  | { kind: "codegenReset"; appSlug: string; ownerHandle: string }
   | { kind: "runtime"; appSlug: string; ownerHandle: string; runtime: AIParams }
+  | { kind: "runtimeReset"; appSlug: string; ownerHandle: string }
   | { kind: "img"; appSlug: string; ownerHandle: string; img: AIParams }
+  | { kind: "imgReset"; appSlug: string; ownerHandle: string }
   | { kind: "env"; appSlug: string; ownerHandle: string; env: Record<string, string> };
 
 // ── main tab ─────────────────────────────────────────────────────────────────
@@ -226,6 +236,9 @@ export function SettingsTab({ ownerHandle, appSlug }: SettingsTabProps) {
   const [codegenConfig, setCodegenConfig] = useState<Partial<AIParams>>({});
   const [runtimeConfig, setRuntimeConfig] = useState<Partial<AIParams>>({});
   const [imgConfig, setImgConfig] = useState<Partial<AIParams>>({});
+  const [codegenIsOverridden, setCodegenIsOverridden] = useState(false);
+  const [runtimeIsOverridden, setRuntimeIsOverridden] = useState(false);
+  const [imgIsOverridden, setImgIsOverridden] = useState(false);
   const [env, setEnv] = useState<Record<string, string>>({});
 
   const [pending, setPending] = useState<SettingsUpdate>({ kind: "fetch", appSlug, ownerHandle });
@@ -251,9 +264,9 @@ export function SettingsTab({ ownerHandle, appSlug }: SettingsTabProps) {
 
     if (pending.kind === "title") setSavingTitle(true);
     else if (pending.kind === "theme") setSavingTheme(true);
-    else if (pending.kind === "codegen") setSavingCodegen(true);
-    else if (pending.kind === "runtime") setSavingRuntime(true);
-    else if (pending.kind === "img") setSavingImg(true);
+    else if (pending.kind === "codegen" || pending.kind === "codegenReset") setSavingCodegen(true);
+    else if (pending.kind === "runtime" || pending.kind === "runtimeReset") setSavingRuntime(true);
+    else if (pending.kind === "img" || pending.kind === "imgReset") setSavingImg(true);
     else if (pending.kind === "env") setSavingEnv(true);
     else if (pending.kind === "iconDescription" || pending.kind === "iconRegen") {
       // Capture the current icon CID; the regen-poll effect waits for it
@@ -273,22 +286,28 @@ export function SettingsTab({ ownerHandle, appSlug }: SettingsTabProps) {
               ? { ...base, iconRegen: true }
               : pending.kind === "codegen"
                 ? { ...base, codegen: pending.codegen }
-                : pending.kind === "runtime"
-                  ? { ...base, runtime: pending.runtime }
-                  : pending.kind === "img"
-                    ? { ...base, img: pending.img }
-                    : pending.kind === "env"
-                      ? { ...base, env: toKVString(pending.env) }
-                      : base;
+                : pending.kind === "codegenReset"
+                  ? { ...base, codegen: null }
+                  : pending.kind === "runtime"
+                    ? { ...base, runtime: pending.runtime }
+                    : pending.kind === "runtimeReset"
+                      ? { ...base, runtime: null }
+                      : pending.kind === "img"
+                        ? { ...base, img: pending.img }
+                        : pending.kind === "imgReset"
+                          ? { ...base, img: null }
+                          : pending.kind === "env"
+                            ? { ...base, env: toKVString(pending.env) }
+                            : base;
 
     void sharedApi.ensureAppSettings(req).then((res) => {
       if (!alive) return;
 
       if (pending.kind === "title") setSavingTitle(false);
       else if (pending.kind === "theme") setSavingTheme(false);
-      else if (pending.kind === "codegen") setSavingCodegen(false);
-      else if (pending.kind === "runtime") setSavingRuntime(false);
-      else if (pending.kind === "img") setSavingImg(false);
+      else if (pending.kind === "codegen" || pending.kind === "codegenReset") setSavingCodegen(false);
+      else if (pending.kind === "runtime" || pending.kind === "runtimeReset") setSavingRuntime(false);
+      else if (pending.kind === "img" || pending.kind === "imgReset") setSavingImg(false);
       else if (pending.kind === "env") setSavingEnv(false);
       else if (pending.kind !== "iconDescription" && pending.kind !== "iconRegen") setLoading(false);
 
@@ -308,6 +327,9 @@ export function SettingsTab({ ownerHandle, appSlug }: SettingsTabProps) {
       setCodegenConfig(s.entry.settings.codegen ?? {});
       setRuntimeConfig(s.entry.settings.runtime ?? {});
       setImgConfig(s.entry.settings.img ?? {});
+      setCodegenIsOverridden(s.entries.some(isActiveModelSettingCodegen));
+      setRuntimeIsOverridden(s.entries.some(isActiveModelSettingRuntime));
+      setImgIsOverridden(s.entries.some(isActiveModelSettingImg));
       setEnv(fromKVString(s.entry.settings.env ?? []));
 
       if (pending.kind === "title") {
@@ -483,9 +505,15 @@ export function SettingsTab({ ownerHandle, appSlug }: SettingsTabProps) {
         savingCodegen={savingCodegen}
         savingRuntime={savingRuntime}
         savingImg={savingImg}
+        codegenIsOverridden={codegenIsOverridden}
+        runtimeIsOverridden={runtimeIsOverridden}
+        imgIsOverridden={imgIsOverridden}
         onSaveCodegen={(cfg) => setPending({ kind: "codegen", appSlug, ownerHandle, codegen: cfg })}
         onSaveRuntime={(cfg) => setPending({ kind: "runtime", appSlug, ownerHandle, runtime: cfg })}
         onSaveImg={(cfg) => setPending({ kind: "img", appSlug, ownerHandle, img: cfg })}
+        onResetCodegen={() => setPending({ kind: "codegenReset", appSlug, ownerHandle })}
+        onResetRuntime={() => setPending({ kind: "runtimeReset", appSlug, ownerHandle })}
+        onResetImg={() => setPending({ kind: "imgReset", appSlug, ownerHandle })}
       />
 
       <Card title="Environment Variables">

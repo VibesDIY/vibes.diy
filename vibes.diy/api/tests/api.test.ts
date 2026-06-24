@@ -1209,6 +1209,69 @@ describe("VibesDiyApi", { timeout: (inject("DB_FLAVOUR" as never) as string) ===
       });
     });
 
+    it("ensureAppSettings can remove app-level model overrides and fall back to user/catalog defaults", async () => {
+      const { appSlug, ownerHandle } = await createApp();
+
+      const userCodegenDefault = { model: m("user-codegen-model"), apiKey: "user-codegen-key" };
+      const userRuntimeDefault = { model: m("user-runtime-model"), apiKey: "user-runtime-key" };
+
+      await api.ensureUserSettings({
+        settings: [
+          {
+            type: "modelDefaults",
+            codegen: userCodegenDefault,
+            runtime: userRuntimeDefault,
+            // Deliberately omit img to prove catalog fallback for that usage.
+          },
+        ],
+      });
+
+      await api.ensureAppSettings({ appSlug, ownerHandle, codegen: { model: m("app-codegen-model"), apiKey: "app-codegen-key" } });
+      await api.ensureAppSettings({ appSlug, ownerHandle, runtime: { model: m("app-runtime-model"), apiKey: "app-runtime-key" } });
+      await api.ensureAppSettings({ appSlug, ownerHandle, img: { model: m("app-img-model"), apiKey: "app-img-key" } });
+
+      const removeCodegen = await api.ensureAppSettings({ appSlug, ownerHandle, codegen: null });
+      expect(removeCodegen.Ok().settings.entries).not.toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            type: "active.model",
+            usage: "codegen",
+          }),
+        ])
+      );
+      expect(removeCodegen.Ok().settings.entry.settings.codegen).toEqual(userCodegenDefault);
+
+      const removeRuntime = await api.ensureAppSettings({ appSlug, ownerHandle, runtime: null });
+      expect(removeRuntime.Ok().settings.entries).not.toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            type: "active.model",
+            usage: "runtime",
+          }),
+        ])
+      );
+      expect(removeRuntime.Ok().settings.entry.settings.runtime).toEqual(userRuntimeDefault);
+
+      const removeImg = await api.ensureAppSettings({ appSlug, ownerHandle, img: null });
+      expect(removeImg.Ok().settings.entries).not.toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            type: "active.model",
+            usage: "img",
+          }),
+        ])
+      );
+
+      const imgModel = removeImg.Ok().settings.entry.settings.img?.model;
+      expect(imgModel?.id).toBe("anthropic/claude-opus-4.5");
+
+      const readBack = await api.ensureAppSettings({ appSlug, ownerHandle });
+      expect(readBack.Ok().settings.entries.filter((entry) => entry.type === "active.model")).toHaveLength(0);
+      expect(readBack.Ok().settings.entry.settings.codegen).toEqual(userCodegenDefault);
+      expect(readBack.Ok().settings.entry.settings.runtime).toEqual(userRuntimeDefault);
+      expect(readBack.Ok().settings.entry.settings.img?.model?.id).toBe("anthropic/claude-opus-4.5");
+    });
+
     it("ensureAppSettings update env", async () => {
       const x1 = await api.ensureAppSettings({ appSlug, ownerHandle, env: [{ key: "x", value: "x" }] });
       const x2 = await api.ensureAppSettings({ appSlug, ownerHandle, env: [{ key: "x", value: "x" }] });
