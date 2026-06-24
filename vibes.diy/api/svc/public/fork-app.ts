@@ -155,7 +155,16 @@ export async function forkApp(
   //    read so renames of srcUserSlug/srcAppSlug are followed automatically.
   //    Mode: dev for classic remix (chat editor), production for clone
   //    (lands straight on /vibe/ published URL).
-  const destMeta: MetaItem[] = [...srcMeta.filter((m) => m.type !== "remix-of"), { type: "remix-of", srcFsId: src.fsId }];
+  const destMeta: MetaItem[] = [
+    ...srcMeta.filter((m) => m.type !== "remix-of"),
+    {
+      type: "remix-of",
+      srcFsId: src.fsId,
+      srcUserId: src.userId,
+      srcOwnerHandle: src.ownerHandle,
+      srcAppSlug: src.appSlug,
+    },
+  ];
   const destMode = skipChat ? "production" : "dev";
   const rIns = await exception2Result(() =>
     vctx.sql.db.insert(vctx.sql.tables.apps).values({

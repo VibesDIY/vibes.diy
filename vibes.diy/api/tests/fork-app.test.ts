@@ -112,6 +112,15 @@ describe("forkApp", { timeout: (inject("DB_FLAVOUR" as never) as string) === "pg
     const remixMeta = rApp.Ok().meta.find((m) => m.type === "remix-of");
     expect(remixMeta).toBeDefined();
     expect(remixMeta && "srcFsId" in remixMeta ? remixMeta.srcFsId : "").toBe(src.fsId);
+    // The remix-of entry snapshots the source's stable identity (captured at
+    // fork time) so the source owner can be notified / back-referenced without
+    // an ambiguous reverse fsId lookup. srcOwnerHandle/srcAppSlug carry the
+    // source's display slugs; srcUserId is the owner's stable Clerk id.
+    assert(remixMeta && remixMeta.type === "remix-of");
+    expect(remixMeta.srcOwnerHandle).toBe(src.ownerHandle);
+    expect(remixMeta.srcAppSlug).toBe(src.appSlug);
+    expect(typeof remixMeta.srcUserId).toBe("string");
+    expect((remixMeta.srcUserId ?? "").length).toBeGreaterThan(0);
   });
 
   it("non-owner can fork a publicAccess app", async () => {

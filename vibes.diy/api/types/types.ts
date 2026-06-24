@@ -62,11 +62,18 @@ export function isMetaTitle(obj: unknown): obj is MetaTitle {
   return !(MetaTitle(obj) instanceof type.errors);
 }
 
-// srcFsId is the immutable anchor. Display slugs are resolved live from
-// the Apps/binding tables so slug renames follow the user.
+// srcFsId is the immutable content anchor. The source vibe's stable identity
+// is snapshotted at fork time: srcUserId (the source owner's Clerk id — stable
+// across renames) drives the remix notification target; srcOwnerHandle/
+// srcAppSlug are display slugs re-resolved live on read but stored so we always
+// know which vibe was the source. All three are OPTIONAL so legacy remix-of
+// entries (srcFsId only) still parse and behave.
 export const MetaRemixOf = type({
   type: "'remix-of'",
   srcFsId: "string",
+  "srcUserId?": "string",
+  "srcOwnerHandle?": "string",
+  "srcAppSlug?": "string",
 });
 
 export type MetaRemixOf = typeof MetaRemixOf.infer;
