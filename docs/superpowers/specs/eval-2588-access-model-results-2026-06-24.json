@@ -8,13 +8,15 @@
   "predecessor": "2525",
   "method": "Generated one vibe per matrix row with prompts that do NOT mention access control; pulled access.js + App.jsx; graded statically against the newcomer-first/per-object model. unknown-rate determined statically (all access fns sync, extractable export, only requireAccess/requireRole).",
   "rollup": {
-    "pass": 5,
+    "pass": 3,
     "soft_fail": 1,
-    "fail": 2,
+    "fail": 4,
     "denominator": 8,
+    "revision_note": "Revised 2026-06-24 after Codex review on PR #2593 (3 findings, all verified against the corpus and accepted). Original roll-up was 5/1/2; corrected to 3/1/4. Changes: row 1 PASS->SOFT-FAIL (App.jsx duplicate `useFireproof` import is an ESM redeclaration error -> doesn't render; access MODEL still textbook-correct), row 3 SOFT-FAIL->FAIL (mutable-author invariant violation + broken collaboration: partner cannot edit/check-off the other person's items), row 8 PASS->FAIL (ChannelSidebar is a non-interactive stub -> the role model is unreachable through the UI). Two of these (rows 1, 8) are App.jsx render/completeness failures orthogonal to the access-MODEL prompt; see grading_axes.",
+    "grading_axes": "Each row is graded on BOTH (a) access.js MODEL correctness and (b) App.jsx gating + renderability. A row fails if either axis fails. Model failures (the prompt's responsibility): row 2 Form-A, row 4 owner-lockout, row 3 mutable-author + no per-object, plus no per-object anywhere. Render/completeness failures (generation reliability, orthogonal to the model prompt): row 1 duplicate import, row 8 stub component.",
     "formA_multiplayer_rows": [1, 2, 3, 4],
     "formA_strict_count": 1,
-    "formA_strict_rate": "25% (1/4) — row 2 habit gates the core write on requireRole(\"owner\")",
+    "formA_strict_rate": "25% (1/4) — row 2 habit gates the core write on requireRole(\"owner\"). Unchanged by the revision: Form-A is about the access MODEL choosing owner-only, and row 1's model is per-visitor-correct (its failure is a non-rendering App, not an owner gate).",
     "formA_broad_count": 2,
     "formA_broad_rate": "50% (2/4) — adds row 4 whiteboard (visitor locked out: core write needs board membership only the owner can grant, no join/request path)",
     "formA_target": "0%",
@@ -28,10 +30,11 @@
       "prompt": "A todo list app",
       "dimension": "the Form-A test (sounds single-user, must be per-visitor)",
       "slug": "eval/balloon-believed-single",
-      "grade": "PASS",
+      "grade": "SOFT-FAIL",
+      "grade_was": "PASS (revised down after Codex review)",
       "formA": false,
-      "reason": "Textbook per-user-private: per-user channel `user:${user.userHandle}`, author check on create AND update, grant.users self-grant. No owner gate. Second visitor adds their own private todos. App gates Composer on can.create({type:'todo', authorHandle: me?.userHandle}), ready-gates the skeleton, renders verdict.reason when denied.",
-      "nits": "Duplicate `import { useFireproof }` (lines 3 and 6) — generation glitch, not access-related."
+      "reason": "Access MODEL is the best in the matrix — textbook per-user-private: per-user channel `user:${user.userHandle}`, author check on create AND update, grant.users self-grant, no owner gate, second visitor adds their own private todos. App gates Composer on can.create({type:'todo', authorHandle: me?.userHandle}), ready-gates, renders reason. BUT App.jsx does not render: lines 3 and 6 are both `import { useFireproof } from \"use-fireproof\"`, an ESM redeclaration error (`Identifier 'useFireproof' has already been declared`) that throws before React mounts. So the model is correct but the app is non-renderable — not a clean PASS. This is a generation/completeness failure, not an access-model failure.",
+      "render_blocker": "duplicate `import { useFireproof }` (lines 3 and 6) — ESM early error"
     },
     {
       "row": 2,
@@ -49,10 +52,11 @@
       "prompt": "A shared shopping list I can invite my partner to",
       "dimension": "per-object collaboration",
       "slug": "eval/eval-2588-shop",
-      "grade": "SOFT-FAIL",
+      "grade": "FAIL",
+      "grade_was": "SOFT-FAIL (revised up after Codex review — caught a real invariant violation + broken collaboration)",
       "formA": false,
-      "reason": "Multiplayer works (no Form-A: any signed-in user adds/edits items), but the per-object model was NOT reached. There is only an `item` type routed to a single global `list` channel with grant.public; no `list` object, no per-list channel (`list:<id>`), no `share`/grant doc, no requireAccess, no invite surface. 'Invite my partner to' is delegated entirely to the runtime app-level door, and every signed-in user edits the one shared list with no isolation. Form-B fallback for a per-object-intent prompt.",
-      "offending_snippet": "if (doc.type === 'item') { if (doc.authorHandle !== user.userHandle) throw...; return { channels: ['list'], grant: { public: ['list'] } } }  // no list object, no per-object channel, no share doc"
+      "reason": "Two real defects, not just a missed model. (1) MUTABLE AUTHOR (recipe-invariant violation, a documented red flag): the item rule checks only `doc.authorHandle === user.userHandle` and never checks `oldDoc.authorHandle`, so any signed-in user can update someone else's item with `authorHandle` rewritten to themselves and hijack authorship. The prompt explicitly requires preserving the author on updates (`if (oldDoc && oldDoc.<authorField> !== user.userHandle) throw`). (2) BROKEN COLLABORATION: because the SAME check runs on every update and the App writes items back preserving the original `authorHandle` (toggle: `database.put({...item, checked:!item.checked})`), a partner CANNOT check off, edit, or delete an item created by the other person (can.edit(item).ok is false for them) — directly contradicting both the access.js comment ('anyone signed-in can edit/check-off/delete any item') and the prompt's 'shared list I can invite my partner to'. So it is neither a working shared list nor safely author-owned. (3) Still no per-object model: single global `list` channel, no per-list channel, no `share`/grant doc, no invite surface.",
+      "offending_snippet": "if (doc.type === 'item') { if (doc.authorHandle !== user.userHandle) throw...; /* no oldDoc.authorHandle check -> author mutable; same check on update -> partner can't edit others' items */ return { channels: ['list'], grant: { public: ['list'] } } }"
     },
     {
       "row": 4,
@@ -98,16 +102,20 @@
       "prompt": "A team workspace with channels and roles",
       "dimension": "the 3+ tier edge (clunky-but-reachable)",
       "slug": "eval/eval-2588-team",
-      "grade": "PASS",
+      "grade": "FAIL",
+      "grade_was": "PASS (revised down after Codex review — App is non-interactive)",
       "formA": false,
-      "reason": "Works via composition (the deliberately-unfeatured edge). owner-only channel + roleGrant creation; roleGrant routes to admin:grants (a held channel, not channel-less) and expands members[role]+=userHandle; message gates on author check + requireAccess(channelId). A role-granted member gets the channel for BOTH read and write (channel doc grants the role), so no broken 'act-but-can't-read'. Owner-management writes gate on can.create({type:'roleGrant',...}) / can.delete(grant) — NOT isOwner. Administered (no self-join) but reachable and enforced, which is all row 8 requires.",
-      "tiers": "owner / admin / member = 3 tiers reachable"
+      "reason": "The access MODEL is correct and reachable on paper: owner-only channel + roleGrant creation; roleGrant routes to admin:grants (a held channel) and expands members[role]; message gates on author check + requireAccess(channelId); a role-granted member gets the channel for BOTH read and write (no broken 'act-but-can't-read'); management gates on can.create({type:'roleGrant'}) / can.delete(grant), NOT isOwner. BUT the App can't exercise any of it: `ChannelSidebar()` (App.jsx:22) takes no props, ignores the `activeId`/`setActiveId` passed at App.jsx:169, and renders only 'Loading…'. So `activeId` is stuck `null` forever -> Composer returns null (App.jsx:82) and MessageFeed shows 'Select a channel' (App.jsx:46). There is no UI to create or select a channel, post a message, or grant a role in context. Non-interactive stub at the channel-selection layer — same failure class as the #2525 task-list FAIL (stubbed composer). The role model is unreachable through the UI, so the row cannot be a PASS. Render/completeness failure, orthogonal to the access-model prompt.",
+      "render_blocker": "ChannelSidebar (App.jsx:22) is a stub that ignores activeId/setActiveId and renders 'Loading…' -> no channel can be selected/created -> composer/feed never reachable",
+      "tiers": "owner / admin / member = 3 tiers, correct in access.js but unreachable through the stubbed UI"
     }
   ],
   "anti_patterns": [
-    "Owner-gating multiplayer/per-visitor apps (the Form-A class): row 2 (habit) puts requireRole(\"owner\") on the core write; row 4 (whiteboard) makes the core write require a membership only the owner can grant with no join path. The newcomer-first default is NOT reliably reached for 'tracker' and 'board' shapes.",
-    "Per-object collaboration (the hybrid) not reached for invite-style prompts: row 3 ('invite my partner') collapsed to one global public list (no per-object channel, no share/grant doc, no request flow); row 4 ('people can join') has no self-join/request type. The per-object recipe (channel-per-object + grant.users + requireAccess + member-authored share + request invert) isn't being picked up — exactly the freshest #2586 layer.",
-    "Minor: dead-code/no-op invariant (row 2 oldDoc.createdBy vs itself); duplicate import (row 1); over-promised owner-delete that write-once blocks (row 6)."
+    "ACCESS-MODEL gaps (the prompt's responsibility): (a) Owner-gating multiplayer/per-visitor apps — the Form-A class: row 2 (habit) puts requireRole(\"owner\") on the core write; row 4 (whiteboard) makes the core write require a membership only the owner can grant with no join path. The newcomer-first default is NOT reliably reached for 'tracker' and 'board' shapes.",
+    "(b) Per-object collaboration (the hybrid) not reached for invite-style prompts: row 3 ('invite my partner') collapsed to one global list (no per-object channel, no share/grant doc, no request flow); row 4 ('people can join') has no self-join/request type. The per-object recipe (channel-per-object + grant.users + requireAccess + member-authored share + request invert) isn't being picked up — exactly the freshest #2586 layer.",
+    "(c) Author not preserved on updates: row 3 checks only the new doc's author and never oldDoc, so authorship is mutable (a documented red flag) AND the same check on every update silently locks a collaborator out of editing the other person's items. The prompt teaches `if (oldDoc && oldDoc.<authorField> !== user.userHandle) throw` — it isn't being applied.",
+    "RENDER/COMPLETENESS failures (generation reliability, orthogonal to the model prompt — but they corrupt the eval if counted as PASS): row 1 ships a duplicate `import { useFireproof }` (ESM early error, app won't mount); row 8 ships a stubbed `ChannelSidebar` that ignores its props and renders 'Loading…', making the workspace non-interactive. Mirrors the #2525 generation-stream/stub-component signal. Worth grading App.jsx renderability explicitly, and a candidate for its own infra issue.",
+    "Minor: dead-code/no-op invariant (row 2 oldDoc.createdBy vs itself); over-promised owner-delete that write-once blocks (row 6)."
   ],
-  "verdict": "CONDITIONAL FAIL on the headline metric. The A/B/C defaults and the administered-D edge are solid (rows 1,5,6,7,8 PASS — per-user-private, owner-published, anonymous, public-comment, reachable workspace; zero isOwner write-gates, unknown 0%). But the Form-A target of 0% is missed: among 4 multiplayer-intent rows, 1 literal Form-A (habit→requireRole owner) and 1 effective visitor-lockout (whiteboard→owner-only membership). And the per-object collaboration model (rows 3 & 4) was not reached. Do NOT proceed to the #2554 migration on this prompt: tighten Form-A avoidance for tracker/board shapes and feature the per-object hybrid + request/join flow, then re-run rows 2, 3, 4."
+  "verdict": "FAIL — do NOT proceed to the #2554 migration on this prompt. Revised roll-up after Codex review: 3 PASS / 1 SOFT-FAIL / 4 FAIL (was 5/1/2). The first layer holds (zero isOwner write-gates anywhere; owner-published row 5, anonymous row 6, public-comment row 7 are clean PASSes; unknown 0%). But: the Form-A 0% target is missed (row 2 literal requireRole owner; row 4 effective owner-only-membership lockout); the per-object hybrid is not reached for invite-style prompts (rows 3, 4); author-preservation-on-update is not applied (row 3, both a mutable-author hole and a broken-collaboration bug); and two rows (1, 8) generate non-renderable/non-interactive App.jsx. Next: (model) tighten Form-A avoidance for tracker/board shapes, feature the per-object hybrid + request/join flow, reinforce author-preserve-on-update; (infra) treat App.jsx renderability as a graded axis and file the generation-completeness regressions. Then re-run rows 1, 2, 3, 4, 8."
 }
