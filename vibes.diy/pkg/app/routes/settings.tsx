@@ -343,7 +343,6 @@ function ModelDefaultsCard() {
         return;
       }
       const def = parseArray(res.Ok().settings, userSettingModelDefaults)[0];
-      console.log("Loaded user settings:", res.Ok().settings, def);
       if (def) {
         // Prefer canonical keys; fall back to legacy chat/app for rows written
         // before the #2608 rename.
@@ -354,7 +353,16 @@ function ModelDefaultsCard() {
     });
   }, [sharedApi]);
 
-  const save = (patch: Partial<{ codegen: AIParams; runtime: AIParams; img: AIParams }>, setSaving: (v: boolean) => void) => {
+  // A patch entry of `{}` (no model) clears that usage's pin. Because
+  // ensureUserSettings replaces the whole `modelDefaults` item by type, omitting
+  // a usage here removes it (and drops any legacy chat/app key) — so model
+  // resolution falls back to the live catalog default (see
+  // api/svc/intern/get-model-defaults.ts) instead of re-pinning whatever the
+  // default happens to be today.
+  const save = (
+    patch: Partial<{ codegen: Partial<AIParams>; runtime: Partial<AIParams>; img: Partial<AIParams> }>,
+    setSaving: (v: boolean) => void
+  ) => {
     setSaving(true);
     const merged = { codegen: codegenConfig, runtime: runtimeConfig, img: imgConfig, ...patch };
     const setting = {
@@ -397,6 +405,18 @@ function ModelDefaultsCard() {
           onSaveImg={(cfg) => {
             setImgConfig(cfg);
             save({ img: cfg }, setSavingImg);
+          }}
+          onResetCodegen={() => {
+            setCodegenConfig({});
+            save({ codegen: {} }, setSavingCodegen);
+          }}
+          onResetRuntime={() => {
+            setRuntimeConfig({});
+            save({ runtime: {} }, setSavingRuntime);
+          }}
+          onResetImg={() => {
+            setImgConfig({});
+            save({ img: {} }, setSavingImg);
           }}
         />
       </ol>
