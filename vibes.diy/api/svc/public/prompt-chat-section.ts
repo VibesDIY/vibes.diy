@@ -22,6 +22,7 @@ import {
   ReqPromptLLMChatSection,
   ReqWithVerifiedAuth,
   ResPromptChatSection,
+  type ResProgress,
   SectionEvent,
   VibeFile,
   VibesDiyError,
@@ -37,6 +38,7 @@ import { type } from "arktype";
 import { VibesApiSQLCtx } from "../types.js";
 import { checkAuth } from "../check-auth.js";
 import { unwrapMsgBase, wrapMsgBase } from "../unwrap-msg-base.js";
+import { withHeartbeat } from "./stream-heartbeat.js";
 import { and, desc, eq } from "drizzle-orm/sql/expressions";
 import {
   createStatsCollector,
@@ -1467,6 +1469,13 @@ async function handleLlmResponse({
       // failure — just CURRENT FILES + its own captured voice + "continue."
       let currentRes: Response = res;
       let currentAbort: AbortController = abort;
+      // Heartbeat cadence for the streaming reads below. The model goes silent
+      // during "think-gaps" (no tokens), and a quiet stretch longer than a
+      // proxy/CDN idle timeout (commonly ~60s) severs the turn before turn-end.
+      // 20s keeps ~3 beats of margin under that floor; during active streaming
+      // each reader.read() settles far faster, so the timer is armed-and-cleared
+      // without firing — beats only happen during real gaps.
+      const HEARTBEAT_MS = 20_000;
       while (true) {
         // Whether this stream produced any clean code.end. Used after the
         // inner loop to update the recovery counter.
@@ -1521,7 +1530,26 @@ async function handleLlmResponse({
           // is set, currentAbort is signaling) from real transport/parser
           // failures. Both end the loop, but the latter is surfaced via
           // the recoveryLogger so it isn't silently swallowed as EOF.
-          const rRead = await exception2Result(() => reader.read());
+          const rRead = await exception2Result(() =>
+            withHeartbeat(() => reader.read(), {
+              intervalMs: HEARTBEAT_MS,
+              beat: () => {
+                // No-op envelope on the client: it resets the client's idle
+                // timer via onMessage, matches no api.request waiter, and is
+                // dropped by the section-event consumers (isSectionEvent filter)
+                // — so it keeps the connection alive without altering turn
+                // output. Fire-and-forget, mirroring the push path's emitProgress.
+                ctx.send
+                  .send(ctx, { type: "vibes.diy.res-progress", stage: "generating" } satisfies ResProgress)
+                  .catch((e: unknown) => {
+                    recoveryLogger
+                      .Warn()
+                      .Any("event", { chatId: req.chatId, promptId, err: String(e) })
+                      .Msg("heartbeat-emit-failed");
+                  });
+              },
+            })
+          );
           if (rRead.isErr()) {
             const intentional = drainOnly || currentAbort.signal.aborted;
             if (!intentional) {
