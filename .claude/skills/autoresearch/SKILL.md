@@ -72,22 +72,22 @@ Activated when a plain-language goal is given without `Metric:`/`Verify:`. Class
 
 ### Orchestration Loop Steps
 
-Backed by `scripts/orchestrate.sh` (deterministic seam — all routing logic lives there). Subcommands exposed: `classify`, `next-hop`, `units`, `plateau`, `screen-cmd`, `verdict`, `validate-state`, `screen-state-predicate`.
+Backed by `.claude/skills/autoresearch/scripts/orchestrate.sh` (deterministic seam — all routing logic lives there). Subcommands exposed: `classify`, `next-hop`, `units`, `plateau`, `screen-cmd`, `verdict`, `validate-state`, `screen-state-predicate`.
 
-1. **Classify** — `scripts/orchestrate.sh classify "<goal>"` → archetype label + mode.
+1. **Classify** — `.claude/skills/autoresearch/scripts/orchestrate.sh classify "<goal>"` → archetype label + mode.
 2. **Derive predicate** — reuse `plan` logic to produce a concrete Success predicate: exact shell command + expected output. For `optimize-metric`, run the full plan/wizard derivation internally.
 3. **Confirm** — ONE `AskUserQuestion` showing: archetype, mode, concrete predicate (command + expected output), terminal choice (stop-at-verified vs proceed-to-ship). Misclassifications are caught here, not mid-run.
 4. **Round-0 dry-run** — prove the predicate command runs and returns a value; safety-screen every derived command via `screen-cmd`; print projected cycle budget. Stop here if `--dry-run`.
 5. **Loop** until predicate satisfied:
    a. Assess state via cheap signals (last `handoff.json`, regression verdict, error count) + affected-test verify.
-   b. `scripts/orchestrate.sh next-hop orchestrator-state.json` → next subcommand.
+   b. `.claude/skills/autoresearch/scripts/orchestrate.sh next-hop orchestrator-state.json` → next subcommand.
    c. Run subcommand (its own bounded inner loop).
    d. Record per-hop outcome ∈ {progressed, no-op, failed, blocked}.
    e. Fold hop's `handoff.json` into `orchestrator-state.json`.
-   f. `scripts/orchestrate.sh units` → recompute **Units remaining**.
+   f. `.claude/skills/autoresearch/scripts/orchestrate.sh units` → recompute **Units remaining**.
 6. **Stop conditions** (checked after each hop):
    - Predicate met → ship gate (only if ship is in the pipeline) else `CONVERGED`.
-   - `scripts/orchestrate.sh plateau orchestrator-state.json` → true → stop + report `PLATEAU`.
+   - `.claude/skills/autoresearch/scripts/orchestrate.sh plateau orchestrator-state.json` → true → stop + report `PLATEAU`.
    - Cycles > ceiling (default 50, override `--max-cycles N`) → stop + report `CEILING`.
    - Hop outcome `blocked`/`failed` with no alternative route → checkpoint + stop + report `BLOCKED`.
 

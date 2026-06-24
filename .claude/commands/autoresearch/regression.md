@@ -76,7 +76,7 @@ Run candidate verify vs baseline metric → compute `regressed` bool + 0-100 `su
 - Else `stability_score = Σ(weight × dim_subscore)` over SCORE dims that ran (flakiness .30 / performance .30 / resource .20 / visual .20, renormalized over present dims). **STABLE iff ≥ 95** (`REG_THRESHOLD`/weights overridable).
 - Print the **score math** (per-dim contribution table) + declare **dims-ran vs UNAVAILABLE** — an UNAVAILABLE dimension is always listed, never silently passed.
 
-Backed by `scripts/score-regression.sh verdict <results.tsv>` (exit 0 STABLE / 1 UNSTABLE).
+Backed by `.claude/skills/autoresearch/scripts/score-regression.sh verdict <results.tsv>` (exit 0 STABLE / 1 UNSTABLE).
 
 ## Hunter (root cause)
 

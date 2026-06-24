@@ -18,19 +18,19 @@ Keyword matching is fuzzy — partial matches and synonyms qualify. When a goal 
 
 ## Router Decision Table
 
-The `next-hop` subcommand of `scripts/orchestrate.sh` reads `orchestrator-state.json` and applies these rules in order. First match wins.
+The `next-hop` subcommand of `.claude/skills/autoresearch/scripts/orchestrate.sh` reads `orchestrator-state.json` and applies these rules in order. First match wins.
 
-| State Signal                                      | Source                                | Next Hop                                      |
-| ------------------------------------------------- | ------------------------------------- | --------------------------------------------- |
-| `errors > 0` in last handoff                      | handoff.json `findings`               | `fix`                                         |
-| regression verdict `UNSTABLE`                     | handoff.json `verdict`                | `regression`                                  |
-| `untested_gaps` flagged                           | handoff.json or units output          | `debug`                                       |
-| `pending_verify` true                             | orchestrator-state.json               | `verify` (fresh independent acceptance check) |
-| predicate met                                     | Success predicate command exit/output | `DONE` (exit loop)                            |
-| hop outcome `blocked` or `failed`, no retry route | orchestrator-state.json               | `BLOCKED` (checkpoint + stop)                 |
-| plateau detected                                  | `scripts/orchestrate.sh plateau`      | `PLATEAU` (stop + report)                     |
-| archetype pipeline has remaining steps            | preset pipeline sequence              | next preset step                              |
-| all preset steps exhausted, predicate not met     | —                                     | `regression` (convergence re-check)           |
+| State Signal                                      | Source                                                       | Next Hop                                      |
+| ------------------------------------------------- | ------------------------------------------------------------ | --------------------------------------------- |
+| `errors > 0` in last handoff                      | handoff.json `findings`                                      | `fix`                                         |
+| regression verdict `UNSTABLE`                     | handoff.json `verdict`                                       | `regression`                                  |
+| `untested_gaps` flagged                           | handoff.json or units output                                 | `debug`                                       |
+| `pending_verify` true                             | orchestrator-state.json                                      | `verify` (fresh independent acceptance check) |
+| predicate met                                     | Success predicate command exit/output                        | `DONE` (exit loop)                            |
+| hop outcome `blocked` or `failed`, no retry route | orchestrator-state.json                                      | `BLOCKED` (checkpoint + stop)                 |
+| plateau detected                                  | `.claude/skills/autoresearch/scripts/orchestrate.sh plateau` | `PLATEAU` (stop + report)                     |
+| archetype pipeline has remaining steps            | preset pipeline sequence                                     | next preset step                              |
+| all preset steps exhausted, predicate not met     | —                                                            | `regression` (convergence re-check)           |
 
 State signals are cheap reads — last `handoff.json` plus the regression verdict field and error count. No re-run of the full suite just to route.
 
@@ -77,13 +77,13 @@ Presets are starting pipelines. The router adapts per cycle from observed state 
 
 Terms used consistently across this file, SKILL.md, and orchestrator-state.json. Definitions live in CONTEXT.md.
 
-| Term                   | Short meaning                                                                                                                                          |
-| ---------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| Goal archetype         | Classification of the user's natural-language goal into one of the 9 categories above                                                                  |
-| Success predicate      | Exact shell command + expected output that defines "done" for Orchestration loop goals                                                                 |
-| Units remaining        | Scalar measure of open gaps (failing tests, errors, metric delta); lower-is-better; computed by `scripts/orchestrate.sh units`                         |
-| Plateau                | Units remaining flat or worse for N consecutive computed cycles (default 5); oscillation that nets zero also qualifies                                 |
-| Orchestration loop     | The cycle-bounded assess→route→run→record loop used for predicate-bearing archetypes                                                                   |
-| Single-pass dispatch   | One-shot routing to a self-terminating subcommand; no loop, Plateau, ceiling, or ship gate                                                             |
-| Independent verify hop | A `verify` routing step (reason/predict) that checks an accepted high-impact change against a fresh signal before DONE/ship; gated by `pending_verify` |
-| Holdout-verify         | Acceptance check run on a held-out set, separate from the `units` signal used to choose the change, to prevent overfitting the metric                  |
+| Term                   | Short meaning                                                                                                                                              |
+| ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Goal archetype         | Classification of the user's natural-language goal into one of the 9 categories above                                                                      |
+| Success predicate      | Exact shell command + expected output that defines "done" for Orchestration loop goals                                                                     |
+| Units remaining        | Scalar measure of open gaps (failing tests, errors, metric delta); lower-is-better; computed by `.claude/skills/autoresearch/scripts/orchestrate.sh units` |
+| Plateau                | Units remaining flat or worse for N consecutive computed cycles (default 5); oscillation that nets zero also qualifies                                     |
+| Orchestration loop     | The cycle-bounded assess→route→run→record loop used for predicate-bearing archetypes                                                                       |
+| Single-pass dispatch   | One-shot routing to a self-terminating subcommand; no loop, Plateau, ceiling, or ship gate                                                                 |
+| Independent verify hop | A `verify` routing step (reason/predict) that checks an accepted high-impact change against a fresh signal before DONE/ship; gated by `pending_verify`     |
+| Holdout-verify         | Acceptance check run on a held-out set, separate from the `units` signal used to choose the change, to prevent overfitting the metric                      |
