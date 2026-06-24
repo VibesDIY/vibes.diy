@@ -141,11 +141,10 @@ export default function About() {
               <div style={{ padding: "24px 16px", backgroundColor: "rgb(218, 41, 28)", color: "white" }}>
                 <h2 style={{ fontWeight: "bold", fontSize: 32, lineHeight: "34px" }}>Yours to control.</h2>
                 <p style={{ marginTop: 12, fontWeight: "bold", fontSize: 18, lineHeight: "24px" }}>
-                  Your app&rsquo;s data is private by default. Only the people you let in can open it.
+                  Private by default&mdash;other people can&rsquo;t open your app unless you let them in.
                 </p>
                 <p style={{ marginTop: 10, fontSize: 13, opacity: 0.85 }}>
-                  No algorithm, no feed&mdash;just your app and the people you share it with. You set the rules for who can read and
-                  write.
+                  You set the rules for who can read, write, and open your app.
                 </p>
               </div>
             </div>

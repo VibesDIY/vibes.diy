@@ -27,18 +27,22 @@ Do not repeat the old claims.
 **What's still true and safe to say:**
 
 - **You control your app's data.** (Lead with this — it can't be wrong.)
-- **Private by default.** A new app's data isn't public; only the people you let in
-  can open it. You set the rules for who can read and write.
-- **No algorithm, no feed.** It's your app and the people you share it with — not a
-  social platform deciding what happens.
+- **Private by default — from other users.** A new app's data isn't public; other
+  people can't open it unless you let them in, and you set who can read and write.
 - **Open source.** Anyone can look under the hood.
 
 **The guardrail:** "private" means *access-gated from other users* — NOT encrypted,
-and NOT hidden from us. It's a normal cloud database (like Google, Notion, Figma can
-read your stuff). So:
+and NOT hidden from the platform. It's a normal cloud database (like Google, Notion,
+or Figma can read your stuff). Scope every privacy claim to *other people*, never to
+secrecy from Vibes:
 
-- ✅ "Only the people you let in can open your app."
-- ❌ "Encrypted." / "We can't see your data." / "Local-first." / "Lives on your device." / "Portable."
+- ✅ "Other people can't open your app unless you let them in."
+- ✅ "You choose who can read, write, and open your app."
+- ❌ "Encrypted." / "We can't see your data." / unqualified "Private." / "Local-first." / "Lives on your device." / "Portable."
+
+**Don't promise "no algorithm" or "no feed."** Discovery is on the roadmap — curated,
+algorithmic feeds are coming as a *feature*, not something we position against. Talk
+about control and access, not the absence of feeds.
 
 When in doubt, talk about **control and access**, never **secrecy from the platform**.
 
