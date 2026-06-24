@@ -302,6 +302,7 @@ export interface EnsureAppsOpts {
   readonly env: Record<string, string>;
   readonly mode: "dev" | "production";
   readonly userId: string;
+  readonly runId?: string;
 }
 
 export async function ensureApps(
@@ -312,19 +313,99 @@ export async function ensureApps(
 ): Promise<Result<ResEnsureAppSlug>> {
   // console.log("0-ensureApps called with opts:", opts, "binding:", binding, "fs:", fs);
   const fsId = await computeFsId(opts.env ?? {}, fs);
-  const exist = await ctx.sql.db
-    .select()
-    .from(ctx.sql.tables.apps)
-    .where(
-      and(
-        eq(ctx.sql.tables.apps.appSlug, binding.appSlug.appSlug),
-        eq(ctx.sql.tables.apps.ownerHandle, binding.ownerHandle.ownerHandle),
-        eq(ctx.sql.tables.apps.fsId, fsId),
-        eq(ctx.sql.tables.apps.userId, binding.ownerHandle.userId)
-      )
-    )
-    .limit(1)
-    .then((r) => r[0]);
+  const sameRun =
+    opts.runId === undefined
+      ? undefined
+      : await ctx.sql.db
+          .select()
+          .from(ctx.sql.tables.apps)
+          .where(
+            and(
+              eq(ctx.sql.tables.apps.appSlug, binding.appSlug.appSlug),
+              eq(ctx.sql.tables.apps.ownerHandle, binding.ownerHandle.ownerHandle),
+              eq(ctx.sql.tables.apps.userId, binding.ownerHandle.userId),
+              eq(ctx.sql.tables.apps.runId, opts.runId)
+            )
+          )
+          .orderBy(desc(ctx.sql.tables.apps.releaseSeq))
+          .limit(1)
+          .then((r) => r[0]);
+  if (sameRun) {
+    const rFileSystems = await toFileSystemItems(ctx, opts.mode, fs);
+    if (rFileSystems.some((item) => item.isErr())) {
+      return Result.Err(
+        `Failed to process file system items: ${rFileSystems
+          .filter((item) => item.isErr())
+          .map((item) => item.Err().message)
+          .join(", ")}`
+      );
+    }
+    const nextMode: "dev" | "production" =
+      opts.mode === "production" && sameRun.mode === "dev" ? "production" : sameRun.mode;
+    await ctx.sql.db
+      .update(ctx.sql.tables.apps)
+      .set({
+        fsId,
+        env: opts.env,
+        fileSystem: rFileSystems.map((item) => item.Ok()),
+        mode: nextMode,
+      })
+      .where(
+        and(
+          eq(ctx.sql.tables.apps.userId, binding.ownerHandle.userId),
+          eq(ctx.sql.tables.apps.ownerHandle, binding.ownerHandle.ownerHandle),
+          eq(ctx.sql.tables.apps.appSlug, binding.appSlug.appSlug),
+          eq(ctx.sql.tables.apps.releaseSeq, sameRun.releaseSeq)
+        )
+      );
+    // Re-point the run's PromptContexts at the new fsId. The dev publish that
+    // ran earlier in this operation stored its (now-replaced) fsId in
+    // PromptContexts, and `loadVersionTimeline` resolves history by joining
+    // PromptContexts.fsId -> Apps.fsId. Rewriting the row's fsId above without
+    // this would orphan the generated turn, so follow-up edits/continuations
+    // seed from an empty buffer instead of the produced files (#2616). runId is
+    // threaded as the promptId, so the run's context row is keyed by it.
+    if (opts.runId !== undefined && sameRun.fsId !== fsId) {
+      await ctx.sql.db
+        .update(ctx.sql.tables.promptContexts)
+        .set({ fsId })
+        .where(
+          and(
+            eq(ctx.sql.tables.promptContexts.userId, binding.ownerHandle.userId),
+            eq(ctx.sql.tables.promptContexts.promptId, opts.runId),
+            eq(ctx.sql.tables.promptContexts.fsId, sameRun.fsId)
+          )
+        );
+    }
+    return Result.Ok({
+      type: "vibes.diy.res-ensure-app-slug",
+      ownerHandle: binding.ownerHandle.ownerHandle,
+      appSlug: binding.appSlug.appSlug,
+      mode: opts.mode,
+      fsId,
+      env: opts.env,
+      fileSystem: rFileSystems.map((item) => item.Ok()),
+      // wrapperUrl: "string",
+      // entryPointUrl: "string",
+    });
+  }
+
+  const exist =
+    opts.runId !== undefined
+      ? undefined
+      : await ctx.sql.db
+          .select()
+          .from(ctx.sql.tables.apps)
+          .where(
+            and(
+              eq(ctx.sql.tables.apps.appSlug, binding.appSlug.appSlug),
+              eq(ctx.sql.tables.apps.ownerHandle, binding.ownerHandle.ownerHandle),
+              eq(ctx.sql.tables.apps.fsId, fsId),
+              eq(ctx.sql.tables.apps.userId, binding.ownerHandle.userId)
+            )
+          )
+          .limit(1)
+          .then((r) => r[0]);
   if (exist) {
     // console.log("1-ensureApps called with opts:", opts, "binding:", binding, "fs:", fs);
     if (opts.mode === "production" && exist.mode === "dev") {
@@ -422,6 +503,7 @@ export async function ensureApps(
         userId: binding.ownerHandle.userId,
         ownerHandle: binding.ownerHandle.ownerHandle,
         fsId,
+        runId: opts.runId,
         env: opts.env,
         fileSystem: rFileSystems.map((item) => item.Ok()),
         meta: carriedMeta,

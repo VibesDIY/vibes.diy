@@ -174,6 +174,7 @@ export const generateEvento: EventoHandler<WrapCmdTSMsg<unknown>, ReqGenerate, R
     if (rPrompt.isErr()) {
       return Result.Err(`Failed to send prompt: ${formatErr(rPrompt.Err())}`);
     }
+    const promptId = rPrompt.Ok().promptId;
 
     // chat.sectionStream emits SectionEvent | ResError. Capture error
     // envelopes so we can surface upstream failures (e.g. provider quota,
@@ -221,7 +222,7 @@ export const generateEvento: EventoHandler<WrapCmdTSMsg<unknown>, ReqGenerate, R
     // instead of being written verbatim to disk.
     const rResolved = await resolveSectionStream({
       sectionStream: sectionOnly,
-      streamId: rPrompt.Ok().promptId,
+      streamId: promptId,
       onSnapshot: (snap) => {
         if (args.verbose) {
           process.stderr.write(`[${snap.source}] ${snap.path} (${snap.content.length} chars, ${snap.appliedSections} sections)\n`);
@@ -311,6 +312,7 @@ export const generateEvento: EventoHandler<WrapCmdTSMsg<unknown>, ReqGenerate, R
       mode: "production",
       appSlug: pushAppSlug,
       ownerHandle: pushUserSlug,
+      runId: promptId,
       apiUrl: args.apiUrl,
       api,
       ctx,

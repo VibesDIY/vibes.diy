@@ -8,6 +8,7 @@ export const ReqEnsureAppSlug = type({
   auth: dashAuthType,
   mode: FSMode,
   "env?": vibeUserEnv,
+  "runId?": "string",
   fileSystem: [vibeFile, "[]"],
 }).and(NeedOneAppSlugUserSlug);
 

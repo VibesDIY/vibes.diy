@@ -59,6 +59,33 @@ function makeMockApi() {
 }
 
 describe("pushFromDir — fast path defaults", () => {
+  it("forwards runId to ensureAppSlug when provided", async () => {
+    const dir = await makeTempDir();
+    const api = makeMockApi();
+    const ctx = makeMockCtx();
+
+    const r = await pushFromDir({
+      dir,
+      mode: "production",
+      appSlug: "test-app",
+      ownerHandle: "testuser",
+      runId: "prompt-123",
+      apiUrl: "https://vibes.diy/api",
+      api,
+      ctx,
+    });
+
+    expect(r.isErr()).toBe(false);
+    expect(api.ensureAppSlug).toHaveBeenCalledWith(
+      expect.objectContaining({
+        mode: "production",
+        appSlug: "test-app",
+        ownerHandle: "testuser",
+        runId: "prompt-123",
+      })
+    );
+  });
+
   it("enables public access and auto-accept-editor by default", async () => {
     const dir = await makeTempDir();
     const api = makeMockApi();
