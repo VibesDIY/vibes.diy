@@ -110,7 +110,11 @@ describe("Apps releaseSeq allocation concurrency (issue #2612)", { timeout: 2000
   it("a DIFFERENT fsId for the same app still appends a new release (provenance preserved)", async () => {
     const { db, flavour, t } = await ctx();
     const [appSlug, userId, ownerHandle] = ["diverge-fsid", "user_dv", "gnome"];
-    const s1 = await allocateAndInsertApp({ db, flavour, row: { ...row(appSlug, userId, ownerHandle, 0), fsId: "fs-A", mode: "dev" } });
+    const s1 = await allocateAndInsertApp({
+      db,
+      flavour,
+      row: { ...row(appSlug, userId, ownerHandle, 0), fsId: "fs-A", mode: "dev" },
+    });
     const s2 = await allocateAndInsertApp({
       db,
       flavour,
@@ -118,7 +122,10 @@ describe("Apps releaseSeq allocation concurrency (issue #2612)", { timeout: 2000
     });
     expect(s1).toBe(1);
     expect(s2).toBe(2);
-    const rows = await db.select({ releaseSeq: t.releaseSeq }).from(t).where(and(eq(t.appSlug, appSlug), eq(t.userId, userId)));
+    const rows = await db
+      .select({ releaseSeq: t.releaseSeq })
+      .from(t)
+      .where(and(eq(t.appSlug, appSlug), eq(t.userId, userId)));
     expect(rows.length).toBe(2);
   });
 
