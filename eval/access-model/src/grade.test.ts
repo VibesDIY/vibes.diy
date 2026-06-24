@@ -1,0 +1,44 @@
+import { describe, it, expect } from "vitest";
+import { gradeRow } from "./grade.js";
+import type { AccessAnalysis } from "./invariants.js";
+
+const clean = (o: Partial<AccessAnalysis>): AccessAnalysis => ({
+  isOwnerWriteGate: false, requireRoleOwnerWrite: false, formAStrict: false, formABroad: false,
+  perUserChannel: false, authorCheckCreate: false, authorCheckUpdate: false, authorImmutable: false,
+  selfGrant: false, perVisitorClean: false, objectChannel: false, memberAuthoredShare: false,
+  requireAccessChild: false, joinPath: false, perObjectRecipe: false, ownerPublished: false,
+  publicRead: false, authorOwned: false, ...o,
+});
+
+describe("gradeRow", () => {
+  it("FAIL on Form-A strict regardless of render", () => {
+    const g = gradeRow({ expect: "per-visitor", analysis: clean({ formAStrict: true }),
+      files: { twoFile: true, renderable: true, reasons: [] }, judge: null });
+    expect(g.grade).toBe("FAIL");
+  });
+  it("FAIL on isOwner write-gate", () => {
+    const g = gradeRow({ expect: "per-visitor", analysis: clean({ perVisitorClean: true, isOwnerWriteGate: true }),
+      files: { twoFile: true, renderable: true, reasons: [] }, judge: null });
+    expect(g.grade).toBe("FAIL");
+  });
+  it("SOFT when model correct but App not renderable (orthogonal completeness failure)", () => {
+    const g = gradeRow({ expect: "per-visitor", analysis: clean({ perVisitorClean: true }),
+      files: { twoFile: true, renderable: false, reasons: ["duplicate import"] }, judge: { secondVisitorCanAct: true, reason: "" } });
+    expect(g.grade).toBe("SOFT");
+  });
+  it("PASS when model correct, renderable, and the second visitor can act", () => {
+    const g = gradeRow({ expect: "per-visitor", analysis: clean({ perVisitorClean: true }),
+      files: { twoFile: true, renderable: true, reasons: [] }, judge: { secondVisitorCanAct: true, reason: "" } });
+    expect(g.grade).toBe("PASS");
+  });
+  it("FAIL when the judge says a second visitor is locked out of a multiplayer app", () => {
+    const g = gradeRow({ expect: "per-object", analysis: clean({ perObjectRecipe: true }),
+      files: { twoFile: true, renderable: true, reasons: [] }, judge: { secondVisitorCanAct: false, reason: "owner-only" } });
+    expect(g.grade).toBe("FAIL");
+  });
+  it("per-object without the full recipe is FAIL on the model axis", () => {
+    const g = gradeRow({ expect: "per-object", analysis: clean({ objectChannel: true }),
+      files: { twoFile: true, renderable: true, reasons: [] }, judge: { secondVisitorCanAct: true, reason: "" } });
+    expect(g.grade).toBe("FAIL");
+  });
+});
