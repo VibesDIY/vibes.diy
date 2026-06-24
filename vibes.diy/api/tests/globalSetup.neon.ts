@@ -52,7 +52,12 @@ export async function setup(project: TestProject) {
     const reason = forceSchemaPush ? "force-push requested via VIBES_DIY_TEST_PG_FORCE_SCHEMA_PUSH=1" : "schema/db target changed";
     console.log(`[pg-tests] ${reason}, running drizzle-kit push...`);
     $.verbose = true;
-    await $`(cd ${root} && VIBES_DIY_TEST_PG_URL=${pgUrl} VIBES_DIY_TEST_NEON_URL=${pgUrl} pnpm exec drizzle-kit push --config ./drizzle.neon.config.ts)`;
+    const drizzleProxyPreload = path.join(root, "scripts", "drizzle-neon-proxy-preload.mjs");
+    if (process.env.VIBES_DIY_TEST_PG_WS_PROXY) {
+      await $`(cd ${root} && NODE_OPTIONS=--import=${drizzleProxyPreload} VIBES_DIY_TEST_PG_URL=${pgUrl} VIBES_DIY_TEST_NEON_URL=${pgUrl} pnpm exec drizzle-kit push --config ./drizzle.neon.config.ts)`;
+    } else {
+      await $`(cd ${root} && VIBES_DIY_TEST_PG_URL=${pgUrl} VIBES_DIY_TEST_NEON_URL=${pgUrl} pnpm exec drizzle-kit push --config ./drizzle.neon.config.ts)`;
+    }
     await fs.writeFile(hashFile, currentCacheKey);
   } else {
     console.log("[pg-tests] schema + db target unchanged, skipping drizzle-kit push");
