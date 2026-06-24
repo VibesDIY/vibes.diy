@@ -15,6 +15,35 @@ const link: React.CSSProperties = {
   cursor: "pointer",
 };
 
+// Use cases — every one is the same move: start from someone else's vibe, tweak it
+// to fit you, share it, and the people you share with remix their own version.
+const useCases: { title: string; body: string }[] = [
+  {
+    title: "Fan fiction that talks back",
+    body: "Start from a character bot, make it answer in your voice, and run a shared story with your friends.",
+  },
+  {
+    title: "Neighborhood tools",
+    body: "Copy a resource tracker, fit it to your city, and share a live tool at the next town meeting — no grant, no dev team.",
+  },
+  {
+    title: "Hobby logs",
+    body: "A restoration tracker you tweak for your garage, then share with the whole car club.",
+  },
+  {
+    title: "Class games",
+    body: "Remix a flashcard app into collaborative trivia your students change live as they play.",
+  },
+  {
+    title: "Shared routines",
+    body: "A workout tracker each client makes their own — and a whole gym starts swapping routines.",
+  },
+  {
+    title: "Fans as co-creators",
+    body: "Tweak a chord-progression vibe to your style; fans remix their own and feed your next track.",
+  },
+];
+
 export default function About() {
   const [isSidebarVisible, setIsSidebarVisible] = useState(false);
   const closeSidebar = useCallback(() => setIsSidebarVisible(false), []);
@@ -204,6 +233,32 @@ export default function About() {
             <p style={{ marginTop: 12, fontSize: 14, opacity: 0.6, color: "rgb(34, 31, 32)" }}>
               You and your friends aren&rsquo;t users anymore. You&rsquo;re makers.
             </p>
+          </div>
+
+          {/* What people make — use cases */}
+          <div style={{ marginBottom: 60 }}>
+            <h2 style={{ fontWeight: "bold", fontSize: 40, lineHeight: "42px", color: "rgb(34, 31, 32)", marginBottom: 20 }}>
+              What people make
+            </h2>
+            <div style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
+              {useCases.map((u) => (
+                <div
+                  key={u.title}
+                  style={{
+                    flex: "1 1 240px",
+                    border: "1px solid black",
+                    backgroundColor: "rgba(255, 255, 240, 0.85)",
+                    padding: "18px 20px",
+                    boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
+                  }}
+                >
+                  <p style={{ fontWeight: "bold", fontSize: 18, lineHeight: "22px", marginBottom: 6, color: "rgb(34, 31, 32)" }}>
+                    {u.title}
+                  </p>
+                  <p style={{ fontSize: 14, lineHeight: "20px", opacity: 0.75, color: "rgb(34, 31, 32)" }}>{u.body}</p>
+                </div>
+              ))}
+            </div>
           </div>
 
           {/* Open source — orange header, cream body, offset left */}
