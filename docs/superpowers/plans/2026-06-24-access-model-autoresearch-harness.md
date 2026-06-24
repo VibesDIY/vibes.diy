@@ -9,6 +9,7 @@
 **Tech Stack:** TypeScript run via `tsx`, `vitest` for unit tests, the `call-ai` workspace package for the judge transport (`LLM_BACKEND_URL`/`LLM_BACKEND_API_KEY`), the published `vibes-diy` CLI for generation. Reuses `@vibes.diy/eval-codegen-matrix` internals.
 
 **Reference material (read before starting):**
+
 - Issue spec: VibesDIY/vibes.diy#2602 (the loop, scope, metric, 5 verify gates, concurrency, the 8-prompt matrix, the baseline).
 - Eval playbook + pass criteria: #2588. Hand-graded corpus + grades: `vibes/eval/access-model-2588/README.md` and `docs/superpowers/specs/eval-2588-access-model-results-2026-06-24.json` (this JSON is the **output schema** `report.ts` must emit).
 - Access-model grammar the grader encodes: `docs/superpowers/specs/2026-06-24-vibe-access-model-design.md` §3 (Form-A trap + A/B/C/D shape taxonomy), §4 (channels=objects / roles=types; see vs do), §5 (owner dissolved, reserved `owner` role, no `isOwner`), §6–7 (per-object reduce/projection mechanics).
@@ -53,6 +54,7 @@ eval/access-model/
 ## Task 0: Scaffold the package
 
 **Files:**
+
 - Create: `eval/access-model/package.json`
 - Create: `eval/access-model/tsconfig.json`
 - Create: `eval/access-model/vitest.config.ts`
@@ -122,6 +124,7 @@ git commit -m "eval(access-model): scaffold package"
 ## Task 1: Prompt + matrix config
 
 **Files:**
+
 - Create: `eval/access-model/config/prompts.eval.jsonl`
 - Create: `eval/access-model/config/prompts.holdout.jsonl`
 - Create: `eval/access-model/config/matrix.json`
@@ -143,7 +146,7 @@ The `expect` field tags each prompt with its dimension so the grader knows which
 {"id":"team","prompt":"A team workspace with channels and roles","dimension":"the 3+ tier edge","expect":"multi-tier"}
 ```
 
-- [ ] **Step 2: Write `config/prompts.holdout.jsonl`** (8 *different* prompts spanning the same 8 dimensions — never shown to the modify step)
+- [ ] **Step 2: Write `config/prompts.holdout.jsonl`** (8 _different_ prompts spanning the same 8 dimensions — never shown to the modify step)
 
 ```jsonl
 {"id":"h-notes","prompt":"A quick notes app","dimension":"Form-A test","expect":"per-visitor"}
@@ -210,9 +213,7 @@ Expected: FAIL — `./config.js` not found.
 
 ```ts
 export type Dimension = "per-visitor" | "per-object" | "owner-published" | "author-owned" | "multi-tier";
-const DIMENSIONS: ReadonlySet<string> = new Set([
-  "per-visitor", "per-object", "owner-published", "author-owned", "multi-tier",
-]);
+const DIMENSIONS: ReadonlySet<string> = new Set(["per-visitor", "per-object", "owner-published", "author-owned", "multi-tier"]);
 
 export interface AccessPrompt {
   readonly id: string;
@@ -255,10 +256,14 @@ export function parseAccessMatrix(text: string): AccessMatrix {
   }
   return {
     cliCommand: typeof o.cliCommand === "string" && o.cliCommand ? o.cliCommand : "npx vibes-diy@latest",
-    apiUrl: o.apiUrl, runtimeHostBase: o.runtimeHostBase, handle: o.handle,
+    apiUrl: o.apiUrl,
+    runtimeHostBase: o.runtimeHostBase,
+    handle: o.handle,
     model: typeof o.model === "string" ? o.model : "",
     judgeModel: o.judgeModel,
-    reps: num(o.reps, 8), concurrency: num(o.concurrency, 32), scoreConcurrency: num(o.scoreConcurrency, 8),
+    reps: num(o.reps, 8),
+    concurrency: num(o.concurrency, 32),
+    scoreConcurrency: num(o.scoreConcurrency, 8),
     screenshotTimeoutMs: num(o.screenshotTimeoutMs, 120000),
   };
 }
@@ -282,9 +287,10 @@ git commit -m "eval(access-model): matrix + prompt config (eval + holdout)"
 
 > **Critical correction (investigated 2026-06-24).** The default `vibes-diy generate` uses is **NOT** `DEFAULT_CODING_MODEL` from `prompts/pkg/prompts.ts` (that constant, `anthropic/claude-opus-4.5`, is a different code path and nothing in-repo sets its env var). The deployed **API** resolves an unspecified model server-side in `getModelDefaults` (`vibes.diy/api/svc/intern/get-model-defaults.ts`) with a 3-tier fallback **per capability**: (1) app-level setting → (2) the **handle's** user-level `modelDefaults` → (3) the catalog `preSelected` model in `vibes.diy/api/svc/models.json`. For codegen (`app` mode) that floor is `preSelected:["app"]` = **`anthropic/claude-opus-4.6-fast`** (`chat` mode floor = `anthropic/claude-sonnet-4.6`). The catalog is fetched **per environment** (`loadModels` → `pkgRepos.workspace/@vibes.diy/api-svc/models.json`, `list-models.ts:35`), and the per-handle/per-app overrides live in **each env's DB** — so the resolved id can differ across dev/prod/cli/preview and depends on the `eval` handle's settings in the target env.
 
-**Pin (2026-06-24, validated via live cli dry-run):** the eval explicitly pins **`anthropic/claude-opus-4.8`** — `matrix.json` sets `model: "anthropic/claude-opus-4.8"` and the driver passes it as `--model`. A dry-run with `--model anthropic/claude-opus-4.8` against the cli env dispatched `"model": "anthropic/claude-opus-4.8"`, confirming the env accepts and routes it. (Note: the env's *unspecified* `generate` default is `anthropic/claude-opus-4.7` per #2606; the eval deliberately overrides to 4.8.) `resolveDefaultModel` returns the explicit pin verbatim, AND a kickoff sanity-check runs `vibes-diy generate --dry-run --json --model <pin>` against the target env and **fails loudly if the live dispatched model ≠ the pin** (catches an env that silently rejects/substitutes the id). The issue requires recording the resolved id per iteration; record it in `run.json` and pass it as `--model` so every iteration is byte-identical on the model axis. A later default-model bump must explicitly invalidate `baseline.json` (Task 13), never silently move it.
+**Pin (2026-06-24, validated via live cli dry-run):** the eval explicitly pins **`anthropic/claude-opus-4.8`** — `matrix.json` sets `model: "anthropic/claude-opus-4.8"` and the driver passes it as `--model`. A dry-run with `--model anthropic/claude-opus-4.8` against the cli env dispatched `"model": "anthropic/claude-opus-4.8"`, confirming the env accepts and routes it. (Note: the env's _unspecified_ `generate` default is `anthropic/claude-opus-4.7` per #2606; the eval deliberately overrides to 4.8.) `resolveDefaultModel` returns the explicit pin verbatim, AND a kickoff sanity-check runs `vibes-diy generate --dry-run --json --model <pin>` against the target env and **fails loudly if the live dispatched model ≠ the pin** (catches an env that silently rejects/substitutes the id). The issue requires recording the resolved id per iteration; record it in `run.json` and pass it as `--model` so every iteration is byte-identical on the model axis. A later default-model bump must explicitly invalidate `baseline.json` (Task 13), never silently move it.
 
 **Files:**
+
 - Create: `eval/access-model/src/model.ts`
 - Test: `eval/access-model/src/model.test.ts`
 
@@ -311,11 +317,15 @@ describe("pickPreSelected", () => {
 
 describe("resolveDefaultModel", () => {
   it("uses an explicit matrix.model pin verbatim when set (no fetch)", async () => {
-    const r = await resolveDefaultModel({ apiUrl: "https://x/api", handle: "eval", model: "anthropic/claude-opus-4.7" } as any, { fetchDefault: async () => "SHOULD_NOT_BE_CALLED" });
+    const r = await resolveDefaultModel({ apiUrl: "https://x/api", handle: "eval", model: "anthropic/claude-opus-4.7" } as any, {
+      fetchDefault: async () => "SHOULD_NOT_BE_CALLED",
+    });
     expect(r).toBe("anthropic/claude-opus-4.7");
   });
   it("falls back to the env's resolved default for the handle when matrix.model is empty", async () => {
-    const r = await resolveDefaultModel({ apiUrl: "https://x/api", handle: "eval", model: "" } as any, { fetchDefault: async () => "anthropic/claude-opus-4.6-fast" });
+    const r = await resolveDefaultModel({ apiUrl: "https://x/api", handle: "eval", model: "" } as any, {
+      fetchDefault: async () => "anthropic/claude-opus-4.6-fast",
+    });
     expect(r).toBe("anthropic/claude-opus-4.6-fast");
   });
 });
@@ -331,7 +341,10 @@ Run: `cd eval/access-model && pnpm exec vitest --run src/model.test.ts`
 import type { AccessMatrix } from "./config.js";
 
 export type Capability = "app" | "chat" | "img" | "img-edit";
-export interface CatalogModel { readonly id: string; readonly preSelected?: readonly string[] }
+export interface CatalogModel {
+  readonly id: string;
+  readonly preSelected?: readonly string[];
+}
 
 /** The catalog floor for a capability — what getModelDefaults tier-3 resolves to. */
 export function pickPreSelected(models: readonly CatalogModel[], cap: Capability): string {
@@ -377,6 +390,7 @@ git commit -m "eval(access-model): resolve+pin the target env's default codegen 
 This is the heart: greppable, **static-first** invariants over `access.js` (and a couple over `App.jsx`). Each invariant returns a boolean; `grade.ts` (Task 5) combines them per dimension. Encodes the design-doc grammar: Form-A strict/broad, `isOwner` write-gate, the per-object recipe, owner-published, author-owned. Detection is regex over source text (the access fns are sync and small; see results JSON `method`).
 
 **Files:**
+
 - Create: `eval/access-model/src/invariants.ts`
 - Test: `eval/access-model/src/invariants.test.ts`
 
@@ -441,7 +455,10 @@ describe("analyzeAccess", () => {
     expect(a.perObjectRecipe).toBe(true);
   });
   it("flags an isOwner write-gate anywhere in access.js", () => {
-    const a = analyzeAccess(`export default function access(doc, oldDoc, user){ if(!user.isOwner) throw {forbidden:true}; return {channels:["x"]}; }`, "per-visitor");
+    const a = analyzeAccess(
+      `export default function access(doc, oldDoc, user){ if(!user.isOwner) throw {forbidden:true}; return {channels:["x"]}; }`,
+      "per-visitor"
+    );
     expect(a.isOwnerWriteGate).toBe(true);
   });
 });
@@ -458,28 +475,28 @@ import type { Dimension } from "./config.js";
 
 export interface AccessAnalysis {
   // hard signals
-  readonly isOwnerWriteGate: boolean;   // any user.isOwner gating a write -> design forbids (target 0)
+  readonly isOwnerWriteGate: boolean; // any user.isOwner gating a write -> design forbids (target 0)
   readonly requireRoleOwnerWrite: boolean; // a core write gated on requireRole("owner")
   // Form-A
-  readonly formAStrict: boolean;        // requireRole("owner") core write where the dimension should be multiplayer
-  readonly formABroad: boolean;         // owner-only membership with no join/request path (per-object dims)
+  readonly formAStrict: boolean; // requireRole("owner") core write where the dimension should be multiplayer
+  readonly formABroad: boolean; // owner-only membership with no join/request path (per-object dims)
   // per-visitor
-  readonly perUserChannel: boolean;     // channel keyed on user handle
+  readonly perUserChannel: boolean; // channel keyed on user handle
   readonly authorCheckCreate: boolean;
-  readonly authorCheckUpdate: boolean;  // oldDoc author compared
-  readonly authorImmutable: boolean;    // oldDoc author cannot change
-  readonly selfGrant: boolean;          // grant.users[...] self-grant present
+  readonly authorCheckUpdate: boolean; // oldDoc author compared
+  readonly authorImmutable: boolean; // oldDoc author cannot change
+  readonly selfGrant: boolean; // grant.users[...] self-grant present
   readonly perVisitorClean: boolean;
   // per-object recipe
-  readonly objectChannel: boolean;      // channel like `name:${...}` keyed on an object id
-  readonly memberAuthoredShare: boolean;// a `share`/invite branch that grants another user in
+  readonly objectChannel: boolean; // channel like `name:${...}` keyed on an object id
+  readonly memberAuthoredShare: boolean; // a `share`/invite branch that grants another user in
   readonly requireAccessChild: boolean; // child docs gated by ctx.requireAccess(objectChannel)
-  readonly joinPath: boolean;           // a request/join branch (membership reachable by non-owner)
+  readonly joinPath: boolean; // a request/join branch (membership reachable by non-owner)
   readonly perObjectRecipe: boolean;
   // owner-published / author-owned
-  readonly ownerPublished: boolean;     // requireRole("owner") write + public read
-  readonly publicRead: boolean;         // grant.public read
-  readonly authorOwned: boolean;        // any signed-in author writes own doc, public read
+  readonly ownerPublished: boolean; // requireRole("owner") write + public read
+  readonly publicRead: boolean; // grant.public read
+  readonly authorOwned: boolean; // any signed-in author writes own doc, public read
 }
 
 const RE = {
@@ -520,17 +537,36 @@ export function analyzeAccess(src: string, expect: Dimension): AccessAnalysis {
   const formABroad = expect === "per-object" && objectChannel && !joinPath;
 
   const perVisitorClean =
-    expect === "per-visitor" && perUserChannel && authorCheckCreate && authorImmutable && selfGrant && !requireRoleOwnerWrite && !isOwnerWriteGate;
+    expect === "per-visitor" &&
+    perUserChannel &&
+    authorCheckCreate &&
+    authorImmutable &&
+    selfGrant &&
+    !requireRoleOwnerWrite &&
+    !isOwnerWriteGate;
   const perObjectRecipe =
     expect === "per-object" && objectChannel && selfGrant && memberAuthoredShare && requireAccessChild && authorImmutable;
-  const authorOwned =
-    (expect === "author-owned") && authorCheckCreate && publicRead && !requireRoleOwnerWrite && !isOwnerWriteGate;
+  const authorOwned = expect === "author-owned" && authorCheckCreate && publicRead && !requireRoleOwnerWrite && !isOwnerWriteGate;
 
   return {
-    isOwnerWriteGate, requireRoleOwnerWrite, formAStrict, formABroad,
-    perUserChannel, authorCheckCreate, authorCheckUpdate, authorImmutable, selfGrant, perVisitorClean,
-    objectChannel, memberAuthoredShare, requireAccessChild, joinPath, perObjectRecipe,
-    ownerPublished, publicRead, authorOwned,
+    isOwnerWriteGate,
+    requireRoleOwnerWrite,
+    formAStrict,
+    formABroad,
+    perUserChannel,
+    authorCheckCreate,
+    authorCheckUpdate,
+    authorImmutable,
+    selfGrant,
+    perVisitorClean,
+    objectChannel,
+    memberAuthoredShare,
+    requireAccessChild,
+    joinPath,
+    perObjectRecipe,
+    ownerPublished,
+    publicRead,
+    authorOwned,
   };
 }
 ```
@@ -553,6 +589,7 @@ git commit -m "eval(access-model): static access-model invariant grader"
 Encodes verify gates 2 (two-file emission) and 3 (renderable) at the per-cell level. Catches the `9cf43ea`-class regression (access-fn code under the `App.jsx` filename) and the row-1 duplicate-import non-render.
 
 **Files:**
+
 - Create: `eval/access-model/src/renderable.ts`
 - Test: `eval/access-model/src/renderable.test.ts`
 
@@ -567,7 +604,10 @@ describe("checkFiles", () => {
     expect(checkFiles({ "App.jsx": "export default function App(){return null}" }).twoFile).toBe(false);
   });
   it("twoFile=true when both present and non-trivial", () => {
-    const r = checkFiles({ "App.jsx": "export default function App(){return <div/>}", "access.js": "export default function access(d,o,u){return {channels:['x']}}" });
+    const r = checkFiles({
+      "App.jsx": "export default function App(){return <div/>}",
+      "access.js": "export default function access(d,o,u){return {channels:['x']}}",
+    });
     expect(r.twoFile).toBe(true);
   });
   it("renderable=false on duplicate import (ESM redeclaration)", () => {
@@ -587,8 +627,8 @@ describe("checkFiles", () => {
 
 ```ts
 export interface FileCheck {
-  readonly twoFile: boolean;     // both access.js and App.jsx present and non-trivial
-  readonly renderable: boolean;  // App.jsx parses-ish, no dup import, not an access-fn clobber
+  readonly twoFile: boolean; // both access.js and App.jsx present and non-trivial
+  readonly renderable: boolean; // App.jsx parses-ish, no dup import, not an access-fn clobber
   readonly reasons: string[];
 }
 
@@ -598,7 +638,10 @@ function dupImport(src: string): boolean {
   const names = new Map<string, number>();
   for (const m of src.matchAll(/import\s+\{([^}]*)\}\s+from/g)) {
     for (const raw of m[1].split(",")) {
-      const name = raw.trim().split(/\s+as\s+/)[0].trim();
+      const name = raw
+        .trim()
+        .split(/\s+as\s+/)[0]
+        .trim();
       if (!name) continue;
       names.set(name, (names.get(name) ?? 0) + 1);
     }
@@ -639,6 +682,7 @@ git commit -m "eval(access-model): two-file + renderability checks"
 Turns the static analysis + the optional judge verdict + the file checks into a per-row grade ∈ {PASS, SOFT, FAIL}, mirroring the two grading axes from the results JSON (model correctness AND App renderability).
 
 **Files:**
+
 - Create: `eval/access-model/src/grade.ts`
 - Test: `eval/access-model/src/grade.test.ts`
 
@@ -650,42 +694,80 @@ import { gradeRow } from "./grade.js";
 import type { AccessAnalysis } from "./invariants.js";
 
 const clean = (o: Partial<AccessAnalysis>): AccessAnalysis => ({
-  isOwnerWriteGate: false, requireRoleOwnerWrite: false, formAStrict: false, formABroad: false,
-  perUserChannel: false, authorCheckCreate: false, authorCheckUpdate: false, authorImmutable: false,
-  selfGrant: false, perVisitorClean: false, objectChannel: false, memberAuthoredShare: false,
-  requireAccessChild: false, joinPath: false, perObjectRecipe: false, ownerPublished: false,
-  publicRead: false, authorOwned: false, ...o,
+  isOwnerWriteGate: false,
+  requireRoleOwnerWrite: false,
+  formAStrict: false,
+  formABroad: false,
+  perUserChannel: false,
+  authorCheckCreate: false,
+  authorCheckUpdate: false,
+  authorImmutable: false,
+  selfGrant: false,
+  perVisitorClean: false,
+  objectChannel: false,
+  memberAuthoredShare: false,
+  requireAccessChild: false,
+  joinPath: false,
+  perObjectRecipe: false,
+  ownerPublished: false,
+  publicRead: false,
+  authorOwned: false,
+  ...o,
 });
 
 describe("gradeRow", () => {
   it("FAIL on Form-A strict regardless of render", () => {
-    const g = gradeRow({ expect: "per-visitor", analysis: clean({ formAStrict: true }),
-      files: { twoFile: true, renderable: true, reasons: [] }, judge: null });
+    const g = gradeRow({
+      expect: "per-visitor",
+      analysis: clean({ formAStrict: true }),
+      files: { twoFile: true, renderable: true, reasons: [] },
+      judge: null,
+    });
     expect(g.grade).toBe("FAIL");
   });
   it("FAIL on isOwner write-gate", () => {
-    const g = gradeRow({ expect: "per-visitor", analysis: clean({ perVisitorClean: true, isOwnerWriteGate: true }),
-      files: { twoFile: true, renderable: true, reasons: [] }, judge: null });
+    const g = gradeRow({
+      expect: "per-visitor",
+      analysis: clean({ perVisitorClean: true, isOwnerWriteGate: true }),
+      files: { twoFile: true, renderable: true, reasons: [] },
+      judge: null,
+    });
     expect(g.grade).toBe("FAIL");
   });
   it("SOFT when model correct but App not renderable (orthogonal completeness failure)", () => {
-    const g = gradeRow({ expect: "per-visitor", analysis: clean({ perVisitorClean: true }),
-      files: { twoFile: true, renderable: false, reasons: ["duplicate import"] }, judge: { secondVisitorCanAct: true, reason: "" } });
+    const g = gradeRow({
+      expect: "per-visitor",
+      analysis: clean({ perVisitorClean: true }),
+      files: { twoFile: true, renderable: false, reasons: ["duplicate import"] },
+      judge: { secondVisitorCanAct: true, reason: "" },
+    });
     expect(g.grade).toBe("SOFT");
   });
   it("PASS when model correct, renderable, and the second visitor can act", () => {
-    const g = gradeRow({ expect: "per-visitor", analysis: clean({ perVisitorClean: true }),
-      files: { twoFile: true, renderable: true, reasons: [] }, judge: { secondVisitorCanAct: true, reason: "" } });
+    const g = gradeRow({
+      expect: "per-visitor",
+      analysis: clean({ perVisitorClean: true }),
+      files: { twoFile: true, renderable: true, reasons: [] },
+      judge: { secondVisitorCanAct: true, reason: "" },
+    });
     expect(g.grade).toBe("PASS");
   });
   it("FAIL when the judge says a second visitor is locked out of a multiplayer app", () => {
-    const g = gradeRow({ expect: "per-object", analysis: clean({ perObjectRecipe: true }),
-      files: { twoFile: true, renderable: true, reasons: [] }, judge: { secondVisitorCanAct: false, reason: "owner-only" } });
+    const g = gradeRow({
+      expect: "per-object",
+      analysis: clean({ perObjectRecipe: true }),
+      files: { twoFile: true, renderable: true, reasons: [] },
+      judge: { secondVisitorCanAct: false, reason: "owner-only" },
+    });
     expect(g.grade).toBe("FAIL");
   });
   it("per-object without the full recipe is FAIL on the model axis", () => {
-    const g = gradeRow({ expect: "per-object", analysis: clean({ objectChannel: true }),
-      files: { twoFile: true, renderable: true, reasons: [] }, judge: { secondVisitorCanAct: true, reason: "" } });
+    const g = gradeRow({
+      expect: "per-object",
+      analysis: clean({ objectChannel: true }),
+      files: { twoFile: true, renderable: true, reasons: [] },
+      judge: { secondVisitorCanAct: true, reason: "" },
+    });
     expect(g.grade).toBe("FAIL");
   });
 });
@@ -701,7 +783,10 @@ import type { Dimension } from "./config.js";
 import type { FileCheck } from "./renderable.js";
 
 export type Grade = "PASS" | "SOFT" | "FAIL";
-export interface JudgeVerdict { readonly secondVisitorCanAct: boolean; readonly reason: string; }
+export interface JudgeVerdict {
+  readonly secondVisitorCanAct: boolean;
+  readonly reason: string;
+}
 
 export interface RowGradeInput {
   readonly expect: Dimension;
@@ -709,7 +794,11 @@ export interface RowGradeInput {
   readonly files: FileCheck;
   readonly judge: JudgeVerdict | null; // null when judge not run (static-decisive) or unavailable
 }
-export interface RowGrade { readonly grade: Grade; readonly modelOk: boolean; readonly reasons: string[]; }
+export interface RowGrade {
+  readonly grade: Grade;
+  readonly modelOk: boolean;
+  readonly reasons: string[];
+}
 
 // Is the access MODEL correct for the expected dimension? (axis a)
 function modelCorrect(expect: Dimension, a: AccessAnalysis): { ok: boolean; reason: string } {
@@ -721,12 +810,18 @@ function modelCorrect(expect: Dimension, a: AccessAnalysis): { ok: boolean; reas
     case "per-object":
       if (a.formAStrict) return { ok: false, reason: "Form-A on a collaboration app" };
       if (a.formABroad) return { ok: false, reason: "owner-only membership, no join path" };
-      return a.perObjectRecipe ? { ok: true, reason: "per-object recipe reached" } : { ok: false, reason: "incomplete per-object recipe" };
+      return a.perObjectRecipe
+        ? { ok: true, reason: "per-object recipe reached" }
+        : { ok: false, reason: "incomplete per-object recipe" };
     case "owner-published":
-      return a.ownerPublished && !a.isOwnerWriteGate ? { ok: true, reason: "owner-published" } : { ok: false, reason: "not owner-published (need requireRole('owner') write + public read)" };
+      return a.ownerPublished && !a.isOwnerWriteGate
+        ? { ok: true, reason: "owner-published" }
+        : { ok: false, reason: "not owner-published (need requireRole('owner') write + public read)" };
     case "author-owned":
       if (a.formAStrict) return { ok: false, reason: "Form-A on an author-owned app" };
-      return a.authorOwned ? { ok: true, reason: "author-owned + public read" } : { ok: false, reason: "incomplete author-owned model" };
+      return a.authorOwned
+        ? { ok: true, reason: "author-owned + public read" }
+        : { ok: false, reason: "incomplete author-owned model" };
     case "multi-tier":
       // lenient: must merely WORK; judge decides reachability. Static only rejects hard footguns.
       return { ok: true, reason: "multi-tier (judge-decided)" };
@@ -739,7 +834,11 @@ export function gradeRow(input: RowGradeInput): RowGrade {
   reasons.push(mc.reason);
 
   // Judge can veto a model that looks fine statically but locks out a second visitor.
-  const multiplayer = input.expect === "per-visitor" || input.expect === "per-object" || input.expect === "author-owned" || input.expect === "multi-tier";
+  const multiplayer =
+    input.expect === "per-visitor" ||
+    input.expect === "per-object" ||
+    input.expect === "author-owned" ||
+    input.expect === "multi-tier";
   const judgeVeto = multiplayer && input.judge !== null && !input.judge.secondVisitorCanAct;
   if (judgeVeto) reasons.push(`judge: second visitor locked out — ${input.judge!.reason}`);
 
@@ -769,6 +868,7 @@ git commit -m "eval(access-model): PASS/SOFT/FAIL grade composition"
 The maximize target: `mean(PASS=1 / SOFT=0.5 / FAIL=0)` over the matrix × reps, plus the roll-up signals the results JSON reports (Form-A strict/broad rate, isOwner count, two-file rate, renderable rate).
 
 **Files:**
+
 - Create: `eval/access-model/src/metric.ts`
 - Test: `eval/access-model/src/metric.test.ts`
 
@@ -782,7 +882,15 @@ const cells = [
   { grade: "PASS", twoFile: true, renderable: true, formAStrict: false, formABroad: false, isOwnerWriteGate: false, ok: true },
   { grade: "SOFT", twoFile: true, renderable: false, formAStrict: false, formABroad: false, isOwnerWriteGate: false, ok: true },
   { grade: "FAIL", twoFile: true, renderable: true, formAStrict: true, formABroad: false, isOwnerWriteGate: false, ok: true },
-  { grade: "GENERATE_FAILED", twoFile: false, renderable: false, formAStrict: false, formABroad: false, isOwnerWriteGate: false, ok: false },
+  {
+    grade: "GENERATE_FAILED",
+    twoFile: false,
+    renderable: false,
+    formAStrict: false,
+    formABroad: false,
+    isOwnerWriteGate: false,
+    ok: false,
+  },
 ] as const;
 
 describe("compositeMetric", () => {
@@ -869,9 +977,10 @@ git commit -m "eval(access-model): composite metric + rollup signals"
 
 ## Task 7: Second-visitor LLM judge (`judge.ts`)
 
-The single semantic call the issue allows: *"can a second signed-in visitor do the core action?"* Reuses codegen-matrix's judge transport (`call-ai`, `LLM_BACKEND_URL/API_KEY` via `resolveDevVars`) and the retry/backoff. Only invoked when static analysis is non-decisive or the dimension is multiplayer (per-visitor/per-object/author-owned/multi-tier).
+The single semantic call the issue allows: _"can a second signed-in visitor do the core action?"_ Reuses codegen-matrix's judge transport (`call-ai`, `LLM_BACKEND_URL/API_KEY` via `resolveDevVars`) and the retry/backoff. Only invoked when static analysis is non-decisive or the dimension is multiplayer (per-visitor/per-object/author-owned/multi-tier).
 
 **Files:**
+
 - Create: `eval/access-model/src/judge.ts`
 - Test: `eval/access-model/src/judge.test.ts`
 
@@ -884,14 +993,20 @@ import { judgeSecondVisitor } from "./judge.js";
 describe("judgeSecondVisitor", () => {
   it("returns the structured verdict from the model", async () => {
     const fakeCall = async () => ({ secondVisitorCanAct: true, reason: "second handle adds its own todos" });
-    const v = await judgeSecondVisitor({ prompt: "A todo list app", expect: "per-visitor",
-      files: { "App.jsx": "x", "access.js": "y" } }, { call: fakeCall, model: "m", endpoint: "e", apiKey: "k" });
+    const v = await judgeSecondVisitor(
+      { prompt: "A todo list app", expect: "per-visitor", files: { "App.jsx": "x", "access.js": "y" } },
+      { call: fakeCall, model: "m", endpoint: "e", apiKey: "k" }
+    );
     expect(v).toEqual({ secondVisitorCanAct: true, reason: "second handle adds its own todos" });
   });
   it("degrades to null on judge failure", async () => {
-    const boom = async () => { throw new Error("429"); };
-    const v = await judgeSecondVisitor({ prompt: "p", expect: "per-object", files: { "App.jsx": "x", "access.js": "y" } },
-      { call: boom, model: "m", endpoint: "e", apiKey: "k", maxAttempts: 1 });
+    const boom = async () => {
+      throw new Error("429");
+    };
+    const v = await judgeSecondVisitor(
+      { prompt: "p", expect: "per-object", files: { "App.jsx": "x", "access.js": "y" } },
+      { call: boom, model: "m", endpoint: "e", apiKey: "k", maxAttempts: 1 }
+    );
     expect(v).toBeNull();
   });
 });
@@ -906,7 +1021,13 @@ import type { Dimension } from "./config.js";
 import type { JudgeVerdict } from "./grade.js";
 
 export interface JudgeDeps {
-  readonly call: (args: { model: string; endpoint: string; apiKey: string; prompt: string; schema: object }) => Promise<JudgeVerdict>;
+  readonly call: (args: {
+    model: string;
+    endpoint: string;
+    apiKey: string;
+    prompt: string;
+    schema: object;
+  }) => Promise<JudgeVerdict>;
   readonly model: string;
   readonly endpoint: string;
   readonly apiKey: string;
@@ -935,14 +1056,22 @@ export function buildJudgePrompt(o: { prompt: string; expect: Dimension; files: 
 
 export async function judgeSecondVisitor(
   input: { prompt: string; expect: Dimension; files: Record<string, string> },
-  deps: JudgeDeps,
+  deps: JudgeDeps
 ): Promise<JudgeVerdict | null> {
   const max = deps.maxAttempts ?? 3;
   let lastErr: unknown;
   for (let attempt = 1; attempt <= max; attempt++) {
     try {
-      return await deps.call({ model: deps.model, endpoint: deps.endpoint, apiKey: deps.apiKey, prompt: buildJudgePrompt(input), schema: SCHEMA });
-    } catch (e) { lastErr = e; }
+      return await deps.call({
+        model: deps.model,
+        endpoint: deps.endpoint,
+        apiKey: deps.apiKey,
+        prompt: buildJudgePrompt(input),
+        schema: SCHEMA,
+      });
+    } catch (e) {
+      lastErr = e;
+    }
   }
   void lastErr;
   return null;
@@ -965,6 +1094,7 @@ git commit -m "eval(access-model): second-visitor judge (single semantic call)"
 Drives `vibes-diy generate` across `eval × reps` (and `holdout × reps`) on the **pinned default model**, reusing codegen-matrix's pool/retry/cell helpers. The one behavioral difference from codegen-matrix: pass `--model <resolvedDefault>` (the pinned default), record it in `run.json`, and pull both `access.js` and `App.jsx` from the generated app dir.
 
 **Files:**
+
 - Create: `eval/access-model/src/generate.ts`
 - Test: `eval/access-model/src/generate.test.ts` (pure-arg builder only; live path validated by smoke run in Task 15)
 
@@ -976,8 +1106,23 @@ import { buildAccessGenerateArgs } from "./generate.js";
 
 describe("buildAccessGenerateArgs", () => {
   it("pins the resolved default model and passes handle/apiUrl/prompt", () => {
-    expect(buildAccessGenerateArgs({ model: "anthropic/claude-opus-4.5", handle: "eval", apiUrl: "https://x/api", prompt: "A todo list app" }))
-      .toEqual(["generate", "--model", "anthropic/claude-opus-4.5", "--handle", "eval", "--api-url", "https://x/api", "A todo list app"]);
+    expect(
+      buildAccessGenerateArgs({
+        model: "anthropic/claude-opus-4.5",
+        handle: "eval",
+        apiUrl: "https://x/api",
+        prompt: "A todo list app",
+      })
+    ).toEqual([
+      "generate",
+      "--model",
+      "anthropic/claude-opus-4.5",
+      "--handle",
+      "eval",
+      "--api-url",
+      "https://x/api",
+      "A todo list app",
+    ]);
   });
 });
 ```
@@ -1021,6 +1166,7 @@ git commit -m "eval(access-model): generate driver (pinned default model, pulls 
 Reads a run's cells, runs `analyzeAccess` + `checkFiles` (static, always), invokes `judgeSecondVisitor` (only for multiplayer dims or static-ambiguous cells), composes `gradeRow`, and writes `cell.score.json` per cell.
 
 **Files:**
+
 - Create: `eval/access-model/src/score.ts`
 - Test: `eval/access-model/src/score.test.ts` (the per-cell scoring function, judge injected)
 
@@ -1034,7 +1180,8 @@ describe("scoreCell", () => {
   it("grades a clean per-visitor cell PASS using static + judge", async () => {
     const files = {
       "App.jsx": "export default function App(){ return <div>hi there friend</div> }",
-      "access.js": "export default function access(doc,oldDoc,user){ if(oldDoc && oldDoc.authorHandle!==user.userHandle) throw {forbidden:true}; if(doc.authorHandle!==user.userHandle) throw {forbidden:true}; return {channels:[`user:${user.userHandle}`], grant:{users:{[user.userHandle]:[`user:${user.userHandle}`]}}} }",
+      "access.js":
+        "export default function access(doc,oldDoc,user){ if(oldDoc && oldDoc.authorHandle!==user.userHandle) throw {forbidden:true}; if(doc.authorHandle!==user.userHandle) throw {forbidden:true}; return {channels:[`user:${user.userHandle}`], grant:{users:{[user.userHandle]:[`user:${user.userHandle}`]}}} }",
     };
     const judge = async () => ({ secondVisitorCanAct: true, reason: "ok" });
     const r = await scoreCell({ expect: "per-visitor", prompt: "A todo list app", files }, { judge });
@@ -1068,7 +1215,7 @@ export interface ScoredCell {
 
 export async function scoreCell(
   input: { expect: Dimension; prompt: string; files: Record<string, string> },
-  deps: { judge: (a: { prompt: string; expect: Dimension; files: Record<string, string> }) => Promise<JudgeVerdict | null> },
+  deps: { judge: (a: { prompt: string; expect: Dimension; files: Record<string, string> }) => Promise<JudgeVerdict | null> }
 ): Promise<ScoredCell> {
   const analysis = analyzeAccess(input.files["access.js"] ?? "", input.expect);
   const files = checkFiles(input.files);
@@ -1076,8 +1223,13 @@ export async function scoreCell(
   const judge = multiplayer ? await deps.judge({ prompt: input.prompt, expect: input.expect, files: input.files }) : null;
   const g = gradeRow({ expect: input.expect, analysis, files, judge });
   return {
-    grade: g.grade, modelOk: g.modelOk, twoFile: files.twoFile, renderable: files.renderable,
-    formAStrict: analysis.formAStrict, formABroad: analysis.formABroad, isOwnerWriteGate: analysis.isOwnerWriteGate,
+    grade: g.grade,
+    modelOk: g.modelOk,
+    twoFile: files.twoFile,
+    renderable: files.renderable,
+    formAStrict: analysis.formAStrict,
+    formABroad: analysis.formABroad,
+    isOwnerWriteGate: analysis.isOwnerWriteGate,
     reasons: g.reasons,
   };
 }
@@ -1097,6 +1249,7 @@ git commit -m "eval(access-model): score stage (static + judge per cell)"
 Aggregates a scored run into (a) `results.json` matching the `eval-2588-access-model-results-*.json` schema (so it's diffable against the hand baseline), (b) `access-summary.md` (a human table), and (c) prints `METRIC=<x>` to stdout — the scalar the autoresearch loop reads.
 
 **Files:**
+
 - Create: `eval/access-model/src/report.ts`
 - Test: `eval/access-model/src/report.test.ts`
 
@@ -1107,8 +1260,30 @@ import { describe, it, expect } from "vitest";
 import { buildResults, renderMetricLine } from "./report.js";
 
 const scored = [
-  { id: "todo", expect: "per-visitor", grade: "PASS", twoFile: true, renderable: true, formAStrict: false, formABroad: false, isOwnerWriteGate: false, ok: true, reps: [{}] },
-  { id: "habit", expect: "per-visitor", grade: "FAIL", twoFile: true, renderable: true, formAStrict: true, formABroad: false, isOwnerWriteGate: false, ok: true, reps: [{}] },
+  {
+    id: "todo",
+    expect: "per-visitor",
+    grade: "PASS",
+    twoFile: true,
+    renderable: true,
+    formAStrict: false,
+    formABroad: false,
+    isOwnerWriteGate: false,
+    ok: true,
+    reps: [{}],
+  },
+  {
+    id: "habit",
+    expect: "per-visitor",
+    grade: "FAIL",
+    twoFile: true,
+    renderable: true,
+    formAStrict: true,
+    formABroad: false,
+    isOwnerWriteGate: false,
+    ok: true,
+    reps: [{}],
+  },
 ] as any;
 
 describe("buildResults", () => {
@@ -1142,9 +1317,10 @@ git commit -m "eval(access-model): report (results.json + METRIC scalar)"
 
 ## Task 11: Design-doc guardrail (`guardrail.ts`)
 
-Verify gate 4. Operates on the **prompt diff** (the iteration's change to `prompts/pkg/`): rejects edits that add enumerated "never/don't…" prohibitions to the access section, or that *name* the owner-only anti-pattern (the `489ff77` lesson — naming it taught the model to reach for it). Grep-first, with a small LLM judge for the semantic "does this enumerate a prohibition" call.
+Verify gate 4. Operates on the **prompt diff** (the iteration's change to `prompts/pkg/`): rejects edits that add enumerated "never/don't…" prohibitions to the access section, or that _name_ the owner-only anti-pattern (the `489ff77` lesson — naming it taught the model to reach for it). Grep-first, with a small LLM judge for the semantic "does this enumerate a prohibition" call.
 
 **Files:**
+
 - Create: `eval/access-model/src/guardrail.ts`
 - Test: `eval/access-model/src/guardrail.test.ts`
 
@@ -1175,7 +1351,10 @@ describe("guardrailGrep", () => {
 - [ ] **Step 3: Implement `src/guardrail.ts`**
 
 ```ts
-export interface GuardrailResult { readonly ok: boolean; readonly hits: string[]; }
+export interface GuardrailResult {
+  readonly ok: boolean;
+  readonly hits: string[];
+}
 
 const ADDED = /^\+(?!\+)/; // added line in a unified diff, not the +++ header
 const PROHIBITION = /\b(never|don'?t|do not|avoid|must not|should not)\b/i;
@@ -1209,6 +1388,7 @@ git commit -m "eval(access-model): design-doc guardrail on prompt diff"
 Pure function combining the run's rollup, the baseline rollup, the holdout rollup, the `pnpm check` result, and the guardrail result into `{ pass, failed[] }`. Any failure ⇒ the autoresearch loop reverts the iteration regardless of the metric.
 
 **Files:**
+
 - Create: `eval/access-model/src/gates.ts`
 - Test: `eval/access-model/src/gates.test.ts`
 
@@ -1223,30 +1403,61 @@ const base = { twoFileRate: 0.8, renderableRate: 0.9, metric: 0.5 };
 describe("evaluateGates", () => {
   it("passes when check+guardrail green and rates >= baseline and holdout not regressed", () => {
     const r = evaluateGates({
-      checkGreen: true, guardrail: { ok: true, hits: [] },
+      checkGreen: true,
+      guardrail: { ok: true, hits: [] },
       current: { twoFileRate: 0.85, renderableRate: 0.92, metric: 0.6 },
-      baseline: base, holdoutCurrent: { metric: 0.55 }, holdoutBaseline: { metric: 0.5 },
+      baseline: base,
+      holdoutCurrent: { metric: 0.55 },
+      holdoutBaseline: { metric: 0.5 },
     });
     expect(r.pass).toBe(true);
     expect(r.failed).toEqual([]);
   });
   it("fails on a two-file emission regression (the 9cf43ea-class catch)", () => {
-    const r = evaluateGates({ checkGreen: true, guardrail: { ok: true, hits: [] },
-      current: { twoFileRate: 0.5, renderableRate: 0.92, metric: 0.7 }, baseline: base,
-      holdoutCurrent: { metric: 0.55 }, holdoutBaseline: { metric: 0.5 } });
+    const r = evaluateGates({
+      checkGreen: true,
+      guardrail: { ok: true, hits: [] },
+      current: { twoFileRate: 0.5, renderableRate: 0.92, metric: 0.7 },
+      baseline: base,
+      holdoutCurrent: { metric: 0.55 },
+      holdoutBaseline: { metric: 0.5 },
+    });
     expect(r.pass).toBe(false);
     expect(r.failed).toContain("two-file-emission");
   });
   it("fails on holdout regression beyond the noise band", () => {
-    const r = evaluateGates({ checkGreen: true, guardrail: { ok: true, hits: [] },
-      current: { twoFileRate: 0.85, renderableRate: 0.92, metric: 0.7 }, baseline: base,
-      holdoutCurrent: { metric: 0.3 }, holdoutBaseline: { metric: 0.5 } });
+    const r = evaluateGates({
+      checkGreen: true,
+      guardrail: { ok: true, hits: [] },
+      current: { twoFileRate: 0.85, renderableRate: 0.92, metric: 0.7 },
+      baseline: base,
+      holdoutCurrent: { metric: 0.3 },
+      holdoutBaseline: { metric: 0.5 },
+    });
     expect(r.pass).toBe(false);
     expect(r.failed).toContain("holdout-regression");
   });
   it("fails when pnpm check is red or guardrail trips", () => {
-    expect(evaluateGates({ checkGreen: false, guardrail: { ok: true, hits: [] }, current: base, baseline: base, holdoutCurrent: { metric: 0.5 }, holdoutBaseline: { metric: 0.5 } }).failed).toContain("check");
-    expect(evaluateGates({ checkGreen: true, guardrail: { ok: false, hits: ["x"] }, current: base, baseline: base, holdoutCurrent: { metric: 0.5 }, holdoutBaseline: { metric: 0.5 } }).failed).toContain("guardrail");
+    expect(
+      evaluateGates({
+        checkGreen: false,
+        guardrail: { ok: true, hits: [] },
+        current: base,
+        baseline: base,
+        holdoutCurrent: { metric: 0.5 },
+        holdoutBaseline: { metric: 0.5 },
+      }).failed
+    ).toContain("check");
+    expect(
+      evaluateGates({
+        checkGreen: true,
+        guardrail: { ok: false, hits: ["x"] },
+        current: base,
+        baseline: base,
+        holdoutCurrent: { metric: 0.5 },
+        holdoutBaseline: { metric: 0.5 },
+      }).failed
+    ).toContain("guardrail");
   });
 });
 ```
@@ -1256,27 +1467,36 @@ describe("evaluateGates", () => {
 - [ ] **Step 3: Implement `src/gates.ts`**
 
 ```ts
-export interface RateSummary { readonly twoFileRate: number; readonly renderableRate: number; readonly metric: number; }
-export interface HoldoutSummary { readonly metric: number; }
+export interface RateSummary {
+  readonly twoFileRate: number;
+  readonly renderableRate: number;
+  readonly metric: number;
+}
+export interface HoldoutSummary {
+  readonly metric: number;
+}
 
 export interface GatesInput {
-  readonly checkGreen: boolean;                 // gate 1: pnpm check + promptAnchor
+  readonly checkGreen: boolean; // gate 1: pnpm check + promptAnchor
   readonly guardrail: { ok: boolean; hits: string[] }; // gate 4
   readonly current: RateSummary;
   readonly baseline: RateSummary;
-  readonly holdoutCurrent: HoldoutSummary;      // gate 5
+  readonly holdoutCurrent: HoldoutSummary; // gate 5
   readonly holdoutBaseline: HoldoutSummary;
-  readonly noiseBand?: number;                  // tolerance for "regress"; default 0.05
+  readonly noiseBand?: number; // tolerance for "regress"; default 0.05
 }
-export interface GatesResult { readonly pass: boolean; readonly failed: string[]; }
+export interface GatesResult {
+  readonly pass: boolean;
+  readonly failed: string[];
+}
 
 export function evaluateGates(i: GatesInput): GatesResult {
   const band = i.noiseBand ?? 0.05;
   const failed: string[] = [];
-  if (!i.checkGreen) failed.push("check");                                            // gate 1
+  if (!i.checkGreen) failed.push("check"); // gate 1
   if (i.current.twoFileRate < i.baseline.twoFileRate - band) failed.push("two-file-emission"); // gate 2
-  if (i.current.renderableRate < i.baseline.renderableRate - band) failed.push("renderable");   // gate 3
-  if (!i.guardrail.ok) failed.push("guardrail");                                      // gate 4
+  if (i.current.renderableRate < i.baseline.renderableRate - band) failed.push("renderable"); // gate 3
+  if (!i.guardrail.ok) failed.push("guardrail"); // gate 4
   if (i.holdoutCurrent.metric < i.holdoutBaseline.metric - band) failed.push("holdout-regression"); // gate 5
   return { pass: failed.length === 0, failed };
 }
@@ -1296,6 +1516,7 @@ git commit -m "eval(access-model): 5 verify discard-gates"
 The ≥-baseline gates need a frozen baseline run summary (from `9cf43ea`, the issue's baseline commit). `baseline.ts` reads/writes a `baseline.json` (rollup of eval + holdout) under the package so the loop compares against a fixed reference, not the previous iteration.
 
 **Files:**
+
 - Create: `eval/access-model/src/baseline.ts`
 - Test: `eval/access-model/src/baseline.test.ts`
 
@@ -1308,7 +1529,9 @@ import { mergeBaseline } from "./baseline.js";
 describe("mergeBaseline", () => {
   it("keeps the recorded commit + rollups and refuses to overwrite without force", () => {
     const existing = { commit: "9cf43ea", eval: { metric: 0.4 }, holdout: { metric: 0.4 } };
-    expect(() => mergeBaseline(existing, { commit: "abc", eval: { metric: 0.6 }, holdout: { metric: 0.5 } }, false)).toThrow(/baseline exists/);
+    expect(() => mergeBaseline(existing, { commit: "abc", eval: { metric: 0.6 }, holdout: { metric: 0.5 } }, false)).toThrow(
+      /baseline exists/
+    );
     const forced = mergeBaseline(existing, { commit: "abc", eval: { metric: 0.6 }, holdout: { metric: 0.5 } }, true);
     expect(forced.commit).toBe("abc");
   });
@@ -1333,6 +1556,7 @@ git commit -m "eval(access-model): frozen baseline capture"
 The single shell command `/autoresearch` calls as `Verify:`. Orchestrates: (1) `pnpm check` on prompts pkg + drift-guard; (2) generate+score+report on the eval matrix → metric; (3) generate+score+report on the holdout → holdout metric; (4) compute the prompt diff (`git diff` of `prompts/pkg/`) → guardrail; (5) `evaluateGates` vs `baseline.json`; (6) print `METRIC=<x>` and a `GATES: pass|FAIL(...)` line; exit non-zero on any gate failure (so the loop discards).
 
 **Files:**
+
 - Create: `eval/access-model/src/verify.ts`
 - Test: `eval/access-model/src/verify.test.ts` (the pure decision function; subprocess calls injected)
 
@@ -1362,8 +1586,14 @@ describe("decideVerify", () => {
 - [ ] **Step 3: Implement `decideVerify({metric, gates})`** → `{ exitCode, lines }` (pure), plus `main()` that wires the real subprocess steps (spawn `pnpm check`, call generate/score/report mains for eval + holdout, read `git diff -- prompts/pkg`, run `guardrail` + `evaluateGates`), prints `lines`, and `process.exit(exitCode)`.
 
 ```ts
-export interface VerifyInput { readonly metric: number; readonly gates: { pass: boolean; failed: string[] }; }
-export interface VerifyDecision { readonly exitCode: number; readonly lines: string[]; }
+export interface VerifyInput {
+  readonly metric: number;
+  readonly gates: { pass: boolean; failed: string[] };
+}
+export interface VerifyDecision {
+  readonly exitCode: number;
+  readonly lines: string[];
+}
 
 export function decideVerify(i: VerifyInput): VerifyDecision {
   const lines = [`METRIC=${i.metric}`, i.gates.pass ? "GATES: pass" : `GATES: FAIL(${i.gates.failed.join(",")})`];
@@ -1416,6 +1646,7 @@ git commit -m "eval(access-model): smoke-run fixes against the live corpus"
 ## Task 16: Runbook + autoresearch wiring
 
 **Files:**
+
 - Create: `eval/access-model/README.md`
 - Create: `agents/access-model-autoresearch.md`
 - Modify: `CLAUDE.md` (add the agents/ link to the Agent Rules list)

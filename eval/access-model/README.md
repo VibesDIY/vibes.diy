@@ -18,13 +18,13 @@ A run is a directory under `runs/`. `generate` creates it (timestamped, or `--ru
 
 ### Stage flags (accurate to `src/*.ts`)
 
-| Flag | `generate` | `score` | `report` | Meaning |
-| --- | :---: | :---: | :---: | --- |
-| `--matrix <path>` | yes | yes | — | matrix config; defaults to `config/matrix.json` |
-| `--prompts <path>` | yes | — | — | prompt corpus; defaults to `config/prompts.eval.jsonl` (or the holdout when `--holdout` is set) |
-| `--holdout` | yes | — | — | use `config/prompts.holdout.jsonl` instead of the eval corpus |
-| `--concurrency <n>` | yes | — | — | parallel `generate` cells; defaults to `matrix.concurrency` (32). Recorded in `run.json` |
-| `--run <dir>` | yes | yes | yes | the run dir. `generate` creates it; `score`/`report` default to the most-recently-modified dir under `runs/` |
+| Flag                | `generate` | `score` | `report` | Meaning                                                                                                      |
+| ------------------- | :--------: | :-----: | :------: | ------------------------------------------------------------------------------------------------------------ |
+| `--matrix <path>`   |    yes     |   yes   |    —     | matrix config; defaults to `config/matrix.json`                                                              |
+| `--prompts <path>`  |    yes     |    —    |    —     | prompt corpus; defaults to `config/prompts.eval.jsonl` (or the holdout when `--holdout` is set)              |
+| `--holdout`         |    yes     |    —    |    —     | use `config/prompts.holdout.jsonl` instead of the eval corpus                                                |
+| `--concurrency <n>` |    yes     |    —    |    —     | parallel `generate` cells; defaults to `matrix.concurrency` (32). Recorded in `run.json`                     |
+| `--run <dir>`       |    yes     |   yes   |   yes    | the run dir. `generate` creates it; `score`/`report` default to the most-recently-modified dir under `runs/` |
 
 `score` uses `matrix.scoreConcurrency` (8) for its own fan-out; it is not overridable per-invocation.
 
@@ -56,7 +56,7 @@ The five discard-gates (#2602):
 
 - **`config/matrix.json`** — the run config. `model` is pinned to **`anthropic/claude-opus-4.8`** (passed as `--model` to every `generate`, recorded in `run.json`, so every iteration is byte-identical on the model axis). Also: `apiUrl` (cli stable-entry), `handle: eval`, `judgeModel`, `reps: 8`, `concurrency: 32`, `scoreConcurrency: 8`. A later default-model bump must explicitly invalidate `baseline.json` — never silently move it.
 - **`config/prompts.eval.jsonl`** — the 8 #2588 prompts, one JSON object per line (`{id, prompt, dimension, expect}`), spanning the five dimensions: `per-visitor`, `per-object`, `owner-published`, `author-owned`, `multi-tier`.
-- **`config/prompts.holdout.jsonl`** — 8 *different* prompts spanning the same five dimensions. **Hidden from the modify step**: the autoresearch loop edits `prompts/pkg/**` but must never see these prompts, so a kept win generalizes rather than overfitting the eval matrix. The holdout drives gate 5.
+- **`config/prompts.holdout.jsonl`** — 8 _different_ prompts spanning the same five dimensions. **Hidden from the modify step**: the autoresearch loop edits `prompts/pkg/**` but must never see these prompts, so a kept win generalizes rather than overfitting the eval matrix. The holdout drives gate 5.
 
 ## `baseline.json` — the frozen reference
 

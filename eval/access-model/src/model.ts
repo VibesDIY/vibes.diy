@@ -1,7 +1,10 @@
 import type { AccessMatrix } from "./config.js";
 
 export type Capability = "app" | "chat" | "img" | "img-edit";
-export interface CatalogModel { readonly id: string; readonly preSelected?: readonly string[] }
+export interface CatalogModel {
+  readonly id: string;
+  readonly preSelected?: readonly string[];
+}
 
 /** The catalog floor for a capability — what getModelDefaults tier-3 resolves to. */
 export function pickPreSelected(models: readonly CatalogModel[], cap: Capability): string {

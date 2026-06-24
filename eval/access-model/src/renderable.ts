@@ -1,6 +1,6 @@
 export interface FileCheck {
-  readonly twoFile: boolean;     // both access.js and App.jsx present and non-trivial
-  readonly renderable: boolean;  // App.jsx parses-ish, no dup import, not an access-fn clobber
+  readonly twoFile: boolean; // both access.js and App.jsx present and non-trivial
+  readonly renderable: boolean; // App.jsx parses-ish, no dup import, not an access-fn clobber
   readonly reasons: string[];
 }
 
@@ -10,7 +10,10 @@ function dupImport(src: string): boolean {
   const names = new Map<string, number>();
   for (const m of src.matchAll(/import\s+\{([^}]*)\}\s+from/g)) {
     for (const raw of m[1].split(",")) {
-      const name = raw.trim().split(/\s+as\s+/)[0].trim();
+      const name = raw
+        .trim()
+        .split(/\s+as\s+/)[0]
+        .trim();
       if (!name) continue;
       names.set(name, (names.get(name) ?? 0) + 1);
     }

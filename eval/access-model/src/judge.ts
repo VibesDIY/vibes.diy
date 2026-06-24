@@ -6,7 +6,13 @@ import type { JudgeVerdict } from "./grade.js";
 import type { AccessMatrix } from "./config.js";
 
 export interface JudgeDeps {
-  readonly call: (args: { model: string; endpoint: string; apiKey: string; prompt: string; schema: object }) => Promise<JudgeVerdict>;
+  readonly call: (args: {
+    model: string;
+    endpoint: string;
+    apiKey: string;
+    prompt: string;
+    schema: object;
+  }) => Promise<JudgeVerdict>;
   readonly model: string;
   readonly endpoint: string;
   readonly apiKey: string;
@@ -35,14 +41,22 @@ export function buildJudgePrompt(o: { prompt: string; expect: Dimension; files: 
 
 export async function judgeSecondVisitor(
   input: { prompt: string; expect: Dimension; files: Record<string, string> },
-  deps: JudgeDeps,
+  deps: JudgeDeps
 ): Promise<JudgeVerdict | null> {
   const max = deps.maxAttempts ?? 3;
   let lastErr: unknown;
   for (let attempt = 1; attempt <= max; attempt++) {
     try {
-      return await deps.call({ model: deps.model, endpoint: deps.endpoint, apiKey: deps.apiKey, prompt: buildJudgePrompt(input), schema: SCHEMA });
-    } catch (e) { lastErr = e; }
+      return await deps.call({
+        model: deps.model,
+        endpoint: deps.endpoint,
+        apiKey: deps.apiKey,
+        prompt: buildJudgePrompt(input),
+        schema: SCHEMA,
+      });
+    } catch (e) {
+      lastErr = e;
+    }
   }
   void lastErr;
   return null;
@@ -70,7 +84,13 @@ function parseVerdict(raw: unknown): JudgeVerdict {
  */
 const JUDGE_RETRIES = 3;
 
-async function realCall(args: { model: string; endpoint: string; apiKey: string; prompt: string; schema: object }): Promise<JudgeVerdict> {
+async function realCall(args: {
+  model: string;
+  endpoint: string;
+  apiKey: string;
+  prompt: string;
+  schema: object;
+}): Promise<JudgeVerdict> {
   const opts: CallAIOptions = {
     model: args.model,
     endpoint: args.endpoint,

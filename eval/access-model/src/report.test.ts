@@ -38,9 +38,39 @@ describe("buildResults", () => {
 
   it("aggregates reps of the same prompt into one row with PASS/SOFT/FAIL counts", () => {
     const cells = [
-      { id: "todo", expect: "per-visitor", grade: "PASS", twoFile: true, renderable: true, formAStrict: false, formABroad: false, isOwnerWriteGate: false, ok: true },
-      { id: "todo", expect: "per-visitor", grade: "SOFT", twoFile: true, renderable: false, formAStrict: false, formABroad: false, isOwnerWriteGate: false, ok: true },
-      { id: "todo", expect: "per-visitor", grade: "FAIL", twoFile: true, renderable: true, formAStrict: true, formABroad: false, isOwnerWriteGate: false, ok: true },
+      {
+        id: "todo",
+        expect: "per-visitor",
+        grade: "PASS",
+        twoFile: true,
+        renderable: true,
+        formAStrict: false,
+        formABroad: false,
+        isOwnerWriteGate: false,
+        ok: true,
+      },
+      {
+        id: "todo",
+        expect: "per-visitor",
+        grade: "SOFT",
+        twoFile: true,
+        renderable: false,
+        formAStrict: false,
+        formABroad: false,
+        isOwnerWriteGate: false,
+        ok: true,
+      },
+      {
+        id: "todo",
+        expect: "per-visitor",
+        grade: "FAIL",
+        twoFile: true,
+        renderable: true,
+        formAStrict: true,
+        formABroad: false,
+        isOwnerWriteGate: false,
+        ok: true,
+      },
     ] as any;
     const r = buildResults(cells);
     expect(r.rows.length).toBe(1);

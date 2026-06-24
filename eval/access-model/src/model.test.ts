@@ -18,11 +18,15 @@ describe("pickPreSelected", () => {
 
 describe("resolveDefaultModel", () => {
   it("uses an explicit matrix.model pin verbatim when set (no fetch)", async () => {
-    const r = await resolveDefaultModel({ apiUrl: "https://x/api", handle: "eval", model: "anthropic/claude-opus-4.7" } as any, { fetchDefault: async () => "SHOULD_NOT_BE_CALLED" });
+    const r = await resolveDefaultModel({ apiUrl: "https://x/api", handle: "eval", model: "anthropic/claude-opus-4.7" } as any, {
+      fetchDefault: async () => "SHOULD_NOT_BE_CALLED",
+    });
     expect(r).toBe("anthropic/claude-opus-4.7");
   });
   it("falls back to the env's resolved default for the handle when matrix.model is empty", async () => {
-    const r = await resolveDefaultModel({ apiUrl: "https://x/api", handle: "eval", model: "" } as any, { fetchDefault: async () => "anthropic/claude-opus-4.6-fast" });
+    const r = await resolveDefaultModel({ apiUrl: "https://x/api", handle: "eval", model: "" } as any, {
+      fetchDefault: async () => "anthropic/claude-opus-4.6-fast",
+    });
     expect(r).toBe("anthropic/claude-opus-4.6-fast");
   });
 });

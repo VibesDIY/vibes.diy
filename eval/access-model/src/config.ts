@@ -1,7 +1,5 @@
 export type Dimension = "per-visitor" | "per-object" | "owner-published" | "author-owned" | "multi-tier";
-const DIMENSIONS: ReadonlySet<string> = new Set([
-  "per-visitor", "per-object", "owner-published", "author-owned", "multi-tier",
-]);
+const DIMENSIONS: ReadonlySet<string> = new Set(["per-visitor", "per-object", "owner-published", "author-owned", "multi-tier"]);
 
 export interface AccessPrompt {
   readonly id: string;
@@ -44,10 +42,14 @@ export function parseAccessMatrix(text: string): AccessMatrix {
   }
   return {
     cliCommand: typeof o.cliCommand === "string" && o.cliCommand ? o.cliCommand : "npx vibes-diy@latest",
-    apiUrl: o.apiUrl, runtimeHostBase: o.runtimeHostBase, handle: o.handle,
+    apiUrl: o.apiUrl,
+    runtimeHostBase: o.runtimeHostBase,
+    handle: o.handle,
     model: typeof o.model === "string" ? o.model : "",
     judgeModel: o.judgeModel,
-    reps: num(o.reps, 8), concurrency: num(o.concurrency, 32), scoreConcurrency: num(o.scoreConcurrency, 8),
+    reps: num(o.reps, 8),
+    concurrency: num(o.concurrency, 32),
+    scoreConcurrency: num(o.scoreConcurrency, 8),
     screenshotTimeoutMs: num(o.screenshotTimeoutMs, 120000),
   };
 }

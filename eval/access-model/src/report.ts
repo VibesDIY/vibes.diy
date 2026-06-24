@@ -151,7 +151,7 @@ export function renderSummary(results: Results): string {
   lines.push(`| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |`);
   for (const row of results.rows) {
     lines.push(
-      `| ${row.id} | ${row.dimension} | ${row.grade} | ${row.pass} | ${row.soft_fail} | ${row.fail} | ${row.generate_failed} | ${row.formA} | ${row.twoFile} | ${row.renderable} |`,
+      `| ${row.id} | ${row.dimension} | ${row.grade} | ${row.pass} | ${row.soft_fail} | ${row.fail} | ${row.generate_failed} | ${row.formA} | ${row.twoFile} | ${row.renderable} |`
     );
   }
   lines.push("");
