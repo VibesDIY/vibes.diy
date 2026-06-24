@@ -1,5 +1,5 @@
 import { spawn, spawnSync } from "node:child_process";
-import { mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
+import { mkdirSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { argv, stderr } from "node:process";
@@ -153,6 +153,11 @@ async function runCell(args: {
 
   const outcome = await runWithRetries(async (attempt): Promise<AttemptResult> => {
     const attemptDir = join(cellDir, `attempt-${attempt}`);
+    // Start each attempt from a clean dir. verify reuses fixed runs/verify-<variant>
+    // dirs across autoresearch iterations; without this, a prior iteration's app
+    // subdir lingers here and discoverAppSlug (which needs exactly one subdir) fails,
+    // marking a good generation as generate-failed (Codex review on #2621).
+    rmSync(attemptDir, { recursive: true, force: true });
     mkdirSync(attemptDir, { recursive: true });
     const appSlug = `${appSlugBase}-a${attempt}`;
     const cliArgs = [
