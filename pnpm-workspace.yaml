@@ -26,6 +26,7 @@ packages:
   - "eval/codegen-edit"
   - "eval/preamble-probe"
   - "eval/codegen-matrix"
+  - "eval/access-model"
 
 # Override sharp version to avoid build failures with 0.34.x
 overrides:

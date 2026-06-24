@@ -228,6 +228,18 @@ importers:
         specifier: ~4.1.9
         version: 4.1.9(@opentelemetry/api@1.9.1)(@types/node@25.9.3)(@vitest/browser-playwright@4.1.9)(@vitest/coverage-v8@4.1.9)(@vitest/ui@4.1.9)(vite@7.3.5(@types/node@25.9.3)(jiti@2.7.0)(lightningcss@1.32.0)(terser@5.46.1)(tsx@4.22.4)(yaml@2.9.0))
 
+  eval/access-model:
+    dependencies:
+      '@vibes.diy/eval-codegen-matrix':
+        specifier: workspace:*
+        version: link:../codegen-matrix
+      call-ai:
+        specifier: workspace:*
+        version: link:../../call-ai/pkg
+      tsx:
+        specifier: ^4.22.4
+        version: 4.22.4
+
   eval/codegen-edit:
     dependencies:
       '@adviser/cement':
