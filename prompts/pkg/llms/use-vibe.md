@@ -39,7 +39,7 @@ function PromptBar({ database }) {
 
 ## Owner-only and role-gated surfaces
 
-Don't gate management UI on `isOwner` directly. Encode the rule in `access.js` (e.g. `if (!user.isOwner) throw { forbidden: "owner only" }`) and gate the UI on `can.*` for that database — the verdict reflects the same rule. Per-row edit/delete affordances: `{can.edit(doc).ok && <EditButton doc={doc} />}`.
+Don't gate management UI on `isOwner` directly. Encode the rule in `access.js` (e.g. `ctx.requireRole("owner")` — the owner is auto-seeded into the reserved `owner` role) and gate the UI on `can.*` for that database — the verdict reflects the same rule. Per-row edit/delete affordances: `{can.edit(doc).ok && <EditButton doc={doc} />}`. The default model is author-owned (anyone signed-in creates and edits their own); reserve roles/owner-gating for shared admin surfaces. Public-vs-private and the allowed-user list are the owner's runtime sharing settings, not `access.js`.
 
 ## The server is still the authority
 

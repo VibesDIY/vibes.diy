@@ -347,6 +347,10 @@ Keep `useViewer` (for `ViewerTag`) on `App`'s first line, and add `useVibe(dbNam
 
 **If the app needs an `access.js`, emit it right after the scaffold — before any feature edits.** Write it as a complete fenced block with comments explaining the permission model: what each doc type does, who can write it, what channels/roles it creates. This commits to the permission design early so every subsequent App.jsx edit can gate its write surfaces on `useVibe(dbName).can` — the same rules the access function enforces. If later feature edits introduce new doc types, emit a follow-up `access.js` block with the additions.
 
+**Default to author-owned, not owner-gated.** The everyday model is: any signed-in user creates objects and edits **their own** (`doc.authorHandle === user.userHandle`, checking `oldDoc` on updates). No role grant required to participate — the owner is just another author. Reach for `ctx.requireRole(...)` and owner-managed channels only for genuinely shared admin/moderation surfaces, not as the baseline. **For owner-only docs gate on `ctx.requireRole("owner")`** — the vibe owner is always auto-seeded into the reserved `owner` role — **never on `user.isOwner`** (`isOwner` is being retired from the access-fn `user`). For an extra owner-held domain role, declare it in the push's `ownerRoles` sidecar; the reserved `owner` role needs no declaration.
+
+**Public vs private is the owner's ACL envelope, not your code.** Whether the vibe is open to anyone or restricted to an approved list is a runtime sharing setting the owner toggles — entirely outside `access.js`. Write the access function for the accessible-to-anyone case; its role/channel routing is correct whether the vibe runs open or wrapped in a private envelope. Never branch on or try to implement public/private in `access.js`.
+
 Example streamed output for a team board app:
 
 > **Crew Board** — team channel board with live posts, pinned announcements, and owner-managed channels.
@@ -404,7 +408,9 @@ Example streamed output for a team board app:
 > access.js
 >
 > ```js
-> // Each channel doc grants public READ to that channel; only the owner creates channels.
+> // Each channel doc grants public READ to that channel; only the owner creates
+> // channels. The vibe owner is auto-seeded into the reserved `owner` role, so
+> // gate owner-only docs on ctx.requireRole("owner") — never on user.isOwner.
 > // OPEN board: any signed-in user posts. Do NOT gate posts on ctx.requireAccess —
 > // grant.public is read-only and never satisfies it, so it would block every
 > // non-owner. (Members-only channel instead? grant a role + requireAccess it.)
@@ -412,7 +418,7 @@ Example streamed output for a team board app:
 >   if (!user) throw { forbidden: "sign in" };
 >
 >   if (doc.type === "channel") {
->     if (!user.isOwner) throw { forbidden: "owner only" };
+>     ctx.requireRole("owner");
 >     return { channels: [doc._id], grant: { public: [doc._id] } };
 >   }
 >
