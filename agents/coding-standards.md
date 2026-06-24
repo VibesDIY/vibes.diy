@@ -87,3 +87,11 @@ Exception: when a reviewer explicitly proposes a numeric gate (e.g. ">5% degrada
 ## Prompt authoring — positive patterns only
 
 System prompts and LLM-facing docs (`prompts/pkg/`, `notes/vibes-app-jsx.md`) should show the correct pattern, not "don't do this" examples. Negative examples get tokenized and the model reproduces them. State rules as what TO do, and show more examples of the right pattern instead of contrasting with wrong ones.
+
+## Robustness over bit-twiddling
+
+Prefer the boring encoding that is obviously correct at every layer over a clever low-level trick that leans on a local invariant. A trick that depends on "this byte/value can never appear here" is a latent bug at the first boundary that disagrees — and the boundary is usually a different storage engine, wire protocol, or driver than the one your tests run against.
+
+Concrete case (#2557 / PR #2590): an advisory-lock key joined identifiers with a literal NUL byte because "NUL can't appear in these identifiers." It was a perfect _uniqueness_ separator and an _invalid Postgres text value_ — Postgres rejects `0x00` in text (SQLSTATE 22021), so every pg write failed. The fix was `JSON.stringify(tuple)`: unambiguous AND valid everywhere. It hid in CI because tests run on libsql, which tolerates NUL.
+
+Rule of thumb: when you reach for a non-printable separator, a packed bitfield, a sentinel value, or "we know field X never contains Y," stop and ask whether a self-describing encoding (JSON, length-prefix, a dedicated column) is correct across all layers this value crosses. Clever-but-minimal loses to boring-but-portable. Pair this with testing against the real engine, not just the convenient one.
