@@ -87,14 +87,21 @@ If `--dry-run` or always before actual ship:
 
 ## Phase 6: Ship
 
-**REQUIRES EXPLICIT USER APPROVAL** (unless --auto with zero errors).
+**REQUIRES EXPLICIT USER APPROVAL.**
+
+`--auto` may skip the approval gate **only** for non-irreversible ship types —
+opening/updating a Code PR. For any action that releases, publishes, tags,
+deploys, or otherwise pushes to an external/shared target, `--auto` does **not**
+bypass approval: stop and obtain fresh explicit user approval first, regardless
+of error count. This keeps the command consistent with the skill's invariant
+that it never pushes, publishes, or deploys without user approval.
 
 Execute the ship action:
 
-- Code PR: create/update PR, request reviewers
-- Release: tag, build, publish
-- Deployment: deploy to target environment
-- Content: publish to CMS/platform
+- Code PR: create/update PR, request reviewers — _`--auto`-eligible_
+- Release: tag, build, publish — _approval required even with `--auto`_
+- Deployment: deploy to target environment — _approval required even with `--auto`_
+- Content: publish to CMS/platform — _approval required even with `--auto`_
 
 ## Phase 7: Verify
 
