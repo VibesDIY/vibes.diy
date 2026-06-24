@@ -5,6 +5,7 @@ import { and, desc, eq } from "drizzle-orm/sql/expressions";
 import { QueueCtx } from "../queue-ctx.js";
 import { processScreenShotEvent } from "../screen-shotter.js";
 import { buildPublishEmbed, postEmbed } from "../intern/post-to-discord.js";
+import { notifyRemixSourceOwner } from "../intern/notify-remix.js";
 
 export const evtNewFsIdEvento: EventoHandler<unknown, MsgBase<EvtNewFsId>, void> = {
   hash: "evt-new-fs-id",
@@ -28,7 +29,13 @@ export const evtNewFsIdEvento: EventoHandler<unknown, MsgBase<EvtNewFsId>, void>
     }
     if (payload.mode === "production") {
       const rows = await qctx.sql.db
-        .select({ releaseSeq: qctx.sql.tables.apps.releaseSeq })
+        .select({
+          releaseSeq: qctx.sql.tables.apps.releaseSeq,
+          userId: qctx.sql.tables.apps.userId,
+          ownerHandle: qctx.sql.tables.apps.ownerHandle,
+          appSlug: qctx.sql.tables.apps.appSlug,
+          meta: qctx.sql.tables.apps.meta,
+        })
         .from(qctx.sql.tables.apps)
         .where(
           and(
@@ -41,6 +48,14 @@ export const evtNewFsIdEvento: EventoHandler<unknown, MsgBase<EvtNewFsId>, void>
         .limit(1);
       const publishCount = rows[0]?.releaseSeq;
       await postEmbed(qctx, buildPublishEmbed(qctx, payload, publishCount));
+
+      // Classic-remix path: a remix is forked in dev and surfaces to the
+      // source owner only on its first production publish. Dedupe is handled
+      // by emitNotification, so re-publishes are naturally once-only.
+      const publishedRow = rows[0];
+      if (publishedRow) {
+        await notifyRemixSourceOwner(qctx, publishedRow);
+      }
 
       // Resolve ownerHandle → userId to notify the vibe owner
       const usb = qctx.sql.tables.handleBinding;

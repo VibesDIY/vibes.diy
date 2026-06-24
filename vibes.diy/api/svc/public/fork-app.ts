@@ -254,6 +254,19 @@ export async function forkApp(
       userId
     );
     if (rPubSet.isErr()) return Result.Err(`Failed to disable clone public access: ${rPubSet.Err().message}`);
+
+    // TODO(#2544 — remix-notification clone path): a clone (skipChat) is born
+    // straight in production and never emits an evt-new-fs-id, so the
+    // classic-remix notification wired into that queue handler does NOT cover
+    // clones. The natural fix is to call notifyRemixSourceOwner here with the
+    // freshly-inserted clone row. It is intentionally NOT wired yet because the
+    // helper lives in @vibes.diy/api-queue and @vibes.diy/api-queue already
+    // depends on @vibes.diy/api-svc (this package) — importing the helper here
+    // would create a CIRCULAR package dependency. Cleanly wiring it needs the
+    // shared emit/notify-remix helpers to move to a package that both svc and
+    // queue can depend on (e.g. api-types or a new api-notify package), which
+    // is larger plumbing out of scope for this phase. See notify-remix.test.ts
+    // (it.todo "clone path notifies the source owner") for the gap.
   }
 
   return Result.Ok({
