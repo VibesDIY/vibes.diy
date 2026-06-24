@@ -94,7 +94,7 @@ const faqs: { q: string; a: React.ReactNode }[] = [
   },
   {
     q: "Is my data private?",
-    a: "Your app's data is private by default — only the people you let in can open it, and you control who can read and write. There's no algorithm or feed deciding what happens to your app.",
+    a: "You decide who can open your app and who can read or write — by default, other people can't get in unless you let them. (Your data is stored in the cloud, so this is about controlling access, not encryption.)",
   },
   {
     q: "How do I use Vibes from the command line?",
