@@ -12,10 +12,10 @@ POST /v1/responses
 
 ### Required Headers
 
-| Header | Value |
-|--------|-------|
-| `Authorization` | `Bearer <token>` |
-| `Content-Type` | `application/json` |
+| Header          | Value              |
+| --------------- | ------------------ |
+| `Authorization` | `Bearer <token>`   |
+| `Content-Type`  | `application/json` |
 
 ### Non-Streaming Request
 
@@ -40,9 +40,7 @@ POST /v1/responses
       "type": "message",
       "role": "assistant",
       "status": "completed",
-      "content": [
-        { "type": "output_text", "text": "The capital of France is Paris." }
-      ]
+      "content": [{ "type": "output_text", "text": "The capital of France is Paris." }]
     }
   ],
   "usage": {
@@ -98,21 +96,21 @@ The spec distinguishes between **output items** (emitted by the model in a respo
 
 **Output items** — every output item in a response MUST include:
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `id` | string | Unique, opaque identifier within the trajectory |
-| `type` | string | Concrete schema identifier (discriminator) |
+| Field    | Type   | Description                                                          |
+| -------- | ------ | -------------------------------------------------------------------- |
+| `id`     | string | Unique, opaque identifier within the trajectory                      |
+| `type`   | string | Concrete schema identifier (discriminator)                           |
 | `status` | string | Lifecycle state: `in_progress`, `completed`, `incomplete`, or custom |
 
 **Input items** — field requirements vary by type:
 
-| Input Type | Required Fields | Optional Fields |
-|-----------|----------------|-----------------|
-| `input_text` | `type`, `text` | — |
-| `input_image` | `type`, image data | — |
-| `input_file` | `type`, file reference | — |
-| `message` (role: user/system/developer) | `type`, `role`, `content` | `id`, `status` |
-| `function_call_output` | `type`, `call_id`, `output` | `id`, `status` |
+| Input Type                              | Required Fields             | Optional Fields |
+| --------------------------------------- | --------------------------- | --------------- |
+| `input_text`                            | `type`, `text`              | —               |
+| `input_image`                           | `type`, image data          | —               |
+| `input_file`                            | `type`, file reference      | —               |
+| `message` (role: user/system/developer) | `type`, `role`, `content`   | `id`, `status`  |
+| `function_call_output`                  | `type`, `call_id`, `output` | `id`, `status`  |
 
 Input content types (`input_text`, `input_image`, etc.) do NOT carry `id` or `status`.
 
@@ -120,38 +118,38 @@ Input content types (`input_text`, `input_image`, etc.) do NOT carry `id` or `st
 
 ### Message Roles
 
-| Role | Description |
-|------|-------------|
-| `user` | End-user input |
-| `assistant` | Model-generated output |
-| `system` | System-level instructions as an inline message item (distinct from the `instructions` parameter) |
-| `developer` | Developer-provided context; providers may handle differently from `system` |
+| Role        | Description                                                                                      |
+| ----------- | ------------------------------------------------------------------------------------------------ |
+| `user`      | End-user input                                                                                   |
+| `assistant` | Model-generated output                                                                           |
+| `system`    | System-level instructions as an inline message item (distinct from the `instructions` parameter) |
+| `developer` | Developer-provided context; providers may handle differently from `system`                       |
 
 ### Core Output Item Types
 
-| Type | Description | Key Fields |
-|------|-------------|------------|
-| `message` | Text output from model | `role`, `content[]` |
-| `function_call` | Tool invocation request | `name`, `call_id`, `arguments` |
-| `reasoning` | Model reasoning trace | `content`, `encrypted_content`, `summary` |
-| `vendor:custom_type` | Provider extension | vendor-defined + `id`, `type`, `status` |
+| Type                 | Description             | Key Fields                                |
+| -------------------- | ----------------------- | ----------------------------------------- |
+| `message`            | Text output from model  | `role`, `content[]`                       |
+| `function_call`      | Tool invocation request | `name`, `call_id`, `arguments`            |
+| `reasoning`          | Model reasoning trace   | `content`, `encrypted_content`, `summary` |
+| `vendor:custom_type` | Provider extension      | vendor-defined + `id`, `type`, `status`   |
 
 ### Content Types
 
 **UserContent** — structured data provided by clients:
 
-| Type | Description |
-|------|-------------|
-| `input_text` | Plain text input |
+| Type          | Description           |
+| ------------- | --------------------- |
+| `input_text`  | Plain text input      |
 | `input_image` | Image (URL or base64) |
-| `input_file` | File reference |
+| `input_file`  | File reference        |
 
 **ModelContent** — outputs generated by the model:
 
-| Type | Description |
-|------|-------------|
-| `output_text` | Generated text, optionally with annotations and logprobs |
-| `refusal` | Model's explicit refusal to complete the request, with explanation text |
+| Type          | Description                                                             |
+| ------------- | ----------------------------------------------------------------------- |
+| `output_text` | Generated text, optionally with annotations and logprobs                |
+| `refusal`     | Model's explicit refusal to complete the request, with explanation text |
 
 ### Item Examples
 
@@ -213,40 +211,40 @@ Input content types (`input_text`, `input_image`, etc.) do NOT carry `id` or `st
 
 Reasoning items have three optional fields — providers support any combination:
 
-| Field | Description |
-|-------|-------------|
-| `content` | Raw reasoning trace (streamable) |
+| Field               | Description                                                                                                                                                            |
+| ------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `content`           | Raw reasoning trace (streamable)                                                                                                                                       |
 | `encrypted_content` | Provider-protected opaque blob; may require explicit opt-in (e.g., via an `include` parameter). Enables preserving reasoning across turns without exposing raw traces. |
-| `summary` | User-safe natural-language summary of the reasoning |
+| `summary`           | User-safe natural-language summary of the reasoning                                                                                                                    |
 
 ---
 
 ## Control Parameters
 
-| Parameter | Type | Description |
-|-----------|------|-------------|
-| `model` | string | **Required.** Model identifier (e.g., `"provider/model-name"`) |
-| `input` | string or array | **Required.** User input — plain string or array of input items |
-| `instructions` | string | System-level instructions (system prompt) |
-| `previous_response_id` | string | Response ID to continue from (context reconstruction) |
-| `stream` | boolean | Enable SSE streaming (default: false) |
-| `temperature` | number | Sampling temperature (0.0 - 2.0) |
-| `top_p` | number | Nucleus sampling threshold |
-| `max_output_tokens` | integer | Maximum tokens to generate |
-| `truncation` | string | Context overflow strategy: `"auto"` or `"disabled"` |
-| `service_tier` | string | Processing priority hint (provider-defined values) |
-| `tools` | array | Tool definitions |
-| `tool_choice` | string or object | Tool invocation control (includes `allowed_tools` mode) |
-| `max_tool_calls` | integer | Maximum number of tool calls the model may make in one response (min: 1) |
-| `reasoning` | object | Reasoning config: `effort` and `summary` (see below) |
-| `metadata` | object | Up to 16 key-value pairs (64-char keys, 512-char values) |
+| Parameter              | Type             | Description                                                              |
+| ---------------------- | ---------------- | ------------------------------------------------------------------------ |
+| `model`                | string           | **Required.** Model identifier (e.g., `"provider/model-name"`)           |
+| `input`                | string or array  | **Required.** User input — plain string or array of input items          |
+| `instructions`         | string           | System-level instructions (system prompt)                                |
+| `previous_response_id` | string           | Response ID to continue from (context reconstruction)                    |
+| `stream`               | boolean          | Enable SSE streaming (default: false)                                    |
+| `temperature`          | number           | Sampling temperature (0.0 - 2.0)                                         |
+| `top_p`                | number           | Nucleus sampling threshold                                               |
+| `max_output_tokens`    | integer          | Maximum tokens to generate                                               |
+| `truncation`           | string           | Context overflow strategy: `"auto"` or `"disabled"`                      |
+| `service_tier`         | string           | Processing priority hint (provider-defined values)                       |
+| `tools`                | array            | Tool definitions                                                         |
+| `tool_choice`          | string or object | Tool invocation control (includes `allowed_tools` mode)                  |
+| `max_tool_calls`       | integer          | Maximum number of tool calls the model may make in one response (min: 1) |
+| `reasoning`            | object           | Reasoning config: `effort` and `summary` (see below)                     |
+| `metadata`             | object           | Up to 16 key-value pairs (64-char keys, 512-char values)                 |
 
 ### Truncation
 
-| Value | Behavior |
-|-------|----------|
-| `"auto"` | Provider may intelligently truncate context if it exceeds the model's window |
-| `"disabled"` | Request fails if context exceeds window |
+| Value        | Behavior                                                                     |
+| ------------ | ---------------------------------------------------------------------------- |
+| `"auto"`     | Provider may intelligently truncate context if it exceeds the model's window |
+| `"disabled"` | Request fails if context exceeds window                                      |
 
 ### Service Tier
 
@@ -267,18 +265,18 @@ Reasoning has two aspects: an **input configuration** and an **output item type*
 }
 ```
 
-| Field | Values | Description |
-|-------|--------|-------------|
-| `effort` | `none`, `low`, `medium`, `high`, `xhigh` | Controls reasoning intensity |
-| `summary` | `concise`, `detailed`, `auto` | Controls how reasoning is surfaced in output items |
+| Field     | Values                                   | Description                                        |
+| --------- | ---------------------------------------- | -------------------------------------------------- |
+| `effort`  | `none`, `low`, `medium`, `high`, `xhigh` | Controls reasoning intensity                       |
+| `summary` | `concise`, `detailed`, `auto`            | Controls how reasoning is surfaced in output items |
 
 **Output items** — reasoning items in the response have three optional fields:
 
-| Field | Description |
-|-------|-------------|
-| `content` | Raw reasoning trace (streamable) |
+| Field               | Description                                                                                                                                                            |
+| ------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `content`           | Raw reasoning trace (streamable)                                                                                                                                       |
 | `encrypted_content` | Provider-protected opaque blob; may require explicit opt-in (e.g., via an `include` parameter). Enables preserving reasoning across turns without exposing raw traces. |
-| `summary` | User-safe natural-language summary of the reasoning |
+| `summary`           | User-safe natural-language summary of the reasoning                                                                                                                    |
 
 Reasoning item on the wire:
 
@@ -287,9 +285,7 @@ Reasoning item on the wire:
   "id": "item_004",
   "type": "reasoning",
   "status": "completed",
-  "summary": [
-    {"type": "summary_text", "text": "Considering geographic and political context..."}
-  ]
+  "summary": [{ "type": "summary_text", "text": "Considering geographic and political context..." }]
 }
 ```
 
@@ -308,22 +304,22 @@ Reasoning item on the wire:
 }
 ```
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `type` | string | Error category |
-| `code` | string | Specific error identifier |
-| `param` | string | Related input parameter (optional) |
-| `message` | string | Human-readable explanation |
+| Field     | Type   | Description                        |
+| --------- | ------ | ---------------------------------- |
+| `type`    | string | Error category                     |
+| `code`    | string | Specific error identifier          |
+| `param`   | string | Related input parameter (optional) |
+| `message` | string | Human-readable explanation         |
 
 ### Error Types
 
-| Type | HTTP Status | Description | Retry? |
-|------|------------|-------------|--------|
-| `invalid_request` | 400 | Malformed request or missing fields | No — fix the request |
-| `not_found` | 404 | Resource does not exist | No |
-| `too_many_requests` | 429 | Rate limited | Yes — with exponential backoff |
-| `server_error` | 500 | Internal provider failure | Yes — with backoff |
-| `model_error` | 500 | Model processing failure | Maybe — depends on error |
+| Type                | HTTP Status | Description                         | Retry?                         |
+| ------------------- | ----------- | ----------------------------------- | ------------------------------ |
+| `invalid_request`   | 400         | Malformed request or missing fields | No — fix the request           |
+| `not_found`         | 404         | Resource does not exist             | No                             |
+| `too_many_requests` | 429         | Rate limited                        | Yes — with exponential backoff |
+| `server_error`      | 500         | Internal provider failure           | Yes — with backoff             |
+| `model_error`       | 500         | Model processing failure            | Maybe — depends on error       |
 
 ### Streaming Errors
 

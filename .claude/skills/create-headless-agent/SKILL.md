@@ -1,12 +1,13 @@
 ---
 description: Scaffolds a headless agent in TypeScript using @openrouter/agent and Bun — for CLI tools, API servers, queue workers, and pipelines. No terminal UI. Use when building a headless agent, programmatic agent, CLI tool that uses AI, batch agent, pipeline agent, API agent, agent without a UI, or agent service.
 metadata:
-    github-path: skills/create-headless-agent
-    github-ref: refs/heads/main
-    github-repo: https://github.com/OpenRouterTeam/skills
-    github-tree-sha: a6b31684a593a0d1d1e549d768efeb674d518f98
+  github-path: skills/create-headless-agent
+  github-ref: refs/heads/main
+  github-repo: https://github.com/OpenRouterTeam/skills
+  github-tree-sha: a6b31684a593a0d1d1e549d768efeb674d518f98
 name: create-headless-agent
 ---
+
 # Create Headless Agent
 
 Scaffolds a headless agent in TypeScript targeting OpenRouter. The generated project uses `@openrouter/agent` for the inner loop (model calls, tool execution, stop conditions) and provides a clean programmatic shell: configuration, session management, tool definitions, and one or more entry points (CLI, HTTP server, MCP server, or library import). No terminal UI, no readline, no ANSI — just input in, result out.
@@ -21,12 +22,12 @@ Scaffolds a headless agent in TypeScript targeting OpenRouter. The generated pro
 
 ## Decision Tree
 
-| User wants to... | Action |
-|---|---|
-| Build a new headless agent | Present checklist below, follow Generation Workflow |
+| User wants to...               | Action                                                                       |
+| ------------------------------ | ---------------------------------------------------------------------------- |
+| Build a new headless agent     | Present checklist below, follow Generation Workflow                          |
 | Add tools to an existing agent | Read [references/tools.md](references/tools.md), present tool checklist only |
-| Add a module | Read [references/modules.md](references/modules.md), generate the module |
-| Add an entry point | Read [references/entry-points.md](references/entry-points.md), generate it |
+| Add a module                   | Read [references/modules.md](references/modules.md), generate the module     |
+| Add an entry point             | Read [references/entry-points.md](references/entry-points.md), generate it   |
 
 ---
 
@@ -36,72 +37,73 @@ Present this as a multi-select checklist. Items marked **ON** are pre-selected d
 
 ### Entry Points (pick one or more)
 
-| Entry Point | Default | Description |
-|-------------|---------|-------------|
-| CLI | ON | args/stdin to agent to stdout, `--json` for NDJSON |
-| Library module | ON | `import { runAgent } from './agent'` |
-| HTTP server | OFF | `Bun.serve()` with SSE streaming |
-| MCP server | OFF | Expose as MCP tool via stdio |
+| Entry Point    | Default | Description                                        |
+| -------------- | ------- | -------------------------------------------------- |
+| CLI            | ON      | args/stdin to agent to stdout, `--json` for NDJSON |
+| Library module | ON      | `import { runAgent } from './agent'`               |
+| HTTP server    | OFF     | `Bun.serve()` with SSE streaming                   |
+| MCP server     | OFF     | Expose as MCP tool via stdio                       |
 
 ### OpenRouter Server Tools (server-side, zero implementation)
 
-| Tool | Type string | Default |
-|------|------------|---------|
-| Web Search | `openrouter:web_search` | ON |
-| Web Fetch | `openrouter:web_fetch` | ON |
-| Datetime | `openrouter:datetime` | ON |
-| Image Generation | `openrouter:image_generation` | OFF |
+| Tool             | Type string                   | Default |
+| ---------------- | ----------------------------- | ------- |
+| Web Search       | `openrouter:web_search`       | ON      |
+| Web Fetch        | `openrouter:web_fetch`        | ON      |
+| Datetime         | `openrouter:datetime`         | ON      |
+| Image Generation | `openrouter:image_generation` | OFF     |
 
 Server tools go in the `tools` array alongside user-defined tools. No client code needed — OpenRouter executes them. Docs: [openrouter.ai/docs/guides/features/server-tools](https://openrouter.ai/docs/guides/features/server-tools/overview).
 
 ### User-Defined Tools (client-side, generated into src/tools/)
 
-| Tool | Default | Description |
-|------|---------|-------------|
-| File Read | ON | Read files with offset/limit |
-| File Write | ON | Write/create files, auto-create directories |
-| File Edit | ON | Search-and-replace with diff validation |
-| Glob/Find | ON | File discovery by glob pattern |
-| Grep/Search | ON | Content search by regex |
-| Directory List | ON | List directory contents |
-| Shell/Bash | ON | Execute commands with timeout and output capture |
-| Custom Tool Template | ON | Empty skeleton for domain-specific tools |
-| JS/TS REPL | OFF | Persistent Bun REPL |
-| Sub-agent Spawn | OFF | Delegate tasks to child agents |
-| View Image | OFF | Read local images as base64 |
+| Tool                 | Default | Description                                      |
+| -------------------- | ------- | ------------------------------------------------ |
+| File Read            | ON      | Read files with offset/limit                     |
+| File Write           | ON      | Write/create files, auto-create directories      |
+| File Edit            | ON      | Search-and-replace with diff validation          |
+| Glob/Find            | ON      | File discovery by glob pattern                   |
+| Grep/Search          | ON      | Content search by regex                          |
+| Directory List       | ON      | List directory contents                          |
+| Shell/Bash           | ON      | Execute commands with timeout and output capture |
+| Custom Tool Template | ON      | Empty skeleton for domain-specific tools         |
+| JS/TS REPL           | OFF     | Persistent Bun REPL                              |
+| Sub-agent Spawn      | OFF     | Delegate tasks to child agents                   |
+| View Image           | OFF     | Read local images as base64                      |
 
 ### Agent Modules (architectural components)
 
-| Module | Default | Description |
-|--------|---------|-------------|
-| Session Persistence | ON | JSONL conversation log, `--no-session` to disable |
-| Retry with Backoff | ON | Built into agent.ts |
-| Context Compaction | OFF | Summarize when context is long |
-| Tool Result Offload | OFF | Persist oversized tool outputs to disk, keep preview in context |
-| System Prompt Composition | OFF | Dynamic instructions from context files |
-| Tool Approval Flow | OFF | Programmatic approve/reject |
-| Structured Event Logging | OFF | JSON events to stderr |
-| Output Schema Validation | OFF | Zod schema constraining response |
-| Webhook Notifications | OFF | POST on completion |
+| Module                    | Default | Description                                                     |
+| ------------------------- | ------- | --------------------------------------------------------------- |
+| Session Persistence       | ON      | JSONL conversation log, `--no-session` to disable               |
+| Retry with Backoff        | ON      | Built into agent.ts                                             |
+| Context Compaction        | OFF     | Summarize when context is long                                  |
+| Tool Result Offload       | OFF     | Persist oversized tool outputs to disk, keep preview in context |
+| System Prompt Composition | OFF     | Dynamic instructions from context files                         |
+| Tool Approval Flow        | OFF     | Programmatic approve/reject                                     |
+| Structured Event Logging  | OFF     | JSON events to stderr                                           |
+| Output Schema Validation  | OFF     | Zod schema constraining response                                |
+| Webhook Notifications     | OFF     | POST on completion                                              |
 
 ### CLI Output Mode (single-select, if CLI entry point is ON)
 
-| Mode | Default | Description |
-|------|---------|-------------|
-| Text | ON | Final response text to stdout |
-| JSON | OFF | NDJSON event stream |
-| Quiet | OFF | Exit code only |
+| Mode  | Default | Description                   |
+| ----- | ------- | ----------------------------- |
+| Text  | ON      | Final response text to stdout |
+| JSON  | OFF     | NDJSON event stream           |
+| Quiet | OFF     | Exit code only                |
 
 ---
 
 ## Generation Workflow
 
 Before generating, **ask the user what to name their agent**. This name is used as:
+
 - the `"name"` field in `package.json`
 - the `"bin"` command (so `bun link` makes it a globally-invokable CLI)
 - the project directory name (if creating a new directory)
 
-Suggested question: *"What would you like to call your agent? (short kebab-case, e.g. `research-bot` or `docs-helper`)"*. Validate the answer is a valid npm package name (lowercase, kebab-case, no spaces). Default to `my-agent` if the user has no preference. Use the chosen name everywhere the workflow below shows `<agent-name>`.
+Suggested question: _"What would you like to call your agent? (short kebab-case, e.g. `research-bot` or `docs-helper`)"_. Validate the answer is a valid npm package name (lowercase, kebab-case, no spaces). Default to `my-agent` if the user has no preference. Use the chosen name everywhere the workflow below shows `<agent-name>`.
 
 After getting the name and checklist selections, follow this workflow:
 
@@ -145,25 +147,25 @@ To later rename the agent, update the `name` and `bin` keys in `package.json`, t
 All user-defined tools follow this pattern using `@openrouter/agent/tool`. Here is one complete example — all other tools in [references/tools.md](references/tools.md) follow the same shape:
 
 ```typescript
-import { tool } from '@openrouter/agent/tool';
-import { z } from 'zod';
+import { tool } from "@openrouter/agent/tool";
+import { z } from "zod";
 
 const DEFAULT_LINE_LIMIT = 2000;
 const MAX_LINE_CHARS = 2000;
 
 export const fileReadTool = tool({
-  name: 'file_read',
+  name: "file_read",
   description:
-    'Read the contents of a file. Output is capped at 2000 lines by default (use offset/limit to paginate) and any line longer than 2000 characters is truncated. When the response is truncated, the hint field tells you how to continue.',
+    "Read the contents of a file. Output is capped at 2000 lines by default (use offset/limit to paginate) and any line longer than 2000 characters is truncated. When the response is truncated, the hint field tells you how to continue.",
   inputSchema: z.object({
-    path: z.string().describe('Absolute path to the file'),
-    offset: z.number().optional().describe('Start reading from this line (1-indexed)'),
+    path: z.string().describe("Absolute path to the file"),
+    offset: z.number().optional().describe("Start reading from this line (1-indexed)"),
     limit: z.number().optional().describe(`Maximum lines to return (default ${DEFAULT_LINE_LIMIT})`),
   }),
   execute: async ({ path, offset, limit }) => {
     try {
       const content = await Bun.file(path).text();
-      const lines = content.split('\n');
+      const lines = content.split("\n");
       const start = offset ? offset - 1 : 0;
       const end = Math.min(start + (limit ?? DEFAULT_LINE_LIMIT), lines.length);
       let longLines = 0;
@@ -176,19 +178,22 @@ export const fileReadTool = tool({
       const truncated = tailTruncated || longLines > 0;
       const hintParts: string[] = [`Showing lines ${start + 1}-${end} of ${lines.length}.`];
       if (tailTruncated) hintParts.push(`Use offset=${end + 1} to continue.`);
-      if (longLines > 0) hintParts.push(`${longLines} line(s) exceeded ${MAX_LINE_CHARS} chars and were per-line truncated; use grep to fetch content from those lines.`);
+      if (longLines > 0)
+        hintParts.push(
+          `${longLines} line(s) exceeded ${MAX_LINE_CHARS} chars and were per-line truncated; use grep to fetch content from those lines.`
+        );
       return {
-        content: slice.join('\n'),
+        content: slice.join("\n"),
         totalLines: lines.length,
         ...(truncated && {
           truncated: true,
           ...(tailTruncated && { nextOffset: end + 1 }),
-          hint: hintParts.join(' '),
+          hint: hintParts.join(" "),
         }),
       };
     } catch (err: any) {
-      if (err.code === 'ENOENT') return { error: `File not found: ${path}` };
-      if (err.code === 'EACCES') return { error: `Permission denied: ${path}` };
+      if (err.code === "ENOENT") return { error: `File not found: ${path}` };
+      if (err.code === "EACCES") return { error: `Permission denied: ${path}` };
       return { error: err.message };
     }
   },
@@ -259,8 +264,8 @@ The `bin` entry is what makes the agent invokable by name after `bun link`. The 
 ### src/config.ts
 
 ```typescript
-import { readFileSync, existsSync } from 'fs';
-import { resolve } from 'path';
+import { readFileSync, existsSync } from "fs";
+import { resolve } from "path";
 
 function positiveNumber(name: string, raw: string): number {
   const n = Number(raw);
@@ -279,50 +284,50 @@ export interface AgentConfig {
   maxCost: number;
   sessionDir: string;
   sessionEnabled: boolean;
-  outputMode: 'text' | 'json' | 'quiet';
+  outputMode: "text" | "json" | "quiet";
 }
 
 const DEFAULTS: AgentConfig = {
-  apiKey: '',
-  model: 'anthropic/claude-sonnet-4.6',
-  name: 'My Agent',
+  apiKey: "",
+  model: "anthropic/claude-sonnet-4.6",
+  name: "My Agent",
   systemPrompt: [
-    'You are a coding assistant with access to tools for reading, writing, editing, and searching files, and running shell commands.',
-    '',
-    'Current working directory: {cwd}',
-    '',
-    'Guidelines:',
-    '- Use your tools proactively. Explore the codebase to find answers instead of asking the user.',
-    '- Keep working until the task is fully resolved before responding.',
-    '- Do not guess or make up information — use your tools to verify.',
-    '- Be concise and direct.',
-    '- Show file paths clearly when working with files.',
-    '- Prefer grep and glob tools over shell commands for file search.',
-    '- When editing code, make minimal targeted changes consistent with the existing style.',
-  ].join('\n'),
+    "You are a coding assistant with access to tools for reading, writing, editing, and searching files, and running shell commands.",
+    "",
+    "Current working directory: {cwd}",
+    "",
+    "Guidelines:",
+    "- Use your tools proactively. Explore the codebase to find answers instead of asking the user.",
+    "- Keep working until the task is fully resolved before responding.",
+    "- Do not guess or make up information — use your tools to verify.",
+    "- Be concise and direct.",
+    "- Show file paths clearly when working with files.",
+    "- Prefer grep and glob tools over shell commands for file search.",
+    "- When editing code, make minimal targeted changes consistent with the existing style.",
+  ].join("\n"),
   maxSteps: 20,
   maxCost: 1.0,
-  sessionDir: '.sessions',
+  sessionDir: ".sessions",
   sessionEnabled: true,
-  outputMode: 'text',
+  outputMode: "text",
 };
 
 export function loadConfig(overrides: Partial<AgentConfig> = {}, opts?: { skipApiKey?: boolean }): AgentConfig {
   let config = { ...DEFAULTS };
 
-  const configPath = resolve('agent.config.json');
+  const configPath = resolve("agent.config.json");
   if (existsSync(configPath)) {
-    const file = JSON.parse(readFileSync(configPath, 'utf-8'));
+    const file = JSON.parse(readFileSync(configPath, "utf-8"));
     config = { ...config, ...file };
   }
 
   if (process.env.OPENROUTER_API_KEY) config.apiKey = process.env.OPENROUTER_API_KEY;
   if (process.env.AGENT_MODEL) config.model = process.env.AGENT_MODEL;
-  if (process.env.AGENT_MAX_STEPS) config.maxSteps = positiveNumber('AGENT_MAX_STEPS', process.env.AGENT_MAX_STEPS);
-  if (process.env.AGENT_MAX_COST) config.maxCost = positiveNumber('AGENT_MAX_COST', process.env.AGENT_MAX_COST);
+  if (process.env.AGENT_MAX_STEPS) config.maxSteps = positiveNumber("AGENT_MAX_STEPS", process.env.AGENT_MAX_STEPS);
+  if (process.env.AGENT_MAX_COST) config.maxCost = positiveNumber("AGENT_MAX_COST", process.env.AGENT_MAX_COST);
 
   config = { ...config, ...overrides };
-  if (!config.apiKey && !opts?.skipApiKey) throw new Error('OPENROUTER_API_KEY is required.');
+  if (!config.apiKey && !opts?.skipApiKey) throw new Error("OPENROUTER_API_KEY is required.");
   return config;
 }
 ```
@@ -332,15 +337,15 @@ export function loadConfig(overrides: Partial<AgentConfig> = {}, opts?: { skipAp
 Adapt imports based on checklist selections. This example includes all default-ON tools:
 
 ```typescript
-import { serverTool } from '@openrouter/agent';
-import { fileReadTool } from './file-read.js';
-import { fileWriteTool } from './file-write.js';
-import { fileEditTool } from './file-edit.js';
-import { globTool } from './glob.js';
-import { grepTool } from './grep.js';
-import { listDirTool } from './list-dir.js';
-import { shellTool } from './shell.js';
-import { myCustomTool } from './custom.js';
+import { serverTool } from "@openrouter/agent";
+import { fileReadTool } from "./file-read.js";
+import { fileWriteTool } from "./file-write.js";
+import { fileEditTool } from "./file-edit.js";
+import { globTool } from "./glob.js";
+import { grepTool } from "./grep.js";
+import { listDirTool } from "./list-dir.js";
+import { shellTool } from "./shell.js";
+import { myCustomTool } from "./custom.js";
 
 // `as const` unlocks full type inference for tool calls downstream.
 // See: https://openrouter.ai/docs/agent-sdk/call-model/tools
@@ -356,42 +361,46 @@ export const tools = [
   myCustomTool,
 
   // Server tools — executed by OpenRouter, no client implementation needed
-  serverTool({ type: 'openrouter:web_search' }),
-  serverTool({ type: 'openrouter:web_fetch' }),
-  serverTool({ type: 'openrouter:datetime', parameters: { timezone: 'UTC' } }),
+  serverTool({ type: "openrouter:web_search" }),
+  serverTool({ type: "openrouter:web_fetch" }),
+  serverTool({ type: "openrouter:datetime", parameters: { timezone: "UTC" } }),
 ] as const;
 ```
 
 ### src/agent.ts
 
 ```typescript
-import { OpenRouter } from '@openrouter/agent';
-import type { Item } from '@openrouter/agent';
-import { stepCountIs, maxCost } from '@openrouter/agent/stop-conditions';
-import type { AgentConfig } from './config.js';
-import { tools } from './tools/index.js';
+import { OpenRouter } from "@openrouter/agent";
+import type { Item } from "@openrouter/agent";
+import { stepCountIs, maxCost } from "@openrouter/agent/stop-conditions";
+import type { AgentConfig } from "./config.js";
+import { tools } from "./tools/index.js";
 
-export type ChatMessage = { role: 'user' | 'assistant' | 'system'; content: string };
+export type ChatMessage = { role: "user" | "assistant" | "system"; content: string };
 
 export type AgentEvent =
-  | { type: 'text'; delta: string }
-  | { type: 'tool_call'; name: string; callId: string; args: Record<string, unknown> }
-  | { type: 'tool_result'; name: string; callId: string; output: string }
-  | { type: 'reasoning'; delta: string }
-  | { type: 'turn_end' }
-  | { type: 'done'; usage: { inputTokens?: number; outputTokens?: number; totalTokens?: number } | null | undefined; durationMs: number };
+  | { type: "text"; delta: string }
+  | { type: "tool_call"; name: string; callId: string; args: Record<string, unknown> }
+  | { type: "tool_result"; name: string; callId: string; output: string }
+  | { type: "reasoning"; delta: string }
+  | { type: "turn_end" }
+  | {
+      type: "done";
+      usage: { inputTokens?: number; outputTokens?: number; totalTokens?: number } | null | undefined;
+      durationMs: number;
+    };
 
 export async function runAgent(
   config: AgentConfig,
   input: string | ChatMessage[],
-  options?: { onEvent?: (event: AgentEvent) => void; signal?: AbortSignal },
+  options?: { onEvent?: (event: AgentEvent) => void; signal?: AbortSignal }
 ) {
   const startedAt = Date.now();
   const client = new OpenRouter({ apiKey: config.apiKey });
 
   const result = client.callModel({
     model: config.model,
-    instructions: config.systemPrompt.replace('{cwd}', process.cwd()),
+    instructions: config.systemPrompt.replace("{cwd}", process.cwd()),
     input: input as string | Item[],
     tools,
     stopWhen: [stepCountIs(config.maxSteps), maxCost(config.maxCost)],
@@ -402,13 +411,13 @@ export async function runAgent(
   // handle the pre-aborted case: addEventListener('abort') does not fire
   // for signals already in the aborted state.
   const onAbort = () => result.cancel();
-  options?.signal?.addEventListener('abort', onAbort);
+  options?.signal?.addEventListener("abort", onAbort);
   if (options?.signal?.aborted) result.cancel();
 
   // Draining getTextStream concurrently with getItemsStream reads the
   // stream dry, so getResponse().outputText ends up empty. We accumulate
   // text deltas here as a source of truth for the final text.
-  let accumulatedText = '';
+  let accumulatedText = "";
 
   try {
     if (options?.onEvent) {
@@ -420,7 +429,7 @@ export async function runAgent(
       const streamText = async () => {
         for await (const delta of result.getTextStream()) {
           if (options?.signal?.aborted) break;
-          options.onEvent!({ type: 'text', delta });
+          options.onEvent!({ type: "text", delta });
           accumulatedText += delta;
         }
       };
@@ -428,26 +437,32 @@ export async function runAgent(
       const streamTools = async () => {
         for await (const item of result.getItemsStream()) {
           if (options?.signal?.aborted) break;
-          if (item.type === 'function_call') {
+          if (item.type === "function_call") {
             callNames.set(item.callId, item.name);
-            if (item.status === 'completed') {
-              const args = (() => { try { return item.arguments ? JSON.parse(item.arguments) : {}; } catch { return {}; } })();
-              options.onEvent!({ type: 'tool_call', name: item.name, callId: item.callId, args });
+            if (item.status === "completed") {
+              const args = (() => {
+                try {
+                  return item.arguments ? JSON.parse(item.arguments) : {};
+                } catch {
+                  return {};
+                }
+              })();
+              options.onEvent!({ type: "tool_call", name: item.name, callId: item.callId, args });
             }
-          } else if (item.type === 'function_call_output') {
-            const out = typeof item.output === 'string' ? item.output : JSON.stringify(item.output);
+          } else if (item.type === "function_call_output") {
+            const out = typeof item.output === "string" ? item.output : JSON.stringify(item.output);
             options.onEvent!({
-              type: 'tool_result',
-              name: callNames.get(item.callId) ?? 'unknown',
+              type: "tool_result",
+              name: callNames.get(item.callId) ?? "unknown",
               callId: item.callId,
-              output: out.length > 200 ? out.slice(0, 200) + '...' : out,
+              output: out.length > 200 ? out.slice(0, 200) + "..." : out,
             });
             // Signal a turn boundary; consumers (e.g. CLI text mode) can
             // render a separator. Keeps presentation out of agent.ts.
-            options.onEvent!({ type: 'turn_end' });
-          } else if (item.type === 'reasoning') {
-            const text = item.summary?.map((s: { text: string }) => s.text).join('') ?? '';
-            if (text) options.onEvent!({ type: 'reasoning', delta: text });
+            options.onEvent!({ type: "turn_end" });
+          } else if (item.type === "reasoning") {
+            const text = item.summary?.map((s: { text: string }) => s.text).join("") ?? "";
+            if (text) options.onEvent!({ type: "reasoning", delta: text });
           }
         }
       };
@@ -457,11 +472,11 @@ export async function runAgent(
 
     const response = await result.getResponse();
     const durationMs = Date.now() - startedAt;
-    const text = accumulatedText || (response.outputText ?? '');
-    options?.onEvent?.({ type: 'done', usage: response.usage, durationMs });
+    const text = accumulatedText || (response.outputText ?? "");
+    options?.onEvent?.({ type: "done", usage: response.usage, durationMs });
     return { text, usage: response.usage, output: response.output, durationMs };
   } finally {
-    options?.signal?.removeEventListener('abort', onAbort);
+    options?.signal?.removeEventListener("abort", onAbort);
   }
 }
 
@@ -474,14 +489,14 @@ export async function runAgent(
 export async function runAgentWithRetry(
   config: AgentConfig,
   input: string | ChatMessage[],
-  options?: { onEvent?: (event: AgentEvent) => void; signal?: AbortSignal; maxRetries?: number },
+  options?: { onEvent?: (event: AgentEvent) => void; signal?: AbortSignal; maxRetries?: number }
 ) {
   for (let attempt = 0, max = options?.maxRetries ?? 3; attempt <= max; attempt++) {
     let toolCallsMade = 0;
     const wrappedOptions = {
       ...options,
       onEvent: (event: AgentEvent) => {
-        if (event.type === 'tool_call') toolCallsMade++;
+        if (event.type === "tool_call") toolCallsMade++;
         options?.onEvent?.(event);
       },
     };
@@ -494,7 +509,7 @@ export async function runAgentWithRetry(
       await new Promise((r) => setTimeout(r, Math.min(1000 * 2 ** attempt, 30000)));
     }
   }
-  throw new Error('Unreachable');
+  throw new Error("Unreachable");
 }
 ```
 
@@ -503,22 +518,22 @@ export async function runAgentWithRetry(
 Headless CLI entry point — parses args, reads stdin, dispatches to the agent, and exits. See [references/entry-points.md](references/entry-points.md) for the complete implementation.
 
 ```typescript
-import { parseArgs } from 'util';
-import { loadConfig } from './config.js';
-import { runAgentWithRetry, type AgentEvent } from './agent.js';
-import { initSessionDir, saveMessage, newSessionPath } from './session.js';
+import { parseArgs } from "util";
+import { loadConfig } from "./config.js";
+import { runAgentWithRetry, type AgentEvent } from "./agent.js";
+import { initSessionDir, saveMessage, newSessionPath } from "./session.js";
 
 const { values, positionals } = parseArgs({
   args: process.argv.slice(2),
   options: {
-    prompt: { type: 'string', short: 'p' },
-    json: { type: 'boolean', short: 'j', default: false },
-    quiet: { type: 'boolean', short: 'q', default: false },
-    'no-session': { type: 'boolean', default: false },
-    model: { type: 'string', short: 'm' },
-    'max-steps': { type: 'string' },
-    'max-cost': { type: 'string' },
-    help: { type: 'boolean', short: 'h', default: false },
+    prompt: { type: "string", short: "p" },
+    json: { type: "boolean", short: "j", default: false },
+    quiet: { type: "boolean", short: "q", default: false },
+    "no-session": { type: "boolean", default: false },
+    model: { type: "string", short: "m" },
+    "max-steps": { type: "string" },
+    "max-cost": { type: "string" },
+    help: { type: "boolean", short: "h", default: false },
   },
   allowPositionals: true,
 });

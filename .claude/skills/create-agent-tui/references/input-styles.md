@@ -2,11 +2,11 @@
 
 Three input styles are available, configured via `config.display.inputStyle`. The default is `block`.
 
-| Style | Look | Raw mode? | Needs `detectBg()`? |
-|-------|------|-----------|---------------------|
-| `block` | Full-width background box with `›` prompt | Yes | Yes |
-| `bordered` | `─` horizontal lines above and below input | Yes | No |
-| `plain` | Simple `> ` caret | No (readline) | No |
+| Style      | Look                                       | Raw mode?     | Needs `detectBg()`? |
+| ---------- | ------------------------------------------ | ------------- | ------------------- |
+| `block`    | Full-width background box with `›` prompt  | Yes           | Yes                 |
+| `bordered` | `─` horizontal lines above and below input | Yes           | No                  |
+| `plain`    | Simple `> ` caret                          | No (readline) | No                  |
 
 ---
 
@@ -17,12 +17,12 @@ Full-width background-colored input area with top/bottom padding — the same lo
 ### styledReadLine()
 
 ```typescript
-const WHITE = '\x1b[97m';
-const RESET = '\x1b[0m';
+const WHITE = "\x1b[97m";
+const RESET = "\x1b[0m";
 
 function styledReadLine(bg: string): Promise<string> {
   return new Promise((resolve) => {
-    let line = '';
+    let line = "";
     let first = true;
 
     function draw() {
@@ -43,12 +43,12 @@ function styledReadLine(bg: string): Promise<string> {
     process.stdin.resume();
 
     const onData = (data: Buffer) => {
-      const str = data.toString('utf-8');
-      if (str.startsWith('\x1b')) return;
+      const str = data.toString("utf-8");
+      if (str.startsWith("\x1b")) return;
       for (let i = 0; i < str.length; i++) {
         const code = str.charCodeAt(i);
         if (code === 13 || code === 10) {
-          process.stdin.off('data', onData);
+          process.stdin.off("data", onData);
           process.stdin.setRawMode(false);
           process.stdin.pause();
           process.stdout.write(`${RESET}\n`);
@@ -67,7 +67,7 @@ function styledReadLine(bg: string): Promise<string> {
       }
     };
 
-    process.stdin.on('data', onData);
+    process.stdin.on("data", onData);
   });
 }
 ```
@@ -85,8 +85,8 @@ function styledReadLine(bg: string): Promise<string> {
 After `styledReadLine()` resolves, write a bottom BG pad and status line:
 
 ```typescript
-if (config.display.inputStyle === 'block') {
-  const cwd = process.cwd().replace(process.env.HOME ?? '', '~');
+if (config.display.inputStyle === "block") {
+  const cwd = process.cwd().replace(process.env.HOME ?? "", "~");
   process.stdout.write(`\x1b[K  ${DIM}${cwd}${RESET}\n`);
 }
 ```
@@ -110,15 +110,15 @@ Horizontal `─` lines above and below the input — the same look as Pi's codin
 ### borderedReadLine()
 
 ```typescript
-const GRAY = '\x1b[90m';
-const RESET = '\x1b[0m';
+const GRAY = "\x1b[90m";
+const RESET = "\x1b[0m";
 
 function borderedReadLine(borderColor = GRAY): Promise<string> {
   return new Promise((resolve) => {
-    let line = '';
+    let line = "";
     let first = true;
     const width = process.stdout.columns || 80;
-    const border = `${borderColor}${'─'.repeat(width)}${RESET}`;
+    const border = `${borderColor}${"─".repeat(width)}${RESET}`;
 
     function draw() {
       if (first) {
@@ -138,12 +138,12 @@ function borderedReadLine(borderColor = GRAY): Promise<string> {
     process.stdin.resume();
 
     const onData = (data: Buffer) => {
-      const str = data.toString('utf-8');
-      if (str.startsWith('\x1b')) return;
+      const str = data.toString("utf-8");
+      if (str.startsWith("\x1b")) return;
       for (let i = 0; i < str.length; i++) {
         const code = str.charCodeAt(i);
         if (code === 13 || code === 10) {
-          process.stdin.off('data', onData);
+          process.stdin.off("data", onData);
           process.stdin.setRawMode(false);
           process.stdin.pause();
           if (!line) {
@@ -166,7 +166,7 @@ function borderedReadLine(borderColor = GRAY): Promise<string> {
       }
     };
 
-    process.stdin.on('data', onData);
+    process.stdin.on("data", onData);
   });
 }
 ```
@@ -184,8 +184,8 @@ function borderedReadLine(borderColor = GRAY): Promise<string> {
 After `borderedReadLine()` resolves, write cwd status line:
 
 ```typescript
-if (config.display.inputStyle === 'bordered') {
-  const cwd = process.cwd().replace(process.env.HOME ?? '', '~');
+if (config.display.inputStyle === "bordered") {
+  const cwd = process.cwd().replace(process.env.HOME ?? "", "~");
   process.stdout.write(`  ${DIM}${cwd}${RESET}\n`);
 }
 ```
@@ -208,7 +208,7 @@ const rl = createInterface({
 function plainReadLine(): Promise<string> {
   return new Promise((resolve) => {
     rl.prompt();
-    rl.once('line', resolve);
+    rl.once("line", resolve);
   });
 }
 ```
@@ -222,11 +222,11 @@ No on-submit handling needed — readline handles the display.
 Use a `getInput()` dispatcher that switches on the configured style:
 
 ```typescript
-import { detectBg } from './terminal-bg.js';
+import { detectBg } from "./terminal-bg.js";
 
 async function main() {
   const config = loadConfig();
-  const BG_INPUT = config.display.inputStyle === 'block' ? await detectBg() : '';
+  const BG_INPUT = config.display.inputStyle === "block" ? await detectBg() : "";
 
   const rl = createInterface({
     input: process.stdin,
@@ -236,11 +236,16 @@ async function main() {
 
   async function getInput(): Promise<string> {
     switch (config.display.inputStyle) {
-      case 'block': return styledReadLine(BG_INPUT);
-      case 'bordered': return borderedReadLine();
-      case 'plain':
+      case "block":
+        return styledReadLine(BG_INPUT);
+      case "bordered":
+        return borderedReadLine();
+      case "plain":
       default:
-        return new Promise((r) => { rl.prompt(); rl.once('line', r); });
+        return new Promise((r) => {
+          rl.prompt();
+          rl.once("line", r);
+        });
     }
   }
 
@@ -249,8 +254,8 @@ async function main() {
     const trimmed = input.trim();
     if (!trimmed) continue;
 
-    if (config.display.inputStyle !== 'plain') {
-      const cwd = process.cwd().replace(process.env.HOME ?? '', '~');
+    if (config.display.inputStyle !== "plain") {
+      const cwd = process.cwd().replace(process.env.HOME ?? "", "~");
       process.stdout.write(`\x1b[K  ${DIM}${cwd}${RESET}\n`);
     }
 

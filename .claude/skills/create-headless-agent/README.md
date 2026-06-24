@@ -43,63 +43,63 @@ The skill presents an interactive checklist when invoked:
 
 ### Entry points
 
-| Entry Point | Default | Description |
-|---|---|---|
-| CLI | on | `bun run src/cli.ts "prompt"` with text, JSON, or quiet output |
-| Library module | on | `import { runAgent } from './agent'` |
-| HTTP server | off | `Bun.serve()` with SSE streaming |
-| MCP server | off | Expose agent as MCP tool |
+| Entry Point    | Default | Description                                                    |
+| -------------- | ------- | -------------------------------------------------------------- |
+| CLI            | on      | `bun run src/cli.ts "prompt"` with text, JSON, or quiet output |
+| Library module | on      | `import { runAgent } from './agent'`                           |
+| HTTP server    | off     | `Bun.serve()` with SSE streaming                               |
+| MCP server     | off     | Expose agent as MCP tool                                       |
 
 ### Server tools (executed by OpenRouter, zero client code)
 
-| Tool | Default | What it does |
-|---|---|---|
-| Web Search | on | Real-time web search via `openrouter:web_search` |
-| Web Fetch | on | Fetch text content from a URL via `openrouter:web_fetch` |
-| Datetime | on | Current date/time via `openrouter:datetime` |
-| Image Generation | off | Generate images via `openrouter:image_generation` |
+| Tool             | Default | What it does                                             |
+| ---------------- | ------- | -------------------------------------------------------- |
+| Web Search       | on      | Real-time web search via `openrouter:web_search`         |
+| Web Fetch        | on      | Fetch text content from a URL via `openrouter:web_fetch` |
+| Datetime         | on      | Current date/time via `openrouter:datetime`              |
+| Image Generation | off     | Generate images via `openrouter:image_generation`        |
 
 ### User-defined tools (your code, executed locally)
 
-| Tool | Default | What it does |
-|---|---|---|
-| File Read | on | Read files with offset/limit |
-| File Write | on | Create/overwrite files, auto-create directories |
-| File Edit | on | Search-and-replace with diff output |
-| Glob/Find | on | Find files by pattern |
-| Grep/Search | on | Search file contents by regex |
-| Directory List | on | List directory entries |
-| Shell/Bash | on | Execute commands with timeout |
-| Custom Tool Template | on | Empty skeleton for your domain |
-| JS/TS REPL | off | Persistent Bun REPL |
-| Sub-agent Spawn | off | Delegate tasks to child agents |
-| View Image | off | Read local images as base64 |
+| Tool                 | Default | What it does                                    |
+| -------------------- | ------- | ----------------------------------------------- |
+| File Read            | on      | Read files with offset/limit                    |
+| File Write           | on      | Create/overwrite files, auto-create directories |
+| File Edit            | on      | Search-and-replace with diff output             |
+| Glob/Find            | on      | Find files by pattern                           |
+| Grep/Search          | on      | Search file contents by regex                   |
+| Directory List       | on      | List directory entries                          |
+| Shell/Bash           | on      | Execute commands with timeout                   |
+| Custom Tool Template | on      | Empty skeleton for your domain                  |
+| JS/TS REPL           | off     | Persistent Bun REPL                             |
+| Sub-agent Spawn      | off     | Delegate tasks to child agents                  |
+| View Image           | off     | Read local images as base64                     |
 
 ### Agent modules (architectural components)
 
-| Module | Default | What it does |
-|---|---|---|
-| Session Persistence | on | JSONL append-only conversation log |
-| Retry with Backoff | on | Exponential backoff on 429/5xx errors |
-| Context Compaction | off | Summarize old messages when context gets long |
-| System Prompt Composition | off | Build instructions from static + dynamic context files |
-| Tool Approval Flow | off | Gate dangerous tools behind programmatic approve/reject |
-| Structured Event Logging | off | Emit JSON events to stderr or file |
-| Output Schema Validation | off | Constrain final response shape with Zod schema |
-| Webhook Notifications | off | POST to a URL on agent completion |
+| Module                    | Default | What it does                                            |
+| ------------------------- | ------- | ------------------------------------------------------- |
+| Session Persistence       | on      | JSONL append-only conversation log                      |
+| Retry with Backoff        | on      | Exponential backoff on 429/5xx errors                   |
+| Context Compaction        | off     | Summarize old messages when context gets long           |
+| System Prompt Composition | off     | Build instructions from static + dynamic context files  |
+| Tool Approval Flow        | off     | Gate dangerous tools behind programmatic approve/reject |
+| Structured Event Logging  | off     | Emit JSON events to stderr or file                      |
+| Output Schema Validation  | off     | Constrain final response shape with Zod schema          |
+| Webhook Notifications     | off     | POST to a URL on agent completion                       |
 
 ## What `@openrouter/agent` handles
 
 The generated agent doesn't reimplement the agent loop — [`@openrouter/agent`](https://www.npmjs.com/package/@openrouter/agent) handles all of that:
 
-| Concern | How `@openrouter/agent` handles it |
-|---------|-------------------------------------|
-| **Model calls** | `client.callModel()` — one call, any model on OpenRouter |
-| **Tool execution** | Automatic — define tools with `tool()` and Zod schemas, the SDK validates input and calls your `execute` function |
-| **Multi-turn** | Automatic — the SDK loops (call model → execute tools → call model) until a stop condition fires |
-| **Stop conditions** | `stepCountIs(n)`, `maxCost(amount)`, `hasToolCall(name)`, or custom functions |
-| **Streaming** | `result.getTextStream()` for text deltas, `result.getToolCallsStream()` for tool calls |
-| **Cost tracking** | `result.getResponse().usage` with input/output token counts |
+| Concern             | How `@openrouter/agent` handles it                                                                                |
+| ------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| **Model calls**     | `client.callModel()` — one call, any model on OpenRouter                                                          |
+| **Tool execution**  | Automatic — define tools with `tool()` and Zod schemas, the SDK validates input and calls your `execute` function |
+| **Multi-turn**      | Automatic — the SDK loops (call model → execute tools → call model) until a stop condition fires                  |
+| **Stop conditions** | `stepCountIs(n)`, `maxCost(amount)`, `hasToolCall(name)`, or custom functions                                     |
+| **Streaming**       | `result.getTextStream()` for text deltas, `result.getToolCallsStream()` for tool calls                            |
+| **Cost tracking**   | `result.getResponse().usage` with input/output token counts                                                       |
 
 ## Generated project structure
 
@@ -175,7 +175,7 @@ For mid-run resilience (crash-resume, cross-process approval flows), pair with t
 
 ### Structured output with `--output-schema`
 
-Constrain the final response to match a JSON Schema using Ajv. The scaffold is tolerant of markdown fences, so schemas work even when the model wraps JSON in ```` ``` ```` blocks:
+Constrain the final response to match a JSON Schema using Ajv. The scaffold is tolerant of markdown fences, so schemas work even when the model wraps JSON in ` ``` ` blocks:
 
 ```bash
 cat > report.schema.json <<'EOF'
@@ -195,6 +195,7 @@ bun run src/cli.ts --output-schema report.schema.json \
 ```
 
 Exit codes:
+
 - `0` — agent succeeded and output matched schema
 - `1` — agent or API error
 - `2` — output failed schema validation (Ajv error message on stderr, or emitted as a `validation_error` event in `--json` mode)

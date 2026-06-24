@@ -1,4 +1,4 @@
-import { describe, test, expect, mock, beforeEach, afterEach } from 'bun:test';
+import { describe, test, expect, mock, beforeEach, afterEach } from "bun:test";
 
 // We test runAgentWithRetry's semantics by replacing the inner runAgent
 // with a controllable fake. We do this by dynamically importing a test
@@ -11,12 +11,12 @@ import { describe, test, expect, mock, beforeEach, afterEach } from 'bun:test';
  */
 async function runWithRetry(
   runner: (onEvent: (e: any) => void) => Promise<{ text: string }>,
-  opts?: { onEvent?: (e: any) => void; maxRetries?: number },
+  opts?: { onEvent?: (e: any) => void; maxRetries?: number }
 ): Promise<{ text: string }> {
   for (let attempt = 0, max = opts?.maxRetries ?? 3; attempt <= max; attempt++) {
     let toolCallsMade = 0;
     const onEvent = (event: any) => {
-      if (event.type === 'tool_call') toolCallsMade++;
+      if (event.type === "tool_call") toolCallsMade++;
       opts?.onEvent?.(event);
     };
     try {
@@ -28,7 +28,7 @@ async function runWithRetry(
       // No sleep in tests
     }
   }
-  throw new Error('Unreachable');
+  throw new Error("Unreachable");
 }
 
 function apiError(status: number) {
@@ -37,70 +37,76 @@ function apiError(status: number) {
   return e;
 }
 
-describe('runAgentWithRetry', () => {
-  test('retries on 429 before tool calls and eventually succeeds', async () => {
+describe("runAgentWithRetry", () => {
+  test("retries on 429 before tool calls and eventually succeeds", async () => {
     let calls = 0;
     const runner = async () => {
       calls++;
       if (calls < 3) throw apiError(429);
-      return { text: 'ok' };
+      return { text: "ok" };
     };
     const result = await runWithRetry(runner);
     expect(calls).toBe(3);
-    expect(result.text).toBe('ok');
+    expect(result.text).toBe("ok");
   });
 
-  test('retries on 500 before tool calls and eventually succeeds', async () => {
+  test("retries on 500 before tool calls and eventually succeeds", async () => {
     let calls = 0;
     const runner = async () => {
       calls++;
       if (calls < 2) throw apiError(500);
-      return { text: 'ok' };
+      return { text: "ok" };
     };
     const result = await runWithRetry(runner);
     expect(calls).toBe(2);
   });
 
-  test('does NOT retry after a tool call has executed (prevents double-mutation)', async () => {
+  test("does NOT retry after a tool call has executed (prevents double-mutation)", async () => {
     let calls = 0;
     const runner = async (onEvent: (e: any) => void) => {
       calls++;
       // Simulate a tool call having happened before the 500 error
-      onEvent({ type: 'tool_call', name: 'file_write', callId: 'c1', args: {} });
+      onEvent({ type: "tool_call", name: "file_write", callId: "c1", args: {} });
       throw apiError(500);
     };
-    await expect(runWithRetry(runner)).rejects.toThrow('HTTP 500');
+    await expect(runWithRetry(runner)).rejects.toThrow("HTTP 500");
     expect(calls).toBe(1); // Only one attempt — no retry after tool_call
   });
 
-  test('does NOT retry non-retryable errors (400, 401, 403)', async () => {
+  test("does NOT retry non-retryable errors (400, 401, 403)", async () => {
     for (const status of [400, 401, 403, 404]) {
       let calls = 0;
-      const runner = async () => { calls++; throw apiError(status); };
+      const runner = async () => {
+        calls++;
+        throw apiError(status);
+      };
       await expect(runWithRetry(runner)).rejects.toThrow(`HTTP ${status}`);
       expect(calls).toBe(1);
     }
   });
 
-  test('gives up after maxRetries', async () => {
+  test("gives up after maxRetries", async () => {
     let calls = 0;
-    const runner = async () => { calls++; throw apiError(429); };
-    await expect(runWithRetry(runner, { maxRetries: 2 })).rejects.toThrow('HTTP 429');
+    const runner = async () => {
+      calls++;
+      throw apiError(429);
+    };
+    await expect(runWithRetry(runner, { maxRetries: 2 })).rejects.toThrow("HTTP 429");
     expect(calls).toBe(3); // initial + 2 retries
   });
 
-  test('per-attempt tool counter resets between retries', async () => {
+  test("per-attempt tool counter resets between retries", async () => {
     // First attempt: no tool calls, 500 error -> retryable
     // Second attempt: tool call + success
     let calls = 0;
     const runner = async (onEvent: (e: any) => void) => {
       calls++;
       if (calls === 1) throw apiError(500);
-      onEvent({ type: 'tool_call', name: 'shell', callId: 'c1', args: {} });
-      return { text: 'done' };
+      onEvent({ type: "tool_call", name: "shell", callId: "c1", args: {} });
+      return { text: "done" };
     };
     const result = await runWithRetry(runner);
     expect(calls).toBe(2);
-    expect(result.text).toBe('done');
+    expect(result.text).toBe("done");
   });
 });

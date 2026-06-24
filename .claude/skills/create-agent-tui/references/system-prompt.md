@@ -25,11 +25,11 @@ Guidelines:
 
 ### Why these guidelines matter
 
-| Guideline | Without it |
-|-----------|-----------|
-| "Use tools proactively" | Model asks "which file?" instead of using `list_dir` |
-| "Keep working until resolved" | Model stops after one tool call, asks if it should continue |
-| "Do not guess" | Model hallucinates file paths or function names |
+| Guideline                     | Without it                                                                 |
+| ----------------------------- | -------------------------------------------------------------------------- |
+| "Use tools proactively"       | Model asks "which file?" instead of using `list_dir`                       |
+| "Keep working until resolved" | Model stops after one tool call, asks if it should continue                |
+| "Do not guess"                | Model hallucinates file paths or function names                            |
 | "Prefer grep/glob over shell" | Model runs `find . -name ...` (slow, ignores .gitignore) instead of `glob` |
 
 ---
@@ -39,19 +39,19 @@ Guidelines:
 For advanced customization, generate a `buildSystemPrompt()` function that assembles the prompt dynamically:
 
 ```typescript
-import { readFileSync, existsSync } from 'fs';
-import { resolve } from 'path';
-import type { AgentConfig } from './config.js';
+import { readFileSync, existsSync } from "fs";
+import { resolve } from "path";
+import type { AgentConfig } from "./config.js";
 
-const CONTEXT_FILES = ['AGENTS.md', 'CLAUDE.md', '.agent-context.md'];
+const CONTEXT_FILES = ["AGENTS.md", "CLAUDE.md", ".agent-context.md"];
 
 export function buildSystemPrompt(config: AgentConfig): string {
-  let prompt = config.systemPrompt.replace('{cwd}', process.cwd());
+  let prompt = config.systemPrompt.replace("{cwd}", process.cwd());
 
   for (const filename of CONTEXT_FILES) {
     const filePath = resolve(filename);
     if (existsSync(filePath)) {
-      const content = readFileSync(filePath, 'utf-8');
+      const content = readFileSync(filePath, "utf-8");
       prompt += `\n\n## ${filename}\n\n${content}`;
     }
   }

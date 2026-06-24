@@ -1,9 +1,9 @@
 #!/usr/bin/env bun
-import { parseArgs } from 'util';
-import { readFileSync } from 'fs';
-import { loadConfig } from './config.js';
-import { runAgentWithRetry, type AgentEvent } from './agent.js';
-import { initSessionDir, saveMessage, newSessionPath } from './session.js';
+import { parseArgs } from "util";
+import { readFileSync } from "fs";
+import { loadConfig } from "./config.js";
+import { runAgentWithRetry, type AgentEvent } from "./agent.js";
+import { initSessionDir, saveMessage, newSessionPath } from "./session.js";
 
 const HELP = `
 Usage: my-agent [options] [prompt]
@@ -37,10 +37,10 @@ function extractJson(text: string): string {
   const fence = trimmed.match(/```(?:json)?\s*\n?([\s\S]*?)\n?```/);
   if (fence) return fence[1].trim();
   // First {...} or [...] block — pick whichever starts earlier
-  const objStart = trimmed.indexOf('{');
-  const objEnd = trimmed.lastIndexOf('}');
-  const arrStart = trimmed.indexOf('[');
-  const arrEnd = trimmed.lastIndexOf(']');
+  const objStart = trimmed.indexOf("{");
+  const objEnd = trimmed.lastIndexOf("}");
+  const arrStart = trimmed.indexOf("[");
+  const arrEnd = trimmed.lastIndexOf("]");
   const useArr = arrStart !== -1 && (objStart === -1 || arrStart < objStart);
   const start = useArr ? arrStart : objStart;
   const end = useArr ? arrEnd : objEnd;
@@ -53,21 +53,21 @@ async function readStdin(): Promise<string> {
   for await (const chunk of process.stdin) {
     chunks.push(chunk as Buffer);
   }
-  return Buffer.concat(chunks).toString('utf-8').trim();
+  return Buffer.concat(chunks).toString("utf-8").trim();
 }
 
 async function main() {
   const { values, positionals } = parseArgs({
     options: {
-      prompt: { type: 'string', short: 'p' },
-      json: { type: 'boolean', short: 'j', default: false },
-      quiet: { type: 'boolean', short: 'q', default: false },
-      'no-session': { type: 'boolean', default: false },
-      model: { type: 'string', short: 'm' },
-      'max-steps': { type: 'string' },
-      'max-cost': { type: 'string' },
-      'output-schema': { type: 'string' },
-      help: { type: 'boolean', short: 'h', default: false },
+      prompt: { type: "string", short: "p" },
+      json: { type: "boolean", short: "j", default: false },
+      quiet: { type: "boolean", short: "q", default: false },
+      "no-session": { type: "boolean", default: false },
+      model: { type: "string", short: "m" },
+      "max-steps": { type: "string" },
+      "max-cost": { type: "string" },
+      "output-schema": { type: "string" },
+      help: { type: "boolean", short: "h", default: false },
     },
     allowPositionals: true,
     strict: true,
@@ -79,7 +79,7 @@ async function main() {
   }
 
   // Resolve prompt from flag, positional arg, or stdin
-  let prompt = values.prompt || positionals[0] || '';
+  let prompt = values.prompt || positionals[0] || "";
   if (!prompt && !process.stdin.isTTY) {
     prompt = await readStdin();
   }
@@ -91,13 +91,13 @@ async function main() {
 
   // Output mode is resolved eagerly (without loading config) so the error path
   // can respect --json / --quiet even if setup (loadConfig, session dir) fails.
-  const outputMode: 'text' | 'json' | 'quiet' = values.json ? 'json' : values.quiet ? 'quiet' : 'text';
+  const outputMode: "text" | "json" | "quiet" = values.json ? "json" : values.quiet ? "quiet" : "text";
 
   function reportError(err: any) {
     const message = err?.message ?? String(err);
-    if (outputMode === 'quiet') return;
-    if (outputMode === 'json') {
-      process.stdout.write(JSON.stringify({ type: 'error', message }) + '\n');
+    if (outputMode === "quiet") return;
+    if (outputMode === "json") {
+      process.stdout.write(JSON.stringify({ type: "error", message }) + "\n");
       return;
     }
     process.stderr.write(`Error: ${message}\n`);
@@ -107,63 +107,63 @@ async function main() {
     // Build config overrides from CLI flags
     const overrides: Record<string, unknown> = { outputMode };
     if (values.model) overrides.model = values.model;
-    if (values['max-steps']) {
-      const n = Number(values['max-steps']);
-      if (!Number.isFinite(n) || n <= 0) throw new Error(`--max-steps must be a positive number, got: ${values['max-steps']}`);
+    if (values["max-steps"]) {
+      const n = Number(values["max-steps"]);
+      if (!Number.isFinite(n) || n <= 0) throw new Error(`--max-steps must be a positive number, got: ${values["max-steps"]}`);
       overrides.maxSteps = n;
     }
-    if (values['max-cost']) {
-      const n = Number(values['max-cost']);
-      if (!Number.isFinite(n) || n <= 0) throw new Error(`--max-cost must be a positive number, got: ${values['max-cost']}`);
+    if (values["max-cost"]) {
+      const n = Number(values["max-cost"]);
+      if (!Number.isFinite(n) || n <= 0) throw new Error(`--max-cost must be a positive number, got: ${values["max-cost"]}`);
       overrides.maxCost = n;
     }
 
     const config = loadConfig(overrides);
-    const noSession = values['no-session'];
+    const noSession = values["no-session"];
     let sessionPath: string | undefined;
 
     // Session setup
     if (config.sessionEnabled && !noSession) {
       initSessionDir(config.sessionDir);
       sessionPath = newSessionPath(config.sessionDir);
-      saveMessage(sessionPath, { role: 'user', content: prompt });
+      saveMessage(sessionPath, { role: "user", content: prompt });
     }
 
     let hasEmittedText = false;
     const result = await runAgentWithRetry(config, prompt, {
       onEvent: (event: AgentEvent) => {
-        if (outputMode === 'quiet') return;
+        if (outputMode === "quiet") return;
 
-        if (outputMode === 'json') {
-          process.stdout.write(JSON.stringify(event) + '\n');
+        if (outputMode === "json") {
+          process.stdout.write(JSON.stringify(event) + "\n");
           return;
         }
 
         // Text mode: stream text deltas to stdout, insert a newline at turn
         // boundaries so multi-turn responses don't run together visually.
-        if (event.type === 'text') {
+        if (event.type === "text") {
           process.stdout.write(event.delta);
           hasEmittedText = true;
-        } else if (event.type === 'turn_end' && hasEmittedText) {
-          process.stdout.write('\n');
+        } else if (event.type === "turn_end" && hasEmittedText) {
+          process.stdout.write("\n");
         }
       },
     });
 
     // Final newline for text mode
-    if (outputMode === 'text' && result.text) {
-      process.stdout.write('\n');
+    if (outputMode === "text" && result.text) {
+      process.stdout.write("\n");
     }
 
     // Save assistant response to session
     if (sessionPath) {
-      saveMessage(sessionPath, { role: 'assistant', content: result.text });
+      saveMessage(sessionPath, { role: "assistant", content: result.text });
     }
 
     // Validate output against JSON Schema (exit code 2 on failure)
-    if (values['output-schema']) {
-      const schema = JSON.parse(readFileSync(values['output-schema'] as string, 'utf-8'));
-      const { default: Ajv } = await import('ajv');
+    if (values["output-schema"]) {
+      const schema = JSON.parse(readFileSync(values["output-schema"] as string, "utf-8"));
+      const { default: Ajv } = await import("ajv");
       const ajv = new Ajv({ allErrors: true });
       const validate = ajv.compile(schema);
 
@@ -175,14 +175,14 @@ async function main() {
       try {
         parsed = JSON.parse(extracted);
       } catch {
-        if (outputMode !== 'quiet') process.stderr.write('Error: agent output is not valid JSON\n');
+        if (outputMode !== "quiet") process.stderr.write("Error: agent output is not valid JSON\n");
         process.exit(2);
       }
       if (!validate(parsed)) {
         const errors = ajv.errorsText(validate.errors);
-        if (outputMode === 'json') {
-          process.stdout.write(JSON.stringify({ type: 'validation_error', errors }) + '\n');
-        } else if (outputMode !== 'quiet') {
+        if (outputMode === "json") {
+          process.stdout.write(JSON.stringify({ type: "validation_error", errors }) + "\n");
+        } else if (outputMode !== "quiet") {
           process.stderr.write(`Error: output failed schema validation: ${errors}\n`);
         }
         process.exit(2);
@@ -199,18 +199,19 @@ async function main() {
 // Pre-parse output mode from argv so the top-level error handler can format
 // errors correctly even if parseArgs() or readStdin() throws before main()'s
 // own try/catch is entered (e.g. on an unknown flag).
-function fallbackOutputMode(): 'text' | 'json' | 'quiet' {
+function fallbackOutputMode(): "text" | "json" | "quiet" {
   const argv = process.argv.slice(2);
-  if (argv.includes('--json') || argv.includes('-j')) return 'json';
-  if (argv.includes('--quiet') || argv.includes('-q')) return 'quiet';
-  return 'text';
+  if (argv.includes("--json") || argv.includes("-j")) return "json";
+  if (argv.includes("--quiet") || argv.includes("-q")) return "quiet";
+  return "text";
 }
 
 main().catch((err) => {
   const mode = fallbackOutputMode();
   const message = err?.message ?? String(err);
-  if (mode === 'quiet') { /* silent */ }
-  else if (mode === 'json') process.stdout.write(JSON.stringify({ type: 'error', message }) + '\n');
+  if (mode === "quiet") {
+    /* silent */
+  } else if (mode === "json") process.stdout.write(JSON.stringify({ type: "error", message }) + "\n");
   else process.stderr.write(`Error: ${message}\n`);
   process.exit(1);
 });

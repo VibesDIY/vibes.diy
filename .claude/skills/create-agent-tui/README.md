@@ -53,11 +53,11 @@ There's also a **hidden** mode that suppresses tool output entirely.
 
 Three input styles are available via `display.inputStyle` or `--input`:
 
-| Style | Description |
-|-------|-------------|
-| **`block`** | Full-width background-colored input box with `›` prompt — adapts to your terminal's color scheme using OSC 11 background detection |
-| **`bordered`** | Horizontal `─` lines above and below the input — works on any terminal without background detection |
-| **`plain`** | Simple `> ` readline prompt — no raw mode, no escape sequences |
+| Style          | Description                                                                                                                        |
+| -------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| **`block`**    | Full-width background-colored input box with `›` prompt — adapts to your terminal's color scheme using OSC 11 background detection |
+| **`bordered`** | Horizontal `─` lines above and below the input — works on any terminal without background detection                                |
+| **`plain`**    | Simple `> ` readline prompt — no raw mode, no escape sequences                                                                     |
 
 **Block** (default) — full-width background input box that adapts to your terminal theme:
 
@@ -113,58 +113,58 @@ The skill presents an interactive checklist when invoked. You pick what you need
 
 ### Server tools (executed by OpenRouter, zero client code)
 
-| Tool | Default | What it does |
-|------|---------|-------------|
-| Web Search | on | Real-time web search via `openrouter:web_search` |
-| Datetime | on | Current date/time via `openrouter:datetime` |
-| Image Generation | off | Generate images via `openrouter:image_generation` |
+| Tool             | Default | What it does                                      |
+| ---------------- | ------- | ------------------------------------------------- |
+| Web Search       | on      | Real-time web search via `openrouter:web_search`  |
+| Datetime         | on      | Current date/time via `openrouter:datetime`       |
+| Image Generation | off     | Generate images via `openrouter:image_generation` |
 
 ### User-defined tools (your code, executed locally)
 
-| Tool | Default | What it does |
-|------|---------|-------------|
-| File Read | on | Read files with offset/limit, detect images |
-| File Write | on | Create/overwrite files, auto-create directories |
-| File Edit | on | Search-and-replace with diff output |
-| Glob/Find | on | Find files by pattern |
-| Grep/Search | on | Search file contents by regex |
-| Directory List | on | List directory entries |
-| Shell/Bash | on | Execute commands with timeout |
-| JS REPL | off | Persistent Node.js environment |
-| Sub-agent Spawn | off | Delegate tasks to child agents |
-| Plan/Todo | off | Track multi-step task progress |
-| Request User Input | off | Ask structured questions |
-| Web Fetch | off | Fetch and extract text from URLs |
-| View Image | off | Read local images as base64 |
-| Custom Tool Template | on | Empty skeleton for your domain |
+| Tool                 | Default | What it does                                    |
+| -------------------- | ------- | ----------------------------------------------- |
+| File Read            | on      | Read files with offset/limit, detect images     |
+| File Write           | on      | Create/overwrite files, auto-create directories |
+| File Edit            | on      | Search-and-replace with diff output             |
+| Glob/Find            | on      | Find files by pattern                           |
+| Grep/Search          | on      | Search file contents by regex                   |
+| Directory List       | on      | List directory entries                          |
+| Shell/Bash           | on      | Execute commands with timeout                   |
+| JS REPL              | off     | Persistent Node.js environment                  |
+| Sub-agent Spawn      | off     | Delegate tasks to child agents                  |
+| Plan/Todo            | off     | Track multi-step task progress                  |
+| Request User Input   | off     | Ask structured questions                        |
+| Web Fetch            | off     | Fetch and extract text from URLs                |
+| View Image           | off     | Read local images as base64                     |
+| Custom Tool Template | on      | Empty skeleton for your domain                  |
 
 ### Harness modules (architectural components)
 
-| Module | Default | What it does |
-|--------|---------|-------------|
-| Session Persistence | on | JSONL append-only conversation log |
-| Context Compaction | off | Summarize old messages when context gets long |
-| System Prompt Composition | off | Build instructions from static + dynamic context files |
-| Tool Permissions | off | Gate dangerous tools behind user approval |
-| Structured Logging | off | Emit events for tool calls, API requests, errors |
+| Module                    | Default | What it does                                           |
+| ------------------------- | ------- | ------------------------------------------------------ |
+| Session Persistence       | on      | JSONL append-only conversation log                     |
+| Context Compaction        | off     | Summarize old messages when context gets long          |
+| System Prompt Composition | off     | Build instructions from static + dynamic context files |
+| Tool Permissions          | off     | Gate dangerous tools behind user approval              |
+| Structured Logging        | off     | Emit events for tool calls, API requests, errors       |
 
 ## What `@openrouter/agent` handles
 
 The generated TUI doesn't reimplement the agent loop — [`@openrouter/agent`](https://www.npmjs.com/package/@openrouter/agent) handles all of that:
 
-| Concern | How `@openrouter/agent` handles it |
-|---------|-------------------------------------|
-| **Model calls** | `client.callModel()` — one call, any model on OpenRouter |
-| **Tool execution** | Automatic — define tools with `tool()` and Zod schemas, the SDK validates input and calls your `execute` function |
-| **Multi-turn** | Automatic — the SDK loops (call model → execute tools → call model) until a stop condition fires |
-| **Stop conditions** | `stepCountIs(n)`, `maxCost(amount)`, `hasToolCall(name)`, or custom functions |
-| **Streaming** | `result.getTextStream()` for text deltas, `result.getToolCallsStream()` for tool calls |
-| **Cost tracking** | `result.getResponse().usage` with input/output token counts |
-| **Dynamic parameters** | Model, temperature, and other params can be functions of conversation context |
-| **Shared context** | Type-safe shared state across tools via `sharedContextSchema` |
-| **Turn lifecycle** | `onTurnStart` / `onTurnEnd` callbacks for logging, compaction triggers, etc. |
+| Concern                | How `@openrouter/agent` handles it                                                                                |
+| ---------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| **Model calls**        | `client.callModel()` — one call, any model on OpenRouter                                                          |
+| **Tool execution**     | Automatic — define tools with `tool()` and Zod schemas, the SDK validates input and calls your `execute` function |
+| **Multi-turn**         | Automatic — the SDK loops (call model → execute tools → call model) until a stop condition fires                  |
+| **Stop conditions**    | `stepCountIs(n)`, `maxCost(amount)`, `hasToolCall(name)`, or custom functions                                     |
+| **Streaming**          | `result.getTextStream()` for text deltas, `result.getToolCallsStream()` for tool calls                            |
+| **Cost tracking**      | `result.getResponse().usage` with input/output token counts                                                       |
+| **Dynamic parameters** | Model, temperature, and other params can be functions of conversation context                                     |
+| **Shared context**     | Type-safe shared state across tools via `sharedContextSchema`                                                     |
+| **Turn lifecycle**     | `onTurnStart` / `onTurnEnd` callbacks for logging, compaction triggers, etc.                                      |
 
-The TUI you build provides everything *around* that loop: configuration, tool definitions, session persistence, the entry point (CLI or API server), and any modules you select from the checklist.
+The TUI you build provides everything _around_ that loop: configuration, tool definitions, session persistence, the entry point (CLI or API server), and any modules you select from the checklist.
 
 ## Generated project structure
 

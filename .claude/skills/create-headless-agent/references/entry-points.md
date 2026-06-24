@@ -18,27 +18,26 @@ The primary entry point. Accepts a prompt via `--prompt`, positional argument, o
 
 The `#!/usr/bin/env bun` shebang on line 1 is required so the OS can execute the file directly when it's invoked via the `bin` symlink created by `bun link`. Without it, the linked binary fails with "Exec format error".
 
-```typescript
+````typescript
 #!/usr/bin/env bun
-import { parseArgs } from 'util';
-import { readFileSync } from 'fs';
-import { loadConfig } from './config.js';
-import { runAgentWithRetry, type AgentEvent } from './agent.js';
-import { initSessionDir, saveMessage, newSessionPath } from './session.js';
+import { parseArgs } from "util";
+import { readFileSync } from "fs";
+import { loadConfig } from "./config.js";
+import { runAgentWithRetry, type AgentEvent } from "./agent.js";
+import { initSessionDir, saveMessage, newSessionPath } from "./session.js";
 
 // ── Argument parsing ────────────────────────────────────────────────
 // Pre-scan argv for output mode so the catch below can format errors
 // (unknown flag, bad schema path, etc.) according to --json / --quiet.
 
 const argv = Bun.argv.slice(2);
-const preMode: 'text' | 'json' | 'quiet' =
-  argv.includes('--json') || argv.includes('-j') ? 'json' :
-  argv.includes('--quiet') || argv.includes('-q') ? 'quiet' : 'text';
+const preMode: "text" | "json" | "quiet" =
+  argv.includes("--json") || argv.includes("-j") ? "json" : argv.includes("--quiet") || argv.includes("-q") ? "quiet" : "text";
 
 function reportError(err: any): never {
   const message = err?.message ?? String(err);
-  if (preMode === 'json') process.stdout.write(JSON.stringify({ type: 'error', message }) + '\n');
-  else if (preMode !== 'quiet') process.stderr.write(`Error: ${message}\n`);
+  if (preMode === "json") process.stdout.write(JSON.stringify({ type: "error", message }) + "\n");
+  else if (preMode !== "quiet") process.stderr.write(`Error: ${message}\n`);
   process.exit(1);
 }
 
@@ -48,15 +47,15 @@ try {
   const parsed = parseArgs({
     args: argv,
     options: {
-      prompt:        { type: 'string',  short: 'p' },
-      json:          { type: 'boolean', short: 'j', default: false },
-      quiet:         { type: 'boolean', short: 'q', default: false },
-      'no-session':  { type: 'boolean', default: false },
-      model:         { type: 'string',  short: 'm' },
-      'max-steps':   { type: 'string' },
-      'max-cost':    { type: 'string' },
-      'output-schema': { type: 'string' },
-      help:          { type: 'boolean', short: 'h', default: false },
+      prompt: { type: "string", short: "p" },
+      json: { type: "boolean", short: "j", default: false },
+      quiet: { type: "boolean", short: "q", default: false },
+      "no-session": { type: "boolean", default: false },
+      model: { type: "string", short: "m" },
+      "max-steps": { type: "string" },
+      "max-cost": { type: "string" },
+      "output-schema": { type: "string" },
+      help: { type: "boolean", short: "h", default: false },
     },
     allowPositionals: true,
     strict: true,
@@ -108,7 +107,7 @@ if (!prompt && !process.stdin.isTTY) {
 }
 
 if (!prompt) {
-  console.error('Error: no prompt provided. Use --prompt, a positional arg, or pipe to stdin.');
+  console.error("Error: no prompt provided. Use --prompt, a positional arg, or pipe to stdin.");
   process.exit(1);
 }
 
@@ -117,23 +116,23 @@ if (!prompt) {
 const config = loadConfig();
 
 if (values.model) config.model = values.model;
-if (values['max-steps']) {
-  const n = Number(values['max-steps']);
-  if (!Number.isFinite(n) || n <= 0) throw new Error(`--max-steps must be a positive number, got: ${values['max-steps']}`);
+if (values["max-steps"]) {
+  const n = Number(values["max-steps"]);
+  if (!Number.isFinite(n) || n <= 0) throw new Error(`--max-steps must be a positive number, got: ${values["max-steps"]}`);
   config.maxSteps = n;
 }
-if (values['max-cost']) {
-  const n = Number(values['max-cost']);
-  if (!Number.isFinite(n) || n <= 0) throw new Error(`--max-cost must be a positive number, got: ${values['max-cost']}`);
+if (values["max-cost"]) {
+  const n = Number(values["max-cost"]);
+  if (!Number.isFinite(n) || n <= 0) throw new Error(`--max-cost must be a positive number, got: ${values["max-cost"]}`);
   config.maxCost = n;
 }
 
 // ── Load output schema (optional) ──────────────────────────────────
 
 let outputSchema: Record<string, unknown> | undefined;
-if (values['output-schema']) {
+if (values["output-schema"]) {
   try {
-    const raw = readFileSync(values['output-schema'], 'utf-8');
+    const raw = readFileSync(values["output-schema"], "utf-8");
     outputSchema = JSON.parse(raw);
   } catch (err: any) {
     console.error(`Error: could not load output schema: ${err.message}`);
@@ -144,10 +143,10 @@ if (values['output-schema']) {
 // ── Session setup ───────────────────────────────────────────────────
 
 let sessionPath: string | undefined;
-if (config.sessionEnabled && !values['no-session']) {
+if (config.sessionEnabled && !values["no-session"]) {
   initSessionDir(config.sessionDir);
   sessionPath = newSessionPath(config.sessionDir);
-  saveMessage(sessionPath, { role: 'user', content: prompt });
+  saveMessage(sessionPath, { role: "user", content: prompt });
 }
 
 // ── Run agent ───────────────────────────────────────────────────────
@@ -159,14 +158,14 @@ try {
     onEvent: (event: AgentEvent) => {
       if (values.json) {
         // NDJSON mode: write every event as a JSON line (including turn_end and done)
-        process.stdout.write(JSON.stringify(event) + '\n');
+        process.stdout.write(JSON.stringify(event) + "\n");
       } else if (!values.quiet) {
         // Text mode: stream text deltas, insert newline at turn boundaries
-        if (event.type === 'text') {
+        if (event.type === "text") {
           process.stdout.write(event.delta);
           hasEmittedText = true;
-        } else if (event.type === 'turn_end' && hasEmittedText) {
-          process.stdout.write('\n');
+        } else if (event.type === "turn_end" && hasEmittedText) {
+          process.stdout.write("\n");
         }
       }
     },
@@ -174,17 +173,17 @@ try {
 
   // In text mode, ensure output ends with a newline
   if (!values.json && !values.quiet) {
-    process.stdout.write('\n');
+    process.stdout.write("\n");
   }
 
   // Persist assistant response
   if (sessionPath) {
-    saveMessage(sessionPath, { role: 'assistant', content: result.text });
+    saveMessage(sessionPath, { role: "assistant", content: result.text });
   }
 
   // Validate output against schema if provided. Install: `bun add ajv`.
   if (outputSchema) {
-    const { default: Ajv } = await import('ajv');
+    const { default: Ajv } = await import("ajv");
     const ajv = new Ajv({ allErrors: true });
     const validate = ajv.compile(outputSchema);
 
@@ -194,10 +193,10 @@ try {
       const trimmed = text.trim();
       const fence = trimmed.match(/```(?:json)?\s*\n?([\s\S]*?)\n?```/);
       if (fence) return fence[1].trim();
-      const objStart = trimmed.indexOf('{');
-      const objEnd = trimmed.lastIndexOf('}');
-      const arrStart = trimmed.indexOf('[');
-      const arrEnd = trimmed.lastIndexOf(']');
+      const objStart = trimmed.indexOf("{");
+      const objEnd = trimmed.lastIndexOf("}");
+      const arrStart = trimmed.indexOf("[");
+      const arrEnd = trimmed.lastIndexOf("]");
       const useArr = arrStart !== -1 && (objStart === -1 || arrStart < objStart);
       const start = useArr ? arrStart : objStart;
       const end = useArr ? arrEnd : objEnd;
@@ -209,7 +208,7 @@ try {
     try {
       parsed = JSON.parse(extractJson(result.text));
     } catch {
-      console.error('Error: agent output is not valid JSON (output-schema was specified)');
+      console.error("Error: agent output is not valid JSON (output-schema was specified)");
       process.exit(2);
     }
     if (!validate(parsed)) {
@@ -222,22 +221,22 @@ try {
 } catch (err: any) {
   if (!values.quiet) {
     if (values.json) {
-      process.stdout.write(JSON.stringify({ type: 'error', message: err.message }) + '\n');
+      process.stdout.write(JSON.stringify({ type: "error", message: err.message }) + "\n");
     } else {
       console.error(`Error: ${err.message}`);
     }
   }
   process.exit(1);
 }
-```
+````
 
 ### Exit codes
 
-| Code | Meaning |
-|------|---------|
-| 0 | Success |
-| 1 | Agent or API error |
-| 2 | Output validation error (schema mismatch) |
+| Code | Meaning                                   |
+| ---- | ----------------------------------------- |
+| 0    | Success                                   |
+| 1    | Agent or API error                        |
+| 2    | Output validation error (schema mismatch) |
 
 ### Usage
 
@@ -290,19 +289,19 @@ A `Bun.serve()` HTTP server that exposes the agent over a REST API with optional
 ### src/server.ts
 
 ```typescript
-import { loadConfig } from './config.js';
-import { runAgentWithRetry, type AgentEvent } from './agent.js';
+import { loadConfig } from "./config.js";
+import { runAgentWithRetry, type AgentEvent } from "./agent.js";
 
 const config = loadConfig();
-const PORT = parseInt(process.env.PORT ?? '3000', 10);
-const ALLOWED_ORIGIN = process.env.ALLOWED_ORIGIN ?? '*';
+const PORT = parseInt(process.env.PORT ?? "3000", 10);
+const ALLOWED_ORIGIN = process.env.ALLOWED_ORIGIN ?? "*";
 const API_SECRET = process.env.AGENT_API_SECRET;
 const MAX_BODY = 1 * 1024 * 1024; // 1 MB
 
 if (!API_SECRET) {
   console.warn(
-    'WARNING: AGENT_API_SECRET is not set. All requests will be rejected with 401.\n' +
-    'Set AGENT_API_SECRET=<secret> and send `Authorization: Bearer <secret>` on every request.',
+    "WARNING: AGENT_API_SECRET is not set. All requests will be rejected with 401.\n" +
+      "Set AGENT_API_SECRET=<secret> and send `Authorization: Bearer <secret>` on every request."
   );
 }
 
@@ -310,21 +309,21 @@ if (!API_SECRET) {
 
 function corsHeaders(): Record<string, string> {
   return {
-    'Access-Control-Allow-Origin': ALLOWED_ORIGIN,
-    'Access-Control-Allow-Methods': 'POST, GET, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    "Access-Control-Allow-Origin": ALLOWED_ORIGIN,
+    "Access-Control-Allow-Methods": "POST, GET, OPTIONS",
+    "Access-Control-Allow-Headers": "Content-Type, Authorization",
   };
 }
 
 function json(data: unknown, status = 200): Response {
   return new Response(JSON.stringify(data), {
     status,
-    headers: { 'Content-Type': 'application/json', ...corsHeaders() },
+    headers: { "Content-Type": "application/json", ...corsHeaders() },
   });
 }
 
 function unauthorized(): Response {
-  return json({ error: 'Unauthorized' }, 401);
+  return json({ error: "Unauthorized" }, 401);
 }
 
 // Fail-closed auth: require AGENT_API_SECRET to be set. The HTTP server
@@ -332,7 +331,7 @@ function unauthorized(): Response {
 // is an access-control footgun. See OWASP A01:2021.
 function checkAuth(req: Request): boolean {
   if (!API_SECRET) return false;
-  return req.headers.get('Authorization') === `Bearer ${API_SECRET}`;
+  return req.headers.get("Authorization") === `Bearer ${API_SECRET}`;
 }
 
 // ── Server ──────────────────────────────────────────────────────────
@@ -347,30 +346,30 @@ Bun.serve({
     const url = new URL(req.url);
 
     // CORS preflight
-    if (req.method === 'OPTIONS') {
+    if (req.method === "OPTIONS") {
       return new Response(null, { status: 204, headers: corsHeaders() });
     }
 
     // Health check
-    if (req.method === 'GET' && url.pathname === '/health') {
+    if (req.method === "GET" && url.pathname === "/health") {
       return json({ ok: true });
     }
 
     // Chat endpoint
-    if (req.method === 'POST' && url.pathname === '/chat') {
+    if (req.method === "POST" && url.pathname === "/chat") {
       if (!checkAuth(req)) return unauthorized();
 
       // Enforce body size limit
-      const contentLength = parseInt(req.headers.get('Content-Length') ?? '0', 10);
+      const contentLength = parseInt(req.headers.get("Content-Length") ?? "0", 10);
       if (contentLength > MAX_BODY) {
-        return json({ error: 'Request body too large' }, 413);
+        return json({ error: "Request body too large" }, 413);
       }
 
       let body: { prompt?: string; messages?: Array<{ role: string; content: string }>; stream?: boolean };
       try {
         body = await req.json();
       } catch {
-        return json({ error: 'Invalid JSON' }, 400);
+        return json({ error: "Invalid JSON" }, 400);
       }
 
       const { prompt, messages = [], stream = false } = body;
@@ -389,16 +388,16 @@ Bun.serve({
             try {
               const result = await runAgentWithRetry(config, input, {
                 onEvent: (event: AgentEvent) => {
-                  if (event.type === 'text') {
-                    const data = JSON.stringify({ type: 'text', content: event.delta });
+                  if (event.type === "text") {
+                    const data = JSON.stringify({ type: "text", content: event.delta });
                     controller.enqueue(encoder.encode(`data: ${data}\n\n`));
                   }
                 },
               });
-              const done = JSON.stringify({ type: 'done', usage: result.usage });
+              const done = JSON.stringify({ type: "done", usage: result.usage });
               controller.enqueue(encoder.encode(`data: ${done}\n\n`));
             } catch (err: any) {
-              const error = JSON.stringify({ type: 'error', message: err.message });
+              const error = JSON.stringify({ type: "error", message: err.message });
               controller.enqueue(encoder.encode(`data: ${error}\n\n`));
             } finally {
               controller.close();
@@ -408,9 +407,9 @@ Bun.serve({
 
         return new Response(readable, {
           headers: {
-            'Content-Type': 'text/event-stream',
-            'Cache-Control': 'no-cache',
-            Connection: 'keep-alive',
+            "Content-Type": "text/event-stream",
+            "Cache-Control": "no-cache",
+            Connection: "keep-alive",
             ...corsHeaders(),
           },
         });
@@ -426,7 +425,7 @@ Bun.serve({
       }
     }
 
-    return json({ error: 'Not found' }, 404);
+    return json({ error: "Not found" }, 404);
   },
 });
 
@@ -490,25 +489,25 @@ Expose the agent as an MCP tool so other agents (including Claude Code) can call
 ### src/mcp-server.ts
 
 ```typescript
-import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
-import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
-import { z } from 'zod';
-import { loadConfig } from './config.js';
-import { runAgentWithRetry } from './agent.js';
+import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
+import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
+import { z } from "zod";
+import { loadConfig } from "./config.js";
+import { runAgentWithRetry } from "./agent.js";
 
 const config = loadConfig();
 
 const server = new McpServer({
-  name: config.name ?? 'headless-agent',
-  version: '1.0.0',
+  name: config.name ?? "headless-agent",
+  version: "1.0.0",
 });
 
 server.tool(
-  'run_agent',
-  'Send a prompt to the agent and get a text response',
+  "run_agent",
+  "Send a prompt to the agent and get a text response",
   {
-    prompt: z.string().describe('The prompt to send to the agent'),
-    model: z.string().optional().describe('Override the model (e.g. anthropic/claude-sonnet-4)'),
+    prompt: z.string().describe("The prompt to send to the agent"),
+    model: z.string().optional().describe("Override the model (e.g. anthropic/claude-sonnet-4)"),
   },
   async ({ prompt, model }) => {
     const runConfig = { ...config };
@@ -517,15 +516,15 @@ server.tool(
     try {
       const result = await runAgentWithRetry(runConfig, prompt);
       return {
-        content: [{ type: 'text' as const, text: result.text }],
+        content: [{ type: "text" as const, text: result.text }],
       };
     } catch (err: any) {
       return {
-        content: [{ type: 'text' as const, text: `Error: ${err.message}` }],
+        content: [{ type: "text" as const, text: `Error: ${err.message}` }],
         isError: true,
       };
     }
-  },
+  }
 );
 
 const transport = new StdioServerTransport();

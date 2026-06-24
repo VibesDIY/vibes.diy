@@ -13,13 +13,13 @@ The endpoint aggregates Artificial Analysis and Design Arena benchmark scores. I
 
 ## Query Parameters
 
-| Parameter | Values | Description |
-|---|---|---|
-| `source` | `artificial-analysis`, `design-arena` | Benchmark source. Omitting it returns all sources. The source determines row shape. |
-| `task_type` | `coding`, `intelligence`, `agentic` | Workload filter. For Artificial Analysis, maps to the corresponding index. For Design Arena, maps to the matching category. |
-| `arena` | `models`, `builders`, `agents` | Design Arena only. Defaults to `models` when `source=design-arena`. |
-| `category` | string | Design Arena category such as `codecategories`, `uicomponent`, `gamedev`, `3d`, `dataviz`, `image`, `video`, or `svg`. Omitting it returns all categories. |
-| `max_results` | integer >= 1 | Maximum number of items to return. Omitting it returns all matching results. |
+| Parameter     | Values                                | Description                                                                                                                                                |
+| ------------- | ------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `source`      | `artificial-analysis`, `design-arena` | Benchmark source. Omitting it returns all sources. The source determines row shape.                                                                        |
+| `task_type`   | `coding`, `intelligence`, `agentic`   | Workload filter. For Artificial Analysis, maps to the corresponding index. For Design Arena, maps to the matching category.                                |
+| `arena`       | `models`, `builders`, `agents`        | Design Arena only. Defaults to `models` when `source=design-arena`.                                                                                        |
+| `category`    | string                                | Design Arena category such as `codecategories`, `uicomponent`, `gamedev`, `3d`, `dataviz`, `image`, `video`, or `svg`. Omitting it returns all categories. |
+| `max_results` | integer >= 1                          | Maximum number of items to return. Omitting it returns all matching results.                                                                               |
 
 ## Response Shape
 
@@ -81,12 +81,12 @@ Higher `elo` and `win_rate` are better. `avg_generation_time_ms` is performance 
 
 ## Errors
 
-| Status | Meaning | Recovery |
-|---|---|---|
-| `400` | Invalid parameters or malformed input | Check enum spelling and incompatible Design Arena-only parameters. |
-| `401` | Missing or invalid API key | Set `OPENROUTER_API_KEY` or pass an `Authorization: Bearer <key>` header. |
-| `429` | Rate limit exceeded | Wait before retrying; avoid repeated broad pulls. |
-| `500` | Server error | Retry later or narrow filters. |
+| Status | Meaning                               | Recovery                                                                  |
+| ------ | ------------------------------------- | ------------------------------------------------------------------------- |
+| `400`  | Invalid parameters or malformed input | Check enum spelling and incompatible Design Arena-only parameters.        |
+| `401`  | Missing or invalid API key            | Set `OPENROUTER_API_KEY` or pass an `Authorization: Bearer <key>` header. |
+| `429`  | Rate limit exceeded                   | Wait before retrying; avoid repeated broad pulls.                         |
+| `500`  | Server error                          | Retry later or narrow filters.                                            |
 
 ## Reporting Guidance
 

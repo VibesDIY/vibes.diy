@@ -1,20 +1,22 @@
-import { tool } from '@openrouter/agent/tool';
-import { z } from 'zod';
-import { readFile, writeFile } from 'fs/promises';
+import { tool } from "@openrouter/agent/tool";
+import { z } from "zod";
+import { readFile, writeFile } from "fs/promises";
 
 export const fileEditTool = tool({
-  name: 'file_edit',
-  description: 'Apply search-and-replace edits to a file',
+  name: "file_edit",
+  description: "Apply search-and-replace edits to a file",
   inputSchema: z.object({
-    path: z.string().describe('Absolute path to the file'),
-    edits: z.array(z.object({
-      old_text: z.string().describe('Text to find (must appear exactly once)'),
-      new_text: z.string().describe('Replacement text'),
-    })),
+    path: z.string().describe("Absolute path to the file"),
+    edits: z.array(
+      z.object({
+        old_text: z.string().describe("Text to find (must appear exactly once)"),
+        new_text: z.string().describe("Replacement text"),
+      })
+    ),
   }),
   execute: async ({ path, edits }) => {
     try {
-      let content = await readFile(path, 'utf-8');
+      let content = await readFile(path, "utf-8");
       const original = content;
 
       for (const edit of edits) {
@@ -24,10 +26,10 @@ export const fileEditTool = tool({
         content = content.replace(edit.old_text, edit.new_text);
       }
 
-      await writeFile(path, content, 'utf-8');
+      await writeFile(path, content, "utf-8");
 
-      const oldLines = original.split('\n');
-      const newLines = content.split('\n');
+      const oldLines = original.split("\n");
+      const newLines = content.split("\n");
       const diff = [`--- ${path}`, `+++ ${path}`];
       let i = 0;
       while (i < oldLines.length || i < newLines.length) {
@@ -38,7 +40,7 @@ export const fileEditTool = tool({
         i++;
       }
 
-      return { edited: true, path, diff: diff.join('\n') };
+      return { edited: true, path, diff: diff.join("\n") };
     } catch (err: any) {
       return { error: err.message };
     }

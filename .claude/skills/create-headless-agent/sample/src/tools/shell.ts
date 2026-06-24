@@ -1,24 +1,24 @@
-import { tool } from '@openrouter/agent/tool';
-import { z } from 'zod';
+import { tool } from "@openrouter/agent/tool";
+import { z } from "zod";
 
 const MAX_LINES = 2000;
 const MAX_BYTES = 256 * 1024;
 
 export const shellTool = tool({
-  name: 'shell',
-  description: 'Execute a shell command and return output',
+  name: "shell",
+  description: "Execute a shell command and return output",
   inputSchema: z.object({
-    command: z.string().describe('Shell command to execute'),
-    timeout: z.number().optional().describe('Timeout in seconds (default: 120)'),
+    command: z.string().describe("Shell command to execute"),
+    timeout: z.number().optional().describe("Timeout in seconds (default: 120)"),
   }),
   execute: async ({ command, timeout }) => {
     const timeoutMs = (timeout ?? 120) * 1000;
-    const shell = process.env.SHELL || '/bin/bash';
+    const shell = process.env.SHELL || "/bin/bash";
 
     try {
-      const proc = Bun.spawn([shell, '-c', command], {
-        stdout: 'pipe',
-        stderr: 'pipe',
+      const proc = Bun.spawn([shell, "-c", command], {
+        stdout: "pipe",
+        stderr: "pipe",
       });
 
       let timedOut = false;
@@ -30,13 +30,8 @@ export const shellTool = tool({
       // Backgrounded children can keep stdout/stderr pipes open even after
       // proc.kill() (they inherit the fds). Race the drain against a second
       // timeout so the tool can return instead of hanging.
-      const drain = Promise.all([
-        new Response(proc.stdout).text(),
-        new Response(proc.stderr).text(),
-      ]);
-      const drainTimeout = new Promise<[string, string]>((res) =>
-        setTimeout(() => res(['', '']), timeoutMs + 2000),
-      );
+      const drain = Promise.all([new Response(proc.stdout).text(), new Response(proc.stderr).text()]);
+      const drainTimeout = new Promise<[string, string]>((res) => setTimeout(() => res(["", ""]), timeoutMs + 2000));
       const [stdoutBuf, stderrBuf] = await Promise.race([drain, drainTimeout]);
       clearTimeout(killTimer);
 
@@ -45,10 +40,12 @@ export const shellTool = tool({
       // grace period and fall back to -1 exit code if it still doesn't.
       const exitCode = await Promise.race([
         proc.exited,
-        new Promise<number>((res) => setTimeout(() => {
-          proc.kill('SIGKILL');
-          setTimeout(() => res(-1), 500);
-        }, 2000)),
+        new Promise<number>((res) =>
+          setTimeout(() => {
+            proc.kill("SIGKILL");
+            setTimeout(() => res(-1), 500);
+          }, 2000)
+        ),
       ]);
       let output = (stdoutBuf + stderrBuf).trim();
 
@@ -58,10 +55,10 @@ export const shellTool = tool({
       }
 
       // Truncate by line count
-      const lines = output.split('\n');
+      const lines = output.split("\n");
       const truncated = lines.length > MAX_LINES;
       if (truncated) {
-        output = lines.slice(-MAX_LINES).join('\n');
+        output = lines.slice(-MAX_LINES).join("\n");
       }
 
       return {

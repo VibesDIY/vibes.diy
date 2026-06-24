@@ -23,8 +23,8 @@ JSONL (newline-delimited JSON) append-only log for crash-safe conversation persi
 ### src/session.ts
 
 ```typescript
-import { appendFileSync, mkdirSync, readdirSync, existsSync } from 'fs';
-import { join } from 'path';
+import { appendFileSync, mkdirSync, readdirSync, existsSync } from "fs";
+import { join } from "path";
 
 type Message = { role: string; content: string; [key: string]: unknown };
 
@@ -42,7 +42,7 @@ export function saveMessage(sessionPath: string, message: Message): void {
     timestamp: new Date().toISOString(),
     message,
   };
-  appendFileSync(sessionPath, JSON.stringify(entry) + '\n');
+  appendFileSync(sessionPath, JSON.stringify(entry) + "\n");
 }
 
 export async function loadSession(sessionPath: string): Promise<Message[]> {
@@ -51,7 +51,7 @@ export async function loadSession(sessionPath: string): Promise<Message[]> {
 
   const text = await file.text();
   return text
-    .split('\n')
+    .split("\n")
     .filter(Boolean)
     .map((line) => {
       try {
@@ -67,12 +67,12 @@ export async function loadSession(sessionPath: string): Promise<Message[]> {
 export function listSessions(dir: string): string[] {
   if (!existsSync(dir)) return [];
   return readdirSync(dir)
-    .filter((f) => f.endsWith('.jsonl'))
+    .filter((f) => f.endsWith(".jsonl"))
     .sort();
 }
 
 export function newSessionPath(dir: string): string {
-  const id = new Date().toISOString().replace(/[:.]/g, '-');
+  const id = new Date().toISOString().replace(/[:.]/g, "-");
   return join(dir, `${id}.jsonl`);
 }
 ```
@@ -82,26 +82,26 @@ export function newSessionPath(dir: string): string {
 In `cli.ts`, wire session persistence around the agent call:
 
 ```typescript
-import { initSessionDir, loadSession, saveMessage, newSessionPath } from './session.js';
+import { initSessionDir, loadSession, saveMessage, newSessionPath } from "./session.js";
 
 // At startup
 initSessionDir(config.sessionDir);
 const sessionPath = args.resume
-  ? args.resume  // path to existing .jsonl
+  ? args.resume // path to existing .jsonl
   : newSessionPath(config.sessionDir);
 
 const messages = await loadSession(sessionPath);
 
 // Before calling the agent
-messages.push({ role: 'user', content: input });
-saveMessage(sessionPath, { role: 'user', content: input });
+messages.push({ role: "user", content: input });
+saveMessage(sessionPath, { role: "user", content: input });
 
 // Pass full history as input
 const result = await runAgent(config, messages, { onEvent });
 
 // After agent responds
-messages.push({ role: 'assistant', content: result.text });
-saveMessage(sessionPath, { role: 'assistant', content: result.text });
+messages.push({ role: "assistant", content: result.text });
+saveMessage(sessionPath, { role: "assistant", content: result.text });
 ```
 
 For single-shot CLI mode, session persistence is optional. Skip it when the agent runs once and exits, or enable it for audit trails:
@@ -110,9 +110,9 @@ For single-shot CLI mode, session persistence is optional. Skip it when the agen
 if (config.sessionDir) {
   initSessionDir(config.sessionDir);
   const sessionPath = newSessionPath(config.sessionDir);
-  saveMessage(sessionPath, { role: 'user', content: input });
+  saveMessage(sessionPath, { role: "user", content: input });
   // ... run agent ...
-  saveMessage(sessionPath, { role: 'assistant', content: result.text });
+  saveMessage(sessionPath, { role: "assistant", content: result.text });
 }
 ```
 
@@ -125,7 +125,7 @@ When conversation history grows too long, summarize older messages to fit within
 ### src/compaction.ts
 
 ```typescript
-import { OpenRouter } from '@openrouter/agent';
+import { OpenRouter } from "@openrouter/agent";
 
 type Message = { role: string; content: string; [key: string]: unknown };
 
@@ -141,7 +141,7 @@ interface CompactionConfig {
 const DEFAULTS: CompactionConfig = {
   threshold: 40,
   keepRecent: 10,
-  model: 'openai/gpt-4.1-mini',
+  model: "openai/gpt-4.1-mini",
 };
 
 /**
@@ -165,14 +165,17 @@ function findSafeBoundary(messages: Message[], cut: number): number {
 
     // Orphaned tool result at the boundary — step past it so the pair
     // stays together on the summarized side.
-    if (msg.role === 'tool') { cut++; continue; }
+    if (msg.role === "tool") {
+      cut++;
+      continue;
+    }
 
     // Assistant with unresolved tool_calls — step past it and any
     // trailing tool results from the same turn.
     const toolCalls = (msg as { tool_calls?: unknown[] }).tool_calls;
-    if (msg.role === 'assistant' && Array.isArray(toolCalls) && toolCalls.length > 0) {
+    if (msg.role === "assistant" && Array.isArray(toolCalls) && toolCalls.length > 0) {
       cut++;
-      while (cut < messages.length && messages[cut].role === 'tool') cut++;
+      while (cut < messages.length && messages[cut].role === "tool") cut++;
       continue;
     }
 
@@ -184,7 +187,7 @@ function findSafeBoundary(messages: Message[], cut: number): number {
 export async function compactMessages(
   client: OpenRouter,
   messages: Message[],
-  config: Partial<CompactionConfig> = {},
+  config: Partial<CompactionConfig> = {}
 ): Promise<Message[]> {
   const opts = { ...DEFAULTS, ...config };
 
@@ -204,16 +207,13 @@ export async function compactMessages(
   const summaryResult = client.callModel({
     model: opts.model,
     instructions:
-      'Summarize the following conversation concisely. Preserve key facts, decisions, file paths mentioned, and tool results. Output only the summary.',
-    input: toSummarize.map((m) => `${m.role}: ${m.content}`).join('\n\n'),
+      "Summarize the following conversation concisely. Preserve key facts, decisions, file paths mentioned, and tool results. Output only the summary.",
+    input: toSummarize.map((m) => `${m.role}: ${m.content}`).join("\n\n"),
   });
 
   const summary = await summaryResult.getText();
 
-  return [
-    { role: 'system', content: `[Conversation summary]\n${summary}` },
-    ...toKeep,
-  ];
+  return [{ role: "system", content: `[Conversation summary]\n${summary}` }, ...toKeep];
 }
 ```
 
@@ -222,7 +222,7 @@ export async function compactMessages(
 In `agent.ts`, compact before calling the model:
 
 ```typescript
-import { compactMessages } from './compaction.js';
+import { compactMessages } from "./compaction.js";
 
 export async function runAgent(config: AgentConfig, input: string | Message[], options?) {
   const client = new OpenRouter({ apiKey: config.apiKey });
@@ -250,7 +250,7 @@ export async function runAgent(config: AgentConfig, input: string | Message[], o
 
 ## Tool Result Offload
 
-Compaction handles context pressure *after* it builds up. This module prevents oversized tool results from entering context in the first place: when a tool returns more than a configurable byte budget, the full output is persisted to disk and the model sees only a preview plus a pointer. The model can retrieve more via a companion `read_persisted_result` tool.
+Compaction handles context pressure _after_ it builds up. This module prevents oversized tool results from entering context in the first place: when a tool returns more than a configurable byte budget, the full output is persisted to disk and the model sees only a preview plus a pointer. The model can retrieve more via a companion `read_persisted_result` tool.
 
 This is the same pattern Claude Code uses for oversized tool results (persist to disk, replace with ~2KB preview) and the same pattern Arize's Alyx uses for large JSON payloads (compressed preview + server-side copy the model drills into). A single oversized `grep` or `shell` output can otherwise consume tens of thousands of tokens on the very first turn.
 
@@ -270,8 +270,8 @@ You generally do **not** need to offload `file_read` (it already paginates), `fi
 An inline helper: each tool calls `offloadIfLarge(result, ctx, opts?)` at the end of its `execute`. If the serialized result is under the byte budget, it passes through unchanged; otherwise it gets written to disk and replaced with a preview + pointer. This pattern doesn't require refactoring the existing `tool({...})` exports in `references/tools.md` — the check just lives inside the tool's own `execute` body.
 
 ```typescript
-import { resolve, sep } from 'path';
-import { mkdirSync, existsSync } from 'fs';
+import { resolve, sep } from "path";
+import { mkdirSync, existsSync } from "fs";
 
 export interface OffloadConfig {
   /** Results larger than this are persisted. Default 50,000 bytes — matches Claude Code's per-tool cap. */
@@ -285,7 +285,7 @@ export interface OffloadConfig {
 export const OFFLOAD_DEFAULTS: OffloadConfig = {
   maxInlineBytes: 50_000,
   previewBytes: 2_000,
-  storageDir: '.agent-state/tool-results',
+  storageDir: ".agent-state/tool-results",
 };
 
 /**
@@ -299,16 +299,19 @@ export const OFFLOAD_DEFAULTS: OffloadConfig = {
 export async function offloadIfLarge<T>(
   result: T,
   ctx: { callId?: string } | undefined,
-  opts: Partial<OffloadConfig> = {},
-): Promise<T | {
-  preview: string;
-  truncated: true;
-  totalBytes: number;
-  persistedAt: string;
-  hint: string;
-}> {
+  opts: Partial<OffloadConfig> = {}
+): Promise<
+  | T
+  | {
+      preview: string;
+      truncated: true;
+      totalBytes: number;
+      persistedAt: string;
+      hint: string;
+    }
+> {
   const config = { ...OFFLOAD_DEFAULTS, ...opts };
-  const serialized = typeof result === 'string' ? result : JSON.stringify(result);
+  const serialized = typeof result === "string" ? result : JSON.stringify(result);
 
   if (serialized.length <= config.maxInlineBytes) return result;
 
@@ -344,13 +347,13 @@ No plain-object refactor needed. Add one line at the return sites of tools whose
 
 ```typescript
 // src/tools/shell.ts
-import { tool } from '@openrouter/agent/tool';
-import { z } from 'zod';
-import { offloadIfLarge } from '../tool-offload.js';
+import { tool } from "@openrouter/agent/tool";
+import { z } from "zod";
+import { offloadIfLarge } from "../tool-offload.js";
 
 export const shellTool = tool({
-  name: 'shell',
-  description: 'Execute a shell command and return stdout+stderr',
+  name: "shell",
+  description: "Execute a shell command and return stdout+stderr",
   inputSchema: z.object({
     command: z.string(),
     timeout: z.number().optional(),
@@ -358,7 +361,7 @@ export const shellTool = tool({
   execute: async ({ command, timeout }, ctx) => {
     // ... existing spawn + capture + truncate logic ...
     const result = { output, exitCode };
-    return offloadIfLarge(result, ctx);   // <-- one line, at the return
+    return offloadIfLarge(result, ctx); // <-- one line, at the return
   },
 });
 ```
@@ -372,20 +375,19 @@ The companion tool — the model needs a way to retrieve more of the persisted p
 It's exported as a factory so the storage dir can be passed in and wired from the same place that configures `offloadIfLarge`:
 
 ```typescript
-import { tool } from '@openrouter/agent/tool';
-import { z } from 'zod';
-import { isInsideStorageDir } from '../tool-offload.js';
+import { tool } from "@openrouter/agent/tool";
+import { z } from "zod";
+import { isInsideStorageDir } from "../tool-offload.js";
 
 const DEFAULT_LIMIT = 10_000;
 
 export function createReadPersistedResultTool(storageDir: string) {
   return tool({
-    name: 'read_persisted_result',
-    description:
-      `Read a section of a previously-persisted oversized tool result. The path comes from a prior tool response\'s persistedAt field and must be inside the offload storage directory (${storageDir}). Supports offset/limit pagination; when output is truncated, the hint field tells you how to continue.`,
+    name: "read_persisted_result",
+    description: `Read a section of a previously-persisted oversized tool result. The path comes from a prior tool response\'s persistedAt field and must be inside the offload storage directory (${storageDir}). Supports offset/limit pagination; when output is truncated, the hint field tells you how to continue.`,
     inputSchema: z.object({
-      path: z.string().describe('Path returned in a previous tool result\'s persistedAt field'),
-      offset: z.number().optional().describe('Byte offset to start from (default 0)'),
+      path: z.string().describe("Path returned in a previous tool result's persistedAt field"),
+      offset: z.number().optional().describe("Byte offset to start from (default 0)"),
       limit: z.number().optional().describe(`Max bytes to return (default ${DEFAULT_LIMIT})`),
     }),
     execute: async ({ path, offset = 0, limit = DEFAULT_LIMIT }) => {
@@ -408,7 +410,7 @@ export function createReadPersistedResultTool(storageDir: string) {
           }),
         };
       } catch (err: any) {
-        if (err.code === 'ENOENT') return { error: `Persisted result not found: ${path}` };
+        if (err.code === "ENOENT") return { error: `Persisted result not found: ${path}` };
         return { error: err.message };
       }
     },
@@ -421,16 +423,16 @@ export function createReadPersistedResultTool(storageDir: string) {
 Use a single `storageDir` constant so `offloadIfLarge` inside each tool and `createReadPersistedResultTool` in the registry agree on the location:
 
 ```typescript
-import { serverTool } from '@openrouter/agent';
-import { OFFLOAD_DEFAULTS } from '../tool-offload.js';
-import { createReadPersistedResultTool } from './read-persisted-result.js';
-import { fileReadTool } from './file-read.js';
-import { fileWriteTool } from './file-write.js';
-import { fileEditTool } from './file-edit.js';
-import { globTool } from './glob.js';
-import { grepTool } from './grep.js';     // unchanged from references/tools.md
-import { shellTool } from './shell.js';   // unchanged — just calls offloadIfLarge inside execute
-import { listDirTool } from './list-dir.js';
+import { serverTool } from "@openrouter/agent";
+import { OFFLOAD_DEFAULTS } from "../tool-offload.js";
+import { createReadPersistedResultTool } from "./read-persisted-result.js";
+import { fileReadTool } from "./file-read.js";
+import { fileWriteTool } from "./file-write.js";
+import { fileEditTool } from "./file-edit.js";
+import { globTool } from "./glob.js";
+import { grepTool } from "./grep.js"; // unchanged from references/tools.md
+import { shellTool } from "./shell.js"; // unchanged — just calls offloadIfLarge inside execute
+import { listDirTool } from "./list-dir.js";
 
 const STORAGE_DIR = OFFLOAD_DEFAULTS.storageDir;
 
@@ -440,10 +442,10 @@ export const tools = [
   fileEditTool,
   globTool,
   listDirTool,
-  grepTool,                              // large tree → disk via offloadIfLarge
-  shellTool,                             // noisy build/test output → disk
-  createReadPersistedResultTool(STORAGE_DIR),  // so the model can drill into persisted payloads
-  serverTool({ type: 'openrouter:web_search' }),
+  grepTool, // large tree → disk via offloadIfLarge
+  shellTool, // noisy build/test output → disk
+  createReadPersistedResultTool(STORAGE_DIR), // so the model can drill into persisted payloads
+  serverTool({ type: "openrouter:web_search" }),
 ] as const;
 ```
 
@@ -470,7 +472,7 @@ Build the system prompt from a static base plus dynamically loaded context files
 ### src/system-prompt.ts
 
 ```typescript
-import { resolve } from 'path';
+import { resolve } from "path";
 
 interface PromptConfig {
   /** Base system prompt */
@@ -493,7 +495,7 @@ export async function composeSystemPrompt(config: PromptConfig): Promise<string>
     }
   }
 
-  return parts.join('\n');
+  return parts.join("\n");
 }
 ```
 
@@ -502,11 +504,11 @@ export async function composeSystemPrompt(config: PromptConfig): Promise<string>
 In `agent.ts`, use as the `instructions` parameter:
 
 ```typescript
-import { composeSystemPrompt } from './system-prompt.js';
+import { composeSystemPrompt } from "./system-prompt.js";
 
 const instructions = await composeSystemPrompt({
-  base: config.systemPrompt.replace('{cwd}', process.cwd()),
-  contextFiles: ['AGENTS.md', 'CLAUDE.md', '.agent-context.md'],
+  base: config.systemPrompt.replace("{cwd}", process.cwd()),
+  contextFiles: ["AGENTS.md", "CLAUDE.md", ".agent-context.md"],
   projectDir: process.cwd(),
 });
 
@@ -532,39 +534,43 @@ Gate dangerous tools behind programmatic approval. Unlike the TUI version, headl
 Set `requireApproval` on individual tool definitions. It accepts `true`, `false`, or a function that receives the tool arguments and returns a boolean:
 
 ```typescript
-import { tool } from '@openrouter/agent/tool';
-import { z } from 'zod';
+import { tool } from "@openrouter/agent/tool";
+import { z } from "zod";
 
 export const shellTool = tool({
-  name: 'shell',
-  description: 'Execute a shell command',
+  name: "shell",
+  description: "Execute a shell command",
   inputSchema: z.object({
     command: z.string(),
     timeout: z.number().optional(),
   }),
-  requireApproval: true,  // always requires approval
-  execute: async ({ command, timeout }) => { /* ... */ },
+  requireApproval: true, // always requires approval
+  execute: async ({ command, timeout }) => {
+    /* ... */
+  },
 });
 ```
 
 ### Conditional approval with a predicate
 
 ```typescript
-export function createShellTool(approvalPolicy: 'always' | 'never' | 'dangerous-only') {
+export function createShellTool(approvalPolicy: "always" | "never" | "dangerous-only") {
   return tool({
-    name: 'shell',
-    description: 'Execute a shell command',
+    name: "shell",
+    description: "Execute a shell command",
     inputSchema: z.object({
       command: z.string(),
       timeout: z.number().optional(),
     }),
-    requireApproval: approvalPolicy === 'always'
-      ? true
-      : approvalPolicy === 'never'
-        ? false
-        : ({ command }: { command: string }) =>
-            /\brm\b|sudo|chmod|chown|\bdd\b|mkfs|curl.*\|.*sh/.test(command),
-    execute: async ({ command, timeout }) => { /* ... */ },
+    requireApproval:
+      approvalPolicy === "always"
+        ? true
+        : approvalPolicy === "never"
+          ? false
+          : ({ command }: { command: string }) => /\brm\b|sudo|chmod|chown|\bdd\b|mkfs|curl.*\|.*sh/.test(command),
+    execute: async ({ command, timeout }) => {
+      /* ... */
+    },
   });
 }
 ```
@@ -576,7 +582,7 @@ Since there is no terminal prompt, wire approvals to an external system. The `on
 ```typescript
 // src/approval.ts
 
-export type ApprovalDecision = 'approve' | 'deny';
+export type ApprovalDecision = "approve" | "deny";
 
 export interface ApprovalRequest {
   toolName: string;
@@ -584,27 +590,22 @@ export interface ApprovalRequest {
 }
 
 /** Auto-approve tools on the allow-list, deny everything else */
-export function createAutoApprover(
-  allowList: string[] = [],
-): (req: ApprovalRequest) => ApprovalDecision {
+export function createAutoApprover(allowList: string[] = []): (req: ApprovalRequest) => ApprovalDecision {
   const allowed = new Set(allowList);
-  return (req) => (allowed.has(req.toolName) ? 'approve' : 'deny');
+  return (req) => (allowed.has(req.toolName) ? "approve" : "deny");
 }
 
 /** Approve via HTTP endpoint (e.g., a Slack bot, admin dashboard) */
-export async function httpApproval(
-  endpoint: string,
-  req: ApprovalRequest,
-): Promise<ApprovalDecision> {
+export async function httpApproval(endpoint: string, req: ApprovalRequest): Promise<ApprovalDecision> {
   const response = await fetch(endpoint, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify(req),
     signal: AbortSignal.timeout(30_000),
   });
-  if (!response.ok) return 'deny';
+  if (!response.ok) return "deny";
   const body = (await response.json()) as { decision?: string };
-  return body.decision === 'approve' ? 'approve' : 'deny';
+  return body.decision === "approve" ? "approve" : "deny";
 }
 ```
 
@@ -642,21 +643,21 @@ The SDK's [`StateAccessor`](https://openrouter.ai/docs/agent-sdk/call-model/tool
 
 ### How it differs from Session Persistence
 
-| Concern | [Session Persistence](#session-persistence) | StateAccessor |
-|---|---|---|
-| What it stores | User/assistant content only | Full `ConversationState`: messages, pending tool calls, unsent tool results, status |
-| Purpose | Audit log, debugging | Live agent state, resumable |
-| Format | Append-only JSONL | Read/write JSON (typically one file per session) |
-| Wire-up | `saveMessage()` in `cli.ts` | Passed to `callModel({ state: ... })` |
-| Required for approval? | No | Yes, if approvals span processes |
+| Concern                | [Session Persistence](#session-persistence) | StateAccessor                                                                       |
+| ---------------------- | ------------------------------------------- | ----------------------------------------------------------------------------------- |
+| What it stores         | User/assistant content only                 | Full `ConversationState`: messages, pending tool calls, unsent tool results, status |
+| Purpose                | Audit log, debugging                        | Live agent state, resumable                                                         |
+| Format                 | Append-only JSONL                           | Read/write JSON (typically one file per session)                                    |
+| Wire-up                | `saveMessage()` in `cli.ts`                 | Passed to `callModel({ state: ... })`                                               |
+| Required for approval? | No                                          | Yes, if approvals span processes                                                    |
 
 ### src/state.ts
 
 ```typescript
-import type { StateAccessor, ConversationState } from '@openrouter/agent';
-import { createInitialState } from '@openrouter/agent';
-import { mkdirSync, existsSync } from 'fs';
-import { resolve } from 'path';
+import type { StateAccessor, ConversationState } from "@openrouter/agent";
+import { createInitialState } from "@openrouter/agent";
+import { mkdirSync, existsSync } from "fs";
+import { resolve } from "path";
 
 export function fileStateAccessor(stateDir: string, sessionId: string): StateAccessor {
   mkdirSync(stateDir, { recursive: true });
@@ -682,7 +683,7 @@ export function fileStateAccessor(stateDir: string, sessionId: string): StateAcc
 export async function loadOrCreateState(
   stateDir: string,
   sessionId: string,
-  initialInput: string,
+  initialInput: string
 ): Promise<{ accessor: StateAccessor; state: ConversationState }> {
   const accessor = fileStateAccessor(stateDir, sessionId);
   const existing = await accessor.load();
@@ -696,11 +697,11 @@ export async function loadOrCreateState(
 ```typescript
 const result = client.callModel({
   model: config.model,
-  instructions: config.systemPrompt.replace('{cwd}', process.cwd()),
+  instructions: config.systemPrompt.replace("{cwd}", process.cwd()),
   input: input as string | Item[],
   tools,
   stopWhen: [stepCountIs(config.maxSteps), maxCost(config.maxCost)],
-  state: stateAccessor,  // <-- persists state across runs
+  state: stateAccessor, // <-- persists state across runs
 });
 ```
 
@@ -726,17 +727,19 @@ await runAgent(config, '', { onEvent: ... });
 
 ```typescript
 // Run 1: agent generates a tool call requiring approval, state.status = 'awaiting_approval'
-await runAgent(config, 'Delete all .bak files', { /* ... */ });
+await runAgent(config, "Delete all .bak files", {
+  /* ... */
+});
 
 // Out of process: human reviews state.pendingToolCalls, decides
 const pending = (await accessor.load())!.pendingToolCalls;
-console.log('Pending:', pending);  // => [{ id: 'call_1', name: 'shell', ... }]
+console.log("Pending:", pending); // => [{ id: 'call_1', name: 'shell', ... }]
 
 // Run 2: resume with approvals
 await client.callModel({
   // ... same config ...
   state: accessor,
-  approveToolCalls: ['call_1'],   // or rejectToolCalls: ['call_1']
+  approveToolCalls: ["call_1"], // or rejectToolCalls: ['call_1']
 });
 ```
 
@@ -758,14 +761,9 @@ Emit typed JSON events to stderr or a log file for observability. Headless agent
 ### src/logger.ts
 
 ```typescript
-import { appendFileSync } from 'fs';
+import { appendFileSync } from "fs";
 
-type EventType =
-  | 'agent_start'
-  | 'agent_end'
-  | 'tool_call'
-  | 'tool_result'
-  | 'error';
+type EventType = "agent_start" | "agent_end" | "tool_call" | "tool_result" | "error";
 
 interface AgentEvent {
   type: EventType;
@@ -800,13 +798,13 @@ export class AgentLogger {
 
 /** Write JSON lines to stderr (default for headless agents) */
 export function stderrJsonHandler(event: AgentEvent): void {
-  process.stderr.write(JSON.stringify(event) + '\n');
+  process.stderr.write(JSON.stringify(event) + "\n");
 }
 
 /** Append JSON lines to a file. Use `appendFileSync` — Bun.write truncates. */
 export function fileLogHandler(logPath: string): EventHandler {
   return (event: AgentEvent) => {
-    appendFileSync(logPath, JSON.stringify(event) + '\n');
+    appendFileSync(logPath, JSON.stringify(event) + "\n");
   };
 }
 ```
@@ -816,24 +814,24 @@ export function fileLogHandler(logPath: string): EventHandler {
 In `cli.ts`, create a logger and pass it to `runAgent`:
 
 ```typescript
-import { AgentLogger, stderrJsonHandler } from './logger.js';
+import { AgentLogger, stderrJsonHandler } from "./logger.js";
 
 const logger = new AgentLogger();
 logger.on(stderrJsonHandler);
 
-logger.emit('agent_start', { model: config.model, input });
+logger.emit("agent_start", { model: config.model, input });
 
 const result = await runAgent(config, input, {
   onEvent: (e) => {
-    if (e.type === 'tool_call') {
-      logger.emit('tool_call', { name: e.name, callId: e.callId, args: e.args });
-    } else if (e.type === 'tool_result') {
-      logger.emit('tool_result', { name: e.name, callId: e.callId, output: e.output });
+    if (e.type === "tool_call") {
+      logger.emit("tool_call", { name: e.name, callId: e.callId, args: e.args });
+    } else if (e.type === "tool_result") {
+      logger.emit("tool_result", { name: e.name, callId: e.callId, output: e.output });
     }
   },
 });
 
-logger.emit('agent_end', {
+logger.emit("agent_end", {
   usage: result.usage,
   outputLength: result.text.length,
 });
@@ -842,9 +840,9 @@ logger.emit('agent_end', {
 For file logging (useful in server/queue-worker mode):
 
 ```typescript
-import { fileLogHandler } from './logger.js';
+import { fileLogHandler } from "./logger.js";
 
-logger.on(fileLogHandler('./agent-events.jsonl'));
+logger.on(fileLogHandler("./agent-events.jsonl"));
 ```
 
 ---
@@ -855,8 +853,8 @@ Constrain the agent's final text response to match a JSON schema. Inspired by Co
 
 ### src/output-schema.ts
 
-```typescript
-import { z } from 'zod';
+````typescript
+import { z } from "zod";
 
 interface ValidationSuccess<T> {
   valid: true;
@@ -874,13 +872,10 @@ type ValidationResult<T> = ValidationSuccess<T> | ValidationFailure;
  * Validate the agent's text output against a Zod schema.
  * Extracts JSON from the text (supports fenced code blocks) and validates.
  */
-export function validateOutput<T>(
-  text: string,
-  schema: z.ZodType<T>,
-): ValidationResult<T> {
+export function validateOutput<T>(text: string, schema: z.ZodType<T>): ValidationResult<T> {
   const json = extractJson(text);
   if (json === null) {
-    return { valid: false, errors: ['No JSON found in agent output'] };
+    return { valid: false, errors: ["No JSON found in agent output"] };
   }
 
   let parsed: unknown;
@@ -897,9 +892,7 @@ export function validateOutput<T>(
 
   return {
     valid: false,
-    errors: result.error.issues.map(
-      (i) => `${i.path.join('.')}: ${i.message}`,
-    ),
+    errors: result.error.issues.map((i) => `${i.path.join(".")}: ${i.message}`),
   };
 }
 
@@ -932,7 +925,7 @@ export async function loadSchemaFromFile(path: string): Promise<z.ZodType> {
 function jsonSchemaToZod(schema: Record<string, unknown>): z.ZodType {
   const type = schema.type as string | undefined;
 
-  if (type === 'object') {
+  if (type === "object") {
     const properties = (schema.properties ?? {}) as Record<string, Record<string, unknown>>;
     const required = new Set((schema.required ?? []) as string[]);
     const shape: Record<string, z.ZodType> = {};
@@ -945,24 +938,24 @@ function jsonSchemaToZod(schema: Record<string, unknown>): z.ZodType {
     return z.object(shape).passthrough();
   }
 
-  if (type === 'array') {
+  if (type === "array") {
     const items = schema.items as Record<string, unknown> | undefined;
     return z.array(items ? jsonSchemaToZod(items) : z.unknown());
   }
 
-  if (type === 'string') {
+  if (type === "string") {
     let s = z.string();
     if (schema.enum) return z.enum(schema.enum as [string, ...string[]]);
     return s;
   }
 
-  if (type === 'number' || type === 'integer') return z.number();
-  if (type === 'boolean') return z.boolean();
-  if (type === 'null') return z.null();
+  if (type === "number" || type === "integer") return z.number();
+  if (type === "boolean") return z.boolean();
+  if (type === "null") return z.null();
 
   return z.unknown();
 }
-```
+````
 
 ### Integration
 
@@ -973,35 +966,35 @@ Add a `--output-schema` CLI flag and validate after the agent completes:
 const args = parseArgs({
   args: Bun.argv.slice(2),
   options: {
-    prompt: { type: 'string', short: 'p' },
-    'output-schema': { type: 'string', short: 's' },
+    prompt: { type: "string", short: "p" },
+    "output-schema": { type: "string", short: "s" },
     // ...
   },
 });
 
 // After runAgent returns:
-if (args.values['output-schema']) {
-  const { validateOutput, loadSchemaFromFile } = await import('./output-schema.js');
-  const schema = await loadSchemaFromFile(args.values['output-schema']);
+if (args.values["output-schema"]) {
+  const { validateOutput, loadSchemaFromFile } = await import("./output-schema.js");
+  const schema = await loadSchemaFromFile(args.values["output-schema"]);
   const validation = validateOutput(result.text, schema);
 
   if (!validation.valid) {
     // Optionally retry with validation errors included in the prompt
     const retryInput = [
       ...messages,
-      { role: 'user', content:
-        `Your previous output did not match the required schema.\n` +
-        `Errors:\n${validation.errors.map((e) => `- ${e}`).join('\n')}\n\n` +
-        `Please output valid JSON matching the schema. Output ONLY the JSON, no other text.`
+      {
+        role: "user",
+        content:
+          `Your previous output did not match the required schema.\n` +
+          `Errors:\n${validation.errors.map((e) => `- ${e}`).join("\n")}\n\n` +
+          `Please output valid JSON matching the schema. Output ONLY the JSON, no other text.`,
       },
     ];
     const retryResult = await runAgent(config, retryInput, { onEvent });
     const retryValidation = validateOutput(retryResult.text, schema);
 
     if (!retryValidation.valid) {
-      process.stderr.write(
-        JSON.stringify({ error: 'output_schema_validation_failed', errors: retryValidation.errors }) + '\n',
-      );
+      process.stderr.write(JSON.stringify({ error: "output_schema_validation_failed", errors: retryValidation.errors }) + "\n");
       process.exit(1);
     }
     // Use retryResult
@@ -1048,7 +1041,7 @@ POST results to an HTTP endpoint when the agent completes. Fire-and-forget with 
 
 ```typescript
 export interface WebhookPayload {
-  status: 'success' | 'error';
+  status: "success" | "error";
   text?: string;
   usage?: {
     input: number;
@@ -1063,33 +1056,30 @@ export interface WebhookPayload {
  * POST a payload to a webhook URL. Fire-and-forget with a 5s timeout.
  * Logs errors to stderr but never throws.
  */
-export async function notifyWebhook(
-  url: string,
-  payload: WebhookPayload,
-): Promise<void> {
+export async function notifyWebhook(url: string, payload: WebhookPayload): Promise<void> {
   try {
     const response = await fetch(url, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
       signal: AbortSignal.timeout(5_000),
     });
     if (!response.ok) {
       process.stderr.write(
         JSON.stringify({
-          event: 'webhook_error',
+          event: "webhook_error",
           status: response.status,
           url,
-        }) + '\n',
+        }) + "\n"
       );
     }
   } catch (err) {
     process.stderr.write(
       JSON.stringify({
-        event: 'webhook_error',
+        event: "webhook_error",
         message: (err as Error).message,
         url,
-      }) + '\n',
+      }) + "\n"
     );
   }
 }
@@ -1110,7 +1100,7 @@ export function resolveWebhookUrl(config?: { webhookUrl?: string }): string | nu
 In `cli.ts`, call after the agent completes:
 
 ```typescript
-import { notifyWebhook, resolveWebhookUrl } from './webhook.js';
+import { notifyWebhook, resolveWebhookUrl } from "./webhook.js";
 
 const startTime = performance.now();
 const result = await runAgent(config, input, { onEvent });
@@ -1120,11 +1110,9 @@ const durationMs = Math.round(performance.now() - startTime);
 const webhookUrl = resolveWebhookUrl(config);
 if (webhookUrl) {
   notifyWebhook(webhookUrl, {
-    status: 'success',
+    status: "success",
     text: result.text,
-    usage: result.usage
-      ? { input: result.usage.input_tokens, output: result.usage.output_tokens }
-      : undefined,
+    usage: result.usage ? { input: result.usage.input_tokens, output: result.usage.output_tokens } : undefined,
     durationMs,
   });
   // Don't await -- fire and forget
@@ -1145,7 +1133,7 @@ try {
   const webhookUrl = resolveWebhookUrl(config);
   if (webhookUrl) {
     await notifyWebhook(webhookUrl, {
-      status: 'error',
+      status: "error",
       error: (err as Error).message,
       durationMs,
     });

@@ -1,13 +1,14 @@
 ---
 description: Answer natural-language questions about a user's OpenRouter usage data — spend, request volume, model breakdown, latency, token usage, and cost optimization. Use when the user asks about their API usage, billing, costs, top models, traffic patterns, or wants to optimize their OpenRouter spend.
 metadata:
-    github-path: skills/openrouter-analytics
-    github-ref: refs/heads/main
-    github-repo: https://github.com/OpenRouterTeam/skills
-    github-tree-sha: 4c56029fe897fef24b020e01108f15cf28fa1469
+  github-path: skills/openrouter-analytics
+  github-ref: refs/heads/main
+  github-repo: https://github.com/OpenRouterTeam/skills
+  github-tree-sha: 4c56029fe897fef24b020e01108f15cf28fa1469
 name: openrouter-analytics
 version: 0.1.0
 ---
+
 # OpenRouter Analytics
 
 Query your OpenRouter usage data programmatically. Answer questions like "What was my spend this month?", "Which models cost the most?", and "How can I reduce my bill?" using the Analytics API.
@@ -26,15 +27,15 @@ cd <skill-path>/scripts && npm install
 
 ## Decision Tree
 
-| User wants to… | Do this |
-|---|---|
-| Know what data is available | Run `discover-schema.ts` to see metrics, dimensions, and filters |
-| See spend / usage / volume | Run `query-analytics.ts` with appropriate metrics |
-| Break down by model, provider, API key | Add `--dimensions` to the query |
-| See trends over time | Add `--granularity day` (or `hour`, `week`, `month`) |
-| Reduce costs | Run `suggest-queries.ts`, find the cost optimization template, execute it |
-| Inspect individual generations | Add `--dimensions generation_id`, then use the `openrouter-generations` skill for details |
-| Answer a specific question | Map the question → metrics + dimensions, then query |
+| User wants to…                         | Do this                                                                                   |
+| -------------------------------------- | ----------------------------------------------------------------------------------------- |
+| Know what data is available            | Run `discover-schema.ts` to see metrics, dimensions, and filters                          |
+| See spend / usage / volume             | Run `query-analytics.ts` with appropriate metrics                                         |
+| Break down by model, provider, API key | Add `--dimensions` to the query                                                           |
+| See trends over time                   | Add `--granularity day` (or `hour`, `week`, `month`)                                      |
+| Reduce costs                           | Run `suggest-queries.ts`, find the cost optimization template, execute it                 |
+| Inspect individual generations         | Add `--dimensions generation_id`, then use the `openrouter-generations` skill for details |
+| Answer a specific question             | Map the question → metrics + dimensions, then query                                       |
 
 ## Workflow
 
@@ -113,6 +114,7 @@ cd <skill-path>/scripts && npx tsx suggest-queries.ts
 ```
 
 Returns a list of pre-built query templates for common questions, each with:
+
 - The natural-language question it answers
 - The query parameters (metrics, dimensions, filters, time range)
 - The CLI flags to pass to `query-analytics.ts`
@@ -123,6 +125,7 @@ Returns a list of pre-built query templates for common questions, each with:
 The query endpoint returns an array of data rows. Each row is a flat object with keys matching the requested metrics and dimensions.
 
 When interpreting results for the user:
+
 - **Spend metrics** (`total_usage`, `credits_usage`, `openrouter_usage`, `byok_usage`, `byok_fees`, `usage_upstream`, `usage_cache`, `usage_web`, `usage_upstream_web`, `usage_file`, `usage_upstream_file`, `usage_web_fetch`, `usage_upstream_web_fetch`) are in USD. `total_usage` includes BYOK inference cost. `usage_data` is typically negative (a data logging discount)
 - **Token counts** (`tokens_total`, `tokens_prompt`, `tokens_completion`) are in native model tokens
 - **Latency** (`avg_latency`, `p50_latency`, etc.) is in milliseconds
@@ -130,7 +133,7 @@ When interpreting results for the user:
 - **Throughput** (`avg_throughput`) is tokens per second
 - When `granularity` is set, rows include a `date__<granularity>` field for the time bucket (e.g., `date__day`, `date__hour`, `date__month`)
 - **Label resolution**: dimensions `api_key_id`, `app`, `user`, and `workspace` have their raw IDs replaced with human-readable names (key name, app title, user name, workspace name) directly in the data rows
-- **Truncation**: when consuming output programmatically, check `metadata.truncated`. If `true`, the result was capped at `--limit` and is a *partial* dataset — raise `--limit` or paginate before reporting totals or rankings
+- **Truncation**: when consuming output programmatically, check `metadata.truncated`. If `true`, the result was capped at `--limit` and is a _partial_ dataset — raise `--limit` or paginate before reporting totals or rankings
 
 ### Cost Optimization Guidance
 
@@ -170,9 +173,9 @@ This workflow is useful for identifying your most expensive or slowest requests 
 
 Both endpoints require a management key via `Authorization: Bearer sk-or-v1-...`.
 
-| Endpoint | Method | Description |
-|---|---|---|
-| `/api/v1/analytics/meta` | GET | Returns available metrics, dimensions, operators, granularities |
-| `/api/v1/analytics/query` | POST | Executes an analytics query and returns structured data |
+| Endpoint                  | Method | Description                                                     |
+| ------------------------- | ------ | --------------------------------------------------------------- |
+| `/api/v1/analytics/meta`  | GET    | Returns available metrics, dimensions, operators, granularities |
+| `/api/v1/analytics/query` | POST   | Executes an analytics query and returns structured data         |
 
 Full documentation: https://openrouter.ai/docs/api/api-reference/analytics

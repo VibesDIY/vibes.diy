@@ -1,12 +1,13 @@
 ---
 description: Generate images from text prompts and edit existing images using OpenRouter's image generation models. Use when the user asks to create, generate, or make an image, picture, or illustration from a description, or wants to edit, modify, transform, or alter an existing image with a text prompt.
 metadata:
-    github-path: skills/openrouter-images
-    github-ref: refs/heads/main
-    github-repo: https://github.com/OpenRouterTeam/skills
-    github-tree-sha: c25b684e61777c90ce5b4c98fd544af8237912ac
+  github-path: skills/openrouter-images
+  github-ref: refs/heads/main
+  github-repo: https://github.com/OpenRouterTeam/skills
+  github-tree-sha: c25b684e61777c90ce5b4c98fd544af8237912ac
 name: openrouter-images
 ---
+
 # OpenRouter Images
 
 Generate images from text prompts and edit existing images via OpenRouter's chat completions API with image modalities.
@@ -25,13 +26,13 @@ cd <skill-path>/scripts && npm install
 
 Pick the right script based on what the user is asking:
 
-| User wants to... | Script | Example |
-|---|---|---|
-| Generate an image from a text description | `generate.ts "prompt"` | "Create an image of a sunset over mountains" |
-| Generate with specific aspect ratio | `generate.ts "prompt" --aspect-ratio 16:9` | "Make a wide landscape image of a forest" |
-| Generate with a different model | `generate.ts "prompt" --model <id>` | "Generate using gemini-2.5-flash-image" |
-| Edit or modify an existing image | `edit.ts path "prompt"` | "Make the sky purple in photo.png" |
-| Transform an image with instructions | `edit.ts path "prompt"` | "Add a party hat to the animal in this image" |
+| User wants to...                          | Script                                     | Example                                       |
+| ----------------------------------------- | ------------------------------------------ | --------------------------------------------- |
+| Generate an image from a text description | `generate.ts "prompt"`                     | "Create an image of a sunset over mountains"  |
+| Generate with specific aspect ratio       | `generate.ts "prompt" --aspect-ratio 16:9` | "Make a wide landscape image of a forest"     |
+| Generate with a different model           | `generate.ts "prompt" --model <id>`        | "Generate using gemini-2.5-flash-image"       |
+| Edit or modify an existing image          | `edit.ts path "prompt"`                    | "Make the sky purple in photo.png"            |
+| Transform an image with instructions      | `edit.ts path "prompt"`                    | "Add a party hat to the animal in this image" |
 
 ## Generate Image
 
@@ -46,12 +47,12 @@ cd <skill-path>/scripts && npx tsx generate.ts "a watercolor painting" --model g
 
 ### Options
 
-| Flag | Description | Default |
-|---|---|---|
-| `--model <id>` | OpenRouter model ID | `google/gemini-3.1-flash-image-preview` |
-| `--output <path>` | Output file path | `image-YYYYMMDD-HHmmss.png` |
-| `--aspect-ratio <r>` | Aspect ratio (e.g. `16:9`, `1:1`, `4:3`) | Model default |
-| `--image-size <s>` | Image size (e.g. `1K`, `2K`) | Model default |
+| Flag                 | Description                              | Default                                 |
+| -------------------- | ---------------------------------------- | --------------------------------------- |
+| `--model <id>`       | OpenRouter model ID                      | `google/gemini-3.1-flash-image-preview` |
+| `--output <path>`    | Output file path                         | `image-YYYYMMDD-HHmmss.png`             |
+| `--aspect-ratio <r>` | Aspect ratio (e.g. `16:9`, `1:1`, `4:3`) | Model default                           |
+| `--image-size <s>`   | Image size (e.g. `1K`, `2K`)             | Model default                           |
 
 ## Edit Image
 
@@ -65,12 +66,12 @@ cd <skill-path>/scripts && npx tsx edit.ts scene.png "convert to watercolor styl
 
 ### Options
 
-| Flag | Description | Default |
-|---|---|---|
-| `--model <id>` | OpenRouter model ID | `google/gemini-3.1-flash-image-preview` |
-| `--output <path>` | Output file path | `image-YYYYMMDD-HHmmss.png` |
-| `--aspect-ratio <r>` | Aspect ratio (e.g. `16:9`, `1:1`, `4:3`) | Model default |
-| `--image-size <s>` | Image size (e.g. `1K`, `2K`) | Model default |
+| Flag                 | Description                              | Default                                 |
+| -------------------- | ---------------------------------------- | --------------------------------------- |
+| `--model <id>`       | OpenRouter model ID                      | `google/gemini-3.1-flash-image-preview` |
+| `--output <path>`    | Output file path                         | `image-YYYYMMDD-HHmmss.png`             |
+| `--aspect-ratio <r>` | Aspect ratio (e.g. `16:9`, `1:1`, `4:3`) | Model default                           |
+| `--image-size <s>`   | Image size (e.g. `1K`, `2K`)             | Model default                           |
 
 Supported input formats: `.png`, `.jpg`, `.jpeg`, `.webp`, `.gif`
 
