@@ -203,11 +203,13 @@ jobs:
             # preview deploy carries the destructive HandleSettings PK
             # swap into dev Neon. The next commit restores the hard-fail
             # guard. DO NOT MERGE THIS COMMIT.
+            # Invoke drizzle-kit directly (`pnpm run script -- --force`
+            # left a bare `--` in argv and drizzle-kit rejected it).
             if [ "$DB_FLAVOUR" = "pg" ]; then
               NEON_DATABASE_URL="$NEON_DATABASE_ADMIN_URL" \
-                pnpm run drizzle:neon -- --force < /dev/null
+                pnpm exec drizzle-kit push --config ./drizzle.neon.config.ts --force --verbose < /dev/null
             else
-              pnpm run drizzle:d1-remote -- --force < /dev/null
+              pnpm exec drizzle-kit push --config ./drizzle.d1-remote.config.ts --force --verbose < /dev/null
             fi
           else
             echo "No schema files changed vs base — skipping drizzle push"
