@@ -9,6 +9,7 @@ EXECUTE IMMEDIATELY.
 ## Parse Arguments
 
 Extract from $ARGUMENTS:
+
 - `Target:` or `--target` — what to ship (path, PR, artifact, deployment)
 - `--type <type>` — override auto-detection: code-pr, code-release, deployment, content, docs, package, config
 - `--dry-run` — validate everything but don't ship
@@ -33,7 +34,7 @@ Remaining text = description of what to ship.
    Q1 (What): "What are you shipping?" — code PR, release, deployment, content, docs, package
    Q2 (Target): "Specific target?" — current branch, specific PR, specific path
    Q3 (Mode): "How to ship?" — full workflow, dry-run only, checklist only
-If all clear → skip.
+   If all clear → skip.
 
 ## Phase 1: Identify
 
@@ -44,6 +45,7 @@ If all clear → skip.
 ## Phase 2: Inventory
 
 Gather everything that will be shipped:
+
 - Files changed (git diff)
 - Dependencies affected
 - Config changes
@@ -65,6 +67,7 @@ If `--checklist-only` → output checklist and stop.
 ## Phase 4: Prepare
 
 Execute pre-ship tasks:
+
 - Run test suite
 - Run type checker
 - Run linter
@@ -77,6 +80,7 @@ If blockers found → STOP, report blockers, ask user to fix.
 ## Phase 5: Dry-Run
 
 If `--dry-run` or always before actual ship:
+
 - Simulate the ship action without executing
 - Report what WOULD happen
 - If `--dry-run` → stop here
@@ -86,6 +90,7 @@ If `--dry-run` or always before actual ship:
 **REQUIRES EXPLICIT USER APPROVAL** (unless --auto with zero errors).
 
 Execute the ship action:
+
 - Code PR: create/update PR, request reviewers
 - Release: tag, build, publish
 - Deployment: deploy to target environment
@@ -94,6 +99,7 @@ Execute the ship action:
 ## Phase 7: Verify
 
 Post-ship verification:
+
 - Confirm artifact is live/accessible
 - Run smoke tests if available
 - Check monitoring for errors
@@ -103,6 +109,7 @@ Post-ship verification:
 
 Create output directory: `autoresearch/ship-{YYMMDD}-{HHMM}/`
 Write:
+
 - `checklist.md` — completed checklist with pass/fail per item
 - `summary.md` — what was shipped, verification results
 - `ship-log.tsv` — phase-by-phase log
@@ -110,6 +117,7 @@ Write:
 ## Rollback
 
 If `--rollback`:
+
 - Identify last ship action from most recent ship log
 - Reverse it (revert PR, unpublish, rollback deployment)
 - Verify rollback succeeded

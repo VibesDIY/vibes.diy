@@ -23,6 +23,7 @@ Round N:
 ## Critic Protocol
 
 The critic MUST:
+
 1. Identify at least 3 specific weaknesses in the candidate
 2. Provide concrete evidence for each weakness
 3. Suggest what a superior candidate would do differently
@@ -32,11 +33,13 @@ The critic MUST:
 ## Judge Protocol
 
 Each judge receives:
+
 - Task description (identical for all judges)
 - 3 candidates with randomized labels (Label-X, Label-Y, Label-Z)
 - Evaluation criteria relevant to the domain
 
 Each judge MUST:
+
 1. Evaluate each candidate independently on all criteria
 2. Produce a ranking (1st, 2nd, 3rd) with reasoning
 3. Select a winner with one-paragraph justification
@@ -46,11 +49,11 @@ Verdict: majority vote. Tie → synthesized candidate (Label-Z) wins.
 
 ## Convergence Detection
 
-| Mode | Stop Condition |
-|---|---|
+| Mode                 | Stop Condition                                         |
+| -------------------- | ------------------------------------------------------ |
 | Convergent (default) | Same incumbent wins N consecutive rounds (default N=3) |
-| Creative | Never auto-stops; runs until iteration limit |
-| Debate | Same as convergent but no synthesis step |
+| Creative             | Never auto-stops; runs until iteration limit           |
+| Debate               | Same as convergent but no synthesis step               |
 
 ## Oscillation Guard
 
@@ -58,23 +61,23 @@ If the incumbent changes more than 5 times in the last 8 rounds → recommend ea
 
 ## Domain-Specific Judge Criteria
 
-| Domain | Criteria |
-|---|---|
+| Domain                | Criteria                                                        |
+| --------------------- | --------------------------------------------------------------- |
 | Software architecture | Scalability, maintainability, performance, security, simplicity |
-| Product strategy | Market fit, feasibility, differentiation, risk, timeline |
-| Business decision | ROI, risk, alignment, resource requirements, reversibility |
-| Security approach | Coverage, false positive rate, practicality, compliance |
-| Research hypothesis | Testability, novelty, evidence support, explanatory power |
-| Content/writing | Clarity, accuracy, engagement, completeness, actionability |
+| Product strategy      | Market fit, feasibility, differentiation, risk, timeline        |
+| Business decision     | ROI, risk, alignment, resource requirements, reversibility      |
+| Security approach     | Coverage, false positive rate, practicality, compliance         |
+| Research hypothesis   | Testability, novelty, evidence support, explanatory power       |
+| Content/writing       | Clarity, accuracy, engagement, completeness, actionability      |
 
 ## Output Files
 
-| File | Content |
-|---|---|
+| File                 | Content                                                                          |
+| -------------------- | -------------------------------------------------------------------------------- |
 | `reason-results.tsv` | Per-round: round, candidate_label, judge_verdict, convergence_count, description |
-| `lineage.md` | Full history of all candidates + critiques + judge reasoning |
-| `summary.md` | Final winner, convergence trajectory, key insights |
-| `handoff.json` | Chain handoff with winner as primary finding |
+| `lineage.md`         | Full history of all candidates + critiques + judge reasoning                     |
+| `summary.md`         | Final winner, convergence trajectory, key insights                               |
+| `handoff.json`       | Chain handoff with winner as primary finding                                     |
 
 ## TSV Schema
 

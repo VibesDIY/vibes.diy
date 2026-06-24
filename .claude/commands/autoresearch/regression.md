@@ -11,6 +11,7 @@ A regression is a **green→red transition ONLY**. The gate orchestrates the pro
 ## Parse Arguments
 
 Extract from $ARGUMENTS:
+
 - `Base:` or `--base` — base ref to diff against. Default: `git merge-base HEAD main` (else `main`/`master`).
 - `Scope:` or `--scope` — file globs limiting the change surface.
 - `--select auto|full|affected` — test selection (default `auto`). `auto` = use the detected affected-test mapper if available, else FULL suite. Never a silent subset.
@@ -31,13 +32,13 @@ Extract from $ARGUMENTS:
 
 Establish the baseline green-set per dimension, then tag each unit. Match by **test-id first, then path**.
 
-| State | Meaning | Gated? |
-|---|---|---|
-| `regression-eligible` | green on baseline | YES — only green→red counts |
-| `pre-existing` | red→red (already failing) | no — excluded |
-| `new-coverage` | absent→red (brand-new test) | no — new coverage, ungated |
-| `flaky` | nondeterministic on baseline | no — routed to flakiness SCORE |
-| `baseline-unavailable` | dimension never green | no — advisory only |
+| State                  | Meaning                      | Gated?                         |
+| ---------------------- | ---------------------------- | ------------------------------ |
+| `regression-eligible`  | green on baseline            | YES — only green→red counts    |
+| `pre-existing`         | red→red (already failing)    | no — excluded                  |
+| `new-coverage`         | absent→red (brand-new test)  | no — new coverage, ungated     |
+| `flaky`                | nondeterministic on baseline | no — routed to flakiness SCORE |
+| `baseline-unavailable` | dimension never green        | no — advisory only             |
 
 **Core invariant: red→red, absent→red, and flake→red are NOT regressions.** Run flakiness N× on **both** baseline and candidate; a candidate failure inside the baseline flake-envelope routes to flakiness SCORE, never to a regression. `5/5 green ≠ non-flaky` — detection probability is `1−(1−p)^n` (≈23% at p=5%, n=5); print it.
 
@@ -47,16 +48,16 @@ Establish the baseline green-set per dimension, then tag each unit. Match by **t
 
 ## Dimension Registry (8)
 
-| Dim | Tier | Compare | Key params |
-|---|---|---|---|
-| functional | HARD | baseline green-set vs candidate; new fail = regression | test cmd, globs |
-| api-contract | HARD | schema/exports diff → breaking? | schema cmd, breaking ruleset |
-| data-migration | HARD | default: up applies clean + idempotent re-apply + app boots/schema valid; schema/rowcount roundtrip opt-in | migrate cmds, fixture, allowlisted DB |
-| integration-e2e | HARD | e2e green-set diff | e2e cmd |
-| flakiness | SCORE | run N× on baseline + candidate, count nondeterministic | runs (def 5), flake-threshold |
-| performance | SCORE | K **independent-process** samples/side, Mann-Whitney U AND effect beyond `max(noise-band%, k·stdev)`, report median delta | bench cmd, samples=7, noise-band=5%, k=2 |
-| resource | SCORE | mem/bundle/size delta vs budget | size cmd, budget |
-| visual-ui | SCORE | containerize render; default `maxDiffPixelRatio` + AA-detection; SSIM = per-page escalation | snapshot cmd, diff-threshold, mask regions |
+| Dim             | Tier  | Compare                                                                                                                   | Key params                                 |
+| --------------- | ----- | ------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------ |
+| functional      | HARD  | baseline green-set vs candidate; new fail = regression                                                                    | test cmd, globs                            |
+| api-contract    | HARD  | schema/exports diff → breaking?                                                                                           | schema cmd, breaking ruleset               |
+| data-migration  | HARD  | default: up applies clean + idempotent re-apply + app boots/schema valid; schema/rowcount roundtrip opt-in                | migrate cmds, fixture, allowlisted DB      |
+| integration-e2e | HARD  | e2e green-set diff                                                                                                        | e2e cmd                                    |
+| flakiness       | SCORE | run N× on baseline + candidate, count nondeterministic                                                                    | runs (def 5), flake-threshold              |
+| performance     | SCORE | K **independent-process** samples/side, Mann-Whitney U AND effect beyond `max(noise-band%, k·stdev)`, report median delta | bench cmd, samples=7, noise-band=5%, k=2   |
+| resource        | SCORE | mem/bundle/size delta vs budget                                                                                           | size cmd, budget                           |
+| visual-ui       | SCORE | containerize render; default `maxDiffPixelRatio` + AA-detection; SSIM = per-page escalation                               | snapshot cmd, diff-threshold, mask regions |
 
 `--select auto` mapper (`jest --findRelatedTests` fed the changed-file list; `nx affected` project-graph) is **best-effort static-import** — blind to dynamic/runtime/global-setup couplings. The report names the mapper + its blind-spot caveat; a HARD STABLE earned on an affected subset prints "run `--select full` for high-stakes". FULL suite is the correctness default.
 

@@ -9,6 +9,7 @@ EXECUTE IMMEDIATELY.
 ## Parse Arguments
 
 Extract from $ARGUMENTS:
+
 - `Task:` — question, proposal, design, argument, or claim to refine
 - `Domain:` or `--domain` — software, product, business, security, research, content
 - `Mode:` or `--mode` — convergent (default), creative, debate
@@ -25,10 +26,10 @@ Remaining text not matching flags = task description.
 ## Setup (if Task or Domain missing)
 
 AskUserQuestion (single batch):
-  Q1 (Task): "What should be reasoned about?" — open text
-  Q2 (Domain): "What domain?" — software architecture, product strategy, business decision, security, research, content
-  Q3 (Mode): "Refinement mode?" — convergent (stop when winner repeats), creative (never auto-stop), debate (no synthesis)
-  Q4 (Judges): "How many blind judges?" — 3 (default), 5 (thorough), 7 (deep)
+Q1 (Task): "What should be reasoned about?" — open text
+Q2 (Domain): "What domain?" — software architecture, product strategy, business decision, security, research, content
+Q3 (Mode): "Refinement mode?" — convergent (stop when winner repeats), creative (never auto-stop), debate (no synthesis)
+Q4 (Judges): "How many blind judges?" — 3 (default), 5 (thorough), 7 (deep)
 If all provided → skip.
 
 ## Setup Phase
@@ -42,31 +43,37 @@ If all provided → skip.
 ## Round Loop
 
 ### Phase 1: Generate-A
+
 - If round 1: Author-A generates first candidate from task description
 - If round N>1: incumbent is Author-A's candidate
 - Cold-start: Author-A sees ONLY task description + domain context
 
 ### Phase 2: Critic
+
 - Critic receives candidate-A (cold-start, no shared session)
 - MUST find at least 3 specific weaknesses
 - MUST suggest what a superior candidate would do differently
 - Role is purely adversarial — never compliment
 
 ### Phase 3: Generate-B
+
 - Author-B receives: task + candidate-A + critique (cold-start)
 - Produces candidate-B addressing critique while preserving A's strengths
 
 ### Phase 4: Synthesize (unless --no-synthesis or debate mode)
+
 - Synthesizer receives: task + A + B (cold-start)
 - Produces hybrid candidate-AB merging best of both
 
 ### Phase 5: Blind Judge Panel
+
 - Each judge receives 3 candidates with RANDOMIZED labels (Label-X, Label-Y, Label-Z)
 - Judges evaluate independently on domain-specific criteria
 - Each produces ranking + one-paragraph justification
 - Verdict: majority vote. Tie → synthesized candidate wins.
 
 ### Phase 6: Convergence Check
+
 - If winner == incumbent → convergence_count++
 - If winner != incumbent → convergence_count = 1, winner becomes incumbent
 - **Convergent mode**: convergence_count >= N → CONVERGED, stop
@@ -74,15 +81,19 @@ If all provided → skip.
 - **Debate mode**: same as convergent, no synthesis
 
 ### Phase 7: Oscillation Guard
+
 If incumbent changed 5+ times in last 8 rounds → recommend early stop (not converging).
 
 ### Phase 8: Log
+
 Append to TSV: round, timestamp, winning candidate label, judge verdict, convergence_count, description
 
 ### Eval Checkpoint
+
 If --evals: check if current_round % interval == 0 → run checkpoint.
 
 ### Bounded Check
+
 If bounded: current_round >= max_iterations → exit loop.
 
 ## Output
@@ -98,6 +109,7 @@ Print: total rounds, convergence status, final winner summary, judge agreement r
 ## Eval Checkpoint (--evals flag)
 
 If --evals present:
+
 - Compute interval: floor(max_iterations / 3), min 1. Fixed 10 if unbounded.
 - Print: `--- Eval Checkpoint (rounds {X}-{Y}) ---\nIncumbent: {label} | Convergence: {count}/{target} | Oscillations: {n}\n{recommendation}\n---`
 - If oscillation detected 3+ checkpoints → recommend early stop.

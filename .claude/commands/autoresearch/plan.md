@@ -9,6 +9,7 @@ EXECUTE IMMEDIATELY.
 ## Parse Arguments
 
 Extract from $ARGUMENTS:
+
 - `Goal:` — text after keyword, or full $ARGUMENTS if no keyword
 - `--chain <targets>` — comma-separated downstream commands
 - `--<subcommand>` — chain shorthand
@@ -18,13 +19,14 @@ Remaining text = goal description.
 ## Setup (if Goal missing)
 
 AskUserQuestion (single batch):
-  Q1 (Goal): "What do you want to achieve?" — open text
-  Q2 (Type): "What kind of goal?" — improve a metric, fix errors, audit security, explore edge cases, document code, ship something
+Q1 (Goal): "What do you want to achieve?" — open text
+Q2 (Type): "What kind of goal?" — improve a metric, fix errors, audit security, explore edge cases, document code, ship something
 If Goal provided → skip.
 
 ## Phase 1: Analyze Goal
 
 Parse the goal to determine:
+
 - Is it measurable? (metric-driven vs subjective)
 - What's the natural scope? (files, modules, entire codebase)
 - What subcommand fits best? (core loop, fix, debug, security, etc.)
@@ -39,11 +41,13 @@ Parse the goal to determine:
 ## Phase 3: Derive Metric + Direction
 
 For metric-driven goals:
+
 - Identify what to measure (test coverage, error count, bundle size, latency, etc.)
 - Determine direction: higher_is_better or lower_is_better
 - Propose metric name and description
 
 For subjective goals:
+
 - Suggest proxy metrics where possible
 - Or recommend /autoresearch:reason for non-measurable goals
 
@@ -58,6 +62,7 @@ For subjective goals:
 ## Phase 5: Derive Guard (optional)
 
 Propose a Guard command if applicable:
+
 - Test suite: `npm test` / `pytest` / `go test ./...`
 - Type check: `tsc --noEmit` / `mypy`
 - Build: `npm run build`
@@ -66,6 +71,7 @@ Propose a Guard command if applicable:
 ## Phase 6: Suggest Iterations
 
 Based on goal complexity:
+
 - Simple metric improvement → 10-15
 - Moderate refactoring → 20-25
 - Complex multi-file changes → 30+
@@ -91,5 +97,6 @@ Ask user: "Run this config now, or adjust?"
 ## Chain Handoff
 
 If --chain set:
+
 - Write handoff.json: version "2.1.0", source "plan", timestamp, status COMPLETE, config = derived config block
 - Invoke next target with the derived config

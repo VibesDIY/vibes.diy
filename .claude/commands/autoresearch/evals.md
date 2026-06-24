@@ -9,6 +9,7 @@ EXECUTE IMMEDIATELY.
 ## Parse Arguments
 
 Extract from $ARGUMENTS:
+
 - Positional path to a specific TSV file
 - `--format` — output format: text (default console), json, md (markdown file)
 - `--compare <path>` — (v2.2.0 placeholder, not yet implemented)
@@ -33,21 +34,21 @@ Extract from $ARGUMENTS:
 
 Activate analysis based on columns present in header:
 
-| Column | Analysis |
-|---|---|
-| `metric` | Trend direction, plateau detection (3+ flat iterations), diminishing returns, biggest single-iteration jumps |
-| `delta` | Per-iteration efficiency, cumulative improvement, effort-to-gain ratio |
-| `status` | Keep/discard rate, crash frequency, success streaks, failure clusters, longest winning streak |
-| `guard` + `guard-metric` | Guard failure rate, metric-improved-but-guard-failed analysis |
-| `severity` | Severity distribution (critical/high/medium/low/info), critical discovery rate per iteration |
-| `hypothesis` + `status` | Confirmation rate, investigation efficiency, most productive techniques |
-| `commit` | File hotspot analysis (cross-ref with `git diff` for kept commits), change size correlation |
-| `technique` | Technique effectiveness ranking |
-| `dimension` | Dimension coverage completeness (X/12) |
-| `candidate_label` + `judge_verdict` | Convergence speed, oscillation count |
-| `error_type` | Error category distribution, fix rate per category |
-| `classification` | New vs extension vs duplicate ratio, saturation curve |
-| `convergence_count` | Convergence trajectory |
+| Column                              | Analysis                                                                                                     |
+| ----------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| `metric`                            | Trend direction, plateau detection (3+ flat iterations), diminishing returns, biggest single-iteration jumps |
+| `delta`                             | Per-iteration efficiency, cumulative improvement, effort-to-gain ratio                                       |
+| `status`                            | Keep/discard rate, crash frequency, success streaks, failure clusters, longest winning streak                |
+| `guard` + `guard-metric`            | Guard failure rate, metric-improved-but-guard-failed analysis                                                |
+| `severity`                          | Severity distribution (critical/high/medium/low/info), critical discovery rate per iteration                 |
+| `hypothesis` + `status`             | Confirmation rate, investigation efficiency, most productive techniques                                      |
+| `commit`                            | File hotspot analysis (cross-ref with `git diff` for kept commits), change size correlation                  |
+| `technique`                         | Technique effectiveness ranking                                                                              |
+| `dimension`                         | Dimension coverage completeness (X/12)                                                                       |
+| `candidate_label` + `judge_verdict` | Convergence speed, oscillation count                                                                         |
+| `error_type`                        | Error category distribution, fix rate per category                                                           |
+| `classification`                    | New vs extension vs duplicate ratio, saturation curve                                                        |
+| `convergence_count`                 | Convergence trajectory                                                                                       |
 
 Unknown columns: report presence but skip analysis. Forward-compatible with future subcommands.
 
@@ -101,14 +102,14 @@ This section documents the checkpoint protocol that looping commands embed:
 
 ### Adaptive Interval Examples
 
-| Subcommand | Default Iterations | Interval | Checkpoints At |
-|---|---|---|---|
-| reason | 8 | 2 | 2, 4, 6, 8 |
-| learn | 10 | 3 | 3, 6, 9, final |
-| debug/security | 15 | 5 | 5, 10, 15 |
-| fix/scenario | 20 | 6 | 6, 12, 18, final |
-| core | 25 | 8 | 8, 16, 24, final |
-| unbounded | unlimited | 10 | every 10 |
+| Subcommand     | Default Iterations | Interval | Checkpoints At   |
+| -------------- | ------------------ | -------- | ---------------- |
+| reason         | 8                  | 2        | 2, 4, 6, 8       |
+| learn          | 10                 | 3        | 3, 6, 9, final   |
+| debug/security | 15                 | 5        | 5, 10, 15        |
+| fix/scenario   | 20                 | 6        | 6, 12, 18, final |
+| core           | 25                 | 8        | 8, 16, 24, final |
+| unbounded      | unlimited          | 10       | every 10         |
 
 ## Backward Compatibility
 

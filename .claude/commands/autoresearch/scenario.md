@@ -9,6 +9,7 @@ EXECUTE IMMEDIATELY.
 ## Parse Arguments
 
 Extract from $ARGUMENTS:
+
 - `Scenario:` — seed scenario description (or full $ARGUMENTS text if no keyword)
 - `Domain:` or `--domain` — web, mobile, API, CLI, data pipeline, infrastructure
 - `Scope:` or `--scope` — file globs for codebase context
@@ -21,28 +22,28 @@ Extract from $ARGUMENTS:
 ## Setup (if Scenario or Domain missing)
 
 AskUserQuestion (single batch):
-  Q1 (Scenario): "Describe the feature/flow to explore"
-  Q2 (Domain): "What domain?" — web app, mobile app, API, CLI, data pipeline, infrastructure
-  Q3 (Scope): "Which files for context?" — suggested globs + entire codebase
-  Q4 (Depth): "How deep?" — quick (10), standard (20), deep (40+), unlimited
+Q1 (Scenario): "Describe the feature/flow to explore"
+Q2 (Domain): "What domain?" — web app, mobile app, API, CLI, data pipeline, infrastructure
+Q3 (Scope): "Which files for context?" — suggested globs + entire codebase
+Q4 (Depth): "How deep?" — quick (10), standard (20), deep (40+), unlimited
 If all provided → skip.
 
 ## 12 Dimensions
 
-| # | Dimension | Explores |
-|---|---|---|
-| 1 | Happy path | Normal successful flows |
-| 2 | Validation | Input boundaries, types, formats |
-| 3 | Permissions | Auth, roles, access control |
-| 4 | Concurrency | Race conditions, deadlocks, ordering |
-| 5 | State | Invalid transitions, corruption |
-| 6 | Scale | High volume, large data, many users |
-| 7 | Failure | Network errors, timeouts, partial failures |
-| 8 | Security | Injection, abuse, bypass attempts |
-| 9 | Integration | Third-party failures, API contract violations |
-| 10 | Data | Null, empty, unicode, injection, overflow |
-| 11 | UX | Confusion, misuse, accessibility |
-| 12 | Recovery | Retry, rollback, idempotency |
+| #   | Dimension   | Explores                                      |
+| --- | ----------- | --------------------------------------------- |
+| 1   | Happy path  | Normal successful flows                       |
+| 2   | Validation  | Input boundaries, types, formats              |
+| 3   | Permissions | Auth, roles, access control                   |
+| 4   | Concurrency | Race conditions, deadlocks, ordering          |
+| 5   | State       | Invalid transitions, corruption               |
+| 6   | Scale       | High volume, large data, many users           |
+| 7   | Failure     | Network errors, timeouts, partial failures    |
+| 8   | Security    | Injection, abuse, bypass attempts             |
+| 9   | Integration | Third-party failures, API contract violations |
+| 10  | Data        | Null, empty, unicode, injection, overflow     |
+| 11  | UX          | Confusion, misuse, accessibility              |
+| 12  | Recovery    | Retry, rollback, idempotency                  |
 
 ## Establish Baseline
 
@@ -54,32 +55,39 @@ If all provided → skip.
 ## Iteration Loop
 
 ### Phase 1: Review
+
 - Read results TSV, check dimension coverage
 - Identify underexplored dimensions
 - If --focus → prioritize that dimension
 
 ### Phase 2: Generate
+
 - Pick next dimension (round-robin, or priority if --focus)
 - Generate 3-5 specific scenarios for this dimension
 - Each: title, dimension, classification, severity, description
 
 ### Phase 3: Classify
+
 - **new** — genuinely novel edge case
 - **extension** — builds on previously found scenario
 - **duplicate** — already covered (skip, don't log)
 
 ### Phase 4: Log
+
 Append new/extension scenarios to TSV. Skip duplicates.
 Severity: critical/high/medium/low.
 
 ### Phase 5: Saturation Check
+
 If 3 consecutive iterations produce only duplicates → dimension saturated, move to next.
 If ALL dimensions saturated → early stop.
 
 ### Eval Checkpoint
+
 If --evals: check if current_iteration % interval == 0 → run checkpoint.
 
 ### Bounded Check
+
 If bounded: current_iteration >= max_iterations → exit loop.
 
 ## Output
@@ -95,6 +103,7 @@ Print: total scenarios (new/extension/duplicate), dimension coverage (X/12 explo
 ## Eval Checkpoint (--evals flag)
 
 If --evals present:
+
 - Compute interval: floor(max_iterations / 3), min 1. Fixed 10 if unbounded.
 - Print: `--- Eval Checkpoint (iterations {X}-{Y}) ---\nNew scenarios: {n} | Dimensions covered: {x}/12 | Saturation: {status}\n{recommendation}\n---`
 - If 3+ checkpoints with mostly duplicates → recommend early stop.
