@@ -7,14 +7,17 @@ Frozen baseline (commit `3fac49e`, preview env, 128 apps @ concurrency 16):
 Keep rule: eval gain > 0.05 noise band with gates green (two-file ≥ 0.95, renderable ≥ 0.95,
 holdout ≥ baseline − 0.05 = 0.434), then a confirmation batch.
 
-| iter | edit                                                                                         | eval  | Δeval             | holdout | verdict                                                                                                                                                                                                                  |
-| ---- | -------------------------------------------------------------------------------------------- | ----- | ----------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| base | —                                                                                            | 0.594 | —                 | 0.484   | reference                                                                                                                                                                                                                |
-| 1    | author-contributed content is author-owned, not owner-published (`system-prompt-initial.md`) | 0.625 | +0.031 (in noise) | 0.250   | **DISCARD** — gate 5 (holdout) fail; the blanket "don't owner-gate" framing overcorrected, collapsing holdout multi-tier (h-club 7/8→1/8) and per-object (h-trip 5/8→2/8) even though eval Form-A improved (34.4%→28.1%) |
+| iter | edit                                                                                                      | eval  | Δeval             | holdout | verdict                                                                                                                                                                                                                  |
+| ---- | --------------------------------------------------------------------------------------------------------- | ----- | ----------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| base | —                                                                                                         | 0.594 | —                 | 0.484   | reference                                                                                                                                                                                                                |
+| 1    | author-contributed content is author-owned, not owner-published (`system-prompt-initial.md`)              | 0.625 | +0.031 (in noise) | 0.250   | **DISCARD** — gate 5 (holdout) fail; the blanket "don't owner-gate" framing overcorrected, collapsing holdout multi-tier (h-club 7/8→1/8) and per-object (h-trip 5/8→2/8) even though eval Form-A improved (34.4%→28.1%) |
+| 2    | additive: curated-sounding feeds (photo wall) are author-owned for posts too (`system-prompt-initial.md`) | 0.578 | −0.016 (in noise) | 0.297   | **DISCARD** — eval flat (within noise), holdout fails gate 5 again. A tiny additive edit producing nearly the same holdout drop as iter 1's blunt rewrite points to **holdout variance**, not real regression            |
 
-Lesson for iter 2: add author-owned _recognition_ for visitor-contributed content without
-discouraging roles/membership where multi-tier and per-object genuinely need them — scope the
-cue to "each visitor adds their own entry + public read", not a global anti-owner-gate rule.
+Observation after iters 1–2: eval is flat across both perturbations (0.578–0.625, ≈±0.025) and
+holdout swings hard (0.484 → 0.25 / 0.30) for two very different edits. The single-shot baseline
+holdout (0.484) is likely a high draw and the 0.05 gate band is too tight to trust. Next step:
+re-measure the baseline (baseline-run2) on the same prompts to quantify the true noise band
+before judging further edits.
 
 This branch drives the [`eval/access-model`](../eval/access-model/README.md) autoresearch
 loop (issue VibesDIY/vibes.diy#2602): _modify `prompts/pkg/**` → deploy to this PR's
