@@ -1,12 +1,13 @@
 ---
 description: Query OpenRouter's Benchmarks API for model benchmark rankings and scores. Use when the user asks for benchmark-backed model selection, model rankings by coding/intelligence/agentic ability, Artificial Analysis or Design Arena ELO/win-rate results, benchmark citations, or wants to call GET /api/v1/benchmarks. Also use alongside openrouter-models when the user asks what model should power an app, product, workflow, or use case and benchmark evidence could inform or rule out part of the recommendation, including creative writing, editing, coding, design, agentic, or intelligence-heavy apps. Do not use for OpenRouter usage analytics, billing/spend analysis, generation metadata, provider uptime/latency, generic model pricing/capability lookup without any selection or benchmark-relevance decision, or creating an evaluation suite for a local app.
 metadata:
-    github-path: skills/openrouter-benchmarks
-    github-ref: refs/heads/main
-    github-repo: https://github.com/OpenRouterTeam/skills
-    github-tree-sha: 97cf71a66d8c2f73d7c433fa430c08000d420857
+  github-path: skills/openrouter-benchmarks
+  github-ref: refs/heads/main
+  github-repo: https://github.com/OpenRouterTeam/skills
+  github-tree-sha: 97cf71a66d8c2f73d7c433fa430c08000d420857
 name: openrouter-benchmarks
 ---
+
 # OpenRouter Benchmarks
 
 Use OpenRouter's unified benchmarks endpoint to answer benchmark-backed model ranking and model-selection questions. The endpoint aggregates Artificial Analysis and Design Arena data and returns citation metadata that should be preserved when reporting results.
@@ -21,15 +22,15 @@ export OPENROUTER_API_KEY=sk-or-v1-...
 
 ## Decision Tree
 
-| User wants to... | Action |
-|---|---|
-| See benchmark-ranked models across sources | Call `GET /api/v1/benchmarks` and preserve source/citation metadata |
-| Choose a model for an app/use case | Check whether Artificial Analysis or Design Arena contains a relevant signal; say when no direct benchmark exists |
-| Find best coding, intelligence, or agentic models | Use `task_type=coding`, `task_type=intelligence`, or `task_type=agentic` |
-| Query Artificial Analysis only | Use `source=artificial-analysis` |
-| Query Design Arena only | Use `source=design-arena`, plus `arena` and `category` when relevant |
-| Get raw API-shaped data for integration work | Return the raw `data`/`meta` shape from the endpoint |
-| Understand all response fields or direct curl usage | Read `references/benchmarks-api.md` |
+| User wants to...                                    | Action                                                                                                            |
+| --------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| See benchmark-ranked models across sources          | Call `GET /api/v1/benchmarks` and preserve source/citation metadata                                               |
+| Choose a model for an app/use case                  | Check whether Artificial Analysis or Design Arena contains a relevant signal; say when no direct benchmark exists |
+| Find best coding, intelligence, or agentic models   | Use `task_type=coding`, `task_type=intelligence`, or `task_type=agentic`                                          |
+| Query Artificial Analysis only                      | Use `source=artificial-analysis`                                                                                  |
+| Query Design Arena only                             | Use `source=design-arena`, plus `arena` and `category` when relevant                                              |
+| Get raw API-shaped data for integration work        | Return the raw `data`/`meta` shape from the endpoint                                                              |
+| Understand all response fields or direct curl usage | Read `references/benchmarks-api.md`                                                                               |
 
 Use `openrouter-models` instead when the user needs pricing, context length, supported parameters, modalities, or provider endpoint performance without asking for benchmark rankings.
 
@@ -53,13 +54,13 @@ Do not rely on endpoint `status: 0` alone. Model-level availability signals such
 
 Query parameters:
 
-| Flag | Values | Notes |
-|---|---|---|
-| `source` | `artificial-analysis`, `design-arena` | Omitting it returns all sources. |
-| `task_type` | `coding`, `intelligence`, `agentic` | Maps to source-specific indices/categories. |
-| `arena` | `models`, `builders`, `agents` | Design Arena only; defaults server-side to `models`. |
-| `category` | `codecategories`, `uicomponent`, `gamedev`, `3d`, `dataviz`, `image`, `video`, `svg`, etc. | Design Arena only. |
-| `max_results` | positive integer | Maximum number of rows returned by the API. |
+| Flag          | Values                                                                                     | Notes                                                |
+| ------------- | ------------------------------------------------------------------------------------------ | ---------------------------------------------------- |
+| `source`      | `artificial-analysis`, `design-arena`                                                      | Omitting it returns all sources.                     |
+| `task_type`   | `coding`, `intelligence`, `agentic`                                                        | Maps to source-specific indices/categories.          |
+| `arena`       | `models`, `builders`, `agents`                                                             | Design Arena only; defaults server-side to `models`. |
+| `category`    | `codecategories`, `uicomponent`, `gamedev`, `3d`, `dataviz`, `image`, `video`, `svg`, etc. | Design Arena only.                                   |
+| `max_results` | positive integer                                                                           | Maximum number of rows returned by the API.          |
 
 Always preserve `meta.citation`, `meta.source_url`, and `meta.as_of`; include attribution when republishing benchmark data.
 

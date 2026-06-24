@@ -1,12 +1,13 @@
 ---
 description: Query OpenRouter for available AI models, pricing, capabilities, throughput, and provider performance. Use when the user asks about available OpenRouter models, model pricing, model context lengths, model capabilities, provider latency or uptime, throughput limits, supported parameters, wants to search/filter/compare models, or find the fastest provider for a model.
 metadata:
-    github-path: skills/openrouter-models
-    github-ref: refs/heads/main
-    github-repo: https://github.com/OpenRouterTeam/skills
-    github-tree-sha: 765d9c04fdff14cd458043fa8e63391eebebf523
+  github-path: skills/openrouter-models
+  github-ref: refs/heads/main
+  github-repo: https://github.com/OpenRouterTeam/skills
+  github-tree-sha: 765d9c04fdff14cd458043fa8e63391eebebf523
 name: openrouter-models
 ---
+
 # OpenRouter Models
 
 Discover, search, and compare the 300+ AI models available on OpenRouter. Query live data including pricing, context lengths, per-provider latency and uptime, throughput, supported modalities, and supported parameters.
@@ -25,22 +26,22 @@ cd <skill-path>/scripts && npm install
 
 Pick the right script based on what the user is asking:
 
-| User wants to... | Script | Example |
-|---|---|---|
-| See all available models | `list-models.ts` | "What models does OpenRouter have?" |
-| Find recently added models | `list-models.ts --sort newest` | "What are the newest models?" |
-| Find cheapest models | `list-models.ts --sort price` | "What's the cheapest model?" |
-| Find highest throughput models | `list-models.ts --sort throughput` | "Which models have the most output capacity?" |
-| Find models in a category | `list-models.ts --category X` | "Best programming models?" |
-| Search by name | `search-models.ts "query"` | "Do they have Claude?" |
-| Resolve an informal model name | `resolve-model.ts "query"` | "Use the nano banana 2.0 model" |
-| Find image-capable models | `search-models.ts --modality image` | "Which models accept images?" |
-| Compare specific models | `compare-models.ts A B` | "Compare Claude vs GPT-4o" |
-| Compare by throughput | `compare-models.ts A B --sort throughput` | "Which has higher throughput, Claude or GPT-4o?" |
-| Check provider performance | `get-endpoints.ts "model-id"` | "Which provider is fastest for Claude?" |
-| Find fastest provider | `get-endpoints.ts "model-id" --sort throughput` | "Fastest provider for Claude Sonnet?" |
-| Find lowest-latency provider | `get-endpoints.ts "model-id" --sort latency` | "Lowest latency provider for GPT-4o?" |
-| Check model availability | `get-endpoints.ts "model-id"` | "Is Claude Sonnet 4 up right now?" |
+| User wants to...               | Script                                          | Example                                          |
+| ------------------------------ | ----------------------------------------------- | ------------------------------------------------ |
+| See all available models       | `list-models.ts`                                | "What models does OpenRouter have?"              |
+| Find recently added models     | `list-models.ts --sort newest`                  | "What are the newest models?"                    |
+| Find cheapest models           | `list-models.ts --sort price`                   | "What's the cheapest model?"                     |
+| Find highest throughput models | `list-models.ts --sort throughput`              | "Which models have the most output capacity?"    |
+| Find models in a category      | `list-models.ts --category X`                   | "Best programming models?"                       |
+| Search by name                 | `search-models.ts "query"`                      | "Do they have Claude?"                           |
+| Resolve an informal model name | `resolve-model.ts "query"`                      | "Use the nano banana 2.0 model"                  |
+| Find image-capable models      | `search-models.ts --modality image`             | "Which models accept images?"                    |
+| Compare specific models        | `compare-models.ts A B`                         | "Compare Claude vs GPT-4o"                       |
+| Compare by throughput          | `compare-models.ts A B --sort throughput`       | "Which has higher throughput, Claude or GPT-4o?" |
+| Check provider performance     | `get-endpoints.ts "model-id"`                   | "Which provider is fastest for Claude?"          |
+| Find fastest provider          | `get-endpoints.ts "model-id" --sort throughput` | "Fastest provider for Claude Sonnet?"            |
+| Find lowest-latency provider   | `get-endpoints.ts "model-id" --sort latency`    | "Lowest latency provider for GPT-4o?"            |
+| Check model availability       | `get-endpoints.ts "model-id"`                   | "Is Claude Sonnet 4 up right now?"               |
 
 ## Resolve Model
 
@@ -54,11 +55,11 @@ cd <skill-path>/scripts && npx tsx resolve-model.ts "llama 3.1"
 
 Results include a `confidence` level and `score`:
 
-| Confidence | Score | Action |
-|---|---|---|
-| `high` (≥0.85) | Use the model directly — the match is unambiguous |
-| `medium` (≥0.55) | Confirm with the user before proceeding |
-| `low` (≥0.30) | Suggest the matches and ask the user to clarify |
+| Confidence       | Score                                             | Action |
+| ---------------- | ------------------------------------------------- | ------ |
+| `high` (≥0.85)   | Use the model directly — the match is unambiguous |
+| `medium` (≥0.55) | Confirm with the user before proceeding           |
+| `low` (≥0.30)    | Suggest the matches and ask the user to clarify   |
 
 **Two-step workflow:** First resolve the informal name with `resolve-model.ts`, then feed the resolved `id` into other scripts (`compare-models.ts`, `get-endpoints.ts`, etc.).
 
@@ -123,6 +124,7 @@ cd <skill-path>/scripts && npx tsx get-endpoints.ts "openai/gpt-4o" --sort laten
 Sort options: `throughput` (fastest tokens/sec first), `latency` (lowest p50 ms first), `uptime` (most reliable first), `price` (cheapest first)
 
 Returns for each provider:
+
 - **Latency** (p50/p75/p90/p99 in ms) — median to worst-case response times
 - **Throughput** (p50/p75/p90/p99 tokens/sec) — generation speed
 - **Uptime** — percentage over the last 30 minutes
@@ -136,9 +138,9 @@ Returns for each provider:
 
 **Query parameters** (all optional):
 
-| Parameter | Example | Effect |
-|---|---|---|
-| `category` | `?category=programming` | Server-side category filter |
+| Parameter              | Example                       | Effect                                |
+| ---------------------- | ----------------------------- | ------------------------------------- |
+| `category`             | `?category=programming`       | Server-side category filter           |
 | `supported_parameters` | `?supported_parameters=tools` | Only models supporting this parameter |
 
 **Tips for working with the response:**
@@ -206,19 +208,19 @@ A subset of the raw API fields — the scripts run `formatModel()` which drops `
 
 ## Key Fields
 
-| Field | Meaning |
-|---|---|
-| `pricing.prompt` / `pricing.completion` | Cost per token in USD. Multiply by 1,000,000 for per-million-token pricing |
-| `context_length` | Max total tokens (input + output) |
-| `top_provider.max_completion_tokens` | Max output tokens from the best provider |
-| `top_provider.is_moderated` | Whether content moderation is applied |
-| `per_request_limits` | Per-request token limits (when non-null) |
-| `supported_parameters` | API parameters the model accepts (e.g., `tools`, `structured_outputs`, `reasoning`, `web_search_options`) |
-| `created` | Unix timestamp — use for sorting by recency |
-| `expiration_date` | Non-null means the model is being deprecated |
-| `latency_30m_ms.p50` | Median response latency over last 30 min |
-| `throughput_30m_tokens_per_sec.p50` | Median generation speed over last 30 min |
-| `uptime_30m` | Provider availability percentage over last 30 min |
+| Field                                   | Meaning                                                                                                   |
+| --------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| `pricing.prompt` / `pricing.completion` | Cost per token in USD. Multiply by 1,000,000 for per-million-token pricing                                |
+| `context_length`                        | Max total tokens (input + output)                                                                         |
+| `top_provider.max_completion_tokens`    | Max output tokens from the best provider                                                                  |
+| `top_provider.is_moderated`             | Whether content moderation is applied                                                                     |
+| `per_request_limits`                    | Per-request token limits (when non-null)                                                                  |
+| `supported_parameters`                  | API parameters the model accepts (e.g., `tools`, `structured_outputs`, `reasoning`, `web_search_options`) |
+| `created`                               | Unix timestamp — use for sorting by recency                                                               |
+| `expiration_date`                       | Non-null means the model is being deprecated                                                              |
+| `latency_30m_ms.p50`                    | Median response latency over last 30 min                                                                  |
+| `throughput_30m_tokens_per_sec.p50`     | Median generation speed over last 30 min                                                                  |
+| `uptime_30m`                            | Provider availability percentage over last 30 min                                                         |
 
 ## Presenting Results
 

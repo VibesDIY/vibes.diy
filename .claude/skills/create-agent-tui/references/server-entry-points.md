@@ -16,40 +16,40 @@ Replace `src/cli.ts` with an HTTP server when the agent should be accessed via A
 ### src/server.ts
 
 ```typescript
-import { createServer } from 'http';
-import { loadConfig } from './config.js';
-import { runAgentWithRetry } from './agent.js';
+import { createServer } from "http";
+import { loadConfig } from "./config.js";
+import { runAgentWithRetry } from "./agent.js";
 
 const config = loadConfig();
-const ALLOWED_ORIGIN = process.env.ALLOWED_ORIGIN ?? 'http://localhost:5173';
+const ALLOWED_ORIGIN = process.env.ALLOWED_ORIGIN ?? "http://localhost:5173";
 const MAX_BODY = 1 * 1024 * 1024; // 1 MB
 
 // WARNING: This server has no authentication. Do not expose on a public
 // interface without adding a bearer token check or similar auth gate.
 // Set AGENT_API_SECRET and check Authorization header for production use.
 const server = createServer(async (req, res) => {
-  res.setHeader('Access-Control-Allow-Origin', ALLOWED_ORIGIN);
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  res.setHeader("Access-Control-Allow-Origin", ALLOWED_ORIGIN);
+  res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization");
 
-  if (req.method === 'OPTIONS') {
+  if (req.method === "OPTIONS") {
     res.writeHead(204);
     res.end();
     return;
   }
 
   if (process.env.AGENT_API_SECRET) {
-    const auth = req.headers['authorization'];
+    const auth = req.headers["authorization"];
     if (auth !== `Bearer ${process.env.AGENT_API_SECRET}`) {
-      res.writeHead(401, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({ error: 'Unauthorized' }));
+      res.writeHead(401, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ error: "Unauthorized" }));
       return;
     }
   }
 
-  if (req.method !== 'POST' || req.url !== '/chat') {
-    res.writeHead(404, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify({ error: 'Not found' }));
+  if (req.method !== "POST" || req.url !== "/chat") {
+    res.writeHead(404, { "Content-Type": "application/json" });
+    res.end(JSON.stringify({ error: "Not found" }));
     return;
   }
 
@@ -59,8 +59,8 @@ const server = createServer(async (req, res) => {
   for await (const chunk of req) {
     totalSize += (chunk as Buffer).length;
     if (totalSize > MAX_BODY) {
-      res.writeHead(413, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify({ error: 'Request body too large' }));
+      res.writeHead(413, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ error: "Request body too large" }));
       return;
     }
     chunks.push(chunk as Buffer);
@@ -70,12 +70,16 @@ const server = createServer(async (req, res) => {
   try {
     body = JSON.parse(Buffer.concat(chunks).toString());
   } catch {
-    res.writeHead(400, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify({ error: 'Invalid JSON' }));
+    res.writeHead(400, { "Content-Type": "application/json" });
+    res.end(JSON.stringify({ error: "Invalid JSON" }));
     return;
   }
 
-  const { message, messages = [], stream = false } = body as {
+  const {
+    message,
+    messages = [],
+    stream = false,
+  } = body as {
     message?: string;
     messages?: Array<{ role: string; content: string }>;
     stream?: boolean;
@@ -83,7 +87,7 @@ const server = createServer(async (req, res) => {
   const input = messages.length > 0 ? messages : message;
 
   if (!input) {
-    res.writeHead(400, { 'Content-Type': 'application/json' });
+    res.writeHead(400, { "Content-Type": "application/json" });
     res.end(JSON.stringify({ error: 'Provide "message" (string) or "messages" (array)' }));
     return;
   }
@@ -91,23 +95,23 @@ const server = createServer(async (req, res) => {
   if (stream) {
     // Server-Sent Events streaming
     res.writeHead(200, {
-      'Content-Type': 'text/event-stream',
-      'Cache-Control': 'no-cache',
-      Connection: 'keep-alive',
+      "Content-Type": "text/event-stream",
+      "Cache-Control": "no-cache",
+      Connection: "keep-alive",
     });
 
     try {
       const result = await runAgentWithRetry(config, input, {
         onEvent: (e) => {
-          if (e.type === 'text') {
-            res.write(`data: ${JSON.stringify({ type: 'text', content: e.delta })}\n\n`);
+          if (e.type === "text") {
+            res.write(`data: ${JSON.stringify({ type: "text", content: e.delta })}\n\n`);
           }
         },
       });
 
-      res.write(`data: ${JSON.stringify({ type: 'done', usage: result.usage })}\n\n`);
+      res.write(`data: ${JSON.stringify({ type: "done", usage: result.usage })}\n\n`);
     } catch (err: any) {
-      res.write(`data: ${JSON.stringify({ type: 'error', message: err.message })}\n\n`);
+      res.write(`data: ${JSON.stringify({ type: "error", message: err.message })}\n\n`);
     }
 
     res.end();
@@ -115,10 +119,10 @@ const server = createServer(async (req, res) => {
     // Standard JSON response
     try {
       const result = await runAgentWithRetry(config, input);
-      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.writeHead(200, { "Content-Type": "application/json" });
       res.end(JSON.stringify({ text: result.text, usage: result.usage }));
     } catch (err: any) {
-      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.writeHead(500, { "Content-Type": "application/json" });
       res.end(JSON.stringify({ error: err.message }));
     }
   }
@@ -165,6 +169,7 @@ Guidance for where to go next after the base harness is working. These are not g
 Connect external tools via the Model Context Protocol. Use the `@modelcontextprotocol/sdk` package to create an MCP client that discovers and registers tools from MCP servers dynamically.
 
 Key steps:
+
 1. Install `@modelcontextprotocol/sdk`
 2. Create an MCP client that connects to configured servers
 3. Convert MCP tool definitions to `@openrouter/agent` tool format
@@ -185,9 +190,10 @@ Use `@openrouter/agent`'s dynamic parameters to change the model based on conver
 
 ```typescript
 client.callModel({
-  model: (ctx) => ctx.numberOfTurns > 5
-    ? 'anthropic/claude-sonnet-4'  // upgrade for complex conversations
-    : 'openai/gpt-4.1-mini',       // start cheap
+  model: (ctx) =>
+    ctx.numberOfTurns > 5
+      ? "anthropic/claude-sonnet-4" // upgrade for complex conversations
+      : "openai/gpt-4.1-mini", // start cheap
   // ...
 });
 ```
@@ -197,10 +203,7 @@ client.callModel({
 Beyond `stepCountIs` and `maxCost`, create domain-specific stop conditions:
 
 ```typescript
-const hasAnswer = (ctx) =>
-  ctx.messages.some(m =>
-    m.role === 'assistant' && m.content?.includes('FINAL ANSWER:')
-  );
+const hasAnswer = (ctx) => ctx.messages.some((m) => m.role === "assistant" && m.content?.includes("FINAL ANSWER:"));
 
 client.callModel({
   stopWhen: [stepCountIs(20), maxCost(2.0), hasAnswer],

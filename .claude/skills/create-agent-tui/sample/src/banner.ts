@@ -1,7 +1,7 @@
-const RESET = '\x1b[0m';
-const BOLD = '\x1b[1m';
-const DIM = '\x1b[2m';
-const CYAN = '\x1b[36m';
+const RESET = "\x1b[0m";
+const BOLD = "\x1b[1m";
+const DIM = "\x1b[2m";
+const CYAN = "\x1b[36m";
 
 const LOGO = `
   ███╗   ███╗██╗   ██╗

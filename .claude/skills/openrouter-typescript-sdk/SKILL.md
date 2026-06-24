@@ -1,18 +1,20 @@
 ---
 description: Complete reference for integrating with 300+ AI models through the OpenRouter TypeScript SDK and Agent packages using the callModel pattern
 metadata:
-    github-path: skills/openrouter-typescript-sdk
-    github-ref: refs/heads/main
-    github-repo: https://github.com/OpenRouterTeam/skills
-    github-tree-sha: ad4a590ddaa69ef9dc295a300a76bd451cab650a
+  github-path: skills/openrouter-typescript-sdk
+  github-ref: refs/heads/main
+  github-repo: https://github.com/OpenRouterTeam/skills
+  github-tree-sha: ad4a590ddaa69ef9dc295a300a76bd451cab650a
 name: openrouter-typescript-sdk
 version: 2.0.0
 ---
+
 # OpenRouter TypeScript SDK
 
 A comprehensive TypeScript SDK for interacting with OpenRouter's unified API, providing access to 300+ AI models through a single, type-safe interface. This skill enables AI agents to leverage the `callModel` pattern for text generation, tool usage, streaming, and multi-turn conversations.
 
 The SDK is split into two packages:
+
 - **`@openrouter/agent`** — Agent features: `callModel`, `tool()`, stop conditions, streaming, format converters
 - **`@openrouter/sdk`** — Platform features: model listing, chat completions, credits, OAuth, API key management
 
@@ -33,10 +35,10 @@ npm install @openrouter/sdk
 Get your API key from [openrouter.ai/settings/keys](https://openrouter.ai/settings/keys), then initialize:
 
 ```typescript
-import { OpenRouter } from '@openrouter/agent';
+import { OpenRouter } from "@openrouter/agent";
 
 const client = new OpenRouter({
-  apiKey: process.env.OPENROUTER_API_KEY
+  apiKey: process.env.OPENROUTER_API_KEY,
 });
 ```
 
@@ -65,10 +67,10 @@ export OPENROUTER_API_KEY=sk-or-v1-your-key-here
 #### Client Initialization
 
 ```typescript
-import { OpenRouter } from '@openrouter/agent';
+import { OpenRouter } from "@openrouter/agent";
 
 const client = new OpenRouter({
-  apiKey: process.env.OPENROUTER_API_KEY
+  apiKey: process.env.OPENROUTER_API_KEY,
 });
 ```
 
@@ -77,8 +79,8 @@ The client automatically uses this key for all subsequent requests:
 ```typescript
 // API key is automatically included
 const result = client.callModel({
-  model: 'openai/gpt-5-nano',
-  input: 'Hello!'
+  model: "openai/gpt-5-nano",
+  input: "Hello!",
 });
 ```
 
@@ -87,12 +89,12 @@ const result = client.callModel({
 Retrieve information about the currently configured API key (requires `@openrouter/sdk`):
 
 ```typescript
-import OpenRouter from '@openrouter/sdk';
+import OpenRouter from "@openrouter/sdk";
 const sdkClient = new OpenRouter({ apiKey: process.env.OPENROUTER_API_KEY });
 
 const keyInfo = await sdkClient.apiKeys.getCurrentKeyMetadata();
-console.log('Key name:', keyInfo.name);
-console.log('Created:', keyInfo.createdAt);
+console.log("Key name:", keyInfo.name);
+console.log("Created:", keyInfo.createdAt);
 ```
 
 #### API Key Management
@@ -105,25 +107,25 @@ const keys = await client.apiKeys.list();
 
 // Create a new key
 const newKey = await client.apiKeys.create({
-  name: 'Production API Key'
+  name: "Production API Key",
 });
 
 // Get a specific key by hash
 const key = await client.apiKeys.get({
-  hash: 'sk-or-v1-...'
+  hash: "sk-or-v1-...",
 });
 
 // Update a key
 await client.apiKeys.update({
-  hash: 'sk-or-v1-...',
+  hash: "sk-or-v1-...",
   requestBody: {
-    name: 'Updated Key Name'
-  }
+    name: "Updated Key Name",
+  },
 });
 
 // Delete a key
 await client.apiKeys.delete({
-  hash: 'sk-or-v1-...'
+  hash: "sk-or-v1-...",
 });
 ```
 
@@ -137,21 +139,21 @@ Generate an authorization code and URL to start the OAuth flow:
 
 ```typescript
 const authResponse = await client.oAuth.createAuthCode({
-  callbackUrl: 'https://myapp.com/auth/callback'
+  callbackUrl: "https://myapp.com/auth/callback",
 });
 
 // authResponse contains:
 // - authorizationUrl: URL to redirect the user to
 // - code: The authorization code for later exchange
 
-console.log('Redirect user to:', authResponse.authorizationUrl);
+console.log("Redirect user to:", authResponse.authorizationUrl);
 ```
 
 **Parameters:**
 
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `callbackUrl` | `string` | Yes | Your application's callback URL after user authorization |
+| Parameter     | Type     | Required | Description                                              |
+| ------------- | -------- | -------- | -------------------------------------------------------- |
+| `callbackUrl` | `string` | Yes      | Your application's callback URL after user authorization |
 
 **Browser Redirect:**
 
@@ -169,10 +171,10 @@ After the user authorizes your application, they are redirected back to your cal
 
 ```typescript
 // In your callback handler
-const code = req.query.code;  // From the redirect URL
+const code = req.query.code; // From the redirect URL
 
 const apiKeyResponse = await client.oAuth.exchangeAuthCodeForAPIKey({
-  code: code
+  code: code,
 });
 
 // apiKeyResponse contains:
@@ -187,71 +189,73 @@ await saveUserApiKey(userId, userApiKey);
 
 **Parameters:**
 
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| `code` | `string` | Yes | The authorization code from the OAuth redirect |
+| Parameter | Type     | Required | Description                                    |
+| --------- | -------- | -------- | ---------------------------------------------- |
+| `code`    | `string` | Yes      | The authorization code from the OAuth redirect |
 
 #### Complete OAuth Flow Example
 
 ```typescript
-import OpenRouter from '@openrouter/sdk';
-import { OpenRouter as Agent } from '@openrouter/agent';
-import express from 'express';
+import OpenRouter from "@openrouter/sdk";
+import { OpenRouter as Agent } from "@openrouter/agent";
+import express from "express";
 
 const app = express();
 // SDK client for OAuth and API key management
 const client = new OpenRouter({
-  apiKey: process.env.OPENROUTER_API_KEY
+  apiKey: process.env.OPENROUTER_API_KEY,
 });
 
 // Step 1: Initiate OAuth flow
-app.get('/auth/start', async (req, res) => {
+app.get("/auth/start", async (req, res) => {
   const authResponse = await client.oAuth.createAuthCode({
-    callbackUrl: 'https://myapp.com/auth/callback'
+    callbackUrl: "https://myapp.com/auth/callback",
   });
 
   // Store any state needed for the callback
-  req.session.oauthState = { /* ... */ };
+  req.session.oauthState = {
+    /* ... */
+  };
 
   // Redirect user to OpenRouter authorization page
   res.redirect(authResponse.authorizationUrl);
 });
 
 // Step 2: Handle callback and exchange code
-app.get('/auth/callback', async (req, res) => {
+app.get("/auth/callback", async (req, res) => {
   const { code } = req.query;
 
   if (!code) {
-    return res.status(400).send('Authorization code missing');
+    return res.status(400).send("Authorization code missing");
   }
 
   try {
     const apiKeyResponse = await client.oAuth.exchangeAuthCodeForAPIKey({
-      code: code as string
+      code: code as string,
     });
 
     // Store the user's API key securely
     await saveUserApiKey(req.session.userId, apiKeyResponse.key);
 
-    res.redirect('/dashboard?auth=success');
+    res.redirect("/dashboard?auth=success");
   } catch (error) {
-    console.error('OAuth exchange failed:', error);
-    res.redirect('/auth/error');
+    console.error("OAuth exchange failed:", error);
+    res.redirect("/auth/error");
   }
 });
 
 // Step 3: Use the user's API key for their requests
-app.post('/api/chat', async (req, res) => {
+app.post("/api/chat", async (req, res) => {
   const userApiKey = await getUserApiKey(req.session.userId);
 
   // Create an agent client with the user's key
   const userAgent = new Agent({
-    apiKey: userApiKey
+    apiKey: userApiKey,
   });
 
   const result = userAgent.callModel({
-    model: 'openai/gpt-5-nano',
-    input: req.body.message
+    model: "openai/gpt-5-nano",
+    input: req.body.message,
   });
 
   const text = await result.getText();
@@ -278,8 +282,8 @@ The `callModel` function is the primary interface for text generation. It provid
 
 ```typescript
 const result = client.callModel({
-  model: 'openai/gpt-5-nano',
-  input: 'Explain quantum computing in one sentence.',
+  model: "openai/gpt-5-nano",
+  input: "Explain quantum computing in one sentence.",
 });
 
 const text = await result.getText();
@@ -299,55 +303,59 @@ const text = await result.getText();
 The SDK accepts flexible input types for the `input` parameter:
 
 ### String Input
+
 A simple string becomes a user message:
 
 ```typescript
 const result = client.callModel({
-  model: 'openai/gpt-5-nano',
-  input: 'Hello, how are you?'
+  model: "openai/gpt-5-nano",
+  input: "Hello, how are you?",
 });
 ```
 
 ### Message Arrays
+
 For multi-turn conversations:
 
 ```typescript
 const result = client.callModel({
-  model: 'openai/gpt-5-nano',
+  model: "openai/gpt-5-nano",
   input: [
-    { role: 'user', content: 'What is the capital of France?' },
-    { role: 'assistant', content: 'The capital of France is Paris.' },
-    { role: 'user', content: 'What is its population?' }
-  ]
+    { role: "user", content: "What is the capital of France?" },
+    { role: "assistant", content: "The capital of France is Paris." },
+    { role: "user", content: "What is its population?" },
+  ],
 });
 ```
 
 ### Multimodal Content
+
 Including images and text:
 
 ```typescript
 const result = client.callModel({
-  model: 'openai/gpt-5-nano',
+  model: "openai/gpt-5-nano",
   input: [
     {
-      role: 'user',
+      role: "user",
       content: [
-        { type: 'text', text: 'What is in this image?' },
-        { type: 'image_url', image_url: { url: 'https://example.com/image.png' } }
-      ]
-    }
-  ]
+        { type: "text", text: "What is in this image?" },
+        { type: "image_url", image_url: { url: "https://example.com/image.png" } },
+      ],
+    },
+  ],
 });
 ```
 
 ### System Instructions
+
 Use the `instructions` parameter for system-level guidance:
 
 ```typescript
 const result = client.callModel({
-  model: 'openai/gpt-5-nano',
-  instructions: 'You are a helpful coding assistant. Be concise.',
-  input: 'How do I reverse a string in Python?'
+  model: "openai/gpt-5-nano",
+  instructions: "You are a helpful coding assistant. Be concise.",
+  input: "How do I reverse a string in Python?",
 });
 ```
 
@@ -357,20 +365,20 @@ const result = client.callModel({
 
 The result object provides multiple methods for consuming the response:
 
-| Method | Purpose |
-|--------|---------|
-| `getText()` | Get complete text after all tools complete |
-| `getResponse()` | Full response object with token usage |
-| `getTextStream()` | Stream text deltas as they arrive |
+| Method                 | Purpose                                           |
+| ---------------------- | ------------------------------------------------- |
+| `getText()`            | Get complete text after all tools complete        |
+| `getResponse()`        | Full response object with token usage             |
+| `getTextStream()`      | Stream text deltas as they arrive                 |
 | `getReasoningStream()` | Stream reasoning tokens (for o1/reasoning models) |
-| `getToolCallsStream()` | Stream tool calls as they complete |
+| `getToolCallsStream()` | Stream tool calls as they complete                |
 
 ### getText()
 
 ```typescript
 const result = client.callModel({
-  model: 'openai/gpt-5-nano',
-  input: 'Write a haiku about coding'
+  model: "openai/gpt-5-nano",
+  input: "Write a haiku about coding",
 });
 
 const text = await result.getText();
@@ -381,21 +389,21 @@ console.log(text);
 
 ```typescript
 const result = client.callModel({
-  model: 'openai/gpt-5-nano',
-  input: 'Hello!'
+  model: "openai/gpt-5-nano",
+  input: "Hello!",
 });
 
 const response = await result.getResponse();
-console.log('Text:', response.text);
-console.log('Token usage:', response.usage);
+console.log("Text:", response.text);
+console.log("Token usage:", response.usage);
 ```
 
 ### getTextStream()
 
 ```typescript
 const result = client.callModel({
-  model: 'openai/gpt-5-nano',
-  input: 'Write a short story'
+  model: "openai/gpt-5-nano",
+  input: "Write a short story",
 });
 
 for await (const delta of result.getTextStream()) {
@@ -412,29 +420,29 @@ Create strongly-typed tools using Zod schemas for automatic validation and type 
 ### Defining Tools
 
 ```typescript
-import { tool } from '@openrouter/agent/tool';
-import { z } from 'zod';
+import { tool } from "@openrouter/agent/tool";
+import { z } from "zod";
 
 const weatherTool = tool({
-  name: 'get_weather',
-  description: 'Get current weather for a location',
+  name: "get_weather",
+  description: "Get current weather for a location",
   inputSchema: z.object({
-    location: z.string().describe('City name'),
-    units: z.enum(['celsius', 'fahrenheit']).optional().default('celsius')
+    location: z.string().describe("City name"),
+    units: z.enum(["celsius", "fahrenheit"]).optional().default("celsius"),
   }),
   outputSchema: z.object({
     temperature: z.number(),
     conditions: z.string(),
-    humidity: z.number()
+    humidity: z.number(),
   }),
   execute: async (params) => {
     // Implement weather fetching logic
     return {
       temperature: 22,
-      conditions: 'Sunny',
-      humidity: 45
+      conditions: "Sunny",
+      humidity: 45,
     };
-  }
+  },
 });
 ```
 
@@ -442,9 +450,9 @@ const weatherTool = tool({
 
 ```typescript
 const result = client.callModel({
-  model: 'openai/gpt-5-nano',
-  input: 'What is the weather in Paris?',
-  tools: [weatherTool]
+  model: "openai/gpt-5-nano",
+  input: "What is the weather in Paris?",
+  tools: [weatherTool],
 });
 
 const text = await result.getText();
@@ -454,51 +462,54 @@ const text = await result.getText();
 ### Tool Types
 
 #### Regular Tools
+
 Standard execute functions that return a result:
 
 ```typescript
 const calculatorTool = tool({
-  name: 'calculate',
-  description: 'Perform mathematical calculations',
+  name: "calculate",
+  description: "Perform mathematical calculations",
   inputSchema: z.object({
-    expression: z.string()
+    expression: z.string(),
   }),
   execute: async ({ expression }) => {
     return { result: eval(expression) };
-  }
+  },
 });
 ```
 
 #### Generator Tools
+
 Yield progress events using `eventSchema`:
 
 ```typescript
 const searchTool = tool({
-  name: 'web_search',
-  description: 'Search the web',
+  name: "web_search",
+  description: "Search the web",
   inputSchema: z.object({ query: z.string() }),
   eventSchema: z.object({
-    type: z.literal('progress'),
-    message: z.string()
+    type: z.literal("progress"),
+    message: z.string(),
   }),
   outputSchema: z.object({ results: z.array(z.string()) }),
   execute: async function* ({ query }) {
-    yield { type: 'progress', message: 'Searching...' };
-    yield { type: 'progress', message: 'Processing results...' };
-    return { results: ['Result 1', 'Result 2'] };
-  }
+    yield { type: "progress", message: "Searching..." };
+    yield { type: "progress", message: "Processing results..." };
+    return { results: ["Result 1", "Result 2"] };
+  },
 });
 ```
 
 #### Manual Tools
+
 Set `execute: false` to handle tool calls yourself:
 
 ```typescript
 const manualTool = tool({
-  name: 'user_confirmation',
-  description: 'Request user confirmation',
+  name: "user_confirmation",
+  description: "Request user confirmation",
   inputSchema: z.object({ message: z.string() }),
-  execute: false
+  execute: false,
 });
 ```
 
@@ -509,26 +520,26 @@ const manualTool = tool({
 Control automatic tool execution with stop conditions:
 
 ```typescript
-import { stepCountIs, maxCost, hasToolCall } from '@openrouter/agent/stop-conditions';
+import { stepCountIs, maxCost, hasToolCall } from "@openrouter/agent/stop-conditions";
 
 const result = client.callModel({
-  model: 'openai/gpt-5.2',
-  input: 'Research this topic thoroughly',
+  model: "openai/gpt-5.2",
+  input: "Research this topic thoroughly",
   tools: [searchTool, analyzeTool],
   stopWhen: [
-    stepCountIs(10),      // Stop after 10 turns
-    maxCost(1.00),        // Stop if cost exceeds $1.00
-    hasToolCall('finish') // Stop when 'finish' tool is called
-  ]
+    stepCountIs(10), // Stop after 10 turns
+    maxCost(1.0), // Stop if cost exceeds $1.00
+    hasToolCall("finish"), // Stop when 'finish' tool is called
+  ],
 });
 ```
 
 ### Available Stop Conditions
 
-| Condition | Description |
-|-----------|-------------|
-| `stepCountIs(n)` | Stop after n turns |
-| `maxCost(amount)` | Stop when cost exceeds amount |
+| Condition           | Description                       |
+| ------------------- | --------------------------------- |
+| `stepCountIs(n)`    | Stop after n turns                |
+| `maxCost(amount)`   | Stop when cost exceeds amount     |
 | `hasToolCall(name)` | Stop when specific tool is called |
 
 ### Custom Stop Conditions
@@ -539,10 +550,10 @@ const customStop = (context) => {
 };
 
 const result = client.callModel({
-  model: 'openai/gpt-5-nano',
-  input: 'Complex task',
+  model: "openai/gpt-5-nano",
+  input: "Complex task",
   tools: [myTool],
-  stopWhen: customStop
+  stopWhen: customStop,
 });
 ```
 
@@ -554,20 +565,20 @@ Compute parameters based on conversation context:
 
 ```typescript
 const result = client.callModel({
-  model: (ctx) => ctx.numberOfTurns > 3 ? 'openai/gpt-4' : 'openai/gpt-4o-mini',
-  temperature: (ctx) => ctx.numberOfTurns > 1 ? 0.3 : 0.7,
-  input: 'Hello!'
+  model: (ctx) => (ctx.numberOfTurns > 3 ? "openai/gpt-4" : "openai/gpt-4o-mini"),
+  temperature: (ctx) => (ctx.numberOfTurns > 1 ? 0.3 : 0.7),
+  input: "Hello!",
 });
 ```
 
 ### Context Object Properties
 
-| Property | Type | Description |
-|----------|------|-------------|
-| `numberOfTurns` | number | Current turn count |
-| `messages` | array | All messages so far |
-| `instructions` | string | Current system instructions |
-| `totalCost` | number | Accumulated cost |
+| Property        | Type   | Description                 |
+| --------------- | ------ | --------------------------- |
+| `numberOfTurns` | number | Current turn count          |
+| `messages`      | array  | All messages so far         |
+| `instructions`  | string | Current system instructions |
+| `totalCost`     | number | Accumulated cost            |
 
 ---
 
@@ -577,20 +588,20 @@ Tools can modify parameters for subsequent turns, enabling skills and context-aw
 
 ```typescript
 const skillTool = tool({
-  name: 'load_skill',
-  description: 'Load a specialized skill',
+  name: "load_skill",
+  description: "Load a specialized skill",
   inputSchema: z.object({
-    skill: z.string().describe('Name of the skill to load')
+    skill: z.string().describe("Name of the skill to load"),
   }),
   nextTurnParams: {
     instructions: (params, context) => {
       const skillInstructions = loadSkillInstructions(params.skill);
       return `${context.instructions}\n\n${skillInstructions}`;
-    }
+    },
   },
   execute: async ({ skill }) => {
     return { loaded: skill };
-  }
+  },
 });
 ```
 
@@ -609,14 +620,14 @@ Control model behavior with these parameters:
 
 ```typescript
 const result = client.callModel({
-  model: 'openai/gpt-5-nano',
-  input: 'Write a creative story',
-  temperature: 0.7,        // Creativity (0-2, default varies by model)
-  maxOutputTokens: 1000,   // Maximum tokens to generate
-  topP: 0.9,               // Nucleus sampling parameter
-  frequencyPenalty: 0.5,   // Reduce repetition
-  presencePenalty: 0.5,    // Encourage new topics
-  stop: ['\n\n']           // Stop sequences
+  model: "openai/gpt-5-nano",
+  input: "Write a creative story",
+  temperature: 0.7, // Creativity (0-2, default varies by model)
+  maxOutputTokens: 1000, // Maximum tokens to generate
+  topP: 0.9, // Nucleus sampling parameter
+  frequencyPenalty: 0.5, // Reduce repetition
+  presencePenalty: 0.5, // Encourage new topics
+  stop: ["\n\n"], // Stop sequences
 });
 ```
 
@@ -628,8 +639,8 @@ All streaming methods support concurrent consumers from a single result object:
 
 ```typescript
 const result = client.callModel({
-  model: 'openai/gpt-5-nano',
-  input: 'Write a detailed explanation'
+  model: "openai/gpt-5-nano",
+  input: "Write a detailed explanation",
 });
 
 // Consumer 1: Stream text to console
@@ -644,16 +655,16 @@ const responsePromise = result.getResponse();
 
 // Both run concurrently
 const [, response] = await Promise.all([textPromise, responsePromise]);
-console.log('\n\nTotal tokens:', response.usage.totalTokens);
+console.log("\n\nTotal tokens:", response.usage.totalTokens);
 ```
 
 ### Streaming Tool Calls
 
 ```typescript
 const result = client.callModel({
-  model: 'openai/gpt-5-nano',
-  input: 'Search for information about TypeScript',
-  tools: [searchTool]
+  model: "openai/gpt-5-nano",
+  input: "Search for information about TypeScript",
+  tools: [searchTool],
 });
 
 for await (const toolCall of result.getToolCallsStream()) {
@@ -672,12 +683,12 @@ Convert between ecosystem formats for interoperability:
 ### OpenAI Format
 
 ```typescript
-import { fromChatMessages, toChatMessage } from '@openrouter/agent';
+import { fromChatMessages, toChatMessage } from "@openrouter/agent";
 
 // OpenAI messages → OpenRouter format
 const result = client.callModel({
-  model: 'openai/gpt-5-nano',
-  input: fromChatMessages(openaiMessages)
+  model: "openai/gpt-5-nano",
+  input: fromChatMessages(openaiMessages),
 });
 
 // Response → OpenAI chat message format
@@ -688,12 +699,12 @@ const chatMsg = toChatMessage(response);
 ### Claude Format
 
 ```typescript
-import { fromClaudeMessages, toClaudeMessage } from '@openrouter/agent';
+import { fromClaudeMessages, toClaudeMessage } from "@openrouter/agent";
 
 // Claude messages → OpenRouter format
 const result = client.callModel({
-  model: 'anthropic/claude-3-opus',
-  input: fromClaudeMessages(claudeMessages)
+  model: "anthropic/claude-3-opus",
+  input: fromClaudeMessages(claudeMessages),
 });
 
 // Response → Claude message format
@@ -711,13 +722,13 @@ The SDK uses the **OpenResponses** format for messages. Understanding these shap
 
 Messages contain a `role` property that determines the message type:
 
-| Role | Description |
-|------|-------------|
-| `user` | User-provided input |
-| `assistant` | Model-generated responses |
-| `system` | System instructions |
+| Role        | Description                |
+| ----------- | -------------------------- |
+| `user`      | User-provided input        |
+| `assistant` | Model-generated responses  |
+| `system`    | System instructions        |
 | `developer` | Developer-level directives |
-| `tool` | Tool execution results |
+| `tool`      | Tool execution results     |
 
 ### Text Message
 
@@ -725,7 +736,7 @@ Simple text content from user or assistant:
 
 ```typescript
 interface TextMessage {
-  role: 'user' | 'assistant';
+  role: "user" | "assistant";
   content: string;
 }
 ```
@@ -736,18 +747,18 @@ Messages with mixed content types:
 
 ```typescript
 interface MultimodalMessage {
-  role: 'user';
+  role: "user";
   content: Array<
-    | { type: 'input_text'; text: string }
-    | { type: 'input_image'; imageUrl: string; detail?: 'auto' | 'low' | 'high' }
+    | { type: "input_text"; text: string }
+    | { type: "input_image"; imageUrl: string; detail?: "auto" | "low" | "high" }
     | {
-        type: 'image';
+        type: "image";
         source: {
-          type: 'url' | 'base64';
+          type: "url" | "base64";
           url?: string;
           media_type?: string;
-          data?: string
-        }
+          data?: string;
+        };
       }
   >;
 }
@@ -759,14 +770,14 @@ When the model requests a tool execution:
 
 ```typescript
 interface ToolCallMessage {
-  role: 'assistant';
+  role: "assistant";
   content?: null;
   tool_calls?: Array<{
     id: string;
-    type: 'function';
+    type: "function";
     function: {
       name: string;
-      arguments: string;  // JSON-encoded arguments
+      arguments: string; // JSON-encoded arguments
     };
   }>;
 }
@@ -778,9 +789,9 @@ Result returned after tool execution:
 
 ```typescript
 interface ToolResultMessage {
-  role: 'tool';
+  role: "tool";
   tool_call_id: string;
-  content: string;  // JSON-encoded result
+  content: string; // JSON-encoded result
 }
 ```
 
@@ -799,7 +810,7 @@ interface OpenResponsesNonStreamingResponse {
   finishReason?: string;
   warnings?: Array<{
     type: string;
-    message: string
+    message: string;
   }>;
   experimental_providerMetadata?: Record<string, unknown>;
 }
@@ -812,15 +823,15 @@ Output messages in the response array:
 ```typescript
 // Text/content message
 interface ResponseOutputMessage {
-  type: 'message';
-  role: 'assistant';
+  type: "message";
+  role: "assistant";
   content: string | Array<ContentPart>;
-  reasoning?: string;  // For reasoning models (o1, etc.)
+  reasoning?: string; // For reasoning models (o1, etc.)
 }
 
 // Tool result in output
 interface FunctionCallOutputMessage {
-  type: 'function_call_output';
+  type: "function_call_output";
   call_id: string;
   output: string;
 }
@@ -834,7 +845,7 @@ When tool calls are parsed from the response:
 interface ParsedToolCall {
   id: string;
   name: string;
-  arguments: unknown;  // Validated against inputSchema
+  arguments: unknown; // Validated against inputSchema
 }
 ```
 
@@ -846,8 +857,8 @@ After a tool completes execution:
 interface ToolExecutionResult {
   toolCallId: string;
   toolName: string;
-  result: unknown;                  // Validated against outputSchema
-  preliminaryResults?: unknown[];   // From generator tools
+  result: unknown; // Validated against outputSchema
+  preliminaryResults?: unknown[]; // From generator tools
   error?: Error;
 }
 ```
@@ -858,7 +869,7 @@ Available in custom stop condition callbacks:
 
 ```typescript
 interface StepResult {
-  stepType: 'initial' | 'continue';
+  stepType: "initial" | "continue";
   text: string;
   toolCalls: ParsedToolCall[];
   toolResults: ToolExecutionResult[];
@@ -880,9 +891,9 @@ Available to tools and dynamic parameter functions:
 
 ```typescript
 interface TurnContext {
-  numberOfTurns: number;                     // Turn count (1-indexed)
-  turnRequest?: OpenResponsesRequest;        // Current request being made
-  toolCall?: OpenResponsesFunctionToolCall;  // Current tool call (in tool context)
+  numberOfTurns: number; // Turn count (1-indexed)
+  turnRequest?: OpenResponsesRequest; // Current request being made
+  toolCall?: OpenResponsesFunctionToolCall; // Current tool call (in tool context)
 }
 ```
 
@@ -912,24 +923,24 @@ type EnhancedResponseStreamEvent =
 
 ### Event Type Reference
 
-| Event Type | Description | Payload |
-|------------|-------------|---------|
-| `response.created` | Response object initialized | `{ response: ResponseObject }` |
-| `response.in_progress` | Generation has started | `{}` |
-| `response.output_text.delta` | Text chunk received | `{ delta: string }` |
-| `response.output_text.done` | Text generation complete | `{ text: string }` |
-| `response.reasoning.delta` | Reasoning chunk (o1 models) | `{ delta: string }` |
-| `response.reasoning.done` | Reasoning complete | `{ reasoning: string }` |
-| `response.function_call_arguments.delta` | Tool argument chunk | `{ delta: string }` |
-| `response.function_call_arguments.done` | Tool arguments complete | `{ arguments: string }` |
-| `response.completed` | Full response complete | `{ response: ResponseObject }` |
-| `tool.preliminary_result` | Generator tool progress | `{ toolCallId: string; result: unknown }` |
+| Event Type                               | Description                 | Payload                                   |
+| ---------------------------------------- | --------------------------- | ----------------------------------------- |
+| `response.created`                       | Response object initialized | `{ response: ResponseObject }`            |
+| `response.in_progress`                   | Generation has started      | `{}`                                      |
+| `response.output_text.delta`             | Text chunk received         | `{ delta: string }`                       |
+| `response.output_text.done`              | Text generation complete    | `{ text: string }`                        |
+| `response.reasoning.delta`               | Reasoning chunk (o1 models) | `{ delta: string }`                       |
+| `response.reasoning.done`                | Reasoning complete          | `{ reasoning: string }`                   |
+| `response.function_call_arguments.delta` | Tool argument chunk         | `{ delta: string }`                       |
+| `response.function_call_arguments.done`  | Tool arguments complete     | `{ arguments: string }`                   |
+| `response.completed`                     | Full response complete      | `{ response: ResponseObject }`            |
+| `tool.preliminary_result`                | Generator tool progress     | `{ toolCallId: string; result: unknown }` |
 
 ### Text Delta Event
 
 ```typescript
 interface OutputTextDeltaEvent {
-  type: 'response.output_text.delta';
+  type: "response.output_text.delta";
   delta: string;
 }
 ```
@@ -940,7 +951,7 @@ For reasoning models (o1, etc.):
 
 ```typescript
 interface ReasoningDeltaEvent {
-  type: 'response.reasoning.delta';
+  type: "response.reasoning.delta";
   delta: string;
 }
 ```
@@ -949,7 +960,7 @@ interface ReasoningDeltaEvent {
 
 ```typescript
 interface FunctionCallArgumentsDeltaEvent {
-  type: 'response.function_call_arguments.delta';
+  type: "response.function_call_arguments.delta";
   delta: string;
 }
 ```
@@ -960,9 +971,9 @@ From generator tools that yield progress:
 
 ```typescript
 interface ToolPreliminaryResultEvent {
-  type: 'tool.preliminary_result';
+  type: "tool.preliminary_result";
   toolCallId: string;
-  result: unknown;  // Matches the tool's eventSchema
+  result: unknown; // Matches the tool's eventSchema
 }
 ```
 
@@ -970,7 +981,7 @@ interface ToolPreliminaryResultEvent {
 
 ```typescript
 interface ResponseCompletedEvent {
-  type: 'response.completed';
+  type: "response.completed";
   response: OpenResponsesNonStreamingResponse;
 }
 ```
@@ -980,40 +991,38 @@ interface ResponseCompletedEvent {
 The `getToolStream()` method yields:
 
 ```typescript
-type ToolStreamEvent =
-  | { type: 'delta'; content: string }
-  | { type: 'preliminary_result'; toolCallId: string; result: unknown };
+type ToolStreamEvent = { type: "delta"; content: string } | { type: "preliminary_result"; toolCallId: string; result: unknown };
 ```
 
 ### Example: Processing Stream Events
 
 ```typescript
 const result = client.callModel({
-  model: 'openai/gpt-5-nano',
-  input: 'Analyze this data',
-  tools: [analysisTool]
+  model: "openai/gpt-5-nano",
+  input: "Analyze this data",
+  tools: [analysisTool],
 });
 
 for await (const event of result.getFullResponsesStream()) {
   switch (event.type) {
-    case 'response.output_text.delta':
+    case "response.output_text.delta":
       process.stdout.write(event.delta);
       break;
 
-    case 'response.reasoning.delta':
-      console.log('[Reasoning]', event.delta);
+    case "response.reasoning.delta":
+      console.log("[Reasoning]", event.delta);
       break;
 
-    case 'response.function_call_arguments.delta':
-      console.log('[Tool Args]', event.delta);
+    case "response.function_call_arguments.delta":
+      console.log("[Tool Args]", event.delta);
       break;
 
-    case 'tool.preliminary_result':
+    case "tool.preliminary_result":
       console.log(`[Progress: ${event.toolCallId}]`, event.result);
       break;
 
-    case 'response.completed':
-      console.log('\n[Complete]', event.response.usage);
+    case "response.completed":
+      console.log("\n[Complete]", event.response.usage);
       break;
   }
 }
@@ -1025,17 +1034,17 @@ The `getNewMessagesStream()` yields OpenResponses format updates:
 
 ```typescript
 type MessageStreamUpdate =
-  | ResponsesOutputMessage        // Text/content updates
-  | OpenResponsesFunctionCallOutput;  // Tool results
+  | ResponsesOutputMessage // Text/content updates
+  | OpenResponsesFunctionCallOutput; // Tool results
 ```
 
 ### Example: Tracking New Messages
 
 ```typescript
 const result = client.callModel({
-  model: 'openai/gpt-5-nano',
-  input: 'Research this topic',
-  tools: [searchTool]
+  model: "openai/gpt-5-nano",
+  input: "Research this topic",
+  tools: [searchTool],
 });
 
 const allMessages: MessageStreamUpdate[] = [];
@@ -1043,10 +1052,10 @@ const allMessages: MessageStreamUpdate[] = [];
 for await (const message of result.getNewMessagesStream()) {
   allMessages.push(message);
 
-  if (message.type === 'message') {
-    console.log('Assistant:', message.content);
-  } else if (message.type === 'function_call_output') {
-    console.log('Tool result:', message.output);
+  if (message.type === "message") {
+    console.log("Assistant:", message.content);
+  } else if (message.type === "function_call_output") {
+    console.log("Tool result:", message.output);
   }
 }
 ```
@@ -1060,10 +1069,10 @@ for await (const message of result.getNewMessagesStream()) {
 Beyond `callModel`, the SDK client (`@openrouter/sdk`) provides access to platform API endpoints:
 
 ```typescript
-import OpenRouter from '@openrouter/sdk';
+import OpenRouter from "@openrouter/sdk";
 
 const sdkClient = new OpenRouter({
-  apiKey: process.env.OPENROUTER_API_KEY
+  apiKey: process.env.OPENROUTER_API_KEY,
 });
 
 // List available models
@@ -1071,14 +1080,14 @@ const models = await sdkClient.models.list();
 
 // Chat completions (alternative to callModel)
 const completion = await sdkClient.chat.send({
-  model: 'openai/gpt-5-nano',
-  messages: [{ role: 'user', content: 'Hello!' }]
+  model: "openai/gpt-5-nano",
+  messages: [{ role: "user", content: "Hello!" }],
 });
 
 // Legacy completions format
 const legacyCompletion = await sdkClient.completions.generate({
-  model: 'openai/gpt-5-nano',
-  prompt: 'Once upon a time'
+  model: "openai/gpt-5-nano",
+  prompt: "Once upon a time",
 });
 
 // Usage analytics
@@ -1100,94 +1109,92 @@ The SDK provides specific error types with actionable messages:
 ```typescript
 try {
   const result = await client.callModel({
-    model: 'openai/gpt-5-nano',
-    input: 'Hello!'
+    model: "openai/gpt-5-nano",
+    input: "Hello!",
   });
   const text = await result.getText();
 } catch (error) {
   if (error.statusCode === 401) {
-    console.error('Invalid API key - check your OPENROUTER_API_KEY');
+    console.error("Invalid API key - check your OPENROUTER_API_KEY");
   } else if (error.statusCode === 402) {
-    console.error('Insufficient credits - add credits at openrouter.ai');
+    console.error("Insufficient credits - add credits at openrouter.ai");
   } else if (error.statusCode === 429) {
-    console.error('Rate limited - implement backoff retry');
+    console.error("Rate limited - implement backoff retry");
   } else if (error.statusCode === 503) {
-    console.error('Model temporarily unavailable - try again or use fallback');
+    console.error("Model temporarily unavailable - try again or use fallback");
   } else {
-    console.error('Unexpected error:', error.message);
+    console.error("Unexpected error:", error.message);
   }
 }
 ```
 
 ### Error Status Codes
 
-| Code | Meaning | Action |
-|------|---------|--------|
-| 400 | Bad request | Check request parameters |
-| 401 | Unauthorized | Verify API key |
-| 402 | Payment required | Add credits |
-| 429 | Rate limited | Implement exponential backoff |
-| 500 | Server error | Retry with backoff |
-| 503 | Service unavailable | Try alternative model |
+| Code | Meaning             | Action                        |
+| ---- | ------------------- | ----------------------------- |
+| 400  | Bad request         | Check request parameters      |
+| 401  | Unauthorized        | Verify API key                |
+| 402  | Payment required    | Add credits                   |
+| 429  | Rate limited        | Implement exponential backoff |
+| 500  | Server error        | Retry with backoff            |
+| 503  | Service unavailable | Try alternative model         |
 
 ---
 
 ## Complete Example: Agent with Tools
 
 ```typescript
-import { OpenRouter } from '@openrouter/agent';
-import { tool } from '@openrouter/agent/tool';
-import { stepCountIs, hasToolCall } from '@openrouter/agent/stop-conditions';
-import { z } from 'zod';
+import { OpenRouter } from "@openrouter/agent";
+import { tool } from "@openrouter/agent/tool";
+import { stepCountIs, hasToolCall } from "@openrouter/agent/stop-conditions";
+import { z } from "zod";
 
 const client = new OpenRouter({
-  apiKey: process.env.OPENROUTER_API_KEY
+  apiKey: process.env.OPENROUTER_API_KEY,
 });
 
 // Define tools
 const searchTool = tool({
-  name: 'web_search',
-  description: 'Search the web for information',
+  name: "web_search",
+  description: "Search the web for information",
   inputSchema: z.object({
-    query: z.string().describe('Search query')
+    query: z.string().describe("Search query"),
   }),
   outputSchema: z.object({
-    results: z.array(z.object({
-      title: z.string(),
-      snippet: z.string(),
-      url: z.string()
-    }))
+    results: z.array(
+      z.object({
+        title: z.string(),
+        snippet: z.string(),
+        url: z.string(),
+      })
+    ),
   }),
   execute: async ({ query }) => {
     // Implement actual search
     return {
-      results: [
-        { title: 'Example', snippet: 'Example result', url: 'https://example.com' }
-      ]
+      results: [{ title: "Example", snippet: "Example result", url: "https://example.com" }],
     };
-  }
+  },
 });
 
 const finishTool = tool({
-  name: 'finish',
-  description: 'Complete the task with final answer',
+  name: "finish",
+  description: "Complete the task with final answer",
   inputSchema: z.object({
-    answer: z.string().describe('The final answer')
+    answer: z.string().describe("The final answer"),
   }),
-  execute: async ({ answer }) => ({ answer })
+  execute: async ({ answer }) => ({ answer }),
 });
 
 // Run agent
 async function runAgent(task: string) {
   const result = client.callModel({
-    model: 'openai/gpt-5-nano',
-    instructions: 'You are a helpful research assistant. Use web_search to find information, then use finish to provide your final answer.',
+    model: "openai/gpt-5-nano",
+    instructions:
+      "You are a helpful research assistant. Use web_search to find information, then use finish to provide your final answer.",
     input: task,
     tools: [searchTool, finishTool],
-    stopWhen: [
-      stepCountIs(10),
-      hasToolCall('finish')
-    ]
+    stopWhen: [stepCountIs(10), hasToolCall("finish")],
   });
 
   // Stream progress
@@ -1199,8 +1206,8 @@ async function runAgent(task: string) {
 }
 
 // Usage
-const answer = await runAgent('What are the latest developments in quantum computing?');
-console.log('Final answer:', answer);
+const answer = await runAgent("What are the latest developments in quantum computing?");
+console.log("Final answer:", answer);
 ```
 
 ---
@@ -1208,28 +1215,32 @@ console.log('Final answer:', answer);
 ## Best Practices
 
 ### 1. Prefer callModel Over Direct API Calls
+
 The `callModel` pattern provides automatic tool execution, type safety, and multi-turn handling.
 
 ### 2. Use Zod for Tool Schemas
+
 Zod provides runtime validation and excellent TypeScript inference:
 
 ```typescript
-import { z } from 'zod';
+import { z } from "zod";
 
 const schema = z.object({
   name: z.string().min(1),
-  age: z.number().int().positive()
+  age: z.number().int().positive(),
 });
 ```
 
 ### 3. Implement Stop Conditions
+
 Always set reasonable limits to prevent runaway costs:
 
 ```typescript
-stopWhen: [stepCountIs(20), maxCost(5.00)]
+stopWhen: [stepCountIs(20), maxCost(5.0)];
 ```
 
 ### 4. Handle Errors Gracefully
+
 Implement retry logic for transient failures:
 
 ```typescript
@@ -1249,6 +1260,7 @@ async function callWithRetry(params, maxRetries = 3) {
 ```
 
 ### 5. Use Streaming for Long Responses
+
 Streaming provides better UX and allows early termination:
 
 ```typescript
@@ -1268,4 +1280,4 @@ for await (const delta of result.getTextStream()) {
 
 ---
 
-*SDK Status: Beta - Report issues on GitHub*
+_SDK Status: Beta - Report issues on GitHub_

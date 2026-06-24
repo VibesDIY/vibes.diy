@@ -2,13 +2,14 @@
 compatibility: browser (requires Web Crypto API, localStorage, sessionStorage)
 description: Implement "Sign In with OpenRouter" using OAuth PKCE — framework-agnostic, no SDK or client registration required. Use when the user wants to add OpenRouter login, authentication, sign-in buttons, OAuth, or AI model inference API keys for browser-based apps. No client registration, no backend, no secrets required.
 metadata:
-    github-path: skills/openrouter-oauth
-    github-ref: refs/heads/main
-    github-repo: https://github.com/OpenRouterTeam/skills
-    github-tree-sha: 592521dee85056a4c0b6dc06b5335d8940d63648
+  github-path: skills/openrouter-oauth
+  github-ref: refs/heads/main
+  github-repo: https://github.com/OpenRouterTeam/skills
+  github-tree-sha: 592521dee85056a4c0b6dc06b5335d8940d63648
 name: openrouter-oauth
 version: 2.0.0
 ---
+
 # Sign In with OpenRouter
 
 Add OAuth login to any web app. Users authorize on OpenRouter and your app receives an API key — no client registration, no backend, no secrets. Works with any framework.
@@ -17,11 +18,11 @@ Live demo: [openrouterteam.github.io/sign-in-with-openrouter](https://openrouter
 
 ## Decision Tree
 
-| User wants to… | Do this |
-|---|---|
-| Add sign-in / login to a web app | Follow the full PKCE flow + button guidance below |
-| Get an API key programmatically (no UI) | Just implement the PKCE flow — skip the button section |
-| Use the OpenRouter SDK after auth | Do PKCE here for the key, then see `openrouter-typescript-sdk` skill for `callModel`/streaming |
+| User wants to…                          | Do this                                                                                        |
+| --------------------------------------- | ---------------------------------------------------------------------------------------------- |
+| Add sign-in / login to a web app        | Follow the full PKCE flow + button guidance below                                              |
+| Get an API key programmatically (no UI) | Just implement the PKCE flow — skip the button section                                         |
+| Use the OpenRouter SDK after auth       | Do PKCE here for the key, then see `openrouter-typescript-sdk` skill for `callModel`/streaming |
 
 ---
 
@@ -46,11 +47,11 @@ code_challenge = base64url(SHA-256(code_verifier))
 https://openrouter.ai/auth?callback_url={url}&code_challenge={challenge}&code_challenge_method=S256
 ```
 
-| Param | Value |
-|---|---|
-| `callback_url` | Your app's URL (where the user returns after auth) |
-| `code_challenge` | The S256 challenge from Step 1 |
-| `code_challenge_method` | Always `S256` |
+| Param                   | Value                                              |
+| ----------------------- | -------------------------------------------------- |
+| `callback_url`          | Your app's URL (where the user returns after auth) |
+| `code_challenge`        | The S256 challenge from Step 1                     |
+| `code_challenge_method` | Always `S256`                                      |
 
 ### Step 3: Handle the redirect back
 
@@ -94,19 +95,29 @@ const VERIFIER_KEY = "openrouter_code_verifier";
 
 type AuthListener = () => void;
 const listeners = new Set<AuthListener>();
-export const onAuthChange = (fn: AuthListener) => { listeners.add(fn); return () => listeners.delete(fn); };
+export const onAuthChange = (fn: AuthListener) => {
+  listeners.add(fn);
+  return () => listeners.delete(fn);
+};
 const notify = () => listeners.forEach((fn) => fn());
 
 // Cross-tab sync: other tabs update when user signs in/out
 if (typeof window !== "undefined") {
-  window.addEventListener("storage", (e) => { if (e.key === STORAGE_KEY) notify(); });
+  window.addEventListener("storage", (e) => {
+    if (e.key === STORAGE_KEY) notify();
+  });
 }
 
-export const getApiKey = (): string | null =>
-  typeof window !== "undefined" ? localStorage.getItem(STORAGE_KEY) : null;
+export const getApiKey = (): string | null => (typeof window !== "undefined" ? localStorage.getItem(STORAGE_KEY) : null);
 
-export const setApiKey = (key: string) => { localStorage.setItem(STORAGE_KEY, key); notify(); };
-export const clearApiKey = () => { localStorage.removeItem(STORAGE_KEY); notify(); };
+export const setApiKey = (key: string) => {
+  localStorage.setItem(STORAGE_KEY, key);
+  notify();
+};
+export const clearApiKey = () => {
+  localStorage.removeItem(STORAGE_KEY);
+  notify();
+};
 
 // Guard: only process ?code= if we initiated an OAuth flow in this tab
 export const hasOAuthCallbackPending = (): boolean =>
@@ -116,13 +127,17 @@ function generateCodeVerifier(): string {
   const bytes = new Uint8Array(32);
   crypto.getRandomValues(bytes);
   return btoa(String.fromCharCode(...bytes))
-    .replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_")
+    .replace(/=+$/, "");
 }
 
 async function computeS256Challenge(verifier: string): Promise<string> {
   const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(verifier));
   return btoa(String.fromCharCode(...new Uint8Array(digest)))
-    .replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+    .replace(/\+/g, "-")
+    .replace(/\//g, "_")
+    .replace(/=+$/, "");
 }
 
 export async function initiateOAuth(callbackUrl?: string): Promise<void> {
@@ -131,7 +146,9 @@ export async function initiateOAuth(callbackUrl?: string): Promise<void> {
   const challenge = await computeS256Challenge(verifier);
   const url = callbackUrl ?? window.location.origin + window.location.pathname;
   window.location.href = `https://openrouter.ai/auth?${new URLSearchParams({
-    callback_url: url, code_challenge: challenge, code_challenge_method: "S256",
+    callback_url: url,
+    code_challenge: challenge,
+    code_challenge_method: "S256",
   })}`;
 }
 
@@ -171,22 +188,22 @@ Build a button component that calls `initiateOAuth()` on click. Include the Open
 
 Recommended classes for visual consistency with the reference implementation:
 
-| Variant | Classes |
-|---|---|
-| `default` | `rounded-lg border border-neutral-300 bg-white text-neutral-900 shadow-sm hover:bg-neutral-50` |
-| `minimal` | `text-neutral-700 underline-offset-4 hover:underline` |
-| `branded` | `rounded-lg bg-neutral-900 text-white shadow hover:bg-neutral-800` |
-| `icon` | Same as `default` + `aspect-square` (logo only, no text) |
-| `cta` | `rounded-xl bg-neutral-900 text-white shadow-lg hover:bg-neutral-800 hover:scale-[1.02] active:scale-[0.98]` |
+| Variant   | Classes                                                                                                      |
+| --------- | ------------------------------------------------------------------------------------------------------------ |
+| `default` | `rounded-lg border border-neutral-300 bg-white text-neutral-900 shadow-sm hover:bg-neutral-50`               |
+| `minimal` | `text-neutral-700 underline-offset-4 hover:underline`                                                        |
+| `branded` | `rounded-lg bg-neutral-900 text-white shadow hover:bg-neutral-800`                                           |
+| `icon`    | Same as `default` + `aspect-square` (logo only, no text)                                                     |
+| `cta`     | `rounded-xl bg-neutral-900 text-white shadow-lg hover:bg-neutral-800 hover:scale-[1.02] active:scale-[0.98]` |
 
 ### Sizes
 
-| Size | Classes |
-|---|---|
-| `sm` | `h-8 px-3 text-xs` |
-| `default` | `h-10 px-5 text-sm` |
-| `lg` | `h-12 px-8 text-base` |
-| `xl` | `h-14 px-10 text-lg` |
+| Size      | Classes               |
+| --------- | --------------------- |
+| `sm`      | `h-8 px-3 text-xs`    |
+| `default` | `h-10 px-5 text-sm`   |
+| `lg`      | `h-12 px-8 text-base` |
+| `xl`      | `h-14 px-10 text-lg`  |
 
 All variants use: `inline-flex items-center justify-center gap-2 font-medium transition-all cursor-pointer disabled:opacity-50`
 

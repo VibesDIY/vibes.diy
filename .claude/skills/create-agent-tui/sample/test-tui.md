@@ -40,6 +40,7 @@ npm run screenshots
 ```
 
 This generates 6 PNGs in `screenshots/`:
+
 - `tool-display-emoji.png`, `tool-display-grouped.png`, `tool-display-minimal.png`
 - `input-style-block.png`, `input-style-bordered.png`, `input-style-plain.png`
 
@@ -70,19 +71,19 @@ Follow this pattern:
 
 After running `npm run screenshots`, verify each tool display PNG:
 
-| Test | Screenshot | What to check |
-|------|-----------|---------------|
-| T1 | `tool-display-emoji.png` | Each tool call shows `⚡` marker with name and args, followed by `✓` with timing |
-| T2 | `tool-display-grouped.png` | Bold action labels (`Ran`, `Listed`, `Read`, `Searched`) with `└` tree-branch output lines |
-| T3 | `tool-display-minimal.png` | Single aggregated summary line (`ran 1 shell command, listed 2 directories...`) |
+| Test | Screenshot                 | What to check                                                                              |
+| ---- | -------------------------- | ------------------------------------------------------------------------------------------ |
+| T1   | `tool-display-emoji.png`   | Each tool call shows `⚡` marker with name and args, followed by `✓` with timing           |
+| T2   | `tool-display-grouped.png` | Bold action labels (`Ran`, `Listed`, `Read`, `Searched`) with `└` tree-branch output lines |
+| T3   | `tool-display-minimal.png` | Single aggregated summary line (`ran 1 shell command, listed 2 directories...`)            |
 
 ### Input styles (T4-T6)
 
-| Test | Screenshot | What to check |
-|------|-----------|---------------|
-| T4 | `input-style-block.png` | Three-line background box with `›` prompt, tinted background extends full width |
-| T5 | `input-style-bordered.png` | Horizontal `─` lines above and below the `›` prompt |
-| T6 | `input-style-plain.png` | Simple `>` prompt, no borders or background |
+| Test | Screenshot                 | What to check                                                                   |
+| ---- | -------------------------- | ------------------------------------------------------------------------------- |
+| T4   | `input-style-block.png`    | Three-line background box with `›` prompt, tinted background extends full width |
+| T5   | `input-style-bordered.png` | Horizontal `─` lines above and below the `›` prompt                             |
+| T6   | `input-style-plain.png`    | Simple `>` prompt, no borders or background                                     |
 
 ### Interactive tests (manual)
 
@@ -92,13 +93,13 @@ These require running the actual CLI:
 OPENROUTER_API_KEY=your-key npm start
 ```
 
-| Test | Action | Expected |
-|------|--------|----------|
-| T7 | Type text in block input | Characters appear after `›`, box stays 3 lines, no shifting |
-| T8 | Press Backspace | Characters removed, no visual artifacts |
-| T9 | Press Enter to submit | Box appears in scrollback with status line below, response streams |
-| T10 | Second prompt after response | New input box renders cleanly, no artifacts from prior block |
-| T11 | Ctrl+C | Process exits cleanly, terminal restored |
+| Test | Action                       | Expected                                                           |
+| ---- | ---------------------------- | ------------------------------------------------------------------ |
+| T7   | Type text in block input     | Characters appear after `›`, box stays 3 lines, no shifting        |
+| T8   | Press Backspace              | Characters removed, no visual artifacts                            |
+| T9   | Press Enter to submit        | Box appears in scrollback with status line below, response streams |
+| T10  | Second prompt after response | New input box renders cleanly, no artifacts from prior block       |
+| T11  | Ctrl+C                       | Process exits cleanly, terminal restored                           |
 
 ## Troubleshooting
 

@@ -1,5 +1,5 @@
-import { appendFileSync, readFileSync, existsSync, mkdirSync, readdirSync } from 'fs';
-import { join } from 'path';
+import { appendFileSync, readFileSync, existsSync, mkdirSync, readdirSync } from "fs";
+import { join } from "path";
 
 type Message = { role: string; content: string; [key: string]: unknown };
 
@@ -17,14 +17,14 @@ export function saveMessage(sessionPath: string, message: Message): void {
     timestamp: new Date().toISOString(),
     message,
   };
-  appendFileSync(sessionPath, JSON.stringify(entry) + '\n');
+  appendFileSync(sessionPath, JSON.stringify(entry) + "\n");
 }
 
 export function loadSession(sessionPath: string): Message[] {
   if (!existsSync(sessionPath)) return [];
 
-  return readFileSync(sessionPath, 'utf-8')
-    .split('\n')
+  return readFileSync(sessionPath, "utf-8")
+    .split("\n")
     .filter(Boolean)
     .map((line) => {
       try {
@@ -40,11 +40,11 @@ export function loadSession(sessionPath: string): Message[] {
 export function listSessions(dir: string): string[] {
   if (!existsSync(dir)) return [];
   return readdirSync(dir)
-    .filter((f) => f.endsWith('.jsonl'))
+    .filter((f) => f.endsWith(".jsonl"))
     .sort();
 }
 
 export function newSessionPath(dir: string): string {
-  const id = new Date().toISOString().replace(/[:.]/g, '-');
+  const id = new Date().toISOString().replace(/[:.]/g, "-");
   return join(dir, `${id}.jsonl`);
 }

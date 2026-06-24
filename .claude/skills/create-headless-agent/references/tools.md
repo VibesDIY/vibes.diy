@@ -19,9 +19,9 @@ Read file contents with optional offset/limit. Full example in SKILL.md.
 
 - **inputSchema**: `path` (string), `offset?` (number, 1-indexed line), `limit?` (number, max lines)
 - **Behavior**: Read file with `await Bun.file(path).text()`, split lines, slice by offset/limit, return content + totalLines + truncated flag
-- **Default line cap**: When `limit` is omitted, return at most 2000 lines. The harness caps *even if the model didn't ask*, so the model never accidentally floods context with a 50k-line file. Pi and Claude Code both use this pattern (Pi: 2000 lines/50KB, Claude Code: 2000 lines + 256KB byte gate).
+- **Default line cap**: When `limit` is omitted, return at most 2000 lines. The harness caps _even if the model didn't ask_, so the model never accidentally floods context with a 50k-line file. Pi and Claude Code both use this pattern (Pi: 2000 lines/50KB, Claude Code: 2000 lines + 256KB byte gate).
 - **Per-line truncation**: Truncate any single line longer than 2000 characters with a `… [line truncated, N chars dropped]` suffix. This dodges minified bundles and JSON dumps that would otherwise consume a whole output budget in one line. Count how many lines were affected so the model sees that fact in the hint — otherwise a 500-line file with one 10MB minified line would silently return incomplete content with `truncated: false`.
-- **Continuation hint**: When *anything* was truncated (tail OR any per-line truncation), set `truncated: true` and include a `hint` string explaining both forms of truncation. Example: `"Showing lines 1-2000 of 50000. Use offset=2001 to continue. 3 line(s) exceeded 2000 chars and were per-line truncated; use grep to fetch content from those lines."` The hint lives inside the returned JSON so the model actually sees it — a `truncated: true` boolean alone is easy to miss. `nextOffset` is only set when the *tail* was truncated, since line-based pagination can't recover per-line truncated content.
+- **Continuation hint**: When _anything_ was truncated (tail OR any per-line truncation), set `truncated: true` and include a `hint` string explaining both forms of truncation. Example: `"Showing lines 1-2000 of 50000. Use offset=2001 to continue. 3 line(s) exceeded 2000 chars and were per-line truncated; use grep to fetch content from those lines."` The hint lives inside the returned JSON so the model actually sees it — a `truncated: true` boolean alone is easy to miss. `nextOffset` is only set when the _tail_ was truncated, since line-based pagination can't recover per-line truncated content.
 - **Image detection**: Check extension for jpg/png/gif/webp — if image, read with `await Bun.file(path).arrayBuffer()`, convert to base64 via `Buffer.from(buf).toString('base64')`, and return `{ type: 'image', data, mimeType }`
 - **Read-only**
 
@@ -54,8 +54,8 @@ Find files by glob pattern.
 ```typescript
 inputSchema: z.object({
   pattern: z.string().describe('Glob pattern, e.g. "src/**/*.ts"'),
-  path: z.string().optional().describe('Directory to search in (default: cwd)'),
-})
+  path: z.string().optional().describe("Directory to search in (default: cwd)"),
+});
 ```
 
 - **Behavior**: Use `new Bun.Glob(pattern)` with `.scan({ cwd: path ?? process.cwd(), dot: false })`. No npm dependency needed — `Bun.Glob` is built in. Filter out results containing `node_modules` manually since `Bun.Glob` does not have an `ignore` option. Collect results into an array (the scan returns an async iterable), cap at 1000 entries, and return relative paths.
@@ -67,11 +67,11 @@ Search file contents by regex.
 
 ```typescript
 inputSchema: z.object({
-  pattern: z.string().describe('Regex pattern to search for'),
-  path: z.string().optional().describe('Directory or file to search (default: cwd)'),
+  pattern: z.string().describe("Regex pattern to search for"),
+  path: z.string().optional().describe("Directory or file to search (default: cwd)"),
   glob: z.string().optional().describe('File filter, e.g. "*.ts"'),
   ignoreCase: z.boolean().optional(),
-})
+});
 ```
 
 - **Behavior**: Shell out to `rg` (ripgrep) via `Bun.spawnSync()` if available, otherwise walk the directory with `readdir` + `Bun.file(f).text()` + `RegExp` fallback. Return matches as `{ file, line, content }[]`, capped at 100 results.
@@ -91,9 +91,9 @@ Execute a shell command and return output.
 
 ```typescript
 inputSchema: z.object({
-  command: z.string().describe('Shell command to execute'),
-  timeout: z.number().optional().describe('Timeout in seconds (default: 120)'),
-})
+  command: z.string().describe("Shell command to execute"),
+  timeout: z.number().optional().describe("Timeout in seconds (default: 120)"),
+});
 ```
 
 - **Behavior**:
@@ -122,21 +122,21 @@ Fetch a web page and extract text content.
 Generate this as a starting point for domain-specific tools:
 
 ```typescript
-import { tool } from '@openrouter/agent/tool';
-import { z } from 'zod';
+import { tool } from "@openrouter/agent/tool";
+import { z } from "zod";
 
 export const myCustomTool = tool({
-  name: 'my_tool',
-  description: 'Describe what this tool does',
+  name: "my_tool",
+  description: "Describe what this tool does",
   inputSchema: z.object({
     // Define your input parameters here
-    param: z.string().describe('Description of the parameter'),
+    param: z.string().describe("Description of the parameter"),
   }),
   // Optional: require user approval before execution
   // requireApproval: true,
   execute: async ({ param }) => {
     // Implement your tool logic here
-    return { result: 'done' };
+    return { result: "done" };
   },
 });
 ```
@@ -160,10 +160,10 @@ Spawn a child agent to handle a delegated task.
 
 ```typescript
 inputSchema: z.object({
-  task: z.string().describe('Short name for the task'),
-  message: z.string().describe('Detailed instructions for the sub-agent'),
-  model: z.string().optional().describe('Model override for the sub-agent'),
-})
+  task: z.string().describe("Short name for the task"),
+  message: z.string().describe("Detailed instructions for the sub-agent"),
+  model: z.string().optional().describe("Model override for the sub-agent"),
+});
 ```
 
 - **Behavior**: Create a new `OpenRouter` client, call `callModel` with the message and a subset of tools. Return the sub-agent's final text response.

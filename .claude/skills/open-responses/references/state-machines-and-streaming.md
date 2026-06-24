@@ -114,48 +114,49 @@ stateDiagram-v2
     failed --> [*]
 ```
 
-| State | Description | Transitions To |
-|-------|-------------|---------------|
-| `created` | Response object first created | `queued` |
-| `queued` | Request accepted, waiting for model availability | `in_progress` |
-| `in_progress` | Model is actively generating output items | `completed`, `incomplete`, `failed` |
-| `completed` | All output items finalized successfully | *(terminal)* |
-| `incomplete` | An item exhausted its token budget; response ends early | *(terminal)* |
-| `failed` | An error occurred during generation | *(terminal)* |
+| State         | Description                                             | Transitions To                      |
+| ------------- | ------------------------------------------------------- | ----------------------------------- |
+| `created`     | Response object first created                           | `queued`                            |
+| `queued`      | Request accepted, waiting for model availability        | `in_progress`                       |
+| `in_progress` | Model is actively generating output items               | `completed`, `incomplete`, `failed` |
+| `completed`   | All output items finalized successfully                 | _(terminal)_                        |
+| `incomplete`  | An item exhausted its token budget; response ends early | _(terminal)_                        |
+| `failed`      | An error occurred during generation                     | _(terminal)_                        |
 
 > **Constraint:** If any item ends in `incomplete` status, the containing response MUST also be `incomplete`.
 
 ### Events Emitted Per Response Transition
 
-| Transition | Event Emitted | When |
-|-----------|---------------|------|
-| *(initial)* -> `created` | `response.created` | Response object first created |
-| `created` -> `queued` | `response.queued` | Response enters model queue |
-| `queued` -> `in_progress` | `response.in_progress` | Model begins processing |
-| `in_progress` -> `completed` | `response.completed` | All items done, response finalized |
-| `in_progress` -> `incomplete` | `response.incomplete` | Item exhausted token budget |
-| `in_progress` -> `failed` | `response.failed` | Error during generation |
+| Transition                    | Event Emitted          | When                               |
+| ----------------------------- | ---------------------- | ---------------------------------- |
+| _(initial)_ -> `created`      | `response.created`     | Response object first created      |
+| `created` -> `queued`         | `response.queued`      | Response enters model queue        |
+| `queued` -> `in_progress`     | `response.in_progress` | Model begins processing            |
+| `in_progress` -> `completed`  | `response.completed`   | All items done, response finalized |
+| `in_progress` -> `incomplete` | `response.incomplete`  | Item exhausted token budget        |
+| `in_progress` -> `failed`     | `response.failed`      | Error during generation            |
 
 ### What Can Be Emitted When — Complete Matrix
 
 All delta and item events carry these fields for stream reconstruction:
+
 - `sequence_number` — monotonically increasing integer for ordering and gap detection
 - `output_index` — position in the response output array
 - `content_index` — position within a content part (for content-level events)
 - `item_id` — references the affected item
 
-| Response State | Item State | Valid Events |
-|---------------|-----------|--------------|
-| `created` | *(no items yet)* | *(none — transient)* |
-| `queued` | *(no items yet)* | *(none — waiting for model)* |
-| `in_progress` | *(no item yet)* | `response.output_item.added` |
-| `in_progress` | `in_progress` (message) | `response.content_part.added`, `response.output_text.delta`, `response.output_text.done`, `response.content_part.done`, `vendor:*` |
-| `in_progress` | `in_progress` (function_call) | `response.function_call_arguments.delta`, `response.function_call_arguments.done`, `vendor:*` |
-| `in_progress` | `in_progress` (reasoning) | `response.reasoning_summary_text.delta`, `response.reasoning_summary_text.done`, `vendor:*` |
-| `in_progress` | `completed` / `incomplete` | `response.output_item.added` (next item), or transition to `completed`/`incomplete`/`failed` |
-| `completed` | *(all items terminal)* | *(none — only `[DONE]` marker)* |
-| `incomplete` | *(at least one item incomplete)* | *(none — only `[DONE]` marker)* |
-| `failed` | *(items may be incomplete)* | *(none — only `[DONE]` marker)* |
+| Response State | Item State                       | Valid Events                                                                                                                       |
+| -------------- | -------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| `created`      | _(no items yet)_                 | _(none — transient)_                                                                                                               |
+| `queued`       | _(no items yet)_                 | _(none — waiting for model)_                                                                                                       |
+| `in_progress`  | _(no item yet)_                  | `response.output_item.added`                                                                                                       |
+| `in_progress`  | `in_progress` (message)          | `response.content_part.added`, `response.output_text.delta`, `response.output_text.done`, `response.content_part.done`, `vendor:*` |
+| `in_progress`  | `in_progress` (function_call)    | `response.function_call_arguments.delta`, `response.function_call_arguments.done`, `vendor:*`                                      |
+| `in_progress`  | `in_progress` (reasoning)        | `response.reasoning_summary_text.delta`, `response.reasoning_summary_text.done`, `vendor:*`                                        |
+| `in_progress`  | `completed` / `incomplete`       | `response.output_item.added` (next item), or transition to `completed`/`incomplete`/`failed`                                       |
+| `completed`    | _(all items terminal)_           | _(none — only `[DONE]` marker)_                                                                                                    |
+| `incomplete`   | _(at least one item incomplete)_ | _(none — only `[DONE]` marker)_                                                                                                    |
+| `failed`       | _(items may be incomplete)_      | _(none — only `[DONE]` marker)_                                                                                                    |
 
 ### State Machine Example: Simple Text Response
 
@@ -258,31 +259,31 @@ The `event` header must match the `type` field in the JSON body. All events carr
 
 These events carry content fragments as they are generated:
 
-| Event | Purpose | Key Payload Fields |
-|-------|---------|-------------------|
-| `response.output_item.added` | New item started | `sequence_number`, `output_index`, `item` (full item, status: in_progress) |
-| `response.content_part.added` | Content part opened | `sequence_number`, `item_id`, `output_index`, `content_index`, `part` |
-| `response.output_text.delta` | Text token | `sequence_number`, `item_id`, `output_index`, `content_index`, `delta` |
-| `response.output_text.done` | Text complete for part | `sequence_number`, `item_id`, `output_index`, `content_index`, `text` |
-| `response.function_call_arguments.delta` | Tool argument fragment | `sequence_number`, `item_id`, `output_index`, `delta` |
-| `response.function_call_arguments.done` | Tool arguments complete | `sequence_number`, `item_id`, `output_index`, `arguments` |
-| `response.reasoning_summary_text.delta` | Reasoning fragment | `sequence_number`, `item_id`, `output_index`, `content_index`, `delta` |
-| `response.reasoning_summary_text.done` | Reasoning complete | `sequence_number`, `item_id`, `output_index`, `content_index`, `text` |
-| `response.content_part.done` | Content part closed | `sequence_number`, `item_id`, `output_index`, `content_index`, `part` |
-| `response.output_item.done` | Item finalized | `sequence_number`, `output_index`, `item` (full item, status: completed) |
+| Event                                    | Purpose                 | Key Payload Fields                                                         |
+| ---------------------------------------- | ----------------------- | -------------------------------------------------------------------------- |
+| `response.output_item.added`             | New item started        | `sequence_number`, `output_index`, `item` (full item, status: in_progress) |
+| `response.content_part.added`            | Content part opened     | `sequence_number`, `item_id`, `output_index`, `content_index`, `part`      |
+| `response.output_text.delta`             | Text token              | `sequence_number`, `item_id`, `output_index`, `content_index`, `delta`     |
+| `response.output_text.done`              | Text complete for part  | `sequence_number`, `item_id`, `output_index`, `content_index`, `text`      |
+| `response.function_call_arguments.delta` | Tool argument fragment  | `sequence_number`, `item_id`, `output_index`, `delta`                      |
+| `response.function_call_arguments.done`  | Tool arguments complete | `sequence_number`, `item_id`, `output_index`, `arguments`                  |
+| `response.reasoning_summary_text.delta`  | Reasoning fragment      | `sequence_number`, `item_id`, `output_index`, `content_index`, `delta`     |
+| `response.reasoning_summary_text.done`   | Reasoning complete      | `sequence_number`, `item_id`, `output_index`, `content_index`, `text`      |
+| `response.content_part.done`             | Content part closed     | `sequence_number`, `item_id`, `output_index`, `content_index`, `part`      |
+| `response.output_item.done`              | Item finalized          | `sequence_number`, `output_index`, `item` (full item, status: completed)   |
 
 ### Lifecycle Events (State Transitions)
 
 These events signal response-level state machine transitions:
 
-| Event | Purpose | Response Status |
-|-------|---------|----------------|
-| `response.created` | Response object created | `queued` |
-| `response.queued` | Response entered model queue | `queued` |
-| `response.in_progress` | Generation started | `in_progress` |
-| `response.completed` | All output finalized | `completed` |
-| `response.incomplete` | Item exhausted token budget | `incomplete` |
-| `response.failed` | Error occurred | `failed` |
+| Event                  | Purpose                      | Response Status |
+| ---------------------- | ---------------------------- | --------------- |
+| `response.created`     | Response object created      | `queued`        |
+| `response.queued`      | Response entered model queue | `queued`        |
+| `response.in_progress` | Generation started           | `in_progress`   |
+| `response.completed`   | All output finalized         | `completed`     |
+| `response.incomplete`  | Item exhausted token budget  | `incomplete`    |
+| `response.failed`      | Error occurred               | `failed`        |
 
 Servers SHOULD NOT use the SSE `id` field.
 
@@ -363,9 +364,9 @@ data: {"type":"acme:trace_event","sequence_number":1,"trace_id":"t_abc","span":"
 
 **Required fields on custom events:**
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `type` | string | Event schema identifier with vendor prefix |
-| `sequence_number` | integer | Monotonically increasing for ordering |
+| Field             | Type    | Description                                |
+| ----------------- | ------- | ------------------------------------------ |
+| `type`            | string  | Event schema identifier with vendor prefix |
+| `sequence_number` | integer | Monotonically increasing for ordering      |
 
 **Constraints:** Custom events must NOT alter core response semantics, token ordering, or item lifecycle. Clients must silently ignore unknown event types for forward compatibility.

@@ -19,8 +19,8 @@ JSONL (newline-delimited JSON) append-only log for crash-safe conversation persi
 ### src/session.ts
 
 ```typescript
-import { appendFileSync, readFileSync, existsSync, mkdirSync, readdirSync } from 'fs';
-import { join } from 'path';
+import { appendFileSync, readFileSync, existsSync, mkdirSync, readdirSync } from "fs";
+import { join } from "path";
 
 type Message = { role: string; content: string; [key: string]: unknown };
 
@@ -38,14 +38,14 @@ export function saveMessage(sessionPath: string, message: Message): void {
     timestamp: new Date().toISOString(),
     message,
   };
-  appendFileSync(sessionPath, JSON.stringify(entry) + '\n');
+  appendFileSync(sessionPath, JSON.stringify(entry) + "\n");
 }
 
 export function loadSession(sessionPath: string): Message[] {
   if (!existsSync(sessionPath)) return [];
 
-  return readFileSync(sessionPath, 'utf-8')
-    .split('\n')
+  return readFileSync(sessionPath, "utf-8")
+    .split("\n")
     .filter(Boolean)
     .map((line) => {
       try {
@@ -61,12 +61,12 @@ export function loadSession(sessionPath: string): Message[] {
 export function listSessions(dir: string): string[] {
   if (!existsSync(dir)) return [];
   return readdirSync(dir)
-    .filter((f) => f.endsWith('.jsonl'))
+    .filter((f) => f.endsWith(".jsonl"))
     .sort();
 }
 
 export function newSessionPath(dir: string): string {
-  const id = new Date().toISOString().replace(/[:.]/g, '-');
+  const id = new Date().toISOString().replace(/[:.]/g, "-");
   return join(dir, `${id}.jsonl`);
 }
 ```
@@ -76,7 +76,7 @@ export function newSessionPath(dir: string): string {
 In `cli.ts`, wrap the message loop:
 
 ```typescript
-import { initSessionDir, loadSession, saveMessage, newSessionPath } from './session.js';
+import { initSessionDir, loadSession, saveMessage, newSessionPath } from "./session.js";
 
 // At startup:
 initSessionDir(config.sessionDir);
@@ -84,18 +84,18 @@ const sessionPath = newSessionPath(config.sessionDir);
 const messages = loadSession(sessionPath); // empty for new, or pass existing path
 
 // In the REPL loop, build the input from history + new message:
-messages.push({ role: 'user', content: input });
-saveMessage(sessionPath, { role: 'user', content: input });
+messages.push({ role: "user", content: input });
+saveMessage(sessionPath, { role: "user", content: input });
 
 const agentInput = messages.length > 1 ? messages : input;
 const result = await runAgentWithRetry(config, agentInput, {
   onEvent: (e) => {
-    if (e.type === 'text') onText(e.delta);
+    if (e.type === "text") onText(e.delta);
   },
 });
 
-messages.push({ role: 'assistant', content: result.text });
-saveMessage(sessionPath, { role: 'assistant', content: result.text });
+messages.push({ role: "assistant", content: result.text });
+saveMessage(sessionPath, { role: "assistant", content: result.text });
 ```
 
 ---
@@ -107,7 +107,7 @@ When conversation history grows too long, summarize older messages to fit within
 ### src/compaction.ts
 
 ```typescript
-import { OpenRouter } from '@openrouter/agent';
+import { OpenRouter } from "@openrouter/agent";
 
 type Message = { role: string; content: string; [key: string]: unknown };
 
@@ -123,7 +123,7 @@ interface CompactionConfig {
 const DEFAULTS: CompactionConfig = {
   threshold: 40,
   keepRecent: 10,
-  model: 'openai/gpt-4.1-mini',
+  model: "openai/gpt-4.1-mini",
 };
 
 /**
@@ -147,14 +147,17 @@ function findSafeBoundary(messages: Message[], cut: number): number {
 
     // Orphaned tool result at the boundary — step past it so the pair
     // stays together on the summarized side.
-    if (msg.role === 'tool') { cut++; continue; }
+    if (msg.role === "tool") {
+      cut++;
+      continue;
+    }
 
     // Assistant with unresolved tool_calls — step past it and any
     // trailing tool results from the same turn.
     const toolCalls = (msg as { tool_calls?: unknown[] }).tool_calls;
-    if (msg.role === 'assistant' && Array.isArray(toolCalls) && toolCalls.length > 0) {
+    if (msg.role === "assistant" && Array.isArray(toolCalls) && toolCalls.length > 0) {
       cut++;
-      while (cut < messages.length && messages[cut].role === 'tool') cut++;
+      while (cut < messages.length && messages[cut].role === "tool") cut++;
       continue;
     }
 
@@ -166,7 +169,7 @@ function findSafeBoundary(messages: Message[], cut: number): number {
 export async function compactMessages(
   client: OpenRouter,
   messages: Message[],
-  config: Partial<CompactionConfig> = {},
+  config: Partial<CompactionConfig> = {}
 ): Promise<Message[]> {
   const opts = { ...DEFAULTS, ...config };
 
@@ -186,16 +189,13 @@ export async function compactMessages(
   const summaryResult = client.callModel({
     model: opts.model,
     instructions:
-      'Summarize the following conversation concisely. Preserve key facts, decisions, file paths mentioned, and tool results. Output only the summary.',
-    input: toSummarize.map((m) => `${m.role}: ${m.content}`).join('\n\n'),
+      "Summarize the following conversation concisely. Preserve key facts, decisions, file paths mentioned, and tool results. Output only the summary.",
+    input: toSummarize.map((m) => `${m.role}: ${m.content}`).join("\n\n"),
   });
 
   const summary = await summaryResult.getText();
 
-  return [
-    { role: 'system', content: `[Conversation summary]\n${summary}` },
-    ...toKeep,
-  ];
+  return [{ role: "system", content: `[Conversation summary]\n${summary}` }, ...toKeep];
 }
 ```
 
@@ -204,7 +204,7 @@ export async function compactMessages(
 In `agent.ts`, call before `callModel`:
 
 ```typescript
-import { compactMessages } from './compaction.js';
+import { compactMessages } from "./compaction.js";
 
 // Inside runAgent, when input is a message array, compact before calling callModel:
 if (Array.isArray(input)) {
@@ -226,8 +226,8 @@ Compose the system prompt from a static base plus dynamically loaded context fil
 ### src/system-prompt.ts
 
 ```typescript
-import { readFileSync, existsSync } from 'fs';
-import { resolve, join } from 'path';
+import { readFileSync, existsSync } from "fs";
+import { resolve, join } from "path";
 
 interface PromptConfig {
   /** Base system prompt */
@@ -244,12 +244,12 @@ export function composeSystemPrompt(config: PromptConfig): string {
   for (const filename of config.contextFiles) {
     const filePath = resolve(config.projectDir, filename);
     if (existsSync(filePath)) {
-      const content = readFileSync(filePath, 'utf-8');
+      const content = readFileSync(filePath, "utf-8");
       parts.push(`\n## ${filename}\n\n${content}`);
     }
   }
 
-  return parts.join('\n');
+  return parts.join("\n");
 }
 ```
 
@@ -282,28 +282,33 @@ For tools that should require approval, set `requireApproval: true` in the tool 
 
 ```typescript
 export const shellTool = tool({
-  name: 'shell',
-  description: 'Execute a shell command',
+  name: "shell",
+  description: "Execute a shell command",
   inputSchema: z.object({ command: z.string(), timeout: z.number().optional() }),
-  requireApproval: true,  // <-- user must confirm before execution
-  execute: async ({ command, timeout }) => { /* ... */ },
+  requireApproval: true, // <-- user must confirm before execution
+  execute: async ({ command, timeout }) => {
+    /* ... */
+  },
 });
 ```
 
 Or use a function for conditional approval based on the config:
 
 ```typescript
-export function createShellTool(approvalPolicy: 'always' | 'never' | 'dangerous-only') {
+export function createShellTool(approvalPolicy: "always" | "never" | "dangerous-only") {
   return tool({
-    name: 'shell',
-    description: 'Execute a shell command',
+    name: "shell",
+    description: "Execute a shell command",
     inputSchema: z.object({ command: z.string(), timeout: z.number().optional() }),
-    requireApproval: approvalPolicy === 'always'
-      ? true
-      : approvalPolicy === 'never'
-        ? false
-        : ({ command }) => /\brm\b|sudo|chmod|chown|\bdd\b|mkfs/.test(command),
-    execute: async ({ command, timeout }) => { /* ... */ },
+    requireApproval:
+      approvalPolicy === "always"
+        ? true
+        : approvalPolicy === "never"
+          ? false
+          : ({ command }) => /\brm\b|sudo|chmod|chown|\bdd\b|mkfs/.test(command),
+    execute: async ({ command, timeout }) => {
+      /* ... */
+    },
   });
 }
 ```
@@ -314,15 +319,15 @@ Add `approvalPolicy` to the config:
 
 ```typescript
 // In config.ts AgentConfig interface:
-approvalPolicy: 'always' | 'never' | 'dangerous-only';
+approvalPolicy: "always" | "never" | "dangerous-only";
 
 // In tools/index.ts, create tools conditionally:
-import { createShellTool } from './shell.js';
+import { createShellTool } from "./shell.js";
 
 export function buildTools(config: AgentConfig) {
   return [
-    fileReadTool,   // never needs approval
-    fileWriteTool,  // maybe
+    fileReadTool, // never needs approval
+    fileWriteTool, // maybe
     createShellTool(config.approvalPolicy),
   ];
 }
@@ -337,7 +342,7 @@ Emit structured events for tool calls, API requests, and errors. Entry point dec
 ### src/logger.ts
 
 ```typescript
-type EventType = 'tool_call' | 'tool_result' | 'api_request' | 'api_error' | 'turn_start' | 'turn_end';
+type EventType = "tool_call" | "tool_result" | "api_request" | "api_error" | "turn_start" | "turn_end";
 
 interface AgentEvent {
   type: EventType;
@@ -368,7 +373,7 @@ export class AgentLogger {
 
 /** Default handler that logs to stderr as JSON */
 export function consoleLogHandler(event: AgentEvent): void {
-  process.stderr.write(JSON.stringify(event) + '\n');
+  process.stderr.write(JSON.stringify(event) + "\n");
 }
 ```
 
@@ -377,7 +382,7 @@ export function consoleLogHandler(event: AgentEvent): void {
 In `agent.ts`, emit events in callbacks:
 
 ```typescript
-import { AgentLogger } from './logger.js';
+import { AgentLogger } from "./logger.js";
 
 export async function runAgent(config: AgentConfig, input, options?) {
   const logger = options?.logger ?? new AgentLogger();
@@ -385,10 +390,10 @@ export async function runAgent(config: AgentConfig, input, options?) {
   const result = client.callModel({
     // ...
     onTurnStart: async (ctx) => {
-      logger.emit('turn_start', { turn: ctx.numberOfTurns });
+      logger.emit("turn_start", { turn: ctx.numberOfTurns });
     },
     onTurnEnd: async (ctx) => {
-      logger.emit('turn_end', { turn: ctx.numberOfTurns });
+      logger.emit("turn_end", { turn: ctx.numberOfTurns });
     },
   });
   // ...
@@ -398,7 +403,7 @@ export async function runAgent(config: AgentConfig, input, options?) {
 In `cli.ts`, attach a handler:
 
 ```typescript
-import { AgentLogger, consoleLogHandler } from './logger.js';
+import { AgentLogger, consoleLogHandler } from "./logger.js";
 
 const logger = new AgentLogger();
 logger.on(consoleLogHandler); // or a custom handler
@@ -415,8 +420,8 @@ Let users type `@filename` to attach file content to their message. Before sendi
 In `cli.ts`, before pushing the user message:
 
 ```typescript
-import { readFileSync, existsSync } from 'fs';
-import { resolve } from 'path';
+import { readFileSync, existsSync } from "fs";
+import { resolve } from "path";
 
 function expandFileRefs(input: string): string {
   const parts: string[] = [];
@@ -426,18 +431,20 @@ function expandFileRefs(input: string): string {
     const filePath = resolve(match[1]);
     if (existsSync(filePath)) {
       try {
-        const content = readFileSync(filePath, 'utf-8');
+        const content = readFileSync(filePath, "utf-8");
         parts.push(`<file path="${match[1]}">\n${content}\n</file>`);
-      } catch { /* skip unreadable */ }
+      } catch {
+        /* skip unreadable */
+      }
     }
   }
   if (!parts.length) return input;
-  return parts.join('\n') + '\n\n' + input;
+  return parts.join("\n") + "\n\n" + input;
 }
 
 // Before messages.push:
 const expanded = expandFileRefs(trimmed);
-messages.push({ role: 'user', content: expanded });
+messages.push({ role: "user", content: expanded });
 ```
 
 Optional: add tab completion for `@` using `rl.completer` to fuzzy-match files in the working directory.
@@ -453,16 +460,19 @@ Optional: add tab completion for `@` using `rl.completer` to fuzzy-match files i
 In `cli.ts`, before command dispatch:
 
 ```typescript
-import { execSync } from 'child_process';
+import { execSync } from "child_process";
 
-if (trimmed.startsWith('!')) {
-  const silent = trimmed.startsWith('!!');
+if (trimmed.startsWith("!")) {
+  const silent = trimmed.startsWith("!!");
   const cmd = trimmed.slice(silent ? 2 : 1).trim();
-  if (!cmd) { rl.prompt(); return; }
+  if (!cmd) {
+    rl.prompt();
+    return;
+  }
   try {
-    const output = execSync(cmd, { encoding: 'utf-8', timeout: 30000, maxBuffer: 256 * 1024 }).trim();
+    const output = execSync(cmd, { encoding: "utf-8", timeout: 30000, maxBuffer: 256 * 1024 }).trim();
     if (!silent) console.log(`${GRAY}${output}${RESET}`);
-    messages.push({ role: 'user', content: `Shell output of \`${cmd}\`:\n\`\`\`\n${output}\n\`\`\`` });
+    messages.push({ role: "user", content: `Shell output of \`${cmd}\`:\n\`\`\`\n${output}\n\`\`\`` });
   } catch (err: any) {
     console.log(`${YELLOW}  ${err.message}${RESET}`);
   }
@@ -480,7 +490,7 @@ Replace readline with raw terminal mode to support Shift+Enter for newlines. Ent
 ### src/multi-line-input.ts
 
 ```typescript
-import { emitKeypressEvents } from 'readline';
+import { emitKeypressEvents } from "readline";
 
 export function readMultiLine(prompt: string): Promise<string> {
   return new Promise((resolve) => {
@@ -489,29 +499,37 @@ export function readMultiLine(prompt: string): Promise<string> {
     process.stdin.setRawMode(true);
     process.stdin.resume();
 
-    let buffer = '';
+    let buffer = "";
     const onKeypress = (_ch: string, key: { name: string; shift?: boolean; ctrl?: boolean }) => {
-      if (key.ctrl && key.name === 'c') { process.exit(0); }
-      if (key.name === 'return' && !key.shift) {
+      if (key.ctrl && key.name === "c") {
+        process.exit(0);
+      }
+      if (key.name === "return" && !key.shift) {
         process.stdin.setRawMode(false);
         process.stdin.pause();
-        process.stdin.removeListener('keypress', onKeypress);
-        process.stdout.write('\n');
+        process.stdin.removeListener("keypress", onKeypress);
+        process.stdout.write("\n");
         resolve(buffer);
         return;
       }
-      if (key.name === 'return' && key.shift) {
-        buffer += '\n';
-        process.stdout.write('\n');
+      if (key.name === "return" && key.shift) {
+        buffer += "\n";
+        process.stdout.write("\n");
         return;
       }
-      if (key.name === 'backspace') {
-        if (buffer.length) { buffer = buffer.slice(0, -1); process.stdout.write('\b \b'); }
+      if (key.name === "backspace") {
+        if (buffer.length) {
+          buffer = buffer.slice(0, -1);
+          process.stdout.write("\b \b");
+        }
         return;
       }
-      if (_ch) { buffer += _ch; process.stdout.write(_ch); }
+      if (_ch) {
+        buffer += _ch;
+        process.stdout.write(_ch);
+      }
     };
-    process.stdin.on('keypress', onKeypress);
+    process.stdin.on("keypress", onKeypress);
   });
 }
 ```
@@ -519,4 +537,3 @@ export function readMultiLine(prompt: string): Promise<string> {
 ### Integration
 
 Replace the `rl.on('line')` loop with calls to `readMultiLine(prompt)` in a `while` loop.
-

@@ -11,7 +11,7 @@ The input box background should adapt to any terminal color scheme. This module 
 ### src/terminal-bg.ts
 
 ```typescript
-const FALLBACK = '\x1b[100m';
+const FALLBACK = "\x1b[100m";
 
 function blend(fg: [number, number, number], bg: [number, number, number], alpha: number): [number, number, number] {
   return [
@@ -26,50 +26,52 @@ function isLight(r: number, g: number, b: number): boolean {
 }
 
 function toAnsi(r: number, g: number, b: number): string {
-  const ct = process.env.COLORTERM ?? '';
-  if (ct.includes('truecolor') || ct.includes('24bit')) {
+  const ct = process.env.COLORTERM ?? "";
+  if (ct.includes("truecolor") || ct.includes("24bit")) {
     return `\x1b[48;2;${r};${g};${b}m`;
   }
   // Approximate to xterm-256: indices 232-255 are grays, 16-231 are 6x6x6 cube
-  const ri = Math.round(r / 255 * 5);
-  const gi = Math.round(g / 255 * 5);
-  const bi = Math.round(b / 255 * 5);
+  const ri = Math.round((r / 255) * 5);
+  const gi = Math.round((g / 255) * 5);
+  const bi = Math.round((b / 255) * 5);
   return `\x1b[48;5;${16 + 36 * ri + 6 * gi + bi}m`;
 }
 
 function queryTerminalBg(timeoutMs = 200): Promise<[number, number, number] | null> {
   return new Promise((resolve) => {
-    if (!process.stdin.isTTY) { resolve(null); return; }
+    if (!process.stdin.isTTY) {
+      resolve(null);
+      return;
+    }
 
-    const timer = setTimeout(() => { cleanup(); resolve(null); }, timeoutMs);
+    const timer = setTimeout(() => {
+      cleanup();
+      resolve(null);
+    }, timeoutMs);
     const wasRaw = process.stdin.isRaw;
     process.stdin.setRawMode(true);
     process.stdin.resume();
 
-    let buf = '';
+    let buf = "";
     const onData = (data: Buffer) => {
       buf += data.toString();
       // Response: \x1b]11;rgb:RRRR/GGGG/BBBB\x1b\\ or \x07
       const match = buf.match(/\x1b\]11;rgb:([0-9a-fA-F]+)\/([0-9a-fA-F]+)\/([0-9a-fA-F]+)/);
       if (match) {
         cleanup();
-        resolve([
-          parseInt(match[1].slice(0, 2), 16),
-          parseInt(match[2].slice(0, 2), 16),
-          parseInt(match[3].slice(0, 2), 16),
-        ]);
+        resolve([parseInt(match[1].slice(0, 2), 16), parseInt(match[2].slice(0, 2), 16), parseInt(match[3].slice(0, 2), 16)]);
       }
     };
 
     function cleanup() {
       clearTimeout(timer);
-      process.stdin.off('data', onData);
+      process.stdin.off("data", onData);
       process.stdin.setRawMode(wasRaw);
       process.stdin.pause();
     }
 
-    process.stdin.on('data', onData);
-    process.stdout.write('\x1b]11;?\x07');
+    process.stdin.on("data", onData);
+    process.stdout.write("\x1b]11;?\x07");
   });
 }
 
@@ -77,9 +79,7 @@ export async function detectBg(): Promise<string> {
   const bg = await queryTerminalBg();
   if (!bg) return FALLBACK;
   const [r, g, b] = bg;
-  const [top, alpha]: [[number, number, number], number] = isLight(r, g, b)
-    ? [[0, 0, 0], 0.04]
-    : [[255, 255, 255], 0.12];
+  const [top, alpha]: [[number, number, number], number] = isLight(r, g, b) ? [[0, 0, 0], 0.04] : [[255, 255, 255], 0.12];
   const [br, bg2, bb] = blend(top, [r, g, b], alpha);
   return toAnsi(br, bg2, bb);
 }
@@ -96,7 +96,7 @@ export async function detectBg(): Promise<string> {
 ### Wire into cli.ts
 
 ```typescript
-import { detectBg } from './terminal-bg.js';
+import { detectBg } from "./terminal-bg.js";
 
 async function main() {
   const config = loadConfig();

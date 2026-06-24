@@ -1,12 +1,12 @@
-import { tool } from '@openrouter/agent/tool';
-import { z } from 'zod';
-import { readdir } from 'fs/promises';
+import { tool } from "@openrouter/agent/tool";
+import { z } from "zod";
+import { readdir } from "fs/promises";
 
 export const listDirTool = tool({
-  name: 'list_dir',
-  description: 'List directory contents',
+  name: "list_dir",
+  description: "List directory contents",
   inputSchema: z.object({
-    path: z.string().optional().describe('Directory path (default: cwd)'),
+    path: z.string().optional().describe("Directory path (default: cwd)"),
   }),
   execute: async ({ path }) => {
     try {

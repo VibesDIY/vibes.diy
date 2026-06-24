@@ -42,10 +42,10 @@ See [SKILL.md](SKILL.md) for the full reference, including:
 
 ## Scripts
 
-| Script | Purpose |
-|--------|---------|
-| `get-generation.ts` | Get metadata for a generation (cost, tokens, latency, provider) |
-| `get-generation-content.ts` | Get stored prompt and completion text |
+| Script                      | Purpose                                                         |
+| --------------------------- | --------------------------------------------------------------- |
+| `get-generation.ts`         | Get metadata for a generation (cost, tokens, latency, provider) |
+| `get-generation-content.ts` | Get stored prompt and completion text                           |
 
 ## Quick start
 

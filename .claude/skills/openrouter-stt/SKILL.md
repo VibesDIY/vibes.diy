@@ -1,12 +1,13 @@
 ---
 description: Transcribe speech to text using OpenRouter's speech-to-text API. Use when the user asks to transcribe audio, convert speech to text, extract a transcript from a recording or meeting, caption a video's audio, or mentions STT, speech-to-text, ASR, or transcription.
 metadata:
-    github-path: skills/openrouter-stt
-    github-ref: refs/heads/main
-    github-repo: https://github.com/OpenRouterTeam/skills
-    github-tree-sha: 08085bbe0b56f7d6199b7f0923eee838ee9bca60
+  github-path: skills/openrouter-stt
+  github-ref: refs/heads/main
+  github-repo: https://github.com/OpenRouterTeam/skills
+  github-tree-sha: 08085bbe0b56f7d6199b7f0923eee838ee9bca60
 name: openrouter-stt
 ---
+
 # OpenRouter Speech-to-Text
 
 Transcribe audio via `POST /api/v1/audio/transcriptions` using `curl`. Requires `OPENROUTER_API_KEY` (get one at https://openrouter.ai/keys). If unset, stop and ask.
@@ -95,14 +96,14 @@ Models are provider-namespaced — use the full slug (`google/chirp-3`, `openai/
 
 ## Parameters
 
-| Field                | Required | Notes                                                                                                     |
-| -------------------- | -------- | --------------------------------------------------------------------------------------------------------- |
-| `model`              | yes      | Full model slug from `/api/v1/models?output_modalities=transcription`.                                    |
+| Field                | Required | Notes                                                                                                             |
+| -------------------- | -------- | ----------------------------------------------------------------------------------------------------------------- |
+| `model`              | yes      | Full model slug from `/api/v1/models?output_modalities=transcription`.                                            |
 | `input_audio.data`   | yes      | Base64-encoded raw audio bytes. **Not** a data URI — just the base64 payload, no `data:audio/...;base64,` prefix. |
-| `input_audio.format` | yes      | `wav`, `mp3`, `flac`, `m4a`, `ogg`, `webm`, or `aac`. Must match the actual bytes. Support varies by provider. |
-| `language`           | no       | ISO-639-1 code (`en`, `ja`, `fr`). Auto-detected if omitted.                                              |
-| `temperature`        | no       | 0–1. Lower is more deterministic.                                                                         |
-| `provider`           | no       | Provider passthrough — see below.                                                                         |
+| `input_audio.format` | yes      | `wav`, `mp3`, `flac`, `m4a`, `ogg`, `webm`, or `aac`. Must match the actual bytes. Support varies by provider.    |
+| `language`           | no       | ISO-639-1 code (`en`, `ja`, `fr`). Auto-detected if omitted.                                                      |
+| `temperature`        | no       | 0–1. Lower is more deterministic.                                                                                 |
+| `provider`           | no       | Provider passthrough — see below.                                                                                 |
 
 ### Picking an audio format
 

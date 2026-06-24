@@ -1,18 +1,18 @@
-import { chromium } from 'playwright';
-import { spawn } from 'child_process';
-import { resolve } from 'path';
+import { chromium } from "playwright";
+import { spawn } from "child_process";
+import { resolve } from "path";
 
-const SAMPLE_DIR = resolve(import.meta.dirname, '..');
-const SCREENSHOTS_DIR = resolve(SAMPLE_DIR, 'screenshots');
+const SAMPLE_DIR = resolve(import.meta.dirname, "..");
+const SCREENSHOTS_DIR = resolve(SAMPLE_DIR, "screenshots");
 const PORT_BASE = 7750;
 let portCounter = 0;
 
 async function capture(name: string, cliArgs: string[]): Promise<void> {
-  const port = PORT_BASE + (portCounter++);
-  const ttyd = spawn('ttyd', [
-    '--port', String(port), '--writable',
-    'npx', 'tsx', 'src/cli.ts', ...cliArgs,
-  ], { cwd: SAMPLE_DIR, stdio: 'ignore' });
+  const port = PORT_BASE + portCounter++;
+  const ttyd = spawn("ttyd", ["--port", String(port), "--writable", "npx", "tsx", "src/cli.ts", ...cliArgs], {
+    cwd: SAMPLE_DIR,
+    stdio: "ignore",
+  });
 
   await new Promise((r) => setTimeout(r, 3000));
 
@@ -34,29 +34,29 @@ async function capture(name: string, cliArgs: string[]): Promise<void> {
 }
 
 async function main() {
-  console.log('Banner:');
-  process.stdout.write('  capturing banner...');
-  await capture('banner', ['--model', 'anthropic/claude-sonnet-4.6']);
+  console.log("Banner:");
+  process.stdout.write("  capturing banner...");
+  await capture("banner", ["--model", "anthropic/claude-sonnet-4.6"]);
 
-  console.log('\nTool display styles:');
-  for (const style of ['emoji', 'grouped', 'minimal'] as const) {
+  console.log("\nTool display styles:");
+  for (const style of ["emoji", "grouped", "minimal"] as const) {
     process.stdout.write(`  capturing ${style}...`);
-    await capture(`tool-display-${style}`, ['--demo', '--tool-display', style]);
+    await capture(`tool-display-${style}`, ["--demo", "--tool-display", style]);
   }
 
-  console.log('\nInput styles:');
-  for (const style of ['block', 'bordered', 'plain'] as const) {
+  console.log("\nInput styles:");
+  for (const style of ["block", "bordered", "plain"] as const) {
     process.stdout.write(`  capturing ${style}...`);
-    await capture(`input-style-${style}`, ['--input', style]);
+    await capture(`input-style-${style}`, ["--input", style]);
   }
 
-  console.log('\nLoader styles:');
-  for (const style of ['gradient', 'spinner', 'minimal'] as const) {
+  console.log("\nLoader styles:");
+  for (const style of ["gradient", "spinner", "minimal"] as const) {
     process.stdout.write(`  capturing ${style}...`);
-    await capture(`loader-${style}`, ['--demo-loader', '--loader-style', style]);
+    await capture(`loader-${style}`, ["--demo-loader", "--loader-style", style]);
   }
 
-  console.log('\nDone! 10 screenshots generated.');
+  console.log("\nDone! 10 screenshots generated.");
 }
 
 main();

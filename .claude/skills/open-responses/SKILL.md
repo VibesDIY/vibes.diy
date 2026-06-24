@@ -1,13 +1,14 @@
 ---
-description: 'This skill should be used when implementing, consuming, or debugging an Open Responses-compliant API — the open standard for multi-provider LLM interoperability. Covers protocol, items, state machines, streaming events, tools, the agentic loop pattern, and extensions. Triggers on: Open Responses, open-responses, /v1/responses endpoint, multi-provider LLM API, Open Responses compliance.'
+description: "This skill should be used when implementing, consuming, or debugging an Open Responses-compliant API — the open standard for multi-provider LLM interoperability. Covers protocol, items, state machines, streaming events, tools, the agentic loop pattern, and extensions. Triggers on: Open Responses, open-responses, /v1/responses endpoint, multi-provider LLM API, Open Responses compliance."
 metadata:
-    github-path: open-responses
-    github-ref: refs/heads/main
-    github-repo: https://github.com/OpenRouterTeam/skills
-    github-tree-sha: c4b900d68355d5ff7e557af11506816bdc762ab1
+  github-path: open-responses
+  github-ref: refs/heads/main
+  github-repo: https://github.com/OpenRouterTeam/skills
+  github-tree-sha: c4b900d68355d5ff7e557af11506816bdc762ab1
 name: open-responses
 version: 1.0.0
 ---
+
 # Open Responses
 
 Open Responses is an open-source specification defining a unified HTTP protocol for multi-provider LLM interactions. It standardizes how clients and servers communicate — messages, tool calls, streaming, multimodal inputs, reasoning — so that code written against one provider works with any compliant provider.
@@ -32,11 +33,11 @@ Open Responses is an open-source specification defining a unified HTTP protocol 
 
 For detailed schemas, JSON examples, and complete event catalogs, load the appropriate reference file:
 
-| File | Contents | When to Load |
-|------|----------|-------------|
-| `references/protocol-and-items.md` | HTTP protocol, item types, content types, control parameters, error handling | Implementing or debugging request/response structure |
+| File                                         | Contents                                                                                      | When to Load                                           |
+| -------------------------------------------- | --------------------------------------------------------------------------------------------- | ------------------------------------------------------ |
+| `references/protocol-and-items.md`           | HTTP protocol, item types, content types, control parameters, error handling                  | Implementing or debugging request/response structure   |
 | `references/state-machines-and-streaming.md` | State machine diagrams, streaming event catalog, complete SSE sequences for text and tool use | Implementing or debugging streaming, state transitions |
-| `references/extensions.md` | Custom items, custom events, schema extensions, governance path | Extending the spec with provider-specific features |
+| `references/extensions.md`                   | Custom items, custom events, schema extensions, governance path                               | Extending the spec with provider-specific features     |
 
 To search references for specific topics: grep for `function_call`, `streaming`, `tool_choice`, `previous_response_id`, `vendor:`, or other keywords.
 
@@ -139,20 +140,20 @@ stateDiagram-v2
 
 #### Event Validity Summary
 
-| Response State | Valid Events |
-|---------------|-------------|
-| `created` | *(transient — response object just created)* |
-| `queued` | *(waiting for model availability)* |
-| `in_progress` | All delta events, all custom events, item lifecycle events |
-| `completed` | *(terminal — no more events except `[DONE]`)* |
-| `incomplete` | *(terminal — no more events except `[DONE]`)* |
-| `failed` | *(terminal — no more events except `[DONE]`)* |
+| Response State | Valid Events                                               |
+| -------------- | ---------------------------------------------------------- |
+| `created`      | _(transient — response object just created)_               |
+| `queued`       | _(waiting for model availability)_                         |
+| `in_progress`  | All delta events, all custom events, item lifecycle events |
+| `completed`    | _(terminal — no more events except `[DONE]`)_              |
+| `incomplete`   | _(terminal — no more events except `[DONE]`)_              |
+| `failed`       | _(terminal — no more events except `[DONE]`)_              |
 
-| Item State | Valid Events |
-|-----------|-------------|
+| Item State    | Valid Events                                                            |
+| ------------- | ----------------------------------------------------------------------- |
 | `in_progress` | Content deltas (`.delta`), content completion (`.done`), part lifecycle |
-| `completed` | *(terminal — no further deltas for this item)* |
-| `incomplete` | *(terminal — no further deltas for this item)* |
+| `completed`   | _(terminal — no further deltas for this item)_                          |
+| `incomplete`  | _(terminal — no further deltas for this item)_                          |
 
 All delta and item events carry `sequence_number` (monotonically increasing), `output_index` (position in response output array), and `item_id`. Content-level events (text, reasoning summary) additionally carry `content_index` (position within a content part). Servers SHOULD NOT use the SSE `id` field.
 
@@ -185,8 +186,8 @@ Open Responses defines two tool categories based on execution location.
   "parameters": {
     "type": "object",
     "properties": {
-      "location": {"type": "string", "description": "City name"},
-      "units": {"type": "string", "enum": ["celsius", "fahrenheit"]}
+      "location": { "type": "string", "description": "City name" },
+      "units": { "type": "string", "enum": ["celsius", "fahrenheit"] }
     },
     "required": ["location"]
   }
@@ -197,13 +198,13 @@ Open Responses defines two tool categories based on execution location.
 
 The `tool_choice` parameter controls whether and how the model uses tools:
 
-| `tool_choice` value | Purpose |
-|-----------|---------|
-| `"auto"` | Model decides whether to call tools (default) |
-| `"required"` | Model must invoke at least one tool |
-| `"none"` | No tool calls permitted |
-| `{"type": "function", "name": "..."}` | Force a specific tool |
-| `{"type": "allowed_tools", "tools": [...]}` | Restrict which tools the model may invoke |
+| `tool_choice` value                         | Purpose                                       |
+| ------------------------------------------- | --------------------------------------------- |
+| `"auto"`                                    | Model decides whether to call tools (default) |
+| `"required"`                                | Model must invoke at least one tool           |
+| `"none"`                                    | No tool calls permitted                       |
+| `{"type": "function", "name": "..."}`       | Force a specific tool                         |
+| `{"type": "allowed_tools", "tools": [...]}` | Restrict which tools the model may invoke     |
 
 The `allowed_tools` form is nested inside `tool_choice`, not a separate top-level parameter:
 
@@ -211,9 +212,7 @@ The `allowed_tools` form is nested inside `tool_choice`, not a separate top-leve
 {
   "tool_choice": {
     "type": "allowed_tools",
-    "tools": [
-      {"type": "function", "name": "get_weather"}
-    ]
+    "tools": [{ "type": "function", "name": "get_weather" }]
   }
 }
 ```
@@ -276,8 +275,15 @@ The agentic loop is the core pattern for multi-step, tool-augmented workflows.
 ```json
 {
   "model": "provider/model-name",
-  "input": [{"type": "message", "role": "user", "content": "Compare the weather in Paris and Tokyo."}],
-  "tools": [{"type": "function", "name": "get_weather", "description": "Get current weather for a city", "parameters": {"type": "object", "properties": {"location": {"type": "string"}}, "required": ["location"]}}]
+  "input": [{ "type": "message", "role": "user", "content": "Compare the weather in Paris and Tokyo." }],
+  "tools": [
+    {
+      "type": "function",
+      "name": "get_weather",
+      "description": "Get current weather for a city",
+      "parameters": { "type": "object", "properties": { "location": { "type": "string" } }, "required": ["location"] }
+    }
+  ]
 }
 ```
 
@@ -288,8 +294,22 @@ The agentic loop is the core pattern for multi-step, tool-augmented workflows.
   "id": "resp_100",
   "status": "completed",
   "output": [
-    {"id": "item_101", "type": "function_call", "name": "get_weather", "call_id": "call_paris", "arguments": "{\"location\":\"Paris\"}", "status": "completed"},
-    {"id": "item_102", "type": "function_call", "name": "get_weather", "call_id": "call_tokyo", "arguments": "{\"location\":\"Tokyo\"}", "status": "completed"}
+    {
+      "id": "item_101",
+      "type": "function_call",
+      "name": "get_weather",
+      "call_id": "call_paris",
+      "arguments": "{\"location\":\"Paris\"}",
+      "status": "completed"
+    },
+    {
+      "id": "item_102",
+      "type": "function_call",
+      "name": "get_weather",
+      "call_id": "call_tokyo",
+      "arguments": "{\"location\":\"Tokyo\"}",
+      "status": "completed"
+    }
   ]
 }
 ```
@@ -315,7 +335,15 @@ The agentic loop is the core pattern for multi-step, tool-augmented workflows.
   "id": "resp_101",
   "status": "completed",
   "output": [
-    {"id": "item_200", "type": "message", "role": "assistant", "status": "completed", "content": [{"type": "output_text", "text": "Paris is currently 18°C and partly cloudy. Tokyo is warmer at 24°C with sunny skies."}]}
+    {
+      "id": "item_200",
+      "type": "message",
+      "role": "assistant",
+      "status": "completed",
+      "content": [
+        { "type": "output_text", "text": "Paris is currently 18°C and partly cloudy. Tokyo is warmer at 24°C with sunny skies." }
+      ]
+    }
   ]
 }
 ```
@@ -343,12 +371,12 @@ Server loads: previous_response.input + previous_response.output + new_input
 
 Open Responses supports four extension mechanisms, all using vendor-prefixed names to prevent collisions. For full details with examples, load `references/extensions.md`.
 
-| Mechanism | Naming Pattern | Required Fields | Constraint |
-|-----------|---------------|-----------------|------------|
-| Custom Items | `vendor:type_name` | `id`, `type`, `status` | Must follow item state machine, must round-trip |
-| Custom Events | `vendor:event_name` | `type`, `sequence_number` | Must not alter core semantics or token order |
-| Schema Extensions | vendor-prefixed fields | N/A (optional fields) | Must not break clients ignoring unknown fields |
-| Governance Path | N/A | N/A | Broad adoption -> TSC proposal -> core spec |
+| Mechanism         | Naming Pattern         | Required Fields           | Constraint                                      |
+| ----------------- | ---------------------- | ------------------------- | ----------------------------------------------- |
+| Custom Items      | `vendor:type_name`     | `id`, `type`, `status`    | Must follow item state machine, must round-trip |
+| Custom Events     | `vendor:event_name`    | `type`, `sequence_number` | Must not alter core semantics or token order    |
+| Schema Extensions | vendor-prefixed fields | N/A (optional fields)     | Must not break clients ignoring unknown fields  |
+| Governance Path   | N/A                    | N/A                       | Broad adoption -> TSC proposal -> core spec     |
 
 Clients must silently ignore unknown item types and event types — this is the forward-compatibility contract.
 
@@ -360,14 +388,14 @@ An API is Open Responses-compliant if it implements the spec directly or is a pr
 
 ### Core Compliance Tests
 
-| Test | Validates |
-|------|-----------|
-| Basic Text Response | ResponseResource schema, item structure, usage |
-| Streaming Response | SSE events, correct ordering, final structure |
-| System Prompt | `instructions` parameter, system role handling |
-| Tool Calling | Function tool definition, function_call output, round-tripping |
-| Image Input | Image URL in user content |
-| Multi-turn Conversation | Message history, assistant + user turns |
+| Test                    | Validates                                                      |
+| ----------------------- | -------------------------------------------------------------- |
+| Basic Text Response     | ResponseResource schema, item structure, usage                 |
+| Streaming Response      | SSE events, correct ordering, final structure                  |
+| System Prompt           | `instructions` parameter, system role handling                 |
+| Tool Calling            | Function tool definition, function_call output, round-tripping |
+| Image Input             | Image URL in user content                                      |
+| Multi-turn Conversation | Message history, assistant + user turns                        |
 
 ### Server Implementation Checklist
 
@@ -401,46 +429,46 @@ An API is Open Responses-compliant if it implements the spec directly or is a pr
 
 ### Streaming Event Types
 
-| Event | Category |
-|-------|----------|
-| `response.created` | Lifecycle |
-| `response.queued` | Lifecycle |
-| `response.in_progress` | Lifecycle |
-| `response.completed` | Lifecycle |
-| `response.incomplete` | Lifecycle |
-| `response.failed` | Lifecycle |
-| `response.output_item.added` / `.done` | Delta |
-| `response.content_part.added` / `.done` | Delta |
-| `response.output_text.delta` / `.done` | Delta |
-| `response.function_call_arguments.delta` / `.done` | Delta |
-| `response.reasoning_summary_text.delta` / `.done` | Delta |
-| `vendor:custom_event` | Custom |
+| Event                                              | Category  |
+| -------------------------------------------------- | --------- |
+| `response.created`                                 | Lifecycle |
+| `response.queued`                                  | Lifecycle |
+| `response.in_progress`                             | Lifecycle |
+| `response.completed`                               | Lifecycle |
+| `response.incomplete`                              | Lifecycle |
+| `response.failed`                                  | Lifecycle |
+| `response.output_item.added` / `.done`             | Delta     |
+| `response.content_part.added` / `.done`            | Delta     |
+| `response.output_text.delta` / `.done`             | Delta     |
+| `response.function_call_arguments.delta` / `.done` | Delta     |
+| `response.reasoning_summary_text.delta` / `.done`  | Delta     |
+| `vendor:custom_event`                              | Custom    |
 
 ### Item Types
 
-| Type | Category |
-|------|----------|
-| `message` | Core |
-| `function_call` | Core |
-| `function_call_output` | Core |
-| `reasoning` | Core |
-| `vendor:custom_type` | Extension |
+| Type                   | Category  |
+| ---------------------- | --------- |
+| `message`              | Core      |
+| `function_call`        | Core      |
+| `function_call_output` | Core      |
+| `reasoning`            | Core      |
+| `vendor:custom_type`   | Extension |
 
 ### State Summary
 
-| Object | States | Terminal |
-|--------|--------|---------|
+| Object   | States                                                              | Terminal                      |
+| -------- | ------------------------------------------------------------------- | ----------------------------- |
 | Response | created -> queued -> in_progress -> completed / incomplete / failed | completed, incomplete, failed |
-| Item | in_progress -> completed / incomplete | completed, incomplete |
+| Item     | in_progress -> completed / incomplete                               | completed, incomplete         |
 
 If any item ends `incomplete`, the containing response MUST also be `incomplete`.
 
 ### Error Types
 
-| Type | HTTP | Retry |
-|------|------|-------|
-| `invalid_request` | 400 | No |
-| `not_found` | 404 | No |
-| `too_many_requests` | 429 | Yes |
-| `server_error` | 500 | Yes |
-| `model_error` | 500 | Maybe |
+| Type                | HTTP | Retry |
+| ------------------- | ---- | ----- |
+| `invalid_request`   | 400  | No    |
+| `not_found`         | 404  | No    |
+| `too_many_requests` | 429  | Yes   |
+| `server_error`      | 500  | Yes   |
+| `model_error`       | 500  | Maybe |

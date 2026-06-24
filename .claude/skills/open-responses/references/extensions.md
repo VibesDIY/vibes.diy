@@ -11,6 +11,7 @@ Complete documentation for extending the Open Responses specification with custo
 Open Responses is designed to be extended by providers without fragmenting the ecosystem. All extensions use vendor-prefixed names to prevent collisions. An API is Open Responses-compliant if it implements the specification directly **or** is a proper superset.
 
 Core invariants that extensions must preserve:
+
 - Core behavior remains intact
 - Clients can reconstruct canonical responses even when ignoring all unknown types and fields
 - The `type` field is always the discriminator — unknown types are safely skippable
@@ -27,10 +28,10 @@ Examples: `openai:web_search_call`, `acme:document_retrieval`, `anthropic:thinki
 
 **Required fields on all custom items:**
 
-| Field | Type | Required |
-|-------|------|----------|
-| `id` | string | Yes — unique within response |
-| `type` | string | Yes — vendor-prefixed type name |
+| Field    | Type   | Required                             |
+| -------- | ------ | ------------------------------------ |
+| `id`     | string | Yes — unique within response         |
+| `type`   | string | Yes — vendor-prefixed type name      |
 | `status` | string | Yes — must follow item state machine |
 
 Custom items participate in the same item state machine as core items (`in_progress` -> `completed`/`incomplete`). They must be losslessly round-trippable — if sent as part of `input` in a follow-up request, the server must correctly process them.
@@ -79,9 +80,7 @@ A provider offering a built-in code interpreter produces custom item types that 
   "status": "completed",
   "code": "import math\nprint(math.sqrt(144))",
   "language": "python",
-  "output": [
-    {"type": "text", "text": "12.0"}
-  ]
+  "output": [{ "type": "text", "text": "12.0" }]
 }
 ```
 
@@ -95,12 +94,13 @@ Providers can emit custom events during streaming.
 
 **Required fields:**
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `type` | string | Event schema identifier with vendor prefix |
-| `sequence_number` | integer | Monotonically increasing for ordering |
+| Field             | Type    | Description                                |
+| ----------------- | ------- | ------------------------------------------ |
+| `type`            | string  | Event schema identifier with vendor prefix |
+| `sequence_number` | integer | Monotonically increasing for ordering      |
 
 **Constraints:**
+
 - Must NOT alter core response semantics
 - Must NOT change token ordering
 - Must NOT affect item lifecycle transitions
@@ -130,6 +130,7 @@ data: {"type":"acme:generation_progress","sequence_number":1,"percent_complete":
 Providers may add optional fields to existing core schemas (items, responses, events).
 
 **Rules:**
+
 - Extended fields must be **optional** — never required
 - Must not break clients that ignore unknown fields
 - Must not change the semantics of existing fields
@@ -160,6 +161,7 @@ Vendor Extension  -->  Broad Adoption  -->  TSC Proposal  -->  Core Specificatio
 ```
 
 The **Technical Steering Committee (TSC)** evaluates extensions based on:
+
 - Adoption across multiple providers
 - Interoperability value
 - Implementation consistency

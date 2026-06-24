@@ -1,13 +1,14 @@
 ---
 description: Discover the OpenRouter analytics schema — available metrics, dimensions, filter operators, and granularities. Use when you need to know what analytics data is queryable, what dimensions you can break down by, or how to map a user's question to the right metric/dimension combination.
 metadata:
-    github-path: skills/openrouter-analytics-schema
-    github-ref: refs/heads/main
-    github-repo: https://github.com/OpenRouterTeam/skills
-    github-tree-sha: ae4a243d589aa6798bf0ef196f371127fd8294a6
+  github-path: skills/openrouter-analytics-schema
+  github-ref: refs/heads/main
+  github-repo: https://github.com/OpenRouterTeam/skills
+  github-tree-sha: ae4a243d589aa6798bf0ef196f371127fd8294a6
 name: openrouter-analytics-schema
 version: 0.1.0
 ---
+
 # OpenRouter Analytics Schema Discovery
 
 Discover what analytics data is available for querying. The meta endpoint returns live, always-current definitions of metrics, dimensions, filter operators, and granularities.
@@ -35,18 +36,10 @@ cd <openrouter-analytics-skill-path>/scripts && npx tsx discover-schema.ts
 ```json
 {
   "data": {
-    "metrics": [
-      { "name": "request_count", "display_label": "Request Count", "is_rate": false, "display_format": "number" }
-    ],
-    "dimensions": [
-      { "name": "model", "display_label": "Model" }
-    ],
-    "operators": [
-      { "name": "eq", "value_type": "scalar" }
-    ],
-    "granularities": [
-      { "name": "day", "display_label": "Day" }
-    ]
+    "metrics": [{ "name": "request_count", "display_label": "Request Count", "is_rate": false, "display_format": "number" }],
+    "dimensions": [{ "name": "model", "display_label": "Model" }],
+    "operators": [{ "name": "eq", "value_type": "scalar" }],
+    "granularities": [{ "name": "day", "display_label": "Day" }]
   }
 }
 ```
@@ -55,11 +48,11 @@ cd <openrouter-analytics-skill-path>/scripts && npx tsx discover-schema.ts
 
 Each metric has:
 
-| Field | Meaning |
-|---|---|
-| `name` | Identifier to use in query requests |
-| `display_label` | Human-readable label |
-| `is_rate` | Whether this is a ratio/rate (averaged, not summed) |
+| Field            | Meaning                                                                                        |
+| ---------------- | ---------------------------------------------------------------------------------------------- |
+| `name`           | Identifier to use in query requests                                                            |
+| `display_label`  | Human-readable label                                                                           |
+| `is_rate`        | Whether this is a ratio/rate (averaged, not summed)                                            |
 | `display_format` | How the value should be formatted: `number`, `currency`, `percent`, `latency`, or `throughput` |
 
 ### Time Range Limits
@@ -69,6 +62,7 @@ Most volume and cost metrics support time ranges up to **365 days** with daily g
 ### Metric Categories
 
 **Volume metrics** (how much):
+
 - `request_count` — number of API requests (up to 365 days)
 - `tokens_total`, `tokens_prompt`, `tokens_completion` — token counts (up to 365 days)
 - `reasoning_tokens` — tokens used for extended thinking (up to 365 days)
@@ -78,6 +72,7 @@ Most volume and cost metrics support time ranges up to **365 days** with daily g
 - `response_cached_count` — count of responses served from cache (31-day limit)
 
 **Cost metrics** (how much money):
+
 - `total_usage` — total cost in USD, including BYOK inference cost (up to 365 days). Computed as `sum(usage) + sum(byok_usage_inference)` so it reflects true spend for both credits and BYOK users.
 - `byok_usage` — BYOK (bring your own key) inference cost in USD (up to 365 days)
 - `credits_usage` — all charges billed to OpenRouter credits in USD, including BYOK platform fees (up to 365 days)
@@ -94,10 +89,12 @@ Most volume and cost metrics support time ranges up to **365 days** with daily g
 - `usage_upstream_web_fetch` — provider-side web fetch cost in USD (31-day limit)
 
 **Performance metrics** (how fast):
+
 - `avg_latency`, `p50_latency`, `p90_latency`, `p99_latency` — response latency in milliseconds
 - `avg_throughput`, `p50_throughput`, `p90_throughput`, `p99_throughput` — tokens per second
 
 **Efficiency metrics** (how well):
+
 - `cache_hit_rate` — ratio of cached tokens to prompt tokens (0–1)
 - `guardrail_invoked_rate` — ratio of requests that triggered guardrails
 - `response_cached_rate` — ratio of responses served from cache
@@ -106,12 +103,12 @@ Most volume and cost metrics support time ranges up to **365 days** with daily g
 
 Each dimension has:
 
-| Field | Meaning |
-|---|---|
-| `name` | Identifier to use in query requests |
-| `display_label` | Human-readable label |
+| Field           | Meaning                             |
+| --------------- | ----------------------------------- |
+| `name`          | Identifier to use in query requests |
+| `display_label` | Human-readable label                |
 
-Dimensions are what you break down by — "show me spend *by model*" means `dimensions: ["model"]`.
+Dimensions are what you break down by — "show me spend _by model_" means `dimensions: ["model"]`.
 
 You can combine up to 2 dimensions in a single query (e.g., `["model", "provider"]`).
 
@@ -119,12 +116,12 @@ You can combine up to 2 dimensions in a single query (e.g., `["model", "provider
 
 Some dimensions have their raw IDs automatically resolved to human-readable labels in query results. Data rows contain the resolved display names directly:
 
-| Dimension | Resolved to |
-|---|---|
-| `api_key_id` | Key name/label |
-| `app` | App title or origin URL |
-| `user` | User name or email address |
-| `workspace` | Workspace name |
+| Dimension    | Resolved to                |
+| ------------ | -------------------------- |
+| `api_key_id` | Key name/label             |
+| `app`        | App title or origin URL    |
+| `user`       | User name or email address |
+| `workspace`  | Workspace name             |
 
 All other dimensions (e.g., `model`, `provider`, `country`) are returned as-is without resolution.
 
@@ -133,6 +130,7 @@ All other dimensions (e.g., `model`, `provider`, `country`) are returned as-is w
 ### Dimension Categories
 
 **Available with all time ranges:**
+
 - `model` — the OpenRouter model ID (permaslug)
 - `variant` — model variant (e.g., standard, extended)
 - `api_key_id` — which API key made the request
@@ -141,6 +139,7 @@ All other dimensions (e.g., `model`, `provider`, `country`) are returned as-is w
 - `app` — application ID
 
 **Limited to 31-day time ranges:**
+
 - `generation_id` — unique ID for each generation (use to drill down to individual requests, then inspect via the `openrouter-generations` skill)
 - `provider` — upstream provider name
 - `origin` — request origin/source
@@ -153,28 +152,28 @@ All other dimensions (e.g., `model`, `provider`, `country`) are returned as-is w
 
 Filter operators for the `filters` array in query requests:
 
-| Operator | Value Type | Meaning |
-|---|---|---|
-| `eq` | scalar | Equals |
-| `neq` | scalar | Not equals |
-| `gt` | scalar | Greater than |
-| `gte` | scalar | Greater than or equal |
-| `lt` | scalar | Less than |
-| `lte` | scalar | Less than or equal |
-| `in` | array | In list |
-| `not_in` | array | Not in list |
+| Operator | Value Type | Meaning               |
+| -------- | ---------- | --------------------- |
+| `eq`     | scalar     | Equals                |
+| `neq`    | scalar     | Not equals            |
+| `gt`     | scalar     | Greater than          |
+| `gte`    | scalar     | Greater than or equal |
+| `lt`     | scalar     | Less than             |
+| `lte`    | scalar     | Less than or equal    |
+| `in`     | array      | In list               |
+| `not_in` | array      | Not in list           |
 
 ## Understanding Granularities
 
 Time bucketing for time-series queries:
 
-| Granularity | Use when |
-|---|---|
-| `minute` | Last few hours, real-time monitoring |
-| `hour` | Last 1–3 days |
-| `day` | Last week to 3 months |
-| `week` | Last 3–12 months |
-| `month` | Year-scale trends |
+| Granularity | Use when                             |
+| ----------- | ------------------------------------ |
+| `minute`    | Last few hours, real-time monitoring |
+| `hour`      | Last 1–3 days                        |
+| `day`       | Last week to 3 months                |
+| `week`      | Last 3–12 months                     |
+| `month`     | Year-scale trends                    |
 
 When no granularity is set, the query returns aggregate totals without time bucketing.
 
@@ -182,42 +181,42 @@ When no granularity is set, the query returns aggregate totals without time buck
 
 Use this guide to translate natural-language questions into the right metric/dimension/filter combination:
 
-| Question pattern | Metrics | Dimensions | Notes |
-|---|---|---|---|
-| "How much did I spend?" | `total_usage` | — | Add granularity for trends |
-| "Which models cost the most?" | `total_usage` | `model` | Order by `total_usage` desc |
-| "How many requests?" | `request_count` | — | Add `model` or `api_key_id` for breakdown |
-| "How many tokens?" | `tokens_total` | — | Use `tokens_prompt` / `tokens_completion` for split |
-| "Which provider is fastest?" | `avg_latency`, `p90_latency` | `provider` | 31-day limit |
-| "What's my cache hit rate?" | `cache_hit_rate` | `model` | Rate metric — shows per-model caching |
-| "Which API key uses the most?" | `request_count`, `total_usage` | `api_key_id` | — |
-| "Usage over time" | `request_count` or `total_usage` | — | Set `granularity: "day"` |
-| "Latency trends" | `p90_latency` | — | Set `granularity: "hour"`, 31d limit |
-| "Usage by country" | `request_count` | `country` | 31-day limit |
-| "How can I save money?" | `total_usage`, `cache_hit_rate`, `tokens_total` | `model` | See cost optimization in `openrouter-analytics` skill |
-| "Show me individual requests" | `total_usage`, `tokens_total` | `generation_id` | 31-day limit. Use returned IDs with `openrouter-generations` skill for full metadata and content |
-| "How much BYOK spend?" | `byok_usage` | `model` | Up to 365 days |
-| "BYOK vs credits split?" | `byok_usage`, `credits_usage` | — | Both up to 365 days |
-| "BYOK platform fees?" | `byok_fees` | `model` | 31-day limit |
-| "Non-BYOK inference spend?" | `openrouter_usage` | `model` | 31-day limit |
-| "How many guardrail triggers?" | `guardrail_invoked_count`, `guardrail_invoked_rate` | `model` | 31-day limit |
-| "How many cached responses?" | `response_cached_count`, `response_cached_rate` | `model` | 31-day limit |
-| "Where does my spend go?" | `usage_upstream`, `usage_cache`, `usage_data` | — | Full cost breakdown (up to 365 days) |
-| "Web search costs?" | `usage_web`, `usage_upstream_web` | `model` | Up to 365 days |
-| "File processing costs?" | `usage_file`, `usage_upstream_file` | `model` | 31-day limit |
-| "Web fetch costs?" | `usage_web_fetch`, `usage_upstream_web_fetch` | `model` | 31-day limit |
+| Question pattern               | Metrics                                             | Dimensions      | Notes                                                                                            |
+| ------------------------------ | --------------------------------------------------- | --------------- | ------------------------------------------------------------------------------------------------ |
+| "How much did I spend?"        | `total_usage`                                       | —               | Add granularity for trends                                                                       |
+| "Which models cost the most?"  | `total_usage`                                       | `model`         | Order by `total_usage` desc                                                                      |
+| "How many requests?"           | `request_count`                                     | —               | Add `model` or `api_key_id` for breakdown                                                        |
+| "How many tokens?"             | `tokens_total`                                      | —               | Use `tokens_prompt` / `tokens_completion` for split                                              |
+| "Which provider is fastest?"   | `avg_latency`, `p90_latency`                        | `provider`      | 31-day limit                                                                                     |
+| "What's my cache hit rate?"    | `cache_hit_rate`                                    | `model`         | Rate metric — shows per-model caching                                                            |
+| "Which API key uses the most?" | `request_count`, `total_usage`                      | `api_key_id`    | —                                                                                                |
+| "Usage over time"              | `request_count` or `total_usage`                    | —               | Set `granularity: "day"`                                                                         |
+| "Latency trends"               | `p90_latency`                                       | —               | Set `granularity: "hour"`, 31d limit                                                             |
+| "Usage by country"             | `request_count`                                     | `country`       | 31-day limit                                                                                     |
+| "How can I save money?"        | `total_usage`, `cache_hit_rate`, `tokens_total`     | `model`         | See cost optimization in `openrouter-analytics` skill                                            |
+| "Show me individual requests"  | `total_usage`, `tokens_total`                       | `generation_id` | 31-day limit. Use returned IDs with `openrouter-generations` skill for full metadata and content |
+| "How much BYOK spend?"         | `byok_usage`                                        | `model`         | Up to 365 days                                                                                   |
+| "BYOK vs credits split?"       | `byok_usage`, `credits_usage`                       | —               | Both up to 365 days                                                                              |
+| "BYOK platform fees?"          | `byok_fees`                                         | `model`         | 31-day limit                                                                                     |
+| "Non-BYOK inference spend?"    | `openrouter_usage`                                  | `model`         | 31-day limit                                                                                     |
+| "How many guardrail triggers?" | `guardrail_invoked_count`, `guardrail_invoked_rate` | `model`         | 31-day limit                                                                                     |
+| "How many cached responses?"   | `response_cached_count`, `response_cached_rate`     | `model`         | 31-day limit                                                                                     |
+| "Where does my spend go?"      | `usage_upstream`, `usage_cache`, `usage_data`       | —               | Full cost breakdown (up to 365 days)                                                             |
+| "Web search costs?"            | `usage_web`, `usage_upstream_web`                   | `model`         | Up to 365 days                                                                                   |
+| "File processing costs?"       | `usage_file`, `usage_upstream_file`                 | `model`         | 31-day limit                                                                                     |
+| "Web fetch costs?"             | `usage_web_fetch`, `usage_upstream_web_fetch`       | `model`         | 31-day limit                                                                                     |
 
 ## Filter Value Reference
 
 Several dimensions are **label-resolved** in query results — the response shows human-readable names, but filters must use the underlying ID. Here's where to find each:
 
-| Dimension | Filter value | Where to find it |
-|---|---|---|
+| Dimension    | Filter value                           | Where to find it                                                                                                                                                                                                     |
+| ------------ | -------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `api_key_id` | Numeric ID **or** 64-char SHA-256 hash | Numeric ID: generation metadata (`api_key_id` field). Hash: `GET /api/v1/keys` (`key_hash` field). Hashes are auto-resolved server-side. If a hash can't be resolved, a sentinel value returns zero rows (no error). |
-| `user` | Clerk user ID (e.g. `user_abc123`) | User settings or org member list — not the display name/email shown in results. |
-| `workspace` | Workspace UUID | Workspace settings page or `GET /api/v1/workspaces` — not the workspace name shown in results. |
-| `app` | Numeric app ID | Generation metadata (`app_id` field) or app settings — not the app title shown in results. |
-| `model` | Permaslug (e.g. `openai/gpt-4o`) | Model page URL or `GET /api/v1/models` — not the display name. |
+| `user`       | Clerk user ID (e.g. `user_abc123`)     | User settings or org member list — not the display name/email shown in results.                                                                                                                                      |
+| `workspace`  | Workspace UUID                         | Workspace settings page or `GET /api/v1/workspaces` — not the workspace name shown in results.                                                                                                                       |
+| `app`        | Numeric app ID                         | Generation metadata (`app_id` field) or app settings — not the app title shown in results.                                                                                                                           |
+| `model`      | Permaslug (e.g. `openai/gpt-4o`)       | Model page URL or `GET /api/v1/models` — not the display name.                                                                                                                                                       |
 
 Other dimensions (`provider`, `origin`, `country`, `finish_reason`, `external_user`, etc.) are not enriched — filter values match what's returned in results.
 

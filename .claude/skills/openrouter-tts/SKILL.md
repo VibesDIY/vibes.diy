@@ -1,12 +1,13 @@
 ---
 description: Generate speech audio from text using OpenRouter's text-to-speech API. Use when the user asks to synthesize speech, narrate text, create a voiceover, generate an audiobook clip, read text aloud, convert text to an audio file, or mentions TTS, text-to-speech, or voice synthesis.
 metadata:
-    github-path: skills/openrouter-tts
-    github-ref: refs/heads/main
-    github-repo: https://github.com/OpenRouterTeam/skills
-    github-tree-sha: 2d2f8ec502f2fbe2ea6f26fd0a4b85f6a0645385
+  github-path: skills/openrouter-tts
+  github-ref: refs/heads/main
+  github-repo: https://github.com/OpenRouterTeam/skills
+  github-tree-sha: 2d2f8ec502f2fbe2ea6f26fd0a4b85f6a0645385
 name: openrouter-tts
 ---
+
 # OpenRouter Text-to-Speech
 
 Synthesize speech via `POST /api/v1/audio/speech` using `curl`. The endpoint is OpenAI-compatible, so the OpenAI SDKs work by pointing them at `https://openrouter.ai/api/v1`. Requires `OPENROUTER_API_KEY` (get one at https://openrouter.ai/keys). If unset, stop and ask.
@@ -75,14 +76,14 @@ Voices are provider-namespaced: OpenAI uses short names (`alloy`, `nova`), Voxtr
 
 ## Parameters
 
-| Field             | Required | Notes                                                                                                             |
-| ----------------- | -------- | ----------------------------------------------------------------------------------------------------------------- |
-| `model`           | yes      | TTS model slug (e.g. `openai/gpt-4o-mini-tts-2025-12-15`, `mistralai/voxtral-mini-tts-2603`).                     |
-| `input`           | yes      | The text to synthesize.                                                                                           |
+| Field             | Required | Notes                                                                                                                                                                                                                                           |
+| ----------------- | -------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `model`           | yes      | TTS model slug (e.g. `openai/gpt-4o-mini-tts-2025-12-15`, `mistralai/voxtral-mini-tts-2603`).                                                                                                                                                   |
+| `input`           | yes      | The text to synthesize.                                                                                                                                                                                                                         |
 | `voice`           | yes      | Voice identifier. Look up the exact set for your model in `supported_voices` on the models endpoint (see the discovery section above). Voices are provider-namespaced — e.g. `alloy` is an OpenAI voice and will not work on Voxtral or Kokoro. |
-| `response_format` | no       | `mp3` or `pcm`. Default is `pcm`. **Set this explicitly** — the default is usually not what a user wants to save. |
-| `speed`           | no       | Playback multiplier (e.g. `1.25`). Honored by OpenAI TTS. Other providers may accept and ignore it, or reject unknown fields — check the provider's behavior if it matters. |
-| `provider`        | no       | Provider passthrough — see below.                                                                                 |
+| `response_format` | no       | `mp3` or `pcm`. Default is `pcm`. **Set this explicitly** — the default is usually not what a user wants to save.                                                                                                                               |
+| `speed`           | no       | Playback multiplier (e.g. `1.25`). Honored by OpenAI TTS. Other providers may accept and ignore it, or reject unknown fields — check the provider's behavior if it matters.                                                                     |
+| `provider`        | no       | Provider passthrough — see below.                                                                                                                                                                                                               |
 
 ### Picking a format
 
@@ -151,10 +152,7 @@ const response = await client.audio.speech.create({
   response_format: "mp3",
 });
 
-await fs.promises.writeFile(
-  "output.mp3",
-  Buffer.from(await response.arrayBuffer()),
-);
+await fs.promises.writeFile("output.mp3", Buffer.from(await response.arrayBuffer()));
 ```
 
 ## Long inputs

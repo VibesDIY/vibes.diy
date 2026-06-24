@@ -1,17 +1,19 @@
 ---
 description: Scaffolds a complete agent TUI in TypeScript using @openrouter/agent — like create-react-app for terminal agents. Generates a customizable terminal interface with three input styles, four tool display modes, ASCII banners, streaming output, session persistence, and configurable tools. Use when building an agent, creating a TUI, scaffolding an agent project, or building a coding assistant.
 metadata:
-    github-path: skills/create-agent-tui
-    github-ref: refs/heads/main
-    github-repo: https://github.com/OpenRouterTeam/skills
-    github-tree-sha: 91b4c6bb2685fb24ff7a4a4a5125d2e861607c73
+  github-path: skills/create-agent-tui
+  github-ref: refs/heads/main
+  github-repo: https://github.com/OpenRouterTeam/skills
+  github-tree-sha: 91b4c6bb2685fb24ff7a4a4a5125d2e861607c73
 name: create-agent-tui
 ---
+
 # Create Agent TUI
 
 Scaffolds a complete agent TUI in TypeScript targeting OpenRouter. The generated project uses `@openrouter/agent` for the inner loop (model calls, tool execution, stop conditions) and provides the outer shell: a customizable terminal interface, configuration, session management, tool definitions, and an entry point.
 
 Architecture draws from three production agent systems:
+
 - **pi-mono/coding-agent** — three-layer separation, JSONL sessions, pluggable tool operations
 - **Claude Code** — tool metadata (read-only, destructive, approval), system prompt composition
 - **Codex CLI** — layered config, approval flow with session caching, structured logging
@@ -26,12 +28,12 @@ Architecture draws from three production agent systems:
 
 ## Decision Tree
 
-| User wants to... | Action |
-|---|---|
-| Build a new agent from scratch | Present checklist below → follow Generation Workflow |
+| User wants to...                 | Action                                                                       |
+| -------------------------------- | ---------------------------------------------------------------------------- |
+| Build a new agent from scratch   | Present checklist below → follow Generation Workflow                         |
 | Add tools to an existing harness | Read [references/tools.md](references/tools.md), present tool checklist only |
-| Add a harness module | Read [references/modules.md](references/modules.md), generate the module |
-| Add an API server entry point | Read [references/server-entry-points.md](references/server-entry-points.md) |
+| Add a harness module             | Read [references/modules.md](references/modules.md), generate the module     |
+| Add an API server entry point    | Read [references/server-entry-points.md](references/server-entry-points.md)  |
 
 ---
 
@@ -41,57 +43,57 @@ Present this as a multi-select checklist. Items marked **ON** are pre-selected d
 
 ### OpenRouter Server Tools (server-side, zero implementation)
 
-| Tool | Type string | Default | Config |
-|------|------------|---------|--------|
-| Web Search | `openrouter:web_search` | ON | engine, max_results, domain filtering |
-| Datetime | `openrouter:datetime` | ON | timezone |
-| Image Generation | `openrouter:image_generation` | OFF | model, quality, size, format |
+| Tool             | Type string                   | Default | Config                                |
+| ---------------- | ----------------------------- | ------- | ------------------------------------- |
+| Web Search       | `openrouter:web_search`       | ON      | engine, max_results, domain filtering |
+| Datetime         | `openrouter:datetime`         | ON      | timezone                              |
+| Image Generation | `openrouter:image_generation` | OFF     | model, quality, size, format          |
 
 Server tools go in the `tools` array alongside user-defined tools. No client code needed — OpenRouter executes them.
 
 ### User-Defined Tools (client-side, generated into src/tools/)
 
-| Tool | Default | Description |
-|------|---------|-------------|
-| File Read | ON | Read files with offset/limit, detect images |
-| File Write | ON | Write/create files, auto-create directories |
-| File Edit | ON | Search-and-replace with diff validation |
-| Glob/Find | ON | File discovery by glob pattern |
-| Grep/Search | ON | Content search by regex |
-| Directory List | ON | List directory contents |
-| Shell/Bash | ON | Execute commands with timeout and output capture |
-| JS REPL | OFF | Persistent Node.js environment |
-| Sub-agent Spawn | OFF | Delegate tasks to child agents |
-| Plan/Todo | OFF | Track multi-step task progress |
-| Request User Input | OFF | Structured multiple-choice questions |
-| Web Fetch | OFF | Fetch and extract text from web pages |
-| View Image | OFF | Read local images as base64 |
-| Custom Tool Template | ON | Empty skeleton for domain-specific tools |
+| Tool                 | Default | Description                                      |
+| -------------------- | ------- | ------------------------------------------------ |
+| File Read            | ON      | Read files with offset/limit, detect images      |
+| File Write           | ON      | Write/create files, auto-create directories      |
+| File Edit            | ON      | Search-and-replace with diff validation          |
+| Glob/Find            | ON      | File discovery by glob pattern                   |
+| Grep/Search          | ON      | Content search by regex                          |
+| Directory List       | ON      | List directory contents                          |
+| Shell/Bash           | ON      | Execute commands with timeout and output capture |
+| JS REPL              | OFF     | Persistent Node.js environment                   |
+| Sub-agent Spawn      | OFF     | Delegate tasks to child agents                   |
+| Plan/Todo            | OFF     | Track multi-step task progress                   |
+| Request User Input   | OFF     | Structured multiple-choice questions             |
+| Web Fetch            | OFF     | Fetch and extract text from web pages            |
+| View Image           | OFF     | Read local images as base64                      |
+| Custom Tool Template | ON      | Empty skeleton for domain-specific tools         |
 
 ### Harness Modules (architectural components)
 
-| Module | Default | Description |
-|--------|---------|-------------|
-| Session Persistence | ON | JSONL append-only conversation log |
-| ASCII Logo Banner | OFF | Custom ASCII art banner on startup — ask for project name |
-| Context Compaction | OFF | Summarize older messages when context is long |
-| System Prompt Composition | OFF | Assemble instructions from static + dynamic context |
-| Tool Permissions / Approval | OFF | Gate dangerous tools behind user confirmation |
-| Structured Event Logging | OFF | Emit events for tool calls, API requests, errors |
-| `@`-file References | OFF | `@filename` to attach file content to next message |
-| `!` Shell Shortcut | OFF | `!command` to run shell and inject output into context |
-| Multi-line Input | OFF | Shift+Enter for multi-line (requires raw terminal mode) |
+| Module                      | Default | Description                                               |
+| --------------------------- | ------- | --------------------------------------------------------- |
+| Session Persistence         | ON      | JSONL append-only conversation log                        |
+| ASCII Logo Banner           | OFF     | Custom ASCII art banner on startup — ask for project name |
+| Context Compaction          | OFF     | Summarize older messages when context is long             |
+| System Prompt Composition   | OFF     | Assemble instructions from static + dynamic context       |
+| Tool Permissions / Approval | OFF     | Gate dangerous tools behind user confirmation             |
+| Structured Event Logging    | OFF     | Emit events for tool calls, API requests, errors          |
+| `@`-file References         | OFF     | `@filename` to attach file content to next message        |
+| `!` Shell Shortcut          | OFF     | `!command` to run shell and inject output into context    |
+| Multi-line Input            | OFF     | Shift+Enter for multi-line (requires raw terminal mode)   |
 
 ### Slash Commands (user-facing REPL commands)
 
-| Command | Default | Description |
-|---------|---------|-------------|
-| `/model` | ON | Switch model via OpenRouter API |
-| `/new` | ON | Start a fresh conversation |
-| `/help` | ON | List available commands |
-| `/compact` | OFF | Manually trigger context compaction |
-| `/session` | OFF | Show session metadata and token usage |
-| `/export` | OFF | Save conversation as Markdown |
+| Command    | Default | Description                           |
+| ---------- | ------- | ------------------------------------- |
+| `/model`   | ON      | Switch model via OpenRouter API       |
+| `/new`     | ON      | Start a fresh conversation            |
+| `/help`    | ON      | List available commands               |
+| `/compact` | OFF     | Manually trigger context compaction   |
+| `/session` | OFF     | Show session metadata and token usage |
+| `/export`  | OFF     | Save conversation as Markdown         |
 
 When slash commands are enabled, generate `src/commands.ts` with a command registry. See [references/slash-commands.md](references/slash-commands.md) for specs.
 
@@ -99,31 +101,31 @@ When slash commands are enabled, generate `src/commands.ts` with a command regis
 
 **Input style** — how the prompt looks. See [references/input-styles.md](references/input-styles.md):
 
-| Style | Default | Description |
-|-------|---------|-------------|
-| `block` | ON | Full-width background box with `›` prompt, adapts to terminal theme |
-| `bordered` | | Horizontal `─` lines above and below input |
-| `plain` | | Simple `> ` readline prompt, no escape sequences |
-| Other | | User describes what they want — implement a custom input style |
+| Style      | Default | Description                                                         |
+| ---------- | ------- | ------------------------------------------------------------------- |
+| `block`    | ON      | Full-width background box with `›` prompt, adapts to terminal theme |
+| `bordered` |         | Horizontal `─` lines above and below input                          |
+| `plain`    |         | Simple `> ` readline prompt, no escape sequences                    |
+| Other      |         | User describes what they want — implement a custom input style      |
 
 **Tool display** — how tool calls appear during execution. See [references/tool-display.md](references/tool-display.md):
 
-| Style | Default | Description |
-|-------|---------|-------------|
-| `grouped` | ON | Bold action labels with tree-branch output |
-| `emoji` | | Per-call `⚡`/`✓` markers with args and timing |
-| `minimal` | | Aggregated one-liner summaries |
-| `hidden` | | No tool output |
-| Other | | User describes what they want — implement a custom display |
+| Style     | Default | Description                                                |
+| --------- | ------- | ---------------------------------------------------------- |
+| `grouped` | ON      | Bold action labels with tree-branch output                 |
+| `emoji`   |         | Per-call `⚡`/`✓` markers with args and timing             |
+| `minimal` |         | Aggregated one-liner summaries                             |
+| `hidden`  |         | No tool output                                             |
+| Other     |         | User describes what they want — implement a custom display |
 
 **Loader animation** — shown while waiting for model response. See [references/loader.md](references/loader.md):
 
-| Style | Default | Description |
-|-------|---------|-------------|
-| `spinner` | ON | Braille dot spinner (⠋⠙⠹…) to the left of the text |
-| `gradient` | | Scrolling color shimmer over the loader text |
-| `minimal` | | Trailing dots (`Working···`) |
-| Other | | User describes what they want — implement a custom animation |
+| Style      | Default | Description                                                  |
+| ---------- | ------- | ------------------------------------------------------------ |
+| `spinner`  | ON      | Braille dot spinner (⠋⠙⠹…) to the left of the text           |
+| `gradient` |         | Scrolling color shimmer over the loader text                 |
+| `minimal`  |         | Trailing dots (`Working···`)                                 |
+| Other      |         | User describes what they want — implement a custom animation |
 
 Also ask for the **loader text** (default: `"Working"`).
 
@@ -158,26 +160,26 @@ After getting checklist selections, follow this workflow:
 All user-defined tools follow this pattern using `@openrouter/agent/tool`. Here is one complete example — all other tools in [references/tools.md](references/tools.md) follow the same shape:
 
 ```typescript
-import { tool } from '@openrouter/agent/tool';
-import { z } from 'zod';
-import { readFile, stat } from 'fs/promises';
+import { tool } from "@openrouter/agent/tool";
+import { z } from "zod";
+import { readFile, stat } from "fs/promises";
 
 const DEFAULT_LINE_LIMIT = 2000;
 const MAX_LINE_CHARS = 2000;
 
 export const fileReadTool = tool({
-  name: 'file_read',
+  name: "file_read",
   description:
-    'Read the contents of a file. Output is capped at 2000 lines by default (use offset/limit to paginate) and any line longer than 2000 characters is truncated. When the response is truncated, the hint field tells you how to continue.',
+    "Read the contents of a file. Output is capped at 2000 lines by default (use offset/limit to paginate) and any line longer than 2000 characters is truncated. When the response is truncated, the hint field tells you how to continue.",
   inputSchema: z.object({
-    path: z.string().describe('Absolute path to the file'),
-    offset: z.number().optional().describe('Start reading from this line (1-indexed)'),
+    path: z.string().describe("Absolute path to the file"),
+    offset: z.number().optional().describe("Start reading from this line (1-indexed)"),
     limit: z.number().optional().describe(`Maximum lines to return (default ${DEFAULT_LINE_LIMIT})`),
   }),
   execute: async ({ path, offset, limit }) => {
     try {
-      const content = await readFile(path, 'utf-8');
-      const lines = content.split('\n');
+      const content = await readFile(path, "utf-8");
+      const lines = content.split("\n");
 
       const start = offset ? offset - 1 : 0;
       const end = Math.min(start + (limit ?? DEFAULT_LINE_LIMIT), lines.length);
@@ -191,20 +193,23 @@ export const fileReadTool = tool({
       const truncated = tailTruncated || longLines > 0;
       const hintParts: string[] = [`Showing lines ${start + 1}-${end} of ${lines.length}.`];
       if (tailTruncated) hintParts.push(`Use offset=${end + 1} to continue.`);
-      if (longLines > 0) hintParts.push(`${longLines} line(s) exceeded ${MAX_LINE_CHARS} chars and were per-line truncated; use grep to fetch content from those lines.`);
+      if (longLines > 0)
+        hintParts.push(
+          `${longLines} line(s) exceeded ${MAX_LINE_CHARS} chars and were per-line truncated; use grep to fetch content from those lines.`
+        );
 
       return {
-        content: slice.join('\n'),
+        content: slice.join("\n"),
         totalLines: lines.length,
         ...(truncated && {
           truncated: true,
           ...(tailTruncated && { nextOffset: end + 1 }),
-          hint: hintParts.join(' '),
+          hint: hintParts.join(" "),
         }),
       };
     } catch (err: any) {
-      if (err.code === 'ENOENT') return { error: `File not found: ${path}` };
-      if (err.code === 'EACCES') return { error: `Permission denied: ${path}` };
+      if (err.code === "ENOENT") return { error: `File not found: ${path}` };
+      if (err.code === "EACCES") return { error: `Permission denied: ${path}` };
       return { error: err.message };
     }
   },
@@ -252,13 +257,13 @@ npm install -D tsx typescript @types/node
 ### src/config.ts
 
 ```typescript
-import { readFileSync, existsSync } from 'fs';
-import { resolve } from 'path';
+import { readFileSync, existsSync } from "fs";
+import { resolve } from "path";
 
 export interface DisplayConfig {
-  toolDisplay: 'emoji' | 'grouped' | 'minimal' | 'hidden';
+  toolDisplay: "emoji" | "grouped" | "minimal" | "hidden";
   reasoning: boolean;
-  inputStyle: 'block' | 'bordered' | 'plain';
+  inputStyle: "block" | "bordered" | "plain";
 }
 
 export interface AgentConfig {
@@ -274,36 +279,36 @@ export interface AgentConfig {
 }
 
 const DEFAULTS: AgentConfig = {
-  apiKey: '',
-  model: 'anthropic/claude-opus-4.7',
+  apiKey: "",
+  model: "anthropic/claude-opus-4.7",
   systemPrompt: [
-    'You are a coding assistant with access to tools for reading, writing, editing, and searching files, and running shell commands.',
-    '',
-    'Current working directory: {cwd}',
-    '',
-    'Guidelines:',
-    '- Use your tools proactively. Explore the codebase to find answers instead of asking the user.',
-    '- Keep working until the task is fully resolved before responding.',
-    '- Do not guess or make up information — use your tools to verify.',
-    '- Be concise and direct.',
-    '- Show file paths clearly when working with files.',
-    '- Prefer grep and glob tools over shell commands for file search.',
-    '- When editing code, make minimal targeted changes consistent with the existing style.',
-  ].join('\n'),
+    "You are a coding assistant with access to tools for reading, writing, editing, and searching files, and running shell commands.",
+    "",
+    "Current working directory: {cwd}",
+    "",
+    "Guidelines:",
+    "- Use your tools proactively. Explore the codebase to find answers instead of asking the user.",
+    "- Keep working until the task is fully resolved before responding.",
+    "- Do not guess or make up information — use your tools to verify.",
+    "- Be concise and direct.",
+    "- Show file paths clearly when working with files.",
+    "- Prefer grep and glob tools over shell commands for file search.",
+    "- When editing code, make minimal targeted changes consistent with the existing style.",
+  ].join("\n"),
   maxSteps: 20,
   maxCost: 1.0,
-  sessionDir: '.sessions',
+  sessionDir: ".sessions",
   showBanner: false,
-  display: { toolDisplay: 'grouped', reasoning: false, inputStyle: 'block' },
+  display: { toolDisplay: "grouped", reasoning: false, inputStyle: "block" },
   slashCommands: true,
 };
 
 export function loadConfig(overrides: Partial<AgentConfig> = {}): AgentConfig {
   let config = { ...DEFAULTS };
 
-  const configPath = resolve('agent.config.json');
+  const configPath = resolve("agent.config.json");
   if (existsSync(configPath)) {
-    const file = JSON.parse(readFileSync(configPath, 'utf-8'));
+    const file = JSON.parse(readFileSync(configPath, "utf-8"));
     if (file.display) {
       config.display = { ...config.display, ...file.display };
     }
@@ -319,7 +324,7 @@ export function loadConfig(overrides: Partial<AgentConfig> = {}): AgentConfig {
     config.display = { ...config.display, ...overrides.display };
   }
   config = { ...config, ...overrides, display: config.display };
-  if (!config.apiKey) throw new Error('OPENROUTER_API_KEY is required.');
+  if (!config.apiKey) throw new Error("OPENROUTER_API_KEY is required.");
   return config;
 }
 ```
@@ -329,14 +334,14 @@ export function loadConfig(overrides: Partial<AgentConfig> = {}): AgentConfig {
 Adapt imports based on checklist selections. This example includes all default-ON tools:
 
 ```typescript
-import { serverTool } from '@openrouter/agent';
-import { fileReadTool } from './file-read.js';
-import { fileWriteTool } from './file-write.js';
-import { fileEditTool } from './file-edit.js';
-import { globTool } from './glob.js';
-import { grepTool } from './grep.js';
-import { listDirTool } from './list-dir.js';
-import { shellTool } from './shell.js';
+import { serverTool } from "@openrouter/agent";
+import { fileReadTool } from "./file-read.js";
+import { fileWriteTool } from "./file-write.js";
+import { fileEditTool } from "./file-edit.js";
+import { globTool } from "./glob.js";
+import { grepTool } from "./grep.js";
+import { listDirTool } from "./list-dir.js";
+import { shellTool } from "./shell.js";
 
 export const tools = [
   // User-defined tools — executed client-side
@@ -349,38 +354,38 @@ export const tools = [
   shellTool,
 
   // Server tools — executed by OpenRouter, no client implementation needed
-  serverTool({ type: 'openrouter:web_search' }),
-  serverTool({ type: 'openrouter:datetime', parameters: { timezone: 'UTC' } }),
+  serverTool({ type: "openrouter:web_search" }),
+  serverTool({ type: "openrouter:datetime", parameters: { timezone: "UTC" } }),
 ];
 ```
 
 ### src/agent.ts
 
 ```typescript
-import { OpenRouter } from '@openrouter/agent';
-import type { Item } from '@openrouter/agent';
-import { stepCountIs, maxCost } from '@openrouter/agent/stop-conditions';
-import type { AgentConfig } from './config.js';
-import { tools } from './tools/index.js';
+import { OpenRouter } from "@openrouter/agent";
+import type { Item } from "@openrouter/agent";
+import { stepCountIs, maxCost } from "@openrouter/agent/stop-conditions";
+import type { AgentConfig } from "./config.js";
+import { tools } from "./tools/index.js";
 
-export type ChatMessage = { role: 'user' | 'assistant' | 'system'; content: string };
+export type ChatMessage = { role: "user" | "assistant" | "system"; content: string };
 
 export type AgentEvent =
-  | { type: 'text'; delta: string }
-  | { type: 'tool_call'; name: string; callId: string; args: Record<string, unknown> }
-  | { type: 'tool_result'; name: string; callId: string; output: string }
-  | { type: 'reasoning'; delta: string };
+  | { type: "text"; delta: string }
+  | { type: "tool_call"; name: string; callId: string; args: Record<string, unknown> }
+  | { type: "tool_result"; name: string; callId: string; output: string }
+  | { type: "reasoning"; delta: string };
 
 export async function runAgent(
   config: AgentConfig,
   input: string | ChatMessage[],
-  options?: { onEvent?: (event: AgentEvent) => void; signal?: AbortSignal },
+  options?: { onEvent?: (event: AgentEvent) => void; signal?: AbortSignal }
 ) {
   const client = new OpenRouter({ apiKey: config.apiKey });
 
   const result = client.callModel({
     model: config.model,
-    instructions: config.systemPrompt.replace('{cwd}', process.cwd()),
+    instructions: config.systemPrompt.replace("{cwd}", process.cwd()),
     input: input as string | Item[],
     tools,
     stopWhen: [stepCountIs(config.maxSteps), maxCost(config.maxCost)],
@@ -398,55 +403,63 @@ export async function runAgent(
 
     for await (const item of result.getItemsStream()) {
       if (options?.signal?.aborted) break;
-      if (item.type === 'message') {
-        const text = item.content
-          ?.filter((c): c is { type: 'output_text'; text: string } => 'text' in c)
-          .map((c) => c.text)
-          .join('') ?? '';
+      if (item.type === "message") {
+        const text =
+          item.content
+            ?.filter((c): c is { type: "output_text"; text: string } => "text" in c)
+            .map((c) => c.text)
+            .join("") ?? "";
         const prev = textByItem.get(item.id) ?? 0;
         if (text.length > prev) {
-          options.onEvent({ type: 'text', delta: text.slice(prev) });
+          options.onEvent({ type: "text", delta: text.slice(prev) });
           textByItem.set(item.id, text.length);
         }
-      } else if (item.type === 'function_call') {
+      } else if (item.type === "function_call") {
         callNames.set(item.callId, item.name);
-        if (item.status === 'completed') {
-          const args = (() => { try { return item.arguments ? JSON.parse(item.arguments) : {}; } catch { return {}; } })();
-          options.onEvent({ type: 'tool_call', name: item.name, callId: item.callId, args });
+        if (item.status === "completed") {
+          const args = (() => {
+            try {
+              return item.arguments ? JSON.parse(item.arguments) : {};
+            } catch {
+              return {};
+            }
+          })();
+          options.onEvent({ type: "tool_call", name: item.name, callId: item.callId, args });
         }
-      } else if (item.type === 'function_call_output') {
-        const out = typeof item.output === 'string' ? item.output : JSON.stringify(item.output);
+      } else if (item.type === "function_call_output") {
+        const out = typeof item.output === "string" ? item.output : JSON.stringify(item.output);
         options.onEvent({
-          type: 'tool_result',
-          name: callNames.get(item.callId) ?? 'unknown',
+          type: "tool_result",
+          name: callNames.get(item.callId) ?? "unknown",
           callId: item.callId,
-          output: out.length > 200 ? out.slice(0, 200) + '…' : out,
+          output: out.length > 200 ? out.slice(0, 200) + "…" : out,
         });
-      } else if (item.type === 'reasoning') {
-        const text = item.summary?.map((s: { text: string }) => s.text).join('') ?? '';
-        if (text) options.onEvent({ type: 'reasoning', delta: text });
+      } else if (item.type === "reasoning") {
+        const text = item.summary?.map((s: { text: string }) => s.text).join("") ?? "";
+        if (text) options.onEvent({ type: "reasoning", delta: text });
       }
     }
   }
 
   const response = await result.getResponse();
-  return { text: response.outputText ?? '', usage: response.usage, output: response.output };
+  return { text: response.outputText ?? "", usage: response.usage, output: response.output };
 }
 
 export async function runAgentWithRetry(
   config: AgentConfig,
   input: string | ChatMessage[],
-  options?: { onEvent?: (event: AgentEvent) => void; signal?: AbortSignal; maxRetries?: number },
+  options?: { onEvent?: (event: AgentEvent) => void; signal?: AbortSignal; maxRetries?: number }
 ) {
   for (let attempt = 0, max = options?.maxRetries ?? 3; attempt <= max; attempt++) {
-    try { return await runAgent(config, input, options); }
-    catch (err: any) {
+    try {
+      return await runAgent(config, input, options);
+    } catch (err: any) {
       const s = err?.status ?? err?.statusCode;
       if (!(s === 429 || (s >= 500 && s < 600)) || attempt === max) throw err;
       await new Promise((r) => setTimeout(r, Math.min(1000 * 2 ** attempt, 30000)));
     }
   }
-  throw new Error('Unreachable');
+  throw new Error("Unreachable");
 }
 ```
 
@@ -455,40 +468,47 @@ export async function runAgentWithRetry(
 Three input styles are supported: `block` (background box), `bordered` (horizontal lines), and `plain` (simple caret). See [references/input-styles.md](references/input-styles.md) for full implementations of `styledReadLine()`, `borderedReadLine()`, and the `getInput()` dispatcher.
 
 ```typescript
-import { createInterface } from 'readline';
-import { loadConfig } from './config.js';
-import { runAgentWithRetry, type AgentEvent } from './agent.js';
-import { detectBg } from './terminal-bg.js';
+import { createInterface } from "readline";
+import { loadConfig } from "./config.js";
+import { runAgentWithRetry, type AgentEvent } from "./agent.js";
+import { detectBg } from "./terminal-bg.js";
 // import { styledReadLine, borderedReadLine } from ... — see references/input-styles.md
 
-const DIM = '\x1b[2m';
-const RESET = '\x1b[0m';
-const BOLD = '\x1b[1m';
-const CYAN = '\x1b[36m';
-const GREEN = '\x1b[32m';
-const YELLOW = '\x1b[33m';
-const GRAY = '\x1b[90m';
+const DIM = "\x1b[2m";
+const RESET = "\x1b[0m";
+const BOLD = "\x1b[1m";
+const CYAN = "\x1b[36m";
+const GREEN = "\x1b[32m";
+const YELLOW = "\x1b[33m";
+const GRAY = "\x1b[90m";
 
 function formatTokens(n: number): string {
   return n >= 1000 ? `${(n / 1000).toFixed(1)}k` : String(n);
 }
 
 function summarizeArgs(name: string, args: Record<string, unknown>): string {
-  const key = { shell: 'command', file_read: 'path', file_write: 'path',
-    file_edit: 'path', glob: 'pattern', grep: 'pattern', web_search: 'query',
-  }[name] ?? Object.keys(args)[0];
-  if (!key || !(key in args)) return '';
+  const key =
+    {
+      shell: "command",
+      file_read: "path",
+      file_write: "path",
+      file_edit: "path",
+      glob: "pattern",
+      grep: "pattern",
+      web_search: "query",
+    }[name] ?? Object.keys(args)[0];
+  if (!key || !(key in args)) return "";
   const val = String(args[key]);
-  return `${key}=${val.length > 40 ? val.slice(0, 40) + '…' : val}`;
+  return `${key}=${val.length > 40 ? val.slice(0, 40) + "…" : val}`;
 }
 
 async function main() {
   const config = loadConfig();
-  const BG_INPUT = config.display.inputStyle === 'block' ? await detectBg() : '';
+  const BG_INPUT = config.display.inputStyle === "block" ? await detectBg() : "";
 
   // Banner
   const width = Math.min(process.stdout.columns || 60, 60);
-  const line = GRAY + '─'.repeat(width) + RESET;
+  const line = GRAY + "─".repeat(width) + RESET;
   console.log(`\n${line}`);
   console.log(`  ${BOLD}My Agent${RESET}  ${DIM}v0.1.0${RESET}`);
   console.log(`  ${DIM}model${RESET}  ${CYAN}${config.model}${RESET}`);
@@ -499,11 +519,16 @@ async function main() {
 
   async function getInput(): Promise<string> {
     switch (config.display.inputStyle) {
-      case 'block': return styledReadLine(BG_INPUT);
-      case 'bordered': return borderedReadLine();
-      case 'plain':
+      case "block":
+        return styledReadLine(BG_INPUT);
+      case "bordered":
+        return borderedReadLine();
+      case "plain":
       default:
-        return new Promise((r) => { rl.prompt(); rl.once('line', r); });
+        return new Promise((r) => {
+          rl.prompt();
+          rl.once("line", r);
+        });
     }
   }
 
@@ -512,31 +537,42 @@ async function main() {
     const trimmed = input.trim();
     if (!trimmed) continue;
 
-    if (config.display.inputStyle !== 'plain') {
-      const cwd = process.cwd().replace(process.env.HOME ?? '', '~');
+    if (config.display.inputStyle !== "plain") {
+      const cwd = process.cwd().replace(process.env.HOME ?? "", "~");
       process.stdout.write(`\x1b[K  ${DIM}${cwd}${RESET}\n`);
     }
 
-    if (trimmed.toLowerCase() === 'exit') { process.exit(0); }
+    if (trimmed.toLowerCase() === "exit") {
+      process.exit(0);
+    }
 
     console.log();
-    let streaming = false, started = false;
+    let streaming = false,
+      started = false;
     const toolStart = new Map<string, number>();
-    const dots = ['·', '··', '···'];
+    const dots = ["·", "··", "···"];
     let di = 0;
     const spin = setInterval(() => {
       if (!started) process.stdout.write(`\r${DIM}${dots[di++ % 3]}${RESET}`);
     }, 300);
 
     const handleEvent = (event: AgentEvent) => {
-      if (!started) { started = true; process.stdout.write('\r\x1b[K'); }
-      if (event.type === 'text') { streaming = true; process.stdout.write(event.delta); }
-      else if (event.type === 'tool_call') {
-        if (streaming) { process.stdout.write('\n'); streaming = false; }
+      if (!started) {
+        started = true;
+        process.stdout.write("\r\x1b[K");
+      }
+      if (event.type === "text") {
+        streaming = true;
+        process.stdout.write(event.delta);
+      } else if (event.type === "tool_call") {
+        if (streaming) {
+          process.stdout.write("\n");
+          streaming = false;
+        }
         toolStart.set(event.callId, Date.now());
         const args = summarizeArgs(event.name, event.args);
-        console.log(`  ${YELLOW}⚡${RESET} ${DIM}${event.name}${args ? ' ' + args : ''}${RESET}`);
-      } else if (event.type === 'tool_result') {
+        console.log(`  ${YELLOW}⚡${RESET} ${DIM}${event.name}${args ? " " + args : ""}${RESET}`);
+      } else if (event.type === "tool_result") {
         const ms = Date.now() - (toolStart.get(event.callId) ?? Date.now());
         console.log(`  ${GREEN}✓${RESET} ${DIM}${event.name} (${(ms / 1000).toFixed(1)}s)${RESET}`);
         started = false;
@@ -572,10 +608,10 @@ When `ASCII Logo Banner` is selected, ask the user for their project name, then 
 Generate ASCII art for the user's project name. Example for a project called "ACME":
 
 ```typescript
-const RESET = '\x1b[0m';
-const BOLD = '\x1b[1m';
-const DIM = '\x1b[2m';
-const CYAN = '\x1b[36m';
+const RESET = "\x1b[0m";
+const BOLD = "\x1b[1m";
+const DIM = "\x1b[2m";
+const CYAN = "\x1b[36m";
 
 const LOGO = `
    █████╗  ██████╗███╗   ███╗███████╗
@@ -598,7 +634,7 @@ Adapt the ASCII art to the user's actual project name. Keep it to one or two sho
 Add at the top of `main()`, before the text banner, when `showBanner` is selected:
 
 ```typescript
-import { printBanner } from './banner.js';
+import { printBanner } from "./banner.js";
 
 // In main(), replace the text banner with:
 if (config.showBanner) {

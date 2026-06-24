@@ -1,12 +1,13 @@
 ---
 description: Generate videos from text prompts (and optional reference or frame images) using OpenRouter's asynchronous video generation API. Use when the user asks to create, generate, or make a video or animation from a description, animate an existing image, or turn a prompt into a short video clip.
 metadata:
-    github-path: skills/openrouter-video
-    github-ref: refs/heads/main
-    github-repo: https://github.com/OpenRouterTeam/skills
-    github-tree-sha: e51e135bce4fd09405b28ded3f7413e52fcd1eea
+  github-path: skills/openrouter-video
+  github-ref: refs/heads/main
+  github-repo: https://github.com/OpenRouterTeam/skills
+  github-tree-sha: e51e135bce4fd09405b28ded3f7413e52fcd1eea
 name: openrouter-video
 ---
+
 # OpenRouter Video
 
 Generate videos via OpenRouter's async `POST /api/v1/videos` using `curl` + `jq`. Requires `OPENROUTER_API_KEY` (get one at https://openrouter.ai/keys). If unset, stop and ask.
@@ -91,7 +92,7 @@ Image `url` can be a public `https://` URL or a local-file data URL: `MIME=image
 
 ## Provider passthrough
 
-Provider-specific params go under `provider.options.<slug>.parameters`. The allowed keys for a given model are listed (flat) in `allowed_passthrough_parameters` on the models endpoint — but the meaning, value range, and required combinations come from the *upstream provider's* API docs (Google Vertex, Alibaba Dashscope, Kwai, ByteDance Volc Engine, MiniMax, OpenAI, etc.). Read the upstream docs before using an unfamiliar key; casing conventions differ between providers (Google/OpenAI use camelCase, most others use snake_case).
+Provider-specific params go under `provider.options.<slug>.parameters`. The allowed keys for a given model are listed (flat) in `allowed_passthrough_parameters` on the models endpoint — but the meaning, value range, and required combinations come from the _upstream provider's_ API docs (Google Vertex, Alibaba Dashscope, Kwai, ByteDance Volc Engine, MiniMax, OpenAI, etc.). Read the upstream docs before using an unfamiliar key; casing conventions differ between providers (Google/OpenAI use camelCase, most others use snake_case).
 
 Example:
 

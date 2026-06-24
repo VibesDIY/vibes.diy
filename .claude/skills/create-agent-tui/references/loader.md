@@ -5,35 +5,35 @@ Three loader animations are available, configured via `config.display.loader`. T
 ```typescript
 export interface LoaderConfig {
   text: string;
-  style: 'gradient' | 'spinner' | 'minimal';
+  style: "gradient" | "spinner" | "minimal";
 }
 ```
 
-| Style | Look | Description |
-|-------|------|-------------|
-| `gradient` | Scrolling color wave over the text | Each letter cycles through gray-to-white ANSI 256 colors, creating a shimmer effect. 150ms per frame. |
-| `spinner` | `⠋ Working` / `⠙ Working` / ... | Braille dot spinner (10-frame cycle) to the left of the text. 80ms per frame. Same style as Pi and Codex. |
-| `minimal` | `Working·` / `Working··` / `Working···` | Dot trail to the right of the text. 300ms per frame. Lowest visual noise. |
+| Style      | Look                                    | Description                                                                                               |
+| ---------- | --------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| `gradient` | Scrolling color wave over the text      | Each letter cycles through gray-to-white ANSI 256 colors, creating a shimmer effect. 150ms per frame.     |
+| `spinner`  | `⠋ Working` / `⠙ Working` / ...         | Braille dot spinner (10-frame cycle) to the left of the text. 80ms per frame. Same style as Pi and Codex. |
+| `minimal`  | `Working·` / `Working··` / `Working···` | Dot trail to the right of the text. 300ms per frame. Lowest visual noise.                                 |
 
 ---
 
 ## src/loader.ts
 
 ```typescript
-import type { LoaderConfig } from './config.js';
+import type { LoaderConfig } from "./config.js";
 
-const DIM = '\x1b[2m';
-const RESET = '\x1b[0m';
+const DIM = "\x1b[2m";
+const RESET = "\x1b[0m";
 
-const SPINNER_FRAMES = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'];
+const SPINNER_FRAMES = ["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"];
 
 const GRADIENT_COLORS = [
-  '\x1b[38;5;240m',
-  '\x1b[38;5;245m',
-  '\x1b[38;5;250m',
-  '\x1b[38;5;255m',
-  '\x1b[38;5;250m',
-  '\x1b[38;5;245m',
+  "\x1b[38;5;240m",
+  "\x1b[38;5;245m",
+  "\x1b[38;5;250m",
+  "\x1b[38;5;255m",
+  "\x1b[38;5;250m",
+  "\x1b[38;5;245m",
 ];
 
 export class Loader {
@@ -47,7 +47,7 @@ export class Loader {
 
   start(): void {
     this.frame = 0;
-    const ms = this.config.style === 'gradient' ? 150 : this.config.style === 'spinner' ? 80 : 300;
+    const ms = this.config.style === "gradient" ? 150 : this.config.style === "spinner" ? 80 : 300;
     this.interval = setInterval(() => this.draw(), ms);
   }
 
@@ -55,7 +55,7 @@ export class Loader {
     if (this.interval) {
       clearInterval(this.interval);
       this.interval = null;
-      process.stdout.write('\r\x1b[K');
+      process.stdout.write("\r\x1b[K");
     }
   }
 
@@ -64,19 +64,19 @@ export class Loader {
     this.frame++;
 
     switch (style) {
-      case 'minimal': {
-        const dots = ['·', '··', '···'];
+      case "minimal": {
+        const dots = ["·", "··", "···"];
         process.stdout.write(`\r${DIM}${text}${dots[this.frame % 3]}${RESET}`);
         break;
       }
-      case 'spinner': {
+      case "spinner": {
         const char = SPINNER_FRAMES[this.frame % SPINNER_FRAMES.length];
         process.stdout.write(`\r${DIM}${char} ${text}${RESET}`);
         break;
       }
-      case 'gradient': {
+      case "gradient": {
         const len = GRADIENT_COLORS.length;
-        let out = '\r';
+        let out = "\r";
         for (let i = 0; i < text.length; i++) {
           const ci = (this.frame + i) % len;
           out += GRADIENT_COLORS[ci] + text[i];
@@ -95,7 +95,7 @@ export class Loader {
 ## Wire into cli.ts
 
 ```typescript
-import { Loader } from './loader.js';
+import { Loader } from "./loader.js";
 
 // Before the agent call — show loader + a preview input box below it:
 const loader = new Loader(config.display.loader);
@@ -134,7 +134,7 @@ Set in `agent.config.json`:
 }
 ```
 
-| Field | Type | Default | Description |
-|-------|------|---------|-------------|
-| `text` | string | `"Working"` | The word displayed during loading |
-| `style` | `'gradient'` \| `'spinner'` \| `'minimal'` | `'gradient'` | Animation style |
+| Field   | Type                                       | Default      | Description                       |
+| ------- | ------------------------------------------ | ------------ | --------------------------------- |
+| `text`  | string                                     | `"Working"`  | The word displayed during loading |
+| `style` | `'gradient'` \| `'spinner'` \| `'minimal'` | `'gradient'` | Animation style                   |
