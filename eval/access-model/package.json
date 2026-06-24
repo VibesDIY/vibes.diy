@@ -1,0 +1,19 @@
+{
+  "name": "@vibes.diy/eval-access-model",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Access-model codegen eval: grade generated access.js/App.jsx against the #2588 access model and drive the autoresearch prompt loop.",
+  "scripts": {
+    "generate": "tsx src/generate.ts",
+    "score": "tsx src/score.ts",
+    "report": "tsx src/report.ts",
+    "verify": "tsx src/verify.ts",
+    "test": "vitest --run"
+  },
+  "dependencies": {
+    "@vibes.diy/eval-codegen-matrix": "workspace:*",
+    "call-ai": "workspace:*",
+    "tsx": "^4.22.4"
+  }
+}
