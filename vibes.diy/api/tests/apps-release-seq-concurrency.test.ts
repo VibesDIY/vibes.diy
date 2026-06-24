@@ -2,7 +2,8 @@ import { describe, expect, it } from "vitest";
 import { ensureSuperThis } from "@fireproof/core-runtime";
 import { createTestDeviceCA } from "@fireproof/core-device-id";
 import { and, eq } from "drizzle-orm";
-import { allocateAndInsertApp, appReleaseLockKey, formatDbErrorChain } from "@vibes.diy/api-svc";
+import { PgDialect } from "drizzle-orm/pg-core";
+import { allocateAndInsertApp, appReleaseLockKey, buildInsertIfAbsent, formatDbErrorChain } from "@vibes.diy/api-svc";
 import { createVibeDiyTestCtx } from "./vibe-diy-test-ctx.js";
 
 // Regression coverage for issue #2612: a single `generate` produces two
@@ -136,6 +137,40 @@ describe("Apps releaseSeq allocation concurrency (issue #2612)", { timeout: 2000
     // boundary disambiguation: ("ab","c") must not collide with ("a","bc")
     expect(appReleaseLockKey("ab", "c")).not.toBe(appReleaseLockKey("a", "bc"));
     expect(appReleaseLockKey("u", `has${NUL}nul`)).not.toContain(NUL);
+  });
+
+  it("pg INSERT binds jsonb array columns (env/fileSystem/meta) as single ::jsonb params, never array-expanded (#2612)", () => {
+    // The CLI `generate` path always inserts an empty `meta: []` plus a
+    // `fileSystem` array. Interpolating a bare JS array into a drizzle `sql`
+    // template expands it into a parameter list — `($1,$2,...)` for a populated
+    // array and `()` for an empty one — so the empty meta rendered as `()` and pg
+    // rejected the whole INSERT with "syntax error at or near ')'". The fix
+    // serializes each jsonb value to JSON text and casts it (`::jsonb`), binding
+    // exactly one param per column regardless of array length. SQLite was never
+    // affected (it already went through JSON.stringify), so only a pg-dialect
+    // compile catches this regression.
+    const row = {
+      appSlug: "to-do",
+      userId: "user_x",
+      ownerHandle: "garden-gnome",
+      fsId: "fs-1",
+      env: {},
+      fileSystem: [{ fileName: "/App.jsx" }, { fileName: "/access.js" }],
+      meta: [] as unknown[],
+      mode: "production",
+      created: "2026-06-24T00:00:00.000Z",
+    };
+    const { sql: text, params } = new PgDialect().sqlToQuery(buildInsertIfAbsent({ db: {} as never, flavour: "pg", row }));
+
+    // The empty-array `()` that triggered the syntax error must be gone.
+    expect(text).not.toMatch(/,\s*\(\s*\)/);
+    // jsonb values are bound as serialized JSON with an explicit cast.
+    expect(text).toContain("::jsonb");
+    // Each jsonb column contributes exactly one bound param (the serialized JSON),
+    // never one-per-array-element.
+    expect(params).toContain(JSON.stringify(row.env));
+    expect(params).toContain(JSON.stringify(row.fileSystem));
+    expect(params).toContain(JSON.stringify(row.meta));
   });
 
   it("formatDbErrorChain surfaces the driver cause (code + constraint) the drizzle wrapper hides", () => {
