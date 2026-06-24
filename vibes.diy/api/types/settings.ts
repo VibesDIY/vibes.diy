@@ -63,6 +63,8 @@ export const userSettingNotifications = type({
   "commentPosted?": "boolean",
   "requestApproved?": "boolean",
   "requestRevoked?": "boolean",
+  "vibeRemixed?": "boolean",
+  "dmReceived?": "boolean",
 });
 export type UserSettingNotifications = typeof userSettingNotifications.infer;
 export function isUserSettingNotifications(obj: unknown): obj is UserSettingNotifications {
