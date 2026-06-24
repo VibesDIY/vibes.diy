@@ -123,6 +123,10 @@ describe("ModelSettingsCards reset / default affordance", () => {
     await waitFor(() => {
       expect(screen.getByText(/Pinned to/)).toBeInTheDocument();
     });
+    // In app mode the fallback target is the effective inherited model (which we
+    // don't render here), so the catalog model is labelled neutrally rather than
+    // claimed as the reset "Default".
+    expect(screen.getByText(/Pinned to/)).toHaveTextContent("Pinned to Claude Sonnet 4.6 · Catalog default: Claude Opus 4.8");
     const resetBtn = screen.getByText("Use default");
     await act(async () => {
       fireEvent.click(resetBtn);
