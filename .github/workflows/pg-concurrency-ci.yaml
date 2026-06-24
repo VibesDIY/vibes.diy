@@ -1,0 +1,81 @@
+name: 'pg concurrency lane'
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# Match the main CI cancellation behavior: only the latest commit on a given
+# ref needs this lane's result.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  pg_concurrency:
+    runs-on: ubuntu-latest
+    if: ${{ github.event_name != 'pull_request' || !contains(github.event.pull_request.title, '[skip ci]') }}
+    permissions:
+      contents: read
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: vibes_diy_pg_concurrency
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d vibes_diy_pg_concurrency"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 30
+      neon_proxy:
+        image: ghcr.io/timowilhelm/local-neon-http-proxy:main
+        env:
+          PG_CONNECTION_STRING: postgres://postgres:postgres@postgres:5432/vibes_diy_pg_concurrency
+        ports:
+          - 4444:4444
+
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Setup runtime environment
+        uses: ./actions/runtime
+
+      - name: Install dependencies
+        run: |
+          pnpm remove -r playwright-chromium
+          pnpm install
+          pnpm dedupe --check
+
+      - name: Wait for local Neon proxy socket
+        run: |
+          set -euo pipefail
+          for _ in $(seq 1 30); do
+            if (echo > /dev/tcp/db.localtest.me/4444) >/dev/null 2>&1; then
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "::error::local Neon proxy did not open db.localtest.me:4444"
+          exit 1
+
+      - name: Run PG advisory-lock concurrency suites
+        working-directory: vibes.diy/api/tests
+        env:
+          # Use an ephemeral in-job postgres + local Neon-compatible proxy
+          # instead of shared dev Neon. This keeps the lane secret-free while
+          # still exercising the pg Pool/advisory-lock path.
+          VIBES_DIY_TEST_PG_URL: postgresql://postgres:postgres@db.localtest.me:5432/vibes_diy_pg_concurrency
+          VIBES_DIY_TEST_PG_WS_PROXY: db.localtest.me:4444/v2
+          VIBES_DIY_TEST_PG_USE_SECURE_WS: '0'
+          # This lane always points at a fresh service DB. Force a push so schema
+          # setup never depends on a stale local hash artifact.
+          VIBES_DIY_TEST_PG_FORCE_SCHEMA_PUSH: '1'
+        run: pnpm run test:pg:concurrency
