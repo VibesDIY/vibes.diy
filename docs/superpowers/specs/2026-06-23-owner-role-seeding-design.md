@@ -2,8 +2,15 @@
 
 **Date:** 2026-06-23
 **Branch:** `claude/vibe-save-permissions-zehx4d`
-**Status:** design reviewed (Charlie + Codex), decisions resolved; ready for
-phase-1 implementation
+**Status:** design reviewed (Charlie + Codex), decisions resolved; phase-1
+implemented (#2555/#2556/#2584).
+
+> **Superseded in part (2026-06-24):** the `ownerRoles` manifest/column described
+> below was **removed before reaching prod** — only the reserved `owner` role
+> (seeded from the `ownerHandle`, no stored declaration) survives. See
+> `2026-06-24-vibe-access-model-design.md` §8a for the rationale and the broader
+> access model this folded into. References to `ownerRoles` / the sidecar / the
+> additive-merge below are historical.
 
 ## Problem
 

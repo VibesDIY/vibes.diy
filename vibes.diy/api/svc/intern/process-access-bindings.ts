@@ -3,17 +3,11 @@ import { and, eq, notInArray, sql } from "drizzle-orm";
 import type { AccessDescriptor, StorageResult, VibeFile } from "@vibes.diy/api-types";
 import type { VibesApiSQLCtx } from "../types.js";
 import { extractExportSource } from "../public/access-function.js";
-import { parseOwnerRoles } from "../public/grant-reduce.js";
 
 export interface ProcessAccessBindingsOpts {
   readonly ownerHandle: string;
   readonly appSlug: string;
   readonly fullFileSystem: readonly { readonly vibeFileItem: VibeFile; readonly storage: StorageResult }[];
-  // Declared owner seed roles (owner-role-seeding). Persisted as JSON on every
-  // AccessFunctionBindings row for this app so each reduce site can seed the
-  // owner without a second query. Undefined/empty stores NULL (reserved `owner`
-  // role is still always seeded at read time).
-  readonly ownerRoles?: readonly string[];
 }
 
 export async function processAccessBindings(vctx: VibesApiSQLCtx, opts: ProcessAccessBindingsOpts): Promise<Result<void>> {
@@ -43,22 +37,10 @@ export async function processAccessBindings(vctx: VibesApiSQLCtx, opts: ProcessA
     const exportNames = parseExportNames(accessJsSource);
 
     const existingBindings = await vctx.sql.db
-      .select({ dbName: tAfb.dbName, accessFnCid: tAfb.accessFnCid, ownerRoles: tAfb.ownerRoles })
+      .select({ dbName: tAfb.dbName, accessFnCid: tAfb.accessFnCid })
       .from(tAfb)
       .where(and(eq(tAfb.ownerHandle, ownerHandle), eq(tAfb.appSlug, appSlug)));
     const oldCids = new Map(existingBindings.map((b) => [b.dbName, b.accessFnCid]));
-
-    // Additive-only redeploy (spec decision #4): never shrink the owner's seeded
-    // roles. Union any previously-stored ownerRoles with the newly declared set,
-    // so a repush that omits the field (or declares fewer) can't lock the owner
-    // out of an access fn still requiring a previously-seeded domain role.
-    // Shrinking is a separate explicit action, out of scope here.
-    const mergedOwnerRoles = new Set<string>();
-    for (const b of existingBindings) {
-      for (const r of parseOwnerRoles(b.ownerRoles)) mergedOwnerRoles.add(r);
-    }
-    for (const r of opts.ownerRoles ?? []) mergedOwnerRoles.add(r);
-    const ownerRolesJson = mergedOwnerRoles.size > 0 ? JSON.stringify(Array.from(mergedOwnerRoles)) : null;
 
     if (exportNames.length > 0) {
       for (const dbName of exportNames) {
@@ -70,7 +52,6 @@ export async function processAccessBindings(vctx: VibesApiSQLCtx, opts: ProcessA
             dbName,
             accessFnCid: cid,
             accessFnAssetUri: accessJsEntry.storage.getURL,
-            ownerRoles: ownerRolesJson,
             updated: new Date().toISOString(),
           })
           .onConflictDoUpdate({
@@ -78,7 +59,6 @@ export async function processAccessBindings(vctx: VibesApiSQLCtx, opts: ProcessA
             set: {
               accessFnCid: cid,
               accessFnAssetUri: accessJsEntry.storage.getURL,
-              ownerRoles: ownerRolesJson,
               updated: new Date().toISOString(),
             },
           });

@@ -262,26 +262,34 @@ reduce changes. So we can defer the primitive with no rewrite cost later.
 
 ## 8. Deliberate non-decisions (with rationale)
 
-### 8a. We will NOT build the `ownerRoles` _producer_
+### 8a. We removed the `ownerRoles` column entirely (no producer, no receiver)
 
-The spec's "declare-don't-extract" `ownerRoles` manifest has a **receiving** half (the column,
-the `ReqEnsureAppSlug` field, the additive write, the six seed sites) — shipped, additive,
-inert — and a **producing** half (codegen declares `ownerRoles` + threads it through the chat
-push) — never built. Nothing populates `req.ownerRoles` today (`prompt-chat-section.ts` doesn't
-set it); the CLI push _could_.
+The spec's "declare-don't-extract" `ownerRoles` manifest had a **receiving** half (the column,
+the `ReqEnsureAppSlug` field, the additive write, reads at the six seed sites) and a
+**producing** half (codegen declares `ownerRoles` + threads it through the chat push). The
+producer was never built — nothing ever set `req.ownerRoles` — so the column was always `NULL`.
 
-We choose not to build the producer, because:
+> **Reversal (2026-06-24, before the column ever reached prod):** we dropped the receiving
+> half too. The drizzle `ownerRoles` column was merged in #2556 but the `drizzle:neon` push
+> that adds it hadn't run, so removing it pre-deploy cost nothing (vs. a `DROP COLUMN`
+> migration later). What's left is the **whole actual mechanism**: the reserved `owner` role,
+> seeded from the `ownerHandle` at the six reduce sites via `seedOwnerGrants`/`newSeededReduce`,
+> with no stored declaration. `parseOwnerRoles`, the `processAccessBindings` additive-merge,
+> the who-am-i precedence maps, and the `ownerRoles` selects/args are gone.
+
+We will not build either half, because:
 
 - **It is redundant.** The reserved `owner` role + app-level grant docs already let an app seed
   the owner (or anyone) into any domain role, more flexibly, with no manifest. (This is exactly
   how aegina's own `editorGrant` works.)
 - **It tilts codegen toward site-with-admin** — the model we're moving away from.
 - **It carries a brick risk** (declare a custom owner role that nothing seeds → owner locked
-  out — caught in review on #2584).
+  out — caught in review on #2584). And a permanent always-`NULL` column with no writer is
+  dead schema weight on the hot write path.
 
-**Disposition:** keep the receiving plumbing dormant (zero cost, gives CLI/power-users an
-escape hatch); don't teach codegen the sidecar; revisit only if a flagship needs
-declare-and-forget ergonomics badly enough to outweigh the above.
+**If declared owner roles are ever genuinely needed**, add the column **and** a producer
+together as one coherent feature, designed right at that point — don't carry speculative
+receiving plumbing ahead of any writer.
 
 ### 8b. We will NOT build channel-scoped roles (yet)
 

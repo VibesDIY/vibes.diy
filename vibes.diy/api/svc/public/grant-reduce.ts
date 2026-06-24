@@ -241,47 +241,42 @@ export class GrantReduce {
 }
 
 /**
- * Reserved role the vibe owner is ALWAYS seeded into at deploy time.
+ * Reserved role the vibe owner is ALWAYS seeded into.
  *
- * This is the backstop for the owner-role-seeding design (spec
- * docs/superpowers/specs/2026-06-23-owner-role-seeding-design.md §3): even when
- * a vibe declares no `ownerRoles`, the owner holds `owner`, so an `access.js`
- * that gates management docs on `ctx.requireRole("owner")` can never be a
- * forgotten brick. It is a NORMAL members entry — visible in computed grants,
- * revocable, transferable — never a special-case bypass in auth evaluation.
+ * The backstop for the owner-role-seeding design
+ * (docs/superpowers/specs/2026-06-23-owner-role-seeding-design.md §3, and
+ * docs/superpowers/specs/2026-06-24-vibe-access-model-design.md §5): the owner
+ * holds `owner`, so an `access.js` that gates management docs on
+ * `ctx.requireRole("owner")` can never be a forgotten brick. It is a NORMAL
+ * members entry — visible in computed grants, revocable, transferable — never a
+ * special-case bypass in auth evaluation. This is the WHOLE seeding mechanism:
+ * the owner is seeded into this one reserved role, derived from the ownerHandle,
+ * with no stored declaration. (Custom owner domain roles, if ever needed, are
+ * populated by the app's own grant docs — see the access-model doc.)
  */
 export const RESERVED_OWNER_ROLE = "owner";
 
 /**
  * Inject the deploy-time owner seed into a reduce: the owner handle becomes a
- * member of the reserved `owner` role plus every declared `ownerRoles` role.
+ * member of the reserved `owner` role.
  *
  * This is the single shared helper every grant-reduce site calls (write gate,
  * the read reduces, and who-am-i's resolveGrants) so server enforcement and the
- * client `can.*` predictor agree on the owner's roles. The seed is the ONLY
- * thing that knows "owner" — it expresses that purely as grant state, keeping
- * enforcement roles-only (no `user.isOwner` branch).
+ * client `can.*` predictor agree that the owner holds `owner`. The seed is the
+ * ONLY thing that knows "owner" — it expresses that purely as grant state,
+ * keeping enforcement roles-only (no `user.isOwner` branch).
  *
  * The seed is installed via `setSeed` (a dedicated slot OUTSIDE
  * `docContributions`), so its reserved identity can never collide with a user
  * document `_id`, and it is re-unioned on every `rebuild()` so a later doc
  * update can't drop it.
  *
- * No-op when `ownerHandle` is falsy. `ownerRoles` defaults to empty (reserved
- * role only).
+ * No-op when `ownerHandle` is falsy.
  */
-export function seedOwnerGrants(reduce: GrantReduce, ownerHandle: string | undefined, ownerRoles: readonly string[] = []): void {
+export function seedOwnerGrants(reduce: GrantReduce, ownerHandle: string | undefined): void {
   if (!ownerHandle) return;
   const members = new Map<string, Set<string>>();
   members.set(RESERVED_OWNER_ROLE, new Set([ownerHandle]));
-  for (const role of ownerRoles) {
-    let set = members.get(role);
-    if (!set) {
-      set = new Set();
-      members.set(role, set);
-    }
-    set.add(ownerHandle);
-  }
   reduce.setSeed({
     members,
     grantRoles: new Map(),
@@ -291,29 +286,14 @@ export function seedOwnerGrants(reduce: GrantReduce, ownerHandle: string | undef
 }
 
 /**
- * Parse the JSON `ownerRoles` column off an AccessFunctionBindings row into a
- * string[]. Tolerant: null/undefined/malformed → []. (The reserved `owner` role
- * is seeded regardless, so [] still seeds the owner into `owner`.)
- */
-export function parseOwnerRoles(json: string | null | undefined): string[] {
-  if (!json) return [];
-  try {
-    const v: unknown = JSON.parse(json);
-    return Array.isArray(v) ? v.filter((x): x is string => typeof x === "string") : [];
-  } catch {
-    return [];
-  }
-}
-
-/**
- * Construct a GrantReduce pre-seeded with the owner's roles. This is the single
- * entry point every reduce site uses (write gate, read reduces, who-am-i, and
- * the write-delta clone) so server enforcement and the client `can.*` predictor
- * agree on the owner's roles. Add stored access-fn outputs afterward with
+ * Construct a GrantReduce pre-seeded with the owner's reserved `owner` role.
+ * The single entry point every reduce site uses (write gate, read reduces,
+ * who-am-i, and the write-delta clone) so server enforcement and the client
+ * `can.*` predictor agree. Add stored access-fn outputs afterward with
  * `addDoc` — the seed lives outside `docContributions` and survives rebuilds.
  */
-export function newSeededReduce(ownerHandle: string | undefined, ownerRoles: readonly string[] = []): GrantReduce {
+export function newSeededReduce(ownerHandle: string | undefined): GrantReduce {
   const reduce = new GrantReduce();
-  seedOwnerGrants(reduce, ownerHandle, ownerRoles);
+  seedOwnerGrants(reduce, ownerHandle);
   return reduce;
 }
