@@ -199,17 +199,39 @@ jobs:
             fi
           fi
           if [ "$SCHEMA_CHANGED" = "1" ]; then
-            # TEMPORARY (#2604 path B): pass --force so this PR's own
-            # preview deploy carries the destructive HandleSettings PK
-            # swap into dev Neon. The next commit restores the hard-fail
-            # guard. DO NOT MERGE THIS COMMIT.
-            # Invoke drizzle-kit directly (`pnpm run script -- --force`
-            # left a bare `--` in argv and drizzle-kit rejected it).
+            # drizzle-kit push is interactive when it detects destructive
+            # changes (e.g. PK swap, column drop) — without a TTY it
+            # defaults to "No, abort" and exits 0, so the workflow happily
+            # marches on with the schema unmodified and the preview API
+            # still misaligned with the worker code (#2601 all over again).
+            # We close that gap by:
+            #   1. Closing stdin so the prompt resolves deterministically.
+            #   2. Capturing combined output to a log file we always echo.
+            #   3. Hard-failing the deploy if either (a) the command itself
+            #      exited non-zero, or (b) drizzle reported a data-loss
+            #      statement. Destructive changes have to be applied via
+            #      the `Push schema to dev Neon (one-off)` workflow_dispatch
+            #      action (under environment: dev so the admin URL never
+            #      transits) so the truncate/drop gets a human review —
+            #      silent CI truncation of the shared dev DB is exactly
+            #      what we don't want.
+            DRIZZLE_LOG=$(mktemp)
+            DRIZZLE_RC=0
             if [ "$DB_FLAVOUR" = "pg" ]; then
               NEON_DATABASE_URL="$NEON_DATABASE_ADMIN_URL" \
-                pnpm exec drizzle-kit push --config ./drizzle.neon.config.ts --force --verbose < /dev/null
+                pnpm run drizzle:neon < /dev/null > "$DRIZZLE_LOG" 2>&1 || DRIZZLE_RC=$?
             else
-              pnpm exec drizzle-kit push --config ./drizzle.d1-remote.config.ts --force --verbose < /dev/null
+              pnpm run drizzle:d1-remote < /dev/null > "$DRIZZLE_LOG" 2>&1 || DRIZZLE_RC=$?
+            fi
+            cat "$DRIZZLE_LOG"
+            if [ "$DRIZZLE_RC" != "0" ]; then
+              echo "::error::drizzle push exited $DRIZZLE_RC — see log above."
+              exit 1
+            fi
+            if grep -qiE 'data[- ]loss|data_loss' "$DRIZZLE_LOG"; then
+              echo "::error::drizzle push refused to apply destructive changes to the shared dev DB."
+              echo "::error::Apply via the 'Push schema to dev Neon (one-off)' workflow_dispatch action after reviewing the diff, then re-run this workflow."
+              exit 1
             fi
           else
             echo "No schema files changed vs base — skipping drizzle push"
