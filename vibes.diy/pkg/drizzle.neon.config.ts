@@ -1,7 +1,3 @@
-// Used by `pnpm run drizzle:neon` (drizzle-kit push) — invoked from
-// vibes.diy/actions/deploy/action.yaml on tag/main deploys and from
-// .github/workflows/vibes-diy-pr-preview.yaml on PRs that touch this
-// file or vibes.diy/api/sql/**. See #2601 for why preview pushes too.
 import { defineConfig } from "drizzle-kit";
 import { dotenv } from "zx";
 
