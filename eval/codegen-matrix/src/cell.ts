@@ -59,6 +59,8 @@ export interface CellScore {
   readonly rubric: RubricResult;
   readonly feature: JudgeResult;
   readonly design: DesignResult;
+  /** Deterministic protocol-adherence signals over the generated source (see structure.ts). */
+  readonly structure: import("./structure.js").StructureSignals;
 }
 
 export interface RunJson {
