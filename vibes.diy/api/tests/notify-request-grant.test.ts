@@ -47,7 +47,7 @@ describe("notifyRequestGrant", { timeout: (inject("DB_FLAVOUR" as never) as stri
     expect(row.ownerHandle).toBe("owner-h");
     expect(row.appSlug).toBe("cool-app");
     expect(row.body).toBe("Access to owner-h/cool-app approved.");
-    expect(row.dedupeKey).toBe(`request-approved:cool-app:${requester}:2026-06-24T00:00:00.000Z`);
+    expect(row.dedupeKey).toBe(`request-approved:owner-h:cool-app:${requester}:2026-06-24T00:00:00.000Z`);
     expect(notifyCalls).toHaveLength(1);
     expect(notifyCalls[0].userId).toBe(requester);
   });
@@ -69,7 +69,7 @@ describe("notifyRequestGrant", { timeout: (inject("DB_FLAVOUR" as never) as stri
     expect(rows).toHaveLength(1);
     expect(rows[0].notificationType).toBe("request-revoked");
     expect(rows[0].body).toBe("Access to owner-h/cool-app was revoked.");
-    expect(rows[0].dedupeKey).toBe(`request-revoked:cool-app:${requester}:2026-06-24T01:00:00.000Z`);
+    expect(rows[0].dedupeKey).toBe(`request-revoked:owner-h:cool-app:${requester}:2026-06-24T01:00:00.000Z`);
   });
 
   it("re-delivery of the same decision is once-only; a new decision (new updated) is distinct", async () => {

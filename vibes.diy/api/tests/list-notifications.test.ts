@@ -226,6 +226,61 @@ describe("notification read API", { timeout: (inject("DB_FLAVOUR" as never) as s
     expect(remixes.items.map((i) => i.body)).not.toContain("vibe-alpha was published");
   });
 
+  // A single user can own the same appSlug under multiple handles. The per-vibe
+  // remixes view must disambiguate by ownerHandle so rows for one handle's vibe
+  // do not co-mingle with another handle's same-named vibe.
+  it("disambiguates same-appSlug rows for one user by ownerHandle", async () => {
+    ctx = await createApiTestCtx({ seqUserIdBase: 1_700_500, apiUrlPort: 18705 });
+    const qctx = emitCtx(ctx);
+    const owner = await userIdOf(ctx, ctx.api);
+
+    // Two vibe-remixed rows, same appSlug, different ownerHandle, same user.
+    await emitNotification(qctx, {
+      userId: owner,
+      notificationType: "vibe-remixed",
+      ownerHandle: "handle-one",
+      appSlug: "shared-app",
+      actorHandle: "remixer-one",
+      body: "@remixer-one remixed handle-one/shared-app",
+      dedupeKey: "vibe-remixed:handle-one/shared-app:r1",
+    });
+    await emitNotification(qctx, {
+      userId: owner,
+      notificationType: "vibe-remixed",
+      ownerHandle: "handle-two",
+      appSlug: "shared-app",
+      actorHandle: "remixer-two",
+      body: "@remixer-two remixed handle-two/shared-app",
+      dedupeKey: "vibe-remixed:handle-two/shared-app:r2",
+    });
+
+    // Without ownerHandle, both same-appSlug rows come back co-mingled.
+    const rNoHandle = await ctx.api.listNotifications({ appSlug: "shared-app", notificationType: "vibe-remixed" });
+    if (rNoHandle.isErr()) assert.fail(`listNotifications(no handle) failed: ${rNoHandle.Err().message}`);
+    expect(rNoHandle.Ok().items).toHaveLength(2);
+
+    // With ownerHandle, only the matching handle's row is returned.
+    const rHandleOne = await ctx.api.listNotifications({
+      appSlug: "shared-app",
+      ownerHandle: "handle-one",
+      notificationType: "vibe-remixed",
+    });
+    if (rHandleOne.isErr()) assert.fail(`listNotifications(handle-one) failed: ${rHandleOne.Err().message}`);
+    expect(rHandleOne.Ok().items).toHaveLength(1);
+    expect(rHandleOne.Ok().items[0].ownerHandle).toBe("handle-one");
+    expect(rHandleOne.Ok().items[0].actorHandle).toBe("remixer-one");
+
+    const rHandleTwo = await ctx.api.listNotifications({
+      appSlug: "shared-app",
+      ownerHandle: "handle-two",
+      notificationType: "vibe-remixed",
+    });
+    if (rHandleTwo.isErr()) assert.fail(`listNotifications(handle-two) failed: ${rHandleTwo.Err().message}`);
+    expect(rHandleTwo.Ok().items).toHaveLength(1);
+    expect(rHandleTwo.Ok().items[0].ownerHandle).toBe("handle-two");
+    expect(rHandleTwo.Ok().items[0].actorHandle).toBe("remixer-two");
+  });
+
   it("requires auth", async () => {
     ctx = await createApiTestCtx({ seqUserIdBase: 1_700_300, apiUrlPort: 18703 });
     // Calling with no auth token should fail (handlers use checkAuth). The api

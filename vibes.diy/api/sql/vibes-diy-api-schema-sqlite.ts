@@ -390,6 +390,7 @@ export const sqlNotifications = sqliteTable(
   (table) => [
     index("Notifications_userId_created").on(table.userId, table.created),
     index("Notifications_userId_readAt").on(table.userId, table.readAt),
+    index("Notifications_userId_ownerHandle_appSlug").on(table.userId, table.ownerHandle, table.appSlug),
     uniqueIndex("Notifications_userId_dedupeKey").on(table.userId, table.dedupeKey),
   ]
 );

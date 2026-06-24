@@ -36,6 +36,6 @@ export async function notifyRequestGrant(qctx: EmitNotificationCtx, grant: Reque
     ownerHandle: grant.ownerHandle,
     appSlug: grant.appSlug,
     body,
-    dedupeKey: `${notificationType}:${grant.appSlug}:${grant.foreignUserId}:${grant.updated}`,
+    dedupeKey: `${notificationType}:${grant.ownerHandle}:${grant.appSlug}:${grant.foreignUserId}:${grant.updated}`,
   });
 }

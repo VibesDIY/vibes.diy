@@ -23,10 +23,11 @@ function remixerLabel(row: NotificationRow): string {
  * forward-only (pre-feature remixes do not appear). Each row links to the
  * published remix via targetRef.
  */
-export function RemixesTab({ appSlug }: { ownerHandle: string; appSlug: string }) {
+export function RemixesTab({ ownerHandle, appSlug }: { ownerHandle: string; appSlug: string }) {
   const { items, loading, error, nextCursor, loadMore } = useNotifications({
     notificationType: "vibe-remixed",
     appSlug,
+    ownerHandle,
   });
 
   if (loading && items.length === 0) {

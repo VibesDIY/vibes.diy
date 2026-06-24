@@ -9,6 +9,9 @@ export interface UseNotificationsFilters {
   notificationType?: NotificationType;
   // Restrict to one subject vibe.
   appSlug?: string;
+  // Restrict to one subject vibe owner. Pairs with `appSlug` to disambiguate
+  // the same appSlug owned under multiple handles by the same user.
+  ownerHandle?: string;
   // Page size (server clamps to 1..100, defaults to 30).
   limit?: number;
 }
@@ -37,7 +40,7 @@ export function useNotifications(filters: UseNotificationsFilters = {}): UseNoti
   const { user } = useUser();
   const { sharedApi } = useVibesDiy();
 
-  const { notificationType, appSlug, limit } = filters;
+  const { notificationType, appSlug, ownerHandle, limit } = filters;
 
   const [items, setItems] = useState<NotificationRow[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -55,9 +58,10 @@ export function useNotifications(filters: UseNotificationsFilters = {}): UseNoti
     () => ({
       ...(notificationType ? { notificationType } : {}),
       ...(appSlug ? { appSlug } : {}),
+      ...(ownerHandle ? { ownerHandle } : {}),
       ...(limit ? { limit } : {}),
     }),
-    [notificationType, appSlug, limit]
+    [notificationType, appSlug, ownerHandle, limit]
   );
 
   const refresh = useCallback(async () => {

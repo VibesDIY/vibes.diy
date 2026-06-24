@@ -130,6 +130,7 @@ export const listNotificationsEvento: EventoHandler<
       // Caller-scoping is the access boundary: every row read is gated on userId.
       const conditions: SQL[] = [eq(t.userId, userId)];
       if (req.appSlug) conditions.push(eq(t.appSlug, req.appSlug));
+      if (req.ownerHandle) conditions.push(eq(t.ownerHandle, req.ownerHandle));
       if (req.notificationType) conditions.push(eq(t.notificationType, req.notificationType));
       if (req.cursor) {
         const rDecoded = decodeCursor(req.cursor);

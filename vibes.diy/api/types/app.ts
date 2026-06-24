@@ -394,6 +394,7 @@ export const reqListNotifications = type({
   type: "'vibes.diy.req-list-notifications'",
   auth: dashAuthType,
   "appSlug?": "string",
+  "ownerHandle?": "string",
   "notificationType?": notificationTypeEnum,
   "cursor?": "string",
   "limit?": "number",
