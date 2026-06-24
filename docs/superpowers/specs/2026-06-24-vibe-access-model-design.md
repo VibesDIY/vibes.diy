@@ -291,8 +291,10 @@ channels. Clunky-at-the-edge beats a false ceiling.
 
 **Build trigger:** when "3+ capability tiers rooted to an object graph, generated cleanly"
 becomes a roadmap target. **Design rules locked now** so it's right when built: scope = the
-object's channel; storage **viewer-indexed** (`user → {channel: role}`) so `who-am-i` stays a
-direct lookup, never a global scan.
+object's channel; expose a **viewer-indexed** projection (`user → {channel: role}`) so
+`who-am-i`/`can.*` stay direct lookups, never a global scan. Per review (Charlie): this is
+likely an _additional_ projection, **not** a hard replacement of role-indexed source state —
+admin/introspection paths still want role-centric access, so we'll probably maintain both.
 
 ### 8c. Invite/discovery needs no new primitive
 
@@ -346,15 +348,19 @@ Several patterns here (and any LLM-generated "ensure X exists" effect) want to w
 may already be in its desired state. On an append-only CRDT log, a naive re-write grows the log
 even when nothing changed.
 
-**Proposal:** Firefly/Fireproof should **no-op a `put` whose content is byte-identical to the
-writer's current head for that `_id`.** This is sound: in a content-addressed CRDT, an
-identical write is the _identity element_ of the merge — it carries no new information, so
-skipping the append is semantically invisible (concurrent writers still merge correctly). It
-turns a class of naive declarative patterns from "log-bloat bug" into "free idempotence," and
-it pays off far beyond access (any reconcile-to-desired-state code the model emits).
+**Proposal:** **no-op a `put` whose content is byte-identical to the writer's current head for
+that `_id`.** This is sound: in a content-addressed CRDT, an identical write is the _identity
+element_ of the merge — it carries no new information, so skipping the append is semantically
+invisible (concurrent writers still merge correctly). It turns a class of naive declarative
+patterns from "log-bloat bug" into "free idempotence," and it pays off far beyond access (any
+reconcile-to-desired-state code the model emits).
 
-This is a **Fireproof/Firefly-core** change, likely upstream, separate from the access work.
-Tracked here so it isn't lost; not blocking anything above.
+**True today vs. not (per review, Charlie):** the underlying Fireproof/pail CRDT _already_
+treats an identical-value put as a no-op at the head/event level. But our **app-documents
+pipeline does not short-circuit yet** — each `putDoc` still allocates a new `seq` revision
+regardless of content. So this is a property to **enforce in our write pipeline**, not
+something already true end-to-end. It's a Fireproof/Firefly-core + pipeline change, separate
+from the access work; tracked here so it isn't lost, not blocking anything above.
 
 ---
 
