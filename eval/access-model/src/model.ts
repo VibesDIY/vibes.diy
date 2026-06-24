@@ -42,7 +42,6 @@ export async function resolveDefaultModel(matrix: AccessMatrix, deps: ResolveDep
  * TODO: not implemented (wired in generate driver / Task 8). The unit test stays on
  * the injected fake; this live adapter is implemented when the generate driver lands.
  */
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export async function fetchDefault(_matrix: AccessMatrix): Promise<string> {
   throw new Error("fetchDefault: not implemented (wired in generate driver / Task 8)");
 }

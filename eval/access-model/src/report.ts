@@ -93,15 +93,19 @@ export function buildResults(cells: readonly ScoredRow[]): Results {
   const byId = new Map<string, ScoredRow[]>();
   const order: string[] = [];
   for (const c of cells) {
-    if (!byId.has(c.id)) {
-      byId.set(c.id, []);
-      order.push(c.id);
+    const reps = byId.get(c.id);
+    if (reps) {
+      reps.push(c);
+      continue;
     }
-    byId.get(c.id)!.push(c);
+    byId.set(c.id, [c]);
+    order.push(c.id);
   }
 
   const rows: ResultRow[] = order.map((id) => {
-    const reps = byId.get(id)!;
+    const reps = byId.get(id);
+    const first = reps?.[0];
+    if (!reps || !first) throw new Error(`missing scored rows for prompt: ${id}`);
     const count = (g: CellGrade) => reps.filter((x) => x.grade === g).length;
     const any = (p: (x: ScoredRow) => boolean) => reps.some(p);
     const all = (p: (x: ScoredRow) => boolean) => reps.every(p);
@@ -109,7 +113,7 @@ export function buildResults(cells: readonly ScoredRow[]): Results {
     return {
       id,
       prompt: "",
-      dimension: reps[0].expect,
+      dimension: first.expect,
       reps: reps.length,
       pass: count("PASS"),
       soft_fail: count("SOFT"),

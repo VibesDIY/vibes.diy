@@ -59,8 +59,9 @@ export function gradeRow(input: RowGradeInput): RowGrade {
     input.expect === "per-object" ||
     input.expect === "author-owned" ||
     input.expect === "multi-tier";
-  const judgeVeto = multiplayer && input.judge !== null && !input.judge.secondVisitorCanAct;
-  if (judgeVeto) reasons.push(`judge: second visitor locked out — ${input.judge!.reason}`);
+  const judge = multiplayer ? input.judge : null;
+  const judgeVeto = judge !== null && !judge.secondVisitorCanAct;
+  if (judgeVeto) reasons.push(`judge: second visitor locked out — ${judge.reason}`);
 
   const modelOk = mc.ok && !judgeVeto;
   if (!modelOk) return { grade: "FAIL", modelOk, reasons };
