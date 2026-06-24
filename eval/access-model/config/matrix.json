@@ -1,8 +1,8 @@
 {
   "cliCommand": "npx vibes-diy@latest",
-  "apiUrl": "https://vibes.diy/api?.stable-entry.=cli",
-  "runtimeHostBase": "vibes.diy",
-  "handle": "eval",
+  "apiUrl": "https://pr-2631-vibes-diy-v2.jchris.workers.dev/api",
+  "runtimeHostBase": "pr-2631.vibespreview.dev",
+  "handle": "evalpr2631",
   "model": "anthropic/claude-opus-4.8",
   "judgeModel": "anthropic/claude-opus-4.5",
   "reps": 8,

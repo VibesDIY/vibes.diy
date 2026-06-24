@@ -17,3 +17,22 @@ Outer-loop runbook: [`agents/autoresearch-outer-loop.md`](../agents/autoresearch
 This file is intentionally not part of the assembled system prompt; it exists to document
 the run and to trigger the first preview deploy on baseline-identical prompts so the frozen
 `baseline.json` is captured against the same env class the candidates run on.
+
+## Auth setup for this run (reproduce in a fresh session)
+
+The eval's `generate` authenticates against the preview API via the CLI device-id keybag.
+The CLI reads **only** the `VIBES_DEVICE_ID` env var (`vibes-diy/cli/device-id-env.ts`) — a
+preview secret in `VIBES_DEVICE_ID_PREVIEW` is **not** consulted — and an existing keybag
+certificate always wins over the env var. In this container the keybag is pre-seeded with the
+**prod** device cert, which the preview worker (dev device-id CA) rejects with
+`authentication_required`. So, before running any stage against the preview:
+
+1. Clear the persisted keybag so the env var can seed the preview cert:
+   `rm -f ~/.fireproof/keybag/*.json` (back it up first if you need the prod cert later).
+2. Export the **preview** secret into the var the CLI actually reads, for every stage:
+   `export VIBES_DEVICE_ID="$VIBES_DEVICE_ID_PREVIEW"`.
+
+The shared Neon DB already has the `eval` handle owned by the prod user, so this run uses a
+dedicated handle the preview user can claim — `evalpr2631` (`config/matrix.json` → `handle`).
+`apiUrl`/`runtimeHostBase` in `matrix.json` point at this PR's preview worker; the model pin
+(`anthropic/claude-opus-4.8`) and the scored matrices are unchanged.
