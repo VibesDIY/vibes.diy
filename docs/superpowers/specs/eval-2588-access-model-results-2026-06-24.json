@@ -1,0 +1,113 @@
+{
+  "eval": "2588",
+  "title": "Newcomer-first + per-object collaboration prompt flip (generation QA)",
+  "date": "2026-06-24",
+  "cli": "vibes-diy@2.5.18",
+  "apiUrl": "https://vibes.diy/api?.stable-entry.=cli",
+  "handle": "eval",
+  "predecessor": "2525",
+  "method": "Generated one vibe per matrix row with prompts that do NOT mention access control; pulled access.js + App.jsx; graded statically against the newcomer-first/per-object model. unknown-rate determined statically (all access fns sync, extractable export, only requireAccess/requireRole).",
+  "rollup": {
+    "pass": 5,
+    "soft_fail": 1,
+    "fail": 2,
+    "denominator": 8,
+    "formA_multiplayer_rows": [1, 2, 3, 4],
+    "formA_strict_count": 1,
+    "formA_strict_rate": "25% (1/4) — row 2 habit gates the core write on requireRole(\"owner\")",
+    "formA_broad_count": 2,
+    "formA_broad_rate": "50% (2/4) — adds row 4 whiteboard (visitor locked out: core write needs board membership only the owner can grant, no join/request path)",
+    "formA_target": "0%",
+    "unknown_rate": "0%",
+    "isOwner_writegate_in_access_js": 0,
+    "isOwner_anywhere_in_access_js": 0
+  },
+  "rows": [
+    {
+      "row": 1,
+      "prompt": "A todo list app",
+      "dimension": "the Form-A test (sounds single-user, must be per-visitor)",
+      "slug": "eval/balloon-believed-single",
+      "grade": "PASS",
+      "formA": false,
+      "reason": "Textbook per-user-private: per-user channel `user:${user.userHandle}`, author check on create AND update, grant.users self-grant. No owner gate. Second visitor adds their own private todos. App gates Composer on can.create({type:'todo', authorHandle: me?.userHandle}), ready-gates the skeleton, renders verdict.reason when denied.",
+      "nits": "Duplicate `import { useFireproof }` (lines 3 and 6) — generation glitch, not access-related."
+    },
+    {
+      "row": 2,
+      "prompt": "A daily habit tracker",
+      "dimension": "per-visitor private",
+      "slug": "eval/eval-2588-habit",
+      "grade": "FAIL",
+      "formA": true,
+      "reason": "FORM-A TRAP. Both habit and completion writes gate on ctx.requireRole(\"owner\"). Only the vibe owner can log anything; every other visitor is read-only ('Read-only view'). A habit tracker must be per-visitor (each person tracks their own). This is the headline bug the eval exists to catch.",
+      "offending_snippet": "if (doc.type === 'habit' || doc.type === 'completion') { ctx.requireRole('owner'); ... }",
+      "nits": "Dead-code invariant: `if (oldDoc && oldDoc.createdBy !== oldDoc.createdBy) throw` compares a field to itself (always false) — intended doc-vs-oldDoc author check, never fires."
+    },
+    {
+      "row": 3,
+      "prompt": "A shared shopping list I can invite my partner to",
+      "dimension": "per-object collaboration",
+      "slug": "eval/eval-2588-shop",
+      "grade": "SOFT-FAIL",
+      "formA": false,
+      "reason": "Multiplayer works (no Form-A: any signed-in user adds/edits items), but the per-object model was NOT reached. There is only an `item` type routed to a single global `list` channel with grant.public; no `list` object, no per-list channel (`list:<id>`), no `share`/grant doc, no requireAccess, no invite surface. 'Invite my partner to' is delegated entirely to the runtime app-level door, and every signed-in user edits the one shared list with no isolation. Form-B fallback for a per-object-intent prompt.",
+      "offending_snippet": "if (doc.type === 'item') { if (doc.authorHandle !== user.userHandle) throw...; return { channels: ['list'], grant: { public: ['list'] } } }  // no list object, no per-object channel, no share doc"
+    },
+    {
+      "row": 4,
+      "prompt": "A collaborative whiteboard people can join",
+      "dimension": "per-object membership",
+      "slug": "eval/eval-2588-board",
+      "grade": "FAIL",
+      "formA": true,
+      "reason": "Visitor locked out of the core action. note/stroke writes require ctx.requireAccess('board'); board membership comes only from a `membership` doc gated on ctx.requireRole(\"owner\"). There is no request/join type any signed-in user can create, so a stranger who opens a 'whiteboard people can join' can read (grant.public) but cannot draw until the owner manually appoints them editor. Fails pass-criterion #1 (second visitor never locked out of the core action). Effectively Form-A via owner-only membership rather than a literal owner write-gate. Also single global `board` channel, not per-object.",
+      "offending_snippet": "if (doc.type === 'membership') { ctx.requireRole('owner'); ... }  // only the owner can admit editors; note/stroke need requireAccess('board'); no join/request flow"
+    },
+    {
+      "row": 5,
+      "prompt": "My personal blog",
+      "dimension": "owner-published",
+      "slug": "eval/eval-2588-blog",
+      "grade": "PASS",
+      "star": true,
+      "formA": false,
+      "reason": "Textbook owner-published: post writes gate on ctx.requireRole(\"owner\"), public read via grant.public + allowAnonymous, no isOwner. App gates publish on can.create(draft), edit/delete on can.edit/can.delete per post, renders reason. Genuinely single-publisher prompt → reserved owner role, zero setup."
+    },
+    {
+      "row": 6,
+      "prompt": "A public guestbook anyone can sign",
+      "dimension": "author-owned + public read (anonymous)",
+      "slug": "eval/eval-2588-guest",
+      "grade": "PASS",
+      "formA": false,
+      "reason": "Open write, no requireAccess: write-once entry (if (oldDoc) throw), author check only when signed in, routes to `public` channel with grant.public and allowAnonymous: true. Anonymous visitors can sign. Named export `guestbook` matches useFireproof('guestbook')/useVibe('guestbook'). App builds candidate {type:'entry', authorHandle: me?.userHandle||null}, ready-gates, renders reason.",
+      "nits": "Comment claims 'owner can delete any entry' but entries are write-once (`if (oldDoc) throw`) with no delete branch, so can.delete in the App is effectively always denied — cosmetic over-promise, core sign action is correct."
+    },
+    {
+      "row": 7,
+      "prompt": "A photo wall where people comment on posts",
+      "dimension": "author-owned comments",
+      "slug": "eval/eval-2588-photo",
+      "grade": "PASS",
+      "formA": false,
+      "reason": "Author-owned post AND comment, both with create+update author checks, routed to `wall` with grant.public, no requireAccess on the open writes, no isOwner. Viewer authors the comment. App gates post on can.create({type:'post', authorHandle}) and comment on can.create({type:'comment', postId, authorHandle}), renders reason."
+    },
+    {
+      "row": 8,
+      "prompt": "A team workspace with channels and roles",
+      "dimension": "the 3+ tier edge (clunky-but-reachable)",
+      "slug": "eval/eval-2588-team",
+      "grade": "PASS",
+      "formA": false,
+      "reason": "Works via composition (the deliberately-unfeatured edge). owner-only channel + roleGrant creation; roleGrant routes to admin:grants (a held channel, not channel-less) and expands members[role]+=userHandle; message gates on author check + requireAccess(channelId). A role-granted member gets the channel for BOTH read and write (channel doc grants the role), so no broken 'act-but-can't-read'. Owner-management writes gate on can.create({type:'roleGrant',...}) / can.delete(grant) — NOT isOwner. Administered (no self-join) but reachable and enforced, which is all row 8 requires.",
+      "tiers": "owner / admin / member = 3 tiers reachable"
+    }
+  ],
+  "anti_patterns": [
+    "Owner-gating multiplayer/per-visitor apps (the Form-A class): row 2 (habit) puts requireRole(\"owner\") on the core write; row 4 (whiteboard) makes the core write require a membership only the owner can grant with no join path. The newcomer-first default is NOT reliably reached for 'tracker' and 'board' shapes.",
+    "Per-object collaboration (the hybrid) not reached for invite-style prompts: row 3 ('invite my partner') collapsed to one global public list (no per-object channel, no share/grant doc, no request flow); row 4 ('people can join') has no self-join/request type. The per-object recipe (channel-per-object + grant.users + requireAccess + member-authored share + request invert) isn't being picked up — exactly the freshest #2586 layer.",
+    "Minor: dead-code/no-op invariant (row 2 oldDoc.createdBy vs itself); duplicate import (row 1); over-promised owner-delete that write-once blocks (row 6)."
+  ],
+  "verdict": "CONDITIONAL FAIL on the headline metric. The A/B/C defaults and the administered-D edge are solid (rows 1,5,6,7,8 PASS — per-user-private, owner-published, anonymous, public-comment, reachable workspace; zero isOwner write-gates, unknown 0%). But the Form-A target of 0% is missed: among 4 multiplayer-intent rows, 1 literal Form-A (habit→requireRole owner) and 1 effective visitor-lockout (whiteboard→owner-only membership). And the per-object collaboration model (rows 3 & 4) was not reached. Do NOT proceed to the #2554 migration on this prompt: tighten Form-A avoidance for tracker/board shapes and feature the per-object hybrid + request/join flow, then re-run rows 2, 3, 4."
+}
