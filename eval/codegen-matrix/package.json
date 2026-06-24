@@ -10,6 +10,9 @@
     "report": "tsx src/report.ts",
     "test": "vitest --run"
   },
+  "exports": {
+    "./scoring": "./src/scoring.ts"
+  },
   "dependencies": {
     "call-ai": "workspace:*",
     "tsx": "^4.22.4"

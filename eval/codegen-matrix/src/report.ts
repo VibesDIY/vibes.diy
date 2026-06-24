@@ -3,6 +3,7 @@ import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { argv, stderr } from "node:process";
 import { readCellJson, readCellScore, CELL_JSON } from "./cell.js";
+import type { StructureSignals } from "./structure.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const RUNS_DIR = resolve(__dirname, "..", "runs");
@@ -19,6 +20,29 @@ export interface JoinedCell {
   readonly rubricRatio: number | null;
   readonly featureScore: number | null;
   readonly designScore: number | null;
+  /** True if any attempt failed with "No files resolved" — a format/parse failure (vs a transport drop). */
+  readonly hadNoFilesAttempt?: boolean;
+  /** Deterministic protocol-adherence signals (present once the cell is scored). */
+  readonly structure?: StructureSignals | null;
+}
+
+/** Per-model protocol-adherence rates. Leading indicators that point at *what* to fix. */
+export interface StructureRow {
+  readonly model: string;
+  readonly class: string;
+  readonly tier: string;
+  readonly total: number;
+  readonly ok: number;
+  /** Share of cells with a "No files resolved" parse failure (format adherence). */
+  readonly parseFailRate: number;
+  /** Of ok cells: share that emitted a separate access.js. */
+  readonly accessJsRate: number | null;
+  /** Of ok cells: share whose access.js used the requireAccess/requireRole DSL. */
+  readonly dslRate: number | null;
+  /** Of ok cells: share whose App.jsx gated writes on useVibe().can. */
+  readonly canGateRate: number | null;
+  /** Of ok cells: share that leaked access logic into App.jsx (anti-pattern; lower is better). */
+  readonly accessLeakRate: number | null;
 }
 
 export interface Row {
@@ -76,6 +100,65 @@ function fmt(n: number | null, digits = 2): string {
   return n === null || Number.isNaN(n) ? "—" : n.toFixed(digits);
 }
 
+/** Format a 0–1 rate as an integer percent, or "—" when undefined. */
+function pct(n: number | null): string {
+  return n === null || Number.isNaN(n) ? "—" : `${Math.round(n * 100)}%`;
+}
+
+/**
+ * Aggregate the deterministic structural signals per model. Parse-fail is over
+ * ALL cells (it's a generate-stage signal); the protocol rates are over OK cells
+ * only (a failed cell has no source to inspect).
+ */
+export function buildStructureRows(cells: readonly JoinedCell[]): StructureRow[] {
+  const groups = new Map<string, JoinedCell[]>();
+  for (const c of cells) {
+    const list = groups.get(c.model) ?? [];
+    list.push(c);
+    groups.set(c.model, list);
+  }
+  const share = (oks: readonly JoinedCell[], pred: (s: StructureSignals) => boolean): number | null =>
+    oks.length === 0 ? null : oks.filter((c) => c.structure && pred(c.structure)).length / oks.length;
+  const rows: StructureRow[] = [];
+  for (const group of groups.values()) {
+    const first = group[0];
+    const oks = group.filter((c) => c.exitState === "ok");
+    rows.push({
+      model: first.model,
+      class: first.class,
+      tier: first.tier,
+      total: group.length,
+      ok: oks.length,
+      parseFailRate: group.filter((c) => c.hadNoFilesAttempt).length / group.length,
+      accessJsRate: share(oks, (s) => s.hasAccessJs),
+      dslRate: share(oks, (s) => s.usesRequireAccess || s.usesRequireRole),
+      canGateRate: share(oks, (s) => s.gatesOnCan),
+      accessLeakRate: share(oks, (s) => s.accessInAppJsx),
+    });
+  }
+  return rows.sort((a, b) => a.model.localeCompare(b.model));
+}
+
+export function renderStructure(rows: readonly StructureRow[]): string {
+  const header = "| model | tier | ok/total | parse-fail | access.js | DSL (reqAccess/Role) | can-gated | access-in-App (✗) |";
+  const sep = "| --- | --- | --: | --: | --: | --: | --: | --: |";
+  const body = rows.map(
+    (r) =>
+      `| ${r.model} | ${r.tier} | ${r.ok}/${r.total} | ${pct(r.parseFailRate)} | ${pct(r.accessJsRate)} | ${pct(r.dslRate)} | ${pct(r.canGateRate)} | ${pct(r.accessLeakRate)} |`
+  );
+  return [
+    "## Structural signals (per model)",
+    "",
+    "Deterministic protocol-adherence rates — leading indicators that point at *what* to fix, " +
+      "less noisy than the 1–5 judge. `parse-fail` is over all cells (format adherence); the rest are over OK cells only.",
+    "",
+    header,
+    sep,
+    ...body,
+    "",
+  ].join("\n");
+}
+
 export function renderSummary(rows: readonly Row[]): string {
   const header = "| model | class | tier | prompt | reps | median ms | rubric | feature | design |";
   const sep = "| --- | --- | --- | --- | --: | --: | --: | --: | --: |";
@@ -106,6 +189,8 @@ function joinCells(runDir: string): JoinedCell[] {
       rubricRatio: score ? score.rubric.passed / score.rubric.total : null,
       featureScore: score?.feature.score ?? null,
       designScore: score?.design.score ?? null,
+      hadNoFilesAttempt: cell.attemptLog.some((a) => /no files resolved/i.test(a.reason)),
+      structure: score?.structure ?? null,
     });
   }
   return out;
@@ -130,7 +215,8 @@ function main(): void {
   const runDir = parseFlag("--run") ?? latestRunDir();
   const cells = joinCells(runDir);
   writeFileSync(join(runDir, "index.jsonl"), cells.map((c) => JSON.stringify(c)).join("\n") + "\n", "utf-8");
-  writeFileSync(join(runDir, "summary.md"), renderSummary(buildRows(cells)), "utf-8");
+  const summary = `${renderSummary(buildRows(cells))}\n${renderStructure(buildStructureRows(cells))}`;
+  writeFileSync(join(runDir, "summary.md"), summary, "utf-8");
   stderr.write(`wrote index.jsonl + summary.md to ${runDir}\n`);
 }
 

@@ -19,6 +19,7 @@ export default defineConfig({
       "prompts/tests/vitest.browser.config.ts",
       "vibes-diy/vitest.config.ts",
       "eval/codegen-matrix/vitest.config.ts",
+      "eval/codegen-agentic/vitest.config.ts",
     ],
   },
 });
