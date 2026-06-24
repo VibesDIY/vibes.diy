@@ -1,5 +1,21 @@
 # Autoresearch run log — #2602 access-model codegen eval
 
+## Iteration ledger
+
+Frozen baseline (commit `3fac49e`, preview env, 128 apps @ concurrency 16):
+**eval = 0.594** (Form-A strict 34.4%, two-file 100%, renderable 100%), **holdout = 0.484**.
+Keep rule: eval gain > 0.05 noise band with gates green (two-file ≥ 0.95, renderable ≥ 0.95,
+holdout ≥ baseline − 0.05 = 0.434), then a confirmation batch.
+
+| iter | edit                                                                                         | eval  | Δeval             | holdout | verdict                                                                                                                                                                                                                  |
+| ---- | -------------------------------------------------------------------------------------------- | ----- | ----------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| base | —                                                                                            | 0.594 | —                 | 0.484   | reference                                                                                                                                                                                                                |
+| 1    | author-contributed content is author-owned, not owner-published (`system-prompt-initial.md`) | 0.625 | +0.031 (in noise) | 0.250   | **DISCARD** — gate 5 (holdout) fail; the blanket "don't owner-gate" framing overcorrected, collapsing holdout multi-tier (h-club 7/8→1/8) and per-object (h-trip 5/8→2/8) even though eval Form-A improved (34.4%→28.1%) |
+
+Lesson for iter 2: add author-owned _recognition_ for visitor-contributed content without
+discouraging roles/membership where multi-tier and per-object genuinely need them — scope the
+cue to "each visitor adds their own entry + public read", not a global anti-owner-gate rule.
+
 This branch drives the [`eval/access-model`](../eval/access-model/README.md) autoresearch
 loop (issue VibesDIY/vibes.diy#2602): _modify `prompts/pkg/**` → deploy to this PR's
 preview env → `generate`/`score`/`report` against it → keep/discard against the composite
