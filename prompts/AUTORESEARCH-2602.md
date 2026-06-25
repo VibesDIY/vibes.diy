@@ -12,11 +12,66 @@ Keep rule (calibrated, #2637): keep only when the eval gain exceeds the measured
 with all gates green — two-file/renderable ≥ baseline − 0.05, holdout ≥ baseline − **0.17** (the
 measured holdout jitter, now the `gates.ts` default `holdoutBand`) — then a confirmation batch.
 
-| iter | edit                                                                                                      | eval  | Δeval             | holdout | verdict                                                                                                                                                                                                                  |
-| ---- | --------------------------------------------------------------------------------------------------------- | ----- | ----------------- | ------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| base | —                                                                                                         | 0.594 | —                 | 0.484   | reference                                                                                                                                                                                                                |
-| 1    | author-contributed content is author-owned, not owner-published (`system-prompt-initial.md`)              | 0.625 | +0.031 (in noise) | 0.250   | **DISCARD** — gate 5 (holdout) fail; the blanket "don't owner-gate" framing overcorrected, collapsing holdout multi-tier (h-club 7/8→1/8) and per-object (h-trip 5/8→2/8) even though eval Form-A improved (34.4%→28.1%) |
-| 2    | additive: curated-sounding feeds (photo wall) are author-owned for posts too (`system-prompt-initial.md`) | 0.578 | −0.016 (in noise) | 0.297   | **DISCARD** — eval flat (within noise), holdout fails gate 5 again. A tiny additive edit producing nearly the same holdout drop as iter 1's blunt rewrite points to **holdout variance**, not real regression            |
+| iter | edit                                                                                                                                                                                              | eval                             | Δeval             | holdout             | verdict                                                                                                                                                                                                                                                              |
+| ---- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------- | ----------------- | ------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| base | —                                                                                                                                                                                                 | 0.594                            | —                 | 0.484               | reference                                                                                                                                                                                                                                                            |
+| 1    | author-contributed content is author-owned, not owner-published (`system-prompt-initial.md`)                                                                                                      | 0.625                            | +0.031 (in noise) | 0.250               | **DISCARD** — gate 5 (holdout) fail; the blanket "don't owner-gate" framing overcorrected, collapsing holdout multi-tier (h-club 7/8→1/8) and per-object (h-trip 5/8→2/8) even though eval Form-A improved (34.4%→28.1%)                                             |
+| 2    | additive: curated-sounding feeds (photo wall) are author-owned for posts too (`system-prompt-initial.md`)                                                                                         | 0.578                            | −0.016 (in noise) | 0.297               | **DISCARD** — eval flat (within noise), holdout fails gate 5 again. A tiny additive edit producing nearly the same holdout drop as iter 1's blunt rewrite points to **holdout variance**, not real regression                                                        |
+| 3    | make the upstream `enrichedPrompt` pre-alloc access-shape-neutral (3-way: author-owned / per-object / owner-published) instead of asserting an owner-published default (`prompts/pkg/prompts.ts`) | **0.7875** ±0.033 (5-batch mean) | **+0.225**        | **0.703** (2-batch) | **KEEP** — huge, far beyond the 0.06 band; Form-A strict 34.4%→2.2%; gates green; generalizes to holdout (+0.305). Root cause was the _enrichment_ layer priming codegen to "only the owner can make changes" before generation. **baseline.json re-based to this.** |
+
+### iter-3 — KEPT (the breakthrough), and the deploy flake that preceded it
+
+After the noise calibration, the first real win. Charlie's review (#2631) pointed past the codegen
+prompt to the **upstream `enrichedPrompt` pre-allocation** in `prompts/pkg/prompts.ts`: before any
+code is generated, the model writes a plain-language product description, and that step was
+instructed to assert "**by default only the app's owner can make changes; everyone else sees a
+read-only view**." That primed every app toward owner-published — the dominant Form-A failure.
+iter-3 replaced it with a 3-way, shape-aware framing (author-owned default / per-object membership /
+owner-published for blog+announcements), consistent with `system-prompt-initial.md`. A 5-persona
+predict-gate caught that an early 2-way draft dropped per-object and would regress team/club; fixed
+to genuine 3-way before any batch.
+
+Result (5 eval batches + 2 holdout, calibrated bands):
+
+| metric                | baseline | iter-3 (mean)     | Δ          |
+| --------------------- | -------- | ----------------- | ---------- |
+| eval.metric           | 0.5625   | **0.7875** ±0.033 | **+0.225** |
+| Form-A strict         | 34.4%    | **2.2%**          | −32.2pp    |
+| holdout.metric        | 0.3984   | **0.703**         | **+0.305** |
+| two-file / renderable | 1 / 1    | 1 / 1             | flat       |
+
+Eval batches 0.797 / 0.813 / 0.734 / 0.828 / 0.766; holdout 0.719 / 0.688 — both tight and far above
+the noise band, so this is a durable win, not a lucky draw. **`baseline.json` re-based to iter-3** as
+the new hill-climb reference (explicit, with `supersedes`), so iters 4+ are judged against 0.7875 /
+0.703, not the original 0.5625 / 0.3984.
+
+Per-dimension (mean over 5 eval batches), worst-first — the new frontier:
+
+| prompt (dimension)                                | pass | fail | /40 | dominant failure                                                                                                                        |
+| ------------------------------------------------- | ---- | ---- | --- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| board — "whiteboard people can join" (per-object) | 12   | 28   | 40  | **"incomplete per-object recipe"** — model builds it as author-owned (public board, each posts own) instead of a joinable shared object |
+| todo (per-visitor)                                | 22   | 18   | 40  | "incomplete per-visitor model" — partial per-user isolation                                                                             |
+| guest — guestbook (author-owned)                  | 28   | 12   | 40  | mixed                                                                                                                                   |
+| team (multi-tier)                                 | 35   | 5    | 40  | minor                                                                                                                                   |
+| habit / photo / shop / blog                       | ≥38  | ≤2   | 40  | clean                                                                                                                                   |
+
+Root cause for the #1 failure (`board`): `system-prompt-initial.md` line ~82 blanket-classifies
+"a shared **board**, wall, guestbook, or map" as **author-owned**, which collides with the per-object
+expectation for "collaborative whiteboard people can **join**." `shop` ("invite my partner") correctly
+maps to per-object and passes 97% — it's the ambiguous "people can join" cue that misfires. → **iter-4
+target**: disambiguate join-to-co-edit-one-shared-surface (per-object) from each-posts-their-own
+wall/guestbook (author-owned), without regressing the passing photo-wall/guestbook.
+
+### Deploy infrastructure note (one-off, did not change the shared system)
+
+The iter-3 deploy hit a Cloudflare **versions+secrets deadlock** (error 10215): the shared
+`vibes-diy-pr-preview.yaml` runs `wrangler secret bulk` _before_ `wrangler deploy`, and a pile-up of
+cancelled-mid-flight deploys (rapid pushes + a rebase) left the worker with an uploaded-but-undeployed
+version, so the secret step failed and the deploy that would clear it never ran. Fixed with a
+**one-shot, self-limiting** workflow (`oneshot-unstick-preview.yaml`, `paths:`-filtered to fire exactly
+once) that did `wrangler deploy` first; the shared workflow then recovered on its own. The shared
+workflow was left untouched. Follow-up worth filing: reorder the shared workflow to deploy-before-secrets
+so this can't recur.
 
 ### Noise measurement — the key methodology finding
 
