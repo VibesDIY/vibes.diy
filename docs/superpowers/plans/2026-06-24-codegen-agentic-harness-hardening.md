@@ -25,16 +25,16 @@ Binding, cross-cutting requirements every task and reviewer must honor:
 
 ## File Structure
 
-| File | Responsibility | Task |
-| --- | --- | --- |
-| `eval/codegen-agentic/src/cell.ts` | add `transient?` to `GenResult`, `maxRetries?` to `MatrixConfig` | 1 |
-| `eval/codegen-matrix/src/judge.ts` | honest `parseJudge` errors; new `assertJudgeReachable` | 2 |
-| `eval/codegen-matrix/src/scoring.ts` | export retry primitives + `assertJudgeReachable` | 2 |
-| `eval/codegen-agentic/src/oneshot.ts` | `runOneShotOnce` + retry wrap + `transient` flag | 3 |
-| `eval/codegen-agentic/src/agentic.ts` | `runAgenticOnce` + retry wrap + `transient` flag | 3 |
-| `eval/codegen-agentic/src/generate.ts` | `shouldAbortPreflight`, warn-on-transient, thread `maxRetries` | 3 |
-| `eval/codegen-agentic/src/score.ts` | `assertJudgeReachable` preflight before the cell loop | 4 |
-| `agents/codegen-agentic-eval.md`, `eval/codegen-agentic/README.md` | document URL + new preflight behavior | 5 |
+| File                                                               | Responsibility                                                   | Task |
+| ------------------------------------------------------------------ | ---------------------------------------------------------------- | ---- |
+| `eval/codegen-agentic/src/cell.ts`                                 | add `transient?` to `GenResult`, `maxRetries?` to `MatrixConfig` | 1    |
+| `eval/codegen-matrix/src/judge.ts`                                 | honest `parseJudge` errors; new `assertJudgeReachable`           | 2    |
+| `eval/codegen-matrix/src/scoring.ts`                               | export retry primitives + `assertJudgeReachable`                 | 2    |
+| `eval/codegen-agentic/src/oneshot.ts`                              | `runOneShotOnce` + retry wrap + `transient` flag                 | 3    |
+| `eval/codegen-agentic/src/agentic.ts`                              | `runAgenticOnce` + retry wrap + `transient` flag                 | 3    |
+| `eval/codegen-agentic/src/generate.ts`                             | `shouldAbortPreflight`, warn-on-transient, thread `maxRetries`   | 3    |
+| `eval/codegen-agentic/src/score.ts`                                | `assertJudgeReachable` preflight before the cell loop            | 4    |
+| `agents/codegen-agentic-eval.md`, `eval/codegen-agentic/README.md` | document URL + new preflight behavior                            | 5    |
 
 ---
 
@@ -44,9 +44,11 @@ Binding, cross-cutting requirements every task and reviewer must honor:
 **Depends-on:** none
 
 **Files:**
+
 - Modify: `eval/codegen-agentic/src/cell.ts`
 
 **Interfaces:**
+
 - Produces: `GenResult.transient?: boolean`, `MatrixConfig.maxRetries?: number` (both optional; `CellResult` inherits `transient` via `extends GenResult`)
 
 - [ ] **Step 1: Add the two optional fields**
@@ -88,11 +90,13 @@ git commit -m "feat(codegen-agentic): add transient flag + optional maxRetries t
 **Depends-on:** none
 
 **Files:**
+
 - Modify: `eval/codegen-matrix/src/judge.ts`
 - Modify: `eval/codegen-matrix/src/scoring.ts`
 - Test: `eval/codegen-matrix/src/judge.test.ts`
 
 **Interfaces:**
+
 - Consumes: `isTransientError`, `retryWithBackoff`, `BackoffOpts` (from existing `./backoff.js`)
 - Produces: re-exported `isTransientError`, `retryWithBackoff`, `BackoffOpts`; `assertJudgeReachable(deps: JudgeDeps): Promise<void>`; `parseJudge` that names the URL cause on non-JSON output
 
@@ -214,6 +218,7 @@ git commit -m "feat(codegen-matrix): honest judge parse errors, assertJudgeReach
 **Depends-on:** 1, 2
 
 **Files:**
+
 - Modify: `eval/codegen-agentic/src/oneshot.ts`
 - Modify: `eval/codegen-agentic/src/agentic.ts`
 - Modify: `eval/codegen-agentic/src/generate.ts`
@@ -221,6 +226,7 @@ git commit -m "feat(codegen-matrix): honest judge parse errors, assertJudgeReach
 - Test: `eval/codegen-agentic/src/generate.test.ts` (new)
 
 **Interfaces:**
+
 - Consumes: `GenResult.transient`, `MatrixConfig.maxRetries` (from Task 1); `isTransientError`, `retryWithBackoff` (from Task 2 barrel)
 - Produces: `shouldAbortPreflight(r: { exitState: string; transient?: boolean }): boolean`; `runOneShot`/`runAgentic` now retry transient errors and set `transient` on exhausted-error results
 
@@ -230,7 +236,7 @@ git commit -m "feat(codegen-matrix): honest judge parse errors, assertJudgeReach
 
 Create `eval/codegen-agentic/src/oneshot.test.ts`:
 
-```typescript
+````typescript
 import { describe, it, expect } from "vitest";
 import { runOneShot } from "./oneshot.js";
 
@@ -269,7 +275,7 @@ describe("runOneShot retry", () => {
     expect(r.transient).toBe(false);
   });
 });
-```
+````
 
 - [ ] **Step 2: Run it to verify it fails**
 
@@ -305,11 +311,29 @@ async function runOneShotOnce(client: OpenRouter, model: string, systemPrompt: s
 }
 
 /** One completion, with transient-error retry. `retries` defaults to 2 (3 attempts). */
-export async function runOneShot(client: OpenRouter, model: string, systemPrompt: string, userPrompt: string, retries = 2): Promise<GenResult> {
+export async function runOneShot(
+  client: OpenRouter,
+  model: string,
+  systemPrompt: string,
+  userPrompt: string,
+  retries = 2
+): Promise<GenResult> {
   try {
-    return await retryWithBackoff(() => runOneShotOnce(client, model, systemPrompt, userPrompt), { retries, isRetryable: isTransientError });
+    return await retryWithBackoff(() => runOneShotOnce(client, model, systemPrompt, userPrompt), {
+      retries,
+      isRetryable: isTransientError,
+    });
   } catch (e) {
-    return { files: {}, steps: 1, buildPass: false, costUsd: 0, tokens: 0, exitState: "errored", note: (e as Error).message.slice(0, 200), transient: isTransientError(e) };
+    return {
+      files: {},
+      steps: 1,
+      buildPass: false,
+      costUsd: 0,
+      tokens: 0,
+      exitState: "errored",
+      note: (e as Error).message.slice(0, 200),
+      transient: isTransientError(e),
+    };
   }
 }
 ```
@@ -381,7 +405,16 @@ export async function runAgentic(
       isRetryable: isTransientError,
     });
   } catch (e) {
-    return { files: {}, steps: 0, buildPass: false, costUsd: 0, tokens: 0, exitState: "errored", note: (e as Error).message.slice(0, 200), transient: isTransientError(e) };
+    return {
+      files: {},
+      steps: 0,
+      buildPass: false,
+      costUsd: 0,
+      tokens: 0,
+      exitState: "errored",
+      note: (e as Error).message.slice(0, 200),
+      transient: isTransientError(e),
+    };
   }
 }
 ```
@@ -428,27 +461,34 @@ export function shouldAbortPreflight(r: { exitState: string; transient?: boolean
 In `runJob`, thread the retry budget into both runners (the `gen` assignment):
 
 ```typescript
-  const gen =
-    job.mode === "oneshot"
-      ? await runOneShot(client, job.model, systemPrompt, job.prompt.prompt, cfg.maxRetries ?? 2)
-      : await runAgentic(client, job.model, systemPrompt, job.prompt.prompt, {
-          maxSteps: cfg.maxSteps,
-          maxCostUsd: cfg.maxCostUsd,
-          needsAccess: job.prompt.needsAccess,
-          retries: cfg.maxRetries ?? 2,
-        });
+const gen =
+  job.mode === "oneshot"
+    ? await runOneShot(client, job.model, systemPrompt, job.prompt.prompt, cfg.maxRetries ?? 2)
+    : await runAgentic(client, job.model, systemPrompt, job.prompt.prompt, {
+        maxSteps: cfg.maxSteps,
+        maxCostUsd: cfg.maxCostUsd,
+        needsAccess: job.prompt.needsAccess,
+        retries: cfg.maxRetries ?? 2,
+      });
 ```
 
 Replace the preflight loop body so it classifies instead of aborting on any error:
 
 ```typescript
-  const smokeModel = cfg.models[0];
-  for (const mode of cfg.modes) {
-    const r = await runJob(client, cfg, systemPrompt, { model: smokeModel.id, openWeight: smokeModel.openWeight, prompt: prompts[0], rep: 0, mode }, runDir);
-    if (shouldAbortPreflight(r)) throw new Error(`preflight ${mode} errored (non-transient): ${r.note}`);
-    if (r.exitState === "errored") stderr.write(`preflight ${mode} hit a transient error after retries — continuing; sweep cells may error.\n`);
-  }
-  stderr.write(`preflight ok. proceeding to full sweep.\n`);
+const smokeModel = cfg.models[0];
+for (const mode of cfg.modes) {
+  const r = await runJob(
+    client,
+    cfg,
+    systemPrompt,
+    { model: smokeModel.id, openWeight: smokeModel.openWeight, prompt: prompts[0], rep: 0, mode },
+    runDir
+  );
+  if (shouldAbortPreflight(r)) throw new Error(`preflight ${mode} errored (non-transient): ${r.note}`);
+  if (r.exitState === "errored")
+    stderr.write(`preflight ${mode} hit a transient error after retries — continuing; sweep cells may error.\n`);
+}
+stderr.write(`preflight ok. proceeding to full sweep.\n`);
 ```
 
 - [ ] **Step 9: Run the full codegen-agentic suite**
@@ -471,9 +511,11 @@ git commit -m "feat(codegen-agentic): retry transient generation errors; preflig
 **Depends-on:** 2
 
 **Files:**
+
 - Modify: `eval/codegen-agentic/src/score.ts`
 
 **Interfaces:**
+
 - Consumes: `assertJudgeReachable(deps: JudgeDeps): Promise<void>` (from Task 2 barrel)
 
 - [ ] **Step 1: Import assertJudgeReachable**
@@ -481,7 +523,15 @@ git commit -m "feat(codegen-agentic): retry transient generation errors; preflig
 In `eval/codegen-agentic/src/score.ts`, add `assertJudgeReachable` to the existing barrel import:
 
 ```typescript
-import { runRubric, computeStructure, judgeFeature, readDevVars, collectSourceFiles, assertJudgeReachable, type JudgeDeps } from "@vibes.diy/eval-codegen-matrix/scoring";
+import {
+  runRubric,
+  computeStructure,
+  judgeFeature,
+  readDevVars,
+  collectSourceFiles,
+  assertJudgeReachable,
+  type JudgeDeps,
+} from "@vibes.diy/eval-codegen-matrix/scoring";
 ```
 
 - [ ] **Step 2: Call it before the cell loop**
@@ -489,8 +539,8 @@ import { runRubric, computeStructure, judgeFeature, readDevVars, collectSourceFi
 In `main()`, immediately after the `deps` assignment and before `const cellDirs = ...`, add:
 
 ```typescript
-  await assertJudgeReachable(deps);
-  stderr.write(`judge preflight ok (${deps.judgeModel}).\n`);
+await assertJudgeReachable(deps);
+stderr.write(`judge preflight ok (${deps.judgeModel}).\n`);
 ```
 
 - [ ] **Step 3: Type-check**
@@ -519,6 +569,7 @@ git commit -m "feat(codegen-agentic): judge-reachability preflight before scorin
 **Depends-on:** none
 
 **Files:**
+
 - Modify: `agents/codegen-agentic-eval.md`
 - Modify: `eval/codegen-agentic/README.md`
 
@@ -527,11 +578,11 @@ git commit -m "feat(codegen-agentic): judge-reachability preflight before scorin
 In `agents/codegen-agentic-eval.md`, Prerequisites §2 ("Judge transport"), add the explicit value and a note:
 
 ```markdown
-   Set the FULL chat-completions path (call-ai posts to it verbatim):
-   `LLM_BACKEND_URL=https://openrouter.ai/api/v1/chat/completions`
-   A bare `.../api/v1` (no `/chat/completions`) makes the judge hit an HTML error
-   page → 100% null feature scores. The score stage now preflights the judge and
-   fails fast if the URL is wrong.
+Set the FULL chat-completions path (call-ai posts to it verbatim):
+`LLM_BACKEND_URL=https://openrouter.ai/api/v1/chat/completions`
+A bare `.../api/v1` (no `/chat/completions`) makes the judge hit an HTML error
+page → 100% null feature scores. The score stage now preflights the judge and
+fails fast if the URL is wrong.
 ```
 
 - [ ] **Step 2: Add troubleshooting rows**
