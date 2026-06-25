@@ -50,14 +50,16 @@ export function isRetryableConflict(err: unknown): boolean {
   for (let depth = 0; cur && depth < 5; depth++) {
     const e = cur as { code?: unknown; message?: unknown; cause?: unknown };
     const code = String(e.code ?? "").toUpperCase();
-    if (code === "23505" || code.includes("CONSTRAINT")) return true; // pg unique_violation; sqlite/libsql SQLITE_CONSTRAINT*
+    if (code === "23505" || code.includes("CONSTRAINT") || code.includes("BUSY")) return true; // pg unique_violation; sqlite/libsql SQLITE_CONSTRAINT* / SQLITE_BUSY
     const msg = String(e.message ?? "").toLowerCase();
     if (
       msg.includes("unique") ||
       msg.includes("primary key") ||
       msg.includes("constraint failed") || // sqlite
       msg.includes("duplicate key") || // pg
-      msg.includes("could not serialize") // pg serialization failure
+      msg.includes("could not serialize") || // pg serialization failure
+      msg.includes("database is locked") || // sqlite/libsql write-lock contention (skipIf txn path)
+      msg.includes("busy") // sqlite/libsql SQLITE_BUSY
     ) {
       return true;
     }
@@ -120,6 +122,17 @@ export interface AllocateParams {
   table: VibesApiTables["appDocuments"];
   row: RevisionRow;
   /**
+   * Runs inside the critical section (same txn, advisory lock held on pg / write
+   * txn on sqlite) BEFORE the insert, against the SERIALIZED current head — the
+   * in-transaction db handle is passed so the read sees committed concurrent
+   * writers. Return true to absorb this write as a no-op: the insert and sidecar
+   * are skipped and the call resolves with `{ inserted: false }` and the current
+   * head seq. Used by putDoc for the content-identical no-op (#2644); the in-lock
+   * recheck is what makes it race-safe (a concurrent write that moved the head
+   * makes the content differ, so this write proceeds instead of dropping).
+   */
+  skipIf?: (exec: VibesSqlite) => Promise<boolean>;
+  /**
    * Runs inside the PG critical section (same txn, advisory lock held) after the
    * insert. Receives the allocated seq and the in-transaction db handle (`tx` on
    * pg, `db` on sqlite/D1) — the sidecar MUST use this handle so its upsert is
@@ -127,6 +140,13 @@ export interface AllocateParams {
    */
   sidecar?: (seq: number, exec: VibesSqlite) => Promise<void>;
   maxAttempts?: number;
+}
+
+/** Result of an allocation: the head seq, and whether a revision was inserted
+ * (false when a `skipIf` predicate absorbed the write as a no-op). */
+export interface AllocateResult {
+  seq: number;
+  inserted: boolean;
 }
 
 const TABLE = sql.raw(`"AppDocuments"`); // physical table name (schema maps ownerHandle -> "userSlug")
@@ -155,8 +175,10 @@ function runReturning(db: VibesSqlite, flavour: DBFlavour, stmt: ReturnType<type
   return (db as unknown as { run: (s: unknown) => Promise<unknown> }).run(stmt);
 }
 
-async function currentHeadSeq(p: AllocateParams): Promise<number> {
-  const r = await p.db
+/** Max(seq) for this doc, read through the given executor (the in-txn handle
+ * when inside the critical section, so it sees committed concurrent writers). */
+async function headSeqWith(exec: VibesSqlite, p: AllocateParams): Promise<number> {
+  const r = await exec
     .select({ maxSeq: sql<number>`COALESCE(MAX(${p.table.seq}),0)` })
     .from(p.table)
     .where(
@@ -171,18 +193,40 @@ async function currentHeadSeq(p: AllocateParams): Promise<number> {
   return Number(r?.maxSeq ?? 0);
 }
 
+function currentHeadSeq(p: AllocateParams): Promise<number> {
+  return headSeqWith(p.db, p);
+}
+
+function asTxRunner(db: VibesSqlite) {
+  return db as unknown as { transaction: <T>(fn: (tx: VibesSqlite) => Promise<T>) => Promise<T> };
+}
+
 /**
  * SQLite/D1 path: the single atomic statement runs under SQLite's global write
  * lock, so MAX(seq) always sees committed rows and the insert never collides.
  * The bounded retry is a safety net for any driver that does not serialize.
+ *
+ * When a `skipIf` predicate is supplied the read+decision+insert must be one
+ * serialized unit, so that path runs inside a write transaction and a retry
+ * re-evaluates skipIf against the now-current head (so a concurrent write that
+ * moved the head is never silently no-op'd over). The fast path is unchanged.
  */
-async function allocateSqlite(p: AllocateParams): Promise<number> {
+async function allocateSqlite(p: AllocateParams): Promise<AllocateResult> {
   const attempts = p.maxAttempts ?? 3;
   for (let i = 0; i < attempts; i++) {
     try {
+      if (p.skipIf) {
+        const skipIf = p.skipIf;
+        return await asTxRunner(p.db).transaction(async (tx) => {
+          if (await skipIf(tx)) return { seq: await headSeqWith(tx, p), inserted: false };
+          const seq = extractReturnedSeq(await runReturning(tx, p.flavour, buildAtomicInsert(p)));
+          if (p.sidecar) await p.sidecar(seq, tx);
+          return { seq, inserted: true };
+        });
+      }
       const seq = extractReturnedSeq(await runReturning(p.db, p.flavour, buildAtomicInsert(p)));
       if (p.sidecar) await p.sidecar(seq, p.db); // best-effort ordering on D1 (see spec)
-      return seq;
+      return { seq, inserted: true };
     } catch (err) {
       if (!isRetryableConflict(err)) throw err;
       await new Promise((r) => setTimeout(r, Math.floor(Math.random() * (8 << i)))); // jittered backoff
@@ -195,21 +239,29 @@ async function allocateSqlite(p: AllocateParams): Promise<number> {
  * Postgres path: a per-doc advisory lock serializes same-doc writers (O(N)), and
  * the transaction wraps the insert + sidecar so the highest-seq writer's grant
  * state lands last. Under the lock the insert never collides, so no retry loop.
+ * A `skipIf` predicate runs here too — inside the lock, so its head read is
+ * serialized against every other same-doc writer (#2644).
  */
-async function allocatePg(p: AllocateParams): Promise<number> {
+async function allocatePg(p: AllocateParams): Promise<AllocateResult> {
   const key = docLockKey(p.row.ownerHandle, p.row.appSlug, p.row.dbName, p.row.docId);
-  const db = p.db as unknown as { transaction: <T>(fn: (tx: VibesSqlite) => Promise<T>) => Promise<T> };
-  return db.transaction(async (tx) => {
+  return asTxRunner(p.db).transaction(async (tx) => {
     await (tx as unknown as { execute: (s: unknown) => Promise<unknown> }).execute(
       sql`SELECT pg_advisory_xact_lock(hashtextextended(${key}, 0))`
     );
+    if (p.skipIf && (await p.skipIf(tx))) {
+      return { seq: await headSeqWith(tx, p), inserted: false };
+    }
     const seq = extractReturnedSeq(await runReturning(tx, "pg", buildAtomicInsert(p)));
     if (p.sidecar) await p.sidecar(seq, tx); // in-txn → ordered LWW on pg
-    return seq;
+    return { seq, inserted: true };
   });
 }
 
-/** Allocate the next seq for this doc and insert the revision atomically. */
-export async function allocateAndInsertRevision(p: AllocateParams): Promise<number> {
+/**
+ * Allocate the next seq for this doc and insert the revision atomically.
+ * Resolves with `{ inserted: false }` (no revision written) when a `skipIf`
+ * predicate absorbs the write as a no-op.
+ */
+export async function allocateAndInsertRevision(p: AllocateParams): Promise<AllocateResult> {
   return p.flavour === "pg" ? allocatePg(p) : allocateSqlite(p);
 }

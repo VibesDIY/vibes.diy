@@ -395,22 +395,22 @@ export const putDocEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqPutDoc>, 
       // as success. This makes the "re-assert my access setup on every page
       // load" pattern (#2631 self-grants / owner-roster grants) free when
       // nothing changed, so codegen can emit the idempotent form without a
-      // read-guard that races sync (#2026). Preconditions, both already true
-      // here: a stable docId (a random-id put has no head and never matches) and
-      // a non-tombstone head (a put over a deleted doc is a resurrection, which
-      // must mint a real revision). The gate still ran, so access is enforced
-      // identically to a real write. Note: because the stored access-fn output
-      // is also left untouched, an access.js change that would alter grants for
-      // unchanged content does not take effect until the doc's content actually
-      // changes — consistent with redeploy not recomputing existing outputs.
-      if (headRow && headRow.deleted !== 1 && docContentEqual(headRow.data, req.doc)) {
-        await ctx.send.send(ctx, {
-          type: "vibes.diy.res-put-doc",
-          status: "ok",
-          id: docId,
-        } satisfies ResPutDoc);
-        return Result.Ok(EventoResult.Continue);
-      }
+      // read-guard that races sync (#2026). Preconditions: a stable docId (a
+      // random-id put has no head and never matches) and a non-tombstone head (a
+      // put over a deleted doc is a resurrection, which must mint a real
+      // revision). The gate still ran, so access is enforced identically to a
+      // real write. Note: the stored access-fn output is also left untouched, so
+      // an access.js change that would alter grants for unchanged content does
+      // not take effect until the doc's content actually changes — consistent
+      // with redeploy not recomputing existing outputs.
+      //
+      // `headRow` is a PRE-LOCK read used only to decide whether a no-op is even
+      // plausible; the binding decision happens under the per-doc lock via the
+      // `skipIf` predicate below, which re-reads the SERIALIZED current head. So
+      // if a concurrent writer commits a different revision between this read and
+      // the lock, the in-lock content no longer matches and this write proceeds
+      // normally instead of dropping it (Codex P1).
+      const mightNoop = !!headRow && headRow.deleted !== 1 && docContentEqual(headRow.data, req.doc);
 
       const now = new Date().toISOString();
       const dbName = req.dbName;
@@ -469,11 +469,29 @@ export const putDocEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqPutDoc>, 
           }
         : undefined;
 
+      // Only pay for the in-lock recheck when a no-op is actually plausible
+      // (pre-lock content already matched). For the common case — a real change —
+      // skipIf is undefined and the fast insert path is untouched. The predicate
+      // re-reads the serialized head under the lock and absorbs the write only if
+      // it STILL matches there (a tombstone or a moved head both fall through).
+      const skipIf = mightNoop
+        ? async (exec: VibesSqlite) => {
+            const cur = await exec
+              .select({ data: t.data, deleted: t.deleted })
+              .from(t)
+              .where(and(eq(t.ownerHandle, req.ownerHandle), eq(t.appSlug, req.appSlug), eq(t.dbName, dbName), eq(t.docId, docId)))
+              .orderBy(desc(t.seq))
+              .limit(1)
+              .then((r) => r[0]);
+            return !!cur && cur.deleted !== 1 && docContentEqual(cur.data, req.doc);
+          }
+        : undefined;
+
       // Allocate seq + insert atomically. On a (near-impossible) exhausted-retry
       // conflict, surface a typed error instead of a raw SQL string.
-      let nextSeq: number;
+      let alloc: { seq: number; inserted: boolean };
       try {
-        nextSeq = await allocateAndInsertRevision({
+        alloc = await allocateAndInsertRevision({
           db: vctx.sql.db,
           flavour: vctx.sql.flavour,
           table: t,
@@ -487,6 +505,7 @@ export const putDocEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqPutDoc>, 
             deleted: 0,
             created: now,
           },
+          skipIf,
           sidecar,
         });
       } catch (err) {
@@ -499,6 +518,19 @@ export const putDocEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqPutDoc>, 
         }
         throw err;
       }
+
+      // Content-identical no-op absorbed under the lock (#2644): no revision was
+      // written, so skip every downstream side effect (DM index, comment event,
+      // doc-changed / grants-changed fan-out) and return the existing doc id.
+      if (!alloc.inserted) {
+        await ctx.send.send(ctx, {
+          type: "vibes.diy.res-put-doc",
+          status: "ok",
+          id: docId,
+        } satisfies ResPutDoc);
+        return Result.Ok(EventoResult.Continue);
+      }
+      const nextSeq = alloc.seq;
 
       // Upsert DirectChannelIndex so both participants appear in listDmThreads
       if (isDirectChannel(req.ownerHandle)) {
