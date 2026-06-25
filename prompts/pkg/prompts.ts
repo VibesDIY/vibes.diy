@@ -198,8 +198,9 @@ export interface MakeBaseSystemPromptOptions {
   pkgBaseUrl?: string;
   // "initial" selects the three-pass first-turn template; "continuation"
   // (default) selects the small-chunk SEARCH/REPLACE template used for
-  // every subsequent turn.
-  variant?: "initial" | "continuation";
+  // every subsequent turn; "agentic-whole-file" selects the tool-loop
+  // template that instructs the model to write whole files via write_file.
+  variant?: "initial" | "continuation" | "agentic-whole-file";
 }
 
 const DEFAULT_PKG_BASE_URL = "https://esm.sh/@vibes.diy/prompts/";
@@ -348,7 +349,12 @@ export async function makeBaseSystemPrompt(
 
   const importStatements = `import React from "react"${generateImportStatements(chosenLlms)}`;
 
-  const templateFilename = sessionDoc?.variant === "initial" ? "system-prompt-initial.md" : "system-prompt.md";
+  const templateFilename =
+    sessionDoc?.variant === "agentic-whole-file"
+      ? "system-prompt-agentic.md"
+      : sessionDoc?.variant === "initial"
+        ? "system-prompt-initial.md"
+        : "system-prompt.md";
   const template = await getSystemPromptTemplate(pkgBaseUrl, templateFilename, sessionDoc.fetch);
   const systemPrompt = template
     .replaceAll("{{STYLE_PROMPT}}", stylePrompt)
