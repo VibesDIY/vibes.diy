@@ -59,13 +59,15 @@ export async function scoreCell(
 ): Promise<ScoredCell> {
   const analysis = analyzeAccess(input.files["access.js"] ?? "", input.expect);
   const files = checkFiles(input.files);
-  const judgeRequired = MULTIPLAYER.has(input.expect);
-  const judge = judgeRequired ? await deps.judge({ prompt: input.prompt, expect: input.expect, files: input.files }) : null;
-  const consent = judgeRequired
-    ? await deps.consentJudge({ prompt: input.prompt, expect: input.expect, files: input.files })
-    : null;
+  // The shape rubric's second-visitor judge runs only for the multiplayer dimensions.
+  const shapeJudgeRequired = MULTIPLAYER.has(input.expect);
+  const judge = shapeJudgeRequired ? await deps.judge({ prompt: input.prompt, expect: input.expect, files: input.files }) : null;
+  // The consent judge runs on EVERY dimension, including owner-published (#2631): a blog
+  // / portfolio can be a collaborative object graph the owner invites authors into, so it's
+  // judged on consent (path + leak), never auto-passed.
+  const consent = await deps.consentJudge({ prompt: input.prompt, expect: input.expect, files: input.files });
   const g = gradeRow({ expect: input.expect, analysis, files, judge });
-  const cg = gradeConsentRow({ analysis, files, consent, judgeRequired });
+  const cg = gradeConsentRow({ analysis, files, consent, judgeRequired: true });
   return {
     grade: g.grade,
     modelOk: g.modelOk,
