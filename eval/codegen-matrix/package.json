@@ -11,7 +11,9 @@
     "test": "vitest --run"
   },
   "exports": {
-    "./scoring": "./src/scoring.ts"
+    "./scoring": "./src/scoring.ts",
+    "./structure": "./src/structure.ts",
+    "./backoff": "./src/backoff.ts"
   },
   "dependencies": {
     "call-ai": "workspace:*",

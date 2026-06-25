@@ -1207,6 +1207,9 @@ importers:
       '@vibes.diy/call-ai-v2':
         specifier: workspace:*
         version: link:../../../call-ai/v2
+      '@vibes.diy/eval-codegen-matrix':
+        specifier: workspace:*
+        version: link:../../../eval/codegen-matrix
       '@vibes.diy/identity':
         specifier: workspace:*
         version: link:../../identity
