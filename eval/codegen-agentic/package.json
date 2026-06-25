@@ -1,0 +1,20 @@
+{
+  "name": "@vibes.diy/eval-codegen-agentic",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Two-mode (one-shot vs agentic) cross-model codegen eval: isolates the tool-loop to measure open-weight tenability and real cost.",
+  "scripts": {
+    "generate": "tsx src/generate.ts",
+    "score": "tsx src/score.ts",
+    "report": "tsx src/report.ts",
+    "test": "vitest --run"
+  },
+  "dependencies": {
+    "@vibes.diy/eval-codegen-matrix": "workspace:*",
+    "@openrouter/agent": "^0.1.0",
+    "esbuild": "^0.25.0",
+    "zod": "^3.23.0",
+    "tsx": "^4.22.4"
+  }
+}

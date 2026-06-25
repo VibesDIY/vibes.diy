@@ -1,0 +1,20 @@
+{
+  "judgeModel": "anthropic/claude-opus-4.5",
+  "reps": 3,
+  "modes": ["oneshot", "agentic"],
+  "concurrency": 4,
+  "maxSteps": 4,
+  "maxCostUsd": 0.5,
+  "budgetUsdTotal": 50,
+  "featureAcceptBar": 3,
+  "models": [
+    { "id": "deepseek/deepseek-chat-v3.1", "openWeight": true },
+    { "id": "deepseek/deepseek-v3.2", "openWeight": true },
+    { "id": "qwen/qwen3-235b-a22b-2507", "openWeight": true },
+    { "id": "qwen/qwen3-coder-plus", "openWeight": true },
+    { "id": "mistralai/mistral-nemo", "openWeight": true },
+    { "id": "openai/gpt-oss-20b", "openWeight": true },
+    { "id": "google/gemini-3.1-pro-preview", "openWeight": false },
+    { "id": "google/gemini-2.5-flash-lite", "openWeight": false }
+  ]
+}
