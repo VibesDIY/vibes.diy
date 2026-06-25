@@ -9,11 +9,11 @@ export interface Suggestion {
 export const quickSuggestions: Suggestion[] = [
   {
     label: "Character Bot",
-    text: "Create a chat app where I design a character — name, personality, and speaking style — then have a conversation with them. Let me edit the character's style anytime and save my favorites.",
+    text: "Create a chat app where I design a character — name, personality, and speaking style — then have a conversation with them. Let me edit the character's style anytime, keep my drafts private, and publish the ones I like to a public gallery others can chat with.",
   },
   {
     label: "Neighborhood Map",
-    text: "Create a community resource tracker where I add local resources (food banks, shelters, free wifi) with name, address, hours, and category, shown in a filterable list anyone can browse.",
+    text: "Create a community resource map where anyone can add local resources (food banks, shelters, free wifi) with name, address, hours, and category — everyone's contributions show up in a shared, filterable list the whole neighborhood can browse.",
   },
   {
     label: "Workout Log",
@@ -25,7 +25,7 @@ export const quickSuggestions: Suggestion[] = [
   },
   {
     label: "Event Tracker",
-    text: "Create an event schedule app where you add acts with stage and time, and star your favorites. Include a text area to paste and parse any schedule.",
+    text: "Create a festival schedule app where a group builds a shared lineup of acts with stage and time, and each person stars their own favorites. Include a text area to paste and parse any schedule.",
   },
   {
     label: "Dream Job",
@@ -33,7 +33,7 @@ export const quickSuggestions: Suggestion[] = [
   },
   {
     label: "History Quest",
-    text: "Create a history RPG where the AI writes a short scene set in a real era, then gives you 3 choices. Each choice leads to a new scene. Track your score.",
+    text: "Create a history RPG where the AI writes a short scene set in a real era, then gives you 3 choices. Each choice leads to a new scene. Track your score on a public leaderboard.",
   },
   {
     label: "Jam Session",
@@ -41,11 +41,11 @@ export const quickSuggestions: Suggestion[] = [
   },
   {
     label: "Brain Dump",
-    text: "Create a task tracker with freeform textarea entry, that sends the text to AI to create task list items using json, and tag them into the selected list.",
+    text: "Create a task tracker with freeform textarea entry that sends the text to AI to create task list items using json, tags them into the selected list, and lets you keep a list private or invite someone to share it.",
   },
   {
     label: "Photo Wall",
-    text: "Image auto-tagger app that automatically saves, analyzes, tags, and describes images, displaying them in a masonry grid as soon as they're dropped on the page, adding tags and descriptions as they come back.",
+    text: "Shared photo wall where anyone can drop in images that auto-save, analyze, tag, and describe themselves, appearing in a masonry grid everyone can browse as the tags and descriptions come back.",
   },
   {
     label: "Legends Chat",
@@ -69,7 +69,7 @@ export const quickSuggestions: Suggestion[] = [
   },
   {
     label: "Meet Up",
-    text: "Paste two people's availability and AI instantly finds the best overlapping times to meet.",
+    text: "Create a shared availability poll — invite people to mark when they're free and AI instantly finds the best overlapping time to meet.",
   },
   {
     label: "Sky Gradient",
@@ -134,11 +134,12 @@ export const quickSuggestions: Suggestion[] = [
 ];
 
 // Named exports for specific prompts used in the create page
-export const partyPlannerPrompt = "Create a party planning app with guest list, RSVP tracking, and budget calculator.";
+export const partyPlannerPrompt =
+  "Create a party planning app with a shared guest list where invitees RSVP themselves, plus collaborative budget tracking.";
 export const progressTrackerPrompt = "Create a random app idea and build it automatically.";
 export const eventTrackerPrompt =
-  "Create an event schedule app where you add acts with stage and time, and star your favorites. Include a text area to paste and parse any schedule.";
+  "Create a festival schedule app where a group builds a shared lineup of acts with stage and time, and each person stars their own favorites. Include a text area to paste and parse any schedule.";
 export const historyQuestPrompt =
-  "Create a history RPG where the AI writes a short scene set in a real era, then gives you 3 choices. Each choice leads to a new scene. Track your score.";
+  "Create a history RPG where the AI writes a short scene set in a real era, then gives you 3 choices. Each choice leads to a new scene. Track your score on a public leaderboard.";
 export const jamSessionPrompt =
   "Create a drum machine with tempo control, 8 pattern slots, and a step sequencer grid. Use createOscillator for hi-hats, kicks, and snares.";
