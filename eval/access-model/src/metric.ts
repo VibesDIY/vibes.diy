@@ -8,6 +8,7 @@ export interface MetricCell {
   readonly formABroad: boolean;
   readonly isOwnerWriteGate: boolean;
   readonly isOwnerToken?: boolean; // any literal `isOwner` token (#2631) — optional so existing callers are unaffected
+  readonly hasShareMechanism?: boolean; // offers invite/join/public sharing (#2631) — optional for back-compat
   readonly ok: boolean; // false => platform/generate failure, excluded from score
 }
 
@@ -28,6 +29,7 @@ export interface Rollup {
   readonly formABroadRate: number;
   readonly isOwnerCount: number;
   readonly isOwnerTokenCount: number;
+  readonly shareabilityRate: number; // fraction of apps offering a consent-respecting share mechanism (#2631)
   readonly twoFileRate: number;
   readonly renderableRate: number;
 }
@@ -44,6 +46,7 @@ export function rollup(cells: readonly MetricCell[]): Rollup {
     formABroadRate: rate((c) => c.formABroad),
     isOwnerCount: scored.filter((c) => c.isOwnerWriteGate).length,
     isOwnerTokenCount: scored.filter((c) => c.isOwnerToken === true).length,
+    shareabilityRate: rate((c) => c.hasShareMechanism === true),
     twoFileRate: rate((c) => c.twoFile),
     renderableRate: rate((c) => c.renderable),
   };

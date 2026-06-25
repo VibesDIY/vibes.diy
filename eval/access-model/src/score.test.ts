@@ -16,6 +16,7 @@ describe("scoreCell", () => {
     expect(r.consentGrade).toBe("PASS");
     expect(r.formAStrict).toBe(false);
     expect(r.twoFile).toBe(true);
+    expect(r.hasShareMechanism).toBe(false); // private per-user, self-grant only — no way to bring others in
   });
 
   it("runs the consent judge (all dimensions) but NOT the shape judge for owner-published", async () => {
@@ -74,6 +75,7 @@ describe("scoreCell", () => {
     const r = await scoreCell({ expect: "per-visitor", prompt: "A todo list app", files }, { judge, consentJudge });
     expect(r.grade).toBe("FAIL"); // shape-rigid rubric
     expect(r.consentGrade).toBe("PASS"); // consent-centric rubric
+    expect(r.hasShareMechanism).toBe(true); // request/join path — others can be brought in
   });
 
   it("isOwner token hard-fails BOTH rubrics", async () => {

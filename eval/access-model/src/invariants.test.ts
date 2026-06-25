@@ -84,6 +84,26 @@ describe("analyzeAccess", () => {
     const a = analyzeAccess(readonlyMention, "per-visitor");
     expect(a.authorImmutable).toBe(false);
   });
+
+  it("detects the `type === 'request'` / 'share' branches the prompt examples teach (#2631 regex fix)", () => {
+    const join = `export default function access(doc, oldDoc, user, ctx) {
+      const ch = "board:" + doc.boardId;
+      if (doc.type === "request") return { channels: [ch] };
+      ctx.requireAccess(ch);
+      return { channels: [ch] };
+    }`;
+    const ja = analyzeAccess(join, "per-object");
+    expect(ja.joinPath).toBe(true);
+
+    const share = `export default function access(doc, oldDoc, user, ctx) {
+      const ch = "board:" + doc.boardId;
+      if (doc.type === "share") { ctx.requireAccess(ch); return { channels: [ch], grant: { users: { [doc.invitee]: [ch] } } }; }
+      ctx.requireAccess(ch);
+      return { channels: [ch] };
+    }`;
+    const sa = analyzeAccess(share, "per-object");
+    expect(sa.memberAuthoredShare).toBe(true);
+  });
 });
 
 // --- Corpus regression: the real hand-graded #2588 corpus is ground truth. ---

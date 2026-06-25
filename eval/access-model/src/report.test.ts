@@ -8,6 +8,7 @@ const mk = (o: Partial<ScoredRow> & Pick<ScoredRow, "id" | "expect" | "grade">):
   formABroad: false,
   isOwnerWriteGate: false,
   isOwnerToken: false,
+  hasShareMechanism: false,
   ok: true,
   consentGrade: o.grade, // default: consent mirrors shape unless overridden
   ...o,

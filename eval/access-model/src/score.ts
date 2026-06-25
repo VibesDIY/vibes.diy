@@ -30,6 +30,12 @@ export interface ScoredCell {
   readonly formABroad: boolean;
   readonly isOwnerWriteGate: boolean;
   readonly isOwnerToken: boolean;
+  /**
+   * Shareability (#2631): does the access model offer ANY consent-respecting way to make
+   * part of the graph visible to others — an invite/share grant, a request/join path, or
+   * public read? false = pure private-per-user with no sharing (the penalty target).
+   */
+  readonly hasShareMechanism: boolean;
   /** false => platform/generate failure, excluded from the metric. */
   readonly ok: boolean;
   readonly judgeVerdict: JudgeVerdict | null;
@@ -77,6 +83,7 @@ export async function scoreCell(
     formABroad: analysis.formABroad,
     isOwnerWriteGate: analysis.isOwnerWriteGate,
     isOwnerToken: analysis.isOwnerToken,
+    hasShareMechanism: analysis.memberAuthoredShare || analysis.joinPath || analysis.publicRead,
     ok: true,
     judgeVerdict: judge,
     reasons: g.reasons,
@@ -97,6 +104,7 @@ function generateFailedCell(): ScoredCell {
     formABroad: false,
     isOwnerWriteGate: false,
     isOwnerToken: false,
+    hasShareMechanism: false,
     ok: false,
     judgeVerdict: null,
     reasons: ["generate-failed (platform failure, excluded from score)"],

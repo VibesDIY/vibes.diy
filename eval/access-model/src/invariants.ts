@@ -47,8 +47,12 @@ const RE = {
   // reversed `user.handle === doc.author` (Codex/Charlie review #2621).
   authorCreate:
     /(\bdoc\.(?:authorHandle|author|userHandle)\b[^;{}]*?(?:!==|===)\s*user\.(?:userHandle|handle)|\buser\.(?:userHandle|handle)\b[^;{}]*?(?:!==|===)\s*doc\.(?:authorHandle|author|userHandle))/,
-  shareBranch: /\b(type\s*===\s*["'`](share|invite|member|join)["'`]|doc\.(invitee|inviteHandle|memberHandle))\b/,
-  joinBranch: /\b(type\s*===\s*["'`](join|request)["'`]|requestToJoin|joinRequest)\b/,
+  // The `\b` lives on the bareword alternatives only — a trailing `\b` after the
+  // closing quote of the `type === "share"` form never matches (a quote is non-word and
+  // is followed by `)`/`{`/space), which silently dropped the most common share/join
+  // pattern — the very one the prompt's own examples teach (#2631 fix).
+  shareBranch: /(type\s*===\s*["'`](share|invite|member|join)["'`]|\bdoc\.(invitee|inviteHandle|memberHandle)\b)/,
+  joinBranch: /(type\s*===\s*["'`](join|request)["'`]|\b(requestToJoin|joinRequest)\b)/,
   // A `members: { ... }` map (role/channel -> users) — the membership construct.
   membersMap: /\bmembers\s*:\s*\{/,
 };
