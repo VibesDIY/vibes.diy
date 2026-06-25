@@ -22,7 +22,10 @@ export interface RowGrade {
 
 // Is the access MODEL correct for the expected dimension? (axis a)
 function modelCorrect(expect: Dimension, a: AccessAnalysis): { ok: boolean; reason: string } {
-  if (a.isOwnerWriteGate) return { ok: false, reason: "isOwner write-gate (design forbids)" };
+  // The `isOwner` token is retired by design (#2631) — its mere presence is a hard fail,
+  // not just the `user.isOwner` write-gate form. isOwnerWriteGate ⊂ isOwnerToken.
+  if (a.isOwnerToken)
+    return { ok: false, reason: a.isOwnerWriteGate ? "isOwner write-gate (design forbids)" : "isOwner token (design retired it)" };
   switch (expect) {
     case "per-visitor":
       if (a.formAStrict) return { ok: false, reason: "Form-A: requireRole('owner') core write" };

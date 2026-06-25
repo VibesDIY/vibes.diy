@@ -7,6 +7,7 @@ export interface MetricCell {
   readonly formAStrict: boolean;
   readonly formABroad: boolean;
   readonly isOwnerWriteGate: boolean;
+  readonly isOwnerToken?: boolean; // any literal `isOwner` token (#2631) — optional so existing callers are unaffected
   readonly ok: boolean; // false => platform/generate failure, excluded from score
 }
 
@@ -26,6 +27,7 @@ export interface Rollup {
   readonly formAStrictRate: number;
   readonly formABroadRate: number;
   readonly isOwnerCount: number;
+  readonly isOwnerTokenCount: number;
   readonly twoFileRate: number;
   readonly renderableRate: number;
 }
@@ -41,6 +43,7 @@ export function rollup(cells: readonly MetricCell[]): Rollup {
     formAStrictRate: rate((c) => c.formAStrict),
     formABroadRate: rate((c) => c.formABroad),
     isOwnerCount: scored.filter((c) => c.isOwnerWriteGate).length,
+    isOwnerTokenCount: scored.filter((c) => c.isOwnerToken === true).length,
     twoFileRate: rate((c) => c.twoFile),
     renderableRate: rate((c) => c.renderable),
   };

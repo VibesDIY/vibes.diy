@@ -1,29 +1,21 @@
 import { describe, it, expect } from "vitest";
 import { buildResults, renderMetricLine, type ScoredRow } from "./report.js";
 
+const mk = (o: Partial<ScoredRow> & Pick<ScoredRow, "id" | "expect" | "grade">): ScoredRow => ({
+  twoFile: true,
+  renderable: true,
+  formAStrict: false,
+  formABroad: false,
+  isOwnerWriteGate: false,
+  isOwnerToken: false,
+  ok: true,
+  consentGrade: o.grade, // default: consent mirrors shape unless overridden
+  ...o,
+});
+
 const scored: readonly ScoredRow[] = [
-  {
-    id: "todo",
-    expect: "per-visitor",
-    grade: "PASS",
-    twoFile: true,
-    renderable: true,
-    formAStrict: false,
-    formABroad: false,
-    isOwnerWriteGate: false,
-    ok: true,
-  },
-  {
-    id: "habit",
-    expect: "per-visitor",
-    grade: "FAIL",
-    twoFile: true,
-    renderable: true,
-    formAStrict: true,
-    formABroad: false,
-    isOwnerWriteGate: false,
-    ok: true,
-  },
+  mk({ id: "todo", expect: "per-visitor", grade: "PASS" }),
+  mk({ id: "habit", expect: "per-visitor", grade: "FAIL", formAStrict: true }),
 ];
 
 describe("buildResults", () => {
@@ -36,39 +28,9 @@ describe("buildResults", () => {
 
   it("aggregates reps of the same prompt into one row with PASS/SOFT/FAIL counts", () => {
     const cells: readonly ScoredRow[] = [
-      {
-        id: "todo",
-        expect: "per-visitor",
-        grade: "PASS",
-        twoFile: true,
-        renderable: true,
-        formAStrict: false,
-        formABroad: false,
-        isOwnerWriteGate: false,
-        ok: true,
-      },
-      {
-        id: "todo",
-        expect: "per-visitor",
-        grade: "SOFT",
-        twoFile: true,
-        renderable: false,
-        formAStrict: false,
-        formABroad: false,
-        isOwnerWriteGate: false,
-        ok: true,
-      },
-      {
-        id: "todo",
-        expect: "per-visitor",
-        grade: "FAIL",
-        twoFile: true,
-        renderable: true,
-        formAStrict: true,
-        formABroad: false,
-        isOwnerWriteGate: false,
-        ok: true,
-      },
+      mk({ id: "todo", expect: "per-visitor", grade: "PASS" }),
+      mk({ id: "todo", expect: "per-visitor", grade: "SOFT", renderable: false }),
+      mk({ id: "todo", expect: "per-visitor", grade: "FAIL", formAStrict: true }),
     ];
     const r = buildResults(cells);
     expect(r.rows).toHaveLength(1);
@@ -79,6 +41,20 @@ describe("buildResults", () => {
     expect(row.soft_fail).toBe(1);
     expect(row.fail).toBe(1);
     expect(row.formA).toBe(true); // any rep flagged Form-A
+  });
+
+  it("computes a side-by-side consent rollup that can diverge from the shape metric (#2631)", () => {
+    // A collaborative todo: shape rubric FAILs both reps, consent rubric PASSes both.
+    const cells: readonly ScoredRow[] = [
+      mk({ id: "todo", expect: "per-visitor", grade: "FAIL", consentGrade: "PASS" }),
+      mk({ id: "todo", expect: "per-visitor", grade: "FAIL", consentGrade: "PASS" }),
+    ];
+    const r = buildResults(cells);
+    expect(r.rollup.metric).toBeCloseTo(0, 5); // shape: both FAIL
+    expect(r.consentRollup.metric).toBeCloseTo(1, 5); // consent: both PASS
+    expect(r.rows[0]?.fail).toBe(2);
+    expect(r.rows[0]?.consent_pass).toBe(2);
+    expect(r.rows[0]?.consent_grade).toBe("PASS");
   });
 });
 

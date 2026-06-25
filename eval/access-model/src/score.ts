@@ -6,8 +6,9 @@ import { mapWithConcurrency } from "../../codegen-matrix/src/pool.js";
 import { analyzeAccess } from "./invariants.js";
 import { checkFiles } from "./renderable.js";
 import { gradeRow, type Grade, type JudgeVerdict } from "./grade.js";
+import { gradeConsentRow, type ConsentVerdict } from "./grade-consent.js";
 import { parseAccessMatrix, type AccessMatrix, type Dimension } from "./config.js";
-import { realJudgeDeps, judgeSecondVisitor, type JudgeDeps } from "./judge.js";
+import { realJudgeDeps, judgeSecondVisitor, judgeConsent, type JudgeDeps } from "./judge.js";
 import { CELL_JSON, RUN_JSON, type AccessCellJson } from "./generate.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -28,10 +29,15 @@ export interface ScoredCell {
   readonly formAStrict: boolean;
   readonly formABroad: boolean;
   readonly isOwnerWriteGate: boolean;
+  readonly isOwnerToken: boolean;
   /** false => platform/generate failure, excluded from the metric. */
   readonly ok: boolean;
   readonly judgeVerdict: JudgeVerdict | null;
   readonly reasons: string[];
+  // Side-by-side consent-centric rubric (#2631) — additive; the fields above are unchanged.
+  readonly consentGrade: Grade | typeof GENERATE_FAILED;
+  readonly consentVerdict: ConsentVerdict | null;
+  readonly consentReasons: string[];
 }
 
 const MULTIPLAYER: ReadonlySet<Dimension> = new Set<Dimension>(["per-visitor", "per-object", "author-owned", "multi-tier"]);
@@ -44,14 +50,22 @@ export async function scoreCell(
   input: { readonly expect: Dimension; readonly prompt: string; readonly files: Record<string, string> },
   deps: {
     readonly judge: (a: { prompt: string; expect: Dimension; files: Record<string, string> }) => Promise<JudgeVerdict | null>;
+    readonly consentJudge: (a: {
+      prompt: string;
+      expect: Dimension;
+      files: Record<string, string>;
+    }) => Promise<ConsentVerdict | null>;
   }
 ): Promise<ScoredCell> {
   const analysis = analyzeAccess(input.files["access.js"] ?? "", input.expect);
   const files = checkFiles(input.files);
-  const judge = MULTIPLAYER.has(input.expect)
-    ? await deps.judge({ prompt: input.prompt, expect: input.expect, files: input.files })
+  const judgeRequired = MULTIPLAYER.has(input.expect);
+  const judge = judgeRequired ? await deps.judge({ prompt: input.prompt, expect: input.expect, files: input.files }) : null;
+  const consent = judgeRequired
+    ? await deps.consentJudge({ prompt: input.prompt, expect: input.expect, files: input.files })
     : null;
   const g = gradeRow({ expect: input.expect, analysis, files, judge });
+  const cg = gradeConsentRow({ analysis, files, consent, judgeRequired });
   return {
     grade: g.grade,
     modelOk: g.modelOk,
@@ -60,9 +74,13 @@ export async function scoreCell(
     formAStrict: analysis.formAStrict,
     formABroad: analysis.formABroad,
     isOwnerWriteGate: analysis.isOwnerWriteGate,
+    isOwnerToken: analysis.isOwnerToken,
     ok: true,
     judgeVerdict: judge,
     reasons: g.reasons,
+    consentGrade: cg.grade,
+    consentVerdict: consent,
+    consentReasons: cg.reasons,
   };
 }
 
@@ -76,9 +94,13 @@ function generateFailedCell(): ScoredCell {
     formAStrict: false,
     formABroad: false,
     isOwnerWriteGate: false,
+    isOwnerToken: false,
     ok: false,
     judgeVerdict: null,
     reasons: ["generate-failed (platform failure, excluded from score)"],
+    consentGrade: GENERATE_FAILED,
+    consentVerdict: null,
+    consentReasons: ["generate-failed (platform failure, excluded from score)"],
   };
 }
 
@@ -138,13 +160,14 @@ export async function main(): Promise<void> {
 
   const judgeDeps: JudgeDeps = realJudgeDeps(matrix);
   const judge = (a: { prompt: string; expect: Dimension; files: Record<string, string> }) => judgeSecondVisitor(a, judgeDeps);
+  const consentJudge = (a: { prompt: string; expect: Dimension; files: Record<string, string> }) => judgeConsent(a, judgeDeps);
 
   await mapWithConcurrency(dirs, matrix.scoreConcurrency, async (dir) => {
     const cell: AccessCellJson = JSON.parse(readFileSync(join(dir, CELL_JSON), "utf-8"));
     const scored =
       cell.exitState === "generate-failed"
         ? generateFailedCell()
-        : await scoreCell({ expect: cell.expect as Dimension, prompt: cell.prompt, files: cell.files }, { judge });
+        : await scoreCell({ expect: cell.expect as Dimension, prompt: cell.prompt, files: cell.files }, { judge, consentJudge });
     writeFileSync(join(dir, SCORE_JSON), JSON.stringify(scored, null, 2), "utf-8");
     stderr.write(`  ${cell.promptId} r${cell.rep}: ${scored.grade}\n`);
   });

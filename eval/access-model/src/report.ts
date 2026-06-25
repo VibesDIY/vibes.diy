@@ -26,8 +26,12 @@ export interface ScoredRow {
   readonly formAStrict: boolean;
   readonly formABroad: boolean;
   readonly isOwnerWriteGate: boolean;
+  readonly isOwnerToken: boolean;
   readonly ok: boolean;
   readonly reasons?: readonly string[];
+  // Side-by-side consent rubric (#2631) — additive.
+  readonly consentGrade: CellGrade;
+  readonly consentReasons?: readonly string[];
 }
 
 /** One aggregated row per prompt id (mirrors the per-row shape of the #2588 results JSON). */
@@ -45,13 +49,20 @@ export interface ResultRow {
   readonly formA: boolean;
   readonly formABroad: boolean;
   readonly isOwner: boolean;
+  readonly isOwnerToken: boolean;
   readonly twoFile: boolean;
   readonly renderable: boolean;
   readonly reasons: readonly string[];
+  // consent rubric per-prompt breakdown (#2631)
+  readonly consent_grade: CellGrade;
+  readonly consent_pass: number;
+  readonly consent_soft_fail: number;
+  readonly consent_fail: number;
 }
 
 export interface Results {
   readonly rollup: Rollup;
+  readonly consentRollup: Rollup;
   readonly rows: readonly ResultRow[];
 }
 
@@ -63,15 +74,21 @@ function toMetricCell(r: ScoredRow): MetricCell {
     formAStrict: r.formAStrict,
     formABroad: r.formABroad,
     isOwnerWriteGate: r.isOwnerWriteGate,
+    isOwnerToken: r.isOwnerToken,
     ok: r.ok,
   };
 }
 
-function modalGrade(reps: readonly ScoredRow[]): CellGrade {
+/** The same cell viewed through the consent rubric: only the grade axis changes. */
+function toConsentMetricCell(r: ScoredRow): MetricCell {
+  return { ...toMetricCell(r), grade: r.consentGrade };
+}
+
+function modalGrade(reps: readonly ScoredRow[], pick: (r: ScoredRow) => CellGrade = (r) => r.grade): CellGrade {
   const order: CellGrade[] = ["PASS", "SOFT", "FAIL", GENERATE_FAILED];
   const counts = new Map<CellGrade, number>();
-  for (const r of reps) counts.set(r.grade, (counts.get(r.grade) ?? 0) + 1);
-  let best: CellGrade = reps[0]?.grade ?? "FAIL";
+  for (const r of reps) counts.set(pick(r), (counts.get(pick(r)) ?? 0) + 1);
+  let best: CellGrade = reps[0] ? pick(reps[0]) : "FAIL";
   let bestN = -1;
   for (const g of order) {
     const n = counts.get(g) ?? 0;
@@ -89,6 +106,7 @@ function modalGrade(reps: readonly ScoredRow[]): CellGrade {
  */
 export function buildResults(cells: readonly ScoredRow[]): Results {
   const r = rollup(cells.map(toMetricCell));
+  const cr = rollup(cells.map(toConsentMetricCell));
 
   const byId = new Map<string, ScoredRow[]>();
   const order: string[] = [];
@@ -107,6 +125,7 @@ export function buildResults(cells: readonly ScoredRow[]): Results {
     const first = reps?.[0];
     if (!reps || !first) throw new Error(`missing scored rows for prompt: ${id}`);
     const count = (g: CellGrade) => reps.filter((x) => x.grade === g).length;
+    const countConsent = (g: CellGrade) => reps.filter((x) => x.consentGrade === g).length;
     const any = (p: (x: ScoredRow) => boolean) => reps.some(p);
     const all = (p: (x: ScoredRow) => boolean) => reps.every(p);
     const reasons = [...new Set(reps.flatMap((x) => x.reasons ?? []))];
@@ -123,13 +142,18 @@ export function buildResults(cells: readonly ScoredRow[]): Results {
       formA: any((x) => x.formAStrict),
       formABroad: any((x) => x.formABroad),
       isOwner: any((x) => x.isOwnerWriteGate),
+      isOwnerToken: any((x) => x.isOwnerToken),
       twoFile: all((x) => x.twoFile),
       renderable: all((x) => x.renderable),
       reasons,
+      consent_grade: modalGrade(reps, (x) => x.consentGrade),
+      consent_pass: countConsent("PASS"),
+      consent_soft_fail: countConsent("SOFT"),
+      consent_fail: countConsent("FAIL"),
     };
   });
 
-  return { rollup: r, rows };
+  return { rollup: r, consentRollup: cr, rows };
 }
 
 /** The single scalar line the autoresearch loop greps for. */
@@ -149,13 +173,20 @@ export function renderSummary(results: Results): string {
   lines.push(`- platform-failed (excluded): ${r.platformFailed}`);
   lines.push(`- Form-A strict rate: ${pct(r.formAStrictRate)} | Form-A broad rate: ${pct(r.formABroadRate)}`);
   lines.push(`- isOwner write-gate count: ${r.isOwnerCount}`);
+  lines.push(`- isOwner token count (hard fail, #2631): ${r.isOwnerTokenCount}`);
   lines.push(`- two-file rate: ${pct(r.twoFileRate)} | renderable rate: ${pct(r.renderableRate)}`);
   lines.push("");
-  lines.push(`| prompt | dimension | grade | pass | soft | fail | gen-failed | formA | twoFile | renderable |`);
-  lines.push(`| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |`);
+  lines.push(
+    `- CONSENT METRIC: **${results.consentRollup.metric.toFixed(4)}** (side-by-side rubric, #2631 — collaboration never penalized; fail only on isOwner token / consent leak / dead-end)`
+  );
+  lines.push("");
+  lines.push(
+    `| prompt | dimension | grade | pass | soft | fail | gen-failed | formA | twoFile | renderable | c-grade | c-pass | c-soft | c-fail |`
+  );
+  lines.push(`| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |`);
   for (const row of results.rows) {
     lines.push(
-      `| ${row.id} | ${row.dimension} | ${row.grade} | ${row.pass} | ${row.soft_fail} | ${row.fail} | ${row.generate_failed} | ${row.formA} | ${row.twoFile} | ${row.renderable} |`
+      `| ${row.id} | ${row.dimension} | ${row.grade} | ${row.pass} | ${row.soft_fail} | ${row.fail} | ${row.generate_failed} | ${row.formA} | ${row.twoFile} | ${row.renderable} | ${row.consent_grade} | ${row.consent_pass} | ${row.consent_soft_fail} | ${row.consent_fail} |`
     );
   }
   lines.push("");
@@ -213,8 +244,11 @@ function loadScoredRows(runDir: string): { rows: ScoredRow[]; prompts: Map<strin
       formAStrict: score.formAStrict,
       formABroad: score.formABroad,
       isOwnerWriteGate: score.isOwnerWriteGate,
+      isOwnerToken: score.isOwnerToken ?? false,
       ok: score.ok,
       reasons: score.reasons,
+      consentGrade: score.consentGrade ?? score.grade,
+      consentReasons: score.consentReasons,
     });
   }
   return { rows, prompts, dims };
@@ -232,7 +266,7 @@ export async function main(): Promise<void> {
   const results = buildResults(scoredRows);
   // backfill the prompt text on each row (buildResults doesn't see cell.json).
   const rowsWithPrompts: ResultRow[] = results.rows.map((row) => ({ ...row, prompt: prompts.get(row.id) ?? "" }));
-  const out: Results = { rollup: results.rollup, rows: rowsWithPrompts };
+  const out: Results = { rollup: results.rollup, consentRollup: results.consentRollup, rows: rowsWithPrompts };
 
   writeFileSync(join(runDir, RESULTS_JSON), JSON.stringify(out, null, 2), "utf-8");
   writeFileSync(join(runDir, SUMMARY_MD), renderSummary(out), "utf-8");
