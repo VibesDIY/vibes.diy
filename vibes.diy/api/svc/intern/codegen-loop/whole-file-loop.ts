@@ -49,6 +49,83 @@ function langFor(filename: string): string {
   return filename.endsWith(".jsx") || filename.endsWith(".tsx") ? "jsx" : "js";
 }
 
+/** A streamed `function_call` output item (cumulative `arguments` JSON). Mirrors @openrouter/agent's StreamableOutputItem. */
+interface StreamedFunctionCall {
+  type?: string;
+  name?: string;
+  arguments?: string;
+}
+
+/**
+ * Pull `path` and `contents` out of a (possibly truncated) write_file arguments
+ * JSON blob. While the tool call streams, `arguments` is a growing prefix of the
+ * final JSON, so a strict `JSON.parse` usually throws mid-stream. We first try a
+ * clean parse, then fall back to extracting each string field, JSON-decoding the
+ * portion that has arrived so escapes (`\n`, `\"`, …) resolve correctly.
+ */
+function extractWriteFileArgs(raw: string): { path?: string; contents?: string } {
+  try {
+    const parsed = JSON.parse(raw) as Record<string, unknown>;
+    return {
+      path: typeof parsed.path === "string" ? parsed.path : undefined,
+      contents: typeof parsed.contents === "string" ? parsed.contents : undefined,
+    };
+  } catch {
+    return { path: extractJsonStringField(raw, "path"), contents: extractJsonStringField(raw, "contents") };
+  }
+}
+
+/**
+ * Decode the string value of `"<field>":"<value>"` from a partial JSON blob,
+ * honoring backslash escapes and stopping at the first unescaped quote (the
+ * value may be unterminated mid-stream). Returns undefined if the field/opening
+ * quote has not arrived yet.
+ */
+function extractJsonStringField(raw: string, field: string): string | undefined {
+  const key = `"${field}"`;
+  const keyAt = raw.indexOf(key);
+  if (keyAt === -1) return undefined;
+  let i = raw.indexOf('"', keyAt + key.length);
+  if (i === -1) return undefined;
+  i += 1; // step past the opening quote of the value
+  let out = "";
+  for (; i < raw.length; i++) {
+    const ch = raw[i];
+    if (ch === "\\") {
+      const next = raw[i + 1];
+      if (next === undefined) break; // escape sequence still arriving
+      out += JSON.parse(`"\\${next}"`) as string;
+      i += 1;
+      continue;
+    }
+    if (ch === '"') break; // closing quote → value complete
+    out += ch;
+  }
+  return out;
+}
+
+/**
+ * Track which lines of each file have already been emitted, so a `function_call`
+ * item that is re-emitted with growing `contents` only fires `onLine` for newly
+ * completed (newline-terminated) lines. The trailing partial line is withheld
+ * until its newline arrives.
+ */
+function makeLineEmitter(onLine: OnLine) {
+  const emitted: Record<string, number> = {};
+  return (rawPath: string, contents: string) => {
+    const filename = normalizeFilename(rawPath);
+    const lang = langFor(filename);
+    const nl = contents.lastIndexOf("\n");
+    if (nl === -1) return; // no completed line yet
+    const lines = contents.slice(0, nl).split("\n");
+    const already = emitted[filename] ?? 0;
+    for (let nr = already; nr < lines.length; nr++) {
+      onLine(filename, lang, lines[nr], nr);
+    }
+    emitted[filename] = lines.length;
+  };
+}
+
 async function runOnce(args: RunArgs): Promise<WholeFileResult> {
   const files: Record<string, string> = {};
 
@@ -79,8 +156,27 @@ async function runOnce(args: RunArgs): Promise<WholeFileResult> {
     stopWhen: [stepCountIs(args.maxSteps), maxCost(args.maxCostUsd)],
   });
 
+  // Stream completed file lines to the caller as the model writes them. The
+  // items stream emits each write_file call cumulatively (same id, growing
+  // arguments), so the emitter diffs against the per-file line cursor and only
+  // fires onLine for newly-completed lines. Drained concurrently with getText()
+  // since both share the underlying reusable stream.
+  const streaming = (async () => {
+    if (!args.onLine) return;
+    const emitLines = makeLineEmitter(args.onLine);
+    for await (const item of result.getItemsStream()) {
+      const fc = item as StreamedFunctionCall;
+      if (fc.type !== "function_call" || fc.name !== "write_file" || typeof fc.arguments !== "string") continue;
+      const { path, contents } = extractWriteFileArgs(fc.arguments);
+      if (typeof path === "string" && path.length > 0 && typeof contents === "string") {
+        emitLines(path, contents);
+      }
+    }
+  })();
+
   // Drive the loop to completion (tools execute as the stream is consumed).
   await result.getText();
+  await streaming;
   const response = await result.getResponse();
   const u = (response as { usage?: { inputTokens?: number; outputTokens?: number; totalTokens?: number } | null }).usage ?? {};
   const prompt_tokens = u.inputTokens ?? 0;
