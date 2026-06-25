@@ -24,8 +24,10 @@ describe("scoreCell", () => {
     let consentCalled = false;
     const files = {
       "App.jsx": "export default function App(){ return <div>hi there friend</div> }",
+      // Corrected owner-published shape (#2631): owner approves authors (requireRole only on the
+      // roster grant), posts author-owned + membership-gated, public read.
       "access.js":
-        "export default function access(doc,oldDoc,user){ ctx.requireRole('owner'); return {channels:['posts'], grant:{public:['posts']}} }",
+        "export default function access(doc,oldDoc,user,ctx){ if(doc.type==='author'){ ctx.requireRole('owner'); return {channels:['blog:authors'], grant:{users:{[doc.authorHandle]:['blog:authors']}, roles:{owner:['blog:authors']}}} } if(doc.type==='post'){ ctx.requireAccess('blog:authors'); if(doc.authorHandle!==user.userHandle) throw {forbidden:true}; if(oldDoc&&oldDoc.authorHandle!==user.userHandle) throw {forbidden:true}; return {channels:['blog'], grant:{public:['blog']}} } return {channels:['blog'], grant:{public:['blog']}} }",
     };
     const judge = async () => {
       shapeCalled = true;
