@@ -1,4 +1,8 @@
-import { computeStructure } from "@vibes.diy/eval-codegen-matrix/scoring";
+// Workers-safe import: the `/structure` subpath is the self-contained,
+// import-free module (pure regex heuristics, no node:* / call-ai / .dev.vars).
+// Do NOT import from `/scoring` — that barrel re-exports judgeFeature, which
+// drags node:fs/node:path/call-ai/.dev.vars into the Workers request-path graph.
+import { computeStructure } from "@vibes.diy/eval-codegen-matrix/structure";
 
 export type VerifyResult = { ok: boolean; problems: string[] };
 
