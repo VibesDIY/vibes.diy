@@ -1,18 +1,19 @@
 {
-  "commit": "3fac49eb9832bb31634ef029e119b28a6f70763f",
-  "note": "Multi-batch mean of 2 baseline-prompt batches (base-run1 + base-run2). Single-batch noise is large (~0.06 eval / ~0.17 holdout), so the frozen reference is averaged rather than a single lucky draw. See prompts/AUTORESEARCH-2602.md and VibesDIY/vibes.diy#2637.",
-  "batches": 2,
+  "commit": "7f16aec6ee65a98696827f40e57c24b1f13abd33",
+  "note": "Re-baselined to KEPT iter-3 (enrichment made access-shape-neutral, #2631) — the new hill-climb reference so later iterations are judged against the current best, not the original baseline. 5-batch eval mean + 2-batch holdout mean against the iter-3 preview deploy. Supersedes the original frozen baseline (eval 0.5625 / holdout 0.3984, commit 3fac49e). Explicit move, recorded in prompts/AUTORESEARCH-2602.md; see also #2637 for the noise calibration.",
+  "supersedes": { "commit": "3fac49eb9832bb31634ef029e119b28a6f70763f", "eval": 0.5625, "holdout": 0.3984375 },
+  "batches": { "eval": 5, "holdout": 2 },
   "eval": {
-    "scored": 128,
+    "scored": 64,
     "platformFailed": 0,
-    "metric": 0.5625,
-    "formAStrictRate": 0.34375,
-    "formABroadRate": 0.0078125,
+    "metric": 0.7875,
+    "formAStrictRate": 0.021875,
+    "formABroadRate": 0.0,
     "isOwnerCount": 0,
     "twoFileRate": 1,
     "renderableRate": 1
   },
   "holdout": {
-    "metric": 0.3984375
+    "metric": 0.703125
   }
 }
