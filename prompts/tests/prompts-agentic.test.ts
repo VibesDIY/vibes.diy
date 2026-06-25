@@ -28,13 +28,7 @@ describe("makeBaseSystemPrompt agentic variant", () => {
   });
 
   it("agentic template keeps all required placeholders", () => {
-    const PLACEHOLDERS = [
-      "{{STYLE_PROMPT}}",
-      "{{DEMO_DATA}}",
-      "{{CONCATENATED_LLMS}}",
-      "{{TITLE_SECTION}}",
-      "{{USER_PROMPT}}",
-    ];
+    const PLACEHOLDERS = ["{{STYLE_PROMPT}}", "{{DEMO_DATA}}", "{{CONCATENATED_LLMS}}", "{{TITLE_SECTION}}", "{{USER_PROMPT}}"];
     for (const p of PLACEHOLDERS) {
       expect(systemPromptAgenticTemplate).toContain(p);
     }

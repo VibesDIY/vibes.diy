@@ -61,7 +61,7 @@ export interface WholeFileCodegenSessionDoc {
  */
 export type MakeBaseSystemPromptFn = (
   model: string,
-  sessionDoc: WholeFileCodegenSessionDoc & { variant: "agentic-whole-file" },
+  sessionDoc: WholeFileCodegenSessionDoc & { variant: "agentic-whole-file" }
 ) => Promise<{ systemPrompt: string }>;
 
 /** The loop entry point (Task 5/6), injected so the handler can be tested with a fake. */

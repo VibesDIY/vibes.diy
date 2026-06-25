@@ -1,11 +1,4 @@
-import type {
-  BlockBeginMsg,
-  CodeBeginMsg,
-  CodeLineMsg,
-  CodeEndMsg,
-  BlockEndMsg,
-  BlockUsage,
-} from "@vibes.diy/call-ai-v2";
+import type { BlockBeginMsg, CodeBeginMsg, CodeLineMsg, CodeEndMsg, BlockEndMsg, BlockUsage } from "@vibes.diy/call-ai-v2";
 
 export type BlockEvent = BlockBeginMsg | CodeBeginMsg | CodeLineMsg | CodeEndMsg | BlockEndMsg;
 
@@ -18,10 +11,7 @@ export interface BlockIds {
   usage: BlockUsage;
 }
 
-export function buildBlockEvents(
-  files: { filename: string; lang: string; content: string }[],
-  ids: BlockIds,
-): BlockEvent[] {
+export function buildBlockEvents(files: { filename: string; lang: string; content: string }[], ids: BlockIds): BlockEvent[] {
   const now = new Date();
   const base = {
     blockId: ids.blockId,

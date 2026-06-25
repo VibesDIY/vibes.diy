@@ -2274,8 +2274,7 @@ export const promptChatSection: EventoHandler<W3CWebSocketEvent, MsgBase<ReqProm
           const rDefaults = await getModelDefaults(vctx, { appSlug: resChat.appSlug, ownerHandle: resChat.ownerHandle });
           if (rDefaults.isErr()) return Result.Err(rDefaults);
           const defaults = rDefaults.Ok();
-          const frontierModel =
-            vctx.sthis.env.get("WHOLE_FILE_FRONTIER_MODEL") ?? orig.prompt.model ?? defaults.codegen.model.id;
+          const frontierModel = vctx.sthis.env.get("WHOLE_FILE_FRONTIER_MODEL") ?? orig.prompt.model ?? defaults.codegen.model.id;
           const cheapModel = vctx.sthis.env.get("WHOLE_FILE_CHEAP_MODEL") ?? defaults.runtime.model.id;
           const userPrompt = firstUserText(orig.prompt.messages);
           // Build the OpenRouter client once (secret resolution centralized in

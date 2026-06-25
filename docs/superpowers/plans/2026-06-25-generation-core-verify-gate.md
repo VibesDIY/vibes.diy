@@ -29,6 +29,7 @@ These bind every task. ultrapowers forwards this block to every reviewer as thei
 ## File Structure
 
 **Create:**
+
 - `vibes.diy/api/svc/intern/codegen-loop/verify.ts` — Workers-safe `verifyFiles`.
 - `vibes.diy/api/svc/intern/codegen-loop/verify.test.ts`
 - `vibes.diy/api/svc/intern/codegen-loop/emit-blocks.ts` — whole-file → block-event adapter.
@@ -40,6 +41,7 @@ These bind every task. ultrapowers forwards this block to every reviewer as thei
 - `prompts/pkg/system-prompt-agentic.md` — whole-file prompt template.
 
 **Modify:**
+
 - `prompts/pkg/prompts.ts` — add `"agentic-whole-file"` variant to `makeBaseSystemPrompt`.
 - `vibes.diy/api/svc/public/prompt-chat-section.ts` — insert the flag-gated branch (~line 2260).
 
@@ -51,10 +53,12 @@ These bind every task. ultrapowers forwards this block to every reviewer as thei
 **Depends-on:** none
 
 **Files:**
+
 - Create: `vibes.diy/api/svc/intern/codegen-loop/verify.ts`
 - Test: `vibes.diy/api/svc/intern/codegen-loop/verify.test.ts`
 
 **Interfaces:**
+
 - Produces: `verifyFiles(files: Record<string, string>, opts: { needsAccess: boolean }): VerifyResult` and `type VerifyResult = { ok: boolean; problems: string[] }`
 - Consumes: `computeStructure` (from `@vibes.diy/eval-codegen-matrix/scoring`)
 
@@ -160,10 +164,12 @@ git commit -m "feat(codegen-loop): Workers-safe verify gate"
 **Depends-on:** none
 
 **Files:**
+
 - Create: `vibes.diy/api/svc/intern/codegen-loop/emit-blocks.ts`
 - Test: `vibes.diy/api/svc/intern/codegen-loop/emit-blocks.test.ts`
 
 **Interfaces:**
+
 - Produces: `buildBlockEvents(files: { filename: string; lang: string; content: string }[], ids: BlockIds): PromptAndBlockMsgs[]` and `type BlockIds = { blockId: string; streamId: string; sectionIdFor: (filename: string) => string; nextSeq: () => number; blockNr: number; usage: BlockUsage }`
 - Consumes: `BlockBeginMsg`, `CodeBeginMsg`, `CodeLineMsg`, `CodeEndMsg`, `BlockEndMsg`, `BlockUsage` (from `@vibes.diy/call-ai-v2`)
 
@@ -179,26 +185,16 @@ import { buildBlockEvents } from "./emit-blocks.js";
 describe("buildBlockEvents", () => {
   it("emits begin → per-file code.begin/line*/end → block.end", () => {
     let seq = 0;
-    const events = buildBlockEvents(
-      [{ filename: "/App.jsx", lang: "jsx", content: "line1\nline2" }],
-      {
-        blockId: "B1",
-        streamId: "P1",
-        sectionIdFor: () => "S1",
-        nextSeq: () => seq++,
-        blockNr: 0,
-        usage: { given: [], calculated: { prompt_tokens: 0, completion_tokens: 0, total_tokens: 0 } },
-      },
-    );
+    const events = buildBlockEvents([{ filename: "/App.jsx", lang: "jsx", content: "line1\nline2" }], {
+      blockId: "B1",
+      streamId: "P1",
+      sectionIdFor: () => "S1",
+      nextSeq: () => seq++,
+      blockNr: 0,
+      usage: { given: [], calculated: { prompt_tokens: 0, completion_tokens: 0, total_tokens: 0 } },
+    });
     const types = events.map((e) => e.type);
-    expect(types).toEqual([
-      "block.begin",
-      "block.code.begin",
-      "block.code.line",
-      "block.code.line",
-      "block.code.end",
-      "block.end",
-    ]);
+    expect(types).toEqual(["block.begin", "block.code.begin", "block.code.line", "block.code.line", "block.code.end", "block.end"]);
     const lines = events.filter((e) => e.type === "block.code.line") as { line: string; lineNr: number }[];
     expect(lines.map((l) => l.line)).toEqual(["line1", "line2"]);
     expect(lines.map((l) => l.lineNr)).toEqual([0, 1]);
@@ -217,9 +213,7 @@ Mirror the sequence `handleFSPrompt` emits (`prompt-chat-section.ts:1938-1980`).
 
 ```typescript
 // emit-blocks.ts
-import type {
-  BlockBeginMsg, CodeBeginMsg, CodeLineMsg, CodeEndMsg, BlockEndMsg, BlockUsage,
-} from "@vibes.diy/call-ai-v2";
+import type { BlockBeginMsg, CodeBeginMsg, CodeLineMsg, CodeEndMsg, BlockEndMsg, BlockUsage } from "@vibes.diy/call-ai-v2";
 
 export type BlockEvent = BlockBeginMsg | CodeBeginMsg | CodeLineMsg | CodeEndMsg | BlockEndMsg;
 export type BlockIds = {
@@ -231,24 +225,39 @@ export type BlockIds = {
   usage: BlockUsage;
 };
 
-export function buildBlockEvents(
-  files: { filename: string; lang: string; content: string }[],
-  ids: BlockIds,
-): BlockEvent[] {
+export function buildBlockEvents(files: { filename: string; lang: string; content: string }[], ids: BlockIds): BlockEvent[] {
   const now = new Date();
   const base = { blockId: ids.blockId, streamId: ids.streamId, blockNr: ids.blockNr, timestamp: now };
   const events: BlockEvent[] = [{ type: "block.begin", seq: ids.nextSeq(), ...base }];
-  let codeLines = 0, codeBytes = 0;
+  let codeLines = 0,
+    codeBytes = 0;
   for (const file of files) {
     const sectionId = ids.sectionIdFor(file.filename);
     events.push({ type: "block.code.begin", sectionId, lang: file.lang, path: file.filename, seq: ids.nextSeq(), ...base });
     const lines = file.content.split("\n");
     lines.forEach((line, lineNr) => {
-      events.push({ type: "block.code.line", sectionId, lang: file.lang, path: file.filename, line, lineNr, seq: ids.nextSeq(), ...base });
+      events.push({
+        type: "block.code.line",
+        sectionId,
+        lang: file.lang,
+        path: file.filename,
+        line,
+        lineNr,
+        seq: ids.nextSeq(),
+        ...base,
+      });
     });
     codeLines += lines.length;
     codeBytes += new TextEncoder().encode(file.content).length;
-    events.push({ type: "block.code.end", sectionId, lang: file.lang, path: file.filename, stats: { lines: lines.length, bytes: codeBytes }, seq: ids.nextSeq(), ...base });
+    events.push({
+      type: "block.code.end",
+      sectionId,
+      lang: file.lang,
+      path: file.filename,
+      stats: { lines: lines.length, bytes: codeBytes },
+      seq: ids.nextSeq(),
+      ...base,
+    });
   }
   events.push({
     type: "block.end",
@@ -286,10 +295,12 @@ git commit -m "feat(codegen-loop): whole-file to block-event adapter"
 **Depends-on:** none
 
 **Files:**
+
 - Create: `prompts/pkg/system-prompt-agentic.md`
 - Modify: `prompts/pkg/prompts.ts` (the `makeBaseSystemPrompt` function and its template-selection logic)
 
 **Interfaces:**
+
 - Produces: a `makeBaseSystemPrompt(..., { variant: "agentic-whole-file" })` path that loads `system-prompt-agentic.md` and substitutes the same placeholders (`{{THEME_DESIGN}}`, `{{STYLE_PROMPT}}`, `{{USER_PROMPT}}`, etc.)
 
 **Parallelization rationale:** The prompt variant is an independent file + a localized template-selection change; isolating it lets prompt iteration proceed without touching the server loop. A good engineer keeps prompt templates separate from runtime wiring.
@@ -335,9 +346,7 @@ In `prompts/pkg/prompts.ts` (around the template-selection at line ~351), extend
 ```typescript
 // pseudo-shape — match the real signature
 const templateFile =
-  variant === "agentic-whole-file" ? "system-prompt-agentic.md"
-  : isInitial ? "system-prompt-initial.md"
-  : "system-prompt.md";
+  variant === "agentic-whole-file" ? "system-prompt-agentic.md" : isInitial ? "system-prompt-initial.md" : "system-prompt.md";
 ```
 
 - [ ] **Step 5: Run test to verify it passes**
@@ -360,9 +369,11 @@ git commit -m "feat(prompts): agentic whole-file system-prompt variant"
 **Depends-on:** none
 
 **Files:**
+
 - Create: `vibes.diy/api/svc/intern/codegen-loop/openrouter-client.ts`
 
 **Interfaces:**
+
 - Produces: `makeOpenRouterClient(env: { get(key: string): string | undefined }): OpenRouter`
 - Consumes: `OpenRouter` from `@openrouter/agent`
 
@@ -398,10 +409,12 @@ git commit -m "feat(codegen-loop): server OpenRouter client factory"
 **Depends-on:** 1, 4
 
 **Files:**
+
 - Create: `vibes.diy/api/svc/intern/codegen-loop/whole-file-loop.ts`
 - Test: `vibes.diy/api/svc/intern/codegen-loop/whole-file-loop.test.ts`
 
 **Interfaces:**
+
 - Produces: `runWholeFileCodegen(args: RunArgs): Promise<WholeFileResult>` where `type RunArgs = { client: OpenRouter; model: string; systemPrompt: string; userPrompt: string; needsAccess: boolean; maxSteps: number; maxCostUsd: number; retries?: number; onLine?: (file: string, lang: string, line: string, lineNr: number) => void }` and `type WholeFileResult = { files: { filename: string; lang: string; content: string }[]; usage: { prompt_tokens: number; completion_tokens: number; total_tokens: number } }`
 - Consumes: `verifyFiles` (Task 1), `OpenRouter` (Task 4), `retryWithBackoff`, `isTransientError` (from `@vibes.diy/eval-codegen-matrix/scoring`), `tool` + `stepCountIs` + `maxCost` (from `@openrouter/agent`)
 
@@ -420,7 +433,10 @@ function mockClientWritingApp(contents: string) {
       const writeFile = tools[0];
       const exec = writeFile.execute({ path: "/App.jsx", contents });
       return {
-        getText: async () => { await exec; return ""; },
+        getText: async () => {
+          await exec;
+          return "";
+        },
         getResponse: async () => ({ usage: { inputTokens: 1, outputTokens: 2, totalTokens: 3 } }),
         getItemsStream: async function* () {},
       };
@@ -433,8 +449,12 @@ describe("runWholeFileCodegen", () => {
     const app = "export default function App(){ return <div>ok</div>; }";
     const r = await runWholeFileCodegen({
       client: mockClientWritingApp(app),
-      model: "frontier", systemPrompt: "sys", userPrompt: "make an app",
-      needsAccess: false, maxSteps: 4, maxCostUsd: 0.5,
+      model: "frontier",
+      systemPrompt: "sys",
+      userPrompt: "make an app",
+      needsAccess: false,
+      maxSteps: 4,
+      maxCostUsd: 0.5,
     });
     expect(r.files[0].filename).toBe("/App.jsx");
     expect(r.files[0].content).toBe(app);
@@ -459,8 +479,14 @@ import type { OpenRouter } from "@openrouter/agent";
 import { verifyFiles } from "./verify.js";
 
 export type RunArgs = {
-  client: OpenRouter; model: string; systemPrompt: string; userPrompt: string;
-  needsAccess: boolean; maxSteps: number; maxCostUsd: number; retries?: number;
+  client: OpenRouter;
+  model: string;
+  systemPrompt: string;
+  userPrompt: string;
+  needsAccess: boolean;
+  maxSteps: number;
+  maxCostUsd: number;
+  retries?: number;
   onLine?: (file: string, lang: string, line: string, lineNr: number) => void;
 };
 export type WholeFileResult = {
@@ -478,25 +504,29 @@ async function runOnce(args: RunArgs): Promise<WholeFileResult> {
       const filename = path.startsWith("/") ? path : `/${path}`;
       files[filename] = contents;
       const v = verifyFiles(files, { needsAccess: args.needsAccess });
-      return v.ok
-        ? { ok: true, feedback: "Build and structural checks pass." }
-        : { ok: false, feedback: v.problems.join("\n") };
+      return v.ok ? { ok: true, feedback: "Build and structural checks pass." } : { ok: false, feedback: v.problems.join("\n") };
     },
   };
   const writeFile = tool(writeFileConfig as unknown as Parameters<typeof tool>[0]);
   const result = args.client.callModel({
-    model: args.model, instructions: args.systemPrompt, input: args.userPrompt,
-    tools: [writeFile], stopWhen: [stepCountIs(args.maxSteps), maxCost(args.maxCostUsd)],
+    model: args.model,
+    instructions: args.systemPrompt,
+    input: args.userPrompt,
+    tools: [writeFile],
+    stopWhen: [stepCountIs(args.maxSteps), maxCost(args.maxCostUsd)],
   });
   await result.getText();
   const response = await result.getResponse();
   const u = (response as any).usage ?? {};
   return {
     files: Object.entries(files).map(([filename, content]) => ({
-      filename, lang: filename.endsWith(".jsx") || filename.endsWith(".tsx") ? "jsx" : "js", content,
+      filename,
+      lang: filename.endsWith(".jsx") || filename.endsWith(".tsx") ? "jsx" : "js",
+      content,
     })),
     usage: {
-      prompt_tokens: u.inputTokens ?? 0, completion_tokens: u.outputTokens ?? 0,
+      prompt_tokens: u.inputTokens ?? 0,
+      completion_tokens: u.outputTokens ?? 0,
       total_tokens: u.totalTokens ?? (u.inputTokens ?? 0) + (u.outputTokens ?? 0),
     },
   };
@@ -529,10 +559,12 @@ git commit -m "feat(codegen-loop): whole-file tool-loop core with Workers-safe v
 **Depends-on:** 5
 
 **Files:**
+
 - Modify: `vibes.diy/api/svc/intern/codegen-loop/whole-file-loop.ts`
 - Test: `vibes.diy/api/svc/intern/codegen-loop/whole-file-loop.test.ts`
 
 **Interfaces:**
+
 - Produces: `RunArgs.model` accepts `string | ((ctx: { numberOfTurns: number }) => string)`; `onLine` is invoked for each streamed file line via `result.getItemsStream()`
 - Consumes: `getItemsStream()` on the `ModelResult` (from `@openrouter/agent`)
 
@@ -596,9 +628,11 @@ git commit -m "feat(codegen-loop): live line streaming + frontier/cheap model ro
 **Depends-on:** 2, 3, 4, 5, 6
 
 **Files:**
+
 - Create: `vibes.diy/api/svc/public/handle-whole-file-codegen.ts`
 
 **Interfaces:**
+
 - Produces: `handleWholeFileCodegenRequest(deps): Promise<Result<number>>` (returns the final block sequence, matching the existing LLM handler's return contract)
 - Consumes: `runWholeFileCodegen` (Task 5/6), `buildBlockEvents` (Task 2), `makeBaseSystemPrompt({ variant: "agentic-whole-file" })` (Task 3), `makeOpenRouterClient` (Task 4), and the existing `assemblePromptPayload`, `appendBlockEvent`, `handlePromptContext` from `prompt-chat-section.ts` / `prompt-assembly.ts`
 
@@ -649,9 +683,11 @@ git commit -m "feat(svc): whole-file codegen handler (loop + emit + persist)"
 **Depends-on:** 7
 
 **Files:**
+
 - Modify: `vibes.diy/api/svc/public/prompt-chat-section.ts` (the LLM branch, ~lines 2259-2286)
 
 **Interfaces:**
+
 - Consumes: `handleWholeFileCodegenRequest` (Task 7)
 
 - [ ] **Step 1: Insert the gated branch**
