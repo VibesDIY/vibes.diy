@@ -50,7 +50,7 @@ export default function ChatPrompt() {
           return Promise.reject();
         }
         return chatApi.openChat({
-          mode: "chat",
+          mode: "codegen",
           prompt,
         });
       })

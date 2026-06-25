@@ -38,7 +38,7 @@ export function AppChatsTab({ ownerHandle, appSlug }: AppChatsTabProps) {
     setSelectedChatId(chatId);
     setChatDetail(null);
     setDetailLoading(true);
-    void chatApi.openChat({ chatId, mode: "app" }).then((rChat) => {
+    void chatApi.openChat({ chatId, mode: "runtime" }).then((rChat) => {
       if (rChat.isErr()) {
         setDetailLoading(false);
         return;

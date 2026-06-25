@@ -11,16 +11,21 @@ import { PromptMsgs } from "./prompt.js";
 // *catalog* tags (`ModelCapability`) and the persisted *settings*
 // (`ActiveModelSetting.usage`, `userSettingModelDefaults`).
 //
-// This is the EXPAND phase of the on-the-wire session `mode` migration (#2618):
-// the wire now ACCEPTS both the legacy `chat`/`app` and canonical
-// `codegen`/`runtime` tokens, and every server consumer normalizes via
-// `canonicalModelUsage()` before branching — but nothing changes what it
-// EMITS yet. Producers (CLI, sandbox) still send legacy, and `openChat` still
-// echoes the caller's `mode` back verbatim, so an old CLI that gates
-// dry-run/focus flags on `mode === "chat"` is unaffected. The client SDK
-// (`llm-chat.ts`) also normalizes the echoed `mode` before gating, so once a
-// client carrying this change is the dominant build, a later CONTRACT step can
-// safely flip the echo + producers to canonical without breaking anyone.
+// On-the-wire session `mode` migration (#2618). The wire ACCEPTS both the
+// legacy `chat`/`app` and canonical `codegen`/`runtime` tokens, and every
+// server consumer normalizes via `canonicalModelUsage()` before branching.
+// In-tree producers (CLI generate/edit, vibe sandbox, dashboard) now EMIT the
+// canonical tokens, and `openChat` echoes the caller's `mode` back verbatim
+// (it is normalized only for internal branching) — so a new client sends and
+// receives `codegen`/`runtime` end to end, while an old published CLI that
+// sends `chat` and gates dry-run/focus on `mode === "chat"` still gets `chat`
+// echoed back and keeps working. The client SDK (`llm-chat.ts`) normalizes the
+// echoed `mode` before gating, so both token families round-trip safely.
+//
+// Legacy-token ACCEPTANCE is deliberately retained for old clients in the wild
+// (the `chat`/`app` arms below, the discriminator alternatives, and the
+// `canonicalModelUsage()` shims). A future contract step can drop that
+// acceptance once old CLI builds have aged out — see #2618.
 //
 // Legacy tokens also stay ACCEPTED wherever they may already be stored (e.g. a
 // persisted `AIParams.model` embeds a catalog `Model` with `supports` tags
@@ -28,7 +33,7 @@ import { PromptMsgs } from "./prompt.js";
 // canonical names there.
 export const LEGACY_CAPABILITY_ALIASES = { chat: "codegen", app: "runtime" } as const;
 
-// Wire session mode — accepts both legacy and canonical tokens (expand phase).
+// Wire session mode — emits canonical, still accepts legacy from old clients (#2618).
 export const PromptLLMStyle = type("'codegen' | 'runtime' | 'img' | 'chat' | 'app'");
 export type PromptLLMStyle = typeof PromptLLMStyle.infer;
 export function isPromptLLMStyle(obj: unknown): obj is PromptLLMStyle {
@@ -143,7 +148,7 @@ export type SlotConfig = typeof slotConfig.infer;
 
 export const reqCreationPromptChatSection = type({
   type: "'vibes.diy.req-prompt-chat-section'",
-  // Codegen mode — accepts canonical `codegen` and legacy `chat` (#2618 expand).
+  // Codegen mode — producers emit `codegen`; legacy `chat` still accepted (#2618).
   mode: "'codegen' | 'chat'",
   auth: dashAuthType,
   chatId: "string",
@@ -180,7 +185,7 @@ export function isReqCreationPromptChatSection(obj: unknown): obj is typeof reqC
 
 export const reqPromptApplicationChatSection = type({
   type: "'vibes.diy.req-prompt-chat-section'",
-  // Runtime mode — accepts canonical `runtime` and legacy `app` (#2618 expand).
+  // Runtime mode — producers emit `runtime`; legacy `app` still accepted (#2618).
   mode: "'runtime' | 'app'",
   auth: dashAuthType,
   chatId: "string",

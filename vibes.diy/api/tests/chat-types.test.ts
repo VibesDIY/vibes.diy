@@ -88,9 +88,9 @@ describe("reqCreationPromptChatSection: selected wire shape", () => {
   });
 });
 
-// #2618 expand phase: the wire `mode` accepts both the legacy (chat/app) and
-// canonical (codegen/runtime) tokens, and the discriminated union still routes
-// each to the right request branch.
+// #2618: producers emit canonical (codegen/runtime) tokens, but the wire still
+// accepts the legacy (chat/app) tokens from old clients, and the discriminated
+// union routes each to the right request branch.
 describe("wire mode accepts legacy + canonical tokens (#2618)", () => {
   const base = {
     type: "vibes.diy.req-prompt-chat-section" as const,

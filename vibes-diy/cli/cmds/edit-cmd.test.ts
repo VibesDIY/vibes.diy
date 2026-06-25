@@ -427,7 +427,7 @@ describe("editEvento", () => {
 
     const updated = await readFile(join(cwd, "App.jsx"), "utf-8");
     expect(updated).toContain("Hello, world");
-    expect(calls.openChat).toEqual([{ ownerHandle: "alice", appSlug: "todo-app", mode: "chat" }]);
+    expect(calls.openChat).toEqual([{ ownerHandle: "alice", appSlug: "todo-app", mode: "codegen" }]);
     expect(calls.prompt).toEqual([
       {
         messages: [

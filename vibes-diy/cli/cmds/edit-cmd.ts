@@ -144,7 +144,7 @@ export const editEvento: EventoHandler<WrapCmdTSMsg<unknown>, ReqEdit, ResEdit |
       // userSettings row for first-time users. Forward only an explicit handle;
       // the server's dry-run resolver picks the default read-only.
       const dryRunHandle = args.ownerHandle === "" ? undefined : args.ownerHandle;
-      const rChat = await api.openChat({ ownerHandle: dryRunHandle, appSlug: args.appSlug, mode: "chat", dryRun: true });
+      const rChat = await api.openChat({ ownerHandle: dryRunHandle, appSlug: args.appSlug, mode: "codegen", dryRun: true });
       if (rChat.isErr()) {
         return Result.Err(`Failed to open chat: ${formatErr(rChat.Err())}`);
       }
@@ -204,7 +204,7 @@ export const editEvento: EventoHandler<WrapCmdTSMsg<unknown>, ReqEdit, ResEdit |
     const rChat = await api.openChat({
       ownerHandle,
       appSlug: args.appSlug,
-      mode: "chat",
+      mode: "codegen",
     });
     if (rChat.isErr()) {
       return Result.Err(`Failed to open chat: ${formatErr(rChat.Err())}`);

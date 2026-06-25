@@ -73,7 +73,7 @@ export function vibeCallAI(sandbox: VibeApiCapableSandbox): EventoHandler {
       // actually needed — not during sandbox setup on non-chat pages. (#2265 B Phase 5)
       const { chatApi } = sandbox.args;
       await chatApi
-        .openChat({ ownerHandle: ctx.validated.ownerHandle, appSlug: ctx.validated.appSlug, mode: "app" })
+        .openChat({ ownerHandle: ctx.validated.ownerHandle, appSlug: ctx.validated.appSlug, mode: "runtime" })
         .then(async (rChat) => {
           if (rChat.isErr()) {
             return ctx.send.send(ctx, {

@@ -153,7 +153,7 @@ export function useChatSession(opts: ChatSessionOpts): ChatSession {
   });
 
   const openChatForReconnect = useCallback(async () => {
-    const r = await chatApi.openChat({ ownerHandle, appSlug, mode: "chat" });
+    const r = await chatApi.openChat({ ownerHandle, appSlug, mode: "codegen" });
     if (r.isErr()) {
       console.error("reconnect openChat failed", r.Err());
       return null;
@@ -233,7 +233,7 @@ export function useChatSession(opts: ChatSessionOpts): ChatSession {
       return; // Already opened or opening
     }
     openingRef.current = true;
-    chatApi.openChat({ ownerHandle, appSlug, mode: "chat" }).then((rChat) => {
+    chatApi.openChat({ ownerHandle, appSlug, mode: "codegen" }).then((rChat) => {
       if (rChat.isErr()) {
         console.error("CHAT-Error", rChat.Err(), ownerHandle, appSlug);
         onSendSettled?.(false);
