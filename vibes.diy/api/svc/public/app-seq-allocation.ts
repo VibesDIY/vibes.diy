@@ -27,6 +27,7 @@ export interface AppReleaseRow {
   readonly userId: string;
   readonly ownerHandle: string; // persisted into the "userSlug" column
   readonly fsId: string;
+  readonly runId?: string; // generate-operation id; null when absent (#2616)
   readonly env: unknown; // jsonb
   readonly fileSystem: unknown; // jsonb
   readonly meta: unknown; // jsonb
@@ -84,10 +85,10 @@ function existsByFsId(row: AppReleaseRow) {
 export function buildInsertIfAbsent(p: AllocateAppParams) {
   const { row, flavour } = p;
   return sql`
-    INSERT INTO ${TABLE} ("appSlug","userId","userSlug","releaseSeq","fsId","env","fileSystem","meta","mode","created")
+    INSERT INTO ${TABLE} ("appSlug","userId","userSlug","releaseSeq","fsId","runId","env","fileSystem","meta","mode","created")
     SELECT ${row.appSlug}, ${row.userId}, ${row.ownerHandle},
            COALESCE(MAX("releaseSeq"),0)+1,
-           ${row.fsId}, ${jsonParam(flavour, row.env)}, ${jsonParam(flavour, row.fileSystem)},
+           ${row.fsId}, ${row.runId ?? null}, ${jsonParam(flavour, row.env)}, ${jsonParam(flavour, row.fileSystem)},
            ${jsonParam(flavour, row.meta)}, ${row.mode}, ${row.created}
     FROM ${TABLE}
     WHERE "appSlug"=${row.appSlug} AND "userId"=${row.userId}
