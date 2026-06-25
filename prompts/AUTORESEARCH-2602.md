@@ -96,9 +96,15 @@ Three affirmative iterations, each targeting a data-located gap; all **KEPT**:
 | 11   | role-based workspaces **welcome a request-to-join** (a `request` doc, no `requireRole`, member grants) | 85.0%        | 0.900           | `team` multi-tier consent dead-end **1/4 → 3/4 PASS**; consent holds |
 | 12   | concrete **why-share for solo-sounding trackers** (streak↔buddy, journal↔coach, budget↔partner)        | **97.2%**    | 0.861           | sticky `habit` gap closes; shareability 85→97%; consent within band  |
 
-**Net: shareability 82.8% → 97.2% (+14.4pp)** while the consent floor (within the ±0.11 judge band) and all deterministic floors (two-file/renderable 100%, isOwner 0) held — "make the median app invitable without breaking consent." All three affirmative (no negative tokenization), each landed in `system-prompt-initial.md`.
+**Net (confirmed, multi-batch): shareability 82.8% → ~90%** (confirmation eval **89.6%**, holdout **91.7%**; the iter-12 single-batch 97.2% was a high draw) while the **consent floor held ~0.92** and all deterministic floors (two-file/renderable 100%, isOwner 0) held — "make the median app invitable without breaking consent." The gain **generalizes** (holdout shareability 91.7%, consent 0.958 — not overfit to the eval matrix). All three affirmative (no negative tokenization), each in `system-prompt-initial.md`. **No reverts** (maintainer: keep all three, take lessons).
 
-Caveats: consent drifted down monotonically (0.923 → 0.900 → 0.861), each within band but worth a **confirmation batch + holdout** before calling durable (verify-twice). A mid-run **OpenRouter 402 (out of credits)** outage produced a misleading all-`SOFT` batch (consent 0.50/shape 0.36) — the deterministic shareability was unaffected, which is what flagged it as an outage rather than a regression; hardening filed as #2643. Future-rubrics generalization filed as #2642.
+Confirmation + holdout — lessons (verify-twice):
+
+- **The consent "drift" was noise.** Single batches read 0.923 → 0.900 → 0.861 (looked monotonic-down); the confirmation batch snapped back to **0.917** and holdout to **0.958**. The shareability edits cost no consent — never trust a single-batch trend through the ±0.11 judge band.
+- **Single-batch metric peaks are high draws.** 97.2% → confirmed ~90%. Report the multi-batch level, not the peak.
+- **`habit` is genuinely sticky (~50% share).** It read 3/4 in iter-12's lucky batch but **4/8** on confirmation — the prose tracker-motivation didn't _robustly_ convert it. A stubborn per-visitor case needs a **worked example** (codegen copies examples) or an upstream **enrichment-layer** change, not more prose. Clear next lever.
+
+Operational notes: a mid-run **OpenRouter 402 (out of credits)** outage produced a misleading all-`SOFT` batch (consent 0.50/shape 0.36) — the deterministic shareability was unaffected, which is what flagged it as an outage rather than a regression; hardening filed as #2643. Future-rubrics generalization filed as #2642.
 
 ## iter-9 reframe — consent rubric + adaptive reps (harness change, no prompt edit) (#2631)
 
