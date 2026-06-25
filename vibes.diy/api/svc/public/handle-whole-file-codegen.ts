@@ -22,16 +22,17 @@
 // correctly framed even for a reconnecting client.) Every event is pushed onto a
 // single awaited promise chain so on-wire order == emit order.
 //
-// Keepalive: the loop's item stream does NOT yield incrementally under workerd
-// (it buffers; `onLine` would fire only at the end), so the turn is silent for
-// the 30-60s of generation. The client's stream watchdog flips to "Reconnecting"
-// after 45s of no block activity, and the reconnect/persist convergence can then
-// mis-frame the turn. We therefore beat a benign `block.begin` heartbeat every
-// HEARTBEAT_MS during the loop: it keeps the client's `blocks` changing (resets
-// the watchdog) and only ever splices an empty `blockMsgs` on the client (no
-// code has streamed yet), so it is inert until the closing burst. Genuine live
-// per-line streaming (the "diffusion" reveal) is deferred until the item stream
-// streams under workerd — see #2650.
+// Live streaming + keepalive: the loop's full-response stream DOES yield
+// incrementally under workerd, but coarsely — the model plans for ~18s before
+// the first `write_file` argument delta, then deltas arrive in ~50-line chunks
+// every few seconds (Cloudflare coalesces the SSE body). We stream each completed
+// line live through `onLine` and tag each `code.begin` with `reveal: "typewriter"`
+// so the client paces the chunks into a steady per-line reveal. A `block.begin`
+// heartbeat covers only the ~18s initial plan gap (it stops on the first streamed
+// line, since once code is flowing a heartbeat `block.begin` would wipe the
+// in-progress card); after that the ~few-second delta cadence keeps the client's
+// 45s watchdog alive on its own. If a run ever buffers to the end, `onLine` fires
+// in one burst — still self-framed — so the path degrades safely. See #2650.
 //
 // Workers-safe by construction: the loop's gate is `verifyFiles` (pure JS +
 // the structural scoring helper), never esbuild. Nothing here imports a
@@ -146,12 +147,14 @@ function langFor(filename: string): string {
  *
  * Sequence:
  *   1. Build the agentic system prompt (`variant: "agentic-whole-file"`).
- *   2. Run the loop, beating a `block.begin` keepalive heartbeat while it runs
- *      (the loop is silent under workerd — see file header).
- *   3. Emit the resolved files as ONE self-framed, in-order burst
- *      (`block.begin → per-file code.begin→line*→code.end → block.end`); the
- *      closing `block.end` is the client's card-reveal signal.
- *   4. Persist the resolved files + that same `buildBlockEvents` sequence via
+ *   2. Run the loop, streaming each completed file line live through `onLine`
+ *      (lazy `block.begin` on the first line, then per-file
+ *      code.begin(reveal)→code.line; a `block.begin` heartbeat covers only the
+ *      initial plan gap — see file header).
+ *   3. Reconcile against the resolved files (close the open section, top up its
+ *      withheld trailing line, emit any file that never streamed a line), then
+ *      `block.end` — the client's card-finalize signal.
+ *   4. Persist the resolved files + the canonical `buildBlockEvents` sequence via
  *      `handlePromptContext` (DB only; never re-emitted to the wire).
  *
  * `prompt.block-end` (the UI-release signal, distinct from `block.end`) is the
@@ -229,7 +232,14 @@ export async function handleWholeFileCodegenRequest(deps: WholeFileCodegenDeps):
   let timer: ReturnType<typeof setTimeout> | undefined;
   const heartbeat = (): void => {
     if (stopped) return;
-    enqueue({ type: "block.begin", seq: liveSeq++, blockId, streamId: promptId, blockNr: 0, timestamp: new Date() } satisfies BlockBeginMsg);
+    enqueue({
+      type: "block.begin",
+      seq: liveSeq++,
+      blockId,
+      streamId: promptId,
+      blockNr: 0,
+      timestamp: new Date(),
+    } satisfies BlockBeginMsg);
     timer = setTimeout(heartbeat, HEARTBEAT_MS);
   };
   timer = setTimeout(heartbeat, HEARTBEAT_MS);
@@ -250,13 +260,38 @@ export async function handleWholeFileCodegenRequest(deps: WholeFileCodegenDeps):
   let blockBegun = false;
   let openFile: string | null = null;
   const emitCodeBegin = (filename: string, lang: string): void => {
-    enqueue({ type: "block.code.begin", sectionId: sectionIdFor(filename), lang, path: filename, reveal: "typewriter", seq: liveSeq++, ...base() } satisfies CodeBeginMsg);
+    enqueue({
+      type: "block.code.begin",
+      sectionId: sectionIdFor(filename),
+      lang,
+      path: filename,
+      reveal: "typewriter",
+      seq: liveSeq++,
+      ...base(),
+    } satisfies CodeBeginMsg);
   };
   const emitCodeLine = (filename: string, lang: string, line: string, lineNr: number): void => {
-    enqueue({ type: "block.code.line", sectionId: sectionIdFor(filename), lang, path: filename, line, lineNr, seq: liveSeq++, ...base() } satisfies CodeLineMsg);
+    enqueue({
+      type: "block.code.line",
+      sectionId: sectionIdFor(filename),
+      lang,
+      path: filename,
+      line,
+      lineNr,
+      seq: liveSeq++,
+      ...base(),
+    } satisfies CodeLineMsg);
   };
   const emitCodeEnd = (filename: string, lang: string, lines: number, bytes: number): void => {
-    enqueue({ type: "block.code.end", sectionId: sectionIdFor(filename), lang, path: filename, stats: { lines, bytes }, seq: liveSeq++, ...base() } satisfies CodeEndMsg);
+    enqueue({
+      type: "block.code.end",
+      sectionId: sectionIdFor(filename),
+      lang,
+      path: filename,
+      stats: { lines, bytes },
+      seq: liveSeq++,
+      ...base(),
+    } satisfies CodeEndMsg);
   };
   const onLine: OnLine = (filename, lang, line, lineNr) => {
     if (!blockBegun) {

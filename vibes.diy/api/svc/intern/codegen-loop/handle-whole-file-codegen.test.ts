@@ -115,13 +115,10 @@ describe("handleWholeFileCodegenRequest emission", () => {
     expect(r.isOk()).toBe(true);
     assertStrictOrdering(emitted);
 
-    // Both real sections appear, App.jsx fully before access.js (no interleave).
-    // A temporary live-only `/_streamdiag…` diagnostic card is appended last; it
-    // is filtered out here (and is never in the persisted sequence).
+    // Both sections appear, App.jsx fully before access.js (no interleave).
     const sectionOrder = emitted
       .filter((e) => (e as { type: string }).type === "block.code.begin")
-      .map((e) => (e as { path: string }).path)
-      .filter((p) => !p.startsWith("/_streamdiag"));
+      .map((e) => (e as { path: string }).path);
     expect(sectionOrder).toEqual(["/App.jsx", "/access.js"]);
   });
 
