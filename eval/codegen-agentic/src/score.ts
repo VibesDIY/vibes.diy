@@ -2,7 +2,7 @@ import { readdirSync, existsSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { argv, stderr } from "node:process";
-import { runRubric, computeStructure, judgeFeature, readDevVars, collectSourceFiles, type JudgeDeps } from "@vibes.diy/eval-codegen-matrix/scoring";
+import { runRubric, computeStructure, judgeFeature, readDevVars, collectSourceFiles, assertJudgeReachable, type JudgeDeps } from "@vibes.diy/eval-codegen-matrix/scoring";
 import { CELL_JSON, CELL_SCORE_JSON, type CellScore, type PromptEntry } from "./cell.js";
 import { parsePrompts } from "./config.js";
 import { mapWithConcurrency } from "./pool.js";
@@ -27,6 +27,8 @@ async function main(): Promise<void> {
   const prompts = parsePrompts(readFileSync(parseFlag("--prompts") ?? join(ROOT, "config/prompts.jsonl"), "utf-8"));
   const promptText = new Map<string, string>(prompts.map((p: PromptEntry): [string, string] => [p.id, p.prompt]));
   const deps: JudgeDeps = { devVars: readDevVars(), judgeModel: JSON.parse(readFileSync(join(ROOT, "config/matrix.json"), "utf-8")).judgeModel };
+  await assertJudgeReachable(deps);
+  stderr.write(`judge preflight ok (${deps.judgeModel}).\n`);
   const cellDirs = readdirSync(runDir).filter((n) => existsSync(join(runDir, n, CELL_JSON)));
   stderr.write(`scoring ${cellDirs.length} cells in ${runDir}\n`);
   let scored = 0, nullJudge = 0;
