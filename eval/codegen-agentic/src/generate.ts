@@ -41,7 +41,13 @@ async function runJob(client: OpenRouter, cfg: MatrixConfig, systemPrompt: strin
   };
   const cellDir = join(runDir, cellDirName(job.prompt.id, job.model, job.rep, job.mode));
   mkdirSync(cellDir, { recursive: true });
-  for (const [path, contents] of Object.entries(gen.files)) writeFileSync(join(cellDir, path), contents, "utf-8");
+  // A model may emit a path with a subdir segment (e.g. "src/App.jsx"); mkdir the
+  // parent before writing so a stray nested path can't throw ENOENT and abort the sweep.
+  for (const [path, contents] of Object.entries(gen.files)) {
+    const dest = join(cellDir, path);
+    mkdirSync(dirname(dest), { recursive: true });
+    writeFileSync(dest, contents, "utf-8");
+  }
   const { files: _omit, ...meta } = cell; // keep cell.json lean; files are on disk
   writeFileSync(join(cellDir, CELL_JSON), JSON.stringify({ ...meta, fileNames: Object.keys(gen.files) }, null, 2), "utf-8");
   stderr.write(`  ${job.prompt.id} ${job.model} r${job.rep} ${job.mode}: ${gen.exitState} build=${gen.buildPass} steps=${gen.steps} $${gen.costUsd.toFixed(4)}\n`);
@@ -100,7 +106,12 @@ export async function main(): Promise<void> {
   let spent = 0;
   stderr.write(`codegen-agentic: ${jobs.length} cells, concurrency=${cfg.concurrency}, budget $${cfg.budgetUsdTotal} -> ${runDir}\n`);
   await mapWithConcurrency(jobs, cfg.concurrency, async (job) => {
-    if (spent >= cfg.budgetUsdTotal) return; // hard budget halt
+    // Soft aggregate cap: no NEW job starts once the budget is reached, but up to
+    // `concurrency` jobs already in flight still finish, so total spend can overshoot
+    // by at most concurrency × maxCostUsd. The per-cell maxCost SDK stop is the hard
+    // per-request cap. (A strictly-hard aggregate cap would require cancelling in-flight
+    // requests — out of scope for v1.)
+    if (spent >= cfg.budgetUsdTotal) return;
     const r = await runJob(client, cfg, systemPrompt, job, runDir);
     spent += r.costUsd;
     stderr.write(`  [budget] spent $${spent.toFixed(2)} / $${cfg.budgetUsdTotal}\n`);

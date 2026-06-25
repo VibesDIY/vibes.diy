@@ -131,7 +131,7 @@ An esbuild transform of the JSX/ESM source, with `react`, `use-fireproof`, `use-
 ### 7.1 Guardrails (cover the full-set "find out late" risk)
 
 - **Preflight smoke** — 1 model × 1 prompt × both modes before the full run; asserts the key works and the parse → build → score → cost pipeline runs end-to-end; aborts with a clear message on failure.
-- **Hard cost caps** — per-cell `maxCost` (SDK stop condition, default $0.50) **and** an aggregate `budgetUsdTotal` that halts the run if exceeded (suggested default ~$50 for the 288-cell run, revisited after the preflight's measured per-cell cost); a live cost meter (running + projected $) in the run log.
+- **Cost caps** — per-cell `maxCost` (SDK stop condition, default $0.50) is the **hard** per-request cap. The aggregate `budgetUsdTotal` (suggested default ~$50 for the 288-cell run, revisited after the preflight's measured per-cell cost) is a **soft** cap: once reached, no new cell starts, but the ≤`concurrency` cells already in flight finish, so total spend can overshoot by at most `concurrency × maxCostUsd` (~$2 on defaults). A strictly-hard aggregate cap would require cancelling in-flight requests — out of scope for v1. A live cost meter (running + projected $) prints to the run log.
 - **Concurrency** — modest (default `concurrency: 4`), since agentic loops are multi-turn and we want cost visible and rate limits respected.
 
 ### 7.2 Error handling
