@@ -3,9 +3,20 @@
 // Runs the agentic write_file tool-loop (Task 5/6) behind the existing
 // block-stream wire protocol, so the unchanged client preview renders a
 // whole-file generation exactly like the SEARCH/REPLACE path. The handler is a
-// thin orchestrator: assemble the agentic system prompt, drive the loop while
-// streaming completed file lines as `block.code.*` events, then persist the
-// resolved files through the same `handlePromptContext` the LLM/FS paths use.
+// thin orchestrator: assemble the agentic system prompt, run the loop, then emit
+// the deterministic block sequence and persist the resolved files through the
+// same `handlePromptContext` the LLM/FS paths use.
+//
+// Emission ordering (important): the client section reducer
+// (components/MessageList.tsx) is a strict sequential state machine — a
+// `block.code.end` consumes the *last* `block.code.begin` it saw, so if any
+// `code.end`/`block.end` reaches the client before its `code.begin` it builds a
+// block with `begin: undefined` and crashes on `block.begin.sectionId`. We
+// therefore emit the canonical `buildBlockEvents` sequence (block.begin →
+// per-file code.begin→line*→code.end → block.end) **awaited, in order**. The
+// model writes whole files, so this is a fast "reveal" on completion rather than
+// token-by-token streaming during generation; live per-line streaming is a
+// follow-up that must preserve this strict per-file ordering.
 //
 // Workers-safe by construction: the loop's gate is `verifyFiles` (pure JS +
 // the structural scoring helper), never esbuild. Nothing here imports a
@@ -16,7 +27,7 @@
 // flag, in Task 8) and is unit-testable with plain fakes.
 
 import { Option, Result } from "@adviser/cement";
-import type { BlockEndMsg, CodeBeginMsg, CodeEndMsg, CodeLineMsg, FileSystemRef } from "@vibes.diy/call-ai-v2";
+import type { BlockEndMsg, FileSystemRef } from "@vibes.diy/call-ai-v2";
 import type { PromptAndBlockMsgs, VibeFile } from "@vibes.diy/api-types";
 import { buildBlockEvents } from "../intern/codegen-loop/emit-blocks.js";
 import type { OnLine, WholeFileResult } from "../intern/codegen-loop/whole-file-loop.js";
@@ -117,12 +128,10 @@ function langFor(filename: string): string {
  *
  * Sequence:
  *   1. Build the agentic system prompt (`variant: "agentic-whole-file"`).
- *   2. Emit `block.begin`.
- *   3. Run the loop. As each file line completes it is streamed out live as a
- *      `block.code.begin` (lazily, on a file's first line) + `block.code.line`.
- *   4. After the loop, emit the per-file `block.code.end` + the closing
- *      `block.end` (built deterministically by `buildBlockEvents`) and persist
- *      the resolved files via `handlePromptContext`.
+ *   2. Run the loop to produce the complete file set.
+ *   3. Build the canonical, correctly-ordered block sequence with
+ *      `buildBlockEvents` and emit it to the client awaited/in-order.
+ *   4. Persist the resolved files via `handlePromptContext`.
  *
  * `prompt.block-end` (the UI-release signal, distinct from `block.end`) is the
  * call site's responsibility — it owns the shared `terminal` flag and emits it
@@ -166,51 +175,16 @@ export async function handleWholeFileCodegenRequest(deps: WholeFileCodegenDeps):
     return id;
   };
 
-  // Live wire seq is independent of the loop's internal block seqs: every
+  // Live wire seq is independent of the sequence's embedded block seqs: every
   // emitted event consumes the next persistence seq, mirroring handleFSPrompt.
   let blockSeq = deps.blockSeq;
   const emit = (evt: PromptAndBlockMsgs): Promise<Result<void>> =>
     appendBlockEvent({ promptId, blockSeq: blockSeq++, evt, emitMode: "emit-only" });
 
-  const baseFields = (blockNr: number) => ({ blockId, streamId: promptId, blockNr, timestamp: new Date() });
-
-  // 2. block.begin
-  const rBegin = await emit({ type: "block.begin", seq: blockSeq, ...baseFields(0) });
-  if (rBegin.isErr()) return Result.Err(rBegin);
-
-  // 3. Stream completed file lines as block.code.begin (once per file) +
-  //    block.code.line. The loop's onLine fires per newly-completed line; we
-  //    open a file's code section the first time we see a line for it.
-  const opened = new Set<string>();
-  const streamErrors: Result<void>[] = [];
-  const onLine: OnLine = (filename, lang, line, lineNr) => {
-    if (!opened.has(filename)) {
-      opened.add(filename);
-      void emit({
-        type: "block.code.begin",
-        sectionId: sectionIdFor(filename),
-        lang,
-        path: filename,
-        seq: blockSeq,
-        ...baseFields(0),
-      } satisfies CodeBeginMsg).then((r) => {
-        if (r.isErr()) streamErrors.push(r);
-      });
-    }
-    void emit({
-      type: "block.code.line",
-      sectionId: sectionIdFor(filename),
-      lang,
-      path: filename,
-      line,
-      lineNr,
-      seq: blockSeq,
-      ...baseFields(0),
-    } satisfies CodeLineMsg).then((r) => {
-      if (r.isErr()) streamErrors.push(r);
-    });
-  };
-
+  // 2. Run the loop to produce the complete files. (Live token-by-token
+  //    streaming during generation is a deliberate follow-up — see the file
+  //    header. Emitting the deterministic ordered sequence below is correct by
+  //    construction and is exactly what the client section reducer expects.)
   const result = await runWholeFileCodegen({
     systemPrompt,
     userPrompt,
@@ -219,50 +193,11 @@ export async function handleWholeFileCodegenRequest(deps: WholeFileCodegenDeps):
     maxCostUsd,
     // Frontier on the first turn, the cheaper fix-up model thereafter (Task 6).
     model: (ctx) => (ctx.numberOfTurns > 1 ? cheapModel : frontierModel),
-    onLine,
   });
 
-  if (streamErrors.length > 0) return Result.Err(streamErrors[0]);
-
-  // 4a. Emit a block.code.begin for any file that produced no streamed line
-  //     (e.g. a single-line file with no trailing newline), so every file in
-  //     the result has an open section before its code.end. Idempotent via
-  //     `opened`.
-  for (const file of result.files) {
-    if (opened.has(file.filename)) continue;
-    opened.add(file.filename);
-    const rOpen = await emit({
-      type: "block.code.begin",
-      sectionId: sectionIdFor(file.filename),
-      lang: file.lang,
-      path: file.filename,
-      seq: blockSeq,
-      ...baseFields(0),
-    } satisfies CodeBeginMsg);
-    if (rOpen.isErr()) return Result.Err(rOpen);
-  }
-
-  // 4b. Close each file's section, then the block. block.code.line lines were
-  //     already streamed live above, so emit only the code.end events here.
-  for (const file of result.files) {
-    const lines = file.content.split("\n");
-    const bytes = new TextEncoder().encode(file.content).length;
-    const rEnd = await emit({
-      type: "block.code.end",
-      sectionId: sectionIdFor(file.filename),
-      lang: file.lang,
-      path: file.filename,
-      stats: { lines: lines.length, bytes },
-      seq: blockSeq,
-      ...baseFields(0),
-    } satisfies CodeEndMsg);
-    if (rEnd.isErr()) return Result.Err(rEnd);
-  }
-
-  // The canonical, persistable event sequence for this turn. Built
-  // deterministically from the resolved files so the stored record is
-  // self-consistent regardless of streaming order. The closing block.end
-  // carries the turn's token usage.
+  // 3. Build the canonical block sequence for the turn:
+  //    block.begin → (per file: code.begin → code.line* → code.end) → block.end.
+  //    The closing block.end carries the turn's token usage.
   let seqForBuild = 0;
   const collectedMsgs = buildBlockEvents(result.files, {
     blockId,
@@ -281,11 +216,15 @@ export async function handleWholeFileCodegenRequest(deps: WholeFileCodegenDeps):
   });
   const blockEnd = collectedMsgs[collectedMsgs.length - 1] as BlockEndMsg;
 
-  // Emit the closing block.end live before persistence (the client uses it to
-  // settle the turn). The post-persist canonical copy (with fsRef) is written
-  // by handlePromptContext.
-  const rBlockEnd = await emit(blockEnd);
-  if (rBlockEnd.isErr()) return Result.Err(rBlockEnd);
+  // 4. Emit the whole sequence to the client IN ORDER. Awaiting each emit
+  //    serializes the sends, so the section reducer never sees a code.line or
+  //    code.end before its code.begin — the fire-and-forget streaming this
+  //    replaced could reorder them, building a block with `begin: undefined`
+  //    and crashing the client on `block.begin.sectionId`.
+  for (const msg of collectedMsgs) {
+    const rEmit = await emit(msg);
+    if (rEmit.isErr()) return Result.Err(rEmit);
+  }
 
   // 5. Persist. Hand the resolved files in directly so handlePromptContext
   //    skips SEARCH/REPLACE resolution and writes them verbatim, then records
