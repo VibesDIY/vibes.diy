@@ -83,6 +83,37 @@ Caveats / follow-ups:
 - Filed during this pass: graphics worked-example lifecycle leaks (#2639), and the github MCP
   `actions_list` huge-JSON tooling issue (#2640).
 
+## iter-9 reframe — consent rubric + adaptive reps (harness change, no prompt edit) (#2631)
+
+iter-9 began as a per-visitor prompt edit to lift `todo` (which failed 2–3/8 on the shape rubric).
+Diagnosis showed `todo` was being routed into per-object collaboration (request-to-join + `requireAccess`)
+— the second-visitor judge read "must request to join" as locked-out. The maintainer reframed: **a todo is
+an object graph like any other; inviting collaborators with consent is legitimate, so collaboration must
+never be counted against a shape.** The prompt edits were reverted — the fix belongs in the grader, not the
+prompt. Three additive harness changes (existing shape rubric + Form-A + frozen `baseline.json` untouched):
+
+1. **`isOwner` token → hard fail.** `invariants.ts` flags the literal `/\bisOwner\b/` (broader than the
+   `user.isOwner` write-gate); a hard fail in **both** rubrics. Caught 1 cell the old detector missed.
+2. **Side-by-side consent rubric.** A shape-agnostic consent judge (`hasConsentPath` +
+   `accessLeakedWithoutConsent`) + `gradeConsentRow`: collaboration is never penalized; a cell fails only
+   on the `isOwner` token, a **consent leak** (access to _others'_ data/membership without the owner's
+   consent), or a **true dead-end** (a second visitor has no consent-respecting path). The report prints
+   `CONSENT METRIC` beside the shape `METRIC`. Validated by re-scoring iter-8 (64 cells): shape **0.797 →
+   consent 0.906** (after a leak-definition calibration that stopped over-flagging author-owned public
+   writes). `todo` recovered 2/8 → consent 8/8; the rubric _also_ caught real issues the shape rubric was
+   blind to — `team` multi-tier dead-ends and `photo` image-docs with no author check — so the side-by-side
+   is net-informative, not merely more lenient.
+3. **Adaptive reps + half-by-default.** `matrix.reps` 8→4 base, `repsMax` 8: a base wave of 4 for every
+   prompt, then a top-up to 8 for only the prompts whose base-wave reps **disagree** (a prompt whose 4 reps
+   all agree — pass _or_ fail — is saturated and stays at 4). Smoke-validated end-to-end: **40 cells vs 64
+   (−37.5%)**, topping up only the 2 disagreeing prompts. Split-half analysis (#2631) justified it: a 4-rep
+   read carries the directional + diagnostic signal; the extra reps mostly bought precision below the noise
+   floor. `verify` now runs this adaptive batch for both eval and holdout.
+
+Baseline stays **frozen** at its 8-rep capture (maintainer decision — _not_ re-captured for the adaptive
+switch); the gates compare _rates_, comparable across rep counts. **No prompt change shipped in iter-9** —
+the kept prompt state remains iter-7+8 (`b3a1534`).
+
 ### iter-3 — KEPT (the breakthrough), and the deploy flake that preceded it
 
 After the noise calibration, the first real win. Charlie's review (#2631) pointed past the codegen
