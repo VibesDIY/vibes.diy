@@ -106,6 +106,38 @@ Confirmation + holdout — lessons (verify-twice):
 
 Operational notes: a mid-run **OpenRouter 402 (out of credits)** outage produced a misleading all-`SOFT` batch (consent 0.50/shape 0.36) — the deterministic shareability was unaffected, which is what flagged it as an outage rather than a regression; hardening filed as #2643. Future-rubrics generalization filed as #2642.
 
+## iters 13–15 — worked example, enrichment, and closing the photo leak (KEPT) (#2631)
+
+After iters 10–12 located the two stubborn gaps — a **sticky per-visitor `habit`** (prose alone didn't robustly convert it to a shareable shape) and a need to test the genuinely multi-tier social shape — the maintainer and I designed the **"perfect habit app"**: a public habit catalog anyone proposes, author-owned check-ins, and **per-`(person, habit)` visibility** (chosen _once per habit, never per check-in_ — per-check-in was rejected as too granular a burden on the user), with a leaderboard that is just "read the public tracking channels and sum them." We added a `social-habit` eval prompt for it (no historical baseline — fresh measurement) and kept the simple `habit` prompt as the derived subset.
+
+Three affirmative iterations, all **KEPT** (maintainer: no reverts, take lessons):
+
+| iter | edit                                                                                                                                                                                                           | where                      | shareability | consent (floor) | result                                                                       |
+| ---- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------- | ------------ | --------------- | ---------------------------------------------------------------------------- |
+| 13   | **worked example** for the social-habit shape (public habit catalog → per-`(person,habit)` `tracking` record carries the visibility grant → check-ins inherit it) + new `social-habit` eval prompt             | `system-prompt-initial.md` | (baseline)   | 0.896           | `social-habit` lands **4/4** consent+share immediately; `habit` still ~50%   |
+| 14   | **enrichment** sentence-3 now offers the _personal-but-shareable_ shape first ("a personal tracker/journal/budget — each keeps their own and can invite a buddy/partner/coach") ahead of the public-feed shape | `prompts.ts`               | **93.2%**    | 0.9773          | aggregate shareability up; consent floor holds; no perturbation              |
+| 15   | **image/file docs are author-owned too** — "apply the author check to _every_ doc type incl. `doc._files`; a photo or upload is author-owned just like a post"                                                 | `system-prompt-initial.md` | **95.5%**    | 0.9773          | closes the `photo` leak: `photo` 4/4 share, **0 consent-fails** (the target) |
+
+**Net: shareability ~90% → 95.5%, consent floor held at 0.9773, isOwner tokens 0, two-file/renderable 100%.** The social shape we designed works out of the box (4/4), the enrichment edit lifted the aggregate without touching consent, and the iter-15 author-check generalization closed the last leak (`photo`). The two per-visitor shape-grader FAILs that remain (`todo`, `habit`) are **not consent failures** — both score **consent 4/4 PASS**; the static shape rubric still wants the strict per-visitor recipe, but under the consent-primary reframe the maintainer endorsed, a private tracker that self-grants and can invite a buddy is a pass. `habit` share stayed sticky (2–3/4) at the shape level — genuine prompt ambiguity ("a daily habit tracker" reads single-user); the social variant resolves the ambiguity by naming the collaboration, which is why it lands cleanly.
+
+Confirmation + holdout (verify-twice on the final iter-15 state):
+
+| batch                 | shareability | consent | isOwner | two-file / renderable | Form-A |
+| --------------------- | ------------ | ------- | ------- | --------------------- | ------ |
+| eval (base)           | **95.5%**    | 0.9773  | 0       | 100% / 100%           | 2.3%   |
+| confirmation (re-run) | **94.4%**    | 0.8889  | 0       | 100% / 100%           | 0.0%   |
+| holdout (8 unseen)    | **81.3%**    | 0.8750  | 0       | 100% / 100%           | 0.0%   |
+
+Shareability **reproduces tightly** on the eval matrix (95.5% → 94.4%, ±1.1pp); consent stays inside the ±0.11 judge band (0.977 → 0.889); the gain **generalizes** to unseen prompts (holdout 81.3% share / 0.875 consent — lower on a harder, never-trained prompt set, but no floor breach: isOwner 0, two-file/renderable 100%, no Form-A anywhere). The `photo` author-check holds across both eval batches (4/4 consent PASS).
+
+Lessons:
+
+- **A worked example converts a shape the prose couldn't.** `social-habit` went 4/4 the first batch — codegen copies examples far more reliably than it follows described recipes. The stubborn `habit` gap from iters 10–12 was best attacked by giving the model the _adjacent_ shape to copy (the social variant), not more prose about the solo one.
+- **The enrichment layer (sentence 3) is high-leverage for the access shape.** Re-ordering it to lead with personal-but-shareable (not public-feed) moved the aggregate shareability with a one-line change and zero consent cost — the runtime preamble steers the access model before codegen starts.
+- **Author checks must be universal across doc types.** The `photo` leak was specifically image/file docs (`doc._files`) skipping the `oldDoc` author check that posts/comments already had. Saying "apply this to _every_ doc type" closed it — a one-line generalization, not a new recipe.
+- **Shape-FAIL ≠ consent-FAIL.** `todo`/`habit` fail the legacy shape rubric but pass consent 4/4; the consent-primary reframe is doing exactly what it was designed to do — not penalizing a private-with-invite tracker for not matching the strict per-visitor template.
+- **Holdout surfaced a new per-object gap to watch:** `h-mood` ("a shared mood board a group can contribute to") leaked consent 4/8 while sharing 8/8 — on this unseen prompt, "a group can contribute to" reads as an open public feed rather than a joinable membership object (the eval `board`, "people can join", is 4/4). Not reverted (lessons-only this run); a candidate target if the loop continues — the membership-vs-open-feed distinction needs the same disambiguation the social-habit naming gave `habit`.
+
 ## iter-9 reframe — consent rubric + adaptive reps (harness change, no prompt edit) (#2631)
 
 iter-9 began as a per-visitor prompt edit to lift `todo` (which failed 2–3/8 on the shape rubric).
