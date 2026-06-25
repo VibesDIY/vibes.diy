@@ -18,8 +18,8 @@ describe("scoreCell", () => {
     expect(r.twoFile).toBe(true);
   });
 
-  it("does not invoke either judge for a non-multiplayer (owner-published) dimension", async () => {
-    let called = false;
+  it("runs the consent judge (all dimensions) but NOT the shape judge for owner-published", async () => {
+    let shapeCalled = false;
     let consentCalled = false;
     const files = {
       "App.jsx": "export default function App(){ return <div>hi there friend</div> }",
@@ -27,7 +27,7 @@ describe("scoreCell", () => {
         "export default function access(doc,oldDoc,user){ ctx.requireRole('owner'); return {channels:['posts'], grant:{public:['posts']}} }",
     };
     const judge = async () => {
-      called = true;
+      shapeCalled = true;
       return { secondVisitorCanAct: true, reason: "ok" };
     };
     const consentJudge = async () => {
@@ -35,10 +35,10 @@ describe("scoreCell", () => {
       return { hasConsentPath: true, accessLeakedWithoutConsent: false, reason: "ok" };
     };
     const r = await scoreCell({ expect: "owner-published", prompt: "My personal blog", files }, { judge, consentJudge });
-    expect(called).toBe(false);
-    expect(consentCalled).toBe(false);
+    expect(shapeCalled).toBe(false); // shape judge: multiplayer dimensions only
+    expect(consentCalled).toBe(true); // consent judge: EVERY dimension incl owner-published (#2631)
     expect(r.grade).toBe("PASS");
-    expect(r.consentGrade).toBe("PASS"); // static-OK: no token, single-writer shape
+    expect(r.consentGrade).toBe("PASS"); // judge-driven now (blog can be collaborative-with-invite)
   });
 
   it("FAILs a Form-A per-visitor cell", async () => {
