@@ -19,6 +19,8 @@ const clean = (o: Partial<AccessAnalysis>): AccessAnalysis => ({
   requireAccessChild: false,
   joinPath: false,
   perObjectRecipe: false,
+  authorRosterGrant: false,
+  ownerOnlyContent: false,
   ownerPublished: false,
   publicRead: false,
   authorOwned: false,
@@ -110,5 +112,15 @@ describe("gradeRow", () => {
       judge: null,
     });
     expect(g.grade).toBe("PASS");
+  });
+  it("FAIL for owner-only-content (#2631): requireRole('owner') on the post is the retired dead-end", () => {
+    const g = gradeRow({
+      expect: "owner-published",
+      analysis: clean({ ownerOnlyContent: true, requireRoleOwnerWrite: true, publicRead: true }),
+      files: { twoFile: true, renderable: true, reasons: [] },
+      judge: null,
+    });
+    expect(g.grade).toBe("FAIL");
+    expect(g.reasons.some((r) => r.includes("owner-only content"))).toBe(true);
   });
 });

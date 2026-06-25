@@ -22,6 +22,8 @@ const analysis = (isOwnerToken = false): AccessAnalysis =>
     requireAccessChild: false,
     joinPath: false,
     perObjectRecipe: false,
+    authorRosterGrant: false,
+    ownerOnlyContent: false,
     ownerPublished: false,
     publicRead: false,
     authorOwned: false,

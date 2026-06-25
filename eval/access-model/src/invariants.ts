@@ -22,7 +22,9 @@ export interface AccessAnalysis {
   readonly joinPath: boolean; // a request/join branch (membership reachable by non-owner)
   readonly perObjectRecipe: boolean;
   // owner-published / author-owned
-  readonly ownerPublished: boolean; // requireRole("owner") write + public read
+  readonly authorRosterGrant: boolean; // owner grants a user the author role/channel (the legit requireRole("owner"))
+  readonly ownerOnlyContent: boolean; // requireRole("owner") gates the CONTENT post itself — the retired dead-end
+  readonly ownerPublished: boolean; // public read + author-owned posts + owner controls the roster (NOT owner-only writes)
   readonly publicRead: boolean; // grant.public read
   readonly authorOwned: boolean; // any signed-in author writes own doc, public read
 }
@@ -53,6 +55,9 @@ const RE = {
   // pattern — the very one the prompt's own examples teach (#2631 fix).
   shareBranch: /(type\s*===\s*["'`](share|invite|member|join)["'`]|\bdoc\.(invitee|inviteHandle|memberHandle)\b)/,
   joinBranch: /(type\s*===\s*["'`](join|request)["'`]|\b(requestToJoin|joinRequest)\b)/,
+  // The owner approves an author: a roster/grant branch (`type === "author"`/"writer"/… ) that
+  // hands a user the author role or channel. The ONE place requireRole("owner") is correct (#2631).
+  authorGrantBranch: /type\s*===\s*["'`](author|writer|contributor|editor|approve|grant)["'`]/,
   // A `members: { ... }` map (role/channel -> users) — the membership construct.
   membersMap: /\bmembers\s*:\s*\{/,
 };
@@ -78,8 +83,18 @@ export function analyzeAccess(src: string, expect: Dimension): AccessAnalysis {
   // (the owner is the sole grantor of membership) with no self-service join/share path.
   const ownerGatedMembership = membersMap && requireRoleOwnerWrite;
 
-  // owner-published is the ONLY dimension where requireRole("owner") on the write is correct.
-  const ownerPublished = requireRoleOwnerWrite && publicRead;
+  // The owner approves authors: a roster grant (`type === "author"` …) under requireRole("owner")
+  // that grants a user in. This is the ONE legitimate use of requireRole("owner") — gating WHO may
+  // author, never the content itself (#2631 — owner-only publishing is a dead end).
+  const authorRosterGrant = requireRoleOwnerWrite && selfGrant && has(RE.authorGrantBranch);
+  // The retired dead-end: requireRole("owner") gates the content directly — no roster grant and
+  // no author-owned posts — so nobody but the owner can ever publish.
+  const ownerOnlyContent = requireRoleOwnerWrite && publicRead && !authorRosterGrant && !authorCheckCreate;
+  // Corrected owner-published (#2631): public read + author-owned posts, with the owner controlling
+  // the roster (requireRole("owner") only on the grant). A personal blog is the roster-of-one case
+  // (author-owned + public, no explicit grant); a multi-author publication adds the roster grant.
+  // The owner-only-content dead-end is no longer accepted.
+  const ownerPublished = publicRead && authorCheckCreate && !ownerOnlyContent;
   // Form-A strict: an owner-gated core write in a dimension that must be multiplayer/per-visitor.
   const multiplayer = expect === "per-visitor" || expect === "per-object" || expect === "author-owned";
   const formAStrict = multiplayer && requireRoleOwnerWrite;
@@ -116,6 +131,8 @@ export function analyzeAccess(src: string, expect: Dimension): AccessAnalysis {
     requireAccessChild,
     joinPath,
     perObjectRecipe,
+    authorRosterGrant,
+    ownerOnlyContent,
     ownerPublished,
     publicRead,
     authorOwned,

@@ -2,7 +2,8 @@
 {"id":"habit","prompt":"A daily habit tracker","dimension":"per-visitor private","expect":"per-visitor"}
 {"id":"shop","prompt":"A shared shopping list I can invite my partner to","dimension":"per-object collaboration","expect":"per-object"}
 {"id":"board","prompt":"A collaborative whiteboard people can join","dimension":"per-object membership + join path","expect":"per-object"}
-{"id":"blog","prompt":"My personal blog","dimension":"owner-published","expect":"owner-published"}
+{"id":"blog","prompt":"My personal blog","dimension":"owner-published (roster of one — author-owned posts + public read, never owner-only writes)","expect":"owner-published"}
+{"id":"magazine","prompt":"An online magazine where I approve contributing writers, each writer publishes and edits their own articles, readers comment, and anyone can read","dimension":"owner-controlled author roster + author-owned articles + public read","expect":"owner-published"}
 {"id":"guest","prompt":"A public guestbook anyone can sign","dimension":"author-owned + public read","expect":"author-owned"}
 {"id":"photo","prompt":"A photo wall where people comment on posts","dimension":"author-owned comments","expect":"author-owned"}
 {"id":"team","prompt":"A team workspace with channels and roles","dimension":"the 3+ tier edge","expect":"multi-tier"}

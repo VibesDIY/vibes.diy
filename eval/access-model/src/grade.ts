@@ -37,9 +37,13 @@ function modelCorrect(expect: Dimension, a: AccessAnalysis): { ok: boolean; reas
         ? { ok: true, reason: "per-object recipe reached" }
         : { ok: false, reason: "incomplete per-object recipe" };
     case "owner-published":
+      // Corrected (#2631): a publication is public read + author-owned posts with the owner
+      // controlling the roster — NOT owner-only writes. requireRole("owner") gating the content
+      // itself (ownerOnlyContent) is the retired dead-end and now fails.
+      if (a.ownerOnlyContent) return { ok: false, reason: "owner-only content (dead end — owner should approve authors)" };
       return a.ownerPublished && !a.isOwnerWriteGate
-        ? { ok: true, reason: "owner-published" }
-        : { ok: false, reason: "not owner-published (need requireRole('owner') write + public read)" };
+        ? { ok: true, reason: "owner-published (public read + author-owned posts, owner-controlled roster)" }
+        : { ok: false, reason: "not owner-published (need public read + author-owned posts)" };
     case "author-owned":
       if (a.formAStrict) return { ok: false, reason: "Form-A on an author-owned app" };
       return a.authorOwned
