@@ -163,6 +163,9 @@ jobs:
           WORKSPACE_NPM_URL: https://${{ steps.pr.outputs.preview_host }}/vibe-pkg/?v=${{ github.sha }}
           VIBES_DIY_API_URL: ${{ steps.pr.outputs.preview_url }}/api
           WORKER_NAME: ${{ steps.pr.outputs.worker_name }}
+          # Experimental: only PRs labeled `preview:whole-file-codegen` run the
+          # whole-file codegen path on their preview deploy (see run block below).
+          WHOLE_FILE_CODEGEN_LABEL: ${{ contains(github.event.pull_request.labels.*.name, 'preview:whole-file-codegen') }}
           PREVIEW_HOST: ${{ steps.pr.outputs.preview_host }}
           # Zone-ops token (DNS + SSL + Workers Routes on vibespreview.dev)
           # used only for the post-deploy route-attach step below.
@@ -253,6 +256,21 @@ jobs:
             echo "secret bulk attempt $attempt failed (Cloudflare 10021?), retrying in 15s..."
             sleep 15
           done
+
+          # Experimental whole-file codegen path: enabled for THIS preview only
+          # when the PR carries the `preview:whole-file-codegen` label. No new
+          # secret is provisioned — the codegen path falls back to
+          # LLM_BACKEND_API_KEY (already an OpenRouter key) when OPENROUTER_API_KEY
+          # is unset, so the existing preview credentials are sufficient.
+          if [ "$WHOLE_FILE_CODEGEN_LABEL" = "true" ]; then
+            echo "Label present — enabling USE_WHOLE_FILE_CODEGEN on $WORKER_NAME"
+            for attempt in 1 2 3; do
+              printf 'true' | pnpm exec wrangler secret put USE_WHOLE_FILE_CODEGEN --name "$WORKER_NAME" && break
+              if [ "$attempt" -eq 3 ]; then echo "secret put USE_WHOLE_FILE_CODEGEN failed after 3 attempts"; exit 1; fi
+              echo "secret put attempt $attempt failed, retrying in 10s..."
+              sleep 10
+            done
+          fi
 
           # Deploy with custom worker name. Routes are attached separately
           # via the zone-level Workers Routes API below: wrangler's `--route`
