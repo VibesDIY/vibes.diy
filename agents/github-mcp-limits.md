@@ -45,8 +45,8 @@ session:
 
 `mcp__github__actions_list` is served by GitHub's official MCP server — not our
 code — so we can't add field projection to it, and Claude Code has no mechanism
-to silently swap a tool's implementation. A `PreToolUse` hook can *deny and
-redirect* (the deny reason is fed back to the caller) but can't *substitute* slim
+to silently swap a tool's implementation. A `PreToolUse` hook can _deny and
+redirect_ (the deny reason is fed back to the caller) but can't _substitute_ slim
 output in place of the tool. The hook + wrapper above is the closest thing to an
 alias the platform allows: mechanical enforcement, self-documenting at the call
 site, no reliance on anyone having read this file.
