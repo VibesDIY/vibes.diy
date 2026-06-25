@@ -69,4 +69,9 @@ describe("parseJudge", () => {
     expect(r.score).toBe(4);
     expect(r.reason).toBe("good");
   });
+  it("returns the actionable reason without throwing when raw is undefined", () => {
+    const r = parseJudge(undefined);
+    expect(r.score).toBeNull();
+    expect(r.reason).toMatch(/chat\/completions/);
+  });
 });

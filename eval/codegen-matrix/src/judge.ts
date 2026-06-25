@@ -85,7 +85,9 @@ function clampScore(v: unknown): number | null {
 }
 
 export function parseJudge(raw: unknown): { score: number | null; reason: string } {
-  const text = typeof raw === "string" ? raw : JSON.stringify(raw);
+  // JSON.stringify(undefined) returns the value `undefined` (not a string), which would
+  // make the catch-path `.trim()` throw; coalesce to "" so the actionable reason is returned.
+  const text = typeof raw === "string" ? raw : (JSON.stringify(raw) ?? "");
   try {
     const obj = JSON.parse(text) as { score?: unknown; reason?: unknown };
     return { score: clampScore(obj.score), reason: typeof obj.reason === "string" ? obj.reason : "" };
