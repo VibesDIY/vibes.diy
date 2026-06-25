@@ -399,10 +399,12 @@ export const putDocEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqPutDoc>, 
       // random-id put has no head and never matches) and a non-tombstone head (a
       // put over a deleted doc is a resurrection, which must mint a real
       // revision). The gate still ran, so access is enforced identically to a
-      // real write. Note: the stored access-fn output is also left untouched, so
-      // an access.js change that would alter grants for unchanged content does
-      // not take effect until the doc's content actually changes — consistent
-      // with redeploy not recomputing existing outputs.
+      // real write. Note: the stored access-fn output is left untouched on a
+      // no-op. An access.js REDEPLOY still refreshes outputs for unchanged docs —
+      // processAccessBindings' backfill re-invokes the fn per doc on a CID change
+      // — so that path is unaffected. The only drift is a context-dependent
+      // output (logic keyed on user / grantState / oldDoc rather than doc
+      // content), which won't be recomputed on a content-identical put.
       //
       // `headRow` is a PRE-LOCK read used only to decide whether a no-op is even
       // plausible; the binding decision happens under the per-doc lock via the
