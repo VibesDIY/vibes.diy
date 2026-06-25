@@ -264,24 +264,26 @@ Note how each edit is preceded by exactly one prose line, the visible structure 
 
 ### access.js output format (when needed)
 
-When the app uses channel-based read isolation or per-document write validation, emit the access function as a **separate file block** after all `App.jsx` edits. One prose line, then the filename `access.js`, then the fenced block:
+When the app uses channel-based read isolation or per-document write validation, emit the access function as a **separate file block** after all `App.jsx` edits. Keep the flow predictable: one prose line, `access.js`, then one complete fenced block.
 
-> Server-side access function gates the chat database — only channel members can read, only authors can post.
->
-> access.js
->
-> ```js
-> export function chat(doc, oldDoc, user, ctx) {
->   if (!user) throw { forbidden: "authentication required" };
->   if (doc.type === "message") {
->     if (doc.userHandle !== user.userHandle) throw { forbidden: "not author" };
->     if (oldDoc && oldDoc.userHandle !== user.userHandle) throw { forbidden: "not author" };
->     ctx.requireAccess(doc.channelId);
->     return { channels: [doc.channelId] };
->   }
->   throw { forbidden: "unknown document type" };
-> }
-> ```
+Worked example — members-only chat writes
+
+access.js
+
+```js
+export function chat(doc, oldDoc, user, ctx) {
+  if (!user) throw { forbidden: "authentication required" };
+
+  if (doc.type === "message") {
+    if (doc.userHandle !== user.userHandle) throw { forbidden: "not author" };
+    if (oldDoc && oldDoc.userHandle !== user.userHandle) throw { forbidden: "not author" };
+    ctx.requireAccess(doc.channelId);
+    return { channels: [doc.channelId] };
+  }
+
+  throw { forbidden: "unknown document type" };
+}
+```
 
 `ctx.requireAccess(channel)` gates on channel **membership** (a `grant.users`/`grant.roles` grant), NOT on `grant.public`, which is read-only — so a channel anyone signed-in should post to must **not** gate writes on `requireAccess` (it would block every non-owner); just check the author and route the doc. Reserve `requireAccess` for members-only channels whose writers you granted membership. For writes that need no sign-in at all ("anyone can sign/submit"), return `allowAnonymous: true` instead of throwing on `!user`. A grant/member/role doc must also return `channels` (route it to an owner-readable admin channel like `["admin:grants"]`) — a channel-less result is rejected as "unreadable write". On updates, also check `oldDoc` (`if (oldDoc && oldDoc.<authorField> !== user.userHandle) throw`, where `<authorField>` is your doc's author field — `authorHandle`/`userHandle`/`senderHandle`) so a writer can't overwrite or re-author someone else's doc. See the fireproof access docs.
 
@@ -411,17 +413,11 @@ Example streamed output for a team board app:
 > }
 > ```
 >
-> Access function — owner manages channels; any signed-in member posts to these open channels.
+> Access function — open channels with owner-managed setup and author-owned posts.
 >
 > access.js
 >
 > ```js
-> // Each channel doc grants public READ to that channel; only the owner creates
-> // channels. The vibe owner is auto-seeded into the reserved `owner` role, so
-> // gate owner-only docs on ctx.requireRole("owner").
-> // OPEN board: any signed-in user posts. Do NOT gate posts on ctx.requireAccess —
-> // grant.public is read-only and never satisfies it, so it would block every
-> // non-owner. (Members-only channel instead? grant a role + requireAccess it.)
 > export function crewBoard(doc, oldDoc, user, ctx) {
 >   if (!user) throw { forbidden: "sign in" };
 >
