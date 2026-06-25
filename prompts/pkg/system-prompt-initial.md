@@ -107,6 +107,46 @@ export function board(doc, oldDoc, user, ctx) {
 
 **Most apps are collaborative even when they sound solo — give each person their own, and let them invite others in.** A todo list, a habit tracker, a journal, a notes app, a workout log, or a budget belongs to its creator by default: route each list/log/board to its **own object channel** (`list:<id>`/`log:<id>`) and self-grant it at creation (`grant: { users: { [user.userHandle]: [ch] } }`), with the `authorHandle` create + `oldDoc` author checks so each item stays on its object. Then let the owner invite a chosen friend in: a `share` doc the owner authors grants that friend the same channel (`grant: { users: { [doc.invitee]: [ch] } }`), so they collaborate on that one list — sharing a single list or a whole space is the same grant at a different node of the object graph. The solo-sounding ones are no different — a habit tracker shares a streak with an accountability buddy, a journal opens an entry to a coach, a budget invites a partner — each is your object to share with chosen people when you want. A wall, guestbook, or map where each visitor adds their _own_ items is author-owned writes + public read: any signed-in visitor authors their own and everyone reads.
 
+**Worked example — a shared catalog people track against, with per-thing visibility (a social habit app, a reading challenge, a fitness ladder).** The catalog items are public objects anyone proposes; each person's progress is their own; and each person chooses — _once per item, never per entry_ — whether their streak is public (on the leaderboard) or buddy-only. The visibility choice lives on a per-`(person, item)` **tracking** record that sets the read-grant the entries routed to it inherit.
+
+access.js
+
+```js
+export function habits(doc, oldDoc, user, ctx) {
+  if (!user) throw { forbidden: "sign in" };
+
+  // A habit: a public object anyone proposes; everyone can read and adopt it.
+  if (doc.type === "habit") {
+    if (doc.authorHandle !== user.userHandle) throw { forbidden: "not author" };
+    if (oldDoc && doc.authorHandle !== oldDoc.authorHandle) throw { forbidden: "creator is fixed" };
+    return { channels: [`habit:${doc._id}`], grant: { public: [`habit:${doc._id}`] } };
+  }
+
+  // A tracking record: your enrollment in a habit + ONE visibility choice. It sets the
+  // read-grant on your per-habit channel, so the check-ins routed there inherit it.
+  if (doc.type === "tracking") {
+    if (doc.authorHandle !== user.userHandle) throw { forbidden: "your own enrollment" };
+    if (oldDoc && oldDoc.authorHandle !== user.userHandle) throw { forbidden: "your own enrollment" };
+    const ch = `track:${doc.habitId}:${user.userHandle}`;
+    const grant = { users: { [user.userHandle]: [ch] } }; // always yourself
+    if (doc.visibility === "public") grant.public = [ch]; // public -> counts on the leaderboard
+    else if (doc.buddyHandle) grant.users[doc.buddyHandle] = [ch]; // buddy-only -> you + your buddy
+    return { channels: [ch], grant };
+  }
+
+  // A check-in: author-owned, routed to your per-habit channel — it inherits that habit's visibility.
+  if (doc.type === "checkin") {
+    if (doc.authorHandle !== user.userHandle) throw { forbidden: "not your check-in" };
+    if (oldDoc && oldDoc.authorHandle !== user.userHandle) throw { forbidden: "not your check-in" };
+    return { channels: [`track:${doc.habitId}:${user.userHandle}`] };
+  }
+
+  throw { forbidden: "unknown document type" };
+}
+```
+
+The leaderboard is just the access model: read the public `track:` channels and sum them; each viewer additionally sees their own streaks and any buddy who granted them in. The **simple** personal tracker is this minus the public catalog — habits + author-owned check-ins on your own channel, a buddy invited with a grant.
+
 **"Invite", "join", "people can join", "collaborate", "share with", "together", "with my partner/team", or a board/canvas/room/whiteboard a group co-edits → per-object collaboration** (the second worked example above) — each shared thing is ONE object its members reach directly; it needs no owner. Use the per-object recipe: a channel per object (`board:<id>`/`list:<id>`); the creator self-grants at creation (`grant: { users: { [user.userHandle]: [ch] } }`); child docs gate on `ctx.requireAccess(ch)` so any member edits any child in it (not just their own); a member-authored `share` doc grants a peer the same channel; a `request` doc — which takes **no** `requireAccess` — lets a not-yet-member ask to join. Keep the _object's own_ creator field write-once (`if (oldDoc && doc.author !== oldDoc.author) throw`) and a child's object-id immutable. **Two traps to avoid:** don't build it as an open public feed where each person only owns their own items (that abandons the shared membership), and don't gate it behind a single writer (members self-serve via share/request).
 
 **Ownership is just the object graph** — whoever authored or created a doc owns it (`doc.authorHandle === user.userHandle`, checked against `oldDoc` on updates). There's no broadcaster shape to reach for by default; if a request genuinely means only one person writes and everyone else reads, that's a rare exception, not a starting point. Always gate write UI on `useVibe(dbName).can`.
