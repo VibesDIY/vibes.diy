@@ -106,7 +106,7 @@ export const generateEvento: EventoHandler<WrapCmdTSMsg<unknown>, ReqGenerate, R
       // the default handle read-only.
       const ownerHandle = args.ownerHandle === "" ? undefined : args.ownerHandle;
       const appSlug = args.appSlug === "" ? undefined : args.appSlug;
-      const rChat = await api.openChat({ ownerHandle, appSlug, mode: "chat", dryRun: true });
+      const rChat = await api.openChat({ ownerHandle, appSlug, mode: "codegen", dryRun: true });
       if (rChat.isErr()) {
         return Result.Err(`Failed to open chat: ${formatErr(rChat.Err())}`);
       }
@@ -156,7 +156,7 @@ export const generateEvento: EventoHandler<WrapCmdTSMsg<unknown>, ReqGenerate, R
       ownerHandle,
       appSlug,
       prompt: args.prompt,
-      mode: "chat",
+      mode: "codegen",
     });
     if (rChat.isErr()) {
       return Result.Err(`Failed to open chat: ${formatErr(rChat.Err())}`);

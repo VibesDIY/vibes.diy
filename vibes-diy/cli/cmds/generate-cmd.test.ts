@@ -202,7 +202,7 @@ describe("generateEvento dry-run", () => {
     const promptOpts = (calls.prompt[0] as { opts: { dryRun?: boolean; dryRunPreAllocate?: boolean } }).opts;
     expect(promptOpts.dryRun).toBe(true);
     expect(promptOpts.dryRunPreAllocate).toBe(true);
-    expect(calls.openChat).toEqual([{ ownerHandle: "alice", appSlug: undefined, mode: "chat", dryRun: true }]);
+    expect(calls.openChat).toEqual([{ ownerHandle: "alice", appSlug: undefined, mode: "codegen", dryRun: true }]);
     expect(calls.ensureAppSlug).toEqual([]);
 
     const res = sent.find((m) => (m as { result?: { type?: string } }).result?.type === "vibes-diy.cli.res-generate") as {
