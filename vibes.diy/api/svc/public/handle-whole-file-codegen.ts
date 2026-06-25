@@ -12,22 +12,26 @@
 // `block.code.end` consumes the *last* `block.code.begin` it saw, so if any
 // `code.end`/`block.end` reaches the client before its `code.begin` it builds a
 // block with `begin: undefined` and crashes on `block.begin.sectionId`. Code
-// cards only materialize when `block.end` flushes them. So events must arrive
-// strictly ordered, one section at a time (`code.begin → code.line* →
-// code.end`), sections never interleaved, `block.begin` first and `block.end`
-// last.
+// cards only materialize when `block.end` flushes them. So the per-turn code
+// must be emitted as ONE self-framed burst — `block.begin → (per file:
+// code.begin → code.line* → code.end) → block.end`, in order, sections never
+// interleaved — and `block.begin` must travel WITH the code, not ahead of it.
+// (A `block.begin` hoisted to turn-start is missed by a client that reconnects
+// mid-turn — `replayReset` drops it — so the late code burst attaches to a block
+// with no opening frame and crashes. The whole sequence emitted together stays
+// correctly framed even for a reconnecting client.) Every event is pushed onto a
+// single awaited promise chain so on-wire order == emit order.
 //
-// We stream live: `block.begin` opens the turn immediately (the keepalive
-// anchor — the client's 45s stream watchdog flips to "Reconnecting" on a silent
-// gap, which the old reveal-on-completion path hit during the ~30-60s the loop
-// ran silent), then `onLine` drips each completed file line as the model writes
-// it, then `block.end` reveals the cards. `onLine` fires synchronously from the
-// stream consumer, so every event is pushed onto a single awaited promise chain
-// (NOT fire-and-forget `void emit(...)`, which reordered a code.end ahead of its
-// code.begin and crashed the client) — guaranteeing on-wire order == emit order.
-// The resolved files are persisted separately via the canonical
-// `buildBlockEvents` sequence, so reload is always complete and exact
-// regardless of any live-stream imperfection.
+// Keepalive: the loop's item stream does NOT yield incrementally under workerd
+// (it buffers; `onLine` would fire only at the end), so the turn is silent for
+// the 30-60s of generation. The client's stream watchdog flips to "Reconnecting"
+// after 45s of no block activity, and the reconnect/persist convergence can then
+// mis-frame the turn. We therefore beat a benign `block.begin` heartbeat every
+// HEARTBEAT_MS during the loop: it keeps the client's `blocks` changing (resets
+// the watchdog) and only ever splices an empty `blockMsgs` on the client (no
+// code has streamed yet), so it is inert until the closing burst. Genuine live
+// per-line streaming (the "diffusion" reveal) is deferred until the item stream
+// streams under workerd — see #2650.
 //
 // Workers-safe by construction: the loop's gate is `verifyFiles` (pure JS +
 // the structural scoring helper), never esbuild. Nothing here imports a
@@ -38,10 +42,13 @@
 // flag, in Task 8) and is unit-testable with plain fakes.
 
 import { Option, Result } from "@adviser/cement";
-import type { BlockBeginMsg, BlockEndMsg, CodeBeginMsg, CodeEndMsg, CodeLineMsg, FileSystemRef } from "@vibes.diy/call-ai-v2";
+import type { BlockBeginMsg, BlockEndMsg, FileSystemRef } from "@vibes.diy/call-ai-v2";
 import type { PromptAndBlockMsgs, VibeFile } from "@vibes.diy/api-types";
 import { buildBlockEvents } from "../intern/codegen-loop/emit-blocks.js";
 import type { OnLine, WholeFileResult } from "../intern/codegen-loop/whole-file-loop.js";
+
+/** How often to beat a keepalive `block.begin` during the (silent) loop, in ms. Comfortably under the client's 45s watchdog. */
+const HEARTBEAT_MS = 20_000;
 
 /**
  * Persist contract consumed from `prompt-chat-section.ts#handlePromptContext`.
@@ -139,12 +146,12 @@ function langFor(filename: string): string {
  *
  * Sequence:
  *   1. Build the agentic system prompt (`variant: "agentic-whole-file"`).
- *   2. Open the live block (`block.begin`) and run the loop, streaming each
- *      completed file line live through `onLine` (serialized, in order).
- *   3. Reconcile the live stream against the resolved files (close the open
- *      section, emit any file that produced no streamed line), then close the
- *      block (`block.end` — the client's card-reveal signal).
- *   4. Persist the resolved files + canonical `buildBlockEvents` sequence via
+ *   2. Run the loop, beating a `block.begin` keepalive heartbeat while it runs
+ *      (the loop is silent under workerd — see file header).
+ *   3. Emit the resolved files as ONE self-framed, in-order burst
+ *      (`block.begin → per-file code.begin→line*→code.end → block.end`); the
+ *      closing `block.end` is the client's card-reveal signal.
+ *   4. Persist the resolved files + that same `buildBlockEvents` sequence via
  *      `handlePromptContext` (DB only; never re-emitted to the wire).
  *
  * `prompt.block-end` (the UI-release signal, distinct from `block.end`) is the
@@ -177,7 +184,7 @@ export async function handleWholeFileCodegenRequest(deps: WholeFileCodegenDeps):
 
   // Stable ids for this block. A single blockId groups the whole turn; each
   // file gets its own sectionId (allocated lazily on first sight so the live
-  // stream and the persisted `buildBlockEvents` sequence agree on section
+  // burst and the persisted `buildBlockEvents` sequence agree on section
   // identity — stable React keys across the live→reload transition).
   const blockId = nextId();
   const sectionIds = new Map<string, string>();
@@ -190,14 +197,15 @@ export async function handleWholeFileCodegenRequest(deps: WholeFileCodegenDeps):
     return id;
   };
 
-  // --- Serialized live wire emitter -------------------------------------------
-  // `onLine` fires synchronously from the stream consumer, so we cannot await
-  // per line. Instead every event is pushed onto a single promise chain that
-  // awaits each `appendBlockEvent` before the next, so on-wire order == enqueue
-  // order without blocking the stream. `blockSeq` (the wire/persistence seq) is
-  // bumped synchronously at enqueue time so it reflects all live events by the
-  // time `handlePromptContext` continues from it; `liveSeq` is the block-relative
-  // seq embedded in each event.
+  // --- Serialized wire emitter ------------------------------------------------
+  // Every event is pushed onto a single promise chain that awaits each
+  // `appendBlockEvent` before the next, so on-wire order == enqueue order. The
+  // heartbeat and the closing burst share this chain, so a heartbeat can never
+  // interleave the burst (it is stopped before the burst is enqueued).
+  // `blockSeq` (the wire/persistence seq) is bumped synchronously at enqueue
+  // time so it reflects every emitted event by the time `handlePromptContext`
+  // continues from it; `liveSeq` is the block-relative seq embedded in the
+  // heartbeat events (the burst carries its own seqs from `buildBlockEvents`).
   let blockSeq = deps.blockSeq;
   let liveSeq = 0;
   let chain: Promise<void> = Promise.resolve();
@@ -210,116 +218,55 @@ export async function handleWholeFileCodegenRequest(deps: WholeFileCodegenDeps):
       if (r.isErr()) firstErr = Result.Err(r);
     });
   };
-  const base = () => ({ blockId, streamId: promptId, blockNr: 0, timestamp: new Date() });
-  const emitBlockBegin = (): void => {
-    enqueue({ type: "block.begin", seq: liveSeq++, ...base() } satisfies BlockBeginMsg);
-  };
-  const emitCodeBegin = (filename: string, lang: string): void => {
+
+  // --- Keepalive heartbeat ----------------------------------------------------
+  // The loop's item stream does not yield incrementally under workerd, so the
+  // turn is silent for the whole generation. Beat a benign `block.begin` every
+  // HEARTBEAT_MS to keep the client's `blocks` changing (resets its 45s
+  // watchdog). It only ever splices an EMPTY `blockMsgs` on the client — no code
+  // has streamed yet — so it is inert until the closing burst, and it re-frames
+  // the block so even a client that reconnected mid-turn stays converged. Stops
+  // before the burst (so it never wipes accumulating code cards) and on any loop
+  // error.
+  let stopped = false;
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const heartbeat = (): void => {
+    if (stopped) return;
     enqueue({
-      type: "block.code.begin",
-      sectionId: sectionIdFor(filename),
-      lang,
-      path: filename,
+      type: "block.begin",
       seq: liveSeq++,
-      ...base(),
-    } satisfies CodeBeginMsg);
+      blockId,
+      streamId: promptId,
+      blockNr: 0,
+      timestamp: new Date(),
+    } satisfies BlockBeginMsg);
+    timer = setTimeout(heartbeat, HEARTBEAT_MS);
   };
-  const emitCodeLine = (filename: string, lang: string, line: string, lineNr: number): void => {
-    enqueue({
-      type: "block.code.line",
-      sectionId: sectionIdFor(filename),
-      lang,
-      path: filename,
-      line,
-      lineNr,
-      seq: liveSeq++,
-      ...base(),
-    } satisfies CodeLineMsg);
-  };
-  const emitCodeEnd = (filename: string, lang: string, lines: number, bytes: number): void => {
-    enqueue({
-      type: "block.code.end",
-      sectionId: sectionIdFor(filename),
-      lang,
-      path: filename,
-      stats: { lines, bytes },
-      seq: liveSeq++,
-      ...base(),
-    } satisfies CodeEndMsg);
-  };
+  timer = setTimeout(heartbeat, HEARTBEAT_MS);
 
-  // --- Live per-file framing driven by `onLine` ------------------------------
-  // `onLine` delivers each newly-completed (newline-terminated) line per file.
-  // Open a section on first sight of a file, close the previous one before
-  // opening the next (never interleave), and track per-file line/byte counts for
-  // the closing `code.end` stats.
-  const streamedFiles = new Set<string>();
-  const lineCount = new Map<string, number>();
-  const byteCount = new Map<string, number>();
-  let openFile: string | null = null;
-  const onLine: OnLine = (filename, lang, line, lineNr) => {
-    if (openFile !== filename) {
-      if (openFile !== null) {
-        emitCodeEnd(openFile, langFor(openFile), lineCount.get(openFile) ?? 0, byteCount.get(openFile) ?? 0);
-      }
-      openFile = filename;
-      streamedFiles.add(filename);
-      emitCodeBegin(filename, lang);
-    }
-    emitCodeLine(filename, lang, line, lineNr);
-    lineCount.set(filename, (lineCount.get(filename) ?? 0) + 1);
-    byteCount.set(filename, (byteCount.get(filename) ?? 0) + new TextEncoder().encode(line).length + 1);
-  };
-
-  // Open the block immediately — the keepalive anchor (see file header).
-  emitBlockBegin();
-
-  // 2. Run the loop, streaming completed file lines live through `onLine`.
-  const result = await runWholeFileCodegen({
-    systemPrompt,
-    userPrompt,
-    needsAccess,
-    maxSteps,
-    maxCostUsd,
-    // Frontier on the first turn, the cheaper fix-up model thereafter (Task 6).
-    model: (ctx) => (ctx.numberOfTurns > 1 ? cheapModel : frontierModel),
-    onLine,
-  });
-
-  // 3a. Reconcile the live stream against the resolved files. Close the still-open
-  //     section, topping it up to its final content — the line emitter withholds
-  //     a file's trailing partial line until its newline arrives, and for the last
-  //     file that newline never comes.
-  const byName = new Map(result.files.map((f) => [f.filename, f] as const));
-  if (openFile !== null) {
-    const f = byName.get(openFile);
-    if (f) {
-      const finalLines = f.content.split("\n");
-      for (let nr = lineCount.get(openFile) ?? 0; nr < finalLines.length; nr++) {
-        emitCodeLine(openFile, f.lang, finalLines[nr], nr);
-      }
-      emitCodeEnd(openFile, f.lang, finalLines.length, new TextEncoder().encode(f.content).length);
-    } else {
-      emitCodeEnd(openFile, langFor(openFile), lineCount.get(openFile) ?? 0, byteCount.get(openFile) ?? 0);
-    }
-    openFile = null;
+  // 2. Run the loop to produce the complete files. No `onLine`: the item stream
+  //    buffers under workerd, so live per-line streaming is deferred (#2650) and
+  //    the heartbeat above carries keepalive instead.
+  let result: WholeFileResult;
+  try {
+    result = await runWholeFileCodegen({
+      systemPrompt,
+      userPrompt,
+      needsAccess,
+      maxSteps,
+      maxCostUsd,
+      // Frontier on the first turn, the cheaper fix-up model thereafter (Task 6).
+      model: (ctx) => (ctx.numberOfTurns > 1 ? cheapModel : frontierModel),
+    });
+  } finally {
+    stopped = true;
+    if (timer !== undefined) clearTimeout(timer);
   }
 
-  // 3b. Emit any file that produced no streamed line at all (single-line or
-  //     no-trailing-newline files never fire `onLine`) as a full section.
-  for (const f of result.files) {
-    if (streamedFiles.has(f.filename)) continue;
-    emitCodeBegin(f.filename, f.lang);
-    const lines = f.content.split("\n");
-    for (let nr = 0; nr < lines.length; nr++) emitCodeLine(f.filename, f.lang, lines[nr], nr);
-    emitCodeEnd(f.filename, f.lang, lines.length, new TextEncoder().encode(f.content).length);
-  }
-
-  // 4. Build the canonical block sequence from the resolved files — the source
-  //    of truth replayed on reload (always complete and exact, independent of
-  //    any live-stream imperfection). Persisted, not re-emitted to the wire:
-  //    block.begin → (per file: code.begin → code.line* → code.end) → block.end,
-  //    the closing block.end carrying the turn's token usage.
+  // 3. Build the canonical block sequence from the resolved files — one
+  //    self-framed burst: block.begin → (per file: code.begin → code.line* →
+  //    code.end) → block.end, the closing block.end carrying the turn's token
+  //    usage. This is also the source of truth replayed on reload.
   let seqForBuild = 0;
   const collectedMsgs = buildBlockEvents(result.files, {
     blockId,
@@ -338,17 +285,18 @@ export async function handleWholeFileCodegenRequest(deps: WholeFileCodegenDeps):
   });
   const blockEnd = collectedMsgs[collectedMsgs.length - 1] as BlockEndMsg;
 
-  // 5. Close the live block. MessageList materializes the code cards on
-  //    block.end, so this is the reveal/finalize signal. Reuse the canonical
-  //    block.end's stats/usage; the live copy carries no fsRef yet (the
-  //    post-persist re-emit that supplies fsRef is a tracked follow-up).
-  enqueue({ ...blockEnd, seq: liveSeq++, timestamp: new Date() });
+  // 4. Emit the whole sequence to the client IN ORDER through the serialized
+  //    chain. Emitting block.begin WITH the code (not ahead of it) keeps the
+  //    section reducer correctly framed even for a client that reconnected
+  //    mid-turn and missed the heartbeats — block.begin re-opens the block right
+  //    before the code, so `code.end` never lands without its `code.begin`.
+  for (const msg of collectedMsgs) enqueue(msg);
 
   // Drain the serialized emit chain and surface the first send failure, if any.
   await chain;
   if (firstErr) return Result.Err(firstErr);
 
-  // 6. Persist. Hand the resolved files in directly so handlePromptContext
+  // 5. Persist. Hand the resolved files in directly so handlePromptContext
   //    skips SEARCH/REPLACE resolution and writes them verbatim, then records
   //    usage + fsRef. Returns the advanced block sequence.
   const vibeFiles: VibeFile[] = result.files.map((f) => ({
