@@ -66,21 +66,24 @@ function jsonParam(flavour: DBFlavour, value: unknown) {
 }
 
 // Match the row whose existence makes a new release a duplicate: same
-// (appSlug, userId, ownerHandle, fsId). This is the fsId-dedup key the pre-lock
-// `exist` check in ensureApps uses — rechecked here INSIDE the lock so a racing
-// writer can't append a second row for an fsId the first writer just committed.
-function existsByFsId(row: AppReleaseRow) {
+// (appSlug, userId, ownerHandle) AND either the same fsId (clean-stream dedup)
+// OR — when this writer carries one — the same runId (one release per generate
+// operation, #2616). Rechecked INSIDE the lock as one statement so a racing
+// writer can't append a second row for an fsId/runId the first just committed.
+function existsByFsIdOrRunId(row: AppReleaseRow) {
+  const runClause = row.runId == null ? sql`` : sql` OR "runId"=${row.runId}`;
   return sql`SELECT 1 FROM ${TABLE}
     WHERE "appSlug"=${row.appSlug} AND "userId"=${row.userId}
-      AND "userSlug"=${row.ownerHandle} AND "fsId"=${row.fsId}`;
+      AND "userSlug"=${row.ownerHandle} AND ("fsId"=${row.fsId}${runClause})`;
 }
 
 /**
- * Atomic INSERT-if-fsId-absent. `HAVING NOT EXISTS(...)` suppresses the single
+ * Atomic INSERT-if-absent. `HAVING NOT EXISTS(...)` suppresses the single
  * aggregate result row (and thus the insert + RETURNING) when a row already
- * carries this fsId, so under the per-(user,app) advisory lock (pg) or the
- * global write lock (sqlite) a duplicate-fsId release can never be appended.
- * When it does insert, `COALESCE(MAX("releaseSeq"),0)+1` allocates the next seq.
+ * carries this fsId (or, for a generate operation, this runId), so under the
+ * per-(user,app) advisory lock (pg) or the global write lock (sqlite) a
+ * duplicate-fsId/-runId release can never be appended. When it does insert,
+ * `COALESCE(MAX("releaseSeq"),0)+1` allocates the next seq.
  */
 export function buildInsertIfAbsent(p: AllocateAppParams) {
   const { row, flavour } = p;
@@ -92,9 +95,37 @@ export function buildInsertIfAbsent(p: AllocateAppParams) {
            ${jsonParam(flavour, row.meta)}, ${row.mode}, ${row.created}
     FROM ${TABLE}
     WHERE "appSlug"=${row.appSlug} AND "userId"=${row.userId}
-    HAVING NOT EXISTS (${existsByFsId(row)})
+    HAVING NOT EXISTS (${existsByFsIdOrRunId(row)})
     RETURNING "releaseSeq"
   `;
+}
+
+// Read the existing release for this run (to report its seq after the insert is
+// suppressed by the runId clause). runId is the promptId — unique per generate
+// operation — so this resolves the single release the dev publish + production
+// push collapse into, regardless of fsId drift.
+function buildSelectByRunId(row: AppReleaseRow) {
+  return sql`SELECT "releaseSeq" FROM ${TABLE}
+    WHERE "appSlug"=${row.appSlug} AND "userId"=${row.userId}
+      AND "userSlug"=${row.ownerHandle} AND "runId"=${row.runId}
+    ORDER BY "releaseSeq" DESC
+    LIMIT 1`;
+}
+
+// Reconcile this run's release in place: repoint it at this writer's files/env
+// and resolve the mode, all in ONE atomic statement so the production-wins rule
+// holds regardless of read timing under sqlite's global write lock. The CASE
+// keeps production terminal (production || incoming-production => production),
+// and the `NOT (mode='production' AND incoming='dev')` guard makes a delayed dev
+// publish a no-op against a finalized production row rather than regressing it.
+function buildReconcileRunRow(row: AppReleaseRow, flavour: DBFlavour) {
+  return sql`UPDATE ${TABLE}
+    SET "fsId"=${row.fsId}, "env"=${jsonParam(flavour, row.env)},
+        "fileSystem"=${jsonParam(flavour, row.fileSystem)},
+        "mode"=CASE WHEN "mode"='production' OR ${row.mode}='production' THEN 'production' ELSE 'dev' END
+    WHERE "appSlug"=${row.appSlug} AND "userId"=${row.userId}
+      AND "userSlug"=${row.ownerHandle} AND "runId"=${row.runId}
+      AND NOT ("mode"='production' AND ${row.mode}='dev')`;
 }
 
 /** Read the existing release for this fsId (to report its seq / decide an upgrade). */
@@ -142,12 +173,25 @@ function runReturning(db: VibesSqlite, flavour: DBFlavour, stmt: ReturnType<type
  * when an earlier writer already committed this fsId.
  */
 async function dedupOrInsert(exec: VibesSqlite, flavour: DBFlavour, p: AllocateAppParams): Promise<number> {
-  // 1. Append a fresh release only if no row carries this fsId yet.
+  // 1. Append a fresh release only if no row carries this fsId (or this runId)
+  //    yet. The runId clause makes a single generate operation — server dev
+  //    publish + CLI production push — collapse into ONE release even when their
+  //    file sets (and thus fsId) diverge (#2616).
   const inserted = normalizeRows(await runReturning(exec, flavour, buildInsertIfAbsent(p)));
   if (inserted.length > 0 && inserted[0].releaseSeq != null) {
     return Number(inserted[0].releaseSeq);
   }
-  // 2. fsId already present -> dedup. A production push that finds a committed
+  // 2a. Insert suppressed by an existing same-run row -> reconcile it in place
+  //     (atomic; production stays terminal, a late dev publish no-ops). The
+  //     SELECT only reports the seq; correctness lives in the UPDATE statement.
+  if (p.row.runId != null) {
+    const existingRun = normalizeRows(await runReturning(exec, flavour, buildSelectByRunId(p.row)));
+    if (existingRun.length > 0 && existingRun[0].releaseSeq != null) {
+      await runReturning(exec, flavour, buildReconcileRunRow(p.row, flavour));
+      return Number(existingRun[0].releaseSeq);
+    }
+  }
+  // 2b. fsId already present -> dedup. A production push that finds a committed
   //    dev row for the same fsId promotes it in place (fsId-keyed promotion),
   //    rather than appending a duplicate dev+production pair (Codex P2).
   if (p.row.mode === "production") {

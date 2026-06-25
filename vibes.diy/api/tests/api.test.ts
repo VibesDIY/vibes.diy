@@ -333,6 +333,93 @@ describe("VibesDiyApi", { timeout: (inject("DB_FLAVOUR" as never) as string) ===
     expect(rows[0].fsId).toBe(prod.fsId);
   });
 
+  it("does not let a delayed dev publish regress a finalized production release", async () => {
+    // Regression for #2616 review (Codex P2): if the production push wins the
+    // race first, a later same-runId dev publish must not repoint the row at the
+    // older dev snapshot — production is the terminal state of the operation.
+    const id = sthis.nextId(8).str.toLocaleLowerCase();
+    const appSlug = `noregress-app-${id}`;
+    const ownerHandle = `noregress-${id}`;
+    const runId = `prompt-noregress-${id}`;
+
+    // Dev publish (mirrors the server-side publish during the codegen stream).
+    const rDev0 = await api.ensureAppSlug({
+      mode: "dev",
+      appSlug,
+      ownerHandle,
+      runId,
+      fileSystem: [
+        {
+          type: "code-block",
+          lang: "jsx",
+          filename: "/App.jsx",
+          content: "export default function App() { return <div>dev version</div>; }",
+        },
+      ],
+    });
+    if (!isResEnsureAppSlugOk(rDev0.Ok())) {
+      assert.fail("Expected dev ensureAppSlug to return ResEnsureAppSlugOk");
+    }
+
+    // Production push finalizes the run (reconciles the dev row in place).
+    const rProd = await api.ensureAppSlug({
+      mode: "production",
+      appSlug,
+      ownerHandle,
+      runId,
+      fileSystem: [
+        {
+          type: "code-block",
+          lang: "jsx",
+          filename: "/App.jsx",
+          content: "export default function App() { return <div>production version</div>; }",
+        },
+      ],
+    });
+    const prod = rProd.Ok();
+    if (!isResEnsureAppSlugOk(prod)) {
+      assert.fail("Expected production ensureAppSlug to return ResEnsureAppSlugOk");
+    }
+
+    // A delayed dev publish for the same run arrives AFTER production finalized,
+    // carrying a different (stale) dev filesystem.
+    const rDev = await api.ensureAppSlug({
+      mode: "dev",
+      appSlug,
+      ownerHandle,
+      runId,
+      fileSystem: [
+        {
+          type: "code-block",
+          lang: "jsx",
+          filename: "/App.jsx",
+          content: "export default function App() { return <div>stale dev version</div>; }",
+        },
+      ],
+    });
+    const dev = rDev.Ok();
+    if (!isResEnsureAppSlugOk(dev)) {
+      assert.fail("Expected dev ensureAppSlug to return ResEnsureAppSlugOk");
+    }
+
+    // The late dev publish is a no-op: it resolves to the finalized production
+    // fsId rather than its own (stale) dev snapshot. (The API response echoes
+    // the requested mode, so the persisted row state below is the real proof.)
+    expect(dev.fsId).toBe(prod.fsId);
+
+    const rows = await appCtx.vibesCtx.sql.db
+      .select()
+      .from(appCtx.vibesCtx.sql.tables.apps)
+      .where(
+        and(eq(appCtx.vibesCtx.sql.tables.apps.appSlug, appSlug), eq(appCtx.vibesCtx.sql.tables.apps.ownerHandle, ownerHandle))
+      )
+      .orderBy(appCtx.vibesCtx.sql.tables.apps.releaseSeq);
+
+    expect(rows).toHaveLength(1);
+    expect(rows[0].mode).toBe("production");
+    expect(rows[0].fsId).toBe(prod.fsId);
+  });
+
   it("re-points PromptContexts to the new fsId when a same-runId reconcile drifts the fsId", async () => {
     // Regression for #2616: the dev publish during a generate stores its fsId in
     // PromptContexts, and loadVersionTimeline joins PromptContexts.fsId ->
