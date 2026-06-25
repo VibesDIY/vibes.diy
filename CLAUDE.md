@@ -25,6 +25,7 @@ Team-shared agent instructions live in the [`agents/`](agents/) directory. These
 - [codegen-agentic-eval.md](agents/codegen-agentic-eval.md) — Two-mode (one-shot vs agentic) tenability eval: isolates the tool-loop to measure open-weight viability + real $/acceptable
 - [autoresearch-outer-loop.md](agents/autoresearch-outer-loop.md) — Running the vendored autoresearch loop unattended: goal + success predicate, per-iteration state/branch persistence, resume, guardrails, scheduling caveats
 - [access-model-autoresearch.md](agents/access-model-autoresearch.md) — Autoresearch config + loop discipline for the access-model codegen eval (`eval/access-model`): Goal/Metric/Verify/Modify surface, frozen grader/baseline, predict-gate before each 64-app batch
+- [github-mcp-limits.md](agents/github-mcp-limits.md) — GitHub MCP tools with awkward output + slim alternatives; `actions_list`/`list_workflow_runs` is auto-redirected to `scripts/gh-runs.sh` by a PreToolUse hook
 
 ## Team-shared skills
 
