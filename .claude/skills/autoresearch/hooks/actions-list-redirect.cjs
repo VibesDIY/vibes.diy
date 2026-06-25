@@ -22,24 +22,36 @@ const HOOK_NAME = "actions-list-redirect";
 // every other `actions_list` method stays available.
 const BLOCKED_METHODS = new Set(["list_workflow_runs"]);
 
+// Single-quote a value for inclusion in a shell command, so branch/repo names
+// with metacharacters (spaces, &, #, /) stay one argument when copy-pasted.
+function shquote(v) {
+  return `'${String(v).replace(/'/g, `'\\''`)}'`;
+}
+
 function redirectMessage(input) {
   const branch = input && (input.branch || input.head_branch);
   const sha = input && input.head_sha;
+  const repo = input && input.owner && input.repo ? `${input.owner}/${input.repo}` : null;
   let live = "scripts/gh-runs.sh";
   if (sha) {
-    live += ` --sha ${sha}`;
+    live += ` --sha ${shquote(sha)}`;
   } else if (branch) {
-    live += ` --branch ${branch}`;
+    live += ` --branch ${shquote(branch)}`;
+  }
+  // If the blocked call targeted a specific repo, carry it into the suggestion.
+  if (repo) {
+    live += ` --repo ${shquote(repo)}`;
   }
   return (
     `BLOCKED: mcp__github__actions_list(method: "list_workflow_runs") returns the raw ` +
     `~400KB API payload and blows the tool-result token cap (VibesDIY/vibes.diy#2640). ` +
     `Get the same data slim (name, head_sha, status, conclusion, event, created_at, ` +
     `html_url) via scripts/gh-runs.sh — two ways depending on your session:\n\n` +
-    `1. Cloud agent session (no gh CLI; direct REST is gated by org policy — the ` +
-    `   common case here): you cannot avoid the raw fetch, so contain it. Either ` +
-    `   delegate this call to a subagent that returns only those fields, OR call ` +
-    `   the MCP tool, let the ~400KB result spill to a file, then project it with:\n` +
+    `1. Cloud agent session (live fetch may be policy-gated or unavailable — no gh ` +
+    `   CLI, and direct REST is often blocked by org egress policy; the common case ` +
+    `   here): you cannot avoid the raw fetch, so contain it. Either delegate this ` +
+    `   call to a subagent that returns only those fields, OR call the MCP tool, let ` +
+    `   the ~400KB result spill to a file, then project it with:\n` +
     `       scripts/gh-runs.sh --from-file <spilled-file-path>\n` +
     `   (No token needed — pure jq over the saved payload. Add --json for JSON.)\n\n` +
     `2. Local/dev shell with real GitHub auth (gh CLI or a permitted token):\n` +
