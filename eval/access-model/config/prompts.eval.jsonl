@@ -6,3 +6,4 @@
 {"id":"guest","prompt":"A public guestbook anyone can sign","dimension":"author-owned + public read","expect":"author-owned"}
 {"id":"photo","prompt":"A photo wall where people comment on posts","dimension":"author-owned comments","expect":"author-owned"}
 {"id":"team","prompt":"A team workspace with channels and roles","dimension":"the 3+ tier edge","expect":"multi-tier"}
+{"id":"social-habit","prompt":"A social habit app where anyone can propose a habit, people adopt habits and log daily check-ins, each person picks per habit whether their streak is public or buddy-only, and a leaderboard ranks the public streaks","dimension":"shared catalog + per-(person,habit) visibility + leaderboard","expect":"multi-tier"}
