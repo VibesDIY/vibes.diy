@@ -341,7 +341,7 @@ export async function ensureApps(
       );
     }
     const nextMode: "dev" | "production" =
-      opts.mode === "production" && sameRun.mode === "dev" ? "production" : sameRun.mode;
+      opts.mode === "production" && sameRun.mode === "dev" ? "production" : (sameRun.mode as "dev" | "production");
     await ctx.sql.db
       .update(ctx.sql.tables.apps)
       .set({

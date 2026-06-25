@@ -323,10 +323,7 @@ describe("VibesDiyApi", { timeout: (inject("DB_FLAVOUR" as never) as string) ===
       .select()
       .from(appCtx.vibesCtx.sql.tables.apps)
       .where(
-        and(
-          eq(appCtx.vibesCtx.sql.tables.apps.appSlug, appSlug),
-          eq(appCtx.vibesCtx.sql.tables.apps.ownerHandle, ownerHandle)
-        )
+        and(eq(appCtx.vibesCtx.sql.tables.apps.appSlug, appSlug), eq(appCtx.vibesCtx.sql.tables.apps.ownerHandle, ownerHandle))
       )
       .orderBy(appCtx.vibesCtx.sql.tables.apps.releaseSeq);
 
@@ -334,6 +331,93 @@ describe("VibesDiyApi", { timeout: (inject("DB_FLAVOUR" as never) as string) ===
     expect(rows[0].mode).toBe("production");
     expect(rows[0].runId).toBe(runId);
     expect(rows[0].fsId).toBe(prod.fsId);
+  });
+
+  it("re-points PromptContexts to the new fsId when a same-runId reconcile drifts the fsId", async () => {
+    // Regression for #2616: the dev publish during a generate stores its fsId in
+    // PromptContexts, and loadVersionTimeline joins PromptContexts.fsId ->
+    // Apps.fsId. The production push reconciles the row in place to a new fsId,
+    // so the prompt context must be re-pointed or the generated turn orphans.
+    const id = sthis.nextId(8).str.toLocaleLowerCase();
+    const appSlug = `runid-link-app-${id}`;
+    const ownerHandle = `runid-link-owner-${id}`;
+    const runId = `prompt-link-${id}`;
+    const chatId = `chat-link-${id}`;
+
+    const rDev = await api.ensureAppSlug({
+      mode: "dev",
+      appSlug,
+      ownerHandle,
+      runId,
+      fileSystem: [
+        {
+          type: "code-block",
+          lang: "jsx",
+          filename: "/App.jsx",
+          content: "export default function App() { return <div>dev version</div>; }",
+        },
+      ],
+    });
+    const dev = rDev.Ok();
+    if (!isResEnsureAppSlugOk(dev)) {
+      assert.fail("Expected dev ensureAppSlug to return ResEnsureAppSlugOk");
+    }
+
+    // The dev Apps row carries the authenticated userId; reuse it so the
+    // PromptContexts row we seed matches the relink's (userId, promptId) filter.
+    const devRow = await appCtx.vibesCtx.sql.db
+      .select()
+      .from(appCtx.vibesCtx.sql.tables.apps)
+      .where(
+        and(eq(appCtx.vibesCtx.sql.tables.apps.appSlug, appSlug), eq(appCtx.vibesCtx.sql.tables.apps.ownerHandle, ownerHandle))
+      )
+      .limit(1)
+      .then((r) => r[0]);
+
+    // Simulate the PromptContexts row the dev publish writes for this turn.
+    await appCtx.vibesCtx.sql.db.insert(appCtx.vibesCtx.sql.tables.promptContexts).values({
+      userId: devRow.userId,
+      chatId,
+      promptId: runId,
+      fsId: dev.fsId,
+      nethash: "test-nethash",
+      promptTokens: 0,
+      completionTokens: 0,
+      totalTokens: 0,
+      ref: { type: "prompt.usage.sql" },
+      created: new Date().toISOString(),
+    });
+
+    const rProd = await api.ensureAppSlug({
+      mode: "production",
+      appSlug,
+      ownerHandle,
+      runId,
+      fileSystem: [
+        {
+          type: "code-block",
+          lang: "jsx",
+          filename: "/App.jsx",
+          content: "export default function App() { return <div>production version</div>; }",
+        },
+      ],
+    });
+    const prod = rProd.Ok();
+    if (!isResEnsureAppSlugOk(prod)) {
+      assert.fail("Expected production ensureAppSlug to return ResEnsureAppSlugOk");
+    }
+
+    expect(dev.fsId).not.toBe(prod.fsId);
+
+    const pcRows = await appCtx.vibesCtx.sql.db
+      .select()
+      .from(appCtx.vibesCtx.sql.tables.promptContexts)
+      .where(eq(appCtx.vibesCtx.sql.tables.promptContexts.promptId, runId));
+
+    // The prompt context now points at the production fsId, so the join in
+    // loadVersionTimeline still resolves the generated turn.
+    expect(pcRows).toHaveLength(1);
+    expect(pcRows[0].fsId).toBe(prod.fsId);
   });
 
   it("keeps fsId dedup fallback when runId is absent", async () => {
@@ -377,10 +461,7 @@ describe("VibesDiyApi", { timeout: (inject("DB_FLAVOUR" as never) as string) ===
       .select()
       .from(appCtx.vibesCtx.sql.tables.apps)
       .where(
-        and(
-          eq(appCtx.vibesCtx.sql.tables.apps.appSlug, appSlug),
-          eq(appCtx.vibesCtx.sql.tables.apps.ownerHandle, ownerHandle)
-        )
+        and(eq(appCtx.vibesCtx.sql.tables.apps.appSlug, appSlug), eq(appCtx.vibesCtx.sql.tables.apps.ownerHandle, ownerHandle))
       )
       .orderBy(appCtx.vibesCtx.sql.tables.apps.releaseSeq);
 

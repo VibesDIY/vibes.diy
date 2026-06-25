@@ -26,6 +26,7 @@ export async function selectLatestAppPerSlug(
       ownerHandle: vctx.sql.tables.apps.ownerHandle,
       releaseSeq: vctx.sql.tables.apps.releaseSeq,
       fsId: vctx.sql.tables.apps.fsId,
+      runId: vctx.sql.tables.apps.runId,
       env: vctx.sql.tables.apps.env,
       fileSystem: vctx.sql.tables.apps.fileSystem,
       meta: vctx.sql.tables.apps.meta,
