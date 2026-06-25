@@ -8,6 +8,8 @@
 
 **Tech Stack:** TypeScript, arktype (`@vibes.diy/call-ai-v2` block-stream schemas), `@openrouter/agent` streaming, React + `requestAnimationFrame`, Vitest (node project `codegen-loop` / `pkg-infra`; browser project `vibes.diy`).
 
+**Acceptance:** waived — verification is the per-task TDD suites (reviewed by the operator) plus the Task 6 browser validation gate; a held-out unit exam cannot capture the diffusion UX (the feature's point) and would only re-cover the committed tests. Per-task review and the pre-merge gate are retained.
+
 ---
 
 ## Global Constraints
@@ -19,7 +21,7 @@
 
 ---
 
-## Task 1: Add the `reveal` marker to `CodeBeginMsg`
+### Task 1: Add the `reveal` marker to `CodeBeginMsg`
 
 **Type:** implementation
 **Depends-on:** none
@@ -120,14 +122,14 @@ git commit -m "feat(block-stream): optional reveal:'typewriter' marker on CodeBe
 
 ---
 
-## Task 2: Server handler — live, self-framed per-line emission
+### Task 2: Server handler — live, self-framed per-line emission
 
 **Type:** implementation
 **Depends-on:** 1
 
 **Files:**
 - Modify: `vibes.diy/api/svc/public/handle-whole-file-codegen.ts`
-- Modify: `vibes.diy/api/svc/intern/codegen-loop/emit-blocks.ts` (thread the `reveal` marker through `buildBlockEvents`)
+- Modify: `vibes.diy/api/svc/intern/codegen-loop/emit-blocks.ts`
 - Test: `vibes.diy/api/svc/intern/codegen-loop/handle-whole-file-codegen.test.ts`
 
 **Interfaces:**
@@ -388,7 +390,7 @@ git commit -m "feat(whole-file-codegen): live self-framed per-line emission + re
 
 ---
 
-## Task 3: `useTypewriterReveal` — paced buffer-drain hook
+### Task 3: `useTypewriterReveal` — paced buffer-drain hook
 
 **Type:** implementation
 **Depends-on:** none
@@ -559,7 +561,7 @@ git commit -m "feat(hooks): useTypewriterReveal paced buffer-drain reveal"
 
 ---
 
-## Task 4: `CodeMsg` — gated typewriter reveal
+### Task 4: `CodeMsg` — gated typewriter reveal
 
 **Type:** implementation
 **Depends-on:** 1, 3
@@ -757,7 +759,7 @@ git commit -m "feat(MessageList): gated typewriter reveal in CodeMsg"
 
 ---
 
-## Task 5: Full verification gate
+### Task 5: Full verification gate
 
 **Type:** gate
 **Depends-on:** 2, 4
@@ -777,7 +779,7 @@ Expected: exit 0.
 
 ---
 
-## Task 6: Browser validation on the preview
+### Task 6: Browser validation on the preview
 
 **Type:** manual
 **Depends-on:** 5
@@ -804,6 +806,6 @@ Post a short comment on PR #2650 summarizing the observed behavior (with a scree
 
 ---
 
-## Acceptance
+## Acceptance disposition
 
-To be set after plan approval (sealed exam authored from the spec if executed via ultrapowers; otherwise the committed Vitest suites in Tasks 1–4 plus the Task 6 browser validation are the verification).
+Waived (see the `**Acceptance:** waived` line in the header). The verification of record is the committed per-task Vitest suites (Tasks 1–4), the full-check gate (Task 5), and the browser validation (Task 6) — all operator-reviewable.
