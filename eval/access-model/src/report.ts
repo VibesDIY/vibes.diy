@@ -27,6 +27,7 @@ export interface ScoredRow {
   readonly formABroad: boolean;
   readonly isOwnerWriteGate: boolean;
   readonly isOwnerToken: boolean;
+  readonly hasShareMechanism: boolean;
   readonly ok: boolean;
   readonly reasons?: readonly string[];
   // Side-by-side consent rubric (#2631) — additive.
@@ -58,6 +59,8 @@ export interface ResultRow {
   readonly consent_pass: number;
   readonly consent_soft_fail: number;
   readonly consent_fail: number;
+  // shareability (#2631): how many reps offer a consent-respecting share mechanism
+  readonly share: number;
 }
 
 export interface Results {
@@ -75,6 +78,7 @@ function toMetricCell(r: ScoredRow): MetricCell {
     formABroad: r.formABroad,
     isOwnerWriteGate: r.isOwnerWriteGate,
     isOwnerToken: r.isOwnerToken,
+    hasShareMechanism: r.hasShareMechanism,
     ok: r.ok,
   };
 }
@@ -150,6 +154,7 @@ export function buildResults(cells: readonly ScoredRow[]): Results {
       consent_pass: countConsent("PASS"),
       consent_soft_fail: countConsent("SOFT"),
       consent_fail: countConsent("FAIL"),
+      share: reps.filter((x) => x.hasShareMechanism).length,
     };
   });
 
@@ -179,14 +184,17 @@ export function renderSummary(results: Results): string {
   lines.push(
     `- CONSENT METRIC: **${results.consentRollup.metric.toFixed(4)}** (side-by-side rubric, #2631 — collaboration never penalized; fail only on isOwner token / consent leak / dead-end)`
   );
+  lines.push(
+    `- SHAREABILITY: **${pct(r.shareabilityRate)}** of apps offer a consent-respecting share mechanism (invite/join/public; #2631 — the optimization target, consent is the floor)`
+  );
   lines.push("");
   lines.push(
-    `| prompt | dimension | grade | pass | soft | fail | gen-failed | formA | twoFile | renderable | c-grade | c-pass | c-soft | c-fail |`
+    `| prompt | dimension | grade | pass | soft | fail | gen-failed | formA | twoFile | renderable | c-grade | c-pass | c-soft | c-fail | share |`
   );
-  lines.push(`| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |`);
+  lines.push(`| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |`);
   for (const row of results.rows) {
     lines.push(
-      `| ${row.id} | ${row.dimension} | ${row.grade} | ${row.pass} | ${row.soft_fail} | ${row.fail} | ${row.generate_failed} | ${row.formA} | ${row.twoFile} | ${row.renderable} | ${row.consent_grade} | ${row.consent_pass} | ${row.consent_soft_fail} | ${row.consent_fail} |`
+      `| ${row.id} | ${row.dimension} | ${row.grade} | ${row.pass} | ${row.soft_fail} | ${row.fail} | ${row.generate_failed} | ${row.formA} | ${row.twoFile} | ${row.renderable} | ${row.consent_grade} | ${row.consent_pass} | ${row.consent_soft_fail} | ${row.consent_fail} | ${row.share}/${row.reps} |`
     );
   }
   lines.push("");
@@ -245,6 +253,7 @@ function loadScoredRows(runDir: string): { rows: ScoredRow[]; prompts: Map<strin
       formABroad: score.formABroad,
       isOwnerWriteGate: score.isOwnerWriteGate,
       isOwnerToken: score.isOwnerToken ?? false,
+      hasShareMechanism: score.hasShareMechanism ?? false,
       ok: score.ok,
       reasons: score.reasons,
       consentGrade: score.consentGrade ?? score.grade,
