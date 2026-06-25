@@ -9,14 +9,14 @@ import type {
 
 export type BlockEvent = BlockBeginMsg | CodeBeginMsg | CodeLineMsg | CodeEndMsg | BlockEndMsg;
 
-export type BlockIds = {
+export interface BlockIds {
   blockId: string;
   streamId: string;
   sectionIdFor: (filename: string) => string;
   nextSeq: () => number;
   blockNr: number;
   usage: BlockUsage;
-};
+}
 
 export function buildBlockEvents(
   files: { filename: string; lang: string; content: string }[],

@@ -4,7 +4,10 @@
 // drags node:fs/node:path/call-ai/.dev.vars into the Workers request-path graph.
 import { computeStructure } from "@vibes.diy/eval-codegen-matrix/structure";
 
-export type VerifyResult = { ok: boolean; problems: string[] };
+export interface VerifyResult {
+  ok: boolean;
+  problems: string[];
+}
 
 // Cheap, Workers-safe syntax heuristic: balanced (), {}, []. Not a parser —
 // the authoritative parse/render check is the client render gate (Plan 2).
