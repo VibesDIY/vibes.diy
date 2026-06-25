@@ -10,6 +10,11 @@ import { mapWithConcurrency } from "./pool.js";
 import { cellDirName, CELL_JSON, RUN_JSON, type CellResult, type MatrixConfig, type ModeName, type PromptEntry } from "./cell.js";
 import type { OpenRouter } from "@openrouter/agent";
 
+/** Preflight aborts the sweep only on a NON-transient errored smoke cell. */
+export function shouldAbortPreflight(r: { exitState: string; transient?: boolean }): boolean {
+  return r.exitState === "errored" && !r.transient;
+}
+
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(__dirname, "..");
 
@@ -24,11 +29,12 @@ interface Job {
 async function runJob(client: OpenRouter, cfg: MatrixConfig, systemPrompt: string, job: Job, runDir: string): Promise<CellResult> {
   const gen =
     job.mode === "oneshot"
-      ? await runOneShot(client, job.model, systemPrompt, job.prompt.prompt)
+      ? await runOneShot(client, job.model, systemPrompt, job.prompt.prompt, cfg.maxRetries ?? 2)
       : await runAgentic(client, job.model, systemPrompt, job.prompt.prompt, {
           maxSteps: cfg.maxSteps,
           maxCostUsd: cfg.maxCostUsd,
           needsAccess: job.prompt.needsAccess,
+          retries: cfg.maxRetries ?? 2,
         });
   const cell: CellResult = {
     ...gen,
@@ -90,7 +96,8 @@ export async function main(): Promise<void> {
   const smokeModel = cfg.models[0];
   for (const mode of cfg.modes) {
     const r = await runJob(client, cfg, systemPrompt, { model: smokeModel.id, openWeight: smokeModel.openWeight, prompt: prompts[0], rep: 0, mode }, runDir);
-    if (r.exitState === "errored") throw new Error(`preflight ${mode} errored: ${r.note}`);
+    if (shouldAbortPreflight(r)) throw new Error(`preflight ${mode} errored (non-transient): ${r.note}`);
+    if (r.exitState === "errored") stderr.write(`preflight ${mode} hit a transient error after retries — continuing; sweep cells may error.\n`);
   }
   stderr.write(`preflight ok. proceeding to full sweep.\n`);
 

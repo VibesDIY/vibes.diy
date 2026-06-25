@@ -5,6 +5,7 @@ import { z } from "zod/v4";
 import { tool } from "@openrouter/agent/tool";
 import { stepCountIs, maxCost } from "@openrouter/agent/stop-conditions";
 import type { OpenRouter } from "@openrouter/agent";
+import { isTransientError, retryWithBackoff } from "@vibes.diy/eval-codegen-matrix/scoring";
 import type { GenResult } from "./cell.js";
 import { buildPrompt } from "./prompt.js";
 import { buildCheck } from "./build-check.js";
@@ -29,7 +30,7 @@ export function makeWriteFileExecutor(
   };
 }
 
-export async function runAgentic(
+async function runAgenticOnce(
   client: OpenRouter,
   model: string,
   systemPrompt: string,
@@ -56,23 +57,36 @@ export async function runAgentic(
   // above is still type-checked against the typed `execute` signature.
   const writeFile = tool(writeFileConfig as unknown as Parameters<typeof tool>[0]);
   const { instructions, input } = buildPrompt("agentic", systemPrompt, userPrompt);
+  const result = client.callModel({
+    model,
+    instructions,
+    input,
+    tools: [writeFile],
+    stopWhen: [stepCountIs(opts.maxSteps), maxCost(opts.maxCostUsd)],
+  });
+  await result.getText();
+  const response = await result.getResponse();
+  const { costUsd, tokens } = extractCost(response as never);
+  if (Object.keys(files).length === 0) {
+    return { files, steps, buildPass: false, costUsd, tokens, exitState: "no-files", note: "model wrote no files" };
+  }
+  const build = await buildCheck(files);
+  return { files, steps, buildPass: build.ok, costUsd, tokens, exitState: "ok", note: build.ok ? "" : build.errors.join("; ") };
+}
+
+export async function runAgentic(
+  client: OpenRouter,
+  model: string,
+  systemPrompt: string,
+  userPrompt: string,
+  opts: { maxSteps: number; maxCostUsd: number; needsAccess: boolean; retries?: number }
+): Promise<GenResult> {
   try {
-    const result = client.callModel({
-      model,
-      instructions,
-      input,
-      tools: [writeFile],
-      stopWhen: [stepCountIs(opts.maxSteps), maxCost(opts.maxCostUsd)],
+    return await retryWithBackoff(() => runAgenticOnce(client, model, systemPrompt, userPrompt, opts), {
+      retries: opts.retries ?? 2,
+      isRetryable: isTransientError,
     });
-    await result.getText();
-    const response = await result.getResponse();
-    const { costUsd, tokens } = extractCost(response as never);
-    if (Object.keys(files).length === 0) {
-      return { files, steps, buildPass: false, costUsd, tokens, exitState: "no-files", note: "model wrote no files" };
-    }
-    const build = await buildCheck(files);
-    return { files, steps, buildPass: build.ok, costUsd, tokens, exitState: "ok", note: build.ok ? "" : build.errors.join("; ") };
   } catch (e) {
-    return { files, steps, buildPass: false, costUsd: 0, tokens: 0, exitState: "errored", note: (e as Error).message.slice(0, 200) };
+    return { files: {}, steps: 0, buildPass: false, costUsd: 0, tokens: 0, exitState: "errored", note: (e as Error).message.slice(0, 200), transient: isTransientError(e) };
   }
 }
