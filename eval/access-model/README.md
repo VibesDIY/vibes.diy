@@ -4,6 +4,13 @@ Drives `vibes-diy generate` over the #2588 8-prompt matrix (plus a hidden holdou
 
 The autoresearch config block + loop discipline live in [`agents/access-model-autoresearch.md`](../../agents/access-model-autoresearch.md). The access-model grammar the grader encodes is in [`docs/superpowers/specs/2026-06-24-vibe-access-model-design.md`](../../docs/superpowers/specs/2026-06-24-vibe-access-model-design.md). Issues: VibesDIY/vibes.diy#2602 (the loop, scope, metric, gates, concurrency, baseline), #2588 (eval playbook + pass criteria), #2595.
 
+### Two rubrics, side by side (#2631)
+
+Every scored cell is graded twice and the report prints both metrics:
+
+- **`METRIC`** — the original **shape-rigid** rubric: the access shape must match the prompt's dimension (per-visitor / per-object / owner-published / author-owned / multi-tier), with Form-A and the second-visitor judge. This is what the frozen `baseline.json` and the discard-gates compare against.
+- **`CONSENT METRIC`** — a **consent-centric** rubric where collaboration is _never_ counted against a shape (a todo is an object graph like any other; inviting collaborators with consent is legitimate). A cell fails only on (1) the retired **`isOwner` token** (a hard fail in both rubrics), (2) a **consent leak** — access to data another user owns, or membership, granted without the owner's/creator's consent — or (3) a **true dead-end** where a second visitor has no consent-respecting path (can't start their own _and_ can't request to join). Driven by a separate consent judge (`hasConsentPath` + `accessLeakedWithoutConsent`).
+
 ## The three stages
 
 Each stage is a `tsx` entrypoint with a `pnpm run` script. Pass flags after a `--` separator (`pnpm run <stage> -- <flags>`).
@@ -18,15 +25,19 @@ A run is a directory under `runs/`. `generate` creates it (timestamped, or `--ru
 
 ### Stage flags (accurate to `src/*.ts`)
 
-| Flag                | `generate` | `score` | `report` | Meaning                                                                                                      |
-| ------------------- | :--------: | :-----: | :------: | ------------------------------------------------------------------------------------------------------------ |
-| `--matrix <path>`   |    yes     |   yes   |    —     | matrix config; defaults to `config/matrix.json`                                                              |
-| `--prompts <path>`  |    yes     |    —    |    —     | prompt corpus; defaults to `config/prompts.eval.jsonl` (or the holdout when `--holdout` is set)              |
-| `--holdout`         |    yes     |    —    |    —     | use `config/prompts.holdout.jsonl` instead of the eval corpus                                                |
-| `--concurrency <n>` |    yes     |    —    |    —     | parallel `generate` cells; defaults to `matrix.concurrency` (32). Recorded in `run.json`                     |
-| `--run <dir>`       |    yes     |   yes   |   yes    | the run dir. `generate` creates it; `score`/`report` default to the most-recently-modified dir under `runs/` |
+| Flag                | `generate` | `score` | `report` | Meaning                                                                                                          |
+| ------------------- | :--------: | :-----: | :------: | ---------------------------------------------------------------------------------------------------------------- |
+| `--matrix <path>`   |    yes     |   yes   |    —     | matrix config; defaults to `config/matrix.json`                                                                  |
+| `--prompts <path>`  |    yes     |    —    |    —     | prompt corpus; defaults to `config/prompts.eval.jsonl` (or the holdout when `--holdout` is set)                  |
+| `--holdout`         |    yes     |    —    |    —     | use `config/prompts.holdout.jsonl` instead of the eval corpus                                                    |
+| `--concurrency <n>` |    yes     |    —    |    —     | parallel `generate` cells; defaults to `matrix.concurrency` (32). Recorded in `run.json`                         |
+| `--run <dir>`       |    yes     |   yes   |   yes    | the run dir. `generate` creates it; `score`/`report` default to the most-recently-modified dir under `runs/`     |
+| `--reps <n>`        |    yes     |    —    |    —     | reps per prompt this wave; defaults to `matrix.reps` (4). The adaptive top-up uses this for the second wave      |
+| `--rep-start <n>`   |    yes     |    —    |    —     | first rep index (default 0); a top-up wave passes `--rep-start 4` so it appends without clobbering the base      |
+| `--only <id,id>`    |    yes     |    —    |    —     | restrict generation to a comma-separated subset of prompt ids (the top-up wave passes the unsaturated ids)       |
+| `--skip-scored`     |     —      |   yes   |    —     | score only cells without an existing `cell.score.json` (the top-up wave uses this so base cells aren't rejudged) |
 
-`score` uses `matrix.scoreConcurrency` (8) for its own fan-out; it is not overridable per-invocation.
+`generate` appends to an existing `--run` dir (it never wipes it and preserves the original `run.json`), so a second wave with a higher `--rep-start` adds reps to the same run. `score` uses `matrix.scoreConcurrency` (8) for its own fan-out; it is not overridable per-invocation.
 
 Typical full run on the eval matrix:
 
@@ -35,6 +46,17 @@ pnpm run generate -- --run runs/today
 pnpm run score    -- --run runs/today
 pnpm run report   -- --run runs/today   # prints METRIC=<x>
 ```
+
+### Adaptive reps (`pnpm run adaptive`)
+
+Uniform reps over-sample easy prompts (which saturate at 1.00 by rep 2–3) and under-sample the noisy ones. The adaptive batch runs a **base wave of `matrix.reps` (4)** for every prompt, scores it, then runs a **top-up wave** (rep indices `reps..repsMax-1`) for **only the prompts whose base-wave reps disagree** — saturated prompts stay at 4, variable ones climb to `matrix.repsMax` (8). Net: fewer cells, same keep/discard decision.
+
+```bash
+pnpm run adaptive -- --run runs/today            # eval matrix, adaptive
+pnpm run adaptive -- --holdout --run runs/today-h # holdout matrix, adaptive
+```
+
+`verify` runs the adaptive batch for both the eval and holdout matrices (a fresh run dir each time).
 
 ## The `verify` command (the autoresearch `Verify:`)
 
@@ -54,7 +76,7 @@ The five discard-gates (#2602):
 
 ## Config
 
-- **`config/matrix.json`** — the run config. `model` is pinned to **`anthropic/claude-opus-4.8`** (passed as `--model` to every `generate`, recorded in `run.json`, so every iteration is byte-identical on the model axis). Also: `apiUrl` (cli stable-entry), `handle: eval`, `judgeModel`, `reps: 8`, `concurrency: 32`, `scoreConcurrency: 8`. A later default-model bump must explicitly invalidate `baseline.json` — never silently move it.
+- **`config/matrix.json`** — the run config. `model` is pinned to **`anthropic/claude-opus-4.8`** (passed as `--model` to every `generate`, recorded in `run.json`, so every iteration is byte-identical on the model axis). Also: `apiUrl` (cli stable-entry), `handle: eval`, `judgeModel`, `reps: 4` (adaptive base wave), `repsMax: 8` (adaptive cap), `concurrency: 32`, `scoreConcurrency: 8`. A later default-model bump must explicitly invalidate `baseline.json` — never silently move it.
 - **`config/prompts.eval.jsonl`** — the 8 #2588 prompts, one JSON object per line (`{id, prompt, dimension, expect}`), spanning the five dimensions: `per-visitor`, `per-object`, `owner-published`, `author-owned`, `multi-tier`.
 - **`config/prompts.holdout.jsonl`** — 8 _different_ prompts spanning the same five dimensions. **Hidden from the modify step**: the autoresearch loop edits `prompts/pkg/**` but must never see these prompts, so a kept win generalizes rather than overfitting the eval matrix. The holdout drives gate 5.
 
