@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { ensureSuperThis } from "@fireproof/core-runtime";
 import { createTestDeviceCA } from "@fireproof/core-device-id";
-import { and, eq } from "drizzle-orm";
+import { and, desc, eq } from "drizzle-orm";
 import { allocateAndInsertRevision, docLockKey, isRetryableConflict, SeqConflictError } from "@vibes.diy/api-svc";
 import { createVibeDiyTestCtx } from "./vibe-diy-test-ctx.js";
 
@@ -41,7 +41,7 @@ describe("seq allocation concurrency (issue #2506)", { timeout: 20000 }, () => {
 
     const seqs = await Promise.all(
       Array.from({ length: N }, (_, i) =>
-        allocateAndInsertRevision({ db, flavour, table: t, row: row(owner, app, dbName, docId, i) })
+        allocateAndInsertRevision({ db, flavour, table: t, row: row(owner, app, dbName, docId, i) }).then((r) => r.seq)
       )
     );
 
@@ -65,7 +65,10 @@ describe("seq allocation concurrency (issue #2506)", { timeout: 20000 }, () => {
     // Tag each write with its own marker; assert the returned seq maps to the row carrying that marker.
     const results = await Promise.all(
       Array.from({ length: N }, (_, i) =>
-        allocateAndInsertRevision({ db, flavour, table: t, row: row(owner, app, dbName, docId, i) }).then((seq) => ({ i, seq }))
+        allocateAndInsertRevision({ db, flavour, table: t, row: row(owner, app, dbName, docId, i) }).then((r) => ({
+          i,
+          seq: r.seq,
+        }))
       )
     );
     for (const { i, seq } of results) {
@@ -85,10 +88,61 @@ describe("seq allocation concurrency (issue #2506)", { timeout: 20000 }, () => {
 
     const seqs = await Promise.all(
       Array.from({ length: N }, (_, i) =>
-        allocateAndInsertRevision({ db, flavour, table: t, row: row(owner, app, dbName, docId, i, i % 4 === 3 ? 1 : 0) })
+        allocateAndInsertRevision({ db, flavour, table: t, row: row(owner, app, dbName, docId, i, i % 4 === 3 ? 1 : 0) }).then(
+          (r) => r.seq
+        )
       )
     );
     expect(new Set(seqs).size).toBe(N);
+  });
+
+  it("skipIf is evaluated against the live head, so a no-op cannot drop a write the early read missed (#2644)", async () => {
+    const { db, flavour, t } = await ctx();
+    const [owner, app, dbName, docId] = ["noop-owner", "noop-app", "noop", "d"];
+    const where = and(eq(t.ownerHandle, owner), eq(t.appSlug, app), eq(t.dbName, dbName), eq(t.docId, docId));
+    const count = async () => (await db.select({ seq: t.seq }).from(t).where(where)).length;
+    // A re-put is a no-op only while the SERIALIZED head still holds A (n === 1).
+    const skipIfHeadIsA = async (exec: typeof db) => {
+      const cur = await exec
+        .select({ data: t.data, deleted: t.deleted })
+        .from(t)
+        .where(where)
+        .orderBy(desc(t.seq))
+        .limit(1)
+        .then((r) => r[0]);
+      return !!cur && cur.deleted !== 1 && (cur.data as { n?: number }).n === 1;
+    };
+
+    // Head A.
+    const a = await allocateAndInsertRevision({ db, flavour, table: t, row: row(owner, app, dbName, docId, 1) });
+    expect(a.inserted).toBe(true);
+
+    // Re-put A while head is A → absorbed as a no-op; no new revision.
+    const reA = await allocateAndInsertRevision({
+      db,
+      flavour,
+      table: t,
+      row: row(owner, app, dbName, docId, 1),
+      skipIf: skipIfHeadIsA,
+    });
+    expect(reA.inserted).toBe(false);
+    expect(await count()).toBe(1);
+
+    // Head moves to B (the concurrent writer in the Codex P1 scenario).
+    await allocateAndInsertRevision({ db, flavour, table: t, row: row(owner, app, dbName, docId, 2) });
+
+    // Re-put A again with the SAME predicate. A stale pre-lock read still "thinks"
+    // the head is A, but the in-lock recheck sees B → must NOT no-op → A is
+    // inserted (restored), not silently dropped.
+    const reA2 = await allocateAndInsertRevision({
+      db,
+      flavour,
+      table: t,
+      row: row(owner, app, dbName, docId, 1),
+      skipIf: skipIfHeadIsA,
+    });
+    expect(reA2.inserted).toBe(true);
+    expect(await count()).toBe(3);
   });
 
   it("docLockKey is identical for the same doc tuple (put/delete share the lock)", () => {
