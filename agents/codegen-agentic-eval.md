@@ -31,6 +31,11 @@ Running both modes on the same model/prompt pair reveals:
    The `score` stage reuses the judge from `codegen-matrix`:
    - Set as environment variables (cloud agent env wins), OR
    - In `vibes.diy/pkg/.dev.vars` (local dev fallback)
+   Set the FULL chat-completions path (call-ai posts to it verbatim):
+   `LLM_BACKEND_URL=https://openrouter.ai/api/v1/chat/completions`
+   A bare `.../api/v1` (no `/chat/completions`) makes the judge hit an HTML error
+   page → 100% null feature scores. The score stage now preflights the judge and
+   fails fast if the URL is wrong.
    See [`agents/worktree-setup.md`](worktree-setup.md) for dev setup.
 
 3. `pnpm install` at the repo root.
@@ -211,6 +216,8 @@ Use for custom analysis (e.g., "do open-weight models fail `collab-lists` more o
 | --- | --- |
 | `OPENROUTER_API_KEY is not set` on `generate` | Set it: `OPENROUTER_API_KEY="..." pnpm run generate` or store in Keychain (see Prerequisites). |
 | `LLM_BACKEND_URL` / `LLM_BACKEND_API_KEY` error on `score` | Set them as env vars or in `vibes.diy/pkg/.dev.vars`. Environment variables win. |
+| `judge preflight failed` on `score` | `LLM_BACKEND_URL` is missing `/chat/completions`. Use the full path. |
+| Preflight logs "transient error after retries — continuing" | A smoke-model provider blip; the sweep proceeds. Only a non-transient error (bad key / model id) aborts. |
 | All cells `exitState: "errored"` with "Step count exceeded" | agentic `maxSteps` is too low for the model. Raise it or shorten prompts. |
 | All cells `exitState: "errored"` with cost exceeded | agentic iterations are expensive. Raise `maxCostUsd` or use cheaper models. |
 | High null feature scores | Judge backend is flaky. Re-run `score` to retry. Some transient timeouts pass on retry. |

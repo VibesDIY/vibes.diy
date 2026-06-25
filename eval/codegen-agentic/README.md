@@ -70,6 +70,8 @@ Pass flags through the pnpm script with `--`, e.g.
    The `score` stage reuses the same judge backend as `codegen-matrix`. Set them:
    - As environment variables (cloud agent env prefers this), OR
    - In `vibes.diy/pkg/.dev.vars` (local dev fallback)
+   Use the full chat-completions path: `LLM_BACKEND_URL=https://openrouter.ai/api/v1/chat/completions`.
+   A bare `.../api/v1` (without `/chat/completions`) makes the judge hit an HTML error page.
    Environment variables win. See [`agents/worktree-setup.md`](../../agents/worktree-setup.md).
 
 3. `pnpm install` at the repo root.
@@ -136,6 +138,12 @@ The `score` stage runs three judges per cell (outputs are files on disk):
 3. **Feature** (`judgeFeature`): calls an LLM with the original prompt + generated code to judge whether the code **fulfills the prompt intent**. Returns a score (0–5) or null if the judge errors.
 
 The `featureAcceptBar` (default 3) is the minimum feature score to count a cell as "acceptable."
+
+## Behavior to know
+
+- **Generation calls retry transient errors**: when a generation call (one-shot or agentic) encounters a transient infra error (5xx, network timeout), it retries automatically up to `maxRetries` times (default 2, for 3 total attempts). Non-transient errors (4xx, parse) fail immediately.
+- **Preflight aborts only on non-transient errors**: the `generate` stage runs a smoke cell (first model, first prompt, both modes) as a preflight. If the cell hits a non-transient error, generation aborts. Transient errors log a warning and the full sweep proceeds (cells may still error).
+- **Judge preflight for the score stage**: the `score` stage calls `assertJudgeReachable` before scoring, which probes the judge backend with a single test call. If the judge returns a null score (e.g., because `LLM_BACKEND_URL` is missing `/chat/completions`), the score stage fails fast with an actionable error instead of producing an all-null report.
 
 ## Reading results
 
