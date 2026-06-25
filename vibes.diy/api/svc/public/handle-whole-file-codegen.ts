@@ -42,7 +42,7 @@
 // flag, in Task 8) and is unit-testable with plain fakes.
 
 import { Option, Result } from "@adviser/cement";
-import type { BlockBeginMsg, BlockEndMsg, FileSystemRef } from "@vibes.diy/call-ai-v2";
+import type { BlockBeginMsg, BlockEndMsg, CodeBeginMsg, CodeEndMsg, CodeLineMsg, FileSystemRef } from "@vibes.diy/call-ai-v2";
 import type { PromptAndBlockMsgs, VibeFile } from "@vibes.diy/api-types";
 import { buildBlockEvents } from "../intern/codegen-loop/emit-blocks.js";
 import type { OnLine, WholeFileResult } from "../intern/codegen-loop/whole-file-loop.js";
@@ -244,9 +244,11 @@ export async function handleWholeFileCodegenRequest(deps: WholeFileCodegenDeps):
   };
   timer = setTimeout(heartbeat, HEARTBEAT_MS);
 
-  // 2. Run the loop to produce the complete files. No `onLine`: the item stream
-  //    buffers under workerd, so live per-line streaming is deferred (#2650) and
-  //    the heartbeat above carries keepalive instead.
+  // 2. Run the loop to produce the complete files. DIAGNOSTIC build: no `onLine`
+  //    (emission stays the safe reveal+heartbeat path, zero crash risk), but the
+  //    loop measures `streamDiag` — whether the SDK's full-response stream
+  //    delivers write_file argument deltas incrementally under workerd, or
+  //    buffers to the end. The result is surfaced as a live-only card below.
   let result: WholeFileResult;
   try {
     result = await runWholeFileCodegen({
@@ -290,7 +292,50 @@ export async function handleWholeFileCodegenRequest(deps: WholeFileCodegenDeps):
   //    section reducer correctly framed even for a client that reconnected
   //    mid-turn and missed the heartbeats — block.begin re-opens the block right
   //    before the code, so `code.end` never lands without its `code.begin`.
-  for (const msg of collectedMsgs) enqueue(msg);
+  //
+  //    DIAGNOSTIC: inject a live-only `/_streamdiag…` card just before block.end
+  //    so the SSE-delivery timing measured in the loop is readable in the browser
+  //    (the card label shows its path). `firstDeltaMs` ≈ a few thousand ⇒ the
+  //    stream flushes incrementally (per-line streaming is viable); ≈ total
+  //    generation time ⇒ it buffered. It is NOT in `collectedMsgs`, so it is
+  //    never persisted and vanishes on reload.
+  const diag = result.streamDiag ?? { firstDeltaMs: -1, lastDeltaMs: -1, deltaCount: 0 };
+  const diagPath = `/_streamdiag_first${diag.firstDeltaMs}ms_last${diag.lastDeltaMs}ms_n${diag.deltaCount}.txt`;
+  const diagSectionId = nextId();
+  const diagBase = { blockId, streamId: promptId, blockNr: 0 } as const;
+  const diagLine = JSON.stringify(diag);
+  for (const msg of collectedMsgs.slice(0, -1)) enqueue(msg);
+  enqueue({
+    type: "block.code.begin",
+    sectionId: diagSectionId,
+    lang: "js",
+    path: diagPath,
+    seq: liveSeq++,
+    timestamp: new Date(),
+    ...diagBase,
+  } satisfies CodeBeginMsg);
+  enqueue({
+    type: "block.code.line",
+    sectionId: diagSectionId,
+    lang: "js",
+    path: diagPath,
+    line: diagLine,
+    lineNr: 0,
+    seq: liveSeq++,
+    timestamp: new Date(),
+    ...diagBase,
+  } satisfies CodeLineMsg);
+  enqueue({
+    type: "block.code.end",
+    sectionId: diagSectionId,
+    lang: "js",
+    path: diagPath,
+    stats: { lines: 1, bytes: diagLine.length },
+    seq: liveSeq++,
+    timestamp: new Date(),
+    ...diagBase,
+  } satisfies CodeEndMsg);
+  enqueue(collectedMsgs[collectedMsgs.length - 1]); // block.end (closes/reveals the cards)
 
   // Drain the serialized emit chain and surface the first send failure, if any.
   await chain;

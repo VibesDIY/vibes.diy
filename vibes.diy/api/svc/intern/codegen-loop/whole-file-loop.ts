@@ -34,9 +34,24 @@ export interface RunArgs {
   onLine?: OnLine;
 }
 
+/**
+ * Streaming-delivery measurement (diagnostic). All @openrouter/agent stream
+ * accessors share one broadcaster over a single `reusableStream`, so this
+ * reflects whether write_file argument deltas arrive incrementally under the
+ * host runtime: `firstDeltaMs` ≈ a few seconds means the SSE body streams;
+ * `firstDeltaMs` ≈ total generation time (with `lastDeltaMs` ≈ the same) means
+ * the response buffered before any delta was delivered (the workerd symptom).
+ */
+export interface StreamDiag {
+  firstDeltaMs: number;
+  lastDeltaMs: number;
+  deltaCount: number;
+}
+
 export interface WholeFileResult {
   files: { filename: string; lang: string; content: string }[];
   usage: { prompt_tokens: number; completion_tokens: number; total_tokens: number };
+  streamDiag?: StreamDiag;
 }
 
 /** Normalize a model-supplied path to a leading-slash form (matches verifyFiles' `/App.jsx` lookups). */
@@ -47,13 +62,6 @@ function normalizeFilename(path: string): string {
 /** Tag a file's language from its extension: jsx/tsx → "jsx", everything else → "js". */
 function langFor(filename: string): string {
   return filename.endsWith(".jsx") || filename.endsWith(".tsx") ? "jsx" : "js";
-}
-
-/** A streamed `function_call` output item (cumulative `arguments` JSON). Mirrors @openrouter/agent's StreamableOutputItem. */
-interface StreamedFunctionCall {
-  type?: string;
-  name?: string;
-  arguments?: string;
 }
 
 /**
@@ -156,18 +164,33 @@ async function runOnce(args: RunArgs): Promise<WholeFileResult> {
     stopWhen: [stepCountIs(args.maxSteps), maxCost(args.maxCostUsd)],
   });
 
-  // Stream completed file lines to the caller as the model writes them. The
-  // items stream emits each write_file call cumulatively (same id, growing
-  // arguments), so the emitter diffs against the per-file line cursor and only
-  // fires onLine for newly-completed lines. Drained concurrently with getText()
-  // since both share the underlying reusable stream.
+  // Stream completed file lines to the caller as the model writes them, via the
+  // SDK's documented full-response stream. We accumulate `write_file` argument
+  // deltas (`response.function_call_arguments.delta`) into a per-call cumulative
+  // JSON blob, resetting on each new output item, and diff completed lines
+  // through `makeLineEmitter`. `streamDiag` records the delivery timing so the
+  // caller can tell whether the SSE body actually streamed under the host
+  // runtime or buffered to the end. Drained concurrently with getText(); both
+  // share the one broadcaster over the reusable stream.
+  const streamDiag: StreamDiag = { firstDeltaMs: -1, lastDeltaMs: -1, deltaCount: 0 };
+  const startMs = Date.now();
   const streaming = (async () => {
-    if (!args.onLine) return;
-    const emitLines = makeLineEmitter(args.onLine);
-    for await (const item of result.getItemsStream()) {
-      const fc = item as StreamedFunctionCall;
-      if (fc.type !== "function_call" || fc.name !== "write_file" || typeof fc.arguments !== "string") continue;
-      const { path, contents } = extractWriteFileArgs(fc.arguments);
+    const emitLines = args.onLine ? makeLineEmitter(args.onLine) : undefined;
+    let argsAccum = "";
+    for await (const event of result.getFullResponsesStream()) {
+      const type = (event as { type?: string }).type;
+      if (type === "response.output_item.added") {
+        argsAccum = ""; // a new output item begins → reset the per-call accumulator
+        continue;
+      }
+      if (type !== "response.function_call_arguments.delta") continue;
+      streamDiag.deltaCount++;
+      const elapsed = Date.now() - startMs;
+      if (streamDiag.firstDeltaMs < 0) streamDiag.firstDeltaMs = elapsed;
+      streamDiag.lastDeltaMs = elapsed;
+      if (!emitLines) continue;
+      argsAccum += (event as { delta?: string }).delta ?? "";
+      const { path, contents } = extractWriteFileArgs(argsAccum);
       if (typeof path === "string" && path.length > 0 && typeof contents === "string") {
         emitLines(path, contents);
       }
@@ -193,6 +216,7 @@ async function runOnce(args: RunArgs): Promise<WholeFileResult> {
       completion_tokens,
       total_tokens: u.totalTokens ?? prompt_tokens + completion_tokens,
     },
+    streamDiag,
   };
 }
 

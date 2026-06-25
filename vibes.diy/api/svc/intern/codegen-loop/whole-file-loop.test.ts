@@ -14,11 +14,11 @@ function execOf(tools: unknown[]): (a: { path: string; contents: string }) => Pr
 }
 
 /**
- * A no-op async iterable standing in for ModelResult.getItemsStream() (no items
- * streamed in unit tests). Returned as a plain async iterator so it satisfies the
- * `for await` contract without being a yield-less generator.
+ * A no-op async iterable standing in for ModelResult.getFullResponsesStream()
+ * (no events streamed in unit tests). Returned as a plain async iterator so it
+ * satisfies the `for await` contract without being a yield-less generator.
  */
-function emptyItems(): AsyncIterableIterator<never> {
+function emptyEvents(): AsyncIterableIterator<never> {
   return {
     [Symbol.asyncIterator]() {
       return this;
@@ -28,27 +28,29 @@ function emptyItems(): AsyncIterableIterator<never> {
 }
 
 /**
- * A `getItemsStream()` stand-in that yields the supplied items in order.
- * Mirrors @openrouter/agent's StreamableOutputItem cumulative-emit contract:
- * the same `function_call` id is re-emitted with progressively growing
- * `arguments` JSON as the tool call streams in.
+ * A `getFullResponsesStream()` stand-in that yields the supplied response events
+ * in order. The loop consumes `response.output_item.added` (resets its per-call
+ * argument accumulator) and `response.function_call_arguments.delta` (the raw,
+ * incremental write_file argument JSON chunks).
  */
-function itemsFrom(items: unknown[]): () => AsyncIterableIterator<unknown> {
+function eventsFrom(events: unknown[]): () => AsyncIterableIterator<unknown> {
   return () => {
     let i = 0;
     return {
       [Symbol.asyncIterator]() {
         return this;
       },
-      next: async () => (i < items.length ? { done: false, value: items[i++] } : { done: true, value: undefined }),
+      next: async () => (i < events.length ? { done: false, value: events[i++] } : { done: true, value: undefined }),
     } as AsyncIterableIterator<unknown>;
   };
 }
 
-/** Build a cumulative `function_call` item snapshot (the SDK re-emits the same id as arguments grow). */
-function fnCall(name: string, args: object) {
-  return { type: "function_call", id: "fc_1", callId: "call_1", name, arguments: JSON.stringify(args) };
+/** A `response.function_call_arguments.delta` event carrying one chunk of the tool-call arguments JSON. */
+function argDelta(delta: string) {
+  return { type: "response.function_call_arguments.delta", delta };
 }
+/** Marks the start of a new output item (a tool call), so the loop resets its per-call accumulator. */
+const itemAdded = { type: "response.output_item.added" } as const;
 
 /**
  * Minimal ModelResult-shaped mock: callModel executes the write_file tool once
@@ -65,7 +67,7 @@ function mockClientWritingApp(contents: string, path = "/App.jsx") {
           return "";
         },
         getResponse: async () => ({ usage: { inputTokens: 1, outputTokens: 2, totalTokens: 3 } }),
-        getItemsStream: emptyItems,
+        getFullResponsesStream: emptyEvents,
       };
     },
   } as unknown as Parameters<typeof runWholeFileCodegen>[0]["client"];
@@ -131,7 +133,7 @@ describe("runWholeFileCodegen", () => {
               throw new Error("503 service unavailable");
             },
             getResponse: async () => ({ usage: {} }),
-            getItemsStream: emptyItems,
+            getFullResponsesStream: emptyEvents,
           };
         }
         const exec = execOf(tools)({ path: "/App.jsx", contents: app });
@@ -141,7 +143,7 @@ describe("runWholeFileCodegen", () => {
             return "";
           },
           getResponse: async () => ({ usage: { inputTokens: 5, outputTokens: 6, totalTokens: 11 } }),
-          getItemsStream: emptyItems,
+          getFullResponsesStream: emptyEvents,
         };
       },
     } as unknown as Parameters<typeof runWholeFileCodegen>[0]["client"];
@@ -161,16 +163,12 @@ describe("runWholeFileCodegen", () => {
     expect(r.usage).toEqual({ prompt_tokens: 5, completion_tokens: 6, total_tokens: 11 });
   });
 
-  it("invokes onLine for each streamed file line", async () => {
+  it("invokes onLine for each streamed file line as argument deltas arrive", async () => {
     const seen: string[] = [];
-    // Cumulative write_file stream: the SDK re-emits the same item id as the
-    // `contents` argument grows. Only completed (newline-terminated) lines fire,
-    // and the per-file line cursor prevents a re-emitted growing item from
-    // double-firing earlier lines.
-    const items = [
-      fnCall("write_file", { path: "/App.jsx", contents: "line1\n" }),
-      fnCall("write_file", { path: "/App.jsx", contents: "line1\nline2\n" }),
-    ];
+    // Two argument deltas that together build the write_file arguments JSON. The
+    // first completes line1 (newline-terminated); the second adds line2. The
+    // per-file line cursor prevents line1 from re-firing on the second delta.
+    const events = [itemAdded, argDelta('{"path":"/App.jsx","contents":"line1\\n'), argDelta('line2\\n"}')];
     const client = {
       callModel: ({ tools }: { tools: unknown[] }) => {
         const exec = execOf(tools)({ path: "/App.jsx", contents: "line1\nline2\n" });
@@ -180,12 +178,12 @@ describe("runWholeFileCodegen", () => {
             return "";
           },
           getResponse: async () => ({ usage: { inputTokens: 1, outputTokens: 2, totalTokens: 3 } }),
-          getItemsStream: itemsFrom(items),
+          getFullResponsesStream: eventsFrom(events),
         };
       },
     } as unknown as Parameters<typeof runWholeFileCodegen>[0]["client"];
 
-    await runWholeFileCodegen({
+    const r = await runWholeFileCodegen({
       client,
       model: "frontier",
       systemPrompt: "sys",
@@ -198,11 +196,13 @@ describe("runWholeFileCodegen", () => {
       },
     });
     expect(seen).toEqual(["line1", "line2"]);
+    // The diagnostic counts every argument delta it saw.
+    expect(r.streamDiag?.deltaCount).toBe(2);
   });
 
   it("passes the file path and language to onLine for each line", async () => {
     const calls: { file: string; lang: string; line: string; lineNr: number }[] = [];
-    const items = [fnCall("write_file", { path: "access.js", contents: "a\nb\n" })];
+    const events = [itemAdded, argDelta('{"path":"access.js","contents":"a\\nb\\n"}')];
     const client = {
       callModel: ({ tools }: { tools: unknown[] }) => {
         const exec = execOf(tools)({ path: "access.js", contents: "a\nb\n" });
@@ -212,7 +212,7 @@ describe("runWholeFileCodegen", () => {
             return "";
           },
           getResponse: async () => ({ usage: { inputTokens: 1, outputTokens: 2, totalTokens: 3 } }),
-          getItemsStream: itemsFrom(items),
+          getFullResponsesStream: eventsFrom(events),
         };
       },
     } as unknown as Parameters<typeof runWholeFileCodegen>[0]["client"];
@@ -235,12 +235,12 @@ describe("runWholeFileCodegen", () => {
     ]);
   });
 
-  it("ignores non-write_file function_call items when streaming lines", async () => {
+  it("ignores deltas for a non-write_file tool call when streaming lines", async () => {
     const seen: string[] = [];
-    const items = [
-      fnCall("some_other_tool", { foo: "bar\nbaz\n" }),
-      fnCall("write_file", { path: "/App.jsx", contents: "only\n" }),
-    ];
+    // A first output item whose arguments carry no path/contents (a different
+    // tool), then the write_file item. The accumulator resets on each item, so
+    // only the write_file contents produce lines.
+    const events = [itemAdded, argDelta('{"foo":"bar\\nbaz\\n"}'), itemAdded, argDelta('{"path":"/App.jsx","contents":"only\\n"}')];
     const client = {
       callModel: ({ tools }: { tools: unknown[] }) => {
         const exec = execOf(tools)({ path: "/App.jsx", contents: "only\n" });
@@ -250,7 +250,7 @@ describe("runWholeFileCodegen", () => {
             return "";
           },
           getResponse: async () => ({ usage: { inputTokens: 1, outputTokens: 2, totalTokens: 3 } }),
-          getItemsStream: itemsFrom(items),
+          getFullResponsesStream: eventsFrom(events),
         };
       },
     } as unknown as Parameters<typeof runWholeFileCodegen>[0]["client"];
@@ -290,7 +290,7 @@ describe("runWholeFileCodegen", () => {
             return "";
           },
           getResponse: async () => ({ usage: { inputTokens: 1, outputTokens: 2, totalTokens: 3 } }),
-          getItemsStream: emptyItems,
+          getFullResponsesStream: emptyEvents,
         };
       },
     } as unknown as Parameters<typeof runWholeFileCodegen>[0]["client"];
