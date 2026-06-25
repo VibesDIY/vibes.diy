@@ -1192,6 +1192,9 @@ importers:
       '@noble/hashes':
         specifier: ^2.2.0
         version: 2.2.0
+      '@openrouter/agent':
+        specifier: ^0.1.0
+        version: 0.1.2
       '@vibes.diy/api-impl':
         specifier: workspace:*
         version: link:../impl
