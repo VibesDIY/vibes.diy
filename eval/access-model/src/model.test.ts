@@ -17,6 +17,7 @@ const baseMatrix: AccessMatrix = {
   model: "",
   judgeModel: "judge-model",
   reps: 8,
+  repsMax: 16,
   concurrency: 32,
   scoreConcurrency: 8,
   screenshotTimeoutMs: 120000,

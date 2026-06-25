@@ -8,6 +8,7 @@
     "generate": "tsx src/generate.ts",
     "score": "tsx src/score.ts",
     "report": "tsx src/report.ts",
+    "adaptive": "tsx src/adaptive.ts",
     "verify": "tsx src/verify.ts",
     "test": "vitest --run"
   },

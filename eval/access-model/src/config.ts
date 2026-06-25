@@ -15,7 +15,8 @@ export interface AccessMatrix {
   readonly handle: string;
   readonly model: string; // "" => pin to resolved default at kickoff
   readonly judgeModel: string;
-  readonly reps: number;
+  readonly reps: number; // base wave reps per prompt
+  readonly repsMax: number; // adaptive cap: unsaturated prompts top up to this many reps
   readonly concurrency: number;
   readonly scoreConcurrency: number;
   readonly screenshotTimeoutMs: number;
@@ -48,6 +49,7 @@ export function parseAccessMatrix(text: string): AccessMatrix {
     model: typeof o.model === "string" ? o.model : "",
     judgeModel: o.judgeModel,
     reps: num(o.reps, 8),
+    repsMax: num(o.repsMax, num(o.reps, 8) * 2),
     concurrency: num(o.concurrency, 32),
     scoreConcurrency: num(o.scoreConcurrency, 8),
     screenshotTimeoutMs: num(o.screenshotTimeoutMs, 120000),

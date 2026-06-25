@@ -1,5 +1,5 @@
 import { spawn, spawnSync } from "node:child_process";
-import { mkdirSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, statSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { argv, stderr } from "node:process";
@@ -276,23 +276,43 @@ export async function main(): Promise<void> {
   const concurrency = Math.max(1, Math.floor(Number(parseFlag("--concurrency") ?? matrix.concurrency)) || 1);
   const cliVersion = resolveCliVersion(matrix.cliCommand);
 
-  const run: AccessRunJson = {
-    startedAt: new Date().toISOString(),
-    apiUrl: matrix.apiUrl,
-    model,
-    cliVersion,
-    commitSha: gitCommitSha(),
-    handle: matrix.handle,
-    reps: matrix.reps,
-    concurrency,
-    promptsFile,
-  };
-  writeFileSync(join(runDir, RUN_JSON), JSON.stringify(run, null, 2), "utf-8");
+  // Reps controls (for the adaptive top-up wave): --reps overrides the count, --rep-start
+  // shifts the first rep index so a top-up appends reps 4..7 onto an existing run without
+  // clobbering the base wave, and --only restricts to a comma-separated subset of prompt ids.
+  const reps = Math.max(1, Math.floor(Number(parseFlag("--reps") ?? matrix.reps)) || 1);
+  const repStart = Math.max(0, Math.floor(Number(parseFlag("--rep-start") ?? 0)) || 0);
+  const onlyFlag = parseFlag("--only");
+  const onlyIds = onlyFlag
+    ? new Set(
+        onlyFlag
+          .split(",")
+          .map((s) => s.trim())
+          .filter(Boolean)
+      )
+    : null;
+  const selPrompts = onlyIds ? prompts.filter((p) => onlyIds.has(p.id)) : prompts;
 
-  // Build the cell list (prompts × reps), then run up to `concurrency` in parallel.
+  // Append-safe: preserve the original run.json (canonical commitSha/model/reps) when a
+  // later top-up wave writes into an existing run dir.
+  if (!existsSync(join(runDir, RUN_JSON))) {
+    const run: AccessRunJson = {
+      startedAt: new Date().toISOString(),
+      apiUrl: matrix.apiUrl,
+      model,
+      cliVersion,
+      commitSha: gitCommitSha(),
+      handle: matrix.handle,
+      reps: matrix.reps,
+      concurrency,
+      promptsFile,
+    };
+    writeFileSync(join(runDir, RUN_JSON), JSON.stringify(run, null, 2), "utf-8");
+  }
+
+  // Build the cell list (selected prompts × [repStart, repStart+reps)), run up to `concurrency`.
   const jobs: { prompt: AccessPrompt; rep: number }[] = [];
-  for (const prompt of prompts) {
-    for (let rep = 0; rep < matrix.reps; rep++) jobs.push({ prompt, rep });
+  for (const prompt of selPrompts) {
+    for (let rep = repStart; rep < repStart + reps; rep++) jobs.push({ prompt, rep });
   }
   stderr.write(`access-model: ${jobs.length} cells, concurrency=${concurrency} -> ${runDir}\n`);
   await mapWithConcurrency(jobs, concurrency, async (job) => {
