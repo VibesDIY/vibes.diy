@@ -15,7 +15,9 @@ export function evaluateProgress(
   if (!buildResult.ok) problems.push(`Build failed: ${buildResult.errors.join("; ")}`);
   const s = computeStructure(files);
   if (needsAccess && !s.hasAccessJs) {
-    problems.push("This app needs per-document permissions but no separate access.js was written. Add an access.js that exports the access function.");
+    problems.push(
+      "This app needs per-document permissions but no separate access.js was written. Add an access.js that exports the access function."
+    );
   }
   if (needsAccess && s.accessInAppJsx) {
     problems.push("Access-control logic is in App.jsx; move it into access.js.");

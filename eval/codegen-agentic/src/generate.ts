@@ -50,7 +50,9 @@ async function runJob(client: OpenRouter, cfg: MatrixConfig, systemPrompt: strin
   }
   const { files: _omit, ...meta } = cell; // keep cell.json lean; files are on disk
   writeFileSync(join(cellDir, CELL_JSON), JSON.stringify({ ...meta, fileNames: Object.keys(gen.files) }, null, 2), "utf-8");
-  stderr.write(`  ${job.prompt.id} ${job.model} r${job.rep} ${job.mode}: ${gen.exitState} build=${gen.buildPass} steps=${gen.steps} $${gen.costUsd.toFixed(4)}\n`);
+  stderr.write(
+    `  ${job.prompt.id} ${job.model} r${job.rep} ${job.mode}: ${gen.exitState} build=${gen.buildPass} steps=${gen.steps} $${gen.costUsd.toFixed(4)}\n`
+  );
   return cell;
 }
 
@@ -89,7 +91,13 @@ export async function main(): Promise<void> {
   // Preflight: one smoke cell (first model, first prompt, both modes) before the sweep.
   const smokeModel = cfg.models[0];
   for (const mode of cfg.modes) {
-    const r = await runJob(client, cfg, systemPrompt, { model: smokeModel.id, openWeight: smokeModel.openWeight, prompt: prompts[0], rep: 0, mode }, runDir);
+    const r = await runJob(
+      client,
+      cfg,
+      systemPrompt,
+      { model: smokeModel.id, openWeight: smokeModel.openWeight, prompt: prompts[0], rep: 0, mode },
+      runDir
+    );
     if (r.exitState === "errored") throw new Error(`preflight ${mode} errored: ${r.note}`);
   }
   stderr.write(`preflight ok. proceeding to full sweep.\n`);
@@ -104,7 +112,9 @@ export async function main(): Promise<void> {
         }
 
   let spent = 0;
-  stderr.write(`codegen-agentic: ${jobs.length} cells, concurrency=${cfg.concurrency}, budget $${cfg.budgetUsdTotal} -> ${runDir}\n`);
+  stderr.write(
+    `codegen-agentic: ${jobs.length} cells, concurrency=${cfg.concurrency}, budget $${cfg.budgetUsdTotal} -> ${runDir}\n`
+  );
   await mapWithConcurrency(jobs, cfg.concurrency, async (job) => {
     // Soft aggregate cap: no NEW job starts once the budget is reached, but up to
     // `concurrency` jobs already in flight still finish, so total spend can overshoot

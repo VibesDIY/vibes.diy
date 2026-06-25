@@ -73,6 +73,14 @@ export async function runAgentic(
     const build = await buildCheck(files);
     return { files, steps, buildPass: build.ok, costUsd, tokens, exitState: "ok", note: build.ok ? "" : build.errors.join("; ") };
   } catch (e) {
-    return { files, steps, buildPass: false, costUsd: 0, tokens: 0, exitState: "errored", note: (e as Error).message.slice(0, 200) };
+    return {
+      files,
+      steps,
+      buildPass: false,
+      costUsd: 0,
+      tokens: 0,
+      exitState: "errored",
+      note: (e as Error).message.slice(0, 200),
+    };
   }
 }

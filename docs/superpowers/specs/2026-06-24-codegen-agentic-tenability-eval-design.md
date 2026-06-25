@@ -27,7 +27,7 @@ Both run through the OpenRouter SDK (`@openrouter/agent`), calling OpenRouter di
 ### 2.2 What is held constant (the isolation that makes it valid)
 
 - **Identical task + coding rules prompt** across all models and both modes — the substantive content of the vibes initial system prompt (Fireproof, `use-vibes`, the access model, the app requirements), with the vibes-parser-specific I/O protocol (SEARCH/REPLACE, the ▸ improvement question, the section/block streaming protocol) removed.
-- The **I/O mechanism necessarily differs by mode** (parse-prose vs `write_file` tool). That difference *is* the loop variable; it is expected, not a confound.
+- The **I/O mechanism necessarily differs by mode** (parse-prose vs `write_file` tool). That difference _is_ the loop variable; it is expected, not a confound.
 - **No per-model prompt adaptation.** Every model gets the same prompt. (Per-model prompt adaptation is a separate, later experiment — see §8.)
 - Same models, prompts, reps, and per-cell budget everywhere.
 

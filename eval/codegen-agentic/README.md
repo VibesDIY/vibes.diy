@@ -16,6 +16,7 @@ Both run the same model on the same prompt; the delta (agentic score – one-sho
 ### Prompt corpus
 
 Three prompts from `config/prompts.jsonl`:
+
 - `collab-lists`: Multi-list todo with per-list invite and Fireproof persistence. **Requires `access.js`** (`needsAccess: true`).
 - `audio-synth`: Web Audio synthesizer with ADSR envelope sliders. **No permissions needed** (`needsAccess: false`).
 - `recipe-shop`: Recipe → shopping list via AI schema extraction + toggle + substitution hints. **No permissions** (`needsAccess: false`).
@@ -23,6 +24,7 @@ Three prompts from `config/prompts.jsonl`:
 ### Models and tenability
 
 Models in `config/matrix.json` are tagged `openWeight: true/false`. The eval answers:
+
 - **Can open-weight models stay viable when given iteration + feedback?** (agentic mode)
 - **At what cost?** ($/acceptable-solution)
 - **Do the open-weight and closed models have the same relationship to iteration**, or does one benefit more?
@@ -43,14 +45,14 @@ Each stage auto-targets the most recent `runs/<ts>/`. Override with `--run <dir>
 
 ### Flags
 
-| Stage    | Flag               | Default              | Purpose                 |
-| -------- | ------------------ | -------------------- | ----------------------- |
-| generate | `--matrix <path>`  | `config/matrix.json` | model/mode/budget conf  |
-| generate | `--prompts <path>` | `config/prompts.jsonl` | prompt corpus           |
+| Stage    | Flag               | Default                   | Purpose                       |
+| -------- | ------------------ | ------------------------- | ----------------------------- |
+| generate | `--matrix <path>`  | `config/matrix.json`      | model/mode/budget conf        |
+| generate | `--prompts <path>` | `config/prompts.jsonl`    | prompt corpus                 |
 | generate | `--system <path>`  | `config/system-prompt.md` | codegen rules + output format |
-| score    | `--run <dir>`      | latest `runs/<ts>/`  | which run to score      |
-| score    | `--prompts <path>` | `config/prompts.jsonl` | prompt text for judges  |
-| report   | `--run <dir>`      | latest `runs/<ts>/`  | which run to report     |
+| score    | `--run <dir>`      | latest `runs/<ts>/`       | which run to score            |
+| score    | `--prompts <path>` | `config/prompts.jsonl`    | prompt text for judges        |
+| report   | `--run <dir>`      | latest `runs/<ts>/`       | which run to report           |
 
 Pass flags through the pnpm script with `--`, e.g.
 `pnpm run generate -- --matrix /tmp/my-matrix.json`.
@@ -58,10 +60,13 @@ Pass flags through the pnpm script with `--`, e.g.
 ## Prerequisites
 
 1. **OpenRouter API key** (for generation):
+
    ```sh
    OPENROUTER_API_KEY="$(security find-generic-password -a "$USER" -s openrouter-api-key -w)" pnpm run generate
    ```
+
    The key is read from `OPENROUTER_API_KEY` at runtime and never logged. Store it in the macOS Keychain:
+
    ```sh
    security add-generic-password -a "$USER" -s openrouter-api-key -w "<your-key>"
    ```
@@ -70,13 +75,14 @@ Pass flags through the pnpm script with `--`, e.g.
    The `score` stage reuses the same judge backend as `codegen-matrix`. Set them:
    - As environment variables (cloud agent env prefers this), OR
    - In `vibes.diy/pkg/.dev.vars` (local dev fallback)
-   Environment variables win. See [`agents/worktree-setup.md`](../../agents/worktree-setup.md).
+     Environment variables win. See [`agents/worktree-setup.md`](../../agents/worktree-setup.md).
 
 3. `pnpm install` at the repo root.
 
 ## Configuration
 
 `config/matrix.json`:
+
 - `judgeModel` — the LLM that scores each cell (default: `anthropic/claude-opus-4.5`).
 - `reps` — repetitions per (prompt × model × mode) cell.
 - `modes` — array of `["oneshot", "agentic"]` or a subset (default: both).
@@ -96,7 +102,8 @@ Pass flags through the pnpm script with `--`, e.g.
 ### One-shot mode
 
 The model outputs filename-fenced blocks:
-```
+
+````
 App.jsx
 ```jsx
 export default function App() { ... }
@@ -105,7 +112,7 @@ access.js (optional)
 ```js
 export function access(...) { ... }
 ```
-```
+````
 
 The `parseFiles` parser extracts them.
 
@@ -121,7 +128,7 @@ The model iterates until `ok: true` or `maxSteps` is reached.
 
 ### v1 is source-only (no design judge)
 
-**This eval scores generated source only — there is no design judge.** v1 never renders or deploys a cell: it does not run the app, capture a screenshot, or visually judge the rendered output. Every signal (build-check, rubric, structure, feature judge) reads the source code on disk. So this harness measures whether models produce *structurally and functionally plausible source*, not whether the running app looks or behaves correctly. A render/design judge is explicitly out of scope for v1.
+**This eval scores generated source only — there is no design judge.** v1 never renders or deploys a cell: it does not run the app, capture a screenshot, or visually judge the rendered output. Every signal (build-check, rubric, structure, feature judge) reads the source code on disk. So this harness measures whether models produce _structurally and functionally plausible source_, not whether the running app looks or behaves correctly. A render/design judge is explicitly out of scope for v1.
 
 ### `access.js` requirement
 
@@ -140,6 +147,7 @@ The `featureAcceptBar` (default 3) is the minimum feature score to count a cell 
 ## Reading results
 
 `runs/<ts>/summary.md` — per-model × mode table with:
+
 - Build-pass rate (what % of 3 reps passed `buildCheck`)
 - Mean feature score (across reps that scored)
 - Acceptable count / total (cells where `buildPass && feature >= bar && (!needsAccess || hasAccessJs)`)
@@ -152,13 +160,13 @@ Then a **delta table**: one-shot → agentic per model, showing the improvement 
 
 ## Troubleshooting
 
-| Symptom | Cause / fix |
-| --- | --- |
-| `OPENROUTER_API_KEY is not set` on `generate` | Provide it as an env var: `OPENROUTER_API_KEY="..." pnpm run generate`. Or store in Keychain with the one-liner above. |
-| `LLM_BACKEND_URL` / `LLM_BACKEND_API_KEY` error on `score` | Set them as env vars or in `vibes.diy/pkg/.dev.vars`. Environment variables win. |
-| Many cells `exitState: "errored"` | Check the `cell.json` `note` field for the error. Often a model timeout or parse failure. |
-| Many `feature: null` scores | The judge backend failed or timed out on those cells. Re-run `score` to retry the nulls; some transient errors will pass on retry. |
-| Want to score an old run | `pnpm run score -- --run runs/<ts>` then `pnpm run report -- --run runs/<ts>`. |
+| Symptom                                                    | Cause / fix                                                                                                                        |
+| ---------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| `OPENROUTER_API_KEY is not set` on `generate`              | Provide it as an env var: `OPENROUTER_API_KEY="..." pnpm run generate`. Or store in Keychain with the one-liner above.             |
+| `LLM_BACKEND_URL` / `LLM_BACKEND_API_KEY` error on `score` | Set them as env vars or in `vibes.diy/pkg/.dev.vars`. Environment variables win.                                                   |
+| Many cells `exitState: "errored"`                          | Check the `cell.json` `note` field for the error. Often a model timeout or parse failure.                                          |
+| Many `feature: null` scores                                | The judge backend failed or timed out on those cells. Re-run `score` to retry the nulls; some transient errors will pass on retry. |
+| Want to score an old run                                   | `pnpm run score -- --run runs/<ts>` then `pnpm run report -- --run runs/<ts>`.                                                     |
 
 ## Tests
 
