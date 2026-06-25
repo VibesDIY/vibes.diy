@@ -2,7 +2,7 @@
 
 `useViewer()` is a **read-only window** into viewer identity. The platform owns the rules — who's the owner, who has been granted read or write — and `useViewer()` lets your app see who's signed in and render their identity. You cannot grant or revoke access from code; you can only reflect the runtime's verdict in your UI.
 
-Use `useViewer()` for identity and display only — `ViewerTag`, avatars, and showing who's signed in. **Write surfaces are gated with `useVibe(dbName).can`** (see use-vibe docs), not with `viewer`/`isOwner`/`access.*`.
+Use `useViewer()` for identity and display only — `ViewerTag`, avatars, and showing who's signed in. **Write surfaces are gated with `useVibe(dbName).can`** (see use-vibe docs), not with `viewer`/`access.*`.
 
 ## Basic Usage
 
@@ -36,7 +36,6 @@ export default function App() {
 
 - `viewer` — `{ userHandle, displayName? }` or `null` for anonymous visitors. Avatars are not on the payload — render them with `<ViewerTag userHandle={...} />`, which resolves the avatar from the handle. Don't build avatar URLs yourself.
 - `isViewerPending` — `true` while the platform is still resolving the viewer identity (e.g. on first render before the parent shell has pushed the identity update). **Gate any auth-dependent UI on `!isViewerPending`** to avoid flashing the wrong state. Once it becomes `false`, `viewer` is either populated or definitively `null`.
-- `isOwner` — `true` when the viewer owns this vibe. A display hint only (e.g. an "admin" badge). Gate owner-only management WRITES (settings, role grants, moderation) on `useVibe(dbName).can` — the access function encodes the owner-only rule — never on `isOwner`.
 - `can(action, dbName?)` — legacy ACL boolean for `"read"`/`"write"`/`"delete"`. Prefer `useVibe(dbName).can.create/edit/delete` for write gating; it runs the app's access function and returns a `reason`.
 - `ViewerTag` — ready-made user pill; see the ViewerTag section below.
 

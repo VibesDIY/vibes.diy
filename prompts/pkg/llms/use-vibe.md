@@ -10,13 +10,13 @@ Pass the Fireproof database name you are writing to. You get:
 
 - `can.create(draft)` / `can.edit(doc)` / `can.delete(doc)` → `{ ok: boolean, reason?: string }`. Gate the write surface on `.ok`; when `!ok`, render `.reason` as the fallback copy (e.g. "authentication required", "not in channel: team").
 - `ready` — `false` until identity and the access function have resolved. While `false`, show a neutral skeleton or disabled control; gating on it avoids a flash of the wrong state.
-- `me` — `{ userHandle, displayName?, isOwner } | null` (null = anonymous). For display only.
+- `me` — `{ userHandle, displayName? } | null` (null = anonymous). For display only.
 
 **Build the candidate from the doc you'll actually write.** `can.create(draft)` runs the access function against `draft`, so `draft` must carry the fields the function checks — `authorHandle`, `channelId`, etc. A bare `can.create({ type: "post" })` gets denied (e.g. `"not author"`) and hides the form even from users who could post. Stamp the same fields you'll `put`: `can.create({ type: "post", channelId, authorHandle: me?.userHandle })`. And gate the **same database** you write to — `useVibe(dbName)` selects the access function and grants by `dbName`, so a gate on a different db won't reflect server enforcement.
 
 ## The rule
 
-Gate every write affordance on `can.*`. Render `reason` when denied. Never branch write permission on `viewer`, `isOwner`, `access.hasRole()`/`access.hasChannel()`, or document fields — those drift from what `access.js` actually does. Identity display (avatars, "signed in as") comes from `useViewer()`'s `ViewerTag`, not from `useVibe`.
+Gate every write affordance on `can.*`. Render `reason` when denied. Never branch write permission on `viewer`, `access.hasRole()`/`access.hasChannel()`, or document fields — those drift from what `access.js` actually does. Identity display (avatars, "signed in as") comes from `useViewer()`'s `ViewerTag`, not from `useVibe`.
 
 ```jsx
 import { useVibe, useViewer } from "use-vibes";
@@ -39,7 +39,7 @@ function PromptBar({ database }) {
 
 ## Owner-only and role-gated surfaces
 
-Don't gate management UI on `isOwner` directly. Encode the rule in `access.js` (e.g. `ctx.requireRole("owner")` — the owner is auto-seeded into the reserved `owner` role) and gate the UI on `can.*` for that database — the verdict reflects the same rule. Per-row edit/delete affordances: `{can.edit(doc).ok && <EditButton doc={doc} />}`. By default every signed-in visitor is a first-class participant who creates and edits their own data; reserve `requireRole("owner")` for genuinely owner-published apps and per-object channels for peer-to-peer sharing. Public-vs-private and the allowed-user list are the owner's runtime sharing settings, not `access.js`.
+Don't gate management UI on a display flag directly. Encode the rule in `access.js` (e.g. `ctx.requireRole("owner")` — the owner is auto-seeded into the reserved `owner` role) and gate the UI on `can.*` for that database — the verdict reflects the same rule. Per-row edit/delete affordances: `{can.edit(doc).ok && <EditButton doc={doc} />}`. By default every signed-in visitor is a first-class participant who creates and edits their own data; reserve `requireRole("owner")` for genuinely owner-published apps and per-object channels for peer-to-peer sharing. Public-vs-private and the allowed-user list are the owner's runtime sharing settings, not `access.js`.
 
 ## The server is still the authority
 

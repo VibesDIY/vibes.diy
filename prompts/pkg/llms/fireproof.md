@@ -394,7 +394,7 @@ The access function is the single source of truth for permissions. Gate write su
 
 This example shows the full round-trip — access.js declares channels and grants; App.jsx reads them back via `access`. Key details:
 
-- **Owner bootstrap:** the vibe owner is auto-seeded into the reserved `owner` role, so gate management operations (channel setup, role grants, moderation) on `ctx.requireRole("owner")` — **never `user.isOwner`** (`isOwner` is being retired from the access-fn `user`). No bootstrap problem — the seed means the owner can manage without a prior grant. Default content, though, should be author-owned (anyone signed-in creates and edits their own); reserve owner-gating for shared admin surfaces.
+- **Owner bootstrap:** the vibe owner is auto-seeded into the reserved `owner` role, so gate management operations (channel setup, role grants, moderation) on `ctx.requireRole("owner")` — **never on a display flag** (the UI gates on `can.*`). No bootstrap problem — the seed means the owner can manage without a prior grant. Default content, though, should be author-owned (anyone signed-in creates and edits their own); reserve owner-gating for shared admin surfaces.
 - **Channel identity:** Channel docs use `_id: "ch:" + name` so names are unique. The `_id` is the channel identifier everywhere — in `channels`, `grant`, and `ctx.requireAccess()`.
 - **Channel grant:** A channel document grants the creator (`grant.users`), adds `grant.public` so all members can read, and `grant.roles` so posters can write.
 - **Write surfaces** are gated with `useVibe(dbName).can.create/edit/delete` — it runs this same access function, so the UI verdict matches the server. Render `.reason` when denied. (See use-vibe docs.)
@@ -444,7 +444,7 @@ export function announcements(doc, oldDoc, user, ctx) {
 }
 ```
 
-App.jsx — `useVibe().can` gates every write surface (posts AND owner-only management); `access.hasChannel()` reflects display-only membership; `isOwner` is a display hint only:
+App.jsx — `useVibe().can` gates every write surface (posts AND owner-only management); `access.hasChannel()` reflects display-only membership:
 
 ```jsx
 import React from "react";
@@ -500,7 +500,7 @@ export default function App() {
         viewer && <p style={{ color: "var(--muted, #888)" }}>{canPost.reason}</p>
       )}
 
-      {/* owner-only management — gated on can.*, not isOwner */}
+      {/* owner-only management — gated on can.* */}
       {canGrant.ok && (
         <button onClick={() => database.put({ type: "roleGrant", role: "poster", userHandle: "newUser" })}>
           Grant poster role
@@ -519,21 +519,12 @@ export default function App() {
 }
 ```
 
-The pattern: `useVibe().can` gates every write surface — including owner-only management, which the access function enforces via `ctx.requireRole("owner")` so `can.create({ type: "roleGrant", … })` is false for non-owners. `access.hasChannel()` reflects display-only membership, and `isOwner` is a display hint only, never the write gate. The access function is the server-side authority — `useVibe().can` is how the UI reflects its decisions for writes.
+The pattern: `useVibe().can` gates every write surface — including owner-only management, which the access function enforces via `ctx.requireRole("owner")` so `can.create({ type: "roleGrant", … })` is false for non-owners. `access.hasChannel()` reflects display-only membership; the write gate is always `can.*`. The access function is the server-side authority — `useVibe().can` is how the UI reflects its decisions for writes.
 
-**Owner-management panels (appoint/revoke moderators, grant/revoke roles) gate on `can.*`, not `isOwner`.** It's tempting to wrap an admin panel in `{isOwner && <ModeratorPanel />}` and have its buttons call `database.put`/`database.del` directly. Don't let `isOwner` be what decides a write — it's the same display hint as everywhere else. Gate each mutating control on the verdict from the doc you'll actually write — appoint on `can.create({ type: "modGrant", role: "moderator", userHandle }).ok`, revoke on `can.delete(grantDoc).ok` — and render `.reason` when denied. `can.*` runs the app's own `access.js` to produce the verdict, so the control's enabled state and message track what the access function decides and stay correct as it grows beyond owner-only (a delegated admin role, say). Gate the panel's *visibility* on those same verdicts too, not `isOwner` alone — otherwise a delegated admin the access function now allows never reaches the controls or their reason.
+**Owner-management panels (appoint/revoke moderators, grant/revoke roles) gate on `can.*`.** Gate each mutating control — and the panel's visibility — on the `can.*` verdict from the doc you'll actually write: appoint on `can.create({ type: "modGrant", role: "moderator", userHandle }).ok`, revoke on `can.delete(grantDoc).ok` — and render `.reason` when denied. `can.*` runs the app's own `access.js` to produce the verdict, so the control's enabled state and message track what the access function decides and stay correct as the rule grows beyond owner-only (a delegated admin role, say).
 
 ```jsx
-// Don't: isOwner decides visibility AND the writes are ungated — a non-owner the
-// access function would allow never reaches the controls, and isOwner drifts from access.js
-{isOwner && (
-  <ModeratorPanel>
-    <button onClick={() => database.put({ type: "modGrant", role: "moderator", userHandle })}>Appoint</button>
-    <button onClick={() => database.del(grantDoc._id)}>Revoke</button>
-  </ModeratorPanel>
-)}
-
-// Do: can.* decides visibility AND gates each write, and supplies the denial reason
+// Gate visibility AND each write on the can.* verdict, and supply the denial reason
 const canAppoint = can.create({ type: "modGrant", role: "moderator", userHandle });
 const canRevoke = can.delete(grantDoc);
 {(canAppoint.ok || canRevoke.ok) && (
@@ -601,7 +592,7 @@ App.jsx — `access.hasChannel()` filters which channels are visible (display); 
       {viewer && access.hasChannel(channel) && (
 =======
       {/* filter to channels the viewer can see — use _id as channel identifier (display only) */}
-      {channels.filter((ch) => isOwner || access.hasChannel(ch._id)).map((ch) => (
+      {channels.filter((ch) => access.hasChannel(ch._id)).map((ch) => (
         <button key={ch._id} onClick={() => setChannel(ch._id)}>{ch.name}</button>
       ))}
 
