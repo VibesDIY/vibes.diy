@@ -8,6 +8,8 @@
 
 **Tech Stack:** TypeScript, `@openrouter/agent` (callModel + tool + stop-conditions), `zod` (via the repo's `zod/v4` shim), `@vibes.diy/eval-codegen-matrix/scoring` (pure helpers), `@vibes.diy/call-ai-v2` (block-stream types), Cloudflare Workers runtime (no esbuild / no native deps in the request path), Vitest.
 
+**Acceptance:** waived — experimental PR; real validation is the preview deploy + reviewer judgment, and the deterministic units (verify gate, emit-protocol sequence, loop with a mocked client) are covered by the plan's committed TDD tests. A held-out exam is ill-fitted to a plan-defined server integration whose only spec-derivable behavior ("flag off → existing path unchanged") is already green at baseline.
+
 ---
 
 ## Global Constraints
