@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 import { runOneShot } from "./oneshot.js";
 
 // Minimal fake OpenRouter client: getText() yields `texts[call]`, or throws if it is an Error.
-function fakeClient(texts: Array<string | Error>) {
+function fakeClient(texts: (string | Error)[]) {
   let call = 0;
   return {
     callModel() {
