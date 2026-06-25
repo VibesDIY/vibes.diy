@@ -1,0 +1,85 @@
+# ONE-SHOT, SELF-LIMITING corrective deploy for PR #2631's preview worker.
+#
+# Why this exists: the shared `vibes-diy-pr-preview.yaml` runs `wrangler secret
+# bulk` BEFORE `wrangler deploy`. Tonight's rapid pushes + a rebase cancelled
+# several preview deploys mid-flight, leaving the worker with an uploaded-but-
+# undeployed version. Cloudflare then refuses the secret-bulk step (error 10215,
+# "latest version isn't currently deployed"), and since that step is first, the
+# deploy that would clear it never runs — a structural deadlock that won't self-
+# heal. CF's own remediation: deploy the latest version FIRST.
+#
+# This workflow does exactly that, ONCE: build + `wrangler deploy` (no secret
+# step — that's the only thing that hits 10215, and secrets persist across
+# deploys). That publishes the iter-3 prompt and leaves a deployed version, so
+# the normal preview workflow works again on its next run.
+#
+# Self-limiting: the `paths:` filter fires this only when THIS file changes, so
+# the commit that adds it runs it exactly once; later pushes (incl. its own
+# removal) never re-trigger it. The file is deleted right after the single run.
+# It does NOT modify the shared deploy workflow.
+name: 'One-shot: unstick PR #2631 preview'
+
+on:
+  push:
+    branches: ['claude/autoresearch-eval-2602-aajh9x']
+    paths: ['.github/workflows/oneshot-unstick-preview.yaml']
+
+jobs:
+  unstick:
+    runs-on: ubuntu-latest
+    environment: dev
+    permissions:
+      contents: read
+      issues: write
+      pull-requests: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Setup runtime environment
+        uses: ./actions/runtime
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Build and deploy (deploy-first, clears CF 10215 deadlock)
+        working-directory: vibes.diy/pkg
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID }}
+          CLOUD_SESSION_TOKEN_PUBLIC: ${{ vars.CLOUD_SESSION_TOKEN_PUBLIC }}
+          CLERK_PUBLISHABLE_KEY: ${{ vars.CLERK_PUBLISHABLE_KEY }}
+          DEVICE_ID_CA_PRIV_KEY: ${{ secrets.DEVICE_ID_CA_PRIV_KEY }}
+          DEVICE_ID_CA_CERT: ${{ vars.DEVICE_ID_CA_CERT }}
+          FP_VERSION: ${{ vars.FP_VERSION }}
+          FPCLOUD_URL: ${{ vars.FPCLOUD_URL }}
+          RESEND_API_KEY: ${{ secrets.RESEND_API_KEY }}
+          VIBES_DIY_PUBLIC_BASE_URL: https://pr-2631-vibes-diy-v2.jchris.workers.dev
+          CLOUD_SESSION_TOKEN_SECRET: ${{ secrets.CLOUD_SESSION_TOKEN_SECRET }}
+          CLOUD_SESSION_TOKEN_ISSUER: ${{ vars.CLOUD_SESSION_TOKEN_ISSUER }}
+          VIBES_DIY_FROM_EMAIL: ${{ vars.VIBES_DIY_FROM_EMAIL }}
+          VIBES_SVC_HOSTNAME_BASE: pr-2631.vibespreview.dev
+          VIBES_SVC_PROTOCOL: https
+          LLM_BACKEND_API_KEY: ${{ secrets.LLM_BACKEND_API_KEY }}
+          LLM_BACKEND_URL: ${{ vars.LLM_BACKEND_URL }}
+          CLERK_PUB_JWT_URL: ${{ vars.CLERK_PUB_JWT_URL }}
+          DB_FLAVOUR: ${{ vars.DB_FLAVOUR }}
+          MAX_APP_SLUG_PER_USER_ID: ${{ vars.MAX_APP_SLUG_PER_USER_ID }}
+          WORKSPACE_NPM_URL: https://pr-2631.vibespreview.dev/vibe-pkg/?v=${{ github.sha }}
+          VIBES_DIY_API_URL: https://pr-2631-vibes-diy-v2.jchris.workers.dev/api
+          WORKER_NAME: pr-2631-vibes-diy-v2
+        run: |
+          set -e
+          # Build using the preview env (workers.dev only; same as the shared workflow).
+          CLOUDFLARE_ENV=preview pnpm exec react-router build
+          # Deploy FIRST — this is the corrective step. `wrangler deploy` never hits
+          # 10215 (that's a secret-modification error), it publishes a deployed
+          # version (clearing the deadlock) and ships the iter-3 prompt. Existing
+          # secrets from prior successful deploys persist, so no secret step needed.
+          for attempt in 1 2 3; do
+            pnpm exec wrangler deploy --env preview --name "$WORKER_NAME" && break
+            if [ "$attempt" -eq 3 ]; then echo "wrangler deploy failed after 3 attempts"; exit 1; fi
+            echo "wrangler deploy attempt $attempt failed, retrying in 15s..."
+            sleep 15
+          done
+          echo "Deployed pr-2631-vibes-diy-v2 at ${{ github.sha }} — deadlock cleared."
