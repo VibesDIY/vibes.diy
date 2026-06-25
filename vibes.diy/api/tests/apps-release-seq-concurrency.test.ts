@@ -90,6 +90,60 @@ describe("Apps releaseSeq allocation concurrency (issue #2612)", { timeout: 2000
     expect(rows[0].mode).toBe("production");
   });
 
+  it("concurrent same-runId writers with DIFFERENT fsIds collapse to ONE production release (#2616)", async () => {
+    const { db, flavour, t } = await ctx();
+    const [appSlug, userId, ownerHandle] = ["one-run", "user_run", "gnome"];
+    const runId = "prompt-run-1";
+    const N = 12;
+
+    // The race the issue targets: a single `generate` whose server dev publish
+    // and CLI production push resolve DIFFERENT file sets (e.g. CLI adds a
+    // README) — so distinct fsIds, but the same runId. They must NOT append two
+    // releases. Modes are mixed to also exercise the production-wins reconcile.
+    const runRow = (i: number) => ({ ...row(appSlug, userId, ownerHandle, i), runId, mode: i % 2 ? "production" : "dev" });
+    const seqs = await Promise.all(Array.from({ length: N }, (_, i) => allocateAndInsertApp({ db, flavour, row: runRow(i) })));
+
+    // Every caller resolves to the same single release...
+    expect(new Set(seqs)).toEqual(new Set([1]));
+    // ...and exactly one row exists for the run, finalized to production.
+    const rows = await db
+      .select({ releaseSeq: t.releaseSeq, mode: t.mode, runId: t.runId })
+      .from(t)
+      .where(and(eq(t.appSlug, appSlug), eq(t.userId, userId)));
+    expect(rows.length).toBe(1);
+    expect(rows[0].runId).toBe(runId);
+    expect(rows[0].mode).toBe("production");
+  });
+
+  it("a delayed dev writer never regresses a finalized production run row (#2616)", async () => {
+    const { db, flavour, t } = await ctx();
+    const [appSlug, userId, ownerHandle] = ["term-run", "user_term", "gnome"];
+    const runId = "prompt-term-1";
+
+    // Production push wins first, then a delayed dev publish for the same run
+    // arrives with a different (stale) fsId. The dev writer must be a no-op.
+    const prodSeq = await allocateAndInsertApp({
+      db,
+      flavour,
+      row: { ...row(appSlug, userId, ownerHandle, 1), fsId: "fs-prod", runId, mode: "production" },
+    });
+    const devSeq = await allocateAndInsertApp({
+      db,
+      flavour,
+      row: { ...row(appSlug, userId, ownerHandle, 2), fsId: "fs-dev", runId, mode: "dev" },
+    });
+
+    expect(prodSeq).toBe(1);
+    expect(devSeq).toBe(1); // same release, not a 2nd
+    const rows = await db
+      .select({ releaseSeq: t.releaseSeq, mode: t.mode, fsId: t.fsId })
+      .from(t)
+      .where(and(eq(t.appSlug, appSlug), eq(t.userId, userId)));
+    expect(rows.length).toBe(1);
+    expect(rows[0].mode).toBe("production"); // not regressed to dev
+    expect(rows[0].fsId).toBe("fs-prod"); // still the production snapshot
+  });
+
   it("a production push for an existing dev fsId upgrades it in place (no new release)", async () => {
     const { db, flavour, t } = await ctx();
     const [appSlug, userId, ownerHandle] = ["upgrade-fsid", "user_up", "gnome"];

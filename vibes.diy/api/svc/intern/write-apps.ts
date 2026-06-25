@@ -16,7 +16,7 @@ import { exception2Result, Result, string2stream, to_uint8, toSortedObject } fro
 import { ensureLogger } from "@vibes.diy/identity";
 import { base58btc } from "multiformats/bases/base58";
 import { sha256 } from "multiformats/hashes/sha2";
-import { and, desc, eq } from "drizzle-orm/sql/expressions";
+import { and, desc, eq, ne } from "drizzle-orm/sql/expressions";
 import mime from "mime";
 import { transform } from "sucrase";
 import { ExportAllDeclaration, ExportNamedDeclaration, ImportDeclaration, parse } from "acorn";
@@ -313,11 +313,21 @@ export async function ensureApps(
 ): Promise<Result<ResEnsureAppSlug>> {
   // console.log("0-ensureApps called with opts:", opts, "binding:", binding, "fs:", fs);
   const fsId = await computeFsId(opts.env ?? {}, fs);
-  const sameRun =
+
+  // One release per generate operation (#2616): a run is identified by `runId`
+  // (the promptId), threaded through both the server-side dev publish and the
+  // CLI production push. The dev->production reconcile is NOT done here — it
+  // happens atomically inside allocateAndInsertApp, under the same
+  // per-(user,app) lock as release allocation, so two same-runId writers can't
+  // append two releases and a late dev publish can't clobber a finalized
+  // production one (the pre-lock check this used to do raced under out-of-order
+  // writers). This read is only a hint to skip the max-apps gate for a
+  // reconcile (which appends no new row); it is not the authoritative decision.
+  const runReconcile =
     opts.runId === undefined
       ? undefined
       : await ctx.sql.db
-          .select()
+          .select({ releaseSeq: ctx.sql.tables.apps.releaseSeq })
           .from(ctx.sql.tables.apps)
           .where(
             and(
@@ -327,68 +337,8 @@ export async function ensureApps(
               eq(ctx.sql.tables.apps.runId, opts.runId)
             )
           )
-          .orderBy(desc(ctx.sql.tables.apps.releaseSeq))
           .limit(1)
           .then((r) => r[0]);
-  if (sameRun) {
-    const rFileSystems = await toFileSystemItems(ctx, opts.mode, fs);
-    if (rFileSystems.some((item) => item.isErr())) {
-      return Result.Err(
-        `Failed to process file system items: ${rFileSystems
-          .filter((item) => item.isErr())
-          .map((item) => item.Err().message)
-          .join(", ")}`
-      );
-    }
-    const nextMode: "dev" | "production" =
-      opts.mode === "production" && sameRun.mode === "dev" ? "production" : (sameRun.mode as "dev" | "production");
-    await ctx.sql.db
-      .update(ctx.sql.tables.apps)
-      .set({
-        fsId,
-        env: opts.env,
-        fileSystem: rFileSystems.map((item) => item.Ok()),
-        mode: nextMode,
-      })
-      .where(
-        and(
-          eq(ctx.sql.tables.apps.userId, binding.ownerHandle.userId),
-          eq(ctx.sql.tables.apps.ownerHandle, binding.ownerHandle.ownerHandle),
-          eq(ctx.sql.tables.apps.appSlug, binding.appSlug.appSlug),
-          eq(ctx.sql.tables.apps.releaseSeq, sameRun.releaseSeq)
-        )
-      );
-    // Re-point the run's PromptContexts at the new fsId. The dev publish that
-    // ran earlier in this operation stored its (now-replaced) fsId in
-    // PromptContexts, and `loadVersionTimeline` resolves history by joining
-    // PromptContexts.fsId -> Apps.fsId. Rewriting the row's fsId above without
-    // this would orphan the generated turn, so follow-up edits/continuations
-    // seed from an empty buffer instead of the produced files (#2616). runId is
-    // threaded as the promptId, so the run's context row is keyed by it.
-    if (opts.runId !== undefined && sameRun.fsId !== fsId) {
-      await ctx.sql.db
-        .update(ctx.sql.tables.promptContexts)
-        .set({ fsId })
-        .where(
-          and(
-            eq(ctx.sql.tables.promptContexts.userId, binding.ownerHandle.userId),
-            eq(ctx.sql.tables.promptContexts.promptId, opts.runId),
-            eq(ctx.sql.tables.promptContexts.fsId, sameRun.fsId)
-          )
-        );
-    }
-    return Result.Ok({
-      type: "vibes.diy.res-ensure-app-slug",
-      ownerHandle: binding.ownerHandle.ownerHandle,
-      appSlug: binding.appSlug.appSlug,
-      mode: opts.mode,
-      fsId,
-      env: opts.env,
-      fileSystem: rFileSystems.map((item) => item.Ok()),
-      // wrapperUrl: "string",
-      // entryPointUrl: "string",
-    });
-  }
 
   const exist =
     opts.runId !== undefined
@@ -446,16 +396,20 @@ export async function ensureApps(
 
   // console.log("2-ensureApps called with opts:", opts, "binding:", binding, "fs:", fs);
   // transaction start
-  const rMaxSeq = await checkMaxAppsPerUser(ctx, opts.userId, binding.appSlug.appSlug);
-  if (rMaxSeq.isErr()) {
-    return Result.Err(rMaxSeq);
-  }
-  const maxSeq = rMaxSeq.Ok();
-  if (isResEnsureAppSlugMaxAppsError(maxSeq)) {
-    return Result.Ok(maxSeq);
-  }
-  if (typeof maxSeq !== "number") {
-    return Result.Err(`Unexpected result from checkMaxAppsPerUser: ${maxSeq}`);
+  // Reconciling an existing run appends no new row, so it must not be blocked by
+  // the max-apps gate (the old pre-lock reconcile branch returned before this).
+  if (!runReconcile) {
+    const rMaxSeq = await checkMaxAppsPerUser(ctx, opts.userId, binding.appSlug.appSlug);
+    if (rMaxSeq.isErr()) {
+      return Result.Err(rMaxSeq);
+    }
+    const maxSeq = rMaxSeq.Ok();
+    if (isResEnsureAppSlugMaxAppsError(maxSeq)) {
+      return Result.Ok(maxSeq);
+    }
+    if (typeof maxSeq !== "number") {
+      return Result.Err(`Unexpected result from checkMaxAppsPerUser: ${maxSeq}`);
+    }
   }
   const rFileSystems = await toFileSystemItems(ctx, opts.mode, fs);
   if (rFileSystems.some((item) => item.isErr())) {
@@ -517,6 +471,56 @@ export async function ensureApps(
     // opaque drizzle "Failed query: insert into Apps ..." wrapper (#2612).
     return Result.Err(`ensureApps: failed to allocate Apps release: ${formatDbErrorChain(rIns.Err())}`);
   }
+
+  if (opts.runId !== undefined) {
+    // The locked allocation guarantees exactly one row for this run. Read it
+    // back so the response reflects the *effective* release: after a same-run
+    // reconcile (or a late dev publish that no-ops against a finalized
+    // production row) the persisted fsId/mode/files may differ from what this
+    // call computed.
+    const canonical = await ctx.sql.db
+      .select()
+      .from(ctx.sql.tables.apps)
+      .where(
+        and(
+          eq(ctx.sql.tables.apps.appSlug, binding.appSlug.appSlug),
+          eq(ctx.sql.tables.apps.ownerHandle, binding.ownerHandle.ownerHandle),
+          eq(ctx.sql.tables.apps.userId, binding.ownerHandle.userId),
+          eq(ctx.sql.tables.apps.runId, opts.runId)
+        )
+      )
+      .orderBy(desc(ctx.sql.tables.apps.releaseSeq))
+      .limit(1)
+      .then((r) => r[0]);
+    const effectiveFsId = canonical?.fsId ?? fsId;
+    // Re-point this run's PromptContexts at the effective fsId. The dev publish
+    // earlier in this operation stored its (possibly now-replaced) fsId, and
+    // `loadVersionTimeline` resolves history by joining PromptContexts.fsId ->
+    // Apps.fsId; without this the generated turn orphans and follow-up edits
+    // seed from an empty buffer (#2616). Scoped to this run via promptId == runId.
+    await ctx.sql.db
+      .update(ctx.sql.tables.promptContexts)
+      .set({ fsId: effectiveFsId })
+      .where(
+        and(
+          eq(ctx.sql.tables.promptContexts.userId, binding.ownerHandle.userId),
+          eq(ctx.sql.tables.promptContexts.promptId, opts.runId),
+          ne(ctx.sql.tables.promptContexts.fsId, effectiveFsId)
+        )
+      );
+    return Result.Ok({
+      type: "vibes.diy.res-ensure-app-slug",
+      appSlug: binding.appSlug.appSlug,
+      ownerHandle: binding.ownerHandle.ownerHandle,
+      mode: (canonical?.mode ?? opts.mode) as "dev" | "production",
+      fsId: effectiveFsId,
+      env: (canonical?.env ?? opts.env) as Record<string, string>,
+      fileSystem: (canonical?.fileSystem ?? rFileSystems.map((item) => item.Ok())) as FileSystemItem[],
+      wrapperUrl: "string",
+      entryPointUrl: "string",
+    });
+  }
+
   return Result.Ok({
     type: "vibes.diy.res-ensure-app-slug",
     appSlug: binding.appSlug.appSlug,
