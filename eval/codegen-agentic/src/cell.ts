@@ -21,6 +21,8 @@ export interface MatrixConfig {
   readonly maxCostUsd: number;
   readonly budgetUsdTotal: number;
   readonly featureAcceptBar: number;
+  /** Max retries on transient generation errors (total attempts = maxRetries + 1). Defaults to 2 when absent. */
+  readonly maxRetries?: number;
   readonly models: readonly ModelEntry[];
 }
 
@@ -33,6 +35,8 @@ export interface GenResult {
   readonly tokens: number;
   readonly exitState: "ok" | "no-files" | "errored";
   readonly note: string;
+  /** Set on an errored result when the underlying error was a transient/retryable infra failure. */
+  readonly transient?: boolean;
 }
 
 export interface CellResult extends GenResult {
