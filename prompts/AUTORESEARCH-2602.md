@@ -83,6 +83,23 @@ Caveats / follow-ups:
 - Filed during this pass: graphics worked-example lifecycle leaks (#2639), and the github MCP
   `actions_list` huge-JSON tooling issue (#2640).
 
+## iters 10–12 — shareability as the optimization target, consent as the floor (#2631)
+
+After the consent reframe, the maintainer made **shareability** the optimization target: the median app should be _collaborative_ — every app should offer a consent-respecting way to make part of its object graph visible to others (invite/share grant, request/join, or public read). Shareability is **deterministic** (`hasShareMechanism = memberAuthoredShare || joinPath || publicRead`, no judge → zero judge noise), the **consent metric is the floor** (must not regress), and the shape rubric is demoted to a reported diagnostic. (Also fixed a real grader bug found here: `shareBranch`/`joinBranch` never matched `type === "request"`/`"share"` — the pattern the prompt's own examples teach — so collaboration was undercounted. And the consent judge now runs on every dimension incl. owner-published.)
+
+Three affirmative iterations, each targeting a data-located gap; all **KEPT**:
+
+| iter | edit                                                                                                   | shareability | consent (floor) | result                                                               |
+| ---- | ------------------------------------------------------------------------------------------------------ | ------------ | --------------- | -------------------------------------------------------------------- |
+| base | (iter-8 kept state)                                                                                    | 82.8%        | ~0.90           | floor                                                                |
+| 10   | per-visitor apps are **shareable per-object** (own channel + `share` doc), not private-per-user        | 84.6%        | 0.923           | `todo` 5→7, `habit` 1→3 share; consent holds                         |
+| 11   | role-based workspaces **welcome a request-to-join** (a `request` doc, no `requireRole`, member grants) | 85.0%        | 0.900           | `team` multi-tier consent dead-end **1/4 → 3/4 PASS**; consent holds |
+| 12   | concrete **why-share for solo-sounding trackers** (streak↔buddy, journal↔coach, budget↔partner)        | **97.2%**    | 0.861           | sticky `habit` gap closes; shareability 85→97%; consent within band  |
+
+**Net: shareability 82.8% → 97.2% (+14.4pp)** while the consent floor (within the ±0.11 judge band) and all deterministic floors (two-file/renderable 100%, isOwner 0) held — "make the median app invitable without breaking consent." All three affirmative (no negative tokenization), each landed in `system-prompt-initial.md`.
+
+Caveats: consent drifted down monotonically (0.923 → 0.900 → 0.861), each within band but worth a **confirmation batch + holdout** before calling durable (verify-twice). A mid-run **OpenRouter 402 (out of credits)** outage produced a misleading all-`SOFT` batch (consent 0.50/shape 0.36) — the deterministic shareability was unaffected, which is what flagged it as an outage rather than a regression; hardening filed as #2643. Future-rubrics generalization filed as #2642.
+
 ## iter-9 reframe — consent rubric + adaptive reps (harness change, no prompt edit) (#2631)
 
 iter-9 began as a per-visitor prompt edit to lift `todo` (which failed 2–3/8 on the shape rubric).
