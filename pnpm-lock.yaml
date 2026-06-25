@@ -1267,6 +1267,9 @@ importers:
       ws:
         specifier: ^8.21.0
         version: 8.21.0(bufferutil@4.1.0)(utf-8-validate@6.0.6)
+      zod:
+        specifier: ^4.0.0
+        version: 4.4.3
     devDependencies:
       '@fireproof/core-cli':
         specifier: 0.24.19
@@ -11706,7 +11709,7 @@ snapshots:
 
   '@openrouter/sdk@0.13.13':
     dependencies:
-      zod: 3.25.76
+      zod: 4.4.3
 
   '@opentelemetry/api@1.9.1':
     optional: true
