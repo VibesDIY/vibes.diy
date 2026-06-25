@@ -16,6 +16,7 @@ Both run the same model on the same prompt; the delta (agentic score – one-sho
 ### Prompt corpus
 
 Three prompts from `config/prompts.jsonl`:
+
 - `collab-lists`: Multi-list todo with per-list invite and Fireproof persistence. **Requires `access.js`** (`needsAccess: true`).
 - `audio-synth`: Web Audio synthesizer with ADSR envelope sliders. **No permissions needed** (`needsAccess: false`).
 - `recipe-shop`: Recipe → shopping list via AI schema extraction + toggle + substitution hints. **No permissions** (`needsAccess: false`).
@@ -23,6 +24,7 @@ Three prompts from `config/prompts.jsonl`:
 ### Models and tenability
 
 Models in `config/matrix.json` are tagged `openWeight: true/false`. The eval answers:
+
 - **Can open-weight models stay viable when given iteration + feedback?** (agentic mode)
 - **At what cost?** ($/acceptable-solution)
 - **Do the open-weight and closed models have the same relationship to iteration**, or does one benefit more?
@@ -43,14 +45,14 @@ Each stage auto-targets the most recent `runs/<ts>/`. Override with `--run <dir>
 
 ### Flags
 
-| Stage    | Flag               | Default              | Purpose                 |
-| -------- | ------------------ | -------------------- | ----------------------- |
-| generate | `--matrix <path>`  | `config/matrix.json` | model/mode/budget conf  |
-| generate | `--prompts <path>` | `config/prompts.jsonl` | prompt corpus           |
+| Stage    | Flag               | Default                   | Purpose                       |
+| -------- | ------------------ | ------------------------- | ----------------------------- |
+| generate | `--matrix <path>`  | `config/matrix.json`      | model/mode/budget conf        |
+| generate | `--prompts <path>` | `config/prompts.jsonl`    | prompt corpus                 |
 | generate | `--system <path>`  | `config/system-prompt.md` | codegen rules + output format |
-| score    | `--run <dir>`      | latest `runs/<ts>/`  | which run to score      |
-| score    | `--prompts <path>` | `config/prompts.jsonl` | prompt text for judges  |
-| report   | `--run <dir>`      | latest `runs/<ts>/`  | which run to report     |
+| score    | `--run <dir>`      | latest `runs/<ts>/`       | which run to score            |
+| score    | `--prompts <path>` | `config/prompts.jsonl`    | prompt text for judges        |
+| report   | `--run <dir>`      | latest `runs/<ts>/`       | which run to report           |
 
 Pass flags through the pnpm script with `--`, e.g.
 `pnpm run generate -- --matrix /tmp/my-matrix.json`.
@@ -58,10 +60,13 @@ Pass flags through the pnpm script with `--`, e.g.
 ## Prerequisites
 
 1. **OpenRouter API key** (for generation):
+
    ```sh
    OPENROUTER_API_KEY="$(security find-generic-password -a "$USER" -s openrouter-api-key -w)" pnpm run generate
    ```
+
    The key is read from `OPENROUTER_API_KEY` at runtime and never logged. Store it in the macOS Keychain:
+
    ```sh
    security add-generic-password -a "$USER" -s openrouter-api-key -w "<your-key>"
    ```
@@ -70,15 +75,16 @@ Pass flags through the pnpm script with `--`, e.g.
    The `score` stage reuses the same judge backend as `codegen-matrix`. Set them:
    - As environment variables (cloud agent env prefers this), OR
    - In `vibes.diy/pkg/.dev.vars` (local dev fallback)
-   Use the full chat-completions path: `LLM_BACKEND_URL=https://openrouter.ai/api/v1/chat/completions`.
-   A bare `.../api/v1` (without `/chat/completions`) makes the judge hit an HTML error page.
-   Environment variables win. See [`agents/worktree-setup.md`](../../agents/worktree-setup.md).
+     Use the full chat-completions path: `LLM_BACKEND_URL=https://openrouter.ai/api/v1/chat/completions`.
+     A bare `.../api/v1` (without `/chat/completions`) makes the judge hit an HTML error page.
+     Environment variables win. See [`agents/worktree-setup.md`](../../agents/worktree-setup.md).
 
 3. `pnpm install` at the repo root.
 
 ## Configuration
 
 `config/matrix.json`:
+
 - `judgeModel` — the LLM that scores each cell (default: `anthropic/claude-opus-4.5`).
 - `reps` — repetitions per (prompt × model × mode) cell.
 - `modes` — array of `["oneshot", "agentic"]` or a subset (default: both).
@@ -98,15 +104,19 @@ Pass flags through the pnpm script with `--`, e.g.
 ### One-shot mode
 
 The model outputs filename-fenced blocks:
-```
+
+````
 App.jsx
 ```jsx
 export default function App() { ... }
-```
+````
+
 access.js (optional)
+
 ```js
 export function access(...) { ... }
 ```
+
 ```
 
 The `parseFiles` parser extracts them.
@@ -173,3 +183,4 @@ Then a **delta table**: one-shot → agentic per model, showing the improvement 
 `cd eval/codegen-agentic && pnpm test` (or `pnpm exec vitest --run --project eval-codegen-agentic` from root). Pure modules are unit-tested (file parsing, build-check, prompt building, cost extraction, config parsing, concurrency pool, feedback evaluation, agentic executor loop); the live generate/score paths are validated by a manual run.
 
 For type-check: `pnpm exec tsc --noEmit -p eval/codegen-agentic/tsconfig.json`.
+```

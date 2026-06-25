@@ -22,10 +22,28 @@ async function runOneShotOnce(client: OpenRouter, model: string, systemPrompt: s
 }
 
 /** One completion, with transient-error retry. `retries` defaults to 2 (3 attempts). */
-export async function runOneShot(client: OpenRouter, model: string, systemPrompt: string, userPrompt: string, retries = 2): Promise<GenResult> {
+export async function runOneShot(
+  client: OpenRouter,
+  model: string,
+  systemPrompt: string,
+  userPrompt: string,
+  retries = 2
+): Promise<GenResult> {
   try {
-    return await retryWithBackoff(() => runOneShotOnce(client, model, systemPrompt, userPrompt), { retries, isRetryable: isTransientError });
+    return await retryWithBackoff(() => runOneShotOnce(client, model, systemPrompt, userPrompt), {
+      retries,
+      isRetryable: isTransientError,
+    });
   } catch (e) {
-    return { files: {}, steps: 1, buildPass: false, costUsd: 0, tokens: 0, exitState: "errored", note: (e as Error).message.slice(0, 200), transient: isTransientError(e) };
+    return {
+      files: {},
+      steps: 1,
+      buildPass: false,
+      costUsd: 0,
+      tokens: 0,
+      exitState: "errored",
+      note: (e as Error).message.slice(0, 200),
+      transient: isTransientError(e),
+    };
   }
 }

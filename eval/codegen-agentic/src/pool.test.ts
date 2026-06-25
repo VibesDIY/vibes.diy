@@ -7,9 +7,11 @@ describe("mapWithConcurrency", () => {
     expect(r).toEqual([10, 20, 30, 40]);
   });
   it("never exceeds the concurrency limit", async () => {
-    let active = 0, peak = 0;
+    let active = 0,
+      peak = 0;
     await mapWithConcurrency([1, 2, 3, 4, 5, 6], 2, async () => {
-      active++; peak = Math.max(peak, active);
+      active++;
+      peak = Math.max(peak, active);
       await new Promise((r) => setTimeout(r, 5));
       active--;
     });

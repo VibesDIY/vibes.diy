@@ -36,7 +36,9 @@ export function aggregate(rows: readonly ReportRow[], bar: number): ModelModeSta
   const groups = new Map<string, ReportRow[]>();
   for (const r of rows) {
     const k = `${r.model}\0${r.mode}`;
-    (groups.get(k) ?? groups.set(k, []).get(k)!).push(r);
+    const group = groups.get(k);
+    if (group) group.push(r);
+    else groups.set(k, [r]);
   }
   const out: ModelModeStat[] = [];
   for (const g of groups.values()) {
@@ -66,12 +68,11 @@ function num(n: number | null, d = 2): string {
 }
 
 export function renderReport(stats: readonly ModelModeStat[]): string {
-  const header =
-    "| model | open? | mode | n | build-pass | mean feature | acceptable | $/acceptable | mean $/gen |";
+  const header = "| model | open? | mode | n | build-pass | mean feature | acceptable | $/acceptable | mean $/gen |";
   const sep = "| --- | --- | --- | --: | --: | --: | --: | --: | --: |";
   const body = stats.map(
     (s) =>
-      `| ${s.model} | ${s.openWeight ? "open" : "closed"} | ${s.mode} | ${s.n} | ${pct(s.buildPassRate)} | ${num(s.meanFeature)} | ${s.acceptable}/${s.n} | ${s.costPerAcceptable === null ? "—" : "$" + s.costPerAcceptable.toFixed(4)} | $${s.meanCostUsd.toFixed(4)} |`,
+      `| ${s.model} | ${s.openWeight ? "open" : "closed"} | ${s.mode} | ${s.n} | ${pct(s.buildPassRate)} | ${num(s.meanFeature)} | ${s.acceptable}/${s.n} | ${s.costPerAcceptable === null ? "—" : "$" + s.costPerAcceptable.toFixed(4)} | $${s.meanCostUsd.toFixed(4)} |`
   );
   // Delta table: one-shot -> agentic per model.
   const byModel = new Map<string, Record<ModeName, ModelModeStat>>();
@@ -113,8 +114,7 @@ function main(): void {
     .sort();
   if (!dirs.length) throw new Error("no runs");
   const runDir = join(runs, dirs[dirs.length - 1]);
-  const bar = JSON.parse(readFileSync(join(ROOT, "config/matrix.json"), "utf-8"))
-    .featureAcceptBar as number;
+  const bar = JSON.parse(readFileSync(join(ROOT, "config/matrix.json"), "utf-8")).featureAcceptBar as number;
   const rows: ReportRow[] = [];
   for (const name of readdirSync(runDir)) {
     const cellDir = join(runDir, name);
@@ -142,11 +142,7 @@ function main(): void {
       hasAccessJs: score?.structure?.hasAccessJs ?? false,
     });
   }
-  writeFileSync(
-    join(runDir, "index.jsonl"),
-    rows.map((r) => JSON.stringify(r)).join("\n") + "\n",
-    "utf-8",
-  );
+  writeFileSync(join(runDir, "index.jsonl"), rows.map((r) => JSON.stringify(r)).join("\n") + "\n", "utf-8");
   writeFileSync(join(runDir, "summary.md"), renderReport(aggregate(rows, bar)), "utf-8");
   stderr.write(`wrote summary.md + index.jsonl to ${runDir}\n`);
 }

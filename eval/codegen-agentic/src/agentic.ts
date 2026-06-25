@@ -87,6 +87,15 @@ export async function runAgentic(
       isRetryable: isTransientError,
     });
   } catch (e) {
-    return { files: {}, steps: 0, buildPass: false, costUsd: 0, tokens: 0, exitState: "errored", note: (e as Error).message.slice(0, 200), transient: isTransientError(e) };
+    return {
+      files: {},
+      steps: 0,
+      buildPass: false,
+      costUsd: 0,
+      tokens: 0,
+      exitState: "errored",
+      note: (e as Error).message.slice(0, 200),
+      transient: isTransientError(e),
+    };
   }
 }

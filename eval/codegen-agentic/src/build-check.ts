@@ -18,9 +18,10 @@ export async function buildCheck(files: Record<string, string>): Promise<{ ok: b
     try {
       await transform(code, { loader: name.endsWith("x") ? "jsx" : "js", format: "esm", jsx: "automatic" });
     } catch (e) {
-      const msg = (e as { errors?: { text: string; location?: { line: number } }[] }).errors
-        ?.map((er) => `${name}:${er.location?.line ?? "?"} ${er.text}`)
-        .join("; ") ?? `${name}: ${(e as Error).message}`;
+      const msg =
+        (e as { errors?: { text: string; location?: { line: number } }[] }).errors
+          ?.map((er) => `${name}:${er.location?.line ?? "?"} ${er.text}`)
+          .join("; ") ?? `${name}: ${(e as Error).message}`;
       errors.push(msg);
     }
   }

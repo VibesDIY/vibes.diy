@@ -33,10 +33,12 @@ Forward these to every reviewer as the attention lens. They are binding, cross-c
 **Depends-on:** none
 
 **Files:**
+
 - Create: `eval/codegen-matrix/src/scoring.ts`
 - Modify: `eval/codegen-matrix/package.json`
 
 **Interfaces:**
+
 - Produces: module specifier `@vibes.diy/eval-codegen-matrix/scoring` re-exporting `runRubric(files)`, `computeStructure(files): StructureSignals`, `judgeFeature(userPrompt, files, deps): Promise<JudgeResult>`, `readDevVars(): DevVars`, `collectSourceFiles(dir): Record<string,string>`, and types `StructureSignals`, `RubricResult`, `JudgeResult`, `JudgeDeps`, `DevVars`.
 
 **Parallelization rationale:** front-loaded contract — `score`, `feedback`, and `agentic` all consume these symbols; fixing the import surface up front lets those tasks build in parallel against a stable barrel instead of reaching into sibling internals.
@@ -92,10 +94,12 @@ git commit -m "refactor(codegen-matrix): expose scoring barrel via package expor
 **Depends-on:** none
 
 **Files:**
+
 - Create: `eval/codegen-agentic/package.json`, `eval/codegen-agentic/tsconfig.json`, `eval/codegen-agentic/vitest.config.ts`, `eval/codegen-agentic/runs/.gitignore`, `eval/codegen-agentic/src/cell.ts`, `eval/codegen-agentic/config/matrix.json`, `eval/codegen-agentic/config/prompts.jsonl`, `eval/codegen-agentic/config/system-prompt.md`
 - Modify: `pnpm-workspace.yaml`, `vitest.config.ts`
 
 **Interfaces:**
+
 - Produces: types `ModeName = "oneshot" | "agentic"`, `ModelEntry`, `PromptEntry` (with `needsAccess: boolean`), `MatrixConfig`, `GenResult`, `CellResult`, `CellScore`, and constant `CELL_JSON`/`CELL_SCORE_JSON`/`RUN_JSON`; plus `cellDirName(promptId, model, rep, mode)` and `modelSlug(model)`.
 
 **Parallelization rationale:** contract-first — every pure module (parse-files, build-check, prompt, cost, config, report) imports these result/config types; defining them in one early task lets all six build concurrently against a fixed contract.
@@ -105,7 +109,7 @@ git commit -m "refactor(codegen-matrix): expose scoring barrel via package expor
 In `pnpm-workspace.yaml`, in the `packages:` list next to the other `eval/*` entries, add:
 
 ```yaml
-  - "eval/codegen-agentic"
+- "eval/codegen-agentic"
 ```
 
 In `vitest.config.ts`, add to the `projects` array (next to `"eval/codegen-matrix/vitest.config.ts"`):
@@ -237,7 +241,10 @@ export const CELL_SCORE_JSON = "cell.score.json";
 export const RUN_JSON = "run.json";
 
 export function modelSlug(model: string): string {
-  return model.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+  return model
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
 }
 export function cellDirName(promptId: string, model: string, rep: number, mode: ModeName): string {
   return `${promptId}__${modelSlug(model)}__r${rep}__${mode}`;
@@ -302,16 +309,18 @@ git commit -m "feat(codegen-agentic): scaffold package, shared types, config"
 **Depends-on:** 2
 
 **Files:**
+
 - Create: `eval/codegen-agentic/src/parse-files.ts`, `eval/codegen-agentic/src/parse-files.test.ts`
 
 **Interfaces:**
+
 - Produces: `parseFiles(text: string): Record<string, string>`
 
 - [ ] **Step 1: Write the failing test**
 
 `eval/codegen-agentic/src/parse-files.test.ts`:
 
-```ts
+````ts
 import { describe, it, expect } from "vitest";
 import { parseFiles } from "./parse-files.js";
 
@@ -331,7 +340,7 @@ describe("parseFiles", () => {
     expect(parseFiles("```jsx\norphan\n```")).toEqual({});
   });
 });
-```
+````
 
 - [ ] **Step 2: Run test to verify it fails**
 
@@ -342,7 +351,7 @@ Expected: FAIL ("parseFiles is not a function" / module not found).
 
 `eval/codegen-agentic/src/parse-files.ts`:
 
-```ts
+````ts
 /**
  * Parse one-shot output: each code file is a fenced block immediately preceded
  * by a line that is just its filename (App.jsx / access.js). Mirrors the vibes
@@ -371,7 +380,7 @@ export function parseFiles(text: string): Record<string, string> {
   }
   return out;
 }
-```
+````
 
 - [ ] **Step 4: Run test to verify it passes**
 
@@ -393,9 +402,11 @@ git commit -m "feat(codegen-agentic): one-shot filename-fenced file parser"
 **Depends-on:** 2
 
 **Files:**
+
 - Create: `eval/codegen-agentic/src/build-check.ts`, `eval/codegen-agentic/src/build-check.test.ts`
 
 **Interfaces:**
+
 - Produces: `buildCheck(files: Record<string,string>): Promise<{ ok: boolean; errors: string[] }>`
 
 - [ ] **Step 1: Write the failing test**
@@ -461,9 +472,10 @@ export async function buildCheck(files: Record<string, string>): Promise<{ ok: b
     try {
       await transform(code, { loader: name.endsWith("x") ? "jsx" : "js", format: "esm", jsx: "automatic" });
     } catch (e) {
-      const msg = (e as { errors?: { text: string; location?: { line: number } }[] }).errors
-        ?.map((er) => `${name}:${er.location?.line ?? "?"} ${er.text}`)
-        .join("; ") ?? `${name}: ${(e as Error).message}`;
+      const msg =
+        (e as { errors?: { text: string; location?: { line: number } }[] }).errors
+          ?.map((er) => `${name}:${er.location?.line ?? "?"} ${er.text}`)
+          .join("; ") ?? `${name}: ${(e as Error).message}`;
       errors.push(msg);
     }
   }
@@ -491,9 +503,11 @@ git commit -m "feat(codegen-agentic): esbuild build-check gate"
 **Depends-on:** 2
 
 **Files:**
+
 - Create: `eval/codegen-agentic/src/prompt.ts`, `eval/codegen-agentic/src/prompt.test.ts`
 
 **Interfaces:**
+
 - Consumes: `ModeName` (from Task 2)
 - Produces: `buildPrompt(mode: ModeName, systemPrompt: string, userPrompt: string): { instructions: string; input: string }`
 
@@ -531,7 +545,7 @@ Expected: FAIL.
 
 `eval/codegen-agentic/src/prompt.ts`:
 
-```ts
+````ts
 import type { ModeName } from "./cell.js";
 
 const ONESHOT_IO =
@@ -547,7 +561,7 @@ const AGENTIC_IO =
 export function buildPrompt(mode: ModeName, systemPrompt: string, userPrompt: string): { instructions: string; input: string } {
   return { instructions: systemPrompt + (mode === "oneshot" ? ONESHOT_IO : AGENTIC_IO), input: userPrompt };
 }
-```
+````
 
 - [ ] **Step 4: Run test to verify it passes**
 
@@ -569,9 +583,11 @@ git commit -m "feat(codegen-agentic): per-mode prompt builder"
 **Depends-on:** 2
 
 **Files:**
+
 - Create: `eval/codegen-agentic/src/cost.ts`, `eval/codegen-agentic/src/cost.test.ts`
 
 **Interfaces:**
+
 - Produces: `extractCost(response: { totalCost?: number; usage?: { totalTokens?: number; cost?: number } }): { costUsd: number; tokens: number }`
 
 - [ ] **Step 1: Write the failing test**
@@ -642,9 +658,11 @@ git commit -m "feat(codegen-agentic): cost/token extraction"
 **Depends-on:** 2
 
 **Files:**
+
 - Create: `eval/codegen-agentic/src/config.ts`, `eval/codegen-agentic/src/config.test.ts`
 
 **Interfaces:**
+
 - Consumes: `MatrixConfig`, `PromptEntry` (from Task 2)
 - Produces: `parseMatrix(text: string): MatrixConfig`, `parsePrompts(text: string): PromptEntry[]`
 
@@ -658,16 +676,38 @@ import { parseMatrix, parsePrompts } from "./config.js";
 
 describe("parseMatrix", () => {
   it("parses a valid matrix", () => {
-    const m = parseMatrix(JSON.stringify({
-      judgeModel: "j", reps: 2, modes: ["oneshot", "agentic"], concurrency: 4,
-      maxSteps: 4, maxCostUsd: 0.5, budgetUsdTotal: 50, featureAcceptBar: 3,
-      models: [{ id: "a/b", openWeight: true }],
-    }));
+    const m = parseMatrix(
+      JSON.stringify({
+        judgeModel: "j",
+        reps: 2,
+        modes: ["oneshot", "agentic"],
+        concurrency: 4,
+        maxSteps: 4,
+        maxCostUsd: 0.5,
+        budgetUsdTotal: 50,
+        featureAcceptBar: 3,
+        models: [{ id: "a/b", openWeight: true }],
+      })
+    );
     expect(m.models[0].id).toBe("a/b");
     expect(m.modes).toEqual(["oneshot", "agentic"]);
   });
   it("rejects an empty model list", () => {
-    expect(() => parseMatrix(JSON.stringify({ judgeModel: "j", reps: 1, modes: ["oneshot"], concurrency: 1, maxSteps: 1, maxCostUsd: 1, budgetUsdTotal: 1, featureAcceptBar: 3, models: [] }))).toThrow();
+    expect(() =>
+      parseMatrix(
+        JSON.stringify({
+          judgeModel: "j",
+          reps: 1,
+          modes: ["oneshot"],
+          concurrency: 1,
+          maxSteps: 1,
+          maxCostUsd: 1,
+          budgetUsdTotal: 1,
+          featureAcceptBar: 3,
+          models: [],
+        })
+      )
+    ).toThrow();
   });
 });
 
@@ -695,7 +735,16 @@ import type { MatrixConfig, PromptEntry } from "./cell.js";
 export function parseMatrix(text: string): MatrixConfig {
   const m = JSON.parse(text) as MatrixConfig;
   if (!Array.isArray(m.models) || m.models.length === 0) throw new Error("matrix.models must be a non-empty array");
-  for (const k of ["judgeModel", "reps", "modes", "concurrency", "maxSteps", "maxCostUsd", "budgetUsdTotal", "featureAcceptBar"] as const) {
+  for (const k of [
+    "judgeModel",
+    "reps",
+    "modes",
+    "concurrency",
+    "maxSteps",
+    "maxCostUsd",
+    "budgetUsdTotal",
+    "featureAcceptBar",
+  ] as const) {
     if (m[k] === undefined) throw new Error(`matrix.${k} is required`);
   }
   return m;
@@ -736,9 +785,11 @@ git commit -m "feat(codegen-agentic): matrix + prompts config loader"
 **Depends-on:** 2
 
 **Files:**
+
 - Create: `eval/codegen-agentic/src/pool.ts`, `eval/codegen-agentic/src/pool.test.ts`
 
 **Interfaces:**
+
 - Produces: `mapWithConcurrency<T, R>(items: readonly T[], limit: number, fn: (item: T, index: number) => Promise<R>): Promise<R[]>`
 
 - [ ] **Step 1: Write the failing test**
@@ -755,9 +806,11 @@ describe("mapWithConcurrency", () => {
     expect(r).toEqual([10, 20, 30, 40]);
   });
   it("never exceeds the concurrency limit", async () => {
-    let active = 0, peak = 0;
+    let active = 0,
+      peak = 0;
     await mapWithConcurrency([1, 2, 3, 4, 5, 6], 2, async () => {
-      active++; peak = Math.max(peak, active);
+      active++;
+      peak = Math.max(peak, active);
       await new Promise((r) => setTimeout(r, 5));
       active--;
     });
@@ -817,9 +870,11 @@ git commit -m "feat(codegen-agentic): bounded-concurrency pool"
 **Depends-on:** 1, 2, 4
 
 **Files:**
+
 - Create: `eval/codegen-agentic/src/feedback.ts`, `eval/codegen-agentic/src/feedback.test.ts`
 
 **Interfaces:**
+
 - Consumes: `computeStructure`, `StructureSignals` (from Task 1, `@vibes.diy/eval-codegen-matrix/scoring`); the `{ ok, errors }` shape of `buildCheck` (from Task 4)
 - Produces: `evaluateProgress(files, buildResult, needsAccess): { clean: boolean; message: string }`
 
@@ -885,7 +940,9 @@ export function evaluateProgress(
   if (!buildResult.ok) problems.push(`Build failed: ${buildResult.errors.join("; ")}`);
   const s = computeStructure(files);
   if (needsAccess && !s.hasAccessJs) {
-    problems.push("This app needs per-document permissions but no separate access.js was written. Add an access.js that exports the access function.");
+    problems.push(
+      "This app needs per-document permissions but no separate access.js was written. Add an access.js that exports the access function."
+    );
   }
   if (needsAccess && s.accessInAppJsx) {
     problems.push("Access-control logic is in App.jsx; move it into access.js.");
@@ -915,9 +972,11 @@ git commit -m "feat(codegen-agentic): loop feedback from build + structure"
 **Depends-on:** 2
 
 **Files:**
+
 - Create: `eval/codegen-agentic/src/client.ts`
 
 **Interfaces:**
+
 - Consumes: `@openrouter/agent` (`OpenRouter`)
 - Produces: `makeClient(): OpenRouter` (reads `OPENROUTER_API_KEY`; throws a clear error if unset)
 
@@ -964,9 +1023,11 @@ git commit -m "feat(codegen-agentic): OpenRouter client wrapper"
 **Depends-on:** 2, 3, 4, 5, 6, 10
 
 **Files:**
+
 - Create: `eval/codegen-agentic/src/oneshot.ts`
 
 **Interfaces:**
+
 - Consumes: `makeClient` (Task 10), `parseFiles` (Task 3), `buildCheck` (Task 4), `buildPrompt` (Task 5), `extractCost` (Task 6), `GenResult` (Task 2)
 - Produces: `runOneShot(client, model, systemPrompt, userPrompt): Promise<GenResult>`
 
@@ -983,12 +1044,7 @@ import { buildCheck } from "./build-check.js";
 import { extractCost } from "./cost.js";
 
 /** One completion, parse the emitted files, run a single build-check (no iteration). */
-export async function runOneShot(
-  client: OpenRouter,
-  model: string,
-  systemPrompt: string,
-  userPrompt: string
-): Promise<GenResult> {
+export async function runOneShot(client: OpenRouter, model: string, systemPrompt: string, userPrompt: string): Promise<GenResult> {
   const { instructions, input } = buildPrompt("oneshot", systemPrompt, userPrompt);
   try {
     const result = client.callModel({ model, instructions, input });
@@ -1000,9 +1056,25 @@ export async function runOneShot(
       return { files, steps: 1, buildPass: false, costUsd, tokens, exitState: "no-files", note: "no files parsed from output" };
     }
     const build = await buildCheck(files);
-    return { files, steps: 1, buildPass: build.ok, costUsd, tokens, exitState: "ok", note: build.ok ? "" : build.errors.join("; ") };
+    return {
+      files,
+      steps: 1,
+      buildPass: build.ok,
+      costUsd,
+      tokens,
+      exitState: "ok",
+      note: build.ok ? "" : build.errors.join("; "),
+    };
   } catch (e) {
-    return { files: {}, steps: 1, buildPass: false, costUsd: 0, tokens: 0, exitState: "errored", note: (e as Error).message.slice(0, 200) };
+    return {
+      files: {},
+      steps: 1,
+      buildPass: false,
+      costUsd: 0,
+      tokens: 0,
+      exitState: "errored",
+      note: (e as Error).message.slice(0, 200),
+    };
   }
 }
 ```
@@ -1027,9 +1099,11 @@ git commit -m "feat(codegen-agentic): one-shot generator"
 **Depends-on:** 1, 2, 4, 5, 6, 9, 10
 
 **Files:**
+
 - Create: `eval/codegen-agentic/src/agentic.ts`, `eval/codegen-agentic/src/agentic.test.ts`
 
 **Interfaces:**
+
 - Consumes: `makeClient`/`OpenRouter` (Task 10), `buildPrompt` (Task 5), `buildCheck` (Task 4), `evaluateProgress` (Task 9), `extractCost` (Task 6), `GenResult` (Task 2)
 - Produces: `runAgentic(client, model, systemPrompt, userPrompt, opts): Promise<GenResult>`, and an exported pure helper `makeWriteFileExecutor(files, getNeedsAccess)` returning `(args) => Promise<{ ok, feedback }>` so the loop logic is unit-testable without the SDK.
 
@@ -1047,7 +1121,10 @@ describe("makeWriteFileExecutor", () => {
   it("accumulates files and reports clean when build+structure pass", async () => {
     const files: Record<string, string> = {};
     const exec = makeWriteFileExecutor(files, () => false);
-    const r = await exec({ path: "App.jsx", contents: `import React from "react";\nexport default function App(){ return <div/>; }` });
+    const r = await exec({
+      path: "App.jsx",
+      contents: `import React from "react";\nexport default function App(){ return <div/>; }`,
+    });
     expect(files["App.jsx"]).toContain("export default");
     expect(r.ok).toBe(true);
     expect(r.feedback).toMatch(/pass/i);
@@ -1057,13 +1134,19 @@ describe("makeWriteFileExecutor", () => {
     const exec = makeWriteFileExecutor(files, () => false);
     const bad = await exec({ path: "App.jsx", contents: `export default function App(){ return <div ;` });
     expect(bad.ok).toBe(false);
-    const good = await exec({ path: "App.jsx", contents: `import React from "react";\nexport default function App(){ return <div/>; }` });
+    const good = await exec({
+      path: "App.jsx",
+      contents: `import React from "react";\nexport default function App(){ return <div/>; }`,
+    });
     expect(good.ok).toBe(true);
   });
   it("requires access.js when needsAccess is true", async () => {
     const files: Record<string, string> = {};
     const exec = makeWriteFileExecutor(files, () => true);
-    const r = await exec({ path: "App.jsx", contents: `import React from "react";\nexport default function App(){ return <div/>; }` });
+    const r = await exec({
+      path: "App.jsx",
+      contents: `import React from "react";\nexport default function App(){ return <div/>; }`,
+    });
     expect(r.ok).toBe(false);
     expect(r.feedback).toMatch(/access\.js/);
   });
@@ -1145,7 +1228,15 @@ export async function runAgentic(
     const build = await buildCheck(files);
     return { files, steps, buildPass: build.ok, costUsd, tokens, exitState: "ok", note: build.ok ? "" : build.errors.join("; ") };
   } catch (e) {
-    return { files, steps, buildPass: false, costUsd: 0, tokens: 0, exitState: "errored", note: (e as Error).message.slice(0, 200) };
+    return {
+      files,
+      steps,
+      buildPass: false,
+      costUsd: 0,
+      tokens: 0,
+      exitState: "errored",
+      note: (e as Error).message.slice(0, 200),
+    };
   }
 }
 ```
@@ -1175,9 +1266,11 @@ git commit -m "feat(codegen-agentic): agentic write_file loop + executor test"
 **Depends-on:** 2, 4, 6, 7, 8, 10, 11, 12
 
 **Files:**
+
 - Create: `eval/codegen-agentic/src/generate.ts`
 
 **Interfaces:**
+
 - Consumes: `parseMatrix`/`parsePrompts` (Task 7), `makeClient` (Task 10), `runOneShot` (Task 11), `runAgentic` (Task 12), `mapWithConcurrency` (Task 8), `cellDirName`/`CellResult`/`RUN_JSON`/`CELL_JSON` (Task 2)
 - Produces: writes `runs/<ts>/<cell>/cell.json` (a `CellResult` + the generated files on disk) and `runs/<ts>/run.json`
 
@@ -1201,19 +1294,40 @@ import type { OpenRouter } from "@openrouter/agent";
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(__dirname, "..");
 
-interface Job { model: string; openWeight: boolean; prompt: PromptEntry; rep: number; mode: ModeName; }
+interface Job {
+  model: string;
+  openWeight: boolean;
+  prompt: PromptEntry;
+  rep: number;
+  mode: ModeName;
+}
 
 async function runJob(client: OpenRouter, cfg: MatrixConfig, systemPrompt: string, job: Job, runDir: string): Promise<CellResult> {
-  const gen = job.mode === "oneshot"
-    ? await runOneShot(client, job.model, systemPrompt, job.prompt.prompt)
-    : await runAgentic(client, job.model, systemPrompt, job.prompt.prompt, { maxSteps: cfg.maxSteps, maxCostUsd: cfg.maxCostUsd, needsAccess: job.prompt.needsAccess });
-  const cell: CellResult = { ...gen, promptId: job.prompt.id, model: job.model, mode: job.mode, rep: job.rep, openWeight: job.openWeight, needsAccess: job.prompt.needsAccess };
+  const gen =
+    job.mode === "oneshot"
+      ? await runOneShot(client, job.model, systemPrompt, job.prompt.prompt)
+      : await runAgentic(client, job.model, systemPrompt, job.prompt.prompt, {
+          maxSteps: cfg.maxSteps,
+          maxCostUsd: cfg.maxCostUsd,
+          needsAccess: job.prompt.needsAccess,
+        });
+  const cell: CellResult = {
+    ...gen,
+    promptId: job.prompt.id,
+    model: job.model,
+    mode: job.mode,
+    rep: job.rep,
+    openWeight: job.openWeight,
+    needsAccess: job.prompt.needsAccess,
+  };
   const cellDir = join(runDir, cellDirName(job.prompt.id, job.model, job.rep, job.mode));
   mkdirSync(cellDir, { recursive: true });
   for (const [path, contents] of Object.entries(gen.files)) writeFileSync(join(cellDir, path), contents, "utf-8");
   const { files: _omit, ...meta } = cell; // keep cell.json lean; files are on disk
   writeFileSync(join(cellDir, CELL_JSON), JSON.stringify({ ...meta, fileNames: Object.keys(gen.files) }, null, 2), "utf-8");
-  stderr.write(`  ${job.prompt.id} ${job.model} r${job.rep} ${job.mode}: ${gen.exitState} build=${gen.buildPass} steps=${gen.steps} $${gen.costUsd.toFixed(4)}\n`);
+  stderr.write(
+    `  ${job.prompt.id} ${job.model} r${job.rep} ${job.mode}: ${gen.exitState} build=${gen.buildPass} steps=${gen.steps} $${gen.costUsd.toFixed(4)}\n`
+  );
   return cell;
 }
 
@@ -1231,24 +1345,51 @@ export async function main(): Promise<void> {
   const ts = new Date().toISOString().replaceAll(":", "-").replaceAll(".", "-");
   const runDir = join(ROOT, "runs", ts);
   mkdirSync(runDir, { recursive: true });
-  writeFileSync(join(runDir, RUN_JSON), JSON.stringify({ startedAt: new Date().toISOString(), judgeModel: cfg.judgeModel, reps: cfg.reps, modes: cfg.modes, maxSteps: cfg.maxSteps, maxCostUsd: cfg.maxCostUsd, models: cfg.models.map((m) => m.id) }, null, 2), "utf-8");
+  writeFileSync(
+    join(runDir, RUN_JSON),
+    JSON.stringify(
+      {
+        startedAt: new Date().toISOString(),
+        judgeModel: cfg.judgeModel,
+        reps: cfg.reps,
+        modes: cfg.modes,
+        maxSteps: cfg.maxSteps,
+        maxCostUsd: cfg.maxCostUsd,
+        models: cfg.models.map((m) => m.id),
+      },
+      null,
+      2
+    ),
+    "utf-8"
+  );
 
   // Preflight: one smoke cell (first model, first prompt, both modes) before the sweep.
   const smokeModel = cfg.models[0];
   for (const mode of cfg.modes) {
-    const r = await runJob(client, cfg, systemPrompt, { model: smokeModel.id, openWeight: smokeModel.openWeight, prompt: prompts[0], rep: 0, mode }, runDir);
+    const r = await runJob(
+      client,
+      cfg,
+      systemPrompt,
+      { model: smokeModel.id, openWeight: smokeModel.openWeight, prompt: prompts[0], rep: 0, mode },
+      runDir
+    );
     if (r.exitState === "errored") throw new Error(`preflight ${mode} errored: ${r.note}`);
   }
   stderr.write(`preflight ok. proceeding to full sweep.\n`);
 
   const jobs: Job[] = [];
-  for (const model of cfg.models) for (const prompt of prompts) for (const mode of cfg.modes) for (let rep = 0; rep < cfg.reps; rep++) {
-    if (model.id === smokeModel.id && prompt.id === prompts[0].id && rep === 0) continue; // already ran in preflight
-    jobs.push({ model: model.id, openWeight: model.openWeight, prompt, rep, mode });
-  }
+  for (const model of cfg.models)
+    for (const prompt of prompts)
+      for (const mode of cfg.modes)
+        for (let rep = 0; rep < cfg.reps; rep++) {
+          if (model.id === smokeModel.id && prompt.id === prompts[0].id && rep === 0) continue; // already ran in preflight
+          jobs.push({ model: model.id, openWeight: model.openWeight, prompt, rep, mode });
+        }
 
   let spent = 0;
-  stderr.write(`codegen-agentic: ${jobs.length} cells, concurrency=${cfg.concurrency}, budget $${cfg.budgetUsdTotal} -> ${runDir}\n`);
+  stderr.write(
+    `codegen-agentic: ${jobs.length} cells, concurrency=${cfg.concurrency}, budget $${cfg.budgetUsdTotal} -> ${runDir}\n`
+  );
   await mapWithConcurrency(jobs, cfg.concurrency, async (job) => {
     if (spent >= cfg.budgetUsdTotal) return; // hard budget halt
     const r = await runJob(client, cfg, systemPrompt, job, runDir);
@@ -1259,7 +1400,10 @@ export async function main(): Promise<void> {
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {
-  main().catch((e) => { stderr.write(`generate failed: ${(e as Error).stack ?? (e as Error).message}\n`); process.exit(1); });
+  main().catch((e) => {
+    stderr.write(`generate failed: ${(e as Error).stack ?? (e as Error).message}\n`);
+    process.exit(1);
+  });
 }
 ```
 
@@ -1283,9 +1427,11 @@ git commit -m "feat(codegen-agentic): generate orchestrator with preflight + bud
 **Depends-on:** 1, 2
 
 **Files:**
+
 - Create: `eval/codegen-agentic/src/score.ts`
 
 **Interfaces:**
+
 - Consumes: `runRubric`, `computeStructure`, `judgeFeature`, `readDevVars`, `collectSourceFiles` (Task 1); `CellScore`/`CELL_JSON`/`CELL_SCORE_JSON` (Task 2)
 - Produces: writes `runs/<ts>/<cell>/cell.score.json` (a `CellScore`) for each generated cell
 
@@ -1298,7 +1444,14 @@ import { readdirSync, existsSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { argv, stderr } from "node:process";
-import { runRubric, computeStructure, judgeFeature, readDevVars, collectSourceFiles, type JudgeDeps } from "@vibes.diy/eval-codegen-matrix/scoring";
+import {
+  runRubric,
+  computeStructure,
+  judgeFeature,
+  readDevVars,
+  collectSourceFiles,
+  type JudgeDeps,
+} from "@vibes.diy/eval-codegen-matrix/scoring";
 import { CELL_JSON, CELL_SCORE_JSON, type CellScore } from "./cell.js";
 import { parsePrompts } from "./config.js";
 import { mapWithConcurrency } from "./pool.js";
@@ -1313,7 +1466,9 @@ function parseFlag(flag: string): string | undefined {
 }
 function latestRunDir(): string {
   const runs = resolve(ROOT, "runs");
-  const dirs = readdirSync(runs).filter((n) => n !== ".gitignore").sort();
+  const dirs = readdirSync(runs)
+    .filter((n) => n !== ".gitignore")
+    .sort();
   if (!dirs.length) throw new Error(`no runs under ${runs}`);
   return join(runs, dirs[dirs.length - 1]);
 }
@@ -1322,30 +1477,55 @@ async function main(): Promise<void> {
   const runDir = parseFlag("--run") ?? latestRunDir();
   const prompts = parsePrompts(readFileSync(parseFlag("--prompts") ?? join(ROOT, "config/prompts.jsonl"), "utf-8"));
   const promptText = new Map(prompts.map((p) => [p.id, p.prompt]));
-  const deps: JudgeDeps = { devVars: readDevVars(), judgeModel: JSON.parse(readFileSync(join(ROOT, "config/matrix.json"), "utf-8")).judgeModel };
+  const deps: JudgeDeps = {
+    devVars: readDevVars(),
+    judgeModel: JSON.parse(readFileSync(join(ROOT, "config/matrix.json"), "utf-8")).judgeModel,
+  };
   const cellDirs = readdirSync(runDir).filter((n) => existsSync(join(runDir, n, CELL_JSON)));
   stderr.write(`scoring ${cellDirs.length} cells in ${runDir}\n`);
-  let scored = 0, nullJudge = 0;
+  let scored = 0,
+    nullJudge = 0;
   await mapWithConcurrency(cellDirs, 4, async (name) => {
     const cellDir = join(runDir, name);
-    const cell = JSON.parse(readFileSync(join(cellDir, CELL_JSON), "utf-8")) as { promptId: string; model: string; mode: CellScore["mode"]; rep: number; exitState: string };
-    if (cell.exitState !== "ok") { stderr.write(`  skip ${name}: ${cell.exitState}\n`); return; }
+    const cell = JSON.parse(readFileSync(join(cellDir, CELL_JSON), "utf-8")) as {
+      promptId: string;
+      model: string;
+      mode: CellScore["mode"];
+      rep: number;
+      exitState: string;
+    };
+    if (cell.exitState !== "ok") {
+      stderr.write(`  skip ${name}: ${cell.exitState}\n`);
+      return;
+    }
     const files = collectSourceFiles(cellDir);
     const rubric = runRubric(files);
     const structure = computeStructure(files);
     const feature = await judgeFeature(promptText.get(cell.promptId) ?? "", files, deps);
-    const score: CellScore = { promptId: cell.promptId, model: cell.model, mode: cell.mode, rep: cell.rep, rubric, feature, structure };
+    const score: CellScore = {
+      promptId: cell.promptId,
+      model: cell.model,
+      mode: cell.mode,
+      rep: cell.rep,
+      rubric,
+      feature,
+      structure,
+    };
     writeFileSync(join(cellDir, CELL_SCORE_JSON), JSON.stringify(score, null, 2), "utf-8");
     scored++;
     if (feature.score === null) nullJudge++;
     stderr.write(`  scored ${name}: rubric=${rubric.passed}/${rubric.total} feature=${feature.score}\n`);
   });
-  if (scored > 0 && nullJudge / scored > 0.2) stderr.write(`WARNING: ${nullJudge}/${scored} cells have a null judge score (${Math.round((100 * nullJudge) / scored)}%).\n`);
+  if (scored > 0 && nullJudge / scored > 0.2)
+    stderr.write(`WARNING: ${nullJudge}/${scored} cells have a null judge score (${Math.round((100 * nullJudge) / scored)}%).\n`);
   stderr.write(`done scoring ${runDir}\n`);
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {
-  main().catch((e) => { stderr.write(`score failed: ${(e as Error).stack ?? (e as Error).message}\n`); process.exit(1); });
+  main().catch((e) => {
+    stderr.write(`score failed: ${(e as Error).stack ?? (e as Error).message}\n`);
+    process.exit(1);
+  });
 }
 ```
 
@@ -1369,9 +1549,11 @@ git commit -m "feat(codegen-agentic): score stage reusing codegen-matrix scoring
 **Depends-on:** 2
 
 **Files:**
+
 - Create: `eval/codegen-agentic/src/report.ts`, `eval/codegen-agentic/src/report.test.ts`
 
 **Interfaces:**
+
 - Consumes: `CellScore`/`CellResult` shapes (Task 2)
 - Produces: `aggregate(rows): ModelModeStat[]`, `isAcceptable(row, bar): boolean`, `renderReport(stats): string`; the `main()` writes `summary.md` + `index.jsonl`
 
@@ -1383,7 +1565,17 @@ git commit -m "feat(codegen-agentic): score stage reusing codegen-matrix scoring
 import { describe, it, expect } from "vitest";
 import { isAcceptable, aggregate, type ReportRow } from "./report.js";
 
-const base: ReportRow = { model: "m", mode: "oneshot", openWeight: true, promptId: "p", needsAccess: false, buildPass: true, feature: 4, costUsd: 0.01, hasAccessJs: false };
+const base: ReportRow = {
+  model: "m",
+  mode: "oneshot",
+  openWeight: true,
+  promptId: "p",
+  needsAccess: false,
+  buildPass: true,
+  feature: 4,
+  costUsd: 0.01,
+  hasAccessJs: false,
+};
 
 describe("isAcceptable", () => {
   it("true when build passes and feature meets the bar (no access needed)", () => {
@@ -1433,12 +1625,26 @@ import { stderr } from "node:process";
 import { CELL_JSON, CELL_SCORE_JSON, type ModeName } from "./cell.js";
 
 export interface ReportRow {
-  model: string; mode: ModeName; openWeight: boolean; promptId: string; needsAccess: boolean;
-  buildPass: boolean; feature: number | null; costUsd: number; hasAccessJs: boolean;
+  model: string;
+  mode: ModeName;
+  openWeight: boolean;
+  promptId: string;
+  needsAccess: boolean;
+  buildPass: boolean;
+  feature: number | null;
+  costUsd: number;
+  hasAccessJs: boolean;
 }
 export interface ModelModeStat {
-  model: string; mode: ModeName; openWeight: boolean; n: number;
-  buildPassRate: number; meanFeature: number | null; acceptable: number; costPerAcceptable: number | null; meanCostUsd: number;
+  model: string;
+  mode: ModeName;
+  openWeight: boolean;
+  n: number;
+  buildPassRate: number;
+  meanFeature: number | null;
+  acceptable: number;
+  costPerAcceptable: number | null;
+  meanCostUsd: number;
 }
 
 export function isAcceptable(r: ReportRow, bar: number): boolean {
@@ -1457,42 +1663,72 @@ export function aggregate(rows: readonly ReportRow[], bar: number): ModelModeSta
     const acceptable = g.filter((r) => isAcceptable(r, bar)).length;
     const totalCost = g.reduce((a, r) => a + r.costUsd, 0);
     out.push({
-      model: g[0].model, mode: g[0].mode, openWeight: g[0].openWeight, n: g.length,
+      model: g[0].model,
+      mode: g[0].mode,
+      openWeight: g[0].openWeight,
+      n: g.length,
       buildPassRate: g.filter((r) => r.buildPass).length / g.length,
       meanFeature: feats.length ? feats.reduce((a, b) => a + b, 0) / feats.length : null,
-      acceptable, costPerAcceptable: acceptable ? totalCost / acceptable : null, meanCostUsd: totalCost / g.length,
+      acceptable,
+      costPerAcceptable: acceptable ? totalCost / acceptable : null,
+      meanCostUsd: totalCost / g.length,
     });
   }
   return out.sort((a, b) => a.model.localeCompare(b.model) || a.mode.localeCompare(b.mode));
 }
 
-function pct(n: number): string { return `${Math.round(n * 100)}%`; }
-function num(n: number | null, d = 2): string { return n === null ? "—" : n.toFixed(d); }
+function pct(n: number): string {
+  return `${Math.round(n * 100)}%`;
+}
+function num(n: number | null, d = 2): string {
+  return n === null ? "—" : n.toFixed(d);
+}
 
 export function renderReport(stats: readonly ModelModeStat[]): string {
   const header = "| model | open? | mode | n | build-pass | mean feature | acceptable | $/acceptable | mean $/gen |";
   const sep = "| --- | --- | --- | --: | --: | --: | --: | --: | --: |";
-  const body = stats.map((s) => `| ${s.model} | ${s.openWeight ? "open" : "closed"} | ${s.mode} | ${s.n} | ${pct(s.buildPassRate)} | ${num(s.meanFeature)} | ${s.acceptable}/${s.n} | ${s.costPerAcceptable === null ? "—" : "$" + s.costPerAcceptable.toFixed(4)} | $${s.meanCostUsd.toFixed(4)} |`);
+  const body = stats.map(
+    (s) =>
+      `| ${s.model} | ${s.openWeight ? "open" : "closed"} | ${s.mode} | ${s.n} | ${pct(s.buildPassRate)} | ${num(s.meanFeature)} | ${s.acceptable}/${s.n} | ${s.costPerAcceptable === null ? "—" : "$" + s.costPerAcceptable.toFixed(4)} | $${s.meanCostUsd.toFixed(4)} |`
+  );
   // Delta table: one-shot -> agentic per model.
   const byModel = new Map<string, Record<ModeName, ModelModeStat>>();
-  for (const s of stats) { const e = byModel.get(s.model) ?? ({} as Record<ModeName, ModelModeStat>); e[s.mode] = s; byModel.set(s.model, e); }
-  const delta = [...byModel.entries()].filter(([, e]) => e.oneshot && e.agentic).map(([m, e]) => {
-    const df = (e.agentic.meanFeature ?? 0) - (e.oneshot.meanFeature ?? 0);
-    const db = e.agentic.buildPassRate - e.oneshot.buildPassRate;
-    return `| ${m} | ${pct(e.oneshot.buildPassRate)} → ${pct(e.agentic.buildPassRate)} (${db >= 0 ? "+" : ""}${pct(db)}) | ${num(e.oneshot.meanFeature)} → ${num(e.agentic.meanFeature)} (${df >= 0 ? "+" : ""}${df.toFixed(2)}) |`;
-  });
+  for (const s of stats) {
+    const e = byModel.get(s.model) ?? ({} as Record<ModeName, ModelModeStat>);
+    e[s.mode] = s;
+    byModel.set(s.model, e);
+  }
+  const delta = [...byModel.entries()]
+    .filter(([, e]) => e.oneshot && e.agentic)
+    .map(([m, e]) => {
+      const df = (e.agentic.meanFeature ?? 0) - (e.oneshot.meanFeature ?? 0);
+      const db = e.agentic.buildPassRate - e.oneshot.buildPassRate;
+      return `| ${m} | ${pct(e.oneshot.buildPassRate)} → ${pct(e.agentic.buildPassRate)} (${db >= 0 ? "+" : ""}${pct(db)}) | ${num(e.oneshot.meanFeature)} → ${num(e.agentic.meanFeature)} (${df >= 0 ? "+" : ""}${df.toFixed(2)}) |`;
+    });
   return [
-    "# codegen-agentic summary", "",
-    "## Per-model × mode", "", header, sep, ...body, "",
-    "## one-shot → agentic delta (the confound-removal result)", "",
-    "| model | build-pass | mean feature |", "| --- | --- | --- |", ...delta, "",
+    "# codegen-agentic summary",
+    "",
+    "## Per-model × mode",
+    "",
+    header,
+    sep,
+    ...body,
+    "",
+    "## one-shot → agentic delta (the confound-removal result)",
+    "",
+    "| model | build-pass | mean feature |",
+    "| --- | --- | --- |",
+    ...delta,
+    "",
   ].join("\n");
 }
 
 function main(): void {
   const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
   const runs = resolve(ROOT, "runs");
-  const dirs = readdirSync(runs).filter((n) => n !== ".gitignore").sort();
+  const dirs = readdirSync(runs)
+    .filter((n) => n !== ".gitignore")
+    .sort();
   if (!dirs.length) throw new Error("no runs");
   const runDir = join(runs, dirs[dirs.length - 1]);
   const bar = JSON.parse(readFileSync(join(ROOT, "config/matrix.json"), "utf-8")).featureAcceptBar as number;
@@ -1500,10 +1736,28 @@ function main(): void {
   for (const name of readdirSync(runDir)) {
     const cellDir = join(runDir, name);
     if (!existsSync(join(cellDir, CELL_JSON))) continue;
-    const cell = JSON.parse(readFileSync(join(cellDir, CELL_JSON), "utf-8")) as { model: string; mode: ModeName; openWeight: boolean; promptId: string; needsAccess: boolean; buildPass: boolean; costUsd: number };
+    const cell = JSON.parse(readFileSync(join(cellDir, CELL_JSON), "utf-8")) as {
+      model: string;
+      mode: ModeName;
+      openWeight: boolean;
+      promptId: string;
+      needsAccess: boolean;
+      buildPass: boolean;
+      costUsd: number;
+    };
     const sp = join(cellDir, CELL_SCORE_JSON);
     const score = existsSync(sp) ? JSON.parse(readFileSync(sp, "utf-8")) : undefined;
-    rows.push({ model: cell.model, mode: cell.mode, openWeight: cell.openWeight, promptId: cell.promptId, needsAccess: cell.needsAccess, buildPass: cell.buildPass, costUsd: cell.costUsd, feature: score?.feature?.score ?? null, hasAccessJs: score?.structure?.hasAccessJs ?? false });
+    rows.push({
+      model: cell.model,
+      mode: cell.mode,
+      openWeight: cell.openWeight,
+      promptId: cell.promptId,
+      needsAccess: cell.needsAccess,
+      buildPass: cell.buildPass,
+      costUsd: cell.costUsd,
+      feature: score?.feature?.score ?? null,
+      hasAccessJs: score?.structure?.hasAccessJs ?? false,
+    });
   }
   writeFileSync(join(runDir, "index.jsonl"), rows.map((r) => JSON.stringify(r)).join("\n") + "\n", "utf-8");
   writeFileSync(join(runDir, "summary.md"), renderReport(aggregate(rows, bar)), "utf-8");
@@ -1533,10 +1787,12 @@ git commit -m "feat(codegen-agentic): report — per-mode stats, delta, \$/accep
 **Depends-on:** 2
 
 **Files:**
+
 - Create: `eval/codegen-agentic/README.md`, `agents/codegen-agentic-eval.md`
 - Modify: `CLAUDE.md` (add the runbook link next to `codegen-matrix-eval.md`)
 
 **Interfaces:**
+
 - Produces: docs only.
 
 - [ ] **Step 1: Write `eval/codegen-agentic/README.md`**
