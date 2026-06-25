@@ -20,6 +20,27 @@ measured holdout jitter, now the `gates.ts` default `holdoutBand`) — then a co
 | 3    | make the upstream `enrichedPrompt` pre-alloc access-shape-neutral (3-way: author-owned / per-object / owner-published) instead of asserting an owner-published default (`prompts/pkg/prompts.ts`) | **0.7875** ±0.033 (5-batch mean) | **+0.225**          | **0.703** (2-batch) | **KEEP** — huge, far beyond the 0.06 band; Form-A strict 34.4%→2.2%; gates green; generalizes to holdout (+0.305). Root cause was the _enrichment_ layer priming codegen to "only the owner can make changes" before generation. **baseline.json re-based to this.**                                                                                                                                                                                                    |
 | 4    | disambiguate "board/whiteboard people join to co-edit" → per-object vs "wall/guestbook each posts own" → author-owned, in the **downstream** `system-prompt-initial.md` classifier (~82/84)       | 0.7396 (3-batch)                 | −0.048 (in noise)   | 0.672               | **DISCARD** — doesn't clear the band; board did not improve. Diagnostic: 19/21 failing board cells still built author-owned shape (no object channel) — the downstream classifier can't override the **upstream enrichment**, which still frames a whiteboard as "everyone adds their own." Reverted. `photo`/`guest` did not regress. Confirms the enrichment is the lever → iter-5.                                                                                   |
 | 5    | enrichment (`prompts.ts`): route "a board/canvas a group co-edits, people join or are invited into, anyone free to change any of it" → per-object membership                                      | 0.6927 (3-batch)                 | −0.095 (regression) | 0.672               | **DISCARD** — backfired. board went 0/8 with Form-A (the "join or are invited into" + "anyone free to change any of it" framing made the model owner-gate the board, not build per-object membership), team 7→5. board is adversarial: iter-4 left it author-owned, iter-5 made it owner-gated. Reverted. Lesson: the enrichment is high-leverage but volatile; precise phrasing matters. → iter-6 pivots off board to the cleaner per-visitor recipe-completeness gap. |
+| 6    | system-prompt per-visitor recipe: make the per-user channel (`user:`+handle) + `grant.users` self-grant explicit, warn against shared/public routing (`system-prompt-initial.md`)                 | 0.7865 (3-batch)                 | −0.001 (flat)       | 0.797 (1 sample)    | **DISCARD** — eval flat. The mechanism _worked_ — `todo` per-user-channel emission 0/12→11/16 and todo passes 4.4→5.3/8 — but it nudged the already-passing `habit` down 7.6→6.7/8, so the two cancel on the 2-prompt per-visitor eval slice. Holdout rose +0.094 but from a single sample (within the ±0.17 holdout noise), so not robust. Reverted. Near-miss: a more surgical per-visitor edit that doesn't perturb `habit` is the clear iter-7.                     |
+
+## Final result (iters 3–6)
+
+**Net change shipped: iter-3 only** — `prompts/pkg/prompts.ts` enrichment made access-shape-neutral —
+plus the harness calibration (`gates.ts` per-metric bands + re-based `baseline.json`, #2637).
+
+|                         | eval       | holdout    | Form-A strict |
+| ----------------------- | ---------- | ---------- | ------------- |
+| original baseline       | 0.5625     | 0.3984     | 34.4%         |
+| **final (iter-3 kept)** | **0.7875** | **0.703**  | **2.2%**      |
+| Δ                       | **+0.225** | **+0.305** | **−32.2pp**   |
+
+The single durable win (iter-3) came from the **upstream enrichment** layer, not the codegen
+classifier or recipe text. The three follow-ups all targeted the post-iter-3 frontier (`board`
+per-object, `todo` per-visitor) and all discarded — but they **mapped the failure surface precisely**:
+`board` is adversarial (resists per-object both ways — author-owned via the classifier, owner-gated via
+the enrichment), and `todo`'s per-visitor recipe is fixable (iter-6 proved the mechanism) but needs a
+surgical edit that doesn't disturb `habit`. Recommended next: **iter-7** — a per-visitor edit scoped to
+"shared-feed vs private" that lifts `todo` without touching `habit`'s working path, confirmed over ≥3
+eval + ≥2 holdout batches.
 
 ### iter-3 — KEPT (the breakthrough), and the deploy flake that preceded it
 
