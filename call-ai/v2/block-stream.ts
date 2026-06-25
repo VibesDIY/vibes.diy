@@ -137,6 +137,9 @@ export const CodeBeginMsg = type({
   sectionId: "string",
   lang: "string",
   "path?": "string",
+  // Optional reveal hint. Only the whole-file codegen handler sets it; the
+  // client gates its paced typewriter reveal on `reveal === "typewriter"`.
+  "reveal?": "'typewriter'",
 }).and(BlockBase);
 export const CodeLineMsg = type({
   type: "'block.code.line'",
