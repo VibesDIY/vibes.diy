@@ -38,6 +38,7 @@ import { isFileMeta } from "./files-url-mint.js";
 import { clientWsSend, connectionAdminMode } from "./app-documents-shared.js";
 import { normalizeChannels } from "./normalize-channels.js";
 import { allocateAndInsertRevision, SeqConflictError } from "./seq-allocation.js";
+import { docContentEqual } from "./doc-content-equal.js";
 import type { VibesSqlite } from "@vibes.diy/api-sql";
 import { resolveActiveHandle } from "./resolve-active-handle.js";
 
@@ -215,6 +216,29 @@ export const putDocEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqPutDoc>, 
 
       const docId = req.docId ?? vctx.sthis.timeOrderedNextId().str;
 
+      // Load the current head revision once when this is an update to a known
+      // docId. Reused below as the access fn's `oldDoc` AND for the
+      // content-identical no-op (#2644). A brand-new doc (client sent no docId)
+      // can never be a no-op and has no prior revision, so skip the read.
+      let headRow: { data: unknown; deleted: number } | undefined;
+      if (req.docId) {
+        const tDocs = vctx.sql.tables.appDocuments;
+        headRow = await vctx.sql.db
+          .select({ data: tDocs.data, deleted: tDocs.deleted })
+          .from(tDocs)
+          .where(
+            and(
+              eq(tDocs.ownerHandle, req.ownerHandle),
+              eq(tDocs.appSlug, req.appSlug),
+              eq(tDocs.dbName, req.dbName),
+              eq(tDocs.docId, req.docId)
+            )
+          )
+          .orderBy(desc(tDocs.seq))
+          .limit(1)
+          .then((r) => r[0]);
+      }
+
       // Fail closed: a doc bound to an access function must NOT be written if no
       // invoker is available — otherwise a missing/misconfigured invoker would
       // silently bypass access enforcement (the `&& vctx.invokeAccessFn` guard
@@ -241,26 +265,9 @@ export const putDocEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqPutDoc>, 
         const writerHandle = userId ? await resolveActiveHandle(vctx, userId) : undefined;
         const userContext = writerHandle ? { userHandle: writerHandle, isOwner } : null;
 
-        // Load existing doc so access fn can enforce update-ownership checks
-        let oldDoc: unknown | null = null;
-        if (req.docId) {
-          const tDocs = vctx.sql.tables.appDocuments;
-          const existing = await vctx.sql.db
-            .select({ data: tDocs.data })
-            .from(tDocs)
-            .where(
-              and(
-                eq(tDocs.ownerHandle, req.ownerHandle),
-                eq(tDocs.appSlug, req.appSlug),
-                eq(tDocs.dbName, req.dbName),
-                eq(tDocs.docId, req.docId)
-              )
-            )
-            .orderBy(desc(tDocs.seq))
-            .limit(1)
-            .then((r) => r[0]);
-          oldDoc = existing?.data ?? null;
-        }
+        // Existing doc so the access fn can enforce update-ownership checks.
+        // Loaded once above as headRow (reused by the no-op check below).
+        const oldDoc: unknown | null = headRow?.data ?? null;
 
         // Resolve the access.js source. The source is content-addressed and
         // immutable per CID, so cache the raw bytes on the DO keyed by CID — a
@@ -379,6 +386,30 @@ export const putDocEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqPutDoc>, 
         }
 
         accessResult = invokeResult;
+      }
+
+      // Content-identical no-op (#2644). Once the write has passed the access
+      // gate, if it re-asserts the EXACT content of the live head revision,
+      // absorb it: no new revision, no clock entry, no AccessFnOutputs rewrite,
+      // and no doc-changed / grants-changed fan-out — return the existing doc id
+      // as success. This makes the "re-assert my access setup on every page
+      // load" pattern (#2631 self-grants / owner-roster grants) free when
+      // nothing changed, so codegen can emit the idempotent form without a
+      // read-guard that races sync (#2026). Preconditions, both already true
+      // here: a stable docId (a random-id put has no head and never matches) and
+      // a non-tombstone head (a put over a deleted doc is a resurrection, which
+      // must mint a real revision). The gate still ran, so access is enforced
+      // identically to a real write. Note: because the stored access-fn output
+      // is also left untouched, an access.js change that would alter grants for
+      // unchanged content does not take effect until the doc's content actually
+      // changes — consistent with redeploy not recomputing existing outputs.
+      if (headRow && headRow.deleted !== 1 && docContentEqual(headRow.data, req.doc)) {
+        await ctx.send.send(ctx, {
+          type: "vibes.diy.res-put-doc",
+          status: "ok",
+          id: docId,
+        } satisfies ResPutDoc);
+        return Result.Ok(EventoResult.Continue);
       }
 
       const now = new Date().toISOString();
