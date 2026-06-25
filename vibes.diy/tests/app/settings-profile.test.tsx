@@ -28,9 +28,9 @@ vi.mock("~/vibes.diy/app/components/BrutalistLayout.js", () => ({
   default: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
 }));
 
-vi.mock("~/vibes.diy/app/components/ModelSettingsCards.js", () => ({
-  ModelSettingsCards: () => <div data-testid="model-settings-cards" />,
-}));
+// Let the real ModelSettingsCards render. Under isolate:false a top-level
+// mock here bleeds into model-settings-cards.test.tsx when the files share a
+// worker, turning unrelated CI runs red.
 
 // Stub react-hot-toast referenced transitively
 vi.mock("react-hot-toast", () => ({
@@ -47,6 +47,18 @@ function makeOkResult<T>(value: T) {
 function makeErrResult(msg: string) {
   return Promise.resolve(Result.Err(new Error(msg)));
 }
+
+const TEST_MODELS = [
+  {
+    id: "opus-4-8",
+    name: "Claude Opus 4.8",
+    description: "default codegen",
+    preSelected: ["codegen", "runtime"],
+    supports: ["codegen", "runtime"],
+  },
+  { id: "sonnet-4-6", name: "Claude Sonnet 4.6", description: "fast", supports: ["codegen", "runtime"] },
+  { id: "img-default", name: "Image Model", description: "images", preSelected: ["img"], supports: ["img"] },
+];
 
 type SettingsItem =
   | { type: "profile"; avatarCid?: string; displayName?: string }
@@ -115,6 +127,10 @@ function makeVibeDiyApi(overrides?: {
 
   const listHandleBindings = vi.fn().mockImplementation(() => makeOkResult({ items: handleItems }));
 
+  const listModels = vi
+    .fn()
+    .mockImplementation(() => makeOkResult({ type: "vibes.diy.res-list-models" as const, models: TEST_MODELS }));
+
   const deleteHandleBinding = vi.fn().mockImplementation(() => makeOkResult({ ownerHandle: "deleted" }));
 
   const createHandleBinding = vi.fn().mockImplementation(() => makeOkResult({ ownerHandle: "new-slug" }));
@@ -124,6 +140,7 @@ function makeVibeDiyApi(overrides?: {
     ensureHandleAvatar,
     requestAssetUploadGrant,
     listHandleBindings,
+    listModels,
     deleteHandleBinding,
     createHandleBinding,
   };
