@@ -63,7 +63,7 @@ import {
   BlockBeginMsg,
   type DeltaStreamMsg,
 } from "@vibes.diy/call-ai-v2";
-import { getRecoveryAddendum, getRecoveryStitchAddendum } from "@vibes.diy/prompts";
+import { getRecoveryAddendum, getRecoveryStitchAddendum, makeBaseSystemPrompt } from "@vibes.diy/prompts";
 import { ensureAppSlugItem } from "./ensure-app-slug-item.js";
 import { sqlite } from "@vibes.diy/api-sql";
 import { getModelDefaults } from "../intern/get-model-defaults.js";
@@ -103,6 +103,9 @@ import {
 import { bumpAppRecency } from "../intern/bump-app-recency.js";
 import { WSSendProvider } from "../svc-ws-send-provider.js";
 import { loadModels } from "./list-models.js";
+import { handleWholeFileCodegenRequest } from "./handle-whole-file-codegen.js";
+import { makeOpenRouterClient } from "../intern/codegen-loop/openrouter-client.js";
+import { runWholeFileCodegen } from "../intern/codegen-loop/whole-file-loop.js";
 
 // Access the raw WSSendProvider from Evento's wrapped ctx.send.
 // Evento wraps the send provider — the raw instance is at .provider.
@@ -2257,32 +2260,88 @@ export const promptChatSection: EventoHandler<W3CWebSocketEvent, MsgBase<ReqProm
           });
         };
       } else if (isReqPromptLLMChatSection(orig)) {
-        prompSectionAction = async (scope: Scope, blockSeq: number) => {
-          const res = await handlerLlmRequest({
-            ctx,
-            blockSeq,
-            scope,
-            vctx,
-            req: req as ReqWithVerifiedAuth<ReqPromptLLMChatSection>,
-            resChat,
-            promptId,
-            preAssembled,
-          });
-          const finalBlockSeq = await handleLlmResponse({
-            scope,
-            vctx,
-            req: req as ReqWithVerifiedAuth<ReqPromptLLMChatSection>,
-            ctx,
-            res: res.res,
-            resChat,
-            promptId,
-            blockSeq: res.blockSeq,
-            llmReq: res.llmReq,
-            abort: res.abort,
-            terminal,
-          });
-          return Result.Ok(finalBlockSeq);
-        };
+        // Experimental whole-file codegen path (default off). Routes a creation
+        // (codegen) turn through the agentic write_file tool-loop instead of the
+        // SEARCH/REPLACE streaming path, behind the USE_WHOLE_FILE_CODEGEN flag.
+        // Any other LLM turn (edits, non-creation chat) falls through to the
+        // existing path unchanged — so with the flag unset (or a non-creation
+        // request) behavior is byte-for-byte identical to before.
+        const useWholeFile = vctx.sthis.env.get("USE_WHOLE_FILE_CODEGEN") === "true";
+        if (useWholeFile && isReqCreationPromptChatSection(orig)) {
+          // Resolve the frontier (first-turn) and cheap (fix-up) models. The
+          // codegen default is the frontier; the runtime default is the cheaper
+          // fix-up model. Env overrides let an operator pin either independently.
+          const rDefaults = await getModelDefaults(vctx, { appSlug: resChat.appSlug, ownerHandle: resChat.ownerHandle });
+          if (rDefaults.isErr()) return Result.Err(rDefaults);
+          const defaults = rDefaults.Ok();
+          const frontierModel =
+            vctx.sthis.env.get("WHOLE_FILE_FRONTIER_MODEL") ?? orig.prompt.model ?? defaults.codegen.model.id;
+          const cheapModel = vctx.sthis.env.get("WHOLE_FILE_CHEAP_MODEL") ?? defaults.runtime.model.id;
+          const userPrompt = firstUserText(orig.prompt.messages);
+          // Build the OpenRouter client once (secret resolution centralized in
+          // the factory); fail the turn cleanly if the key is unset.
+          const rClient = exception2Result(() => makeOpenRouterClient(vctx.sthis.env));
+          if (rClient.isErr()) return Result.Err(rClient);
+          const client = rClient.Ok();
+          const pkgBaseUrl = promptsPkgBaseUrl(vctx.params.pkgRepos.workspace);
+          const fetchOverride = createPromptAssetFetch({ fetchAsset: vctx.fetchAsset });
+          prompSectionAction = async (_scope: Scope, blockSeq: number) =>
+            handleWholeFileCodegenRequest({
+              promptId,
+              blockSeq,
+              nextId: () => vctx.sthis.nextId(12).str,
+              userPrompt,
+              // The agentic variant reuses makeBaseSystemPrompt's default
+              // skills/gating injection; theme/title are optional and resolved
+              // from the same template path the existing variants use.
+              sessionDoc: { userPrompt },
+              // The creation turn doesn't pre-declare access needs; the loop's
+              // verify gate is advisory only when this is true, so default off
+              // for the experimental path.
+              needsAccess: false,
+              frontierModel,
+              cheapModel,
+              maxSteps: 4,
+              maxCostUsd: 0.5,
+              terminal,
+              // Inject the real collaborators, bound to this live request. The
+              // handler stays decoupled from this module's internal wiring.
+              makeBaseSystemPrompt: (model, sessionDoc) =>
+                makeBaseSystemPrompt(model, { ...sessionDoc, pkgBaseUrl, fetch: fetchOverride }),
+              runWholeFileCodegen: (args) => runWholeFileCodegen({ ...args, client }),
+              appendBlockEvent: ({ promptId: pid, blockSeq: bseq, evt, emitMode }) =>
+                appendBlockEvent({ ctx, vctx, req, resChat, promptId: pid, blockSeq: bseq, evt, emitMode }),
+              handlePromptContext: ({ promptId: pid, blockSeq: bseq, value, collectedMsgs, fileSystem }) =>
+                handlePromptContext({ vctx, req, resChat, promptId: pid, blockSeq: bseq, value, collectedMsgs, fileSystem }),
+            });
+        } else {
+          prompSectionAction = async (scope: Scope, blockSeq: number) => {
+            const res = await handlerLlmRequest({
+              ctx,
+              blockSeq,
+              scope,
+              vctx,
+              req: req as ReqWithVerifiedAuth<ReqPromptLLMChatSection>,
+              resChat,
+              promptId,
+              preAssembled,
+            });
+            const finalBlockSeq = await handleLlmResponse({
+              scope,
+              vctx,
+              req: req as ReqWithVerifiedAuth<ReqPromptLLMChatSection>,
+              ctx,
+              res: res.res,
+              resChat,
+              promptId,
+              blockSeq: res.blockSeq,
+              llmReq: res.llmReq,
+              abort: res.abort,
+              terminal,
+            });
+            return Result.Ok(finalBlockSeq);
+          };
+        }
       }
       if (isReqPromptFSChatSection(orig)) {
         prompSectionAction = async (scope: Scope, blockSeq: number) => {
