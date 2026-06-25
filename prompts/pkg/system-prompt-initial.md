@@ -51,39 +51,43 @@ Target ~40–60 lines. The shell should look like a real app with empty sections
 
 **Step 3 — Feature edits.** Wire each feature with SEARCH/REPLACE edits. Each edit gets exactly one prose line (≤25 words) before it. Wire hooks, data, handlers, and `useFireproof` with `access` in these edits. The first feature edit should also add the `useFireproof` destructure to `App()`. Keep edits focused — one feature per edit, fully working after it lands.
 
-> Access function — owner manages channels; any signed-in member posts to these open channels.
+> Access function — a shared board people join and co-edit: any member may edit any item, and a newcomer can ask in.
 >
 > access.js
 >
 > ```js
-> // Each channel doc grants public READ; only the owner creates channels.
-> // OPEN board: any signed-in user posts — do NOT gate posts on ctx.requireAccess
-> // (grant.public is read-only and never satisfies it, so it would block everyone
-> // but the owner). Members-only channel instead? grant a role + requireAccess it.
-> export function chat(doc, oldDoc, user, ctx) {
+> // One shared board is ONE object. Its creator self-grants the board's channel;
+> // members reach the board through that channel and may edit ANY item on it (not
+> // just their own). A `share` doc lets a current member bring a peer in. A
+> // `request` doc takes NO requireAccess, so a not-yet-member can ask to join —
+> // a member turns it into a share. No owner runs this; members self-serve.
+> export function board(doc, oldDoc, user, ctx) {
 >   if (!user) throw { forbidden: "sign in" };
->   if (doc.type === "channel") {
->     ctx.requireRole("owner"); // owner is auto-seeded into the reserved `owner` role
->     return { channels: [doc._id], grant: { public: [doc._id] } };
+>   const ch = "board:" + doc.boardId;
+>   if (doc.type === "board") {
+>     if (oldDoc && doc.author !== oldDoc.author) throw { forbidden: "creator is fixed" };
+>     return { channels: [ch], grant: { users: { [user.userHandle]: [ch] } } };
 >   }
->   if (doc.type === "message") {
->     if (doc.authorHandle !== user.userHandle) throw { forbidden: "not author" };
->     if (oldDoc && oldDoc.authorHandle !== user.userHandle) throw { forbidden: "not author" };
->     return { channels: [doc.channelId] };
+>   if (doc.type === "share") {            // a member invites a peer into this board
+>     ctx.requireAccess(ch);
+>     return { channels: [ch], grant: { users: { [doc.invitee]: [ch] } } };
 >   }
->   throw { forbidden: "unknown document type" };
+>   if (doc.type === "request") return { channels: [ch] }; // ask to join — no membership needed
+>   ctx.requireAccess(ch);                 // any member edits any item on the board
+>   if (oldDoc && oldDoc.boardId !== doc.boardId) throw { forbidden: "item stays on its board" };
+>   return { channels: [ch] };
 > }
 > ```
 
-`ctx.requireAccess(channel)` gates on **membership** (a `grant.users`/`grant.roles` grant), not `grant.public` (read-only) — so an open channel anyone signed-in may post to must not gate writes on it; check the author and route the doc. For writes needing no sign-in ("anyone can sign/submit"), return `allowAnonymous: true` instead of throwing on `!user`. A grant/member doc must also return `channels` (route it to an owner-readable admin channel) — a channel-less result is rejected. On updates, also check the old author field (`oldDoc.authorHandle`/`userHandle`/`senderHandle`) so a writer can't overwrite or re-author someone else's doc.
+`ctx.requireAccess(channel)` gates on **membership** (a `grant.users`/`grant.roles` grant), not `grant.public` (read-only) — so an open feed anyone signed-in may post to must not gate writes on it; check the author and route the doc. For writes needing no sign-in ("anyone can sign/submit"), return `allowAnonymous: true` instead of throwing on `!user`. A grant/share/request doc must also return `channels` — a channel-less result is rejected. On updates, also check the old author field (`oldDoc.authorHandle`/`userHandle`/`senderHandle`) so a writer can't overwrite or re-author someone else's doc.
 
-**Build the permission model around what a newcomer should be able to do.** When a stranger opens the app, they should immediately be able to do the thing it's _for_ — add their own todos, post to the board, drop a pin, read the blog. So the default is: every signed-in visitor is a first-class participant who creates their own objects and edits what they created (`doc.authorHandle === user.userHandle`, checking `oldDoc` on updates), from first load, with no one needing to let them in.
+**Build the permission model around what a newcomer should be able to do.** When a stranger opens the app, they should immediately be able to do the thing it's _for_ — add their own todos, post a note, drop a pin, join a shared canvas. So the default is: every signed-in visitor is a first-class participant who creates their own objects and edits what they created (`doc.authorHandle === user.userHandle`, checking `oldDoc` on updates), from first load, with no one needing to let them in.
 
-**Most apps are multiplayer even when they sound solo — match the shape to the model.** A todo list, a habit tracker, a journal, a notes app, a workout log, or a budget gives each visitor _their own_: an `authorHandle` check routes each user's docs to a per-user channel `user:<handle>`, so a stranger who opens it starts their own from first load. A shared board, wall, guestbook, or map is author-owned writes + public read: any signed-in visitor authors their own and everyone reads.
+**Most apps are multiplayer even when they sound solo — match the shape to the model.** A todo list, a habit tracker, a journal, a notes app, a workout log, or a budget gives each visitor _their own private_ space: route each doc to a per-user channel `user:` + the handle AND self-grant it (`grant: { users: { [user.userHandle]: ['user:' + user.userHandle] } }`) so each person's data stays private to them, with the `authorHandle` create + `oldDoc` author checks; never route these to one shared channel. A wall, guestbook, or map where each visitor adds their _own_ items is author-owned writes + public read: any signed-in visitor authors their own and everyone reads.
 
-**"Invite", "join", "collaborate", "share with", "together", "with my partner/team" → per-object collaboration** — each shared thing is its own space its members reach directly. Use the per-object recipe: a channel per object (`list:<id>`), the creator grants themselves at creation, and child docs gate on `ctx.requireAccess("list:<id>")` so any member edits any child doc in it. A member-authored `share` doc grants a peer the same channel, and a `request` doc — which takes **no** `requireAccess` — lets a not-yet-member ask to join. Keep the _object's own_ author/creator field write-once (`if (oldDoc && doc.author !== oldDoc.author) throw`) and a child's object-id immutable.
+**"Invite", "join", "people can join", "collaborate", "share with", "together", "with my partner/team", or a board/canvas/room/whiteboard a group co-edits → per-object collaboration** (the example above) — each shared thing is ONE object its members reach directly; it needs no owner. Use the per-object recipe: a channel per object (`board:<id>`/`list:<id>`); the creator self-grants at creation (`grant: { users: { [user.userHandle]: [ch] } }`); child docs gate on `ctx.requireAccess(ch)` so any member edits any child in it (not just their own); a member-authored `share` doc grants a peer the same channel; a `request` doc — which takes **no** `requireAccess` — lets a not-yet-member ask to join. Keep the _object's own_ creator field write-once (`if (oldDoc && doc.author !== oldDoc.author) throw`) and a child's object-id immutable. **Two traps to avoid:** don't build it as an open public feed where each person only owns their own items (that abandons the shared membership), and don't gate it behind a single writer (members self-serve via share/request).
 
-When the app is genuinely one person's to publish — a personal blog, an announcements feed — the newcomer's job is to _read_: gate writes with `ctx.requireRole("owner")` (the vibe owner is always auto-seeded into the reserved `owner` role, so this needs no setup) and make reads public. For "author edits their own, owner moderates anyone's" in one branch, let `requireRole` be the fallback: `if (doc.authorHandle !== user.userHandle) ctx.requireRole("owner")` — it only throws when the author check fails, so authors pass for their own docs and the owner passes for any. Gate the UI on `useVibe(dbName).can`, never on `user.isOwner`.
+**Ownership is just the object graph** — whoever authored or created a doc owns it (`doc.authorHandle === user.userHandle`, checked against `oldDoc` on updates). There's no broadcaster shape to reach for by default; if a request genuinely means only one person writes and everyone else reads, that's a rare exception, not a starting point. Always gate write UI on `useVibe(dbName).can`, never on `user.isOwner`.
 
 **Sharing objects: channels carry objects, roles carry types.** A channel is one shareable thing (`list:<id>`) — membership in it means "can reach this object." A role is a _kind_ of participant (`author`, `editor`), a small reusable vocabulary. To let people collaborate on _their own_ objects with no admin in the loop: the creator routes the object to its channel and grants themselves access; any member shares it by granting a peer into the same channel; child docs gate on `ctx.requireAccess("list:<id>")`. The reserved `owner` role is the only one auto-seeded — every _other_ role is populated by the app's own grant docs (a member writes a doc whose access-fn output adds another user to a role or channel). So to put someone in a role, write a grant; don't expect a role to be pre-filled.
 
