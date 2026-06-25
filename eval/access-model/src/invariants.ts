@@ -3,6 +3,7 @@ import type { Dimension } from "./config.js";
 export interface AccessAnalysis {
   // hard signals
   readonly isOwnerWriteGate: boolean; // any user.isOwner gating a write -> design forbids (target 0)
+  readonly isOwnerToken: boolean; // any literal `isOwner` token in access.js -> design retired it; hard fail
   readonly requireRoleOwnerWrite: boolean; // a core write gated on requireRole("owner")
   // Form-A
   readonly formAStrict: boolean; // requireRole("owner") core write where the dimension should be multiplayer
@@ -28,6 +29,7 @@ export interface AccessAnalysis {
 
 const RE = {
   isOwner: /\buser\.isOwner\b/,
+  isOwnerToken: /\bisOwner\b/,
   requireRoleOwner: /requireRole\(\s*["'`]owner["'`]\s*\)/,
   perUserChannel: /user:\$\{[^}]*\b(userHandle|authorHandle|handle)\b[^}]*\}/,
   // `list:${doc._id}` / `ch:${doc.id}` — an interpolated channel keyed on an object/doc id.
@@ -54,6 +56,7 @@ const RE = {
 export function analyzeAccess(src: string, expect: Dimension): AccessAnalysis {
   const has = (re: RegExp) => re.test(src);
   const isOwnerWriteGate = has(RE.isOwner);
+  const isOwnerToken = has(RE.isOwnerToken);
   const requireRoleOwnerWrite = has(RE.requireRoleOwner);
   const perUserChannel = has(RE.perUserChannel);
   const selfGrant = has(RE.grantUsers);
@@ -94,6 +97,7 @@ export function analyzeAccess(src: string, expect: Dimension): AccessAnalysis {
 
   return {
     isOwnerWriteGate,
+    isOwnerToken,
     requireRoleOwnerWrite,
     formAStrict,
     formABroad,

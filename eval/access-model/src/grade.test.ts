@@ -4,6 +4,7 @@ import type { AccessAnalysis } from "./invariants.js";
 
 const clean = (o: Partial<AccessAnalysis>): AccessAnalysis => ({
   isOwnerWriteGate: false,
+  isOwnerToken: false,
   requireRoleOwnerWrite: false,
   formAStrict: false,
   formABroad: false,
@@ -37,11 +38,21 @@ describe("gradeRow", () => {
   it("FAIL on isOwner write-gate", () => {
     const g = gradeRow({
       expect: "per-visitor",
-      analysis: clean({ perVisitorClean: true, isOwnerWriteGate: true }),
+      analysis: clean({ perVisitorClean: true, isOwnerWriteGate: true, isOwnerToken: true }),
       files: { twoFile: true, renderable: true, reasons: [] },
       judge: null,
     });
     expect(g.grade).toBe("FAIL");
+  });
+  it("FAIL on a bare isOwner token even without the user.isOwner write-gate form", () => {
+    const g = gradeRow({
+      expect: "per-visitor",
+      analysis: clean({ perVisitorClean: true, isOwnerToken: true }), // e.g. doc.isOwner / an isOwner var
+      files: { twoFile: true, renderable: true, reasons: [] },
+      judge: { secondVisitorCanAct: true, reason: "" },
+    });
+    expect(g.grade).toBe("FAIL");
+    expect(g.reasons.some((r) => r.includes("isOwner token"))).toBe(true);
   });
   it("SOFT when model correct but App not renderable (orthogonal completeness failure)", () => {
     const g = gradeRow({

@@ -3,6 +3,7 @@ import { isTransientError, retryWithBackoff } from "../../codegen-matrix/src/bac
 import { readDevVars } from "../../codegen-matrix/src/judge.js";
 import type { AccessMatrix, Dimension } from "./config.js";
 import type { JudgeVerdict } from "./grade.js";
+import type { ConsentVerdict } from "./grade-consent.js";
 
 export interface JudgeDeps {
   readonly call: (args: {
@@ -75,6 +76,75 @@ function parseVerdict(raw: unknown): JudgeVerdict {
   const obj = JSON.parse(text) as { secondVisitorCanAct?: unknown; reason?: unknown };
   return {
     secondVisitorCanAct: obj.secondVisitorCanAct === true,
+    reason: typeof obj.reason === "string" ? obj.reason : "",
+  };
+}
+
+const CONSENT_SCHEMA = {
+  type: "object",
+  properties: {
+    hasConsentPath: { type: "boolean" },
+    accessLeakedWithoutConsent: { type: "boolean" },
+    reason: { type: "string" },
+  },
+  required: ["hasConsentPath", "accessLeakedWithoutConsent", "reason"],
+} as const;
+
+/**
+ * The consent-centric judge prompt (#2631 rubric refinement). Deliberately
+ * shape-agnostic: it never asks which access shape the generator picked, because
+ * letting users invite collaborators into part of an object graph is always
+ * legitimate. It asks two consent questions only.
+ */
+export function buildConsentJudgePrompt(o: { prompt: string; expect: Dimension; files: Record<string, string> }): string {
+  return [
+    `A code generator produced a multi-user app from the request: "${o.prompt}".`,
+    `Judge the access model on TWO consent questions ONLY. Do NOT judge which access "shape" it chose —`,
+    `letting users invite collaborators into part of an object graph is always allowed, for any app.`,
+    `1. hasConsentPath: after the creator uses it, does a DIFFERENT signed-in visitor have a path that`,
+    `   respects consent — they can EITHER start their OWN data/graph immediately, OR request to join and`,
+    `   be approved by the creator or an existing member? Answer false ONLY if a second visitor is at a`,
+    `   true dead-end: cannot start their own AND cannot request access.`,
+    `2. accessLeakedWithoutConsent: does the model ever hand someone access to data they do NOT own without`,
+    `   the owner/creator (or an existing member) consenting — e.g. auto-granting a stranger write access,`,
+    `   public write the request never asked for, or a share/grant that lets a non-member add themselves`,
+    `   with no approver? Answer true if so.`,
+    `\n--- access.js ---\n${o.files["access.js"] ?? "(missing)"}`,
+    `\n--- App.jsx ---\n${o.files["App.jsx"] ?? "(missing)"}`,
+  ].join("\n");
+}
+
+export async function judgeConsent(
+  input: { prompt: string; expect: Dimension; files: Record<string, string> },
+  deps: JudgeDeps
+): Promise<ConsentVerdict | null> {
+  const max = deps.maxAttempts ?? 3;
+  let lastErr: unknown;
+  for (let attempt = 1; attempt <= max; attempt++) {
+    try {
+      return parseConsentVerdict(
+        await deps.call({
+          model: deps.model,
+          endpoint: deps.endpoint,
+          apiKey: deps.apiKey,
+          prompt: buildConsentJudgePrompt(input),
+          schema: CONSENT_SCHEMA,
+        })
+      );
+    } catch (e) {
+      lastErr = e;
+    }
+  }
+  void lastErr;
+  return null;
+}
+
+function parseConsentVerdict(raw: unknown): ConsentVerdict {
+  const text = typeof raw === "string" ? raw : JSON.stringify(raw);
+  const obj = JSON.parse(text) as { hasConsentPath?: unknown; accessLeakedWithoutConsent?: unknown; reason?: unknown };
+  return {
+    hasConsentPath: obj.hasConsentPath === true,
+    accessLeakedWithoutConsent: obj.accessLeakedWithoutConsent === true,
     reason: typeof obj.reason === "string" ? obj.reason : "",
   };
 }
