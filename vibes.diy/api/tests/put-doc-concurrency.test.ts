@@ -145,6 +145,40 @@ describe("seq allocation concurrency (issue #2506)", { timeout: 20000 }, () => {
     expect(await count()).toBe(3);
   });
 
+  it("skipIf falls through when the live head is a tombstone — a re-put resurrects, never no-ops (#2644)", async () => {
+    const { db, flavour, t } = await ctx();
+    const [owner, app, dbName, docId] = ["tomb-owner", "tomb-app", "tomb", "d"];
+    const where = and(eq(t.ownerHandle, owner), eq(t.appSlug, app), eq(t.dbName, dbName), eq(t.docId, docId));
+    const count = async () => (await db.select({ seq: t.seq }).from(t).where(where)).length;
+    // A re-put of A is a no-op only if the live head is A AND not a tombstone.
+    const skipIfHeadIsLiveA = async (exec: typeof db) => {
+      const cur = await exec
+        .select({ data: t.data, deleted: t.deleted })
+        .from(t)
+        .where(where)
+        .orderBy(desc(t.seq))
+        .limit(1)
+        .then((r) => r[0]);
+      return !!cur && cur.deleted !== 1 && (cur.data as { n?: number }).n === 1;
+    };
+
+    // Head A, then a tombstone (the concurrent delete that overlaps the no-op window).
+    await allocateAndInsertRevision({ db, flavour, table: t, row: row(owner, app, dbName, docId, 1) });
+    await allocateAndInsertRevision({ db, flavour, table: t, row: row(owner, app, dbName, docId, 1, /*deleted*/ 1) });
+
+    // Re-put A: a stale read may have seen live A, but the in-lock recheck sees a
+    // tombstone head → must NOT no-op → A is inserted (resurrected).
+    const reA = await allocateAndInsertRevision({
+      db,
+      flavour,
+      table: t,
+      row: row(owner, app, dbName, docId, 1),
+      skipIf: skipIfHeadIsLiveA,
+    });
+    expect(reA.inserted).toBe(true);
+    expect(await count()).toBe(3);
+  });
+
   it("docLockKey is identical for the same doc tuple (put/delete share the lock)", () => {
     expect(docLockKey("o", "a", "d", "x")).toBe(docLockKey("o", "a", "d", "x"));
     expect(docLockKey("o", "a", "d", "x")).not.toBe(docLockKey("o", "a", "d", "y"));
