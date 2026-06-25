@@ -36,7 +36,9 @@ export function aggregate(rows: readonly ReportRow[], bar: number): ModelModeSta
   const groups = new Map<string, ReportRow[]>();
   for (const r of rows) {
     const k = `${r.model}\0${r.mode}`;
-    (groups.get(k) ?? groups.set(k, []).get(k)!).push(r);
+    const group = groups.get(k);
+    if (group) group.push(r);
+    else groups.set(k, [r]);
   }
   const out: ModelModeStat[] = [];
   for (const g of groups.values()) {
