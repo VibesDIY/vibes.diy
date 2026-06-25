@@ -1,9 +1,10 @@
 import { spawnSync } from "node:child_process";
-import { readFileSync } from "node:fs";
+import { readFileSync, rmSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { stdout, stderr } from "node:process";
-import { parseAccessMatrix } from "./config.js";
+import { parseAccessMatrix, type AccessMatrix } from "./config.js";
+import { runAdaptive } from "./adaptive.js";
 import { evaluateGates, type GatesResult, type RateSummary, type HoldoutSummary } from "./gates.js";
 import { guardrail, type GuardrailResult } from "./guardrail.js";
 import { realJudgeDeps } from "./judge.js";
@@ -98,22 +99,15 @@ function runPromptsCheck(): boolean {
  * stage scripts as subprocesses (mirrors baseline.ts's realRunStages — no stage logic
  * is duplicated). Returns the run's results.json rollup.
  */
-function runStages(variant: "eval" | "holdout"): StageResults {
+function runStages(variant: "eval" | "holdout", matrix: AccessMatrix): StageResults {
   const runFlag = resolve(ROOT, "runs", `verify-${variant}`);
-  const generateArgs = variant === "holdout" ? ["--holdout", "--run", runFlag] : ["--run", runFlag];
-  const steps: { script: string; args: string[] }[] = [
-    { script: "generate", args: generateArgs },
-    { script: "score", args: ["--run", runFlag] },
-    { script: "report", args: ["--run", runFlag] },
-  ];
-  for (const step of steps) {
-    const r = spawnSync("pnpm", ["run", step.script, "--", ...step.args], {
-      cwd: ROOT,
-      encoding: "utf-8",
-      stdio: "inherit",
-    });
-    if (r.status !== 0) throw new Error(`${variant} ${step.script} failed (exit ${r.status})`);
-  }
+  // Fresh dir each verify so stale cells from a prior run don't pollute the adaptive
+  // saturation decision or the rollup.
+  rmSync(runFlag, { recursive: true, force: true });
+  // Adaptive batch: a base wave of matrix.reps for all prompts, then a top-up of only
+  // the prompts that didn't saturate (up to matrix.repsMax) — half-cost on the easy
+  // prompts, full precision where the metric noise actually is.
+  runAdaptive({ runDir: runFlag, holdout: variant === "holdout", matrix });
   return JSON.parse(readFileSync(resolve(runFlag, "results.json"), "utf-8")) as StageResults;
 }
 
@@ -140,11 +134,11 @@ export async function main(): Promise<void> {
   const checkGreen = runPromptsCheck();
 
   // Gates 2/3: eval matrix.
-  const evalSummary = summaryFromResults(runStages("eval"));
+  const evalSummary = summaryFromResults(runStages("eval", matrix));
   const currentEvalMetric = evalSummary.rate.metric;
 
   // Gate 5: holdout matrix.
-  const holdoutSummary = summaryFromResults(runStages("holdout"));
+  const holdoutSummary = summaryFromResults(runStages("holdout", matrix));
 
   // Gate 4: prompt-diff guardrail (grep-first, degrades to grep verdict if judge is down).
   const diff = promptDiff();

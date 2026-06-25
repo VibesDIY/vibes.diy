@@ -1,4 +1,4 @@
-import { readdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { argv, stderr, stdout } from "node:process";
@@ -155,8 +155,13 @@ export async function main(): Promise<void> {
   // run.json is informational here; presence confirms a real run dir.
   void RUN_JSON;
 
-  const dirs = cellDirs(runDir);
-  stderr.write(`access-model score: ${dirs.length} cells in ${runDir} (concurrency=${matrix.scoreConcurrency})\n`);
+  // --skip-scored: score only cells without an existing cell.score.json (the adaptive
+  // top-up wave uses this so base-wave cells are not re-judged).
+  const skipScored = argv.includes("--skip-scored");
+  const dirs = cellDirs(runDir).filter((dir) => !(skipScored && existsSync(join(dir, SCORE_JSON))));
+  stderr.write(
+    `access-model score: ${dirs.length} cells in ${runDir} (concurrency=${matrix.scoreConcurrency}${skipScored ? ", skip-scored" : ""})\n`
+  );
 
   const judgeDeps: JudgeDeps = realJudgeDeps(matrix);
   const judge = (a: { prompt: string; expect: Dimension; files: Record<string, string> }) => judgeSecondVisitor(a, judgeDeps);
