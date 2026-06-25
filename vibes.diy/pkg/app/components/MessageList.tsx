@@ -1,4 +1,5 @@
 import React, { memo, useEffect, useRef } from "react";
+import { useTypewriterReveal } from "../hooks/useTypewriterReveal.js";
 import { PromptBlock } from "../routes/chat/chat.$ownerHandle.$appSlug.js";
 import { parseOptionLines } from "../utils/option-lines.js";
 import { OptionButtons } from "./OptionButtons.js";
@@ -266,13 +267,14 @@ function PromptErrorMsg({ msg, onRetry }: { msg: PromptError; onRetry?: (msg: Pr
   );
 }
 
-function CodeMsg({
+export function CodeMsg({
   lines,
   begin,
   end,
   truncated,
   onClick,
   onDiffClick,
+  isStreaming = false,
 }: {
   begin: CodeBeginMsg;
   lines: LineMsg[];
@@ -280,9 +282,16 @@ function CodeMsg({
   truncated?: { reason: string; kind: string; truncatedAtLine: number };
   onClick: () => void;
   onDiffClick?: (diff: { path: string; lines: string[] } | null) => void;
+  isStreaming?: boolean;
 }) {
   const isDiff = lines.some((l) => l.line.startsWith("<<<<<<< SEARCH"));
   const codeReady = end !== undefined;
+  const revealEnabled = begin.reveal === "typewriter";
+  const revealed = useTypewriterReveal(lines.length, isStreaming, revealEnabled);
+  // While a gated card is mid-reveal, show the streaming line-by-line body;
+  // once caught up (and not streaming) it falls back to the existing summary.
+  const revealing = revealEnabled && revealed < lines.length;
+  const revealLines = revealing ? lines.slice(0, revealed) : lines;
   const isTruncated = truncated !== undefined;
   const renderSeq = useChatDebug("CodeMsg", {
     sectionId: begin.sectionId,
@@ -379,16 +388,21 @@ function CodeMsg({
             </button>
           </div>
 
-          {/* Code preview with height transition instead of conditional rendering */}
+          {/* Code body: expanded + line-by-line while a gated card reveals;
+              otherwise the existing collapsed summary preview. */}
           <div
-            className={`bg-light-background-02 dark:bg-dark-background-01 m-0 h-0 max-h-0 min-h-0 overflow-hidden rounded-sm border-0 p-0 font-mono text-sm opacity-0 shadow-inner transition-all`}
+            className={
+              revealing
+                ? "bg-light-background-02 dark:bg-dark-background-02 overflow-hidden font-mono text-xs leading-relaxed"
+                : "bg-light-background-02 dark:bg-dark-background-01 m-0 h-0 max-h-0 min-h-0 overflow-hidden rounded-sm border-0 p-0 font-mono text-sm opacity-0 shadow-inner transition-all"
+            }
           >
-            {lines.slice(0, 3).map((line, idx) => (
-              <div key={`${begin.blockId}-${line.lineNr}-${idx}`} className="text-light-primary dark:text-dark-secondary truncate">
+            {(revealing ? revealLines : revealLines.slice(0, 3)).map((line, idx) => (
+              <div key={`${begin.sectionId}-${line.lineNr ?? idx}`} className="text-light-primary dark:text-dark-secondary truncate">
                 {line.line || " "}
               </div>
             ))}
-            {lines.length > 3 && <div className="text-accent-01 dark:text-accent-01">...</div>}
+            {!revealing && revealLines.length > 3 && <div className="text-accent-01 dark:text-accent-01">...</div>}
           </div>
         </BrutalistCard>
       </div>
@@ -602,6 +616,7 @@ function MessageList({
                   lines={block.lines}
                   end={block.end}
                   truncated={block.truncated}
+                  isStreaming={promptProcessing}
                   onDiffClick={onDiffClick}
                   onClick={() => {
                     if (onDiffClick) onDiffClick(null);
@@ -676,6 +691,7 @@ function MessageList({
                   lines={preBlock.lines}
                   end={preBlock.end}
                   truncated={preBlock.truncated}
+                  isStreaming={promptProcessing}
                   onClick={() => {
                     /* no fsRef yet — the original block.end never fired */
                   }}
@@ -706,6 +722,7 @@ function MessageList({
               begin={codeBegin!}
               lines={collectedMsg}
               truncated={{ reason: msg.reason, kind: msg.kind, truncatedAtLine: msg.truncatedAtLine }}
+              isStreaming={promptProcessing}
               onClick={() => {
                 /* no-op: truncated blocks have no navigable target */
               }}
