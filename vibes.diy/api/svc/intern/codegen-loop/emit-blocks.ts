@@ -9,6 +9,7 @@ export interface BlockIds {
   nextSeq: () => number;
   blockNr: number;
   usage: BlockUsage;
+  reveal?: "typewriter";
 }
 
 export function buildBlockEvents(files: { filename: string; lang: string; content: string }[], ids: BlockIds): BlockEvent[] {
@@ -39,6 +40,7 @@ export function buildBlockEvents(files: { filename: string; lang: string; conten
       sectionId,
       lang: file.lang,
       path: file.filename,
+      reveal: ids.reveal,
       seq: ids.nextSeq(),
       ...base,
     } satisfies CodeBeginMsg);

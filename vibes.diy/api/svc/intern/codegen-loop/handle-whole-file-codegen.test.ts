@@ -142,6 +142,38 @@ describe("handleWholeFileCodegenRequest emission", () => {
     expect(fileSystem).toEqual([{ type: "code-block", filename: "/App.jsx", lang: "jsx", content: "a\nb\nc" }]);
   });
 
+  it("streams code lines live (self-framed) and tags code.begin with reveal:'typewriter'", async () => {
+    const result: WholeFileResult = {
+      files: [{ filename: "/App.jsx", lang: "jsx", content: "a\nb\nc" }],
+      usage: { prompt_tokens: 1, completion_tokens: 2, total_tokens: 3 },
+    };
+    // Drive onLine the way the loop would, mid-run, before resolving.
+    const { deps, emitted } = makeDeps(result, {
+      runWholeFileCodegen: async ({ onLine }) => {
+        onLine?.("/App.jsx", "jsx", "a", 0);
+        onLine?.("/App.jsx", "jsx", "b", 1);
+        // "c" withheld (no trailing newline) — reconciliation must add it.
+        return result;
+      },
+    });
+
+    await handleWholeFileCodegenRequest(deps);
+    assertStrictOrdering(emitted);
+    // First wire event is block.begin (emitted lazily WITH the code, not before).
+    expect(emitted[0].type).toBe("block.begin");
+    // Every streamed code.begin carries the reveal marker.
+    const begins = emitted.filter((e) => (e as { type: string }).type === "block.code.begin");
+    expect(begins.length).toBeGreaterThanOrEqual(1);
+    expect(begins.every((e) => (e as { reveal?: string }).reveal === "typewriter")).toBe(true);
+    // All three lines reach the wire (the withheld "c" via reconciliation).
+    const lines = emitted
+      .filter((e) => (e as { type: string }).type === "block.code.line")
+      .map((e) => (e as { line: string }).line);
+    expect(lines).toEqual(["a", "b", "c"]);
+    // No diagnostic card.
+    expect(emitted.some((e) => ((e as { path?: string }).path ?? "").startsWith("/_streamdiag"))).toBe(false);
+  });
+
   it("beats keepalive heartbeats during a slow loop without breaking ordering", async () => {
     vi.useFakeTimers();
     try {

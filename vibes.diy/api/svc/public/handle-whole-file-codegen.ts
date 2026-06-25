@@ -219,36 +219,65 @@ export async function handleWholeFileCodegenRequest(deps: WholeFileCodegenDeps):
     });
   };
 
-  // --- Keepalive heartbeat ----------------------------------------------------
-  // The loop's item stream does not yield incrementally under workerd, so the
-  // turn is silent for the whole generation. Beat a benign `block.begin` every
-  // HEARTBEAT_MS to keep the client's `blocks` changing (resets its 45s
-  // watchdog). It only ever splices an EMPTY `blockMsgs` on the client — no code
-  // has streamed yet — so it is inert until the closing burst, and it re-frames
-  // the block so even a client that reconnected mid-turn stays converged. Stops
-  // before the burst (so it never wipes accumulating code cards) and on any loop
-  // error.
+  // --- Keepalive heartbeat (until the first streamed line) -------------------
+  // The model plans for ~18s before the first write_file argument delta; after
+  // that, deltas arrive every few seconds and keep the client's 45s watchdog
+  // alive on their own. So beat a benign `block.begin` until the first onLine,
+  // then stop (a heartbeat block.begin splices the client's blockMsgs, which is
+  // inert while empty but would WIPE an in-progress card once code is streaming).
   let stopped = false;
   let timer: ReturnType<typeof setTimeout> | undefined;
   const heartbeat = (): void => {
     if (stopped) return;
-    enqueue({
-      type: "block.begin",
-      seq: liveSeq++,
-      blockId,
-      streamId: promptId,
-      blockNr: 0,
-      timestamp: new Date(),
-    } satisfies BlockBeginMsg);
+    enqueue({ type: "block.begin", seq: liveSeq++, blockId, streamId: promptId, blockNr: 0, timestamp: new Date() } satisfies BlockBeginMsg);
     timer = setTimeout(heartbeat, HEARTBEAT_MS);
   };
   timer = setTimeout(heartbeat, HEARTBEAT_MS);
+  const stopHeartbeat = (): void => {
+    stopped = true;
+    if (timer !== undefined) clearTimeout(timer);
+    timer = undefined;
+  };
 
-  // 2. Run the loop to produce the complete files. DIAGNOSTIC build: no `onLine`
-  //    (emission stays the safe reveal+heartbeat path, zero crash risk), but the
-  //    loop measures `streamDiag` — whether the SDK's full-response stream
-  //    delivers write_file argument deltas incrementally under workerd, or
-  //    buffers to the end. The result is surfaced as a live-only card below.
+  // --- Live per-file framing driven by `onLine` ------------------------------
+  // Emit one self-framed sequence: block.begin (lazy, on the first line) →
+  // per-file code.begin(reveal) → code.line* → code.end → block.end. block.begin
+  // travels WITH the code so a client that reconnected mid-turn stays framed.
+  const base = () => ({ blockId, streamId: promptId, blockNr: 0, timestamp: new Date() });
+  const streamedFiles = new Set<string>();
+  const lineCount = new Map<string, number>();
+  const byteCount = new Map<string, number>();
+  let blockBegun = false;
+  let openFile: string | null = null;
+  const emitCodeBegin = (filename: string, lang: string): void => {
+    enqueue({ type: "block.code.begin", sectionId: sectionIdFor(filename), lang, path: filename, reveal: "typewriter", seq: liveSeq++, ...base() } satisfies CodeBeginMsg);
+  };
+  const emitCodeLine = (filename: string, lang: string, line: string, lineNr: number): void => {
+    enqueue({ type: "block.code.line", sectionId: sectionIdFor(filename), lang, path: filename, line, lineNr, seq: liveSeq++, ...base() } satisfies CodeLineMsg);
+  };
+  const emitCodeEnd = (filename: string, lang: string, lines: number, bytes: number): void => {
+    enqueue({ type: "block.code.end", sectionId: sectionIdFor(filename), lang, path: filename, stats: { lines, bytes }, seq: liveSeq++, ...base() } satisfies CodeEndMsg);
+  };
+  const onLine: OnLine = (filename, lang, line, lineNr) => {
+    if (!blockBegun) {
+      blockBegun = true;
+      stopHeartbeat();
+      enqueue({ type: "block.begin", seq: liveSeq++, ...base() } satisfies BlockBeginMsg);
+    }
+    if (openFile !== filename) {
+      if (openFile !== null) {
+        emitCodeEnd(openFile, langFor(openFile), lineCount.get(openFile) ?? 0, byteCount.get(openFile) ?? 0);
+      }
+      openFile = filename;
+      streamedFiles.add(filename);
+      emitCodeBegin(filename, lang);
+    }
+    emitCodeLine(filename, lang, line, lineNr);
+    lineCount.set(filename, (lineCount.get(filename) ?? 0) + 1);
+    byteCount.set(filename, (byteCount.get(filename) ?? 0) + new TextEncoder().encode(line).length + 1);
+  };
+
+  // 2. Run the loop, streaming completed lines live through `onLine`.
   let result: WholeFileResult;
   try {
     result = await runWholeFileCodegen({
@@ -257,18 +286,45 @@ export async function handleWholeFileCodegenRequest(deps: WholeFileCodegenDeps):
       needsAccess,
       maxSteps,
       maxCostUsd,
-      // Frontier on the first turn, the cheaper fix-up model thereafter (Task 6).
       model: (ctx) => (ctx.numberOfTurns > 1 ? cheapModel : frontierModel),
+      onLine,
     });
   } finally {
-    stopped = true;
-    if (timer !== undefined) clearTimeout(timer);
+    stopHeartbeat();
   }
 
-  // 3. Build the canonical block sequence from the resolved files — one
-  //    self-framed burst: block.begin → (per file: code.begin → code.line* →
-  //    code.end) → block.end, the closing block.end carrying the turn's token
-  //    usage. This is also the source of truth replayed on reload.
+  // 3. Reconcile the live stream against the resolved files. If a run buffered,
+  //    onLine fired at the end and produced the same self-framed burst; either way
+  //    close the open section (topping up the withheld trailing line) and emit any
+  //    file that never streamed a line as a full section.
+  if (!blockBegun) {
+    blockBegun = true;
+    enqueue({ type: "block.begin", seq: liveSeq++, ...base() } satisfies BlockBeginMsg);
+  }
+  const byName = new Map(result.files.map((f) => [f.filename, f] as const));
+  if (openFile !== null) {
+    const f = byName.get(openFile);
+    if (f) {
+      const finalLines = f.content.split("\n");
+      for (let nr = lineCount.get(openFile) ?? 0; nr < finalLines.length; nr++) {
+        emitCodeLine(openFile, f.lang, finalLines[nr], nr);
+      }
+      emitCodeEnd(openFile, f.lang, finalLines.length, new TextEncoder().encode(f.content).length);
+    } else {
+      emitCodeEnd(openFile, langFor(openFile), lineCount.get(openFile) ?? 0, byteCount.get(openFile) ?? 0);
+    }
+    openFile = null;
+  }
+  for (const f of result.files) {
+    if (streamedFiles.has(f.filename)) continue;
+    emitCodeBegin(f.filename, f.lang);
+    const lines = f.content.split("\n");
+    for (let nr = 0; nr < lines.length; nr++) emitCodeLine(f.filename, f.lang, lines[nr], nr);
+    emitCodeEnd(f.filename, f.lang, lines.length, new TextEncoder().encode(f.content).length);
+  }
+
+  // 4. Build the canonical persisted sequence (also carrying the reveal marker so a
+  //    reload renders identically), then close the live block.
   let seqForBuild = 0;
   const collectedMsgs = buildBlockEvents(result.files, {
     blockId,
@@ -276,6 +332,7 @@ export async function handleWholeFileCodegenRequest(deps: WholeFileCodegenDeps):
     sectionIdFor,
     nextSeq: () => seqForBuild++,
     blockNr: 0,
+    reveal: "typewriter",
     usage: {
       given: [],
       calculated: {
@@ -286,58 +343,8 @@ export async function handleWholeFileCodegenRequest(deps: WholeFileCodegenDeps):
     },
   });
   const blockEnd = collectedMsgs[collectedMsgs.length - 1] as BlockEndMsg;
+  enqueue({ ...blockEnd, seq: liveSeq++, timestamp: new Date() });
 
-  // 4. Emit the whole sequence to the client IN ORDER through the serialized
-  //    chain. Emitting block.begin WITH the code (not ahead of it) keeps the
-  //    section reducer correctly framed even for a client that reconnected
-  //    mid-turn and missed the heartbeats — block.begin re-opens the block right
-  //    before the code, so `code.end` never lands without its `code.begin`.
-  //
-  //    DIAGNOSTIC: inject a live-only `/_streamdiag…` card just before block.end
-  //    so the SSE-delivery timing measured in the loop is readable in the browser
-  //    (the card label shows its path). `firstDeltaMs` ≈ a few thousand ⇒ the
-  //    stream flushes incrementally (per-line streaming is viable); ≈ total
-  //    generation time ⇒ it buffered. It is NOT in `collectedMsgs`, so it is
-  //    never persisted and vanishes on reload.
-  const diag = result.streamDiag ?? { firstDeltaMs: -1, lastDeltaMs: -1, deltaCount: 0 };
-  const diagPath = `/_streamdiag_first${diag.firstDeltaMs}ms_last${diag.lastDeltaMs}ms_n${diag.deltaCount}.txt`;
-  const diagSectionId = nextId();
-  const diagBase = { blockId, streamId: promptId, blockNr: 0 } as const;
-  const diagLine = JSON.stringify(diag);
-  for (const msg of collectedMsgs.slice(0, -1)) enqueue(msg);
-  enqueue({
-    type: "block.code.begin",
-    sectionId: diagSectionId,
-    lang: "js",
-    path: diagPath,
-    seq: liveSeq++,
-    timestamp: new Date(),
-    ...diagBase,
-  } satisfies CodeBeginMsg);
-  enqueue({
-    type: "block.code.line",
-    sectionId: diagSectionId,
-    lang: "js",
-    path: diagPath,
-    line: diagLine,
-    lineNr: 0,
-    seq: liveSeq++,
-    timestamp: new Date(),
-    ...diagBase,
-  } satisfies CodeLineMsg);
-  enqueue({
-    type: "block.code.end",
-    sectionId: diagSectionId,
-    lang: "js",
-    path: diagPath,
-    stats: { lines: 1, bytes: diagLine.length },
-    seq: liveSeq++,
-    timestamp: new Date(),
-    ...diagBase,
-  } satisfies CodeEndMsg);
-  enqueue(collectedMsgs[collectedMsgs.length - 1]); // block.end (closes/reveals the cards)
-
-  // Drain the serialized emit chain and surface the first send failure, if any.
   await chain;
   if (firstErr) return Result.Err(firstErr);
 
