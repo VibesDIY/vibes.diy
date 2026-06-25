@@ -82,14 +82,19 @@ if [ -z "$REPO" ]; then
   [ -z "$REPO" ] && REPO="VibesDIY/vibes.diy"
 fi
 
-query="per_page=${PER_PAGE}"
-[ -n "$BRANCH" ] && query="${query}&branch=${BRANCH}"
-[ -n "$SHA" ]    && query="${query}&head_sha=${SHA}"
+# Build query fields as discrete key=value pairs and let gh/curl URL-encode them.
+# Branch refs can legitimately contain `&`, `#`, `/`, spaces (e.g. qa/a&b), which
+# would corrupt a hand-concatenated query string.
 
 # Prefer the gh CLI (handles auth + the org's egress policy); fall back to curl.
+# `gh api` defaults to POST once -f/-F fields are present, so force GET; the
+# fields are then sent as a properly-encoded query string.
 resp=""
 if command -v gh >/dev/null 2>&1; then
-  resp="$(gh api "repos/${REPO}/actions/runs?${query}" 2>/dev/null || true)"
+  gh_args=(api "repos/${REPO}/actions/runs" -X GET -F "per_page=${PER_PAGE}")
+  [ -n "$BRANCH" ] && gh_args+=(-f "branch=${BRANCH}")
+  [ -n "$SHA" ]    && gh_args+=(-f "head_sha=${SHA}")
+  resp="$(gh "${gh_args[@]}" 2>/dev/null || true)"
 fi
 if [ -z "$resp" ]; then
   TOKEN="${GH_TOKEN:-${GITHUB_TOKEN:-}}"
@@ -99,11 +104,15 @@ if [ -z "$resp" ]; then
     echo "  then: scripts/gh-runs.sh --from-file <that file>" >&2
     exit 69
   fi
-  http="$(curl -sS -o /tmp/gh-runs-resp.$$ -w '%{http_code}' \
-    -H "Authorization: Bearer ${TOKEN}" \
-    -H "Accept: application/vnd.github+json" \
-    -H "X-GitHub-Api-Version: 2022-11-28" \
-    "https://api.github.com/repos/${REPO}/actions/runs?${query}" || true)"
+  # curl -G + --data-urlencode appends each field to the query string, encoded.
+  curl_args=(-sS -G -o /tmp/gh-runs-resp.$$ -w '%{http_code}'
+    -H "Authorization: Bearer ${TOKEN}"
+    -H "Accept: application/vnd.github+json"
+    -H "X-GitHub-Api-Version: 2022-11-28"
+    --data-urlencode "per_page=${PER_PAGE}")
+  [ -n "$BRANCH" ] && curl_args+=(--data-urlencode "branch=${BRANCH}")
+  [ -n "$SHA" ]    && curl_args+=(--data-urlencode "head_sha=${SHA}")
+  http="$(curl "${curl_args[@]}" "https://api.github.com/repos/${REPO}/actions/runs" || true)"
   resp="$(cat /tmp/gh-runs-resp.$$ 2>/dev/null || true)"
   rm -f /tmp/gh-runs-resp.$$
   if [ "$http" != "200" ]; then
