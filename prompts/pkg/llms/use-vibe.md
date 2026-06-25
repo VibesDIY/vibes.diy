@@ -22,10 +22,10 @@ Gate every write affordance on `can.*`. Render `reason` when denied. Never branc
 import { useVibe, useViewer } from "use-vibes";
 
 function PromptBar({ database }) {
-  const { can, ready } = useVibe("aestheticBoard");
+  const { can, ready, me } = useVibe("aestheticBoard");
   const { ViewerTag } = useViewer();
   if (!ready) return <div className="skeleton" />;
-  const v = can.create({ type: "tile" });
+  const v = can.create({ type: "tile", authorHandle: me?.userHandle });
   if (!v.ok) return <p className="muted">{v.reason}</p>; // e.g. "authentication required"
   return (
     <form onSubmit={/* … */}>
