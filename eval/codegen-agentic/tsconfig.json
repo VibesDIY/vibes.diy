@@ -1,0 +1,4 @@
+{
+  "extends": "../codegen-matrix/tsconfig.json",
+  "include": ["src/**/*.ts"]
+}

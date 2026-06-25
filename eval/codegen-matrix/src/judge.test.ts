@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { parseDevVars, resolveDevVars, buildFeaturePrompt, buildDesignPrompt } from "./judge.js";
+import { parseDevVars, resolveDevVars, buildFeaturePrompt, buildDesignPrompt, parseJudge } from "./judge.js";
 
 describe("parseDevVars", () => {
   it("extracts the LLM url + key", () => {
@@ -50,5 +50,28 @@ describe("buildDesignPrompt", () => {
     const p = buildDesignPrompt("build a synth");
     expect(p).toContain("build a synth");
     expect(p).toMatch(/layout|hierarchy|contrast/i);
+  });
+});
+
+describe("parseJudge", () => {
+  it("names the /chat/completions cause when the body is HTML", () => {
+    const r = parseJudge("<!DOCTYPE html>\n<html><body>Not Found</body></html>");
+    expect(r.score).toBeNull();
+    expect(r.reason).toMatch(/chat\/completions/);
+  });
+  it("names the cause when the body is empty", () => {
+    const r = parseJudge("");
+    expect(r.score).toBeNull();
+    expect(r.reason).toMatch(/chat\/completions/);
+  });
+  it("parses a well-formed judge object", () => {
+    const r = parseJudge(`{"score":4,"reason":"good"}`);
+    expect(r.score).toBe(4);
+    expect(r.reason).toBe("good");
+  });
+  it("returns the actionable reason without throwing when raw is undefined", () => {
+    const r = parseJudge(undefined);
+    expect(r.score).toBeNull();
+    expect(r.reason).toMatch(/chat\/completions/);
   });
 });

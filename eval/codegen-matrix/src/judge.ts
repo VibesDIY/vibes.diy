@@ -84,13 +84,21 @@ function clampScore(v: unknown): number | null {
   return Math.max(1, Math.min(5, Math.round(n)));
 }
 
-function parseJudge(raw: unknown): { score: number | null; reason: string } {
+export function parseJudge(raw: unknown): { score: number | null; reason: string } {
+  // JSON.stringify(undefined) returns the value `undefined` (not a string), which would
+  // make the catch-path `.trim()` throw; coalesce to "" so the actionable reason is returned.
+  const text = typeof raw === "string" ? raw : (JSON.stringify(raw) ?? "");
   try {
-    const text = typeof raw === "string" ? raw : JSON.stringify(raw);
     const obj = JSON.parse(text) as { score?: unknown; reason?: unknown };
     return { score: clampScore(obj.score), reason: typeof obj.reason === "string" ? obj.reason : "" };
   } catch {
-    return { score: null, reason: "judge returned unparseable output" };
+    const trimmed = text.trim();
+    const looksHtml = /^<(!doctype|html)/i.test(trimmed);
+    const hint =
+      looksHtml || trimmed.length === 0
+        ? "judge returned non-JSON (HTML/empty) — check LLM_BACKEND_URL includes /chat/completions"
+        : `judge returned unparseable output: ${trimmed.slice(0, 120)}`;
+    return { score: null, reason: hint };
   }
 }
 
@@ -119,6 +127,26 @@ export async function judgeFeature(
     return { score, reason, judgeModel: deps.judgeModel };
   } catch (e) {
     return { score: null, reason: `judge call failed: ${(e as Error).message}`, judgeModel: deps.judgeModel };
+  }
+}
+
+/**
+ * One trivial judge call to confirm the transport is reachable and returns
+ * parseable JSON. Throws an actionable error if the judge yields a null score
+ * (e.g. LLM_BACKEND_URL missing /chat/completions) so the score stage can fail
+ * fast instead of producing an all-null report.
+ */
+export async function assertJudgeReachable(deps: JudgeDeps): Promise<void> {
+  const probe = await judgeFeature(
+    "Score whether the app fulfils 'hello world'.",
+    { "App.jsx": "export default () => <h1>hi</h1>;" },
+    deps
+  );
+  if (probe.score === null) {
+    throw new Error(
+      `judge preflight failed (${probe.reason}). Check LLM_BACKEND_URL (needs the full ` +
+        `https://openrouter.ai/api/v1/chat/completions path) and LLM_BACKEND_API_KEY.`
+    );
   }
 }
 
