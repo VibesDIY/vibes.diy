@@ -26,6 +26,16 @@
             "timeout": 10
           }
         ]
+      },
+      {
+        "matcher": "mcp__github__actions_list",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash \"$CLAUDE_PROJECT_DIR/.claude/skills/autoresearch/hooks/node-hook-runner.sh\" \"$CLAUDE_PROJECT_DIR/.claude/skills/autoresearch/hooks/actions-list-redirect.cjs\"",
+            "timeout": 10
+          }
+        ]
       }
     ]
   }
