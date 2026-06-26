@@ -24,6 +24,8 @@
     "@fireproof/core-types-base": "0.24.19",
     "@fireproof/core-types-device-id": "0.24.19",
     "@fireproof/core-types-protocols-dashboard": "0.24.19",
+    "jose": "~6.2.2",
+    "multiformats": "~13.4.2",
     "zod": "^4.1.12"
   },
   "devDependencies": {
