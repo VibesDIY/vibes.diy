@@ -46,6 +46,7 @@ import { Option, Result } from "@adviser/cement";
 import type { BlockBeginMsg, BlockEndMsg, CodeBeginMsg, CodeEndMsg, CodeLineMsg, FileSystemRef } from "@vibes.diy/call-ai-v2";
 import type { PromptAndBlockMsgs, VibeFile } from "@vibes.diy/api-types";
 import { buildBlockEvents } from "../intern/codegen-loop/emit-blocks.js";
+import { buildSectionThemeEvent } from "../intern/codegen-loop/section-theme-event.js";
 import type { OnLine, WholeFileResult } from "../intern/codegen-loop/whole-file-loop.js";
 
 /** How often to beat a keepalive `block.begin` during the (silent) loop, in ms. Comfortably under the client's 45s watchdog. */
@@ -81,6 +82,8 @@ export type AppendBlockEventFn = (args: {
 /** The single field this handler reads off the session doc to compose the system prompt. */
 export interface WholeFileCodegenSessionDoc {
   userPrompt?: string;
+  /** Pre-allocated theme slug to emit as a `prompt.section-theme` event before the first block. */
+  theme?: string;
   [key: string]: unknown;
 }
 
@@ -108,6 +111,8 @@ export type RunWholeFileCodegenFn = (args: {
 export interface WholeFileCodegenDeps {
   /** The promptId for this turn (block events stream under it). */
   promptId: string;
+  /** The chat id this turn belongs to (used in PromptBase-shaped events like prompt.section-theme). Defaults to promptId when omitted. */
+  chatId?: string;
   /** The seq the next block event uses (handed in by the call site's allocator). */
   blockSeq: number;
   /** Id allocator: a fresh, collision-resistant id string per call. */
@@ -225,6 +230,23 @@ export async function handleWholeFileCodegenRequest(deps: WholeFileCodegenDeps):
       if (r.isErr()) firstErr = Result.Err(r);
     });
   };
+
+  // --- Pre-allocated theme event (emitted first, before any block event) -----
+  // When the session doc carries a pre-allocated theme slug, emit a
+  // prompt.section-theme event first so the client can hydrate the theme
+  // immediately — before the first code line arrives or the heartbeat fires.
+  // A session with no pre-allocated theme emits nothing here.
+  if (sessionDoc.theme !== undefined && sessionDoc.theme.length > 0) {
+    enqueue(
+      buildSectionThemeEvent({
+        theme: sessionDoc.theme,
+        streamId: promptId,
+        chatId: deps.chatId ?? promptId,
+        seq: liveSeq++,
+        timestamp: new Date(),
+      })
+    );
+  }
 
   // --- Keepalive heartbeat (until the first streamed line) -------------------
   // The model plans for ~18s before the first write_file argument delta; after
