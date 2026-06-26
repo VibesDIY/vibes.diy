@@ -8,6 +8,7 @@ import { useVibesDiy } from "../../vibes-diy-provider.js";
 import { calcEntryPointUrl } from "@vibes.diy/api-pkg";
 import { getCode } from "./get-code.js";
 import type { EvtVibeViewerChanged } from "@vibes.diy/vibe-types";
+import type { VibesTheme } from "@vibes.diy/prompts";
 import { RUNTIME_PREVIEW_IFRAME_ALLOW, RUNTIME_PREVIEW_IFRAME_SANDBOX } from "../../lib/iframe-policy.js";
 import { adminModeStorageKey } from "../../lib/admin-mode.js";
 import { ThemedSkeleton, colorsetToSkeletonTokens, type ColorThemeTokens } from "./ThemedSkeleton.js";
@@ -28,6 +29,23 @@ export function shouldShowColdOpen({
   firstStreamDone: boolean;
 }): boolean {
   return running && pinnedFsId === undefined && !firstStreamDone;
+}
+
+/**
+ * Selects the colorset slug for the cold-open palette. An explicit `colorTheme`
+ * (a user palette pick) wins; otherwise we fall back to the structural theme's
+ * slug. Pre-allocation on a fresh generation writes only `active.theme`
+ * (hydrated into `promptState.theme`) — never `active.colorTheme` — so without
+ * this fallback a fresh gen's cold open would paint neutral. This implements
+ * the documented "colorTheme defaults to the same slug as theme" semantics
+ * (prompt-state.ts). Theme and colorset slugs mirror one-to-one, so the theme
+ * slug resolves via getColorsetBySlug. Pure + exported for unit testing.
+ */
+export function coldOpenSlugFrom(s: { colorTheme?: string | null; theme?: VibesTheme | null }): string | undefined {
+  if (typeof s.colorTheme === "string" && s.colorTheme.length > 0) return s.colorTheme;
+  const themeSlug = s.theme?.slug;
+  if (typeof themeSlug === "string" && themeSlug.length > 0) return themeSlug;
+  return undefined;
 }
 
 export function PreviewApp({ promptState }: { promptState: PromptState }) {
@@ -225,7 +243,7 @@ export function PreviewApp({ promptState }: { promptState: PromptState }) {
   // neutral fallback paints for the sub-100ms gap. Keyed on the slug so a chat
   // switch re-resolves; the cancelled flag guards a slug change mid-import.
   const [coldOpenTokens, setColdOpenTokens] = useState<ColorThemeTokens | null>(null);
-  const coldOpenSlug = promptState.colorTheme;
+  const coldOpenSlug = coldOpenSlugFrom(promptState);
   useEffect(() => {
     if (typeof coldOpenSlug !== "string" || coldOpenSlug.length === 0) {
       setColdOpenTokens(null);
