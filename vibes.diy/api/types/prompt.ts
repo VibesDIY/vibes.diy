@@ -81,6 +81,26 @@ export function isPromptModelResolved(msg: unknown): msg is PromptModelResolved 
   return !(PromptModelResolved(msg) instanceof type.errors);
 }
 
+// Byte-faithful capture of the model's raw output for a turn: the concatenated
+// delta text exactly as the model streamed it, BEFORE the block parser ran.
+// Persisted once per turn so debugging can replay the true transcript —
+// including consumed filename labels and separator blank lines the block
+// parser drops — which a block-faithful reconstruction can't recover (it's
+// downstream of the parser, so it inherits the parser's decisions rather than
+// revealing them). See VibesDIY/vibes.diy#2655. `text` is the whole turn's
+// markdown; on a recovery continuation it is the kept safe-cut prefix of each
+// aborted stream stitched to the continuation that replaced it.
+export const PromptRaw = type({
+  type: "'prompt.raw'",
+  text: "string",
+}).and(PromptBase);
+
+export type PromptRaw = typeof PromptRaw.infer;
+
+export function isPromptRaw(msg: unknown): msg is PromptRaw {
+  return !(PromptRaw(msg) instanceof type.errors);
+}
+
 // Single-block payload emitted on a dryRun:true request. Rides on the
 // section stream framed by the existing block-begin/-end pair so the
 // client narrows on msg.type just like any other event. Carries the
@@ -103,7 +123,8 @@ export const PromptMsgs = PromptBlockBegin.or(PromptBlockEnd)
   .or(PromptError)
   .or(PromptFS)
   .or(PromptDryRunPayload)
-  .or(PromptModelResolved);
+  .or(PromptModelResolved)
+  .or(PromptRaw);
 export type PromptMsgs = typeof PromptMsgs.infer;
 
 // Type guard with optional streamId filter

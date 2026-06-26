@@ -1512,6 +1512,41 @@ async function handleLlmResponse({
       let recoveryCounter: RecoveryCounter = { consecutiveFruitless: 0 };
       let isRecoveryStream = false;
 
+      // Byte-faithful raw capture (#2655): the model's exact output text for
+      // the whole turn, BEFORE the block parser ran. The per-stream
+      // partialBuffer below already accumulates delta text for recovery; here
+      // we commit, per stream, the portion that survives into the final turn
+      // (the full text on a clean end, or the kept safe-cut prefix when the
+      // stream was aborted for recovery), so a recovery continuation stitches
+      // onto the prefix instead of duplicating it. Persisted once at turn end
+      // as a prompt.raw block — historical turns predating this have none.
+      let turnRawText = "";
+      let rawEmitted = false;
+      const emitTurnRaw = async (): Promise<Result<void>> => {
+        // Idempotent (multiple terminal returns call this) and skips empty
+        // turns so we don't write a useless prompt.raw row.
+        if (rawEmitted || turnRawText === "") return Result.Ok();
+        rawEmitted = true;
+        const r = await appendBlockEvent({
+          ctx,
+          vctx,
+          req,
+          promptId,
+          blockSeq,
+          evt: {
+            type: "prompt.raw",
+            streamId: promptId,
+            chatId: req.chatId,
+            seq: blockSeq,
+            text: turnRawText,
+            timestamp: new Date(),
+          },
+          resChat,
+        });
+        blockSeq++;
+        return r;
+      };
+
       // Continue-mode recovery: each iteration consumes one upstream stream.
       // On apply error, the iteration sets a `recoverHint`, aborts upstream,
       // and drains. After the inner loop exits we update the counter (only
@@ -1713,6 +1748,12 @@ async function handleLlmResponse({
           }
         }
 
+        // Commit this stream's surviving raw text to the turn total: the full
+        // captured text on a clean end (recoverHint === null), or just the
+        // safe-cut prefix that a recovery continuation will build onto. Done
+        // once per stream at the boundary so recovery stitches don't duplicate.
+        turnRawText += recoverHint === null ? partialBuffer.text : recoverHint.partial;
+
         // Update counter at the boundary between streams. Only recovery
         // streams contribute to the budget — the original stream's progress
         // (or lack of) is not counted: the first apply error is always
@@ -1732,6 +1773,8 @@ async function handleLlmResponse({
 
         if (recoverHint === null) {
           // Stream finished naturally and no recovery was triggered.
+          const rRaw = await emitTurnRaw();
+          if (rRaw.isErr()) return Result.Err(rRaw);
           return Result.Ok();
         }
 
@@ -1745,6 +1788,11 @@ async function handleLlmResponse({
               consecutiveFruitless: recoveryCounter.consecutiveFruitless,
             })
             .Msg("recovery-exhausted");
+          // Persist the raw text captured before exhaustion (consumes a
+          // blockSeq, so it must precede the synthesized block.end below to
+          // keep the ChatSections (chatId, promptId, blockSeq) key unique).
+          const rRaw = await emitTurnRaw();
+          if (rRaw.isErr()) return Result.Err(rRaw);
           // Finalize the turn even though no clean stream produced a real
           // block.end. Without this, the client never sees a completion
           // event and the per-prompt context (chatCtx.promptIds) leaks. We
