@@ -97,6 +97,74 @@ describe("identity wire-compat (baseline: @fireproof/* 0.24.19)", { timeout: 300
     expect(issued.certificatePayload.sub).toBe("csr-test");
   });
 
+  // Regression for the Certor normalize-then-hash ordering (requested on #2667):
+  // the cert thumbprint is computed AFTER CertificatePayloadSchema.parse fills the
+  // patched `.catch("")` params defaults, so the issuing claim must be fully
+  // populated or the signer's x5t (pre-parse) disagrees with the verifier's
+  // (post-parse). Pin BOTH outcomes so a future extracted CA/verifier that drops
+  // the normalize step is caught here. The extracted CA (Task 3) must preserve it.
+  it("regression: Certor normalize-then-hash — incomplete claim ⇒ thumbprint mismatch, full claim ⇒ x5t match", async () => {
+    const mintWith = async (params: Record<string, unknown>) => {
+      const key = await DeviceIdKey.create();
+      const csr = (await new DeviceIdCSR(sthis, key).createCSR({ commonName: "regr-cn" })).Ok();
+      const nowIssue = Math.floor(Date.now() / 1000);
+      const issued = (
+        await ca.processCSR(csr, {
+          azp: "regr",
+          exp: nowIssue + 3600,
+          iat: nowIssue,
+          iss: "test-issuer",
+          jti: "regr-cert-jti",
+          nbf: nowIssue,
+          params,
+          role: "device-id",
+          sub: "device-id-subject-regr",
+          userId: "user-id-regr",
+          aud: ["http://test-audience.localhost/"],
+        } as never)
+      ).Ok();
+      const signer = new DeviceIdSignMsg(sthis.txt.base64, key, issued.certificatePayload);
+      const now = Math.floor(Date.now() / 1000);
+      return signer.sign(
+        {
+          iss: "regr",
+          sub: "device-id",
+          deviceId: await key.fingerPrint(),
+          seq: 1,
+          exp: now + 120,
+          nbf: now - 2,
+          iat: now,
+          jti: "regr-tok-jti",
+        },
+        "ES256"
+      );
+    };
+
+    // Incomplete params (missing first/image_url/last/name) ⇒ schema fills them on
+    // the verifier's re-parse ⇒ thumbprint mismatch.
+    const incomplete = await mintWith({ email: "regr@example.com", email_verified: true, public_meta: "{}" });
+    const vrBad = await verifier.verifyWithCertificate(incomplete);
+    expect(vrBad.valid).toBe(false);
+    if (!vrBad.valid) expect((vrBad as { errorCode?: string }).errorCode).toBe("CERT_THUMBPRINT_MISMATCH");
+
+    // Fully-populated params ⇒ parse is a no-op ⇒ x5t / x5t#S256 match ⇒ valid.
+    const full = await mintWith({
+      nick: "nick-regr",
+      email: "regr@example.com",
+      email_verified: true,
+      first: "first-regr",
+      image_url: "http://example.com/image-regr.png",
+      last: "last-regr",
+      name: "name-regr",
+      public_meta: "{}",
+    });
+    const vrGood = await verifier.verifyWithCertificate(full);
+    expect(vrGood.valid).toBe(true);
+    const header = decodeSeg(full.split(".")[0]);
+    expect(header).toHaveProperty("x5t");
+    expect(header).toHaveProperty("x5t#S256");
+  });
+
   // --- Cross-verification gate -------------------------------------------------
   // The proof obligation every extraction step must keep green: a token minted by
   // the EXTRACTED impl verifies under the FIREPROOF verifier, and a fireproof-minted
