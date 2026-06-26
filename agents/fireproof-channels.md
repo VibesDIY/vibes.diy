@@ -1,5 +1,18 @@
 # Fireproof Channels — Per-Database Access Control
 
+> **Status (since #2134): legacy substrate, not the client-facing story.** Per-database ACLs
+> (`dbAcls`) are still **stored** in AppSettings and **enforced server-side** on every document
+> operation (`db-acl-resolver.ts`) — nothing here was removed. What changed is that they are no
+> longer surfaced to vibe code: `useViewer().can()` is now a plain membership check and takes no
+> `dbName`, and `dbAcls` no longer ride the `whoAmI` / `viewerChanged` wire to the client. In
+> practice this mechanism now exists mainly to make the built-in **`comments`** feature work (the
+> `comments` lazy default below) and as a low-level knob for power users / the owner sharing UI
+> (the ShareModal comments toggle writes `dbAcls` via app settings). For client-side per-document
+> or per-database gating, use **access functions** (`useVibe(dbName).can.*`) instead — they run
+> the same logic the server enforces, return a `reason`, and **supersede `dbAcls`** when present
+> (the access function is the authority). Treat `dbAcls` as the legacy layer; reach for access
+> functions first.
+
 ## What are Channels?
 
 A **channel** is a per-database access control override layered on top of the existing role-based
