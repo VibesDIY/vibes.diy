@@ -75,6 +75,26 @@ grep -n "<rule you changed>" /tmp/verify-sc/access.js
 
 End-to-end behavior (does the running app work?) still needs a human or `qa-pr` browser pass — re-pull only proves the bytes shipped.
 
+## Inspect the chat: why did the app turn out this way?
+
+When an app shipped wrong — a file is missing, two files got merged, the wrong code landed — read **what the model actually replied with**, not just the user prompt. `pull` gives you the current bytes; `chats` gives you the generation that produced them.
+
+```bash
+npx vibes-diy chats garden-gnome/alignment-chart                       # list chat sessions (chatId + time)
+npx vibes-diy chats garden-gnome/alignment-chart <chatId>              # the user prompt(s) for that chat
+npx vibes-diy chats garden-gnome/alignment-chart <chatId> --response   # the MODEL's reply
+```
+
+`--response` reconstructs the model's reply from the stored block events and **annotates each code fence with the path the parser bound it to** — so you can see directly which file each block became. Modifiers (all require `--response`):
+
+- `--turn <promptId>` — pick a turn in a multi-turn chat (default: newest; the command prints the turn count and IDs).
+- `--files` — the resolved `path → content` map: **what actually got written**. Diff this against the fence labels in `--response` to catch a mis-bind (e.g. an `access.js`-labelled block that bound to `App.jsx` and clobbered it).
+- `--jsonl` — the raw block events, one JSON object per line (for `jq` / fixtures).
+- `--raw` — byte-faithful model text captured upstream of the parser (preserves consumed filename labels and blank lines). **New generations only** — older chats have no raw capture and the command says so; fall back to the default `--response` or `--jsonl`.
+- `--user` — also print the prompt(s) so the transcript reads top-down.
+
+The tell for a path mis-bind: in `--response` a fence is labelled with the filename the model intended (e.g. ` ```js access.js `) but its annotated parsed path is `App.jsx`, and `--files` shows only `App.jsx` holding that content with no `access.js`. That means two blocks bound to the same path and the second clobbered the first.
+
 ## Environment: prod vs cli vs dev (the key gotcha)
 
 The default `--api-url` is `https://vibes.diy/api?.stable-entry.=cli` — the **cli** plane, _not_ prod. cli shares the prod data plane, so for most work it's equivalent, but they are different worker deploys.
@@ -95,6 +115,8 @@ See `agents/environments.md` for the full dev/prod/cli/preview architecture.
 | Push to prod        | `cd <dir> && npx vibes-diy push --vibe <handle>/<app> --api-url https://vibes.diy/api` |
 | AI follow-up edit   | `npx vibes-diy edit --help`                                                            |
 | Generate a new vibe | `npx vibes-diy generate --help`                                                        |
+| List chats          | `npx vibes-diy chats <handle>/<app>`                                                   |
+| Inspect model reply | `npx vibes-diy chats <handle>/<app> <chatId> --response [--files\|--jsonl\|--raw]`     |
 | Coding rules        | `npx vibes-diy system`                                                                 |
 
 ## Common mistakes
@@ -106,3 +128,4 @@ See `agents/environments.md` for the full dev/prod/cli/preview architecture.
 - **`unknown document type`** — `access.js` doesn't return for a type the app writes (e.g. ImgGen's docs). Add a branch returning `{ channels, grant }` for it.
 - **No editor grant** — pushing under another handle needs write access on that vibe.
 - **Confusing code with data** — schema/UI/access-rules = this skill; documents/queries = `vibe-data`.
+- **Guessing why an app shipped wrong** — don't reverse-engineer from the deployed bytes alone; read the generation with `chats <vibe> <chatId> --response` (and `--files`) to see what the model emitted and which file each block bound to.
