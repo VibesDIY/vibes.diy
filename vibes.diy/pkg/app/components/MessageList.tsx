@@ -554,8 +554,8 @@ function MessageList({
     // Only show the streaming indicator on the latest AI message
     // const isLatestAiMessage = promptProcessing && i === latestAiMessageIndex && msg.type === "ai";
     let collectedMsg: LineMsg[] = [];
-    let codeBegin: CodeBeginMsg;
-    let toplevelBegin: ToplevelBeginMsg;
+    let codeBegin: CodeBeginMsg | undefined = undefined;
+    let toplevelBegin: ToplevelBeginMsg | undefined = undefined;
     let hasPromptReq = false;
     // let traceBlockId: BlockEndMsg | undefined
     const nprompt = fixCurrentStreaming(promptBlock);
@@ -674,7 +674,7 @@ function MessageList({
           // set `begin: undefined` and crash the render below on
           // `block.begin.sectionId`. Skip the orphaned end instead — the persisted
           // canonical sequence renders correctly on the next reload.
-          if ((codeBegin as CodeBeginMsg | undefined) !== undefined) {
+          if (codeBegin !== undefined) {
             blockMsgs.push({
               type: "Code",
               begin: codeBegin,
@@ -745,7 +745,7 @@ function MessageList({
           // Defensive (same orphan-on-reconnect class as code.end above): only
           // build a TopLevel block when its begin is open, else a reconnect-split
           // toplevel.end would set begin: undefined and crash the render.
-          if ((toplevelBegin as ToplevelBeginMsg | undefined) !== undefined) {
+          if (toplevelBegin !== undefined) {
             blockMsgs.push({
               type: "TopLevel",
               begin: toplevelBegin,
