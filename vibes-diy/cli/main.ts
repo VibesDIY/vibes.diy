@@ -25,7 +25,7 @@ import { loginCmd } from "./cmds/login-cmd.js";
 import { pushCmd } from "./cmds/push-cmd.js";
 import { putAssetCmd, isResPutAssetCli } from "./cmds/put-asset-cmd.js";
 import { generateCmd, isResGenerate } from "./cmds/generate-cmd.js";
-import { chatsCmd, isResChatsList, isResChatDetail, type ResChatDetail } from "./cmds/chats-cmd.js";
+import { chatsCmd, isResChatsList, isResChatDetail, isResChatResponse, type ResChatDetail, type ResChatResponse } from "./cmds/chats-cmd.js";
 import { editCmd, isResEdit } from "./cmds/edit-cmd.js";
 import { skillsCmd, isResSkillsList, isResSkillContent } from "./cmds/skills-cmd.js";
 import { themesCmd, isResThemesList, isResThemeContent } from "./cmds/themes-cmd.js";
@@ -272,6 +272,12 @@ async function main(): Promise<number> {
                 }
               }
             }
+            break;
+          }
+          case isResChatResponse(msg): {
+            // Body is already rendered to the requested mode (verbatim markdown,
+            // files JSON, or jsonl) by the handler — print it as-is.
+            console.log((msg as ResChatResponse).output);
             break;
           }
           case isResDbList(msg): {

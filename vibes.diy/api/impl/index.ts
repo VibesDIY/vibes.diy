@@ -20,6 +20,9 @@ import {
   ReqGetChatDetails,
   ResGetChatDetails,
   isResGetChatDetails,
+  ReqGetChatResponse,
+  ResGetChatResponse,
+  isResGetChatResponse,
   ReqGetAppByFsId,
   ResGetAppByFsId,
   isResGetAppByFsId,
@@ -436,6 +439,15 @@ export class VibesDiyApi implements VibesDiyApiIface<{
       { ...req, type: "vibes.diy.req-get-chat-details" },
       {
         resMatch: isResGetChatDetails,
+      }
+    );
+  }
+
+  getChatResponse(req: Req<ReqGetChatResponse>): Promise<Result<ResGetChatResponse, VibesDiyError>> {
+    return this.request(
+      { ...req, type: "vibes.diy.req-get-chat-response" },
+      {
+        resMatch: isResGetChatResponse,
       }
     );
   }

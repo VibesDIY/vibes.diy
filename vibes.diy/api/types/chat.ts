@@ -339,6 +339,57 @@ export function isSectionEvent(obj: unknown): obj is SectionEvent {
   return !(sectionEvent(obj) instanceof type.errors);
 }
 
+// Read-only request for a stored chat's *model response* — the full block
+// stream (`ChatSections.blocks`) rather than the distilled user prompt that
+// `getChatDetails` returns. Powers `vibes-diy chats <vibe> <chatId>
+// --response` (verbatim / files / jsonl). Optional `promptId` selects one
+// turn when a chat has several; omitted returns every turn newest-first.
+export const reqGetChatResponse = type({
+  type: "'vibes.diy.req-get-chat-response'",
+  auth: dashAuthType,
+  ownerHandle: "string",
+  appSlug: "string",
+  "chatId?": "string",
+  "promptId?": "string",
+});
+export type ReqGetChatResponse = typeof reqGetChatResponse.infer;
+export function isReqGetChatResponse(obj: unknown): obj is ReqGetChatResponse {
+  return !(reqGetChatResponse(obj) instanceof type.errors);
+}
+
+// One stored section row (`ChatSections`): `blockSeq` is the per-turn section
+// index, `blocks` the verbatim `PromptAndBlockMsgs` array as persisted.
+export const resChatResponseSection = type({
+  blockSeq: "number",
+  blocks: [PromptAndBlockMsgs, "[]"],
+});
+export type ResChatResponseSection = typeof resChatResponseSection.infer;
+
+// One turn (`promptId`) of a chat, with its sections in `blockSeq` order. The
+// CLI rebuilds `SectionEvent`s from these to feed `resolveSectionStream` (the
+// shared generate/edit resolver) for `--files`, and concatenates the block
+// lines for the verbatim view.
+export const resChatResponseTurn = type({
+  chatId: "string",
+  promptId: "string",
+  created: "string",
+  "fsId?": "string",
+  sections: [resChatResponseSection, "[]"],
+});
+export type ResChatResponseTurn = typeof resChatResponseTurn.infer;
+
+export const resGetChatResponse = type({
+  type: "'vibes.diy.res-get-chat-response'",
+  "chatId?": "string",
+  ownerHandle: "string",
+  appSlug: "string",
+  turns: [resChatResponseTurn, "[]"],
+});
+export type ResGetChatResponse = typeof resGetChatResponse.infer;
+export function isResGetChatResponse(obj: unknown): obj is ResGetChatResponse {
+  return !(resGetChatResponse(obj) instanceof type.errors);
+}
+
 export const evtNewFsId = type({
   type: "'vibes.diy.evt-new-fs-id'",
   ownerHandle: "string",
