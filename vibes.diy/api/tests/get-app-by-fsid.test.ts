@@ -6,6 +6,7 @@ import { createTestDeviceCA, createTestUser } from "@fireproof/core-device-id";
 import { cfServe, CFInject, noopCache, vibesMsgEvento, WSSendProvider } from "@vibes.diy/api-svc";
 import { Request as CFRequest, ExecutionContext } from "@cloudflare/workers-types";
 import { isResEnsureAppSlugOk } from "@vibes.diy/api-types";
+import { and, eq } from "drizzle-orm/sql/expressions";
 import { createVibeDiyTestCtx } from "./vibe-diy-test-ctx.js";
 
 describe("getAppByFsId grant flow", { timeout: (inject("DB_FLAVOUR" as never) as string) === "pg" ? 30000 : 5000 }, () => {
@@ -204,5 +205,93 @@ describe("getAppByFsId grant flow", { timeout: (inject("DB_FLAVOUR" as never) as
       assert.fail("Expected getAppByFsId to succeed: " + JSON.stringify(rApp.Err()));
     }
     expect(rApp.Ok().grant).toBe("owner");
+  });
+
+  it("getAppByFsId surfaces the active icon (head version cid+mime)", async () => {
+    const { appSlug, ownerHandle } = await createApp();
+    // A settings mutation creates the appSettings row; we then seed an
+    // ActiveIcon directly (the cid is normally written by the icon queue).
+    await api.ensureAppSettings({ appSlug, ownerHandle, title: "Icon App" });
+
+    const db = appCtx.vibesCtx.sql.db;
+    const tables = appCtx.vibesCtx.sql.tables;
+    const row = await db
+      .select()
+      .from(tables.appSettings)
+      .where(and(eq(tables.appSettings.ownerHandle, ownerHandle), eq(tables.appSettings.appSlug, appSlug)))
+      .limit(1)
+      .then((r: { settings: unknown }[]) => r[0]);
+    assert.ok(row, "expected an appSettings row after ensureAppSettings");
+
+    const now = new Date().toISOString();
+    const entries = Array.isArray(row.settings) ? (row.settings as unknown[]) : [];
+    const iconEntry = {
+      type: "active.icon",
+      currentCid: "sql://Assets/icon-head",
+      versions: [
+        { cid: "sql://Assets/icon-old", mime: "image/png", descriptionAt: "old", created: now },
+        { cid: "sql://Assets/icon-head", mime: "image/png", descriptionAt: "head", created: now },
+      ],
+    };
+    await db
+      .update(tables.appSettings)
+      .set({ settings: [...entries, iconEntry], updated: now })
+      .where(and(eq(tables.appSettings.ownerHandle, ownerHandle), eq(tables.appSettings.appSlug, appSlug)));
+
+    const rApp = await api.getAppByFsId({ appSlug, ownerHandle });
+    if (rApp.isErr()) {
+      assert.fail("Expected getAppByFsId to succeed: " + JSON.stringify(rApp.Err()));
+    }
+    expect(rApp.Ok().icon).toEqual({ cid: "sql://Assets/icon-head", mime: "image/png" });
+  });
+
+  it("getAppByFsId surfaces the enriched-prompt description", async () => {
+    const { appSlug, ownerHandle } = await createApp();
+    // A settings mutation creates the appSettings row; we then seed an
+    // active.enriched-prompt entry directly (normally written by pre-alloc).
+    await api.ensureAppSettings({ appSlug, ownerHandle, title: "Described App" });
+
+    const db = appCtx.vibesCtx.sql.db;
+    const tables = appCtx.vibesCtx.sql.tables;
+    const row = await db
+      .select()
+      .from(tables.appSettings)
+      .where(and(eq(tables.appSettings.ownerHandle, ownerHandle), eq(tables.appSettings.appSlug, appSlug)))
+      .limit(1)
+      .then((r: { settings: unknown }[]) => r[0]);
+    assert.ok(row, "expected an appSettings row after ensureAppSettings");
+
+    const now = new Date().toISOString();
+    const entries = Array.isArray(row.settings) ? (row.settings as unknown[]) : [];
+    const enrichedEntry = { type: "active.enriched-prompt", enrichedPrompt: "A short three-sentence product description." };
+    await db
+      .update(tables.appSettings)
+      .set({ settings: [...entries, enrichedEntry], updated: now })
+      .where(and(eq(tables.appSettings.ownerHandle, ownerHandle), eq(tables.appSettings.appSlug, appSlug)));
+
+    const rApp = await api.getAppByFsId({ appSlug, ownerHandle, summary: true });
+    if (rApp.isErr()) {
+      assert.fail("Expected getAppByFsId to succeed: " + JSON.stringify(rApp.Err()));
+    }
+    expect(rApp.Ok().enrichedPrompt).toBe("A short three-sentence product description.");
+  });
+
+  it("summary mode drops fileSystem/env but keeps grant and meta", async () => {
+    const { appSlug, ownerHandle } = await createApp();
+    await api.ensureAppSettings({ appSlug, ownerHandle, title: "Summary App" });
+
+    // Full fetch carries the app's files.
+    const rFull = await api.getAppByFsId({ appSlug, ownerHandle });
+    if (rFull.isErr()) assert.fail("Expected full getAppByFsId to succeed: " + JSON.stringify(rFull.Err()));
+    expect(rFull.Ok().fileSystem.length).toBeGreaterThan(0);
+
+    // Summary fetch keeps grant + title meta but omits the heavy payloads.
+    const rSummary = await api.getAppByFsId({ appSlug, ownerHandle, summary: true });
+    if (rSummary.isErr()) assert.fail("Expected summary getAppByFsId to succeed: " + JSON.stringify(rSummary.Err()));
+    const summary = rSummary.Ok();
+    expect(summary.grant).toBe("owner");
+    expect(summary.fileSystem).toEqual([]);
+    expect(summary.env).toEqual({});
+    expect(summary.meta.find((m) => m.type === "title")).toEqual({ type: "title", title: "Summary App" });
   });
 });

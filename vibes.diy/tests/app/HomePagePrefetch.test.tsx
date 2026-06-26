@@ -55,6 +55,9 @@ vi.mock("~/vibes.diy/app/components/MyAppsSection.js", async (importOriginal) =>
   ...(await importOriginal<Record<string, unknown>>()),
   MyAppsSection: () => null,
 }));
+vi.mock("~/vibes.diy/app/components/CuratedVibesSection.js", () => ({
+  CuratedVibesSection: () => null,
+}));
 vi.mock("~/vibes.diy/app/components/NewSessionContent/VibeGallery.js", () => ({ default: () => null }));
 vi.mock("~/vibes.diy/app/components/PillPortal.js", async (importOriginal) => ({
   ...(await importOriginal<Record<string, unknown>>()),

@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useAuth } from "@clerk/react";
 import SessionSidebar from "./SessionSidebar.js";
 import { MyAppsSection } from "./MyAppsSection.js";
+import { CuratedVibesSection } from "./CuratedVibesSection.js";
 import { quickSuggestions } from "../data/quick-suggestions-data.js";
 import { useVibesDiy } from "../vibes-diy-provider.js";
 import { useTheme } from "../contexts/ThemeContext.js";
@@ -279,9 +280,11 @@ export default function HomePage() {
               </div>
             </div>
 
-            {/* My Apps — Gallery-style box: 4 apps visible at a time, scrolls
-                vertically inside the container for older entries. */}
-            <MyAppsSection isMobile={mobile} />
+            {/* Signed-in visitors see their own apps; signed-out visitors get a
+                curated, category-grouped showcase in the same slot. Wait for
+                Clerk to resolve so we don't flash the curated grid to a
+                returning user. */}
+            {isLoaded && (isSignedIn ? <MyAppsSection isMobile={mobile} /> : <CuratedVibesSection isMobile={mobile} />)}
           </div>
         </div>
       </div>

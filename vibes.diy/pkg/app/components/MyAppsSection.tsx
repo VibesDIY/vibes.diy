@@ -48,11 +48,19 @@ const screenshotCache = new Map<string, MetaScreenShot | null>();
 // null means fetched but the app has no display name; absent means not yet fetched.
 const ownerDisplayNameCache = new Map<string, string | null>();
 
-function screenshotSrc(shot: MetaScreenShot): string {
+export function screenshotSrc(shot: MetaScreenShot): string {
   return `/assets/cid/?url=${encodeURIComponent(shot.assetUrl)}&mime=${encodeURIComponent(shot.mime)}`;
 }
 
-type AppItem = Pick<ResRecentVibesItem, "ownerHandle" | "appSlug" | "title" | "icon">;
+export type AppItem = Pick<ResRecentVibesItem, "ownerHandle" | "appSlug" | "title" | "icon">;
+
+// Default open-target: the auth-gated /chat editor. Signed-out surfaces (e.g.
+// the curated homepage showcase) must override this with a /vibe public-viewer
+// builder, since /chat sits inside the auth layout and would bounce logged-out
+// visitors to sign-in instead of opening the app.
+function defaultAppHref(item: AppItem): string {
+  return `/chat/${item.ownerHandle}/${item.appSlug}`;
+}
 
 interface MyAppsSectionProps {
   isMobile: boolean;
@@ -167,9 +175,10 @@ interface AppIconCardProps {
   isMobile: boolean;
   index: number;
   onOpenInfo: () => void;
+  hrefFor?: (item: AppItem) => string;
 }
 
-function AppIconCard({ item, appHostBaseUrl, isMobile, index, onOpenInfo }: AppIconCardProps) {
+export function AppIconCard({ item, appHostBaseUrl, isMobile, index, onOpenInfo, hrefFor = defaultAppHref }: AppIconCardProps) {
   const label = item.title ?? item.appSlug;
   const iconUrl = item.icon ? cidAssetUrl(item.icon.cid, item.icon.mime, appHostBaseUrl) : undefined;
   const iconSize = isMobile ? 64 : 100;
@@ -228,11 +237,7 @@ function AppIconCard({ item, appHostBaseUrl, isMobile, index, onOpenInfo }: AppI
           <TexturedPattern width={iconSize} height={iconSize} borderRadius={iconRadius} />
         </div>
 
-        <Link
-          to={`/chat/${item.ownerHandle}/${item.appSlug}`}
-          aria-label={`Open ${label}`}
-          style={getVibeCardMainIconContainerStyle(isHovered, isMobile)}
-        >
+        <Link to={hrefFor(item)} aria-label={`Open ${label}`} style={getVibeCardMainIconContainerStyle(isHovered, isMobile)}>
           {iconUrl ? (
             <img
               src={iconUrl}
@@ -340,9 +345,10 @@ interface AppDetailPanelProps {
   item: AppItem | null;
   appHostBaseUrl: string;
   onClose: () => void;
+  hrefFor?: (item: AppItem) => string;
 }
 
-export function AppDetailPanel({ item, appHostBaseUrl, onClose }: AppDetailPanelProps) {
+export function AppDetailPanel({ item, appHostBaseUrl, onClose, hrefFor = defaultAppHref }: AppDetailPanelProps) {
   const open = item !== null;
   const label = item?.title ?? item?.appSlug ?? "";
   const iconUrl = item?.icon ? cidAssetUrl(item.icon.cid, item.icon.mime, appHostBaseUrl) : undefined;
@@ -463,7 +469,7 @@ export function AppDetailPanel({ item, appHostBaseUrl, onClose }: AppDetailPanel
 
               <div className="flex flex-col gap-3 mt-auto pt-4">
                 <Link
-                  to={`/chat/${item.ownerHandle}/${item.appSlug}`}
+                  to={hrefFor(item)}
                   onClick={onClose}
                   className="flex items-center justify-center px-4 py-3 bg-blue-500 hover:bg-blue-600 text-white text-sm font-bold uppercase tracking-widest border-2 border-[var(--vibes-near-black)] rounded-md shadow-[4px_4px_0_0_var(--vibes-near-black)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0_0_var(--vibes-near-black)] transition-all duration-150"
                 >

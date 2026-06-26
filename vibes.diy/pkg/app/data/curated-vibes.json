@@ -1,0 +1,60 @@
+{
+  "$comment": "Curated vibes shown on the logged-out homepage where 'My Apps' renders for signed-in users. Edit freely: entries are owner/app only (ownerHandle + appSlug). Titles, icons, and screenshots are fetched live from each app — do not hardcode them here. Apps that are missing or not public are skipped at render time.",
+  "groups": [
+    {
+      "category": "Mind games",
+      "vibes": [
+        { "ownerHandle": "jchris", "appSlug": "melodle" },
+        { "ownerHandle": "jchris", "appSlug": "emoji-connections" },
+        { "ownerHandle": "jchris", "appSlug": "color-sudoku" }
+      ]
+    },
+    {
+      "category": "Music / sound",
+      "vibes": [
+        { "ownerHandle": "og", "appSlug": "couch-karaoke" },
+        { "ownerHandle": "og", "appSlug": "jazz-improvisation-explainer" },
+        { "ownerHandle": "og", "appSlug": "voice-as-instrument" }
+      ]
+    },
+    {
+      "category": "Arcade / games",
+      "vibes": [
+        { "ownerHandle": "og", "appSlug": "tilt-gyro-flippers" },
+        { "ownerHandle": "og", "appSlug": "maze-ghost-chase" },
+        { "ownerHandle": "og", "appSlug": "grid-merge-tiles" }
+      ]
+    },
+    {
+      "category": "Clever / funny callAI",
+      "vibes": [
+        { "ownerHandle": "og", "appSlug": "wizard-quest" },
+        { "ownerHandle": "og", "appSlug": "li-corporate-haiku" },
+        { "ownerHandle": "og", "appSlug": "pirate-chat-filter" },
+        { "ownerHandle": "og", "appSlug": "charades-emoji" }
+      ]
+    },
+    {
+      "category": "Creative / media",
+      "vibes": [
+        { "ownerHandle": "og", "appSlug": "disposable-camera" },
+        { "ownerHandle": "og", "appSlug": "mascot-lore-card" },
+        { "ownerHandle": "og", "appSlug": "scream-into-void" }
+      ]
+    },
+    {
+      "category": "Ambient / social",
+      "vibes": [
+        { "ownerHandle": "og", "appSlug": "breath-circle" },
+        { "ownerHandle": "og", "appSlug": "camera-roll-trivia" }
+      ]
+    },
+    {
+      "category": "Work / STEM",
+      "vibes": [
+        { "ownerHandle": "og", "appSlug": "exec-briefing-book" },
+        { "ownerHandle": "og", "appSlug": "parabolic-trajectory" }
+      ]
+    }
+  ]
+}
