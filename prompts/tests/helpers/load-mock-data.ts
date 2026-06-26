@@ -4,6 +4,7 @@
 import { CoerceURI, URI } from "@adviser/cement";
 import systemPromptTemplate from "../../pkg/system-prompt.md?raw";
 import systemPromptInitialTemplate from "../../pkg/system-prompt-initial.md?raw";
+import systemPromptAgenticTemplate from "../../pkg/system-prompt-agentic.md?raw";
 import recoveryAddendumTemplate from "../../pkg/recovery-addendum.md?raw";
 import recoveryStitchAddendumTemplate from "../../pkg/recovery-stitch-addendum.md?raw";
 
@@ -19,6 +20,12 @@ export function createMockFetchFromPkgFiles(): (url: CoerceURI) => Promise<Respo
       return Promise.resolve({
         ok: true,
         text: () => Promise.resolve(systemPromptInitialTemplate),
+      } as Response);
+    }
+    if (url.includes("system-prompt-agentic.md")) {
+      return Promise.resolve({
+        ok: true,
+        text: () => Promise.resolve(systemPromptAgenticTemplate),
       } as Response);
     }
     if (url.includes("system-prompt.md")) {
