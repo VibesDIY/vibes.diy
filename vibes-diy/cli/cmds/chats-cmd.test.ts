@@ -68,6 +68,33 @@ describe("chatsCmd", () => {
     expect(request.ownerHandle).toBe("other-user");
   });
 
+  it("--response sets the response flag for a specific chat", async () => {
+    const request = await runChats(["jchris/hat-smeller", "chat-123", "--response"]);
+    expect(request.chatId).toBe("chat-123");
+    expect(request.response).toBe(true);
+    expect(request.files).toBeFalsy();
+    expect(request.jsonl).toBeFalsy();
+  });
+
+  it("--files and --jsonl flags flow through", async () => {
+    const filesReq = await runChats(["jchris/hat-smeller", "chat-123", "--response", "--files"]);
+    expect(filesReq.files).toBe(true);
+    const jsonlReq = await runChats(["jchris/hat-smeller", "chat-123", "--response", "--jsonl"]);
+    expect(jsonlReq.jsonl).toBe(true);
+  });
+
+  it("--turn maps to promptId; omitted leaves it undefined", async () => {
+    const withTurn = await runChats(["jchris/hat-smeller", "chat-123", "--response", "--turn", "prompt-9"]);
+    expect(withTurn.promptId).toBe("prompt-9");
+    const withoutTurn = await runChats(["jchris/hat-smeller", "chat-123", "--response"]);
+    expect(withoutTurn.promptId).toBeUndefined();
+  });
+
+  it("--user flag flows through", async () => {
+    const request = await runChats(["jchris/hat-smeller", "chat-123", "--response", "--user"]);
+    expect(request.user).toBe(true);
+  });
+
   it("rejects the legacy placeholder form (vibe positional + chatId + --vibe)", async () => {
     const ctx = makeCtx();
     await expect(run(chatsCmd(ctx), ["ignored", "chat-123", "--vibe", "alice/cool-app"])).rejects.toThrow(

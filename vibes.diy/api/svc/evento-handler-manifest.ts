@@ -5,6 +5,7 @@ import { listUserSlugAppSlugEvento } from "./public/list-user-slug-app-slug.js";
 import { listRecentVibesEvento } from "./public/list-recent-vibes.js";
 import { pinRecentVibeEvento } from "./public/pin-recent-vibe.js";
 import { getChatDetailsEvento } from "./public/get-chat-details.js";
+import { getChatResponseEvento } from "./public/get-chat-response.js";
 import { getAppByFsIdEvento } from "./public/get-app-by-fsid.js";
 import { ensureUserSettingsEvento } from "./public/ensure-user-settings.js";
 import { ensureHandleAvatarEvento } from "./public/ensure-handle-avatar.js";
@@ -134,6 +135,7 @@ export const chatHandlers = [
   openChat,
   promptChatSection,
   getChatDetailsEvento,
+  getChatResponseEvento,
   listApplicationChats,
   forkAppEvento,
   setModeFsIdEvento,
