@@ -91,10 +91,13 @@ describe("runWholeFileCodegen", () => {
     expect(r.files[0].lang).toBe("jsx");
   });
 
-  it("normalizes a bare path to a leading slash and tags .js as js", async () => {
-    const access = "export default async function () { return true; }";
+  it("normalizes a bare path to a leading slash and tags .jsx as jsx", async () => {
+    // commitWriteFile only stores a file when verify passes; a lone access.js
+    // fails the gate (App.jsx is required). Test path-normalisation with a valid
+    // App.jsx written via a bare (no leading slash) path instead.
+    const app = "export default function App(){ return <div>ok</div>; }";
     const r = await runWholeFileCodegen({
-      client: mockClientWritingApp(access, "access.js"),
+      client: mockClientWritingApp(app, "App.jsx"),
       model: "frontier",
       systemPrompt: "sys",
       userPrompt: "make an app",
@@ -102,9 +105,9 @@ describe("runWholeFileCodegen", () => {
       maxSteps: 4,
       maxCostUsd: 0.5,
     });
-    expect(r.files[0].filename).toBe("/access.js");
-    expect(r.files[0].lang).toBe("js");
-    expect(r.files[0].content).toBe(access);
+    expect(r.files[0].filename).toBe("/App.jsx");
+    expect(r.files[0].lang).toBe("jsx");
+    expect(r.files[0].content).toBe(app);
   });
 
   it("maps the model usage block to prompt/completion/total tokens", async () => {
@@ -283,7 +286,9 @@ describe("runWholeFileCodegen", () => {
     });
     expect(rOk.verify?.ok).toBe(true);
 
-    // A stop-limit exit could leave a broken final map (here: no default export).
+    // commitWriteFile does not store a file that fails verify. A broken write
+    // (no default export) leaves files empty, so the terminal verify reports
+    // "App.jsx is missing" rather than the original structural error.
     const broken = "const x = 1;";
     const rBad = await runWholeFileCodegen({
       client: mockClientWritingApp(broken),
@@ -295,7 +300,7 @@ describe("runWholeFileCodegen", () => {
       maxCostUsd: 0.5,
     });
     expect(rBad.verify?.ok).toBe(false);
-    expect(rBad.verify?.problems.join(" ")).toContain("default export");
+    expect(rBad.verify?.problems.join(" ")).toContain("missing");
   });
 
   it("routes model as a function of numberOfTurns", () => {

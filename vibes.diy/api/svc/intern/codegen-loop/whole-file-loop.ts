@@ -173,6 +173,25 @@ export function makeLineEmitter(onLine: OnLine) {
   return emit;
 }
 
+/**
+ * Attempt to commit a file to the shared map, but only if the verify callback
+ * approves. The verify receives a snapshot of `files` with the new entry merged
+ * in, so it can validate cross-file constraints without ever mutating `files`.
+ * Only on approval does `files[filename]` get updated; a failing verify leaves
+ * the map unchanged so a stop-limit exit cannot strand broken content there.
+ */
+export function commitWriteFile(
+  files: Record<string, string>,
+  filename: string,
+  contents: string,
+  verify: (f: Record<string, string>) => { ok: boolean; problems: string[] },
+): { ok: boolean; feedback: string } {
+  const v = verify({ ...files, [filename]: contents });
+  if (v.ok === false) return { ok: false, feedback: v.problems.join("\n") };
+  files[filename] = contents;
+  return { ok: true, feedback: "ok" };
+}
+
 async function runOnce(args: RunArgs): Promise<WholeFileResult> {
   const files: Record<string, string> = {};
 
@@ -185,9 +204,7 @@ async function runOnce(args: RunArgs): Promise<WholeFileResult> {
     inputSchema: z.object({ path: z.string(), contents: z.string() }),
     execute: async ({ path, contents }: { path: string; contents: string }) => {
       const filename = normalizeFilename(path);
-      files[filename] = contents;
-      const v = verifyFiles(files, { needsAccess: args.needsAccess });
-      return v.ok ? { ok: true, feedback: "Build and structural checks pass." } : { ok: false, feedback: v.problems.join("\n") };
+      return commitWriteFile(files, filename, contents, (f) => verifyFiles(f, { needsAccess: args.needsAccess }));
     },
   };
   // The SDK's `tool()` is typed against a genuine zod@4 `$ZodObject`; bridge the
