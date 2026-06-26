@@ -1,23 +1,38 @@
 [![Join our
-  Discord](https://discord-badge.selem.workers.dev/i/weSgWt684k.svg)](https://discord.gg/weSgWt684k)
+  Discord](https://discord-badge.selem.workers.dev/i/vnpWycj4Ta.svg)](https://discord.gg/vnpWycj4Ta)
 
-# ✨ Build Mini Apps with AI Magic
+# ✨ Vibes DIY — make apps with your friends
 
-Turn your **ideas** into **interactive apps** instantly. [Try it now](https://vibes.diy/) or [fork on GitHub](https://github.com/VibesDIY/vibes.diy) to customize with your own AI account.
+Software is getting weird again. Describe what you want and get a real, live app — fun, done, and alive. [Try it now](https://vibes.diy/) or [fork on GitHub](https://github.com/VibesDIY/vibes.diy).
 
-Create beautiful, interactive mini apps with zero setup. Your creations are automatically saved and can be shared instantly.
+Make apps with your friends, so easy even AI can do it. Describe your app in plain words, it builds instantly, and you keep changing it just by talking to it. Share the link and your friends join right away — no setup, no "wait, let me send you the invite."
 
-## Features
+## Why it's different
 
-- Create interactive mini apps using AI
-- Browse and return to your previous creations
-- Auto-save your work securely
-- See your app changes in real-time
+- **Fun** — build for any reason, or no reason at all.
+- **Done** — it's a real app at its own live link, not a prototype. State is saved automatically.
+- **Alive** — keep talking to it and it keeps changing. So can anyone you share it with.
+
+Seeing a vibe makes you want to change it. Start from someone else's, tweak it to fit you, share it, and the people you share with remix their own version. You're not a user anymore — you're a maker.
+
+## What people make
+
+A character bot that answers in your voice. A neighborhood resource tracker you share at the next town meeting. A flashcard app remixed into collaborative trivia your students change live. A workout tracker a whole gym swaps routines on. Every one is the same move: start, tweak, share, remix.
+
+## Yours to control
+
+Private by default — or open to the world. You choose. Keep an app to the people you invite, or publish it so anyone can use and remix it. You set who can read, write, and open it.
+
+> Your app's data lives in a centralized cloud database. "Private" means access-gated from other people — not encrypted, and not hidden from the platform.
+
+## Open source
+
+The whole platform is open source under Apache 2.0. Read the code, open an issue, send a PR.
 
 ## Quick Start
 
-1. [Try the demo](https://vibes.diy/) - No setup required!
-2. Or set up your own:
+1. [Try the demo](https://vibes.diy/) — no setup required.
+2. Or run it yourself:
    - Clone the repository
    - Install with `pnpm i`
    - Run `pnpm dev`
@@ -28,11 +43,4 @@ We are committed to providing a welcoming and inclusive environment for all cont
 
 Interested in contributing? Check out our [Contributing Guide](CONTRIBUTING.md) to get started.
 
-## Your Work is Always Safe
-
-Every app you create is automatically saved, so you can:
-
-- Browse your creations in the sidebar
-- Return to previous work anytime
-- Keep track of your building history
-- Save screenshots of your apps
+Find us on [Discord](https://discord.gg/vnpWycj4Ta), [Substack](https://vibesdiy.substack.com/), [YouTube](https://www.youtube.com/@VibesDIY), and [Bluesky](https://bsky.app/profile/vibes.diy).
