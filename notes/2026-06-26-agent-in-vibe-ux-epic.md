@@ -516,7 +516,7 @@ so the count stays crisp.)
 - #1855 data-mode CTA language → automatic View/Join (+ "Request access" only when gated); "make it yours" is the implicit result of editing, not a labeled CTA.
 - #1854 publish intent → the one new setting.
 - #1856 non-owner edit = your copy → the inline fork message; now *the* mechanism for "make your own" (§2).
-- #2037 Join over Fresh Install → **resolved structurally**: there is no Fresh Install/Remix button to compete with Join; Join is the explicit CTA, forking is implicit-on-edit only.
+- #2037 Join over Fresh Install → **resolved structurally**: there's no Fresh Install/Remix button to compete with joining; Join happens automatically (auto-join, or "Request access" when gated) and "make it yours" is implicit-on-edit only — so nothing pulls visitors toward an empty fork.
 - #1857 sharing-onramp epic → this doc *is* its resolution.
 - #1973 two sharing modes legible → Join vs implicit-fork + intent (third "group-private" = Shared-space intent).
 - #2178 read-only/admin indicator → viewer-mode indicator system (§2).
