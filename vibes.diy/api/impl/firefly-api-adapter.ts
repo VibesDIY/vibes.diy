@@ -41,7 +41,16 @@ export class FireflyApiAdapter {
   private readonly adminMode: boolean;
   private readonly openDbNames = new Set<string>();
   private readonly grantsChangedListeners: ((evt: { ownerHandle: string; appSlug: string }) => void)[] = [];
-  private readonly grantReactivityOnce = new ResolveOnce<void>();
+  // Grant-reactivity install state. We don't gate this on a ResolveOnce: that
+  // would cache the rejection of a transient first attempt and never retry, the
+  // exact failure mode #2448 describes. `installed` makes a completed install
+  // idempotent; `installing` guards against the re-entrant onReconnect that can
+  // fire while the very first install is still awaiting its server round-trip.
+  private grantReactivityInstalled = false;
+  private grantReactivityInstalling = false;
+  // Armed once: registers the connection-lifecycle callback that re-issues the
+  // subscriptions whose first attempt failed before the server recorded them.
+  private reconnectRetryArmed = false;
 
   constructor(
     api: VibesDiyApi | (() => Promise<VibesDiyApi>),
@@ -130,9 +139,14 @@ export class FireflyApiAdapter {
   }
 
   async subscribeDocs(dbName = "default"): Promise<Result<ResSubscribeDocs, VibesDiyError>> {
-    const ownerHandle = await this.resolveOwnerHandle();
+    // Record the db name synchronously, before any await: if this first attempt
+    // fails at the transport (server never records it for replay), the
+    // connection-lifecycle retry below still knows to re-issue it (#2448).
     this.openDbNames.add(dbName);
-    return (await this.getApi()).subscribeDocs({
+    const api = await this.getApi();
+    this.armReconnectRetry(api);
+    const ownerHandle = await this.resolveOwnerHandle();
+    return api.subscribeDocs({
       appSlug: this.svc.vibeApp.appSlug,
       ownerHandle,
       dbName,
@@ -144,12 +158,30 @@ export class FireflyApiAdapter {
    * re-issue subscribeDocs for every open db (the event is app-coarse) so future
    * writes to a newly-granted channel flow live, and notify onGrantsChanged
    * listeners. Forward-only: no backfill. Idempotent.
+   *
+   * Resilient to a transient startup failure: if the first install can't reach
+   * the API, it is retried on the connection-lifecycle callback armed below once
+   * the connection recovers, instead of staying uninstalled until restart
+   * (#2448).
    */
   async enableGrantReactivity(): Promise<void> {
-    return this.grantReactivityOnce.once(async () => {
-      const ownerHandle = await this.resolveOwnerHandle();
+    await this.installGrantReactivity();
+  }
+
+  private async installGrantReactivity(): Promise<void> {
+    if (this.grantReactivityInstalled || this.grantReactivityInstalling) return;
+    this.grantReactivityInstalling = true;
+    try {
       const api = await this.getApi();
+      // Arm before the round-trip below so a recovery path exists even if this
+      // first subscribeViewerGrants rejects.
+      this.armReconnectRetry(api);
+      const ownerHandle = await this.resolveOwnerHandle();
       await api.subscribeViewerGrants({ ownerHandle, appSlug: this.svc.vibeApp.appSlug });
+      // Attach the listener only after the subscribe succeeds — and only once
+      // (guarded by grantReactivityInstalled) so reconnect retries never stack
+      // duplicate listeners. replayConnectionState re-attaches it across later
+      // reconnects.
       api.onViewerGrantsChanged((evt) => {
         for (const dbName of this.openDbNames) {
           void this.subscribeDocs(dbName);
@@ -158,6 +190,30 @@ export class FireflyApiAdapter {
           fn({ ownerHandle: evt.ownerHandle, appSlug: evt.appSlug });
         }
       });
+      this.grantReactivityInstalled = true;
+    } finally {
+      this.grantReactivityInstalling = false;
+    }
+  }
+
+  /**
+   * Register — exactly once per adapter — the connection-lifecycle callback that
+   * recovers subscriptions whose first attempt failed before the server could
+   * record them for replay (#2448). It fires only when a connection actually
+   * (re)establishes, so a permanently bad apiUrl that never connects can't spin.
+   */
+  private armReconnectRetry(api: VibesDiyApi): void {
+    if (this.reconnectRetryArmed) return;
+    this.reconnectRetryArmed = true;
+    api.onReconnect(() => {
+      if (!this.grantReactivityInstalled) {
+        void this.installGrantReactivity().catch(() => undefined);
+      }
+      // Re-issue every db subscription opened on this adapter. Safe to repeat:
+      // subscribeDocs dedupes both server-side and in VibesDiyApi.
+      for (const dbName of this.openDbNames) {
+        void this.subscribeDocs(dbName).catch(() => undefined);
+      }
     });
   }
 

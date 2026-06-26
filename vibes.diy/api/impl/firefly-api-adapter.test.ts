@@ -15,6 +15,9 @@ function fakeVibesDiyApi(overrides: Partial<Record<string, unknown>> = {}): Vibe
       })
     ),
     onDocChanged: vi.fn(() => () => undefined),
+    onReconnect: vi.fn(() => () => undefined),
+    subscribeViewerGrants: vi.fn(async () => Result.Ok({ type: "vibes.diy.res-subscribe-viewer-grants", status: "ok" })),
+    onViewerGrantsChanged: vi.fn(() => () => undefined),
     ...overrides,
   } as unknown as VibesDiyApi;
 }
@@ -213,6 +216,111 @@ describe("FireflyApiAdapter", () => {
         docId: "doc-1",
       },
     ]);
+  });
+});
+
+describe("FireflyApiAdapter — transient startup failure recovery (#2448)", () => {
+  it("re-installs grant reactivity on reconnect after a failed first attempt", async () => {
+    let reconnect: (() => void) | undefined;
+    let grantsListener: ((evt: { ownerHandle: string; appSlug: string }) => void) | undefined;
+    let attempt = 0;
+    const subscribeViewerGrants = vi.fn(async () => {
+      attempt++;
+      if (attempt === 1) throw new Error("API briefly unavailable");
+      return Result.Ok({ type: "vibes.diy.res-subscribe-viewer-grants", status: "ok" });
+    });
+    const onViewerGrantsChanged = vi.fn((fn: (evt: { ownerHandle: string; appSlug: string }) => void) => {
+      grantsListener = fn;
+      return () => undefined;
+    });
+    const api = fakeVibesDiyApi({
+      subscribeViewerGrants,
+      onViewerGrantsChanged,
+      onReconnect: vi.fn((fn: () => void) => {
+        reconnect = fn;
+        return () => undefined;
+      }),
+    });
+    const adapter = new FireflyApiAdapter(api, "my-app", { ownerHandle: "alice" });
+
+    // First install fails transiently — swallowed, mirroring the headless caller.
+    await adapter.enableGrantReactivity().catch(() => undefined);
+    expect(subscribeViewerGrants).toHaveBeenCalledTimes(1);
+    // Listener was never attached because the subscribe rejected before it.
+    expect(onViewerGrantsChanged).not.toHaveBeenCalled();
+
+    // Connection recovers — the lifecycle callback retries the install.
+    reconnect?.();
+    await new Promise((r) => setTimeout(r, 0));
+    expect(subscribeViewerGrants).toHaveBeenCalledTimes(2);
+    expect(onViewerGrantsChanged).toHaveBeenCalledTimes(1);
+    expect(grantsListener).toBeDefined();
+  });
+
+  it("does not re-install grant reactivity once it has succeeded", async () => {
+    let reconnect: (() => void) | undefined;
+    const subscribeViewerGrants = vi.fn(async () =>
+      Result.Ok({ type: "vibes.diy.res-subscribe-viewer-grants", status: "ok" })
+    );
+    const onViewerGrantsChanged = vi.fn(() => () => undefined);
+    const api = fakeVibesDiyApi({
+      subscribeViewerGrants,
+      onViewerGrantsChanged,
+      onReconnect: vi.fn((fn: () => void) => {
+        reconnect = fn;
+        return () => undefined;
+      }),
+    });
+    const adapter = new FireflyApiAdapter(api, "my-app", { ownerHandle: "alice" });
+    await adapter.enableGrantReactivity();
+    expect(subscribeViewerGrants).toHaveBeenCalledTimes(1);
+    expect(onViewerGrantsChanged).toHaveBeenCalledTimes(1);
+
+    // A later reconnect must not re-subscribe or stack a duplicate listener —
+    // replayConnectionState handles already-recorded subscriptions.
+    reconnect?.();
+    await new Promise((r) => setTimeout(r, 0));
+    expect(subscribeViewerGrants).toHaveBeenCalledTimes(1);
+    expect(onViewerGrantsChanged).toHaveBeenCalledTimes(1);
+  });
+
+  it("re-issues a per-db subscription on reconnect after a failed first attempt", async () => {
+    let reconnect: (() => void) | undefined;
+    let attempt = 0;
+    const subscribeDocs = vi.fn(async (_req: { appSlug: string; ownerHandle: string; dbName: string }) => {
+      attempt++;
+      if (attempt === 1) throw new Error("API briefly unavailable");
+      return Result.Ok({ type: "vibes.diy.res-subscribe-docs", status: "ok" });
+    });
+    const api = fakeVibesDiyApi({
+      subscribeDocs,
+      onReconnect: vi.fn((fn: () => void) => {
+        reconnect = fn;
+        return () => undefined;
+      }),
+    });
+    const adapter = new FireflyApiAdapter(api, "my-app", { ownerHandle: "alice" });
+
+    // First subscribe fails transiently — caller swallows (FireflyDatabase.resubscribe).
+    await adapter.subscribeDocs("todos").catch(() => undefined);
+    expect(subscribeDocs).toHaveBeenCalledTimes(1);
+
+    // Reconnect re-issues the subscription for the db that was opened.
+    reconnect?.();
+    await new Promise((r) => setTimeout(r, 0));
+    expect(subscribeDocs).toHaveBeenCalledTimes(2);
+    expect(subscribeDocs.mock.calls[1][0].dbName).toBe("todos");
+  });
+
+  it("arms the reconnect retry only once across many subscribeDocs calls", async () => {
+    const onReconnect = vi.fn(() => () => undefined);
+    const subscribeDocs = vi.fn(async () => Result.Ok({ type: "vibes.diy.res-subscribe-docs", status: "ok" }));
+    const api = fakeVibesDiyApi({ subscribeDocs, onReconnect });
+    const adapter = new FireflyApiAdapter(api, "my-app", { ownerHandle: "alice" });
+    await adapter.subscribeDocs("a");
+    await adapter.subscribeDocs("b");
+    await adapter.enableGrantReactivity();
+    expect(onReconnect).toHaveBeenCalledTimes(1);
   });
 });
 

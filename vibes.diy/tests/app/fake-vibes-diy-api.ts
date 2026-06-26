@@ -25,10 +25,13 @@ export interface FakeVibesDiyApi {
   onDocChanged: (fn: (ownerHandle: string, appSlug: string, dbName: string, docId: string) => void) => () => void;
   subscribeViewerGrants: (req: { ownerHandle: string; appSlug: string }) => Promise<Result<unknown>>;
   onViewerGrantsChanged: (fn: (evt: { ownerHandle: string; appSlug: string }) => void) => () => void;
+  onReconnect: (fn: () => void) => () => void;
   /** db names passed to subscribeDocs, in call order — lets tests assert resubscribe */
   readonly _subscribeDocsCalls: string[];
   /** simulate a server-push viewer-grants-changed event */
   _simulateViewerGrantsChanged: (ownerHandle: string, appSlug: string) => void;
+  /** simulate the connection (re)establishing — fires onReconnect listeners */
+  _simulateReconnect: () => void;
   /** how many times `new VibesDiyApi(...)` would have been called — used by multi-db test */
   readonly _connectionId: number;
   /** raw access to the doc store keyed by dbName */
@@ -41,6 +44,7 @@ export function createFakeVibesDiyApi(opts: { defaultHandle?: string } = {}): Fa
   const docsByDb = new Map<string, Map<string, Record<string, unknown>>>();
   const docChangedListeners: ((u: string, a: string, db: string, doc: string) => void)[] = [];
   const viewerGrantsListeners: ((evt: { ownerHandle: string; appSlug: string }) => void)[] = [];
+  const reconnectListeners: (() => void)[] = [];
   const subscribeDocsCalls: string[] = [];
   const connectionId = ++connectionCounter;
 
@@ -116,10 +120,22 @@ export function createFakeVibesDiyApi(opts: { defaultHandle?: string } = {}): Fa
       };
     },
 
+    onReconnect: (fn) => {
+      reconnectListeners.push(fn);
+      return () => {
+        const i = reconnectListeners.indexOf(fn);
+        if (i >= 0) reconnectListeners.splice(i, 1);
+      };
+    },
+
     _subscribeDocsCalls: subscribeDocsCalls,
 
     _simulateViewerGrantsChanged: (ownerHandle, appSlug) => {
       for (const fn of viewerGrantsListeners) fn({ ownerHandle, appSlug });
+    },
+
+    _simulateReconnect: () => {
+      for (const fn of reconnectListeners) fn();
     },
 
     _simulateDocChanged: (ownerHandle, appSlug, dbName, docId) => {

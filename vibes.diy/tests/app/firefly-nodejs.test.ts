@@ -293,6 +293,24 @@ describe("FireflyApiAdapter end-to-end against fake VibesDiyApi", () => {
     expect(delivered).toContain("new");
     expect(delivered).not.toContain("old"); // forward-only: no backfill on promotion
   });
+
+  it("reconnect re-issues a db's doc subscription (transient startup failure recovery, #2448)", async () => {
+    const api = createFakeVibesDiyApi({ defaultHandle: "alice" });
+    const adapter = new FireflyApiAdapter(api as never, "my-app", { ownerHandle: "alice" });
+    // FireflyDatabase's constructor fires resubscribe() → adapter.subscribeDocs.
+    new FireflyDatabase("reconnect-db", adapter);
+    await new Promise((r) => setTimeout(r, 0));
+    const before = api._subscribeDocsCalls.filter((n) => n === "reconnect-db").length;
+    expect(before).toBeGreaterThan(0);
+
+    // Connection (re)establishes — the adapter re-issues subscriptions for every
+    // db it has opened, recovering any whose first attempt the server never
+    // recorded for replay.
+    api._simulateReconnect();
+    await new Promise((r) => setTimeout(r, 0));
+    const after = api._subscribeDocsCalls.filter((n) => n === "reconnect-db").length;
+    expect(after).toBeGreaterThan(before);
+  });
 });
 
 // The fireproof() factory itself is tested in use-vibes/tests/fireproof-node.node.test.ts.
