@@ -165,6 +165,64 @@ describe("block-stream path-line suppression from toplevel emissions", () => {
   });
 });
 
+describe("block-stream path-line survives a blank separator before the fence", () => {
+  const toplevelLines = (chunks: unknown[]): string[] =>
+    chunks.filter((c): c is ToplevelLineMsg => isToplevelLine(c)).map((c) => c.line);
+
+  it("binds a non-default filename across a single blank line", async () => {
+    const chunks = await runBlockStream(["access.js", "", "```js", "export default 1;", "```"]);
+    const begin = chunks.find((c) => isCodeBegin(c)) as CodeBeginMsg | undefined;
+    const end = chunks.find((c) => isCodeEnd(c)) as CodeEndMsg | undefined;
+    expect(begin?.path).toBe("access.js");
+    expect(end?.path).toBe("access.js");
+  });
+
+  it("binds across multiple blank lines", async () => {
+    const chunks = await runBlockStream(["access.js", "", "", "```js", "x", "```"]);
+    const begin = chunks.find((c) => isCodeBegin(c)) as CodeBeginMsg | undefined;
+    expect(begin?.path).toBe("access.js");
+  });
+
+  it("drops the filename and the blank separator from toplevel prose when the fence binds", async () => {
+    const chunks = await runBlockStream(["access.js", "", "```js", "x", "```"]);
+    expect(toplevelLines(chunks)).toEqual([]);
+  });
+
+  // Real-world repro: a one-shot that emits App.jsx then access.js, each with a
+  // blank line between the filename label and its fence. Before the fix the
+  // second block fell back to DEFAULT_PATH and clobbered App.jsx.
+  it("binds two files independently when each filename is separated from its fence by a blank line", async () => {
+    const chunks = await runBlockStream([
+      "App.jsx",
+      "",
+      "```jsx",
+      "const a = 1;",
+      "```",
+      "access.js",
+      "",
+      "```js",
+      "export default 2;",
+      "```",
+    ]);
+    const begins = chunks.filter((c) => isCodeBegin(c)) as CodeBeginMsg[];
+    expect(begins).toHaveLength(2);
+    expect(begins[0].path).toBe("App.jsx");
+    expect(begins[1].path).toBe("access.js");
+  });
+
+  it("a non-blank prose line between the filename and the fence still breaks the binding", async () => {
+    const chunks = await runBlockStream(["access.js", "Here it is:", "```js", "x", "```"]);
+    const begin = chunks.find((c) => isCodeBegin(c)) as CodeBeginMsg | undefined;
+    expect(begin?.path).toBe("App.jsx");
+    expect(toplevelLines(chunks)).toEqual(["access.js", "Here it is:"]);
+  });
+
+  it("filename followed by a blank then end-of-stream flushes both as prose in order", async () => {
+    const chunks = await runBlockStream(["access.js", ""]);
+    expect(toplevelLines(chunks)).toEqual(["access.js", ""]);
+  });
+});
+
 describe("block-stream trailing horizontal-rule suppression", () => {
   const toplevelLines = (chunks: unknown[]): string[] =>
     chunks.filter((c): c is ToplevelLineMsg => isToplevelLine(c)).map((c) => c.line);
