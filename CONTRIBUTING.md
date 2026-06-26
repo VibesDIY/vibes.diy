@@ -33,7 +33,7 @@ Any one of these means Track B (issue first, code second):
 - Adds a feature flag, a new code path, or a parallel implementation of something that already exists.
 - Touches multiple subsystems or otherwise has broad surface area.
 - Is an experiment — i.e. the payoff is uncertain.
-- Changes user-visible behavior, an API, or a data contract.
+- Broadly or contentiously changes user-visible behavior, or changes an API or data contract. (A narrow bug fix that *restores* intended behavior — removing a layout flash, killing a default-content flicker — is Track A even though it's user-visible. The tripwire is for new or debatable behavior, not for fixing something that's plainly broken.)
 - Bundles an always-on change together with experimental or flag-gated work. (Split it: land the small, non-controversial piece on its own; route the broad part to a design issue.)
 
 ### Experiments must pay for themselves
