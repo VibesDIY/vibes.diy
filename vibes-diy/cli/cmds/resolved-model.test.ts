@@ -46,4 +46,33 @@ describe("modelFromSectionEvent", () => {
   it("ignores empty blocks", () => {
     expect(modelFromSectionEvent(sectionEvent([]))).toBeUndefined();
   });
+
+  it("prefers prompt.model-resolved (post-fallback) over the prompt.req echo", () => {
+    const evt = sectionEvent([
+      promptReqBlock("primary/model"),
+      {
+        type: "prompt.model-resolved",
+        streamId: "stream-1",
+        chatId: "chat-1",
+        seq: 1,
+        timestamp: new Date(),
+        model: "fallback/model",
+      },
+    ]);
+    expect(modelFromSectionEvent(evt)).toBe("fallback/model");
+  });
+
+  it("reads the model from a standalone prompt.model-resolved block", () => {
+    const evt = sectionEvent([
+      {
+        type: "prompt.model-resolved",
+        streamId: "stream-1",
+        chatId: "chat-1",
+        seq: 0,
+        timestamp: new Date(),
+        model: "fallback/model",
+      },
+    ]);
+    expect(modelFromSectionEvent(evt)).toBe("fallback/model");
+  });
 });

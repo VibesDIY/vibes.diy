@@ -246,13 +246,20 @@ export const editEvento: EventoHandler<WrapCmdTSMsg<unknown>, ReqEdit, ResEdit |
             sectionEventCount += 1;
             blockCount += msg.blocks.length;
             streamedBytes += JSON.stringify(msg).length;
-            // Surface the model the server actually resolved (default path,
-            // no --model override) the first time a prompt.req block arrives.
-            if (announcedModel === undefined) {
+            // Surface the model the server actually resolved (default path, no
+            // --model override) when the first prompt.req block arrives, and
+            // correct it if a later prompt.model-resolved reports a fallback
+            // swapped models mid-turn (#2628).
+            {
               const resolved = modelFromSectionEvent(msg);
-              if (resolved) {
+              if (resolved && resolved !== announcedModel) {
+                const fellBack = announcedModel !== undefined;
                 announcedModel = resolved;
-                sendProgress(ctx, "info", `Editing with ${announcedModel}...`).catch(() => {
+                sendProgress(
+                  ctx,
+                  "info",
+                  fellBack ? `Fell back to ${announcedModel}...` : `Editing with ${announcedModel}...`
+                ).catch(() => {
                   /* progress is best-effort */
                 });
               }

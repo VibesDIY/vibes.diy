@@ -1083,6 +1083,41 @@ async function handlerLlmRequest({
     })
     .do();
 
+  // Record the model the turn was ACTUALLY dispatched with — ALWAYS, on every
+  // turn, so debugging and at-scale usage stats have a reliable per-turn record
+  // of which model ran, independent of any fallback. In the common case this
+  // matches the pre-dispatch `prompt.req` echo above; when a catalog fallback
+  // `dispatchLlmRequestWithFallback` swapped models after retryable primary
+  // failures, that echo is stale (already streamed before the swap) and this
+  // post-dispatch event carries the real model — clients prefer it (#2628).
+  // Informational only — reconstruction reads only request.messages. The
+  // recovery-continuation dispatch reuses the initial model and falls back only
+  // on its own failure — a rarer case left to a follow-up.
+  const finalModel = dispatch.llmReq.model;
+  if (dispatch.ok && finalModel !== undefined) {
+    await scope
+      .evalResult(async () => {
+        const r = await appendBlockEvent({
+          ctx,
+          vctx,
+          req,
+          promptId,
+          blockSeq,
+          evt: {
+            type: "prompt.model-resolved",
+            streamId: promptId,
+            chatId: req.chatId,
+            seq: blockSeq,
+            model: finalModel,
+            timestamp: new Date(),
+          },
+        });
+        blockSeq++;
+        return r;
+      })
+      .do();
+  }
+
   return { res, blockSeq, llmReq: dispatch.llmReq, abort: dispatch.abort };
 }
 

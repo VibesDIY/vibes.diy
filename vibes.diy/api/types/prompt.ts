@@ -63,6 +63,24 @@ export const PromptBlockEnd = type({
 
 export type PromptBlockEnd = typeof PromptBlockEnd.infer;
 
+// Post-dispatch signal carrying the model the turn was ACTUALLY dispatched
+// with — i.e. after `dispatchLlmRequestWithFallback` may have swapped in a
+// catalog fallback following retryable primary failures. The pre-dispatch
+// `prompt.req` echo records the *intended* model and is already streamed by
+// the time any fallback runs, so it can be stale; clients prefer this value
+// when present. Purely informational/observability (VibesDIY/vibes.diy#2628)
+// — reconstruction only reads `request.messages`.
+export const PromptModelResolved = type({
+  type: "'prompt.model-resolved'",
+  model: "string",
+}).and(PromptBase);
+
+export type PromptModelResolved = typeof PromptModelResolved.infer;
+
+export function isPromptModelResolved(msg: unknown): msg is PromptModelResolved {
+  return !(PromptModelResolved(msg) instanceof type.errors);
+}
+
 // Single-block payload emitted on a dryRun:true request. Rides on the
 // section stream framed by the existing block-begin/-end pair so the
 // client narrows on msg.type just like any other event. Carries the
@@ -80,7 +98,12 @@ export function isPromptDryRunPayload(msg: unknown): msg is PromptDryRunPayload 
   return !(PromptDryRunPayload(msg) instanceof type.errors);
 }
 
-export const PromptMsgs = PromptBlockBegin.or(PromptBlockEnd).or(PromptReq).or(PromptError).or(PromptFS).or(PromptDryRunPayload);
+export const PromptMsgs = PromptBlockBegin.or(PromptBlockEnd)
+  .or(PromptReq)
+  .or(PromptError)
+  .or(PromptFS)
+  .or(PromptDryRunPayload)
+  .or(PromptModelResolved);
 export type PromptMsgs = typeof PromptMsgs.infer;
 
 // Type guard with optional streamId filter

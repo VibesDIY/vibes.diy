@@ -1,6 +1,8 @@
+import { Result } from "@adviser/cement";
 import { isCodeBegin, isCodeEnd, isCodeLine, isToplevelLine } from "@vibes.diy/call-ai-v2";
 import { isPromptReq } from "@vibes.diy/api-types";
 import type { PromptAndBlockMsgs, ResChatResponseTurn, SectionEvent } from "@vibes.diy/api-types";
+import { resolveSectionStream, type ResolveSectionStreamResult } from "./resolve-section-stream.js";
 
 // Flatten a turn's sections (already blockSeq-ordered by the server) into the
 // single ordered block-event stream the model produced. Used by every render
@@ -96,4 +98,45 @@ export function buildSectionStream(turn: ResChatResponseTurn): ReadableStream<Se
       controller.close();
     },
   });
+}
+
+/**
+ * Resolve the `path → content` map a turn produced (`--files`), seeding the
+ * resolver so SEARCH/REPLACE edit turns resolve correctly.
+ *
+ * A stored edit turn often contains only SEARCH/REPLACE hunks, not whole
+ * files. Replaying it through `resolveSectionStream` with no prior filesystem
+ * would yield `{}` or apply errors — the live `edit` path seeds from disk and
+ * the server seeds from the previous persisted filesystem. We reproduce that
+ * here without any extra fetch by chaining: take this chat's turns oldest→
+ * newest up to the selected one, and feed each turn's resolved files as the
+ * seed for the next. The creation turn (full files) needs no seed; every later
+ * edit composes on top of it.
+ */
+export async function resolveTurnFiles(
+  turns: readonly ResChatResponseTurn[],
+  selectedPromptId: string
+): Promise<Result<ResolveSectionStreamResult>> {
+  const selected = turns.find((t) => t.promptId === selectedPromptId);
+  if (selected === undefined) {
+    return Result.Err(new Error(`No turn with promptId ${selectedPromptId}`));
+  }
+  // Same-chat turns only (an app-level query may span chats), oldest-first.
+  const chain = turns
+    .filter((t) => t.chatId === selected.chatId)
+    .slice()
+    .sort((a, b) => (a.created < b.created ? -1 : a.created > b.created ? 1 : 0));
+  let seed = new Map<string, string>();
+  let last: ResolveSectionStreamResult | undefined;
+  for (const t of chain) {
+    const r = await resolveSectionStream({ sectionStream: buildSectionStream(t), streamId: t.promptId, seed });
+    if (r.isErr()) return Result.Err(r.Err());
+    last = r.Ok();
+    seed = new Map(Object.entries(last.files));
+    if (t.promptId === selected.promptId) break;
+  }
+  if (last === undefined) {
+    return Result.Ok({ files: {}, errors: [], snapshotCount: 0, applyErrorCount: 0, turnEndSeen: false, promptErrors: [] });
+  }
+  return Result.Ok(last);
 }
