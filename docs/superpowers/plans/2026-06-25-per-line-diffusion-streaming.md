@@ -27,10 +27,12 @@
 **Depends-on:** none
 
 **Files:**
+
 - Modify: `call-ai/v2/block-stream.ts` (the `CodeBeginMsg` definition, ~line 135)
 - Test: `call-ai/v2/reveal-marker.test.ts` (create)
 
 **Interfaces:**
+
 - Produces: `CodeBeginMsg.reveal?: "typewriter"` — an optional literal field on the existing `CodeBeginMsg` arktype.
 
 - [ ] **Step 1: Write the failing test**
@@ -128,11 +130,13 @@ git commit -m "feat(block-stream): optional reveal:'typewriter' marker on CodeBe
 **Depends-on:** 1
 
 **Files:**
+
 - Modify: `vibes.diy/api/svc/public/handle-whole-file-codegen.ts`
 - Modify: `vibes.diy/api/svc/intern/codegen-loop/emit-blocks.ts`
 - Test: `vibes.diy/api/svc/intern/codegen-loop/handle-whole-file-codegen.test.ts`
 
 **Interfaces:**
+
 - Consumes: `CodeBeginMsg.reveal` (from Task 1) — set to `"typewriter"` on every emitted and persisted `code.begin`.
 - Produces: `BlockIds.reveal?: "typewriter"` on `buildBlockEvents` (so the persisted sequence carries the marker).
 - Consumes: `runWholeFileCodegen({ onLine })` and `WholeFileResult` (existing, `vibes.diy/api/svc/intern/codegen-loop/whole-file-loop.ts`) — the loop already drives `onLine` from `getFullResponsesStream`.
@@ -171,9 +175,7 @@ it("streams code lines live (self-framed) and tags code.begin with reveal:'typew
   expect(begins.length).toBeGreaterThanOrEqual(1);
   expect(begins.every((e) => (e as { reveal?: string }).reveal === "typewriter")).toBe(true);
   // All three lines reach the wire (the withheld "c" via reconciliation).
-  const lines = emitted
-    .filter((e) => (e as { type: string }).type === "block.code.line")
-    .map((e) => (e as { line: string }).line);
+  const lines = emitted.filter((e) => (e as { type: string }).type === "block.code.line").map((e) => (e as { line: string }).line);
   expect(lines).toEqual(["a", "b", "c"]);
   // No diagnostic card.
   expect(emitted.some((e) => ((e as { path?: string }).path ?? "").startsWith("/_streamdiag"))).toBe(false);
@@ -194,134 +196,166 @@ Expected: FAIL — the new test fails because the handler does not pass `onLine`
 In `vibes.diy/api/svc/public/handle-whole-file-codegen.ts`, replace the body from the heartbeat block through the burst (the section currently labeled "Keepalive heartbeat" / "Run the loop" / "Emit the whole sequence" / the diagnostic card) with the following. Keep the serialized `enqueue`/`chain`/`firstErr` block above it, and the persist (`handlePromptContext`) block below it, unchanged.
 
 ```ts
-  // --- Keepalive heartbeat (until the first streamed line) -------------------
-  // The model plans for ~18s before the first write_file argument delta; after
-  // that, deltas arrive every few seconds and keep the client's 45s watchdog
-  // alive on their own. So beat a benign `block.begin` until the first onLine,
-  // then stop (a heartbeat block.begin splices the client's blockMsgs, which is
-  // inert while empty but would WIPE an in-progress card once code is streaming).
-  let stopped = false;
-  let timer: ReturnType<typeof setTimeout> | undefined;
-  const heartbeat = (): void => {
-    if (stopped) return;
-    enqueue({ type: "block.begin", seq: liveSeq++, blockId, streamId: promptId, blockNr: 0, timestamp: new Date() } satisfies BlockBeginMsg);
-    timer = setTimeout(heartbeat, HEARTBEAT_MS);
-  };
-  timer = setTimeout(heartbeat, HEARTBEAT_MS);
-  const stopHeartbeat = (): void => {
-    stopped = true;
-    if (timer !== undefined) clearTimeout(timer);
-    timer = undefined;
-  };
-
-  // --- Live per-file framing driven by `onLine` ------------------------------
-  // Emit one self-framed sequence: block.begin (lazy, on the first line) →
-  // per-file code.begin(reveal) → code.line* → code.end → block.end. block.begin
-  // travels WITH the code so a client that reconnected mid-turn stays framed.
-  const base = () => ({ blockId, streamId: promptId, blockNr: 0, timestamp: new Date() });
-  const streamedFiles = new Set<string>();
-  const lineCount = new Map<string, number>();
-  const byteCount = new Map<string, number>();
-  let blockBegun = false;
-  let openFile: string | null = null;
-  const emitCodeBegin = (filename: string, lang: string): void => {
-    enqueue({ type: "block.code.begin", sectionId: sectionIdFor(filename), lang, path: filename, reveal: "typewriter", seq: liveSeq++, ...base() } satisfies CodeBeginMsg);
-  };
-  const emitCodeLine = (filename: string, lang: string, line: string, lineNr: number): void => {
-    enqueue({ type: "block.code.line", sectionId: sectionIdFor(filename), lang, path: filename, line, lineNr, seq: liveSeq++, ...base() } satisfies CodeLineMsg);
-  };
-  const emitCodeEnd = (filename: string, lang: string, lines: number, bytes: number): void => {
-    enqueue({ type: "block.code.end", sectionId: sectionIdFor(filename), lang, path: filename, stats: { lines, bytes }, seq: liveSeq++, ...base() } satisfies CodeEndMsg);
-  };
-  const onLine: OnLine = (filename, lang, line, lineNr) => {
-    if (!blockBegun) {
-      blockBegun = true;
-      stopHeartbeat();
-      enqueue({ type: "block.begin", seq: liveSeq++, ...base() } satisfies BlockBeginMsg);
-    }
-    if (openFile !== filename) {
-      if (openFile !== null) {
-        emitCodeEnd(openFile, langFor(openFile), lineCount.get(openFile) ?? 0, byteCount.get(openFile) ?? 0);
-      }
-      openFile = filename;
-      streamedFiles.add(filename);
-      emitCodeBegin(filename, lang);
-    }
-    emitCodeLine(filename, lang, line, lineNr);
-    lineCount.set(filename, (lineCount.get(filename) ?? 0) + 1);
-    byteCount.set(filename, (byteCount.get(filename) ?? 0) + new TextEncoder().encode(line).length + 1);
-  };
-
-  // Run the loop, streaming completed lines live through `onLine`.
-  let result: WholeFileResult;
-  try {
-    result = await runWholeFileCodegen({
-      systemPrompt,
-      userPrompt,
-      needsAccess,
-      maxSteps,
-      maxCostUsd,
-      model: (ctx) => (ctx.numberOfTurns > 1 ? cheapModel : frontierModel),
-      onLine,
-    });
-  } finally {
-    stopHeartbeat();
-  }
-
-  // Reconcile the live stream against the resolved files. If a run buffered,
-  // onLine fired at the end and produced the same self-framed burst; either way
-  // close the open section (topping up the withheld trailing line) and emit any
-  // file that never streamed a line as a full section.
-  if (!blockBegun) {
-    blockBegun = true;
-    enqueue({ type: "block.begin", seq: liveSeq++, ...base() } satisfies BlockBeginMsg);
-  }
-  const byName = new Map(result.files.map((f) => [f.filename, f] as const));
-  if (openFile !== null) {
-    const f = byName.get(openFile);
-    if (f) {
-      const finalLines = f.content.split("\n");
-      for (let nr = lineCount.get(openFile) ?? 0; nr < finalLines.length; nr++) {
-        emitCodeLine(openFile, f.lang, finalLines[nr], nr);
-      }
-      emitCodeEnd(openFile, f.lang, finalLines.length, new TextEncoder().encode(f.content).length);
-    } else {
-      emitCodeEnd(openFile, langFor(openFile), lineCount.get(openFile) ?? 0, byteCount.get(openFile) ?? 0);
-    }
-    openFile = null;
-  }
-  for (const f of result.files) {
-    if (streamedFiles.has(f.filename)) continue;
-    emitCodeBegin(f.filename, f.lang);
-    const lines = f.content.split("\n");
-    for (let nr = 0; nr < lines.length; nr++) emitCodeLine(f.filename, f.lang, lines[nr], nr);
-    emitCodeEnd(f.filename, f.lang, lines.length, new TextEncoder().encode(f.content).length);
-  }
-
-  // Build the canonical persisted sequence (also carrying the reveal marker so a
-  // reload renders identically), then close the live block.
-  let seqForBuild = 0;
-  const collectedMsgs = buildBlockEvents(result.files, {
+// --- Keepalive heartbeat (until the first streamed line) -------------------
+// The model plans for ~18s before the first write_file argument delta; after
+// that, deltas arrive every few seconds and keep the client's 45s watchdog
+// alive on their own. So beat a benign `block.begin` until the first onLine,
+// then stop (a heartbeat block.begin splices the client's blockMsgs, which is
+// inert while empty but would WIPE an in-progress card once code is streaming).
+let stopped = false;
+let timer: ReturnType<typeof setTimeout> | undefined;
+const heartbeat = (): void => {
+  if (stopped) return;
+  enqueue({
+    type: "block.begin",
+    seq: liveSeq++,
     blockId,
     streamId: promptId,
-    sectionIdFor,
-    nextSeq: () => seqForBuild++,
     blockNr: 0,
-    reveal: "typewriter",
-    usage: {
-      given: [],
-      calculated: {
-        prompt_tokens: result.usage.prompt_tokens,
-        completion_tokens: result.usage.completion_tokens,
-        total_tokens: result.usage.total_tokens,
-      },
-    },
-  });
-  const blockEnd = collectedMsgs[collectedMsgs.length - 1] as BlockEndMsg;
-  enqueue({ ...blockEnd, seq: liveSeq++, timestamp: new Date() });
+    timestamp: new Date(),
+  } satisfies BlockBeginMsg);
+  timer = setTimeout(heartbeat, HEARTBEAT_MS);
+};
+timer = setTimeout(heartbeat, HEARTBEAT_MS);
+const stopHeartbeat = (): void => {
+  stopped = true;
+  if (timer !== undefined) clearTimeout(timer);
+  timer = undefined;
+};
 
-  await chain;
-  if (firstErr) return Result.Err(firstErr);
+// --- Live per-file framing driven by `onLine` ------------------------------
+// Emit one self-framed sequence: block.begin (lazy, on the first line) →
+// per-file code.begin(reveal) → code.line* → code.end → block.end. block.begin
+// travels WITH the code so a client that reconnected mid-turn stays framed.
+const base = () => ({ blockId, streamId: promptId, blockNr: 0, timestamp: new Date() });
+const streamedFiles = new Set<string>();
+const lineCount = new Map<string, number>();
+const byteCount = new Map<string, number>();
+let blockBegun = false;
+let openFile: string | null = null;
+const emitCodeBegin = (filename: string, lang: string): void => {
+  enqueue({
+    type: "block.code.begin",
+    sectionId: sectionIdFor(filename),
+    lang,
+    path: filename,
+    reveal: "typewriter",
+    seq: liveSeq++,
+    ...base(),
+  } satisfies CodeBeginMsg);
+};
+const emitCodeLine = (filename: string, lang: string, line: string, lineNr: number): void => {
+  enqueue({
+    type: "block.code.line",
+    sectionId: sectionIdFor(filename),
+    lang,
+    path: filename,
+    line,
+    lineNr,
+    seq: liveSeq++,
+    ...base(),
+  } satisfies CodeLineMsg);
+};
+const emitCodeEnd = (filename: string, lang: string, lines: number, bytes: number): void => {
+  enqueue({
+    type: "block.code.end",
+    sectionId: sectionIdFor(filename),
+    lang,
+    path: filename,
+    stats: { lines, bytes },
+    seq: liveSeq++,
+    ...base(),
+  } satisfies CodeEndMsg);
+};
+const onLine: OnLine = (filename, lang, line, lineNr) => {
+  if (!blockBegun) {
+    blockBegun = true;
+    stopHeartbeat();
+    enqueue({ type: "block.begin", seq: liveSeq++, ...base() } satisfies BlockBeginMsg);
+  }
+  if (openFile !== filename) {
+    if (openFile !== null) {
+      emitCodeEnd(openFile, langFor(openFile), lineCount.get(openFile) ?? 0, byteCount.get(openFile) ?? 0);
+    }
+    openFile = filename;
+    streamedFiles.add(filename);
+    emitCodeBegin(filename, lang);
+  }
+  emitCodeLine(filename, lang, line, lineNr);
+  lineCount.set(filename, (lineCount.get(filename) ?? 0) + 1);
+  byteCount.set(filename, (byteCount.get(filename) ?? 0) + new TextEncoder().encode(line).length + 1);
+};
+
+// Run the loop, streaming completed lines live through `onLine`.
+let result: WholeFileResult;
+try {
+  result = await runWholeFileCodegen({
+    systemPrompt,
+    userPrompt,
+    needsAccess,
+    maxSteps,
+    maxCostUsd,
+    model: (ctx) => (ctx.numberOfTurns > 1 ? cheapModel : frontierModel),
+    onLine,
+  });
+} finally {
+  stopHeartbeat();
+}
+
+// Reconcile the live stream against the resolved files. If a run buffered,
+// onLine fired at the end and produced the same self-framed burst; either way
+// close the open section (topping up the withheld trailing line) and emit any
+// file that never streamed a line as a full section.
+if (!blockBegun) {
+  blockBegun = true;
+  enqueue({ type: "block.begin", seq: liveSeq++, ...base() } satisfies BlockBeginMsg);
+}
+const byName = new Map(result.files.map((f) => [f.filename, f] as const));
+if (openFile !== null) {
+  const f = byName.get(openFile);
+  if (f) {
+    const finalLines = f.content.split("\n");
+    for (let nr = lineCount.get(openFile) ?? 0; nr < finalLines.length; nr++) {
+      emitCodeLine(openFile, f.lang, finalLines[nr], nr);
+    }
+    emitCodeEnd(openFile, f.lang, finalLines.length, new TextEncoder().encode(f.content).length);
+  } else {
+    emitCodeEnd(openFile, langFor(openFile), lineCount.get(openFile) ?? 0, byteCount.get(openFile) ?? 0);
+  }
+  openFile = null;
+}
+for (const f of result.files) {
+  if (streamedFiles.has(f.filename)) continue;
+  emitCodeBegin(f.filename, f.lang);
+  const lines = f.content.split("\n");
+  for (let nr = 0; nr < lines.length; nr++) emitCodeLine(f.filename, f.lang, lines[nr], nr);
+  emitCodeEnd(f.filename, f.lang, lines.length, new TextEncoder().encode(f.content).length);
+}
+
+// Build the canonical persisted sequence (also carrying the reveal marker so a
+// reload renders identically), then close the live block.
+let seqForBuild = 0;
+const collectedMsgs = buildBlockEvents(result.files, {
+  blockId,
+  streamId: promptId,
+  sectionIdFor,
+  nextSeq: () => seqForBuild++,
+  blockNr: 0,
+  reveal: "typewriter",
+  usage: {
+    given: [],
+    calculated: {
+      prompt_tokens: result.usage.prompt_tokens,
+      completion_tokens: result.usage.completion_tokens,
+      total_tokens: result.usage.total_tokens,
+    },
+  },
+});
+const blockEnd = collectedMsgs[collectedMsgs.length - 1] as BlockEndMsg;
+enqueue({ ...blockEnd, seq: liveSeq++, timestamp: new Date() });
+
+await chain;
+if (firstErr) return Result.Err(firstErr);
 ```
 
 This references `CodeBeginMsg`, `CodeLineMsg`, `CodeEndMsg` (already imported) and `OnLine` (already imported). Remove the now-unused diagnostic imports/locals if the linter flags them.
@@ -358,15 +392,15 @@ export interface BlockIds {
 And in the per-file loop, add `reveal: ids.reveal` to the `block.code.begin` object (alongside `lang`, `path`):
 
 ```ts
-    events.push({
-      type: "block.code.begin",
-      sectionId,
-      lang: file.lang,
-      path: file.filename,
-      reveal: ids.reveal,
-      seq: ids.nextSeq(),
-      ...base,
-    } satisfies CodeBeginMsg);
+events.push({
+  type: "block.code.begin",
+  sectionId,
+  lang: file.lang,
+  path: file.filename,
+  reveal: ids.reveal,
+  seq: ids.nextSeq(),
+  ...base,
+} satisfies CodeBeginMsg);
 ```
 
 (`reveal: undefined` is valid for the optional field, so existing callers that omit `reveal` are unaffected.)
@@ -396,10 +430,12 @@ git commit -m "feat(whole-file-codegen): live self-framed per-line emission + re
 **Depends-on:** none
 
 **Files:**
+
 - Create: `vibes.diy/pkg/app/hooks/useTypewriterReveal.ts`
 - Test: `vibes.diy/pkg/test/typewriter-reveal.test.ts` (pure pacing math, node project)
 
 **Interfaces:**
+
 - Produces: `stepReveal(state: RevealState, total: number, isStreaming: boolean, nowMs: number): RevealState` — pure pacing step.
 - Produces: `useTypewriterReveal(total: number, isStreaming: boolean, enabled: boolean): number` — the React hook returning the current revealed line count.
 - Produces: `RevealState` interface `{ revealedFloat: number; lastTickMs: number }` and constants `BASE_RATE`, `MAX_RATE`, `FINISH_MS`.
@@ -567,10 +603,12 @@ git commit -m "feat(hooks): useTypewriterReveal paced buffer-drain reveal"
 **Depends-on:** 1, 3
 
 **Files:**
+
 - Modify: `vibes.diy/pkg/app/components/MessageList.tsx` (`CodeMsg` ~lines 269-397; its call sites in the reducer ~lines 598-616 and ~670-695)
 - Test: `vibes.diy/tests/app/code-msg-reveal.test.tsx` (create; browser project `vibes.diy`)
 
 **Interfaces:**
+
 - Consumes: `CodeBeginMsg.reveal` (from Task 1) — `begin.reveal === "typewriter"` enables the reveal.
 - Consumes: `useTypewriterReveal(total, isStreaming, enabled)` (from Task 3).
 - Produces: `CodeMsg` gains an `isStreaming?: boolean` prop.
@@ -692,31 +730,33 @@ export function CodeMsg({
 3. Inside `CodeMsg`, after the existing `const codeReady = end !== undefined;` line, derive the reveal:
 
 ```ts
-  const revealEnabled = begin.reveal === "typewriter";
-  const revealed = useTypewriterReveal(lines.length, isStreaming, revealEnabled);
-  // While a gated card is mid-reveal, show the streaming line-by-line body;
-  // once caught up (and not streaming) it falls back to the existing summary.
-  const revealing = revealEnabled && revealed < lines.length;
-  const revealLines = revealing ? lines.slice(0, revealed) : lines;
+const revealEnabled = begin.reveal === "typewriter";
+const revealed = useTypewriterReveal(lines.length, isStreaming, revealEnabled);
+// While a gated card is mid-reveal, show the streaming line-by-line body;
+// once caught up (and not streaming) it falls back to the existing summary.
+const revealing = revealEnabled && revealed < lines.length;
+const revealLines = revealing ? lines.slice(0, revealed) : lines;
 ```
 
 4. Replace the collapsed body block (the `<div>` with `h-0 max-h-0 min-h-0 ... opacity-0 ... overflow-hidden`, currently ~lines 382-392, rendering `lines.slice(0, 3)`) with a body that expands while revealing and renders `revealLines`:
 
 ```tsx
-      {/* Code body: expanded + line-by-line while a gated card reveals;
-          otherwise the existing collapsed summary preview. */}
-      <div
-        className={
-          revealing
-            ? "bg-light-background-02 dark:bg-dark-background-02 overflow-hidden font-mono text-xs leading-relaxed"
-            : "bg-light-background-02 dark:bg-dark-background-02 h-0 max-h-0 min-h-0 overflow-hidden opacity-0"
-        }
-      >
-        {(revealing ? revealLines : revealLines.slice(0, 3)).map((line, idx) => (
-          <div key={`${begin.sectionId}-${line.lineNr ?? idx}`}>{line.line || " "}</div>
-        ))}
-        {!revealing && revealLines.length > 3 && <div>…</div>}
-      </div>
+{
+  /* Code body: expanded + line-by-line while a gated card reveals;
+          otherwise the existing collapsed summary preview. */
+}
+<div
+  className={
+    revealing
+      ? "bg-light-background-02 dark:bg-dark-background-02 overflow-hidden font-mono text-xs leading-relaxed"
+      : "bg-light-background-02 dark:bg-dark-background-02 h-0 max-h-0 min-h-0 overflow-hidden opacity-0"
+  }
+>
+  {(revealing ? revealLines : revealLines.slice(0, 3)).map((line, idx) => (
+    <div key={`${begin.sectionId}-${line.lineNr ?? idx}`}>{line.line || " "}</div>
+  ))}
+  {!revealing && revealLines.length > 3 && <div>…</div>}
+</div>;
 ```
 
 (Match the existing surrounding class names / structure; the key change is the conditional `h-0 ... opacity-0` collapse and rendering `revealLines` instead of a hard `lines.slice(0,3)` when revealing.)
@@ -724,18 +764,18 @@ export function CodeMsg({
 5. Thread `isStreaming` from the reducer's `CodeMsg` call sites. In the reducer, `promptProcessing` is the turn-running flag (already a parameter of `MessageList`). At the `isBlockEnd` flush site (~line 598) and any other `<CodeMsg .../>` render, pass `isStreaming={promptProcessing}`:
 
 ```tsx
-                <CodeMsg
-                  key={`code-${block.begin.sectionId}-${idx}`}
-                  begin={block.begin}
-                  lines={block.lines}
-                  end={block.end}
-                  truncated={block.truncated}
-                  isStreaming={promptProcessing}
-                  onDiffClick={onDiffClick}
-                  onClick={() => {
-                    /* unchanged */
-                  }}
-                />
+<CodeMsg
+  key={`code-${block.begin.sectionId}-${idx}`}
+  begin={block.begin}
+  lines={block.lines}
+  end={block.end}
+  truncated={block.truncated}
+  isStreaming={promptProcessing}
+  onDiffClick={onDiffClick}
+  onClick={() => {
+    /* unchanged */
+  }}
+/>
 ```
 
 Apply the same `isStreaming={promptProcessing}` to the pre-truncate `CodeMsg` render (~line 673) and the truncated `CodeMsg` render if present. Do not change any other props.
@@ -765,6 +805,7 @@ git commit -m "feat(MessageList): gated typewriter reveal in CodeMsg"
 **Depends-on:** 2, 4
 
 **Files:**
+
 - (none — verification only)
 
 - [ ] **Step 1: Run the full check**
@@ -785,6 +826,7 @@ Expected: exit 0.
 **Depends-on:** 5
 
 **Files:**
+
 - (none — drives the deployed preview)
 
 - [ ] **Step 1: Wait for the preview deploy of the merged/pushed branch**
@@ -794,6 +836,7 @@ The `preview:whole-file-codegen` label + `USE_WHOLE_FILE_CODEGEN=true` are alrea
 - [ ] **Step 2: Drive a creation prompt and observe**
 
 On `https://pr-2650-vibes-diy-v2.jchris.workers.dev`, submit a brand-new creation prompt. Confirm, via screenshots across the ~60–120s generation:
+
 - code lines materialize line-by-line in the chat code card (steady typewriter), not all at once;
 - NO "Reconnecting" appears;
 - NO `Cannot read properties of undefined (reading 'sectionId')` in the console (read_console_messages);

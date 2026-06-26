@@ -55,7 +55,7 @@ Files: `vibes.diy/api/svc/intern/codegen-loop/whole-file-loop.ts` (done), `vibes
   - persist `buildBlockEvents(result.files)` (also carrying the `reveal` marker) via `handlePromptContext`, unchanged.
 - **Remove the diagnostic `/_streamdiag` card.**
 - **Keepalive:** a `block.begin` heartbeat runs only until the first `onLine` (covers the ~18s plan gap; stops on the first line so it never wipes an in-progress card). Within a turn the ~3s delta cadence keeps the watchdog alive.
-- **Crash-safety:** continuous `code.line` means no silent gap → no mid-turn reconnect → no race. If a run buffers, `onLine` fires at the end → the same self-framed burst as today's safe reveal. This brings the path to **parity with the production SEARCH/REPLACE streaming path**, which emits the same event types and handles reconnect correctly. Residual: a `>45s` pause *within a single file* (between its `code.begin` and `code.end`) could still reconnect mid-section; the measured ~3s cadence makes this effectively impossible, and it is the same risk the production path already carries.
+- **Crash-safety:** continuous `code.line` means no silent gap → no mid-turn reconnect → no race. If a run buffers, `onLine` fires at the end → the same self-framed burst as today's safe reveal. This brings the path to **parity with the production SEARCH/REPLACE streaming path**, which emits the same event types and handles reconnect correctly. Residual: a `>45s` pause _within a single file_ (between its `code.begin` and `code.end`) could still reconnect mid-section; the measured ~3s cadence makes this effectively impossible, and it is the same risk the production path already carries.
 
 ## ② CodeMsg reveal + gate
 
