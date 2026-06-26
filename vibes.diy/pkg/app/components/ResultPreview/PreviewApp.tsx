@@ -10,7 +10,7 @@ import { getCode } from "./get-code.js";
 import type { EvtVibeViewerChanged } from "@vibes.diy/vibe-types";
 import { RUNTIME_PREVIEW_IFRAME_ALLOW, RUNTIME_PREVIEW_IFRAME_SANDBOX } from "../../lib/iframe-policy.js";
 import { adminModeStorageKey } from "../../lib/admin-mode.js";
-import { ThemedSkeleton } from "./ThemedSkeleton.js";
+import { ThemedSkeleton, colorsetToSkeletonTokens, type ColorThemeTokens } from "./ThemedSkeleton.js";
 
 /**
  * Returns true during the cold-open window: the prompt is running, the iframe
@@ -217,6 +217,35 @@ export function PreviewApp({ promptState }: { promptState: PromptState }) {
   const showColdOpen = shouldShowColdOpen({ running: promptState.running, pinnedFsId, firstStreamDone });
   const showOverlay = promptState.running;
 
+  // Resolve the cold-open skeleton's palette from the chat's colorset slug.
+  // `promptState.colorTheme` is a slug string; the resolved tokens live in the
+  // client-only colorsets bundle (kept off the API worker's import graph), so
+  // we dynamically import it the same way ColorsetPicker does. The import is
+  // async — until it resolves we keep `coldOpenTokens` null so ThemedSkeleton's
+  // neutral fallback paints for the sub-100ms gap. Keyed on the slug so a chat
+  // switch re-resolves; the cancelled flag guards a slug change mid-import.
+  const [coldOpenTokens, setColdOpenTokens] = useState<ColorThemeTokens | null>(null);
+  const coldOpenSlug = promptState.colorTheme;
+  useEffect(() => {
+    if (typeof coldOpenSlug !== "string" || coldOpenSlug.length === 0) {
+      setColdOpenTokens(null);
+      return;
+    }
+    let cancelled = false;
+    void import("../../../../../prompts/pkg/themes/colorsets-bundle.js")
+      .then((mod) => {
+        if (cancelled) return;
+        const colorset = mod.getColorsetBySlug(coldOpenSlug);
+        setColdOpenTokens(colorset === undefined ? null : colorsetToSkeletonTokens(colorset));
+      })
+      .catch(() => {
+        if (!cancelled) setColdOpenTokens(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [coldOpenSlug]);
+
   // Push owner identity into the iframe as soon as the runtime is ready.
   // render-vibe.ts omits viewerEnv for ?preview=yes (no Clerk session on the
   // HTTP path), so without this push can("write") would be false until the
@@ -272,7 +301,7 @@ export function PreviewApp({ promptState }: { promptState: PromptState }) {
         allow={RUNTIME_PREVIEW_IFRAME_ALLOW}
         style={{ isolation: "isolate", transform: "translate3d(0,0,0)" }}
       />
-      {showColdOpen ? <ThemedSkeleton colorTheme={null} /> : null}
+      {showColdOpen ? <ThemedSkeleton colorTheme={coldOpenTokens} /> : null}
       {showOverlay && (
         <div
           aria-hidden="true"

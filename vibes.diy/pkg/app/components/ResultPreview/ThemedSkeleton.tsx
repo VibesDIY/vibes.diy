@@ -1,4 +1,5 @@
 import React from "react";
+import type { Colorset } from "@vibes.diy/prompts";
 
 export interface ColorThemeTokens {
   background?: string;
@@ -11,9 +12,30 @@ export interface ColorThemeTokens {
   radius?: string;
 }
 
-const NEUTRAL: Required<
-  Pick<ColorThemeTokens, "background" | "surface" | "accent" | "text-primary" | "border" | "radius">
-> = {
+/**
+ * Maps a resolved Colorset's canonical LIGHT colors + structural block into the
+ * ColorThemeTokens shape the skeleton consumes. Pure (no React) so it can be
+ * unit-tested in isolation. Reads only the LIGHT `colors` map (the cold-open
+ * paints in light mode); structural tokens (`font-family`, `radius`) are pulled
+ * through when present and omitted otherwise so ThemedSkeleton's neutral
+ * fallbacks apply.
+ */
+export function colorsetToSkeletonTokens(colorset: Colorset): ColorThemeTokens {
+  const c = colorset.colors;
+  const s = colorset.structural ?? {};
+  const tokens: ColorThemeTokens = {};
+  if (c.background !== undefined) tokens.background = c.background;
+  if (c.surface !== undefined) tokens.surface = c.surface;
+  if (c.primary !== undefined) tokens.primary = c.primary;
+  if (c.accent !== undefined) tokens.accent = c.accent;
+  if (c["text-primary"] !== undefined) tokens["text-primary"] = c["text-primary"];
+  if (c.border !== undefined) tokens.border = c.border;
+  if (s["font-family"] !== undefined) tokens["font-family"] = s["font-family"];
+  if (s.radius !== undefined) tokens.radius = s.radius;
+  return tokens;
+}
+
+const NEUTRAL: Required<Pick<ColorThemeTokens, "background" | "surface" | "accent" | "text-primary" | "border" | "radius">> = {
   background: "#0d0d10",
   surface: "#17171c",
   accent: "#6b7280",
