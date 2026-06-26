@@ -11,13 +11,13 @@
 **Scope note — what this plan deliberately excludes:**
 
 - **Bucket C (login localhost server / #1616)** — already shipped; `node.ts` re-exports `deviceIdRegisterEvento`/`isResDeviceIdRegister` and the styled `/cert` page landed. Not re-touched here.
-- **Bucket D (legacy in-browser IndexedDB — `use-fireproof` in `ImgGen.tsx` / `use-img-gen.ts`)** — **out of scope** per the design's ratified resolution (Q5): it is a separate firefly-migration track with its own acceptance criteria, _not_ part of the identity/PKI extraction. Excluded.
+- **Residual `@fireproof/use-fireproof` app imports** (the `useFireproof` hook/types in `ImgGen` and ~15 `pkg/app` files) — **not part of this identity/PKI extraction** and not tracked by this effort. In the deployed iframe runtime that hook is injected with the firefly-backed bridge, so it is not a local-IndexedDB dependency; if those imports ever need removing it is a separate app concern, not de-fireproof. Excluded.
 - **Bucket E (`SuperThis` / `ensureSuperThis` narrowing)** — separate plan, tracked in [#2468](https://github.com/VibesDIY/vibes.diy/issues/2468). This plan keeps using the existing `RuntimeContext` seam unchanged.
 - **Bucket F (`@fireproof/core-cli` build tool)** — separate plan, tracked in [#2483](https://github.com/VibesDIY/vibes.diy/issues/2483). The `cli-kit.ts` runtime-framework internals swap is [#2482](https://github.com/VibesDIY/vibes.diy/issues/2482); browser-graph hardening is [#2469](https://github.com/VibesDIY/vibes.diy/issues/2469).
 
 **Source-of-truth references:**
 
-- Design spec: [`docs/superpowers/specs/2026-06-19-defireproof-identity-extraction-design.md`](../specs/2026-06-19-defireproof-identity-extraction-design.md) (APPROVED; Buckets A–F; resolutions Q1–Q6).
+- Design spec: [`docs/superpowers/specs/2026-06-19-defireproof-identity-extraction-design.md`](../specs/2026-06-19-defireproof-identity-extraction-design.md) (APPROVED; Buckets A, B, C, E, F; resolutions Q1–Q4, Q6).
 - Foundation plan (predecessor, landed): [`docs/superpowers/plans/2026-06-19-defireproof-identity-extraction-foundation.md`](2026-06-19-defireproof-identity-extraction-foundation.md). This plan is its **"Plan 3 — Identity runtime extraction"** roadmap item, folded together with the residual **Plan 2 — Type ownership** (Bucket B), because the wire-types and the verifier that consumes the patch cut over together.
 
 ---
@@ -537,7 +537,7 @@ git commit -m "feat(identity): lift keybag in-repo; drop device-id/keybag/dash/t
 grep -rn "@fireproof/" --include=package.json . | grep -v node_modules
 ```
 
-Categorize each: (a) `core-runtime` / `core-types-base` `SuperThis` → keep (Bucket E #2468); (b) `core-cli` → keep (Bucket F #2483); (c) `use-fireproof` in `vibes.diy/base` / `tests/app` → keep (Bucket D, out of scope); (d) device-id/keybag/protocols-dashboard/types-protocols-dashboard/types-device-id whose only importer was the identity facade → **removable**.
+Categorize each: (a) `core-runtime` / `core-types-base` `SuperThis` → keep (Bucket E #2468); (b) `core-cli` → keep (Bucket F #2483); (c) `use-fireproof` in `vibes.diy/base` / `pkg/app` / `tests/app` → keep (residual app/ImgGen imports, not part of this effort); (d) device-id/keybag/protocols-dashboard/types-protocols-dashboard/types-device-id whose only importer was the identity facade → **removable**.
 
 - [ ] **Step 2: Remove category (d) declarations package-by-package**
 
@@ -580,7 +580,7 @@ Reaching **zero `@fireproof/*`** after this plan requires, in order:
 
 - **Plan 4 — `SuperThis` decision (Bucket E).** Narrow `RuntimeContext` and migrate the ~30 `ensureSuperThis` call sites onto a thin in-repo runtime-context (spec Q1 resolution); drop `@fireproof/core-runtime`. Tracked: [#2468](https://github.com/VibesDIY/vibes.diy/issues/2468). Also [#2469](https://github.com/VibesDIY/vibes.diy/issues/2469) (browser-graph hardening — durable replacement for the `find-up` exclude).
 - **Plan 5 — Build-toolchain swap (Bucket F).** Replace `core-cli tsc`/`build`/`pack`/`publish` across ~33 scripts / ~22 devDeps with `tsc`/`tsup`/in-repo wrapper; drop the `@fireproof/core-cli` devDep repo-wide. Tracked: [#2483](https://github.com/VibesDIY/vibes.diy/issues/2483). Runtime cmd-ts internals swap behind `cli-kit.ts`: [#2482](https://github.com/VibesDIY/vibes.diy/issues/2482).
-- **Out of scope (separate track):** Bucket D legacy in-browser IndexedDB (`use-fireproof` in ImgGen / vibe-card) — its own firefly-migration with separate acceptance criteria (spec Q5).
+- **Not part of this effort:** residual `@fireproof/use-fireproof` hook/type imports in app/ImgGen code — injected with the firefly-backed bridge in the deployed runtime, so not a de-fireproof concern.
 
 Only after Plans 4 + 5 does `pnpm` resolve **zero** `@fireproof/*` for the identity/PKI surface.
 

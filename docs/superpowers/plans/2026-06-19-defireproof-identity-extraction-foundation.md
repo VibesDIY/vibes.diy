@@ -266,8 +266,7 @@ Per the spec's risk-ordered phasing. These are **not** detailed here; each gets 
 - **Plan 3 — Identity runtime extraction (spec phase 2 + Clerk dash-api).** Lift-verbatim device-id signer / keybag / CA-verify + the `core-protocols-dashboard` runtime client behind one `createDeviceIdGetToken()` API; collapse the 3 duplicated client signers. **Gate:** extend Task 1's harness with cross-verification (extracted-mints ⇄ fireproof-verifies).
 - **Plan 4 — Own the login localhost server (spec phase 3 → closes #1616).** Replace the `core-cli` device-id-register dependency with our `login-server` + a styled `/cert` success page.
 - **Plan 5 — `SuperThis` decision (spec phase 4).** Narrow `RuntimeContext` and migrate the ~30 `ensureSuperThis` call sites onto it; optionally upstream into `@adviser/cement`. Tracked: [#2468](https://github.com/VibesDIY/vibes.diy/issues/2468).
-- **Plan 6 — Legacy IndexedDB migration (Bucket D, separate track).**
-- **Plan 7 — Build-toolchain swap (Bucket F, separate track).** Replace `core-cli tsc`/`build`/`pack`/`publish`; drop the `@fireproof/core-cli` devDep repo-wide → true zero `@fireproof/*`.
+- **Plan 6 — Build-toolchain swap (Bucket F, separate track).** Replace `core-cli tsc`/`build`/`pack`/`publish`; drop the `@fireproof/core-cli` devDep repo-wide → true zero `@fireproof/*`.
 
 ## Self-review notes
 
