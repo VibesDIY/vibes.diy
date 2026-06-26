@@ -85,9 +85,9 @@ npx vibes-diy chats garden-gnome/alignment-chart <chatId>              # the use
 npx vibes-diy chats garden-gnome/alignment-chart <chatId> --response   # the MODEL's reply
 ```
 
-`--response` reconstructs the model's reply from the stored block events and **annotates each code fence with the path the parser bound it to** — so you can see directly which file each block became. Modifiers (all require `--response`):
+`--response` reconstructs the model's reply from the stored block events and **annotates each code fence with the path the parser bound it to** — so you can see directly which file each block became. Modifiers (each implies `--response`, so they also work on their own):
 
-- `--turn <promptId>` — pick a turn in a multi-turn chat (default: newest; the command prints the turn count and IDs).
+- `--turn <promptId>` — pick a turn in a multi-turn chat (default: newest; the command prints the total turn count and the selected turn's `promptId`).
 - `--files` — the resolved `path → content` map: **what actually got written**. Cross-check it against the filename labels in `--response`: if the model named a file (e.g. an `access.js` label line) that has no matching key in `--files`, that block was misrouted.
 - `--jsonl` — the raw block events, one JSON object per line (for `jq` / fixtures).
 - `--raw` — byte-faithful model text captured upstream of the parser (preserves consumed filename labels and blank lines). **New generations only** — older chats have no raw capture and the command says so; fall back to the default `--response` or `--jsonl`.
