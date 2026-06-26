@@ -1,12 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { PromptAndBlockMsgs, ResChatResponseTurn } from "@vibes.diy/api-types";
-import {
-  buildSectionStream,
-  extractUserPrompts,
-  reconstructVerbatim,
-  renderJsonl,
-  turnBlocks,
-} from "./chat-response-render.js";
+import { buildSectionStream, extractUserPrompts, reconstructVerbatim, renderJsonl, turnBlocks } from "./chat-response-render.js";
 import { resolveSectionStream } from "./resolve-section-stream.js";
 
 const base = (seq: number) => ({
