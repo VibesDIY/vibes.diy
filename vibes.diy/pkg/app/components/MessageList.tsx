@@ -1,7 +1,6 @@
 import React, { memo, useEffect, useRef } from "react";
 import { PromptBlock } from "../routes/chat/chat.$ownerHandle.$appSlug.js";
 import { parseOptionLines } from "../utils/option-lines.js";
-import { OptionButtons } from "@vibes.diy/base";
 import {
   BlockBeginMsg,
   BlockEndMsg,
@@ -20,7 +19,7 @@ import {
   ToplevelBeginMsg,
   ToplevelEndMsg,
 } from "@vibes.diy/call-ai-v2";
-import { BrutalistCard } from "@vibes.diy/base";
+import { BrutalistCard, OptionButtons } from "@vibes.diy/base";
 import ReactMarkdown from "react-markdown";
 import { PromptError, PromptReq, isPromptError, isPromptReq } from "@vibes.diy/api-types";
 

@@ -167,13 +167,13 @@ export const LiveSwitchOpen: Story = {
 
 // --- 1b: first-generation — stream then de-blur into the inset card ----------------------
 
-export const FirstGeneration: Story = {
+export const FirstGeneration: StoryObj<{ progress: number }> = {
   name: "1b · First-generation (stream → de-blur)",
   argTypes: {
     progress: { control: { type: "range", min: 0, max: 1, step: 0.05 } },
   },
   args: { progress: 0.35 },
-  render: (args: { progress: number }) => {
+  render: (args) => {
     const p = args.progress;
     // 25px → ~0 across generation (mirrors PreviewApp blur ramp, simplified to a continuous scrub)
     const blurPx = 25 * Math.pow(2 / 3, p * 8);
