@@ -84,54 +84,102 @@ land on and want to change. Crucially:
 ### 1a. The edit affordance — the one reusable primitive (design this first)
 
 ```
- ┌─────────────────────────┐   Exactly TWO curated chips + "Other" (free text).
- │   ▸ Make it a drum kit   │   - The two chips are CACHED → instant, served as a
- │   ▸ Add a high score     │     page view: NO login, NO codegen call.
- │   ▸ Other…  (free text)  │   - "Other", or a chip whose result isn't cached →
- ├─────────────────────────┤     a REAL codegen request → login required at that
- │  ✎ describe a change…  ▸ │     moment (§3). The login wall sits on codegen,
- └─────────────────────────┘     not on the page.
+ ┌─────────────────────────┐   Two chips (up to THREE on occasion) + "Other" (free text).
+ │   ▸ Make it a drum kit   │   - Curated chips are CACHED ("cached" == "curated" here)
+ │   ▸ Add a high score     │     → instant, served as a page view: NO login, NO codegen.
+ │   ▸ Other…  (free text)  │   - "Other", or any click whose result isn't cached → a
+ ├─────────────────────────┤     REAL codegen request → login at that moment (§3). The
+ │  ✎ describe a change…  ▸ │     login wall sits on codegen, not on the page.
+ └─────────────────────────┘   - Future: we may pre-cache predicted next-clicks even on
+                                  user-generated vibes — then "cached" extends past curated.
         Same component, different seed:
         - Homepage / starter: CREATE a new app ("Make a ___").
         - Any vibe: TRANSFORM this app ("Make it ___"); a non-owner's first
           transform forks to their own copy (#1856), inline & non-blocking.
 ```
 
-Two chips keep it a trained, low-choice gesture; "Other" is the open road. Same component,
-different seed — this absorbs the Instant Starter Stack (#1896), the inline edit/hot-swap
-(#1745), and what used to be a distinct "iterate" UI into **one** thing.
+Two (sometimes three) chips keep it a trained, low-choice gesture; "Other" is the open
+road. **Reuse the existing chat suggestion-chip component for visual unity** —
+`OptionButtons` (`vibes.diy/pkg/app/components/OptionButtons.tsx`), which is already a
+decoupled, Tailwind-styled list fed by `▸`-prefixed option lines parsed out of the last AI
+message (`parseOptionLines`, `utils/option-lines.ts`). That's the seam (see §1d): the chips
+*are* the chat's suggestion chips, so the edit affordance and the chat are the same data,
+rendered in two places. Same component, different seed — this absorbs the Instant Starter
+Stack (#1896), the inline edit/hot-swap (#1745), and the old distinct "iterate" UI into
+**one** thing.
 
-### 1b. First-generation state on `/vibe` (the new state, sketch alongside 1a)
+### 1b. First-generation (and every non-cached change) state on `/vibe`
 
-This is the novel piece. You submitted a prompt on the homepage; now you're on `/vibe` and
-**the code is being built.** It must **not** look like today's chat editor.
-
-```
- ┌─────────────────────────┐   Mobile, full-bleed.
- │                         │   - The canvas is where the app is being born; code
- │     (app blooming —     │     streams INTO it, not into a code pane with a
- │   code streaming in)    │     preview tab.
- │                         │   - A slim progress affordance (not a chat log);
- │   building your app…    │     collapses into the Live edit affordance (1a)
- │                         │     when the first runnable build lands.
- ├─────────────────────────┤   - Hot-swap overlay kept: subsequent builds swap in
- │  ◐ building…            │     place (the existing mechanism).
- └─────────────────────────┘
-```
-
-### 1c. Live + edit — app running, affordance present
+A non-cached click (Other, or any uncached chip) starts a **generation phase** that takes
+time. Because it takes time, **show the chat stream while it generates** — then **hide it
+the moment the first code block completes** and show the live preview instead. The chat is
+never the destination; it's a transient progress view that yields to the running app.
 
 ```
- ┌─────────────────────────┐   - App fills the screen.
- │                         │   - One pill carries identity + share, parameterized
- │     (running app)       │     by grant (§2) — NOT four look-alike buttons with
- │                         │     three interaction models (#1708).
- │                         │   - Editing IS the affordance (1a): owner/writer →
- │                         │     chips+textarea change the app in place; reader/anon
- ├─────────────────────────┤     → the pill shows the intent CTA (Join/Remix/View).
- │ ⌂   ◐ handle ▾    ✎ edit │   - There is no "Edit" destination and no separate
- └─────────────────────────┘     iterate flow — you just change the app.
+  DURING generation (pre first code block)      AFTER first code block completes
+  ┌─────────────────────────┐                   ┌─────────────────────────┐
+  │ building your app…      │  show the stream  │                         │
+  │ ▸ adding a grid…        │  (real AI         │     (live preview —     │
+  │ ▸ wiring up sound…      │   narration       │      app running)       │
+  │ ▸ ```jsx                │   streaming)      │                         │
+  │   function App() {      │                   ├─────────────────────────┤
+  │ ...                     │   ── 1st code ──▶ │  💬 chat   ⌂  ◐ handle ▾ │ ← toggle
+  └─────────────────────────┘   block done      └─────────────────────────┘   reopens chat
 ```
+
+- **Detecting "first code block completes":** the stream is `PromptAndBlockMsgs`; watch for
+  the first `block.code.end` (`isCodeEnd`, `call-ai/v2/block-stream.ts`). On that event, swap
+  stream → live preview and hot-swap subsequent builds in place (existing mechanism).
+- **Chat is a toggle, always available.** A `💬` control opens the chat whether it's *still
+  streaming* or *complete* — so a curious user can watch the build, and anyone can reread
+  how an app was made. The chat is hidden by default once the app runs, not deleted.
+- **Curated (cached) items have no real generation, so their chat is "faked."** Because the
+  chips are cached/hand-built, there's no live stream — but the toggle must still open *some*
+  plausible history. So curated starters ship with **pre-authored chat** stored in the **same
+  data structures** as real chat (`ChatSections` / `PromptAndBlockMsgs`), including the
+  trailing `▸` option lines that render as the next chips. One data model, real or faked.
+- It must **not** look like today's chat editor — the stream is a transient overlay, not a
+  side-by-side code pane.
+
+### 1c. Live + edit — app running, the switch closed
+
+```
+  closed (switch is the pill)            open (switch reveals the affordance)
+  ┌─────────────────────────┐            ┌─────────────────────────┐
+  │                         │            │     (running app)       │
+  │     (running app)       │   tap the  ├─────────────────────────┤
+  │                         │   switch   │   ▸ Make it a drum kit   │ ← OptionButtons
+  │                         │  ───────▶  │   ▸ Add a high score     │   (the chips)
+  ├─────────────────────────┤            │   ▸ Other…              │
+  │ ⌂   ◐ handle ▾   [VIBES]│            │  ✎ describe a change… ▸ │
+  └─────────────────────────┘            └─────────────────────────┘
+```
+
+- **Opening the switch reveals the chips (the edit affordance).** This is the core move:
+  the VibesSwitch's open state *is* §1a. Closed, it's the identity/share pill (one model,
+  not four look-alike buttons with three behaviors, #1708). On start/homepage flows it
+  starts **already open** (chips showing); on a live vibe it starts closed.
+- **Editing IS the affordance:** owner/writer → chips + textarea change the app in place;
+  reader/anon → the switch shows the intent CTA (Join/Remix/View, §2). No "Edit"
+  destination, no separate iterate flow — you just change the app.
+
+### 1d. Implementation grounding — the build seam (existing code this reuses)
+
+The design lands on code that already exists; the work is mostly *re-wiring*, not new
+systems. Charlie/Codex and the explorers confirmed these seams:
+
+| Need | Reuse / extend | Where |
+| --- | --- | --- |
+| The chips | **`OptionButtons`** — decoupled, Tailwind, already the chat suggestion chips | `pkg/app/components/OptionButtons.tsx` |
+| Chip source | `▸`-prefixed lines parsed from the last AI message (`parseOptionLines`) | `pkg/app/utils/option-lines.ts` |
+| The switch that opens to reveal them | **`ExpandedVibesPill`** owns the open/close phase machine (`idle→bubble→…→open`); **`VibesSwitch`** is the SVG toggle. Redefine "open" to render `OptionButtons`. | `base/components/ExpandedVibesPill.tsx`, `VibesSwitch.tsx` |
+| The chat stream during generation | `PromptAndBlockMsgs` stream; first-code-block via `isCodeEnd` | `pkg/app/hooks/useChatSession.ts`, `call-ai/v2/block-stream.ts` |
+| Real **and faked** chat in one model | `ChatSections` rows of `PromptAndBlockMsgs[]` (`block.toplevel.line` / `block.code.*`); pre-author curated history the same way | `api/sql/...schema-sqlite.ts`, `prompt-assembly.ts` |
+| Today's homepage onramp (to replace) | carousel of full suggestions → `/chat/prompt?prompt64=` | `pkg/app/components/HomePage.tsx`, `data/quick-suggestions-data.ts` |
+
+> **There is an earlier prototype of "switch-opens-to-chips" but it's unsatisfying** — treat
+> it as a learning, not a base. The unification target is: chips = `OptionButtons` fed by
+> `▸` lines, so the affordance and the chat are literally the same data in two surfaces.
 
 ## 2. Consistency spec (the verb + state model)
 
@@ -260,7 +308,7 @@ for your judgement before code.
 | Day | Work | Output | Gate |
 | --- | --- | --- | --- |
 | **0–1** | Lofi sketches of the edit affordance (§1a), first-generation `/vibe` (§1b), live+edit (§1c), mobile-first. Flow outlines for: new app from homepage, visitor-Join, visitor-Remix, owner-edit. Finalize §2 verb spec + §7 subtraction ledger. | Sketch set + this doc's §1–2 ratified | **GATE 1: you approve the sketches & verbs before any code.** |
-| **2** | Spike the edit affordance (§1a) + first-generation `/vibe` state (§1b), mobile-first, app-blooms-in-canvas. Behind a flag; cached chips anonymous, **login gates codegen by design** (§3) — no anonymous-draft backend needed. | Clickable affordance + first-gen on `/vibe` | **GATE 2: does the affordance + first-gen feel right on a phone?** |
+| **2** | **The first & biggest step: redefine the VibesSwitch so opening it reveals the chips** (`OptionButtons`), already-open on start flows (§1c/§1d). Then the first-generation stream→preview behavior (§1b). Behind a flag; cached chips anonymous, **login gates codegen by design** (§3) — no anonymous-draft backend needed. | Switch-reveals-chips + first-gen on `/vibe` | **GATE 2: does opening the switch → chips, and first-gen, feel right on a phone?** |
 | **3** | Verb collapse + landing card: Remix/Join/View by intent; delete Clone/Fresh-Install/Edit-button; publish-intent setting (#1854). Mostly deletion. | PR-1 part 1 | — |
 | **4** | Share panel link-first (#2232 + children). Indicator system for viewer modes (#2178/#2275). | PR-1 complete → review | **GATE 3: PR-1 review/QA.** |
 | **5** | Inversion wiring: agent-in-vibe live+edit, hot-swap inline, `/chat` → `/vibe` redirects, lazy chat connection flip. | PR-2 (may carry over) | **GATE 4: full cutover review.** |
@@ -342,16 +390,21 @@ What we delete, and the learning it encodes — so the knowledge survives the co
 
 ## 8. Open questions for GATE 1
 
-**✅ 1. Edit-affordance shape — DECIDED (jchris).** Exactly **two curated chips + "Other"
-(free text)**. Two keeps it a low-choice trained gesture; "Other" is the open road. Same on
-the homepage and on any vibe.
+**✅ 1. Edit-affordance shape — DECIDED (jchris).** **Two curated chips (up to three on
+occasion) + "Other" (free text)**, rendered with the existing `OptionButtons` suggestion-chip
+style for unity, surfaced by **opening the VibesSwitch** (already-open on start). Low-choice
+trained gesture; "Other" is the open road. Same on the homepage and on any vibe.
+Terminology: **"cached" == "curated"** in this doc; future caching of predicted next-clicks
+may extend "cached" beyond curated, even to user-generated vibes.
 
 **✅ 2. Login boundary — DECIDED (jchris).** **No login until a real codegen request** (Other
 or an uncached chip). Cached chips are anonymous page-views. So there's **no anonymous
 *generation*, hence no anonymous-draft / claim-on-sign-in system to build** (§3). The only
 residual: preserve the pending prompt across the sign-in redirect (existing `?intent=`/prompt
-routing handles it) — confirm it survives the Other/uncached path. Define "uncached chip"
-precisely (a curated chip whose generated result isn't pre-warmed).
+routing handles it) — confirm it survives the Other/uncached path. "Uncached" = any click
+whose result isn't pre-warmed; today, since cached==curated, that's effectively just "Other",
+but future predicted-next-click caching could pre-warm some non-curated clicks too (so keep
+the boundary defined by *cache-hit*, not by *is-it-a-curated-chip*).
 
 3. **Slug + draft lifecycle (reduced by Q2).** Cached chips reuse existing cached-vibe URLs;
    a *new* slug is allocated only at the first real codegen — which is now **post-login** — so
