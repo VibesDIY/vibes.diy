@@ -16,12 +16,15 @@ import { DeviceIdSignMsg } from "./device-id/sign.js";
 // NOT bundleable for Cloudflare Workers. Worker code must use "./server" for
 // the CA/token API, never this module.
 export { getKeyBag } from "@fireproof/core-keybag";
-// Device-id client crypto (key/sign/csr) is now in-repo (Task 2); the server CA
-// stays fireproof-backed until Task 3.
+// Device-id crypto (key/sign/csr) + the server-side verifier and CA are now
+// in-repo (Tasks 2-3). The production server still reaches the CA/verify through
+// core-protocols-dashboard's deviceIdCAFromEnv/tokenApi (./server) until Task 5
+// re-homes that layer onto these in-repo classes.
 export { DeviceIdKey } from "./device-id/key.js";
 export { DeviceIdSignMsg } from "./device-id/sign.js";
 export { DeviceIdCSR } from "./device-id/csr.js";
-export { DeviceIdCA } from "@fireproof/core-device-id";
+export { DeviceIdVerifyMsg } from "./device-id/verify.js";
+export { DeviceIdCA } from "./device-id/ca.js";
 // Login device-id-register flow (the localhost cert handler — Bucket C / #1616).
 // Generic cmd-ts streaming primitives (isCmdProgress/sendProgress/…) are NOT
 // re-exported here: they're CLI-framework, not identity, and stay on core-cli.

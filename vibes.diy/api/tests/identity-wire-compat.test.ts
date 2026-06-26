@@ -263,4 +263,93 @@ describe("identity wire-compat (baseline: @fireproof/* 0.24.19)", { timeout: 300
     const payload = decodeSeg(extractedTok.split(".")[1]);
     expect(Object.keys(payload).sort()).toEqual(SESSION_CLAIM_KEYS);
   });
+
+  // Task 3: full server round-trip on the in-repo CA + verifier. Proves the
+  // lifted DeviceIdCA issues certs whose tokens verify under BOTH the fireproof
+  // and the in-repo verifier, and that the in-repo CA+verifier preserve the
+  // Certor normalize-then-hash invariant (incomplete claim ⇒ thumbprint mismatch).
+  it("cross-verify: in-repo CA issues certs verifiable under both verifiers; preserves thumbprint invariant", async () => {
+    const fullParams = {
+      nick: "nick-ca",
+      email: "ca@example.com",
+      email_verified: true,
+      first: "first-ca",
+      image_url: "http://example.com/image-ca.png",
+      last: "last-ca",
+      name: "name-ca",
+      public_meta: "{}",
+    };
+    const claimFor = (params: Record<string, unknown>) => {
+      const n = Math.floor(Date.now() / 1000);
+      return {
+        azp: "ca-xverify",
+        exp: n + 3600,
+        iat: n,
+        iss: "test-issuer",
+        jti: "ca-cert-jti",
+        nbf: n,
+        params,
+        role: "device-id",
+        sub: "device-id-subject-ca",
+        userId: "user-id-ca",
+        aud: ["http://test-audience.localhost/"],
+      };
+    };
+
+    const caKey = await extracted.DeviceIdKey.create();
+    const inRepoCA = new extracted.DeviceIdCA({
+      base64: sthis.txt.base64,
+      caKey,
+      caSubject: {
+        commonName: "In-Repo Test CA",
+        organization: "Test",
+        locality: "T",
+        stateOrProvinceName: "T",
+        countryName: "US",
+      },
+      actions: { generateSerialNumber: async () => sthis.nextId(32).str },
+    });
+    const caCert = (await inRepoCA.caCertificate()).Ok();
+
+    const mintViaInRepoCA = async (params: Record<string, unknown>) => {
+      const devKey = await extracted.DeviceIdKey.create();
+      const csr = (await new extracted.DeviceIdCSR(sthis, devKey).createCSR({ commonName: "ca-dev" })).Ok();
+      const issued = (await inRepoCA.processCSR(csr, claimFor(params) as never)).Ok();
+      const signer = new extracted.DeviceIdSignMsg(sthis.txt.base64, devKey, issued.certificatePayload);
+      const now = Math.floor(Date.now() / 1000);
+      return signer.sign(
+        {
+          iss: "ca-xverify",
+          sub: "device-id",
+          deviceId: await devKey.fingerPrint(),
+          seq: 1,
+          exp: now + 120,
+          nbf: now - 2,
+          iat: now,
+          jti: "ca-tok-jti",
+        },
+        "ES256"
+      );
+    };
+
+    // Full claim ⇒ valid under both the fireproof and the in-repo verifier.
+    const token = await mintViaInRepoCA(fullParams);
+    const fpVerifier = new DeviceIdVerifyMsg(sthis.txt.base64, [caCert] as never, {
+      clockTolerance: 0,
+      deviceIdCA: inRepoCA as never,
+    });
+    const inRepoVerifier = new extracted.DeviceIdVerifyMsg(sthis.txt.base64, [caCert], {
+      clockTolerance: 0,
+      deviceIdCA: inRepoCA as never,
+    });
+    expect((await fpVerifier.verifyWithCertificate(token)).valid).toBe(true);
+    expect((await inRepoVerifier.verifyWithCertificate(token)).valid).toBe(true);
+
+    // Incomplete claim ⇒ the in-repo verifier rejects with CERT_THUMBPRINT_MISMATCH,
+    // proving the lifted CA+verifier preserve the normalize-then-hash ordering.
+    const badToken = await mintViaInRepoCA({ email: "ca@example.com", email_verified: true, public_meta: "{}" });
+    const vrBad = await inRepoVerifier.verifyWithCertificate(badToken);
+    expect(vrBad.valid).toBe(false);
+    if (!vrBad.valid) expect((vrBad as { errorCode?: string }).errorCode).toBe("CERT_THUMBPRINT_MISMATCH");
+  });
 });
