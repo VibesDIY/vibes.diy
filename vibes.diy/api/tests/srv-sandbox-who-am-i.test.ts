@@ -3,7 +3,6 @@ import { vibesDiySrvSandbox } from "@vibes.diy/vibe-srv-sandbox";
 import { VibesDiyApiIface, VibesDiyError } from "@vibes.diy/api-types";
 import { Result } from "@adviser/cement";
 import { ResVibeWhoAmI } from "@vibes.diy/vibe-types";
-import type { DbAcl } from "@vibes.diy/api-types";
 
 // Task 7 host-side bridge handler `vibeWhoAmI`. Dependencies are injected
 // (chatApi) so the handler is testable without stubbing globals or mocking
@@ -91,36 +90,6 @@ describe("vibeWhoAmI host handler", () => {
       type: "vibe.res.whoAmI",
       viewer: { userHandle: "alice", displayName: "Alice" },
       access: "override",
-    });
-  });
-
-  it("passes dbAcls through when present", async () => {
-    const dbAcls: Record<string, DbAcl> = { "notes-db": { write: ["members"] } };
-    const { sandbox, captured, iframe } = setupSandbox({
-      whoAmIResult: Result.Ok({
-        type: "vibe.res.whoAmI" as const,
-        tid: "t2",
-        viewer: { userHandle: "bob", displayName: "Bob" },
-        access: "viewer",
-        dbAcls,
-      } satisfies ResVibeWhoAmI),
-    });
-
-    sandbox.handleMessage(
-      fakeMessageEvent(
-        { type: "vibe.req.whoAmI", tid: "t2", appSlug: "notes", ownerHandle: "alice" },
-        "https://notes--alice.example.com",
-        iframe
-      )
-    );
-    await new Promise((r) => setTimeout(r, 50));
-
-    const msg = captured.find((c) => (c.data as { type?: string }).type === "vibe.res.whoAmI");
-    expect(msg?.data).toMatchObject({
-      tid: "t2",
-      type: "vibe.res.whoAmI",
-      access: "viewer",
-      dbAcls,
     });
   });
 

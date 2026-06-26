@@ -48,7 +48,6 @@ describe("bootstrapViewer", () => {
           tid: sentTid,
           viewer: { userHandle: "alice", displayName: "Alice" },
           access: "override",
-          dbAcls: { comments: { write: ["members"], delete: ["members"] } },
         },
       } as MessageEvent)
     );
@@ -60,7 +59,6 @@ describe("bootstrapViewer", () => {
     expect(evt.data.type).toBe("vibe.evt.viewerChanged");
     expect(evt.data.viewer).toEqual({ userHandle: "alice", displayName: "Alice" });
     expect(evt.data.access).toBe("override");
-    expect(evt.data.dbAcls).toEqual({ comments: { write: ["members"], delete: ["members"] } });
   });
 
   it("dispatches viewerChanged with viewer: null when the host reports an anonymous session", async () => {

@@ -158,7 +158,6 @@ export function vibeWhoAmI(sandbox: VibeApiCapableSandbox): EventoHandler {
         viewer: r.viewer,
         access: r.access,
         ...(r.isOwner !== undefined ? { isOwner: r.isOwner } : {}),
-        ...(r.dbAcls !== undefined ? { dbAcls: r.dbAcls } : {}),
         ...(r.grants !== undefined ? { grants: r.grants } : {}),
       } satisfies ResVibeWhoAmI);
       return Result.Ok(EventoResult.Stop);

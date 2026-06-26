@@ -15,7 +15,7 @@ function App() {
   return (
     <div data-testid="state">
       <span data-testid="name">{viewer.displayName ?? viewer.userHandle}</span>
-      {can("write", "comments") ? <button data-testid="write">Post</button> : null}
+      {can("write") ? <button data-testid="write">Post</button> : null}
     </div>
   );
 }

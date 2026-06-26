@@ -29,8 +29,8 @@ import { and, eq } from "drizzle-orm";
 async function buildViewerEnvForRender(vctx: VibesApiSQLCtx, args: { appSlug: string; ownerUserSlug: string }) {
   const r = await resolveWhoAmI(vctx, { auth: undefined, ...args });
   if (!r.isOk()) return undefined;
-  const { viewer, access, isOwner, dbAcls, grants } = r.Ok();
-  return { viewer, access, ...(isOwner ? { isOwner } : {}), ...(dbAcls ? { dbAcls } : {}), ...(grants ? { grants } : {}) };
+  const { viewer, access, isOwner, grants } = r.Ok();
+  return { viewer, access, ...(isOwner ? { isOwner } : {}), ...(grants ? { grants } : {}) };
 }
 
 export async function buildAccessFnBindingsForRender(vctx: VibesApiSQLCtx, args: { appSlug: string; ownerUserSlug: string }) {

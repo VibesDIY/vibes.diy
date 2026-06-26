@@ -476,15 +476,14 @@ export function isReqVibeWhoAmI(x: unknown): x is ReqVibeWhoAmI {
 // `viewer: null` means anonymous. The arktype `null` literal matches
 // encoded JSON null.
 //
-// `access` is the app-scoped role. `dbAcls` carries any per-db overrides
-// configured for this app — missing entries fall back to the role gate
-// in the sandbox's `can()` helper.
+// `access` is the app-scoped membership role. Fine-grained per-document and
+// per-database permissions are enforced server-side by access functions —
+// the client only needs to know whether the viewer is through the door.
 export const ResVibeWhoAmI = type({
   type: "'vibe.res.whoAmI'",
   viewer: viewerPayload.or("null"),
   access: docAccessLevel,
   "isOwner?": "boolean",
-  "dbAcls?": type({ "[string]": dbAcl }),
   "grants?": type({ "[string]": type({ channels: "string[]", publicChannels: "string[]", roles: "string[]" }) }),
   "adminMode?": "boolean",
 }).and(Base);
@@ -592,7 +591,6 @@ export const EvtVibeViewerChanged = type({
   viewer: viewerPayload.or("null"),
   access: docAccessLevel,
   "isOwner?": "boolean",
-  "dbAcls?": type({ "[string]": dbAcl }),
   "grants?": type({ "[string]": type({ channels: "string[]", publicChannels: "string[]", roles: "string[]" }) }),
   "adminMode?": "boolean",
 });

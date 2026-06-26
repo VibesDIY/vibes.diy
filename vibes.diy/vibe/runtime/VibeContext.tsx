@@ -118,7 +118,6 @@ function LiveCycleVibeContextProvider({ mountParams, children }: VibeContextProv
         viewer: event.data.viewer,
         access: event.data.access,
         ...(event.data.isOwner !== undefined ? { isOwner: event.data.isOwner } : {}),
-        ...(event.data.dbAcls ? { dbAcls: event.data.dbAcls } : {}),
         ...(event.data.grants ? { grants: event.data.grants } : {}),
         ...(event.data.adminMode !== undefined ? { adminMode: event.data.adminMode } : {}),
       });
