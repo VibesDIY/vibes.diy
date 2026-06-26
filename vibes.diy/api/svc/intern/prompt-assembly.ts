@@ -14,7 +14,7 @@ import {
 import { ChatMessage, isCodeBegin, isCodeEnd, isCodeLine, isToplevelLine } from "@vibes.diy/call-ai-v2";
 import { ensureLogger } from "@vibes.diy/identity";
 import { and, eq } from "drizzle-orm/sql/expressions";
-import { makeBaseSystemPrompt, resolveEffectiveModel } from "@vibes.diy/prompts";
+import { makeBaseSystemPrompt } from "@vibes.diy/prompts";
 import type { VibesApiSQLCtx } from "../types.js";
 import { createPromptAssetFetch, promptsPkgBaseUrl } from "./prompt-asset-fetch.js";
 import { loadModels } from "../public/list-models.js";
@@ -246,7 +246,7 @@ export async function assemblePromptPayload(
   const isInitial = timeline.length === 0;
 
   const systemPrompt = await exception2Result(async () => {
-    return makeBaseSystemPrompt(await resolveEffectiveModel({ model }, {}), {
+    return makeBaseSystemPrompt(model, {
       skills,
       theme,
       title,

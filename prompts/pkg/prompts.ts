@@ -1,38 +1,10 @@
 import type { UserSettings } from "./settings.js";
-import { loadAsset, KeyedResolvOnce, envFactory } from "@adviser/cement";
+import { loadAsset, KeyedResolvOnce } from "@adviser/cement";
 import { getLlmCatalog, getLlmCatalogNames, LlmCatalogEntry } from "./json-docs.js";
 import { composeDesignMd, getColorsetCatalogNames, getThemeCatalogNames, parseColorsetYaml, vibesThemes } from "./themes/index.js";
 import { type } from "arktype";
 
 import { defaultStylePrompt } from "./style-prompts.js";
-
-// Single source of truth for the default coding model used across the repo.
-// Hardcoded fallback (keeps the narrowed literal type for consumers that need it).
-export const DEFAULT_CODING_MODEL_FALLBACK = "anthropic/claude-opus-4.5" as const;
-// Resolved default — overridable via the DEFAULT_CODING_MODEL env var (see #1474).
-export const DEFAULT_CODING_MODEL: string =
-  envFactory({ symbol: "prompts" }).get("DEFAULT_CODING_MODEL") ?? DEFAULT_CODING_MODEL_FALLBACK;
-
-async function defaultCodingModel() {
-  return DEFAULT_CODING_MODEL;
-}
-
-function normalizeModelIdInternal(id: unknown): string | undefined {
-  if (typeof id !== "string") return undefined;
-  const trimmed = id.trim();
-  return trimmed.length > 0 ? trimmed : undefined;
-}
-
-export async function resolveEffectiveModel(
-  settingsDoc?: { model?: string },
-  vibeDoc?: { selectedModel?: string }
-): Promise<string> {
-  const sessionChoice = normalizeModelIdInternal(vibeDoc?.selectedModel);
-  if (sessionChoice) return sessionChoice;
-  const globalChoice = normalizeModelIdInternal(settingsDoc?.model);
-  if (globalChoice) return globalChoice;
-  return defaultCodingModel();
-}
 
 export async function getDefaultSkills(): Promise<string[]> {
   return ["fireproof", "callai", "image-gen", "web-audio", "use-vibe"];
