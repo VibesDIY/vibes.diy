@@ -80,6 +80,14 @@ land on and want to change. Crucially:
 - **The codegen agent lives *in* the vibe.** First-generation streaming and every later
   edit happen on `/vibe` through the one affordance. No `/chat`, no second URL, no context
   switch.
+- **Everything floats *above* the app.** Because the agent is in the app (not the app in
+  the agent), the chips, the generation stream, and the chat all render as a **floating
+  overlay layer on top of the running app** — exactly like the VibesSwitch and comments
+  float over the iframe today (the existing `ExpandedVibesPill` overlay on the vibe route,
+  `vibe.$ownerHandle.$appSlug.tsx`). Nothing pushes the app aside or swaps it for a code
+  pane; the app is always *the surface*, the agent is always *on top of it*. (This makes
+  #1836's "open below / push content down" request moot — floating-over is now intentional;
+  we keep only its first-run onboarding idea.)
 
 ### 1a. The edit affordance — the one reusable primitive (design this first)
 
