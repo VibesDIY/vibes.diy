@@ -100,7 +100,9 @@ function OtherInput() {
       <span className="text-sm text-light-secondary dark:text-dark-secondary" style={{ flex: 1 }}>
         describe a change…
       </span>
-      <span aria-hidden style={{ fontSize: 16 }}>▸</span>
+      <span aria-hidden style={{ fontSize: 16 }}>
+        ▸
+      </span>
     </div>
   );
 }
@@ -125,7 +127,15 @@ export const LiveSwitchClosed: Story = {
       {/* closed switch = the identity/share pill; isTwinkling = the public-entry pulse */}
       <div style={{ position: "absolute", left: 0, right: 0, bottom: 18, display: "flex", justifyContent: "center" }}>
         <div
-          style={{ display: "flex", alignItems: "center", gap: 14, padding: "8px 16px", borderRadius: 999, background: "rgba(0,0,0,0.55)", backdropFilter: "blur(8px)" }}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            gap: 14,
+            padding: "8px 16px",
+            borderRadius: 999,
+            background: "rgba(0,0,0,0.55)",
+            backdropFilter: "blur(8px)",
+          }}
         >
           <span style={{ color: "#fff", fontSize: 18 }}>⌂</span>
           <span style={{ color: "#fff", fontSize: 14, opacity: 0.85 }}>◐ meghan ▾</span>
@@ -186,7 +196,9 @@ export const FirstGeneration: Story = {
               <strong>building your app…</strong>
               <span className="text-light-secondary dark:text-dark-secondary">▸ laying out a 4×4 pad grid</span>
               <span className="text-light-secondary dark:text-dark-secondary">▸ wiring up the sound</span>
-              <code style={{ fontSize: 12, opacity: 0.8 }}>```jsx{"\n"}function App() {"{"}</code>
+              <code style={{ fontSize: 12, opacity: 0.8 }}>
+                ```jsx{"\n"}function App() {"{"}
+              </code>
               <span aria-hidden className="h-3 w-3 animate-spin rounded-full border-2 border-current border-t-transparent" />
             </div>
           )}
