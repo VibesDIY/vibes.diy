@@ -55,6 +55,7 @@ Full list and provenance: [`.claude/skills/README.md`](.claude/skills/README.md)
 - Run checks: `pnpm check` (format + build + test + lint)
 - Run tests: `cd vibes.diy/tests && pnpm test`
 - Never push to main
+- Scope first: small one-sentence non-controversial fixes go straight to a PR; broad/experimental/prompt-or-behavior-changing work starts with a design issue. [CONTRIBUTING.md § Scope](CONTRIBUTING.md#scope-small-and-sharp-by-default)
 - Never manually update version numbers in package.json
 - Don't write releases to code until they are shipped (esm.sh caches bad URLs)
 - Don't squash, rebase instead

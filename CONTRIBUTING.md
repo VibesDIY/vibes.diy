@@ -8,6 +8,42 @@ Thanks for contributing to `vibes.diy`.
 - Search existing [issues](https://github.com/VibesDIY/vibes.diy/issues) and [pull requests](https://github.com/VibesDIY/vibes.diy/pulls).
 - For questions, open a discussion in an issue or draft PR.
 
+## Scope: small and sharp by default
+
+The most valuable contribution is a PR that fixes one real, noticeable thing with a small, well-understood surface area. These compound our velocity. Default to them.
+
+**The sweet spot is papercuts.** The layout-flash in the result preview header. The persistent CGI 404 in prod. Flashes of default/placeholder content during page load. There is no shortage of work like this — the hard part is _noticing_ it. Noticing a small defect and turning it into a tight issue or a small PR is exactly the bandwidth we want the team to add, so the maintainer doesn't have to carry every observation from "noticed" to "fixed" themselves. If you spot one, capture it (see [Reporting Bugs](#reporting-bugs)) or fix it — don't let it evaporate in chat.
+
+### Two tracks
+
+Decide which track a change is on _before_ you write code:
+
+- **Track A — just do it.** Small, reversible, non-controversial, and explainable in one sentence. Open the PR directly. Most work should be here.
+- **Track B — discuss first.** Broad, experimental, or behavior-changing. Open a GitHub issue describing the problem and the proposed direction, get it narrowed or explicitly approved as worthwhile churn, _then_ write code. The design discussion is async and lightweight — a couple of issue comments is enough — but it has to settle the motivation first.
+
+### The one-sentence test
+
+You should be able to say what a PR does and why in one sentence, and a reviewer should be able to verify it without reconstructing your intent. If you can't, the change is probably too broad or not yet understood — narrow it, or take it to a Track B discussion.
+
+### Design-discussion tripwires
+
+Any one of these means Track B (issue first, code second):
+
+- Changes the system prompt or codegen behavior.
+- Adds a feature flag, a new code path, or a parallel implementation of something that already exists.
+- Touches multiple subsystems or otherwise has broad surface area.
+- Is an experiment — i.e. the payoff is uncertain.
+- Changes user-visible behavior, an API, or a data contract.
+- Bundles an always-on change together with experimental or flag-gated work. (Split it: land the small, non-controversial piece on its own; route the broad part to a design issue.)
+
+### Experiments must pay for themselves
+
+Big experiments cost time and tokens. Only start one when the expected payoff is proportional to that investment, and only after a Track B discussion that says so. Start with the cheapest test of the hypothesis — often a prompt change plus an eval run — before building any runtime machinery. An experiment's issue should state the hypothesis, how we'll know it worked (a metric or eval), and the rough cost; and it should **characterize the baseline first** — measure how often the problem actually occurs before investing in fixing it.
+
+### Clarity is the author's job
+
+A PR that takes a reviewer hours to figure out "what is this even trying to do" is a net cost, even when the code is correct — it contributes to the fog instead of cutting through it. The burden of making intent legible is on the author: a clear title, a one-paragraph "why", and an explicit in-scope / out-of-scope line. If a PR grows past its original one-sentence purpose mid-flight, split it rather than letting it sprawl.
+
 ## Development Setup
 
 ```bash
