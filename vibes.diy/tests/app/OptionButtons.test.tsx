@@ -1,7 +1,7 @@
 import React from "react";
 import { vi, describe, it, expect, beforeEach } from "vitest";
 import { render, fireEvent, waitFor } from "@testing-library/react";
-import { OptionButtons } from "~/vibes.diy/app/components/OptionButtons.js";
+import { OptionButtons } from "@vibes.diy/base";
 
 const SAMPLE_OPTIONS = ["Add a settings page", "Make the empty state friendlier", "I'm done for now"];
 const HELPER_TEXT = "These are optional. Pick one to suggest the next improvement, or type your own change.";
