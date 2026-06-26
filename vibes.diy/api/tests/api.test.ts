@@ -83,9 +83,18 @@ function emptySectorStream(chatId: string, promptId: string, index: number) {
       type: "prompt.req",
     },
     {
+      // Successful turns also persist the post-dispatch resolved model.
+      chatId,
+      model: expect.any(String),
+      seq: 2,
+      streamId: expect.any(String),
+      timestamp: expect.any(Date),
+      type: "prompt.model-resolved",
+    },
+    {
       type: "prompt.block-end",
       chatId,
-      seq: 2,
+      seq: 3,
       streamId: expect.any(String),
       timestamp: expect.any(Date),
     },
@@ -1056,7 +1065,7 @@ describe("VibesDiyApi", { timeout: (inject("DB_FLAVOUR" as never) as string) ===
     const toWait = processStream(chat.sectionStream, async (msg) => {
       resp(msg);
       // console.log(resp.mock.calls.length)
-      if (resp.mock.calls.length >= loops * 3) {
+      if (resp.mock.calls.length >= loops * 4) {
         await rChatRes.Ok().close();
       }
 
@@ -1133,7 +1142,7 @@ describe("VibesDiyApi", { timeout: (inject("DB_FLAVOUR" as never) as string) ===
     });
     const allBlocks = nextFn.mock.calls.filter((c) => "blocks" in c[0]).flatMap((c) => c[0].blocks);
     expect(allBlocks.some((b: { type: string }) => b.type === "prompt.block-end")).toBe(true);
-    expect(allBlocks.length).toEqual(3);
+    expect(allBlocks.length).toEqual(4);
   });
 
   it("promptFS", async () => {
