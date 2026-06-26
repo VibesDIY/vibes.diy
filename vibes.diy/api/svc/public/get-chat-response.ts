@@ -17,7 +17,7 @@ import { ensureLogger } from "@vibes.diy/identity";
 import { unwrapMsgBase } from "../unwrap-msg-base.js";
 import { VibesApiSQLCtx } from "../types.js";
 import { checkAuth } from "../check-auth.js";
-import { eq, and, desc } from "drizzle-orm/sql/expressions";
+import { eq, and } from "drizzle-orm/sql/expressions";
 
 // Read-only sibling to getChatDetails. Where getChatDetails distills the last
 // user message and throws the model's blocks away, this returns the full
@@ -53,26 +53,30 @@ export const getChatResponseEvento: EventoHandler<
 
       // Same ownership join as getChatDetails (HandleBinding → ChatContexts →
       // PromptContexts → ChatSections), but we keep the blocks instead of
-      // distilling them. One row per section (blockSeq); ordered newest-turn
-      // first (created desc). Sections within a turn are sorted by blockSeq in
-      // JS below (rows of one turn share `created`, so they stay contiguous).
+      // distilling them. We drive from ChatSections (ownership via
+      // ChatContexts) and LEFT JOIN PromptContexts for fsId/created: a turn
+      // that failed before `handlePromptContext` inserted its PromptContexts
+      // row still has its `prompt.error` + terminal block persisted in
+      // ChatSections, and surfacing those failures is exactly what this
+      // debugging command is for. An INNER JOIN would silently drop them.
       const rows = await vctx.sql.db
         .select({
-          chatId: vctx.sql.tables.chatContexts.chatId,
-          promptId: vctx.sql.tables.promptContexts.promptId,
+          chatId: vctx.sql.tables.chatSections.chatId,
+          promptId: vctx.sql.tables.chatSections.promptId,
           fsId: vctx.sql.tables.promptContexts.fsId,
-          created: vctx.sql.tables.promptContexts.created,
+          promptCreated: vctx.sql.tables.promptContexts.created,
+          sectionCreated: vctx.sql.tables.chatSections.created,
           blockSeq: vctx.sql.tables.chatSections.blockSeq,
           blocks: vctx.sql.tables.chatSections.blocks,
         })
         .from(vctx.sql.tables.handleBinding)
         .innerJoin(vctx.sql.tables.chatContexts, eq(vctx.sql.tables.chatContexts.ownerHandle, vctx.sql.tables.handleBinding.handle))
-        .innerJoin(vctx.sql.tables.promptContexts, eq(vctx.sql.tables.promptContexts.chatId, vctx.sql.tables.chatContexts.chatId))
-        .innerJoin(
-          vctx.sql.tables.chatSections,
+        .innerJoin(vctx.sql.tables.chatSections, eq(vctx.sql.tables.chatSections.chatId, vctx.sql.tables.chatContexts.chatId))
+        .leftJoin(
+          vctx.sql.tables.promptContexts,
           and(
-            eq(vctx.sql.tables.chatSections.chatId, vctx.sql.tables.promptContexts.chatId),
-            eq(vctx.sql.tables.chatSections.promptId, vctx.sql.tables.promptContexts.promptId)
+            eq(vctx.sql.tables.promptContexts.chatId, vctx.sql.tables.chatSections.chatId),
+            eq(vctx.sql.tables.promptContexts.promptId, vctx.sql.tables.chatSections.promptId)
           )
         )
         .where(
@@ -81,12 +85,13 @@ export const getChatResponseEvento: EventoHandler<
             eq(vctx.sql.tables.chatContexts.ownerHandle, req.ownerHandle),
             eq(vctx.sql.tables.chatContexts.appSlug, req.appSlug),
             ...(req.chatId !== undefined ? [eq(vctx.sql.tables.chatContexts.chatId, req.chatId)] : []),
-            ...(req.promptId !== undefined ? [eq(vctx.sql.tables.promptContexts.promptId, req.promptId)] : [])
+            ...(req.promptId !== undefined ? [eq(vctx.sql.tables.chatSections.promptId, req.promptId)] : [])
           )
-        )
-        .orderBy(desc(vctx.sql.tables.promptContexts.created));
+        );
 
-      // Group section rows into turns, preserving newest-first turn order.
+      // Group section rows into turns. `created` prefers the PromptContexts
+      // timestamp, falling back to the section's own `created` for failed
+      // turns that never got a PromptContexts row.
       const turns = new Map<string, ResChatResponseTurn>();
       for (const row of rows) {
         let turn = turns.get(row.promptId);
@@ -94,7 +99,7 @@ export const getChatResponseEvento: EventoHandler<
           turn = {
             chatId: row.chatId,
             promptId: row.promptId,
-            created: row.created,
+            created: row.promptCreated ?? row.sectionCreated,
             ...(row.fsId !== undefined && row.fsId !== null ? { fsId: row.fsId } : {}),
             sections: [],
           };
@@ -109,17 +114,18 @@ export const getChatResponseEvento: EventoHandler<
       }
 
       // Order each turn's sections by blockSeq so the block stream rebuilds in
-      // emission order regardless of how the DB returned the rows.
+      // emission order, and order turns newest-first by `created`.
       for (const turn of turns.values()) {
         turn.sections.sort((a, b) => a.blockSeq - b.blockSeq);
       }
+      const orderedTurns = Array.from(turns.values()).sort((a, b) => (a.created < b.created ? 1 : a.created > b.created ? -1 : 0));
 
       await ctx.send.send(ctx, {
         type: "vibes.diy.res-get-chat-response",
         ...(req.chatId !== undefined ? { chatId: req.chatId } : {}),
         ownerHandle: req.ownerHandle,
         appSlug: req.appSlug,
-        turns: Array.from(turns.values()),
+        turns: orderedTurns,
       } satisfies ResGetChatResponse);
       return Result.Ok(EventoResult.Continue);
     }

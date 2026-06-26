@@ -4,12 +4,11 @@ import { type } from "arktype";
 import { resListApplicationChatsItem } from "@vibes.diy/api-types";
 import type { ResListApplicationChatsItem, ResGetChatDetails, ResChatResponseTurn } from "@vibes.diy/api-types";
 import { CliCtx, cmdTsDefaultArgs } from "../cli-ctx.js";
-import { sendMsg, sendProgress, WrapCmdTSMsg } from "../cmd-evento.js";
+import { sendMsg, WrapCmdTSMsg } from "../cmd-evento.js";
 import { resolveHandle } from "../resolve-handle.js";
 import { formatErr } from "./format-err.js";
 import { resolveVibePositionals } from "../parse-vibe.js";
-import { resolveSectionStream } from "./resolve-section-stream.js";
-import { buildSectionStream, extractUserPrompts, reconstructVerbatim, renderJsonl, turnBlocks } from "./chat-response-render.js";
+import { extractUserPrompts, reconstructVerbatim, renderJsonl, resolveTurnFiles, turnBlocks } from "./chat-response-render.js";
 
 export const ReqChats = type({
   type: "'vibes-diy.cli.chats'",
@@ -94,11 +93,13 @@ export const chatsEvento: EventoHandler<WrapCmdTSMsg<unknown>, ReqChats, ResChat
       if (ownerHandle === undefined) {
         return Result.Err("Could not resolve handle. Pass --handle or run 'vibes-diy login'.");
       }
+      // Fetch the whole chat's turns (don't filter by promptId server-side):
+      // we select the turn client-side, and --files needs the sibling turns to
+      // seed the SEARCH/REPLACE chain (see resolveTurnFiles).
       const rResp = await api.getChatResponse({
         ownerHandle,
         appSlug: args.appSlug,
         ...(args.chatId !== undefined ? { chatId: args.chatId } : {}),
-        ...(args.promptId !== undefined ? { promptId: args.promptId } : {}),
       });
       if (rResp.isErr()) {
         return Result.Err(formatErr(rResp.Err()));
@@ -118,10 +119,11 @@ export const chatsEvento: EventoHandler<WrapCmdTSMsg<unknown>, ReqChats, ResChat
           return Result.Err(`No turn with promptId ${args.promptId} in this chat.`);
         }
       } else if (turns.length > 1) {
-        await sendProgress(
-          ctx,
-          "info",
-          `Showing newest turn ${turn.promptId} (${turns.length} turns total — use --turn <promptId> to pick another).`
+        // To stderr, NOT stdout: --jsonl/--files stdout must stay machine-
+        // parseable (one JSON object per line / a JSON object), so a human
+        // "showing newest turn" banner can't lead the body.
+        ectx.output.stderr(
+          `Showing newest turn ${turn.promptId} (${turns.length} turns total — use --turn <promptId> to pick another).\n`
         );
       }
       const blocks = turnBlocks(turn);
@@ -130,7 +132,7 @@ export const chatsEvento: EventoHandler<WrapCmdTSMsg<unknown>, ReqChats, ResChat
       if (args.jsonl === true) {
         body = renderJsonl(blocks);
       } else if (args.files === true) {
-        const rResolved = await resolveSectionStream({ sectionStream: buildSectionStream(turn), streamId: turn.promptId });
+        const rResolved = await resolveTurnFiles(turns, turn.promptId);
         if (rResolved.isErr()) {
           return Result.Err(`Failed to resolve stored stream: ${rResolved.Err().message}`);
         }
