@@ -214,11 +214,15 @@ inside it — not nested in the chat.** Decided structure (jchris):
 
 - **The menu's top-level nav is invariant across owner vs visitor.** Same items, same
   places, whoever you are; only the *contents* of a given view differ by role (e.g. the
-  "access" view shows Join/View for a visitor, sharing controls for an owner). One nav to
-  learn; it never rearranges under you.
-- **Join / View live in this menu** (reachable by navigating the switch top-level), styled
-  as part of the switch's look-and-feel — not as a separate landing card. The edit affordance
-  (chips/Other) is another peer.
+  "access" view shows Request-access / make-your-own for a request-gated visitor, sharing
+  controls for an owner). One nav to learn; it never rearranges under you.
+- **The access view lives in this menu** (reachable by navigating the switch top-level),
+  styled as part of the switch's look-and-feel — not as a separate landing card. The edit
+  affordance (chips/Other) is another peer.
+- **Active handle is a top-level item in the switch nav (#2275).** You join shared vibes
+  **per handle**, so you must always be able to *see which handle you're browsing/acting as*
+  and *switch it* — surfaced top-level, not buried. (Backend active-handle resolution already
+  landed per #2275; this is the UI.)
 - **Detailed layout of the menu and the access view is explicitly deferred** — "hard to
   specify without seeing the other parts first; design it later." Sketch the other states
   first, then design this against them.
@@ -245,66 +249,73 @@ verbs for 2 outcomes**; collapse them.
 > in the product, you just *change the app*, and if it isn't yours that change forks. The act
 > is still remixing; it simply has no button, because the affordance is the act.
 
-### The verb model: almost no verbs
+### The verb model: one surviving access word
 
-The fundamental fork is still binary — **the shared thing** vs **your own copy** — but only
-one side has a *word*. **"Make your own copy" is not a CTA at all**: it is the implicit
-result of using the edit affordance (a chip or "Other") on a vibe you don't own. So the only
-explicit CTAs are about *someone else's shared thing*, which the affordance can't express.
+Almost everything is automatic. **View is automatic** (readable vibes just load). **Join is
+automatic** (auto-join) *except* when the vibe is request-gated — there, the lone explicit
+access CTA is **"Request access."** And "make your own copy" has no verb: it's what the edit
+affordance does on a vibe you don't own.
 
 | What you can do | How it's surfaced | Replaces |
 | --- | --- | --- |
-| **Change it** — own → in place; **don't own → silently forks to your copy** | the edit affordance (chips + Other), §1a — **no verb, no button** | "Remix", "Clone", "Fresh Install", "Edit", "Fork" |
-| Participate in the **shared space** (become a member, same dataset) | **Join** | "Join collab", "Request access" |
-| **Read** the shared thing (no membership) | **View** | "Open" (as a verb) |
-| Use a **public** app | it just loads (no CTA) | — |
+| **Read / use** a readable vibe | **automatic** — public & read-only just load | "View" / "Open" buttons |
+| Get into the **shared data** | **automatic** (auto-join) — *or* **"Request access"** when request-gated | "Join collab" button (only "Request access" survives) |
+| **Change it** — own → in place; **don't own → clone to your handle**, then your edit applies | the edit affordance (chips + Other), §1a — **no verb, no button** | "Remix", "Clone", "Fresh Install", "Edit", "Fork" |
 
-- **"Remix" is no longer a verb (jchris).** Remixing is simply what happens when you choose
-  a chip or "Other" on a vibe you don't own — the fork is implicit and silent, surfaced only
-  by the #1856 inline "this is your copy, the original is unchanged" message. There is **no
-  Remix / Clone / Edit / Fresh-Install button anywhere.**
-- This deletes the *last* "make a copy" verb. The **affordance is the action**; ownership
-  alone decides whether changing the app edits it in place or forks it. (#1709 #2162 #2262
-  #1855 #1856 #2037 all collapse into this.)
-- **Join** and **View** survive because they are choices about *entering someone else's
-  shared thing*, which "just change it" can't carry.
+- **The only surviving explicit access word is "Request access."** Join otherwise just
+  happens (auto-join); View always just happens. (jchris)
+- **On a request-gated vibe with no grant, the real choice is two things:** **Request access**
+  (get into the original's *shared data*) vs **make your own copy** (a "no-op edit" — clone
+  the published app to *your* handle, no change required). These are genuinely different
+  outcomes — same data vs your own space.
+- **Clone-to-your-handle keeps the slug.** The forked app lands at
+  `/vibe/$yourHandle/$sameAppSlug` — the appSlug **does not change** unless you've already
+  used that slug under your handle, in which case a fresh slug is assigned (collision only).
+- **"Remix" is no longer a verb (jchris).** The fork is implicit, surfaced by the #1856
+  inline "this is your copy" message. No Remix / Clone / Edit / Fresh-Install button anywhere.
+  (#1709 #2162 #2262 #1855 #1856 #2037 collapse into this.)
 
 ### One new setting: publish intent (#1854)
 
-The creator picks what the vibe *is for*; this drives which CTA is primary on a
-non-member's landing — it does **not** change access enforcement.
+The creator picks what the vibe *is for*; this sets sensible **access defaults** and framing
+— it does not add CTAs (there's only ever "Request access", and only when gated).
 
-| Intent | Primary CTA | Also available |
+| Intent | Access default it sets | Visitor experience |
 | --- | --- | --- |
-| Shared space | **Join** | the edit affordance (changing it forks your copy) |
-| Template | **— none** (land in the editable app; the chips *are* the invitation) | Join (if collab allowed) |
-| Read-only / published | **View** | the edit affordance (forks) |
+| Shared space | auto-join on | **auto-joined**, with a "join as [handle]" consent step; or "Request access" if the creator turned auto-join off |
+| Template | public | use it; the chips invite changes; editing **clones to your handle** (no CTA) |
+| Read-only / published | public, read-only | **view automatically**; editing clones to your handle |
 
-### CTA precedence (access-state wins over intent)
+### Access-state → what the visitor sees (precedence)
 
 There is now **at most one explicit CTA** (Join or View) plus the always-present edit
 affordance (using it forks when you don't own). Access state gates which is shown; resolve
-in this fixed order: `revoked` → `pending` → `private/no-requests` → `private/requests-on` →
-`public-or-granted (intent-driven)`. The canonical lookup:
+Almost every state is automatic; the only explicit access CTA is **Request access**, and the
+always-available alternative is **make your own copy** (clone→your handle). The canonical
+lookup, by access state for a visitor with no personal grant:
 
-| intent | grant / access-state | request-setting | explicit CTA | edit affordance |
-| --- | --- | --- | --- | --- |
-| `*` | `revoked-access` | `*` | — (`Access revoked`) | forks * |
-| `*` | `pending-request` | `*` | — (`Requested`) | forks * |
-| `*` | `not-grant + private` | `requests-off` | — (`App not available`) | forks * |
-| `*` | `not-grant + private` | `requests-on` | `Join` (request-to-join) | forks * |
-| `shared-space` | `public-or-granted` | `*` | `Join` | forks |
-| `template` | `public-or-granted` | `*` | — (chips are the invitation) | forks |
-| `read-only-published` | `public-or-granted` | `*` | `View` | forks |
+| access state | explicit access CTA | what's automatic / the alternative |
+| --- | --- | --- |
+| `public-access` | — | app loads; **read/use automatically** (View is automatic) |
+| auto-join (auto-approve on) | — | **auto-joined**, with a **"join as [handle]" consent** step |
+| request-gated (`requests-on`) | **Request access** | or **make your own copy** (clone→your handle) |
+| `pending-request` | — (`Requested`, disabled) | or make your own copy |
+| `revoked-access` | — (`Revoked`, disabled) | or make your own copy |
+| private, `requests-off` (`not-grant`) | — (`App not available`) | make your own copy * |
 
-\* only when the source is reachable (you can't fork what you can't see). `public +
-no-membership` loads directly (no gate CTA). `member` / `submitter` resolve in Member mode,
-outside this visitor resolver. The strict-enum JSON form (`intent`, `grantState`,
-`requestSetting`, `explicitCta`) lands with PR-1 as the wiring source of truth.
+\* "make your own copy" = the no-op clone-to-your-handle (same appSlug unless taken), only
+when the published app is reachable (you can't clone what you can't see). `member` /
+`submitter` resolve in Member mode, outside this visitor resolver. The strict-enum JSON form
+(`accessState`, `explicitCta`, `cloneAvailable`) lands with PR-1 as the wiring source of truth.
 
-> The *visual* placement of Join/View and the edit affordance in the switch menu is
-> **deferred** (jchris: "hard to specify without seeing the other parts first") — see §1e.
-> This table fixes the *logic*, not the layout.
+> **Why "join as [handle]" matters:** joining exposes *a* handle of yours to the other
+> members. Since you may have several, auto-join must let you **consent to which handle** is
+> revealed before it commits you (jchris). This pairs with the always-visible active-handle
+> switcher (§1e, #2275).
+
+> The *visual* placement of the access view, the edit affordance, and the handle switcher in
+> the switch menu is **deferred** (jchris: "hard to specify without seeing the other parts
+> first") — see §1e. This table fixes the *logic*, not the layout.
 
 ### Grant → surface (collapsing the 12-state table)
 
@@ -313,9 +324,12 @@ The 12 grant values in `notes/vibes-sharing-reference.md` collapse, for UI purpo
 
 | Mode | Who | Indicator | Pill shows |
 | --- | --- | --- | --- |
-| **Author** | owner / admin | (highlighted, e.g. shield) | agent-ready, Share, handle switcher |
-| **Member** | writer/reader grant | read-only → lock glyph when no write | agent-ready (writer) or Join-to-edit |
-| **Visitor** | anon / no grant | none | explicit CTA (Join *or* View) + the edit affordance (editing forks) |
+| **Author** | owner / admin | (highlighted, e.g. shield) | agent-ready, Share, **active-handle switcher** |
+| **Member** | writer/reader grant | read-only → lock glyph when no write | agent-ready (writer), active-handle switcher |
+| **Visitor** | anon / no grant | none | **Request access** (only if request-gated) + the edit affordance (editing clones to your handle); else just uses/views |
+
+The **active-handle switcher is present in every mode** (you always act *as* a handle) and is
+a top-level switch-nav item (§1e, #2275).
 
 **`submitter`** (the latent fourth grant role — write-can-add, read-restricted, present in
 the type system but unexposed in UI today per `notes/vibes-sharing-reference.md`) folds
@@ -411,7 +425,7 @@ so the count stays crisp.)
 - #1857 sharing-onramp epic → this doc *is* its resolution.
 - #1973 two sharing modes legible → Join vs implicit-fork + intent (third "group-private" = Shared-space intent).
 - #2178 read-only/admin indicator → viewer-mode indicator system (§2).
-- #2275 active handle + switcher + login → handle switcher in the pill (Author/Visitor modes).
+- #2275 active handle + switcher + login → **top-level active-handle switcher in the switch nav**, present in every mode; plus the "join as [handle]" consent step on auto-join (§1e/§2). You join per handle, so the active handle is always visible and switchable.
 
 **Explicit build (Share cluster, PR-1):** #2238 (umbrella — "simplify the sharing UI"; this
 cluster *is* its resolution) #2232 (anchor) #2233 #2234 #2235 #2236 #1768.
@@ -480,7 +494,8 @@ the boundary defined by *cache-hit*, not by *is-it-a-curated-chip*).
    contract, not a hope (ref #1896's <500ms curated-swap target).
 5. **Group-private intent.** Is jchris's "group-private / collaborative" (#1973) a fourth
    publish intent or just "Shared space" with a private visibility? Recommendation: the
-   latter — intent (Join/Remix/View) is orthogonal to visibility (Restricted/Public).
+   latter — publish intent is orthogonal to visibility (Restricted/Public) and to auto-join
+   vs request-gated.
 
 **✅ 6. Generation-overlay shape — DECIDED (jchris).** Inset rounded card; card shape never
 changes, contents swap stream → live app, forming app de-blurs behind (§1b).
