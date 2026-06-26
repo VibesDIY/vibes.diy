@@ -83,18 +83,13 @@ function emptySectorStream(chatId: string, promptId: string, index: number) {
       type: "prompt.req",
     },
     {
-      // Successful turns also persist the post-dispatch resolved model.
-      chatId,
-      model: expect.any(String),
-      seq: 2,
-      streamId: expect.any(String),
-      timestamp: expect.any(Date),
-      type: "prompt.model-resolved",
-    },
-    {
+      // No prompt.model-resolved here: it is emitted only when a catalog
+      // fallback swapped models (#2628). These turns don't fall back, so the
+      // stream is just begin / req / block-end. The always-on model record
+      // lives on PromptContexts.ref.model (#1701), not the section stream.
       type: "prompt.block-end",
       chatId,
-      seq: 3,
+      seq: 2,
       streamId: expect.any(String),
       timestamp: expect.any(Date),
     },
@@ -1065,7 +1060,10 @@ describe("VibesDiyApi", { timeout: (inject("DB_FLAVOUR" as never) as string) ===
     const toWait = processStream(chat.sectionStream, async (msg) => {
       resp(msg);
       // console.log(resp.mock.calls.length)
-      if (resp.mock.calls.length >= loops * 4) {
+      // 3 section-events per (no-fallback) turn: prompt.block-begin,
+      // prompt.req, prompt.block-end. No prompt.model-resolved without a
+      // fallback (#2628); the model record is on PromptContexts.ref (#1701).
+      if (resp.mock.calls.length >= loops * 3) {
         await rChatRes.Ok().close();
       }
 
@@ -1142,7 +1140,9 @@ describe("VibesDiyApi", { timeout: (inject("DB_FLAVOUR" as never) as string) ===
     });
     const allBlocks = nextFn.mock.calls.filter((c) => "blocks" in c[0]).flatMap((c) => c[0].blocks);
     expect(allBlocks.some((b: { type: string }) => b.type === "prompt.block-end")).toBe(true);
-    expect(allBlocks.length).toEqual(4);
+    // 3 blocks: prompt.block-begin, prompt.req, prompt.block-end. No
+    // prompt.model-resolved (no fallback on this turn — #2628).
+    expect(allBlocks.length).toEqual(3);
   });
 
   it("promptFS", async () => {

@@ -76,6 +76,12 @@ export const PromptContextSql = type({
   type: "'prompt.usage.sql'",
   usage: BlockUsage,
   "fsRef?": FileSystemRef,
+  // The model the turn was dispatched with (post catalog-fallback), co-located
+  // with usage so cost-by-model rollups read from PromptContexts alone
+  // (VibesDIY/vibes.diy#1701). Optional: absent — not null/empty — on historical
+  // rows and when no model id was available, so consumers can distinguish
+  // "unknown historical" from "unknown new".
+  "model?": "string",
 });
 export type PromptContextSql = typeof PromptContextSql.infer;
 

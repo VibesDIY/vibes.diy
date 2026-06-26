@@ -704,6 +704,7 @@ export async function handlePromptContext({
   collectedMsgs: iCollectedMsgs,
   blockChunks = 100,
   fileSystem,
+  model,
 }: {
   vctx: VibesApiSQLCtx;
   req: ReqWithVerifiedAuth<ReqPromptChatSection>;
@@ -714,6 +715,9 @@ export async function handlePromptContext({
   collectedMsgs: PromptAndBlockMsgs[];
   blockChunks?: number;
   fileSystem?: VibeFile[];
+  // Dispatched model (post-fallback), persisted on the usage ref for
+  // cost-by-model rollups (#1701). Optional — omitted when unavailable.
+  model?: string;
 }): Promise<Result<{ blockSeq: number; fsRef: Option<FileSystemRef> }>> {
   let fsRef: Option<FileSystemRef> = Option.None();
   const code: CodeBlocks[] = [];
@@ -797,6 +801,8 @@ export async function handlePromptContext({
         type: "prompt.usage.sql",
         usage: value.usage,
         fsRef: fsRef.toValue(),
+        // Absent (not null/empty) when no model id was available (#1701).
+        ...(model !== undefined && model !== "" ? { model } : {}),
       } satisfies PromptContextSql, // BlockUsageSql has optional properties, so it can be satisfied by an empty object
       created: new Date().toISOString(),
     })
@@ -1083,18 +1089,18 @@ async function handlerLlmRequest({
     })
     .do();
 
-  // Record the model the turn was ACTUALLY dispatched with — ALWAYS, on every
-  // turn, so debugging and at-scale usage stats have a reliable per-turn record
-  // of which model ran, independent of any fallback. In the common case this
-  // matches the pre-dispatch `prompt.req` echo above; when a catalog fallback
-  // `dispatchLlmRequestWithFallback` swapped models after retryable primary
-  // failures, that echo is stale (already streamed before the swap) and this
-  // post-dispatch event carries the real model — clients prefer it (#2628).
-  // Informational only — reconstruction reads only request.messages. The
-  // recovery-continuation dispatch reuses the initial model and falls back only
-  // on its own failure — a rarer case left to a follow-up.
+  // Emit a post-dispatch model record ONLY when a catalog fallback
+  // (dispatchLlmRequestWithFallback) swapped models after retryable primary
+  // failures — i.e. when the model actually run differs from the pre-dispatch
+  // `prompt.req` echo above (which is stale, already streamed before the swap).
+  // This is the live signal clients use to correct "Generating with <primary>"
+  // → "Fell back to <model>" mid-turn (#2628); on the common no-fallback path
+  // the prompt.req echo is already correct, so we emit nothing and pay no extra
+  // ChatSections row. The always-on at-rest record of which model ran lives on
+  // PromptContexts.ref.model (#1701), co-located with usage for cost rollups.
+  // Informational only — reconstruction reads only request.messages.
   const finalModel = dispatch.llmReq.model;
-  if (dispatch.ok && finalModel !== undefined) {
+  if (dispatch.ok && finalModel !== undefined && finalModel !== modelId) {
     await scope
       .evalResult(async () => {
         const r = await appendBlockEvent({
@@ -1372,6 +1378,7 @@ async function handleEndMsg({
   blockSeq,
   fileSystem,
   terminal,
+  model,
 }: {
   collectedMsgs: PromptAndBlockMsgs[];
   vctx: VibesApiSQLCtx;
@@ -1386,6 +1393,9 @@ async function handleEndMsg({
   // single prompt.block-end EARLY (below) and flips this flag so the finally
   // doesn't emit a second one. See PromptTerminalSignal.
   terminal: PromptTerminalSignal;
+  // Dispatched model (post-fallback), forwarded to handlePromptContext for the
+  // usage ref (#1701).
+  model?: string;
 }): Promise<Result<number>> {
   // Early UI release (#2472): emit prompt.block-end BEFORE the persist so the
   // client flips `running` off — dropping the click-blocking overlay, rendering
@@ -1408,7 +1418,7 @@ async function handleEndMsg({
   }
   terminal.promptBlockEndEmitted = true;
 
-  const r = await handlePromptContext({ vctx, req, promptId, resChat, value, blockSeq, collectedMsgs, fileSystem });
+  const r = await handlePromptContext({ vctx, req, promptId, resChat, value, blockSeq, collectedMsgs, fileSystem, model });
   if (r.isErr()) {
     return Result.Err(r);
   }
@@ -1741,7 +1751,18 @@ async function handleLlmResponse({
             }
           } else {
             collectedMsgs.push(value);
-            const x = await handleEndMsg({ collectedMsgs, vctx, req, ctx, resChat, promptId, value, blockSeq, terminal });
+            const x = await handleEndMsg({
+              collectedMsgs,
+              vctx,
+              req,
+              ctx,
+              resChat,
+              promptId,
+              value,
+              blockSeq,
+              terminal,
+              model: llmReq.model,
+            });
             if (x.isErr()) return Result.Err(x);
             blockSeq = x.Ok();
             collectedMsgs.splice(0, collectedMsgs.length);
@@ -1830,6 +1851,7 @@ async function handleLlmResponse({
             value: exhaustedEnd,
             blockSeq,
             terminal,
+            model: llmReq.model,
           });
           if (xEnd.isErr()) return Result.Err(xEnd);
           return Result.Ok();
