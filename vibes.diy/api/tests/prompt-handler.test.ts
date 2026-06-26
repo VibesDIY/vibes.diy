@@ -147,10 +147,19 @@ describe("promptChatSection handler with selected+slots", () => {
 
     expect(calls).toEqual([PRIMARY_MODEL, PRIMARY_MODEL, FALLBACK_MODEL]);
     expect(blocks.some((b) => b.type === "prompt.error")).toBe(false);
+    // The pre-dispatch prompt.req echo still shows the primary (it streamed
+    // before the swap)...
     expect(blocks.find((b) => b.type === "prompt.req")).toEqual(
       expect.objectContaining({
         request: expect.objectContaining({ model: PRIMARY_MODEL }),
       })
+    );
+    // ...and because a fallback happened, a post-dispatch prompt.model-resolved
+    // carries the model actually run so clients can correct the live label
+    // (#2628). Emitted ONLY on a fallback — the no-fallback turns in
+    // api.test.ts carry no such block.
+    expect(blocks.find((b) => b.type === "prompt.model-resolved")).toEqual(
+      expect.objectContaining({ type: "prompt.model-resolved", model: FALLBACK_MODEL })
     );
   });
 
