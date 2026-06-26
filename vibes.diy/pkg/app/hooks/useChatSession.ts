@@ -7,6 +7,7 @@ import type { LLMChat, VibesDiyApiIface } from "@vibes.diy/api-types";
 import { getThemeBySlug } from "@vibes.diy/prompts";
 import { useStreamWatchdog } from "./useStreamWatchdog.js";
 import { useReconnectLoop } from "./useReconnectLoop.js";
+import { isSectionTheme, sectionThemeActions } from "./section-theme-actions.js";
 import { notifyRecentVibesChanged } from "./useRecentVibes.js";
 import type { PromptState, PromptAction } from "../routes/chat/prompt-state.js";
 import type { ChatNavigation } from "./useChatNavigation.js";
@@ -109,6 +110,10 @@ export function useChatSession(opts: ChatSessionOpts): ChatSession {
           return;
         }
         for (const block of se.blocks) {
+          if (isSectionTheme(block)) {
+            for (const action of sectionThemeActions(block)) dispatch(action);
+            continue;
+          }
           dispatch(block);
         }
       })
