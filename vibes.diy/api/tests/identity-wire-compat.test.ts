@@ -185,7 +185,7 @@ describe("identity wire-compat (baseline: @fireproof/* 0.24.19)", { timeout: 300
     expect((vr.payload as { sub?: string }).sub).toBe("device-id");
   });
 
-  it("cross-verify: extracted-minted token verifies under the fireproof verifier (byte-stable header+claims)", async () => {
+  it("cross-verify: extracted signer's header is byte-identical to fireproof + verifies under it", async () => {
     // Build the extracted signer from a publicly-issued cert (never from private
     // signer state): mint a key, run the CSR -> cert path, read the public
     // certificatePayload — the same field createDeviceIdGetToken reads from the keybag.
@@ -222,28 +222,42 @@ describe("identity wire-compat (baseline: @fireproof/* 0.24.19)", { timeout: 300
         aud: ["http://test-audience.localhost/"],
       } as never)
     ).Ok();
-    const signer = new extracted.DeviceIdSignMsg(sthis.txt.base64, key, issued.certificatePayload);
-    const now = Math.floor(Date.now() / 1000);
-    const token = await signer.sign(
-      {
-        iss: "wire-compat",
-        sub: "device-id",
-        deviceId: await key.fingerPrint(),
-        seq: 1,
-        exp: now + 120,
-        nbf: now - 2,
-        iat: now,
-        jti: "xverify-jti",
-      },
+    const claims = {
+      iss: "wire-compat",
+      sub: "device-id",
+      deviceId: await key.fingerPrint(),
+      seq: 1,
+      exp: nowIssue + 120,
+      nbf: nowIssue - 2,
+      iat: nowIssue,
+      jti: "xverify-jti",
+    };
+
+    // Sign the SAME key + cert + claims with both the extracted and the fireproof
+    // signer. The JWT header is deterministic (kid/x5c/x5t/x5t#S256 derive from the
+    // key+cert; alg/typ are fixed), so the header segment must be byte-identical.
+    // This catches header field-order / extra-field / missing-`typ` drift that a
+    // decode-and-check-properties assertion would miss — the byte-level gate before
+    // dropping the fireproof signer.
+    const extractedTok = await new extracted.DeviceIdSignMsg(sthis.txt.base64, key, issued.certificatePayload).sign(
+      claims,
       "ES256"
     );
-    const vr = await verifier.verifyWithCertificate(token);
+    const fireproofTok = await new DeviceIdSignMsg(sthis.txt.base64, key, issued.certificatePayload).sign(claims, "ES256");
+    expect(extractedTok.split(".")[0]).toBe(fireproofTok.split(".")[0]);
+
+    // Exact header shape (not just property presence).
+    const header = decodeSeg(extractedTok.split(".")[0]);
+    expect(header.typ).toBe("JWT");
+    expect(header.alg).toBe("ES256");
+    expect(Object.keys(header).sort()).toEqual(["alg", "kid", "typ", "x5c", "x5t", "x5t#S256"].sort());
+
+    // The extracted-minted token verifies under the fireproof verifier, carrying
+    // the exact FPDeviceIDSession claim set.
+    const vr = await verifier.verifyWithCertificate(extractedTok);
     expect(vr.valid).toBe(true);
     if (!vr.valid) throw new Error(String(vr.error));
-    const header = decodeSeg(token.split(".")[0]);
-    expect(header.alg).toBe("ES256");
-    for (const k of ["kid", "x5c", "x5t", "x5t#S256"]) expect(header).toHaveProperty(k);
-    const payload = decodeSeg(token.split(".")[1]);
+    const payload = decodeSeg(extractedTok.split(".")[1]);
     expect(Object.keys(payload).sort()).toEqual(SESSION_CLAIM_KEYS);
   });
 });
