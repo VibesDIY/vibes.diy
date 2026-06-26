@@ -28,7 +28,7 @@
 **Depends-on:** none
 
 **Files:**
-- Modify: `vibes.diy/api/types/prompt.ts` (union at line 83; add new member type above it)
+- Modify: `vibes.diy/api/types/prompt.ts`
 - Test: `vibes.diy/api/tests/prompt-section-theme.test.ts`
 
 **Interfaces:**
@@ -110,8 +110,8 @@ git commit -m "feat(whole-file): add prompt.section-theme wire event to PromptMs
 **Depends-on:** 1
 
 **Files:**
-- Create: `vibes.diy/api/svc/intern/codegen-loop/section-theme-event.ts` (pure builder)
-- Modify: `vibes.diy/api/svc/public/handle-whole-file-codegen.ts` (emit the builder's event as the first `enqueue`, guarded on `sessionDoc.theme`)
+- Create: `vibes.diy/api/svc/intern/codegen-loop/section-theme-event.ts`
+- Modify: `vibes.diy/api/svc/public/handle-whole-file-codegen.ts`
 - Test: `vibes.diy/api/tests/section-theme-event.test.ts`
 
 **Interfaces:**
@@ -216,8 +216,8 @@ git commit -m "feat(whole-file): emit prompt.section-theme first when a pre-allo
 **Depends-on:** 1
 
 **Files:**
-- Create: `vibes.diy/pkg/app/hooks/section-theme-actions.ts` (pure translation helper)
-- Modify: `vibes.diy/pkg/app/hooks/useChatSession.ts` (intercept the new event in `attachSectionStream`'s block loop, ~lines 111-113)
+- Create: `vibes.diy/pkg/app/hooks/section-theme-actions.ts`
+- Modify: `vibes.diy/pkg/app/hooks/useChatSession.ts`
 - Test: `vibes.diy/tests/app/section-theme-actions.test.ts`
 
 **Interfaces:**
@@ -322,7 +322,7 @@ git commit -m "feat(whole-file): hydrate promptState.theme live from prompt.sect
 **Depends-on:** none
 
 **Files:**
-- Modify: `vibes.diy/api/svc/intern/codegen-loop/whole-file-loop.ts` (the `extractJsonStringField` decoder, lines 104-125, esp. the `out += JSON.parse(...)` at line 117)
+- Modify: `vibes.diy/api/svc/intern/codegen-loop/whole-file-loop.ts`
 - Test: `vibes.diy/api/tests/whole-file-unescape.test.ts`
 
 **Interfaces:**
@@ -405,7 +405,7 @@ git commit -m "fix(whole-file): decode \\uXXXX escapes instead of crashing the s
 **Depends-on:** 4
 
 **Files:**
-- Modify: `vibes.diy/api/svc/intern/codegen-loop/whole-file-loop.ts` (`makeLineEmitter`, lines 133-147, and its call sites where the stream completes, ~lines 207-214)
+- Modify: `vibes.diy/api/svc/intern/codegen-loop/whole-file-loop.ts`
 - Test: `vibes.diy/api/tests/whole-file-eof-flush.test.ts`
 
 **Interfaces:**
@@ -486,7 +486,7 @@ git commit -m "fix(whole-file): flush the trailing newline-less line at stream E
 **Depends-on:** 5
 
 **Files:**
-- Modify: `vibes.diy/api/svc/intern/codegen-loop/whole-file-loop.ts` (`write_file` `execute`, lines 155-165, plus the return that yields `files`, ~lines 229-233)
+- Modify: `vibes.diy/api/svc/intern/codegen-loop/whole-file-loop.ts`
 - Test: `vibes.diy/api/tests/whole-file-verify-before-return.test.ts`
 
 **Interfaces:**
@@ -612,9 +612,9 @@ git commit -m "test(whole-file): lock first-creation-turn routing (Codex P1 regr
 **Depends-on:** none
 
 **Files:**
-- Modify: `vibes.diy/pkg/app/hooks/useTypewriterReveal.ts` (falsy `if (!x)` at lines 29/64/71/79; `stepReveal` 4-positional-param signature at line 24 + its call site at line 74)
-- Modify: `vibes.diy/pkg/app/components/ResultPreview/PreviewApp.tsx` (falsy `if (!cancelled)` at line 260)
-- Test: `vibes.diy/tests/app/typewriter-reveal-step.test.ts` (characterize `stepReveal` so the signature refactor is behavior-preserving)
+- Modify: `vibes.diy/pkg/app/hooks/useTypewriterReveal.ts`
+- Modify: `vibes.diy/pkg/app/components/ResultPreview/PreviewApp.tsx`
+- Test: `vibes.diy/tests/app/typewriter-reveal-step.test.ts`
 
 **Interfaces:**
 - Consumes: nothing new
@@ -668,7 +668,7 @@ git commit -m "style(rules-bag): explicit boolean checks + object-arg stepReveal
 **Depends-on:** 1, 2, 3, 4, 5, 6, 7, 8
 
 **Files:**
-- None (verification only)
+- None
 
 Run and require green:
 - `pnpm run build` (tsc) — the CI `compile_test` build.
