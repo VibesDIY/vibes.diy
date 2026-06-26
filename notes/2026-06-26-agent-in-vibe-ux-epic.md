@@ -184,8 +184,10 @@ never the destination; it's a transient progress view that yields to the running
   not four look-alike buttons with three behaviors, #1708). On start/homepage flows it
   starts **already open** (chips showing); on a live vibe it starts closed.
 - **Editing IS the affordance:** owner/writer → chips + textarea change the app in place;
-  reader/anon → the switch shows the intent CTA (Join/Remix/View, §2). No "Edit"
-  destination, no separate iterate flow — you just change the app.
+  **non-owner → the same chips/Other silently fork to their own copy** (#1856) — there is no
+  "Remix" button, it's just what editing a vibe you don't own does (§2). Plus, for a visitor,
+  the switch surfaces the one explicit CTA (Join *or* View). No "Edit" destination, no
+  separate iterate flow — you just change the app.
 
 ### 1d. Implementation grounding — the build seam (existing code this reuses)
 
@@ -205,73 +207,104 @@ systems. Charlie/Codex and the explorers confirmed these seams:
 > it as a learning, not a base. The unification target is: chips = `OptionButtons` fed by
 > `▸` lines, so the affordance and the chat are literally the same data in two surfaces.
 
+### 1e. The switch menu & the visitor landing (structure decided, layout deferred)
+
+The switch is a **top-level menu**, and the landing/access actions are a **peer of chat
+inside it — not nested in the chat.** Decided structure (jchris):
+
+- **The menu's top-level nav is invariant across owner vs visitor.** Same items, same
+  places, whoever you are; only the *contents* of a given view differ by role (e.g. the
+  "access" view shows Join/View for a visitor, sharing controls for an owner). One nav to
+  learn; it never rearranges under you.
+- **Join / View live in this menu** (reachable by navigating the switch top-level), styled
+  as part of the switch's look-and-feel — not as a separate landing card. The edit affordance
+  (chips/Other) is another peer.
+- **Detailed layout of the menu and the access view is explicitly deferred** — "hard to
+  specify without seeing the other parts first; design it later." Sketch the other states
+  first, then design this against them.
+
+Two visitor-landing visuals **are** decided now:
+
+- **Restricted vibe, no access → blurred preview behind the gate.** Show the OG screenshot
+  blurred behind the access view (reuse the `PreviewApp` de-blur), as a tease that sharpens
+  if access is granted. (See §1d / `PreviewApp.tsx`.)
+- **Public visitor entry → switch closed, with a subtle pulse.** Land in the working app
+  (consume before identity); the switch stays closed but draws the eye with a gentle
+  twinkle/pulse — the existing `isTwinkling` prop on `VibesSwitch` is exactly this seam. No
+  auto-open, no covering the app.
+
 ## 2. Consistency spec (the verb + state model)
 
 Align to the house voice (`notes/how-to-talk-about-vibes.md`): remix-first, "seeing
 should imply changing," plain outcomes over engine talk. The current system has **4+
 verbs for 2 outcomes**; collapse them.
 
-### Two outcomes → three canonical CTAs
+> **"Remix" the culture stays; "Remix" the button goes.** The house voice is right that the
+> medium *is* remixing — "start with someone else's vibe → change it → share it." That stays
+> in marketing/copy. What we delete is the **in-product button** labeled Remix/Clone/Edit:
+> in the product, you just *change the app*, and if it isn't yours that change forks. The act
+> is still remixing; it simply has no button, because the affordance is the act.
 
-The fundamental fork is binary — **your own copy** vs **the shared thing**. Within "the
-shared thing," creator intent splits participate-vs-read-only. So there are exactly **three
-canonical in-product CTA words**, one per outcome, and nothing else. Public-with-no-
-membership is *not* a fourth word — the app just loads (no gate, no CTA), so "Open" is
-deleted as a verb.
+### The verb model: almost no verbs
 
-| Outcome | Canonical CTA (the only word) | Replaces | Who |
-| --- | --- | --- | --- |
-| Participate in the **shared space** (same dataset, become a member) | **Join** | "Join collab", "Request access" | collab-intent / invited |
-| **Read** the shared thing (no membership) | **View** | "Open" (as a verb) | read-only-intent |
-| Make **your own** independent copy and change it | **Remix** | "Clone", "Fresh Install", "Edit"(non-owner), "Fork" | everyone |
+The fundamental fork is still binary — **the shared thing** vs **your own copy** — but only
+one side has a *word*. **"Make your own copy" is not a CTA at all**: it is the implicit
+result of using the edit affordance (a chip or "Other") on a vibe you don't own. So the only
+explicit CTAs are about *someone else's shared thing*, which the affordance can't express.
 
-- **Remix is the one primary verb for "make/change."** Owner talking to their own app,
-  a stranger forking a template, a friend tweaking a shared game — all "remix." The
-  copy-vs-no-copy distinction (`skipChat`) **disappears** because chat is inline: remix
-  drops you into the same `/vibe` canvas with the agent ready, on your own copy.
-- **"Clone" is deleted.** It was only "remix without the editor"; with the agent inline
-  there is no editor to skip. (#1709 #2162 #2262 #1855 #2037)
-- **"Edit" as a button is deleted.** The owner doesn't navigate to edit — the agent is
-  already there. (#1709 #1856)
-- **"Fresh Install" is deleted.** It was Clone with scarier words. (#1855 #2037)
+| What you can do | How it's surfaced | Replaces |
+| --- | --- | --- |
+| **Change it** — own → in place; **don't own → silently forks to your copy** | the edit affordance (chips + Other), §1a — **no verb, no button** | "Remix", "Clone", "Fresh Install", "Edit", "Fork" |
+| Participate in the **shared space** (become a member, same dataset) | **Join** | "Join collab", "Request access" |
+| **Read** the shared thing (no membership) | **View** | "Open" (as a verb) |
+| Use a **public** app | it just loads (no CTA) | — |
+
+- **"Remix" is no longer a verb (jchris).** Remixing is simply what happens when you choose
+  a chip or "Other" on a vibe you don't own — the fork is implicit and silent, surfaced only
+  by the #1856 inline "this is your copy, the original is unchanged" message. There is **no
+  Remix / Clone / Edit / Fresh-Install button anywhere.**
+- This deletes the *last* "make a copy" verb. The **affordance is the action**; ownership
+  alone decides whether changing the app edits it in place or forks it. (#1709 #2162 #2262
+  #1855 #1856 #2037 all collapse into this.)
+- **Join** and **View** survive because they are choices about *entering someone else's
+  shared thing*, which "just change it" can't carry.
 
 ### One new setting: publish intent (#1854)
 
 The creator picks what the vibe *is for*; this drives which CTA is primary on a
 non-member's landing — it does **not** change access enforcement.
 
-| Intent | Primary CTA | Secondary (always available) |
+| Intent | Primary CTA | Also available |
 | --- | --- | --- |
-| Shared space | **Join** | Remix |
-| Template | **Remix** | Join (if collab allowed) |
-| Read-only / published | **View** | Remix |
+| Shared space | **Join** | the edit affordance (changing it forks your copy) |
+| Template | **— none** (land in the editable app; the chips *are* the invitation) | Join (if collab allowed) |
+| Read-only / published | **View** | the edit affordance (forks) |
 
 ### CTA precedence (access-state wins over intent)
 
-Intent only chooses the primary CTA *among actions the access state actually permits*.
-Resolve in this fixed order so the CTA is always predictable:
-`revoked` → `pending` → `private/no-requests` → `private/requests-on` →
-`public-or-granted (intent-driven)`. The canonical lookup (the GATE-1 → implementation
-handoff matrix, via @CharlieHelps):
+There is now **at most one explicit CTA** (Join or View) plus the always-present edit
+affordance (using it forks when you don't own). Access state gates which is shown; resolve
+in this fixed order: `revoked` → `pending` → `private/no-requests` → `private/requests-on` →
+`public-or-granted (intent-driven)`. The canonical lookup:
 
-| intent | grant / access-state | request-setting | primary CTA | secondary CTA |
+| intent | grant / access-state | request-setting | explicit CTA | edit affordance |
 | --- | --- | --- | --- | --- |
-| `*` | `revoked-access` | `*` | — (`Access revoked`) | `Remix` |
-| `*` | `pending-request` | `*` | — (`Requested`) | `Remix` |
-| `*` | `not-grant + private` | `requests-off` | — (`App not available`) | `Remix` * |
-| `*` | `not-grant + private` | `requests-on` | `Join` (request-to-join) | `Remix` |
-| `shared-space` | `public-or-granted` | `*` | `Join` | `Remix` |
-| `template` | `public-or-granted` | `*` | `Remix` | `Join` † |
-| `read-only-published` | `public-or-granted` | `*` | `View` | `Remix` |
+| `*` | `revoked-access` | `*` | — (`Access revoked`) | forks * |
+| `*` | `pending-request` | `*` | — (`Requested`) | forks * |
+| `*` | `not-grant + private` | `requests-off` | — (`App not available`) | forks * |
+| `*` | `not-grant + private` | `requests-on` | `Join` (request-to-join) | forks * |
+| `shared-space` | `public-or-granted` | `*` | `Join` | forks |
+| `template` | `public-or-granted` | `*` | — (chips are the invitation) | forks |
+| `read-only-published` | `public-or-granted` | `*` | `View` | forks |
 
-\* only when the source is reachable for remix. † only when collaboration is allowed.
-`public + no-membership` loads directly and bypasses the gate UI (no gate CTA). `member` /
-`submitter` are resolved in Member mode, outside this visitor CTA resolver.
+\* only when the source is reachable (you can't fork what you can't see). `public +
+no-membership` loads directly (no gate CTA). `member` / `submitter` resolve in Member mode,
+outside this visitor resolver. The strict-enum JSON form (`intent`, `grantState`,
+`requestSetting`, `explicitCta`) lands with PR-1 as the wiring source of truth.
 
-`Remix` is the one action available in nearly every state (it forks; it doesn't depend on
-the source's grant), which is why it's the universal fallback / secondary. The strict-enum
-JSON form of this table (`intent`, `grantState`, `requestSetting`, `primaryCta`,
-`secondaryCta`) lands with PR-1 as the wiring source of truth.
+> The *visual* placement of Join/View and the edit affordance in the switch menu is
+> **deferred** (jchris: "hard to specify without seeing the other parts first") — see §1e.
+> This table fixes the *logic*, not the layout.
 
 ### Grant → surface (collapsing the 12-state table)
 
@@ -282,7 +315,7 @@ The 12 grant values in `notes/vibes-sharing-reference.md` collapse, for UI purpo
 | --- | --- | --- | --- |
 | **Author** | owner / admin | (highlighted, e.g. shield) | agent-ready, Share, handle switcher |
 | **Member** | writer/reader grant | read-only → lock glyph when no write | agent-ready (writer) or Join-to-edit |
-| **Visitor** | anon / no grant | none | intent-driven CTA (Join/Remix/View) |
+| **Visitor** | anon / no grant | none | explicit CTA (Join *or* View) + the edit affordance (editing forks) |
 
 **`submitter`** (the latent fourth grant role — write-can-add, read-restricted, present in
 the type system but unexposed in UI today per `notes/vibes-sharing-reference.md`) folds
@@ -331,9 +364,9 @@ for your judgement before code.
 
 | Day | Work | Output | Gate |
 | --- | --- | --- | --- |
-| **0–1** | Lofi sketches of the edit affordance (§1a), first-generation `/vibe` (§1b), live+edit (§1c), mobile-first. Flow outlines for: new app from homepage, visitor-Join, visitor-Remix, owner-edit. Finalize §2 verb spec + §7 subtraction ledger. | Sketch set + this doc's §1–2 ratified | **GATE 1: you approve the sketches & verbs before any code.** |
+| **0–1** | Lofi sketches of the edit affordance (§1a), first-generation `/vibe` (§1b), live+edit (§1c), mobile-first. Flow outlines for: new app from homepage, visitor Join/View, non-owner-edit-forks, owner-edit. Finalize §2 verb spec + §7 subtraction ledger. (Switch menu / access view layout §1e is deferred.) | Sketch set + this doc's §1–2 ratified | **GATE 1: you approve the sketches & verbs before any code.** |
 | **2** | **The first & biggest step: redefine the VibesSwitch so opening it reveals the chips** (`OptionButtons`), already-open on start flows (§1c/§1d). Then the first-generation stream→preview behavior (§1b). Behind a flag; cached chips anonymous, **login gates codegen by design** (§3) — no anonymous-draft backend needed. | Switch-reveals-chips + first-gen on `/vibe` | **GATE 2: does opening the switch → chips, and first-gen, feel right on a phone?** |
-| **3** | Verb collapse + landing card: Remix/Join/View by intent; delete Clone/Fresh-Install/Edit-button; publish-intent setting (#1854). Mostly deletion. | PR-1 part 1 | — |
+| **3** | Verb collapse: **Join/View only + implicit fork on edit**; delete the Remix/Clone/Fresh-Install/Edit buttons entirely; publish-intent setting (#1854). Mostly deletion. | PR-1 part 1 | — |
 | **4** | Share panel link-first (#2232 + children). Indicator system for viewer modes (#2178/#2275). | PR-1 complete → review | **GATE 3: PR-1 review/QA.** |
 | **5** | Inversion wiring: agent-in-vibe live+edit, hot-swap inline, `/chat` → `/vibe` redirects, lazy chat connection flip. | PR-2 (may carry over) | **GATE 4: full cutover review.** |
 
@@ -367,16 +400,16 @@ so the count stays crisp.)
 **Resolved by design (the inversion / verb model):**
 - #2518 `/chat` deprecation → *is* PR-2 (#2517 handled as a pre-task).
 - #1745 inline edit + hot-swap → the edit affordance + live+edit (§1a/§1c); there is no separate iterate flow.
-- #1709 EDIT/CLONE/REMIX popup → **deleted** (no submenu; agent is inline).
-- #2262 "vibe" button → "remix" → subsumed; the agent affordance is the remix entry.
-- #1708 action-bar inconsistency → **deleted** (one pill, one model).
-- #2162 Clone/Remix inconsistency across surfaces → **deleted** (Clone is gone; Remix everywhere).
-- #1855 data-mode CTA language → Join/Remix/View by intent.
+- #1709 EDIT/CLONE/REMIX popup → **deleted** (no submenu; no copy-verbs; editing is the affordance).
+- #2262 "vibe" button → "remix" → **moot** ("Remix" is no longer a verb; editing a non-owned vibe forks implicitly, §2).
+- #1708 action-bar inconsistency → **deleted** (one switch, one model).
+- #2162 Clone/Remix inconsistency across surfaces → **deleted** (no Clone, no Remix verb anywhere).
+- #1855 data-mode CTA language → Join/View by intent; "make your own" is the implicit fork on edit, not a labeled CTA.
 - #1854 publish intent → the one new setting.
-- #1856 non-owner edit = your copy → inline fork message in the edit affordance (§1a).
-- #2037 Join over Fresh Install → Fresh Install deleted; Join primary by intent.
+- #1856 non-owner edit = your copy → the inline fork message; now *the* mechanism for "make your own" (§2).
+- #2037 Join over Fresh Install → **resolved structurally**: there is no Fresh Install/Remix button to compete with Join; Join is the explicit CTA, forking is implicit-on-edit only.
 - #1857 sharing-onramp epic → this doc *is* its resolution.
-- #1973 two sharing modes legible → Join vs Remix + intent (third "group-private" = Shared-space intent).
+- #1973 two sharing modes legible → Join vs implicit-fork + intent (third "group-private" = Shared-space intent).
 - #2178 read-only/admin indicator → viewer-mode indicator system (§2).
 - #2275 active handle + switcher + login → handle switcher in the pill (Author/Visitor modes).
 
@@ -395,6 +428,12 @@ mostly mooted by the new pill; salvage the first-run onboarding copy into the ho
 
 **Prerequisite, handled separately:** #2517 (backend Track B SharedSessions DO — jchris is
 doing this as an independent pre-task; not part of these two PRs).
+
+**Deferred to after this epic (new):**
+- **Owner self-branch to a new appSlug.** In this model an owner's edits change the app in
+  place; a non-owner's edits fork. An owner who wants to *deliberately* branch their own vibe
+  to a new appSlug has no affordance yet — that's a wanted follow-up, but explicitly **after
+  this epic** (jchris). File it when the epic lands so it isn't lost.
 
 ## 7. The subtraction ledger ("learnings")
 
