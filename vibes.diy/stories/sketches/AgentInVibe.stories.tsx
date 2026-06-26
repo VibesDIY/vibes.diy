@@ -66,7 +66,8 @@ function FakeVibeApp({ blurPx = 0 }: { readonly blurPx?: number }) {
   );
 }
 
-/** The floating, inset, rounded overlay card the agent lives in (the inversion made literal). */
+/** The floating, inset, rounded overlay card the agent lives in (the inversion made literal).
+ *  Lifted to bottom:84 to clear the persistent BottomNav (the open vibe switch row). */
 function OverlayCard({ children, tall }: { readonly children: React.ReactNode; readonly tall?: boolean }) {
   return (
     <div
@@ -74,10 +75,10 @@ function OverlayCard({ children, tall }: { readonly children: React.ReactNode; r
         position: "absolute",
         left: 12,
         right: 12,
-        bottom: 12,
+        bottom: 84,
         // inset rounded card — mirrors ResultPreview.tsx:108 (margin 12 / radius 12), now on the OVERLAY
         borderRadius: 12,
-        maxHeight: tall ? "70%" : undefined,
+        maxHeight: tall ? "62%" : undefined,
         overflow: "hidden",
         background: "var(--color-light-background-00, #fff)",
         boxShadow: "0 8px 40px rgba(0,0,0,0.45)",
@@ -87,6 +88,66 @@ function OverlayCard({ children, tall }: { readonly children: React.ReactNode; r
       className="text-light-primary dark:text-dark-primary"
     >
       {children}
+    </div>
+  );
+}
+
+/** The persistent open vibe-switch nav — lower-right, same-latitude buttons + the toggle,
+ *  echoing the real ExpandedVibesPill (cream bar #FFFEF0, near-black border, circular
+ *  colored icons). Redefines the nav to Home / Chat(selected) / Share + the VibesSwitch. */
+function NavIcon({
+  children,
+  color,
+  selected,
+}: {
+  readonly children: React.ReactNode;
+  readonly color: string;
+  readonly selected?: boolean;
+}) {
+  return (
+    <div
+      style={{
+        width: 42,
+        height: 42,
+        borderRadius: "50%",
+        background: color,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        color: "#fff",
+        fontSize: 18,
+        border: "1px solid var(--vibes-near-black, #1a1a1a)",
+        boxShadow: selected ? "0 0 0 3px var(--vibes-near-black, #1a1a1a)" : "none",
+      }}
+    >
+      {children}
+    </div>
+  );
+}
+
+function BottomNav() {
+  return (
+    <div
+      style={{
+        position: "absolute",
+        right: 12,
+        bottom: 14,
+        display: "flex",
+        alignItems: "center",
+        gap: 8,
+        padding: "8px 10px",
+        borderRadius: 30,
+        background: "var(--vibes-cream, #FFFEF0)",
+        border: "1px solid var(--vibes-near-black, #1a1a1a)",
+        boxShadow: "0 8px 30px rgba(0,0,0,0.4)",
+      }}
+    >
+      <NavIcon color="#3b82f6">⌂</NavIcon>
+      <NavIcon color="#fb923c" selected>
+        💬
+      </NavIcon>
+      <NavIcon color="#22c55e">↗</NavIcon>
+      <VibesSwitch size={40} isActive />
     </div>
   );
 }
@@ -124,23 +185,9 @@ export const LiveSwitchClosed: Story = {
   render: () => (
     <Phone>
       <FakeVibeApp />
-      {/* closed switch = the identity/share pill; isTwinkling = the public-entry pulse */}
-      <div style={{ position: "absolute", left: 0, right: 0, bottom: 18, display: "flex", justifyContent: "center" }}>
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 14,
-            padding: "8px 16px",
-            borderRadius: 999,
-            background: "rgba(0,0,0,0.55)",
-            backdropFilter: "blur(8px)",
-          }}
-        >
-          <span style={{ color: "#fff", fontSize: 18 }}>⌂</span>
-          <span style={{ color: "#fff", fontSize: 14, opacity: 0.85 }}>◐ meghan ▾</span>
-          <VibesSwitch size={40} isTwinkling />
-        </div>
+      {/* closed: just the switch in the lower-right (nav collapsed); isTwinkling = public-entry pulse */}
+      <div style={{ position: "absolute", right: 14, bottom: 16 }}>
+        <VibesSwitch size={48} isTwinkling />
       </div>
     </Phone>
   ),
@@ -154,13 +201,11 @@ export const LiveSwitchOpen: Story = {
     <Phone>
       <FakeVibeApp />
       <OverlayCard>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-          <strong className="text-sm">Make it yours</strong>
-          <VibesSwitch size={36} isActive />
-        </div>
+        <strong className="text-sm">Make it yours</strong>
         <OptionButtons options={["Make it a drum kit", "Add a high score"]} isFirst />
         <OtherInput />
       </OverlayCard>
+      <BottomNav />
     </Phone>
   ),
 };
@@ -203,6 +248,7 @@ export const FirstGeneration: StoryObj<{ progress: number }> = {
             </div>
           )}
         </OverlayCard>
+        <BottomNav />
       </Phone>
     );
   },
@@ -237,6 +283,7 @@ export const RestrictedGate: Story = {
           </button>
         </div>
       </OverlayCard>
+      <BottomNav />
     </Phone>
   ),
 };
