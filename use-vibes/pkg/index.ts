@@ -13,12 +13,6 @@ export {
   callAi,
   type CallAI,
 
-  // Vibes generation hook
-  useVibes,
-  type UseVibesOptions,
-  type UseVibesResult,
-  type VibeDocument,
-
   // Viewer identity & capabilities hook
   useViewer,
   type UseViewerResult,

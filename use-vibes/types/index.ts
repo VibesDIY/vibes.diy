@@ -42,5 +42,4 @@ export interface RuntimeError {
   errorType?: "SyntaxError" | "ReferenceError" | "TypeError" | "DatabaseError" | "Other";
 }
 
-export * from "./vibes-gen-types.js";
 export * from "./img-vibes-types.js";

@@ -201,10 +201,6 @@ export { constructVibesDatabaseName } from "./utils/databaseName.js";
 // Export types for testing and advanced usage
 export type { ImageDocument, PartialImageDocument, UseImgVibesOptions, UseImgVibesResult } from "@vibes.diy/use-vibes-types";
 
-// Export useVibes hook and types
-export type { UseVibesOptions, UseVibesResult, VibeDocument } from "@vibes.diy/use-vibes-types";
-export { useVibes } from "./hooks/vibes-gen/index.js";
-
 // Export useViewer hook and types — re-exported from @vibes.diy/vibe-runtime
 // so the sandbox import-map alias `use-vibes` → `@vibes.diy/vibe-runtime`
 // also surfaces the hook (see vibes.diy/api/svc/intern/grouped-vibe-import-map.ts).

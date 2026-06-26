@@ -14,7 +14,7 @@
  *
  * **Browser-link safety.** This module is re-exported from `use-vibes`'s
  * top-level entry, so browser bundles will *link* it even when they only
- * use `useFireproof`/`useVibes`. Top-level imports MUST stay browser-safe;
+ * use `useFireproof`. Top-level imports MUST stay browser-safe;
  * Node-only modules (keybag, device-id) live behind a dynamic import in
  * `lazyKeybagGetToken`. Native `node:path` is replaced by inline basename
  * logic so Vite/webpack don't fail at module-link time.
