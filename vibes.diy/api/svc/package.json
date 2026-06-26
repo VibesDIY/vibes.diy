@@ -26,7 +26,9 @@
     "@libsql/client": "^0.17.3",
     "@neondatabase/serverless": "^1.1.0",
     "@noble/hashes": "^2.2.0",
+    "@openrouter/agent": "^0.1.0",
     "@vibes.diy/api-impl": "workspace:*",
+    "@vibes.diy/eval-codegen-matrix": "workspace:*",
     "@vibes.diy/api-pkg": "workspace:*",
     "@vibes.diy/api-sql": "workspace:*",
     "@vibes.diy/api-types": "workspace:*",
@@ -48,7 +50,8 @@
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
     "sucrase": "^3.35.1",
-    "ws": "^8.21.0"
+    "ws": "^8.21.0",
+    "zod": "^4.0.0"
   },
   "devDependencies": {
     "@fireproof/core-cli": "0.24.19",
