@@ -26,5 +26,11 @@ export default defineConfig({
         },
       ],
     },
+    // Reuse the browser context across files within a worker instead of tearing
+    // it down per file. The useVibes generation-hook tests that module-mocked
+    // call-ai / @vibes.diy/prompts (which would bleed across files in a shared
+    // worker) were removed with the hook itself, so there's no cross-file mock
+    // bleed surface left. See #2467 (and the app project's hardening in #2457).
+    isolate: false,
   },
 });
