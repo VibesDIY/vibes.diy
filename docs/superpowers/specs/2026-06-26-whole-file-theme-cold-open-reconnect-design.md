@@ -10,7 +10,7 @@
 The experimental flag-gated whole-file codegen path (`USE_WHOLE_FILE_CODEGEN`) shipped the reliable generation core but skipped three things the production SEARCH/REPLACE path has. On the preview, browser testing surfaced all three:
 
 1. **Every generation comes out with the same default theme.** The whole-file dispatch never runs pre-allocation, so no theme slug is selected or threaded into the agentic prompt — `{{THEME_DESIGN}}` resolves to empty and the prompt falls back to the default `stylePrompt` ("brutalist web") on every generation. Apps differ in content but share one visual identity.
-2. **Long, blank time-to-paint.** The app preview only paints when `App.jsx` fully completes (no incremental compile; explicitly out of scope in the per-line diffusion design). Measured ≈30–34s of blank canvas for the *simplest* app; 60–120s for typical 600–1300-line apps. There is no themed cold open — the magic-harness §5.5 idea ("the preview materializes in the real theme before any app code exists") is unbuilt, and the runtime color-override channel only fires on manual palette edits, never on fresh generation.
+2. **Long, blank time-to-paint.** The app preview only paints when `App.jsx` fully completes (no incremental compile; explicitly out of scope in the per-line diffusion design). Measured ≈30–34s of blank canvas for the _simplest_ app; 60–120s for typical 600–1300-line apps. There is no themed cold open — the magic-harness §5.5 idea ("the preview materializes in the real theme before any app code exists") is unbuilt, and the runtime color-override channel only fires on manual palette edits, never on fresh generation.
 3. **A reconnect mid-generation wedges into a frozen "Reconnecting…" + blank canvas.** Recoverable only by a full reload. Generation succeeds server-side; the live view never converges.
 
 These chain together: the long blank window (2) is exactly what gives the 45s watchdog time to trip into the reconnect path (3), and a default-only theme (1) makes the would-be cold open worthless. Fixing all three as one coherent change closes the gap between the whole-file path and a magical, reliable experience.
@@ -28,7 +28,7 @@ The priority order from the magic-harness design holds: **Fast → Fun**, and **
 
 ### 2. No themed cold open
 
-- The runtime color-override channel (`vibes.diy/vibe/runtime/VibeContext.tsx`, bridge `vibes.diy/vibe/srv-sandbox/srv-sandbox.ts`) restyles a *running* app in <100ms, but is only invoked on manual palette edits (`vibes.diy/pkg/app/routes/chat/chat.$ownerHandle.$appSlug.tsx:287-353`), never on fresh generation.
+- The runtime color-override channel (`vibes.diy/vibe/runtime/VibeContext.tsx`, bridge `vibes.diy/vibe/srv-sandbox/srv-sandbox.ts`) restyles a _running_ app in <100ms, but is only invoked on manual palette edits (`vibes.diy/pkg/app/routes/chat/chat.$ownerHandle.$appSlug.tsx:287-353`), never on fresh generation.
 - The app preview cannot render partial JSX, so first paint waits for the full `App.jsx`. With no cold open, the preview area is a blank grid for the entire generation.
 
 ### 3. Reconnect convergence — the missing `fsRef` on the whole-file `block.end`
@@ -36,7 +36,7 @@ The priority order from the magic-harness design holds: **Fast → Fun**, and **
 - The 45s stream watchdog (`vibes.diy/pkg/app/hooks/useStreamWatchdog.ts:7`) flips `connection → "reconnecting"` on silence while a turn is in flight (`vibes.diy/pkg/app/routes/chat/prompt-state.ts:258-259`).
 - That state only settles back to `"live"` on a canonical `block.end` carrying `fsRef` (`prompt-state.ts:330-338`, gated on `!!block.fsRef`).
 - The whole-file handler emits its live terminal `block.end` built from `buildBlockEvents` **before** persist, so it has no `fsRef` (`vibes.diy/api/svc/public/handle-whole-file-codegen.ts:403-404`), and after persisting (`:419-426`) it returns without re-emitting a `block.end` carrying `fsRef`.
-- The production path *does* re-emit post-persist with `fsRef` (`prompt-chat-section.ts:1389`, `evt: { ...value, fsRef: r.Ok().fsRef.toValue() }`). The whole-file path lacks this, so once it goes "reconnecting" it can never settle → frozen spinner + blank live view until reload.
+- The production path _does_ re-emit post-persist with `fsRef` (`prompt-chat-section.ts:1389`, `evt: { ...value, fsRef: r.Ok().fsRef.toValue() }`). The whole-file path lacks this, so once it goes "reconnecting" it can never settle → frozen spinner + blank live view until reload.
 
 ## Design
 

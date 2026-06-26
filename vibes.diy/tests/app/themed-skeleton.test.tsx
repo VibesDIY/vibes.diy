@@ -9,7 +9,7 @@ afterEach(cleanup);
 describe("ThemedSkeleton", () => {
   it("applies theme tokens as CSS variables on the root", () => {
     const { container } = render(
-      <ThemedSkeleton colorTheme={{ background: "#101014", accent: "#cfa562", "text-primary": "#fafafa" }} />,
+      <ThemedSkeleton colorTheme={{ background: "#101014", accent: "#cfa562", "text-primary": "#fafafa" }} />
     );
     const root = container.firstElementChild as HTMLElement;
     expect(root.style.getPropertyValue("--skeleton-bg")).toBe("#101014");

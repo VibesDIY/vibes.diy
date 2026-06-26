@@ -24,11 +24,13 @@
 **Depends-on:** none
 
 **Files:**
+
 - Create: `vibes.diy/api/svc/intern/codegen-loop/whole-file-session-doc.ts`
 - Create: `vibes.diy/api/svc/intern/codegen-loop/whole-file-session-doc.test.ts`
 - Modify: `vibes.diy/api/svc/public/prompt-chat-section.ts` (whole-file dispatch branch, currently passing `sessionDoc: { userPrompt }` ~line 2308)
 
 **Interfaces:**
+
 - Consumes: `preAllocate(vctx, { prompt }): Promise<Result<PreAllocateResult>>` (existing, `vibes.diy/api/svc/intern/pre-allocate.ts:45`), where `PreAllocateResult = { skills: string[]; pairs: { title: string; slug: string }[]; theme: string; enrichedPrompt?: string }`.
 - Produces: `buildWholeFileSessionDoc(userPrompt: string, pre?: PreAllocateResult): WholeFileCodegenSessionDoc` — maps a pre-allocation result into the handler's `sessionDoc` (theme slug, skills, title, enrichedPrompt). Returns `{ userPrompt }` unchanged when `pre` is undefined (pre-alloc failure fallback).
 
@@ -156,10 +158,12 @@ git commit -m "feat(whole-file-codegen): run pre-allocation + thread theme into 
 **Depends-on:** none
 
 **Files:**
+
 - Create: `vibes.diy/pkg/app/components/ResultPreview/ThemedSkeleton.tsx`
 - Test: `vibes.diy/tests/app/themed-skeleton.test.tsx`
 
 **Interfaces:**
+
 - Produces: `ThemedSkeleton(props: { colorTheme: ColorThemeTokens | null }): JSX.Element` — a parametric app-shell placeholder (header, two card placeholders, a button) styled from theme tokens via CSS custom properties; falls back to neutral tokens when `colorTheme` is null.
 - Consumes: the colorset token shape already carried in `promptState.colorTheme` (canonical `background`/`surface`/`primary`/`accent`/`text-primary`/`border` + structural `font-family`/`radius`). Use the existing colorset type exported alongside `prompt-state.ts` / the themes bundle; if no shared type exists, declare a local `ColorThemeTokens` with those optional string fields.
 
@@ -176,7 +180,7 @@ import { ThemedSkeleton } from "../../pkg/app/components/ResultPreview/ThemedSke
 describe("ThemedSkeleton", () => {
   it("applies theme tokens as CSS variables on the root", () => {
     const { container } = render(
-      <ThemedSkeleton colorTheme={{ background: "#101014", accent: "#cfa562", "text-primary": "#fafafa" }} />,
+      <ThemedSkeleton colorTheme={{ background: "#101014", accent: "#cfa562", "text-primary": "#fafafa" }} />
     );
     const root = container.firstElementChild as HTMLElement;
     expect(root.style.getPropertyValue("--skeleton-bg")).toBe("#101014");
@@ -306,9 +310,11 @@ git commit -m "feat(preview): parametric ThemedSkeleton cold-open placeholder"
 **Depends-on:** 2
 
 **Files:**
+
 - Modify: `vibes.diy/pkg/app/components/ResultPreview/PreviewApp.tsx` (the `showBlur` cold-open window, ~line 197)
 
 **Interfaces:**
+
 - Consumes: `ThemedSkeleton({ colorTheme })` (from Task 2); `promptState.running`, `promptState.colorTheme`, and the existing `pinnedFsId` / `firstStreamDone` locals already computed in `PreviewApp.tsx:197`.
 
 - [ ] **Step 1: Write the failing test**
@@ -324,12 +330,22 @@ import { PreviewApp } from "../../pkg/app/components/ResultPreview/PreviewApp.js
 // component already consumes.
 describe("PreviewApp cold open", () => {
   it("shows the themed skeleton while generating with nothing painted yet", () => {
-    const { queryByTestId } = renderPreviewApp({ running: true, pinnedFsId: undefined, firstStreamDone: false, colorTheme: { accent: "#cfa562" } });
+    const { queryByTestId } = renderPreviewApp({
+      running: true,
+      pinnedFsId: undefined,
+      firstStreamDone: false,
+      colorTheme: { accent: "#cfa562" },
+    });
     expect(queryByTestId("themed-skeleton")).toBeTruthy();
   });
 
   it("hides the themed skeleton once the app has painted", () => {
-    const { queryByTestId } = renderPreviewApp({ running: false, pinnedFsId: "fs-123", firstStreamDone: true, colorTheme: { accent: "#cfa562" } });
+    const { queryByTestId } = renderPreviewApp({
+      running: false,
+      pinnedFsId: "fs-123",
+      firstStreamDone: true,
+      colorTheme: { accent: "#cfa562" },
+    });
     expect(queryByTestId("themed-skeleton")).toBeNull();
   });
 });
@@ -351,7 +367,9 @@ import { ThemedSkeleton } from "./ThemedSkeleton.js";
 // ...
 const showColdOpen = promptState.running && pinnedFsId === undefined && !firstStreamDone;
 // ...in the returned JSX, inside the preview container:
-{showColdOpen ? <ThemedSkeleton colorTheme={promptState.colorTheme ?? null} /> : null}
+{
+  showColdOpen ? <ThemedSkeleton colorTheme={promptState.colorTheme ?? null} /> : null;
+}
 ```
 
 Place it so it overlays the preview area (the container is positioned; `ThemedSkeleton` is `position:absolute; inset:0`). Do not alter the iframe mount/hot-swap logic.
@@ -376,11 +394,13 @@ git commit -m "feat(preview): paint ThemedSkeleton during the cold-open window"
 **Depends-on:** none
 
 **Files:**
+
 - Modify: `vibes.diy/api/svc/public/handle-whole-file-codegen.ts` (after the `handlePromptContext` persist, ~lines 419-428)
 - Test: `vibes.diy/api/svc/intern/codegen-loop/handle-whole-file-codegen.test.ts`
 - Test: `vibes.diy/tests/app/message-list-reconnect-converge.test.tsx`
 
 **Interfaces:**
+
 - Consumes: `handlePromptContext(...) → Result<{ blockSeq: number; fsRef: Option<FileSystemRef> }>` (existing handler dep); `appendBlockEvent({ promptId, blockSeq, evt, emitMode: "emit-only" })` (existing handler dep); `Option.toValue()` from `@adviser/cement`; the reducer's `isBlockEnd` settle gate (`vibes.diy/pkg/app/routes/chat/prompt-state.ts:330-338`, settles `connection: "live"` when `!!block.fsRef` and `block.streamId === inFlightStreamId`).
 
 - [ ] **Step 1: Write the failing handler test**
@@ -411,24 +431,24 @@ Expected: FAIL — no `block.end` carries `fsRef`.
 In `handle-whole-file-codegen.ts`, after the persist + error check (`if (rPersist.isErr()) return Result.Err(rPersist);`, ~line 426) and before `return Result.Ok(...)`, add (mirrors `prompt-chat-section.ts:1389`):
 
 ```ts
-  // Convergence anchor: re-emit the canonical block.end carrying fsRef so a
-  // client that flipped to "reconnecting" mid-generation settles back to "live"
-  // (prompt-state.ts isBlockEnd gate is `!!block.fsRef`) and PreviewApp repoints
-  // the iframe for first paint (PreviewApp.tsx isBlockEnd && msg.fsRef). The
-  // pre-persist block.end above stays as the live card-finalize signal.
-  const fsRefVal = rPersist.Ok().fsRef.toValue();
-  if (fsRefVal !== undefined) {
-    const wireSeq = blockSeq++;
-    const rEnd = await appendBlockEvent({
-      promptId,
-      blockSeq: wireSeq,
-      evt: { ...blockEnd, fsRef: fsRefVal, seq: liveSeq++, timestamp: new Date() },
-      emitMode: "emit-only",
-    });
-    if (rEnd.isErr()) return Result.Err(rEnd);
-  }
+// Convergence anchor: re-emit the canonical block.end carrying fsRef so a
+// client that flipped to "reconnecting" mid-generation settles back to "live"
+// (prompt-state.ts isBlockEnd gate is `!!block.fsRef`) and PreviewApp repoints
+// the iframe for first paint (PreviewApp.tsx isBlockEnd && msg.fsRef). The
+// pre-persist block.end above stays as the live card-finalize signal.
+const fsRefVal = rPersist.Ok().fsRef.toValue();
+if (fsRefVal !== undefined) {
+  const wireSeq = blockSeq++;
+  const rEnd = await appendBlockEvent({
+    promptId,
+    blockSeq: wireSeq,
+    evt: { ...blockEnd, fsRef: fsRefVal, seq: liveSeq++, timestamp: new Date() },
+    emitMode: "emit-only",
+  });
+  if (rEnd.isErr()) return Result.Err(rEnd);
+}
 
-  return Result.Ok(rPersist.Ok().blockSeq);
+return Result.Ok(rPersist.Ok().blockSeq);
 ```
 
 - [ ] **Step 4: Run the handler test to confirm it passes**
@@ -445,10 +465,20 @@ import { promptReducer, initialPromptState } from "../../pkg/app/routes/chat/pro
 
 describe("reconnect convergence", () => {
   it("settles connection live on a block.end carrying fsRef for the in-flight stream", () => {
-    let s = { ...initialPromptState, inFlightStreamId: "p1", connection: "reconnecting" as const, running: true,
-      blocks: [{ msgs: [] }], current: { msgs: [] } };
+    let s = {
+      ...initialPromptState,
+      inFlightStreamId: "p1",
+      connection: "reconnecting" as const,
+      running: true,
+      blocks: [{ msgs: [] }],
+      current: { msgs: [] },
+    };
     s = promptReducer(s, {
-      type: "block.end", streamId: "p1", blockId: "b1", seq: 1, timestamp: new Date(),
+      type: "block.end",
+      streamId: "p1",
+      blockId: "b1",
+      seq: 1,
+      timestamp: new Date(),
       fsRef: { fsId: "fs-9", appSlug: "a", ownerHandle: "o", mode: "create" },
     } as never);
     expect(s.connection).toBe("live");
@@ -456,8 +486,14 @@ describe("reconnect convergence", () => {
   });
 
   it("does NOT settle on a block.end lacking fsRef", () => {
-    let s = { ...initialPromptState, inFlightStreamId: "p1", connection: "reconnecting" as const, running: true,
-      blocks: [{ msgs: [] }], current: { msgs: [] } };
+    let s = {
+      ...initialPromptState,
+      inFlightStreamId: "p1",
+      connection: "reconnecting" as const,
+      running: true,
+      blocks: [{ msgs: [] }],
+      current: { msgs: [] },
+    };
     s = promptReducer(s, { type: "block.end", streamId: "p1", blockId: "b1", seq: 1, timestamp: new Date() } as never);
     expect(s.connection).toBe("reconnecting");
   });
@@ -489,6 +525,7 @@ git commit -m "fix(whole-file-codegen): re-emit canonical block.end with fsRef f
 **Depends-on:** 1, 3, 4
 
 **Files:**
+
 - (none — verification only)
 
 - [ ] Run the affected suites + lint + format + rules-bag:
@@ -510,6 +547,7 @@ Expected: all green. (Flaky-test policy: rerun a single failing file in isolatio
 **Depends-on:** 5
 
 **Files:**
+
 - (none — on-preview verification by the operator)
 
 - [ ] On the PR preview (`USE_WHOLE_FILE_CODEGEN=true`, label `preview:whole-file-codegen`), confirm: (a) several different prompts produce **visibly different themes** (not all brutalist); (b) the **themed skeleton paints within ~1-2s** of submit and is never a blank grid; (c) the real app swaps in cleanly on completion; (d) a **mid-generation reload/transport drop converges** with no frozen "Reconnecting…" and no `sectionId` console error. This is the load-bearing verification (this class of streaming/reconnect bug is invisible to unit tests).
