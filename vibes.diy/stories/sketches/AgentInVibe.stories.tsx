@@ -66,28 +66,87 @@ function FakeVibeApp({ blurPx = 0 }: { readonly blurPx?: number }) {
   );
 }
 
-/** The floating, inset, rounded overlay card the agent lives in (the inversion made literal).
- *  Lifted to bottom:84 to clear the persistent BottomNav (the open vibe switch row). */
-function OverlayCard({ children, tall }: { readonly children: React.ReactNode; readonly tall?: boolean }) {
+/** Small stand-in for the app icon shown in the unified card header. */
+function AppIcon() {
+  return (
+    <div
+      style={{
+        width: 30,
+        height: 30,
+        borderRadius: 8,
+        flexShrink: 0,
+        background: "linear-gradient(160deg,#312e81,#4c1d95)",
+        border: "1px solid rgba(0,0,0,0.15)",
+      }}
+    />
+  );
+}
+
+/** EXPERIMENT (might revert): ONE unified overlay = the expanded vibe switch as a single
+ *  rounded card that contains everything — icon + title at the top, content in the middle,
+ *  and the nav row + toggle at the bottom latitude. No second floating bubble. Variable height. */
+function UnifiedOverlay({
+  title,
+  subtitle,
+  children,
+}: {
+  readonly title: string;
+  readonly subtitle?: string;
+  readonly children: React.ReactNode;
+}) {
   return (
     <div
       style={{
         position: "absolute",
         left: 12,
         right: 12,
-        bottom: 84,
-        // inset rounded card — mirrors ResultPreview.tsx:108 (margin 12 / radius 12), now on the OVERLAY
-        borderRadius: 12,
-        maxHeight: tall ? "62%" : undefined,
+        bottom: 12,
+        borderRadius: 16,
+        maxHeight: "82%",
         overflow: "hidden",
+        display: "flex",
+        flexDirection: "column",
         background: "var(--color-light-background-00, #fff)",
+        border: "1px solid var(--vibes-near-black, #1a1a1a)",
         boxShadow: "0 8px 40px rgba(0,0,0,0.45)",
-        border: "1px solid var(--color-light-decorative-00, #e5e5e5)",
-        padding: 14,
       }}
       className="text-light-primary dark:text-dark-primary"
     >
-      {children}
+      {/* header — icon + title at the top */}
+      <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "14px 14px 8px" }}>
+        <AppIcon />
+        <div style={{ lineHeight: 1.2 }}>
+          <strong className="text-sm">{title}</strong>
+          {subtitle && (
+            <div className="text-light-secondary dark:text-dark-secondary" style={{ fontSize: 12 }}>
+              {subtitle}
+            </div>
+          )}
+        </div>
+      </div>
+      {/* body — the content (chips, stream, gate) */}
+      <div style={{ padding: "0 14px", overflowY: "auto" }}>{children}</div>
+      {/* footer — nav + toggle at the bottom latitude */}
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: 8,
+          marginTop: 10,
+          padding: "10px 14px 12px",
+          borderTop: "1px solid var(--color-light-decorative-00, #e5e5e5)",
+        }}
+      >
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <NavIcon color="#3b82f6">⌂</NavIcon>
+          <NavIcon color="#fb923c" selected>
+            💬
+          </NavIcon>
+          <NavIcon color="#22c55e">↗</NavIcon>
+        </div>
+        <VibesSwitch size={40} isActive />
+      </div>
     </div>
   );
 }
@@ -121,33 +180,6 @@ function NavIcon({
       }}
     >
       {children}
-    </div>
-  );
-}
-
-function BottomNav() {
-  return (
-    <div
-      style={{
-        position: "absolute",
-        right: 12,
-        bottom: 14,
-        display: "flex",
-        alignItems: "center",
-        gap: 8,
-        padding: "8px 10px",
-        borderRadius: 30,
-        background: "var(--vibes-cream, #FFFEF0)",
-        border: "1px solid var(--vibes-near-black, #1a1a1a)",
-        boxShadow: "0 8px 30px rgba(0,0,0,0.4)",
-      }}
-    >
-      <NavIcon color="#3b82f6">⌂</NavIcon>
-      <NavIcon color="#fb923c" selected>
-        💬
-      </NavIcon>
-      <NavIcon color="#22c55e">↗</NavIcon>
-      <VibesSwitch size={40} isActive />
     </div>
   );
 }
@@ -200,12 +232,10 @@ export const LiveSwitchOpen: Story = {
   render: () => (
     <Phone>
       <FakeVibeApp />
-      <OverlayCard>
-        <strong className="text-sm">Make it yours</strong>
+      <UnifiedOverlay title="Bloom Machine" subtitle="bloom">
         <OptionButtons options={["Make it a drum kit", "Add a high score"]} isFirst />
         <OtherInput />
-      </OverlayCard>
-      <BottomNav />
+      </UnifiedOverlay>
     </Phone>
   ),
 };
@@ -226,11 +256,10 @@ export const FirstGeneration: StoryObj<{ progress: number }> = {
     return (
       <Phone>
         <FakeVibeApp blurPx={firstCodeDone ? Math.min(blurPx, 4) : blurPx} />
-        <OverlayCard tall>
+        <UnifiedOverlay title="Bloom Machine" subtitle={firstCodeDone ? "live ✦" : "building your app…"}>
           {firstCodeDone ? (
             <div className="text-sm">
-              <strong>Bloom Machine is live ✦</strong>
-              <p className="text-light-secondary dark:text-dark-secondary" style={{ marginTop: 6 }}>
+              <p className="text-light-secondary dark:text-dark-secondary" style={{ marginTop: 2 }}>
                 Keep going — tap a chip or describe a change.
               </p>
               <OptionButtons options={["Add a high score", "Make it dark"]} />
@@ -238,7 +267,6 @@ export const FirstGeneration: StoryObj<{ progress: number }> = {
             </div>
           ) : (
             <div className="text-sm" style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-              <strong>building your app…</strong>
               <span className="text-light-secondary dark:text-dark-secondary">▸ laying out a 4×4 pad grid</span>
               <span className="text-light-secondary dark:text-dark-secondary">▸ wiring up the sound</span>
               <code style={{ fontSize: 12, opacity: 0.8 }}>
@@ -247,8 +275,7 @@ export const FirstGeneration: StoryObj<{ progress: number }> = {
               <span aria-hidden className="h-3 w-3 animate-spin rounded-full border-2 border-current border-t-transparent" />
             </div>
           )}
-        </OverlayCard>
-        <BottomNav />
+        </UnifiedOverlay>
       </Phone>
     );
   },
@@ -261,9 +288,8 @@ export const RestrictedGate: Story = {
   render: () => (
     <Phone>
       <FakeVibeApp blurPx={14} />
-      <OverlayCard>
-        <strong className="text-sm">@meghan’s Bloom Machine</strong>
-        <p className="text-light-secondary dark:text-dark-secondary text-sm" style={{ marginTop: 6 }}>
+      <UnifiedOverlay title="@meghan’s Bloom Machine" subtitle="invite-only">
+        <p className="text-light-secondary dark:text-dark-secondary text-sm" style={{ marginTop: 2 }}>
           This vibe is invite-only. Ask to join the shared beat, or start your own.
         </p>
         <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
@@ -282,8 +308,7 @@ export const RestrictedGate: Story = {
             Make it yours
           </button>
         </div>
-      </OverlayCard>
-      <BottomNav />
+      </UnifiedOverlay>
     </Phone>
   ),
 };
