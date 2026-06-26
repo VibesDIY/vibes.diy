@@ -2,9 +2,9 @@
 
 > **For agentic workers:** Parallel execution: use `ultrapowers:ultrapowers` (this plan carries ultraplan markers). Sequential fallback: superpowers:subagent-driven-development or superpowers:executing-plans. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Acceptance:** waived — verification of record is the operator's manual preview browser pass (spec A1/A3) on the deployed PR preview (https://pr-2650-vibes-diy-v2.jchris.workers.dev). Per this PR's documented process lesson ("unit tests passed at every step and missed all of the headline"), no held-out automated exam is authored: a green automated suite here would re-create the exact false-confidence failure mode. Each implementation task carries its own committed TDD tests for the *mechanical* criteria (wire shape, slug→theme translation, unicode decode, EOF flush, verify-before-return, gating); `pnpm run build` (tsc) + `cd vibes.diy/tests && pnpm test` + `pnpm run rules-bag:constructors` gate CI; the visual headline (themed cold open paints themed; no reliability regression) is confirmed by the operator in the browser at the pre-merge gate.
+**Acceptance:** waived — verification of record is the operator's manual preview browser pass (spec A1/A3) on the deployed PR preview (https://pr-2650-vibes-diy-v2.jchris.workers.dev). Per this PR's documented process lesson ("unit tests passed at every step and missed all of the headline"), no held-out automated exam is authored: a green automated suite here would re-create the exact false-confidence failure mode. Each implementation task carries its own committed TDD tests for the _mechanical_ criteria (wire shape, slug→theme translation, unicode decode, EOF flush, verify-before-return, gating); `pnpm run build` (tsc) + `cd vibes.diy/tests && pnpm test` + `pnpm run rules-bag:constructors` gate CI; the visual headline (themed cold open paints themed; no reliability regression) is confirmed by the operator in the browser at the pre-merge gate.
 
-**Goal:** Make the themed cold open paint in the pre-allocated theme on a *fresh* whole-file generation by delivering the theme to the client at stream start, and clear the three real correctness bugs + small rules-bag remnants so PR #2650 is honest and safe to take out of draft.
+**Goal:** Make the themed cold open paint in the pre-allocated theme on a _fresh_ whole-file generation by delivering the theme to the client at stream start, and clear the three real correctness bugs + small rules-bag remnants so PR #2650 is honest and safe to take out of draft.
 
 **Architecture:** The client already has full theme plumbing (`setTheme`/`setColorTheme` actions + reducer cases in `prompt-state.ts`, `coldOpenSlugFrom` fallback in `PreviewApp.tsx`); the only gap is that the theme never reaches the client during the live stream. We add a first-class section-event (`prompt.section-theme`) to the wire protocol, emit it as the first event of the whole-file (flag-on) stream from the already-loaded `active.theme` slug, and translate it on the client into the existing `setTheme` dispatch. Production SEARCH/REPLACE never emits the new event, so flag-off behavior is identical. Separately we fix three real bugs in `whole-file-loop.ts` and a couple of rules-bag remnants.
 
@@ -28,10 +28,12 @@
 **Depends-on:** none
 
 **Files:**
+
 - Modify: `vibes.diy/api/types/prompt.ts`
 - Test: `vibes.diy/api/tests/prompt-section-theme.test.ts`
 
 **Interfaces:**
+
 - Consumes: `PromptBase` (existing, `prompt.ts`: `{ streamId, chatId, seq, timestamp }`)
 - Produces: `PromptSectionTheme` arktype + type (`{ type: "prompt.section-theme", theme: string, "colorTheme?": string }` & `PromptBase`); `PromptMsgs` union now includes `'prompt.section-theme'`.
 
@@ -88,7 +90,12 @@ export type PromptSectionTheme = typeof PromptSectionTheme.infer;
 Then add `.or(PromptSectionTheme)` to the union:
 
 ```ts
-export const PromptMsgs = PromptBlockBegin.or(PromptBlockEnd).or(PromptReq).or(PromptError).or(PromptFS).or(PromptDryRunPayload).or(PromptSectionTheme);
+export const PromptMsgs = PromptBlockBegin.or(PromptBlockEnd)
+  .or(PromptReq)
+  .or(PromptError)
+  .or(PromptFS)
+  .or(PromptDryRunPayload)
+  .or(PromptSectionTheme);
 ```
 
 - [ ] **Step 4: Run the test and the build**
@@ -110,11 +117,13 @@ git commit -m "feat(whole-file): add prompt.section-theme wire event to PromptMs
 **Depends-on:** 1
 
 **Files:**
+
 - Create: `vibes.diy/api/svc/intern/codegen-loop/section-theme-event.ts`
 - Modify: `vibes.diy/api/svc/public/handle-whole-file-codegen.ts`
 - Test: `vibes.diy/api/tests/section-theme-event.test.ts`
 
 **Interfaces:**
+
 - Consumes: `PromptSectionTheme` (Task 1)
 - Produces: `buildSectionThemeEvent(args: { theme: string; colorTheme?: string; streamId: string; chatId: string; seq: number; timestamp: Date }): PromptSectionTheme`
 
@@ -132,7 +141,14 @@ describe("buildSectionThemeEvent", () => {
 
   it("builds a theme-only event", () => {
     const evt = buildSectionThemeEvent({ theme: "aether", ...base });
-    expect(evt).toEqual({ type: "prompt.section-theme", theme: "aether", streamId: "s1", chatId: "c1", seq: 3, timestamp: new Date(0) });
+    expect(evt).toEqual({
+      type: "prompt.section-theme",
+      theme: "aether",
+      streamId: "s1",
+      chatId: "c1",
+      seq: 3,
+      timestamp: new Date(0),
+    });
   });
 
   it("includes colorTheme only when a non-empty slug is given", () => {
@@ -216,11 +232,13 @@ git commit -m "feat(whole-file): emit prompt.section-theme first when a pre-allo
 **Depends-on:** 1
 
 **Files:**
+
 - Create: `vibes.diy/pkg/app/hooks/section-theme-actions.ts`
 - Modify: `vibes.diy/pkg/app/hooks/useChatSession.ts`
 - Test: `vibes.diy/tests/app/section-theme-actions.test.ts`
 
 **Interfaces:**
+
 - Consumes: `PromptSectionTheme` (Task 1); `getThemeBySlug(slug: string): VibesTheme | undefined` (from `@vibes.diy/prompts`)
 - Produces: `sectionThemeActions(block: PromptSectionTheme): PromptAction[]` and `isSectionTheme(block: unknown): block is PromptSectionTheme`
 
@@ -322,10 +340,12 @@ git commit -m "feat(whole-file): hydrate promptState.theme live from prompt.sect
 **Depends-on:** none
 
 **Files:**
+
 - Modify: `vibes.diy/api/svc/intern/codegen-loop/whole-file-loop.ts`
 - Test: `vibes.diy/api/tests/whole-file-unescape.test.ts`
 
 **Interfaces:**
+
 - Consumes: nothing new
 - Produces: `extractJsonStringField` decodes `\uXXXX` and standard escapes without throwing (behavior change only; signature unchanged)
 
@@ -359,33 +379,33 @@ If `extractJsonStringField` is not exported, export it (it is currently a module
 In `extractJsonStringField`, replace the backslash branch (lines ~112-119):
 
 ```ts
-    if (ch === "\\") {
-      const next = raw[i + 1];
-      if (next === undefined) break;
-      out += JSON.parse(`"\\${next}"`) as string;
-      i += 1;
-      continue;
-    }
+if (ch === "\\") {
+  const next = raw[i + 1];
+  if (next === undefined) break;
+  out += JSON.parse(`"\\${next}"`) as string;
+  i += 1;
+  continue;
+}
 ```
 
 with an explicit decoder that consumes 4 hex digits for `\u`:
 
 ```ts
-    if (ch === "\\") {
-      const next = raw[i + 1];
-      if (next === undefined) break;
-      if (next === "u") {
-        const hex = raw.slice(i + 2, i + 6);
-        if (/^[0-9a-fA-F]{4}$/.test(hex) === false) break; // partial mid-stream escape — wait for more bytes
-        out += String.fromCharCode(parseInt(hex, 16));
-        i += 5;
-        continue;
-      }
-      const simple: Record<string, string> = { n: "\n", t: "\t", r: "\r", b: "\b", f: "\f", "\"": '"', "\\": "\\", "/": "/" };
-      out += simple[next] ?? next;
-      i += 1;
-      continue;
-    }
+if (ch === "\\") {
+  const next = raw[i + 1];
+  if (next === undefined) break;
+  if (next === "u") {
+    const hex = raw.slice(i + 2, i + 6);
+    if (/^[0-9a-fA-F]{4}$/.test(hex) === false) break; // partial mid-stream escape — wait for more bytes
+    out += String.fromCharCode(parseInt(hex, 16));
+    i += 5;
+    continue;
+  }
+  const simple: Record<string, string> = { n: "\n", t: "\t", r: "\r", b: "\b", f: "\f", '"': '"', "\\": "\\", "/": "/" };
+  out += simple[next] ?? next;
+  i += 1;
+  continue;
+}
 ```
 
 - [ ] **Step 4: Run the test — expect PASS.**
@@ -405,10 +425,12 @@ git commit -m "fix(whole-file): decode \\uXXXX escapes instead of crashing the s
 **Depends-on:** 4
 
 **Files:**
+
 - Modify: `vibes.diy/api/svc/intern/codegen-loop/whole-file-loop.ts`
 - Test: `vibes.diy/api/tests/whole-file-eof-flush.test.ts`
 
 **Interfaces:**
+
 - Consumes: `OnLine` (existing type in this file)
 - Produces: `makeLineEmitter(onLine: OnLine)` returns an emitter with a `flush(rawPath: string, contents: string)` method that emits the final newline-less line
 
@@ -447,10 +469,12 @@ function makeLineEmitter(onLine: OnLine) {
   const pump = (rawPath: string, contents: string, includeLast: boolean) => {
     const filename = normalizeFilename(rawPath);
     const lang = langFor(filename);
-    const slice = includeLast ? contents : (() => {
-      const nl = contents.lastIndexOf("\n");
-      return nl === -1 ? undefined : contents.slice(0, nl);
-    })();
+    const slice = includeLast
+      ? contents
+      : (() => {
+          const nl = contents.lastIndexOf("\n");
+          return nl === -1 ? undefined : contents.slice(0, nl);
+        })();
     if (slice === undefined) return;
     const lines = slice.split("\n");
     const already = emitted[filename] ?? 0;
@@ -486,10 +510,12 @@ git commit -m "fix(whole-file): flush the trailing newline-less line at stream E
 **Depends-on:** 5
 
 **Files:**
+
 - Modify: `vibes.diy/api/svc/intern/codegen-loop/whole-file-loop.ts`
 - Test: `vibes.diy/api/tests/whole-file-verify-before-return.test.ts`
 
 **Interfaces:**
+
 - Consumes: `verifyFiles(files, opts)` (existing in `verify.ts`)
 - Produces: a verify-failing `write_file` call leaves the prior good contents intact and does not return the broken file as a committed output
 
@@ -559,9 +585,11 @@ git commit -m "fix(whole-file): only commit a written file after verify passes"
 **Depends-on:** none
 
 **Files:**
+
 - Test: `vibes.diy/api/tests/whole-file-gating.test.ts` (test-only — confirms Codex P1 is already resolved on this head)
 
 **Interfaces:**
+
 - Consumes: `isReqCreationPromptChatSection` (from `api/types/chat.ts`)
 - Produces: a regression test asserting edit/application requests are not creation requests (so they cannot route to the whole-file loop)
 
@@ -612,11 +640,13 @@ git commit -m "test(whole-file): lock first-creation-turn routing (Codex P1 regr
 **Depends-on:** none
 
 **Files:**
+
 - Modify: `vibes.diy/pkg/app/hooks/useTypewriterReveal.ts`
 - Modify: `vibes.diy/pkg/app/components/ResultPreview/PreviewApp.tsx`
 - Test: `vibes.diy/tests/app/typewriter-reveal-step.test.ts`
 
 **Interfaces:**
+
 - Consumes: nothing new
 - Produces: `stepReveal(args: { state: RevealState; total: number; isStreaming: boolean; nowMs: number }): RevealState` (object-arg form)
 
@@ -668,9 +698,11 @@ git commit -m "style(rules-bag): explicit boolean checks + object-arg stepReveal
 **Depends-on:** 1, 2, 3, 4, 5, 6, 7, 8
 
 **Files:**
+
 - None
 
 Run and require green:
+
 - `pnpm run build` (tsc) — the CI `compile_test` build.
 - `cd vibes.diy/tests && pnpm test` — the app suite.
 - The api test suite (the runner that executes `vibes.diy/api/tests/*.test.ts`).
@@ -688,8 +720,8 @@ If a suite is flaky, rerun once (and in isolation) before treating it as a real 
 This task is performed by the operator (it pushes, browser-tests the deployed preview, and posts to GitHub — outside a worktree).
 
 - Push the integration result to the PR branch `experiment/codegen-magic-harness`; let CI deploy the preview.
-- **Operator browser pass (verification of record)** on https://pr-2650-vibes-diy-v2.jchris.workers.dev: on a *fresh* generation confirm spec **A1** — the cold-open skeleton paints in the pre-allocated theme's colors, not neutral — and spec **A3** — no `sectionId` crash, reconnect converges, the generated app renders and functions. If A1 fails, the foundation is not delivered; stop and diagnose before exiting draft.
-- Rewrite the PR description to match reality: themed cold open now delivered at stream start; three correctness bugs fixed; gating already first-creation-only (regression-tested); theme *variety* (visible structural/palette difference across gens) is NOT yet addressed — it is the deferred Phase 1/2 follow-up. Do not overclaim.
+- **Operator browser pass (verification of record)** on https://pr-2650-vibes-diy-v2.jchris.workers.dev: on a _fresh_ generation confirm spec **A1** — the cold-open skeleton paints in the pre-allocated theme's colors, not neutral — and spec **A3** — no `sectionId` crash, reconnect converges, the generated app renders and functions. If A1 fails, the foundation is not delivered; stop and diagnose before exiting draft.
+- Rewrite the PR description to match reality: themed cold open now delivered at stream start; three correctness bugs fixed; gating already first-creation-only (regression-tested); theme _variety_ (visible structural/palette difference across gens) is NOT yet addressed — it is the deferred Phase 1/2 follow-up. Do not overclaim.
 - Reply to the stale review threads with the evidence: `TextEncoder`→`sthis.txt.encode`, `OnLine`/`emitCodeLine/End` object args, `exception2Result`, `makeOpenRouterClient` returns `Result`, and the `MessageList` cast removal are already on this head; the `import React` default-import note is declined (matches the repo's 23-file convention). Codex P1 (gating) is already first-creation-only — see the Task 7 regression test; Codex P2s (verify-before-return, EOF flush) are fixed in Tasks 5-6.
 - Once A1+A3 pass and CI is green, take the PR out of draft and label `ready-to-merge`.
 

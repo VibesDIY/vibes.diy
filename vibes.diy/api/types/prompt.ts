@@ -88,7 +88,12 @@ export const PromptSectionTheme = type({
 
 export type PromptSectionTheme = typeof PromptSectionTheme.infer;
 
-export const PromptMsgs = PromptBlockBegin.or(PromptBlockEnd).or(PromptReq).or(PromptError).or(PromptFS).or(PromptDryRunPayload).or(PromptSectionTheme);
+export const PromptMsgs = PromptBlockBegin.or(PromptBlockEnd)
+  .or(PromptReq)
+  .or(PromptError)
+  .or(PromptFS)
+  .or(PromptDryRunPayload)
+  .or(PromptSectionTheme);
 export type PromptMsgs = typeof PromptMsgs.infer;
 
 // Type guard with optional streamId filter

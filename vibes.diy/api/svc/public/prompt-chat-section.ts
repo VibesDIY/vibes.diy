@@ -2313,6 +2313,10 @@ export const promptChatSection: EventoHandler<W3CWebSocketEvent, MsgBase<ReqProm
               blockSeq,
               nextId: () => vctx.sthis.nextId(12).str,
               userPrompt,
+              // Thread the real chat id so the prompt.section-theme event (and
+              // any other PromptBase-shaped events) carry it instead of falling
+              // back to promptId.
+              chatId: req.chatId,
               // The persisted active settings thread theme/skills/title/
               // enrichedPrompt into the agentic system prompt ({{THEME_DESIGN}}
               // and friends). Falls back to userPrompt-only when none were

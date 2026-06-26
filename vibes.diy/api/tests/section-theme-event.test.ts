@@ -6,7 +6,14 @@ describe("buildSectionThemeEvent", () => {
 
   it("builds a theme-only event", () => {
     const evt = buildSectionThemeEvent({ theme: "aether", ...base });
-    expect(evt).toEqual({ type: "prompt.section-theme", theme: "aether", streamId: "s1", chatId: "c1", seq: 3, timestamp: new Date(0) });
+    expect(evt).toEqual({
+      type: "prompt.section-theme",
+      theme: "aether",
+      streamId: "s1",
+      chatId: "c1",
+      seq: 3,
+      timestamp: new Date(0),
+    });
   });
 
   it("includes colorTheme only when a non-empty slug is given", () => {

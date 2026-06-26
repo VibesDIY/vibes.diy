@@ -184,7 +184,7 @@ export function commitWriteFile(
   files: Record<string, string>,
   filename: string,
   contents: string,
-  verify: (f: Record<string, string>) => { ok: boolean; problems: string[] },
+  verify: (f: Record<string, string>) => { ok: boolean; problems: string[] }
 ): { ok: boolean; feedback: string } {
   const v = verify({ ...files, [filename]: contents });
   if (v.ok === false) return { ok: false, feedback: v.problems.join("\n") };
