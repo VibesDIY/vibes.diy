@@ -2,16 +2,16 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use subagent-driven-development (recommended) or executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Replace the `@fireproof/*` runtime *internals* still backing `@vibes.diy/identity` (device-id signer/key, keybag, CSR→cert CA + verify, and the Clerk dashboard client) with in-repo implementations, gated by a byte-level wire-compat harness, so the `@fireproof/*` runtime dependencies and the `core-types-base` patch can be dropped — without changing a single call site or forcing any user to re-login.
+**Goal:** Replace the `@fireproof/*` runtime _internals_ still backing `@vibes.diy/identity` (device-id signer/key, keybag, CSR→cert CA + verify, and the Clerk dashboard client) with in-repo implementations, gated by a byte-level wire-compat harness, so the `@fireproof/*` runtime dependencies and the `core-types-base` patch can be dropped — without changing a single call site or forcing any user to re-login.
 
-**Architecture:** Plan 1 (foundation) already landed the **encapsulation boundary**: every identity-relevant import in source routes through `@vibes.diy/identity` (`.` browser / `./server` worker / `./node` Node-CLI), the three duplicated device-id signers are DRY'd behind `createDeviceIdGetToken()`, and a golden wire-compat harness pins the current contract. The package is still **fireproof-backed internally** — its facade modules `export { … } from "@fireproof/*"`. This plan swaps those internals behind the *unchanged* facade surface. Per the spec's ratified resolution (Q2): **lift-verbatim** the cert/CSR/token sign+verify crypto (a deployed wire format — do not risk a reimplementation drift), reimplement only provably-standard primitives (HKDF) behind compat tests. Every cutover is gated by extending the existing harness with **cross-verification** (extracted-mints ⇄ fireproof-verifies) before the fireproof backing is removed.
+**Architecture:** Plan 1 (foundation) already landed the **encapsulation boundary**: every identity-relevant import in source routes through `@vibes.diy/identity` (`.` browser / `./server` worker / `./node` Node-CLI), the three duplicated device-id signers are DRY'd behind `createDeviceIdGetToken()`, and a golden wire-compat harness pins the current contract. The package is still **fireproof-backed internally** — its facade modules `export { … } from "@fireproof/*"`. This plan swaps those internals behind the _unchanged_ facade surface. Per the spec's ratified resolution (Q2): **lift-verbatim** the cert/CSR/token sign+verify crypto (a deployed wire format — do not risk a reimplementation drift), reimplement only provably-standard primitives (HKDF) behind compat tests. Every cutover is gated by extending the existing harness with **cross-verification** (extracted-mints ⇄ fireproof-verifies) before the fireproof backing is removed.
 
-**Tech Stack:** TypeScript, Vitest 4, pnpm workspaces, `@adviser/cement` (Result/Option/Lazy — explicitly *not* a removal target), `jose` (ES256, already a dep via `hkdf-key.ts`), WebCrypto. Source under extraction: `@fireproof/core-device-id`, `@fireproof/core-keybag`, `@fireproof/core-protocols-dashboard`, `@fireproof/core-types-*`.
+**Tech Stack:** TypeScript, Vitest 4, pnpm workspaces, `@adviser/cement` (Result/Option/Lazy — explicitly _not_ a removal target), `jose` (ES256, already a dep via `hkdf-key.ts`), WebCrypto. Source under extraction: `@fireproof/core-device-id`, `@fireproof/core-keybag`, `@fireproof/core-protocols-dashboard`, `@fireproof/core-types-*`.
 
 **Scope note — what this plan deliberately excludes:**
 
 - **Bucket C (login localhost server / #1616)** — already shipped; `node.ts` re-exports `deviceIdRegisterEvento`/`isResDeviceIdRegister` and the styled `/cert` page landed. Not re-touched here.
-- **Bucket D (legacy in-browser IndexedDB — `use-fireproof` in `ImgGen.tsx` / `use-img-gen.ts`)** — **out of scope** per the design's ratified resolution (Q5): it is a separate firefly-migration track with its own acceptance criteria, *not* part of the identity/PKI extraction. Excluded.
+- **Bucket D (legacy in-browser IndexedDB — `use-fireproof` in `ImgGen.tsx` / `use-img-gen.ts`)** — **out of scope** per the design's ratified resolution (Q5): it is a separate firefly-migration track with its own acceptance criteria, _not_ part of the identity/PKI extraction. Excluded.
 - **Bucket E (`SuperThis` / `ensureSuperThis` narrowing)** — separate plan, tracked in [#2468](https://github.com/VibesDIY/vibes.diy/issues/2468). This plan keeps using the existing `RuntimeContext` seam unchanged.
 - **Bucket F (`@fireproof/core-cli` build tool)** — separate plan, tracked in [#2483](https://github.com/VibesDIY/vibes.diy/issues/2483). The `cli-kit.ts` runtime-framework internals swap is [#2482](https://github.com/VibesDIY/vibes.diy/issues/2482); browser-graph hardening is [#2469](https://github.com/VibesDIY/vibes.diy/issues/2469).
 
@@ -26,7 +26,7 @@
 
 - **The facade still imports fireproof at runtime.** `vibes.diy/identity/index.ts` does `export { ensureSuperThis, ensureLogger, runtimeFn, hashObjectSync, sts } from "@fireproof/core-runtime"`, `export { JWKPrivateSchema } from "@fireproof/core-types-base"`, `export { ClerkApiToken, clerkDashApi, DashboardApiImpl } from "@fireproof/core-protocols-dashboard"`, plus type-only re-exports from `core-types-protocols-dashboard`, `core-types-base`, `core-types-device-id`. `vibes.diy/identity/node.ts` does `export { getKeyBag } from "@fireproof/core-keybag"` and `export { DeviceIdKey, DeviceIdSignMsg, DeviceIdCSR, DeviceIdCA } from "@fireproof/core-device-id"`. These re-exported **values** are what still pin the dependency.
 - **The single owned signer already exists.** `createDeviceIdGetToken(sthis, { iss, missingCertMessage })` in `vibes.diy/identity/node.ts` is the DRY'd implementation; its three callers already import it: `vibes-diy/cli/main.ts:44`, `use-vibes/base/firefly-defaults.node.ts:18`, and the eval harness. **No call site changes in this plan** — only the symbols `createDeviceIdGetToken` references internally change backing.
-- **The patch is load-bearing in two places.** `patches/@fireproof__core-types-base@0.24.19.patch` adds `.catch()` defaults to `ClerkClaimSchema`. Our copy already lives in `vibes.diy/identity/clerk-claim.ts` (the phase-1 parity artifact). The upstream patch *also* relaxes fireproof's internal `tokenApi.verify` (`core-protocols-dashboard/token.js` imports the upstream schema), so the patch is droppable **only after** our extracted verifier replaces fireproof's `tokenApi` — which is Task 5 of this plan.
+- **The patch is load-bearing in two places.** `patches/@fireproof__core-types-base@0.24.19.patch` adds `.catch()` defaults to `ClerkClaimSchema`. Our copy already lives in `vibes.diy/identity/clerk-claim.ts` (the phase-1 parity artifact). The upstream patch _also_ relaxes fireproof's internal `tokenApi.verify` (`core-protocols-dashboard/token.js` imports the upstream schema), so the patch is droppable **only after** our extracted verifier replaces fireproof's `tokenApi` — which is Task 5 of this plan.
 - **The golden harness exists** at `vibes.diy/api/tests/identity-wire-compat.test.ts` and currently pins the baseline (header `{alg:ES256,typ:JWT,kid,x5c,x5t,x5t#S256}`; payload `FPDeviceIDSession` keys `{deviceId,exp,iat,iss,jti,nbf,seq,sub}`; verify via `new DeviceIdVerifyMsg(sthis.txt.base64,[caCert],{clockTolerance,deviceIdCA}).verifyWithCertificate(jwt)` returning a `{valid,payload,header}` discriminated union). It deps `@fireproof/core-device-id`, `core-runtime`, `core-types-base`, `core-types-device-id`, `@adviser/cement`; runner `vitest --run`.
 - **Server CA / verify call sites** to re-home: `vibes.diy/api/svc/public/get-cert-from-csr.ts` (`DeviceIdCA.processCSR`), `vibes.diy/api/svc/create-handler.ts:143-149` (CA from env + `tokenApi[type].verify`), `vibes.diy/api/svc/check-auth.ts` (verify result shapes), `vibes.diy/api/svc/types.ts:37` (`DeviceIdCAIf`).
 - **Clerk runtime client** call sites: `vibes.diy/api/impl/index.ts:169,301` (`new ClerkApiToken(sthis)`), `use-vibes/base/contexts/VibeContext.tsx:4,69,98` (`clerkDashApi`/`DashboardApiImpl`).
@@ -56,13 +56,15 @@ Extended:
 
 - `vibes.diy/api/tests/identity-wire-compat.test.ts` — add the cross-verification gate.
 
+> **Exports surface (no new subpaths):** The new modules live in subdirectories for organization but are **internal** — `@vibes.diy/identity`'s `package.json` exports only `.`, `./server`, and `./node`, and this plan adds **none**. Every consumer (and the cross-package wire-compat harness) reaches the extracted classes through those three existing entrypoints; the facade modules (`index.ts`/`server.ts`/`node.ts`) re-export from the in-repo modules instead of from `@fireproof/*`. A cross-package import of `@vibes.diy/identity/device-id/*` would fail to resolve under the package's `exports` map — do not write one.
+
 > **DRY / lift-verbatim instruction:** Per spec Q2, the crypto bodies are **lifted verbatim** from the installed `@fireproof/core-device-id` / `core-keybag` / `core-protocols-dashboard` sources (same `jose`-based ES256, same JWT header/claim layout), adjusting only import paths (`@fireproof/core-types-base` → `./types/wire.js`; `SuperThis` stays via the existing `RuntimeContext` seam). Do **not** rewrite the signing/verifying algorithm — a byte mismatch is silent auth breakage. The cross-verification harness (Task 1) is the proof obligation.
 
 ---
 
 ## Task 1: Extend the golden harness with cross-verification (the gate)
 
-This task adds the proof obligation that *every* later cutover must keep green: a token minted by the **extracted** signer must verify under the **fireproof** verifier, and vice-versa, byte-for-byte. It is written first, against placeholder extracted factories that initially just re-call fireproof, so the harness compiles and passes before any real swap, then tightens as each module lands.
+This task adds the proof obligation that _every_ later cutover must keep green: a token minted by the **extracted** signer must verify under the **fireproof** verifier, and vice-versa, byte-for-byte. It is written first, against placeholder extracted factories that initially just re-call fireproof, so the harness compiles and passes before any real swap, then tightens as each module lands.
 
 **Files:**
 
@@ -91,7 +93,7 @@ export const extracted = {
 
 - [ ] **Step 2: Add the failing cross-verification test**
 
-Append to `vibes.diy/api/tests/identity-wire-compat.test.ts` (inside the existing `describe`, reusing its `sthis`/`ca`/`user`/`verifier`). It mints with the *baseline* user signer and verifies with the *extracted* verifier, and mints with an *extracted* signer and verifies with the *baseline* verifier:
+Append to `vibes.diy/api/tests/identity-wire-compat.test.ts` (inside the existing `describe`, reusing its `sthis`/`ca`/`user`/`verifier`). It mints with the _baseline_ user signer and verifies with the _extracted_ verifier, and mints with an _extracted_ signer and verifies with the _baseline_ verifier:
 
 ```ts
 import { extracted } from "./identity-extracted-factories.js";
@@ -107,20 +109,41 @@ it("cross-verify: fireproof-minted token verifies under the extracted verifier",
   expect(vr.valid).toBe(true);
 });
 
+// Helper: issue a device cert through the PUBLIC CA path so neither the signer
+// nor the verifier reads private state. `DeviceIdSignMsg` stores its cert in a
+// hard-private `#cert` and exposes no `certificatePayload`/`payload` getter, so
+// we must NOT reconstruct a signer from `user.deviceIdSigner`. Instead mirror
+// what `createTestUser` does internally: build a CSR and issue a cert via the
+// CA, then read the public `certificatePayload` off the issuance result (the
+// same field `node.ts`'s `createDeviceIdGetToken` reads from the keybag cert).
+// The ONLY contract this test pins is the verified `ca.processCSR(csrJWS,
+// clerkClaim)` → `{ certificatePayload }`; the `DeviceIdCSR` construction below
+// mirrors the installed `createTestUser` helper — match its exact call when you
+// implement (it is already imported in the harness).
+async function issueDeviceCert(sthisArg: SuperThis, caArg: typeof ca) {
+  const key = (await DeviceIdKey.create()).Ok();
+  const csr = await DeviceIdCSR.create(sthisArg, key, { session: "wire-compat" });
+  const clerkClaim = {
+    role: "member",
+    sub: "u_wirecompat",
+    userId: "u_wirecompat",
+    params: { email: "wire@compat.test", email_verified: true, public_meta: {} },
+  };
+  const cert = (await caArg.processCSR(await csr.asJWS(), clerkClaim)).Ok();
+  return { key, certPayload: cert.certificatePayload };
+}
+
 it("cross-verify: extracted-minted token verifies under the fireproof verifier (byte-identical header+claims)", async () => {
-  // Build an extracted signer from the SAME device key + cert the fireproof user holds.
-  const devkey = await extracted.DeviceIdKey.createFromJWK(await user.devkey.exportPrivateJWK());
-  const signer = new extracted.DeviceIdSignMsg(
-    sthis.txt.base64,
-    devkey.Ok ? devkey.Ok() : devkey, // tolerate Result|value during migration
-    user.deviceIdSigner.certificatePayload ?? user.deviceIdSigner["payload"]
-  );
+  // Mint with the EXTRACTED signer, built from a publicly-issued cert (never
+  // from createTestUser's private `#cert`).
+  const { key, certPayload } = await issueDeviceCert(sthis, ca);
+  const signer = new extracted.DeviceIdSignMsg(sthis.txt.base64, key, certPayload);
   const now = Math.floor(Date.now() / 1000);
   const token = await signer.sign(
     {
       iss: "wire-compat",
       sub: "device-id",
-      deviceId: await (devkey.Ok ? devkey.Ok() : devkey).fingerPrint(),
+      deviceId: await key.fingerPrint(),
       seq: 1,
       exp: now + 120,
       nbf: now - 2,
@@ -131,20 +154,18 @@ it("cross-verify: extracted-minted token verifies under the fireproof verifier (
   );
   const vr = await verifier.verifyWithCertificate(token); // fireproof verifier
   expect(vr.valid).toBe(true);
-  if (vr.valid) {
-    const header = decodeSeg(token.split(".")[0]);
-    expect(header.alg).toBe("ES256");
-    for (const k of ["kid", "x5c", "x5t", "x5t#S256"]) expect(header).toHaveProperty(k);
-    const payload = decodeSeg(token.split(".")[1]);
-    expect(Object.keys(payload).sort()).toEqual(SESSION_CLAIM_KEYS);
-  }
+  const header = decodeSeg(token.split(".")[0]);
+  expect(header.alg).toBe("ES256");
+  for (const k of ["kid", "x5c", "x5t", "x5t#S256"]) expect(header).toHaveProperty(k);
+  const payload = decodeSeg(token.split(".")[1]);
+  expect(Object.keys(payload).sort()).toEqual(SESSION_CLAIM_KEYS);
 });
 ```
 
 - [ ] **Step 3: Run it — confirm green against the baseline (factories still delegate to fireproof)**
 
 Run: `cd vibes.diy/api/tests && pnpm vitest --run identity-wire-compat`
-Expected: PASS (both cross-verify tests green — the extracted factories *are* the fireproof ones in v1, so this just proves the harness mechanism works).
+Expected: PASS (both cross-verify tests green — the extracted factories _are_ the fireproof ones in v1, so this just proves the harness mechanism works).
 
 - [ ] **Step 4: Commit**
 
@@ -178,17 +199,29 @@ Create `vibes.diy/identity/device-id/csr.ts` by copying `DeviceIdCSR` (CSR JWS b
 
 In `vibes.diy/identity/package.json` `dependencies`, add `"jose"` at the version already resolved in the repo (match `vibes.diy/api/svc`'s `jose` range — read it from `vibes.diy/api/svc/package.json` and copy that exact range). Do **not** remove any `@fireproof/*` dep yet.
 
-- [ ] **Step 5: Repoint the extracted `DeviceIdKey`/`DeviceIdSignMsg` factories at the lifted modules**
+- [ ] **Step 5: Surface the lifted modules through `./node`, then repoint the factories**
 
-In `vibes.diy/api/tests/identity-extracted-factories.ts`, change the two imports:
+The `@vibes.diy/identity` `package.json` only exports `.`, `./server`, and `./node` — there is **no** `./device-id/*` subpath, and the cross-package harness (`vibes.diy/api/tests`) cannot use a relative import. So the harness must reach the extracted classes through an **exported** subpath. `node.ts` already re-exports `DeviceIdKey`/`DeviceIdSignMsg` (currently from `@fireproof/core-device-id`); repoint _those_ re-exports at the in-repo modules so `./node` now surfaces the extracted impl:
+
+In `vibes.diy/identity/node.ts`, split the grouped re-export and point the lifted classes in-repo:
 
 ```ts
-import { DeviceIdKey } from "@vibes.diy/identity/device-id/key";
-import { DeviceIdSignMsg } from "@vibes.diy/identity/device-id/sign";
+// Lifted in Task 2 — surfaced through the existing ./node export (no new subpath):
+export { DeviceIdKey } from "./device-id/key.js";
+export { DeviceIdSignMsg } from "./device-id/sign.js";
+export { DeviceIdCSR } from "./device-id/csr.js";
+// Still fireproof-backed until later tasks:
+export { DeviceIdCA } from "@fireproof/core-device-id";
+```
+
+Then in `vibes.diy/api/tests/identity-extracted-factories.ts`:
+
+```ts
+import { DeviceIdKey, DeviceIdSignMsg } from "@vibes.diy/identity/node";
 import { DeviceIdVerifyMsg } from "@fireproof/core-device-id"; // still fireproof until Task 3
 ```
 
-(Leave `DeviceIdVerifyMsg` on fireproof — Task 3 lifts it.)
+(Leave `DeviceIdVerifyMsg` on fireproof — Task 3 lifts it. The harness's `DeviceIdCSR`/`createTestDeviceCA`/`createTestUser` baseline imports stay on `@fireproof/core-device-id` — they generate the comparison fixtures.)
 
 - [ ] **Step 6: Run the harness — extracted mints must verify under fireproof**
 
@@ -219,18 +252,25 @@ Create `vibes.diy/identity/device-id/verify.ts` by copying `DeviceIdVerifyMsg` (
 
 Create `vibes.diy/identity/ca/device-ca.ts` by copying `DeviceIdCA` (`processCSR(csrJWS, clerkClaim)`, `caCertificate()`, `getCAKey()`) and the env helpers `deviceIdCAFromEnv` / `getCloudPubkeyFromEnv` from the installed `core-device-id` / `core-protocols-dashboard` sources. Keep the env variable names (`DEVICE_ID_CA_*`, `CLOUD_SESSION_TOKEN_*`) and the cert payload layout **identical** — deployed CA material must keep working unchanged.
 
-- [ ] **Step 3: Repoint the extracted verifier factory**
+- [ ] **Step 3: Surface the verifier through `./node`, then repoint the factory**
 
-In `vibes.diy/api/tests/identity-extracted-factories.ts`:
+In `vibes.diy/identity/node.ts`, add the verifier + CA re-exports pointing in-repo (same "no new subpath" rule as Task 2 Step 5):
 
 ```ts
-import { DeviceIdVerifyMsg } from "@vibes.diy/identity/device-id/verify";
+export { DeviceIdVerifyMsg } from "./device-id/verify.js";
+export { DeviceIdCA } from "./ca/device-ca.js"; // replaces the fireproof DeviceIdCA re-export
+```
+
+Then in `vibes.diy/api/tests/identity-extracted-factories.ts`:
+
+```ts
+import { DeviceIdVerifyMsg } from "@vibes.diy/identity/node";
 ```
 
 - [ ] **Step 4: Run the harness — full extracted ⇄ fireproof cross-verification**
 
 Run: `cd vibes.diy/api/tests && pnpm vitest --run identity-wire-compat`
-Expected: PASS. Now *both* directions use the extracted impl on one side and fireproof on the other — the complete byte-compat gate for device-id tokens. If either direction fails, a crypto detail drifted during the lift; do not proceed.
+Expected: PASS. Now _both_ directions use the extracted impl on one side and fireproof on the other — the complete byte-compat gate for device-id tokens. If either direction fails, a crypto detail drifted during the lift; do not proceed.
 
 - [ ] **Step 5: Commit**
 
@@ -360,7 +400,9 @@ import { ClerkClaimSchema } from "../clerk-claim.js";
 describe("clerk claim parity (patch behavior owned in-repo)", () => {
   it("accepts a Clerk JWT missing the optional profile fields", () => {
     const claim = {
-      role: "member", sub: "u_1", userId: "u_1",
+      role: "member",
+      sub: "u_1",
+      userId: "u_1",
       params: { email: "a@b.c", email_verified: true, public_meta: {} },
     };
     expect(ClerkClaimSchema.safeParse(claim).success).toBe(true);
@@ -417,7 +459,7 @@ In `vibes.diy/identity/node.ts`, change `export { getKeyBag } from "@fireproof/c
 
 - [ ] **Step 3: Repoint the harness factories' `createTestDeviceCA`/`createTestUser`**
 
-These test helpers come from `@fireproof/core-device-id`. Keep them on fireproof (they generate the *baseline* fixtures the cross-verify test compares against — that is the point). No change. Confirm the harness still imports them from `@fireproof/core-device-id`.
+These test helpers come from `@fireproof/core-device-id`. Keep them on fireproof (they generate the _baseline_ fixtures the cross-verify test compares against — that is the point). No change. Confirm the harness still imports them from `@fireproof/core-device-id`.
 
 - [ ] **Step 4: Drop the dead deps**
 
@@ -426,6 +468,7 @@ From `vibes.diy/identity/package.json` `dependencies`, remove `@fireproof/core-k
 ```bash
 grep -rn "@fireproof/core-keybag\|@fireproof/core-device-id\|@fireproof/core-protocols-dashboard\|@fireproof/core-types" vibes.diy/identity --include=*.ts
 ```
+
 Expected: only `core-runtime` and (in comments) historical mentions remain. Remove each dep with zero hits.
 
 - [ ] **Step 5: Reinstall + full check**
@@ -446,13 +489,14 @@ git commit -m "feat(identity): lift keybag in-repo; drop device-id/keybag/dash/t
 
 **Files:**
 
-- Modify: any of the 27 `package.json` files still declaring a now-unused `@fireproof/*` dep (device-id/keybag/protocols-dashboard/types-*), where the only importer was routed through `@vibes.diy/identity`.
+- Modify: any of the 27 `package.json` files still declaring a now-unused `@fireproof/*` dep (device-id/keybag/protocols-dashboard/types-\*), where the only importer was routed through `@vibes.diy/identity`.
 
 - [ ] **Step 1: Inventory remaining `@fireproof/*` declarations**
 
 ```bash
 grep -rn "@fireproof/" --include=package.json . | grep -v node_modules
 ```
+
 Categorize each: (a) `core-runtime` / `core-types-base` `SuperThis` → keep (Bucket E #2468); (b) `core-cli` → keep (Bucket F #2483); (c) `use-fireproof` in `vibes.diy/base` / `tests/app` → keep (Bucket D, out of scope); (d) device-id/keybag/protocols-dashboard/types-protocols-dashboard/types-device-id whose only importer was the identity facade → **removable**.
 
 - [ ] **Step 2: Remove category (d) declarations package-by-package**
