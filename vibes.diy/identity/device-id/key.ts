@@ -5,7 +5,7 @@
 // so keys minted here are interchangeable with the upstream impl (proven by the
 // wire-compat cross-verification harness in vibes.diy/api/tests).
 import { Result } from "@adviser/cement";
-import { JWKPrivateSchema, JWKPublicSchema } from "@fireproof/core-types-base";
+import { JWKPrivateSchema, JWKPublicSchema } from "../types/wire.js";
 import type { JWKPrivate, JWKPublic } from "@fireproof/core-types-base";
 import type { DeviceIdKeyIf } from "@fireproof/core-types-device-id";
 import { generateKeyPair, exportJWK, calculateJwkThumbprint, type GenerateKeyPairOptions } from "jose";

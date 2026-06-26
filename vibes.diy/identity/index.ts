@@ -18,31 +18,36 @@ export { ClerkClaimSchema, ClerkEmailTemplateClaimSchema, type ClerkClaim } from
 export { ensureSuperThis, ensureLogger, runtimeFn, hashObjectSync, sts } from "@fireproof/core-runtime";
 
 // --- Auth wire-types (type-only; erased at build) ---
+// Owned in-repo (Task 4 / Bucket B):
 export type {
   DashAuthType,
   ReqCertFromCsr,
   ResCertFromCsr,
   VerifiedClaimsResult,
   VerifiedAuthResult,
-  VerifiedResult,
   WithAuth,
   FPApiParameters,
   FPApiToken,
-} from "@fireproof/core-types-protocols-dashboard";
+} from "./types/wire.js";
 
+// Still upstream-sourced (deferred): VerifiedResult pulls the User type graph;
+// SuperThis/DocTypes are Bucket E (runtime context); the JWK TYPES + FPDeviceIDSession /
+// DeviceIdKeyBagItem / DeviceIdResult / DeviceIdCAIf stay upstream to preserve
+// type-identity — only the JWK schema VALUES are owned (below).
+export type { VerifiedResult } from "@fireproof/core-types-protocols-dashboard";
 export type {
   SuperThis,
   FPDeviceIDSession,
   DocTypes,
   JWKPrivate,
+  JWKPublic,
   DeviceIdKeyBagItem,
   DeviceIdResult,
 } from "@fireproof/core-types-base";
-
 export type { DeviceIdCAIf } from "@fireproof/core-types-device-id";
 
-// --- Schemas (zod; browser-safe runtime values) ---
-export { JWKPrivateSchema } from "@fireproof/core-types-base";
+// --- Schemas (zod; browser-safe runtime values; owned in-repo, Task 4) ---
+export { JWKPrivateSchema, JWKPublicSchema } from "./types/wire.js";
 
 // --- Clerk dashboard client (already browser-linked via VibeContext today) ---
 export { ClerkApiToken, clerkDashApi, DashboardApiImpl } from "@fireproof/core-protocols-dashboard";

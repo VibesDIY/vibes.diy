@@ -1,7 +1,8 @@
 // Lifted verbatim from @fireproof/core-device-id@0.24.19 `device-id-validator.js`
 // (upstream tag fireproof-storage/fireproof@v0.24.19). Verifies a CSR JWS and
 // checks the header/payload public keys agree. Imports only adjusted.
-import { JWKPublicSchema, FPDeviceIDCSRPayloadSchema } from "@fireproof/core-types-base";
+import { FPDeviceIDCSRPayloadSchema } from "@fireproof/core-types-base";
+import { JWKPublicSchema } from "../types/wire.js";
 import type { FPDeviceIDCSRPayload, JWKPublic } from "@fireproof/core-types-base";
 import { jwtVerify, decodeProtectedHeader, calculateJwkThumbprint, type JWK } from "jose";
 import { sts } from "@fireproof/core-runtime";
