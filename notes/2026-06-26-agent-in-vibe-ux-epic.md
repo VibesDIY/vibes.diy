@@ -340,22 +340,34 @@ the moment of the write:**
 - **Reads commit nothing.** A *cached* chip is a read — navigate to pre-existing addressable
   content; no slug/fsId is created. The slug-vs-fsId question only arises at a *write*.
 
-**The irreducible-ish core (the pre-identity / cached zone).** Before the first write — an
-anonymous user roaming the start tree, or browsing precached transforms of a published app —
-**there is no ownership yet, so "which appSlug/fsId am I on?" has no committed answer.** It's a
-property of how the cached content was *authored/stored*, not a runtime decision:
-- For **curated starters**, it's a curation choice (the tree is authored as some set of
-  addressable apps).
-- For **precached transforms of an app you don't own**, *where the cached render lives
-  addressably* is an open infra choice — candidates: (a) a **content-addressed preview
-  namespace** (uncommitted, shareable-as-preview, owned by no one until kept); (b) speculative
-  alternate fsIds under the source slug; (c) pre-made forks under a system handle.
+**Why this split = the data boundary (jchris's key insight).** **appSlug is the data
+namespace; fsId is the code version within it.** So *same slug + new fsId* = new code with the
+**data carried over**; *new slug* = **fresh/empty data**. That's precisely why an **owner edit**
+stays same-slug (you want your data to carry, like additional prompting) and **make-it-yours** is
+a new slug (code only, fresh data — #2). The slug-vs-fsId choice *is* the "carry the data or
+not" choice — and the only reason to reuse a slug is to carry its data.
 
-**The fuzz is bounded:** it exists only in the read-only pre-identity zone and **collapses
-deterministically at the first write** (ownership then decides slug-vs-fsId); it never touches
-committed state. **Lean:** model (a), content-addressed *preview* URLs — keeps every *committed*
-app cleanly owned with a clear slug+fsId lineage and absorbs the fuzz into an explicitly
-ephemeral preview layer. Open — see §8/20.
+**The cached zone — resolved (jchris): pre-made forks under a system handle.** The apparent
+fuzz dissolves once cached content has an *owner*. Curated starters and precached transforms
+are **real, addressable apps owned by a platform/system handle** — the start tree is just a set
+of system-owned public apps. That makes the slug-vs-fsId rule **fully uniform**:
+
+- **Every app has an owner — user *or* system.** Editing your own advances its fsId; editing
+  one you don't own (including a system-owned cached app) forks a new slug under your handle.
+  "System" is simply another owner; the same rule covers everything.
+- **An anonymous browser is just reading system-owned public apps** (cached chips = reads). The
+  **first write forks to their handle**, with `remixOf` → the system fork it came from, whose
+  own `remixOf` chains back to the ultimate source (lineage stays intact, #15).
+- **Infra follow-ups:** a system/cache handle that owns these; a dedupe key (content-address by
+  `(source, transform)`); and **GC for pre-made forks that are never kept** (the cost of this
+  model — track it). See §8/20.
+
+**Start-tree default (jchris, for now).** From the **top of the tree, a set of distinct system
+appSlugs** (the roots — each its own data namespace); **browsing deeper via chips = new fsIds in
+the same slug** (transforms that carry context/data forward as you descend). It'll likely end up
+a blend of new-slug vs same-slug-new-fsId in places; this is the working assumption — *if
+something different is needed, we code it at the time.* (Consistent with the data-boundary rule:
+descending a starter carries its data; jumping to a different root starts fresh.)
 
 ### Active-handle resolution & join consent (decided)
 
@@ -705,10 +717,11 @@ code-only copy). Applied doc-wide.
     just an assumption): serve a remixable app's code shell for copying independent of the data
     grant.*
 
-20. **Chips → appSlug vs fsId (mostly decided; one open core).** Decided: ownership decides at
-    the write — your own app → same appSlug + new fsId (additional prompting); an app you don't
-    own → new appSlug (make it yours); reads commit nothing (§2 "Chips → appSlug vs fsId"). Open
-    core: for **precached transforms of an app you don't own**, where the cached render lives
-    addressably before any commit (lean: a content-addressed *preview* namespace). Bounded — it
-    only affects the pre-identity read zone and collapses at the first write. **Confirm the
-    preview-namespace default or leave deferred.**
+20. **✅ Chips → appSlug vs fsId — DECIDED (jchris).** **appSlug = data namespace; fsId = code
+    version.** Same slug + new fsId = new code, data carried; new slug = fresh data. Ownership
+    decides at the write: own app → same slug + new fsId; don't-own → new slug (make it yours,
+    fresh data); reads commit nothing. **Cached content = pre-made forks under a system handle**
+    (curated starters + precached transforms are system-owned public apps), so the rule is
+    fully uniform (system is just another owner). **Start-tree default:** top = distinct system
+    appSlugs; deeper = new fsIds in the same slug. Infra follow-ups: system/cache handle,
+    content-address dedupe, **GC for unkept pre-made forks**. (§2 "Chips → appSlug vs fsId".)
