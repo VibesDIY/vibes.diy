@@ -10,6 +10,25 @@ import { getCode } from "./get-code.js";
 import type { EvtVibeViewerChanged } from "@vibes.diy/vibe-types";
 import { RUNTIME_PREVIEW_IFRAME_ALLOW, RUNTIME_PREVIEW_IFRAME_SANDBOX } from "../../lib/iframe-policy.js";
 import { adminModeStorageKey } from "../../lib/admin-mode.js";
+import { ThemedSkeleton } from "./ThemedSkeleton.js";
+
+/**
+ * Returns true during the cold-open window: the prompt is running, the iframe
+ * has not yet been pinned to a server-side fsId, and the first stream has not
+ * completed. Extracted as a pure function so it can be unit-tested without
+ * mounting the full component.
+ */
+export function shouldShowColdOpen({
+  running,
+  pinnedFsId,
+  firstStreamDone,
+}: {
+  running: boolean;
+  pinnedFsId: string | undefined;
+  firstStreamDone: boolean;
+}): boolean {
+  return running && pinnedFsId === undefined && !firstStreamDone;
+}
 
 export function PreviewApp({ promptState }: { promptState: PromptState }) {
   const { ownerHandle, appSlug, fsId } = useParams<{ ownerHandle: string; appSlug: string; fsId?: string }>();
@@ -195,6 +214,7 @@ export function PreviewApp({ promptState }: { promptState: PromptState }) {
   // ResultPreview hides the whole PreviewApp slot during the code-override
   // window, so this still no-ops when the iframe isn't actually visible.
   const showBlur = promptState.running && pinnedFsId === undefined && !firstStreamDone;
+  const showColdOpen = shouldShowColdOpen({ running: promptState.running, pinnedFsId, firstStreamDone });
   const showOverlay = promptState.running;
 
   // Push owner identity into the iframe as soon as the runtime is ready.
@@ -252,6 +272,7 @@ export function PreviewApp({ promptState }: { promptState: PromptState }) {
         allow={RUNTIME_PREVIEW_IFRAME_ALLOW}
         style={{ isolation: "isolate", transform: "translate3d(0,0,0)" }}
       />
+      {showColdOpen ? <ThemedSkeleton colorTheme={null} /> : null}
       {showOverlay && (
         <div
           aria-hidden="true"
