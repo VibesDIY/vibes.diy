@@ -196,7 +196,7 @@ describe("handleWholeFileCodegenRequest emission", () => {
   });
 
   it("forwards the pre-allocated theme into the agentic system prompt", async () => {
-    const seen: Array<{ variant?: string; theme?: unknown }> = [];
+    const seen: { variant?: string; theme?: unknown }[] = [];
     const result: WholeFileResult = {
       files: [{ filename: "/App.jsx", lang: "jsx", content: "a" }],
       usage: { prompt_tokens: 1, completion_tokens: 2, total_tokens: 3 },
@@ -250,7 +250,7 @@ describe("handleWholeFileCodegenRequest emission", () => {
       files: [{ filename: "/App.jsx", lang: "jsx", content: "a" }],
       usage: { prompt_tokens: 1, completion_tokens: 2, total_tokens: 3 },
     };
-    const emitted: Array<{ type: string; fsRef?: unknown }> = [];
+    const emitted: { type: string; fsRef?: unknown }[] = [];
     const { deps } = makeDeps(result, {
       appendBlockEvent: async ({ evt }) => {
         emitted.push({ type: (evt as { type: string }).type, fsRef: (evt as { fsRef?: unknown }).fsRef });
