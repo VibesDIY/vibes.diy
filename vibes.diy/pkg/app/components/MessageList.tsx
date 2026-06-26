@@ -667,28 +667,21 @@ function MessageList({
           // acc.push(<CodeMsg key={codeBegin!.sectionId} begin={codeBegin!} lines={collectedMsg} />);
           break;
         case isCodeEnd(msg):
-          if ((codeBegin as CodeBeginMsg | undefined) === undefined) {
-            // [wf-debug] TEMPORARY: a code.end with no open code.begin would push
-            // a block with begin=undefined and crash the render. Log the full
-            // msg sequence to find the live-stream ordering bug, and skip safely.
-            // eslint-disable-next-line no-console
-            console.error("[wf-debug] code.end with no open code.begin", {
-              endSectionId: (msg as { sectionId?: string }).sectionId,
-              seq: nprompt.msgs.map((m) => ({
-                t: (m as { type: string }).type,
-                s: (m as { sectionId?: string }).sectionId,
-                r: (m as { reveal?: string }).reveal,
-              })),
+          // Defensive: a reconnect can replay a section's `code.end` onto a fresh
+          // block whose `code.begin` was on the now-superseded stream (long
+          // whole-file generations spread a section over ~30s, widening this
+          // window). Without an open `codeBegin`, building a Code block here would
+          // set `begin: undefined` and crash the render below on
+          // `block.begin.sectionId`. Skip the orphaned end instead — the persisted
+          // canonical sequence renders correctly on the next reload.
+          if ((codeBegin as CodeBeginMsg | undefined) !== undefined) {
+            blockMsgs.push({
+              type: "Code",
+              begin: codeBegin,
+              lines: collectedMsg,
+              end: msg,
             });
-            collectedMsg = [];
-            break;
           }
-          blockMsgs.push({
-            type: "Code",
-            begin: codeBegin,
-            lines: collectedMsg,
-            end: msg,
-          });
           collectedMsg = [];
           break;
         case isCodeTruncated(msg):
@@ -749,13 +742,17 @@ function MessageList({
           collectedMsg = [];
           break;
         case isToplevelEnd(msg):
-          blockMsgs.push({
-            type: "TopLevel",
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            begin: toplevelBegin!,
-            lines: collectedMsg,
-            end: msg,
-          });
+          // Defensive (same orphan-on-reconnect class as code.end above): only
+          // build a TopLevel block when its begin is open, else a reconnect-split
+          // toplevel.end would set begin: undefined and crash the render.
+          if ((toplevelBegin as ToplevelBeginMsg | undefined) !== undefined) {
+            blockMsgs.push({
+              type: "TopLevel",
+              begin: toplevelBegin,
+              lines: collectedMsg,
+              end: msg,
+            });
+          }
           collectedMsg = [];
           break;
       }
