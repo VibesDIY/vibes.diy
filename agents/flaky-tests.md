@@ -6,6 +6,19 @@ A flake is a test that fails on `pnpm check` but passes on rerun (or in isolatio
 
 #1515 is the running log. It is intentionally kept generic — check the issue's comments for current known flakes rather than maintaining a list here. A test that fails the same way on every run is **not** a flake; that's a real failure and gets its own issue.
 
+## Optional LoopX triage packet
+
+When a maintainer wants help before rerunning CI or appending to #1515, they can
+ask their local agent to follow [`loopx-flaky-watch.md`](loopx-flaky-watch.md).
+That flow is read-only by default: it prepares a no-send triage packet from the
+failed run, changed files, same-head rerun evidence, and any isolated test result
+the maintainer provides.
+
+LoopX must not comment on #1515, rerun CI, open issues, open branches, or mark a
+failure as ignorable without explicit maintainer approval. Its job is to keep
+the repeated flake-watch context together so the human decision is faster and
+less repetitive.
+
 ## When you hit a flaky failure
 
 1. **Rerun `pnpm check`** (or the specific suite in isolation, e.g. `cd vibes.diy/tests && pnpm test <pattern>`) before assuming it's a real failure. If it passes the second time with no code change, it's flaky.
