@@ -195,22 +195,23 @@ for your judgement before code.
 | **2** | Genesis spike — the new first-generation `/vibe` state, mobile-first, app-blooms-in-canvas. Curated starter tiles. Behind a flag. | Clickable Genesis on `/vibe` | **GATE 2: does Genesis feel right on a phone?** |
 | **3** | Verb collapse + landing card: Remix/Join/View by intent; delete Clone/Fresh-Install/Edit-button; publish-intent setting (#1854). Mostly deletion. | PR-1 part 1 | — |
 | **4** | Share panel link-first (#2232 + children). Indicator system for viewer modes (#2178/#2275). | PR-1 complete → review | **GATE 3: PR-1 review/QA.** |
-| **5** | Inversion wiring: agent-in-vibe Live/Iterating, hot-swap inline, `/chat` → `/vibe` redirects. **Only the parts not blocked by #2517.** | PR-2 (may carry over) | **GATE 4: scope check vs #2517.** |
+| **5** | Inversion wiring: agent-in-vibe Live/Iterating, hot-swap inline, `/chat` → `/vibe` redirects, lazy chat connection flip. | PR-2 (may carry over) | **GATE 4: full cutover review.** |
 
-**Hard dependency:** full `/chat` deletion + lazy chat connection is **Track C #2518,
-blocked on Track B #2517** (SharedSessions DO). #2517 "can start now" but isn't done. If
-it hasn't shipped by Day 5, PR-2 lands the *design* (Genesis, agent-in-vibe shell behind
-a flag, redirects stubbed) and the connection-laziness flip waits on #2517. **Do not let
-PR-2 block on backend — keep the flag.**
+**Prerequisite (being handled separately):** full `/chat` deletion needs the lazy chat
+connection from **Track B #2517** (SharedSessions DO). jchris is tackling #2517
+independently as a pre-task — **treat it as done for planning purposes.** That means PR-2
+can land the *full* inversion (not a flagged stub): once #2517 is in, the agent-in-vibe
+wiring + `/chat` → `/vibe` redirects + connection-laziness flip all ship together. Keep a
+flag only as a rollback seam, not as a dependency workaround.
 
 ## 5. PR structure
 
 - **PR-1 "Vibe-first surface: verbs, landing, share" (no backend dep).** Genesis state
   (flagged), verb collapse, publish-intent, link-first share, viewer-mode indicators.
   This is where most of the *deletion* lands. Ships this week.
-- **PR-2 "Agent-in-vibe / retire /chat" (gated on #2517).** Inline agent Live/Iterating,
-  hot-swap, route redirects, lazy chat connection. Design lands behind a flag; full cutover
-  follows #2517.
+- **PR-2 "Agent-in-vibe / retire /chat" (#2517 handled as a pre-task).** Inline agent
+  Live/Iterating, hot-swap, route redirects, lazy chat connection flip — full cutover, with
+  a flag kept only as a rollback seam.
 
 Both human-driven on UI. Label `agent-created`; @-mention `@CharlieHelps`; `ready-to-merge`
 when green.
@@ -244,7 +245,8 @@ agent-bar affordance) #1749 (authed non-owner flow — validate against new Live
 orthogonal) #1951 (feedback link — keep, orthogonal) #1836 (VibesPanel position/first-run —
 mostly mooted by the new pill; salvage the first-run onboarding copy into Genesis).
 
-**Out of scope this week / deferred:** #2517 (backend Track B — *prerequisite*, not our PR).
+**Prerequisite, handled separately:** #2517 (backend Track B SharedSessions DO — jchris is
+doing this as an independent pre-task; not part of these two PRs).
 
 ## 7. The subtraction ledger ("learnings")
 
