@@ -319,6 +319,24 @@ which handle, and when you're asked, differ by app type:
   for confirmation first** — so you don't accidentally fire duplicate requests from multiple
   handles.
 
+### Identity exposure: reads are anonymous, writes are you (decided)
+
+One clean rule for when your handle is exposed:
+
+- **Reads have no app-effect — anonymous.** Viewing/reading a vibe attributes nothing to you
+  (at most *anonymous* metrics). "Consume before identity" in force.
+- **Writes are done as your current handle, and expose it (jchris).** Writing *data* to a
+  public app (using its features to persist something) is attributed to your current handle
+  and visible to others. **Implication: writing requires a current handle → login**; anonymous
+  users can read/use but not write.
+- **Comments are writes too — posted as your current handle (jchris).** The composer must make
+  the **acting handle obvious**: place the submit button right next to the **active-handle tag**
+  (the top-level handle indicator already in the switch nav, §1e), so "commenting as @handle"
+  is unmistakable. (Ties #1742 comments, #1951 feedback.)
+- **Net login-trigger set (resolves §8/17):** login is required to **write** — codegen
+  (Other/uncached edit), Join, Request access, any data write, and commenting. Reading and
+  browsing cached chips stay anonymous.
+
 ### One new setting: publish intent (#1854)
 
 The creator picks what the vibe *is for*; this sets sensible **access defaults** and framing
@@ -556,11 +574,10 @@ explicit return path (§2 "Ownership, code vs data, and 'make it yours' semantic
 
 ### Parked semantic gaps (resolve before build, not blocking sketches)
 
-13. **Does using a public app *expose* your handle to others?** Partly settled: on a public
-    app you **act as your current session handle** (not anonymous) and can switch at will
-    (§2 resolution rules). Open part: is that handle *visible to the owner / other users* when
-    you're only viewing/using (not commenting, not joined), or is it just your local acting
-    identity? Lean: local until you comment or Join.
+13. **✅ Public-app handle exposure — DECIDED (jchris).** **Reads = anonymous** (no app-effect,
+    maybe anon metrics). **Writes (incl. comments) = your current handle, exposed to others**;
+    writing therefore requires login. See §2 "Identity exposure: reads are anonymous, writes
+    are you."
 14. **Request-access consent symmetry.** Requesting access exposes a handle to the owner (for
     approval). Should "Request access" carry the same **"request as [handle]"** consent as
     auto-join? Lean: yes, by symmetry — requesting and joining both expose identity.
@@ -571,10 +588,10 @@ explicit return path (§2 "Ownership, code vs data, and 'make it yours' semantic
 16. **Lineage attribution visibility.** `remixOf` records the source. Is that link public /
     shown to the source owner (who sees who made their own copy), or private? Lean: attribution
     visible (matches house "remix culture"), but the copier's *data* never is.
-17. **Full login-trigger set.** Login is required at: codegen (Other/uncached edit), Join, and
-    Request access (all expose/own identity). Anonymous stays: cached-chip browsing + viewing
-    public apps. Confirm this is the complete, coherent set (esp. commenting — does posting a
-    comment require login + a chosen handle?).
+17. **✅ Full login-trigger set — DECIDED (jchris).** Login is required to **write**: codegen
+    (Other/uncached edit), Join, Request access, any data write, and **commenting** (posted as
+    your current handle). Anonymous stays: reads, viewing/using public apps read-only, and
+    cached-chip browsing. (§2 "Identity exposure".)
 **✅ 18. Name for the copy concept — DECIDED (jchris): "make it yours / your own."** "Fork"
 and "clone" are retired as user words; **"remix"** stays as the cultural *act of changing* a
 vibe; the *result* of changing one you don't own is that it **becomes yours** (an independent
