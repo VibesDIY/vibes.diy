@@ -31,8 +31,12 @@ describe("dbSubscribeEvento – canonical route", () => {
         }),
       }),
       close: vi.fn(() => Promise.resolve()),
-      subscribeViewerGrants: vi.fn().mockResolvedValue(undefined),
+      subscribeViewerGrants: vi.fn().mockResolvedValue({
+        isErr: () => false,
+        Ok: () => ({ type: "vibes.diy.res-subscribe-viewer-grants", status: "ok" }),
+      }),
       onViewerGrantsChanged: vi.fn(),
+      onReconnect: vi.fn(),
       subscribeDocs: vi.fn().mockResolvedValue({
         isErr: () => true,
         Err: () => "test-abort",

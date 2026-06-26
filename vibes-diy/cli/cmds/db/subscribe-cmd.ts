@@ -34,7 +34,11 @@ export const dbSubscribeEvento: EventoHandler<WrapCmdTSMsg<unknown>, ReqDbSubscr
     if (rApi.isErr()) return Result.Err(rApi.Err());
     const { api, ownerHandle } = rApi.Ok();
     const adapter = new FireflyApiAdapter(api, ctx.validated.appSlug, { ownerHandle });
-    await adapter.enableGrantReactivity();
+    // Best-effort: grant reactivity is a live-update nicety, not required to
+    // subscribe. A transient failure here must not abort the command — the
+    // adapter retries it on its reconnect lifecycle once the connection
+    // recovers (#2448). Mirrors the headless fireproof() caller.
+    await adapter.enableGrantReactivity().catch(() => undefined);
 
     // Trigger server-side subscription. The api layer transparently reconnects on
     // mid-stream disconnects (api/impl/index.ts onClose → setTimeout → replay), but
