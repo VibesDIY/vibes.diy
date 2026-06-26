@@ -27,10 +27,11 @@ const lines = Array.from({ length: 40 }, (_, i) => ({
   blockNr: 0,
   timestamp: new Date(),
 }));
+const noop = () => undefined;
 
 describe("CodeMsg typewriter reveal", () => {
   it("reveals a partial subset while a gated card is streaming", async () => {
-    render(<CodeMsg begin={begin("typewriter")} lines={lines} isStreaming onClick={() => {}} />);
+    render(<CodeMsg begin={begin("typewriter")} lines={lines} isStreaming onClick={noop} />);
     // Early in the reveal, far fewer than all 40 lines are visible.
     await waitFor(() => {
       const shown = screen.queryAllByText(/^line \d+$/).length;
@@ -40,7 +41,7 @@ describe("CodeMsg typewriter reveal", () => {
   });
 
   it("does NOT animate an ungated card (no reveal marker)", () => {
-    render(<CodeMsg begin={begin()} lines={lines} isStreaming onClick={() => {}} />);
+    render(<CodeMsg begin={begin()} lines={lines} isStreaming onClick={noop} />);
     // Ungated cards keep the existing collapsed summary (no expanded line list).
     expect(screen.queryByText("line 39")).toBeNull();
   });
