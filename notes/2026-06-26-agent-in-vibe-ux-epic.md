@@ -299,6 +299,23 @@ affordance does on a vibe you don't own.
   switch's access view (the gate/menu context), distinct from the deleted Remix/Clone/Edit
   chrome. The running app stays button-free.
 
+### Active-handle resolution & join consent (decided)
+
+The UI over the backend `resolveActiveHandle` (#2275). You act *as a handle*; the rules for
+which handle, and when you're asked, differ by app type:
+
+- **"Join as [handle]" is skipped if you have only one handle.** Single-handle users auto-join
+  with no consent step; the selector appears only when there's a real choice (>1 handle).
+- **Public apps → act as your current session handle; switch at will, no confirm.** Your
+  current handle is the acting identity on a public app; switching is free and instant.
+- **Request-access apps → fall back to your last-used handle *in that app*.** If your current
+  session handle has no relationship yet (no grant, no pending request) in this app, don't
+  silently act as it — use the handle you last used in this app, so you don't start over /
+  fan out a new identity by accident.
+- **Switching on a request-access app is allowed, but issuing *another* access request asks
+  for confirmation first** — so you don't accidentally fire duplicate requests from multiple
+  handles.
+
 ### One new setting: publish intent (#1854)
 
 The creator picks what the vibe *is for*; this sets sensible **access defaults** and framing
@@ -536,10 +553,11 @@ fresh data; editing always forks fresh with "open your copy" as the explicit ret
 
 ### Parked semantic gaps (resolve before build, not blocking sketches)
 
-13. **Does using a public app expose your handle?** When logged in and just viewing/using a
-    public vibe (no Join), are you anonymous, or visible to the owner as a viewer? Lean:
-    anonymous until you Join or comment (consume before identity), but confirm — it affects
-    whether the active-handle switcher even matters on a public app you haven't joined.
+13. **Does using a public app *expose* your handle to others?** Partly settled: on a public
+    app you **act as your current session handle** (not anonymous) and can switch at will
+    (§2 resolution rules). Open part: is that handle *visible to the owner / other users* when
+    you're only viewing/using (not commenting, not joined), or is it just your local acting
+    identity? Lean: local until you comment or Join.
 14. **Request-access consent symmetry.** Requesting access exposes a handle to the owner (for
     approval). Should "Request access" carry the same **"request as [handle]"** consent as
     auto-join? Lean: yes, by symmetry — requesting and joining both expose identity.
@@ -554,3 +572,7 @@ fresh data; editing always forks fresh with "open your copy" as the explicit ret
     Request access (all expose/own identity). Anonymous stays: cached-chip browsing + viewing
     public apps. Confirm this is the complete, coherent set (esp. commenting — does posting a
     comment require login + a chosen handle?).
+18. **Name for the copy/clone concept (in progress).** "Fork" is banned ("forks are for
+    dorks"); "remix" = the *cultural act of changing* a vibe (stays); we need a friendlier word
+    than "clone" for *taking an independent code-only copy*. Candidate under discussion — see
+    the open naming question. Once chosen, replace "clone"/"make your own copy" doc-wide.
