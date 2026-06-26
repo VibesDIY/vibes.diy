@@ -1,6 +1,6 @@
 # Removing the `@fireproof/*` dependency — extracting the identity/PKI core
 
-Status: **APPROVED — IN PROGRESS.** Owner gave go-ahead; resolutions ratified. Plan 1 (foundation) landed. **Encapsulation boundary ("far shore") reached:** every identity-relevant `@fireproof/*` import in source now routes through `@vibes.diy/identity` (browser-safe `.`, worker-safe `./server`, Node-only `./node`); the three duplicated device-id signers are DRY'd into `createDeviceIdGetToken`; the package is still fireproof-backed internally. Remaining `@fireproof/*` in source: `@fireproof/use-fireproof` + `core-types-protocols-cloud` (Bucket D, legacy IndexedDB/cloud-attach) and the generic `core-cli` cmd-ts streaming primitives (CLI-framework / Bucket F) — both deferred by design. Plan: [`2026-06-19-defireproof-identity-extraction-foundation.md`](../plans/2026-06-19-defireproof-identity-extraction-foundation.md).
+Status: **APPROVED — IN PROGRESS.** Owner gave go-ahead; resolutions ratified. Plan 1 (foundation) landed. **Encapsulation boundary ("far shore") reached:** every identity-relevant `@fireproof/*` import in source now routes through `@vibes.diy/identity` (browser-safe `.`, worker-safe `./server`, Node-only `./node`); the three duplicated device-id signers are DRY'd into `createDeviceIdGetToken`; the package is still fireproof-backed internally. Remaining `@fireproof/*` in source: the generic `core-cli` cmd-ts streaming primitives (CLI-framework / Bucket F) — deferred by design. (Residual `@fireproof/use-fireproof` hook/type imports in app/ImgGen code are not part of this identity/PKI effort and are not tracked here.) Plan: [`2026-06-19-defireproof-identity-extraction-foundation.md`](../plans/2026-06-19-defireproof-identity-extraction-foundation.md).
 
 Related:
 
@@ -14,7 +14,7 @@ the external [`fireproof`](https://github.com/fireproof-storage/fireproof) repo
 (all `@fireproof/*` packages, locked at `0.24.19`, plus a
 [`core-types-base` patch](../../../patches/@fireproof__core-types-base@0.24.19.patch))
 is **not** the database — it's the **identity / PKI / auth-token machinery** plus
-some **runtime glue** and a **legacy in-browser IndexedDB hook**.
+some **runtime glue**.
 
 That residual coupling is why a one-line UX fix like #1616 can't be fixed in this
 repo: the localhost `/cert` success page is rendered by fireproof's
@@ -83,15 +83,6 @@ These are (almost) all erasable types. The exceptions that carry runtime values 
 | ---------------------------------------------- | ---------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `ReqDeviceIdRegister`, `isResDeviceIdRegister` | `core-cli` | [`login-cmd.ts:40`](../../../vibes-diy/cli/cmds/login-cmd.ts) builds a `core-cli.device-id-register` DTO; the fireproof handler spins up the localhost Hono server, opens the browser to `/settings/csr-to-cert`, and **renders the unstyled `/cert` success page we can't touch**. |
 
-### Bucket D — Legacy in-browser IndexedDB (NOT "deep ops")
-
-This is the original **local** fireproof database, still used in the browser — it is
-_not_ part of the firefly cloud migration and _not_ a deep library op.
-
-| Symbol                                                                                       | Package                                      | Where                                                                                                                                                                                                                                                                                          |
-| -------------------------------------------------------------------------------------------- | -------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `useFireproof`, `fireproof`, `Database`, `DocFileMeta`, `DocSet`, `DocResponse`, `DocWithId` | `use-fireproof` / `@fireproof/use-fireproof` | ImgGen image metadata ([`base/hooks/img-gen/use-img-gen.ts`](../../../vibes.diy/base/hooks/img-gen/use-img-gen.ts), [`base/components/ImgGen.tsx`](../../../vibes.diy/base/components/ImgGen.tsx)), vibe-card file metadata, `databaseManager`, `useAllGroups`, `useChatHydration` (~15 files) |
-
 ### Bucket E — Runtime glue (the pervasive bottleneck)
 
 | Symbol                                                           | Package                    | Role                                                                                                                                              |
@@ -146,8 +137,7 @@ issues/verifies its credentials." Unidirectional deps; built on `@adviser/cement
                            get-cert-from-csr)
 ```
 
-Buckets D and E are handled separately (below) — D is an app-migration track, E is
-an ownership decision about `SuperThis`.
+Bucket E is handled separately (below) — an ownership decision about `SuperThis`.
 
 ### Extraction strategy (the central design choice)
 
@@ -196,11 +186,7 @@ open question — see Q2.
 4. **`SuperThis` decision (Bucket E).** See Q1 — re-home into identity, push down
    into `@adviser/cement`, or thin in-repo replacement. Until resolved, full
    `@fireproof/*`-zero is blocked.
-5. **Legacy IndexedDB migration (Bucket D) — separate track.** Migrate ImgGen /
-   vibe-card metadata off classic local fireproof (onto firefly or a small in-repo
-   local store). Largest app-surface change; gated independently. Until done, a
-   single narrowly-scoped `@fireproof/use-fireproof` dep may legitimately remain.
-6. **Build-toolchain swap (Bucket F) — separate track.** Replace `core-cli
+5. **Build-toolchain swap (Bucket F) — separate track.** Replace `core-cli
 tsc`/`build`/`pack`/`publish` with a plain `tsc`/`tsup`/in-repo wrapper and drop
    the `@fireproof/core-cli` devDep repo-wide. Mechanical but touches every
    workspace; only after this does `pnpm` resolve **zero** `@fireproof/*`.
@@ -224,8 +210,6 @@ tsc`/`build`/`pack`/`publish` with a plain `tsc`/`tsup`/in-repo wrapper and drop
 - **Q4 — Publish target.** Is `@vibes.diy/identity` a public npm package (so external
   Node/Wrangler/generated-vibe consumers authenticate against a stable surface), or
   internal-only? Affects naming, API-stability commitments, and packaging.
-- **Q5 — Bucket D scope.** Is the legacy in-browser IndexedDB migration part of this
-  initiative, or explicitly deferred? It's the long pole to truly zeroing `@fireproof/*`.
 - **Q6 — Upstream tracking.** After extraction, do we keep pulling security fixes
   from upstream fireproof `0.24.x` into the lifted crypto, or hard-fork and own it outright?
 
@@ -247,9 +231,7 @@ owner sign-off before any plan.
 4. **Publish (Q4)** → **internal workspace package first**; stabilize API/security
    posture before any public npm commitment. If external need is urgent, publish a
    narrow pre-1.0 surface with explicit compatibility guarantees.
-5. **Bucket D (Q5)** → explicitly **out of scope**; its own firefly-migration track
-   with separate acceptance criteria.
-6. **Upstream (Q6)** → **managed fork**, not an immediate hard fork: a lightweight
+5. **Upstream (Q6)** → **managed fork**, not an immediate hard fork: a lightweight
    upstream-sync lane for fireproof `0.24.x` security fixes, documenting source SHAs +
    local deltas.
 
