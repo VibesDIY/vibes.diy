@@ -89,10 +89,12 @@ function UnifiedOverlay({
   title,
   subtitle,
   children,
+  pickerOpen,
 }: {
   readonly title: string;
   readonly subtitle?: string;
   readonly children: React.ReactNode;
+  readonly pickerOpen?: boolean;
 }) {
   return (
     <div
@@ -126,7 +128,7 @@ function UnifiedOverlay({
       </div>
       {/* body — the content (chips, stream, gate) */}
       <div style={{ padding: "0 14px", overflowY: "auto" }}>{children}</div>
-      {/* footer — nav + toggle at the bottom latitude */}
+      {/* footer — handle picker (leftmost) + nav links + toggle, at the bottom latitude */}
       <div
         style={{
           display: "flex",
@@ -134,18 +136,19 @@ function UnifiedOverlay({
           justifyContent: "space-between",
           gap: 8,
           marginTop: 10,
-          padding: "10px 14px 12px",
+          padding: "10px 12px 12px",
           borderTop: "1px solid var(--color-light-decorative-00, #e5e5e5)",
         }}
       >
-        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+        <ViewerTag pickerOpen={pickerOpen} />
+        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
           <NavIcon color="#3b82f6">⌂</NavIcon>
           <NavIcon color="#fb923c" selected>
             💬
           </NavIcon>
           <NavIcon color="#22c55e">↗</NavIcon>
         </div>
-        <VibesSwitch size={40} isActive />
+        <VibesSwitch size={38} isActive />
       </div>
     </div>
   );
@@ -166,20 +169,185 @@ function NavIcon({
   return (
     <div
       style={{
-        width: 42,
-        height: 42,
+        width: 38,
+        height: 38,
         borderRadius: "50%",
         background: color,
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
         color: "#fff",
-        fontSize: 18,
+        fontSize: 16,
         border: "1px solid var(--vibes-near-black, #1a1a1a)",
         boxShadow: selected ? "0 0 0 3px var(--vibes-near-black, #1a1a1a)" : "none",
       }}
     >
       {children}
+    </div>
+  );
+}
+
+/** Tiny camera glyph for the me-mode "edit photo" affordance (mirrors the runtime ViewerTag). */
+function CameraGlyph({ size }: { readonly size: number }) {
+  return (
+    <svg
+      aria-hidden="true"
+      viewBox="0 0 24 24"
+      width={size}
+      height={size}
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={2.5}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      style={{ display: "block" }}
+    >
+      <path d="M4 7h4l2-2h4l2 2h4a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V8a1 1 0 0 1 1-1Z" />
+      <circle cx="12" cy="12.5" r="3.5" />
+    </svg>
+  );
+}
+
+/** One row in the handle dropdown — a handle to act as, or an action. */
+function HandleRow({
+  initial,
+  icon,
+  label,
+  active,
+}: {
+  readonly initial?: string;
+  readonly icon?: React.ReactNode;
+  readonly label: string;
+  readonly active?: boolean;
+}) {
+  return (
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: 8,
+        padding: "7px 8px",
+        borderRadius: 8,
+        background: active ? "var(--color-light-background-01, #eee)" : "transparent",
+      }}
+    >
+      <span
+        style={{
+          width: 24,
+          height: 24,
+          borderRadius: "50%",
+          background: initial ? "#6366f1" : "transparent",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          color: initial ? "#fff" : "inherit",
+          fontSize: 11,
+          fontWeight: 700,
+          flexShrink: 0,
+        }}
+      >
+        {initial ?? icon}
+      </span>
+      <span className="text-sm" style={{ flex: 1 }}>
+        {label}
+      </span>
+      {active && <span style={{ fontSize: 12 }}>✓</span>}
+    </div>
+  );
+}
+
+/** The handle dropdown (the active-handle switcher, #2275) — opens upward from the nav tag. */
+function HandleMenu() {
+  return (
+    <div
+      style={{
+        position: "absolute",
+        bottom: "calc(100% + 8px)",
+        left: 0,
+        width: 230,
+        background: "var(--color-light-background-00, #fff)",
+        border: "1px solid var(--color-light-decorative-01, #ddd)",
+        borderRadius: 12,
+        boxShadow: "0 10px 36px rgba(0,0,0,0.28)",
+        padding: 6,
+        zIndex: 10,
+      }}
+      className="text-light-primary dark:text-dark-primary"
+    >
+      <div className="text-light-secondary dark:text-dark-secondary" style={{ fontSize: 11, padding: "4px 8px" }}>
+        Acting as
+      </div>
+      <HandleRow initial="M" label="@meghan" active />
+      <HandleRow initial="W" label="@meghan_work" />
+      <div style={{ height: 1, background: "var(--color-light-decorative-00, #eee)", margin: "6px 0" }} />
+      <HandleRow icon={<CameraGlyph size={14} />} label="Edit photo" />
+      <HandleRow icon={<span style={{ fontSize: 15 }}>＋</span>} label="New handle" />
+    </div>
+  );
+}
+
+/** Sketch viewer-tag + handle picker for the leftmost of the nav. Presentation echoes the
+ *  runtime ViewerTagImpl (avatar + handle + me-mode camera affordance); real impl reuses its
+ *  shell + the chrome-side HandleAvatarEditor upload path, plus this new handle dropdown. */
+function ViewerTag({ pickerOpen }: { readonly pickerOpen?: boolean }) {
+  return (
+    <div style={{ position: "relative", flexShrink: 0 }}>
+      {pickerOpen && <HandleMenu />}
+      <div
+        style={{
+          display: "inline-flex",
+          alignItems: "center",
+          gap: 6,
+          padding: "3px 8px 3px 3px",
+          borderRadius: 999,
+          cursor: "pointer",
+          background: "var(--color-light-background-01, #eee)",
+          border: "1px solid var(--color-light-decorative-01, #ddd)",
+        }}
+        className="text-light-primary dark:text-dark-primary"
+      >
+        <span style={{ position: "relative", width: 26, height: 26, flexShrink: 0 }}>
+          <span
+            style={{
+              width: 26,
+              height: 26,
+              borderRadius: "50%",
+              background: "#6366f1",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              color: "#fff",
+              fontSize: 12,
+              fontWeight: 700,
+              outline: "2px dashed #818cf8",
+              outlineOffset: 1,
+            }}
+          >
+            M
+          </span>
+          <span
+            style={{
+              position: "absolute",
+              right: -3,
+              bottom: -3,
+              width: 13,
+              height: 13,
+              borderRadius: "50%",
+              background: "#1a1a1a",
+              color: "#fff",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <CameraGlyph size={8} />
+          </span>
+        </span>
+        <span className="text-sm" style={{ fontWeight: 500 }}>
+          @meghan
+        </span>
+        <span style={{ fontSize: 11, opacity: 0.6 }}>▾</span>
+      </div>
     </div>
   );
 }
@@ -233,6 +401,21 @@ export const LiveSwitchOpen: Story = {
     <Phone>
       <FakeVibeApp />
       <UnifiedOverlay title="Bloom Machine" subtitle="bloom">
+        <OptionButtons options={["Make it a drum kit", "Add a high score"]} isFirst />
+        <OtherInput />
+      </UnifiedOverlay>
+    </Phone>
+  ),
+};
+
+// --- handle picker open — the active-handle display + switcher (#2275), leftmost in the nav --
+
+export const HandlePickerOpen: Story = {
+  name: "1a · Handle picker (open)",
+  render: () => (
+    <Phone>
+      <FakeVibeApp />
+      <UnifiedOverlay title="Bloom Machine" subtitle="bloom" pickerOpen>
         <OptionButtons options={["Make it a drum kit", "Add a high score"]} isFirst />
         <OtherInput />
       </UnifiedOverlay>
