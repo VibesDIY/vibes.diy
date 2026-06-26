@@ -1,5 +1,7 @@
 import type { Preview } from "@storybook/react-vite";
 import { getVibesGlobalCSS } from "@vibes.diy/base";
+// Real Tailwind v4 utilities (JIT from stories + base classes) for pixel fidelity.
+import "./tailwind.css";
 
 // Inject global CSS (tokens + resets + keyframes)
 const style = document.createElement("style");
