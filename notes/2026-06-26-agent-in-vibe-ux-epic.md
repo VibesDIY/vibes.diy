@@ -29,94 +29,105 @@ the one cluster that stays a distinct surface. The success metric for the whole 
 **less code and less UI than we started with.** What we remove becomes "learnings"
 (captured in §7), not lost work.
 
-## 1. North star: the unified `/vibe` surface
+## 1. North star: one edit affordance, one `/vibe` surface
 
-There is one screen. It has three **states**, and the same screen is reused for every
-visitor — the differences are parameters, not separate code paths.
+There are **two places**, and they share **one primitive**.
 
-```
-                       does an app exist yet?
-                        ┌──────────────┴──────────────┐
-                       NO                              YES
-                   ┌────┴────┐                    ┌─────┴─────┐
-              ┌─── GENESIS ──┐               who are you? × creator intent
-              first-generation                    │
-              (replaces /chat new            ┌─────┴─────┬──────────┐
-               + home "new vibe"           OWNER     MEMBER /     ANON /
-               + Starter Stack)              │       INVITED      no-grant
-                                             │          │            │
-                                          LIVE        LIVE      LIVE or onramp
-                                         (agent      (agent     (Join / Remix /
-                                          ready)     ready if    View by intent)
-                                                     writer)
-```
+1. **The homepage** is where the *first* prompt happens — fed by the curated starter
+   content (today's `/start` / Instant Starter Stack #1896). You pick a starter or type a
+   prompt; submitting **creates a vibe and routes you to `/vibe`.** Prompt *entry* lives
+   here, before the vibe exists.
+2. **`/vibe/$user/$app`** is where the app lives and is changed: it arrives in a
+   **first-generation** state (code being built), settles into **live + edit**, and stays
+   there forever. This is the bookmarkable / shareable URL.
 
-- **State is a function, not a route.** `/vibe/$user/$app` always. A brand-new draft
-  allocates its slug eagerly so the URL is shareable/bookmarkable from second zero
-  (open question Q3 below).
-- **Mobile-first.** The canvas is the app, full-bleed. The agent is a bottom sheet /
-  collapsed bar — never a side-by-side desktop editor. The desktop layout is the mobile
-  layout with breathing room, not a different design.
-- **The agent is an affordance, not a destination.** Tapping it talks to the app; the
-  app hot-swaps in place (the existing hot-swap overlay, kept). No navigation, no
-  context switch, no second URL.
+The primitive that unifies them is **the edit affordance: curated chips + a textarea.**
+The same component appears on the homepage, on a curated starter, and on *any* vibe you
+land on and want to change. Crucially:
 
-### 1a. GENESIS — the new first-generation state (the first thing to design)
-
-This is the riskiest, most novel piece and the thing to sketch first. **It must not look
-like today's chat UI.** It is the app's birth, mobile-first, with the agent seeding it.
+> **There is no separate "iterate flow." Editing a vibe is the starter stack pointed at an
+> existing app.** Sometimes there are a few curated "Make it ___" chips, sometimes one or
+> two, sometimes none and it's just the textarea. Because the gesture is identical whether
+> you're creating from a starter or transforming a stranger's vibe, **the starter stack
+> *trains* the universal edit gesture** — first use teaches every future use. That's the
+> simplification: one affordance to design, learn, and maintain, not a starter UI plus a
+> separate edit UI.
 
 ```
- ┌─────────────────────────┐    Mobile, full-bleed.
- │                         │    - The canvas is where the app WILL be.
- │      (the canvas —      │    - Curated starter tiles (the #1896 Starter Stack
- │     app blooms here)    │      chips, generalized) seed the first prompt:
- │                         │      "Make a ___"  →  app blooms IN the canvas,
- │   ▸ Make a song player  │      not in a code pane with a preview.
- │   ▸ Make a list w/ pals │    - Generation streams INTO the canvas; the agent
- │   ▸ Make a game         │      bar shows progress, collapses when done.
- │   ▸ Other…              │    - No login required to make the first app
- │                         │      (deferred identity — see §3, #1693).
- ├─────────────────────────┤
- │  ✎ describe your app…  ▸│ ← agent bar (collapsed sheet)
+ HOMEPAGE  (prompt entry)              /vibe/$user/$app   (bookmarkable; app lives here)
+ ─────────────────────────            ────────────────────────────────────────────────
+  the EDIT AFFORDANCE:                ┌─ FIRST-GENERATION ─┐  arrived from a prompt;
+  curated chips + textarea            │ code streams in,   │  code is being built;
+   ▸ Make a song player               │ app blooms in the  │  NOT today's chat UI.
+   ▸ Make a list w/ pals              │ canvas in place    │
+   ▸ Make a game        submit        └─────────┬──────────┘
+   ✎ describe…  ──── create vibe ──▶            ▼
+                                      ┌─ LIVE + EDIT ──────────────────────┐
+   (same component reappears  ───────▶│ app runs full-bleed; the SAME edit │
+    on every vibe as "change   on a   │ affordance (chips + textarea) is   │
+    this app")                 vibe   │ how you change it. param by        │
+                                      │ who-you-are × creator intent (§2). │
+                                      │ non-owner's first edit → forks to  │
+                                      │ their copy, inline msg (#1856).    │
+                                      └────────────────────────────────────┘
+```
+
+- **The app's URL is always `/vibe`.** The homepage is the front door for the *first*
+  prompt only; everything after lives on `/vibe`. Slug allocated on submit so the URL is
+  shareable from second zero (lifecycle in Q3).
+- **Mobile-first.** The canvas is the app, full-bleed; the edit affordance is a bottom
+  sheet, never a side-by-side desktop editor. Desktop = mobile with breathing room.
+- **The codegen agent lives *in* the vibe.** First-generation streaming and every later
+  edit happen on `/vibe` through the one affordance. No `/chat`, no second URL, no context
+  switch.
+
+### 1a. The edit affordance — the one reusable primitive (design this first)
+
+```
+ ┌─────────────────────────┐   chips + textarea. The ONLY door into edit mode.
+ │   ▸ Make it a drum kit   │   - On the homepage / a starter: chips CREATE a new
+ │   ▸ Add a high score     │     app from nothing ("Make a ___").
+ │   ▸ Make it dark         │   - On any vibe: chips TRANSFORM this app ("Make it
+ │                         │     ___"); a non-owner's first transform forks to
+ ├─────────────────────────┤     their own copy (#1856), inline & non-blocking.
+ │  ✎ change this app…    ▸ │   - Chip count is elastic: a few, one, or none —
+ └─────────────────────────┘     mostly it's the textarea. Curated chips are the
+                                  trained on-ramp; the textarea is the open road.
+```
+
+Same component, different seed. This absorbs the Instant Starter Stack (#1896), the inline
+edit/hot-swap (#1745), and what used to be a distinct "iterate" UI — into **one** thing.
+
+### 1b. First-generation state on `/vibe` (the new state, sketch alongside 1a)
+
+This is the novel piece. You submitted a prompt on the homepage; now you're on `/vibe` and
+**the code is being built.** It must **not** look like today's chat editor.
+
+```
+ ┌─────────────────────────┐   Mobile, full-bleed.
+ │                         │   - The canvas is where the app is being born; code
+ │     (app blooming —     │     streams INTO it, not into a code pane with a
+ │   code streaming in)    │     preview tab.
+ │                         │   - A slim progress affordance (not a chat log);
+ │   building your app…    │     collapses into the Live edit affordance (1a)
+ │                         │     when the first runnable build lands.
+ ├─────────────────────────┤   - Hot-swap overlay kept: subsequent builds swap in
+ │  ◐ building…            │     place (the existing mechanism).
  └─────────────────────────┘
 ```
 
-Genesis is **one screen serving three jobs that are currently three systems**: the
-homepage "new vibe" entry (`home.tsx`), the `/chat` new session
-(`NewSessionContent`), and the Instant Starter Stack `/start` route (#1896). The
-Starter Stack stops being a special route and becomes "Genesis, seeded with curated
-content." (jchris's keystone question — answered: yes, standardize it as the normal
-pre-vibe display, not a special view.)
-
-### 1b. LIVE — app running, agent collapsed
+### 1c. Live + edit — app running, affordance present
 
 ```
- ┌─────────────────────────┐    - App fills the screen.
- │                         │    - One pill, bottom. It is the agent handle +
- │     (running app)       │      the share/identity affordances, parameterized
- │                         │      by grant (see §2). NOT four look-alike buttons
- │                         │      with three interaction models (#1708).
- │                         │    - Owner: tap pill → agent ready (this is "Edit",
- │                         │      but there is no Edit button — you just talk to
- │                         │      your app).
- ├─────────────────────────┤    - Member/writer: same.
- │ ⌂   ◐ handle ▾   ✎ Remix│ ← - Reader/anon: pill shows the intent-driven CTA
- └─────────────────────────┘      (Join / Remix / View) + Share.
-```
-
-### 1c. ITERATING — agent expanded
-
-```
- ┌─────────────────────────┐    - Agent sheet rises over the lower third; app
- │     (running app,       │      stays visible and hot-swaps as code lands.
- │      hot-swapping)      │    - For a NON-owner, the first edit silently forks
- ├─────────────────────────┤      to their copy and the sheet says, inline and
- │ You: make it blue       │      non-blocking: "You're remixing — this is your
- │ ▸ applying…             │      copy, the original is unchanged." (#1856 —
- │ ✎ keep talking…        ▸│      a state, not a modal gate.)
- └─────────────────────────┘    - This is what #1745 / #2518 describe, but as the
-                                  default, not a bolt-on.
+ ┌─────────────────────────┐   - App fills the screen.
+ │                         │   - One pill carries identity + share, parameterized
+ │     (running app)       │     by grant (§2) — NOT four look-alike buttons with
+ │                         │     three interaction models (#1708).
+ │                         │   - Editing IS the affordance (1a): owner/writer →
+ │                         │     chips+textarea change the app in place; reader/anon
+ ├─────────────────────────┤     → the pill shows the intent CTA (Join/Remix/View).
+ │ ⌂   ◐ handle ▾    ✎ edit │   - There is no "Edit" destination and no separate
+ └─────────────────────────┘     iterate flow — you just change the app.
 ```
 
 ## 2. Consistency spec (the verb + state model)
@@ -163,21 +174,29 @@ non-member's landing — it does **not** change access enforcement.
 ### CTA precedence (access-state wins over intent)
 
 Intent only chooses the primary CTA *among actions the access state actually permits*.
-Resolve in this fixed order so the CTA is always predictable (Charlie offered a full
-`intent × grant × request-setting → primary/secondary` truth table — accepted, it lands at
-GATE 1):
+Resolve in this fixed order so the CTA is always predictable:
+`revoked` → `pending` → `private/no-requests` → `private/requests-on` →
+`public-or-granted (intent-driven)`. The canonical lookup (the GATE-1 → implementation
+handoff matrix, via @CharlieHelps):
 
-1. `revoked-access` → disabled **"Access revoked"**, no primary. *(Remix still offered — a
-   copy is independent of the revocation.)*
-2. `pending-request` → disabled **"Requested"**, no primary. *(Remix still offered.)*
-3. Private + requests **off** (`not-grant`) → "App not available" (no card). *(Remix only if
-   the source is itself reachable to this viewer.)*
-4. Private + requests **on** → primary **Join** (as "Request to join"); secondary Remix.
-5. Public / granted → primary CTA = **publish-intent** (Shared→Join, Read-only→View,
-   Template→Remix); the other two outcomes are always present as secondary.
+| intent | grant / access-state | request-setting | primary CTA | secondary CTA |
+| --- | --- | --- | --- | --- |
+| `*` | `revoked-access` | `*` | — (`Access revoked`) | `Remix` |
+| `*` | `pending-request` | `*` | — (`Requested`) | `Remix` |
+| `*` | `not-grant + private` | `requests-off` | — (`App not available`) | `Remix` * |
+| `*` | `not-grant + private` | `requests-on` | `Join` (request-to-join) | `Remix` |
+| `shared-space` | `public-or-granted` | `*` | `Join` | `Remix` |
+| `template` | `public-or-granted` | `*` | `Remix` | `Join` † |
+| `read-only-published` | `public-or-granted` | `*` | `View` | `Remix` |
+
+\* only when the source is reachable for remix. † only when collaboration is allowed.
+`public + no-membership` loads directly and bypasses the gate UI (no gate CTA). `member` /
+`submitter` are resolved in Member mode, outside this visitor CTA resolver.
 
 `Remix` is the one action available in nearly every state (it forks; it doesn't depend on
-the source's grant), which is why it's the universal fallback.
+the source's grant), which is why it's the universal fallback / secondary. The strict-enum
+JSON form of this table (`intent`, `grantState`, `requestSetting`, `primaryCta`,
+`secondaryCta`) lands with PR-1 as the wiring source of truth.
 
 ### Grant → surface (collapsing the 12-state table)
 
@@ -215,14 +234,15 @@ preserved (the existing `?intent=` routing already does this — keep it, surfac
 Shared data gets a "sign in to see @sender's entries" prompt (#2353) instead of a silent
 empty state.
 
-> **⚠️ Anonymous Genesis is NOT free — it has a backend dependency.** The current
-> first-generation path is auth-gated: `routes.ts` puts `chat/prompt` under the auth
-> layout, and `prompt.tsx` only calls `chatApi.openChat()` once `isSignedIn` is true. So
-> "make the first app with no login" requires **new anonymous-draft + claim-on-sign-in
-> work** (server allocates a throwaway-owner draft; the slug is claimed on auth). That is
-> a dependency, not a given. **Split the Genesis work accordingly:** the new mobile-first
-> first-generation *UI* (canvas, starter tiles, app-blooms-in-place) has no backend
-> dependency and ships in PR-1 **still auth-gated**; the *anonymous* path is a separate,
+> **⚠️ Anonymous first-app creation is NOT free — it has a backend dependency.** The
+> current path from homepage prompt to first generation is auth-gated: `routes.ts` puts
+> `chat/prompt` under the auth layout, and `prompt.tsx` only calls `chatApi.openChat()`
+> once `isSignedIn` is true. So "make the first app with no login" requires **new
+> anonymous-draft + claim-on-sign-in work** (server allocates a throwaway-owner draft; the
+> slug is claimed on auth). That is a dependency, not a given. **Split the work
+> accordingly:** the new mobile-first homepage prompt-entry + edit affordance (§1a) and the
+> first-generation `/vibe` *UI* (§1b: canvas, app-blooms-in-place) have no backend
+> dependency and ship in PR-1 **still auth-gated**; the *anonymous* path is a separate,
 > explicitly-flagged dependency (GATE 1, §8 Q2/Q3) — do not assume it for every state.
 
 ## 4. Week plan (human-in-the-loop gates)
@@ -233,11 +253,11 @@ for your judgement before code.
 
 | Day | Work | Output | Gate |
 | --- | --- | --- | --- |
-| **0–1** | Lofi sketches of Genesis / Live / Iterating, mobile-first. Flow outlines for: new app, visitor-Join, visitor-Remix, owner-iterate. Finalize §2 verb spec + §7 subtraction ledger. | Sketch set + this doc's §1–2 ratified | **GATE 1: you approve the sketches & verbs before any code.** |
-| **2** | Genesis spike — the new first-generation `/vibe` state, mobile-first, app-blooms-in-canvas. Curated starter tiles. Behind a flag, **auth-gated** (anonymous path is a separate dependency, §3). | Clickable Genesis on `/vibe` | **GATE 2: does Genesis feel right on a phone?** |
+| **0–1** | Lofi sketches of the edit affordance (§1a), first-generation `/vibe` (§1b), live+edit (§1c), mobile-first. Flow outlines for: new app from homepage, visitor-Join, visitor-Remix, owner-edit. Finalize §2 verb spec + §7 subtraction ledger. | Sketch set + this doc's §1–2 ratified | **GATE 1: you approve the sketches & verbs before any code.** |
+| **2** | Spike the edit affordance (§1a) + first-generation `/vibe` state (§1b), mobile-first, app-blooms-in-canvas. Behind a flag, **auth-gated** (anonymous path is a separate dependency, §3). | Clickable affordance + first-gen on `/vibe` | **GATE 2: does the affordance + first-gen feel right on a phone?** |
 | **3** | Verb collapse + landing card: Remix/Join/View by intent; delete Clone/Fresh-Install/Edit-button; publish-intent setting (#1854). Mostly deletion. | PR-1 part 1 | — |
 | **4** | Share panel link-first (#2232 + children). Indicator system for viewer modes (#2178/#2275). | PR-1 complete → review | **GATE 3: PR-1 review/QA.** |
-| **5** | Inversion wiring: agent-in-vibe Live/Iterating, hot-swap inline, `/chat` → `/vibe` redirects, lazy chat connection flip. | PR-2 (may carry over) | **GATE 4: full cutover review.** |
+| **5** | Inversion wiring: agent-in-vibe live+edit, hot-swap inline, `/chat` → `/vibe` redirects, lazy chat connection flip. | PR-2 (may carry over) | **GATE 4: full cutover review.** |
 
 **Prerequisite (being handled separately):** full `/chat` deletion needs the lazy chat
 connection from **Track B #2517** (SharedSessions DO). jchris is tackling #2517
@@ -248,12 +268,12 @@ flag only as a rollback seam, not as a dependency workaround.
 
 ## 5. PR structure
 
-- **PR-1 "Vibe-first surface: verbs, landing, share" (no backend dep).** Genesis state
-  (flagged, **auth-gated** — anonymous generation is deferred to its own dependency, §3),
-  verb collapse, publish-intent, link-first share, viewer-mode indicators. This is where
-  most of the *deletion* lands. Ships this week.
+- **PR-1 "Vibe-first surface: verbs, landing, share" (no backend dep).** Edit affordance
+  (§1a) + first-generation `/vibe` state (§1b), both flagged and **auth-gated** (anonymous
+  generation deferred to its own dependency, §3); verb collapse, publish-intent, link-first
+  share, viewer-mode indicators. This is where most of the *deletion* lands. Ships this week.
 - **PR-2 "Agent-in-vibe / retire /chat" (#2517 handled as a pre-task).** Inline agent
-  Live/Iterating, hot-swap, route redirects, lazy chat connection flip — full cutover, with
+  live+edit, hot-swap, route redirects, lazy chat connection flip — full cutover, with
   a flag kept only as a rollback seam.
 
 Both human-driven on UI. Label `agent-created`; @-mention `@CharlieHelps`; `ready-to-merge`
@@ -267,14 +287,14 @@ so the count stays crisp.)
 
 **Resolved by design (the inversion / verb model):**
 - #2518 `/chat` deprecation → *is* PR-2 (#2517 handled as a pre-task).
-- #1745 inline edit + hot-swap → the default Iterating state.
+- #1745 inline edit + hot-swap → the edit affordance + live+edit (§1a/§1c); there is no separate iterate flow.
 - #1709 EDIT/CLONE/REMIX popup → **deleted** (no submenu; agent is inline).
 - #2262 "vibe" button → "remix" → subsumed; the agent affordance is the remix entry.
 - #1708 action-bar inconsistency → **deleted** (one pill, one model).
 - #2162 Clone/Remix inconsistency across surfaces → **deleted** (Clone is gone; Remix everywhere).
 - #1855 data-mode CTA language → Join/Remix/View by intent.
 - #1854 publish intent → the one new setting.
-- #1856 non-owner edit = your copy → inline Iterating state message.
+- #1856 non-owner edit = your copy → inline fork message in the edit affordance (§1a).
 - #2037 Join over Fresh Install → Fresh Install deleted; Join primary by intent.
 - #1857 sharing-onramp epic → this doc *is* its resolution.
 - #1973 two sharing modes legible → Join vs Remix + intent (third "group-private" = Shared-space intent).
@@ -284,14 +304,15 @@ so the count stays crisp.)
 **Explicit build (Share cluster, PR-1):** #2238 (umbrella — "simplify the sharing UI"; this
 cluster *is* its resolution) #2232 (anchor) #2233 #2234 #2235 #2236 #1768.
 
-**Explicit build (FTUE / Genesis):** #1693 (principle, §3) #1896 (Starter Stack → Genesis seed)
+**Explicit build (FTUE / first-gen + edit affordance):** #1693 (principle, §3) #1896 (Starter Stack
+→ *is* the edit affordance, §1a — the only door into edit mode, so it trains the iterate gesture)
 #2353 (shared-data "sign in to see @sender's entries" prompt — design in §3, built here; single bucket).
 
 **Validate after landing (small follow-ups):** #1747 (reader → request writer access — now an
 agent-bar affordance) #1749 (authed non-owner flow — validate against new Live state)
 #1766 (live auto-let-in on approval — keep, orthogonal) #1742 (unread-comments blue dot — keep,
 orthogonal) #1951 (feedback link — keep, orthogonal) #1836 (VibesPanel position/first-run —
-mostly mooted by the new pill; salvage the first-run onboarding copy into Genesis).
+mostly mooted by the new pill; salvage the first-run onboarding copy into the homepage prompt-entry).
 
 **Prerequisite, handled separately:** #2517 (backend Track B SharedSessions DO — jchris is
 doing this as an independent pre-task; not part of these two PRs).
@@ -309,14 +330,15 @@ What we delete, and the learning it encodes — so the knowledge survives the co
 | "Public Sharing: disabled / Enable" pill (#2235) | State-vs-action ambiguity comes from cramming config into the link surface. Link-first removes the question. |
 | Compact-then-expand share panel (#2236) | The flash was the panel trying to be two things. Link-first is one thing. |
 | Dual auto-accept checkboxes (#1768) | Two controls for one field = two surfaces drifting. One component. |
-| Separate `/start` *system* (#1896) — route kept as a **compat redirect** into `/vibe`, not hard-removed | Onboarding isn't a special place; it's the normal vibe surface seeded with curated content. (Redirect avoids breaking the prototype/links.) |
+| Separate `/start` *system* (#1896) — its curated content feeds the **homepage** prompt-entry; the route itself becomes a **compat redirect**, not hard-removed | Onboarding isn't a special place; it's the homepage's edit affordance seeded with curated content, identical to editing any vibe. (Redirect avoids breaking the prototype/links.) |
 
 ## 8. Open questions for GATE 1
 
-1. **Genesis canvas vs chips.** Does Genesis lead with curated tiles (Starter-Stack
-   style, instant cached) or a blank prompt? Recommendation: tiles first (remix-first
-   house thesis), blank prompt one tap away.
-2. **Anonymous Genesis + claim/recovery.** Can a logged-out user generate before any slug
+1. **Edit-affordance chip count.** Does the affordance (homepage *and* on-vibe) lead with
+   curated chips (instant cached) or mostly the bare textarea, and how many chips? Recommendation:
+   elastic — a few curated chips first (remix-first house thesis; they train the gesture), textarea
+   always present and dominant, chips can drop to zero.
+2. **Anonymous first-app creation + claim/recovery.** Can a logged-out user generate before any slug
    exists, then claim on sign-in? Ties to #1693, and **has a backend dependency** (§3).
    Recommendation: yes — anonymous draft, claimed later. *Must* define the claim/recovery
    path up front so first-gen work is never lost if sign-in is interrupted (e.g. draft keyed
@@ -325,8 +347,8 @@ What we delete, and the learning it encodes — so the knowledge survives the co
    the URL is shareable immediately) or after? Recommendation: eager, throwaway anonymous
    owner for logged-out drafts — **with a defined TTL/cleanup for abandoned drafts** so eager
    allocation doesn't leak slugs/storage.
-4. **Curated-vs-real perf contract.** Genesis has two lanes — curated/cached (must feel
-   instant, click-as-page-view) and real generation (visibly different, has latency). Define
+4. **Curated-vs-real perf contract.** The edit affordance has two lanes — curated/cached (must
+   feel instant, click-as-page-view) and real generation (visibly different, has latency). Define
    the perf budget and the visible treatment that distinguishes them, so "instant" is a
    contract, not a hope (ref #1896's <500ms curated-swap target).
 5. **Group-private intent.** Is jchris's "group-private / collaborative" (#1973) a fourth
