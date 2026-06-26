@@ -50,7 +50,7 @@ const NEUTRAL: Required<Pick<ColorThemeTokens, "background" | "surface" | "accen
  * Scales across all themes with no per-theme work; replaced by the real app
  * iframe on first paint. Static (no motion) by scope.
  */
-export function ThemedSkeleton({ colorTheme }: { colorTheme: ColorThemeTokens | null }): JSX.Element {
+export function ThemedSkeleton({ colorTheme }: { colorTheme: ColorThemeTokens | null }): React.JSX.Element {
   const t = colorTheme ?? {};
   const vars = {
     "--skeleton-bg": t.background ?? NEUTRAL.background,

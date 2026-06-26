@@ -259,7 +259,7 @@ describe("handleWholeFileCodegenRequest emission", () => {
       handlePromptContext: async ({ blockSeq }) =>
         Result.Ok({
           blockSeq,
-          fsRef: Option.Some<FileSystemRef>({ fsId: "fs-9", appSlug: "a", ownerHandle: "o", mode: "create" }),
+          fsRef: Option.Some<FileSystemRef>({ fsId: "fs-9", appSlug: "a", ownerHandle: "o", mode: "dev" }),
         }),
     });
     await handleWholeFileCodegenRequest(deps);
