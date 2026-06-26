@@ -136,22 +136,41 @@ export function extractJsonStringField(raw: string, field: string): string | und
  * Track which lines of each file have already been emitted, so a `function_call`
  * item that is re-emitted with growing `contents` only fires `onLine` for newly
  * completed (newline-terminated) lines. The trailing partial line is withheld
- * until its newline arrives.
+ * until its newline arrives; call `flush` once the stream ends to emit it.
  */
-function makeLineEmitter(onLine: OnLine) {
+export function makeLineEmitter(onLine: OnLine) {
   const emitted: Record<string, number> = {};
-  return (rawPath: string, contents: string) => {
+  const pump = (rawPath: string, contents: string, includeLast: boolean) => {
     const filename = normalizeFilename(rawPath);
     const lang = langFor(filename);
     const nl = contents.lastIndexOf("\n");
-    if (nl === -1) return; // no completed line yet
-    const lines = contents.slice(0, nl).split("\n");
+    // When flushing, emit up to (and including) the partial trailing content.
+    // If the content ends with `\n`, the trailing "line" is empty — skip it.
+    // When not flushing, only emit up to the last newline (partial last line is withheld).
+    let slice: string | undefined;
+    if (includeLast === true) {
+      // Only include the trailing segment if there's actual content past the last newline.
+      if (nl === -1) {
+        slice = contents; // no newline at all — the entire content is a partial line
+      } else if (nl < contents.length - 1) {
+        slice = contents; // there is trailing content after the last newline
+      } else {
+        slice = contents.slice(0, nl); // trailing newline — nothing new to flush
+      }
+    } else {
+      slice = nl === -1 ? undefined : contents.slice(0, nl);
+    }
+    if (slice === undefined) return;
+    const lines = slice.split("\n");
     const already = emitted[filename] ?? 0;
     for (let nr = already; nr < lines.length; nr++) {
       onLine({ file: filename, lang, line: lines[nr], lineNr: nr });
     }
     emitted[filename] = lines.length;
   };
+  const emit = (rawPath: string, contents: string) => pump(rawPath, contents, false);
+  emit.flush = (rawPath: string, contents: string) => pump(rawPath, contents, true);
+  return emit;
 }
 
 async function runOnce(args: RunArgs): Promise<WholeFileResult> {
@@ -197,10 +216,19 @@ async function runOnce(args: RunArgs): Promise<WholeFileResult> {
   const streaming = (async () => {
     const emitLines = args.onLine !== undefined ? makeLineEmitter(args.onLine) : undefined;
     let argsAccum = "";
+    let lastPath: string | undefined;
+    let lastContents: string | undefined;
     for await (const event of result.getFullResponsesStream()) {
       const type = (event as { type?: string }).type;
       if (type === "response.output_item.added") {
-        argsAccum = ""; // a new output item begins → reset the per-call accumulator
+        // A new output item begins — flush the trailing line of the previous tool
+        // call before resetting the accumulator, so the last partial line is not lost.
+        if (emitLines !== undefined && typeof lastPath === "string" && typeof lastContents === "string") {
+          emitLines.flush(lastPath, lastContents);
+        }
+        argsAccum = "";
+        lastPath = undefined;
+        lastContents = undefined;
         continue;
       }
       if (type !== "response.function_call_arguments.delta") continue;
@@ -213,7 +241,13 @@ async function runOnce(args: RunArgs): Promise<WholeFileResult> {
       const { path, contents } = extractWriteFileArgs(argsAccum);
       if (typeof path === "string" && path.length > 0 && typeof contents === "string") {
         emitLines(path, contents);
+        lastPath = path;
+        lastContents = contents;
       }
+    }
+    // Flush the trailing partial line of the last tool call (if any).
+    if (emitLines !== undefined && typeof lastPath === "string" && typeof lastContents === "string") {
+      emitLines.flush(lastPath, lastContents);
     }
   })();
 
