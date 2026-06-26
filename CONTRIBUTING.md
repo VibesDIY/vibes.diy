@@ -27,14 +27,16 @@ You should be able to say what a PR does and why in one sentence, and a reviewer
 
 ### Design-discussion tripwires
 
-Any one of these means Track B (issue first, code second):
+Any one of these is a signal to _consider_ Track B (issue first, code second):
 
-- Changes the system prompt or codegen behavior.
+- Materially changes the system prompt or codegen behavior. (Pure typo/clarity edits with no intended behavior change can stay Track A.)
 - Adds a feature flag, a new code path, or a parallel implementation of something that already exists.
 - Touches multiple subsystems or otherwise has broad surface area.
 - Is an experiment — i.e. the payoff is uncertain.
-- Broadly or contentiously changes user-visible behavior, or changes an API or data contract. (A narrow bug fix that *restores* intended behavior — removing a layout flash, killing a default-content flicker — is Track A even though it's user-visible. The tripwire is for new or debatable behavior, not for fixing something that's plainly broken.)
+- Broadly or contentiously changes user-visible behavior, or changes an API or data contract. (A narrow bug fix that _restores_ intended behavior — removing a layout flash, killing a default-content flicker — is Track A even though it's user-visible. The tripwire is for new or debatable behavior, not for fixing something that's plainly broken.)
 - Bundles an always-on change together with experimental or flag-gated work. (Split it: land the small, non-controversial piece on its own; route the broad part to a design issue.)
+
+**These are guidance, not hard gates.** They're heuristics for noticing when a change is getting big enough to be worth a quick design conversation — not a checklist that blocks work. When a tripwire trips, the move is to _flag it_ — "this looks like it might want a design issue first; should I scope it, or is it small enough to just do?" — and let the human decide. Don't refuse to proceed, and don't become rigid about the letter of the rule. A fast human check beats both rule-bound intransigence and silently barreling ahead; the goal is less fog, not more process.
 
 ### Experiments must pay for themselves
 
