@@ -257,7 +257,7 @@ export function PreviewApp({ promptState }: { promptState: PromptState }) {
         setColdOpenTokens(colorset === undefined ? null : colorsetToSkeletonTokens(colorset));
       })
       .catch(() => {
-        if (!cancelled) setColdOpenTokens(null);
+        if (cancelled === false) setColdOpenTokens(null);
       });
     return () => {
       cancelled = true;

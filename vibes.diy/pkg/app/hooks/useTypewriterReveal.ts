@@ -21,12 +21,22 @@ export interface RevealState {
  * rate is whatever clears the current backlog within FINISH_MS (never below
  * BASE_RATE), so "done" never lags far behind the model.
  */
-export function stepReveal(state: RevealState, total: number, isStreaming: boolean, nowMs: number): RevealState {
+export function stepReveal({
+  state,
+  total,
+  isStreaming,
+  nowMs,
+}: {
+  state: RevealState;
+  total: number;
+  isStreaming: boolean;
+  nowMs: number;
+}): RevealState {
   if (state.revealedFloat >= total) return { revealedFloat: total, lastTickMs: nowMs };
   const dt = Math.max(0, (nowMs - state.lastTickMs) / 1000);
   const backlog = total - state.revealedFloat;
   let next: number;
-  if (!isStreaming) {
+  if (isStreaming === false) {
     // Drain the remaining backlog within FINISH_MS (never slower than BASE_RATE).
     const rate = Math.max(BASE_RATE, backlog / (FINISH_MS / 1000));
     next = Math.min(total, state.revealedFloat + rate * dt);
@@ -61,22 +71,22 @@ export function useTypewriterReveal(total: number, isStreaming: boolean, enabled
   streamingRef.current = isStreaming;
 
   useEffect(() => {
-    if (!enabled) {
+    if (enabled === false) {
       setRevealed(total);
       return;
     }
     let mounted = true;
     let raf = 0;
     const tick = (now: number): void => {
-      if (!mounted) return;
+      if (mounted === false) return;
       const s = stateRef.current;
       if (s.lastTickMs === 0) s.lastTickMs = now;
-      const nextState = stepReveal(s, totalRef.current, streamingRef.current, now);
+      const nextState = stepReveal({ state: s, total: totalRef.current, isStreaming: streamingRef.current, nowMs: now });
       stateRef.current = nextState;
       const count = Math.floor(nextState.revealedFloat);
       setRevealed((prev) => (prev !== count ? count : prev));
       const caughtUp = nextState.revealedFloat >= totalRef.current;
-      if (!caughtUp || streamingRef.current) raf = requestAnimationFrame(tick);
+      if (caughtUp === false || streamingRef.current === true) raf = requestAnimationFrame(tick);
     };
     raf = requestAnimationFrame(tick);
     return () => {
