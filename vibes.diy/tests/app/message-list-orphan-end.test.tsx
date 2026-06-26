@@ -33,8 +33,9 @@ describe("MessageList orphan code.end (reconnect convergence guard)", () => {
     ];
     const promptBlocks = [{ msgs } as unknown as PromptBlock];
 
+    const onClick = (): void => undefined;
     expect(() =>
-      render(<MessageList promptBlocks={promptBlocks} promptProcessing={false} chatId="c1" onClick={() => {}} />)
+      render(<MessageList promptBlocks={promptBlocks} promptProcessing={false} chatId="c1" onClick={onClick} />)
     ).not.toThrow();
   });
 });
