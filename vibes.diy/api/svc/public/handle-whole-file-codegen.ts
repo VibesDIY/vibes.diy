@@ -425,5 +425,22 @@ export async function handleWholeFileCodegenRequest(deps: WholeFileCodegenDeps):
   });
   if (rPersist.isErr()) return Result.Err(rPersist);
 
+  // Convergence anchor: re-emit the canonical block.end carrying fsRef so a
+  // client that flipped to "reconnecting" mid-generation settles back to "live"
+  // (prompt-state.ts isBlockEnd gate is `!!block.fsRef`) and PreviewApp repoints
+  // the iframe for first paint (PreviewApp.tsx isBlockEnd && msg.fsRef). The
+  // pre-persist block.end above stays as the live card-finalize signal.
+  const fsRefVal = rPersist.Ok().fsRef.toValue();
+  if (fsRefVal !== undefined) {
+    const wireSeq = blockSeq++;
+    const rEnd = await appendBlockEvent({
+      promptId,
+      blockSeq: wireSeq,
+      evt: { ...blockEnd, fsRef: fsRefVal, seq: liveSeq++, timestamp: new Date() },
+      emitMode: "emit-only",
+    });
+    if (rEnd.isErr()) return Result.Err(rEnd);
+  }
+
   return Result.Ok(rPersist.Ok().blockSeq);
 }

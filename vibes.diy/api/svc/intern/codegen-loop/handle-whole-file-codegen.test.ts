@@ -30,6 +30,8 @@ function makeDeps(
     runWholeFileCodegen?: WholeFileCodegenDeps["runWholeFileCodegen"];
     sessionDoc?: WholeFileCodegenDeps["sessionDoc"];
     makeBaseSystemPrompt?: WholeFileCodegenDeps["makeBaseSystemPrompt"];
+    appendBlockEvent?: WholeFileCodegenDeps["appendBlockEvent"];
+    handlePromptContext?: WholeFileCodegenDeps["handlePromptContext"];
   }
 ): {
   deps: WholeFileCodegenDeps;
@@ -53,14 +55,18 @@ function makeDeps(
     byteLength: (s) => s.length,
     makeBaseSystemPrompt: overrides?.makeBaseSystemPrompt ?? (async () => ({ systemPrompt: "sys" })),
     runWholeFileCodegen: overrides?.runWholeFileCodegen ?? (async () => result),
-    appendBlockEvent: async ({ evt }) => {
-      emitted.push(evt);
-      return Result.Ok(undefined);
-    },
-    handlePromptContext: async ({ blockSeq, value, collectedMsgs, fileSystem }) => {
-      persisted.push({ collectedMsgs: [...collectedMsgs], fileSystem, value });
-      return Result.Ok({ blockSeq, fsRef: Option.None<FileSystemRef>() });
-    },
+    appendBlockEvent:
+      overrides?.appendBlockEvent ??
+      (async ({ evt }) => {
+        emitted.push(evt);
+        return Result.Ok(undefined);
+      }),
+    handlePromptContext:
+      overrides?.handlePromptContext ??
+      (async ({ blockSeq, value, collectedMsgs, fileSystem }) => {
+        persisted.push({ collectedMsgs: [...collectedMsgs], fileSystem, value });
+        return Result.Ok({ blockSeq, fsRef: Option.None<FileSystemRef>() });
+      }),
   };
   return { deps, emitted, persisted };
 }
@@ -237,5 +243,27 @@ describe("handleWholeFileCodegenRequest emission", () => {
     } finally {
       vi.useRealTimers();
     }
+  });
+
+  it("re-emits a canonical block.end carrying fsRef after persist", async () => {
+    const result: WholeFileResult = {
+      files: [{ filename: "/App.jsx", lang: "jsx", content: "a" }],
+      usage: { prompt_tokens: 1, completion_tokens: 2, total_tokens: 3 },
+    };
+    const emitted: Array<{ type: string; fsRef?: unknown }> = [];
+    const { deps } = makeDeps(result, {
+      appendBlockEvent: async ({ evt }) => {
+        emitted.push({ type: (evt as { type: string }).type, fsRef: (evt as { fsRef?: unknown }).fsRef });
+        return Result.Ok(undefined);
+      },
+      handlePromptContext: async ({ blockSeq }) =>
+        Result.Ok({
+          blockSeq,
+          fsRef: Option.Some<FileSystemRef>({ fsId: "fs-9", appSlug: "a", ownerHandle: "o", mode: "create" }),
+        }),
+    });
+    await handleWholeFileCodegenRequest(deps);
+    const ends = emitted.filter((e) => e.type === "block.end");
+    expect(ends.some((e) => (e.fsRef as { fsId?: string } | undefined)?.fsId === "fs-9")).toBe(true);
   });
 });
