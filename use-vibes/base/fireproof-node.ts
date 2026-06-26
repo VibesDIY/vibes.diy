@@ -111,8 +111,9 @@ let sharedAdapter = Lazy((resolved: ResolvedOpts): FireflyApiAdapter => {
   );
   // headless consumers get live grant updates by default. Best-effort: a failed
   // connection (e.g. a bad apiUrl) must not surface as an unhandled rejection
-  // that crashes the process — next activity retries. Mirrors the connection
-  // triggers in VibesDiyApi (#2444).
+  // that crashes the process (#2444). A transient first-attempt failure is
+  // retried on the adapter's reconnect lifecycle once the connection recovers,
+  // so reactivity comes up without a process restart (#2448).
   adapter.enableGrantReactivity().catch(() => undefined);
   return adapter;
 });

@@ -256,6 +256,7 @@ export class VibesDiyApi implements VibesDiyApiIface<{
   private readonly userNotificationListeners: ((evt: EvtUserNotification) => void)[] = [];
   private readonly userNotificationDetachers = new Map<(evt: EvtUserNotification) => void, () => void>();
   private userNotificationSubscribed = false;
+  private readonly reconnectListeners: (() => void)[] = [];
   private currentConnection: VibeDiyApiConnection | undefined;
   private reconnectTimer: ReturnType<typeof setTimeout> | undefined;
   private closed = false;
@@ -350,6 +351,20 @@ export class VibesDiyApi implements VibesDiyApiIface<{
         subscribeViewerGrants: (sub) => this.subscribeViewerGrants(sub),
         subscribeUserNotifications: (req) => this.subscribeUserNotifications(req),
       });
+      // Notify lifecycle listeners that a connection is (re)established. Used by
+      // consumers (e.g. FireflyApiAdapter) to re-install subscriptions whose
+      // first attempt failed before the server recorded them for replay — those
+      // gaps aren't covered by replayConnectionState above, which only re-issues
+      // already-acknowledged subscriptions (#2448). Fires on every new
+      // connection, so it is lifecycle-driven (never spins on a bad apiUrl that
+      // never connects). Listener errors must not break the connect path.
+      for (const fn of this.reconnectListeners) {
+        try {
+          fn();
+        } catch (_e: unknown) {
+          /* listener errors must not break connection setup */
+        }
+      }
       // When this connection dies, schedule proactive reconnect (unless explicitly closed)
       conn.onClose(() => {
         if (this.currentConnection === conn) {
@@ -834,6 +849,21 @@ export class VibesDiyApi implements VibesDiyApiIface<{
       const detach = this.userNotificationDetachers.get(fn);
       this.userNotificationDetachers.delete(fn);
       detach?.();
+    };
+  }
+
+  /**
+   * Register a callback fired whenever the underlying connection is
+   * (re)established — including the first successful connect after one or more
+   * failed attempts. Lets consumers re-run install-once side effects (server
+   * subscriptions, listener attach) that were lost when their first attempt hit
+   * a briefly-unavailable API. Returns an unsubscribe fn.
+   */
+  onReconnect(fn: () => void): () => void {
+    this.reconnectListeners.push(fn);
+    return () => {
+      const idx = this.reconnectListeners.indexOf(fn);
+      if (idx >= 0) this.reconnectListeners.splice(idx, 1);
     };
   }
 
