@@ -18,13 +18,12 @@ describe("vibeMountParams", () => {
     expect(r instanceof type.errors).toBe(false);
   });
 
-  it("accepts viewerEnv with viewer + dbAcls", () => {
+  it("accepts viewerEnv with viewer", () => {
     const r = vibeMountParams({
       usrEnv: {},
       viewerEnv: {
         viewer: { userHandle: "alice", displayName: "Alice" },
         access: "override",
-        dbAcls: { comments: { write: ["members"] } },
       },
     });
     expect(r instanceof type.errors).toBe(false);

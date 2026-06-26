@@ -20,7 +20,6 @@ function renderWith(env: ViewerEnv | undefined): UseViewerResult {
     viewer: null,
     access: "none",
     isOwner: false,
-    dbAcls: {},
     can: () => false,
     isViewerPending: true,
     ViewerTag: () => null,
@@ -34,47 +33,39 @@ function renderWith(env: ViewerEnv | undefined): UseViewerResult {
 }
 
 describe("useViewer", () => {
-  it("exposes viewer + access + dbAcls", () => {
-    const r = renderWith({ ...baseEnv, dbAcls: { comments: { write: ["members"] } } });
+  it("exposes viewer + access", () => {
+    const r = renderWith(baseEnv);
     expect(r.viewer?.userHandle).toBe("alice");
     expect(r.access).toBe("override");
-    expect(r.dbAcls.comments.write).toEqual(["members"]);
   });
 
   it("returns sensible defaults when no viewerEnv was provided", () => {
     const r = renderWith(undefined);
     expect(r.viewer).toBeNull();
     expect(r.access).toBe("none");
-    expect(r.dbAcls).toEqual({});
   });
 
-  it("can(write, dbName) consults the per-db ACL", () => {
-    const r = renderWith({
-      viewer: { userHandle: "bob" },
-      access: "viewer" as const,
-      dbAcls: { comments: { write: ["members"] } },
-    });
-    expect(r.can("write", "comments")).toBe(true); // viewer is in members
-    expect(r.can("write", "other")).toBe(false); // viewer cannot write by role
-  });
+  it("can() is a membership check driven by access level", () => {
+    // editor — read + write member
+    const editor = renderWith({ viewer: { userHandle: "bob" }, access: "editor" as const });
+    expect(editor.can("read")).toBe(true);
+    expect(editor.can("write")).toBe(true);
+    expect(editor.can("delete")).toBe(true);
 
-  it("can(write) without dbName collapses for single-db case", () => {
-    const r = renderWith({ viewer: { userHandle: "bob" }, access: "override" as const });
-    expect(r.can("write")).toBe(true);
-    const r2 = renderWith({ viewer: null, access: "none" as const });
-    expect(r2.can("write")).toBe(false);
-  });
+    // viewer — read-only member
+    const viewer = renderWith({ viewer: { userHandle: "carol" }, access: "viewer" as const });
+    expect(viewer.can("read")).toBe(true);
+    expect(viewer.can("write")).toBe(false);
 
-  it("can(action) returns false if any configured override denies", () => {
-    const r = renderWith({
-      viewer: { userHandle: "bob" },
-      access: "editor" as const,
-      // "submitters"-only write means editors cannot write to lockedDb
-      dbAcls: { lockedDb: { write: ["submitters"] } },
-    });
-    // Editor can write at the role-fallback level for "any other db", but
-    // the lockedDb override is submitters-only — so global can("write") is false.
-    expect(r.can("write")).toBe(false);
+    // submitter — write-only member
+    const submitter = renderWith({ viewer: { userHandle: "dave" }, access: "submitter" as const });
+    expect(submitter.can("read")).toBe(false);
+    expect(submitter.can("write")).toBe(true);
+
+    // not a member — through neither read nor write
+    const none = renderWith({ viewer: null, access: "none" as const });
+    expect(none.can("read")).toBe(false);
+    expect(none.can("write")).toBe(false);
   });
 
   it("isViewerPending is true when viewerEnv is undefined, false when set", () => {
@@ -93,27 +84,17 @@ describe("useViewer", () => {
     expect(r.isOwner).toBe(false);
   });
 
-  it("owner with admin off: access is editor, can() evaluates as editor", () => {
-    const r = renderWith({
-      ...baseEnv,
-      access: "editor" as const,
-      isOwner: true,
-      dbAcls: { restrictedDb: { write: ["submitters"] } },
-    });
+  it("owner with admin off: access is editor, can() evaluates as editor member", () => {
+    const r = renderWith({ ...baseEnv, access: "editor" as const, isOwner: true });
     expect(r.access).toBe("editor");
     expect(r.isOwner).toBe(true);
-    expect(r.can("write", "restrictedDb")).toBe(false);
+    expect(r.can("write")).toBe(true);
   });
 
-  it("owner with admin on: access is owner, can() bypasses", () => {
-    const r = renderWith({
-      ...baseEnv,
-      access: "override" as const,
-      isOwner: true,
-      dbAcls: { restrictedDb: { write: ["submitters"] } },
-    });
+  it("owner with admin on: access is override, can() evaluates as member", () => {
+    const r = renderWith({ ...baseEnv, access: "override" as const, isOwner: true });
     expect(r.access).toBe("override");
     expect(r.isOwner).toBe(true);
-    expect(r.can("write", "restrictedDb")).toBe(true);
+    expect(r.can("write")).toBe(true);
   });
 });

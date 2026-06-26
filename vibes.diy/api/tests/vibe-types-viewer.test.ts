@@ -24,14 +24,13 @@ describe("ResVibeWhoAmI", () => {
       })
     ).toBe(true);
   });
-  it("validates signed-in response with dbAcls", () => {
+  it("validates signed-in response", () => {
     expect(
       isResVibeWhoAmI({
         type: "vibe.res.whoAmI",
         tid: "abc",
         viewer: { userHandle: "alice", displayName: "Alice" },
         access: "override",
-        dbAcls: { comments: { write: ["members"] } },
       })
     ).toBe(true);
   });

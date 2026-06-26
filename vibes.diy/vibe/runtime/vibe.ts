@@ -1,5 +1,5 @@
 import { type } from "arktype";
-import { viewerPayload, docAccessLevel, dbAcl } from "@vibes.diy/vibe-types";
+import { viewerPayload, docAccessLevel } from "@vibes.diy/vibe-types";
 
 // the vibe'd react website
 export const vibeEnv = type({});
@@ -12,7 +12,6 @@ export const viewerEnv = type({
   viewer: viewerPayload.or("null"),
   access: docAccessLevel,
   "isOwner?": "boolean",
-  "dbAcls?": type({ "[string]": dbAcl }),
   "grants?": type({ "[string]": type({ channels: "string[]", publicChannels: "string[]", roles: "string[]" }) }),
   "adminMode?": "boolean",
 });

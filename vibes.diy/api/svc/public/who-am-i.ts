@@ -7,10 +7,7 @@ import {
   ResError,
   W3CWebSocketEvent,
   isUserSettingProfile,
-  type DbAcl,
   type AccessDescriptor,
-  COMMENTS_DB_NAME,
-  COMMENTS_DEFAULT_ACL,
 } from "@vibes.diy/api-types";
 import { ReqVibeWhoAmI, ResVibeWhoAmI, ViewerPayload, DocAccessLevel, isReqVibeWhoAmI } from "@vibes.diy/vibe-types";
 import { and, eq } from "drizzle-orm";
@@ -35,7 +32,6 @@ export interface ResolvedWhoAmI {
   viewer: ViewerPayload | null;
   access: DocAccessLevel;
   isOwner: boolean;
-  dbAcls: Record<string, DbAcl> | undefined;
   grants: Record<string, { channels: string[]; publicChannels: string[]; roles: string[] }> | undefined;
 }
 
@@ -147,29 +143,19 @@ export async function resolveWhoAmI(vctx: VibesApiSQLCtx, args: ResolveWhoAmIArg
     ownerHandle: ownerUserSlug,
     env: [],
   });
+  // whoAmI ensures app settings exist (and propagates a settings error), but no
+  // longer reads per-db ACLs: fine-grained data permissions are enforced
+  // server-side by access functions, so the client only needs membership.
   if (rSettings.isErr()) return Result.Err(rSettings.Err());
-  const rawDbAcls = rSettings.Ok().settings.entry.dbAcls;
-
-  // Apply lazy defaults so client can() stays in lockstep with server resolveDbAcl.
-  // When no explicit comments override is stored, the server grants members write/delete
-  // via COMMENTS_DEFAULT_ACL. Mirror that here so can("write","comments") returns the
-  // same answer the server would reach.
-  // Note: COMMENTS_DEFAULT_ACL intentionally omits `read` — the server falls back to
-  // canRead||isPublicReadable; the client does the same via its own canRead logic.
-  const effectiveDbAcls: Record<string, DbAcl> = { ...rawDbAcls };
-  if (!effectiveDbAcls[COMMENTS_DB_NAME]) {
-    effectiveDbAcls[COMMENTS_DB_NAME] = COMMENTS_DEFAULT_ACL;
-  }
-  const dbAcls = effectiveDbAcls;
 
   if (!auth) {
     const grants = await resolveGrants(vctx, ownerUserSlug, appSlug, undefined);
-    return Result.Ok({ viewer: null, access, isOwner, dbAcls, grants });
+    return Result.Ok({ viewer: null, access, isOwner, grants });
   }
 
   if (!viewerUserId) {
     const grants = await resolveGrants(vctx, ownerUserSlug, appSlug, undefined);
-    return Result.Ok({ viewer: null, access, isOwner, dbAcls, grants });
+    return Result.Ok({ viewer: null, access, isOwner, grants });
   }
 
   const userSettingsRow = await vctx.sql.db
@@ -194,7 +180,7 @@ export async function resolveWhoAmI(vctx: VibesApiSQLCtx, args: ResolveWhoAmIArg
 
   if (!viewerSlug) {
     const grants = await resolveGrants(vctx, ownerUserSlug, appSlug, undefined);
-    return Result.Ok({ viewer: null, access, isOwner, dbAcls, grants });
+    return Result.Ok({ viewer: null, access, isOwner, grants });
   }
 
   const displayName = displayOverride ?? deriveDisplayName(auth.verifiedAuth.claims);
@@ -205,7 +191,6 @@ export async function resolveWhoAmI(vctx: VibesApiSQLCtx, args: ResolveWhoAmIArg
     viewer: { userHandle: viewerSlug, displayName },
     access,
     isOwner,
-    dbAcls,
     grants,
   });
 }
@@ -255,7 +240,6 @@ export const whoAmIEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqVibeWhoAm
         viewer: r.viewer,
         access: r.access,
         ...(r.isOwner ? { isOwner: r.isOwner } : {}),
-        ...(r.dbAcls !== undefined ? { dbAcls: r.dbAcls } : {}),
         ...(r.grants !== undefined ? { grants: r.grants } : {}),
         // Only echo an EFFECTIVE owner-admin session. The server write path
         // enables the admin override solely for `isOwner && connectionAdminMode`
