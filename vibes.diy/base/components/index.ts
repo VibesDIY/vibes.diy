@@ -12,3 +12,4 @@ export * from "./VibesSwitch.styles.js";
 export * from "./VibesSwitch.js";
 export * from "./ExpandedVibesPill.js";
 export * from "./OptionButtons.js";
+export * from "./ViewerTagView.js";

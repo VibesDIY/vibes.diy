@@ -1,4 +1,5 @@
-import React, { useEffect, useRef, useState } from "react";
+import React from "react";
+import { ViewerTagView } from "@vibes.diy/base";
 import type { ViewerEnv } from "./vibe.js";
 import { getRegisteredVibeApi } from "./register-dependencies.js";
 
@@ -12,31 +13,13 @@ export type ViewerTagProps = { style?: React.CSSProperties } & (
 
 type ViewerTagImplProps = ViewerTagProps & { _viewer: ViewerPayload | null };
 
-function CameraGlyph({ size }: { size: number }): React.ReactElement {
-  return (
-    <svg
-      aria-hidden="true"
-      viewBox="0 0 24 24"
-      width={size}
-      height={size}
-      style={{ display: "block" }}
-      fill="none"
-      stroke="currentColor"
-      strokeWidth={2}
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <path d="M4 7h4l2-2h4l2 2h4a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V8a1 1 0 0 1 1-1Z" />
-      <circle cx="12" cy="12.5" r="3.5" />
-    </svg>
-  );
-}
-
+/**
+ * Runtime viewer tag — resolves the viewer/handle/avatar from runtime state, then renders
+ * the shared presentational `ViewerTagView` (@vibes.diy/base), injecting the iframe
+ * host-bridge actions (getRegisteredVibeApi): avatar upload and sign-in. The platform
+ * chrome reuses the same `ViewerTagView` with its own injected actions.
+ */
 export function ViewerTagImpl({ _viewer, style, ...props }: ViewerTagImplProps): React.ReactElement {
-  const [uploading, setUploading] = useState(false);
-  const [avatarError, setAvatarError] = useState(false);
-  const fileRef = useRef<HTMLInputElement>(null);
-
   const slugFromProp = "user" in props && props.user ? props.user.userHandle : "userHandle" in props ? props.userHandle : undefined;
   const resolvedSlug = slugFromProp ?? _viewer?.userHandle ?? "";
   const resolvedAvatarUrl =
@@ -46,39 +29,12 @@ export function ViewerTagImpl({ _viewer, style, ...props }: ViewerTagImplProps):
         ? `/u/${encodeURIComponent(resolvedSlug)}/avatar`
         : undefined;
 
-  useEffect(() => {
-    setAvatarError(false);
-  }, [resolvedAvatarUrl]);
-
   if (("userHandle" in props || "user" in props) && !slugFromProp) {
     return <span style={{ color: "var(--muted, #888)", fontStyle: "italic", fontSize: 13 }}>no user handle provided</span>;
   }
 
   // Anonymous viewer with no explicit slug prop: show a login button.
   const isAnonymousSelf = _viewer === null && !("userHandle" in props) && !("user" in props);
-  if (isAnonymousSelf) {
-    return (
-      <button
-        onClick={() => getRegisteredVibeApi()?.requestLogin()}
-        style={{
-          display: "inline-flex",
-          alignItems: "center",
-          gap: 6,
-          background: "transparent",
-          border: "1px solid var(--accent, #6366f1)",
-          borderRadius: 999,
-          padding: "5px 14px",
-          fontSize: 14,
-          color: "var(--accent, #6366f1)",
-          cursor: "pointer",
-          fontWeight: 500,
-          ...style,
-        }}
-      >
-        Sign in
-      </button>
-    );
-  }
 
   // Editing your own avatar is only offered in the "me" shape: no handle/user
   // prop was provided, so the tag resolves to the logged-in viewer. An explicit
@@ -87,122 +43,32 @@ export function ViewerTagImpl({ _viewer, style, ...props }: ViewerTagImplProps):
   // logged-in viewer to have a handle to write to.
   const isSelf = _viewer !== null && !("userHandle" in props) && !("user" in props);
 
-  async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  async function handlePickFile(file: File): Promise<void> {
     const api = getRegisteredVibeApi();
     if (!api) return;
-    setUploading(true);
-    try {
-      // Target the VIEWER's own handle (self-edit), never the app owner's.
-      // Without a viewer identity there's no handle to write to.
-      const viewerHandle = _viewer?.userHandle;
-      if (!viewerHandle) return;
-      const rUpload = await api.putAsset(file, file.type);
-      if (rUpload.isErr()) return;
-      const uploadRes = rUpload.Ok();
-      if (uploadRes.status !== "ok") return;
-      // Pass the upload's mime as a hint. The host previews the trusted getURL
-      // it recorded for this CID when it proxied the putAsset above, so this
-      // only labels the Content-Type.
-      await api.updateAvatarCid(uploadRes.cid, viewerHandle, file.type);
-    } finally {
-      setUploading(false);
-      // Reset so the same file can be selected again
-      if (fileRef.current) fileRef.current.value = "";
-    }
+    // Target the VIEWER's own handle (self-edit), never the app owner's.
+    // Without a viewer identity there's no handle to write to.
+    const viewerHandle = _viewer?.userHandle;
+    if (!viewerHandle) return;
+    const rUpload = await api.putAsset(file, file.type);
+    if (rUpload.isErr()) return;
+    const uploadRes = rUpload.Ok();
+    if (uploadRes.status !== "ok") return;
+    // Pass the upload's mime as a hint. The host previews the trusted getURL it
+    // recorded for this CID when it proxied the putAsset above, so this only
+    // labels the Content-Type.
+    await api.updateAvatarCid(uploadRes.cid, viewerHandle, file.type);
   }
 
-  const initial = resolvedSlug.charAt(0).toUpperCase();
-  const hasAvatarImage = Boolean(resolvedAvatarUrl && !avatarError);
-
   return (
-    <span
-      style={{
-        display: "inline-flex",
-        alignItems: "center",
-        gap: 8,
-        background: "var(--card-bg, rgba(255,255,255,0.07))",
-        border: "1px solid var(--border, rgba(255,255,255,0.15))",
-        borderRadius: 999,
-        padding: "5px 14px 5px 5px",
-        fontSize: 14,
-        color: "var(--text, #e0e0e0)",
-        ...style,
-      }}
-    >
-      <span style={{ position: "relative", flexShrink: 0 }}>
-        <span
-          onClick={isSelf ? () => fileRef.current?.click() : undefined}
-          style={{
-            width: 30,
-            height: 30,
-            borderRadius: "50%",
-            background: "var(--accent, #6366f1)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            fontSize: 12,
-            fontWeight: 700,
-            color: "white",
-            overflow: "hidden",
-            cursor: isSelf ? "pointer" : "default",
-            opacity: uploading ? 0.5 : 1,
-            ...(isSelf ? { outline: "2px dashed var(--accent, #818cf8)", outlineOffset: 2 } : {}),
-          }}
-        >
-          {hasAvatarImage ? (
-            <img
-              src={resolvedAvatarUrl}
-              alt={resolvedSlug}
-              onError={() => setAvatarError(true)}
-              style={{ width: "100%", height: "100%", objectFit: "cover", borderRadius: "50%" }}
-            />
-          ) : (
-            initial
-          )}
-          {isSelf && !hasAvatarImage && (
-            <span
-              style={{
-                position: "absolute",
-                inset: 0,
-                background: "rgba(15,12,40,0.72)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                color: "var(--accent-text, var(--accent, #a5b4fc))",
-                borderRadius: "50%",
-              }}
-            >
-              <CameraGlyph size={13} />
-            </span>
-          )}
-        </span>
-        {isSelf && hasAvatarImage && (
-          <span
-            style={{
-              position: "absolute",
-              right: -1,
-              bottom: -1,
-              width: 13,
-              height: 13,
-              borderRadius: "50%",
-              background: "rgba(15,12,40,0.9)",
-              border: "1px solid var(--border, rgba(255,255,255,0.25))",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              lineHeight: 1,
-              color: "var(--accent-text, var(--accent, #a5b4fc))",
-              pointerEvents: "none",
-            }}
-          >
-            <CameraGlyph size={9} />
-          </span>
-        )}
-      </span>
-      <span style={{ fontWeight: 500 }}>{resolvedSlug}</span>
-      {isSelf && <input ref={fileRef} type="file" accept="image/*" style={{ display: "none" }} onChange={handleFileChange} />}
-    </span>
+    <ViewerTagView
+      slug={resolvedSlug}
+      avatarUrl={resolvedAvatarUrl}
+      editable={isSelf}
+      anonymous={isAnonymousSelf}
+      onSignIn={() => getRegisteredVibeApi()?.requestLogin()}
+      onPickFile={handlePickFile}
+      style={style}
+    />
   );
 }

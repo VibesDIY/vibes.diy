@@ -1,6 +1,6 @@
 import React from "react";
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import { VibesSwitch, OptionButtons } from "@vibes.diy/base";
+import { VibesSwitch, OptionButtons, ViewerTagView } from "@vibes.diy/base";
 
 /**
  * SKETCH — "the agent lives in the vibe" (see notes/2026-06-26-agent-in-vibe-ux-epic.md).
@@ -188,26 +188,6 @@ function NavIcon({
 }
 
 /** Tiny camera glyph for the me-mode "edit photo" affordance (mirrors the runtime ViewerTag). */
-function CameraGlyph({ size }: { readonly size: number }) {
-  return (
-    <svg
-      aria-hidden="true"
-      viewBox="0 0 24 24"
-      width={size}
-      height={size}
-      fill="none"
-      stroke="currentColor"
-      strokeWidth={2.5}
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      style={{ display: "block" }}
-    >
-      <path d="M4 7h4l2-2h4l2 2h4a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V8a1 1 0 0 1 1-1Z" />
-      <circle cx="12" cy="12.5" r="3.5" />
-    </svg>
-  );
-}
-
 /** One row in the handle dropdown — a handle to act as, or an action. */
 function HandleRow({
   initial,
@@ -287,68 +267,29 @@ function HandleMenu() {
   );
 }
 
-/** Sketch viewer-tag + handle picker for the leftmost of the nav. Presentation echoes the
- *  runtime ViewerTagImpl (avatar + handle + me-mode camera affordance); real impl reuses its
- *  shell + the chrome-side HandleAvatarEditor upload path, plus this new handle dropdown. */
+/** Sketch viewer-tag + handle picker for the leftmost of the nav. Composes the REAL shared
+ *  `ViewerTagView` (@vibes.diy/base) — the same component the runtime uses — with chrome-side
+ *  placeholder actions, plus the new handle dropdown as a sibling. Editing the photo is
+ *  clicking the avatar (me mode), scoped to the active handle (no separate menu item). */
 function ViewerTag({ pickerOpen }: { readonly pickerOpen?: boolean }) {
   return (
     <div style={{ position: "relative", flexShrink: 0 }}>
       {pickerOpen && <HandleMenu />}
-      <div
+      <ViewerTagView
+        slug="meghan"
+        displayName="@meghan"
+        editable
+        onPickFile={() => undefined}
+        trailing={<span style={{ fontSize: 11, opacity: 0.6, marginLeft: 1 }}>▾</span>}
         style={{
-          display: "inline-flex",
-          alignItems: "center",
-          gap: 6,
-          padding: "3px 8px 3px 3px",
-          borderRadius: 999,
-          cursor: "pointer",
           background: "var(--color-light-background-01, #eee)",
           border: "1px solid var(--color-light-decorative-01, #ddd)",
+          color: "var(--color-light-primary, #333)",
+          fontSize: 13,
+          padding: "3px 8px 3px 4px",
+          cursor: "pointer",
         }}
-        className="text-light-primary dark:text-dark-primary"
-      >
-        <span style={{ position: "relative", width: 26, height: 26, flexShrink: 0 }}>
-          <span
-            style={{
-              width: 26,
-              height: 26,
-              borderRadius: "50%",
-              background: "#6366f1",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              color: "#fff",
-              fontSize: 12,
-              fontWeight: 700,
-              outline: "2px dashed #818cf8",
-              outlineOffset: 1,
-            }}
-          >
-            M
-          </span>
-          <span
-            style={{
-              position: "absolute",
-              right: -3,
-              bottom: -3,
-              width: 13,
-              height: 13,
-              borderRadius: "50%",
-              background: "#1a1a1a",
-              color: "#fff",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
-            <CameraGlyph size={8} />
-          </span>
-        </span>
-        <span className="text-sm" style={{ fontWeight: 500 }}>
-          @meghan
-        </span>
-        <span style={{ fontSize: 11, opacity: 0.6 }}>▾</span>
-      </div>
+      />
     </div>
   );
 }
