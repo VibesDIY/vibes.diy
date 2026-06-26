@@ -60,6 +60,23 @@ Extended:
 
 > **DRY / lift-verbatim instruction:** Per spec Q2, the crypto bodies are **lifted verbatim** from the installed `@fireproof/core-device-id` / `core-keybag` / `core-protocols-dashboard` sources (same `jose`-based ES256, same JWT header/claim layout), adjusting only import paths (`@fireproof/core-types-base` → `./types/wire.js`; `SuperThis` stays via the existing `RuntimeContext` seam). Do **not** rewrite the signing/verifying algorithm — a byte mismatch is silent auth breakage. The cross-verification harness (Task 1) is the proof obligation.
 
+### Source-lock provenance (managed-fork discipline — spec Q6)
+
+Each lifted symbol must record its exact upstream origin so the managed-fork sync lane can track security fixes against known source SHAs. **All packages are pinned at `0.24.19`** (the version installed in this repo); upstream tag `fireproof-storage/fireproof@v0.24.19`. As the first action of each lift task, fill the **upstream file path** and **commit SHA** columns below by reading the installed package source (`node_modules/@fireproof/<pkg>/…`) and resolving the `v0.24.19` tag's commit on the upstream repo — and keep this table updated in the PR description. The implementing agent must not leave a lifted module without a populated row (this is the provenance gate, not optional bookkeeping).
+
+| Lifted symbol(s)                                           | Upstream package @ version                                               | Target in-repo module                          | Upstream file path     | Upstream commit SHA |
+| ---------------------------------------------------------- | ------------------------------------------------------------------------ | ---------------------------------------------- | ---------------------- | ------------------- |
+| `DeviceIdKey`                                              | `@fireproof/core-device-id@0.24.19`                                      | `vibes.diy/identity/device-id/key.ts`          | _(record at lift)_     | _(v0.24.19 SHA)_    |
+| `DeviceIdSignMsg`                                          | `@fireproof/core-device-id@0.24.19`                                      | `vibes.diy/identity/device-id/sign.ts`         | _(record at lift)_     | _(v0.24.19 SHA)_    |
+| `DeviceIdCSR`                                              | `@fireproof/core-device-id@0.24.19`                                      | `vibes.diy/identity/device-id/csr.ts`          | _(record at lift)_     | _(v0.24.19 SHA)_    |
+| `DeviceIdVerifyMsg`                                        | `@fireproof/core-device-id@0.24.19`                                      | `vibes.diy/identity/device-id/verify.ts`       | _(record at lift)_     | _(v0.24.19 SHA)_    |
+| `DeviceIdCA`, `deviceIdCAFromEnv`, `getCloudPubkeyFromEnv` | `@fireproof/core-device-id@0.24.19` / `core-protocols-dashboard@0.24.19` | `vibes.diy/identity/ca/device-ca.ts`           | _(record at lift)_     | _(v0.24.19 SHA)_    |
+| `getKeyBag`                                                | `@fireproof/core-keybag@0.24.19`                                         | `vibes.diy/identity/keybag/keybag.ts`          | _(record at lift)_     | _(v0.24.19 SHA)_    |
+| `ClerkApiToken`, `tokenApi`                                | `@fireproof/core-protocols-dashboard@0.24.19`                            | `vibes.diy/identity/dash-api/clerk-token.ts`   | _(record at lift)_     | _(v0.24.19 SHA)_    |
+| `clerkDashApi`, `DashboardApiImpl`                         | `@fireproof/core-protocols-dashboard@0.24.19`                            | `vibes.diy/identity/dash-api/dash-client.ts`   | _(record at lift)_     | _(v0.24.19 SHA)_    |
+| `JWKPrivateSchema`, `JWKPrivate`                           | `@fireproof/core-types-base@0.24.19`                                     | `vibes.diy/identity/types/wire.ts`             | _(record at lift)_     | _(v0.24.19 SHA)_    |
+| `ClerkClaimSchema` (already lifted, incl. patch)           | `@fireproof/core-types-base@0.24.19` _(+ local patch)_                   | `vibes.diy/identity/clerk-claim.ts` _(exists)_ | `fp-clerk-claim.zod.*` | _(v0.24.19 SHA)_    |
+
 ---
 
 ## Task 1: Extend the golden harness with cross-verification (the gate)
@@ -364,6 +381,8 @@ git add vibes.diy/identity/types/ vibes.diy/identity/index.ts vibes.diy/identity
 git commit -m "feat(identity): own auth wire-types in-repo; drop core-types-* re-exports"
 ```
 
+> **Bucket B is not "done" at this task's exit.** Task 4 re-homes the wire-type _declarations_, but the `core-types-base` patch (and thus the type/verify coupling it carries) can only be retired once the **extracted verifier replaces fireproof's `tokenApi`** and the patch-removal gates in **Task 5 (Steps 5–7)** pass green. Treat Bucket B as complete only after Task 5, not here.
+
 ---
 
 ## Task 5: Lift the Clerk token verifier + dashboard client; drop the patch
@@ -389,26 +408,47 @@ Create `vibes.diy/identity/dash-api/dash-client.ts` by copying `clerkDashApi` an
 
 In `vibes.diy/identity/index.ts`, change `export { ClerkApiToken, clerkDashApi, DashboardApiImpl } from "@fireproof/core-protocols-dashboard"` to re-export from `./dash-api/clerk-token.js` and `./dash-api/dash-client.js`. Update `server.ts` similarly (it re-exports `core-protocols-dashboard` for the worker CA/token path).
 
-- [ ] **Step 4: Add a Clerk verify cross-compat test**
+- [ ] **Step 4: Add a Clerk verify cross-compat test (incl. an explicit fireproof↔extracted token cross-check)**
 
-Create `vibes.diy/identity/dash-api/clerk-token.test.ts` that signs a Clerk token with the extracted `ClerkApiToken` and asserts it verifies, and that a real-shaped Clerk JWT (omitting `first`/`image_url`/`last`/`name`) is accepted via the `.catch()` parity — pinning the exact behavior the patch provided.
+Create `vibes.diy/identity/dash-api/clerk-token.test.ts`. It must do **three** things: (a) the claim-parity check (real Clerk JWT omitting `first`/`image_url`/`last`/`name` is accepted via the `.catch()` parity the patch provided); (b) **extracted→fireproof**: a token signed by the _extracted_ `ClerkApiToken` verifies under the _fireproof_ `ClerkApiToken`; (c) **fireproof→extracted**: a token signed by the _fireproof_ `ClerkApiToken` verifies under the _extracted_ one. Mint and verify with the **same** env key material on both sides so the cross-check proves byte-compat, not just self-consistency — mirroring the device-id cross-verification gate (Task 1).
 
 ```ts
 import { describe, it, expect } from "vitest";
+import { ensureSuperThis } from "@fireproof/core-runtime";
+import { ClerkApiToken as FpClerkApiToken } from "@fireproof/core-protocols-dashboard";
+import { ClerkApiToken as ExtractedClerkApiToken } from "./clerk-token.js";
 import { ClerkClaimSchema } from "../clerk-claim.js";
+
+const sthis = ensureSuperThis();
+const claim = {
+  role: "member",
+  sub: "u_1",
+  userId: "u_1",
+  params: { email: "a@b.c", email_verified: true, public_meta: {} },
+};
 
 describe("clerk claim parity (patch behavior owned in-repo)", () => {
   it("accepts a Clerk JWT missing the optional profile fields", () => {
-    const claim = {
-      role: "member",
-      sub: "u_1",
-      userId: "u_1",
-      params: { email: "a@b.c", email_verified: true, public_meta: {} },
-    };
     expect(ClerkClaimSchema.safeParse(claim).success).toBe(true);
   });
 });
+
+describe("clerk token cross-compat (extracted ⇄ fireproof, shared key material)", () => {
+  it("extracted-signed token verifies under the fireproof verifier", async () => {
+    const token = await new ExtractedClerkApiToken(sthis).sign(claim);
+    const vr = await new FpClerkApiToken(sthis).verify(token);
+    expect(vr.isOk?.() ?? vr.valid ?? !!vr).toBeTruthy();
+  });
+
+  it("fireproof-signed token verifies under the extracted verifier", async () => {
+    const token = await new FpClerkApiToken(sthis).sign(claim);
+    const vr = await new ExtractedClerkApiToken(sthis).verify(token);
+    expect(vr.isOk?.() ?? vr.valid ?? !!vr).toBeTruthy();
+  });
+});
 ```
+
+> Adjust `.sign(...)`/`.verify(...)` to `ClerkApiToken`'s exact installed signature when implementing (it reads the same `CLOUD_SESSION_TOKEN_*` env material on both sides). The `vr.isOk?.() ?? vr.valid ?? !!vr` shim tolerates whichever result shape the installed version returns; tighten it to the real shape once known.
 
 - [ ] **Step 5: Run the API auth suite — verify nothing re-logs-in**
 
