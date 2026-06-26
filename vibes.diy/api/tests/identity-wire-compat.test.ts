@@ -1,8 +1,9 @@
 // Golden wire-compat harness. Pins the CURRENT (@fireproof/* 0.24.19) device-id
 // token / CSR->cert / verify contract so the extracted @vibes.diy/identity impl
-// can be proven equivalent. A later phase extends this with cross-verification
-// (extracted-mints verify under the fireproof verifier and vice-versa) by
-// swapping the mint/verify factories below for the extracted ones.
+// can be proven equivalent. The cross-verification block at the bottom proves
+// extracted-mints verify under the fireproof verifier and vice-versa, by routing
+// the impl-under-test through `./identity-extracted-factories` — repoint those
+// factories at the in-repo modules as each lift lands; the tests must stay green.
 import { describe, it, expect, beforeAll } from "vitest";
 import { ensureSuperThis } from "@fireproof/core-runtime";
 import {
@@ -14,6 +15,7 @@ import {
   DeviceIdCSR,
 } from "@fireproof/core-device-id";
 import type { SuperThis } from "@fireproof/core-types-base";
+import { extracted } from "./identity-extracted-factories.js";
 
 const decodeSeg = (seg: string) => JSON.parse(Buffer.from(seg, "base64url").toString("utf8"));
 const SESSION_CLAIM_KEYS = ["deviceId", "exp", "iat", "iss", "jti", "nbf", "seq", "sub"];
@@ -93,5 +95,87 @@ describe("identity wire-compat (baseline: @fireproof/* 0.24.19)", { timeout: 300
     expect(cert.issuer.commonName).toBe("Test Device CA");
     expect(issued.certificatePayload.aud).toBe("certificate-authority");
     expect(issued.certificatePayload.sub).toBe("csr-test");
+  });
+
+  // --- Cross-verification gate -------------------------------------------------
+  // The proof obligation every extraction step must keep green: a token minted by
+  // the EXTRACTED impl verifies under the FIREPROOF verifier, and a fireproof-minted
+  // token verifies under the EXTRACTED verifier. While the factories delegate to
+  // fireproof (v1) these are tautological; they bite the moment a factory is
+  // repointed at an in-repo module (a byte mismatch in the lifted crypto fails here).
+
+  it("cross-verify: fireproof-minted token verifies under the extracted verifier", async () => {
+    const tok = await user.getDashBoardToken();
+    const caCert = (await ca.caCertificate()).Ok();
+    const extractedVerifier = new extracted.DeviceIdVerifyMsg(sthis.txt.base64, [caCert], {
+      clockTolerance: 0,
+      deviceIdCA: ca,
+    });
+    const vr = await extractedVerifier.verifyWithCertificate(tok.token);
+    expect(vr.valid).toBe(true);
+    if (!vr.valid) throw new Error(String(vr.error));
+    expect((vr.payload as { sub?: string }).sub).toBe("device-id");
+  });
+
+  it("cross-verify: extracted-minted token verifies under the fireproof verifier (byte-stable header+claims)", async () => {
+    // Build the extracted signer from a publicly-issued cert (never from private
+    // signer state): mint a key, run the CSR -> cert path, read the public
+    // certificatePayload — the same field createDeviceIdGetToken reads from the keybag.
+    const key = await extracted.DeviceIdKey.create();
+    const csr = (await new DeviceIdCSR(sthis, key).createCSR({ commonName: "xverify-cn" })).Ok();
+    // The verifier re-validates the cert's embedded Clerk claim, so issuance needs
+    // the full claim shape (params/role/userId), mirroring createTestUser.
+    const nowIssue = Math.floor(Date.now() / 1000);
+    const issued = (
+      await ca.processCSR(csr, {
+        azp: "test-app-xverify",
+        exp: nowIssue + 3600,
+        iat: nowIssue,
+        iss: "test-issuer",
+        jti: "xverify-cert-jti",
+        nbf: nowIssue,
+        // Fully-populated params: CertificatePayloadSchema fills first/image_url/
+        // last/name defaults on parse, and Certor hashes the cert AFTER parse, so an
+        // under-specified claim makes the signer's x5t (pre-parse) disagree with the
+        // verifier's (post-parse) → CERT_THUMBPRINT_MISMATCH. Supply every field.
+        params: {
+          nick: "nick-xverify",
+          email: "xverify@example.com",
+          email_verified: true,
+          first: "first-xverify",
+          image_url: "http://example.com/image-xverify.png",
+          last: "last-xverify",
+          name: "name-xverify",
+          public_meta: '{ "role": "tester" }',
+        },
+        role: "device-id",
+        sub: "device-id-subject-xverify",
+        userId: "user-id-xverify",
+        aud: ["http://test-audience.localhost/"],
+      } as never)
+    ).Ok();
+    const signer = new extracted.DeviceIdSignMsg(sthis.txt.base64, key, issued.certificatePayload);
+    const now = Math.floor(Date.now() / 1000);
+    const token = await signer.sign(
+      {
+        iss: "wire-compat",
+        sub: "device-id",
+        deviceId: await key.fingerPrint(),
+        seq: 1,
+        exp: now + 120,
+        nbf: now - 2,
+        iat: now,
+        jti: "xverify-jti",
+      },
+      "ES256"
+    );
+    const vr = await verifier.verifyWithCertificate(token);
+    expect(vr.valid).toBe(true);
+    if (!vr.valid) throw new Error(String(vr.error));
+    const header = decodeSeg(token.split(".")[0]);
+    expect(header.alg).toBe("ES256");
+    for (const k of ["kid", "x5c", "x5t", "x5t#S256"]) expect(header).toHaveProperty(k);
+    const payload = decodeSeg(token.split(".")[1]);
+    expect(Object.keys(payload).sort()).toEqual(SESSION_CLAIM_KEYS);
   });
 });
