@@ -11,3 +11,4 @@ export * from "./VibesPanel.js";
 export * from "./VibesSwitch.styles.js";
 export * from "./VibesSwitch.js";
 export * from "./ExpandedVibesPill.js";
+export * from "./OptionButtons.js";

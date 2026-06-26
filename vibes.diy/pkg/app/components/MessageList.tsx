@@ -1,7 +1,7 @@
 import React, { memo, useEffect, useRef } from "react";
 import { PromptBlock } from "../routes/chat/chat.$ownerHandle.$appSlug.js";
 import { parseOptionLines } from "../utils/option-lines.js";
-import { OptionButtons } from "./OptionButtons.js";
+import { OptionButtons } from "@vibes.diy/base";
 import {
   BlockBeginMsg,
   BlockEndMsg,
