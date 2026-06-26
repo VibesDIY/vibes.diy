@@ -613,4 +613,4 @@ This library is compatible with all modern browsers that support React 18+ and E
 
 ## License
 
-MIT+Apache
+Apache-2.0

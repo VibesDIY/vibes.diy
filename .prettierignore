@@ -21,3 +21,8 @@ vibes/eval/**/App.jsx
 prompts/pkg/system-prompt.md
 prompts/pkg/system-prompt-initial.md
 prompts/pkg/llms/
+
+# License files — canonical legal text must stay byte-exact for GitHub's
+# license detection (licensee); prettier must not reflow them.
+LICENSE.md
+**/LICENSE.md
