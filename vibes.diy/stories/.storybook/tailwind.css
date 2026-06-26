@@ -1,0 +1,57 @@
+/*
+ * Real Tailwind v4 pipeline for Storybook so sketches + components render with
+ * pixel fidelity — utilities are JIT-generated from the actual classes used in
+ * the stories and in @vibes.diy/base (instead of relying on the partial set in
+ * getVibesGlobalCSS).
+ *
+ * The @theme block mirrors vibes.diy/pkg/app/app.css — keep the tokens in sync.
+ */
+@import "tailwindcss";
+
+/* The app uses Tailwind's class dark mode (darkMode: "class"); replicate the
+   class-based `dark:` variant for v4 so the Storybook theme toggle works. */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* Scan the stories and the shared base components for class names. Paths are
+   relative to this file (.storybook/). */
+@source "../**/*.{ts,tsx}";
+@source "../../base/**/*.{ts,tsx}";
+
+@theme {
+  /* Values from @vibes.diy/base tokens.ts — keep in sync with app.css */
+
+  --color-midnight: #333333;
+  --color-tahiti: #999;
+  --color-bermuda: #cccccc;
+
+  --color-light-primary: #333333;
+  --color-light-secondary: #333333;
+  --color-light-decorative-00: #eeeeee;
+  --color-light-decorative-01: #ddd;
+  --color-light-decorative-02: #333333;
+  --color-light-background-00: #ffffff;
+  --color-light-background-01: #eeeeee;
+  --color-light-background-02: #ddd;
+
+  --color-dark-primary: #e0e0e0;
+  --color-dark-secondary: #e0e0e0;
+  --color-dark-decorative-00: #333333;
+  --color-dark-decorative-01: #444;
+  --color-dark-decorative-02: #e0e0e0;
+  --color-dark-background-00: #1a1a1a;
+  --color-dark-background-01: #222222;
+  --color-dark-background-02: #222222;
+
+  --color-accent-00-light: #aaa;
+  --color-accent-01-light: #999;
+  --color-accent-02-light: #888;
+  --color-accent-03-light: #777;
+
+  --color-accent-00-dark: #bbb;
+  --color-accent-01-dark: #aaa;
+  --color-accent-02-dark: #777;
+  --color-accent-03-dark: #666;
+
+  --font-sans:
+    "Inter", ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+}
