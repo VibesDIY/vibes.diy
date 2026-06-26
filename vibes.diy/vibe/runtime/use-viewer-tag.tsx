@@ -80,8 +80,12 @@ export function ViewerTagImpl({ _viewer, style, ...props }: ViewerTagImplProps):
     );
   }
 
-  // _viewer !== null guard prevents undefined === undefined when viewer is anonymous.
-  const isSelf = _viewer !== null && ((!("userHandle" in props) && !("user" in props)) || resolvedSlug === _viewer?.userHandle);
+  // Editing your own avatar is only offered in the "me" shape: no handle/user
+  // prop was provided, so the tag resolves to the logged-in viewer. An explicit
+  // handle prop is a profile reference (even when it happens to match the
+  // viewer) and is never editable. The _viewer !== null guard requires a
+  // logged-in viewer to have a handle to write to.
+  const isSelf = _viewer !== null && !("userHandle" in props) && !("user" in props);
 
   async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
