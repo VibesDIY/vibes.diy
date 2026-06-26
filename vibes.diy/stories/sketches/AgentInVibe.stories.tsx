@@ -280,8 +280,9 @@ function HandleMenu() {
       <HandleRow initial="M" label="@meghan" active />
       <HandleRow initial="W" label="@meghan_work" />
       <div style={{ height: 1, background: "var(--color-light-decorative-00, #eee)", margin: "6px 0" }} />
-      <HandleRow icon={<CameraGlyph size={14} />} label="Edit photo" />
       <HandleRow icon={<span style={{ fontSize: 15 }}>＋</span>} label="New handle" />
+      {/* No "Edit photo" item — editing a photo is done by clicking the avatar (scoped to
+          that handle), reusing the runtime ViewerTag's click-photo logic. */}
     </div>
   );
 }
