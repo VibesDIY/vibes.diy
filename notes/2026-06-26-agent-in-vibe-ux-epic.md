@@ -88,6 +88,16 @@ land on and want to change. Crucially:
   pane; the app is always *the surface*, the agent is always *on top of it*. (This makes
   #1836's "open below / push content down" request moot — floating-over is now intentional;
   we keep only its first-run onboarding idea.)
+- **The inversion, made literal: the rounded inset card moves from the app to the overlay.**
+  On the old chat route the *app preview* was the inset rounded card (`margin:12px;
+  borderRadius:12px`, `ResultPreview.tsx:108`) sitting inside the chat. Now the **overlay**
+  (open chat / chips / stream) takes that exact treatment on mobile — inset with rounded
+  corners and edge spacing — so the **vibe always shows around its edges** and you never
+  forget the app is right there underneath. And during a generation the **app behind the
+  overlay reuses the existing progressive de-blur** (`PreviewApp.tsx`: `blurPx` starts 25px
+  and decays ×⅔ per `hotSwapCount` via `backdropFilter`, falling back to moving-stripes) —
+  the same blur→sharp ramp the old route ran on its preview, now on the forming app under
+  the floating agent. Roles swapped; effects reused.
 
 ### 1a. The edit affordance — the one reusable primitive (design this first)
 
