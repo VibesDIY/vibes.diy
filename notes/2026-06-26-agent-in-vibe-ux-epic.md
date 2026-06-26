@@ -310,6 +310,11 @@ edit affordance does on a vibe you don't own.
   default — no silent routing to the old one. The system *knows* your existing copies and
   offers **"open your own"** as a distinct choice in the access view, but a chip/Other click
   defaults to a fresh copy. (Not idempotent: the menu remembers, the affordance doesn't.)
+- **Visiting a source you've remixed lists *your* remixes of it (jchris).** That "menu
+  remembers" capability generalizes: when you open a vibe you've made copies of, the access
+  view surfaces **the list of your remixes of that source** (a reverse-lineage lookup over
+  `remixOf`). This list is also where the future **"propose upstream"** action lives (below)
+  — so the same query powers both "open your own" and "contribute back."
 - **"Make it yours" / "open your own" are access-view choices, not floating buttons.**
   This does *not* reintroduce copy-buttons on the app: they're navigational items inside the
   switch's access view (the gate/menu context), distinct from the deleted Remix/Clone/Edit
@@ -329,8 +334,9 @@ which handle, and when you're asked, differ by app type:
   to logged-in users; a logged-out visitor reads anonymously, and any *write* (codegen, Join,
   Request, data write, comment) first prompts login (§"Identity exposure"). No tension: reads
   are handle-less; the active handle only exists/matters once you're logged in and writing.
-- **"Join as [handle]" is skipped if you have only one handle.** Single-handle users auto-join
-  with no consent step; the selector appears only when there's a real choice (>1 handle).
+- **"Join as [handle]" / "Request as [handle]" consent — both, skipped if you have one
+  handle (jchris, #14).** Joining *and* requesting access both expose a handle to the owner, so
+  both let you choose which handle. With a single handle the step is skipped (no real choice).
 - **Public apps → act as your current session handle; switch at will, no confirm.** Your
   current handle is the acting identity on a public app; switching is free and instant.
 - **Request-access apps → fall back to your last-used handle *in that app*.** If your current
@@ -361,13 +367,15 @@ One clean rule for when your handle is exposed:
 
 ### One new setting: publish intent (#1854)
 
-The creator picks what the vibe *is for*; this sets sensible **access defaults** and framing
-— it does not add CTAs (there's only ever "Request access", and only when gated).
+The creator picks what the vibe *is for*; this sets sensible **access + remixability defaults**
+and framing — it does not add CTAs (there's only ever "Request access", and only when gated).
+Two orthogonal owner settings: **access** (join/data) and **remixable-without-access** (copy
+the code).
 
-| Intent | Access default it sets | Visitor experience |
+| Intent | Defaults it sets | Visitor experience |
 | --- | --- | --- |
-| Shared space | auto-join on | **auto-joined**, with a "join as [handle]" consent step; or "Request access" if the creator turned auto-join off |
-| Template | public | use it; the chips invite changes; editing **makes it yours** (no CTA) |
+| Shared space | auto-join on; remixable = access-only | **auto-joined**, with a "join as [handle]" consent step; or "Request access" if auto-join is off |
+| Template / **remix-seed** | public *or* gated, **remixable-without-access on** | the chips invite changes; **make it yours** is the headline (presentation of seed-vs-gated deferred, §2) |
 | Read-only / published | public, read-only | **view automatically**; editing makes it yours |
 
 ### Access-state → what the visitor sees (precedence)
@@ -380,24 +388,36 @@ visitor with no personal grant:
 | --- | --- | --- |
 | `public-access` | — | app loads; **read/use automatically** (View is automatic) |
 | auto-join (auto-approve on) | — | **auto-joined**, with a **"join as [handle]" consent** step |
-| request-gated (`requests-on`) | **Request access** | **+ make it yours** (shell is loadable) |
-| `pending-request` | — (`Requested`, disabled) | + make it yours |
-| `revoked-access` | — (`Revoked`, disabled) | + make it yours |
-| private, `requests-off` (`not-grant`) | — (`App not available`) | **— nothing loadable → no make-it-yours** |
+| request-gated (`requests-on`) | **Request access** | **+ make it yours** if remixable-without-access |
+| `pending-request` | — (`Requested`, disabled) | + make it yours if remixable-without-access |
+| `revoked-access` | — (`Revoked`, disabled) | + make it yours if remixable-without-access |
+| private, `requests-off` (`not-grant`) | — (`App not available`) | only if **remixable-without-access** is on (below) |
 
-**Canonical reachability rule (resolves the row↔footnote conflict Charlie flagged):**
-"make it yours" is available **iff the app's published shell is loadable to you** — true for
-public and request-gated-*published* vibes (you can run the code with your own empty data),
-false for a fully private / unpublished / not-found vibe (nothing to load → nothing to copy).
-So the last row is the false case: no make-it-yours. *(Backend assumption to confirm — §8/19 —
-that a request-gated vibe's prod shell is servable to a non-granted visitor while its data
-stays gated.)*
+**Canonical "make it yours" rule (decided, jchris — supersedes the old reachability-only
+rule):** you can make a vibe yours if **either**
+
+1. **you have access** to it (you can load/see it — public or granted), **or**
+2. the **owner has marked the app "remixable without access"** — a per-app setting, *separate
+   from access*, that exposes the code shell for copying even to people who can't join/see the
+   data.
+
+So make-it-yours availability is its **own axis (remixability), orthogonal to access**.
+Access gates joining + shared data; remixability gates copying the code. A fully private app
+with remixability off is the only "no make-it-yours" case.
+
+> **Remix-seed apps (note, presentation deferred — jchris).** For some creators the *main*
+> flow is making apps meant as **remix seeds** — templates to be made-yours, not spaces to
+> join. Those apps lead with "remixable without access" on. **Discuss later how we present a
+> remix-seed app differently from a request-access app** (a seed says "make this yours"; a
+> gated app says "request access") — likely tied to publish intent (#1854), where Template
+> intent ⇒ remixability-on by default. Backend must serve the code shell for remixing
+> independent of the data grant.
 
 **Second dimension the strict enum needs (exhaustiveness fix):** whether you **already have
 your own copy** of this lineage — if so, the access view also offers **"open your own"** (a
 chip/Other still defaults to a *fresh* copy, §2 ownership). So the wiring enum is
-`{ accessState, hasExistingCopy } → { explicitCta, canMakeYours, offerOpenYourOwn }`, and it
-lands with PR-1 as the source of truth. `member` / `submitter` resolve in Member mode, outside
+`{ accessState, hasExistingCopy, remixableWithoutAccess } → { explicitCta, canMakeYours,
+offerOpenYourOwn }`, and it lands with PR-1 as the source of truth. `member` / `submitter` resolve in Member mode, outside
 this visitor resolver.
 
 > **Why "join as [handle]" matters:** joining exposes *a* handle of yours to the other
@@ -543,6 +563,18 @@ doing this as an independent pre-task; not part of these two PRs).
   place; a non-owner's edits fork. An owner who wants to *deliberately* branch their own vibe
   to a new appSlug has no affordance yet — that's a wanted follow-up, but explicitly **after
   this epic** (jchris). File it when the epic lands so it isn't lost.
+- **Propose changes upstream (the contribution path) (jchris).** After you make a vibe yours
+  and improve it independently, you may want to **propose those changes back to the source
+  appSlug** you got it from — so independent improvements can rejoin the group (this is the
+  other half of remixing, and the answer to the #1973 fragmentation risk). **The affordance
+  is deferred** (a "propose upstream" / "publish upstream" control on your remix, reviewed by
+  the source owner who accepts or declines). **But the DATA STRUCTURES must be reserved now,
+  while the model is on the workbench**, so we don't preclude it:
+  - **Reverse-lineage query** — "list my remixes where `remixOf` = sourceX" (so visiting a
+    source surfaces your copies of it; §2). Needs `remixOf` indexed by `(remixOf, owner)`.
+  - **A proposal entity** — a PR-like record: `{ fromAppSlug (your remix), toAppSlug (source),
+    proposed fsId/diff, author handle, status: open|accepted|declined }`, reviewable by the
+    source owner. Reserve room for this when the lineage/sharing schema is built.
 
 ## 7. The subtraction ledger ("learnings")
 
@@ -612,17 +644,18 @@ explicit return path (§2 "Ownership, code vs data, and 'make it yours' semantic
     maybe anon metrics). **Writes (incl. comments) = your current handle, exposed to others**;
     writing therefore requires login. See §2 "Identity exposure: reads are anonymous, writes
     are you."
-14. **Request-access consent symmetry.** Requesting access exposes a handle to the owner (for
-    approval). Should "Request access" carry the same **"request as [handle]"** consent as
-    auto-join? Lean: yes, by symmetry — requesting and joining both expose identity.
+14. **✅ Request-access consent symmetry — DECIDED (jchris): yes.** "Request access" carries the
+    same **"request as [handle]"** consent as auto-join (skipped when you have one handle). Both
+    expose identity, so both let you choose which handle. (§2 active-handle resolution.)
 15. **appSlug as lineage label.** **Invariant (per Charlie): lineage truth is `remixOf`;
     appSlug is only a best-effort *label*.** Slug is a *per-handle* id we keep stable across a
     make-it-yours lineage for memorable/shareable URLs, but it's **not** a lineage key
     (collisions suffix, so it can't be relied on). Anything that needs true ancestry reads
     `remixOf`, never the slug. (Confirm we're fine with this split.)
-16. **Lineage attribution visibility.** `remixOf` records the source. Is that link public /
-    shown to the source owner (who sees who made their own copy), or private? Lean: attribution
-    visible (matches house "remix culture"), but the copier's *data* never is.
+16. **✅ Lineage attribution visibility — DECIDED (jchris): visible.** The `remixOf` link is
+    **public / shown** (the source owner can see who made their own copy) — it matches house
+    "remix culture" and feeds the future propose-upstream path. The copier's *data* is never
+    exposed, only the lineage edge.
 17. **✅ Full login-trigger set — DECIDED (jchris).** Login is required to **write**: codegen
     (Other/uncached edit), Join, Request access, any data write, and **commenting** (posted as
     your current handle). Anonymous stays: reads, viewing/using public apps read-only, and
@@ -632,8 +665,10 @@ and "clone" are retired as user words; **"remix"** stays as the cultural *act of
 vibe; the *result* of changing one you don't own is that it **becomes yours** (an independent
 code-only copy). Applied doc-wide.
 
-19. **Reachability of a request-gated vibe's prod shell (backend confirm).** The §2 "make it
-    yours" reachability rule assumes a published-but-request-gated vibe's **code shell is
-    servable to a non-granted visitor** (they can run it with their own empty data) while its
-    **shared data stays gated**. Confirm the backend can serve code-without-data this way; if
-    not, "make it yours" is unavailable on request-gated vibes too (only public ones).
+19. **✅ Make-it-yours rule — DECIDED (jchris): access OR remixable-without-access.** You can
+    make a vibe yours if you have access to it **or** the owner marked it **remixable-without-
+    access** (a per-app setting, its own axis separate from access — §2). Some creators make
+    apps as **remix seeds** where this is the main flow; **how we present a remix-seed app vs a
+    request-access app is deferred to the design phase** (§2 note). *Backend requirement (not
+    just an assumption): serve a remixable app's code shell for copying independent of the data
+    grant.*
