@@ -259,9 +259,7 @@ describe("FireflyApiAdapter — transient startup failure recovery (#2448)", () 
 
   it("does not re-install grant reactivity once it has succeeded", async () => {
     let reconnect: (() => void) | undefined;
-    const subscribeViewerGrants = vi.fn(async () =>
-      Result.Ok({ type: "vibes.diy.res-subscribe-viewer-grants", status: "ok" })
-    );
+    const subscribeViewerGrants = vi.fn(async () => Result.Ok({ type: "vibes.diy.res-subscribe-viewer-grants", status: "ok" }));
     const onViewerGrantsChanged = vi.fn(() => () => undefined);
     const api = fakeVibesDiyApi({
       subscribeViewerGrants,
