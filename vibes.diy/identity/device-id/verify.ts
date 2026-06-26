@@ -48,8 +48,6 @@ export class DeviceIdVerifyMsg {
 
   async verifyWithCertificate<S>(jwt: string, schema?: S): Promise<VerifyWithCertificateResult<S>> {
     let certInfo: HeaderCertInfo | undefined = undefined;
-    let jwtPayload: unknown = null;
-    let jwtHeader: unknown = null;
     const rCertInfo = this.extractCertificateFromJWT(jwt);
     if (rCertInfo.isErr()) {
       return this.createVerifyWithCertificateError(rCertInfo) as VerifyWithCertificateResult<S>;
@@ -91,8 +89,8 @@ export class DeviceIdVerifyMsg {
         certificateInfo: certInfo,
       }) as VerifyWithCertificateResult<S>;
     }
-    jwtPayload = jwtVerification.payload;
-    jwtHeader = jwtVerification.protectedHeader;
+    let jwtPayload: unknown = jwtVerification.payload;
+    const jwtHeader: unknown = jwtVerification.protectedHeader;
     const rCertValidation = await this.validateCertificate(certInfo.certificate);
     if (rCertValidation.isErr()) {
       return this.createVerifyWithCertificateError(rCertValidation, {
@@ -184,8 +182,7 @@ export class DeviceIdVerifyMsg {
       if (notAfter < now) {
         throw new Error(`Certificate has expired (valid to: ${notAfter.toISOString()})`);
       }
-      let trustedCA: CertificatePayload | null = null;
-      trustedCA = this.findTrustedCA(cert, this.#trustedCAs) ?? null;
+      const trustedCA: CertificatePayload | null = this.findTrustedCA(cert, this.#trustedCAs) ?? null;
       if (!trustedCA) {
         throw new Error("Certificate not issued by a trusted CA");
       }
