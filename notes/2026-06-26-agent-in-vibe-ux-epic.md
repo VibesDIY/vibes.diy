@@ -358,9 +358,9 @@ of system-owned public apps. That makes the slug-vs-fsId rule **fully uniform**:
 - **An anonymous browser is just reading system-owned public apps** (cached chips = reads). The
   **first write forks to their handle**, with `remixOf` → the system fork it came from, whose
   own `remixOf` chains back to the ultimate source (lineage stays intact, #15).
-- **Infra follow-ups:** a system/cache handle that owns these; a dedupe key (content-address by
-  `(source, transform)`); and **GC for pre-made forks that are never kept** (the cost of this
-  model — track it). See §8/20.
+- **Infra follow-ups:** a system/cache handle that owns these, and a dedupe key (content-address
+  by `(source, transform)`). **No GC needed** — unkept pre-made forks are a negligible drop in
+  the bucket vs everything else (jchris), so they just persist. See §8/20.
 
 **Start-tree default (jchris, for now).** From the **top of the tree, a set of distinct system
 appSlugs** (the roots — each its own data namespace); **browsing deeper via chips = new fsIds in
@@ -723,5 +723,6 @@ code-only copy). Applied doc-wide.
     fresh data); reads commit nothing. **Cached content = pre-made forks under a system handle**
     (curated starters + precached transforms are system-owned public apps), so the rule is
     fully uniform (system is just another owner). **Start-tree default:** top = distinct system
-    appSlugs; deeper = new fsIds in the same slug. Infra follow-ups: system/cache handle,
-    content-address dedupe, **GC for unkept pre-made forks**. (§2 "Chips → appSlug vs fsId".)
+    appSlugs; deeper = new fsIds in the same slug. Infra follow-ups: system/cache handle +
+    content-address dedupe. **No GC** — unkept forks are negligible, they just persist. (§2
+    "Chips → appSlug vs fsId".)
