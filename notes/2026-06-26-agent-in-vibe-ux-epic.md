@@ -177,11 +177,21 @@ one shared component).
 ## 3. Deferred identity (the FTUE principle, #1693)
 
 Not a separate build this week, but a **constraint on every state above**: never show a
-control that only rejects the user; defer sign-up until after value. Genesis requires no
-login to make the first app. A logged-out visitor can Join/Remix and is asked to sign in
-*only* at the moment it's needed, with intent preserved (the existing `?intent=` routing
-already does this — keep it, surface it later). Shared data gets a "sign in to see
-@sender's entries" prompt (#2353) instead of a silent empty state.
+control that only rejects the user; defer sign-up until after value. A logged-out visitor
+can Join/Remix and is asked to sign in *only* at the moment it's needed, with intent
+preserved (the existing `?intent=` routing already does this — keep it, surface it later).
+Shared data gets a "sign in to see @sender's entries" prompt (#2353) instead of a silent
+empty state.
+
+> **⚠️ Anonymous Genesis is NOT free — it has a backend dependency.** The current
+> first-generation path is auth-gated: `routes.ts` puts `chat/prompt` under the auth
+> layout, and `prompt.tsx` only calls `chatApi.openChat()` once `isSignedIn` is true. So
+> "make the first app with no login" requires **new anonymous-draft + claim-on-sign-in
+> work** (server allocates a throwaway-owner draft; the slug is claimed on auth). That is
+> a dependency, not a given. **Split the Genesis work accordingly:** the new mobile-first
+> first-generation *UI* (canvas, starter tiles, app-blooms-in-place) has no backend
+> dependency and ships in PR-1 **still auth-gated**; the *anonymous* path is a separate,
+> explicitly-flagged dependency (GATE 1, §8 Q2/Q3) — do not assume it for every state.
 
 ## 4. Week plan (human-in-the-loop gates)
 
@@ -192,7 +202,7 @@ for your judgement before code.
 | Day | Work | Output | Gate |
 | --- | --- | --- | --- |
 | **0–1** | Lofi sketches of Genesis / Live / Iterating, mobile-first. Flow outlines for: new app, visitor-Join, visitor-Remix, owner-iterate. Finalize §2 verb spec + §7 subtraction ledger. | Sketch set + this doc's §1–2 ratified | **GATE 1: you approve the sketches & verbs before any code.** |
-| **2** | Genesis spike — the new first-generation `/vibe` state, mobile-first, app-blooms-in-canvas. Curated starter tiles. Behind a flag. | Clickable Genesis on `/vibe` | **GATE 2: does Genesis feel right on a phone?** |
+| **2** | Genesis spike — the new first-generation `/vibe` state, mobile-first, app-blooms-in-canvas. Curated starter tiles. Behind a flag, **auth-gated** (anonymous path is a separate dependency, §3). | Clickable Genesis on `/vibe` | **GATE 2: does Genesis feel right on a phone?** |
 | **3** | Verb collapse + landing card: Remix/Join/View by intent; delete Clone/Fresh-Install/Edit-button; publish-intent setting (#1854). Mostly deletion. | PR-1 part 1 | — |
 | **4** | Share panel link-first (#2232 + children). Indicator system for viewer modes (#2178/#2275). | PR-1 complete → review | **GATE 3: PR-1 review/QA.** |
 | **5** | Inversion wiring: agent-in-vibe Live/Iterating, hot-swap inline, `/chat` → `/vibe` redirects, lazy chat connection flip. | PR-2 (may carry over) | **GATE 4: full cutover review.** |
@@ -207,8 +217,9 @@ flag only as a rollback seam, not as a dependency workaround.
 ## 5. PR structure
 
 - **PR-1 "Vibe-first surface: verbs, landing, share" (no backend dep).** Genesis state
-  (flagged), verb collapse, publish-intent, link-first share, viewer-mode indicators.
-  This is where most of the *deletion* lands. Ships this week.
+  (flagged, **auth-gated** — anonymous generation is deferred to its own dependency, §3),
+  verb collapse, publish-intent, link-first share, viewer-mode indicators. This is where
+  most of the *deletion* lands. Ships this week.
 - **PR-2 "Agent-in-vibe / retire /chat" (#2517 handled as a pre-task).** Inline agent
   Live/Iterating, hot-swap, route redirects, lazy chat connection flip — full cutover, with
   a flag kept only as a rollback seam.
