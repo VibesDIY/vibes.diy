@@ -46,6 +46,7 @@ function makeDeps(
     maxSteps: 4,
     maxCostUsd: 0.5,
     terminal: { promptBlockEndEmitted: false },
+    byteLength: (s) => s.length,
     makeBaseSystemPrompt: async () => ({ systemPrompt: "sys" }),
     runWholeFileCodegen: overrides?.runWholeFileCodegen ?? (async () => result),
     appendBlockEvent: async ({ evt }) => {
@@ -139,6 +140,19 @@ describe("handleWholeFileCodegenRequest emission", () => {
     expect(fileSystem).toEqual([{ type: "code-block", filename: "/App.jsx", lang: "jsx", content: "a\nb\nc" }]);
   });
 
+  it("returns an error and persists nothing when the loop's terminal verify failed", async () => {
+    const result: WholeFileResult = {
+      files: [{ filename: "/App.jsx", lang: "jsx", content: "const x = 1;" }],
+      usage: { prompt_tokens: 1, completion_tokens: 2, total_tokens: 3 },
+      verify: { ok: false, problems: ["App.jsx has no default export"] },
+    };
+    const { deps, persisted } = makeDeps(result);
+
+    const r = await handleWholeFileCodegenRequest(deps);
+    expect(r.isErr()).toBe(true);
+    expect(persisted).toHaveLength(0); // a rejected file set is never written
+  });
+
   it("streams code lines live (self-framed) and tags code.begin with reveal:'typewriter'", async () => {
     const result: WholeFileResult = {
       files: [{ filename: "/App.jsx", lang: "jsx", content: "a\nb\nc" }],
@@ -147,8 +161,8 @@ describe("handleWholeFileCodegenRequest emission", () => {
     // Drive onLine the way the loop would, mid-run, before resolving.
     const { deps, emitted } = makeDeps(result, {
       runWholeFileCodegen: async ({ onLine }) => {
-        onLine?.("/App.jsx", "jsx", "a", 0);
-        onLine?.("/App.jsx", "jsx", "b", 1);
+        onLine?.({ file: "/App.jsx", lang: "jsx", line: "a", lineNr: 0 });
+        onLine?.({ file: "/App.jsx", lang: "jsx", line: "b", lineNr: 1 });
         // "c" withheld (no trailing newline) — reconciliation must add it.
         return result;
       },

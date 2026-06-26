@@ -10,11 +10,19 @@ import { stepCountIs, maxCost } from "@openrouter/agent/stop-conditions";
 // which drags node:fs/node:path/node:url/call-ai into the Workers request-path
 // graph (same reason verify.ts imports `/structure`, not `/scoring`).
 import { isTransientError, retryWithBackoff } from "@vibes.diy/eval-codegen-matrix/backoff";
+import { exception2Result } from "@adviser/cement";
 import type { OpenRouter } from "@openrouter/agent";
-import { verifyFiles } from "./verify.js";
+import { verifyFiles, type VerifyResult } from "./verify.js";
 
+/** One newly-completed streamed line (the `OnLine` payload). */
+export interface OnLineArgs {
+  file: string;
+  lang: string;
+  line: string;
+  lineNr: number;
+}
 /** Streamed line callback (wired by the live-streaming task; the type lives here so the contract is fixed). */
-export type OnLine = (file: string, lang: string, line: string, lineNr: number) => void;
+export type OnLine = (args: OnLineArgs) => void;
 
 export interface RunArgs {
   client: OpenRouter;
@@ -51,6 +59,8 @@ export interface StreamDiag {
 export interface WholeFileResult {
   files: { filename: string; lang: string; content: string }[];
   usage: { prompt_tokens: number; completion_tokens: number; total_tokens: number };
+  /** Final structural verify of the resolved file set; the caller refuses to persist when `ok` is false. */
+  verify?: VerifyResult;
   streamDiag?: StreamDiag;
 }
 
@@ -72,15 +82,17 @@ function langFor(filename: string): string {
  * portion that has arrived so escapes (`\n`, `\"`, …) resolve correctly.
  */
 function extractWriteFileArgs(raw: string): { path?: string; contents?: string } {
-  try {
-    const parsed = JSON.parse(raw) as Record<string, unknown>;
+  const rParsed = exception2Result(() => JSON.parse(raw) as Record<string, unknown>);
+  if (rParsed.isOk()) {
+    const parsed = rParsed.Ok();
     return {
       path: typeof parsed.path === "string" ? parsed.path : undefined,
       contents: typeof parsed.contents === "string" ? parsed.contents : undefined,
     };
-  } catch {
-    return { path: extractJsonStringField(raw, "path"), contents: extractJsonStringField(raw, "contents") };
   }
+  // Mid-stream the blob is a growing prefix of the final JSON, so the parse
+  // throws; fall back to extracting each string field from the partial text.
+  return { path: extractJsonStringField(raw, "path"), contents: extractJsonStringField(raw, "contents") };
 }
 
 /**
@@ -128,7 +140,7 @@ function makeLineEmitter(onLine: OnLine) {
     const lines = contents.slice(0, nl).split("\n");
     const already = emitted[filename] ?? 0;
     for (let nr = already; nr < lines.length; nr++) {
-      onLine(filename, lang, lines[nr], nr);
+      onLine({ file: filename, lang, line: lines[nr], lineNr: nr });
     }
     emitted[filename] = lines.length;
   };
@@ -175,7 +187,7 @@ async function runOnce(args: RunArgs): Promise<WholeFileResult> {
   const streamDiag: StreamDiag = { firstDeltaMs: -1, lastDeltaMs: -1, deltaCount: 0 };
   const startMs = Date.now();
   const streaming = (async () => {
-    const emitLines = args.onLine ? makeLineEmitter(args.onLine) : undefined;
+    const emitLines = args.onLine !== undefined ? makeLineEmitter(args.onLine) : undefined;
     let argsAccum = "";
     for await (const event of result.getFullResponsesStream()) {
       const type = (event as { type?: string }).type;
@@ -188,7 +200,7 @@ async function runOnce(args: RunArgs): Promise<WholeFileResult> {
       const elapsed = Date.now() - startMs;
       if (streamDiag.firstDeltaMs < 0) streamDiag.firstDeltaMs = elapsed;
       streamDiag.lastDeltaMs = elapsed;
-      if (!emitLines) continue;
+      if (emitLines === undefined) continue;
       argsAccum += (event as { delta?: string }).delta ?? "";
       const { path, contents } = extractWriteFileArgs(argsAccum);
       if (typeof path === "string" && path.length > 0 && typeof contents === "string") {
@@ -200,6 +212,14 @@ async function runOnce(args: RunArgs): Promise<WholeFileResult> {
   // Drive the loop to completion (tools execute as the stream is consumed).
   await result.getText();
   await streaming;
+
+  // Terminal verify re-check. The write_file executor stores `contents` even on
+  // a failing verify, so a stop-limit exit (maxSteps/maxCost reached mid-fix) can
+  // leave the model's last, still-broken write in `files`. Return the final
+  // verify so the caller refuses to persist a file set the gate already rejected
+  // (e.g. an App.jsx with no default export) instead of shipping it blindly.
+  const verify = verifyFiles(files, { needsAccess: args.needsAccess });
+
   const response = await result.getResponse();
   const u = (response as { usage?: { inputTokens?: number; outputTokens?: number; totalTokens?: number } | null }).usage ?? {};
   const prompt_tokens = u.inputTokens ?? 0;
@@ -216,6 +236,7 @@ async function runOnce(args: RunArgs): Promise<WholeFileResult> {
       completion_tokens,
       total_tokens: u.totalTokens ?? prompt_tokens + completion_tokens,
     },
+    verify,
     streamDiag,
   };
 }

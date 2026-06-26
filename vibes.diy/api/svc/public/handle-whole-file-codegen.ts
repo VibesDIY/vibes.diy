@@ -129,6 +129,9 @@ export interface WholeFileCodegenDeps {
   /** Terminal signal shared with the call site's `.finally()` (see PromptTerminalSignal). */
   terminal: { promptBlockEndEmitted: boolean };
 
+  /** UTF-8 byte length of a string (wired from `sthis.txt.encode` — no `new TextEncoder`). Drives the cosmetic code stats. */
+  byteLength: (s: string) => number;
+
   // Injected collaborators (bound to the live request at the call site).
   makeBaseSystemPrompt: MakeBaseSystemPromptFn;
   runWholeFileCodegen: RunWholeFileCodegenFn;
@@ -172,6 +175,7 @@ export async function handleWholeFileCodegenRequest(deps: WholeFileCodegenDeps):
     cheapModel,
     maxSteps,
     maxCostUsd,
+    byteLength,
     makeBaseSystemPrompt,
     runWholeFileCodegen,
     appendBlockEvent,
@@ -270,46 +274,51 @@ export async function handleWholeFileCodegenRequest(deps: WholeFileCodegenDeps):
       ...base(),
     } satisfies CodeBeginMsg);
   };
-  const emitCodeLine = (filename: string, lang: string, line: string, lineNr: number): void => {
+  const emitCodeLine = (args: { file: string; lang: string; line: string; lineNr: number }): void => {
     enqueue({
       type: "block.code.line",
-      sectionId: sectionIdFor(filename),
-      lang,
-      path: filename,
-      line,
-      lineNr,
+      sectionId: sectionIdFor(args.file),
+      lang: args.lang,
+      path: args.file,
+      line: args.line,
+      lineNr: args.lineNr,
       seq: liveSeq++,
       ...base(),
     } satisfies CodeLineMsg);
   };
-  const emitCodeEnd = (filename: string, lang: string, lines: number, bytes: number): void => {
+  const emitCodeEnd = (args: { file: string; lang: string; lines: number; bytes: number }): void => {
     enqueue({
       type: "block.code.end",
-      sectionId: sectionIdFor(filename),
-      lang,
-      path: filename,
-      stats: { lines, bytes },
+      sectionId: sectionIdFor(args.file),
+      lang: args.lang,
+      path: args.file,
+      stats: { lines: args.lines, bytes: args.bytes },
       seq: liveSeq++,
       ...base(),
     } satisfies CodeEndMsg);
   };
-  const onLine: OnLine = (filename, lang, line, lineNr) => {
-    if (!blockBegun) {
+  const onLine: OnLine = ({ file, lang, line, lineNr }) => {
+    if (blockBegun === false) {
       blockBegun = true;
       stopHeartbeat();
       enqueue({ type: "block.begin", seq: liveSeq++, ...base() } satisfies BlockBeginMsg);
     }
-    if (openFile !== filename) {
+    if (openFile !== file) {
       if (openFile !== null) {
-        emitCodeEnd(openFile, langFor(openFile), lineCount.get(openFile) ?? 0, byteCount.get(openFile) ?? 0);
+        emitCodeEnd({
+          file: openFile,
+          lang: langFor(openFile),
+          lines: lineCount.get(openFile) ?? 0,
+          bytes: byteCount.get(openFile) ?? 0,
+        });
       }
-      openFile = filename;
-      streamedFiles.add(filename);
-      emitCodeBegin(filename, lang);
+      openFile = file;
+      streamedFiles.add(file);
+      emitCodeBegin(file, lang);
     }
-    emitCodeLine(filename, lang, line, lineNr);
-    lineCount.set(filename, (lineCount.get(filename) ?? 0) + 1);
-    byteCount.set(filename, (byteCount.get(filename) ?? 0) + new TextEncoder().encode(line).length + 1);
+    emitCodeLine({ file, lang, line, lineNr });
+    lineCount.set(file, (lineCount.get(file) ?? 0) + 1);
+    byteCount.set(file, (byteCount.get(file) ?? 0) + byteLength(line) + 1);
   };
 
   // 2. Run the loop, streaming completed lines live through `onLine`.
@@ -328,25 +337,38 @@ export async function handleWholeFileCodegenRequest(deps: WholeFileCodegenDeps):
     stopHeartbeat();
   }
 
+  // The loop's terminal verify failed (e.g. a stop-limit exit left a broken file
+  // set): refuse to persist it. Drain what already streamed live, then end the
+  // turn — the rejected files are never written, so a reload shows nothing.
+  if (result.verify?.ok === false) {
+    await chain;
+    return Result.Err(`whole-file codegen produced a verify-failing file set: ${result.verify.problems.join("; ")}`);
+  }
+
   // 3. Reconcile the live stream against the resolved files. If a run buffered,
   //    onLine fired at the end and produced the same self-framed burst; either way
   //    close the open section (topping up the withheld trailing line) and emit any
   //    file that never streamed a line as a full section.
-  if (!blockBegun) {
+  if (blockBegun === false) {
     blockBegun = true;
     enqueue({ type: "block.begin", seq: liveSeq++, ...base() } satisfies BlockBeginMsg);
   }
   const byName = new Map(result.files.map((f) => [f.filename, f] as const));
   if (openFile !== null) {
     const f = byName.get(openFile);
-    if (f) {
+    if (f !== undefined) {
       const finalLines = f.content.split("\n");
       for (let nr = lineCount.get(openFile) ?? 0; nr < finalLines.length; nr++) {
-        emitCodeLine(openFile, f.lang, finalLines[nr], nr);
+        emitCodeLine({ file: openFile, lang: f.lang, line: finalLines[nr], lineNr: nr });
       }
-      emitCodeEnd(openFile, f.lang, finalLines.length, new TextEncoder().encode(f.content).length);
+      emitCodeEnd({ file: openFile, lang: f.lang, lines: finalLines.length, bytes: byteLength(f.content) });
     } else {
-      emitCodeEnd(openFile, langFor(openFile), lineCount.get(openFile) ?? 0, byteCount.get(openFile) ?? 0);
+      emitCodeEnd({
+        file: openFile,
+        lang: langFor(openFile),
+        lines: lineCount.get(openFile) ?? 0,
+        bytes: byteCount.get(openFile) ?? 0,
+      });
     }
     openFile = null;
   }
@@ -354,8 +376,8 @@ export async function handleWholeFileCodegenRequest(deps: WholeFileCodegenDeps):
     if (streamedFiles.has(f.filename)) continue;
     emitCodeBegin(f.filename, f.lang);
     const lines = f.content.split("\n");
-    for (let nr = 0; nr < lines.length; nr++) emitCodeLine(f.filename, f.lang, lines[nr], nr);
-    emitCodeEnd(f.filename, f.lang, lines.length, new TextEncoder().encode(f.content).length);
+    for (let nr = 0; nr < lines.length; nr++) emitCodeLine({ file: f.filename, lang: f.lang, line: lines[nr], lineNr: nr });
+    emitCodeEnd({ file: f.filename, lang: f.lang, lines: lines.length, bytes: byteLength(f.content) });
   }
 
   // 4. Build the canonical persisted sequence (also carrying the reveal marker so a
@@ -368,6 +390,7 @@ export async function handleWholeFileCodegenRequest(deps: WholeFileCodegenDeps):
     nextSeq: () => seqForBuild++,
     blockNr: 0,
     reveal: "typewriter",
+    byteLength,
     usage: {
       given: [],
       calculated: {

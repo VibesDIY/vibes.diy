@@ -26,14 +26,14 @@ function balanced(code: string): boolean {
 export function verifyFiles(files: Record<string, string>, opts: { needsAccess: boolean }): VerifyResult {
   const problems: string[] = [];
   const app = files["App.jsx"] ?? files["/App.jsx"];
-  if (!app) return { ok: false, problems: ["App.jsx is missing"] };
-  if (!/export\s+default\s+/.test(app)) problems.push("App.jsx has no default export");
+  if (app === undefined) return { ok: false, problems: ["App.jsx is missing"] };
+  if (/export\s+default\s+/.test(app) === false) problems.push("App.jsx has no default export");
   for (const [name, code] of Object.entries(files)) {
-    if (!/\.(jsx?|tsx?)$/.test(name)) continue;
-    if (!balanced(code)) problems.push(`${name}: unbalanced brackets (likely a syntax error)`);
+    if (/\.(jsx?|tsx?)$/.test(name) === false) continue;
+    if (balanced(code) === false) problems.push(`${name}: unbalanced brackets (likely a syntax error)`);
   }
   const s = computeStructure(files);
-  if (opts.needsAccess && !s.hasAccessJs) {
+  if (opts.needsAccess && s.hasAccessJs === false) {
     problems.push("This app needs per-document permissions but no separate access.js was written. Add an access.js file.");
   }
   if (opts.needsAccess && s.accessInAppJsx) {

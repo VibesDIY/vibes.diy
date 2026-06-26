@@ -10,6 +10,7 @@ describe("buildBlockEvents", () => {
       sectionIdFor: () => "S1",
       nextSeq: () => seq++,
       blockNr: 0,
+      byteLength: (s) => s.length,
       usage: { given: [], calculated: { prompt_tokens: 0, completion_tokens: 0, total_tokens: 0 } },
     });
     const types = events.map((e) => e.type);

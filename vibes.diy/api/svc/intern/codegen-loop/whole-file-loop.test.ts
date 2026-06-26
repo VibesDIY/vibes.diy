@@ -191,7 +191,7 @@ describe("runWholeFileCodegen", () => {
       needsAccess: false,
       maxSteps: 4,
       maxCostUsd: 0.5,
-      onLine: (_file, _lang, line) => {
+      onLine: ({ line }) => {
         seen.push(line);
       },
     });
@@ -225,7 +225,7 @@ describe("runWholeFileCodegen", () => {
       needsAccess: false,
       maxSteps: 4,
       maxCostUsd: 0.5,
-      onLine: (file, lang, line, lineNr) => {
+      onLine: ({ file, lang, line, lineNr }) => {
         calls.push({ file, lang, line, lineNr });
       },
     });
@@ -263,11 +263,39 @@ describe("runWholeFileCodegen", () => {
       needsAccess: false,
       maxSteps: 4,
       maxCostUsd: 0.5,
-      onLine: (_file, _lang, line) => {
+      onLine: ({ line }) => {
         seen.push(line);
       },
     });
     expect(seen).toEqual(["only"]);
+  });
+
+  it("returns the terminal verify status of the resolved file set", async () => {
+    const valid = "export default function App(){ return <div>ok</div>; }";
+    const rOk = await runWholeFileCodegen({
+      client: mockClientWritingApp(valid),
+      model: "frontier",
+      systemPrompt: "sys",
+      userPrompt: "make an app",
+      needsAccess: false,
+      maxSteps: 4,
+      maxCostUsd: 0.5,
+    });
+    expect(rOk.verify?.ok).toBe(true);
+
+    // A stop-limit exit could leave a broken final map (here: no default export).
+    const broken = "const x = 1;";
+    const rBad = await runWholeFileCodegen({
+      client: mockClientWritingApp(broken),
+      model: "frontier",
+      systemPrompt: "sys",
+      userPrompt: "make an app",
+      needsAccess: false,
+      maxSteps: 4,
+      maxCostUsd: 0.5,
+    });
+    expect(rBad.verify?.ok).toBe(false);
+    expect(rBad.verify?.problems.join(" ")).toContain("default export");
   });
 
   it("routes model as a function of numberOfTurns", () => {

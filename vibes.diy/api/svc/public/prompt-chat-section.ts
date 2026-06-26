@@ -2267,7 +2267,19 @@ export const promptChatSection: EventoHandler<W3CWebSocketEvent, MsgBase<ReqProm
         // existing path unchanged — so with the flag unset (or a non-creation
         // request) behavior is byte-for-byte identical to before.
         const useWholeFile = vctx.sthis.env.get("USE_WHOLE_FILE_CODEGEN") === "true";
+        // Only the FIRST turn (empty version timeline) routes through the
+        // whole-file loop: it builds a complete file set from the prompt alone.
+        // A follow-up edit ("make the button blue") has existing files the loop
+        // never sees — it receives only `userPrompt` — so it must stay on the
+        // SEARCH/REPLACE path that composes against the current content. Without
+        // this gate, an edit would overwrite the whole app with a fresh file.
+        let routeWholeFile = false;
         if (useWholeFile && isReqCreationPromptChatSection(orig)) {
+          const rTimeline = await loadVersionTimeline(vctx, req.chatId);
+          if (rTimeline.isErr()) return Result.Err(rTimeline);
+          routeWholeFile = rTimeline.Ok().length === 0;
+        }
+        if (routeWholeFile) {
           // Resolve the frontier (first-turn) and cheap (fix-up) models. The
           // codegen default is the frontier; the runtime default is the cheaper
           // fix-up model. Env overrides let an operator pin either independently.
@@ -2279,7 +2291,7 @@ export const promptChatSection: EventoHandler<W3CWebSocketEvent, MsgBase<ReqProm
           const userPrompt = firstUserText(orig.prompt.messages);
           // Build the OpenRouter client once (secret resolution centralized in
           // the factory); fail the turn cleanly if the key is unset.
-          const rClient = exception2Result(() => makeOpenRouterClient(vctx.sthis.env));
+          const rClient = makeOpenRouterClient(vctx.sthis.env);
           if (rClient.isErr()) return Result.Err(rClient);
           const client = rClient.Ok();
           const pkgBaseUrl = promptsPkgBaseUrl(vctx.params.pkgRepos.workspace);
@@ -2303,6 +2315,9 @@ export const promptChatSection: EventoHandler<W3CWebSocketEvent, MsgBase<ReqProm
               maxSteps: 4,
               maxCostUsd: 0.5,
               terminal,
+              // UTF-8 byte length via the SuperThis text encoder (rules-bag bans
+              // `new TextEncoder`); drives the cosmetic code-block byte stats.
+              byteLength: (s: string) => vctx.sthis.txt.encode(s).length,
               // Inject the real collaborators, bound to this live request. The
               // handler stays decoupled from this module's internal wiring.
               makeBaseSystemPrompt: (model, sessionDoc) =>

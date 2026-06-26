@@ -10,6 +10,8 @@ export interface BlockIds {
   blockNr: number;
   usage: BlockUsage;
   reveal?: "typewriter";
+  /** UTF-8 byte length of a string (wired from `sthis.txt.encode` — no `new TextEncoder`). */
+  byteLength: (s: string) => number;
 }
 
 export function buildBlockEvents(files: { filename: string; lang: string; content: string }[], ids: BlockIds): BlockEvent[] {
@@ -59,7 +61,7 @@ export function buildBlockEvents(files: { filename: string; lang: string; conten
       } satisfies CodeLineMsg);
     }
 
-    const fileBytes = new TextEncoder().encode(file.content).length;
+    const fileBytes = ids.byteLength(file.content);
     totalCodeLines += lines.length;
     totalCodeBytes += fileBytes;
 
