@@ -126,26 +126,29 @@ function UnifiedOverlay({
       </div>
       {/* body — the content (chips, stream, gate) */}
       <div style={{ padding: "0 14px", overflowY: "auto" }}>{children}</div>
-      {/* footer — nav + toggle at the bottom latitude */}
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          gap: 8,
-          marginTop: 10,
-          padding: "10px 14px 12px",
-          borderTop: "1px solid var(--color-light-decorative-00, #e5e5e5)",
-        }}
-      >
-        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <NavIcon color="#3b82f6">⌂</NavIcon>
-          <NavIcon color="#fb923c" selected>
-            💬
-          </NavIcon>
-          <NavIcon color="#22c55e">↗</NavIcon>
+      {/* footer — production-style cream nav bar at the bottom latitude */}
+      <div style={{ padding: "10px 12px 12px", marginTop: 6 }}>
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: 8,
+            padding: "8px 10px",
+            borderRadius: 30,
+            background: "var(--vibes-cream, #FFFEF0)",
+            border: "1px solid var(--vibes-near-black, #1a1a1a)",
+          }}
+        >
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <NavIcon color="#3b82f6">⌂</NavIcon>
+            <NavIcon color="#fb923c" selected>
+              💬
+            </NavIcon>
+            <NavIcon color="#22c55e">↗</NavIcon>
+          </div>
+          <VibesSwitch size={40} isActive />
         </div>
-        <VibesSwitch size={40} isActive />
       </div>
     </div>
   );
