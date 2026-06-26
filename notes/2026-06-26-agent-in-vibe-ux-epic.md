@@ -125,11 +125,18 @@ Align to the house voice (`notes/how-to-talk-about-vibes.md`): remix-first, "see
 should imply changing," plain outcomes over engine talk. The current system has **4+
 verbs for 2 outcomes**; collapse them.
 
-### Two outcomes, two words
+### Two outcomes → three canonical CTAs
 
-| Outcome | Canonical word | Replaces | Who |
+The fundamental fork is binary — **your own copy** vs **the shared thing**. Within "the
+shared thing," creator intent splits participate-vs-read-only. So there are exactly **three
+canonical in-product CTA words**, one per outcome, and nothing else. Public-with-no-
+membership is *not* a fourth word — the app just loads (no gate, no CTA), so "Open" is
+deleted as a verb.
+
+| Outcome | Canonical CTA (the only word) | Replaces | Who |
 | --- | --- | --- | --- |
-| Use the **same shared thing** (same dataset) | **Join** (public → just **Open**) | "Join collab", "Request access" | invited / public / collab-intent |
+| Participate in the **shared space** (same dataset, become a member) | **Join** | "Join collab", "Request access" | collab-intent / invited |
+| **Read** the shared thing (no membership) | **View** | "Open" (as a verb) | read-only-intent |
 | Make **your own** independent copy and change it | **Remix** | "Clone", "Fresh Install", "Edit"(non-owner), "Fork" | everyone |
 
 - **Remix is the one primary verb for "make/change."** Owner talking to their own app,
@@ -153,6 +160,25 @@ non-member's landing — it does **not** change access enforcement.
 | Template | **Remix** | Join (if collab allowed) |
 | Read-only / published | **View** | Remix |
 
+### CTA precedence (access-state wins over intent)
+
+Intent only chooses the primary CTA *among actions the access state actually permits*.
+Resolve in this fixed order so the CTA is always predictable (Charlie offered a full
+`intent × grant × request-setting → primary/secondary` truth table — accepted, it lands at
+GATE 1):
+
+1. `revoked-access` → disabled **"Access revoked"**, no primary. *(Remix still offered — a
+   copy is independent of the revocation.)*
+2. `pending-request` → disabled **"Requested"**, no primary. *(Remix still offered.)*
+3. Private + requests **off** (`not-grant`) → "App not available" (no card). *(Remix only if
+   the source is itself reachable to this viewer.)*
+4. Private + requests **on** → primary **Join** (as "Request to join"); secondary Remix.
+5. Public / granted → primary CTA = **publish-intent** (Shared→Join, Read-only→View,
+   Template→Remix); the other two outcomes are always present as secondary.
+
+`Remix` is the one action available in nearly every state (it forks; it doesn't depend on
+the source's grant), which is why it's the universal fallback.
+
 ### Grant → surface (collapsing the 12-state table)
 
 The 12 grant values in `notes/vibes-sharing-reference.md` collapse, for UI purposes, to
@@ -163,6 +189,12 @@ The 12 grant values in `notes/vibes-sharing-reference.md` collapse, for UI purpo
 | **Author** | owner / admin | (highlighted, e.g. shield) | agent-ready, Share, handle switcher |
 | **Member** | writer/reader grant | read-only → lock glyph when no write | agent-ready (writer) or Join-to-edit |
 | **Visitor** | anon / no grant | none | intent-driven CTA (Join/Remix/View) |
+
+**`submitter`** (the latent fourth grant role — write-can-add, read-restricted, present in
+the type system but unexposed in UI today per `notes/vibes-sharing-reference.md`) folds
+into **Member** mode as a write-limited variant; it gets **no distinct viewer mode or
+indicator** until/unless it's actually surfaced as a control. Calling it out explicitly so
+the three-mode model is known to be a deliberate collapse, not an omission.
 
 ### Share panel: link-first (#2232 anchor)
 
@@ -229,8 +261,12 @@ when green.
 
 ## 6. Full issue disposition (nothing lost)
 
+All **30** issues from the original backlog list are accounted for below, each in exactly
+one bucket. (#2517 is **not** one of the 30 — it's the backend prerequisite, kept separate
+so the count stays crisp.)
+
 **Resolved by design (the inversion / verb model):**
-- #2518 `/chat` deprecation → *is* PR-2 (gated on #2517).
+- #2518 `/chat` deprecation → *is* PR-2 (#2517 handled as a pre-task).
 - #1745 inline edit + hot-swap → the default Iterating state.
 - #1709 EDIT/CLONE/REMIX popup → **deleted** (no submenu; agent is inline).
 - #2262 "vibe" button → "remix" → subsumed; the agent affordance is the remix entry.
@@ -242,13 +278,14 @@ when green.
 - #2037 Join over Fresh Install → Fresh Install deleted; Join primary by intent.
 - #1857 sharing-onramp epic → this doc *is* its resolution.
 - #1973 two sharing modes legible → Join vs Remix + intent (third "group-private" = Shared-space intent).
-- #2353 shared-data sign-in prompt → §3 deferred-identity prompt.
 - #2178 read-only/admin indicator → viewer-mode indicator system (§2).
 - #2275 active handle + switcher + login → handle switcher in the pill (Author/Visitor modes).
 
-**Explicit build (Share cluster, PR-1):** #2232 (anchor) #2233 #2234 #2235 #2236 #1768.
+**Explicit build (Share cluster, PR-1):** #2238 (umbrella — "simplify the sharing UI"; this
+cluster *is* its resolution) #2232 (anchor) #2233 #2234 #2235 #2236 #1768.
 
-**Explicit build (FTUE / Genesis):** #1693 (principle, §3) #1896 (Starter Stack → Genesis seed) #2353.
+**Explicit build (FTUE / Genesis):** #1693 (principle, §3) #1896 (Starter Stack → Genesis seed)
+#2353 (shared-data "sign in to see @sender's entries" prompt — design in §3, built here; single bucket).
 
 **Validate after landing (small follow-ups):** #1747 (reader → request writer access — now an
 agent-bar affordance) #1749 (authed non-owner flow — validate against new Live state)
@@ -272,20 +309,28 @@ What we delete, and the learning it encodes — so the knowledge survives the co
 | "Public Sharing: disabled / Enable" pill (#2235) | State-vs-action ambiguity comes from cramming config into the link surface. Link-first removes the question. |
 | Compact-then-expand share panel (#2236) | The flash was the panel trying to be two things. Link-first is one thing. |
 | Dual auto-accept checkboxes (#1768) | Two controls for one field = two surfaces drifting. One component. |
-| Separate `/start` route (#1896) | Onboarding isn't a special place; it's the normal vibe surface seeded with curated content. |
+| Separate `/start` *system* (#1896) — route kept as a **compat redirect** into `/vibe`, not hard-removed | Onboarding isn't a special place; it's the normal vibe surface seeded with curated content. (Redirect avoids breaking the prototype/links.) |
 
 ## 8. Open questions for GATE 1
 
 1. **Genesis canvas vs chips.** Does Genesis lead with curated tiles (Starter-Stack
    style, instant cached) or a blank prompt? Recommendation: tiles first (remix-first
    house thesis), blank prompt one tap away.
-2. **Anonymous Genesis.** Can a logged-out user generate before any slug exists, then
-   claim on sign-in? Ties to #1693. Recommendation: yes — anonymous draft, claimed later.
-3. **Eager slug allocation.** Allocate `/vibe/$user/$app` before first generation (so the
-   URL is shareable immediately) or after? Recommendation: eager, with a throwaway
-   anonymous owner for logged-out drafts.
-4. **Group-private intent.** Is jchris's "group-private / collaborative" (#1973) a fourth
+2. **Anonymous Genesis + claim/recovery.** Can a logged-out user generate before any slug
+   exists, then claim on sign-in? Ties to #1693, and **has a backend dependency** (§3).
+   Recommendation: yes — anonymous draft, claimed later. *Must* define the claim/recovery
+   path up front so first-gen work is never lost if sign-in is interrupted (e.g. draft keyed
+   to a client token, re-attachable post-auth).
+3. **Eager slug + draft lifecycle.** Allocate `/vibe/$user/$app` before first generation (so
+   the URL is shareable immediately) or after? Recommendation: eager, throwaway anonymous
+   owner for logged-out drafts — **with a defined TTL/cleanup for abandoned drafts** so eager
+   allocation doesn't leak slugs/storage.
+4. **Curated-vs-real perf contract.** Genesis has two lanes — curated/cached (must feel
+   instant, click-as-page-view) and real generation (visibly different, has latency). Define
+   the perf budget and the visible treatment that distinguishes them, so "instant" is a
+   contract, not a hope (ref #1896's <500ms curated-swap target).
+5. **Group-private intent.** Is jchris's "group-private / collaborative" (#1973) a fourth
    publish intent or just "Shared space" with a private visibility? Recommendation: the
    latter — intent (Join/Remix/View) is orthogonal to visibility (Restricted/Public).
-5. **Desktop.** Confirm desktop = mobile-with-breathing-room, not a reintroduced
+6. **Desktop.** Confirm desktop = mobile-with-breathing-room, not a reintroduced
    side-by-side editor.
