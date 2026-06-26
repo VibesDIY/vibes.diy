@@ -84,19 +84,22 @@ land on and want to change. Crucially:
 ### 1a. The edit affordance — the one reusable primitive (design this first)
 
 ```
- ┌─────────────────────────┐   chips + textarea. The ONLY door into edit mode.
- │   ▸ Make it a drum kit   │   - On the homepage / a starter: chips CREATE a new
- │   ▸ Add a high score     │     app from nothing ("Make a ___").
- │   ▸ Make it dark         │   - On any vibe: chips TRANSFORM this app ("Make it
- │                         │     ___"); a non-owner's first transform forks to
- ├─────────────────────────┤     their own copy (#1856), inline & non-blocking.
- │  ✎ change this app…    ▸ │   - Chip count is elastic: a few, one, or none —
- └─────────────────────────┘     mostly it's the textarea. Curated chips are the
-                                  trained on-ramp; the textarea is the open road.
+ ┌─────────────────────────┐   Exactly TWO curated chips + "Other" (free text).
+ │   ▸ Make it a drum kit   │   - The two chips are CACHED → instant, served as a
+ │   ▸ Add a high score     │     page view: NO login, NO codegen call.
+ │   ▸ Other…  (free text)  │   - "Other", or a chip whose result isn't cached →
+ ├─────────────────────────┤     a REAL codegen request → login required at that
+ │  ✎ describe a change…  ▸ │     moment (§3). The login wall sits on codegen,
+ └─────────────────────────┘     not on the page.
+        Same component, different seed:
+        - Homepage / starter: CREATE a new app ("Make a ___").
+        - Any vibe: TRANSFORM this app ("Make it ___"); a non-owner's first
+          transform forks to their own copy (#1856), inline & non-blocking.
 ```
 
-Same component, different seed. This absorbs the Instant Starter Stack (#1896), the inline
-edit/hot-swap (#1745), and what used to be a distinct "iterate" UI — into **one** thing.
+Two chips keep it a trained, low-choice gesture; "Other" is the open road. Same component,
+different seed — this absorbs the Instant Starter Stack (#1896), the inline edit/hot-swap
+(#1745), and what used to be a distinct "iterate" UI into **one** thing.
 
 ### 1b. First-generation state on `/vibe` (the new state, sketch alongside 1a)
 
@@ -234,16 +237,19 @@ preserved (the existing `?intent=` routing already does this — keep it, surfac
 Shared data gets a "sign in to see @sender's entries" prompt (#2353) instead of a silent
 empty state.
 
-> **⚠️ Anonymous first-app creation is NOT free — it has a backend dependency.** The
-> current path from homepage prompt to first generation is auth-gated: `routes.ts` puts
-> `chat/prompt` under the auth layout, and `prompt.tsx` only calls `chatApi.openChat()`
-> once `isSignedIn` is true. So "make the first app with no login" requires **new
-> anonymous-draft + claim-on-sign-in work** (server allocates a throwaway-owner draft; the
-> slug is claimed on auth). That is a dependency, not a given. **Split the work
-> accordingly:** the new mobile-first homepage prompt-entry + edit affordance (§1a) and the
-> first-generation `/vibe` *UI* (§1b: canvas, app-blooms-in-place) have no backend
-> dependency and ship in PR-1 **still auth-gated**; the *anonymous* path is a separate,
-> explicitly-flagged dependency (GATE 1, §8 Q2/Q3) — do not assume it for every state.
+> **The login boundary is the codegen request, not the page (jchris's rule).** **No login
+> until a real code-generation request** — i.e. selecting "Other" (free text) or a chip
+> whose result isn't cached. The two cached chips serve pre-generated content as plain page
+> views, so anonymous users browse real working apps with **zero login and zero backend
+> change**. This means we do **not** need anonymous *generation* — no anonymous-draft +
+> claim-on-sign-in system. The existing codegen auth-gate (`routes.ts` auth layout +
+> `isSignedIn` in `prompt.tsx`) is **correct and stays**; we just (a) serve cached starters
+> as cached vibe page-views that don't hit it, and (b) make sure its trigger is the first
+> real codegen (Other / uncached chip / first edit), with the pending prompt preserved
+> through sign-in (the existing `?intent=`/prompt routing already carries this). **Net: less
+> backend work than the earlier "anonymous draft" reading, not more** — and the whole §1a/§1b
+> surface ships in PR-1 with no new backend. Shared data still gets a "sign in to see
+> @sender's entries" prompt (#2353) at its own moment.
 
 ## 4. Week plan (human-in-the-loop gates)
 
@@ -254,7 +260,7 @@ for your judgement before code.
 | Day | Work | Output | Gate |
 | --- | --- | --- | --- |
 | **0–1** | Lofi sketches of the edit affordance (§1a), first-generation `/vibe` (§1b), live+edit (§1c), mobile-first. Flow outlines for: new app from homepage, visitor-Join, visitor-Remix, owner-edit. Finalize §2 verb spec + §7 subtraction ledger. | Sketch set + this doc's §1–2 ratified | **GATE 1: you approve the sketches & verbs before any code.** |
-| **2** | Spike the edit affordance (§1a) + first-generation `/vibe` state (§1b), mobile-first, app-blooms-in-canvas. Behind a flag, **auth-gated** (anonymous path is a separate dependency, §3). | Clickable affordance + first-gen on `/vibe` | **GATE 2: does the affordance + first-gen feel right on a phone?** |
+| **2** | Spike the edit affordance (§1a) + first-generation `/vibe` state (§1b), mobile-first, app-blooms-in-canvas. Behind a flag; cached chips anonymous, **login gates codegen by design** (§3) — no anonymous-draft backend needed. | Clickable affordance + first-gen on `/vibe` | **GATE 2: does the affordance + first-gen feel right on a phone?** |
 | **3** | Verb collapse + landing card: Remix/Join/View by intent; delete Clone/Fresh-Install/Edit-button; publish-intent setting (#1854). Mostly deletion. | PR-1 part 1 | — |
 | **4** | Share panel link-first (#2232 + children). Indicator system for viewer modes (#2178/#2275). | PR-1 complete → review | **GATE 3: PR-1 review/QA.** |
 | **5** | Inversion wiring: agent-in-vibe live+edit, hot-swap inline, `/chat` → `/vibe` redirects, lazy chat connection flip. | PR-2 (may carry over) | **GATE 4: full cutover review.** |
@@ -269,9 +275,10 @@ flag only as a rollback seam, not as a dependency workaround.
 ## 5. PR structure
 
 - **PR-1 "Vibe-first surface: verbs, landing, share" (no backend dep).** Edit affordance
-  (§1a) + first-generation `/vibe` state (§1b), both flagged and **auth-gated** (anonymous
-  generation deferred to its own dependency, §3); verb collapse, publish-intent, link-first
-  share, viewer-mode indicators. This is where most of the *deletion* lands. Ships this week.
+  (§1a) + first-generation `/vibe` state (§1b), both flagged; cached chips anonymous, login
+  gates codegen by design (§3 — no anonymous-draft backend); verb collapse, publish-intent,
+  link-first share, viewer-mode indicators. This is where most of the *deletion* lands. Ships
+  this week.
 - **PR-2 "Agent-in-vibe / retire /chat" (#2517 handled as a pre-task).** Inline agent
   live+edit, hot-swap, route redirects, lazy chat connection flip — full cutover, with
   a flag kept only as a rollback seam.
@@ -331,22 +338,26 @@ What we delete, and the learning it encodes — so the knowledge survives the co
 | Compact-then-expand share panel (#2236) | The flash was the panel trying to be two things. Link-first is one thing. |
 | Dual auto-accept checkboxes (#1768) | Two controls for one field = two surfaces drifting. One component. |
 | Separate `/start` *system* (#1896) — its curated content feeds the **homepage** prompt-entry; the route itself becomes a **compat redirect**, not hard-removed | Onboarding isn't a special place; it's the homepage's edit affordance seeded with curated content, identical to editing any vibe. (Redirect avoids breaking the prototype/links.) |
+| The anonymous-draft + claim-on-sign-in *backend system* we thought we'd need (never built) | Put the login wall on the codegen request, not the page: cached content is anonymous page-views, so anonymous *generation* never exists and there's nothing to claim. The cheapest feature is the one the boundary placement deletes. |
 
 ## 8. Open questions for GATE 1
 
-1. **Edit-affordance chip count.** Does the affordance (homepage *and* on-vibe) lead with
-   curated chips (instant cached) or mostly the bare textarea, and how many chips? Recommendation:
-   elastic — a few curated chips first (remix-first house thesis; they train the gesture), textarea
-   always present and dominant, chips can drop to zero.
-2. **Anonymous first-app creation + claim/recovery.** Can a logged-out user generate before any slug
-   exists, then claim on sign-in? Ties to #1693, and **has a backend dependency** (§3).
-   Recommendation: yes — anonymous draft, claimed later. *Must* define the claim/recovery
-   path up front so first-gen work is never lost if sign-in is interrupted (e.g. draft keyed
-   to a client token, re-attachable post-auth).
-3. **Eager slug + draft lifecycle.** Allocate `/vibe/$user/$app` before first generation (so
-   the URL is shareable immediately) or after? Recommendation: eager, throwaway anonymous
-   owner for logged-out drafts — **with a defined TTL/cleanup for abandoned drafts** so eager
-   allocation doesn't leak slugs/storage.
+**✅ 1. Edit-affordance shape — DECIDED (jchris).** Exactly **two curated chips + "Other"
+(free text)**. Two keeps it a low-choice trained gesture; "Other" is the open road. Same on
+the homepage and on any vibe.
+
+**✅ 2. Login boundary — DECIDED (jchris).** **No login until a real codegen request** (Other
+or an uncached chip). Cached chips are anonymous page-views. So there's **no anonymous
+*generation*, hence no anonymous-draft / claim-on-sign-in system to build** (§3). The only
+residual: preserve the pending prompt across the sign-in redirect (existing `?intent=`/prompt
+routing handles it) — confirm it survives the Other/uncached path. Define "uncached chip"
+precisely (a curated chip whose generated result isn't pre-warmed).
+
+3. **Slug + draft lifecycle (reduced by Q2).** Cached chips reuse existing cached-vibe URLs;
+   a *new* slug is allocated only at the first real codegen — which is now **post-login** — so
+   the eager-anonymous-slug + TTL worry largely dissolves. Remaining: confirm slug allocation
+   timing for the post-login draft (at codegen start, so the URL is shareable immediately) and
+   normal cleanup for drafts abandoned after login.
 4. **Curated-vs-real perf contract.** The edit affordance has two lanes — curated/cached (must
    feel instant, click-as-page-view) and real generation (visibly different, has latency). Define
    the perf budget and the visible treatment that distinguishes them, so "instant" is a
