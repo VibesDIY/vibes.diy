@@ -105,7 +105,10 @@ export const chatsEvento: EventoHandler<WrapCmdTSMsg<unknown>, ReqChats, ResChat
       }
       const turns = rResp.Ok().turns;
       if (turns.length === 0) {
-        return sendMsg(ctx, { type: "vibes-diy.cli.res-chat-response", output: "(no response found for this chat)" } satisfies ResChatResponse);
+        return sendMsg(ctx, {
+          type: "vibes-diy.cli.res-chat-response",
+          output: "(no response found for this chat)",
+        } satisfies ResChatResponse);
       }
       // Default to the newest turn (turns are newest-first); --turn picks another.
       let turn: ResChatResponseTurn | undefined = turns[0];
@@ -140,7 +143,12 @@ export const chatsEvento: EventoHandler<WrapCmdTSMsg<unknown>, ReqChats, ResChat
       let output = body;
       if (args.user === true) {
         const userBlock = extractUserPrompts(blocks)
-          .map((p) => p.split("\n").map((l) => `> ${l}`).join("\n"))
+          .map((p) =>
+            p
+              .split("\n")
+              .map((l) => `> ${l}`)
+              .join("\n")
+          )
           .join("\n>\n");
         output = userBlock === "" ? body : `${userBlock}\n\n${body}`;
       }
