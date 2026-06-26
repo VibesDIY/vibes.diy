@@ -1,7 +1,8 @@
 import React, { useState, useRef, useEffect, Fragment } from "react";
-import { useFireproof } from "use-vibes";
-import { useViewer } from "use-vibes";
+import { useFireproof } from "use-fireproof";
+import { useViewer, useVibe } from "use-vibes";
 
+const DB = "teamChannels";
 const URL_RE = /(https?:\/\/[^\s]+)/g;
 
 function LinkedText({ text }) {
@@ -27,9 +28,13 @@ function LinkedText({ text }) {
   );
 }
 
-function ChannelPreview({ name, onPick }) {
-  const { useLiveQuery } = useFireproof(name);
-  const { docs } = useLiveQuery("timestamp", { descending: true, limit: 5 });
+function ChannelPreview({ channel, onPick }) {
+  const { useLiveQuery } = useFireproof(DB);
+  const { docs } = useLiveQuery((d) => (d.type === "message" ? [d.channelId, d.timestamp] : undefined), {
+    prefix: [channel._id],
+    descending: true,
+    limit: 5,
+  });
   const last = docs[0];
   const avatars = [
     ...new Map(docs.filter((m) => m.authorAvatarUrl).map((m) => [m.authorHandle, m.authorAvatarUrl])).values(),
@@ -37,11 +42,11 @@ function ChannelPreview({ name, onPick }) {
 
   return (
     <button
-      onClick={() => onPick(name)}
+      onClick={() => onPick(channel._id)}
       className="w-full text-left px-5 py-4 border-b border-[oklch(0.31_0.005_285)] hover:bg-[oklch(0.28_0.005_285)] flex flex-col gap-2"
     >
       <div className="flex items-center justify-between">
-        <span className="font-semibold text-[oklch(1_0_0)]"># {name}</span>
+        <span className="font-semibold text-[oklch(1_0_0)]"># {channel.name}</span>
         <div className="flex items-center gap-1">
           {avatars.map((url) => (
             <img key={url} src={url} alt="" className="w-6 h-6 rounded-full ring-1 ring-[oklch(0.31_0.005_285)]" />
@@ -69,28 +74,35 @@ function ChannelHome({ channels, onPick }) {
   if (channels.length === 0) {
     return (
       <div className="flex-1 flex items-center justify-center text-[oklch(0.55_0.02_261)] text-sm italic">
-        No channels yet — add one in the sidebar.
+        No channels yet — the owner can add one in the sidebar.
       </div>
     );
   }
   return (
     <div className="flex-1 overflow-y-auto">
       {channels.map((ch) => (
-        <ChannelPreview key={ch._id} name={ch.name} onPick={onPick} />
+        <ChannelPreview key={ch._id} channel={ch} onPick={onPick} />
       ))}
     </div>
   );
 }
 
-function ChannelView({ name, viewer, can }) {
-  const { useLiveQuery, useDocument, database } = useFireproof(name);
-  const { docs: messages } = useLiveQuery("timestamp", { descending: false, limit: 200 });
-  const { doc, merge } = useDocument({ text: "" });
+function ChannelView({ channel, viewer }) {
+  const { useLiveQuery, database } = useFireproof(DB);
+  const { can, ready, me } = useVibe(DB);
+  const { docs: messages } = useLiveQuery((d) => (d.type === "message" ? [d.channelId, d.timestamp] : undefined), {
+    prefix: [channel._id],
+    descending: false,
+    limit: 200,
+  });
+  const [text, setText] = useState("");
   const [pendingImage, setPendingImage] = useState(null);
   const fileRef = useRef(null);
-  const writable = can("write", name);
   const prevCountRef = useRef(messages.length);
   const bottomRef = useRef(null);
+
+  // useVibe().can previews the access function — the same gate the server runs.
+  const writeVerdict = ready ? can.create({ type: "message", channelId: channel._id, authorHandle: me?.userHandle }) : null;
 
   // Scroll to bottom on new messages
   useEffect(() => {
@@ -102,7 +114,7 @@ function ChannelView({ name, viewer, can }) {
     if (messages.length > prevCountRef.current) {
       const last = messages[messages.length - 1];
       if (document.hidden && Notification.permission === "granted" && last?.authorHandle !== viewer?.userHandle) {
-        new Notification(`#${name}`, {
+        new Notification(`#${channel.name}`, {
           body: `${last.authorDisplayName || "someone"}: ${last._files?.image ? "📷 sent an image" : last.text}`,
           icon: last.authorAvatarUrl || undefined,
         });
@@ -113,20 +125,26 @@ function ChannelView({ name, viewer, can }) {
 
   async function handleSubmit(e) {
     e.preventDefault();
-    const text = doc.text.trim();
-    if ((!text && !pendingImage) || !viewer) return;
+    const trimmed = text.trim();
+    if ((!trimmed && !pendingImage) || !me) return;
     const entry = {
-      text: text || "",
+      type: "message",
+      channelId: channel._id,
+      text: trimmed || "",
       timestamp: Date.now(),
-      authorHandle: viewer.userHandle,
-      authorDisplayName: viewer.displayName || viewer.userHandle,
-      authorAvatarUrl: viewer.avatarUrl,
+      authorHandle: me.userHandle,
+      authorDisplayName: viewer?.displayName || me.userHandle,
+      authorAvatarUrl: viewer?.avatarUrl,
     };
     if (pendingImage) entry._files = { image: pendingImage };
-    merge({ text: "" });
+    setText("");
     setPendingImage(null);
     if (fileRef.current) fileRef.current.value = "";
     await database.put(entry);
+  }
+
+  async function remove(doc) {
+    await database.del(doc._id);
   }
 
   return (
@@ -136,9 +154,9 @@ function ChannelView({ name, viewer, can }) {
           <li className="text-sm text-[oklch(0.71_0.02_261)] italic">No messages yet. Be the first.</li>
         ) : (
           messages.map((m) => (
-            <li key={m._id} className="text-sm text-[oklch(0.87_0.01_258)] flex gap-3">
+            <li key={m._id} className="text-sm text-[oklch(0.87_0.01_258)] flex gap-3 group">
               {m.authorAvatarUrl && <img src={m.authorAvatarUrl} alt="" className="w-8 h-8 rounded-full shrink-0" />}
-              <div className="min-w-0">
+              <div className="min-w-0 flex-1">
                 <span className="font-semibold text-[oklch(1_0_0)]">{m.authorDisplayName || m.authorHandle || "anonymous"}</span>
                 <span className="ml-2 text-xs text-[oklch(0.71_0.02_261)]">
                   {m.timestamp ? new Date(m.timestamp).toLocaleTimeString() : ""}
@@ -154,18 +172,24 @@ function ChannelView({ name, viewer, can }) {
                   </p>
                 )}
               </div>
+              {ready && can.delete(m).ok && (
+                <button
+                  onClick={() => remove(m)}
+                  className="opacity-0 group-hover:opacity-100 text-xs text-[oklch(0.71_0.02_261)] hover:text-[oklch(0.7_0.18_25)] shrink-0"
+                >
+                  delete
+                </button>
+              )}
             </li>
           ))
         )}
         <li ref={bottomRef} />
       </ul>
-      {!viewer ? (
-        <div className="px-6 py-4 border-t border-[oklch(0.31_0.005_285)] text-sm text-[oklch(0.71_0.02_261)]">
-          Sign in to participate.
-        </div>
-      ) : !writable ? (
+      {!ready ? (
+        <div className="px-6 py-4 border-t border-[oklch(0.31_0.005_285)] text-sm text-[oklch(0.71_0.02_261)] italic">Loading…</div>
+      ) : !writeVerdict.ok ? (
         <div className="px-6 py-4 border-t border-[oklch(0.31_0.005_285)] text-sm text-[oklch(0.71_0.02_261)] italic">
-          Read-only — contact the owner for write access.
+          {writeVerdict.reason || "Read-only — contact the owner for write access."}
         </div>
       ) : (
         <div className="border-t border-[oklch(0.31_0.005_285)]">
@@ -184,7 +208,7 @@ function ChannelView({ name, viewer, can }) {
             </div>
           )}
           <div className="px-6 pt-2 text-xs text-[oklch(0.71_0.02_261)]">
-            Posting as <span className="text-[oklch(0.79_0.18_75)] font-medium">{viewer.displayName || viewer.userHandle}</span>
+            Posting as <span className="text-[oklch(0.79_0.18_75)] font-medium">{viewer?.displayName || me?.userHandle}</span>
           </div>
           <form onSubmit={handleSubmit} className="px-6 py-3 flex gap-2 pr-20">
             <button
@@ -202,10 +226,10 @@ function ChannelView({ name, viewer, can }) {
               onChange={(e) => setPendingImage(e.target.files?.[0] || null)}
             />
             <input
-              value={doc.text}
-              onChange={(e) => merge({ text: e.target.value })}
+              value={text}
+              onChange={(e) => setText(e.target.value)}
               className="flex-1 px-3 py-2 rounded bg-[oklch(0.18_0.005_285)] border border-[oklch(0.31_0.005_285)] text-[oklch(1_0_0)] min-h-[44px]"
-              placeholder={`Message #${name}`}
+              placeholder={`Message #${channel.name}`}
             />
             <button
               type="submit"
@@ -220,37 +244,39 @@ function ChannelView({ name, viewer, can }) {
   );
 }
 
-function ChannelList({ active, onPick, can, c }) {
-  const { useLiveQuery } = useFireproof("channel-registry");
-  const { docs } = useLiveQuery("name");
-  const visible = docs.filter((ch) => ch.name && can("read", ch.name));
-  if (visible.length === 0) {
+function ChannelList({ channels, active, onPick, c }) {
+  if (channels.length === 0) {
     return <div className="px-4 py-2 text-xs text-[oklch(0.71_0.02_261)] italic">No channels yet.</div>;
   }
-  return visible.map((ch) => (
-    <button key={ch._id} onClick={() => onPick(ch.name)} className={active === ch.name ? c.channelBtnActive : c.channelBtn}>
+  return channels.map((ch) => (
+    <button key={ch._id} onClick={() => onPick(ch._id)} className={active === ch._id ? c.channelBtnActive : c.channelBtn}>
       # {ch.name}
     </button>
   ));
 }
 
 function AddChannelForm() {
-  const { useDocument, database } = useFireproof("channel-registry");
-  const { doc, merge } = useDocument({ name: "" });
+  const { database } = useFireproof(DB);
+  const { can, ready, me } = useVibe(DB);
+  const [name, setName] = useState("");
+
+  // Channel creation is owner-only — encoded in access.js and previewed here.
+  const verdict = ready ? can.create({ type: "channel", createdBy: me?.userHandle }) : null;
+  if (!ready || !verdict.ok) return null;
 
   async function handleSubmit(e) {
     e.preventDefault();
-    const name = doc.name.trim().toLowerCase().replace(/\s+/g, "-");
-    if (!name) return;
-    merge({ name: "" });
-    await database.put({ name });
+    const slug = name.trim().toLowerCase().replace(/\s+/g, "-");
+    if (!slug) return;
+    setName("");
+    await database.put({ _id: "ch:" + slug, type: "channel", name: slug, createdBy: me?.userHandle, createdAt: Date.now() });
   }
 
   return (
     <form onSubmit={handleSubmit} className="px-3 py-2 flex gap-1 border-t border-[oklch(0.25_0.005_285)]">
       <input
-        value={doc.name}
-        onChange={(e) => merge({ name: e.target.value })}
+        value={name}
+        onChange={(e) => setName(e.target.value)}
         placeholder="new-channel"
         className="flex-1 px-2 py-1 text-xs rounded bg-[oklch(0.22_0.005_285)] border border-[oklch(0.31_0.005_285)] text-[oklch(1_0_0)] min-w-0"
       />
@@ -265,11 +291,11 @@ function AddChannelForm() {
 }
 
 export default function App() {
-  const { viewer, can } = useViewer();
-  const [activeChannel, setActiveChannel] = useState(null);
-  const { useLiveQuery } = useFireproof("channel-registry");
-  const { docs: allChannels } = useLiveQuery("name");
-  const visibleChannels = allChannels.filter((ch) => ch.name && can("read", ch.name));
+  const { viewer } = useViewer();
+  const { useLiveQuery } = useFireproof(DB);
+  const { docs: channels } = useLiveQuery("type", { key: "channel" });
+  const [activeId, setActiveId] = useState(null);
+  const activeChannel = channels.find((ch) => ch._id === activeId) || null;
 
   // Request notification permission once viewer is known
   useEffect(() => {
@@ -298,14 +324,14 @@ export default function App() {
     <div className={c.page}>
       <aside className={c.sidebar} id="sidebar">
         <div className={c.sidebarHeader}>
-          <h1 className={c.title} onClick={() => setActiveChannel(null)}>
+          <h1 className={c.title} onClick={() => setActiveId(null)}>
             Team Channels
           </h1>
         </div>
         <section id="channel-list" className={c.channelList}>
           <div className="px-4 py-1 text-[10px] uppercase tracking-wider text-[oklch(0.71_0.02_261)]">Channels</div>
-          <ChannelList active={activeChannel} onPick={setActiveChannel} can={can} c={c} />
-          {can("write", "channel-registry") && <AddChannelForm />}
+          <ChannelList channels={channels} active={activeId} onPick={setActiveId} c={c} />
+          <AddChannelForm />
         </section>
         {viewer && (
           <div className={c.viewerBar}>
@@ -316,13 +342,13 @@ export default function App() {
       </aside>
       <main className={c.main} id="app">
         <header className={c.header} id="app-header">
-          <h2 className={c.headerTitle}>{activeChannel ? `# ${activeChannel}` : "Team Channels"}</h2>
+          <h2 className={c.headerTitle}>{activeChannel ? `# ${activeChannel.name}` : "Team Channels"}</h2>
         </header>
         <section id="channel-view" className={c.section}>
           {!activeChannel ? (
-            <ChannelHome channels={visibleChannels} onPick={setActiveChannel} />
+            <ChannelHome channels={channels} onPick={setActiveId} />
           ) : (
-            <ChannelView key={activeChannel} name={activeChannel} viewer={viewer} can={can} />
+            <ChannelView key={activeChannel._id} channel={activeChannel} viewer={viewer} />
           )}
         </section>
       </main>
