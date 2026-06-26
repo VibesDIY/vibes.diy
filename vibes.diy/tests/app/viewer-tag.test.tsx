@@ -58,6 +58,18 @@ describe("ViewerTag", () => {
     expect(document.querySelector('input[type="file"]')).toBeTruthy();
   });
 
+  it("does not show edit affordance when an explicit handle matches the viewer", () => {
+    // "me" shape (no props) is editable, but an explicit handle prop is a
+    // profile reference and is never editable, even when it matches the viewer.
+    renderViewerTag(aliceEnv, { userHandle: "alice" });
+    expect(document.querySelector('input[type="file"]')).toBeNull();
+  });
+
+  it("does not show edit affordance when a user prop matches the viewer", () => {
+    renderViewerTag(aliceEnv, { user: { userHandle: "alice" } });
+    expect(document.querySelector('input[type="file"]')).toBeNull();
+  });
+
   it("shows a sign-in button when viewer is anonymous and no props given", () => {
     renderViewerTag(undefined);
     expect(screen.getByText("Sign in")).toBeTruthy();
