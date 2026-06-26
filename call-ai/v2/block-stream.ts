@@ -308,6 +308,14 @@ export function createBlockStream(
   //   path-shape line → consumed as path on fence open; flushed as prose otherwise
   //   hr-shape line   → dropped at line.end (trailing); flushed as prose if any line follows
   let pendingLine: PendingLine | undefined;
+  // Blank lines seen after a path candidate. A filename label is conventionally
+  // separated from its fence by a blank line, so we hold the pending path across
+  // these blanks instead of letting the blank flush it — otherwise the fence
+  // falls back to DEFAULT_PATH and a second file (e.g. access.js) silently
+  // clobbers App.jsx. Dropped when a fence consumes the path; flushed as prose
+  // (after the path, in order) if non-blank content or end-of-stream intervenes.
+  // Invariant: non-empty only while `pendingLine?.kind === "path"`.
+  let pendingBlanks: string[] = [];
   const toplevelStat = { lines: 0, bytes: 0, cnt: 0 };
   const codeStat = { lines: 0, bytes: 0, cnt: 0 };
   const imageStat = { lines: 0, bytes: 0, cnt: 0 };
@@ -362,10 +370,16 @@ export function createBlockStream(
   }
 
   function flushPendingAsToplevel(controller: TransformStreamDefaultController<BlockStreamMsg>) {
-    if (pendingLine === undefined) return;
-    const line = pendingLine.content;
-    pendingLine = undefined;
-    emitToplevelLine(controller, line);
+    if (pendingLine !== undefined) {
+      const line = pendingLine.content;
+      pendingLine = undefined;
+      emitToplevelLine(controller, line);
+    }
+    if (pendingBlanks.length > 0) {
+      const blanks = pendingBlanks;
+      pendingBlanks = [];
+      for (const blank of blanks) emitToplevelLine(controller, blank);
+    }
   }
 
   let currentUsageSSE: SseUsage = { prompt_tokens: 0, completion_tokens: 0, total_tokens: 0 };
@@ -443,6 +457,8 @@ export function createBlockStream(
             if (pendingLine !== undefined && pendingLine.kind === "path") {
               consumedPath = pendingLine.content.trim();
               pendingLine = undefined;
+              // Drop blank separators between the filename label and the fence.
+              pendingBlanks = [];
             } else {
               flushPendingAsToplevel(controller);
             }
@@ -491,6 +507,11 @@ export function createBlockStream(
               // HR candidate: drop only if it's the last line of the block.
               flushPendingAsToplevel(controller);
               pendingLine = { content, kind: "hr" };
+            } else if (trimmed.length === 0 && pendingLine?.kind === "path") {
+              // Blank line after a filename label: hold the path across it so a
+              // following fence still binds to the named file. Buffer the blank
+              // so it flushes in order if prose/end-of-stream intervenes instead.
+              pendingBlanks.push(content);
             } else {
               flushPendingAsToplevel(controller);
               emitToplevelLine(controller, content);
