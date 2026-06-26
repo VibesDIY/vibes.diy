@@ -8,7 +8,14 @@ import { sendMsg, WrapCmdTSMsg } from "../cmd-evento.js";
 import { resolveHandle } from "../resolve-handle.js";
 import { formatErr } from "./format-err.js";
 import { resolveVibePositionals } from "../parse-vibe.js";
-import { extractUserPrompts, reconstructVerbatim, renderJsonl, resolveTurnFiles, turnBlocks } from "./chat-response-render.js";
+import {
+  extractRawText,
+  extractUserPrompts,
+  reconstructVerbatim,
+  renderJsonl,
+  resolveTurnFiles,
+  turnBlocks,
+} from "./chat-response-render.js";
 
 export const ReqChats = type({
   type: "'vibes-diy.cli.chats'",
@@ -17,8 +24,9 @@ export const ReqChats = type({
   "chatId?": "string",
   apiUrl: "string",
   // --response family: dump the model's actual reply for a chat. `response` is
-  // implied by any of `files`/`jsonl`/`user`. `promptId` selects one turn.
+  // implied by any of `raw`/`files`/`jsonl`/`user`. `promptId` selects one turn.
   "response?": "boolean",
+  "raw?": "boolean",
   "files?": "boolean",
   "jsonl?": "boolean",
   "user?": "boolean",
@@ -88,7 +96,8 @@ export const chatsEvento: EventoHandler<WrapCmdTSMsg<unknown>, ReqChats, ResChat
 
     // --response (and its --files/--jsonl/--user variants): dump the model's
     // actual reply for a chat, not just the user prompt getChatDetails returns.
-    const wantResponse = args.response === true || args.files === true || args.jsonl === true || args.user === true;
+    const wantResponse =
+      args.response === true || args.raw === true || args.files === true || args.jsonl === true || args.user === true;
     if (wantResponse) {
       if (ownerHandle === undefined) {
         return Result.Err("Could not resolve handle. Pass --handle or run 'vibes-diy login'.");
@@ -129,7 +138,14 @@ export const chatsEvento: EventoHandler<WrapCmdTSMsg<unknown>, ReqChats, ResChat
       const blocks = turnBlocks(turn);
 
       let body: string;
-      if (args.jsonl === true) {
+      if (args.raw === true) {
+        // Byte-faithful: the exact model text before the parser ran. Only
+        // present for turns generated after raw capture shipped.
+        const raw = extractRawText(blocks);
+        body =
+          raw ??
+          "(no raw capture for this turn — byte-faithful text is only stored for generations after raw capture shipped; try --jsonl or the default block-faithful view)";
+      } else if (args.jsonl === true) {
         body = renderJsonl(blocks);
       } else if (args.files === true) {
         const rResolved = await resolveTurnFiles(turns, turn.promptId);
@@ -237,6 +253,11 @@ export function chatsCmd(ctx: CliCtx) {
         long: "response",
         short: "r",
         description: "Show the model's reply, block-faithfully reconstructed from stored block events, instead of the user prompt",
+      }),
+      raw: flag({
+        long: "raw",
+        description:
+          "With --response: byte-faithful raw model text captured upstream of the parser (preserves consumed labels & blank lines; new generations only)",
       }),
       files: flag({
         long: "files",

@@ -1,6 +1,6 @@
 import { Result } from "@adviser/cement";
 import { isCodeBegin, isCodeEnd, isCodeLine, isToplevelLine } from "@vibes.diy/call-ai-v2";
-import { isPromptReq } from "@vibes.diy/api-types";
+import { isPromptRaw, isPromptReq } from "@vibes.diy/api-types";
 import type { PromptAndBlockMsgs, ResChatResponseTurn, SectionEvent } from "@vibes.diy/api-types";
 import { resolveSectionStream, type ResolveSectionStreamResult } from "./resolve-section-stream.js";
 
@@ -52,6 +52,19 @@ export function reconstructVerbatim(blocks: readonly PromptAndBlockMsgs[]): stri
 /** One raw block event per line, for piping into `jq` or capturing fixtures. */
 export function renderJsonl(blocks: readonly PromptAndBlockMsgs[]): string {
   return blocks.map((b) => JSON.stringify(b)).join("\n");
+}
+
+/**
+ * The byte-faithful raw model text for a turn (`--raw`): the exact markdown the
+ * model streamed, captured upstream of the block parser, so consumed filename
+ * labels and separator blank lines the parser drops are preserved. Returns
+ * undefined when the turn has no `prompt.raw` block — turns generated before
+ * byte-faithful capture shipped can't be backfilled. Multiple `prompt.raw`
+ * blocks (shouldn't happen per turn) are concatenated.
+ */
+export function extractRawText(blocks: readonly PromptAndBlockMsgs[]): string | undefined {
+  const parts = blocks.filter(isPromptRaw).map((b) => b.text);
+  return parts.length === 0 ? undefined : parts.join("");
 }
 
 /**

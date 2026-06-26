@@ -1,6 +1,13 @@
 import { describe, expect, it } from "vitest";
 import type { PromptAndBlockMsgs, ResChatResponseTurn } from "@vibes.diy/api-types";
-import { buildSectionStream, extractUserPrompts, reconstructVerbatim, renderJsonl, turnBlocks } from "./chat-response-render.js";
+import {
+  buildSectionStream,
+  extractRawText,
+  extractUserPrompts,
+  reconstructVerbatim,
+  renderJsonl,
+  turnBlocks,
+} from "./chat-response-render.js";
 import { resolveSectionStream } from "./resolve-section-stream.js";
 
 const base = (seq: number) => ({
@@ -77,6 +84,27 @@ describe("renderJsonl", () => {
     expect(lines).toHaveLength(2);
     expect(JSON.parse(lines[0]).type).toBe("block.toplevel.line");
     expect(JSON.parse(lines[1]).type).toBe("block.code.begin");
+  });
+});
+
+describe("extractRawText", () => {
+  const rawBlock = (text: string): PromptAndBlockMsgs =>
+    ({
+      type: "prompt.raw",
+      streamId: "stream-1",
+      chatId: "c",
+      seq: 9,
+      timestamp: new Date(0),
+      text,
+    }) as unknown as PromptAndBlockMsgs;
+
+  it("returns the byte-faithful text from a prompt.raw block", () => {
+    const blocks = [toplevelLine(0, "App.jsx"), rawBlock("App.jsx\n\n```jsx\nconst a=1;\n```\n")];
+    expect(extractRawText(blocks)).toBe("App.jsx\n\n```jsx\nconst a=1;\n```\n");
+  });
+
+  it("returns undefined when no prompt.raw block is present (un-backfilled turn)", () => {
+    expect(extractRawText([toplevelLine(0, "hi"), codeBegin(1, "jsx", "App.jsx")])).toBeUndefined();
   });
 });
 
