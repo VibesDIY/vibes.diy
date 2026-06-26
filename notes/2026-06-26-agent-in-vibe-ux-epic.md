@@ -214,7 +214,7 @@ inside it — not nested in the chat.** Decided structure (jchris):
 
 - **The menu's top-level nav is invariant across owner vs visitor.** Same items, same
   places, whoever you are; only the *contents* of a given view differ by role (e.g. the
-  "access" view shows Request-access / make-your-own for a request-gated visitor, sharing
+  "access" view shows Request-access / make-it-yours for a request-gated visitor, sharing
   controls for an owner). One nav to learn; it never rearranges under you.
 - **The access view lives in this menu** (reachable by navigating the switch top-level),
   styled as part of the switch's look-and-feel — not as a separate landing card. The edit
@@ -253,29 +253,33 @@ verbs for 2 outcomes**; collapse them.
 
 Almost everything is automatic. **View is automatic** (readable vibes just load). **Join is
 automatic** (auto-join) *except* when the vibe is request-gated — there, the lone explicit
-access CTA is **"Request access."** And "make your own copy" has no verb: it's what the edit
-affordance does on a vibe you don't own.
+access CTA is **"Request access."** And **"make it yours"** has no verb: it's just what the
+edit affordance does on a vibe you don't own.
+
+> **Words (decided, jchris): "remix" = the act; "make it yours / your own" = the result.**
+> You *remix* a vibe (change it — the cultural verb, stays); doing so on a vibe you don't own
+> makes it *yours* (an independent copy). "Fork"/"clone" are retired as user words.
 
 | What you can do | How it's surfaced | Replaces |
 | --- | --- | --- |
 | **Read / use** a readable vibe | **automatic** — public & read-only just load | "View" / "Open" buttons |
 | Get into the **shared data** | **automatic** (auto-join) — *or* **"Request access"** when request-gated | "Join collab" button (only "Request access" survives) |
-| **Change it** — own → in place; **don't own → clone to your handle**, then your edit applies | the edit affordance (chips + Other), §1a — **no verb, no button** | "Remix", "Clone", "Fresh Install", "Edit", "Fork" |
+| **Change it** — own → in place; **don't own → it becomes yours** (a copy under your handle), then your edit applies | the edit affordance (chips + Other), §1a — **no verb, no button** | "Remix"/"Clone"/"Fresh Install"/"Edit"/"Fork" buttons |
 
 - **The only surviving explicit access word is "Request access."** Join otherwise just
   happens (auto-join); View always just happens. (jchris)
 - **On a request-gated vibe with no grant, the real choice is two things:** **Request access**
-  (get into the original's *shared data*) vs **make your own copy** (a "no-op edit" — clone
-  the published app to *your* handle, no change required). These are genuinely different
-  outcomes — same data vs your own space.
-- **Clone-to-your-handle keeps the slug.** The forked app lands at
-  `/vibe/$yourHandle/$sameAppSlug` — the appSlug **does not change** unless you've already
-  used that slug under your handle, in which case a fresh slug is assigned (collision only).
-- **"Remix" is no longer a verb (jchris).** The fork is implicit, surfaced by the #1856
-  inline "this is your copy" message. No Remix / Clone / Edit / Fresh-Install button anywhere.
-  (#1709 #2162 #2262 #1855 #1856 #2037 collapse into this.)
+  (get into the original's *shared data*) vs **make it yours** (take the published app as your
+  own — code only, no change required). Genuinely different outcomes — same data vs your space.
+- **Making it yours keeps the slug.** Your copy lands at `/vibe/$yourHandle/$sameAppSlug` —
+  the appSlug **does not change** unless you've already used that slug under your handle, in
+  which case a fresh slug is assigned (collision only).
+- **"Remix" is not a button; "make it yours" is not a verb (jchris).** The copy is implicit,
+  surfaced by the #1856 inline "it's yours now — the original is unchanged" message. No
+  Remix / Clone / Edit / Fresh-Install button anywhere. (#1709 #2162 #2262 #1855 #1856 #2037
+  collapse into this.)
 
-### Ownership, code vs data, and clone semantics (decided)
+### Ownership, code vs data, and "make it yours" semantics (decided)
 
 - **Ownership is account-level (jchris).** You own every app *any of your handles* created;
   switching your active handle never forks your own work. **Ownership = account; membership
@@ -283,18 +287,17 @@ affordance does on a vibe you don't own.
 - **The edit affordance changes CODE; only the owner changes code in place (jchris).**
   Everyone else — **including writer-members** — forks when they use the chips/Other. A
   write-grant member changes *data* simply by **using** the app (that's using, not editing);
-  they cannot rewrite the shared code. So for every non-owner, the edit affordance clones.
-- **Clone takes code only, fresh/empty data (jchris).** If you wanted the shared data you'd
-  Join. (Curated starters are the exception only in that their authored content ships *as*
-  the starter.) The clone lands at `/vibe/$yourActiveHandle/$sameAppSlug`, slug preserved
-  unless you've used it (then suffixed).
-- **Editing always forks fresh; "open your copy" is the explicit return path (jchris).**
-  Re-engaging the affordance on a source you've already cloned makes a *new* copy by default
-  — no silent routing to the old one. The system *knows* your existing copies and offers
-  **"open your copy"** as a distinct choice in the access view, but a chip/Other click
-  defaults to a fresh fork. (Clone is not idempotent: the menu remembers, the affordance
-  doesn't.)
-- **"Make your own copy" / "open your copy" are access-view choices, not floating buttons.**
+  they cannot rewrite the shared code. So for every non-owner, the edit affordance makes a copy.
+- **Making it yours takes code only, fresh/empty data (jchris).** If you wanted the shared
+  data you'd Join. (Curated starters are the exception only in that their authored content
+  ships *as* the starter.) Your copy lands at `/vibe/$yourActiveHandle/$sameAppSlug`, slug
+  preserved unless you've used it (then suffixed).
+- **Editing always makes a fresh copy; "open your own" is the explicit return path (jchris).**
+  Re-engaging the affordance on a source you've already made yours produces a *new* copy by
+  default — no silent routing to the old one. The system *knows* your existing copies and
+  offers **"open your own"** as a distinct choice in the access view, but a chip/Other click
+  defaults to a fresh copy. (Not idempotent: the menu remembers, the affordance doesn't.)
+- **"Make it yours" / "open your own" are access-view choices, not floating buttons.**
   This does *not* reintroduce copy-buttons on the app: they're navigational items inside the
   switch's access view (the gate/menu context), distinct from the deleted Remix/Clone/Edit
   chrome. The running app stays button-free.
@@ -324,30 +327,30 @@ The creator picks what the vibe *is for*; this sets sensible **access defaults**
 | Intent | Access default it sets | Visitor experience |
 | --- | --- | --- |
 | Shared space | auto-join on | **auto-joined**, with a "join as [handle]" consent step; or "Request access" if the creator turned auto-join off |
-| Template | public | use it; the chips invite changes; editing **clones to your handle** (no CTA) |
-| Read-only / published | public, read-only | **view automatically**; editing clones to your handle |
+| Template | public | use it; the chips invite changes; editing **makes it yours** (no CTA) |
+| Read-only / published | public, read-only | **view automatically**; editing makes it yours |
 
 ### Access-state → what the visitor sees (precedence)
 
 There is now **at most one explicit CTA** (Join or View) plus the always-present edit
 affordance (using it forks when you don't own). Access state gates which is shown; resolve
 Almost every state is automatic; the only explicit access CTA is **Request access**, and the
-always-available alternative is **make your own copy** (clone→your handle). The canonical
+always-available alternative is **make it yours** (your own copy → your handle). The canonical
 lookup, by access state for a visitor with no personal grant:
 
 | access state | explicit access CTA | what's automatic / the alternative |
 | --- | --- | --- |
 | `public-access` | — | app loads; **read/use automatically** (View is automatic) |
 | auto-join (auto-approve on) | — | **auto-joined**, with a **"join as [handle]" consent** step |
-| request-gated (`requests-on`) | **Request access** | or **make your own copy** (clone→your handle) |
-| `pending-request` | — (`Requested`, disabled) | or make your own copy |
-| `revoked-access` | — (`Revoked`, disabled) | or make your own copy |
-| private, `requests-off` (`not-grant`) | — (`App not available`) | make your own copy * |
+| request-gated (`requests-on`) | **Request access** | or **make it yours** (your own copy) |
+| `pending-request` | — (`Requested`, disabled) | or make it yours |
+| `revoked-access` | — (`Revoked`, disabled) | or make it yours |
+| private, `requests-off` (`not-grant`) | — (`App not available`) | make it yours * |
 
-\* "make your own copy" = the no-op clone-to-your-handle (same appSlug unless taken), only
-when the published app is reachable (you can't clone what you can't see). `member` /
-`submitter` resolve in Member mode, outside this visitor resolver. The strict-enum JSON form
-(`accessState`, `explicitCta`, `cloneAvailable`) lands with PR-1 as the wiring source of truth.
+\* "make it yours" = the no-op copy to your handle (same appSlug unless taken), only when the
+published app is reachable (you can't copy what you can't see). `member` / `submitter` resolve
+in Member mode, outside this visitor resolver. The strict-enum JSON form (`accessState`,
+`explicitCta`, `canMakeYours`) lands with PR-1 as the wiring source of truth.
 
 > **Why "join as [handle]" matters:** joining exposes *a* handle of yours to the other
 > members. Since you may have several, auto-join must let you **consent to which handle** is
@@ -367,7 +370,7 @@ The 12 grant values in `notes/vibes-sharing-reference.md` collapse, for UI purpo
 | --- | --- | --- | --- |
 | **Author** | owner / admin | (highlighted, e.g. shield) | agent-ready, Share, **active-handle switcher** |
 | **Member** | writer/reader grant | read-only → lock glyph when no write | agent-ready (writer), active-handle switcher |
-| **Visitor** | anon / no grant | none | **Request access** (only if request-gated) + the edit affordance (editing clones to your handle); else just uses/views |
+| **Visitor** | anon / no grant | none | **Request access** (only if request-gated) + the edit affordance (editing makes it yours); else just uses/views |
 
 The **active-handle switcher is present in every mode** (you always act *as* a handle) and is
 a top-level switch-nav item (§1e, #2275).
@@ -421,7 +424,7 @@ for your judgement before code.
 | --- | --- | --- | --- |
 | **0–1** | Lofi sketches of the edit affordance (§1a), first-generation `/vibe` (§1b), live+edit (§1c), mobile-first. Flow outlines for: new app from homepage, visitor Join/View, non-owner-edit-forks, owner-edit. Finalize §2 verb spec + §7 subtraction ledger. (Switch menu / access view layout §1e is deferred.) | Sketch set + this doc's §1–2 ratified | **GATE 1: you approve the sketches & verbs before any code.** |
 | **2** | **The first & biggest step: redefine the VibesSwitch so opening it reveals the chips** (`OptionButtons`), already-open on start flows (§1c/§1d). Then the first-generation stream→preview behavior (§1b). Behind a flag; cached chips anonymous, **login gates codegen by design** (§3) — no anonymous-draft backend needed. | Switch-reveals-chips + first-gen on `/vibe` | **GATE 2: does opening the switch → chips, and first-gen, feel right on a phone?** |
-| **3** | Verb collapse: **Join/View only + implicit fork on edit**; delete the Remix/Clone/Fresh-Install/Edit buttons entirely; publish-intent setting (#1854). Mostly deletion. | PR-1 part 1 | — |
+| **3** | Verb collapse: **Request-access only + "make it yours" implicit on edit**; delete the Remix/Clone/Fresh-Install/Edit buttons entirely; publish-intent setting (#1854). Mostly deletion. | PR-1 part 1 | — |
 | **4** | Share panel link-first (#2232 + children). Indicator system for viewer modes (#2178/#2275). | PR-1 complete → review | **GATE 3: PR-1 review/QA.** |
 | **5** | Inversion wiring: agent-in-vibe live+edit, hot-swap inline, `/chat` → `/vibe` redirects, lazy chat connection flip. | PR-2 (may carry over) | **GATE 4: full cutover review.** |
 
@@ -497,7 +500,7 @@ What we delete, and the learning it encodes — so the knowledge survives the co
 | Deleted | Learning |
 | --- | --- |
 | `/chat` route + editor shell | The editor was never the product; the app is. The agent belongs inside the app. |
-| Clone / Fresh Install verbs | "Copy without the editor" was an artifact of the editor existing. With inline agent, there's only Remix. |
+| Clone / Fresh Install / Fork verbs | "Copy without the editor" was an artifact of the editor existing. With the inline agent there's no copy-button: you *remix* it (the act) and it *becomes yours* (the result). |
 | EDIT/CLONE/REMIX submenu (#1709) | Three verbs for one action taught users nothing; the affordance *is* the explanation. |
 | Four-button action bar (#1708) | Look-alike buttons with different interaction models = the cost of bolting features onto a preview pane. |
 | "Public Sharing: disabled / Enable" pill (#2235) | State-vs-action ambiguity comes from cramming config into the link surface. Link-first removes the question. |
@@ -547,9 +550,9 @@ changes, contents swap stream → live app, forming app de-blurs behind (§1b).
 already opening the switch; no per-vibe coach (#1836's onboarding idea dropped).
 
 **✅ 9–12. Access/identity core logic — DECIDED (jchris):** ownership is account-level; only
-the owner changes code in place (non-owners incl. writer-members fork); clone = code only +
-fresh data; editing always forks fresh with "open your copy" as the explicit return path
-(§2 "Ownership, code vs data, and clone semantics").
+the owner changes code in place (non-owners incl. writer-members make a copy); "make it yours"
+= code only + fresh data; editing always makes a fresh copy with "open your own" as the
+explicit return path (§2 "Ownership, code vs data, and 'make it yours' semantics").
 
 ### Parked semantic gaps (resolve before build, not blocking sketches)
 
@@ -561,18 +564,18 @@ fresh data; editing always forks fresh with "open your copy" as the explicit ret
 14. **Request-access consent symmetry.** Requesting access exposes a handle to the owner (for
     approval). Should "Request access" carry the same **"request as [handle]"** consent as
     auto-join? Lean: yes, by symmetry — requesting and joining both expose identity.
-15. **appSlug as lineage label.** Slug is a *per-handle* id we keep stable across a clone
-    lineage for memorable/shareable URLs, but it's **not** a global lineage key (collisions
-    suffix). True lineage stays tracked via `remixOf`. Confirm we're fine with slug-as-best-
-    effort-label, lineage-as-`remixOf`-truth.
-16. **Clone attribution visibility.** `remixOf` records the source. Is that lineage link
-    public / shown to the source owner (who sees who cloned), or private to the cloner? Lean:
-    attribution visible (matches house "remix culture"), but the *cloner's data* never is.
+15. **appSlug as lineage label.** Slug is a *per-handle* id we keep stable across a
+    make-it-yours lineage for memorable/shareable URLs, but it's **not** a global lineage key
+    (collisions suffix). True lineage stays tracked via `remixOf`. Confirm we're fine with
+    slug-as-best-effort-label, lineage-as-`remixOf`-truth.
+16. **Lineage attribution visibility.** `remixOf` records the source. Is that link public /
+    shown to the source owner (who sees who made their own copy), or private? Lean: attribution
+    visible (matches house "remix culture"), but the copier's *data* never is.
 17. **Full login-trigger set.** Login is required at: codegen (Other/uncached edit), Join, and
     Request access (all expose/own identity). Anonymous stays: cached-chip browsing + viewing
     public apps. Confirm this is the complete, coherent set (esp. commenting — does posting a
     comment require login + a chosen handle?).
-18. **Name for the copy/clone concept (in progress).** "Fork" is banned ("forks are for
-    dorks"); "remix" = the *cultural act of changing* a vibe (stays); we need a friendlier word
-    than "clone" for *taking an independent code-only copy*. Candidate under discussion — see
-    the open naming question. Once chosen, replace "clone"/"make your own copy" doc-wide.
+**✅ 18. Name for the copy concept — DECIDED (jchris): "make it yours / your own."** "Fork"
+and "clone" are retired as user words; **"remix"** stays as the cultural *act of changing* a
+vibe; the *result* of changing one you don't own is that it **becomes yours** (an independent
+code-only copy). Applied doc-wide.
