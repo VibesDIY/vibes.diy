@@ -88,12 +88,12 @@ npx vibes-diy chats garden-gnome/alignment-chart <chatId> --response   # the MOD
 `--response` reconstructs the model's reply from the stored block events and **annotates each code fence with the path the parser bound it to** — so you can see directly which file each block became. Modifiers (all require `--response`):
 
 - `--turn <promptId>` — pick a turn in a multi-turn chat (default: newest; the command prints the turn count and IDs).
-- `--files` — the resolved `path → content` map: **what actually got written**. Diff this against the fence labels in `--response` to catch a mis-bind (e.g. an `access.js`-labelled block that bound to `App.jsx` and clobbered it).
+- `--files` — the resolved `path → content` map: **what actually got written**. Cross-check it against the filename labels in `--response`: if the model named a file (e.g. an `access.js` label line) that has no matching key in `--files`, that block was misrouted.
 - `--jsonl` — the raw block events, one JSON object per line (for `jq` / fixtures).
 - `--raw` — byte-faithful model text captured upstream of the parser (preserves consumed filename labels and blank lines). **New generations only** — older chats have no raw capture and the command says so; fall back to the default `--response` or `--jsonl`.
 - `--user` — also print the prompt(s) so the transcript reads top-down.
 
-The tell for a path mis-bind: in `--response` a fence is labelled with the filename the model intended (e.g. ` ```js access.js `) but its annotated parsed path is `App.jsx`, and `--files` shows only `App.jsx` holding that content with no `access.js`. That means two blocks bound to the same path and the second clobbered the first.
+The tell for a path mis-bind: `--response` annotates each fence with the path the parser **bound** it to (e.g. ` ```js App.jsx `), not the name the model typed. A filename the model emitted but the parser did **not** consume is left as a **bare prose line just above the fence**. So a clobber reads as a prose line `access.js` directly above a fence annotated ` ```js App.jsx ` — the orphaned label and the bound path disagree — and `--files` confirms it: only `App.jsx`, holding that content, no `access.js` key. (A label the parser *did* consume is suppressed from prose and the fence already shows the right path, so the thing to grep for is an orphaned filename line whose name is missing from `--files`.) Use `--raw` if you need the model's exact original framing inline.
 
 ## Environment: prod vs cli vs dev (the key gotcha)
 
