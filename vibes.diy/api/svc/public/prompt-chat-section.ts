@@ -97,6 +97,7 @@ import {
 import {
   reconstructConversationMessages,
   assemblePromptPayload,
+  loadActiveSettings,
   type ReconstructOpts,
   type AssemblePromptPayloadArgs,
 } from "../intern/prompt-assembly.js";
@@ -106,6 +107,7 @@ import { loadModels } from "./list-models.js";
 import { handleWholeFileCodegenRequest } from "./handle-whole-file-codegen.js";
 import { makeOpenRouterClient } from "../intern/codegen-loop/openrouter-client.js";
 import { runWholeFileCodegen } from "../intern/codegen-loop/whole-file-loop.js";
+import { buildWholeFileSessionDoc } from "../intern/codegen-loop/whole-file-session-doc.js";
 
 // Access the raw WSSendProvider from Evento's wrapped ctx.send.
 // Evento wraps the send provider — the raw instance is at .provider.
@@ -2289,6 +2291,15 @@ export const promptChatSection: EventoHandler<W3CWebSocketEvent, MsgBase<ReqProm
           const frontierModel = vctx.sthis.env.get("WHOLE_FILE_FRONTIER_MODEL") ?? orig.prompt.model ?? defaults.codegen.model.id;
           const cheapModel = vctx.sthis.env.get("WHOLE_FILE_CHEAP_MODEL") ?? defaults.runtime.model.id;
           const userPrompt = firstUserText(orig.prompt.messages);
+          // Read the theme/skills/title/enrichedPrompt that `ensureChatId`
+          // already chose and persisted (its one pre-allocation call wrote the
+          // `active.*` app_settings rows upstream). Reuse the same reader the
+          // SEARCH/REPLACE path uses via assemblePromptPayload — no second LLM
+          // call, and the prompt theme is guaranteed identical to the persisted
+          // app_settings theme a later cold-open reads. When the settings are
+          // empty (pre-alloc failed / ineligible upstream), the mapper falls
+          // back to userPrompt only rather than blocking generation.
+          const activeSettings = await loadActiveSettings(vctx, req.chatId);
           // Build the OpenRouter client once (secret resolution centralized in
           // the factory); fail the turn cleanly if the key is unset.
           const rClient = makeOpenRouterClient(vctx.sthis.env);
@@ -2302,10 +2313,11 @@ export const promptChatSection: EventoHandler<W3CWebSocketEvent, MsgBase<ReqProm
               blockSeq,
               nextId: () => vctx.sthis.nextId(12).str,
               userPrompt,
-              // The agentic variant reuses makeBaseSystemPrompt's default
-              // skills/gating injection; theme/title are optional and resolved
-              // from the same template path the existing variants use.
-              sessionDoc: { userPrompt },
+              // The persisted active settings thread theme/skills/title/
+              // enrichedPrompt into the agentic system prompt ({{THEME_DESIGN}}
+              // and friends). Falls back to userPrompt-only when none were
+              // persisted (pre-alloc failed / ineligible upstream).
+              sessionDoc: buildWholeFileSessionDoc(userPrompt, activeSettings),
               // The creation turn doesn't pre-declare access needs; the loop's
               // verify gate is advisory only when this is true, so default off
               // for the experimental path.

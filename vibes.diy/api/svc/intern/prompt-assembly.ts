@@ -109,10 +109,23 @@ export function reconstructConversationMessages(sectionMsgs: PromptAndBlockMsgs[
   return messages;
 }
 
-async function loadActiveSettings(
-  vctx: VibesApiSQLCtx,
-  chatId: string
-): Promise<{ skills?: string[]; theme?: string; title?: string; enrichedPrompt?: string }> {
+/** The persisted active settings a creation turn wrote (theme/skills/title/enrichedPrompt). */
+export interface ActiveSettings {
+  skills?: string[];
+  theme?: string;
+  title?: string;
+  enrichedPrompt?: string;
+}
+
+/**
+ * Read the `active.*` app_settings rows (theme/skills/title/enrichedPrompt) for
+ * the app behind `chatId` — the same rows `ensureChatId` wrote from its
+ * pre-allocation call. Returns `{}` when the chat/app row or settings are
+ * absent. This is the single reader both `assemblePromptPayload` (SEARCH/REPLACE
+ * path) and the whole-file path use, so the prompt theme always matches the
+ * persisted `app_settings` theme.
+ */
+export async function loadActiveSettings(vctx: VibesApiSQLCtx, chatId: string): Promise<ActiveSettings> {
   const rChat = await exception2Result(() =>
     vctx.sql.db
       .select({ appSlug: vctx.sql.tables.chatContexts.appSlug, ownerHandle: vctx.sql.tables.chatContexts.ownerHandle })
@@ -165,7 +178,7 @@ export interface AssemblePromptPayloadArgs {
   // preview path so a fresh `generate --dry-run` can render the pre-allocated
   // system prompt without persisting anything. When absent, settings are read
   // from app_settings as usual.
-  readonly activeSettingsOverride?: { skills?: string[]; theme?: string; title?: string; enrichedPrompt?: string };
+  readonly activeSettingsOverride?: ActiveSettings;
   // Optional: on follow-up turns, attach the most recent stored preview
   // screenshot to the new user message as an image_url content part, so a
   // vision-capable model can ground visual edits ("center this", "the colors

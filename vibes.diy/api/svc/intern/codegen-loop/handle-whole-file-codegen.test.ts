@@ -26,7 +26,11 @@ function idGen(): () => string {
  */
 function makeDeps(
   result: WholeFileResult,
-  overrides?: { runWholeFileCodegen?: WholeFileCodegenDeps["runWholeFileCodegen"] }
+  overrides?: {
+    runWholeFileCodegen?: WholeFileCodegenDeps["runWholeFileCodegen"];
+    sessionDoc?: WholeFileCodegenDeps["sessionDoc"];
+    makeBaseSystemPrompt?: WholeFileCodegenDeps["makeBaseSystemPrompt"];
+  }
 ): {
   deps: WholeFileCodegenDeps;
   emitted: PromptAndBlockMsgs[];
@@ -39,7 +43,7 @@ function makeDeps(
     blockSeq: 1,
     nextId: idGen(),
     userPrompt: "make an app",
-    sessionDoc: { userPrompt: "make an app" },
+    sessionDoc: overrides?.sessionDoc ?? { userPrompt: "make an app" },
     needsAccess: false,
     frontierModel: "frontier",
     cheapModel: "cheap",
@@ -47,7 +51,7 @@ function makeDeps(
     maxCostUsd: 0.5,
     terminal: { promptBlockEndEmitted: false },
     byteLength: (s) => s.length,
-    makeBaseSystemPrompt: async () => ({ systemPrompt: "sys" }),
+    makeBaseSystemPrompt: overrides?.makeBaseSystemPrompt ?? (async () => ({ systemPrompt: "sys" })),
     runWholeFileCodegen: overrides?.runWholeFileCodegen ?? (async () => result),
     appendBlockEvent: async ({ evt }) => {
       emitted.push(evt);
@@ -183,6 +187,23 @@ describe("handleWholeFileCodegenRequest emission", () => {
     expect(lines).toEqual(["a", "b", "c"]);
     // No diagnostic card.
     expect(emitted.some((e) => ((e as { path?: string }).path ?? "").startsWith("/_streamdiag"))).toBe(false);
+  });
+
+  it("forwards the pre-allocated theme into the agentic system prompt", async () => {
+    const seen: Array<{ variant?: string; theme?: unknown }> = [];
+    const result: WholeFileResult = {
+      files: [{ filename: "/App.jsx", lang: "jsx", content: "a" }],
+      usage: { prompt_tokens: 1, completion_tokens: 2, total_tokens: 3 },
+    };
+    const { deps } = makeDeps(result, {
+      sessionDoc: { userPrompt: "x", theme: "aether" },
+      makeBaseSystemPrompt: async (_model: string, doc: { variant: string; theme?: unknown }) => {
+        seen.push({ variant: doc.variant, theme: doc.theme });
+        return { systemPrompt: "sp" };
+      },
+    });
+    await handleWholeFileCodegenRequest(deps);
+    expect(seen[0]).toEqual({ variant: "agentic-whole-file", theme: "aether" });
   });
 
   it("beats keepalive heartbeats during a slow loop without breaking ordering", async () => {
