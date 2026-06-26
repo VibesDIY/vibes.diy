@@ -398,7 +398,10 @@ export function CodeMsg({
             }
           >
             {(revealing ? revealLines : revealLines.slice(0, 3)).map((line, idx) => (
-              <div key={`${begin.sectionId}-${line.lineNr ?? idx}`} className="text-light-primary dark:text-dark-secondary truncate">
+              <div
+                key={`${begin.sectionId}-${line.lineNr ?? idx}`}
+                className="text-light-primary dark:text-dark-secondary truncate"
+              >
                 {line.line || " "}
               </div>
             ))}
@@ -664,10 +667,25 @@ function MessageList({
           // acc.push(<CodeMsg key={codeBegin!.sectionId} begin={codeBegin!} lines={collectedMsg} />);
           break;
         case isCodeEnd(msg):
+          if ((codeBegin as CodeBeginMsg | undefined) === undefined) {
+            // [wf-debug] TEMPORARY: a code.end with no open code.begin would push
+            // a block with begin=undefined and crash the render. Log the full
+            // msg sequence to find the live-stream ordering bug, and skip safely.
+            // eslint-disable-next-line no-console
+            console.error("[wf-debug] code.end with no open code.begin", {
+              endSectionId: (msg as { sectionId?: string }).sectionId,
+              seq: nprompt.msgs.map((m) => ({
+                t: (m as { type: string }).type,
+                s: (m as { sectionId?: string }).sectionId,
+                r: (m as { reveal?: string }).reveal,
+              })),
+            });
+            collectedMsg = [];
+            break;
+          }
           blockMsgs.push({
             type: "Code",
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            begin: codeBegin!,
+            begin: codeBegin,
             lines: collectedMsg,
             end: msg,
           });
