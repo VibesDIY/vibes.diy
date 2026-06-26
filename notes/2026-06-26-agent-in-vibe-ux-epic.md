@@ -76,7 +76,9 @@ land on and want to change. Crucially:
   prompt only; everything after lives on `/vibe`. Slug allocated on submit so the URL is
   shareable from second zero (lifecycle in Q3).
 - **Mobile-first.** The canvas is the app, full-bleed; the edit affordance is a bottom
-  sheet, never a side-by-side desktop editor. Desktop = mobile with breathing room.
+  sheet, never a side-by-side desktop editor. **Decided: sketch/design mobile only for now**
+  — defer the desktop treatment until the mobile flows feel right (don't assume
+  mobile-with-breathing-room yet).
 - **The codegen agent lives *in* the vibe.** First-generation streaming and every later
   edit happen on `/vibe` through the one affordance. No `/chat`, no second URL, no context
   switch.
@@ -86,8 +88,9 @@ land on and want to change. Crucially:
   float over the iframe today (the existing `ExpandedVibesPill` overlay on the vibe route,
   `vibe.$ownerHandle.$appSlug.tsx`). Nothing pushes the app aside or swaps it for a code
   pane; the app is always *the surface*, the agent is always *on top of it*. (This makes
-  #1836's "open below / push content down" request moot — floating-over is now intentional;
-  we keep only its first-run onboarding idea.)
+  #1836's "open below / push content down" request moot — floating-over is now intentional.
+  **Decided: no per-vibe first-run onboarding** — the homepage/start flow already opens the
+  switch, so we don't add a per-vibe coach; #1836's onboarding idea is dropped.)
 - **The inversion, made literal: the rounded inset card moves from the app to the overlay.**
   On the old chat route the *app preview* was the inset rounded card (`margin:12px;
   borderRadius:12px`, `ResultPreview.tsx:108`) sitting inside the chat. Now the **overlay**
@@ -145,9 +148,12 @@ never the destination; it's a transient progress view that yields to the running
   └─────────────────────────┘   block done      └─────────────────────────┘   reopens chat
 ```
 
+- **Decided: the stream lives in the inset rounded card** — the same card it keeps after the
+  app appears. The card's shape never changes; only its *contents* swap (stream → live app)
+  while the **forming app de-blurs behind it**. Least motion, most consistent.
 - **Detecting "first code block completes":** the stream is `PromptAndBlockMsgs`; watch for
   the first `block.code.end` (`isCodeEnd`, `call-ai/v2/block-stream.ts`). On that event, swap
-  stream → live preview and hot-swap subsequent builds in place (existing mechanism).
+  the card's contents stream → live preview and hot-swap subsequent builds in place.
 - **Chat is a toggle, always available.** A `💬` control opens the chat whether it's *still
   streaming* or *complete* — so a curious user can watch the build, and anyone can reread
   how an app was made. The chat is hidden by default once the app runs, not deleted.
@@ -436,5 +442,11 @@ the boundary defined by *cache-hit*, not by *is-it-a-curated-chip*).
 5. **Group-private intent.** Is jchris's "group-private / collaborative" (#1973) a fourth
    publish intent or just "Shared space" with a private visibility? Recommendation: the
    latter — intent (Join/Remix/View) is orthogonal to visibility (Restricted/Public).
-6. **Desktop.** Confirm desktop = mobile-with-breathing-room, not a reintroduced
-   side-by-side editor.
+
+**✅ 6. Generation-overlay shape — DECIDED (jchris).** Inset rounded card; card shape never
+changes, contents swap stream → live app, forming app de-blurs behind (§1b).
+
+**✅ 7. Desktop — DECIDED (jchris).** Sketch/design **mobile only for now**; defer desktop.
+
+**✅ 8. Per-vibe first-run onboarding — DECIDED (jchris).** **None** — rely on the start flow
+already opening the switch; no per-vibe coach (#1836's onboarding idea dropped).
