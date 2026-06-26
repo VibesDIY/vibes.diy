@@ -325,6 +325,38 @@ edit affordance does on a vibe you don't own.
   the access view as a no-op — the copy carries no prompt. One operation; the only difference
   is whether a prompt rides along.
 
+### Chips → appSlug vs fsId: decided at the write, by ownership
+
+When a chip/Other produces a change, does it land as a **new appSlug** (a new app) or a **new
+fsId in the same appSlug** (a new version, like additional prompting)? **Ownership decides, at
+the moment of the write:**
+
+- **Your own app → same appSlug, new fsId.** A chip on your app is additional prompting — it
+  advances your app to a new version *in place* (the existing fsId-per-codegen model). *(jchris
+  said "same fsId"; read as "same app, normal new-version" — codegen always mints a new fsId.
+  Flag if literal fsId-pinning was meant.)*
+- **An app you don't own → new appSlug.** The write makes it yours: a fresh app under your
+  handle, `remixOf` → source (matches #4).
+- **Reads commit nothing.** A *cached* chip is a read — navigate to pre-existing addressable
+  content; no slug/fsId is created. The slug-vs-fsId question only arises at a *write*.
+
+**The irreducible-ish core (the pre-identity / cached zone).** Before the first write — an
+anonymous user roaming the start tree, or browsing precached transforms of a published app —
+**there is no ownership yet, so "which appSlug/fsId am I on?" has no committed answer.** It's a
+property of how the cached content was *authored/stored*, not a runtime decision:
+- For **curated starters**, it's a curation choice (the tree is authored as some set of
+  addressable apps).
+- For **precached transforms of an app you don't own**, *where the cached render lives
+  addressably* is an open infra choice — candidates: (a) a **content-addressed preview
+  namespace** (uncommitted, shareable-as-preview, owned by no one until kept); (b) speculative
+  alternate fsIds under the source slug; (c) pre-made forks under a system handle.
+
+**The fuzz is bounded:** it exists only in the read-only pre-identity zone and **collapses
+deterministically at the first write** (ownership then decides slug-vs-fsId); it never touches
+committed state. **Lean:** model (a), content-addressed *preview* URLs — keeps every *committed*
+app cleanly owned with a clear slug+fsId lineage and absorbs the fuzz into an explicitly
+ephemeral preview layer. Open — see §8/20.
+
 ### Active-handle resolution & join consent (decided)
 
 The UI over the backend `resolveActiveHandle` (#2275). You act *as a handle*; the rules for
@@ -672,3 +704,11 @@ code-only copy). Applied doc-wide.
     request-access app is deferred to the design phase** (§2 note). *Backend requirement (not
     just an assumption): serve a remixable app's code shell for copying independent of the data
     grant.*
+
+20. **Chips → appSlug vs fsId (mostly decided; one open core).** Decided: ownership decides at
+    the write — your own app → same appSlug + new fsId (additional prompting); an app you don't
+    own → new appSlug (make it yours); reads commit nothing (§2 "Chips → appSlug vs fsId"). Open
+    core: for **precached transforms of an app you don't own**, where the cached render lives
+    addressably before any commit (lean: a content-addressed *preview* namespace). Bounded — it
+    only affects the pre-identity read zone and collapses at the first write. **Confirm the
+    preview-namespace default or leave deferred.**
