@@ -80,7 +80,15 @@ export function isPromptDryRunPayload(msg: unknown): msg is PromptDryRunPayload 
   return !(PromptDryRunPayload(msg) instanceof type.errors);
 }
 
-export const PromptMsgs = PromptBlockBegin.or(PromptBlockEnd).or(PromptReq).or(PromptError).or(PromptFS).or(PromptDryRunPayload);
+export const PromptSectionTheme = type({
+  type: "'prompt.section-theme'",
+  theme: "string",
+  "colorTheme?": "string",
+}).and(PromptBase);
+
+export type PromptSectionTheme = typeof PromptSectionTheme.infer;
+
+export const PromptMsgs = PromptBlockBegin.or(PromptBlockEnd).or(PromptReq).or(PromptError).or(PromptFS).or(PromptDryRunPayload).or(PromptSectionTheme);
 export type PromptMsgs = typeof PromptMsgs.infer;
 
 // Type guard with optional streamId filter
