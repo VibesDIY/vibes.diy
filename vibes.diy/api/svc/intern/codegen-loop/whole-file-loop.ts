@@ -97,11 +97,11 @@ function extractWriteFileArgs(raw: string): { path?: string; contents?: string }
 
 /**
  * Decode the string value of `"<field>":"<value>"` from a partial JSON blob,
- * honoring backslash escapes and stopping at the first unescaped quote (the
- * value may be unterminated mid-stream). Returns undefined if the field/opening
- * quote has not arrived yet.
+ * honoring backslash escapes (including `\uXXXX` unicode escapes) and stopping
+ * at the first unescaped quote (the value may be unterminated mid-stream).
+ * Returns undefined if the field/opening quote has not arrived yet.
  */
-function extractJsonStringField(raw: string, field: string): string | undefined {
+export function extractJsonStringField(raw: string, field: string): string | undefined {
   const key = `"${field}"`;
   const keyAt = raw.indexOf(key);
   if (keyAt === -1) return undefined;
@@ -114,7 +114,15 @@ function extractJsonStringField(raw: string, field: string): string | undefined 
     if (ch === "\\") {
       const next = raw[i + 1];
       if (next === undefined) break; // escape sequence still arriving
-      out += JSON.parse(`"\\${next}"`) as string;
+      if (next === "u") {
+        const hex = raw.slice(i + 2, i + 6);
+        if (/^[0-9a-fA-F]{4}$/.test(hex) === false) break; // partial mid-stream escape — wait for more bytes
+        out += String.fromCharCode(parseInt(hex, 16));
+        i += 5;
+        continue;
+      }
+      const simple: Record<string, string> = { n: "\n", t: "\t", r: "\r", b: "\b", f: "\f", '"': '"', "\\": "\\", "/": "/" };
+      out += simple[next] ?? next;
       i += 1;
       continue;
     }
