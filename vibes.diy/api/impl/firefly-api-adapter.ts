@@ -73,24 +73,43 @@ export class FireflyApiAdapter {
   }
 
   private async getApi(): Promise<VibesDiyApi> {
-    return this.apiOnce.once(async () => (typeof this.apiArg === "function" ? this.apiArg() : this.apiArg));
+    // ResolveOnce caches a rejection, which would permanently break the
+    // reconnect retry path if the api factory fails transiently at startup
+    // (the default fireproof() factory does a network bootstrap to resolve the
+    // owner handle). Reset on failure so a later reconnect re-runs it (#2448).
+    try {
+      return await this.apiOnce.once(async () => (typeof this.apiArg === "function" ? this.apiArg() : this.apiArg));
+    } catch (e) {
+      this.apiOnce.reset();
+      throw e;
+    }
   }
 
   async resolveOwnerHandle(): Promise<string> {
     if (this.ownerHandleOverride !== undefined) return this.ownerHandleOverride;
-    return this.ownerHandleOnce.once(async () => {
-      const rRes = await (await this.getApi()).ensureUserSettings({ settings: [] });
-      if (rRes.isErr()) {
-        throw new Error(`Failed to load user settings: ${rRes.Err()}`);
-      }
-      const def = rRes.Ok().settings.find(isUserSettingDefaultHandle);
-      if (def === undefined) {
-        throw new Error("No defaultHandle — pass {ownerHandle} or run 'npx vibes-diy login' first");
-      }
-      // Backfill svc.vibeApp.ownerHandle so FireflyDatabase's onMsg filter works.
-      (this.svc.vibeApp as { ownerHandle: string }).ownerHandle = def.ownerHandle;
-      return def.ownerHandle;
-    });
+    // Same rejection-caching hazard as getApi: in the default fireproof() path
+    // this lookup runs over the WebSocket, so a transient startup failure here
+    // must not be cached forever — otherwise the reconnect retry re-enters
+    // subscribeDocs() and immediately gets the cached rejection, never
+    // subscribing (#2448). Reset on failure so the next reconnect retries.
+    try {
+      return await this.ownerHandleOnce.once(async () => {
+        const rRes = await (await this.getApi()).ensureUserSettings({ settings: [] });
+        if (rRes.isErr()) {
+          throw new Error(`Failed to load user settings: ${rRes.Err()}`);
+        }
+        const def = rRes.Ok().settings.find(isUserSettingDefaultHandle);
+        if (def === undefined) {
+          throw new Error("No defaultHandle — pass {ownerHandle} or run 'npx vibes-diy login' first");
+        }
+        // Backfill svc.vibeApp.ownerHandle so FireflyDatabase's onMsg filter works.
+        (this.svc.vibeApp as { ownerHandle: string }).ownerHandle = def.ownerHandle;
+        return def.ownerHandle;
+      });
+    } catch (e) {
+      this.ownerHandleOnce.reset();
+      throw e;
+    }
   }
 
   // ── FireflyTransport methods ───────────────────────────────────────
@@ -177,7 +196,15 @@ export class FireflyApiAdapter {
       // first subscribeViewerGrants rejects.
       this.armReconnectRetry(api);
       const ownerHandle = await this.resolveOwnerHandle();
-      await api.subscribeViewerGrants({ ownerHandle, appSlug: this.svc.vibeApp.appSlug });
+      const rSub = await api.subscribeViewerGrants({ ownerHandle, appSlug: this.svc.vibeApp.appSlug });
+      // A Result.Err — the normal path for a request timeout or a WS close
+      // before the response, not just a thrown exception — means VibesDiyApi did
+      // NOT record the subscription for replay. Leave grantReactivityInstalled
+      // false and let the next reconnect retry, rather than marking it installed
+      // with nothing for replayConnectionState to re-issue (#2448).
+      if (rSub.isErr()) {
+        throw new Error(`subscribeViewerGrants failed: ${rSub.Err()}`);
+      }
       // Attach the listener only after the subscribe succeeds — and only once
       // (guarded by grantReactivityInstalled) so reconnect retries never stack
       // duplicate listeners. replayConnectionState re-attaches it across later

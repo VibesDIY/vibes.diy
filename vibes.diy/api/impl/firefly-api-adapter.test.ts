@@ -320,6 +320,61 @@ describe("FireflyApiAdapter — transient startup failure recovery (#2448)", () 
     await adapter.enableGrantReactivity();
     expect(onReconnect).toHaveBeenCalledTimes(1);
   });
+
+  it("retries owner-handle resolution after a transient failure (no override)", async () => {
+    let attempt = 0;
+    const ensureUserSettings = vi.fn(async () => {
+      attempt++;
+      if (attempt === 1) throw new Error("WS unavailable");
+      return Result.Ok({
+        type: "vibes.diy.res-ensure-user-settings",
+        userId: "user-1",
+        settings: [{ type: "defaultHandle", ownerHandle: "alice" }],
+        updated: "now",
+        created: "now",
+      });
+    });
+    const api = fakeVibesDiyApi({ ensureUserSettings });
+    const adapter = new FireflyApiAdapter(api, "my-app"); // no ownerHandle override
+
+    // First lookup fails transiently and must NOT be cached as a permanent rejection.
+    await expect(adapter.resolveOwnerHandle()).rejects.toThrow(/WS unavailable/);
+    // A retry re-runs the lookup and resolves.
+    expect(await adapter.resolveOwnerHandle()).toBe("alice");
+    expect(ensureUserSettings).toHaveBeenCalledTimes(2);
+  });
+
+  it("retries grant reactivity when subscribeViewerGrants returns Result.Err (not just throws)", async () => {
+    let reconnect: (() => void) | undefined;
+    let attempt = 0;
+    const subscribeViewerGrants = vi.fn(async () => {
+      attempt++;
+      if (attempt === 1) return Result.Err("request timeout");
+      return Result.Ok({ type: "vibes.diy.res-subscribe-viewer-grants", status: "ok" });
+    });
+    const onViewerGrantsChanged = vi.fn(() => () => undefined);
+    const api = fakeVibesDiyApi({
+      subscribeViewerGrants,
+      onViewerGrantsChanged,
+      onReconnect: vi.fn((fn: () => void) => {
+        reconnect = fn;
+        return () => undefined;
+      }),
+    });
+    const adapter = new FireflyApiAdapter(api, "my-app", { ownerHandle: "alice" });
+
+    // An Err result (timeout / WS close before response) must not mark installed
+    // or attach the listener — the sub was never recorded for replay.
+    await adapter.enableGrantReactivity().catch(() => undefined);
+    expect(subscribeViewerGrants).toHaveBeenCalledTimes(1);
+    expect(onViewerGrantsChanged).not.toHaveBeenCalled();
+
+    // Reconnect retries and this time the subscribe succeeds.
+    reconnect?.();
+    await new Promise((r) => setTimeout(r, 0));
+    expect(subscribeViewerGrants).toHaveBeenCalledTimes(2);
+    expect(onViewerGrantsChanged).toHaveBeenCalledTimes(1);
+  });
 });
 
 describe("FireflyApiAdapter — async factory", () => {
