@@ -275,6 +275,30 @@ affordance does on a vibe you don't own.
   inline "this is your copy" message. No Remix / Clone / Edit / Fresh-Install button anywhere.
   (#1709 #2162 #2262 #1855 #1856 #2037 collapse into this.)
 
+### Ownership, code vs data, and clone semantics (decided)
+
+- **Ownership is account-level (jchris).** You own every app *any of your handles* created;
+  switching your active handle never forks your own work. **Ownership = account; membership
+  and identity-exposure = handle.** "Own → edit in place" means *your account* owns it.
+- **The edit affordance changes CODE; only the owner changes code in place (jchris).**
+  Everyone else — **including writer-members** — forks when they use the chips/Other. A
+  write-grant member changes *data* simply by **using** the app (that's using, not editing);
+  they cannot rewrite the shared code. So for every non-owner, the edit affordance clones.
+- **Clone takes code only, fresh/empty data (jchris).** If you wanted the shared data you'd
+  Join. (Curated starters are the exception only in that their authored content ships *as*
+  the starter.) The clone lands at `/vibe/$yourActiveHandle/$sameAppSlug`, slug preserved
+  unless you've used it (then suffixed).
+- **Editing always forks fresh; "open your copy" is the explicit return path (jchris).**
+  Re-engaging the affordance on a source you've already cloned makes a *new* copy by default
+  — no silent routing to the old one. The system *knows* your existing copies and offers
+  **"open your copy"** as a distinct choice in the access view, but a chip/Other click
+  defaults to a fresh fork. (Clone is not idempotent: the menu remembers, the affordance
+  doesn't.)
+- **"Make your own copy" / "open your copy" are access-view choices, not floating buttons.**
+  This does *not* reintroduce copy-buttons on the app: they're navigational items inside the
+  switch's access view (the gate/menu context), distinct from the deleted Remix/Clone/Edit
+  chrome. The running app stays button-free.
+
 ### One new setting: publish intent (#1854)
 
 The creator picks what the vibe *is for*; this sets sensible **access defaults** and framing
@@ -504,3 +528,29 @@ changes, contents swap stream → live app, forming app de-blurs behind (§1b).
 
 **✅ 8. Per-vibe first-run onboarding — DECIDED (jchris).** **None** — rely on the start flow
 already opening the switch; no per-vibe coach (#1836's onboarding idea dropped).
+
+**✅ 9–12. Access/identity core logic — DECIDED (jchris):** ownership is account-level; only
+the owner changes code in place (non-owners incl. writer-members fork); clone = code only +
+fresh data; editing always forks fresh with "open your copy" as the explicit return path
+(§2 "Ownership, code vs data, and clone semantics").
+
+### Parked semantic gaps (resolve before build, not blocking sketches)
+
+13. **Does using a public app expose your handle?** When logged in and just viewing/using a
+    public vibe (no Join), are you anonymous, or visible to the owner as a viewer? Lean:
+    anonymous until you Join or comment (consume before identity), but confirm — it affects
+    whether the active-handle switcher even matters on a public app you haven't joined.
+14. **Request-access consent symmetry.** Requesting access exposes a handle to the owner (for
+    approval). Should "Request access" carry the same **"request as [handle]"** consent as
+    auto-join? Lean: yes, by symmetry — requesting and joining both expose identity.
+15. **appSlug as lineage label.** Slug is a *per-handle* id we keep stable across a clone
+    lineage for memorable/shareable URLs, but it's **not** a global lineage key (collisions
+    suffix). True lineage stays tracked via `remixOf`. Confirm we're fine with slug-as-best-
+    effort-label, lineage-as-`remixOf`-truth.
+16. **Clone attribution visibility.** `remixOf` records the source. Is that lineage link
+    public / shown to the source owner (who sees who cloned), or private to the cloner? Lean:
+    attribution visible (matches house "remix culture"), but the *cloner's data* never is.
+17. **Full login-trigger set.** Login is required at: codegen (Other/uncached edit), Join, and
+    Request access (all expose/own identity). Anonymous stays: cached-chip browsing + viewing
+    public apps. Confirm this is the complete, coherent set (esp. commenting — does posting a
+    comment require login + a chosen handle?).
