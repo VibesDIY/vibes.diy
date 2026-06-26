@@ -8,14 +8,20 @@ import { Lazy, Result } from "@adviser/cement";
 import type { SuperThis, FPDeviceIDSession } from "@fireproof/core-types-base";
 import type { DashAuthType } from "@fireproof/core-types-protocols-dashboard";
 import { getKeyBag } from "@fireproof/core-keybag";
-import { DeviceIdKey, DeviceIdSignMsg } from "@fireproof/core-device-id";
+import { DeviceIdKey } from "./device-id/key.js";
+import { DeviceIdSignMsg } from "./device-id/sign.js";
 
-// --- Re-exported fireproof crypto/keybag (the seam; swap internals later) ---
+// --- Re-exported crypto/keybag (the seam; swap internals progressively) ---
 // Node-CLI only: core-keybag pulls in `find-up` (fs config lookup), which is
 // NOT bundleable for Cloudflare Workers. Worker code must use "./server" for
 // the CA/token API, never this module.
 export { getKeyBag } from "@fireproof/core-keybag";
-export { DeviceIdKey, DeviceIdSignMsg, DeviceIdCSR, DeviceIdCA } from "@fireproof/core-device-id";
+// Device-id client crypto (key/sign/csr) is now in-repo (Task 2); the server CA
+// stays fireproof-backed until Task 3.
+export { DeviceIdKey } from "./device-id/key.js";
+export { DeviceIdSignMsg } from "./device-id/sign.js";
+export { DeviceIdCSR } from "./device-id/csr.js";
+export { DeviceIdCA } from "@fireproof/core-device-id";
 // Login device-id-register flow (the localhost cert handler — Bucket C / #1616).
 // Generic cmd-ts streaming primitives (isCmdProgress/sendProgress/…) are NOT
 // re-exported here: they're CLI-framework, not identity, and stay on core-cli.

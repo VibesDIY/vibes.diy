@@ -190,7 +190,7 @@ describe("identity wire-compat (baseline: @fireproof/* 0.24.19)", { timeout: 300
     // signer state): mint a key, run the CSR -> cert path, read the public
     // certificatePayload — the same field createDeviceIdGetToken reads from the keybag.
     const key = await extracted.DeviceIdKey.create();
-    const csr = (await new DeviceIdCSR(sthis, key).createCSR({ commonName: "xverify-cn" })).Ok();
+    const csr = (await new extracted.DeviceIdCSR(sthis, key).createCSR({ commonName: "xverify-cn" })).Ok();
     // The verifier re-validates the cert's embedded Clerk claim, so issuance needs
     // the full claim shape (params/role/userId), mirroring createTestUser.
     const nowIssue = Math.floor(Date.now() / 1000);
@@ -243,7 +243,10 @@ describe("identity wire-compat (baseline: @fireproof/* 0.24.19)", { timeout: 300
       claims,
       "ES256"
     );
-    const fireproofTok = await new DeviceIdSignMsg(sthis.txt.base64, key, issued.certificatePayload).sign(claims, "ES256");
+    // The fireproof signer is nominally typed to fireproof's DeviceIdKey; `key` is
+    // the in-repo class (structurally identical). Cast to bridge the #private brand
+    // purely so we can prove the two signers emit byte-identical headers at runtime.
+    const fireproofTok = await new DeviceIdSignMsg(sthis.txt.base64, key as never, issued.certificatePayload).sign(claims, "ES256");
     expect(extractedTok.split(".")[0]).toBe(fireproofTok.split(".")[0]);
 
     // Exact header shape (not just property presence).
