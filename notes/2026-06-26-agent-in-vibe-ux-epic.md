@@ -115,9 +115,19 @@ land on and want to change. Crucially:
                                   user-generated vibes — then "cached" extends past curated.
         Same component, different seed:
         - Homepage / starter: CREATE a new app ("Make a ___").
-        - Any vibe: TRANSFORM this app ("Make it ___"); a non-owner's first
-          transform forks to their own copy (#1856), inline & non-blocking.
+        - Any vibe: TRANSFORM this app ("Make it ___").
 ```
+
+**The cached/uncached boundary is also the read/write (and login/fork) boundary** — this is
+the line Charlie flagged, made explicit:
+
+- **A cached chip is a *read*: navigate to pre-generated content.** No codegen, no write,
+  **no login**, and **nothing is forked** — you're just moving to an already-existing cached
+  result (a page view). Anonymous users can roam the cached tree freely.
+- **"Other" / an uncached chip is a *write*: a real codegen request.** This needs **login**
+  (it's a write, §"Identity exposure"), and **if the source vibe isn't yours, the generated
+  result lands as your own copy** (makes it yours, #1856). So forking happens *only* on an
+  uncached transform, never on a cached click.
 
 Two (sometimes three) chips keep it a trained, low-choice gesture; "Other" is the open
 road. **Reuse the existing chat suggestion-chip component for visual unity** —
@@ -183,11 +193,14 @@ never the destination; it's a transient progress view that yields to the running
   the VibesSwitch's open state *is* §1a. Closed, it's the identity/share pill (one model,
   not four look-alike buttons with three behaviors, #1708). On start/homepage flows it
   starts **already open** (chips showing); on a live vibe it starts closed.
-- **Editing IS the affordance:** owner/writer → chips + textarea change the app in place;
-  **non-owner → the same chips/Other silently fork to their own copy** (#1856) — there is no
-  "Remix" button, it's just what editing a vibe you don't own does (§2). Plus, for a visitor,
-  the switch surfaces the one explicit CTA (Join *or* View). No "Edit" destination, no
-  separate iterate flow — you just change the app.
+- **Editing IS the affordance:** **owner (account) → chips + textarea change the code in
+  place**; **every non-owner — including writer-members — makes it theirs** (a fresh copy
+  under their handle, #1856), because only the owner edits code in place (§2). Writer-members
+  change *data* by *using* the app; that's using, not editing. No "Remix" button — it's just
+  what editing a vibe you don't own does.
+- **For a visitor, the only explicit access CTA is "Request access"** (and only when the vibe
+  is request-gated); View and Join are automatic (§2). No "Edit" destination, no separate
+  iterate flow — you just change the app.
 
 ### 1d. Implementation grounding — the build seam (existing code this reuses)
 
@@ -301,12 +314,21 @@ edit affordance does on a vibe you don't own.
   This does *not* reintroduce copy-buttons on the app: they're navigational items inside the
   switch's access view (the gate/menu context), distinct from the deleted Remix/Clone/Edit
   chrome. The running app stays button-free.
+- **"Make it yours" is one operation with two entry points (Charlie's overload note).** It's
+  the *same* server action (code-only copy → your handle) whether triggered (a) **implicitly**
+  by editing a vibe you don't own — the copy carries your prompt — or (b) **explicitly** from
+  the access view as a no-op — the copy carries no prompt. One operation; the only difference
+  is whether a prompt rides along.
 
 ### Active-handle resolution & join consent (decided)
 
 The UI over the backend `resolveActiveHandle` (#2275). You act *as a handle*; the rules for
 which handle, and when you're asked, differ by app type:
 
+- **Logged-out users have no handle and only read (anonymous).** "Acting as a handle" applies
+  to logged-in users; a logged-out visitor reads anonymously, and any *write* (codegen, Join,
+  Request, data write, comment) first prompts login (§"Identity exposure"). No tension: reads
+  are handle-less; the active handle only exists/matters once you're logged in and writing.
 - **"Join as [handle]" is skipped if you have only one handle.** Single-handle users auto-join
   with no consent step; the selector appears only when there's a real choice (>1 handle).
 - **Public apps → act as your current session handle; switch at will, no confirm.** Your
@@ -350,25 +372,33 @@ The creator picks what the vibe *is for*; this sets sensible **access defaults**
 
 ### Access-state → what the visitor sees (precedence)
 
-There is now **at most one explicit CTA** (Join or View) plus the always-present edit
-affordance (using it forks when you don't own). Access state gates which is shown; resolve
 Almost every state is automatic; the only explicit access CTA is **Request access**, and the
-always-available alternative is **make it yours** (your own copy → your handle). The canonical
-lookup, by access state for a visitor with no personal grant:
+where-reachable alternative is **make it yours**. The canonical lookup, by access state for a
+visitor with no personal grant:
 
 | access state | explicit access CTA | what's automatic / the alternative |
 | --- | --- | --- |
 | `public-access` | — | app loads; **read/use automatically** (View is automatic) |
 | auto-join (auto-approve on) | — | **auto-joined**, with a **"join as [handle]" consent** step |
-| request-gated (`requests-on`) | **Request access** | or **make it yours** (your own copy) |
-| `pending-request` | — (`Requested`, disabled) | or make it yours |
-| `revoked-access` | — (`Revoked`, disabled) | or make it yours |
-| private, `requests-off` (`not-grant`) | — (`App not available`) | make it yours * |
+| request-gated (`requests-on`) | **Request access** | **+ make it yours** (shell is loadable) |
+| `pending-request` | — (`Requested`, disabled) | + make it yours |
+| `revoked-access` | — (`Revoked`, disabled) | + make it yours |
+| private, `requests-off` (`not-grant`) | — (`App not available`) | **— nothing loadable → no make-it-yours** |
 
-\* "make it yours" = the no-op copy to your handle (same appSlug unless taken), only when the
-published app is reachable (you can't copy what you can't see). `member` / `submitter` resolve
-in Member mode, outside this visitor resolver. The strict-enum JSON form (`accessState`,
-`explicitCta`, `canMakeYours`) lands with PR-1 as the wiring source of truth.
+**Canonical reachability rule (resolves the row↔footnote conflict Charlie flagged):**
+"make it yours" is available **iff the app's published shell is loadable to you** — true for
+public and request-gated-*published* vibes (you can run the code with your own empty data),
+false for a fully private / unpublished / not-found vibe (nothing to load → nothing to copy).
+So the last row is the false case: no make-it-yours. *(Backend assumption to confirm — §8/19 —
+that a request-gated vibe's prod shell is servable to a non-granted visitor while its data
+stays gated.)*
+
+**Second dimension the strict enum needs (exhaustiveness fix):** whether you **already have
+your own copy** of this lineage — if so, the access view also offers **"open your own"** (a
+chip/Other still defaults to a *fresh* copy, §2 ownership). So the wiring enum is
+`{ accessState, hasExistingCopy } → { explicitCta, canMakeYours, offerOpenYourOwn }`, and it
+lands with PR-1 as the source of truth. `member` / `submitter` resolve in Member mode, outside
+this visitor resolver.
 
 > **Why "join as [handle]" matters:** joining exposes *a* handle of yours to the other
 > members. Since you may have several, auto-join must let you **consent to which handle** is
@@ -418,11 +448,14 @@ preserved (the existing `?intent=` routing already does this — keep it, surfac
 Shared data gets a "sign in to see @sender's entries" prompt (#2353) instead of a silent
 empty state.
 
-> **The login boundary is the codegen request, not the page (jchris's rule).** **No login
-> until a real code-generation request** — i.e. selecting "Other" (free text) or a chip
-> whose result isn't cached. The two cached chips serve pre-generated content as plain page
-> views, so anonymous users browse real working apps with **zero login and zero backend
-> change**. This means we do **not** need anonymous *generation* — no anonymous-draft +
+> **Login is on the first *write*, not the page (jchris's rule).** Codegen is *one* write,
+> not the only one: login is required for **any write** — codegen (Other/uncached edit), Join,
+> Request access, a data write, or a comment (§"Identity exposure"). What stays anonymous is
+> **reading**: viewing/using public apps read-only, and browsing the cached-chip tree (cached
+> chips serve pre-generated content as plain page views — no codegen, no write). So anonymous
+> users roam real working apps with **zero login and zero backend change**, and the login wall
+> falls on the first write they attempt. This means we do **not** need anonymous *generation* —
+> no anonymous-draft +
 > claim-on-sign-in system. The existing codegen auth-gate (`routes.ts` auth layout +
 > `isSignedIn` in `prompt.tsx`) is **correct and stays**; we just (a) serve cached starters
 > as cached vibe page-views that don't hit it, and (b) make sure its trigger is the first
@@ -440,7 +473,7 @@ for your judgement before code.
 
 | Day | Work | Output | Gate |
 | --- | --- | --- | --- |
-| **0–1** | Lofi sketches of the edit affordance (§1a), first-generation `/vibe` (§1b), live+edit (§1c), mobile-first. Flow outlines for: new app from homepage, visitor Join/View, non-owner-edit-forks, owner-edit. Finalize §2 verb spec + §7 subtraction ledger. (Switch menu / access view layout §1e is deferred.) | Sketch set + this doc's §1–2 ratified | **GATE 1: you approve the sketches & verbs before any code.** |
+| **0–1** | Lofi sketches of the edit affordance (§1a), first-generation `/vibe` (§1b), live+edit (§1c), mobile-first. Flow outlines for: new app from homepage, visitor (auto-view / auto-join / request-gated), non-owner-edit-makes-it-theirs, owner-edit. Finalize §2 verb spec + §7 subtraction ledger. (Switch menu / access view layout §1e is deferred.) | Sketch set + this doc's §1–2 ratified | **GATE 1: you approve the sketches & verbs before any code.** |
 | **2** | **The first & biggest step: redefine the VibesSwitch so opening it reveals the chips** (`OptionButtons`), already-open on start flows (§1c/§1d). Then the first-generation stream→preview behavior (§1b). Behind a flag; cached chips anonymous, **login gates codegen by design** (§3) — no anonymous-draft backend needed. | Switch-reveals-chips + first-gen on `/vibe` | **GATE 2: does opening the switch → chips, and first-gen, feel right on a phone?** |
 | **3** | Verb collapse: **Request-access only + "make it yours" implicit on edit**; delete the Remix/Clone/Fresh-Install/Edit buttons entirely; publish-intent setting (#1854). Mostly deletion. | PR-1 part 1 | — |
 | **4** | Share panel link-first (#2232 + children). Indicator system for viewer modes (#2178/#2275). | PR-1 complete → review | **GATE 3: PR-1 review/QA.** |
@@ -480,7 +513,7 @@ so the count stays crisp.)
 - #2262 "vibe" button → "remix" → **moot** ("Remix" is no longer a verb; editing a non-owned vibe forks implicitly, §2).
 - #1708 action-bar inconsistency → **deleted** (one switch, one model).
 - #2162 Clone/Remix inconsistency across surfaces → **deleted** (no Clone, no Remix verb anywhere).
-- #1855 data-mode CTA language → Join/View by intent; "make your own" is the implicit fork on edit, not a labeled CTA.
+- #1855 data-mode CTA language → automatic View/Join (+ "Request access" only when gated); "make it yours" is the implicit result of editing, not a labeled CTA.
 - #1854 publish intent → the one new setting.
 - #1856 non-owner edit = your copy → the inline fork message; now *the* mechanism for "make your own" (§2).
 - #2037 Join over Fresh Install → **resolved structurally**: there is no Fresh Install/Remix button to compete with Join; Join is the explicit CTA, forking is implicit-on-edit only.
@@ -536,9 +569,10 @@ trained gesture; "Other" is the open road. Same on the homepage and on any vibe.
 Terminology: **"cached" == "curated"** in this doc; future caching of predicted next-clicks
 may extend "cached" beyond curated, even to user-generated vibes.
 
-**✅ 2. Login boundary — DECIDED (jchris).** **No login until a real codegen request** (Other
-or an uncached chip). Cached chips are anonymous page-views. So there's **no anonymous
-*generation*, hence no anonymous-draft / claim-on-sign-in system to build** (§3). The only
+**✅ 2. Login boundary — DECIDED (jchris).** **Login on the first *write*** (codegen is one
+write — Other/uncached edit — alongside Join, Request, data write, comment; see #17). Reading
+and cached-chip browsing stay anonymous. So there's **no anonymous *generation*, hence no
+anonymous-draft / claim-on-sign-in system to build** (§3). The only
 residual: preserve the pending prompt across the sign-in redirect (existing `?intent=`/prompt
 routing handles it) — confirm it survives the Other/uncached path. "Uncached" = any click
 whose result isn't pre-warmed; today, since cached==curated, that's effectively just "Other",
@@ -581,10 +615,11 @@ explicit return path (§2 "Ownership, code vs data, and 'make it yours' semantic
 14. **Request-access consent symmetry.** Requesting access exposes a handle to the owner (for
     approval). Should "Request access" carry the same **"request as [handle]"** consent as
     auto-join? Lean: yes, by symmetry — requesting and joining both expose identity.
-15. **appSlug as lineage label.** Slug is a *per-handle* id we keep stable across a
-    make-it-yours lineage for memorable/shareable URLs, but it's **not** a global lineage key
-    (collisions suffix). True lineage stays tracked via `remixOf`. Confirm we're fine with
-    slug-as-best-effort-label, lineage-as-`remixOf`-truth.
+15. **appSlug as lineage label.** **Invariant (per Charlie): lineage truth is `remixOf`;
+    appSlug is only a best-effort *label*.** Slug is a *per-handle* id we keep stable across a
+    make-it-yours lineage for memorable/shareable URLs, but it's **not** a lineage key
+    (collisions suffix, so it can't be relied on). Anything that needs true ancestry reads
+    `remixOf`, never the slug. (Confirm we're fine with this split.)
 16. **Lineage attribution visibility.** `remixOf` records the source. Is that link public /
     shown to the source owner (who sees who made their own copy), or private? Lean: attribution
     visible (matches house "remix culture"), but the copier's *data* never is.
@@ -596,3 +631,9 @@ explicit return path (§2 "Ownership, code vs data, and 'make it yours' semantic
 and "clone" are retired as user words; **"remix"** stays as the cultural *act of changing* a
 vibe; the *result* of changing one you don't own is that it **becomes yours** (an independent
 code-only copy). Applied doc-wide.
+
+19. **Reachability of a request-gated vibe's prod shell (backend confirm).** The §2 "make it
+    yours" reachability rule assumes a published-but-request-gated vibe's **code shell is
+    servable to a non-granted visitor** (they can run it with their own empty data) while its
+    **shared data stays gated**. Confirm the backend can serve code-without-data this way; if
+    not, "make it yours" is unavailable on request-gated vibes too (only public ones).
