@@ -122,21 +122,6 @@ export default function VibeIframeWrapper() {
   // chatApi fallback for safety. sharedHandlers RPCs stay on chatApi until
   // Track B (SharedSessions). (#2265 A1)
   const dataApi = vctx.vibeApi ?? vctx.chatApi;
-
-  // Hand a suggestion chip / "describe a change" off to the chat route, which
-  // pre-fills its composer from ?prompt64 (#2675 merge checkpoint). The /vibe
-  // surface doesn't edit in-page yet — /chat is the live-update surface for
-  // now, so we navigate there with the prompt seeded. URLSearchParams encodes
-  // the base64 safely (+, /, = are otherwise URL-significant).
-  const handleEditPrompt = useCallback(
-    (text: string) => {
-      const trimmed = text.trim();
-      if (!trimmed || !ownerHandle || !appSlug) return;
-      const qs = new URLSearchParams({ prompt64: vctx.sthis.txt.base64.encode(trimmed) }).toString();
-      void navigate(`/chat/${ownerHandle}/${appSlug}?${qs}`);
-    },
-    [ownerHandle, appSlug, navigate, vctx.sthis]
-  );
   // Iframe URL: prefer the SSR-computed value from the loader so the
   // <iframe src=...> ships in the first byte of HTML and the browser can
   // start fetching the iframe document without waiting for React hydration.
@@ -193,6 +178,28 @@ export default function VibeIframeWrapper() {
   const [searchParam] = useSearchParams();
   const [retryCount, setRetryCount] = useState(0);
   const [isOwner, setIsOwner] = useState(false);
+
+  // Hand a suggestion chip / "describe a change" off to the chat route, which
+  // pre-fills its composer from ?prompt64 (#2675 merge checkpoint). The /vibe
+  // surface doesn't edit in-page yet — /chat is the live-update surface for now.
+  // Ownership decides where it lands (§2 "Ownership decides, at the write"):
+  //   - Owner → edit in place: /chat/$owner/$app, prompt seeded.
+  //   - Non-owner (incl. logged-out) → make it yours: /remix forks to your
+  //     handle (auth-gated), then forwards prompt64 onto the new copy's chat.
+  // A non-owner can't write the owner's chat (the server rejects on userId
+  // mismatch), so routing them straight to /chat would dead-end the send.
+  // URLSearchParams encodes the base64 safely (+, /, = are URL-significant).
+  const handleEditPrompt = useCallback(
+    (text: string) => {
+      const trimmed = text.trim();
+      if (!trimmed || !ownerHandle || !appSlug) return;
+      const qs = new URLSearchParams({ prompt64: vctx.sthis.txt.base64.encode(trimmed) }).toString();
+      const dest = isOwner ? `/chat/${ownerHandle}/${appSlug}?${qs}` : `/remix/${ownerHandle}/${appSlug}?${qs}`;
+      void navigate(dest);
+    },
+    [isOwner, ownerHandle, appSlug, navigate, vctx.sthis]
+  );
+
   const adminStorageKey = ownerHandle && appSlug ? adminModeStorageKey(ownerHandle, appSlug) : "";
   const [adminMode, setAdminMode] = useState(() => {
     if (typeof window === "undefined" || !adminStorageKey) return false;
