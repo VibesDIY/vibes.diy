@@ -77,7 +77,7 @@ export default function BloomMachine() {
                   }}
                 />
               );
-            }),
+            })
           )}
         </div>
       </div>
