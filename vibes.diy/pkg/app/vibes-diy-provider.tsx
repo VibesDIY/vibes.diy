@@ -351,8 +351,7 @@ function LiveCycleVibesDiyProvider({ children, webVars }: { children: React.Reac
     // shown to first-time viewers, who often complete via sign-up (or have OAuth
     // transfer sign-in -> sign-up), so set signUpForceRedirectUrl too — Clerk
     // uses that, not forceRedirectUrl, for the sign-up branch.
-    openSignIn: () =>
-      clerk.openSignIn({ forceRedirectUrl: window.location.href, signUpForceRedirectUrl: window.location.href }),
+    openSignIn: () => clerk.openSignIn({ forceRedirectUrl: window.location.href, signUpForceRedirectUrl: window.location.href }),
     // Host-side consent gate (#1968): a sandboxed vibe can propose an avatar
     // write, but the AvatarConfirmModal (mounted below) must approve it before
     // ensureUserSettings runs.
