@@ -91,14 +91,22 @@ export default function App() {
 
   const writeVerdict =
     ready && activeListId ? can.create({ type: "item", listId: activeListId, authorHandle: me?.userHandle }) : null;
-  const canCreateList = ready ? can.create({ type: "list", creatorHandle: me?.userHandle }).ok : false;
+  // Preview the list-create gate with a valid placeholder _id: access.js builds the
+  // channel from doc._id (safeId), and a create candidate has no _id yet — without
+  // one the predictor throws "Invalid id" and the gate wrongly reads as denied.
+  const createListVerdict = ready ? can.create({ type: "list", _id: "list-preview", creatorHandle: me?.userHandle }) : null;
+  const canCreateList = !!createListVerdict?.ok;
   const canInvite =
     ready && activeListId ? can.create({ type: "member", listId: activeListId, addedBy: me?.userHandle }).ok : false;
 
   async function createList() {
     if (!me) return;
-    const created = await database.put({ type: "list", title: "Untitled list", creatorHandle: me.userHandle });
-    setActiveId(created.id);
+    // Generate the _id ourselves so it's a valid channel token (safeId) and the
+    // same value the create predictor saw — Fireproof's auto _id isn't guaranteed
+    // to match /^[A-Za-z0-9_-]+$/.
+    const _id = "list-" + crypto.randomUUID();
+    await database.put({ _id, type: "list", title: "Untitled list", creatorHandle: me.userHandle });
+    setActiveId(_id);
   }
 
   async function addItem(e) {
@@ -209,7 +217,11 @@ export default function App() {
       <ul className="flex-1 overflow-y-auto px-5 py-3 space-y-2">
         {!activeListId ? (
           <li className="text-sm opacity-50 italic">
-            {canCreateList ? "Create a list to get started." : "Sign in to create a list."}
+            {canCreateList
+              ? "Create a list to get started."
+              : me
+                ? createListVerdict?.reason || "You can't create a list here."
+                : "Sign in to create a list."}
           </li>
         ) : sorted.length === 0 ? (
           <li className="text-sm opacity-50 italic">No items yet — add one below.</li>
