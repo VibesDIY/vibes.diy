@@ -54,7 +54,7 @@ export function UnifiedVibeCard(props: UnifiedVibeCardProps) {
   return (
     <>
       {!mounted && (
-        <div style={{ position: "absolute", right: 14, bottom: 16 }}>
+        <div style={{ position: "absolute", right: 14, bottom: 16, pointerEvents: "auto" }}>
           <button
             type="button"
             aria-label="Open vibe menu"

@@ -701,43 +701,55 @@ export default function VibeIframeWrapper() {
       {isAccessGranted &&
         hasMounted &&
         createPortal(
-          <div className="fixed bottom-4 right-4 z-50">
-            <Delayed ms={1000}>
-              <UnifiedVibeCard
-                appTitle={appTitle ?? appSlug ?? "Vibe"}
-                appSlug={vibeSlug}
-                appIconUrl={screenshotUrl ?? undefined}
-                isOwner={isOwner}
-                handleSlug={authSignedIn ? ownerHandle : undefined}
-                chips={["Make it a drum kit", "Add a high score"]}
-                onSelectChip={(chip) => console.warn("[agent-in-vibe] chip select not wired yet:", chip)}
-                onSubmitOther={(text) => console.warn("[agent-in-vibe] other submit not wired yet:", text)}
-                onHome={() => {
-                  // On a PR preview, stay on the preview subdomain so the home
-                  // page reflects the same (preview) session — otherwise we'd
-                  // jump to prod and mask the preview's real signed-in state.
-                  // Reuses the createVibe helper's PR-origin detection.
-                  window.open(resolveBuilderOriginFrom(window.location.origin), "_blank");
-                }}
-                onShare={authSignedIn ? shareModal.open : undefined}
-                onSignIn={
-                  authSignedIn
-                    ? undefined
-                    : () =>
-                        clerk.openSignIn({ forceRedirectUrl: window.location.href, signUpForceRedirectUrl: window.location.href })
-                }
-                isTwinkling={isNetworkActive}
-              />
-              <ShareModal
-                modal={shareModal}
-                placement="above"
-                isOwner={isOwner}
-                myGrant={myGrant}
-                adminMode={adminMode}
-                onToggleAdmin={isOwner ? toggleAdmin : undefined}
-              />
-            </Delayed>
-          </div>,
+          <>
+            {/* Full-viewport overlay layer: the card floats above the running app
+                and shows it around its edges. pointer-events-none lets clicks reach
+                the app everywhere EXCEPT the card's own interactive surfaces (the
+                card re-enables pointer-events on its toggle and open dialog). */}
+            <div className="pointer-events-none fixed inset-0 z-50">
+              <Delayed ms={1000}>
+                <UnifiedVibeCard
+                  appTitle={appTitle ?? appSlug ?? "Vibe"}
+                  appSlug={vibeSlug}
+                  appIconUrl={screenshotUrl ?? undefined}
+                  isOwner={isOwner}
+                  handleSlug={authSignedIn ? ownerHandle : undefined}
+                  chips={["Make it a drum kit", "Add a high score"]}
+                  onSelectChip={(chip) => console.warn("[agent-in-vibe] chip select not wired yet:", chip)}
+                  onSubmitOther={(text) => console.warn("[agent-in-vibe] other submit not wired yet:", text)}
+                  onHome={() => {
+                    // On a PR preview, stay on the preview subdomain so the home
+                    // page reflects the same (preview) session — otherwise we'd
+                    // jump to prod and mask the preview's real signed-in state.
+                    // Reuses the createVibe helper's PR-origin detection.
+                    window.open(resolveBuilderOriginFrom(window.location.origin), "_blank");
+                  }}
+                  onShare={authSignedIn ? shareModal.open : undefined}
+                  onSignIn={
+                    authSignedIn
+                      ? undefined
+                      : () =>
+                          clerk.openSignIn({ forceRedirectUrl: window.location.href, signUpForceRedirectUrl: window.location.href })
+                  }
+                  isTwinkling={isNetworkActive}
+                />
+              </Delayed>
+            </div>
+            {/* Share modal keeps its prior bottom-right anchor (popover placement
+                is revisited in #2680). */}
+            <div className="fixed bottom-4 right-4 z-50">
+              <Delayed ms={1000}>
+                <ShareModal
+                  modal={shareModal}
+                  placement="above"
+                  isOwner={isOwner}
+                  myGrant={myGrant}
+                  adminMode={adminMode}
+                  onToggleAdmin={isOwner ? toggleAdmin : undefined}
+                />
+              </Delayed>
+            </div>
+          </>,
           document.body
         )}
       {hasMounted && (
