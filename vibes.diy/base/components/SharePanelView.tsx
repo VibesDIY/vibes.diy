@@ -7,9 +7,12 @@ import { ViewerTagView } from "./ViewerTagView.js";
  * model"). Scoped to people who can already SEE the vibe, with three classes whose contents
  * stack additively:
  *
- *   - anonymous visitor → Copy URL
- *   - granted member    → Copy URL + the member roster ("who you're in there with")
- *   - author            → Copy URL + roster + the access setting (Public vs grant-required)
+ *   - anonymous visitor → Copy URL + the access copy
+ *   - granted member    → + the member roster ("who you're in there with")
+ *   - author            → the access TOGGLE (replaces the copy) + roster
+ *
+ * The access slot is a toggle by role: the owner gets the Public/grant-required buttons (the
+ * source of truth), everyone else gets a read-only sentence describing the same thing.
  *
  * Built as a real `@vibes.diy/base` component so it can be iterated in Storybook (the same
  * single-source-of-truth loop the unified card used). All actions are INJECTED.
@@ -41,7 +44,8 @@ export interface SharePanelViewProps {
   readonly viewer: ShareViewer;
   /** The people in the vibe — shown to member + author (the roster). Owner lists first. */
   readonly members?: readonly ShareMember[];
-  /** Author-only: who can open the vibe. Public = anyone with the link; request = grant-required. */
+  /** Who can open the vibe. Public = anyone with the link; request = grant-required. The
+   *  author edits it via the toggle; everyone else sees it as read-only copy. */
   readonly access?: ShareAccess;
   readonly onChangeAccess?: (access: ShareAccess) => void;
   /** Author-only: tapping a member's roster tag opens that member's access controls
@@ -80,7 +84,7 @@ export function SharePanelView({
       className={`text-light-primary dark:text-dark-primary ${className ?? ""}`}
       style={{ display: "flex", flexDirection: "column", gap: 14 }}
     >
-      {/* Link — everyone who can see the vibe. The access-state copy sits BELOW it. */}
+      {/* Link — everyone who can see the vibe. */}
       <div>
         <div
           className="rounded-md border border-light-decorative-01 dark:border-dark-decorative-01 py-1.5 pl-3 pr-1.5"
@@ -103,44 +107,12 @@ export function SharePanelView({
         >
           View live ↗
         </button>
-        <p className="mt-1.5 text-xs text-light-secondary dark:text-dark-secondary">
-          {access === "public" ? "Anyone with the link can open this vibe." : "Only approved members can access this vibe."}
-        </p>
       </div>
 
-      {/* Member roster — granted members and the author. ViewerTag tags flow inline (wrap),
-          like a list of tags. No roles here — role changes live in the (TBD) manage flow,
-          which the author reaches by tapping a tag. */}
-      {showRoster && (
-        <div>
-          <p className="text-xs text-light-secondary dark:text-dark-secondary" style={{ marginBottom: 6 }}>
-            In this vibe
-          </p>
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-            {roster.map((m) => {
-              const tag = (
-                <ViewerTagView slug={m.handle} displayName={`@${m.handle}`} avatarUrl={m.avatarUrl} style={ROSTER_TAG_STYLE} />
-              );
-              return isAuthor ? (
-                <button
-                  key={m.handle}
-                  type="button"
-                  aria-label={`Manage @${m.handle}`}
-                  onClick={() => onSelectMember?.(m)}
-                  style={{ background: "none", border: "none", padding: 0, cursor: "pointer" }}
-                >
-                  {tag}
-                </button>
-              ) : (
-                <span key={m.handle}>{tag}</span>
-              );
-            })}
-          </div>
-        </div>
-      )}
-
-      {/* Access setting — author only. The one surviving owner control: who can READ it. */}
-      {isAuthor && (
+      {/* Access slot — a toggle by role, directly above the roster. The owner gets the
+          buttons (the source of truth for who can open the vibe); everyone else gets the
+          read-only sentence describing the same thing. */}
+      {isAuthor ? (
         <div>
           <p className="text-xs text-light-secondary dark:text-dark-secondary" style={{ marginBottom: 6 }}>
             Who can open it
@@ -169,6 +141,41 @@ export function SharePanelView({
                 >
                   {opt.label}
                 </button>
+              );
+            })}
+          </div>
+        </div>
+      ) : (
+        <p className="text-xs text-light-secondary dark:text-dark-secondary">
+          {access === "public" ? "Anyone with the link can open this vibe." : "Only approved members can access this vibe."}
+        </p>
+      )}
+
+      {/* Member roster — granted members and the author. ViewerTag tags flow inline (wrap),
+          like a list of tags. No roles here — role changes live in the (TBD) manage flow,
+          which the author reaches by tapping a tag. */}
+      {showRoster && (
+        <div>
+          <p className="text-xs text-light-secondary dark:text-dark-secondary" style={{ marginBottom: 6 }}>
+            In this vibe
+          </p>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+            {roster.map((m) => {
+              const tag = (
+                <ViewerTagView slug={m.handle} displayName={`@${m.handle}`} avatarUrl={m.avatarUrl} style={ROSTER_TAG_STYLE} />
+              );
+              return isAuthor ? (
+                <button
+                  key={m.handle}
+                  type="button"
+                  aria-label={`Manage @${m.handle}`}
+                  onClick={() => onSelectMember?.(m)}
+                  style={{ background: "none", border: "none", padding: 0, cursor: "pointer" }}
+                >
+                  {tag}
+                </button>
+              ) : (
+                <span key={m.handle}>{tag}</span>
               );
             })}
           </div>
