@@ -483,7 +483,7 @@ export default function App() {
                   key={it._id}
                   data-item-id={it._id}
                   className={
-                    "group flex items-center gap-3 px-4 py-3 transition " +
+                    "group flex select-none items-center gap-2 py-3 pr-4 pl-2 transition " +
                     CARD +
                     (dragId === it._id ? " opacity-60 ring-2 ring-[var(--comp-accent)]" : " hover:border-[var(--comp-accent)]")
                   }
@@ -493,10 +493,10 @@ export default function App() {
                     onPointerMove={onDragMove}
                     onPointerUp={endDrag}
                     onPointerCancel={endDrag}
-                    className="-ml-1 cursor-grab touch-none p-1 text-[var(--comp-muted)] opacity-50 hover:opacity-90"
+                    className="-my-3 grid shrink-0 cursor-grab touch-none select-none place-items-center self-stretch px-2 text-[var(--comp-muted)] opacity-60 hover:opacity-100"
                     aria-label="drag to reorder"
                   >
-                    <IconGrip size={16} />
+                    <IconGrip size={20} />
                   </span>
                   <button
                     onClick={() => toggle(it, it.done)}
