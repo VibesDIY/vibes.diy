@@ -57,10 +57,15 @@ describe("SharePanelView", () => {
     expect(onChangeAccess).toHaveBeenCalledWith("request");
   });
 
-  it("access-state copy reflects the mode, below the url", () => {
-    const { rerender } = render(<SharePanelView url="u" viewer="author" access="public" />);
+  it("non-owner sees the access copy (reflecting the mode); the owner sees the toggle instead", () => {
+    const { rerender } = render(<SharePanelView url="u" viewer="member" access="public" members={[]} />);
     expect(screen.getByText(/anyone with the link can open/i)).toBeTruthy();
-    rerender(<SharePanelView url="u" viewer="author" access="request" />);
+    expect(screen.queryByRole("radiogroup")).toBeNull();
+    rerender(<SharePanelView url="u" viewer="member" access="request" members={[]} />);
     expect(screen.getByText(/only approved members can access/i)).toBeTruthy();
+    // the owner gets the toggle as the source of truth — not the sentence
+    rerender(<SharePanelView url="u" viewer="author" access="public" />);
+    expect(screen.queryByText(/anyone with the link can open/i)).toBeNull();
+    expect(screen.getByRole("radiogroup")).toBeTruthy();
   });
 });
