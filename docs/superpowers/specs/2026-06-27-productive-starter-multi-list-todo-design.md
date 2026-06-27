@@ -145,20 +145,38 @@ export default function access(doc, oldDoc, user, ctx) {
   switch (doc.type) {
     case "list": {
       const chan = "list:" + doc._id;
-      if (oldDoc) ctx.requireAccess(chan + "/admin"); // only creator renames/edits the list
+      if (oldDoc) {
+        // edit: creator is immutable, and only the creator (admin) may edit
+        if (doc.creatorHandle !== oldDoc.creatorHandle) throw { forbidden: "creatorHandle is immutable" };
+        ctx.requireAccess(chan + "/admin");
+      } else {
+        // create: you can only create a list you own
+        if (doc.creatorHandle !== user.userHandle) throw { forbidden: "You must be the creator" };
+      }
       return {
         channels: [chan],
         grant: { users: { [doc.creatorHandle]: [chan, chan + "/admin"] } },
       };
     }
     case "item": {
-      const chan = "list:" + doc.listId;
+      // gate on the EXISTING list on edits so listId can't be used to hop channels
+      const chan = "list:" + (oldDoc ? oldDoc.listId : doc.listId);
       ctx.requireAccess(chan); // any member: add/edit/check/reorder/delete
+      if (oldDoc) {
+        // listId and authorHandle are immutable once written
+        if (doc.listId !== oldDoc.listId) throw { forbidden: "listId is immutable" };
+        if (doc.authorHandle !== oldDoc.authorHandle) throw { forbidden: "authorHandle is immutable" };
+      } else if (doc.authorHandle !== user.userHandle) {
+        // honest attribution: you can only author as yourself
+        throw { forbidden: "authorHandle must be you" };
+      }
       return { channels: [chan] };
     }
     case "member": {
       const chan = "list:" + doc.listId;
       ctx.requireAccess(chan + "/admin"); // only the creator (sole admin)
+      if (oldDoc) throw { forbidden: "Membership grants are immutable" };
+      if (doc.addedBy !== user.userHandle) throw { forbidden: "addedBy must be you" };
       return {
         channels: [chan],
         grant: { users: { [doc.userHandle]: [chan] } },
@@ -171,6 +189,22 @@ export default function access(doc, oldDoc, user, ctx) {
 ```
 
 No `user.isOwner` anywhere — purely channel/grant driven, per the access model.
+
+**Immutable-field enforcement (why the `oldDoc` checks matter).** Because any member can
+write item docs and any signed-in user can create a list, the access fn must pin the fields
+that authority and attribution hinge on — otherwise a write could quietly reassign them:
+
+- **`list.creatorHandle`** — validated `=== user.userHandle` on create and frozen on edit, so
+  nobody can create a list owned by someone else, and a title edit can't reseed `/admin` to
+  the wrong handle (which would lock out the real creator).
+- **`item.listId`** — frozen on edit and gated against the _existing_ channel, so a member of
+  list B can't move an item into list A (or out of a list they shouldn't reach).
+- **`item.authorHandle`** — `=== user.userHandle` on create, frozen on edit, so `ViewerTag`
+  attribution can't be forged by a collaborator re-PUTting the doc.
+- **`member`** docs are create-only (no edits) and `addedBy` is pinned to the writer.
+
+This is the field-diff discipline the access-model doc flags as easy to get subtly wrong
+(§7a) — written out explicitly here so the generated `access.js` carries it from day one.
 
 ---
 
