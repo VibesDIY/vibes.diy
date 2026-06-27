@@ -344,7 +344,11 @@ function LiveCycleVibesDiyProvider({ children, webVars }: { children: React.Reac
     chatApi: realCtx.chatApi,
     vibeApi: realCtx.vibeApi,
     eventListeners: globalThis.window,
-    openSignIn: () => clerk.openSignIn(),
+    // Redirect back to wherever the sign-in was triggered (e.g. a vibe's
+    // viewer tag) instead of Clerk's default post-login URL (the homepage).
+    // OAuth/social sign-in goes through a full redirect, so without this the
+    // user lands on `/` and loses the vibe they were viewing.
+    openSignIn: () => clerk.openSignIn({ forceRedirectUrl: window.location.href }),
     // Host-side consent gate (#1968): a sandboxed vibe can propose an avatar
     // write, but the AvatarConfirmModal (mounted below) must approve it before
     // ensureUserSettings runs.
