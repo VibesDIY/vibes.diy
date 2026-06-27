@@ -15,6 +15,8 @@ export interface UnifiedVibeCardProps {
   handleSlug?: string;
   handleAvatarUrl?: string;
   onHome?: () => void;
+  /** Selects the edit affordance (switches the body back to chips/Other). */
+  onEdit?: () => void;
   onShare?: () => void;
   /** Ref attached to the Share nav button so an external popover (the ShareModal) can anchor to it. */
   shareButtonRef?: React.Ref<HTMLButtonElement>;
@@ -188,7 +190,7 @@ export function UnifiedVibeCard(props: UnifiedVibeCardProps) {
                   <path d="M5 10v10a1 1 0 001 1h4v-6h4v6h4a1 1 0 001-1V10" />
                 </svg>
               </NavIcon>
-              <NavIcon label="Edit" color="#fb923c" selected={(props.selectedNav ?? "edit") === "edit"}>
+              <NavIcon label="Edit" color="#fb923c" selected={(props.selectedNav ?? "edit") === "edit"} onClick={props.onEdit}>
                 <svg
                   width="17"
                   height="17"

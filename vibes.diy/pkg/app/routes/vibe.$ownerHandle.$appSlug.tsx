@@ -13,11 +13,13 @@ import {
   BLUE,
   YELLOW,
   UnifiedVibeCard,
+  SharePanelView,
   gridBackground,
   cx,
   useMobile,
   resolveBuilderOriginFrom,
 } from "@vibes.diy/base";
+import type { ShareMember, ShareViewer, ShareAccess } from "@vibes.diy/base";
 import { useShareModal } from "../components/ResultPreview/useShareModal.js";
 import { useIframeApiInFlight } from "../hooks/useIframeApiInFlight.js";
 import { ShareModal } from "../components/ResultPreview/ShareModal.js";
@@ -502,6 +504,36 @@ export default function VibeIframeWrapper() {
     prevShareOpenRef.current = shareModal.isOpen;
   }, [shareModal.isOpen]);
 
+  // Agent-in-vibe Share view (#2680): tapping Share swaps the card body to the in-card
+  // SharePanelView with real data; deep manage/publish still opens the ShareModal.
+  const [shareViewOpen, setShareViewOpen] = useState(false);
+  const [shareMembers, setShareMembers] = useState<ShareMember[]>([]);
+  useEffect(() => {
+    if (!shareViewOpen || !authSignedIn || !ownerHandle || !appSlug) return;
+    let cancelled = false;
+    void vctx.sharedApi.listMembers({ ownerHandle, appSlug }).then((res) => {
+      if (cancelled) return;
+      // listMembers returns collaborators (not the owner); prepend the owner so the
+      // roster always leads with them.
+      // Roles aren't shown on the view page (only used for owner-first sort), so collapse
+      // the write-limited "submitter" role into "viewer" to fit the ShareMember type.
+      const collaborators: ShareMember[] = res.isOk()
+        ? res.Ok().members.map((m) => ({ handle: m.displayName, role: m.role === "editor" ? "editor" : "viewer" }))
+        : [];
+      setShareMembers([{ handle: ownerHandle, role: "owner" }, ...collaborators]);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [shareViewOpen, authSignedIn, ownerHandle, appSlug, vctx.sharedApi]);
+
+  const shareViewer: ShareViewer = isOwner
+    ? "author"
+    : myGrant === "editor" || myGrant === "viewer" || myGrant === "submitter"
+      ? "member"
+      : "anonymous";
+  const shareAccess: ShareAccess = isWorldReadable ? "public" : "request";
+
   const vibeSlug = `${ownerHandle}/${appSlug}`;
   const cloneUrl = `/remix/${vibeSlug}?skipChat=true`;
 
@@ -724,8 +756,25 @@ export default function VibeIframeWrapper() {
                     // Reuses the createVibe helper's PR-origin detection.
                     window.open(resolveBuilderOriginFrom(window.location.origin), "_blank");
                   }}
-                  onShare={authSignedIn ? shareModal.open : undefined}
+                  onEdit={() => setShareViewOpen(false)}
+                  onShare={() => setShareViewOpen(true)}
                   shareButtonRef={shareModal.buttonRef}
+                  selectedNav={shareViewOpen ? "share" : "edit"}
+                  body={
+                    shareViewOpen ? (
+                      <SharePanelView
+                        url={shareModal.publishedUrl ?? `${window.location.origin}/vibe/${vibeSlug}`}
+                        copied={shareModal.urlCopied}
+                        onCopy={() => void shareModal.handleCopyUrl()}
+                        onViewLive={() => window.open(shareModal.publishedUrl ?? `/vibe/${vibeSlug}`, "_blank")}
+                        viewer={shareViewer}
+                        members={shareMembers}
+                        access={shareAccess}
+                        onChangeAccess={() => shareModal.open()}
+                        onSelectMember={() => shareModal.open()}
+                      />
+                    ) : undefined
+                  }
                   onSignIn={
                     authSignedIn
                       ? undefined
