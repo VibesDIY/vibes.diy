@@ -13,15 +13,22 @@
 // Clerk-claim reference swapped to the owned schema.
 import { z } from "zod";
 import { SubjectSchema, ExtensionsSchema } from "@fireproof/core-types-base";
+import type { CertificatePayload } from "@fireproof/core-types-base";
 import { JWKPublicSchema } from "./wire.js";
 import { ClerkClaimSchema } from "../clerk-claim.js";
 
-export const CreatingUserSchema = z.object({
+// `CreatingUserSchema` / `CertificateSchema` are internal building blocks for
+// `CertificatePayloadSchema` (nothing imports them directly). They are NOT
+// exported: their inferred Zod types reference zod-internal symbols by a
+// pnpm-hashed path that can't be named portably in emitted `.d.ts` (TS2883), and
+// only `CertificatePayloadSchema` — given an explicit named type below — needs to
+// cross the package's declaration boundary.
+const CreatingUserSchema = z.object({
   type: z.literal("clerk"),
   claims: ClerkClaimSchema,
 });
 
-export const CertificateSchema = z.object({
+const CertificateSchema = z.object({
   version: z.literal("3"),
   serialNumber: z.string(),
   subject: SubjectSchema,
@@ -63,7 +70,13 @@ export const CertificateSchema = z.object({
   extensions: ExtensionsSchema.optional(),
 });
 
-export const CertificatePayloadSchema = z
+// Annotated with the upstream `CertificatePayload` type (the verbatim shape this
+// schema was lifted from) so tsc emits a portable, nameable declaration instead
+// of inlining the zod-internal types (TS2883). The annotation is type-only; the
+// runtime schema keeps the owned lenient `ClerkClaimSchema` behavior. Consumers
+// (`Certor`, `DeviceIdCA`) only call `.parse`/`.safeParse`, which `z.ZodType`
+// provides.
+export const CertificatePayloadSchema: z.ZodType<CertificatePayload> = z
   .object({
     iss: z.string(),
     sub: z.string(),
@@ -75,4 +88,4 @@ export const CertificatePayloadSchema = z
     certificate: CertificateSchema,
     creatingUser: CreatingUserSchema.optional(),
   })
-  .readonly();
+  .readonly() as z.ZodType<CertificatePayload>;
