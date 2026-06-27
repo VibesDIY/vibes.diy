@@ -11,6 +11,12 @@ interface OptionButtonsProps {
    * only needs to see the explainer once.
    */
   readonly isFirst?: boolean;
+  /**
+   * Overrides the default one-line explainer shown when `isFirst` is true. Lets a
+   * host (e.g. the in-vibe edit card) frame the affordance differently from chat
+   * without forking the component.
+   */
+  readonly firstMessage?: string;
   readonly onSelect?: (option: string) => boolean | undefined | Promise<boolean | undefined>;
 }
 
@@ -21,7 +27,7 @@ interface OptionButtonsProps {
  * is used for non-most-recent messages — the buttons stay visually present
  * (history) but cannot be clicked.
  */
-export function OptionButtons({ options, disabled, isFirst, onSelect }: OptionButtonsProps) {
+export function OptionButtons({ options, disabled, isFirst, firstMessage, onSelect }: OptionButtonsProps) {
   const [selected, setSelected] = React.useState<string | null>(null);
 
   const clearIfStillSelected = React.useCallback((option: string) => {
@@ -66,7 +72,7 @@ export function OptionButtons({ options, disabled, isFirst, onSelect }: OptionBu
     <div className="mt-3 flex flex-col gap-2" data-message-role="brainstorm-options">
       {isFirst && (
         <p className="text-xs text-light-secondary dark:text-dark-secondary" data-testid="option-buttons-explainer">
-          These are optional. Pick one to suggest the next improvement, or type your own change.
+          {firstMessage ?? "These are optional. Pick one to suggest the next improvement, or type your own change."}
         </p>
       )}
       {options.map((option) => {
