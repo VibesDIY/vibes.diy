@@ -111,4 +111,20 @@ describe("evento handler manifest parity", () => {
       expect(chat.has(h), `${h} must NOT be a chatHandler`).toBe(false);
     }
   });
+
+  it("chat-history READ queries are shared, not chat — only long streams stay chat-plane", () => {
+    const shared = hashes(sharedHandlers);
+    const chat = hashes(chatHandlers);
+    // These are plain D1 reads (ChatSections/ChatContexts joins). They moved off
+    // the chat plane so every API serves them — e.g. the /vibe route reads a
+    // vibe's latest suggestion chips without opening the heavy ChatSessions socket.
+    const movedReads = ["get-chat-response", "get-chat-details", "list-application-chats"];
+    for (const h of movedReads) {
+      expect(shared.has(h), `${h} must be a sharedHandler`).toBe(true);
+      expect(chat.has(h), `${h} must NOT be a chatHandler`).toBe(false);
+    }
+    // The streaming ops are the only reason chatHandlers exists — they stay.
+    expect(chat.has("open-chat-handler")).toBe(true);
+    expect(chat.has("prompt-chat-section-handler")).toBe(true);
+  });
 });

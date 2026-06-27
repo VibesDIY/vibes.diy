@@ -113,6 +113,17 @@ export const sharedHandlers = [
   reportAttributionReferrersEvento,
   reportCampaignHealthEvento,
   reportCampaignAdPreviewsEvento,
+  // Chat-history READS are plain D1 queries, not streams. Only the long-lived
+  // streaming ops (openChat / promptChatSection) actually need the chat plane —
+  // you can't co-tenant many long streams in one worker, which is the ONLY reason
+  // anything lives on chatHandlers. These reads were on the chat plane for purely
+  // historical reasons; moving them to sharedHandlers serves them on every API
+  // (AppSessions/vibeApi included), so e.g. the /vibe route can read a vibe's
+  // latest suggestion chips without building the lazy chatApi / opening the heavy
+  // ChatSessions socket. (jchris)
+  getChatDetailsEvento,
+  getChatResponseEvento,
+  listApplicationChats,
 ] as const;
 
 export const appHandlers = [
@@ -134,9 +145,10 @@ export const chatHandlers = [
   ensureAppSlugItemEvento,
   openChat,
   promptChatSection,
-  getChatDetailsEvento,
-  getChatResponseEvento,
-  listApplicationChats,
+  // NB: the chat-history READ handlers (get-chat-details, get-chat-response,
+  // list-application-chats) moved to sharedHandlers — they're D1 queries, not
+  // streams, so every plane can serve them. Only streaming + the few write ops
+  // below remain chat-plane-only.
   forkAppEvento,
   setModeFsIdEvento,
 ] as const;
