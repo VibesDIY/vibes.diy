@@ -7,8 +7,45 @@
 > yet*. The `/chat` route, and a large amount of chrome and copy, **go away** — that
 > deleted surface area is the deliverable, not a side effect.
 
-Status: planning. Owner: jchris. Drafted 2026-06-26. This is a living plan — update it
-as the sketches resolve.
+Status: **in build** — first checkpoint in review (PR #2684 / child issue #2676). Owner: jchris.
+Drafted 2026-06-26; updated 2026-06-27. This is a living plan — update it as the sketches resolve.
+
+## 0. Delivery status (updated 2026-06-27)
+
+Shipping as **incremental merges off `main`**, not the original two-PR plan (§4/§5, rewritten).
+The work is broken into the child issues **#2676–#2682**; the first is in review as **PR #2684
+(#2676)**.
+
+**Done / in PR #2684:**
+
+- **The unified card** — `UnifiedVibeCard` in `@vibes.diy/base`: the VibesSwitch opens into one
+  rounded card — icon + title **and the handle/viewer tag at the top**, chips + "Other" in the
+  middle, a **Home / Edit / Share** bottom nav, and the persistent VibesSwitch logo floating
+  lower-right. Rendered on `/vibe` in place of `ExpandedVibesPill`. (#2676)
+- **The simplified Share dialogue** — `SharePanelView`: the 3-class in-group model (anonymous →
+  Copy URL; member → + roster on grant-gated vibes; author → + the Public/grant-required toggle),
+  wired into the card's Share view with real member data. (partial #2680)
+- **Edit hand-off (the merge checkpoint)** — chips + "Other" encode the typed change as a
+  `?prompt64` query. **Owner → `/chat/$owner/$app`** (edit in place); **non-owner → `/remix`**
+  (fork to your handle, auth-gated) → both **pre-fill the chat composer** (you tap send). This
+  lets the card ship **without** removing `/chat` or building in-page live update yet.
+
+**Deferred (each its own issue), in rough order:**
+
+- **In-page live update / first-generation on `/vibe`** — the chips/Other still hop to `/chat`;
+  the stream→preview swap and live hot-swap aren't built. (#2677, #1745)
+- **Cached-read chip lane** — chips are placeholder strings that all route to codegen (a write).
+  The two-lane model (cached chip = read → navigate to a pre-generated vibe; only Other/uncached =
+  write) isn't built, and needs the system-owned cached-fork infra. (§1a, §20)
+- **Handle picker** — the top-of-card tag shows the handle with a ▾, but the switcher dropdown
+  isn't wired. (#2678, #2275)
+- **Verb collapse** — delete the Remix/Clone/Fresh-Install/Edit chrome and the now-unused
+  `ExpandedVibesPill`; persist the Public/grant-required setting (today the toggle just opens the
+  legacy ShareModal); the #1856 "it's yours now" inline message. (#2679)
+- **Share manage flow** — per-member role menu, the request-access screen, the
+  `remixable-without-access` setting. (deferred half of #2680; §2 "Deferred")
+- **Retire `/chat`** — deliberately kept by the checkpoint; gated on Track B **#2517**. (#2518)
+- **Post-epic:** owner self-branch (#2681); propose-upstream + lineage data structures (#2682).
 
 ## Why this is one decision, not thirty
 
@@ -187,21 +224,23 @@ above the app, which shows around its edges.
 ```
   closed (toggle lower-right)            open (the unified card)
   ┌─────────────────────────┐            ┌──────────────────────────────┐
-  │                         │            │ ▣ Bloom Machine              │ ← icon + title
+  │                         │            │ ▣ Bloom Machine  (M)@meghan▾ │ ← icon+title + handle tag
   │     (running app)       │            │   bloom                      │
   │                         │   tap      ├──────────────────────────────┤
   │                         │  ───────▶  │ ▸ Make it a drum kit          │ ← OptionButtons
   │                         │            │ ▸ Add a high score            │   (the chips)
   ├─────────────────────────┤            │ ✎ describe a change…       ▸ │ ← "Other"
   │                  [VIBES]│            ├──────────────────────────────┤
-  └─────────────────────────┘            │ (M)@meghan▾  ⌂ 💬 ↗   [VIBES] │ ← nav (see §1e)
-                                         └──────────────────────────────┘
+  └─────────────────────────┘            │ ⌂   ✎   ↗           [VIBES]   │ ← nav: Home/Edit/Share;
+                                         └──────────────────────────────┘   logo floats at right
 ```
 
-- **Bottom nav (the open switch row), left → right:** the **handle picker** (active-handle
-  display + switcher, #2275; leftmost), then **Home** (vibes.diy), **Chat** (the edit
-  affordance — *selected* in these views), **Share** (sharing controls; comments TBD), and the
-  **VibesSwitch toggle** at the right. Details in §1e.
+- **Bottom nav (the open switch row), left → right:** **Home**, **Edit** (the edit affordance —
+  pencil icon, *selected* by default), **Share** (sharing controls; comments TBD). The persistent
+  VibesSwitch logo floats over the row's right end (the row reserves an invisible placeholder so
+  it flows around it). **The handle picker moved to the top of the card** (header row), not the
+  nav — the bottom row got tight once the persistent logo took its right end. Details in §1e.
+  *(Built: Home/Edit/Share + the top handle tag. The handle switcher dropdown is #2678.)*
 - **Editing IS the affordance:** owner (account) → chips/Other change the code in place; every
   non-owner — including writer-members — makes it theirs (a fresh copy, #1856). Writer-members
   change *data* by *using* the app; that's using, not editing. No "Remix" button.
@@ -249,30 +288,37 @@ inside it — not nested in the chat.** Decided structure (jchris):
   and *switch it* — surfaced top-level, not buried. (Backend active-handle resolution already
   landed per #2275; this is the UI.)
 
-**Decided (jchris; prototyped in Storybook, screenshots in `notes/sketches/agent-in-vibe/`): the
-bottom-nav layout.** The nav sits at the bottom latitude of the unified card (§1c). **Left →
-right:**
+**Decided (jchris; prototyped in Storybook, screenshots in `notes/sketches/agent-in-vibe/`) — and
+since built (#2676).** The nav sits at the bottom latitude of the unified card (§1c); the handle
+picker sits at the **top**. **As built:**
 
 ```
-  (M)@meghan ▾        ⌂        💬        ↗        [VIBES]
-  └ handle picker ┘  Home    Chat     Share    switch toggle
-   (leftmost)               (selected
-                            in chat view)
+  ▣ title              (M)@meghan ▾   ← header: icon+title + handle picker (TOP)
+  ────────────────────────────────
+       …chips / Other / share view…
+  ────────────────────────────────
+   ⌂        ✎          ↗     [VIBES]   ← bottom nav + persistent logo
+  Home     Edit      Share    logo
+         (selected            floats
+          by default)         at right
 ```
 
-- **Handle picker = leftmost (jchris: "put it at the leftmost along that bottom latitude").**
-  It **reuses `ViewerTagView`** (now in `@vibes.diy/base`, §1d): the active handle's avatar +
-  name as a pill, a `▾` caret in the `trailing` slot. **Editing your photo = clicking the
-  avatar**, exactly like the runtime "me mode" viewer tag — *not* a menu item. The caret opens a
-  **handle dropdown** ("Acting as" header → your handles, current one checked → divider → "New
-  handle"). There is **no "Edit photo" menu row** — that was tried and removed (it was ambiguous
-  *which* handle's photo you'd edit; clicking the avatar scopes it to the shown handle).
-- **Home / Chat / Share** are circular colored nav icons echoing the production `ExpandedVibesPill`
-  (Home blue, the edit/vibe affordance orange, etc.). **Chat is the *selected* item** in the
-  edit/affordance views. Share opens the link-first share controls (§2 "Share panel"); comments
-  placement TBD.
-- **VibesSwitch toggle = rightmost** — the grow/shrink morph back to the closed lower-right toggle
-  (§1c). The whole row is contained inside the one unified card, not a separate bar.
+- **Handle picker = top of the card (changed from "leftmost in the nav").** jchris originally
+  put it at the leftmost bottom latitude, then moved it to the header: *"move the handle
+  chooser/viewer tag to top of the open card"* — the bottom row got tight once the persistent
+  logo claimed its right end. It **reuses `ViewerTagView`** (`@vibes.diy/base`, §1d): the handle's
+  avatar + name as a pill, a `▾` caret in the `trailing` slot; anonymous → Sign-in. **Editing your
+  photo = clicking the avatar** (not a menu row). *Built: the tag + caret render. The handle
+  dropdown ("Acting as" → your handles → "New handle") is **#2678**, not yet wired.*
+- **Home / Edit / Share** are circular colored nav icons echoing the production `ExpandedVibesPill`
+  (Home blue, **Edit** orange — a **pencil**, not a chat bubble; Share green ↗). **Edit is the
+  *selected* item by default** (the edit affordance is the home view); Share swaps the card's
+  middle for the share view (§2). The **"Chat" label/💬 glyph is retired** — the affordance is
+  "Edit." Comments placement TBD.
+- **The VibesSwitch logo is persistent, not a contained toggle.** It always renders at a fixed
+  size/position (lower-right), like production — it never remounts, resizes, or moves, and runs
+  its own open/close morph via `isActive`. The card **grows/shrinks around it**; the bottom row
+  reserves an invisible placeholder so it flows around the logo rather than under it.
 - **Still deferred:** the layout of the **access view** itself (what fills the card's middle for a
   request-gated visitor / owner share controls). "Hard to specify without seeing the other parts
   first; design it later." The nav frame is settled; the access view's contents are not.
@@ -446,22 +492,12 @@ One clean rule for when your handle is exposed:
   (Other/uncached edit), Join, Request access, any data write, and commenting. Reading and
   browsing cached chips stay anonymous.
 
-### One new setting: publish intent (#1854)
+### One new setting: publish intent (#1854) — superseded
 
-> **Superseded (2026-06-27) — see "Share dialogue: the simplified in-group model" below.** The
-> 3-preset picker collapses to a single **Public vs grant-required** access setting; the
-> remixability axis is deferred. The reasoning/axes here are kept as the record.
-
-The creator picks what the vibe *is for*; this sets sensible **access + remixability defaults**
-and framing — it does not add CTAs (there's only ever "Request access", and only when gated).
-Two orthogonal owner settings: **access** (join/data) and **remixable-without-access** (copy
-the code).
-
-| Intent | Defaults it sets | Visitor experience |
-| --- | --- | --- |
-| Shared space | auto-join on; remixable = access-only | **auto-joined**, with a "join as [handle]" consent step; or "Request access" if auto-join is off |
-| Template / **remix-seed** | public *or* gated, **remixable-without-access on** | the chips invite changes; **make it yours** is the headline (presentation of seed-vs-gated deferred, §2) |
-| Read-only / published | public, read-only | **view automatically**; editing makes it yours |
+> ~~A 3-preset publish-intent picker (Shared space / Template / Read-only) setting access +
+> remixability defaults.~~ **Collapsed 2026-06-27 to a single Public vs grant-required access
+> setting** — see "Share dialogue — the simplified in-group model" below for the reasoning. The
+> remixability axis (`remixable-without-access`) is deferred to #2679.
 
 ### Access-state → what the visitor sees (precedence)
 
@@ -502,7 +538,7 @@ with remixability off is the only "no make-it-yours" case.
 your own copy** of this lineage — if so, the access view also offers **"open your own"** (a
 chip/Other still defaults to a *fresh* copy, §2 ownership). So the wiring enum is
 `{ accessState, hasExistingCopy, remixableWithoutAccess } → { explicitCta, canMakeYours,
-offerOpenYourOwn }`, and it lands with PR-1 as the source of truth. `member` / `submitter` resolve in Member mode, outside
+offerOpenYourOwn }`, and it lands with the verb-collapse work (#2679) as the source of truth. `member` / `submitter` resolve in Member mode, outside
 this visitor resolver.
 
 > **Why "join as [handle]" matters:** joining exposes *a* handle of yours to the other
@@ -536,13 +572,12 @@ the three-mode model is known to be a deliberate collapse, not an omission.
 
 ### Share panel: link-first (#2232 anchor)
 
-Default Share = **URL + Copy** + the publish-intent toggle. Everything else
-(permissions, members, requests, invites, comments policy) collapses behind a single
-**"Manage access"** link. Kills: the compact-then-expand layout flash (#2236), the
-ambiguous "Public Sharing: disabled / Enable" pill (#2235), the auto-open-new-tab on
-publish (#2234 → copy URL + inline "View live" toast), the unexplained role dropdown
-(#2233 → moves behind Manage access), and the duplicate auto-accept checkboxes (#1768 →
-one shared component).
+> ~~Everything-behind-one-"Manage access"-link framing.~~ **Refined 2026-06-27** — the
+> "Manage access" drawer is superseded by the 3-class in-group model below. **What stays true:**
+> Share leads with **URL + Copy**, and link-first still kills the compact-then-expand flash
+> (#2236), the "Public Sharing: disabled / Enable" pill (#2235), the auto-open-new-tab on publish
+> (#2234 → copy URL + inline "View live"), the unexplained role dropdown (#2233), and the
+> duplicate auto-accept checkboxes (#1768).
 
 ### Share dialogue — the simplified in-group model (decided 2026-06-27, jchris)
 
@@ -621,43 +656,48 @@ empty state.
 > real codegen (Other / uncached chip / first edit), with the pending prompt preserved
 > through sign-in (the existing `?intent=`/prompt routing already carries this). **Net: less
 > backend work than the earlier "anonymous draft" reading, not more** — and the whole §1a/§1b
-> surface ships in PR-1 with no new backend. Shared data still gets a "sign in to see
-> @sender's entries" prompt (#2353) at its own moment.
+> surface ships across the card (#2676) and first-gen (#2677) with no new backend. Shared data
+> still gets a "sign in to see @sender's entries" prompt (#2353) at its own moment.
 
-## 4. Week plan (human-in-the-loop gates)
+## 4. Delivery model (incremental merges off `main`)
 
-Two PRs. PR-1 is design + the no-dependency deletions (ships this week regardless of
-backend). PR-2 is the inversion wiring (gated on #2517). Each **GATE** is a hard stop
-for your judgement before code.
+> **Supersedes the original two-PR week plan (PR-1 deletions / PR-2 inversion).** Rather than one
+> big split gated on backend work, the epic ships as a **sequence of small, independently
+> mergeable PRs** off `main`, broken into the child issues #2676–#2682. The first (PR #2684 /
+> #2676) is in review — current snapshot in §0.
 
-| Day | Work | Output | Gate |
-| --- | --- | --- | --- |
-| **0–1** | Lofi sketches of the edit affordance (§1a), first-generation `/vibe` (§1b), live+edit (§1c), mobile-first. Flow outlines for: new app from homepage, visitor (auto-view / auto-join / request-gated), non-owner-edit-makes-it-theirs, owner-edit. Finalize §2 verb spec + §7 subtraction ledger. (Switch menu / access view layout §1e is deferred.) | Sketch set + this doc's §1–2 ratified | **GATE 1: you approve the sketches & verbs before any code.** |
-| **2** | **The first & biggest step: redefine the VibesSwitch so opening it reveals the chips** (`OptionButtons`), already-open on start flows (§1c/§1d). Then the first-generation stream→preview behavior (§1b). Behind a flag; cached chips anonymous, **login gates codegen by design** (§3) — no anonymous-draft backend needed. | Switch-reveals-chips + first-gen on `/vibe` | **GATE 2: does opening the switch → chips, and first-gen, feel right on a phone?** |
-| **3** | Verb collapse: **Request-access only + "make it yours" implicit on edit**; delete the Remix/Clone/Fresh-Install/Edit buttons entirely; publish-intent setting (#1854). Mostly deletion. | PR-1 part 1 | — |
-| **4** | Share panel link-first (#2232 + children). Indicator system for viewer modes (#2178/#2275). | PR-1 complete → review | **GATE 3: PR-1 review/QA.** |
-| **5** | Inversion wiring: agent-in-vibe live+edit, hot-swap inline, `/chat` → `/vibe` redirects, lazy chat connection flip. | PR-2 (may carry over) | **GATE 4: full cutover review.** |
+Two principles carry over from the original plan:
 
-**Prerequisite (being handled separately):** full `/chat` deletion needs the lazy chat
-connection from **Track B #2517** (SharedSessions DO). jchris is tackling #2517
-independently as a pre-task — **treat it as done for planning purposes.** That means PR-2
-can land the *full* inversion (not a flagged stub): once #2517 is in, the agent-in-vibe
-wiring + `/chat` → `/vibe` redirects + connection-laziness flip all ship together. Keep a
-flag only as a rollback seam, not as a dependency workaround.
+- **Human gate before behavior-changing code.** Sketches, verbs, and prompt/behavior changes get
+  jchris's eyes before implementation; the single-source-of-truth Storybook loop (real
+  `@vibes.diy/base` components, not mockups) keeps each surface reviewable as it lands.
+- **`/chat` deletion stays gated on Track B #2517** (lazy SharedSessions connection; jchris,
+  separate). Until it lands, the agent-in-vibe surface **coexists** with `/chat` rather than
+  replacing it — the prompt64 edit hand-off (§0) is the seam that lets the card ship in the
+  meantime, no flag and no backend change.
 
-## 5. PR structure
+## 5. Merge sequence
 
-- **PR-1 "Vibe-first surface: verbs, landing, share" (no backend dep).** Edit affordance
-  (§1a) + first-generation `/vibe` state (§1b), both flagged; cached chips anonymous, login
-  gates codegen by design (§3 — no anonymous-draft backend); verb collapse, publish-intent,
-  link-first share, viewer-mode indicators. This is where most of the *deletion* lands. Ships
-  this week.
-- **PR-2 "Agent-in-vibe / retire /chat" (#2517 handled as a pre-task).** Inline agent
-  live+edit, hot-swap, route redirects, lazy chat connection flip — full cutover, with
-  a flag kept only as a rollback seam.
+Each is its own small PR; the order is rough, not rigid. Status mirrors §0.
 
-Both human-driven on UI. Label `agent-created`; @-mention `@CharlieHelps`; `ready-to-merge`
-when green.
+1. **#2676 — unified card + simplified share + prompt64 hand-off.** *(PR #2684, in review.)*
+   `UnifiedVibeCard` on `/vibe`, `SharePanelView`, owner→`/chat` / non-owner→`/remix` pre-fill.
+   No backend dep. *(partial #2680 rides along.)*
+2. **#2677 — first-generation on `/vibe`** (in-page stream→preview, de-blur, hot-swap; #1745).
+   The chips/Other stop hopping to `/chat` and change the app in place. The **cached-read chip
+   lane** (§1a/§20) lands here or alongside it.
+3. **#2678 — handle picker** (wire the top-of-card tag's switcher dropdown; #2275).
+4. **#2679 — verb collapse** (delete the Remix/Clone/Fresh-Install/Edit chrome + the unused
+   `ExpandedVibesPill`; persist the Public/grant-required setting; the #1856 "it's yours now"
+   message; viewer-mode indicators #2178).
+5. **#2680 — Share manage flow** (per-member roles, request-access screen,
+   `remixable-without-access`).
+6. **#2518 — retire `/chat`** (redirects → `/vibe`, lazy connection flip). **Gated on #2517.**
+
+Post-epic: **#2681** (owner self-branch to a new appSlug), **#2682** (propose-upstream + reserve
+lineage data structures).
+
+Each PR: label `agent-created`; @-mention `@CharlieHelps`; `ready-to-merge` when green.
 
 ## 6. Full issue disposition (nothing lost)
 
@@ -666,7 +706,7 @@ one bucket. (#2517 is **not** one of the 30 — it's the backend prerequisite, k
 so the count stays crisp.)
 
 **Resolved by design (the inversion / verb model):**
-- #2518 `/chat` deprecation → *is* PR-2 (#2517 handled as a pre-task).
+- #2518 `/chat` deprecation → the final merge in the sequence (§5), gated on #2517.
 - #1745 inline edit + hot-swap → the edit affordance + live+edit (§1a/§1c); there is no separate iterate flow.
 - #1709 EDIT/CLONE/REMIX popup → **deleted** (no submenu; no copy-verbs; editing is the affordance).
 - #2262 "vibe" button → "remix" → **moot** ("Remix" is no longer a verb; editing a non-owned vibe forks implicitly, §2).
@@ -681,7 +721,7 @@ so the count stays crisp.)
 - #2178 read-only/admin indicator → viewer-mode indicator system (§2).
 - #2275 active handle + switcher + login → **top-level active-handle switcher in the switch nav**, present in every mode; plus the "join as [handle]" consent step on auto-join (§1e/§2). You join per handle, so the active handle is always visible and switchable.
 
-**Explicit build (Share cluster, PR-1):** #2238 (umbrella — "simplify the sharing UI"; this
+**Explicit build (Share cluster, #2680):** #2238 (umbrella — "simplify the sharing UI"; this
 cluster *is* its resolution) #2232 (anchor) #2233 #2234 #2235 #2236 #1768.
 
 **Explicit build (FTUE / first-gen + edit affordance):** #1693 (principle, §3) #1896 (Starter Stack
