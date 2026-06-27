@@ -262,6 +262,16 @@ export default function BloomMachine() {
     setLit((p) => ({ ...p, [key]: false }));
   };
 
+  // Tap a dot to clear every tone recorded on that step.
+  const clearStep = (i) => {
+    patternRef.current[i] = [];
+    setStepColors((prev) => {
+      const next = prev.slice();
+      next[i] = [];
+      return next;
+    });
+  };
+
   const playActive = running || pressed;
 
   return (
@@ -342,8 +352,11 @@ export default function BloomMachine() {
                 background = `conic-gradient(${cols.map((col, k) => `${col} ${k * slice}deg ${(k + 1) * slice}deg`).join(", ")})`;
               }
               return (
-                <span
+                <button
                   key={i}
+                  type="button"
+                  aria-label={`clear step ${i + 1}`}
+                  onClick={() => clearStep(i)}
                   style={{
                     ...styles.dot,
                     background,
@@ -388,17 +401,22 @@ const styles = {
   transportRow: { display: "flex", alignItems: "center", justifyContent: "center", gap: 18, marginTop: 18 },
   dots: {
     display: "grid",
-    gridTemplateColumns: `repeat(${DOT_COLS}, 14px)`,
-    gap: "10px 12px",
+    gridTemplateColumns: `repeat(${DOT_COLS}, 17px)`,
+    gap: "13px 16px",
     alignContent: "center",
     justifyContent: "center",
   },
   dot: {
-    width: 14,
-    height: 14,
+    width: 17,
+    height: 17,
     borderRadius: "50%",
+    border: "none",
+    padding: 0,
+    cursor: "pointer",
     background: "rgba(255,255,255,0.18)",
     transition: "box-shadow 80ms ease, transform 80ms ease",
+    WebkitTapHighlightColor: "transparent",
+    touchAction: "manipulation",
   },
   transport: {
     width: 60, // ≈75% of a tone pad
