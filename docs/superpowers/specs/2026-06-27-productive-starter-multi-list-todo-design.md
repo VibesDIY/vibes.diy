@@ -6,7 +6,7 @@
 agent-in-vibe UX epic (#2675). Music is the only category fleshed out so far; this is the
 first real design for **Productive**.
 
-> **Scope decision (jchris): design the full app standalone.** We are *not* shaping this to
+> **Scope decision (jchris): design the full app standalone.** We are _not_ shaping this to
 > the root-vs-chiclet starter tree yet. Build the complete collaborative multi-list todo as
 > one vibe, then split it into an evolution of starter steps (root app + 2+Other transforms)
 > afterward. The data model and ordering algorithm are identical regardless of how it is
@@ -111,10 +111,10 @@ function positionForAppend(sorted) {
 // dropping at index `target` in the visually-sorted array (dragged item removed first)
 function positionForDrop(sorted, targetIndex) {
   const before = sorted[targetIndex - 1]; // undefined at top
-  const after  = sorted[targetIndex];     // undefined at bottom
-  if (!before) return after.position - STEP;       // top
-  if (!after)  return before.position + STEP;       // bottom
-  return (before.position + after.position) / 2;     // between → average
+  const after = sorted[targetIndex]; // undefined at bottom
+  if (!before) return after.position - STEP; // top
+  if (!after) return before.position + STEP; // bottom
+  return (before.position + after.position) / 2; // between → average
 }
 ```
 
@@ -122,7 +122,7 @@ function positionForDrop(sorted, targetIndex) {
   rows appear at the bottom.
 - **Drag between two** → average → a single `database.put` on the dragged doc only.
 - **Drag to top / bottom** → first − 1 / last + 1.
-- **No epsilon guard (decided).** After ~50 repeated drops into the *exact same gap*, float
+- **No epsilon guard (decided).** After ~50 repeated drops into the _exact same gap_, float
   precision is exhausted; acceptable for a starter. If it ever matters, renormalize-on-
   collision becomes a later evolution step.
 - **Completion:** checking a box sets `done: true` and renders strikethrough **in place** —
@@ -153,12 +153,12 @@ export default function access(doc, oldDoc, user, ctx) {
     }
     case "item": {
       const chan = "list:" + doc.listId;
-      ctx.requireAccess(chan);                 // any member: add/edit/check/reorder/delete
+      ctx.requireAccess(chan); // any member: add/edit/check/reorder/delete
       return { channels: [chan] };
     }
     case "member": {
       const chan = "list:" + doc.listId;
-      ctx.requireAccess(chan + "/admin");      // only the creator (sole admin)
+      ctx.requireAccess(chan + "/admin"); // only the creator (sole admin)
       return {
         channels: [chan],
         grant: { users: { [doc.userHandle]: [chan] } },
@@ -200,19 +200,19 @@ Single screen, two zones:
 
 ## 7. Decisions log (from brainstorming)
 
-| Decision | Choice |
-| --- | --- |
-| Starter-tree placement | Design full app standalone; slice into root + chiclets later |
-| Lists ↔ databases | Single db, one channel `list:<id>` per list (per-object hybrid) |
-| Sharing model | Creator = sole admin; friends = full read/write members |
-| Inviting | Invite-by-handle, kept minimal (platform friend picker coming) |
-| Author tagging | Yes — `authorHandle` + `ViewerTag` on items |
-| New item placement | Bottom; entry box pinned at bottom |
-| Reorder | Fractional float `position`; average neighbours on drop-between |
-| Precision exhaustion | Ignore epsilon for v1 |
-| Completed items | Strikethrough in place |
-| Touch fallback | Native DnD + up/down nudge arrows |
-| `STEP` | 1 |
+| Decision               | Choice                                                          |
+| ---------------------- | --------------------------------------------------------------- |
+| Starter-tree placement | Design full app standalone; slice into root + chiclets later    |
+| Lists ↔ databases      | Single db, one channel `list:<id>` per list (per-object hybrid) |
+| Sharing model          | Creator = sole admin; friends = full read/write members         |
+| Inviting               | Invite-by-handle, kept minimal (platform friend picker coming)  |
+| Author tagging         | Yes — `authorHandle` + `ViewerTag` on items                     |
+| New item placement     | Bottom; entry box pinned at bottom                              |
+| Reorder                | Fractional float `position`; average neighbours on drop-between |
+| Precision exhaustion   | Ignore epsilon for v1                                           |
+| Completed items        | Strikethrough in place                                          |
+| Touch fallback         | Native DnD + up/down nudge arrows                               |
+| `STEP`                 | 1                                                               |
 
 ---
 
