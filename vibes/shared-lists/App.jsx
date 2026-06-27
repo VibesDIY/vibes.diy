@@ -22,9 +22,12 @@ function positionForDrop(sorted, targetIndex) {
 // Atelier Studio theme (prompts/pkg/themes/atelier.md): warm light palette, soft
 // hairline borders, gentle shadows, Playfair Display / Space Mono. Respects the
 // visitor's system color scheme via the dark media query below.
-const FONT_BODY = { fontFamily: "'Playfair Display', Georgia, serif" };
+const FONT_DISPLAY = { fontFamily: "'Playfair Display', Georgia, serif" };
+const FONT_BODY = { fontFamily: "ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" };
 const FONT_MONO = { fontFamily: "'Space Mono', ui-monospace, monospace" };
-const CARD = "rounded-2xl border border-[var(--comp-border)] bg-[var(--comp-surface)] shadow-[0_2px_10px_rgba(0,0,0,0.06)]";
+const CARD = "rounded-xl border border-[var(--comp-border)] bg-[var(--comp-surface)] shadow-[0_1px_2px_rgba(0,0,0,0.05)]";
+// Compact ViewerTag pill (it carries its own border/padding; don't double-wrap it).
+const TAG = { fontSize: 12, padding: "3px 11px 3px 3px" };
 
 function ThemeStyle() {
   return (
@@ -40,6 +43,10 @@ function ThemeStyle() {
         --comp-accent-text: oklch(1 0 0);
         --comp-done: oklch(0.74 0.13 150);
         --comp-danger: oklch(0.58 0.20 25);
+        /* Alias the theme into the tokens ViewerTag reads, so avatars/pills match. */
+        --accent: var(--comp-accent);
+        --border: var(--comp-border);
+        --muted: var(--comp-muted);
       }
       @media (prefers-color-scheme: dark) {
         :root {
@@ -313,7 +320,9 @@ export default function App() {
       <div className="mx-auto flex min-h-screen w-full max-w-xl flex-col">
         <header className="flex items-end justify-between gap-3 px-5 pt-9 pb-4">
           <div>
-            <h1 className="text-4xl font-bold tracking-tight">Shared Lists</h1>
+            <h1 style={FONT_DISPLAY} className="text-4xl font-bold tracking-tight">
+              Shared Lists
+            </h1>
             <p style={FONT_MONO} className="mt-1.5 text-xs uppercase tracking-wider text-[var(--comp-muted)]">
               make a list · add friends · drag to reorder
             </p>
@@ -340,6 +349,7 @@ export default function App() {
                 onBlur={(e) => renameList(e.target.value)}
                 disabled={!(ready && can.edit({ ...activeList }).ok)}
                 aria-label="list title"
+                style={FONT_DISPLAY}
                 className="min-w-0 flex-1 border-b border-transparent bg-transparent py-0.5 text-2xl font-bold outline-none focus:border-[var(--comp-border)] disabled:opacity-100"
               />
               {ready && can.delete(activeList).ok && (
@@ -359,16 +369,13 @@ export default function App() {
               </span>
               {members.length === 0 && <span className="text-sm italic text-[var(--comp-muted)]">just you</span>}
               {members.map((m) => (
-                <span
-                  key={m._id}
-                  className="flex items-center gap-1.5 rounded-full border border-[var(--comp-border)] bg-[var(--comp-bg)] px-2.5 py-1"
-                >
-                  <ViewerTag userHandle={m.userHandle} className="text-xs" />
+                <span key={m._id} className="flex items-center gap-1">
+                  <ViewerTag userHandle={m.userHandle} style={TAG} />
                   {ready && can.delete(m).ok && (
                     <button
                       onClick={() => revoke(m)}
                       aria-label="remove friend"
-                      className="text-[var(--comp-muted)] hover:text-[var(--comp-danger)]"
+                      className="text-[var(--comp-muted)] opacity-60 hover:text-[var(--comp-danger)] hover:opacity-100"
                     >
                       <IconX size={13} />
                     </button>
@@ -380,9 +387,9 @@ export default function App() {
           </div>
         )}
 
-        <ul className="flex-1 space-y-2.5 px-5 pb-12">
+        <ul className="flex-1 space-y-2 px-5 pb-12">
           {!activeListId ? (
-            <li className="rounded-2xl border border-dashed border-[var(--comp-border)] px-4 py-14 text-center text-sm italic text-[var(--comp-muted)]">
+            <li className="rounded-xl border border-dashed border-[var(--comp-border)] px-4 py-12 text-center text-sm italic text-[var(--comp-muted)]">
               {isViewerPending
                 ? "Connecting…"
                 : canCreateList
@@ -401,9 +408,9 @@ export default function App() {
                   onDragOver={(e) => e.preventDefault()}
                   onDrop={() => dropOn(it)}
                   className={
-                    "group flex items-center gap-3 px-4 py-3.5 transition " +
+                    "group flex items-center gap-3 px-4 py-3 transition " +
                     CARD +
-                    (dragId === it._id ? " opacity-40" : " hover:shadow-[0_5px_18px_rgba(0,0,0,0.10)]")
+                    (dragId === it._id ? " opacity-40" : " hover:border-[var(--comp-accent)]")
                   }
                 >
                   <span className="cursor-grab text-[var(--comp-muted)] opacity-40 group-hover:opacity-80" aria-hidden>
@@ -421,10 +428,14 @@ export default function App() {
                   >
                     <IconCheck size={14} />
                   </button>
-                  <span className={"flex-1 break-words text-lg " + (it.done ? "text-[var(--comp-muted)] line-through" : "")}>
+                  <span className={"flex-1 break-words " + (it.done ? "text-[var(--comp-muted)] line-through" : "")}>
                     {it.text}
                   </span>
-                  {it.authorHandle && <ViewerTag userHandle={it.authorHandle} className="shrink-0 text-[11px] opacity-60" />}
+                  {it.authorHandle && (
+                    <span className="shrink-0 opacity-70">
+                      <ViewerTag userHandle={it.authorHandle} style={TAG} />
+                    </span>
+                  )}
                   <span className="flex shrink-0 flex-col leading-none text-[var(--comp-muted)] opacity-50">
                     <button
                       onClick={() => nudge(i, -1)}
@@ -457,7 +468,7 @@ export default function App() {
                 <li onDragOver={(e) => e.preventDefault()} onDrop={() => dropOn(null)}>
                   <form
                     onSubmit={addItem}
-                    className="flex items-center gap-3 rounded-2xl border border-dashed border-[var(--comp-border)] px-4 py-3.5"
+                    className="flex items-center gap-3 rounded-xl border border-dashed border-[var(--comp-border)] px-4 py-3"
                   >
                     <span
                       className="grid h-6 w-6 shrink-0 place-items-center rounded-full border border-dashed border-[var(--comp-border)] text-[var(--comp-muted)]"
@@ -470,7 +481,7 @@ export default function App() {
                       onChange={(e) => setText(e.target.value)}
                       placeholder="Add an item…"
                       aria-label="Add an item"
-                      className="flex-1 bg-transparent text-lg outline-none placeholder:text-[var(--comp-muted)] placeholder:opacity-60"
+                      className="flex-1 bg-transparent outline-none placeholder:text-[var(--comp-muted)] placeholder:opacity-60"
                     />
                     {text.trim() && (
                       <button
