@@ -19,23 +19,31 @@ function positionForDrop(sorted, targetIndex) {
   return (before.position + after.position) / 2; // between → average
 }
 
+const CARD = "border-2 border-black rounded-xl shadow-[3px_3px_0_0_#000]";
+
 function ListRail({ lists, activeId, onPick, onNew, canCreate }) {
   return (
-    <nav className="flex gap-2 overflow-x-auto px-5 py-3 border-b-2 border-black">
-      {lists.map((l) => (
-        <button
-          key={l._id}
-          onClick={() => onPick(l._id)}
-          className={
-            "px-3 py-2 rounded border-2 border-black whitespace-nowrap min-h-[44px] " +
-            (l._id === activeId ? "bg-[oklch(0.8_0.18_85)] font-bold" : "bg-white")
-          }
-        >
-          {l.title || "Untitled"}
-        </button>
-      ))}
+    <nav className="flex gap-2 overflow-x-auto px-5 py-3">
+      {lists.map((l) => {
+        const active = l._id === activeId;
+        return (
+          <button
+            key={l._id}
+            onClick={() => onPick(l._id)}
+            className={
+              "shrink-0 whitespace-nowrap rounded-lg border-2 border-black px-3 py-2 text-sm font-bold shadow-[2px_2px_0_0_#000] transition active:translate-y-px " +
+              (active ? "bg-[oklch(0.85_0.17_88)]" : "bg-white hover:-translate-y-px")
+            }
+          >
+            {l.title || "Untitled"}
+          </button>
+        );
+      })}
       {canCreate && (
-        <button onClick={onNew} className="px-3 py-2 rounded border-2 border-black bg-white min-h-[44px] shrink-0">
+        <button
+          onClick={onNew}
+          className="shrink-0 whitespace-nowrap rounded-lg border-2 border-dashed border-black/40 px-3 py-2 text-sm font-bold text-black/50 hover:border-black hover:text-black"
+        >
           + New list
         </button>
       )}
@@ -52,16 +60,20 @@ function InviteBox({ onInvite }) {
         onInvite(handle);
         setHandle("");
       }}
-      className="flex gap-2"
+      className="flex items-center gap-1"
     >
       <input
         value={handle}
         onChange={(e) => setHandle(e.target.value)}
-        placeholder="friend handle"
-        className="px-2 py-1 text-sm border-2 border-black rounded bg-white min-w-0"
+        placeholder="add friend by handle"
+        className="w-36 min-w-0 rounded-lg border-2 border-black bg-white px-2 py-1 text-sm outline-none"
       />
-      <button type="submit" className="px-2 py-1 text-sm border-2 border-black rounded bg-white shrink-0">
-        + invite
+      <button
+        type="submit"
+        aria-label="invite"
+        className="shrink-0 rounded-lg border-2 border-black bg-white px-2 py-1 text-sm font-bold hover:bg-[oklch(0.85_0.17_88)]"
+      >
+        +
       </button>
     </form>
   );
@@ -177,132 +189,161 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen bg-[oklch(0.98_0.01_95)] text-[oklch(0.2_0.02_260)] font-sans flex flex-col">
-      <header className="px-5 pt-6 pb-1">
-        <h1 className="text-2xl font-black">Shared Lists</h1>
-      </header>
-      {/* TEMP diagnostic — remove once the preview identity issue is solved */}
-      <div className="px-5 pb-2 font-mono text-[10px] opacity-50">
-        dbg: pending={String(isViewerPending)} handle={viewer?.userHandle || "∅"} ready={String(ready)} create=
-        {createListVerdict?.reason || (canCreateList ? "ok" : "-")}
-      </div>
+    <div className="min-h-screen bg-[oklch(0.97_0.012_95)] font-sans text-[oklch(0.2_0.02_260)]">
+      <div className="mx-auto flex min-h-screen w-full max-w-xl flex-col">
+        <header className="px-5 pt-7 pb-2">
+          <h1 className="text-3xl font-black tracking-tight">Shared Lists</h1>
+          <p className="text-sm text-black/50">make a list, add friends, drag to reorder</p>
+        </header>
 
-      <ListRail lists={lists} activeId={activeListId} onPick={setActiveId} onNew={createList} canCreate={canCreateList} />
+        <ListRail lists={lists} activeId={activeListId} onPick={setActiveId} onNew={createList} canCreate={canCreateList} />
 
-      {activeList && (
-        <div className="px-5 py-3 border-b-2 border-black flex items-center gap-3 flex-wrap">
-          <input
-            key={activeList._id}
-            defaultValue={activeList.title}
-            onBlur={(e) => renameList(e.target.value)}
-            disabled={!(ready && can.edit({ ...activeList }).ok)}
-            className="font-bold bg-transparent border-b-2 border-transparent focus:border-black disabled:opacity-100 min-w-0"
-          />
-          <div className="flex items-center gap-2 ml-auto flex-wrap">
-            {members.map((m) => (
-              <span key={m._id} className="flex items-center gap-1">
-                <ViewerTag userHandle={m.userHandle} className="text-xs" />
-                {ready && can.delete(m).ok && (
-                  <button onClick={() => revoke(m)} className="text-xs opacity-40 hover:opacity-100" aria-label="revoke">
+        {activeList && (
+          <div className={"mx-5 mb-3 bg-white px-4 py-3 " + CARD}>
+            <div className="flex items-center gap-2">
+              <input
+                key={activeList._id}
+                defaultValue={activeList.title}
+                onBlur={(e) => renameList(e.target.value)}
+                disabled={!(ready && can.edit({ ...activeList }).ok)}
+                aria-label="list title"
+                className="min-w-0 flex-1 rounded-lg bg-transparent px-1 py-0.5 text-lg font-black outline-none focus:bg-black/5 disabled:opacity-100"
+              />
+              {ready && can.delete(activeList).ok && (
+                <button
+                  onClick={deleteList}
+                  aria-label="delete list"
+                  className="shrink-0 rounded-lg border-2 border-black px-2 py-1 text-xs font-bold text-black/60 hover:bg-[oklch(0.62_0.22_25)] hover:text-white"
+                >
+                  Delete
+                </button>
+              )}
+            </div>
+            <div className="mt-2 flex flex-wrap items-center gap-2">
+              <span className="text-xs font-medium text-black/50">Shared with:</span>
+              {members.length === 0 && <span className="text-xs italic text-black/40">just you</span>}
+              {members.map((m) => (
+                <span key={m._id} className="flex items-center gap-1 rounded-full bg-black/5 px-2 py-0.5">
+                  <ViewerTag userHandle={m.userHandle} className="text-xs" />
+                  {ready && can.delete(m).ok && (
+                    <button
+                      onClick={() => revoke(m)}
+                      aria-label="remove friend"
+                      className="text-xs text-black/40 hover:text-[oklch(0.62_0.22_25)]"
+                    >
+                      ✕
+                    </button>
+                  )}
+                </span>
+              ))}
+              {canInvite && <InviteBox onInvite={invite} />}
+            </div>
+          </div>
+        )}
+
+        <ul className="flex-1 space-y-2 px-5 pb-10">
+          {!activeListId ? (
+            <li className="rounded-xl border-2 border-dashed border-black/30 px-4 py-10 text-center text-sm italic text-black/50">
+              {isViewerPending
+                ? "Connecting…"
+                : canCreateList
+                  ? "Create a list to get started."
+                  : viewer
+                    ? createListVerdict?.reason || "You can't create a list here."
+                    : "Sign in to create a list."}
+            </li>
+          ) : (
+            <>
+              {sorted.map((it, i) => (
+                <li
+                  key={it._id}
+                  draggable
+                  onDragStart={() => setDragId(it._id)}
+                  onDragOver={(e) => e.preventDefault()}
+                  onDrop={() => dropOn(it)}
+                  className={
+                    "group flex items-center gap-2 bg-white px-3 py-2.5 " + CARD + (dragId === it._id ? " opacity-40" : "")
+                  }
+                >
+                  <span className="cursor-grab select-none text-black/25 group-hover:text-black/50" aria-hidden>
+                    ⠿
+                  </span>
+                  <button
+                    onClick={() => toggle(it)}
+                    aria-label={it.done ? "mark not done" : "mark done"}
+                    className={
+                      "grid h-6 w-6 shrink-0 place-items-center rounded-md border-2 border-black text-sm font-black " +
+                      (it.done ? "bg-[oklch(0.8_0.2_145)]" : "bg-white")
+                    }
+                  >
+                    {it.done ? "✓" : ""}
+                  </button>
+                  <span className={"flex-1 break-words " + (it.done ? "text-black/40 line-through" : "")}>{it.text}</span>
+                  {it.authorHandle && <ViewerTag userHandle={it.authorHandle} className="shrink-0 text-[11px] opacity-60" />}
+                  <span className="flex shrink-0 flex-col leading-none text-black/40">
+                    <button
+                      onClick={() => nudge(i, -1)}
+                      disabled={i === 0}
+                      className="px-1 hover:text-black disabled:opacity-20"
+                      aria-label="move up"
+                    >
+                      ▲
+                    </button>
+                    <button
+                      onClick={() => nudge(i, 1)}
+                      disabled={i === sorted.length - 1}
+                      className="px-1 hover:text-black disabled:opacity-20"
+                      aria-label="move down"
+                    >
+                      ▼
+                    </button>
+                  </span>
+                  <button
+                    onClick={() => remove(it)}
+                    aria-label="delete"
+                    className="shrink-0 px-1 text-black/30 hover:text-[oklch(0.62_0.22_25)]"
+                  >
                     ✕
                   </button>
-                )}
-              </span>
-            ))}
-          </div>
-          {canInvite && <InviteBox onInvite={invite} />}
-          {ready && can.delete(activeList).ok && (
-            <button onClick={deleteList} className="text-xs opacity-50 hover:text-[oklch(0.6_0.2_25)]">
-              Delete list
-            </button>
+                </li>
+              ))}
+
+              {writeVerdict?.ok ? (
+                <li onDragOver={(e) => e.preventDefault()} onDrop={() => dropOn(null)}>
+                  <form
+                    onSubmit={addItem}
+                    className="flex items-center gap-2 rounded-xl border-2 border-dashed border-black/40 px-3 py-2.5"
+                  >
+                    <span
+                      className="grid h-6 w-6 shrink-0 place-items-center rounded-md border-2 border-dashed border-black/40 text-black/40"
+                      aria-hidden
+                    >
+                      +
+                    </span>
+                    <input
+                      value={text}
+                      onChange={(e) => setText(e.target.value)}
+                      placeholder="Add an item…"
+                      aria-label="Add an item"
+                      className="flex-1 bg-transparent outline-none placeholder:text-black/40"
+                    />
+                    {text.trim() && (
+                      <button
+                        type="submit"
+                        className="shrink-0 rounded-lg border-2 border-black bg-[oklch(0.85_0.17_88)] px-3 py-1 text-sm font-bold"
+                      >
+                        Add
+                      </button>
+                    )}
+                  </form>
+                </li>
+              ) : (
+                <li className="px-1 py-2 text-sm italic text-black/50">{writeVerdict?.reason || "Sign in to add items."}</li>
+              )}
+            </>
           )}
-        </div>
-      )}
-
-      <ul className="flex-1 overflow-y-auto px-5 py-3 space-y-2">
-        {!activeListId ? (
-          <li className="text-sm opacity-50 italic">
-            {isViewerPending
-              ? "Connecting…"
-              : canCreateList
-                ? "Create a list to get started."
-                : viewer
-                  ? createListVerdict?.reason || "You can't create a list here."
-                  : "Sign in to create a list."}
-          </li>
-        ) : sorted.length === 0 ? (
-          <li className="text-sm opacity-50 italic">No items yet — add one below.</li>
-        ) : (
-          sorted.map((it, i) => (
-            <li
-              key={it._id}
-              draggable
-              onDragStart={() => setDragId(it._id)}
-              onDragOver={(e) => e.preventDefault()}
-              onDrop={() => dropOn(it)}
-              className={
-                "px-3 py-2 bg-white border-2 border-black rounded flex items-center gap-3 " +
-                (dragId === it._id ? "opacity-40" : "")
-              }
-            >
-              <input type="checkbox" checked={it.done} onChange={() => toggle(it)} className="w-5 h-5 shrink-0" />
-              <span className={it.done ? "line-through opacity-50" : ""}>{it.text}</span>
-              {it.authorHandle && <ViewerTag userHandle={it.authorHandle} className="text-xs opacity-60 shrink-0 ml-auto" />}
-              <span className="flex flex-col leading-none shrink-0">
-                <button
-                  onClick={() => nudge(i, -1)}
-                  disabled={i === 0}
-                  className="text-xs disabled:opacity-20"
-                  aria-label="move up"
-                >
-                  ▲
-                </button>
-                <button
-                  onClick={() => nudge(i, 1)}
-                  disabled={i === sorted.length - 1}
-                  className="text-xs disabled:opacity-20"
-                  aria-label="move down"
-                >
-                  ▼
-                </button>
-              </span>
-              <button
-                onClick={() => remove(it)}
-                className="text-xs opacity-40 hover:opacity-100 hover:text-[oklch(0.6_0.2_25)] shrink-0"
-                aria-label="delete"
-              >
-                ✕
-              </button>
-            </li>
-          ))
-        )}
-        {activeListId && <li onDragOver={(e) => e.preventDefault()} onDrop={() => dropOn(null)} className="h-6" />}
-      </ul>
-
-      {activeListId &&
-        (ready && writeVerdict && !writeVerdict.ok ? (
-          <div className="px-5 py-3 border-t-2 border-black text-sm opacity-70 italic">
-            {writeVerdict.reason || "Sign in to add items."}
-          </div>
-        ) : (
-          <form
-            onSubmit={addItem}
-            className="sticky bottom-0 bg-[oklch(0.98_0.01_95)] px-5 py-3 flex gap-2 border-t-2 border-black"
-          >
-            <input
-              value={text}
-              onChange={(e) => setText(e.target.value)}
-              placeholder="Add an item…"
-              className="flex-1 px-3 py-2 border-2 border-black rounded bg-white min-h-[44px]"
-            />
-            <button
-              type="submit"
-              className="px-4 py-2 bg-[oklch(0.8_0.18_85)] border-2 border-black rounded font-bold min-h-[44px]"
-            >
-              Add
-            </button>
-          </form>
-        ))}
+        </ul>
+      </div>
     </div>
   );
 }
