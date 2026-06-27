@@ -448,6 +448,10 @@ One clean rule for when your handle is exposed:
 
 ### One new setting: publish intent (#1854)
 
+> **Superseded (2026-06-27) — see "Share dialogue: the simplified in-group model" below.** The
+> 3-preset picker collapses to a single **Public vs grant-required** access setting; the
+> remixability axis is deferred. The reasoning/axes here are kept as the record.
+
 The creator picks what the vibe *is for*; this sets sensible **access + remixability defaults**
 and framing — it does not add CTAs (there's only ever "Request access", and only when gated).
 Two orthogonal owner settings: **access** (join/data) and **remixable-without-access** (copy
@@ -539,6 +543,58 @@ ambiguous "Public Sharing: disabled / Enable" pill (#2235), the auto-open-new-ta
 publish (#2234 → copy URL + inline "View live" toast), the unexplained role dropdown
 (#2233 → moves behind Manage access), and the duplicate auto-accept checkboxes (#1768 →
 one shared component).
+
+### Share dialogue — the simplified in-group model (decided 2026-06-27, jchris)
+
+**This supersedes the 3-preset publish-intent picker above and trims the link-first
+default.** The whole share dialogue is scoped to **people who can already see the vibe**, and
+collapses to **three classes** whose contents stack additively (consistent with the §1e
+invariant-nav principle and the three viewer modes above):
+
+| Class | The share dialogue shows |
+| --- | --- |
+| **Anonymous visitor** | **Copy URL** (+ View live). Reads only — see why below. |
+| **Granted member** | Copy URL **+ the member roster** ("who you're in there with"). |
+| **Author** | Copy URL + roster **+ the access setting** (Public vs grant-required). |
+
+**Why publish intent collapses to one Public/grant-required setting.** The 3 intents
+(Shared space / Template / Read-only) were presets over orthogonal axes, but two facts
+dissolve them:
+
+1. **Editing a vibe you don't own *always* forks** (§2 ownership), so "Read-only" and
+   "Template" differ only in *emphasis* — not a mode. Both are just "view it; changing it
+   makes your own copy."
+2. **Anonymous = read-only; every write is you** (§2 "Identity exposure", §3). A stranger
+   cannot write your shared data — the moment they try (data write, join, comment, codegen,
+   even "make it yours"), they hit login and it's attributed to their handle. So a public
+   vibe is never anonymous spam, just accountable contribution. **The login wall already does
+   the gating publish-intent was reaching for**, which kills the "read-only vs shared / personal
+   vs shared" owner mode — it has nothing left to protect.
+
+What's left for the author to actually decide is **who can READ it** (the only thing
+anonymity touches): **Public** (anyone with the link) vs **grant-required**. Everything else
+is emergent — View is automatic; **make it yours (fork)** is always available to anyone who
+can see it; collaboration happens for people the author lets in (→ the roster).
+
+**Deferred — two distinct items, and only these:**
+
+1. **The `remixable-without-access` setting** — the author toggle that says "you can't
+   *see/access* this vibe, but yes you can *remix* the code" (the gated remix-seed). It's an
+   advanced, orthogonal knob; build it later. (The "make it yours" rule + remixability axis
+   above stay true; we just don't surface the setting yet.)
+2. **The request-access *screen*** — the landing a *not-yet-granted* user hits on a
+   grant-required vibe. This is a fourth class (someone who *can't* see the vibe yet), outside
+   the three-class dialogue.
+
+> **Not deferred: the member roster.** A grant-required vibe has two halves — the
+> *already-granted* member (sees the roster → **in scope**) and the *not-yet-granted* visitor
+> (request screen → deferred). Only the second half defers. The roster (and "browse members /
+> member roster" — naming TBD) is a first-class part of the dialogue.
+
+The roster appears for granted members on a non-auto-grant (grant-required) vibe — auto-grant
+(public) membership is open, so there's no curated list to browse. Inside the roster, contents
+differ by role: a member sees a read-only list; the author additionally manages it (roles,
+the deeper request/approve controls — themselves part of the deferred request flow).
 
 ## 3. Deferred identity (the FTUE principle, #1693)
 
