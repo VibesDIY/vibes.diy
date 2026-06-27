@@ -14,10 +14,10 @@ import { useFireproof } from "use-vibes";
 // envelope so it sounds like a real hit, not a sustained noise wash). Each owns a
 // colour and a level trim so the kit sits balanced.
 const DRUMS = [
-  { name: "hat", kind: "hat", color: "#f472b6", glow: "#ec4899", gain: 0.5, cutoff: 9000, decay: 0.05 }, // pink
-  { name: "clap", kind: "clap", color: "#fbbf24", glow: "#f59e0b", gain: 1.0, cutoff: 1600, decay: 0.14 }, // amber
-  { name: "snare", kind: "snare", color: "#34d399", glow: "#10b981", gain: 1.0, cutoff: 1900, decay: 0.18, body: 190 }, // emerald
-  { name: "kick", kind: "kick", color: "#60a5fa", glow: "#3b82f6", gain: 1.6, decay: 0.34, pitch: 150, drop: 48 }, // blue
+  { name: "hat", kind: "hat", color: "#cdd6dd", glow: "#eef3f7", gain: 0.5, cutoff: 9000, decay: 0.05 }, // steel
+  { name: "clap", kind: "clap", color: "#c9a94e", glow: "#e6cf7a", gain: 1.0, cutoff: 1600, decay: 0.14 }, // brass
+  { name: "snare", kind: "snare", color: "#b87333", glow: "#e0954a", gain: 1.0, cutoff: 1900, decay: 0.18, body: 190 }, // copper
+  { name: "kick", kind: "kick", color: "#7d8893", glow: "#9fb0bd", gain: 1.6, decay: 0.34, pitch: 150, drop: 48 }, // gunmetal steel
 ];
 
 // One variant per column, left → right: shifts brightness (cutoff / kick pitch)
@@ -692,7 +692,7 @@ const styles = {
     borderRadius: 10,
   },
   fx: { display: "flex", alignItems: "center", gap: 8 },
-  fxSlider: { width: 104, accentColor: "#f472b6", cursor: "pointer" },
+  fxSlider: { width: 104, accentColor: "#c9a94e", cursor: "pointer" },
   spin: { display: "flex", flexDirection: "column", gap: 2 },
   spinBtn: {
     width: 24,
