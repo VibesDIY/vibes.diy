@@ -212,6 +212,8 @@ export { useViewer, type UseViewerResult } from "@vibes.diy/vibe-runtime";
 export {
   createVibe,
   buildCreateVibeUrl,
+  resolveBuilderOrigin,
+  resolveBuilderOriginFrom,
   VIBES_DIY_BUILDER_URL,
   CREATE_VIBE_SAFE_URL_LENGTH,
   type CreateVibeOptions,
