@@ -143,9 +143,27 @@ export default function BloomMachine() {
       ctxRef.current = ctx;
       masterRef.current = master;
     }
-    if (ctxRef.current.state === "suspended") ctxRef.current.resume();
+    if (ctxRef.current.state !== "running") ctxRef.current.resume();
     return ctxRef.current;
   }, []);
+
+  // iOS Safari unlock: must run synchronously inside a trusted gesture
+  // (pointerdown/click), resume the context, AND start one real sound right
+  // here — a downstream timer/promise/effect does NOT count. Re-checks state on
+  // every gesture so audio recovers after the tab is backgrounded/locked.
+  const unlockAudio = useCallback(() => {
+    const ctx = ensureCtx();
+    if (ctx.state !== "running") {
+      ctx.resume();
+      const osc = ctx.createOscillator();
+      const g = ctx.createGain();
+      g.gain.value = 0.0001;
+      osc.connect(g).connect(ctx.destination);
+      osc.start();
+      osc.stop(ctx.currentTime + 0.01);
+    }
+    return ctx;
+  }, [ensureCtx]);
 
   // Live, sustained note — rings until the pad is released.
   const press = useCallback(
@@ -266,10 +284,11 @@ export default function BloomMachine() {
   // if it's already the active row).
   const togglePlay = useCallback(
     (id) => {
+      unlockAudio(); // synchronous, inside the click — before any branching
       if (activeIdRef.current === id) stopLoop();
       else startLoopOn(id);
     },
-    [startLoopOn, stopLoop]
+    [unlockAudio, startLoopOn, stopLoop]
   );
 
   const savePattern = async (id) => {
@@ -338,6 +357,7 @@ export default function BloomMachine() {
   }, [savedDocs]);
 
   const onPadDown = (e, r, c, note) => {
+    unlockAudio(); // synchronous, inside pointerdown — before any state/async work
     e.currentTarget.setPointerCapture?.(e.pointerId); // keep events if the finger slides off
     const key = `${r}-${c}`;
     const wave = WAVES[c];
