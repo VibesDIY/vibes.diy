@@ -46,7 +46,7 @@ function AuthedShell() {
   if (isSignedIn === false) {
     return (
       <div className="signin-wrap">
-        <SignIn routing="hash" forceRedirectUrl="/reports/" />
+        <SignIn routing="hash" forceRedirectUrl="/reports/" signUpForceRedirectUrl="/reports/" />
       </div>
     );
   }
