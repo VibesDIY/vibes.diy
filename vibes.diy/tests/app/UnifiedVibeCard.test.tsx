@@ -90,6 +90,18 @@ describe("UnifiedVibeCard", () => {
     expect(screen.getByText("@meghan")).toBeTruthy();
   });
 
+  it("keeps a single persistent toggle in both states (no remount/resize)", () => {
+    const { rerender } = render(<UnifiedVibeCard appTitle="Bloom Machine" />);
+    // Closed: the one toggle is present and labelled "Open vibe menu".
+    expect(screen.getByRole("button", { name: /open vibe menu/i })).toBeTruthy();
+    expect(screen.queryByRole("button", { name: /close vibe menu/i })).toBeNull();
+    // Open: the SAME toggle persists, now labelled "Close vibe menu" — there is
+    // never a second, differently-sized switch.
+    rerender(<UnifiedVibeCard appTitle="Bloom Machine" open />);
+    expect(screen.getByRole("button", { name: /close vibe menu/i })).toBeTruthy();
+    expect(screen.queryByRole("button", { name: /open vibe menu/i })).toBeNull();
+  });
+
   it("forwards shareButtonRef to the Share nav button (so an external popover can anchor)", () => {
     const ref = React.createRef<HTMLButtonElement>();
     render(<UnifiedVibeCard appTitle="Bloom Machine" open shareButtonRef={ref} />);
