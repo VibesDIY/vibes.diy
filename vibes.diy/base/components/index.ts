@@ -14,3 +14,4 @@ export * from "./ExpandedVibesPill.js";
 export * from "./OptionButtons.js";
 export * from "./ViewerTagView.js";
 export * from "./UnifiedVibeCard.js";
+export * from "./SharePanelView.js";
