@@ -7,7 +7,17 @@ import { calcEntryPointUrl } from "@vibes.diy/api-pkg";
 import { createPortal } from "react-dom";
 import SessionSidebar from "../components/SessionSidebar.js";
 import { Delayed } from "../components/Delayed.js";
-import { VibesSwitch, VibesButton, BLUE, YELLOW, ExpandedVibesPill, gridBackground, cx, useMobile } from "@vibes.diy/base";
+import {
+  VibesSwitch,
+  VibesButton,
+  BLUE,
+  YELLOW,
+  ExpandedVibesPill,
+  gridBackground,
+  cx,
+  useMobile,
+  resolveBuilderOriginFrom,
+} from "@vibes.diy/base";
 import { useShareModal } from "../components/ResultPreview/useShareModal.js";
 import { useIframeApiInFlight } from "../hooks/useIframeApiInFlight.js";
 import { ShareModal } from "../components/ResultPreview/ShareModal.js";
@@ -704,7 +714,11 @@ export default function VibeIframeWrapper() {
                 appSlug={vibeSlug}
                 isTwinkling={isNetworkActive}
                 onHome={() => {
-                  window.open("https://vibes.diy", "_blank");
+                  // On a PR preview, stay on the preview subdomain so the home
+                  // page reflects the same (preview) session — otherwise we'd
+                  // jump to prod and mask the preview's real signed-in state.
+                  // Reuses the createVibe helper's PR-origin detection.
+                  window.open(resolveBuilderOriginFrom(window.location.origin), "_blank");
                 }}
                 onLogin={
                   authSignedIn
