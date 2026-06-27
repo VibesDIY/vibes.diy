@@ -651,11 +651,17 @@ export default function VibeIframeWrapper() {
       {/* Grid overlay — shown while grant is resolving or for card/not-found states */}
       {!isAccessGranted && (
         <div className={cx(gridBackground, "flex h-screen w-screen items-center justify-center")}>
-          <div className="fixed top-4 left-4 z-50">
-            <Delayed ms={1000}>
-              <VibesSwitch size={60} isActive={isSidebarVisible} onToggle={setIsSidebarVisible} className="cursor-pointer" />
-            </Delayed>
-          </div>
+          {/* Top-left logo doubles as the sidebar toggle. Only show it on the
+              persistent card / not-found screens — never during transient
+              "loading" — so the logo doesn't flash top-left before reappearing
+              as the bottom-right pill once access resolves. */}
+          {(showCard || notFound) && (
+            <div className="fixed top-4 left-4 z-50">
+              <Delayed ms={1000}>
+                <VibesSwitch size={60} isActive={isSidebarVisible} onToggle={setIsSidebarVisible} className="cursor-pointer" />
+              </Delayed>
+            </div>
+          )}
           {showCard ? (
             <div style={{ maxWidth: 500, width: "100%", margin: "0 16px", boxShadow: "0 2px 4px rgba(0,0,0,0.1)" }}>
               <div

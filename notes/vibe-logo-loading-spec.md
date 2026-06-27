@@ -11,9 +11,9 @@ clunky and unfinished.
 Desired behavior: the logo should be **invisible during loading** and only
 appear once, in the bottom-right corner. No top-left flash.
 
-> Status: spec only. Do not implement yet — there are in-flight changes to this
-> route that would make a code change here a painful rebase. Merge those first,
-> then implement against this spec.
+> Status: **implemented** on branch `claude/vibe-logo-animation-plan-e8px3h`
+> (PR #2702). The in-flight route work has merged to main; this branch was
+> rebased and the change below applied.
 
 ## Where it happens
 
