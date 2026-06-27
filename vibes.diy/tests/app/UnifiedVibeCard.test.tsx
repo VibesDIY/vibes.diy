@@ -29,7 +29,7 @@ describe("UnifiedVibeCard", () => {
         open
         chips={["Make it a drum kit", "Add a high score"]}
         onSelectChip={onSelectChip}
-      />,
+      />
     );
     fireEvent.click(screen.getByText("Make it a drum kit"));
     expect(onSelectChip).toHaveBeenCalledWith("Make it a drum kit");
@@ -43,7 +43,7 @@ describe("UnifiedVibeCard", () => {
         open
         chips={["Make it a drum kit", "Add a high score"]}
         onSelectChip={onSelectChip}
-      />,
+      />
     );
     fireEvent.click(screen.getByText("Make it a drum kit"));
     fireEvent.click(screen.getByText("Add a high score"));
@@ -73,7 +73,7 @@ describe("UnifiedVibeCard", () => {
         onHome={onHome}
         onShare={onShare}
         onOpenChange={onOpenChange}
-      />,
+      />
     );
     fireEvent.click(screen.getByRole("button", { name: /home/i }));
     expect(onHome).toHaveBeenCalled();
