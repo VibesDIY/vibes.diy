@@ -321,7 +321,19 @@ export async function persistDefaultUserSlug(ctx: VibesApiSQLCtx, userId: string
     .limit(1)
     .then((r) => r[0]);
   if (!existing) {
-    await ctx.sql.db.insert(ctx.sql.tables.userSettings).values({ userId, settings: [newSetting], updated: now, created: now });
+    // Idempotent under concurrent first-load whoAmI calls (#2695): a fresh user
+    // with no UserSettings row can have several whoAmI RPCs (iframe bootstrap,
+    // host viewer refresh, comments viewer lookup) reach this path at once. A
+    // plain insert lets the writer that loses the race hit the userId PK conflict
+    // and throw — which would reject resolveWhoAmI and leave first-load identity
+    // flaky for exactly the handle-less users this targets. onConflictDoNothing
+    // makes the loser a no-op; concurrent whoAmI writers resolve the same handle
+    // (handle binding is race-safe via writeHandleBinding), so the winner's row
+    // already carries the correct default. Mirrors writeHandleBinding above.
+    await ctx.sql.db
+      .insert(ctx.sql.tables.userSettings)
+      .values({ userId, settings: [newSetting], updated: now, created: now })
+      .onConflictDoNothing();
   } else {
     const { filtered: currentParsed, warning: currentWarning } = parseArrayWarning(existing.settings, userSettingItem);
     if (currentWarning.length > 0) {
