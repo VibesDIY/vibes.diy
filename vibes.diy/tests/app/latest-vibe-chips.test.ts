@@ -24,11 +24,12 @@ function promptReq(): unknown {
   return { type: "prompt.req", streamId: "stream-1", prompt: "make a thing" };
 }
 
-function turn(created: string, lines: string[], extra: unknown[] = []): ResChatResponseTurn {
+function turn(created: string, lines: string[], extra: unknown[] = [], fsId?: string): ResChatResponseTurn {
   return {
     chatId: "chat-1",
     promptId: `p-${created}`,
     created,
+    ...(fsId ? { fsId } : {}),
     sections: [{ blockSeq: 0, blocks: [...extra, ...lines.map((t, i) => line(t, i))] as never }],
   };
 }
@@ -57,6 +58,17 @@ describe("latestTurnChips", () => {
   it("returns no chips when the latest turn ended without a ▸ question", () => {
     const t = turn("2026-06-27T02:00:00Z", ["Here is your app.", "No options were offered."]);
     expect(latestTurnChips([t])).toEqual([]);
+  });
+
+  it("prefers the newest turn matching the given fsId over the globally-newest turn", () => {
+    const newestOtherVersion = turn("2026-06-27T03:00:00Z", ["v2 turn", "▸ V2 chip"], [], "fs-v2");
+    const targetVersion = turn("2026-06-27T02:00:00Z", ["v1 turn", "▸ V1 chip"], [], "fs-v1");
+    expect(latestTurnChips([newestOtherVersion, targetVersion], "fs-v1")).toEqual(["V1 chip"]);
+  });
+
+  it("falls back to the newest turn when no turn matches the fsId", () => {
+    const t = turn("2026-06-27T02:00:00Z", ["only turn", "▸ Only chip"], [], "fs-v1");
+    expect(latestTurnChips([t], "fs-nonexistent")).toEqual(["Only chip"]);
   });
 
   it("ignores non-toplevel blocks when assembling the narration", () => {

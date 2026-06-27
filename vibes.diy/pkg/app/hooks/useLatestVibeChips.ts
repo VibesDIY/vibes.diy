@@ -22,10 +22,15 @@ const MAX_CHIPS = 3;
  * turn with no narration, a turn that ended without a question) → no chips, and
  * the card falls back to its text-input-only form.
  */
-export function latestTurnChips(turns: readonly ResChatResponseTurn[]): readonly string[] {
-  const latest = turns[0];
-  if (!latest) return [];
-  const text = latest.sections
+export function latestTurnChips(turns: readonly ResChatResponseTurn[], fsId?: string): readonly string[] {
+  // Prefer the newest turn for THIS code version (fsId snapshot semantics) — the
+  // chips should reflect the version being viewed, not whatever chat turn is
+  // globally newest. Turns come newest-first, so find()/[0] both pick the newest
+  // qualifying turn. Fall back to the newest turn overall when no fsId is pinned
+  // (e.g. `/vibe/$owner/$app` with no version) or none matches.
+  const turn = (fsId ? turns.find((t) => t.fsId === fsId) : undefined) ?? turns[0];
+  if (!turn) return [];
+  const text = turn.sections
     .flatMap((s) => s.blocks)
     // NB: wrap the guard — `isToplevelLine(msg, streamId?)` takes an optional
     // second arg, and Array.filter would pass the element index into it, so a
@@ -50,9 +55,11 @@ export function useLatestVibeChips(args: {
   readonly sharedApi: Pick<VibesDiyApiIface, "getChatResponse">;
   readonly ownerHandle?: string;
   readonly appSlug?: string;
+  /** The code version being viewed; chips prefer this turn's suggestions. */
+  readonly fsId?: string;
   readonly enabled: boolean;
 }): readonly string[] {
-  const { sharedApi, ownerHandle, appSlug, enabled } = args;
+  const { sharedApi, ownerHandle, appSlug, fsId, enabled } = args;
   const [chips, setChips] = useState<readonly string[]>([]);
 
   useEffect(() => {
@@ -65,7 +72,7 @@ export function useLatestVibeChips(args: {
       .getChatResponse({ ownerHandle, appSlug })
       .then((r) => {
         if (cancelled) return;
-        setChips(r.isErr() ? [] : latestTurnChips(r.Ok().turns));
+        setChips(r.isErr() ? [] : latestTurnChips(r.Ok().turns, fsId));
       })
       .catch(() => {
         if (!cancelled) setChips([]);
@@ -73,7 +80,7 @@ export function useLatestVibeChips(args: {
     return () => {
       cancelled = true;
     };
-  }, [sharedApi, ownerHandle, appSlug, enabled]);
+  }, [sharedApi, ownerHandle, appSlug, fsId, enabled]);
 
   return chips;
 }

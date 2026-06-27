@@ -209,6 +209,7 @@ export default function VibeIframeWrapper() {
     sharedApi: vctx.sharedApi,
     ownerHandle,
     appSlug,
+    fsId,
     enabled: isOwner,
   });
 
