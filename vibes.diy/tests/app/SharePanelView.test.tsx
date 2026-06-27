@@ -24,8 +24,19 @@ describe("SharePanelView", () => {
     expect(screen.queryByRole("radiogroup")).toBeNull();
   });
 
-  it("granted member: shows the roster (owner first), read-only, no access setting", () => {
-    render(<SharePanelView url="u" viewer="member" members={ROSTER} />);
+  it("granted member on a public vibe: no roster (open membership)", () => {
+    render(<SharePanelView url="u" viewer="member" access="public" members={ROSTER} />);
+    expect(screen.queryByText(/in this vibe/i)).toBeNull();
+    expect(screen.queryByText("@meghan")).toBeNull();
+  });
+
+  it("owner sees the roster even on a public vibe", () => {
+    render(<SharePanelView url="u" viewer="author" access="public" members={ROSTER} />);
+    expect(screen.getByText("@meghan")).toBeTruthy();
+  });
+
+  it("granted member on a gated vibe: shows the roster (owner first), read-only, no access setting", () => {
+    render(<SharePanelView url="u" viewer="member" access="request" members={ROSTER} />);
     expect(screen.getByText(/in this vibe/i)).toBeTruthy();
     expect(screen.getByText("@meghan")).toBeTruthy();
     expect(screen.getByText("@alex")).toBeTruthy();

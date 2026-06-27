@@ -591,10 +591,12 @@ can see it; collaboration happens for people the author lets in (→ the roster)
 > (request screen → deferred). Only the second half defers. The roster (and "browse members /
 > member roster" — naming TBD) is a first-class part of the dialogue.
 
-The roster appears for granted members on a non-auto-grant (grant-required) vibe — auto-grant
-(public) membership is open, so there's no curated list to browse. Inside the roster, contents
-differ by role: a member sees a read-only list; the author additionally manages it (roles,
-the deeper request/approve controls — themselves part of the deferred request flow).
+The roster appears for granted **members** only on a non-auto-grant (grant-required) vibe — a
+public ("anyone with the link") vibe has open membership, so there's no curated list to browse,
+and the access copy is shown *without* a roster. **The owner is the exception (decided
+2026-06-27): they always see the roster, even on a public vibe**, so they can see who's been
+granted. Inside the roster, contents differ by role: a member sees a read-only list; the author
+additionally manages it (per-member roles via tapping a tag — the deferred manage flow).
 
 ## 3. Deferred identity (the FTUE principle, #1693)
 
