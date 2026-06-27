@@ -206,6 +206,11 @@ export default function App() {
   const [text, setText] = useState("");
   const [dragId, setDragId] = useState(null);
   const [saving, setSaving] = useState(0);
+  // Optimistic `done` overrides keyed by item _id. We flip the value locally for
+  // an instant check/strikethrough, then drop the override once the write settles
+  // so the live query is the single source of truth — on failure that means the
+  // row simply reverts to its current saved state (no inverse threading).
+  const [optimisticDone, setOptimisticDone] = useState({});
 
   // Optimistic writes (per prompts/llms/use-vibe.md): Fireproof is local-first, so
   // useLiveQuery reflects the change immediately; the runtime surfaces a toast if
@@ -261,7 +266,16 @@ export default function App() {
   }
 
   function toggle(doc) {
-    run(() => database.put({ ...doc, done: !doc.done }));
+    const next = !doc.done;
+    setOptimisticDone((o) => ({ ...o, [doc._id]: next })); // reflect immediately
+    run(() => database.put({ ...doc, done: next })).finally(() =>
+      // Drop the override and defer to the live query (reverts on a failed save).
+      setOptimisticDone((o) => {
+        const copy = { ...o };
+        delete copy[doc._id];
+        return copy;
+      })
+    );
   }
 
   function remove(doc) {
@@ -400,69 +414,70 @@ export default function App() {
             </li>
           ) : (
             <>
-              {sorted.map((it, i) => (
-                <li
-                  key={it._id}
-                  draggable
-                  onDragStart={() => setDragId(it._id)}
-                  onDragOver={(e) => e.preventDefault()}
-                  onDrop={() => dropOn(it)}
-                  className={
-                    "group flex items-center gap-3 px-4 py-3 transition " +
-                    CARD +
-                    (dragId === it._id ? " opacity-40" : " hover:border-[var(--comp-accent)]")
-                  }
-                >
-                  <span className="cursor-grab text-[var(--comp-muted)] opacity-40 group-hover:opacity-80" aria-hidden>
-                    <IconGrip size={16} />
-                  </span>
-                  <button
-                    onClick={() => toggle(it)}
-                    aria-label={it.done ? "mark not done" : "mark done"}
+              {sorted.map((it, i) => {
+                const done = it._id in optimisticDone ? optimisticDone[it._id] : it.done;
+                return (
+                  <li
+                    key={it._id}
+                    draggable
+                    onDragStart={() => setDragId(it._id)}
+                    onDragOver={(e) => e.preventDefault()}
+                    onDrop={() => dropOn(it)}
                     className={
-                      "grid h-6 w-6 shrink-0 place-items-center rounded-full border transition " +
-                      (it.done
-                        ? "border-transparent bg-[var(--comp-done)] text-[var(--comp-accent-text)]"
-                        : "border-[var(--comp-border)] bg-transparent text-transparent hover:border-[var(--comp-accent)]")
+                      "group flex items-center gap-3 px-4 py-3 transition " +
+                      CARD +
+                      (dragId === it._id ? " opacity-40" : " hover:border-[var(--comp-accent)]")
                     }
                   >
-                    <IconCheck size={14} />
-                  </button>
-                  <span className={"flex-1 break-words " + (it.done ? "text-[var(--comp-muted)] line-through" : "")}>
-                    {it.text}
-                  </span>
-                  {it.authorHandle && (
-                    <span className="shrink-0 opacity-70">
-                      <ViewerTag userHandle={it.authorHandle} style={TAG} />
+                    <span className="cursor-grab text-[var(--comp-muted)] opacity-40 group-hover:opacity-80" aria-hidden>
+                      <IconGrip size={16} />
                     </span>
-                  )}
-                  <span className="flex shrink-0 flex-col leading-none text-[var(--comp-muted)] opacity-50">
                     <button
-                      onClick={() => nudge(i, -1)}
-                      disabled={i === 0}
-                      className="hover:text-[var(--comp-text)] disabled:opacity-20"
-                      aria-label="move up"
+                      onClick={() => toggle(it)}
+                      aria-label={done ? "mark not done" : "mark done"}
+                      className={
+                        "grid h-6 w-6 shrink-0 place-items-center rounded-full border transition " +
+                        (done
+                          ? "border-transparent bg-[var(--comp-done)] text-[var(--comp-accent-text)]"
+                          : "border-[var(--comp-border)] bg-transparent text-transparent hover:border-[var(--comp-accent)]")
+                      }
                     >
-                      <IconUp size={15} />
+                      <IconCheck size={14} />
                     </button>
+                    <span className={"flex-1 break-words " + (done ? "text-[var(--comp-muted)] line-through" : "")}>{it.text}</span>
+                    {it.authorHandle && (
+                      <span className="shrink-0 opacity-70">
+                        <ViewerTag userHandle={it.authorHandle} style={TAG} />
+                      </span>
+                    )}
+                    <span className="flex shrink-0 flex-col leading-none text-[var(--comp-muted)] opacity-50">
+                      <button
+                        onClick={() => nudge(i, -1)}
+                        disabled={i === 0}
+                        className="hover:text-[var(--comp-text)] disabled:opacity-20"
+                        aria-label="move up"
+                      >
+                        <IconUp size={15} />
+                      </button>
+                      <button
+                        onClick={() => nudge(i, 1)}
+                        disabled={i === sorted.length - 1}
+                        className="hover:text-[var(--comp-text)] disabled:opacity-20"
+                        aria-label="move down"
+                      >
+                        <IconDown size={15} />
+                      </button>
+                    </span>
                     <button
-                      onClick={() => nudge(i, 1)}
-                      disabled={i === sorted.length - 1}
-                      className="hover:text-[var(--comp-text)] disabled:opacity-20"
-                      aria-label="move down"
+                      onClick={() => remove(it)}
+                      aria-label="delete"
+                      className="shrink-0 text-[var(--comp-muted)] opacity-50 hover:text-[var(--comp-danger)] hover:opacity-100"
                     >
-                      <IconDown size={15} />
+                      <IconX size={16} />
                     </button>
-                  </span>
-                  <button
-                    onClick={() => remove(it)}
-                    aria-label="delete"
-                    className="shrink-0 text-[var(--comp-muted)] opacity-50 hover:text-[var(--comp-danger)] hover:opacity-100"
-                  >
-                    <IconX size={16} />
-                  </button>
-                </li>
-              ))}
+                  </li>
+                );
+              })}
 
               {writeVerdict?.ok ? (
                 <li onDragOver={(e) => e.preventDefault()} onDrop={() => dropOn(null)}>
