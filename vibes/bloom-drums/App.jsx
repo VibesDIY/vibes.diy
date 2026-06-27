@@ -2,25 +2,27 @@ import React, { useRef, useState, useCallback, useEffect } from "react";
 import { useFireproof } from "use-vibes";
 
 // ── Bloom Drums ──────────────────────────────────────────────────────────────
-// The pattern sequencer (fork of system/bloom-machine) with the pitched tones
-// swapped for noise-based drum voices. A 4×4 grid of pads: each row is a drum
-// (hi-hat / clap / snare / kick), each column a brighter/duller variant. Hold a
-// pad to sound it (sustained until release); the hit records — quantized to the
-// nearest step, with the held duration — into the active pattern. Patterns are a
-// list of rows (play · 16-step playhead · save/delete); one plays at a time.
+// An evolution of the pattern sequencer (system/bloom-machine) — reached via its
+// "make it a drum machine" chip — with the pitched tones swapped for real drum
+// voices. A 4×4 grid of pads: each row is a drum (hi-hat / clap / snare / kick),
+// each column a brighter/duller variant. Hold a pad to sound it; the hit records
+// — quantized to the nearest step — into the active pattern. Patterns are a list
+// of rows (play · 16-step playhead · save/delete); one plays at a time.
 // Everything else matches bloom-machine. Web Audio + local state — no backend.
 
-// One drum per row (top → bottom): a noise voice through a band filter. Each
-// owns a distinct colour, plus a level trim so the four sit at similar loudness.
+// One drum per row (top → bottom): a short, percussive voice (its own amp/pitch
+// envelope so it sounds like a real hit, not a sustained noise wash). Each owns a
+// colour and a level trim so the kit sits balanced.
 const DRUMS = [
-  { name: "hat", type: "highpass", freq: 7000, q: 0.7, gain: 0.6, color: "#f472b6", glow: "#ec4899" }, // pink
-  { name: "clap", type: "bandpass", freq: 1800, q: 1.4, gain: 1.1, color: "#fbbf24", glow: "#f59e0b" }, // amber
-  { name: "snare", type: "bandpass", freq: 1000, q: 0.9, gain: 1.2, color: "#34d399", glow: "#10b981" }, // emerald
-  { name: "kick", type: "lowpass", freq: 160, q: 1.0, gain: 2.2, color: "#60a5fa", glow: "#3b82f6" }, // blue
+  { name: "hat", kind: "hat", color: "#f472b6", glow: "#ec4899", gain: 0.5, cutoff: 9000, decay: 0.05 }, // pink
+  { name: "clap", kind: "clap", color: "#fbbf24", glow: "#f59e0b", gain: 1.0, cutoff: 1600, decay: 0.14 }, // amber
+  { name: "snare", kind: "snare", color: "#34d399", glow: "#10b981", gain: 1.0, cutoff: 1900, decay: 0.18, body: 190 }, // emerald
+  { name: "kick", kind: "kick", color: "#60a5fa", glow: "#3b82f6", gain: 1.6, decay: 0.34, pitch: 150, drop: 48 }, // blue
 ];
 
-// One variant per column, left → right: shifts the filter cutoff (duller → brighter)
-// and trims level, so a row gives four flavours of the same drum.
+// One variant per column, left → right: shifts brightness (cutoff / kick pitch)
+// and trims level, so a row gives four flavours of the same drum. (Same grit
+// arrangement as before — only the underlying voices changed.)
 const BASE_GAIN = 0.22;
 const VARIANTS = [
   { cutoffMul: 0.6, gain: 1.0 },
@@ -102,21 +104,77 @@ function makeNoise(ctx) {
   return buf;
 }
 
-// Build a drum voice: looping noise → band filter → shared envelope gain. Shaped
-// like the old oscillator voice ({ env, oscs, gains }) so the rest is unchanged —
-// the buffer source plays the role of an "osc", the filter of a "gain".
+// Build a drum voice. Returns the same { env, oscs, gains } shape as before so
+// press/release/playRecorded/teardown are unchanged — but inside, each voice has
+// its own percussive amp envelope (`shape`) and, for the kick, a pitch drop, so
+// it reads as a real drum hit rather than a sustained noise wash. The outer `env`
+// (driven by press/playRecorded) just scales the level.
 function buildVoice(ctx, noise, drum, variant) {
+  const t = ctx.currentTime;
   const env = ctx.createGain();
-  const src = ctx.createBufferSource();
-  src.buffer = noise;
-  src.loop = true;
-  const filter = ctx.createBiquadFilter();
-  filter.type = drum.type;
-  filter.frequency.value = drum.freq * variant.cutoffMul;
-  filter.Q.value = drum.q;
-  src.connect(filter);
-  filter.connect(env);
-  return { env, oscs: [src], gains: [filter] };
+  const shape = ctx.createGain(); // percussive amp envelope, multiplies into env
+  shape.connect(env);
+  const oscs = [];
+  const gains = [shape];
+
+  // fast attack → exponential decay to ~silence over the drum's decay time
+  shape.gain.setValueAtTime(0.0001, t);
+  shape.gain.exponentialRampToValueAtTime(1, t + 0.003);
+  shape.gain.exponentialRampToValueAtTime(0.0008, t + drum.decay);
+
+  const noiseSrc = (filterType, freq, q) => {
+    const src = ctx.createBufferSource();
+    src.buffer = noise;
+    src.loop = true;
+    const f = ctx.createBiquadFilter();
+    f.type = filterType;
+    f.frequency.value = freq;
+    if (q != null) f.Q.value = q;
+    src.connect(f).connect(shape);
+    oscs.push(src);
+    gains.push(f);
+  };
+
+  if (drum.kind === "kick") {
+    const osc = ctx.createOscillator();
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(drum.pitch * (0.85 + variant.cutoffMul * 0.25), t);
+    osc.frequency.exponentialRampToValueAtTime(drum.drop, t + drum.decay * 0.6);
+    osc.connect(shape);
+    oscs.push(osc);
+    // a short noise click for attack
+    const click = ctx.createBufferSource();
+    click.buffer = noise;
+    click.loop = true;
+    const hp = ctx.createBiquadFilter();
+    hp.type = "highpass";
+    hp.frequency.value = 3000;
+    const clickGain = ctx.createGain();
+    clickGain.gain.setValueAtTime(0.6, t);
+    clickGain.gain.exponentialRampToValueAtTime(0.0008, t + 0.02);
+    click.connect(hp).connect(clickGain).connect(shape);
+    oscs.push(click);
+    gains.push(hp, clickGain);
+  } else if (drum.kind === "snare") {
+    noiseSrc("highpass", drum.cutoff * variant.cutoffMul); // the noise crack
+    const body = ctx.createOscillator(); // a bit of tonal body
+    body.type = "triangle";
+    body.frequency.value = drum.body;
+    const bodyGain = ctx.createGain();
+    bodyGain.gain.value = 0.5;
+    body.connect(bodyGain).connect(shape);
+    oscs.push(body);
+    gains.push(bodyGain);
+  } else {
+    // hat (highpass) / clap (bandpass) — filtered noise burst
+    noiseSrc(
+      drum.kind === "hat" ? "highpass" : "bandpass",
+      drum.cutoff * variant.cutoffMul,
+      drum.kind === "clap" ? 1.2 : undefined
+    );
+  }
+
+  return { env, oscs, gains };
 }
 
 export default function BloomDrums() {
