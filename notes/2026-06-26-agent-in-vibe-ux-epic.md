@@ -175,32 +175,38 @@ never the destination; it's a transient progress view that yields to the running
 - It must **not** look like today's chat editor — the stream is a transient overlay, not a
   side-by-side code pane.
 
-### 1c. Live + edit — app running, the switch closed
+### 1c. Live + edit — the unified card (the expanded switch contains everything)
+
+**Decided (jchris; prototyped in Storybook `Sketches/Agent-in-Vibe`, screenshots in
+`notes/sketches/agent-in-vibe/`):** the expanded vibe switch is **one rounded card** — not two
+floating bubbles — that contains everything: **icon + title at the top, the content (chips /
+stream / access view) in the middle, and the nav row at the bottom latitude.** Closed, it
+collapses to just the toggle in the lower-right (a grow/shrink morph). Variable height; floats
+above the app, which shows around its edges.
 
 ```
-  closed (switch is the pill)            open (switch reveals the affordance)
-  ┌─────────────────────────┐            ┌─────────────────────────┐
-  │                         │            │     (running app)       │
-  │     (running app)       │   tap the  ├─────────────────────────┤
-  │                         │   switch   │   ▸ Make it a drum kit   │ ← OptionButtons
-  │                         │  ───────▶  │   ▸ Add a high score     │   (the chips)
-  ├─────────────────────────┤            │   ▸ Other…              │
-  │ ⌂   ◐ handle ▾   [VIBES]│            │  ✎ describe a change… ▸ │
-  └─────────────────────────┘            └─────────────────────────┘
+  closed (toggle lower-right)            open (the unified card)
+  ┌─────────────────────────┐            ┌──────────────────────────────┐
+  │                         │            │ ▣ Bloom Machine              │ ← icon + title
+  │     (running app)       │            │   bloom                      │
+  │                         │   tap      ├──────────────────────────────┤
+  │                         │  ───────▶  │ ▸ Make it a drum kit          │ ← OptionButtons
+  │                         │            │ ▸ Add a high score            │   (the chips)
+  ├─────────────────────────┤            │ ✎ describe a change…       ▸ │ ← "Other"
+  │                  [VIBES]│            ├──────────────────────────────┤
+  └─────────────────────────┘            │ (M)@meghan▾  ⌂ 💬 ↗   [VIBES] │ ← nav (see §1e)
+                                         └──────────────────────────────┘
 ```
 
-- **Opening the switch reveals the chips (the edit affordance).** This is the core move:
-  the VibesSwitch's open state *is* §1a. Closed, it's the identity/share pill (one model,
-  not four look-alike buttons with three behaviors, #1708). On start/homepage flows it
-  starts **already open** (chips showing); on a live vibe it starts closed.
-- **Editing IS the affordance:** **owner (account) → chips + textarea change the code in
-  place**; **every non-owner — including writer-members — makes it theirs** (a fresh copy
-  under their handle, #1856), because only the owner edits code in place (§2). Writer-members
-  change *data* by *using* the app; that's using, not editing. No "Remix" button — it's just
-  what editing a vibe you don't own does.
-- **For a visitor, the only explicit access CTA is "Request access"** (and only when the vibe
-  is request-gated); View and Join are automatic (§2). No "Edit" destination, no separate
-  iterate flow — you just change the app.
+- **Bottom nav (the open switch row), left → right:** the **handle picker** (active-handle
+  display + switcher, #2275; leftmost), then **Home** (vibes.diy), **Chat** (the edit
+  affordance — *selected* in these views), **Share** (sharing controls; comments TBD), and the
+  **VibesSwitch toggle** at the right. Details in §1e.
+- **Editing IS the affordance:** owner (account) → chips/Other change the code in place; every
+  non-owner — including writer-members — makes it theirs (a fresh copy, #1856). Writer-members
+  change *data* by *using* the app; that's using, not editing. No "Remix" button.
+- **For a visitor, the only explicit access CTA is "Request access"** (request-gated only);
+  View and Join are automatic (§2). No "Edit" destination, no separate iterate flow.
 
 ### 1d. Implementation grounding — the build seam (existing code this reuses)
 
@@ -209,9 +215,10 @@ systems. Charlie/Codex and the explorers confirmed these seams:
 
 | Need | Reuse / extend | Where |
 | --- | --- | --- |
-| The chips | **`OptionButtons`** — decoupled, Tailwind, already the chat suggestion chips | `pkg/app/components/OptionButtons.tsx` |
+| The chips | **`OptionButtons`** — decoupled, Tailwind, already the chat suggestion chips. **Moved to `@vibes.diy/base`** so the chrome sketch and the chat render the *same* component (single source of truth). | `base/components/OptionButtons.tsx` (was `pkg/app/components/`) |
 | Chip source | `▸`-prefixed lines parsed from the last AI message (`parseOptionLines`) | `pkg/app/utils/option-lines.ts` |
-| The switch that opens to reveal them | **`ExpandedVibesPill`** owns the open/close phase machine (`idle→bubble→…→open`); **`VibesSwitch`** is the SVG toggle. Redefine "open" to render `OptionButtons`. | `base/components/ExpandedVibesPill.tsx`, `VibesSwitch.tsx` |
+| The active-handle tag (handle picker leftmost in the nav) | **`ViewerTagView`** — presentational shell **extracted to `@vibes.diy/base`** from the runtime viewer tag: avatar (img/initial), click-the-avatar-to-edit camera affordance + hidden file input, anonymous→Sign-in, a `trailing` slot for the picker caret. All actions are **injected** — the runtime wires `onPickFile`/`onSignIn` to the iframe host bridge (`getRegisteredVibeApi`), the chrome wires them to platform APIs. | `base/components/ViewerTagView.tsx`; runtime wrapper `vibe/runtime/use-viewer-tag.tsx` |
+| The switch that opens to reveal them | **`ExpandedVibesPill`** owns the open/close phase machine (`idle→bubble→…→open`); **`VibesSwitch`** is the SVG toggle. Redefine "open" to render the unified card (title + `OptionButtons` + nav). | `base/components/ExpandedVibesPill.tsx`, `VibesSwitch.tsx` |
 | The chat stream during generation | `PromptAndBlockMsgs` stream; first-code-block via `isCodeEnd` | `pkg/app/hooks/useChatSession.ts`, `call-ai/v2/block-stream.ts` |
 | Real **and faked** chat in one model | `ChatSections` rows of `PromptAndBlockMsgs[]` (`block.toplevel.line` / `block.code.*`); pre-author curated history the same way | `api/sql/...schema-sqlite.ts`, `prompt-assembly.ts` |
 | Today's homepage onramp (to replace) | carousel of full suggestions → `/chat/prompt?prompt64=` | `pkg/app/components/HomePage.tsx`, `data/quick-suggestions-data.ts` |
@@ -220,7 +227,12 @@ systems. Charlie/Codex and the explorers confirmed these seams:
 > it as a learning, not a base. The unification target is: chips = `OptionButtons` fed by
 > `▸` lines, so the affordance and the chat are literally the same data in two surfaces.
 
-### 1e. The switch menu & the visitor landing (structure decided, layout deferred)
+> **Shared-component consolidation already started (PR for this doc).** `OptionButtons` and
+> `ViewerTagView` are now in `@vibes.diy/base` and rendered by the Storybook sketches *and*
+> the runtime, so the sketches are built from real components, not throwaway mockups — the
+> single-source-of-truth pattern the next PRs should keep extending. (Ledger §7.)
+
+### 1e. The switch menu & the visitor landing (bottom-nav layout decided; access view deferred)
 
 The switch is a **top-level menu**, and the landing/access actions are a **peer of chat
 inside it — not nested in the chat.** Decided structure (jchris):
@@ -236,9 +248,34 @@ inside it — not nested in the chat.** Decided structure (jchris):
   **per handle**, so you must always be able to *see which handle you're browsing/acting as*
   and *switch it* — surfaced top-level, not buried. (Backend active-handle resolution already
   landed per #2275; this is the UI.)
-- **Detailed layout of the menu and the access view is explicitly deferred** — "hard to
-  specify without seeing the other parts first; design it later." Sketch the other states
-  first, then design this against them.
+
+**Decided (jchris; prototyped in Storybook, screenshots in `notes/sketches/agent-in-vibe/`): the
+bottom-nav layout.** The nav sits at the bottom latitude of the unified card (§1c). **Left →
+right:**
+
+```
+  (M)@meghan ▾        ⌂        💬        ↗        [VIBES]
+  └ handle picker ┘  Home    Chat     Share    switch toggle
+   (leftmost)               (selected
+                            in chat view)
+```
+
+- **Handle picker = leftmost (jchris: "put it at the leftmost along that bottom latitude").**
+  It **reuses `ViewerTagView`** (now in `@vibes.diy/base`, §1d): the active handle's avatar +
+  name as a pill, a `▾` caret in the `trailing` slot. **Editing your photo = clicking the
+  avatar**, exactly like the runtime "me mode" viewer tag — *not* a menu item. The caret opens a
+  **handle dropdown** ("Acting as" header → your handles, current one checked → divider → "New
+  handle"). There is **no "Edit photo" menu row** — that was tried and removed (it was ambiguous
+  *which* handle's photo you'd edit; clicking the avatar scopes it to the shown handle).
+- **Home / Chat / Share** are circular colored nav icons echoing the production `ExpandedVibesPill`
+  (Home blue, the edit/vibe affordance orange, etc.). **Chat is the *selected* item** in the
+  edit/affordance views. Share opens the link-first share controls (§2 "Share panel"); comments
+  placement TBD.
+- **VibesSwitch toggle = rightmost** — the grow/shrink morph back to the closed lower-right toggle
+  (§1c). The whole row is contained inside the one unified card, not a separate bar.
+- **Still deferred:** the layout of the **access view** itself (what fills the card's middle for a
+  request-gated visitor / owner share controls). "Hard to specify without seeing the other parts
+  first; design it later." The nav frame is settled; the access view's contents are not.
 
 Two visitor-landing visuals **are** decided now:
 
@@ -635,6 +672,7 @@ What we delete, and the learning it encodes — so the knowledge survives the co
 | Dual auto-accept checkboxes (#1768) | Two controls for one field = two surfaces drifting. One component. |
 | Separate `/start` *system* (#1896) — its curated content feeds the **homepage** prompt-entry; the route itself becomes a **compat redirect**, not hard-removed | Onboarding isn't a special place; it's the homepage's edit affordance seeded with curated content, identical to editing any vibe. (Redirect avoids breaking the prototype/links.) |
 | The anonymous-draft + claim-on-sign-in *backend system* we thought we'd need (never built) | Put the login wall on the codegen request, not the page: cached content is anonymous page-views, so anonymous *generation* never exists and there's nothing to claim. The cheapest feature is the one the boundary placement deletes. |
+| Duplicate viewer-tag / suggestion-chip implementations across runtime, chrome, and sketches | Presentational shells (`ViewerTagView`, `OptionButtons`) belong in `@vibes.diy/base` with their host-bridge actions **injected** at the edge. One component renders in the runtime *and* the platform chrome *and* the Storybook sketches — so sketches stay honest (real components) and the chip/handle UI can't drift between surfaces. |
 
 ## 8. Open questions for GATE 1
 
