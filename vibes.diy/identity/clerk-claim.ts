@@ -7,10 +7,12 @@ import { z } from "zod";
  * defaults on `first` / `image_url` / `last` / `name`. Real Clerk JWTs omit
  * those fields, and without the catch the strict schema rejects them.
  *
- * This is the phase-1 **parity artifact**: vibes code validates Clerk claims
- * through this owned schema instead of the patched upstream one. The upstream
- * patch is still required (fireproof's own `tokenApi.verify` imports its copy)
- * and is removed only once the verifier itself is extracted.
+ * This is the owned **parity artifact**: vibes code validates Clerk claims
+ * through this schema instead of the patched upstream one. As of the Task 5
+ * token-verify lift the in-repo `tokenApi` uses THIS schema (not fireproof's),
+ * so the upstream `core-types-base` patch is no longer on any runtime path and
+ * is removed. The frozen parity gate (`clerk-claim-parity.test.ts`) pins the
+ * `.catch()` behavior here independently of upstream.
  */
 export const ClerkEmailTemplateClaimSchema = z.object({
   nick: z.string().optional(),
@@ -40,3 +42,21 @@ export const ClerkClaimSchema = z.object({
 });
 
 export type ClerkClaim = z.infer<typeof ClerkClaimSchema>;
+
+/**
+ * Wrapper schema fireproof's `tokenApi` Clerk-verify uses as the `parseSchema`
+ * over the `{ payload, protectedHeader }` JWT-verify result. Lifted verbatim
+ * from `core-types-base`'s `fp-clerk-claim.zod` (`FPClerkClaimSchema`); inherits
+ * the patched leniency via the owned `ClerkClaimSchema` above.
+ */
+export const FPClerkClaimSchema = z.object({
+  payload: ClerkClaimSchema,
+  protectedHeader: z
+    .object({
+      alg: z.string(),
+      cat: z.string(),
+      kid: z.string(),
+      typ: z.string(),
+    })
+    .partial(),
+});

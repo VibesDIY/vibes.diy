@@ -6,7 +6,7 @@
 // `.catch("")` params defaults), so this normalize-then-hash order is load-bearing
 // for thumbprint equality (pinned by the wire-compat harness). Imports only adjusted.
 import { toSortedObject } from "@adviser/cement";
-import { CertificatePayloadSchema } from "@fireproof/core-types-base";
+import { CertificatePayloadSchema } from "../types/cert-payload.js";
 import type { BaseXXEndeCoder, CertificatePayload } from "@fireproof/core-types-base";
 import type { CertorIf } from "@fireproof/core-types-device-id";
 import { decodeJwt } from "jose";
