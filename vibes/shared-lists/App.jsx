@@ -19,7 +19,44 @@ function positionForDrop(sorted, targetIndex) {
   return (before.position + after.position) / 2; // between → average
 }
 
-const CARD = "border-2 border-black rounded-xl shadow-[3px_3px_0_0_#000]";
+// Atelier Studio theme (prompts/pkg/themes/atelier.md): warm light palette, soft
+// hairline borders, gentle shadows, Playfair Display / Space Mono. Respects the
+// visitor's system color scheme via the dark media query below.
+const FONT_BODY = { fontFamily: "'Playfair Display', Georgia, serif" };
+const FONT_MONO = { fontFamily: "'Space Mono', ui-monospace, monospace" };
+const CARD = "rounded-2xl border border-[var(--comp-border)] bg-[var(--comp-surface)] shadow-[0_2px_10px_rgba(0,0,0,0.06)]";
+
+function ThemeStyle() {
+  return (
+    <style>{`
+      @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700;800&family=Space+Mono&display=optional');
+      :root {
+        --comp-bg: oklch(0.96 0.03 70);
+        --comp-surface: oklch(1 0 0);
+        --comp-text: oklch(0.25 0.04 30);
+        --comp-muted: oklch(0.50 0.04 30);
+        --comp-border: oklch(0.25 0.04 30 / 0.14);
+        --comp-accent: oklch(0.65 0.18 55);
+        --comp-accent-text: oklch(1 0 0);
+        --comp-done: oklch(0.74 0.13 150);
+        --comp-danger: oklch(0.58 0.20 25);
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --comp-bg: oklch(0.21 0.02 45);
+          --comp-surface: oklch(0.27 0.02 45);
+          --comp-text: oklch(0.95 0.02 70);
+          --comp-muted: oklch(0.72 0.03 60);
+          --comp-border: oklch(0.95 0.02 70 / 0.16);
+          --comp-accent: oklch(0.72 0.17 58);
+          --comp-accent-text: oklch(0.18 0.02 45);
+          --comp-done: oklch(0.72 0.14 150);
+          --comp-danger: oklch(0.66 0.20 25);
+        }
+      }
+    `}</style>
+  );
+}
 
 // Inline stroke icons (house style: no emoji in the UI).
 function Svg({ size = 18, children, ...rest }) {
@@ -69,19 +106,19 @@ const IconPlus = (p) => (
 function IconGrip({ size = 16, ...rest }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" {...rest}>
-      <circle cx="9" cy="5" r="1.5" />
-      <circle cx="9" cy="12" r="1.5" />
-      <circle cx="9" cy="19" r="1.5" />
-      <circle cx="15" cy="5" r="1.5" />
-      <circle cx="15" cy="12" r="1.5" />
-      <circle cx="15" cy="19" r="1.5" />
+      <circle cx="9" cy="5" r="1.4" />
+      <circle cx="9" cy="12" r="1.4" />
+      <circle cx="9" cy="19" r="1.4" />
+      <circle cx="15" cy="5" r="1.4" />
+      <circle cx="15" cy="12" r="1.4" />
+      <circle cx="15" cy="19" r="1.4" />
     </svg>
   );
 }
 
 function ListRail({ lists, activeId, onPick, onNew, canCreate }) {
   return (
-    <nav className="flex gap-2 overflow-x-auto px-5 py-3">
+    <nav className="flex gap-2 overflow-x-auto px-5 py-1">
       {lists.map((l) => {
         const active = l._id === activeId;
         return (
@@ -89,8 +126,10 @@ function ListRail({ lists, activeId, onPick, onNew, canCreate }) {
             key={l._id}
             onClick={() => onPick(l._id)}
             className={
-              "shrink-0 whitespace-nowrap rounded-lg border-2 border-black px-3 py-2 text-sm font-bold shadow-[2px_2px_0_0_#000] transition active:translate-y-px " +
-              (active ? "bg-[oklch(0.85_0.17_88)]" : "bg-white hover:-translate-y-px")
+              "shrink-0 whitespace-nowrap rounded-full px-4 py-1.5 text-sm transition " +
+              (active
+                ? "bg-[var(--comp-accent)] text-[var(--comp-accent-text)]"
+                : "border border-[var(--comp-border)] bg-[var(--comp-surface)] text-[var(--comp-text)] hover:border-[var(--comp-accent)]")
             }
           >
             {l.title || "Untitled"}
@@ -100,7 +139,7 @@ function ListRail({ lists, activeId, onPick, onNew, canCreate }) {
       {canCreate && (
         <button
           onClick={onNew}
-          className="shrink-0 whitespace-nowrap rounded-lg border-2 border-dashed border-black/40 px-3 py-2 text-sm font-bold text-black/50 hover:border-black hover:text-black"
+          className="shrink-0 whitespace-nowrap rounded-full border border-dashed border-[var(--comp-border)] px-4 py-1.5 text-sm text-[var(--comp-muted)] hover:border-[var(--comp-accent)] hover:text-[var(--comp-text)]"
         >
           + New list
         </button>
@@ -118,20 +157,21 @@ function InviteBox({ onInvite }) {
         onInvite(handle);
         setHandle("");
       }}
-      className="flex items-center gap-1"
+      className="flex items-center gap-1.5"
     >
       <input
         value={handle}
         onChange={(e) => setHandle(e.target.value)}
         placeholder="add friend by handle"
-        className="w-40 min-w-0 rounded-lg border-2 border-black bg-white px-3 py-1.5 text-sm outline-none"
+        style={FONT_MONO}
+        className="w-40 min-w-0 rounded-full border border-[var(--comp-border)] bg-[var(--comp-bg)] px-3 py-1.5 text-xs outline-none focus:border-[var(--comp-accent)]"
       />
       <button
         type="submit"
         aria-label="invite"
-        className="grid h-8 w-8 shrink-0 place-items-center rounded-lg border-2 border-black bg-white hover:bg-[oklch(0.85_0.17_88)]"
+        className="grid h-8 w-8 shrink-0 place-items-center rounded-full border border-[var(--comp-border)] text-[var(--comp-muted)] hover:border-[var(--comp-accent)] hover:text-[var(--comp-accent)]"
       >
-        <IconPlus size={16} />
+        <IconPlus size={15} />
       </button>
     </form>
   );
@@ -268,16 +308,22 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen bg-[oklch(0.97_0.012_95)] font-sans text-[oklch(0.2_0.02_260)]">
+    <div className="min-h-screen bg-[var(--comp-bg)] text-[var(--comp-text)]" style={FONT_BODY}>
+      <ThemeStyle />
       <div className="mx-auto flex min-h-screen w-full max-w-xl flex-col">
-        <header className="flex items-end justify-between gap-3 px-5 pt-8 pb-3">
+        <header className="flex items-end justify-between gap-3 px-5 pt-9 pb-4">
           <div>
-            <h1 className="text-3xl font-black tracking-tight">Shared Lists</h1>
-            <p className="mt-1 text-sm text-black/50">make a list, add friends, drag to reorder</p>
+            <h1 className="text-4xl font-bold tracking-tight">Shared Lists</h1>
+            <p style={FONT_MONO} className="mt-1.5 text-xs uppercase tracking-wider text-[var(--comp-muted)]">
+              make a list · add friends · drag to reorder
+            </p>
           </div>
           {saving > 0 && (
-            <span className="mb-1 flex shrink-0 items-center gap-1.5 rounded-full bg-black/5 px-2.5 py-1 text-xs font-medium text-black/50">
-              <span className="h-2 w-2 animate-pulse rounded-full bg-[oklch(0.7_0.18_85)]" />
+            <span
+              style={FONT_MONO}
+              className="mb-1.5 flex shrink-0 items-center gap-1.5 rounded-full border border-[var(--comp-border)] px-2.5 py-1 text-[11px] text-[var(--comp-muted)]"
+            >
+              <span className="h-2 w-2 animate-pulse rounded-full bg-[var(--comp-accent)]" />
               Saving…
             </span>
           )}
@@ -286,7 +332,7 @@ export default function App() {
         <ListRail lists={lists} activeId={activeListId} onPick={setActiveId} onNew={createList} canCreate={canCreateList} />
 
         {activeList && (
-          <div className={"mx-5 mb-4 bg-white px-5 py-4 " + CARD}>
+          <div className={"mx-5 mt-3 mb-4 px-5 py-4 " + CARD}>
             <div className="flex items-center gap-3">
               <input
                 key={activeList._id}
@@ -294,29 +340,35 @@ export default function App() {
                 onBlur={(e) => renameList(e.target.value)}
                 disabled={!(ready && can.edit({ ...activeList }).ok)}
                 aria-label="list title"
-                className="min-w-0 flex-1 rounded-lg bg-transparent px-1.5 py-1 text-xl font-black outline-none focus:bg-black/5 disabled:opacity-100"
+                className="min-w-0 flex-1 border-b border-transparent bg-transparent py-0.5 text-2xl font-bold outline-none focus:border-[var(--comp-border)] disabled:opacity-100"
               />
               {ready && can.delete(activeList).ok && (
                 <button
                   onClick={deleteList}
                   aria-label="delete list"
-                  className="shrink-0 rounded-lg border-2 border-black px-3 py-1.5 text-xs font-bold text-black/60 hover:bg-[oklch(0.62_0.22_25)] hover:text-white"
+                  style={FONT_MONO}
+                  className="shrink-0 rounded-full border border-[var(--comp-border)] px-3 py-1.5 text-[11px] uppercase tracking-wide text-[var(--comp-muted)] hover:border-[var(--comp-danger)] hover:text-[var(--comp-danger)]"
                 >
                   Delete
                 </button>
               )}
             </div>
             <div className="mt-3 flex flex-wrap items-center gap-2.5">
-              <span className="text-xs font-medium text-black/50">Shared with</span>
-              {members.length === 0 && <span className="text-xs italic text-black/40">just you</span>}
+              <span style={FONT_MONO} className="text-[11px] uppercase tracking-wide text-[var(--comp-muted)]">
+                Shared with
+              </span>
+              {members.length === 0 && <span className="text-sm italic text-[var(--comp-muted)]">just you</span>}
               {members.map((m) => (
-                <span key={m._id} className="flex items-center gap-1.5 rounded-full bg-black/5 px-2.5 py-1">
+                <span
+                  key={m._id}
+                  className="flex items-center gap-1.5 rounded-full border border-[var(--comp-border)] bg-[var(--comp-bg)] px-2.5 py-1"
+                >
                   <ViewerTag userHandle={m.userHandle} className="text-xs" />
                   {ready && can.delete(m).ok && (
                     <button
                       onClick={() => revoke(m)}
                       aria-label="remove friend"
-                      className="text-black/40 hover:text-[oklch(0.62_0.22_25)]"
+                      className="text-[var(--comp-muted)] hover:text-[var(--comp-danger)]"
                     >
                       <IconX size={13} />
                     </button>
@@ -328,9 +380,9 @@ export default function App() {
           </div>
         )}
 
-        <ul className="flex-1 space-y-3 px-5 pb-12">
+        <ul className="flex-1 space-y-2.5 px-5 pb-12">
           {!activeListId ? (
-            <li className="rounded-xl border-2 border-dashed border-black/30 px-4 py-12 text-center text-sm italic text-black/50">
+            <li className="rounded-2xl border border-dashed border-[var(--comp-border)] px-4 py-14 text-center text-sm italic text-[var(--comp-muted)]">
               {isViewerPending
                 ? "Connecting…"
                 : canCreateList
@@ -349,29 +401,35 @@ export default function App() {
                   onDragOver={(e) => e.preventDefault()}
                   onDrop={() => dropOn(it)}
                   className={
-                    "group flex items-center gap-3 bg-white px-4 py-3.5 " + CARD + (dragId === it._id ? " opacity-40" : "")
+                    "group flex items-center gap-3 px-4 py-3.5 transition " +
+                    CARD +
+                    (dragId === it._id ? " opacity-40" : " hover:shadow-[0_5px_18px_rgba(0,0,0,0.10)]")
                   }
                 >
-                  <span className="cursor-grab text-black/25 group-hover:text-black/50" aria-hidden>
+                  <span className="cursor-grab text-[var(--comp-muted)] opacity-40 group-hover:opacity-80" aria-hidden>
                     <IconGrip size={16} />
                   </span>
                   <button
                     onClick={() => toggle(it)}
                     aria-label={it.done ? "mark not done" : "mark done"}
                     className={
-                      "grid h-6 w-6 shrink-0 place-items-center rounded-md border-2 border-black " +
-                      (it.done ? "bg-[oklch(0.8_0.2_145)] text-black" : "bg-white text-transparent")
+                      "grid h-6 w-6 shrink-0 place-items-center rounded-full border transition " +
+                      (it.done
+                        ? "border-transparent bg-[var(--comp-done)] text-[var(--comp-accent-text)]"
+                        : "border-[var(--comp-border)] bg-transparent text-transparent hover:border-[var(--comp-accent)]")
                     }
                   >
                     <IconCheck size={14} />
                   </button>
-                  <span className={"flex-1 break-words " + (it.done ? "text-black/40 line-through" : "")}>{it.text}</span>
+                  <span className={"flex-1 break-words text-lg " + (it.done ? "text-[var(--comp-muted)] line-through" : "")}>
+                    {it.text}
+                  </span>
                   {it.authorHandle && <ViewerTag userHandle={it.authorHandle} className="shrink-0 text-[11px] opacity-60" />}
-                  <span className="flex shrink-0 flex-col leading-none text-black/35">
+                  <span className="flex shrink-0 flex-col leading-none text-[var(--comp-muted)] opacity-50">
                     <button
                       onClick={() => nudge(i, -1)}
                       disabled={i === 0}
-                      className="hover:text-black disabled:opacity-20"
+                      className="hover:text-[var(--comp-text)] disabled:opacity-20"
                       aria-label="move up"
                     >
                       <IconUp size={15} />
@@ -379,7 +437,7 @@ export default function App() {
                     <button
                       onClick={() => nudge(i, 1)}
                       disabled={i === sorted.length - 1}
-                      className="hover:text-black disabled:opacity-20"
+                      className="hover:text-[var(--comp-text)] disabled:opacity-20"
                       aria-label="move down"
                     >
                       <IconDown size={15} />
@@ -388,7 +446,7 @@ export default function App() {
                   <button
                     onClick={() => remove(it)}
                     aria-label="delete"
-                    className="shrink-0 text-black/30 hover:text-[oklch(0.62_0.22_25)]"
+                    className="shrink-0 text-[var(--comp-muted)] opacity-50 hover:text-[var(--comp-danger)] hover:opacity-100"
                   >
                     <IconX size={16} />
                   </button>
@@ -399,10 +457,10 @@ export default function App() {
                 <li onDragOver={(e) => e.preventDefault()} onDrop={() => dropOn(null)}>
                   <form
                     onSubmit={addItem}
-                    className="flex items-center gap-3 rounded-xl border-2 border-dashed border-black/40 px-4 py-3.5"
+                    className="flex items-center gap-3 rounded-2xl border border-dashed border-[var(--comp-border)] px-4 py-3.5"
                   >
                     <span
-                      className="grid h-6 w-6 shrink-0 place-items-center rounded-md border-2 border-dashed border-black/40 text-black/40"
+                      className="grid h-6 w-6 shrink-0 place-items-center rounded-full border border-dashed border-[var(--comp-border)] text-[var(--comp-muted)]"
                       aria-hidden
                     >
                       <IconPlus size={14} />
@@ -412,12 +470,12 @@ export default function App() {
                       onChange={(e) => setText(e.target.value)}
                       placeholder="Add an item…"
                       aria-label="Add an item"
-                      className="flex-1 bg-transparent text-base outline-none placeholder:text-black/40"
+                      className="flex-1 bg-transparent text-lg outline-none placeholder:text-[var(--comp-muted)] placeholder:opacity-60"
                     />
                     {text.trim() && (
                       <button
                         type="submit"
-                        className="shrink-0 rounded-lg border-2 border-black bg-[oklch(0.85_0.17_88)] px-3 py-1.5 text-sm font-bold"
+                        className="shrink-0 rounded-full bg-[var(--comp-accent)] px-4 py-1.5 text-sm font-semibold text-[var(--comp-accent-text)]"
                       >
                         Add
                       </button>
@@ -425,7 +483,9 @@ export default function App() {
                   </form>
                 </li>
               ) : (
-                <li className="px-1 py-2 text-sm italic text-black/50">{writeVerdict?.reason || "Sign in to add items."}</li>
+                <li className="px-1 py-2 text-sm italic text-[var(--comp-muted)]">
+                  {writeVerdict?.reason || "Sign in to add items."}
+                </li>
               )}
             </>
           )}
