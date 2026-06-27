@@ -1,4 +1,4 @@
-# Productive starter vibe — multi-list collaborative todo
+# Productive starter vibe — multi-list collaborative todo (`system/shared-lists`)
 
 **Date:** 2026-06-27
 **Status:** design ratified in brainstorming; ready for implementation plan.
@@ -338,5 +338,5 @@ Per the #2675 system-handle guide (written alongside `bloom-machine`/#2683):
   before committing.
 - **README** carries the canonical `--vibe system/<slug>` push/pull commands + a one-line
   description so collaborators don't mis-publish.
-- **Slug:** TBD — proposing `system/list-pals` (the homepage sketch chip was "Make a list
-  w/ pals"); to be confirmed with jchris.
+- **Slug:** `system/shared-lists` (decided, jchris). Source at `vibes/shared-lists/`,
+  deployed with `npx vibes-diy push --vibe system/shared-lists`.
