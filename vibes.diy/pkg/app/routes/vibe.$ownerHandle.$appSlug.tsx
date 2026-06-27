@@ -24,6 +24,7 @@ import { useShareModal } from "../components/ResultPreview/useShareModal.js";
 import { useIframeApiInFlight } from "../hooks/useIframeApiInFlight.js";
 import { ShareModal } from "../components/ResultPreview/ShareModal.js";
 import { useDocumentTitle } from "../hooks/useDocumentTitle.js";
+import { useLatestVibeChips } from "../hooks/useLatestVibeChips.js";
 import { toast } from "react-hot-toast";
 import { isMetaScreenShot, isMetaTitle, type ResGetAppByFsId, type VibesFPApiParameters } from "@vibes.diy/api-types";
 import { computeCardVariant } from "./vibe-card-variant.js";
@@ -199,6 +200,17 @@ export default function VibeIframeWrapper() {
     },
     [isOwner, ownerHandle, appSlug, navigate, vctx.sthis]
   );
+
+  // The edit card's suggestion chips are the vibe's OWN latest suggestions — the
+  // trailing `▸` options the model emitted on the last codegen turn — not a
+  // hardcoded placeholder. Owner-gated read (the owner's chat is private), so
+  // non-owners get the text-input-only card. (#2704-adjacent regression fix, §1a.)
+  const editChips = useLatestVibeChips({
+    sharedApi: vctx.sharedApi,
+    ownerHandle,
+    appSlug,
+    enabled: isOwner,
+  });
 
   const adminStorageKey = ownerHandle && appSlug ? adminModeStorageKey(ownerHandle, appSlug) : "";
   const [adminMode, setAdminMode] = useState(() => {
@@ -768,7 +780,7 @@ export default function VibeIframeWrapper() {
                   appIconUrl={screenshotUrl ?? undefined}
                   isOwner={isOwner}
                   handleSlug={myUserSlug}
-                  chips={["Make it a drum kit", "Add a high score"]}
+                  chips={editChips}
                   onSelectChip={handleEditPrompt}
                   onSubmitOther={handleEditPrompt}
                   onHome={() => {
