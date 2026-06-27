@@ -228,7 +228,7 @@ export default function App() {
                 ? "Create a list to get started."
                 : viewer
                   ? createListVerdict?.reason || "You can't create a list here."
-                  : "You're signed in, but this account has no vibe handle on this server yet, so writes are disabled. Pick/create a handle in the Vibes switch."}
+                  : "Sign in to create a list."}
           </li>
         ) : sorted.length === 0 ? (
           <li className="text-sm opacity-50 italic">No items yet — add one below.</li>
