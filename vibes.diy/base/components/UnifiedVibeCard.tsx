@@ -287,16 +287,30 @@ function OtherRow({ onSubmitOther }: { readonly onSubmitOther?: (text: string) =
         placeholder="Make it your own…"
         className="flex-1 bg-transparent text-sm text-light-primary dark:text-dark-primary outline-none placeholder:text-light-secondary dark:placeholder:text-dark-secondary"
       />
-      {/* Round submit button mirroring the old chat composer's send button
-          (Button variant="blue": brutalist border + hard offset shadow + press). */}
+      {/* Round submit button mirroring the homepage / chat composer's send
+          button (circular, near-black, white up-arrow) — scaled down to fit
+          the one-line edit field. See NewSessionContent.styles getSubmitButtonStyle. */}
       <button
         type="submit"
         aria-label="Submit change"
-        className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-[5px] border-2 border-[#1a1a1a] bg-blue-500 text-white shadow-[3px_3px_0px_0px_#1a1a1a] transition-colors hover:bg-blue-600 active:translate-x-[3px] active:translate-y-[3px] active:shadow-none"
+        style={{
+          width: 30,
+          height: 30,
+          flexShrink: 0,
+          borderRadius: "50%",
+          border: "none",
+          background: "var(--vibes-near-black, #1a1a1a)",
+          color: "#fff",
+          fontSize: 17,
+          fontWeight: "bold",
+          lineHeight: 1,
+          cursor: "pointer",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+        }}
       >
-        <span aria-hidden="true" className="text-lg leading-none">
-          ↑
-        </span>
+        <span aria-hidden="true">↑</span>
       </button>
     </form>
   );
