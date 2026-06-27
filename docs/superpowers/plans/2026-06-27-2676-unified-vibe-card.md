@@ -9,15 +9,17 @@
 **Tech Stack:** React 18, TypeScript, Tailwind v4, `@vibes.diy/base` (the shared presentational package), Vitest + Testing Library (`vibes.diy/tests/app`), Storybook (`vibes.diy/stories`).
 
 **Decisions locked (jchris, 2026-06-27):**
+
 - No feature flag — review on the PR preview deploy. The route renders `UnifiedVibeCard` directly.
 - New component; `ExpandedVibesPill` stays in the tree (deleted later).
 - This PR carries Home + Share + login into the nav; drops Clone/Edit/Remix/QR. Handle picker is a visual stub (#2678). Chips are wired to an injected `onSelectChip`/`onSubmitOther`; the route passes **placeholder chips** (`["Make it a drum kit", "Add a high score"]`) and handlers that `console.warn` for now (real codegen wiring is #2677 / PR-2) so the affordance reads fully on the preview.
 - **Open/close tween (jchris):** only the **outer card** grows/shrinks (a scale anchored at the closed toggle's lower-right corner); the inner content (header, chips, nav) **fades in after** the card finishes growing, and fades out first on close.
 
 **Scope boundaries (out of scope, tracked elsewhere):**
+
 - First-generation stream→preview swap and de-blur → #2677.
 - Real handle dropdown + switching → #2678 (stub only here).
-- Verb collapse / publish intent → #2679. Link-first Share panel internals → #2680 (we only open the *existing* share modal here).
+- Verb collapse / publish intent → #2679. Link-first Share panel internals → #2680 (we only open the _existing_ share modal here).
 - Deleting `ExpandedVibesPill` → follow-up cleanup issue.
 
 ---
@@ -75,6 +77,7 @@ Layout mirrors the approved sketch (`notes/sketches/agent-in-vibe/02-open-chips.
 ## Task 1: Scaffold `UnifiedVibeCard` (closed state + open toggle)
 
 **Files:**
+
 - Create: `vibes.diy/base/components/UnifiedVibeCard.tsx`
 - Modify: `vibes.diy/base/components/index.ts`
 - Test: `vibes.diy/tests/app/UnifiedVibeCard.test.tsx`
@@ -265,34 +268,30 @@ git commit -m "feat(base): scaffold UnifiedVibeCard closed/open toggle"
 ## Task 2: Card header (icon) + chips body + "Other" row
 
 **Files:**
+
 - Modify: `vibes.diy/base/components/UnifiedVibeCard.tsx`
 - Test: `vibes.diy/tests/app/UnifiedVibeCard.test.tsx`
 
 - [ ] **Step 1: Write the failing test** (append inside the `describe`)
 
 ```tsx
-  it("renders chips and fires onSelectChip", () => {
-    const onSelectChip = vi.fn();
-    render(
-      <UnifiedVibeCard
-        appTitle="Bloom Machine"
-        open
-        chips={["Make it a drum kit", "Add a high score"]}
-        onSelectChip={onSelectChip}
-      />,
-    );
-    fireEvent.click(screen.getByText("Make it a drum kit"));
-    expect(onSelectChip).toHaveBeenCalledWith("Make it a drum kit");
-  });
+it("renders chips and fires onSelectChip", () => {
+  const onSelectChip = vi.fn();
+  render(
+    <UnifiedVibeCard appTitle="Bloom Machine" open chips={["Make it a drum kit", "Add a high score"]} onSelectChip={onSelectChip} />
+  );
+  fireEvent.click(screen.getByText("Make it a drum kit"));
+  expect(onSelectChip).toHaveBeenCalledWith("Make it a drum kit");
+});
 
-  it("submits the Other free-text row", () => {
-    const onSubmitOther = vi.fn();
-    render(<UnifiedVibeCard appTitle="Bloom Machine" open onSubmitOther={onSubmitOther} />);
-    const input = screen.getByPlaceholderText(/describe a change/i);
-    fireEvent.change(input, { target: { value: "make it dark" } });
-    fireEvent.submit(input.closest("form")!);
-    expect(onSubmitOther).toHaveBeenCalledWith("make it dark");
-  });
+it("submits the Other free-text row", () => {
+  const onSubmitOther = vi.fn();
+  render(<UnifiedVibeCard appTitle="Bloom Machine" open onSubmitOther={onSubmitOther} />);
+  const input = screen.getByPlaceholderText(/describe a change/i);
+  fireEvent.change(input, { target: { value: "make it dark" } });
+  fireEvent.submit(input.closest("form")!);
+  expect(onSubmitOther).toHaveBeenCalledWith("make it dark");
+});
 ```
 
 - [ ] **Step 2: Run test to verify it fails**
@@ -311,33 +310,38 @@ import { OptionButtons } from "./OptionButtons.js";
 Add an icon block at the start of the header row (before the title `<div>`):
 
 ```tsx
-        <div
-          aria-hidden
-          style={{
-            width: 30,
-            height: 30,
-            borderRadius: 8,
-            flexShrink: 0,
-            overflow: "hidden",
-            background: "linear-gradient(160deg,#312e81,#4c1d95)",
-            border: "1px solid rgba(0,0,0,0.15)",
-          }}
-        >
-          {props.appIconUrl && (
-            <img src={props.appIconUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-          )}
-        </div>
+<div
+  aria-hidden
+  style={{
+    width: 30,
+    height: 30,
+    borderRadius: 8,
+    flexShrink: 0,
+    overflow: "hidden",
+    background: "linear-gradient(160deg,#312e81,#4c1d95)",
+    border: "1px solid rgba(0,0,0,0.15)",
+  }}
+>
+  {props.appIconUrl && <img src={props.appIconUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />}
+</div>
 ```
 
 After the header `<div>` (still **inside the inner fade wrapper** — the `<div>` with the `opacity` transition), add the body. Use a local controlled input for "Other":
 
 ```tsx
-      <div style={{ padding: "0 14px 12px", overflowY: "auto" }}>
-        {props.chips && props.chips.length > 0 && (
-          <OptionButtons options={props.chips} isFirst onSelect={(o) => { props.onSelectChip?.(o); return true; }} />
-        )}
-        <OtherRow onSubmitOther={props.onSubmitOther} />
-      </div>
+<div style={{ padding: "0 14px 12px", overflowY: "auto" }}>
+  {props.chips && props.chips.length > 0 && (
+    <OptionButtons
+      options={props.chips}
+      isFirst
+      onSelect={(o) => {
+        props.onSelectChip?.(o);
+        return true;
+      }}
+    />
+  )}
+  <OtherRow onSubmitOther={props.onSubmitOther} />
+</div>
 ```
 
 Add the `OtherRow` subcomponent at the bottom of the file (before `export default`):
@@ -362,7 +366,11 @@ function OtherRow({ onSubmitOther }: { readonly onSubmitOther?: (text: string) =
         placeholder="describe a change…"
         className="flex-1 bg-transparent text-sm text-light-primary dark:text-dark-primary outline-none placeholder:text-light-secondary dark:placeholder:text-dark-secondary"
       />
-      <button type="submit" aria-label="Submit change" style={{ background: "none", border: "none", cursor: "pointer", fontSize: 16 }}>
+      <button
+        type="submit"
+        aria-label="Submit change"
+        style={{ background: "none", border: "none", cursor: "pointer", fontSize: 16 }}
+      >
         ▸
       </button>
     </form>
@@ -389,38 +397,39 @@ git commit -m "feat(base): UnifiedVibeCard header icon + chips + Other row"
 ## Task 3: Bottom nav row (handle stub · Home · Chat · Share · toggle)
 
 **Files:**
+
 - Modify: `vibes.diy/base/components/UnifiedVibeCard.tsx`
 - Test: `vibes.diy/tests/app/UnifiedVibeCard.test.tsx`
 
 - [ ] **Step 1: Write the failing test** (append inside the `describe`)
 
 ```tsx
-  it("fires nav callbacks and closes via the toggle", () => {
-    const onHome = vi.fn();
-    const onShare = vi.fn();
-    const onOpenChange = vi.fn();
-    render(
-      <UnifiedVibeCard
-        appTitle="Bloom Machine"
-        open
-        handleSlug="meghan"
-        onHome={onHome}
-        onShare={onShare}
-        onOpenChange={onOpenChange}
-      />,
-    );
-    fireEvent.click(screen.getByRole("button", { name: /home/i }));
-    expect(onHome).toHaveBeenCalled();
-    fireEvent.click(screen.getByRole("button", { name: /share/i }));
-    expect(onShare).toHaveBeenCalled();
-    fireEvent.click(screen.getByRole("button", { name: /close vibe menu/i }));
-    expect(onOpenChange).toHaveBeenCalledWith(false);
-  });
+it("fires nav callbacks and closes via the toggle", () => {
+  const onHome = vi.fn();
+  const onShare = vi.fn();
+  const onOpenChange = vi.fn();
+  render(
+    <UnifiedVibeCard
+      appTitle="Bloom Machine"
+      open
+      handleSlug="meghan"
+      onHome={onHome}
+      onShare={onShare}
+      onOpenChange={onOpenChange}
+    />
+  );
+  fireEvent.click(screen.getByRole("button", { name: /home/i }));
+  expect(onHome).toHaveBeenCalled();
+  fireEvent.click(screen.getByRole("button", { name: /share/i }));
+  expect(onShare).toHaveBeenCalled();
+  fireEvent.click(screen.getByRole("button", { name: /close vibe menu/i }));
+  expect(onOpenChange).toHaveBeenCalledWith(false);
+});
 
-  it("renders the handle stub when handleSlug is set", () => {
-    render(<UnifiedVibeCard appTitle="Bloom Machine" open handleSlug="meghan" />);
-    expect(screen.getByText("@meghan")).toBeTruthy();
-  });
+it("renders the handle stub when handleSlug is set", () => {
+  render(<UnifiedVibeCard appTitle="Bloom Machine" open handleSlug="meghan" />);
+  expect(screen.getByText("@meghan")).toBeTruthy();
+});
 ```
 
 - [ ] **Step 2: Run test to verify it fails**
@@ -481,47 +490,53 @@ function NavIcon({
 Append the footer nav as the last child of the **inner fade wrapper** (after the body block, inside the `opacity`-transition `<div>` — so it fades in with the rest):
 
 ```tsx
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          gap: 8,
-          padding: "10px 12px 12px",
-          borderTop: "1px solid var(--color-light-decorative-00, #e5e5e5)",
-        }}
-      >
-        {props.handleSlug ? (
-          <ViewerTagView
-            slug={props.handleSlug}
-            displayName={`@${props.handleSlug}`}
-            avatarUrl={props.handleAvatarUrl}
-            trailing={<span style={{ fontSize: 11, opacity: 0.6, marginLeft: 1 }}>▾</span>}
-            style={{
-              background: "var(--color-light-background-01, #eee)",
-              border: "1px solid var(--color-light-decorative-01, #ddd)",
-              color: "var(--color-light-primary, #333)",
-              fontSize: 13,
-              padding: "3px 8px 3px 4px",
-            }}
-          />
-        ) : (
-          <ViewerTagView slug="?" anonymous onSignIn={props.onSignIn} />
-        )}
-        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-          <NavIcon label="Home" color="#3b82f6" onClick={props.onHome}>⌂</NavIcon>
-          <NavIcon label="Chat" color="#fb923c" selected>💬</NavIcon>
-          <NavIcon label="Share" color="#22c55e" onClick={props.onShare}>↗</NavIcon>
-        </div>
-        <button
-          type="button"
-          aria-label="Close vibe menu"
-          onClick={() => setOpen(false)}
-          style={{ background: "none", border: "none", padding: 0, cursor: "pointer" }}
-        >
-          <VibesSwitch size={38} isActive />
-        </button>
-      </div>
+<div
+  style={{
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 8,
+    padding: "10px 12px 12px",
+    borderTop: "1px solid var(--color-light-decorative-00, #e5e5e5)",
+  }}
+>
+  {props.handleSlug ? (
+    <ViewerTagView
+      slug={props.handleSlug}
+      displayName={`@${props.handleSlug}`}
+      avatarUrl={props.handleAvatarUrl}
+      trailing={<span style={{ fontSize: 11, opacity: 0.6, marginLeft: 1 }}>▾</span>}
+      style={{
+        background: "var(--color-light-background-01, #eee)",
+        border: "1px solid var(--color-light-decorative-01, #ddd)",
+        color: "var(--color-light-primary, #333)",
+        fontSize: 13,
+        padding: "3px 8px 3px 4px",
+      }}
+    />
+  ) : (
+    <ViewerTagView slug="?" anonymous onSignIn={props.onSignIn} />
+  )}
+  <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+    <NavIcon label="Home" color="#3b82f6" onClick={props.onHome}>
+      ⌂
+    </NavIcon>
+    <NavIcon label="Chat" color="#fb923c" selected>
+      💬
+    </NavIcon>
+    <NavIcon label="Share" color="#22c55e" onClick={props.onShare}>
+      ↗
+    </NavIcon>
+  </div>
+  <button
+    type="button"
+    aria-label="Close vibe menu"
+    onClick={() => setOpen(false)}
+    style={{ background: "none", border: "none", padding: 0, cursor: "pointer" }}
+  >
+    <VibesSwitch size={38} isActive />
+  </button>
+</div>
 ```
 
 - [ ] **Step 4: Run test to verify it passes**
@@ -541,6 +556,7 @@ git commit -m "feat(base): UnifiedVibeCard bottom nav row + close toggle"
 ## Task 4: Point the Storybook sketch at the real component
 
 **Files:**
+
 - Modify: `vibes.diy/stories/sketches/AgentInVibe.stories.tsx`
 
 - [ ] **Step 1: Update the import and the live stories**
@@ -604,6 +620,7 @@ git commit -m "refactor(stories): drive AgentInVibe live sketches from real Unif
 ## Task 5: Swap `UnifiedVibeCard` onto the `/vibe` route
 
 **Files:**
+
 - Modify: `vibes.diy/pkg/app/routes/vibe.$ownerHandle.$appSlug.tsx`
 
 - [ ] **Step 1: Update the import**
@@ -621,26 +638,27 @@ import { VibesSwitch, VibesButton, BLUE, YELLOW, UnifiedVibeCard, gridBackground
 Replace the `<ExpandedVibesPill ... />` element (≈ lines 689-706) with:
 
 ```tsx
-              <UnifiedVibeCard
-                appTitle={appTitle ?? appSlug}
-                appSlug={vibeSlug}
-                appIconUrl={screenshotUrl ?? undefined}
-                isOwner={isOwner}
-                handleSlug={authSignedIn ? ownerHandle : undefined}
-                chips={["Make it a drum kit", "Add a high score"]}
-                onSelectChip={(chip) => console.warn("[agent-in-vibe] chip select not wired yet:", chip)}
-                onSubmitOther={(text) => console.warn("[agent-in-vibe] other submit not wired yet:", text)}
-                onHome={() => {
-                  window.open("https://vibes.diy", "_blank");
-                }}
-                onShare={authSignedIn ? shareModal.open : undefined}
-                onSignIn={authSignedIn ? undefined : () => clerk.openSignIn()}
-                isTwinkling={isNetworkActive}
-              />
+<UnifiedVibeCard
+  appTitle={appTitle ?? appSlug}
+  appSlug={vibeSlug}
+  appIconUrl={screenshotUrl ?? undefined}
+  isOwner={isOwner}
+  handleSlug={authSignedIn ? ownerHandle : undefined}
+  chips={["Make it a drum kit", "Add a high score"]}
+  onSelectChip={(chip) => console.warn("[agent-in-vibe] chip select not wired yet:", chip)}
+  onSubmitOther={(text) => console.warn("[agent-in-vibe] other submit not wired yet:", text)}
+  onHome={() => {
+    window.open("https://vibes.diy", "_blank");
+  }}
+  onShare={authSignedIn ? shareModal.open : undefined}
+  onSignIn={authSignedIn ? undefined : () => clerk.openSignIn()}
+  isTwinkling={isNetworkActive}
+/>
 ```
 
 Notes:
-- `handleSlug={authSignedIn ? ownerHandle : undefined}` is a **stub**: it shows *the app owner's* handle, not the viewer's active handle. The real active-handle wiring is #2678. (Acceptable for a preview; revisit in #2678.)
+
+- `handleSlug={authSignedIn ? ownerHandle : undefined}` is a **stub**: it shows _the app owner's_ handle, not the viewer's active handle. The real active-handle wiring is #2678. (Acceptable for a preview; revisit in #2678.)
 - `shareModal.buttonRef` was used for popover positioning of the old Group button. The `ShareModal` below still renders with `placement="above"`; keep the existing `<ShareModal .../>` element unchanged directly after the card. If the share popover positioning looks off in preview, that is expected and tracked for #2680 (link-first Share); do not block this PR on it.
 
 - [ ] **Step 3: Typecheck the app package**
@@ -692,6 +710,7 @@ Open a PR titled for the feature goal (e.g. "Unified vibe card: open the switch 
 ## Self-Review
 
 **Spec coverage (issue #2676 scope):**
+
 - Unified card on "open" (icon+title / chips+Other / nav) — Tasks 1-3. ✅
 - Chips = `OptionButtons` fed by option strings — Task 2. ✅
 - Bottom nav order handle·Home·Chat(selected)·Share·toggle — Task 3. ✅
