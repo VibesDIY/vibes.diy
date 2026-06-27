@@ -59,6 +59,6 @@ describe("SharePanelView", () => {
     const { rerender } = render(<SharePanelView url="u" viewer="author" access="public" />);
     expect(screen.getByText(/anyone with the link can open/i)).toBeTruthy();
     rerender(<SharePanelView url="u" viewer="author" access="request" />);
-    expect(screen.getByText(/people you approve can open/i)).toBeTruthy();
+    expect(screen.getByText(/only the members listed here can open/i)).toBeTruthy();
   });
 });

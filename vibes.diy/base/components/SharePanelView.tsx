@@ -99,7 +99,7 @@ export function SharePanelView({
       {/* Copy URL — everyone who can see the vibe. */}
       <div>
         <p className="text-xs text-light-secondary dark:text-dark-secondary" style={{ marginBottom: 6 }}>
-          {access === "public" ? "Anyone with the link can open this vibe." : "People you approve can open this vibe."}
+          {access === "public" ? "Anyone with the link can open this vibe." : "Only the members listed here can open this vibe."}
         </p>
         <div
           className="rounded-md border border-light-decorative-01 dark:border-dark-decorative-01 py-1.5 pl-3 pr-1.5"
