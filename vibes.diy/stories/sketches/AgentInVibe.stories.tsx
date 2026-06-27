@@ -454,9 +454,15 @@ const ROSTER: readonly ShareMember[] = [
   { handle: "sam", role: "viewer" },
 ];
 
-function ShareBody({ viewer }: { readonly viewer: "anonymous" | "member" | "author" }) {
+function ShareBody({
+  viewer,
+  initialAccess = "public",
+}: {
+  readonly viewer: "anonymous" | "member" | "author";
+  readonly initialAccess?: ShareAccess;
+}) {
   const [copied, setCopied] = React.useState(false);
-  const [access, setAccess] = React.useState<ShareAccess>("public");
+  const [access, setAccess] = React.useState<ShareAccess>(initialAccess);
   return (
     <SharePanelView
       url="vibes.diy/meghan/bloom"
@@ -492,7 +498,7 @@ export const ShareVisitor: Story = {
 };
 
 export const ShareMemberView: Story = {
-  name: "Share · granted member (+ roster)",
+  name: "Share · granted member, gated (+ roster)",
   render: () => (
     <Phone>
       <FakeVibeApp />
@@ -504,7 +510,7 @@ export const ShareMemberView: Story = {
         selectedNav="share"
         onHome={() => undefined}
         onShare={() => undefined}
-        body={<ShareBody viewer="member" />}
+        body={<ShareBody viewer="member" initialAccess="request" />}
       />
     </Phone>
   ),

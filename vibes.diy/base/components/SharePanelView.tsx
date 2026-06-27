@@ -8,8 +8,10 @@ import { ViewerTagView } from "./ViewerTagView.js";
  * stack additively:
  *
  *   - anonymous visitor → Copy URL + the access copy
- *   - granted member    → + the member roster ("who you're in there with")
- *   - author            → the access TOGGLE (replaces the copy) + roster
+ *   - granted member    → + the member roster ("who you're in there with") on grant-gated
+ *                         vibes only (a public vibe has open membership, so no list)
+ *   - author            → the access TOGGLE (replaces the copy) + the roster (always, even
+ *                         on a public vibe, so the owner can see who's been granted)
  *
  * The access slot is a toggle by role: the owner gets the Public/grant-required buttons (the
  * source of truth), everyone else gets a read-only sentence describing the same thing.
@@ -75,7 +77,10 @@ export function SharePanelView({
   className,
 }: SharePanelViewProps) {
   const isAuthor = viewer === "author";
-  const showRoster = viewer === "member" || viewer === "author";
+  // The roster only makes sense on a grant-gated vibe — a curated list worth browsing.
+  // On a public ("anyone with the link") vibe membership is open, so members don't see a
+  // list. The owner is the exception (new decision): they always see who's been granted.
+  const showRoster = isAuthor || (viewer === "member" && access === "request");
   // Owner(s) always list first; everyone else keeps their given order (stable sort).
   const roster = [...members].sort((a, b) => Number(b.role === "owner") - Number(a.role === "owner"));
 
