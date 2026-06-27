@@ -12,7 +12,7 @@ import {
   VibesButton,
   BLUE,
   YELLOW,
-  ExpandedVibesPill,
+  UnifiedVibeCard,
   gridBackground,
   cx,
   useMobile,
@@ -191,7 +191,10 @@ export default function VibeIframeWrapper() {
   // comment" on. Owner + editor stay enabled; viewer/submitter/public/none
   // get the disabled hint.
   const [myGrant, setMyGrant] = useState<"owner" | "editor" | "viewer" | "submitter" | "public" | "none">("none");
-  const [pendingCount, setPendingCount] = useState(0);
+  // Pending request count is still fetched (network side effect feeds future
+  // share-popover wiring, #2680) but no longer rendered after the pill→card
+  // swap; underscore-prefixed so the unused-var lint stays green.
+  const [_pendingCount, setPendingCount] = useState(0);
   const [pendingBump, setPendingBump] = useState(0);
   const [dmUnreadCount, setDmUnreadCount] = useState(0);
   const inRefreshViewerFromWhoAmIRef = useRef(false);
@@ -700,19 +703,15 @@ export default function VibeIframeWrapper() {
         createPortal(
           <div className="fixed bottom-4 right-4 z-50">
             <Delayed ms={1000}>
-              <ExpandedVibesPill
-                size={60}
-                cloneHref={cloneUrl}
-                editHref={isOwner ? `/chat/${vibeSlug}` : undefined}
-                onCommunity={authSignedIn ? shareModal.open : undefined}
-                communityButtonRef={shareModal.buttonRef}
-                communityBadgeCount={isOwner && adminMode ? pendingCount : 0}
-                dmUnreadCount={dmUnreadCount}
-                hasUnpublishedChanges={isOwner && adminMode && shareModal.hasUnpublishedChanges}
-                appTitle={appTitle ?? appSlug}
-                appIconUrl={screenshotUrl ?? undefined}
+              <UnifiedVibeCard
+                appTitle={appTitle ?? appSlug ?? "Vibe"}
                 appSlug={vibeSlug}
-                isTwinkling={isNetworkActive}
+                appIconUrl={screenshotUrl ?? undefined}
+                isOwner={isOwner}
+                handleSlug={authSignedIn ? ownerHandle : undefined}
+                chips={["Make it a drum kit", "Add a high score"]}
+                onSelectChip={(chip) => console.warn("[agent-in-vibe] chip select not wired yet:", chip)}
+                onSubmitOther={(text) => console.warn("[agent-in-vibe] other submit not wired yet:", text)}
                 onHome={() => {
                   // On a PR preview, stay on the preview subdomain so the home
                   // page reflects the same (preview) session — otherwise we'd
@@ -720,12 +719,14 @@ export default function VibeIframeWrapper() {
                   // Reuses the createVibe helper's PR-origin detection.
                   window.open(resolveBuilderOriginFrom(window.location.origin), "_blank");
                 }}
-                onLogin={
+                onShare={authSignedIn ? shareModal.open : undefined}
+                onSignIn={
                   authSignedIn
                     ? undefined
                     : () =>
                         clerk.openSignIn({ forceRedirectUrl: window.location.href, signUpForceRedirectUrl: window.location.href })
                 }
+                isTwinkling={isNetworkActive}
               />
               <ShareModal
                 modal={shareModal}
