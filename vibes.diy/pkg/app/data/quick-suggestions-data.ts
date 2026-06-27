@@ -9,7 +9,7 @@ export interface Suggestion {
 export const quickSuggestions: Suggestion[] = [
   {
     label: "Character Bot",
-    text: "Build a character creator that interviews me about my character's name, personality, backstory, and speaking style, then uses createVibe to hand off to a dedicated chat vibe personalized to that character — already in their voice, ready to talk from the first message. Let me publish finished characters to a public gallery others can chat with.",
+    text: "Build a character creator that interviews me about my character's name, personality, backstory, and speaking style, then uses createVibe to open a new chat app already in that character's voice — ready to talk from the first message. Let me publish finished characters to a public gallery others can chat with.",
   },
   {
     label: "Neighborhood Map",
@@ -57,7 +57,7 @@ export const quickSuggestions: Suggestion[] = [
   },
   {
     label: "Money Moves",
-    text: "Interview me about my loans, income, savings rate, and retirement goals, then use createVibe to build a personal finance vibe with my numbers already loaded — payoff curves, compound interest projections, and retirement timeline built around my actual situation.",
+    text: "Interview me about my loans, income, savings rate, and retirement goals, then use createVibe to open a personal finance app with my numbers already loaded — payoff curves, compound interest projections, and retirement timeline built around my actual situation.",
   },
   {
     label: "Pigment Studio",
@@ -129,7 +129,7 @@ export const quickSuggestions: Suggestion[] = [
   },
   {
     label: "Wildcard",
-    text: "Ask me one unexpected question, then use createVibe to build an app I didn't know I wanted — something genuinely surprising based on my answer, opening fresh in the builder.",
+    text: "Ask me one unexpected question, then use createVibe to open an app I didn't know I wanted — something genuinely surprising based on my answer.",
   },
 ];
 
