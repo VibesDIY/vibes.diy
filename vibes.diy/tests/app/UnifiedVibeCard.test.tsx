@@ -43,4 +43,31 @@ describe("UnifiedVibeCard", () => {
     fireEvent.submit(input.closest("form")!);
     expect(onSubmitOther).toHaveBeenCalledWith("make it dark");
   });
+
+  it("fires nav callbacks and closes via the toggle", () => {
+    const onHome = vi.fn();
+    const onShare = vi.fn();
+    const onOpenChange = vi.fn();
+    render(
+      <UnifiedVibeCard
+        appTitle="Bloom Machine"
+        open
+        handleSlug="meghan"
+        onHome={onHome}
+        onShare={onShare}
+        onOpenChange={onOpenChange}
+      />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: /home/i }));
+    expect(onHome).toHaveBeenCalled();
+    fireEvent.click(screen.getByRole("button", { name: /share/i }));
+    expect(onShare).toHaveBeenCalled();
+    fireEvent.click(screen.getByRole("button", { name: /close vibe menu/i }));
+    expect(onOpenChange).toHaveBeenCalledWith(false);
+  });
+
+  it("renders the handle stub when handleSlug is set", () => {
+    render(<UnifiedVibeCard appTitle="Bloom Machine" open handleSlug="meghan" />);
+    expect(screen.getByText("@meghan")).toBeTruthy();
+  });
 });
