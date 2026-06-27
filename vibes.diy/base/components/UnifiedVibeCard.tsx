@@ -279,7 +279,7 @@ function OtherRow({ onSubmitOther }: { readonly onSubmitOther?: (text: string) =
         setValue("");
       }}
       style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 10 }}
-      className="rounded-md border border-light-decorative-01 dark:border-dark-decorative-01 py-1.5 pl-3 pr-1.5"
+      className="rounded-md border border-light-decorative-01 dark:border-dark-decorative-01 py-1.5 pl-3 pr-3"
     >
       <input
         value={value}
@@ -299,7 +299,7 @@ function OtherRow({ onSubmitOther }: { readonly onSubmitOther?: (text: string) =
           flexShrink: 0,
           borderRadius: "50%",
           border: "none",
-          background: "var(--vibes-near-black, #1a1a1a)",
+          background: "var(--vibes-blue, #3b82f6)",
           color: "#fff",
           fontSize: 17,
           fontWeight: "bold",
