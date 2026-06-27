@@ -96,6 +96,24 @@ describe("UnifiedVibeCard", () => {
     expect(screen.getByRole("button", { name: /edit/i })).toBeTruthy();
   });
 
+  it("renders a custom body in place of chips/Other and can select the Share nav", () => {
+    render(
+      <UnifiedVibeCard
+        appTitle="Bloom Machine"
+        open
+        chips={["Make it a drum kit"]}
+        selectedNav="share"
+        body={<div>SHARE PANEL BODY</div>}
+      />
+    );
+    // body override wins over chips
+    expect(screen.getByText("SHARE PANEL BODY")).toBeTruthy();
+    expect(screen.queryByText("Make it a drum kit")).toBeNull();
+    // Share nav reads selected (3px ring), Edit does not
+    const share = screen.getByRole("button", { name: /share/i });
+    expect(share.style.boxShadow).toContain("3px");
+  });
+
   it("keeps a single persistent toggle in both states (no remount/resize)", () => {
     const { rerender } = render(<UnifiedVibeCard appTitle="Bloom Machine" />);
     // Closed: the one toggle is present and labelled "Open vibe menu".

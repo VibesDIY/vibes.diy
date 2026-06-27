@@ -22,6 +22,11 @@ export interface UnifiedVibeCardProps {
   isTwinkling?: boolean;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
+  /** Overrides the card's middle (chips + Other) — e.g. the SharePanelView when the
+   *  Share view is active. Header and bottom nav stay. */
+  body?: React.ReactNode;
+  /** Which bottom-nav affordance reads as selected. Defaults to "edit". */
+  selectedNav?: "edit" | "share";
   className?: string;
 }
 
@@ -138,21 +143,25 @@ export function UnifiedVibeCard(props: UnifiedVibeCardProps) {
               )}
             </div>
             <div style={{ padding: "0 14px 12px", overflowY: "auto" }}>
-              {props.chips && props.chips.length > 0 && (
-                <OptionButtons
-                  options={props.chips}
-                  isFirst
-                  firstMessage="Describe a change to edit this app live:"
-                  onSelect={(o) => {
-                    props.onSelectChip?.(o);
-                    // Return false so OptionButtons clears the press and the chips stay
-                    // clickable — until codegen is wired (#2677) a chip click is a fire-and-
-                    // forget signal, not a one-shot commit, so we don't want it to lock.
-                    return false;
-                  }}
-                />
+              {props.body ?? (
+                <>
+                  {props.chips && props.chips.length > 0 && (
+                    <OptionButtons
+                      options={props.chips}
+                      isFirst
+                      firstMessage="Describe a change to edit this app live:"
+                      onSelect={(o) => {
+                        props.onSelectChip?.(o);
+                        // Return false so OptionButtons clears the press and the chips stay
+                        // clickable — until codegen is wired (#2677) a chip click is a fire-and-
+                        // forget signal, not a one-shot commit, so we don't want it to lock.
+                        return false;
+                      }}
+                    />
+                  )}
+                  <OtherRow onSubmitOther={props.onSubmitOther} />
+                </>
               )}
-              <OtherRow onSubmitOther={props.onSubmitOther} />
             </div>
             <div
               style={{
@@ -179,7 +188,7 @@ export function UnifiedVibeCard(props: UnifiedVibeCardProps) {
                   <path d="M5 10v10a1 1 0 001 1h4v-6h4v6h4a1 1 0 001-1V10" />
                 </svg>
               </NavIcon>
-              <NavIcon label="Edit" color="#fb923c" selected>
+              <NavIcon label="Edit" color="#fb923c" selected={(props.selectedNav ?? "edit") === "edit"}>
                 <svg
                   width="17"
                   height="17"
@@ -195,7 +204,13 @@ export function UnifiedVibeCard(props: UnifiedVibeCardProps) {
                   <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z" />
                 </svg>
               </NavIcon>
-              <NavIcon label="Share" color="#22c55e" onClick={props.onShare} buttonRef={props.shareButtonRef}>
+              <NavIcon
+                label="Share"
+                color="#22c55e"
+                selected={props.selectedNav === "share"}
+                onClick={props.onShare}
+                buttonRef={props.shareButtonRef}
+              >
                 ↗
               </NavIcon>
               {/* Invisible placeholder matching the persistent logo's footprint
@@ -279,7 +294,7 @@ function OtherRow({ onSubmitOther }: { readonly onSubmitOther?: (text: string) =
         setValue("");
       }}
       style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 10 }}
-      className="rounded-md border border-light-decorative-01 dark:border-dark-decorative-01 py-1.5 pl-3 pr-3"
+      className="rounded-md border border-light-decorative-01 dark:border-dark-decorative-01 py-1.5 pl-3 pr-2.5"
     >
       <input
         value={value}
