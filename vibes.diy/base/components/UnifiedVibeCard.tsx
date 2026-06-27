@@ -16,6 +16,8 @@ export interface UnifiedVibeCardProps {
   handleAvatarUrl?: string;
   onHome?: () => void;
   onShare?: () => void;
+  /** Ref attached to the Share nav button so an external popover (the ShareModal) can anchor to it. */
+  shareButtonRef?: React.Ref<HTMLButtonElement>;
   onSignIn?: () => void;
   isTwinkling?: boolean;
   open?: boolean;
@@ -176,7 +178,7 @@ export function UnifiedVibeCard(props: UnifiedVibeCardProps) {
                 <NavIcon label="Chat" color="#fb923c" selected>
                   💬
                 </NavIcon>
-                <NavIcon label="Share" color="#22c55e" onClick={props.onShare}>
+                <NavIcon label="Share" color="#22c55e" onClick={props.onShare} buttonRef={props.shareButtonRef}>
                   ↗
                 </NavIcon>
               </div>
@@ -201,16 +203,19 @@ function NavIcon({
   color,
   selected,
   onClick,
+  buttonRef,
   children,
 }: {
   readonly label: string;
   readonly color: string;
   readonly selected?: boolean;
   readonly onClick?: () => void;
+  readonly buttonRef?: React.Ref<HTMLButtonElement>;
   readonly children: React.ReactNode;
 }) {
   return (
     <button
+      ref={buttonRef}
       type="button"
       aria-label={label}
       onClick={onClick}

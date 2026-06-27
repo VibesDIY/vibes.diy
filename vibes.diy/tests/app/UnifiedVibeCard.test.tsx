@@ -89,4 +89,11 @@ describe("UnifiedVibeCard", () => {
     render(<UnifiedVibeCard appTitle="Bloom Machine" open handleSlug="meghan" />);
     expect(screen.getByText("@meghan")).toBeTruthy();
   });
+
+  it("forwards shareButtonRef to the Share nav button (so an external popover can anchor)", () => {
+    const ref = React.createRef<HTMLButtonElement>();
+    render(<UnifiedVibeCard appTitle="Bloom Machine" open shareButtonRef={ref} />);
+    expect(ref.current).not.toBeNull();
+    expect(ref.current?.getAttribute("aria-label")).toBe("Share");
+  });
 });

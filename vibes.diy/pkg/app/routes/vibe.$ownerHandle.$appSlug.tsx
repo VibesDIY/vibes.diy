@@ -713,7 +713,7 @@ export default function VibeIframeWrapper() {
                   appSlug={vibeSlug}
                   appIconUrl={screenshotUrl ?? undefined}
                   isOwner={isOwner}
-                  handleSlug={authSignedIn ? ownerHandle : undefined}
+                  handleSlug={myUserSlug}
                   chips={["Make it a drum kit", "Add a high score"]}
                   onSelectChip={(chip) => console.warn("[agent-in-vibe] chip select not wired yet:", chip)}
                   onSubmitOther={(text) => console.warn("[agent-in-vibe] other submit not wired yet:", text)}
@@ -725,6 +725,7 @@ export default function VibeIframeWrapper() {
                     window.open(resolveBuilderOriginFrom(window.location.origin), "_blank");
                   }}
                   onShare={authSignedIn ? shareModal.open : undefined}
+                  shareButtonRef={shareModal.buttonRef}
                   onSignIn={
                     authSignedIn
                       ? undefined
