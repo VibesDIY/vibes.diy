@@ -42,6 +42,12 @@ export default function BloomMachine() {
     osc.connect(env);
     osc.start(t);
     osc.stop(t + dur + 0.05);
+    // Tear down the graph once the note finishes so repeated taps don't
+    // accumulate silent, still-connected nodes on the AudioContext.
+    osc.onended = () => {
+      osc.disconnect();
+      env.disconnect();
+    };
   }, []);
 
   const tap = (r, c, note) => {
