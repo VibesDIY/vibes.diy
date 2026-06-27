@@ -4,7 +4,8 @@ import React, { useRef, useState, useCallback, useEffect } from "react";
 // The music starter for the Instant Starter Stack. A 4×4 grid of pads, each tied
 // to a musical tone. Hold a pad: it sounds the note (sustained until release) and
 // lights up in that note's own colour. The first touch starts an 8-step loop and
-// records the tone at the current step, so it replays each time the playhead
+// records the tone — quantized to the nearest beat, with the held duration — so
+// it replays (sounding the note and lighting its pad) each time the playhead
 // comes back around. Pure Web Audio + local state — no login, no backend, no DB.
 
 // One row per pitch (top = highest). Each note owns a distinct colour.
@@ -31,6 +32,20 @@ const COLS = WAVES.length;
 const STEPS = 8;
 const BPM = 100;
 const STEP_MS = 60_000 / BPM;
+
+// Distinct colours in a step's recorded tones, in first-seen order (a colour
+// repeated by multiple tones is counted once).
+function distinctColors(tones) {
+  const seen = new Set();
+  const out = [];
+  for (const t of tones) {
+    if (!seen.has(t.color)) {
+      seen.add(t.color);
+      out.push(t.color);
+    }
+  }
+  return out;
+}
 
 // Build an oscillator voice feeding a shared envelope gain. The pure sine reads
 // quiet, so it gets an octave-up sine partial at 2/3 amplitude for presence.
@@ -62,15 +77,18 @@ function buildVoice(ctx, wave, freq) {
 
 export default function BloomMachine() {
   const [lit, setLit] = useState({}); // "r-c" → true while a pad is held
+  const [flash, setFlash] = useState({}); // "r-c" → true while a recorded note replays
   const [pressed, setPressed] = useState(false); // play button touch feedback
   const [running, setRunning] = useState(false); // loop transport state
   const [step, setStep] = useState(-1); // playhead position for the dots
+  const [stepColors, setStepColors] = useState(() => Array.from({ length: STEPS }, () => []));
 
   const ctxRef = useRef(null);
   const masterRef = useRef(null);
-  const voicesRef = useRef({}); // "r-c" → held live voice
+  const voicesRef = useRef({}); // "r-c" → held live voice (+ its open record)
   const patternRef = useRef(Array.from({ length: STEPS }, () => [])); // recorded tones per step
   const stepRef = useRef(-1);
+  const stepStartRef = useRef(0); // wall-clock time the current step began (for quantize)
   const runningRef = useRef(false);
   const timerRef = useRef(null);
 
@@ -102,7 +120,7 @@ export default function BloomMachine() {
       env.gain.linearRampToValueAtTime(peak, t + 0.01); // attack, then sustain
       env.connect(masterRef.current);
       oscs.forEach((o) => o.start(t));
-      voicesRef.current[key] = { env, oscs, gains };
+      voicesRef.current[key] = { env, oscs, gains, rec: null, pressStart: performance.now() };
     },
     [ensureCtx]
   );
@@ -111,6 +129,8 @@ export default function BloomMachine() {
     const v = voicesRef.current[key];
     if (!v) return;
     delete voicesRef.current[key];
+    // Record the held duration onto the open record (same object lives in the pattern).
+    if (v.rec) v.rec.dur = Math.max(0.08, (performance.now() - v.pressStart) / 1000);
     const ctx = ctxRef.current;
     const t = ctx.currentTime;
     const rel = 0.18;
@@ -125,21 +145,22 @@ export default function BloomMachine() {
     };
   }, []);
 
-  // One-shot pluck — used when a recorded tone replays on the loop.
-  const pluck = useCallback(
-    (freq, wave) => {
+  // Replay a recorded tone for its captured duration (attack → sustain → release).
+  const playRecorded = useCallback(
+    (rec) => {
       const ctx = ensureCtx();
       const t = ctx.currentTime;
-      const peak = Math.min(BASE_GAIN * wave.gain, 1);
-      const dur = 0.5;
-      const { env, oscs, gains } = buildVoice(ctx, wave, freq);
+      const peak = Math.min(BASE_GAIN * rec.wave.gain, 1);
+      const dur = rec.dur;
+      const { env, oscs, gains } = buildVoice(ctx, rec.wave, rec.freq);
       env.gain.setValueAtTime(0, t);
       env.gain.linearRampToValueAtTime(peak, t + 0.01);
-      env.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+      env.gain.setValueAtTime(peak, t + Math.max(0.02, dur - 0.08));
+      env.gain.linearRampToValueAtTime(0.0001, t + dur);
       env.connect(masterRef.current);
       oscs.forEach((o) => {
         o.start(t);
-        o.stop(t + dur + 0.05);
+        o.stop(t + dur + 0.03);
       });
       oscs[0].onended = () => {
         oscs.forEach((o) => o.disconnect());
@@ -150,11 +171,17 @@ export default function BloomMachine() {
     [ensureCtx]
   );
 
+  // Sound every recorded tone at step i and light its pad for the note's duration.
   const playStep = useCallback(
     (i) => {
-      patternRef.current[i].forEach((tone) => pluck(tone.freq, tone.wave));
+      patternRef.current[i].forEach((rec) => {
+        playRecorded(rec);
+        const key = `${rec.r}-${rec.c}`;
+        setFlash((p) => ({ ...p, [key]: true }));
+        setTimeout(() => setFlash((p) => ({ ...p, [key]: false })), Math.max(120, rec.dur * 1000));
+      });
     },
-    [pluck]
+    [playRecorded]
   );
 
   const startLoop = useCallback(() => {
@@ -163,10 +190,12 @@ export default function BloomMachine() {
     runningRef.current = true;
     setRunning(true);
     stepRef.current = 0;
+    stepStartRef.current = performance.now();
     setStep(0);
     playStep(0);
     timerRef.current = setInterval(() => {
       stepRef.current = (stepRef.current + 1) % STEPS;
+      stepStartRef.current = performance.now();
       setStep(stepRef.current);
       playStep(stepRef.current);
     }, STEP_MS);
@@ -200,13 +229,30 @@ export default function BloomMachine() {
   const onPadDown = (e, r, c, note) => {
     e.currentTarget.setPointerCapture?.(e.pointerId); // keep events if the finger slides off
     const key = `${r}-${c}`;
-    press(key, note.freq, WAVES[c]);
+    const wave = WAVES[c];
+    press(key, note.freq, wave);
     setLit((p) => ({ ...p, [key]: true }));
-    // First touch also starts the loop (at step 0); record the tone at the
-    // current playhead so it replays each time that step comes back around.
-    if (!runningRef.current) startLoop();
-    const at = stepRef.current < 0 ? 0 : stepRef.current;
-    patternRef.current[at].push({ freq: note.freq, wave: WAVES[c] });
+
+    // First touch starts the loop at step 0; otherwise quantize the record
+    // position to the nearest beat (round up past the half-step boundary).
+    let at;
+    if (!runningRef.current) {
+      startLoop();
+      at = 0;
+    } else {
+      const elapsed = performance.now() - stepStartRef.current;
+      at = elapsed > STEP_MS / 2 ? (stepRef.current + 1) % STEPS : stepRef.current;
+    }
+
+    const rec = { freq: note.freq, wave, r, c, color: note.color, dur: 0.5 };
+    patternRef.current[at].push(rec);
+    const v = voicesRef.current[key];
+    if (v) v.rec = rec; // release() fills in dur
+    setStepColors((prev) => {
+      const next = prev.slice();
+      next[at] = distinctColors(patternRef.current[at]);
+      return next;
+    });
   };
 
   const onPadUp = (r, c) => {
@@ -223,10 +269,11 @@ export default function BloomMachine() {
         <div style={styles.grid}>
           {NOTES.map((note, r) =>
             Array.from({ length: COLS }).map((_, c) => {
-              const on = lit[`${r}-${c}`];
+              const key = `${r}-${c}`;
+              const on = lit[key] || flash[key];
               return (
                 <button
-                  key={`${r}-${c}`}
+                  key={key}
                   type="button"
                   aria-label={`${note.name} pad`}
                   onPointerDown={(e) => onPadDown(e, r, c, note)}
@@ -247,11 +294,31 @@ export default function BloomMachine() {
           )}
         </div>
 
-        {/* Playhead — 8 dots, one lit at a time as the loop advances. */}
+        {/* Playhead — 8 dots. Each glows the distinct colour(s) recorded on it,
+            sliced like a pie when there's more than one; the active step pulses. */}
         <div style={styles.dots}>
-          {Array.from({ length: STEPS }).map((_, i) => (
-            <span key={i} style={{ ...styles.dot, ...(step === i ? styles.dotOn : null) }} />
-          ))}
+          {Array.from({ length: STEPS }).map((_, i) => {
+            const cols = stepColors[i] || [];
+            const active = step === i;
+            let background = "rgba(255,255,255,0.18)";
+            if (cols.length === 1) {
+              background = cols[0];
+            } else if (cols.length > 1) {
+              const slice = 360 / cols.length;
+              background = `conic-gradient(${cols.map((col, k) => `${col} ${k * slice}deg ${(k + 1) * slice}deg`).join(", ")})`;
+            }
+            return (
+              <span
+                key={i}
+                style={{
+                  ...styles.dot,
+                  background,
+                  boxShadow: active ? "0 0 10px 2px rgba(233,231,255,0.85)" : "none",
+                  transform: active ? "scale(1.4)" : "scale(1)",
+                }}
+              />
+            );
+          })}
         </div>
 
         {/* Play / stop — circular, pad-sized. Pressed visual on touch-start;
@@ -314,18 +381,13 @@ const styles = {
     userSelect: "none",
     WebkitUserSelect: "none",
   },
-  dots: { display: "flex", justifyContent: "center", gap: 10, margin: "16px 0" },
+  dots: { display: "flex", justifyContent: "center", gap: 12, margin: "18px 0" },
   dot: {
-    width: 8,
-    height: 8,
+    width: 14,
+    height: 14,
     borderRadius: "50%",
     background: "rgba(255,255,255,0.18)",
-    transition: "background 80ms ease, box-shadow 80ms ease, transform 80ms ease",
-  },
-  dotOn: {
-    background: "#e9e7ff",
-    boxShadow: "0 0 8px 1px rgba(233,231,255,0.7)",
-    transform: "scale(1.35)",
+    transition: "box-shadow 80ms ease, transform 80ms ease",
   },
   controls: { display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 12 },
   transport: {
