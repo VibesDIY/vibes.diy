@@ -35,7 +35,7 @@ const COLS = VARIANTS.length;
 // 16-step loop, two steps per beat (eighth notes). BPM is global and live.
 const STEPS = 16;
 const DOT_COLS = 8; // dots laid out as 2 rows of 8
-const DEFAULT_BPM = 100;
+const DEFAULT_BPM = 120;
 const MIN_BPM = 40;
 const MAX_BPM = 240;
 const stepMsFor = (bpm) => 60_000 / bpm / 2;
