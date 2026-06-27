@@ -9,7 +9,7 @@ export interface Suggestion {
 export const quickSuggestions: Suggestion[] = [
   {
     label: "Character Bot",
-    text: "Create a chat app where I design a character — name, personality, and speaking style — then have a conversation with them. Let me edit the character's style anytime, keep my drafts private, and publish the ones I like to a public gallery others can chat with.",
+    text: "Build a character creator that interviews me about my character's name, personality, backstory, and speaking style, then uses createVibe to hand off to a dedicated chat vibe personalized to that character — already in their voice, ready to talk from the first message. Let me publish finished characters to a public gallery others can chat with.",
   },
   {
     label: "Neighborhood Map",
@@ -57,7 +57,7 @@ export const quickSuggestions: Suggestion[] = [
   },
   {
     label: "Money Moves",
-    text: "Personal finance calculator with student loan payoff, compound interest, and retirement goal visualizations.",
+    text: "Interview me about my loans, income, savings rate, and retirement goals, then use createVibe to build a personal finance vibe with my numbers already loaded — payoff curves, compound interest projections, and retirement timeline built around my actual situation.",
   },
   {
     label: "Pigment Studio",
@@ -129,7 +129,7 @@ export const quickSuggestions: Suggestion[] = [
   },
   {
     label: "Wildcard",
-    text: "Roll the dice — AI generates a completely unexpected app you didn't know you wanted.",
+    text: "Ask me one unexpected question, then use createVibe to build an app I didn't know I wanted — something genuinely surprising based on my answer, opening fresh in the builder.",
   },
 ];
 
