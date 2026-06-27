@@ -2,11 +2,10 @@ import React, { useRef, useState, useCallback, useEffect } from "react";
 
 // ── Bloom Machine ───────────────────────────────────────────────────────────
 // The music starter for the Instant Starter Stack. A 4×4 grid of pads, each tied
-// to a musical tone. Hold a pad: it sounds the note (sustained until release) and
-// lights up in that note's own colour. The first touch starts a 16-step loop and
-// records the tone — quantized to the nearest step, with the held duration — so
-// it replays (sounding the note and lighting its pad) each time the playhead
-// comes back around. Pure Web Audio + local state — no login, no backend, no DB.
+// to a musical tone. Hold a pad to sound its note (sustained until release); the
+// note records — quantized to the nearest step, with the held duration — into the
+// active pattern. Patterns are a list of rows (play · 16-step playhead · save/
+// delete); one plays at a time. Pure Web Audio + local state — no DB, no backend.
 
 // One row per pitch (top = highest). Each note owns a distinct colour.
 const NOTES = [
@@ -28,14 +27,25 @@ const WAVES = [
 ];
 const COLS = WAVES.length;
 
-// 16-step loop, two dots (steps) per beat at 100 BPM (eighth notes).
+// 16-step loop, two steps per beat (eighth notes). BPM is global and live.
 const STEPS = 16;
 const DOT_COLS = 8; // dots laid out as 2 rows of 8
-const BPM = 100;
-const STEP_MS = 60_000 / BPM / 2;
+const DEFAULT_BPM = 100;
+const MIN_BPM = 40;
+const MAX_BPM = 240;
+const stepMsFor = (bpm) => 60_000 / bpm / 2;
 
-// Distinct colours in a step's recorded tones, in first-seen order (a colour
-// repeated by multiple tones is counted once).
+let nextId = 1;
+const emptyPattern = () => ({
+  id: nextId++,
+  steps: Array.from({ length: STEPS }, () => []),
+  saved: false,
+  dirty: false,
+});
+const isEmpty = (p) => p.steps.every((s) => s.length === 0);
+
+// Distinct colours in a step's recorded tones, first-seen order (a colour
+// repeated by multiple tones counts once).
 function distinctColors(tones) {
   const seen = new Set();
   const out = [];
@@ -79,19 +89,25 @@ function buildVoice(ctx, wave, freq) {
 export default function BloomMachine() {
   const [lit, setLit] = useState({}); // "r-c" → true while a pad is held
   const [flash, setFlash] = useState({}); // "r-c" → true while a recorded note replays
-  const [pressed, setPressed] = useState(false); // play button touch feedback
-  const [running, setRunning] = useState(false); // loop transport state
-  const [step, setStep] = useState(-1); // playhead position for the dots
-  const [stepColors, setStepColors] = useState(() => Array.from({ length: STEPS }, () => []));
+  const [bpm, setBpm] = useState(DEFAULT_BPM);
+  const [patterns, setPatterns] = useState(() => [emptyPattern()]);
+  const [activeId, setActiveId] = useState(null); // pattern currently playing, or null
+  const [step, setStep] = useState(-1); // playhead position for the active row
 
   const ctxRef = useRef(null);
   const masterRef = useRef(null);
   const voicesRef = useRef({}); // "r-c" → held live voice (+ its open record)
-  const patternRef = useRef(Array.from({ length: STEPS }, () => [])); // recorded tones per step
+  const timerRef = useRef(null);
   const stepRef = useRef(-1);
   const stepStartRef = useRef(0); // wall-clock time the current step began (for quantize)
-  const runningRef = useRef(false);
-  const timerRef = useRef(null);
+
+  // Refs mirror state so the timer/pointer callbacks always read fresh values.
+  const patternsRef = useRef(patterns);
+  patternsRef.current = patterns;
+  const activeIdRef = useRef(activeId);
+  activeIdRef.current = activeId;
+  const stepMsRef = useRef(stepMsFor(bpm));
+  stepMsRef.current = stepMsFor(bpm);
 
   // Lazily create the AudioContext + a limiter bus on first touch (autoplay policy).
   const ensureCtx = useCallback(() => {
@@ -130,7 +146,7 @@ export default function BloomMachine() {
     const v = voicesRef.current[key];
     if (!v) return;
     delete voicesRef.current[key];
-    // Record the held duration onto the open record (same object lives in the pattern).
+    // Stamp the held duration onto the open record (same object lives in state).
     if (v.rec) v.rec.dur = Math.max(0.08, (performance.now() - v.pressStart) / 1000);
     const ctx = ctxRef.current;
     const t = ctx.currentTime;
@@ -172,10 +188,12 @@ export default function BloomMachine() {
     [ensureCtx]
   );
 
-  // Sound every recorded tone at step i and light its pad for the note's duration.
+  // Sound every recorded tone at step i of pattern `id`, lighting each pad.
   const playStep = useCallback(
-    (i) => {
-      patternRef.current[i].forEach((rec) => {
+    (id, i) => {
+      const pat = patternsRef.current.find((p) => p.id === id);
+      if (!pat) return;
+      pat.steps[i].forEach((rec) => {
         playRecorded(rec);
         const key = `${rec.r}-${rec.c}`;
         setFlash((p) => ({ ...p, [key]: true }));
@@ -185,44 +203,78 @@ export default function BloomMachine() {
     [playRecorded]
   );
 
-  const startLoop = useCallback(() => {
-    if (runningRef.current) return;
-    ensureCtx();
-    runningRef.current = true;
-    setRunning(true);
-    stepRef.current = 0;
+  // Advance the playhead; reschedules itself, reading bpm live via stepMsRef.
+  const tickRef = useRef(() => {});
+  tickRef.current = () => {
+    stepRef.current = (stepRef.current + 1) % STEPS;
     stepStartRef.current = performance.now();
-    setStep(0);
-    playStep(0);
-    timerRef.current = setInterval(() => {
-      stepRef.current = (stepRef.current + 1) % STEPS;
-      stepStartRef.current = performance.now();
-      setStep(stepRef.current);
-      playStep(stepRef.current);
-    }, STEP_MS);
-  }, [ensureCtx, playStep]);
+    setStep(stepRef.current);
+    playStep(activeIdRef.current, stepRef.current);
+    timerRef.current = setTimeout(() => tickRef.current(), stepMsRef.current);
+  };
 
-  // Pause is really stop: clear the playhead so the next play restarts at zero.
-  // The recorded pattern is kept, so those tones still play on the next run.
+  const startLoopOn = useCallback(
+    (id) => {
+      ensureCtx();
+      if (timerRef.current) clearTimeout(timerRef.current);
+      activeIdRef.current = id;
+      setActiveId(id);
+      stepRef.current = 0;
+      stepStartRef.current = performance.now();
+      setStep(0);
+      playStep(id, 0);
+      timerRef.current = setTimeout(() => tickRef.current(), stepMsRef.current);
+    },
+    [ensureCtx, playStep]
+  );
+
+  // Pause/stop: clear the playhead. Recorded patterns are kept.
   const stopLoop = useCallback(() => {
-    runningRef.current = false;
-    setRunning(false);
     if (timerRef.current) {
-      clearInterval(timerRef.current);
+      clearTimeout(timerRef.current);
       timerRef.current = null;
     }
+    activeIdRef.current = null;
+    setActiveId(null);
     stepRef.current = -1;
     setStep(-1);
   }, []);
 
-  const toggleTransport = useCallback(() => {
-    if (runningRef.current) stopLoop();
-    else startLoop();
-  }, [startLoop, stopLoop]);
+  // Play on a row stops whatever's playing and starts it from zero (toggle off
+  // if it's already the active row).
+  const togglePlay = useCallback(
+    (id) => {
+      if (activeIdRef.current === id) stopLoop();
+      else startLoopOn(id);
+    },
+    [startLoopOn, stopLoop]
+  );
+
+  const savePattern = (id) => setPatterns((prev) => prev.map((p) => (p.id === id ? { ...p, saved: true, dirty: false } : p)));
+
+  const deletePattern = (id) => {
+    if (id === activeIdRef.current) stopLoop();
+    setPatterns((prev) => {
+      const next = prev.filter((p) => p.id !== id);
+      return next.length ? next : [emptyPattern()];
+    });
+  };
+
+  // The "+" clear: prepend a fresh empty row and pause.
+  const addPattern = () => {
+    stopLoop();
+    setPatterns((prev) => [emptyPattern(), ...prev]);
+  };
+
+  // Tap a dot to clear that step on its row (marks the row dirty).
+  const clearStep = (id, i) =>
+    setPatterns((prev) =>
+      prev.map((p) => (p.id === id ? { ...p, dirty: true, steps: p.steps.map((s, idx) => (idx === i ? [] : s)) } : p))
+    );
 
   useEffect(
     () => () => {
-      if (timerRef.current) clearInterval(timerRef.current);
+      if (timerRef.current) clearTimeout(timerRef.current);
     },
     []
   );
@@ -234,26 +286,28 @@ export default function BloomMachine() {
     press(key, note.freq, wave);
     setLit((p) => ({ ...p, [key]: true }));
 
-    // First touch starts the loop at step 0; otherwise quantize the record
-    // position to the nearest beat (round up past the half-step boundary).
+    // First touch starts the loop on the top row at step 0; otherwise record onto
+    // the active row, quantized to the nearest step.
+    let targetId;
     let at;
-    if (!runningRef.current) {
-      startLoop();
+    if (!timerRef.current) {
+      targetId = patternsRef.current[0].id;
+      startLoopOn(targetId);
       at = 0;
     } else {
+      targetId = activeIdRef.current;
       const elapsed = performance.now() - stepStartRef.current;
-      at = elapsed > STEP_MS / 2 ? (stepRef.current + 1) % STEPS : stepRef.current;
+      at = elapsed > stepMsRef.current / 2 ? (stepRef.current + 1) % STEPS : stepRef.current;
     }
 
     const rec = { freq: note.freq, wave, r, c, color: note.color, dur: 0.5 };
-    patternRef.current[at].push(rec);
+    setPatterns((prev) =>
+      prev.map((p) =>
+        p.id === targetId ? { ...p, dirty: true, steps: p.steps.map((s, idx) => (idx === at ? [...s, rec] : s)) } : p
+      )
+    );
     const v = voicesRef.current[key];
-    if (v) v.rec = rec; // release() fills in dur
-    setStepColors((prev) => {
-      const next = prev.slice();
-      next[at] = distinctColors(patternRef.current[at]);
-      return next;
-    });
+    if (v) v.rec = rec; // release() fills in dur on the same object
   };
 
   const onPadUp = (r, c) => {
@@ -262,21 +316,43 @@ export default function BloomMachine() {
     setLit((p) => ({ ...p, [key]: false }));
   };
 
-  // Tap a dot to clear every tone recorded on that step.
-  const clearStep = (i) => {
-    patternRef.current[i] = [];
-    setStepColors((prev) => {
-      const next = prev.slice();
-      next[i] = [];
-      return next;
-    });
-  };
-
-  const playActive = running || pressed;
-
   return (
     <div style={styles.screen}>
       <div style={styles.frame}>
+        {/* Global controls — BPM stepper + the "+" clear (new empty row). */}
+        <div style={styles.topbar}>
+          <label style={styles.bpm}>
+            <span style={styles.bpmLabel}>BPM</span>
+            <input
+              type="number"
+              min={MIN_BPM}
+              max={MAX_BPM}
+              step={1}
+              value={bpm}
+              onChange={(e) => {
+                const v = Number(e.target.value);
+                if (!Number.isNaN(v)) setBpm(Math.min(MAX_BPM, Math.max(MIN_BPM, Math.round(v))));
+              }}
+              style={styles.bpmInput}
+            />
+          </label>
+          <button
+            type="button"
+            aria-label="new empty pattern"
+            disabled={isEmpty(patterns[0])}
+            onClick={addPattern}
+            style={{
+              ...styles.round,
+              ...styles.plus,
+              opacity: isEmpty(patterns[0]) ? 0.35 : 1,
+              cursor: isEmpty(patterns[0]) ? "not-allowed" : "pointer",
+            }}
+          >
+            +
+          </button>
+        </div>
+
+        {/* Tone pads. */}
         <div style={styles.grid}>
           {NOTES.map((note, r) =>
             Array.from({ length: COLS }).map((_, c) => {
@@ -305,68 +381,74 @@ export default function BloomMachine() {
           )}
         </div>
 
-        {/* Transport row — play/stop button with the 16-step playhead beside it,
-            the two dot rows vertically centred on the button. */}
-        <div style={styles.transportRow}>
-          {/* Play / stop — circular, 75% of a pad. Pressed visual on touch-start;
-              the transport toggles on touch-end. */}
-          <button
-            type="button"
-            aria-label={running ? "stop" : "play"}
-            aria-pressed={running}
-            onPointerDown={(e) => {
-              e.currentTarget.setPointerCapture?.(e.pointerId);
-              setPressed(true);
-            }}
-            onPointerUp={() => {
-              setPressed(false);
-              toggleTransport();
-            }}
-            onPointerCancel={() => setPressed(false)}
-            onLostPointerCapture={() => setPressed(false)}
-            onContextMenu={(e) => e.preventDefault()}
-            style={{
-              ...styles.transport,
-              background: playActive ? "#e9e7ff" : "rgba(255,255,255,0.07)",
-              color: playActive ? "#1e1b4b" : "#e9e7ff",
-              borderColor: playActive ? "#e9e7ff" : "rgba(255,255,255,0.14)",
-              boxShadow: running ? "0 0 18px 3px rgba(233,231,255,0.45)" : "none",
-              transform: pressed ? "scale(0.94)" : "scale(1)",
-            }}
-          >
-            <span style={{ fontSize: 18, lineHeight: 1 }}>{running ? "❚❚" : "▶"}</span>
-          </button>
-
-          {/* Playhead — 16 dots in 2 rows of 8. Each glows the distinct colour(s)
-              recorded on it, sliced like a pie when there's more than one; the
-              active step pulses. */}
-          <div style={styles.dots}>
-            {Array.from({ length: STEPS }).map((_, i) => {
-              const cols = stepColors[i] || [];
-              const active = step === i;
-              let background = "rgba(255,255,255,0.18)";
-              if (cols.length === 1) {
-                background = cols[0];
-              } else if (cols.length > 1) {
-                const slice = 360 / cols.length;
-                background = `conic-gradient(${cols.map((col, k) => `${col} ${k * slice}deg ${(k + 1) * slice}deg`).join(", ")})`;
-              }
-              return (
+        {/* Pattern list — newest/working row on top. */}
+        <div style={styles.list}>
+          {patterns.map((p) => {
+            const isActive = activeId === p.id;
+            const saveMode = !p.saved || p.dirty;
+            return (
+              <div key={p.id} style={styles.row}>
                 <button
-                  key={i}
                   type="button"
-                  aria-label={`clear step ${i + 1}`}
-                  onClick={() => clearStep(i)}
+                  aria-label={isActive ? "stop" : "play"}
+                  onClick={() => togglePlay(p.id)}
                   style={{
-                    ...styles.dot,
-                    background,
-                    boxShadow: active ? "0 0 10px 2px rgba(233,231,255,0.85)" : "none",
-                    transform: active ? "scale(1.4)" : "scale(1)",
+                    ...styles.round,
+                    background: isActive ? "#e9e7ff" : "rgba(255,255,255,0.07)",
+                    color: isActive ? "#1e1b4b" : "#e9e7ff",
+                    borderColor: isActive ? "#e9e7ff" : "rgba(255,255,255,0.14)",
+                    boxShadow: isActive ? "0 0 16px 3px rgba(233,231,255,0.45)" : "none",
                   }}
-                />
-              );
-            })}
-          </div>
+                >
+                  <span style={{ fontSize: 15, lineHeight: 1 }}>{isActive ? "❚❚" : "▶"}</span>
+                </button>
+
+                <div style={styles.dotsWrap}>
+                  <div style={styles.dots}>
+                    {p.steps.map((tones, i) => {
+                      const cols = distinctColors(tones);
+                      const active = isActive && step === i;
+                      let background = "rgba(255,255,255,0.18)";
+                      if (cols.length === 1) {
+                        background = cols[0];
+                      } else if (cols.length > 1) {
+                        const slice = 360 / cols.length;
+                        background = `conic-gradient(${cols.map((col, k) => `${col} ${k * slice}deg ${(k + 1) * slice}deg`).join(", ")})`;
+                      }
+                      return (
+                        <button
+                          key={i}
+                          type="button"
+                          aria-label={`clear step ${i + 1}`}
+                          onClick={() => clearStep(p.id, i)}
+                          style={{
+                            ...styles.dot,
+                            background,
+                            boxShadow: active ? "0 0 10px 2px rgba(233,231,255,0.85)" : "none",
+                            transform: active ? "scale(1.4)" : "scale(1)",
+                          }}
+                        />
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  aria-label={saveMode ? "save pattern" : "delete pattern"}
+                  onClick={() => (saveMode ? savePattern(p.id) : deletePattern(p.id))}
+                  style={{
+                    ...styles.round,
+                    background: saveMode ? "rgba(52,211,153,0.18)" : "rgba(244,114,182,0.14)",
+                    color: "#e9e7ff",
+                    borderColor: saveMode ? "rgba(52,211,153,0.6)" : "rgba(244,114,182,0.5)",
+                  }}
+                >
+                  <span style={{ fontSize: 16, lineHeight: 1 }}>{saveMode ? "💾" : "🗑"}</span>
+                </button>
+              </div>
+            );
+          })}
         </div>
       </div>
     </div>
@@ -385,6 +467,19 @@ const styles = {
     boxSizing: "border-box",
   },
   frame: { width: "100%", maxWidth: 360, color: "#e9e7ff" },
+  topbar: { display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 },
+  bpm: { display: "flex", alignItems: "center", gap: 8 },
+  bpmLabel: { fontSize: 12, opacity: 0.7, letterSpacing: 0.5 },
+  bpmInput: {
+    width: 64,
+    padding: "6px 8px",
+    fontSize: 15,
+    fontVariantNumeric: "tabular-nums",
+    color: "#e9e7ff",
+    background: "rgba(255,255,255,0.07)",
+    border: "1px solid rgba(255,255,255,0.18)",
+    borderRadius: 10,
+  },
   grid: { display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 12 },
   pad: {
     aspectRatio: "1 / 1",
@@ -398,7 +493,9 @@ const styles = {
     userSelect: "none",
     WebkitUserSelect: "none",
   },
-  transportRow: { display: "flex", alignItems: "center", justifyContent: "center", gap: 18, marginTop: 18 },
+  list: { display: "flex", flexDirection: "column", gap: 14, marginTop: 18 },
+  row: { display: "flex", alignItems: "center", gap: 10 },
+  dotsWrap: { flex: 1, display: "flex", justifyContent: "center" },
   dots: {
     display: "grid",
     gridTemplateColumns: `repeat(${DOT_COLS}, 17px)`,
@@ -418,12 +515,14 @@ const styles = {
     WebkitTapHighlightColor: "transparent",
     touchAction: "manipulation",
   },
-  transport: {
-    width: 60, // ≈75% of a tone pad
-    height: 60,
+  round: {
+    width: 45, // 75% of the previous 60px play button
+    height: 45,
     flexShrink: 0,
     borderRadius: "50%",
     border: "1px solid rgba(255,255,255,0.14)",
+    background: "rgba(255,255,255,0.07)",
+    color: "#e9e7ff",
     cursor: "pointer",
     padding: 0,
     display: "flex",
@@ -431,8 +530,7 @@ const styles = {
     justifyContent: "center",
     transition: "background 120ms ease, box-shadow 120ms ease, color 120ms ease, transform 90ms ease",
     WebkitTapHighlightColor: "transparent",
-    touchAction: "none",
-    userSelect: "none",
-    WebkitUserSelect: "none",
+    touchAction: "manipulation",
   },
+  plus: { fontSize: 24, fontWeight: 300, lineHeight: 1 },
 };
