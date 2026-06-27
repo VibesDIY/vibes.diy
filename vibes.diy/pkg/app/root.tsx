@@ -12,7 +12,7 @@ import { VibesDiyProvider, VibesDiyWebVars } from "./vibes-diy-provider.js";
 import { VibesFPApiParameters } from "@vibes.diy/api-types";
 import { getVibesGlobalCSS } from "@vibes.diy/base";
 import "./app.css";
-import { Toaster } from "react-hot-toast";
+import { CopyableToaster } from "./components/CopyableToaster.js";
 import { exception2Result } from "@adviser/cement";
 
 // Decode the Clerk frontend API host from a publishable key (pk_<env>_<base64>).
@@ -100,7 +100,7 @@ export default function App() {
       <AppErrorBoundary>
         <ThemeProvider>
           <CookieConsentProvider>
-            <Toaster></Toaster>
+            <CopyableToaster />
             <Outlet />
             <ClientOnly>
               <CookieBanner />
