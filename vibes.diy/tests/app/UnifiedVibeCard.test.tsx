@@ -57,7 +57,9 @@ describe("UnifiedVibeCard", () => {
     render(<UnifiedVibeCard appTitle="Bloom Machine" open onSubmitOther={onSubmitOther} />);
     const input = screen.getByPlaceholderText(/describe a change/i);
     fireEvent.change(input, { target: { value: "make it dark" } });
-    fireEvent.submit(input.closest("form")!);
+    const form = input.closest("form");
+    if (!form) throw new Error("expected the Other row to be wrapped in a form");
+    fireEvent.submit(form);
     expect(onSubmitOther).toHaveBeenCalledWith("make it dark");
   });
 
