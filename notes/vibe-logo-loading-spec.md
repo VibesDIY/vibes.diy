@@ -133,20 +133,20 @@ only, e.g.:
 (The grid background + "Preparing…" loading screen stays — only the logo is
 suppressed during `"loading"`.)
 
-## Open question for the human
+## Decision (settled)
 
-The request was "make it not appear in the top-left **at all**." The
-recommended change keeps the logo on the card / not-found screens because it's
-the only sidebar toggle there. Two ways to go:
+**Remove the top-left logo from the `"loading"` state only; keep it on the
+card / not-found screens.** Gate the top-left logo on `showCard || notFound`.
 
-1. **Recommended:** keep the top-left logo on card / not-found, remove it only
-   from `"loading"`. Eliminates the flash; preserves the sidebar entry point.
-2. **Literal "never top-left":** remove the top-left logo entirely. Then we must
-   either (a) accept the sidebar is unreachable from card / not-found (it already
-   is from the granted state), or (b) give the sidebar another entry point.
+This was the recommended option and is now the agreed direction (confirmed by
+the human and by review on PR #2702). The logo stays as the `SessionSidebar`
+entry point on the persistent card / not-found screens; it just never appears
+during transient loading, so the happy path shows the logo exactly once — as the
+bottom-right pill.
 
-Recommend option 1 unless we have decided the sidebar should die on these
-screens too.
+The literal "never top-left anywhere" variant is explicitly **out of scope** for
+this change: it would require giving the sidebar an alternate entry point on the
+card / not-found screens, which is a separate UX decision.
 
 ## Out of scope / follow-ups (not part of this fix)
 
@@ -165,4 +165,4 @@ screens too.
 2. Open a vibe that returns a `request`/`invite`/`pending`/`revoked` card.
    Confirm the top-left logo still shows and still toggles the sidebar.
 3. Open a non-existent vibe. Confirm the not-found screen still shows the
-   top-left logo (or matches whatever option the human picks above).
+   top-left logo.
