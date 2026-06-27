@@ -9,7 +9,31 @@ export interface Suggestion {
 export const quickSuggestions: Suggestion[] = [
   {
     label: "Character Bot",
-    text: "Build a character creator that interviews me about my character's name, personality, backstory, and speaking style, then uses createVibe to open a new chat app already in that character's voice — ready to talk from the first message. Let me publish finished characters to a public gallery others can chat with.",
+    text: "Create a chat app where I design a character — name, personality, and speaking style — then have a conversation with them. Let me edit the character's style anytime, keep my drafts private, and publish the ones I like to a public gallery others can chat with.",
+  },
+  {
+    label: "Pitch Deck",
+    text: "Interview me about my company, the problem I'm solving, my market size, team, traction, and funding ask, then use createVibe to open a pitch deck app with my slides already written — problem, solution, market, team, traction, and ask all pre-populated with my actual content, ready to present and refine.",
+  },
+  {
+    label: "Speech Writer",
+    text: "Interview me about the occasion, who I'm speaking about, my relationship to them, and a few key memories or things I want to say, then use createVibe to open a speech app with my full draft already written — introduction, stories, and closing already shaped around what I told you.",
+  },
+  {
+    label: "Cover Letter",
+    text: "Ask me to paste the job description, then interview me about my relevant experience and what I most want to highlight, then use createVibe to open a cover letter app with a tailored draft already written for that specific role — ready to edit and send.",
+  },
+  {
+    label: "Lesson Plan",
+    text: "Interview me about the subject, age group, learning objectives, and how long the lesson runs, then use createVibe to open a lesson plan app with the full plan already structured — objectives, activities, materials, and assessment built around my topic.",
+  },
+  {
+    label: "Brand Kit",
+    text: "Interview me about my company name, what it does, who it's for, the tone I want, and a few visual preferences, then use createVibe to open a brand guidelines app with colors, fonts, voice, and a mission statement already drafted for my brand.",
+  },
+  {
+    label: "Podcast Script",
+    text: "Interview me about my episode topic, who the guest is, what I want to cover, and how long the episode runs, then use createVibe to open a script app with my episode already structured — intro, talking points, questions, and outro written and ready to edit.",
   },
   {
     label: "Neighborhood Map",
