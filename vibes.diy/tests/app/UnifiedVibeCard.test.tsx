@@ -90,6 +90,12 @@ describe("UnifiedVibeCard", () => {
     expect(screen.getByText("@meghan")).toBeTruthy();
   });
 
+  it("shows the in-vibe edit explainer and an Edit nav button", () => {
+    render(<UnifiedVibeCard appTitle="Bloom Machine" open chips={["Make it a drum kit"]} />);
+    expect(screen.getByText("Describe a change to edit this app live.")).toBeTruthy();
+    expect(screen.getByRole("button", { name: /edit/i })).toBeTruthy();
+  });
+
   it("keeps a single persistent toggle in both states (no remount/resize)", () => {
     const { rerender } = render(<UnifiedVibeCard appTitle="Bloom Machine" />);
     // Closed: the one toggle is present and labelled "Open vibe menu".

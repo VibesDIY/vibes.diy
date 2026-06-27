@@ -17,6 +17,14 @@ describe("OptionButtons", () => {
     expect(container.textContent).toContain(HELPER_TEXT);
   });
 
+  it("renders a custom firstMessage in place of the default explainer", () => {
+    const { container } = render(
+      <OptionButtons options={SAMPLE_OPTIONS} isFirst firstMessage="Describe a change to edit this app live." />
+    );
+    expect(container.textContent).toContain("Describe a change to edit this app live.");
+    expect(container.textContent).not.toContain(HELPER_TEXT);
+  });
+
   it("omits the explainer when isFirst is false", () => {
     const onSelect = vi.fn();
     const { container } = render(<OptionButtons options={SAMPLE_OPTIONS} isFirst={false} onSelect={onSelect} />);

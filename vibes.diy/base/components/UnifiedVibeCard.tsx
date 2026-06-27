@@ -142,6 +142,7 @@ export function UnifiedVibeCard(props: UnifiedVibeCardProps) {
                 <OptionButtons
                   options={props.chips}
                   isFirst
+                  firstMessage="Describe a change to edit this app live."
                   onSelect={(o) => {
                     props.onSelectChip?.(o);
                     // Return false so OptionButtons clears the press and the chips stay
@@ -163,10 +164,23 @@ export function UnifiedVibeCard(props: UnifiedVibeCardProps) {
               }}
             >
               <NavIcon label="Home" color="#3b82f6" onClick={props.onHome}>
-                ⌂
+                <span style={{ filter: "grayscale(1)", fontSize: 16, lineHeight: 1 }}>🏠</span>
               </NavIcon>
-              <NavIcon label="Chat" color="#fb923c" selected>
-                💬
+              <NavIcon label="Edit" color="#fb923c" selected>
+                <svg
+                  width="17"
+                  height="17"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth={2.2}
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden="true"
+                >
+                  <path d="M12 20h9" />
+                  <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z" />
+                </svg>
               </NavIcon>
               <NavIcon label="Share" color="#22c55e" onClick={props.onShare} buttonRef={props.shareButtonRef}>
                 ↗
