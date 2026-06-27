@@ -35,6 +35,23 @@ describe("UnifiedVibeCard", () => {
     expect(onSelectChip).toHaveBeenCalledWith("Make it a drum kit");
   });
 
+  it("keeps chips clickable after a selection (no permanent lock)", () => {
+    const onSelectChip = vi.fn();
+    render(
+      <UnifiedVibeCard
+        appTitle="Bloom Machine"
+        open
+        chips={["Make it a drum kit", "Add a high score"]}
+        onSelectChip={onSelectChip}
+      />,
+    );
+    fireEvent.click(screen.getByText("Make it a drum kit"));
+    fireEvent.click(screen.getByText("Add a high score"));
+    expect(onSelectChip).toHaveBeenCalledTimes(2);
+    expect(onSelectChip).toHaveBeenNthCalledWith(1, "Make it a drum kit");
+    expect(onSelectChip).toHaveBeenNthCalledWith(2, "Add a high score");
+  });
+
   it("submits the Other free-text row", () => {
     const onSubmitOther = vi.fn();
     render(<UnifiedVibeCard appTitle="Bloom Machine" open onSubmitOther={onSubmitOther} />);
