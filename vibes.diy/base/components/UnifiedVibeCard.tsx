@@ -186,7 +186,7 @@ export function UnifiedVibeCard(props: UnifiedVibeCardProps) {
           card opens — never remounting, resizing, or moving — and runs its own
           open/close morph via `isActive`. The card floats above it; the logo is
           the single toggle. */}
-      <div style={{ position: "absolute", right: 16, bottom: 16, zIndex: 3, pointerEvents: "auto" }}>
+      <div style={{ position: "absolute", right: 16, bottom: 24, zIndex: 3, pointerEvents: "auto" }}>
         <button
           type="button"
           aria-label={open ? "Close vibe menu" : "Open vibe menu"}
