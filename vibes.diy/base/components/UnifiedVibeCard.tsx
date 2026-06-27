@@ -64,8 +64,7 @@ export function UnifiedVibeCard(props: UnifiedVibeCardProps) {
             position: "absolute",
             left: 12,
             right: 12,
-            // Sit above the persistent logo (logo: 60px tall at bottom:16 → top ~76).
-            bottom: 84,
+            bottom: 12,
             borderRadius: 16,
             maxHeight: "82%",
             overflow: "hidden",
@@ -115,6 +114,28 @@ export function UnifiedVibeCard(props: UnifiedVibeCardProps) {
                   </div>
                 )}
               </div>
+              {/* Handle picker / viewer tag lives at the TOP of the card — the
+                  bottom row is tight now that the persistent logo occupies its
+                  right end. */}
+              <div style={{ flex: 1 }} />
+              {props.handleSlug ? (
+                <ViewerTagView
+                  slug={props.handleSlug}
+                  displayName={`@${props.handleSlug}`}
+                  avatarUrl={props.handleAvatarUrl}
+                  trailing={<span style={{ fontSize: 11, opacity: 0.6, marginLeft: 1 }}>▾</span>}
+                  style={{
+                    background: "var(--color-light-background-01, #eee)",
+                    border: "1px solid var(--color-light-decorative-01, #ddd)",
+                    color: "var(--color-light-primary, #333)",
+                    fontSize: 13,
+                    padding: "3px 8px 3px 4px",
+                    flexShrink: 0,
+                  }}
+                />
+              ) : (
+                <ViewerTagView slug="?" anonymous onSignIn={props.onSignIn} />
+              )}
             </div>
             <div style={{ padding: "0 14px 12px", overflowY: "auto" }}>
               {props.chips && props.chips.length > 0 && (
@@ -136,40 +157,25 @@ export function UnifiedVibeCard(props: UnifiedVibeCardProps) {
               style={{
                 display: "flex",
                 alignItems: "center",
-                justifyContent: "space-between",
-                gap: 8,
+                gap: 6,
                 padding: "10px 12px 12px",
                 borderTop: "1px solid var(--color-light-decorative-00, #e5e5e5)",
               }}
             >
-              {props.handleSlug ? (
-                <ViewerTagView
-                  slug={props.handleSlug}
-                  displayName={`@${props.handleSlug}`}
-                  avatarUrl={props.handleAvatarUrl}
-                  trailing={<span style={{ fontSize: 11, opacity: 0.6, marginLeft: 1 }}>▾</span>}
-                  style={{
-                    background: "var(--color-light-background-01, #eee)",
-                    border: "1px solid var(--color-light-decorative-01, #ddd)",
-                    color: "var(--color-light-primary, #333)",
-                    fontSize: 13,
-                    padding: "3px 8px 3px 4px",
-                  }}
-                />
-              ) : (
-                <ViewerTagView slug="?" anonymous onSignIn={props.onSignIn} />
-              )}
-              <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                <NavIcon label="Home" color="#3b82f6" onClick={props.onHome}>
-                  ⌂
-                </NavIcon>
-                <NavIcon label="Chat" color="#fb923c" selected>
-                  💬
-                </NavIcon>
-                <NavIcon label="Share" color="#22c55e" onClick={props.onShare} buttonRef={props.shareButtonRef}>
-                  ↗
-                </NavIcon>
-              </div>
+              <NavIcon label="Home" color="#3b82f6" onClick={props.onHome}>
+                ⌂
+              </NavIcon>
+              <NavIcon label="Chat" color="#fb923c" selected>
+                💬
+              </NavIcon>
+              <NavIcon label="Share" color="#22c55e" onClick={props.onShare} buttonRef={props.shareButtonRef}>
+                ↗
+              </NavIcon>
+              {/* Invisible placeholder matching the persistent logo's footprint
+                  (size 60 → 120×60) so the bottom row flows AROUND the logo, which
+                  floats over this slot at the lower-right — the row never sits under
+                  it, and the card keeps its original bottom-anchored position. */}
+              <div aria-hidden style={{ width: 120, height: 60, flexShrink: 0, marginLeft: "auto" }} />
             </div>
           </div>
         </div>
