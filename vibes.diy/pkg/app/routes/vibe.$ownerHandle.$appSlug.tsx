@@ -304,6 +304,15 @@ export default function VibeIframeWrapper() {
     }
   }, [authSignedIn]);
 
+  // On the "App not available" screen the top-left logo + sidebar are the only
+  // thing to interact with, so open the sidebar by default once we resolve to
+  // not-found. Runs only on the false→true transition, so it stays closeable.
+  useEffect(() => {
+    if (notFound) {
+      setIsSidebarVisible(true);
+    }
+  }, [notFound]);
+
   // Subscribe to DM navigation requests from the iframe. A vibe posts
   // ReqOpenDmThread to ask the parent to open a direct-message thread.
   const srvVibeSandbox = vctx.srvVibeSandbox;
