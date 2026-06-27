@@ -189,19 +189,19 @@ export default function App() {
   const { viewer, isViewerPending, ViewerTag } = useViewer();
   const { can, ready, me } = useVibe(DB);
 
-  // lists newest-first via _id (roughly temporal — no createdAt needed for ordering)
-  const { docs: lists } = useLiveQuery((d) => (d.type === "list" ? d._id : undefined), { descending: true });
+  // Three stable, type-keyed live queries (the proven idiom): each is subscribed
+  // once and hydrates on load. We filter/sort by the active list in plain JS so the
+  // subscriptions never change as the active list does — a query whose `prefix`
+  // changed with activeListId was the cause of the "empty until you write" flash.
+  const { docs: listDocs } = useLiveQuery("type", { key: "list" });
+  const { docs: itemDocs } = useLiveQuery("type", { key: "item" });
+  const { docs: memberDocs } = useLiveQuery("type", { key: "member" });
+
+  const lists = [...listDocs].sort((a, b) => (a._id < b._id ? 1 : -1)); // newest-first by _id
   const [activeId, setActiveId] = useState(null);
   const activeListId = activeId || lists[0]?._id || null;
   const activeList = lists.find((l) => l._id === activeListId) || null;
-
-  // compound index [listId, position] → already sorted ascending by position
-  const { docs: sorted } = useLiveQuery((d) => (d.type === "item" ? [d.listId, d.position] : undefined), {
-    prefix: activeListId ? [activeListId] : ["__none__"],
-  });
-  const { docs: members } = useLiveQuery((d) => (d.type === "member" ? d.listId : undefined), {
-    key: activeListId || "__none__",
-  });
+  const members = memberDocs.filter((m) => m.listId === activeListId);
 
   const [text, setText] = useState("");
   const [dragId, setDragId] = useState(null);
@@ -219,7 +219,8 @@ export default function App() {
 
   // The rendered list: raw query rows with optimistic overrides applied, then
   // sorted by the effective position. Everything below reads/reorders `items`.
-  const items = sorted
+  const items = itemDocs
+    .filter((it) => it.listId === activeListId)
     .map((it) => ({
       ...it,
       done: it._id in optimisticDone ? optimisticDone[it._id] : it.done,
