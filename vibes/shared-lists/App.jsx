@@ -69,7 +69,7 @@ function InviteBox({ onInvite }) {
 
 export default function App() {
   const { useLiveQuery, database } = useFireproof(DB);
-  const { ViewerTag } = useViewer();
+  const { viewer, isViewerPending, ViewerTag } = useViewer();
   const { can, ready, me } = useVibe(DB);
 
   // lists newest-first via _id (roughly temporal — no createdAt needed for ordering)
@@ -178,9 +178,14 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-[oklch(0.98_0.01_95)] text-[oklch(0.2_0.02_260)] font-sans flex flex-col">
-      <header className="px-5 pt-6 pb-3">
+      <header className="px-5 pt-6 pb-1">
         <h1 className="text-2xl font-black">Shared Lists</h1>
       </header>
+      {/* TEMP diagnostic — remove once the preview identity issue is solved */}
+      <div className="px-5 pb-2 font-mono text-[10px] opacity-50">
+        dbg: pending={String(isViewerPending)} handle={viewer?.userHandle || "∅"} ready={String(ready)} create=
+        {createListVerdict?.reason || (canCreateList ? "ok" : "-")}
+      </div>
 
       <ListRail lists={lists} activeId={activeListId} onPick={setActiveId} onNew={createList} canCreate={canCreateList} />
 
@@ -217,11 +222,13 @@ export default function App() {
       <ul className="flex-1 overflow-y-auto px-5 py-3 space-y-2">
         {!activeListId ? (
           <li className="text-sm opacity-50 italic">
-            {canCreateList
-              ? "Create a list to get started."
-              : me
-                ? createListVerdict?.reason || "You can't create a list here."
-                : "Sign in to create a list."}
+            {isViewerPending
+              ? "Connecting…"
+              : canCreateList
+                ? "Create a list to get started."
+                : viewer
+                  ? createListVerdict?.reason || "You can't create a list here."
+                  : "You're signed in, but this account has no vibe handle on this server yet, so writes are disabled. Pick/create a handle in the Vibes switch."}
           </li>
         ) : sorted.length === 0 ? (
           <li className="text-sm opacity-50 italic">No items yet — add one below.</li>
