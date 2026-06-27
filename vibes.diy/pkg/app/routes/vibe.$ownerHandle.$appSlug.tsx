@@ -705,7 +705,8 @@ export default function VibeIframeWrapper() {
                 onLogin={
                   authSignedIn
                     ? undefined
-                    : () => clerk.openSignIn({ forceRedirectUrl: window.location.href, signUpForceRedirectUrl: window.location.href })
+                    : () =>
+                        clerk.openSignIn({ forceRedirectUrl: window.location.href, signUpForceRedirectUrl: window.location.href })
                 }
               />
               <ShareModal
