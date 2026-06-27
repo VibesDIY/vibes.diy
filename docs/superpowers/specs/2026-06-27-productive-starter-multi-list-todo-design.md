@@ -139,18 +139,29 @@ friendly fallback. v1 ships both.
 ## 5. `access.js`
 
 ```js
+// List ids ride inside channel names ("list:" + id [+ "/admin"]). Reject anything
+// that isn't a plain token so a crafted id can't inject a channel or collide with
+// the "/admin" namespace (e.g. listId = "abc/admin" → "list:abc/admin").
+const SAFE_ID = /^[A-Za-z0-9_-]+$/;
+function safeId(id) {
+  if (typeof id !== "string" || !SAFE_ID.test(id)) throw { forbidden: "Invalid id" };
+  return id;
+}
+
 export default function access(doc, oldDoc, user, ctx) {
   if (!user?.userHandle) throw { forbidden: "Sign in to make changes" };
+  // doc type can never change under an existing _id (no retyping across auth paths)
+  if (oldDoc && doc.type !== oldDoc.type) throw { forbidden: "type is immutable" };
 
   switch (doc.type) {
     case "list": {
-      const chan = "list:" + doc._id;
+      const chan = "list:" + safeId(doc._id);
       if (oldDoc) {
         // edit: creator is immutable, and only the creator (admin) may edit
         if (doc.creatorHandle !== oldDoc.creatorHandle) throw { forbidden: "creatorHandle is immutable" };
         ctx.requireAccess(chan + "/admin");
       } else {
-        // create: you can only create a list you own
+        // create: you can only create a list you own (bind identity to the writer)
         if (doc.creatorHandle !== user.userHandle) throw { forbidden: "You must be the creator" };
       }
       return {
@@ -160,20 +171,20 @@ export default function access(doc, oldDoc, user, ctx) {
     }
     case "item": {
       // gate on the EXISTING list on edits so listId can't be used to hop channels
-      const chan = "list:" + (oldDoc ? oldDoc.listId : doc.listId);
+      const chan = "list:" + safeId(oldDoc ? oldDoc.listId : doc.listId);
       ctx.requireAccess(chan); // any member: add/edit/check/reorder/delete
       if (oldDoc) {
         // listId and authorHandle are immutable once written
         if (doc.listId !== oldDoc.listId) throw { forbidden: "listId is immutable" };
         if (doc.authorHandle !== oldDoc.authorHandle) throw { forbidden: "authorHandle is immutable" };
       } else if (doc.authorHandle !== user.userHandle) {
-        // honest attribution: you can only author as yourself
+        // honest attribution: bind authorHandle to the writer
         throw { forbidden: "authorHandle must be you" };
       }
       return { channels: [chan] };
     }
     case "member": {
-      const chan = "list:" + doc.listId;
+      const chan = "list:" + safeId(doc.listId);
       ctx.requireAccess(chan + "/admin"); // only the creator (sole admin)
       if (oldDoc) throw { forbidden: "Membership grants are immutable" };
       if (doc.addedBy !== user.userHandle) throw { forbidden: "addedBy must be you" };
@@ -202,9 +213,36 @@ that authority and attribution hinge on — otherwise a write could quietly reas
 - **`item.authorHandle`** — `=== user.userHandle` on create, frozen on edit, so `ViewerTag`
   attribution can't be forged by a collaborator re-PUTting the doc.
 - **`member`** docs are create-only (no edits) and `addedBy` is pinned to the writer.
+- **`doc.type`** is frozen across any existing `_id`, so a doc can't be retyped to slip
+  through a different branch's auth path.
+- **List ids are canonicalized** (`safeId`, `/^[A-Za-z0-9_-]+$/`) before they're concatenated
+  into channel names, so a crafted `listId` can't inject a channel or collide with the
+  `/admin` suffix (e.g. `listId = "abc/admin"`).
 
 This is the field-diff discipline the access-model doc flags as easy to get subtly wrong
 (§7a) — written out explicitly here so the generated `access.js` carries it from day one.
+
+### 5a. Revoke / delete semantics & propagation lag
+
+Grant changes flow through the `GrantReduce`, so a revoke/delete is **eventually**, not
+instantly, consistent — the UI must expect a short transition window and read it from the
+runtime rather than assuming immediate effect.
+
+- **Revoking a friend.** The creator deletes the friend's `member` doc; the reduce drops that
+  user's `grant.users[handle]` entry for `list:<id>`, after which the list disappears from
+  their registry query and their item writes fail. (Deleting a `member` doc is gated by the
+  same `/admin` rule — only the creator revokes.)
+- **Deleting an item.** A Fireproof delete by any member; gated like any item write
+  (`requireAccess("list:"+listId)` against the existing channel). Soft-delete (a `done`-style
+  `deleted` flag) is an option if we want undo, but v1 uses hard delete.
+- **Deleting a list.** Creator-only (`/admin`); v1 deletes the list doc and leaves orphaned
+  item docs to be ignored by the registry/item queries (no cascade in a CRDT). A later
+  evolution step can sweep them.
+- **Propagation-lag UX.** Write surfaces already render `useVibe("lists").can.*.reason` when a
+  write is denied, so during the brief post-revoke window a removed collaborator sees the
+  denial reason (not a silent dead button), and a just-added friend may see a short "syncing
+  access…" state before the list resolves. Never assume the grant is live the instant the
+  `member` doc is written — gate on `can.*`, surface `.reason`.
 
 ---
 
