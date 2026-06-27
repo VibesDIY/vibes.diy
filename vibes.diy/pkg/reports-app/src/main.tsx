@@ -44,9 +44,14 @@ function AuthedShell() {
   const { isLoaded, isSignedIn, getToken } = useAuth();
   if (isLoaded === false) return <Loading msg="loading session…" />;
   if (isSignedIn === false) {
+    // Preserve the current path + query (e.g. ?report=campaign-health) across
+    // both the sign-in and sign-up branches — AuthedShell selects the active
+    // report from location.search below, so a hardcoded "/reports/" would drop
+    // it and force the user onto the default growth report after auth.
+    const returnTo = window.location.pathname + window.location.search;
     return (
       <div className="signin-wrap">
-        <SignIn routing="hash" forceRedirectUrl="/reports/" signUpForceRedirectUrl="/reports/" />
+        <SignIn routing="hash" forceRedirectUrl={returnTo} signUpForceRedirectUrl={returnTo} />
       </div>
     );
   }
