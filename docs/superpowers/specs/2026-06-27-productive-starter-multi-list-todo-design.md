@@ -94,6 +94,12 @@ doc's hybrid mechanism.
 - Items: `useLiveQuery("listId", { key: activeListId })`, sorted client-side ascending by
   `position`.
 
+> **Ordering note (per the #2675 system-handle guide):** items need an _explicit_ order
+> (drag), so `position` is justified — but the **list registry** does not. Fireproof's
+> auto `_id` is roughly temporal, so order lists newest-first with `_id` descending for free
+> rather than adding a `createdAt` just to sort (see `prompts/pkg/llms/fireproof.md`). Keep
+> `createdAt` only where it's shown to the user, not for ordering.
+
 ---
 
 ## 4. Fractional ordering
@@ -290,9 +296,47 @@ Single screen, two zones:
 
 ## 8. Out of scope for v1 (future evolution steps)
 
-- Slicing into the starter tree (root app = single shared list; chiclets = "Add more lists",
-  "Invite friends").
+This spec describes the **full built-up destination** app. When we slice it into the starter
+tree, the **root must follow the instant-starter philosophy** the #2675 system-handle guide
+sets out (and `bloom-machine` demonstrates): instant, no-login, no-codegen, **fully usable
+anonymously with zero backend**, built up interactively. So the natural evolution is:
+
+- **Root (first step): a single local list, no Fireproof.** Pure client state — add, check,
+  strikethrough, drag-reorder (the `position` math is local-only here). Instant page view, no
+  login. This is the `bloom-machine`-equivalent slice for Productive.
+- **Step: persist (Fireproof).** Wire the single list to a db so it survives reload (login on
+  first write). Defer the DB until this step — don't add it at the root.
+- **Step: multi-list.** Introduce the `list` doc + registry + list rail.
+- **Step: friends.** Introduce channels + `access.js` + the `member`/invite flow (everything
+  in §3–§5). This is where the access posture becomes a deliberate decision (per the guide:
+  reads anonymous, writes require login).
+
+Also deferred:
+
 - Delegated admin (friends inviting friends) — free via granting the `/admin` channel.
 - Request-to-join flow (relies on the request-doc pattern; invite-by-handle covers v1).
 - Renormalize-on-collision for float precision.
 - Due dates, kanban view, "Done" section — candidate sideways chiclet transforms.
+
+---
+
+## 9. Starter conventions & deployment (`system` handle)
+
+Per the #2675 system-handle guide (written alongside `bloom-machine`/#2683):
+
+- **Curated starters are real apps owned by the platform `system` handle** — a starter is just
+  a system-owned public app, addressable at `vibes.diy/vibe/system/<slug>`.
+- **Source layout:** `vibes/<slug>/`, files **flat at the root** — `App.jsx` + `README.md`
+  (+ `access.js` once persistence/sharing land). `push` only ships top-level files (**no
+  subdirectories**), so **all components live inline in `App.jsx`** — don't split the list
+  rail / rows / forms into separate files.
+- **Deploy:** from the vibe's dir, `npx vibes-diy push --vibe system/<slug>` (always pass
+  `--vibe system/<slug>` so it isn't published under a personal handle). Handle/app
+  self-create on first push. `system` is currently on jchris's account (first-writer-wins) —
+  **coordinate before pushing from another account.**
+- **Prettier-clean or CI fails** (`compile_test` runs `format:check`) — `npx prettier --write`
+  before committing.
+- **README** carries the canonical `--vibe system/<slug>` push/pull commands + a one-line
+  description so collaborators don't mis-publish.
+- **Slug:** TBD — proposing `system/list-pals` (the homepage sketch chip was "Make a list
+  w/ pals"); to be confirmed with jchris.
