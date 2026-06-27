@@ -3,8 +3,8 @@ import React, { useRef, useState, useCallback, useEffect } from "react";
 // ── Bloom Machine ───────────────────────────────────────────────────────────
 // The music starter for the Instant Starter Stack. A 4×4 grid of pads, each tied
 // to a musical tone. Hold a pad: it sounds the note (sustained until release) and
-// lights up in that note's own colour. The first touch starts an 8-step loop and
-// records the tone — quantized to the nearest beat, with the held duration — so
+// lights up in that note's own colour. The first touch starts a 16-step loop and
+// records the tone — quantized to the nearest step, with the held duration — so
 // it replays (sounding the note and lighting its pad) each time the playhead
 // comes back around. Pure Web Audio + local state — no login, no backend, no DB.
 
@@ -28,10 +28,11 @@ const WAVES = [
 ];
 const COLS = WAVES.length;
 
-// 8-step loop, one dot (step) per beat at 100 BPM.
-const STEPS = 8;
+// 16-step loop, two dots (steps) per beat at 100 BPM (eighth notes).
+const STEPS = 16;
+const DOT_COLS = 8; // dots laid out as 2 rows of 8
 const BPM = 100;
-const STEP_MS = 60_000 / BPM;
+const STEP_MS = 60_000 / BPM / 2;
 
 // Distinct colours in a step's recorded tones, in first-seen order (a colour
 // repeated by multiple tones is counted once).
@@ -294,36 +295,11 @@ export default function BloomMachine() {
           )}
         </div>
 
-        {/* Playhead — 8 dots. Each glows the distinct colour(s) recorded on it,
-            sliced like a pie when there's more than one; the active step pulses. */}
-        <div style={styles.dots}>
-          {Array.from({ length: STEPS }).map((_, i) => {
-            const cols = stepColors[i] || [];
-            const active = step === i;
-            let background = "rgba(255,255,255,0.18)";
-            if (cols.length === 1) {
-              background = cols[0];
-            } else if (cols.length > 1) {
-              const slice = 360 / cols.length;
-              background = `conic-gradient(${cols.map((col, k) => `${col} ${k * slice}deg ${(k + 1) * slice}deg`).join(", ")})`;
-            }
-            return (
-              <span
-                key={i}
-                style={{
-                  ...styles.dot,
-                  background,
-                  boxShadow: active ? "0 0 10px 2px rgba(233,231,255,0.85)" : "none",
-                  transform: active ? "scale(1.4)" : "scale(1)",
-                }}
-              />
-            );
-          })}
-        </div>
-
-        {/* Play / stop — circular, pad-sized. Pressed visual on touch-start;
-            the transport toggles on touch-end. */}
-        <div style={styles.controls}>
+        {/* Transport row — play/stop button with the 16-step playhead beside it,
+            the two dot rows vertically centred on the button. */}
+        <div style={styles.transportRow}>
+          {/* Play / stop — circular, 75% of a pad. Pressed visual on touch-start;
+              the transport toggles on touch-end. */}
           <button
             type="button"
             aria-label={running ? "stop" : "play"}
@@ -344,12 +320,40 @@ export default function BloomMachine() {
               background: playActive ? "#e9e7ff" : "rgba(255,255,255,0.07)",
               color: playActive ? "#1e1b4b" : "#e9e7ff",
               borderColor: playActive ? "#e9e7ff" : "rgba(255,255,255,0.14)",
-              boxShadow: running ? "0 0 22px 4px rgba(233,231,255,0.45)" : "none",
+              boxShadow: running ? "0 0 18px 3px rgba(233,231,255,0.45)" : "none",
               transform: pressed ? "scale(0.94)" : "scale(1)",
             }}
           >
-            <span style={{ fontSize: 22, lineHeight: 1 }}>{running ? "❚❚" : "▶"}</span>
+            <span style={{ fontSize: 18, lineHeight: 1 }}>{running ? "❚❚" : "▶"}</span>
           </button>
+
+          {/* Playhead — 16 dots in 2 rows of 8. Each glows the distinct colour(s)
+              recorded on it, sliced like a pie when there's more than one; the
+              active step pulses. */}
+          <div style={styles.dots}>
+            {Array.from({ length: STEPS }).map((_, i) => {
+              const cols = stepColors[i] || [];
+              const active = step === i;
+              let background = "rgba(255,255,255,0.18)";
+              if (cols.length === 1) {
+                background = cols[0];
+              } else if (cols.length > 1) {
+                const slice = 360 / cols.length;
+                background = `conic-gradient(${cols.map((col, k) => `${col} ${k * slice}deg ${(k + 1) * slice}deg`).join(", ")})`;
+              }
+              return (
+                <span
+                  key={i}
+                  style={{
+                    ...styles.dot,
+                    background,
+                    boxShadow: active ? "0 0 10px 2px rgba(233,231,255,0.85)" : "none",
+                    transform: active ? "scale(1.4)" : "scale(1)",
+                  }}
+                />
+              );
+            })}
+          </div>
         </div>
       </div>
     </div>
@@ -381,7 +385,14 @@ const styles = {
     userSelect: "none",
     WebkitUserSelect: "none",
   },
-  dots: { display: "flex", justifyContent: "center", gap: 12, margin: "18px 0" },
+  transportRow: { display: "flex", alignItems: "center", justifyContent: "center", gap: 18, marginTop: 18 },
+  dots: {
+    display: "grid",
+    gridTemplateColumns: `repeat(${DOT_COLS}, 14px)`,
+    gap: "10px 12px",
+    alignContent: "center",
+    justifyContent: "center",
+  },
   dot: {
     width: 14,
     height: 14,
@@ -389,9 +400,10 @@ const styles = {
     background: "rgba(255,255,255,0.18)",
     transition: "box-shadow 80ms ease, transform 80ms ease",
   },
-  controls: { display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 12 },
   transport: {
-    aspectRatio: "1 / 1",
+    width: 60, // ≈75% of a tone pad
+    height: 60,
+    flexShrink: 0,
     borderRadius: "50%",
     border: "1px solid rgba(255,255,255,0.14)",
     cursor: "pointer",
