@@ -15,6 +15,11 @@ export default function RemixRoute() {
   const { ownerHandle, appSlug, fsId } = useParams<{ ownerHandle: string; appSlug: string; fsId?: string }>();
   const [searchParams] = useSearchParams();
   const skipChat = searchParams.get("skipChat") === "true";
+  // A non-owner's edit on /vibe forks here, carrying the prompt they typed (or
+  // the suggestion chip they tapped) as ?prompt64 so it survives the fork (and
+  // the sign-in round-trip — the auth layout preserves path+search). We forward
+  // it onto the new copy's chat URL, where the composer pre-fills it (#2675).
+  const prompt64 = searchParams.get("prompt64");
   useDocumentTitle(`${skipChat ? "Clone" : "Remix"} ${ownerHandle}/${appSlug} - vibes.diy`);
   const { chatApi } = useVibesDiy();
   const { isSignedIn, isLoaded } = useAuth();
@@ -68,10 +73,13 @@ export default function RemixRoute() {
       // Remix: the forked Apps row shares the source's storage refs. The
       // chat route hydrates the editor from Apps.fileSystem when no
       // ChatSections exist, so landing on code view shows the source code
-      // ready to edit.
-      navigate(`/chat/${fork.ownerHandle}/${fork.appSlug}/${fork.srcFsId}?view=code`);
+      // ready to edit. Carry prompt64 forward so the composer pre-fills the
+      // change the user described on the source vibe (#2675).
+      const params = new URLSearchParams({ view: "code" });
+      if (prompt64) params.set("prompt64", prompt64);
+      navigate(`/chat/${fork.ownerHandle}/${fork.appSlug}/${fork.srcFsId}?${params.toString()}`);
     })();
-  }, [isLoaded, isSignedIn, ownerHandle, appSlug, fsId, skipChat, navigate, chatApi]);
+  }, [isLoaded, isSignedIn, ownerHandle, appSlug, fsId, skipChat, prompt64, navigate, chatApi]);
 
   return (
     <div className={cx(gridBackground, "flex h-screen w-screen items-center justify-center")}>
