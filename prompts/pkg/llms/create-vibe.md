@@ -114,12 +114,13 @@ and the new tab will be blocked.
 
 ## API
 
-- `createVibe(prompt, options?)` → `Window | null`. Opens the builder in a new
-  tab; returns the opened window, or `null` if the popup was blocked. Options:
-  `baseURL` (builder origin, defaults to the production builder) and
-  `maxUrlLength` (warn threshold).
-- `buildCreateVibeUrl(prompt, baseURL?)` → `string`. The hand-off URL without
-  navigating — use it for a fallback link.
+- `createVibe(prompt)` → `Window | null`. Opens the builder in a new tab;
+  returns the opened window, or `null` if the popup was blocked. The builder
+  origin is chosen automatically — you don't pass one.
+- `buildCreateVibeUrl(prompt)` → `string`. The hand-off URL without navigating —
+  use it for a fallback link. **Import it alongside `createVibe`** —
+  `import { createVibe, buildCreateVibeUrl } from "use-vibes"` — it is not
+  included automatically.
 
 Very long prompts (a verbose brief over a few thousand characters) make a long
 URL; `createVibe()` warns in the console when it crosses a safe threshold but
@@ -127,7 +128,19 @@ still proceeds. Keep the brief focused. If `createVibe()` returns `null` (popup
 blocked), offer a fallback link so the hand-off still works:
 
 ```jsx
-const win = createVibe(spec);
-// If you want a belt-and-suspenders fallback, render an <a> with the URL:
-//   <a href={buildCreateVibeUrl(spec)} target="_blank" rel="noopener">Open the builder</a>
+import { createVibe, buildCreateVibeUrl } from "use-vibes";
+
+function HandoffButton({ spec }) {
+  const [blocked, setBlocked] = React.useState(false);
+  return blocked ? (
+    <a href={buildCreateVibeUrl(spec)} target="_blank" rel="noopener noreferrer">
+      Open the builder
+    </a>
+  ) : (
+    <button onClick={() => setBlocked(!createVibe(spec))}>Create my pitch deck</button>
+  );
+}
 ```
+
+The hand-off always lands on the public vibes.diy builder (or, when the vibe is
+running under a PR preview, that preview). You don't choose the destination.

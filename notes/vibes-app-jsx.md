@@ -141,8 +141,8 @@ their company, a course outline already on their topic).
 <button onClick={() => createVibe(spec)}>Create my pitch deck</button>
 ```
 
-- `createVibe(prompt, options?)` → `Window | null` (null if the popup was blocked).
-- `buildCreateVibeUrl(prompt, baseURL?)` → the hand-off URL, for a fallback `<a href>`.
+- `createVibe(prompt)` → `Window | null` (null if the popup was blocked). The builder origin is chosen automatically.
+- `buildCreateVibeUrl(prompt)` → the hand-off URL, for a fallback `<a href>`.
 
 See the `create-vibe` skill doc (`prompts/pkg/llms/create-vibe.md`) for the full
 interviewer pattern.
