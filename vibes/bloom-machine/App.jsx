@@ -92,10 +92,13 @@ function makeSatCurve(amount) {
 function applyFx(nodes, ctx, fx, bpm) {
   if (!nodes) return;
   const t = ctx.currentTime;
-  nodes.shaper.curve = makeSatCurve(fx);
-  nodes.delay.delayTime.setValueAtTime(60 / bpm, t); // one beat
-  nodes.delaySend.gain.setValueAtTime(fx * 0.9, t); // signal piped into the delay
-  nodes.delayFb.gain.setValueAtTime(Math.min(0.9, fx * 0.85), t); // feedback (< 1)
+  // Cap the top of the slider at the old 75% mark so cranking it all the way
+  // isn't so extreme — the whole range scales down proportionally.
+  const a = fx * 0.75;
+  nodes.shaper.curve = makeSatCurve(a);
+  nodes.delay.delayTime.setValueAtTime(120 / bpm, t); // two beats
+  nodes.delaySend.gain.setValueAtTime(a * 0.9, t); // signal piped into the delay
+  nodes.delayFb.gain.setValueAtTime(Math.min(0.9, a * 0.85), t); // feedback (< 1)
 }
 
 // Build an oscillator voice feeding a shared envelope gain. The pure sine reads
@@ -173,7 +176,7 @@ export default function BloomMachine() {
       const limiter = ctx.createDynamicsCompressor();
       limiter.threshold.value = -6;
       limiter.ratio.value = 12;
-      const delay = ctx.createDelay(2.0);
+      const delay = ctx.createDelay(4.0); // up to 2 beats even at the slowest BPM
       const delaySend = ctx.createGain();
       const delayFb = ctx.createGain();
 
