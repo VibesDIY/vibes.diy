@@ -142,7 +142,7 @@ export function UnifiedVibeCard(props: UnifiedVibeCardProps) {
                 <OptionButtons
                   options={props.chips}
                   isFirst
-                  firstMessage="Describe a change to edit this app live."
+                  firstMessage="Describe a change to edit this app live:"
                   onSelect={(o) => {
                     props.onSelectChip?.(o);
                     // Return false so OptionButtons clears the press and the chips stay
@@ -279,7 +279,7 @@ function OtherRow({ onSubmitOther }: { readonly onSubmitOther?: (text: string) =
         setValue("");
       }}
       style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 10 }}
-      className="rounded-md border border-light-decorative-01 dark:border-dark-decorative-01 px-3 py-2"
+      className="rounded-md border border-light-decorative-01 dark:border-dark-decorative-01 py-1.5 pl-3 pr-1.5"
     >
       <input
         value={value}
@@ -287,12 +287,16 @@ function OtherRow({ onSubmitOther }: { readonly onSubmitOther?: (text: string) =
         placeholder="Make it your own…"
         className="flex-1 bg-transparent text-sm text-light-primary dark:text-dark-primary outline-none placeholder:text-light-secondary dark:placeholder:text-dark-secondary"
       />
+      {/* Round submit button mirroring the old chat composer's send button
+          (Button variant="blue": brutalist border + hard offset shadow + press). */}
       <button
         type="submit"
         aria-label="Submit change"
-        style={{ background: "none", border: "none", cursor: "pointer", fontSize: 16 }}
+        className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-[5px] border-2 border-[#1a1a1a] bg-blue-500 text-white shadow-[3px_3px_0px_0px_#1a1a1a] transition-colors hover:bg-blue-600 active:translate-x-[3px] active:translate-y-[3px] active:shadow-none"
       >
-        ▸
+        <span aria-hidden="true" className="text-lg leading-none">
+          ↑
+        </span>
       </button>
     </form>
   );
