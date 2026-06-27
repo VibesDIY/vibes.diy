@@ -1,7 +1,9 @@
 # Productive starter vibe — multi-list collaborative todo (`system/shared-lists`)
 
 **Date:** 2026-06-27
-**Status:** design ratified in brainstorming; ready for implementation plan.
+**Status:** implemented and deployed to `system/shared-lists`
+(https://vibes.diy/vibe/system/shared-lists); source at `vibes/shared-lists/`. Plan:
+`docs/superpowers/plans/2026-06-27-shared-lists-starter.md`.
 **Parent:** the Productive category of the Instant Starter Stack (#1896), tracked under the
 agent-in-vibe UX epic (#2675). Music is the only category fleshed out so far; this is the
 first real design for **Productive**.
