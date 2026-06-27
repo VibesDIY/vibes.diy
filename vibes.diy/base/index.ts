@@ -11,3 +11,6 @@ export { PromptBar } from "./components/PromptBar.js";
 export { defaultClasses } from "./utils/style-utils.js";
 export { isDebug, logDebug } from "./utils/debug.js";
 export type { ImageDocument, PartialImageDocument } from "@vibes.diy/vibe-types";
+// PR-preview origin detection (reused for the vibe-switch Home link); the helper
+// lives in the runtime alongside createVibe.
+export { resolveBuilderOrigin, resolveBuilderOriginFrom, VIBES_DIY_BUILDER_URL } from "@vibes.diy/vibe-runtime";
