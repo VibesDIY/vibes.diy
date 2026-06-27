@@ -298,7 +298,14 @@ export default function BloomMachine() {
     if (pat.docId) doc._id = pat.docId;
     try {
       const res = await database.put(doc);
-      setPatterns((prev) => prev.map((p) => (p.id === id ? { ...p, saved: true, dirty: false, docId: p.docId || res.id } : p)));
+      // Saving also does what the old "+" did: if the top row holds something,
+      // start a fresh empty row on top and pause, ready for the next pattern.
+      const addFresh = !isEmpty(patternsRef.current[0]);
+      setPatterns((prev) => {
+        const next = prev.map((p) => (p.id === id ? { ...p, saved: true, dirty: false, docId: p.docId || res.id } : p));
+        return addFresh ? [emptyPattern(), ...next] : next;
+      });
+      if (addFresh) stopLoop();
     } catch (err) {
       // Leave the row in "save" mode so the unsaved edit isn't lost.
       console.error("save failed (sign in to save?)", err);
@@ -322,12 +329,6 @@ export default function BloomMachine() {
   };
 
   const bumpBpm = (d) => setBpm((b) => Math.min(MAX_BPM, Math.max(MIN_BPM, b + d)));
-
-  // The "+" clear: prepend a fresh empty row and pause.
-  const addPattern = () => {
-    stopLoop();
-    setPatterns((prev) => [emptyPattern(), ...prev]);
-  };
 
   // Tap a dot to clear that step on its row (marks the row dirty).
   const clearStep = (id, i) =>
@@ -404,7 +405,7 @@ export default function BloomMachine() {
         .bm-bpm { -moz-appearance: textfield; appearance: textfield; }
       `}</style>
       <div style={styles.frame}>
-        {/* Global controls — BPM stepper + the "+" clear (new empty row). */}
+        {/* Global controls — BPM stepper (saving spawns the next empty row). */}
         <div style={styles.topbar}>
           <div style={styles.bpm}>
             <span style={styles.bpmLabel}>BPM</span>
@@ -430,20 +431,6 @@ export default function BloomMachine() {
               </button>
             </div>
           </div>
-          <button
-            type="button"
-            aria-label="new empty pattern"
-            disabled={isEmpty(patterns[0])}
-            onClick={addPattern}
-            style={{
-              ...styles.round,
-              ...styles.plus,
-              opacity: isEmpty(patterns[0]) ? 0.35 : 1,
-              cursor: isEmpty(patterns[0]) ? "not-allowed" : "pointer",
-            }}
-          >
-            +
-          </button>
         </div>
 
         {/* Tone pads. */}
@@ -559,6 +546,13 @@ const styles = {
     fontFamily: "Inter, system-ui, sans-serif",
     padding: 20,
     boxSizing: "border-box",
+    // Text selection is never useful here and only gets in the way of tapping
+    // and holding pads — disable it for the whole app.
+    userSelect: "none",
+    WebkitUserSelect: "none",
+    MozUserSelect: "none",
+    msUserSelect: "none",
+    WebkitTouchCallout: "none",
   },
   frame: { width: "100%", maxWidth: 360, color: "#e9e7ff" },
   topbar: { display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 },
@@ -645,5 +639,4 @@ const styles = {
     WebkitTapHighlightColor: "transparent",
     touchAction: "manipulation",
   },
-  plus: { fontSize: 24, fontWeight: 300, lineHeight: 1 },
 };
