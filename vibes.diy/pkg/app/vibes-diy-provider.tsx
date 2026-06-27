@@ -347,8 +347,12 @@ function LiveCycleVibesDiyProvider({ children, webVars }: { children: React.Reac
     // Redirect back to wherever the sign-in was triggered (e.g. a vibe's
     // viewer tag) instead of Clerk's default post-login URL (the homepage).
     // OAuth/social sign-in goes through a full redirect, so without this the
-    // user lands on `/` and loses the vibe they were viewing.
-    openSignIn: () => clerk.openSignIn({ forceRedirectUrl: window.location.href }),
+    // user lands on `/` and loses the vibe they were viewing. The viewer tag is
+    // shown to first-time viewers, who often complete via sign-up (or have OAuth
+    // transfer sign-in -> sign-up), so set signUpForceRedirectUrl too — Clerk
+    // uses that, not forceRedirectUrl, for the sign-up branch.
+    openSignIn: () =>
+      clerk.openSignIn({ forceRedirectUrl: window.location.href, signUpForceRedirectUrl: window.location.href }),
     // Host-side consent gate (#1968): a sandboxed vibe can propose an avatar
     // write, but the AvatarConfirmModal (mounted below) must approve it before
     // ensureUserSettings runs.

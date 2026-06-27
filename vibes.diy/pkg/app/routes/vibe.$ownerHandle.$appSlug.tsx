@@ -702,7 +702,11 @@ export default function VibeIframeWrapper() {
                 onHome={() => {
                   window.open("https://vibes.diy", "_blank");
                 }}
-                onLogin={authSignedIn ? undefined : () => clerk.openSignIn({ forceRedirectUrl: window.location.href })}
+                onLogin={
+                  authSignedIn
+                    ? undefined
+                    : () => clerk.openSignIn({ forceRedirectUrl: window.location.href, signUpForceRedirectUrl: window.location.href })
+                }
               />
               <ShareModal
                 modal={shareModal}
