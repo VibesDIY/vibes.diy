@@ -9,102 +9,21 @@
 // through the @vibes.diy/identity/server facade.
 import { Lazy, Result, param, exception2Result, isArrayBuffer, isUint8Array } from "@adviser/cement";
 import { sts, ensureSuperThis } from "@fireproof/core-runtime";
-import { decodeJwt, decodeProtectedHeader, jwtVerify, exportJWK, type JWK } from "jose";
-import { ClerkClaimSchema, FPClerkClaimSchema } from "../clerk-claim.js";
+import { decodeProtectedHeader, exportJWK } from "jose";
+import { ClerkClaimSchema } from "../clerk-claim.js";
 import { JWKPublicSchema } from "../types/wire.js";
 import { FPDeviceIDSessionSchema, toJwksAlg } from "@fireproof/core-types-base";
 import type { SuperThis, JWKPublic } from "@fireproof/core-types-base";
 import type { VerifyWithCertificateOptions } from "@fireproof/core-types-device-id";
 import { DeviceIdCA } from "../device-id/ca.js";
 import { DeviceIdVerifyMsg } from "../device-id/verify.js";
+import { ClerkApiToken } from "./clerk-token.js";
 import type { FPApiToken, VerifiedClaimsResult } from "../types/wire.js";
 
-export class ClerkApiToken implements FPApiToken {
-  readonly sthis: SuperThis;
-  constructor(sthis: SuperThis) {
-    this.sthis = sthis;
-  }
-
-  readonly keysAndUrls = Lazy((): Result<{ keys: string[]; urls: string[] }> => {
-    const keys: string[] = [];
-    const urls: string[] = [];
-    for (let idx = 0; ; idx++) {
-      const suffix = !idx ? "" : `_${idx}`;
-      const key = `CLERK_PUB_JWT_KEY${suffix}`;
-      const url = `CLERK_PUB_JWT_URL${suffix}`;
-      const rEnvVal = this.sthis.env.gets({ [key]: param.OPTIONAL, [url]: param.OPTIONAL });
-      if (rEnvVal.isErr()) {
-        return Result.Err(rEnvVal.Err());
-      }
-      const { [key]: keyVal, [url]: urlVal } = rEnvVal.Ok();
-      if (!keyVal && !urlVal) {
-        break;
-      }
-      if (keyVal) {
-        keys.push(keyVal);
-      }
-      if (urlVal) {
-        urls.push(
-          ...urlVal
-            .split(",")
-            .map((u) => u.trim())
-            .filter((u) => u)
-        );
-      }
-    }
-    return Result.Ok({ keys, urls });
-  });
-
-  async decode(token: string): Promise<Result<VerifiedClaimsResult>> {
-    const claims = await exception2Result(() => decodeJwt(token));
-    if (claims.isErr()) {
-      return Result.Err(claims);
-    }
-    const r = ClerkClaimSchema.safeParse(claims.Ok());
-    if (!r.success) {
-      return Result.Err(r.error);
-    }
-    return Result.Ok({ type: "clerk", token, claims: r.data });
-  }
-
-  async verify(token: string): Promise<Result<VerifiedClaimsResult>> {
-    const rKaUs = this.keysAndUrls();
-    if (rKaUs.isErr()) {
-      return Result.Err(rKaUs);
-    }
-    const { keys, urls } = rKaUs.Ok();
-    const rt = await sts.verifyToken(token, keys, urls, {
-      parseSchema: (payload: unknown) => {
-        const r = FPClerkClaimSchema.safeParse(payload);
-        if (r.success) {
-          return Result.Ok(r.data);
-        } else {
-          console.log("FPClerkClaimSchema parse error", payload, r.error);
-          return Result.Err(r.error);
-        }
-      },
-      verifyToken: async (tok: string, key: JWK) => {
-        const rPublicKey = await sts.importJWK(key, "RS256");
-        if (rPublicKey.isErr()) {
-          return Result.Err(rPublicKey);
-        }
-        const r = await exception2Result(() => jwtVerify(tok, rPublicKey.Ok().key));
-        if (r.isErr()) {
-          return Result.Err(r);
-        }
-        if (!r.Ok()) {
-          return Result.Err("ClerkVerifyToken: failed");
-        }
-        return Result.Ok({ payload: r.Ok() });
-      },
-    } as never);
-    if (rt.isErr()) {
-      return Result.Err(rt.Err());
-    }
-    const t = rt.Ok() as { payload: unknown };
-    return Result.Ok({ type: "clerk", token, claims: t.payload });
-  }
-}
+// `ClerkApiToken` lives in the browser-safe `./clerk-token.js` (no device-id
+// crypto) and is re-exported here so existing `dash-api/token.js` importers and
+// `tokenApi` below are unchanged.
+export { ClerkApiToken } from "./clerk-token.js";
 
 export class DeviceIdApiToken implements FPApiToken {
   readonly sthis: SuperThis;
