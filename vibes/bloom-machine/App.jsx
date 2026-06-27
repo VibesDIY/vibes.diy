@@ -104,7 +104,7 @@ export default function BloomMachine() {
       oscs.forEach((o) => o.start(t));
       voicesRef.current[key] = { env, oscs, gains };
     },
-    [ensureCtx],
+    [ensureCtx]
   );
 
   const release = useCallback((key) => {
@@ -147,14 +147,14 @@ export default function BloomMachine() {
         env.disconnect();
       };
     },
-    [ensureCtx],
+    [ensureCtx]
   );
 
   const playStep = useCallback(
     (i) => {
       patternRef.current[i].forEach((tone) => pluck(tone.freq, tone.wave));
     },
-    [pluck],
+    [pluck]
   );
 
   const startLoop = useCallback(() => {
@@ -194,7 +194,7 @@ export default function BloomMachine() {
     () => () => {
       if (timerRef.current) clearInterval(timerRef.current);
     },
-    [],
+    []
   );
 
   const onPadDown = (e, r, c, note) => {
@@ -243,7 +243,7 @@ export default function BloomMachine() {
                   }}
                 />
               );
-            }),
+            })
           )}
         </div>
 
