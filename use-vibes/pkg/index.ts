@@ -17,6 +17,11 @@ export {
   useViewer,
   type UseViewerResult,
 
+  // Meta-vibes: hand off to the builder to create a new, personalized vibe
+  createVibe,
+  buildCreateVibeUrl,
+  type CreateVibeOptions,
+
   // Install ID generation
   generateInstallId,
 

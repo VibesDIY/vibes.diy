@@ -121,6 +121,32 @@ const { viewer, isOwner, ViewerTag } = useViewer();
 
 Stamp `authorHandle: viewer.userHandle` on docs at write time. Render with `<ViewerTag userHandle={doc.authorHandle} />` — it resolves display name and avatar automatically. Only persist the handle, not displayName or avatarUrl.
 
+## Meta-vibes (`createVibe` — a vibe that builds another vibe)
+
+```javascript
+import { createVibe } from "use-vibes";
+```
+
+`createVibe(prompt)` hands off to the builder to generate a **new, personalized
+vibe** from a prompt you construct at runtime. The canonical use is an
+**interviewer vibe**: it runs an adaptive conversation (often with `callAI`),
+then — when it has enough — calls `createVibe(richPrompt)` so the user lands in a
+second vibe that is already filled in with their content (a pitch deck that knows
+their company, a course outline already on their topic).
+
+```jsx
+// Always call createVibe() from a click — it opens the builder in a NEW TAB, and
+// browsers only allow opening a tab from inside a user gesture. Build a rich,
+// opinionated prompt; don't call it inside an await chain (the gesture expires).
+<button onClick={() => createVibe(spec)}>Create my pitch deck</button>
+```
+
+- `createVibe(prompt, options?)` → `Window | null` (null if the popup was blocked).
+- `buildCreateVibeUrl(prompt, baseURL?)` → the hand-off URL, for a fallback `<a href>`.
+
+See the `create-vibe` skill doc (`prompts/pkg/llms/create-vibe.md`) for the full
+interviewer pattern.
+
 ## Channels (multi-group / Slack-style apps)
 
 Each named Fireproof database is a **channel** — an isolated data space with its own access policy. App.jsx reads display-only permissions via `access` from `useFireproof()`; write surfaces are gated with `useVibe(dbName).can`.

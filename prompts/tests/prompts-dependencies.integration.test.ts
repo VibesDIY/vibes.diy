@@ -73,6 +73,26 @@ describe("makeBaseSystemPrompt skill selection", () => {
     expect(result.systemPrompt).not.toMatch(/from\s+"call-ai"/);
   });
 
+  it("create-vibe is selectable and injects the use-vibes import", async () => {
+    const result = await mod.makeBaseSystemPrompt("anthropic/claude-sonnet-4.5", {
+      _id: "user_settings",
+      skills: ["fireproof", "create-vibe"],
+      ...opts,
+    });
+    expect(result.systemPrompt).toMatch(/<createVibe-docs>/);
+    expect(result.systemPrompt).toMatch(/import\s+\{\s*createVibe\s*\}\s+from\s+"use-vibes"/);
+    expect(result.skills).toContain("create-vibe");
+  });
+
+  it("create-vibe is NOT a default skill", async () => {
+    const result = await mod.makeBaseSystemPrompt("anthropic/claude-sonnet-4.5", {
+      ...opts,
+      _id: "user_settings",
+    });
+    expect(result.systemPrompt).not.toMatch(/<createVibe-docs>/);
+    expect(result.skills).not.toContain("create-vibe");
+  });
+
   it("empty skills array falls back to defaults", async () => {
     const result = await mod.makeBaseSystemPrompt("anthropic/claude-sonnet-4.5", {
       _id: "user_settings",
