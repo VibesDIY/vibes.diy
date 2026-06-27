@@ -55,19 +55,6 @@ export function UnifiedVibeCard(props: UnifiedVibeCardProps) {
 
   return (
     <>
-      {!mounted && (
-        <div style={{ position: "absolute", right: 14, bottom: 16, pointerEvents: "auto" }}>
-          <button
-            type="button"
-            aria-label="Open vibe menu"
-            onClick={() => setOpen(true)}
-            style={{ background: "none", border: "none", padding: 0, cursor: "pointer" }}
-          >
-            <VibesSwitch size={48} isActive isTwinkling={isTwinkling} />
-          </button>
-        </div>
-      )}
-
       {mounted && (
         <div
           role="dialog"
@@ -77,7 +64,8 @@ export function UnifiedVibeCard(props: UnifiedVibeCardProps) {
             position: "absolute",
             left: 12,
             right: 12,
-            bottom: 12,
+            // Sit above the persistent logo (logo: 60px tall at bottom:16 → top ~76).
+            bottom: 84,
             borderRadius: 16,
             maxHeight: "82%",
             overflow: "hidden",
@@ -182,18 +170,26 @@ export function UnifiedVibeCard(props: UnifiedVibeCardProps) {
                   ↗
                 </NavIcon>
               </div>
-              <button
-                type="button"
-                aria-label="Close vibe menu"
-                onClick={() => setOpen(false)}
-                style={{ background: "none", border: "none", padding: 0, cursor: "pointer" }}
-              >
-                <VibesSwitch size={38} isActive />
-              </button>
             </div>
           </div>
         </div>
       )}
+
+      {/* The VibesSwitch logo is ALWAYS rendered at a fixed size and position
+          (lower-right), like production: it persists before / during / after the
+          card opens — never remounting, resizing, or moving — and runs its own
+          open/close morph via `isActive`. The card floats above it; the logo is
+          the single toggle. */}
+      <div style={{ position: "absolute", right: 16, bottom: 16, zIndex: 3, pointerEvents: "auto" }}>
+        <button
+          type="button"
+          aria-label={open ? "Close vibe menu" : "Open vibe menu"}
+          onClick={() => setOpen(!open)}
+          style={{ display: "block", background: "none", border: "none", padding: 0, cursor: "pointer" }}
+        >
+          <VibesSwitch size={60} isActive={!open} isTwinkling={!open && isTwinkling} />
+        </button>
+      </div>
     </>
   );
 }
