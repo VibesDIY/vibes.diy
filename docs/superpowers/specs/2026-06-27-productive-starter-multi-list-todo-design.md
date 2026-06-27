@@ -144,6 +144,11 @@ friendly fallback. v1 ships both.
 
 ## 5. `access.js`
 
+> **Export convention:** the runtime selects the access function by an export whose **name
+> matches the database name** (see `vibes/team-channels/access.js`, exported as
+> `teamChannels`). Our db is `sharedLists`, so the function is `export function sharedLists(…)`
+> — _not_ `export default`.
+
 ```js
 // List ids ride inside channel names ("list:" + id [+ "/admin"]). Reject anything
 // that isn't a plain token so a crafted id can't inject a channel or collide with
@@ -154,7 +159,7 @@ function safeId(id) {
   return id;
 }
 
-export default function access(doc, oldDoc, user, ctx) {
+export function sharedLists(doc, oldDoc, user, ctx) {
   if (!user?.userHandle) throw { forbidden: "Sign in to make changes" };
   // doc type can never change under an existing _id (no retyping across auth paths)
   if (oldDoc && doc.type !== oldDoc.type) throw { forbidden: "type is immutable" };
