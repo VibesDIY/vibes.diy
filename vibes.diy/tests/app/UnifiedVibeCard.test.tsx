@@ -20,4 +20,27 @@ describe("UnifiedVibeCard", () => {
     expect(screen.getByText("Bloom Machine")).toBeTruthy();
     expect(screen.getByText("meghan/bloom")).toBeTruthy();
   });
+
+  it("renders chips and fires onSelectChip", () => {
+    const onSelectChip = vi.fn();
+    render(
+      <UnifiedVibeCard
+        appTitle="Bloom Machine"
+        open
+        chips={["Make it a drum kit", "Add a high score"]}
+        onSelectChip={onSelectChip}
+      />,
+    );
+    fireEvent.click(screen.getByText("Make it a drum kit"));
+    expect(onSelectChip).toHaveBeenCalledWith("Make it a drum kit");
+  });
+
+  it("submits the Other free-text row", () => {
+    const onSubmitOther = vi.fn();
+    render(<UnifiedVibeCard appTitle="Bloom Machine" open onSubmitOther={onSubmitOther} />);
+    const input = screen.getByPlaceholderText(/describe a change/i);
+    fireEvent.change(input, { target: { value: "make it dark" } });
+    fireEvent.submit(input.closest("form")!);
+    expect(onSubmitOther).toHaveBeenCalledWith("make it dark");
+  });
 });

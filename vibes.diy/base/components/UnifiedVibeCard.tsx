@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { VibesSwitch } from "./VibesSwitch.js";
+import { OptionButtons } from "./OptionButtons.js";
 
 export interface UnifiedVibeCardProps {
   appTitle: string;
@@ -96,6 +97,22 @@ export function UnifiedVibeCard(props: UnifiedVibeCardProps) {
             className="text-light-primary dark:text-dark-primary"
           >
             <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "14px 14px 8px" }}>
+              <div
+                aria-hidden
+                style={{
+                  width: 30,
+                  height: 30,
+                  borderRadius: 8,
+                  flexShrink: 0,
+                  overflow: "hidden",
+                  background: "linear-gradient(160deg,#312e81,#4c1d95)",
+                  border: "1px solid rgba(0,0,0,0.15)",
+                }}
+              >
+                {props.appIconUrl && (
+                  <img src={props.appIconUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                )}
+              </div>
               <div style={{ lineHeight: 1.2 }}>
                 <strong className="text-sm">{appTitle}</strong>
                 {appSlug && (
@@ -105,10 +122,53 @@ export function UnifiedVibeCard(props: UnifiedVibeCardProps) {
                 )}
               </div>
             </div>
+            <div style={{ padding: "0 14px 12px", overflowY: "auto" }}>
+              {props.chips && props.chips.length > 0 && (
+                <OptionButtons
+                  options={props.chips}
+                  isFirst
+                  onSelect={(o) => {
+                    props.onSelectChip?.(o);
+                    return true;
+                  }}
+                />
+              )}
+              <OtherRow onSubmitOther={props.onSubmitOther} />
+            </div>
           </div>
         </div>
       )}
     </>
+  );
+}
+
+function OtherRow({ onSubmitOther }: { readonly onSubmitOther?: (text: string) => void }) {
+  const [value, setValue] = React.useState("");
+  return (
+    <form
+      onSubmit={(e) => {
+        e.preventDefault();
+        const text = value.trim();
+        if (text) onSubmitOther?.(text);
+        setValue("");
+      }}
+      style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 10 }}
+      className="rounded-md border border-light-decorative-01 dark:border-dark-decorative-01 px-3 py-2"
+    >
+      <input
+        value={value}
+        onChange={(e) => setValue(e.target.value)}
+        placeholder="describe a change…"
+        className="flex-1 bg-transparent text-sm text-light-primary dark:text-dark-primary outline-none placeholder:text-light-secondary dark:placeholder:text-dark-secondary"
+      />
+      <button
+        type="submit"
+        aria-label="Submit change"
+        style={{ background: "none", border: "none", cursor: "pointer", fontSize: 16 }}
+      >
+        ▸
+      </button>
+    </form>
   );
 }
 
