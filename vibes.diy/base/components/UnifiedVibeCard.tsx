@@ -164,7 +164,20 @@ export function UnifiedVibeCard(props: UnifiedVibeCardProps) {
               }}
             >
               <NavIcon label="Home" color="#3b82f6" onClick={props.onHome}>
-                <span style={{ filter: "grayscale(1)", fontSize: 16, lineHeight: 1 }}>🏠</span>
+                <svg
+                  width="17"
+                  height="17"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth={2.2}
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden="true"
+                >
+                  <path d="M3 12l9-9 9 9" />
+                  <path d="M5 10v10a1 1 0 001 1h4v-6h4v6h4a1 1 0 001-1V10" />
+                </svg>
               </NavIcon>
               <NavIcon label="Edit" color="#fb923c" selected>
                 <svg
@@ -271,7 +284,7 @@ function OtherRow({ onSubmitOther }: { readonly onSubmitOther?: (text: string) =
       <input
         value={value}
         onChange={(e) => setValue(e.target.value)}
-        placeholder="describe a change…"
+        placeholder="Make it your own…"
         className="flex-1 bg-transparent text-sm text-light-primary dark:text-dark-primary outline-none placeholder:text-light-secondary dark:placeholder:text-dark-secondary"
       />
       <button

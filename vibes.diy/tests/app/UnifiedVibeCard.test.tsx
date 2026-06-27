@@ -55,7 +55,7 @@ describe("UnifiedVibeCard", () => {
   it("submits the Other free-text row", () => {
     const onSubmitOther = vi.fn();
     render(<UnifiedVibeCard appTitle="Bloom Machine" open onSubmitOther={onSubmitOther} />);
-    const input = screen.getByPlaceholderText(/describe a change/i);
+    const input = screen.getByPlaceholderText(/make it your own/i);
     fireEvent.change(input, { target: { value: "make it dark" } });
     const form = input.closest("form");
     if (!form) throw new Error("expected the Other row to be wrapped in a form");
