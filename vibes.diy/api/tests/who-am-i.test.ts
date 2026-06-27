@@ -161,6 +161,33 @@ describe("resolveWhoAmI", { timeout: 30000 }, () => {
     expect(res.isOk()).toBe(true);
     expect(res.Ok().viewer?.displayName).toBe("Alice the Great");
   });
+
+  // #2692: a signed-in user who has never created a chat (zero handle bindings)
+  // must still resolve to a handle, not viewer:null. whoAmI auto-assigns one.
+  it("auto-assigns a handle for an authenticated user with no bindings", async () => {
+    const auth = makeAuth("user-id-who-am-i-test-fresh", "carol-fresh");
+    const res = await resolveWhoAmI(vibesCtx, {
+      auth,
+      appSlug,
+      ownerUserSlug: ownerHandle,
+    });
+    expect(res.isOk()).toBe(true);
+    const r = res.Ok();
+    // No longer the dead "signed in but viewer:null" state.
+    expect(r.viewer).not.toBeNull();
+    expect(typeof r.viewer?.userHandle).toBe("string");
+    expect(r.viewer?.userHandle.length).toBeGreaterThan(0);
+    const firstHandle = r.viewer?.userHandle;
+
+    // Idempotent + stable: a second whoAmI resolves the same handle (now the
+    // persisted default), not a freshly generated one.
+    const res2 = await resolveWhoAmI(vibesCtx, {
+      auth,
+      appSlug,
+      ownerUserSlug: ownerHandle,
+    });
+    expect(res2.Ok().viewer?.userHandle).toBe(firstHandle);
+  });
 });
 
 // Build a minimal VerifiedResult that resolveWhoAmI accepts, using a known userId.
