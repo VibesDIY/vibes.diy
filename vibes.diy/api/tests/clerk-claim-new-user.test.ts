@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { ClerkClaimSchema } from "@fireproof/core-types-base";
+import { ClerkClaimSchema } from "../../identity/clerk-claim.js";
 
 // Regression guard for the "Invalid input" ZodError that blocked brand-new
 // Clerk signups from completing their first prompt (see vibes-diy-provider
@@ -14,11 +14,11 @@ import { ClerkClaimSchema } from "@fireproof/core-types-base";
 //   { code: "invalid_type", expected: "string", path: ["params","last"],
 //     message: "Invalid input" }
 //
-// vibes.diy applies a pnpm patch (patches/@fireproof__core-types-base@0.24.19.patch)
-// that wraps `first`, `last`, `image_url` in `z.string().catch("")` and `name`
-// in `z.string().nullable().catch(null)` so missing template variables fall
-// through to safe defaults instead of erroring out. This test pins that
-// behavior so a future upstream bump can't silently drop it.
+// vibes.diy now owns the lenient Clerk claim schema in
+// `vibes.diy/identity/clerk-claim.ts`, preserving the old patched behavior
+// (`.catch("")` for `first` / `last` / `image_url`, `.catch(null)` for
+// `name`) after the upstream patch was removed. This test pins that owned
+// behavior so a future refactor can't silently reintroduce the strict rejection.
 
 function newUserClaim(omit: readonly string[] = []): Record<string, unknown> {
   const omitSet = new Set(omit);
