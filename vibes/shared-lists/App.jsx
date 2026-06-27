@@ -338,24 +338,25 @@ export default function App() {
     <div className="min-h-screen bg-[var(--comp-bg)] text-[var(--comp-text)]" style={FONT_BODY}>
       <ThemeStyle />
       <div className="mx-auto flex min-h-screen w-full max-w-xl flex-col">
-        <header className="flex items-end justify-between gap-3 px-5 pt-9 pb-4">
-          <div>
-            <h1 style={FONT_DISPLAY} className="text-4xl font-bold tracking-tight">
-              Shared Lists
-            </h1>
-            <p style={FONT_MONO} className="mt-1.5 text-xs uppercase tracking-wider text-[var(--comp-muted)]">
-              make a list · add friends · drag to reorder
-            </p>
-          </div>
-          {saving > 0 && (
-            <span
-              style={FONT_MONO}
-              className="mb-1.5 flex shrink-0 items-center gap-1.5 rounded-full border border-[var(--comp-border)] px-2.5 py-1 text-[11px] text-[var(--comp-muted)]"
-            >
-              <span className="h-2 w-2 animate-pulse rounded-full bg-[var(--comp-accent)]" />
-              Saving…
-            </span>
-          )}
+        <header className="relative px-5 pt-9 pb-4">
+          <h1 style={FONT_DISPLAY} className="text-4xl font-bold tracking-tight">
+            Shared Lists
+          </h1>
+          <p style={FONT_MONO} className="mt-1.5 text-xs uppercase tracking-wider text-[var(--comp-muted)]">
+            make a list · add friends · drag to reorder
+          </p>
+          {/* Absolutely positioned so toggling visibility never reflows the header. */}
+          <span
+            style={FONT_MONO}
+            className={
+              "absolute right-5 top-9 flex items-center gap-1.5 rounded-full border border-[var(--comp-border)] bg-[var(--comp-surface)] px-2.5 py-1 text-[11px] text-[var(--comp-muted)] transition-opacity " +
+              (saving > 0 ? "opacity-100" : "pointer-events-none opacity-0")
+            }
+            aria-hidden={saving === 0}
+          >
+            <span className="h-2 w-2 animate-pulse rounded-full bg-[var(--comp-accent)]" />
+            Saving…
+          </span>
         </header>
 
         <ListRail lists={lists} activeId={activeListId} onPick={setActiveId} onNew={createList} canCreate={canCreateList} />
