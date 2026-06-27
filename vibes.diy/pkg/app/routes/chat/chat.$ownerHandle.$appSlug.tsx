@@ -85,7 +85,7 @@ export function Chat({ inConstruction = false, initialPrompt }: { inConstruction
   useDocumentTitle(`${ownerHandle} - ${appSlug} - vibes.diy`);
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
-  const { chatApi, sharedApi, webVars: svcVars, srvVibeSandbox } = useVibesDiy();
+  const { chatApi, sharedApi, webVars: svcVars, srvVibeSandbox, sthis } = useVibesDiy();
   const shareModal = useShareModal({
     ownerHandle,
     appSlug,
@@ -214,6 +214,32 @@ export function Chat({ inConstruction = false, initialPrompt }: { inConstruction
     if (!initialPrompt) return;
     dispatch({ type: "setOptimisticPrompt", text: initialPrompt });
   }, [initialPrompt, dispatch]);
+
+  // Pre-fill the composer from an incoming ?prompt64. The /vibe route's
+  // suggestion chips and "describe a change" box hand off here (#2675) by
+  // navigating to /chat/$owner/$app?prompt64=<encoded>. We SEED the input
+  // rather than auto-submit — the user reviews and taps send, which is
+  // lower-risk than firing a turn on navigation. Strip the param after so a
+  // reload doesn't re-seed over a half-typed message. inConstruction is the
+  // /chat/prompt create flow, which consumes prompt64 itself (initialPrompt).
+  useEffect(() => {
+    if (inConstruction) return;
+    const prompt64 = searchParams.get("prompt64");
+    if (!prompt64) return;
+    const decoded = sthis.txt.base64.decode(prompt64);
+    if (decoded) {
+      chatInput.current?.setPromptIfEmpty(decoded);
+      chatInput.current?.setFocus();
+    }
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev);
+        next.delete("prompt64");
+        return next;
+      },
+      { replace: true }
+    );
+  }, [inConstruction, searchParams, setSearchParams, sthis]);
 
   // Clear stale messages immediately when navigating to a different chat so
   // the old conversation is not visible while the new one loads.

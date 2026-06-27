@@ -122,6 +122,21 @@ export default function VibeIframeWrapper() {
   // chatApi fallback for safety. sharedHandlers RPCs stay on chatApi until
   // Track B (SharedSessions). (#2265 A1)
   const dataApi = vctx.vibeApi ?? vctx.chatApi;
+
+  // Hand a suggestion chip / "describe a change" off to the chat route, which
+  // pre-fills its composer from ?prompt64 (#2675 merge checkpoint). The /vibe
+  // surface doesn't edit in-page yet — /chat is the live-update surface for
+  // now, so we navigate there with the prompt seeded. URLSearchParams encodes
+  // the base64 safely (+, /, = are otherwise URL-significant).
+  const handleEditPrompt = useCallback(
+    (text: string) => {
+      const trimmed = text.trim();
+      if (!trimmed || !ownerHandle || !appSlug) return;
+      const qs = new URLSearchParams({ prompt64: vctx.sthis.txt.base64.encode(trimmed) }).toString();
+      void navigate(`/chat/${ownerHandle}/${appSlug}?${qs}`);
+    },
+    [ownerHandle, appSlug, navigate, vctx.sthis]
+  );
   // Iframe URL: prefer the SSR-computed value from the loader so the
   // <iframe src=...> ships in the first byte of HTML and the browser can
   // start fetching the iframe document without waiting for React hydration.
@@ -747,8 +762,8 @@ export default function VibeIframeWrapper() {
                   isOwner={isOwner}
                   handleSlug={myUserSlug}
                   chips={["Make it a drum kit", "Add a high score"]}
-                  onSelectChip={(chip) => console.warn("[agent-in-vibe] chip select not wired yet:", chip)}
-                  onSubmitOther={(text) => console.warn("[agent-in-vibe] other submit not wired yet:", text)}
+                  onSelectChip={handleEditPrompt}
+                  onSubmitOther={handleEditPrompt}
                   onHome={() => {
                     // On a PR preview, stay on the preview subdomain so the home
                     // page reflects the same (preview) session — otherwise we'd
