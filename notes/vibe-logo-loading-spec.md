@@ -148,6 +148,13 @@ The literal "never top-left anywhere" variant is explicitly **out of scope** for
 this change: it would require giving the sidebar an alternate entry point on the
 card / not-found screens, which is a separate UX decision.
 
+### Not-found opens the sidebar by default
+
+On the "App not available" (not-found) screen the top-left logo + `SessionSidebar`
+are the only thing to interact with, so the sidebar opens by default there — an
+effect flips `setIsSidebarVisible(true)` on the `notFound` false→true transition.
+It only fires on that transition, so the user can still close it.
+
 ## Out of scope / follow-ups (not part of this fix)
 
 - The bottom-right pill's own `Delayed ms={1000}` after access is granted still
