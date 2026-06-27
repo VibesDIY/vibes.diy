@@ -10,6 +10,7 @@ export interface UnifiedVibeCardProps {
   chips?: readonly string[];
   onSelectChip?: (chip: string) => void;
   onSubmitOther?: (text: string) => void;
+  /** Reserved for the verb-collapse work (#2679); not yet wired to any behavior. */
   isOwner?: boolean;
   handleSlug?: string;
   handleAvatarUrl?: string;
@@ -34,6 +35,8 @@ export function UnifiedVibeCard(props: UnifiedVibeCardProps) {
   // Animation: the OUTER card scales from the toggle's lower-right corner
   // (`grown`), and the inner content fades in only after the grow. `mounted`
   // keeps the card in the DOM through the shrink so the exit animates.
+  // Initialize from `open` so a controlled open-on-mount shows instantly; the
+  // grow-from-corner entrance only plays on a subsequent toggle (by design).
   const [mounted, setMounted] = useState(open);
   const [grown, setGrown] = useState(open);
   useEffect(() => {
@@ -130,7 +133,10 @@ export function UnifiedVibeCard(props: UnifiedVibeCardProps) {
                   isFirst
                   onSelect={(o) => {
                     props.onSelectChip?.(o);
-                    return true;
+                    // Return false so OptionButtons clears the press and the chips stay
+                    // clickable — until codegen is wired (#2677) a chip click is a fire-and-
+                    // forget signal, not a one-shot commit, so we don't want it to lock.
+                    return false;
                   }}
                 />
               )}
