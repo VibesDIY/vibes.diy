@@ -206,10 +206,11 @@ export default function App() {
   const [text, setText] = useState("");
   const [dragId, setDragId] = useState(null);
   const [saving, setSaving] = useState(0);
-  // Optimistic `done` overrides keyed by item _id. We flip the value locally for
-  // an instant check/strikethrough, then drop the override once the write settles
-  // so the live query is the single source of truth — on failure that means the
-  // row simply reverts to its current saved state (no inverse threading).
+  // Optimistic `done` overrides keyed by item _id. We flip the value locally for an
+  // instant check/strikethrough and then LEAVE it: the live query lands the same
+  // value a moment later (network-delayed) and the override is simply redundant.
+  // Clearing it on success would flash old→new as the query catches up, so we only
+  // clear on a FAILED save — which reverts the row to its current saved state.
   const [optimisticDone, setOptimisticDone] = useState({});
 
   // Optimistic writes (per prompts/llms/use-vibe.md): Fireproof is local-first, so
@@ -265,17 +266,22 @@ export default function App() {
     );
   }
 
-  function toggle(doc) {
-    const next = !doc.done;
-    setOptimisticDone((o) => ({ ...o, [doc._id]: next })); // reflect immediately
-    run(() => database.put({ ...doc, done: next })).finally(() =>
-      // Drop the override and defer to the live query (reverts on a failed save).
-      setOptimisticDone((o) => {
-        const copy = { ...o };
-        delete copy[doc._id];
-        return copy;
+  function toggle(doc, currentDone) {
+    const next = !currentDone; // base off the displayed state so a quick re-tap works
+    setOptimisticDone((o) => ({ ...o, [doc._id]: next })); // reflect immediately, and keep it
+    setSaving((n) => n + 1);
+    database
+      .put({ ...doc, done: next })
+      .catch((e) => {
+        console.error("[shared-lists] toggle failed", e);
+        // Revert: drop the override so the live query (current saved state) shows through.
+        setOptimisticDone((o) => {
+          const copy = { ...o };
+          delete copy[doc._id];
+          return copy;
+        });
       })
-    );
+      .finally(() => setSaving((n) => n - 1));
   }
 
   function remove(doc) {
@@ -433,7 +439,7 @@ export default function App() {
                       <IconGrip size={16} />
                     </span>
                     <button
-                      onClick={() => toggle(it)}
+                      onClick={() => toggle(it, done)}
                       aria-label={done ? "mark not done" : "mark done"}
                       className={
                         "grid h-6 w-6 shrink-0 place-items-center rounded-full border transition " +
