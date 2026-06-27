@@ -4,6 +4,18 @@ Authoritative source: Issue #228 research threads — comments 3192681700, 31926
 
 > **Web Audio is a browser built-in.** Use `window.AudioContext` (with the
 > `window.webkitAudioContext` fallback) directly, gated on a user gesture as shown below.
+>
+> **iOS Safari: unlock audio synchronously inside the gesture.** WebKit requires
+> playback to *directly result* from a trusted handler (`pointerdown`, `touchend`,
+> `click`, `keydown`). Inside that handler you must, synchronously and before any
+> async work: create-or-resume the `AudioContext` **and start at least one real
+> sound** (a ~10ms blip at `gain ≈ 0.0001` is enough). A resume/start that runs
+> from a downstream `setTimeout`, `Promise.then`, `await`, `requestAnimationFrame`,
+> a React state-update→effect, a worker/scheduler task, or a media
+> `canplay`/`canplaythrough` callback **does not count** and will stay silent on
+> iOS. Once the context is `running`, all of those are fine for scheduling. iOS
+> also suspends audio after backgrounding/lock, so **re-check `audioCtx.state` on
+> every gesture** and resume again if needed. See the `unlockAudio()` gate in §1.
 
 ## 1) Fundamentals and Core Nodes
 
@@ -17,14 +29,39 @@ Authoritative source: Issue #228 research threads — comments 3192681700, 31926
 Examples
 
 ```js
-// 1) Context (user gesture required in many browsers)
-const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+// 1) Context + iOS-safe unlock gate.
+let audioCtx;
+function unlockAudio() {
+  audioCtx ||= new (window.AudioContext || window.webkitAudioContext)();
+  // Re-check every gesture — iOS suspends audio after backgrounding/lock.
+  if (audioCtx.state !== "running") {
+    audioCtx.resume();
+    // Start one real (silent) sound synchronously, inside the gesture, so WebKit
+    // actually unlocks output. This is the part a resume()-alone often misses.
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    gain.gain.value = 0.0001;
+    osc.connect(gain).connect(audioCtx.destination);
+    osc.start();
+    osc.stop(audioCtx.currentTime + 0.01);
+  }
+  return audioCtx;
+}
 
-// Start/resume only in direct response to a user gesture (e.g., a Play button)
-document.querySelector("#start-audio")?.addEventListener("click", async () => {
-  if (audioCtx.state !== "running") await audioCtx.resume();
-  // now safe to create/start nodes
+// Call unlockAudio() FIRST, synchronously, in a trusted gesture — before any
+// app/audio logic. After it returns, the context is running and timers,
+// requestAnimationFrame, sequencers, and workers are all safe to schedule with.
+document.querySelector("#start-audio")?.addEventListener("pointerdown", () => {
+  unlockAudio();
+  // now safe to create/start nodes, kick off the transport, etc.
 });
+
+// ✗ What breaks on iOS — the unlock does NOT count if audio first starts from a
+// downstream callback, because it no longer "directly results" from the gesture:
+//   el.addEventListener("click", () => requestAnimationFrame(() => audioCtx.resume()));  // risky
+//   setTimeout(...), Promise.then(...), await fetch(...), await import(...),
+//   a React state update then effect, a scheduler/task-queue callback, or a
+//   media canplay/canplaythrough callback — all too late. Unlock in the handler.
 
 // 2) Simple tone
 const osc = audioCtx.createOscillator();
@@ -225,7 +262,12 @@ External sync and drift
 
 ## 5) Practical Notes
 
-- User gesture required to start/resume `AudioContext` and to access the mic.
+- User gesture required to start/resume `AudioContext` and to access the mic. On
+  iOS Safari the unlock must be **synchronous inside the gesture and start one
+  real sound** (the `unlockAudio()` gate in §1); a resume from a downstream
+  timer/promise/`await`/rAF/effect/media callback is too late. Re-check
+  `audioCtx.state` on every gesture, since iOS suspends audio after
+  backgrounding/lock.
 - Convolver IRs: host with CORS if cross‑origin; decode before use.
 - Latency budget: device `baseLatency` + your lookahead + any Worklet buffering.
 - Headphones recommended for monitoring to avoid acoustic feedback.
