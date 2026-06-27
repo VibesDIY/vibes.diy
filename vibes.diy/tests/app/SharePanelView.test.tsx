@@ -5,8 +5,8 @@ import { SharePanelView } from "@vibes.diy/base";
 import type { ShareMember } from "@vibes.diy/base";
 
 const ROSTER: readonly ShareMember[] = [
-  { handle: "meghan", role: "owner" },
   { handle: "alex", role: "editor" },
+  { handle: "meghan", role: "owner" },
 ];
 
 beforeEach(() => {
@@ -24,19 +24,22 @@ describe("SharePanelView", () => {
     expect(screen.queryByRole("radiogroup")).toBeNull();
   });
 
-  it("granted member: shows the roster, but no access setting", () => {
+  it("granted member: shows the roster (owner first), read-only, no access setting", () => {
     render(<SharePanelView url="u" viewer="member" members={ROSTER} />);
+    expect(screen.getByText(/in this vibe/i)).toBeTruthy();
     expect(screen.getByText("@meghan")).toBeTruthy();
     expect(screen.getByText("@alex")).toBeTruthy();
-    expect(screen.getByText(/in this vibe · 2/i)).toBeTruthy();
-    // members don't get the access toggle or the manage entry
+    // owner is sorted first even though it's last in the input
+    const names = screen.getAllByText(/^@/).map((n) => n.textContent);
+    expect(names[0]).toBe("@meghan");
+    // members don't get the access toggle or clickable manage tags
     expect(screen.queryByRole("radiogroup")).toBeNull();
-    expect(screen.queryByRole("button", { name: /manage/i })).toBeNull();
+    expect(screen.queryByRole("button", { name: /manage @/i })).toBeNull();
   });
 
-  it("author: roster + manage + the access setting, which fires on change", () => {
+  it("author: tapping a member tag opens that member, and the access setting fires", () => {
     const onChangeAccess = vi.fn();
-    const onManageMembers = vi.fn();
+    const onSelectMember = vi.fn();
     render(
       <SharePanelView
         url="u"
@@ -44,21 +47,20 @@ describe("SharePanelView", () => {
         members={ROSTER}
         access="public"
         onChangeAccess={onChangeAccess}
-        onManageMembers={onManageMembers}
+        onSelectMember={onSelectMember}
       />
     );
-    expect(screen.getByText("@meghan")).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: /manage @meghan/i }));
+    expect(onSelectMember).toHaveBeenCalledWith(expect.objectContaining({ handle: "meghan" }));
     expect(screen.getByRole("radio", { name: /anyone with the link/i }).getAttribute("aria-checked")).toBe("true");
     fireEvent.click(screen.getByRole("radio", { name: /people you approve/i }));
     expect(onChangeAccess).toHaveBeenCalledWith("request");
-    fireEvent.click(screen.getByRole("button", { name: /manage/i }));
-    expect(onManageMembers).toHaveBeenCalled();
   });
 
-  it("reflects the access state in the explainer copy", () => {
+  it("access-state copy reflects the mode, below the url", () => {
     const { rerender } = render(<SharePanelView url="u" viewer="author" access="public" />);
     expect(screen.getByText(/anyone with the link can open/i)).toBeTruthy();
     rerender(<SharePanelView url="u" viewer="author" access="request" />);
-    expect(screen.getByText(/only the members listed here can open/i)).toBeTruthy();
+    expect(screen.getByText(/only approved members can access/i)).toBeTruthy();
   });
 });

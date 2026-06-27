@@ -1,4 +1,5 @@
 import React from "react";
+import { ViewerTagView } from "./ViewerTagView.js";
 
 /**
  * Presentational share dialogue — the simplified in-group model from
@@ -15,7 +16,8 @@ import React from "react";
  *
  * Deferred, NOT modelled here: (1) the `remixable-without-access` author setting
  * ("can't see it, but can remix it"), (2) the request-access screen a *not-yet-granted*
- * user hits on a grant-required vibe. Groundwork for #2680 (link-first Share, #2232 cluster).
+ * user hits on a grant-required vibe, (3) the per-member manage menu (viewer / editor /
+ * remove) reached by an author tapping a roster tag. Groundwork for #2680 (#2232 cluster).
  */
 
 export type ShareViewer = "anonymous" | "member" | "author";
@@ -37,44 +39,24 @@ export interface SharePanelViewProps {
   readonly onViewLive?: () => void;
   /** Which of the three in-vibe classes is viewing. */
   readonly viewer: ShareViewer;
-  /** The people in the vibe — shown to member + author (the roster). */
+  /** The people in the vibe — shown to member + author (the roster). Owner lists first. */
   readonly members?: readonly ShareMember[];
   /** Author-only: who can open the vibe. Public = anyone with the link; request = grant-required. */
   readonly access?: ShareAccess;
   readonly onChangeAccess?: (access: ShareAccess) => void;
-  /** Author-only: open the deeper member management (roles / approve). Stub for now. */
-  readonly onManageMembers?: () => void;
+  /** Author-only: tapping a member's roster tag opens that member's access controls
+   *  (viewer / editor / remove) — the manage flow, not yet designed. */
+  readonly onSelectMember?: (member: ShareMember) => void;
   readonly className?: string;
 }
 
-function Avatar({ member }: { readonly member: ShareMember }) {
-  const initial = member.handle.charAt(0).toUpperCase();
-  return (
-    <span
-      aria-hidden="true"
-      style={{
-        width: 24,
-        height: 24,
-        flexShrink: 0,
-        borderRadius: "50%",
-        background: "var(--vibes-blue, #3b82f6)",
-        color: "#fff",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        fontSize: 11,
-        fontWeight: 700,
-        overflow: "hidden",
-      }}
-    >
-      {member.avatarUrl ? (
-        <img src={member.avatarUrl} alt="" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-      ) : (
-        initial
-      )}
-    </span>
-  );
-}
+const ROSTER_TAG_STYLE: React.CSSProperties = {
+  background: "var(--color-light-background-01, #eee)",
+  border: "1px solid var(--color-light-decorative-01, #ddd)",
+  color: "var(--color-light-primary, #333)",
+  fontSize: 13,
+  padding: "3px 10px 3px 4px",
+};
 
 export function SharePanelView({
   url,
@@ -85,22 +67,21 @@ export function SharePanelView({
   members = [],
   access = "public",
   onChangeAccess,
-  onManageMembers,
+  onSelectMember,
   className,
 }: SharePanelViewProps) {
   const isAuthor = viewer === "author";
   const showRoster = viewer === "member" || viewer === "author";
+  // Owner(s) always list first; everyone else keeps their given order (stable sort).
+  const roster = [...members].sort((a, b) => Number(b.role === "owner") - Number(a.role === "owner"));
 
   return (
     <div
       className={`text-light-primary dark:text-dark-primary ${className ?? ""}`}
       style={{ display: "flex", flexDirection: "column", gap: 14 }}
     >
-      {/* Copy URL — everyone who can see the vibe. */}
+      {/* Link — everyone who can see the vibe. The access-state copy sits BELOW it. */}
       <div>
-        <p className="text-xs text-light-secondary dark:text-dark-secondary" style={{ marginBottom: 6 }}>
-          {access === "public" ? "Anyone with the link can open this vibe." : "Only the members listed here can open this vibe."}
-        </p>
         <div
           className="rounded-md border border-light-decorative-01 dark:border-dark-decorative-01 py-1.5 pl-3 pr-1.5"
           style={{ display: "flex", alignItems: "center", gap: 8 }}
@@ -122,33 +103,39 @@ export function SharePanelView({
         >
           View live ↗
         </button>
+        <p className="mt-1.5 text-xs text-light-secondary dark:text-dark-secondary">
+          {access === "public" ? "Anyone with the link can open this vibe." : "Only approved members can access this vibe."}
+        </p>
       </div>
 
-      {/* Member roster — granted members and the author. Contents differ by role: a member
-          sees a read-only list; the author additionally gets the management entry. */}
+      {/* Member roster — granted members and the author. ViewerTag tags flow inline (wrap),
+          like a list of tags. No roles here — role changes live in the (TBD) manage flow,
+          which the author reaches by tapping a tag. */}
       {showRoster && (
         <div>
-          <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", marginBottom: 6 }}>
-            <p className="text-xs text-light-secondary dark:text-dark-secondary">In this vibe · {members.length}</p>
-            {isAuthor && (
-              <button
-                type="button"
-                onClick={onManageMembers}
-                className="text-xs font-medium text-blue-600 hover:underline dark:text-blue-400"
-              >
-                Manage →
-              </button>
-            )}
+          <p className="text-xs text-light-secondary dark:text-dark-secondary" style={{ marginBottom: 6 }}>
+            In this vibe
+          </p>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+            {roster.map((m) => {
+              const tag = (
+                <ViewerTagView slug={m.handle} displayName={`@${m.handle}`} avatarUrl={m.avatarUrl} style={ROSTER_TAG_STYLE} />
+              );
+              return isAuthor ? (
+                <button
+                  key={m.handle}
+                  type="button"
+                  aria-label={`Manage @${m.handle}`}
+                  onClick={() => onSelectMember?.(m)}
+                  style={{ background: "none", border: "none", padding: 0, cursor: "pointer" }}
+                >
+                  {tag}
+                </button>
+              ) : (
+                <span key={m.handle}>{tag}</span>
+              );
+            })}
           </div>
-          <ul style={{ display: "flex", flexDirection: "column", gap: 6, margin: 0, padding: 0, listStyle: "none" }}>
-            {members.map((m) => (
-              <li key={m.handle} style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                <Avatar member={m} />
-                <span className="flex-1 truncate text-sm">@{m.handle}</span>
-                {m.role && <span className="text-xs capitalize text-light-secondary dark:text-dark-secondary">{m.role}</span>}
-              </li>
-            ))}
-          </ul>
         </div>
       )}
 
