@@ -87,8 +87,9 @@ function makeSatCurve(amount) {
   return curve;
 }
 
-// One control (0..1) drives the whole FX bus: saturation drive, the level sent
-// into a one-beat delay, and the delay's feedback all rise together.
+// One control (0..1) drives the whole FX bus: saturation drive plus two layered
+// delays — a slow two-beat one always on, and a fast one-beat one that fades in
+// only once the slider passes 1/3 of the way up.
 function applyFx(nodes, ctx, fx, bpm) {
   if (!nodes) return;
   const t = ctx.currentTime;
@@ -96,9 +97,17 @@ function applyFx(nodes, ctx, fx, bpm) {
   // isn't so extreme — the whole range scales down proportionally.
   const a = fx * 0.75;
   nodes.shaper.curve = makeSatCurve(a);
-  nodes.delay.delayTime.setValueAtTime(120 / bpm, t); // two beats
+
+  // slow delay — two beats, always engaged
+  nodes.delay.delayTime.setValueAtTime(120 / bpm, t);
   nodes.delaySend.gain.setValueAtTime(a * 0.9, t); // signal piped into the delay
   nodes.delayFb.gain.setValueAtTime(Math.min(0.9, a * 0.85), t); // feedback (< 1)
+
+  // fast delay — one beat (original pace), fades in from 1/3 → full at the top
+  const fade = Math.max(0, Math.min(1, (fx - 1 / 3) / (2 / 3)));
+  nodes.delay2.delayTime.setValueAtTime(60 / bpm, t);
+  nodes.delaySend2.gain.setValueAtTime(a * 0.9 * fade, t);
+  nodes.delayFb2.gain.setValueAtTime(Math.min(0.9, a * 0.85) * fade, t);
 }
 
 // Build an oscillator voice feeding a shared envelope gain. The pure sine reads
@@ -176,22 +185,34 @@ export default function BloomMachine() {
       const limiter = ctx.createDynamicsCompressor();
       limiter.threshold.value = -6;
       limiter.ratio.value = 12;
-      const delay = ctx.createDelay(4.0); // up to 2 beats even at the slowest BPM
+      // Two layered delays tapped off the saturated signal: a slow one (two
+      // beats) always on, and a fast one (one beat) that fades in only past 1/3.
+      const delay = ctx.createDelay(4.0); // slow — up to 2 beats even at slowest BPM
       const delaySend = ctx.createGain();
       const delayFb = ctx.createGain();
+      const delay2 = ctx.createDelay(2.0); // fast — one beat
+      const delaySend2 = ctx.createGain();
+      const delayFb2 = ctx.createGain();
 
       bus.connect(shaper);
       shaper.connect(limiter);
       limiter.connect(ctx.destination);
+      // slow delay
       shaper.connect(delaySend);
       delaySend.connect(delay);
       delay.connect(delayFb);
       delayFb.connect(delay); // feedback
       delay.connect(limiter); // wet into the limiter → out
+      // fast delay (second layer)
+      shaper.connect(delaySend2);
+      delaySend2.connect(delay2);
+      delay2.connect(delayFb2);
+      delayFb2.connect(delay2); // feedback
+      delay2.connect(limiter);
 
       ctxRef.current = ctx;
       masterRef.current = bus; // voices connect to the bus
-      fxNodesRef.current = { shaper, delay, delaySend, delayFb };
+      fxNodesRef.current = { shaper, delay, delaySend, delayFb, delay2, delaySend2, delayFb2 };
       applyFx(fxNodesRef.current, ctx, fxRef.current, bpmRef.current);
     }
     if (ctxRef.current.state !== "running") ctxRef.current.resume();
