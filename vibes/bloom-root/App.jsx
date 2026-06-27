@@ -170,6 +170,13 @@ export default function Bloom() {
             })
           )}
         </div>
+        <footer style={styles.credit}>
+          With thanks to ambient pioneer Brian Eno and musician &amp; software designer Peter Chilvers, whose{" "}
+          <a href="https://generativemusic.com/bloom.html" target="_blank" rel="noreferrer" style={styles.creditLink}>
+            Bloom
+          </a>{" "}
+          inspired this.
+        </footer>
       </div>
     </div>
   );
@@ -196,6 +203,8 @@ const styles = {
   title: { fontSize: 26, fontWeight: 800, margin: 0, letterSpacing: -0.5 },
   subtitle: { opacity: 0.7, fontSize: 13, margin: "4px 0 0" },
   grid: { display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 12 },
+  credit: { marginTop: 22, fontSize: 12, lineHeight: 1.5, opacity: 0.6 },
+  creditLink: { color: "#c4b5fd", textDecoration: "underline" },
   pad: {
     aspectRatio: "1 / 1",
     borderRadius: 14,
