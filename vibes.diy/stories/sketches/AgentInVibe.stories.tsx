@@ -1,7 +1,7 @@
 import React from "react";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { VibesSwitch, OptionButtons, ViewerTagView, UnifiedVibeCard, SharePanelView } from "@vibes.diy/base";
-import type { PublishIntent } from "@vibes.diy/base";
+import type { ShareAccess, ShareMember } from "@vibes.diy/base";
 
 /**
  * SKETCH — "the agent lives in the vibe" (see notes/2026-06-26-agent-in-vibe-ux-epic.md).
@@ -443,30 +443,75 @@ export const RestrictedGate: Story = {
   ),
 };
 
-// --- Share panel (link-first, #2680 groundwork) -----------------------------------------
+// --- Share dialogue (simplified in-group model, #2680 groundwork) ------------------------
 // Real `SharePanelView` rendered inside the unified card's body via its `body` slot, so we
-// can iterate the sharing-panel design on the actual component (single-source-of-truth loop).
+// can iterate on the actual component (single-source-of-truth loop). Three in-scope classes:
+// anonymous → Copy URL · member → + roster · author → + access setting.
 
-function ShareBody({ isOwner = true }: { readonly isOwner?: boolean }) {
+const ROSTER: readonly ShareMember[] = [
+  { handle: "meghan", role: "owner" },
+  { handle: "alex", role: "editor" },
+  { handle: "sam", role: "viewer" },
+];
+
+function ShareBody({ viewer }: { readonly viewer: "anonymous" | "member" | "author" }) {
   const [copied, setCopied] = React.useState(false);
-  const [intent, setIntent] = React.useState<PublishIntent>("shared");
+  const [access, setAccess] = React.useState<ShareAccess>("public");
   return (
     <SharePanelView
       url="vibes.diy/meghan/bloom"
       copied={copied}
       onCopy={() => setCopied(true)}
       onViewLive={() => undefined}
-      isOwner={isOwner}
-      publishIntent={intent}
-      onChangePublishIntent={setIntent}
-      onManageAccess={() => undefined}
-      onRequestAccess={() => undefined}
+      viewer={viewer}
+      members={viewer === "anonymous" ? [] : ROSTER}
+      access={access}
+      onChangeAccess={setAccess}
+      onManageMembers={() => undefined}
     />
   );
 }
 
-export const ShareViewInCard: Story = {
-  name: "Share · link-first (owner)",
+export const ShareVisitor: Story = {
+  name: "Share · anonymous visitor (copy URL)",
+  render: () => (
+    <Phone>
+      <FakeVibeApp />
+      <UnifiedVibeCard
+        open
+        appTitle="Bloom Machine"
+        appSlug="meghan/bloom"
+        selectedNav="share"
+        onHome={() => undefined}
+        onShare={() => undefined}
+        onSignIn={() => undefined}
+        body={<ShareBody viewer="anonymous" />}
+      />
+    </Phone>
+  ),
+};
+
+export const ShareMemberView: Story = {
+  name: "Share · granted member (+ roster)",
+  render: () => (
+    <Phone>
+      <FakeVibeApp />
+      <UnifiedVibeCard
+        open
+        appTitle="Bloom Machine"
+        appSlug="meghan/bloom"
+        handleSlug="alex"
+        selectedNav="share"
+        onHome={() => undefined}
+        onShare={() => undefined}
+        body={<ShareBody viewer="member" />}
+      />
+    </Phone>
+  ),
+};
+
+export const ShareAuthorView: Story = {
+  name: "Share · author (+ access setting)",
   render: () => (
     <Phone>
       <FakeVibeApp />
@@ -478,26 +523,7 @@ export const ShareViewInCard: Story = {
         selectedNav="share"
         onHome={() => undefined}
         onShare={() => undefined}
-        body={<ShareBody isOwner />}
-      />
-    </Phone>
-  ),
-};
-
-export const ShareViewVisitor: Story = {
-  name: "Share · link-first (visitor)",
-  render: () => (
-    <Phone>
-      <FakeVibeApp blurPx={10} />
-      <UnifiedVibeCard
-        open
-        appTitle="@meghan’s Bloom Machine"
-        appSlug="meghan/bloom"
-        selectedNav="share"
-        onHome={() => undefined}
-        onShare={() => undefined}
-        onSignIn={() => undefined}
-        body={<ShareBody isOwner={false} />}
+        body={<ShareBody viewer="author" />}
       />
     </Phone>
   ),
