@@ -1,5 +1,11 @@
 import { describe, it, expect, vi, afterEach } from "vitest";
-import { buildCreateVibeUrl, createVibe, VIBES_DIY_BUILDER_URL, CREATE_VIBE_SAFE_URL_LENGTH } from "@vibes.diy/vibe-runtime";
+import {
+  buildCreateVibeUrl,
+  createVibe,
+  resolveBuilderOriginFrom,
+  VIBES_DIY_BUILDER_URL,
+  CREATE_VIBE_SAFE_URL_LENGTH,
+} from "@vibes.diy/vibe-runtime";
 
 // Mirrors how routes/chat/prompt.tsx reads the param: standard base64 over
 // UTF-8 (sthis.txt.base64.decode). Decode locally so the test is self-contained.
@@ -29,10 +35,33 @@ describe("buildCreateVibeUrl", () => {
     expect(decodeBase64Utf8(encoded as string)).toBe(prompt);
   });
 
-  it("honors a custom baseURL", () => {
-    const url = new URL(buildCreateVibeUrl("x", "https://example.test"));
-    expect(url.origin).toBe("https://example.test");
-    expect(url.pathname).toBe("/chat/prompt");
+  it("resolves to the prod builder origin in the test (non-preview) context", () => {
+    // The vitest browser runner executes inside a non-preview iframe, so the
+    // resolver falls back to the public domain rather than leaking the host.
+    expect(new URL(buildCreateVibeUrl("x")).origin).toBe(new URL(VIBES_DIY_BUILDER_URL).origin);
+  });
+});
+
+describe("resolveBuilderOriginFrom", () => {
+  it("adopts a PR-preview origin", () => {
+    expect(resolveBuilderOriginFrom("https://pr-2694-vibes-diy-v2.jchris.workers.dev")).toBe(
+      "https://pr-2694-vibes-diy-v2.jchris.workers.dev"
+    );
+  });
+
+  it("routes prod, cli, dev, sandbox, stable-entry, third-party, and unknown to vibes.diy", () => {
+    for (const origin of [
+      "https://vibes.diy",
+      "https://cli-v2.vibesdiy.net",
+      "https://dev-v2.vibesdiy.net",
+      "https://prod-v2.vibesdiy.net",
+      "https://app--user.dev-v2.vibesdiy.net", // sandbox subdomain (the iframe's own origin)
+      "https://example.com", // third-party embed
+      "http://pr-1-vibes-diy-v2.jchris.workers.dev", // not https → not adopted
+      undefined,
+    ]) {
+      expect(resolveBuilderOriginFrom(origin)).toBe(VIBES_DIY_BUILDER_URL);
+    }
   });
 });
 

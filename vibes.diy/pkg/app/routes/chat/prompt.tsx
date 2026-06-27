@@ -33,6 +33,18 @@ export default function ChatPrompt() {
 
   const effectivePrompt = prompt64 ? sthis.txt.base64.decode(prompt64) : sessionPrompt;
 
+  // Seed the sessionStorage fallback from a URL-only prompt64 so a signed-OUT
+  // visitor doesn't lose the prompt across the Clerk sign-in round-trip (which
+  // can strip the query string). The homepage flow seeds this storage before
+  // navigating, but a cross-origin createVibe() hand-off (#2690) can only pass
+  // the prompt via the URL — without this, a meta-vibe's brief is unrecoverable
+  // if the user has to sign in. Cleared by the codegen effect once it runs.
+  useEffect(() => {
+    if (prompt64 && effectivePrompt && typeof window !== "undefined") {
+      sessionStorage.setItem(PENDING_PROMPT_KEY, effectivePrompt);
+    }
+  }, [prompt64, effectivePrompt]);
+
   useEffect(() => {
     if (!effectivePrompt || hasRun.current || !isLoaded || !isSignedIn) {
       return;

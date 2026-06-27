@@ -50,6 +50,8 @@ export { useVibe, type UseVibeResult, type CanVerdict, type UseVibeMe } from "./
 export {
   createVibe,
   buildCreateVibeUrl,
+  resolveBuilderOrigin,
+  resolveBuilderOriginFrom,
   VIBES_DIY_BUILDER_URL,
   CREATE_VIBE_SAFE_URL_LENGTH,
   type CreateVibeOptions,

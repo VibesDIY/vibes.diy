@@ -13,12 +13,62 @@ function encodeBase64Utf8(text: string): string {
 }
 
 /**
- * Default builder origin a meta-vibe hands off to. Override with
- * `options.baseURL` (e.g. for cli/dev/preview environments — Phase 1 vibes run
- * cross-origin from the builder, so the origin can't be inferred from
- * `window.location`).
+ * The public builder domain. Every environment hands off here EXCEPT a PR
+ * preview deploy (see {@link resolveBuilderOriginFrom}). cli, dev, the sandbox
+ * subdomains, and the stable-entry backends are all internal hosts that must
+ * never leak into a hand-off URL, so they fall through to this.
  */
 export const VIBES_DIY_BUILDER_URL = "https://vibes.diy";
+
+// A PR-preview deploy host, e.g. `pr-2694-vibes-diy-v2.jchris.workers.dev`
+// (.github/workflows/vibes-diy-pr-preview.yaml deploys `pr-{N}-vibes-diy-v2` on
+// workers.dev). This is the ONLY non-prod origin we ever hand off to.
+const PREVIEW_HOST = /^pr-\d+-vibes-diy-v2\.[a-z0-9-]+\.workers\.dev$/i;
+
+function isPreviewOrigin(origin: string): boolean {
+  try {
+    const { protocol, hostname } = new URL(origin);
+    return protocol === "https:" && PREVIEW_HOST.test(hostname);
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Decide the builder origin from the (already-detected) top-level page origin.
+ * Pure, so it's the unit-test seam. Only a PR-preview deploy is adopted; every
+ * other origin — prod, cli, dev, a sandbox subdomain, a stable-entry backend, a
+ * third-party embed, or none at all — routes to the public {@link
+ * VIBES_DIY_BUILDER_URL}, so no internal host can leak.
+ */
+export function resolveBuilderOriginFrom(topOrigin: string | undefined): string {
+  return topOrigin && isPreviewOrigin(topOrigin) ? topOrigin : VIBES_DIY_BUILDER_URL;
+}
+
+// The vibe runs in a cross-origin sandboxed iframe, so it can't read
+// `window.top.location`. `ancestorOrigins` exposes the ancestor chain's origins
+// cross-origin (Chromium/WebKit); the last entry is the top builder page. Fall
+// back to the referrer origin (Firefox has no ancestorOrigins), then undefined.
+function detectTopOrigin(): string | undefined {
+  if (typeof window === "undefined") return undefined;
+  try {
+    const ao = window.location.ancestorOrigins;
+    if (ao && ao.length > 0) return ao.item(ao.length - 1) ?? undefined;
+  } catch {
+    /* ancestorOrigins unsupported — fall through to referrer */
+  }
+  try {
+    if (typeof document !== "undefined" && document.referrer) return new URL(document.referrer).origin;
+  } catch {
+    /* malformed referrer — fall through */
+  }
+  return undefined;
+}
+
+/** The builder origin this vibe should hand off to (prod, or the PR preview it runs under). */
+export function resolveBuilderOrigin(): string {
+  return resolveBuilderOriginFrom(detectTopOrigin());
+}
 
 /**
  * Base64 inflates the prompt by ~4/3 and the encoded value rides in a query
@@ -30,22 +80,21 @@ export const VIBES_DIY_BUILDER_URL = "https://vibes.diy";
 export const CREATE_VIBE_SAFE_URL_LENGTH = 6000;
 
 export interface CreateVibeOptions {
-  /** Builder origin to hand off to. Defaults to {@link VIBES_DIY_BUILDER_URL}. */
-  readonly baseURL?: string;
   /** Override the safe-URL-length warning threshold (default {@link CREATE_VIBE_SAFE_URL_LENGTH}). */
   readonly maxUrlLength?: number;
 }
 
 /**
- * Build the builder hand-off URL for `prompt`. Pure — it performs no
- * navigation, so it is safe to call during render (e.g. to populate an
- * `<a href>` fallback) and trivial to unit test.
+ * Build the builder hand-off URL for `prompt`. The builder origin is resolved
+ * automatically ({@link resolveBuilderOrigin}) — prod by default, or the PR
+ * preview the vibe is running under. Performs no navigation, so it's safe to
+ * call during render (e.g. to populate an `<a href>` fallback).
  */
-export function buildCreateVibeUrl(prompt: string, baseURL: string = VIBES_DIY_BUILDER_URL): string {
+export function buildCreateVibeUrl(prompt: string): string {
   // `/chat/prompt` is the route that actually consumes `prompt64`; the bare
   // homepage (`/`) ignores the param. URL/searchParams percent-encodes the
   // base64 value so `+` `/` `=` survive the query string intact.
-  const url = new URL("/chat/prompt", baseURL);
+  const url = new URL("/chat/prompt", resolveBuilderOrigin());
   url.searchParams.set("prompt64", encodeBase64Utf8(prompt));
   return url.toString();
 }
@@ -67,8 +116,8 @@ export function buildCreateVibeUrl(prompt: string, baseURL: string = VIBES_DIY_B
  * `href`).
  */
 export function createVibe(prompt: string, options: CreateVibeOptions = {}): Window | null {
-  const { baseURL = VIBES_DIY_BUILDER_URL, maxUrlLength = CREATE_VIBE_SAFE_URL_LENGTH } = options;
-  const url = buildCreateVibeUrl(prompt, baseURL);
+  const { maxUrlLength = CREATE_VIBE_SAFE_URL_LENGTH } = options;
+  const url = buildCreateVibeUrl(prompt);
 
   if (url.length > maxUrlLength) {
     console.warn(

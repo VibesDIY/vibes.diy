@@ -79,6 +79,16 @@ describe("/chat/prompt initial user message", () => {
     expect(screen.getByTestId("chat").getAttribute("data-initial-prompt")).toBe("remembered prompt");
   });
 
+  it("seeds the sessionStorage fallback from prompt64 for a signed-out visitor (createVibe hand-off)", () => {
+    // Signed out: codegen is parked, but a URL-only prompt64 (e.g. a createVibe
+    // hand-off, #2690) must survive the Clerk sign-in round-trip, which can strip
+    // the query string. Seeding sessionStorage is what makes it recoverable.
+    setTestAuth({ isSignedIn: false, isLoaded: true });
+    currentSearch = new URLSearchParams({ prompt64: "b64:make me a pitch deck" });
+    render(<ChatPrompt />);
+    expect(sessionStorage.getItem(PENDING_PROMPT_KEY)).toBe("make me a pitch deck");
+  });
+
   it("shows no overlay and no initial prompt when there is nothing to send", () => {
     render(<ChatPrompt />);
     expect(screen.getByTestId("chat").getAttribute("data-initial-prompt")).toBe("");

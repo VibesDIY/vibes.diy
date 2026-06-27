@@ -37,6 +37,18 @@ plumbing and no new sandbox token, so it ships as Phase 1.
   with** (`routes/chat/prompt.tsx`), and targets **`/chat/prompt?prompt64=`** —
   the route that actually consumes the param. (The issue's sketch wrote
   `/?prompt64=`; the bare homepage ignores it, so we use `/chat/prompt`.)
+- **Auto-resolves the builder origin — no `baseURL` option.** The vibe runs in a
+  cross-origin sandboxed iframe, so it reads the top page's origin via
+  `ancestorOrigins` (referrer fallback) and **only adopts it when it matches the
+  PR-preview pattern** (`pr-{N}-vibes-diy-v2.*.workers.dev`). Everything else —
+  prod, cli, dev, the sandbox subdomains, the stable-entry backends, a
+  third-party embed, or no signal — routes to the public `https://vibes.diy`, so
+  no internal host can leak into the hand-off URL. Net: prod always lands on
+  vibes.diy; a vibe opened under a PR preview hands off to that same preview.
+- Signed-out robustness: `/chat/prompt` now seeds its `sessionStorage` fallback
+  from a URL-only `prompt64` on mount, so the brief survives the Clerk sign-in
+  round-trip (which can strip the query). Previously only the homepage flow
+  seeded that storage; a URL-only `createVibe` hand-off didn't. (Codex P2.)
 - A ~6,000-char safe-URL-length guard that warns (but still proceeds) on very long
   prompts.
 - A `create-vibe` skill (`prompts/pkg/llms/create-vibe.{ts,md}`), registered in
