@@ -13,8 +13,18 @@ const NOTES = [
   { name: "E4", freq: 329.63, color: "#60a5fa", glow: "#3b82f6" }, // blue
 ];
 
-// One waveform per column, left → right.
-const WAVES = ["sine", "triangle", "sawtooth", "square"];
+// One waveform per column, left → right. Sine/triangle carry less harmonic
+// energy than saw/square, so they read quieter at equal amplitude — boost the
+// left two by 2×. Base peak is 0.22, so 2× = 0.44, still within headroom; if a
+// louder base ever pushes the boosted notes past ~1.0, drop the right two
+// (gain < 1) rather than letting them clip.
+const BASE_GAIN = 0.22;
+const WAVES = [
+  { type: "sine", gain: 2 },
+  { type: "triangle", gain: 2 },
+  { type: "sawtooth", gain: 1 },
+  { type: "square", gain: 1 },
+];
 const COLS = WAVES.length;
 
 export default function BloomMachine() {
@@ -32,14 +42,15 @@ export default function BloomMachine() {
     const t = ctx.currentTime;
     const dur = 0.9;
 
+    const peak = Math.min(BASE_GAIN * wave.gain, 1);
     const env = ctx.createGain();
     env.gain.setValueAtTime(0, t);
-    env.gain.linearRampToValueAtTime(0.22, t + 0.008);
+    env.gain.linearRampToValueAtTime(peak, t + 0.008);
     env.gain.exponentialRampToValueAtTime(0.0001, t + dur);
     env.connect(ctx.destination);
 
     const osc = ctx.createOscillator();
-    osc.type = wave;
+    osc.type = wave.type;
     osc.frequency.value = freq;
     osc.connect(env);
     osc.start(t);
