@@ -1,6 +1,6 @@
 import React from "react";
 import type { Meta, StoryObj } from "@storybook/react-vite";
-import { VibesSwitch, OptionButtons, ViewerTagView } from "@vibes.diy/base";
+import { VibesSwitch, OptionButtons, ViewerTagView, UnifiedVibeCard } from "@vibes.diy/base";
 
 /**
  * SKETCH — "the agent lives in the vibe" (see notes/2026-06-26-agent-in-vibe-ux-epic.md).
@@ -327,10 +327,7 @@ export const LiveSwitchClosed: Story = {
   render: () => (
     <Phone>
       <FakeVibeApp />
-      {/* closed: just the switch in the lower-right (nav collapsed); isTwinkling = public-entry pulse */}
-      <div style={{ position: "absolute", right: 14, bottom: 16 }}>
-        <VibesSwitch size={48} isTwinkling />
-      </div>
+      <UnifiedVibeCard appTitle="Bloom Machine" appSlug="meghan/bloom" isTwinkling />
     </Phone>
   ),
 };
@@ -342,10 +339,17 @@ export const LiveSwitchOpen: Story = {
   render: () => (
     <Phone>
       <FakeVibeApp />
-      <UnifiedOverlay title="Bloom Machine" subtitle="bloom">
-        <OptionButtons options={["Make it a drum kit", "Add a high score"]} isFirst />
-        <OtherInput />
-      </UnifiedOverlay>
+      <UnifiedVibeCard
+        open
+        appTitle="Bloom Machine"
+        appSlug="meghan/bloom"
+        handleSlug="meghan"
+        chips={["Make it a drum kit", "Add a high score"]}
+        onSelectChip={() => undefined}
+        onSubmitOther={() => undefined}
+        onHome={() => undefined}
+        onShare={() => undefined}
+      />
     </Phone>
   ),
 };
