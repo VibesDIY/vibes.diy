@@ -89,9 +89,9 @@ function makeSatCurve(amount) {
 function applyFx(nodes, ctx, fx, bpm) {
   if (!nodes) return;
   const t = ctx.currentTime;
-  nodes.shaper.curve = makeSatCurve(fx);
+  nodes.shaper.curve = makeSatCurve(fx); // distortion unchanged
   nodes.delay.delayTime.setValueAtTime(60 / bpm, t); // one beat
-  nodes.delaySend.gain.setValueAtTime(fx * 0.9, t); // signal piped into the delay
+  nodes.delaySend.gain.setValueAtTime(fx * 0.9 * 0.1, t); // echo cut to 10% of its old amount
   nodes.delayFb.gain.setValueAtTime(Math.min(0.9, fx * 0.85), t); // feedback (< 1)
 }
 
@@ -597,10 +597,10 @@ export default function BloomDrums() {
                   onClick={() => togglePlay(p.id)}
                   style={{
                     ...styles.round,
-                    background: isActive ? "#e9e7ff" : "rgba(255,255,255,0.07)",
-                    color: isActive ? "#1e1b4b" : "#e9e7ff",
-                    borderColor: isActive ? "#e9e7ff" : "rgba(255,255,255,0.14)",
-                    boxShadow: isActive ? "0 0 16px 3px rgba(233,231,255,0.45)" : "none",
+                    background: isActive ? "#ece6da" : "rgba(255,255,255,0.07)",
+                    color: isActive ? "#1b1a17" : "#ece6da",
+                    borderColor: isActive ? "#ece6da" : "rgba(255,255,255,0.14)",
+                    boxShadow: isActive ? "0 0 16px 3px rgba(236,230,218,0.45)" : "none",
                   }}
                 >
                   <span style={{ fontSize: 15, lineHeight: 1 }}>{isActive ? "❚❚" : "▶"}</span>
@@ -627,7 +627,7 @@ export default function BloomDrums() {
                           style={{
                             ...styles.dot,
                             background,
-                            boxShadow: active ? "0 0 10px 2px rgba(233,231,255,0.85)" : "none",
+                            boxShadow: active ? "0 0 10px 2px rgba(236,230,218,0.85)" : "none",
                             transform: active ? "scale(1.4)" : "scale(1)",
                           }}
                         />
@@ -643,7 +643,7 @@ export default function BloomDrums() {
                   style={{
                     ...styles.round,
                     background: saveMode ? "rgba(52,211,153,0.18)" : "rgba(244,114,182,0.14)",
-                    color: "#e9e7ff",
+                    color: "#ece6da",
                     borderColor: saveMode ? "rgba(52,211,153,0.6)" : "rgba(244,114,182,0.5)",
                   }}
                 >
@@ -664,7 +664,7 @@ const styles = {
     display: "flex",
     alignItems: "flex-start",
     justifyContent: "center",
-    background: "linear-gradient(160deg,#1e1b4b 0%,#312e81 45%,#4c1d95 100%)",
+    background: "linear-gradient(160deg,#20242a 0%,#2c2824 45%,#3a2c20 100%)", // steel → bronze
     fontFamily: "Inter, system-ui, sans-serif",
     padding: 20,
     boxSizing: "border-box",
@@ -676,7 +676,7 @@ const styles = {
     msUserSelect: "none",
     WebkitTouchCallout: "none",
   },
-  frame: { width: "100%", maxWidth: 360, color: "#e9e7ff" },
+  frame: { width: "100%", maxWidth: 360, color: "#ece6da" },
   topbar: { display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 14 },
   bpm: { display: "flex", alignItems: "center", gap: 8 },
   bpmLabel: { fontSize: 12, opacity: 0.7, letterSpacing: 0.5 },
@@ -686,7 +686,7 @@ const styles = {
     fontSize: 15,
     textAlign: "center",
     fontVariantNumeric: "tabular-nums",
-    color: "#e9e7ff",
+    color: "#ece6da",
     background: "rgba(255,255,255,0.07)",
     border: "1px solid rgba(255,255,255,0.18)",
     borderRadius: 10,
@@ -703,7 +703,7 @@ const styles = {
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    color: "#e9e7ff",
+    color: "#ece6da",
     background: "rgba(255,255,255,0.07)",
     border: "1px solid rgba(255,255,255,0.18)",
     borderRadius: 6,
@@ -753,7 +753,7 @@ const styles = {
     borderRadius: "50%",
     border: "1px solid rgba(255,255,255,0.14)",
     background: "rgba(255,255,255,0.07)",
-    color: "#e9e7ff",
+    color: "#ece6da",
     cursor: "pointer",
     padding: 0,
     display: "flex",
