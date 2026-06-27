@@ -50,4 +50,14 @@ export type { DeviceIdCAIf } from "@fireproof/core-types-device-id";
 export { JWKPrivateSchema, JWKPublicSchema } from "./types/wire.js";
 
 // --- Clerk dashboard client (already browser-linked via VibeContext today) ---
-export { ClerkApiToken, clerkDashApi, DashboardApiImpl } from "@fireproof/core-protocols-dashboard";
+// `ClerkApiToken` is the OWNED lift (dash-api/clerk-token.ts): its `decode()`
+// parses through the owned lenient `ClerkClaimSchema`, so real Clerk JWTs that
+// omit `first`/`image_url`/`last`/`name` still decode now that the upstream
+// `core-types-base` patch is gone. The upstream `ClerkApiToken` would parse with
+// the now-strict upstream schema and reject those JWTs — breaking the browser
+// `getTokenClaims()` path (api/impl/index.ts). The dedicated `clerk-token.js`
+// module has no device-id-crypto deps, so this stays out of the browser bundle's
+// device-id graph. `clerkDashApi`/`DashboardApiImpl` (the dashboard HTTP client,
+// not claim decoders) stay upstream.
+export { ClerkApiToken } from "./dash-api/clerk-token.js";
+export { clerkDashApi, DashboardApiImpl } from "@fireproof/core-protocols-dashboard";
