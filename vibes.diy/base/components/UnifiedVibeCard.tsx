@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { VibesSwitch } from "./VibesSwitch.js";
 import { OptionButtons } from "./OptionButtons.js";
+import { ViewerTagView } from "./ViewerTagView.js";
 
 export interface UnifiedVibeCardProps {
   appTitle: string;
@@ -135,10 +136,95 @@ export function UnifiedVibeCard(props: UnifiedVibeCardProps) {
               )}
               <OtherRow onSubmitOther={props.onSubmitOther} />
             </div>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                gap: 8,
+                padding: "10px 12px 12px",
+                borderTop: "1px solid var(--color-light-decorative-00, #e5e5e5)",
+              }}
+            >
+              {props.handleSlug ? (
+                <ViewerTagView
+                  slug={props.handleSlug}
+                  displayName={`@${props.handleSlug}`}
+                  avatarUrl={props.handleAvatarUrl}
+                  trailing={<span style={{ fontSize: 11, opacity: 0.6, marginLeft: 1 }}>▾</span>}
+                  style={{
+                    background: "var(--color-light-background-01, #eee)",
+                    border: "1px solid var(--color-light-decorative-01, #ddd)",
+                    color: "var(--color-light-primary, #333)",
+                    fontSize: 13,
+                    padding: "3px 8px 3px 4px",
+                  }}
+                />
+              ) : (
+                <ViewerTagView slug="?" anonymous onSignIn={props.onSignIn} />
+              )}
+              <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                <NavIcon label="Home" color="#3b82f6" onClick={props.onHome}>
+                  ⌂
+                </NavIcon>
+                <NavIcon label="Chat" color="#fb923c" selected>
+                  💬
+                </NavIcon>
+                <NavIcon label="Share" color="#22c55e" onClick={props.onShare}>
+                  ↗
+                </NavIcon>
+              </div>
+              <button
+                type="button"
+                aria-label="Close vibe menu"
+                onClick={() => setOpen(false)}
+                style={{ background: "none", border: "none", padding: 0, cursor: "pointer" }}
+              >
+                <VibesSwitch size={38} isActive />
+              </button>
+            </div>
           </div>
         </div>
       )}
     </>
+  );
+}
+
+function NavIcon({
+  label,
+  color,
+  selected,
+  onClick,
+  children,
+}: {
+  readonly label: string;
+  readonly color: string;
+  readonly selected?: boolean;
+  readonly onClick?: () => void;
+  readonly children: React.ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      aria-label={label}
+      onClick={onClick}
+      style={{
+        width: 38,
+        height: 38,
+        borderRadius: "50%",
+        background: color,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        color: "#fff",
+        fontSize: 16,
+        cursor: "pointer",
+        border: "1px solid var(--vibes-near-black, #1a1a1a)",
+        boxShadow: selected ? "0 0 0 3px var(--vibes-near-black, #1a1a1a)" : "none",
+      }}
+    >
+      {children}
+    </button>
   );
 }
 
