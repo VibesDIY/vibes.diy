@@ -18,6 +18,7 @@ import { optAuth } from "../check-auth.js";
 import { checkDocAccess } from "./access-helpers.js";
 import { ensureAppSettings } from "./ensure-app-settings.js";
 import { resolveActiveHandle } from "./resolve-active-handle.js";
+import { ensureUserSlug, persistDefaultUserSlug } from "../intern/ensure-slug-binding.js";
 import { VerifiedResult } from "@vibes.diy/identity";
 import { deriveDisplayName } from "./derive-display-name.js";
 
@@ -176,9 +177,31 @@ export async function resolveWhoAmI(vctx: VibesApiSQLCtx, args: ResolveWhoAmIArg
   // Shared resolver: defaultHandle setting wins, else any bound handle. The
   // document write path uses the same helper so the published handle and the
   // access-fn user handle cannot diverge for multi-handle users (#2275).
-  const viewerSlug = await resolveActiveHandle(vctx, viewerUserId, items);
+  let viewerSlug = await resolveActiveHandle(vctx, viewerUserId, items);
+
+  // Invariant: an authenticated user must always resolve to a handle (#2692).
+  // A signed-in user with zero handle bindings (e.g. signed up but never opened
+  // a chat) previously fell through to viewer:null here, which silently disabled
+  // every write in every vibe with no affordance to recover — the reported
+  // "signed in but you can't write, and no sign-in button" dead state. Auto-
+  // assign a handle, reusing the same generator the chat-creation path uses
+  // (ensureUserSlug: candidates from Clerk claims, then random 3-word handles),
+  // and persist it as the user's default so the published handle stays stable
+  // across sessions. This mirrors ensureChatId's lazy provisioning so the two
+  // entry points cannot diverge. resolveActiveHandle only returns undefined when
+  // the user has no bindings at all, so writing the default is unambiguous.
+  if (!viewerSlug) {
+    const rEnsured = await ensureUserSlug(vctx, auth.verifiedAuth.claims, { userId: viewerUserId });
+    if (rEnsured.isOk()) {
+      viewerSlug = rEnsured.Ok().ownerHandle;
+      await persistDefaultUserSlug(vctx, viewerUserId, viewerSlug);
+    }
+  }
 
   if (!viewerSlug) {
+    // Auto-assign exhausted its candidates (every generated handle collided) —
+    // genuinely rare. Fall back to the prior anonymous-viewer behavior rather
+    // than erroring the whole whoAmI.
     const grants = await resolveGrants(vctx, ownerUserSlug, appSlug, undefined);
     return Result.Ok({ viewer: null, access, isOwner, grants });
   }
