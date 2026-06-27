@@ -13,16 +13,21 @@ thing the app is *for*?").
 
 Decisions worth a full post:
 
-- **Static-first grader, exactly one LLM judge.** Greppable access-model invariants
-  (Form-A strict/broad, the `isOwner` write-gate, the per-object recipe,
-  owner-published vs author-owned) do most of the scoring deterministically;
-  a single semantic judge ("can a second signed-in visitor do the core action?")
-  is reserved for the multiplayer dimension. Composite = `mean(PASS=1/SOFT=.5/FAIL=0)`
-  over an 8-prompt × 8-rep matrix. The grader was validated against 8 ground-truth
-  corpus rows before being trusted to grade anything.
-- **Freeze the ruler.** The grader, both matrices, and `baseline.json` are frozen —
-  only `prompts/pkg/**` may change — so the loop can't "improve" by editing its own
-  metric. That separation is what makes an autonomous keep/discard loop trustworthy.
+- **Static-first grader, LLM judging used sparingly.** Greppable access-model
+  invariants (Form-A strict/broad, the `isOwner` write-gate, the per-object recipe,
+  owner-published vs author-owned) do most of the scoring deterministically; the
+  semantic judging is the minority. The harness (#2621) started with a single
+  second-visitor judge ("can a second signed-in visitor do the core action?")
+  reserved for the multiplayer dimension; the loop run (#2631) later added a
+  consent-side judge. Composite = `mean(PASS=1/SOFT=.5/FAIL=0)` over an
+  8-prompt × 8-rep matrix. The grader was validated against 8 ground-truth corpus
+  rows before being trusted to grade anything.
+- **Freeze the ruler (and record the exceptions).** The grader, both matrices, and
+  `baseline.json` are frozen by default — only `prompts/pkg/**` may change — so the
+  loop can't "improve" by editing its own metric. Re-baselining is allowed but
+  explicit and recorded when warranted (e.g. #2631 re-captured `baseline.json`
+  against the preview env). That separation — frozen-by-default, deliberately
+  re-baselined — is what makes an autonomous keep/discard loop trustworthy.
 - **A gate that enforces a prompt-writing principle.** One of the 5 discard-gates
   rejects any prompt diff that *enumerates prohibitions or names the anti-pattern* —
   the negative-tokenization / "examples bias, grammar enables" rule, turned from
