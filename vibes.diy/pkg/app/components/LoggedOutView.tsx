@@ -24,8 +24,13 @@ export default function LoggedOutView({ isLoaded = true, trackingEventName }: Lo
         isUserAuthenticated: false,
       });
     }
+    // Return the user to where they started after auth — for both the sign-in
+    // and sign-up branches (a first-time user may follow the "Sign up" link or
+    // have an OAuth attempt transfer sign-in -> sign-up). The legacy combined
+    // `redirectUrl` is deprecated, so set the split props explicitly.
     await clerk.redirectToSignIn({
-      redirectUrl: window.location.href,
+      signInFallbackRedirectUrl: window.location.href,
+      signUpFallbackRedirectUrl: window.location.href,
     });
   };
 

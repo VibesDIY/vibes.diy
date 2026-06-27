@@ -17,7 +17,7 @@ export default function LoginPage() {
 
   return (
     <div className={cx(gridBackground, "flex h-screen w-screen items-center justify-center")}>
-      <SignIn routing="hash" fallbackRedirectUrl={redirectTo} signUpUrl="/login" />
+      <SignIn routing="hash" fallbackRedirectUrl={redirectTo} signUpFallbackRedirectUrl={redirectTo} signUpUrl="/login" />
     </div>
   );
 }
