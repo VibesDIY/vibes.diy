@@ -467,7 +467,7 @@ function ShareBody({ viewer }: { readonly viewer: "anonymous" | "member" | "auth
       members={viewer === "anonymous" ? [] : ROSTER}
       access={access}
       onChangeAccess={setAccess}
-      onManageMembers={() => undefined}
+      onSelectMember={() => undefined}
     />
   );
 }
