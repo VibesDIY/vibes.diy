@@ -75,6 +75,29 @@ function distinctColors(tones) {
   return out;
 }
 
+// Soft-clip saturation curve. amount 0 → linear (clean); higher → more drive.
+function makeSatCurve(amount) {
+  const k = amount * 100;
+  const n = 1024;
+  const curve = new Float32Array(n);
+  for (let i = 0; i < n; i++) {
+    const x = (i * 2) / n - 1;
+    curve[i] = ((1 + k) * x) / (1 + k * Math.abs(x));
+  }
+  return curve;
+}
+
+// One control (0..1) drives the whole FX bus: saturation drive, the level sent
+// into a one-beat delay, and the delay's feedback all rise together.
+function applyFx(nodes, ctx, fx, bpm) {
+  if (!nodes) return;
+  const t = ctx.currentTime;
+  nodes.shaper.curve = makeSatCurve(fx);
+  nodes.delay.delayTime.setValueAtTime(60 / bpm, t); // one beat
+  nodes.delaySend.gain.setValueAtTime(fx * 0.9, t); // signal piped into the delay
+  nodes.delayFb.gain.setValueAtTime(Math.min(0.9, fx * 0.85), t); // feedback (< 1)
+}
+
 // Build an oscillator voice feeding a shared envelope gain. The pure sine reads
 // quiet, so it gets an octave-up sine partial at 2/3 amplitude for presence.
 function buildVoice(ctx, wave, freq) {
@@ -107,6 +130,7 @@ export default function BloomMachine() {
   const [lit, setLit] = useState({}); // "r-c" → true while a pad is held
   const [flash, setFlash] = useState({}); // "r-c" → true while a recorded note replays
   const [bpm, setBpm] = useState(DEFAULT_BPM);
+  const [fx, setFx] = useState(0.25); // saturation + one-beat delay, 0..1
   const [patterns, setPatterns] = useState(() => [emptyPattern()]);
   const [activeId, setActiveId] = useState(null); // pattern currently playing, or null
   const [step, setStep] = useState(-1); // playhead position for the active row
@@ -125,6 +149,11 @@ export default function BloomMachine() {
   activeIdRef.current = activeId;
   const stepMsRef = useRef(stepMsFor(bpm));
   stepMsRef.current = stepMsFor(bpm);
+  const fxRef = useRef(fx);
+  fxRef.current = fx;
+  const bpmRef = useRef(bpm);
+  bpmRef.current = bpm;
+  const fxNodesRef = useRef(null);
 
   // Persistence. Auto _id is roughly temporal, so descending = newest first —
   // saved patterns load back in insertion order with no extra sort field.
@@ -136,12 +165,31 @@ export default function BloomMachine() {
     if (!ctxRef.current) {
       const Ctx = window.AudioContext || window.webkitAudioContext;
       const ctx = new Ctx();
-      const master = ctx.createDynamicsCompressor();
-      master.threshold.value = -6;
-      master.ratio.value = 12;
-      master.connect(ctx.destination);
+
+      // Voices feed `bus`; the FX bus is bus → saturation → limiter → out, with
+      // a one-beat delay send tapped off the saturated signal (feedback loop).
+      const bus = ctx.createGain();
+      const shaper = ctx.createWaveShaper();
+      const limiter = ctx.createDynamicsCompressor();
+      limiter.threshold.value = -6;
+      limiter.ratio.value = 12;
+      const delay = ctx.createDelay(2.0);
+      const delaySend = ctx.createGain();
+      const delayFb = ctx.createGain();
+
+      bus.connect(shaper);
+      shaper.connect(limiter);
+      limiter.connect(ctx.destination);
+      shaper.connect(delaySend);
+      delaySend.connect(delay);
+      delay.connect(delayFb);
+      delayFb.connect(delay); // feedback
+      delay.connect(limiter); // wet into the limiter → out
+
       ctxRef.current = ctx;
-      masterRef.current = master;
+      masterRef.current = bus; // voices connect to the bus
+      fxNodesRef.current = { shaper, delay, delaySend, delayFb };
+      applyFx(fxNodesRef.current, ctx, fxRef.current, bpmRef.current);
     }
     if (ctxRef.current.state !== "running") ctxRef.current.resume();
     return ctxRef.current;
@@ -305,7 +353,8 @@ export default function BloomMachine() {
         const next = prev.map((p) => (p.id === id ? { ...p, saved: true, dirty: false, docId: p.docId || res.id } : p));
         return addFresh ? [emptyPattern(), ...next] : next;
       });
-      if (addFresh) stopLoop();
+      // Note: deliberately do NOT stop the transport — whatever's playing keeps
+      // playing; the fresh empty row just waits on top.
     } catch (err) {
       // Leave the row in "save" mode so the unsaved edit isn't lost.
       console.error("save failed (sign in to save?)", err);
@@ -342,6 +391,13 @@ export default function BloomMachine() {
     },
     []
   );
+
+  // Live FX: re-apply when the slider or tempo (one-beat delay time) changes.
+  useEffect(() => {
+    if (ctxRef.current && fxNodesRef.current) {
+      applyFx(fxNodesRef.current, ctxRef.current, fx, bpm);
+    }
+  }, [fx, bpm]);
 
   // Hydrate saved patterns from the database as they arrive. Dedupe by docId so a
   // row we just saved isn't re-added; saved rows append below the working rows
@@ -431,6 +487,20 @@ export default function BloomMachine() {
               </button>
             </div>
           </div>
+          {/* FX — one slider drives saturation + a one-beat delay (drive, send,
+              and feedback all rise together). */}
+          <label style={styles.fx}>
+            <span style={styles.bpmLabel}>FX</span>
+            <input
+              type="range"
+              min={0}
+              max={1}
+              step={0.01}
+              value={fx}
+              onChange={(e) => setFx(Number(e.target.value))}
+              style={styles.fxSlider}
+            />
+          </label>
         </div>
 
         {/* Tone pads. */}
@@ -569,6 +639,8 @@ const styles = {
     border: "1px solid rgba(255,255,255,0.18)",
     borderRadius: 10,
   },
+  fx: { display: "flex", alignItems: "center", gap: 8 },
+  fxSlider: { width: 104, accentColor: "#f472b6", cursor: "pointer" },
   spin: { display: "flex", flexDirection: "column", gap: 2 },
   spinBtn: {
     width: 24,
