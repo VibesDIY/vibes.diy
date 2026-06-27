@@ -1,4 +1,5 @@
 import React, { useRef, useState, useCallback, useEffect } from "react";
+import { useFireproof } from "use-vibes";
 
 // ── Bloom Machine ───────────────────────────────────────────────────────────
 // The music starter for the Instant Starter Stack. A 4×4 grid of pads, each tied
@@ -43,6 +44,22 @@ const emptyPattern = () => ({
   dirty: false,
 });
 const isEmpty = (p) => p.steps.every((s) => s.length === 0);
+
+// A recorded tone only needs (row, col, dur) persisted — freq/wave/colour derive
+// from the row/column. Keeps the stored doc small and reconstructable.
+const makeRec = (r, c, dur) => ({
+  r,
+  c,
+  dur,
+  freq: NOTES[r].freq,
+  wave: WAVES[c],
+  color: NOTES[r].color,
+});
+const serializeSteps = (steps) => steps.map((s) => s.map((rec) => ({ r: rec.r, c: rec.c, dur: rec.dur })));
+const hydrateSteps = (steps) =>
+  Array.isArray(steps) && steps.length === STEPS
+    ? steps.map((s) => (Array.isArray(s) ? s.map((t) => makeRec(t.r, t.c, t.dur ?? 0.3)) : []))
+    : Array.from({ length: STEPS }, () => []);
 
 // Distinct colours in a step's recorded tones, first-seen order (a colour
 // repeated by multiple tones counts once).
@@ -108,6 +125,11 @@ export default function BloomMachine() {
   activeIdRef.current = activeId;
   const stepMsRef = useRef(stepMsFor(bpm));
   stepMsRef.current = stepMsFor(bpm);
+
+  // Persistence. Auto _id is roughly temporal, so descending = newest first —
+  // saved patterns load back in insertion order with no extra sort field.
+  const { database, useLiveQuery } = useFireproof("bloom-machine");
+  const { docs: savedDocs } = useLiveQuery("_id", { descending: true });
 
   // Lazily create the AudioContext + a limiter bus on first touch (autoplay policy).
   const ensureCtx = useCallback(() => {
@@ -250,15 +272,37 @@ export default function BloomMachine() {
     [startLoopOn, stopLoop]
   );
 
-  const savePattern = (id) => setPatterns((prev) => prev.map((p) => (p.id === id ? { ...p, saved: true, dirty: false } : p)));
+  const savePattern = async (id) => {
+    const pat = patternsRef.current.find((p) => p.id === id);
+    if (!pat) return;
+    const doc = { type: "pattern", steps: serializeSteps(pat.steps) };
+    if (pat.docId) doc._id = pat.docId;
+    try {
+      const res = await database.put(doc);
+      setPatterns((prev) => prev.map((p) => (p.id === id ? { ...p, saved: true, dirty: false, docId: p.docId || res.id } : p)));
+    } catch (err) {
+      // Leave the row in "save" mode so the unsaved edit isn't lost.
+      console.error("save failed (sign in to save?)", err);
+    }
+  };
 
-  const deletePattern = (id) => {
+  const deletePattern = async (id) => {
+    const pat = patternsRef.current.find((p) => p.id === id);
     if (id === activeIdRef.current) stopLoop();
+    if (pat?.docId) {
+      try {
+        await database.del(pat.docId);
+      } catch (err) {
+        console.error("delete failed", err);
+      }
+    }
     setPatterns((prev) => {
       const next = prev.filter((p) => p.id !== id);
       return next.length ? next : [emptyPattern()];
     });
   };
+
+  const bumpBpm = (d) => setBpm((b) => Math.min(MAX_BPM, Math.max(MIN_BPM, b + d)));
 
   // The "+" clear: prepend a fresh empty row and pause.
   const addPattern = () => {
@@ -278,6 +322,20 @@ export default function BloomMachine() {
     },
     []
   );
+
+  // Hydrate saved patterns from the database as they arrive. Dedupe by docId so a
+  // row we just saved isn't re-added; saved rows append below the working rows
+  // (savedDocs is newest-first by _id, i.e. insertion order).
+  useEffect(() => {
+    if (!savedDocs || savedDocs.length === 0) return;
+    setPatterns((prev) => {
+      const have = new Set(prev.map((p) => p.docId).filter(Boolean));
+      const incoming = savedDocs
+        .filter((d) => d.type === "pattern" && !have.has(d._id))
+        .map((d) => ({ id: nextId++, docId: d._id, steps: hydrateSteps(d.steps), saved: true, dirty: false }));
+      return incoming.length ? [...prev, ...incoming] : prev;
+    });
+  }, [savedDocs]);
 
   const onPadDown = (e, r, c, note) => {
     e.currentTarget.setPointerCapture?.(e.pointerId); // keep events if the finger slides off
@@ -318,13 +376,21 @@ export default function BloomMachine() {
 
   return (
     <div style={styles.screen}>
+      {/* Native number spinners are inconsistent/hidden across browsers; hide
+          them and use our own ▲/▼ so the stepper arrows always show. */}
+      <style>{`
+        .bm-bpm::-webkit-outer-spin-button,
+        .bm-bpm::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+        .bm-bpm { -moz-appearance: textfield; appearance: textfield; }
+      `}</style>
       <div style={styles.frame}>
         {/* Global controls — BPM stepper + the "+" clear (new empty row). */}
         <div style={styles.topbar}>
-          <label style={styles.bpm}>
+          <div style={styles.bpm}>
             <span style={styles.bpmLabel}>BPM</span>
             <input
               type="number"
+              className="bm-bpm"
               min={MIN_BPM}
               max={MAX_BPM}
               step={1}
@@ -335,7 +401,15 @@ export default function BloomMachine() {
               }}
               style={styles.bpmInput}
             />
-          </label>
+            <div style={styles.spin}>
+              <button type="button" aria-label="increase bpm" onClick={() => bumpBpm(1)} style={styles.spinBtn}>
+                ▲
+              </button>
+              <button type="button" aria-label="decrease bpm" onClick={() => bumpBpm(-1)} style={styles.spinBtn}>
+                ▼
+              </button>
+            </div>
+          </div>
           <button
             type="button"
             aria-label="new empty pattern"
@@ -471,14 +545,33 @@ const styles = {
   bpm: { display: "flex", alignItems: "center", gap: 8 },
   bpmLabel: { fontSize: 12, opacity: 0.7, letterSpacing: 0.5 },
   bpmInput: {
-    width: 64,
+    width: 48,
     padding: "6px 8px",
     fontSize: 15,
+    textAlign: "center",
     fontVariantNumeric: "tabular-nums",
     color: "#e9e7ff",
     background: "rgba(255,255,255,0.07)",
     border: "1px solid rgba(255,255,255,0.18)",
     borderRadius: 10,
+  },
+  spin: { display: "flex", flexDirection: "column", gap: 2 },
+  spinBtn: {
+    width: 24,
+    height: 17,
+    padding: 0,
+    fontSize: 9,
+    lineHeight: 1,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    color: "#e9e7ff",
+    background: "rgba(255,255,255,0.07)",
+    border: "1px solid rgba(255,255,255,0.18)",
+    borderRadius: 6,
+    cursor: "pointer",
+    WebkitTapHighlightColor: "transparent",
+    touchAction: "manipulation",
   },
   grid: { display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 12 },
   pad: {
