@@ -92,7 +92,7 @@ describe("UnifiedVibeCard", () => {
 
   it("shows the in-vibe edit explainer and an Edit nav button", () => {
     render(<UnifiedVibeCard appTitle="Bloom Machine" open chips={["Make it a drum kit"]} />);
-    expect(screen.getByText("Describe a change to edit this app live.")).toBeTruthy();
+    expect(screen.getByText("Describe a change to edit this app live:")).toBeTruthy();
     expect(screen.getByRole("button", { name: /edit/i })).toBeTruthy();
   });
 
