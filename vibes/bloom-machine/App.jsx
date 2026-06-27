@@ -13,14 +13,16 @@ const NOTES = [
   { name: "E4", freq: 329.63, color: "#60a5fa", glow: "#3b82f6" }, // blue
 ];
 
-const COLS = 4;
+// One waveform per column, left → right.
+const WAVES = ["sine", "triangle", "sawtooth", "square"];
+const COLS = WAVES.length;
 
 export default function BloomMachine() {
   const [lit, setLit] = useState({}); // "r-c" → true while blooming
   const ctxRef = useRef(null);
 
   // Lazily create the AudioContext on the first tap (autoplay policy).
-  const playNote = useCallback((freq) => {
+  const playNote = useCallback((freq, wave) => {
     if (!ctxRef.current) {
       const Ctx = window.AudioContext || window.webkitAudioContext;
       ctxRef.current = new Ctx();
@@ -37,7 +39,7 @@ export default function BloomMachine() {
     env.connect(ctx.destination);
 
     const osc = ctx.createOscillator();
-    osc.type = "triangle";
+    osc.type = wave;
     osc.frequency.value = freq;
     osc.connect(env);
     osc.start(t);
@@ -51,7 +53,7 @@ export default function BloomMachine() {
   }, []);
 
   const tap = (r, c, note) => {
-    playNote(note.freq);
+    playNote(note.freq, WAVES[c]);
     const key = `${r}-${c}`;
     setLit((p) => ({ ...p, [key]: true }));
     setTimeout(() => setLit((p) => ({ ...p, [key]: false })), 260);
@@ -60,10 +62,6 @@ export default function BloomMachine() {
   return (
     <div style={styles.screen}>
       <div style={styles.frame}>
-        <header style={styles.header}>
-          <h1 style={styles.title}>Bloom Machine</h1>
-          <p style={styles.subtitle}>tap the pads · share the beat</p>
-        </header>
         <div style={styles.grid}>
           {NOTES.map((note, r) =>
             Array.from({ length: COLS }).map((_, c) => {
@@ -95,7 +93,7 @@ const styles = {
   screen: {
     minHeight: "100vh",
     display: "flex",
-    alignItems: "center",
+    alignItems: "flex-start",
     justifyContent: "center",
     background: "linear-gradient(160deg,#1e1b4b 0%,#312e81 45%,#4c1d95 100%)",
     fontFamily: "Inter, system-ui, sans-serif",
@@ -103,9 +101,6 @@ const styles = {
     boxSizing: "border-box",
   },
   frame: { width: "100%", maxWidth: 360, color: "#e9e7ff" },
-  header: { marginBottom: 18 },
-  title: { fontSize: 26, fontWeight: 800, margin: 0, letterSpacing: -0.5 },
-  subtitle: { opacity: 0.7, fontSize: 13, margin: "4px 0 0" },
   grid: { display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 12 },
   pad: {
     aspectRatio: "1 / 1",
