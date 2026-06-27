@@ -47,3 +47,10 @@ export {
   type CanSeeArgs,
 } from "./access-runner.js";
 export { useVibe, type UseVibeResult, type CanVerdict, type UseVibeMe } from "./use-vibe.js";
+export {
+  createVibe,
+  buildCreateVibeUrl,
+  VIBES_DIY_BUILDER_URL,
+  CREATE_VIBE_SAFE_URL_LENGTH,
+  type CreateVibeOptions,
+} from "./create-vibe.js";

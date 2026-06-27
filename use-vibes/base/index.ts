@@ -206,6 +206,17 @@ export type { ImageDocument, PartialImageDocument, UseImgVibesOptions, UseImgVib
 // also surfaces the hook (see vibes.diy/api/svc/intern/grouped-vibe-import-map.ts).
 export { useViewer, type UseViewerResult } from "@vibes.diy/vibe-runtime";
 
+// createVibe — hand off to the builder to generate a new vibe ("meta-vibes").
+// Re-exported from @vibes.diy/vibe-runtime so the sandbox import-map alias
+// `use-vibes` → `@vibes.diy/vibe-runtime` surfaces it too, exactly like useViewer.
+export {
+  createVibe,
+  buildCreateVibeUrl,
+  VIBES_DIY_BUILDER_URL,
+  CREATE_VIBE_SAFE_URL_LENGTH,
+  type CreateVibeOptions,
+} from "@vibes.diy/vibe-runtime";
+
 // App-specific components moved to vibes.diy/pkg/app - no longer exported
 
 // Export app slug utilities

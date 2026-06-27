@@ -123,6 +123,16 @@ export function createMockFetchFromPkgFiles(): (url: CoerceURI) => Promise<Respo
       } as Response);
     }
 
+    if (url.includes("create-vibe.md")) {
+      return Promise.resolve({
+        ok: true,
+        text: () =>
+          Promise.resolve(
+            "<createVibe-docs>\n# createVibe\nHand off to the builder to generate a second, personalized vibe (meta-vibes).\n</createVibe-docs>"
+          ),
+      } as Response);
+    }
+
     // Colorset YAML — must be matched BEFORE the broader theme .md pattern.
     // Serves a recognizable per-slug minimal colorset so composer code paths
     // can run without filesystem access.
