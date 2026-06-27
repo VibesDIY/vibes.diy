@@ -20,8 +20,8 @@ const NOTES = [
 // (gain < 1) rather than letting them clip.
 const BASE_GAIN = 0.22;
 const WAVES = [
-  { type: "sine", gain: 2 },
-  { type: "triangle", gain: 2 },
+  { type: "sine", gain: 4 },
+  { type: "triangle", gain: 4 },
   { type: "sawtooth", gain: 1 },
   { type: "square", gain: 1 },
 ];
@@ -29,6 +29,7 @@ const COLS = WAVES.length;
 
 export default function BloomMachine() {
   const [lit, setLit] = useState({}); // "r-c" → true while blooming
+  const [playing, setPlaying] = useState(false); // play/pause toggle (visual only for now)
   const ctxRef = useRef(null);
 
   // Lazily create the AudioContext on the first tap (autoplay policy).
@@ -95,6 +96,24 @@ export default function BloomMachine() {
             })
           )}
         </div>
+        {/* Play/pause indicator — circular, pad-sized. Visual only for now. */}
+        <div style={styles.controls}>
+          <button
+            type="button"
+            aria-label={playing ? "pause" : "play"}
+            aria-pressed={playing}
+            onClick={() => setPlaying((p) => !p)}
+            style={{
+              ...styles.transport,
+              background: playing ? "#e9e7ff" : "rgba(255,255,255,0.07)",
+              color: playing ? "#1e1b4b" : "#e9e7ff",
+              borderColor: playing ? "#e9e7ff" : "rgba(255,255,255,0.14)",
+              boxShadow: playing ? "0 0 22px 4px rgba(233,231,255,0.45)" : "none",
+            }}
+          >
+            <span style={{ fontSize: 22, lineHeight: 1 }}>{playing ? "❚❚" : "▶"}</span>
+          </button>
+        </div>
       </div>
     </div>
   );
@@ -120,6 +139,19 @@ const styles = {
     cursor: "pointer",
     padding: 0,
     transition: "transform 90ms ease, background 90ms ease, box-shadow 90ms ease",
+    WebkitTapHighlightColor: "transparent",
+  },
+  controls: { display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 12, marginTop: 12 },
+  transport: {
+    aspectRatio: "1 / 1",
+    borderRadius: "50%",
+    border: "1px solid rgba(255,255,255,0.14)",
+    cursor: "pointer",
+    padding: 0,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    transition: "background 120ms ease, box-shadow 120ms ease, color 120ms ease",
     WebkitTapHighlightColor: "transparent",
   },
 };
