@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import { useFireproof } from "use-fireproof";
 import { useViewer, useVibe } from "use-vibes";
 
@@ -212,6 +212,20 @@ export default function App() {
   // Clearing it on success would flash old→new as the query catches up, so we only
   // clear on a FAILED save — which reverts the row to its current saved state.
   const [optimisticDone, setOptimisticDone] = useState({});
+  // Optimistic `position` overrides keyed by item _id — same idea, so a reorder
+  // (nudge or drag) re-sorts instantly instead of waiting on the live query.
+  const [optimisticPos, setOptimisticPos] = useState({});
+  const dragIdRef = useRef(null);
+
+  // The rendered list: raw query rows with optimistic overrides applied, then
+  // sorted by the effective position. Everything below reads/reorders `items`.
+  const items = sorted
+    .map((it) => ({
+      ...it,
+      done: it._id in optimisticDone ? optimisticDone[it._id] : it.done,
+      position: it._id in optimisticPos ? optimisticPos[it._id] : it.position,
+    }))
+    .sort((a, b) => a.position - b.position);
 
   // Optimistic writes (per prompts/llms/use-vibe.md): Fireproof is local-first, so
   // useLiveQuery reflects the change immediately; the runtime surfaces a toast if
@@ -259,7 +273,7 @@ export default function App() {
         listId: activeListId,
         text: t,
         done: false,
-        position: positionForAppend(sorted),
+        position: positionForAppend(items),
         authorHandle: me.userHandle,
         createdAt: Date.now(),
       })
@@ -288,28 +302,71 @@ export default function App() {
     run(() => database.del(doc._id));
   }
 
-  function setPosition(doc, position) {
-    return database.put({ ...doc, position });
-  }
-
-  function dropOn(targetDoc) {
-    if (!dragId || dragId === targetDoc?._id) return;
-    const dragged = sorted.find((d) => d._id === dragId);
-    const without = sorted.filter((d) => d._id !== dragId);
-    const targetIndex = targetDoc ? without.findIndex((d) => d._id === targetDoc._id) : without.length;
-    setDragId(null);
-    run(() => setPosition(dragged, positionForDrop(without, targetIndex)));
+  // Persist position changes. Like the toggle, keep the optimistic positions on
+  // success (the live query lands them) and drop them only on a failed save.
+  function commitPositions(updates) {
+    setOptimisticPos((o) => {
+      const n = { ...o };
+      for (const u of updates) n[u.doc._id] = u.position;
+      return n;
+    });
+    setSaving((n) => n + 1);
+    Promise.all(updates.map((u) => database.put({ ...u.doc, position: u.position })))
+      .catch((e) => {
+        console.error("[shared-lists] reorder failed", e);
+        setOptimisticPos((o) => {
+          const n = { ...o };
+          for (const u of updates) delete n[u.doc._id];
+          return n;
+        });
+      })
+      .finally(() => setSaving((n) => n - 1));
   }
 
   function nudge(i, delta) {
     const j = i + delta;
-    if (j < 0 || j >= sorted.length) return;
-    const a = sorted[i];
-    const b = sorted[j];
-    run(async () => {
-      await setPosition(a, b.position);
-      await setPosition(b, a.position);
-    });
+    if (j < 0 || j >= items.length) return;
+    const a = items[i];
+    const b = items[j];
+    commitPositions([
+      { doc: a, position: b.position },
+      { doc: b, position: a.position },
+    ]);
+  }
+
+  // Pointer-based drag from the grip — works on desktop AND iOS Safari (native
+  // HTML5 drag-and-drop never fires on touch). Reorders optimistically on the fly
+  // (fast paint), then persists the final position on release.
+  function startDrag(e, it) {
+    e.preventDefault();
+    e.currentTarget.setPointerCapture(e.pointerId);
+    dragIdRef.current = it._id;
+    setDragId(it._id);
+  }
+
+  function onDragMove(e) {
+    const id = dragIdRef.current;
+    if (!id) return;
+    const row = document.elementFromPoint(e.clientX, e.clientY)?.closest("[data-item-id]");
+    const overId = row?.getAttribute("data-item-id");
+    if (!overId || overId === id) return;
+    const rect = row.getBoundingClientRect();
+    const after = e.clientY > rect.top + rect.height / 2;
+    const without = items.filter((d) => d._id !== id);
+    let idx = without.findIndex((d) => d._id === overId);
+    if (idx < 0) return;
+    if (after) idx += 1;
+    setOptimisticPos((o) => ({ ...o, [id]: positionForDrop(without, idx) }));
+  }
+
+  function endDrag() {
+    const id = dragIdRef.current;
+    if (!id) return;
+    dragIdRef.current = null;
+    setDragId(null);
+    if (!(id in optimisticPos)) return; // a tap with no move — nothing to persist
+    const moved = items.find((d) => d._id === id);
+    if (moved) commitPositions([{ doc: moved, position: moved.position }]);
   }
 
   function invite(handle) {
@@ -421,73 +478,76 @@ export default function App() {
             </li>
           ) : (
             <>
-              {sorted.map((it, i) => {
-                const done = it._id in optimisticDone ? optimisticDone[it._id] : it.done;
-                return (
-                  <li
-                    key={it._id}
-                    draggable
-                    onDragStart={() => setDragId(it._id)}
-                    onDragOver={(e) => e.preventDefault()}
-                    onDrop={() => dropOn(it)}
+              {items.map((it, i) => (
+                <li
+                  key={it._id}
+                  data-item-id={it._id}
+                  className={
+                    "group flex items-center gap-3 px-4 py-3 transition " +
+                    CARD +
+                    (dragId === it._id ? " opacity-60 ring-2 ring-[var(--comp-accent)]" : " hover:border-[var(--comp-accent)]")
+                  }
+                >
+                  <span
+                    onPointerDown={(e) => startDrag(e, it)}
+                    onPointerMove={onDragMove}
+                    onPointerUp={endDrag}
+                    onPointerCancel={endDrag}
+                    className="-ml-1 cursor-grab touch-none p-1 text-[var(--comp-muted)] opacity-50 hover:opacity-90"
+                    aria-label="drag to reorder"
+                  >
+                    <IconGrip size={16} />
+                  </span>
+                  <button
+                    onClick={() => toggle(it, it.done)}
+                    aria-label={it.done ? "mark not done" : "mark done"}
                     className={
-                      "group flex items-center gap-3 px-4 py-3 transition " +
-                      CARD +
-                      (dragId === it._id ? " opacity-40" : " hover:border-[var(--comp-accent)]")
+                      "grid h-6 w-6 shrink-0 place-items-center rounded-full border transition " +
+                      (it.done
+                        ? "border-transparent bg-[var(--comp-done)] text-[var(--comp-accent-text)]"
+                        : "border-[var(--comp-border)] bg-transparent text-transparent hover:border-[var(--comp-accent)]")
                     }
                   >
-                    <span className="cursor-grab text-[var(--comp-muted)] opacity-40 group-hover:opacity-80" aria-hidden>
-                      <IconGrip size={16} />
+                    <IconCheck size={14} />
+                  </button>
+                  <span className={"flex-1 break-words " + (it.done ? "text-[var(--comp-muted)] line-through" : "")}>
+                    {it.text}
+                  </span>
+                  {it.authorHandle && (
+                    <span className="shrink-0 opacity-70">
+                      <ViewerTag userHandle={it.authorHandle} style={TAG} />
                     </span>
+                  )}
+                  <span className="flex shrink-0 flex-col leading-none text-[var(--comp-muted)] opacity-50">
                     <button
-                      onClick={() => toggle(it, done)}
-                      aria-label={done ? "mark not done" : "mark done"}
-                      className={
-                        "grid h-6 w-6 shrink-0 place-items-center rounded-full border transition " +
-                        (done
-                          ? "border-transparent bg-[var(--comp-done)] text-[var(--comp-accent-text)]"
-                          : "border-[var(--comp-border)] bg-transparent text-transparent hover:border-[var(--comp-accent)]")
-                      }
+                      onClick={() => nudge(i, -1)}
+                      disabled={i === 0}
+                      className="hover:text-[var(--comp-text)] disabled:opacity-20"
+                      aria-label="move up"
                     >
-                      <IconCheck size={14} />
+                      <IconUp size={15} />
                     </button>
-                    <span className={"flex-1 break-words " + (done ? "text-[var(--comp-muted)] line-through" : "")}>{it.text}</span>
-                    {it.authorHandle && (
-                      <span className="shrink-0 opacity-70">
-                        <ViewerTag userHandle={it.authorHandle} style={TAG} />
-                      </span>
-                    )}
-                    <span className="flex shrink-0 flex-col leading-none text-[var(--comp-muted)] opacity-50">
-                      <button
-                        onClick={() => nudge(i, -1)}
-                        disabled={i === 0}
-                        className="hover:text-[var(--comp-text)] disabled:opacity-20"
-                        aria-label="move up"
-                      >
-                        <IconUp size={15} />
-                      </button>
-                      <button
-                        onClick={() => nudge(i, 1)}
-                        disabled={i === sorted.length - 1}
-                        className="hover:text-[var(--comp-text)] disabled:opacity-20"
-                        aria-label="move down"
-                      >
-                        <IconDown size={15} />
-                      </button>
-                    </span>
                     <button
-                      onClick={() => remove(it)}
-                      aria-label="delete"
-                      className="shrink-0 text-[var(--comp-muted)] opacity-50 hover:text-[var(--comp-danger)] hover:opacity-100"
+                      onClick={() => nudge(i, 1)}
+                      disabled={i === items.length - 1}
+                      className="hover:text-[var(--comp-text)] disabled:opacity-20"
+                      aria-label="move down"
                     >
-                      <IconX size={16} />
+                      <IconDown size={15} />
                     </button>
-                  </li>
-                );
-              })}
+                  </span>
+                  <button
+                    onClick={() => remove(it)}
+                    aria-label="delete"
+                    className="shrink-0 text-[var(--comp-muted)] opacity-50 hover:text-[var(--comp-danger)] hover:opacity-100"
+                  >
+                    <IconX size={16} />
+                  </button>
+                </li>
+              ))}
 
               {writeVerdict?.ok ? (
-                <li onDragOver={(e) => e.preventDefault()} onDrop={() => dropOn(null)}>
+                <li>
                   <form
                     onSubmit={addItem}
                     className="flex items-center gap-3 rounded-xl border border-dashed border-[var(--comp-border)] px-4 py-3"
