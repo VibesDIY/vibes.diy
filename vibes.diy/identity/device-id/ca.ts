@@ -5,8 +5,8 @@
 // (`caCertificate`). The signed cert payload shape + ES256 `CERT+JWT` header are
 // the issuance wire contract. Imports only adjusted (DeviceIdKey/Validator/Certor
 // are the in-repo lifts).
-import { CertificatePayloadSchema } from "@fireproof/core-types-base";
 import { JWKPrivateSchema } from "../types/wire.js";
+import { CertificatePayloadSchema } from "../types/cert-payload.js";
 import type {
   BaseXXEndeCoder,
   Extensions,

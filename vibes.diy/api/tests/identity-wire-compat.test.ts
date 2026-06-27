@@ -140,10 +140,20 @@ describe("identity wire-compat (baseline: @fireproof/* 0.24.19)", { timeout: 300
       );
     };
 
-    // Incomplete params (missing first/image_url/last/name) ⇒ schema fills them on
-    // the verifier's re-parse ⇒ thumbprint mismatch.
+    // Assert against the OWNED verifier (what we ship). It uses the owned, lenient
+    // CertificatePayloadSchema, so the normalize-then-hash invariant holds
+    // independently of the dropped core-types-base patch. (The fireproof baseline
+    // verifier now parses strictly and rejects incomplete claims earlier, which is
+    // why this targets the extracted verifier.)
+    const extractedVerifier = new extracted.DeviceIdVerifyMsg(sthis.txt.base64, [(await ca.caCertificate()).Ok()], {
+      clockTolerance: 5,
+      deviceIdCA: ca as never,
+    });
+
+    // Incomplete params (missing first/image_url/last/name) ⇒ owned schema fills them
+    // on the verifier's re-parse ⇒ thumbprint mismatch.
     const incomplete = await mintWith({ email: "regr@example.com", email_verified: true, public_meta: "{}" });
-    const vrBad = await verifier.verifyWithCertificate(incomplete);
+    const vrBad = await extractedVerifier.verifyWithCertificate(incomplete);
     expect(vrBad.valid).toBe(false);
     if (!vrBad.valid) expect((vrBad as { errorCode?: string }).errorCode).toBe("CERT_THUMBPRINT_MISMATCH");
 
@@ -158,7 +168,7 @@ describe("identity wire-compat (baseline: @fireproof/* 0.24.19)", { timeout: 300
       name: "name-regr",
       public_meta: "{}",
     });
-    const vrGood = await verifier.verifyWithCertificate(full);
+    const vrGood = await extractedVerifier.verifyWithCertificate(full);
     expect(vrGood.valid).toBe(true);
     const header = decodeSeg(full.split(".")[0]);
     expect(header).toHaveProperty("x5t");
