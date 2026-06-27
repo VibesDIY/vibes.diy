@@ -2,14 +2,19 @@
 // "list:<id>/admin" (who may invite). Creator is sole admin; members have full
 // read/write on items. See the spec for the full rationale and the immutable-field
 // discipline. The export name MUST match the database name ("sharedLists").
-
-const SAFE_ID = /^[A-Za-z0-9_-]+$/;
-function safeId(id) {
-  if (typeof id !== "string" || !SAFE_ID.test(id)) throw { forbidden: "Invalid id" };
-  return id;
-}
-
+//
+// IMPORTANT: the runtime extracts ONLY this exported function for sandboxed eval,
+// so it must be SELF-CONTAINED — module-level helpers are not in scope. Keep all
+// helpers (e.g. safeId) inside the function body.
 export function sharedLists(doc, oldDoc, user, ctx) {
+  // List ids ride inside channel names ("list:" + id [+ "/admin"]); reject
+  // anything that isn't a plain token so a crafted id can't inject a channel or
+  // collide with the "/admin" namespace (e.g. listId = "abc/admin").
+  const safeId = (id) => {
+    if (typeof id !== "string" || !/^[A-Za-z0-9_-]+$/.test(id)) throw { forbidden: "Invalid id" };
+    return id;
+  };
+
   if (!user?.userHandle) throw { forbidden: "Sign in to make changes" };
   if (oldDoc && doc.type !== oldDoc.type) throw { forbidden: "type is immutable" };
 

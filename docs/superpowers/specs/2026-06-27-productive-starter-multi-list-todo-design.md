@@ -151,17 +151,21 @@ friendly fallback. v1 ships both.
 > `teamChannels`). Our db is `sharedLists`, so the function is `export function sharedLists(…)`
 > — _not_ `export default`.
 
-```js
-// List ids ride inside channel names ("list:" + id [+ "/admin"]). Reject anything
-// that isn't a plain token so a crafted id can't inject a channel or collide with
-// the "/admin" namespace (e.g. listId = "abc/admin" → "list:abc/admin").
-const SAFE_ID = /^[A-Za-z0-9_-]+$/;
-function safeId(id) {
-  if (typeof id !== "string" || !SAFE_ID.test(id)) throw { forbidden: "Invalid id" };
-  return id;
-}
+> **Self-contained constraint:** the runtime extracts _only_ the exported function for
+> sandboxed eval, so module-level helpers are **not** in scope (a top-level `safeId` throws
+> `ReferenceError: 'safeId' is not defined` at write time). Keep every helper **inside** the
+> function body — matches `vibes/team-channels/access.js` and `vibes/pickathon-access/access.js`.
 
+```js
 export function sharedLists(doc, oldDoc, user, ctx) {
+  // List ids ride inside channel names ("list:" + id [+ "/admin"]). Reject anything
+  // that isn't a plain token so a crafted id can't inject a channel or collide with
+  // the "/admin" namespace (e.g. listId = "abc/admin" → "list:abc/admin").
+  const safeId = (id) => {
+    if (typeof id !== "string" || !/^[A-Za-z0-9_-]+$/.test(id)) throw { forbidden: "Invalid id" };
+    return id;
+  };
+
   if (!user?.userHandle) throw { forbidden: "Sign in to make changes" };
   // doc type can never change under an existing _id (no retyping across auth paths)
   if (oldDoc && doc.type !== oldDoc.type) throw { forbidden: "type is immutable" };
