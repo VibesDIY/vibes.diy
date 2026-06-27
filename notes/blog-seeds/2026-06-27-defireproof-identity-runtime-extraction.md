@@ -14,9 +14,9 @@ engineering is how you pull a live PKI runtime in-house *safely*:
 - **A byte-compat gate, not a trust-me.** The plan extends the golden harness with an
   extracted ⇄ fireproof *cross-verification* step, so the lifted crypto is proven
   identical to the original before the dependency is cut, not after.
-- **Source-lock provenance per symbol.** Every lifted symbol carries a managed-fork
-  provenance row pointing at the upstream it was copied from — so a future upstream
-  fix is a deliberate re-sync, not a silent drift.
+- **Source-lock provenance per symbol.** The extraction plan requires per-symbol
+  provenance tracking — each lifted symbol annotated with the upstream it was copied
+  from — so a future upstream fix is a deliberate re-sync, not a silent drift.
 
 Worth a post on the discipline of *managed-fork extraction*: the trade-off between
 vendoring a dependency's security-critical code (you own the PKI, you own the bugs)
