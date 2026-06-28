@@ -39,6 +39,12 @@ export interface CFEnv {
   CHAT_SESSIONS: DurableObjectNamespace;
   APP_SESSIONS: DurableObjectNamespace;
   SHARED_SESSIONS: DurableObjectNamespace;
+  // #2714 Spec B — the unified session class. SESSIONS carries the vibe + shared
+  // planes; CODEGEN_SESSIONS the codegen plane. Both bind class "Sessions"; they
+  // are separate handles so cli can cross-script SESSIONS→prod (shared data
+  // plane) while keeping CODEGEN_SESSIONS local (per-env codegen isolation).
+  SESSIONS: DurableObjectNamespace;
+  CODEGEN_SESSIONS: DurableObjectNamespace;
   USER_NOTIFY: DurableObjectNamespace;
   VIBES_SERVICE: Queue;
   BROWSER: Fetcher; // screenshotter uses Cloudflare's Browser Rendering API, which is accessed via a Fetcher binding
