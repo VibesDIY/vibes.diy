@@ -147,6 +147,37 @@ function nameFor(url, i) {
   }
 }
 
+// Wait until the Vibes app preview *iframe* has actually painted content.
+// The preview is served from `<app>--<owner>.<host>`, a DIFFERENT origin than
+// the `vibes.diy` editor — so the editor page cannot read the iframe's
+// document (same-origin policy), and "the <iframe> element exists" is NOT a
+// readiness signal (it's there immediately, blank). Playwright, however, drives
+// each child frame regardless of origin, so we poll the app frame's own body.
+// The `<app>--<owner>` host (a `--` in the hostname) uniquely identifies the
+// preview frame and excludes auxiliary iframes (Clerk, analytics).
+async function waitForAppPaint(page, timeoutMs = 30000) {
+  const start = Date.now();
+  while (Date.now() - start < timeoutMs) {
+    const appFrame = page.frames().find((fr) => {
+      try {
+        return new URL(fr.url()).hostname.includes("--");
+      } catch {
+        return false;
+      }
+    });
+    if (appFrame) {
+      try {
+        const len = await appFrame.evaluate(() => (document.body?.innerText || "").trim().length);
+        if (len > 0) return true;
+      } catch {
+        /* frame mid-navigation; retry */
+      }
+    }
+    await page.waitForTimeout(500);
+  }
+  return false;
+}
+
 mkdirSync(outDir, { recursive: true });
 
 const executablePath = resolveCloudChromium();
@@ -172,26 +203,7 @@ try {
     try {
       await page.goto(url, { waitUntil: "networkidle", timeout: 60000 });
       if (waitIframe) {
-        for (let t = 0; t < 24; t++) {
-          const ready = await page
-            .evaluate(() => {
-              const f = document.querySelector("iframe");
-              if (!f) return false;
-              try {
-                const d = f.contentDocument || f.contentWindow?.document;
-                return !!(d && d.body && d.body.innerText.trim().length > 0);
-              } catch {
-                return true; // cross-origin iframe present and presumably painting
-              }
-            })
-            .catch(() => false);
-          if (ready) {
-            ev.iframeReady = true;
-            break;
-          }
-          await page.waitForTimeout(1000);
-        }
-        if (ev.iframeReady === undefined) ev.iframeReady = false;
+        ev.iframeReady = await waitForAppPaint(page);
       }
       await page.waitForTimeout(settle);
       await page.screenshot({ path: shot, fullPage });
