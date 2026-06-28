@@ -30,6 +30,10 @@ export async function takeScreenshot(event: EvtNewFsId, browserFetcher: Fetcher)
       timeout: 30000,
     });
 
+    // Give the page an extra moment after network idle so the full render
+    // (post-hydration paint, fonts, late layout) can settle before capture.
+    await new Promise((resolve) => setTimeout(resolve, 2000));
+
     return page.screenshot({
       type: "jpeg",
       quality: 85,
