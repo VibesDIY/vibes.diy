@@ -77,10 +77,10 @@ describe("SharePanelView", () => {
     expect(screen.getByText("reader")).toBeTruthy();
   });
 
-  it("surfaces a submitter as 'contributor' (write-capable, not a reader)", () => {
+  it("surfaces a submitter by name (write-capable form-filler, not a reader)", () => {
     render(<SharePanelView url="u" viewer="author" access="request" members={[{ handle: "sam", role: "submitter" }]} />);
     expect(screen.getByText("@sam")).toBeTruthy();
-    expect(screen.getByText("contributor")).toBeTruthy();
+    expect(screen.getByText("submitter")).toBeTruthy();
     expect(screen.queryByText("reader")).toBeNull();
   });
 

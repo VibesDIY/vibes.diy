@@ -62,14 +62,15 @@ export interface SharePanelViewProps {
 }
 
 // Read-only role label shown in each roster tag. Mirrors the legacy MembersSection
-// convention (a "viewer" grant reads as "reader") and surfaces "submitter" as
-// "contributor" — a write-capable, read-restricted member (canWrite, db-acl-eval).
+// convention (a "viewer" grant reads as "reader"). A "submitter" can write but not
+// read others' entries (canWrite, db-acl-eval) — the role for filling out forms
+// (contact requests, sign-ups, etc.) — and is labeled with its own name.
 function roleLabel(role: NonNullable<ShareMember["role"]>): string {
   switch (role) {
     case "viewer":
       return "reader";
     case "submitter":
-      return "contributor";
+      return "submitter";
     default:
       return role; // owner / editor
   }
