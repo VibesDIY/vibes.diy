@@ -27,7 +27,6 @@ const opts = tseslint.config(
       "jest.config.js",
       "**/.netlify/**",
       "**/.react-router/**",
-      "**/slack/**",
       "**/dist/",
       "**/pubdir/",
       "**/node_modules/",

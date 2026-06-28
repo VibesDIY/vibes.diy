@@ -15,7 +15,6 @@ call-ai/v2/line-stream.test.ts:125:      const encoder = new TextEncoder();
 call-ai/v2/line-stream.test.ts:145:      const encoder = new TextEncoder();
 call-ai/v2/line-stream.test.ts:169:      const encoder = new TextEncoder();
 call-ai/v2/line-stream.test.ts:185:      const encoder = new TextEncoder();
-vibes.diy/pkg/slack/scripts/bundle-fs.ts:281:  return new TextDecoder().decode(decompressed);
 vibes.diy/pkg/workers/clerk-webhook.ts:3:const enc = new TextEncoder();
 vibes.diy/pkg/test/url-origin-normalization.test.ts:20:    expect(new URL("http://example.com:80/path").origin).toBe("http://example.com");
 vibes.diy/pkg/test/url-origin-normalization.test.ts:24:    expect(new URL("https://example.com:443/path").origin).toBe("https://example.com");
