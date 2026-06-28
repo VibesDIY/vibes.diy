@@ -78,9 +78,16 @@ production-preferred path):
 
 - `selectLatestDraftOrPublished(vctx, { ownerHandle, appSlug })` → max-(releaseSeq, created) over
   **all** modes (so a newer `dev` wins; falls back to production when no dev exists).
-- Surface it through `getAppByFsId` (the no-fsId path) **when the authenticated caller owns the
-  app**: owner → incl-dev; non-owner/anon → production-preferred (today's behavior). This makes the
-  route _and_ the CLI owner-aware through one server change, keyed on the verified `userId`.
+- **Expose it via an EXPLICIT selection mode — not a silent default change** (Charlie review,
+  2026-06-28). Add `selectMode?: "published" | "ownerLatest"` to `getAppByFsId` (the no-`fsId`
+  path), or a dedicated `getLatestDraft` endpoint. **Existing no-`fsId` callsites keep `"published"`
+  (the default)** — share / published-state UX depends on production semantics and must not
+  regress. The `/vibe` route and the owner CLI paths **opt in** to `"ownerLatest"`, and the server
+  still verifies the caller's `userId` owns the app before honoring it (a non-owner asking for
+  `ownerLatest` falls back to `published`).
+- **Resolver contract (no-regress):** document that `"published"` is byte-for-byte today's
+  `selectLatestAppPerSlug` behavior; `"ownerLatest"` only differs for the authenticated owner.
+  Audit existing `getAppByFsId` no-`fsId` consumers and assert they pass `"published"` (or omit it).
 
 ### 3b. `/vibe` route: pin the owner's latest-dev fsId + the draft indicator (frontend)
 
@@ -97,6 +104,16 @@ resolves true and the URL has no explicit `fsId`:
 
 This keeps serving **fsId-pinned** (no server-side viewer gating), with owner-awareness in the
 route where `isOwner` is already known.
+
+**Route-pin guardrails (Charlie review):**
+
+- **Only re-pin UNVERSIONED URLs.** A versioned `/vibe/.../{fsId}` is an explicit request — never
+  override it (acceptance criterion: a versioned URL is byte-for-byte unchanged for the owner).
+- **Preserve query params** when re-pinning (merge, don't drop `?token`/etc.).
+- **Avoid a visible double-load.** The first paint is the production iframe (SSR); the owner re-pin
+  swaps to the draft fsId. Gate the swap so it's a single transition (no flash to production →
+  draft → production), and skip it entirely when the owner's latest already _is_ production
+  (no unpublished draft).
 
 ### 3c. Publish from the Vibes switch (frontend + a new RPC)
 
@@ -115,6 +132,15 @@ route where `isOwner` is already known.
     `fsId`'s content** (idempotent no-op when that content is already the highest production).
     Reuse the release-allocation infra (`app-seq-allocation.ts`); `buildUpgradeToProduction` alone is
     insufficient for the older-version case.
+  - **Pinned semantics (Charlie review):** the switch's publish target is **the latest dev,
+    selected ATOMICALLY on the server** (don't trust a client-passed fsId for the common case — the
+    `fsId?` param is the CLI/`versions` "publish a specific version" path, owner-verified). **Do NOT
+    demote old production rows** — they stay as history; the new top-of-stack production simply wins.
+    **Preserve event parity:** publish emits `evt-new-fs-id` exactly like other production updates,
+    so downstream consumers (Discord, caches, recency) react identically.
+  - **Race / no-op acceptance:** concurrent publishes converge (the `MAX+1` allocation is atomic);
+    publishing when the latest dev is already the highest production is a **no-op success** (clears
+    to "Up to date" without minting a duplicate).
 - **`UnifiedVibeCard` Publish control:** shown to the owner when an unpublished draft exists
   ("needs publish"); calls `publishApp`; on success the indicator clears to "Up to date" and the
   draft becomes the production everyone sees. Placement: a Publish affordance in the switch (the
@@ -163,25 +189,44 @@ D1 first (it's the principle); D2 and D3 follow and are independent of each othe
 
 ---
 
-## 6. Open decisions (recommendations; confirm before/within build)
+## 6. Decisions (Charlie review + jchris, 2026-06-28 — "agree with Charlie")
 
-1. **Draft-read mechanism — route-pins-fsId (recommended) vs server-side viewer-aware entry-point.**
-   Recommend route-pins (the entry-point has no viewer auth; keeps serving simple). Confirm.
-2. **Draft indicator placement/look** — a "Draft · unpublished" badge in the card header (near the
-   title/handle), distinct from the running app. Sketch in Storybook before building.
-3. **Publish control placement** — in the `UnifiedVibeCard`: a Publish button that appears in the
-   Edit view (or a thin "unpublished changes — Publish" banner above the nav) when a draft exists.
-   Sketch options.
-4. **What "publish" promotes** — the latest dev `fsId` (recommended: one click ships the newest
-   draft). A "publish a specific older version" is a CLI/`versions` capability, not the switch button.
-5. **CLI `versions` UX** — `versions` lists; `pull --fsId <id>` fetches any. Confirm the command
-   surface (a `versions` subcommand vs flags on `pull`).
-6. **Draft cleanup / GC** — dev rows accumulate (6.4k dev vs 6.5k production globally). Out of scope
-   here; note for a follow-up if it matters.
+1. **Draft-read mechanism → route-pin** (not a viewer-aware entry-point). Guardrails in §3b.
+2. **Draft indicator → a compact header badge** "Draft · unpublished" in the card header. Sketch in
+   Storybook before building.
+3. **Publish control → an in-card banner near the edit context** — state + action together
+   ("unpublished changes · Publish"), not a bare nav button. Sketch before building.
+4. **Publish target → the latest dev only** (selected atomically server-side); "publish a specific
+   older version" stays a CLI/`versions` capability.
+5. **CLI `versions` → a dedicated `versions` command**, with `pull --published` and `pull --fsId`
+   as fast paths.
+6. **Draft cleanup / GC** — dev rows accumulate (≈6.4k dev vs 6.5k production globally). Out of scope
+   here; follow-up if it matters.
 
 ---
 
-## 7. Relationship to the epic
+## 7. Test matrix + acceptance criteria (Charlie review)
+
+Cover **owner / member / anon × route / CLI × before / after publish**:
+
+| viewer × surface                     | before publish                 | after publish                               |
+| ------------------------------------ | ------------------------------ | ------------------------------------------- |
+| owner · `/vibe` (unversioned)        | latest dev (draft) + indicator | latest production, indicator clears         |
+| anon/member · `/vibe` (unversioned)  | latest production              | latest production (now the published draft) |
+| any · `/vibe/.../{fsId}` (versioned) | that exact fsId (NO re-pin)    | that exact fsId (NO re-pin)                 |
+| owner · CLI `pull` (default)         | latest dev                     | latest production (= the published draft)   |
+| owner · CLI `pull --published`       | latest production              | latest production                           |
+| anon/member · CLI `pull`             | latest production              | latest production                           |
+| CLI `versions`                       | lists dev + production rows    | reflects the new production release         |
+
+Plus: **versioned-URL no-repin guarantee** (byte-for-byte unchanged for the owner); **publish race**
+(concurrent publishes converge via atomic `MAX+1`); **publish no-op** (latest dev already highest
+production → success, no duplicate row); **`getAppByFsId` no-regress** (existing no-`fsId` consumers
+on `"published"` are unchanged).
+
+---
+
+## 8. Relationship to the epic
 
 - Consistent with PR-A (in-place gen writes drafts) and PR-B (a non-owner fork creates a new owned
   vibe → the forker is the owner → sees their draft; publishes when ready). No conflict.
