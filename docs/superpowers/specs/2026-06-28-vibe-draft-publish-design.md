@@ -100,9 +100,21 @@ route where `isOwner` is already known.
 
 ### 3c. Publish from the Vibes switch (frontend + a new RPC)
 
-- **New RPC `publishApp({ ownerHandle, appSlug, fsId? })`** (owner-only, auth-checked): promotes the
-  latest `dev` (or the given `fsId`) to `production` via `buildUpgradeToProduction` + a production
-  release allocation, so `pull` / anon / `codegen-log` reflect it. Idempotent.
+- **New RPC `publishApp({ ownerHandle, appSlug, fsId? })`** (owner-only, auth-checked): makes the
+  chosen content the **served public latest**. **It must allocate a NEW highest-seq production
+  release for that content — not just flip the row to `production` in place** (Codex review,
+  2026-06-28). Rationale: the entry-point + `selectLatestAppPerSlug` pick the **highest production
+  `releaseSeq`**, so flipping a row's mode keeps its old seq.
+  - Publishing the **latest dev** (the switch's common case) happens to work either way, since the
+    latest dev already carries the highest `releaseSeq`.
+  - Publishing an **older `fsId`** (the CLI/`versions` "publish this version" case) would **fail** if
+    upgraded in place — a newer production row still out-ranks it. So publish must **re-release** the
+    chosen content as a new top-of-stack production row (allocate `releaseSeq = MAX+1`, same
+    `fsId`/content), so `pull` / anon / `codegen-log` reflect exactly the published version.
+  - One uniform rule: **publish always mints `production` at `MAX(releaseSeq)+1` for the chosen
+    `fsId`'s content** (idempotent no-op when that content is already the highest production).
+    Reuse the release-allocation infra (`app-seq-allocation.ts`); `buildUpgradeToProduction` alone is
+    insufficient for the older-version case.
 - **`UnifiedVibeCard` Publish control:** shown to the owner when an unpublished draft exists
   ("needs publish"); calls `publishApp`; on success the indicator clears to "Up to date" and the
   draft becomes the production everyone sees. Placement: a Publish affordance in the switch (the
