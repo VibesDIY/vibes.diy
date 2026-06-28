@@ -35,6 +35,8 @@ import { toast } from "react-hot-toast";
 import { isMetaScreenShot, isMetaTitle, type ResGetAppByFsId, type VibesFPApiParameters } from "@vibes.diy/api-types";
 import { computeCardVariant } from "./vibe-card-variant.js";
 import { readIntent, withIntent, withoutIntent } from "./vibe-intent.js";
+import { forkDestination } from "./vibe-fork.js";
+import { notifyRecentVibesChanged } from "../hooks/useRecentVibes.js";
 import { adminModeStorageKey } from "../lib/admin-mode.js";
 import { RUNTIME_PREVIEW_IFRAME_ALLOW, RUNTIME_PREVIEW_IFRAME_SANDBOX } from "../lib/iframe-policy.js";
 
@@ -183,7 +185,7 @@ export default function VibeIframeWrapper() {
   const clerk = useClerk();
   const [isSidebarVisible, setIsSidebarVisible] = useState(false);
   const closeSidebar = useCallback(() => setIsSidebarVisible(false), []);
-  const [searchParam] = useSearchParams();
+  const [searchParam, setSearchParam] = useSearchParams();
   const [retryCount, setRetryCount] = useState(0);
   const [isOwner, setIsOwner] = useState(false);
 
@@ -209,6 +211,23 @@ export default function VibeIframeWrapper() {
     enabled: isOwner,
   });
 
+  // On the forked /vibe page (?prompt64 carried from a seamless non-owner fork),
+  // auto-fire the generation once ownership resolves to us — only when isOwner is
+  // true (i.e. the page is already our own fork), so we never send against the
+  // owner's session. Guarded by a ref + scrubbed from the URL so a refresh/re-render
+  // doesn't re-fire. (#2677 PR-B)
+  const autoFiredRef = useRef(false);
+  useEffect(() => {
+    if (autoFiredRef.current) return;
+    const p64 = searchParam.get("prompt64");
+    if (!p64 || !isOwner) return;
+    autoFiredRef.current = true;
+    generation.sendPrompt(vctx.sthis.txt.base64.decode(p64));
+    const next = new URLSearchParams(searchParam);
+    next.delete("prompt64");
+    setSearchParam(next, { replace: true });
+  }, [isOwner, searchParam, setSearchParam, generation.sendPrompt, vctx.sthis]);
+
   // Hand a suggestion chip / "describe a change" off to the chat route, which
   // pre-fills its composer from ?prompt64 (#2675 merge checkpoint). The /vibe
   // surface doesn't edit in-page yet — /chat is the live-update surface for now.
@@ -223,14 +242,35 @@ export default function VibeIframeWrapper() {
     (text: string) => {
       const trimmed = text.trim();
       if (!trimmed || !ownerHandle || !appSlug) return;
+      // Owner: generate in place (PR-A).
       if (isOwner) {
-        generation.sendPrompt(trimmed); // generate in place — no hop
+        generation.sendPrompt(trimmed);
         return;
       }
-      const qs = new URLSearchParams({ prompt64: vctx.sthis.txt.base64.encode(trimmed) }).toString();
-      void navigate(`/remix/${ownerHandle}/${appSlug}?${qs}`);
+      const prompt64 = vctx.sthis.txt.base64.encode(trimmed);
+      // Logged-out non-owner: keep the existing /remix hop (it handles
+      // login -> fork -> prompt). Seamless inline fork needs a signed-in user.
+      if (!authSignedIn) {
+        void navigate(`/remix/${ownerHandle}/${appSlug}?${new URLSearchParams({ prompt64 }).toString()}`);
+        return;
+      }
+      // Signed-in non-owner: make-it-yours INLINE, then land on the fork's /vibe
+      // page carrying the prompt. The fork must complete (and the URL must point
+      // at the fork) before any codegen opens. Anchor the destination on the
+      // returned ResForkApp fields, not the pre-fork route params.
+      const tid = toast.loading("Making it yours…");
+      void (async () => {
+        const rFork = await vctx.chatApi.forkApp({ srcUserSlug: ownerHandle, srcAppSlug: appSlug, srcFsId: fsId });
+        if (rFork.isErr()) {
+          toast.error(`Couldn't make it yours: ${rFork.Err().message}`, { id: tid });
+          return;
+        }
+        toast.dismiss(tid);
+        notifyRecentVibesChanged();
+        void navigate(forkDestination(rFork.Ok(), prompt64), { replace: true });
+      })();
     },
-    [isOwner, ownerHandle, appSlug, navigate, vctx.sthis, generation.sendPrompt]
+    [isOwner, authSignedIn, ownerHandle, appSlug, fsId, navigate, vctx.sthis, vctx.chatApi, generation.sendPrompt]
   );
 
   const adminStorageKey = ownerHandle && appSlug ? adminModeStorageKey(ownerHandle, appSlug) : "";
