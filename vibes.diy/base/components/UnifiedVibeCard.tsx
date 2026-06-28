@@ -28,6 +28,12 @@ export interface UnifiedVibeCardProps {
   /** Controlled open state for the handle picker (defaults to internal state). */
   handlePickerOpen?: boolean;
   onHandlePickerOpenChange?: (open: boolean) => void;
+  /** Viewer-mode indicator (#2178): "author" shows a shield, a read-only "member"
+   *  shows a lock, "visitor" shows nothing. Per the epic §2 grant→surface table. */
+  viewerMode?: "author" | "member" | "visitor";
+  /** For a member viewer: true when they have no write grant (viewer/submitter) —
+   *  drives the lock glyph. Ignored for author/visitor. */
+  memberReadOnly?: boolean;
   onHome?: () => void;
   /** Selects the edit affordance (switches the body back to chips/Other). */
   onEdit?: () => void;
@@ -159,6 +165,7 @@ export function UnifiedVibeCard(props: UnifiedVibeCardProps) {
                   bottom row is tight now that the persistent logo occupies its
                   right end. */}
               <div style={{ flex: 1 }} />
+              <ModeIndicator viewerMode={props.viewerMode} memberReadOnly={props.memberReadOnly} />
               {props.handleSlug ? (
                 <div ref={pickerWrapRef} style={{ position: "relative", flexShrink: 0 }}>
                   <ViewerTagView
@@ -320,6 +327,41 @@ export function UnifiedVibeCard(props: UnifiedVibeCardProps) {
         </button>
       </div>
     </>
+  );
+}
+
+// Viewer-mode indicator (#2178) — a small glyph next to the handle tag. Author →
+// shield; read-only member → lock; everyone else (writer member, visitor) → nothing.
+// The design is settled in the epic §2 grant→surface table; this just renders it.
+function ModeIndicator({
+  viewerMode,
+  memberReadOnly,
+}: {
+  readonly viewerMode?: "author" | "member" | "visitor";
+  readonly memberReadOnly?: boolean;
+}) {
+  const show = viewerMode === "author" ? "shield" : viewerMode === "member" && memberReadOnly ? "lock" : null;
+  if (!show) return null;
+  const label = show === "shield" ? "Owner" : "Read-only";
+  return (
+    <span
+      role="img"
+      aria-label={label}
+      title={label}
+      className="text-light-secondary dark:text-dark-secondary"
+      style={{ display: "inline-flex", flexShrink: 0, opacity: 0.75 }}
+    >
+      {show === "shield" ? (
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          <path d="M12 3l7 3v5c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6l7-3z" />
+        </svg>
+      ) : (
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          <rect x="5" y="11" width="14" height="9" rx="2" />
+          <path d="M8 11V7a4 4 0 0 1 8 0v4" />
+        </svg>
+      )}
+    </span>
   );
 }
 
