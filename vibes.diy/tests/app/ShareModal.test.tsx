@@ -122,6 +122,9 @@ function createMockModal(overrides: Partial<UseShareModalReturn> = {}): UseShare
     embedCopied: false,
     handleCopyEmbed: vi.fn().mockResolvedValue(undefined),
     pinterestShareUrl: undefined,
+    publicAccessEnabled: false,
+    isTogglingPublicAccess: false,
+    handleSetPublicAccess: vi.fn().mockResolvedValue(undefined),
     ...overrides,
   };
 }
