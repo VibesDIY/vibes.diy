@@ -88,6 +88,8 @@ Shipping a release normally means cutting three tags at the same commit (`vibes-
 
 This is the easiest path from a phone: create `ship@<ver>` once via the GitHub **Releases** UI (target `main`), and all three deploys go.
 
+**From the CLI, the tag must be annotated — pass `-m`.** This repo's git config forces annotated tags, so a bare `git tag ship@<ver> <sha>` fails with `fatal: no tag message?` and the subsequent `git push` then errors with `src refspec ... does not match any` (the tag was never created). Always create it as `git tag -a ship@<ver> <sha> -m "ship <ver>: fan-out to prod + cli + pkg"`, then `git push origin ship@<ver>`. Same rule applies to the per-stream `vibes-diy@p*` / `vibes-diy@c*` / `pkg@p*` tags.
+
 ⚠️ **Requires the `DEPLOY_TAG_PAT` secret.** The fan-out pushes the child tags with a fine-grained PAT (Contents: read/write on this repo), **not** the default `GITHUB_TOKEN`. GitHub suppresses workflow runs for events created by `GITHUB_TOKEN`, so a `GITHUB_TOKEN` push would create the child tags but the deploys would silently never fire. The workflow hard-fails up front if `DEPLOY_TAG_PAT` is missing rather than half-shipping. A GitHub App token (`actions/create-github-app-token`) is a more auditable alternative if you'd rather not maintain a long-lived PAT.
 
 The fan-out only ships **merged code**: if the `ship@` target commit isn't on `main` (an ancestor of `origin/main`), the job aborts before tagging — so a stray `ship@` on a feature branch can't push a prod/cli/npm deploy.
