@@ -1,4 +1,4 @@
-import React from "react";
+import * as React from "react";
 
 /** De-blur overlay layered over the /vibe iframe during an in-place generation.
  *  Lifted from PreviewApp's stream overlay (backdropFilter blur ramp → faint
@@ -26,5 +26,3 @@ export function InVibeBlurOverlay({ active, blurPx }: { readonly active: boolean
     />
   );
 }
-
-export default InVibeBlurOverlay;

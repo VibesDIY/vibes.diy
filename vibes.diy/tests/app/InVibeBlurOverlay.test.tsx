@@ -1,4 +1,4 @@
-import React from "react";
+import * as React from "react";
 import { describe, it, expect, afterEach } from "vitest";
 import { render, cleanup } from "@testing-library/react";
 import { InVibeBlurOverlay } from "~/vibes.diy/app/components/InVibeBlurOverlay.js";

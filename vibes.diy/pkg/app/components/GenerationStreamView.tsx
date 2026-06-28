@@ -1,4 +1,4 @@
-import React from "react";
+import * as React from "react";
 import { isToplevelLine, type ToplevelLineMsg } from "@vibes.diy/call-ai-v2";
 import type { PromptBlock } from "../routes/chat/prompt-state.js";
 
@@ -35,5 +35,3 @@ export function GenerationStreamView({
     </div>
   );
 }
-
-export default GenerationStreamView;
