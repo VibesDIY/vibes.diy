@@ -1,0 +1,77 @@
+{
+  "id": "z3QkefAC57rcrs",
+  "clazz": "DeviceIdKeyBagItem",
+  "item": {
+    "deviceId": {
+      "kty": "EC",
+      "crv": "P-256",
+      "x": "Lg_s0u4Z4I2YLvwe7C_0mlJ9wZSZ-O7HZ-5OmLHT_Hc",
+      "y": "DMFTlfuSWnL6PKo_yAOtlw4T-z3bFrniHYhrHzw7rRg",
+      "d": "oNaLQAKo7fbIHFNi1t6LG9v6IZvWNJYfYQ8KLCs5w1Y"
+    },
+    "cert": {
+      "certificateJWT": "eyJhbGciOiJFUzI1NiIsInR5cCI6IkNFUlQrSldUIiwia2lkIjoiWUxkd1RWZk5sOVVUUUczMno2ek5FNVI3QTh4NjBiaXlreXJfa2ljektSTSIsIng1YyI6W119.eyJpc3MiOiJUZXN0IERldmljZSBDQSIsInN1YiI6ImdvbGRlbi1kZXZpY2UiLCJhdWQiOiJjZXJ0aWZpY2F0ZS1hdXRob3JpdHkiLCJpYXQiOjE3ODI2MjM2ODUsIm5iZiI6MTc4MjYyMzY4NSwiZXhwIjoxODE0MTU5Njg1LCJqdGkiOiJ6NzQxcUx1R1J6Vm5EYlliaXdyZUtjQkRKTlN1Q3d5TGRHRkVwbnBvMjNFemIiLCJjcmVhdGluZ1VzZXIiOnsidHlwZSI6ImNsZXJrIiwiY2xhaW1zIjp7ImF6cCI6ImdvbGRlbi1hcHAiLCJleHAiOjE3MDAwMDM2MDAsImlhdCI6MTcwMDAwMDAwMCwiaXNzIjoiZ29sZGVuLWlzc3VlciIsImp0aSI6ImdvbGRlbi1qdGkiLCJuYmYiOjE3MDAwMDAwMDAsInBhcmFtcyI6eyJuaWNrIjoiZ29sZGVuIiwiZW1haWwiOiJnb2xkZW5AZXhhbXBsZS5jb20iLCJlbWFpbF92ZXJpZmllZCI6dHJ1ZSwiZmlyc3QiOiJGaXJzdCIsImltYWdlX3VybCI6Imh0dHA6Ly9leGFtcGxlLmNvbS9pLnBuZyIsImxhc3QiOiJMYXN0IiwibmFtZSI6IkdvbGRlbiBEZXZpY2UiLCJwdWJsaWNfbWV0YSI6e319LCJyb2xlIjoiZGV2aWNlLWlkIiwic3ViIjoiZ29sZGVuLXN1YmplY3QiLCJ1c2VySWQiOiJnb2xkZW4tdXNlciIsImF1ZCI6WyJodHRwOi8vdGVzdC1hdWRpZW5jZS5sb2NhbGhvc3QvIl19fSwiY2VydGlmaWNhdGUiOnsidmVyc2lvbiI6IjMiLCJzZXJpYWxOdW1iZXIiOiJ6NzQxcUx1R1J6Vm5EYlliaXdyZUtjQkRKTlN1Q3d5TGRHRkVwbnBvMjNFemIiLCJzdWJqZWN0Ijp7ImNvbW1vbk5hbWUiOiJnb2xkZW4tZGV2aWNlIn0sImlzc3VlciI6eyJjb21tb25OYW1lIjoiVGVzdCBEZXZpY2UgQ0EiLCJvcmdhbml6YXRpb24iOiJUZXN0IE9yZ2FuaXphdGlvbiIsImxvY2FsaXR5IjoiVGVzdCBDaXR5Iiwic3RhdGVPclByb3ZpbmNlTmFtZSI6IlRlc3QgU3RhdGUiLCJjb3VudHJ5TmFtZSI6IlVTIn0sInZhbGlkaXR5Ijp7Im5vdEJlZm9yZSI6IjIwMjYtMDYtMjhUMDU6MTQ6NDUuMDAwWiIsIm5vdEFmdGVyIjoiMjAyNy0wNi0yOFQwNToxNDo0NS4wMDBaIn0sInN1YmplY3RQdWJsaWNLZXlJbmZvIjp7Imt0eSI6IkVDIiwiY3J2IjoiUC0yNTYiLCJ4IjoiTGdfczB1NFo0STJZTHZ3ZTdDXzBtbEo5d1pTWi1PN0haLTVPbUxIVF9IYyIsInkiOiJETUZUbGZ1U1duTDZQS29feUFPdGx3NFQtejNiRnJuaUhZaHJIenc3clJnIn0sInNpZ25hdHVyZUFsZ29yaXRobSI6IkVTMjU2Iiwia2V5VXNhZ2UiOlsiZGlnaXRhbFNpZ25hdHVyZSIsImtleUVuY2lwaGVybWVudCJdLCJleHRlbmRlZEtleVVzYWdlIjpbInNlcnZlckF1dGgiXX19.F_A_U8TMoRmIZWuMM5kIf9ujrt3Bgt2imgcBkzDTfVU9CJTfPMJ5F4NIsOfFWjwj6szTbSGnVk3B9k0tAleJgA",
+      "certificatePayload": {
+        "iss": "Test Device CA",
+        "sub": "golden-device",
+        "aud": "certificate-authority",
+        "iat": 1782623685,
+        "nbf": 1782623685,
+        "exp": 1814159685,
+        "jti": "z741qLuGRzVnDbYbiwreKcBDJNSuCwyLdGFEpnpo23Ezb",
+        "creatingUser": {
+          "type": "clerk",
+          "claims": {
+            "azp": "golden-app",
+            "exp": 1700003600,
+            "iat": 1700000000,
+            "iss": "golden-issuer",
+            "jti": "golden-jti",
+            "nbf": 1700000000,
+            "params": {
+              "nick": "golden",
+              "email": "golden@example.com",
+              "email_verified": true,
+              "first": "First",
+              "image_url": "http://example.com/i.png",
+              "last": "Last",
+              "name": "Golden Device",
+              "public_meta": {}
+            },
+            "role": "device-id",
+            "sub": "golden-subject",
+            "userId": "golden-user",
+            "aud": ["http://test-audience.localhost/"]
+          }
+        },
+        "certificate": {
+          "version": "3",
+          "serialNumber": "z741qLuGRzVnDbYbiwreKcBDJNSuCwyLdGFEpnpo23Ezb",
+          "subject": {
+            "commonName": "golden-device"
+          },
+          "issuer": {
+            "commonName": "Test Device CA",
+            "organization": "Test Organization",
+            "locality": "Test City",
+            "stateOrProvinceName": "Test State",
+            "countryName": "US"
+          },
+          "validity": {
+            "notBefore": "2026-06-28T05:14:45.000Z",
+            "notAfter": "2027-06-28T05:14:45.000Z"
+          },
+          "subjectPublicKeyInfo": {
+            "kty": "EC",
+            "crv": "P-256",
+            "x": "Lg_s0u4Z4I2YLvwe7C_0mlJ9wZSZ-O7HZ-5OmLHT_Hc",
+            "y": "DMFTlfuSWnL6PKo_yAOtlw4T-z3bFrniHYhrHzw7rRg"
+          },
+          "signatureAlgorithm": "ES256",
+          "keyUsage": ["digitalSignature", "keyEncipherment"],
+          "extendedKeyUsage": ["serverAuth"]
+        }
+      }
+    }
+  }
+}
