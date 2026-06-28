@@ -2,6 +2,7 @@ import { type } from "arktype";
 import { FileSystemRefFields } from "@vibes.diy/call-ai-v2";
 import { fileSystemItem, MetaItem } from "./types.js";
 import { dashAuthType, vibeUserEnv, vibeFile, FSMode, NeedOneAppSlugUserSlug } from "./common.js";
+import { PromptAndBlockMsgs } from "./chat.js";
 
 export const ReqEnsureAppSlug = type({
   type: "'vibes.diy.req-ensure-app-slug'",
@@ -106,6 +107,31 @@ export const resGetChatDetails = type({
 export type ResGetChatDetails = typeof resGetChatDetails.infer;
 export function isResGetChatDetails(obj: unknown): obj is ResGetChatDetails {
   return !(resGetChatDetails(obj) instanceof type.errors);
+}
+
+// Deep-read a single runtime in-app chat (ApplicationChats) by chatId.
+// Powers `vibes-diy app-chats <vibe> <chatId>` — returns the full blocks array
+// (all messages in that chat session). Distinct from getChatDetails (which reads
+// the codegen/builder chat system: ChatContexts + ChatSections).
+export const reqGetApplicationChat = type({
+  type: "'vibes.diy.req-get-application-chat'",
+  auth: dashAuthType,
+  chatId: "string",
+  "appSlug?": "string", // optional scoping/validation constraint
+  "ownerHandle?": "string", // optional scoping/validation constraint
+});
+export type ReqGetApplicationChat = typeof reqGetApplicationChat.infer;
+
+export const resGetApplicationChat = type({
+  type: "'vibes.diy.res-get-application-chat'",
+  "chatId?": "string",
+  "appSlug?": "string",
+  "ownerHandle?": "string",
+  blocks: PromptAndBlockMsgs.array(),
+});
+export type ResGetApplicationChat = typeof resGetApplicationChat.infer;
+export function isResGetApplicationChat(obj: unknown): obj is ResGetApplicationChat {
+  return !(resGetApplicationChat(obj) instanceof type.errors);
 }
 
 export const reqGetAppByFsId = type({

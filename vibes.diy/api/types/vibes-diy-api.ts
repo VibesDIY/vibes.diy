@@ -23,6 +23,8 @@ import {
   ResCreateHandleBinding,
   ReqDeleteHandleBinding,
   ResDeleteHandleBinding,
+  ReqGetApplicationChat,
+  ResGetApplicationChat,
 } from "./app.js";
 import {
   ReqOpenChat,
@@ -191,6 +193,7 @@ export interface VibesDiyApiIface<_T = unknown> {
   ensureAppSettings(req: Req<ReqEnsureAppSettings>): Promise<Result<ResEnsureAppSettings, VibesDiyError>>;
   listApplicationChats(req: Req<ReqListApplicationChats>): Promise<Result<ResListApplicationChats, VibesDiyError>>;
   listCodegenChats(req: Req<ReqListCodegenChats>): Promise<Result<ResListCodegenChats, VibesDiyError>>;
+  getApplicationChat(req: Req<ReqGetApplicationChat>): Promise<Result<ResGetApplicationChat, VibesDiyError>>;
 
   getTokenClaims(): Promise<Result<VerifiedClaimsResult & { claims: ClerkClaim }>>;
 
