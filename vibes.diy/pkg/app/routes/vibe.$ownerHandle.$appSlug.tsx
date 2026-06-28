@@ -22,6 +22,7 @@ import {
 import type { ShareMember, ShareViewer, ShareAccess, HandleOption } from "@vibes.diy/base";
 import { isUserSettingDefaultHandle } from "@vibes.diy/api-types";
 import { switchActiveHandle, createAndUseHandle, handleAvatarUrl } from "./handle-picker-actions.js";
+import { uploadHandleAvatar } from "../lib/upload-avatar.js";
 import { useYoursNowToast } from "../hooks/use-yours-now-toast.js";
 import { useShareModal } from "../components/ResultPreview/useShareModal.js";
 import { useIframeApiInFlight } from "../hooks/useIframeApiInFlight.js";
@@ -361,6 +362,9 @@ export default function VibeIframeWrapper() {
   // gracefully to the initial when a handle has no photo yet.
   const [myHandles, setMyHandles] = useState<HandleOption[]>([]);
   const [handlePickerBusy, setHandlePickerBusy] = useState(false);
+  // Cache-buster bumped after an avatar upload so the per-handle /u/<h>/avatar
+  // endpoint re-paints with the new image instead of the cached one.
+  const [avatarVersion, setAvatarVersion] = useState(0);
   // The viewer's grant on this vibe — used to decide whether the comments
   // composer is enabled when the owner has flipped "Only collaborators can
   // comment" on. Owner + editor stay enabled; viewer/submitter/public/none
@@ -601,6 +605,24 @@ export default function VibeIframeWrapper() {
         refreshViewer: refreshViewerFromWhoAmI,
       }),
     [vctx.sharedApi, refreshViewerFromWhoAmI]
+  );
+
+  // Make a new avatar for the active handle from the card's viewer tag — the same
+  // upload + consent-overlay flow Settings uses (uploadHandleAvatar). On success
+  // bust the avatar URL and re-run whoAmI so the embedded vibe's viewer (its
+  // avatar comes from the same endpoint) repaints too.
+  const handlePickAvatar = useCallback(
+    async (file: File) => {
+      if (!myUserSlug) return;
+      const result = await uploadHandleAvatar({ sharedApi: vctx.sharedApi, handle: myUserSlug, file });
+      if (!result.ok) {
+        if (!result.cancelled) toast.error(result.error);
+        return;
+      }
+      setAvatarVersion((v) => v + 1);
+      void refreshViewerFromWhoAmI();
+    },
+    [myUserSlug, vctx.sharedApi, refreshViewerFromWhoAmI]
   );
 
   useEffect(() => {
@@ -1036,10 +1058,14 @@ export default function VibeIframeWrapper() {
                   appIconUrl={screenshotUrl ?? undefined}
                   isOwner={isOwner}
                   handleSlug={myUserSlug}
-                  handleAvatarUrl={myUserSlug ? handleAvatarUrl(myUserSlug) : undefined}
+                  handleAvatarUrl={
+                    myUserSlug ? `${handleAvatarUrl(myUserSlug)}${avatarVersion ? `?v=${avatarVersion}` : ""}` : undefined
+                  }
                   handles={myHandles}
                   onSelectHandle={(slug) => void handleSelectHandle(slug)}
                   onNewHandle={() => void handleNewHandle()}
+                  // Owner-only: making a new avatar writes to the active handle.
+                  onPickAvatar={isOwner ? (file) => void handlePickAvatar(file) : undefined}
                   handlePickerBusy={handlePickerBusy}
                   viewerMode={shareViewer === "author" ? "author" : shareViewer === "member" ? "member" : "visitor"}
                   // Only a viewer grant is read-only; submitter is write-capable

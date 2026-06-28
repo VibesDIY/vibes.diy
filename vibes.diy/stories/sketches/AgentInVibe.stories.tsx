@@ -200,7 +200,7 @@ function ViewerTag() {
         displayName="@meghan"
         editable
         onPickFile={() => undefined}
-        trailing={<span style={{ fontSize: 11, opacity: 0.6, marginLeft: 1 }}>▾</span>}
+        onTagClick={() => undefined}
         style={{
           background: "var(--color-light-background-01, #eee)",
           border: "1px solid var(--color-light-decorative-01, #ddd)",

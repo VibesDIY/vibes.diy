@@ -1,9 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { VibesButton } from "@vibes.diy/base";
-import { isResAssetUploadGrant } from "@vibes.diy/api-types";
 import type { Conn } from "@vibes.diy/api-types";
-import { exception2Result } from "@adviser/cement";
-import { avatarConfirmController } from "../lib/avatar-confirm.js";
+import { uploadHandleAvatar } from "../lib/upload-avatar.js";
 
 // Platform Settings widget for editing ONE handle's avatar. A deliberate
 // derivative of the avatar-edit flow — NOT the vibe-runtime ViewerTag, which is
@@ -39,60 +37,10 @@ export function HandleAvatarEditor({ sharedApi, handle }: HandleAvatarEditorProp
   const onUpload = async (file: File) => {
     setUploading(true);
     setError(null);
-
-    // 1. Mint a short-lived upload grant.
-    const rGrant = await sharedApi.requestAssetUploadGrant({
-      ownerHandle: handle,
-      appSlug: "_profile",
-      mimeType: file.type || "application/octet-stream",
-    });
-    if (rGrant.isErr()) {
-      setUploading(false);
-      setError(`Upload failed: ${rGrant.Err().message}`);
-      return;
-    }
-    const grantRes = rGrant.Ok();
-    if (!isResAssetUploadGrant(grantRes)) {
-      setUploading(false);
-      setError("Upload failed: unexpected grant response shape");
-      return;
-    }
-
-    // 2. POST the bytes.
-    const uploadUrl = /^https?:\/\//i.test(grantRes.uploadUrl)
-      ? grantRes.uploadUrl
-      : `${window.location.origin}${grantRes.uploadUrl}`;
-    const rUpload = await exception2Result(() =>
-      fetch(uploadUrl, {
-        method: "POST",
-        headers: {
-          "X-Asset-Grant": grantRes.grant,
-          "Content-Type": file.type || "application/octet-stream",
-        },
-        body: file,
-      })
-    );
+    const result = await uploadHandleAvatar({ sharedApi, handle, file });
     setUploading(false);
-    if (rUpload.isErr()) {
-      setError(`Upload failed: ${rUpload.Err().message}`);
-      return;
-    }
-    const res = rUpload.Ok();
-    if (!res.ok) {
-      const text = await res.text().catch(() => "");
-      setError(`Upload failed: POST /assets returned ${res.status}: ${text}`);
-      return;
-    }
-    const body = (await res.json()) as { cid: string; getURL: string; size: number; uploadId: string };
-
-    // 3. Preview/confirm gate (#1968) — getURL is the trusted server response.
-    const confirmed = await avatarConfirmController.request({ cid: body.cid, mimeType: file.type, getURL: body.getURL });
-    if (!confirmed) return;
-
-    // 4. Write per-handle; the server re-validates ownership of `handle`.
-    const rSave = await sharedApi.ensureHandleAvatar({ handle, cid: body.cid, mime: file.type });
-    if (rSave.isErr()) {
-      setError(`Failed to save avatar: ${rSave.Err()}`);
+    if (!result.ok) {
+      if (!result.cancelled) setError(result.error);
       return;
     }
     setBroken(false);
