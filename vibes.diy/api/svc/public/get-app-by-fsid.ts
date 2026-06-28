@@ -23,7 +23,7 @@ import { unwrapMsgBase } from "../unwrap-msg-base.js";
 import { VibesApiSQLCtx } from "../types.js";
 import { optAuth } from "../check-auth.js";
 import { and, eq } from "drizzle-orm/sql/expressions";
-import { selectLatestAppPerSlug } from "./select-app.js";
+import { selectLatestAppPerSlug, selectLatestDraftOrPublished } from "./select-app.js";
 import { deriveDisplayName } from "./derive-display-name.js";
 import { ensureAppSettings } from "./ensure-app-settings.js";
 import { hasAccessInvite, redeemInvite } from "./invite-flow.js";
@@ -91,6 +91,7 @@ export const getAppByFsIdEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqGet
 
       let app: typeof vctx.sql.tables.apps.$inferSelect | undefined;
       if (req.fsId) {
+        // Explicit version → serve that exact fsId, regardless of selectMode (#2772).
         app = await vctx.sql.db
           .select()
           .from(vctx.sql.tables.apps)
@@ -103,7 +104,18 @@ export const getAppByFsIdEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqGet
           )
           .limit(1)
           .then((r) => r[0]);
+      } else if (req.selectMode === "ownerLatest" && callerUserId) {
+        // Owner-only latest-incl-dev resolution (#2772): return the caller's newest
+        // row across modes (a fresh in-place `dev` draft wins). If the selected row
+        // isn't owned by the caller, fall back to "published" so a non-owner asking
+        // for ownerLatest never gets someone else's draft — published is the contract.
+        const draft = await selectLatestDraftOrPublished(vctx, { ownerHandle: req.ownerHandle, appSlug: req.appSlug });
+        app =
+          draft && draft.userId === callerUserId
+            ? draft
+            : await selectLatestAppPerSlug(vctx, { ownerHandle: req.ownerHandle, appSlug: req.appSlug });
       } else {
+        // Default ("published"): byte-for-byte today's behavior — latest production.
         app = await selectLatestAppPerSlug(vctx, { ownerHandle: req.ownerHandle, appSlug: req.appSlug });
       }
 

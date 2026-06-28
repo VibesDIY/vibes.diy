@@ -719,6 +719,106 @@ export const NonOwnerFork: Story = {
 // blur, no spinner). Real = stream + de-blur. This story puts them next to each other so the
 // visible contract is legible at a glance.
 
+// =========================================================================================
+// #2772 — Draft / published for in-place generation. After the owner generates in place on
+// /vibe, their latest is a `dev` (draft) row; the public still sees the last `production`.
+// The route re-pins the OWNER to their draft fsId and surfaces these two states:
+//   D1 (this PR) — the "Draft · unpublished" header badge (owner-only chrome).
+//   D2 (next)    — an in-card "unpublished changes · Publish" banner (state + action together).
+// Both render the REAL UnifiedVibeCard; the D2 banner is sketched in the `body` slot until
+// the publishApp RPC + control land. See docs/superpowers/specs/2026-06-28-vibe-draft-publish-design.md.
+// =========================================================================================
+
+// --- #2772 · D1 · owner viewing a draft — the header badge --------------------------------
+
+export const DraftBadge: Story = {
+  name: "#2772 · D1 · draft badge (owner)",
+  render: () => (
+    <Phone>
+      {/* The owner's latest in-place gen — the route re-pinned the iframe to this draft fsId. */}
+      <FakeVibeApp />
+      <UnifiedVibeCard
+        open
+        appTitle="Bloom Machine"
+        appSlug="meghan/bloom"
+        handleSlug="meghan"
+        viewerMode="author"
+        publishState="draft"
+        chips={["Add swing", "Make it grimy"]}
+        onSelectChip={() => undefined}
+        onSubmitOther={() => undefined}
+        onHome={() => undefined}
+        onShare={() => undefined}
+      />
+    </Phone>
+  ),
+};
+
+/** Sketched D2 banner — state ("unpublished changes") + action (Publish) together, above the
+ *  chips, per §6 decision 3. Becomes a real control (calling publishApp) in PR-D2; here it's
+ *  body-slot sketch content so we can agree the placement now. On publish the badge + banner
+ *  both clear ("Up to date"). */
+function PublishBanner() {
+  return (
+    <div
+      className="rounded-md"
+      style={{
+        background: "rgba(245,158,11,0.10)",
+        border: "1px solid rgba(245,158,11,0.4)",
+        padding: "8px 10px",
+        marginBottom: 10,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        gap: 8,
+      }}
+    >
+      <span className="text-sm" style={{ color: "#92400e", lineHeight: 1.3 }}>
+        <strong>Unpublished changes.</strong> <span style={{ opacity: 0.8 }}>Only you can see this draft.</span>
+      </span>
+      <button
+        type="button"
+        className="rounded-md px-3 py-1.5 text-sm font-semibold"
+        style={{ flexShrink: 0, background: "var(--vibes-near-black, #1a1a1a)", color: "#fff", border: "none", cursor: "pointer" }}
+      >
+        Publish
+      </button>
+    </div>
+  );
+}
+
+// --- #2772 · D2 (forward-look) · the in-card Publish banner -------------------------------
+
+export const DraftPublishBanner: Story = {
+  name: "#2772 · D2 · publish banner (owner draft)",
+  render: () => (
+    <Phone>
+      <FakeVibeApp />
+      <UnifiedVibeCard
+        open
+        appTitle="Bloom Machine"
+        appSlug="meghan/bloom"
+        handleSlug="meghan"
+        viewerMode="author"
+        publishState="draft"
+        onHome={() => undefined}
+        onShare={() => undefined}
+        body={
+          <>
+            <PublishBanner />
+            <OptionButtons
+              options={["Add swing", "Make it grimy"]}
+              isFirst
+              firstMessage="Keep editing, or publish what you have:"
+            />
+            <OtherInput />
+          </>
+        }
+      />
+    </Phone>
+  ),
+};
+
 export const PerfContract: StoryObj = {
   name: "#2677 · perf contract (cached vs real)",
   parameters: { viewport: { defaultViewport: "responsive" } },

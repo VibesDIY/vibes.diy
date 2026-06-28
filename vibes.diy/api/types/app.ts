@@ -141,6 +141,13 @@ export const reqGetAppByFsId = type({
   appSlug: "string",
   ownerHandle: "string",
   "token?": "string",
+  // Which version the no-`fsId` (unversioned) resolution returns (#2772).
+  // "published" (default) is today's behavior byte-for-byte: latest production,
+  // shared by everyone. "ownerLatest" returns the caller's latest row across all
+  // modes (so a newer in-place `dev` draft wins) — owner-only: the server falls
+  // back to "published" when the caller doesn't own the app. Ignored when `fsId`
+  // is set (an explicit version is always served exactly).
+  "selectMode?": "'published'|'ownerLatest'",
 });
 export type ReqGetAppByFsId = typeof reqGetAppByFsId.infer;
 export function isReqGetAppByFsId(obj: unknown): obj is ReqGetAppByFsId {

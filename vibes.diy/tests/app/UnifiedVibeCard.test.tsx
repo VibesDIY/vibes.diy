@@ -209,6 +209,21 @@ describe("UnifiedVibeCard", () => {
     expect(screen.queryByRole("img", { name: /^owner$/i })).toBeNull();
   });
 
+  it("shows the 'Draft · unpublished' badge when publishState is draft (#2772)", () => {
+    render(<UnifiedVibeCard appTitle="Bloom Machine" open handleSlug="meghan" viewerMode="author" publishState="draft" />);
+    expect(screen.getByText(/draft · unpublished/i)).toBeTruthy();
+    expect(screen.getByRole("status", { name: /unpublished/i })).toBeTruthy();
+  });
+
+  it("hides the draft badge when published or unset (#2772)", () => {
+    const { rerender } = render(
+      <UnifiedVibeCard appTitle="Bloom Machine" open handleSlug="meghan" viewerMode="author" publishState="published" />
+    );
+    expect(screen.queryByText(/draft · unpublished/i)).toBeNull();
+    rerender(<UnifiedVibeCard appTitle="Bloom Machine" open handleSlug="meghan" viewerMode="author" />);
+    expect(screen.queryByText(/draft · unpublished/i)).toBeNull();
+  });
+
   it("gates the admin badge to the owner: a stale adminMode never labels a member/visitor (Codex P2)", () => {
     const { rerender } = render(
       <UnifiedVibeCard appTitle="Bloom Machine" open handleSlug="meghan" viewerMode="member" memberReadOnly adminMode />

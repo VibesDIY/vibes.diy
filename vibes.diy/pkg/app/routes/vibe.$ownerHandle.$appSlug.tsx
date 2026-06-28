@@ -36,6 +36,7 @@ import { isMetaScreenShot, isMetaTitle, type ResGetAppByFsId, type VibesFPApiPar
 import { computeCardVariant } from "./vibe-card-variant.js";
 import { readIntent, withIntent, withoutIntent } from "./vibe-intent.js";
 import { forkDestination } from "./vibe-fork.js";
+import { pinnedIframeFsId } from "./vibe-draft-pin.js";
 import { notifyRecentVibesChanged } from "../hooks/useRecentVibes.js";
 import { adminModeStorageKey } from "../lib/admin-mode.js";
 import { RUNTIME_PREVIEW_IFRAME_ALLOW, RUNTIME_PREVIEW_IFRAME_SANDBOX } from "../lib/iframe-policy.js";
@@ -144,6 +145,12 @@ export default function VibeIframeWrapper() {
   const loaderData = matches[matches.length - 1]?.data as { iframeUrl?: string; isWorldReadable?: boolean } | undefined;
   const isWorldReadable = (loaderData as { isWorldReadable?: boolean } | undefined)?.isWorldReadable ?? false;
   const [iframeUrl, setIframeUrl] = useState<string | undefined>(loaderData?.iframeUrl);
+  // #2772 D1: the owner's latest unpublished in-place draft. `draftFsId` re-pins the
+  // iframe to that version; `isDraft` drives the "Draft · unpublished" badge. Both stay
+  // unset for non-owners, versioned URLs, and owners whose latest is already published.
+  // Declared here (above the iframe-sync effect) because that effect pins `draftFsId`.
+  const [draftFsId, setDraftFsId] = useState<string | undefined>(undefined);
+  const [isDraft, setIsDraft] = useState(false);
   const isNetworkActive = useIframeApiInFlight();
   // Gate the post-iframe chrome (overlays, pill, sidebar) until after client
   // hydration. The chrome uses createPortal(..., document.body), which calls
@@ -157,13 +164,18 @@ export default function VibeIframeWrapper() {
 
   const ssrIframeUrl = loaderData?.iframeUrl;
   useEffect(() => {
-    if (ssrIframeUrl) {
+    if (ssrIframeUrl && !draftFsId) {
       // On the data-router path the loader re-runs on a client-side param change
       // (e.g. the seamless non-owner fork navigating to /vibe/$yours/$forkSlug),
       // producing a fresh loader iframeUrl. The `iframeUrl` state was only seeded
       // once at mount, so without copying the new value the <iframe src> stays
       // pinned to the source app and the fork's generation would hot-swap the
       // stale runtime. Sync state to the current loader URL. (#2677 PR-B)
+      //
+      // EXCEPTION (#2772 D1): when the owner has an unpublished draft, `draftFsId`
+      // is set and we fall through to re-pin the iframe to that draft version —
+      // a single transition from the SSR production paint (which is the correct
+      // first paint for anon + the owner before their draft resolves).
       setIframeUrl(ssrIframeUrl);
       return;
     }
@@ -173,17 +185,29 @@ export default function VibeIframeWrapper() {
     }
     const myUrl = URI.from(window.location.href);
     const port = myUrl.port && myUrl.port !== "80" && myUrl.port !== "443" ? myUrl.port : undefined;
+    // A versioned URL (route-param `fsId`) is an explicit request and is NEVER
+    // overridden; only the unversioned owner-draft case pins `draftFsId`.
+    const pinFsId = pinnedIframeFsId(fsId, draftFsId);
     const baseUrl = calcEntryPointUrl({
       hostnameBase: vctx.webVars.env.VIBES_SVC_HOSTNAME_BASE,
       protocol: myUrl.protocol === "https:" ? "https" : "http",
-      bindings: { appSlug, ownerHandle, ...(fsId ? { fsId } : {}) },
+      bindings: { appSlug, ownerHandle, ...(pinFsId ? { fsId: pinFsId } : {}) },
       port,
     });
     const myParams = Object.fromEntries(myUrl.getParams);
     setIframeUrl(
       BuildURI.from(baseUrl).searchParams(myParams, "merge").setParam("npmUrl", vctx.webVars.pkgRepos.workspace).toString()
     );
-  }, [ssrIframeUrl, appSlug, ownerHandle, fsId, vctx.webVars.env.VIBES_SVC_HOSTNAME_BASE, vctx.webVars.pkgRepos.workspace]);
+  }, [
+    ssrIframeUrl,
+    appSlug,
+    ownerHandle,
+    fsId,
+    draftFsId,
+    vctx.webVars.env.VIBES_SVC_HOSTNAME_BASE,
+    vctx.webVars.pkgRepos.workspace,
+  ]);
+
   const [notFound, setNotFound] = useState(false);
   const [reqLogin, setReqLogin] = useState(false);
   const [cardGrant, setCardGrant] = useState<ResGetAppByFsId["grant"] | undefined>(undefined);
@@ -342,6 +366,11 @@ export default function VibeIframeWrapper() {
     // same session (carrying ?prompt64) would be suppressed and never generate.
     autoFiredRef.current = false;
     forkingRef.current = false;
+    // Clear the previous vibe's draft pin synchronously on nav — the draft effect
+    // re-resolves async, so without this the new vibe briefly shows the old draft
+    // fsId (the route component is reused across vibe→vibe nav). (#2772 D1)
+    setDraftFsId(undefined);
+    setIsDraft(false);
   }, [ownerHandle, appSlug]);
 
   useEffect(() => {
@@ -371,6 +400,36 @@ export default function VibeIframeWrapper() {
       cancelled = true;
     };
   }, [authSignedIn, ownerHandle, vctx.sharedApi]);
+
+  // #2772 D1: owner draft read. When the owner views the UNVERSIONED /vibe URL,
+  // resolve their latest-incl-dev fsId (selectMode:"ownerLatest", owner-verified
+  // server-side). A `dev` result means an unpublished draft → pin it (the iframe-sync
+  // effect re-pins to `draftFsId`) + show the badge; a `production` result means
+  // up-to-date → leave the production paint as is. Versioned URLs (route-param `fsId`)
+  // and non-owners are guarded out, so the public surface is unchanged.
+  useEffect(() => {
+    if (!isOwner || fsId || !ownerHandle || !appSlug) {
+      setIsDraft(false);
+      setDraftFsId(undefined);
+      return;
+    }
+    let cancelled = false;
+    void vctx.sharedApi.getAppByFsId({ appSlug, ownerHandle, selectMode: "ownerLatest" }).then((rRes) => {
+      if (cancelled || rRes.isErr()) return;
+      const res = rRes.Ok();
+      // Only honor a genuine owner grant on a dev row; anything else stays on production.
+      if (res.error || res.grant !== "owner" || !res.fsId || res.mode !== "dev") {
+        setIsDraft(false);
+        setDraftFsId(undefined);
+        return;
+      }
+      setIsDraft(true);
+      setDraftFsId(res.fsId);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [isOwner, fsId, ownerHandle, appSlug, vctx.sharedApi]);
 
   useEffect(() => {
     if (!isOwner || !ownerHandle || !appSlug) {
@@ -959,6 +1018,9 @@ export default function VibeIframeWrapper() {
                   // (canWrite, db-acl-eval) so it gets no lock (Codex P2).
                   memberReadOnly={myGrant === "viewer"}
                   adminMode={adminMode}
+                  // #2772 D1: the owner-only "Draft · unpublished" badge — set when
+                  // the owner is pinned to their latest unpublished in-place draft.
+                  publishState={isDraft ? "draft" : undefined}
                   chips={editChips}
                   onSelectChip={handleEditPrompt}
                   onSubmitOther={handleEditPrompt}
