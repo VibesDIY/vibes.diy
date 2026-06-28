@@ -71,12 +71,19 @@ describe("keybag golden — on-disk WRITE contract (two-phase enroll)", () => {
     expect("cert" in onDisk.item).toBe(false);
   });
 
-  it("setDeviceId(jwk, cert) writes the full envelope byte-for-byte equal to the golden file", async () => {
+  it("setDeviceId(jwk, cert) writes the full envelope (structurally equal to the golden file)", async () => {
     const { dir, sthis } = tmpKeybag();
     const kb = await getKeyBag(sthis);
     await kb.setDeviceId(deviceId); // phase 1
     await kb.setDeviceId(deviceId, cert); // phase 2 (post-CA-callback)
 
+    // STRUCTURAL, not literal-byte, equality: the keybag always `JSON.parse`s on
+    // read, so whitespace and key order are NOT a compatibility boundary — an
+    // existing file is read regardless of formatting. What must not drift is the
+    // parsed JSON content (envelope keys, clazz, the nested deviceId + cert), and
+    // that is exactly what `toEqual` over the parsed value pins. (A raw-string
+    // compare would also fail spuriously: the committed fixture is
+    // prettier-formatted, while the provider emits `JSON.stringify(item, null, 2)`.)
     const onDisk = JSON.parse(readFileSync(join(dir, DEVICE_ID_FILENAME), "utf8"));
     expect(onDisk).toEqual({ id: DEVICE_ID, clazz: "DeviceIdKeyBagItem", item: { deviceId, cert } });
     expect(onDisk).toEqual(FIXTURE);
