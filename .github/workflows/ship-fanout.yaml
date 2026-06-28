@@ -12,6 +12,20 @@ name: ship fan-out
 # agents/deploy-tags.md's pending-changes tooling + rollback depend on are still
 # created. The `ship@` tag itself triggers nothing but this workflow.
 #
+# Test-once-then-fan-out: a freshly-merged main commit usually has NO green
+# `compile_test` check (ci.yaml runs on the PR-head SHA; we rebase-merge, so the
+# main commit's SHA differs). If we pushed the child tags blind, vibes-diy@p and
+# vibes-diy@c would each fire vibes-diy-deploy.yaml and — neither seeing a green
+# check — both run the full sharded suite IN PARALLEL: the same tests, twice.
+# Instead this workflow runs the gate→checks→test×4→compile_test graph ONCE on
+# the ship SHA (the same graph vibes-diy-deploy uses), emitting a reusable green
+# `compile_test` check-run on that exact commit. THEN it pushes the child tags;
+# each child deploy's own `gate` finds that green check and skips straight to
+# deploy. Test once, deploy both vibes-diy@ tags. The downstream tags need ZERO
+# changes — the gate is already SHA-keyed and source-agnostic. (pkg@p still runs
+# its own actions/base; package-deploy.yaml has no green-check gate.) See
+# agents/deploy-tags.md § ship@ one-tag fan-out.
+#
 # IMPORTANT: the child tags are pushed with a PAT (secrets.DEPLOY_TAG_PAT), NOT
 # the default GITHUB_TOKEN. GitHub suppresses workflow runs for events created by
 # GITHUB_TOKEN, so a GITHUB_TOKEN push would create the tags but never trigger
@@ -28,16 +42,22 @@ concurrency:
   group: ship-fanout-${{ github.ref }}
   cancel-in-progress: false
 
-permissions:
-  contents: write
-
 jobs:
-  fanout:
-    # A tag *deletion* (`git push origin --delete ship@x.y.z`) also fires this
-    # push event, with no commit to deploy. Skip those so a cleanup never fans
-    # out a bogus release.
+  # Front-load every validation here so we never spend the test suite on an
+  # invalid ship tag, and look up whether this SHA is already green (the same
+  # skip-tests-if-green optimization vibes-diy-deploy's gate uses, hoisted so a
+  # green SHA skips the whole matrix). Everything chains off this job, so the
+  # `!github.event.deleted` guard (a `git push --delete ship@x.y.z` also fires
+  # this push event, with no commit to deploy) cascades to the whole run.
+  gate:
     if: ${{ !github.event.deleted }}
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      checks: read
+    outputs:
+      sha_green: ${{ steps.green.outputs.sha_green }}
+      ver: ${{ steps.validate.outputs.ver }}
     steps:
       - name: Require deploy PAT
         env:
@@ -48,16 +68,14 @@ jobs:
             exit 1
           fi
 
-      - name: Checkout ship commit
-        uses: actions/checkout@v5
+      - uses: actions/checkout@v5
         with:
           ref: ${{ github.sha }}
           fetch-depth: 0
           fetch-tags: true
-          token: ${{ secrets.DEPLOY_TAG_PAT }}
-          persist-credentials: true
 
-      - name: Create and push canonical deploy tags
+      - name: Validate ship tag (semver, on-main, child tags free)
+        id: validate
         env:
           SHIP_REF: ${{ github.ref }}
           SHIP_SHA: ${{ github.sha }}
@@ -69,7 +87,6 @@ jobs:
             echo "::error::ship tag version '$VER' is not bare semver (expected ship@X.Y.Z)"
             exit 1
           fi
-          echo "Fanning out ship@$VER at $SHIP_SHA"
 
           # Only ever fan out a commit that's already on main. A prod/cli/npm
           # deploy must come from merged code, never an arbitrary off-main ref.
@@ -79,9 +96,148 @@ jobs:
             exit 1
           fi
 
+          # Refuse to ship if any child tag already exists — deploy tags are
+          # immutable. Catch it here, before the suite runs, not just at push.
+          for t in "vibes-diy@p$VER" "vibes-diy@c$VER" "pkg@p$VER"; do
+            if git rev-parse -q --verify "refs/tags/$t" >/dev/null; then
+              echo "::error::tag $t already exists — tags are immutable, bump the ship@ version instead"
+              exit 1
+            fi
+          done
+
+          echo "ver=$VER" >> "$GITHUB_OUTPUT"
+          echo "ship@$VER at $SHIP_SHA validated — on main, child tags free"
+
+      - name: check-sha-tested
+        id: green
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SHA: ${{ github.sha }}
+          REPO: ${{ github.repository }}
+        run: |
+          # Same green-check lookup vibes-diy-deploy's gate uses. Fail safe: any
+          # API hiccup → sha_green=false → the full checks + sharded suite runs,
+          # so coverage is never silently dropped.
+          GREEN=$(gh api "repos/${REPO}/commits/${SHA}/check-runs" --paginate \
+            --jq '[.check_runs[] | select(.name=="compile_test" and .conclusion=="success")] | length' \
+            2>/dev/null | awk '{s+=$1} END {print s+0}')
+          if [ "${GREEN:-0}" -ge 1 ]; then
+            echo "sha_green=true" >> "$GITHUB_OUTPUT"
+            echo "✅ ${SHA} already has a green compile_test check — skipping checks + tests." \
+              >> "${GITHUB_STEP_SUMMARY:-/dev/stdout}"
+          else
+            echo "sha_green=false" >> "$GITHUB_OUTPUT"
+            echo "No green compile_test check on ${SHA} — running checks + sharded tests."
+          fi
+
+  # Lint + format-check + build(typecheck); skipped on an already-green SHA.
+  # Mirrors vibes-diy-deploy.yaml's `checks`. `run-tests: 'false'` skips the
+  # Docker suite here.
+  checks:
+    needs: gate
+    if: ${{ needs.gate.outputs.sha_green != 'true' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: ./actions/base
+        with:
+          run-tests: 'false'
+
+  # The Docker Playwright/vitest suite, fanned out across 4 free standard
+  # runners, only when the SHA isn't already green. fail-fast: false for the
+  # full picture. Mirrors vibes-diy-deploy.yaml's `test`.
+  test:
+    needs: gate
+    if: ${{ needs.gate.outputs.sha_green != 'true' }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4]
+    steps:
+      - uses: actions/checkout@v5
+      - uses: ./actions/base
+        with:
+          run-checks: 'false'
+          shard: ${{ matrix.shard }}/4
+          artifact-suffix: -shard-${{ matrix.shard }}
+
+  # Aggregator. The job id is `compile_test` ON PURPOSE: it makes this run emit a
+  # check-run named exactly `compile_test` on the ship SHA, which is the green
+  # check each child deploy's `gate` looks up to skip its own suite. Green iff
+  # the SHA was already green OR checks + every test shard passed; fails the
+  # fan-out otherwise (a red suite can never reach the tag push). Mirrors
+  # vibes-diy-deploy.yaml's `compile_test`.
+  compile_test:
+    needs: [gate, checks, test]
+    if: ${{ always() && !github.event.deleted }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: gate
+        env:
+          GATE_RESULT: ${{ needs.gate.result }}
+          CHECKS_RESULT: ${{ needs.checks.result }}
+          TEST_RESULT: ${{ needs.test.result }}
+          SHA_GREEN: ${{ needs.gate.outputs.sha_green }}
+        run: |
+          echo "gate=${GATE_RESULT} checks=${CHECKS_RESULT} test=${TEST_RESULT} sha_green=${SHA_GREEN}"
+          # gate must have run so sha_green (and the validations) are trustworthy;
+          # if it failed we can't trust the signal, so refuse to green (fail
+          # closed, no fan-out).
+          if [ "${GATE_RESULT}" != "success" ]; then
+            echo "::error::gate job concluded '${GATE_RESULT}' — cannot determine test status; refusing to green."
+            exit 1
+          fi
+          if [ "${SHA_GREEN}" = "true" ]; then
+            echo "SHA already has a green compile_test — reused; gate green."
+            exit 0
+          fi
+          rc=0
+          for r in "${CHECKS_RESULT}" "${TEST_RESULT}"; do
+            case "$r" in
+              success) ;;
+              *) echo "::error::required job concluded '$r' (expected success)"; rc=1 ;;
+            esac
+          done
+          if [ "$rc" -eq 0 ]; then
+            echo "checks + all test shards passed — gate green."
+          fi
+          exit "$rc"
+
+  # Create + push the three canonical deploy tags — only once compile_test is
+  # green, so a red suite never ships. Gate on the *result* (not implicit
+  # success()) because compile_test runs via always() and the green-SHA reuse
+  # path leaves checks/test skipped, which the default success() gate would
+  # propagate as a skip.
+  fanout:
+    needs: [gate, compile_test]
+    if: ${{ always() && needs.compile_test.result == 'success' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout ship commit
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+          fetch-tags: true
+          token: ${{ secrets.DEPLOY_TAG_PAT }}
+          persist-credentials: true
+
+      - name: Create and push canonical deploy tags
+        env:
+          VER: ${{ needs.gate.outputs.ver }}
+          SHIP_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+
+          echo "Fanning out ship@$VER at $SHIP_SHA (compile_test green on this SHA)"
+
           CHILD_TAGS=("vibes-diy@p$VER" "vibes-diy@c$VER" "pkg@p$VER")
 
-          # Refuse to move existing tags — deploy tags are immutable.
+          # Re-check immutability right before push — cheap insurance against a
+          # race with another tag created since the gate validated.
           for t in "${CHILD_TAGS[@]}"; do
             if git rev-parse -q --verify "refs/tags/$t" >/dev/null; then
               echo "::error::tag $t already exists — tags are immutable, bump the ship@ version instead"
@@ -102,6 +258,8 @@ jobs:
 
           {
             echo "### ship@$VER fanned out :rocket:"
+            echo ""
+            echo "Compile-tested once on \`$SHIP_SHA\`; child deploys reuse that green check."
             echo ""
             echo "Commit \`$SHIP_SHA\` tagged as:"
             for t in "${CHILD_TAGS[@]}"; do echo "- \`$t\`"; done
