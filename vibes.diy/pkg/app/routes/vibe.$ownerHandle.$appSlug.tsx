@@ -230,7 +230,7 @@ export default function VibeIframeWrapper() {
       const qs = new URLSearchParams({ prompt64: vctx.sthis.txt.base64.encode(trimmed) }).toString();
       void navigate(`/remix/${ownerHandle}/${appSlug}?${qs}`);
     },
-    [isOwner, ownerHandle, appSlug, navigate, vctx.sthis, generation]
+    [isOwner, ownerHandle, appSlug, navigate, vctx.sthis, generation.sendPrompt]
   );
 
   const adminStorageKey = ownerHandle && appSlug ? adminModeStorageKey(ownerHandle, appSlug) : "";
@@ -717,7 +717,6 @@ export default function VibeIframeWrapper() {
 
   const cardVariant = computeCardVariant(cardGrant);
   const isAccessGranted = cardVariant === "iframe";
-  const showGenStream = generation.phase === "streaming";
   // Desktop landing buttons get extra vertical padding so the two-line labels
   // ("FRESH \n INSTALL", "JOIN \n COLLAB") don't crowd the button edge. Mobile
   // already sizes nicely via the base width:100% / minHeight:60px rules.
@@ -728,6 +727,10 @@ export default function VibeIframeWrapper() {
       : { paddingLeft: 18, paddingRight: 18, paddingTop: 14, paddingBottom: 18, height: "auto" };
   const showCard = cardVariant === "request" || cardVariant === "invite" || cardVariant === "pending" || cardVariant === "revoked";
   const requestAccessSubtitle = ownerDisplayName ? `Ask to collab with ${ownerDisplayName}.` : "Ask to join the collaboration.";
+  // Show the codegen stream in the card body only while streaming; once the
+  // first code block lands (phase "live") the body returns to chips and the app
+  // de-blurs behind. (§1b)
+  const showGenStream = generation.phase === "streaming";
 
   return (
     <>
