@@ -1,6 +1,6 @@
 import type { SuperThis, JWKPrivate, DeviceIdKeyBagItem } from "@vibes.diy/identity";
 import { JWKPrivateSchema } from "@vibes.diy/identity";
-import { getKeyBag } from "@vibes.diy/identity/node";
+import { deviceIdKeybagReEnrollMessage, getKeyBag, isUnreadableDeviceIdKeybagError } from "@vibes.diy/identity/node";
 import { Buffer } from "node:buffer";
 
 /**
@@ -96,6 +96,9 @@ export async function seedDeviceIdFromEnv(sthis: SuperThis): Promise<SeedDeviceI
   if (!raw) return "unset";
   const kb = await getKeyBag(sthis);
   const existing = await kb.getDeviceId();
+  if (existing.error && isUnreadableDeviceIdKeybagError(existing.error)) {
+    throw new Error(deviceIdKeybagReEnrollMessage({ headlessEnvVar: VIBES_DEVICE_ID_ENV }));
+  }
   if (existing.cert.IsSome()) return "already-authenticated"; // an interactive `vibes-diy login` always wins
   const { deviceId, cert } = extractDeviceId(parseEnvValue(raw));
   await kb.setDeviceId(deviceId, cert);
