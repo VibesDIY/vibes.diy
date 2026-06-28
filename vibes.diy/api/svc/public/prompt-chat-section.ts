@@ -33,12 +33,14 @@ import {
   vibeFile,
   isVibeCodeBlock,
   type EvtUserNotification,
+  type ShardIdentity,
 } from "@vibes.diy/api-types";
 import { ensureLogger } from "@vibes.diy/identity";
 import { type } from "arktype";
 import { VibesApiSQLCtx } from "../types.js";
 import { checkAuth } from "../check-auth.js";
 import { unwrapMsgBase, wrapMsgBase } from "../unwrap-msg-base.js";
+import { shardIdentityError } from "../shard-gate.js";
 import { withHeartbeat } from "./stream-heartbeat.js";
 import { and, desc, eq } from "drizzle-orm/sql/expressions";
 import {
@@ -2169,6 +2171,19 @@ export const promptChatSection: EventoHandler<W3CWebSocketEvent, MsgBase<ReqProm
         return Result.Err(rResChat);
       }
       const resChat = rResChat.Ok();
+
+      // Post-resolution shard-identity gate (#2714). The canonical (ownerHandle,
+      // appSlug) is only known after getResChatFromMode resolves; on the vibe
+      // shard (img-gen rides AppSessions), assert it addresses THIS shard before
+      // any streaming/LLM work — the split-brain defense for chat ops.
+      const shardId = ctx.ctx.get<ShardIdentity>("shardIdentity");
+      if (shardId !== undefined && shardId.kind === "vibe") {
+        const oShardErr = shardIdentityError(shardId, resChat.ownerHandle, resChat.appSlug);
+        if (oShardErr.IsSome()) {
+          await ctx.send.send(ctx, oShardErr.unwrap());
+          return Result.Ok(EventoResult.Continue);
+        }
+      }
 
       // Chat-mode assembly hoisted from handlerLlmRequest. Computing the
       // {model, messages} payload here keeps assembly on a single code
