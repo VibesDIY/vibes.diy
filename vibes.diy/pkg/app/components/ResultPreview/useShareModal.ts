@@ -15,6 +15,14 @@ interface UseShareModalParams {
    * preview-image URL for social shares (Pinterest). May carry a leading dot.
    */
   hostnameBase: string;
+  /**
+   * When true, load the sharing settings (and expose `publicAccessEnabled` +
+   * `handleSetPublicAccess`) WITHOUT opening the legacy modal — for the
+   * agent-in-vibe in-card Share view (#2680/#2679). The eager mount fetch stays
+   * unchanged, so this adds no per-pageview network cost: settings load only when
+   * the Share surface (modal OR this view) is actually shown.
+   */
+  shareViewActive?: boolean;
 }
 
 interface UseShareModalReturn {
@@ -59,6 +67,13 @@ interface UseShareModalReturn {
    * pin image must be publicly fetchable), mirroring the embed snippet.
    */
   pinterestShareUrl: string | undefined;
+  /** Whether anyone-with-the-link can open the vibe (the `publicAccess.enable`
+   *  setting). Drives the in-card Share view's Public/grant-required toggle. */
+  publicAccessEnabled: boolean;
+  isTogglingPublicAccess: boolean;
+  /** Persist who can open the vibe: `true` = public (anyone with the link),
+   *  `false` = grant-required. Optimistic with rollback on failure. */
+  handleSetPublicAccess: (enable: boolean) => Promise<void>;
 }
 
 export type { UseShareModalReturn };
@@ -70,6 +85,7 @@ export function useShareModal({
   chatApi,
   sharedApi,
   hostnameBase,
+  shareViewActive = false,
 }: UseShareModalParams): UseShareModalReturn {
   const [isOpen, setIsOpen] = useState(false);
   const [isPublished, setIsPublished] = useState(false);
@@ -83,6 +99,7 @@ export function useShareModal({
   const [isTogglingAutoJoin, setIsTogglingAutoJoin] = useState(false);
   const [urlCopied, setUrlCopied] = useState(false);
   const [publicAccessEnabled, setPublicAccessEnabled] = useState(false);
+  const [isTogglingPublicAccess, setIsTogglingPublicAccess] = useState(false);
   const [embedSnippet, setEmbedSnippet] = useState<string | undefined>(undefined);
   const [embedCopied, setEmbedCopied] = useState(false);
   const [pinterestShareUrl, setPinterestShareUrl] = useState<string | undefined>(undefined);
@@ -171,9 +188,10 @@ export function useShareModal({
     clearCopyTimeout();
   }
 
-  // Fetch current production state and settings when modal opens
+  // Fetch current production state and settings when the Share surface opens —
+  // the legacy modal OR the agent-in-vibe in-card Share view (shareViewActive).
   useEffect(() => {
-    if (!isOpen) return;
+    if (!isOpen && !shareViewActive) return;
     let cancelled = false;
 
     // Reset transient UI state before re-fetching. We intentionally do NOT
@@ -257,7 +275,27 @@ export function useShareModal({
     return () => {
       cancelled = true;
     };
-  }, [isOpen, appSlug, ownerHandle, sharedApi, hostnameBase]);
+  }, [isOpen, shareViewActive, appSlug, ownerHandle, sharedApi, hostnameBase]);
+
+  // Persist who can open the vibe (the agent-in-vibe Share view toggle, #2680/#2679).
+  // public = publicAccess.enable true; grant-required = false. Only this axis is
+  // touched here — request/auto-accept (auto-join) stays as-is. Optimistic with
+  // rollback, mirroring the canonical write in useSharingPanel.togglePublicAccess.
+  const handleSetPublicAccess = useCallback(
+    async (enable: boolean) => {
+      const prev = publicAccessEnabled;
+      if (enable === prev) return;
+      setPublicAccessEnabled(enable);
+      setIsTogglingPublicAccess(true);
+      const res = await sharedApi.ensureAppSettings({ appSlug, ownerHandle, publicAccess: { enable } });
+      setIsTogglingPublicAccess(false);
+      if (res.isErr()) {
+        setPublicAccessEnabled(prev);
+        toast.error(`Couldn't update who can open this vibe: ${res.Err().message}`);
+      }
+    },
+    [publicAccessEnabled, appSlug, ownerHandle, sharedApi]
+  );
 
   const handlePublish = useCallback(
     async (autoJoin: boolean, role: "editor" | "viewer" = "editor") => {
@@ -427,5 +465,8 @@ export function useShareModal({
     embedCopied,
     handleCopyEmbed,
     pinterestShareUrl,
+    publicAccessEnabled,
+    isTogglingPublicAccess,
+    handleSetPublicAccess,
   };
 }

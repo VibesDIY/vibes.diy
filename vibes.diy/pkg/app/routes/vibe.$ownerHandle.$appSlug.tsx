@@ -605,6 +605,11 @@ export default function VibeIframeWrapper() {
     return unsubscribe;
   }, [authSignedIn, ownerHandle, appSlug, refreshViewerFromWhoAmI, dataApi]);
 
+  // Agent-in-vibe Share view (#2680): tapping Share swaps the card body to the in-card
+  // SharePanelView. Declared before useShareModal so it can drive the hook's settings
+  // load (shareViewActive) without opening the legacy modal.
+  const [shareViewOpen, setShareViewOpen] = useState(false);
+
   const shareModal = useShareModal({
     ownerHandle: ownerHandle ?? "",
     appSlug: appSlug ?? "",
@@ -612,6 +617,7 @@ export default function VibeIframeWrapper() {
     chatApi: vctx.chatApi,
     sharedApi: vctx.sharedApi,
     hostnameBase: vctx.webVars.env.VIBES_SVC_HOSTNAME_BASE,
+    shareViewActive: shareViewOpen,
   });
 
   const prevShareOpenRef = useRef(shareModal.isOpen);
@@ -622,9 +628,6 @@ export default function VibeIframeWrapper() {
     prevShareOpenRef.current = shareModal.isOpen;
   }, [shareModal.isOpen]);
 
-  // Agent-in-vibe Share view (#2680): tapping Share swaps the card body to the in-card
-  // SharePanelView with real data; deep manage/publish still opens the ShareModal.
-  const [shareViewOpen, setShareViewOpen] = useState(false);
   const [shareMembers, setShareMembers] = useState<ShareMember[]>([]);
   useEffect(() => {
     if (!shareViewOpen || !authSignedIn || !ownerHandle || !appSlug) return;
@@ -650,7 +653,16 @@ export default function VibeIframeWrapper() {
     : myGrant === "editor" || myGrant === "viewer" || myGrant === "submitter"
       ? "member"
       : "anonymous";
-  const shareAccess: ShareAccess = isWorldReadable ? "public" : "request";
+  // Source the toggle's state from the persisted `publicAccess` setting once the
+  // Share view has loaded it; until then fall back to the loader's world-readable
+  // hint (so there's no flash — it just sharpens to the authoritative value).
+  const shareAccess: ShareAccess = shareModal.settingsLoaded
+    ? shareModal.publicAccessEnabled
+      ? "public"
+      : "request"
+    : isWorldReadable
+      ? "public"
+      : "request";
 
   const vibeSlug = `${ownerHandle}/${appSlug}`;
   const cloneUrl = `/remix/${vibeSlug}?skipChat=true`;
@@ -899,7 +911,7 @@ export default function VibeIframeWrapper() {
                         viewer={shareViewer}
                         members={shareMembers}
                         access={shareAccess}
-                        onChangeAccess={() => shareModal.open()}
+                        onChangeAccess={(next) => void shareModal.handleSetPublicAccess(next === "public")}
                         onSelectMember={() => shareModal.open()}
                       />
                     ) : undefined
