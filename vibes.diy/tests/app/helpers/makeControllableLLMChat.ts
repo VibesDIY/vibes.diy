@@ -20,6 +20,9 @@ export interface ControllableLLMChat {
   // Emits a complete code block: begin + one code.line per source line + end.
   // The resolved source must pass the push guard (len>=200 and include "export default").
   emitCodeBlock(source: string, blockId?: string): void;
+  // Emits the assistant's toplevel narration lines (block.toplevel.line) — the
+  // carrier for the trailing `▸` suggestion-chip group the model appends.
+  emitToplevelLines(lines: string[], blockId?: string): void;
 }
 
 export function makeControllableLLMChat(opts: { chatId?: string } = {}): ControllableLLMChat {
@@ -141,6 +144,24 @@ export function makeControllableLLMChat(opts: { chatId?: string } = {}): Control
           stats: { lines: lines.length, bytes: source.length },
         } as PromptAndBlockMsgs,
       ]);
+    },
+    emitToplevelLines(lines: string[], blockId = "b1") {
+      result.pushBlocks(
+        lines.map(
+          (line, i) =>
+            ({
+              type: "block.toplevel.line",
+              blockId,
+              streamId: "stream-1",
+              seq: i,
+              blockNr: 1,
+              timestamp: new Date(),
+              sectionId: "section-1",
+              lineNr: i,
+              line,
+            }) as PromptAndBlockMsgs
+        )
+      );
     },
   };
   return result;

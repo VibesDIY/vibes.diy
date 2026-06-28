@@ -104,6 +104,26 @@ describe("useInVibeGeneration", () => {
     await waitFor(() => expect(view.result.current.blurPx).toBeLessThan(25));
   });
 
+  it("derives suggestionChips from the latest block's trailing ▸ options (fresh follow-ups)", async () => {
+    const { view, fakeChat } = setup();
+    await waitFor(() => expect(view.result.current.phase).toBe("idle"));
+    expect(view.result.current.suggestionChips).toEqual([]); // none before a turn
+    act(() => view.result.current.sendPrompt("make a timer"));
+    await act(async () => fakeChat.emitBlockBegin());
+    // The model's narration ends with a trailing option group; the terminal
+    // "I'm done for now" dismiss chip is dropped and the list caps at three.
+    await act(async () =>
+      fakeChat.emitToplevelLines([
+        "Added a countdown timer.",
+        "▸ Add a pause button",
+        "▸ Play a sound at zero",
+        "▸ I'm done for now",
+      ])
+    );
+    await act(async () => fakeChat.emitCodeEnd());
+    await waitFor(() => expect(view.result.current.suggestionChips).toEqual(["Add a pause button", "Play a sound at zero"]));
+  });
+
   it("does not open a chat when disabled", async () => {
     const { view, openChat } = setup({ enabled: false });
     expect(view.result.current.phase).toBe("idle");

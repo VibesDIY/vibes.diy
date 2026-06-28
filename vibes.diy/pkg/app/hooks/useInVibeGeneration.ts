@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from "react";
 import type { Conn, LLMChatEntry } from "@vibes.diy/api-types";
-import { isCodeEnd } from "@vibes.diy/call-ai-v2";
+import { isCodeEnd, isToplevelLine, type ToplevelLineMsg } from "@vibes.diy/call-ai-v2";
 import { promptReducer, type PromptState } from "../routes/chat/prompt-state.js";
 import { useChatSession } from "./useChatSession.js";
 import { getCode } from "../components/ResultPreview/get-code.js";
+import { chipsFromNarration } from "./useLatestVibeChips.js";
 import { shouldAcceptPrompt } from "../utils/submit-guard.js";
 
 export type GenerationPhase = "idle" | "streaming" | "live";
@@ -19,6 +20,12 @@ export interface InVibeGeneration {
   readonly blocks: PromptState["blocks"];
   readonly blurPx: number;
   readonly counts: { readonly messages: number; readonly lines: number };
+  // The trailing `▸` suggestion chips parsed from the LATEST streamed block —
+  // the model's fresh follow-up options for the edit just made. Empty until a
+  // turn has produced narration. The /vibe card prefers these over the stale
+  // persisted-chat chips once an in-place edit has run, so the card never
+  // re-shows the pre-edit suggestions after a generation. (vibe-tour-chips-edit)
+  readonly suggestionChips: readonly string[];
   readonly sendPrompt: (text: string) => void;
   // Open the codegen chat lazily, on the owner's first edit intent. The host
   // calls this when the edit UI (the UnifiedVibeCard) opens, so passive
@@ -187,12 +194,27 @@ export function useInVibeGeneration(opts: UseInVibeGenerationOpts): InVibeGenera
 
   const counts = useMemo(() => ({ messages: promptState.blocks.length, lines: getCode(promptState).code.length }), [promptState]);
 
+  // Fresh follow-up chips for THIS edit: parse the trailing `▸` options out of
+  // the latest streamed block's toplevel narration (same shaping the chat read
+  // applies). Source from the in-memory block, so there's no server re-read race
+  // after the turn settles.
+  const suggestionChips = useMemo(() => {
+    const last = promptState.blocks[promptState.blocks.length - 1];
+    if (last === undefined) return [];
+    const text = last.msgs
+      .filter((m): m is ToplevelLineMsg => isToplevelLine(m))
+      .map((m) => m.line)
+      .join("\n");
+    return chipsFromNarration(text);
+  }, [promptState.blocks]);
+
   return {
     phase,
     isGenerating,
     blocks: promptState.blocks,
     blurPx,
     counts,
+    suggestionChips,
     sendPrompt,
     activate,
   };

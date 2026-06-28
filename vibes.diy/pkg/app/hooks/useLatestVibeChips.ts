@@ -13,6 +13,18 @@ const TERMINAL_CHIP = "i'm done for now";
 const MAX_CHIPS = 3;
 
 /**
+ * Shape an assistant turn's narration text into edit-card chips: parse the
+ * trailing `▸` option group, drop the terminal "I'm done for now" dismiss chip,
+ * and cap at three. Shared by the persisted-chat read (`latestTurnChips`) and the
+ * in-place generation hook (which parses its own freshly-streamed block) so both
+ * surfaces apply identical chip semantics.
+ */
+export function chipsFromNarration(text: string): readonly string[] {
+  const { options } = parseOptionLines(text, { streaming: false });
+  return options.filter((o) => o.trim().toLowerCase() !== TERMINAL_CHIP).slice(0, MAX_CHIPS);
+}
+
+/**
  * Derive the edit-card suggestion chips from a vibe's most recent chat turn.
  *
  * Pure + exported for testing. `turns` is the `getChatResponse` payload, ordered
@@ -38,8 +50,7 @@ export function latestTurnChips(turns: readonly ResChatResponseTurn[], fsId?: st
     .filter((b): b is ToplevelLineMsg => isToplevelLine(b))
     .map((b) => b.line)
     .join("\n");
-  const { options } = parseOptionLines(text, { streaming: false });
-  return options.filter((o) => o.trim().toLowerCase() !== TERMINAL_CHIP).slice(0, MAX_CHIPS);
+  return chipsFromNarration(text);
 }
 
 /**
