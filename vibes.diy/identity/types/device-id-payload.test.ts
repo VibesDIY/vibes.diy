@@ -15,12 +15,7 @@
 //     upstream schema rejects it. This is the same patch-class leniency frozen by
 //     `clerk-claim-parity.test.ts`, asserted here at the CSR-payload boundary.
 import { describe, it, expect } from "vitest";
-import {
-  SubjectSchema,
-  ExtensionsSchema,
-  FPDeviceIDSessionSchema,
-  FPDeviceIDCSRPayloadSchema,
-} from "./device-id-payload.js";
+import { SubjectSchema, ExtensionsSchema, FPDeviceIDSessionSchema, FPDeviceIDCSRPayloadSchema } from "./device-id-payload.js";
 import {
   SubjectSchema as UpstreamSubject,
   ExtensionsSchema as UpstreamExtensions,
