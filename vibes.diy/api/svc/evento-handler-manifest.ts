@@ -1,3 +1,4 @@
+import { EventoHandler } from "@adviser/cement";
 import { ensureAppSlugItemEvento } from "./public/ensure-app-slug-item.js";
 import { openChat } from "./public/open-chat.js";
 import { promptChatSection } from "./public/prompt-chat-section.js";
@@ -58,107 +59,148 @@ import { reportAttributionReferrersEvento } from "./public/report-attribution-re
 import { reportCampaignHealthEvento } from "./public/report-campaign-health.js";
 import { reportCampaignAdPreviewsEvento } from "./public/report-campaign-ad-previews.js";
 
-export const sharedHandlers = [
-  listUserSlugAppSlugEvento,
-  listRecentVibesEvento,
-  pinRecentVibeEvento,
-  getAppByFsIdEvento,
-  ensureAppSettingsEvento,
-  ensureUserSettingsEvento,
-  ensureHandleAvatarEvento,
-  listModelsEvento,
-  // Grants, invites, membership — stateless D1 queries called from the parent
-  // app on chatApi. They ride sharedHandlers (served on both the chat plane and
-  // AppSessions) until SharedSessions lands them on their own singleton DO
-  // (#2265 §2 Track B).
-  createInviteEvento,
-  revokeInviteEvento,
-  redeemInviteEvento,
-  hasAccessInviteEvento,
-  inviteSetRoleEvento,
-  listInviteGrantsEvento,
-  requestAccessEvento,
-  hasAccessRequestEvento,
-  approveRequestEvento,
-  requestSetRoleEvento,
-  revokeRequestEvento,
-  listRequestGrantsEvento,
-  subscribeRequestGrantsEvento,
-  listMembersEvento,
-  listMembershipsEvento,
-  whoAmIEvento,
-  accessFnSourceEvento,
-  subscribeUserNotificationsEvento,
-  // User/identity-scoped reads + grant ops that are NOT tied to any vibe shard
-  // and are called from the parent app (and srv-sandbox) on chatApi. They belong
-  // with the other stateless user-scoped handlers here, not in appHandlers —
-  // that's what lets the chat plane drop appHandlers while these keep working:
+/**
+ * ShardKind — the Durable Object shard a connection is opened against. This is
+ * the ONLY thing that distinguishes the former chat / vibe / shared "APIs": one
+ * handler surface, opened against a different shard key (#2714). Stop reasoning
+ * about "which API is which" and reason about "what shard kind is correct."
+ *
+ *   - "stream": per-stream UUID shard (ChatSessions). A heavy codegen stream
+ *     gets its own worker — you can't co-tenant many live streams.
+ *   - "vibe":   `ownerHandle--appSlug` shard (AppSessions). All viewers of one
+ *     vibe rendezvous on one DO → cross-user live broadcast + local QuickJS
+ *     access-fn eval.
+ *   - "shared": singleton / userId shard (SharedSessions). One always-warm DO
+ *     for stateless user/identity reads — no cold-start wait, no topology.
+ */
+export type ShardKind = "stream" | "vibe" | "shared";
+
+/**
+ * A handler tagged with the shard kinds allowed to serve it. The `allowed` set
+ * is the SINGLE SOURCE OF TRUTH for placement: the per-plane evento composition
+ * (this file) and the parity tests both read it, so there is nothing to keep in
+ * sync. Re-homing a capability between planes is now a one-line `allowed` edit,
+ * not a handler-array shuffle (the recurring cost in #2265, #2517, #2710).
+ */
+export interface HandlerManifestEntry {
+  readonly allowed: readonly ShardKind[];
+  readonly handler: EventoHandler;
+}
+
+// Allowed-set presets. Named so the manifest reads as a contract.
+const ALL_SHARDS: readonly ShardKind[] = ["stream", "vibe", "shared"];
+const VIBE_ONLY: readonly ShardKind[] = ["vibe"];
+const STREAM_ONLY: readonly ShardKind[] = ["stream"];
+// open-chat / prompt-chat-section run on the stream plane (their canonical home)
+// AND the vibe plane: img-gen rides vibeApi → AppSessions, so `req-open-chat
+// {mode:img}` must resolve there too. Declaring it here folds away the old
+// `imgGenAppSessionStopgapHandlers` array (#2350) — the capability is just
+// allowed on two shard kinds, no separate stopgap to track.
+const STREAM_AND_VIBE: readonly ShardKind[] = ["stream", "vibe"];
+
+function entry(allowed: readonly ShardKind[], handler: EventoHandler): HandlerManifestEntry {
+  return { allowed, handler };
+}
+
+/**
+ * The handler manifest — one list, each handler declaring the shard kinds that
+ * may serve it. Ordering is preserved per shard by `handlersForShard`, so the
+ * composed eventos match the historical (shared → vibe → stream) push order.
+ *
+ * Two reasons a handler is shard-bound (#2714):
+ *   (a) code/capability presence — dissolved by loading the capability on the
+ *       allowed planes; not a security boundary.
+ *   (b) stateful rendezvous / topology — irreducible. A doc write does LOCAL
+ *       broadcast on the vibe shard; `subscribeDocs` / `subscribeViewerGrants`
+ *       fan out to co-tenant sockets that only exist there; chat streaming has
+ *       per-shard backpressure. These stay `VIBE_ONLY` / `STREAM_*` and (next
+ *       step, see agents/do-session-split.md) keep a fail-loud runtime identity
+ *       gate at dispatch. Types enforce *kind*; runtime enforces *identity*.
+ */
+export const handlerManifest: readonly HandlerManifestEntry[] = [
+  // --- Shared: stateless user/identity/D1 reads + grant ops. Served on every
+  // shard kind — no broadcast, no per-shard state, safe everywhere.
+  entry(ALL_SHARDS, listUserSlugAppSlugEvento),
+  entry(ALL_SHARDS, listRecentVibesEvento),
+  entry(ALL_SHARDS, pinRecentVibeEvento),
+  entry(ALL_SHARDS, getAppByFsIdEvento),
+  entry(ALL_SHARDS, ensureAppSettingsEvento),
+  entry(ALL_SHARDS, ensureUserSettingsEvento),
+  entry(ALL_SHARDS, ensureHandleAvatarEvento),
+  entry(ALL_SHARDS, listModelsEvento),
+  // Grants, invites, membership — stateless D1 queries called from the parent app.
+  entry(ALL_SHARDS, createInviteEvento),
+  entry(ALL_SHARDS, revokeInviteEvento),
+  entry(ALL_SHARDS, redeemInviteEvento),
+  entry(ALL_SHARDS, hasAccessInviteEvento),
+  entry(ALL_SHARDS, inviteSetRoleEvento),
+  entry(ALL_SHARDS, listInviteGrantsEvento),
+  entry(ALL_SHARDS, requestAccessEvento),
+  entry(ALL_SHARDS, hasAccessRequestEvento),
+  entry(ALL_SHARDS, approveRequestEvento),
+  entry(ALL_SHARDS, requestSetRoleEvento),
+  entry(ALL_SHARDS, revokeRequestEvento),
+  entry(ALL_SHARDS, listRequestGrantsEvento),
+  entry(ALL_SHARDS, subscribeRequestGrantsEvento),
+  entry(ALL_SHARDS, listMembersEvento),
+  entry(ALL_SHARDS, listMembershipsEvento),
+  entry(ALL_SHARDS, whoAmIEvento),
+  entry(ALL_SHARDS, accessFnSourceEvento),
+  entry(ALL_SHARDS, subscribeUserNotificationsEvento),
+  // User/identity-scoped reads + grant ops NOT tied to any vibe shard:
   //   - listDmThreads: the DM inbox read (DmInbox, vibe-route badge).
   //   - assetUploadGrant: issues an R2 upload grant for handle-avatar uploads
   //     (HandleAvatarEditor) and srv-sandbox putAsset — no broadcast/access-fn.
-  // (#2265 A2; these land on SharedSessions in Track B.)
-  listDmThreadsEvento,
-  assetUploadGrantEvento,
-  // Re-homed from chatHandlers (#2265 Track B): stateless identity/settings/
-  // analytics D1 ops called from non-chat pages (settings, messages, reporting
-  // dashboard). Moving them here lets chatApi go lazy without stranding callers.
-  listHandleBindingsEvento,
-  createHandleBindingEvento,
-  deleteHandleBindingEvento,
-  getCertFromCsrEvento,
-  reportGrowthMembershipsEvento,
-  reportGrowthVibesWithDataEvento,
-  reportActiveMembersEvento,
-  reportTopVibesByMembersEvento,
-  reportAttributionReferrersEvento,
-  reportCampaignHealthEvento,
-  reportCampaignAdPreviewsEvento,
-  // Chat-history READS are plain D1 queries, not streams. Only the long-lived
-  // streaming ops (openChat / promptChatSection) actually need the chat plane —
-  // you can't co-tenant many long streams in one worker, which is the ONLY reason
-  // anything lives on chatHandlers. These reads were on the chat plane for purely
-  // historical reasons; moving them to sharedHandlers serves them on every API
-  // (AppSessions/vibeApi included), so e.g. the /vibe route can read a vibe's
-  // latest suggestion chips without building the lazy chatApi / opening the heavy
-  // ChatSessions socket. (jchris)
-  getChatDetailsEvento,
-  getChatResponseEvento,
-  listApplicationChats,
-] as const;
+  entry(ALL_SHARDS, listDmThreadsEvento),
+  entry(ALL_SHARDS, assetUploadGrantEvento),
+  // Identity/settings/analytics D1 ops called from non-chat pages (settings,
+  // messages, reporting dashboard).
+  entry(ALL_SHARDS, listHandleBindingsEvento),
+  entry(ALL_SHARDS, createHandleBindingEvento),
+  entry(ALL_SHARDS, deleteHandleBindingEvento),
+  entry(ALL_SHARDS, getCertFromCsrEvento),
+  entry(ALL_SHARDS, reportGrowthMembershipsEvento),
+  entry(ALL_SHARDS, reportGrowthVibesWithDataEvento),
+  entry(ALL_SHARDS, reportActiveMembersEvento),
+  entry(ALL_SHARDS, reportTopVibesByMembersEvento),
+  entry(ALL_SHARDS, reportAttributionReferrersEvento),
+  entry(ALL_SHARDS, reportCampaignHealthEvento),
+  entry(ALL_SHARDS, reportCampaignAdPreviewsEvento),
+  // Chat-history READS are plain D1 queries, not streams — every shard can serve
+  // them, so the /vibe route reads a vibe's latest suggestion chips without
+  // opening the heavy stream socket. Only the long-lived streaming ops below
+  // actually need the stream shard.
+  entry(ALL_SHARDS, getChatDetailsEvento),
+  entry(ALL_SHARDS, getChatResponseEvento),
+  entry(ALL_SHARDS, listApplicationChats),
 
-export const appHandlers = [
-  // Vibe/channel-scoped doc ops. These ride AppSessions (vibeApi) only —
-  // local broadcast + local QuickJS access-fn eval — and are NO LONGER served
-  // by the chat plane (#2265 A2: chatMsgEvento dropped appHandlers). DM message
-  // docs reach these via the channel-keyed dmApi (`<channelUserSlug>--dm`).
-  putDocEvento,
-  getDocEvento,
-  queryDocsEvento,
-  deleteDocEvento,
-  subscribeDocsEvento,
-  subscribeViewerGrantsEvento,
-  listDbNamesEvento,
-  markDmReadEvento,
-] as const;
+  // --- Vibe: channel-scoped doc ops. Category (b) — local broadcast + local
+  // QuickJS access-fn eval rendezvous on the vibe shard, so these must land
+  // there and nowhere else. DM message docs reach them via the channel-keyed
+  // dmApi (`<channelUserSlug>--dm`).
+  entry(VIBE_ONLY, putDocEvento),
+  entry(VIBE_ONLY, getDocEvento),
+  entry(VIBE_ONLY, queryDocsEvento),
+  entry(VIBE_ONLY, deleteDocEvento),
+  entry(VIBE_ONLY, subscribeDocsEvento),
+  entry(VIBE_ONLY, subscribeViewerGrantsEvento),
+  entry(VIBE_ONLY, listDbNamesEvento),
+  entry(VIBE_ONLY, markDmReadEvento),
 
-export const chatHandlers = [
-  ensureAppSlugItemEvento,
-  openChat,
-  promptChatSection,
-  // NB: the chat-history READ handlers (get-chat-details, get-chat-response,
-  // list-application-chats) moved to sharedHandlers — they're D1 queries, not
-  // streams, so every plane can serve them. Only streaming + the few write ops
-  // below remain chat-plane-only.
-  forkAppEvento,
-  setModeFsIdEvento,
-] as const;
+  // --- Stream: chat streaming + the create/fork/mode write ops. Streaming is
+  // category (b) — you can't co-tenant many long streams in one worker.
+  entry(STREAM_ONLY, ensureAppSlugItemEvento),
+  entry(STREAM_AND_VIBE, openChat),
+  entry(STREAM_AND_VIBE, promptChatSection),
+  entry(STREAM_ONLY, forkAppEvento),
+  entry(STREAM_ONLY, setModeFsIdEvento),
+];
 
-// Stopgap (#2350): img-gen rides vibeApi → AppSessions, so the AppSessions
-// evento must serve open-chat + prompt or `req-open-chat {mode:img}` falls
-// through to the WildCard "Not Implemented". These stay in chatHandlers (their
-// canonical home); this array re-exposes only the two streaming ops the img
-// path needs on the app session, without polluting appHandlers (which the
-// parity test pins to doc/notification ops only). Remove once img streaming
-// moves to the heavy/chat session per
-// docs/superpowers/specs/2026-06-16-heavy-light-session-design.md.
-export const imgGenAppSessionStopgapHandlers = [openChat, promptChatSection] as const;
+/**
+ * The handlers a DO opened against `kind` must serve, in manifest order. This is
+ * how each plane's evento is composed — there is no per-plane handler array to
+ * maintain anymore; the plane is just a filter over the manifest by shard kind.
+ */
+export function handlersForShard(kind: ShardKind): EventoHandler[] {
+  return handlerManifest.filter((e) => e.allowed.includes(kind)).map((e) => e.handler);
+}

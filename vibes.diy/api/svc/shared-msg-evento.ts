@@ -1,14 +1,15 @@
 import { Lazy, Evento, EventoResult, EventoType, Result } from "@adviser/cement";
 import { W3CWebSocketEventEventoEnDecoder } from "@vibes.diy/api-pkg";
 import { ResError } from "@vibes.diy/api-types";
-import { sharedHandlers } from "./evento-handler-manifest.js";
+import { handlersForShard } from "./evento-handler-manifest.js";
 
-// SharedSessions is the non-vibe-plane DO: stateless user/identity reads only
-// (sharedHandlers). No doc ops, no chat streaming, no local QuickJS. (#2265 Track B)
+// SharedSessions is the "shared" shard: stateless user/identity reads only
+// (handlers allowed on every shard kind). No doc ops, no chat streaming, no
+// local QuickJS. (#2265 Track B)
 export const sharedMsgEvento = Lazy(() => {
   const evento = new Evento(new W3CWebSocketEventEventoEnDecoder());
   evento.push(
-    ...sharedHandlers,
+    ...handlersForShard("shared"),
     {
       type: EventoType.WildCard,
       hash: "shared-not-msg-implemented-handler",
