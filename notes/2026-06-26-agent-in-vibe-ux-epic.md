@@ -46,8 +46,9 @@ in #2796** (sibling validation pass: #2795).
   `vibesMsgEvento` retirement). (#2518)
 - **Cached-read chip lane** — only the **write** lane shipped. The **read** half (instant cached
   page-views, anonymous browsing of the cached tree, the no-login/no-fork boundary) and the
-  system-owned cached-fork infra were **never built**. **Was untracked — now tracked in #2796, with
-  a build-vs-drop decision pending.** (§1a)
+  system-owned cached-fork infra were **never built**. **Decision (via #2796): build, not drop —
+  now tracked in #2801** with a design-level spec at
+  `docs/superpowers/specs/2026-06-28-cached-fork-infra-design.md`. (§1a)
 - **First-generation polish** — the `💬` chat-history toggle (reopen stream/history any time) and
   the faked chat for cached/curated items (pre-authored `ChatSections`). (#2677)
 - **Publish-intent setting (#1854)** — the binary Public/grant-required access toggle already
@@ -698,8 +699,8 @@ Each is its own small PR; the order is rough, not rigid. Status mirrors §0.
    `UnifiedVibeCard` on `/vibe`, `SharePanelView`. No backend dep. *(partial #2680 rode along.)*
 2. **#2677 — first-generation on `/vibe`** (in-page stream→preview, de-blur, hot-swap; #1745).
    The write lane shipped — chips/Other change the app in place. Remaining: the `💬` chat-history
-   toggle + faked cached chat. The **cached-read chip lane** (§1a/§20) is **now tracked in #2796**
-   (build-vs-drop decision pending).
+   toggle + faked cached chat. The **cached-read chip lane** (§1a/§20) is **now tracked in #2801**
+   (decided: build; spec `docs/superpowers/specs/2026-06-28-cached-fork-infra-design.md`).
 3. ✅ **#2678 — handle picker** (the top-of-card tag's switcher dropdown is wired; #2275).
 4. **#2679 — verb collapse** (the Remix/Clone/Fresh-Install/Edit chrome is gone, and the
    Public/grant-required access toggle persists directly; remaining: the #1854 publish-intent
