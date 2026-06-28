@@ -77,7 +77,7 @@ Filing the issue, then re-checking CI, is the canonical use of the waiting-for-C
 
 Once the branch is **review-approved** and the **preview worker has deployed** (the `github-actions[bot]` "Preview Deployment" comment is posted), you have a live, real-data environment for this PR. Use the slow `compile_test` window to actually exercise any changed feature that's reachable from the CLI **against that preview**, instead of only trusting unit tests. This is the same idle-window discipline as filing cleanup issues — turn the wait into verification.
 
-**Scope it to the diff.** Only validate features the PR actually touched and that the CLI can reach (`list`, `db get/put/query/del`, `chats`, `db subscribe`, `mcp`). A data-model change → query the affected db on the preview; a new list/owner field → `list --json` and check it's present; an access-rule change → exercise the grant path. If nothing in the diff is CLI-reachable, say so in one line and skip — don't manufacture a check.
+**Scope it to the diff.** Only validate features the PR actually touched and that the CLI can reach (`list`, `db get/put/query/del`, `db subscribe`, `codegen-log` and `app-chats` for chat history, `mcp`). A data-model change → query the affected db on the preview; a new list/owner field → `list --json` and check it's present; an access-rule change → exercise the grant path. If nothing in the diff is CLI-reachable, say so in one line and skip — don't manufacture a check. (`vibes-diy chats` is a removed shim that just prints a migration message — use `codegen-log` for the build transcript and `app-chats` for the deployed app's runtime chats.)
 
 ### How to point the CLI at a PR preview
 
