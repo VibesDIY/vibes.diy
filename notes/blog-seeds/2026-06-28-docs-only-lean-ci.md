@@ -1,14 +1,19 @@
-# Giving docs-only PRs a leaner CI cycle without the "required check stuck pending" trap
+# Save a tree, skip the tests: a leaner CI cycle for docs-only PRs
 
-Source: branch `claude/docs-only-ci-triggers-kjrxdb` — `actions/changed-scope` (new),
-`actions/base`, `ci.yaml`, `pg-concurrency-ci.yaml`
+_(and how to do it without the "required check stuck pending" trap)_
 
-We do a lot of docs-only commits (notes, agents/, blog seeds, READMEs), and every
-one of them was paying for the full ~7.5-min `compile_test` suite plus the Postgres
-+ Neon-proxy concurrency lane. The preview deploy was already path-filtered, so
+Source: #2725 — `actions/changed-scope` (new), `actions/base`, `ci.yaml`,
+`pg-concurrency-ci.yaml`
+
+A README typo doesn't need a 7.5-minute Playwright suite and a Postgres cluster.
+But that's exactly what it got: we do a lot of docs-only commits (notes, agents/,
+blog seeds, READMEs), and every one was paying for the full `compile_test` suite
+plus the Postgres + Neon-proxy concurrency lane — spinning up containers to prove
+that prose didn't break the build. The preview deploy was already path-filtered, so
 that part was fine — the waste was build + docker test + the pg lane. The goal:
-docs-only PRs run install + format-check + lint only, everything else runs the full
-cycle, and adding code mid-PR re-enables it automatically.
+docs-only PRs run install + format-check + lint only (formatting still matters for
+prose), everything else runs the full cycle, and adding code mid-PR re-enables it
+automatically.
 
 Decisions worth a full post:
 
