@@ -32,7 +32,7 @@ function clerkFrontendHostFromKey(key: string | undefined): string | undefined {
 // Cloudflare Web Analytics (RUM) beacon site token for the vibes.diy site.
 // Public client-side token (ships in every page's HTML by design) — not a
 // secret. The beacon is only rendered when the SSR layer enables it for the
-// request (non-EU, non-dev; see workers/app.ts `enableCfRum`).
+// request (prod deployment + non-EU; see workers/app.ts `enableCfRum`).
 const CF_WEB_ANALYTICS_TOKEN = "c8c1ae3173414bd9b08c2dcc00727eff";
 
 // Default page metadata. React Router falls back to the nearest parent route's
