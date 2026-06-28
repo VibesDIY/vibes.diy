@@ -15,15 +15,15 @@ describe("sharedMsgEvento", () => {
     );
     for (const h of hset(handlersForShard("shared"))) expect(served.has(h), `missing ${h}`).toBe(true);
   });
-  it("serves no vibe-only or stream-only handler", () => {
+  it("serves no vibe-only or codegen-only handler", () => {
     const served = new Set(
       sharedMsgEvento()
         .handlers()
         .actions.map((h: { hash: string }) => h.hash)
     );
-    // Anything served on stream/vibe but NOT on shared must be absent here.
+    // Anything served on codegen/vibe but NOT on shared must be absent here.
     const sharedHashes = hset(handlersForShard("shared"));
-    const elsewhere = [...hset(handlersForShard("vibe")), ...hset(handlersForShard("stream"))].filter(
+    const elsewhere = [...hset(handlersForShard("vibe")), ...hset(handlersForShard("codegen"))].filter(
       (h) => sharedHashes.has(h) === false
     );
     expect(elsewhere.length, "expected some non-shared handlers to exist").toBeGreaterThan(0);
