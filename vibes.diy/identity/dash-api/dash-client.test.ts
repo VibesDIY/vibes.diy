@@ -50,7 +50,12 @@ describe("dash-client (owned browser dashboard HTTP client)", () => {
   it("surfaces a non-ok HTTP response as a Result.Err", async () => {
     const api = clerkDashApi(fakeClerk("t"), {
       apiUrl: "https://dash.test/api/unique-3",
-      fetch: (async () => ({ ok: false, status: 403, statusText: "Forbidden", text: async () => "nope" })) as unknown as typeof fetch,
+      fetch: (async () => ({
+        ok: false,
+        status: 403,
+        statusText: "Forbidden",
+        text: async () => "nope",
+      })) as unknown as typeof fetch,
     });
     const res = await api.findUser({} as never);
     expect(res.isErr()).toBe(true);
