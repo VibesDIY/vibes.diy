@@ -1,6 +1,6 @@
 # Split `vibes-diy chats` into `codegen-log` + `app-chats`
 
-**Status:** proposed — design review
+**Status:** approved — implementing (4 decisions resolved 2026-06-28)
 **Date:** 2026-06-28
 **Author:** jchris (+ Claude)
 
@@ -88,24 +88,16 @@ commands sharing the existing render helpers (`chat-response-render.ts`):
   (`<chatId>`, `--response`/`--raw`/`--files`/`--jsonl`/`--user`/`--turn`) →
   existing `get-chat-response`. This is the current command's deep-read behavior,
   now with a LIST that matches it.
-- **`app-chats`**: LIST → `listApplicationChats` (today's LIST behavior).
-  Deep-read of an `ApplicationChats` row's inline `blocks` is a **follow-up**
-  (out of scope for v1 unless trivial) — v1 is LIST only, which is the builder
-  debug need.
+- **`app-chats`**: LIST → `listApplicationChats` (today's LIST behavior), **plus
+  a deep-read**: `app-chats <vibe> <chatId>` replies with the chat body (the
+  `ApplicationChats.blocks`). Decision #3 — deep-read is in v1, not deferred.
 
-### Back-compat for the published `chats` command
+### The retired `chats` command
 
-`vibes-diy chats` is shipped on npm (currently `latest 2.6.9`). Options (pick in
-review):
-
-- **(A) Keep `chats` as a thin deprecated alias of `codegen-log`** (its
-  deep-read already reads codegen), printing a one-line deprecation notice to
-  stderr that points at `codegen-log` + `app-chats`. Its LIST is changed to read
-  `ChatContexts` (so the alias becomes self-consistent). Lowest breakage.
-- **(B) Remove `chats`**, ship the two new commands. Cleaner, but a breaking CLI
-  change.
-
-Recommendation: **(A)** for one release, then remove `chats` in a later major.
+Decision #1 — **no backward compat.** `chats` is removed as a working command and
+replaced by a stub that prints a warning to stderr ("`chats` has been split — use
+`vibes-diy codegen-log` (build transcript) or `vibes-diy app-chats` (in-app
+chats)") and exits non-zero. It does **not** proxy to either new command.
 
 ## Test plan (TDD, tests first)
 
@@ -113,21 +105,23 @@ Recommendation: **(A)** for one release, then remove `chats` in a later major.
   `createVibeDiyTestCtx` harness — seed `ChatContexts` rows for an app, assert
   list + cursor pagination + `appSlug`/`ownerHandle` filtering. Mirror the
   existing `list-application-chats` test. (Reuse infra; no new harness.)
-- **CLI:** extend `chats-cmd.test.ts` → `codegen-log` lists from the new endpoint
-  and deep-reads via `get-chat-response`; `app-chats` lists from
-  `listApplicationChats`. Assert the deprecation notice on `chats` (option A).
+- **CLI:** extend `chats-cmd.test.ts` (→ split into `codegen-log` + `app-chats`
+  tests) → `codegen-log` lists from the new endpoint and deep-reads via
+  `get-chat-response`; `app-chats` lists from `listApplicationChats` and
+  deep-reads its `blocks`; `chats` prints the warning and exits non-zero.
 - **Regression guard:** a test that a vibe with codegen history but no
   `ApplicationChats` row (the photo-chat shape) is now listed by `codegen-log`
   (would have returned empty under the old `chats`).
 
-## Open questions for review
+## Resolved decisions (2026-06-28, @jchris)
 
-1. Back-compat: **(A) deprecated alias** vs **(B) remove `chats`**?
-2. Should `codegen-log` live under a `debug` namespace (e.g.
-   `vibes-diy debug codegen-log`) to signal it's platform-internal, or stay
-   top-level alongside `app-chats`?
-3. Does `app-chats` need a v1 deep-read (render `ApplicationChats.blocks`), or is
-   LIST sufficient for the builder debug use case to start?
-4. Type duplication: distinct `*CodegenChats` types vs reusing the
-   `*ApplicationChats` item shape with a shared name. (Leaning distinct, per the
-   type-hygiene rule — don't overload one envelope for two features.)
+1. **No backward compat.** `chats` becomes a warn-and-exit stub pointing at the
+   two new commands — it does not proxy. (See "The retired `chats` command".)
+2. **Top-level commands.** No `debug` namespace; `codegen-log` and `app-chats`
+   sit alongside the other top-level subcommands.
+3. **`app-chats` deep-reads.** v1 includes `app-chats <vibe> <chatId>` rendering
+   the chat body from `ApplicationChats.blocks`.
+4. **Reuse existing types per surface** → distinct types. Each command uses the
+   types already defined for its own table family (`*ApplicationChats*` for
+   `app-chats`; the codegen list reuses/extends what exists for `ChatContexts` /
+   `get-chat-response`), rather than one shared envelope across both.
