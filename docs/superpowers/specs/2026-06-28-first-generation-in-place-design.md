@@ -260,6 +260,22 @@ owner-private chat server-side and return only a safe projection.** Suggestion c
 clearly-safe projection; the cached-app _history_ read (§4 PR-C) is a larger exposure decision but
 would follow the same single-source, server-filtered shape rather than a side persistence.
 
+**Projection-endpoint discipline (Charlie review, 2026-06-28) — standardize on this shape for
+every "safe slice of private chat" endpoint:**
+
+1. **Private chat stays the single source of truth** (no second data model, no side persistence).
+2. **A dedicated endpoint per public slice** (chips now, others later) — _not_ a generic
+   "read `chatSections`" surface that future UI could over-read through.
+3. **Build the response from an explicit allowlist projection schema** — only the fields the UI
+   needs — with **size/count caps**.
+4. **Enforce visibility/auth at the same boundary as app access**, and **never return raw private
+   sections**.
+5. **Read-only and non-persistent**, with **logs/metrics** so we can audit what the anonymous paths
+   expose.
+
+This gives a reusable pattern without a second data model or leaking owner-only context through
+future UI features. (Carried into #2755.)
+
 ---
 
 ## 7. Perf contract (§8 Q4) — the two lanes look categorically different
