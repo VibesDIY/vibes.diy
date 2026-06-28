@@ -633,7 +633,11 @@ export const HistoryReopened: Story = {
               <span style={{ cursor: "pointer", opacity: 0.7 }}>← back to edit</span>
             </div>
             {/* Past stream — read through the REAL getChatDetails path (real stored
-                chatSections), not hardcoded history. */}
+                chatSections) and rendered with the real MessageList. The `▸` lines below
+                stand in for the model's ACTUAL toplevel narration (block.toplevel.line) —
+                freeform prose, shape varies; #2677 shows it verbatim, it does NOT generate
+                tidy retrospective summaries (that'd be a separate model step). The counts
+                (messages · lines) ARE real & free: blocks.length + getCode().code length. */}
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
               <div className="rounded-md bg-light-background-01 dark:bg-dark-background-01" style={{ padding: "7px 10px" }}>
                 <strong>you</strong> · make a 4×4 drum pad that plays on tap
