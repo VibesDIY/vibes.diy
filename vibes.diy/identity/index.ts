@@ -58,6 +58,8 @@ export { JWKPrivateSchema, JWKPublicSchema } from "./types/wire.js";
 // `getTokenClaims()` path (api/impl/index.ts). The dedicated `clerk-token.js`
 // module has no device-id-crypto deps, so this stays out of the browser bundle's
 // device-id graph. `clerkDashApi`/`DashboardApiImpl` (the dashboard HTTP client,
-// not claim decoders) stay upstream.
+// not claim decoders) are now OWNED in-repo too (dash-api/dash-client.ts,
+// Task 6.2), so the browser `.` surface no longer imports any `@fireproof/*`
+// VALUE except the `core-runtime` context helpers (Bucket E).
 export { ClerkApiToken } from "./dash-api/clerk-token.js";
-export { clerkDashApi, DashboardApiImpl } from "@fireproof/core-protocols-dashboard";
+export { clerkDashApi, DashboardApiImpl } from "./dash-api/dash-client.js";
