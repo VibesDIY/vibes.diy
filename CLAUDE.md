@@ -54,6 +54,7 @@ Full list and provenance: [`.claude/skills/README.md`](.claude/skills/README.md)
 
 - Run checks: `pnpm check` (format + build + test + lint)
 - Run tests: `cd vibes.diy/tests && pnpm test`
+- **Run independent commands concurrently** — when several steps have no data dependency between them (multiple test suites, greps, status checks, package builds), issue them as parallel tool calls in a single message instead of one-at-a-time. It's faster and it works. Only serialize when a later call needs an earlier call's output.
 - Never push to main
 - Scope first (guidance, not a gate): small one-sentence non-controversial fixes go straight to a PR; for broad/experimental/prompt-or-behavior-changing work, flag the human to consider a design issue first rather than rigidly blocking or silently barreling ahead. [CONTRIBUTING.md § Scope](CONTRIBUTING.md#scope-small-and-sharp-by-default)
 - Never manually update version numbers in package.json
