@@ -635,12 +635,10 @@ export default function VibeIframeWrapper() {
     void vctx.sharedApi.listMembers({ ownerHandle, appSlug }).then((res) => {
       if (cancelled) return;
       // listMembers returns collaborators (not the owner); prepend the owner so the
-      // roster always leads with them.
-      // Roles aren't shown on the view page (only used for owner-first sort), so collapse
-      // the write-limited "submitter" role into "viewer" to fit the ShareMember type.
-      const collaborators: ShareMember[] = res.isOk()
-        ? res.Ok().members.map((m) => ({ handle: m.displayName, role: m.role === "editor" ? "editor" : "viewer" }))
-        : [];
+      // roster always leads with them. Carry each member's real grant role through —
+      // including "submitter" (a write-capable, read-restricted member), surfaced as
+      // "contributor" in the roster rather than mislabeled as a reader (Codex P2).
+      const collaborators: ShareMember[] = res.isOk() ? res.Ok().members.map((m) => ({ handle: m.displayName, role: m.role })) : [];
       setShareMembers([{ handle: ownerHandle, role: "owner" }, ...collaborators]);
     });
     return () => {
@@ -888,7 +886,9 @@ export default function VibeIframeWrapper() {
                   onNewHandle={() => void handleNewHandle()}
                   handlePickerBusy={handlePickerBusy}
                   viewerMode={shareViewer === "author" ? "author" : shareViewer === "member" ? "member" : "visitor"}
-                  memberReadOnly={myGrant === "viewer" || myGrant === "submitter"}
+                  // Only a viewer grant is read-only; submitter is write-capable
+                  // (canWrite, db-acl-eval) so it gets no lock (Codex P2).
+                  memberReadOnly={myGrant === "viewer"}
                   chips={editChips}
                   onSelectChip={handleEditPrompt}
                   onSubmitOther={handleEditPrompt}

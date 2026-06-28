@@ -77,6 +77,19 @@ describe("SharePanelView", () => {
     expect(screen.getByText("reader")).toBeTruthy();
   });
 
+  it("surfaces a submitter as 'contributor' (write-capable, not a reader)", () => {
+    render(<SharePanelView url="u" viewer="author" access="request" members={[{ handle: "sam", role: "submitter" }]} />);
+    expect(screen.getByText("@sam")).toBeTruthy();
+    expect(screen.getByText("contributor")).toBeTruthy();
+    expect(screen.queryByText("reader")).toBeNull();
+  });
+
+  it("omits the role label when a member has no role", () => {
+    render(<SharePanelView url="u" viewer="author" access="request" members={[{ handle: "sam" }]} />);
+    expect(screen.getByText("@sam")).toBeTruthy();
+    expect(screen.queryByText("reader")).toBeNull();
+  });
+
   it("author: the access toggle is disabled (and inert) while accessPending", () => {
     const onChangeAccess = vi.fn();
     render(<SharePanelView url="u" viewer="author" access="public" accessPending onChangeAccess={onChangeAccess} />);
