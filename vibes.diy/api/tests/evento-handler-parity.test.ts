@@ -119,7 +119,7 @@ describe("evento handler manifest (declarative, #2714)", () => {
   });
 
   it("chat-history READ queries are plain D1 reads — allowed on every shard, not codegen-only", () => {
-    for (const hash of ["get-chat-response", "get-chat-details", "list-application-chats"]) {
+    for (const hash of ["get-chat-response", "get-chat-details", "list-application-chats", "list-codegen-chats"]) {
       expect([...allowedOf(hash)].sort(), `${hash} must be allowed on all shards`).toEqual(["codegen", "shared", "vibe"]);
     }
   });

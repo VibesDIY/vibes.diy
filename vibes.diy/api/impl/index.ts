@@ -39,6 +39,9 @@ import {
   ReqListApplicationChats,
   ResListApplicationChats,
   isResListApplicationChats,
+  ReqListCodegenChats,
+  ResListCodegenChats,
+  isResListCodegenChats,
   ReqEnsureAppSettings,
   ResEnsureAppSettings,
   isResEnsureAppSettings,
@@ -508,6 +511,15 @@ export class VibesDiyApi implements VibesDiyApiIface<{
       { ...req, type: "vibes.diy.req-list-application-chats" },
       {
         resMatch: isResListApplicationChats,
+      }
+    );
+  }
+
+  listCodegenChats(req: Req<ReqListCodegenChats>): Promise<Result<ResListCodegenChats, VibesDiyError>> {
+    return this.request(
+      { ...req, type: "vibes.diy.req-list-codegen-chats" },
+      {
+        resMatch: isResListCodegenChats,
       }
     );
   }

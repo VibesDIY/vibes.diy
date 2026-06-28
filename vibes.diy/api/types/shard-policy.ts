@@ -119,6 +119,7 @@ export const SHARD_POLICY = {
   "vibes.diy.req-get-chat-details": ALL_SHARDS,
   "vibes.diy.req-get-chat-response": ALL_SHARDS,
   "vibes.diy.req-list-application-chats": ALL_SHARDS,
+  "vibes.diy.req-list-codegen-chats": ALL_SHARDS,
 
   // --- Vibe: channel-scoped doc ops (local broadcast + access-fn rendezvous).
   "vibes.diy.req-put-doc": VIBE_ONLY,
