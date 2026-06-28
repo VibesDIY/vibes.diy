@@ -21,20 +21,20 @@ The workflow is `gate → (checks ‖ test×4) → compile_test → deploy`:
 
 - **`gate`** — looks up whether this exact SHA already has a green `compile_test`
   check (the test-reuse path below), exposed as the `sha_green` output.
-- **`checks`** — lint + format-check + build(typecheck); **always runs**
-  (`run-tests: 'false'` on `actions/base`), even on an already-green SHA. It's
-  the cheap blocking backstop the old single-job deploy always kept: the
-  green-check lookup matches any check named `compile_test`, and some publish
-  workflows emit one without running tests (see #2790), so only the re-runnable
-  test matrix is skipped on that signal — never lint/build.
+- **`checks`** — lint + format-check + build(typecheck) (`run-tests: 'false'` on
+  `actions/base`); **skipped on an already-green SHA**. Every workflow that emits
+  a `compile_test` check now runs the real suite (`ci.yaml`, this deploy,
+  `call-ai-publish`) — the test-skipping publish jobs were renamed off that check
+  name in #2790 — so a green `compile_test` certifies lint+build+test all passed
+  and re-running lint/build here would be waste.
 - **`test`** — the Docker vitest suite fanned out across **4 free standard
   runners** (`shard: i/4`), skipped only when already green. This is the
   speedup: a non-green deploy's suite drops from ~4-min serial to ~2-min
   parallel.
 - **`compile_test`** — aggregator that **keeps this exact job name** so it still
-  emits a reusable green `compile_test` check on the deploy SHA. Green iff both
-  `gate` and `checks` succeeded **and** the SHA was already green **or** every
-  `test` shard passed.
+  emits a reusable green `compile_test` check on the deploy SHA. Green iff `gate`
+  succeeded **and** the SHA was already green **or** (`checks` + every `test`
+  shard passed).
 - **`deploy`** — the Cloudflare deploy (per-tag `environment` + secrets); runs
   only on a green `compile_test`, so a red suite/lint/build can never deploy.
 

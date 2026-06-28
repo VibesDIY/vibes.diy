@@ -7,7 +7,11 @@ on:
       - 'use-vibes@*'
 
 jobs:
-  compile_test:
+  # Named `publish` (not `compile_test`): this job SKIPS the test suite
+  # (`pnpm run lint || true`, no tests), so it must not emit a `compile_test`
+  # check — the deploy/CI green-SHA reuse path keys on that exact name to mean
+  # "the real suite passed." See VibesDIY/vibes.diy#2790.
+  publish:
     runs-on: ubuntu-latest
     environment: ${{ startsWith(github.ref, 'refs/tags/core@s') && 'staging' || startsWith(github.ref, 'refs/tags/core@p') && 'production' || 'dev' }}
     steps:
