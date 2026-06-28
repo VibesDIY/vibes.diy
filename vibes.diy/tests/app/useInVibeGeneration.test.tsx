@@ -36,5 +36,8 @@ describe("useInVibeGeneration", () => {
     await waitFor(() => expect(view.result.current.phase).toBe("streaming"));
     await act(async () => fakeChat.emitCodeEnd());
     await waitFor(() => expect(view.result.current.phase).toBe("live"));
+    // counts.messages tracks the block count; blocks is passed through from the reducer.
+    expect(view.result.current.counts.messages).toBe(1);
+    expect(view.result.current.blocks).toHaveLength(1);
   });
 });
