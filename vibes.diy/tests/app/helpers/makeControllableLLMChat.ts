@@ -132,7 +132,7 @@ export function makeControllableLLMChat(opts: { chatId?: string } = {}): Control
           type: "block.code.end",
           blockId,
           streamId: "stream-1",
-          seq: seq++,
+          seq,
           blockNr: 1,
           timestamp: new Date(),
           sectionId: "section-1",
