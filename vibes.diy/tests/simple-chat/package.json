@@ -19,7 +19,7 @@
     "@monaco-editor/react": "^4.7.0",
     "@react-router/node": "^7.18.0",
     "@react-router/serve": "^7.18.0",
-    "@shikijs/monaco": "^4.2.0",
+    "@shikijs/monaco": "^4.3.0",
     "@tailwindcss/typography": "^0.5.20",
     "@vibes.diy/prompts": "workspace:*",
     "call-ai": "workspace:*",
