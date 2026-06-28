@@ -1,14 +1,14 @@
 import { Lazy, Evento, EventoResult, EventoType, Result } from "@adviser/cement";
 import { W3CWebSocketEventEventoEnDecoder } from "@vibes.diy/api-pkg";
 import { ResError } from "@vibes.diy/api-types";
-import { sharedHandlers, appHandlers, chatHandlers } from "./evento-handler-manifest.js";
+import { handlerManifest } from "./evento-handler-manifest.js";
 
+// The monolith evento: every handler, regardless of shard kind. Used by cfServe
+// as the default when a DO doesn't pin a narrower shard plane.
 export const vibesMsgEvento = Lazy(() => {
   const evento = new Evento(new W3CWebSocketEventEventoEnDecoder());
   evento.push(
-    ...sharedHandlers,
-    ...appHandlers,
-    ...chatHandlers,
+    ...handlerManifest.map((e) => e.handler),
     {
       type: EventoType.WildCard,
       hash: "not-msg-implemented-handler",

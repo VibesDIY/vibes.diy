@@ -48,4 +48,25 @@ A third connection, plus making the chat plane lazy:
 - **Local QuickJS replaced AccessFnDO** (now deleted). Cached WASM module per DO instance, fresh VM context per eval, lazy init. Both AppSessions and ChatSessions supply a `localInvokeAccessFn` override; there is no default cross-DO invoker. A doc bound to an access fn with no invoker available **fails closed** (`app-documents-write-eventos.ts`).
 - **CLI cross-script binds APP_SESSIONS + USER_NOTIFY to prod.** Same DO instances, shared data plane. Deploy prod before CLI. (AccessFnDO was a _local_ class in every env — no cross-script binding — which is why its deletion had no 10061 ordering trap; see `do-migrations.md`.)
 - **`resolveShardDO` prefix routing** in UserNotify: `app:vibeKey` → APP_SESSIONS, plain shardId → CHAT_SESSIONS. Extensible via `SHARD_PREFIX_BINDINGS`.
-- **Handler manifest** (`evento-handler-manifest.ts`) is the single source of truth for which handlers go where; `chatMsgEvento` composes from the exported `chatPlaneHandlers` (`sharedHandlers + chatHandlers`, no `appHandlers`). The parity test enforces no overlap and that doc ops never re-enter the chat plane.
+- **Handler manifest** (`evento-handler-manifest.ts`) is the single source of truth for which handlers go where. As of #2714 it is **one declarative list** — each handler carries `allowed: ShardKind[]` (`"stream" | "vibe" | "shared"`), and every plane's evento is `handlersForShard(kind)`, a filter over that list. There are no longer three separate `sharedHandlers` / `appHandlers` / `chatHandlers` arrays to shuffle handlers between, and the `imgGenAppSessionStopgapHandlers` array is gone (`open-chat` / `prompt` just carry `allowed: ["stream","vibe"]`). The parity test asserts over `allowed` directly (doc ops are `["vibe"]` only; streaming is stream-bound). Re-homing a capability between planes is now a one-line `allowed` edit — no DO migration.
+
+## #2714 — collapse three "APIs" into one shard-keyed surface
+
+The three client connections (`chatApi`/`vibeApi`/`sharedApi`) and three DO classes (ChatSessions/AppSessions/SharedSessions) are the **same handler surface opened against a different shard key**. The shard key is the only thing that matters, so handlers should **declare** the shard kind(s) they support instead of being **quarantined** into per-plane arrays (decision: declare, one API — see issue #2714).
+
+**Shipped (step 2 of the build shape): the declarative manifest.** `ShardKind`, the single `handlerManifest` (each entry `{ allowed, handler }`), and `handlersForShard(kind)`. Behavior-preserving: each plane's served set is byte-for-byte what it was, but the placement metadata now lives in one place that both composition and tests read.
+
+**Why it's safe to unify (two reasons a handler was shard-bound):**
+
+- **(a) code/capability presence** — dissolved by loading the capability on the allowed planes behind a lazy `import()`. Not a security boundary; the access control _is_ the access-fn running, which travels with the code.
+- **(b) stateful rendezvous / topology** — irreducible. A doc write does **local broadcast** on the vibe shard; `subscribeDocs`/`subscribeViewerGrants` fan out to co-tenant sockets that only exist there; chat streaming has per-shard backpressure. These stay `VIBE_ONLY` / `STREAM_*`. **The monolith unifies code; it never unifies topology.**
+
+**Remaining (TDD plan, not yet built):**
+
+1. **Source-of-truth module in a shared package** so browser `pkg` and worker `api/svc` both import `ShardKind` + the `allowed` metadata and can't drift. (Today the manifest lives in `api/svc`; the browser side doesn't yet consume it.)
+2. **Branded client connections + a `call(conn, handler)` constraint** — the connection's `kind` must be a member of the handler's `allowed` set → **kind mismatch is a compile error** in the browser. Branded shard-key constructors (`openVibe`/`openShared`/`openStream`) pick the right key.
+3. **Single dispatch gate in the DO** — at runtime, mirror the kind check **and** add a **fail-loud identity assertion** for category-(b) handlers: the connection's shard identity must match the request's target (`owner--appSlug`), else **throw** — a write that can't reach its vibe's broadcast shard must never persist-and-go-quiet. Types enforce _kind_; runtime enforces _identity_.
+4. **Lazy-load the heavy capability modules** (QuickJS access-fn, streaming) via `find_additional_modules` + `rules` so a cheap shared/read instance never parses them (1 s startup budget; DO hibernation re-runs global scope on wake — verify).
+5. **Wrangler / migration sequencing** from 3 DO classes → 1 (open question: keep streaming isolated for blast-radius, or go fully monolithic).
+
+Open questions carried from the issue: singleton hot-shard contention (`global:0..k`?); DO-hibernation startup cost; one-plane-isolated vs fully monolithic.

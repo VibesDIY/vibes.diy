@@ -1,37 +1,39 @@
 import { describe, expect, it } from "vitest";
-import { sharedHandlers, appHandlers, chatHandlers } from "../svc/evento-handler-manifest.js";
+import { handlerManifest, handlersForShard, ShardKind } from "../svc/evento-handler-manifest.js";
 import { chatPlaneHandlers } from "../svc/chat-msg-evento.js";
 
-function hashes(handlers: readonly { readonly hash: string }[]): Set<string> {
-  return new Set(handlers.map((h) => h.hash));
+// The single declarative manifest (#2714) is the source of truth: each handler
+// carries `allowed: ShardKind[]`. These assertions read that metadata directly
+// — there is no per-plane handler array to keep in sync anymore.
+
+function hashesOn(kind: ShardKind): Set<string> {
+  return new Set(handlersForShard(kind).map((h) => h.hash));
 }
 
-describe("evento handler manifest parity", () => {
-  it("no handler appears in more than one category", () => {
-    const shared = hashes(sharedHandlers);
-    const app = hashes(appHandlers);
-    const chat = hashes(chatHandlers);
+function allowedOf(hash: string): readonly ShardKind[] {
+  const found = handlerManifest.filter((e) => e.handler.hash === hash);
+  expect(found.length, `"${hash}" must appear exactly once in the manifest`).toBe(1);
+  return found[0].allowed;
+}
 
-    for (const h of shared) {
-      expect(app.has(h), `"${h}" in both shared and app`).toBe(false);
-      expect(chat.has(h), `"${h}" in both shared and chat`).toBe(false);
-    }
-    for (const h of app) {
-      expect(chat.has(h), `"${h}" in both app and chat`).toBe(false);
-    }
-  });
-
+describe("evento handler manifest (declarative, #2714)", () => {
   it("every handler has a unique hash", () => {
-    const all = [...sharedHandlers, ...appHandlers, ...chatHandlers];
-    const allHashes = all.map((h) => h.hash);
-    const uniqueHashes = new Set(allHashes);
-    expect(uniqueHashes.size, "duplicate hashes found").toBe(allHashes.length);
+    const allHashes = handlerManifest.map((e) => e.handler.hash);
+    expect(new Set(allHashes).size, "duplicate hashes found").toBe(allHashes.length);
   });
 
-  it("shared + app + chat covers all expected handlers", () => {
-    const all = hashes([...sharedHandlers, ...appHandlers, ...chatHandlers]);
-    expect(all.size).toBeGreaterThan(0);
+  it("every handler is allowed on at least one shard kind", () => {
+    for (const e of handlerManifest) {
+      expect(e.allowed.length, `"${e.handler.hash}" has an empty allowed set`).toBeGreaterThan(0);
+      for (const k of e.allowed) {
+        expect(["stream", "vibe", "shared"]).toContain(k);
+      }
+    }
+  });
 
+  it("covers all expected handlers", () => {
+    const all = new Set(handlerManifest.map((e) => e.handler.hash));
+    expect(all.size).toBeGreaterThan(0);
     expect(all.has("put-doc")).toBe(true);
     expect(all.has("open-chat-handler")).toBe(true);
     expect(all.has("list-recent-vibes")).toBe(true);
@@ -41,58 +43,50 @@ describe("evento handler manifest parity", () => {
     expect(all.has("vibe.whoAmI")).toBe(true);
   });
 
-  it("app handlers are doc/notification ops only", () => {
-    const app = hashes(appHandlers);
-    expect(app.has("put-doc")).toBe(true);
-    expect(app.has("subscribe-docs")).toBe(true);
-
-    expect(app.has("open-chat-handler")).toBe(false);
-    expect(app.has("list-request-grants")).toBe(false);
-    expect(app.has("vibe.whoAmI")).toBe(false);
-  });
-
-  it("chat handlers are chat-streaming ops only", () => {
-    const chat = hashes(chatHandlers);
-    expect(chat.has("open-chat-handler")).toBe(true);
-    expect(chat.has("prompt-chat-section-handler")).toBe(true);
-    expect(chat.has("ensure-appSlug-item")).toBe(true);
-
-    expect(chat.has("put-doc")).toBe(false);
-    expect(chat.has("list-request-grants")).toBe(false);
-  });
-
-  it("chat plane (chatMsgEvento) excludes appHandlers — doc ops live on AppSessions (#2265 A2)", () => {
-    const chatPlane = hashes(chatPlaneHandlers);
-    for (const h of hashes(appHandlers)) {
-      expect(chatPlane.has(h), `appHandler "${h}" must not be served by ChatSessions`).toBe(false);
+  it("doc ops are vibe-only — they must never reach the stream or shared shard (#2265 AccessFnDO gate)", () => {
+    // Category (b) topology: doc writes do LOCAL broadcast on the vibe shard, so
+    // serving them elsewhere would persist-and-go-quiet (silent split-brain).
+    for (const hash of ["put-doc", "subscribe-docs", "get-doc", "delete-doc", "subscribe-viewer-grants"]) {
+      expect([...allowedOf(hash)].sort(), `${hash} must be vibe-only`).toEqual(["vibe"]);
     }
-    // Doc writes in particular must never reach the chat plane (AccessFnDO gate).
-    expect(chatPlane.has("put-doc")).toBe(false);
-    expect(chatPlane.has("subscribe-docs")).toBe(false);
-    // But the chat plane still serves chat streaming + shared queries.
-    expect(chatPlane.has("open-chat-handler")).toBe(true);
-    expect(chatPlane.has("vibe.whoAmI")).toBe(true);
-    // User-scoped reads/grants that the parent app calls on chatApi must stay
-    // reachable on the chat plane (they were reclassified out of appHandlers).
-    // Regression guard: dropping appHandlers must not strand these callers.
-    expect(chatPlane.has("list-dm-threads")).toBe(true); // DmInbox / vibe-route badge
-    expect(chatPlane.has("asset-upload-grant")).toBe(true); // HandleAvatarEditor / srv-sandbox putAsset
-  });
-
-  it("shared handlers include grants/membership (transition: called from parent app on chat connection)", () => {
-    const shared = hashes(sharedHandlers);
-    expect(shared.has("list-request-grants")).toBe(true);
-    expect(shared.has("vibe.whoAmI")).toBe(true);
-    expect(shared.has("create-invite")).toBe(true);
-    expect(shared.has("list-members")).toBe(true);
-
+    const stream = hashesOn("stream");
+    const shared = hashesOn("shared");
+    expect(stream.has("put-doc")).toBe(false);
+    expect(stream.has("subscribe-docs")).toBe(false);
     expect(shared.has("put-doc")).toBe(false);
-    expect(shared.has("open-chat-handler")).toBe(false);
+    expect(shared.has("subscribe-docs")).toBe(false);
   });
 
-  it("identity/settings/report handlers are shared, not chat (Track B re-home)", () => {
-    const shared = hashes(sharedHandlers);
-    const chat = hashes(chatHandlers);
+  it("chat streaming write ops (ensure/fork/setMode) are stream-only", () => {
+    for (const hash of ["ensure-appSlug-item", "fork-app", "set-mode-fsid"]) {
+      expect([...allowedOf(hash)].sort(), `${hash} must be stream-only`).toEqual(["stream"]);
+    }
+  });
+
+  it("open-chat + prompt are allowed on stream AND vibe (img-gen on vibeApi, #2350)", () => {
+    for (const hash of ["open-chat-handler", "prompt-chat-section-handler"]) {
+      expect([...allowedOf(hash)].sort(), `${hash} must be stream+vibe`).toEqual(["stream", "vibe"]);
+    }
+    expect(hashesOn("stream").has("open-chat-handler")).toBe(true);
+    expect(hashesOn("vibe").has("open-chat-handler")).toBe(true);
+  });
+
+  it("shared reads/grants/membership are allowed on every shard kind", () => {
+    for (const hash of [
+      "list-request-grants",
+      "vibe.whoAmI",
+      "create-invite",
+      "list-members",
+      "list-models",
+      // user-scoped reads the parent app calls on chatApi must stay reachable
+      "list-dm-threads", // DmInbox / vibe-route badge
+      "asset-upload-grant", // HandleAvatarEditor / srv-sandbox putAsset
+    ]) {
+      expect([...allowedOf(hash)].sort(), `${hash} must be allowed on all shards`).toEqual(["shared", "stream", "vibe"]);
+    }
+  });
+
+  it("identity/settings/report handlers are allowed everywhere (Track B re-home)", () => {
     const reHomed = [
       "list-user-slug-bindings",
       "create-user-slug-binding",
@@ -106,25 +100,26 @@ describe("evento handler manifest parity", () => {
       "vibes.diy.req-report-campaign-health",
       "vibes.diy.req-report-campaign-ad-previews",
     ];
-    for (const h of reHomed) {
-      expect(shared.has(h), `${h} must be a sharedHandler`).toBe(true);
-      expect(chat.has(h), `${h} must NOT be a chatHandler`).toBe(false);
+    for (const hash of reHomed) {
+      expect(allowedOf(hash)).toContain("shared");
+      expect(allowedOf(hash)).toContain("stream");
     }
   });
 
-  it("chat-history READ queries are shared, not chat — only long streams stay chat-plane", () => {
-    const shared = hashes(sharedHandlers);
-    const chat = hashes(chatHandlers);
-    // These are plain D1 reads (ChatSections/ChatContexts joins). They moved off
-    // the chat plane so every API serves them — e.g. the /vibe route reads a
-    // vibe's latest suggestion chips without opening the heavy ChatSessions socket.
-    const movedReads = ["get-chat-response", "get-chat-details", "list-application-chats"];
-    for (const h of movedReads) {
-      expect(shared.has(h), `${h} must be a sharedHandler`).toBe(true);
-      expect(chat.has(h), `${h} must NOT be a chatHandler`).toBe(false);
+  it("chat-history READ queries are plain D1 reads — allowed on every shard, not stream-only", () => {
+    for (const hash of ["get-chat-response", "get-chat-details", "list-application-chats"]) {
+      expect([...allowedOf(hash)].sort(), `${hash} must be allowed on all shards`).toEqual(["shared", "stream", "vibe"]);
     }
-    // The streaming ops are the only reason chatHandlers exists — they stay.
-    expect(chat.has("open-chat-handler")).toBe(true);
-    expect(chat.has("prompt-chat-section-handler")).toBe(true);
+  });
+
+  it("chatPlaneHandlers == handlersForShard('stream'): streaming + shared reads, no doc ops", () => {
+    const chatPlane = new Set(chatPlaneHandlers.map((h) => h.hash));
+    expect(chatPlane).toEqual(hashesOn("stream"));
+    // Doc writes must never reach the chat plane (AccessFnDO gate).
+    expect(chatPlane.has("put-doc")).toBe(false);
+    expect(chatPlane.has("subscribe-docs")).toBe(false);
+    // But the chat plane still serves chat streaming + shared queries.
+    expect(chatPlane.has("open-chat-handler")).toBe(true);
+    expect(chatPlane.has("vibe.whoAmI")).toBe(true);
   });
 });
