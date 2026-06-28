@@ -81,4 +81,49 @@ describe("useInVibeGeneration", () => {
     await act(async () => fakeChat.emitCodeBlock(src));
     await waitFor(() => expect(view.result.current.counts.lines).toBeGreaterThan(0));
   });
+
+  it("rejects a new prompt while a turn is already in flight", async () => {
+    const { view, fakeChat } = setup();
+    await waitFor(() => expect(view.result.current.phase).toBe("idle"));
+    act(() => view.result.current.sendPrompt("first"));
+    await act(async () => fakeChat.emitBlockBegin()); // running = true
+    await waitFor(() => expect(view.result.current.phase).toBe("streaming"));
+    // A second prompt while the turn is in flight must be ignored — only the
+    // first turn's chat.prompt() should have fired.
+    act(() => view.result.current.sendPrompt("second"));
+    await new Promise((r) => setTimeout(r, 30));
+    expect(fakeChat.chat.prompt).toHaveBeenCalledTimes(1);
+  });
+
+  it("resets generation state when the vibe (ownerHandle/appSlug) changes", async () => {
+    // Distinct chats per open — re-opening for the new vibe must get a fresh
+    // stream (the real openChat does); reusing one stream would lock its reader.
+    const fakeChat = makeControllableLLMChat({ chatId: "A" });
+    const nextChat = makeControllableLLMChat({ chatId: "B" });
+    const opened = [fakeChat.chat, nextChat.chat];
+    let openIdx = 0;
+    const openChat = vi.fn(async () => Result.Ok(opened[Math.min(openIdx++, opened.length - 1)]));
+    const chatApi = { openChat } as never;
+    const sharedApi = {
+      getAppByFsId: vi.fn(async () => Result.Ok({ fsId: "FS-1" })),
+      ensureAppSettings: vi.fn(async () => Result.Err("no settings")),
+    } as never;
+    const srvVibeSandbox = { pushSource: vi.fn(() => true) } as never;
+    const view = renderHook(
+      (p: { ownerHandle: string; appSlug: string }) =>
+        useInVibeGeneration({ ownerHandle: p.ownerHandle, appSlug: p.appSlug, fsId: "FS-1", chatApi, sharedApi, srvVibeSandbox }),
+      { initialProps: { ownerHandle: "owner", appSlug: "appA" } }
+    );
+    await waitFor(() => expect(view.result.current.phase).toBe("idle"));
+    act(() => view.result.current.sendPrompt("build it"));
+    await act(async () => fakeChat.emitBlockBegin());
+    await act(async () => fakeChat.emitCodeEnd());
+    await waitFor(() => expect(view.result.current.phase).toBe("live"));
+    expect(view.result.current.blocks.length).toBeGreaterThan(0);
+    // Navigate to a different vibe — the reducer must reset, not carry appA's blocks.
+    view.rerender({ ownerHandle: "owner", appSlug: "appB" });
+    await waitFor(() => expect(view.result.current.phase).toBe("idle"));
+    expect(view.result.current.blocks).toHaveLength(0);
+    expect(view.result.current.counts.messages).toBe(0);
+  });
 });
