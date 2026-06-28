@@ -558,7 +558,10 @@ function HistorySummaryRow({ messages, lines }: { readonly messages: number; rea
       className="flex w-full items-center justify-between rounded-md border border-light-decorative-01 dark:border-dark-decorative-01 px-3 py-1.5 text-left"
       style={{ marginBottom: 8, cursor: "pointer", background: "transparent" }}
     >
-      <span className="text-light-secondary dark:text-dark-secondary" style={{ display: "flex", alignItems: "center", gap: 7, fontSize: 12 }}>
+      <span
+        className="text-light-secondary dark:text-dark-secondary"
+        style={{ display: "flex", alignItems: "center", gap: 7, fontSize: 12 }}
+      >
         <span aria-hidden style={{ fontSize: 13 }}>
           ⟲
         </span>
@@ -588,13 +591,7 @@ export const FirstGenStreaming: Story = {
         viewerMode="author"
         onHome={() => undefined}
         onShare={() => undefined}
-        body={
-          <GenStreamBody
-            messages={2}
-            codeLines={48}
-            narration={["laying out a 4×4 pad grid", "wiring up the sound engine"]}
-          />
-        }
+        body={<GenStreamBody messages={2} codeLines={48} narration={["laying out a 4×4 pad grid", "wiring up the sound engine"]} />}
       />
     </Phone>
   ),
