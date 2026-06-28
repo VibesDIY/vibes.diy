@@ -95,15 +95,8 @@ export function useInVibeGeneration(opts: UseInVibeGenerationOpts): InVibeGenera
   // 'streaming' once a turn is running and before any completed code block;
   // 'live' once the first code.end has landed (subsequent edits keep us 'live'
   // and hot-swap in place); else 'idle'.
-  const firstCodeDone = useMemo(
-    () => promptState.blocks.some((b) => b.msgs.some((m) => isCodeEnd(m))),
-    [promptState.blocks]
-  );
-  const phase: GenerationPhase = firstCodeDone
-    ? "live"
-    : promptState.running || promptToSend !== null
-      ? "streaming"
-      : "idle";
+  const firstCodeDone = useMemo(() => promptState.blocks.some((b) => b.msgs.some((m) => isCodeEnd(m))), [promptState.blocks]);
+  const phase: GenerationPhase = firstCodeDone ? "live" : promptState.running || promptToSend !== null ? "streaming" : "idle";
 
   const sendPrompt = useCallback((text: string) => {
     const trimmed = text.trim();
