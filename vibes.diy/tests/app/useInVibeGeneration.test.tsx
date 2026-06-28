@@ -40,4 +40,18 @@ describe("useInVibeGeneration", () => {
     expect(view.result.current.counts.messages).toBe(1);
     expect(view.result.current.blocks).toHaveLength(1);
   });
+
+  it("pushes resolved source to the iframe on a completed code block and ramps blur down", async () => {
+    const { view, fakeChat, pushSource } = setup();
+    await waitFor(() => expect(view.result.current.phase).toBe("idle"));
+    act(() => view.result.current.sendPrompt("make a counter"));
+    const before = view.result.current.blurPx; // promptToSend set, hotSwapCount 0 → 25
+    expect(before).toBe(25);
+    await act(async () => fakeChat.emitBlockBegin());
+    // A full, valid module so the push guard (len>=200 && includes "export default") passes.
+    const src = `export default function App(){return null}\n${"// pad line\n".repeat(40)}`;
+    await act(async () => fakeChat.emitCodeBlock(src));
+    await waitFor(() => expect(pushSource).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(view.result.current.blurPx).toBeLessThan(25));
+  });
 });
