@@ -18,16 +18,16 @@ describe("resolveShardDO", () => {
     expect(result.name).toBe("app:foo");
   });
 
-  it("foo (bare codegen) → CODEGEN_SESSIONS, physical name 'chat:foo'", () => {
+  it("foo (bare codegen) → CODEGEN_SESSIONS, physical name 'codegen:foo'", () => {
     const result = resolveShardDO("foo", env);
     expect(result.ns).toBe(CODEGEN_SESSIONS);
-    expect(result.name).toBe("chat:foo");
+    expect(result.name).toBe("codegen:foo");
   });
 
-  it("foo:bar (unknown prefix) → CODEGEN_SESSIONS, physical name 'chat:foo:bar'", () => {
+  it("foo:bar (unknown prefix) → CODEGEN_SESSIONS, physical name 'codegen:foo:bar'", () => {
     const result = resolveShardDO("foo:bar", env);
     expect(result.ns).toBe(CODEGEN_SESSIONS);
-    expect(result.name).toBe("chat:foo:bar");
+    expect(result.name).toBe("codegen:foo:bar");
   });
 
   it("app:foo--bar → SESSIONS with the full vibe-keyed physical name", () => {
@@ -48,10 +48,10 @@ describe("resolveShardDO", () => {
     expect(result.name).toBe("shared:notify-user-abc");
   });
 
-  it("bare notify-user-abc → CODEGEN_SESSIONS as 'chat:notify-user-abc'", () => {
+  it("bare notify-user-abc → CODEGEN_SESSIONS as 'codegen:notify-user-abc'", () => {
     const result = resolveShardDO("notify-user-abc", env);
     expect(result.ns).toBe(CODEGEN_SESSIONS);
-    expect(result.name).toBe("chat:notify-user-abc");
+    expect(result.name).toBe("codegen:notify-user-abc");
   });
 
   // Cross-plane collision guard: the same logical user shard registered on the
