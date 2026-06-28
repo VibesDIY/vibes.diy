@@ -226,6 +226,9 @@ export default function VibeIframeWrapper() {
   // owner's session. Guarded by a ref + scrubbed from the URL so a refresh/re-render
   // doesn't re-fire. (#2677 PR-B)
   const autoFiredRef = useRef(false);
+  // Guards against a rapid double-submit forking the same vibe twice (each fork
+  // would mint a separate copy). Reset on vibe change (below) and on fork error.
+  const forkingRef = useRef(false);
   useEffect(() => {
     if (autoFiredRef.current) return;
     const p64 = searchParam.get("prompt64");
@@ -266,16 +269,22 @@ export default function VibeIframeWrapper() {
       // Signed-in non-owner: make-it-yours INLINE, then land on the fork's /vibe
       // page carrying the prompt. The fork must complete (and the URL must point
       // at the fork) before any codegen opens. Anchor the destination on the
-      // returned ResForkApp fields, not the pre-fork route params.
+      // returned ResForkApp fields, not the pre-fork route params. The in-flight
+      // guard stops a rapid double-tap from minting two forks.
+      if (forkingRef.current) return;
+      forkingRef.current = true;
       const tid = toast.loading("Making it yours…");
       void (async () => {
         const rFork = await vctx.chatApi.forkApp({ srcUserSlug: ownerHandle, srcAppSlug: appSlug, srcFsId: fsId });
         if (rFork.isErr()) {
+          forkingRef.current = false; // allow a retry
           toast.error(`Couldn't make it yours: ${rFork.Err().message}`, { id: tid });
           return;
         }
         toast.dismiss(tid);
         notifyRecentVibesChanged();
+        // On success we navigate to the fork; the slug-keyed reset effect clears
+        // forkingRef so the new page can fork again later if needed.
         void navigate(forkDestination(rFork.Ok(), prompt64), { replace: true });
       })();
     },
@@ -332,6 +341,7 @@ export default function VibeIframeWrapper() {
     // reset the auto-fire one-shot too — otherwise a second seamless fork in the
     // same session (carrying ?prompt64) would be suppressed and never generate.
     autoFiredRef.current = false;
+    forkingRef.current = false;
   }, [ownerHandle, appSlug]);
 
   useEffect(() => {
