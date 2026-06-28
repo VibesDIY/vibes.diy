@@ -90,6 +90,42 @@ App.jsx
 
 The `useDocument` hook provides several methods: `merge(updates)` updates the document with new fields without saving (use this instead of keeping a `useState` for document data), `submit(e)` handles form submission by preventing default, saving, and resetting, `save()` saves the current document state, and `reset()` resets to initial state. When you call submit, the document is reset, so if you didn't provide an `_id` then you can use the form to create a stream of new documents as in the basic example above.
 
+### Seeding starter data — give each seed a deterministic `_id`
+
+When an app ships with default content — starter slides, template rows, example cards — and writes it into the database on first load, give **each seed document a deterministic `_id`** (`"seed:intro"`, `"seed:" + key`). This makes the seeding write **idempotent**: if it ever runs again, it overwrites the same documents instead of creating fresh copies.
+
+The trap is the live-query empty state. `useLiveQuery` renders empty before data arrives, so `docs.length === 0` is briefly true on **every** fresh load — and a `useRef`/`useState` "already seeded" flag only guards the current session, never the next reload, a second device, or another collaborator. With **auto-generated** `_id`s, each of those re-seeds the full set and duplicate copies pile up without bound. Deterministic `_id`s collapse every re-seed back onto the same N documents.
+
+```jsx
+import React from "react";
+import { useFireproof } from "use-fireproof";
+
+// Stable _id per seed, and no Date.now()/random fields — keep the payload
+// constant so a redundant seed is a true no-op, not a churning rewrite.
+const SEED = [
+  { _id: "seed:intro", type: "slide", title: "Welcome", position: 1000 },
+  { _id: "seed:problem", type: "slide", title: "The problem", position: 2000 },
+  { _id: "seed:ask", type: "slide", title: "The ask", position: 3000 },
+];
+
+export default function App() {
+  const { useLiveQuery, database } = useFireproof("deck");
+  const { docs: slides } = useLiveQuery("position");
+
+  React.useEffect(() => {
+    if (slides.length > 0) return; // already has content — don't seed
+    // Deterministic _id → idempotent. Even if this runs again (another load or
+    // device before the query resolves), it overwrites the same docs instead of
+    // minting new ones, so seed slides never duplicate.
+    SEED.forEach((s) => database.put(s).catch((e) => console.error(e)));
+  }, [slides.length, database]);
+
+  return <Deck slides={slides} />;
+}
+```
+
+Don't stamp `Date.now()` or other changing values into seed documents — that makes each re-seed rewrite the doc with new content, churning revisions even though the `_id` is stable. This is the write-side of the same `_id` rule the access function follows (see "`_id` strategy matters" below): resource-like docs — channels, profiles, **seeds** — get deterministic `_id`s; event/content docs let `_id` auto-generate.
+
 ### Updating Documents in Event Handlers
 
 To update an existing document from a click handler or callback, use `database.put()` directly. Never call `useDocument` inside an event handler — that violates React's Rules of Hooks. Adding a toggle to list items:
@@ -733,7 +769,7 @@ type AccessDescriptor = {
 
 **Channels** route documents. A document with `channels: ["general"]` is only visible to users who have been granted access to `"general"`. Channels are the unit of read isolation.
 
-**`_id` strategy matters.** Documents that represent a unique named resource (channels, user profiles, config singletons) should use a deterministic `_id` with a short prefix — `"ch:" + name`, `"profile:" + handle`, `"config"`. This enforces uniqueness: two users creating "general" get the same doc, not two. Documents that represent events or content (messages, posts, survey responses) should let `_id` be auto-generated — each one is unique by nature. Use `doc._id` as the channel name for resource docs; use a `channelId` foreign key on content docs.
+**`_id` strategy matters.** Documents that represent a unique named resource (channels, user profiles, config singletons, **seed/starter content**) should use a deterministic `_id` with a short prefix — `"ch:" + name`, `"profile:" + handle`, `"config"`, `"seed:" + key`. This enforces uniqueness: two users creating "general" get the same doc, not two — and a first-load seed that runs again (a fresh tab, another device) overwrites the same starter docs instead of duplicating them (see "Seeding starter data" above). Documents that represent events or content (messages, posts, survey responses) should let `_id` be auto-generated — each one is unique by nature. Use `doc._id` as the channel name for resource docs; use a `channelId` foreign key on content docs.
 
 **Grants are additive.** The effective access state is the union of every current document's `AccessDescriptor` output. There is no "remove grant" operation — deleting a document drops its contribution from the union automatically. This makes revocation trivial: delete the document that granted access, and the grant disappears on next sync.
 
