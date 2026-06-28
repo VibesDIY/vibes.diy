@@ -1,14 +1,26 @@
 import React, { useState } from "react";
 import { Toaster, ToastBar, type Toast } from "react-hot-toast";
 
+// The warning icon used by `toast("…", { icon: WARNING_ICON })`. Warnings are
+// plain (type "blank") toasts distinguished only by this icon, so we key off it
+// to decide whether they get a Copy button alongside error toasts.
+export const WARNING_ICON = "⚠️";
+
 // Extract the plain-text payload of a toast so it can be copied to the clipboard.
-// Error toasts are created with `toast.error("...")`, so the message is a string;
-// richer (ReactNode) messages have no copyable text and return "" (no button).
+// Error/warning toasts carry a string message; richer (ReactNode) messages have
+// no copyable text and return "" (no button).
 export function toastText(t: Toast): string {
   const m = t.message;
   if (typeof m === "string") return m;
   if (typeof m === "number") return String(m);
   return "";
+}
+
+// A toast is copyable when it's an error or a warning (icon = WARNING_ICON) and
+// it has plain-text content to copy.
+export function isCopyableToast(t: Toast): boolean {
+  if (!toastText(t)) return false;
+  return t.type === "error" || t.icon === WARNING_ICON;
 }
 
 function CopyButton({ toast: t }: { toast: Toast }) {
@@ -30,8 +42,8 @@ function CopyButton({ toast: t }: { toast: Toast }) {
     <button
       type="button"
       onClick={copy}
-      aria-label="Copy error message to clipboard"
-      title="Copy error to clipboard"
+      aria-label="Copy message to clipboard"
+      title="Copy message to clipboard"
       className="ml-1 shrink-0 self-start rounded border border-current px-1.5 py-0.5 text-xs font-medium opacity-60 hover:opacity-100"
     >
       {copied ? "Copied" : "Copy"}
@@ -40,8 +52,8 @@ function CopyButton({ toast: t }: { toast: Toast }) {
 }
 
 // Drop-in replacement for <Toaster>. Renders the default toast (icon + message)
-// and appends a "Copy" button to error toasts so errors can be grabbed for debug.
-// Error toasts get a longer duration so there's time to click copy.
+// and appends a "Copy" button to error and warning toasts so they can be grabbed
+// for debug. Error toasts get a longer duration so there's time to click copy.
 export function CopyableToaster() {
   return (
     <Toaster toastOptions={{ error: { duration: 10000 } }}>
@@ -51,7 +63,7 @@ export function CopyableToaster() {
             <>
               {icon}
               {message}
-              {t.type === "error" && <CopyButton toast={t} />}
+              {isCopyableToast(t) && <CopyButton toast={t} />}
             </>
           )}
         </ToastBar>

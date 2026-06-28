@@ -4,6 +4,7 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import { isBlockEnd, isCodeEnd } from "@vibes.diy/call-ai-v2";
 import { BuildURI, URI } from "@adviser/cement";
 import { toast } from "react-hot-toast";
+import { WARNING_ICON } from "../CopyableToaster.js";
 import { useVibesDiy } from "../../vibes-diy-provider.js";
 import { calcEntryPointUrl } from "@vibes.diy/api-pkg";
 import { getCode } from "./get-code.js";
@@ -109,7 +110,9 @@ export function PreviewApp({ promptState }: { promptState: PromptState }) {
       // the preview may be a step behind the latest stream.
       toast(`${newFailed} edit${newFailed === 1 ? "" : "s"} couldn't apply — preview may be stale`, {
         id: "aider-resolve-error",
-        icon: "⚠️",
+        icon: WARNING_ICON,
+        // Longer duration so there's time to hit the Copy button (see CopyableToaster).
+        duration: 10000,
       });
     }
 
@@ -231,7 +234,8 @@ export function PreviewApp({ promptState }: { promptState: PromptState }) {
       // Warning, not error — mountVibe re-uses the React root, so the iframe
       // keeps the previously-committed DOM. This is a "heads up the latest
       // edit didn't paint", not a hard failure.
-      toast(`Hot-swap failed: ${firstLine}`, { id: "hot-swap-error", icon: "⚠️" });
+      // Longer duration so there's time to hit the Copy button (see CopyableToaster).
+      toast(`Hot-swap failed: ${firstLine}`, { id: "hot-swap-error", icon: WARNING_ICON, duration: 10000 });
     }) as () => void;
     return unsubscribe;
   }, [srvVibeSandbox]);
