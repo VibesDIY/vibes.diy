@@ -138,7 +138,11 @@ export function SharePanelView({
                 { value: "request", label: "People you approve" },
               ] as const
             ).map((opt) => {
-              const active = opt.value === access;
+              // While the authoritative setting is still loading (accessPending), neither
+              // button is selected — `access` is only the loader's `isWorldReadable` fallback
+              // at this point, so honouring it would flash a button as selected before the
+              // real `publicAccess` value resolves. Both stay unselected until it lands.
+              const active = !accessPending && opt.value === access;
               return (
                 <button
                   key={opt.value}

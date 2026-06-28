@@ -99,6 +99,20 @@ describe("SharePanelView", () => {
     expect(onChangeAccess).not.toHaveBeenCalled();
   });
 
+  it("author: neither button is selected while accessPending — no flash of the loader fallback", () => {
+    // `access` is the loader's `isWorldReadable` fallback until the real setting resolves;
+    // while pending, both radios must read unchecked so one doesn't flash as selected.
+    const { rerender } = render(<SharePanelView url="u" viewer="author" access="public" accessPending />);
+    expect(screen.getByRole("radio", { name: /anyone with the link/i }).getAttribute("aria-checked")).toBe("false");
+    expect(screen.getByRole("radio", { name: /people you approve/i }).getAttribute("aria-checked")).toBe("false");
+    rerender(<SharePanelView url="u" viewer="author" access="request" accessPending />);
+    expect(screen.getByRole("radio", { name: /anyone with the link/i }).getAttribute("aria-checked")).toBe("false");
+    expect(screen.getByRole("radio", { name: /people you approve/i }).getAttribute("aria-checked")).toBe("false");
+    // once it resolves (accessPending falsy), the matching button selects
+    rerender(<SharePanelView url="u" viewer="author" access="request" />);
+    expect(screen.getByRole("radio", { name: /people you approve/i }).getAttribute("aria-checked")).toBe("true");
+  });
+
   it("non-owner sees the access copy (reflecting the mode); the owner sees the toggle instead", () => {
     const { rerender } = render(<SharePanelView url="u" viewer="member" access="public" members={[]} />);
     expect(screen.getByText(/anyone with the link can open/i)).toBeTruthy();
