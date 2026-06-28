@@ -1,5 +1,7 @@
 # Chrome DevTools MCP debugging loop
 
+> **Environment:** the `mcp__chrome-devtools__*` tools work out of the box in **cloud / web sessions** — that's the default place to use them, and you should prefer this managed Chrome over asking a human to drive a browser locally. A SessionStart hook provisions a working headful Chrome through the egress proxy; see [`cloud-browser-setup.md`](cloud-browser-setup.md) (run `bash scripts/setup-cloud-browser.sh` if `navigate_page` ever fails with `ERR_CONNECTION_CLOSED` or a missing-Chrome error). The "ask the user to quit Chrome" and "use the user's `vibes.diy` cookies" guidance lower in this file is **local-workstation-specific** — in a cloud session the Chrome is yours to open, navigate, and restart freely.
+
 When iterating on a UI/streaming bug with the user driving the dev server, follow this loop. It compresses signal-to-noise: real reproduction, structured snapshots from the page, no premature edits.
 
 ## Loop
@@ -34,9 +36,11 @@ Vite HMRs client-side TS, but Server-side TS imported via React-Router SSR may h
 
 When the loop ends, remove temporary `console.log`/`console.warn` breadcrumbs and the `window.__*Debug` writer. Keep telemetry only if it's already in a structured `debug` namespace the project ships with.
 
-## Session management
+## Session management (local workstation)
 
-Initiate Chrome sessions yourself — open pages, navigate freely (`new_page`, `navigate_page`, etc.). But if Chrome needs to be restarted or quit, **ask the user to quit Chrome manually** rather than killing the process. Killing Chrome can lose tabs, state, or work in unrelated windows. If Chrome MCP can't connect or needs a fresh session, ask the user to "please quit and reopen Chrome" instead of running `pkill` or similar.
+This section applies when driving a developer's **local** Chrome. In a cloud session the Chrome is managed and ephemeral — restart it however you need (the SessionStart hook rebuilds the setup), no need to ask anyone.
+
+Initiate Chrome sessions yourself — open pages, navigate freely (`new_page`, `navigate_page`, etc.). But on a local workstation, if Chrome needs to be restarted or quit, **ask the user to quit Chrome manually** rather than killing the process. Killing Chrome can lose tabs, state, or work in unrelated windows. If Chrome MCP can't connect or needs a fresh session, ask the user to "please quit and reopen Chrome" instead of running `pkill` or similar.
 
 ## CLI routing — never hit cli-v2 directly
 
