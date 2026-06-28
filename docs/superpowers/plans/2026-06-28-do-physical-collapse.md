@@ -191,9 +191,13 @@ If a dev/preview deploy is available, capture a `wrangler tail` cold-wake timing
 
 > Default tilt (confirm, don't assume): **3→2** — unify `AppSessions`+`SharedSessions`, keep `ChatSessions` (codegen) standalone. The tasks below are written for either outcome; only the count of `new_classes`/`deleted_classes` and the cli binding shape differ.
 
+> **✅ DECIDED (jchris): 3→1, fully monolithic.** One class `Sessions`, two binding handles — `SESSIONS` (vibe + shared) and `CODEGEN_SESSIONS` (codegen) — so cli keeps codegen local while cross-script-binding `SESSIONS`→prod. The resource-isolation argument for 3→2 was retracted (DO instance placement is Cloudflare's opaque scheduling, not a guarantee a class boundary buys you; per-instance limits already isolate a runaway codegen stream regardless of class). The only real 3→2 reason left was the cli binding model — and the **same-name local + cross-script** binding wrangler-validates cleanly (Tier-1 dry-run: rendered as two distinct namespaces, disambiguated by `script_name`). The remote migration validator is the one untested layer; it's caught safely at the (reversible) Phase C cli deploy with the old 3-class topology as rollback. No behavior change (cli keeps its own codegen).
+
 ---
 
-## Phase C — Unified class + routing (`new_classes` migration; behavior-preserving)
+## Phase C — Unified class + routing (`new_classes` migration; behavior-preserving) — ✅ SHIPPED (this PR)
+
+> **Implemented as 3→1.** `Sessions` class (`workers/sessions.ts`) derives its plane from the request path (`shardKindForPath`) and replicates each former class's `fetch` wiring per kind. `app.ts` routes vibe+shared→`SESSIONS`, codegen→`CODEGEN_SESSIONS`; `resolveShardDO` reroutes UserNotify fan-out to the unified bindings. `wrangler.toml` appends `v9 new_classes=["Sessions"]` + the two bindings in all six env blocks (cli: `SESSIONS` cross-script→prod, `CODEGEN_SESSIONS` local). Old classes stay exported/bound for rollback; GC is Phase E. **Deploy: prod before cli** (cli's cross-script `SESSIONS` needs prod's class first). The task list below is the original plan; the shipped shape matches it with the 3→1 binding split.
 
 ### Task C1: Add the unified DO class
 
