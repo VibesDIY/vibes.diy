@@ -1,10 +1,15 @@
 import { describe, it, expect } from "vitest";
-import { ensureSuperThis } from "@fireproof/core-runtime";
+import { ensureSuperThis, hashStringSync } from "@fireproof/core-runtime";
 import { getKeyBag } from "@fireproof/core-keybag";
 import type { SuperThis } from "@fireproof/core";
 import type { JWKPrivate, DeviceIdKeyBagItem, DeviceIdResult } from "@fireproof/core-types-base";
 import { Buffer } from "node:buffer";
+import { mkdtempSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { seedDeviceIdFromEnv, VIBES_DEVICE_ID_ENV } from "./device-id-env.js";
+
+const DEVICE_ID_FILENAME = `${hashStringSync("FIREProof:deviceId")}.json`;
 
 // JWKPrivate is a discriminated union; in these tests we only read the EC `x`.
 function deviceX(devid: DeviceIdResult): string {
@@ -19,6 +24,15 @@ function inMemorySthis(): SuperThis {
   // may be set (CI/deploy secret). Clear it so the "unset" case doesn't inherit
   // the ambient value; seeding tests set it explicitly anyway (#2425).
   sthis.env.delete(VIBES_DEVICE_ID_ENV);
+  return sthis;
+}
+
+function fileKeybagSthis(rawKeybagFile: string): SuperThis {
+  const dir = mkdtempSync(join(tmpdir(), "seed-device-id-env-"));
+  const sthis = ensureSuperThis();
+  sthis.env.set("FP_KEYBAG_URL", `file://${dir}`);
+  sthis.env.delete(VIBES_DEVICE_ID_ENV);
+  writeFileSync(join(dir, DEVICE_ID_FILENAME), rawKeybagFile);
   return sthis;
 }
 
@@ -104,5 +118,18 @@ describe("seedDeviceIdFromEnv", () => {
     delete (item.item as Record<string, unknown>).cert;
     sthis.env.set(VIBES_DEVICE_ID_ENV, JSON.stringify(item));
     await expect(seedDeviceIdFromEnv(sthis)).rejects.toThrow(/missing the signed certificate/);
+  });
+
+  it("throws clean re-enroll guidance when the on-disk keybag is unreadable/corrupt", async () => {
+    const sthis = fileKeybagSthis("%%% not json %%%");
+    sthis.env.set(VIBES_DEVICE_ID_ENV, JSON.stringify(fakeDeviceIdItem("replacement-x")));
+
+    const err = await seedDeviceIdFromEnv(sthis)
+      .then(() => null)
+      .catch((e) => e);
+
+    const message = err instanceof Error ? err.message : String(err);
+    expect(message).toMatch(/login --force/);
+    expect(message).not.toMatch(/read bag failed/i);
   });
 });

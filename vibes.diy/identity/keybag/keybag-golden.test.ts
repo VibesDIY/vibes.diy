@@ -195,16 +195,17 @@ describe("keybag golden — node-only boundary (keybag must not reach the browse
 });
 
 describe("keybag golden — corruption / partial-write failure mode (characterization)", () => {
-  // CHARACTERIZATION of today's behavior so the lift can't drift it silently —
-  // NOT an endorsement that throwing is the ideal contract for a credential read.
-  // The asymmetry: unparseable BYTES throw ("read bag failed"); parseable JSON
-  // that fails the schema returns a structured error (no throw).
-  it("unparseable files throw (empty / non-JSON / truncated)", async () => {
+  // Intentional behavior change in #2726: unreadable/corrupt BYTES are now
+  // normalized to the same structured-error contract as schema-invalid JSON.
+  it("unparseable files return a structured error (empty / non-JSON / truncated)", async () => {
     for (const contents of ["", "%%% not json %%%", '{"id":"z3QkefAC57rcrs","clazz":"DeviceIdK']) {
       const { dir, sthis } = tmpKeybag();
       writeFileSync(join(dir, DEVICE_ID_FILENAME), contents);
       const kb = await getKeyBag(sthis);
-      await expect(kb.getDeviceId()).rejects.toThrow();
+      const devid = await kb.getDeviceId();
+      expect(devid.error).toBeDefined();
+      expect(devid.deviceId.IsNone()).toBe(true);
+      expect(devid.cert.IsNone()).toBe(true);
     }
   });
 

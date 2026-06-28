@@ -4,10 +4,11 @@
 // authority — none of which are browser-safe (fs, jose, env-loaded CA keys).
 // Kept on a separate subpath so the browser-safe "./index.js" never links them.
 
-import { Lazy, Result } from "@adviser/cement";
-import type { SuperThis, FPDeviceIDSession } from "@fireproof/core-types-base";
+import { Lazy, Option, Result } from "@adviser/cement";
+import type { SuperThis, FPDeviceIDSession, DeviceIdResult } from "@fireproof/core-types-base";
 import type { DashAuthType } from "@fireproof/core-types-protocols-dashboard";
-import { getKeyBag } from "@fireproof/core-keybag";
+import { getKeyBag as getCoreKeyBag } from "@fireproof/core-keybag";
+import { deviceIdRegisterEvento as coreDeviceIdRegisterEvento, isResDeviceIdRegister } from "@fireproof/core-cli";
 import { DeviceIdKey } from "./device-id/key.js";
 import { DeviceIdSignMsg } from "./device-id/sign.js";
 
@@ -15,7 +16,75 @@ import { DeviceIdSignMsg } from "./device-id/sign.js";
 // Node-CLI only: core-keybag pulls in `find-up` (fs config lookup), which is
 // NOT bundleable for Cloudflare Workers. Worker code must use "./server" for
 // the CA/token API, never this module.
-export { getKeyBag } from "@fireproof/core-keybag";
+//
+// #2726: normalize unreadable/corrupt keybag bytes into DeviceIdResult.error so
+// callers can surface clean re-enroll guidance instead of raw throw paths.
+const READ_BAG_FAILED_MARKER = "read bag failed";
+const DEVICE_ID_KEYBAG_UNREADABLE_ERR_NAME = "DeviceIdKeybagUnreadableError";
+const patchedKeyBags = new WeakSet<object>();
+
+function errorMessage(error: unknown): string {
+  if (typeof error === "string") return error;
+  if (error && typeof error === "object" && typeof (error as { message?: unknown }).message === "string") {
+    return (error as { message: string }).message;
+  }
+  return String(error);
+}
+
+function withCause(message: string, cause: unknown): Error {
+  const err = new Error(message);
+  (err as Error & { cause?: unknown }).cause = cause;
+  return err;
+}
+
+function toUnreadableKeybagError(cause: unknown): Error {
+  const err = withCause("Device ID keybag is unreadable or corrupt", cause);
+  err.name = DEVICE_ID_KEYBAG_UNREADABLE_ERR_NAME;
+  return err;
+}
+
+export function isUnreadableDeviceIdKeybagError(error: unknown): boolean {
+  if (!error) return false;
+  if (error && typeof error === "object" && (error as { name?: unknown }).name === DEVICE_ID_KEYBAG_UNREADABLE_ERR_NAME) {
+    return true;
+  }
+  if (errorMessage(error).toLowerCase().includes(READ_BAG_FAILED_MARKER)) {
+    return true;
+  }
+  const cause = error && typeof error === "object" ? (error as { cause?: unknown }).cause : undefined;
+  return cause !== undefined && cause !== error ? isUnreadableDeviceIdKeybagError(cause) : false;
+}
+
+export function deviceIdKeybagReEnrollMessage(opts?: { readonly headlessEnvVar?: string }): string {
+  const base = "Device ID keybag is unreadable or corrupt";
+  if (opts?.headlessEnvVar) {
+    return `${base} — re-enroll with 'vibes-diy login --force', or set ${opts.headlessEnvVar} for headless auth`;
+  }
+  return `${base} — re-enroll with 'vibes-diy login --force'`;
+}
+
+export async function getKeyBag(sthis: SuperThis) {
+  const kb = await getCoreKeyBag(sthis);
+  if (!patchedKeyBags.has(kb as object)) {
+    const rawGetDeviceId = kb.getDeviceId.bind(kb);
+    kb.getDeviceId = async (): Promise<DeviceIdResult> => {
+      try {
+        return await rawGetDeviceId();
+      } catch (error) {
+        if (!isUnreadableDeviceIdKeybagError(error)) {
+          throw error;
+        }
+        return {
+          deviceId: Option.None(),
+          cert: Option.None(),
+          error: toUnreadableKeybagError(error),
+        };
+      }
+    };
+    patchedKeyBags.add(kb as object);
+  }
+  return kb;
+}
 // Device-id crypto (key/sign/csr) + the server-side verifier and CA are now
 // in-repo (Tasks 2-3). The production server still reaches the CA/verify through
 // core-protocols-dashboard's deviceIdCAFromEnv/tokenApi (./server) until Task 5
@@ -28,7 +97,26 @@ export { DeviceIdCA } from "./device-id/ca.js";
 // Login device-id-register flow (the localhost cert handler — Bucket C / #1616).
 // Generic cmd-ts streaming primitives (isCmdProgress/sendProgress/…) are NOT
 // re-exported here: they're CLI-framework, not identity, and stay on core-cli.
-export { deviceIdRegisterEvento, isResDeviceIdRegister } from "@fireproof/core-cli";
+export const deviceIdRegisterEvento: typeof coreDeviceIdRegisterEvento = {
+  ...coreDeviceIdRegisterEvento,
+  handle: async (ctx) => {
+    const args = ctx.validated as { readonly forceRenew?: boolean };
+    const cliCtx = ctx.ctx.getOrThrow("cliCtx") as { readonly sthis: SuperThis };
+    const existing = await (await getKeyBag(cliCtx.sthis)).getDeviceId();
+    if (existing.error && isUnreadableDeviceIdKeybagError(existing.error) && !args.forceRenew) {
+      return Result.Err(deviceIdKeybagReEnrollMessage());
+    }
+    try {
+      return await coreDeviceIdRegisterEvento.handle(ctx);
+    } catch (error) {
+      if (isUnreadableDeviceIdKeybagError(error)) {
+        return Result.Err(deviceIdKeybagReEnrollMessage());
+      }
+      throw error;
+    }
+  },
+};
+export { isResDeviceIdRegister };
 export type { ReqDeviceIdRegister } from "@fireproof/core-cli";
 
 /**
@@ -47,10 +135,13 @@ export type { ReqDeviceIdRegister } from "@fireproof/core-cli";
  */
 export async function createDeviceIdGetToken(
   sthis: SuperThis,
-  opts: { readonly iss: string; readonly missingCertMessage?: string }
+  opts: { readonly iss: string; readonly missingCertMessage?: string; readonly corruptKeybagMessage?: string }
 ): Promise<() => Promise<Result<DashAuthType>>> {
   const kb = await getKeyBag(sthis);
   const devid = await kb.getDeviceId();
+  if (devid.error && isUnreadableDeviceIdKeybagError(devid.error)) {
+    throw withCause(opts.corruptKeybagMessage ?? deviceIdKeybagReEnrollMessage(), devid.error);
+  }
   if (devid.cert.IsNone()) {
     throw new Error(opts.missingCertMessage ?? "Run 'npx vibes-diy login' to authenticate this device");
   }

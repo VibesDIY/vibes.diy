@@ -1,5 +1,10 @@
 import { ensureSuperThis, type SuperThis } from "@vibes.diy/identity";
-import { createDeviceIdGetToken, isResDeviceIdRegister } from "@vibes.diy/identity/node";
+import {
+  createDeviceIdGetToken,
+  deviceIdKeybagReEnrollMessage,
+  isResDeviceIdRegister,
+  isUnreadableDeviceIdKeybagError,
+} from "@vibes.diy/identity/node";
 import { AppContext, EventoSendProvider, exception2Result, HandleTriggerCtx, processStream, Result } from "@adviser/cement";
 import { VibesDiyApi } from "@vibes.diy/api-impl";
 import { dotenv } from "zx";
@@ -43,6 +48,7 @@ import { pullCmd, isResPull, type ResPull } from "./cmds/pull-cmd.js";
 import { CliCtx, defaultCliOutput } from "./cli-ctx.js";
 import { cmdTsEvento, isCmdProgress, WrapCmdTSMsg } from "./cmd-evento.js";
 import { seedDeviceIdFromEnv, VIBES_DEVICE_ID_ENV } from "./device-id-env.js";
+import { formatErr } from "./cmds/format-err.js";
 import { err, isErr } from "cmd-ts/dist/cjs/Result.js";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
@@ -51,6 +57,7 @@ async function vibesDiyApiFactory(sthis: SuperThis) {
   const getToken = await createDeviceIdGetToken(sthis, {
     iss: "use-vibes/cli",
     missingCertMessage: `Device ID certificate is missing — run 'vibes-diy login', or set ${VIBES_DEVICE_ID_ENV} for headless auth`,
+    corruptKeybagMessage: deviceIdKeybagReEnrollMessage({ headlessEnvVar: VIBES_DEVICE_ID_ENV }),
   });
   return (apiUrl: string, opts?: { idleTimeoutMs?: number; skipShard?: boolean }) => {
     return new VibesDiyApi({
@@ -75,6 +82,13 @@ class OutputSelector implements EventoSendProvider<unknown, unknown, unknown> {
     this.tstream.writable.close();
     return Promise.resolve(Result.Ok());
   }
+}
+
+function formatCliError(err: unknown): string {
+  if (isUnreadableDeviceIdKeybagError(err)) {
+    return deviceIdKeybagReEnrollMessage({ headlessEnvVar: VIBES_DEVICE_ID_ENV });
+  }
+  return formatErr(err);
 }
 
 async function main(): Promise<number> {
@@ -166,13 +180,13 @@ async function main(): Promise<number> {
           })
           .then((r) => {
             if (r.isErr()) {
-              console.error("Error:", String(r.Err()));
+              console.error("Error:", formatCliError(r.Err()));
               ctx.exitCode = 1;
               return;
             }
             const stepCtx = r.Ok();
             if (stepCtx.error) {
-              console.error("Error:", String(stepCtx.error));
+              console.error("Error:", formatCliError(stepCtx.error));
               ctx.exitCode = 1;
             }
           });
