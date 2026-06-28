@@ -54,11 +54,14 @@ reversible tombstone, not a row delete.
 - New column `unpublishedAt` on **`AppSlugBindings`**, mirroring `pinnedAt`
   exactly: `text().notNull().default("")`, empty = published, ISO timestamp =
   unpublished. One column, one row, one write.
-- A non-empty `unpublishedAt` means the slug stops resolving on the public
-  serving path. `get-app-by-fsid.ts`'s no-fsId "latest production" lookup treats
-  a tombstoned binding as `not-found` (same 404 + `grant: "not-found"` it
-  already returns for a missing slug). **Explicit `fsId` reads still resolve** —
-  see §4 (lineage/permalinks must not break).
+- A non-empty `unpublishedAt` means the slug stops resolving on **every**
+  no-fsId, slug-keyed public resolver — not just the obvious one. The tombstone
+  has to be checked at each place a bare `ownerHandle/appSlug` becomes content
+  for a non-owner (see §4a for the full list); a filter on `get-app-by-fsid.ts`
+  alone would leave the slug reachable via remix and version-listing. Each treats
+  a tombstoned binding as `not-found` (same 404 + `grant: "not-found"` already
+  returned for a missing slug). **Explicit `fsId` reads still resolve** — see §4
+  (lineage/permalinks must not break).
 - The slug disappears from `list` and recent-vibes (it already filters through
   `AppSlugBindings`); `versions` continues to show history to the owner.
 - **Nothing in `Apps`, `AppDocuments`, grants, or chat history is touched.** Code
@@ -83,9 +86,14 @@ A true purge (drop `Apps` rows, `AppDocuments`, grants, chat history) is
 destructive, irreversible, and entangled with lineage and member data. We
 **do not ship it in v1.** When/if we do, it must be gated on:
 
-- **Ownership**: account-level owner of the handle only — the same
-  `ensureSlugBinding` / `publishApp` check that already guards push
-  (`owner.userId !== userId → err`). Not editors, not grantees.
+- **Ownership**: account-level owner of the handle only (`owner.userId !==
+  userId → err`, same rule `publishApp` enforces). Not editors, not grantees.
+  **Use a read-only check** — read the existing `AppSlugBindings` row and verify
+  the handle owner. Do **not** route this through `ensureSlugBinding`: it calls
+  `ensureAppSlug` (`ensure-slug-binding.ts:356`), which *creates* a binding when
+  the slug is missing, so a typo or nonexistent slug would mint a stray binding
+  (and consume quota) before "tombstoning" it. The same read-only rule applies to
+  the v1 unpublish/republish mutations below.
 - **Lineage guard**: refuse (or require `--force`) if any other app's
   `Apps.meta` references this app's `fsId` as `remix-of` `srcFsId`. Hard-deleting
   a remixed source is exactly the orphaning #2688 warns about.
@@ -115,6 +123,26 @@ immutable `srcFsId`, not the mutable slug.
 non-owners, that's a one-line policy change in the same lookup — but the default
 should preserve lineage.)
 
+### 4a. The full set of no-fsId slug resolvers the tombstone must gate
+
+The serving lookup is **not** the only path that turns a bare
+`ownerHandle/appSlug` into content without an explicit `fsId`. Unpublish is only
+real if every one of these consults `unpublishedAt` for non-owners; otherwise a
+known public slug stays reachable:
+
+| Resolver | File | Why it leaks today |
+|---|---|---|
+| Latest-production serve | `get-app-by-fsid.ts` (no-fsId → `selectLatestAppPerSlug`) | The bare public URL. |
+| **Remix without a source fsId** | `fork-app.ts:79-80` (no `srcFsId` → `selectLatestAppPerSlug` by `ownerHandle/appSlug`), reached from `pkg/app/routes/remix.$ownerHandle.$appSlug.tsx` | `/remix/:owner/:slug` forks the latest row directly; never consults `AppSlugBindings`. |
+| **Version listing for non-owners** | `list-versions.ts:49-61` (selects `Apps` by `ownerHandle/appSlug`, returns production rows to non-owners) | Hands out live production `fsId`s for a tombstoned slug. |
+
+All three select from `Apps` keyed only by `ownerHandle/appSlug` and never look
+at the binding. The fix is one shared helper — "is this binding tombstoned for
+this caller?" — applied at each non-owner entry point (or an explicit reject of
+no-fsId fork / non-owner version-listing when the binding is tombstoned). Owners
+keep full access to all three so restore and history still work. This is why the
+v1 scope and tests below name remix and `listVersions`, not just serve.
+
 ### 5. Live URLs & esm.sh caching
 
 The caching hazard #2688 raises ("delete then recreate a slug → serve stale")
@@ -139,16 +167,23 @@ owner now has a clean, reversible way to hide one when they want to.
 - `AppSlugBindings.unpublishedAt` column (drizzle push, default `""`, same
   zero-downtime pattern as `pinnedAt`/`updated`).
 - API: `unpublishAppSlug` / `republishAppSlug` mutations, owner-only, that flip
-  the column. Reuse the `ensureSlugBinding` ownership check.
-- Serving: no-fsId lookup in `get-app-by-fsid.ts` treats tombstoned bindings as
-  `not-found`; explicit-fsId unchanged.
-- Listing: recent-vibes / `list` exclude tombstoned slugs; `versions` still shows
-  owner history.
+  the column via a **read-only** owner check (read the binding + verify owner; do
+  not use the create-on-missing `ensureSlugBinding`, see §3).
+- Serving / resolvers: every no-fsId, slug-keyed resolver from §4a treats a
+  tombstoned binding as `not-found` for non-owners —
+  `get-app-by-fsid.ts` (latest-production serve), `fork-app.ts`'s no-`srcFsId`
+  path (remix), and `list-versions.ts` (non-owner listing). Explicit-fsId and
+  owner reads are unchanged.
+- Listing: recent-vibes / `list` exclude tombstoned slugs; owner `versions` still
+  shows history.
 - CLI: `vibes-diy unpublish <vibe>` (alias `rm`) + `vibes-diy publish <vibe>`
   (restore). Mirrors the `push`/`versions` arg-resolution (`resolveVibeArgs`).
-- Tests: tombstone hides from serve + list, explicit fsId still resolves, remix
-  `srcFsId` still resolves through a tombstoned source, restore is exact,
-  non-owner is rejected.
+- Tests: tombstone hides from serve, **non-owner remix (`/remix/:owner/:slug`,
+  no `srcFsId`)**, and **non-owner `listVersions`**, plus `list`; explicit fsId
+  still resolves; remix via an explicit `srcFsId` still resolves through a
+  tombstoned source; owner still sees everything; restore is exact; non-owner
+  unpublish and unpublish of a nonexistent slug are both rejected **without
+  creating a binding**.
 
 **Explicitly not in v1:** hard delete / data purge, asset GC, any UI affordance
 (CLI-first; UI is a fast-follow once the CLI semantics settle).
