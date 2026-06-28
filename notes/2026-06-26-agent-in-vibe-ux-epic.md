@@ -10,41 +10,50 @@
 Status: **in build** — first checkpoint in review (PR #2684 / child issue #2676). Owner: jchris.
 Drafted 2026-06-26; updated 2026-06-27. This is a living plan — update it as the sketches resolve.
 
-## 0. Delivery status (updated 2026-06-27)
+## 0. Delivery status (updated 2026-06-28)
 
 Shipping as **incremental merges off `main`**, not the original two-PR plan (§4/§5, rewritten).
-The work is broken into the child issues **#2676–#2682**; the first is in review as **PR #2684
-(#2676)**.
+The work is broken into the child issues **#2676–#2682**; PR #2684 (#2676) and its follow-ups have
+**merged**. Most of the epic has landed — **the remaining + deferred work is restated and tracked
+in #2796** (sibling validation pass: #2795).
 
-**Done / in PR #2684:**
+**Done (landed on `main`):**
 
 - **The unified card** — `UnifiedVibeCard` in `@vibes.diy/base`: the VibesSwitch opens into one
   rounded card — icon + title **and the handle/viewer tag at the top**, chips + "Other" in the
   middle, a **Home / Edit / Share** bottom nav, and the persistent VibesSwitch logo floating
-  lower-right. Rendered on `/vibe` in place of `ExpandedVibesPill`. (#2676)
-- **The simplified Share dialogue** — `SharePanelView`: the 3-class in-group model (anonymous →
-  Copy URL; member → + roster on grant-gated vibes; author → + the Public/grant-required toggle),
-  wired into the card's Share view with real member data. (partial #2680)
-- **Edit hand-off (the merge checkpoint)** — chips + "Other" encode the typed change as a
-  `?prompt64` query. **Owner → `/chat/$owner/$app`** (edit in place); **non-owner → `/remix`**
-  (fork to your handle, auth-gated) → both **pre-fill the chat composer** (you tap send). This
-  lets the card ship **without** removing `/chat` or building in-page live update yet.
+  lower-right. Rendered on `/vibe` in place of `ExpandedVibesPill`. (#2676 — closed)
+- **In-place generation (the write lane)** — chips + "Other" now fire **real in-place codegen on
+  `/vibe`** (`useLatestVibeChips` + `useInVibeGeneration`) instead of hopping to `/chat`; the
+  codegen agent now lives in the vibe. **Seamless non-owner fork** — editing a vibe you don't own
+  forks to your handle in place. (partial #2677)
+- **Handle picker** — the top-of-card tag's switcher dropdown is wired. (#2678 — closed)
+- **Verb collapse** — the Remix/Clone/Fresh-Install/Edit chrome is gone. (#2679 — publish-intent
+  persistence still open, see below)
+- **The simplified Share dialogue (read side)** — `SharePanelView`: the 3-class in-group model
+  (anonymous → Copy URL; member → + roster on grant-gated vibes; author → + the Public/grant-required
+  toggle), wired into the card's Share view with real member data. (partial #2680)
+- **Draft / published** vibe states.
 
-**Deferred (each its own issue), in rough order:**
+**Deferred / remaining (each its own issue — restated in #2796):**
 
-- **In-page live update / first-generation on `/vibe`** — the chips/Other still hop to `/chat`;
-  the stream→preview swap and live hot-swap aren't built. (#2677, #1745)
-- **Cached-read chip lane** — chips are placeholder strings that all route to codegen (a write).
-  The two-lane model (cached chip = read → navigate to a pre-generated vibe; only Other/uncached =
-  write) isn't built, and needs the system-owned cached-fork infra. (§1a, §20)
-- **Handle picker** — the top-of-card tag shows the handle with a ▾, but the switcher dropdown
-  isn't wired. (#2678, #2275)
-- **Verb collapse** — delete the Remix/Clone/Fresh-Install/Edit chrome and the now-unused
-  `ExpandedVibesPill`; persist the Public/grant-required setting (today the toggle just opens the
-  legacy ShareModal); the #1856 "it's yours now" inline message. (#2679)
+- **Retire `/chat`** — the headline deliverable, now **unblocked**: Track B **#2517 is closed** and
+  the 3→1 session-DO collapse **#2714** shipped. But `/chat/:o/:s` is still a live route in
+  `routes.ts` with no redirect, and `vibesMsgEvento` is still present. Needs the human design pass
+  (URL strategy, 301/302 redirects + analytics preservation, img-gen heavy/light split,
+  `vibesMsgEvento` retirement). (#2518)
+- **Cached-read chip lane** — only the **write** lane shipped. The **read** half (instant cached
+  page-views, anonymous browsing of the cached tree, the no-login/no-fork boundary) and the
+  system-owned cached-fork infra were **never built**. **Was untracked — now tracked in #2796, with
+  a build-vs-drop decision pending.** (§1a)
+- **First-generation polish** — the `💬` chat-history toggle (reopen stream/history any time) and
+  the faked chat for cached/curated items (pre-authored `ChatSections`). (#2677)
+- **Publish-intent persistence** — the card's Public/grant-required toggle still opens the legacy
+  `ShareModal` instead of writing the setting directly. (#2679)
 - **Share manage flow** — per-member role menu, the request-access screen, the
   `remixable-without-access` setting. (deferred half of #2680; §2 "Deferred")
-- **Retire `/chat`** — deliberately kept by the checkpoint; gated on Track B **#2517**. (#2518)
+- **#2353** — the "sign in to see @sender's entries" shared-data empty-state prompt (§3 FTUE);
+  confirm built vs not.
 - **Post-epic:** owner self-branch (#2681); propose-upstream + lineage data structures (#2682).
 
 ## Why this is one decision, not thirty
@@ -680,19 +689,19 @@ Two principles carry over from the original plan:
 
 Each is its own small PR; the order is rough, not rigid. Status mirrors §0.
 
-1. **#2676 — unified card + simplified share + prompt64 hand-off.** *(PR #2684, in review.)*
-   `UnifiedVibeCard` on `/vibe`, `SharePanelView`, owner→`/chat` / non-owner→`/remix` pre-fill.
-   No backend dep. *(partial #2680 rides along.)*
+1. ✅ **#2676 — unified card + simplified share + prompt64 hand-off.** *(PR #2684, merged.)*
+   `UnifiedVibeCard` on `/vibe`, `SharePanelView`. No backend dep. *(partial #2680 rode along.)*
 2. **#2677 — first-generation on `/vibe`** (in-page stream→preview, de-blur, hot-swap; #1745).
-   The chips/Other stop hopping to `/chat` and change the app in place. The **cached-read chip
-   lane** (§1a/§20) lands here or alongside it.
-3. **#2678 — handle picker** (wire the top-of-card tag's switcher dropdown; #2275).
-4. **#2679 — verb collapse** (delete the Remix/Clone/Fresh-Install/Edit chrome + the unused
-   `ExpandedVibesPill`; persist the Public/grant-required setting; the #1856 "it's yours now"
-   message; viewer-mode indicators #2178).
+   The write lane shipped — chips/Other change the app in place. Remaining: the `💬` chat-history
+   toggle + faked cached chat. The **cached-read chip lane** (§1a/§20) is **now tracked in #2796**
+   (build-vs-drop decision pending).
+3. ✅ **#2678 — handle picker** (the top-of-card tag's switcher dropdown is wired; #2275).
+4. **#2679 — verb collapse** (the Remix/Clone/Fresh-Install/Edit chrome is gone; remaining: persist
+   the Public/grant-required setting; the #1856 "it's yours now" message; viewer-mode indicators #2178).
 5. **#2680 — Share manage flow** (per-member roles, request-access screen,
    `remixable-without-access`).
-6. **#2518 — retire `/chat`** (redirects → `/vibe`, lazy connection flip). **Gated on #2517.**
+6. **#2518 — retire `/chat`** (redirects → `/vibe`, lazy connection flip). **Unblocked: #2517 closed
+   + #2714 shipped — now awaiting the human design pass (see #2796).**
 
 Post-epic: **#2681** (owner self-branch to a new appSlug), **#2682** (propose-upstream + reserve
 lineage data structures).
