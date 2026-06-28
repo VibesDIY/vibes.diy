@@ -110,6 +110,14 @@ export default {
       }) as unknown as CFResponse;
     }
 
+    if (route === "rum-beacon") {
+      // Swallow the Cloudflare Web Analytics beacon POST (#2770). The Worker owns
+      // the whole zone route, so /cdn-cgi/rum never reaches Cloudflare's edge
+      // collector; without this it falls through to SSR and 404s on every page
+      // load. A 204 keeps the beacon quiet (no console/network error).
+      return new Response(null, { status: 204 }) as unknown as CFResponse;
+    }
+
     if (route === "app-api") {
       const vibe = url.getParam("vibe");
       if (vibe === undefined) {

@@ -214,6 +214,23 @@ describe("worker routeDecision", () => {
   it("/vibe/ alone (nothing to strip) → ssr, not a trailing-slash redirect", () => {
     expect(decide({ pathname: "/vibe/" })).toBe("ssr");
   });
+
+  it("/cdn-cgi/rum → rum-beacon (swallow Cloudflare RUM beacon, no SSR 404) (#2770)", () => {
+    // Cloudflare auto-injects beacon.min.js, which POSTs to /cdn-cgi/rum. The
+    // Worker owns the zone route, so this never reaches the edge collector — it
+    // must be short-circuited or it falls through to SSR and 404s on every load.
+    expect(decide({ pathname: "/cdn-cgi/rum", method: "POST" })).toBe("rum-beacon");
+    expect(decide({ pathname: "/cdn-cgi/rum", method: "GET" })).toBe("rum-beacon");
+  });
+
+  it("regression: /cdn-cgi/rum must NOT fall through to SSR (would 404)", () => {
+    expect(decide({ pathname: "/cdn-cgi/rum", method: "POST" })).not.toBe("ssr");
+  });
+
+  it("other /cdn-cgi/* paths still fall through to SSR (only /cdn-cgi/rum is swallowed)", () => {
+    expect(decide({ pathname: "/cdn-cgi/trace" })).toBe("ssr");
+    expect(decide({ pathname: "/cdn-cgi/rum/extra" })).toBe("ssr");
+  });
 });
 
 describe("worker routeDecision — PR preview base (pr-<N>.vibespreview.dev)", () => {

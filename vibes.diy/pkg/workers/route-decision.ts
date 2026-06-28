@@ -19,6 +19,7 @@ export type Route =
   | "clerk-webhook" // POST /webhooks/clerk → Svix-verified Clerk event handler
   | "legacy-vibe-redirect" // /vibe/<slug> (exactly two segments) → 301 to /vibe/og/<slug>
   | "vibe-trailing-slash-redirect" // /vibe/<…>/ (trailing slash) → 301 to the slash-stripped path
+  | "rum-beacon" // /cdn-cgi/rum → 204 no-content (swallow Cloudflare RUM beacon, no SSR 404)
   | "ssr"; // everything else → React Router
 
 export interface RouteInput {
@@ -42,6 +43,15 @@ export function routeDecision(req: RouteInput): Route {
   }
   if (pathname.startsWith("/vibe-pkg/")) {
     return "vibe-pkg";
+  }
+
+  // Cloudflare auto-injects the Web Analytics beacon (static.cloudflareinsights.com/
+  // beacon.min.js), which POSTs to /cdn-cgi/rum. Because this Worker owns the whole
+  // zone route, that request reaches us instead of Cloudflare's edge collector and
+  // falls through to SSR, which 404s — surfacing as a console/network error on every
+  // page load (#2770). Swallow it with a 204 so the beacon succeeds quietly.
+  if (pathname === "/cdn-cgi/rum") {
+    return "rum-beacon";
   }
 
   // App subdomain: hostname is `<app>--<user>.<base>`.
