@@ -120,12 +120,12 @@ export function localBroadcastCallbacks(connections: Set<WSSendProvider>, env: C
       // (they match only their own db's channel), so a private-channel write still
       // doesn't fan out to unrelated channel subscriptions.
       if (shouldLog) {
-        console.info("[AppSessions] notifyDocChanged key:", channelKey, "conn:", senderConnId.slice(0, 8));
-        console.info("[AppSessions] docChanged fanout", "key=", channelKey, "conns=", connections.size);
+        console.info("[Sessions] notifyDocChanged key:", channelKey, "conn:", senderConnId.slice(0, 8));
+        console.info("[Sessions] docChanged fanout", "key=", channelKey, "conns=", connections.size);
       }
       if (connections.size >= HOT_VIBE_CONN_WARN_THRESHOLD) {
         console.warn(
-          "[AppSessions] hot-vibe fanout",
+          "[Sessions] hot-vibe fanout",
           "key=",
           channelKey,
           "conns=",
@@ -160,7 +160,7 @@ export function localBroadcastCallbacks(connections: Set<WSSendProvider>, env: C
     notifyRequestGrantChanged: async (evt: EvtRequestGrant, senderConnId: string): Promise<void> => {
       const key = `${evt.grant.ownerHandle}/${evt.grant.appSlug}`;
       if (shouldLog) {
-        console.info("[AppSessions] notifyRequestGrantChanged key:", key, "conn:", senderConnId.slice(0, 8));
+        console.info("[Sessions] notifyRequestGrantChanged key:", key, "conn:", senderConnId.slice(0, 8));
       }
       for (const conn of connections) {
         if (!conn.subscribedRequestGrantKeys.has(key)) continue;
@@ -187,12 +187,12 @@ export function localBroadcastCallbacks(connections: Set<WSSendProvider>, env: C
     notifyViewerGrantsChanged: async (evt: EvtViewerGrantsChanged, _senderConnId: string): Promise<void> => {
       const key = `${evt.ownerHandle}/${evt.appSlug}`;
       if (shouldLog) {
-        console.info("[AppSessions] notifyViewerGrantsChanged key:", key);
-        console.info("[AppSessions] viewerGrants fanout", "key=", key, "conns=", connections.size);
+        console.info("[Sessions] notifyViewerGrantsChanged key:", key);
+        console.info("[Sessions] viewerGrants fanout", "key=", key, "conns=", connections.size);
       }
       if (connections.size >= HOT_VIBE_CONN_WARN_THRESHOLD) {
         console.warn(
-          "[AppSessions] hot-vibe fanout",
+          "[Sessions] hot-vibe fanout",
           "key=",
           key,
           "conns=",

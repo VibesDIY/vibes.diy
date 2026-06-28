@@ -43,7 +43,7 @@ describe("localBroadcastCallbacks fanout structured logs", () => {
 
     spy.mockRestore();
 
-    expect(logs.some((l) => l.includes("[AppSessions] viewerGrants fanout") && l.includes("conns="))).toBe(true);
+    expect(logs.some((l) => l.includes("[Sessions] viewerGrants fanout") && l.includes("conns="))).toBe(true);
   });
 
   it("logs per-vibe connection count on doc-changed fanout", async () => {
@@ -62,7 +62,7 @@ describe("localBroadcastCallbacks fanout structured logs", () => {
 
     spy.mockRestore();
 
-    expect(logs.some((l) => l.includes("[AppSessions] docChanged fanout") && l.includes("conns="))).toBe(true);
+    expect(logs.some((l) => l.includes("[Sessions] docChanged fanout") && l.includes("conns="))).toBe(true);
   });
 });
 
