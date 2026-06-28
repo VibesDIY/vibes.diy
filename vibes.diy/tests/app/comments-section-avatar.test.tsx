@@ -18,7 +18,12 @@ const whoAmI = vi.fn();
 // Inject the VibesDiy context via the real provider instead of mocking it.
 const render = (ui: React.ReactElement, options?: Parameters<typeof rtlRender>[1]) =>
   rtlRender(ui, {
-    wrapper: vibesWrapper({ chatApi: { queryDocs, putDoc, deleteDoc, subscribeDocs, onDocChanged, whoAmI } }),
+    wrapper: vibesWrapper({
+      // Comments doc ops now ride the vibe/AppSessions connection; plain whoAmI
+      // stays on sharedApi. This harness gives the component both planes.
+      vibeApi: { queryDocs, putDoc, deleteDoc, subscribeDocs, onDocChanged },
+      sharedApi: { whoAmI },
+    }),
     ...options,
   });
 
@@ -134,7 +139,8 @@ describe("CommentsSection avatar behavior", () => {
 describe("CommentsSection connection routing (#2265 A1)", () => {
   // Vibe-scoped doc ops must run on AppSessions (vibeApi) when present — that is
   // the connection with local broadcast + local QuickJS access-fn eval. When
-  // vibeApi is absent (no vibe in context) the component falls back to chatApi.
+  // vibeApi is absent, the component mints the AppSessions connection via
+  // appApiFor(`<owner>--<app>`); there is no stale chatApi fallback.
   afterEach(() => cleanup());
 
   beforeEach(() => {
@@ -197,13 +203,27 @@ describe("CommentsSection connection routing (#2265 A1)", () => {
     expect(calls).not.toContain("chat:putDoc");
   });
 
-  it("falls back to chatApi when vibeApi is absent", async () => {
+  it("mints the vibe doc connection via appApiFor when vibeApi is absent", async () => {
     const calls: string[] = [];
-    const wrapper = vibesWrapper({ chatApi: mkApi("chat", calls) });
+    const chatApi = mkApi("chat", calls);
+    const appApi = mkApi("app", calls);
+    const appApiFor = vi.fn(() => appApi);
+    const wrapper = vibesWrapper({ chatApi, appApiFor });
     rtlRender(<CommentsSection ownerHandle="owner" appSlug="my-app" canModerate={false} composerDisabled={false} />, {
       wrapper,
     });
 
-    await waitFor(() => expect(calls).toContain("chat:queryDocs"));
+    await waitFor(() => expect(appApiFor).toHaveBeenCalledWith("owner--my-app"));
+    await waitFor(() => expect(calls).toContain("app:queryDocs"));
+
+    fireEvent.change(screen.getByPlaceholderText("Write a comment…"), { target: { value: "hi" } });
+    fireEvent.click(screen.getByRole("button", { name: "Post" }));
+    await waitFor(() => expect(calls).toContain("app:putDoc"));
+
+    expect(calls).toContain("app:subscribeDocs");
+    // Without vibeApi, sharedApi still resolves from the shared/chat plane.
+    expect(calls).toContain("chat:whoAmI");
+    expect(calls).not.toContain("chat:queryDocs");
+    expect(calls).not.toContain("chat:putDoc");
   });
 });
