@@ -12,6 +12,11 @@ export interface ControllableLLMChat {
   pushBlocks(blocks: PromptAndBlockMsgs[]): void;
   // Close the readable so the route's processStream resolves.
   closeStream(): void;
+  // Convenience emitters for common message types.
+  // Emits a prompt.block-begin message (flips the reducer's running to true).
+  emitBlockBegin(streamId?: string): void;
+  // Emits a block.code.end message (signals the first code block completed).
+  emitCodeEnd(blockId?: string, seq?: number): void;
 }
 
 export function makeControllableLLMChat(opts: { chatId?: string } = {}): ControllableLLMChat {
@@ -39,7 +44,7 @@ export function makeControllableLLMChat(opts: { chatId?: string } = {}): Control
     close,
   } as unknown as ControllableLLMChat["chat"];
 
-  return {
+  const result: ControllableLLMChat = {
     chat,
     pushBlocks(blocks) {
       if (closed) return;
@@ -57,5 +62,32 @@ export function makeControllableLLMChat(opts: { chatId?: string } = {}): Control
       closed = true;
       controller.close();
     },
+    emitBlockBegin(streamId = "stream-1") {
+      result.pushBlocks([
+        {
+          type: "prompt.block-begin",
+          streamId,
+          chatId,
+          seq: 0,
+          timestamp: new Date(),
+        } as PromptAndBlockMsgs,
+      ]);
+    },
+    emitCodeEnd(blockId = "b1", seq = 1) {
+      result.pushBlocks([
+        {
+          type: "block.code.end",
+          blockId,
+          streamId: "stream-1",
+          seq,
+          blockNr: 1,
+          timestamp: new Date(),
+          sectionId: "section-1",
+          lang: "tsx",
+          stats: { lines: 10, bytes: 200 },
+        } as PromptAndBlockMsgs,
+      ]);
+    },
   };
+  return result;
 }
