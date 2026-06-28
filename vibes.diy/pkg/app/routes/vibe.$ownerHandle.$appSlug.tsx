@@ -28,6 +28,9 @@ import { useIframeApiInFlight } from "../hooks/useIframeApiInFlight.js";
 import { ShareModal } from "../components/ResultPreview/ShareModal.js";
 import { useDocumentTitle } from "../hooks/useDocumentTitle.js";
 import { useLatestVibeChips } from "../hooks/useLatestVibeChips.js";
+import { useInVibeGeneration } from "../hooks/useInVibeGeneration.js";
+import { InVibeBlurOverlay } from "../components/InVibeBlurOverlay.js";
+import { GenerationStreamView } from "../components/GenerationStreamView.js";
 import { toast } from "react-hot-toast";
 import { isMetaScreenShot, isMetaTitle, type ResGetAppByFsId, type VibesFPApiParameters } from "@vibes.diy/api-types";
 import { computeCardVariant } from "./vibe-card-variant.js";
@@ -184,27 +187,6 @@ export default function VibeIframeWrapper() {
   const [retryCount, setRetryCount] = useState(0);
   const [isOwner, setIsOwner] = useState(false);
 
-  // Hand a suggestion chip / "describe a change" off to the chat route, which
-  // pre-fills its composer from ?prompt64 (#2675 merge checkpoint). The /vibe
-  // surface doesn't edit in-page yet — /chat is the live-update surface for now.
-  // Ownership decides where it lands (§2 "Ownership decides, at the write"):
-  //   - Owner → edit in place: /chat/$owner/$app, prompt seeded.
-  //   - Non-owner (incl. logged-out) → make it yours: /remix forks to your
-  //     handle (auth-gated), then forwards prompt64 onto the new copy's chat.
-  // A non-owner can't write the owner's chat (the server rejects on userId
-  // mismatch), so routing them straight to /chat would dead-end the send.
-  // URLSearchParams encodes the base64 safely (+, /, = are URL-significant).
-  const handleEditPrompt = useCallback(
-    (text: string) => {
-      const trimmed = text.trim();
-      if (!trimmed || !ownerHandle || !appSlug) return;
-      const qs = new URLSearchParams({ prompt64: vctx.sthis.txt.base64.encode(trimmed) }).toString();
-      const dest = isOwner ? `/chat/${ownerHandle}/${appSlug}?${qs}` : `/remix/${ownerHandle}/${appSlug}?${qs}`;
-      void navigate(dest);
-    },
-    [isOwner, ownerHandle, appSlug, navigate, vctx.sthis]
-  );
-
   // The edit card's suggestion chips are the vibe's OWN latest suggestions — the
   // trailing `▸` options the model emitted on the last codegen turn — not a
   // hardcoded placeholder. Owner-gated read (the owner's chat is private), so
@@ -216,6 +198,40 @@ export default function VibeIframeWrapper() {
     fsId,
     enabled: isOwner,
   });
+
+  const generation = useInVibeGeneration({
+    ownerHandle: ownerHandle ?? "",
+    appSlug: appSlug ?? "",
+    fsId,
+    chatApi: vctx.chatApi,
+    sharedApi: vctx.sharedApi,
+    srvVibeSandbox: vctx.srvVibeSandbox,
+    enabled: isOwner,
+  });
+
+  // Hand a suggestion chip / "describe a change" off to the chat route, which
+  // pre-fills its composer from ?prompt64 (#2675 merge checkpoint). The /vibe
+  // surface doesn't edit in-page yet — /chat is the live-update surface for now.
+  // Ownership decides where it lands (§2 "Ownership decides, at the write"):
+  //   - Owner → generate in place: sendPrompt drives the in-card codegen stream.
+  //   - Non-owner (incl. logged-out) → make it yours: /remix forks to your
+  //     handle (auth-gated), then forwards prompt64 onto the new copy's chat.
+  // A non-owner can't write the owner's chat (the server rejects on userId
+  // mismatch), so routing them straight to /chat would dead-end the send.
+  // URLSearchParams encodes the base64 safely (+, /, = are URL-significant).
+  const handleEditPrompt = useCallback(
+    (text: string) => {
+      const trimmed = text.trim();
+      if (!trimmed || !ownerHandle || !appSlug) return;
+      if (isOwner) {
+        generation.sendPrompt(trimmed); // generate in place — no hop
+        return;
+      }
+      const qs = new URLSearchParams({ prompt64: vctx.sthis.txt.base64.encode(trimmed) }).toString();
+      void navigate(`/remix/${ownerHandle}/${appSlug}?${qs}`);
+    },
+    [isOwner, ownerHandle, appSlug, navigate, vctx.sthis, generation]
+  );
 
   const adminStorageKey = ownerHandle && appSlug ? adminModeStorageKey(ownerHandle, appSlug) : "";
   const [adminMode, setAdminMode] = useState(() => {
@@ -701,6 +717,7 @@ export default function VibeIframeWrapper() {
 
   const cardVariant = computeCardVariant(cardGrant);
   const isAccessGranted = cardVariant === "iframe";
+  const showGenStream = generation.phase === "streaming";
   // Desktop landing buttons get extra vertical padding so the two-line labels
   // ("FRESH \n INSTALL", "JOIN \n COLLAB") don't crowd the button edge. Mobile
   // already sizes nicely via the base width:100% / minHeight:60px rules.
@@ -734,6 +751,7 @@ export default function VibeIframeWrapper() {
             allow={RUNTIME_PREVIEW_IFRAME_ALLOW}
             style={{ isolation: "isolate", transform: "translate3d(0,0,0)" }}
           />
+          <InVibeBlurOverlay active={generation.blurPx > 0} blurPx={generation.blurPx} />
         </div>
       )}
       {isWorldReadable && cardGrant === undefined && (
@@ -902,6 +920,12 @@ export default function VibeIframeWrapper() {
                         onChangeAccess={(next) => void shareModal.handleSetPublicAccess(next === "public")}
                         accessPending={!shareModal.settingsLoaded || shareModal.isTogglingPublicAccess}
                         onSelectMember={() => shareModal.open()}
+                      />
+                    ) : showGenStream ? (
+                      <GenerationStreamView
+                        blocks={generation.blocks}
+                        messages={generation.counts.messages}
+                        lines={generation.counts.lines}
                       />
                     ) : undefined
                   }

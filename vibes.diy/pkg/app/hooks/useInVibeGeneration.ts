@@ -24,6 +24,9 @@ export interface UseInVibeGenerationOpts {
   // The hook only needs pushSource from the sandbox; accept the structural
   // subset so we don't depend on the concrete sandbox type. undefined-safe.
   readonly srvVibeSandbox: { pushSource(source: string): boolean } | undefined;
+  // When false, the hook stays inert — no codegen chat is opened. Defaults to
+  // true so existing callers that omit the flag keep their current behavior.
+  readonly enabled?: boolean;
 }
 
 function initialState(appSlug: string): PromptState {
@@ -58,7 +61,7 @@ export function useInVibeGeneration(opts: UseInVibeGenerationOpts): InVibeGenera
     ownerHandle,
     appSlug,
     fsId,
-    inConstruction: false,
+    inConstruction: opts.enabled === false,
     chatApi,
     sharedApi,
     promptState,
