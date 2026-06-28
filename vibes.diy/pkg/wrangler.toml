@@ -438,9 +438,14 @@ binding = "BROWSER"
 [env.cli.durable_objects]
 bindings = [
   { name = "CHAT_SESSIONS", class_name = "ChatSessions" },
-  { name = "APP_SESSIONS", class_name = "AppSessions", script_name = "vibes-diy-v2-prod" },
+  # #2714 Spec B Phase E (cli-first unbind, PR-E1): the cross-script APP_SESSIONS
+  # + SHARED_SESSIONS bindings are removed here so prod can later `deleted_classes`
+  # those classes without a 10061 (the validator counts a cross-script binding's
+  # class_name as a live reference). This cli deploy MUST go live BEFORE prod's
+  # deletion deploy (PR-E2) — the REVERSE of the usual prod-before-cli. vibe/shared
+  # traffic already routes to SESSIONS (Phase C); these bindings are dead. The
+  # cross-script USER_NOTIFY binding stays (UserNotify is not part of the collapse).
   { name = "USER_NOTIFY", class_name = "UserNotify", script_name = "vibes-diy-v2-prod" },
-  { name = "SHARED_SESSIONS", class_name = "SharedSessions", script_name = "vibes-diy-v2-prod" },
   # v9 (#2714 Spec B): SESSIONS cross-script→prod (vibe+shared share the prod data
   # plane); CODEGEN_SESSIONS local (codegen isolated per-env). The SAME class name
   # "Sessions" appears both local and cross-script — disambiguated by script_name.
