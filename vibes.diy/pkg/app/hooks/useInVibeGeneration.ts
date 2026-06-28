@@ -4,6 +4,7 @@ import { isCodeEnd } from "@vibes.diy/call-ai-v2";
 import { promptReducer, type PromptState } from "../routes/chat/prompt-state.js";
 import { useChatSession } from "./useChatSession.js";
 import { getCode } from "../components/ResultPreview/get-code.js";
+import { shouldAcceptPrompt } from "../utils/submit-guard.js";
 
 export type GenerationPhase = "idle" | "streaming" | "live";
 
@@ -95,15 +96,39 @@ export function useInVibeGeneration(opts: UseInVibeGenerationOpts): InVibeGenera
     if (ok) setHotSwapCount((c) => c + 1);
   }, [promptState.blocks, opts.srvVibeSandbox]);
 
+  // Reset all generation state when the route is reused for a different vibe
+  // (client-side nav between /vibe pages). The reducer initializer runs only on
+  // first mount, so without this the reducer keeps the previous vibe's blocks —
+  // firstCodeDone/getCode would resolve against the old app and the next edit
+  // could push stale source into the freshly-loaded iframe. Mirrors the chat
+  // route's slug-keyed clearChat effect, plus the hook's own hot-swap/blur state.
+  const prevVibeKeyRef = useRef(`${ownerHandle}/${appSlug}`);
+  useEffect(() => {
+    const key = `${ownerHandle}/${appSlug}`;
+    if (key === prevVibeKeyRef.current) return;
+    prevVibeKeyRef.current = key;
+    dispatch({ type: "clearChat", appSlug });
+    seenByBlockIdRef.current.clear();
+    setHotSwapCount(0);
+    sendPromptState(null);
+  }, [ownerHandle, appSlug]);
+
   // 'streaming' once a turn is running and before any completed code block;
   // 'live' once the first code.end has landed (subsequent edits keep us 'live'
   // and hot-swap in place); else 'idle'.
   const firstCodeDone = useMemo(() => promptState.blocks.some((b) => b.msgs.some((m) => isCodeEnd(m))), [promptState.blocks]);
   const phase: GenerationPhase = firstCodeDone ? "live" : promptState.running || promptToSend !== null ? "streaming" : "idle";
 
+  // Reject a new prompt while a turn is already in flight. Chips/Other re-enable
+  // at phase "live" (first code.end), but the previous turn can still be running
+  // until block-end — a second chat.prompt() would interleave into the single
+  // reducer block. Mirrors the chat surface's shouldAcceptPrompt guard. Read via
+  // a ref so sendPrompt stays referentially stable (no callback churn).
+  const inFlightRef = useRef(false);
+  inFlightRef.current = promptState.running || promptToSend !== null || promptState.optimisticPrompt !== undefined;
   const sendPrompt = useCallback((text: string) => {
-    const trimmed = text.trim();
-    if (trimmed) sendPromptState(trimmed);
+    if (!shouldAcceptPrompt({ text, submitting: inFlightRef.current, running: false })) return;
+    sendPromptState(text.trim());
   }, []);
 
   const blurPx = useMemo(() => {
