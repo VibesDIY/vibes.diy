@@ -127,6 +127,14 @@ Don't post this comment until the work is genuinely complete, CI is green, and `
 
 When posting the Rollout watch comment, also add the `ready-to-merge` label to the PR. The comment gives humans context; the label makes merge queue triage faster.
 
+## Close the issues a PR fixes (don't trust auto-close)
+
+GitHub's keyword auto-close (`Fixes #N` / `Closes #N` in the PR body closing the issue on merge) **rarely fires reliably in this repo** — so treat closing fixed issues as a step you own, not one the platform handles for you.
+
+**Corollary — link early so it _might_ auto-close, for free.** Before final CI even finishes — as soon as your own validation has passed and you're confident the PR fixes an issue — make sure every issue it resolves is referenced with a closing keyword (`Fixes #N`) in the **PR body** (not just a commit message). That's the cheap path: if auto-close does fire on merge, you never have to search-and-close later. Do this proactively while the slow checks run; it costs nothing and sometimes saves the manual step.
+
+**On merge — verify, then close what's still open.** Auto-close failing is the common case, so after the PR merges, check each issue the PR fixed. If it's still open, close it explicitly (`issue_write` state `closed`, or `gh issue close`) with a one-line comment linking the merged PR (`Fixed by #<PR>`). Never leave a fixed issue open just because the keyword didn't take. If a merge-on-green poller (see [Always end a work session with a PR](#always-end-a-work-session-with-a-pr)) does the merge, fold the issue-close + verify step into that same job so it happens without a separate human nudge.
+
 ## Every PR: drop a blog post seed
 
 Every PR you open should add **one** blog post seed as its own file under [`notes/blog-seeds/`](../notes/blog-seeds/), committed on the PR branch alongside the feature work. Don't ask first and don't wait for a yes — the seed is a lightweight capture, not a commitment to publish. The team mines `notes/blog-seeds/` later and promotes the good ones into full posts.
