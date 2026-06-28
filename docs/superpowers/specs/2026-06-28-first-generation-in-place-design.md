@@ -68,6 +68,18 @@ the end of "preview vs deployed drift" bugs.
 > `/chat` retires. #2677 **builds and owns the single-surface hot-swap path on `/vibe`**; `/chat`
 > converges onto it later (not the reverse).
 
+**Confirmed by review (Charlie, 2026-06-28): no code-level reason the deployed `/vibe`
+`runtime.ready` would be missed** — the capture is in the shared sandbox singleton + provider wiring
+(`pkg/app/vibes-diy-provider.tsx`, `pkg/app/root.tsx`), which mounts for `/vibe` too. Two caveats to
+keep explicit:
+
+- **`/vibe` must actually invoke `srvVibeSandbox.pushSource(...)` from the generation path** — the
+  bridge exists, but nothing on `/vibe` calls it today; the new `useInVibeGeneration` hook (§3) is
+  what wires it.
+- **Routing is "last `runtime.ready` wins"** if more than one vibe iframe is ever mounted — the
+  singleton posts to whichever iframe announced ready most recently. `/vibe` mounts one iframe, so
+  this is fine today, but keep it in mind against any future multi-iframe layout.
+
 ---
 
 ## 3. Architecture: lift the generation engine into a shared headless hook
@@ -118,10 +130,20 @@ server changes.** This is the bulk of #2677 / #1745.
 A non-owner **cannot** write the owner's chat — the server rejects on `userId` mismatch
 (`api/svc/public/prompt-chat-section.ts`). So on a non-owner's first write, **fire make-it-yours
 _before_ opening codegen** (the one server action, §2 of the epic — code-only copy → your handle,
-prompt rides along), `replaceState` → `/vibe/$yourHandle/$slug`, then `sendPrompt` runs in _their_
-copy. The card stays mounted; the iframe de-blurs into the fork; the #1856 "it's yours now"
-message is the only surfacing. **The fork is the explicit point the non-owner path diverges** — it
-never opens a codegen chat against the owner's session.
+prompt rides along), navigate → `/vibe/$yourHandle/$slug`, then `sendPrompt` runs in _their_ copy.
+The card stays mounted; the iframe de-blurs into the fork; the #1856 "it's yours now" message is the
+only surfacing. **The fork is the explicit point the non-owner path diverges** — it never opens a
+codegen chat against the owner's session.
+
+**Implementation guardrails (Charlie review, 2026-06-28):**
+
+- **Do not open codegen until the fork returns** and its identifiers are applied — otherwise the
+  send races the fork and can fire against the pre-fork (owner's) context.
+- **Anchor writes by the returned `chatId` / fork slugs, not the pre-fork route params.** The route
+  params still point at the source until navigation settles.
+- **Prefer router `navigate(dest, { replace: true })` over raw `window.history.replaceState`** so
+  the param-driven hooks (`useParams`/`useSearchParams` consumers across the route) stay coherent —
+  a raw history mutation leaves React Router's params stale.
 
 ### PR-C — cached-read lane (the two-lane split)
 
@@ -170,11 +192,17 @@ deferring the whole lane to its own issue — no stubs either way.**
 2. A **content-address dedupe key** `(sourceFsId, transform)` so repeated cached clicks resolve to
    one fork (no GC needed — §20).
 3. **Serving cached results as page-views that skip the codegen auth-gate** (reads, no login).
-4. An **auth-free, owner-unscoped readable-history read path** so an anonymous/non-owner viewer
-   can open a cached app's stored chat (today `getChatDetails`/`getChatResponse` are `checkAuth` +
-   owner-scoped — Codex review). This is what the cached-app "faked chat" toggle depends on.
+4. **Anonymous, server-filtered projection reads over the owner-private chat** (single source, no
+   side persistence — jchris). Two projections:
+   - **Suggestion chips** (`▸` lines only) — unblocks non-owner chips everywhere (§6a), **filed as
+     #2755**. This is the near-term, clearly-safe one.
+   - **A readable-history projection** for the cached-app "faked chat" toggle — a larger exposure
+     decision, but the same shape: filter `chatSections` server-side, return only what's safe to
+     show anonymously (today `getChatDetails`/`getChatResponse` are `checkAuth` + owner-scoped —
+     Codex review).
 
-None of (1)-(4) blocks PR-A or PR-B.
+None of (1)-(4) blocks PR-A or PR-B. Note that **#2755 (the chips projection) is the highest-value
+backend piece** — it's what makes the non-owner card non-empty, independent of the cached lane.
 
 ---
 
@@ -209,6 +237,28 @@ it grows").
   bullets; the sketch uses such bullets only as _illustrative stand-ins_. Generating clean
   summaries would be a **separate model step** — filed as **#2753** — #2677 shows the model's
   real narration verbatim and never hardcodes summaries.
+
+### 6a. Non-owner suggestion chips — the same private-chat root cause (jchris decision)
+
+A consequence surfaced in review: the card's **suggestion chips are empty for every non-owner
+today.** `useLatestVibeChips` parses the trailing `▸` options from the vibe's chat via
+`getChatResponse` and is `enabled: isOwner`, because that endpoint is owner-scoped — so a non-owner
+or anonymous visitor gets the **text-input-only card** (just "Other"). This is current `/vibe`
+behavior (#2676), but #1896's "stranger lands on an app and sees _Make it a drum machine · Add
+808s · Other_" promise **needs non-empty chips for non-owners.**
+
+**Decision (jchris): keep the chat as the single source — do _not_ persist a duplicate.** A
+side-persisted copy (e.g. in `appSettings`) is a separate low-usage code path that can drift from
+the chat and rot. Instead, add a **narrow anonymous read path that filters `chatSections`
+server-side and returns _only_ the suggestion-chip content** — never the private chat body. The
+chips are public CTAs by design, so exposing just that projection is safe while the full chat stays
+owner-private. `useLatestVibeChips` then reads from this endpoint and drops its `enabled: isOwner`
+gate; the `latestTurnChips` parse moves (or is shared) server-side. **Filed as #2755.**
+
+This establishes the general pattern for the epic: **narrow anonymous read paths that filter the
+owner-private chat server-side and return only a safe projection.** Suggestion chips are the first,
+clearly-safe projection; the cached-app _history_ read (§4 PR-C) is a larger exposure decision but
+would follow the same single-source, server-filtered shape rather than a side persistence.
 
 ---
 
