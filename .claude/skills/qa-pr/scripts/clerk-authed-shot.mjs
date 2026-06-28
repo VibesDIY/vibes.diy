@@ -23,8 +23,8 @@
 // (final URL, signed-in email, iframe-ready bool, shot path). It never prints a
 // cookie or token.
 //
-// Usage:
-//   node clerk-authed-shot.mjs --storage state.json --out /tmp/shots \
+// Usage (keep the storage file OUTSIDE the repo — it holds a session cookie):
+//   node clerk-authed-shot.mjs --storage /tmp/state.prod.json --out /tmp/shots \
 //     https://vibes.diy/chat/<handle>/<slug> [more urls...]
 //   [--out <dir>]        directory for screenshots (default: cwd). Auto-named from each URL path.
 //   [--mobile]           use a 390x844 (iPhone 14 Pro) viewport instead of 1280x900
@@ -32,6 +32,8 @@
 //   [--full]             full-page screenshot instead of viewport-only
 //   [--no-iframe-wait]   skip the "wait until the app iframe paints" poll (faster, for non-app pages)
 //   [--settle <ms>]      extra settle time after iframe paint (default 2500)
+//   [--allow-repo-path]  permit a --storage path inside the repo (refused by default,
+//                        so a cookie-bearing file can't be accidentally git-added)
 //
 // Tip for the Vibes editor: route-nav straight to /chat/<handle>/<slug> rather
 // than clicking sidebar app cards — the card→preview→ENTER path is finicky and
@@ -102,6 +104,30 @@ if (!storagePath || !existsSync(storagePath)) {
 if (urls.length === 0) {
   console.error("clerk-authed-shot: pass at least one URL to screenshot.");
   process.exit(2);
+}
+
+// Refuse a storage file that lives inside the git repo: it holds a live session
+// cookie, and a repo-local path is one `git add -A` away from being committed.
+// Default to /tmp; --allow-repo-path is the explicit escape hatch.
+if (!flag("allow-repo-path")) {
+  let dir = presolve(storagePath, "..");
+  let repoRoot = null;
+  for (let up = 0; up < 40 && dir; up++) {
+    if (existsSync(presolve(dir, ".git"))) {
+      repoRoot = dir;
+      break;
+    }
+    const parent = presolve(dir, "..");
+    if (parent === dir) break;
+    dir = parent;
+  }
+  if (repoRoot) {
+    console.error(
+      `clerk-authed-shot: --storage path is inside the repo (${repoRoot}). It holds a live session cookie — ` +
+        "write it under /tmp (e.g. /tmp/state.prod.json) so it can't be accidentally committed, or pass --allow-repo-path to override.",
+    );
+    process.exit(2);
+  }
 }
 
 let viewport = { width: 1280, height: 900 };
