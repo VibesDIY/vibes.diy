@@ -12,23 +12,63 @@ const TIMEOUT = (inject("DB_FLAVOUR" as never) as string) === "pg" ? 30000 : 100
 
 const TEST_USER_ID = "get-app-chat-test-user";
 
-// A minimal valid blocks array to seed — uses prompt.block-begin which only
-// requires the PromptBase fields (streamId, chatId, seq, timestamp).
-const SEED_BLOCKS = [
+// The transcript for a runtime/img chat lives in ChatSections (keyed by chatId),
+// NOT in ApplicationChats.blocks — which is initialized to `[]` on creation and
+// never updated. This is the `jchris/photo-chat` shape that motivated the split:
+// an ApplicationChats row with zero inline blocks but a full ChatSections history.
+//
+// We seed two turns out of insertion order to prove the handler reassembles them
+// chronologically (turn `prompt-1` before `prompt-2`) and orders sections within a
+// turn by `blockSeq`. The blocks use prompt.block-begin / prompt.req shapes, which
+// only require the PromptBase fields (streamId, chatId, seq, timestamp).
+const ALPHA_CHAT_SECTIONS = [
+  // prompt-2 (newer turn) — listed first to exercise the chronological sort.
   {
-    type: "prompt.block-begin",
-    streamId: "test-stream-id",
     chatId: "app-chat-id-alpha",
-    seq: 0,
-    timestamp: "2026-06-20T10:00:00.000Z",
+    promptId: "prompt-2",
+    blockSeq: 0,
+    created: "2026-06-20T10:05:00.000Z",
+    blocks: [
+      {
+        type: "prompt.block-begin",
+        streamId: "stream-2",
+        chatId: "app-chat-id-alpha",
+        seq: 0,
+        timestamp: "2026-06-20T10:05:00.000Z",
+      },
+    ],
+  },
+  // prompt-1 (older turn) — second section (blockSeq 1) listed before blockSeq 0.
+  {
+    chatId: "app-chat-id-alpha",
+    promptId: "prompt-1",
+    blockSeq: 1,
+    created: "2026-06-20T10:00:01.000Z",
+    blocks: [
+      {
+        type: "prompt.block-begin",
+        streamId: "stream-1b",
+        chatId: "app-chat-id-alpha",
+        seq: 1,
+        timestamp: "2026-06-20T10:00:02.000Z",
+      },
+    ],
   },
   {
-    type: "prompt.req",
-    request: { messages: [{ role: "user", content: [{ type: "text", text: "hello" }] }] },
-    streamId: "test-stream-id",
     chatId: "app-chat-id-alpha",
-    seq: 1,
-    timestamp: "2026-06-20T10:00:01.000Z",
+    promptId: "prompt-1",
+    blockSeq: 0,
+    created: "2026-06-20T10:00:01.000Z",
+    blocks: [
+      {
+        type: "prompt.req",
+        request: { messages: [{ role: "user", content: [{ type: "text", text: "hello" }] }] },
+        streamId: "stream-1a",
+        chatId: "app-chat-id-alpha",
+        seq: 0,
+        timestamp: "2026-06-20T10:00:01.000Z",
+      },
+    ],
   },
 ];
 
@@ -81,7 +121,9 @@ describe("get-application-chat", { timeout: TIMEOUT }, () => {
       getToken: async () => Result.Ok(await testUser.getDashBoardToken()),
     });
 
-    // Seed ApplicationChats rows for the test user
+    // Seed ApplicationChats rows (ownership anchors) with empty inline blocks —
+    // matching production, where this column is never written. The real
+    // transcript is seeded into ChatSections below.
     const t = appCtx.vibesCtx.sql.tables;
     await appCtx.vibesCtx.sql.db.insert(t.applicationChats).values([
       {
@@ -89,7 +131,7 @@ describe("get-application-chat", { timeout: TIMEOUT }, () => {
         userId: TEST_USER_ID,
         appSlug: "my-app",
         ownerHandle: "bob",
-        blocks: SEED_BLOCKS,
+        blocks: [],
         created: "2026-06-20T10:00:00.000Z",
       },
       {
@@ -101,9 +143,13 @@ describe("get-application-chat", { timeout: TIMEOUT }, () => {
         created: "2026-06-19T10:00:00.000Z",
       },
     ]);
+
+    // Seed the alpha chat's transcript into ChatSections (beta intentionally has
+    // none, so it resolves to empty blocks).
+    await appCtx.vibesCtx.sql.db.insert(t.chatSections).values(ALPHA_CHAT_SECTIONS);
   }, TIMEOUT);
 
-  it("returns blocks for a known chatId", async () => {
+  it("reassembles ChatSections blocks chronologically by turn then blockSeq", async () => {
     const r = await api.getApplicationChat({ chatId: "app-chat-id-alpha" });
     expect(r.isOk()).toBe(true);
     const body = r.Ok();
@@ -111,7 +157,12 @@ describe("get-application-chat", { timeout: TIMEOUT }, () => {
     expect(body.chatId).toBe("app-chat-id-alpha");
     expect(body.appSlug).toBe("my-app");
     expect(body.ownerHandle).toBe("bob");
-    expect(body.blocks.length).toBeGreaterThan(0);
+    // Three seeded blocks across two turns. Order is older turn (prompt-1) first —
+    // blockSeq 0 (prompt.req) then blockSeq 1 — then the newer turn (prompt-2),
+    // proving both the cross-turn chronological sort and within-turn blockSeq sort.
+    expect(body.blocks.length).toBe(3);
+    expect((body.blocks[0] as { type: string }).type).toBe("prompt.req");
+    expect(body.blocks.map((b) => (b as { seq: number }).seq)).toEqual([0, 1, 0]);
   });
 
   it("returns empty blocks for an unknown chatId (no error)", async () => {
