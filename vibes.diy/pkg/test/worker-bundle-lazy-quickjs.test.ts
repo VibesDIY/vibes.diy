@@ -96,7 +96,11 @@ describe("worker entrypoint keeps QuickJS lazy (#2714 Spec B Phase A)", () => {
 const hasBuild = existsSync(BUILD_ASSETS) && readdirSync(BUILD_ASSETS).some((f) => /^worker-entry-.*\.js$/.test(f));
 
 describe.skipIf(!hasBuild)("built worker bundle splits QuickJS into a lazy chunk", () => {
-  const entries = readdirSync(BUILD_ASSETS).filter((f) => /^worker-entry-.*\.js$/.test(f));
+  // `describe.skipIf` still runs this factory at collection time, so any read of
+  // BUILD_ASSETS here must be guarded — in a clean checkout (the `pnpm check` /
+  // CI case) the directory does not exist and an unguarded readdirSync throws
+  // ENOENT before the suite can skip. Guard on hasBuild; [] when absent.
+  const entries = hasBuild ? readdirSync(BUILD_ASSETS).filter((f) => /^worker-entry-.*\.js$/.test(f)) : [];
 
   it("the entry chunk does not inline the QuickJS glue", () => {
     for (const entry of entries) {
