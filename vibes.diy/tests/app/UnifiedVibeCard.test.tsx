@@ -126,6 +126,50 @@ describe("UnifiedVibeCard", () => {
     expect(share.style.boxShadow).toContain("3px");
   });
 
+  it("layers streamBody over the chips: stream shows, chips stay mounted but hidden+inert", () => {
+    const onSelectChip = vi.fn();
+    const { rerender } = render(
+      <UnifiedVibeCard appTitle="Bloom Machine" open chips={["Make it a drum kit"]} onSelectChip={onSelectChip} />
+    );
+    // Resting: chip is visible and clickable.
+    const chip = screen.getByText("Make it a drum kit");
+    expect(chip).toBeTruthy();
+
+    // Streaming: the stream view shows; the chip stays in the DOM (reserving the
+    // panel height, so it doesn't resize) but is hidden and inert.
+    rerender(
+      <UnifiedVibeCard
+        appTitle="Bloom Machine"
+        open
+        chips={["Make it a drum kit"]}
+        onSelectChip={onSelectChip}
+        streamBody={<div>STREAMING NARRATION</div>}
+      />
+    );
+    expect(screen.getByText("STREAMING NARRATION")).toBeTruthy();
+    // Chip is still mounted (height reserved) but hidden behind an aria-hidden/inert wrapper.
+    const stillThere = screen.getByText("Make it a drum kit");
+    expect(stillThere).toBeTruthy();
+    const hiddenWrap = stillThere.closest("[aria-hidden='true']");
+    expect(hiddenWrap).toBeTruthy();
+    expect((hiddenWrap as HTMLElement).style.visibility).toBe("hidden");
+  });
+
+  it("body (Share view) still fully replaces the chips even if streamBody is also passed", () => {
+    render(
+      <UnifiedVibeCard
+        appTitle="Bloom Machine"
+        open
+        chips={["Make it a drum kit"]}
+        body={<div>SHARE PANEL BODY</div>}
+        streamBody={<div>STREAMING NARRATION</div>}
+      />
+    );
+    expect(screen.getByText("SHARE PANEL BODY")).toBeTruthy();
+    expect(screen.queryByText("STREAMING NARRATION")).toBeNull();
+    expect(screen.queryByText("Make it a drum kit")).toBeNull();
+  });
+
   it("keeps a single persistent toggle in both states (no remount/resize)", () => {
     const { rerender } = render(<UnifiedVibeCard appTitle="Bloom Machine" />);
     // Closed: the one toggle is present and labelled "Open vibe menu".

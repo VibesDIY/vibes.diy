@@ -252,6 +252,18 @@ export default function VibeIframeWrapper() {
     enabled: isOwner,
   });
 
+  // The chips the edit card displays. Once an in-place edit has run we prefer the
+  // fresh follow-up chips the model just streamed over the (now stale) pre-edit
+  // persisted-chat chips. We only re-settle this OUTSIDE a turn: while one streams,
+  // `suggestionChips` is parsed from the in-progress block and would churn line by
+  // line — the chips are hidden behind the stream then, but they still reserve the
+  // panel's height, so freezing them keeps the panel from resizing mid-edit.
+  const [cardChips, setCardChips] = useState<readonly string[]>(editChips);
+  useEffect(() => {
+    if (generation.isGenerating) return;
+    setCardChips(generation.suggestionChips.length > 0 ? generation.suggestionChips : editChips);
+  }, [generation.isGenerating, generation.suggestionChips, editChips]);
+
   // On the forked /vibe page (?prompt64 carried from a seamless non-owner fork),
   // auto-fire the generation once ownership resolves to us — only when isOwner is
   // true (i.e. the page is already our own fork), so we never send against the
@@ -877,10 +889,13 @@ export default function VibeIframeWrapper() {
       : { paddingLeft: 18, paddingRight: 18, paddingTop: 14, paddingBottom: 18, height: "auto" };
   const showCard = cardVariant === "request" || cardVariant === "invite" || cardVariant === "pending" || cardVariant === "revoked";
   const requestAccessSubtitle = ownerDisplayName ? `Ask to collab with ${ownerDisplayName}.` : "Ask to join the collaboration.";
-  // Show the codegen stream in the card body only while streaming; once the
-  // first code block lands (phase "live") the body returns to chips and the app
-  // de-blurs behind. (§1b)
-  const showGenStream = generation.phase === "streaming";
+  // Show the codegen stream in the card for the WHOLE in-flight turn (until
+  // block-end settles), not just the pre-first-code "streaming" phase. Gating on
+  // phase flipped the body back to chips at the first code.end while the turn was
+  // still running — so the (stale) suggestion chips re-appeared mid-edit and the
+  // panel resized. isGenerating keeps the stream up until the turn fully settles.
+  // (vibe-tour-chips-edit; supersedes the §1b phase gate.)
+  const showGenStream = generation.isGenerating;
 
   return (
     <>
@@ -1055,7 +1070,7 @@ export default function VibeIframeWrapper() {
                   // so the owner can't ship a partial generation (Charlie review).
                   onPublish={isDraft && !generation.isGenerating ? handlePublish : undefined}
                   publishing={publishing}
-                  chips={editChips}
+                  chips={cardChips}
                   onSelectChip={handleEditPrompt}
                   onSubmitOther={handleEditPrompt}
                   onHome={() => {
@@ -1090,7 +1105,13 @@ export default function VibeIframeWrapper() {
                         accessPending={!shareModal.settingsLoaded || shareModal.isTogglingPublicAccess}
                         onSelectMember={() => shareModal.open()}
                       />
-                    ) : showGenStream ? (
+                    ) : undefined
+                  }
+                  // The stream LAYERS over the chips (height reserved) rather than
+                  // replacing the whole body, so the panel doesn't resize as the
+                  // turn streams in. (vibe-tour-chips-edit)
+                  streamBody={
+                    showGenStream ? (
                       <GenerationStreamView
                         blocks={generation.blocks}
                         messages={generation.counts.messages}

@@ -65,6 +65,13 @@ export interface UnifiedVibeCardProps {
   /** Overrides the card's middle (chips + Other) — e.g. the SharePanelView when the
    *  Share view is active. Header and bottom nav stay. */
   body?: React.ReactNode;
+  /** The in-place codegen stream view. Unlike `body` (a full replace), this LAYERS
+   *  over the chips+Other region: the chips stay mounted (hidden, inert) to reserve
+   *  their height, and the stream is absolutely positioned on top. So the panel
+   *  shows the streaming chat without resizing as a turn runs, and the old
+   *  suggestion chips don't sit visible behind it. Ignored while `body` is set
+   *  (Share view wins). (vibe-tour-chips-edit) */
+  streamBody?: React.ReactNode;
   /** Which bottom-nav affordance reads as selected. Defaults to "edit". */
   selectedNav?: "edit" | "share";
   className?: string;
@@ -268,23 +275,34 @@ export function UnifiedVibeCard(props: UnifiedVibeCardProps) {
                 <PublishBanner onPublish={props.onPublish} publishing={props.publishing} />
               )}
               {props.body ?? (
-                <>
-                  {props.chips && props.chips.length > 0 && (
-                    <OptionButtons
-                      options={props.chips}
-                      isFirst
-                      firstMessage="Describe a change to edit this app live:"
-                      onSelect={(o) => {
-                        props.onSelectChip?.(o);
-                        // Return false so OptionButtons clears the press and the chips stay
-                        // clickable — until codegen is wired (#2677) a chip click is a fire-and-
-                        // forget signal, not a one-shot commit, so we don't want it to lock.
-                        return false;
-                      }}
-                    />
-                  )}
-                  <OtherRow onSubmitOther={props.onSubmitOther} />
-                </>
+                // The chips+Other region. While a turn streams (`streamBody` set),
+                // it stays mounted but hidden+inert so it reserves its height, and
+                // the stream view layers on top — the panel shows the streaming
+                // chat without resizing and the old chips don't sit visible.
+                <div style={{ position: "relative" }}>
+                  <div
+                    aria-hidden={props.streamBody ? true : undefined}
+                    inert={props.streamBody ? true : undefined}
+                    style={props.streamBody ? { visibility: "hidden" } : undefined}
+                  >
+                    {props.chips && props.chips.length > 0 && (
+                      <OptionButtons
+                        options={props.chips}
+                        isFirst
+                        firstMessage="Describe a change to edit this app live:"
+                        onSelect={(o) => {
+                          props.onSelectChip?.(o);
+                          // Return false so OptionButtons clears the press and the chips stay
+                          // clickable — the chip click hands off to in-place codegen, which the
+                          // host surfaces via streamBody; we don't want the button to lock.
+                          return false;
+                        }}
+                      />
+                    )}
+                    <OtherRow onSubmitOther={props.onSubmitOther} />
+                  </div>
+                  {props.streamBody && <div style={{ position: "absolute", inset: 0, overflowY: "auto" }}>{props.streamBody}</div>}
+                </div>
               )}
             </div>
             <div

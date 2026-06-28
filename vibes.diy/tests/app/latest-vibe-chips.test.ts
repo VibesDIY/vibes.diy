@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import type { ResChatResponseTurn } from "@vibes.diy/api-types";
-import { latestTurnChips } from "../../pkg/app/hooks/useLatestVibeChips.js";
+import { latestTurnChips, chipsFromNarration } from "../../pkg/app/hooks/useLatestVibeChips.js";
 
 // Build a single `block.toplevel.line` event (the assistant narration carrier).
 // Field set must satisfy the ToplevelLineMsg arktype schema so `isToplevelLine`
@@ -74,5 +74,16 @@ describe("latestTurnChips", () => {
   it("ignores non-toplevel blocks when assembling the narration", () => {
     const t = turn("2026-06-27T02:00:00Z", ["Built it.", "▸ Make it blue"], [promptReq()]);
     expect(latestTurnChips([t])).toEqual(["Make it blue"]);
+  });
+});
+
+describe("chipsFromNarration", () => {
+  it("parses the trailing ▸ group, drops the terminal chip, and caps at three", () => {
+    const text = ["Done!", "▸ One", "▸ Two", "▸ Three", "▸ Four", "▸ I'm done for now"].join("\n");
+    expect(chipsFromNarration(text)).toEqual(["One", "Two", "Three"]);
+  });
+
+  it("returns no chips when the narration ended without a ▸ question", () => {
+    expect(chipsFromNarration("Here is your app. No options offered.")).toEqual([]);
   });
 });
