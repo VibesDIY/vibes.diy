@@ -75,6 +75,21 @@ export function useInVibeGeneration(opts: UseInVibeGenerationOpts): InVibeGenera
   const [active, setActive] = useState(false);
   const activate = useCallback(() => setActive(true), []);
 
+  // Re-arm the lazy gate SYNCHRONOUSLY on a vibe-key change, mirroring
+  // useChatSession's own render-phase slug guard. The slug-keyed reset effect
+  // below also flips `active` false, but effects run after commit — and
+  // useChatSession's open effect (registered before that reset effect) would
+  // fire once on the first render of the newly-navigated vibe while `active` is
+  // still the stale `true`, eagerly opening codegen on a passive cross-vibe
+  // view. Setting state during render makes React restart this render with
+  // `active=false` before committing, so the open effect sees inConstruction
+  // true and stays inert until the owner edits the new vibe. (#2761, Codex P2)
+  const activeVibeKeyRef = useRef(`${ownerHandle}/${appSlug}`);
+  if (activeVibeKeyRef.current !== `${ownerHandle}/${appSlug}`) {
+    activeVibeKeyRef.current = `${ownerHandle}/${appSlug}`;
+    setActive(false);
+  }
+
   // The /vibe iframe stays pinned to its own fsId and hot-swaps in place, so we
   // do NOT navigate on follow-ups (end-of-stream fsId settle is deferred). A
   // no-op keeps useChatSession's contract satisfied.
@@ -133,10 +148,9 @@ export function useInVibeGeneration(opts: UseInVibeGenerationOpts): InVibeGenera
     seenByBlockIdRef.current.clear();
     setHotSwapCount(0);
     sendPromptState(null);
-    // Re-arm the lazy gate: a freshly-navigated vibe is passive again until the
-    // owner opens its edit UI (or fires a prompt). Without this, navigating from
-    // an active vibe would eagerly open codegen on the next vibe's mount. (#2761)
-    setActive(false);
+    // Note: re-arming the lazy `active` gate happens synchronously during render
+    // (the activeVibeKeyRef guard above), not here — an effect would run too late
+    // to stop useChatSession's open effect firing once on the new vibe. (#2761)
   }, [ownerHandle, appSlug]);
 
   // 'streaming' once a turn is running and before any completed code block;
