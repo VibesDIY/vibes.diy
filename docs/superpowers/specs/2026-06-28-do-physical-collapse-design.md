@@ -34,6 +34,8 @@ The whole collapse hinges on one measured fact (the gating measurement below): *
 
 > **Empirical follow-up (cheap, not blocking the decision):** the mechanism is settled by the runtime model and in-repo precedent; a `wrangler tail` cold-wake timing on a shared-only instance can attach a concrete millisecond number to the QuickJS parse specifically, and is folded into the Phase A verification rather than gating this design.
 
+> **Phase A result (PR — Phase A shipped).** Building the worker after the dynamic-import change confirms the bare `import()` **already code-splits QuickJS out of the entry chunk** under Vite + `@cloudflare/vite-plugin` — the entry carries no QuickJS glue (`_QTS_`/`RELEASE_SYNC` absent), only the `import()` reference to a lazy `workerd-*.js` chunk; the glue + the 503 kB `RELEASE_SYNC-*.wasm` live in separate chunks. **No `manualChunks` or `find_additional_modules` was needed (escalation-ladder rung 1 sufficed).** So the always-warm-read-shard property holds with zero extra config — which means the startup-cost axis no longer constrains the Phase B choice, and **3→1 is tenable on that axis.** The residual 3→2 tilt is now purely the cli cross-script topology constraint below.
+
 Sources: [Worker startup time limit increased to 1 second](https://developers.cloudflare.com/changelog/post/2025-10-10-increased-startup-time/) · [Lifecycle of a Durable Object](https://developers.cloudflare.com/durable-objects/concepts/durable-object-lifecycle/) · [How Workers works](https://developers.cloudflare.com/workers/reference/how-workers-works/) · [Rules of Durable Objects](https://developers.cloudflare.com/durable-objects/best-practices/rules-of-durable-objects/)
 
 ## Decisions (locked in brainstorm with jchris)

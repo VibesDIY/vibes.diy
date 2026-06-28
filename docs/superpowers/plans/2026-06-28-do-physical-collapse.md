@@ -49,6 +49,8 @@
 
 ## Phase A — Lazy-load QuickJS (committed; no DO migration)
 
+> **✅ SHIPPED (this PR).** A1 (dynamic import in `cf-serve.ts`, all 88 access-fn tests green), A2 (build-output gate `vibes.diy/pkg/test/worker-bundle-lazy-quickjs.test.ts`), A3 (shared-DO-wires-no-invoker invariant). **Empirical lever result:** the bare dynamic `import()` already code-splits QuickJS out of the entry chunk under Vite + `@cloudflare/vite-plugin` — **escalation-ladder rung 1 sufficed; no `manualChunks` / `find_additional_modules` needed.** Entry chunk has no QuickJS glue (`_QTS_`/`RELEASE_SYNC` absent); glue + the 503 kB `RELEASE_SYNC-*.wasm` are in separate lazy chunks. → Phase B input: startup-cost no longer constrains the class-count choice; the only residual 3→2 tilt is the cli cross-script topology.
+
 ### Task A1: Dynamic-import QuickJS at the call site
 
 **Files:**
