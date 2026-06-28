@@ -202,6 +202,43 @@ fun site, and a botless account can use a different login. So:
 8. **Docs**: update `agents/cloud-browser-setup.md` (auth now covered in cloud) and
    the qa-pr skill; note the local-workstation path becomes the fallback.
 
+### First-pass migration order (concrete)
+
+To minimize churn and keep the migration executable without rediscovery, do the
+first pass in this file-oriented order (provider + route gates first, then
+Clerk-hook call sites):
+
+1. **Provider boundary + adapter scaffolding**
+   - `pkg/app/vibes-diy-provider.tsx`
+   - `pkg/reports-app/src/main.tsx`
+2. **Route/auth gates**
+   - `pkg/app/routes.ts`
+   - `pkg/app/routes/auth.tsx`
+   - `pkg/app/routes/login.tsx`
+3. **Auth-sensitive route flows**
+   - `pkg/app/routes/vibe.$ownerHandle.$appSlug.tsx`
+   - `pkg/app/routes/groups.tsx`
+   - `pkg/app/routes/settings.tsx`
+   - `pkg/app/routes/settings/csr-to-cert.tsx`
+   - `pkg/app/routes/remix.$ownerHandle.$appSlug.tsx`
+   - `pkg/app/routes/chat/prompt.tsx`
+4. **Shared hooks**
+   - `pkg/app/hooks/useRecentVibes.ts`
+   - `pkg/app/hooks/useMemberships.ts`
+   - `pkg/app/hooks/useAllGroups.ts`
+   - `pkg/app/hooks/useCapiCompleteRegistration.ts`
+   - `pkg/app/hooks/useVibes.ts`
+5. **Leaf direct Clerk consumers**
+   - `pkg/app/components/SessionSidebar.tsx`
+   - `pkg/app/components/LoggedOutView.tsx`
+   - `pkg/app/components/RecentVibes.tsx`
+   - `pkg/app/components/ResultPreview/CommentsSection.tsx`
+   - `pkg/app/components/ResultPreview/DataView.tsx`
+   - `pkg/app/components/HomePage.tsx`
+   - `pkg/app/routes/chat/chat.$ownerHandle.$appSlug.tsx`
+   - `pkg/app/routes/logout.tsx`
+   - `pkg/reports-app/src/App.tsx`
+
 ### Re-mint cadence (resolved, per Charlie)
 
 Current shape: CLI caches ~60s; token `exp` ~120s; `nbf` backdated; server
