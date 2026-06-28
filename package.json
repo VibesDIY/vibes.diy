@@ -71,7 +71,7 @@
     "@typescript/native-preview": "7.0.0-dev.20260519.1",
     "@vitest/browser-playwright": "~4.1.9",
     "@vitest/coverage-v8": "~4.1.9",
-    "eslint": "^10.0.3",
+    "eslint": "^10.6.0",
     "eslint-plugin-import": "^2.32.0",
     "knip": "^6.17.1",
     "playwright": "^1.61.0",
