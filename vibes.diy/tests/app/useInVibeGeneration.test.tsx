@@ -124,6 +124,50 @@ describe("useInVibeGeneration", () => {
     await waitFor(() => expect(view.result.current.suggestionChips).toEqual(["Add a pause button", "Play a sound at zero"]));
   });
 
+  it("hasLocalEdit stays false when blocks arrive from replayed history (no local send)", async () => {
+    // The Charlie-review case: the server replays prior turns into `blocks` on
+    // open. That must NOT count as a local edit, or a versioned view would prefer
+    // the latest streamed chips over its fsId-scoped persisted chips.
+    const { view, fakeChat, openChat } = setup();
+    await waitFor(() => expect(view.result.current.phase).toBe("idle"));
+    expect(view.result.current.hasLocalEdit).toBe(false);
+    // Opening the edit UI activates the lazy codegen chat (#2761) WITHOUT sending
+    // a prompt — this is the path on which the server replays prior turns.
+    act(() => view.result.current.activate());
+    await waitFor(() => expect(openChat).toHaveBeenCalledTimes(1));
+    await act(async () => fakeChat.emitBlockBegin());
+    await act(async () => fakeChat.emitToplevelLines(["Loaded.", "▸ History chip"]));
+    await act(async () => fakeChat.emitCodeEnd());
+    expect(view.result.current.blocks.length).toBeGreaterThan(0);
+    expect(view.result.current.hasLocalEdit).toBe(false);
+  });
+
+  it("hasLocalEdit flips true on a local sendPrompt and resets when the vibe changes", async () => {
+    const fakeChat = makeControllableLLMChat({ chatId: "A" });
+    const nextChat = makeControllableLLMChat({ chatId: "B" });
+    const opened = [fakeChat.chat, nextChat.chat];
+    let openIdx = 0;
+    const openChat = vi.fn(async () => Result.Ok(opened[Math.min(openIdx++, opened.length - 1)]));
+    const chatApi = { openChat } as never;
+    const sharedApi = {
+      getAppByFsId: vi.fn(async () => Result.Ok({ fsId: "FS-1" })),
+      ensureAppSettings: vi.fn(async () => Result.Err("no settings")),
+    } as never;
+    const srvVibeSandbox = { pushSource: vi.fn(() => true) } as never;
+    const view = renderHook(
+      (p: { ownerHandle: string; appSlug: string }) =>
+        useInVibeGeneration({ ownerHandle: p.ownerHandle, appSlug: p.appSlug, fsId: "FS-1", chatApi, sharedApi, srvVibeSandbox }),
+      { initialProps: { ownerHandle: "owner", appSlug: "appA" } }
+    );
+    await waitFor(() => expect(view.result.current.phase).toBe("idle"));
+    expect(view.result.current.hasLocalEdit).toBe(false);
+    act(() => view.result.current.sendPrompt("make it green"));
+    await waitFor(() => expect(view.result.current.hasLocalEdit).toBe(true));
+    // Navigating to a different vibe resets it.
+    view.rerender({ ownerHandle: "owner", appSlug: "appB" });
+    await waitFor(() => expect(view.result.current.hasLocalEdit).toBe(false));
+  });
+
   it("does not open a chat when disabled", async () => {
     const { view, openChat } = setup({ enabled: false });
     expect(view.result.current.phase).toBe("idle");

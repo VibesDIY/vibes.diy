@@ -259,15 +259,17 @@ export default function VibeIframeWrapper() {
   // line — the chips are hidden behind the stream then, but they still reserve the
   // panel's height, so freezing them keeps the panel from resizing mid-edit.
   //
-  // Distinguish "no turn yet" from "a turn ran but offered no options": once a turn
-  // has produced any block we trust its `suggestionChips` even when empty (→ the
-  // text-input-only state), rather than restoring the stale pre-edit `editChips`.
+  // Distinguish "no local edit yet" from "a local edit ran but offered no options":
+  // once the user has started an in-place edit THIS session we trust its
+  // `suggestionChips` even when empty (→ the text-input-only state), rather than
+  // restoring the stale pre-edit `editChips`. Gate on `hasLocalEdit`, not on the
+  // mere presence of blocks — replayed chat history also fills blocks on open and
+  // would wrongly override the fsId-scoped persisted chips on a versioned view.
   const [cardChips, setCardChips] = useState<readonly string[]>(editChips);
-  const hasStreamedTurn = generation.blocks.length > 0;
   useEffect(() => {
     if (generation.isGenerating) return;
-    setCardChips(hasStreamedTurn ? generation.suggestionChips : editChips);
-  }, [generation.isGenerating, hasStreamedTurn, generation.suggestionChips, editChips]);
+    setCardChips(generation.hasLocalEdit ? generation.suggestionChips : editChips);
+  }, [generation.isGenerating, generation.hasLocalEdit, generation.suggestionChips, editChips]);
 
   // On the forked /vibe page (?prompt64 carried from a seamless non-owner fork),
   // auto-fire the generation once ownership resolves to us — only when isOwner is
