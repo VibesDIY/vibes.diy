@@ -167,4 +167,37 @@ describe("useInVibeGeneration", () => {
     expect(view.result.current.blocks).toHaveLength(0);
     expect(view.result.current.counts.messages).toBe(0);
   });
+
+  it("does NOT eagerly re-open codegen when client-navigating between vibes (#2761, Codex P2)", async () => {
+    const fakeChat = makeControllableLLMChat({ chatId: "A" });
+    const nextChat = makeControllableLLMChat({ chatId: "B" });
+    const opened = [fakeChat.chat, nextChat.chat];
+    let openIdx = 0;
+    const openChat = vi.fn(async () => Result.Ok(opened[Math.min(openIdx++, opened.length - 1)]));
+    const chatApi = { openChat } as never;
+    const sharedApi = {
+      getAppByFsId: vi.fn(async () => Result.Ok({ fsId: "FS-1" })),
+      ensureAppSettings: vi.fn(async () => Result.Err("no settings")),
+    } as never;
+    const srvVibeSandbox = { pushSource: vi.fn(() => true) } as never;
+    const view = renderHook(
+      (p: { ownerHandle: string; appSlug: string }) =>
+        useInVibeGeneration({ ownerHandle: p.ownerHandle, appSlug: p.appSlug, fsId: "FS-1", chatApi, sharedApi, srvVibeSandbox }),
+      { initialProps: { ownerHandle: "owner", appSlug: "appA" } }
+    );
+    // Owner opens the edit UI on vibe A → exactly one openChat.
+    act(() => view.result.current.activate());
+    await waitFor(() => expect(openChat).toHaveBeenCalledTimes(1));
+    // Client-side nav to a DIFFERENT vibe must NOT eagerly re-open codegen: the
+    // `active` latch is re-armed synchronously during render, so passive browsing
+    // of the new vibe opens no connection. (Without the render-phase reset,
+    // useChatSession's open effect would fire once for appB → 2 calls.)
+    view.rerender({ ownerHandle: "owner", appSlug: "appB" });
+    await new Promise((r) => setTimeout(r, 50));
+    expect(openChat).toHaveBeenCalledTimes(1);
+    expect(view.result.current.phase).toBe("idle");
+    // Opening the edit UI on the new vibe re-activates and opens ITS chat.
+    act(() => view.result.current.activate());
+    await waitFor(() => expect(openChat).toHaveBeenCalledTimes(2));
+  });
 });
