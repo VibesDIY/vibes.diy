@@ -125,7 +125,7 @@ export default {
       // #2714 Spec B — vibe plane routes to the unified Sessions class via the
       // SESSIONS handle. The DO derives kind="vibe" from the /api/app path.
       //
-      // The physical DO name is PLANE-PREFIXED (`app:`/`shared:`/`chat:`). On
+      // The physical DO name is PLANE-PREFIXED (`app:`/`shared:`/`codegen:`). On
       // non-cli envs SESSIONS and CODEGEN_SESSIONS bind the SAME class, hence the
       // same DO namespace — so a bare `idFromName(shard)` for codegen could
       // collide with a vibe key or the shared singleton and co-tenant one
@@ -149,9 +149,11 @@ export default {
 
     if (route === "api-do") {
       const shard = url.getParam("shard") ?? crypto.randomUUID();
-      // Codegen plane → CODEGEN_SESSIONS, physical name `chat:<shard>` (local on
-      // cli; cross-script SESSIONS is for vibe/shared). Same class "Sessions".
-      const id = env.CODEGEN_SESSIONS.idFromName(`chat:${shard}`);
+      // Codegen plane → CODEGEN_SESSIONS, physical name `codegen:<shard>` (local
+      // on cli; cross-script SESSIONS is for vibe/shared). Same class "Sessions".
+      // (`app:`/`shared:` are pinned to the old classes' registration shardIds
+      // during the drain; `codegen:` is free — its registration id is bare.)
+      const id = env.CODEGEN_SESSIONS.idFromName(`codegen:${shard}`);
       const obj = env.CODEGEN_SESSIONS.get(id);
       return obj.fetch(request); // handle WebSocket upgrade and API requests in the unified Sessions Durable Object
     }
