@@ -25,9 +25,9 @@ import type { DashAuthType } from "@vibes.diy/identity";
 export interface VibesDiyWebVars {
   readonly pkgRepos: PkgRepos;
   // Cloudflare Web Analytics (RUM) beacon site token. Present only when the
-  // SSR layer decides the beacon should be injected for this request (non-EU
-  // visitors, non-dev) — see root.tsx loader and workers/app.ts. Undefined ⇒
-  // no beacon rendered. It's a public client-side token, safe to ship in HTML.
+  // SSR layer decides the beacon should be injected for this request (prod
+  // deployment + non-EU visitors) — see root.tsx loader and workers/app.ts.
+  // Undefined ⇒ no beacon rendered. Public client-side token, safe in HTML.
   readonly cfWebAnalyticsToken?: string;
   readonly env: {
     GTM_CONTAINER_ID?: string;
