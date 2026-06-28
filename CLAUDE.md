@@ -52,9 +52,10 @@ Full list and provenance: [`.claude/skills/README.md`](.claude/skills/README.md)
 
 ## Quick Reference
 
-- Run checks: `pnpm check` (format + build + test + lint)
+- Run checks: default to **`pnpm fast-check`** before committing — it prettier-writes changed/untracked files, then builds + lints (fast, and catches exactly what CI's `prettier --check` would fail on). The full **`pnpm check`** adds the test suite but is slow (60–120s) and occasionally flaky — reserve it for higher-risk changes, or just let CI run it. Prettier validation comes first either way. See [agents/code-quality.md](agents/code-quality.md).
 - Run tests: `cd vibes.diy/tests && pnpm test`
 - **Run independent commands concurrently** — when several steps have no data dependency between them (multiple test suites, greps, status checks, package builds), issue them as parallel tool calls in a single message instead of one-at-a-time. It's faster and it works. Only serialize when a later call needs an earlier call's output.
+- **Memory is repo-backed** — every project-scoped memory must be backed by content in this repo's [`agents/`](agents/) directory; the memory file is just a one-paragraph pointer, never a duplicate of the substance. Applies to all memory types (feedback, reference, project). If something is too sensitive or personal to land in the repo, raise it before saving rather than writing prose into memory.
 - Never push to main
 - Scope first (guidance, not a gate): small one-sentence non-controversial fixes go straight to a PR; for broad/experimental/prompt-or-behavior-changing work, flag the human to consider a design issue first rather than rigidly blocking or silently barreling ahead. [CONTRIBUTING.md § Scope](CONTRIBUTING.md#scope-small-and-sharp-by-default)
 - Never manually update version numbers in package.json
