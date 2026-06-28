@@ -15,6 +15,49 @@
 - **Bucket E (`SuperThis` / `ensureSuperThis` narrowing)** — separate plan, tracked in [#2468](https://github.com/VibesDIY/vibes.diy/issues/2468). This plan keeps using the existing `RuntimeContext` seam unchanged.
 - **Bucket F (`@fireproof/core-cli` build tool)** — separate plan, tracked in [#2483](https://github.com/VibesDIY/vibes.diy/issues/2483). The `cli-kit.ts` runtime-framework internals swap is [#2482](https://github.com/VibesDIY/vibes.diy/issues/2482); browser-graph hardening is [#2469](https://github.com/VibesDIY/vibes.diy/issues/2469).
 
+### Definition of done — the hard boundary (this epic)
+
+The original goal ("remove fireproof completely") is **bounded for this epic**. "Done"
+for the identity runtime extraction (Tasks 1–7) means:
+
+- **Zero `@fireproof/*` _value_ (runtime) imports** in `vibes.diy/identity/**` and in
+  every call site, **except** the two explicitly out-of-scope buckets below.
+- **`type`-only imports are allowed to remain.** `import type … from "@fireproof/*"`
+  is erased at build (no bundle/runtime weight, no patch coupling), so the lightweight
+  `core-types-*` packages may stay as type-only deps. The deliverable is dropping the
+  **heavy protocol/keybag** runtime deps and the count of `dependencies` actually
+  falling — not deleting every last `@fireproof/*` string.
+
+Explicitly **out of scope** (do NOT try to remove these here — they are separate buckets):
+
+- **`@fireproof/core-runtime`** (`SuperThis`, `ensureSuperThis`, `sts`, `ensureLogger`,
+  `hashObjectAsync`/`hashObjectSync`, `deepFreeze`, `runtimeFn`, …) = **Bucket E**,
+  tracked in [#2468](https://github.com/VibesDIY/vibes.diy/issues/2468). The identity
+  package keeps importing these values via the existing `RuntimeContext` seam.
+- **`@fireproof/core-cli`** (the `core-cli tsc`/`build`/`pack`/`publish` build tool, plus
+  the `deviceIdRegisterEvento`/`isResDeviceIdRegister` login-register primitives) =
+  **Bucket F**, tracked in [#2483](https://github.com/VibesDIY/vibes.diy/issues/2483).
+
+Reaching literal **zero `@fireproof/*`** requires Bucket E **and** Bucket F to land
+afterward (plus the unrelated residual `@fireproof/use-fireproof` app/ImgGen imports,
+which are not a de-fireproof concern). Until then, "done" = the boundary above.
+
+### Task 6/7 delivery split (scope discipline)
+
+Per `CONTRIBUTING.md` scope guidance, Task 6 is delivered as two PRs:
+
+- **Lower-risk, straight to PR (this PR):** Task 6.2 (browser dash-client lift), Task 6.3
+  (own the leftover `core-types-base` value schemas), and the safe portion of Task 7
+  (drop `core-protocols-dashboard` repo-wide — single facade importer; drop
+  `core-device-id` from every package except `api/tests`, its only importer).
+- **Broad/risky → design issue first:** Task 6.1 (the **keybag** lift). `core-keybag` is
+  the credential **write** path (CLI `login`/enroll persists `~/.fireproof/keybag/<id>.json`)
+  with **no enroll/persist unit coverage today**, and it drags the file/indexeddb gateway
+  graph + `find-up`. It is hardened-first (golden keybag harness → verbatim lift → real
+  `login` smoke test) under its own spec-first design issue, and `core-keybag`'s repo-wide
+  removal (identity / `vibes-diy` / `use-vibes/base` / `eval/codegen-edit` / the
+  `use-vibes/*` type packages) lands with that PR.
+
 **Source-of-truth references:**
 
 - Design spec: [`docs/superpowers/specs/2026-06-19-defireproof-identity-extraction-design.md`](../specs/2026-06-19-defireproof-identity-extraction-design.md) (APPROVED; Buckets A, B, C, E, F; resolutions Q1–Q4, Q6).
