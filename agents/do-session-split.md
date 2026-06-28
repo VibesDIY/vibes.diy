@@ -54,19 +54,26 @@ A third connection, plus making the chat plane lazy:
 
 The three client connections (`chatApi`/`vibeApi`/`sharedApi`) and three DO classes (ChatSessions/AppSessions/SharedSessions) are the **same handler surface opened against a different shard key**. The shard key is the only thing that matters, so handlers should **declare** the shard kind(s) they support instead of being **quarantined** into per-plane arrays (decision: declare, one API — see issue #2714).
 
-**Shipped (step 2 of the build shape): the declarative manifest.** `ShardKind`, the single `handlerManifest` (each entry `{ allowed, handler }`), and `handlersForShard(kind)`. Behavior-preserving: each plane's served set is byte-for-byte what it was, but the placement metadata now lives in one place that both composition and tests read.
+**Shipped — step 2, the declarative manifest (#2715).** `ShardKind`, the single `handlerManifest`, and `handlersForShard(kind)`. Behavior-preserving: each plane's served set is byte-for-byte what it was, but the placement metadata now lives in one place that both composition and tests read.
+
+**Shipped — Spec A, the enforcement layer (#2722).** Built on the current 3-DO topology with **no migration**:
+
+- **Source-of-truth module in `api-types`** (`shard-policy.ts`): `ShardKind` (now `"codegen" | "vibe" | "shared"` — renamed from `"stream"`, since streaming isn't exclusive to ChatSessions; the vibe shard streams too for img-gen), `SHARD_POLICY` keyed by request `type` (static `ShardKind[]` or a `(req)=>ShardKind[]` **mode predicate** for `open-chat`/`prompt`), branded shard-key constructors (`openVibe`/`openShared`/`openCodegen`), and `ShardIdentity`. The worker manifest derives `allowed` from `SHARD_POLICY`; a parity test pins manifest⇄policy 1:1. Both planes import it → can't drift.
+- **Browser compile-time kind gate** — `Conn<K extends ShardKind>` derives method availability from `SHARD_POLICY` (a method exists only if `K` is allowed; `openChat` narrows to `mode:"img"` on `Conn<"vibe">`). The three connections are branded `Conn<"codegen">`/`Conn<"vibe">`/`Conn<"shared">`. `putDoc` on `sharedApi` is a compile error.
+- **Worker runtime gate** — each DO injects `{ kind, shardId }` into `appCtx`; `gated()` (in `api/svc/shard-gate.ts`) does the kind+mode check at dispatch and a **fail-loud identity assert** for vibe-keyed ops (`${owner}--${appSlug} === shardId`, doc ops inline, chat ops post-resolution). On mismatch it **sends a coded `ResError`** (`wrong-shard` / `wrong-shard-kind`) and stops dispatch — never persist-and-go-quiet. (A bare throw would be rewritten to `internal-error` by the WS catch, so it sends, not throws.) Types enforce _kind_; runtime enforces _identity_.
 
 **Why it's safe to unify (two reasons a handler was shard-bound):**
 
-- **(a) code/capability presence** — dissolved by loading the capability on the allowed planes behind a lazy `import()`. Not a security boundary; the access control _is_ the access-fn running, which travels with the code.
-- **(b) stateful rendezvous / topology** — irreducible. A doc write does **local broadcast** on the vibe shard; `subscribeDocs`/`subscribeViewerGrants` fan out to co-tenant sockets that only exist there; chat streaming has per-shard backpressure. These stay `VIBE_ONLY` / `STREAM_*`. **The monolith unifies code; it never unifies topology.**
+- **(a) code/capability presence** — dissolvable by loading the capability on the allowed planes behind a lazy `import()` (Spec B). Not a security boundary; the access control _is_ the access-fn running, which travels with the code.
+- **(b) stateful rendezvous / topology** — irreducible. A doc write does **local broadcast** on the vibe shard; `subscribeDocs`/`subscribeViewerGrants` fan out to co-tenant sockets that only exist there; chat streaming has per-shard backpressure. These stay vibe-only / codegen-only. **The monolith unifies code; it never unifies topology** — which is why the runtime identity gate is the part you can never delete.
 
-**Remaining (TDD plan, not yet built):**
+**Remaining — Spec B, the physical collapse (not yet built):**
 
-1. **Source-of-truth module in a shared package** so browser `pkg` and worker `api/svc` both import `ShardKind` + the `allowed` metadata and can't drift. (Today the manifest lives in `api/svc`; the browser side doesn't yet consume it.)
-2. **Branded client connections + a `call(conn, handler)` constraint** — the connection's `kind` must be a member of the handler's `allowed` set → **kind mismatch is a compile error** in the browser. Branded shard-key constructors (`openVibe`/`openShared`/`openStream`) pick the right key.
-3. **Single dispatch gate in the DO** — at runtime, mirror the kind check **and** add a **fail-loud identity assertion** for category-(b) handlers: the connection's shard identity must match the request's target (`owner--appSlug`), else **throw** — a write that can't reach its vibe's broadcast shard must never persist-and-go-quiet. Types enforce _kind_; runtime enforces _identity_.
-4. **Lazy-load the heavy capability modules** (QuickJS access-fn, streaming) via `find_additional_modules` + `rules` so a cheap shared/read instance never parses them (1 s startup budget; DO hibernation re-runs global scope on wake — verify).
-5. **Wrangler / migration sequencing** from 3 DO classes → 1 (open question: keep streaming isolated for blast-radius, or go fully monolithic).
+1. **Lazy-load the heavy capability modules** (QuickJS access-fn, streaming) via `find_additional_modules` + `rules` so a cheap shared/read instance never parses them (1 s startup budget; **verify whether DO hibernation re-runs global scope on wake** — this measurement gates the collapse). Today QuickJS is a static top-level import in `cf-serve.ts` (parsed by every DO incl. the lean shared one); the WASM instantiation is already lazy, the module import is not.
+2. **Wrangler / migration sequencing** from 3 DO classes → 1 (or 2 — open question: keep codegen isolated for blast-radius, or go fully monolithic).
+
+Spec A makes Spec B a pure infra/migration job: by the time a handler can run on a different shard, the identity gate already guarantees it can't quietly serve the wrong one.
 
 Open questions carried from the issue: singleton hot-shard contention (`global:0..k`?); DO-hibernation startup cost; one-plane-isolated vs fully monolithic.
+
+Spec A deploy note: ordinary worker deploy (no wrangler/DO change), trivial rollback. The one runtime change is the fail-loud gate; its false-positive surface is effectively nil for active features (normal + srv-sandbox writes have `target == shardId`; admin/fork don't hit the identity branch; DM channel-keyed writes are the only theoretical mismatch and the feature is gated/invisible).
