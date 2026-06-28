@@ -36,7 +36,7 @@
   "license": "Apache-2.0",
   "devDependencies": {
     "@playwright/test": "^1.61.0",
-    "@types/node": "^25.9.2",
+    "@types/node": "^26.0.1",
     "@vitest/browser-playwright": "~4.1.9",
     "jest": "^30.4.2",
     "tsx": "^4.22.4",
