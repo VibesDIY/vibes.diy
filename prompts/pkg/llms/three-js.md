@@ -117,8 +117,9 @@ texture.wrapT = THREE.RepeatWrapping;
 texture.repeat.set(2, 2);
 texture.flipY = false;
 
-// HDR textures
-const hdrLoader = new THREE.HDRLoader();
+// HDR textures (loaders live in addons, not the core THREE namespace)
+import { HDRLoader } from "three/addons/loaders/HDRLoader.js";
+const hdrLoader = new HDRLoader();
 const envMap = hdrLoader.load("environment.hdr");
 envMap.mapping = THREE.EquirectangularReflectionMapping;
 ```
@@ -1347,6 +1348,14 @@ export default function SkyGlider() {
     gameStateRef.current.keys[event.code] = false;
   }, []);
 
+  const handleResize = useCallback(() => {
+    const state = gameStateRef.current;
+    if (!state.camera || !state.renderer) return;
+    state.camera.aspect = window.innerWidth / window.innerHeight;
+    state.camera.updateProjectionMatrix();
+    state.renderer.setSize(window.innerWidth, window.innerHeight);
+  }, []);
+
   const updateGame = useCallback(() => {
     const state = gameStateRef.current;
     if (!state.gameRunning || !state.glider) return;
@@ -1430,12 +1439,29 @@ export default function SkyGlider() {
     initThreeJS();
     window.addEventListener("keydown", handleKeyDown);
     window.addEventListener("keyup", handleKeyUp);
+    window.addEventListener("resize", handleResize);
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
       window.removeEventListener("keyup", handleKeyUp);
-      gameStateRef.current.gameRunning = false;
+      window.removeEventListener("resize", handleResize);
+      const state = gameStateRef.current;
+      state.gameRunning = false;
+      // Release GPU resources so remounts don't leak WebGL contexts
+      if (state.scene) {
+        state.scene.traverse((obj) => {
+          if (obj.geometry) obj.geometry.dispose();
+          if (obj.material) {
+            const materials = Array.isArray(obj.material) ? obj.material : [obj.material];
+            materials.forEach((material) => {
+              if (material.map) material.map.dispose(); // CanvasTextures, etc.
+              material.dispose();
+            });
+          }
+        });
+      }
+      if (state.renderer) state.renderer.dispose();
     };
-  }, [initThreeJS, handleKeyDown, handleKeyUp]);
+  }, [initThreeJS, handleKeyDown, handleKeyUp, handleResize]);
 
   return (
     <div className="relative h-screen w-full bg-sky-200">
@@ -1743,8 +1769,11 @@ export default function HalftoneArtStudio() {
 
     createObjects();
 
-    // Animation loop
+    // Animation loop — capture the id so cleanup can cancel it. Because this
+    // effect re-runs on every `parameters` change, an uncancelled loop would
+    // keep calling composer.render() on a disposed renderer.
     const clock = new THREE.Clock();
+    let animationId;
     const animate = () => {
       const delta = clock.getDelta();
       const elapsed = clock.getElapsedTime();
@@ -1763,7 +1792,7 @@ export default function HalftoneArtStudio() {
 
       controls.update();
       composer.render();
-      requestAnimationFrame(animate);
+      animationId = requestAnimationFrame(animate);
     };
 
     animate();
@@ -1780,6 +1809,17 @@ export default function HalftoneArtStudio() {
 
     return () => {
       window.removeEventListener("resize", handleResize);
+      cancelAnimationFrame(animationId);
+      controls.dispose();
+      // Dispose every geometry + material we created (ShaderMaterials included)
+      sceneRef.current.objects.forEach((obj) => {
+        obj.geometry.dispose();
+        const materials = Array.isArray(obj.material) ? obj.material : [obj.material];
+        materials.forEach((material) => material.dispose());
+      });
+      // Dispose post-processing passes + the composer's render targets
+      composer.passes.forEach((pass) => pass.dispose?.());
+      composer.dispose();
       renderer.dispose();
     };
   }, [parameters]);
