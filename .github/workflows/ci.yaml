@@ -7,28 +7,99 @@ on:
 
 # Cancel superseded runs: a new push to the same PR (or re-dispatch on the
 # same ref) supersedes the in-flight run, so let it die instead of burning
-# the full ~7.5-min suite on a commit nobody is waiting on. Pure speed/cost
-# win — only the latest commit's result matters. Keyed per ref so distinct
-# PRs never cancel each other. (The pr-preview workflow already does this.)
+# the full suite on a commit nobody is waiting on. Pure speed/cost win — only
+# the latest commit's result matters. Keyed per ref so distinct PRs never
+# cancel each other. (The pr-preview workflow already does this.)
 concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+# Why this is split into scope → checks + test(shards) → compile_test instead
+# of one job: the bottleneck was the ~4-min Docker vitest suite running serially
+# in a single `compile_test` job. vibes.diy is a PUBLIC repo, so GitHub's
+# standard runners are free, unlimited, and concurrent — which makes sharding
+# the suite across several of them the cost-free alternative to a paid larger
+# runner (no Team plan, no per-minute billing). vitest's `--shard` splits the
+# sorted test-file list, so each shard runs a disjoint slice on its own runner.
+# `checks` (format + lint + typecheck) runs ONCE here rather than redundantly in
+# every shard. The final `compile_test` job keeps that exact name so the
+# required branch-protection check — and the `compile_test`-green lookup that
+# deploy jobs use to skip the suite (actions/base check-sha-tested) — both keep
+# working unchanged.
 jobs:
-  compile_test:
+  # Cheap gate: decide whether this PR's changes are docs-only, exposed as a job
+  # output the checks/test jobs consume. The `[skip ci]` title guard lives here;
+  # because checks/test/compile_test all chain off this job, skipping it cascades
+  # to the whole run (matching the old single-job `[skip ci]` behavior).
+  scope:
     runs-on: ubuntu-latest
-
     if: ${{ !contains(github.event.pull_request.title, '[skip ci]') }}
+    outputs:
+      docs_only: ${{ steps.scope.outputs.docs_only }}
     steps:
       - uses: actions/checkout@v5
-
-      # Detect docs-only PRs (changes confined to docs top-level paths). The
-      # job still runs to completion either way — so the `compile_test` status
-      # check always reports — but actions/base skips build + docker test when
-      # this is "true", giving docs PRs an install+format+lint-only cycle.
       - id: scope
         uses: ./actions/changed-scope
 
+  # Non-shardable work: install + format-check + lint + build(typecheck). Runs
+  # once. `run-tests: 'false'` skips the Docker suite here; docs-only still skips
+  # the build inside actions/base while format + lint always run.
+  checks:
+    needs: scope
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
       - uses: ./actions/base
         with:
-          docs-only: ${{ steps.scope.outputs.docs_only }}
+          run-tests: 'false'
+          docs-only: ${{ needs.scope.outputs.docs_only }}
+
+  # The Docker Playwright/vitest suite, fanned out across free standard runners.
+  # `run-checks: 'false'` so format/lint/typecheck don't re-run per shard. Skipped
+  # wholesale on docs-only PRs (no test code is affected). fail-fast: false so one
+  # shard's failure doesn't cancel the others — you get the full red/green picture.
+  # Bump the matrix length + the "/N" denominator together to change shard count.
+  test:
+    needs: scope
+    if: ${{ needs.scope.outputs.docs_only != 'true' }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4]
+    steps:
+      - uses: actions/checkout@v5
+      - uses: ./actions/base
+        with:
+          run-checks: 'false'
+          shard: ${{ matrix.shard }}/4
+          artifact-suffix: -shard-${{ matrix.shard }}
+
+  # Required-check gate. Keeps the name `compile_test` so branch protection and
+  # the deploy-time "is this SHA green?" lookup keep matching. Runs even when an
+  # upstream job failed (always()) so it can report red; a `skipped` upstream
+  # (docs-only test, or a [skip ci] cascade) counts as a pass. Mirrors the old
+  # job's `[skip ci]` skip so that path is unchanged.
+  compile_test:
+    needs: [checks, test]
+    if: ${{ always() && !contains(github.event.pull_request.title, '[skip ci]') }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: gate
+        env:
+          CHECKS_RESULT: ${{ needs.checks.result }}
+          TEST_RESULT: ${{ needs.test.result }}
+        shell: bash
+        run: |
+          echo "checks=${CHECKS_RESULT} test=${TEST_RESULT}"
+          rc=0
+          for r in "${CHECKS_RESULT}" "${TEST_RESULT}"; do
+            case "$r" in
+              success|skipped) ;;
+              *) echo "::error::a required CI job concluded '$r'"; rc=1 ;;
+            esac
+          done
+          if [ "$rc" -eq 0 ]; then
+            echo "All CI jobs passed (or were intentionally skipped)."
+          fi
+          exit "$rc"
