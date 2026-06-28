@@ -17,6 +17,12 @@ eval/codegen-edit/archive-*/
 # Eval result App snapshots can intentionally capture broken/truncated JSX.
 vibes/eval/**/App.jsx
 
+# Generated demo/example vibe source (prompt-generated; style-exempt per
+# agents/rules-bag.md, same as the eval snapshots above). Prettier must not
+# reflow generated output — it just re-drifts on regeneration (#2775).
+vibes/*/App.jsx
+vibes/*/access.js
+
 # LLM prompt files — filename-line + fence must be adjacent (no blank line)
 prompts/pkg/system-prompt.md
 prompts/pkg/system-prompt-initial.md
