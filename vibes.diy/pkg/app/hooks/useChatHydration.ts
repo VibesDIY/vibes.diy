@@ -3,7 +3,7 @@ import type { Dispatch } from "react";
 import { exception2Result } from "@adviser/cement";
 import { fireproof } from "@fireproof/use-fireproof";
 import type { VibeDocument } from "@vibes.diy/prompts";
-import type { VibesDiyApiIface } from "@vibes.diy/api-types";
+import type { Conn } from "@vibes.diy/api-types";
 import type { PromptAction, HydratedCodeViewFile } from "../routes/chat/prompt-state.js";
 import {
   inferCodeViewLanguage,
@@ -17,7 +17,7 @@ export interface ChatHydrationOpts {
   readonly ownerHandle: string;
   readonly appSlug: string;
   readonly fsId: string | undefined;
-  readonly sharedApi: VibesDiyApiIface;
+  readonly sharedApi: Conn<"shared">;
   readonly dispatch: Dispatch<PromptAction>;
 }
 

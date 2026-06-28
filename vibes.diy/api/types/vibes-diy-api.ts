@@ -313,11 +313,19 @@ type StaticShards<T extends ReqType> = (typeof SHARD_POLICY)[T] extends readonly
 // predicate, so `StaticShards` is `never` and `K extends never` is false →
 // they are dropped here and re-added by `ChatOverrides`.
 type AvailableMethods<K extends ShardKind> = {
-  [M in keyof VibesDiyApiIface as MethodReqType<VibesDiyApiIface[M]> extends ReqType
-    ? K extends StaticShards<MethodReqType<VibesDiyApiIface[M]>>
-      ? M
-      : never
-    : M]: VibesDiyApiIface[M];
+  // `[MethodReqType] extends [never]` (tuple-wrapped to defeat distribution)
+  // catches the no-reqType methods — no-arg ops (close, getTokenClaims) and
+  // callback registrars (onDocChanged, …) whose `MethodReqType` is `never`. A
+  // bare `extends ReqType` would mis-route them: `never extends ReqType` is
+  // true, so they'd take the policy branch and be dropped for every kind. They
+  // carry no placement contract, so keep them on every shard view.
+  [M in keyof VibesDiyApiIface as [MethodReqType<VibesDiyApiIface[M]>] extends [never]
+    ? M
+    : MethodReqType<VibesDiyApiIface[M]> extends ReqType
+      ? K extends StaticShards<MethodReqType<VibesDiyApiIface[M]>>
+        ? M
+        : never
+      : M]: VibesDiyApiIface[M];
 };
 
 // Mode-predicate op overrides. `openChat` is the only such op on the interface

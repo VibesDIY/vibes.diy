@@ -55,6 +55,22 @@ codegen.listModels({}); // ok
 expectTypeOf<"forkApp" extends keyof Conn<"codegen"> ? true : false>().toEqualTypeOf<true>();
 expectTypeOf<"forkApp" extends keyof Conn<"vibe"> ? true : false>().toEqualTypeOf<false>();
 
+// No-reqType methods carry no placement contract and MUST be retained on every
+// shard view: no-arg ops (close, getTokenClaims) and callback registrars
+// (onDocChanged, onRequestGrant, onViewerGrantsChanged, onUserNotification). A
+// `never extends ReqType`-routed `AvailableMethods` mapped type would silently
+// drop all of these for every kind (regression guarded here).
+type NoReqTypeMethod =
+  | "close"
+  | "getTokenClaims"
+  | "onDocChanged"
+  | "onRequestGrant"
+  | "onViewerGrantsChanged"
+  | "onUserNotification";
+expectTypeOf<NoReqTypeMethod extends keyof Conn<"codegen"> ? true : false>().toEqualTypeOf<true>();
+expectTypeOf<NoReqTypeMethod extends keyof Conn<"vibe"> ? true : false>().toEqualTypeOf<true>();
+expectTypeOf<NoReqTypeMethod extends keyof Conn<"shared"> ? true : false>().toEqualTypeOf<true>();
+
 // open-chat is a mode-predicate op: vibe accepts only mode:"img".
 vibe.openChat({ mode: "img" }); // ok
 // @ts-expect-error open-chat codegen-mode not allowed on vibe

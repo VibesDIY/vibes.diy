@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { VibesButton } from "@vibes.diy/base";
-import { isResAssetUploadGrant, type VibesDiyApiIface } from "@vibes.diy/api-types";
+import { isResAssetUploadGrant } from "@vibes.diy/api-types";
+import type { Conn } from "@vibes.diy/api-types";
 import { exception2Result } from "@adviser/cement";
 import { avatarConfirmController } from "../lib/avatar-confirm.js";
 
@@ -16,7 +17,7 @@ import { avatarConfirmController } from "../lib/avatar-confirm.js";
 // which re-validates ownership server-side.
 
 interface HandleAvatarEditorProps {
-  readonly sharedApi: VibesDiyApiIface;
+  readonly sharedApi: Conn<"shared">;
   readonly handle: string;
 }
 
