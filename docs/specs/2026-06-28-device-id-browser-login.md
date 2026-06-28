@@ -63,20 +63,44 @@ Two integration seams in the web app, both already centralized.
 `getToken(): Promise<Result<DashAuthType>>` that today returns
 `{ type: "clerk", token }`. The transport
 (`vibes.diy/api/impl/vibes-diy-api-transport.ts`, `sendApiMessage`) attaches
-whatever it returns as the per-message `auth`. **This is the only place the data
-plane needs to change:** when a device keybag is active, `getToken` returns
-`{ type: "device-id", token }` minted client-side from the keybag (cache + re-mint
-on a short interval, mirroring the CLI's per-60s re-mint).
+whatever it returns as the per-message `auth`. **This is the primary data-plane
+change** (see also Seam 3 for the claims preflight): when a device keybag is
+active, `getToken` returns `{ type: "device-id", token }` minted client-side from
+the keybag (cache + re-mint on a short interval, mirroring the CLI's per-60s
+re-mint).
 
 ### Seam 2 — UI signed-in state
 
 The app gates protected UI on Clerk's `useAuth().isSignedIn`
-(`vibes.diy/pkg/app/routes/auth.tsx`). When a device keybag is active, the app
-must report "signed in" without Clerk. Approach: a small auth-state shim that ORs
-a `deviceIdActive` flag into the signed-in check and surfaces the identity from
-the cert's `creatingUser` claim (display name/email), so the existing UI renders
-unchanged. The unit-test mock (`vibes.diy/tests/app/clerk-test-mock.ts`,
-`setTestAuth`) is the precedent for substituting auth state.
+(`vibes.diy/pkg/app/routes/auth.tsx`, and the generate preflight at
+`vibes.diy/pkg/app/routes/chat/prompt.tsx:48`). When a device keybag is active,
+the app must report "signed in" without Clerk. Approach: a small auth-state shim
+that ORs a `deviceIdActive` flag into the signed-in check and surfaces the
+identity from the cert's `creatingUser` claim (display name/email), so the
+existing UI renders unchanged. The unit-test mock
+(`vibes.diy/tests/app/clerk-test-mock.ts`, `setTestAuth`) is the precedent for
+substituting auth state.
+
+### Seam 3 — client-side claims (`getTokenClaims`)
+
+_(Found in review by Codex — a third seam beyond the original two.)_
+
+The first generate path doesn't just send the token; it first calls
+`chatApi.getTokenClaims()` before `openChat`
+(`vibes.diy/pkg/app/routes/chat/prompt.tsx:57`). `VibesDiyApi.getTokenClaims()`
+(`vibes.diy/api/impl/index.ts:317`) **ignores the auth type** and always runs
+`new ClerkApiToken(sthis).decode(token)`. A `device-id` token's identity lives in
+the `creatingUser` claim inside the `x5c` cert, not as a Clerk-signed JWT body, so
+this client-side decode fails **before** the server-side `device-id`↔`clerk`
+coercion can help — which would block the core qa-pr generate step entirely.
+
+`getTokenClaims()` must branch on `DashAuthType`: for `device-id`, extract the
+embedded Clerk claim from the cert (the same `creatingUser.claims` the server
+reads) instead of decoding the JWT body as a Clerk token. This is purely
+client-side claim extraction — no signature trust is implied (the server still
+verifies on every message); it only needs to return the right `ClerkClaim` shape
+so the preflight passes. Reuse whatever cert-claim extraction the device-id
+verifier already uses server-side rather than hand-rolling a parser.
 
 ### Per-environment cert
 
@@ -127,13 +151,18 @@ fun site, and a botless account can use a different login. So:
    return `{ type: "device-id", token }`; else current Clerk path.
 3. **Auth-state shim** so `isSignedIn`-gated UI renders for the device-id session,
    sourcing identity from the cert claim.
-4. **Keybag intake**: read `localStorage["vibes.diy.device-id-keybag"]` (name TBD)
+4. **`getTokenClaims` device-id branch** (`vibes.diy/api/impl/index.ts:317`): when
+   the token is `device-id`, return the cert's embedded `creatingUser` claim
+   instead of `ClerkApiToken.decode()`, so the generate preflight
+   (`routes/chat/prompt.tsx:57`) passes. Reuse the server-side cert-claim
+   extraction.
+5. **Keybag intake**: read `localStorage["vibes.diy.device-id-keybag"]` (name TBD)
    on init; validate; activate.
-5. **qa-pr wiring**: inject the env cert (prod vs preview by target origin) via
+6. **qa-pr wiring**: inject the env cert (prod vs preview by target origin) via
    `initScript`; drop the Google-session preflight when device-id is active;
    update the skill's _Browser environment_ section so the **authenticated** spine
    is cloud-default too.
-6. **Docs**: update `agents/cloud-browser-setup.md` (auth now covered in cloud) and
+7. **Docs**: update `agents/cloud-browser-setup.md` (auth now covered in cloud) and
    the qa-pr skill; note the local-workstation path becomes the fallback.
 
 ## Testing
