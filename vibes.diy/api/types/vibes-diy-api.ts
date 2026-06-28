@@ -76,7 +76,7 @@ import {
   ResHasAccessRequest,
   EvtRequestGrant,
 } from "./request-access.js";
-import { ResSubscribeUserNotifications, EvtUserNotification } from "./notifications.js";
+import { ResSubscribeUserNotifications, EvtUserNotification, ReqSubscribeUserNotificationsRaw } from "./notifications.js";
 import {
   ReqPutDoc,
   ResPutDoc,
@@ -278,7 +278,9 @@ export interface VibesDiyApiIface<_T = unknown> {
 
   // Subscribe to user-level notifications on the current WS connection.
   // The server will push EvtUserNotification events for the authenticated user.
-  subscribeUserNotifications(req: Req<{ auth?: unknown }>): Promise<Result<ResSubscribeUserNotifications, VibesDiyError>>;
+  subscribeUserNotifications(
+    req: Req<ReqSubscribeUserNotificationsRaw>
+  ): Promise<Result<ResSubscribeUserNotifications, VibesDiyError>>;
 
   // Register a callback for user notification events pushed from the API.
   // Events arrive only after subscribeUserNotifications has been called.
