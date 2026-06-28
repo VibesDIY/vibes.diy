@@ -28,6 +28,7 @@ Team-shared agent instructions live in the [`agents/`](agents/) directory. These
 - [github-mcp-limits.md](agents/github-mcp-limits.md) — GitHub MCP tools with awkward output + slim alternatives; `actions_list`/`list_workflow_runs` is auto-redirected to `scripts/gh-runs.sh` by a PreToolUse hook
 - [cloud-browser-setup.md](agents/cloud-browser-setup.md) — chrome-devtools MCP screenshots work out of the box in cloud sessions (SessionStart hook + `scripts/setup-cloud-browser.sh`); why the TLS 1.2 cap, and what to run if it ever fails
 - [chrome-mcp-debug.md](agents/chrome-mcp-debug.md) — Chrome DevTools MCP debugging loop: add breadcrumbs, reproduce, inspect structured snapshots, fix, re-verify
+- [authed-browser-debugging.md](agents/authed-browser-debugging.md) — drive a _logged-in_ Vibes browser for ad-hoc debugging/screenshots in cloud sessions: `clerk-qa-login.mjs --storage` → `clerk-authed-shot.mjs`; why you can't `--cdp` the chrome-devtools MCP browser (pipe transport), route-nav > sidebar cards, wait-for-iframe, never print/commit the storage-state cookie
 
 ## Team-shared skills
 
