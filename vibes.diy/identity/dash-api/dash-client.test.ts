@@ -6,15 +6,20 @@
 // passes the token through OPAQUELY — it never decodes/validates the JWT, so it
 // carries none of the strict-claim-decode bug class that bit Task 5.
 import { describe, it, expect } from "vitest";
-import { clerkDashApi, DashboardApiImpl, type LoadedClerkLike } from "./dash-client.js";
+import { clerkDashApi, DashboardApiImpl } from "./dash-client.js";
+import type { LoadedClerk } from "@clerk/shared/types";
 
-function fakeClerk(token: string): LoadedClerkLike {
+// Partial stub of @clerk/shared's LoadedClerk: this client only registers a
+// listener and reads `session.getToken`, so we stub just those. The cast is
+// confined to test scaffolding — the production call site (VibeContext) passes a
+// real LoadedClerk with no cast.
+function fakeClerk(token: string): LoadedClerk {
   return {
-    addListener(cb) {
+    addListener: (cb: (r: { session: { getToken: () => Promise<string> } }) => void) => {
       cb({ session: { getToken: async () => token } });
       return () => undefined; // unsubscribe no-op
     },
-  };
+  } as unknown as LoadedClerk;
 }
 
 describe("dash-client (owned browser dashboard HTTP client)", () => {
