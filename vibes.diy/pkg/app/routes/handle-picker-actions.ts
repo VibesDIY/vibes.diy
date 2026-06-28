@@ -1,6 +1,6 @@
 import { toast } from "react-hot-toast";
 import type { HandleOption } from "@vibes.diy/base";
-import type { VibesDiyApiIface } from "@vibes.diy/api-types";
+import type { Conn } from "@vibes.diy/api-types";
 
 // The active-handle switcher's two write actions (#2678), extracted from the vibe
 // route so the success / partial-failure paths are unit-testable without mounting
@@ -17,7 +17,7 @@ export const handleAvatarUrl = (slug: string): string => `/u/${encodeURIComponen
 export interface SwitchActiveHandleDeps {
   readonly slug: string;
   readonly currentSlug: string | undefined;
-  readonly sharedApi: VibesDiyApiIface;
+  readonly sharedApi: Conn<"shared">;
   readonly setBusy: (busy: boolean) => void;
   readonly setActiveHandle: (slug: string) => void;
   readonly refreshViewer: () => Promise<void>;
@@ -47,7 +47,7 @@ export async function switchActiveHandle({
 }
 
 export interface CreateAndUseHandleDeps {
-  readonly sharedApi: VibesDiyApiIface;
+  readonly sharedApi: Conn<"shared">;
   readonly setBusy: (busy: boolean) => void;
   readonly setHandles: (updater: (prev: HandleOption[]) => HandleOption[]) => void;
   readonly setActiveHandle: (slug: string) => void;
