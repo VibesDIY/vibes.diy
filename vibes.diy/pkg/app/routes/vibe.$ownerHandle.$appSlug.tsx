@@ -228,16 +228,16 @@ export default function VibeIframeWrapper() {
     setSearchParam(next, { replace: true });
   }, [isOwner, searchParam, setSearchParam, generation.sendPrompt, vctx.sthis]);
 
-  // Hand a suggestion chip / "describe a change" off to the chat route, which
-  // pre-fills its composer from ?prompt64 (#2675 merge checkpoint). The /vibe
-  // surface doesn't edit in-page yet — /chat is the live-update surface for now.
-  // Ownership decides where it lands (§2 "Ownership decides, at the write"):
+  // The edit affordance, routed by ownership at the moment of the write
+  // (§2 "Ownership decides, at the write"):
   //   - Owner → generate in place: sendPrompt drives the in-card codegen stream.
-  //   - Non-owner (incl. logged-out) → make it yours: /remix forks to your
-  //     handle (auth-gated), then forwards prompt64 onto the new copy's chat.
+  //   - Signed-in non-owner → make it yours INLINE: forkApp to your handle, then
+  //     land on the fork's /vibe page carrying ?prompt64 so it auto-fires there.
+  //   - Logged-out non-owner → the /remix hop (it handles login → fork → prompt).
   // A non-owner can't write the owner's chat (the server rejects on userId
-  // mismatch), so routing them straight to /chat would dead-end the send.
-  // URLSearchParams encodes the base64 safely (+, /, = are URL-significant).
+  // mismatch), so the fork must complete and the URL must be the fork before any
+  // codegen opens. URLSearchParams encodes the base64 safely (+, /, = are
+  // URL-significant).
   const handleEditPrompt = useCallback(
     (text: string) => {
       const trimmed = text.trim();
@@ -319,6 +319,10 @@ export default function VibeIframeWrapper() {
     hasRuntimeReadyRef.current = false;
     writerGrantActiveRef.current = false;
     pendingWriterViewerRefreshRef.current = false;
+    // The /vibe route component is reused across client-side vibe→vibe nav, so
+    // reset the auto-fire one-shot too — otherwise a second seamless fork in the
+    // same session (carrying ?prompt64) would be suppressed and never generate.
+    autoFiredRef.current = false;
   }, [ownerHandle, appSlug]);
 
   useEffect(() => {
