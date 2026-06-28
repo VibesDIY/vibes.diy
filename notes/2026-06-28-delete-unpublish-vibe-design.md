@@ -1,6 +1,6 @@
 # Delete / unpublish a deployed vibe — design
 
-Status: **proposal for review** (resolves the design half of [#2688](https://github.com/VibesDIY/vibes.diy/issues/2688))
+Status: **reviewed — model accepted, open questions settled** (resolves the design half of [#2688](https://github.com/VibesDIY/vibes.diy/issues/2688))
 Filed-from: [#2688](https://github.com/VibesDIY/vibes.diy/issues/2688), which itself spun out of [#2683](https://github.com/VibesDIY/vibes.diy/pull/2683).
 
 ## The problem in one line
@@ -119,6 +119,14 @@ its bare public URL, **without** breaking a remix chain that points at one of it
 versions. It matches the existing fork model, where lineage is anchored to the
 immutable `srcFsId`, not the mutable slug.
 
+**Product semantics to state explicitly:** unpublish is **de-index + block the
+latest route, *not* access revocation.** Explicit-fsId reads keep resolving for
+everyone, including non-owners, in v1 — anyone holding a deep `~{fsId}~`
+permalink can still load that exact version. If a user needs to actually revoke
+access, that's the grants/visibility surface (or a future hard delete), not
+unpublish. Saying this out loud avoids the trap of unpublish being mistaken for
+"make it private."
+
 (If product later wants unpublish to *also* dark the explicit-fsId reads for
 non-owners, that's a one-line policy change in the same lookup — but the default
 should preserve lineage.)
@@ -171,13 +179,19 @@ owner now has a clean, reversible way to hide one when they want to.
   not use the create-on-missing `ensureSlugBinding`, see §3).
 - Serving / resolvers: every no-fsId, slug-keyed resolver from §4a treats a
   tombstoned binding as `not-found` for non-owners —
-  `get-app-by-fsid.ts` (latest-production serve), `fork-app.ts`'s no-`srcFsId`
-  path (remix), and `list-versions.ts` (non-owner listing). Explicit-fsId and
-  owner reads are unchanged.
+  `get-app-by-fsid.ts` (latest serve), `fork-app.ts`'s no-`srcFsId`
+  path (remix), and `list-versions.ts` (non-owner listing). The gate is keyed on
+  the **tombstone, not the resolved row's mode**: `selectLatestAppPerSlug` orders
+  `dev` < `production` and returns the last row, so when a slug has *only* dev
+  rows it resolves to a dev row — block no-fsId public resolution regardless, so
+  a tombstoned slug can't still resolve via that dev-path fallback. Explicit-fsId
+  and owner reads are unchanged.
 - Listing: recent-vibes / `list` exclude tombstoned slugs; owner `versions` still
   shows history.
-- CLI: `vibes-diy unpublish <vibe>` (alias `rm`) + `vibes-diy publish <vibe>`
-  (restore). Mirrors the `push`/`versions` arg-resolution (`resolveVibeArgs`).
+- CLI: `vibes-diy unpublish <vibe>` + `vibes-diy publish <vibe>` (restore).
+  Mirrors the `push`/`versions` arg-resolution (`resolveVibeArgs`). **No `rm`
+  alias in v1** — `rm` reads as destructive, but this action is intentionally
+  reversible (see Decisions §1).
 - Tests: tombstone hides from serve, **non-owner remix (`/remix/:owner/:slug`,
   no `srcFsId`)**, and **non-owner `listVersions`**, plus `list`; explicit fsId
   still resolves; remix via an explicit `srcFsId` still resolves through a
@@ -188,17 +202,21 @@ owner now has a clean, reversible way to hide one when they want to.
 **Explicitly not in v1:** hard delete / data purge, asset GC, any UI affordance
 (CLI-first; UI is a fast-follow once the CLI semantics settle).
 
-## Open questions for review
+## Decisions (settled in review)
 
-1. **Naming.** `unpublish` (reversible, accurate) vs `rm`/`delete` (familiar but
-   implies destruction). Proposal: `unpublish` is the canonical verb, `rm` an
-   alias, and we *reserve* `delete` for the future hard-delete so we don't have
-   to retrain muscle memory later.
-2. **Explicit-fsId visibility after unpublish.** Default proposed: keep
-   resolving (preserves lineage/permalinks). Acceptable, or should non-owners get
-   404 on every version too?
-3. **Does hard delete ever get a CLI surface,** or does it stay an
-   ops/admin-only operation behind the guards in §3?
+These were open questions in the first draft; resolved in PR #2811 review
+([@CharlieHelps](https://github.com/VibesDIY/vibes.diy/pull/2811)):
+
+1. **Naming.** `unpublish` is the canonical verb. We **reserve `delete`** for the
+   future irreversible hard-delete, and ship **no `rm` alias in v1** — `rm` reads
+   as destructive, which misrepresents a reversible action.
+2. **Explicit-fsId visibility after unpublish.** Explicit-fsId reads **keep
+   resolving for everyone, including non-owners**, in v1 — this preserves
+   permalinks/lineage and avoids cache/identity weirdness. Framed as product
+   semantics: unpublish = de-index + block the latest route, **not** access
+   revocation (see §4).
+3. **Hard delete surface.** Deferred. Stays **ops/admin-only** until the lineage +
+   member-data guards and failure UX are proven; no CLI surface in v1.
 
 ---
 
