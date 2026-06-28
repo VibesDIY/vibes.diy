@@ -258,11 +258,16 @@ export default function VibeIframeWrapper() {
   // `suggestionChips` is parsed from the in-progress block and would churn line by
   // line — the chips are hidden behind the stream then, but they still reserve the
   // panel's height, so freezing them keeps the panel from resizing mid-edit.
+  //
+  // Distinguish "no turn yet" from "a turn ran but offered no options": once a turn
+  // has produced any block we trust its `suggestionChips` even when empty (→ the
+  // text-input-only state), rather than restoring the stale pre-edit `editChips`.
   const [cardChips, setCardChips] = useState<readonly string[]>(editChips);
+  const hasStreamedTurn = generation.blocks.length > 0;
   useEffect(() => {
     if (generation.isGenerating) return;
-    setCardChips(generation.suggestionChips.length > 0 ? generation.suggestionChips : editChips);
-  }, [generation.isGenerating, generation.suggestionChips, editChips]);
+    setCardChips(hasStreamedTurn ? generation.suggestionChips : editChips);
+  }, [generation.isGenerating, hasStreamedTurn, generation.suggestionChips, editChips]);
 
   // On the forked /vibe page (?prompt64 carried from a seamless non-owner fork),
   // auto-fire the generation once ownership resolves to us — only when isOwner is

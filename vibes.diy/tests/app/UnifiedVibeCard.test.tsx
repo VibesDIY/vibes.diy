@@ -155,6 +155,17 @@ describe("UnifiedVibeCard", () => {
     expect((hiddenWrap as HTMLElement).style.visibility).toBe("hidden");
   });
 
+  it("reserves a minimum stream height so a text-input-only card (no chips) doesn't crush the narration", () => {
+    render(<UnifiedVibeCard appTitle="Bloom Machine" open streamBody={<div>STREAMING NARRATION</div>} />);
+    const stream = screen.getByText("STREAMING NARRATION");
+    // The relative wrapper is the stream overlay's offset parent; it carries the
+    // reserved minHeight so the absolutely-positioned stream has room to render.
+    const overlay = stream.parentElement as HTMLElement;
+    const relativeWrap = overlay.parentElement as HTMLElement;
+    expect(relativeWrap.style.position).toBe("relative");
+    expect(relativeWrap.style.minHeight).toBe("128px");
+  });
+
   it("body (Share view) still fully replaces the chips even if streamBody is also passed", () => {
     render(
       <UnifiedVibeCard
