@@ -143,17 +143,26 @@ npx vibes-diy db query --app-slug recipe-tracker --handle jchris --db recipes ca
 
 ## Chat history
 
-List chat sessions for a vibe and view prompt history:
+`chats` has been split into two commands — pick by which chat you mean:
 
-```bash
-# List all chats for an app
-npx vibes-diy chats recipe-tracker --json
+- **`app-chats`** — the deployed app's own **runtime** chat/image messages (data the app stored, e.g. a chat-bot vibe's conversation):
 
-# Show prompts for a specific chat
-npx vibes-diy chats recipe-tracker <chatId> --json
-```
+  ```bash
+  # List the app's runtime chats
+  npx vibes-diy app-chats recipe-tracker --json
 
-Use `--handle` to specify the owner explicitly.
+  # Deep-read one chat (toplevel/code/image blocks)
+  npx vibes-diy app-chats recipe-tracker <chatId> --json
+  ```
+
+- **`codegen-log`** — the **build transcript** (the builder↔LLM conversation that generated the source):
+
+  ```bash
+  npx vibes-diy codegen-log recipe-tracker             # list build turns
+  npx vibes-diy codegen-log recipe-tracker --response  # reconstructed model reply
+  ```
+
+Use `--handle` to specify the owner explicitly. (`vibes-diy chats` is removed — it now just prints a pointer to these two.)
 
 ## Tailing changes
 
