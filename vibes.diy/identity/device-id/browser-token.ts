@@ -11,9 +11,8 @@
 // injects the keybag item (sourced from VIBES_DEVICE_ID / _PREVIEW) and the web
 // app mints `{ type: "device-id", token }` per message, just like the CLI.
 import { Lazy, Result } from "@adviser/cement";
-import type { SuperThis, FPDeviceIDSession, CertificatePayload } from "@fireproof/core-types-base";
+import type { SuperThis, FPDeviceIDSession, CertificatePayload, JWKPrivate } from "@fireproof/core-types-base";
 import type { DashAuthType } from "@fireproof/core-types-protocols-dashboard";
-import type { JWKPrivate } from "../types/wire.js";
 import { DeviceIdKey } from "./key.js";
 import { DeviceIdSignMsg } from "./sign.js";
 

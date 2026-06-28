@@ -61,7 +61,6 @@ describe.skipIf(!RAW)("device-id browser-token minter (spike)", () => {
     expect(typeof userId).toBe("string");
     expect((userId as string).length).toBeGreaterThan(0);
 
-    // eslint-disable-next-line no-console
     console.log(`[spike] minted device-id token; recovered userId=${userId} deviceId=${payload.deviceId}`);
   });
 });
