@@ -1067,6 +1067,14 @@ export default function VibeIframeWrapper() {
                   }}
                   onEdit={() => setShareViewOpen(false)}
                   onShare={() => setShareViewOpen(true)}
+                  // Lazy codegen open (#2761): opening the edit card is the
+                  // owner's first edit intent — bring up the codegen chat now
+                  // rather than eagerly on /vibe mount, so passive browsing
+                  // never opens a connection. activate() is a no-op once active,
+                  // and a no-op for non-owners (the hook is enabled:false).
+                  onOpenChange={(cardOpen) => {
+                    if (cardOpen) generation.activate();
+                  }}
                   shareButtonRef={shareModal.buttonRef}
                   selectedNav={shareViewOpen ? "share" : "edit"}
                   body={

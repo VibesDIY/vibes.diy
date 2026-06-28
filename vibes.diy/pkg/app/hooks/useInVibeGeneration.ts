@@ -20,6 +20,13 @@ export interface InVibeGeneration {
   readonly blurPx: number;
   readonly counts: { readonly messages: number; readonly lines: number };
   readonly sendPrompt: (text: string) => void;
+  // Open the codegen chat lazily, on the owner's first edit intent. The host
+  // calls this when the edit UI (the UnifiedVibeCard) opens, so passive
+  // browsing of one's own vibe never establishes a codegen connection — the
+  // chat opens on first interaction, not on /vibe mount. Idempotent: a no-op
+  // once already active. sendPrompt also activates, covering the fork
+  // auto-fire path where the card never opens. (#2761)
+  readonly activate: () => void;
 }
 
 export interface UseInVibeGenerationOpts {
@@ -31,8 +38,10 @@ export interface UseInVibeGenerationOpts {
   // The hook only needs pushSource from the sandbox; accept the structural
   // subset so we don't depend on the concrete sandbox type. undefined-safe.
   readonly srvVibeSandbox: { pushSource(source: string): boolean } | undefined;
-  // When false, the hook stays inert — no codegen chat is opened. Defaults to
-  // true so existing callers that omit the flag keep their current behavior.
+  // When false, the hook stays inert — no codegen chat is opened, regardless of
+  // activation. Non-owners pass false to stay gated off. Owners pass true, but
+  // even then the chat opens lazily (see `activate`), not on mount. Defaults to
+  // treating an omitted flag as enabled.
   readonly enabled?: boolean;
 }
 
@@ -59,6 +68,13 @@ export function useInVibeGeneration(opts: UseInVibeGenerationOpts): InVibeGenera
   const [hotSwapCount, setHotSwapCount] = useState(0);
   const seenByBlockIdRef = useRef<Map<string, number>>(new Map());
 
+  // Lazy codegen open (#2761): an owner merely VIEWING their vibe must not open
+  // a codegen chat. We stay inert (inConstruction → true) until the owner opens
+  // the edit UI (activate) or fires a prompt (sendPrompt also activates). The
+  // `enabled` flag still hard-gates non-owners off independent of activation.
+  const [active, setActive] = useState(false);
+  const activate = useCallback(() => setActive(true), []);
+
   // The /vibe iframe stays pinned to its own fsId and hot-swaps in place, so we
   // do NOT navigate on follow-ups (end-of-stream fsId settle is deferred). A
   // no-op keeps useChatSession's contract satisfied.
@@ -68,7 +84,7 @@ export function useInVibeGeneration(opts: UseInVibeGenerationOpts): InVibeGenera
     ownerHandle,
     appSlug,
     fsId,
-    inConstruction: opts.enabled === false,
+    inConstruction: opts.enabled === false || !active,
     chatApi,
     sharedApi,
     promptState,
@@ -117,6 +133,10 @@ export function useInVibeGeneration(opts: UseInVibeGenerationOpts): InVibeGenera
     seenByBlockIdRef.current.clear();
     setHotSwapCount(0);
     sendPromptState(null);
+    // Re-arm the lazy gate: a freshly-navigated vibe is passive again until the
+    // owner opens its edit UI (or fires a prompt). Without this, navigating from
+    // an active vibe would eagerly open codegen on the next vibe's mount. (#2761)
+    setActive(false);
   }, [ownerHandle, appSlug]);
 
   // 'streaming' once a turn is running and before any completed code block;
@@ -134,6 +154,9 @@ export function useInVibeGeneration(opts: UseInVibeGenerationOpts): InVibeGenera
   inFlightRef.current = promptState.running || promptToSend !== null || promptState.optimisticPrompt !== undefined;
   const sendPrompt = useCallback((text: string) => {
     if (!shouldAcceptPrompt({ text, submitting: inFlightRef.current, running: false })) return;
+    // A programmatic send (e.g. the fork auto-fire that never opens the edit UI)
+    // must still bring the codegen chat up — opening is lazy now (#2761).
+    setActive(true);
     sendPromptState(text.trim());
   }, []);
 
@@ -157,5 +180,6 @@ export function useInVibeGeneration(opts: UseInVibeGenerationOpts): InVibeGenera
     blurPx,
     counts,
     sendPrompt,
+    activate,
   };
 }

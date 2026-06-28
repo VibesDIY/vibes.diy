@@ -30,10 +30,35 @@ function setup(overrides: { enabled?: boolean } = {}) {
 describe("useInVibeGeneration", () => {
   beforeEach(() => vi.clearAllMocks());
 
-  it("starts idle and opens the chat", async () => {
+  it("stays inert on mount — no codegen chat until first edit intent (#2761)", async () => {
     const { view, openChat } = setup();
     expect(view.result.current.phase).toBe("idle");
+    // Passive browse: give effects a tick; openChat must NOT fire on mount.
+    await new Promise((r) => setTimeout(r, 50));
+    expect(openChat).not.toHaveBeenCalled();
+  });
+
+  it("activate() lazily opens the codegen chat (edit UI opened) (#2761)", async () => {
+    const { view, openChat } = setup();
+    await new Promise((r) => setTimeout(r, 30));
+    expect(openChat).not.toHaveBeenCalled();
+    act(() => view.result.current.activate());
     await waitFor(() => expect(openChat).toHaveBeenCalledTimes(1));
+    // Idempotent: a second activate must not open a second chat.
+    act(() => view.result.current.activate());
+    await new Promise((r) => setTimeout(r, 30));
+    expect(openChat).toHaveBeenCalledTimes(1);
+  });
+
+  it("sendPrompt activates the chat even without an explicit edit-UI open (#2761)", async () => {
+    // The fork auto-fire path calls sendPrompt directly; it must still open.
+    const { view, openChat, fakeChat } = setup();
+    await new Promise((r) => setTimeout(r, 30));
+    expect(openChat).not.toHaveBeenCalled();
+    act(() => view.result.current.sendPrompt("make it blue"));
+    await waitFor(() => expect(openChat).toHaveBeenCalledTimes(1));
+    await act(async () => fakeChat.emitBlockBegin());
+    await waitFor(() => expect(view.result.current.phase).toBe("streaming"));
   });
 
   it("sendPrompt drives phase idle -> streaming, then -> live on the first code.end", async () => {
