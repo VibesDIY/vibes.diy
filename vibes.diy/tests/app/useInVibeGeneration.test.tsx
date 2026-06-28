@@ -4,7 +4,7 @@ import { Result } from "@adviser/cement";
 import { useInVibeGeneration } from "~/vibes.diy/app/hooks/useInVibeGeneration.js";
 import { makeControllableLLMChat } from "./helpers/makeControllableLLMChat.js";
 
-function setup() {
+function setup(overrides: { enabled?: boolean } = {}) {
   const fakeChat = makeControllableLLMChat();
   const openChat = vi.fn(async () => Result.Ok(fakeChat.chat));
   const getAppByFsId = vi.fn(async () => Result.Ok({ fsId: "FS-1" }));
@@ -14,7 +14,15 @@ function setup() {
   const pushSource = vi.fn(() => true);
   const srvVibeSandbox = { pushSource } as never;
   const view = renderHook(() =>
-    useInVibeGeneration({ ownerHandle: "owner", appSlug: "app", fsId: "FS-1", chatApi, sharedApi, srvVibeSandbox })
+    useInVibeGeneration({
+      ownerHandle: "owner",
+      appSlug: "app",
+      fsId: "FS-1",
+      chatApi,
+      sharedApi,
+      srvVibeSandbox,
+      ...overrides,
+    })
   );
   return { view, fakeChat, openChat, pushSource };
 }
@@ -53,6 +61,14 @@ describe("useInVibeGeneration", () => {
     await act(async () => fakeChat.emitCodeBlock(src));
     await waitFor(() => expect(pushSource).toHaveBeenCalledTimes(1));
     await waitFor(() => expect(view.result.current.blurPx).toBeLessThan(25));
+  });
+
+  it("does not open a chat when disabled", async () => {
+    const { view, openChat } = setup({ enabled: false });
+    expect(view.result.current.phase).toBe("idle");
+    // give effects a tick; openChat must never fire
+    await new Promise((r) => setTimeout(r, 50));
+    expect(openChat).not.toHaveBeenCalled();
   });
 
   it("counts.lines reflects the resolved code length after a code block", async () => {
