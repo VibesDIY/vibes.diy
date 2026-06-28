@@ -176,11 +176,14 @@ no viewer-aware worker gating needed.
 
 ## 5. PR slices (independently mergeable)
 
-- **PR-D1 — owner draft read + indicator.** The resolver (§3a) + the route's owner-pin + draft
-  indicator (§3b). The owner sees their latest draft on `/vibe`; everyone else unchanged. (Resolver
-  is the backend dependency; route/indicator are frontend.)
-- **PR-D2 — publish from the switch.** `publishApp` RPC + the Publish control + needs-publish/up-to-date
-  state (§3c). Depends on the resolver returning both release seqs.
+- **PR-D1 — owner draft read + indicator.** ✅ shipped (#2774). The resolver (§3a) + the route's
+  owner-pin + draft indicator (§3b). The owner sees their latest draft on `/vibe`; everyone else
+  unchanged.
+- **PR-D2 — publish from the switch.** ✅ implemented. `publishApp` RPC (mints a new top-of-stack
+  production at `MAX+1`, no demote, owner-auth, emits `evt-new-fs-id`) + the in-card Publish banner
+  (`onPublish`/`publishing` on `UnifiedVibeCard`) + the route re-resolves the draft on success so
+  the badge/banner clear and the iframe re-pins to the published version. Charlie's note — guard the
+  async re-pin incl. query-param preservation — landed as `buildPinnedIframeUrl` + tests.
 - **PR-D3 — CLI draft/published + versions.** `pull` owner-draft-default + `--published`, the
   `versions` command + access-any-version, `codegen-log` alignment (§3d). Depends on the resolver +
   `listVersions`.

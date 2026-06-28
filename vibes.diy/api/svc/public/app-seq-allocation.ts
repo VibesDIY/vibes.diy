@@ -248,3 +248,99 @@ async function allocatePg(p: AllocateAppParams): Promise<number> {
 export async function allocateAndInsertApp(p: AllocateAppParams): Promise<number> {
   return p.flavour === "pg" ? allocatePg(p) : allocateSqlite(p);
 }
+
+// ── Publish (#2772 D2) ─────────────────────────────────────────────────────
+//
+// Publishing must make the chosen content the served public latest. The
+// entry-point + `selectLatestAppPerSlug` pick the HIGHEST production
+// `releaseSeq`, so flipping a row's mode in place keeps its old seq and an
+// older `fsId` would still be out-ranked (Codex review). Instead, publish MINTS
+// a NEW top-of-stack production release (`releaseSeq = MAX+1`) carrying the
+// chosen content — and does NOT demote the old production (it stays as history;
+// the new highest-seq simply wins). Idempotent: when the chosen content is
+// already the highest production, it's a no-op success ("up to date"), never a
+// duplicate row.
+
+export interface MintProductionParams {
+  db: VibesSqlite;
+  flavour: DBFlavour;
+  row: AppReleaseRow; // the chosen content (mode is ignored — always minted as production)
+}
+
+export interface MintProductionResult {
+  readonly released: boolean; // false = idempotent no-op (content already top production)
+  readonly releaseSeq: number;
+}
+
+/** Highest-`releaseSeq` production row for (appSlug, userId): its fsId + seq. */
+function buildSelectTopProduction(row: AppReleaseRow) {
+  return sql`SELECT "releaseSeq","fsId" FROM ${TABLE}
+    WHERE "appSlug"=${row.appSlug} AND "userId"=${row.userId} AND "userSlug"=${row.ownerHandle} AND "mode"='production'
+    ORDER BY "releaseSeq" DESC
+    LIMIT 1`;
+}
+
+/**
+ * Append a production release at `COALESCE(MAX("releaseSeq"),0)+1` with the
+ * chosen content. Unlike `buildInsertIfAbsent`, this deliberately has NO
+ * fsId/runId dedup guard — re-publishing the same content as a new top-of-stack
+ * release is the whole point (the older-version case). Caller guarantees
+ * idempotency by checking the top production fsId first, under the same lock.
+ */
+function buildInsertProductionRelease(row: AppReleaseRow, flavour: DBFlavour) {
+  return sql`
+    INSERT INTO ${TABLE} ("appSlug","userId","userSlug","releaseSeq","fsId","runId","env","fileSystem","meta","mode","created")
+    SELECT ${row.appSlug}, ${row.userId}, ${row.ownerHandle},
+           COALESCE(MAX("releaseSeq"),0)+1,
+           ${row.fsId}, ${row.runId ?? null}, ${jsonParam(flavour, row.env)}, ${jsonParam(flavour, row.fileSystem)},
+           ${jsonParam(flavour, row.meta)}, 'production', ${row.created}
+    FROM ${TABLE}
+    WHERE "appSlug"=${row.appSlug} AND "userId"=${row.userId}
+    RETURNING "releaseSeq"
+  `;
+}
+
+/** Mint-or-noop under the passed executor (tx under the pg lock, or db on sqlite). */
+async function mintOrNoop(exec: VibesSqlite, flavour: DBFlavour, row: AppReleaseRow): Promise<MintProductionResult> {
+  const top = normalizeRows(await runReturning(exec, flavour, buildSelectTopProduction(row)));
+  if (top.length > 0 && top[0].fsId === row.fsId) {
+    // The chosen content is already the highest production → no-op success.
+    return { released: false, releaseSeq: Number(top[0].releaseSeq) };
+  }
+  const inserted = normalizeRows(await runReturning(exec, flavour, buildInsertProductionRelease(row, flavour)));
+  const seq = Number(inserted[0]?.releaseSeq);
+  if (!Number.isFinite(seq)) {
+    throw new Error(`publish mint: no releaseSeq returned for ${row.appSlug}/${row.fsId}`);
+  }
+  return { released: true, releaseSeq: seq };
+}
+
+/**
+ * Mint a new top-of-stack production release for the chosen content (or no-op
+ * when it's already the highest production). Serializes on the SAME
+ * per-(user, app) advisory lock as `allocateAndInsertApp` (pg) / runs under
+ * sqlite's global write lock, so a concurrent publish or codegen write can't
+ * race the MAX+1 allocation.
+ */
+export async function mintProductionRelease(p: MintProductionParams): Promise<MintProductionResult> {
+  if (p.flavour === "pg") {
+    const key = appReleaseLockKey(p.row.userId, p.row.appSlug);
+    const db = p.db as unknown as { transaction: <T>(fn: (tx: VibesSqlite) => Promise<T>) => Promise<T> };
+    return db.transaction(async (tx) => {
+      await (tx as unknown as { execute: (s: unknown) => Promise<unknown> }).execute(
+        sql`SELECT pg_advisory_xact_lock(hashtextextended(${key}, 0))`
+      );
+      return mintOrNoop(tx, "pg", p.row);
+    });
+  }
+  const attempts = 5;
+  for (let i = 0; i < attempts; i++) {
+    try {
+      return await mintOrNoop(p.db, p.flavour, p.row);
+    } catch (err) {
+      if (!isRetryableConflict(err)) throw err;
+      await new Promise((r) => setTimeout(r, Math.floor(Math.random() * (8 << i))));
+    }
+  }
+  throw new SeqConflictError(0);
+}

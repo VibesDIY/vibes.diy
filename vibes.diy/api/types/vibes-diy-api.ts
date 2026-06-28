@@ -17,6 +17,8 @@ import {
   ResSetModeFs,
   ReqForkApp,
   ResForkApp,
+  ReqPublishApp,
+  ResPublishApp,
   ReqListHandleBindings,
   ResListHandleBindings,
   ReqCreateHandleBinding,
@@ -200,6 +202,8 @@ export interface VibesDiyApiIface<_T = unknown> {
   setSetModeFs(req: Req<ReqSetModeFs>): Promise<Result<ResSetModeFs>>;
 
   forkApp(req: Req<ReqForkApp>): Promise<Result<ResForkApp, VibesDiyError>>;
+
+  publishApp(req: Req<ReqPublishApp>): Promise<Result<ResPublishApp, VibesDiyError>>;
 
   getCertFromCsr(req: Req<ReqCertFromCsr>): Promise<Result<ResCertFromCsr>>;
 

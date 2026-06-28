@@ -42,8 +42,16 @@ export interface UnifiedVibeCardProps {
    *  badge in the header — the owner is viewing their latest unpublished in-place
    *  generation. "published" / undefined shows nothing. Only the owner ever sees a
    *  draft (the route re-pins to the latest dev fsId for them); everyone else stays on
-   *  production, so this is owner-only chrome. The Publish control itself is D2. */
+   *  production, so this is owner-only chrome. */
   publishState?: "draft" | "published";
+  /** Publish the current draft (#2772 D2). When provided AND `publishState` is "draft"
+   *  AND the Edit view is active, an in-card "unpublished changes · Publish" banner
+   *  shows above the body. The host gates this (only a real publishable draft, not
+   *  mid-generation); clicking calls `onPublish`. Omit to hide the banner (e.g. D1,
+   *  or while streaming). */
+  onPublish?: () => void;
+  /** Disables the Publish button + shows a pending label while a publish is in flight. */
+  publishing?: boolean;
   onHome?: () => void;
   /** Selects the edit affordance (switches the body back to chips/Other). */
   onEdit?: () => void;
@@ -242,6 +250,9 @@ export function UnifiedVibeCard(props: UnifiedVibeCardProps) {
               )}
             </div>
             <div style={{ padding: "0 14px 12px", overflowY: "auto" }}>
+              {props.publishState === "draft" && props.onPublish && props.selectedNav !== "share" && (
+                <PublishBanner onPublish={props.onPublish} publishing={props.publishing} />
+              )}
               {props.body ?? (
                 <>
                   {props.chips && props.chips.length > 0 && (
@@ -442,6 +453,48 @@ function DraftBadge() {
       <span aria-hidden style={{ width: 6, height: 6, borderRadius: "50%", background: "#f59e0b" }} />
       Draft · unpublished
     </span>
+  );
+}
+
+// Publish control (#2772 D2) — an in-card banner pairing the draft state with the
+// action ("unpublished changes · Publish"), shown above the Edit body when the owner
+// has a publishable draft. Clicking calls publishApp; on success the host clears the
+// draft so this and the header badge disappear ("up to date").
+function PublishBanner({ onPublish, publishing }: { readonly onPublish: () => void; readonly publishing?: boolean }) {
+  return (
+    <div
+      className="rounded-md"
+      style={{
+        background: "rgba(245,158,11,0.10)",
+        border: "1px solid rgba(245,158,11,0.4)",
+        padding: "8px 10px",
+        marginBottom: 10,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        gap: 8,
+      }}
+    >
+      <span className="text-sm" style={{ color: "#92400e", lineHeight: 1.3 }}>
+        <strong>Unpublished changes.</strong> <span style={{ opacity: 0.8 }}>Only you can see this draft.</span>
+      </span>
+      <button
+        type="button"
+        onClick={onPublish}
+        disabled={publishing}
+        className="rounded-md px-3 py-1.5 text-sm font-semibold"
+        style={{
+          flexShrink: 0,
+          background: "var(--vibes-near-black, #1a1a1a)",
+          color: "#fff",
+          border: "none",
+          cursor: publishing ? "default" : "pointer",
+          opacity: publishing ? 0.6 : 1,
+        }}
+      >
+        {publishing ? "Publishing…" : "Publish"}
+      </button>
+    </div>
   );
 }
 

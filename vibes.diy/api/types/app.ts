@@ -349,6 +349,40 @@ export function isReqSetModeFs(obj: unknown): obj is ReqSetModeFs {
   return !(ReqSetModeFs(obj) instanceof type.errors);
 }
 
+// Publish an app's draft to production (#2772 D2). Owner-only. Mints a NEW
+// top-of-stack production release (`releaseSeq = MAX+1`) for the chosen content
+// rather than flipping a row in place — so publishing an OLDER `fsId` still wins
+// the unversioned read, and old production rows stay as history (no demote). The
+// common case (no `fsId`) publishes the owner's latest dev draft, selected
+// atomically server-side; `fsId` is the "publish a specific version" path.
+export const reqPublishApp = type({
+  type: "'vibes.diy.req-publish-app'",
+  auth: dashAuthType,
+  appSlug: "string",
+  ownerHandle: "string",
+  "fsId?": "string",
+});
+export type ReqPublishApp = typeof reqPublishApp.infer;
+export function isReqPublishApp(obj: unknown): obj is ReqPublishApp {
+  return !(reqPublishApp(obj) instanceof type.errors);
+}
+
+export const resPublishApp = type({
+  type: "'vibes.diy.res-publish-app'",
+  appSlug: "string",
+  ownerHandle: "string",
+  fsId: "string",
+  releaseSeq: "number",
+  mode: "'production'",
+  // true = a new production release was minted; false = the chosen content was
+  // already the highest production (idempotent no-op success — "up to date").
+  published: "boolean",
+});
+export type ResPublishApp = typeof resPublishApp.infer;
+export function isResPublishApp(obj: unknown): obj is ResPublishApp {
+  return !(resPublishApp(obj) instanceof type.errors);
+}
+
 // HandleBinding CRUD
 
 export const ReqListHandleBindings = type({

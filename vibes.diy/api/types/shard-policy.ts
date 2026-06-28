@@ -138,6 +138,7 @@ export const SHARD_POLICY = {
   "vibes.diy.req-open-chat": (req) => chatShardsForMode(req.mode),
   "vibes.diy.req-prompt-chat-section": (req) => chatShardsForMode(req.mode),
   "vibes.diy.req-fork-app": CODEGEN_ONLY,
+  "vibes.diy.req-publish-app": CODEGEN_ONLY,
   "vibes.diy.req-set-mode-fs": CODEGEN_ONLY,
 } as const satisfies Record<string, PolicyEntry>;
 

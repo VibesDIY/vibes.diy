@@ -224,6 +224,65 @@ describe("UnifiedVibeCard", () => {
     expect(screen.queryByText(/draft · unpublished/i)).toBeNull();
   });
 
+  it("shows the Publish banner and fires onPublish for an owner draft (#2772 D2)", () => {
+    const onPublish = vi.fn();
+    render(
+      <UnifiedVibeCard
+        appTitle="Bloom Machine"
+        open
+        handleSlug="meghan"
+        viewerMode="author"
+        publishState="draft"
+        onPublish={onPublish}
+      />
+    );
+    expect(screen.getByText(/unpublished changes/i)).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: /^publish$/i }));
+    expect(onPublish).toHaveBeenCalledTimes(1);
+  });
+
+  it("disables the Publish button and shows a pending label while publishing (#2772 D2)", () => {
+    const onPublish = vi.fn();
+    render(
+      <UnifiedVibeCard
+        appTitle="Bloom Machine"
+        open
+        handleSlug="meghan"
+        viewerMode="author"
+        publishState="draft"
+        onPublish={onPublish}
+        publishing
+      />
+    );
+    const btn = screen.getByRole("button", { name: /publishing/i }) as HTMLButtonElement;
+    expect(btn.disabled).toBe(true);
+    fireEvent.click(btn);
+    expect(onPublish).not.toHaveBeenCalled();
+  });
+
+  it("hides the Publish banner without onPublish (D1 badge-only) and in the Share view (#2772 D2)", () => {
+    const { rerender } = render(
+      <UnifiedVibeCard appTitle="Bloom Machine" open handleSlug="meghan" viewerMode="author" publishState="draft" />
+    );
+    // D1: badge shows, but no banner without onPublish.
+    expect(screen.getByText(/draft · unpublished/i)).toBeTruthy();
+    expect(screen.queryByText(/unpublished changes/i)).toBeNull();
+    // Share view: banner stays hidden even with onPublish (it belongs to the Edit body).
+    rerender(
+      <UnifiedVibeCard
+        appTitle="Bloom Machine"
+        open
+        handleSlug="meghan"
+        viewerMode="author"
+        publishState="draft"
+        onPublish={() => undefined}
+        selectedNav="share"
+        body={<div>SHARE</div>}
+      />
+    );
+    expect(screen.queryByText(/unpublished changes/i)).toBeNull();
+  });
+
   it("gates the admin badge to the owner: a stale adminMode never labels a member/visitor (Codex P2)", () => {
     const { rerender } = render(
       <UnifiedVibeCard appTitle="Bloom Machine" open handleSlug="meghan" viewerMode="member" memberReadOnly adminMode />
