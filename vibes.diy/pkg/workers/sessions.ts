@@ -18,9 +18,11 @@ import { CFEnv, isBuildNotification, type ShardIdentity } from "@vibes.diy/api-t
 import { exception2Result, URI } from "@adviser/cement";
 import { type } from "arktype";
 import type { QuickJSWASMModule } from "@cf-wasm/quickjs";
-import { userNotifyCallbacksForAppSessions } from "./app-sessions.js";
-import { userNotifyCallbacksForChatSessions } from "./chat-sessions.js";
-import { userNotifyCallbacksForSharedSessions } from "./shared-sessions.js";
+import {
+  userNotifyCallbacksForAppSessions,
+  userNotifyCallbacksForChatSessions,
+  userNotifyCallbacksForSharedSessions,
+} from "./session-callbacks.js";
 import { shardKindForPath } from "./route-decision.js";
 
 // #2714 Spec B — the physical collapse. The three session DO classes

@@ -8,7 +8,7 @@
 // bounded-registration guard that mirrors how ChatSessions gates registration).
 
 import { describe, expect, it, vi } from "vitest";
-import { userNotifyCallbacksForSharedSessions } from "../workers/shared-sessions.js";
+import { userNotifyCallbacksForSharedSessions } from "../workers/session-callbacks.js";
 import { userNotifyShardFor } from "@vibes.diy/api-types";
 import type { CFEnv } from "@vibes.diy/api-types";
 

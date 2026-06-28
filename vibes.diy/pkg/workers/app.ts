@@ -27,12 +27,9 @@ import {
   vibePathnameHasFsId,
 } from "@vibes.diy/api-svc/intern/get-vibe-route-hints.js";
 
-export { ChatSessions } from "./chat-sessions.js";
-export { AppSessions } from "./app-sessions.js";
-export { SharedSessions } from "./shared-sessions.js";
-// #2714 Spec B — the unified session class. The old three are kept exported
-// (their classes/bindings remain) so this collapse is rollback-able by
-// re-routing; they are GC'd in a later deploy once drained.
+// #2714 Spec B Phase E — the old ChatSessions/AppSessions/SharedSessions classes
+// are deleted (drained per #2778; `v10 deleted_classes` in wrangler.toml). The
+// unified `Sessions` class serves all three planes.
 export { Sessions } from "./sessions.js";
 export { UserNotify } from "./user-notify.js";
 // import { cfServe } from "@vibes.diy/api-svc";

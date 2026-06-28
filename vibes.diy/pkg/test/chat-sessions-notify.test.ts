@@ -9,7 +9,7 @@
 // drop every build notification. This test pins that contract. (#2265 Track B)
 
 import { describe, expect, it, vi } from "vitest";
-import { userNotifyCallbacksForChatSessions } from "../workers/chat-sessions.js";
+import { userNotifyCallbacksForChatSessions } from "../workers/session-callbacks.js";
 import { userNotifyShardFor } from "@vibes.diy/api-types";
 import type { CFEnv, EvtUserNotification } from "@vibes.diy/api-types";
 
