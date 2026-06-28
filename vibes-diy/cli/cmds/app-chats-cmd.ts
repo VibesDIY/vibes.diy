@@ -8,7 +8,7 @@ import { sendMsg, WrapCmdTSMsg } from "../cmd-evento.js";
 import { resolveHandle } from "../resolve-handle.js";
 import { formatErr } from "./format-err.js";
 import { resolveVibePositionals } from "../parse-vibe.js";
-import { reconstructVerbatim } from "./chat-response-render.js";
+import { renderAppChatBlocks } from "./chat-response-render.js";
 
 export const ReqAppChats = type({
   type: "'vibes-diy.cli.app-chats'",
@@ -77,8 +77,9 @@ export const appChatsEvento: EventoHandler<WrapCmdTSMsg<unknown>, ReqAppChats, R
           return Result.Err(formatErr(rDetail.Err()));
         }
         const detail: ResGetApplicationChat = rDetail.Ok();
-        // Render blocks as readable text using the shared block renderer.
-        const output = reconstructVerbatim(detail.blocks);
+        // Render blocks as readable text using the app-chat renderer (supports
+        // image placeholders in addition to toplevel/code blocks).
+        const output = renderAppChatBlocks(detail.blocks);
         return sendMsg(ctx, {
           type: "vibes-diy.cli.res-app-chats-detail",
           chatId: args.chatId,

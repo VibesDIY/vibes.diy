@@ -1,5 +1,5 @@
 import { Result } from "@adviser/cement";
-import { isCodeBegin, isCodeEnd, isCodeLine, isToplevelLine } from "@vibes.diy/call-ai-v2";
+import { isBlockImage, isCodeBegin, isCodeEnd, isCodeLine, isToplevelLine } from "@vibes.diy/call-ai-v2";
 import { isPromptRaw, isPromptReq } from "@vibes.diy/api-types";
 import type { PromptAndBlockMsgs, ResChatResponseTurn, SectionEvent } from "@vibes.diy/api-types";
 import { resolveSectionStream, type ResolveSectionStreamResult } from "./resolve-section-stream.js";
@@ -44,6 +44,40 @@ export function reconstructVerbatim(blocks: readonly PromptAndBlockMsgs[]): stri
       out.push(b.line);
     } else if (isCodeEnd(b)) {
       out.push("```");
+    }
+  }
+  return out.join("\n");
+}
+
+/**
+ * Render app-chat blocks (runtime/img mode) as readable text. Extends the
+ * verbatim reconstruction with image-block placeholders so that image-gen
+ * chats are not silently empty. The codegen `reconstructVerbatim` is
+ * deliberately left unchanged — this function is the app-chats-specific
+ * renderer.
+ *
+ * Image payloads have two shapes (see `BlockImageMsg` in block-stream.ts):
+ *  - LLM-streamed: `{ url }` — raw data: URL or remote URL.
+ *  - Server-side image-gen (Prodia etc.): `{ uploadId, cid }` — the asset has
+ *    already been written to storage; display reads via Stage C's meta.url.
+ *
+ * We render both as `[image: <url-or-cid>]`.
+ */
+export function renderAppChatBlocks(blocks: readonly PromptAndBlockMsgs[]): string {
+  const out: string[] = [];
+  for (const b of blocks) {
+    if (isToplevelLine(b)) {
+      out.push(b.line);
+    } else if (isCodeBegin(b)) {
+      const info = b.path ? `${b.lang} ${b.path}` : b.lang;
+      out.push("```" + info);
+    } else if (isCodeLine(b)) {
+      out.push(b.line);
+    } else if (isCodeEnd(b)) {
+      out.push("```");
+    } else if (isBlockImage(b)) {
+      const ref = b.url ?? b.cid ?? b.uploadId ?? "(unknown)";
+      out.push(`[image: ${ref}]`);
     }
   }
   return out.join("\n");
