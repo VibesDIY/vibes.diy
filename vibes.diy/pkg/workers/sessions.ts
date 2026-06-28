@@ -86,6 +86,13 @@ export class Sessions implements DurableObject {
 
     const uri = URI.from(request.url);
     const kind = shardKindForPath(uri.pathname);
+    // app.ts only routes /api/app, /api/shared and /api(/*) here, so the kind is
+    // always one of the three planes. Warn loudly if some other path ever reaches
+    // a session DO — a new route added without a matching shardKindForPath branch
+    // would otherwise silently default to "codegen" (Charlie review, #2766).
+    if (!uri.pathname.startsWith("/api")) {
+      console.warn("[Sessions] unexpected WS path, defaulting to codegen kind:", uri.pathname);
+    }
 
     const cctx = {} as unknown as ExecutionContext & CFInjectMutable;
     (cctx as CFInjectMutable).cache = caches.default as unknown as CfCacheIf;
