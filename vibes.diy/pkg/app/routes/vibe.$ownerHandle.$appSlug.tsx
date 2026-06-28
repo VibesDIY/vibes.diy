@@ -36,7 +36,7 @@ import { isMetaScreenShot, isMetaTitle, type ResGetAppByFsId, type VibesFPApiPar
 import { computeCardVariant } from "./vibe-card-variant.js";
 import { readIntent, withIntent, withoutIntent } from "./vibe-intent.js";
 import { forkDestination } from "./vibe-fork.js";
-import { pinnedIframeFsId } from "./vibe-draft-pin.js";
+import { buildPinnedIframeUrl } from "./vibe-draft-pin.js";
 import { notifyRecentVibesChanged } from "../hooks/useRecentVibes.js";
 import { adminModeStorageKey } from "../lib/admin-mode.js";
 import { RUNTIME_PREVIEW_IFRAME_ALLOW, RUNTIME_PREVIEW_IFRAME_SANDBOX } from "../lib/iframe-policy.js";
@@ -151,6 +151,11 @@ export default function VibeIframeWrapper() {
   // Declared here (above the iframe-sync effect) because that effect pins `draftFsId`.
   const [draftFsId, setDraftFsId] = useState<string | undefined>(undefined);
   const [isDraft, setIsDraft] = useState(false);
+  // #2772 D2: publish-in-flight flag + a bump that re-runs the draft resolver after
+  // a successful publish (so the badge + banner clear and the iframe re-pins to the
+  // freshly-published production).
+  const [publishing, setPublishing] = useState(false);
+  const [publishBump, setPublishBump] = useState(0);
   const isNetworkActive = useIframeApiInFlight();
   // Gate the post-iframe chrome (overlays, pill, sidebar) until after client
   // hydration. The chrome uses createPortal(..., document.body), which calls
@@ -186,17 +191,20 @@ export default function VibeIframeWrapper() {
     const myUrl = URI.from(window.location.href);
     const port = myUrl.port && myUrl.port !== "80" && myUrl.port !== "443" ? myUrl.port : undefined;
     // A versioned URL (route-param `fsId`) is an explicit request and is NEVER
-    // overridden; only the unversioned owner-draft case pins `draftFsId`.
-    const pinFsId = pinnedIframeFsId(fsId, draftFsId);
-    const baseUrl = calcEntryPointUrl({
-      hostnameBase: vctx.webVars.env.VIBES_SVC_HOSTNAME_BASE,
-      protocol: myUrl.protocol === "https:" ? "https" : "http",
-      bindings: { appSlug, ownerHandle, ...(pinFsId ? { fsId: pinFsId } : {}) },
-      port,
-    });
-    const myParams = Object.fromEntries(myUrl.getParams);
+    // overridden; only the unversioned owner-draft case pins `draftFsId`. The query
+    // params are merged so a `?token`/etc. survives the re-pin (spec §3b).
     setIframeUrl(
-      BuildURI.from(baseUrl).searchParams(myParams, "merge").setParam("npmUrl", vctx.webVars.pkgRepos.workspace).toString()
+      buildPinnedIframeUrl({
+        hostnameBase: vctx.webVars.env.VIBES_SVC_HOSTNAME_BASE,
+        protocol: myUrl.protocol === "https:" ? "https" : "http",
+        port,
+        appSlug,
+        ownerHandle,
+        fsId,
+        draftFsId,
+        currentParams: Object.fromEntries(myUrl.getParams),
+        npmUrl: vctx.webVars.pkgRepos.workspace,
+      })
     );
   }, [
     ssrIframeUrl,
@@ -315,6 +323,26 @@ export default function VibeIframeWrapper() {
     [isOwner, authSignedIn, ownerHandle, appSlug, fsId, navigate, vctx.sthis, vctx.chatApi, generation.sendPrompt]
   );
 
+  // #2772 D2: publish the owner's current draft. Mints a new top-of-stack production
+  // server-side (no demote); on success bump the draft resolver so the badge + banner
+  // clear and the iframe re-pins to the now-published production.
+  const handlePublish = useCallback(() => {
+    if (!isOwner || !ownerHandle || !appSlug || publishing) return;
+    setPublishing(true);
+    const tid = toast.loading("Publishing…");
+    void (async () => {
+      const rPub = await vctx.chatApi.publishApp({ ownerHandle, appSlug });
+      setPublishing(false);
+      if (rPub.isErr()) {
+        toast.error(`Couldn't publish: ${rPub.Err().message}`, { id: tid });
+        return;
+      }
+      toast.success("Published — everyone sees it now.", { id: tid });
+      notifyRecentVibesChanged();
+      setPublishBump((n) => n + 1);
+    })();
+  }, [isOwner, ownerHandle, appSlug, publishing, vctx.chatApi]);
+
   const adminStorageKey = ownerHandle && appSlug ? adminModeStorageKey(ownerHandle, appSlug) : "";
   const [adminMode, setAdminMode] = useState(() => {
     if (typeof window === "undefined" || !adminStorageKey) return false;
@@ -429,7 +457,7 @@ export default function VibeIframeWrapper() {
     return () => {
       cancelled = true;
     };
-  }, [isOwner, fsId, ownerHandle, appSlug, vctx.sharedApi]);
+  }, [isOwner, fsId, ownerHandle, appSlug, publishBump, vctx.sharedApi]);
 
   useEffect(() => {
     if (!isOwner || !ownerHandle || !appSlug) {
@@ -1021,6 +1049,10 @@ export default function VibeIframeWrapper() {
                   // #2772 D1: the owner-only "Draft · unpublished" badge — set when
                   // the owner is pinned to their latest unpublished in-place draft.
                   publishState={isDraft ? "draft" : undefined}
+                  // #2772 D2: the in-card Publish control — only a real, settled draft
+                  // (not mid-generation), so the banner never competes with the stream.
+                  onPublish={isDraft && !showGenStream ? handlePublish : undefined}
+                  publishing={publishing}
                   chips={editChips}
                   onSelectChip={handleEditPrompt}
                   onSubmitOther={handleEditPrompt}

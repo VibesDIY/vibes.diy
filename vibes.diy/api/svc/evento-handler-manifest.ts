@@ -18,6 +18,7 @@ import { getApplicationChatEvento } from "./public/get-application-chat.js";
 import { ensureAppSettingsEvento } from "./public/ensure-app-settings.js";
 import { setModeFsIdEvento } from "./public/set-mode-fsid.js";
 import { forkAppEvento } from "./public/fork-app.js";
+import { publishAppEvento } from "./public/publish-app.js";
 import { getCertFromCsrEvento } from "./public/get-cert-from-csr.js";
 import {
   createInviteEvento,
@@ -178,6 +179,7 @@ export const handlerManifest: readonly HandlerManifestEntry[] = [
   entry("vibes.diy.req-open-chat", openChat),
   entry("vibes.diy.req-prompt-chat-section", promptChatSection),
   entry("vibes.diy.req-fork-app", forkAppEvento),
+  entry("vibes.diy.req-publish-app", publishAppEvento),
   entry("vibes.diy.req-set-mode-fs", setModeFsIdEvento),
 ];
 

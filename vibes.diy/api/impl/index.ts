@@ -54,6 +54,9 @@ import {
   ReqForkApp,
   ResForkApp,
   isResForkApp,
+  ReqPublishApp,
+  ResPublishApp,
+  isResPublishApp,
   ReqCreateInvite,
   ResCreateInvite,
   isResCreateInvite,
@@ -550,6 +553,15 @@ export class VibesDiyApi implements VibesDiyApiIface<{
       { ...req, type: "vibes.diy.req-fork-app" },
       {
         resMatch: isResForkApp,
+      }
+    );
+  }
+
+  publishApp(req: Req<ReqPublishApp>): Promise<Result<ResPublishApp, VibesDiyError>> {
+    return this.request(
+      { ...req, type: "vibes.diy.req-publish-app" },
+      {
+        resMatch: isResPublishApp,
       }
     );
   }
