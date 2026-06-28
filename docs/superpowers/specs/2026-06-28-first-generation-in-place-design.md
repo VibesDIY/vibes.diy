@@ -125,14 +125,27 @@ never opens a codegen chat against the owner's session.
 
 ### PR-C — cached-read lane (the two-lane split)
 
-A cached chip is a **read**: navigate to a real pre-built public app (real stored `chatSections`),
-no codegen, no login. **The fakeness line (jchris's constraint):** the lane is honest only if
-cached targets are _real navigable apps with real stored chat read through `getChatDetails`_ — not
-hardcoded frontend history. So PR-C ships the real navigation + real read behavior. What's
-genuinely backend-coordinated and **deferred to a follow-up**: a **system/cache handle** that owns
-the curated forks (a real curator handle works in the interim), a **content-address dedupe key**
-`(sourceFsId, transform)`, and the formal **auth-skip** optimization for serving cached results.
-**If the honest version turns out to need that backend before it's useful, we fall back to
+A cached chip is a **read**: navigate to a real pre-built public app, no codegen, no login. The
+**live app** loads anonymously through the existing public-vibe iframe path (no auth) — that part
+is genuinely frontend-only.
+
+**The fakeness line (jchris's constraint), split correctly after review (Codex, 2026-06-28):**
+the lane is honest only if cached targets are _real navigable apps with real stored chat_, not
+hardcoded frontend history. But the **chat-history read is NOT anonymous-readable today**: both
+history endpoints (`getChatDetails`, `getChatResponse`) are `checkAuth`-wrapped and scope rows to
+the **authenticated owner** via `handleBinding.userId` (`api/svc/public/get-chat-details.ts:40,70`).
+So the split is:
+
+- **Frontend-only now:** the cached chip's **navigation + live app** (anonymous public-read).
+- **Backend-coordinated (deferred):** the **faked-chat history toggle on a cached app** —
+  serving a cached app's stored `PromptAndBlockMsgs` to an anonymous/non-owner viewer needs an
+  **auth-free readable-history read path** (today's endpoints reject it). Per the real-or-defer
+  rule, the cached-app history rides with the backend; we do **not** stub it.
+
+Other genuinely backend-coordinated pieces, **deferred to a follow-up**: a **system/cache handle**
+that owns the curated forks (a real curator handle works in the interim), a **content-address
+dedupe key** `(sourceFsId, transform)`, and the **auth-skip** optimization for serving cached
+results. **If the honest version turns out to need that backend before it's useful, we fall back to
 deferring the whole lane to its own issue — no stubs either way.**
 
 ---
@@ -145,8 +158,10 @@ deferring the whole lane to its own issue — no stubs either way.**
   unchanged (§3 confirms the gate is correct and stays; the pending prompt already survives the
   sign-in redirect via the `?intent=`/prompt routing).
 - The single-iframe hot-swap path (the runtime already registers the bridge — §2).
-- The cached-lane _navigation + real-read_ behavior in PR-C, **provided** cached targets are real
-  apps with real stored chat.
+- The cached-lane's **navigation + live app** in PR-C (anonymous public-vibe read). _Not_ the
+  cached-app history toggle — that needs the auth-free read path below.
+- PR-A's history of the **active** session (already in the client `promptState`, §6) and an
+  **owner** re-opening history on their own vibe (`getChatResponse`, owner-scoped, already exists).
 
 **Backend-coordinated (PR-C's "real" lane, a follow-up — not blocking A/B):**
 
@@ -155,8 +170,11 @@ deferring the whole lane to its own issue — no stubs either way.**
 2. A **content-address dedupe key** `(sourceFsId, transform)` so repeated cached clicks resolve to
    one fork (no GC needed — §20).
 3. **Serving cached results as page-views that skip the codegen auth-gate** (reads, no login).
+4. An **auth-free, owner-unscoped readable-history read path** so an anonymous/non-owner viewer
+   can open a cached app's stored chat (today `getChatDetails`/`getChatResponse` are `checkAuth` +
+   owner-scoped — Codex review). This is what the cached-app "faked chat" toggle depends on.
 
-None of (1)-(3) blocks PR-A or PR-B.
+None of (1)-(4) blocks PR-A or PR-B.
 
 ---
 
@@ -167,13 +185,21 @@ live stream; after first-code it shows chips with a **history-summary row** abov
 reopens the past stream. **The summary carries a line/block count** (jchris: "so you can sense if
 it grows").
 
-**Data source — verified, split into real vs. not:**
+**Data source — verified, with a read-path correction (Codex review, 2026-06-28):**
 
-- **The counts (`N messages · ~L lines`) — real and free.** _messages_ = `promptState.blocks.length`;
+- **For the _active_ generation session (PR-A) — all client-side, no endpoint.** The blocks the
+  user just streamed are already in the local `promptState`. _messages_ = `promptState.blocks.length`;
   _lines_ = the length of the resolved code array `getCode(promptState).code` — the **exact** value
-  `PreviewApp` already computes to hot-swap. For a vibe you _land on_, the same two numbers come
-  from the stored `chatSections` via the real `getChatDetails` read (`api/svc/public/get-chat-details.ts`
-  selects `chatSections.blocks`).
+  `PreviewApp` already computes to hot-swap. So the history toggle on a vibe you _just generated_
+  needs no read at all.
+- **For a vibe you _land on_ (history of an existing app) — use `getChatResponse`, NOT
+  `getChatDetails`.** Correction: `getChatDetails` returns `prompts: {prompt, fsId, created}` — it
+  uses `chatSections.blocks` _internally_ only to extract the last user prompt, and does **not**
+  return `PromptAndBlockMsgs`. The blocks-returning read is **`getChatResponse`**
+  (`api/svc/public/get-chat-response.ts`, "reconstruct the verbatim model response"), which is what
+  feeds `MessageList` narration and the resolved-code line count. **Auth caveat:** both endpoints
+  are `checkAuth`-wrapped and owner-scoped, so land-on history works for the **owner** today; an
+  anonymous/cached-app history read needs the auth-free read path noted in §4 (PR-C).
 - **The narration text — real prose, freeform shape.** `block.toplevel.line` carries
   `line: "string"` — the model's actual narration, already rendered by `MessageList.tsx`. The
   history body **reuses `MessageList`** to show real prompts + real narration + per-turn code line
@@ -204,18 +230,18 @@ latency never reads as "the app suddenly got slow."
 
 ## 8. Build-seam map (reuse, don't rewrite)
 
-| Need                                 | Reuse / extend                                                             | Where                                                                      |
-| ------------------------------------ | -------------------------------------------------------------------------- | -------------------------------------------------------------------------- |
-| Codegen chat handle + section stream | `useChatSession` → extract `useInVibeGeneration` (local reducer)           | `pkg/app/hooks/useChatSession.ts`                                          |
-| First-code-block detection           | `isCodeEnd` per block                                                      | `call-ai/v2/block-stream.ts`                                               |
-| Hot-swap into the live iframe        | `srvVibeSandbox.pushSource()` (already registered by the deployed runtime) | `vibe/srv-sandbox/srv-sandbox.ts`, `vibe/runtime/register-dependencies.ts` |
-| De-blur ramp                         | `blurPx` 25 ×⅔/`hotSwapCount` via `backdropFilter`                         | `pkg/app/components/ResultPreview/PreviewApp.tsx:133-276`                  |
-| Resolved code + line count           | `getCode(promptState).code`                                                | `pkg/app/components/ResultPreview/get-code.ts`                             |
-| The chips                            | `OptionButtons` (already in `@vibes.diy/base`, the card's body)            | `base/components/OptionButtons.tsx`                                        |
-| The card shell                       | `UnifiedVibeCard` `body` slot (already supports view-swapping)             | `base/components/UnifiedVibeCard.tsx`                                      |
-| History rendering                    | `MessageList` (real prompts + narration)                                   | `pkg/app/components/MessageList.tsx`                                       |
-| Stored-chat read (land-on history)   | `getChatDetails` / `getChatResponse`                                       | `api/svc/public/get-chat-details.ts`                                       |
-| The hop being replaced               | `handleEditPrompt` + `/remix` + `setPromptIfEmpty`                         | `routes/vibe.…tsx:196`, `routes/remix.…tsx`, `routes/chat/chat.…tsx`       |
+| Need                                            | Reuse / extend                                                                                                           | Where                                                                      |
+| ----------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------- |
+| Codegen chat handle + section stream            | `useChatSession` → extract `useInVibeGeneration` (local reducer)                                                         | `pkg/app/hooks/useChatSession.ts`                                          |
+| First-code-block detection                      | `isCodeEnd` per block                                                                                                    | `call-ai/v2/block-stream.ts`                                               |
+| Hot-swap into the live iframe                   | `srvVibeSandbox.pushSource()` (already registered by the deployed runtime)                                               | `vibe/srv-sandbox/srv-sandbox.ts`, `vibe/runtime/register-dependencies.ts` |
+| De-blur ramp                                    | `blurPx` 25 ×⅔/`hotSwapCount` via `backdropFilter`                                                                       | `pkg/app/components/ResultPreview/PreviewApp.tsx:133-276`                  |
+| Resolved code + line count                      | `getCode(promptState).code`                                                                                              | `pkg/app/components/ResultPreview/get-code.ts`                             |
+| The chips                                       | `OptionButtons` (already in `@vibes.diy/base`, the card's body)                                                          | `base/components/OptionButtons.tsx`                                        |
+| The card shell                                  | `UnifiedVibeCard` `body` slot (already supports view-swapping)                                                           | `base/components/UnifiedVibeCard.tsx`                                      |
+| History rendering                               | `MessageList` (real prompts + narration)                                                                                 | `pkg/app/components/MessageList.tsx`                                       |
+| Stored-chat read (land-on history) — **blocks** | `getChatResponse` (returns `PromptAndBlockMsgs`; `getChatDetails` only returns last-prompt summaries; both owner-scoped) | `api/svc/public/get-chat-response.ts`                                      |
+| The hop being replaced                          | `handleEditPrompt` + `/remix` + `setPromptIfEmpty`                                                                       | `routes/vibe.…tsx:196`, `routes/remix.…tsx`, `routes/chat/chat.…tsx`       |
 
 ---
 
@@ -233,8 +259,8 @@ single-source-of-truth. Story IDs `sketches-agent-in-vibe--*`; PNGs in
 
 ![first-gen live](https://raw.githubusercontent.com/VibesDIY/vibes.diy/884a77a1fc58186c6d27b569aaf7ca4cd34f41f2/notes/sketches/agent-in-vibe/14-first-gen-live.png)
 
-**History reopened — past stream via the real `getChatDetails` path (narration is the model's
-real prose; counts are real):**
+**History reopened — past stream via the live `promptState` (active session) or `getChatResponse`
+(land-on, owner-scoped); narration is the model's real prose; counts are real:**
 
 ![history reopened](https://raw.githubusercontent.com/VibesDIY/vibes.diy/884a77a1fc58186c6d27b569aaf7ca4cd34f41f2/notes/sketches/agent-in-vibe/15-history-reopened.png)
 
@@ -261,8 +287,9 @@ handle:**
   re-point to the new fsId (canonical bundle) or keep the hot-swapped DOM. Lean: re-point quietly
   once the autosave fsId is known, matching `/chat`.
 - **Cached-lane fakeness gate (PR-C).** Before building, confirm at least one real curated app
-  with real stored chat exists to navigate to. If not, PR-C waits on the system-handle backend or
-  defers — no stub.
+  with real stored chat exists to navigate to. The **live-app navigation** is anonymous-readable
+  now; the **history toggle on a cached app** needs the auth-free readable-history read path (§4/§5
+  item 4) — without it, PR-C ships the cached live app but defers the cached-app history. No stub.
 - **Auto-summaries are explicitly deferred** (§6) — tidy per-turn summaries are a separate model
   step, filed as **#2753**.
 
