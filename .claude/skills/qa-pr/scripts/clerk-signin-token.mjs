@@ -1,16 +1,22 @@
 #!/usr/bin/env node
 // Mint a Clerk sign-in token for headless qa-pr login (cloud sessions).
 //
-// Backend-only: needs CLERK_SECRET_KEY (the qa-pr harness env — never committed).
+// Backend-only: needs a Clerk secret in the qa-pr harness env (never committed).
 // Resolves the operator's Clerk userId by email (default: `git config
 // user.email`), then mints a one-time sign-in token the browser consumes via the
 // ticket strategy. Dependency-free — plain fetch against the Clerk Backend API.
 //
+// The secret MUST match the target Clerk instance (a token minted on the wrong
+// instance won't activate):
+//   --instance prod    (default) → CLERK_SECRET_KEY          (for vibes.diy)
+//   --instance preview           → CLERK_SECRET_KEY_PREVIEW  (for *.workers.dev / cli)
+//                                  (falls back to CLERK_SECRET_KEY if _PREVIEW unset)
+//
 // Usage:
-//   CLERK_SECRET_KEY=sk_... node clerk-signin-token.mjs [--email a@b.com] [--user-id user_xxx] [--json]
+//   node clerk-signin-token.mjs [--instance prod|preview] [--email a@b.com] [--user-id user_xxx] [--json]
 //
 // Output (default): the bare token on stdout (so it can be captured into a var).
-//   --json: { token, userId, email } for the harness.
+//   --json: { token, userId, email, instance } for the harness.
 //
 // Background: docs/specs/2026-06-28-clerk-signin-token-qa-login.md
 import { execSync } from "node:child_process";
@@ -28,15 +34,20 @@ function die(msg) {
   process.exit(1);
 }
 
-const secret = process.env.CLERK_SECRET_KEY;
+const instance = (arg("instance") ?? "prod").toLowerCase();
+if (instance !== "prod" && instance !== "preview") {
+  die(`--instance must be 'prod' or 'preview' (got '${instance}').`);
+}
+// preview prefers the dedicated secret but falls back to CLERK_SECRET_KEY so a
+// single-secret env still works; prod only ever uses CLERK_SECRET_KEY.
+const secret =
+  instance === "preview" ? (process.env.CLERK_SECRET_KEY_PREVIEW ?? process.env.CLERK_SECRET_KEY) : process.env.CLERK_SECRET_KEY;
 if (!secret) {
-  die(
-    "CLERK_SECRET_KEY is not set. Provide the secret for the TARGET instance " +
-      "(prod for vibes.diy, dev/preview for *.workers.dev previews) in the harness env.",
-  );
+  const wanted = instance === "preview" ? "CLERK_SECRET_KEY_PREVIEW (or CLERK_SECRET_KEY)" : "CLERK_SECRET_KEY";
+  die(`No secret for instance '${instance}'. Set ${wanted} in the harness env (must match the target instance).`);
 }
 if (!secret.startsWith("sk_")) {
-  die("CLERK_SECRET_KEY does not look like a Clerk secret key (expected sk_…).");
+  die(`The secret for instance '${instance}' does not look like a Clerk secret key (expected sk_…).`);
 }
 
 async function bapi(path, init = {}) {
@@ -96,7 +107,7 @@ if (!minted?.token) {
 }
 
 if (wantJson) {
-  process.stdout.write(JSON.stringify({ token: minted.token, userId, email }) + "\n");
+  process.stdout.write(JSON.stringify({ token: minted.token, userId, email, instance }) + "\n");
 } else {
   process.stdout.write(minted.token + "\n");
 }

@@ -31,7 +31,13 @@ do exactly this, and they win on the two things that matter:
 ### 1. Mint (backend, needs the secret)
 
 A dependency-free Node script (`scripts/clerk-signin-token.mjs`) calls the Clerk
-Backend API with `CLERK_SECRET_KEY`:
+Backend API with the secret for the **target instance**, selected by `--instance`:
+
+- `--instance prod` (default) → `CLERK_SECRET_KEY` (for `vibes.diy`)
+- `--instance preview` → `CLERK_SECRET_KEY_PREVIEW` (for `*.workers.dev` / cli;
+  falls back to `CLERK_SECRET_KEY` if the preview var is unset)
+
+Then:
 
 1. Resolve the user: `GET https://api.clerk.com/v1/users?email_address=<email>`
    (email defaults to `git config user.email`) → `userId`. (Or pass `--user-id`.)
