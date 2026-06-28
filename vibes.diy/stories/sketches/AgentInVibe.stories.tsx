@@ -264,6 +264,7 @@ export const LiveSwitchOpen: Story = {
         appTitle="Bloom Machine"
         appSlug="meghan/bloom"
         handleSlug="meghan"
+        viewerMode="author"
         chips={["Make it a drum kit", "Add a high score"]}
         onSelectChip={() => undefined}
         onSubmitOther={() => undefined}
@@ -441,6 +442,8 @@ export const ShareMemberView: Story = {
         appTitle="Bloom Machine"
         appSlug="meghan/bloom"
         handleSlug="alex"
+        viewerMode="member"
+        memberReadOnly
         selectedNav="share"
         onHome={() => undefined}
         onShare={() => undefined}
@@ -460,6 +463,7 @@ export const ShareAuthorView: Story = {
         appTitle="Bloom Machine"
         appSlug="meghan/bloom"
         handleSlug="meghan"
+        viewerMode="author"
         selectedNav="share"
         onHome={() => undefined}
         onShare={() => undefined}

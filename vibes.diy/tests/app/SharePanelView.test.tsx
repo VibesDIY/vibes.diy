@@ -68,6 +68,15 @@ describe("SharePanelView", () => {
     expect(onChangeAccess).toHaveBeenCalledWith("request");
   });
 
+  it("shows each member's role in the roster (owner / editor / reader)", () => {
+    render(<SharePanelView url="u" viewer="author" access="request" members={ROSTER} />);
+    // ROSTER = alex (editor), meghan (owner). A "viewer" grant reads as "reader".
+    expect(screen.getByText("owner")).toBeTruthy();
+    expect(screen.getByText("editor")).toBeTruthy();
+    render(<SharePanelView url="u" viewer="author" access="request" members={[{ handle: "sam", role: "viewer" }]} />);
+    expect(screen.getByText("reader")).toBeTruthy();
+  });
+
   it("author: the access toggle is disabled (and inert) while accessPending", () => {
     const onChangeAccess = vi.fn();
     render(<SharePanelView url="u" viewer="author" access="public" accessPending onChangeAccess={onChangeAccess} />);

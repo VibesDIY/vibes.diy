@@ -179,4 +179,26 @@ describe("UnifiedVibeCard", () => {
     expect(ref.current).not.toBeNull();
     expect(ref.current?.getAttribute("aria-label")).toBe("Share");
   });
+
+  it("shows a shield for the author viewer mode", () => {
+    render(<UnifiedVibeCard appTitle="Bloom Machine" open handleSlug="meghan" viewerMode="author" />);
+    expect(screen.getByRole("img", { name: /owner/i })).toBeTruthy();
+    expect(screen.queryByRole("img", { name: /read-only/i })).toBeNull();
+  });
+
+  it("shows a lock for a read-only member, nothing for a writer member", () => {
+    const { rerender } = render(
+      <UnifiedVibeCard appTitle="Bloom Machine" open handleSlug="meghan" viewerMode="member" memberReadOnly />
+    );
+    expect(screen.getByRole("img", { name: /read-only/i })).toBeTruthy();
+    rerender(<UnifiedVibeCard appTitle="Bloom Machine" open handleSlug="meghan" viewerMode="member" />);
+    expect(screen.queryByRole("img", { name: /read-only/i })).toBeNull();
+    expect(screen.queryByRole("img", { name: /owner/i })).toBeNull();
+  });
+
+  it("shows no mode indicator for a visitor", () => {
+    render(<UnifiedVibeCard appTitle="Bloom Machine" open handleSlug="meghan" viewerMode="visitor" />);
+    expect(screen.queryByRole("img", { name: /owner/i })).toBeNull();
+    expect(screen.queryByRole("img", { name: /read-only/i })).toBeNull();
+  });
 });

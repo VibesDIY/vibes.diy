@@ -887,6 +887,8 @@ export default function VibeIframeWrapper() {
                   onSelectHandle={(slug) => void handleSelectHandle(slug)}
                   onNewHandle={() => void handleNewHandle()}
                   handlePickerBusy={handlePickerBusy}
+                  viewerMode={shareViewer === "author" ? "author" : shareViewer === "member" ? "member" : "visitor"}
+                  memberReadOnly={myGrant === "viewer" || myGrant === "submitter"}
                   chips={editChips}
                   onSelectChip={handleEditPrompt}
                   onSubmitOther={handleEditPrompt}

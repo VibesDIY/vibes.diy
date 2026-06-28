@@ -61,6 +61,12 @@ export interface SharePanelViewProps {
   readonly className?: string;
 }
 
+// Read-only role label shown in each roster tag, mirroring the legacy
+// MembersSection convention (a "viewer" grant reads as "reader").
+function roleLabel(role: NonNullable<ShareMember["role"]>): string {
+  return role === "viewer" ? "reader" : role;
+}
+
 const ROSTER_TAG_STYLE: React.CSSProperties = {
   background: "var(--color-light-background-01, #eee)",
   border: "1px solid var(--color-light-decorative-01, #ddd)",
@@ -165,8 +171,9 @@ export function SharePanelView({
       )}
 
       {/* Member roster — granted members and the author. ViewerTag tags flow inline (wrap),
-          like a list of tags. No roles here — role changes live in the (TBD) manage flow,
-          which the author reaches by tapping a tag. */}
+          like a list of tags. Each tag carries the member's role read-only (owner / editor /
+          reader), mirroring the legacy MembersSection. Role *changes* still live in the (TBD)
+          manage flow, which the author reaches by tapping a tag. */}
       {showRoster && (
         <div>
           <p className="text-xs text-light-secondary dark:text-dark-secondary" style={{ marginBottom: 6 }}>
@@ -175,7 +182,17 @@ export function SharePanelView({
           <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
             {roster.map((m) => {
               const tag = (
-                <ViewerTagView slug={m.handle} displayName={`@${m.handle}`} avatarUrl={m.avatarUrl} style={ROSTER_TAG_STYLE} />
+                <ViewerTagView
+                  slug={m.handle}
+                  displayName={`@${m.handle}`}
+                  avatarUrl={m.avatarUrl}
+                  trailing={
+                    m.role ? (
+                      <span style={{ fontSize: 11, opacity: 0.6, marginLeft: 2 }}>{roleLabel(m.role)}</span>
+                    ) : undefined
+                  }
+                  style={ROSTER_TAG_STYLE}
+                />
               );
               return isAuthor ? (
                 <button
