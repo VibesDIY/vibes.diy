@@ -201,4 +201,11 @@ describe("UnifiedVibeCard", () => {
     expect(screen.queryByRole("img", { name: /owner/i })).toBeNull();
     expect(screen.queryByRole("img", { name: /read-only/i })).toBeNull();
   });
+
+  it("shows the admin-mode indicator, taking precedence over the author shield (#2178)", () => {
+    render(<UnifiedVibeCard appTitle="Bloom Machine" open handleSlug="meghan" viewerMode="author" adminMode />);
+    expect(screen.getByRole("img", { name: /admin mode/i })).toBeTruthy();
+    // The plain "Owner" shield label is replaced by the admin one.
+    expect(screen.queryByRole("img", { name: /^owner$/i })).toBeNull();
+  });
 });
