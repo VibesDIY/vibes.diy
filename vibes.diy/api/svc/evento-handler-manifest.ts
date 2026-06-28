@@ -1,5 +1,6 @@
 import { EventoHandler } from "@adviser/cement";
 import { PROBE_MODES, shardsForReq, type ReqType, type ShardKind } from "@vibes.diy/api-types";
+import { gated } from "./shard-gate.js";
 import { ensureAppSlugItemEvento } from "./public/ensure-app-slug-item.js";
 import { openChat } from "./public/open-chat.js";
 import { promptChatSection } from "./public/prompt-chat-section.js";
@@ -201,5 +202,9 @@ export function allowedKinds(reqType: ReqType): readonly ShardKind[] {
  * with the allowed set derived from `SHARD_POLICY`.
  */
 export function handlersForShard(kind: ShardKind): EventoHandler[] {
-  return handlerManifest.filter((e) => allowedKinds(e.reqType).includes(kind)).map((e) => e.handler);
+  // Wrap each plane handler in the runtime gate (#2714): the kind+mode check and
+  // (vibe shard) the inline-key identity check run BEFORE the handler. `gated`
+  // preserves `hash`/`validate`/`type`/`post`, so composition order and the
+  // parity tests are unaffected.
+  return handlerManifest.filter((e) => allowedKinds(e.reqType).includes(kind)).map((e) => gated(e.reqType, e.handler));
 }
