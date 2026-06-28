@@ -1,5 +1,6 @@
 import { useCallback, useMemo, useReducer, useState } from "react";
 import type { Conn, LLMChatEntry } from "@vibes.diy/api-types";
+import { isCodeEnd } from "@vibes.diy/call-ai-v2";
 import { promptReducer, type PromptState } from "../routes/chat/prompt-state.js";
 import { useChatSession } from "./useChatSession.js";
 
@@ -32,6 +33,8 @@ function initialState(appSlug: string): PromptState {
     title: appSlug,
     blocks: [],
     searchParams: new URLSearchParams(),
+    // PromptState carries setSearchParams as structural baggage; the hook's
+    // embedded context never navigates, so a no-op cast is safe.
     setSearchParams: (() => undefined) as never,
     agentSavedBlockIds: new Set<string>(),
     connection: "live",
@@ -66,7 +69,7 @@ export function useInVibeGeneration(opts: UseInVibeGenerationOpts): InVibeGenera
   // 'live' once the first code.end has landed (subsequent edits keep us 'live'
   // and hot-swap in place); else 'idle'.
   const firstCodeDone = useMemo(
-    () => promptState.blocks.some((b) => b.msgs.some((m) => (m as { type?: string }).type === "block.code.end")),
+    () => promptState.blocks.some((b) => b.msgs.some((m) => isCodeEnd(m))),
     [promptState.blocks]
   );
   const phase: GenerationPhase = firstCodeDone
