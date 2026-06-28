@@ -408,12 +408,22 @@ export default {
     // a dev/draft build whose grant check won't confirm public access.
     const hasFsId = vibePathnameHasFsId(url.pathname);
 
+    // Cloudflare Web Analytics (RUM): inject the beacon ourselves in SSR rather
+    // than via Cloudflare's edge auto-injection, which is unreliable for
+    // Worker-rendered HTML and made the beacon POST to vibes.diy/cdn-cgi/rum —
+    // a path the edge 404s for this zone (#2770). Our snippet posts to
+    // cloudflareinsights.com instead, so it never touches our zone/Worker.
+    // Preserve the dashboard's "exclude EU" posture using Cloudflare's own EU
+    // determination (request.cf.isEUCountry === "1"), and skip dev entirely.
+    const enableCfRum = !import.meta.env.DEV && request.cf?.isEUCountry !== "1";
+
     // Delegate to React Router for SSR
     const ssrResponse = (await getRequestHandler()(request as unknown as Parameters<ReturnType<typeof createRequestHandler>>[0], {
       vibeDiyAppParams: cfCtx.vibesCtx.params,
       vibeOgTitle: vibeHints.ogTitle,
       isWorldReadable: hasFsId ? false : vibeHints.isWorldReadable,
       isPubliclyEmbeddable: vibeHints.isPubliclyEmbeddable,
+      enableCfRum,
     })) as unknown as CFResponse;
 
     // Log missing vibe paths so the ETL pipeline can surface them for reanimation triage.
