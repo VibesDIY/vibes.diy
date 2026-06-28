@@ -26,6 +26,12 @@ export interface InVibeGeneration {
   // persisted-chat chips once an in-place edit has run, so the card never
   // re-shows the pre-edit suggestions after a generation. (vibe-tour-chips-edit)
   readonly suggestionChips: readonly string[];
+  // True once a prompt has been sent LOCALLY this session for the current vibe
+  // (reset on vibe change). Distinct from `blocks.length > 0`, which also goes
+  // true from replayed chat history on open — so the card gates "prefer the
+  // streamed chips" on this, not on the mere presence of blocks, to avoid
+  // overriding fsId-scoped persisted chips on a versioned view. (Charlie review)
+  readonly hasLocalEdit: boolean;
   readonly sendPrompt: (text: string) => void;
   // Open the codegen chat lazily, on the owner's first edit intent. The host
   // calls this when the edit UI (the UnifiedVibeCard) opens, so passive
@@ -73,6 +79,9 @@ export function useInVibeGeneration(opts: UseInVibeGenerationOpts): InVibeGenera
   const [promptState, dispatch] = useReducer(promptReducer, undefined, () => initialState(appSlug));
   const [promptToSend, sendPromptState] = useState<string | null>(null);
   const [hotSwapCount, setHotSwapCount] = useState(0);
+  // Whether the user has started an in-place edit this session for this vibe.
+  // Reset on vibe change alongside the reducer. Drives `hasLocalEdit`.
+  const [hasLocalEdit, setHasLocalEdit] = useState(false);
   const seenByBlockIdRef = useRef<Map<string, number>>(new Map());
 
   // Lazy codegen open (#2761): an owner merely VIEWING their vibe must not open
@@ -154,6 +163,7 @@ export function useInVibeGeneration(opts: UseInVibeGenerationOpts): InVibeGenera
     dispatch({ type: "clearChat", appSlug });
     seenByBlockIdRef.current.clear();
     setHotSwapCount(0);
+    setHasLocalEdit(false);
     sendPromptState(null);
     // Note: re-arming the lazy `active` gate happens synchronously during render
     // (the activeVibeKeyRef guard above), not here — an effect would run too late
@@ -178,6 +188,7 @@ export function useInVibeGeneration(opts: UseInVibeGenerationOpts): InVibeGenera
     // A programmatic send (e.g. the fork auto-fire that never opens the edit UI)
     // must still bring the codegen chat up — opening is lazy now (#2761).
     setActive(true);
+    setHasLocalEdit(true);
     sendPromptState(text.trim());
   }, []);
 
@@ -215,6 +226,7 @@ export function useInVibeGeneration(opts: UseInVibeGenerationOpts): InVibeGenera
     blurPx,
     counts,
     suggestionChips,
+    hasLocalEdit,
     sendPrompt,
     activate,
   };
