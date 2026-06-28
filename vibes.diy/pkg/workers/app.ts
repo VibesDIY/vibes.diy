@@ -132,6 +132,15 @@ export default {
       // unchanged, so Spec A's identity gate is unaffected. Prefixes match the
       // UserNotify registration shardIds, so resolveShardDO addresses the same
       // physical instance.
+      //
+      // ⚠️ LOAD-BEARING STRING — DO NOT RENAME the `app:` prefix (e.g. to `vibe:`
+      // for cosmetic parity with ShardKind="vibe"). This literal is the input to
+      // idFromName, so it IS the physical DO identity, and it is pinned to the
+      // pre-collapse AppSessions registration shardId for instance continuity
+      // across #2714 Spec B. Changing it remaps every vibe-plane session to a
+      // fresh DO (abandoning live instances) AND strands persisted UserNotify
+      // registrations keyed `app:<vibe>` that resolveShardDO still resolves by
+      // this exact prefix. A rename is a live-instance migration, not a tidy-up.
       const id = env.SESSIONS.idFromName(`app:${vibe}`);
       const obj = env.SESSIONS.get(id);
       return obj.fetch(request);
@@ -140,6 +149,9 @@ export default {
     if (route === "shared-do") {
       const shard = url.getParam("shard");
       // Shared plane → SESSIONS, physical name `shared:<shard|global>`.
+      // ⚠️ LOAD-BEARING — `shared:` is frozen for the same reason as `app:` above
+      // (pinned to the pre-collapse SharedSessions registration shardId). Don't
+      // rename it; doing so remaps the shared singleton to a fresh instance.
       const id = env.SESSIONS.idFromName(`shared:${shard ?? "global"}`);
       return env.SESSIONS.get(id).fetch(request);
     }

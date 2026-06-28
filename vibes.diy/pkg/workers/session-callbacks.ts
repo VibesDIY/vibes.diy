@@ -10,6 +10,10 @@ import { CFEnv, isUserNotifyShard, userNotifyShardFor, type EvtUserNotification 
 // old-class drain marker).
 
 // Vibe plane (formerly AppSessions): registers under `app:<vibeKey>`.
+// ⚠️ LOAD-BEARING — the `app:` prefix here is the persisted registration shardId
+// resolveShardDO maps back to the physical DO instance; it must stay identical
+// to app.ts's `idFromName(\`app:${vibe}\`)`. Frozen for instance/registration
+// continuity across #2714 Spec B — do not rename (see resolve-shard-do.ts).
 export function userNotifyCallbacksForAppSessions(vibeKey: string, env: CFEnv) {
   const shardId = `app:${vibeKey}`;
 
