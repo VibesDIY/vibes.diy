@@ -1,27 +1,11 @@
 import React, { useState } from "react";
 import { Toaster, ToastBar, type Toast } from "react-hot-toast";
+import { isCopyableToast, toastText, WARNING_ICON } from "./copyable-toast-logic.js";
 
-// The warning icon used by `toast("…", { icon: WARNING_ICON })`. Warnings are
-// plain (type "blank") toasts distinguished only by this icon, so we key off it
-// to decide whether they get a Copy button alongside error toasts.
-export const WARNING_ICON = "⚠️";
-
-// Extract the plain-text payload of a toast so it can be copied to the clipboard.
-// Error/warning toasts carry a string message; richer (ReactNode) messages have
-// no copyable text and return "" (no button).
-export function toastText(t: Toast): string {
-  const m = t.message;
-  if (typeof m === "string") return m;
-  if (typeof m === "number") return String(m);
-  return "";
-}
-
-// A toast is copyable when it's an error or a warning (icon = WARNING_ICON) and
-// it has plain-text content to copy.
-export function isCopyableToast(t: Toast): boolean {
-  if (!toastText(t)) return false;
-  return t.type === "error" || t.icon === WARNING_ICON;
-}
+// Re-export the pure helpers so existing importers (e.g. PreviewApp) keep their
+// `../CopyableToaster.js` import path. The implementations live in the React-free
+// copyable-toast-logic module so their unit tests can run in node.
+export { isCopyableToast, toastText, WARNING_ICON };
 
 function CopyButton({ toast: t }: { toast: Toast }) {
   const [copied, setCopied] = useState(false);

@@ -1,6 +1,11 @@
 import { describe, it, expect } from "vitest";
 import type { Toast } from "react-hot-toast";
-import { isCopyableToast, toastText, WARNING_ICON } from "~/vibes.diy/app/components/CopyableToaster.js";
+import { isCopyableToast, toastText, WARNING_ICON } from "../app/components/copyable-toast-logic.js";
+
+// Pure-logic unit tests for the toast Copy-button helpers. These live in the node
+// `pkg-infra` project (not the isolate:false browser project) because they exercise
+// pure functions and need no DOM — keeping them out of the shared browser worker
+// graph that previously made the import flake as "Failed to import test file".
 
 // Minimal Toast factory — only the fields isCopyableToast/toastText read.
 function makeToast(overrides: Partial<Toast>): Toast {

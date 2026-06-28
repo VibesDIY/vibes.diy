@@ -5,20 +5,7 @@ import { playwright } from "@vitest/browser-playwright";
 export default defineConfig({
   plugins: [tsconfigPaths({ configNames: ["tsconfig.test.json"] }) as never],
   optimizeDeps: {
-    // `react-hot-toast` must be pre-bundled here: under `isolate: false` (shared
-    // worker), the first test to import it would otherwise trigger a mid-run Vite
-    // re-optimize + reload, corrupting the in-flight import of whichever file is
-    // loading — surfacing as a flaky "Failed to import test file" (e.g.
-    // copyable-toaster.test.tsx). Listing it up front makes the bundling deterministic.
-    include: [
-      "react",
-      "react-dom",
-      "react/jsx-runtime",
-      "@testing-library/react",
-      "react-markdown",
-      "react-router-dom",
-      "react-hot-toast",
-    ],
+    include: ["react", "react-dom", "react/jsx-runtime", "@testing-library/react", "react-markdown", "react-router-dom"],
     // `find-up` (Node-only keybag chain behind @vibes.diy/identity/node, reached
     // via fireproof-node's dynamic import) imports `unicorn-magic`'s `toPath`,
     // which esbuild can't pre-bundle; the keybag path never runs in-browser.
