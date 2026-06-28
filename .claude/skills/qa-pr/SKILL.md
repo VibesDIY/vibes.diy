@@ -46,23 +46,28 @@ In a cloud session the browser is provisioned automatically: a SessionStart hook
 What's automatic, and how authenticated sign-in works:
 
 - **Browser plumbing, navigation, screenshots, console/network capture** — work out of the box, including the unauthenticated surfaces (the production/preview homepage and the pre-auth build form). Steps 1–3 run anywhere.
-- **Authenticated sign-in (cloud) — via a Clerk sign-in token.** The cloud Chrome starts cold with no Google session, so interactive OAuth is a non-starter. Instead, log in through Clerk's own [sign-in-token / ticket flow](../../../docs/specs/2026-06-28-clerk-signin-token-qa-login.md) — it yields a **real Clerk session** (identical to a normal login), so the rest of the spine runs unchanged **except Step 4.1's sign-in sub-step**, which this replaces (see _Step 4 — cloud-token branch_ below).
-  1. **Mint**, selecting the secret by **target instance** (`--instance prod` → `CLERK_SECRET_KEY` for `vibes.diy`; `--instance preview` → `CLERK_SECRET_KEY_PREVIEW` for `*.workers.dev` previews / cli, falling back to `CLERK_SECRET_KEY`). For a PR-preview QA run use `preview`:
-     ```bash
-     TOKEN=$(node .claude/skills/qa-pr/scripts/clerk-signin-token.mjs --instance preview)
-     ```
-     (resolves your Clerk userId by `git config user.email`; pass `--email`/`--user-id` to override.)
-  2. **Consume** on the target origin (where `window.Clerk` is live) via `evaluate_script`, interpolating `$TOKEN` into the function body (capture the response — `setActive` needs `result.createdSessionId`):
-     ```js
-     if (!window.Clerk) return { ok: false, err: "window.Clerk not present" };
-     await window.Clerk.load?.(); // wait until ClerkJS is loaded before driving it
-     const result = await window.Clerk.client.signIn.create({ strategy: "ticket", ticket: "<TOKEN>" });
-     if (result.status !== "complete") return { ok: false, status: result.status };
-     await window.Clerk.setActive({ session: result.createdSessionId });
-     return { ok: true, userId: window.Clerk.user?.id ?? null };
-     ```
-     Confirm `ok: true` and a non-null `userId`, then continue at the **cloud-token branch of Step 4** (do **not** run Step 4.1's OAuth flow — you're already signed in).
-  - **If `CLERK_SECRET_KEY` is absent**, you can't sign in headlessly: finish Steps 1–3 and mark the authenticated spine `path_not_tested` (reason: "no CLERK_SECRET_KEY in env"), or run on a local workstation (below). Never fake a sign-in. **Never** echo `CLERK_SECRET_KEY` or the minted token into the triage, gist, or PR comment.
+- **Authenticated sign-in (cloud) — the main path: `clerk-qa-login.mjs`.** The cloud Chrome starts cold with no Google session, so interactive OAuth is a non-starter. Instead, log in through Clerk's own [sign-in-token / ticket flow](../../../docs/specs/2026-06-28-clerk-signin-token-qa-login.md) — it yields a **real Clerk session** (identical to a normal login; **verified end-to-end 2026-06-28 on both prod and preview**), so the rest of the spine runs unchanged **except Step 4.1's sign-in sub-step**, which this replaces (see _Step 4 — cloud-token branch_ below). One script does the whole thing — mint, consume, and verify — in a single process:
+  ```bash
+  # Preview/dev instance (dev-v2.vibesdiy.net + pr-*.workers.dev previews):
+  node .claude/skills/qa-pr/scripts/clerk-qa-login.mjs --instance preview --origin <preview-origin>
+  # Prod instance (vibes.diy, prod-v2, cli-v2):
+  node .claude/skills/qa-pr/scripts/clerk-qa-login.mjs --instance prod --origin https://vibes.diy
+  ```
+  It resolves your Clerk userId by `git config user.email` (pass `--email`/`--user-id` to override), mints, drives a cloud-configured Chromium (proxy + TLS-1.2 + `--no-sandbox`, per [`agents/cloud-browser-setup.md`](../../../agents/cloud-browser-setup.md)), consumes the ticket, calls `setActive`, and prints non-secret evidence. **Confirm `"PASS": true` with a non-null `authed.clerkUserId`.**
+  - **Why a script, not the agent driving `evaluate_script`:** the minted sign-in token is a credential. The harness security policy forbids it from ever entering the agent's transcript or a tool-call argument — so the agent must **not** mint it into a shell variable it reads, echo it, or paste it into an `evaluate_script` body. The script keeps the token in-process (minted → passed to the page as a function argument → consumed), never printing it. This is the primary mechanism precisely because the inline-`evaluate_script` form can't be done without leaking the token.
+  - **Instance discipline** (a token minted on the wrong instance won't activate): `--instance prod` (`CLERK_SECRET_KEY`, Clerk `clerk.vibes.diy` / `pk_live`) serves `vibes.diy`, `prod-v2`, **and `cli-v2` (an exact prod clone — same Clerk)**. `--instance preview` (`CLERK_SECRET_KEY_PREVIEW`, Clerk `*.clerk.accounts.dev` / `pk_test`, falling back to `CLERK_SECRET_KEY`) serves `dev-v2.vibesdiy.net` and the `pr-*.workers.dev` previews. **`cli` is _not_ on the preview instance.**
+  - **Continuing the spine in the same browser.** The script authenticates the browser it drives. To authenticate a browser another tool (e.g. chrome-devtools MCP) is driving, attach with `--cdp <cdp-url>` (works when that Chrome exposes a CDP endpoint). For a standalone/Playwright spine, `--storage <file>` exports the session's cookies for reuse. _(Wiring the chrome-devtools MCP Chrome with a CDP port so the MCP spine attaches directly is the tracked follow-up; the login mechanism itself is verified.)_
+  - **Reference — what the script does in the page** (do **not** run this from the agent with a real token; it's here to document the mechanism):
+    ```js
+    if (!window.Clerk) return { ok: false, err: "window.Clerk not present" };
+    await window.Clerk.load?.(); // wait until ClerkJS is loaded before driving it
+    const result = await window.Clerk.client.signIn.create({ strategy: "ticket", ticket });
+    if (result.status !== "complete") return { ok: false, status: result.status };
+    await window.Clerk.setActive({ session: result.createdSessionId });
+    return { ok: true, userId: window.Clerk.user?.id ?? null };
+    ```
+    After `PASS`, continue at the **cloud-token branch of Step 4** (do **not** run Step 4.1's OAuth flow — you're already signed in). Verified findings: `window.Clerk` is exposed and reliable post-`load()` on both instances; the ticket sign-in hit **no Turnstile/CAPTCHA challenge** on either (keep the `@clerk/testing` Testing-Token fallback documented for the risk/attack-protection case).
+  - **If the instance secret is absent**, you can't sign in headlessly: finish Steps 1–3 and mark the authenticated spine `path_not_tested` (reason: "no `CLERK_SECRET_KEY[_PREVIEW]` in env"), or run on a local workstation (below). Never fake a sign-in. **Never** echo the secret or the minted token (or the `--storage` state file, which holds the session cookie) into the triage, gist, or PR comment.
 
 ### Local workstation (secondary)
 
