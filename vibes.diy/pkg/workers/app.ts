@@ -391,9 +391,12 @@ export default {
     // Worker-rendered HTML and made the beacon POST to vibes.diy/cdn-cgi/rum —
     // a path the edge 404s for this zone (#2770). Our snippet posts to
     // cloudflareinsights.com instead, so it never touches our zone/Worker.
-    // Preserve the dashboard's "exclude EU" posture using Cloudflare's own EU
-    // determination (request.cf.isEUCountry === "1"), and skip dev entirely.
-    const enableCfRum = !import.meta.env.DEV && request.cf?.isEUCountry !== "1";
+    // Restrict to the prod deployment: the site token is hard-coded for the
+    // vibes.diy site, and manual-install beacons attribute by token (not
+    // hostname), so firing it from dev/preview/cli/test Workers would pollute
+    // production analytics. Preserve the dashboard's "exclude EU" posture using
+    // Cloudflare's own EU determination (request.cf.isEUCountry === "1").
+    const enableCfRum = env.ENVIRONMENT === "prod" && request.cf?.isEUCountry !== "1";
 
     // Delegate to React Router for SSR
     const ssrResponse = (await getRequestHandler()(request as unknown as Parameters<ReturnType<typeof createRequestHandler>>[0], {
