@@ -230,6 +230,44 @@ describe("UnifiedVibeCard", () => {
     expect(screen.queryByRole("menu", { name: /acting as/i })).toBeNull();
   });
 
+  it("no longer renders a disclosure triangle and opens the picker from the tag itself", () => {
+    render(
+      <UnifiedVibeCard appTitle="Bloom Machine" open handleSlug="meghan" handles={[{ slug: "meghan" }, { slug: "meghan_work" }]} />
+    );
+    // The ▾ caret is gone — the whole tag is the trigger now.
+    expect(screen.queryByText("▾")).toBeNull();
+    const trigger = screen.getByRole("button", { name: /switch handle/i });
+    expect(trigger.textContent).toContain("@meghan");
+    fireEvent.click(trigger);
+    expect(screen.getByRole("menu", { name: /acting as/i })).toBeTruthy();
+  });
+
+  it("clicking the avatar makes a new avatar (file picker) instead of opening the picker", () => {
+    const onPickAvatar = vi.fn();
+    render(
+      <UnifiedVibeCard
+        appTitle="Bloom Machine"
+        open
+        handleSlug="meghan"
+        handles={[{ slug: "meghan" }]}
+        onPickAvatar={onPickAvatar}
+      />
+    );
+    const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
+    expect(fileInput).toBeTruthy();
+    const clickSpy = vi.spyOn(fileInput, "click").mockImplementation(() => undefined);
+    fireEvent.click(screen.getByRole("button", { name: /change avatar/i }));
+    // The avatar opens the file picker and does NOT open the handle menu.
+    expect(clickSpy).toHaveBeenCalledTimes(1);
+    expect(screen.queryByRole("menu", { name: /acting as/i })).toBeNull();
+  });
+
+  it("offers no avatar edit affordance without onPickAvatar", () => {
+    render(<UnifiedVibeCard appTitle="Bloom Machine" open handleSlug="meghan" handles={[{ slug: "meghan" }]} />);
+    expect(screen.queryByRole("button", { name: /change avatar/i })).toBeNull();
+    expect(document.querySelector('input[type="file"]')).toBeNull();
+  });
+
   it("fires onNewHandle from the picker", () => {
     const onNewHandle = vi.fn();
     render(

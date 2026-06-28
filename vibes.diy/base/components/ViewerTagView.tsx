@@ -6,7 +6,12 @@ import React, { useEffect, useRef, useState } from "react";
  * interaction (hidden file input, camera affordance, scoped to one handle). All actions
  * are INJECTED: the runtime wires `onPickFile`/`onSignIn` to the iframe host bridge
  * (getRegisteredVibeApi), the chrome wires them to the platform APIs (sharedApi upload /
- * Clerk login). The `trailing` slot carries extras like a handle-picker caret.
+ * Clerk login).
+ *
+ * Click routing (#2678 follow-up): when `onTagClick` is supplied the WHOLE pill is a
+ * picker trigger (the card opens the HandlePickerMenu) — there is no separate disclosure
+ * caret. The one exception is the avatar: in `editable` me-mode clicking the avatar opens
+ * the file picker to make a new avatar and stops there (it never also opens the menu).
  */
 
 function CameraGlyph({ size }: { readonly size: number }): React.ReactElement {
@@ -43,7 +48,17 @@ export interface ViewerTagViewProps {
   /** Called with the chosen file when the avatar is edited. May be async; the view shows
    *  an uploading state until it resolves. */
   readonly onPickFile?: (file: File) => void | Promise<void>;
-  /** Slot rendered at the trailing edge of the pill (e.g. a handle-picker caret). */
+  /** When set, the whole pill (everything except the editable avatar) is a picker
+   *  trigger — clicking it calls this. The card wires it to toggle the HandlePickerMenu.
+   *  Omit to render a plain, non-interactive tag (the runtime / anonymous shapes). */
+  readonly onTagClick?: () => void;
+  /** Reflected on the trigger's `aria-expanded` (the menu's open state). */
+  readonly tagExpanded?: boolean;
+  /** Accessible label for the picker trigger. Default "Switch handle". */
+  readonly tagLabel?: string;
+  /** Slot rendered at the trailing edge of the pill — e.g. the share roster's
+   *  read-only role label. NOT a disclosure caret: the whole pill is the picker
+   *  trigger via `onTagClick`. */
   readonly trailing?: React.ReactNode;
   readonly style?: React.CSSProperties;
 }
@@ -56,6 +71,9 @@ export function ViewerTagView({
   anonymous,
   onSignIn,
   onPickFile,
+  onTagClick,
+  tagExpanded,
+  tagLabel,
   trailing,
   style,
 }: ViewerTagViewProps): React.ReactElement {
@@ -106,9 +124,14 @@ export function ViewerTagView({
 
   const initial = slug.charAt(0).toUpperCase();
   const hasAvatarImage = Boolean(avatarUrl && !avatarError);
+  const interactive = Boolean(onTagClick);
 
   return (
     <span
+      // The whole pill is the picker trigger (a convenience hit area). The
+      // editable avatar stops propagation so it keeps its own make-a-new-avatar
+      // action; the keyboard/SR-reachable trigger is the labelled name button.
+      onClick={interactive ? () => onTagClick?.() : undefined}
       style={{
         display: "inline-flex",
         alignItems: "center",
@@ -119,12 +142,35 @@ export function ViewerTagView({
         padding: "5px 14px 5px 5px",
         fontSize: 14,
         color: "var(--text, #e0e0e0)",
+        cursor: interactive ? "pointer" : undefined,
         ...style,
       }}
     >
       <span style={{ position: "relative", flexShrink: 0 }}>
         <span
-          onClick={editable ? () => fileRef.current?.click() : undefined}
+          role={editable ? "button" : undefined}
+          aria-label={editable ? "Change avatar" : undefined}
+          tabIndex={editable ? 0 : undefined}
+          onClick={
+            editable
+              ? (e) => {
+                  // Avatar = make a new avatar, never the picker.
+                  e.stopPropagation();
+                  fileRef.current?.click();
+                }
+              : undefined
+          }
+          onKeyDown={
+            editable
+              ? (e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    fileRef.current?.click();
+                  }
+                }
+              : undefined
+          }
           style={{
             width: 30,
             height: 30,
@@ -192,7 +238,36 @@ export function ViewerTagView({
           </span>
         )}
       </span>
-      <span style={{ fontWeight: 500 }}>{displayName ?? slug}</span>
+      {interactive ? (
+        <button
+          type="button"
+          aria-haspopup="menu"
+          aria-expanded={tagExpanded ?? false}
+          aria-label={tagLabel ?? "Switch handle"}
+          onClick={(e) => {
+            // Stop the bubble so the pill's convenience onClick doesn't fire too.
+            e.stopPropagation();
+            onTagClick?.();
+          }}
+          style={{
+            flex: 1,
+            minWidth: 0,
+            textAlign: "left",
+            background: "none",
+            border: "none",
+            padding: 0,
+            margin: 0,
+            font: "inherit",
+            fontWeight: 500,
+            color: "inherit",
+            cursor: "pointer",
+          }}
+        >
+          {displayName ?? slug}
+        </button>
+      ) : (
+        <span style={{ fontWeight: 500 }}>{displayName ?? slug}</span>
+      )}
       {trailing}
       {editable && <input ref={fileRef} type="file" accept="image/*" style={{ display: "none" }} onChange={handleFileChange} />}
     </span>

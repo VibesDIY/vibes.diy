@@ -23,6 +23,11 @@ export interface UnifiedVibeCardProps {
   onSelectHandle?: (slug: string) => void;
   /** Create a new handle ("New handle" row). */
   onNewHandle?: () => void;
+  /** Upload a new avatar for the active handle. When provided, the header tag's
+   *  avatar becomes the click-to-edit affordance (the runtime ViewerTag's me-mode
+   *  reused here): clicking the avatar opens a file picker and runs the host's
+   *  consent overlay. Clicking anywhere else on the tag opens the handle picker. */
+  onPickAvatar?: (file: File) => void | Promise<void>;
   /** Disables the picker rows while a switch/create is in flight. */
   handlePickerBusy?: boolean;
   /** Controlled open state for the handle picker (defaults to internal state). */
@@ -241,34 +246,13 @@ export function UnifiedVibeCard(props: UnifiedVibeCardProps) {
                     slug={props.handleSlug}
                     displayName={`@${props.handleSlug}`}
                     avatarUrl={props.handleAvatarUrl}
-                    trailing={
-                      pickerInteractive ? (
-                        <button
-                          type="button"
-                          aria-label="Switch handle"
-                          aria-haspopup="menu"
-                          aria-expanded={pickerOpen}
-                          onClick={() => setPickerOpen(!pickerOpen)}
-                          style={{
-                            display: "inline-flex",
-                            alignItems: "center",
-                            background: "none",
-                            border: "none",
-                            padding: "0 2px",
-                            marginLeft: 1,
-                            fontSize: 11,
-                            lineHeight: 1,
-                            opacity: 0.6,
-                            cursor: "pointer",
-                            color: "inherit",
-                          }}
-                        >
-                          ▾
-                        </button>
-                      ) : (
-                        <span style={{ fontSize: 11, opacity: 0.6, marginLeft: 1 }}>▾</span>
-                      )
-                    }
+                    // The avatar is the make-a-new-avatar affordance (reuses the
+                    // ViewerTag me-mode + the host consent overlay); a click
+                    // anywhere else on the tag opens the handle picker.
+                    editable={Boolean(props.onPickAvatar)}
+                    onPickFile={props.onPickAvatar}
+                    onTagClick={pickerInteractive ? () => setPickerOpen(!pickerOpen) : undefined}
+                    tagExpanded={pickerOpen}
                     style={{
                       background: "var(--color-light-background-01, #eee)",
                       border: "1px solid var(--color-light-decorative-01, #ddd)",
