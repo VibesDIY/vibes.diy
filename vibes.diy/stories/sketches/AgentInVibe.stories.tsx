@@ -427,7 +427,6 @@ function ShareBody({
       url="vibes.diy/meghan/bloom"
       copied={copied}
       onCopy={() => setCopied(true)}
-      onViewLive={() => undefined}
       viewer={viewer}
       members={viewer === "anonymous" ? [] : ROSTER}
       access={access}

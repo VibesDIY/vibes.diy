@@ -120,6 +120,19 @@ export function UnifiedVibeCard(props: UnifiedVibeCardProps) {
 
   return (
     <>
+      {/* Click-away backdrop: while the card is open, a transparent full-viewport
+          layer sits above the running app (which lives in an iframe, so a
+          document-level mousedown listener can't see clicks landing on it) and
+          below the card + toggle. Clicking it dismisses the expansion. Rendered
+          only while `open` so the exit animation isn't click-blocking. */}
+      {open && (
+        <div
+          aria-hidden
+          data-testid="vibe-menu-backdrop"
+          onClick={() => setOpen(false)}
+          style={{ position: "fixed", inset: 0, zIndex: 1, pointerEvents: "auto" }}
+        />
+      )}
       {mounted && (
         <div
           role="dialog"
@@ -130,6 +143,7 @@ export function UnifiedVibeCard(props: UnifiedVibeCardProps) {
             left: 12,
             right: 12,
             bottom: 12,
+            zIndex: 2,
             borderRadius: 16,
             maxHeight: "82%",
             overflow: "hidden",
