@@ -1,7 +1,8 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { VibesSwitch } from "./VibesSwitch.js";
 import { OptionButtons } from "./OptionButtons.js";
 import { ViewerTagView } from "./ViewerTagView.js";
+import { HandlePickerMenu, type HandleOption } from "./HandlePickerMenu.js";
 
 export interface UnifiedVibeCardProps {
   appTitle: string;
@@ -14,6 +15,19 @@ export interface UnifiedVibeCardProps {
   isOwner?: boolean;
   handleSlug?: string;
   handleAvatarUrl?: string;
+  /** The handles this account can act as (the active-handle switcher, #2278/#2275).
+   *  When provided, the header tag's caret becomes interactive and opens the
+   *  HandlePickerMenu. Omit to keep the tag's caret static (legacy behavior). */
+  handles?: readonly HandleOption[];
+  /** Switch the active handle (the host persists it via the `defaultHandle` setting). */
+  onSelectHandle?: (slug: string) => void;
+  /** Create a new handle ("New handle" row). */
+  onNewHandle?: () => void;
+  /** Disables the picker rows while a switch/create is in flight. */
+  handlePickerBusy?: boolean;
+  /** Controlled open state for the handle picker (defaults to internal state). */
+  handlePickerOpen?: boolean;
+  onHandlePickerOpenChange?: (open: boolean) => void;
   onHome?: () => void;
   /** Selects the edit affordance (switches the body back to chips/Other). */
   onEdit?: () => void;
@@ -40,6 +54,26 @@ export function UnifiedVibeCard(props: UnifiedVibeCardProps) {
     if (controlledOpen === undefined) setInternalOpen(next);
     onOpenChange?.(next);
   };
+
+  // Handle picker (the active-handle switcher) — opened from the header tag's
+  // caret. The picker is interactive only when the host supplies `handles`.
+  const pickerInteractive = props.handles !== undefined;
+  const [internalPickerOpen, setInternalPickerOpen] = useState(false);
+  const pickerOpen = props.handlePickerOpen ?? internalPickerOpen;
+  const setPickerOpen = (next: boolean) => {
+    if (props.handlePickerOpen === undefined) setInternalPickerOpen(next);
+    props.onHandlePickerOpenChange?.(next);
+  };
+  const pickerWrapRef = useRef<HTMLDivElement>(null);
+  // Click-away: close the picker when a pointer-down lands outside its anchor.
+  useEffect(() => {
+    if (!pickerOpen) return;
+    const onDown = (e: MouseEvent) => {
+      if (!pickerWrapRef.current?.contains(e.target as Node)) setPickerOpen(false);
+    };
+    document.addEventListener("mousedown", onDown);
+    return () => document.removeEventListener("mousedown", onDown);
+  }, [pickerOpen]);
 
   // Animation: the OUTER card scales from the toggle's lower-right corner
   // (`grown`), and the inner content fades in only after the grow. `mounted`
@@ -126,20 +160,65 @@ export function UnifiedVibeCard(props: UnifiedVibeCardProps) {
                   right end. */}
               <div style={{ flex: 1 }} />
               {props.handleSlug ? (
-                <ViewerTagView
-                  slug={props.handleSlug}
-                  displayName={`@${props.handleSlug}`}
-                  avatarUrl={props.handleAvatarUrl}
-                  trailing={<span style={{ fontSize: 11, opacity: 0.6, marginLeft: 1 }}>▾</span>}
-                  style={{
-                    background: "var(--color-light-background-01, #eee)",
-                    border: "1px solid var(--color-light-decorative-01, #ddd)",
-                    color: "var(--color-light-primary, #333)",
-                    fontSize: 13,
-                    padding: "3px 8px 3px 4px",
-                    flexShrink: 0,
-                  }}
-                />
+                <div ref={pickerWrapRef} style={{ position: "relative", flexShrink: 0 }}>
+                  <ViewerTagView
+                    slug={props.handleSlug}
+                    displayName={`@${props.handleSlug}`}
+                    avatarUrl={props.handleAvatarUrl}
+                    trailing={
+                      pickerInteractive ? (
+                        <button
+                          type="button"
+                          aria-label="Switch handle"
+                          aria-haspopup="menu"
+                          aria-expanded={pickerOpen}
+                          onClick={() => setPickerOpen(!pickerOpen)}
+                          style={{
+                            display: "inline-flex",
+                            alignItems: "center",
+                            background: "none",
+                            border: "none",
+                            padding: "0 2px",
+                            marginLeft: 1,
+                            fontSize: 11,
+                            lineHeight: 1,
+                            opacity: 0.6,
+                            cursor: "pointer",
+                            color: "inherit",
+                          }}
+                        >
+                          ▾
+                        </button>
+                      ) : (
+                        <span style={{ fontSize: 11, opacity: 0.6, marginLeft: 1 }}>▾</span>
+                      )
+                    }
+                    style={{
+                      background: "var(--color-light-background-01, #eee)",
+                      border: "1px solid var(--color-light-decorative-01, #ddd)",
+                      color: "var(--color-light-primary, #333)",
+                      fontSize: 13,
+                      padding: "3px 8px 3px 4px",
+                      flexShrink: 0,
+                    }}
+                  />
+                  {pickerInteractive && pickerOpen && (
+                    <HandlePickerMenu
+                      handles={props.handles ?? []}
+                      activeSlug={props.handleSlug}
+                      busy={props.handlePickerBusy}
+                      placement="down"
+                      onSelect={(slug) => {
+                        props.onSelectHandle?.(slug);
+                        setPickerOpen(false);
+                      }}
+                      onNewHandle={() => {
+                        props.onNewHandle?.();
+                        setPickerOpen(false);
+                      }}
+                    />
+                  )}
+                </div>
               ) : (
                 <ViewerTagView slug="?" anonymous onSignIn={props.onSignIn} />
               )}

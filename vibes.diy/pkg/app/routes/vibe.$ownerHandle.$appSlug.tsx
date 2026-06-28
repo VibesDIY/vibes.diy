@@ -19,7 +19,8 @@ import {
   useMobile,
   resolveBuilderOriginFrom,
 } from "@vibes.diy/base";
-import type { ShareMember, ShareViewer, ShareAccess } from "@vibes.diy/base";
+import type { ShareMember, ShareViewer, ShareAccess, HandleOption } from "@vibes.diy/base";
+import { isUserSettingDefaultHandle } from "@vibes.diy/api-types";
 import { useShareModal } from "../components/ResultPreview/useShareModal.js";
 import { useIframeApiInFlight } from "../hooks/useIframeApiInFlight.js";
 import { ShareModal } from "../components/ResultPreview/ShareModal.js";
@@ -223,6 +224,11 @@ export default function VibeIframeWrapper() {
     adminModeRef.current = adminMode;
   }, [adminMode]);
   const [myUserSlug, setMyUserSlug] = useState<string | undefined>(undefined);
+  // The handles this account can act as, for the active-handle switcher (#2678,
+  // the UI for #2275). The avatar URL is the per-handle endpoint (#2434); it 404s
+  // gracefully to the initial when a handle has no photo yet.
+  const [myHandles, setMyHandles] = useState<HandleOption[]>([]);
+  const [handlePickerBusy, setHandlePickerBusy] = useState(false);
   // The viewer's grant on this vibe — used to decide whether the comments
   // composer is enabled when the owner has flipped "Only collaborators can
   // comment" on. Owner + editor stay enabled; viewer/submitter/public/none
@@ -257,15 +263,68 @@ export default function VibeIframeWrapper() {
     if (!authSignedIn || !ownerHandle) {
       setIsOwner(false);
       setMyUserSlug(undefined);
+      setMyHandles([]);
       return;
     }
-    vctx.sharedApi.listHandleBindings({}).then((res) => {
-      if (res.isErr()) return;
-      const items = res.Ok().items;
-      setIsOwner(items.some((item) => item.ownerHandle === ownerHandle));
-      if (items.length > 0) setMyUserSlug(items[0].ownerHandle);
-    });
+    let cancelled = false;
+    // Resolve the handle list + the active (default) handle together: ownership is
+    // account-level (any of your handles), so isOwner is independent of which
+    // handle is active. The active handle is the `defaultHandle` setting honored
+    // server-side by resolveActiveHandle (#2275); fall back to the first binding.
+    void Promise.all([vctx.sharedApi.listHandleBindings({}), vctx.sharedApi.ensureUserSettings({ settings: [] })]).then(
+      ([bRes, sRes]) => {
+        if (cancelled || bRes.isErr()) return;
+        const items = bRes.Ok().items;
+        setIsOwner(items.some((item) => item.ownerHandle === ownerHandle));
+        setMyHandles(items.map((i) => ({ slug: i.ownerHandle, avatarUrl: `/u/${encodeURIComponent(i.ownerHandle)}/avatar` })));
+        const def = sRes.isOk() ? sRes.Ok().settings.filter(isUserSettingDefaultHandle)[0]?.ownerHandle : undefined;
+        const active = def && items.some((i) => i.ownerHandle === def) ? def : items[0]?.ownerHandle;
+        if (active) setMyUserSlug(active);
+      }
+    );
+    return () => {
+      cancelled = true;
+    };
   }, [authSignedIn, ownerHandle, vctx.sharedApi]);
+
+  // Switch the active handle: persist it as the `defaultHandle` user setting, which
+  // resolveActiveHandle honors when attributing later writes (codegen/fork/data).
+  const handleSelectHandle = useCallback(
+    async (slug: string) => {
+      if (slug === myUserSlug) return;
+      setHandlePickerBusy(true);
+      const r = await vctx.sharedApi.ensureUserSettings({ settings: [{ type: "defaultHandle", ownerHandle: slug }] });
+      setHandlePickerBusy(false);
+      if (r.isErr()) {
+        toast.error(`Couldn't switch handle: ${r.Err().message}`);
+        return;
+      }
+      setMyUserSlug(slug);
+    },
+    [myUserSlug, vctx.sharedApi]
+  );
+
+  // "New handle": mint a binding (server picks a random slug) and immediately act
+  // as it, so the gesture has a visible outcome.
+  const handleNewHandle = useCallback(async () => {
+    setHandlePickerBusy(true);
+    const r = await vctx.sharedApi.createHandleBinding({});
+    if (r.isErr()) {
+      setHandlePickerBusy(false);
+      toast.error(`Couldn't create handle: ${r.Err().message}`);
+      return;
+    }
+    const created = r.Ok().ownerHandle;
+    await vctx.sharedApi.ensureUserSettings({ settings: [{ type: "defaultHandle", ownerHandle: created }] });
+    setHandlePickerBusy(false);
+    setMyHandles((prev) =>
+      prev.some((h) => h.slug === created)
+        ? prev
+        : [...prev, { slug: created, avatarUrl: `/u/${encodeURIComponent(created)}/avatar` }]
+    );
+    setMyUserSlug(created);
+    toast.success(`Now acting as @${created}`);
+  }, [vctx.sharedApi]);
 
   useEffect(() => {
     if (!isOwner || !ownerHandle || !appSlug) {
@@ -796,6 +855,11 @@ export default function VibeIframeWrapper() {
                   appIconUrl={screenshotUrl ?? undefined}
                   isOwner={isOwner}
                   handleSlug={myUserSlug}
+                  handleAvatarUrl={myUserSlug ? `/u/${encodeURIComponent(myUserSlug)}/avatar` : undefined}
+                  handles={myHandles}
+                  onSelectHandle={(slug) => void handleSelectHandle(slug)}
+                  onNewHandle={() => void handleNewHandle()}
+                  handlePickerBusy={handlePickerBusy}
                   chips={editChips}
                   onSelectChip={handleEditPrompt}
                   onSubmitOther={handleEditPrompt}
