@@ -12,6 +12,14 @@ import { CFEnv } from "@vibes.diy/api-types";
 // physical name 1:1: `app:`/`shared:` registrations keep their full name on
 // SESSIONS; a bare codegen registration becomes `codegen:<id>` on
 // CODEGEN_SESSIONS.
+//
+// ⚠️ LOAD-BEARING PREFIXES — `app:`/`shared:` are frozen, not free to rename.
+// They must stay byte-identical to the strings app.ts feeds idFromName AND to
+// the persisted UserNotify registration shardIds (pinned to the pre-collapse
+// App/SharedSessions registrations for instance continuity across #2714 Spec
+// B). Renaming a key here without changing app.ts — or vice versa — splits the
+// fan-out: a connection on the new-named instance won't receive notifies routed
+// to an old-named registration. Treat these as on-the-wire constants.
 const SHARD_PREFIX_BINDINGS: Record<string, keyof Pick<CFEnv, "SESSIONS">> = {
   app: "SESSIONS",
   shared: "SESSIONS",
