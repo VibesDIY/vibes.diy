@@ -33,7 +33,7 @@
     "@vibes.diy/base": "workspace:*",
     "@vibes.diy/vibe-runtime": "workspace:*",
     "ag-grid-community": "^35.3.1",
-    "ag-grid-react": "^35.3.1",
+    "ag-grid-react": "^36.0.0",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
     "react-router": "^7.18.0",
