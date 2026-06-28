@@ -26,6 +26,8 @@ Team-shared agent instructions live in the [`agents/`](agents/) directory. These
 - [autoresearch-outer-loop.md](agents/autoresearch-outer-loop.md) — Running the vendored autoresearch loop unattended: goal + success predicate, per-iteration state/branch persistence, resume, guardrails, scheduling caveats
 - [access-model-autoresearch.md](agents/access-model-autoresearch.md) — Autoresearch config + loop discipline for the access-model codegen eval (`eval/access-model`): Goal/Metric/Verify/Modify surface, frozen grader/baseline, predict-gate before each 64-app batch
 - [github-mcp-limits.md](agents/github-mcp-limits.md) — GitHub MCP tools with awkward output + slim alternatives; `actions_list`/`list_workflow_runs` is auto-redirected to `scripts/gh-runs.sh` by a PreToolUse hook
+- [cloud-browser-setup.md](agents/cloud-browser-setup.md) — chrome-devtools MCP screenshots work out of the box in cloud sessions (SessionStart hook + `scripts/setup-cloud-browser.sh`); why the TLS 1.2 cap, and what to run if it ever fails
+- [chrome-mcp-debug.md](agents/chrome-mcp-debug.md) — Chrome DevTools MCP debugging loop: add breadcrumbs, reproduce, inspect structured snapshots, fix, re-verify
 
 ## Team-shared skills
 
