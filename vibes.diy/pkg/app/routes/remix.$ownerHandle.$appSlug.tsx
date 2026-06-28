@@ -65,8 +65,9 @@ export default function RemixRoute() {
 
       if (skipChat) {
         // Clone: skip the chat/edit stage and land straight on the
-        // published /vibe/ URL.
-        navigate(`/vibe/${fork.ownerHandle}/${fork.appSlug}/${fork.srcFsId}`);
+        // published /vibe/ URL. `yours=1` triggers the one-time "it's yours now"
+        // message on landing (#1856).
+        navigate(`/vibe/${fork.ownerHandle}/${fork.appSlug}/${fork.srcFsId}?yours=1`);
         return;
       }
 
@@ -77,6 +78,8 @@ export default function RemixRoute() {
       // change the user described on the source vibe (#2675).
       const params = new URLSearchParams({ view: "code" });
       if (prompt64) params.set("prompt64", prompt64);
+      // `yours=1` triggers the one-time "it's yours now" message on landing (#1856).
+      params.set("yours", "1");
       navigate(`/chat/${fork.ownerHandle}/${fork.appSlug}/${fork.srcFsId}?${params.toString()}`);
     })();
   }, [isLoaded, isSignedIn, ownerHandle, appSlug, fsId, skipChat, prompt64, navigate, chatApi]);

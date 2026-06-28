@@ -25,6 +25,7 @@ import { useChatHydration } from "../../hooks/useChatHydration.js";
 import { useMobilePreviewFlip } from "../../hooks/useMobilePreviewFlip.js";
 import { calcEntryPointUrl } from "@vibes.diy/api-pkg";
 import ChatHeaderContent from "../../components/ChatHeaderContent.js";
+import { useYoursNowToast } from "../../hooks/use-yours-now-toast.js";
 import ChatInterface from "../../components/ChatInterface.js";
 import { ResultPreviewHeaderContent } from "../../components/ResultPreview/ResultPreviewHeaderContent.js";
 import { useShareModal } from "../../components/ResultPreview/useShareModal.js";
@@ -182,6 +183,9 @@ export function Chat({ inConstruction = false, initialPrompt }: { inConstruction
 
   // "remix of" indicator + code-view file-system hydration for the current fsId.
   const { remixOf } = useChatHydration({ ownerHandle, appSlug, fsId, sharedApi, dispatch });
+
+  // One-time "it's yours now" message when landing here from a fresh remix (#1856).
+  useYoursNowToast();
 
   // Chat handle + open/fire lifecycle + reconnect/watchdog (see useChatSession).
   const { chat } = useChatSession({
