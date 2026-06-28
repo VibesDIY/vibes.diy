@@ -13,31 +13,155 @@ on:
         description: 'Version to deploy'
         required: true
 
+# Why this is split into gate → (checks ‖ test shards) → compile_test → deploy
+# instead of one job: a deploy off a SHA with no green compile_test check (a
+# fresh prod tag, a rebased main commit) used to run the full ~4-min suite
+# serially inside actions/base before deploying. That suite is the same one
+# ci.yaml now shards, so fan it out here too across free standard runners
+# (public repo → unlimited + concurrent).
+#
+#   gate        — does this SHA already have a green compile_test check? (the old
+#                 skip-tests-if-sha-green optimization, hoisted to job level so a
+#                 green SHA skips the WHOLE matrix + checks, not just one step).
+#   checks      — lint + format-check + build(typecheck), once, when not green.
+#   test        — the Docker vitest suite, fanned across 4 shards, when not green.
+#   compile_test — aggregator that KEEPS this exact job name so it still emits a
+#                 reusable green `compile_test` check on the deploy SHA: that's
+#                 what lets a second same-SHA deploy (@p after @c, etc.) reuse the
+#                 result via gate. Green iff SHA-already-green OR checks+test both
+#                 passed — so a red suite (or lint/build) can never reach deploy.
+#   deploy      — the Cloudflare deploy; runs only on a green compile_test.
 jobs:
+  gate:
+    runs-on: ubuntu-latest
+    if: ${{ !contains(github.event.head_commit.message || '', '[skip ci]') }}
+    # checks: read lets the lookup below see whether this SHA already has a green
+    # compile_test check. No checkout / contents needed here.
+    permissions:
+      checks: read
+    outputs:
+      sha_green: ${{ steps.check.outputs.sha_green }}
+    steps:
+      - name: check-sha-tested
+        id: check
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SHA: ${{ github.sha }}
+          REPO: ${{ github.repository }}
+        shell: bash
+        run: |
+          # Same green-check lookup actions/base used for skip-tests-if-sha-green,
+          # at job level so a green SHA skips the whole matrix. Fail safe: any API
+          # hiccup → sha_green=false → the full checks + sharded suite runs, so
+          # coverage is never silently dropped.
+          GREEN=$(gh api "repos/${REPO}/commits/${SHA}/check-runs" --paginate \
+            --jq '[.check_runs[] | select(.name=="compile_test" and .conclusion=="success")] | length' \
+            2>/dev/null | awk '{s+=$1} END {print s+0}')
+          if [ "${GREEN:-0}" -ge 1 ]; then
+            echo "sha_green=true" >> "$GITHUB_OUTPUT"
+            echo "✅ ${SHA} already has a green compile_test check — skipping checks + tests." \
+              >> "${GITHUB_STEP_SUMMARY:-/dev/stdout}"
+          else
+            echo "sha_green=false" >> "$GITHUB_OUTPUT"
+            echo "No green compile_test check on ${SHA} — running checks + sharded tests."
+          fi
+
+  # Lint + format-check + build(typecheck) gate — the non-test half of what
+  # actions/base ran before the deploy. Runs once, only when the SHA isn't
+  # already green. `run-tests: 'false'` skips the Docker suite here.
+  checks:
+    needs: gate
+    if: ${{ needs.gate.outputs.sha_green != 'true' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: ./actions/base
+        with:
+          run-tests: 'false'
+
+  # The Docker Playwright/vitest suite, fanned out across free standard runners,
+  # only when the SHA isn't already green. fail-fast: false for the full picture.
+  test:
+    needs: gate
+    if: ${{ needs.gate.outputs.sha_green != 'true' }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4]
+    steps:
+      - uses: actions/checkout@v5
+      - uses: ./actions/base
+        with:
+          run-checks: 'false'
+          shard: ${{ matrix.shard }}/4
+          artifact-suffix: -shard-${{ matrix.shard }}
+
+  # Aggregator. Keeps the name `compile_test` so it still emits a reusable green
+  # check on the deploy SHA (same-SHA deploy reuse via gate) and so the meaning
+  # of a green compile_test on a SHA is unchanged. Green iff the SHA was already
+  # green OR checks + every test shard passed; fails the deploy otherwise.
   compile_test:
+    needs: [gate, checks, test]
+    if: ${{ always() && !contains(github.event.head_commit.message || '', '[skip ci]') }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: gate
+        env:
+          GATE_RESULT: ${{ needs.gate.result }}
+          CHECKS_RESULT: ${{ needs.checks.result }}
+          TEST_RESULT: ${{ needs.test.result }}
+          SHA_GREEN: ${{ needs.gate.outputs.sha_green }}
+        shell: bash
+        run: |
+          echo "gate=${GATE_RESULT} checks=${CHECKS_RESULT} test=${TEST_RESULT} sha_green=${SHA_GREEN}"
+          # gate must have actually run — if it errored we can't trust sha_green,
+          # so refuse to green (fail closed, no deploy).
+          if [ "${GATE_RESULT}" != "success" ]; then
+            echo "::error::gate job concluded '${GATE_RESULT}' — cannot determine test status; refusing to green."
+            exit 1
+          fi
+          # Already-green SHA: tests were intentionally reused, nothing to verify.
+          if [ "${SHA_GREEN}" = "true" ]; then
+            echo "SHA already has a green compile_test — reused; gate green."
+            exit 0
+          fi
+          # Otherwise both checks and the full test matrix must have passed.
+          rc=0
+          for r in "${CHECKS_RESULT}" "${TEST_RESULT}"; do
+            case "$r" in
+              success) ;;
+              *) echo "::error::required job concluded '$r' (expected success)"; rc=1 ;;
+            esac
+          done
+          if [ "$rc" -eq 0 ]; then
+            echo "checks + all test shards passed — gate green."
+          fi
+          exit "$rc"
+
+  # The actual Cloudflare deploy. Carries the per-tag environment + all secrets.
+  # `needs: compile_test` with the default success() gate means it runs ONLY when
+  # the aggregator went green — a failed suite, lint/build, or [skip ci] (which
+  # skips compile_test) all block it. This job just needs install (the deploy
+  # action does its own build + wrangler); lint/build/test already gated above.
+  deploy:
+    needs: compile_test
     runs-on: ubuntu-latest
     # @c (cli) tags used to run in a separate `deploy_cli` job, but the body was
     # identical — the only real difference is the environment (the cli-vs-prod
     # divergence, e.g. the queue consumer, lives in vibes.diy/actions/deploy
-    # gated on CLOUDFLARE_ENV). So @c now folds into the ternary below instead of
+    # gated on CLOUDFLARE_ENV). So @c folds into the ternary below instead of
     # duplicating the whole job. See agents/deploy-tags.md.
-    if: ${{ !contains(github.event.head_commit.message || '', '[skip ci]') }}
     environment: ${{ startsWith(github.ref, 'refs/tags/vibes-diy@s') && 'staging' || startsWith(github.ref, 'refs/tags/vibes-diy@p') && 'prodv2' || startsWith(github.ref, 'refs/tags/vibes-diy@c') && 'cli' || 'dev' }}
-    # checks: read lets actions/base look up whether this exact SHA already has a
-    # green compile_test check (skip-tests-if-sha-green below). The deploy action
-    # uses Cloudflare tokens, not GITHUB_TOKEN, so read-only scoping is safe.
     permissions:
       contents: read
-      checks: read
     steps:
       - uses: actions/checkout@v5
 
       - uses: ./actions/base
         with:
-          # A deploy tag cut from an already-tested commit (e.g. @c from a PR
-          # head) skips the ~5-min suite; any SHA without a green check still
-          # runs it. See agents/deploy-tags.md § "Test reuse across deploys".
-          skip-tests-if-sha-green: 'true'
+          run-checks: 'false'
+          run-tests: 'false'
 
       - uses: ./vibes.diy/actions/deploy
         with:
