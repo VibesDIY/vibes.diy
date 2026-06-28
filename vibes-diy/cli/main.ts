@@ -33,6 +33,14 @@ import {
   type ResChatDetail,
   type ResChatResponse,
 } from "./cmds/chats-cmd.js";
+import {
+  codegenLogCmd,
+  isResCodegenLogList,
+  isResCodegenLogDetail,
+  isResCodegenLogResponse,
+  type ResCodegenLogDetail,
+  type ResCodegenLogResponse,
+} from "./cmds/codegen-log-cmd.js";
 import { editCmd, isResEdit } from "./cmds/edit-cmd.js";
 import { skillsCmd, isResSkillsList, isResSkillContent } from "./cmds/skills-cmd.js";
 import { themesCmd, isResThemesList, isResThemeContent } from "./cmds/themes-cmd.js";
@@ -128,6 +136,7 @@ async function main(): Promise<number> {
       version: packageJson.version,
       cmds: {
         chats: chatsCmd(ctx),
+        "codegen-log": codegenLogCmd(ctx),
         db: dbSubcommands(ctx),
         edit: editCmd(ctx),
         generate: generateCmd(ctx),
@@ -285,6 +294,43 @@ async function main(): Promise<number> {
             // Body is already rendered to the requested mode (verbatim markdown,
             // files JSON, or jsonl) by the handler — print it as-is.
             console.log((msg as ResChatResponse).output);
+            break;
+          }
+          case isResCodegenLogList(msg): {
+            if (wmsg.cmdTs.outputFormat === "json") {
+              for (const item of msg.items) {
+                console.log(JSON.stringify(item));
+              }
+            } else {
+              if (msg.items.length === 0) {
+                console.log("(no codegen chats found)");
+              } else {
+                for (const item of msg.items) {
+                  console.log(`${item.chatId}  ${item.created}`);
+                }
+              }
+            }
+            break;
+          }
+          case isResCodegenLogDetail(msg): {
+            const detail = msg as ResCodegenLogDetail;
+            if (wmsg.cmdTs.outputFormat === "json") {
+              console.log(JSON.stringify(detail, null, 2));
+            } else {
+              if (detail.prompts.length === 0) {
+                console.log("(no prompts in this chat)");
+              } else {
+                for (const p of detail.prompts) {
+                  console.log(`[${p.created}] ${p.prompt}`);
+                }
+              }
+            }
+            break;
+          }
+          case isResCodegenLogResponse(msg): {
+            // Body is already rendered to the requested mode (verbatim markdown,
+            // files JSON, or jsonl) by the handler — print it as-is.
+            console.log((msg as ResCodegenLogResponse).output);
             break;
           }
           case isResDbList(msg): {
