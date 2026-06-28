@@ -109,18 +109,18 @@ See `agents/environments.md` for the full dev/prod/cli/preview architecture.
 
 ## Quick reference
 
-| Goal                | Command                                                                                |
-| ------------------- | -------------------------------------------------------------------------------------- |
-| Log in              | `npx vibes-diy login`                                                                  |
-| Pull source         | `npx vibes-diy pull <handle>/<app> --dir <dir>`                                        |
-| Stage on cli first  | `cd <dir> && npx vibes-diy push --vibe <handle>/<app>` (default `--api-url` = cli)     |
-| Push to prod        | `cd <dir> && npx vibes-diy push --vibe <handle>/<app> --api-url https://vibes.diy/api` |
-| AI follow-up edit   | `npx vibes-diy edit --help`                                                            |
-| Generate a new vibe | `npx vibes-diy generate --help`                                                        |
-| List build turns    | `npx vibes-diy codegen-log <handle>/<app>`                                             |
-| Inspect model reply | `npx vibes-diy codegen-log <handle>/<app> <chatId> --response [--files\|--jsonl\|--raw]` |
-| Read app runtime chats | `npx vibes-diy app-chats <handle>/<app> [<chatId>]`                                  |
-| Coding rules        | `npx vibes-diy system`                                                                 |
+| Goal                   | Command                                                                                  |
+| ---------------------- | ---------------------------------------------------------------------------------------- |
+| Log in                 | `npx vibes-diy login`                                                                    |
+| Pull source            | `npx vibes-diy pull <handle>/<app> --dir <dir>`                                          |
+| Stage on cli first     | `cd <dir> && npx vibes-diy push --vibe <handle>/<app>` (default `--api-url` = cli)       |
+| Push to prod           | `cd <dir> && npx vibes-diy push --vibe <handle>/<app> --api-url https://vibes.diy/api`   |
+| AI follow-up edit      | `npx vibes-diy edit --help`                                                              |
+| Generate a new vibe    | `npx vibes-diy generate --help`                                                          |
+| List build turns       | `npx vibes-diy codegen-log <handle>/<app>`                                               |
+| Inspect model reply    | `npx vibes-diy codegen-log <handle>/<app> <chatId> --response [--files\|--jsonl\|--raw]` |
+| Read app runtime chats | `npx vibes-diy app-chats <handle>/<app> [<chatId>]`                                      |
+| Coding rules           | `npx vibes-diy system`                                                                   |
 
 ## Common mistakes
 
