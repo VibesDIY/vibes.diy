@@ -50,6 +50,11 @@ export interface SharePanelViewProps {
    *  author edits it via the toggle; everyone else sees it as read-only copy. */
   readonly access?: ShareAccess;
   readonly onChangeAccess?: (access: ShareAccess) => void;
+  /** Author-only: disables the access toggle while the authoritative setting is still
+   *  loading (or a write is in flight). Prevents acting on the loader's `isWorldReadable`
+   *  fallback before the real `publicAccess` value resolves — otherwise a click in that
+   *  window can be silently dropped or clobbered by the late read. */
+  readonly accessPending?: boolean;
   /** Author-only: tapping a member's roster tag opens that member's access controls
    *  (viewer / editor / remove) — the manage flow, not yet designed. */
   readonly onSelectMember?: (member: ShareMember) => void;
@@ -73,6 +78,7 @@ export function SharePanelView({
   members = [],
   access = "public",
   onChangeAccess,
+  accessPending,
   onSelectMember,
   className,
 }: SharePanelViewProps) {
@@ -136,9 +142,11 @@ export function SharePanelView({
                   type="button"
                   role="radio"
                   aria-checked={active}
+                  disabled={accessPending}
                   onClick={() => onChangeAccess?.(opt.value)}
                   className={
                     "flex-1 rounded-md border px-3 py-2 text-center text-xs font-medium transition-colors " +
+                    (accessPending ? "cursor-default opacity-60 " : "") +
                     (active
                       ? "border-[#1a1a1a] bg-light-background-01 dark:bg-dark-background-01"
                       : "border-light-decorative-01 dark:border-dark-decorative-01 hover:bg-light-background-01 dark:hover:bg-dark-background-01")

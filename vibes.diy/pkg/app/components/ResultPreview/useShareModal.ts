@@ -284,7 +284,11 @@ export function useShareModal({
   const handleSetPublicAccess = useCallback(
     async (enable: boolean) => {
       const prev = publicAccessEnabled;
-      if (enable === prev) return;
+      // Only skip a no-op once the authoritative setting has loaded — before that,
+      // `publicAccessEnabled` is still its initial `false` while the UI may show the
+      // loader's world-readable hint, so an equality check here would silently drop a
+      // legitimate click (Codex P2). The control is also disabled until loaded.
+      if (settingsLoaded && enable === prev) return;
       setPublicAccessEnabled(enable);
       setIsTogglingPublicAccess(true);
       const res = await sharedApi.ensureAppSettings({ appSlug, ownerHandle, publicAccess: { enable } });
@@ -294,7 +298,7 @@ export function useShareModal({
         toast.error(`Couldn't update who can open this vibe: ${res.Err().message}`);
       }
     },
-    [publicAccessEnabled, appSlug, ownerHandle, sharedApi]
+    [publicAccessEnabled, settingsLoaded, appSlug, ownerHandle, sharedApi]
   );
 
   const handlePublish = useCallback(
