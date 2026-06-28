@@ -90,9 +90,10 @@ jobs:
           SCOPE_RESULT: ${{ needs.scope.result }}
           CHECKS_RESULT: ${{ needs.checks.result }}
           TEST_RESULT: ${{ needs.test.result }}
+          DOCS_ONLY: ${{ needs.scope.outputs.docs_only }}
         shell: bash
         run: |
-          echo "scope=${SCOPE_RESULT} checks=${CHECKS_RESULT} test=${TEST_RESULT}"
+          echo "scope=${SCOPE_RESULT} checks=${CHECKS_RESULT} test=${TEST_RESULT} docs_only=${DOCS_ONLY}"
           rc=0
           # scope and checks must genuinely succeed — never accept a bare
           # "skipped" for them. If scope errors (checkout / changed-scope),
@@ -107,12 +108,19 @@ jobs:
             esac
           done
           # test may legitimately be "skipped" — but ONLY via its
-          # `if: docs_only != 'true'` docs-only path, which is reachable solely
-          # when scope SUCCEEDED. Since success of scope is already required
-          # above, a skipped test here is the intended docs-only skip, not a
-          # dependency cascade.
+          # `if: docs_only != 'true'` docs-only path. Gate that explicitly on
+          # docs_only rather than inferring it from scope==success: a skipped
+          # test is accepted only when this really is a docs-only PR, so any
+          # other skip (a future `if:` on the test job, a dependency cascade)
+          # fails the required check instead of silently passing.
           case "${TEST_RESULT}" in
-            success|skipped) ;;
+            success) ;;
+            skipped)
+              if [ "${DOCS_ONLY}" != "true" ]; then
+                echo "::error::test matrix was skipped but this is not a docs-only PR (docs_only=${DOCS_ONLY})"
+                rc=1
+              fi
+              ;;
             *) echo "::error::the test matrix concluded '${TEST_RESULT}'"; rc=1 ;;
           esac
           if [ "$rc" -eq 0 ]; then
