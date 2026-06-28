@@ -23,8 +23,7 @@ on:
 #   gate        — does this SHA already have a green compile_test check? (the old
 #                 skip-tests-if-sha-green optimization, hoisted to job level so a
 #                 green SHA skips the WHOLE matrix + checks, not just one step).
-#   checks      — lint + format-check + build(typecheck); ALWAYS runs (cheap
-#                 blocking backstop, kept even on a green SHA — see its comment).
+#   checks      — lint + format-check + build(typecheck); skipped on a green SHA.
 #   test        — the Docker vitest suite, fanned across 4 shards, when not green.
 #   compile_test — aggregator that KEEPS this exact job name so it still emits a
 #                 reusable green `compile_test` check on the deploy SHA: that's
@@ -68,19 +67,15 @@ jobs:
           fi
 
   # Lint + format-check + build(typecheck) gate — the non-test half of what
-  # actions/base ran before the deploy. Runs ALWAYS (even on an already-green
-  # SHA), deliberately: it's the cheap blocking backstop that the old deploy
-  # kept regardless of skip-tests-if-sha-green. The green-check lookup matches
-  # any check named `compile_test`, and other publish workflows
-  # (use-vibes-publish / prompts-publish) emit one WITHOUT running tests — so a
-  # cross-stream same-SHA tag could set sha_green=true off a check that never
-  # ran the suite. Skipping only the (re-runnable, sharded) test matrix on that
-  # signal — never lint/build — keeps a misleading match from removing the
-  # backstop. See #2790 for retiring that name collision at the source (which
-  # would then let this job also skip on a genuinely-green SHA).
-  # `run-tests: 'false'` skips the Docker suite here.
+  # actions/base ran before the deploy. Skipped on an already-green SHA: every
+  # workflow that emits a `compile_test` check now runs the real suite
+  # (ci.yaml, this deploy, call-ai-publish) — the test-skipping publish jobs
+  # were renamed off that check name in #2790 — so a green `compile_test` means
+  # lint+build+test all passed, and re-running lint/build here would be pure
+  # waste. `run-tests: 'false'` skips the Docker suite here.
   checks:
     needs: gate
+    if: ${{ needs.gate.outputs.sha_green != 'true' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -124,29 +119,29 @@ jobs:
         shell: bash
         run: |
           echo "gate=${GATE_RESULT} checks=${CHECKS_RESULT} test=${TEST_RESULT} sha_green=${SHA_GREEN}"
+          # gate must have run so sha_green is trustworthy; if it errored we
+          # can't trust the signal, so refuse to green (fail closed, no deploy).
+          if [ "${GATE_RESULT}" != "success" ]; then
+            echo "::error::gate job concluded '${GATE_RESULT}' — cannot determine test status; refusing to green."
+            exit 1
+          fi
+          # Already-green SHA: checks + tests were intentionally skipped because a
+          # `compile_test` check on this SHA already certifies lint+build+test
+          # passed (only real-suite workflows emit that name post-#2790).
+          if [ "${SHA_GREEN}" = "true" ]; then
+            echo "SHA already has a green compile_test — reused; gate green."
+            exit 0
+          fi
+          # Otherwise both checks and the full sharded test matrix must have passed.
           rc=0
-          # gate must have run so sha_green is trustworthy, and checks (lint +
-          # build) ALWAYS runs — it's the backstop kept even on a green SHA,
-          # because the green-check lookup isn't workflow-scoped (see the checks
-          # job comment). Both must succeed.
-          for r in "${GATE_RESULT}" "${CHECKS_RESULT}"; do
+          for r in "${CHECKS_RESULT}" "${TEST_RESULT}"; do
             case "$r" in
               success) ;;
               *) echo "::error::required job concluded '$r' (expected success)"; rc=1 ;;
             esac
           done
-          # The test matrix is skipped only on an already-green SHA; otherwise the
-          # full sharded suite must have passed.
-          if [ "${SHA_GREEN}" = "true" ]; then
-            echo "SHA already green — test suite reused (lint/build still ran)."
-          else
-            case "${TEST_RESULT}" in
-              success) ;;
-              *) echo "::error::test matrix concluded '${TEST_RESULT}' (expected success)"; rc=1 ;;
-            esac
-          fi
           if [ "$rc" -eq 0 ]; then
-            echo "gate green — deploy may proceed."
+            echo "checks + all test shards passed — gate green."
           fi
           exit "$rc"
 
