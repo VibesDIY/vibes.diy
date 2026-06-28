@@ -86,6 +86,18 @@ Shipping a release normally means cutting three tags at the same commit (`vibes-
 
 `ship-fanout.yaml` triggers on `push: tags: ['ship@*']`, validates the version is bare semver, creates the three canonical tags **at the same commit the `ship@` tag points to**, and pushes them. The existing `vibes-diy-deploy` / `package-deploy` workflows then run unchanged — so the per-stream tags this runbook's pending-changes tooling and rollback depend on still exist. The `ship@` tag itself triggers nothing else.
 
+### Test once, deploy both `vibes-diy@` tags (compile-test reuse)
+
+A freshly-merged main commit usually has **no green `compile_test` check**: `ci.yaml` runs on the PR-head SHA, and we rebase-merge, so the SHA that lands on main differs from the one CI greened. If `ship@` pushed the child tags blind, `vibes-diy@p` and `vibes-diy@c` would each fire `vibes-diy-deploy.yaml` and — neither finding a green check — both run the full sharded suite **in parallel: the same tests, twice**.
+
+So `ship-fanout.yaml` runs the **same `gate → checks ‖ test×4 → compile_test` graph** `vibes-diy-deploy` uses, **once**, on the ship SHA _before_ pushing any child tag. The aggregator job is named `compile_test` on purpose, so the run emits a reusable green `compile_test` check-run on that exact commit; only then does the `fanout` job push the three tags. Each child deploy's own `gate` then finds that green check and **skips straight to deploy**. The downstream tags need **zero changes** — the `gate` lookup is already SHA-keyed and source-agnostic; `ship@` just guarantees the green check exists before they fire. A red suite fails the fan-out before any tag is pushed, so a broken commit can never ship.
+
+Caveats:
+
+- **Only the two `vibes-diy@` tags reuse the check.** `pkg@p` → `package-deploy.yaml` runs its own `actions/base` (checks + tests) unconditionally — it has no green-check `gate` — so npm still tests independently. Teaching `package-deploy` a gate would extend "test once" to all three; not done yet.
+- **Only the `ship@` path dedups.** Hand-cutting `vibes-diy@p` + `vibes-diy@c` at the same commit still double-tests, because neither's `compile_test` check has landed when the other starts. Prefer `ship@`.
+- All the existing fan-out validations (semver, on-main, child-tag immutability) now run **up front in the `gate` job**, so an invalid `ship@` tag fails before spending the suite — not after.
+
 This is the easiest path from a phone: create `ship@<ver>` once via the GitHub **Releases** UI (target `main`), and all three deploys go.
 
 **From the CLI, the tag must be annotated — pass `-m`.** This repo's git config forces annotated tags, so a bare `git tag ship@<ver> <sha>` fails with `fatal: no tag message?` and the subsequent `git push` then errors with `src refspec ... does not match any` (the tag was never created). Always create it as `git tag -a ship@<ver> <sha> -m "ship <ver>: fan-out to prod + cli + pkg"`, then `git push origin ship@<ver>`. Same rule applies to the per-stream `vibes-diy@p*` / `vibes-diy@c*` / `pkg@p*` tags.
