@@ -17,6 +17,8 @@ npx vibes-diy login
 
 Pushing under someone else's handle requires an **editor grant** on that vibe — without it, `pull` returns "Access denied" and `push` fails server-side.
 
+> **Validating a just-merged CLI feature?** `npx vibes-diy@latest` is the **published** package and can lag `main` — a subcommand that exists in repo source (`vibes-diy/cli/cmds/`) may not be in the published binary yet (e.g. `versions` errored with "Not a valid subcommand name" while present at `main.ts:144`). To test recently-merged CLI behavior, run the **repo-local** CLI (`node vibes-diy/cli/run.js <cmd>` — needs deps installed + `tsx`), not `npx vibes-diy@latest`.
+
 ## The loop: pull → edit → push → verify
 
 ### 1. Pull the source to disk
