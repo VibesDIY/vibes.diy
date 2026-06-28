@@ -9,6 +9,7 @@ import { generateEvento } from "./cmds/generate-cmd.js";
 import { dbListEvento, dbGetEvento, dbPutEvento, dbDelEvento, dbQueryEvento, dbSubscribeEvento } from "./cmds/db/index.js";
 import { chatsEvento } from "./cmds/chats-cmd.js";
 import { codegenLogEvento } from "./cmds/codegen-log-cmd.js";
+import { appChatsEvento } from "./cmds/app-chats-cmd.js";
 import { editEvento } from "./cmds/edit-cmd.js";
 import { listEvento } from "./cmds/list-cmd.js";
 import { pullEvento } from "./cmds/pull-cmd.js";
@@ -47,6 +48,7 @@ export function cmdTsEvento() {
     pushEvento,
     putAssetEvento,
     generateEvento,
+    appChatsEvento,
     chatsEvento,
     codegenLogEvento,
     editEvento,

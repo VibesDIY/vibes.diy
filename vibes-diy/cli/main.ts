@@ -41,6 +41,7 @@ import {
   type ResCodegenLogDetail,
   type ResCodegenLogResponse,
 } from "./cmds/codegen-log-cmd.js";
+import { appChatsCmd, isResAppChatsList, isResAppChatsDetail, type ResAppChatsDetail } from "./cmds/app-chats-cmd.js";
 import { editCmd, isResEdit } from "./cmds/edit-cmd.js";
 import { skillsCmd, isResSkillsList, isResSkillContent } from "./cmds/skills-cmd.js";
 import { themesCmd, isResThemesList, isResThemeContent } from "./cmds/themes-cmd.js";
@@ -135,6 +136,7 @@ async function main(): Promise<number> {
       description: "vibes-diy cli",
       version: packageJson.version,
       cmds: {
+        "app-chats": appChatsCmd(ctx),
         chats: chatsCmd(ctx),
         "codegen-log": codegenLogCmd(ctx),
         db: dbSubcommands(ctx),
@@ -331,6 +333,31 @@ async function main(): Promise<number> {
             // Body is already rendered to the requested mode (verbatim markdown,
             // files JSON, or jsonl) by the handler — print it as-is.
             console.log((msg as ResCodegenLogResponse).output);
+            break;
+          }
+          case isResAppChatsList(msg): {
+            if (wmsg.cmdTs.outputFormat === "json") {
+              for (const item of msg.items) {
+                console.log(JSON.stringify(item));
+              }
+            } else {
+              if (msg.items.length === 0) {
+                console.log("(no app chats found)");
+              } else {
+                for (const item of msg.items) {
+                  console.log(`${item.chatId}  ${item.created}`);
+                }
+              }
+            }
+            break;
+          }
+          case isResAppChatsDetail(msg): {
+            const detail = msg as ResAppChatsDetail;
+            if (wmsg.cmdTs.outputFormat === "json") {
+              console.log(JSON.stringify(detail, null, 2));
+            } else {
+              console.log(detail.output);
+            }
             break;
           }
           case isResDbList(msg): {
