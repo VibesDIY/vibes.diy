@@ -11,7 +11,7 @@ import {
 import { CfCacheIf, cfServe } from "@vibes.diy/api-svc";
 import { WSSendProvider } from "@vibes.diy/api-svc/svc-ws-send-provider.js";
 import { CFInjectMutable, cfServeAppCtx, localBroadcastCallbacks, localInvokeAccessFn } from "@vibes.diy/api-svc/cf-serve.js";
-import { CFEnv, isBuildNotification, type EvtUserNotification } from "@vibes.diy/api-types";
+import { CFEnv, isBuildNotification, type EvtUserNotification, type ShardIdentity } from "@vibes.diy/api-types";
 import { exception2Result, URI } from "@adviser/cement";
 import { type } from "arktype";
 import { appMsgEvento } from "@vibes.diy/api-svc/app-msg-evento.js";
@@ -164,6 +164,10 @@ export class AppSessions implements DurableObject {
         accessFnSourceCache,
       })
     ).appCtx;
+
+    // AppSessions is the "vibe" shard: stamp its identity so the runtime gate
+    // (#2714) can fail-loud on a wrong-shard request before any write/broadcast.
+    cctx.appCtx.set("shardIdentity", { kind: "vibe", shardId: currentVibeKey ?? "" } satisfies ShardIdentity);
 
     return cfServe(request, cctx, appMsgEvento);
   }

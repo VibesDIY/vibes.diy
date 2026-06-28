@@ -12,7 +12,7 @@ import { CfCacheIf, cfServe } from "@vibes.diy/api-svc";
 import { WSSendProvider } from "@vibes.diy/api-svc/svc-ws-send-provider.js";
 import { CFInjectMutable, cfServeAppCtx } from "@vibes.diy/api-svc/cf-serve.js";
 import { sharedMsgEvento } from "@vibes.diy/api-svc/shared-msg-evento.js";
-import { CFEnv, isBuildNotification, isUserNotifyShard, userNotifyShardFor } from "@vibes.diy/api-types";
+import { CFEnv, isBuildNotification, isUserNotifyShard, userNotifyShardFor, type ShardIdentity } from "@vibes.diy/api-types";
 import { exception2Result, URI } from "@adviser/cement";
 import { type } from "arktype";
 
@@ -146,6 +146,9 @@ export class SharedSessions implements DurableObject {
     // callbackOverrides is Record<string,unknown> and fully optional in cfServeAppCtx.
     const userCbs = shard !== undefined ? userNotifyCallbacksForSharedSessions(shard, this.env) : {};
     cctx.appCtx = (await cfServeAppCtx(request, this.env, cctx, { ...userCbs })).appCtx;
+    // SharedSessions is the "shared" shard: stamp its identity so the runtime
+    // gate (#2714) sees the kind. Its shard id is the (optional) `?shard=` name.
+    cctx.appCtx.set("shardIdentity", { kind: "shared", shardId: shard ?? "" } satisfies ShardIdentity);
     return cfServe(request, cctx, sharedMsgEvento);
   }
 }
