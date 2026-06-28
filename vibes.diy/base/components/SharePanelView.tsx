@@ -187,9 +187,7 @@ export function SharePanelView({
                   displayName={`@${m.handle}`}
                   avatarUrl={m.avatarUrl}
                   trailing={
-                    m.role ? (
-                      <span style={{ fontSize: 11, opacity: 0.6, marginLeft: 2 }}>{roleLabel(m.role)}</span>
-                    ) : undefined
+                    m.role ? <span style={{ fontSize: 11, opacity: 0.6, marginLeft: 2 }}>{roleLabel(m.role)}</span> : undefined
                   }
                   style={ROSTER_TAG_STYLE}
                 />
