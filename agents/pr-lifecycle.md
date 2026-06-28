@@ -73,6 +73,38 @@ Keep each issue scoped and linked:
 
 Filing the issue, then re-checking CI, is the canonical use of the waiting-for-CI window — not a detour from it.
 
+## Validate changed features against the preview server while CI runs
+
+Once the branch is **review-approved** and the **preview worker has deployed** (the `github-actions[bot]` "Preview Deployment" comment is posted), you have a live, real-data environment for this PR. Use the slow `compile_test` window to actually exercise any changed feature that's reachable from the CLI **against that preview**, instead of only trusting unit tests. This is the same idle-window discipline as filing cleanup issues — turn the wait into verification.
+
+**Scope it to the diff.** Only validate features the PR actually touched and that the CLI can reach (`list`, `db get/put/query/del`, `chats`, `db subscribe`, `mcp`). A data-model change → query the affected db on the preview; a new list/owner field → `list --json` and check it's present; an access-rule change → exercise the grant path. If nothing in the diff is CLI-reachable, say so in one line and skip — don't manufacture a check.
+
+### How to point the CLI at a PR preview
+
+Two env vars do it. **Both are required** — the preview rejects the prod cert.
+
+- **`VIBES_API_URL`** — redirects all CLI traffic to one environment. For a PR preview set it to the preview worker's API path. The URL is in the bot's "Preview Deployment" comment on the PR:
+
+  ```
+  VIBES_API_URL='https://pr-<N>-vibes-diy-v2.jchris.workers.dev/api'
+  ```
+
+- **`VIBES_DEVICE_ID_PREVIEW`** — the headless device cert for the **preview/dev** certificate authority. Preview shares dev's bindings, so its certs are issued by `DEV` (`iss: DEV`, `azp: dev-v2.vibesdiy.net`) — the default `VIBES_DEVICE_ID` (prod, `iss: vibes.diy`) fails there with `[authentication_required]`. Feed the preview value in **as** `VIBES_DEVICE_ID` (the var the CLI seeds its keybag from):
+
+  ```bash
+  VIBES_DEVICE_ID="$VIBES_DEVICE_ID_PREVIEW" \
+  VIBES_API_URL='https://pr-<N>-vibes-diy-v2.jchris.workers.dev/api' \
+  npx vibes-diy list --json
+  ```
+
+**Gotcha — clear the keybag when switching envs.** The CLI seeds its keybag from `VIBES_DEVICE_ID` _only when the keybag is empty_ ("an existing login always wins"); otherwise it prints `Note: VIBES_DEVICE_ID is set but ignored — already logged in` and keeps the old cert. If a prior command in the session already seeded the prod cert, remove the keybag before re-seeding with the preview cert:
+
+```bash
+find ~/.fireproof -name '*.json' -path '*keybag*' -delete
+```
+
+Full CLI command reference lives in the [`vibe-data`](../.claude/skills/vibe-data/SKILL.md) and [`vibe-code`](../.claude/skills/vibe-code/SKILL.md) skills; the env/cert model is in [`environments.md`](environments.md) and [`vibe-data` § Headless / CI auth](../.claude/skills/vibe-data/SKILL.md). Report what you validated (or why nothing was CLI-reachable) when you post the ready-to-merge signal.
+
 ## Ready-to-merge signal
 
 A PR is ready for the human to consider merging when there's a comment at the bottom of the PR thread with this structure:
