@@ -7,15 +7,17 @@
 import { Lazy, Result } from "@adviser/cement";
 import type { SuperThis, FPDeviceIDSession } from "@fireproof/core-types-base";
 import type { DashAuthType } from "@fireproof/core-types-protocols-dashboard";
-import { getKeyBag } from "@fireproof/core-keybag";
+import { getKeyBag } from "./keybag/keybag.js";
 import { DeviceIdKey } from "./device-id/key.js";
 import { DeviceIdSignMsg } from "./device-id/sign.js";
 
 // --- Re-exported crypto/keybag (the seam; swap internals progressively) ---
-// Node-CLI only: core-keybag pulls in `find-up` (fs config lookup), which is
-// NOT bundleable for Cloudflare Workers. Worker code must use "./server" for
-// the CA/token API, never this module.
-export { getKeyBag } from "@fireproof/core-keybag";
+// Node-only: the keybag touches `node:fs` (and a deno fs branch), which is NOT
+// bundleable for Cloudflare Workers. Worker code must use "./server" for the
+// CA/token API, never this module. The keybag is now lifted in-repo
+// (./keybag/keybag.js) — the device-id slice, verbatim, gated by the keybag
+// golden harness.
+export { getKeyBag } from "./keybag/keybag.js";
 // Device-id crypto (key/sign/csr) + the server-side verifier and CA are now
 // in-repo (Tasks 2-3). The production server still reaches the CA/verify through
 // core-protocols-dashboard's deviceIdCAFromEnv/tokenApi (./server) until Task 5

@@ -18,7 +18,6 @@
     "@adviser/cement": "^0.5.34",
     "@clerk/shared": "^4.15.0",
     "@fireproof/core-cli": "0.24.19",
-    "@fireproof/core-keybag": "0.24.19",
     "@fireproof/core-runtime": "0.24.19",
     "@fireproof/core-types-base": "0.24.19",
     "@fireproof/core-types-device-id": "0.24.19",
@@ -28,6 +27,7 @@
     "zod": "^4.1.12"
   },
   "devDependencies": {
+    "@types/deno": "~2.5.0",
     "vitest": "~4.1.9"
   },
   "repository": {
