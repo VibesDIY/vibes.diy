@@ -54,4 +54,15 @@ describe("useInVibeGeneration", () => {
     await waitFor(() => expect(pushSource).toHaveBeenCalledTimes(1));
     await waitFor(() => expect(view.result.current.blurPx).toBeLessThan(25));
   });
+
+  it("counts.lines reflects the resolved code length after a code block", async () => {
+    const { view, fakeChat } = setup();
+    await waitFor(() => expect(view.result.current.phase).toBe("idle"));
+    expect(view.result.current.counts.lines).toBe(0); // no code yet
+    act(() => view.result.current.sendPrompt("a list app"));
+    await act(async () => fakeChat.emitBlockBegin());
+    const src = `export default function App(){return null}\n${"// pad line\n".repeat(40)}`;
+    await act(async () => fakeChat.emitCodeBlock(src));
+    await waitFor(() => expect(view.result.current.counts.lines).toBeGreaterThan(0));
+  });
 });

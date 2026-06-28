@@ -110,11 +110,13 @@ export function useInVibeGeneration(opts: UseInVibeGenerationOpts): InVibeGenera
     return generating ? b : 0;
   }, [hotSwapCount, promptState.running, promptState.optimisticPrompt, promptToSend]);
 
+  const counts = useMemo(() => ({ messages: promptState.blocks.length, lines: getCode(promptState).code.length }), [promptState]);
+
   return {
     phase,
     blocks: promptState.blocks,
     blurPx,
-    counts: { messages: promptState.blocks.length, lines: 0 }, // lines wired in a later task
+    counts,
     sendPrompt,
   };
 }
