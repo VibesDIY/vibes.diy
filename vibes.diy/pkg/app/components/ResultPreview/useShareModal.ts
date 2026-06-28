@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback, createElement } from "react";
 import { toast } from "react-hot-toast";
-import type { VibesDiyApiIface } from "@vibes.diy/api-types";
+import type { Conn } from "@vibes.diy/api-types";
 import { buildEmbedSnippet } from "../../lib/iframe-policy.js";
 import { buildPinterestShareUrl, vibeScreenshotImageUrl } from "../../utils/vibeUrls.js";
 
@@ -8,8 +8,8 @@ interface UseShareModalParams {
   ownerHandle: string;
   appSlug: string;
   fsId: string | undefined;
-  chatApi: VibesDiyApiIface;
-  sharedApi: VibesDiyApiIface;
+  chatApi: Conn<"codegen">;
+  sharedApi: Conn<"shared">;
   /**
    * Runtime host base (`VIBES_SVC_HOSTNAME_BASE`). Used to build the public
    * preview-image URL for social shares (Pinterest). May carry a leading dot.

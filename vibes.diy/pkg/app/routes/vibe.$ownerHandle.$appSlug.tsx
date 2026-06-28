@@ -122,10 +122,11 @@ export default function VibeIframeWrapper() {
   // const [searchParam] = useSearchParams();
   const vctx = useVibesDiy();
   // Vibe-scoped doc-plane ops (e.g. subscribeViewerGrants) run on AppSessions
-  // (vibeApi) so doc-changed fan-out + local access-fn eval happen locally;
-  // chatApi fallback for safety. sharedHandlers RPCs stay on chatApi until
-  // Track B (SharedSessions). (#2265 A1)
-  const dataApi = vctx.vibeApi ?? vctx.chatApi;
+  // (vibeApi) so doc-changed fan-out + local access-fn eval happen locally.
+  // These are VIBE_ONLY ops, so there is no codegen fallback — when vibeApi is
+  // absent, mint the AppSessions connection for this route's vibe key via
+  // appApiFor. Both are Conn<"vibe">. (#2714, was #2265 A1)
+  const dataApi = vctx.vibeApi ?? (ownerHandle && appSlug ? vctx.appApiFor?.(`${ownerHandle}--${appSlug}`) : undefined);
   // Iframe URL: prefer the SSR-computed value from the loader so the
   // <iframe src=...> ships in the first byte of HTML and the browser can
   // start fetching the iframe document without waiting for React hydration.
@@ -362,7 +363,10 @@ export default function VibeIframeWrapper() {
       inRefreshViewerFromWhoAmIRef.current = true;
 
       try {
-        const conn = vctx.vibeApi ?? vctx.chatApi; // admin mode is a doc-plane concern → ride vibeApi
+        // admin mode is a doc-plane concern → ride the AppSessions (vibe)
+        // connection; no codegen fallback. (#2714)
+        const conn = vctx.vibeApi ?? vctx.appApiFor?.(`${ownerHandle}--${appSlug}`);
+        if (!conn) return;
         const rRes = await conn.whoAmI({
           tid: crypto.randomUUID(),
           appSlug,
@@ -394,7 +398,7 @@ export default function VibeIframeWrapper() {
         inRefreshViewerFromWhoAmIRef.current = false;
       }
     },
-    [appSlug, ownerHandle, srvVibeSandbox, vctx.vibeApi, vctx.chatApi]
+    [appSlug, ownerHandle, srvVibeSandbox, vctx.vibeApi, vctx.appApiFor]
   );
 
   const flushPendingWriterViewerRefresh = useCallback(async (): Promise<void> => {
@@ -577,7 +581,7 @@ export default function VibeIframeWrapper() {
   }, [adminMode, adminStorageKey, refreshViewerFromWhoAmI]);
 
   useEffect(() => {
-    if (!authSignedIn || !ownerHandle || !appSlug) return;
+    if (!authSignedIn || !ownerHandle || !appSlug || !dataApi) return;
     void dataApi.subscribeViewerGrants({ appSlug, ownerHandle });
     const unsubscribe = dataApi.onViewerGrantsChanged((evt) => {
       if (evt.ownerHandle !== ownerHandle || evt.appSlug !== appSlug) return;

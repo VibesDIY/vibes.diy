@@ -54,11 +54,13 @@ function formatTime(iso?: string): string {
 }
 
 export function CommentsSection({ ownerHandle, appSlug, canModerate, composerDisabled }: CommentsSectionProps) {
-  const { chatApi, vibeApi, sharedApi } = useVibesDiy();
+  const { vibeApi, appApiFor, sharedApi } = useVibesDiy();
   // Vibe-scoped doc ops run on AppSessions (vibeApi): that connection does local
-  // broadcast + local QuickJS access-fn eval. Fall back to chatApi defensively —
-  // on /vibe/ and /chat/ routes vibeApi is always present. (#2265 A1)
-  const dataApi = vibeApi ?? chatApi;
+  // broadcast + local QuickJS access-fn eval. On /vibe/ and /chat/ routes vibeApi
+  // is the page's primary connection; otherwise mint the AppSessions connection
+  // for this vibe key via appApiFor. Both are Conn<"vibe"> — doc ops are
+  // VIBE_ONLY, so there is no codegen fallback. (#2714, was #2265 A1)
+  const dataApi = vibeApi ?? appApiFor?.(`${ownerHandle}--${appSlug}`);
   // Plain whoAmI (no adminMode field) now rides sharedApi instead of chatApi.
   // who-am-i.ts:211 used to unconditionally write rawSend.adminMode = (adminMode === true),
   // so an omitted adminMode field would evaluate undefined === true → false and stomp a
@@ -96,6 +98,7 @@ export function CommentsSection({ ownerHandle, appSlug, canModerate, composerDis
   }, [sharedApi, isSignedIn, ownerHandle, appSlug]);
 
   const reload = useCallback(async () => {
+    if (!dataApi) return;
     const res = await dataApi.queryDocs({ ownerHandle, appSlug, dbName: COMMENTS_DB_NAME });
     if (res.isOk()) {
       const docs = res.Ok().docs as unknown as CommentDoc[];
@@ -119,6 +122,7 @@ export function CommentsSection({ ownerHandle, appSlug, canModerate, composerDis
   // open/close cycle of the parent modal doesn't accumulate live listeners
   // (otherwise every doc change fires reload() N times per session).
   useEffect(() => {
+    if (!dataApi) return;
     void dataApi.subscribeDocs({ ownerHandle, appSlug, dbName: COMMENTS_DB_NAME });
     const unsubscribe = dataApi.onDocChanged((evtUserSlug, evtAppSlug, evtDbName) => {
       if (evtUserSlug === ownerHandle && evtAppSlug === appSlug && evtDbName === COMMENTS_DB_NAME) {
@@ -130,7 +134,7 @@ export function CommentsSection({ ownerHandle, appSlug, canModerate, composerDis
 
   async function handlePost() {
     const text = body.trim();
-    if (!text || posting) return;
+    if (!text || posting || !dataApi) return;
     setPosting(true);
     setError(undefined);
     const res = await dataApi.putDoc({
@@ -159,6 +163,7 @@ export function CommentsSection({ ownerHandle, appSlug, canModerate, composerDis
   }
 
   async function handleDelete(c: CommentDoc) {
+    if (!dataApi) return;
     const res = await dataApi.deleteDoc({ ownerHandle, appSlug, dbName: COMMENTS_DB_NAME, docId: c._id });
     if (res.isOk()) {
       void reload();

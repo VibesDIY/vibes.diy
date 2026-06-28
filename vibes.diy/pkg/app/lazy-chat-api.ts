@@ -1,4 +1,4 @@
-import type { VibesDiyApiIface } from "@vibes.diy/api-types";
+import type { Conn, VibesDiyApiIface } from "@vibes.diy/api-types";
 
 // chatApi is a lazy proxy: constructing it does NOT open a WebSocket. The real
 // VibesDiyApi (and its ChatSessions socket) is built on the first property
@@ -15,9 +15,9 @@ import type { VibesDiyApiIface } from "@vibes.diy/api-types";
 // Without binding, `chatApi.openChat()` would run with `this` = the proxy — and
 // since the proxy has no `set` trap, `this.x = y` writes would land on the empty
 // proxy target while reads resolve from the instance, corrupting connection state.
-export function makeLazyChatApi(build: () => VibesDiyApiIface): VibesDiyApiIface {
+export function makeLazyChatApi(build: () => VibesDiyApiIface): Conn<"codegen"> {
   let instance: VibesDiyApiIface | undefined;
-  return new Proxy({} as VibesDiyApiIface, {
+  return new Proxy({} as Conn<"codegen">, {
     get(_target, prop) {
       if (!instance) instance = build();
       const val = (instance as unknown as Record<string | symbol, unknown>)[prop];

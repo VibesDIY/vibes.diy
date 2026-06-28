@@ -1,9 +1,9 @@
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import type { DmThreadItem, VibesDiyApiIface } from "@vibes.diy/api-types";
+import type { Conn, DmThreadItem } from "@vibes.diy/api-types";
 
 interface DmInboxProps {
-  sharedApi?: VibesDiyApiIface | null;
+  sharedApi?: Conn<"shared"> | null;
   myUserSlug?: string;
 }
 

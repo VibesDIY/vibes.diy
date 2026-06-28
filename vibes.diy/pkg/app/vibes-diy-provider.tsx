@@ -11,6 +11,7 @@ import { BuildURI, exception2Result, Future, KeyedResolvOnce, Lazy, Option, Resu
 import { type } from "arktype";
 import { PostHogProvider } from "posthog-js/react";
 import { PkgRepos, VibesDiyApiIface } from "@vibes.diy/api-types";
+import type { Conn } from "@vibes.diy/api-types";
 import { vibesDiySrvSandbox, VibesDiySrvSandbox } from "@vibes.diy/vibe-srv-sandbox";
 import { SuperThis } from "@fireproof/use-fireproof";
 import { ensureSuperThis } from "@vibes.diy/identity";
@@ -48,15 +49,15 @@ export interface AppUserSlugFsId {
 export interface VibesDiyCtx {
   sthis: SuperThis;
   // dashApi: FPApiInterface;
-  chatApi: VibesDiyApiIface;
-  vibeApi?: VibesDiyApiIface;
+  chatApi: Conn<"codegen">;
+  vibeApi?: Conn<"vibe">;
   // Non-vibe-plane shared reads (+ notify on non-vibe pages). On vibe routes
   // this is vibeApi; otherwise a SharedSessions connection (per-user or global).
-  sharedApi: VibesDiyApiIface;
+  sharedApi: Conn<"shared">;
   // Build (or fetch the cached) AppSessions connection for an arbitrary vibe
   // key. For vibe-data that isn't the page's primary vibe — e.g. DM threads
   // keyed by `<channelUserSlug>--dm`. Same data plane as vibeApi, no new DO.
-  appApiFor?: (vibeKey: string) => VibesDiyApiIface;
+  appApiFor?: (vibeKey: string) => Conn<"vibe">;
   // Kept for backward compatibility during migration; set to undefined — notify now rides sharedApi.
   notifyApi?: VibesDiyApiIface;
   webVars: VibesDiyWebVars;
@@ -67,8 +68,8 @@ export interface VibesDiyCtx {
 const realCtx: VibesDiyCtx = {
   sthis: {} as SuperThis,
   // dashApi: {} as FPApiInterface,
-  chatApi: {} as VibesDiyApi,
-  sharedApi: {} as VibesDiyApiIface,
+  chatApi: {} as Conn<"codegen">,
+  sharedApi: {} as Conn<"shared">,
   webVars: {} as VibesDiyCtx["webVars"],
   srvVibeSandbox: {} as VibesDiyCtx["srvVibeSandbox"],
 };
@@ -267,7 +268,7 @@ function LiveCycleVibesDiyProvider({ children, webVars }: { children: React.Reac
   // same instance, so callers can invoke this every render without churning a
   // WebSocket. Used for the primary vibeApi below and for DM threads (keyed
   // `<channelUserSlug>--dm`) on the /messages routes.
-  const buildAppApi = (vibeKey: string): VibesDiyApiIface => {
+  const buildAppApi = (vibeKey: string): Conn<"vibe"> => {
     const appApiUrl = BuildURI.from(apiUrl).pathname("/api/app").cleanParams().setParam("vibe", vibeKey).toString();
     const capturedGetToken = sharedGetToken ?? realCtx.getToken;
     return vibesDiyApis.get(appApiUrl).once(() => {
@@ -276,7 +277,7 @@ function LiveCycleVibesDiyProvider({ children, webVars }: { children: React.Reac
         skipShard: true,
         getToken: capturedGetToken ?? (() => Promise.resolve(Result.Err("token not available"))),
       });
-    }) as VibesDiyApiIface;
+    }) as Conn<"vibe">;
   };
   realCtx.appApiFor = buildAppApi;
 
@@ -284,7 +285,7 @@ function LiveCycleVibesDiyProvider({ children, webVars }: { children: React.Reac
   // skipShard: true preserves the ?shard param already embedded in the URL
   // (same pattern as buildAppApi with ?vibe= — see api/impl/index.ts:272-276
   // where skipShard || cfg.ws → use cfg.apiUrl as-is, no ?shard= appended).
-  const buildSharedApi = (shard: string): VibesDiyApiIface => {
+  const buildSharedApi = (shard: string): Conn<"shared"> => {
     const sharedUrl = sharedApiUrl(apiUrl, shard);
     const capturedGetToken = sharedGetToken ?? realCtx.getToken;
     return vibesDiyApis.get(sharedUrl).once(
@@ -294,7 +295,7 @@ function LiveCycleVibesDiyProvider({ children, webVars }: { children: React.Reac
           skipShard: true, // shard is already embedded in the URL above; do not append a random one
           getToken: capturedGetToken ?? (() => Promise.resolve(Result.Err("token not available"))),
         })
-    ) as VibesDiyApiIface;
+    ) as Conn<"shared">;
   };
 
   // Build vibeApi (→ AppSessions, which wires the doc-changed emit) for every
@@ -341,8 +342,14 @@ function LiveCycleVibesDiyProvider({ children, webVars }: { children: React.Reac
       toast.error(txt);
     },
     // dashApi: realCtx.dashApi as ReturnType<typeof clerkDashApi>,
-    chatApi: realCtx.chatApi,
-    vibeApi: realCtx.vibeApi,
+    // TODO(#2714): kind-narrow this call site. The srv-sandbox is a server-plane
+    // consumer that holds BOTH planes and routes per-op internally (img-gen →
+    // chatApi, doc ops → vibeApi), so it is typed against the full
+    // VibesDiyApiIface. The branded connections widen back to that here; the
+    // runtime values are full VibesDiyApi instances, so this is a no-op widening,
+    // not a kind violation.
+    chatApi: realCtx.chatApi as VibesDiyApiIface,
+    vibeApi: realCtx.vibeApi as VibesDiyApiIface | undefined,
     eventListeners: globalThis.window,
     // Redirect back to wherever the sign-in was triggered (e.g. a vibe's
     // viewer tag) instead of Clerk's default post-login URL (the homepage).
@@ -375,7 +382,10 @@ function LiveCycleVibesDiyProvider({ children, webVars }: { children: React.Reac
   // render so a sandbox first built on a non-vibe render (vibeApi undefined),
   // or a cross-vibe navigation, routes data ops to the current vibeApi instead
   // of the frozen constructor copy. Idempotent on an unchanged reference. (#2348)
-  realCtx.srvVibeSandbox.setVibeApi?.(realCtx.vibeApi);
+  // TODO(#2714): kind-narrow this call site. Same boundary as the sandbox
+  // constructor above — setVibeApi takes the full VibesDiyApiIface; the runtime
+  // value is the full impl, so this widening is a no-op.
+  realCtx.srvVibeSandbox.setVibeApi?.(realCtx.vibeApi as VibesDiyApiIface | undefined);
 
   useEngagedVisit();
   useCapiCompleteRegistration();

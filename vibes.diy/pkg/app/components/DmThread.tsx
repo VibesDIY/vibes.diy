@@ -1,12 +1,14 @@
 import React, { useEffect, useRef, useState } from "react";
 import { directChannelUserSlug } from "@vibes.diy/api-types";
-import type { VibesDiyApiIface } from "@vibes.diy/api-types";
+import type { Conn } from "@vibes.diy/api-types";
 
 interface DmThreadProps {
   myUserSlug: string;
   otherUserSlug: string;
   vibeRef?: { ownerHandle: string; appSlug: string };
-  dmApi?: VibesDiyApiIface | null;
+  // DM doc ops (queryDocs/putDoc/markDmRead) are VIBE_ONLY → an AppSessions
+  // connection (appApiFor(`<channel>--dm`)). (#2714)
+  dmApi?: Conn<"vibe"> | null;
 }
 
 interface MsgDoc {
