@@ -23,6 +23,37 @@ inputs:
       the full suite.
     required: false
     default: "false"
+  run-checks:
+    description: >-
+      When "true" (default) run the format-check + lint + build(typecheck)
+      trio. ci.yaml's sharded test jobs set this "false" so those checks run
+      exactly once in a dedicated job instead of redundantly in every shard.
+      Every deploy caller leaves it default, so their pre-deploy gate is
+      unchanged.
+    required: false
+    default: "true"
+  run-tests:
+    description: >-
+      When "true" (default) run the Docker Playwright/vitest suite. ci.yaml's
+      checks-only job sets this "false". Deploy callers leave it default.
+    required: false
+    default: "true"
+  shard:
+    description: >-
+      Optional vitest shard spec (e.g. "1/4") passed straight through to
+      `vitest --shard`. Empty (default) runs the whole suite in a single
+      process — today's behavior, used by every deploy caller. ci.yaml fans
+      this out across N free standard runners (the repo is public, so they're
+      unlimited + concurrent) to cut wall-clock without a larger runner.
+    required: false
+    default: ""
+  artifact-suffix:
+    description: >-
+      Suffix appended to the uploaded test-timing artifact name so parallel
+      shards don't collide (upload-artifact@v4 requires unique names). Empty
+      (default) keeps the artifact named "test-timing".
+    required: false
+    default: ""
 runs:
   using: composite
   steps:
@@ -64,6 +95,7 @@ runs:
     # new lint failures on a deps-only PR (false green). Same dep+config set →
     # incremental hit; deps/config change → full re-lint.
     - name: restore-lint-caches
+      if: ${{ inputs.run-checks == 'true' }}
       uses: actions/cache@v4
       with:
         path: |
@@ -79,7 +111,7 @@ runs:
     # source of truth as the test step). Best-effort: failures here are harmless
     # — the test step pulls synchronously if the image isn't ready yet.
     - name: prepull-playwright-image
-      if: ${{ inputs.docs-only != 'true' }}
+      if: ${{ inputs.run-tests == 'true' && inputs.docs-only != 'true' }}
       shell: bash
       run: |
         PW=$(pnpm exec playwright --version 2>/dev/null | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -n1 || true)
@@ -93,6 +125,7 @@ runs:
         fi
 
     - name: format-check
+      if: ${{ inputs.run-checks == 'true' }}
       shell: bash
       run: |
         _t0=$(date +%s)
@@ -111,6 +144,7 @@ runs:
     # same check. Local PR-readiness still uses `pnpm run rules-bag:constructors`
     # per CLAUDE.md; CI enforcement lives in the lint step below.
     - name: lint
+      if: ${{ inputs.run-checks == 'true' }}
       shell: bash
       run: |
         _t0=$(date +%s)
@@ -119,7 +153,7 @@ runs:
 
     # Build temporarily disabled due to pre-existing TypeScript errors in hosting/pkg and vibes.diy/pkg
     - name: build
-      if: ${{ inputs.docs-only != 'true' }}
+      if: ${{ inputs.run-checks == 'true' && inputs.docs-only != 'true' }}
       shell: bash
       run: |
         _t0=$(date +%s)
@@ -134,6 +168,7 @@ runs:
     # the same suite under that job name, so a green check is faithful coverage.
     - name: check-sha-tested
       id: gate
+      if: ${{ inputs.run-tests == 'true' }}
       shell: bash
       env:
         GH_TOKEN: ${{ github.token }}
@@ -162,9 +197,11 @@ runs:
         fi
 
     - name: test
-      if: ${{ steps.gate.outputs.skip_tests != 'true' && inputs.docs-only != 'true' }}
+      if: ${{ inputs.run-tests == 'true' && steps.gate.outputs.skip_tests != 'true' && inputs.docs-only != 'true' }}
       shell: bash
       env:
+        # Optional vitest shard spec (e.g. "1/4"); empty runs the whole suite.
+        SHARD_SPEC: ${{ inputs.shard }}
         # Single switch that flips the test suite from "surfaced" to "blocking".
         # "true" → a red suite fails the job (CI gates on tests). This is the
         # close-out of #2426, enabled once the deterministic failures (#2425)
@@ -210,13 +247,21 @@ runs:
         # vitest on load) writes test-phase-timing.json with per-file PRE-RUN
         # phase costs (collect / setup / environment / prepare) — the json
         # reporter only exposes start/end, which hides where the import phase goes.
+        # When ci.yaml fans the suite out across runners it passes a vitest shard
+        # spec (e.g. "1/4"); vitest splits the sorted file list into that slice.
+        # Empty SHARD_SPEC (every deploy caller) runs the whole suite unchanged.
+        SHARD_FLAG=""
+        if [ -n "${SHARD_SPEC}" ]; then
+          SHARD_FLAG="--shard=${SHARD_SPEC}"
+          echo "Running vitest shard ${SHARD_SPEC}"
+        fi
         rm -f test-timing.json test-phase-timing.json test-unhandled-errors.json
         set +e
         timeout 1800 docker run --rm \
           -v $(pwd):/work \
           -w /work \
           mcr.microsoft.com/playwright:v${PLAYWRIGHT_VERSION}-noble \
-          bash -c "corepack enable && corepack prepare pnpm@${PNPM_VERSION} --activate && npm run test -- --reporter=json --outputFile=test-timing.json --reporter=./tools/vitest-phase-reporter.ts"
+          bash -c "corepack enable && corepack prepare pnpm@${PNPM_VERSION} --activate && npm run test -- ${SHARD_FLAG} --reporter=json --outputFile=test-timing.json --reporter=./tools/vitest-phase-reporter.ts"
         TEST_EXIT=$?
         set -e
 
@@ -278,10 +323,10 @@ runs:
     # tracking across runs. always() so a failing run's partial timing is kept
     # too; skipped when the test step was short-circuited (skip-tests-if-sha-green).
     - name: upload-test-timing
-      if: ${{ always() && steps.gate.outputs.skip_tests != 'true' && inputs.docs-only != 'true' }}
+      if: ${{ always() && inputs.run-tests == 'true' && steps.gate.outputs.skip_tests != 'true' && inputs.docs-only != 'true' }}
       uses: actions/upload-artifact@v4
       with:
-        name: test-timing
+        name: test-timing${{ inputs.artifact-suffix }}
         path: |
           test-timing.json
           test-phase-timing.json
