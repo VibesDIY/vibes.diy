@@ -11,10 +11,13 @@
 // injects the keybag item (sourced from VIBES_DEVICE_ID / _PREVIEW) and the web
 // app mints `{ type: "device-id", token }` per message, just like the CLI.
 import { Lazy, Result } from "@adviser/cement";
-import type { SuperThis, FPDeviceIDSession, CertificatePayload, JWKPrivate } from "@fireproof/core-types-base";
+import { decodeProtectedHeader } from "jose";
+import type { SuperThis, FPDeviceIDSession, CertificatePayload, JWKPrivate, BaseXXEndeCoder } from "@fireproof/core-types-base";
 import type { DashAuthType } from "@fireproof/core-types-protocols-dashboard";
+import type { VerifiedClaimsResult } from "../types/wire.js";
 import { DeviceIdKey } from "./key.js";
 import { DeviceIdSignMsg } from "./sign.js";
+import { Certor } from "./certor.js";
 
 /** The shape the CLI persists in `~/.fireproof/keybag/<id>.json` (the `item`),
  * and that `VIBES_DEVICE_ID` carries — the private key plus the signed cert. */
@@ -62,4 +65,30 @@ export async function createDeviceIdGetTokenFromItem(
     },
     { resetAfter: 60, skipUnref: true }
   );
+}
+
+/**
+ * Client-side claim extraction for a device-id token (Seam 3). The identity
+ * lives in the cert's `creatingUser` claim inside the `x5c` header, not in the
+ * JWT body, so `ClerkApiToken.decode()` can't read it. This pulls the same
+ * `creatingUser.claims` the server reads. NO signature trust is implied — the
+ * server still verifies every message; this only feeds the client-side
+ * `getTokenClaims()` preflight so the generate path isn't blocked.
+ */
+export function deviceIdClaimsFromToken(base64: BaseXXEndeCoder, token: string): Result<VerifiedClaimsResult> {
+  try {
+    const header = decodeProtectedHeader(token);
+    const x5c = header.x5c;
+    if (!x5c || !x5c[0]) {
+      return Result.Err("deviceIdClaimsFromToken: missing x5c in JWT header");
+    }
+    const cert = Certor.fromString(base64, x5c[0]).asCert();
+    const claims = cert.creatingUser?.claims;
+    if (!claims) {
+      return Result.Err("deviceIdClaimsFromToken: cert has no creatingUser claim");
+    }
+    return Result.Ok({ type: "device-id", token, claims } as VerifiedClaimsResult);
+  } catch (e) {
+    return Result.Err(e as Error);
+  }
 }

@@ -183,6 +183,7 @@ import {
   ReqCertFromCsr,
   ResCertFromCsr,
   VerifiedClaimsResult,
+  deviceIdClaimsFromToken,
 } from "@vibes.diy/identity";
 import { VibeDiyApiConnection } from "./api-connection.js";
 import { getVibesDiyWebSocketConnection } from "./websocket-connection.js";
@@ -322,10 +323,23 @@ export class VibesDiyApi implements VibesDiyApiIface<{
     if (rToken.isErr()) {
       return Result.Err(rToken);
     }
-    // console.log("VibeDiyApi getTokenClaims token", rToken.Ok().token);
     const sthis = ensureSuperThis();
+    const auth = rToken.Ok();
+    // device-id tokens carry the Clerk identity in the x5c cert's creatingUser
+    // claim, not in the JWT body — ClerkApiToken.decode() can't read it. Extract
+    // it client-side (server still verifies on every message). See Seam 3 of
+    // docs/specs/2026-06-28-device-id-browser-login.md.
+    if (auth.type === "device-id") {
+      const rClaims = deviceIdClaimsFromToken(sthis.txt.base64, auth.token);
+      if (rClaims.isErr()) {
+        console.error("getTokenClaims device-id failed:", rClaims.Err());
+        return Result.Err(rClaims);
+      }
+      return Result.Ok(rClaims.Ok() as VerifiedClaimsResult & { claims: ClerkClaim });
+    }
+    // console.log("VibeDiyApi getTokenClaims token", auth.token);
     const tokenapi = new ClerkApiToken(sthis);
-    const rClaims = await tokenapi.decode(rToken.Ok().token);
+    const rClaims = await tokenapi.decode(auth.token);
     if (rClaims.isErr()) {
       console.error("getTokenClaims verify failed:", rClaims.Err());
       return Result.Err(rClaims);

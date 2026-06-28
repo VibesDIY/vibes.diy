@@ -63,3 +63,9 @@ export { JWKPrivateSchema, JWKPublicSchema } from "./types/wire.js";
 // VALUE except the `core-runtime` context helpers (Bucket E).
 export { ClerkApiToken } from "./dash-api/clerk-token.js";
 export { clerkDashApi, DashboardApiImpl } from "./dash-api/dash-client.js";
+
+// --- Browser-safe device-id login (device-id browser-login spec) ---
+// Mints + claim-extracts device-id tokens in the browser, fed an in-memory
+// keybag item (Seam 1 + Seam 3). Browser-safe because it never touches the
+// node-only keybag (getKeyBag/fs) — only the isomorphic DeviceIdKey/DeviceIdSignMsg.
+export { createDeviceIdGetTokenFromItem, deviceIdClaimsFromToken, type DeviceIdItem } from "./device-id/browser-token.js";
