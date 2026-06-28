@@ -21,6 +21,8 @@ import {
 } from "@vibes.diy/base";
 import type { ShareMember, ShareViewer, ShareAccess, HandleOption } from "@vibes.diy/base";
 import { isUserSettingDefaultHandle } from "@vibes.diy/api-types";
+import { switchActiveHandle, createAndUseHandle, handleAvatarUrl } from "./handle-picker-actions.js";
+import { useYoursNowToast } from "../hooks/use-yours-now-toast.js";
 import { useShareModal } from "../components/ResultPreview/useShareModal.js";
 import { useIframeApiInFlight } from "../hooks/useIframeApiInFlight.js";
 import { ShareModal } from "../components/ResultPreview/ShareModal.js";
@@ -223,6 +225,9 @@ export default function VibeIframeWrapper() {
   useEffect(() => {
     adminModeRef.current = adminMode;
   }, [adminMode]);
+  // One-time "it's yours now" message when landing here from a fresh clone (#1856).
+  useYoursNowToast();
+
   const [myUserSlug, setMyUserSlug] = useState<string | undefined>(undefined);
   // The handles this account can act as, for the active-handle switcher (#2678,
   // the UI for #2275). The avatar URL is the per-handle endpoint (#2434); it 404s
@@ -276,7 +281,7 @@ export default function VibeIframeWrapper() {
         if (cancelled || bRes.isErr()) return;
         const items = bRes.Ok().items;
         setIsOwner(items.some((item) => item.ownerHandle === ownerHandle));
-        setMyHandles(items.map((i) => ({ slug: i.ownerHandle, avatarUrl: `/u/${encodeURIComponent(i.ownerHandle)}/avatar` })));
+        setMyHandles(items.map((i) => ({ slug: i.ownerHandle, avatarUrl: handleAvatarUrl(i.ownerHandle) })));
         const def = sRes.isOk() ? sRes.Ok().settings.filter(isUserSettingDefaultHandle)[0]?.ownerHandle : undefined;
         const active = def && items.some((i) => i.ownerHandle === def) ? def : items[0]?.ownerHandle;
         if (active) setMyUserSlug(active);
@@ -404,53 +409,29 @@ export default function VibeIframeWrapper() {
   // (useViewer / vibe.evt.viewerChanged) switch personas too — otherwise the iframe
   // keeps the old handle while document writes use the new one (Codex P1).
   const handleSelectHandle = useCallback(
-    async (slug: string) => {
-      if (slug === myUserSlug) return;
-      setHandlePickerBusy(true);
-      const r = await vctx.sharedApi.ensureUserSettings({ settings: [{ type: "defaultHandle", ownerHandle: slug }] });
-      if (r.isErr()) {
-        setHandlePickerBusy(false);
-        toast.error(`Couldn't switch handle: ${r.Err().message}`);
-        return;
-      }
-      setMyUserSlug(slug);
-      await refreshViewerFromWhoAmI();
-      setHandlePickerBusy(false);
-    },
+    (slug: string) =>
+      switchActiveHandle({
+        slug,
+        currentSlug: myUserSlug,
+        sharedApi: vctx.sharedApi,
+        setBusy: setHandlePickerBusy,
+        setActiveHandle: setMyUserSlug,
+        refreshViewer: refreshViewerFromWhoAmI,
+      }),
     [myUserSlug, vctx.sharedApi, refreshViewerFromWhoAmI]
   );
 
-  // "New handle": mint a binding (server picks a random slug) and immediately act
-  // as it, so the gesture has a visible outcome. Same viewer refresh as a switch.
-  const handleNewHandle = useCallback(async () => {
-    setHandlePickerBusy(true);
-    const r = await vctx.sharedApi.createHandleBinding({});
-    if (r.isErr()) {
-      setHandlePickerBusy(false);
-      toast.error(`Couldn't create handle: ${r.Err().message}`);
-      return;
-    }
-    const created = r.Ok().ownerHandle;
-    // The binding exists now, so surface it in the list regardless of whether the
-    // switch-to-it write sticks.
-    setMyHandles((prev) =>
-      prev.some((h) => h.slug === created)
-        ? prev
-        : [...prev, { slug: created, avatarUrl: `/u/${encodeURIComponent(created)}/avatar` }]
-    );
-    // Mirror the switch-handle guard: don't claim success / advance the active
-    // handle if persisting the default fails (Charlie review).
-    const s = await vctx.sharedApi.ensureUserSettings({ settings: [{ type: "defaultHandle", ownerHandle: created }] });
-    if (s.isErr()) {
-      setHandlePickerBusy(false);
-      toast.error(`Created @${created}, but couldn't switch to it: ${s.Err().message}`);
-      return;
-    }
-    setMyUserSlug(created);
-    await refreshViewerFromWhoAmI();
-    setHandlePickerBusy(false);
-    toast.success(`Now acting as @${created}`);
-  }, [vctx.sharedApi, refreshViewerFromWhoAmI]);
+  const handleNewHandle = useCallback(
+    () =>
+      createAndUseHandle({
+        sharedApi: vctx.sharedApi,
+        setBusy: setHandlePickerBusy,
+        setHandles: setMyHandles,
+        setActiveHandle: setMyUserSlug,
+        refreshViewer: refreshViewerFromWhoAmI,
+      }),
+    [vctx.sharedApi, refreshViewerFromWhoAmI]
+  );
 
   useEffect(() => {
     if (!srvVibeSandbox) return;
@@ -880,7 +861,7 @@ export default function VibeIframeWrapper() {
                   appIconUrl={screenshotUrl ?? undefined}
                   isOwner={isOwner}
                   handleSlug={myUserSlug}
-                  handleAvatarUrl={myUserSlug ? `/u/${encodeURIComponent(myUserSlug)}/avatar` : undefined}
+                  handleAvatarUrl={myUserSlug ? handleAvatarUrl(myUserSlug) : undefined}
                   handles={myHandles}
                   onSelectHandle={(slug) => void handleSelectHandle(slug)}
                   onNewHandle={() => void handleNewHandle()}

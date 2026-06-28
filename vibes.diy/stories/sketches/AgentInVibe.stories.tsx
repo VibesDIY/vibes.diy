@@ -153,9 +153,9 @@ function UnifiedOverlay({
   );
 }
 
-/** The persistent open vibe-switch nav — lower-right, same-latitude buttons + the toggle,
- *  echoing the real ExpandedVibesPill (cream bar #FFFEF0, near-black border, circular
- *  colored icons). Redefines the nav to Home / Chat(selected) / Share + the VibesSwitch. */
+/** The persistent open vibe-switch nav — lower-right, same-latitude buttons + the toggle
+ *  (cream bar #FFFEF0, near-black border, circular colored icons). Redefines the nav to
+ *  Home / Chat(selected) / Share + the VibesSwitch. */
 function NavIcon({
   children,
   color,
