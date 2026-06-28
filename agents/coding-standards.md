@@ -39,7 +39,7 @@ Only use `echo 'message' | say` after a waiting period completes or when a full 
 
 **Spell out abbreviations** with spaces between each letter so TTS pronounces them correctly: `C I`, `C D`, `A P I`, `U R I`, `D M`, `C T A`. Exception: `PRs` — no space, TTS handles it fine.
 
-**Voice (operator-local).** If you have a high-quality *Enhanced* or *Premium* voice installed, prefer it via `-v`, e.g. `echo 'msg' | say -v "Zoe (Enhanced)" &`. The exact name (with the parenthetical) must match `say -v '?'`. These voices are per-machine downloads (System Settings → Accessibility → Spoken Content → Manage Voices), so don't hardcode one in shared tooling — fall back to the system default when the named voice isn't installed. Note: the Siri voice and Apple's Personal Voice do **not** work with `say`.
+**Voice (operator-local).** If you have a high-quality _Enhanced_ or _Premium_ voice installed, prefer it via `-v`, e.g. `echo 'msg' | say -v "Zoe (Enhanced)" &`. The exact name (with the parenthetical) must match `say -v '?'`. These voices are per-machine downloads (System Settings → Accessibility → Spoken Content → Manage Voices), so don't hardcode one in shared tooling — fall back to the system default when the named voice isn't installed. Note: the Siri voice and Apple's Personal Voice do **not** work with `say`.
 
 Forbidden: bare `'<thing> deployed' | say`, `'done' | say`, anything that sounds like a CI bot.
 
