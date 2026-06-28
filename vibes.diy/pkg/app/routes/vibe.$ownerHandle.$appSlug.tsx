@@ -636,8 +636,8 @@ export default function VibeIframeWrapper() {
       if (cancelled) return;
       // listMembers returns collaborators (not the owner); prepend the owner so the
       // roster always leads with them. Carry each member's real grant role through —
-      // including "submitter" (a write-capable, read-restricted member), surfaced as
-      // "contributor" in the roster rather than mislabeled as a reader (Codex P2).
+      // including "submitter" (a write-capable, read-restricted member — the form-filler
+      // role), surfaced by name in the roster rather than mislabeled as a reader (Codex P2).
       const collaborators: ShareMember[] = res.isOk() ? res.Ok().members.map((m) => ({ handle: m.displayName, role: m.role })) : [];
       setShareMembers([{ handle: ownerHandle, role: "owner" }, ...collaborators]);
     });
