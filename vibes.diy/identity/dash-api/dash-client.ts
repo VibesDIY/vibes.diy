@@ -8,11 +8,10 @@
 // It is a pure HTTP client — it never decodes a JWT or parses claims through a
 // strict schema, so it carries none of the Task-5 strict-decode bug class. Only
 // imports were adjusted: the request/response wire-types stay type-only from
-// `@fireproof/core-types-protocols-dashboard` (Bucket B, kept), and the Clerk
-// dependency is narrowed to the minimal `LoadedClerkLike` surface this client
-// actually touches (`addListener` + `session.getToken`) so the package needn't
-// pull `@clerk/shared`. The sole consumer (`use-vibes/.../VibeContext.tsx`)
-// already adapts via `Parameters<typeof clerkDashApi>[0]` + `as unknown as`.
+// `@fireproof/core-types-protocols-dashboard` (Bucket B, kept), and `clerkDashApi`
+// takes the real `LoadedClerk` from `@clerk/shared/types` (the exact type
+// `@clerk/react`'s `useClerk()` returns), so the sole consumer
+// (`use-vibes/.../VibeContext.tsx`) passes `clerk` directly with no cast.
 import { Result, KeyedResolvOnce, WaitingForValue, Option, exception2Result } from "@adviser/cement";
 import type {
   ReqEnsureUser,
@@ -61,18 +60,7 @@ import type {
   DashboardApiConfig,
   WithoutTypeAndAuth,
 } from "@fireproof/core-types-protocols-dashboard";
-
-// Minimal slice of `@clerk/shared`'s `LoadedClerk` that `clerkDashApi` touches —
-// it only registers a listener and reads `session.getToken(...)`.
-interface ClerkSessionLike {
-  getToken(opts?: unknown): Promise<string | null>;
-}
-interface ClerkResourcesLike {
-  readonly session?: ClerkSessionLike | null;
-}
-export interface LoadedClerkLike {
-  addListener(callback: (resources: ClerkResourcesLike) => void): () => void;
-}
+import type { LoadedClerk, GetTokenOptions } from "@clerk/shared/types";
 
 export class DashboardApiImpl<T> implements FPApiInterface {
   readonly cfg: DashboardApiConfigIntern<T>;
@@ -194,7 +182,14 @@ export class DashboardApiImpl<T> implements FPApiInterface {
   }
 }
 const keyedDashApis = new KeyedResolvOnce<DashboardApiImpl<unknown>>();
-export function clerkDashApi<T>(clerk: LoadedClerkLike, iopts: ClerkDashboardApiConfig<T>): DashboardApiImpl<T> {
+// `T` is the Clerk token-fetch context, which on this Clerk-specific path is a
+// `GetTokenOptions` — constraining it lets `session.getToken(cfg.getTokenCtx)`
+// type-check against the real Clerk SDK with no cast (upstream built against an
+// older @clerk/shared whose looser `getToken` accepted an unconstrained `T`).
+export function clerkDashApi<T extends GetTokenOptions = GetTokenOptions>(
+  clerk: LoadedClerk,
+  iopts: ClerkDashboardApiConfig<T>
+): DashboardApiImpl<T> {
   return keyedDashApis.get(iopts.apiUrl).once(() => {
     const waitForToken = new WaitingForValue<string>();
     const dashApi = new DashboardApiImpl<T>({
