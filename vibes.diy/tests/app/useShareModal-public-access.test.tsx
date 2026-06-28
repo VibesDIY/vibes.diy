@@ -87,6 +87,29 @@ describe("useShareModal — public-access toggle (#2680/#2679)", () => {
     expect(result.current.publicAccessEnabled).toBe(true); // rolled back
   });
 
+  it("does not drop a click made before settings finish loading (Codex P2)", async () => {
+    // The load read hangs, so settingsLoaded stays false and publicAccessEnabled
+    // keeps its initial `false` — the window where the UI shows the world-readable
+    // hint. A click to "request" (enable=false) must still write, not no-op.
+    const ensureAppSettings = vi
+      .fn()
+      .mockReturnValueOnce(new Promise(() => undefined)) // load never resolves
+      .mockReturnValue(ok({ settings: { entry: { publicAccess: { enable: false } } } }));
+    const { api } = makeApi({ ensureAppSettings });
+    const { result } = renderHook(() => useShareModal({ ...baseParams(api), shareViewActive: true }));
+    expect(result.current.settingsLoaded).toBe(false);
+
+    await act(async () => {
+      await result.current.handleSetPublicAccess(false);
+    });
+
+    expect(ensureAppSettings).toHaveBeenCalledWith({
+      appSlug: "bloom",
+      ownerHandle: "meghan",
+      publicAccess: { enable: false },
+    });
+  });
+
   it("no-ops when the value is unchanged", async () => {
     const ensureAppSettings = vi.fn(() => ok({ settings: { entry: { publicAccess: { enable: true } } } }));
     const { api } = makeApi({ ensureAppSettings });

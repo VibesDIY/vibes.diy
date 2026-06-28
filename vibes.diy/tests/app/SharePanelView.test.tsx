@@ -68,6 +68,15 @@ describe("SharePanelView", () => {
     expect(onChangeAccess).toHaveBeenCalledWith("request");
   });
 
+  it("author: the access toggle is disabled (and inert) while accessPending", () => {
+    const onChangeAccess = vi.fn();
+    render(<SharePanelView url="u" viewer="author" access="public" accessPending onChangeAccess={onChangeAccess} />);
+    const req = screen.getByRole("radio", { name: /people you approve/i }) as HTMLButtonElement;
+    expect(req.disabled).toBe(true);
+    fireEvent.click(req);
+    expect(onChangeAccess).not.toHaveBeenCalled();
+  });
+
   it("non-owner sees the access copy (reflecting the mode); the owner sees the toggle instead", () => {
     const { rerender } = render(<SharePanelView url="u" viewer="member" access="public" members={[]} />);
     expect(screen.getByText(/anyone with the link can open/i)).toBeTruthy();

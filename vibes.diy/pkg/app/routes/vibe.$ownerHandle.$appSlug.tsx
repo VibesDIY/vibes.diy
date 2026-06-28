@@ -912,6 +912,7 @@ export default function VibeIframeWrapper() {
                         members={shareMembers}
                         access={shareAccess}
                         onChangeAccess={(next) => void shareModal.handleSetPublicAccess(next === "public")}
+                        accessPending={!shareModal.settingsLoaded || shareModal.isTogglingPublicAccess}
                         onSelectMember={() => shareModal.open()}
                       />
                     ) : undefined
