@@ -60,7 +60,7 @@ each is a live moving part, and we are not here to optimize it.
 
 The one thing we **do** skip when lifting: **code that is dead on arrival** — code no live
 path in the system reaches once the boundary moves. The test is "**used by anything live**,"
-not "used by *this package*":
+not "used by _this package_":
 
 - The keybag's general-keystore methods (`getNamedKey` / `getJwt` / `setRawObj` / …) are
   **dead on arrival** in identity's keybag — nothing reaches them through identity's
