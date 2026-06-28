@@ -16,7 +16,7 @@
     "@tanstack/react-table": "^8.21.3",
     "@vibes.diy/base": "workspace:*",
     "arktype": "^2.2.1",
-    "cookie": "^1.1.1",
+    "cookie": "^2.0.0",
     "react": "^19.2.7",
     "react-dom": "^19.2.7"
   },
