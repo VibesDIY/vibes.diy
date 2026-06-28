@@ -870,6 +870,7 @@ export default function VibeIframeWrapper() {
                   // Only a viewer grant is read-only; submitter is write-capable
                   // (canWrite, db-acl-eval) so it gets no lock (Codex P2).
                   memberReadOnly={myGrant === "viewer"}
+                  adminMode={adminMode}
                   chips={editChips}
                   onSelectChip={handleEditPrompt}
                   onSubmitOther={handleEditPrompt}

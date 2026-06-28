@@ -34,6 +34,10 @@ export interface UnifiedVibeCardProps {
   /** For a member viewer: true when they have no write grant (viewer/submitter) —
    *  drives the lock glyph. Ignored for author/visitor. */
   memberReadOnly?: boolean;
+  /** Owner has admin mode on (full access-fn bypass, #2178) — shows a highlighted
+   *  shield, taking precedence over the plain author shield. The toggle itself lives
+   *  in the Share controls; this is just the indicator. */
+  adminMode?: boolean;
   onHome?: () => void;
   /** Selects the edit affordance (switches the body back to chips/Other). */
   onEdit?: () => void;
@@ -165,7 +169,7 @@ export function UnifiedVibeCard(props: UnifiedVibeCardProps) {
                   bottom row is tight now that the persistent logo occupies its
                   right end. */}
               <div style={{ flex: 1 }} />
-              <ModeIndicator viewerMode={props.viewerMode} memberReadOnly={props.memberReadOnly} />
+              <ModeIndicator viewerMode={props.viewerMode} memberReadOnly={props.memberReadOnly} adminMode={props.adminMode} />
               {props.handleSlug ? (
                 <div ref={pickerWrapRef} style={{ position: "relative", flexShrink: 0 }}>
                   <ViewerTagView
@@ -330,33 +334,45 @@ export function UnifiedVibeCard(props: UnifiedVibeCardProps) {
   );
 }
 
-// Viewer-mode indicator (#2178) — a small glyph next to the handle tag. Author →
+// Viewer-mode indicator (#2178) — a small glyph next to the handle tag. Admin →
+// highlighted (filled, amber) shield = full access-fn bypass; author → muted outline
 // shield; read-only member → lock; everyone else (writer member, visitor) → nothing.
-// The design is settled in the epic §2 grant→surface table; this just renders it.
+// Settled in the epic §2 grant→surface table; admin is the #2178 owner-bypass state
+// (the toggle lives in the Share controls — this only reflects the state).
 function ModeIndicator({
   viewerMode,
   memberReadOnly,
+  adminMode,
 }: {
   readonly viewerMode?: "author" | "member" | "visitor";
   readonly memberReadOnly?: boolean;
+  readonly adminMode?: boolean;
 }) {
-  const show = viewerMode === "author" ? "shield" : viewerMode === "member" && memberReadOnly ? "lock" : null;
+  const show = adminMode
+    ? "admin"
+    : viewerMode === "author"
+      ? "shield"
+      : viewerMode === "member" && memberReadOnly
+        ? "lock"
+        : null;
   if (!show) return null;
-  const label = show === "shield" ? "Owner" : "Read-only";
+  const isAdmin = show === "admin";
+  const isShield = isAdmin || show === "shield";
+  const label = isAdmin ? "Admin mode" : show === "shield" ? "Owner" : "Read-only";
   return (
     <span
       role="img"
       aria-label={label}
       title={label}
-      className="text-light-secondary dark:text-dark-secondary"
-      style={{ display: "inline-flex", flexShrink: 0, opacity: 0.75 }}
+      className={isAdmin ? undefined : "text-light-secondary dark:text-dark-secondary"}
+      style={{ display: "inline-flex", flexShrink: 0, opacity: isAdmin ? 1 : 0.75, ...(isAdmin ? { color: "#d97706" } : {}) }}
     >
-      {show === "shield" ? (
+      {isShield ? (
         <svg
           width="16"
           height="16"
           viewBox="0 0 24 24"
-          fill="none"
+          fill={isAdmin ? "currentColor" : "none"}
           stroke="currentColor"
           strokeWidth={2}
           strokeLinecap="round"

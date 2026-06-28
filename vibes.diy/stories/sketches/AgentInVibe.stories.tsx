@@ -275,6 +275,30 @@ export const LiveSwitchOpen: Story = {
   ),
 };
 
+// --- admin mode — the owner-bypass indicator (#2178): highlighted shield ----------------
+
+export const AdminMode: Story = {
+  name: "1c · Live — admin mode (bypass shield)",
+  render: () => (
+    <Phone>
+      <FakeVibeApp />
+      <UnifiedVibeCard
+        open
+        appTitle="Bloom Machine"
+        appSlug="meghan/bloom"
+        handleSlug="meghan"
+        viewerMode="author"
+        adminMode
+        chips={["Make it a drum kit", "Add a high score"]}
+        onSelectChip={() => undefined}
+        onSubmitOther={() => undefined}
+        onHome={() => undefined}
+        onShare={() => undefined}
+      />
+    </Phone>
+  ),
+};
+
 // --- handle picker open — the active-handle display + switcher (#2275), leftmost in the nav --
 
 const PICKER_HANDLES: readonly HandleOption[] = [{ slug: "meghan" }, { slug: "meghan_work" }];
