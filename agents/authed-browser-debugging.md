@@ -58,12 +58,13 @@ small Playwright script that **reuses the same exported `--storage` state**. You
 don't need to reverse-engineer the launch options every time — copy them verbatim
 from `clerk-authed-shot.mjs`. The load-bearing bits:
 
-- **Playwright resolves from the global install**, not a repo `node_modules` (a
-  fresh clone has none). Import it as:
-  ```js
-  import { createRequire } from "node:module";
-  const { chromium } = createRequire("/opt/node22/lib/node_modules/x/")("playwright");
-  ```
+- **Resolve Playwright the way the helpers do — don't hardcode a path.** A fresh
+  clone has no repo `node_modules`, so Playwright comes from elsewhere (the global
+  `lib/node_modules`, `NODE_PATH`, etc.) and the exact location varies by
+  environment. Copy `loadChromium()` from `clerk-authed-shot.mjs`: it
+  `createRequire`s `playwright` / `playwright-core` across several candidate bases
+  (script dir, cwd, the global `…/lib/node_modules`, `NODE_PATH`) and returns the
+  first that resolves — robust across cloud and workstation.
 - **Cloud launch accommodations** are mandatory (same as the shot/login scripts):
   resolve the cloud Chromium via `/opt/pw-browsers/chromium`, launch headless with
   `proxy: { server: process.env.HTTPS_PROXY }` and
@@ -89,9 +90,62 @@ these are the stable `aria-label`s, found in `vibes.diy/base/components/UnifiedV
 | Handle picker (▾)        | `[aria-label="Switch handle"]`                                         |
 | Draft badge (#2772)      | `[aria-label="Draft — unpublished changes"]`                           |
 
-Note: `data-vibe-switch` exists **only** in the pkg react control
-(`vibes.diy/api/pkg/react/components/vibes-control.tsx`), **not** the main app —
-don't target it for app-surface QA.
+Note: `data-vibe-switch` belongs to the **embeddable package/control surface**
+(e.g. `vibes.diy/api/pkg/react/components/vibes-control.tsx`,
+`vibes.diy/pkg/slack/serve/vibe-controls.tsx`, and
+`vibes.diy/pkg/public/vibes-controls/`), **not** the `UnifiedVibeCard` app surface
+— don't target it for app-surface QA.
+
+## Two accounts at once (owner A + non-owner B)
+
+Some flows need a **second** identity — non-owner "make it yours" fork, the
+share-roster seen as a granted member vs the owner, attribution as a different
+handle. The login tool already does this; no new tooling required.
+`clerk-qa-login.mjs` mints with the **instance admin secret**, so it resolves
+**whatever** identity you pass via `--email` / `--user-id` — it does _not_ have to
+be your git identity (this repo's git email is `noreply@anthropic.com`, yet
+`--email jchris@gmail.com` logs in as that Clerk user). So "account B" is simply a
+second run with a different `--email` and its **own** `--storage` file:
+
+```bash
+# Account A (owner)
+node .claude/skills/qa-pr/scripts/clerk-qa-login.mjs --instance prod --origin https://vibes.diy \
+  --email <A@email> --storage /tmp/state.A.json
+# Account B (non-owner)
+node .claude/skills/qa-pr/scripts/clerk-qa-login.mjs --instance prod --origin https://vibes.diy \
+  --email <B@email> --storage /tmp/state.B.json
+```
+
+Each file holds that account's session cookie — confirm `"PASS": true` with the
+expected `authed.clerkUserId` for **each**. Then drive them independently: **one
+Playwright context per storage file**. Two contexts in the same browser keep
+separate cookie jars, so A and B stay signed in **simultaneously** — exactly what
+owner-vs-non-owner and roster flows need:
+
+```js
+const ctxA = await browser.newContext({ storageState: "/tmp/state.A.json", viewport });
+const ctxB = await browser.newContext({ storageState: "/tmp/state.B.json", viewport });
+const pageA = await ctxA.newPage(); // owner: opens /vibe/<A>/<app>
+const pageB = await ctxB.newPage(); // non-owner: opens the same vibe, taps a chip → forks to B
+```
+
+(Or just run `clerk-authed-shot.mjs` / your driver twice, once per `--storage`.)
+Clean up **both** files when done: `rm -f /tmp/state.A.json /tmp/state.B.json`.
+
+**Designated QA pair (prod).** Use **`jchris@gmail.com`** as account A (owner) and
+**`jchris@vibes.diy`** as account B (the non-owner / second user) — both are
+jchris's own accounts, kept for this purpose. They resolve to **two distinct Clerk
+users**, so they exercise the real owner-vs-non-owner split.
+
+> **Verified** (this is the smoke test to repeat): two logins into separate
+> `--storage` files, then two contexts loaded together, returned both signed in at
+> once with **different** `clerkUserId`s —
+> `jchris@gmail.com` → `user_35qT44…F2V30` (A) and
+> `jchris@vibes.diy` → `user_35qSx4…T4I7f` (B). `bothSignedIn: true`.
+
+**Don't borrow real third parties.** The admin secret _can_ mint a token for any
+user, but only log in as identities you're authorized to drive (the pair above, or
+your own alt). Do **not** enumerate the Clerk user directory to find an account.
 
 ## Why a Playwright script and not the chrome-devtools MCP browser
 
