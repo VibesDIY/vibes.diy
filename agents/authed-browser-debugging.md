@@ -11,7 +11,11 @@ for "sign in as the operator, open some authed URLs, grab screenshots."
 > [`chrome-mcp-debug.md`](chrome-mcp-debug.md)). This doc is only for surfaces
 > behind sign-in.
 
-## The recipe (two steps)
+## The recipe (three steps)
+
+Always write the storage-state file under `/tmp` (or the session scratchpad),
+**never inside the repo** — it holds a live session cookie, and `clerk-authed-shot.mjs`
+refuses a repo-local `--storage` path by default for exactly that reason.
 
 ```bash
 # 1) Authenticate and EXPORT the session to a storage-state file.
@@ -26,6 +30,10 @@ node .claude/skills/qa-pr/scripts/clerk-authed-shot.mjs \
   --storage /tmp/state.prod.json --out /tmp/shots \
   https://vibes.diy/chat/<handle>/<slug> \
   https://vibes.diy/chat/<handle>/<other-slug>
+
+# 3) Clean up — delete the session file when you're done so reusable
+#    session state doesn't linger longer than the task needs it.
+rm -f /tmp/state.prod.json
 ```
 
 `clerk-authed-shot.mjs` loads the storage state into a fresh Playwright context,
@@ -71,9 +79,11 @@ attaches directly is a tracked follow-up; until then, screenshot via the script.
 - **Wait for the app iframe to paint, or you get blank shots.** Right after the
   editor route loads, the App pane shows a placeholder ("Make apps with your
   friends / Shareable in seconds") before the generated app renders in its
-  `<iframe>`. Screenshot too early and you capture the empty shell. The script
-  polls the iframe body until it has content (`--no-iframe-wait` opts out for
-  non-app pages).
+  `<iframe>`. Screenshot too early and you capture the empty shell. The preview
+  iframe is **cross-origin** to the editor (`<app>--<owner>.<host>`), so you
+  can't read it from the editor page — the script waits on the app's own child
+  frame via Playwright's frame API until its body has content (`--no-iframe-wait`
+  opts out for non-app pages).
 - **Email lookup, not git identity.** The operator's git email is often a
   non-Clerk address, so pass `--email` (or `--user-id`) explicitly to
   `clerk-qa-login.mjs` — don't rely on `git config user.email`.
@@ -86,6 +96,8 @@ attaches directly is a tracked follow-up; until then, screenshot via the script.
 - The **storage-state file holds a live session cookie** — treat it as the secret
   it is. Never print, echo, `cat`, commit, or paste its contents into a log,
   triage, gist, or PR comment. Use it only as a file input to the script. Write it
-  under `/tmp` (or the session scratchpad), not into the repo.
+  under `/tmp` (or the session scratchpad), not into the repo — `clerk-authed-shot.mjs`
+  refuses a repo-local `--storage` path by default (`--allow-repo-path` to override),
+  and **`rm -f` it when the task is done** so reusable session state doesn't linger.
 - Screenshots of the operator's own signed-in UI are fine to surface (they own the
   account); a screenshot must never frame a token, cookie value, or secret.
