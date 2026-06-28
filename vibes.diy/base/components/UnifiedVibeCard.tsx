@@ -279,7 +279,16 @@ export function UnifiedVibeCard(props: UnifiedVibeCardProps) {
                 // it stays mounted but hidden+inert so it reserves its height, and
                 // the stream view layers on top — the panel shows the streaming
                 // chat without resizing and the old chips don't sit visible.
-                <div style={{ position: "relative" }}>
+                <div
+                  style={{
+                    position: "relative",
+                    // While streaming, reserve a readable minimum so a text-input-only
+                    // card (no chips) doesn't crush the overlaid narration into the
+                    // lone input row's height. Harmless when chips are present — they
+                    // already reserve more, so the panel still doesn't resize.
+                    ...(props.streamBody ? { minHeight: 128 } : null),
+                  }}
+                >
                   <div
                     aria-hidden={props.streamBody ? true : undefined}
                     inert={props.streamBody ? true : undefined}
