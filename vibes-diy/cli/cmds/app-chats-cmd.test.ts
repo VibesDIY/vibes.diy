@@ -195,7 +195,7 @@ describe("appChatsEvento handler", () => {
 
     const api = {
       ensureUserSettings: async () => Result.Ok({ settings: [] }),
-      getApplicationChat: async (req: unknown) => {
+      getApplicationChat: async (_req: unknown) => {
         return Result.Ok({
           type: "vibes.diy.res-get-application-chat",
           chatId: "chat-abc",
