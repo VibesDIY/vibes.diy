@@ -1,6 +1,8 @@
 # Spec: device-id browser login (headless auth for the web app)
 
-**Status:** draft / spec-first
+**Status:** draft / spec-first. Reviewed by Codex (added Seam 3) and Charlie
+(unified auth adapter, asset-bridge caveat, remint cadence — all folded in below).
+Seams 1 + 3 are **prototype-validated** (see _Prototype_ below).
 **Goal:** let an agent log into the vibes.diy **web app** as a real user in an
 unattended cloud session — so the authenticated `qa-pr` spine (generate → edit →
 publish → remix) can run in the cloud, not only on a local workstation.
@@ -25,9 +27,11 @@ login.**
 - The device keybag item carries an ES256 private key plus a CA-signed cert; the
   cert embeds the user's Clerk identity as a `creatingUser` claim
   (`vibes-diy/cli/device-id-env.ts`, cert payload in `vibes.diy/identity/...`).
-- A device token is a short-lived ES256 JWT with the cert in its `x5c` header —
-  minted in plain JS (`createDeviceIdGetToken`), so it works in a browser via
-  WebCrypto, not just in Node.
+- A device token is a short-lived ES256 JWT with the cert in its `x5c` header. The
+  signer (`identity/device-id/sign.ts`, `key.ts`) is **isomorphic** (jose +
+  WebCrypto), so it runs in a browser. The CLI's `createDeviceIdGetToken` is
+  node-only only because it's wired to `getKeyBag` (fs); a browser-targeted factory
+  fed the keybag item directly is feasible — and is prototyped (Seam 1).
 - The server verifies the cert and **coerces `device-id` and `clerk` to the same
   `userId` claim** — `coercedVerifiedAuthUser()` in
   `vibes.diy/api/svc/check-auth.ts` treats them identically. The asset-session
@@ -55,7 +59,8 @@ already present in the cloud env.
 
 ## Design
 
-Two integration seams in the web app, both already centralized.
+Four integration seams in the web app. Seams 1 + 3 are prototype-validated; 2 + 4
+are the remaining web-app integration work.
 
 ### Seam 1 — token source (`getToken`)
 
@@ -69,17 +74,27 @@ active, `getToken` returns `{ type: "device-id", token }` minted client-side fro
 the keybag (cache + re-mint on a short interval, mirroring the CLI's per-60s
 re-mint).
 
-### Seam 2 — UI signed-in state
+### Seam 2 — UI signed-in state (unified auth adapter)
 
 The app gates protected UI on Clerk's `useAuth().isSignedIn`
 (`vibes.diy/pkg/app/routes/auth.tsx`, and the generate preflight at
-`vibes.diy/pkg/app/routes/chat/prompt.tsx:48`). When a device keybag is active,
-the app must report "signed in" without Clerk. Approach: a small auth-state shim
-that ORs a `deviceIdActive` flag into the signed-in check and surfaces the
-identity from the cert's `creatingUser` claim (display name/email), so the
-existing UI renders unchanged. The unit-test mock
-(`vibes.diy/tests/app/clerk-test-mock.ts`, `setTestAuth`) is the precedent for
-substituting auth state.
+`vibes.diy/pkg/app/routes/chat/prompt.tsx:48`). A keybag must make the app report
+"signed in" without Clerk.
+
+_Revised per Charlie's review:_ a single OR'd `deviceIdActive` flag is **not
+enough** — `vibes-diy-provider.tsx` also depends on Clerk `loaded`,
+`session?.getToken`, `addListener`, `user?.id`, and `openSignIn`, and there are
+many direct `@clerk/react` consumers across `pkg/app` (incl. `routes/auth.tsx`).
+And **synthetic Clerk session injection is to be avoided.**
+
+Instead, introduce a small **unified auth adapter** with a stable surface —
+`isLoaded`, `isSignedIn`, `userId`, `getToken`, `openSignIn`, `subscribe` — backed
+by Clerk normally and by the device-id keybag when one is active (identity from
+the cert's `creatingUser` claim). Swap the provider and the route/component gates
+to consume the adapter instead of `@clerk/react` directly. This keeps one auth
+abstraction for the whole app rather than special-casing `isSignedIn` in N places.
+(The unit-test mock `vibes.diy/tests/app/clerk-test-mock.ts` `setTestAuth` is
+precedent for substituting auth state, but the adapter is the production seam.)
 
 ### Seam 3 — client-side claims (`getTokenClaims`)
 
@@ -101,6 +116,21 @@ client-side claim extraction — no signature trust is implied (the server still
 verifies on every message); it only needs to return the right `ClerkClaim` shape
 so the preflight passes. Reuse whatever cert-claim extraction the device-id
 verifier already uses server-side rather than hand-rolling a parser.
+
+### Seam 4 — asset-session bridge for device-id (published-app assets)
+
+_(Raised by Charlie's review.)_
+
+Published/preview apps load subresources (images, video) from the asset host,
+gated by a short-lived cookie minted at `/_auth/session`. The **server** bridge
+(`vibes.diy/api/svc/public/asset-session.ts`, `verifyAnyBearer`) already accepts a
+device-id bearer — but the **client** helper
+(`vibes.diy/pkg/app/lib/asset-session.ts`) currently **no-ops for non-`clerk`
+auth types**, so a device-id session would skip minting the asset cookie and
+asset-gated subresources could fail to load. Since the qa-pr spine publishes an
+app and views it, extend the client helper to drive the bridge for device-id too
+(post the minted device token as the bearer). Low risk — the server side already
+supports it.
 
 ### Per-environment cert
 
@@ -142,28 +172,62 @@ fun site, and a botless account can use a different login. So:
 
 ## Implementation plan (after spec sign-off)
 
-1. **Browser device-token minter** in the identity package — a WebCrypto path
-   that imports the keybag JWK and mints the `x5c`-headed ES256 JWT (factor out /
-   browser-port `createDeviceIdGetToken`; ensure no Node `Buffer` on the browser
-   path — the env parser in `device-id-env.ts` uses `Buffer`, so add an
-   `atob`-based decode for the browser).
+1. **Browser device-token minter** — ✅ prototyped: `createDeviceIdGetTokenFromItem`
+   in `vibes.diy/identity/device-id/browser-token.ts` feeds the keybag item to the
+   isomorphic `DeviceIdKey` + `DeviceIdSignMsg` (jose), bypassing the node-only
+   `getKeyBag`. Remaining: export it from the browser-safe `@vibes.diy/identity`
+   entry, and a `Buffer`-free keybag parse (the env parser in `device-id-env.ts`
+   uses `Buffer`; the browser path uses `sthis.txt.base64`).
 2. **`getToken` branch** in `vibes-diy-provider.tsx`: if a keybag is active,
-   return `{ type: "device-id", token }`; else current Clerk path.
-3. **Auth-state shim** so `isSignedIn`-gated UI renders for the device-id session,
-   sourcing identity from the cert claim.
+   return `{ type: "device-id", token }`; else current Clerk path. Re-mint off the
+   token `exp` with a ~30–45s safety buffer (see _Re-mint cadence_).
+3. **Unified auth adapter** (Seam 2): introduce the `isLoaded`/`isSignedIn`/
+   `userId`/`getToken`/`openSignIn`/`subscribe` surface; back it with Clerk or the
+   keybag; migrate the provider and route/component gates onto it. No synthetic
+   Clerk session.
 4. **`getTokenClaims` device-id branch** (`vibes.diy/api/impl/index.ts:317`): when
    the token is `device-id`, return the cert's embedded `creatingUser` claim
    instead of `ClerkApiToken.decode()`, so the generate preflight
    (`routes/chat/prompt.tsx:57`) passes. Reuse the server-side cert-claim
-   extraction.
-5. **Keybag intake**: read `localStorage["vibes.diy.device-id-keybag"]` (name TBD)
+   extraction. (Claim extraction proven in the prototype.)
+5. **Asset-session client bridge** (Seam 4): extend
+   `vibes.diy/pkg/app/lib/asset-session.ts` to drive `/_auth/session` for
+   device-id auth (server already accepts it).
+6. **Keybag intake**: read `localStorage["vibes.diy.device-id-keybag"]` (name TBD)
    on init; validate; activate.
-6. **qa-pr wiring**: inject the env cert (prod vs preview by target origin) via
+7. **qa-pr wiring**: inject the env cert (prod vs preview by target origin) via
    `initScript`; drop the Google-session preflight when device-id is active;
    update the skill's _Browser environment_ section so the **authenticated** spine
    is cloud-default too.
-7. **Docs**: update `agents/cloud-browser-setup.md` (auth now covered in cloud) and
+8. **Docs**: update `agents/cloud-browser-setup.md` (auth now covered in cloud) and
    the qa-pr skill; note the local-workstation path becomes the fallback.
+
+### Re-mint cadence (resolved, per Charlie)
+
+Current shape: CLI caches ~60s; token `exp` ~120s; `nbf` backdated; server
+`clockTolerance` 60s. Browser minter should schedule the re-mint off `exp` with a
+~30–45s safety buffer (refresh before the last ~30–45s of validity), which still
+lands near the 60s cadence and avoids clock-skew edge races.
+
+## Prototype (validates Seams 1 + 3)
+
+`vibes.diy/identity/device-id/browser-token.ts` +
+`browser-token.spike.test.ts` (gated on `VIBES_DEVICE_ID`/`_PREVIEW`, inert in CI).
+The spike mints a token from the real keybag on the isomorphic path and asserts:
+valid ES256 JWT with the `x5c`/`x5t`/`x5t#S256` chain; signature verifies against
+the cert's public key (`subjectPublicKeyInfo`); and the Clerk `userId` is
+recoverable client-side from the cert (`creatingUser.claims`) — i.e. Seam 3 works
+without `ClerkApiToken.decode()`. Not yet proven: live server acceptance and the
+in-app wiring (Seams 2 + 4). The spike is throwaway — fold into a fixture-based
+test or delete before merge.
+
+## Dependencies / known risks
+
+- **`#2671` — device-id forged-cert rejection.** Charlie flags a known open
+  weakness (a golden test currently marked failing for a forged-cert rejection
+  path). It doesn't block this feature (we mint with a real cert), but it's the
+  trust-boundary backstop for the device-id verifier and should be tracked
+  alongside; cross-link before merge.
 
 ## Testing
 
@@ -178,6 +242,7 @@ fun site, and a botless account can use a different login. So:
 1. `initScript` vs `evaluate_script`+reload for injection — any CSP/storage
    partitioning gotcha on the preview origin?
 2. localStorage key name + shape (raw keybag JSON vs the base64 the CLI accepts).
-3. Should the auth-state shim live in the provider or a dedicated wrapper, to keep
-   the Clerk path untouched and easy to reason about?
-4. Re-mint cadence in the browser — match the CLI's 60s, or tie to token `exp`?
+
+_Resolved in review:_ auth-state approach → **unified auth adapter**, not a
+provider shim or synthetic Clerk session (Seam 2, per Charlie). Re-mint cadence →
+**off `exp` with a ~30–45s buffer** (per Charlie).
