@@ -112,6 +112,40 @@ describe("evento handler manifest (declarative, #2714)", () => {
     }
   });
 
+  it("preserves manifest order per shard (historical shared → vibe → stream push order)", () => {
+    // The manifest is partitioned shared-block → vibe-block → stream-block, and
+    // handlersForShard is a *stable* filter, so each plane's served order equals
+    // the order of the matching manifest entries. cf-serve push order matters for
+    // dispatch precedence, so this contract gets its own regression guard.
+    const manifestOrder = handlerManifest.map((e) => e.handler.hash);
+    const isSubsequence = (sub: readonly string[], full: readonly string[]): boolean => {
+      let i = 0;
+      for (const h of full) {
+        if (h === sub[i]) i++;
+      }
+      return i === sub.length;
+    };
+    for (const kind of ["stream", "vibe", "shared"] as const) {
+      const served = handlersForShard(kind).map((h) => h.hash);
+      expect(isSubsequence(served, manifestOrder), `${kind} order must follow manifest order`).toBe(true);
+    }
+
+    // Concrete sequence invariants matching the historical per-plane push order.
+    const vibe = handlersForShard("vibe").map((h) => h.hash);
+    // shared reads precede vibe doc ops precede the open-chat/prompt stopgap pair.
+    expect(vibe.indexOf("list-models")).toBeLessThan(vibe.indexOf("put-doc"));
+    expect(vibe.indexOf("put-doc")).toBeLessThan(vibe.indexOf("open-chat-handler"));
+    expect(vibe.indexOf("open-chat-handler")).toBeLessThan(vibe.indexOf("prompt-chat-section-handler"));
+
+    const stream = handlersForShard("stream").map((h) => h.hash);
+    // shared reads precede chat ops; within chat ops: ensure → open-chat → prompt → fork → setMode.
+    expect(stream.indexOf("list-models")).toBeLessThan(stream.indexOf("ensure-appSlug-item"));
+    expect(stream.indexOf("ensure-appSlug-item")).toBeLessThan(stream.indexOf("open-chat-handler"));
+    expect(stream.indexOf("open-chat-handler")).toBeLessThan(stream.indexOf("prompt-chat-section-handler"));
+    expect(stream.indexOf("prompt-chat-section-handler")).toBeLessThan(stream.indexOf("fork-app"));
+    expect(stream.indexOf("fork-app")).toBeLessThan(stream.indexOf("set-mode-fsid"));
+  });
+
   it("chatPlaneHandlers == handlersForShard('stream'): streaming + shared reads, no doc ops", () => {
     const chatPlane = new Set(chatPlaneHandlers.map((h) => h.hash));
     expect(chatPlane).toEqual(hashesOn("stream"));
