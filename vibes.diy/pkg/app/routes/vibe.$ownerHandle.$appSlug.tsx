@@ -431,12 +431,21 @@ export default function VibeIframeWrapper() {
       return;
     }
     const created = r.Ok().ownerHandle;
-    await vctx.sharedApi.ensureUserSettings({ settings: [{ type: "defaultHandle", ownerHandle: created }] });
+    // The binding exists now, so surface it in the list regardless of whether the
+    // switch-to-it write sticks.
     setMyHandles((prev) =>
       prev.some((h) => h.slug === created)
         ? prev
         : [...prev, { slug: created, avatarUrl: `/u/${encodeURIComponent(created)}/avatar` }]
     );
+    // Mirror the switch-handle guard: don't claim success / advance the active
+    // handle if persisting the default fails (Charlie review).
+    const s = await vctx.sharedApi.ensureUserSettings({ settings: [{ type: "defaultHandle", ownerHandle: created }] });
+    if (s.isErr()) {
+      setHandlePickerBusy(false);
+      toast.error(`Created @${created}, but couldn't switch to it: ${s.Err().message}`);
+      return;
+    }
     setMyUserSlug(created);
     await refreshViewerFromWhoAmI();
     setHandlePickerBusy(false);
