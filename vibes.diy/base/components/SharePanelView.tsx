@@ -30,7 +30,7 @@ export type ShareAccess = "public" | "request";
 
 export interface ShareMember {
   readonly handle: string;
-  readonly role?: "owner" | "editor" | "viewer";
+  readonly role?: "owner" | "editor" | "viewer" | "submitter";
   readonly avatarUrl?: string;
 }
 
@@ -61,10 +61,18 @@ export interface SharePanelViewProps {
   readonly className?: string;
 }
 
-// Read-only role label shown in each roster tag, mirroring the legacy
-// MembersSection convention (a "viewer" grant reads as "reader").
+// Read-only role label shown in each roster tag. Mirrors the legacy MembersSection
+// convention (a "viewer" grant reads as "reader") and surfaces "submitter" as
+// "contributor" — a write-capable, read-restricted member (canWrite, db-acl-eval).
 function roleLabel(role: NonNullable<ShareMember["role"]>): string {
-  return role === "viewer" ? "reader" : role;
+  switch (role) {
+    case "viewer":
+      return "reader";
+    case "submitter":
+      return "contributor";
+    default:
+      return role; // owner / editor
+  }
 }
 
 const ROSTER_TAG_STYLE: React.CSSProperties = {
