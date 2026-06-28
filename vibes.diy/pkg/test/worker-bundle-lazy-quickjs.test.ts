@@ -79,16 +79,16 @@ describe("worker entrypoint keeps QuickJS lazy (#2714 Spec B Phase A)", () => {
   });
 
   // The lazy import in cf-serve.ts only fires through localInvokeAccessFn, which
-  // a DO reaches only if it wires an `invokeAccessFn` override. The vibe/codegen
-  // shards do; the shared shard must not — that is why a shared/reads-only
-  // instance never triggers the QuickJS import. (Runtime rejection of a vibe-only
-  // op arriving on a shared shard is separately enforced by Spec A's shard gate.)
-  it("only the vibe + codegen DOs wire the access-fn invoker; the shared DO does not", () => {
-    const wires = (f: string): boolean => /invokeAccessFn\s*:/.test(stripComments(readFileSync(f, "utf-8")));
-    const WORKERS = resolve(REPO_ROOT, "vibes.diy", "pkg", "workers");
-    expect(wires(resolve(WORKERS, "app-sessions.ts")), "AppSessions (vibe) wires invokeAccessFn").toBe(true);
-    expect(wires(resolve(WORKERS, "chat-sessions.ts")), "ChatSessions (codegen) wires invokeAccessFn").toBe(true);
-    expect(wires(resolve(WORKERS, "shared-sessions.ts")), "SharedSessions must NOT wire invokeAccessFn").toBe(false);
+  // the unified Sessions DO reaches only if it wires an `invokeAccessFn` override.
+  // It wires it in exactly the two planes that evaluate access fns — vibe and
+  // codegen — and NOT in the shared branch, which is why a shared/reads-only
+  // instance never triggers the QuickJS import. (#2714 Spec B Phase E collapsed
+  // the three classes into sessions.ts; runtime rejection of a vibe-only op on a
+  // shared shard is separately enforced by Spec A's shard gate.)
+  it("the unified Sessions class wires the access-fn invoker for vibe+codegen only, not shared", () => {
+    const sessions = stripComments(readFileSync(resolve(REPO_ROOT, "vibes.diy", "pkg", "workers", "sessions.ts"), "utf-8"));
+    const wired = (sessions.match(/invokeAccessFn\s*:/g) ?? []).length;
+    expect(wired, "expected invokeAccessFn wired in exactly 2 planes (vibe + codegen), not the shared branch").toBe(2);
   });
 });
 

@@ -17,11 +17,10 @@ binding = "BROWSER"
 
 [durable_objects]
 bindings = [
-  { name = "CHAT_SESSIONS", class_name = "ChatSessions" },
-  { name = "APP_SESSIONS", class_name = "AppSessions" },
-  { name = "SHARED_SESSIONS", class_name = "SharedSessions" },
-  # v9 (#2714 Spec B): unified Sessions class. SESSIONS = vibe + shared planes,
-  # CODEGEN_SESSIONS = codegen plane. Both bind class "Sessions" (local here).
+  # #2714 Spec B: unified Sessions class. SESSIONS = vibe + shared planes,
+  # CODEGEN_SESSIONS = codegen plane (both bind class "Sessions", local here). The
+  # old CHAT_/APP_/SHARED_SESSIONS local bindings + classes were deleted in Phase E
+  # (v10 deleted_classes) after the drain confirmed zero traffic (#2778).
   { name = "SESSIONS", class_name = "Sessions" },
   { name = "CODEGEN_SESSIONS", class_name = "Sessions" },
   { name = "USER_NOTIFY", class_name = "UserNotify" },
@@ -78,6 +77,17 @@ new_classes = ["SharedSessions"]
 tag = "v9"
 new_classes = ["Sessions"]
 
+# v10: retire the old session classes (#2714 Spec B Phase E). Drained per #2778
+# (old-class invocations a positive zero since the v9/2.6.13 deploy). IRREVERSIBLE
+# — destroys all instances/state for these classes; safe only because they hold no
+# durable storage (doc data is D1, broadcast is in-memory, access-fn WASM is a
+# cache). Ordering: cli's cross-script APP_/SHARED_SESSIONS bindings were dropped
+# first (PR-E1, c2.6.16 live) so prod's delete clears the 10061 validator. Deploy
+# prod before cli for this one (cli's cross-script binding already gone).
+[[migrations]]
+tag = "v10"
+deleted_classes = ["ChatSessions", "AppSessions", "SharedSessions"]
+
 [[d1_databases]]
 binding = "DB"
 database_name = "dev-vibes-diy-v2"
@@ -104,11 +114,10 @@ binding = "BROWSER"
 
 [env.local.durable_objects]
 bindings = [
-  { name = "CHAT_SESSIONS", class_name = "ChatSessions" },
-  { name = "APP_SESSIONS", class_name = "AppSessions" },
-  { name = "SHARED_SESSIONS", class_name = "SharedSessions" },
-  # v9 (#2714 Spec B): unified Sessions class. SESSIONS = vibe + shared planes,
-  # CODEGEN_SESSIONS = codegen plane. Both bind class "Sessions" (local here).
+  # #2714 Spec B: unified Sessions class. SESSIONS = vibe + shared planes,
+  # CODEGEN_SESSIONS = codegen plane (both bind class "Sessions", local here). The
+  # old CHAT_/APP_/SHARED_SESSIONS local bindings + classes were deleted in Phase E
+  # (v10 deleted_classes) after the drain confirmed zero traffic (#2778).
   { name = "SESSIONS", class_name = "Sessions" },
   { name = "CODEGEN_SESSIONS", class_name = "Sessions" },
   { name = "USER_NOTIFY", class_name = "UserNotify" },
@@ -151,6 +160,11 @@ new_classes = ["SharedSessions"]
 [[env.local.migrations]]
 tag = "v9"
 new_classes = ["Sessions"]
+
+# v10: retire old session classes — see top-level v10. (#2714 Spec B Phase E)
+[[env.local.migrations]]
+tag = "v10"
+deleted_classes = ["ChatSessions", "AppSessions", "SharedSessions"]
 
 [[env.local.d1_databases]]
 binding = "DB"
@@ -184,11 +198,10 @@ binding = "BROWSER"
 
 [env.dev.durable_objects]
 bindings = [
-  { name = "CHAT_SESSIONS", class_name = "ChatSessions" },
-  { name = "APP_SESSIONS", class_name = "AppSessions" },
-  { name = "SHARED_SESSIONS", class_name = "SharedSessions" },
-  # v9 (#2714 Spec B): unified Sessions class. SESSIONS = vibe + shared planes,
-  # CODEGEN_SESSIONS = codegen plane. Both bind class "Sessions" (local here).
+  # #2714 Spec B: unified Sessions class. SESSIONS = vibe + shared planes,
+  # CODEGEN_SESSIONS = codegen plane (both bind class "Sessions", local here). The
+  # old CHAT_/APP_/SHARED_SESSIONS local bindings + classes were deleted in Phase E
+  # (v10 deleted_classes) after the drain confirmed zero traffic (#2778).
   { name = "SESSIONS", class_name = "Sessions" },
   { name = "CODEGEN_SESSIONS", class_name = "Sessions" },
   { name = "USER_NOTIFY", class_name = "UserNotify" },
@@ -231,6 +244,11 @@ new_classes = ["SharedSessions"]
 [[env.dev.migrations]]
 tag = "v9"
 new_classes = ["Sessions"]
+
+# v10: retire old session classes — see top-level v10. (#2714 Spec B Phase E)
+[[env.dev.migrations]]
+tag = "v10"
+deleted_classes = ["ChatSessions", "AppSessions", "SharedSessions"]
 
 [[env.dev.d1_databases]]
 binding = "DB"
@@ -266,11 +284,10 @@ binding = "BROWSER"
 
 [env.preview.durable_objects]
 bindings = [
-  { name = "CHAT_SESSIONS", class_name = "ChatSessions" },
-  { name = "APP_SESSIONS", class_name = "AppSessions" },
-  { name = "SHARED_SESSIONS", class_name = "SharedSessions" },
-  # v9 (#2714 Spec B): unified Sessions class. SESSIONS = vibe + shared planes,
-  # CODEGEN_SESSIONS = codegen plane. Both bind class "Sessions" (local here).
+  # #2714 Spec B: unified Sessions class. SESSIONS = vibe + shared planes,
+  # CODEGEN_SESSIONS = codegen plane (both bind class "Sessions", local here). The
+  # old CHAT_/APP_/SHARED_SESSIONS local bindings + classes were deleted in Phase E
+  # (v10 deleted_classes) after the drain confirmed zero traffic (#2778).
   { name = "SESSIONS", class_name = "Sessions" },
   { name = "CODEGEN_SESSIONS", class_name = "Sessions" },
   { name = "USER_NOTIFY", class_name = "UserNotify" },
@@ -314,6 +331,11 @@ new_classes = ["SharedSessions"]
 tag = "v9"
 new_classes = ["Sessions"]
 
+# v10: retire old session classes — see top-level v10. (#2714 Spec B Phase E)
+[[env.preview.migrations]]
+tag = "v10"
+deleted_classes = ["ChatSessions", "AppSessions", "SharedSessions"]
+
 [[env.preview.d1_databases]]
 binding = "DB"
 database_name = "dev-vibes-diy-v2"
@@ -347,11 +369,10 @@ binding = "BROWSER"
 
 [env.prod.durable_objects]
 bindings = [
-  { name = "CHAT_SESSIONS", class_name = "ChatSessions" },
-  { name = "APP_SESSIONS", class_name = "AppSessions" },
-  { name = "SHARED_SESSIONS", class_name = "SharedSessions" },
-  # v9 (#2714 Spec B): unified Sessions class. SESSIONS = vibe + shared planes,
-  # CODEGEN_SESSIONS = codegen plane. Both bind class "Sessions" (local here).
+  # #2714 Spec B: unified Sessions class. SESSIONS = vibe + shared planes,
+  # CODEGEN_SESSIONS = codegen plane (both bind class "Sessions", local here). The
+  # old CHAT_/APP_/SHARED_SESSIONS local bindings + classes were deleted in Phase E
+  # (v10 deleted_classes) after the drain confirmed zero traffic (#2778).
   { name = "SESSIONS", class_name = "Sessions" },
   { name = "CODEGEN_SESSIONS", class_name = "Sessions" },
   { name = "USER_NOTIFY", class_name = "UserNotify" },
@@ -395,6 +416,11 @@ new_classes = ["SharedSessions"]
 tag = "v9"
 new_classes = ["Sessions"]
 
+# v10: retire old session classes — see top-level v10. (#2714 Spec B Phase E)
+[[env.prod.migrations]]
+tag = "v10"
+deleted_classes = ["ChatSessions", "AppSessions", "SharedSessions"]
+
 [[env.prod.d1_databases]]
 binding = "DB"
 database_name = "prod-vibes-diy-v2"
@@ -437,7 +463,8 @@ binding = "BROWSER"
 # prod, so prod's class loses its last reference before prod deletes it.
 [env.cli.durable_objects]
 bindings = [
-  { name = "CHAT_SESSIONS", class_name = "ChatSessions" },
+  # #2714 Spec B Phase E: cli's local CHAT_SESSIONS binding + class are deleted
+  # (v10 deleted_classes); codegen now runs on the local CODEGEN_SESSIONS handle.
   # #2714 Spec B Phase E (cli-first unbind, PR-E1): the cross-script APP_SESSIONS
   # + SHARED_SESSIONS bindings are removed here so prod can later `deleted_classes`
   # those classes without a 10061 (the validator counts a cross-script binding's
@@ -516,6 +543,11 @@ new_classes = ["SharedSessions"]
 [[env.cli.migrations]]
 tag = "v9"
 new_classes = ["Sessions"]
+
+# v10: retire old session classes — see top-level v10. (#2714 Spec B Phase E)
+[[env.cli.migrations]]
+tag = "v10"
+deleted_classes = ["ChatSessions", "AppSessions", "SharedSessions"]
 
 [[env.cli.d1_databases]]
 binding = "DB"
