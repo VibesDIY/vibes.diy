@@ -1075,7 +1075,6 @@ export default function VibeIframeWrapper() {
                         url={shareModal.publishedUrl ?? `${window.location.origin}/vibe/${vibeSlug}`}
                         copied={shareModal.urlCopied}
                         onCopy={() => void shareModal.handleCopyUrl()}
-                        onViewLive={() => window.open(shareModal.publishedUrl ?? `/vibe/${vibeSlug}`, "_blank")}
                         viewer={shareViewer}
                         members={shareMembers}
                         access={shareAccess}

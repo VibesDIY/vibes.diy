@@ -40,8 +40,6 @@ export interface SharePanelViewProps {
   /** When true, the Copy button reads "Copied". */
   readonly copied?: boolean;
   readonly onCopy?: () => void;
-  /** Opens the live published app (link-first: copy URL + inline "View live", #2234). */
-  readonly onViewLive?: () => void;
   /** Which of the three in-vibe classes is viewing. */
   readonly viewer: ShareViewer;
   /** The people in the vibe — shown to member + author (the roster). Owner lists first. */
@@ -88,7 +86,6 @@ export function SharePanelView({
   url,
   copied,
   onCopy,
-  onViewLive,
   viewer,
   members = [],
   access = "public",
@@ -111,27 +108,18 @@ export function SharePanelView({
       style={{ display: "flex", flexDirection: "column", gap: 14 }}
     >
       {/* Link — everyone who can see the vibe. */}
-      <div>
-        <div
-          className="rounded-md border border-light-decorative-01 dark:border-dark-decorative-01 py-1.5 pl-3 pr-1.5"
-          style={{ display: "flex", alignItems: "center", gap: 8 }}
-        >
-          <span className="flex-1 truncate text-sm">{url}</span>
-          <button
-            type="button"
-            onClick={onCopy}
-            aria-label="Copy link"
-            className="shrink-0 rounded-[5px] border-2 border-[#1a1a1a] bg-blue-500 px-3 py-1 text-xs font-bold text-white transition-colors hover:bg-blue-600 active:translate-x-[2px] active:translate-y-[2px]"
-          >
-            {copied ? "Copied" : "Copy"}
-          </button>
-        </div>
+      <div
+        className="rounded-md border border-light-decorative-01 dark:border-dark-decorative-01 py-1.5 pl-3 pr-1.5"
+        style={{ display: "flex", alignItems: "center", gap: 8 }}
+      >
+        <span className="flex-1 truncate text-sm">{url}</span>
         <button
           type="button"
-          onClick={onViewLive}
-          className="mt-1.5 text-xs font-medium text-blue-600 hover:underline dark:text-blue-400"
+          onClick={onCopy}
+          aria-label="Copy link"
+          className="shrink-0 rounded-[5px] border-2 border-[#1a1a1a] bg-blue-500 px-3 py-1 text-xs font-bold text-white transition-colors hover:bg-blue-600 active:translate-x-[2px] active:translate-y-[2px]"
         >
-          View live ↗
+          {copied ? "Copied" : "Copy"}
         </button>
       </div>
 

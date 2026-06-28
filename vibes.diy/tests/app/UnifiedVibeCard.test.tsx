@@ -85,6 +85,18 @@ describe("UnifiedVibeCard", () => {
     expect(onOpenChange).toHaveBeenCalledWith(false);
   });
 
+  it("closes when the click-away backdrop is clicked", () => {
+    const onOpenChange = vi.fn();
+    render(<UnifiedVibeCard appTitle="Bloom Machine" open onOpenChange={onOpenChange} />);
+    fireEvent.click(screen.getByTestId("vibe-menu-backdrop"));
+    expect(onOpenChange).toHaveBeenCalledWith(false);
+  });
+
+  it("renders no click-away backdrop while closed", () => {
+    render(<UnifiedVibeCard appTitle="Bloom Machine" />);
+    expect(screen.queryByTestId("vibe-menu-backdrop")).toBeNull();
+  });
+
   it("renders the handle stub when handleSlug is set", () => {
     render(<UnifiedVibeCard appTitle="Bloom Machine" open handleSlug="meghan" />);
     expect(screen.getByText("@meghan")).toBeTruthy();
