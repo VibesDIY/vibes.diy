@@ -10,6 +10,12 @@ export type GenerationPhase = "idle" | "streaming" | "live";
 
 export interface InVibeGeneration {
   readonly phase: GenerationPhase;
+  // True while a prompt turn is in flight and NOT yet settled — i.e. from
+  // sendPrompt until block-end, which is LATER than `phase` leaving "streaming"
+  // (phase flips to "live" at the first code.end, but the turn keeps running).
+  // Publish must gate on this, not on phase, so an owner can't ship a partial
+  // turn (later dev writes from the same runId would be dropped). (#2772 D2)
+  readonly isGenerating: boolean;
   readonly blocks: PromptState["blocks"];
   readonly blurPx: number;
   readonly counts: { readonly messages: number; readonly lines: number };
@@ -131,17 +137,22 @@ export function useInVibeGeneration(opts: UseInVibeGenerationOpts): InVibeGenera
     sendPromptState(text.trim());
   }, []);
 
+  // A turn is in flight until block-end settles the reducer (running back to
+  // false). This is the same predicate the in-flight guard + blur ramp use; it
+  // stays true through the "live" phase, so publish can wait for full settle.
+  const isGenerating = promptState.running || promptToSend !== null || promptState.optimisticPrompt !== undefined;
+
   const blurPx = useMemo(() => {
     let b = 25;
     for (let i = 0; i < hotSwapCount; i++) b *= 2 / 3;
-    const generating = promptState.running || promptToSend !== null || promptState.optimisticPrompt !== undefined;
-    return generating ? b : 0;
-  }, [hotSwapCount, promptState.running, promptState.optimisticPrompt, promptToSend]);
+    return isGenerating ? b : 0;
+  }, [hotSwapCount, isGenerating]);
 
   const counts = useMemo(() => ({ messages: promptState.blocks.length, lines: getCode(promptState).code.length }), [promptState]);
 
   return {
     phase,
+    isGenerating,
     blocks: promptState.blocks,
     blurPx,
     counts,

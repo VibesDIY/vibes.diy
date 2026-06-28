@@ -49,6 +49,22 @@ describe("useInVibeGeneration", () => {
     expect(view.result.current.blocks).toHaveLength(1);
   });
 
+  it("keeps isGenerating true after the first code.end (phase live) so publish can't ship a partial turn", async () => {
+    const { view, fakeChat } = setup();
+    await waitFor(() => expect(view.result.current.phase).toBe("idle"));
+    expect(view.result.current.isGenerating).toBe(false);
+    act(() => view.result.current.sendPrompt("make it blue"));
+    await act(async () => fakeChat.emitBlockBegin());
+    await waitFor(() => expect(view.result.current.phase).toBe("streaming"));
+    expect(view.result.current.isGenerating).toBe(true);
+    await act(async () => fakeChat.emitCodeEnd());
+    await waitFor(() => expect(view.result.current.phase).toBe("live"));
+    // The crux of the publish gate (#2772 D2 / Charlie review): phase flips to "live"
+    // at the first code.end, but the turn is still running — isGenerating stays true so
+    // `!isGenerating` keeps the Publish control closed until the whole turn settles.
+    expect(view.result.current.isGenerating).toBe(true);
+  });
+
   it("pushes resolved source to the iframe on a completed code block and ramps blur down", async () => {
     const { view, fakeChat, pushSource } = setup();
     await waitFor(() => expect(view.result.current.phase).toBe("idle"));
