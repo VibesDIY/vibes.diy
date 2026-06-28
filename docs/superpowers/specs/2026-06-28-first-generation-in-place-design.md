@@ -29,13 +29,13 @@ can and honest about latency where it can't.
 
 ## 1. Decisions locked (brainstorm, jchris, 2026-06-28)
 
-| # | Decision | Choice |
-| --- | --- | --- |
-| Gen iframe | Which iframe forms + de-blurs behind the card during a real generation | **Hot-swap the existing `/vibe` iframe in place** (no reload, no second iframe). Risk accepted: it's on the direct line to the core product value. |
-| Single surface | Consequence of the above | **Retire the preview iframe — one iframe surface.** The deployed runtime iframe hot-swaps for both first-gen and edits; `PreviewApp`'s separate `preview=yes` shell becomes deletable. |
-| Cached lane | How to slice the cached-read lane vs. real generation | **Frontend-first, but only if it hits the REAL contract** (real stored `chatSections`, real read path). No fake handlers. If the honest version needs backend before it's useful, defer the whole lane to its own issue rather than stub it. |
-| Fork point | Where the non-owner make-it-yours happens in-place | **Fork inline, then `replaceState` the URL seamlessly** to `/vibe/$yourHandle/$slug`; card stays mounted, iframe de-blurs into the copy. Never routes a non-owner into the owner's chat. |
-| Chat toggle | How the stream/history reopens after the app runs | **Lives inside the Edit view + a history-summary affordance** (no new nav item; nav stays Home / Edit / Share, consistent with §1e retiring the Chat glyph). Carries a **line/block-count summary** so history size is sensible at a glance. |
+| #              | Decision                                                               | Choice                                                                                                                                                                                                                                       |
+| -------------- | ---------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Gen iframe     | Which iframe forms + de-blurs behind the card during a real generation | **Hot-swap the existing `/vibe` iframe in place** (no reload, no second iframe). Risk accepted: it's on the direct line to the core product value.                                                                                           |
+| Single surface | Consequence of the above                                               | **Retire the preview iframe — one iframe surface.** The deployed runtime iframe hot-swaps for both first-gen and edits; `PreviewApp`'s separate `preview=yes` shell becomes deletable.                                                       |
+| Cached lane    | How to slice the cached-read lane vs. real generation                  | **Frontend-first, but only if it hits the REAL contract** (real stored `chatSections`, real read path). No fake handlers. If the honest version needs backend before it's useful, defer the whole lane to its own issue rather than stub it. |
+| Fork point     | Where the non-owner make-it-yours happens in-place                     | **Fork inline, then `replaceState` the URL seamlessly** to `/vibe/$yourHandle/$slug`; card stays mounted, iframe de-blurs into the copy. Never routes a non-owner into the owner's chat.                                                     |
+| Chat toggle    | How the stream/history reopens after the app runs                      | **Lives inside the Edit view + a history-summary affordance** (no new nav item; nav stays Home / Edit / Share, consistent with §1e retiring the Chat glyph). Carries a **line/block-count summary** so history size is sensible at a glance. |
 
 ---
 
@@ -52,7 +52,7 @@ There are two iframe surfaces today:
 
 **The decisive seam:** the runtime's `registerDependencies` (`vibe/runtime/register-dependencies.ts:419-443`)
 calls `registerHotSwapHandler()` and `sendRuntimeReadyWithRetry()` **unconditionally**. The
-`set-source` listener is registered for *every* runtime, and `preview=yes` only **skips SSR
+`set-source` listener is registered for _every_ runtime, and `preview=yes` only **skips SSR
 viewer identity** (`api/svc/intern/render-vibe.ts:169-179`) — it does **not** gate hot-swap. The
 host-side bridge (`vibe/srv-sandbox/srv-sandbox.ts`) is a **shared singleton** that posts
 `set-source` to whichever iframe last announced `runtime.ready` and caches the latest source in
@@ -64,7 +64,7 @@ preview surface becomes deletable — a deletion win for the subtraction ledger 
 the end of "preview vs deployed drift" bugs.
 
 > **Sequencing caveat:** `/chat` still mounts `PreviewApp` and coexists until #2518 (`/chat`
-> retirement, gated on Track B #2517). So the *full* deletion of the preview iframe lands when
+> retirement, gated on Track B #2517). So the _full_ deletion of the preview iframe lands when
 > `/chat` retires. #2677 **builds and owns the single-surface hot-swap path on `/vibe`**; `/chat`
 > converges onto it later (not the reverse).
 
@@ -107,24 +107,27 @@ card, decaying per `hotSwapCount` — the same effect `PreviewApp` runs, now on 
 ## 4. The three PR slices (independently mergeable)
 
 ### PR-A — in-place real generation (frontend-only, no backend)
+
 Replace `handleEditPrompt`'s **owner branch** with in-card generation via `useInVibeGeneration`:
 stream `PromptAndBlockMsgs` in the Edit-view body, detect first `isCodeEnd`, swap body → chips,
 de-blur the live app behind. The codegen auth-gate already exists and is correct (§3) — **zero
 server changes.** This is the bulk of #2677 / #1745.
 
 ### PR-B — seamless non-owner fork (the hard constraint)
+
 A non-owner **cannot** write the owner's chat — the server rejects on `userId` mismatch
 (`api/svc/public/prompt-chat-section.ts`). So on a non-owner's first write, **fire make-it-yours
-*before* opening codegen** (the one server action, §2 of the epic — code-only copy → your handle,
-prompt rides along), `replaceState` → `/vibe/$yourHandle/$slug`, then `sendPrompt` runs in *their*
+_before_ opening codegen** (the one server action, §2 of the epic — code-only copy → your handle,
+prompt rides along), `replaceState` → `/vibe/$yourHandle/$slug`, then `sendPrompt` runs in _their_
 copy. The card stays mounted; the iframe de-blurs into the fork; the #1856 "it's yours now"
 message is the only surfacing. **The fork is the explicit point the non-owner path diverges** — it
 never opens a codegen chat against the owner's session.
 
 ### PR-C — cached-read lane (the two-lane split)
+
 A cached chip is a **read**: navigate to a real pre-built public app (real stored `chatSections`),
 no codegen, no login. **The fakeness line (jchris's constraint):** the lane is honest only if
-cached targets are *real navigable apps with real stored chat read through `getChatDetails`* — not
+cached targets are _real navigable apps with real stored chat read through `getChatDetails`_ — not
 hardcoded frontend history. So PR-C ships the real navigation + real read behavior. What's
 genuinely backend-coordinated and **deferred to a follow-up**: a **system/cache handle** that owns
 the curated forks (a real curator handle works in the interim), a **content-address dedupe key**
@@ -137,14 +140,16 @@ deferring the whole lane to its own issue — no stubs either way.**
 ## 5. Backend answer (what ships frontend-first vs. needs coordination)
 
 **Frontend-only (no server work):**
+
 - All of PR-A — real generation reuses the existing codegen chat + the existing auth-gate
   unchanged (§3 confirms the gate is correct and stays; the pending prompt already survives the
   sign-in redirect via the `?intent=`/prompt routing).
 - The single-iframe hot-swap path (the runtime already registers the bridge — §2).
-- The cached-lane *navigation + real-read* behavior in PR-C, **provided** cached targets are real
+- The cached-lane _navigation + real-read_ behavior in PR-C, **provided** cached targets are real
   apps with real stored chat.
 
 **Backend-coordinated (PR-C's "real" lane, a follow-up — not blocking A/B):**
+
 1. A **system/cache handle** that owns curated + precached forks (so the slug-vs-fsId rule stays
    uniform — system is just another owner, §20).
 2. A **content-address dedupe key** `(sourceFsId, transform)` so repeated cached clicks resolve to
@@ -164,9 +169,9 @@ it grows").
 
 **Data source — verified, split into real vs. not:**
 
-- **The counts (`N messages · ~L lines`) — real and free.** *messages* = `promptState.blocks.length`;
-  *lines* = the length of the resolved code array `getCode(promptState).code` — the **exact** value
-  `PreviewApp` already computes to hot-swap. For a vibe you *land on*, the same two numbers come
+- **The counts (`N messages · ~L lines`) — real and free.** _messages_ = `promptState.blocks.length`;
+  _lines_ = the length of the resolved code array `getCode(promptState).code` — the **exact** value
+  `PreviewApp` already computes to hot-swap. For a vibe you _land on_, the same two numbers come
   from the stored `chatSections` via the real `getChatDetails` read (`api/svc/public/get-chat-details.ts`
   selects `chatSections.blocks`).
 - **The narration text — real prose, freeform shape.** `block.toplevel.line` carries
@@ -175,7 +180,7 @@ it grows").
   count. It is **not** invented.
 - **Out of scope (honesty flag):** tidy retrospective one-liners like "built a 4×4 grid of pad
   buttons." The model's toplevel prose is freeform and not guaranteed to be neat past-tense
-  bullets; the sketch uses such bullets only as *illustrative stand-ins*. Generating clean
+  bullets; the sketch uses such bullets only as _illustrative stand-ins_. Generating clean
   summaries would be a **separate model step** — filed as **#2753** — #2677 shows the model's
   real narration verbatim and never hardcodes summaries.
 
@@ -183,15 +188,15 @@ it grows").
 
 ## 7. Perf contract (§8 Q4) — the two lanes look categorically different
 
-| | Cached / READ lane | Real-generation / WRITE lane |
-| --- | --- | --- |
-| Trigger | a cached (curated/precached) chip | "Other" / an uncached chip / first generation |
-| Budget | **click-as-page-view, < 500ms** | latency-bearing, seconds |
-| Visible | instant content swap; **no stream, no blur, no spinner** | **stream in card + de-blur behind**; reads as "generating for real" |
-| Identity | anonymous **read** | **login on the write** |
-| Commits | nothing (navigate to existing content) | owner → same slug, new fsId; non-owner → new slug (fork) |
+|          | Cached / READ lane                                       | Real-generation / WRITE lane                                        |
+| -------- | -------------------------------------------------------- | ------------------------------------------------------------------- |
+| Trigger  | a cached (curated/precached) chip                        | "Other" / an uncached chip / first generation                       |
+| Budget   | **click-as-page-view, < 500ms**                          | latency-bearing, seconds                                            |
+| Visible  | instant content swap; **no stream, no blur, no spinner** | **stream in card + de-blur behind**; reads as "generating for real" |
+| Identity | anonymous **read**                                       | **login on the write**                                              |
+| Commits  | nothing (navigate to existing content)                   | owner → same slug, new fsId; non-owner → new slug (fork)            |
 
-The contract is that the visible treatment makes the lane obvious *before* the user waits — the
+The contract is that the visible treatment makes the lane obvious _before_ the user waits — the
 real lane's stream + de-blur is the "this is generating for real" signal #1896 asked for, so
 latency never reads as "the app suddenly got slow."
 
@@ -199,18 +204,18 @@ latency never reads as "the app suddenly got slow."
 
 ## 8. Build-seam map (reuse, don't rewrite)
 
-| Need | Reuse / extend | Where |
-| --- | --- | --- |
-| Codegen chat handle + section stream | `useChatSession` → extract `useInVibeGeneration` (local reducer) | `pkg/app/hooks/useChatSession.ts` |
-| First-code-block detection | `isCodeEnd` per block | `call-ai/v2/block-stream.ts` |
-| Hot-swap into the live iframe | `srvVibeSandbox.pushSource()` (already registered by the deployed runtime) | `vibe/srv-sandbox/srv-sandbox.ts`, `vibe/runtime/register-dependencies.ts` |
-| De-blur ramp | `blurPx` 25 ×⅔/`hotSwapCount` via `backdropFilter` | `pkg/app/components/ResultPreview/PreviewApp.tsx:133-276` |
-| Resolved code + line count | `getCode(promptState).code` | `pkg/app/components/ResultPreview/get-code.ts` |
-| The chips | `OptionButtons` (already in `@vibes.diy/base`, the card's body) | `base/components/OptionButtons.tsx` |
-| The card shell | `UnifiedVibeCard` `body` slot (already supports view-swapping) | `base/components/UnifiedVibeCard.tsx` |
-| History rendering | `MessageList` (real prompts + narration) | `pkg/app/components/MessageList.tsx` |
-| Stored-chat read (land-on history) | `getChatDetails` / `getChatResponse` | `api/svc/public/get-chat-details.ts` |
-| The hop being replaced | `handleEditPrompt` + `/remix` + `setPromptIfEmpty` | `routes/vibe.…tsx:196`, `routes/remix.…tsx`, `routes/chat/chat.…tsx` |
+| Need                                 | Reuse / extend                                                             | Where                                                                      |
+| ------------------------------------ | -------------------------------------------------------------------------- | -------------------------------------------------------------------------- |
+| Codegen chat handle + section stream | `useChatSession` → extract `useInVibeGeneration` (local reducer)           | `pkg/app/hooks/useChatSession.ts`                                          |
+| First-code-block detection           | `isCodeEnd` per block                                                      | `call-ai/v2/block-stream.ts`                                               |
+| Hot-swap into the live iframe        | `srvVibeSandbox.pushSource()` (already registered by the deployed runtime) | `vibe/srv-sandbox/srv-sandbox.ts`, `vibe/runtime/register-dependencies.ts` |
+| De-blur ramp                         | `blurPx` 25 ×⅔/`hotSwapCount` via `backdropFilter`                         | `pkg/app/components/ResultPreview/PreviewApp.tsx:133-276`                  |
+| Resolved code + line count           | `getCode(promptState).code`                                                | `pkg/app/components/ResultPreview/get-code.ts`                             |
+| The chips                            | `OptionButtons` (already in `@vibes.diy/base`, the card's body)            | `base/components/OptionButtons.tsx`                                        |
+| The card shell                       | `UnifiedVibeCard` `body` slot (already supports view-swapping)             | `base/components/UnifiedVibeCard.tsx`                                      |
+| History rendering                    | `MessageList` (real prompts + narration)                                   | `pkg/app/components/MessageList.tsx`                                       |
+| Stored-chat read (land-on history)   | `getChatDetails` / `getChatResponse`                                       | `api/svc/public/get-chat-details.ts`                                       |
+| The hop being replaced               | `handleEditPrompt` + `/remix` + `setPromptIfEmpty`                         | `routes/vibe.…tsx:196`, `routes/remix.…tsx`, `routes/chat/chat.…tsx`       |
 
 ---
 
@@ -265,7 +270,7 @@ handle:**
 
 ## 11. Subtraction-ledger additions (epic §7)
 
-| Deleted | Learning |
-| --- | --- |
+| Deleted                                                                                | Learning                                                                                                                                                                                    |
+| -------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | The preview iframe (`PreviewApp`'s `preview=yes` shell) — once `/chat` retires (#2518) | The deployed runtime already registered the hot-swap bridge unconditionally; "preview" was only an SSR-identity skip. One iframe surface kills the preview-vs-deployed drift class of bugs. |
-| `handleEditPrompt`'s `/chat` and `/remix` hops (owner + non-owner) | The hop existed only because `/vibe` couldn't generate in place. Once it can, the destination is the same surface — no navigation. |
+| `handleEditPrompt`'s `/chat` and `/remix` hops (owner + non-owner)                     | The hop existed only because `/vibe` couldn't generate in place. Once it can, the destination is the same surface — no navigation.                                                          |
