@@ -208,4 +208,17 @@ describe("UnifiedVibeCard", () => {
     // The plain "Owner" shield label is replaced by the admin one.
     expect(screen.queryByRole("img", { name: /^owner$/i })).toBeNull();
   });
+
+  it("gates the admin badge to the owner: a stale adminMode never labels a member/visitor (Codex P2)", () => {
+    const { rerender } = render(
+      <UnifiedVibeCard appTitle="Bloom Machine" open handleSlug="meghan" viewerMode="member" memberReadOnly adminMode />
+    );
+    // adminMode is ignored for a member — they still get the read-only lock, not admin.
+    expect(screen.queryByRole("img", { name: /admin mode/i })).toBeNull();
+    expect(screen.getByRole("img", { name: /read-only/i })).toBeTruthy();
+    // ...and nothing at all for a visitor.
+    rerender(<UnifiedVibeCard appTitle="Bloom Machine" open handleSlug="meghan" viewerMode="visitor" adminMode />);
+    expect(screen.queryByRole("img", { name: /admin mode/i })).toBeNull();
+    expect(screen.queryByRole("img", { name: /read-only/i })).toBeNull();
+  });
 });
