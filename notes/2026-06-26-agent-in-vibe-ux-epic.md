@@ -28,8 +28,10 @@ in #2796** (sibling validation pass: #2795).
   codegen agent now lives in the vibe. **Seamless non-owner fork** — editing a vibe you don't own
   forks to your handle in place. (partial #2677)
 - **Handle picker** — the top-of-card tag's switcher dropdown is wired. (#2678 — closed)
-- **Verb collapse** — the Remix/Clone/Fresh-Install/Edit chrome is gone. (#2679 — publish-intent
-  persistence still open, see below)
+- **Verb collapse** — the Remix/Clone/Fresh-Install/Edit chrome is gone; the card's
+  Public/grant-required access toggle persists directly (`shareModal.handleSetPublicAccess` →
+  `sharedApi.ensureAppSettings({ publicAccess })`, optimistic with rollback). (#2679 — the fuller
+  publish-intent presets remain, see below)
 - **The simplified Share dialogue (read side)** — `SharePanelView`: the 3-class in-group model
   (anonymous → Copy URL; member → + roster on grant-gated vibes; author → + the Public/grant-required
   toggle), wired into the card's Share view with real member data. (partial #2680)
@@ -48,8 +50,11 @@ in #2796** (sibling validation pass: #2795).
   a build-vs-drop decision pending.** (§1a)
 - **First-generation polish** — the `💬` chat-history toggle (reopen stream/history any time) and
   the faked chat for cached/curated items (pre-authored `ChatSections`). (#2677)
-- **Publish-intent persistence** — the card's Public/grant-required toggle still opens the legacy
-  `ShareModal` instead of writing the setting directly. (#2679)
+- **Publish-intent setting (#1854)** — the binary Public/grant-required access toggle already
+  persists; what remains is the richer publish-intent model (Shared space / Template / Read-only
+  presets that set access + remixability defaults), the #1856 "it's yours now" inline message, and
+  the viewer-mode indicators. (#2679) _(Only the manage flow's `onSelectMember` still opens the
+  legacy `ShareModal` — that's the #2680 manage-flow half, not the access toggle.)_
 - **Share manage flow** — per-member role menu, the request-access screen, the
   `remixable-without-access` setting. (deferred half of #2680; §2 "Deferred")
 - **#2353** — the "sign in to see @sender's entries" shared-data empty-state prompt (§3 FTUE);
@@ -696,8 +701,9 @@ Each is its own small PR; the order is rough, not rigid. Status mirrors §0.
    toggle + faked cached chat. The **cached-read chip lane** (§1a/§20) is **now tracked in #2796**
    (build-vs-drop decision pending).
 3. ✅ **#2678 — handle picker** (the top-of-card tag's switcher dropdown is wired; #2275).
-4. **#2679 — verb collapse** (the Remix/Clone/Fresh-Install/Edit chrome is gone; remaining: persist
-   the Public/grant-required setting; the #1856 "it's yours now" message; viewer-mode indicators #2178).
+4. **#2679 — verb collapse** (the Remix/Clone/Fresh-Install/Edit chrome is gone, and the
+   Public/grant-required access toggle persists directly; remaining: the #1854 publish-intent
+   presets; the #1856 "it's yours now" message; viewer-mode indicators #2178).
 5. **#2680 — Share manage flow** (per-member roles, request-access screen,
    `remixable-without-access`).
 6. **#2518 — retire `/chat`** (redirects → `/vibe`, lazy connection flip). **Unblocked: #2517 closed
