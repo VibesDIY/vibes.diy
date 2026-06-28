@@ -126,6 +126,53 @@ describe("UnifiedVibeCard", () => {
     expect(screen.queryByRole("button", { name: /open vibe menu/i })).toBeNull();
   });
 
+  it("keeps the handle caret static when no handles are supplied (legacy)", () => {
+    render(<UnifiedVibeCard appTitle="Bloom Machine" open handleSlug="meghan" />);
+    // No interactive switcher button, no menu.
+    expect(screen.queryByRole("button", { name: /switch handle/i })).toBeNull();
+    expect(screen.queryByRole("menu", { name: /acting as/i })).toBeNull();
+  });
+
+  it("opens the handle picker from the caret and lists handles + New handle", () => {
+    render(
+      <UnifiedVibeCard appTitle="Bloom Machine" open handleSlug="meghan" handles={[{ slug: "meghan" }, { slug: "meghan_work" }]} />
+    );
+    // Closed by default.
+    expect(screen.queryByRole("menu", { name: /acting as/i })).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: /switch handle/i }));
+    expect(screen.getByRole("menu", { name: /acting as/i })).toBeTruthy();
+    expect(screen.getByRole("menuitem", { name: /@meghan_work/i })).toBeTruthy();
+    expect(screen.getByRole("menuitem", { name: /new handle/i })).toBeTruthy();
+  });
+
+  it("fires onSelectHandle and closes the picker", () => {
+    const onSelectHandle = vi.fn();
+    render(
+      <UnifiedVibeCard
+        appTitle="Bloom Machine"
+        open
+        handleSlug="meghan"
+        handles={[{ slug: "meghan" }, { slug: "meghan_work" }]}
+        onSelectHandle={onSelectHandle}
+      />
+    );
+    fireEvent.click(screen.getByRole("button", { name: /switch handle/i }));
+    fireEvent.click(screen.getByRole("menuitem", { name: /@meghan_work/i }));
+    expect(onSelectHandle).toHaveBeenCalledWith("meghan_work");
+    // Picker closes after a selection.
+    expect(screen.queryByRole("menu", { name: /acting as/i })).toBeNull();
+  });
+
+  it("fires onNewHandle from the picker", () => {
+    const onNewHandle = vi.fn();
+    render(
+      <UnifiedVibeCard appTitle="Bloom Machine" open handleSlug="meghan" handles={[{ slug: "meghan" }]} onNewHandle={onNewHandle} />
+    );
+    fireEvent.click(screen.getByRole("button", { name: /switch handle/i }));
+    fireEvent.click(screen.getByRole("menuitem", { name: /new handle/i }));
+    expect(onNewHandle).toHaveBeenCalled();
+  });
+
   it("forwards shareButtonRef to the Share nav button (so an external popover can anchor)", () => {
     const ref = React.createRef<HTMLButtonElement>();
     render(<UnifiedVibeCard appTitle="Bloom Machine" open shareButtonRef={ref} />);

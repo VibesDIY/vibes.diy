@@ -1,7 +1,7 @@
 import React from "react";
 import type { Meta, StoryObj } from "@storybook/react-vite";
 import { VibesSwitch, OptionButtons, ViewerTagView, UnifiedVibeCard, SharePanelView } from "@vibes.diy/base";
-import type { ShareAccess, ShareMember } from "@vibes.diy/base";
+import type { ShareAccess, ShareMember, HandleOption } from "@vibes.diy/base";
 
 /**
  * SKETCH — "the agent lives in the vibe" (see notes/2026-06-26-agent-in-vibe-ux-epic.md).
@@ -90,12 +90,10 @@ function UnifiedOverlay({
   title,
   subtitle,
   children,
-  pickerOpen,
 }: {
   readonly title: string;
   readonly subtitle?: string;
   readonly children: React.ReactNode;
-  readonly pickerOpen?: boolean;
 }) {
   return (
     <div
@@ -141,7 +139,7 @@ function UnifiedOverlay({
           borderTop: "1px solid var(--color-light-decorative-00, #e5e5e5)",
         }}
       >
-        <ViewerTag pickerOpen={pickerOpen} />
+        <ViewerTag />
         <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
           <NavIcon color="#3b82f6">⌂</NavIcon>
           <NavIcon color="#fb923c" selected>
@@ -188,94 +186,15 @@ function NavIcon({
   );
 }
 
-/** Tiny camera glyph for the me-mode "edit photo" affordance (mirrors the runtime ViewerTag). */
-/** One row in the handle dropdown — a handle to act as, or an action. */
-function HandleRow({
-  initial,
-  icon,
-  label,
-  active,
-}: {
-  readonly initial?: string;
-  readonly icon?: React.ReactNode;
-  readonly label: string;
-  readonly active?: boolean;
-}) {
-  return (
-    <div
-      style={{
-        display: "flex",
-        alignItems: "center",
-        gap: 8,
-        padding: "7px 8px",
-        borderRadius: 8,
-        background: active ? "var(--color-light-background-01, #eee)" : "transparent",
-      }}
-    >
-      <span
-        style={{
-          width: 24,
-          height: 24,
-          borderRadius: "50%",
-          background: initial ? "#6366f1" : "transparent",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          color: initial ? "#fff" : "inherit",
-          fontSize: 11,
-          fontWeight: 700,
-          flexShrink: 0,
-        }}
-      >
-        {initial ?? icon}
-      </span>
-      <span className="text-sm" style={{ flex: 1 }}>
-        {label}
-      </span>
-      {active && <span style={{ fontSize: 12 }}>✓</span>}
-    </div>
-  );
-}
-
-/** The handle dropdown (the active-handle switcher, #2275) — opens upward from the nav tag. */
-function HandleMenu() {
-  return (
-    <div
-      style={{
-        position: "absolute",
-        bottom: "calc(100% + 8px)",
-        left: 0,
-        width: 230,
-        background: "var(--color-light-background-00, #fff)",
-        border: "1px solid var(--color-light-decorative-01, #ddd)",
-        borderRadius: 12,
-        boxShadow: "0 10px 36px rgba(0,0,0,0.28)",
-        padding: 6,
-        zIndex: 10,
-      }}
-      className="text-light-primary dark:text-dark-primary"
-    >
-      <div className="text-light-secondary dark:text-dark-secondary" style={{ fontSize: 11, padding: "4px 8px" }}>
-        Acting as
-      </div>
-      <HandleRow initial="M" label="@meghan" active />
-      <HandleRow initial="W" label="@meghan_work" />
-      <div style={{ height: 1, background: "var(--color-light-decorative-00, #eee)", margin: "6px 0" }} />
-      <HandleRow icon={<span style={{ fontSize: 15 }}>＋</span>} label="New handle" />
-      {/* No "Edit photo" item — editing a photo is done by clicking the avatar (scoped to
-          that handle), reusing the runtime ViewerTag's click-photo logic. */}
-    </div>
-  );
-}
-
-/** Sketch viewer-tag + handle picker for the leftmost of the nav. Composes the REAL shared
+/** Sketch viewer-tag for the leftmost of the nav. Composes the REAL shared
  *  `ViewerTagView` (@vibes.diy/base) — the same component the runtime uses — with chrome-side
- *  placeholder actions, plus the new handle dropdown as a sibling. Editing the photo is
- *  clicking the avatar (me mode), scoped to the active handle (no separate menu item). */
-function ViewerTag({ pickerOpen }: { readonly pickerOpen?: boolean }) {
+ *  placeholder actions. Editing the photo is clicking the avatar (me mode), scoped to the
+ *  active handle (no separate menu item). The handle dropdown itself is the real
+ *  `HandlePickerMenu` (@vibes.diy/base), shown in the `HandlePickerOpen` story below via the
+ *  as-built `UnifiedVibeCard`. */
+function ViewerTag() {
   return (
     <div style={{ position: "relative", flexShrink: 0 }}>
-      {pickerOpen && <HandleMenu />}
       <ViewerTagView
         slug="meghan"
         displayName="@meghan"
@@ -357,15 +276,30 @@ export const LiveSwitchOpen: Story = {
 
 // --- handle picker open — the active-handle display + switcher (#2275), leftmost in the nav --
 
+const PICKER_HANDLES: readonly HandleOption[] = [{ slug: "meghan" }, { slug: "meghan_work" }];
+
 export const HandlePickerOpen: Story = {
   name: "1a · Handle picker (open)",
   render: () => (
     <Phone>
       <FakeVibeApp />
-      <UnifiedOverlay title="Bloom Machine" subtitle="bloom" pickerOpen>
-        <OptionButtons options={["Make it a drum kit", "Add a high score"]} isFirst />
-        <OtherInput />
-      </UnifiedOverlay>
+      {/* The as-built UnifiedVibeCard with the active-handle switcher open — the real
+          HandlePickerMenu (@vibes.diy/base) drops below the header tag (#2678 / UI for #2275). */}
+      <UnifiedVibeCard
+        open
+        handlePickerOpen
+        appTitle="Bloom Machine"
+        appSlug="meghan/bloom"
+        handleSlug="meghan"
+        handles={PICKER_HANDLES}
+        chips={["Make it a drum kit", "Add a high score"]}
+        onSelectChip={() => undefined}
+        onSubmitOther={() => undefined}
+        onHome={() => undefined}
+        onShare={() => undefined}
+        onSelectHandle={() => undefined}
+        onNewHandle={() => undefined}
+      />
     </Phone>
   ),
 };
