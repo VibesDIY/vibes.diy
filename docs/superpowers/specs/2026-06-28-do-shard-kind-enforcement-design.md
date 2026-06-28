@@ -10,26 +10,26 @@
 #2715 made the worker's handler placement declarative: one manifest, each handler tagged with the shard kinds allowed to serve it. This spec builds the **enforcement** the issue calls the keystone — the part you can never delete — on top of that, **without any DO migration**:
 
 1. A **single source-of-truth module in `api-types`** (the package-graph leaf both planes already import) declaring `ShardKind`, the `SHARD_POLICY` map (keyed by request `type`), and branded shard-key constructors.
-2. **Browser compile-time *kind* enforcement** — connections become `Conn<K extends ShardKind>`; a method exists on the type only if `K` is in that request's policy. `putDoc` on a `Conn<"shared">` is a compile error, derived from the shared map.
-3. **Worker runtime *kind* + *identity* gate at DO dispatch** — mirror the kind check for non-TS callers, and add a fail-loud assertion that the connection's shard identity matches the request's target. A topology-bound write that can't reach its vibe's broadcast shard **throws — never persist-and-go-quiet**.
+2. **Browser compile-time _kind_ enforcement** — connections become `Conn<K extends ShardKind>`; a method exists on the type only if `K` is in that request's policy. `putDoc` on a `Conn<"shared">` is a compile error, derived from the shared map.
+3. **Worker runtime _kind_ + _identity_ gate at DO dispatch** — mirror the kind check for non-TS callers, and add a fail-loud assertion that the connection's shard identity matches the request's target. A topology-bound write that can't reach its vibe's broadcast shard **throws — never persist-and-go-quiet**.
 
-Types enforce *kind*; runtime enforces *identity*. This spec hardens the **current** 3-DO topology and turns Spec B into a pure infra/migration job.
+Types enforce _kind_; runtime enforces _identity_. This spec hardens the **current** 3-DO topology and turns Spec B into a pure infra/migration job.
 
 ## Decisions (locked in brainstorm)
 
-| Decision | Choice |
-| --- | --- |
-| Scope | Enforcement layer only; behavior-preserving. No wrangler/DO-class change, no lazy-load. |
-| `ShardKind` vocabulary | `"codegen" \| "vibe" \| "shared"` (renames #2715's `"stream"` → `"codegen"`) |
-| Shared module home | `api-types` (leaf package; both browser and worker already depend on it → no cycle) |
-| `SHARD_POLICY` key | request `type` discriminant (e.g. `"vibes.diy.req-put-doc"`) |
-| Browser enforcement | Derive method availability on `Conn<K>` from `SHARD_POLICY`; brand all three connection vars |
-| Identity gate coverage | Assert on **all** vibe-keyed ops (reads + writes); fail-loud-never-persist emphasis on writes/fan-out |
-| `forkApp`/`setModeFsId` → shared | Follow-up, not in this spec |
+| Decision                         | Choice                                                                                                |
+| -------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| Scope                            | Enforcement layer only; behavior-preserving. No wrangler/DO-class change, no lazy-load.               |
+| `ShardKind` vocabulary           | `"codegen" \| "vibe" \| "shared"` (renames #2715's `"stream"` → `"codegen"`)                          |
+| Shared module home               | `api-types` (leaf package; both browser and worker already depend on it → no cycle)                   |
+| `SHARD_POLICY` key               | request `type` discriminant (e.g. `"vibes.diy.req-put-doc"`)                                          |
+| Browser enforcement              | Derive method availability on `Conn<K>` from `SHARD_POLICY`; brand all three connection vars          |
+| Identity gate coverage           | Assert on **all** vibe-keyed ops (reads + writes); fail-loud-never-persist emphasis on writes/fan-out |
+| `forkApp`/`setModeFsId` → shared | Follow-up, not in this spec                                                                           |
 
 ### Why `"codegen"`, not `"stream"`
 
-`"stream"` names the wrong axis: streaming is **not** exclusive to ChatSessions. The vibe shard already carries streams (the img-gen `open-chat`/`prompt` path), just lighter, co-tenantable ones. What makes ChatSessions its own shard is **heavy codegen-stream isolation** — one intensive long-lived stream per worker, can't co-tenant. The kind names the *workload that needs isolation*, not the transport.
+`"stream"` names the wrong axis: streaming is **not** exclusive to ChatSessions. The vibe shard already carries streams (the img-gen `open-chat`/`prompt` path), just lighter, co-tenantable ones. What makes ChatSessions its own shard is **heavy codegen-stream isolation** — one intensive long-lived stream per worker, can't co-tenant. The kind names the _workload that needs isolation_, not the transport.
 
 - `codegen` — ChatSessions: per-stream UUID shard; isolates heavy codegen streams.
 - `vibe` — AppSessions: `owner--appSlug` rendezvous; local broadcast + access-fn, **and can carry lighter streams** (img-gen).
@@ -37,7 +37,7 @@ Types enforce *kind*; runtime enforces *identity*. This spec hardens the **curre
 
 Payoff: the #2350 stopgap entry now reads its own justification — `open-chat`/`prompt` get `allowed: ["codegen","vibe"]` ("heavy on codegen, lighter on vibe for img-gen") instead of the opaque `["stream","vibe"]`.
 
-Honest nuance to keep in code comments: a few non-codegen ops (`ensureAppSlugItem`, `forkApp`, `setModeFsId`) also ride the codegen shard for app-create/lifecycle reasons, not because they are codegen. The kind names the shard's *reason to exist*; those ops are along for the ride. (`ensureAppSlugItem` additionally imports `processAccessBindings` → QuickJS, so it is code-bound to a QuickJS-carrying shard until Spec B's lazy-load; `forkApp`/`setModeFsId` are pure D1 writes and free to widen to `shared` whenever a caller benefits.)
+Honest nuance to keep in code comments: a few non-codegen ops (`ensureAppSlugItem`, `forkApp`, `setModeFsId`) also ride the codegen shard for app-create/lifecycle reasons, not because they are codegen. The kind names the shard's _reason to exist_; those ops are along for the ride. (`ensureAppSlugItem` additionally imports `processAccessBindings` → QuickJS, so it is code-bound to a QuickJS-carrying shard until Spec B's lazy-load; `forkApp`/`setModeFsId` are pure D1 writes and free to widen to `shared` whenever a caller benefits.)
 
 ## Architecture
 
@@ -65,7 +65,7 @@ export type SharedShard = string & { readonly __brand: "shared" };
 export type CodegenShard = string & { readonly __brand: "codegen" };
 
 export function openVibe(ownerHandle: string, appSlug: string): VibeShard; // `${owner}--${slug}`
-export function openShared(shard?: string): SharedShard;                    // default "global"
+export function openShared(shard?: string): SharedShard; // default "global"
 export function openCodegen(streamId: string): CodegenShard;
 ```
 
@@ -76,8 +76,8 @@ The worker's `handlerManifest` (in `api-svc`) stops hard-coding `allowed` inline
 `VibesDiyApiIface` becomes `VibesDiyApiIface<K extends ShardKind>`. Each method is present **iff** `K` is in `SHARD_POLICY[thatMethod'sReqType]`, via a conditional/mapped type driven by the shared map. The provider brands all three connections:
 
 ```ts
-chatApi:   Conn<"codegen">;
-vibeApi:   Conn<"vibe">;
+chatApi: Conn<"codegen">;
+vibeApi: Conn<"vibe">;
 sharedApi: Conn<"shared">;
 ```
 
@@ -91,11 +91,11 @@ Open-sites use the branded constructors so the right shard key is minted. Churn 
 
 The DO injects its own identity into `appCtx` before dispatch — it already knows it:
 
-| DO | injected |
-| --- | --- |
-| `AppSessions` | `{ kind: "vibe", shardId: this.vibeKey }` (the `?vibe=owner--slug` it was opened with) |
-| `SharedSessions` | `{ kind: "shared", shardId }` |
-| `ChatSessions` | `{ kind: "codegen", shardId }` |
+| DO               | injected                                                                               |
+| ---------------- | -------------------------------------------------------------------------------------- |
+| `AppSessions`    | `{ kind: "vibe", shardId: this.vibeKey }` (the `?vibe=owner--slug` it was opened with) |
+| `SharedSessions` | `{ kind: "shared", shardId }`                                                          |
+| `ChatSessions`   | `{ kind: "codegen", shardId }`                                                         |
 
 The gate, before running a handler:
 
@@ -121,7 +121,7 @@ Fail-loud = a thrown `res-error` with a distinct code, surfaced to the one reque
 
 ## Why this ordering is safe
 
-Spec A changes no topology — every DO serves the same handler set it does today (guaranteed by the parity tests carried from #2715). It only *adds* a compile-time gate (browser) and a runtime gate (worker) around the existing dispatch. That makes the later physical collapse (Spec B) a migration whose correctness is already fenced: by the time a handler can run on a different shard, the identity gate already guarantees it can't quietly serve the wrong one.
+Spec A changes no topology — every DO serves the same handler set it does today (guaranteed by the parity tests carried from #2715). It only _adds_ a compile-time gate (browser) and a runtime gate (worker) around the existing dispatch. That makes the later physical collapse (Spec B) a migration whose correctness is already fenced: by the time a handler can run on a different shard, the identity gate already guarantees it can't quietly serve the wrong one.
 
 ## References
 
