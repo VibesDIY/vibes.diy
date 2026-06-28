@@ -1049,9 +1049,11 @@ export default function VibeIframeWrapper() {
                   // #2772 D1: the owner-only "Draft · unpublished" badge — set when
                   // the owner is pinned to their latest unpublished in-place draft.
                   publishState={isDraft ? "draft" : undefined}
-                  // #2772 D2: the in-card Publish control — only a real, settled draft
-                  // (not mid-generation), so the banner never competes with the stream.
-                  onPublish={isDraft && !showGenStream ? handlePublish : undefined}
+                  // #2772 D2: the in-card Publish control — only a real, settled draft.
+                  // Gate on isGenerating (turn in flight until block-end), NOT showGenStream
+                  // (phase flips to "live" at the first code.end while the turn still runs),
+                  // so the owner can't ship a partial generation (Charlie review).
+                  onPublish={isDraft && !generation.isGenerating ? handlePublish : undefined}
                   publishing={publishing}
                   chips={editChips}
                   onSelectChip={handleEditPrompt}

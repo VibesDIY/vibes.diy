@@ -156,4 +156,21 @@ describe("publishApp", { timeout: (inject("DB_FLAVOUR" as never) as string) === 
     const rPub = await api2.publishApp({ appSlug, ownerHandle });
     expect(rPub.isErr()).toBe(true);
   });
+
+  it("converges concurrent publishes of the same draft (atomic mint, no duplicate)", async () => {
+    const { appSlug, ownerHandle } = await publishedThenDraft();
+
+    // Two publishes fired together: the atomic insert + idempotency guard means
+    // exactly one mints and the other no-ops — they converge on the same fsId.
+    const [a, b] = await Promise.all([api.publishApp({ appSlug, ownerHandle }), api.publishApp({ appSlug, ownerHandle })]);
+    if (a.isErr() || b.isErr()) assert.fail("Expected both concurrent publishes to succeed");
+    expect(a.Ok().fsId).toBe(b.Ok().fsId);
+    expect(a.Ok().mode).toBe("production");
+    // At most one actually minted a new release (the other is the idempotent no-op).
+    expect([a.Ok().published, b.Ok().published].filter(Boolean).length).toBeLessThanOrEqual(1);
+
+    // The served production is that converged fsId.
+    const served = await api.getAppByFsId({ appSlug, ownerHandle });
+    expect(served.Ok().fsId).toBe(a.Ok().fsId);
+  });
 });

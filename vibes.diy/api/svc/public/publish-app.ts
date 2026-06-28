@@ -47,29 +47,26 @@ export async function publishApp(vctx: VibesApiSQLCtx, req: ReqPublishApp, userI
     return Result.Err("app-not-found");
   }
 
-  // 2. Owner-only: the caller must own the row being published.
+  // 2. Owner-only: the caller must own the row being published. (Ownership is
+  //    immutable per app, so this read can be outside the mint lock; the mint
+  //    re-resolves the actual target atomically — see mintProductionRelease.)
   if (target.userId !== userId) {
     return Result.Err("not-owner");
   }
 
-  // 3. Mint a new top-of-stack production release for the chosen content (or a
-  //    no-op when it's already the highest production — "up to date").
+  // 3. Mint a new top-of-stack production release (or a no-op when the target is
+  //    already the highest production — "up to date"). The target is re-resolved
+  //    INSIDE the lock: for the no-`fsId` case the latest row is selected atomically
+  //    so a concurrent codegen write can't slip a different draft in (Codex review).
   const rMint = await exception2Result(() =>
     mintProductionRelease({
       db: vctx.sql.db,
       flavour: vctx.sql.flavour,
-      row: {
-        appSlug: target.appSlug,
-        userId: target.userId,
-        ownerHandle: target.ownerHandle,
-        fsId: target.fsId,
-        runId: target.runId ?? undefined,
-        env: target.env,
-        fileSystem: target.fileSystem,
-        meta: target.meta,
-        mode: "production",
-        created: new Date().toISOString(),
-      },
+      appSlug: req.appSlug,
+      userId,
+      ownerHandle: req.ownerHandle,
+      created: new Date().toISOString(),
+      ...(req.fsId ? { fsId: req.fsId } : {}),
     })
   );
   if (rMint.isErr()) {
@@ -82,14 +79,14 @@ export async function publishApp(vctx: VibesApiSQLCtx, req: ReqPublishApp, userI
   if (mint.released) {
     const entryPointUrl = calcEntryPointUrl({
       ...vctx.params.vibes.svc,
-      bindings: { ownerHandle: req.ownerHandle, appSlug: req.appSlug, fsId: target.fsId },
+      bindings: { ownerHandle: req.ownerHandle, appSlug: req.appSlug, fsId: mint.fsId },
     });
     await vctx.postQueue({
       payload: {
         type: "vibes.diy.evt-new-fs-id",
         ownerHandle: req.ownerHandle,
         appSlug: req.appSlug,
-        fsId: target.fsId,
+        fsId: mint.fsId,
         vibeUrl: entryPointUrl,
         sessionToken: "offline",
         mode: "production",
@@ -105,7 +102,7 @@ export async function publishApp(vctx: VibesApiSQLCtx, req: ReqPublishApp, userI
     type: "vibes.diy.res-publish-app",
     appSlug: req.appSlug,
     ownerHandle: req.ownerHandle,
-    fsId: target.fsId,
+    fsId: mint.fsId,
     releaseSeq: mint.releaseSeq,
     mode: "production",
     published: mint.released,
