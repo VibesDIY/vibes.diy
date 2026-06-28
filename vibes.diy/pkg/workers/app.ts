@@ -30,6 +30,10 @@ import {
 export { ChatSessions } from "./chat-sessions.js";
 export { AppSessions } from "./app-sessions.js";
 export { SharedSessions } from "./shared-sessions.js";
+// #2714 Spec B — the unified session class. The old three are kept exported
+// (their classes/bindings remain) so this collapse is rollback-able by
+// re-routing; they are GC'd in a later deploy once drained.
+export { Sessions } from "./sessions.js";
 export { UserNotify } from "./user-notify.js";
 // import { cfServe } from "@vibes.diy/api-svc";
 // import { CfCacheIf } from "@vibes.diy/api-svc/api.js";
@@ -118,22 +122,28 @@ export default {
           headers: { "Content-Type": "application/json" },
         }) as unknown as CFResponse;
       }
-      const id = env.APP_SESSIONS.idFromName(vibe);
-      const obj = env.APP_SESSIONS.get(id);
+      // #2714 Spec B — vibe plane now routes to the unified Sessions class via
+      // the SESSIONS handle (same shard key). The DO derives kind="vibe" from
+      // the /api/app path (shardKindForPath).
+      const id = env.SESSIONS.idFromName(vibe);
+      const obj = env.SESSIONS.get(id);
       return obj.fetch(request);
     }
 
     if (route === "shared-do") {
       const shard = url.getParam("shard");
-      const id = shard ? env.SHARED_SESSIONS.idFromName(shard) : env.SHARED_SESSIONS.idFromName("global");
-      return env.SHARED_SESSIONS.get(id).fetch(request);
+      // Shared plane → SESSIONS (singleton "global" key by default).
+      const id = shard ? env.SESSIONS.idFromName(shard) : env.SESSIONS.idFromName("global");
+      return env.SESSIONS.get(id).fetch(request);
     }
 
     if (route === "api-do") {
       const shard = url.getParam("shard") ?? crypto.randomUUID();
-      const id = env.CHAT_SESSIONS.idFromName(shard);
-      const obj = env.CHAT_SESSIONS.get(id);
-      return obj.fetch(request); // handle WebSocket upgrade and API requests in the chat sessions Durable Object
+      // Codegen plane → CODEGEN_SESSIONS (local-on-cli; cross-script SESSIONS is
+      // for vibe/shared). Same class "Sessions", separate handle.
+      const id = env.CODEGEN_SESSIONS.idFromName(shard);
+      const obj = env.CODEGEN_SESSIONS.get(id);
+      return obj.fetch(request); // handle WebSocket upgrade and API requests in the unified Sessions Durable Object
     }
 
     if (route === "vibe-pkg") {

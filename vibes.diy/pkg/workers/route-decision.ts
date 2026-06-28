@@ -5,6 +5,8 @@
 // actual `app.ts` fetch handler delegates to this so the routing
 // invariant is exercised at test time and not just in production.
 
+import { ShardKind } from "@vibes.diy/api-types";
+
 export type Route =
   | "app-api" // /api/app → AppSessions DO (vibe-scoped WebSocket)
   | "shared-do" // /api/shared → SharedSessions DO (singleton/per-user shared-plane WS)
@@ -112,4 +114,16 @@ export function routeDecision(req: RouteInput): Route {
   }
 
   return "ssr";
+}
+
+// #2714 Spec B — the unified `Sessions` DO can't infer its plane from its class
+// (there's only one class now), so it derives the shard kind from the request
+// path. These branches MUST mirror the `app-api`/`shared-do`/`api-do` cases in
+// `routeDecision` above (a parity test pins them together): app.ts routes by
+// `routeDecision`, the DO stamps its identity by `shardKindForPath` — both keyed
+// on the same pathname, so they can't disagree.
+export function shardKindForPath(pathname: string): ShardKind {
+  if (pathname === "/api/app" || pathname.startsWith("/api/app/")) return "vibe";
+  if (pathname === "/api/shared" || pathname.startsWith("/api/shared/")) return "shared";
+  return "codegen"; // "/api" or "/api/*" (the api-do route)
 }

@@ -40,7 +40,10 @@ function cfWebSocketPair(): { client: WebSocket; server: WebSocket } {
   return { client: client as unknown as WebSocket, server: server as unknown as WebSocket };
 }
 
-function userNotifyCallbacksForAppSessions(vibeKey: string, env: CFEnv) {
+// Exported so the unified `Sessions` class (#2714 Spec B) can reuse the exact
+// vibe-plane user-notify wiring. (Phase E relocates this when AppSessions is
+// deleted.)
+export function userNotifyCallbacksForAppSessions(vibeKey: string, env: CFEnv) {
   const shardId = `app:${vibeKey}`;
 
   function fetchUserNotify(userId: string, body: Record<string, unknown>): Promise<CFResponse> {

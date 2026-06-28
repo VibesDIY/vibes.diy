@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { routeDecision } from "../../pkg/workers/route-decision.js";
+import { routeDecision, shardKindForPath } from "../../pkg/workers/route-decision.js";
 
 const HOSTNAME_BASE = "vibesdiy.net";
 
@@ -246,5 +246,35 @@ describe("worker routeDecision — PR preview base (pr-<N>.vibespreview.dev)", (
 
   it("assets.pr-<N>.vibespreview.dev → cf-serve (asset/auth host)", () => {
     expect(decidePreview({ hostname: "assets.pr-7.vibespreview.dev", pathname: "/_files/u/a/db/doc/key" })).toBe("cf-serve");
+  });
+});
+
+describe("shardKindForPath (#2714 Spec B — unified Sessions DO kind)", () => {
+  it("derives the shard kind from the api path", () => {
+    expect(shardKindForPath("/api/app")).toBe("vibe");
+    expect(shardKindForPath("/api/app/")).toBe("vibe");
+    expect(shardKindForPath("/api/shared")).toBe("shared");
+    expect(shardKindForPath("/api/shared/")).toBe("shared");
+    expect(shardKindForPath("/api")).toBe("codegen");
+    expect(shardKindForPath("/api/anything-else")).toBe("codegen");
+  });
+
+  // Parity: the DO's kind (shardKindForPath) MUST agree with how app.ts routes
+  // (routeDecision) for every api-plane path — they are keyed on the same
+  // pathname, so a divergence would mean the DO stamps the wrong identity.
+  it("agrees with routeDecision for every api-plane route", () => {
+    const cases: { pathname: string; route: string; kind: string }[] = [
+      { pathname: "/api/app", route: "app-api", kind: "vibe" },
+      { pathname: "/api/app?vibe=alice--todo", route: "app-api", kind: "vibe" },
+      { pathname: "/api/shared", route: "shared-do", kind: "shared" },
+      { pathname: "/api", route: "api-do", kind: "codegen" },
+      { pathname: "/api/openChat", route: "api-do", kind: "codegen" },
+    ];
+    for (const c of cases) {
+      // pathname may carry a query in the test table; route-decision takes the raw pathname
+      const pathOnly = c.pathname.split("?")[0];
+      expect(decide({ pathname: pathOnly })).toBe(c.route);
+      expect(shardKindForPath(pathOnly)).toBe(c.kind);
+    }
   });
 });
