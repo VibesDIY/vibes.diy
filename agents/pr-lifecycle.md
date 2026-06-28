@@ -17,7 +17,7 @@ After opening or updating the PR:
 3. **Subscribe to the PR** (so CI failures and review comments wake the session).
    - **Cloud/agent sessions: `send_later` is not available.** The harness PR-activity instructions say to schedule a self check-in "if the `send_later` tool is available" — in cloud sessions it is **not** (the `claude-code-remote` MCP server isn't wired up). Don't burn a turn rediscovering this each time. The webhook subscription still wakes you on review comments and CI failures; it does **not** deliver CI _success_, new pushes, or merge-conflict transitions. To cover those, substitute the `CronCreate` tool for the check-in (e.g. `12 * * * *` hourly, off-minute) — but know it is **session-only**: it dies when the session/container is reclaimed, so it's a within-session safety net, not a durable cross-session one. There is currently no durable self-check-in in cloud sessions; if the session is reclaimed before review lands, re-subscription on the next session is the recovery path. `CronDelete` the job once the PR is merged or closed.
 4. **Apply Charlie's advice autonomously** as feedback arrives — handle it per [Handling reviewer feedback](#handling-reviewer-feedback) below, escalating to the human only when something genuinely needs more thought (API/contract changes, user-visible behavior shifts, real trade-offs).
-5. **Once every feedback comment is resolved** (and CI is green), **label the PR `ready-to-merge`** — this is the signal to the human that the PR is ready to consider merging. See [Ready-to-merge signal](#ready-to-merge-signal) below; pair the label with the Rollout watch comment.
+5. **Once every feedback comment is resolved, CI is green, and you've validated the change** (or stated in one line why nothing was reachable — see [Validate changed features](#validate-changed-features-against-the-preview--standard-operating-procedure), which is SOP), **label the PR `ready-to-merge`** — this is the signal to the human that the PR is ready to consider merging. See [Ready-to-merge signal](#ready-to-merge-signal) below; pair the label with the Rollout watch comment.
 
 ## One PR per feature, titled for the goal
 
@@ -73,9 +73,11 @@ Keep each issue scoped and linked:
 
 Filing the issue, then re-checking CI, is the canonical use of the waiting-for-CI window — not a detour from it.
 
-## Validate changed features against the preview server while CI runs
+## Validate changed features against the preview — standard operating procedure
 
-Once the branch is **review-approved** and the **preview worker has deployed** (the `github-actions[bot]` "Preview Deployment" comment is posted), you have a live, real-data environment for this PR. Use the slow `compile_test` window to actually exercise any changed feature that's reachable from the CLI **against that preview**, instead of only trusting unit tests. This is the same idle-window discipline as filing cleanup issues — turn the wait into verification.
+**Validation is SOP, not an optional extra.** Every PR exercises what it changed against a real running environment before it's called ready — the same way every PR gets a blog seed and a Charlie mention. The only acceptable skip is "nothing in the diff is reachable from the CLI or the browser," and that gets stated in one line, not assumed. "Unit tests pass" is necessary, not sufficient: tests check the code you thought to test; validation checks the system actually behaves. Treat an unvalidated PR as unfinished.
+
+Once the branch is **review-approved** and the **preview worker has deployed** (the `github-actions[bot]` "Preview Deployment" comment is posted), you have a live, real-data environment for this PR. The slow `compile_test` / CI window is the natural time to do it — same idle-window discipline as filing cleanup issues — but the validation happens regardless of whether you're waiting on anything. Exercise every changed feature reachable from the CLI **or the browser** against that preview, instead of only trusting unit tests.
 
 **Scope it to the diff.** Only validate features the PR actually touched and that the CLI can reach (`list`, `db get/put/query/del`, `db subscribe`, `codegen-log` and `app-chats` for chat history, `mcp`). A data-model change → query the affected db on the preview; a new list/owner field → `list --json` and check it's present; an access-rule change → exercise the grant path. If nothing in the diff is CLI-reachable, say so in one line and skip — don't manufacture a check. (`vibes-diy chats` is a removed shim that just prints a migration message — use `codegen-log` for the build transcript and `app-chats` for the deployed app's runtime chats.)
 
@@ -105,7 +107,7 @@ Two env vars do it. **Both are required** — the preview rejects the prod cert.
 find ~/.fireproof -name '*.json' -path '*keybag*' -delete
 ```
 
-Full CLI command reference lives in the [`vibe-data`](../.claude/skills/vibe-data/SKILL.md) and [`vibe-code`](../.claude/skills/vibe-code/SKILL.md) skills; the env/cert model is in [`environments.md`](environments.md) and [`vibe-data` § Headless / CI auth](../.claude/skills/vibe-data/SKILL.md). Report what you validated (or why nothing was CLI-reachable) when you post the ready-to-merge signal.
+Full CLI command reference lives in the [`vibe-data`](../.claude/skills/vibe-data/SKILL.md) and [`vibe-code`](../.claude/skills/vibe-code/SKILL.md) skills; the env/cert model is in [`environments.md`](environments.md) and [`vibe-data` § Headless / CI auth](../.claude/skills/vibe-data/SKILL.md). Because validation is SOP, **always** report what you validated — CLI checks, browser flow, or both — when you post the ready-to-merge signal; if nothing in the diff was reachable, say that explicitly. A ready-to-merge label with no validation note reads as "skipped the step."
 
 ## Ready-to-merge signal
 
