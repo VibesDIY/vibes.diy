@@ -32,6 +32,7 @@ import { describe, it, expect } from "vitest";
 import { mkdtempSync, readdirSync, readFileSync, writeFileSync, existsSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { hashStringSync } from "@fireproof/core-runtime";
 import { ensureSuperThis } from "../index.js";
 import { getKeyBag } from "../node.js";
 import type { JWKPrivate, DeviceIdKeyBagItem, SuperThis } from "../index.js";
@@ -139,5 +140,80 @@ describe("keybag golden — contract locks", () => {
 
     await (await getKeyBag(sthis)).setDeviceId(deviceId);
     expect(existsSync(join(home, ".fireproof", "keybag", DEVICE_ID_FILENAME))).toBe(true);
+  });
+
+  it("the filename derives from a frozen hash of the device-id key string", () => {
+    // Pin the DERIVATION, not just the literal: the on-disk slot is named
+    // `hashStringSync("FIREProof:deviceId") + ".json"`. Asserting the hash output
+    // equals the frozen constant makes a hash-fn/encoding swap fail as the
+    // intentional contract break it is (it would silently relocate every existing
+    // keybag). The write tests above separately assert the real on-disk filename
+    // equals this literal, which catches a change to the key STRING itself.
+    expect(hashStringSync("FIREProof:deviceId")).toBe(DEVICE_ID);
+    expect(`${DEVICE_ID}.json`).toBe(DEVICE_ID_FILENAME);
+  });
+});
+
+describe("keybag golden — memory provider parity (lift must keep memory:// working)", () => {
+  // Many tests (e.g. vibes-diy/cli/device-id-env.test.ts) use a memory:// keybag.
+  // The narrow node-only lift must keep this backend, so pin the get/set contract.
+  // Memory has no disk to inspect and dies with the instance, so this is a same-
+  // instance round-trip (the file tests above already pin the on-disk bytes).
+  function memSthis(): SuperThis {
+    const sthis = ensureSuperThis();
+    sthis.env.set("FP_KEYBAG_URL", `memory://kb-golden-${sthis.nextId().str}`);
+    return sthis;
+  }
+
+  it("memory:// round-trips key-only then key+cert", async () => {
+    const sthis = memSthis();
+    const kb = await getKeyBag(sthis);
+
+    await kb.setDeviceId(deviceId);
+    let devid = await kb.getDeviceId();
+    expect(devid.deviceId.IsSome()).toBe(true);
+    expect(devid.deviceId.Unwrap()).toEqual(deviceId);
+    expect(devid.cert.IsNone()).toBe(true);
+
+    await kb.setDeviceId(deviceId, cert);
+    devid = await kb.getDeviceId();
+    expect(devid.deviceId.Unwrap()).toEqual(deviceId);
+    expect(devid.cert.IsSome()).toBe(true);
+    expect(devid.cert.Unwrap()).toEqual(cert);
+  });
+});
+
+describe("keybag golden — node-only boundary (keybag must not reach the browser bundle)", () => {
+  it("the browser surface (index.js) does not expose the keybag", async () => {
+    // The keybag drags `find-up` and must stay node-only. The browser door must
+    // never surface it; the transitive find-up leak is separately caught by
+    // scripts/check-browser-imports.mjs.
+    const browser = await import("../index.js");
+    expect("getKeyBag" in browser).toBe(false);
+    expect("createDeviceIdGetToken" in browser).toBe(false);
+  });
+});
+
+describe("keybag golden — corruption / partial-write failure mode (characterization)", () => {
+  // CHARACTERIZATION of today's behavior so the lift can't drift it silently —
+  // NOT an endorsement that throwing is the ideal contract for a credential read.
+  // The asymmetry: unparseable BYTES throw ("read bag failed"); parseable JSON
+  // that fails the schema returns a structured error (no throw).
+  it("unparseable files throw (empty / non-JSON / truncated)", async () => {
+    for (const contents of ["", "%%% not json %%%", '{"id":"z3QkefAC57rcrs","clazz":"DeviceIdK']) {
+      const { dir, sthis } = tmpKeybag();
+      writeFileSync(join(dir, DEVICE_ID_FILENAME), contents);
+      const kb = await getKeyBag(sthis);
+      await expect(kb.getDeviceId()).rejects.toThrow();
+    }
+  });
+
+  it("parseable JSON of the wrong shape returns a structured error, not a throw", async () => {
+    const { dir, sthis } = tmpKeybag();
+    writeFileSync(join(dir, DEVICE_ID_FILENAME), JSON.stringify({ hello: "world" }));
+    const devid = await (await getKeyBag(sthis)).getDeviceId();
+    expect(devid.error).toBeDefined();
+    expect(devid.deviceId.IsNone()).toBe(true);
+    expect(devid.cert.IsNone()).toBe(true);
   });
 });
