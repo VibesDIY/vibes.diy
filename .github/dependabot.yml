@@ -10,6 +10,14 @@ updates:
     schedule:
       interval: "weekly"
     open-pull-requests-limit: 20
+    groups:
+      # Keep @clerk/* in lockstep: @vibes.diy/identity depends on @clerk/shared
+      # for the LoadedClerk/GetTokenOptions types on clerkDashApi, and a skew
+      # between @clerk/shared and @clerk/react's pinned @clerk/shared breaks that
+      # call site. Grouping bumps them in a single PR. (See #2730.)
+      clerk:
+        patterns:
+          - "@clerk/*"
     ignore:
       - dependency-name: "@adviser/cement"
         update-types: ["version-update:semver-major", "version-update:semver-minor"]
