@@ -9,7 +9,7 @@ How PRs flow from spec to merge. The goal is to minimize cognitive overhead for 
 When the human points you at an issue by number ("work on #123", "take #123", "fix #123"), the **first move** — before investigating, branching, or writing any code — is to claim that issue so the same work doesn't get started twice. Treat it as step zero, not a nicety to do later.
 
 1. **Read the issue first** and check its current assignees. If it's **already assigned to someone else**, that's the duplicate-work signal firing — stop and flag it to the human ("#123 is already assigned to `@x` — still want me on it?") rather than steamrolling the claim.
-2. Otherwise, **assign it to `jchris`** via the GitHub MCP `issue_write` tool's `assignees` field on `VibesDIY/vibes.diy`. **`assignees` is a replacement set, not additive** — GitHub's update-issue call overwrites the whole assignee list with what you pass, so include any existing assignees alongside `jchris` (e.g. `["jchris", "existing-owner"]`); passing `["jchris"]` alone silently removes whoever was already there. When the issue is unassigned, `["jchris"]` is correct.
+2. Otherwise, **assign it to the default human owner, `jchris`** (override: if the requester names a different assignee, use that instead) via the GitHub MCP `issue_write` tool's `assignees` field on `VibesDIY/vibes.diy`. **`assignees` is a replacement set, not additive** — GitHub's update-issue call overwrites the whole assignee list with what you pass, so include any existing assignees alongside `jchris` (e.g. `["jchris", "existing-owner"]`); passing `["jchris"]` alone silently removes whoever was already there. When the issue is unassigned, `["jchris"]` is correct.
 
 ## Always end a work session with a PR
 
