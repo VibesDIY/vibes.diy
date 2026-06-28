@@ -12,7 +12,7 @@ function fakeClerk(token: string): LoadedClerkLike {
   return {
     addListener(cb) {
       cb({ session: { getToken: async () => token } });
-      return () => {};
+      return () => undefined; // unsubscribe no-op
     },
   };
 }
