@@ -75,11 +75,18 @@ xrHelper.baseExperience.onStateChangedObservable.add((state) => {
 
 ### VR Button
 
-`createDefaultXRExperienceAsync` adds the "Enter VR" button automatically. To add it manually:
+`createDefaultXRExperienceAsync` adds the "Enter VR" button automatically. To use your own button instead, disable the default UI and drive the session yourself:
 
 ```javascript
-const vrButton = BABYLON.WebXRDefaultExperience.CreateAsync(scene, {
+// Build the experience without the default Enter VR button...
+const xrHelper = await scene.createDefaultXRExperienceAsync({
+  disableDefaultUI: true,
   uiOptions: { sessionMode: "immersive-vr" },
+});
+
+// ...then wire up your own DOM button to enter/exit the session
+document.getElementById("enter-vr").addEventListener("click", async () => {
+  await xrHelper.baseExperience.enterXRAsync("immersive-vr", "local-floor");
 });
 ```
 
@@ -540,7 +547,7 @@ export default function App() {
 
 ## Real-World Example 2: AR Passthrough — Tap to Place Glowing Orbs
 
-Tap a real-world surface to plant a pulsing orb anchored in place. Orb positions are stored in Fireproof so they survive page reload.
+Tap a real-world surface to plant a pulsing orb at the hit-test point. Orb positions are stored in Fireproof so they survive page reload. (Orbs are placed at the hit-test location, not world-locked to it — for true anchoring that survives device movement, wire in `WebXRAnchorSystem` as shown in the Anchors reference above.)
 
 On devices without AR support (desktop, unsupported browsers) the app automatically enters **fixture mode**: a background photo stands in for the passthrough feed, and mouse clicks place orbs via ray-picking. The 3D scene is identical in both modes — only the background source differs.
 
