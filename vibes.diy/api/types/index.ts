@@ -28,6 +28,7 @@ export * from "./report.js";
 export * from "./direct-channel.js";
 export * from "./notifications.js";
 export * from "./access-function.js";
+export * from "./shard-policy.js";
 
 export interface FetchOkResult {
   type: "fetch.ok";
