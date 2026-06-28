@@ -205,4 +205,73 @@ describe("getAppByFsId grant flow", { timeout: (inject("DB_FLAVOUR" as never) as
     }
     expect(rApp.Ok().grant).toBe("owner");
   });
+
+  // #2772 D1 — owner draft read (selectMode:"ownerLatest"). Create a production
+  // baseline (the published version everyone sees) and then a NEWER dev row on the
+  // same slug (an in-place generation draft). The resolver must give the owner the
+  // draft on "ownerLatest" while keeping the default "published" path on production,
+  // and must never leak the draft to a non-owner.
+  async function createPublishedThenDraft() {
+    const now = sthis.nextId(8).str;
+    // production baseline
+    const rProd = await api.ensureAppSlug({
+      mode: "production",
+      fileSystem: [
+        { type: "code-block", lang: "jsx", filename: "/App.jsx", content: `function App(){return <div>pub ${now}</div>;} App();` },
+      ],
+    });
+    const prod = rProd.Ok();
+    if (!isResEnsureAppSlugOk(prod)) assert.fail("Expected ensureAppSlug (production) to return ResEnsureAppSlugOk");
+    const { appSlug, ownerHandle } = prod;
+    // a newer in-place dev draft on the SAME slug
+    const rDraft = await api.ensureAppSlug({
+      appSlug,
+      mode: "dev",
+      fileSystem: [
+        {
+          type: "code-block",
+          lang: "jsx",
+          filename: "/App.jsx",
+          content: `function App(){return <div>draft ${now}</div>;} App();`,
+        },
+      ],
+    });
+    const draft = rDraft.Ok();
+    if (!isResEnsureAppSlugOk(draft)) assert.fail("Expected ensureAppSlug (dev draft) to return ResEnsureAppSlugOk");
+    return { appSlug, ownerHandle };
+  }
+
+  it("getAppByFsId selectMode:ownerLatest returns the owner's latest dev draft", async () => {
+    const { appSlug, ownerHandle } = await createPublishedThenDraft();
+
+    const rApp = await api.getAppByFsId({ appSlug, ownerHandle, selectMode: "ownerLatest" });
+    if (rApp.isErr()) assert.fail("Expected getAppByFsId to succeed: " + JSON.stringify(rApp.Err()));
+    const res = rApp.Ok();
+    expect(res.grant).toBe("owner");
+    expect(res.mode).toBe("dev"); // the draft — drives the "Draft · unpublished" badge
+  });
+
+  it("getAppByFsId default (published) still returns production for the owner — no regress", async () => {
+    const { appSlug, ownerHandle } = await createPublishedThenDraft();
+
+    // No selectMode → today's behavior byte-for-byte: latest production.
+    const rApp = await api.getAppByFsId({ appSlug, ownerHandle });
+    if (rApp.isErr()) assert.fail("Expected getAppByFsId to succeed: " + JSON.stringify(rApp.Err()));
+    const res = rApp.Ok();
+    expect(res.grant).toBe("owner");
+    expect(res.mode).toBe("production");
+  });
+
+  it("getAppByFsId selectMode:ownerLatest falls back to published for a non-owner (no draft leak)", async () => {
+    const { appSlug, ownerHandle } = await createPublishedThenDraft();
+    // Make the production version publicly accessible so the non-owner gets a grant.
+    await api.ensureAppSettings({ appSlug, ownerHandle, publicAccess: { enable: true } });
+
+    // Non-owner asks for ownerLatest — must NOT receive the owner's dev draft.
+    const rApp = await api2.getAppByFsId({ appSlug, ownerHandle, selectMode: "ownerLatest" });
+    if (rApp.isErr()) assert.fail("Expected getAppByFsId to succeed: " + JSON.stringify(rApp.Err()));
+    const res = rApp.Ok();
+    expect(res.mode).toBe("production"); // fell back to published — the draft never leaks
+    expect(res.grant).toBe("public-access");
+  });
 });

@@ -38,6 +38,12 @@ export interface UnifiedVibeCardProps {
    *  shield, taking precedence over the plain author shield. The toggle itself lives
    *  in the Share controls; this is just the indicator. */
   adminMode?: boolean;
+  /** Draft/published indicator (#2772). "draft" shows a compact "Draft · unpublished"
+   *  badge in the header — the owner is viewing their latest unpublished in-place
+   *  generation. "published" / undefined shows nothing. Only the owner ever sees a
+   *  draft (the route re-pins to the latest dev fsId for them); everyone else stays on
+   *  production, so this is owner-only chrome. The Publish control itself is D2. */
+  publishState?: "draft" | "published";
   onHome?: () => void;
   /** Selects the edit affordance (switches the body back to chips/Other). */
   onEdit?: () => void;
@@ -165,6 +171,7 @@ export function UnifiedVibeCard(props: UnifiedVibeCardProps) {
                   </div>
                 )}
               </div>
+              {props.publishState === "draft" && <DraftBadge />}
               {/* Handle picker / viewer tag lives at the TOP of the card — the
                   bottom row is tight now that the persistent logo occupies its
                   right end. */}
@@ -401,6 +408,39 @@ function ModeIndicator({
           <path d="M8 11V7a4 4 0 0 1 8 0v4" />
         </svg>
       )}
+    </span>
+  );
+}
+
+// Draft indicator (#2772) — a compact "Draft · unpublished" pill shown in the card
+// header when the owner is viewing their latest unpublished in-place generation. The
+// route only re-pins to the draft fsId for the owner, so this badge is owner-only by
+// construction; non-owners always see published and never get this prop. Publishing
+// (D2) clears the draft so the badge disappears.
+function DraftBadge() {
+  return (
+    <span
+      role="status"
+      aria-label="Draft — unpublished changes"
+      title="You're viewing your latest unpublished draft"
+      style={{
+        flexShrink: 0,
+        display: "inline-flex",
+        alignItems: "center",
+        gap: 4,
+        borderRadius: 999,
+        padding: "2px 8px",
+        fontSize: 11,
+        fontWeight: 600,
+        lineHeight: 1.4,
+        color: "#b45309",
+        background: "rgba(245,158,11,0.14)",
+        border: "1px solid rgba(245,158,11,0.45)",
+        whiteSpace: "nowrap",
+      }}
+    >
+      <span aria-hidden style={{ width: 6, height: 6, borderRadius: "50%", background: "#f59e0b" }} />
+      Draft · unpublished
     </span>
   );
 }
