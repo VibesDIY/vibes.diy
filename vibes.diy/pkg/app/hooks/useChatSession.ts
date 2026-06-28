@@ -258,11 +258,13 @@ export function useChatSession(opts: ChatSessionOpts): ChatSession {
         (chat as LLMChat).close();
       }
     };
-    // Dep array preserved verbatim from the route — the self-referential `chat`
-    // dependency is what flips this effect from the open path to the fire path.
-    // `onSendSettled` is identity-stable in the route (memoized), so listing it
-    // here does not re-fire the effect.
-  }, [ownerHandle, appSlug, chat, openingRef, chatApi, sharedApi, promptToSend, onSendSettled]);
+    // The self-referential `chat` dependency is what flips this effect from the
+    // open path to the fire path. `onSendSettled` is identity-stable in the
+    // route (memoized), so listing it here does not re-fire the effect.
+    // `inConstruction` is listed so a lazy host (useInVibeGeneration, #2761)
+    // that flips it false on first edit re-runs this effect and opens the chat;
+    // in the /chat route it's constant per mount, so it adds no extra runs.
+  }, [ownerHandle, appSlug, chat, openingRef, chatApi, sharedApi, promptToSend, onSendSettled, inConstruction]);
 
   return { chat };
 }
