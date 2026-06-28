@@ -12,6 +12,17 @@ inputs:
       fresh prod tag, etc.), so coverage is never silently dropped.
     required: false
     default: "false"
+  docs-only:
+    description: >-
+      When "true", skip the expensive build + docker test steps (and the
+      Playwright image pre-pull) for a docs-only PR, while still running
+      install + format-check + lint. Set by ci.yaml from actions/changed-scope.
+      The job itself always runs to completion, so its `compile_test` status
+      check still reports green — required-check coverage is never dropped, only
+      the build/test work that a docs change can't affect. Default "false" runs
+      the full suite.
+    required: false
+    default: "false"
 runs:
   using: composite
   steps:
@@ -68,6 +79,7 @@ runs:
     # source of truth as the test step). Best-effort: failures here are harmless
     # — the test step pulls synchronously if the image isn't ready yet.
     - name: prepull-playwright-image
+      if: ${{ inputs.docs-only != 'true' }}
       shell: bash
       run: |
         PW=$(pnpm exec playwright --version 2>/dev/null | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -n1 || true)
@@ -107,6 +119,7 @@ runs:
 
     # Build temporarily disabled due to pre-existing TypeScript errors in hosting/pkg and vibes.diy/pkg
     - name: build
+      if: ${{ inputs.docs-only != 'true' }}
       shell: bash
       run: |
         _t0=$(date +%s)
@@ -149,7 +162,7 @@ runs:
         fi
 
     - name: test
-      if: ${{ steps.gate.outputs.skip_tests != 'true' }}
+      if: ${{ steps.gate.outputs.skip_tests != 'true' && inputs.docs-only != 'true' }}
       shell: bash
       env:
         # Single switch that flips the test suite from "surfaced" to "blocking".
@@ -265,7 +278,7 @@ runs:
     # tracking across runs. always() so a failing run's partial timing is kept
     # too; skipped when the test step was short-circuited (skip-tests-if-sha-green).
     - name: upload-test-timing
-      if: ${{ always() && steps.gate.outputs.skip_tests != 'true' }}
+      if: ${{ always() && steps.gate.outputs.skip_tests != 'true' && inputs.docs-only != 'true' }}
       uses: actions/upload-artifact@v4
       with:
         name: test-timing
