@@ -42,6 +42,37 @@ Reaching literal **zero `@fireproof/*`** requires Bucket E **and** Bucket F to l
 afterward (plus the unrelated residual `@fireproof/use-fireproof` app/ImgGen imports,
 which are not a de-fireproof concern). Until then, "done" = the boundary above.
 
+### The preservation principle (governs every lift)
+
+What we preserve is **not just runtime logic — it's the entire rollout surface**: every
+moving part that could break a deploy. That includes the **dependency shape** (versions,
+caret-vs-exact ranges, direct-vs-peer, bundled-vs-type-only, the transitive graph), the
+**build/publish mechanics** (what the package emits, how it packs), and the **on-disk/env
+contracts** (keybag path, file format, env vars) — not only the byte/wire behavior the
+golden harness gates.
+
+**Minimize churn to all of those, not just the logic.** When a change isn't strictly
+required to hit the target (move one package boundary in-repo), don't make it — even if it
+looks like an obvious improvement. **Cleanup is a separate, later pass** (find-up/browser-graph
+hardening #2469, dep-graph minimization, restructuring). This is why the `@clerk/shared`
+caret dep, the verbatim `sysFS` filesystem layer, and the keybag's **deno** branch all stay:
+each is a live moving part, and we are not here to optimize it.
+
+The one thing we **do** skip when lifting: **code that is dead on arrival** — code no live
+path in the system reaches once the boundary moves. The test is "**used by anything live**,"
+not "used by *this package*":
+
+- The keybag's general-keystore methods (`getNamedKey` / `getJwt` / `setRawObj` / …) are
+  **dead on arrival** in identity's keybag — nothing reaches them through identity's
+  `getKeyBag` (the database-key path uses firefly's own keybag, a separate data-layer
+  concern). So the lift carries only the **device-id slice** (`getDeviceId`/`setDeviceId`).
+- The **deno** filesystem branch is **used** — it anchors correctness under the deno
+  runtime, just not via the CLI's node path — so it is preserved verbatim, node **and**
+  deno, alongside both providers (file + memory).
+
+Rule of thumb: **skip dead-on-arrival; preserve everything exercised by any live path;
+defer all narrowing/optimization to the later cleanup pass.**
+
 ### Task 6/7 delivery split (scope discipline)
 
 Per `CONTRIBUTING.md` scope guidance, Task 6 is delivered as two PRs:
