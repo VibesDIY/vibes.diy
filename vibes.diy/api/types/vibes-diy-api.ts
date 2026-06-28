@@ -42,6 +42,8 @@ import {
   ResEnsureHandleAvatar,
   ReqListApplicationChats,
   ResListApplicationChats,
+  ReqListCodegenChats,
+  ResListCodegenChats,
   ReqEnsureAppSettings,
   ResEnsureAppSettings,
 } from "./settings.js";
@@ -188,6 +190,7 @@ export interface VibesDiyApiIface<_T = unknown> {
   ensureHandleAvatar(req: Req<ReqEnsureHandleAvatar>): Promise<Result<ResEnsureHandleAvatar, VibesDiyError>>;
   ensureAppSettings(req: Req<ReqEnsureAppSettings>): Promise<Result<ResEnsureAppSettings, VibesDiyError>>;
   listApplicationChats(req: Req<ReqListApplicationChats>): Promise<Result<ResListApplicationChats, VibesDiyError>>;
+  listCodegenChats(req: Req<ReqListCodegenChats>): Promise<Result<ResListCodegenChats, VibesDiyError>>;
 
   getTokenClaims(): Promise<Result<VerifiedClaimsResult & { claims: ClerkClaim }>>;
 

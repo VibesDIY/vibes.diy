@@ -13,6 +13,7 @@ import { getAppByFsIdEvento } from "./public/get-app-by-fsid.js";
 import { ensureUserSettingsEvento } from "./public/ensure-user-settings.js";
 import { ensureHandleAvatarEvento } from "./public/ensure-handle-avatar.js";
 import { listApplicationChats } from "./public/list-application-chats.js";
+import { listCodegenChats } from "./public/list-codegen-chats.js";
 import { ensureAppSettingsEvento } from "./public/ensure-app-settings.js";
 import { setModeFsIdEvento } from "./public/set-mode-fsid.js";
 import { forkAppEvento } from "./public/fork-app.js";
@@ -153,6 +154,7 @@ export const handlerManifest: readonly HandlerManifestEntry[] = [
   entry("vibes.diy.req-get-chat-details", getChatDetailsEvento),
   entry("vibes.diy.req-get-chat-response", getChatResponseEvento),
   entry("vibes.diy.req-list-application-chats", listApplicationChats),
+  entry("vibes.diy.req-list-codegen-chats", listCodegenChats),
 
   // --- Vibe: channel-scoped doc ops. Category (b) — local broadcast + local
   // QuickJS access-fn eval rendezvous on the vibe shard, so these must land

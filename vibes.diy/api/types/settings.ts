@@ -419,6 +419,34 @@ export function isResListApplicationChats(obj: unknown): obj is ResListApplicati
   return !(resListApplicationChats(obj) instanceof type.errors);
 }
 
+export const reqListCodegenChats = type({
+  type: "'vibes.diy.req-list-codegen-chats'",
+  auth: dashAuthType,
+  "appSlug?": "string",
+  "ownerHandle?": "string",
+  "limit?": "number", // default 20, max 100
+  "cursor?": "string", // ISO timestamp cursor for next page (exclusive)
+});
+export type ReqListCodegenChats = typeof reqListCodegenChats.infer;
+
+export const resListCodegenChatsItem = type({
+  chatId: "string",
+  appSlug: "string",
+  ownerHandle: "string",
+  created: "string",
+});
+export type ResListCodegenChatsItem = typeof resListCodegenChatsItem.infer;
+
+export const resListCodegenChats = type({
+  type: "'vibes.diy.res-list-codegen-chats'",
+  items: resListCodegenChatsItem.array(),
+  "nextCursor?": "string", // present only when more pages exist
+});
+export type ResListCodegenChats = typeof resListCodegenChats.infer;
+export function isResListCodegenChats(obj: unknown): obj is ResListCodegenChats {
+  return !(resListCodegenChats(obj) instanceof type.errors);
+}
+
 export const evtAppSetting = type({
   type: "'vibes.diy.evt-app-setting'",
   ownerHandle: "string",
