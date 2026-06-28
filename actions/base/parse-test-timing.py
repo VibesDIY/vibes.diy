@@ -223,6 +223,23 @@ def main() -> int:
     else:
         print(text)
 
+    # Surface the failing test identities on stderr too, so they land in the
+    # *retrievable* job log — not only the step summary / uploaded artifact.
+    # Triage from the Actions logs API (or an agent/automation with just log
+    # access) can then see WHICH tests failed, not merely the aggregate count.
+    # Keeps the existing summary/artifact output; this is purely additive. #2752.
+    for name, bad, msg in failures:
+        if bad:
+            for title in bad:
+                print(f"FAILED: {name} > {title}", file=sys.stderr)
+        elif msg:
+            print(f"FAILED (suite): {name} — {msg.splitlines()[0][:300]}", file=sys.stderr)
+        else:
+            print(f"FAILED (suite): {name}", file=sys.stderr)
+    for line in error_lines:
+        if line.startswith("- **"):
+            print(f"UNHANDLED: {line[2:].replace('**', '')}", file=sys.stderr)
+
     unhandled_count = sum(1 for line in error_lines if line.startswith("- **"))
     summary_line = f"parse-test-timing: {len(results)} files, {total} tests, {failed} failed"
     if has_unhandled:
