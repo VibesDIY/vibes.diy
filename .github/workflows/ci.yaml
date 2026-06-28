@@ -22,4 +22,13 @@ jobs:
     steps:
       - uses: actions/checkout@v5
 
+      # Detect docs-only PRs (changes confined to docs top-level paths). The
+      # job still runs to completion either way — so the `compile_test` status
+      # check always reports — but actions/base skips build + docker test when
+      # this is "true", giving docs PRs an install+format+lint-only cycle.
+      - id: scope
+        uses: ./actions/changed-scope
+
       - uses: ./actions/base
+        with:
+          docs-only: ${{ steps.scope.outputs.docs_only }}

@@ -1,0 +1,73 @@
+name: "changed-scope"
+description: >-
+  Detect whether a pull request's changes are confined to docs-only top-level
+  paths, so callers can run a leaner CI cycle (skip build/test/preview/pg) when
+  nothing that affects the build changed. Outputs `docs_only` ("true"/"false").
+outputs:
+  docs_only:
+    description: >-
+      "true" only when every changed file in the PR is under a docs top-level
+      path. "false" for any non-PR event, any diff failure, an empty diff, or
+      any changed file outside the docs allowlist — i.e. the safe default is to
+      run the full CI cycle.
+    value: ${{ steps.detect.outputs.docs_only }}
+runs:
+  using: composite
+  steps:
+    - id: detect
+      shell: bash
+      env:
+        EVENT_NAME: ${{ github.event_name }}
+        BASE_SHA: ${{ github.event.pull_request.base.sha }}
+      run: |
+        set -euo pipefail
+
+        emit() { echo "docs_only=$1" >> "$GITHUB_OUTPUT"; }
+
+        # Only pull requests can be "docs-only". Pushes to main, tag deploys,
+        # and workflow_dispatch always run the full cycle — there is no PR diff
+        # to scope against, and main must never be deployed from a lean run.
+        if [ "${EVENT_NAME}" != "pull_request" ]; then
+          emit false
+          echo "event '${EVENT_NAME}' is not a pull_request — full CI."
+          exit 0
+        fi
+
+        # Two-arg `git diff A B` (not `A...B`): depth-1 fetches of base + HEAD
+        # don't share a merge-base, so the symmetric form would error. This
+        # mirrors the schema-diff check in vibes-diy-pr-preview.yaml. Every
+        # failure mode below fails OPEN (docs_only=false → full CI) so a flaky
+        # fetch or shallow-checkout edge case can never silently skip coverage.
+        if ! git fetch --no-tags --depth=1 origin "$BASE_SHA" 2>/dev/null; then
+          emit false
+          echo "::warning::could not fetch base ${BASE_SHA} — assuming code changed (full CI)."
+          exit 0
+        fi
+        if ! CHANGED=$(git diff --name-only "$BASE_SHA" HEAD 2>/dev/null); then
+          emit false
+          echo "::warning::git diff against ${BASE_SHA} failed — assuming code changed (full CI)."
+          exit 0
+        fi
+        if [ -z "$CHANGED" ]; then
+          emit false
+          echo "no changed files detected vs base — assuming code changed (full CI)."
+          exit 0
+        fi
+
+        # Docs allowlist of TOP-LEVEL paths — deliberately NOT a file-type match.
+        # `prompts/**/*.md` is prompt source (code), and the app imports legal
+        # markdown (vibes.diy/pkg/app/routes/legal/*-notes.md via `?url`), so a
+        # `*.md` rule would wrongly skip CI on real changes. Anything outside
+        # this set — including any newly-added top-level directory — is treated
+        # as code, so the safe default is always the full cycle. To mark a new
+        # docs root as lean-eligible, add it here.
+        DOCS_RE='^(docs/|notes/|agents/|\.agents/|\.claude/|[^/]+\.md$|LICENSE$)'
+
+        if printf '%s\n' "$CHANGED" | grep -qvE "$DOCS_RE"; then
+          emit false
+          echo "non-docs files changed — full CI. Triggering paths:"
+          printf '%s\n' "$CHANGED" | grep -vE "$DOCS_RE" | sed 's/^/  /'
+        else
+          emit true
+          echo "docs-only change — lean CI (skipping build/test + pg concurrency lane)."
+        fi

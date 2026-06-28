@@ -15,9 +15,29 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  # Cheap gate: decide whether this PR's changes are docs-only. Kept as its own
+  # job (not an in-job step) because the expensive lane below must be skipped at
+  # the JOB level — a step-level guard would still boot the postgres + Neon-proxy
+  # service containers. The workflow still TRIGGERS on every PR (no on.paths
+  # filter), and a job skipped via `if:` reports a "skipped" conclusion that
+  # branch protection counts as passing — so this stays safe whether or not
+  # `pg_concurrency` is a required check (the stuck-pending trap only hits when
+  # a whole workflow is filtered out at on.paths and never posts a status).
+  changes:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      docs_only: ${{ steps.scope.outputs.docs_only }}
+    steps:
+      - uses: actions/checkout@v5
+      - id: scope
+        uses: ./actions/changed-scope
+
   pg_concurrency:
     runs-on: ubuntu-latest
-    if: ${{ github.event_name != 'pull_request' || !contains(github.event.pull_request.title, '[skip ci]') }}
+    needs: changes
+    if: ${{ (github.event_name != 'pull_request' || !contains(github.event.pull_request.title, '[skip ci]')) && needs.changes.outputs.docs_only != 'true' }}
     permissions:
       contents: read
 
