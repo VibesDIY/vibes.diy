@@ -8,7 +8,7 @@ import {
   type SharedShard,
   type CodegenShard,
 } from "./shard-policy.js";
-import type { Req, MethodReqType, VibesDiyApiIface } from "./vibes-diy-api.js";
+import type { Req, MethodReqType, Conn, VibesDiyApiIface } from "./vibes-diy-api.js";
 import type { ReqPutDoc } from "./app-documents.js";
 
 expectTypeOf<ShardKind>().toEqualTypeOf<"codegen" | "vibe" | "shared">();
@@ -33,3 +33,31 @@ type AnyNever = {
   [M in RequestTakingMethods]: MethodReqType<VibesDiyApiIface[M]> extends never ? M : never;
 }[RequestTakingMethods];
 expectTypeOf<AnyNever>().toEqualTypeOf<never>();
+
+// ── Task 3.2: Conn<K> derives method availability from SHARD_POLICY ──────────
+declare const vibe: Conn<"vibe">;
+declare const shared: Conn<"shared">;
+declare const codegen: Conn<"codegen">;
+
+// put-doc is VIBE_ONLY → present on vibe, absent on shared/codegen.
+vibe.putDoc({ ownerHandle: "a", appSlug: "t", dbName: "d", doc: {} }); // ok
+// @ts-expect-error put-doc not allowed on shared
+shared.putDoc({ ownerHandle: "a", appSlug: "t", dbName: "d", doc: {} });
+// @ts-expect-error put-doc not allowed on codegen
+codegen.putDoc({ ownerHandle: "a", appSlug: "t", dbName: "d", doc: {} });
+
+// list-models is ALL_SHARDS → present on every kind.
+shared.listModels({}); // ok
+vibe.listModels({}); // ok
+codegen.listModels({}); // ok
+
+// fork-app is CODEGEN_ONLY → the method exists on codegen, absent on vibe.
+expectTypeOf<"forkApp" extends keyof Conn<"codegen"> ? true : false>().toEqualTypeOf<true>();
+expectTypeOf<"forkApp" extends keyof Conn<"vibe"> ? true : false>().toEqualTypeOf<false>();
+
+// open-chat is a mode-predicate op: vibe accepts only mode:"img".
+vibe.openChat({ mode: "img" }); // ok
+// @ts-expect-error open-chat codegen-mode not allowed on vibe
+vibe.openChat({ mode: "codegen" });
+codegen.openChat({ mode: "codegen" }); // ok
+codegen.openChat({ mode: "img" }); // ok
