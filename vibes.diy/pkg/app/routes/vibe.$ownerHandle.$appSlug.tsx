@@ -157,7 +157,16 @@ export default function VibeIframeWrapper() {
 
   const ssrIframeUrl = loaderData?.iframeUrl;
   useEffect(() => {
-    if (ssrIframeUrl) return;
+    if (ssrIframeUrl) {
+      // On the data-router path the loader re-runs on a client-side param change
+      // (e.g. the seamless non-owner fork navigating to /vibe/$yours/$forkSlug),
+      // producing a fresh loader iframeUrl. The `iframeUrl` state was only seeded
+      // once at mount, so without copying the new value the <iframe src> stays
+      // pinned to the source app and the fork's generation would hot-swap the
+      // stale runtime. Sync state to the current loader URL. (#2677 PR-B)
+      setIframeUrl(ssrIframeUrl);
+      return;
+    }
     if (!appSlug || !ownerHandle) {
       setIframeUrl(undefined);
       return;
