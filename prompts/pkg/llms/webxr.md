@@ -78,10 +78,11 @@ xrHelper.baseExperience.onStateChangedObservable.add((state) => {
 `createDefaultXRExperienceAsync` adds the "Enter VR" button automatically. To use your own button instead, disable the default UI and drive the session yourself:
 
 ```javascript
-// Build the experience without the default Enter VR button...
+// Build the experience without the default Enter VR button. With
+// disableDefaultUI there's no UI to configure, so the session mode and
+// reference space are set on enterXRAsync below, not via uiOptions.
 const xrHelper = await scene.createDefaultXRExperienceAsync({
   disableDefaultUI: true,
-  uiOptions: { sessionMode: "immersive-vr" },
 });
 
 // ...then wire up your own DOM button to enter/exit the session
