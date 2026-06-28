@@ -12,6 +12,7 @@
 // schemas (CertificatePayloadSchema, FPDeviceIDCSRPayloadSchema) are NOT owned
 // here — they pull a large upstream graph and the lifted crypto still needs them,
 // so `core-types-base` stays a dependency until the later dep-removal tasks.
+import { Result } from "@adviser/cement";
 import { z } from "zod";
 import type { ClerkClaim } from "../clerk-claim.js";
 // JWKPublic TYPE stays upstream-sourced to preserve type-identity across the
@@ -65,6 +66,49 @@ export const JWKPublicSchema = JWKCommon.and(
     z.object({ kty: z.literal("OKP"), crv: z.enum(["Ed25519", "Ed448", "X25519", "X448"]), x: z.string() }),
   ])
 );
+
+// --- JWK alg helper (lifted verbatim from core-types-base `jwk-public.zod`) ---
+// Maps a JWK to its JWS `alg`. Owned in-repo so `dash-api/token.ts`'s
+// cloud-pubkey loader no longer imports a VALUE from `@fireproof/core-types-base`.
+export function toJwksAlg(jwk: { kty?: string; crv?: string; alg?: string }): Result<string> {
+  if (jwk.alg) {
+    return Result.Ok(jwk.alg);
+  }
+  switch (jwk.kty) {
+    case "EC": {
+      switch (jwk.crv) {
+        case "P-256":
+          return Result.Ok("ES256");
+        case "P-384":
+          return Result.Ok("ES384");
+        case "P-521":
+          return Result.Ok("ES512");
+        case "secp256k1":
+          return Result.Ok("ES256K");
+        default:
+          return Result.Err(`Unsupported EC curve: ${jwk.crv}`);
+      }
+    }
+    case "RSA": {
+      return Result.Ok("RS256");
+    }
+    case "OKP": {
+      switch (jwk.crv) {
+        case "Ed25519":
+          return Result.Ok("EdDSA");
+        case "Ed448":
+          return Result.Ok("EdDSA");
+        default:
+          return Result.Err(`Unsupported OKP curve: ${jwk.crv}`);
+      }
+    }
+    case "oct": {
+      return Result.Ok("HS256");
+    }
+    default:
+      return Result.Err(`Unsupported key type: ${jwk.kty}`);
+  }
+}
 
 // --- Auth wire-types (erasable; reproduced from the installed .d.ts) ---
 

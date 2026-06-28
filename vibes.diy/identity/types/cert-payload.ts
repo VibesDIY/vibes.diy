@@ -6,13 +6,15 @@
 // path (Certor / DeviceIdCA / DeviceIdVerifyMsg) parses certs through this schema,
 // so to drop the patch without changing real-cert verification we own these here
 // referencing the owned (lenient) `ClerkClaimSchema`. The non-Clerk sub-schemas
-// (`SubjectSchema` / `ExtensionsSchema`) are NOT patched and stay upstream-sourced.
+// (`SubjectSchema` / `ExtensionsSchema`) are NOT patched but are now ALSO owned
+// in-repo (`./device-id-payload.js`, Task 6.3) so the cert path no longer imports
+// a VALUE from `@fireproof/core-types-base`.
 //
 // Lifted verbatim from `core-types-base`'s `fp-ca-cert-payload.zod` /
 // `fp-device-id-payload.zod` (`CreatingUserSchema`) @ 0.24.19, with only the
 // Clerk-claim reference swapped to the owned schema.
 import { z } from "zod";
-import { SubjectSchema, ExtensionsSchema } from "@fireproof/core-types-base";
+import { SubjectSchema, ExtensionsSchema } from "./device-id-payload.js";
 import type { CertificatePayload } from "@fireproof/core-types-base";
 import { JWKPublicSchema } from "./wire.js";
 import { ClerkClaimSchema } from "../clerk-claim.js";

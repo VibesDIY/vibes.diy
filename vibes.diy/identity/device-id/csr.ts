@@ -3,7 +3,7 @@
 // certificate-signing-request JWS the CA consumes. Imports only adjusted; the CSR
 // payload shape and header are the enrollment wire contract.
 import { calculateJwkThumbprint, SignJWT, type JWTPayload as JoseJWTPayload } from "jose";
-import { FPDeviceIDCSRPayloadSchema } from "@fireproof/core-types-base";
+import { FPDeviceIDCSRPayloadSchema } from "../types/device-id-payload.js";
 import type { Subject, Extensions, FPDeviceIDCSRPayload, SuperThis } from "@fireproof/core-types-base";
 import { exception2Result, Result } from "@adviser/cement";
 import { DeviceIdKey } from "./key.js";

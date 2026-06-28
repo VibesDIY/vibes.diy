@@ -11,8 +11,8 @@ import { Lazy, Result, param, exception2Result, isArrayBuffer, isUint8Array } fr
 import { sts, ensureSuperThis } from "@fireproof/core-runtime";
 import { decodeProtectedHeader, exportJWK } from "jose";
 import { ClerkClaimSchema } from "../clerk-claim.js";
-import { JWKPublicSchema } from "../types/wire.js";
-import { FPDeviceIDSessionSchema, toJwksAlg } from "@fireproof/core-types-base";
+import { JWKPublicSchema, toJwksAlg } from "../types/wire.js";
+import { FPDeviceIDSessionSchema } from "../types/device-id-payload.js";
 import type { SuperThis, JWKPublic } from "@fireproof/core-types-base";
 import type { VerifyWithCertificateOptions } from "@fireproof/core-types-device-id";
 import { DeviceIdCA } from "../device-id/ca.js";
