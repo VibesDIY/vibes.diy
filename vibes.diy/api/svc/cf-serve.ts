@@ -23,7 +23,12 @@ import {
 } from "@vibes.diy/api-types";
 import { cfDrizzle, createVibesApiTables, toDBFlavour, VibesSqlite } from "@vibes.diy/api-sql";
 import { R2ToS3Api } from "./peers/r2-to-s3api.js";
-import { getQuickJSWASMModule, type QuickJSWASMModule } from "@cf-wasm/quickjs";
+// QuickJS is imported lazily (dynamic import at the call site in
+// localInvokeAccessFn) so the worker entrypoint module graph stays lean: a
+// shared/reads-only DO that never evaluates an access fn never parses QuickJS,
+// even on a cold-isolate wake that re-runs global scope. Type-only import here
+// is erased at compile time. See #2714 Spec B (do-physical-collapse).
+import type { QuickJSWASMModule } from "@cf-wasm/quickjs";
 
 // declare global {
 //   class WebSocketPair {
@@ -257,7 +262,11 @@ export async function localInvokeAccessFn(
     return channels;
   }
 
-  const QuickJS = cachedModuleRef.module ?? (await getQuickJSWASMModule());
+  // Lazy dynamic import: only a cache miss (first access-fn eval on this DO
+  // instance) pulls in the QuickJS module. The `??` short-circuit means a cache
+  // hit never even evaluates the import(). This keeps QuickJS out of the worker
+  // entrypoint graph so a shared/reads-only DO never parses it (#2714 Spec B).
+  const QuickJS = cachedModuleRef.module ?? (await import("@cf-wasm/quickjs").then((m) => m.getQuickJSWASMModule()));
   cachedModuleRef.module = QuickJS;
   const vm = QuickJS.newContext();
 
