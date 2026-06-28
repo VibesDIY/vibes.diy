@@ -29,6 +29,12 @@ function clerkFrontendHostFromKey(key: string | undefined): string | undefined {
   return rDecoded.Ok().replace(/\$+$/, "") || undefined;
 }
 
+// Cloudflare Web Analytics (RUM) beacon site token for the vibes.diy site.
+// Public client-side token (ships in every page's HTML by design) — not a
+// secret. The beacon is only rendered when the SSR layer enables it for the
+// request (non-EU, non-dev; see workers/app.ts `enableCfRum`).
+const CF_WEB_ANALYTICS_TOKEN = "c8c1ae3173414bd9b08c2dcc00727eff";
+
 // Default page metadata. React Router falls back to the nearest parent route's
 // meta when a leaf route doesn't export its own, so this guarantees every page
 // has a non-empty <title> even if a route forgets to set one.
@@ -37,13 +43,14 @@ export function meta() {
 }
 
 // Loader for root route
-export async function loader(loaderCtx: { context: { vibeDiyAppParams: VibesFPApiParameters } }) {
+export async function loader(loaderCtx: { context: { vibeDiyAppParams: VibesFPApiParameters; enableCfRum?: boolean } }) {
   // const env = await fetch("/api/clientEnv")
   // console.log(`loader-invoke from root.tsx`, loaderCtx.context.vibeDiyAppParams.vibes.env);
   const params = loaderCtx.context.vibeDiyAppParams;
   return new Response(
     JSON.stringify({
       // pkgRepos: params.pkgRepos,
+      cfWebAnalyticsToken: loaderCtx.context.enableCfRum ? CF_WEB_ANALYTICS_TOKEN : undefined,
       env: {
         GTM_CONTAINER_ID: params.vibes.env.GTM_CONTAINER_ID,
         POSTHOG_KEY: params.vibes.env.POSTHOG_KEY,
@@ -76,6 +83,13 @@ export function Layout({ children }: { children: React.ReactNode }) {
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         {clerkHost && <link rel="preconnect" href={`https://${clerkHost}`} crossOrigin="anonymous" />}
+        {svcEnv.cfWebAnalyticsToken && (
+          <script
+            defer
+            src="https://static.cloudflareinsights.com/beacon.min.js"
+            data-cf-beacon={JSON.stringify({ token: svcEnv.cfWebAnalyticsToken })}
+          />
+        )}
         <style dangerouslySetInnerHTML={{ __html: getVibesGlobalCSS() }} />
         <Meta />
         <Links />
