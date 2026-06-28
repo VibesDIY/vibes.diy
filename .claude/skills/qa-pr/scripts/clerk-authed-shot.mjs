@@ -9,15 +9,15 @@
 // hand `clerk-qa-login.mjs --cdp` — you cannot attach the validated Clerk
 // session to the MCP's own browser. The reliable pattern is instead:
 //
-//   1) clerk-qa-login.mjs --instance <i> --origin <o> --email <e> --storage state.json
+//   1) clerk-qa-login.mjs --instance <i> --origin <o> --email <e> --storage /tmp/state.prod.json
 //      → authenticates and exports a Playwright storageState (cookies + origin
 //        localStorage). The minted token stays in-process; only the session
-//        cookie lands in state.json.
-//   2) this script --storage state.json <url> [<url> ...]
+//        cookie lands in the file.
+//   2) this script --storage /tmp/state.prod.json <url> [<url> ...]
 //      → loads that session into a fresh Playwright context and screenshots each
 //        URL, waiting for the app <iframe> to actually paint first.
 //
-// SECURITY: state.json holds a live Clerk session cookie. Treat it like the
+// SECURITY: the storage-state file holds a live Clerk session cookie. Treat it like the
 // secret it is — never print, echo, commit, or paste its contents anywhere. This
 // script only ever reads it as a Playwright input and emits non-secret evidence
 // (final URL, signed-in email, iframe-ready bool, shot path). It never prints a
