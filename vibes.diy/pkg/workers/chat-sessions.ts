@@ -12,7 +12,14 @@ import { CfCacheIf, cfServe } from "@vibes.diy/api-svc";
 import { WSSendProvider } from "@vibes.diy/api-svc/svc-ws-send-provider.js";
 import { CFInjectMutable, cfServeAppCtx, localInvokeAccessFn } from "@vibes.diy/api-svc/cf-serve.js";
 import { chatMsgEvento } from "@vibes.diy/api-svc/chat-msg-evento.js";
-import { CFEnv, isBuildNotification, isUserNotifyShard, userNotifyShardFor, type EvtUserNotification } from "@vibes.diy/api-types";
+import {
+  CFEnv,
+  isBuildNotification,
+  isUserNotifyShard,
+  userNotifyShardFor,
+  type EvtUserNotification,
+  type ShardIdentity,
+} from "@vibes.diy/api-types";
 import { exception2Result, URI } from "@adviser/cement";
 import { type } from "arktype";
 import type { QuickJSWASMModule } from "@cf-wasm/quickjs";
@@ -189,6 +196,9 @@ export class ChatSessions implements DurableObject {
         invokeAccessFn: (params: Parameters<typeof localInvokeAccessFn>[1]) => localInvokeAccessFn(quickjsRef, params),
       })
     ).appCtx;
+    // ChatSessions is the "codegen" shard: stamp its identity (the per-stream
+    // shard id) so the runtime gate (#2714) can fail-loud on a wrong-shard request.
+    cctx.appCtx.set("shardIdentity", { kind: "codegen", shardId: shard ?? "" } satisfies ShardIdentity);
     return cfServe(request, cctx, chatMsgEvento);
   }
 }
