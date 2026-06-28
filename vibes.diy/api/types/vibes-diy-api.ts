@@ -158,7 +158,19 @@ export interface OptionalAuth {
 }
 // export type Req<T> = Omit<T, "type" | "auth"> & OptionalAuth;
 
-export type Req<T> = T extends unknown ? Omit<T, "type" | "auth"> & OptionalAuth : never;
+// `__reqType` is a type-only phantom: an OPTIONAL property that is never set or
+// read at runtime. It carries the originating request's `type` discriminant at
+// the type level so a method's concrete reqType can be recovered via
+// `MethodReqType` (and, downstream, mapped against SHARD_POLICY in `Conn<K>`).
+// Because it is optional it does not change any value-level assignability.
+export type Req<T> = T extends unknown
+  ? Omit<T, "type" | "auth"> & OptionalAuth & { readonly __reqType?: T extends { type: infer Ty } ? Ty : never }
+  : never;
+
+// Recover the reqType discriminant carried by a method whose parameter is a
+// `Req<...>`. Methods that take no request (or a request without a `type`)
+// resolve to `never`.
+export type MethodReqType<M> = M extends (req: infer R) => unknown ? (R extends { __reqType?: infer Ty } ? Ty : never) : never;
 
 export interface VibesDiyApiIface<_T = unknown> {
   close(): Promise<void>;
