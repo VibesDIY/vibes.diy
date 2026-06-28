@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { ShardKind, shardsForReq } from "@vibes.diy/api-types";
-import { handlerManifest, handlersForShard } from "../svc/evento-handler-manifest.js";
+import { type ReqType, type ShardKind } from "@vibes.diy/api-types";
+import { allowedKinds, handlerManifest, handlersForShard } from "../svc/evento-handler-manifest.js";
 import { chatPlaneHandlers } from "../svc/chat-msg-evento.js";
 
 // The single declarative policy (#2714) is the source of truth: each handler
@@ -14,20 +14,17 @@ function hashesOn(kind: ShardKind): Set<string> {
 }
 
 // The reqType carried by the (unique) manifest entry for a given handler hash.
-function reqTypeOf(hash: string): string {
+function reqTypeOf(hash: string): ReqType {
   const found = handlerManifest.filter((e) => e.handler.hash === hash);
   expect(found.length, `"${hash}" must appear exactly once in the manifest`).toBe(1);
   return found[0].reqType;
 }
 
-// The composition-time allowed set for a handler hash: the UNION across modes,
-// matching how `handlersForShard` derives plane membership.
+// The composition-time allowed set for a handler hash. Delegates to the
+// production derivation (`allowedKinds`) so the test can't drift from how
+// `handlersForShard` actually computes plane membership.
 function allowedOf(hash: string): readonly ShardKind[] {
-  const reqType = reqTypeOf(hash);
-  const kinds: ShardKind[] = ["codegen", "vibe", "shared"];
-  return kinds.filter((k) =>
-    ["codegen", "vibe", "shared", "img", "runtime"].some((mode) => shardsForReq(reqType, { mode }).includes(k))
-  );
+  return allowedKinds(reqTypeOf(hash));
 }
 
 describe("evento handler manifest (declarative, #2714)", () => {

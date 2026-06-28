@@ -1,5 +1,5 @@
 import { EventoHandler } from "@adviser/cement";
-import { ReqType, ShardKind, shardsForReq } from "@vibes.diy/api-types";
+import { PROBE_MODES, shardsForReq, type ReqType, type ShardKind } from "@vibes.diy/api-types";
 import { ensureAppSlugItemEvento } from "./public/ensure-app-slug-item.js";
 import { openChat } from "./public/open-chat.js";
 import { promptChatSection } from "./public/prompt-chat-section.js";
@@ -63,7 +63,7 @@ import { reportCampaignAdPreviewsEvento } from "./public/report-campaign-ad-prev
 // Re-export ShardKind from @vibes.diy/api-types so existing importers of this
 // module (the per-plane evento composition, the parity tests) keep working
 // after the type moved to the browser-safe leaf package (#2714).
-export { ShardKind };
+export type { ShardKind };
 
 /**
  * A handler mapped to its request `type` discriminant. Placement is no longer
@@ -176,20 +176,22 @@ export const handlerManifest: readonly HandlerManifestEntry[] = [
   entry("vibes.diy.req-set-mode-fs", setModeFsIdEvento),
 ];
 
-// All shard kinds, in the canonical order used to derive an `allowed` set.
+// Canonical: the shard kinds in their iteration/dispatch order. Distinct from
+// the policy's `ALL_SHARDS` preset (which is a *value* meaning "every shard");
+// `KINDS` is the *order* we probe and filter by.
 const KINDS: readonly ShardKind[] = ["codegen", "vibe", "shared"];
 
 /**
  * The shard kinds that may serve `reqType`, taken as the UNION across every
- * possible request `mode` so a mode-refined op (open-chat / prompt) registers on
- * every shard it can ever serve. This reproduces the pre-#2714 static `allowed`
- * set per handler: composition-time membership is the union; the per-request
- * `mode` predicate then refines placement at dispatch time.
+ * possible request `mode` (`PROBE_MODES`) so a mode-refined op (open-chat /
+ * prompt) registers on every shard it can ever serve. This reproduces the
+ * pre-#2714 static `allowed` set per handler: composition-time membership is the
+ * union; the per-request `mode` predicate then refines placement at dispatch
+ * time. Exported so the parity test consumes this production derivation rather
+ * than re-implementing it.
  */
-function allowedKinds(reqType: ReqType): readonly ShardKind[] {
-  return KINDS.filter((k) =>
-    ["codegen", "vibe", "shared", "img", "runtime"].some((mode) => shardsForReq(reqType, { mode }).includes(k))
-  );
+export function allowedKinds(reqType: ReqType): readonly ShardKind[] {
+  return KINDS.filter((k) => PROBE_MODES.some((mode) => shardsForReq(reqType, { mode }).includes(k)));
 }
 
 /**

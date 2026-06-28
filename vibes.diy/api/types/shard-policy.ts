@@ -45,6 +45,11 @@ export function chatShardsForMode(mode: string | undefined): readonly ShardKind[
   }
 }
 
+// Every chat `mode` a request can carry — probed to take the UNION placement at
+// composition time. Only modes here, not ShardKinds: `chatShardsForMode` branches
+// img vs the codegen/runtime default, so this set covers every distinct outcome.
+export const PROBE_MODES: readonly string[] = ["codegen", "img", "runtime"];
+
 type PolicyEntry = readonly ShardKind[] | ((req: { mode?: string }) => readonly ShardKind[]);
 
 // Allowed-set presets, named so the policy reads as a contract. Mirrors the
@@ -133,6 +138,7 @@ export type ReqType = keyof typeof SHARD_POLICY;
 
 /** The shard kinds that may serve `reqType` for the given request. */
 export function shardsForReq(reqType: string, req: { mode?: string }): readonly ShardKind[] {
+  // widen to index by an arbitrary (possibly unknown) reqType; unknown → undefined → no placement (fail-closed)
   const entry = (SHARD_POLICY as Record<string, PolicyEntry | undefined>)[reqType];
   if (entry === undefined) return [];
   return typeof entry === "function" ? entry(req) : entry;
