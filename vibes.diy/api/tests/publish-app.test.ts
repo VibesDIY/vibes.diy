@@ -151,6 +151,23 @@ describe("publishApp", { timeout: (inject("DB_FLAVOUR" as never) as string) === 
     expect(served.Ok().releaseSeq).toBeGreaterThan(pubV2.Ok().releaseSeq);
   });
 
+  it("a non-owner can pull the published fsId even when a dev row shares it (Codex review)", async () => {
+    // Publishing mints a production row carrying the dev draft's fsId, leaving the
+    // dev row — so one fsId maps to BOTH a dev and a production row. getAppByFsId's
+    // exact lookup must prefer the production row, else a non-owner pulling the
+    // published fsId binds the dev duplicate and is denied.
+    const { appSlug, ownerHandle } = await publishedThenDraft();
+    const rPub = await api.publishApp({ appSlug, ownerHandle });
+    const publishedFsId = rPub.Ok().fsId;
+    await api.ensureAppSettings({ appSlug, ownerHandle, publicAccess: { enable: true } });
+
+    const rApp = await api2.getAppByFsId({ appSlug, ownerHandle, fsId: publishedFsId });
+    if (rApp.isErr()) assert.fail("Expected getAppByFsId to succeed: " + JSON.stringify(rApp.Err()));
+    const res = rApp.Ok();
+    expect(res.mode).toBe("production"); // bound the production row, not the dev duplicate
+    expect(res.grant).toBe("public-access"); // pullable, not not-grant
+  });
+
   it("rejects a non-owner publish", async () => {
     const { appSlug, ownerHandle } = await publishedThenDraft();
     const rPub = await api2.publishApp({ appSlug, ownerHandle });

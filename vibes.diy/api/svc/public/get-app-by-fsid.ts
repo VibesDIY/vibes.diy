@@ -22,7 +22,7 @@ import { type } from "arktype";
 import { unwrapMsgBase } from "../unwrap-msg-base.js";
 import { VibesApiSQLCtx } from "../types.js";
 import { optAuth } from "../check-auth.js";
-import { and, eq } from "drizzle-orm/sql/expressions";
+import { and, desc, eq } from "drizzle-orm/sql/expressions";
 import { selectLatestAppPerSlug, selectLatestDraftOrPublished } from "./select-app.js";
 import { deriveDisplayName } from "./derive-display-name.js";
 import { ensureAppSettings } from "./ensure-app-settings.js";
@@ -92,6 +92,11 @@ export const getAppByFsIdEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqGet
       let app: typeof vctx.sql.tables.apps.$inferSelect | undefined;
       if (req.fsId) {
         // Explicit version → serve that exact fsId, regardless of selectMode (#2772).
+        // Publishing a draft (D2) mints a production row carrying the SAME fsId as
+        // the dev row it came from, so a single fsId can map to BOTH a dev and a
+        // production row. Prefer production / highest releaseSeq so the exact lookup
+        // binds the published row — otherwise a non-owner pulling a published fsId
+        // could bind the dev duplicate and be denied (Codex review).
         app = await vctx.sql.db
           .select()
           .from(vctx.sql.tables.apps)
@@ -102,6 +107,7 @@ export const getAppByFsIdEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqGet
               eq(vctx.sql.tables.apps.ownerHandle, req.ownerHandle)
             )
           )
+          .orderBy(desc(vctx.sql.tables.apps.mode), desc(vctx.sql.tables.apps.releaseSeq)) // "production" > "dev", then newest
           .limit(1)
           .then((r) => r[0]);
       } else if (req.selectMode === "ownerLatest" && callerUserId) {
