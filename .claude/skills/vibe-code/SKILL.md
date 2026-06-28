@@ -131,4 +131,4 @@ See `agents/environments.md` for the full dev/prod/cli/preview architecture.
 - **`unknown document type`** — `access.js` doesn't return for a type the app writes (e.g. ImgGen's docs). Add a branch returning `{ channels, grant }` for it.
 - **No editor grant** — pushing under another handle needs write access on that vibe.
 - **Confusing code with data** — schema/UI/access-rules = this skill; documents/queries = `vibe-data`.
-- **Guessing why an app shipped wrong** — don't reverse-engineer from the deployed bytes alone; read the generation with `chats <vibe> <chatId> --response` (and `--files`) to see what the model emitted and which file each block bound to.
+- **Guessing why an app shipped wrong** — don't reverse-engineer from the deployed bytes alone; read the generation with `codegen-log <vibe> <chatId> --response` (and `--files`) to see what the model emitted and which file each block bound to.
