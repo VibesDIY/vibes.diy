@@ -122,26 +122,36 @@ export default {
           headers: { "Content-Type": "application/json" },
         }) as unknown as CFResponse;
       }
-      // #2714 Spec B — vibe plane now routes to the unified Sessions class via
-      // the SESSIONS handle (same shard key). The DO derives kind="vibe" from
-      // the /api/app path (shardKindForPath).
-      const id = env.SESSIONS.idFromName(vibe);
+      // #2714 Spec B — vibe plane routes to the unified Sessions class via the
+      // SESSIONS handle. The DO derives kind="vibe" from the /api/app path.
+      //
+      // The physical DO name is PLANE-PREFIXED (`app:`/`shared:`/`chat:`). On
+      // non-cli envs SESSIONS and CODEGEN_SESSIONS bind the SAME class, hence the
+      // same DO namespace — so a bare `idFromName(shard)` for codegen could
+      // collide with a vibe key or the shared singleton and co-tenant one
+      // instance across planes (shared `connections`/QuickJS cache). The prefix
+      // keeps the three planes' instances disjoint regardless of namespace. The
+      // logical shard identity the DO stamps (from `?vibe=`/`?shard=`) is
+      // unchanged, so Spec A's identity gate is unaffected. Prefixes match the
+      // UserNotify registration shardIds, so resolveShardDO addresses the same
+      // physical instance.
+      const id = env.SESSIONS.idFromName(`app:${vibe}`);
       const obj = env.SESSIONS.get(id);
       return obj.fetch(request);
     }
 
     if (route === "shared-do") {
       const shard = url.getParam("shard");
-      // Shared plane → SESSIONS (singleton "global" key by default).
-      const id = shard ? env.SESSIONS.idFromName(shard) : env.SESSIONS.idFromName("global");
+      // Shared plane → SESSIONS, physical name `shared:<shard|global>`.
+      const id = env.SESSIONS.idFromName(`shared:${shard ?? "global"}`);
       return env.SESSIONS.get(id).fetch(request);
     }
 
     if (route === "api-do") {
       const shard = url.getParam("shard") ?? crypto.randomUUID();
-      // Codegen plane → CODEGEN_SESSIONS (local-on-cli; cross-script SESSIONS is
-      // for vibe/shared). Same class "Sessions", separate handle.
-      const id = env.CODEGEN_SESSIONS.idFromName(shard);
+      // Codegen plane → CODEGEN_SESSIONS, physical name `chat:<shard>` (local on
+      // cli; cross-script SESSIONS is for vibe/shared). Same class "Sessions".
+      const id = env.CODEGEN_SESSIONS.idFromName(`chat:${shard}`);
       const obj = env.CODEGEN_SESSIONS.get(id);
       return obj.fetch(request); // handle WebSocket upgrade and API requests in the unified Sessions Durable Object
     }

@@ -3,9 +3,14 @@ import { CFEnv } from "@vibes.diy/api-types";
 
 // #2714 Spec B — the session planes collapsed into one class "Sessions",
 // addressed via two handles: SESSIONS (vibe + shared) and CODEGEN_SESSIONS
-// (codegen). UserNotify fan-out resolves a registered shardId back to the DO
-// that registered it, so the prefix→binding map mirrors app.ts's routing:
-// `app:`/`shared:` registrations live on SESSIONS, bare ids on CODEGEN_SESSIONS.
+// (codegen). On non-cli envs both bind the same class → the same DO namespace,
+// so the PHYSICAL DO name must be plane-prefixed (`app:`/`shared:`/`chat:`) or a
+// codegen shard could collide with a vibe key / the shared singleton and
+// co-tenant one instance across planes. app.ts opens those exact prefixed names;
+// this resolver (used by UserNotify fan-out) must address the SAME physical
+// instance for a registered shardId, so it maps the registration prefix to its
+// physical name 1:1: `app:`/`shared:` registrations keep their full name on
+// SESSIONS; a bare codegen registration becomes `chat:<id>` on CODEGEN_SESSIONS.
 const SHARD_PREFIX_BINDINGS: Record<string, keyof Pick<CFEnv, "SESSIONS">> = {
   app: "SESSIONS",
   shared: "SESSIONS",
@@ -17,8 +22,11 @@ export function resolveShardDO(shardId: string, env: CFEnv): { ns: DurableObject
     const prefix = shardId.slice(0, colonIdx);
     const binding = SHARD_PREFIX_BINDINGS[prefix];
     if (binding !== undefined) {
-      return { ns: env[binding], name: shardId.slice(colonIdx + 1) };
+      // Keep the full prefixed id as the physical name (matches app.ts's
+      // `app:<vibe>` / `shared:<shard>`).
+      return { ns: env[binding], name: shardId };
     }
   }
-  return { ns: env.CODEGEN_SESSIONS, name: shardId };
+  // Bare id = a codegen registration; app.ts opens it as `chat:<shard>`.
+  return { ns: env.CODEGEN_SESSIONS, name: `chat:${shardId}` };
 }
