@@ -120,6 +120,7 @@ import {
 import { type } from "arktype";
 import { LLMRequest } from "@vibes.diy/call-ai-v2";
 import { DashAuthType, ReqCertFromCsr, ResCertFromCsr, VerifiedClaimsResult, ClerkClaim } from "@vibes.diy/identity";
+import type { ShardKind, ReqType, SHARD_POLICY } from "./shard-policy.js";
 
 export const LLMChatEntry = type({
   tid: "string",
@@ -287,3 +288,46 @@ export interface VibesDiyApiIface<_T = unknown> {
   // Returns an unsubscribe function.
   onUserNotification(fn: (evt: EvtUserNotification) => void): () => void;
 }
+
+// ── Conn<K>: per-shard view of the API derived from SHARD_POLICY ──────────────
+//
+// A connection is opened against one ShardKind. `Conn<K>` is the subset of
+// `VibesDiyApiIface` whose handlers may run on that kind, derived structurally
+// from `SHARD_POLICY` so the policy map stays the single source of truth (no
+// hand-maintained per-shard interface to drift). It is type-only machinery —
+// nothing here exists at runtime.
+
+// The static shard set for a reqType whose policy entry is a plain readonly
+// array. Predicate entries (open-chat / prompt — placement depends on
+// `req.mode`) are NOT static arrays, so this resolves to `never` for them; they
+// are handled explicitly by `ChatOverrides` below.
+type StaticShards<T extends ReqType> = (typeof SHARD_POLICY)[T] extends readonly ShardKind[]
+  ? (typeof SHARD_POLICY)[T][number]
+  : never;
+
+// Keep only the methods whose reqType has a STATIC policy entry that includes
+// `K`. Methods with no reqType (no-arg ops like `getTokenClaims`/`close`, and
+// callback registrars like `onDocChanged`) have `MethodReqType` = `never`, which
+// is not a `ReqType`, so they fall through and are kept for every kind. The
+// predicate ops (open-chat) DO have a reqType but its policy entry is a
+// predicate, so `StaticShards` is `never` and `K extends never` is false →
+// they are dropped here and re-added by `ChatOverrides`.
+type AvailableMethods<K extends ShardKind> = {
+  [M in keyof VibesDiyApiIface as MethodReqType<VibesDiyApiIface[M]> extends ReqType
+    ? K extends StaticShards<MethodReqType<VibesDiyApiIface[M]>>
+      ? M
+      : never
+    : M]: VibesDiyApiIface[M];
+};
+
+// Mode-predicate op overrides. `openChat` is the only such op on the interface
+// (`prompt`/`promptFS` live on the returned `LLMChat`, not here). For the vibe
+// shard, openChat is restricted to `mode: "img"` (img-gen rides AppSessions);
+// every other kind gets the full openChat signature.
+type ChatOverrides<K extends ShardKind> = K extends "vibe"
+  ? {
+      openChat(req: Req<ReqOpenChat> & { mode: "img" }): ReturnType<VibesDiyApiIface["openChat"]>;
+    }
+  : Pick<VibesDiyApiIface, "openChat">;
+
+export type Conn<K extends ShardKind> = Omit<AvailableMethods<K>, "openChat"> & ChatOverrides<K>;

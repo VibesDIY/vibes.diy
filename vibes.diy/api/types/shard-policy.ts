@@ -56,9 +56,14 @@ type PolicyEntry = readonly ShardKind[] | ((req: { mode?: string }) => readonly 
 // pre-#2714 manifest semantics: ALL = stateless reads/grants safe on every
 // shard; VIBE_ONLY = channel-scoped doc ops (local broadcast + access-fn eval
 // rendezvous on the vibe shard); CODEGEN_ONLY = the create/fork/mode write ops.
-const ALL_SHARDS: readonly ShardKind[] = ["codegen", "vibe", "shared"];
-const VIBE_ONLY: readonly ShardKind[] = ["vibe"];
-const CODEGEN_ONLY: readonly ShardKind[] = ["codegen"];
+// `as const` (not an explicit `readonly ShardKind[]` annotation) so each preset
+// keeps its literal tuple type — `Conn<K>` (vibes-diy-api.ts) reads these tuples
+// out of `SHARD_POLICY` to derive per-shard method availability, which only works
+// if the element literals survive. Runtime values are unchanged; the `satisfies`
+// on SHARD_POLICY still enforces every entry is a valid PolicyEntry.
+const ALL_SHARDS = ["codegen", "vibe", "shared"] as const;
+const VIBE_ONLY = ["vibe"] as const;
+const CODEGEN_ONLY = ["codegen"] as const;
 
 /**
  * The single source of truth for handler placement (#2714), keyed by the request
