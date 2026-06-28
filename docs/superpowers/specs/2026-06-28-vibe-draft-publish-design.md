@@ -184,11 +184,13 @@ no viewer-aware worker gating needed.
   (`onPublish`/`publishing` on `UnifiedVibeCard`) + the route re-resolves the draft on success so
   the badge/banner clear and the iframe re-pins to the published version. Charlie's note — guard the
   async re-pin incl. query-param preservation — landed as `buildPinnedIframeUrl` + tests.
-- **PR-D3 — CLI draft/published + versions.** `pull` owner-draft-default + `--published`, the
-  `versions` command + access-any-version, `codegen-log` alignment (§3d). Depends on the resolver +
-  `listVersions`.
+- **PR-D3 — CLI draft/published + versions.** ✅ implemented. `pull` owner-draft-default (`selectMode:
+"ownerLatest"`) + `--published` + `--fsId`; the new `versions` command (lists every release, owner
+  sees drafts) backed by a `listVersions` RPC; `pull --fsId` reaches any version (§3d). `codegen-log`
+  needed no change — it lists chat turns (already incl. dev fsIds), with no published/draft pointer
+  to realign.
 
-D1 first (it's the principle); D2 and D3 follow and are independent of each other.
+All three slices shipped. D1 (#2774) and D2 (#2780) merged; D3 this PR.
 
 ---
 

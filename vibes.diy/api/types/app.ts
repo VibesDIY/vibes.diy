@@ -175,6 +175,41 @@ export function isResGetAppByFsId(obj: unknown): obj is ResGetAppByFsId {
   return !(resGetAppByFsId(obj) instanceof type.errors);
 }
 
+// List every Apps release for (ownerHandle, appSlug) — the CLI `versions` command
+// (#2772 D3). The owner gets all rows (dev drafts + production history); anyone
+// else gets only production rows. `published` marks the row that is the served
+// public latest (highest production releaseSeq).
+export const reqListVersions = type({
+  type: "'vibes.diy.req-list-versions'",
+  "auth?": dashAuthType,
+  appSlug: "string",
+  ownerHandle: "string",
+});
+export type ReqListVersions = typeof reqListVersions.infer;
+export function isReqListVersions(obj: unknown): obj is ReqListVersions {
+  return !(reqListVersions(obj) instanceof type.errors);
+}
+
+export const resListVersionsItem = type({
+  fsId: "string",
+  mode: "'production'|'dev'",
+  releaseSeq: "number",
+  created: "string",
+  published: "boolean",
+});
+export type ResListVersionsItem = typeof resListVersionsItem.infer;
+
+export const resListVersions = type({
+  type: "'vibes.diy.res-list-versions'",
+  appSlug: "string",
+  ownerHandle: "string",
+  items: resListVersionsItem.array(),
+});
+export type ResListVersions = typeof resListVersions.infer;
+export function isResListVersions(obj: unknown): obj is ResListVersions {
+  return !(resListVersions(obj) instanceof type.errors);
+}
+
 export const reqGetByUserSlugAppSlug = type({
   type: "'vibes.diy.req-get-by-user-slug-app-slug'",
   auth: dashAuthType,

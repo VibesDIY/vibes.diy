@@ -57,6 +57,9 @@ import {
   ReqPublishApp,
   ResPublishApp,
   isResPublishApp,
+  ReqListVersions,
+  ResListVersions,
+  isResListVersions,
   ReqCreateInvite,
   ResCreateInvite,
   isResCreateInvite,
@@ -562,6 +565,15 @@ export class VibesDiyApi implements VibesDiyApiIface<{
       { ...req, type: "vibes.diy.req-publish-app" },
       {
         resMatch: isResPublishApp,
+      }
+    );
+  }
+
+  listVersions(req: Req<ReqListVersions>): Promise<Result<ResListVersions, VibesDiyError>> {
+    return this.request(
+      { ...req, type: "vibes.diy.req-list-versions" },
+      {
+        resMatch: isResListVersions,
       }
     );
   }

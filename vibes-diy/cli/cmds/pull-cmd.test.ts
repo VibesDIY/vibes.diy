@@ -113,6 +113,40 @@ describe("pullCmd", () => {
     expect(request.appSlug).toBe("hat-smeller");
     expect(request.ownerHandle).toBe("other-user");
   });
+
+  it("defaults to the draft (published:false, no fsId) — #2772 D3", async () => {
+    const ctx = makeCtx();
+    const reader = ctx.cliStream.stream.getReader();
+    const firstRead = reader.read();
+    await run(pullCmd(ctx), ["my-app"]);
+    const first = await firstRead;
+    await ctx.cliStream.close();
+    const request = (first.value as { result: ReqPull }).result;
+    expect(request.published).toBe(false);
+    expect(request.fsId).toBeUndefined();
+  });
+
+  it("--published sets published:true", async () => {
+    const ctx = makeCtx();
+    const reader = ctx.cliStream.stream.getReader();
+    const firstRead = reader.read();
+    await run(pullCmd(ctx), ["my-app", "--published"]);
+    const first = await firstRead;
+    await ctx.cliStream.close();
+    const request = (first.value as { result: ReqPull }).result;
+    expect(request.published).toBe(true);
+  });
+
+  it("--fsId carries a specific version", async () => {
+    const ctx = makeCtx();
+    const reader = ctx.cliStream.stream.getReader();
+    const firstRead = reader.read();
+    await run(pullCmd(ctx), ["my-app", "--fsId", "zABC123"]);
+    const first = await firstRead;
+    await ctx.cliStream.close();
+    const request = (first.value as { result: ReqPull }).result;
+    expect(request.fsId).toBe("zABC123");
+  });
 });
 
 describe("deriveHostnameBase", () => {

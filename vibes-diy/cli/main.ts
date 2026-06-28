@@ -42,6 +42,7 @@ import { systemCmd, isResSystem } from "./cmds/system-cmd.js";
 import { listCmd, isResVibesList, type ResVibesList } from "./cmds/list-cmd.js";
 import { mcpCmd } from "./cmds/mcp-cmd.js";
 import { pullCmd, isResPull, type ResPull } from "./cmds/pull-cmd.js";
+import { versionsCmd, isResVersions, type ResVersions } from "./cmds/versions-cmd.js";
 import { CliCtx, defaultCliOutput } from "./cli-ctx.js";
 import { cmdTsEvento, isCmdProgress, WrapCmdTSMsg } from "./cmd-evento.js";
 import { seedDeviceIdFromEnv, VIBES_DEVICE_ID_ENV } from "./device-id-env.js";
@@ -140,6 +141,7 @@ async function main(): Promise<number> {
         mcp: mcpCmd(ctx),
         pull: pullCmd(ctx),
         push: pushCmd(ctx),
+        versions: versionsCmd(ctx),
         "put-asset": putAssetCmd(ctx),
         skills: skillsCmd(ctx),
         themes: themesCmd(ctx),
@@ -384,6 +386,24 @@ async function main(): Promise<number> {
               for (const item of items) {
                 const label = item.title ? `  ${item.title}` : "";
                 console.log(`${item.ownerHandle}/${item.appSlug}${label}`);
+              }
+            }
+            break;
+          }
+          case isResVersions(msg): {
+            const vMsg = msg as ResVersions;
+            if (wmsg.cmdTs.outputFormat === "json") {
+              for (const item of vMsg.items) {
+                console.log(JSON.stringify(item));
+              }
+            } else if (vMsg.items.length === 0) {
+              console.log(`No versions for ${vMsg.ownerHandle}/${vMsg.appSlug}`);
+            } else {
+              for (const item of vMsg.items) {
+                // marker: ● = published (served public latest), ○ = draft/history
+                const marker = item.published ? "●" : "○";
+                const tag = item.published ? " (published)" : item.mode === "dev" ? " (draft)" : "";
+                console.log(`${marker} ${item.fsId}  ${item.mode}  seq=${item.releaseSeq}  ${item.created}${tag}`);
               }
             }
             break;

@@ -19,6 +19,8 @@ import {
   ResForkApp,
   ReqPublishApp,
   ResPublishApp,
+  ReqListVersions,
+  ResListVersions,
   ReqListHandleBindings,
   ResListHandleBindings,
   ReqCreateHandleBinding,
@@ -204,6 +206,8 @@ export interface VibesDiyApiIface<_T = unknown> {
   forkApp(req: Req<ReqForkApp>): Promise<Result<ResForkApp, VibesDiyError>>;
 
   publishApp(req: Req<ReqPublishApp>): Promise<Result<ResPublishApp, VibesDiyError>>;
+
+  listVersions(req: Req<ReqListVersions>): Promise<Result<ResListVersions, VibesDiyError>>;
 
   getCertFromCsr(req: Req<ReqCertFromCsr>): Promise<Result<ResCertFromCsr>>;
 

@@ -1,4 +1,4 @@
-import { command, option, optional, positional, string } from "cmd-ts";
+import { command, flag, option, optional, positional, string } from "cmd-ts";
 import { mkdir, writeFile } from "fs/promises";
 import { dirname, join, resolve } from "path";
 import {
@@ -25,6 +25,10 @@ export const ReqPull = type({
   ownerHandle: "string",
   dir: "string",
   apiUrl: "string",
+  // #2772 D3: which version to pull. A specific `fsId` wins; otherwise the owner
+  // gets their latest draft by default and `--published` forces the public latest.
+  "fsId?": "string",
+  published: "boolean",
 });
 export type ReqPull = typeof ReqPull.infer;
 
@@ -84,7 +88,15 @@ export const pullEvento: EventoHandler<WrapCmdTSMsg<unknown>, ReqPull, ResPull> 
       return Result.Err("Could not resolve user slug. Run 'vibes-diy login' first.");
     }
 
-    const rApp = await api.getAppByFsId({ appSlug: args.appSlug, ownerHandle });
+    // Version selection (#2772 D3): an explicit `--fsId` is served exactly;
+    // otherwise the owner gets their latest draft (selectMode "ownerLatest", which
+    // the server downgrades to published for non-owners) unless `--published`.
+    const getArgs = args.fsId
+      ? { appSlug: args.appSlug, ownerHandle, fsId: args.fsId }
+      : args.published
+        ? { appSlug: args.appSlug, ownerHandle }
+        : { appSlug: args.appSlug, ownerHandle, selectMode: "ownerLatest" as const };
+    const rApp = await api.getAppByFsId(getArgs);
     if (rApp.isErr()) {
       return Result.Err(formatErr(rApp.Err()));
     }
@@ -182,6 +194,17 @@ export function pullCmd(ctx: CliCtx) {
         defaultValue: () => "",
         defaultValueIsSerializable: true,
       }),
+      fsId: option({
+        long: "fsId",
+        description: "Pull a specific version by fsId (overrides --published / the draft default)",
+        type: string,
+        defaultValue: () => "",
+        defaultValueIsSerializable: true,
+      }),
+      published: flag({
+        long: "published",
+        description: "Pull the published (production) version instead of your latest draft",
+      }),
     },
     handler: ctx.cliStream.enqueue((args) => {
       if (args.userSlug) process.stderr.write("[deprecated] --user-slug is deprecated, use --handle or --vibe instead\n");
@@ -196,6 +219,8 @@ export function pullCmd(ctx: CliCtx) {
         ownerHandle: resolved.handle,
         dir: args.dir,
         apiUrl: args.apiUrl,
+        published: args.published,
+        ...(args.fsId ? { fsId: args.fsId } : {}),
       } satisfies ReqPull;
     }),
   });

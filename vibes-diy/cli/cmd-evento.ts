@@ -12,6 +12,7 @@ import { appChatsEvento } from "./cmds/app-chats-cmd.js";
 import { editEvento } from "./cmds/edit-cmd.js";
 import { listEvento } from "./cmds/list-cmd.js";
 import { pullEvento } from "./cmds/pull-cmd.js";
+import { versionsEvento } from "./cmds/versions-cmd.js";
 import { deviceIdRegisterEvento } from "@vibes.diy/identity/node";
 import { isCmdProgress, isCmdTSMsg, sendProgress, type CmdProgress, type CmdTSMsg, type WrapCmdTSMsg } from "./cli-kit.js";
 
@@ -52,6 +53,7 @@ export function cmdTsEvento() {
     editEvento,
     listEvento,
     pullEvento,
+    versionsEvento,
     deviceIdRegisterEvento,
     dbListEvento,
     dbGetEvento,
