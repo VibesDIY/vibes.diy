@@ -50,6 +50,49 @@ for `vibes.diy` / `prod-v2` / `cli-v2`; `--instance preview`
 (`CLERK_SECRET_KEY_PREVIEW`, `*.clerk.accounts.dev`) for `dev-v2.vibesdiy.net`
 and `pr-*.workers.dev` previews.
 
+## Driving interactions, not just screenshots
+
+`clerk-authed-shot.mjs` only **navigates + screenshots** — it can't click. When a
+flow needs interaction (grow the vibe card, open Share, switch handle), write a
+small Playwright script that **reuses the same exported `--storage` state**. You
+don't need to reverse-engineer the launch options every time — copy them verbatim
+from `clerk-authed-shot.mjs`. The load-bearing bits:
+
+- **Playwright resolves from the global install**, not a repo `node_modules` (a
+  fresh clone has none). Import it as:
+  ```js
+  import { createRequire } from "node:module";
+  const { chromium } = createRequire("/opt/node22/lib/node_modules/x/")("playwright");
+  ```
+- **Cloud launch accommodations** are mandatory (same as the shot/login scripts):
+  resolve the cloud Chromium via `/opt/pw-browsers/chromium`, launch headless with
+  `proxy: { server: process.env.HTTPS_PROXY }` and
+  `args: ["--no-sandbox","--disable-dev-shm-usage","--disable-quic","--ssl-version-max=tls1.2"]`.
+  Copy the `resolveCloudChromium()` helper straight out of `clerk-authed-shot.mjs`.
+- **Load the session** with `browser.newContext({ storageState: "/tmp/state.prod.json", viewport })`.
+
+**Gotcha — `networkidle` hangs on `/vibe/$owner/$app` card routes.** Some vibes keep
+a long-lived connection open, so the page never reaches `networkidle` and
+`page.goto(url, { waitUntil: "networkidle" })` times out at 60s (observed on
+`/vibe/garden-gnome/to-do`; `bouncing-div` was fine). For `/vibe/` routes use
+`waitUntil: "domcontentloaded"` + an explicit `waitForTimeout` settle instead.
+`clerk-authed-shot.mjs` itself uses `networkidle`, so a card route may screenshot
+empty/timeout there — drive it from your own script with `domcontentloaded`.
+
+**Unified vibe card selectors** (the merged agent-in-vibe surface, #2676/#2680) —
+these are the stable `aria-label`s, found in `vibes.diy/base/components/UnifiedVibeCard.tsx`:
+
+| Element                  | Selector                                                               |
+| ------------------------ | ---------------------------------------------------------------------- |
+| Grow / collapse the card | `[aria-label="Open vibe menu"]` / `[aria-label="Close vibe menu"]`     |
+| Bottom nav               | `[aria-label="Home"]` · `[aria-label="Edit"]` · `[aria-label="Share"]` |
+| Handle picker (▾)        | `[aria-label="Switch handle"]`                                         |
+| Draft badge (#2772)      | `[aria-label="Draft — unpublished changes"]`                           |
+
+Note: `data-vibe-switch` exists **only** in the pkg react control
+(`vibes.diy/api/pkg/react/components/vibes-control.tsx`), **not** the main app —
+don't target it for app-surface QA.
+
 ## Why a Playwright script and not the chrome-devtools MCP browser
 
 You can authenticate the browser `clerk-qa-login.mjs` itself drives, but you
