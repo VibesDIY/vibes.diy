@@ -167,6 +167,9 @@ export class AppSessions implements DurableObject {
 
     // AppSessions is the "vibe" shard: stamp its identity so the runtime gate
     // (#2714) can fail-loud on a wrong-shard request before any write/broadcast.
+    // An absent vibe key intentionally yields shardId "" — a never-matching
+    // identity (fail-closed). Do NOT "fix" the `?? ""` into anything permissive:
+    // the vibe kind IS identity-checked, so a real key must address this shard.
     cctx.appCtx.set("shardIdentity", { kind: "vibe", shardId: currentVibeKey ?? "" } satisfies ShardIdentity);
 
     return cfServe(request, cctx, appMsgEvento);

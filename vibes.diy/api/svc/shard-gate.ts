@@ -1,5 +1,5 @@
-import { EventoHandler, EventoResult, Option, Result } from "@adviser/cement";
-import { shardsForReq, type ResError, type ShardIdentity } from "@vibes.diy/api-types";
+import { EventoHandler, EventoResult, HandleTriggerCtx, Option, Result } from "@adviser/cement";
+import { openVibe, shardsForReq, type ResError, type ShardIdentity } from "@vibes.diy/api-types";
 
 // The runtime shard gate (#2714). Types enforce *kind* at composition time;
 // this gate enforces *identity* at dispatch time, fail-loud. It wraps each
@@ -8,13 +8,15 @@ import { shardsForReq, type ResError, type ShardIdentity } from "@vibes.diy/api-
 
 /**
  * The vibe-key identity assertion: a vibe-keyed doc op must address the shard it
- * landed on. Returns `Some(ResError)` when `${ownerHandle}--${appSlug}` does not
- * equal the connection's `shardId`, else `None`. The split-brain defense (#2714):
- * a request routed to the wrong vibe DO must be rejected BEFORE any write or
- * broadcast, since those would mutate / fan out on the wrong shard.
+ * landed on. Returns `Some(ResError)` when `openVibe(ownerHandle, appSlug)` does
+ * not equal the connection's `shardId`, else `None`. The split-brain defense
+ * (#2714): a request routed to the wrong vibe DO must be rejected BEFORE any
+ * write or broadcast, since those would mutate / fan out on the wrong shard.
  */
 export function shardIdentityError(id: ShardIdentity, ownerHandle: string, appSlug: string): Option<ResError> {
-  const expected = `${ownerHandle}--${appSlug}`;
+  // openVibe is the single source of truth for the vibe-key format; compare as
+  // strings (the constructor returns a branded VibeShard).
+  const expected: string = openVibe(ownerHandle, appSlug);
   if (expected === id.shardId) return Option.None();
   return Option.Some({
     type: "vibes.diy.res-error",
@@ -91,4 +93,23 @@ export function gated(reqType: string, handler: EventoHandler): EventoHandler {
       return handler.handle(ctx);
     },
   };
+}
+
+/**
+ * Post-resolution chat-identity gate (#2714), shared by the chat ops whose
+ * canonical target is only known after a lookup (open-chat, prompt-chat-section).
+ * Returns `Some(ResError)` only on the vibe shard when the resolved
+ * (ownerHandle, appSlug) does not address THIS shard; `None` otherwise (no
+ * identity, non-vibe kind, or a match). Callers send the Option and stop:
+ *   const oErr = assertChatShardIdentity(ctx, ownerHandle, appSlug);
+ *   if (oErr.IsSome()) { await ctx.send.send(ctx, oErr.unwrap()); return Result.Ok(EventoResult.Continue); }
+ */
+export function assertChatShardIdentity<INREQ, REQ, RES>(
+  ctx: HandleTriggerCtx<INREQ, REQ, RES>,
+  ownerHandle: string,
+  appSlug: string
+): Option<ResError> {
+  const id = ctx.ctx.get<ShardIdentity>("shardIdentity");
+  if (id === undefined || id.kind !== "vibe") return Option.None();
+  return shardIdentityError(id, ownerHandle, appSlug);
 }

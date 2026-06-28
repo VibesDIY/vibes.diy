@@ -10,10 +10,9 @@ import {
   VibesDiyError,
   W3CWebSocketEvent,
 } from "@vibes.diy/api-types";
-import type { ShardIdentity } from "@vibes.diy/api-types";
 import { type } from "arktype";
 import { unwrapMsgBase } from "../unwrap-msg-base.js";
-import { shardIdentityError } from "../shard-gate.js";
+import { assertChatShardIdentity } from "../shard-gate.js";
 import { VibesApiSQLCtx } from "../types.js";
 import { checkAuth as checkAuth } from "../check-auth.js";
 import { WSSendProvider } from "../svc-ws-send-provider.js";
@@ -67,13 +66,10 @@ export const openChat: EventoHandler<W3CWebSocketEvent, MsgBase<ReqOpenChat>, Re
       // is only known after the chat lookup above; on the vibe shard (img-gen
       // rides AppSessions), assert the resolved app addresses THIS shard before
       // any streaming work — the split-brain defense for chat ops.
-      const shardId = ctx.ctx.get<ShardIdentity>("shardIdentity");
-      if (shardId !== undefined && shardId.kind === "vibe") {
-        const oErr = shardIdentityError(shardId, ownerHandle, appSlug);
-        if (oErr.IsSome()) {
-          await ctx.send.send(ctx, oErr.unwrap());
-          return Result.Ok(EventoResult.Continue);
-        }
+      const oErr = assertChatShardIdentity(ctx, ownerHandle, appSlug);
+      if (oErr.IsSome()) {
+        await ctx.send.send(ctx, oErr.unwrap());
+        return Result.Ok(EventoResult.Continue);
       }
 
       const wsp = ctx.send.provider as WSSendProvider;
