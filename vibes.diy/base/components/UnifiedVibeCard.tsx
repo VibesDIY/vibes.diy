@@ -348,13 +348,17 @@ function ModeIndicator({
   readonly memberReadOnly?: boolean;
   readonly adminMode?: boolean;
 }) {
-  const show = adminMode
-    ? "admin"
-    : viewerMode === "author"
-      ? "shield"
-      : viewerMode === "member" && memberReadOnly
-        ? "lock"
-        : null;
+  // Admin mode only applies to the owner (the server gates it on isOwner in whoAmI),
+  // so require the author viewer state — a stale adminMode flag must not relabel a
+  // member/visitor session as admin or hide their lock (Codex P2).
+  const show =
+    adminMode && viewerMode === "author"
+      ? "admin"
+      : viewerMode === "author"
+        ? "shield"
+        : viewerMode === "member" && memberReadOnly
+          ? "lock"
+          : null;
   if (!show) return null;
   const isAdmin = show === "admin";
   const isShield = isAdmin || show === "shield";
