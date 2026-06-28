@@ -496,3 +496,277 @@ export const ShareAuthorView: Story = {
     </Phone>
   ),
 };
+
+// =========================================================================================
+// #2677 — First-generation: stream → live preview, de-blur, history toggle.
+// Decisions locked with jchris (2026-06-28): single iframe surface that hot-swaps in place
+// (no preview iframe); cached lane = real read; non-owner fork inline; the stream lives in
+// the Edit view (no new nav item) with a line/block-count history summary.
+//
+// These render the REAL `UnifiedVibeCard` and feed its `body` slot the sketched content the
+// implementation will turn into real components (the generation-stream view, the history
+// summary). Card shell = real; body = the design target. Single source of truth preserved.
+// =========================================================================================
+
+/** Generation-stream view — what the Edit body shows DURING a real (non-cached) generation,
+ *  before the first code block completes. Real AI narration (`▸` toplevel lines) + the
+ *  opening of the first code fence + a spinner. A summary line at the top lets you sense how
+ *  much has streamed (jchris: "a line or block count summary … so you can sense if it grows").
+ *  The app de-blurs BEHIND the card (see story); this is just the card's middle. */
+function GenStreamBody({
+  narration,
+  codeLines,
+  messages,
+}: {
+  readonly narration: readonly string[];
+  readonly codeLines: number;
+  readonly messages: number;
+}) {
+  return (
+    <div className="text-sm" style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+      <div
+        className="text-light-secondary dark:text-dark-secondary"
+        style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12, marginBottom: 2 }}
+      >
+        <span aria-hidden className="h-3 w-3 animate-spin rounded-full border-2 border-current border-t-transparent" />
+        <span>
+          building your app… · {messages} msgs · ~{codeLines} lines
+        </span>
+      </div>
+      {narration.map((line) => (
+        <span key={line} className="text-light-secondary dark:text-dark-secondary">
+          ▸ {line}
+        </span>
+      ))}
+      <code
+        className="rounded bg-light-background-01 dark:bg-dark-background-01"
+        style={{ fontSize: 12, opacity: 0.85, padding: "6px 8px", whiteSpace: "pre", overflowX: "hidden" }}
+      >
+        {"```jsx\nfunction App() {\n  const pads = usePads()\n  return ("}
+      </code>
+    </div>
+  );
+}
+
+/** The history-summary affordance — sits ABOVE the chips in the live Edit view (after first
+ *  code). Tapping it reopens the past stream (the 4a "history" toggle, no new nav item). The
+ *  count is the line/block summary jchris asked for, so history size is sensible at a glance. */
+function HistorySummaryRow({ messages, lines }: { readonly messages: number; readonly lines: number }) {
+  return (
+    <button
+      type="button"
+      className="flex w-full items-center justify-between rounded-md border border-light-decorative-01 dark:border-dark-decorative-01 px-3 py-1.5 text-left"
+      style={{ marginBottom: 8, cursor: "pointer", background: "transparent" }}
+    >
+      <span className="text-light-secondary dark:text-dark-secondary" style={{ display: "flex", alignItems: "center", gap: 7, fontSize: 12 }}>
+        <span aria-hidden style={{ fontSize: 13 }}>
+          ⟲
+        </span>
+        history · {messages} messages · ~{lines} lines
+      </span>
+      <span aria-hidden className="text-light-secondary dark:text-dark-secondary" style={{ fontSize: 12, opacity: 0.6 }}>
+        ›
+      </span>
+    </button>
+  );
+}
+
+// --- #2677 · real-gen DURING stream (pre first code block) — app de-blurs behind -----------
+
+export const FirstGenStreaming: Story = {
+  name: "#2677 · real-gen · streaming (de-blur)",
+  render: () => (
+    <Phone>
+      {/* App forming behind the card — heavy blur early in the stream (25px ramp). The
+          single deployed iframe hot-swaps in place; no separate preview iframe. */}
+      <FakeVibeApp blurPx={18} />
+      <UnifiedVibeCard
+        open
+        appTitle="Bloom Machine"
+        appSlug="meghan/bloom"
+        handleSlug="meghan"
+        viewerMode="author"
+        onHome={() => undefined}
+        onShare={() => undefined}
+        body={
+          <GenStreamBody
+            messages={2}
+            codeLines={48}
+            narration={["laying out a 4×4 pad grid", "wiring up the sound engine"]}
+          />
+        }
+      />
+    </Phone>
+  ),
+};
+
+// --- #2677 · real-gen AFTER first code block — app sharp, chips + history summary ----------
+
+export const FirstGenLive: Story = {
+  name: "#2677 · real-gen · live (post first-code)",
+  render: () => (
+    <Phone>
+      {/* First code block landed → app sharp behind (blur decayed to ~0). */}
+      <FakeVibeApp />
+      <UnifiedVibeCard
+        open
+        appTitle="Bloom Machine"
+        appSlug="meghan/bloom"
+        handleSlug="meghan"
+        viewerMode="author"
+        onHome={() => undefined}
+        onShare={() => undefined}
+        body={
+          <>
+            <HistorySummaryRow messages={3} lines={132} />
+            <OptionButtons
+              options={["Add swing", "Make it grimy"]}
+              isFirst
+              firstMessage="Keep going — tap a chip or describe a change:"
+            />
+            <OtherInput />
+          </>
+        }
+      />
+    </Phone>
+  ),
+};
+
+// --- #2677 · history reopened (the 4a toggle) — past stream + summary header ---------------
+
+export const HistoryReopened: Story = {
+  name: "#2677 · history reopened (past stream)",
+  render: () => (
+    <Phone>
+      <FakeVibeApp />
+      <UnifiedVibeCard
+        open
+        appTitle="Bloom Machine"
+        appSlug="meghan/bloom"
+        handleSlug="meghan"
+        viewerMode="author"
+        onHome={() => undefined}
+        onShare={() => undefined}
+        body={
+          <div className="text-sm" style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+            <div
+              className="text-light-secondary dark:text-dark-secondary"
+              style={{ display: "flex", alignItems: "center", justifyContent: "space-between", fontSize: 12 }}
+            >
+              <span>history · 3 messages · ~132 lines</span>
+              <span style={{ cursor: "pointer", opacity: 0.7 }}>← back to edit</span>
+            </div>
+            {/* Past stream — read through the REAL getChatDetails path (real stored
+                chatSections), not hardcoded history. */}
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              <div className="rounded-md bg-light-background-01 dark:bg-dark-background-01" style={{ padding: "7px 10px" }}>
+                <strong>you</strong> · make a 4×4 drum pad that plays on tap
+              </div>
+              <div className="text-light-secondary dark:text-dark-secondary">▸ built a 4×4 grid of pad buttons</div>
+              <div className="text-light-secondary dark:text-dark-secondary">▸ wired Web Audio playback</div>
+              <code style={{ fontSize: 11, opacity: 0.7 }}>App.jsx · 132 lines</code>
+              <div className="rounded-md bg-light-background-01 dark:bg-dark-background-01" style={{ padding: "7px 10px" }}>
+                <strong>you</strong> · add swing
+              </div>
+            </div>
+          </div>
+        }
+      />
+    </Phone>
+  ),
+};
+
+// --- #2677 · non-owner seamless fork (3a) — make-it-yours, then de-blur into your copy -----
+
+export const NonOwnerFork: Story = {
+  name: "#2677 · non-owner fork (make-it-yours)",
+  render: () => (
+    <Phone>
+      {/* The forked copy forms behind the card — same de-blur ramp, now over YOUR copy. */}
+      <FakeVibeApp blurPx={14} />
+      <UnifiedVibeCard
+        open
+        appTitle="Bloom Machine"
+        // URL has flipped to your handle (replaceState) — the card stays mounted.
+        appSlug="alex/bloom"
+        handleSlug="alex"
+        viewerMode="author"
+        onHome={() => undefined}
+        onShare={() => undefined}
+        body={
+          <div className="text-sm" style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            {/* The #1856 inline "it's yours now" message — the only surfacing of the fork. */}
+            <div
+              className="rounded-md"
+              style={{ background: "rgba(34,197,94,0.12)", border: "1px solid rgba(34,197,94,0.4)", padding: "8px 10px" }}
+            >
+              <strong>It's yours now.</strong>{" "}
+              <span className="text-light-secondary dark:text-dark-secondary">
+                @meghan's original is unchanged — building your copy.
+              </span>
+            </div>
+            <GenStreamBody messages={1} codeLines={36} narration={["copying the app", "applying your change"]} />
+          </div>
+        }
+      />
+    </Phone>
+  ),
+};
+
+// --- #2677 · perf contract (§8 Q4) — cached READ vs real WRITE, side by side ---------------
+// The two lanes must look CATEGORICALLY different. Cached = instant page-view (no stream, no
+// blur, no spinner). Real = stream + de-blur. This story puts them next to each other so the
+// visible contract is legible at a glance.
+
+export const PerfContract: StoryObj = {
+  name: "#2677 · perf contract (cached vs real)",
+  parameters: { viewport: { defaultViewport: "responsive" } },
+  render: () => (
+    <div style={{ display: "flex", gap: 24, padding: 16, background: "#222", alignItems: "flex-start" }}>
+      <div>
+        <div style={{ color: "#9ae6b4", font: "600 13px Inter, sans-serif", marginBottom: 8, textAlign: "center" }}>
+          CACHED chip → READ · &lt;500ms, page-view
+          <div style={{ color: "#cbd5e0", fontWeight: 400, fontSize: 11 }}>no stream · no blur · no login</div>
+        </div>
+        <Phone>
+          {/* Cached: instant swap to the already-generated app. Sharp immediately. */}
+          <FakeVibeApp />
+          <UnifiedVibeCard
+            open
+            appTitle="Drum Kit"
+            appSlug="vibes/drum-kit"
+            handleSlug="meghan"
+            viewerMode="author"
+            onHome={() => undefined}
+            onShare={() => undefined}
+            body={
+              <>
+                <OptionButtons options={["Add swing", "Make it grimy"]} isFirst firstMessage="Instant — tap to keep exploring:" />
+                <OtherInput />
+              </>
+            }
+          />
+        </Phone>
+      </div>
+      <div>
+        <div style={{ color: "#fbb6ce", font: "600 13px Inter, sans-serif", marginBottom: 8, textAlign: "center" }}>
+          OTHER / uncached → WRITE · seconds
+          <div style={{ color: "#cbd5e0", fontWeight: 400, fontSize: 11 }}>stream + de-blur · login on write</div>
+        </div>
+        <Phone>
+          <FakeVibeApp blurPx={18} />
+          <UnifiedVibeCard
+            open
+            appTitle="Bloom Machine"
+            appSlug="meghan/bloom"
+            handleSlug="meghan"
+            viewerMode="author"
+            onHome={() => undefined}
+            onShare={() => undefined}
+            body={<GenStreamBody messages={2} codeLines={48} narration={["laying out a 4×4 pad grid", "wiring up the sound"]} />}
+          />
+        </Phone>
+      </div>
+    </div>
+  ),
+};
