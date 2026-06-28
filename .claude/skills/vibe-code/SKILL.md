@@ -79,12 +79,12 @@ End-to-end behavior (does the running app work?) still needs a human or `qa-pr` 
 
 ## Inspect the chat: why did the app turn out this way?
 
-When an app shipped wrong — a file is missing, two files got merged, the wrong code landed — read **what the model actually replied with**, not just the user prompt. `pull` gives you the current bytes; `chats` gives you the generation that produced them.
+When an app shipped wrong — a file is missing, two files got merged, the wrong code landed — read **what the model actually replied with**, not just the user prompt. `pull` gives you the current bytes; `codegen-log` gives you the generation that produced them. (For the deployed app's own _runtime_ chat data — a chat-bot vibe's messages — use `app-chats` instead.)
 
 ```bash
-npx vibes-diy chats garden-gnome/alignment-chart                       # list chat sessions (chatId + time)
-npx vibes-diy chats garden-gnome/alignment-chart <chatId>              # the user prompt(s) for that chat
-npx vibes-diy chats garden-gnome/alignment-chart <chatId> --response   # the MODEL's reply
+npx vibes-diy codegen-log garden-gnome/alignment-chart                       # list build turns (chatId + time)
+npx vibes-diy codegen-log garden-gnome/alignment-chart <chatId>              # the user prompt(s) for that turn
+npx vibes-diy codegen-log garden-gnome/alignment-chart <chatId> --response   # the MODEL's reply
 ```
 
 `--response` reconstructs the model's reply from the stored block events and **annotates each code fence with the path the parser bound it to** — so you can see directly which file each block became. Modifiers (each implies `--response`, so they also work on their own):
@@ -117,8 +117,9 @@ See `agents/environments.md` for the full dev/prod/cli/preview architecture.
 | Push to prod        | `cd <dir> && npx vibes-diy push --vibe <handle>/<app> --api-url https://vibes.diy/api` |
 | AI follow-up edit   | `npx vibes-diy edit --help`                                                            |
 | Generate a new vibe | `npx vibes-diy generate --help`                                                        |
-| List chats          | `npx vibes-diy chats <handle>/<app>`                                                   |
-| Inspect model reply | `npx vibes-diy chats <handle>/<app> <chatId> --response [--files\|--jsonl\|--raw]`     |
+| List build turns    | `npx vibes-diy codegen-log <handle>/<app>`                                             |
+| Inspect model reply | `npx vibes-diy codegen-log <handle>/<app> <chatId> --response [--files\|--jsonl\|--raw]` |
+| Read app runtime chats | `npx vibes-diy app-chats <handle>/<app> [<chatId>]`                                  |
 | Coding rules        | `npx vibes-diy system`                                                                 |
 
 ## Common mistakes
