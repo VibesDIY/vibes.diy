@@ -3,12 +3,12 @@ import { W3CWebSocketEventEventoEnDecoder } from "@vibes.diy/api-pkg";
 import { ResError } from "@vibes.diy/api-types";
 import { handlersForShard } from "./evento-handler-manifest.js";
 
-// ChatSessions is the "stream" shard: chat streaming + the stateless shared
+// ChatSessions is the "codegen" shard: chat streaming + the stateless shared
 // queries the parent app still calls on chatApi. Vibe-scoped doc ops are
-// `VIBE_ONLY` in the manifest, so `handlersForShard("stream")` excludes them —
+// vibe-only in `SHARD_POLICY`, so `handlersForShard("codegen")` excludes them —
 // keeping doc writes off the chat plane is what let AccessFnDO be retired
-// (#2265). Exported so a parity test can assert what the stream shard serves.
-export const chatPlaneHandlers = handlersForShard("stream");
+// (#2265). Exported so a parity test can assert what the codegen shard serves.
+export const chatPlaneHandlers = handlersForShard("codegen");
 
 export const chatMsgEvento = Lazy(() => {
   const evento = new Evento(new W3CWebSocketEventEventoEnDecoder());

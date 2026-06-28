@@ -1,19 +1,33 @@
 import { describe, expect, it } from "vitest";
-import { handlerManifest, handlersForShard, ShardKind } from "../svc/evento-handler-manifest.js";
+import { ShardKind, shardsForReq } from "@vibes.diy/api-types";
+import { handlerManifest, handlersForShard } from "../svc/evento-handler-manifest.js";
 import { chatPlaneHandlers } from "../svc/chat-msg-evento.js";
 
-// The single declarative manifest (#2714) is the source of truth: each handler
-// carries `allowed: ShardKind[]`. These assertions read that metadata directly
-// — there is no per-plane handler array to keep in sync anymore.
+// The single declarative policy (#2714) is the source of truth: each handler
+// carries its request `type` (`reqType`) and `SHARD_POLICY` in
+// `@vibes.diy/api-types` maps that type → allowed shard kinds. These assertions
+// read that policy directly — there is no per-plane handler array to keep in
+// sync anymore.
 
 function hashesOn(kind: ShardKind): Set<string> {
   return new Set(handlersForShard(kind).map((h) => h.hash));
 }
 
-function allowedOf(hash: string): readonly ShardKind[] {
+// The reqType carried by the (unique) manifest entry for a given handler hash.
+function reqTypeOf(hash: string): string {
   const found = handlerManifest.filter((e) => e.handler.hash === hash);
   expect(found.length, `"${hash}" must appear exactly once in the manifest`).toBe(1);
-  return found[0].allowed;
+  return found[0].reqType;
+}
+
+// The composition-time allowed set for a handler hash: the UNION across modes,
+// matching how `handlersForShard` derives plane membership.
+function allowedOf(hash: string): readonly ShardKind[] {
+  const reqType = reqTypeOf(hash);
+  const kinds: ShardKind[] = ["codegen", "vibe", "shared"];
+  return kinds.filter((k) =>
+    ["codegen", "vibe", "shared", "img", "runtime"].some((mode) => shardsForReq(reqType, { mode }).includes(k))
+  );
 }
 
 describe("evento handler manifest (declarative, #2714)", () => {
@@ -24,9 +38,10 @@ describe("evento handler manifest (declarative, #2714)", () => {
 
   it("every handler is allowed on at least one shard kind", () => {
     for (const e of handlerManifest) {
-      expect(e.allowed.length, `"${e.handler.hash}" has an empty allowed set`).toBeGreaterThan(0);
-      for (const k of e.allowed) {
-        expect(["stream", "vibe", "shared"]).toContain(k);
+      const allowed = allowedOf(e.handler.hash);
+      expect(allowed.length, `"${e.handler.hash}" has an empty allowed set`).toBeGreaterThan(0);
+      for (const k of allowed) {
+        expect(["codegen", "vibe", "shared"]).toContain(k);
       }
     }
   });
@@ -43,31 +58,31 @@ describe("evento handler manifest (declarative, #2714)", () => {
     expect(all.has("vibe.whoAmI")).toBe(true);
   });
 
-  it("doc ops are vibe-only — they must never reach the stream or shared shard (#2265 AccessFnDO gate)", () => {
+  it("doc ops are vibe-only — they must never reach the codegen or shared shard (#2265 AccessFnDO gate)", () => {
     // Category (b) topology: doc writes do LOCAL broadcast on the vibe shard, so
     // serving them elsewhere would persist-and-go-quiet (silent split-brain).
     for (const hash of ["put-doc", "subscribe-docs", "get-doc", "delete-doc", "subscribe-viewer-grants"]) {
       expect([...allowedOf(hash)].sort(), `${hash} must be vibe-only`).toEqual(["vibe"]);
     }
-    const stream = hashesOn("stream");
+    const codegen = hashesOn("codegen");
     const shared = hashesOn("shared");
-    expect(stream.has("put-doc")).toBe(false);
-    expect(stream.has("subscribe-docs")).toBe(false);
+    expect(codegen.has("put-doc")).toBe(false);
+    expect(codegen.has("subscribe-docs")).toBe(false);
     expect(shared.has("put-doc")).toBe(false);
     expect(shared.has("subscribe-docs")).toBe(false);
   });
 
-  it("chat streaming write ops (ensure/fork/setMode) are stream-only", () => {
+  it("chat streaming write ops (ensure/fork/setMode) are codegen-only", () => {
     for (const hash of ["ensure-appSlug-item", "fork-app", "set-mode-fsid"]) {
-      expect([...allowedOf(hash)].sort(), `${hash} must be stream-only`).toEqual(["stream"]);
+      expect([...allowedOf(hash)].sort(), `${hash} must be codegen-only`).toEqual(["codegen"]);
     }
   });
 
-  it("open-chat + prompt are allowed on stream AND vibe (img-gen on vibeApi, #2350)", () => {
+  it("open-chat + prompt are allowed on codegen AND vibe (img-gen on vibeApi, #2350)", () => {
     for (const hash of ["open-chat-handler", "prompt-chat-section-handler"]) {
-      expect([...allowedOf(hash)].sort(), `${hash} must be stream+vibe`).toEqual(["stream", "vibe"]);
+      expect([...allowedOf(hash)].sort(), `${hash} must be codegen+vibe`).toEqual(["codegen", "vibe"]);
     }
-    expect(hashesOn("stream").has("open-chat-handler")).toBe(true);
+    expect(hashesOn("codegen").has("open-chat-handler")).toBe(true);
     expect(hashesOn("vibe").has("open-chat-handler")).toBe(true);
   });
 
@@ -82,7 +97,7 @@ describe("evento handler manifest (declarative, #2714)", () => {
       "list-dm-threads", // DmInbox / vibe-route badge
       "asset-upload-grant", // HandleAvatarEditor / srv-sandbox putAsset
     ]) {
-      expect([...allowedOf(hash)].sort(), `${hash} must be allowed on all shards`).toEqual(["shared", "stream", "vibe"]);
+      expect([...allowedOf(hash)].sort(), `${hash} must be allowed on all shards`).toEqual(["codegen", "shared", "vibe"]);
     }
   });
 
@@ -102,18 +117,18 @@ describe("evento handler manifest (declarative, #2714)", () => {
     ];
     for (const hash of reHomed) {
       expect(allowedOf(hash)).toContain("shared");
-      expect(allowedOf(hash)).toContain("stream");
+      expect(allowedOf(hash)).toContain("codegen");
     }
   });
 
-  it("chat-history READ queries are plain D1 reads — allowed on every shard, not stream-only", () => {
+  it("chat-history READ queries are plain D1 reads — allowed on every shard, not codegen-only", () => {
     for (const hash of ["get-chat-response", "get-chat-details", "list-application-chats"]) {
-      expect([...allowedOf(hash)].sort(), `${hash} must be allowed on all shards`).toEqual(["shared", "stream", "vibe"]);
+      expect([...allowedOf(hash)].sort(), `${hash} must be allowed on all shards`).toEqual(["codegen", "shared", "vibe"]);
     }
   });
 
-  it("preserves manifest order per shard (historical shared → vibe → stream push order)", () => {
-    // The manifest is partitioned shared-block → vibe-block → stream-block, and
+  it("preserves manifest order per shard (historical shared → vibe → codegen push order)", () => {
+    // The manifest is partitioned shared-block → vibe-block → codegen-block, and
     // handlersForShard is a *stable* filter, so each plane's served order equals
     // the order of the matching manifest entries. cf-serve push order matters for
     // dispatch precedence, so this contract gets its own regression guard.
@@ -125,7 +140,7 @@ describe("evento handler manifest (declarative, #2714)", () => {
       }
       return i === sub.length;
     };
-    for (const kind of ["stream", "vibe", "shared"] as const) {
+    for (const kind of ["codegen", "vibe", "shared"] as const) {
       const served = handlersForShard(kind).map((h) => h.hash);
       expect(isSubsequence(served, manifestOrder), `${kind} order must follow manifest order`).toBe(true);
     }
@@ -137,18 +152,18 @@ describe("evento handler manifest (declarative, #2714)", () => {
     expect(vibe.indexOf("put-doc")).toBeLessThan(vibe.indexOf("open-chat-handler"));
     expect(vibe.indexOf("open-chat-handler")).toBeLessThan(vibe.indexOf("prompt-chat-section-handler"));
 
-    const stream = handlersForShard("stream").map((h) => h.hash);
+    const codegen = handlersForShard("codegen").map((h) => h.hash);
     // shared reads precede chat ops; within chat ops: ensure → open-chat → prompt → fork → setMode.
-    expect(stream.indexOf("list-models")).toBeLessThan(stream.indexOf("ensure-appSlug-item"));
-    expect(stream.indexOf("ensure-appSlug-item")).toBeLessThan(stream.indexOf("open-chat-handler"));
-    expect(stream.indexOf("open-chat-handler")).toBeLessThan(stream.indexOf("prompt-chat-section-handler"));
-    expect(stream.indexOf("prompt-chat-section-handler")).toBeLessThan(stream.indexOf("fork-app"));
-    expect(stream.indexOf("fork-app")).toBeLessThan(stream.indexOf("set-mode-fsid"));
+    expect(codegen.indexOf("list-models")).toBeLessThan(codegen.indexOf("ensure-appSlug-item"));
+    expect(codegen.indexOf("ensure-appSlug-item")).toBeLessThan(codegen.indexOf("open-chat-handler"));
+    expect(codegen.indexOf("open-chat-handler")).toBeLessThan(codegen.indexOf("prompt-chat-section-handler"));
+    expect(codegen.indexOf("prompt-chat-section-handler")).toBeLessThan(codegen.indexOf("fork-app"));
+    expect(codegen.indexOf("fork-app")).toBeLessThan(codegen.indexOf("set-mode-fsid"));
   });
 
-  it("chatPlaneHandlers == handlersForShard('stream'): streaming + shared reads, no doc ops", () => {
+  it("chatPlaneHandlers == handlersForShard('codegen'): streaming + shared reads, no doc ops", () => {
     const chatPlane = new Set(chatPlaneHandlers.map((h) => h.hash));
-    expect(chatPlane).toEqual(hashesOn("stream"));
+    expect(chatPlane).toEqual(hashesOn("codegen"));
     // Doc writes must never reach the chat plane (AccessFnDO gate).
     expect(chatPlane.has("put-doc")).toBe(false);
     expect(chatPlane.has("subscribe-docs")).toBe(false);
