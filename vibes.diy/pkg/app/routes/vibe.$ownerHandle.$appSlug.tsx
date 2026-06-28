@@ -1065,7 +1065,11 @@ export default function VibeIframeWrapper() {
                   onSelectHandle={(slug) => void handleSelectHandle(slug)}
                   onNewHandle={() => void handleNewHandle()}
                   // Owner-only: making a new avatar writes to the active handle.
-                  onPickAvatar={isOwner ? (file) => void handlePickAvatar(file) : undefined}
+                  // Pass the promise through (no `void`) so ViewerTagView's
+                  // `await onPickFile` holds its uploading state through the
+                  // upload + consent + save, and a second pick can't supersede a
+                  // still-pending confirmation (Codex P2).
+                  onPickAvatar={isOwner ? handlePickAvatar : undefined}
                   handlePickerBusy={handlePickerBusy}
                   viewerMode={shareViewer === "author" ? "author" : shareViewer === "member" ? "member" : "visitor"}
                   // Only a viewer grant is read-only; submitter is write-capable

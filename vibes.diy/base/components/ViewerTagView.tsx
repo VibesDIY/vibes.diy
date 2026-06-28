@@ -269,7 +269,19 @@ export function ViewerTagView({
         <span style={{ fontWeight: 500 }}>{displayName ?? slug}</span>
       )}
       {trailing}
-      {editable && <input ref={fileRef} type="file" accept="image/*" style={{ display: "none" }} onChange={handleFileChange} />}
+      {editable && (
+        <input
+          ref={fileRef}
+          type="file"
+          accept="image/*"
+          style={{ display: "none" }}
+          // The avatar opens this via fileRef.click(), which dispatches a fresh
+          // click on the input that would otherwise bubble to the pill's onClick
+          // and toggle the picker. Stop it here so avatar-click stays avatar-only.
+          onClick={(e) => e.stopPropagation()}
+          onChange={handleFileChange}
+        />
+      )}
     </span>
   );
 }

@@ -195,6 +195,18 @@ describe("UnifiedVibeCard", () => {
     expect(screen.queryByRole("menu", { name: /acting as/i })).toBeNull();
   });
 
+  it("the hidden file input's click does not bubble up and open the picker (Charlie blocking)", () => {
+    // fileRef.current.click() dispatches a real bubbling click on the input;
+    // without stopPropagation on the input it would reach the pill's onClick and
+    // toggle the handle picker. Fire a real click on the input to assert it doesn't.
+    render(
+      <UnifiedVibeCard appTitle="Bloom Machine" open handleSlug="meghan" handles={[{ slug: "meghan" }]} onPickAvatar={vi.fn()} />
+    );
+    const fileInput = document.querySelector('input[type="file"]') as HTMLInputElement;
+    fireEvent.click(fileInput);
+    expect(screen.queryByRole("menu", { name: /acting as/i })).toBeNull();
+  });
+
   it("offers no avatar edit affordance without onPickAvatar", () => {
     render(<UnifiedVibeCard appTitle="Bloom Machine" open handleSlug="meghan" handles={[{ slug: "meghan" }]} />);
     expect(screen.queryByRole("button", { name: /change avatar/i })).toBeNull();
