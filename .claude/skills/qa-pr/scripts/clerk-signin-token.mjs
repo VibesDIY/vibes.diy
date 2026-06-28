@@ -88,7 +88,7 @@ async function resolveUserId() {
     die(`No Clerk user found for email ${email} on this instance. Wrong instance secret?`);
   }
   if (users.length > 1) {
-    process.stderr.write(`clerk-signin-token: ${users.length} users match ${email}; using the first.\n`);
+    die(`${users.length} Clerk users match ${email} on this instance — ambiguous. Pass --user-id explicitly.`);
   }
   return { userId: users[0].id, email };
 }
