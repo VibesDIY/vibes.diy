@@ -96,6 +96,9 @@ const STREAM_ONLY: readonly ShardKind[] = ["stream"];
 // {mode:img}` must resolve there too. Declaring it here folds away the old
 // `imgGenAppSessionStopgapHandlers` array (#2350) — the capability is just
 // allowed on two shard kinds, no separate stopgap to track.
+// TODO(#2350): once img streaming moves to the heavy/chat session, revert the
+// open-chat / prompt entries below to STREAM_ONLY (drop them from the vibe
+// shard). See docs/superpowers/specs/2026-06-16-heavy-light-session-design.md.
 const STREAM_AND_VIBE: readonly ShardKind[] = ["stream", "vibe"];
 
 function entry(allowed: readonly ShardKind[], handler: EventoHandler): HandlerManifestEntry {
