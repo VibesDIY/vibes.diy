@@ -81,25 +81,41 @@ jobs:
   # (docs-only test, or a [skip ci] cascade) counts as a pass. Mirrors the old
   # job's `[skip ci]` skip so that path is unchanged.
   compile_test:
-    needs: [checks, test]
+    needs: [scope, checks, test]
     if: ${{ always() && !contains(github.event.pull_request.title, '[skip ci]') }}
     runs-on: ubuntu-latest
     steps:
       - name: gate
         env:
+          SCOPE_RESULT: ${{ needs.scope.result }}
           CHECKS_RESULT: ${{ needs.checks.result }}
           TEST_RESULT: ${{ needs.test.result }}
         shell: bash
         run: |
-          echo "checks=${CHECKS_RESULT} test=${TEST_RESULT}"
+          echo "scope=${SCOPE_RESULT} checks=${CHECKS_RESULT} test=${TEST_RESULT}"
           rc=0
-          for r in "${CHECKS_RESULT}" "${TEST_RESULT}"; do
+          # scope and checks must genuinely succeed — never accept a bare
+          # "skipped" for them. If scope errors (checkout / changed-scope),
+          # GitHub *skips* checks+test as its dependents; accepting "skipped"
+          # would let the required check go green without checkout, lint, build,
+          # or tests ever running. `checks` has no `if:`, so it only skips when
+          # scope didn't succeed — require success outright.
+          for r in "${SCOPE_RESULT}" "${CHECKS_RESULT}"; do
             case "$r" in
-              success|skipped) ;;
-              *) echo "::error::a required CI job concluded '$r'"; rc=1 ;;
+              success) ;;
+              *) echo "::error::required upstream job concluded '$r' (expected success)"; rc=1 ;;
             esac
           done
+          # test may legitimately be "skipped" — but ONLY via its
+          # `if: docs_only != 'true'` docs-only path, which is reachable solely
+          # when scope SUCCEEDED. Since success of scope is already required
+          # above, a skipped test here is the intended docs-only skip, not a
+          # dependency cascade.
+          case "${TEST_RESULT}" in
+            success|skipped) ;;
+            *) echo "::error::the test matrix concluded '${TEST_RESULT}'"; rc=1 ;;
+          esac
           if [ "$rc" -eq 0 ]; then
-            echo "All CI jobs passed (or were intentionally skipped)."
+            echo "All required CI jobs passed (test skipped only on docs-only PRs)."
           fi
           exit "$rc"
