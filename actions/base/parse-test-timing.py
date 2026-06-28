@@ -195,7 +195,21 @@ def main() -> int:
 
     failures = []
     for r in results:
-        bad = [a.get("title", "?") for a in r.get("assertionResults", []) if a.get("status") == "failed"]
+        # Prefer the fully-qualified test name (ancestor describe blocks + leaf
+        # title) over the bare `title`: in suites with nested describe()s or
+        # repeated `it` names the leaf alone is ambiguous, which would defeat the
+        # point of surfacing identities for log-only triage. The json report's
+        # `fullName` carries the joined path; `ancestorTitles` is the fallback
+        # if a reporter omits it; `title` is the last resort. See #2752.
+        def full_name(a: dict) -> str:
+            name = a.get("fullName")
+            if name:
+                return name
+            ancestors = a.get("ancestorTitles") or []
+            leaf = a.get("title", "?")
+            return " > ".join([*ancestors, leaf]) if ancestors else leaf
+
+        bad = [full_name(a) for a in r.get("assertionResults", []) if a.get("status") == "failed"]
         if bad or r.get("status") == "failed":
             # A suite that fails to import/setup has no failed assertions — its
             # error lives in the file-level message. Surface it so the summary
