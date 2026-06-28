@@ -54,6 +54,8 @@ What's automatic, and how authenticated sign-in works:
      (resolves your Clerk userId by `git config user.email`; pass `--email`/`--user-id` to override.)
   2. **Consume** on the target origin (where `window.Clerk` is live) via `evaluate_script`, interpolating `$TOKEN` into the function body (capture the response — `setActive` needs `result.createdSessionId`):
      ```js
+     if (!window.Clerk) return { ok: false, err: "window.Clerk not present" };
+     await window.Clerk.load?.(); // wait until ClerkJS is loaded before driving it
      const result = await window.Clerk.client.signIn.create({ strategy: "ticket", ticket: "<TOKEN>" });
      if (result.status !== "complete") return { ok: false, status: result.status };
      await window.Clerk.setActive({ session: result.createdSessionId });
