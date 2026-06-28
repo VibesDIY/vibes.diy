@@ -25,14 +25,7 @@ import { loginCmd } from "./cmds/login-cmd.js";
 import { pushCmd } from "./cmds/push-cmd.js";
 import { putAssetCmd, isResPutAssetCli } from "./cmds/put-asset-cmd.js";
 import { generateCmd, isResGenerate } from "./cmds/generate-cmd.js";
-import {
-  chatsCmd,
-  isResChatsList,
-  isResChatDetail,
-  isResChatResponse,
-  type ResChatDetail,
-  type ResChatResponse,
-} from "./cmds/chats-cmd.js";
+import { chatsCmd } from "./cmds/chats-cmd.js";
 import {
   codegenLogCmd,
   isResCodegenLogList,
@@ -259,43 +252,6 @@ async function main(): Promise<number> {
           }
           case isResEnsureAppSlug(msg): {
             // Already reported via sendProgress in push handler
-            break;
-          }
-          case isResChatsList(msg): {
-            if (wmsg.cmdTs.outputFormat === "json") {
-              for (const item of msg.items) {
-                console.log(JSON.stringify(item));
-              }
-            } else {
-              if (msg.items.length === 0) {
-                console.log("(no chats found)");
-              } else {
-                for (const item of msg.items) {
-                  console.log(`${item.chatId}  ${item.created}`);
-                }
-              }
-            }
-            break;
-          }
-          case isResChatDetail(msg): {
-            const detail = msg as ResChatDetail;
-            if (wmsg.cmdTs.outputFormat === "json") {
-              console.log(JSON.stringify(detail, null, 2));
-            } else {
-              if (detail.prompts.length === 0) {
-                console.log("(no prompts in this chat)");
-              } else {
-                for (const p of detail.prompts) {
-                  console.log(`[${p.created}] ${p.prompt}`);
-                }
-              }
-            }
-            break;
-          }
-          case isResChatResponse(msg): {
-            // Body is already rendered to the requested mode (verbatim markdown,
-            // files JSON, or jsonl) by the handler — print it as-is.
-            console.log((msg as ResChatResponse).output);
             break;
           }
           case isResCodegenLogList(msg): {
