@@ -8,28 +8,49 @@
 | `vibes-diy@c*` | cli         | compile_test | No (shared prod queue)    |
 | `vibes-diy@d*` | dev         | compile_test | No                        |
 
-All four targets (dev / staging / prodv2 / cli) run the **same** `compile_test`
-job; the environment is picked by ref prefix. The cli-vs-prod behavioural
-difference (e.g. the queue consumer only deploys when `CLOUDFLARE_ENV=prod`)
-lives in `vibes.diy/actions/deploy`, gated on `CLOUDFLARE_ENV` — not in a
-separate job. (There was a duplicate `deploy_cli` job; it was folded back in.)
+All four targets (dev / staging / prodv2 / cli) run the **same** workflow; the
+environment is picked by ref prefix on the final `deploy` job. The cli-vs-prod
+behavioural difference (e.g. the queue consumer only deploys when
+`CLOUDFLARE_ENV=prod`) lives in `vibes.diy/actions/deploy`, gated on
+`CLOUDFLARE_ENV` — not in a separate job. (There was a duplicate `deploy_cli`
+job; it was folded back in.)
+
+### Job graph (sharded)
+
+The workflow is `gate → (checks ‖ test×4) → compile_test → deploy`:
+
+- **`gate`** — looks up whether this exact SHA already has a green `compile_test`
+  check (the test-reuse path below), exposed as the `sha_green` output.
+- **`checks`** — lint + format-check + build(typecheck), once, skipped when the
+  SHA is already green (`run-tests: 'false'` on `actions/base`).
+- **`test`** — the Docker vitest suite fanned out across **4 free standard
+  runners** (`shard: i/4`), skipped when already green. This is the speedup: a
+  non-green deploy's suite drops from ~4-min serial to ~2-min parallel.
+- **`compile_test`** — aggregator that **keeps this exact job name** so it still
+  emits a reusable green `compile_test` check on the deploy SHA. Green iff the
+  SHA was already green **or** `checks` + every `test` shard passed.
+- **`deploy`** — the Cloudflare deploy (per-tag `environment` + secrets); runs
+  only on a green `compile_test`, so a red suite/lint/build can never deploy.
 
 ### Test reuse across deploys
 
-`actions/base` runs the full ~5-min suite, and a single commit can be tested
-many times (PR CI → merge-to-main dev deploy → `@s` → `@p` → `@c`). To avoid
-re-running tests on a SHA that's already green, the deploy job passes
-`skip-tests-if-sha-green: "true"` to `actions/base`: if the **exact** commit
-SHA already has a successful `compile_test` check, the test step is skipped.
+A single commit can be tested many times (PR CI → merge-to-main dev deploy →
+`@s` → `@p` → `@c`). To avoid re-running the suite on a SHA that's already
+green, the `gate` job checks whether the **exact** commit SHA already has a
+successful `compile_test` check; if so, `checks` + `test` are skipped and the
+deploy proceeds. The `compile_test` **aggregator emits a fresh green check on
+every deploy SHA**, so a second same-SHA deploy (e.g. `@p` after `@c`, or `@c`
+after a fresh `@p`) reuses it — not just deploys cut from a PR head.
 
-- ✅ Tagging `@c`/`@p`/`@s` at a commit that was tested as-is (e.g. **`@c` from a
-  PR head**, which already ran `ci.yaml`'s `compile_test` on that head SHA) →
-  tests are skipped.
+- ✅ Tagging `@c`/`@p`/`@s` at a commit already tested as-is (e.g. **`@c` from a
+  PR head**, which ran `ci.yaml`'s `compile_test`; or a second deploy of a SHA an
+  earlier deploy already greened) → tests are skipped.
 - ⚠️ A SHA with no green check (a rebased main commit, a fresh prod tag pointing
-  at a commit no PR tested directly) → the suite runs in full. Coverage is never
-  silently dropped — the skip only fires on a positive green-check match.
+  at a commit no PR or prior deploy tested) → the sharded suite runs in full.
+  Coverage is never silently dropped — the skip only fires on a positive
+  green-check match, and the `gate` lookup fails safe to "not green".
 
-This needs `checks: read` on the job (already granted in `vibes-diy-deploy.yaml`).
+This needs `checks: read` on the `gate` job (granted in `vibes-diy-deploy.yaml`).
 
 ## Package publish (`package-deploy.yaml`)
 
