@@ -54,14 +54,22 @@ runs:
           exit 0
         fi
 
-        # Docs allowlist of TOP-LEVEL paths — deliberately NOT a file-type match.
-        # `prompts/**/*.md` is prompt source (code), and the app imports legal
-        # markdown (vibes.diy/pkg/app/routes/legal/*-notes.md via `?url`), so a
-        # `*.md` rule would wrongly skip CI on real changes. Anything outside
-        # this set — including any newly-added top-level directory — is treated
-        # as code, so the safe default is always the full cycle. To mark a new
-        # docs root as lean-eligible, add it here.
-        DOCS_RE='^(docs/|notes/|agents/|\.agents/|\.claude/|[^/]+\.md$|LICENSE$)'
+        # Lean-eligible allowlist of TOP-LEVEL paths — deliberately NOT a
+        # file-type match. `prompts/**/*.md` is prompt source (code), and the app
+        # imports legal markdown (vibes.diy/pkg/app/routes/legal/*-notes.md via
+        # `?url`), so a `*.md` rule would wrongly skip CI on real changes.
+        # Anything outside this set — including any newly-added top-level
+        # directory — is treated as code, so the safe default is always the full
+        # cycle. To mark a new lean-eligible root, add it here.
+        #
+        # `landing-pages/` is the self-contained good.vibes.diy site: it is not a
+        # pnpm workspace member, builds + deploys through its own path-scoped
+        # workflow (landing-pages-deploy.yml), and never affects the monorepo
+        # build or test suite. So a landing-pages-only PR skips the heavy
+        # compile_test build/test steps and the pg-concurrency lane (gating the
+        # work, not the trigger — required checks still report), while its own
+        # deploy workflow runs.
+        DOCS_RE='^(docs/|notes/|agents/|\.agents/|\.claude/|landing-pages/|[^/]+\.md$|LICENSE$)'
 
         if printf '%s\n' "$CHANGED" | grep -qvE "$DOCS_RE"; then
           emit false
