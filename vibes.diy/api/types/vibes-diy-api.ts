@@ -185,6 +185,13 @@ export type MethodReqType<M> = M extends (req: infer R) => unknown ? (R extends 
 
 export interface VibesDiyApiIface<_T = unknown> {
   close(): Promise<void>;
+  // Rollable per-user codegen connections only (cold-start design): advance to the
+  // next shard in the user's family on `shard-overloaded`, reconnect there, and
+  // return true if it rolled (false when not rollable or MAX_ROLL_INDEX is hit, so
+  // callers stop retrying). No-arg → kept on every Conn<K> view. Required on the
+  // interface (the `Conn<K>` derivation needs every method callable, not optional);
+  // non-rolling instances simply return false.
+  rollCodegenShard(): boolean;
   ensureAppSlug(req: Req<ReqEnsureAppSlug>): Promise<Result<ResEnsureAppSlug, VibesDiyError>>;
   // getByUserSlugAppSlug(req: Req<ReqGetByUserSlugAppSlug>): Promise<Result<ResGetByUserSlugAppSlug, VibesDiyError>>;
   listUserSlugAppSlug(req: Req<ReqListUserSlugAppSlug>): Promise<Result<ResListUserSlugAppSlug, VibesDiyError>>;

@@ -181,10 +181,8 @@ import {
   EvtUserNotification,
   ResSubscribeUserNotifications,
   isResSubscribeUserNotifications,
-  isResError,
   codegenShardForUser,
   MAX_ROLL_INDEX,
-  SHARD_OVERLOADED_CODE,
 } from "@vibes.diy/api-types";
 import { Result, Lazy, BuildURI } from "@adviser/cement";
 import {
@@ -513,17 +511,12 @@ export class VibesDiyApi implements VibesDiyApiIface<{
       resMatch: (res: unknown) => boolean;
     }
   ): Promise<ResultVibesDiy<S>> {
-    const res = await requestApiResponse<Q, S>(this, req, msgParam);
-    // Codegen admission overload: the DO is at capacity. Advance to the next shard
-    // in this user's family and reconnect there (cold-start design §4). We DON'T
-    // transparently re-send here: a prompt's section stream is bound to the
-    // connection at open time, so the roll drops that connection and the chat's
-    // existing reconnect loop re-establishes the stream on the fresh shard. The
-    // overload error is surfaced so the caller replays on the now-warm shard.
-    if (res.isErr() && isResError(res.Err()) && res.Err().error.code === SHARD_OVERLOADED_CODE) {
-      this.rollCodegenShard();
-    }
-    return res;
+    // Note: the `shard-overloaded` roll is NOT triggered here. A prompt's section
+    // stream is bound to the connection at open time, so the roll must coordinate
+    // with the chat session's reconnect/reopen (useChatSession) — which also needs
+    // `rollCodegenShard()`'s return value to stop retrying at MAX_ROLL_INDEX. The
+    // session drives it; this stays a plain request.
+    return requestApiResponse<Q, S>(this, req, msgParam);
   }
 
   ensureAppSlug(req: Req<ReqEnsureAppSlug>): Promise<Result<ResEnsureAppSlug, VibesDiyError>> {
