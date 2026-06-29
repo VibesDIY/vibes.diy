@@ -40,6 +40,15 @@ describe("vibe-runtime client entry stays free of react-dom/server", () => {
     expect(index).not.toMatch(/from\s+["']\.\/worker-loader-executor\.js["']/);
   });
 
+  // Slice B1 (#2856): the backend executor seam is server-only too (it shapes
+  // Worker Loader code + drives the beta binding), so it must stay off the client
+  // root. Server callers deep-import it.
+  it("index.ts does not re-export the backend executor modules", () => {
+    const index = runtimeFile("index.ts");
+    expect(index).not.toMatch(/from\s+["']\.\/backend-executor\.js["']/);
+    expect(index).not.toMatch(/from\s+["']\.\/backend-worker-loader-executor\.js["']/);
+  });
+
   it("node-executor.ts deep-imports the slice-1 renderer (not the package root)", () => {
     const node = runtimeFile("node-executor.ts");
     expect(node).toMatch(/from\s+["']\.\/render-vibes\.js["']/);
