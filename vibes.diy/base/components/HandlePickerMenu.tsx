@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { toRFC2822_32ByteLength } from "@vibes.diy/vibe-types";
 
 /**
  * Presentational handle-picker dropdown — the active-handle switcher (#2275 / #2678).
@@ -39,22 +40,12 @@ export interface HandlePickerMenuProps {
   readonly style?: React.CSSProperties;
 }
 
-/** Mirror of the server's `toRFC2822_32ByteLength` (ensure-slug-binding.ts) so the
- *  inline preview shows exactly the slug the binding will be created with.
- *
- *  We trim the dash edges AFTER the 32-char slice — the server slices last, which
- *  means truncation can land on a dash (e.g. 31 letters then `!b` → `…a-b` → slice
- *  → `…a-`). Trimming after the slice keeps this idempotent, so when the server
- *  sanitizes our already-sanitized value a second time the result is unchanged and
- *  the created handle matches the preview (Codex P2 on #2825). */
-export function sanitizeHandle(raw: string): string {
-  return raw
-    .toLowerCase()
-    .replace(/[^a-z0-9-]/g, "-")
-    .replace(/-+/g, "-")
-    .slice(0, 32)
-    .replace(/^-+|-+$/g, "");
-}
+/** Sanitize a typed handle to the slug the binding will be created with. This is
+ *  the SAME `toRFC2822_32ByteLength` the server applies on write (single source of
+ *  truth in @vibes.diy/vibe-types), so the inline preview can't drift from the
+ *  persisted handle — the function is idempotent, so the server's re-sanitize is a
+ *  no-op (#2825). Kept as a named re-export under a UI-friendly alias. */
+export const sanitizeHandle = toRFC2822_32ByteLength;
 
 export function HandlePickerMenu({
   handles,
