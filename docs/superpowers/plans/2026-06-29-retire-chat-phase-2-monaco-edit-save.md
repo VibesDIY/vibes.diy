@@ -11,6 +11,7 @@
 The new fsId is **resolved from the canonical post-persist `block.end(...fsRef)`** — the hook already exposes exactly this as `persistedFsRef` (`useInVibeGeneration.ts:44,238`: "the vibe-scoped fsRef carried by the latest canonical POST-PERSIST `block.end`"), so the save path watches `persistedFsRef` change after submitting `promptFS` rather than re-implementing block.end tracking. (This collapses the old risk #2.)
 
 **Charlie's guardrails (#2866 sign-off — load-bearing):**
+
 1. **Target unversioned owner `/vibe` only.** The re-pin works because resolution there is `fsId ?? draftFsId` (a versioned `/vibe/:fsId` view has `fsId` set and won't draft-pin). Save/Edit affordance is owner-only and only on the unversioned view; do not change versioned-view resolution.
 2. **Never `pushSource` + re-pin on the same manual-save event.** A manual full-file save re-pins (reload) and must NOT also hot-swap via `pushSource` — `pushSource` is reserved for streamed codegen updates. Keep the two channels mutually exclusive per event.
 
