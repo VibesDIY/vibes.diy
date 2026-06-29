@@ -317,6 +317,25 @@ reason — it never 500s the page or blocks first byte. This is the "never add a
 path" rule's _legitimate_ exception: the client render IS the real path; SSR is additive. A misconfigured
 `VIBES_SSR=loader` (flag on, binding absent) therefore renders exactly like `off`, never an error page.
 
+**Structured fallback reasons** (recorded + asserted in tests so regressions are observable, per
+@CharlieHelps): `ssr_disabled` (flag `off`/undefined — not a failure, the normal path),
+`select_error` (misconfigured loader / selection threw), `source_missing` (no entry source bytes),
+`entry_ambiguous` (see below), `relative_import_unsupported` (single-file scope, below),
+`executor_error` (render threw / timed out), `ok` (SSR injected). Each non-`ok`/`ssr_disabled`
+outcome ships the empty container.
+
+**Explicit behavior on the edges (per @CharlieHelps nits):**
+
+- **HEAD requests do no executor work.** `render-vibe.ts` already returns an empty body for HEAD; the
+  SSR attempt is skipped entirely for `method === "HEAD"` (no isolate spin-up just to discard it).
+- **Entry resolution is deterministic.** The convention already prefers `/App.jsx | /App.tsx`. SSR
+  acts only when there is **exactly one** convention entry: zero → `source_missing` fallback; more
+  than one (both `App.jsx` and `App.tsx`, or the old multi-item fallback set) → `entry_ambiguous`
+  fallback. No guessing which file is "the" entry.
+- **`renderPendingVibe` is untouched.** The pending-vibe path (pre-publish placeholder) never runs the
+  executor and never emits the `data-vibe-ssr` marker — SSR is only for the published `renderVibe`
+  path.
+
 ### Scope decisions (sharp, CI-verifiable cut)
 
 - **Single-file entry first.** A vibe whose `App.{jsx,tsx}` imports sibling files (`./Badge.jsx`)
@@ -331,6 +350,9 @@ path" rule's _legitimate_ exception: the client render IS the real path; SSR is 
   `WorkerLoaderExecutor` (beta, gated). So in prod `VIBES_SSR=off` until Loader is GA — slice 4 lands
   the **fully-tested wiring + marker contract dormant behind the flag**, exactly as slice 2 landed the
   executors dormant. CI exercises the wiring with `VIBES_SSR=node` (node env) / an injected executor.
+  **To be explicit (per @CharlieHelps): `node`-mode CI validates the wiring + marker + fallback
+  contract, NOT live WorkerLoader/edge parity** — the Loader path's isolate behavior, dep-bundling,
+  and React-version pinning are proven when slice 3's bundling lands, not here.
 - **Caching + OG/meta unchanged this cut.** The serve path already does ETag + `no-cache,
 must-revalidate` (unversioned) / `max-age=86400` (versioned), and the ETag already keys on
   `fs.meta`; that's adequate for an SSR payload derived from the same `fsId`+meta. An SSR-HTML
@@ -357,10 +379,15 @@ must-revalidate` (unversioned) / `max-age=86400` (versioned), and the ETag alrea
     response HTML contains `data-vibe-ssr` and the component's output inside `vibe-app-container`.
   - `VIBES_SSR=off` (no executor) → empty `<div class="vibe-app-container">`, no marker (regression
     guard on today's behavior).
-  - Executor throws → falls back to the empty container, no 500, structured reason logged.
+  - Executor throws → falls back to the empty container, no 500, reason `executor_error`.
   - **Misconfig: `VIBES_SSR=loader` with no `env.LOADER` binding** → selection throws but the route
-    catches it → empty container, no 500 (renders exactly like `off`).
-  - A vibe with a relative import → falls back to client-only (not a wrong render).
+    catches it → empty container, no 500, reason `select_error` (renders exactly like `off`).
+  - A vibe with a relative import → client-only fallback, reason `relative_import_unsupported`.
+  - **Entry resolution**: zero convention entries → `source_missing`; both `App.jsx` + `App.tsx`
+    present → `entry_ambiguous`; exactly one → SSRs.
+  - **HEAD request** → no executor invoked (assert the injected executor's `render` was never called),
+    empty body as today.
+  - **`renderPendingVibe`** → never emits `data-vibe-ssr`, never calls the executor (regression guard).
 - **Browser project** (`tests/app`, real DOM): `mountVibe` hydrates **only** when `data-vibe-ssr` is
   present; a marker-less container with incidental child nodes uses `createRoot` (tightening guard vs.
   the slice-1 `hasChildNodes()` behavior).
