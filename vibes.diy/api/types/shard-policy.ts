@@ -13,6 +13,32 @@ export interface ShardIdentity {
   readonly shardId: string;
 }
 
+// --- Codegen-DO admission control (see notifications.ts shard-family + the
+// per-user cold-start design). Pinning a user to one codegen DO reintroduces the
+// CPU-exhaustion risk random sharding avoided; this bounds a single user's
+// concurrent heavy streams on their DO and emits a deterministic overload signal
+// the client rolls on.
+
+/** Default max concurrent in-flight streams a single codegen DO admits before it
+ * returns `shard-overloaded`. Env-tunable via `CFEnv.MAX_CONCURRENT_CODEGEN_STREAMS`;
+ * this is the fallback default. Counts streams on the codegen DO of ANY mode
+ * (codegen / runtime / img's codegen leg) — one shared budget. */
+export const MAX_CONCURRENT_CODEGEN_STREAMS = 3;
+
+/** ResError `code` a codegen DO sends when it is at capacity. The client rolls
+ * to the next shard in the user's family (codegenShardForUser) on this code. */
+export const SHARD_OVERLOADED_CODE = "shard-overloaded";
+
+/** Per-DO-instance admission counter, injected into the AppContext on the
+ * codegen plane only (so its mere presence means "this is a codegen DO"). Shared
+ * by reference across concurrent requests on the same instance, so `active`
+ * spans every in-flight stream. `limit` is resolved once from env at DO
+ * construction. */
+export interface CodegenAdmission {
+  active: number;
+  readonly limit: number;
+}
+
 export type VibeShard = string & { readonly __brand: "vibe" };
 export type SharedShard = string & { readonly __brand: "shared" };
 export type CodegenShard = string & { readonly __brand: "codegen" };

@@ -181,6 +181,10 @@ import {
   EvtUserNotification,
   ResSubscribeUserNotifications,
   isResSubscribeUserNotifications,
+  isResError,
+  codegenShardForUser,
+  MAX_ROLL_INDEX,
+  SHARD_OVERLOADED_CODE,
 } from "@vibes.diy/api-types";
 import { Result, Lazy, BuildURI } from "@adviser/cement";
 import {
@@ -233,6 +237,14 @@ export interface VibesDiyApiParam {
   // where the server routes by a different param (e.g. /api/app?vibe=…) and
   // the shard param is ignored noise.
   readonly skipShard?: boolean;
+  // Rollable per-user codegen connection (cold-start design). When set, THIS
+  // client owns the codegen shard: it pins to the user's shard family
+  // (codegenShardForUser) at a sessionStorage-seeded roll index, and on a
+  // `shard-overloaded` ResError it advances the index and reconnects on the next
+  // shard. Set ONLY on the website per-user-codegen path — NOT for per-vibe
+  // (owner--app) or random-UUID (CLI/anon) connections, which must never roll.
+  // Takes precedence over `shardKey` when both are set.
+  readonly codegenUserId?: string;
 }
 
 interface VibesDiyApiConfig {
@@ -281,21 +293,40 @@ export class VibesDiyApi implements VibesDiyApiIface<{
   private currentConnection: VibeDiyApiConnection | undefined;
   private reconnectTimer: ReturnType<typeof setTimeout> | undefined;
   private closed = false;
+  // Rollable per-user codegen shard state (cold-start design). Set only when
+  // `codegenUserId` is provided. `rollBaseApiUrl` is the apiUrl with no shard
+  // param; the live shard is `codegenShardForUser(rollCodegenUserId, rollShardIndex)`,
+  // rebuilt on every (re)connect so a roll takes effect without re-keying the
+  // provider's instance cache.
+  private rollCodegenUserId: string | undefined;
+  private rollBaseApiUrl: string | undefined;
+  private rollShardIndex = 0;
 
   constructor(cfg: VibesDiyApiParam) {
     const sthis = cfg.sthis ?? ensureSuperThis();
     // Each API instance gets its own DO shard to avoid CPU limits under concurrent load.
     // When a preset WebSocket is provided (tests), skip sharding — tests bypass worker routing.
-    // If shardKey is provided (e.g. a viewer landing on /vibe/<u>/<a>), pin to that
-    // stable value so all visitors of the same vibe land on the same warm DO.
+    // Rollable per-user codegen (codegenUserId): pin to the user's shard FAMILY at
+    // a sessionStorage-seeded roll index so the 2nd+ chat rejoins a warm DO; roll on
+    // overload. Else if shardKey is provided (e.g. a viewer on /vibe/<u>/<a>), pin to
+    // that stable value so all visitors of the same vibe land on the same warm DO.
+    // Else random UUID (codegen load-balancing — CLI/anon).
     // If skipShard is true (e.g. /api/app which routes by ?vibe= instead),
     // omit the param entirely so it doesn't appear as noise in logs/devtools.
+    const rollUserId = cfg.ws || cfg.skipShard ? undefined : cfg.codegenUserId;
+    if (rollUserId !== undefined) {
+      this.rollCodegenUserId = rollUserId;
+      this.rollBaseApiUrl = cfg.apiUrl;
+      this.rollShardIndex = this.readPersistedShardIndex(rollUserId);
+    }
     const apiUrl =
       cfg.ws || cfg.skipShard
         ? cfg.apiUrl
-        : BuildURI.from(cfg.apiUrl)
-            .setParam("shard", cfg.shardKey ?? crypto.randomUUID())
-            .toString();
+        : rollUserId !== undefined
+          ? BuildURI.from(cfg.apiUrl).setParam("shard", codegenShardForUser(rollUserId, this.rollShardIndex)).toString()
+          : BuildURI.from(cfg.apiUrl)
+              .setParam("shard", cfg.shardKey ?? crypto.randomUUID())
+              .toString();
     // const pkgRepos: PkgRepos = {
     //   private: cfg.pkgRepos?.private ?? "https://esm.sh/",
     //   public: cfg.pkgRepos?.public ?? BuildURI.from(window.location.origin).appendRelative("/dev-npm").toString(),
@@ -349,8 +380,71 @@ export class VibesDiyApi implements VibesDiyApiIface<{
     return this.getReadyConnection().then((conn) => conn.close());
   }
 
+  // sessionStorage key for the per-user roll index. Sticky so reconnects/reloads
+  // land on the working shard, not back on `~0`.
+  private rollStorageKey(userId: string): string {
+    return `vibes-codegen-shard-idx:${userId}`;
+  }
+
+  private readPersistedShardIndex(userId: string): number {
+    try {
+      const store = (globalThis as { sessionStorage?: { getItem(k: string): string | null } }).sessionStorage;
+      const raw = store?.getItem(this.rollStorageKey(userId));
+      if (raw === null || raw === undefined) return 0;
+      const n = Number(raw);
+      return Number.isInteger(n) && n >= 0 && n <= MAX_ROLL_INDEX ? n : 0;
+    } catch {
+      return 0;
+    }
+  }
+
+  private persistShardIndex(userId: string, n: number): void {
+    try {
+      const store = (globalThis as { sessionStorage?: { setItem(k: string, v: string): void } }).sessionStorage;
+      store?.setItem(this.rollStorageKey(userId), String(n));
+    } catch {
+      /* sessionStorage unavailable (SSR / worker) — roll still works in-memory */
+    }
+  }
+
+  // The live socket URL. For a rollable per-user codegen connection it is rebuilt
+  // from the base + the user's family shard at the current roll index, so a roll
+  // takes effect on the next (re)connect without re-keying the instance cache.
+  private currentApiUrl(): string {
+    if (this.rollCodegenUserId !== undefined && this.rollBaseApiUrl !== undefined) {
+      return BuildURI.from(this.rollBaseApiUrl)
+        .setParam("shard", codegenShardForUser(this.rollCodegenUserId, this.rollShardIndex))
+        .toString();
+    }
+    return this.cfg.apiUrl;
+  }
+
+  /**
+   * Advance to the next shard in the user's codegen family on `shard-overloaded`.
+   * Bounded by MAX_ROLL_INDEX (the SAME cap the server registration guard accepts,
+   * so the client can never roll to a shard the guard would reject). Persists the
+   * new index, then drops the current connection so the next `getReadyConnection`
+   * opens the new shard — which also tears down and re-establishes any per-prompt
+   * section stream via the existing reconnect path. No-op (returns false) for
+   * non-rollable connections (CLI/anon/per-vibe) or once the bound is hit.
+   */
+  rollCodegenShard(): boolean {
+    if (this.rollCodegenUserId === undefined || this.closed) return false;
+    if (this.rollShardIndex >= MAX_ROLL_INDEX) return false;
+    this.rollShardIndex += 1;
+    this.persistShardIndex(this.rollCodegenUserId, this.rollShardIndex);
+    const old = this.currentConnection;
+    this.currentConnection = undefined;
+    old?.close();
+    // Eagerly open the new shard; best-effort — next activity retries on failure.
+    this.getReadyConnection().catch((_e: unknown) => {
+      /* best-effort reconnect onto the rolled shard */
+    });
+    return true;
+  }
+
   async getReadyConnection(): Promise<VibeDiyApiConnection> {
-    const conn = await getVibesDiyWebSocketConnection(this.cfg.apiUrl, this.cfg.ws, this.cfg.ca);
+    const conn = await getVibesDiyWebSocketConnection(this.currentApiUrl(), this.cfg.ws, this.cfg.ca);
     if (conn !== this.currentConnection) {
       this.currentConnection = conn;
       replayConnectionState({
@@ -419,7 +513,17 @@ export class VibesDiyApi implements VibesDiyApiIface<{
       resMatch: (res: unknown) => boolean;
     }
   ): Promise<ResultVibesDiy<S>> {
-    return requestApiResponse(this, req, msgParam);
+    const res = await requestApiResponse<Q, S>(this, req, msgParam);
+    // Codegen admission overload: the DO is at capacity. Advance to the next shard
+    // in this user's family and reconnect there (cold-start design §4). We DON'T
+    // transparently re-send here: a prompt's section stream is bound to the
+    // connection at open time, so the roll drops that connection and the chat's
+    // existing reconnect loop re-establishes the stream on the fresh shard. The
+    // overload error is surfaced so the caller replays on the now-warm shard.
+    if (res.isErr() && isResError(res.Err()) && res.Err().error.code === SHARD_OVERLOADED_CODE) {
+      this.rollCodegenShard();
+    }
+    return res;
   }
 
   ensureAppSlug(req: Req<ReqEnsureAppSlug>): Promise<Result<ResEnsureAppSlug, VibesDiyError>> {

@@ -87,4 +87,18 @@ describe("userNotifyCallbacksForSharedSessions — registration payload", () => 
     expect(cbs).toEqual({});
     expect(cbs.registerUserSubscription).toBeUndefined();
   });
+
+  it("does NOT register a ROLLED codegen-family shard (shared plane stays STRICT equality)", async () => {
+    // The codegen plane admits the bounded family (base~1, …) so the client can
+    // roll; the shared plane must NOT — it keeps exactly one shard per user. So a
+    // `notify-user-<uid>~1` shard, while owned by this user, is rejected here. This
+    // is the split that preserves Track B's bounded-subscriber-set on the shared
+    // plane. (Security invariants, design spec 2026-06-29.)
+    const { env, fakeStub } = buildFakeEnv();
+    const rolled = `${shard}~1`;
+    const cbs = userNotifyCallbacksForSharedSessions(rolled, env);
+    await cbs.registerUserSubscription?.(userId);
+    await cbs.deregisterUserSubscription?.(userId);
+    expect(fakeStub.fetch).not.toHaveBeenCalled();
+  });
 });

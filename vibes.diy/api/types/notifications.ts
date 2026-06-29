@@ -36,6 +36,49 @@ export function isUserNotifyShard(shard: string): boolean {
   return shard.startsWith(USER_NOTIFY_SHARD_PREFIX);
 }
 
+// --- Per-user codegen shard family (cold-start + admission-control auto-roll).
+//
+// The website pins each authenticated user's heavy codegen chat to a stable
+// per-user DO (base shard = userNotifyShardFor(userId)) so the 2nd+ chat rejoins
+// a warm DO instead of cold-starting a random-UUID one. To re-earn the CPU
+// isolation that random sharding gave, the codegen DO admits a bounded number of
+// concurrent streams and returns `shard-overloaded` past it; the client then
+// rolls to the next shard in THIS family and retries.
+
+// Max codegen-shard roll index. The client rolls 0..MAX_ROLL_INDEX on
+// `shard-overloaded`; the codegen-plane registration guard accepts the SAME
+// bounded family, so the per-user UserNotify subscriber set stays capped at
+// MAX_ROLL_INDEX + 1 (not unbounded). Client roll-bound and server guard MUST
+// read this one constant or the client could roll to a shard the guard rejects.
+export const MAX_ROLL_INDEX = 8;
+
+// The codegen shard string for `userId` at roll index `n`. n=0 is the base shard
+// — byte-identical to userNotifyShardFor(userId), so it passes the notify-shard
+// guard for free; n>=1 appends `~n`.
+export function codegenShardForUser(userId: string, n: number): string {
+  const base = userNotifyShardFor(userId);
+  return n <= 0 ? base : `${base}~${n}`;
+}
+
+// Whether `shard` belongs to `userId`'s codegen shard family: the base notify
+// shard, OR `${base}~${n}` with `n` a STRICT integer in 1..MAX_ROLL_INDEX
+// (digits only, no leading zero, in range). Strict parsing + the hard upper
+// bound keep the accepted set finite — this is what preserves Track B's
+// bounded-subscriber-set property on the codegen plane.
+//
+// ⚠️ Codegen plane ONLY. The shared plane must keep STRICT equality
+// (`shard === userNotifyShardFor(userId)`) so its subscriber set stays exactly
+// one per user; only the codegen plane rolls, so only it relaxes to the family.
+export function shardBelongsToUser(shard: string, userId: string): boolean {
+  const base = userNotifyShardFor(userId);
+  if (shard === base) return true;
+  if (!shard.startsWith(`${base}~`)) return false;
+  const suffix = shard.slice(base.length + 1);
+  if (!/^[1-9][0-9]*$/.test(suffix)) return false; // strict: no leading zero, digits only
+  const n = Number(suffix);
+  return n >= 1 && n <= MAX_ROLL_INDEX;
+}
+
 export const ReqSubscribeUserNotificationsRaw = type({
   type: "'vibes.diy.req-subscribe-user-notifications'",
 });

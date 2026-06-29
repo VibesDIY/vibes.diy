@@ -1,5 +1,5 @@
 import { Request as CFRequest, Response as CFResponse } from "@cloudflare/workers-types";
-import { CFEnv, isUserNotifyShard, userNotifyShardFor, type EvtUserNotification } from "@vibes.diy/api-types";
+import { CFEnv, isUserNotifyShard, userNotifyShardFor, shardBelongsToUser, type EvtUserNotification } from "@vibes.diy/api-types";
 
 // #2714 Spec B Phase E — the per-plane UserNotify callback builders, relocated
 // here from the deleted ChatSessions/AppSessions/SharedSessions classes so the
@@ -82,20 +82,23 @@ export function userNotifyCallbacksForChatSessions(shard: string, env: CFEnv) {
     notifyUser,
     registerUserSubscription: async (userId: string): Promise<void> => {
       // The `?shard=` param is client-supplied on the public /api path, so only let a
-      // connection register the shard that belongs to its OWN authenticated user. This
-      // ties the (otherwise arbitrary) shard to the verified userId and keeps the bound
-      // at one shard per user — a client can't inflate UserNotify with forged shards.
-      if (shard !== userNotifyShardFor(userId)) {
-        // Expected only on a forged shard, or if the client's DO-name id (clerk.user.id)
-        // ever drifts from the server's claims.userId — in which case notification
-        // registration silently no-ops, so surface it for telemetry.
-        console.warn("[Sessions] skip user-notify register (codegen): shard does not match authenticated user", shard.slice(0, 16));
+      // connection register a shard in its OWN authenticated user's family. This ties
+      // the (otherwise arbitrary) shard to the verified userId — a client can't inflate
+      // UserNotify with forged shards. Codegen rolls on overload, so this plane accepts
+      // the BOUNDED family (shardBelongsToUser, capped at MAX_ROLL_INDEX + 1), not strict
+      // equality — keeping the per-user subscriber set finite. The shared plane below
+      // stays strict-equality (exactly one shard per user); only codegen relaxes.
+      if (!shardBelongsToUser(shard, userId)) {
+        // Expected only on a forged/out-of-family shard, or if the client's DO-name id
+        // (clerk.user.id) ever drifts from the server's claims.userId — in which case
+        // notification registration silently no-ops, so surface it for telemetry.
+        console.warn("[Sessions] skip user-notify register (codegen): shard not in user family", shard.slice(0, 24));
         return;
       }
       await fetchUserNotify(userId, { action: "register", shardId: shard });
     },
     deregisterUserSubscription: async (userId: string): Promise<void> => {
-      if (shard !== userNotifyShardFor(userId)) return;
+      if (!shardBelongsToUser(shard, userId)) return;
       await fetchUserNotify(userId, { action: "deregister", shardId: shard });
     },
   };

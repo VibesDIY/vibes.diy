@@ -14,7 +14,14 @@ import { CFInjectMutable, cfServeAppCtx, localBroadcastCallbacks, localInvokeAcc
 import { appMsgEvento } from "@vibes.diy/api-svc/app-msg-evento.js";
 import { chatMsgEvento } from "@vibes.diy/api-svc/chat-msg-evento.js";
 import { sharedMsgEvento } from "@vibes.diy/api-svc/shared-msg-evento.js";
-import { CFEnv, isBuildNotification, type ShardIdentity } from "@vibes.diy/api-types";
+import {
+  CFEnv,
+  isBuildNotification,
+  isUserNotifyShard,
+  MAX_CONCURRENT_CODEGEN_STREAMS,
+  type ShardIdentity,
+  type CodegenAdmission,
+} from "@vibes.diy/api-types";
 import { exception2Result, URI } from "@adviser/cement";
 import { type } from "arktype";
 import type { QuickJSWASMModule } from "@cf-wasm/quickjs";
@@ -67,9 +74,19 @@ export class Sessions implements DurableObject {
   private quickjsModule: { module: QuickJSWASMModule | null } = { module: null };
   // Vibe-plane access.js source cache, keyed by access-fn CID (see #2512).
   private accessFnSourceCache: Map<string, string> = new Map<string, string>();
+  // Codegen-plane admission counter — per-DO-instance, shared by reference across
+  // all concurrent requests on this instance so `active` spans every in-flight
+  // stream. Injected into the AppContext only on the codegen plane (below). The
+  // limit is env-tunable (MAX_CONCURRENT_CODEGEN_STREAMS), resolved once here.
+  private readonly codegenAdmission: CodegenAdmission;
 
   constructor(_state: DurableObjectState, env: CFEnv) {
     this.env = env;
+    const envLimit = env.MAX_CONCURRENT_CODEGEN_STREAMS;
+    this.codegenAdmission = {
+      active: 0,
+      limit: typeof envLimit === "number" && envLimit > 0 ? envLimit : MAX_CONCURRENT_CODEGEN_STREAMS,
+    };
   }
 
   async fetch(request: CFRequest): Promise<CFResponse> {
@@ -143,6 +160,15 @@ export class Sessions implements DurableObject {
 
     cctx.appCtx = (await cfServeAppCtx(request, this.env, cctx, overrides)).appCtx;
     cctx.appCtx.set("shardIdentity", { kind, shardId } satisfies ShardIdentity);
+    // Admission control is installed ONLY for PER-USER (notify-prefixed) codegen
+    // shards — the pinned DOs that actually need the bound. Random-UUID codegen
+    // shards (CLI/anon, today's default) already get their own DO per connection,
+    // so they keep zero admission control and are fully behavior-preserving until
+    // clients opt into per-user pinning. The holder's presence is what tells the
+    // gate "enforce admission here"; vibe/shared/random-UUID never set it.
+    if (kind === "codegen" && isUserNotifyShard(shardId)) {
+      cctx.appCtx.set("codegenAdmission", this.codegenAdmission);
+    }
     return cfServe(request, cctx, evento);
   }
 

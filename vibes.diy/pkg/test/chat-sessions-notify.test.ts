@@ -10,7 +10,7 @@
 
 import { describe, expect, it, vi } from "vitest";
 import { userNotifyCallbacksForChatSessions } from "../workers/session-callbacks.js";
-import { userNotifyShardFor } from "@vibes.diy/api-types";
+import { userNotifyShardFor, codegenShardForUser } from "@vibes.diy/api-types";
 import type { CFEnv, EvtUserNotification } from "@vibes.diy/api-types";
 
 function buildFakeEnv() {
@@ -78,5 +78,27 @@ describe("userNotifyCallbacksForChatSessions — notifyUser emitter", () => {
 
     await cbs.registerUserSubscription?.(userId);
     expect(capturedBodies).toEqual([{ action: "register", shardId: shard }]);
+  });
+
+  it("registers a ROLLED shard in the user's family (codegen plane admits the bounded family)", async () => {
+    const { env, capturedBodies } = buildFakeEnv();
+    const rolled = codegenShardForUser(userId, 1); // notify-user-<uid>~1
+    const cbs = userNotifyCallbacksForChatSessions(rolled, env);
+    // Rolled shards are notify-prefixed, so they reach registration, and the
+    // family guard (shardBelongsToUser) admits them — unlike the old strict-equality
+    // guard which would have no-oped.
+    expect(cbs.registerUserSubscription).toBeDefined();
+    await cbs.registerUserSubscription?.(userId);
+    expect(capturedBodies).toEqual([{ action: "register", shardId: rolled }]);
+  });
+
+  it("does NOT register a notify shard belonging to a DIFFERENT user", async () => {
+    const { env, capturedBodies } = buildFakeEnv();
+    // A forged shard that is notify-prefixed (so it passes isUserNotifyShard) but
+    // belongs to another user — the family guard must reject it.
+    const foreign = userNotifyShardFor("user_other");
+    const cbs = userNotifyCallbacksForChatSessions(foreign, env);
+    await cbs.registerUserSubscription?.(userId);
+    expect(capturedBodies).toEqual([]); // no register fan-out
   });
 });

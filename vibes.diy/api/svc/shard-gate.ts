@@ -1,5 +1,12 @@
 import { EventoHandler, EventoResult, HandleTriggerCtx, Option, Result } from "@adviser/cement";
-import { openVibe, shardsForReq, type ResError, type ShardIdentity } from "@vibes.diy/api-types";
+import {
+  openVibe,
+  shardsForReq,
+  SHARD_OVERLOADED_CODE,
+  type ResError,
+  type ShardIdentity,
+  type CodegenAdmission,
+} from "@vibes.diy/api-types";
 
 // The runtime shard gate (#2714). Types enforce *kind* at composition time;
 // this gate enforces *identity* at dispatch time, fail-loud. It wraps each
@@ -122,4 +129,57 @@ export function assertChatShardIdentity<INREQ, REQ, RES>(
   const id = ctx.ctx.get<ShardIdentity>("shardIdentity");
   if (id === undefined || id.kind !== "vibe") return Option.None();
   return shardIdentityError(id, ownerHandle, appSlug);
+}
+
+/**
+ * Codegen-DO admission control (per-user cold-start design). Wrap a heavy
+ * stream handler (prompt-chat-section) so it admits at most `limit` concurrent
+ * streams on a given codegen DO instance; past that it sends a coded
+ * `shard-overloaded` ResError and stops — the client then rolls to the next
+ * shard in the user's family and retries.
+ *
+ * The admission counter (`CodegenAdmission`) is injected into the AppContext
+ * ONLY on the codegen plane (sessions.ts), so:
+ *   - holder absent → not a codegen DO (vibe/shared/test monolith) → pass through
+ *     unchanged (behavior-preserving), exactly like the kind/identity gate.
+ *   - holder present → count active streams; admit/reject; decrement on every
+ *     exit path (completion, error, mid-stream WS close) via `finally`.
+ *
+ * Dry-runs do no heavy generation (they early-return before LLM dispatch), so
+ * they don't consume a slot — read the ORIGINAL request (`enRequest`), since the
+ * validated payload may not carry `dryRun`.
+ *
+ * Composed INSIDE `gated` (see handlersForShard) so the kind/identity gate runs
+ * first and only legitimately-placed codegen streams reach admission.
+ */
+export function admissionGated(handler: EventoHandler): EventoHandler {
+  return {
+    ...handler,
+    handle: async (ctx) => {
+      const adm = ctx.ctx.get<CodegenAdmission>("codegenAdmission");
+      if (adm === undefined) {
+        return handler.handle(ctx);
+      }
+      const enPayload = (ctx.enRequest as { payload?: { dryRun?: unknown } } | undefined)?.payload;
+      if (enPayload?.dryRun === true) {
+        return handler.handle(ctx);
+      }
+      if (adm.active >= adm.limit) {
+        await ctx.send.send(ctx, {
+          type: "vibes.diy.res-error",
+          error: {
+            message: `codegen shard at capacity (${adm.limit} concurrent streams)`,
+            code: SHARD_OVERLOADED_CODE,
+          },
+        } satisfies ResError);
+        return Result.Ok(EventoResult.Continue);
+      }
+      adm.active += 1;
+      try {
+        return await handler.handle(ctx);
+      } finally {
+        adm.active -= 1;
+      }
+    },
+  };
 }
