@@ -102,10 +102,11 @@ describe("UnifiedVibeCard", () => {
     expect(screen.getByText("@meghan")).toBeTruthy();
   });
 
-  it("shows the in-vibe edit explainer and an Edit nav button", () => {
+  it("shows the in-vibe edit explainer plus Edit and Editor nav buttons", () => {
     render(<UnifiedVibeCard appTitle="Bloom Machine" open chips={["Make it a drum kit"]} />);
     expect(screen.getByText("Describe a change to edit this app live:")).toBeTruthy();
-    expect(screen.getByRole("button", { name: /edit/i })).toBeTruthy();
+    expect(screen.getByRole("button", { name: /^edit$/i })).toBeTruthy();
+    expect(screen.getByRole("button", { name: /^editor$/i })).toBeTruthy();
   });
 
   it("renders a custom body in place of chips/Other and can select the Share nav", () => {
