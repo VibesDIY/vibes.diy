@@ -121,6 +121,10 @@ export async function createAppContext<T extends VibesSqlite>(
     VIBES_SVC_PROTOCOL: "https",
     VIBES_SVC_PORT: param.OPTIONAL,
 
+    // Vibe SSR mode (#2802 slice 4): off (default) | node | loader. Unrecognized
+    // ⇒ off. render-vibe.ts only honors `loader` on the live route.
+    VIBES_SSR: param.OPTIONAL,
+
     RESEND_API_KEY: param.REQUIRED,
     VIBES_DIY_PUBLIC_BASE_URL: param.REQUIRED,
 
@@ -214,9 +218,17 @@ export async function createAppContext<T extends VibesSqlite>(
         protocol: envVals.VIBES_SVC_PROTOCOL as "https" | "http",
         port: envVals.VIBES_SVC_PORT,
       },
+      // The Worker Loader (env.LOADER) binding for the `loader` SSR executor.
+      // Beta + not yet plumbed from the Cloudflare bindings object — left
+      // undefined here, so VIBES_SSR=loader degrades to client-only (select_error)
+      // until the binding lands (tracked in #2845). render-vibe.ts passes it to
+      // attemptVibeSsr; the param slot is what lets it be populated (or injected
+      // in tests) without further wiring.
+      loader: undefined,
       env: {
         CLERK_PUBLISHABLE_KEY: envVals.CLERK_PUBLISHABLE_KEY,
         VIBES_DIY_API_URL: envVals.VIBES_DIY_API_URL,
+        VIBES_SSR: envVals.VIBES_SSR,
 
         GTM_CONTAINER_ID: envVals.GTM_CONTAINER_ID,
         POSTHOG_KEY: envVals.POSTHOG_KEY,

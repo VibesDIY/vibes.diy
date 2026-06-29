@@ -195,8 +195,9 @@ export async function renderVibe({
   // HTML into the vibe-app-container (behind VIBES_SSR; "off" by default). HEAD
   // does no executor work. attemptVibeSsr never throws — any failure yields a
   // structured reason and we ship the empty container (client-only, today's
-  // path), never a 500. The LOADER binding is a beta follow-up, so `loader` is
-  // undefined for now (VIBES_SSR=loader degrades to client-only via select_error).
+  // path), never a 500. The LOADER binding comes from params.vibes.loader; it's
+  // a beta follow-up still populated undefined (#2845), so VIBES_SSR=loader
+  // degrades to client-only via select_error until the binding is plumbed.
   //
   // SECURITY (per Codex review): this route renders UNTRUSTED, persisted vibe
   // `App.jsx`. `NodeExecutor` runs the module in-process with full Node
@@ -210,7 +211,7 @@ export async function renderVibe({
   if (ctx.request.method !== "HEAD") {
     const ssr = await attemptVibeSsr({
       mode: liveSsrMode,
-      loader: undefined,
+      loader: vctx.params.vibes.loader,
       fsItems,
       mountParams: { usrEnv, ...(viewerEnv ? { viewerEnv } : {}), ...(accessFnBindings ? { accessFnBindings } : {}) },
       loadSource: async (item) => {
