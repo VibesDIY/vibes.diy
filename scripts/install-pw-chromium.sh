@@ -116,6 +116,22 @@ if [ -f "$PW_CACHE/chromium-$REV/INSTALLATION_COMPLETE" ] \
   exit 0
 fi
 
+# --- 2b. Preflight: ffmpeg must already be present --------------------------
+# `playwright install chromium` also installs the matching ffmpeg build, but
+# ffmpeg is ONLY served from the `dbazure` CDN path (→ the MS host the proxy
+# hard-blocks) — we can't mirror it the way we mirror the cft chrome. The cloud
+# image pre-seeds the right ffmpeg revision, so this is normally fine. If a
+# future image stops doing that, surface a clear, actionable message up front
+# rather than a confusing mid-install proxy failure.
+FFMPEG_REV="$(node -e 'const b=require(process.argv[1]);const f=b.browsers.find(x=>x.name==="ffmpeg");process.stdout.write(f?f.revision:"")' "$BROWSERS_JSON" 2>/dev/null || true)"
+if [ -n "$FFMPEG_REV" ] && [ ! -f "$PW_CACHE/ffmpeg-$FFMPEG_REV/INSTALLATION_COMPLETE" ]; then
+  log "WARNING: ffmpeg-$FFMPEG_REV is not pre-seeded in $PW_CACHE. ffmpeg is only"
+  log "         served from the proxy-blocked MS host (not the cft/googleapis path"
+  log "         we mirror), so the chromium install will fail fetching it. This"
+  log "         image may have stopped bundling ffmpeg — update this script"
+  log "         (see agents/cloud-browser-setup.md) to handle ffmpeg too."
+fi
+
 # --- 3. Build the localhost mirror via curl ---------------------------------
 # Playwright (with PLAYWRIGHT_DOWNLOAD_HOST set) fetches the cft artifacts at:
 #   /builds/cft/<CFT_VER>/linux64/chrome-linux64.zip
@@ -166,12 +182,17 @@ PORT_FILE="$SCRATCH/port"
 rm -f "$PORT_FILE"
 
 # Tiny static server: streams files under $MIRROR, logs hits/misses, prints its
-# chosen ephemeral port on stdout.
+# chosen ephemeral port on stdout. Resolved paths are confined to ROOT so a
+# crafted request (e.g. /../../etc/passwd) can never escape the mirror dir.
 MIRROR="$MIRROR" node -e '
   const http=require("http"),fs=require("fs"),path=require("path");
-  const ROOT=process.env.MIRROR;
+  const ROOT=path.resolve(process.env.MIRROR);
   const s=http.createServer((req,res)=>{
-    const f=path.join(ROOT,decodeURIComponent(req.url.split("?")[0]));
+    const rel=decodeURIComponent(req.url.split("?")[0]);
+    const f=path.resolve(path.join(ROOT,rel));
+    if(f!==ROOT && !f.startsWith(ROOT+path.sep)){
+      process.stderr.write("DENY "+req.url+"\n");res.writeHead(403);return res.end();
+    }
     fs.stat(f,(e,st)=>{
       if(e||!st.isFile()){process.stderr.write("MISS "+req.url+"\n");res.writeHead(404);return res.end();}
       res.writeHead(200,{"content-length":st.size});
