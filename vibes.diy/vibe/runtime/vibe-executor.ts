@@ -70,7 +70,7 @@ export function selectExecutor(mode: VibesSsrMode, opts: SelectExecutorOptions =
     case "node":
       return new NodeExecutor();
     case "loader":
-      if (!opts.loader) {
+      if (opts.loader === undefined) {
         throw new Error("VIBES_SSR=loader requires a Worker Loader (env.LOADER) binding");
       }
       return new WorkerLoaderExecutor(opts.loader);

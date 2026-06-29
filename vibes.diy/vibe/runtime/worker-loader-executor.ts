@@ -1,3 +1,4 @@
+import { TxtEnDecoderSingleton } from "@adviser/cement";
 import { transformVibeSource } from "./transform-vibe-source.js";
 import { type Executor, type VibeExecuteInput, type VibeExecuteResult } from "./vibe-executor.js";
 
@@ -95,7 +96,9 @@ export function buildVibeWorkerCode(input: { module: string; mountParams: unknow
 /** Hex SHA-256 of the worker code — the `env.LOADER.get` id, so identical code reuses one isolate. */
 async function hashWorkerCode(code: WorkerCode): Promise<string> {
   const payload = `${code.compatibilityDate}\n${code.mainModule}\n${JSON.stringify(code.modules)}`;
-  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(payload));
+  // `TxtEnDecoderSingleton().encode` is the cement UTF-8 encoder `sthis.txt`
+  // wraps — rules-bag forbids `new TextEncoder` directly.
+  const digest = await crypto.subtle.digest("SHA-256", TxtEnDecoderSingleton().encode(payload));
   return Array.from(new Uint8Array(digest))
     .map((b) => b.toString(16).padStart(2, "0"))
     .join("");
