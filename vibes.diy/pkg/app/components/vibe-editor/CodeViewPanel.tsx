@@ -9,11 +9,21 @@ import type { CodeViewModel } from "./code-from-chat.js";
  * the /vibe first-paint bundle — and shiki itself is loaded via a LAZY dynamic
  * `import("shiki")` so even the highlighter is fetched only when this tab
  * renders. Do not add a top-level `import … from "shiki"` here.
+ *
+ * File selection is owned here so clicking a file tab actually switches the
+ * shown source. The default is `model.activeFile`; a stale picked name (after
+ * the model changes to a different vibe) falls back to that default.
  */
-export function CodeViewPanel({ model, onPickFile }: { model: CodeViewModel; onPickFile: (fileName: string) => void }) {
-  const html = useShikiHtml(model.activeCode, model.language);
+export function CodeViewPanel({ model }: { model: CodeViewModel }) {
+  const [pickedFileName, setPickedFileName] = useState<string | undefined>(undefined);
 
-  if (model.files.length === 0) {
+  const activeFile = model.files.find((f) => f.fileName === pickedFileName) ?? model.activeFile;
+  const activeCode = activeFile ? activeFile.code.join("\n") : model.activeCode;
+  const language = activeFile ? activeFile.lang || model.language : model.language;
+  const html = useShikiHtml(activeCode, language);
+
+  // Nothing generated yet: no hydrated files AND no streamed source.
+  if (model.files.length === 0 && !activeCode) {
     return (
       <div className="flex h-full items-center justify-center p-6 text-center text-sm text-gray-500 dark:text-gray-400">
         No code yet — make an edit to generate this vibe's source.
@@ -21,41 +31,43 @@ export function CodeViewPanel({ model, onPickFile }: { model: CodeViewModel; onP
     );
   }
 
-  const activeFileName = model.activeFile?.fileName;
+  const activeFileName = activeFile?.fileName;
 
   return (
     <div className="flex h-full min-h-0 flex-col">
-      <div
-        role="tablist"
-        aria-label="Source files"
-        className="flex flex-shrink-0 gap-1 overflow-x-auto border-b border-gray-200 bg-gray-50 px-2 py-1 dark:border-gray-700 dark:bg-gray-900"
-      >
-        {model.files.map((file) => {
-          const selected = file.fileName === activeFileName;
-          return (
-            <button
-              key={file.fileName}
-              type="button"
-              role="tab"
-              aria-selected={selected}
-              onClick={() => onPickFile(file.fileName)}
-              className={
-                "rounded px-2 py-1 font-mono text-xs whitespace-nowrap " +
-                (selected
-                  ? "bg-white text-gray-900 shadow-sm dark:bg-gray-800 dark:text-gray-100"
-                  : "text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200")
-              }
-            >
-              {file.fileName}
-            </button>
-          );
-        })}
-      </div>
+      {model.files.length > 0 && (
+        <div
+          role="tablist"
+          aria-label="Source files"
+          className="flex flex-shrink-0 gap-1 overflow-x-auto border-b border-gray-200 bg-gray-50 px-2 py-1 dark:border-gray-700 dark:bg-gray-900"
+        >
+          {model.files.map((file) => {
+            const selected = file.fileName === activeFileName;
+            return (
+              <button
+                key={file.fileName}
+                type="button"
+                role="tab"
+                aria-selected={selected}
+                onClick={() => setPickedFileName(file.fileName)}
+                className={
+                  "rounded px-2 py-1 font-mono text-xs whitespace-nowrap " +
+                  (selected
+                    ? "bg-white text-gray-900 shadow-sm dark:bg-gray-800 dark:text-gray-100"
+                    : "text-gray-500 hover:text-gray-800 dark:text-gray-400 dark:hover:text-gray-200")
+                }
+              >
+                {file.fileName}
+              </button>
+            );
+          })}
+        </div>
+      )}
       <div className="min-h-0 flex-1 overflow-auto bg-white text-xs dark:bg-gray-950">
         {html ? (
           <div className="vibe-code-shiki [&_pre]:m-0 [&_pre]:p-3" dangerouslySetInnerHTML={{ __html: html }} />
         ) : (
-          <pre className="m-0 p-3 font-mono text-gray-800 dark:text-gray-200">{model.activeCode}</pre>
+          <pre className="m-0 p-3 font-mono text-gray-800 dark:text-gray-200">{activeCode}</pre>
         )}
       </div>
     </div>

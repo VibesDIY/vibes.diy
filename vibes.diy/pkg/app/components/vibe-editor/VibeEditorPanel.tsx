@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import type { PromptState } from "../../routes/chat/prompt-state.js";
 import { EDITOR_TABS, type EditorTab } from "./editor-tab-state.js";
 import { resolveCodeView } from "./code-from-chat.js";
@@ -35,10 +35,6 @@ export function VibeEditorPanel({
   promptState: PromptState;
   onActivateChat?: () => void;
 }) {
-  // Local selection for the Code tab's file row. Phase 1 only needs to track
-  // which file was clicked; resolveCodeView already defaults the selection.
-  const [, setPickedFile] = useState<string | undefined>(undefined);
-
   return (
     <div className="flex h-full min-h-0 flex-col">
       <div
@@ -70,7 +66,7 @@ export function VibeEditorPanel({
       </div>
 
       <div className="min-h-0 flex-1 overflow-auto">
-        {tab === "code" && <CodeViewPanel model={resolveCodeView(promptState)} onPickFile={setPickedFile} />}
+        {tab === "code" && <CodeViewPanel model={resolveCodeView(promptState)} />}
         {tab === "data" && <DataView promptState={promptState} />}
         {tab === "chat" && <ChatInterface promptState={promptState} onClick={() => undefined} />}
         {tab === "settings" && <SettingsTabScoped ownerHandle={ownerHandle} appSlug={appSlug} />}
