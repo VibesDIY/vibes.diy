@@ -5,7 +5,7 @@ import { FPDeviceIDCSRPayloadSchema } from "../types/device-id-payload.js";
 import { JWKPublicSchema } from "../types/wire.js";
 import type { FPDeviceIDCSRPayload, JWKPublic } from "@fireproof/core-types-base";
 import { jwtVerify, decodeProtectedHeader, calculateJwkThumbprint, type JWK } from "jose";
-import { sts } from "@fireproof/core-runtime";
+import * as sts from "../sts/index.js";
 
 interface ValidateCSRError {
   readonly valid: false;

@@ -13,7 +13,7 @@
 // Only imports were adjusted; the decode/verify logic is byte-for-byte the same,
 // gated by auth-token-verify-golden.test.ts through the identity facade.
 import { Lazy, Result, param, exception2Result } from "@adviser/cement";
-import { sts } from "@fireproof/core-runtime";
+import * as sts from "../sts/index.js";
 import { decodeJwt, jwtVerify, type JWK } from "jose";
 import { ClerkClaimSchema, FPClerkClaimSchema } from "../clerk-claim.js";
 import type { SuperThis } from "@fireproof/core-types-base";
