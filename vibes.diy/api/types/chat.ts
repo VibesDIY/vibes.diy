@@ -11,30 +11,26 @@ import { PromptMsgs } from "./prompt.js";
 // *catalog* tags (`ModelCapability`) and the persisted *settings*
 // (`ActiveModelSetting.usage`, `userSettingModelDefaults`).
 //
-// On-the-wire session `mode` migration (#2618). The wire ACCEPTS both the
-// legacy `chat`/`app` and canonical `codegen`/`runtime` tokens, and every
-// server consumer normalizes via `canonicalModelUsage()` before branching.
-// In-tree producers (CLI generate/edit, vibe sandbox, dashboard) now EMIT the
-// canonical tokens, and `openChat` echoes the caller's `mode` back verbatim
-// (it is normalized only for internal branching) — so a new client sends and
-// receives `codegen`/`runtime` end to end, while an old published CLI that
-// sends `chat` and gates dry-run/focus on `mode === "chat"` still gets `chat`
-// echoed back and keeps working. The client SDK (`llm-chat.ts`) normalizes the
-// echoed `mode` before gating, so both token families round-trip safely.
+// On-the-wire session `mode` migration (#2618) — CONTRACT step complete. The
+// wire now accepts ONLY the canonical `codegen`/`runtime`/`img` tokens; the
+// legacy `chat`/`app` arms have been dropped (#2618 expand→migrate→contract:
+// #2630 widened acceptance, #2641 flipped producers, this step removes legacy).
+// An old published CLI that still sends `mode: "chat"` no longer validates and
+// is rejected at the request boundary — by the time of this step those builds
+// have aged out. Server consumers branch directly on the (now canonical-only)
+// `req.mode`; `openChat` echoes it back verbatim.
 //
-// Legacy-token ACCEPTANCE is deliberately retained for old clients in the wild
-// (the `chat`/`app` arms below, the discriminator alternatives, and the
-// `canonicalModelUsage()` shims). A future contract step can drop that
-// acceptance once old CLI builds have aged out — see #2618.
-//
-// Legacy tokens also stay ACCEPTED wherever they may already be stored (e.g. a
-// persisted `AIParams.model` embeds a catalog `Model` with `supports` tags
-// written before this rename), so old rows keep parsing; we only ever WRITE
-// canonical names there.
+// Legacy tokens are STILL accepted by the model *catalog* `ModelCapability`
+// (below) wherever they may already be stored — a persisted `AIParams.model`
+// embeds a catalog `Model` whose `supports`/`preSelected` tags may have been
+// written before #2608. That data-at-rest back-compat is independent of the
+// wire `mode` and outlives it; `canonicalModelUsage()` / `LEGACY_CAPABILITY_ALIASES`
+// stay to normalize those stored tags (and to defensively normalize the raw,
+// pre-validation `req.mode` at the shard-routing layer — see shard-policy.ts).
 export const LEGACY_CAPABILITY_ALIASES = { chat: "codegen", app: "runtime" } as const;
 
-// Wire session mode — emits canonical, still accepts legacy from old clients (#2618).
-export const PromptLLMStyle = type("'codegen' | 'runtime' | 'img' | 'chat' | 'app'");
+// Wire session mode — canonical-only (#2618 contract step; legacy chat/app dropped).
+export const PromptLLMStyle = type("'codegen' | 'runtime' | 'img'");
 export type PromptLLMStyle = typeof PromptLLMStyle.infer;
 export function isPromptLLMStyle(obj: unknown): obj is PromptLLMStyle {
   return !(PromptLLMStyle(obj) instanceof type.errors);
@@ -148,8 +144,8 @@ export type SlotConfig = typeof slotConfig.infer;
 
 export const reqCreationPromptChatSection = type({
   type: "'vibes.diy.req-prompt-chat-section'",
-  // Codegen mode — producers emit `codegen`; legacy `chat` still accepted (#2618).
-  mode: "'codegen' | 'chat'",
+  // Codegen mode — canonical-only (#2618 contract step; legacy `chat` dropped).
+  mode: "'codegen'",
   auth: dashAuthType,
   chatId: "string",
   outerTid: "string", // this is used to emit events to the current chat session
@@ -185,8 +181,8 @@ export function isReqCreationPromptChatSection(obj: unknown): obj is typeof reqC
 
 export const reqPromptApplicationChatSection = type({
   type: "'vibes.diy.req-prompt-chat-section'",
-  // Runtime mode — producers emit `runtime`; legacy `app` still accepted (#2618).
-  mode: "'runtime' | 'app'",
+  // Runtime mode — canonical-only (#2618 contract step; legacy `app` dropped).
+  mode: "'runtime'",
   auth: dashAuthType,
   chatId: "string",
   outerTid: "string", // this is used to emit events to the current chat session

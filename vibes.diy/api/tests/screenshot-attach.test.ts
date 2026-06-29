@@ -58,7 +58,7 @@ describe("assemblePromptPayload: screenshot attachment", () => {
   async function followUpChat(): Promise<{ chatId: string; fsId: string }> {
     const { appSlug, ownerHandle } = await ctx.createApp();
     const userId = await userIdForSlug(ctx, ownerHandle);
-    const rOpen = await ctx.api.openChat({ ownerHandle, appSlug, mode: "chat" });
+    const rOpen = await ctx.api.openChat({ ownerHandle, appSlug, mode: "codegen" });
     expect(rOpen.isOk()).toBe(true);
     const chat = rOpen.Ok();
     const rTurn = await appendTurnToChat(ctx.appCtx.vibesCtx, {
@@ -146,7 +146,7 @@ describe("assemblePromptPayload: screenshot attachment", () => {
 
   it("does not attach a screenshot on the initial (empty) turn even when requested", async () => {
     const { appSlug, ownerHandle } = await ctx.createApp();
-    const rOpen = await ctx.api.openChat({ ownerHandle, appSlug, mode: "chat" });
+    const rOpen = await ctx.api.openChat({ ownerHandle, appSlug, mode: "codegen" });
     expect(rOpen.isOk()).toBe(true);
     const chat = rOpen.Ok();
 
@@ -164,7 +164,7 @@ describe("assemblePromptPayload: screenshot attachment", () => {
   it("walks back to the most recent version that has a screenshot", async () => {
     const { appSlug, ownerHandle } = await ctx.createApp();
     const userId = await userIdForSlug(ctx, ownerHandle);
-    const rOpen = await ctx.api.openChat({ ownerHandle, appSlug, mode: "chat" });
+    const rOpen = await ctx.api.openChat({ ownerHandle, appSlug, mode: "codegen" });
     expect(rOpen.isOk()).toBe(true);
     const chat = rOpen.Ok();
     const vctx = ctx.appCtx.vibesCtx;

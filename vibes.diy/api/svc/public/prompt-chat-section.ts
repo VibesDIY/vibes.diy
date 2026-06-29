@@ -14,7 +14,6 @@ import {
   isReqPromptLLMChatSection,
   LLMHeaders,
   type PromptStyle,
-  canonicalModelUsage,
   MsgBase,
   PromptAndBlockMsgs,
   ReqPromptChatSection,
@@ -436,10 +435,9 @@ function logLlmAttemptFailure(args: LogLlmAttemptFailureArgs): void {
 }
 
 async function findFallbackModel(vctx: VibesApiSQLCtx, mode: PromptStyle, failedModel: string): Promise<Result<string>> {
-  // `mode` may be a legacy or canonical wire token (#2618); normalize before
-  // gating and before matching against canonical catalog `fallbackFor` tags.
-  const canonicalMode = canonicalModelUsage(mode);
-  if (canonicalMode !== "codegen" && canonicalMode !== "runtime") {
+  // Wire mode is canonical-only (#2618 contract step) and matches the catalog
+  // `fallbackFor` tags directly — no normalization needed.
+  if (mode !== "codegen" && mode !== "runtime") {
     return Result.Err(`Mode ${mode} does not support LLM fallback`);
   }
   const rModels = await loadModels(vctx);
@@ -448,7 +446,7 @@ async function findFallbackModel(vctx: VibesApiSQLCtx, mode: PromptStyle, failed
     return Result.Err(`Failed to load fallback model catalog: ${String(rModels.Err())}`);
   }
   for (const model of rModels.Ok().models) {
-    if (model.id !== failedModel && Array.isArray(model.fallbackFor) && model.fallbackFor.includes(canonicalMode)) {
+    if (model.id !== failedModel && Array.isArray(model.fallbackFor) && model.fallbackFor.includes(mode)) {
       return Result.Ok(model.id);
     }
   }
@@ -747,7 +745,7 @@ export async function handlePromptContext({
     const closed = blockAcc.ingest(msg);
     if (closed) code.push({ begin: closed.begin, lines: [...closed.lines], end: closed.end });
   }
-  if (code.length > 0 && (canonicalModelUsage(resChat.mode) === "codegen" || isPromptFSStyle(resChat.mode))) {
+  if (code.length > 0 && (resChat.mode === "codegen" || isPromptFSStyle(resChat.mode))) {
     // here is where the music plays
     let resolvedFileSystem: VibeFile[];
     if (fileSystem) {
@@ -861,7 +859,7 @@ async function getResChatFromMode(
   //
   // Security: only take this shortcut for an ephemeral chatId that was NEVER
   // persisted. A real chatId must still fall through to the userId-scoped
-  // ownership lookup below — otherwise a forged dry-run (mode:"chat",
+  // ownership lookup below — otherwise a forged dry-run (mode:"codegen",
   // dryRun:true, inline slugs, someone else's chatId) would skip ownership and
   // make assembly — which reads chatSections/promptContexts by chatId alone —
   // reconstruct and emit another user's chat history.
@@ -964,9 +962,9 @@ async function handlerLlmRequest({
       if (r.isErr()) {
         return Result.Err(r);
       }
-      // `req.mode` may be a legacy or canonical wire token (#2618); normalize
-      // to the canonical ModelDefaults bucket.
-      switch (canonicalModelUsage(req.mode)) {
+      // Wire mode is canonical-only (#2618 contract step) — it IS the
+      // ModelDefaults bucket name.
+      switch (req.mode) {
         case "codegen":
           return Result.Ok(req.prompt.model ?? r.Ok().codegen.model.id);
         case "runtime":
@@ -992,7 +990,7 @@ async function handlerLlmRequest({
       });
       if (preAssembled !== undefined) {
         withSystemPrompt = Result.Ok(preAssembled);
-      } else if (canonicalModelUsage(req.mode) === "runtime" || req.mode === "img") {
+      } else if (req.mode === "runtime" || req.mode === "img") {
         let messages = req.prompt.messages;
         if (req.mode === "img") {
           const imgReq = req as ReqWithVerifiedAuth<typeof reqPromptImageChatSection.infer>;
@@ -1037,7 +1035,7 @@ async function handlerLlmRequest({
     model: withSystemPrompt.model,
     headers: vctx.params.llm.headers,
     stream: true,
-    ...(isInitialTurn && canonicalModelUsage(req.mode) === "codegen" ? { verbosity: "low" as const } : {}),
+    ...(isInitialTurn && req.mode === "codegen" ? { verbosity: "low" as const } : {}),
     ...(req.mode === "img" ? { modalities: ["text", "image"] } : {}),
   };
 

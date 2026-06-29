@@ -15,7 +15,7 @@ describe("reqCreationPromptChatSection: selected wire shape", () => {
   it("accepts selected: { kind: 'version', fsId }", () => {
     const r = reqCreationPromptChatSection({
       type: "vibes.diy.req-prompt-chat-section",
-      mode: "chat",
+      mode: "codegen",
       auth: { type: "device-id", token: "t" },
       chatId: "c1",
       outerTid: "tid",
@@ -28,7 +28,7 @@ describe("reqCreationPromptChatSection: selected wire shape", () => {
   it("accepts selected: { kind: 'draft', files }", () => {
     const r = reqCreationPromptChatSection({
       type: "vibes.diy.req-prompt-chat-section",
-      mode: "chat",
+      mode: "codegen",
       auth: { type: "device-id", token: "t" },
       chatId: "c1",
       outerTid: "tid",
@@ -51,7 +51,7 @@ describe("reqCreationPromptChatSection: selected wire shape", () => {
   it("rejects selected with unknown kind", () => {
     const r = reqCreationPromptChatSection({
       type: "vibes.diy.req-prompt-chat-section",
-      mode: "chat",
+      mode: "codegen",
       auth: { type: "device-id", token: "t" },
       chatId: "c1",
       outerTid: "tid",
@@ -64,7 +64,7 @@ describe("reqCreationPromptChatSection: selected wire shape", () => {
   it("accepts slots config with per-slot mute flags", () => {
     const r = reqCreationPromptChatSection({
       type: "vibes.diy.req-prompt-chat-section",
-      mode: "chat",
+      mode: "codegen",
       auth: { type: "device-id", token: "t" },
       chatId: "c1",
       outerTid: "tid",
@@ -77,7 +77,7 @@ describe("reqCreationPromptChatSection: selected wire shape", () => {
   it("rejects invalid slot value", () => {
     const r = reqCreationPromptChatSection({
       type: "vibes.diy.req-prompt-chat-section",
-      mode: "chat",
+      mode: "codegen",
       auth: { type: "device-id", token: "t" },
       chatId: "c1",
       outerTid: "tid",
@@ -88,10 +88,12 @@ describe("reqCreationPromptChatSection: selected wire shape", () => {
   });
 });
 
-// #2618: producers emit canonical (codegen/runtime) tokens, but the wire still
-// accepts the legacy (chat/app) tokens from old clients, and the discriminated
-// union routes each to the right request branch.
-describe("wire mode accepts legacy + canonical tokens (#2618)", () => {
+// #2618 (contract step): the wire now accepts ONLY canonical tokens. Legacy
+// chat/app are rejected by PromptLLMStyle and by both request discriminators —
+// old CLI builds that still send them have aged out. canonicalModelUsage still
+// maps the legacy aliases, but only to normalize persisted *catalog* tags
+// (ModelCapability) at rest, which is independent of the wire mode.
+describe("wire mode is canonical-only (#2618 contract step)", () => {
   const base = {
     type: "vibes.diy.req-prompt-chat-section" as const,
     auth: { type: "device-id", token: "t" },
@@ -100,14 +102,16 @@ describe("wire mode accepts legacy + canonical tokens (#2618)", () => {
     prompt: { messages: [{ role: "user", content: [{ type: "text", text: "go" }] }] },
   };
 
-  it("PromptLLMStyle accepts legacy and canonical tokens", () => {
-    for (const m of ["chat", "app", "img", "codegen", "runtime"]) {
+  it("PromptLLMStyle accepts canonical tokens and rejects legacy", () => {
+    for (const m of ["codegen", "runtime", "img"]) {
       expect(isPromptLLMStyle(m)).toBe(true);
     }
-    expect(isPromptLLMStyle("bogus")).toBe(false);
+    for (const m of ["chat", "app", "bogus"]) {
+      expect(isPromptLLMStyle(m)).toBe(false);
+    }
   });
 
-  it("canonicalModelUsage maps legacy aliases and passes canonical through", () => {
+  it("canonicalModelUsage still maps legacy catalog aliases (data-at-rest)", () => {
     expect(canonicalModelUsage("chat")).toBe("codegen");
     expect(canonicalModelUsage("app")).toBe("runtime");
     expect(canonicalModelUsage("codegen")).toBe("codegen");
@@ -115,22 +119,19 @@ describe("wire mode accepts legacy + canonical tokens (#2618)", () => {
     expect(canonicalModelUsage("img")).toBe("img");
   });
 
-  it("creation request accepts canonical 'codegen' and legacy 'chat'", () => {
-    for (const mode of ["codegen", "chat"]) {
-      expect(reqCreationPromptChatSection({ ...base, mode })).not.toBeInstanceOf(type.errors);
-    }
-    // 'app'/'runtime' must NOT validate as a creation request
+  it("creation request accepts canonical 'codegen' and rejects legacy 'chat'/'app'", () => {
+    expect(reqCreationPromptChatSection({ ...base, mode: "codegen" })).not.toBeInstanceOf(type.errors);
+    expect(reqCreationPromptChatSection({ ...base, mode: "chat" })).toBeInstanceOf(type.errors);
     expect(reqCreationPromptChatSection({ ...base, mode: "app" })).toBeInstanceOf(type.errors);
   });
 
-  it("application request accepts canonical 'runtime' and legacy 'app'", () => {
-    for (const mode of ["runtime", "app"]) {
-      expect(reqPromptApplicationChatSection({ ...base, mode })).not.toBeInstanceOf(type.errors);
-    }
+  it("application request accepts canonical 'runtime' and rejects legacy 'app'/'chat'", () => {
+    expect(reqPromptApplicationChatSection({ ...base, mode: "runtime" })).not.toBeInstanceOf(type.errors);
+    expect(reqPromptApplicationChatSection({ ...base, mode: "app" })).toBeInstanceOf(type.errors);
     expect(reqPromptApplicationChatSection({ ...base, mode: "chat" })).toBeInstanceOf(type.errors);
   });
 
-  it("the LLM union routes each mode token to the correct branch", () => {
+  it("the LLM union routes each canonical mode to the correct branch and rejects legacy", () => {
     const route = (mode: string) => {
       const r = reqPromptLLMChatSection({ ...base, mode });
       expect(r).not.toBeInstanceOf(type.errors);
@@ -140,10 +141,11 @@ describe("wire mode accepts legacy + canonical tokens (#2618)", () => {
         image: isReqPromptImageChatSection(r),
       };
     };
-    expect(route("chat")).toEqual({ creation: true, application: false, image: false });
     expect(route("codegen")).toEqual({ creation: true, application: false, image: false });
-    expect(route("app")).toEqual({ creation: false, application: true, image: false });
     expect(route("runtime")).toEqual({ creation: false, application: true, image: false });
     expect(route("img")).toEqual({ creation: false, application: false, image: true });
+    // Legacy tokens no longer validate as any LLM chat-section request.
+    expect(reqPromptLLMChatSection({ ...base, mode: "chat" })).toBeInstanceOf(type.errors);
+    expect(reqPromptLLMChatSection({ ...base, mode: "app" })).toBeInstanceOf(type.errors);
   });
 });

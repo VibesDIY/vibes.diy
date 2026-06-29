@@ -25,12 +25,12 @@ function stubApi(connection: VibeDiyApiConnection) {
     cfg: { sthis: ensureSuperThis() },
     getReadyConnection: async () => connection,
     send: async () => Result.Ok({} as never),
-    request: async () => Result.Ok({ chatId: "chat-1", ownerHandle: "o", appSlug: "a", mode: "chat" }),
+    request: async () => Result.Ok({ chatId: "chat-1", ownerHandle: "o", appSlug: "a", mode: "codegen" }),
   };
 }
 
 async function openChat(connection: VibeDiyApiConnection) {
-  const rChat = await LLMChatImpl.open({ ownerHandle: "o", appSlug: "a", mode: "chat" } as never, stubApi(connection) as never);
+  const rChat = await LLMChatImpl.open({ ownerHandle: "o", appSlug: "a", mode: "codegen" } as never, stubApi(connection) as never);
   expect(rChat.isOk()).toBe(true);
   return rChat.Ok();
 }

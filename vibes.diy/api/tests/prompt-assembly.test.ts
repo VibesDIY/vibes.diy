@@ -36,7 +36,7 @@ describe("assemblePromptPayload: slot interpolation", () => {
   it("on a 3-turn chat, payload contains synthetic ORIGINAL + LAST_EDIT + PREVIOUS user messages", async () => {
     const { appSlug, ownerHandle } = await ctx.createApp();
     const userId = await userIdForSlug(ctx, ownerHandle);
-    const rOpen = await ctx.api.openChat({ ownerHandle, appSlug, mode: "chat" });
+    const rOpen = await ctx.api.openChat({ ownerHandle, appSlug, mode: "codegen" });
     expect(rOpen.isOk()).toBe(true);
     const chat = rOpen.Ok();
     const vctx = ctx.appCtx.vibesCtx;
@@ -85,7 +85,7 @@ describe("assemblePromptPayload: slot interpolation", () => {
   it("selected:{kind:'version',fsId} loads that fsId's vfs into SELECTED_VERSION slot", async () => {
     const { appSlug, ownerHandle } = await ctx.createApp();
     const userId = await userIdForSlug(ctx, ownerHandle);
-    const rOpen = await ctx.api.openChat({ ownerHandle, appSlug, mode: "chat" });
+    const rOpen = await ctx.api.openChat({ ownerHandle, appSlug, mode: "codegen" });
     expect(rOpen.isOk()).toBe(true);
     const chat = rOpen.Ok();
     const vctx = ctx.appCtx.vibesCtx;
@@ -147,7 +147,7 @@ describe("assemblePromptPayload: slot interpolation", () => {
   it("slots.compaction='off' disables turn compaction (older code blocks render verbatim)", async () => {
     const { appSlug, ownerHandle } = await ctx.createApp();
     const userId = await userIdForSlug(ctx, ownerHandle);
-    const rOpen = await ctx.api.openChat({ ownerHandle, appSlug, mode: "chat" });
+    const rOpen = await ctx.api.openChat({ ownerHandle, appSlug, mode: "codegen" });
     expect(rOpen.isOk()).toBe(true);
     const chat = rOpen.Ok();
     const vctx = ctx.appCtx.vibesCtx;
@@ -212,7 +212,7 @@ describe("assemblePromptPayload: slot interpolation", () => {
 
   it("activeSettingsOverride injects skills/theme/title without reading app_settings (dry-run pre-alloc preview)", async () => {
     const { appSlug, ownerHandle } = await ctx.createApp();
-    const rOpen = await ctx.api.openChat({ ownerHandle, appSlug, mode: "chat" });
+    const rOpen = await ctx.api.openChat({ ownerHandle, appSlug, mode: "codegen" });
     expect(rOpen.isOk()).toBe(true);
     const chat = rOpen.Ok();
     const vctx = ctx.appCtx.vibesCtx;
@@ -247,7 +247,7 @@ describe("assemblePromptPayload: slot interpolation", () => {
 
   it("system prompt no longer contains 'CURRENT FILES (resolved so far this turn):'", async () => {
     const { appSlug, ownerHandle } = await ctx.createApp();
-    const rOpen = await ctx.api.openChat({ ownerHandle, appSlug, mode: "chat" });
+    const rOpen = await ctx.api.openChat({ ownerHandle, appSlug, mode: "codegen" });
     expect(rOpen.isOk()).toBe(true);
     const chat = rOpen.Ok();
     const vctx = ctx.appCtx.vibesCtx;

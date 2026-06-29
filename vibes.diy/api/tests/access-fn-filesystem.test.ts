@@ -362,7 +362,7 @@ export { myHandler as "my-db" }`;
     const pushRes = rPush.Ok();
     assert(isResEnsureAppSlugOk(pushRes), "expected ResEnsureAppSlugOk");
 
-    const rOpen = await api.openChat({ ownerHandle, appSlug, mode: "chat" });
+    const rOpen = await api.openChat({ ownerHandle, appSlug, mode: "codegen" });
     assert(rOpen.isOk(), "openChat failed");
     const chat = rOpen.Ok();
 
