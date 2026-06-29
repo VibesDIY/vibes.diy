@@ -149,11 +149,17 @@ Drive this without asking for permission on each merge. "Hold for Charlie" means
 - **schema / migration changes** (new tables or columns, `drizzle-kit push`),
 - **Durable Object topology** (new DO classes, alarm wiring, DO migrations),
 - **new bindings / infrastructure** (queues, egress proxies, env-gated runtime, secrets plumbing),
+- **queue behavior changes** — not just a new queue binding, but **enabling a new producer/consumer path** (even on an existing queue) or changing retry / routing / DLQ behavior,
+- **live env-flag flips** — any deploy step or config change that **turns a runtime flag on/off (or changes a default) and changes live behavior**,
 - anything **riskier** than garden-variety, or where rollback is **not** a clean `git revert`.
 
 **This holds regardless of size** — a small schema tweak still ships on its own deploy. For these, drive the PR all the way to **green + `ready-to-merge` + the Rollout watch comment**, then **stop and hand it to the human to merge**, and say _explicitly_ in the Rollout watch note that it's a hold-for-human deploy and why (so it lands deliberately and can be watched / rolled back). Do **not** merge it yourself even though everything is green.
 
-**Garden-variety changes auto-merge** per the loop: pure library code behind an off-by-default flag, docs, tests, blog seeds, small non-risky fixes — anything whose rollback is a clean revert with no deploy coupling.
+**Garden-variety changes auto-merge** per the loop: pure library code behind an off-by-default flag, docs, tests, blog seeds, small non-risky fixes — anything whose rollback is a clean revert with no deploy coupling. Crucially, **off-by-default flag _plumbing_ with no live activation is garden-variety**.
+
+So the practical split is: **plumbing can auto-merge; activation / behavior-change holds for a human.** Or, as a single test:
+
+> If a change can introduce live side effects that aren't cleanly reversible with `git revert`, treat it as risky and hold for a human merge.
 
 **When unsure which bucket a change is in, treat it as risky and hold.** The cost of a needless hold is one human click; the cost of an auto-merged risky change is a bad deploy.
 
