@@ -967,16 +967,19 @@ export default function VibeIframeWrapper() {
           When the vibe is world-readable the live app is already painting in the
           fixed iframe, so lift this layer above it (fixed + z-index) and swap the
           opaque grid for a dim, blurred scrim — otherwise the card paints behind
-          the running app and the CTAs read as floating, backing-less buttons. */}
+          the running app and the CTAs read as floating, backing-less buttons.
+          zIndex 5 keeps the lifted layer ABOVE the iframe (z-auto) but BELOW the
+          SessionSidebar (fixed z-10) so the top-left logo can still open a usable
+          sidebar over the landing card in these states (Codex P2). */}
       {!isAccessGranted && (
         <div
           className={cx(
             "flex h-screen w-screen items-center justify-center",
-            liftCardOverApp ? "fixed inset-0 z-30" : gridBackground
+            liftCardOverApp ? "fixed inset-0" : gridBackground
           )}
           style={
             liftCardOverApp
-              ? { background: "rgba(0,0,0,0.6)", backdropFilter: "blur(3px)", WebkitBackdropFilter: "blur(3px)" }
+              ? { zIndex: 5, background: "rgba(0,0,0,0.6)", backdropFilter: "blur(3px)", WebkitBackdropFilter: "blur(3px)" }
               : undefined
           }
         >
