@@ -146,19 +146,22 @@ Decide one of:
 
 Risk factors:
 
-| Factor                  | Lower Risk                         | Higher Risk                                                    |
-| ----------------------- | ---------------------------------- | -------------------------------------------------------------- |
-| Bump type               | Patch on `>=1.0`                   | Major, or `0.x → 0.y`                                          |
-| Listed as               | `devDependencies`                  | `dependencies` (ships)                                         |
-| Usage scope             | 1-2 files, build-only              | Widespread, in LLM/sync/hosting hot path                       |
-| Feature area            | Linting, storybook, dev tooling    | Fireproof sync, LLM streaming, Cloudflare hosting              |
-| Changelog               | Bug fixes only                     | API changes, dropped Node/React, ESM/CJS export-map shifts     |
-| Peer-dep change         | None                               | Requires newer React / Node / TypeScript                       |
-| Lockfile diff           | Single line                        | Cascades across many transitives                               |
-| Workspace coverage      | Bumped consistently                | Single-workspace bump (will fail `pnpm dedupe --check`)        |
-| Sibling family          | Standalone, or whole family bumped | Partial-family bump (e.g., `@vitest/browser` without `vitest`) |
-| Security advisory       | No                                 | Yes (merge sooner)                                             |
-| `dependabot.yml` ignore | None                               | Violates a configured rule → `Hold`                            |
+| Factor                  | Lower Risk                         | Higher Risk                                                          |
+| ----------------------- | ---------------------------------- | -------------------------------------------------------------------- |
+| Bump type               | Patch on `>=1.0`                   | Major, or `0.x → 0.y`                                                |
+| Listed as               | `devDependencies`                  | `dependencies` (ships)                                               |
+| Usage scope             | 1-2 files, build-only              | Widespread, in LLM/sync/hosting hot path                             |
+| Feature area            | Linting, storybook, dev tooling    | Fireproof sync, LLM streaming, Cloudflare hosting                    |
+| Changelog               | Bug fixes only                     | API changes, dropped Node/React, ESM/CJS export-map shifts           |
+| Peer-dep change         | None                               | Requires newer React / Node / TypeScript                             |
+| Lockfile diff           | Single line                        | Cascades across many transitives                                     |
+| Workspace coverage      | Bumped consistently                | Single-workspace bump (will fail `pnpm dedupe --check`)              |
+| Sibling family          | Standalone, or whole family bumped | Partial-family bump (e.g., `@vitest/browser` without `vitest`)       |
+| Security advisory       | No                                 | Yes (merge sooner)                                                   |
+| `dependabot.yml` ignore | None                               | Violates a configured rule → `Hold`                                  |
+| Age vs. the batch       | Same age as the rest of the batch  | Conspicuously older — survived a prior cycle (probably for a reason) |
+
+**Stale-skipped items.** A PR that's much older than the rest of the batch has usually been seen and passed over before. Treat that as signal: it's probably risky or blocked for a reason that isn't in the diff. Keep your verdict honest, but **don't fold it into a combined PR** (Step 6) — surface it as its own line so the decision to merge it is deliberate, never a side effect of draining the queue.
 
 **Do not** recommend running the test suite — CI handles `pnpm check`. Instead, call out things CI won't catch:
 
@@ -237,7 +240,34 @@ For grouped/multi-package PRs, one section per package and one combined recommen
 - #1180 react 19.2.5 → 20.0.0 — violates dependabot.yml ignore rule (only patches allowed)
 ```
 
-### Step 6: Offer to post findings as PR comments
+### Step 6: Bundle the safe group into one PR
+
+After the report, offer to roll the low- and mid-risk updates into **one** combined PR so they land (and get validated) together instead of as N separate merges. This is the fastest way to drain a saturated queue (see the 20/20 capacity check in Step 1).
+
+> Want me to bundle the safe updates into a single PR? (yes / no / selective)
+
+**What goes in the bundle:** every PR whose verdict is **Merge** or **Verify** — the low- and mid-risk tier. One combined PR is safe for these because CI (`pnpm check`) plus the preview validation below catch the only realistic failure modes, and a single lockfile resolution is cleaner than N racing ones.
+
+**What stays out of the bundle — never auto-include:**
+
+- **Hold** and **Investigate** verdicts. These need code changes or human judgment first; they get their own dedicated PRs (e.g. the React Router 8 family migration, a `cookie` 2.0 call-site rewrite).
+- **Stale-skipped items.** If a PR is conspicuously older than the rest of the batch — it sat through a previous weekly cycle and got left out — there is almost always a reason it wasn't merged before (an unresolved major, a known-flaky upgrade). **Leave it out by default**, even if its verdict is Merge/Verify. Re-surface it as its own line ("still skipping #1884 multiformats 14.0.0 — 39d old, left out of a prior batch; handle separately") rather than silently folding it into the group. Example: a `multiformats` 13→14 major that's been open 39 days while everything else in the batch is 1–12 days old. Don't let the bundle become the thing that finally sneaks a long-deferred risky bump through.
+- Partial coordinated-family bumps that are `Hold` (a family member without its siblings).
+
+**Building the branch** (work on the session's designated branch, not a Dependabot branch):
+
+1. For each bundled PR, set the dependency floor to the Dependabot target version (`^<new>`, or exact for pinned deps like `@typescript/native-preview`) in **every** workspace `package.json` where it's declared — `grep -rn '"<pkg>":' --include=package.json` to find them all. Missing a workspace will fail `pnpm dedupe --check`.
+2. `pnpm install` to regenerate `pnpm-lock.yaml`, then `pnpm dedupe`.
+3. Gate locally before pushing:
+   - `pnpm dedupe --check` must exit `0` (the workspace-consistency gate CI enforces). Pre-existing peer-dep WARNs that also fire on `main` are not failures — confirm they predate your change.
+   - `pnpm fast-check` (format + build + lint). Reserve full `pnpm check` for higher-risk bundles or let CI run it.
+4. Push, open the PR. Title it for the goal ("Bundle N low/mid-risk Dependabot updates"), list every bundled `#NNNN` in the body, and call out what was deliberately excluded and why.
+
+**Validate against the preview deploy** (catches what CI can't — see Step 4's "things CI won't catch"): once the PR's preview is up, smoke-test with the `vibes-diy` CLI and a browser (chrome-devtools MCP) against the **preview URL**, not local. Exercise anything the bundle touches — e.g. an `@clerk/*` bump means a sign-in + token round-trip; a `shiki`/Monaco bump means open the editor and confirm highlighting. Record the result on the PR.
+
+**On merge — close the bundled originals yourself.** GitHub will _not_ auto-close them: the closing commits live on your branch, not Dependabot's. After the group PR merges, close each bundled Dependabot PR with a one-line comment pointing at it ("Superseded by #<group> — bumped there and merged."). Skip this and the queue stays falsely saturated. Stale-skipped items you excluded stay open untouched.
+
+### Step 7: Offer to post findings as PR comments
 
 After the report, ask once:
 
