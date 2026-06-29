@@ -315,8 +315,10 @@ describe("useInVibeGeneration", () => {
     await waitFor(() => expect(view.result.current.phase).toBe("idle"));
     act(() => view.result.current.saveCode({ buffer: SAVE_BUFFER, filePath: "/App.jsx", lang: "jsx" }));
     await waitFor(() => expect(view.result.current.saveState).toBe("saving"));
-    // The canonical post-persist block.end carries the new fsId; the hook resolves
-    // it from persistedFsRef and re-pins (not navigate).
+    // The save's stream opens a block, then lands the canonical post-persist
+    // block.end carrying the new fsId (a block.end with no open block is dropped
+    // by the reducer). The hook resolves the fsId from persistedFsRef and re-pins.
+    await act(async () => fakeChat.emitBlockBegin("stream-1"));
     await act(async () => fakeChat.emitBlockEnd("zSAVED-1"));
     await waitFor(() => expect(view.result.current.saveState).toBe("rebuilt"));
     expect(onSavedFsId).toHaveBeenCalledWith("zSAVED-1");
@@ -336,6 +338,7 @@ describe("useInVibeGeneration", () => {
     // Retry (the edit is still recoverable) — promptFS now succeeds and the save settles.
     act(() => view.result.current.saveCode({ buffer: SAVE_BUFFER, filePath: "/App.jsx", lang: "jsx" }));
     await waitFor(() => expect(view.result.current.saveState).toBe("saving"));
+    await act(async () => fakeChat.emitBlockBegin("stream-1"));
     await act(async () => fakeChat.emitBlockEnd("zSAVED-RETRY"));
     await waitFor(() => expect(view.result.current.saveState).toBe("rebuilt"));
     expect(onSavedFsId).toHaveBeenCalledWith("zSAVED-RETRY");
