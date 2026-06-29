@@ -235,15 +235,23 @@ the schedule.
   interval units + inclusive boundaries (5s, 1h); sub-5s / over-1h / malformed rejection;
   scheduled-without-interval error; interval-without-scheduled ignored; substring guard.
 
-#### B2b — `processBackendBindings` + the `backendFunctionBindings` table (persistence + wiring) — _next_
+#### B2b — `processBackendBindings` + the `backendFunctionBindings` table (persistence + wiring) — ✅ implemented
 
-Clone `processAccessBindings`: detect `/backend.js`, upsert a `backendFunctionBindings` row
-(`{ownerHandle, appSlug, cid, assetUri, handlers, intervalMs, updated}`) using the B2a parse result,
-delete on removal; wire it into the push path (`ensure-app-slug-item.ts`) next to
-`processAccessBindings`. Carries the new D1/pg table + Drizzle migration — intentionally landed with
-(or just before) B3's DO that reads it, so no unused schema ships early.
+Clones `processAccessBindings`: detects `/backend.js`, upserts a single `backendFunctionBindings` row
+keyed by `{ownerHandle, appSlug}` (`{backendCid, backendAssetUri, handlers (JSON), intervalMs, updated}`)
+from the B2a parse result, deletes on removal. Wired into the push path (`ensure-app-slug-item.ts`)
+next to `processAccessBindings`.
 
-- **Tests:** detection, upsert/delete on removal, handlers + interval persisted from the parse result.
+- **Table:** `BackendFunctionBindings` added to both pg + sqlite schemas and the tables registry. The
+  repo is schema-as-source-of-truth (`drizzle-kit push`), so there's **no hand-written migration**;
+  test/dev/prod DBs converge to the schema on push.
+- **Interval rejection is an early pre-check.** The schedule is validated against `req.fileSystem`
+  **before** any storage/DB mutation, so a bad interval returns a clean `app-slug-invalid` `res-error`
+  with **no partial commit**; persistence runs after `ensureApps`, by which point the config is known
+  valid.
+- **Tests** (`api/tests/backend-bindings.test.ts`, end-to-end via `ensureAppSlug` against a real test
+  DB): registers handlers + interval on first push; updates interval on re-push; removes the row when
+  `backend.js` is dropped; rejects a sub-5s interval (`app-slug-invalid`) and writes no binding.
 
 ### Slice B3 — `_api` routing → BackendDO.fetch → isolate
 

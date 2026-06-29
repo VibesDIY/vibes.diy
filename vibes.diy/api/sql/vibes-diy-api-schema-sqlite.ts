@@ -373,6 +373,24 @@ export const sqlAccessFunctionBindings = sqliteTable(
   ]
 );
 
+// One backend.js per app (#2856 B2b), keyed by (ownerHandle, appSlug). CID-keyed
+// like AccessFunctionBindings. `handlers` is a JSON array of the trigger exports
+// present (e.g. ["fetch","scheduled"]); `intervalMs` is the validated
+// config.scheduled.interval in ms (null = no schedule).
+export const sqlBackendFunctionBindings = sqliteTable(
+  "BackendFunctionBindings",
+  {
+    ownerHandle: text("userSlug").notNull(),
+    appSlug: text().notNull(),
+    backendCid: text().notNull(),
+    backendAssetUri: text(), // nullable — full storage URI
+    handlers: text().notNull(), // JSON array of trigger export names
+    intervalMs: int(), // nullable — validated scheduled interval in ms
+    updated: text().notNull(),
+  },
+  (table) => [primaryKey({ columns: [table.ownerHandle, table.appSlug] })]
+);
+
 export const sqlAccessFnOutputs = sqliteTable(
   "AccessFnOutputs",
   {
