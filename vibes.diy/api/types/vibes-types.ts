@@ -1,9 +1,16 @@
 import { type } from "arktype";
 import { FPApiParameters } from "@vibes.diy/identity";
 import { VibesSvcEnv } from "./vibes-diy-serv-ctx.js";
-// Type-only (erased at runtime): the SSR isolate binding lives in vibe-runtime;
-// the api worker bundles from monorepo source, so the type is reached relatively.
-import type { WorkerLoaderBinding } from "../../vibe/runtime/worker-loader-executor.js";
+
+// Structural shape of the Cloudflare Worker Loader (`env.LOADER`) binding for
+// vibe SSR's isolate executor (#2802 slice 4). Defined here — not imported from
+// `vibe-runtime` — so `@vibes.diy/api-types` stays self-contained when
+// packed/published (a relative import would dangle in the tarball; per Codex
+// review). Structurally compatible with vibe-runtime's `WorkerLoaderBinding`, so
+// `params.vibes.loader` flows to `attemptVibeSsr` without a cast.
+export interface WorkerLoaderBinding {
+  get(id: string, factory: () => unknown): { getEntrypoint(): { fetch(request: Request): Promise<Response> } };
+}
 
 export interface PkgRepos {
   readonly workspace: string;
