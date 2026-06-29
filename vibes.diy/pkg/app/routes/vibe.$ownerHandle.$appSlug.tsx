@@ -37,7 +37,7 @@ import { isMetaScreenShot, isMetaTitle, type ResGetAppByFsId, type VibesFPApiPar
 import { computeCardVariant } from "./vibe-card-variant.js";
 import { readIntent, withIntent, withoutIntent } from "./vibe-intent.js";
 import { forkDestination } from "./vibe-fork.js";
-import { buildPinnedIframeUrl, isFreshPersistedEdit, resolveOwnerDraft } from "./vibe-draft-pin.js";
+import { buildPinnedIframeUrl, resolveOwnerDraft } from "./vibe-draft-pin.js";
 import { notifyRecentVibesChanged } from "../hooks/useRecentVibes.js";
 import { adminModeStorageKey } from "../lib/admin-mode.js";
 import { RUNTIME_PREVIEW_IFRAME_ALLOW, RUNTIME_PREVIEW_IFRAME_SANDBOX } from "../lib/iframe-policy.js";
@@ -157,11 +157,6 @@ export default function VibeIframeWrapper() {
   // freshly-published production).
   const [publishing, setPublishing] = useState(false);
   const [publishBump, setPublishBump] = useState(0);
-  // Bumped when an in-place edit completes (the generation falls out of flight),
-  // re-running the draft resolver so the "Draft · unpublished" badge + banner
-  // appear immediately — without it the resolver only re-runs on mount, so a fresh
-  // edit's draft state stays hidden until a page reload.
-  const [draftRecheckBump, setDraftRecheckBump] = useState(0);
   const isNetworkActive = useIframeApiInFlight();
   // Gate the post-iframe chrome (overlays, pill, sidebar) until after client
   // hydration. The chrome uses createPortal(..., document.body), which calls
@@ -277,20 +272,6 @@ export default function VibeIframeWrapper() {
     if (generation.isGenerating) return;
     setCardChips(generation.hasLocalEdit ? generation.suggestionChips : editChips);
   }, [generation.isGenerating, generation.hasLocalEdit, generation.suggestionChips, editChips]);
-
-  // When an in-place edit PERSISTS (a new fsId arrives on the canonical post-persist
-  // `block.end`), the owner's latest dev fsId now exists server-side. Bump the draft
-  // resolver so the badge + banner surface right away — the resolver's own deps
-  // (isOwner/fsId/slug/publish) don't change on a follow-up edit, so without this it'd
-  // stay stale until reload. Keyed on the persisted fsId rather than the in-flight
-  // flag falling: that flag drops at the EARLY `prompt.block-end`, before the server
-  // persist, so re-resolving then could read a stale `ownerLatest` row (#2839 review).
-  const prevPersistedFsIdRef = useRef(generation.persistedFsId);
-  useEffect(() => {
-    const fresh = isFreshPersistedEdit(prevPersistedFsIdRef.current, generation.persistedFsId, generation.hasLocalEdit);
-    prevPersistedFsIdRef.current = generation.persistedFsId;
-    if (fresh) setDraftRecheckBump((n) => n + 1);
-  }, [generation.persistedFsId, generation.hasLocalEdit]);
 
   // On the forked /vibe page (?prompt64 carried from a seamless non-owner fork),
   // auto-fire the generation once ownership resolves to us — only when isOwner is
@@ -498,30 +479,16 @@ export default function VibeIframeWrapper() {
   // up-to-date → leave the production paint as is. Versioned URLs (route-param `fsId`)
   // and non-owners are guarded out, so the public surface is unchanged.
   //
-  // The resolver also re-runs after an in-place edit settles (`draftRecheckBump`) so
-  // the badge/banner appear without a reload. On THAT path the iframe is already
-  // showing the new draft (the generation hot-swapped its source in place), so we
-  // update the badge state but deliberately skip re-pinning `draftFsId` — flipping it
-  // would change the iframe `src` and reload the runtime, discarding the hot-swap for
-  // identical code (a visible flash after every edit). Mount/publish runs still pin.
-  const draftRecheckHandledRef = useRef(draftRecheckBump);
-  // Scope the draft-recheck tracking to the CURRENT vibe. This route component is
-  // reused across client-side navigation between /vibe pages, so the tracking refs
-  // would otherwise carry the previous vibe's state — and a generation still settling
-  // across the nav could mark the next vibe's FIRST resolve as a recheck and skip its
-  // iframe pin (Charlie review #2839). Reset synchronously during render (mirrors the
-  // hook's activeVibeKeyRef guard) so it lands before any effect reads the refs:
-  // `prevPersistedFsId` clears (no fsId carries across vibes) and `handledRef` re-syncs
-  // to the current bump (the new vibe's mount resolve reads isRecheck=false → pins).
-  const recheckVibeKeyRef = useRef(`${ownerHandle}/${appSlug}`);
-  if (recheckVibeKeyRef.current !== `${ownerHandle}/${appSlug}`) {
-    recheckVibeKeyRef.current = `${ownerHandle}/${appSlug}`;
-    prevPersistedFsIdRef.current = undefined;
-    draftRecheckHandledRef.current = draftRecheckBump;
-  }
+  // The resolver also re-runs after an in-place edit PERSISTS — `generation.persistedFsId`
+  // (the fsId of the canonical post-persist `block.end`) is in the deps, so a settled
+  // edit re-triggers it. On that path the iframe is already showing the new draft (the
+  // generation hot-swapped its source in place), and `resolveOwnerDraft` detects this by
+  // comparing the resolved fsId against the hot-swapped one — skipping the re-pin so a
+  // `draftFsId` change doesn't reload identical code. The comparison is timing-independent,
+  // so cross-vibe navigation can't synthesize a skipped pin (Charlie review #2839): a
+  // different vibe's resolved fsId never equals this one's persistedFsId. Mount and publish
+  // both pin (no hot-swap / the resolve flips to production).
   useEffect(() => {
-    const isRecheck = draftRecheckBump !== draftRecheckHandledRef.current;
-    draftRecheckHandledRef.current = draftRecheckBump;
     if (!isOwner || fsId || !ownerHandle || !appSlug) {
       setIsDraft(false);
       setDraftFsId(undefined);
@@ -530,16 +497,16 @@ export default function VibeIframeWrapper() {
     let cancelled = false;
     void vctx.sharedApi.getAppByFsId({ appSlug, ownerHandle, selectMode: "ownerLatest" }).then((rRes) => {
       if (cancelled || rRes.isErr()) return;
-      const { isDraft: nextIsDraft, pinFsId, repin } = resolveOwnerDraft(rRes.Ok(), isRecheck);
+      const { isDraft: nextIsDraft, pinFsId, repin } = resolveOwnerDraft(rRes.Ok(), generation.persistedFsId);
       setIsDraft(nextIsDraft);
-      // Skip the re-pin on a post-edit recheck — the iframe already hot-swapped to
-      // this draft, so a `draftFsId` change would only force a redundant reload.
+      // Skip the re-pin only when the iframe already shows this exact draft via the
+      // in-place hot-swap — otherwise a `draftFsId` change would force a redundant reload.
       if (repin) setDraftFsId(pinFsId);
     });
     return () => {
       cancelled = true;
     };
-  }, [isOwner, fsId, ownerHandle, appSlug, publishBump, draftRecheckBump, vctx.sharedApi]);
+  }, [isOwner, fsId, ownerHandle, appSlug, publishBump, generation.persistedFsId, vctx.sharedApi]);
 
   useEffect(() => {
     if (!isOwner || !ownerHandle || !appSlug) {

@@ -16,28 +16,21 @@ export function pinnedIframeFsId(fsId: string | undefined, draftFsId: string | u
   return fsId ?? draftFsId;
 }
 
-// #2772/#2839 — a fresh in-place edit settling means the owner now has an
-// unpublished draft server-side. The draft resolver's own deps (owner/fsId/slug/
-// publish) don't change on a follow-up edit, so the badge + banner would otherwise
-// stay stale until a reload. Re-resolve when a NEW persisted fsId arrives — the fsId
-// of the canonical post-persist `block.end` (BlockEndMsg with fsRef), which lands
-// only after the server's R2/DB persist. We deliberately key off this, NOT the early
-// `prompt.block-end` that flips the in-flight flag (it fires BEFORE the persist, so
-// re-resolving then races a stale `ownerLatest` read; #2839 review). Gated on
-// `hasLocalEdit` so replayed history block.ends (baseline, no edit this session)
-// don't fire a spurious recheck.
-export function isFreshPersistedEdit(prevFsId: string | undefined, nextFsId: string | undefined, hasLocalEdit: boolean): boolean {
-  return hasLocalEdit && nextFsId !== undefined && nextFsId !== prevFsId;
-}
-
 // The owner-latest resolve, reduced to the two UI decisions: does the badge/banner
 // show (`isDraft`), and should the iframe (re)pin to this draft fsId. A `dev` row
 // owned by the viewer is the only draft; anything else is "up to date" → no badge,
-// clear the pin. On a post-edit recheck (`isRecheck`) the iframe already shows the
-// draft (the generation hot-swapped its source in place), so we keep the badge but
-// skip the re-pin — flipping `draftFsId` would change the iframe `src` and reload the
-// runtime for identical code (a visible flash after every edit). Mount/publish runs
-// (isRecheck=false) still pin.
+// clear the pin.
+//
+// The re-pin decision is a TIMING-INDEPENDENT invariant (#2839 review): skip the
+// re-pin only when the resolved draft fsId is exactly the one already hot-swapped
+// into the live iframe (`hotSwappedFsId` = the generation's `persistedFsId`). That
+// happens precisely after an in-place edit on the current vibe — the generation
+// pushed this draft's source in place, so re-pinning would change the iframe `src`
+// and reload identical code (a visible flash). On EVERY other path the two differ
+// (or `hotSwappedFsId` is undefined) so we pin: mount (no hot-swap yet), cross-vibe
+// navigation (a different vibe's fsId can never equal this one's), and publish (the
+// resolve flips to `production`, taking the not-a-draft branch). No bump counters or
+// recheck flags — so navigation cannot synthesize a "skip the pin" signal.
 export interface OwnerLatestResolve {
   readonly error?: unknown;
   readonly grant?: string;
@@ -49,14 +42,15 @@ export interface OwnerDraftDecision {
   readonly isDraft: boolean;
   /** fsId to pass to `setDraftFsId` when `repin` is true. */
   readonly pinFsId: string | undefined;
-  /** Whether to call `setDraftFsId(pinFsId)` at all (false on a post-edit recheck). */
+  /** Whether to call `setDraftFsId(pinFsId)` at all (false only when the iframe
+   *  already shows this exact draft via an in-place hot-swap). */
   readonly repin: boolean;
 }
 
-export function resolveOwnerDraft(res: OwnerLatestResolve, isRecheck: boolean): OwnerDraftDecision {
+export function resolveOwnerDraft(res: OwnerLatestResolve, hotSwappedFsId: string | undefined): OwnerDraftDecision {
   const isDevDraft = !res.error && res.grant === "owner" && !!res.fsId && res.mode === "dev";
   if (!isDevDraft) return { isDraft: false, pinFsId: undefined, repin: true };
-  return { isDraft: true, pinFsId: res.fsId, repin: !isRecheck };
+  return { isDraft: true, pinFsId: res.fsId, repin: res.fsId !== hotSwappedFsId };
 }
 
 export interface PinnedIframeUrlOpts {
