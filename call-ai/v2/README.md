@@ -100,11 +100,11 @@ import {
   isCodeLine,
   isBlockImage,
 } from "call-ai/v2";
-import { ensureSuperThis } from "@fireproof/core-runtime";
+import { ensureRuntimeContext } from "@vibes.diy/identity";
 
-const sthis = ensureSuperThis();
-const streamId = sthis.nextId().str;
-const createId = () => sthis.nextId().str;
+const rt = ensureRuntimeContext();
+const streamId = rt.nextId().str;
+const createId = () => rt.nextId().str;
 
 const pipeline = response.body
   .pipeThrough(createStatsCollector(streamId, 1000))
