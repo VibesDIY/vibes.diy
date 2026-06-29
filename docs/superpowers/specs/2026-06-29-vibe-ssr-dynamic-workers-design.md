@@ -260,6 +260,95 @@ Route wiring, caching, OG/meta, the live-query/quiesce data path, full vibe depe
 import-map resolution in the Node path, a live Worker Loader load, and access-consistent
 per-viewer SSR. All deferred to slices 3–6 above.
 
+## Slice 4 (this PR) — route wiring + hydrate marker
+
+**Sequencing note: slice 4 ahead of slice 3.** The follow-up list numbers the data path (3) before
+route wiring (4), but route wiring is the _enabler_ — without it the slice-2 executor renders to
+nothing a user can see, and the data path (3) can't be exercised end-to-end until a render lands in
+a page. Slice 4 is also the higher-confidence cut: it's almost entirely CI-verifiable behind the
+default-`off` flag and carries **no** dependency on the beta `env.LOADER` binding, whereas slice 3
+needs it plus a Fireproof reader. So we wire the seam first, then slot the data path in behind it.
+
+### Where it plugs in
+
+The vibe iframe document is **already server-rendered React on the Cloudflare Worker**:
+`api/svc/intern/render-vibe.ts` assembles a `VibesDiyServCtx` (`vsctx`) and streams
+`renderToReadableStream(VibePage(vsctx))` (render-vibe.ts:239). `VibePage`
+(`api/svc/intern/components/vibe-page.tsx:65`) emits an **empty** `<div class="vibe-app-container" />`
+plus an inline `<script type="module">` (`vsctx.mountJS`) that imports the entry component from
+`/~<fsId>~/App.jsx` and calls `mountVibe([App], { usrEnv, viewerEnv, accessFnBindings })` on the
+client. The vibe component is _referenced_ here, not executed — the browser fetches it as an asset.
+
+Slice 4 makes the Worker optionally **execute** the entry component server-side and inject its HTML
+into the container:
+
+1. **Select the executor** from env in `render-vibe.ts`:
+   `selectExecutor(parseVibesSsrMode(env.VIBES_SSR), { loader: env.LOADER })`. `off` (default) ⇒
+   `undefined` ⇒ skip SSR, ship today's empty container (exact current behavior, zero risk).
+2. **Acquire the entry source.** The executor needs the entry component's raw TSX. The
+   convention-entry items (`/App.jsx` | `/App.tsx`, already resolved at render-vibe.ts:130) carry the
+   source bytes served at `/~<fsId>~/<file>`; read those and hand the source to the executor.
+3. **Render + inject.** `await executor.render({ source, mountParams })` → `{ html }`. Add a new
+   optional `vsctx.ssrHtml`; `VibePage` renders
+   `<div class="vibe-app-container" data-vibe-ssr dangerouslySetInnerHTML={{ __html: ssrHtml }} />`
+   when present, else the empty `<div class="vibe-app-container" />` unchanged. The injected string is
+   exactly `renderVibeToString(comps, mountParams)` (slice 1), and `mountVibe` rebuilds the **same**
+   tree — byte-identical by construction, so hydration matches. The outer `VibePage` shell and the
+   inner vibe HTML are two independent `react-dom/server` passes stitched via
+   `dangerouslySetInnerHTML` (opaque to the shell's React), so there's no cross-render reconciliation.
+4. **Tighten `mountVibe` to the marker.** Replace slice 1's `container.hasChildNodes()` heuristic
+   with an explicit `container.getAttribute("data-vibe-ssr") !== null` check (the slice-1 spec already
+   flagged this as the slice-4 follow-up, per @CharlieHelps on #2823). `hydrateRoot` only when the
+   marker is present; empty/marker-less container keeps today's `createRoot` client render.
+
+### Fallback discipline (load-bearing)
+
+SSR is an optimization, never a correctness dependency. If the executor throws, times out, or the
+source can't be acquired, `render-vibe.ts` **falls back to the empty container** (client-only render,
+today's path) and logs a structured reason — it never 500s the page or blocks first byte. This is the
+"never add a fallback — fix the real path" rule's _legitimate_ exception: the client render IS the
+real path; SSR is additive.
+
+### Scope decisions (sharp, CI-verifiable cut)
+
+- **Single-file entry first.** A vibe whose `App.{jsx,tsx}` imports sibling files (`./Badge.jsx`)
+  needs those modules resolved for the executor too — that is exactly the **relative / full
+  dependency-graph resolution** slice 2 explicitly deferred (`NodeExecutor` resolves bare specifiers
+  only; the Loader path needs bundling). Slice 4 SSRs **single-file entries** (no unresolved relative
+  imports); a vibe with relative imports cleanly **falls back to client-only** (per above) rather than
+  rendering wrong. Multi-file SSR rides the slice-2 dep-resolution carry-forward, landed when the data
+  path / bundling does.
+- **Production stays `off`.** `NodeExecutor` cannot run on the Cloudflare Worker (it uses
+  `Buffer` / `import.meta.resolve` / `data:`-URL import — Node-only); the Worker path needs
+  `WorkerLoaderExecutor` (beta, gated). So in prod `VIBES_SSR=off` until Loader is GA — slice 4 lands
+  the **fully-tested wiring + marker contract dormant behind the flag**, exactly as slice 2 landed the
+  executors dormant. CI exercises the wiring with `VIBES_SSR=node` (node env) / an injected executor.
+- **Caching + OG/meta unchanged this cut.** The serve path already does ETag + `no-cache,
+must-revalidate` (unversioned) / `max-age=86400` (versioned), and the ETag already keys on
+  `fs.meta`; that's adequate for an SSR payload derived from the same `fsId`+meta. An SSR-HTML
+  LRU/Cache-API and content-derived OG/meta are deferred (the latter is the slice-5 Markdown layer).
+  No crawler-visible change either: the iframe SSR is still inside the cross-origin sandbox (see SEO
+  model) — slice 4 buys **first paint**, not SEO.
+
+### Tests (CI-runnable today)
+
+- **Node SSR project** (`tests/app/ssr`, node env):
+  - `render-vibe` wiring (with an injected `NodeExecutor` / fake executor): a single-file vibe →
+    response HTML contains `data-vibe-ssr` and the component's output inside `vibe-app-container`.
+  - `VIBES_SSR=off` (no executor) → empty `<div class="vibe-app-container">`, no marker (regression
+    guard on today's behavior).
+  - Executor throws → falls back to the empty container, no 500, structured reason logged.
+  - A vibe with a relative import → falls back to client-only (not a wrong render).
+- **Browser project** (`tests/app`, real DOM): `mountVibe` hydrates **only** when `data-vibe-ssr` is
+  present; a marker-less container with incidental child nodes uses `createRoot` (tightening guard vs.
+  the slice-1 `hasChildNodes()` behavior).
+
+### Out of scope for slice 4 (explicit YAGNI)
+
+The live-query/quiesce data path (slice 3), multi-file/relative dependency resolution, an SSR-HTML
+LRU/Cache-API, content-derived OG/meta + the Markdown no-JS SEO layer (slice 5), a live Worker Loader
+load, and per-viewer access-consistent SSR (slice 6).
+
 ## SEO & the iframe boundary
 
 The vibe must run in a cross-origin **sandboxed iframe** for safety (untrusted code execution).
