@@ -170,7 +170,7 @@ prompt.
 Filed as a separate issue (see VibesDIY/vibes.diy issue link in the PR that
 introduces this harness). **Until that lands**, v1 of the harness can:
 
-- (a) stub edit turns by calling `api.openChat({ userHandle, appSlug, mode: "chat" })` directly with the existing slug — the SDK supports this, the CLI just doesn't expose it. This is fine for the harness since we're already in-process.
+- (a) stub edit turns by calling `api.openChat({ userHandle, appSlug, mode: "codegen" })` directly with the existing slug — the SDK supports this, the CLI just doesn't expose it. This is fine for the harness since we're already in-process.
 - (b) generate single-turn-only and accept the lower error rate.
 
 Recommend (a) — it gives us the multi-pass corpus immediately without waiting
@@ -195,7 +195,7 @@ ultimately use.
 ### Step 2 — Implement `run.ts` (single-run archiver)
 
 1. Read auth from existing CLI credentials store.
-2. `api.openChat({ userHandle: "eval", prompt, mode: "chat" })`, then
+2. `api.openChat({ userHandle: "eval", prompt, mode: "codegen" })`, then
    `chat.prompt(...)`.
 3. Tee `chat.sectionStream`:
    - branch A → `sections.jsonl` writer (JSON.stringify each event, `\n`).
