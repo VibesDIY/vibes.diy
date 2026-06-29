@@ -1,0 +1,503 @@
+{{!--
+{
+  "layout": "standard",
+  "title": "How Vibes DIY Gets Built | 10 Facts From the Build Log",
+  "description": "Ten true things about building Vibes DIY — 474 days, 4,027 commits, 218,000 lines of code, robots on the team, and the real people who showed up. A look inside the making of a no-code app builder.",
+  "ogUrl": "https://good.vibes.diy/built/",
+  "source": "built"
+}
+--}}
+
+<style>
+        @import url('https://fonts.cdnfonts.com/css/alte-haas-grotesk');
+
+        :root {
+            --os-gray: #7A7A7A;
+            --grid-gray: #CCCDC8;
+            --goldenrod: #FEDD00;
+            --ruby: #DA291C;
+            --bluey: #009ACE;
+            --sprout-green: #16A34A;
+            --flame-orange: #FF6B00;
+            --ivory: #FFFFF0;
+            --black: #231F20;
+            --white: #FFFFFF;
+            --grid-line: rgba(255, 255, 255, 0.5);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Alte Haas Grotesk', sans-serif;
+            background-color: var(--grid-gray);
+            color: var(--black);
+            line-height: 1.6;
+            background-image:
+                linear-gradient(var(--grid-line) 1px, transparent 1px),
+                linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
+            background-size: 40px 40px;
+            min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        header {
+            padding: 1.5rem 2rem;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: linear-gradient(to bottom, var(--grid-gray) 60%, transparent);
+        }
+        .logo-link { display: block; text-decoration: none; }
+        .logo-img { height: 88px; width: auto; display: block; }
+
+        /* monospace data label used throughout */
+        .mono {
+            font-family: 'SFMono-Regular', 'Menlo', 'Consolas', monospace;
+        }
+
+        /* ── Masthead ── */
+        .build-hero {
+            max-width: 1180px;
+            margin: 0 auto;
+            padding: 2rem 2rem 1rem;
+        }
+        .build-hero-inner {
+            background: var(--black);
+            color: var(--ivory);
+            border-radius: 24px;
+            padding: 4rem 3.25rem 3.5rem;
+            position: relative;
+            overflow: hidden;
+        }
+        .build-hero-inner::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background-image:
+                linear-gradient(rgba(255,255,255,0.045) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,255,255,0.045) 1px, transparent 1px);
+            background-size: 40px 40px;
+            pointer-events: none;
+        }
+        .build-hero-inner > * { position: relative; }
+        .hero-overline {
+            font-size: 0.72rem;
+            letter-spacing: 0.32em;
+            text-transform: uppercase;
+            color: var(--goldenrod);
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.65rem;
+        }
+        .hero-overline .dot {
+            width: 8px; height: 8px; border-radius: 50%;
+            background: var(--sprout-green);
+            box-shadow: 0 0 0 0 rgba(22,163,74,0.7);
+            animation: pulse 2.2s infinite;
+        }
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(22,163,74,0.6); }
+            70% { box-shadow: 0 0 0 9px rgba(22,163,74,0); }
+            100% { box-shadow: 0 0 0 0 rgba(22,163,74,0); }
+        }
+        .build-hero h1 {
+            font-size: clamp(2.6rem, 6.5vw, 5rem);
+            font-weight: bold;
+            line-height: 0.98;
+            letter-spacing: -0.035em;
+            margin-bottom: 1.5rem;
+            max-width: 14ch;
+        }
+        .build-hero h1 .hl { color: var(--goldenrod); }
+        .build-hero .lede {
+            font-size: 1.2rem;
+            opacity: 0.75;
+            max-width: 56ch;
+        }
+
+        /* ── Stat ribbon ── */
+        .stat-ribbon {
+            max-width: 1180px;
+            margin: 0 auto;
+            padding: 1.75rem 2rem 0;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1rem;
+        }
+        .stat {
+            background: var(--ivory);
+            border: 3px solid var(--black);
+            border-radius: 16px;
+            padding: 1.5rem 1.5rem 1.35rem;
+            box-shadow: 6px 6px 0 var(--black);
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+        }
+        .stat .num {
+            font-size: clamp(2.2rem, 4.5vw, 3.4rem);
+            font-weight: bold;
+            line-height: 0.95;
+            letter-spacing: -0.04em;
+        }
+        .stat .unit {
+            font-size: 0.7rem;
+            letter-spacing: 0.16em;
+            text-transform: uppercase;
+            color: var(--os-gray);
+            margin-top: 0.55rem;
+        }
+        .stat.s-ruby   { box-shadow: 6px 6px 0 var(--ruby);   border-color: var(--ruby); }
+        .stat.s-ruby   .num { color: var(--ruby); }
+        .stat.s-bluey  { box-shadow: 6px 6px 0 var(--bluey);  border-color: var(--bluey); }
+        .stat.s-bluey  .num { color: var(--bluey); }
+        .stat.s-orange { box-shadow: 6px 6px 0 var(--flame-orange); border-color: var(--flame-orange); }
+        .stat.s-orange .num { color: var(--flame-orange); }
+        .stat.s-green  { box-shadow: 6px 6px 0 var(--sprout-green); border-color: var(--sprout-green); }
+        .stat.s-green  .num { color: var(--sprout-green); }
+
+        /* ── Section header ── */
+        .section-hdr {
+            max-width: 1180px;
+            margin: 3.25rem auto 0;
+            padding: 0 2rem;
+            font-size: 0.75rem;
+            letter-spacing: 0.25em;
+            text-transform: uppercase;
+            color: var(--os-gray);
+        }
+        .section-hdr::before { content: "// "; }
+        .section-hdr-rule {
+            max-width: 1180px;
+            margin: 0.6rem auto 1.75rem;
+            padding: 0 2rem;
+        }
+        .section-hdr-rule hr {
+            border: none;
+            border-top: 2px solid var(--black);
+        }
+
+        /* ── Facts ── */
+        .facts {
+            max-width: 1180px;
+            margin: 0 auto;
+            padding: 0 2rem;
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1.25rem;
+        }
+        .fact {
+            background: var(--white);
+            border: 3px solid var(--black);
+            border-radius: 18px;
+            padding: 1.85rem 1.85rem 1.65rem;
+            box-shadow: 6px 6px 0 var(--black);
+            position: relative;
+            transition: transform 0.18s ease, box-shadow 0.18s ease;
+        }
+        .fact:hover { transform: translate(-3px, -3px); box-shadow: 9px 9px 0 var(--black); }
+        .fact-idx {
+            font-size: 0.78rem;
+            letter-spacing: 0.18em;
+            color: var(--os-gray);
+            margin-bottom: 0.9rem;
+        }
+        .fact-big {
+            font-size: clamp(2.4rem, 5vw, 3.5rem);
+            font-weight: bold;
+            line-height: 0.92;
+            letter-spacing: -0.04em;
+            margin-bottom: 0.5rem;
+            display: block;
+        }
+        .fact h3 {
+            font-size: 1.3rem;
+            font-weight: bold;
+            letter-spacing: -0.015em;
+            margin-bottom: 0.5rem;
+            line-height: 1.15;
+        }
+        .fact p {
+            font-size: 0.97rem;
+            color: #444;
+            line-height: 1.55;
+        }
+        /* accent corner tab */
+        .fact::after {
+            content: '';
+            position: absolute;
+            top: -3px; right: 1.6rem;
+            width: 42px; height: 12px;
+            border-radius: 0 0 6px 6px;
+            background: var(--black);
+        }
+        .fact.a-ruby   { border-color: var(--ruby); box-shadow: 6px 6px 0 var(--ruby); }
+        .fact.a-ruby::after { background: var(--ruby); }
+        .fact.a-ruby   .fact-big, .fact.a-ruby .fact-idx { color: var(--ruby); }
+        .fact.a-ruby:hover { box-shadow: 9px 9px 0 var(--ruby); }
+        .fact.a-bluey  { border-color: var(--bluey); box-shadow: 6px 6px 0 var(--bluey); }
+        .fact.a-bluey::after { background: var(--bluey); }
+        .fact.a-bluey  .fact-big, .fact.a-bluey .fact-idx { color: var(--bluey); }
+        .fact.a-bluey:hover { box-shadow: 9px 9px 0 var(--bluey); }
+        .fact.a-orange { border-color: var(--flame-orange); box-shadow: 6px 6px 0 var(--flame-orange); }
+        .fact.a-orange::after { background: var(--flame-orange); }
+        .fact.a-orange .fact-big, .fact.a-orange .fact-idx { color: var(--flame-orange); }
+        .fact.a-orange:hover { box-shadow: 9px 9px 0 var(--flame-orange); }
+        .fact.a-green  { border-color: var(--sprout-green); box-shadow: 6px 6px 0 var(--sprout-green); }
+        .fact.a-green::after { background: var(--sprout-green); }
+        .fact.a-green  .fact-big, .fact.a-green .fact-idx { color: var(--sprout-green); }
+        .fact.a-green:hover { box-shadow: 9px 9px 0 var(--sprout-green); }
+        .fact.a-gold   { border-color: #d4b800; box-shadow: 6px 6px 0 #d4b800; }
+        .fact.a-gold::after { background: #d4b800; }
+        .fact.a-gold   .fact-big, .fact.a-gold .fact-idx { color: #a08c00; }
+        .fact.a-gold:hover { box-shadow: 9px 9px 0 #d4b800; }
+
+        /* span two columns for the marquee facts */
+        .fact.wide { grid-column: 1 / -1; }
+        .fact.wide .fact-inner {
+            display: flex;
+            align-items: center;
+            gap: 2rem;
+            flex-wrap: wrap;
+        }
+        .fact.wide .fact-num-block { flex: 0 0 auto; }
+        .fact.wide .fact-copy { flex: 1 1 320px; }
+        .fact.wide .fact-big { margin-bottom: 0; }
+
+        /* ── Closing CTA ── */
+        .build-cta {
+            max-width: 1180px;
+            margin: 3.5rem auto 0;
+            padding: 0 2rem;
+        }
+        .build-cta-inner {
+            background: var(--black);
+            color: var(--ivory);
+            border-radius: 24px;
+            padding: 3.5rem 3rem;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        .build-cta-inner::before {
+            content: '';
+            position: absolute; inset: 0;
+            background-image:
+                linear-gradient(rgba(255,255,255,0.045) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,255,255,0.045) 1px, transparent 1px);
+            background-size: 40px 40px;
+        }
+        .build-cta-inner > * { position: relative; }
+        .build-cta h2 {
+            font-size: clamp(1.8rem, 4vw, 2.8rem);
+            line-height: 1.05;
+            letter-spacing: -0.03em;
+            margin-bottom: 0.85rem;
+        }
+        .build-cta h2 .hl { color: var(--goldenrod); }
+        .build-cta p {
+            opacity: 0.7;
+            font-size: 1.1rem;
+            max-width: 48ch;
+            margin: 0 auto 2rem;
+        }
+        .cta-row { display: flex; gap: 0.9rem; justify-content: center; flex-wrap: wrap; }
+        .btn {
+            display: inline-block;
+            padding: 0.95rem 1.9rem;
+            border-radius: 50px;
+            font-weight: 600;
+            font-size: 1rem;
+            text-decoration: none;
+            border: 2px solid var(--ivory);
+            transition: transform 0.15s ease, background 0.15s ease, color 0.15s ease;
+        }
+        .btn-primary { background: var(--goldenrod); border-color: var(--goldenrod); color: var(--black); }
+        .btn-primary:hover { transform: translateY(-2px); }
+        .btn-ghost { background: transparent; color: var(--ivory); }
+        .btn-ghost:hover { background: var(--ivory); color: var(--black); }
+
+        /* ── Reveal animation ── */
+        .reveal { opacity: 0; transform: translateY(18px); transition: opacity 0.6s ease, transform 0.6s ease; }
+        .reveal.in { opacity: 1; transform: none; }
+        @media (prefers-reduced-motion: reduce) {
+            .reveal { opacity: 1; transform: none; transition: none; }
+            .hero-overline .dot { animation: none; }
+        }
+
+        @media (max-width: 860px) {
+            .stat-ribbon { grid-template-columns: repeat(2, 1fr); }
+            .facts { grid-template-columns: 1fr; }
+            .build-hero-inner { padding: 2.75rem 1.75rem; }
+        }
+        @media (max-width: 480px) {
+            .stat-ribbon { grid-template-columns: 1fr; }
+        }
+    </style>
+
+<main>
+    <!-- ── Masthead ── -->
+    <section class="build-hero">
+        <div class="build-hero-inner reveal">
+            <div class="hero-overline"><span class="dot"></span><span class="mono">build log // since 2025-02-20</span></div>
+            <h1>How Vibes&nbsp;DIY <span class="hl">gets built.</span></h1>
+            <p class="lede">It turns a sentence into a working app. Here are ten true things about the making of it — pulled straight from the commit history.</p>
+        </div>
+    </section>
+
+    <!-- ── Stat ribbon ── -->
+    <section class="stat-ribbon">
+        <div class="stat s-bluey reveal">
+            <div class="num">{{daysSince "2025-02-20"}}</div>
+            <div class="unit mono">days of building</div>
+        </div>
+        <div class="stat s-ruby reveal">
+            <div class="num">4,027+</div>
+            <div class="unit mono">commits</div>
+        </div>
+        <div class="stat s-orange reveal">
+            <div class="num">102</div>
+            <div class="unit mono">commits, busiest day</div>
+        </div>
+        <div class="stat s-green reveal">
+            <div class="num">218K</div>
+            <div class="unit mono">lines of code</div>
+        </div>
+    </section>
+
+    <!-- ── Facts ── -->
+    <div class="section-hdr reveal">Ten facts from the build log</div>
+    <div class="section-hdr-rule reveal"><hr></div>
+
+    <section class="facts">
+
+        <!-- 01 — concept, wide -->
+        <article class="fact wide a-gold reveal">
+            <div class="fact-inner">
+                <div class="fact-num-block">
+                    <div class="fact-idx mono">FACT 01</div>
+                    <span class="fact-big">A sentence&nbsp;→ an app.</span>
+                </div>
+                <div class="fact-copy">
+                    <p>You type an idea in plain English and get a real, interactive app you can use and share — no setup, no code, no install. That's the whole pitch, and everything below is what it took to make it true.</p>
+                </div>
+            </div>
+        </article>
+
+        <!-- 02 — age -->
+        <article class="fact a-bluey reveal">
+            <div class="fact-idx mono">FACT 02</div>
+            <span class="fact-big">{{monthsSince "2025-02-20"}} months</span>
+            <h3>It's been building since day one.</h3>
+            <p>The very first commit landed February 20, 2025. As of today that's {{daysSince "2025-02-20"}} days of continuous building — the project has basically never stopped moving.</p>
+        </article>
+
+        <!-- 03 — commits -->
+        <article class="fact a-ruby reveal">
+            <div class="fact-idx mono">FACT 03</div>
+            <span class="fact-big">4,027+</span>
+            <h3>Commits — about 8.5 every single day.</h3>
+            <p>Including weekends. Roughly one meaningful change shipped every couple of waking hours, day after day, for over a year.</p>
+        </article>
+
+        <!-- 04 — busiest day -->
+        <article class="fact a-orange reveal">
+            <div class="fact-idx mono">FACT 04</div>
+            <span class="fact-big">102 in a day</span>
+            <h3>The busiest day was a blur.</h3>
+            <p>On May 12, 2026, more than a hundred changes shipped in a single day — about one every fifteen minutes, around the clock.</p>
+        </article>
+
+        <!-- 05 — lines of code -->
+        <article class="fact a-green reveal">
+            <div class="fact-idx mono">FACT 05</div>
+            <span class="fact-big">218,000</span>
+            <h3>Lines of code — novel-length.</h3>
+            <p>For scale, that's longer than most novels — closer to <em>War and Peace</em>, written in software instead of prose.</p>
+        </article>
+
+        <!-- 06 — robots -->
+        <article class="fact a-gold reveal">
+            <div class="fact-idx mono">FACT 06</div>
+            <span class="fact-big">🤖 + 🧑</span>
+            <h3>Robots are on the team — and pull real weight.</h3>
+            <p>Automated helpers — a dependency-updating bot and AI coding assistants — account for hundreds of contributions, quietly keeping everything patched and current alongside the humans.</p>
+        </article>
+
+        <!-- 07 — autosave -->
+        <article class="fact a-bluey reveal">
+            <div class="fact-idx mono">FACT 07</div>
+            <span class="fact-big">Auto-saved</span>
+            <h3>Your work saves itself.</h3>
+            <p>Every app you make is stored automatically, so you can wander off, come back days later, and pick up exactly where you left off — nothing to remember to "save."</p>
+        </article>
+
+        <!-- 08 — remix -->
+        <article class="fact a-ruby reveal">
+            <div class="fact-idx mono">FACT 08</div>
+            <span class="fact-big">Remixable</span>
+            <h3>Land on it, tweak it, make it yours.</h3>
+            <p>You can take someone else's creation, change what you want, and run your own version — building on each other's ideas instead of starting from a blank page every time.</p>
+        </article>
+
+        <!-- 09 — people -->
+        <article class="fact a-orange reveal">
+            <div class="fact-idx mono">FACT 09</div>
+            <span class="fact-big">Real people</span>
+            <h3>From genuinely interesting corners.</h3>
+            <p>Contributors include festival and arts folks — and even K. Mike Merrill, the artist once known as "the publicly traded person," who famously sold shares of himself like a company.</p>
+        </article>
+
+        <!-- 10 — realtime, wide -->
+        <article class="fact wide a-green reveal">
+            <div class="fact-inner">
+                <div class="fact-num-block">
+                    <div class="fact-idx mono">FACT 10</div>
+                    <span class="fact-big">Live edits.</span>
+                </div>
+                <div class="fact-copy">
+                    <p>When you edit an app, you watch it update in real time as you go. The gap between "I have an idea" and "I'm using it" shrinks to almost nothing — which, after {{daysSince "2025-02-20"}} days and 4,027+ commits, is the whole point.</p>
+                </div>
+            </div>
+        </article>
+
+    </section>
+
+    <!-- ── Closing CTA ── -->
+    <section class="build-cta">
+        <div class="build-cta-inner reveal">
+            <h2>Add a commit of your&nbsp;<span class="hl">own.</span></h2>
+            <p>Type one sentence. Get a working app. The next interesting thing built here could be yours.</p>
+            <div class="cta-row">
+                <a href="https://links.vibes.diy/homepage" class="btn btn-primary">Start building →</a>
+                <a href="generate.html" class="btn btn-ghost">See how it ships</a>
+            </div>
+        </div>
+    </section>
+
+    <div style="padding-bottom: 1rem;"></div>
+{{> newsletter}}
+</main>
+
+<script>
+    (function () {
+        var els = document.querySelectorAll('.reveal');
+        if (!('IntersectionObserver' in window)) {
+            els.forEach(function (el) { el.classList.add('in'); });
+            return;
+        }
+        var io = new IntersectionObserver(function (entries) {
+            entries.forEach(function (e) {
+                if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); }
+            });
+        }, { threshold: 0.12, rootMargin: '0px 0px -8% 0px' });
+        els.forEach(function (el, i) {
+            el.style.transitionDelay = Math.min(i * 45, 300) + 'ms';
+            io.observe(el);
+        });
+    })();
+</script>

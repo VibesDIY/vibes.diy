@@ -1,0 +1,96 @@
+{
+  "slug": "machine-learning-methods",
+  "page_url": "https://good.vibes.diy/edu/machine-learning-methods/",
+  "label": "Machine Learning Methods",
+  "department": "Data Science / Stats",
+  "vocabulary": [
+    "cross-validation",
+    "regularization",
+    "clustering algorithms",
+    "dimensionality reduction",
+    "logistic regression",
+    "decision trees and random forests",
+    "support vector machines",
+    "feature engineering",
+    "model selection",
+    "principal component analysis",
+    "gradient descent",
+    "neural networks"
+  ],
+  "sources": [
+    {
+      "institution": "MIT",
+      "title": "6.S897 Machine Learning for Healthcare",
+      "url": "https://ocw.mit.edu/courses/6-s897-machine-learning-for-healthcare-spring-2019/"
+    },
+    {
+      "institution": "UC Berkeley",
+      "title": "DATA C100 Principles and Techniques of Data Science",
+      "url": "https://ds100.org/fa24/"
+    },
+    {
+      "institution": "Carnegie Mellon",
+      "title": "36-462 Statistical Machine Learning",
+      "url": "https://www.stat.cmu.edu/~ryantibs/statml/"
+    },
+    {
+      "institution": "UNC Chapel Hill",
+      "title": "STOR 565: Machine Learning",
+      "url": "https://nobel.web.unc.edu/teaching/stor-565-machine-learning/"
+    },
+    {
+      "institution": "University of Washington",
+      "title": "STAT 534: Statistical Computing",
+      "url": "https://stat.uw.edu/academics/course-catalog/stat-534"
+    }
+  ],
+  "app_prompts": [
+    "A self-taught learner has been hearing the same machine learning vocabulary words on every podcast and wants to actually understand what each one does and when each is the right tool, without committing to a 16-week MOOC. They want to play with toy datasets, try the methods, and watch the methods fail in instructive ways. Build a playful learning app where the learner picks from a small library of classic toy datasets — irises, MNIST digits, a synthetic two-moons cluster, a credit default tabular dataset, a few thousand customer churn records — and walks through a guided exploration of each method in the basic toolkit: logistic regression, decision trees and random forests, support vector machines, clustering algorithms, dimensionality reduction including principal component analysis, and a small neural network. For each method, the app should explain in plain language what it is doing, walk the learner through some lightweight feature engineering decisions, run a cross-validation pass to estimate honest performance, and surface the results so the learner can see why one model wins on one dataset and loses on another. The learner should be able to compare two methods side-by-side on the same dataset, watch how regularization strength changes the decision boundary, see how dimensionality reduction with principal component analysis lets them visualize high-dimensional data on a 2D plot, and observe gradient descent literally moving through the loss landscape on a simple problem. Every concept gets a 'why does this matter' sidebar tying it to model selection — when this method shines, when it breaks. The goal is not to teach them to ship production models but to leave them with grounded intuitions for every entry in the machine learning vocabulary they keep hearing.",
+    "A small data team running pro bono analytics for a regional nonprofit network has half a dozen volunteer data scientists collaborating on modeling projects: predicting which donors are likely to lapse, which volunteers will return, which program participants are at risk of falling out. Members have different backgrounds and the team needs a coordination app for collaborative modeling work since current GitHub-plus-Slack workflow does not capture modeling decisions well. Build a community modeling workspace where each project gets a shared page that records the problem framing (classification of lapse risk, e.g.), the candidate datasets the team has access to, and the modeling decisions being explored. Team members can each propose a modeling approach — one volunteer might try logistic regression with careful feature engineering, another decision trees and random forests, a third support vector machines, a fourth a small neural network — and the workspace shows the cross-validation results from each, with each member's notes on what they tried for regularization, model selection, and feature choices. The team should be able to discuss tradeoffs in threaded comments tied to specific decisions: 'Why principal component analysis here? Wouldn't that lose interpretability the program director needs?' For clustering analyses (segmenting donors by behavior, segmenting volunteers by engagement pattern), members can propose alternative clustering algorithms and discuss the resulting segments together. The team lead can promote a leading approach to 'recommended' and tag the project as ready for handoff to the nonprofit, with a written non-technical summary the team drafts collaboratively. Over time the workspace builds the team's institutional memory: which approaches worked for which kinds of nonprofit problems, what feature engineering matters most in this domain, and which volunteers have which strengths.",
+    "A data scientist at a mid-sized e-commerce company maintains a portfolio of recurring production models — churn risk, fraud flag, lifetime value, recommended next product — and needs an operational workflow app for the regular tasks the role demands: weekly performance monitoring, monthly retraining, periodic model selection reviews when business conditions shift. The current workflow is a mix of notebooks and Slack reminders, and decisions get lost. Build an operational workflow app where each production model has a page that records its current specification: the algorithm family (logistic regression, decision trees and random forests, support vector machines, gradient-boosted trees, a deployed neural network), the feature set with documented feature engineering steps, the regularization strategy, the cross-validation protocol used in the last training run, and the held-out performance metrics. Weekly, the app prompts the data scientist to log monitoring observations: any drift in input feature distributions, any drift in predicted-versus-observed outcomes, any operational issues. Monthly retraining is templated: the workflow steps the data scientist through pulling a fresh training window, re-running the model selection comparison among candidate algorithms, applying the established feature engineering pipeline, and producing a structured retraining report that documents the cross-validation results and the decision to keep or replace the current model. Quarterly the workflow forces a deeper review: should the model family change? Should new features be engineered? Should dimensionality reduction (principal component analysis or otherwise) be considered to reduce the feature footprint? Each decision is logged with rationale, so when a model is challenged six months later — by a stakeholder, an auditor, or a future data scientist inheriting the role — the full record of why this model looks the way it does is recoverable.",
+    "A research data scientist at a hospital system is building a clinical risk model intended to flag inpatients at elevated risk of sepsis within the next six hours, drawing on vitals, labs, medication orders, and demographic features from the electronic health record. They need a serious analytic app that supports the rigorous model development required for a clinical deployment — every modeling decision must be defensible to a clinical advisory board and a regulatory reviewer. Build a professional model development app that walks the data scientist through the structured pipeline. They start by defining the prediction task formally — the index time, the prediction window, the inclusion and exclusion criteria, the outcome definition — and document each. The app supports feature engineering with explicit handling of time-windowed aggregates, missing-data conventions, and clinical plausibility checks for each derived feature. Model selection is structured: they specify the candidate algorithms (logistic regression with regularization, decision trees and random forests, support vector machines, gradient-boosted trees, a small neural network) and the cross-validation protocol respecting patient-level grouping and temporal validity. The app runs the comparison and produces a structured report including discrimination, calibration in each clinically relevant subgroup, decision-curve analysis, and the operating thresholds the clinical team would actually use. The data scientist documents the tradeoffs — interpretability of logistic regression against the modest accuracy gains of random forests or a neural network — and the recommendation. Principal component analysis or other dimensionality reduction is considered explicitly with the question of clinical interpretability. The final artifact is a model card the clinical advisory board can read, including limitations, subpopulations where the model performs less well, and the planned monitoring protocol after deployment. Nothing about this app generates code — it produces the rigorous decision record around the modeling.",
+    "A federal regulatory agency reviews machine learning models that companies deploy in regulated decisions — lending, hiring, insurance underwriting, healthcare risk stratification — for compliance with fairness, transparency, and statistical validity standards. The review team needs a mission-critical audit app that lets reviewers examine submitted model documentation with the same rigor across submissions, generate the structured findings that go into enforcement decisions, and maintain a complete audit trail. Build a high-stakes regulatory review app where each submission opens a structured review case. The reviewer logs the model's stated purpose, the algorithm family (logistic regression, decision trees and random forests, support vector machines, neural networks, or ensembles), the training data description, the documented feature engineering, the regularization and model selection protocol, and the cross-validation strategy used to estimate performance. The app walks the reviewer through a standardized rubric: was the cross-validation protocol appropriate to the data structure? Was the model selection process documented and defensible? Were the features engineered without leakage of outcome information? Is the choice of algorithm proportionate to the decision's stakes — is a black-box neural network being used where a regularized logistic regression would have sufficed? The reviewer then evaluates subgroup performance using the submitted disaggregated metrics, flagging disparate performance that the submitter must explain. Dimensionality reduction techniques like principal component analysis are scrutinized for whether they obscure protected attributes. The reviewer can request additional documentation from the submitter through the app, and every exchange is logged. The output is a structured findings document with cited evidence, suitable for the agency's enforcement workflow and defensible if litigated. Across submissions the app surfaces patterns — which industries are submitting which algorithm families, which review issues recur — feeding the agency's policy guidance work for the next rulemaking cycle."
+  ],
+  "apps": [
+    {
+      "num": "01",
+      "slug": "ml-toolkit-explorer",
+      "author": "edu",
+      "live": true,
+      "title": "ML Toolkit Explorer",
+      "tagline": "Pick a dataset. Try the methods. Watch them fail instructively."
+    },
+    {
+      "num": "02",
+      "slug": "collaborative-modeling",
+      "author": "edu",
+      "live": true,
+      "title": "Modeling Workspace",
+      "tagline": "Each volunteer tries a different approach. The workspace shows what worked and why."
+    },
+    {
+      "num": "03",
+      "slug": "model-portfolio-ops",
+      "author": "edu",
+      "live": true,
+      "title": "Model Portfolio Ops",
+      "tagline": "Weekly monitoring. Monthly retraining. Quarterly architecture review."
+    },
+    {
+      "num": "04",
+      "slug": "clinical-model-development",
+      "author": "edu",
+      "live": true,
+      "title": "Model Development Card",
+      "tagline": "Prediction task, feature engineering, subgroup calibration — defensible to a clinical advisory board."
+    },
+    {
+      "num": "05",
+      "slug": "ml-regulatory-review",
+      "author": "edu",
+      "live": true,
+      "title": "Regulatory Review",
+      "tagline": "Was the cross-validation defensible? Was the black-box proportionate to the stakes?"
+    }
+  ]
+}

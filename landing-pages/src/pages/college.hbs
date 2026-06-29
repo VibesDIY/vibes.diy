@@ -1,0 +1,382 @@
+{{!--
+{
+  "layout": "webring",
+  "title": "For College | Vibes DIY",
+  "description": "Lonely Socks Club, Captain Safety Meeting, Professor Pizza, Study Roulette, Clean Deputy. Five dorm-grade vibes for the small civilization you live with.",
+  "ogUrl": "https://good.vibes.diy/college/",
+  "source": "college",
+  "apps": [
+    {
+      "num": "01",
+      "slug": "lonely-socks-club",
+      "author": "jchris",
+      "live": true,
+      "title": "Lonely Socks Club",
+      "tagline": "Two soles reunited at last.",
+      "desc": "Post photos of single socks searching for their soulmate. Funny names, exaggerated bios, dramatic reunion announcements. Half dating app, half pet adoption page, half laundry-tragedy support group.",
+      "fork": "Your floor has six washers and nobody marks which they took. Clone it and update the machine count and the drama."
+    },
+    {
+      "num": "02",
+      "slug": "captain-safety-meeting",
+      "author": "jchris",
+      "live": true,
+      "title": "Captain Safety Meeting",
+      "tagline": "Find the perfect overlap for the meeting nobody names directly.",
+      "desc": "Frictionless coordination for spontaneous hangouts. Mark when you're free; the app finds the sacred overlap. Pirate-captain energy meets dorm-room logistics.",
+      "fork": "Want it for a 10-person apartment instead of a whole floor? Clone it and change the group size and the window it checks."
+    },
+    {
+      "num": "03",
+      "slug": "study-pizza-vote",
+      "author": "og",
+      "live": true,
+      "title": "Professor Pizza",
+      "tagline": "Knowledge decides the pizza order.",
+      "desc": "Submit your topping preferences, then run a trivia battle on the study topic. Highest score gets the most pull on the final order. Studying as communal game with food stakes.",
+      "fork": "Want it seeded with your exam's vocab instead of generic questions? Clone it and replace the question set."
+    },
+    {
+      "num": "04",
+      "slug": "study-buddy-pairing",
+      "author": "og",
+      "live": true,
+      "title": "Study Roulette",
+      "tagline": "Random study pairings for productive chaos.",
+      "desc": "Mark yourself ready; get paired with nearby students for short focus sessions. Silent-focus or collaborative-chaos energy. Late-night library culture in app form.",
+      "fork": "Running it for a specific class section rather than a whole library floor? Clone it and scope it to your course."
+    },
+    {
+      "num": "05",
+      "slug": "clean-deputy",
+      "author": "jchris",
+      "live": true,
+      "title": "Clean Deputy",
+      "tagline": "Anonymous complaints. Public roasting. Social pressure through comedy.",
+      "desc": "Upload photos of abandoned laundry, mystery spills, fridge crimes. Sharp commentary gets generated. A leaderboard for legendary offenders. Shame works.",
+      "fork": "Your house has a specific repeat offender category — dishes, shared fridge shelves, the bathroom. Clone it and name your crimes specifically."
+    }
+  ],
+  "ogImage": "https://good.vibes.diy/images/screenshots/college.jpg"
+}
+--}}
+
+<style>
+  @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=optional");
+
+  :root {
+    --concrete: oklch(0.88 0 0);
+    --acid: oklch(0.94 0.23 110);
+    --black: oklch(0.10 0 0);
+    --ink: oklch(0 0 0);
+    --hover: oklch(1 0 0 / 0.4);
+  }
+
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html, body {
+    background: var(--concrete);
+    color: var(--black);
+    font-family: "Inter", system-ui, sans-serif;
+    line-height: 1.55;
+    min-height: 100vh;
+    background-image:
+      radial-gradient(circle at 20% 10%, rgba(0,0,0,0.03), transparent 50%),
+      radial-gradient(circle at 80% 90%, rgba(0,0,0,0.04), transparent 50%);
+  }
+  a { color: inherit; text-decoration: none; }
+  .mono { font-family: "JetBrains Mono", monospace; }
+
+  .layout { max-width: 1100px; margin: 0 auto; padding: 0 1.25rem; border-left: 2px solid var(--black); border-right: 2px solid var(--black); }
+
+  .topbar {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 1rem 1.25rem;
+    border-bottom: 4px solid var(--black);
+    margin: 0 -1.25rem;
+    padding-left: 1.25rem; padding-right: 1.25rem;
+  }
+  .topbar .brand {
+    font-family: "Inter", sans-serif; font-weight: 900; letter-spacing: -0.02em;
+    font-size: 1.25rem;
+  }
+  .topbar .meta {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.6rem; letter-spacing: 0.18em; text-transform: uppercase;
+  }
+  .topbar .meta b { background: var(--acid); padding: 2px 6px; }
+
+  .crumb {
+    padding: 0.55rem 0;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.65rem; letter-spacing: 0.18em; text-transform: uppercase;
+    border-bottom: 2px solid var(--black);
+  }
+  .crumb a:hover { background: var(--acid); }
+
+  .hero {
+    padding: 4rem 0 3.5rem;
+    border-bottom: 4px solid var(--black);
+    position: relative;
+  }
+  .hero .label {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.6rem; letter-spacing: 0.25em; text-transform: uppercase;
+    margin-bottom: 1.5rem;
+    display: inline-block;
+    padding: 4px 10px;
+    background: var(--black); color: var(--concrete);
+  }
+  .hero h1 {
+    font-size: clamp(3rem, 9vw, 7rem);
+    font-weight: 900;
+    line-height: 0.92;
+    letter-spacing: -0.04em;
+    margin-bottom: 1.5rem;
+  }
+  .hero h1 .hi {
+    background: var(--acid);
+    padding: 0 0.18em;
+    display: inline-block;
+    transform: rotate(-1.5deg);
+    box-shadow: 6px 6px 0 var(--black);
+    margin: 0.1em 0;
+  }
+  .hero p.lead {
+    font-size: 1.2rem;
+    max-width: 720px;
+    line-height: 1.5;
+  }
+  .hero .marker {
+    background: var(--acid);
+    padding: 1px 4px;
+  }
+
+  .stats {
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    border-bottom: 4px solid var(--black);
+  }
+  @media (max-width: 700px) { .stats { grid-template-columns: repeat(2, 1fr); } }
+  .stat-cell {
+    padding: 1.25rem 1.5rem;
+    border-right: 2px solid var(--black);
+  }
+  .stat-cell:last-child { border-right: none; }
+  @media (max-width: 700px) {
+    .stat-cell { border-bottom: 2px solid var(--black); }
+    .stat-cell:nth-child(2n) { border-right: none; }
+  }
+  .stat-cell .k {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.55rem; letter-spacing: 0.25em; text-transform: uppercase;
+    margin-bottom: 0.4rem;
+  }
+  .stat-cell .v {
+    font-family: "Inter", sans-serif; font-weight: 900;
+    font-size: 1.4rem; letter-spacing: -0.02em;
+  }
+
+  .section-label {
+    padding: 1.5rem 0 0.75rem;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.6rem; letter-spacing: 0.25em; text-transform: uppercase;
+    border-bottom: 2px dashed var(--black);
+    margin-bottom: 1.5rem;
+  }
+  .section-label::before { content: "// "; }
+
+  .apps {
+    display: flex; flex-direction: column; gap: 0;
+    border-top: 2px solid var(--black);
+    border-bottom: 4px solid var(--black);
+  }
+  .app {
+    padding: 2rem 1.5rem;
+    border-bottom: 2px solid var(--black);
+    display: grid;
+    grid-template-columns: 80px 1fr 320px;
+    gap: 2rem;
+    align-items: start;
+    transition: background 0.15s;
+  }
+  .app:last-child { border-bottom: none; }
+  @media (max-width: 800px) { .app { grid-template-columns: 1fr; gap: 1rem; } }
+  .app:hover { background: rgba(0,0,0,0.04); }
+
+  .app .num-cell {
+    font-family: "JetBrains Mono", monospace;
+    display: flex; flex-direction: column; gap: 0.4rem;
+  }
+  .app .num {
+    font-family: "Inter", sans-serif; font-weight: 900;
+    font-size: 3rem; line-height: 0.85; letter-spacing: -0.04em;
+  }
+  .app .status {
+    font-size: 0.55rem; letter-spacing: 0.2em; text-transform: uppercase;
+    padding: 3px 6px; border: 2px solid var(--black);
+    text-align: center;
+  }
+  .app--live .status { background: var(--acid); }
+
+  .app .body { display: flex; flex-direction: column; gap: 0.7rem; }
+  .app .body .title {
+    font-size: 2rem; font-weight: 900; letter-spacing: -0.02em;
+    line-height: 1.05;
+  }
+  .app .body .tagline {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.85rem; padding: 6px 10px;
+    background: var(--acid); display: inline-block; align-self: flex-start;
+  }
+  .app .body .desc { font-size: 1rem; line-height: 1.55; }
+
+  .app .right { display: flex; flex-direction: column; gap: 0.6rem; }
+  .app .shot { display: block; aspect-ratio: 16/9; overflow: hidden; border: 2px solid var(--black); background: var(--concrete); }
+  .app .shot img { width: 100%; height: 100%; object-fit: cover; }
+  .app .shot-placeholder {
+    padding: 1rem; height: 100%; display: flex; align-items: center; justify-content: center;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.7rem; letter-spacing: 0.2em; text-transform: uppercase;
+    text-align: center;
+  }
+  .app .ctas { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0; border: 2px solid var(--black); }
+  .app .ctas--single { grid-template-columns: 1fr; }
+  .btn {
+    text-align: center;
+    padding: 0.55rem 0.5rem;
+    background: transparent;
+    border-right: 2px solid var(--black);
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.65rem; letter-spacing: 0.15em; text-transform: uppercase; font-weight: 700;
+    color: var(--black);
+    cursor: pointer;
+    transition: background 0.12s;
+  }
+  .btn:last-child { border-right: none; }
+  .btn:hover { background: var(--acid); }
+  .prompt-link {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.7rem;
+    text-decoration: underline;
+  }
+  .prompt-link:hover { background: var(--acid); }
+  .fork-note {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.68rem;
+    line-height: 1.5;
+    color: oklch(0.35 0 0);
+    border-left: 2px solid var(--black);
+    padding-left: 0.6rem;
+    margin-top: 0.2rem;
+  }
+
+  .epilogue {
+    padding: 2.5rem 0;
+    border-bottom: 4px solid var(--black);
+  }
+  .epilogue h2 {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.6rem; letter-spacing: 0.25em; text-transform: uppercase;
+    margin-bottom: 1rem;
+  }
+  .epilogue h2::before { content: "// "; }
+  .epilogue p { font-size: 1.1rem; max-width: 720px; line-height: 1.55; }
+  .epilogue .hl { background: var(--acid); padding: 1px 4px; }
+
+  footer.term-footer {
+    padding: 1rem 0;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.6rem; letter-spacing: 0.2em; text-transform: uppercase;
+    display: flex; justify-content: space-between;
+  }
+  footer.term-footer a:hover { background: var(--acid); }
+</style>
+
+<div class="layout">
+  <header class="topbar">
+    <a class="brand" href="https://links.vibes.diy/homepage">VIBES.DIY</a>
+    <span class="meta"><b>FOR COLLEGE</b> · five dorm-grade vibes</span>
+  </header>
+
+  <nav class="crumb">
+    <a href="/">Home</a> &nbsp;›&nbsp; College
+  </nav>
+
+  <section class="hero">
+    <span class="label">For College</span>
+    <h1>Tools for the<br/><span class="hi">small civilization</span><br/>you live with.</h1>
+    <p class="lead">
+      Five custom apps for the strange ongoing project of living with other people in a building you didn't choose. They handle <span class="marker">laundry tragedy</span>, <span class="marker">scheduling rituals nobody names directly</span>, <span class="marker">communal mess</span>, <span class="marker">studying as a social game</span>, and <span class="marker">accidental friendships at 2am</span>.
+    </p>
+  </section>
+
+  <div class="stats">
+    <div class="stat-cell">
+      <div class="k">Apps</div>
+      <div class="v">Five</div>
+    </div>
+    <div class="stat-cell">
+      <div class="k">Audience</div>
+      <div class="v">Dorms / Houses</div>
+    </div>
+    <div class="stat-cell">
+      <div class="k">Persistence</div>
+      <div class="v">Fireproof</div>
+    </div>
+    <div class="stat-cell">
+      <div class="k">Skin</div>
+      <div class="v">Slab Concrete</div>
+    </div>
+  </div>
+
+  <div class="section-label">The Reading List</div>
+
+  <section class="apps">
+    {{#each apps}}
+      <article class="app {{#if live}}app--live{{else}}app--pending{{/if}}">
+        <div class="num-cell">
+          <div class="num">{{num}}</div>
+          <div class="status">{{#if live}}Live{{else}}Pending{{/if}}</div>
+        </div>
+        <div class="body">
+          <h2 class="title">{{title}}</h2>
+          <span class="tagline">{{tagline}}</span>
+          <p class="desc">{{desc}}</p>
+        </div>
+        <div class="right">
+          {{#if live}}
+            <a class="shot" href="https://vibes.diy/vibe/{{author}}/{{slug}}" aria-label="{{title}} screenshot"><img src="https://{{slug}}--{{author}}.prod-v2.vibesdiy.net/screenshot.jpg" alt="{{slug}}" onerror="this.onerror=null; this.src='{{@root.assetPrefix}}images/og-preview.png';"/></a>
+            <div class="ctas">
+              <a class="btn" href="https://vibes.diy/vibe/{{author}}/{{slug}}">Join</a>
+              <a class="btn" href="https://vibes.diy/remix/{{author}}/{{slug}}?skipChat=true">Clone</a>
+              <a class="btn" href="https://vibes.diy/remix/{{author}}/{{slug}}">Remix</a>
+            </div>
+            <a class="prompt-link" href="https://vibes.diy/chat/prompt?prompt64={{prompt64 desc}}">// start fresh from this prompt — describe your version instead</a>
+            {{#if fork}}<p class="fork-note">{{fork}}</p>{{/if}}
+          {{else}}
+            <div class="shot"><div class="shot-placeholder">awaiting deploy</div></div>
+            <div class="ctas ctas--single">
+              <a class="btn" href="https://vibes.diy/chat/prompt?prompt64={{prompt64 desc}}">Start From Prompt</a>
+            </div>
+          {{/if}}
+        </div>
+      </article>
+    {{/each}}
+  </section>
+
+  <div class="epilogue">
+    <h2>Read Me</h2>
+    <p>
+      The dorm is the original <span class="hl">small civilization</span>. It has shared resources, shared mess, shared rituals nobody named directly, and a constantly-rotating cast of who-is-actually-here-tonight. Standard apps are too formal for it, and group chats forget. These five are sized to the actual scale of the problem: a hallway, a kitchen, a study group, a 1am laundry crisis. <span class="hl">Remix any one</span> to fit your house specifically.
+    </p>
+    <p style="margin-top:1rem;">
+      these five were built for one dorm's exact complaints. yours is probably different. clone whichever is closest and describe what's different about your situation.
+    </p>
+  </div>
+
+  {{> newsletter}}
+<footer class="term-footer">
+    <span>Vibes.diy · <a href="https://links.vibes.diy/homepage">homepage</a> · <a href="/expressions/">expressions</a></span>
+    <span>// END OF READING LIST</span>
+  </footer>
+</div>

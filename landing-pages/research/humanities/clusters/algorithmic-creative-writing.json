@@ -1,0 +1,46 @@
+{
+  "slug": "algorithmic-creative-writing",
+  "page_url": "/edu/algorithmic-creative-writing.html",
+  "label": "Algorithmic & Experimental Writing",
+  "department": "Literature / Creative Writing / Media Arts",
+  "vocabulary": [
+    "Oulipo and constrained writing",
+    "algorithmic text generation",
+    "language models",
+    "aleatoric writing",
+    "agency and authorship",
+    "alienation and appropriation",
+    "programmatic situations",
+    "author-computer-reader relationship",
+    "constrained writing",
+    "procedural generation",
+    "generative text",
+    "magic words as material",
+    "ineffable meanings",
+    "divinatory ontologies"
+  ],
+  "sources": [
+    {
+      "institution": "SFPC",
+      "title": "The Unfinished Sentence: Algorithmic Text Generation",
+      "url": "https://sfpc.study/classes"
+    },
+    {
+      "institution": "SFPC",
+      "title": "Computational Exploration of Magical and Divinatory Language",
+      "url": "https://sfpc.study/classes"
+    },
+    {
+      "institution": "MIT OCW SHASS",
+      "title": "Writing About Literature: Writing About Love",
+      "url": "https://ocw.mit.edu/courses/literature/"
+    }
+  ],
+  "app_prompts": [
+    "Oulipo constraint generator: user picks a writing constraint (lipogram, N+7, snowball) and gets a prompt to write under that constraint — then sees an example of how Oulipo authors used it.",
+    "Aleatoric writing tool: user picks a text generation rule (random word, dice roll, newspaper cut-up) and produces a piece of constrained writing, seeing how chance shapes authorship.",
+    "Language model authorship quiz: user reads excerpts and decides: human-written, human-assisted, or AI-generated? Then explores what the distinction means for authorship, creativity, and intent.",
+    "Generative text workshop: user describes a pattern (every third word is a color, each sentence begins where the last one ended) and the app helps them apply it to generate a short experimental piece.",
+    "Divinatory language explorer: user picks a divinatory system (Tarot, I Ching, runes) and traces how its language creates meaning — the semantic space, the interpretive tradition, the role of the reader."
+  ]
+}

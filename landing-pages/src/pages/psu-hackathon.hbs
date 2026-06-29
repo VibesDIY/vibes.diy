@@ -1,0 +1,325 @@
+{{!--
+{
+  "layout": "editorial",
+  "title": "PSU Claude Code Hackathon — Sponsored by Vibes DIY",
+  "description": "Build something real with Claude Code and Vibes DIY. Saturday May 16, 10am–3pm at Portland State University Business Accelerator.",
+  "ogUrl": "https://good.vibes.diy/psu-hackathon/",
+  "source": "psu-hackathon",
+  "ogImage": "https://good.vibes.diy/images/screenshots/psu-hackathon.jpg"
+}
+--}}
+
+<style>
+  @import url('https://fonts.cdnfonts.com/css/alte-haas-grotesk');
+
+  :root {
+    --black: #000000;
+    --near-black: #231f20;
+    --gray-dark: #333333;
+    --gray-mid: #6b6b6b;
+    --gray-light: #cccdc8;
+    --cream: #fffff0;
+    --red: #da291c;
+    --cyan: #009ace;
+    --yellow: #fedd00;
+
+    --font-main: 'Alte Haas Grotesk', -apple-system, 'Segoe UI', sans-serif;
+    --card-border: 2px solid var(--black);
+    --gutter: clamp(1rem, 4vw, 3rem);
+    --grid-size: 40px;
+  }
+
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+
+  body {
+    background-color: #cccdc8;
+    background-image:
+      linear-gradient(rgba(255,255,255,0.5) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.5) 1px, transparent 1px);
+    background-size: var(--grid-size) var(--grid-size);
+    color: var(--near-black);
+    font-family: var(--font-main);
+    font-size: clamp(1rem, 1.1vw, 1.125rem);
+    line-height: 1.6;
+    overflow-x: hidden;
+  }
+
+  ::selection { background: var(--yellow); color: var(--black); }
+  a { color: var(--red); text-decoration: underline; text-underline-offset: 2px; transition: color 0.2s; }
+  a:hover { color: var(--black); }
+  h1, h2, h3 { font-family: var(--font-main); font-weight: normal; line-height: 1.1; }
+
+  /* Nav */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    padding: 0.75rem var(--gutter);
+    display: flex; justify-content: space-between; align-items: center;
+    background: var(--cream); border-bottom: 3px solid var(--black);
+  }
+  .nav-logo { text-decoration: none; display: flex; align-items: center; }
+  .nav-logo-pill { height: 36px; width: auto; display: block; transition: opacity 0.2s; }
+  .nav-logo:hover .nav-logo-pill { opacity: 0.85; }
+  .nav-cta-btn {
+    background: var(--red); color: var(--cream) !important;
+    padding: 0.5rem 1.2rem; text-decoration: none !important;
+    font-weight: bold; font-size: 0.85rem; border: 2px solid var(--black);
+    transition: background 0.2s, transform 0.15s;
+  }
+  .nav-cta-btn:hover { background: var(--near-black); transform: translateY(-1px); }
+
+  /* Page */
+  .page {
+    max-width: 860px; margin: 0 auto;
+    padding: calc(60px + 2.5rem) var(--gutter) 3rem;
+  }
+
+  /* Color stripe */
+  .color-stripe { height: 8px; display: flex; margin-bottom: 1.5rem; }
+  .color-stripe > div { flex: 1; }
+
+  /* Cards */
+  .card {
+    background: var(--cream); border: var(--card-border);
+    padding: clamp(1.5rem, 4vw, 2.5rem); margin-bottom: 1.5rem;
+  }
+  .card--red    { background: var(--red);    color: var(--cream); }
+  .card--cyan   { background: var(--cyan);   color: var(--cream); }
+  .card--yellow { background: var(--yellow); color: var(--black); }
+  .card--black  { background: var(--black);  color: var(--cream); }
+
+  /* Hero */
+  .event-badge {
+    display: inline-block; font-size: 0.7rem; font-weight: bold;
+    letter-spacing: 0.12em; text-transform: uppercase;
+    padding: 0.3rem 0.75rem; border: 2px solid var(--black);
+    margin-bottom: 1rem; background: var(--yellow);
+  }
+  .hero-title {
+    font-size: clamp(2.5rem, 6vw, 4.5rem);
+    letter-spacing: -0.02em; line-height: 1.05;
+    margin-bottom: 1rem;
+  }
+  .event-meta {
+    display: flex; flex-direction: column; gap: 0.3rem;
+    font-size: clamp(1rem, 1.8vw, 1.2rem); color: var(--gray-dark);
+    margin-bottom: 1.5rem;
+  }
+  .event-meta strong { color: var(--near-black); }
+
+  /* CTA button */
+  .btn-primary {
+    display: inline-block; padding: 1rem 2rem;
+    background: var(--red); color: var(--cream) !important;
+    font-family: var(--font-main); font-size: 1.1rem; font-weight: bold;
+    text-decoration: none !important; border: 2px solid var(--black);
+    box-shadow: 4px 4px 0 var(--black);
+    transition: transform 0.15s, box-shadow 0.15s;
+  }
+  .btn-primary:hover { transform: translate(-2px, -2px); box-shadow: 6px 6px 0 var(--black); color: var(--cream) !important; }
+
+  .btn-secondary {
+    display: inline-block; padding: 1rem 2rem;
+    background: var(--cream); color: var(--near-black) !important;
+    font-family: var(--font-main); font-size: 1.1rem; font-weight: bold;
+    text-decoration: none !important; border: 2px solid var(--black);
+    box-shadow: 4px 4px 0 var(--black);
+    transition: transform 0.15s, box-shadow 0.15s;
+  }
+  .btn-secondary:hover { transform: translate(-2px, -2px); box-shadow: 6px 6px 0 var(--black); }
+
+  /* YouTube lite embed */
+  .yt-facade {
+    position: relative; width: 100%; aspect-ratio: 16/9;
+    overflow: hidden; cursor: pointer; background: var(--near-black);
+    border: var(--card-border);
+  }
+  .yt-facade img {
+    position: absolute; inset: 0; width: 100%; height: 100%;
+    object-fit: cover; display: block;
+  }
+  .yt-play-btn {
+    position: absolute; inset: 0; width: 100%; height: 100%;
+    background: rgba(0,0,0,0.2); border: none; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: background 0.2s;
+  }
+  .yt-facade:hover .yt-play-btn { background: rgba(0,0,0,0.35); }
+  .yt-facade iframe {
+    position: absolute; inset: 0; width: 100%; height: 100%; border: 0;
+  }
+
+  /* Section label */
+  .section-label {
+    display: inline-block; font-size: 0.7rem; font-weight: bold;
+    letter-spacing: 0.12em; text-transform: uppercase;
+    padding: 0.3rem 0.75rem; border: 2px solid currentColor;
+    margin-bottom: 0.75rem;
+  }
+
+  /* Prize card */
+  .prize-number {
+    font-size: clamp(1.5rem, 3vw, 2.5rem); font-weight: bold;
+    line-height: 1; margin-bottom: 0.25rem;
+  }
+
+  /* Grid */
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem; }
+
+  /* QR section */
+  .qr-wrap {
+    display: flex; flex-direction: column; align-items: center;
+    gap: 1rem; padding: 2rem;
+    background: var(--cream); border: var(--card-border);
+    margin-bottom: 1.5rem; text-align: center;
+  }
+  .qr-wrap img { display: block; width: 200px; height: 200px; image-rendering: pixelated; }
+  .qr-label { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--gray-mid); }
+  .qr-url { font-size: 0.9rem; font-weight: bold; color: var(--near-black); }
+
+  /* Footer */
+  footer { margin-top: 1.5rem; padding: 2rem var(--gutter); text-align: center; font-size: 0.8rem; color: var(--near-black); }
+  footer a { color: var(--red); margin: 0 0.75rem; text-decoration: none; }
+  footer a:hover { text-decoration: underline; }
+  .footer-logo { height: 40px; width: auto; }
+
+  /* Reveal */
+  .reveal { opacity: 0; transform: translateY(14px); transition: opacity 0.45s ease, transform 0.45s ease; }
+  .reveal.visible { opacity: 1; transform: translateY(0); }
+
+  @media (max-width: 600px) {
+    .grid-2 { grid-template-columns: 1fr; }
+    nav .nav-cta-btn { display: none; }
+  }
+</style>
+
+<nav>
+  <a href="https://links.vibes.diy/homepage" class="nav-logo" aria-label="Vibes DIY">
+    <img src="Vibes-Toggle-1-Transparent.png" alt="Vibes DIY" class="nav-logo-pill">
+  </a>
+  <a href="https://luma.com/bf9gpp2z" class="nav-cta-btn" target="_blank" rel="noopener">Register</a>
+</nav>
+
+<div class="page">
+
+  <div class="color-stripe reveal">
+    <div style="background: var(--red);"></div>
+    <div style="background: var(--cyan);"></div>
+    <div style="background: var(--yellow);"></div>
+    <div style="background: var(--near-black);"></div>
+    <div style="background: var(--red);"></div>
+    <div style="background: var(--cyan);"></div>
+  </div>
+
+  <!-- ── HERO ── -->
+  <div class="card reveal">
+    <div class="event-badge">Portland State University</div>
+    <h1 class="hero-title">Claude Code&nbsp;Hackathon</h1>
+    <div class="event-meta">
+      <div><strong>Saturday, May 16</strong> &nbsp;·&nbsp; 10:00 AM – 3:00 PM</div>
+      <div>PSU Business Accelerator &nbsp;·&nbsp; Portland, OR</div>
+      <div>Sponsored by <strong>Vibes DIY</strong></div>
+    </div>
+    <a href="https://luma.com/bf9gpp2z" class="btn-primary" target="_blank" rel="noopener">Register on Luma →</a>
+  </div>
+
+  <!-- ── PRIZE ── -->
+  <div class="card card--yellow reveal" style="margin-top: 1.5rem;">
+    <span class="section-label" style="border-color: var(--near-black); color: var(--near-black);">The Prize</span>
+    <h2 style="font-size: clamp(1.5rem, 3.5vw, 2.5rem); margin-bottom: 0.75rem; line-height: 1.15;">Vibes DIY Lifetime&nbsp;Access</h2>
+    <p style="font-size: clamp(1rem, 1.6vw, 1.2rem); line-height: 1.6; max-width: 36em;">
+      Whichever hackathon submission has the most real users one week after the event wins. Build something people actually use — and keep building forever, on us.
+    </p>
+  </div>
+
+  <!-- ── HOW TO USE + DISCORD ── -->
+  <div class="grid-2 reveal">
+    <div class="card" style="display: flex; flex-direction: column; gap: 0.75rem;">
+      <span class="section-label">Get started</span>
+      <h3 style="font-size: 1.4rem; line-height: 1.2;">How to build with Vibes DIY&nbsp;+ Claude</h3>
+      <p style="color: var(--gray-dark); font-size: 0.95rem; line-height: 1.6; flex: 1;">New to Vibes DIY? Start here — a step-by-step guide to making and sharing an app before the clock runs out.</p>
+      <div style="display: flex; flex-direction: column; gap: 0.75rem; margin-top: 0.5rem;">
+        <a href="https://good.vibes.diy/how-to" class="btn-secondary" style="text-align: center; font-size: 0.95rem;">Make and share an app →</a>
+        <a href="https://good.vibes.diy/generate" class="btn-secondary" style="text-align: center; font-size: 0.95rem;">How to use Vibes with your agent CLI →</a>
+      </div>
+    </div>
+    <div class="card card--cyan" style="display: flex; flex-direction: column; gap: 0.75rem;">
+      <span class="section-label" style="border-color: rgba(255,255,255,0.5); color: var(--cream);">Community</span>
+      <h3 style="font-size: 1.4rem; color: var(--cream); line-height: 1.2;">Join the event Discord</h3>
+      <p style="color: rgba(255,255,255,0.85); font-size: 0.95rem; line-height: 1.6; flex: 1;">Get help, share your build, find teammates, and connect with other builders at the hackathon.</p>
+      <a href="https://bit.ly/4nrBN4X" class="btn-primary" style="text-align: center; font-size: 0.95rem; background: var(--cream); color: var(--near-black) !important; box-shadow: 4px 4px 0 rgba(0,0,0,0.3);" target="_blank" rel="noopener">Join Discord →</a>
+    </div>
+  </div>
+
+  <!-- ── VIDEO ── -->
+  <div class="reveal">
+    <div class="yt-facade" id="yt-vibetoken" data-video-id="t2hXw9xYLz0">
+      <img src="https://i.ytimg.com/vi/t2hXw9xYLz0/maxresdefault.jpg" alt="vibetoken.lol — watch on YouTube">
+      <button class="yt-play-btn" aria-label="Play video">
+        <svg width="68" height="48" viewBox="0 0 68 48" aria-hidden="true">
+          <path d="M66.52 7.74c-.78-2.93-2.49-5.41-5.42-6.19C55.79.13 34 0 34 0S12.21.13 6.9 1.55c-2.93.78-4.63 3.26-5.42 6.19C.06 13.05 0 24 0 24s.06 10.95 1.48 16.26c.78 2.93 2.49 5.41 5.42 6.19C12.21 47.87 34 48 34 48s21.79-.13 27.1-1.55c2.93-.78 4.64-3.26 5.42-6.19C67.94 34.95 68 24 68 24s-.06-10.95-1.48-16.26z" fill="#f00"/>
+          <path d="M45 24 27 14v20" fill="#fff"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- ── CLAIM TOKENS ── -->
+  <div class="card card--red reveal" style="margin-top: 1.5rem; text-align: center;">
+    <a href="https://vibetoken.lol/demo-hackathon" class="btn-primary" style="background: var(--cream); color: var(--near-black) !important; box-shadow: 4px 4px 0 rgba(0,0,0,0.3);" target="_blank" rel="noopener">Claim your tokens →</a>
+  </div>
+
+  <!-- ── QR CODE ── -->
+  <div class="qr-wrap reveal">
+    <div class="qr-label">Share this page</div>
+    <img
+      src="https://api.qrserver.com/v1/create-qr-code/?data=https%3A%2F%2Fgood.vibes.diy%2Fpsu-hackathon%2F&size=400x400&margin=10&color=231f20&bgcolor=fffff0"
+      alt="QR code linking to good.vibes.diy/psu-hackathon"
+      width="200" height="200"
+    >
+    <div class="qr-url">good.vibes.diy/psu-hackathon</div>
+  </div>
+
+  <!-- Color stripe -->
+  <div class="color-stripe" style="margin-bottom: 0;">
+    <div style="background: var(--red);"></div>
+    <div style="background: var(--cyan);"></div>
+    <div style="background: var(--yellow);"></div>
+    <div style="background: var(--near-black);"></div>
+    <div style="background: var(--red);"></div>
+    <div style="background: var(--cyan);"></div>
+  </div>
+
+</div><!-- /.page -->
+
+<footer>
+  <a href="https://links.vibes.diy/homepage">
+    <img src="Vibes-Toggle-1-Transparent.png" alt="Vibes DIY" class="footer-logo">
+  </a>
+  <p style="margin-top: 1rem;">
+    <a href="https://links.vibes.diy/discord">Discord</a>
+    <a href="https://links.vibes.diy/YouTube">YouTube</a>
+    <a href="https://links.vibes.diy/Substack">Substack</a>
+  </p>
+  <p style="margin-top: 0.75rem; color: var(--gray-mid);">&copy; 2025 Vibes DIY</p>
+</footer>
+
+<script>
+  // Scroll reveal
+  const reveals = document.querySelectorAll('.reveal');
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); observer.unobserve(e.target); } });
+  }, { threshold: 0.06, rootMargin: '0px 0px -30px 0px' });
+  reveals.forEach(el => observer.observe(el));
+
+  // YouTube lite embed
+  document.querySelectorAll('.yt-facade').forEach(facade => {
+    facade.addEventListener('click', () => {
+      const id = facade.dataset.videoId;
+      if (id) {
+        facade.innerHTML = `<iframe src="https://www.youtube.com/embed/${id}?autoplay=1&rel=0" title="vibetoken.lol" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>`;
+      }
+    });
+  });
+</script>
+{{> newsletter}}

@@ -1,0 +1,56 @@
+{
+  "slug": "us-foreign-policy",
+  "page_url": "/edu/us-foreign-policy.html",
+  "label": "U.S. Foreign Policy & Diplomacy",
+  "department": "History — Diplomatic/International",
+  "vocabulary": [
+    "American imperialism",
+    "containment strategy",
+    "foreign policy decision-making",
+    "FRUS (Foreign Relations of the United States)",
+    "declassified documents",
+    "transnational history",
+    "humanitarian intervention",
+    "Big Stick diplomacy",
+    "Dollar Diplomacy",
+    "Open Door policy",
+    "archival diplomacy",
+    "non-state actors",
+    "modernization theory",
+    "American exceptionalism"
+  ],
+  "sources": [
+    {
+      "institution": "H-Net H-Diplo",
+      "title": "History of U.S. Foreign Policy (1890s-present)",
+      "url": "https://networks.h-net.org/node/28443/pages/59076/h-diplo-syllabus-archive"
+    },
+    {
+      "institution": "H-Net H-Diplo",
+      "title": "U.S. Diplomatic History—20th Century",
+      "url": "https://networks.h-net.org/node/28443/pages/59076/h-diplo-syllabus-archive"
+    },
+    {
+      "institution": "H-Net H-Diplo",
+      "title": "U.S. Foreign Relations to 1914",
+      "url": "https://networks.h-net.org/node/28443/pages/59076/h-diplo-syllabus-archive"
+    },
+    {
+      "institution": "H-Net H-Diplo",
+      "title": "The U.S. and the Modern World",
+      "url": "https://networks.h-net.org/node/28443/pages/59076/h-diplo-syllabus-archive"
+    },
+    {
+      "institution": "MIT OCW",
+      "title": "21H.009 The World: 1400-Present",
+      "url": "https://ocw.mit.edu/courses/history/"
+    }
+  ],
+  "app_prompts": [
+    "US foreign policy doctrine quiz: user reads a historical scenario and identifies which doctrine applied — Monroe, Big Stick, Dollar Diplomacy, Open Door, containment — and sees what actually happened.",
+    "FRUS document explorer: user picks a diplomatic crisis and steps through the archival record — what State Department cables said, what the President knew, what was hidden from Congress.",
+    "American imperialism timeline: user traces US overseas expansion from 1898 to the present — Philippines, Panama, Cuba, Vietnam, Iraq — and sees the justifications used each time.",
+    "Transnational history mapper: user picks a 20th-century movement (anti-colonialism, non-alignment, human rights) and traces how it crossed borders and shaped US foreign policy responses.",
+    "Foreign policy decision-making case study: user picks a crisis (Cuban Missile Crisis, Gulf of Tonkin, Iraq 2003) and walks through the decision process — who advised what, what was known, what was assumed."
+  ]
+}

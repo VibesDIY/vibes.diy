@@ -1,0 +1,394 @@
+{{!--
+{
+  "layout": "webring",
+  "title": "Accountability Partners | Vibes DIY",
+  "description": "Five apps for finding the right person to do the hard thing with. Cohort, Staked, Post, Letters, Pod. The matching layer nobody built — until now.",
+  "ogUrl": "https://good.vibes.diy/accountability/",
+  "source": "accountability",
+  "apps": [
+    {
+      "num": "01",
+      "slug": "goal-cohort-match",
+      "author": "og",
+      "live": true,
+      "title": "Cohort",
+      "tagline": "Twenty strangers, one goal, one month.",
+      "desc": "20 people all trying to change the same thing join a fixed-length cohort. Daily check-ins, weekly group calls, pair off into 1-on-1 partnerships naturally or don't. The cohort closes at the start. Finishers recruit the next round — 'I quit sugar in Cohort 3.'",
+      "fork": "Want it scoped to a specific goal — 30 days sober, daily writing, marathon training — with prompts matched to that goal? Clone it and replace the check-in questions."
+    },
+    {
+      "num": "02",
+      "slug": "accountability-vouched",
+      "author": "og",
+      "live": true,
+      "title": "Staked",
+      "tagline": "You can't join. Someone has to stake their reputation on you.",
+      "desc": "An existing user vouches you're serious; their credibility score drops if you ghost. Every partner sees 'introduced by [name], who has staked 4 others, all still going.' The network is the trust graph of all vouchers. Ghosting costs both of you.",
+      "fork": "Want the vouching mechanic for a small closed community rather than open strangers? Clone it and seed the initial member list yourself."
+    },
+    {
+      "num": "03",
+      "slug": "goal-slot-board",
+      "author": "og",
+      "live": true,
+      "title": "Post",
+      "tagline": "Post the goal, not the profile.",
+      "desc": "'Quit sugar, 30 days, one partner, starts Monday.' People claim open goal slots, not profiles. After the first week, both decide to continue or part cleanly. Unclaimed slots expire. The goal itself is shareable outside the app.",
+      "fork": "Running it for a single goal category — fitness, creative work, sobriety? Clone it and narrow the slot template to match."
+    },
+    {
+      "num": "04",
+      "slug": "slow-accountability-letters",
+      "author": "og",
+      "live": true,
+      "title": "Letters",
+      "tagline": "One message per day. No rush, no ghosting.",
+      "desc": "Write to one partner at a time, long-form, about the real thing — the fear, the why, the small wins. Rate-limited to one message per day. Day 14 prompt: 'what does failing look like, and what do you want me to do?' The letters become the archive of the change.",
+      "fork": "Want the rate limit set to once a week for a slower, longer arc? Clone it and change the cadence and the milestone prompts."
+    },
+    {
+      "num": "05",
+      "slug": "accountability-pod",
+      "author": "og",
+      "live": true,
+      "title": "Pod",
+      "tagline": "The 1-on-1 comes after the pod.",
+      "desc": "1-on-1 partnerships only form after a week inside a four-person pod with the same goal. First contact is always the group. Pods dissolve into pairs or stay whole — the group decides. Pods recruit new members; that is how the network grows.",
+      "fork": "Want pods of three instead of four, or a two-week trial before pairing off? Clone it and adjust the pod size and the trial window."
+    }
+  ],
+  "ogImage": "https://good.vibes.diy/images/screenshots/accountability.jpg"
+}
+--}}
+
+<style>
+  @import url("https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=optional");
+
+  :root {
+    --parchment: oklch(0.96 0.02 80);
+    --forest: oklch(0.38 0.10 145);
+    --forest-light: oklch(0.52 0.10 145);
+    --forest-pale: oklch(0.92 0.04 145);
+    --black: oklch(0.10 0 0);
+    --muted: oklch(0.55 0 0);
+    --border: oklch(0.82 0 0);
+  }
+
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html, body {
+    background: var(--parchment);
+    color: var(--black);
+    font-family: "Inter", system-ui, sans-serif;
+    line-height: 1.55;
+    min-height: 100vh;
+    background-image:
+      radial-gradient(ellipse at 10% 0%, oklch(0.85 0.06 145 / 0.18), transparent 55%),
+      radial-gradient(ellipse at 90% 100%, oklch(0.85 0.04 80 / 0.15), transparent 55%);
+  }
+  a { color: inherit; text-decoration: none; }
+  .serif { font-family: "DM Serif Display", Georgia, serif; }
+  .mono { font-family: "JetBrains Mono", monospace; }
+
+  .layout { max-width: 1100px; margin: 0 auto; padding: 0 1.25rem; border-left: 2px solid var(--black); border-right: 2px solid var(--black); }
+
+  .topbar {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 1rem 1.25rem;
+    border-bottom: 4px solid var(--black);
+    margin: 0 -1.25rem;
+    padding-left: 1.25rem; padding-right: 1.25rem;
+  }
+  .topbar .brand {
+    font-family: "Inter", sans-serif; font-weight: 900; letter-spacing: -0.02em;
+    font-size: 1.25rem;
+  }
+  .topbar .meta {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.6rem; letter-spacing: 0.18em; text-transform: uppercase;
+  }
+  .topbar .meta b { background: var(--forest-pale); padding: 2px 6px; border: 1px solid var(--forest); }
+
+  .crumb {
+    padding: 0.55rem 0;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.65rem; letter-spacing: 0.18em; text-transform: uppercase;
+    border-bottom: 2px solid var(--black);
+  }
+  .crumb a:hover { background: var(--forest-pale); }
+
+  .hero {
+    padding: 4rem 0 3.5rem;
+    border-bottom: 4px solid var(--black);
+    position: relative;
+  }
+  .hero .label {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.6rem; letter-spacing: 0.25em; text-transform: uppercase;
+    margin-bottom: 1.5rem;
+    display: inline-block;
+    padding: 4px 10px;
+    background: var(--black); color: var(--parchment);
+  }
+  .hero h1 {
+    font-family: "DM Serif Display", Georgia, serif;
+    font-size: clamp(3rem, 9vw, 6.5rem);
+    font-weight: 400;
+    line-height: 0.95;
+    letter-spacing: -0.02em;
+    margin-bottom: 1.5rem;
+  }
+  .hero h1 .hi {
+    background: var(--forest);
+    color: var(--parchment);
+    padding: 0 0.15em;
+    display: inline-block;
+    transform: rotate(-0.8deg);
+    box-shadow: 5px 5px 0 var(--black);
+    margin: 0.08em 0;
+  }
+  .hero p.lead {
+    font-size: 1.15rem;
+    max-width: 720px;
+    line-height: 1.55;
+    color: var(--black);
+  }
+  .hero .marker {
+    background: var(--forest-pale);
+    padding: 1px 5px;
+    border-bottom: 2px solid var(--forest);
+  }
+
+  .stats {
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    border-bottom: 4px solid var(--black);
+  }
+  @media (max-width: 700px) { .stats { grid-template-columns: repeat(2, 1fr); } }
+  .stat-cell {
+    padding: 1.25rem 1.5rem;
+    border-right: 2px solid var(--black);
+  }
+  .stat-cell:last-child { border-right: none; }
+  @media (max-width: 700px) {
+    .stat-cell { border-bottom: 2px solid var(--black); }
+    .stat-cell:nth-child(2n) { border-right: none; }
+  }
+  .stat-cell .k {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.55rem; letter-spacing: 0.25em; text-transform: uppercase;
+    margin-bottom: 0.4rem; color: var(--muted);
+  }
+  .stat-cell .v {
+    font-family: "Inter", sans-serif; font-weight: 900;
+    font-size: 1.4rem; letter-spacing: -0.02em;
+  }
+
+  .section-label {
+    padding: 1.5rem 0 0.75rem;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.6rem; letter-spacing: 0.25em; text-transform: uppercase;
+    border-bottom: 2px dashed var(--black);
+    margin-bottom: 1.5rem;
+  }
+  .section-label::before { content: "// "; }
+
+  .apps {
+    display: flex; flex-direction: column; gap: 0;
+    border-top: 2px solid var(--black);
+    border-bottom: 4px solid var(--black);
+  }
+  .app {
+    padding: 2rem 1.5rem;
+    border-bottom: 2px solid var(--black);
+    display: grid;
+    grid-template-columns: 80px 1fr 320px;
+    gap: 2rem;
+    align-items: start;
+    transition: background 0.15s;
+  }
+  .app:last-child { border-bottom: none; }
+  @media (max-width: 800px) { .app { grid-template-columns: 1fr; gap: 1rem; } }
+  .app:hover { background: var(--forest-pale); }
+
+  .app .num-cell {
+    font-family: "JetBrains Mono", monospace;
+    display: flex; flex-direction: column; gap: 0.4rem;
+  }
+  .app .num {
+    font-family: "Inter", sans-serif; font-weight: 900;
+    font-size: 3rem; line-height: 0.85; letter-spacing: -0.04em;
+  }
+  .app .status {
+    font-size: 0.55rem; letter-spacing: 0.2em; text-transform: uppercase;
+    padding: 3px 6px; border: 2px solid var(--black);
+    text-align: center;
+  }
+  .app--live .status { background: var(--forest); color: var(--parchment); border-color: var(--forest); }
+
+  .app .body { display: flex; flex-direction: column; gap: 0.7rem; }
+  .app .body .title {
+    font-family: "DM Serif Display", Georgia, serif;
+    font-size: 2.4rem; font-weight: 400; letter-spacing: -0.01em;
+    line-height: 1.0;
+  }
+  .app .body .tagline {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.82rem; padding: 6px 10px;
+    background: var(--forest); color: var(--parchment);
+    display: inline-block; align-self: flex-start;
+  }
+  .app .body .desc { font-size: 1rem; line-height: 1.55; }
+
+  .app .right { display: flex; flex-direction: column; gap: 0.6rem; }
+  .app .shot { display: block; aspect-ratio: 16/9; overflow: hidden; border: 2px solid var(--black); background: var(--forest-pale); }
+  .app .shot img { width: 100%; height: 100%; object-fit: cover; }
+  .app .shot-placeholder {
+    padding: 1rem; height: 100%; display: flex; align-items: center; justify-content: center;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.7rem; letter-spacing: 0.2em; text-transform: uppercase;
+    text-align: center; color: var(--muted);
+  }
+  .app .ctas { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0; border: 2px solid var(--black); }
+  .app .ctas--single { grid-template-columns: 1fr; }
+  .btn {
+    text-align: center;
+    padding: 0.55rem 0.5rem;
+    background: transparent;
+    border-right: 2px solid var(--black);
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.65rem; letter-spacing: 0.15em; text-transform: uppercase; font-weight: 700;
+    color: var(--black);
+    cursor: pointer;
+    transition: background 0.12s;
+  }
+  .btn:last-child { border-right: none; }
+  .btn:hover { background: var(--forest); color: var(--parchment); }
+  .prompt-link {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.7rem;
+    text-decoration: underline;
+    color: var(--muted);
+  }
+  .prompt-link:hover { color: var(--forest); }
+  .fork-note {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.68rem;
+    line-height: 1.5;
+    color: var(--muted);
+    border-left: 2px solid var(--forest-pale);
+    padding-left: 0.6rem;
+    margin-top: 0.2rem;
+  }
+
+  .epilogue {
+    padding: 2.5rem 0;
+    border-bottom: 4px solid var(--black);
+  }
+  .epilogue h2 {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.6rem; letter-spacing: 0.25em; text-transform: uppercase;
+    margin-bottom: 1rem;
+  }
+  .epilogue h2::before { content: "// "; }
+  .epilogue p { font-size: 1.1rem; max-width: 720px; line-height: 1.6; }
+  .epilogue .hl { background: var(--forest-pale); padding: 1px 5px; border-bottom: 2px solid var(--forest); }
+
+  footer.term-footer {
+    padding: 1rem 0;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.6rem; letter-spacing: 0.2em; text-transform: uppercase;
+    display: flex; justify-content: space-between;
+    color: var(--muted);
+  }
+  footer.term-footer a { color: inherit; }
+  footer.term-footer a:hover { color: var(--forest); }
+</style>
+
+<div class="layout">
+  <header class="topbar">
+    <a class="brand" href="https://links.vibes.diy/homepage">VIBES.DIY</a>
+    <span class="meta"><b>ACCOUNTABILITY</b> · five partnership patterns</span>
+  </header>
+
+  <nav class="crumb">
+    <a href="/">Home</a> &nbsp;›&nbsp; Accountability
+  </nav>
+
+  <section class="hero">
+    <span class="label">Accountability Partners</span>
+    <h1>Find the right person<br/>to do the<br/><span class="hi">hard thing with.</span></h1>
+    <p class="lead">
+      The accountability partner relationship is one of the most reliably effective behavioral tools we have — quit drinking, ship the project, run every day, learn a language. Yet it is entirely coordinated today via <span class="marker">Reddit threads</span>, <span class="marker">casual text asks</span>, and <span class="marker">expensive coaching</span>. Five different ways to solve the matching problem that nobody shipped.
+    </p>
+  </section>
+
+  <div class="stats">
+    <div class="stat-cell">
+      <div class="k">Apps</div>
+      <div class="v">Five</div>
+    </div>
+    <div class="stat-cell">
+      <div class="k">Audience</div>
+      <div class="v">Anyone Changing</div>
+    </div>
+    <div class="stat-cell">
+      <div class="k">Persistence</div>
+      <div class="v">Fireproof</div>
+    </div>
+    <div class="stat-cell">
+      <div class="k">Skin</div>
+      <div class="v">Ledger</div>
+    </div>
+  </div>
+
+  <div class="section-label">The Partnership Patterns</div>
+
+  <section class="apps">
+    {{#each apps}}
+      <article class="app {{#if live}}app--live{{else}}app--pending{{/if}}">
+        <div class="num-cell">
+          <div class="num">{{num}}</div>
+          <div class="status">{{#if live}}Live{{else}}Pending{{/if}}</div>
+        </div>
+        <div class="body">
+          <h2 class="title">{{title}}</h2>
+          <span class="tagline">{{tagline}}</span>
+          <p class="desc">{{desc}}</p>
+        </div>
+        <div class="right">
+          {{#if live}}
+            <a class="shot" href="https://vibes.diy/vibe/{{author}}/{{slug}}" aria-label="{{title}} screenshot"><img src="https://{{slug}}--{{author}}.prod-v2.vibesdiy.net/screenshot.jpg" alt="{{slug}}" onerror="this.onerror=null; this.src='{{@root.assetPrefix}}images/og-preview.png';"/></a>
+            <div class="ctas">
+              <a class="btn" href="https://vibes.diy/vibe/{{author}}/{{slug}}">Join</a>
+              <a class="btn" href="https://vibes.diy/remix/{{author}}/{{slug}}?skipChat=true">Clone</a>
+              <a class="btn" href="https://vibes.diy/remix/{{author}}/{{slug}}">Remix</a>
+            </div>
+            <a class="prompt-link" href="https://vibes.diy/chat/prompt?prompt64={{prompt64 desc}}">// start fresh from this prompt — describe your version instead</a>
+            {{#if fork}}<p class="fork-note">{{fork}}</p>{{/if}}
+          {{else}}
+            <div class="shot"><div class="shot-placeholder">awaiting deploy</div></div>
+            <div class="ctas ctas--single">
+              <a class="btn" href="https://vibes.diy/chat/prompt?prompt64={{prompt64 desc}}">Start From Prompt</a>
+            </div>
+          {{/if}}
+        </div>
+      </article>
+    {{/each}}
+  </section>
+
+  <div class="epilogue">
+    <h2>Read Me</h2>
+    <p>
+      Every existing attempt at this — gym buddy apps, accountability Twitter, HabitShare — treated it as a <span class="hl">task tracker with social features bolted on</span>. The coordination problem isn't tracking. It's finding the right specific person and establishing a shared rhythm. That is the dating-app insight: the discovery and matching layer is the hard part, not the journaling. Each of these five breaks one assumption about how you find that person. Remix the one that fits your goal.
+    </p>
+    <p style="margin-top:1rem;">
+      These five were built around common goal patterns. Your goal probably has specific friction those patterns don't quite capture. Clone whichever structure is closest and describe what's different about your situation — the goal, the cadence, the trust model.
+    </p>
+  </div>
+
+  {{> newsletter}}
+<footer class="term-footer">
+    <span>Vibes.diy · <a href="https://links.vibes.diy/homepage">homepage</a> · <a href="/dating.html">dating</a> · <a href="/expressions/">expressions</a></span>
+    <span>// END OF PARTNERSHIP PATTERNS</span>
+  </footer>
+</div>

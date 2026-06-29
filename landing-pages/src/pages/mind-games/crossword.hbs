@@ -1,0 +1,101 @@
+{{!--
+{
+  "layout": "webring",
+  "title": "Mini Crossword | Mind Games",
+  "description": "Across, down, and a few twists. Four crossword variations — each one a live deployed app.",
+  "ogUrl": "https://good.vibes.diy/mind-games/crossword.html",
+  "source": "mind-games-crossword"
+}
+--}}
+
+<style>
+  @import url("https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&display=swap");
+
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    font-family:Georgia, 'Times New Roman', serif;
+    background:#f4f1ea;
+    color:#0a0a0a;
+    min-height:100vh;
+    background-image:linear-gradient(#0a0a0a 1px, transparent 1px) 0 0 / 40px 40px, linear-gradient(90deg, #0a0a0a 1px, transparent 1px) 0 0 / 40px 40px;
+    background-attachment:fixed;
+  }
+  a{color:inherit;text-decoration:none}
+  .wrap{max-width:1100px;margin:0 auto;padding:64px 24px 96px;position:relative;z-index:1}
+  header.top{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:48px;gap:24px;flex-wrap:wrap}
+  header.top a.back{color:#0a0a0a;text-decoration:none;opacity:.6;font-size:14px}
+  header.top a.back:hover{opacity:1}
+  h1{font-family:'Playfair Display', Georgia, serif;font-size:clamp(40px,7vw,84px);margin:0;line-height:.95;letter-spacing:-.02em}
+  .desc{max-width:560px;font-size:18px;opacity:.75;margin:16px 0 0}
+  .accent-bar{display:inline-block;height:6px;width:120px;background:#0a0a0a;margin:24px 0 0}
+  .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:32px;margin-top:56px}
+  @media (max-width:720px){.grid{grid-template-columns:1fr}}
+  .card{background:#fbfaf6;border:3px solid #0a0a0a;border-radius:0;box-shadow:none;overflow:hidden;display:flex;flex-direction:column;transition:transform .15s ease}
+  .card:hover{transform:translateY(-2px)}
+  .shot{display:block;aspect-ratio:16/10;background:#f4f1ea;overflow:hidden;border-bottom:3px solid #0a0a0a}
+  .shot img{width:100%;height:100%;object-fit:cover;display:block}
+  .meta{padding:20px 22px 24px}
+  .meta h3{margin:0 0 10px;font-family:'Playfair Display', Georgia, serif;font-size:24px;letter-spacing:-.01em}
+  .meta h3 a{color:inherit;text-decoration:none}
+  .meta h3 a:hover{opacity:.7}
+  .prompt{margin:0 0 16px;font-size:14px;line-height:1.55;opacity:.78}
+  .play{display:inline-flex;align-items:center;gap:6px;color:#0a0a0a;font-weight:700;text-decoration:none;font-size:14px;letter-spacing:.02em}
+  .play:hover{text-decoration:underline}
+  footer{margin-top:64px;font-size:13px;opacity:.5}
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div>
+      <h1>Mini Crossword</h1>
+      <p class="desc">Across, down, and a few twists. Four variations on the theme, each one a live deployed app you can poke at.</p>
+      <div class="accent-bar"></div>
+    </div>
+    <a class="back" href="./index.html">&larr; Mind Games hub</a>
+  </header>
+  <main class="grid">
+    <article class="card">
+      <a class="shot" href="https://vibes.diy/vibe/jchris/mini-crossword" target="_blank" rel="noopener">
+        <img src="https://mini-crossword--jchris.prod-v2.vibesdiy.net/screenshot.jpg" alt="Tiny Grid preview" loading="lazy"/>
+      </a>
+      <div class="meta">
+        <h3><a href="https://vibes.diy/vibe/jchris/mini-crossword" target="_blank" rel="noopener">Tiny Grid</a></h3>
+        <p class="prompt">Daily 3-by-3 mini crossword. Tap a cell, type letter, auto-advance. Across/Down clues listed below. Reveal-letter and check-grid buttons. Save best time.</p>
+        <a class="play" href="https://vibes.diy/vibe/jchris/mini-crossword" target="_blank" rel="noopener">Play live &rarr;</a>
+      </div>
+    </article>
+    <article class="card">
+      <a class="shot" href="https://vibes.diy/vibe/jchris/picto-crossword" target="_blank" rel="noopener">
+        <img src="https://picto-crossword--jchris.prod-v2.vibesdiy.net/screenshot.jpg" alt="Picto Cross preview" loading="lazy"/>
+      </a>
+      <div class="meta">
+        <h3><a href="https://vibes.diy/vibe/jchris/picto-crossword" target="_blank" rel="noopener">Picto Cross</a></h3>
+        <p class="prompt">Mini crossword where each clue is a tiny inline SVG icon. Tap cell to enter letter. Highlights current word direction. Daily themed picto sets.</p>
+        <a class="play" href="https://vibes.diy/vibe/jchris/picto-crossword" target="_blank" rel="noopener">Play live &rarr;</a>
+      </div>
+    </article>
+    <article class="card">
+      <a class="shot" href="https://vibes.diy/vibe/jchris/rebus-crossword" target="_blank" rel="noopener">
+        <img src="https://rebus-crossword--jchris.prod-v2.vibesdiy.net/screenshot.jpg" alt="Rebus Run preview" loading="lazy"/>
+      </a>
+      <div class="meta">
+        <h3><a href="https://vibes.diy/vibe/jchris/rebus-crossword" target="_blank" rel="noopener">Rebus Run</a></h3>
+        <p class="prompt">5x5 crossword with rebus cells holding 2-3-letter clusters. Show legend of allowed clusters. Tap a cell, pick cluster or letter from popup keyboard.</p>
+        <a class="play" href="https://vibes.diy/vibe/jchris/rebus-crossword" target="_blank" rel="noopener">Play live &rarr;</a>
+      </div>
+    </article>
+    <article class="card">
+      <a class="shot" href="https://vibes.diy/vibe/jchris/diagonal-crossword" target="_blank" rel="noopener">
+        <img src="https://diagonal-crossword--jchris.prod-v2.vibesdiy.net/screenshot.jpg" alt="Triagonal preview" loading="lazy"/>
+      </a>
+      <div class="meta">
+        <h3><a href="https://vibes.diy/vibe/jchris/diagonal-crossword" target="_blank" rel="noopener">Triagonal</a></h3>
+        <p class="prompt">Crossword with Across, Down, AND one diagonal answer. Three clue lists. Auto-advance follows currently selected direction. Highlight diagonal in accent color.</p>
+        <a class="play" href="https://vibes.diy/vibe/jchris/diagonal-crossword" target="_blank" rel="noopener">Play live &rarr;</a>
+      </div>
+    </article>
+  </main>
+  {{> newsletter}}
+<footer>Built with vibes.diy. Each card is a one-prompt mini-app.</footer>
+</div>

@@ -1,0 +1,9 @@
+.env
+.wrangler/
+_site/
+node_modules/
+package-lock.json
+.claude/
+.lighthouse/
+.superpowers/
+vibes/**/*.log

@@ -1,0 +1,252 @@
+{{!--
+{
+  "layout": "webring",
+  "title": "Bridesmaids Apps — Vibes DIY",
+  "description": "You're not just in the wedding. You're running it. Apps for the bridal party that actually does the work.",
+  "ogUrl": "https://good.vibes.diy/bridesmaids/",
+  "source": "bridesmaids",
+  "apps": [
+    {
+      "num": "01",
+      "slug": "bachelorette-planner",
+      "author": "og",
+      "live": true,
+      "title": "Bachelorette Planner",
+      "tagline": "Twelve activities. Four budgets. One very strong opinion about axe throwing.",
+      "desc": "List every activity the group is considering, vote thumbs up or down per person, see what actually has consensus. Running cost tally so nobody is surprised at checkout. The one who keeps saying 'I'm fine with anything' gets a vote too.",
+      "fork": "Your group has a theme and a budget cap nobody will say out loud. Clone it and add those fields — everyone will thank you, including the MOH."
+    },
+    {
+      "num": "02",
+      "slug": "bridesmaid-dress-tracker",
+      "author": "og",
+      "live": true,
+      "title": "Dress Tracker",
+      "tagline": "The spreadsheet your group chat was pretending to be.",
+      "desc": "One row per bridesmaid: size, color, retailer, order date, estimated arrival, alterations status, appointment date, dress arrived, bride approved. The group chat can go back to memes.",
+      "fork": "Different designer? Different retailer per person? Multiple fittings? Clone it and add the columns your specific situation actually needs."
+    },
+    {
+      "num": "03",
+      "slug": "moh-task-checklist",
+      "author": "og",
+      "live": true,
+      "title": "MOH Master Checklist",
+      "tagline": "Everything they asked you to 'just handle.'",
+      "desc": "Tasks organized by phase: 6+ months out, 3 months, 1 month, week of, day of, day after. Check things off. Add notes. Add custom tasks for the things they didn't realize they were asking you to handle. Progress bar per phase because you deserve to see it move.",
+      "fork": "Your bride has 47 opinions and a very specific florist situation. Clone it and add the tasks nobody else knows exist yet."
+    },
+    {
+      "num": "04",
+      "slug": "wedding-gift-split",
+      "author": "og",
+      "live": true,
+      "title": "Group Gift Split",
+      "tagline": "Who's in, what they owe, and who has not yet Venmo'd.",
+      "desc": "One gift, multiple contributors, zero awkward spreadsheets. Enter the gift, the link, the total, and everyone's share. Track who has paid with a toggle. Shows what's still needed. The person who collects the money will cry with relief.",
+      "fork": "Splitting across multiple gifts, not just one? Or need to track who picked up physical items? Clone it and adjust to your specific logistical nightmare."
+    },
+    {
+      "num": "05",
+      "slug": "speech-prep-timer",
+      "author": "og",
+      "live": true,
+      "title": "Speech Timer",
+      "tagline": "Three minutes. You have three minutes.",
+      "desc": "Paste your speech, get a word-count estimate of how long it runs (125 wpm). Practice with a live countdown: green under 3 minutes, yellow at 3–4, red past 4. Delivery notes section for the things you keep forgetting to say with feeling. The open bar is not a valid reason to wing it.",
+      "fork": "Planning a longer toast for a smaller dinner, or a shorter one for the main reception? Clone it and change the target time and the color thresholds."
+    }
+  ],
+  "ogImage": "https://good.vibes.diy/images/screenshots/bridesmaids.jpg"
+}
+--}}
+
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Fraunces:opsz,wght@9..144,600;9..144,700&display=optional');
+
+  :root {
+    --bg: #f6eef3;
+    --surface: #fff9fc;
+    --ink: #2a1d27;
+    --muted: #675565;
+    --line: #e3d4df;
+    --brand: #b53f7d;
+    --brand-strong: #922f64;
+    --accent: #7d3f62;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    font-family: 'Inter', system-ui, sans-serif;
+    color: var(--ink);
+    line-height: 1.56;
+    background: radial-gradient(circle at 0 0, #eddbe7 0, var(--bg) 42%), var(--bg);
+  }
+
+  a { color: inherit; text-decoration: none; }
+
+  .page { max-width: 980px; margin: 0 auto; padding: 0 1.25rem 4rem; }
+
+  .topbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.05rem 0;
+    border-bottom: 1px solid var(--line);
+    font-size: 0.85rem;
+  }
+
+  .brand { font-weight: 800; letter-spacing: 0.02em; }
+  .path { color: var(--muted); font-weight: 600; }
+
+  .hero { padding: 3rem 0 2.2rem; }
+
+  .eyebrow {
+    display: inline-block;
+    font-size: 0.7rem;
+    letter-spacing: 0.11em;
+    text-transform: uppercase;
+    font-weight: 700;
+    color: var(--brand);
+    margin-bottom: 0.9rem;
+  }
+
+  h1 {
+    margin: 0;
+    font-family: 'Fraunces', Georgia, serif;
+    font-size: clamp(2.3rem, 5.2vw, 3.65rem);
+    line-height: 1.05;
+  }
+
+  .lead { margin: 1rem 0 1.35rem; max-width: 62ch; color: var(--muted); font-size: 1.03rem; }
+
+  .primary-cta {
+    display: inline-block;
+    background: var(--brand);
+    color: #fff;
+    font-weight: 700;
+    border-radius: 0.62rem;
+    padding: 0.8rem 1.16rem;
+  }
+
+  .primary-cta:hover { background: var(--brand-strong); }
+
+  .proof {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.8rem;
+    margin: 0 0 2rem;
+  }
+
+  .proof-card {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 0.8rem;
+    padding: 0.92rem;
+  }
+
+  .proof-card strong { display: block; margin-bottom: 0.3rem; font-size: 0.95rem; }
+  .proof-card span { color: var(--muted); font-size: 0.86rem; }
+
+  .section-title { margin: 0 0 0.9rem; font-size: 1.1rem; font-weight: 800; }
+
+  .apps-grid { display: grid; gap: 0.9rem; }
+
+  .app-card {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 0.9rem;
+    padding: 1rem;
+  }
+
+  .app-head { display: flex; align-items: baseline; gap: 0.58rem; margin-bottom: 0.28rem; }
+  .app-index { color: var(--accent); font-size: 0.72rem; font-weight: 800; letter-spacing: 0.12em; }
+  .app-title { margin: 0; font-size: 1.05rem; font-weight: 800; }
+  .app-tagline { margin: 0 0 0.45rem; font-size: 0.9rem; color: var(--brand); font-weight: 600; }
+  .app-desc { margin: 0; color: var(--muted); font-size: 0.92rem; }
+  .fork-note { margin: 0.6rem 0 0; color: var(--muted); font-size: 0.8rem; }
+
+  .actions { margin-top: 0.8rem; display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; }
+
+  .open-btn {
+    border: 1px solid var(--brand);
+    border-radius: 0.55rem;
+    padding: 0.5rem 0.9rem;
+    font-size: 0.84rem;
+    font-weight: 700;
+    color: var(--brand-strong);
+    background: #fff;
+  }
+
+  .open-btn:hover { background: #fff1f8; }
+
+  .minor-actions { display: flex; gap: 0.65rem; }
+  .minor-actions a { color: var(--muted); font-size: 0.8rem; text-decoration: underline; text-underline-offset: 2px; }
+
+  .closing {
+    margin-top: 2rem;
+    background: #922f64;
+    color: #fff4fa;
+    border-radius: 0.95rem;
+    padding: 1.32rem;
+  }
+
+  .closing h2 { margin: 0 0 0.45rem; font-size: 1.22rem; }
+  .closing p { margin: 0 0 0.9rem; opacity: 0.92; }
+
+  @media (max-width: 760px) {
+    .proof { grid-template-columns: 1fr; }
+  }
+</style>
+
+<div class="page">
+  <header class="topbar">
+    <a class="brand" href="https://links.vibes.diy/homepage">Vibes DIY</a>
+    <span class="path">/bridesmaids/</span>
+  </header>
+
+  <section class="hero">
+    <p class="eyebrow">Bridal-party control center</p>
+    <h1>Run the wedding support work without the spreadsheet circus.</h1>
+    <p class="lead">From planning the bachelorette to splitting gift costs and timing speeches, these apps help bridesmaids and MOHs execute cleanly.</p>
+    <a class="primary-cta" href="https://vibes.diy/vibe/og/bachelorette-planner" target="_blank" rel="noopener">Open Bachelorette Planner</a>
+  </section>
+
+  <section class="proof" aria-label="Bridesmaids value strip">
+    <article class="proof-card"><strong>For real coordinators</strong><span>Built for the people who actually manage the details.</span></article>
+    <article class="proof-card"><strong>Clear ownership</strong><span>Make responsibilities visible so tasks stop slipping.</span></article>
+    <article class="proof-card"><strong>Easy to tailor</strong><span>Clone and adjust each tool to the bride's exact plan.</span></article>
+  </section>
+
+  <section>
+    <h2 class="section-title">Open the app for your current task</h2>
+    <div class="apps-grid">
+      {{#each apps}}
+      <article class="app-card">
+        <div class="app-head">
+          <span class="app-index">APP {{num}}</span>
+          <h3 class="app-title">{{title}}</h3>
+        </div>
+        <p class="app-tagline">{{tagline}}</p>
+        <p class="app-desc">{{desc}}</p>
+        {{#if fork}}<p class="fork-note">{{fork}}</p>{{/if}}
+        <div class="actions">
+          <a class="open-btn" href="https://vibes.diy/vibe/{{author}}/{{slug}}" target="_blank" rel="noopener">Open app</a>
+          <div class="minor-actions">
+            <a href="https://vibes.diy/remix/{{author}}/{{slug}}?skipChat=true" target="_blank" rel="noopener">Clone</a>
+            <a href="https://vibes.diy/remix/{{author}}/{{slug}}" target="_blank" rel="noopener">Remix</a>
+          </div>
+        </div>
+      </article>
+      {{/each}}
+    </div>
+  </section>
+
+  <section class="closing">
+    <h2>Start with the highest-friction item first.</h2>
+    <p>Open Bachelorette Planner now, align your group quickly, and then move through dresses, tasks, gifts, and speeches.</p>
+    <a class="primary-cta" href="https://vibes.diy/vibe/og/bachelorette-planner" target="_blank" rel="noopener">Open Bachelorette Planner</a>
+  </section>
+</div>

@@ -1,0 +1,799 @@
+[
+  {
+    "url": "/edu/cal-berkeley/stat-156-causal-inference/",
+    "instSlug": "cal-berkeley",
+    "courseSlug": "stat-156-causal-inference",
+    "title": "STAT 156 Causal Inference",
+    "clusters": [
+      "causal-inference"
+    ]
+  },
+  {
+    "url": "/edu/cal-berkeley/data-c100-principles-and-techniques-of-data-science/",
+    "instSlug": "cal-berkeley",
+    "courseSlug": "data-c100-principles-and-techniques-of-data-science",
+    "title": "DATA C100 Principles and Techniques of Data Science",
+    "clusters": [
+      "machine-learning-methods"
+    ]
+  },
+  {
+    "url": "/edu/cal-berkeley/pbhlth-142-introduction-to-probability-and-statistics-in-biology-and-public-health/",
+    "instSlug": "cal-berkeley",
+    "courseSlug": "pbhlth-142-introduction-to-probability-and-statistics-in-biology-and-public-health",
+    "title": "PBHLTH 142 Introduction to Probability and Statistics in Biology and Public Health",
+    "clusters": []
+  },
+  {
+    "url": "/edu/cal-berkeley/econ-219a-foundations-of-psychology-and-economics/",
+    "instSlug": "cal-berkeley",
+    "courseSlug": "econ-219a-foundations-of-psychology-and-economics",
+    "title": "ECON 219A Foundations of Psychology and Economics",
+    "clusters": [
+      "behavioral-economics"
+    ]
+  },
+  {
+    "url": "/edu/cal-berkeley/espm-155ac-sociology-and-political-ecology-of-agro-food-systems/",
+    "instSlug": "cal-berkeley",
+    "courseSlug": "espm-155ac-sociology-and-political-ecology-of-agro-food-systems",
+    "title": "ESPM 155AC Sociology and Political Ecology of Agro-Food Systems",
+    "clusters": []
+  },
+  {
+    "url": "/edu/cal-berkeley/cy-plan-110-introduction-to-city-planning/",
+    "instSlug": "cal-berkeley",
+    "courseSlug": "cy-plan-110-introduction-to-city-planning",
+    "title": "CY PLAN 110 Introduction to City Planning",
+    "clusters": [
+      "urban-land-use-planning"
+    ]
+  },
+  {
+    "url": "/edu/cmu/36-318-introduction-to-causal-inference/",
+    "instSlug": "cmu",
+    "courseSlug": "36-318-introduction-to-causal-inference",
+    "title": "36-318 Introduction to Causal Inference",
+    "clusters": [
+      "causal-inference"
+    ]
+  },
+  {
+    "url": "/edu/cmu/36-462-statistical-machine-learning/",
+    "instSlug": "cmu",
+    "courseSlug": "36-462-statistical-machine-learning",
+    "title": "36-462 Statistical Machine Learning",
+    "clusters": [
+      "machine-learning-methods"
+    ]
+  },
+  {
+    "url": "/edu/cmu/19-629-climate-change-science-and-solutions/",
+    "instSlug": "cmu",
+    "courseSlug": "19-629-climate-change-science-and-solutions",
+    "title": "19-629 Climate Change Science and Solutions",
+    "clusters": [
+      "climate-change-policy"
+    ]
+  },
+  {
+    "url": "/edu/cmu/19-701-introduction-to-the-theory-and-practice-of-policy-analysis/",
+    "instSlug": "cmu",
+    "courseSlug": "19-701-introduction-to-the-theory-and-practice-of-policy-analysis",
+    "title": "19-701 Introduction to the Theory and Practice of Policy Analysis",
+    "clusters": [
+      "policy-analysis-decision-modeling"
+    ]
+  },
+  {
+    "url": "/edu/cmu/94-802-geographic-information-systems/",
+    "instSlug": "cmu",
+    "courseSlug": "94-802-geographic-information-systems",
+    "title": "94-802 Geographic Information Systems",
+    "clusters": [
+      "spatial-analysis-gis"
+    ]
+  },
+  {
+    "url": "/edu/cmu/90-722-management-science-i-optimization-and-decision-modeling/",
+    "instSlug": "cmu",
+    "courseSlug": "90-722-management-science-i-optimization-and-decision-modeling",
+    "title": "90-722 Management Science I: Optimization and Decision Modeling",
+    "clusters": [
+      "behavioral-economics",
+      "policy-analysis-decision-modeling"
+    ]
+  },
+  {
+    "url": "/edu/h-net-diplo/history-of-u-s-foreign-policy-1890s-present/",
+    "instSlug": "h-net-diplo",
+    "courseSlug": "history-of-u-s-foreign-policy-1890s-present",
+    "title": "History of U.S. Foreign Policy (1890s-present)",
+    "clusters": [
+      "cold-war-history",
+      "us-foreign-policy"
+    ]
+  },
+  {
+    "url": "/edu/h-net-diplo/u-s-diplomatic-history-20th-century/",
+    "instSlug": "h-net-diplo",
+    "courseSlug": "u-s-diplomatic-history-20th-century",
+    "title": "U.S. Diplomatic History—20th Century",
+    "clusters": [
+      "us-foreign-policy"
+    ]
+  },
+  {
+    "url": "/edu/h-net-diplo/the-u-s-and-the-modern-world/",
+    "instSlug": "h-net-diplo",
+    "courseSlug": "the-u-s-and-the-modern-world",
+    "title": "The U.S. and the Modern World",
+    "clusters": [
+      "us-foreign-policy"
+    ]
+  },
+  {
+    "url": "/edu/h-net-diplo/u-s-foreign-relations-since-1914/",
+    "instSlug": "h-net-diplo",
+    "courseSlug": "u-s-foreign-relations-since-1914",
+    "title": "U.S. Foreign Relations Since 1914",
+    "clusters": [
+      "us-foreign-policy"
+    ]
+  },
+  {
+    "url": "/edu/h-net-diplo/u-s-foreign-relations-to-1914/",
+    "instSlug": "h-net-diplo",
+    "courseSlug": "u-s-foreign-relations-to-1914",
+    "title": "U.S. Foreign Relations to 1914",
+    "clusters": [
+      "us-foreign-policy"
+    ]
+  },
+  {
+    "url": "/edu/h-net-diplo/rethinking-cold-war-history/",
+    "instSlug": "h-net-diplo",
+    "courseSlug": "rethinking-cold-war-history",
+    "title": "Rethinking Cold War History",
+    "clusters": [
+      "cold-war-history"
+    ]
+  },
+  {
+    "url": "/edu/h-net-urban/history-of-urban-problems/",
+    "instSlug": "h-net-urban",
+    "courseSlug": "history-of-urban-problems",
+    "title": "History of Urban Problems",
+    "clusters": [
+      "urban-race-housing"
+    ]
+  },
+  {
+    "url": "/edu/h-net-urban/the-new-suburban-history/",
+    "instSlug": "h-net-urban",
+    "courseSlug": "the-new-suburban-history",
+    "title": "The New Suburban History",
+    "clusters": [
+      "urban-race-housing"
+    ]
+  },
+  {
+    "url": "/edu/h-net-urban/race-immigration-urban-politics/",
+    "instSlug": "h-net-urban",
+    "courseSlug": "race-immigration-urban-politics",
+    "title": "Race, Immigration & Urban Politics",
+    "clusters": [
+      "slavery-civil-rights"
+    ]
+  },
+  {
+    "url": "/edu/h-net-urban/modern-central-american-history/",
+    "instSlug": "h-net-urban",
+    "courseSlug": "modern-central-american-history",
+    "title": "Modern Central American History",
+    "clusters": [
+      "latin-american-history"
+    ]
+  },
+  {
+    "url": "/edu/h-net-urban/reform-and-revolution-in-latin-america/",
+    "instSlug": "h-net-urban",
+    "courseSlug": "reform-and-revolution-in-latin-america",
+    "title": "Reform and Revolution in Latin America",
+    "clusters": [
+      "latin-american-history"
+    ]
+  },
+  {
+    "url": "/edu/h-net-urban/colonial-latin-american-history/",
+    "instSlug": "h-net-urban",
+    "courseSlug": "colonial-latin-american-history",
+    "title": "Colonial Latin American History",
+    "clusters": [
+      "latin-american-history"
+    ]
+  },
+  {
+    "url": "/edu/mit-humanities/21h-102-american-history-since-1865/",
+    "instSlug": "mit-humanities",
+    "courseSlug": "21h-102-american-history-since-1865",
+    "title": "21H.102 American History Since 1865",
+    "clusters": [
+      "cold-war-history"
+    ]
+  },
+  {
+    "url": "/edu/mit-humanities/21h-009-the-world-1400-present/",
+    "instSlug": "mit-humanities",
+    "courseSlug": "21h-009-the-world-1400-present",
+    "title": "21H.009 The World: 1400-Present",
+    "clusters": []
+  },
+  {
+    "url": "/edu/mit-humanities/21l-002x-foundations-of-world-culture-ii-world-literatures-and-texts/",
+    "instSlug": "mit-humanities",
+    "courseSlug": "21l-002x-foundations-of-world-culture-ii-world-literatures-and-texts",
+    "title": "21L.002X Foundations of World Culture II: World Literatures and Texts",
+    "clusters": [
+      "literary-analysis"
+    ]
+  },
+  {
+    "url": "/edu/mit-humanities/21l-003-introduction-to-fiction/",
+    "instSlug": "mit-humanities",
+    "courseSlug": "21l-003-introduction-to-fiction",
+    "title": "21L.003 Introduction to Fiction",
+    "clusters": [
+      "literary-analysis"
+    ]
+  },
+  {
+    "url": "/edu/mit-humanities/24-00-problems-of-philosophy/",
+    "instSlug": "mit-humanities",
+    "courseSlug": "24-00-problems-of-philosophy",
+    "title": "24.00 Problems of Philosophy",
+    "clusters": [
+      "ethics-philosophy"
+    ]
+  },
+  {
+    "url": "/edu/mit-humanities/24-118-paradox-and-infinity/",
+    "instSlug": "mit-humanities",
+    "courseSlug": "24-118-paradox-and-infinity",
+    "title": "24.118 Paradox and Infinity",
+    "clusters": []
+  },
+  {
+    "url": "/edu/mit/6-s897-machine-learning-for-healthcare/",
+    "instSlug": "mit",
+    "courseSlug": "6-s897-machine-learning-for-healthcare",
+    "title": "6.S897 Machine Learning for Healthcare",
+    "clusters": [
+      "machine-learning-methods"
+    ]
+  },
+  {
+    "url": "/edu/mit/14-32-econometrics/",
+    "instSlug": "mit",
+    "courseSlug": "14-32-econometrics",
+    "title": "14.32 Econometrics",
+    "clusters": [
+      "causal-inference"
+    ]
+  },
+  {
+    "url": "/edu/mit/11-520-a-workshop-on-geographic-information-systems/",
+    "instSlug": "mit",
+    "courseSlug": "11-520-a-workshop-on-geographic-information-systems",
+    "title": "11.520 A Workshop on Geographic Information Systems",
+    "clusters": [
+      "spatial-analysis-gis"
+    ]
+  },
+  {
+    "url": "/edu/mit/14-13-psychology-and-economics/",
+    "instSlug": "mit",
+    "courseSlug": "14-13-psychology-and-economics",
+    "title": "14.13 Psychology and Economics",
+    "clusters": [
+      "behavioral-economics"
+    ]
+  },
+  {
+    "url": "/edu/mit/1-020-ecology-ii-engineering-for-sustainability/",
+    "instSlug": "mit",
+    "courseSlug": "1-020-ecology-ii-engineering-for-sustainability",
+    "title": "1.020 Ecology II: Engineering for Sustainability",
+    "clusters": [
+      "climate-change-policy"
+    ]
+  },
+  {
+    "url": "/edu/mit/hst-953-collaborative-data-science-in-medicine/",
+    "instSlug": "mit",
+    "courseSlug": "hst-953-collaborative-data-science-in-medicine",
+    "title": "HST.953 Collaborative Data Science in Medicine",
+    "clusters": [
+      "machine-learning-methods"
+    ]
+  },
+  {
+    "url": "/edu/mit-shass/writing-about-literature-writing-about-love/",
+    "instSlug": "mit-shass",
+    "courseSlug": "writing-about-literature-writing-about-love",
+    "title": "Writing About Literature: Writing About Love",
+    "clusters": [
+      "literary-analysis"
+    ]
+  },
+  {
+    "url": "/edu/mit-shass/foundations-of-western-culture-the-making-of-the-modern-world/",
+    "instSlug": "mit-shass",
+    "courseSlug": "foundations-of-western-culture-the-making-of-the-modern-world",
+    "title": "Foundations of Western Culture: The Making of the Modern World",
+    "clusters": [
+      "capitalism-labor-history"
+    ]
+  },
+  {
+    "url": "/edu/mit-shass/how-to-stage-a-revolution/",
+    "instSlug": "mit-shass",
+    "courseSlug": "how-to-stage-a-revolution",
+    "title": "How to Stage a Revolution",
+    "clusters": [
+      "revolutions-political-change"
+    ]
+  },
+  {
+    "url": "/edu/mit-shass/american-history-since-1865/",
+    "instSlug": "mit-shass",
+    "courseSlug": "american-history-since-1865",
+    "title": "American History Since 1865",
+    "clusters": [
+      "cold-war-history"
+    ]
+  },
+  {
+    "url": "/edu/mit-shass/good-food-ethics-and-politics-of-food/",
+    "instSlug": "mit-shass",
+    "courseSlug": "good-food-ethics-and-politics-of-food",
+    "title": "Good Food: Ethics and Politics of Food",
+    "clusters": [
+      "ethics-philosophy"
+    ]
+  },
+  {
+    "url": "/edu/mit-shass/musical-improvisation/",
+    "instSlug": "mit-shass",
+    "courseSlug": "musical-improvisation",
+    "title": "Musical Improvisation",
+    "clusters": [
+      "music-sound-culture"
+    ]
+  },
+  {
+    "url": "/edu/sfpc/code-societies-orientation/",
+    "instSlug": "sfpc",
+    "courseSlug": "code-societies-orientation",
+    "title": "Code Societies Orientation",
+    "clusters": [
+      "critical-algorithms"
+    ]
+  },
+  {
+    "url": "/edu/sfpc/surveillance-studies/",
+    "instSlug": "sfpc",
+    "courseSlug": "surveillance-studies",
+    "title": "Surveillance Studies",
+    "clusters": [
+      "critical-algorithms"
+    ]
+  },
+  {
+    "url": "/edu/sfpc/black-mirrors-reimagining-race-technology-and-justice/",
+    "instSlug": "sfpc",
+    "courseSlug": "black-mirrors-reimagining-race-technology-and-justice",
+    "title": "Black Mirrors: Reimagining Race, Technology, and Justice",
+    "clusters": [
+      "critical-algorithms"
+    ]
+  },
+  {
+    "url": "/edu/sfpc/the-unfinished-sentence-algorithmic-text-generation/",
+    "instSlug": "sfpc",
+    "courseSlug": "the-unfinished-sentence-algorithmic-text-generation",
+    "title": "The Unfinished Sentence: Algorithmic Text Generation",
+    "clusters": [
+      "algorithmic-creative-writing"
+    ]
+  },
+  {
+    "url": "/edu/sfpc/computational-exploration-of-magical-and-divinatory-language/",
+    "instSlug": "sfpc",
+    "courseSlug": "computational-exploration-of-magical-and-divinatory-language",
+    "title": "Computational Exploration of Magical and Divinatory Language",
+    "clusters": [
+      "music-sound-culture",
+      "algorithmic-creative-writing"
+    ]
+  },
+  {
+    "url": "/edu/sfpc/dark-matters/",
+    "instSlug": "sfpc",
+    "courseSlug": "dark-matters",
+    "title": "Dark Matters",
+    "clusters": []
+  },
+  {
+    "url": "/edu/stanford/stats-209-introduction-to-causal-inference/",
+    "instSlug": "stanford",
+    "courseSlug": "stats-209-introduction-to-causal-inference",
+    "title": "STATS 209: Introduction to Causal Inference",
+    "clusters": [
+      "causal-inference"
+    ]
+  },
+  {
+    "url": "/edu/stanford/educ-255c-applied-quasi-experimental-research-in-education/",
+    "instSlug": "stanford",
+    "courseSlug": "educ-255c-applied-quasi-experimental-research-in-education",
+    "title": "EDUC 255C: Applied Quasi-Experimental Research in Education",
+    "clusters": [
+      "causal-inference"
+    ]
+  },
+  {
+    "url": "/edu/stanford/epi-225-introduction-to-epidemiologic-and-clinical-research-methods/",
+    "instSlug": "stanford",
+    "courseSlug": "epi-225-introduction-to-epidemiologic-and-clinical-research-methods",
+    "title": "EPI 225: Introduction to Epidemiologic and Clinical Research Methods",
+    "clusters": []
+  },
+  {
+    "url": "/edu/stanford/epi-247-epidemic-intelligence-how-to-identify-investigate-and-interrupt-outbreaks-of-disease/",
+    "instSlug": "stanford",
+    "courseSlug": "epi-247-epidemic-intelligence-how-to-identify-investigate-and-interrupt-outbreaks-of-disease",
+    "title": "EPI 247: Epidemic Intelligence: How to Identify, Investigate and Interrupt Outbreaks of Disease",
+    "clusters": [
+      "epidemiology-study-design"
+    ]
+  },
+  {
+    "url": "/edu/stanford/earthsys-168-publpol-163-land-use-planning-for-sustainable-cities/",
+    "instSlug": "stanford",
+    "courseSlug": "earthsys-168-publpol-163-land-use-planning-for-sustainable-cities",
+    "title": "EARTHSYS 168 / PUBLPOL 163: Land Use: Planning for Sustainable Cities",
+    "clusters": [
+      "urban-land-use-planning"
+    ]
+  },
+  {
+    "url": "/edu/stanford/econ-278-behavioral-and-experimental-economics-i/",
+    "instSlug": "stanford",
+    "courseSlug": "econ-278-behavioral-and-experimental-economics-i",
+    "title": "ECON 278: Behavioral and Experimental Economics I",
+    "clusters": []
+  },
+  {
+    "url": "/edu/unc/epid-710-fundamentals-of-epidemiology/",
+    "instSlug": "unc",
+    "courseSlug": "epid-710-fundamentals-of-epidemiology",
+    "title": "EPID 710: Fundamentals of Epidemiology",
+    "clusters": [
+      "epidemiology-study-design"
+    ]
+  },
+  {
+    "url": "/edu/unc/epid-718-analytic-methods-in-observational-epidemiology/",
+    "instSlug": "unc",
+    "courseSlug": "epid-718-analytic-methods-in-observational-epidemiology",
+    "title": "EPID 718: Analytic Methods in Observational Epidemiology",
+    "clusters": [
+      "epidemiology-study-design"
+    ]
+  },
+  {
+    "url": "/edu/unc/stor-565-machine-learning/",
+    "instSlug": "unc",
+    "courseSlug": "stor-565-machine-learning",
+    "title": "STOR 565: Machine Learning",
+    "clusters": [
+      "machine-learning-methods"
+    ]
+  },
+  {
+    "url": "/edu/unc/econ-416-behavioral-economics/",
+    "instSlug": "unc",
+    "courseSlug": "econ-416-behavioral-economics",
+    "title": "ECON 416: Behavioral Economics",
+    "clusters": [
+      "behavioral-economics"
+    ]
+  },
+  {
+    "url": "/edu/unc/plan-741-land-use-and-environmental-planning/",
+    "instSlug": "unc",
+    "courseSlug": "plan-741-land-use-and-environmental-planning",
+    "title": "PLAN 741: Land Use and Environmental Planning",
+    "clusters": [
+      "urban-land-use-planning"
+    ]
+  },
+  {
+    "url": "/edu/unc/educ-935-multilevel-modeling/",
+    "instSlug": "unc",
+    "courseSlug": "educ-935-multilevel-modeling",
+    "title": "EDUC 935: Multilevel Modeling",
+    "clusters": [
+      "research-methods-regression"
+    ]
+  },
+  {
+    "url": "/edu/ut-austin-hum/e-316l-british-literature-masterworks-of-literature-british/",
+    "instSlug": "ut-austin-hum",
+    "courseSlug": "e-316l-british-literature-masterworks-of-literature-british",
+    "title": "E 316L: British Literature (Masterworks of Literature: British)",
+    "clusters": [
+      "literary-analysis"
+    ]
+  },
+  {
+    "url": "/edu/ut-austin-hum/his-305l-ans-301m-history-of-east-asia-since-1800/",
+    "instSlug": "ut-austin-hum",
+    "courseSlug": "his-305l-ans-301m-history-of-east-asia-since-1800",
+    "title": "HIS 305L / ANS 301M: History of East Asia Since 1800",
+    "clusters": []
+  },
+  {
+    "url": "/edu/ut-austin-hum/phl-301l-early-modern-philosophy/",
+    "instSlug": "ut-austin-hum",
+    "courseSlug": "phl-301l-early-modern-philosophy",
+    "title": "PHL 301L: Early Modern Philosophy",
+    "clusters": [
+      "ethics-philosophy"
+    ]
+  },
+  {
+    "url": "/edu/ut-austin-hum/rtf-345-contemporary-horror/",
+    "instSlug": "ut-austin-hum",
+    "courseSlug": "rtf-345-contemporary-horror",
+    "title": "RTF 345: Contemporary Horror",
+    "clusters": []
+  },
+  {
+    "url": "/edu/ut-austin-hum/mus-307-jazz-appreciation/",
+    "instSlug": "ut-austin-hum",
+    "courseSlug": "mus-307-jazz-appreciation",
+    "title": "MUS 307: Jazz Appreciation",
+    "clusters": [
+      "music-sound-culture"
+    ]
+  },
+  {
+    "url": "/edu/ut-austin-hum/arh-347n-las-327-aztec-art-and-civilization/",
+    "instSlug": "ut-austin-hum",
+    "courseSlug": "arh-347n-las-327-aztec-art-and-civilization",
+    "title": "ARH 347N / LAS 327: Aztec Art and Civilization",
+    "clusters": [
+      "latin-american-history"
+    ]
+  },
+  {
+    "url": "/edu/ut-austin/eco-348k-causal-inference/",
+    "instSlug": "ut-austin",
+    "courseSlug": "eco-348k-causal-inference",
+    "title": "ECO 348K Causal Inference",
+    "clusters": [
+      "causal-inference"
+    ]
+  },
+  {
+    "url": "/edu/ut-austin/crp-386-urban-gis/",
+    "instSlug": "ut-austin",
+    "courseSlug": "crp-386-urban-gis",
+    "title": "CRP 386 Urban GIS",
+    "clusters": [
+      "spatial-analysis-gis"
+    ]
+  },
+  {
+    "url": "/edu/ut-austin/eco-370m-behavioral-economics/",
+    "instSlug": "ut-austin",
+    "courseSlug": "eco-370m-behavioral-economics",
+    "title": "ECO 370M Behavioral Economics",
+    "clusters": [
+      "behavioral-economics"
+    ]
+  },
+  {
+    "url": "/edu/ut-austin/pbh-354-introduction-to-epidemiology/",
+    "instSlug": "ut-austin",
+    "courseSlug": "pbh-354-introduction-to-epidemiology",
+    "title": "PBH 354 Introduction to Epidemiology",
+    "clusters": [
+      "epidemiology-study-design"
+    ]
+  },
+  {
+    "url": "/edu/ut-austin/grg-333k-climate-change/",
+    "instSlug": "ut-austin",
+    "courseSlug": "grg-333k-climate-change",
+    "title": "GRG 333K Climate Change",
+    "clusters": [
+      "climate-change-policy"
+    ]
+  },
+  {
+    "url": "/edu/ut-austin/grg-470c-advanced-geographic-information-systems/",
+    "instSlug": "ut-austin",
+    "courseSlug": "grg-470c-advanced-geographic-information-systems",
+    "title": "GRG 470C Advanced Geographic Information Systems",
+    "clusters": [
+      "spatial-analysis-gis"
+    ]
+  },
+  {
+    "url": "/edu/uw-madison-history/history-315-gender-race-and-colonialism/",
+    "instSlug": "uw-madison-history",
+    "courseSlug": "history-315-gender-race-and-colonialism",
+    "title": "History 315 – Gender, Race and Colonialism",
+    "clusters": [
+      "gender-colonialism"
+    ]
+  },
+  {
+    "url": "/edu/uw-madison-history/history-329-history-of-american-capitalism/",
+    "instSlug": "uw-madison-history",
+    "courseSlug": "history-329-history-of-american-capitalism",
+    "title": "History 329 – History of American Capitalism",
+    "clusters": [
+      "capitalism-labor-history"
+    ]
+  },
+  {
+    "url": "/edu/uw-madison-history/history-393-slavery-civil-war-and-reconstruction-1848-1877/",
+    "instSlug": "uw-madison-history",
+    "courseSlug": "history-393-slavery-civil-war-and-reconstruction-1848-1877",
+    "title": "History 393 – Slavery, Civil War, and Reconstruction, 1848-1877",
+    "clusters": [
+      "slavery-civil-rights"
+    ]
+  },
+  {
+    "url": "/edu/uw-madison-history/history-375-the-cold-war-from-world-war-ii-to-end-of-soviet-empire/",
+    "instSlug": "uw-madison-history",
+    "courseSlug": "history-375-the-cold-war-from-world-war-ii-to-end-of-soviet-empire",
+    "title": "History 375 – The Cold War: From World War II to End of Soviet Empire",
+    "clusters": [
+      "cold-war-history"
+    ]
+  },
+  {
+    "url": "/edu/uw-madison-history/history-321-african-american-history-since-1900/",
+    "instSlug": "uw-madison-history",
+    "courseSlug": "history-321-african-american-history-since-1900",
+    "title": "History 321 – African American History Since 1900",
+    "clusters": [
+      "slavery-civil-rights"
+    ]
+  },
+  {
+    "url": "/edu/uw-madison-history/history-347-the-caribbean-and-its-diasporas/",
+    "instSlug": "uw-madison-history",
+    "courseSlug": "history-347-the-caribbean-and-its-diasporas",
+    "title": "History 347 – The Caribbean and its Diasporas",
+    "clusters": [
+      "gender-colonialism"
+    ]
+  },
+  {
+    "url": "/edu/uw-madison/stat-992-topics-in-causal-inference/",
+    "instSlug": "uw-madison",
+    "courseSlug": "stat-992-topics-in-causal-inference",
+    "title": "STAT 992: Topics in Causal Inference",
+    "clusters": [
+      "causal-inference"
+    ]
+  },
+  {
+    "url": "/edu/uw-madison/envir-st-413-preserving-nature/",
+    "instSlug": "uw-madison",
+    "courseSlug": "envir-st-413-preserving-nature",
+    "title": "ENVIR ST 413: Preserving Nature",
+    "clusters": [
+      "climate-change-policy"
+    ]
+  },
+  {
+    "url": "/edu/uw-madison/civ-engr-571-urban-transportation-planning/",
+    "instSlug": "uw-madison",
+    "courseSlug": "civ-engr-571-urban-transportation-planning",
+    "title": "CIV ENGR 571: Urban Transportation Planning",
+    "clusters": [
+      "urban-land-use-planning"
+    ]
+  },
+  {
+    "url": "/edu/uw-madison/pop-hlth-849-genetic-epidemiology/",
+    "instSlug": "uw-madison",
+    "courseSlug": "pop-hlth-849-genetic-epidemiology",
+    "title": "POP HLTH 849: Genetic Epidemiology",
+    "clusters": [
+      "epidemiology-study-design"
+    ]
+  },
+  {
+    "url": "/edu/uw-madison/pa-881-cost-benefit-analysis/",
+    "instSlug": "uw-madison",
+    "courseSlug": "pa-881-cost-benefit-analysis",
+    "title": "PA 881: Cost-Benefit Analysis",
+    "clusters": [
+      "behavioral-economics",
+      "policy-analysis-decision-modeling"
+    ]
+  },
+  {
+    "url": "/edu/uw-madison/ed-psych-560-foundations-in-quantitative-and-qualitative-research-methods/",
+    "instSlug": "uw-madison",
+    "courseSlug": "ed-psych-560-foundations-in-quantitative-and-qualitative-research-methods",
+    "title": "ED PSYCH 560: Foundations in Quantitative and Qualitative Research Methods",
+    "clusters": [
+      "research-methods-regression"
+    ]
+  },
+  {
+    "url": "/edu/uw-seattle/stat-534-statistical-computing/",
+    "instSlug": "uw-seattle",
+    "courseSlug": "stat-534-statistical-computing",
+    "title": "STAT 534: Statistical Computing",
+    "clusters": [
+      "research-methods-regression"
+    ]
+  },
+  {
+    "url": "/edu/uw-seattle/biost-518-applied-biostatistics-ii/",
+    "instSlug": "uw-seattle",
+    "courseSlug": "biost-518-applied-biostatistics-ii",
+    "title": "BIOST 518: Applied Biostatistics II",
+    "clusters": [
+      "epidemiology-study-design",
+      "research-methods-regression"
+    ]
+  },
+  {
+    "url": "/edu/uw-seattle/urbdp-520-quantitative-methods-in-urban-design-and-planning/",
+    "instSlug": "uw-seattle",
+    "courseSlug": "urbdp-520-quantitative-methods-in-urban-design-and-planning",
+    "title": "URBDP 520: Quantitative Methods in Urban Design and Planning",
+    "clusters": [
+      "research-methods-regression"
+    ]
+  },
+  {
+    "url": "/edu/uw-seattle/envir-495-climate-justice/",
+    "instSlug": "uw-seattle",
+    "courseSlug": "envir-495-climate-justice",
+    "title": "ENVIR 495: Climate Justice",
+    "clusters": [
+      "climate-change-policy"
+    ]
+  },
+  {
+    "url": "/edu/uw-seattle/econ-411-behavioral-economics/",
+    "instSlug": "uw-seattle",
+    "courseSlug": "econ-411-behavioral-economics",
+    "title": "ECON 411: Behavioral Economics",
+    "clusters": [
+      "behavioral-economics"
+    ]
+  },
+  {
+    "url": "/edu/uw-seattle/edpsy-591-methods-of-educational-research/",
+    "instSlug": "uw-seattle",
+    "courseSlug": "edpsy-591-methods-of-educational-research",
+    "title": "EDPSY 591: Methods of Educational Research",
+    "clusters": [
+      "research-methods-regression"
+    ]
+  }
+]

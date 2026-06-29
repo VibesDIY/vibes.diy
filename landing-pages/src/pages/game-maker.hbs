@@ -1,0 +1,454 @@
+{{!--
+{
+  "layout": "webring",
+  "title": "Game Maker — Build Games with Blocks | Vibes DIY",
+  "description": "A Scratch-style game playground powered by Blockly. Drag blocks to code Pong, Frogger, Breakout, and more. AI-generated sprites. No coding required.",
+  "ogUrl": "https://good.vibes.diy/game-maker",
+  "source": "game-maker"
+}
+--}}
+
+<style>
+  @import url("https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Inter:wght@400;500;600;700;800;900&display=optional");
+
+  :root {
+    --bg: #0a0a1a;
+    --surface: #13131e;
+    --surface-hi: #1e1e2e;
+    --accent: #4ade80;
+    --accent-dim: rgba(74, 222, 128, 0.12);
+    --yellow: #ffd700;
+    --cyan: #60a5fa;
+    --pink: #f472b6;
+    --text: #f0f0f0;
+    --muted: #7a7a8a;
+    --border: rgba(255, 255, 255, 0.08);
+    --border-hi: rgba(255, 255, 255, 0.15);
+  }
+
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: "Inter", system-ui, sans-serif;
+    line-height: 1.6;
+    min-height: 100vh;
+    scroll-behavior: smooth;
+  }
+  a { color: inherit; text-decoration: none; }
+
+  .layout { max-width: 1100px; margin: 0 auto; padding: 0 1.5rem; }
+  .pixel { font-family: "Press Start 2P", monospace; }
+
+  /* Nav */
+  .topbar {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 1rem 0;
+    border-bottom: 1px solid var(--border-hi);
+  }
+  .topbar .brand {
+    font-family: "Press Start 2P", monospace;
+    font-size: 0.75rem; color: var(--accent);
+  }
+  .topbar .cta-link {
+    font-size: 0.85rem; font-weight: 700;
+    color: var(--accent); border: 2px solid var(--accent);
+    padding: 6px 16px; border-radius: 6px;
+    transition: all 0.15s;
+  }
+  .topbar .cta-link:hover { background: var(--accent); color: var(--bg); }
+
+  /* Hero */
+  .hero {
+    padding: 5rem 0 4rem;
+    text-align: center;
+  }
+  .hero .badge {
+    display: inline-block;
+    font-family: "Press Start 2P", monospace;
+    font-size: 0.55rem; letter-spacing: 0.15em; text-transform: uppercase;
+    color: var(--yellow);
+    border: 1px solid rgba(255, 215, 0, 0.3);
+    padding: 5px 12px; border-radius: 4px;
+    margin-bottom: 1.5rem;
+    background: rgba(255, 215, 0, 0.08);
+  }
+  .hero h1 {
+    font-size: clamp(2.5rem, 6vw, 4.5rem);
+    font-weight: 900; line-height: 1.05;
+    letter-spacing: -0.03em;
+    margin-bottom: 1.25rem;
+  }
+  .hero h1 .hi { color: var(--accent); }
+  .hero h1 .blocks { color: var(--yellow); }
+  .hero .lead {
+    font-size: 1.2rem; max-width: 640px; margin: 0 auto 2.5rem;
+    color: rgba(255, 255, 255, 0.7); line-height: 1.6;
+  }
+  .hero .cta-row {
+    display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;
+  }
+  .btn-primary {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: var(--accent); color: var(--bg);
+    font-weight: 800; font-size: 1rem;
+    padding: 14px 28px; border-radius: 10px; border: none;
+    cursor: pointer; transition: all 0.15s;
+    text-decoration: none;
+  }
+  .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 4px 20px rgba(74, 222, 128, 0.3); }
+  .btn-secondary {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: transparent; color: var(--text);
+    font-weight: 700; font-size: 1rem;
+    padding: 14px 28px; border-radius: 10px;
+    border: 2px solid var(--border-hi);
+    cursor: pointer; transition: all 0.15s;
+    text-decoration: none;
+  }
+  .btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
+
+  /* Section headings */
+  .section { padding: 4rem 0; border-top: 1px solid var(--border); }
+  .section-label {
+    font-family: "Press Start 2P", monospace;
+    font-size: 0.55rem; letter-spacing: 0.2em; text-transform: uppercase;
+    color: var(--accent); margin-bottom: 1rem;
+  }
+  .section h2 {
+    font-size: clamp(1.8rem, 4vw, 2.8rem);
+    font-weight: 900; letter-spacing: -0.02em;
+    margin-bottom: 1rem;
+  }
+  .section .sub {
+    font-size: 1.1rem; color: rgba(255, 255, 255, 0.6);
+    max-width: 600px; margin-bottom: 2.5rem;
+  }
+
+  /* Game cards */
+  .games-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.5rem;
+  }
+  .game-card {
+    background: var(--surface);
+    border: 1px solid var(--border-hi);
+    border-radius: 14px;
+    overflow: hidden;
+    transition: all 0.2s;
+  }
+  .game-card:hover {
+    border-color: var(--accent);
+    transform: translateY(-4px);
+    box-shadow: 0 8px 24px rgba(74, 222, 128, 0.08);
+  }
+  .game-card .thumb {
+    width: 100%;
+    aspect-ratio: 16 / 10;
+    overflow: hidden;
+    border-bottom: 1px solid var(--border);
+    position: relative;
+  }
+  .game-card .thumb img {
+    width: 100%; height: 100%; object-fit: cover;
+  }
+  .game-card .thumb .placeholder {
+    width: 100%; height: 100%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 3rem;
+  }
+  .game-card .info {
+    padding: 1.25rem 1.5rem;
+  }
+  .game-card .info h3 {
+    font-size: 1.15rem; font-weight: 800; margin-bottom: 0.4rem;
+  }
+  .game-card .info p {
+    font-size: 0.85rem; color: var(--muted); line-height: 1.5;
+    margin-bottom: 1rem;
+  }
+  .game-card .info .tag {
+    display: inline-block;
+    font-family: "Press Start 2P", monospace;
+    font-size: 0.45rem; letter-spacing: 0.1em; text-transform: uppercase;
+    padding: 3px 8px; border-radius: 3px;
+    border: 1px solid var(--border-hi);
+    color: var(--muted);
+  }
+
+  /* Features */
+  .features-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 1.25rem;
+  }
+  .feature-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 1.75rem;
+  }
+  .feature-card .icon {
+    font-size: 2rem; margin-bottom: 0.75rem;
+  }
+  .feature-card h3 {
+    font-size: 1rem; font-weight: 800; margin-bottom: 0.5rem;
+  }
+  .feature-card p {
+    font-size: 0.85rem; color: var(--muted); line-height: 1.5;
+  }
+
+  /* How it works */
+  .steps {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1.5rem;
+    counter-reset: step;
+  }
+  .step {
+    counter-increment: step;
+    position: relative;
+    padding: 1.5rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+  }
+  .step::before {
+    content: counter(step, decimal-leading-zero);
+    font-family: "Press Start 2P", monospace;
+    font-size: 0.6rem;
+    color: var(--accent);
+    margin-bottom: 0.75rem;
+    display: block;
+  }
+  .step h3 { font-size: 1rem; font-weight: 800; margin-bottom: 0.4rem; }
+  .step p { font-size: 0.85rem; color: var(--muted); line-height: 1.5; }
+
+  /* CTA */
+  .cta-section {
+    padding: 5rem 0;
+    text-align: center;
+    border-top: 1px solid var(--border);
+  }
+  .cta-section h2 {
+    font-size: clamp(1.8rem, 4vw, 2.5rem);
+    font-weight: 900; margin-bottom: 1rem;
+  }
+  .cta-section p {
+    color: var(--muted); max-width: 500px; margin: 0 auto 2rem;
+  }
+
+  /* Footer */
+  .footer {
+    padding: 2rem 0;
+    border-top: 1px solid var(--border);
+    display: flex; justify-content: space-between; align-items: center;
+    flex-wrap: wrap; gap: 1rem;
+    color: var(--muted); font-size: 0.8rem;
+  }
+  .footer a { color: var(--muted); }
+  .footer a:hover { color: var(--accent); }
+  .footer .links { display: flex; gap: 1.5rem; }
+
+  @media (max-width: 600px) {
+    .hero { padding: 3rem 0 2.5rem; }
+    .section { padding: 2.5rem 0; }
+  }
+</style>
+
+<div class="layout">
+
+  <!-- Nav -->
+  <nav class="topbar">
+    <a href="https://links.vibes.diy/homepage" class="brand">VIBES DIY</a>
+    <a href="https://vibes.diy/vibe/og/block-game-maker" class="cta-link">Open Game Maker →</a>
+  </nav>
+
+  <!-- Hero -->
+  <section class="hero">
+    <div class="badge">🧩 visual game builder</div>
+    <h1>Build games with<br><span class="blocks">blocks</span>, not <span class="hi">code</span></h1>
+    <p class="lead">
+      A Scratch-style playground where you drag Blockly blocks to create real games.
+      AI generates your sprites. No programming experience needed.
+    </p>
+    <div class="cta-row">
+      <a href="https://vibes.diy/vibe/og/block-game-maker" class="btn-primary">🟢 Start Building</a>
+      <a href="#games" class="btn-secondary">See the games ↓</a>
+    </div>
+  </section>
+
+  <!-- Spotlight: Frogger -->
+  <section class="section" style="border-top: none; padding-top: 0;">
+    <div style="
+      background: var(--surface);
+      border: 1px solid var(--border-hi);
+      border-radius: 16px;
+      overflow: hidden;
+    ">
+      <div style="
+        aspect-ratio: 16 / 9;
+        position: relative;
+      ">
+        <iframe
+          src="https://frogger-crossing--og.prod-v2.vibesdiy.net/"
+          style="width: 100%; height: 100%; border: none;"
+          allow="autoplay"
+        ></iframe>
+      </div>
+      <div style="
+        padding: 1.5rem 2rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 1rem;
+        border-top: 1px solid var(--border);
+      ">
+        <div>
+          <h3 style="font-size: 1.2rem; font-weight: 800; margin-bottom: 0.25rem;">🐸 Frogger — playable right here</h3>
+          <p style="color: var(--muted); font-size: 0.85rem; margin: 0;">Arrow keys to hop. Dodge cars, rest on islands, reach home. Built in under 200 lines.</p>
+        </div>
+        <a href="https://vibes.diy/vibe/og/frogger-crossing" class="btn-secondary" style="padding: 8px 20px; font-size: 0.85rem;">
+          Open full screen →
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- How it works -->
+  <section class="section">
+    <div class="section-label">How it works</div>
+    <h2>Three steps to a playable game</h2>
+    <div class="sub">Pick a template or start blank. Snap blocks together. Hit the green flag.</div>
+    <div class="steps">
+      <div class="step">
+        <h3>Pick a template</h3>
+        <p>Start with Pong, Breakout, Sprite Chase, or a blank canvas. Each comes with pre-wired sprites and logic.</p>
+      </div>
+      <div class="step">
+        <h3>Drag blocks</h3>
+        <p>Snap together movement, collision, scoring, and sound blocks. Each sprite gets its own script — just like Scratch.</p>
+      </div>
+      <div class="step">
+        <h3>Hit 🟢 Run</h3>
+        <p>Your blocks compile instantly. The game runs live on stage. Edit, run, repeat — no build step, no deploy.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Features -->
+  <section class="section">
+    <div class="section-label">What you get</div>
+    <h2>Everything a game needs</h2>
+    <div class="features-grid">
+      <div class="feature-card">
+        <div class="icon">🧩</div>
+        <h3>8 Block Categories</h3>
+        <p>Events, Motion, Control, Sensing, Looks, Score, Sound, and Math. Over 30 blocks to compose any game logic.</p>
+      </div>
+      <div class="feature-card">
+        <div class="icon">🎨</div>
+        <h3>AI Sprite Art</h3>
+        <p>Type a prompt, hit Generate. ImgGen creates your character art in seconds. Or use colored shapes — your call.</p>
+      </div>
+      <div class="feature-card">
+        <div class="icon">🔊</div>
+        <h3>Sound Effects</h3>
+        <p>Five preset sounds (ping, pop, buzz, blip, whoosh) plus a custom tone generator. Web Audio API under the hood.</p>
+      </div>
+      <div class="feature-card">
+        <div class="icon">📢</div>
+        <h3>Sprite Messaging</h3>
+        <p>Broadcast and receive messages between sprites. The same pattern Scratch uses for inter-sprite communication.</p>
+      </div>
+      <div class="feature-card">
+        <div class="icon">💾</div>
+        <h3>Auto-Save</h3>
+        <p>Projects save to Fireproof automatically. Come back later and your blocks are exactly where you left them.</p>
+      </div>
+      <div class="feature-card">
+        <div class="icon">🤖</div>
+        <h3>AI Chat (coming)</h3>
+        <p>The callAI block lets NPCs talk using real AI. Build Zelda-style worlds where every character has a brain.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Games -->
+  <section class="section" id="games">
+    <div class="section-label">Made with Game Maker</div>
+    <h2>Games people are building</h2>
+    <div class="sub">Every game below was built with blocks. Click to play — then remix it yourself.</div>
+    <div class="games-grid">
+      <a href="https://vibes.diy/vibe/og/block-game-maker" class="game-card">
+        <div class="thumb">
+          <img src="https://block-game-maker--og.prod-v2.vibesdiy.net/screenshot.jpg"
+               onerror="this.onerror=null; this.parentElement.innerHTML='<div class=placeholder>🧩</div>'"
+               alt="Game Maker">
+        </div>
+        <div class="info">
+          <h3>🧩 Game Maker</h3>
+          <p>The Scratch-style editor itself. Pick a template, drag blocks, build anything.</p>
+          <span class="tag">editor</span>
+        </div>
+      </a>
+      <a href="https://vibes.diy/vibe/og/block-code-playground" class="game-card">
+        <div class="thumb">
+          <img src="https://block-code-playground--og.prod-v2.vibesdiy.net/screenshot.jpg"
+               onerror="this.onerror=null; this.parentElement.innerHTML='<div class=placeholder>🏃</div>'"
+               alt="Sprite Chase">
+        </div>
+        <div class="info">
+          <h3>🏃 Sprite Chase</h3>
+          <p>AI-generated sprites chase your cursor. Pick a theme — Ocean, Space, Forest, or Candy.</p>
+          <span class="tag">blockly + imggen</span>
+        </div>
+      </a>
+      <a href="https://vibes.diy/vibe/og/frogger-crossing" class="game-card">
+        <div class="thumb">
+          <img src="https://frogger-crossing--og.prod-v2.vibesdiy.net/screenshot.jpg"
+               onerror="this.onerror=null; this.parentElement.innerHTML='<div class=placeholder>🐸</div>'"
+               alt="Frogger">
+        </div>
+        <div class="info">
+          <h3>🐸 Frogger</h3>
+          <p>Classic hop-across-traffic with safe islands. Six lanes, three lives, one frog.</p>
+          <span class="tag">arcade</span>
+        </div>
+      </a>
+      <a href="https://vibes.diy/vibe/og/wizard-quest" class="game-card">
+        <div class="thumb">
+          <img src="https://wizard-quest--og.prod-v2.vibesdiy.net/screenshot.jpg"
+               onerror="this.onerror=null; this.parentElement.innerHTML='<div class=placeholder>🗡️</div>'"
+               alt="Wizard Quest">
+        </div>
+        <div class="info">
+          <h3>🗡️ Wizard Quest</h3>
+          <p>Explore a forest map, talk to AI-powered wizards. Each NPC generates unique dialog.</p>
+          <span class="tag">rpg + callai</span>
+        </div>
+      </a>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section class="cta-section">
+    <h2>Your game is one drag away</h2>
+    <p>No install. No sign-up required. Just open the editor and start snapping blocks.</p>
+    <a href="https://vibes.diy/vibe/og/block-game-maker" class="btn-primary">🟢 Open Game Maker</a>
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <span>© 2026 <a href="https://links.vibes.diy/homepage">Vibes DIY</a></span>
+    <div class="links">
+      <a href="https://links.vibes.diy/discord">Discord</a>
+      <a href="https://links.vibes.diy/YouTube">YouTube</a>
+      <a href="https://links.vibes.diy/Substack">Substack</a>
+      <a href="https://links.vibes.diy/readme">GitHub</a>
+    </div>
+  </footer>
+
+</div>

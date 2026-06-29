@@ -1,0 +1,116 @@
+{
+  "source": "School for Poetic Computation (SFPC)",
+  "location": "New York, NY",
+  "region": "Northeast",
+  "fetched": "2026-05-19",
+  "items": [
+    {
+      "title": "Code Societies Orientation",
+      "department": "Interdisciplinary Humanities",
+      "year": 2020,
+      "url": "https://github.com/SFPC/code-societies/blob/master/2020.html",
+      "fetch_method": "direct",
+      "topics": [
+        "code as social and political technology",
+        "algorithms and power",
+        "surveillance",
+        "social media infrastructure",
+        "interface and ideology",
+        "modes of seeing and feeling",
+        "systems of power",
+        "critical technology studies"
+      ],
+      "source_text": "Code Societies centers understanding technology as social and the social as political technology. We will engage with code, and the ways code acts on our bodies and networks equally as subject and as medium. How do different platforms and processes—including algorithms, surveillance, social media, infrastructure, and interface—yield distinct modes of seeing, thinking, feeling, and reinforce existing systems of power?"
+    },
+    {
+      "title": "Surveillance Studies",
+      "department": "Interdisciplinary Humanities",
+      "year": 2020,
+      "url": "https://github.com/SFPC/code-societies/blob/master/surveillance-studies.md",
+      "fetch_method": "direct",
+      "topics": [
+        "surveillance of Blackness",
+        "archive of slavery",
+        "predictive policing",
+        "biometric technologies",
+        "direct-to-consumer DNA testing",
+        "acts of refusal",
+        "hope as method",
+        "carceral capitalism"
+      ],
+      "source_text": "This class grappled with the surveillance of Black life – the archive of slavery, predictive policing, biometric technologies, direct-to-consumer DNA testing kits – in order to understand and also create acts of refusal. Taking hope as a method of refusal, the class questioned various ways of challenging and resisting surveillance."
+    },
+    {
+      "title": "Black Mirrors: Reimagining Race, Technology, and Justice",
+      "department": "Philosophy / Ethics",
+      "year": 2020,
+      "url": "https://github.com/SFPC/code-societies/blob/master/2020.html",
+      "fetch_method": "direct",
+      "topics": [
+        "discriminatory design",
+        "racial hierarchies in algorithms",
+        "biased bots",
+        "altruistic algorithms",
+        "encoded inequity",
+        "sociologically informed skepticism",
+        "race and technology",
+        "algorithmic justice"
+      ],
+      "source_text": "From everyday apps to complex algorithms, technology has the potential to hide, speed, and even deepen discrimination, while appearing neutral and even benevolent when compared to racist practices of a previous era. In this class, participants will explore a range of discriminatory designs that encode inequity: by explicitly amplifying racial hierarchies, by ignoring but thereby replicating social divisions, or by aiming to fix racial bias but ultimately doing quite the opposite."
+    },
+    {
+      "title": "The Unfinished Sentence: Algorithmic Text Generation",
+      "department": "Literature / Creative Writing",
+      "year": 2020,
+      "url": "https://docs.google.com/document/d/1l62d0RI3xRxkzNG30knARzCF5CfkWls0bcbi_xQmSTo/edit",
+      "fetch_method": "direct",
+      "topics": [
+        "Oulipo and constrained writing",
+        "algorithmic text generation",
+        "language models",
+        "aleatoric writing",
+        "agency and authorship",
+        "alienation and appropriation",
+        "programmatic situations",
+        "author-computer-reader relationship"
+      ],
+      "source_text": "This course grew from my interests in Oulipo (and other constrained writing techniques) and \"programmatic situations structured by artists\" such as prompts, instructions, choreographies, codes, or constraints used to invite others to create text content. We will explore text generation by reading algorithm generated texts, playing with text generation tools, and discussing the implication of algorithm text generation within the context of agency, alienation, appropriation, archiving, and authorship."
+    },
+    {
+      "title": "Computational Exploration of Magical and Divinatory Language",
+      "department": "Music / Sound Studies",
+      "year": 2020,
+      "url": "https://github.com/aparrish/comexmadivla",
+      "fetch_method": "direct",
+      "topics": [
+        "magic words as material",
+        "phoneme-to-grapheme models",
+        "ineffable meanings",
+        "linguistic expression as space",
+        "divinatory ontologies",
+        "semantic space of Tarot",
+        "generative adversarial networks for language",
+        "ad-hoc ontologies"
+      ],
+      "source_text": "Words have power that arises not just from their meaning but from their material. Some words, those \"somewhere between the 'legible' and 'illegible,' between the 'spirit world' and the 'human world',\" as scholar James Robson writes, \"express or illustrate ineffable meanings and powers that defy... traditional modalities of communication.\" In this workshop, we will use techniques in computational text analysis and text generation to better understand how magic words work, and coin new magic words of our own."
+    },
+    {
+      "title": "Dark Matters",
+      "department": "Art History / Visual Culture",
+      "year": 2018,
+      "url": "https://github.com/0ld-h3ad/DarkMatters-Fall2018",
+      "fetch_method": "direct",
+      "topics": [
+        "surveillance of Blackness",
+        "Black Gooey Universe",
+        "white as neutral in interfaces",
+        "biometric surveillance",
+        "algorithmic policing",
+        "radical imagination in artistic practice",
+        "critical access studies",
+        "software as ideology"
+      ],
+      "source_text": "In this course we will consider together the surveillance of Blackness and the positioning of white as neutral within interfaces as forms of violence perpetuated by high technology. We will discuss how we all can use computational systems to create change while holding them accountable to their origins and biases. For this course we will be reading Simone Browne and other critical theorists to understand how these structures are compromised so that we can begin to imagine what an outside to them might look like."
+    }
+  ]
+}

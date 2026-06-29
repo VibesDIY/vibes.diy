@@ -1,0 +1,476 @@
+{{!--
+{
+  "layout": "webring",
+  "title": "For Growth Writers | Vibes DIY",
+  "description": "Five strategy tools for systematic publishers — AI brief generation, topic cluster mapping, idea scoring, audience segmentation, and compound tracking. Open source. Clone any of them.",
+  "ogUrl": "https://good.vibes.diy/growth-writers/",
+  "source": "growth-writers",
+  "ogImage": "https://good.vibes.diy/images/screenshots/growth-writers.jpg",
+  "apps": [
+    {
+      "num": "01",
+      "slug": "ai-content-brief",
+      "author": "og",
+      "live": true,
+      "spotlight": true,
+      "title": "Brief Factory",
+      "tagline": "You've written this brief 40 times. Now you don't have to.",
+      "desc": "AI content brief generator. Enter a topic and target reader. Get back a structured brief: angle, key points, what to avoid, word count, CTA. Takes 8 seconds. Open source — swap the template for your own format.",
+      "fork": "Swap the brief format for your own template. Add a tone-of-voice field. Make it match your editorial standards."
+    },
+    {
+      "num": "02",
+      "slug": "topic-cluster-map",
+      "author": "og",
+      "live": true,
+      "title": "The Cluster Map",
+      "tagline": "Topic pillars, coverage status, and the gaps.",
+      "desc": "Create named content pillars. Add topics under each and mark them published, in queue, or missing. See coverage at a glance. So you can explain to yourself why publishing your 9th article on email subject lines was 'strategic.'",
+      "fork": "Clone it for a client. Rename the pillars to their content categories. Their content gaps are now visible in 30 seconds."
+    },
+    {
+      "num": "03",
+      "slug": "idea-scoring-board",
+      "author": "og",
+      "live": true,
+      "title": "Idea Tribunal",
+      "tagline": "Twelve ideas enter. One gets written this week.",
+      "desc": "Define your scoring criteria with custom weights. Add topic ideas. Score each one. The app stack-ranks the list and highlights the winner. The rest can wait — or plead their case next week.",
+      "fork": "Clone it for your client intake process. Rename the criteria to match what they actually care about."
+    },
+    {
+      "num": "04",
+      "slug": "reader-segment-mapper",
+      "author": "og",
+      "live": true,
+      "title": "Reader Segments",
+      "tagline": "Who, specifically, are you writing for?",
+      "desc": "Define your reader segments. Add topic ideas. Map which topics serve which segments. See the grid: who's underserved, which topics are pillar candidates, and which pieces you've been writing for an audience of one.",
+      "fork": "Clone it for your client roster. Replace segments with client names. Now it's a content distribution map."
+    },
+    {
+      "num": "05",
+      "slug": "content-compound-tracker",
+      "author": "og",
+      "live": true,
+      "title": "The Compound View",
+      "tagline": "Track how your pieces build on each other.",
+      "desc": "Add published pieces. Draw connections between them. See which articles are hubs with many links pointing in and out — and which are orphans that nobody will ever find. Compounding content, not just content.",
+      "fork": "Clone it for a content audit. Import your existing URLs. Find the orphans before your next planning cycle."
+    }
+  ]
+}
+--}}
+
+<style>
+  @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=optional");
+
+  :root {
+    --bg:         #0d1117;
+    --bg-raised:  #161b22;
+    --bg-panel:   #21262d;
+    --border:     #30363d;
+    --border-hi:  #58a6ff44;
+    --blue:       #58a6ff;
+    --blue-dim:   rgba(88,166,255,0.12);
+    --green:      #3fb950;
+    --green-dim:  rgba(63,185,80,0.12);
+    --text:       #e6edf3;
+    --text-muted: #8b949e;
+    --text-dim:   #484f58;
+    --red:        #f85149;
+  }
+
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html, body {
+    font-family: "Inter", -apple-system, system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    min-height: 100vh;
+  }
+
+  a { color: inherit; text-decoration: none; }
+
+  .layout { max-width: 1080px; margin: 0 auto; padding: 0 1.5rem; }
+
+  /* ── Topbar ── */
+  .topbar {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 1rem 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .topbar .brand {
+    font-weight: 700; font-size: 1rem;
+    color: var(--blue);
+    letter-spacing: -0.01em;
+  }
+  .topbar .meta {
+    font-size: 0.65rem; letter-spacing: 0.18em; text-transform: uppercase;
+    color: var(--text-muted);
+  }
+
+  /* ── Hero ── */
+  .hero {
+    padding: 5rem 0 3.5rem;
+    border-bottom: 1px solid var(--border);
+  }
+  .hero .label {
+    display: inline-flex; align-items: center; gap: 0.5rem;
+    padding: 4px 12px;
+    background: var(--blue-dim);
+    border: 1px solid var(--border-hi);
+    border-radius: 999px;
+    font-size: 0.6rem; letter-spacing: 0.2em; text-transform: uppercase;
+    font-weight: 600; color: var(--blue);
+    margin-bottom: 1.5rem;
+  }
+  .hero .label::before {
+    content: ''; width: 6px; height: 6px;
+    background: var(--green); border-radius: 50%; flex-shrink: 0;
+  }
+  .hero h1 {
+    font-size: clamp(2.4rem, 6vw, 4.5rem);
+    font-weight: 800; line-height: 1.1;
+    letter-spacing: -0.03em;
+    margin-bottom: 1.5rem;
+    max-width: 800px;
+  }
+  .hero h1 em {
+    font-style: italic; color: var(--blue);
+  }
+  .hero .lead {
+    max-width: 660px;
+    font-size: 1.05rem; line-height: 1.7;
+    color: var(--text-muted);
+    margin-bottom: 2rem;
+  }
+  .hero .cta-row {
+    display: flex; gap: 0.75rem; flex-wrap: wrap;
+  }
+
+  /* ── Stats bar ── */
+  .stats {
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    margin: 2.5rem 0;
+    border: 1px solid var(--border);
+    border-radius: 8px; overflow: hidden;
+  }
+  @media (max-width: 640px) { .stats { grid-template-columns: repeat(2, 1fr); } }
+  .stat-cell {
+    padding: 1rem 1.25rem;
+    border-right: 1px solid var(--border);
+    background: var(--bg-raised);
+  }
+  .stat-cell:last-child { border-right: none; }
+  @media (max-width: 640px) {
+    .stat-cell { border-bottom: 1px solid var(--border); }
+    .stat-cell:nth-child(2n) { border-right: none; }
+  }
+  .stat-cell .k {
+    font-size: 0.58rem; letter-spacing: 0.18em; text-transform: uppercase;
+    color: var(--text-muted); margin-bottom: 0.25rem;
+  }
+  .stat-cell .v {
+    font-size: 1.1rem; font-weight: 700; color: var(--text);
+  }
+
+  .section-label {
+    padding: 1.5rem 0 0.5rem;
+    font-size: 0.6rem; letter-spacing: 0.22em; text-transform: uppercase;
+    color: var(--text-dim); font-weight: 600;
+  }
+
+  /* ── Spotlight ── */
+  .spotlight {
+    background: var(--bg-raised);
+    border: 1px solid var(--border-hi);
+    border-radius: 10px;
+    padding: 2.5rem;
+    margin-bottom: 1.5rem;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2.5rem;
+    align-items: start;
+  }
+  @media (max-width: 760px) { .spotlight { grid-template-columns: 1fr; } }
+  .sp-content { display: flex; flex-direction: column; gap: 1rem; }
+  .sp-badge {
+    display: inline-flex; align-items: center; gap: 0.4rem;
+    font-size: 0.58rem; letter-spacing: 0.18em; text-transform: uppercase;
+    color: var(--blue); font-weight: 600;
+  }
+  .sp-badge::before {
+    content: ''; width: 5px; height: 5px;
+    background: var(--blue); border-radius: 50%;
+  }
+  .spotlight h2 {
+    font-size: clamp(2rem, 4vw, 2.8rem);
+    font-weight: 800; line-height: 1.05;
+    letter-spacing: -0.025em;
+  }
+  .sp-tagline {
+    font-size: 1rem; color: var(--text-muted); line-height: 1.6;
+  }
+  .sp-editorial {
+    font-size: 0.9rem; line-height: 1.7; color: var(--text-muted);
+    border-left: 2px solid var(--border-hi);
+    padding-left: 1rem;
+  }
+  .sp-cta {
+    display: inline-block;
+    padding: 0.7rem 1.6rem;
+    background: var(--blue);
+    color: var(--bg);
+    border-radius: 6px;
+    font-weight: 700; font-size: 0.875rem;
+    align-self: flex-start;
+    transition: opacity 0.15s;
+  }
+  .sp-cta:hover { opacity: 0.85; }
+  .sp-prompt {
+    font-size: 0.8rem; font-style: italic; color: var(--text-dim);
+  }
+  .sp-prompt a { color: var(--text-dim); }
+  .sp-prompt a:hover { color: var(--blue); }
+  .sp-fork {
+    font-size: 0.8rem; line-height: 1.65; color: var(--text-muted);
+    border-left: 2px solid var(--border);
+    padding-left: 0.75rem;
+  }
+  .sp-visual { display: flex; flex-direction: column; gap: 0.75rem; }
+  .shot {
+    display: block; aspect-ratio: 16/10;
+    overflow: hidden; border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--bg-panel);
+  }
+  .shot img { width: 100%; height: 100%; object-fit: cover; }
+  .shot-placeholder {
+    height: 100%; display: flex; align-items: center; justify-content: center;
+    font-size: 0.62rem; letter-spacing: 0.18em; text-transform: uppercase;
+    color: var(--text-dim);
+  }
+  .sp-secondaries { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.4rem; }
+
+  /* ── Gallery grid ── */
+  .apps {
+    display: grid; grid-template-columns: repeat(2, 1fr);
+    gap: 1rem; padding: 0.5rem 0 4rem;
+  }
+  @media (max-width: 680px) { .apps { grid-template-columns: 1fr; } }
+
+  .app {
+    background: var(--bg-raised);
+    border: 1px solid var(--border);
+    border-radius: 10px; padding: 1.5rem;
+    display: flex; flex-direction: column; gap: 0.85rem;
+    transition: border-color 0.15s, transform 0.15s;
+  }
+  .app:hover { border-color: var(--border-hi); transform: translateY(-1px); }
+  .app-head {
+    display: flex; justify-content: space-between; align-items: center;
+    padding-bottom: 0.5rem; border-bottom: 1px solid var(--border);
+  }
+  .app-num {
+    font-size: 0.58rem; letter-spacing: 0.18em; text-transform: uppercase;
+    color: var(--blue);
+  }
+  .app-status {
+    font-size: 0.55rem; letter-spacing: 0.15em; text-transform: uppercase;
+    padding: 2px 8px; border: 1px solid var(--border); border-radius: 999px;
+    color: var(--text-dim);
+  }
+  .app--live .app-status {
+    background: var(--green-dim); border-color: rgba(63,185,80,0.4);
+    color: var(--green);
+  }
+  .app h2 {
+    font-size: 1.7rem; font-weight: 700;
+    line-height: 1.05; letter-spacing: -0.02em;
+  }
+  .app .tagline {
+    font-size: 0.9rem; color: var(--blue); font-style: italic;
+  }
+  .app .desc {
+    font-size: 0.875rem; line-height: 1.65; color: var(--text-muted); flex: 1;
+  }
+  .app .ctas { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.35rem; }
+  .app .ctas--single { grid-template-columns: 1fr; }
+  .fork-hint {
+    font-size: 0.78rem; line-height: 1.65; color: var(--text-muted);
+    border-left: 2px solid var(--border); padding-left: 0.7rem;
+  }
+
+  /* ── Buttons ── */
+  .btn {
+    text-align: center; padding: 0.55rem 0.4rem;
+    background: transparent; border: 1px solid var(--border);
+    border-radius: 6px; font-family: inherit;
+    font-size: 0.62rem; letter-spacing: 0.12em; text-transform: uppercase;
+    font-weight: 600; color: var(--text-muted);
+    transition: all 0.12s; cursor: pointer;
+  }
+  .btn:hover { background: var(--blue-dim); border-color: var(--border-hi); color: var(--blue); }
+  .btn.btn-primary {
+    background: var(--blue); border-color: var(--blue);
+    color: var(--bg); font-weight: 700;
+  }
+  .btn.btn-primary:hover { opacity: 0.85; }
+  .prompt-link {
+    font-size: 0.78rem; font-style: italic; color: var(--text-dim);
+  }
+  .prompt-link:hover { color: var(--blue); }
+
+  /* ── Epilogue ── */
+  .epilogue {
+    padding: 2rem;
+    background: var(--bg-raised); border: 1px solid var(--border);
+    border-radius: 10px; margin-bottom: 3rem;
+  }
+  .epilogue .ep-label {
+    font-size: 0.58rem; letter-spacing: 0.2em; text-transform: uppercase;
+    color: var(--blue); font-weight: 600; margin-bottom: 0.75rem;
+  }
+  .epilogue p {
+    font-size: 1rem; line-height: 1.75; color: var(--text-muted);
+    max-width: 700px;
+  }
+  .epilogue em { color: var(--text); font-style: italic; }
+
+  /* ── Footer ── */
+  footer {
+    padding: 1.5rem 0;
+    border-top: 1px solid var(--border);
+    font-size: 0.62rem; letter-spacing: 0.15em; text-transform: uppercase;
+    display: flex; justify-content: space-between;
+    color: var(--text-dim);
+  }
+  footer a { color: inherit; }
+  footer a:hover { color: var(--blue); }
+</style>
+
+<div class="layout">
+  <header class="topbar">
+    <a class="brand" href="https://links.vibes.diy/homepage">vibes.diy</a>
+    <span class="meta">For Growth Writers · five tools</span>
+  </header>
+
+  <section class="hero">
+    <span class="label">For Growth Writers</span>
+    <h1>You have a content strategy.<br><em>It's just in your head.</em></h1>
+    <p class="lead">
+      Five tools for the people who care about compounding content, topic clusters,
+      and systematic publishing — and who definitely aren't going to say
+      <em>that other word</em>. Open source. Clone any of them. Make them yours.
+    </p>
+    <div class="cta-row">
+      {{#each apps}}{{#if spotlight}}
+      <a class="btn btn-primary" href="https://vibes.diy/vibe/{{author}}/{{slug}}">Open the Brief Factory →</a>
+      {{/if}}{{/each}}
+      <a class="btn" href="https://links.vibes.diy/discord">Join the Discord</a>
+    </div>
+  </section>
+
+  <div class="stats">
+    <div class="stat-cell"><div class="k">Apps</div><div class="v">Five</div></div>
+    <div class="stat-cell"><div class="k">Stack</div><div class="v">Strategy</div></div>
+    <div class="stat-cell"><div class="k">Skin</div><div class="v">Recon Grid</div></div>
+    <div class="stat-cell"><div class="k">Audience</div><div class="v">Growth Writers</div></div>
+  </div>
+
+  <div class="section-label">// spotlight</div>
+
+  {{#each apps}}{{#if spotlight}}
+  <section class="spotlight">
+    <div class="sp-content">
+      <span class="sp-badge">Hero App · №&nbsp;{{num}}</span>
+      <h2>{{title}}</h2>
+      <p class="sp-tagline">{{tagline}}</p>
+      <p class="sp-editorial">
+        Every brief you've ever written starts the same way:
+        a tab with nothing in it. A topic you already know.
+        A reader you could describe in your sleep.
+        And somehow it still takes forty minutes.
+        <em>Stop that.</em>
+      </p>
+      {{#if live}}
+        <a class="sp-cta" href="https://vibes.diy/vibe/{{author}}/{{slug}}">Open Brief Factory →</a>
+        <p class="sp-prompt"><a href="https://vibes.diy/chat/prompt?prompt64={{prompt64 desc}}">↳ the prompt that made this — describe your version instead</a></p>
+        {{#if fork}}<p class="sp-fork">{{fork}}</p>{{/if}}
+      {{else}}
+        <a class="sp-cta" href="https://vibes.diy/chat/prompt?prompt64={{prompt64 desc}}">Start From Prompt →</a>
+        {{#if fork}}<p class="sp-fork">{{fork}}</p>{{/if}}
+      {{/if}}
+    </div>
+    <div class="sp-visual">
+      {{#if live}}
+        <a class="shot" href="https://vibes.diy/vibe/{{author}}/{{slug}}" aria-label="{{title}} screenshot">
+          <img src="https://{{slug}}--{{author}}.prod-v2.vibesdiy.net/screenshot.jpg" alt="{{title}}"
+               onerror="this.onerror=null; this.src='{{@root.assetPrefix}}images/og-preview.png';"/>
+        </a>
+        <div class="sp-secondaries">
+          <a class="btn" href="https://vibes.diy/vibe/{{author}}/{{slug}}">Join</a>
+          <a class="btn" href="https://vibes.diy/remix/{{author}}/{{slug}}?skipChat=true">Clone</a>
+          <a class="btn" href="https://vibes.diy/remix/{{author}}/{{slug}}">Remix</a>
+        </div>
+      {{else}}
+        <div class="shot"><div class="shot-placeholder">Deploying…</div></div>
+      {{/if}}
+    </div>
+  </section>
+  {{/if}}{{/each}}
+
+  <div class="section-label">// the tools</div>
+
+  <section class="apps">
+    {{#each apps}}{{^if spotlight}}
+      <article class="app {{#if live}}app--live{{/if}}">
+        <div class="app-head">
+          <span class="app-num">№&nbsp;{{num}} · {{slug}}</span>
+          <span class="app-status">{{#if live}}Live{{else}}Pending{{/if}}</span>
+        </div>
+        <h2>{{title}}</h2>
+        <p class="tagline">{{tagline}}</p>
+        <p class="desc">{{desc}}</p>
+        {{#if live}}
+          <a class="shot" href="https://vibes.diy/vibe/{{author}}/{{slug}}" aria-label="{{title}} screenshot">
+            <img src="https://{{slug}}--{{author}}.prod-v2.vibesdiy.net/screenshot.jpg" alt="{{title}}"
+                 onerror="this.onerror=null; this.src='{{@root.assetPrefix}}images/og-preview.png';"/>
+          </a>
+          <div class="ctas">
+            <a class="btn" href="https://vibes.diy/vibe/{{author}}/{{slug}}">Join</a>
+            <a class="btn" href="https://vibes.diy/remix/{{author}}/{{slug}}?skipChat=true">Clone</a>
+            <a class="btn" href="https://vibes.diy/remix/{{author}}/{{slug}}">Remix</a>
+          </div>
+          <a class="prompt-link" href="https://vibes.diy/chat/prompt?prompt64={{prompt64 desc}}">↳ the prompt that made this — describe your version instead</a>
+          {{#if fork}}<p class="fork-hint">{{fork}}</p>{{/if}}
+        {{else}}
+          <div class="shot"><div class="shot-placeholder">Awaiting deploy</div></div>
+          <div class="ctas ctas--single">
+            <a class="btn btn-primary" href="https://vibes.diy/chat/prompt?prompt64={{prompt64 desc}}">Start From Prompt</a>
+          </div>
+          {{#if fork}}<p class="fork-hint">{{fork}}</p>{{/if}}
+        {{/if}}
+      </article>
+    {{/if}}{{/each}}
+  </section>
+
+  <section class="epilogue">
+    <div class="ep-label">// the real talk</div>
+    <p>
+      You know what these tools are really for. We know too.
+      We're just not going to say it — because the point isn't the traffic,
+      it's the system. <em>Clone whichever one is closest to how you already think.</em>
+      Your data, your format, your workflow. Open source — make it yours.
+    </p>
+  </section>
+
+  {{> newsletter}}
+
+  <footer>
+    <span>Vibes.diy · <a href="https://links.vibes.diy/homepage">homepage</a> · <a href="https://links.vibes.diy/discord">discord</a> · <a href="/creators.html">creators</a> · <a href="/expressions/">expressions</a></span>
+    <span>// fin</span>
+  </footer>
+</div>

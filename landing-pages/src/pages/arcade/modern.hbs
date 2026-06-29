@@ -1,0 +1,196 @@
+{{!--
+{
+  "layout": "raw",
+  "title": "Modern — Six Casual Games | Arcade · Vibes DIY",
+  "description": "Six modern casual games — tile fold, orbit dot, color merge, rhythm tap, zen shape, flow link.",
+  "ogUrl": "https://good.vibes.diy/arcade/modern"
+,
+  "source": "arcade-modern"
+}
+--}}
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Modern — Games Landing</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
+  :root {
+    --bg: #f5f4f0;
+    --bg-2: #eceae3;
+    --ink: #131214;
+    --muted: #6b6a72;
+    --line: rgba(19, 18, 20, 0.08);
+    --accent: #1a1a1a;
+    --pop: #ff5a3c;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: "Inter", "SF Pro Display", -apple-system, system-ui, sans-serif;
+    background:
+      radial-gradient(circle at 80% 10%, #ffe7e0 0%, transparent 45%),
+      radial-gradient(circle at 10% 90%, #e0e8ff 0%, transparent 50%),
+      var(--bg);
+    color: var(--ink);
+    min-height: 100vh;
+    padding: 64px 32px 96px;
+    -webkit-font-smoothing: antialiased;
+  }
+  header {
+    max-width: 1240px;
+    margin: 0 auto 64px;
+  }
+  .eyebrow {
+    font-size: 11px;
+    letter-spacing: 0.32em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 14px;
+  }
+  h1 {
+    margin: 0;
+    font-size: clamp(40px, 6vw, 84px);
+    font-weight: 600;
+    letter-spacing: -0.03em;
+    line-height: 1.05;
+  }
+  h1 em { font-style: normal; color: var(--pop); }
+  .lead {
+    max-width: 600px;
+    margin: 22px 0 0;
+    font-size: 17px;
+    color: var(--muted);
+    line-height: 1.55;
+  }
+  nav { margin-top: 28px; }
+  nav a {
+    color: var(--ink);
+    text-decoration: none;
+    font-size: 14px;
+    border-bottom: 1px solid currentColor;
+    padding-bottom: 2px;
+  }
+  .grid {
+    max-width: 1240px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 24px;
+  }
+  .card {
+    background: rgba(255,255,255,0.62);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid var(--line);
+    border-radius: 20px;
+    padding: 18px 20px 24px;
+    box-shadow: 0 1px 0 rgba(255,255,255,0.8) inset, 0 12px 40px -20px rgba(19,18,20,0.18);
+    transition: transform 0.35s cubic-bezier(.2,.7,.2,1), box-shadow 0.35s;
+  }
+  .card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 1px 0 rgba(255,255,255,0.8) inset, 0 22px 60px -22px rgba(19,18,20,0.28);
+  }
+  .shot {
+    display: block;
+    width: 100%;
+    aspect-ratio: 16/10;
+    object-fit: cover;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #e9e6df, #d3d0c7);
+    margin-bottom: 18px;
+  }
+  .row {
+    display: flex; align-items: baseline; justify-content: space-between;
+    margin-bottom: 8px;
+  }
+  h2 {
+    margin: 0;
+    font-size: 19px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+  }
+  .idx {
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    color: var(--muted);
+  }
+  .prompt {
+    margin: 0 0 18px;
+    font-size: 14px;
+    line-height: 1.6;
+    color: #2c2b30;
+    min-height: 90px;
+  }
+  .play {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 16px;
+    background: var(--accent);
+    color: #fff;
+    text-decoration: none;
+    border-radius: 999px;
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 0.01em;
+  }
+  .play::after { content: "→"; transition: transform 0.2s; }
+  .play:hover::after { transform: translateX(3px); }
+</style>
+</head>
+<body>
+  <header>
+    <div class="eyebrow">Modern · Series 04</div>
+    <h1>Quiet games for <em>thoughtful</em> moments.</h1>
+    <p class="lead">A small collection of six minimalist mini-games. Soft palettes, gentle motion, and just enough challenge to make a coffee break feel deliberate.</p>
+    <nav><a href="index.html">← All themes</a></nav>
+  </header>
+
+  <main class="grid">
+    <article class="card">
+      <a href="https://vibes.diy/vibe/jchris/pair-flip"><img class="shot" src="https://pair-flip--jchris.prod-v2.vibesdiy.net/screenshot.jpg" alt=""></a>
+      <div class="row"><h2>Tile Fold</h2><span class="idx">01 / 06</span></div>
+      <p class="prompt">A 4×4 grid of pastel cards. Flip two, match removes the pair. Time tracked, glass-morphism UI, gentle haptics.</p>
+      <a class="play" href="https://vibes.diy/vibe/jchris/pair-flip">Open</a>
+    </article>
+
+    <article class="card">
+      <a href="https://vibes.diy/vibe/jchris/arc-strike"><img class="shot" src="https://arc-strike--jchris.prod-v2.vibesdiy.net/screenshot.jpg" alt=""></a>
+      <div class="row"><h2>Orbit Dot</h2><span class="idx">02 / 06</span></div>
+      <p class="prompt">A dot orbits the center. Tap as it crosses the target arc; the arc shrinks each round. Streaks award bonuses.</p>
+      <a class="play" href="https://vibes.diy/vibe/jchris/arc-strike">Open</a>
+    </article>
+
+    <article class="card">
+      <a href="https://vibes.diy/vibe/jchris/color-cascade"><img class="shot" src="https://color-cascade--jchris.prod-v2.vibesdiy.net/screenshot.jpg" alt=""></a>
+      <div class="row"><h2>Color Merge</h2><span class="idx">03 / 06</span></div>
+      <p class="prompt">A 2048-style swipe merger. Combining same-colored tiles evolves their hue along a smooth gradient toward a final color.</p>
+      <a class="play" href="https://vibes.diy/vibe/jchris/color-cascade">Open</a>
+    </article>
+
+    <article class="card">
+      <a href="https://vibes.diy/vibe/jchris/lane-drop"><img class="shot" src="https://lane-drop--jchris.prod-v2.vibesdiy.net/screenshot.jpg" alt=""></a>
+      <div class="row"><h2>Rhythm Tap</h2><span class="idx">04 / 06</span></div>
+      <p class="prompt">Three falling-note lanes, sixty-second song. Tap the matching key as each note hits the bar. Crisp particle feedback per hit.</p>
+      <a class="play" href="https://vibes.diy/vibe/jchris/lane-drop">Open</a>
+    </article>
+
+    <article class="card">
+      <a href="https://vibes.diy/vibe/jchris/zen-geometry"><img class="shot" src="https://zen-geometry--jchris.prod-v2.vibesdiy.net/screenshot.jpg" alt=""></a>
+      <div class="row"><h2>Zen Shape</h2><span class="idx">05 / 06</span></div>
+      <p class="prompt">Drag basic shapes into silhouettes to fill them. Twenty short puzzles, no timer, no fail state — just a soft, ambient flow.</p>
+      <a class="play" href="https://vibes.diy/vibe/jchris/zen-geometry">Open</a>
+    </article>
+
+    <article class="card">
+      <a href="https://vibes.diy/vibe/jchris/color-connect"><img class="shot" src="https://color-connect--jchris.prod-v2.vibesdiy.net/screenshot.jpg" alt=""></a>
+      <div class="row"><h2>Flow Link</h2><span class="idx">06 / 06</span></div>
+      <p class="prompt">Connect colored dot pairs on a grid with non-crossing paths that cover every cell. Twelve hand-tuned levels of rising challenge.</p>
+      <a class="play" href="https://vibes.diy/vibe/jchris/color-connect">Open</a>
+    </article>
+  </main>
+</body>
+</html>
+{{> newsletter}}

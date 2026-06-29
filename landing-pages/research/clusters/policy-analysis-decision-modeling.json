@@ -1,0 +1,91 @@
+{
+  "slug": "policy-analysis-decision-modeling",
+  "page_url": "https://good.vibes.diy/edu/policy-analysis-decision-modeling/",
+  "label": "Policy Analysis and Decision Modeling",
+  "department": "Public Policy",
+  "vocabulary": [
+    "cost-benefit analysis",
+    "decision analysis",
+    "risk analysis methods",
+    "uncertainty in policy analysis",
+    "stakeholder analysis",
+    "willingness to pay valuation",
+    "social discount rate",
+    "multi-criteria evaluation",
+    "sensitivity analysis",
+    "shadow pricing",
+    "welfare economics",
+    "optimization modeling"
+  ],
+  "sources": [
+    {
+      "institution": "Carnegie Mellon",
+      "title": "19-701 Introduction to the Theory and Practice of Policy Analysis",
+      "url": "http://coursecatalog.web.cmu.edu/schools-colleges/collegeofengineering/"
+    },
+    {
+      "institution": "Carnegie Mellon",
+      "title": "90-722 Management Science I: Optimization and Decision Modeling",
+      "url": "https://www.heinz.cmu.edu/current-students/courses/90-722"
+    },
+    {
+      "institution": "UW Madison",
+      "title": "PA 881: Cost-Benefit Analysis",
+      "url": "https://lafollette.wisc.edu/course/pa-881-cost-benefit-analysis/"
+    },
+    {
+      "institution": "MIT",
+      "title": "1.020 Ecology II: Engineering for Sustainability",
+      "url": "https://ocw.mit.edu/courses/1-020-ecology-ii-engineering-for-sustainability-spring-2008/"
+    }
+  ],
+  "app_prompts": [
+    "A college student in an introductory public policy course is struggling to internalize what cost-benefit analysis actually is — they can recite the formula but freeze when asked to apply it to a real decision. They want a casual practice tool to work through small policy scenarios without the burden of producing a full-blown analysis. Build a playful practice app that presents one mini policy decision at a time — a city deciding whether to install a new pedestrian bridge, a school district debating whether to extend the bus service into a rural area, a state choosing between two competing road safety interventions — and walks the student through the elements of a cost-benefit analysis at a beginner level. For each scenario the app prompts the student to name the costs and the benefits, both monetized and unmonetized, identify whose welfare the decision affects (an initial stakeholder analysis), pick a social discount rate appropriate to the time horizon, and apply willingness to pay valuation to the non-market benefits like reduced travel time, lives saved, or avoided injuries. The app should explain each concept as the student touches it, including the trickier ones — shadow pricing when no market price exists, how to handle uncertainty in policy analysis with simple sensitivity analysis, and what welfare economics is implicitly assuming about how to add up gains and losses across people. After each scenario, the student sees a worked solution from a sample policy analyst and can compare their reasoning, with emphasis on where reasonable analysts would differ rather than a single right answer. The app should track which concepts the student is shaky on and serve more practice in those areas, building toward fluency for the final exam without becoming yet another grindy quiz tool.",
+    "A graduate policy workshop at a school of public affairs runs in teams of 4-5 students, each team working with a real client agency on a year-long capstone project that produces a formal policy memo with a quantitative analysis. The teams need a coordination app for the iterative work of policy analysis — sharing drafts, debating assumptions, and tracking the inputs that go into the final recommendation. Build a team coordination app where each capstone team has a project page that starts with the client's problem statement, the policy alternatives under analysis (typically 3-5), and a structured stakeholder analysis identifying whose interests are at stake. Team members can divide up the analytic work: one teammate scopes the cost-benefit analysis for each alternative, another conducts the risk analysis methods workup, another runs the multi-criteria evaluation comparing alternatives across non-monetized goals, another handles the optimization modeling if the problem has a constrained-choice structure. Each component lives in its own section with documented assumptions and the team's debate over those assumptions in threaded comments — Is this social discount rate defensible? Whose willingness to pay are we measuring, and is that consistent with the agency's equity commitments? What shadow pricing approach are we using for ecosystem services? The app should support the iterative drafting of the policy memo with version history, and produce a structured table of every assumption underlying the analysis so the client agency can see exactly what the team did. Teams can compare their memo structure to anonymized exemplars from past workshops, and the workshop faculty can leave milestone reviews. After the final presentation, the project artifacts are preserved as the team's professional portfolio and the program's institutional memory.",
+    "A policy analyst at a federal agency Office of Policy and Evaluation handles a rolling portfolio of policy analyses — regulatory cost-benefit analyses for proposed rules, decision memos for the Secretary, structured reviews of program performance — and needs an operational workflow app for the recurring rhythm of the role. The current process is a mix of Word documents, Excel sheets, and email threads, and important methodological decisions get lost between projects. Build an operational workflow app where each policy analysis is a structured project. The analyst starts each project by defining the decision being supported, the alternatives, the time horizon, the affected population, and the analytic methods on the plan — cost-benefit analysis, decision analysis under uncertainty, multi-criteria evaluation, optimization modeling, or risk analysis methods. For cost-benefit analyses, the workflow steps through inventorying impact categories, identifying which require shadow pricing or willingness to pay valuation, picking the social discount rate per agency convention, and structuring a sensitivity analysis on the load-bearing assumptions. For decision analyses under genuine uncertainty in policy analysis, the workflow supports decision trees, expected value calculations, and value-of-information analyses. The app maintains a library of agency-standard assumptions — the standard discount rate, the value of statistical life used in agency CBAs, monetization conventions for time savings, health benefits, and environmental amenities — so analysts use consistent inputs across projects. Stakeholder analysis is templated for each project. Welfare economics framing — Kaldor-Hicks compensation tests, distributional weighting — is explicit so the analyst documents which assumption is being used. Every project produces a structured analytic appendix in the standardized format the agency requires for cross-project comparability and for the regulatory record.",
+    "A senior policy analyst at a federal benefit-cost analysis division is leading the analysis behind a proposed major regulation expected to have annual impacts in the billions of dollars across the regulated industry and the broader economy. They need a serious analytic app that supports the rigorous economic analysis required under executive order regulatory review and defensible to the agency's economists, OMB review, and litigation. Build a professional regulatory analysis app where the analyst defines the regulatory alternatives — typically a no-action baseline, the proposed rule, and several variants of more and less stringent versions — and lays out the structured cost-benefit analysis for each. The app supports articulating the causal logic from regulatory provision to economic effect for each impact category, identifying which impacts are monetized through market prices, which require shadow pricing or willingness to pay valuation, and which remain qualitative. Social discount rate convention follows the agency's standard but the analyst can run sensitivity analysis on rate choice. Risk analysis methods are integrated for impact categories with genuine uncertainty in policy analysis — fat-tailed distributions of compliance costs, low-probability high-consequence environmental risks — and the app supports Monte Carlo simulation framing without doing the math itself. Multi-criteria evaluation supplements the monetized analysis for non-commensurable goals like distributional impact across income, race, and geography. Optimization modeling is supported if the rule design has a constrained-choice structure. Stakeholder analysis documents which groups are net winners and net losers and how much. Welfare economics framing is explicit: which efficiency standard, which distributional weighting if any. The app produces the full regulatory impact analysis document section by section, with traceability from every cited number to its source and a structured sensitivity analysis appendix. Every analytic decision is versioned because the analysis will be inspected by OMB, public commenters, and federal courts.",
+    "A federal regulatory review office reviews the regulatory impact analyses submitted by agencies for every economically significant rule across the executive branch, with billions to trillions of dollars in annual impact at stake across the portfolio. The review staff need a mission-critical analytic app to apply consistent rigor across hundreds of analyses per year, produce structured findings that go back to submitting agencies, and maintain a complete audit trail because the review's decisions are scrutinized by Congress, the public, and the courts. Build a high-stakes regulatory review app where each submission opens a structured review case. The reviewer logs the proposed rule, the agency's analytic alternatives, the agency's cost-benefit analysis with each line-item benefit and cost, the social discount rate used, the willingness to pay valuation approaches applied, the shadow pricing methods for non-market impacts, the sensitivity analysis ranges, the treatment of uncertainty in policy analysis, and the multi-criteria evaluation for non-monetized considerations. The app walks the reviewer through a standardized rubric: are the alternatives defined comprehensively, is the baseline defensible, is the causal logic from regulatory provision to economic effect documented, is the willingness to pay valuation drawn from defensible studies, is the social discount rate consistent with agency guidance, is the distributional analysis adequate given the welfare economics implications, is the optimization modeling (where used) transparent in its constraints and objective? Stakeholder analysis is reviewed for completeness. Risk analysis methods are scrutinized for whether tail risks are surfaced honestly. Every finding is documented with citation to the specific paragraph or table in the submitted analysis. The app supports structured correspondence with the submitting agency, and final review findings are published with the rulemaking record. Across submissions the app surfaces patterns: which agencies' analyses are consistently more rigorous, which methodological issues recur most often, which assumptions are doing the most work across the regulatory portfolio. This informs the office's guidance documents and the next administration's update to the regulatory review framework."
+  ],
+  "apps": [
+    {
+      "num": "01",
+      "slug": "cba-practice",
+      "author": "edu",
+      "live": true,
+      "title": "CBA Practice",
+      "tagline": "Pedestrian bridge, rural bus route, road safety intervention — work through the costs and benefits."
+    },
+    {
+      "num": "02",
+      "slug": "policy-capstone-workspace",
+      "author": "edu",
+      "live": true,
+      "title": "Capstone Workspace",
+      "tagline": "Five alternatives. Shared assumptions. Version-controlled memo."
+    },
+    {
+      "num": "03",
+      "slug": "regulatory-analysis-workflow",
+      "author": "edu",
+      "live": true,
+      "title": "Regulatory Analysis",
+      "tagline": "Impact categories, shadow pricing, sensitivity analysis — the structured workflow for federal CBAs."
+    },
+    {
+      "num": "04",
+      "slug": "major-rule-analysis",
+      "author": "edu",
+      "live": true,
+      "title": "Major Rule Analysis",
+      "tagline": "Causal logic from provision to effect. Distributional analysis. Defensible at OMB."
+    },
+    {
+      "num": "05",
+      "slug": "rulemaking-review",
+      "author": "edu",
+      "live": true,
+      "title": "Rulemaking Review",
+      "tagline": "Alternatives, baseline, sensitivity — apply consistent rigor across hundreds of submissions."
+    }
+  ]
+}

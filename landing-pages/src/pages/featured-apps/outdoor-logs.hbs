@@ -1,0 +1,630 @@
+{{!--
+{
+  "layout": "webring",
+  "title": "Outdoor Adventure Logs — A Vibes DIY Field Notes",
+  "description": "Field journals for the world outside — photo timelapses, location-pinned sightings, stargazing notes, and shared logbooks from the trail.",
+  "ogUrl": "https://good.vibes.diy/featured-apps/outdoor-logs",
+  "source": "outdoor-logs",
+  "groups": [
+    {
+      "title": "Daily Sunset Timelapse",
+      "description": "Daily sunset timelapse — daily photo prompt; align frames; auto timelapse; compare dates and angles across seasons. You're documenting a construction site that changes daily and need to overlay the same GPS pin on every shot. Clone this and add a fixed-coordinate alignment marker.",
+      "tags": ["timelapse", "photography", "seasons"],
+      "variants": [
+        { "author": "garden-gnome", "slug": "sunset-timelapse" },
+        { "author": "jchris", "slug": "golden-hour-archive" }
+      ]
+    },
+    {
+      "title": "Neighborhood Sound Map",
+      "description": "Neighborhood sound map — record ambient audio at locations; pin to map; curated listening walks; seasonal comparisons. Your birding group wants to map calls by species across a specific forest trail, not a whole neighborhood. Clone this and narrow the map to a single-trail bounding box.",
+      "tags": ["audio", "map", "walks"],
+      "variants": [{ "author": "jchris", "slug": "strip-busy-when" }]
+    },
+    {
+      "title": "Stargazing Log",
+      "description": "Stargazing log — point your phone at the sky; identify constellations; log sightings with friends; track seasonal changes. Your astronomy club has a long-running contest to see who spots Messier objects first each year. Clone this and add a Messier checklist with timestamps so the race is official.",
+      "tags": ["sky", "constellations", "log"],
+      "variants": [{ "author": "jchris", "slug": "night-sky-journal" }]
+    },
+    {
+      "title": "Geocache Adventure Log",
+      "description": "Geocache adventure log — coordinates and hints; find-and-sign flow; photo proof; difficulty and terrain ratings; personal stats. Your scout troop runs its own private cache circuit that isn't on any public platform. Clone this and strip the public datasets — just your troop's 12 hides, your rules, your leaderboard.",
+      "tags": ["geocache", "find", "log"],
+      "variants": [{ "author": "jchris", "slug": "cache-quest-journal" }]
+    }
+  ]
+}
+--}}
+
+<style>
+  /* Field Notes — woodsy edition · ranger station letterpress */
+
+  :root {
+    --ink: #1d2418;
+    --paper: #ece4cf;
+    --paper-soft: #e0d6bb;
+    --rule: #a89f7e;
+    --muted: #5e624f;
+    --accent: #2d5a3d;     /* deep pine */
+    --accent-soft: #b8c8a8;
+    --rust: #8a4a1c;       /* trail-blaze rust */
+    --tag-bg: #d6cfb0;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    color: var(--ink);
+    font-family: Georgia, "Iowan Old Style", "Palatino Linotype", serif;
+    font-size: 17px;
+    line-height: 1.65;
+    background-color: var(--paper);
+    background-image:
+      radial-gradient(circle at 8% 6%, rgba(45, 90, 61, 0.06) 0, transparent 40%),
+      radial-gradient(circle at 92% 90%, rgba(138, 74, 28, 0.05) 0, transparent 40%),
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240' viewBox='0 0 240 240'%3E%3Cg fill='none' stroke='%232d5a3d' stroke-opacity='0.08' stroke-width='1'%3E%3Cpath d='M0 60 Q 60 30 120 60 T 240 60'/%3E%3Cpath d='M0 100 Q 60 70 120 100 T 240 100'/%3E%3Cpath d='M0 140 Q 60 110 120 140 T 240 140'/%3E%3Cpath d='M0 180 Q 60 150 120 180 T 240 180'/%3E%3Cpath d='M0 220 Q 60 190 120 220 T 240 220'/%3E%3C/g%3E%3C/svg%3E");
+    background-attachment: fixed;
+  }
+
+  ::selection { background: var(--accent-soft); color: var(--ink); }
+
+  a {
+    color: var(--accent);
+    text-decoration: underline;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 2px;
+  }
+  a:visited { color: #4d3a1a; }
+  a:hover { color: var(--rust); }
+
+  .masthead {
+    border-bottom: 1px solid var(--rule);
+    background: var(--paper);
+    padding: 32px 24px 22px;
+    text-align: center;
+    position: relative;
+  }
+  .masthead::before,
+  .masthead::after {
+    content: "";
+    display: block;
+    height: 1px;
+    background: var(--rule);
+    width: 60%;
+    margin: 0 auto;
+    opacity: 0.5;
+  }
+  .masthead::before { margin-bottom: 18px; }
+  .mast-kicker {
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font-size: 11px;
+    letter-spacing: 0.32em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin: 0 0 8px;
+  }
+  .mast-title {
+    font-family: "Didot", "Bodoni MT", "Playfair Display", Georgia, serif;
+    font-weight: 400;
+    font-size: clamp(34px, 5vw, 52px);
+    line-height: 1.05;
+    letter-spacing: -0.01em;
+    margin: 0 0 6px;
+  }
+  .mast-tagline {
+    font-style: italic;
+    color: var(--muted);
+    margin: 0;
+    font-size: 16px;
+  }
+  .mast-nav {
+    margin-top: 16px;
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font-size: 12px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+  }
+  .mast-nav a {
+    margin: 0 10px;
+    color: var(--ink);
+    text-decoration: none;
+    border-bottom: 1px solid transparent;
+  }
+  .mast-nav a:hover {
+    color: var(--accent);
+    border-bottom-color: var(--accent);
+  }
+
+  main {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 40px 24px 64px;
+  }
+
+  .lede {
+    font-size: 19px;
+    line-height: 1.6;
+    color: var(--ink);
+    margin: 0 0 36px;
+    border-left: 3px solid var(--accent);
+    padding: 4px 0 4px 18px;
+  }
+  .lede em { color: var(--rust); font-style: italic; }
+
+  .section-head {
+    margin: 56px 0 18px;
+    border-bottom: 1px solid var(--rule);
+    padding-bottom: 10px;
+  }
+  .section-head h2 {
+    font-family: "Didot", "Bodoni MT", "Playfair Display", Georgia, serif;
+    font-weight: 400;
+    font-size: 28px;
+    margin: 0 0 4px;
+    letter-spacing: -0.005em;
+  }
+  .section-head .deck {
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin: 0;
+  }
+
+  article.post {
+    margin: 0 0 44px;
+    padding-bottom: 36px;
+    border-bottom: 1px solid var(--rule);
+  }
+  article.post:last-child { border-bottom: none; }
+  .post-meta {
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin: 0 0 6px;
+  }
+  .post-meta .dot { margin: 0 8px; opacity: 0.6; }
+
+  .post-title {
+    font-family: "Didot", "Bodoni MT", "Playfair Display", Georgia, serif;
+    font-weight: 400;
+    font-size: 26px;
+    line-height: 1.2;
+    margin: 0 0 14px;
+    letter-spacing: -0.005em;
+  }
+  .post-title a { color: var(--ink); text-decoration: none; border-bottom: 1px solid transparent; }
+  .post-title a:hover { border-bottom-color: var(--accent); color: var(--accent); }
+
+  .post-body { margin: 0 0 14px; color: var(--ink); }
+
+  .post-actions {
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font-size: 12px;
+    letter-spacing: 0.06em;
+    margin: 0;
+  }
+  .post-actions a {
+    margin-right: 16px;
+    text-decoration: none;
+    border-bottom: 1px solid var(--accent);
+    padding-bottom: 1px;
+  }
+  .post-actions a:last-child { margin-right: 0; }
+  .post-actions a.start-fresh {
+    color: var(--rust);
+    border-bottom-color: var(--rust);
+    font-weight: 600;
+  }
+  .post-actions a.start-fresh:hover {
+    background: var(--rust);
+    color: var(--paper);
+    border-bottom-color: var(--rust);
+  }
+
+  .prompt-figures {
+    display: grid;
+    gap: 8px;
+    margin: 0 0 16px;
+    grid-template-columns: 1fr;
+  }
+  .prompt-figures.multi {
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  }
+  .prompt-figures a {
+    display: block;
+    border: 1px solid var(--rule);
+    background: var(--paper-soft);
+    overflow: hidden;
+  }
+  .prompt-figures img {
+    display: block;
+    width: 100%;
+    height: auto;
+    aspect-ratio: 16 / 10;
+    object-fit: cover;
+    filter: saturate(0.8) contrast(0.95) sepia(0.08);
+    transition: filter 0.2s ease;
+  }
+  .prompt-figures a:hover img { filter: saturate(1) contrast(1.02) sepia(0); }
+
+  .takes-line {
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font-size: 12px;
+    letter-spacing: 0.06em;
+    color: var(--muted);
+    margin: 0 0 10px;
+  }
+  .takes-line a {
+    color: var(--accent);
+    text-decoration: none;
+    border-bottom: 1px solid var(--accent-soft);
+    margin-right: 14px;
+  }
+  .takes-line a:hover { border-bottom-color: var(--accent); }
+
+  .tags {
+    margin: 14px 0 0;
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font-size: 11px;
+    letter-spacing: 0.04em;
+  }
+  .tags .label {
+    color: var(--muted);
+    margin-right: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+  }
+  .tags a {
+    display: inline-block;
+    background: var(--tag-bg);
+    color: var(--ink);
+    padding: 2px 9px;
+    margin: 0 4px 4px 0;
+    text-decoration: none;
+    border: 1px solid transparent;
+  }
+  .tags a:hover { background: var(--accent-soft); }
+
+  .pull {
+    margin: 60px 0;
+    padding: 24px 0;
+    border-top: 1px solid var(--rule);
+    border-bottom: 1px solid var(--rule);
+    text-align: center;
+    font-family: "Didot", "Bodoni MT", "Playfair Display", Georgia, serif;
+    font-style: italic;
+    font-size: 22px;
+    line-height: 1.4;
+    color: var(--ink);
+  }
+  .pull strong { font-style: normal; font-weight: 700; }
+  .pull cite {
+    display: block;
+    margin-top: 14px;
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font-style: normal;
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  .subscribe {
+    margin: 56px 0 32px;
+    padding: 28px 28px 24px;
+    border: 1px solid var(--rule);
+    background: var(--paper-soft);
+    text-align: center;
+  }
+  .subscribe h2 {
+    font-family: "Didot", "Bodoni MT", "Playfair Display", Georgia, serif;
+    font-weight: 400;
+    font-size: 24px;
+    margin: 0 0 6px;
+  }
+  .subscribe p {
+    margin: 0 0 16px;
+    color: var(--muted);
+    font-size: 15px;
+  }
+  .subscribe form {
+    display: inline-flex;
+    gap: 8px;
+    max-width: 100%;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .subscribe input[type="email"] {
+    padding: 10px 14px;
+    border: 1px solid var(--rule);
+    background: var(--paper);
+    color: var(--ink);
+    font-family: Georgia, serif;
+    font-size: 15px;
+    min-width: 240px;
+  }
+  .subscribe input[type="email"]:focus { outline: 1px solid var(--accent); border-color: var(--accent); }
+  .subscribe button[type="submit"] {
+    padding: 10px 18px;
+    background: var(--ink);
+    color: var(--paper);
+    border: 1px solid var(--ink);
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font-size: 12px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    cursor: pointer;
+  }
+  .subscribe button[type="submit"]:hover { background: var(--accent); border-color: var(--accent); }
+  .featured-cta-response {
+    margin-top: 10px;
+    font-size: 12px;
+    color: var(--muted);
+    min-height: 1em;
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    letter-spacing: 0.06em;
+  }
+  .featured-cta-response.is-success { color: var(--accent); }
+  .featured-cta-response.is-error { color: var(--rust); }
+
+  .blogroll {
+    margin: 48px 0 24px;
+    padding: 24px 0;
+    border-top: 1px solid var(--rule);
+    border-bottom: 1px solid var(--rule);
+  }
+  .blogroll h2 {
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font-size: 11px;
+    letter-spacing: 0.32em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin: 0 0 14px;
+  }
+  .blogroll ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    columns: 2;
+    column-gap: 32px;
+  }
+  .blogroll li {
+    margin: 0 0 8px;
+    font-size: 15px;
+    break-inside: avoid;
+  }
+  .blogroll li a {
+    color: var(--ink);
+    text-decoration: none;
+    border-bottom: 1px dotted var(--rule);
+  }
+  .blogroll li a:hover { color: var(--accent); border-bottom-color: var(--accent); }
+  .blogroll li .desc { color: var(--muted); font-size: 13px; font-style: italic; }
+
+  .colophon {
+    margin: 40px 0 0;
+    padding: 24px 0 0;
+    border-top: 1px solid var(--rule);
+    text-align: center;
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .colophon p { margin: 0 0 6px; }
+  .colophon a { color: var(--muted); text-decoration: none; border-bottom: 1px dotted var(--rule); }
+  .colophon a:hover { color: var(--accent); border-bottom-color: var(--accent); }
+  .ornament { color: var(--rule); margin: 0 12px; }
+
+  @media (max-width: 540px) {
+    .blogroll ul { columns: 1; }
+    .post-title { font-size: 22px; }
+  }
+</style>
+
+<header class="masthead">
+  <p class="mast-kicker">Vibes DIY · Field Notes № 05 · Ranger Station</p>
+  <h1 class="mast-title">Outdoor Adventure Logs</h1>
+  <p class="mast-tagline">Field journals for the world outside — sunset timelapses, sound maps, stargazing logs, geocache hunts.</p>
+  <nav class="mast-nav">
+    <a href="#about">About</a>
+    <a href="#prompts">Trail Logs</a>
+    <a href="#subscribe">Subscribe</a>
+    <a href="/featured-apps/">Index</a>
+  </nav>
+</header>
+
+<main>
+
+  <a id="about"></a>
+  <p class="lede">
+    A small <em>ranger-station bulletin</em> for the apps people make to record the world outside — sunsets aligned across seasons, ambient sound maps from the slow walk home, constellations logged on a clear night, geocaches signed under a rock. Birders keep life lists. Stargazers track meridians. None of these are products. All of them are vibes — built in an evening, carried on a phone, shared with the three friends who actually walk the trail with you.
+  </p>
+
+  <div class="section-head">
+    <h2>Trail Logs &amp; Prompts</h2>
+    <p class="deck">Pick one, fork it, or start a fresh take from the prompt itself</p>
+  </div>
+
+  <a id="prompts"></a>
+  {{#each groups}}
+  <article class="post">
+    <p class="post-meta">
+      <span>Log № {{numIdx @index}}</span>
+      {{#if variants.[1]}}
+      <span class="dot">·</span>
+      <span>{{variants.length}} takes already exist</span>
+      {{/if}}
+    </p>
+    <h3 class="post-title">{{title}}</h3>
+
+    <div class="prompt-figures{{#if variants.[1]}} multi{{/if}}">
+      {{#each variants}}
+      <a href="https://vibes.diy/vibe/{{author}}/{{slug}}" aria-label="{{slug}} screenshot">
+        <img src="https://{{slug}}--{{author}}.prod-v2.vibesdiy.net/screenshot.jpg" alt="{{slug}}" onerror="this.onerror=null; this.src='{{@root.assetPrefix}}images/og-preview.png';">
+      </a>
+      {{/each}}
+    </div>
+
+    <p class="post-body">{{description}}</p>
+
+    {{#if variants.[1]}}
+    <p class="takes-line">
+      Existing takes:
+      {{#each variants}}
+      <a href="https://vibes.diy/vibe/{{author}}/{{slug}}">{{slug}}</a>
+      {{/each}}
+    </p>
+    {{else}}
+    {{#with variants.[0]}}
+    <p class="takes-line">
+      One take so far: <a href="https://vibes.diy/vibe/{{author}}/{{slug}}">{{slug}}</a>
+    </p>
+    {{/with}}
+    {{/if}}
+
+    <p class="post-actions">
+      {{#with variants.[0]}}
+      <a href="https://vibes.diy/remix/{{author}}/{{slug}}?skipChat=true">Clone a take</a>
+      <a href="https://vibes.diy/remix/{{author}}/{{slug}}">Remix it</a>
+      {{/with}}
+      <a class="start-fresh" href="https://vibes.diy/chat/prompt?prompt64={{prompt64 description}}">Start fresh from this prompt →</a>
+    </p>
+
+    {{#if tags}}
+    <p class="tags">
+      <span class="label">Tags</span>
+      {{#each tags}}<a href="#">#{{this}}</a>{{/each}}
+    </p>
+    {{/if}}
+  </article>
+  {{/each}}
+
+  <blockquote class="pull">
+    "The audience is three hikers and a curious dog —<br>
+    but the trail is real,<br>
+    and anyone can ship a logbook in the time it takes to walk it."
+    <cite>— Field Notes, № 05</cite>
+  </blockquote>
+
+  <a id="subscribe"></a>
+  <section class="subscribe">
+    <h2>Get the next batch in your inbox.</h2>
+    <p>One email when a new round of trail logs ships. Plus the prompts behind them.</p>
+    <form
+      action="https://diy.us9.list-manage.com/subscribe/post?u=3336ce5a9fc731f6f88b5bcad&amp;id=1cca0fb28b&amp;f_id=007b69e1f0&amp;SOURCE={{source}}"
+      method="post"
+      id="mc-embedded-subscribe-form"
+      name="mc-embedded-subscribe-form"
+      target="_blank"
+    >
+      <input type="email" name="EMAIL" placeholder="you@somewhere.com" required aria-label="Email" autocomplete="email">
+      <button type="submit" name="subscribe">Send me the trail notes</button>
+      <input type="hidden" name="SOURCE" value="{{source}}">
+      <div aria-hidden="true" style="position:absolute; left:-5000px;">
+        <input type="text" name="b_3336ce5a9fc731f6f88b5bcad_1cca0fb28b" tabindex="-1" value="">
+      </div>
+    </form>
+    <div class="featured-cta-response" aria-live="polite"></div>
+  </section>
+
+  <section class="blogroll">
+    <h2>Blogroll · Field Notes from elsewhere on the site</h2>
+    <ul>
+      <li><a href="/featured-apps/garden-and-plants.html">Garden &amp; Plants</a><br><span class="desc">Bee gardens, herb encyclopedias, plant journals.</span></li>
+      <li><a href="/featured-apps/photo-identifiers.html">Photo Identifiers</a><br><span class="desc">Snap a thing, name a thing.</span></li>
+      <li><a href="/featured-apps/mood-and-journals.html">Mood, Dreams &amp; Journals</a><br><span class="desc">Inner-life logging.</span></li>
+      <li><a href="/featured-apps/">All Categories</a><br><span class="desc">Every Field Note in one place.</span></li>
+    </ul>
+  </section>
+
+  <footer class="colophon">
+    <p>Field Notes № 05 · Outdoor Adventure Logs</p>
+    <p>
+      Set in Didot &amp; Georgia
+      <span class="ornament">·</span>
+      Posted April 29, 2026
+      <span class="ornament">·</span>
+      <a href="mailto:hello@vibes.diy">hello@vibes.diy</a>
+    </p>
+  </footer>
+
+</main>
+
+<script>
+(function() {
+  const INIT_FLAG = '__vibesMailchimpNewsletterAjax__';
+  if (window[INIT_FLAG]) return;
+  window[INIT_FLAG] = true;
+  const JSONP_NAMESPACE = '__vibesMailchimpCallbacks__';
+  if (!window[JSONP_NAMESPACE] || typeof window[JSONP_NAMESPACE] !== 'object') {
+    window[JSONP_NAMESPACE] = {};
+  }
+  function clean(m) { return String(m).replace(/<[^>]*>/g,'').replace(/^\s*[01]\s*-\s*/,'').trim() || 'Something went wrong.'; }
+  function jsonp(url, ms) {
+    return new Promise((resolve, reject) => {
+      const k = 'cb_' + Math.random().toString(36).slice(2);
+      url.searchParams.set('c', JSONP_NAMESPACE + '.' + k);
+      const s = document.createElement('script');
+      s.src = url.toString();
+      s.async = true;
+      let done = false;
+      const t = setTimeout(() => fin(new Error('Timeout')), ms);
+      function fin(e, d) {
+        if (done) return;
+        done = true;
+        clearTimeout(t);
+        delete window[JSONP_NAMESPACE][k];
+        s.remove();
+        e ? reject(e) : resolve(d);
+      }
+      window[JSONP_NAMESPACE][k] = (d) => fin(null, d);
+      s.onerror = () => fin(new Error('Network'));
+      document.body.appendChild(s);
+    });
+  }
+  function set(el, st, msg) {
+    el.classList.remove('is-loading','is-success','is-error');
+    el.textContent = msg;
+    if (st) el.classList.add(st);
+  }
+  const form = document.getElementById('mc-embedded-subscribe-form');
+  if (!(form instanceof HTMLFormElement)) return;
+  const r = form.parentElement.querySelector('.featured-cta-response');
+  const btn = form.querySelector('button[type="submit"]');
+  let busy = false;
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    if (busy) return;
+    if (!form.checkValidity()) return form.reportValidity();
+    busy = true; btn.disabled = true;
+    set(r, 'is-loading', 'Sending …');
+    try {
+      const u = new URL(form.action);
+      u.pathname = u.pathname.replace(/\/subscribe\/post\/?$/, '/subscribe/post-json');
+      const fd = new FormData(form);
+      for (const [k,v] of fd.entries()) {
+        if (k === 'EMAIL' || k === 'SOURCE' || k.startsWith('b_')) u.searchParams.set(k, String(v));
+      }
+      const d = await jsonp(u, 10000);
+      if (d && d.result === 'success') {
+        set(r, 'is-success', 'Subscribed — check your inbox to confirm.');
+        form.reset();
+      } else {
+        set(r, 'is-error', d && d.msg ? clean(d.msg) : 'Something went wrong.');
+      }
+    } catch(err) {
+      set(r, 'is-error', 'Could not connect. Please try again.');
+    } finally {
+      busy = false; btn.disabled = false;
+    }
+  });
+})();
+</script>

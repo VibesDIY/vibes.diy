@@ -1,0 +1,253 @@
+{{!--
+{
+  "layout": "webring",
+  "title": "Golf League Manager | Vibes DIY",
+  "description": "Run your casual golf league from one link — digital scorecards, handicap tracker, season standings, skins game, tee time sign-ups. No paid apps, no paper, works on any phone.",
+  "ogUrl": "https://good.vibes.diy/golf-league/",
+  "source": "golf-league",
+  "apps": [
+    {
+      "num": "01",
+      "slug": "golf-scorecard",
+      "author": "og",
+      "live": true,
+      "title": "Digital Scorecard",
+      "tagline": "18 holes. All players. Automatic totals.",
+      "desc": "Track strokes per hole for every player in your group. Net and gross scores calculate instantly. Works for stroke play, match play, and stableford. Share results via link."
+    },
+    {
+      "num": "02",
+      "slug": "golf-handicap-tracker",
+      "author": "og",
+      "live": true,
+      "title": "Handicap Tracker",
+      "tagline": "Your differential after every round.",
+      "desc": "Log each round score and course rating. Your running handicap index updates after every entry. Shows your trend over the full season. No paid membership, no USGA required."
+    },
+    {
+      "num": "03",
+      "slug": "golf-league-standings",
+      "author": "og",
+      "live": true,
+      "title": "League Standings",
+      "tagline": "Season points. Week by week.",
+      "desc": "Commissioner posts weekly results. League table tracks points, wins, and net scores for the whole group. One link for everyone to check the standings."
+    },
+    {
+      "num": "04",
+      "slug": "skins-game-tracker",
+      "author": "og",
+      "live": true,
+      "title": "Skins Game",
+      "tagline": "Who won the skin on 7? Who owes who?",
+      "desc": "Track hole-by-hole skins with carryovers and side bets. End-of-round totals show exactly who owes what. No arguments at the 19th hole."
+    },
+    {
+      "num": "05",
+      "slug": "tee-time-signup",
+      "author": "og",
+      "live": true,
+      "title": "Tee Time Sign-Up",
+      "tagline": "Who's in Saturday? Lock in your spot.",
+      "desc": "Post an upcoming round with date and time. Group members sign up. Caps at 4 per tee. Shows who is committed and who is still deciding."
+    }
+  ],
+  "ogImage": "https://good.vibes.diy/images/screenshots/golf-league.jpg"
+}
+--}}
+
+<style>
+  @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&family=Playfair+Display:wght@700;800&family=JetBrains+Mono:wght@400;700&display=optional");
+
+  :root {
+    --cream:    #fdfaf4;
+    --sand:     #e8dfc8;
+    --fairway:  #2d6a2d;
+    --rough:    #1a3d1a;
+    --ink:      #1a1a1a;
+    --dim:      #666;
+    --flag-red: #c8102e;
+  }
+
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body {
+    background: var(--cream);
+    color: var(--ink);
+    font-family: "Inter", system-ui, sans-serif;
+    line-height: 1.55;
+    min-height: 100vh;
+  }
+  a { color: inherit; text-decoration: none; }
+
+  .layout { max-width: 1100px; margin: 0 auto; padding: 0 1.25rem; border-left: 2px solid var(--sand); border-right: 2px solid var(--sand); }
+
+  .topbar {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 1rem 0;
+    border-bottom: 3px solid var(--fairway);
+  }
+  .topbar .brand { font-weight: 900; letter-spacing: -0.02em; font-size: 1.25rem; color: var(--fairway); }
+  .topbar .meta { font-family: "JetBrains Mono", monospace; font-size: 0.6rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--dim); }
+
+  .crumb { padding: 0.55rem 0; font-family: "JetBrains Mono", monospace; font-size: 0.65rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--dim); border-bottom: 1px solid var(--sand); }
+  .crumb a:hover { color: var(--fairway); }
+
+  .hero { padding: 4rem 0 3rem; border-bottom: 3px solid var(--fairway); }
+  .hero .label {
+    display: inline-block; padding: 4px 12px; margin-bottom: 1.5rem;
+    background: var(--fairway); color: var(--cream);
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.6rem; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase;
+  }
+  .hero h1 {
+    font-family: "Playfair Display", Georgia, serif;
+    font-size: clamp(2.8rem, 7vw, 6rem);
+    font-weight: 800; line-height: 0.95; letter-spacing: -0.02em;
+    margin-bottom: 1.5rem; color: var(--rough);
+  }
+  .hero h1 .hi { color: var(--fairway); }
+  .hero p.lead { font-size: 1.1rem; max-width: 720px; line-height: 1.6; color: var(--dim); }
+  .hero .marker { background: var(--sand); padding: 1px 4px; }
+
+  .stats {
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    border: 2px solid var(--sand); border-radius: 4px;
+    margin: 2rem 0; overflow: hidden;
+  }
+  @media (max-width: 700px) { .stats { grid-template-columns: repeat(2, 1fr); } }
+  .stat-cell { padding: 1.25rem 1.5rem; border-right: 1px solid var(--sand); background: var(--cream); }
+  .stat-cell:last-child { border-right: none; }
+  @media (max-width: 700px) { .stat-cell { border-bottom: 1px solid var(--sand); } .stat-cell:nth-child(2n) { border-right: none; } }
+  .stat-cell .k { font-family: "JetBrains Mono", monospace; font-size: 0.55rem; letter-spacing: 0.25em; text-transform: uppercase; color: var(--dim); margin-bottom: 0.4rem; }
+  .stat-cell .v { font-family: "Playfair Display", serif; font-weight: 700; font-size: 1.4rem; color: var(--rough); }
+
+  .section-label { padding: 1.5rem 0 0.75rem; font-family: "JetBrains Mono", monospace; font-size: 0.6rem; letter-spacing: 0.25em; text-transform: uppercase; color: var(--dim); border-bottom: 1px dashed var(--sand); margin-bottom: 1.5rem; }
+
+  .apps { display: flex; flex-direction: column; border-top: 2px solid var(--fairway); border-bottom: 2px solid var(--fairway); }
+  .app {
+    padding: 2rem 0; border-bottom: 1px solid var(--sand);
+    display: grid; grid-template-columns: 80px 1fr 320px;
+    gap: 2rem; align-items: start;
+    transition: background 0.15s;
+  }
+  .app:last-child { border-bottom: none; }
+  @media (max-width: 800px) { .app { grid-template-columns: 1fr; gap: 1rem; } }
+  .app:hover { background: oklch(0.97 0.02 145); }
+
+  .num-cell { display: flex; flex-direction: column; gap: 0.4rem; }
+  .app .num { font-family: "Playfair Display", serif; font-weight: 800; font-size: 3.5rem; line-height: 0.85; color: var(--fairway); }
+  .app .status { font-family: "JetBrains Mono", monospace; font-size: 0.55rem; letter-spacing: 0.2em; text-transform: uppercase; padding: 3px 6px; border: 1px solid var(--sand); text-align: center; color: var(--dim); }
+  .app--live .status { background: var(--fairway); color: var(--cream); border-color: var(--fairway); }
+
+  .body { display: flex; flex-direction: column; gap: 0.7rem; }
+  .body .title { font-family: "Playfair Display", serif; font-size: 2rem; font-weight: 700; line-height: 1.05; color: var(--rough); }
+  .body .tagline { font-family: "JetBrains Mono", monospace; font-size: 0.82rem; padding: 5px 10px; background: var(--sand); border-left: 3px solid var(--fairway); display: inline-block; color: var(--rough); }
+  .body .desc { font-size: 1rem; line-height: 1.55; color: var(--dim); }
+
+  .right { display: flex; flex-direction: column; gap: 0.6rem; }
+  .shot { display: block; aspect-ratio: 16/9; overflow: hidden; border: 1px solid var(--sand); background: var(--sand); }
+  .shot img { width: 100%; height: 100%; object-fit: cover; }
+  .shot-placeholder { padding: 1rem; height: 100%; display: flex; align-items: center; justify-content: center; font-family: "JetBrains Mono", monospace; font-size: 0.7rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--dim); text-align: center; }
+
+  .ctas { display: grid; grid-template-columns: repeat(3, 1fr); border: 1px solid var(--sand); }
+  .ctas--single { grid-template-columns: 1fr; }
+  .btn { text-align: center; padding: 0.6rem 0.5rem; background: transparent; border-right: 1px solid var(--sand); font-family: "JetBrains Mono", monospace; font-size: 0.65rem; letter-spacing: 0.15em; text-transform: uppercase; font-weight: 700; color: var(--ink); cursor: pointer; transition: background 0.12s; }
+  .btn:last-child { border-right: none; }
+  .btn:hover { background: var(--fairway); color: var(--cream); border-color: var(--fairway); }
+
+  .prompt-link { font-family: "JetBrains Mono", monospace; font-size: 0.7rem; text-decoration: underline; color: var(--dim); }
+  .prompt-link:hover { color: var(--fairway); }
+
+  .epilogue { padding: 2.5rem 0; border-bottom: 2px solid var(--sand); }
+  .epilogue h2 { font-family: "JetBrains Mono", monospace; font-size: 0.6rem; letter-spacing: 0.25em; text-transform: uppercase; color: var(--dim); margin-bottom: 1rem; }
+  .epilogue p { font-size: 1.1rem; max-width: 720px; line-height: 1.6; color: var(--dim); }
+  .epilogue .hl { background: var(--sand); padding: 1px 4px; color: var(--rough); }
+
+  footer.foot { padding: 1rem 0; font-family: "JetBrains Mono", monospace; font-size: 0.6rem; letter-spacing: 0.2em; text-transform: uppercase; display: flex; justify-content: space-between; color: var(--dim); }
+  footer.foot a:hover { color: var(--fairway); }
+</style>
+
+<div class="layout">
+  <header class="topbar">
+    <a class="brand" href="https://links.vibes.diy/homepage">VIBES.DIY</a>
+    <span class="meta">Golf League &middot; five tools</span>
+  </header>
+
+  <nav class="crumb">
+    <a href="/">Home</a> &nbsp;&rsaquo;&nbsp; Golf League
+  </nav>
+
+  <section class="hero">
+    <span class="label">For Golf Leagues</span>
+    <h1>Run your season.<br/><span class="hi">Lose the paper.</span></h1>
+    <p class="lead">
+      Five tools for casual golf leagues that don&rsquo;t want to pay for an app or track things in a spreadsheet.
+      <span class="marker">Scorecards</span>, <span class="marker">handicap tracking</span>,
+      <span class="marker">season standings</span>, <span class="marker">skins games</span>,
+      <span class="marker">tee time sign-ups</span>. No downloads. Works on any phone.
+    </p>
+  </section>
+
+  <div class="stats">
+    <div class="stat-cell"><div class="k">Apps</div><div class="v">Five</div></div>
+    <div class="stat-cell"><div class="k">Audience</div><div class="v">Casual Leagues</div></div>
+    <div class="stat-cell"><div class="k">Persistence</div><div class="v">Fireproof</div></div>
+    <div class="stat-cell"><div class="k">Skin</div><div class="v">Scorecard</div></div>
+  </div>
+
+  <div class="section-label">The Bag</div>
+
+  <section class="apps">
+    {{#each apps}}
+    <article class="app {{#if live}}app--live{{else}}app--pending{{/if}}">
+      <div class="num-cell">
+        <div class="num">{{num}}</div>
+        <div class="status">{{#if live}}Live{{else}}Pending{{/if}}</div>
+      </div>
+      <div class="body">
+        <h2 class="title">{{title}}</h2>
+        <span class="tagline">{{tagline}}</span>
+        <p class="desc">{{desc}}</p>
+      </div>
+      <div class="right">
+        {{#if live}}
+          <a class="shot" href="https://vibes.diy/vibe/{{author}}/{{slug}}" aria-label="{{title}} screenshot"><img src="https://{{slug}}--{{author}}.prod-v2.vibesdiy.net/screenshot.jpg" alt="{{slug}}" onerror="this.onerror=null; this.src='{{@root.assetPrefix}}images/og-preview.png';"/></a>
+          <div class="ctas">
+            <a class="btn" href="https://vibes.diy/vibe/{{author}}/{{slug}}">Join</a>
+            <a class="btn" href="https://vibes.diy/remix/{{author}}/{{slug}}?skipChat=true">Clone</a>
+            <a class="btn" href="https://vibes.diy/remix/{{author}}/{{slug}}">Remix</a>
+          </div>
+          <a class="prompt-link" href="https://vibes.diy/chat/prompt?prompt64={{prompt64 desc}}">// start fresh from this prompt</a>
+          <span class="prompt-link" style="opacity:0.55; text-decoration:none; font-size:0.6rem;">The prompt that built this. Describe your group&rsquo;s format instead.</span>
+        {{else}}
+          <div class="shot"><div class="shot-placeholder">awaiting deploy</div></div>
+          <div class="ctas ctas--single">
+            <a class="btn" href="https://vibes.diy/chat/prompt?prompt64={{prompt64 desc}}">Start From Prompt</a>
+          </div>
+        {{/if}}
+      </div>
+    </article>
+    {{/each}}
+  </section>
+
+  <div class="epilogue">
+    <h2>Read Me</h2>
+    <p>
+      The USGA handicap system requires a paid membership and 54 holes of history.
+      Your Saturday group needs a scorecard and a way to settle the skins.
+      <span class="hl">These five are sized to the actual problem</span> — a dozen guys, a season, a running tab.
+    </p>
+    <p style="margin-top:1rem;">
+      Your group plays a modified Stableford with double-points on the back nine — clone the scorecard and add the column.
+      Your skins carryover rules are different from everyone else&rsquo;s — clone the Skins Game and fix the logic.
+      Your sign-up caps at foursomes but you allow waitlists — clone Tee Time and add the queue.
+      The app that fits your Saturday is one clone away.
+    </p>
+  </div>
+
+  {{> newsletter}}
+<footer class="foot">
+    <span>Vibes.diy &middot; <a href="https://links.vibes.diy/homepage">homepage</a> &middot; <a href="/world-cup-pool.html">world cup</a> &middot; <a href="/fantasy-league.html">fantasy</a></span>
+    <span>// 19TH HOLE</span>
+  </footer>
+</div>

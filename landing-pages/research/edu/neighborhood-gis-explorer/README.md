@@ -1,0 +1,22 @@
+# neighborhood-gis-explorer
+
+> A high school student got curious about why some neighborhoods in their city feel walkable and others do not, and they want a casual exploratory tool to build intuition for what spatial analysis even looks like — without committing to a full GIS software stack. They want to noodle with map layers, see how a place changes when you overlay different information on it, and learn the vocabulary as they go. Build a playful exploration app where the student picks a city or neighborhood they care about and assembles thematic mapping layers from a small built-in library: parks, schools, transit stops, grocery stores, hills, historic redlining boundaries, and population density. The app should walk them through what each layer represents and let them stack spatial overlays to see, for example, whether neighborhoods with the most parks are the same as the neighborhoods with the most grocery stores. It should introduce proximity analysis casually — 'circle every home within 10 minutes' walk of a park' — and show them what happens when the buffer distance changes. It should let them experiment with a simple site suitability analysis: 'pretend you are siting a new branch library; show me places that are far from existing branches, near transit, and in dense residential areas.' The app should explain each concept they touch in plain language as they touch it, building a glossary of spatial analysis terms tied to what they just did, and let them save their maps as little urban data visualization stories they can share with a friend. The point is to develop an eye for spatial pattern, not to produce a publication-quality map.
+
+Live at [https://vibes.diy/vibe/edu/neighborhood-gis-explorer](https://vibes.diy/vibe/edu/neighborhood-gis-explorer)
+
+Single-file React app built with [vibes.diy](https://vibes.diy). Visit the live url to manage access.
+
+## Run it
+
+```sh
+npx vibes-diy push     # uploads App.jsx, prints a live HTTPS URL
+```
+
+Edit [App.jsx](App.jsx) and push again to iterate.
+
+## Commands
+
+- `npx vibes-diy push` — deploy the current directory
+- `npx vibes-diy push --instant-join` — deploy with auto-accept sharing
+- `npx vibes-diy generate "prompt"` — generate a new app from a prompt
+- `npx vibes-diy help` — full command list

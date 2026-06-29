@@ -1,0 +1,549 @@
+{{!--
+{
+  "layout": "webring",
+  "title": "Access API — Per-Document Write Validation & Channel Isolation",
+  "description": "Server-enforced access functions for Vibes DIY apps. Validate every write, route documents to channels, and control who reads what — all from /access.js.",
+  "ogUrl": "https://good.vibes.diy/access-api/",
+  "source": "access-api",
+  "ogImage": "https://good.vibes.diy/images/screenshots/access-api.jpg"
+}
+--}}
+
+<style>
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=optional");
+
+:root {
+  --bg: oklch(0.16 0.015 260);
+  --bg-elev: oklch(0.21 0.018 260);
+  --bg-deep: oklch(0.12 0.018 260);
+  --fg: oklch(0.97 0.005 260);
+  --fg-dim: oklch(0.65 0.015 260);
+  --fg-faint: oklch(0.45 0.015 260);
+  --border: oklch(1 0 0 / 0.08);
+  --border-strong: oklch(1 0 0 / 0.18);
+  --live: oklch(0.86 0.21 135);
+  --live-text: oklch(0.18 0.05 135);
+  --punk: oklch(0.70 0.24 350);
+  --warn: oklch(0.85 0.18 80);
+  --cyan: oklch(0.75 0.14 220);
+  --indigo: oklch(0.62 0.22 280);
+}
+
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: "Inter", system-ui, sans-serif;
+  background: var(--bg); color: var(--fg);
+  line-height: 1.6; font-size: 16px;
+  background-image:
+    radial-gradient(circle at 8% 0%, rgba(180,255,140,0.05), transparent 35%),
+    radial-gradient(circle at 95% 100%, rgba(255,120,200,0.06), transparent 40%);
+  background-attachment: fixed;
+}
+a { color: var(--live); text-decoration: none; border-bottom: 1px dashed var(--live); transition: color 0.15s; }
+a:hover { color: var(--fg); border-bottom-color: var(--fg); }
+code { font-family: "JetBrains Mono", monospace; font-size: 0.85em; background: var(--bg-deep); color: var(--live); padding: 1px 6px; border-radius: 4px; }
+
+.layout { max-width: 860px; margin: 0 auto; padding: 0 1.5rem; }
+
+.topbar {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 1rem 0; border-bottom: 1px solid var(--border);
+}
+.topbar .brand {
+  font-family: "JetBrains Mono", monospace; font-weight: 700; font-size: 1rem;
+  color: var(--fg); text-decoration: none; border-bottom: none;
+}
+.topbar .brand:hover { color: var(--live); }
+.topbar .back-link {
+  font-family: "JetBrains Mono", monospace; font-size: 0.75rem;
+  letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--fg-faint); border-bottom: none;
+}
+.topbar .back-link:hover { color: var(--live); }
+
+.hero { padding: 4rem 0 2.5rem; }
+.hero .eyebrow {
+  font-family: "JetBrains Mono", monospace; font-size: 0.7rem;
+  letter-spacing: 0.3em; text-transform: uppercase;
+  color: var(--live); margin-bottom: 1rem;
+}
+.hero h1 {
+  font-size: clamp(2rem, 5vw, 3.2rem); font-weight: 900;
+  letter-spacing: -0.03em; line-height: 1.05; margin-bottom: 1rem;
+}
+.hero .sub { font-size: 1.1rem; color: var(--fg-dim); max-width: 600px; line-height: 1.65; }
+
+.section-label {
+  padding: 3rem 0 0.5rem;
+  font-family: "JetBrains Mono", monospace; font-size: 0.7rem;
+  letter-spacing: 0.3em; text-transform: uppercase; color: var(--fg-faint);
+}
+.section-label::before { content: "// "; color: var(--live); }
+.section-title {
+  font-size: clamp(1.4rem, 3vw, 1.9rem); font-weight: 800;
+  letter-spacing: -0.02em; margin-bottom: 0.5rem;
+}
+.section-sub { color: var(--fg-dim); font-size: 0.97rem; margin-bottom: 1.25rem; line-height: 1.6; }
+
+.cmd {
+  background: var(--bg-deep); border: 1px solid var(--border-strong);
+  border-radius: 12px; padding: 1.25rem 1.5rem;
+  font-family: "JetBrains Mono", monospace; font-size: 0.9rem; line-height: 1.8;
+  overflow-x: auto; margin: 1rem 0; position: relative;
+}
+.cmd::before {
+  content: "javascript"; position: absolute; top: 0; right: 0;
+  padding: 4px 12px; background: var(--border); border-bottom-left-radius: 8px;
+  font-size: 0.6rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--fg-faint);
+}
+.cmd--ts::before { content: "typescript"; }
+.cmd--shell::before { content: "shell"; }
+.cmd--copy::before { display: none; }
+.cmd .k { color: var(--punk); }
+.cmd .s { color: var(--warn); }
+.cmd .fn { color: var(--live); }
+.cmd .c { color: var(--fg-faint); }
+.cmd .b { color: var(--fg); font-weight: 600; }
+.cmd .raw { display: none; }
+
+.copy-btn {
+  position: absolute; top: 0; right: 0; padding: 6px 14px;
+  background: var(--border); color: var(--fg-faint); border: none;
+  border-bottom-left-radius: 8px; font-family: "JetBrains Mono", monospace;
+  font-size: 0.6rem; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase;
+  cursor: pointer; transition: background 0.12s, color 0.12s; z-index: 2;
+}
+.copy-btn:hover { background: var(--live); color: var(--live-text); }
+.copy-btn.copied { background: var(--live); color: var(--live-text); }
+
+.callout-list {
+  list-style: none; background: var(--bg-elev); border: 1px solid var(--border);
+  border-radius: 10px; padding: 1.25rem 1.5rem; margin: 1rem 0;
+}
+.callout-list li {
+  padding: 0.45rem 0; font-size: 0.93rem; color: var(--fg-dim); line-height: 1.5;
+  border-bottom: 1px solid var(--border);
+}
+.callout-list li:last-child { border-bottom: none; }
+
+.api-table {
+  width: 100%; border-collapse: collapse; font-size: 0.9rem; margin: 1rem 0;
+  border: 1px solid var(--border-strong); border-radius: 10px; overflow: hidden;
+}
+.api-table th {
+  background: var(--bg-elev); text-align: left; padding: 0.65rem 1rem;
+  font-family: "JetBrains Mono", monospace; font-size: 0.7rem;
+  letter-spacing: 0.15em; text-transform: uppercase; color: var(--fg-faint);
+  border-bottom: 1px solid var(--border-strong);
+}
+.api-table td { padding: 0.65rem 1rem; border-bottom: 1px solid var(--border); vertical-align: top; }
+.api-table tr:last-child td { border-bottom: none; }
+.api-table td:first-child { font-family: "JetBrains Mono", monospace; color: var(--live); font-size: 0.85rem; white-space: nowrap; }
+.api-table td:last-child { color: var(--fg-dim); font-size: 0.88rem; }
+
+.concept-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin: 1rem 0;
+}
+@media (max-width: 640px) { .concept-grid { grid-template-columns: 1fr; } }
+.concept-card {
+  background: var(--bg-elev); border: 1px solid var(--border);
+  border-left: 3px solid var(--live); border-radius: 4px;
+  padding: 1.25rem 1.5rem;
+}
+.concept-card h4 {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 0.7rem; letter-spacing: 0.18em; text-transform: uppercase;
+  color: var(--live); margin-bottom: 0.5rem;
+}
+.concept-card p { color: var(--fg-dim); font-size: 0.92rem; line-height: 1.55; }
+.concept-card.warn { border-left-color: var(--warn); }
+.concept-card.warn h4 { color: var(--warn); }
+.concept-card.punk { border-left-color: var(--punk); }
+.concept-card.punk h4 { color: var(--punk); }
+.concept-card.cyan { border-left-color: var(--cyan); }
+.concept-card.cyan h4 { color: var(--cyan); }
+
+.spec-banner {
+  background: linear-gradient(135deg, var(--bg-elev), var(--bg-deep));
+  border: 1px solid var(--border-strong);
+  border-radius: 14px; padding: 2rem 2.5rem;
+  margin: 2rem 0; display: flex; gap: 1.5rem; align-items: center;
+}
+@media (max-width: 640px) { .spec-banner { flex-direction: column; text-align: center; } }
+.spec-banner .icon {
+  font-size: 2.5rem; flex-shrink: 0;
+}
+.spec-banner .content { flex: 1; }
+.spec-banner h3 {
+  font-size: 1.1rem; font-weight: 800; letter-spacing: -0.02em; margin-bottom: 0.3rem;
+}
+.spec-banner p { color: var(--fg-dim); font-size: 0.9rem; line-height: 1.55; }
+.spec-banner .btn {
+  display: inline-block; padding: 0.6rem 1.4rem;
+  background: var(--live); color: var(--live-text) !important;
+  font-weight: 700; font-size: 0.9rem; border-radius: 8px;
+  text-decoration: none; border: none; border-bottom: none;
+  transition: opacity 0.15s; margin-top: 0.75rem;
+}
+.spec-banner .btn:hover { opacity: 0.85; border-bottom: none; }
+
+.cta {
+  margin: 4rem 0 2rem; padding: 2.5rem;
+  background: var(--bg-elev); border: 1px solid var(--border-strong); border-radius: 14px;
+}
+.cta h2 { font-size: 1.6rem; font-weight: 800; letter-spacing: -0.02em; margin-bottom: 0.5rem; }
+.cta p { color: var(--fg-dim); font-size: 0.95rem; margin-bottom: 1.25rem; }
+.cta-buttons { display: flex; gap: 0.75rem; flex-wrap: wrap; }
+.btn {
+  display: inline-block; padding: 0.6rem 1.4rem;
+  background: var(--live); color: var(--live-text) !important;
+  font-weight: 700; font-size: 0.9rem; border-radius: 8px;
+  text-decoration: none; border: none; border-bottom: none; transition: opacity 0.15s;
+}
+.btn:hover { opacity: 0.85; color: var(--live-text) !important; border-bottom: none; }
+.btn-secondary {
+  background: transparent; color: var(--fg) !important;
+  border: 2px solid var(--border-strong); border-radius: 8px;
+  padding: 0.55rem 1.4rem;
+}
+.btn-secondary:hover { border-color: var(--live); color: var(--live) !important; }
+
+footer.term-footer {
+  padding: 1.5rem 0; border-top: 1px solid var(--border);
+  font-family: "JetBrains Mono", monospace; font-size: 0.65rem;
+  letter-spacing: 0.18em; text-transform: uppercase; color: var(--fg-faint);
+  display: flex; justify-content: space-between; flex-wrap: wrap; gap: 1rem;
+}
+footer.term-footer a { color: var(--fg-faint); border-bottom: none; }
+footer.term-footer a:hover { color: var(--live); }
+</style>
+
+<div class="layout">
+  <header class="topbar">
+    <a href="https://links.vibes.diy/homepage" class="brand">vibes.diy</a>
+    <a href="/creator-documentation/" class="back-link">&larr; Creator Documentation</a>
+  </header>
+
+  <section class="hero">
+    <div class="eyebrow">/access.js</div>
+    <h1>Private channels.<br>Anonymous submissions.<br>Role-gated reads.</h1>
+    <p class="sub">Build workspace chat where each channel is private. Run surveys anyone can answer but only admins can read. Gate dashboards by team role. One file, server-enforced &mdash; no backend to write.</p>
+  </section>
+
+  <!-- VISUAL SPEC -->
+  <div class="spec-banner" style="margin-bottom: 2rem;">
+    <div class="icon">&#x1F4D0;</div>
+    <div class="content">
+      <h3>Visual Specification</h3>
+      <p>Color-coded document cards, flow diagrams, channel membership visuals, and the full runtime architecture &mdash; everything on this page, illustrated.</p>
+      <a class="btn" href="/specs/access-function-spec.html">Open the visual spec &rarr;</a>
+    </div>
+  </div>
+
+  <!-- FILE STRUCTURE -->
+  <div class="section-label">file structure</div>
+  <h2 class="section-title">One file, named exports</h2>
+  <p class="section-sub">Access functions live in <code>/access.js</code>, alongside <code>/App.jsx</code>. Each named export maps to a database name &mdash; <code>export function chat(...)</code> gates <code>useFireproof("chat")</code>. An <code>export default</code> function acts as a catch-all for any database without its own named export.</p>
+
+  <div class="cmd cmd--copy">
+    <button class="copy-btn" type="button">COPY</button>
+    <span class="raw">// /access.js — each export name = the database it gates
+export function chat(doc, oldDoc, user, ctx) {
+  if (!user) throw { forbidden: "authentication required" };
+  if (doc.type === "message") {
+    if (doc.userHandle !== user.userHandle) throw { forbidden: "not author" };
+    ctx.requireAccess(doc.channelId);
+    return { channels: [doc.channelId] };
+  }
+  return {};
+}</span><span class="c">// /access.js &mdash; each export name = the database it gates</span><br/><span class="k">export function</span> <span class="fn">chat</span>(doc, oldDoc, user, ctx) {<br/>&nbsp;&nbsp;<span class="k">if</span> (!user) <span class="k">throw</span> { forbidden: <span class="s">"authentication required"</span> };<br/>&nbsp;&nbsp;<span class="k">if</span> (doc.type === <span class="s">"message"</span>) {<br/>&nbsp;&nbsp;&nbsp;&nbsp;<span class="k">if</span> (doc.userHandle !== user.userHandle) <span class="k">throw</span> { forbidden: <span class="s">"not author"</span> };<br/>&nbsp;&nbsp;&nbsp;&nbsp;ctx.<span class="fn">requireAccess</span>(doc.channelId);<br/>&nbsp;&nbsp;&nbsp;&nbsp;<span class="k">return</span> { channels: [doc.channelId] };<br/>&nbsp;&nbsp;}<br/>&nbsp;&nbsp;<span class="k">return</span> {};<br/>}
+  </div>
+
+  <div class="cmd cmd--copy">
+    <button class="copy-btn" type="button">COPY</button>
+    <span class="raw">// /App.jsx — no access option needed; the server matches by database name
+const { useLiveQuery, database } = useFireproof("chat");</span><span class="c">// /App.jsx &mdash; no access option needed; the server matches by name</span><br/><span class="k">const</span> { useLiveQuery, database } = <span class="fn">useFireproof</span>(<span class="s">"chat"</span>);
+  </div>
+
+  <!-- FUNCTION SIGNATURE -->
+  <div class="section-label">signature</div>
+  <h2 class="section-title">Function signature</h2>
+
+  <div class="cmd cmd--ts">
+    (doc, oldDoc, user: UserContext | null, ctx: Helpers) => AccessDescriptor;
+  </div>
+
+  <table class="api-table">
+    <thead>
+      <tr><th>Argument</th><th>Description</th></tr>
+    </thead>
+    <tbody>
+      <tr><td>doc</td><td>The document being written</td></tr>
+      <tr><td>oldDoc</td><td>The previous version &mdash; <code>null</code> for new documents</td></tr>
+      <tr><td>user</td><td>The authenticated user (<code>UserContext</code>), or <code>null</code> for anonymous requests</td></tr>
+      <tr><td>ctx</td><td>Server-provided helpers for checking materialized grant state</td></tr>
+    </tbody>
+  </table>
+
+  <p class="section-sub" style="margin-top:1rem;"><strong style="color:var(--fg)">UserContext:</strong></p>
+  <div class="cmd cmd--ts">
+    {<br/>&nbsp;&nbsp;userHandle: <span class="fn">string</span> &nbsp;&nbsp;<span class="c">// stable unique id &mdash; use for all auth checks</span><br/>&nbsp;&nbsp;displayName?: <span class="fn">string</span> <span class="c">// display only &mdash; never use for identity checks</span><br/>&nbsp;&nbsp;isOwner: <span class="fn">boolean</span> &nbsp;&nbsp;&nbsp;<span class="c">// true when this user owns the vibe &mdash; use for management gates</span><br/>}
+  </div>
+
+  <p class="section-sub" style="margin-top:1rem;"><strong style="color:var(--fg)">Helpers (<code>ctx</code>):</strong> Opaque closures over materialized grant state. They throw or pass &mdash; you cannot enumerate channels, list members, or iterate grants.</p>
+  <ul class="callout-list">
+    <li><code>ctx.requireAccess(channelId)</code> &mdash; throws if user is not in the channel</li>
+    <li><code>ctx.requireRole(roleName)</code> &mdash; throws if user does not have the role</li>
+  </ul>
+
+  <!-- ACCESS DESCRIPTOR -->
+  <div class="section-label">return type</div>
+  <h2 class="section-title">AccessDescriptor</h2>
+  <p class="section-sub">All fields are optional. <code>{}</code> is a valid return. <code>throw { forbidden: "reason" }</code> rejects the write.</p>
+
+  <div class="cmd cmd--ts cmd--copy">
+    <button class="copy-btn" type="button">COPY</button>
+    <span class="raw">type AccessDescriptor = {
+  channels?: string[];           // route this doc to channels
+  members?: Record<roleName, userHandle[]>; // role membership (reduced by union)
+  grant?: {
+    users?: Record<userHandle, string[]>;   // direct user → channel grants
+    roles?: Record<roleName, string[]>;     // role → channel grants
+    public?: string[];                      // member-public read — any member, no channel grant needed
+  };
+  expiry?: string | number | null; // ISO date or unix seconds
+  allowAnonymous?: boolean;        // opt-in for null-user writes
+};</span><span class="k">type</span> <span class="b">AccessDescriptor</span> = {<br/>&nbsp;&nbsp;channels?: <span class="fn">string</span>[]; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="c">// route this doc to channels</span><br/>&nbsp;&nbsp;members?: Record&lt;roleName, userHandle[]&gt;; <span class="c">// role membership (reduced by union)</span><br/>&nbsp;&nbsp;grant?: {<br/>&nbsp;&nbsp;&nbsp;&nbsp;users?: Record&lt;userHandle, <span class="fn">string</span>[]&gt;; &nbsp;&nbsp;<span class="c">// direct user &rarr; channel grants</span><br/>&nbsp;&nbsp;&nbsp;&nbsp;roles?: Record&lt;roleName, <span class="fn">string</span>[]&gt;; &nbsp;&nbsp;&nbsp;<span class="c">// role &rarr; channel grants</span><br/>&nbsp;&nbsp;&nbsp;&nbsp;public?: <span class="fn">string</span>[]; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="c">// public read &mdash; no auth required</span><br/>&nbsp;&nbsp;};<br/>&nbsp;&nbsp;expiry?: <span class="fn">string</span> | <span class="fn">number</span> | <span class="k">null</span>; <span class="c">// ISO date or unix seconds</span><br/>&nbsp;&nbsp;allowAnonymous?: <span class="fn">boolean</span>; &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="c">// opt-in for null-user writes</span><br/>};
+  </div>
+
+  <!-- KEY CONCEPTS -->
+  <div class="section-label">key concepts</div>
+  <h2 class="section-title">How it all fits together</h2>
+
+  <div class="concept-grid">
+    <div class="concept-card">
+      <h4>Channels</h4>
+      <p>Route documents. A document with <code>channels: ["general"]</code> is only visible to users who have been granted access to <code>"general"</code>. Channels are the unit of read isolation.</p>
+    </div>
+    <div class="concept-card warn">
+      <h4>Grants are additive</h4>
+      <p>The effective access state is the union of every current document's <code>AccessDescriptor</code>. No "remove grant" operation &mdash; deleting a document drops its contribution automatically. Revocation is deletion.</p>
+    </div>
+    <div class="concept-card cyan">
+      <h4>Grant resolution</h4>
+      <p>Two passes: first expand <code>grant.roles</code> through <code>members</code>, then union with <code>grant.users</code> direct grants. Roles and direct grants compose, never override.</p>
+    </div>
+    <div class="concept-card punk">
+      <h4>allowAnonymous</h4>
+      <p>If <code>user</code> is <code>null</code> and the function returns without throwing, the runtime checks <code>allowAnonymous</code>. Without it, the write is rejected &mdash; prevents silent open anonymous writes. <code>grant.public</code> makes a channel readable by any member (no channel grant needed); anonymous <em>write</em> requires <code>allowAnonymous: true</code> separately. Whether non-members can read public channels depends on the app-level public toggle.</p>
+    </div>
+  </div>
+
+  <!-- EXAMPLE: WORKSPACE CHAT -->
+  <div class="section-label">example</div>
+  <h2 class="section-title">Workspace chat with channels</h2>
+  <p class="section-sub">A single access function handles three document types: channel creation with member grants, messages routed to channels, and invites that extend access.</p>
+
+  <div class="cmd cmd--copy">
+    <button class="copy-btn" type="button">COPY</button>
+    <span class="raw">// /access.js
+export function chat(doc, oldDoc, user, ctx) {
+  if (!user) throw { forbidden: "authentication required" };
+
+  if (doc.type === "channel-meta") {
+    if (doc.ownerHandle !== user.userHandle) throw { forbidden: "not owner" };
+    if (oldDoc && oldDoc.ownerHandle !== user.userHandle) throw { forbidden: "not owner" };
+    return {
+      channels: [doc._id],
+      grant: {
+        users: Object.fromEntries(
+          [[doc.ownerHandle, [doc._id]],
+           ...doc.memberHandles.map(h => [h, [doc._id]])]
+        ),
+      },
+    };
+  }
+
+  if (doc.type === "message") {
+    if (doc.userHandle !== user.userHandle) throw { forbidden: "not author" };
+    ctx.requireAccess(doc.channelId);
+    return { channels: [doc.channelId] };
+  }
+
+  if (doc.type === "channel-invite") {
+    if (doc.senderHandle !== user.userHandle) throw { forbidden: "not sender" };
+    ctx.requireAccess(doc.channelId);
+    return {
+      channels: [doc.channelId],
+      grant: { users: { [doc.inviteeHandle]: [doc.channelId] } },
+    };
+  }
+
+  return {};
+}</span><span class="c">// /access.js</span><br/><span class="k">export function</span> <span class="fn">chat</span>(doc, oldDoc, user, ctx) {<br/>&nbsp;&nbsp;<span class="k">if</span> (!user) <span class="k">throw</span> { forbidden: <span class="s">"authentication required"</span> };<br/><br/>&nbsp;&nbsp;<span class="k">if</span> (doc.type === <span class="s">"channel-meta"</span>) {<br/>&nbsp;&nbsp;&nbsp;&nbsp;<span class="k">if</span> (doc.ownerHandle !== user.userHandle) <span class="k">throw</span> { forbidden: <span class="s">"not owner"</span> };<br/>&nbsp;&nbsp;&nbsp;&nbsp;<span class="k">if</span> (oldDoc &amp;&amp; oldDoc.ownerHandle !== user.userHandle) <span class="k">throw</span> { forbidden: <span class="s">"not owner"</span> };<br/>&nbsp;&nbsp;&nbsp;&nbsp;<span class="k">return</span> {<br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;channels: [doc._id],<br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;grant: {<br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;users: Object.<span class="fn">fromEntries</span>(<br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[[doc.ownerHandle, [doc._id]],<br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;...doc.memberHandles.<span class="fn">map</span>(h =&gt; [h, [doc._id]])]<br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;),<br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;},<br/>&nbsp;&nbsp;&nbsp;&nbsp;};<br/>&nbsp;&nbsp;}<br/><br/>&nbsp;&nbsp;<span class="k">if</span> (doc.type === <span class="s">"message"</span>) {<br/>&nbsp;&nbsp;&nbsp;&nbsp;<span class="k">if</span> (doc.userHandle !== user.userHandle) <span class="k">throw</span> { forbidden: <span class="s">"not author"</span> };<br/>&nbsp;&nbsp;&nbsp;&nbsp;ctx.<span class="fn">requireAccess</span>(doc.channelId);<br/>&nbsp;&nbsp;&nbsp;&nbsp;<span class="k">return</span> { channels: [doc.channelId] };<br/>&nbsp;&nbsp;}<br/><br/>&nbsp;&nbsp;<span class="k">if</span> (doc.type === <span class="s">"channel-invite"</span>) {<br/>&nbsp;&nbsp;&nbsp;&nbsp;<span class="k">if</span> (doc.senderHandle !== user.userHandle) <span class="k">throw</span> { forbidden: <span class="s">"not sender"</span> };<br/>&nbsp;&nbsp;&nbsp;&nbsp;ctx.<span class="fn">requireAccess</span>(doc.channelId);<br/>&nbsp;&nbsp;&nbsp;&nbsp;<span class="k">return</span> {<br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;channels: [doc.channelId],<br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;grant: { users: { [doc.inviteeHandle]: [doc.channelId] } },<br/>&nbsp;&nbsp;&nbsp;&nbsp;};<br/>&nbsp;&nbsp;}<br/><br/>&nbsp;&nbsp;<span class="k">return</span> {};<br/>}
+  </div>
+
+  <ul class="callout-list">
+    <li><strong style="color:var(--fg)">channel-meta</strong> &mdash; owner creates a channel and grants access to listed members</li>
+    <li><strong style="color:var(--fg)">message</strong> &mdash; only the author can post, must already have channel access</li>
+    <li><strong style="color:var(--fg)">channel-invite</strong> &mdash; any channel member can invite others; deleting the invite revokes the grant</li>
+  </ul>
+
+  <!-- EXAMPLE: ANONYMOUS SURVEY -->
+  <div class="section-label">example</div>
+  <h2 class="section-title">Anonymous survey with role-gated results</h2>
+  <p class="section-sub">Unauthenticated visitors submit responses. Admins and the feedback team can view raw data. Published results become fully public.</p>
+
+  <div class="cmd cmd--copy">
+    <button class="copy-btn" type="button">COPY</button>
+    <span class="raw">// /access.js
+export function survey(doc, oldDoc, user, ctx) {
+  if (doc.type === "survey-response") {
+    if (oldDoc) throw { forbidden: "responses are write-once" };
+    return { channels: ["inbound-responses"], allowAnonymous: true };
+  }
+
+  if (doc.type === "survey-config") {
+    if (!user?.isOwner) throw { forbidden: "owner only" };
+    return {
+      grant: {
+        roles: {
+          "feedback-team": ["inbound-responses"],
+        },
+      },
+    };
+  }
+
+  if (doc.type === "final-results") {
+    ctx.requireRole("feedback-team");
+    return { channels: [doc._id], grant: { public: [doc._id] } };
+  }
+
+  if (!user) throw { forbidden: "authentication required" };
+  return {};
+}</span><span class="c">// /access.js</span><br/><span class="k">export function</span> <span class="fn">survey</span>(doc, oldDoc, user, ctx) {<br/>&nbsp;&nbsp;<span class="k">if</span> (doc.type === <span class="s">"survey-response"</span>) {<br/>&nbsp;&nbsp;&nbsp;&nbsp;<span class="k">if</span> (oldDoc) <span class="k">throw</span> { forbidden: <span class="s">"responses are write-once"</span> };<br/>&nbsp;&nbsp;&nbsp;&nbsp;<span class="k">return</span> { channels: [<span class="s">"inbound-responses"</span>], allowAnonymous: <span class="k">true</span> };<br/>&nbsp;&nbsp;}<br/><br/>&nbsp;&nbsp;<span class="k">if</span> (doc.type === <span class="s">"survey-config"</span>) {<br/>&nbsp;&nbsp;&nbsp;&nbsp;<span class="k">if</span> (!user?.isOwner) <span class="k">throw</span> { forbidden: <span class="s">"owner only"</span> };<br/>&nbsp;&nbsp;&nbsp;&nbsp;<span class="k">return</span> {<br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;grant: {<br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;roles: {<br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="s">"feedback-team"</span>: [<span class="s">"inbound-responses"</span>],<br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;},<br/>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;},<br/>&nbsp;&nbsp;&nbsp;&nbsp;};<br/>&nbsp;&nbsp;}<br/><br/>&nbsp;&nbsp;<span class="k">if</span> (doc.type === <span class="s">"final-results"</span>) {<br/>&nbsp;&nbsp;&nbsp;&nbsp;ctx.<span class="fn">requireRole</span>(<span class="s">"feedback-team"</span>);<br/>&nbsp;&nbsp;&nbsp;&nbsp;<span class="k">return</span> { channels: [doc._id], grant: { public: [doc._id] } };<br/>&nbsp;&nbsp;}<br/><br/>&nbsp;&nbsp;<span class="k">if</span> (!user) <span class="k">throw</span> { forbidden: <span class="s">"authentication required"</span> };<br/>&nbsp;&nbsp;<span class="k">return</span> {};<br/>}
+  </div>
+
+  <ul class="callout-list">
+    <li><code>allowAnonymous: true</code> on survey-response lets unauthenticated visitors submit</li>
+    <li>Checking <code>oldDoc</code> makes responses write-once &mdash; prevents clients from overwriting existing submissions</li>
+    <li><code>grant.public</code> on final-results makes them readable by any member without a channel grant</li>
+    <li><code>user.isOwner</code> on survey-config restricts configuration to the vibe owner</li>
+    <li>The <strong style="color:var(--fg)">singleton grant doc</strong> pattern (survey-config) wires role-to-channel access in one place</li>
+  </ul>
+
+  <!-- MULTIPLE DATABASES -->
+  <div class="section-label">multi-database</div>
+  <h2 class="section-title">Multiple databases in one file</h2>
+  <p class="section-sub">Each named export gates its own database. Databases without a matching named export fall through to <code>export default</code> if one exists. If there is no default export either, the database uses default app-level permissions.</p>
+
+  <div class="cmd cmd--copy">
+    <button class="copy-btn" type="button">COPY</button>
+    <span class="raw">// /access.js
+export function chat(doc, oldDoc, user, ctx) {
+  if (!user) throw { forbidden: "authentication required" };
+  ctx.requireAccess(doc.channelId);
+  return { channels: [doc.channelId] };
+}
+
+export function notes(doc, oldDoc, user, ctx) {
+  if (!user) throw { forbidden: "authentication required" };
+  return {};
+}</span><span class="c">// /access.js</span><br/><span class="k">export function</span> <span class="fn">chat</span>(doc, oldDoc, user, ctx) {<br/>&nbsp;&nbsp;<span class="k">if</span> (!user) <span class="k">throw</span> { forbidden: <span class="s">"authentication required"</span> };<br/>&nbsp;&nbsp;ctx.<span class="fn">requireAccess</span>(doc.channelId);<br/>&nbsp;&nbsp;<span class="k">return</span> { channels: [doc.channelId] };<br/>}<br/><br/><span class="k">export function</span> <span class="fn">notes</span>(doc, oldDoc, user, ctx) {<br/>&nbsp;&nbsp;<span class="k">if</span> (!user) <span class="k">throw</span> { forbidden: <span class="s">"authentication required"</span> };<br/>&nbsp;&nbsp;<span class="k">return</span> {};<br/>}
+  </div>
+
+  <!-- CATCH-ALL DEFAULT -->
+  <div class="section-label">catch-all</div>
+  <h2 class="section-title">Catch-all with <code>export default</code></h2>
+  <p class="section-sub">Use <code>export default</code> to gate every database without writing a named export for each one. Named exports still take precedence for databases that need custom logic. Especially useful when an app has many databases or uses hyphenated names (<code>error-log</code>, <code>user-prefs</code>) that can't be JavaScript identifiers.</p>
+
+  <div class="cmd cmd--copy">
+    <button class="copy-btn" type="button">COPY</button>
+    <span class="raw">// /access.js
+export function chat(doc, oldDoc, user, ctx) {
+  if (!user) throw { forbidden: "authentication required" };
+  ctx.requireAccess(doc.channelId);
+  return { channels: [doc.channelId] };
+}
+
+// Everything else: require authentication, no channel routing
+export default function (doc, oldDoc, user, ctx) {
+  if (!user) throw { forbidden: "authentication required" };
+  return {};
+}</span><span class="c">// /access.js</span><br/><span class="k">export function</span> <span class="fn">chat</span>(doc, oldDoc, user, ctx) {<br/>&nbsp;&nbsp;<span class="k">if</span> (!user) <span class="k">throw</span> { forbidden: <span class="s">"authentication required"</span> };<br/>&nbsp;&nbsp;ctx.<span class="fn">requireAccess</span>(doc.channelId);<br/>&nbsp;&nbsp;<span class="k">return</span> { channels: [doc.channelId] };<br/>}<br/><br/><span class="c">// Everything else: require authentication, no channel routing</span><br/><span class="k">export default function</span> (doc, oldDoc, user, ctx) {<br/>&nbsp;&nbsp;<span class="k">if</span> (!user) <span class="k">throw</span> { forbidden: <span class="s">"authentication required"</span> };<br/>&nbsp;&nbsp;<span class="k">return</span> {};<br/>}
+  </div>
+
+  <!-- ROLES -->
+  <div class="section-label">patterns</div>
+  <h2 class="section-title">Roles via <code>members</code> reduce</h2>
+  <p class="section-sub">Roles aren't a fixed registry. They're materialized from document contributions &mdash; each document can add handles to a role.</p>
+
+  <div class="cmd cmd--copy">
+    <button class="copy-btn" type="button">COPY</button>
+    <span class="raw">// A team-meta doc contributes members to a role
+if (doc.type === "team-meta") {
+  ctx.requireRole("admin");
+  return {
+    members: { [doc.teamId]: doc.memberHandles },
+    grant: { roles: { [doc.teamId]: doc.channels } },
+  };
+}
+
+// A per-employee membership doc contributes one handle
+if (doc.type === "membership") {
+  return { members: { [doc.role]: [doc.userHandle] } };
+}</span><span class="c">// A team-meta doc contributes members to a role</span><br/><span class="k">if</span> (doc.type === <span class="s">"team-meta"</span>) {<br/>&nbsp;&nbsp;ctx.<span class="fn">requireRole</span>(<span class="s">"admin"</span>);<br/>&nbsp;&nbsp;<span class="k">return</span> {<br/>&nbsp;&nbsp;&nbsp;&nbsp;members: { [doc.teamId]: doc.memberHandles },<br/>&nbsp;&nbsp;&nbsp;&nbsp;grant: { roles: { [doc.teamId]: doc.channels } },<br/>&nbsp;&nbsp;};<br/>}<br/><br/><span class="c">// A per-employee membership doc contributes one handle</span><br/><span class="k">if</span> (doc.type === <span class="s">"membership"</span>) {<br/>&nbsp;&nbsp;<span class="k">return</span> { members: { [doc.role]: [doc.userHandle] } };<br/>}
+  </div>
+
+  <!-- VISUAL SPEC LINK -->
+  <div class="spec-banner">
+    <div class="icon">&#x1F4D0;</div>
+    <div class="content">
+      <h3>Full Visual Specification</h3>
+      <p>Color-coded document cards, flow diagrams, channel membership visuals, and runtime architecture details. Covers every use case with styled interactive examples.</p>
+      <a class="btn" href="/specs/access-function-spec.html">Open the visual spec &rarr;</a>
+    </div>
+  </div>
+
+  <!-- CTA -->
+  <div class="cta">
+    <h2>Start writing access functions</h2>
+    <p>Create <code>/access.js</code> in your vibe, add a named export for each database, and push. The server discovers it automatically.</p>
+    <div class="cta-buttons">
+      <a class="btn" href="https://links.vibes.diy/homepage">Open Vibes DIY &rarr;</a>
+      <a class="btn btn-secondary" href="/creator-documentation/">&larr; Creator Documentation</a>
+    </div>
+  </div>
+
+  {{> newsletter}}
+  <footer class="term-footer">
+    <span>$ /access.js &middot; api reference</span>
+    <span>
+      <a href="https://links.vibes.diy/discord">discord</a>
+      &nbsp;&middot;&nbsp;
+      <a href="https://links.vibes.diy/CLI">github</a>
+      &nbsp;&middot;&nbsp;
+      <a href="/creator-documentation/">docs</a>
+    </span>
+  </footer>
+</div>
+
+<script>
+  document.querySelectorAll('.copy-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const block = btn.closest('.cmd');
+      const raw = block.querySelector('.raw');
+      const text = raw ? raw.textContent.trim() : '';
+      if (!text) return;
+      navigator.clipboard.writeText(text).then(() => {
+        btn.textContent = 'COPIED';
+        btn.classList.add('copied');
+        setTimeout(() => { btn.textContent = 'COPY'; btn.classList.remove('copied'); }, 1800);
+      }).catch(() => {
+        btn.textContent = 'FAILED';
+        setTimeout(() => { btn.textContent = 'COPY'; }, 1800);
+      });
+    });
+  });
+</script>

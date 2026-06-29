@@ -1,0 +1,51 @@
+{
+  "slug": "slavery-civil-rights",
+  "page_url": "/edu/slavery-civil-rights.html",
+  "label": "Slavery, Reconstruction & Civil Rights",
+  "department": "History — American",
+  "vocabulary": [
+    "chattel slavery",
+    "abolition movement",
+    "emancipation history",
+    "Reconstruction amendments",
+    "freedpeople",
+    "racial capitalism",
+    "Jim Crow",
+    "civil rights movement",
+    "Black Power",
+    "mass incarceration",
+    "Black feminist thought",
+    "racial uplift ideology",
+    "Great Migration",
+    "Harlem Renaissance"
+  ],
+  "sources": [
+    {
+      "institution": "UW–Madison",
+      "title": "History 393 – Slavery, Civil War, and Reconstruction",
+      "url": "https://history.wisc.edu/syllabi-library/"
+    },
+    {
+      "institution": "UW–Madison",
+      "title": "History 321 – African American History Since 1900",
+      "url": "https://history.wisc.edu/syllabi-library/"
+    },
+    {
+      "institution": "MIT OCW",
+      "title": "21H.102 American History Since 1865",
+      "url": "https://ocw.mit.edu/courses/history/"
+    },
+    {
+      "institution": "H-Net H-Urban",
+      "title": "Race, Immigration & Urban Politics",
+      "url": "https://networks.h-net.org/node/22277/pages/40096/syllabus-archive-introduction"
+    }
+  ],
+  "app_prompts": [
+    "Reconstruction amendments explainer: user explores the 13th, 14th, and 15th amendments — what each said, what freedpeople expected, what actually happened, and how Reconstruction was dismantled.",
+    "Great Migration tracker: user picks a Southern city of origin and traces the migration routes north and west — what pushed people out, what drew them to Chicago or Detroit, what they found when they arrived.",
+    "Civil rights movement timeline: user picks a year and sees the key events, the organizations involved, the government responses, and the local and national tensions that shaped the movement.",
+    "Racial capitalism case study: user picks an era (slavery, Reconstruction, Jim Crow, mass incarceration) and sees how racial hierarchy was encoded into economic structures — labor control, property law, credit.",
+    "Black feminist thought reader: user selects a concept from Crenshaw, Collins, or hooks — intersectionality, the matrix of domination, the politics of respectability — and explores what it means with historical examples."
+  ]
+}

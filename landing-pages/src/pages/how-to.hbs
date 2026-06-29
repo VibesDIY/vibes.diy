@@ -1,0 +1,586 @@
+{{!--
+{
+  "layout": "editorial",
+  "title": "How to Make and Share an App with Vibes DIY",
+  "description": "From idea to live app in minutes. No coding, no setup, no waiting. Here's exactly how it works.",
+  "ogUrl": "https://good.vibes.diy/how-to/",
+  "source": "how-to",
+  "ogImage": "https://good.vibes.diy/images/screenshots/how-to.jpg"
+}
+--}}
+
+<style>
+  @import url('https://fonts.cdnfonts.com/css/alte-haas-grotesk');
+
+  :root {
+    --black: #000000;
+    --near-black: #231f20;
+    --gray-dark: #333333;
+    --gray-mid: #6b6b6b;
+    --gray-light: #cccdc8;
+    --cream: #fffff0;
+    --red: #da291c;
+    --cyan: #009ace;
+    --yellow: #fedd00;
+
+    --font-main: 'Alte Haas Grotesk', -apple-system, 'Segoe UI', sans-serif;
+    --card-border: 2px solid var(--black);
+    --gutter: clamp(1rem, 4vw, 3rem);
+    --grid-size: 40px;
+    --article-width: 860px;
+  }
+
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+
+  body {
+    background-color: #cccdc8;
+    background-image:
+      linear-gradient(rgba(255,255,255,0.5) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.5) 1px, transparent 1px);
+    background-size: var(--grid-size) var(--grid-size);
+    color: var(--near-black);
+    font-family: var(--font-main);
+    font-size: clamp(1rem, 1.1vw, 1.125rem);
+    line-height: 1.6;
+    overflow-x: hidden;
+  }
+
+  ::selection { background: var(--yellow); color: var(--black); }
+  a { color: var(--red); text-decoration: underline; text-underline-offset: 2px; transition: color 0.2s; }
+  a:hover { color: var(--black); }
+  h1, h2, h3, h4 { font-family: var(--font-main); font-weight: normal; line-height: 1.1; }
+
+  /* ── Nav ── */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    padding: 0.75rem var(--gutter);
+    display: flex; justify-content: space-between; align-items: center;
+    background: var(--cream); border-bottom: 3px solid var(--black);
+  }
+  .nav-logo { text-decoration: none; display: flex; align-items: center; }
+  .nav-logo-pill { height: 36px; width: auto; display: block; transition: opacity 0.2s; }
+  .nav-logo:hover .nav-logo-pill { opacity: 0.85; }
+  .nav-links { display: flex; gap: 1.25rem; align-items: center; }
+  .nav-links a { color: var(--near-black); text-decoration: none; font-size: 0.85rem; }
+  .nav-links a:hover { color: var(--red); }
+  .nav-cta-btn {
+    background: var(--red); color: var(--cream) !important;
+    padding: 0.5rem 1.2rem; text-decoration: none !important;
+    font-weight: bold; font-size: 0.85rem; border: 2px solid var(--black);
+    transition: background 0.2s, transform 0.15s;
+  }
+  .nav-cta-btn:hover { background: var(--near-black); transform: translateY(-1px); }
+
+  /* ── Page & article column ── */
+  .page {
+    max-width: 1200px; margin: 0 auto;
+    padding: calc(60px + 2.5rem) var(--gutter) 2rem;
+  }
+
+  .article {
+    max-width: var(--article-width);
+    margin: 0 auto;
+  }
+
+  /* ── Color stripe ── */
+  .color-stripe { height: 8px; display: flex; margin-bottom: 2rem; }
+  .color-stripe > div { flex: 1; }
+
+  /* ── Section divider ── */
+  .act-divider {
+    border: var(--card-border);
+    background: var(--black);
+    color: var(--cream);
+    padding: 2rem 2.5rem;
+    margin: 3rem 0 2rem;
+  }
+  .act-divider .act-label {
+    font-size: 0.7rem; letter-spacing: 0.12em; text-transform: uppercase;
+    color: rgba(255,255,255,0.5); margin-bottom: 0.4rem;
+  }
+  .act-divider h2 { font-size: clamp(2rem, 4vw, 3rem); color: var(--cream); }
+  .act-divider p { font-size: 1.05rem; color: rgba(255,255,255,0.7); margin-top: 0.5rem; max-width: 36em; line-height: 1.6; }
+
+  /* ── Hero ── */
+  .hero-block {
+    border: var(--card-border); background: var(--cream);
+    padding: clamp(2rem, 5vw, 3.5rem);
+    margin-bottom: 1.5rem;
+  }
+  .hero-block h1 { font-size: clamp(2.5rem, 5.5vw, 4rem); letter-spacing: -0.02em; margin-bottom: 0.75rem; }
+  .hero-block .hero-sub { font-size: clamp(1.1rem, 1.8vw, 1.35rem); color: var(--gray-dark); max-width: 30em; line-height: 1.5; }
+
+  /* ── Beat (a step in the article) ── */
+  .beat {
+    margin-bottom: 2.5rem;
+  }
+
+  .beat-intro {
+    font-size: clamp(1rem, 1.4vw, 1.15rem);
+    color: var(--near-black);
+    line-height: 1.65;
+    margin-bottom: 1rem;
+    max-width: 42em;
+  }
+
+  .beat-intro strong { color: var(--near-black); }
+
+  .beat-caption {
+    font-size: 0.875rem;
+    color: var(--gray-mid);
+    line-height: 1.55;
+    margin-top: 0.65rem;
+    max-width: 42em;
+  }
+
+  .beat-label {
+    display: inline-block;
+    font-size: 0.68rem; font-weight: bold; letter-spacing: 0.1em;
+    text-transform: uppercase; padding: 0.25rem 0.6rem;
+    border: 2px solid var(--black);
+    margin-bottom: 0.6rem;
+  }
+  .beat-label--a { background: var(--cream); }
+  .beat-label--b { background: var(--cyan); color: var(--cream); border-color: var(--cyan); }
+
+  /* ── Screenshot groups ── */
+  .shots {
+    display: grid;
+    gap: 4px;
+    background: var(--black);
+    border: var(--card-border);
+  }
+  .shots--1 { grid-template-columns: 1fr; }
+  .shots--2 { grid-template-columns: 1fr 1fr; }
+  .shots--3 { grid-template-columns: 1fr 1fr 1fr; }
+
+  .shot {
+    display: flex; flex-direction: column;
+    background: var(--gray-light);
+  }
+  .shot img {
+    width: 100%; display: block;
+  }
+  .shot-label {
+    font-size: 0.68rem; letter-spacing: 0.06em; text-transform: uppercase;
+    color: var(--cream); background: var(--black);
+    padding: 0.3rem 0.6rem;
+    border-top: 1px solid rgba(255,255,255,0.15);
+  }
+
+  /* ── Pull quote / callout ── */
+  .callout {
+    border: var(--card-border);
+    padding: 1.5rem 2rem;
+    margin: 2rem 0;
+  }
+  .callout--red    { background: var(--red);    color: var(--cream); border-color: var(--red); }
+  .callout--yellow { background: var(--yellow); color: var(--black); }
+  .callout--black  { background: var(--black);  color: var(--cream); }
+  .callout p { font-size: clamp(1.1rem, 2vw, 1.5rem); line-height: 1.4; font-style: italic; }
+  .callout cite { display: block; font-size: 0.8rem; font-style: normal; margin-top: 0.5rem; opacity: 0.7; }
+
+  /* ── CTA ── */
+  .cta-block {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;
+    margin: 3rem 0 0;
+  }
+  .cta-card {
+    display: block; padding: 2rem; text-align: center;
+    border: var(--card-border); text-decoration: none !important;
+    transition: transform 0.15s;
+  }
+  .cta-card:hover { transform: translateY(-3px); }
+  .cta-card h3 { font-size: 1.5rem; margin-bottom: 0.4rem; }
+  .cta-card p { font-size: 0.95rem; line-height: 1.5; }
+  .cta-card--red   { background: var(--red);  color: var(--cream); }
+  .cta-card--cyan  { background: var(--cyan); color: var(--cream); }
+  .cta-card--red p, .cta-card--cyan p { color: rgba(255,255,255,0.8); }
+
+  /* ── Footer ── */
+  footer { margin-top: 3rem; padding: 2rem var(--gutter); text-align: center; font-size: 0.8rem; color: var(--near-black); }
+  footer a { color: var(--red); margin: 0 0.75rem; text-decoration: none; }
+  footer a:hover { text-decoration: underline; }
+  .footer-logo { height: 40px; width: auto; }
+
+  /* ── Reveal ── */
+  .reveal { opacity: 0; transform: translateY(14px); transition: opacity 0.45s ease, transform 0.45s ease; }
+  .reveal.visible { opacity: 1; transform: translateY(0); }
+
+  /* ── Responsive ── */
+  @media (max-width: 680px) {
+    .shots--2, .shots--3 { grid-template-columns: 1fr; }
+    .cta-block { grid-template-columns: 1fr; }
+    .nav-links a:not(.nav-cta-btn) { display: none; }
+  }
+</style>
+
+<!-- Nav -->
+<nav>
+  <a href="https://links.vibes.diy/homepage" class="nav-logo" aria-label="Vibes DIY">
+    <img src="Vibes-Toggle-1-Transparent.png" alt="Vibes DIY" class="nav-logo-pill">
+  </a>
+  <div class="nav-links">
+    <a href="#make">Make</a>
+    <a href="#share">Share</a>
+    <a href="#together">Together</a>
+    <a href="#remix">Remix</a>
+    <a href="https://links.vibes.diy/homepage" class="nav-cta-btn">Try It Free</a>
+  </div>
+</nav>
+
+<div class="page">
+  <div class="article">
+
+    <!-- Color stripe -->
+    <div class="color-stripe">
+      <div style="background: var(--red);"></div>
+      <div style="background: var(--cyan);"></div>
+      <div style="background: var(--yellow);"></div>
+      <div style="background: var(--near-black);"></div>
+      <div style="background: var(--red);"></div>
+      <div style="background: var(--cyan);"></div>
+    </div>
+
+    <!-- ── HERO ── -->
+    <div class="hero-block reveal">
+      <h1>Make it. Tweak it. Send the link.</h1>
+      <p class="hero-sub">No code, no setup, no developer. Describe what you want — Vibes DIY builds it, you share it, and anyone with the link can use it in&nbsp;real&nbsp;time.</p>
+    </div>
+
+    <!-- ══════════════════════════════════════
+         ACT 1 — MAKE
+    ══════════════════════════════════════ -->
+    <div class="act-divider reveal" id="make">
+      <div class="act-label">Part one</div>
+      <h2>Make&nbsp;it</h2>
+      <p>Go to vibes.diy and start typing. The app builds live while you watch.</p>
+    </div>
+
+    <!-- Login note -->
+    <div class="callout callout--yellow reveal" style="margin-bottom: 2rem;">
+      <p style="font-size: 1rem; font-style: normal;">After you submit your first prompt, Vibes DIY will ask you to sign in. It takes about ten seconds with Google or GitHub.</p>
+    </div>
+
+    <!-- Beat: Homepage -->
+    <div class="beat reveal">
+      <p class="beat-intro">Start at <a href="https://links.vibes.diy/homepage">vibes.diy</a>. The whole thing lives in your browser — nothing to install, free signup.</p>
+      <div class="shots shots--1">
+        <div class="shot">
+          <img src="images/how-to/a1-homepage.png" alt="vibes.diy homepage — What's the vibe? Try it.">
+          <div class="shot-label">vibes.diy</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Beat: Type your prompt -->
+    <div class="beat reveal">
+      <p class="beat-intro">Describe what you want to build. One or two sentences is enough. No technical language required — just explain it the way you'd describe it to a&nbsp;friend.</p>
+      <div class="shots shots--1">
+        <div class="shot">
+          <img src="images/how-to/a2-prompt-filled.png" alt="Prompt filled in describing a shopping list app organized by store">
+          <div class="shot-label">The prompt</div>
+        </div>
+      </div>
+      <p class="beat-caption">This prompt describes a shopping list app organized by store, with autocomplete for items from that store's history.</p>
+    </div>
+
+    <!-- Beat: Session starts / building -->
+    <div class="beat reveal">
+      <p class="beat-intro">Vibes DIY gets to work immediately. You can watch the app take shape in real time — first the session loads, then the preview comes together as the code is written.</p>
+      <div class="shots shots--3">
+        <div class="shot">
+          <img src="images/how-to/a3-session-preparing.png" alt="Preparing AI session — the builder interface loading">
+          <div class="shot-label">Session starting</div>
+        </div>
+        <div class="shot">
+          <img src="images/how-to/a3b-code-building.png" alt="Code being written in the Code tab as the app builds">
+          <div class="shot-label">Code being written</div>
+        </div>
+        <div class="shot">
+          <img src="images/how-to/a3c-preview-loading.png" alt="Preview pane loading — app rendering for the first time">
+          <div class="shot-label">Preview rendering</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Beat: App live -->
+    <div class="beat reveal">
+      <p class="beat-intro">Once coding is complete, the preview activates. Vibes DIY also suggests what to improve next, so you don't have to figure out your next move from&nbsp;scratch.</p>
+      <div class="shots shots--1">
+        <div class="shot">
+          <img src="images/how-to/a4-app-live.png" alt="App running live in the preview pane with AI suggestions for next improvements">
+          <div class="shot-label">Live — the builder chat on the left, your working app on the right</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Beat: Iterate -->
+    <div class="beat reveal">
+      <p class="beat-intro">Ask for changes the same way you'd ask a person. One message — "Add an AI autofill button" — and the feature appears. The conversation keeps going as long as you&nbsp;want.</p>
+      <div class="shots shots--2">
+        <div class="shot">
+          <img src="images/how-to/a5-iterate-autofill.png" alt="Typing — Add an AI autofill button — in the chat">
+          <div class="shot-label">The request</div>
+        </div>
+        <div class="shot">
+          <img src="images/how-to/a6-stores-added.png" alt="AI autofill working — stores like Walmart, Target, Costco appear instantly">
+          <div class="shot-label">The result</div>
+        </div>
+      </div>
+      <p class="beat-caption">One prompt added an AI-powered store suggester. Tap the star icon, and stores like Walmart, Target, and Costco populate&nbsp;instantly.</p>
+    </div>
+
+    <!-- Beat: Theme picker -->
+    <div class="beat reveal">
+      <p class="beat-intro">When the functionality feels right, pick a look. Vibes DIY has dozens of built-in visual themes — or just describe the feeling you want in the chat and let the builder surprise&nbsp;you.</p>
+      <div class="shots shots--1">
+        <div class="shot">
+          <img src="images/how-to/a7-theme-picker.png" alt="Theme picker open showing dozens of visual styles">
+          <div class="shot-label">Theme picker</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Beat: Code editor -->
+    <div class="beat reveal">
+      <p class="beat-intro">The Code tab gives you direct access to the source. You can edit the app title, tweak copy, adjust anything — or just leave it to the&nbsp;chat.</p>
+      <div class="shots shots--1">
+        <div class="shot">
+          <img src="images/how-to/a8b-code-editor.png" alt="Code editor view showing the full App.jsx source with the app title editable">
+          <div class="shot-label">Code tab — full source, directly editable</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Beat: New title / reskin -->
+    <div class="beat reveal">
+      <p class="beat-intro">Apply the theme and the whole app transforms — colors, typography, personality. Here, "Store Lists" became "Buy&nbsp;Baby,&nbsp;Buy!"</p>
+      <div class="shots shots--1">
+        <div class="shot">
+          <img src="images/how-to/a8-app-themed.png" alt="App restyled as Buy Baby Buy with Slab Concrete theme — black header, yellow text">
+          <div class="shot-label">After: Slab Concrete theme applied</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Beat: Bug fix sequence -->
+    <div class="beat reveal">
+      <p class="beat-intro">You can keep the conversation going until you're satisfied. Here, the list items were rendering as white text on a white background — unreadable. One message to flag it, and the next version fixes&nbsp;it.</p>
+      <div class="shots shots--3">
+        <div class="shot">
+          <img src="images/how-to/a9a-bug.png" alt="Shopping list items invisible — white text on white background">
+          <div class="shot-label">The bug</div>
+        </div>
+        <div class="shot">
+          <img src="images/how-to/a9b-fix-request.png" alt="Typing the fix request — items are white font on white background, please fix">
+          <div class="shot-label">The request</div>
+        </div>
+        <div class="shot">
+          <img src="images/how-to/a9-app-working.png" alt="Fixed — list items now legible with Cookies and Chocolate clearly visible">
+          <div class="shot-label">Fixed</div>
+        </div>
+      </div>
+      <p class="beat-caption">The app is already saving real data the whole time. Add stores. Check off items. Come back tomorrow. Everything is&nbsp;there.</p>
+    </div>
+
+    <!-- ══════════════════════════════════════
+         ACT 2 — SHARE
+    ══════════════════════════════════════ -->
+    <div class="act-divider reveal" id="share">
+      <div class="act-label">Part two</div>
+      <h2>Share&nbsp;it</h2>
+      <p>One button. One link. Anyone with it can open the app in their&nbsp;browser.</p>
+    </div>
+
+    <!-- Beat: Share panel -->
+    <div class="beat reveal">
+      <p class="beat-intro">Hit the Share button in the top right of the builder. Choose how you want to handle new visitors — auto-approve everyone, or review each request — then hit&nbsp;Publish.</p>
+      <div class="shots shots--1">
+        <div class="shot">
+          <img src="images/how-to/b1-share-panel.png" alt="Share panel open with Publish button and visitor approval settings">
+          <div class="shot-label">Share panel — one click to publish</div>
+        </div>
+      </div>
+      <p class="beat-caption">No deployment steps. No hosting to configure. The moment you hit Publish, the app is live on the&nbsp;internet.</p>
+    </div>
+
+    <!-- Beat: URL -->
+    <div class="beat reveal">
+      <p class="beat-intro">The URL in the address bar is your app. Copy it. Text it. Drop it in a group chat. Anyone who opens it lands directly in your app — Limit access to friends, or allow&nbsp;everyone.</p>
+      <div class="shots shots--1">
+        <div class="shot">
+          <img src="images/how-to/b2-url-bar.png" alt="URL bar highlighted showing vibes.diy/vibe/meghan-sinnott/store-lists">
+          <div class="shot-label">The shareable link</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════════════════════
+         ACT 3 — TOGETHER
+    ══════════════════════════════════════ -->
+    <div class="act-divider reveal" id="together">
+      <div class="act-label">Part three</div>
+      <h2>Use it together</h2>
+      <p>The person you sent it to can run their own copy — or join yours and use it in&nbsp;real&nbsp;time.</p>
+    </div>
+
+    <!-- Beat: Landing choice -->
+    <div class="beat reveal">
+      <p class="beat-intro">When someone opens your link, they see a choice: <strong>Fresh Install</strong> — spin up their own copy with their own data — or <strong>Request Access</strong> — ask to collaborate on&nbsp;yours.</p>
+      <div class="shots shots--1">
+        <div class="shot">
+          <img src="images/how-to/c1-actor-b-landing.png" alt="Landing page showing Fresh Install and Request Access options with a preview of the app">
+          <div class="shot-label">The choice</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Beat: Sign in + Requested -->
+    <div class="beat reveal">
+      <p class="beat-intro">They click Request Access, sign in with Google or GitHub, and the request is sent. You'll see it as soon as you open the&nbsp;app.</p>
+      <div class="shots shots--2">
+        <div class="shot">
+          <img src="images/how-to/c2-actor-b-signin.png" alt="Sign in to Vibes DIY with Google or GitHub">
+          <div class="shot-label">Sign in</div>
+        </div>
+        <div class="shot">
+          <img src="images/how-to/c3-actor-b-requested.png" alt="REQUESTED state — the owner has your request">
+          <div class="shot-label">Request sent</div>
+        </div>
+      </div>
+      <p class="beat-caption">On their end, the button changes to "REQUESTED" and shows where to check the status. On your end, a notification badge&nbsp;appears.</p>
+    </div>
+
+    <!-- Beat: Notification → Pending → Approved -->
+    <div class="beat reveal">
+      <p class="beat-intro">A badge appears on the Group tab of your app. Open the share panel, see their request, and approve them — it takes three&nbsp;seconds.</p>
+      <div class="shots shots--3">
+        <div class="shot">
+          <img src="images/how-to/c4-actor-a-notification.png" alt="Orange notification badge on the Group tab">
+          <div class="shot-label">Notification</div>
+        </div>
+        <div class="shot">
+          <img src="images/how-to/c5-actor-a-pending.png" alt="Share panel showing pending request from meghan.sinnott@gmail.com">
+          <div class="shot-label">Pending request</div>
+        </div>
+        <div class="shot">
+          <img src="images/how-to/c6-actor-a-approved.png" alt="Request approved — user now shown as Editor">
+          <div class="shot-label">Approved</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Beat: Use together -->
+    <div class="beat reveal">
+      <p class="beat-intro">Now you're both in the same app. They can see your stores, your lists. They add something — you see it appear on your screen, live, without refreshing. No sync button. No&nbsp;save.</p>
+      <div class="shots shots--3">
+        <div class="shot">
+          <img src="images/how-to/d1-actor-b-using.png" alt="The other person using the app, viewing Trader Joe's list">
+          <div class="shot-label">They open it</div>
+        </div>
+        <div class="shot">
+          <img src="images/how-to/d2-actor-b-adding.png" alt="They type Overly packaged fruit into the Trader Joe's list">
+          <div class="shot-label">They add an item</div>
+        </div>
+        <div class="shot">
+          <img src="images/how-to/d3-actor-a-synced.png" alt="Your screen now shows Overly packaged fruit on the list too">
+          <div class="shot-label">You see it instantly</div>
+        </div>
+      </div>
+      <p class="beat-caption">"Overly packaged fruit" — added by someone else, on their device, appearing on your screen in real time. No configuration required.</p>
+    </div>
+
+    <!-- ══════════════════════════════════════
+         ACT 4 — REMIX
+    ══════════════════════════════════════ -->
+    <div class="act-divider reveal" id="remix">
+      <div class="act-label">Part four</div>
+      <h2>Remix&nbsp;it</h2>
+      <p>Anyone can clone your app and take it in a completely different direction — with one&nbsp;prompt.</p>
+    </div>
+
+    <!-- Beat: Clone -->
+    <div class="beat reveal">
+      <p class="beat-intro">Every published app has a Clone button in the Vibes bar at the bottom of the screen. One tap copies your app under their account — same codebase, their own data, their own&nbsp;URL.</p>
+      <div class="shots shots--2">
+        <div class="shot">
+          <img src="images/how-to/e1-clone-button.png" alt="Clone button visible in the Vibes bar at the bottom of the app">
+          <div class="shot-label">Clone button</div>
+        </div>
+        <div class="shot">
+          <img src="images/how-to/e2-cloning.png" alt="Cloning vibe — loading screen">
+          <div class="shot-label">Cloning</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Beat: Their own copy → Remix -->
+    <div class="beat reveal">
+      <p class="beat-intro">They land in their own copy — blank slate, ready to customize. Hit Edit, type a new direction in the chat, and the AI picks it up from&nbsp;there.</p>
+      <div class="shots shots--2">
+        <div class="shot">
+          <img src="images/how-to/e3-cloned-app.png" alt="Their own cloned copy of the app — empty, under their account">
+          <div class="shot-label">Their copy</div>
+        </div>
+        <div class="shot">
+          <img src="images/how-to/e4-remixing.png" alt="Typing Make it cookie themed into the chat to start customizing">
+          <div class="shot-label">One prompt to go a new direction</div>
+        </div>
+      </div>
+      <p class="beat-caption">"Make it cookie themed" — and now it's a completely different app. Same structure, new personality, new data, new&nbsp;owner.</p>
+    </div>
+
+    <!-- ── CTA ── -->
+    <div class="callout callout--black reveal" style="text-align: center; margin: 3rem 0 1.5rem;">
+      <p style="font-size: clamp(1.3rem, 2.5vw, 2rem);">"If you can describe it, you can build&nbsp;it."</p>
+    </div>
+
+    <div class="cta-block reveal">
+      <a href="https://links.vibes.diy/homepage" class="cta-card cta-card--red">
+        <h3>Start Building</h3>
+        <p>Go to vibes.diy and type your first prompt. Free, no credit card.</p>
+      </a>
+      <a href="https://links.vibes.diy/discord" class="cta-card cta-card--cyan">
+        <h3>Join the Community</h3>
+        <p>See what others are building. Get help. Share yours.</p>
+      </a>
+    </div>
+
+    <!-- Color stripe -->
+    <div class="color-stripe" style="margin-top: 2rem; margin-bottom: 0;">
+      <div style="background: var(--red);"></div>
+      <div style="background: var(--cyan);"></div>
+      <div style="background: var(--yellow);"></div>
+      <div style="background: var(--near-black);"></div>
+      <div style="background: var(--red);"></div>
+      <div style="background: var(--cyan);"></div>
+    </div>
+
+  </div><!-- /.article -->
+</div><!-- /.page -->
+
+<footer>
+  <a href="https://links.vibes.diy/homepage">
+    <img src="Vibes-Toggle-1-Transparent.png" alt="Vibes DIY" class="footer-logo">
+  </a>
+  <p style="margin-top: 1rem;">
+    <a href="https://links.vibes.diy/discord">Discord</a>
+    <a href="https://links.vibes.diy/YouTube">YouTube</a>
+    <a href="https://links.vibes.diy/Substack">Substack</a>
+    <a href="https://links.vibes.diy/Bluesky">Bluesky</a>
+  </p>
+  <p style="margin-top: 0.75rem; color: var(--gray-mid);">&copy; 2025 Vibes DIY</p>
+</footer>
+
+<script>
+  const reveals = document.querySelectorAll('.reveal');
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) { entry.target.classList.add('visible'); observer.unobserve(entry.target); }
+    });
+  }, { threshold: 0.06, rootMargin: '0px 0px -30px 0px' });
+  reveals.forEach(el => observer.observe(el));
+</script>
+{{> newsletter}}

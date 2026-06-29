@@ -1,0 +1,101 @@
+{{!--
+{
+  "layout": "webring",
+  "title": "Grouping | Mind Games",
+  "description": "Sort sixteen into four hidden categories. Four variations on the theme — each one a live deployed app.",
+  "ogUrl": "https://good.vibes.diy/mind-games/connections.html",
+  "source": "mind-games-connections"
+}
+--}}
+
+<style>
+  @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap");
+
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    font-family:'Inter', system-ui, sans-serif;
+    background:#ffffff;
+    color:#121212;
+    min-height:100vh;
+    background-image:radial-gradient(circle at 10% 10%, #f9df74 0 80px, transparent 81px), radial-gradient(circle at 90% 30%, #a0c35a 0 90px, transparent 91px), radial-gradient(circle at 30% 90%, #b0c4ef 0 100px, transparent 101px), radial-gradient(circle at 80% 80%, #a374d5 0 70px, transparent 71px);
+    background-attachment:fixed;
+  }
+  a{color:inherit;text-decoration:none}
+  .wrap{max-width:1100px;margin:0 auto;padding:64px 24px 96px;position:relative;z-index:1}
+  header.top{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:48px;gap:24px;flex-wrap:wrap}
+  header.top a.back{color:#121212;text-decoration:none;opacity:.6;font-size:14px}
+  header.top a.back:hover{opacity:1}
+  h1{font-family:'Inter', sans-serif;font-size:clamp(40px,7vw,84px);margin:0;line-height:.95;letter-spacing:-.02em}
+  .desc{max-width:560px;font-size:18px;opacity:.75;margin:16px 0 0}
+  .accent-bar{display:inline-block;height:6px;width:120px;background:#a374d5;margin:24px 0 0}
+  .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:32px;margin-top:56px}
+  @media (max-width:720px){.grid{grid-template-columns:1fr}}
+  .card{background:#f4eef9;border:none;border-radius:12px;box-shadow:0 6px 24px rgba(20,20,40,.08);overflow:hidden;display:flex;flex-direction:column;transition:transform .15s ease}
+  .card:hover{transform:translateY(-2px)}
+  .shot{display:block;aspect-ratio:16/10;background:#ffffff;overflow:hidden}
+  .shot img{width:100%;height:100%;object-fit:cover;display:block}
+  .meta{padding:20px 22px 24px}
+  .meta h3{margin:0 0 10px;font-size:24px;letter-spacing:-.01em}
+  .meta h3 a{color:inherit;text-decoration:none}
+  .meta h3 a:hover{color:#a374d5}
+  .prompt{margin:0 0 16px;font-size:14px;line-height:1.55;opacity:.78}
+  .play{display:inline-flex;align-items:center;gap:6px;color:#a374d5;font-weight:700;text-decoration:none;font-size:14px;letter-spacing:.02em}
+  .play:hover{text-decoration:underline}
+  footer{margin-top:64px;font-size:13px;opacity:.5}
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div>
+      <h1>Grouping</h1>
+      <p class="desc">Sort sixteen into four. Four variations on the theme, each one a live deployed app you can poke at.</p>
+      <div class="accent-bar"></div>
+    </div>
+    <a class="back" href="./index.html">&larr; Mind Games hub</a>
+  </header>
+  <main class="grid">
+    <article class="card">
+      <a class="shot" href="https://vibes.diy/vibe/jchris/chromatic-families" target="_blank" rel="noopener">
+        <img src="https://chromatic-families--jchris.prod-v2.vibesdiy.net/screenshot.jpg" alt="Hue Sort preview" loading="lazy"/>
+      </a>
+      <div class="meta">
+        <h3><a href="https://vibes.diy/vibe/jchris/chromatic-families" target="_blank" rel="noopener">Hue Sort</a></h3>
+        <p class="prompt">Group 16 paint-color names into 4 chromatic families. Tap to pick four, submit. Wrong shakes; correct fills row in family color. Save daily streak.</p>
+        <a class="play" href="https://vibes.diy/vibe/jchris/chromatic-families" target="_blank" rel="noopener">Play live &rarr;</a>
+      </div>
+    </article>
+    <article class="card">
+      <a class="shot" href="https://vibes.diy/vibe/jchris/phonetic-four" target="_blank" rel="noopener">
+        <img src="https://phonetic-four--jchris.prod-v2.vibesdiy.net/screenshot.jpg" alt="Sound Sort preview" loading="lazy"/>
+      </a>
+      <div class="meta">
+        <h3><a href="https://vibes.diy/vibe/jchris/phonetic-four" target="_blank" rel="noopener">Sound Sort</a></h3>
+        <p class="prompt">16 words group by phonetic patterns (rhymes, alliteration). Tap word to hear it spoken via Web Speech. Submit groups of four, four lives.</p>
+        <a class="play" href="https://vibes.diy/vibe/jchris/phonetic-four" target="_blank" rel="noopener">Play live &rarr;</a>
+      </div>
+    </article>
+    <article class="card">
+      <a class="shot" href="https://vibes.diy/vibe/jchris/emoji-connections" target="_blank" rel="noopener">
+        <img src="https://emoji-connections--jchris.prod-v2.vibesdiy.net/screenshot.jpg" alt="Emoji Quartet preview" loading="lazy"/>
+      </a>
+      <div class="meta">
+        <h3><a href="https://vibes.diy/vibe/jchris/emoji-connections" target="_blank" rel="noopener">Emoji Quartet</a></h3>
+        <p class="prompt">16 emojis sort into four hidden categories. Difficulty colors revealed after solve. Daily puzzle, share result grid as emoji squares.</p>
+        <a class="play" href="https://vibes.diy/vibe/jchris/emoji-connections" target="_blank" rel="noopener">Play live &rarr;</a>
+      </div>
+    </article>
+    <article class="card">
+      <a class="shot" href="https://vibes.diy/vibe/jchris/cuisine-sort" target="_blank" rel="noopener">
+        <img src="https://cuisine-sort--jchris.prod-v2.vibesdiy.net/screenshot.jpg" alt="Plate Mates preview" loading="lazy"/>
+      </a>
+      <div class="meta">
+        <h3><a href="https://vibes.diy/vibe/jchris/cuisine-sort" target="_blank" rel="noopener">Plate Mates</a></h3>
+        <p class="prompt">16 ingredient names group by cuisine (Italian, Thai, Mexican, Japanese). Four lives. Save streak in Fireproof. AI hint suggests one ingredient's cuisine.</p>
+        <a class="play" href="https://vibes.diy/vibe/jchris/cuisine-sort" target="_blank" rel="noopener">Play live &rarr;</a>
+      </div>
+    </article>
+  </main>
+  {{> newsletter}}
+<footer>Built with vibes.diy. Each card is a one-prompt mini-app.</footer>
+</div>

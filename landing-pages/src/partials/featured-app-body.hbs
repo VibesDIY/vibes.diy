@@ -1,0 +1,150 @@
+{{> featured-app-styles}}
+
+<main>
+<div class="top-tagline">
+  <a href="https://links.vibes.diy/homepage">Vibes DIY</a>
+  lets anyone create and share custom code creations. Collaborate with your friends, be a hero at work, make wishes come true.
+</div>
+
+<nav class="breadcrumb">
+  <a href="/">Home</a>
+  &nbsp;›&nbsp;
+  <a href="/featured-apps/">Featured Apps</a>
+  &nbsp;›&nbsp; {{breadcrumbTitle}}
+</nav>
+
+<section class="hero">
+  <div class="hero-badge">Featured Apps</div>
+  <h1>{{heroTitle}}<span>{{heroAccentWord}}</span></h1>
+  <p>{{heroDesc}}</p>
+</section>
+
+{{#if featuredSection}}
+<section class="gallery gallery--featured-section">
+  <div class="classics-section">
+    <div class="classics-spine">{{featuredSection.label}}</div>
+    <div class="classics-content">
+      {{#if featuredSection.caption}}<p class="classics-caption">{{{featuredSection.caption}}}</p>{{/if}}
+      <div class="places-list places-list--inline">
+        {{#each featuredSection.groups}}
+          <div class="place">
+            <a
+              class="prompt-link"
+              href="https://vibes.diy/chat/prompt?prompt64={{prompt64 description}}"
+              title="Start a fresh vibe from this prompt"
+            >[ prompt → ]</a>
+            <div class="place-body">
+              <div class="place-header">
+                {{#if title}}<span class="place-num">{{title}}</span>{{else}}<span class="place-num">{{numIdx @index}}</span>{{/if}}
+                <p class="place-desc">{{description}}{{#if variants.[1]}}<span class="takes-tag">{{variants.length}} takes</span>{{/if}}</p>
+              </div>
+              <div class="scroller">
+              {{#each variants}}
+                <div class="variant">
+                  <a
+                    class="shot"
+                    href="https://vibes.diy/vibe/{{author}}/{{slug}}"
+                    aria-label="{{slug}} screenshot"
+                  ><img src="https://{{slug}}--{{author}}.prod-v2.vibesdiy.net/screenshot.jpg" alt="{{slug}}" onerror="this.onerror=null; this.src='{{@root.assetPrefix}}images/og-preview.png';"></a>
+                  <div class="ctas">
+                    <a class="btn" href="https://vibes.diy/vibe/{{author}}/{{slug}}" title="Collaborate with the group">Join</a>
+                    <a class="btn" href="https://vibes.diy/clone/{{author}}/{{slug}}" title="Run your own copy">Clone</a>
+                    <a class="btn" href="https://vibes.diy/remix/{{author}}/{{slug}}" title="Change the code">Remix</a>
+                  </div>
+                </div>
+              {{/each}}
+              </div>
+            </div>
+          </div>
+        {{/each}}
+      </div>
+    </div>
+  </div>
+</section>
+{{/if}}
+
+<section class="gallery">
+  <div class="classics-section">
+    <div class="classics-spine">Classics</div>
+    <div class="classics-content">
+      <p class="classics-caption">OG vibes from Vibes DIY 1.0. Pick one to clone or remix.</p>
+      <div class="classics-grid">
+      {{#each classics}}
+        <div class="classic">
+          <p class="classic-desc">{{description}}</p>
+          <div class="shot-wrap">
+            <a
+              class="shot"
+              href="https://vibes.diy/vibe/{{author}}/{{slug}}"
+              aria-label="{{description}}"
+            ><img src="https://{{slug}}--{{author}}.prod-v2.vibesdiy.net/screenshot.jpg" alt="{{slug}}" onerror="this.onerror=null; this.src='{{@root.assetPrefix}}images/og-preview.png';"></a>
+          </div>
+          <div class="ctas">
+            <a class="brand-btn" href="https://vibes.diy/vibe/{{author}}/{{slug}}" title="Collaborate with the group">Join</a>
+            <a class="brand-btn" href="https://vibes.diy/clone/{{author}}/{{slug}}" title="Run your own copy">Clone</a>
+            <a class="brand-btn" href="https://vibes.diy/remix/{{author}}/{{slug}}" title="Change the code">Remix</a>
+          </div>
+        </div>
+      {{/each}}
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="gallery gallery--places">
+  <div class="section-head">
+    <h2>Jumpstart your vibe</h2>
+    <p>Each take below started with a prompt.
+      Hit <strong>Remix</strong> to fork any of them into your own copy
+      and reshape the code with AI — change the look, add features, make
+      it yours.</p>
+  </div>
+  <div class="places-list">
+    {{#each groups}}
+      <div class="place">
+        <a
+          class="prompt-link"
+          href="https://vibes.diy/chat/prompt?prompt64={{prompt64 description}}"
+          title="Start a fresh vibe from this prompt"
+        >[ prompt → ]</a>
+        <div class="place-body">
+          <div class="place-header">
+            <span class="place-num">{{numIdx @index}}</span>
+            <p class="place-desc">{{description}}{{#if variants.[1]}}<span class="takes-tag">{{variants.length}} takes</span>{{/if}}</p>
+          </div>
+          <div class="scroller">
+          {{#each variants}}
+            <div class="variant">
+              <a
+                class="shot"
+                href="https://vibes.diy/vibe/{{author}}/{{slug}}"
+                aria-label="{{slug}} screenshot"
+              ><img src="https://{{slug}}--{{author}}.prod-v2.vibesdiy.net/screenshot.jpg" alt="{{slug}}" onerror="this.onerror=null; this.src='{{@root.assetPrefix}}images/og-preview.png';"></a>
+              <div class="ctas">
+                <a class="btn" href="https://vibes.diy/vibe/{{author}}/{{slug}}" title="Collaborate with the group">Join</a>
+                <a class="btn" href="https://vibes.diy/clone/{{author}}/{{slug}}" title="Run your own copy">Clone</a>
+                <a class="btn" href="https://vibes.diy/remix/{{author}}/{{slug}}" title="Change the code">Remix</a>
+              </div>
+            </div>
+          {{/each}}
+          </div>
+        </div>
+      </div>
+      {{#if @first}}
+        <div class="places-explainer">
+          <p>Want to start clean from just the idea?
+            Click <strong>[ prompt → ]</strong> next to any title to begin
+            a fresh vibe from that prompt — Vibes DIY writes the first
+            version for you, no fork required.</p>
+        </div>
+      {{/if}}
+    {{/each}}
+  </div>
+</section>
+
+<section class="stories">
+  <p>{{{stories}}}</p>
+</section>
+
+{{> featured-cta}}
+</main>

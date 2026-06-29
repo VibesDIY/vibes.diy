@@ -1,0 +1,649 @@
+{{!--
+{
+  "layout": "webring",
+  "title": "Hamburger Business Review | Vibes DIY",
+  "description": "Seven tools for the people who take fast food seriously. A 10-K parody for your order, an every-store completionist tracker, a couple-compatibility burger scorer, a mascot lore archive, a kiosk-vs-human ledger, a franchise field guide, and a global menu passport.",
+  "ogUrl": "https://good.vibes.diy/hamburger-business-review/",
+  "ogImage": "https://good.vibes.diy/images/screenshots/hamburger-business-review.jpg",
+  "source": "hamburger-business-review",
+  "apps": [
+    {
+      "num": "01",
+      "slug": "order-10k",
+      "author": "og",
+      "live": true,
+      "spotlight": true,
+      "title": "Order 10-K",
+      "tagline": "An annual report for your fast food habit.",
+      "desc": "Paste your items or upload a receipt. The app parodies an SEC annual report: revenue (spend), COGS (calories), MD&A (one paragraph of dry commentary on this order), risk factors (ice cream machine, mid-shift swap, fries freshness), forward outlook. Each filing gets a shareable card. Save filings in Fireproof."
+    },
+    {
+      "num": "02",
+      "slug": "every-store-in",
+      "author": "og",
+      "live": true,
+      "title": "Every Store In",
+      "tagline": "The Zach Challenge, as a checklist.",
+      "desc": "Pick a chain and a city. The app shows every location and lets you check them off with a timestamped visit and a photo. Personal completion percentage, leaderboard among friends. Newspaper-broadsheet aesthetic. Save visits in Fireproof."
+    },
+    {
+      "num": "03",
+      "slug": "burger-partner",
+      "author": "og",
+      "live": true,
+      "title": "Burger Partner",
+      "tagline": "Compatibility scoring for the standing-order couple.",
+      "desc": "Two people enter their standing fast-food orders. The app rates compatibility — chain overlap, sauce agreement, price gap, calorie gap, breakfast and lunch alignment — and writes a one-paragraph relationship verdict. Save couple profiles in Fireproof. Output a shareable card."
+    },
+    {
+      "num": "04",
+      "slug": "mascot-lore-card",
+      "author": "og",
+      "live": true,
+      "title": "Mascot Lore",
+      "tagline": "Archive cards for the clowns, kings, and colonels.",
+      "desc": "Pick a fast-food mascot — Ronald, the King, the Colonel, Jack, the Noid, Wendy. The app generates an archival lore card with era, status, controversies, key episodes, and a one-line elegy. Vault aesthetic, dark amber. Save your card collection in Fireproof."
+    },
+    {
+      "num": "05",
+      "slug": "from-the-machine",
+      "author": "og",
+      "live": true,
+      "title": "From the Machine",
+      "tagline": "Log every kiosk, every drive-thru voice. Watch the ratio move.",
+      "desc": "Every visit, log whether you ordered from a kiosk, the app, the drive-thru speaker, or a cashier. The app tallies your automation ratio over time and projects when a human cashier will be a rare encounter. Terminal CRT aesthetic. Save log in Fireproof."
+    },
+    {
+      "num": "06",
+      "slug": "not-franchised",
+      "author": "og",
+      "live": true,
+      "title": "Not Franchised",
+      "tagline": "A communal field guide to who actually owns the store.",
+      "desc": "Look up a fast-food location and surface what is known about the operator: independent franchisee, multi-unit, corporate-owned. Users annotate locations with notes — 'Black-owned, opened 1987.' Codex aesthetic, archival. Save annotations in Fireproof."
+    },
+    {
+      "num": "07",
+      "slug": "menu-passport",
+      "author": "og",
+      "live": true,
+      "title": "Menu Passport",
+      "tagline": "Items that only exist in one country. Have you had it?",
+      "desc": "Browse a deck of fast-food items that exist only in specific countries — McAloo Tikki India, Teriyaki Burger Japan, McSpicy Paneer, Croque McDo France. Quiz mode guesses the country; passport mode tracks which you have tried. Poster aesthetic. Save passport in Fireproof."
+    }
+  ]
+}
+--}}
+
+<style>
+  @import url("https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=optional");
+
+  :root {
+    --paper: #f5efe2;
+    --paper-2: #ede5d4;
+    --ink: #1a1814;
+    --ink-soft: #3a342a;
+    --muted: #807663;
+    --rule: #1a181433;
+    --regulatory-red: #b3261e;
+    --regulatory-red-soft: #b3261e22;
+    --ledger-gold: #8a6a1b;
+    --accent-stamp: #b3261e;
+  }
+
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body {
+    background: var(--paper);
+    background-image:
+      repeating-linear-gradient(0deg, transparent, transparent 39px, rgba(26,24,20,0.04) 40px),
+      repeating-linear-gradient(90deg, transparent, transparent 39px, rgba(26,24,20,0.04) 40px);
+    color: var(--ink);
+    font-family: "Inter", system-ui, sans-serif;
+    line-height: 1.55;
+    min-height: 100vh;
+  }
+  a { color: var(--ink); text-decoration: none; }
+  a:hover { color: var(--regulatory-red); }
+
+  .display { font-family: "Playfair Display", "Times New Roman", serif; font-weight: 900; letter-spacing: -0.01em; }
+  .mono { font-family: "JetBrains Mono", ui-monospace, monospace; }
+
+  .layout { max-width: 1180px; margin: 0 auto; padding: 0 1.5rem; }
+
+  /* ── Masthead ── */
+  .masthead {
+    display: flex; justify-content: space-between; align-items: baseline;
+    padding: 1.2rem 0 0.8rem;
+    border-bottom: 2px solid var(--ink);
+  }
+  .masthead .brand {
+    font-family: "Playfair Display", serif;
+    font-weight: 900;
+    font-size: 1.35rem;
+    letter-spacing: -0.01em;
+  }
+  .masthead .brand a { color: var(--ink); }
+  .masthead .meta {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+  }
+
+  .filing-bar {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 0.6rem 0;
+    border-bottom: 1px solid var(--rule);
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .filing-bar .stamp {
+    color: var(--regulatory-red);
+    border: 1.5px solid var(--regulatory-red);
+    padding: 3px 8px;
+    border-radius: 2px;
+    font-weight: 700;
+  }
+
+  /* ── Hero / spotlight ── */
+  .hero {
+    padding: 4rem 0 3rem;
+    border-bottom: 1px solid var(--rule);
+    display: grid;
+    grid-template-columns: 1.4fr 1fr;
+    gap: 3rem;
+    align-items: start;
+  }
+  @media (max-width: 900px) { .hero { grid-template-columns: 1fr; gap: 2rem; } }
+
+  .hero .lede {
+    display: flex; flex-direction: column; gap: 1.6rem;
+  }
+  .hero .kicker {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--regulatory-red);
+    font-weight: 700;
+  }
+  .hero h1 {
+    font-family: "Playfair Display", serif;
+    font-weight: 900;
+    font-size: clamp(2.6rem, 6vw, 4.6rem);
+    line-height: 0.98;
+    letter-spacing: -0.025em;
+    color: var(--ink);
+  }
+  .hero h1 em {
+    font-style: italic;
+    color: var(--regulatory-red);
+  }
+  .hero p.lead {
+    font-size: 1.1rem;
+    line-height: 1.65;
+    color: var(--ink-soft);
+    max-width: 560px;
+  }
+  .hero .cta-row {
+    display: flex; gap: 0.8rem; flex-wrap: wrap;
+    margin-top: 0.4rem;
+  }
+  .btn-primary {
+    display: inline-block;
+    background: var(--ink);
+    color: var(--paper);
+    padding: 0.95rem 1.6rem;
+    font-family: "Inter", sans-serif;
+    font-weight: 700;
+    font-size: 0.85rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    border: 2px solid var(--ink);
+    border-radius: 2px;
+    transition: all .15s;
+  }
+  .btn-primary:hover {
+    background: var(--regulatory-red);
+    border-color: var(--regulatory-red);
+    color: var(--paper);
+  }
+  .btn-secondary {
+    display: inline-block;
+    background: transparent;
+    color: var(--ink);
+    padding: 0.95rem 1.4rem;
+    font-family: "Inter", sans-serif;
+    font-weight: 700;
+    font-size: 0.85rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    border: 2px solid var(--ink);
+    border-radius: 2px;
+    transition: all .15s;
+  }
+  .btn-secondary:hover {
+    background: var(--ink);
+    color: var(--paper);
+  }
+
+  /* Spotlight visual */
+  .filing-card {
+    background: #fffbf2;
+    border: 1.5px solid var(--ink);
+    box-shadow: 5px 5px 0 var(--ink);
+    padding: 1.6rem 1.5rem 1.8rem;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.85rem;
+    line-height: 1.5;
+    color: var(--ink-soft);
+    position: relative;
+  }
+  .filing-card .stamp-corner {
+    position: absolute;
+    top: -14px; right: 18px;
+    background: var(--paper);
+    color: var(--regulatory-red);
+    border: 2px solid var(--regulatory-red);
+    padding: 4px 10px;
+    font-weight: 700;
+    font-size: 0.7rem;
+    letter-spacing: 0.18em;
+    border-radius: 2px;
+    text-transform: uppercase;
+  }
+  .filing-card h3 {
+    font-family: "Playfair Display", serif;
+    font-weight: 900;
+    font-size: 1.1rem;
+    letter-spacing: 0;
+    color: var(--ink);
+    margin-bottom: 0.8rem;
+    border-bottom: 1px solid var(--rule);
+    padding-bottom: 0.6rem;
+  }
+  .filing-card dl {
+    display: grid;
+    grid-template-columns: max-content 1fr;
+    column-gap: 1.2rem;
+    row-gap: 0.5rem;
+  }
+  .filing-card dt {
+    font-size: 0.65rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--muted);
+    font-weight: 600;
+  }
+  .filing-card dd {
+    font-size: 0.85rem;
+    color: var(--ink);
+  }
+  .filing-card .mda {
+    margin-top: 1rem;
+    padding-top: 0.8rem;
+    border-top: 1px solid var(--rule);
+    font-style: italic;
+    font-size: 0.8rem;
+    color: var(--ink-soft);
+    line-height: 1.55;
+  }
+
+  /* ── Statline ── */
+  .statline {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    border-top: 2px solid var(--ink);
+    border-bottom: 2px solid var(--ink);
+    background: var(--paper-2);
+  }
+  @media (max-width: 700px) { .statline { grid-template-columns: repeat(2, 1fr); } }
+  .stat-cell {
+    padding: 1.2rem 1.4rem;
+    border-right: 1px solid var(--rule);
+  }
+  .stat-cell:last-child { border-right: none; }
+  @media (max-width: 700px) {
+    .stat-cell { border-bottom: 1px solid var(--rule); }
+    .stat-cell:nth-child(2n) { border-right: none; }
+    .stat-cell:nth-last-child(-n+2) { border-bottom: none; }
+  }
+  .stat-cell .k {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.6rem;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 0.4rem;
+  }
+  .stat-cell .v {
+    font-family: "Playfair Display", serif;
+    font-weight: 900;
+    font-size: 1.5rem;
+    letter-spacing: -0.01em;
+    color: var(--ink);
+  }
+
+  /* ── Section header ── */
+  .section-hdr {
+    padding: 2.6rem 0 0.6rem;
+    display: flex; align-items: baseline; justify-content: space-between;
+  }
+  .section-hdr h2 {
+    font-family: "Playfair Display", serif;
+    font-weight: 900;
+    font-size: 2rem;
+    letter-spacing: -0.015em;
+  }
+  .section-hdr .label {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  /* ── Gallery ── */
+  .apps {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem;
+    padding: 1.5rem 0 3.5rem;
+  }
+  @media (max-width: 900px) { .apps { grid-template-columns: 1fr; } }
+
+  .app {
+    background: #fffbf2;
+    border: 1.5px solid var(--ink);
+    box-shadow: 4px 4px 0 var(--ink);
+    padding: 1.8rem;
+    display: flex; flex-direction: column; gap: 0.9rem;
+    transition: transform .15s ease, box-shadow .15s ease;
+  }
+  .app:hover {
+    transform: translate(-2px, -2px);
+    box-shadow: 6px 6px 0 var(--regulatory-red);
+  }
+  .app .head {
+    display: flex; justify-content: space-between; align-items: center;
+    padding-bottom: 0.6rem;
+    border-bottom: 1px solid var(--rule);
+  }
+  .app .num {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    font-weight: 600;
+  }
+  .app .status {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.6rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    padding: 3px 8px;
+    border: 1px solid var(--muted);
+    border-radius: 2px;
+    color: var(--muted);
+    font-weight: 600;
+  }
+  .app--live .status {
+    background: var(--ink);
+    color: var(--paper);
+    border-color: var(--ink);
+  }
+  .app--pending .status {
+    border-color: var(--regulatory-red);
+    color: var(--regulatory-red);
+  }
+  .app .title {
+    font-family: "Playfair Display", serif;
+    font-weight: 900;
+    font-size: 1.9rem;
+    line-height: 1.05;
+    letter-spacing: -0.015em;
+    color: var(--ink);
+  }
+  .app .tagline {
+    font-style: italic;
+    font-size: 1rem;
+    color: var(--regulatory-red);
+    line-height: 1.4;
+  }
+  .app .desc {
+    font-size: 0.92rem;
+    line-height: 1.6;
+    color: var(--ink-soft);
+    flex: 1;
+  }
+  .app .shot {
+    display: block;
+    aspect-ratio: 16/10;
+    overflow: hidden;
+    border: 1.5px solid var(--ink);
+    background: var(--paper-2);
+  }
+  .app .shot img { width: 100%; height: 100%; object-fit: cover; }
+  .app .shot-placeholder {
+    height: 100%;
+    display: flex; align-items: center; justify-content: center;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--muted);
+    text-align: center;
+    padding: 1rem;
+  }
+  .app .ctas {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.5rem;
+  }
+  .app .ctas--single { grid-template-columns: 1fr; }
+  .btn {
+    text-align: center;
+    padding: 0.7rem 0.5rem;
+    background: transparent;
+    border: 1.5px solid var(--ink);
+    border-radius: 2px;
+    font-family: "Inter", sans-serif;
+    font-weight: 700;
+    font-size: 0.7rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--ink);
+    cursor: pointer;
+    transition: all .12s;
+  }
+  .btn:hover {
+    background: var(--ink);
+    color: var(--paper);
+  }
+  .btn-remix:hover {
+    background: var(--regulatory-red);
+    border-color: var(--regulatory-red);
+  }
+  .prompt-link {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.75rem;
+    color: var(--muted);
+  }
+  .prompt-link:hover { color: var(--regulatory-red); }
+
+  /* ── Editorial epilogue ── */
+  .epilogue {
+    margin: 1rem 0 3rem;
+    padding: 2.6rem 2.2rem;
+    background: var(--ink);
+    color: var(--paper);
+    border: 1.5px solid var(--ink);
+  }
+  .epilogue h2 {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: #d4b97a;
+    margin-bottom: 1rem;
+  }
+  .epilogue p {
+    font-family: "Playfair Display", serif;
+    font-size: 1.35rem;
+    line-height: 1.5;
+    max-width: 780px;
+  }
+  .epilogue p em {
+    font-style: italic;
+    color: #d4b97a;
+  }
+  .epilogue .byline {
+    margin-top: 1.6rem;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: rgba(245, 239, 226, 0.6);
+  }
+
+  /* ── Footer ── */
+  footer.colophon {
+    padding: 1.4rem 0 2rem;
+    border-top: 2px solid var(--ink);
+    display: flex; justify-content: space-between; align-items: center;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+  footer.colophon a { color: var(--ink-soft); }
+  footer.colophon a:hover { color: var(--regulatory-red); }
+</style>
+
+<div class="layout">
+
+  <header class="masthead">
+    <div class="brand"><a href="https://links.vibes.diy/homepage">Hamburger Business Review</a></div>
+    <div class="meta">Vol. I · Filed via Vibes DIY</div>
+  </header>
+
+  <div class="filing-bar">
+    <span>Form 10-K · For Fiscal Year Ending: Whenever You Get Hungry</span>
+    <span class="stamp">Unaudited</span>
+  </div>
+
+  <!-- ── Hero / Spotlight ── -->
+  <section class="hero">
+    <div class="lede">
+      <span class="kicker">Spotlight Filing · Order 10-K</span>
+      <h1>The business of <em>your</em> burger.</h1>
+      <p class="lead">
+        Most people review a fast-food meal in a star rating. The serious reader files
+        a 10-K. Paste in your order, scan the receipt — get back a parody annual report
+        with revenue, COGS, risk factors, MD&amp;A, and a shareable cover sheet. The
+        spotlight tool of seven, made for people who already think of their drive-thru
+        habit as a portfolio.
+      </p>
+      <div class="cta-row">
+        <a class="btn-primary" href="https://vibes.diy/vibe/{{apps.0.author}}/{{apps.0.slug}}">File Your First 10-K</a>
+        <a class="btn-secondary" href="#gallery">See the Other Six</a>
+      </div>
+    </div>
+
+    <aside class="filing-card" aria-label="Sample 10-K filing">
+      <span class="stamp-corner">Specimen</span>
+      <h3>Filing · Wendy's Run · 11:47 PM</h3>
+      <dl>
+        <dt>Revenue</dt><dd>$11.42</dd>
+        <dt>COGS (cal)</dt><dd>1,840</dd>
+        <dt>Segment Mix</dt><dd>Burger 68% · Fry 22% · Drink 10%</dd>
+        <dt>Sauce Reserves</dt><dd>Ghost Pepper × 4</dd>
+        <dt>Risk Factors</dt><dd>Late-night staffing · Frosty machine</dd>
+        <dt>Forward Outlook</dt><dd>Heartburn anticipated Q1.</dd>
+      </dl>
+      <div class="mda">
+        Management notes a difficult quarter for the Jr. Bacon segment but reaffirms
+        guidance on the Baconator line. The board remains optimistic.
+      </div>
+    </aside>
+  </section>
+
+  <!-- ── Statline ── -->
+  <div class="statline">
+    <div class="stat-cell">
+      <div class="k">Filings</div>
+      <div class="v">Seven</div>
+    </div>
+    <div class="stat-cell">
+      <div class="k">Persistence</div>
+      <div class="v">Fireproof</div>
+    </div>
+    <div class="stat-cell">
+      <div class="k">Skin</div>
+      <div class="v">Proof Sheet</div>
+    </div>
+    <div class="stat-cell">
+      <div class="k">Stance</div>
+      <div class="v">Not Reviews</div>
+    </div>
+  </div>
+
+  <!-- ── Section header ── -->
+  <div class="section-hdr" id="gallery">
+    <h2>Other Filings on the Wire</h2>
+    <span class="label">// supporting tools</span>
+  </div>
+
+  <section class="apps">
+    {{#each apps}}{{#unless spotlight}}
+      <article class="app {{#if live}}app--live{{else}}app--pending{{/if}}">
+        <div class="head">
+          <span class="num">№ {{num}} · {{slug}}</span>
+          <span class="status">{{#if live}}Live{{else}}Pending{{/if}}</span>
+        </div>
+        <h2 class="title">{{title}}</h2>
+        <p class="tagline">{{tagline}}</p>
+        <p class="desc">{{desc}}</p>
+        {{#if live}}
+          <a class="shot" href="https://vibes.diy/vibe/{{author}}/{{slug}}" aria-label="{{title}} screenshot"><img src="https://{{slug}}--{{author}}.prod-v2.vibesdiy.net/screenshot.jpg" alt="{{slug}}" onerror="this.onerror=null; this.src='{{@root.assetPrefix}}images/og-preview.png';"/></a>
+          <div class="ctas">
+            <a class="btn" href="https://vibes.diy/vibe/{{author}}/{{slug}}">Open</a>
+            <a class="btn" href="https://vibes.diy/clone/{{author}}/{{slug}}">Clone</a>
+            <a class="btn btn-remix" href="https://vibes.diy/remix/{{author}}/{{slug}}">Remix</a>
+          </div>
+          <a class="prompt-link" href="https://vibes.diy/chat/prompt?prompt64={{prompt64 desc}}">↳ start fresh from this prompt</a>
+        {{else}}
+          <div class="shot"><div class="shot-placeholder">Awaiting Deploy</div></div>
+          <div class="ctas ctas--single">
+            <a class="btn" href="https://vibes.diy/chat/prompt?prompt64={{prompt64 desc}}">Start From Prompt</a>
+          </div>
+        {{/if}}
+      </article>
+    {{/unless}}{{/each}}
+  </section>
+
+  <section class="epilogue">
+    <h2>// editor's note</h2>
+    <p>
+      Fast food isn't a category to <em>rate</em>. It's a category to <em>file against</em>.
+      Seven tools — each one treats your order, your habit, or your operator the way a
+      serious reader of the business would. Clone any one of them and turn the joke into
+      your own franchise.
+    </p>
+    <div class="byline">— Filed via Vibes DIY · clone the kit, remix the doctrine</div>
+  </section>
+
+  <footer class="colophon">
+    <span>vibes.diy · <a href="https://links.vibes.diy/homepage">homepage</a> · <a href="/dating.html">dating</a> · <a href="/college.html">college</a> · <a href="/expressions/">expressions</a></span>
+    <span>// 30 —</span>
+  </footer>
+
+</div>

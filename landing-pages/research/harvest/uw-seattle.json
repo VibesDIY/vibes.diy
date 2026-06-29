@@ -1,0 +1,111 @@
+{
+  "source": "University of Washington",
+  "location": "Seattle, WA",
+  "region": "Pacific Northwest",
+  "fetched": "2026-05-18",
+  "items": [
+    {
+      "title": "STAT 534: Statistical Computing",
+      "department": "Data Science / Stats",
+      "year": 2024,
+      "url": "https://stat.uw.edu/academics/course-catalog/stat-534",
+      "fetch_method": "web-search",
+      "topics": [
+        "scientific programming in C++",
+        "data structures and algorithms",
+        "numerical computing",
+        "object-oriented design",
+        "modularization",
+        "numerical graphics",
+        "computational statistics"
+      ],
+      "source_text": "Introduction to scientific computing. Programming tools, modern programming methodologies (modularization, object oriented design), design of data structures and algorithms, numerical computing and graphics. Uses C++ for several substantial scientific programming projects."
+    },
+    {
+      "title": "BIOST 518: Applied Biostatistics II",
+      "department": "Public Health",
+      "year": 2024,
+      "url": "https://www.biostat.washington.edu/academics/courses/BIOST/518",
+      "fetch_method": "web-search",
+      "topics": [
+        "multiple regression",
+        "right-censored response variables",
+        "dummy variables",
+        "variable transformations",
+        "interaction terms",
+        "correlated outcome data",
+        "model diagnostics",
+        "case diagnostics"
+      ],
+      "source_text": "Multiple regression for continuous, discrete, and right-censored response variables, including dummy variables, transformations, and interactions. Introduction to regression with correlated outcome data, model and case diagnostics, and computer assignments using real data and standard statistical computer packages."
+    },
+    {
+      "title": "URBDP 520: Quantitative Methods in Urban Design and Planning",
+      "department": "Urban Planning",
+      "year": 2024,
+      "url": "https://urbdp.be.uw.edu/wp-content/uploads/sites/10/2025/05/520-syll-ver1.pdf",
+      "fetch_method": "direct",
+      "topics": [
+        "regression analysis",
+        "matrix methods",
+        "cohort-survival population models",
+        "spatial analysis techniques",
+        "demographic techniques",
+        "statistical thinking",
+        "evidence-based planning",
+        "R programming for urban data"
+      ],
+      "source_text": "Methods of statistical and mathematical analysis in design and planning, emphasizing the use of computer packages for analyzing urban data, including regression, matrix methods, and cohort-survival population models. The course establishes a solid fact basis for planning activities and decision-making, covering statistical analysis and techniques, demographic techniques, geographical and spatial analysis, and economic analysis."
+    },
+    {
+      "title": "ENVIR 495: Climate Justice",
+      "department": "Environmental Studies",
+      "year": 2024,
+      "url": "https://sustainability.uw.edu/blog/2024-03/spring-course-climate-justice",
+      "fetch_method": "web-search",
+      "topics": [
+        "climate justice frameworks",
+        "settler-colonialism and climate",
+        "environmental racism",
+        "intersectionality in climate policy",
+        "climate crisis differentiated impacts",
+        "systems of oppression in environmental policy",
+        "climate adaptation and social equity"
+      ],
+      "source_text": "This course explores the concept of climate justice — including its histories, diversities, and crucial importance for re-imagining our planet and relations. Climate crises are long-standing, differentiated, and experienced through compounding systems of settler-colonialism, racism, class and casteism, and patriarchy. Solutions that fail to address systems of oppression will not achieve climate justice."
+    },
+    {
+      "title": "ECON 411: Behavioral Economics",
+      "department": "Behavioral Economics",
+      "year": 2024,
+      "url": "https://econ.washington.edu/courses/2024/winter/econ/411/a",
+      "fetch_method": "web-search",
+      "topics": [
+        "psychological biases in economic models",
+        "systematic departures from rational choice",
+        "nudge theory",
+        "prospect theory",
+        "bounded rationality",
+        "behavioral policy design",
+        "experimental economics methods"
+      ],
+      "source_text": "The course incorporates insights from psychology into economic models and examines evidence suggesting individuals systematically depart from traditional economic assumptions. It modifies these assumptions to construct models that generate sharp and testable predictions. Students learn how to incorporate behavioral ideas to shape markets and policy, with readings including Thaler and Sunstein's Nudge."
+    },
+    {
+      "title": "EDPSY 591: Methods of Educational Research",
+      "department": "Education Research",
+      "year": 2024,
+      "url": "https://education.uw.edu/node/25227",
+      "fetch_method": "web-search",
+      "topics": [
+        "experimental research design",
+        "quasi-experimental research design",
+        "causal inference in education",
+        "APA standards for empirical reporting",
+        "applied social science research methods",
+        "educational data analysis"
+      ],
+      "source_text": "Focus on experimental and quasi-experimental research design methods, as well as APA writing standards. Recommended for beginning graduate students who need a broad overview of educational research methods. Includes discussions applying and critically evaluating research methods in social science research contexts."
+    }
+  ]
+}

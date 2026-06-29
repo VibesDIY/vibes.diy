@@ -1,0 +1,115 @@
+{{!--
+{
+  "layout": "standard",
+  "title": "Vibes for Running the Place | Vibes DIY",
+  "description": "Operational software for small workplace teams that aren't software teams — real estate offices, restaurants, dental practices, Pilates studios, religious-ed admin, trading desks. Browse the boards, remix your own.",
+  "ogUrl": "https://good.vibes.diy/featured-apps/run-the-place",
+  "source": "run-the-place",
+  "accent": "#1a3a6c",
+  "breadcrumbTitle": "Run the Place",
+  "heroTitle": "Run the ",
+  "heroAccentWord": "Place",
+  "heroDesc": "Pipelines, prep lists, shift reconciliations, handoff logs. Your team has a process — software shouldn't fight it. Try a board, then remix it for the way your shop actually closes out.",
+  "stories": "Every small operation has a spreadsheet that keeps growing. The Pilates studio with the laminated check-in clipboard. The dental front desk with the tab-jumping Excel macro. The four-agent real-estate office with a shared Google Sheet that has 14 colored tabs and one person who knows how it works. <strong>The spreadsheet keeps growing because nobody is going to ship a SaaS for one Pilates studio.</strong> Vibes are for that — apps shaped exactly to your shift, your stations, your sign-off, made in a sentence and reshaped tomorrow when the process changes.",
+  "ctaTitle": "Make your shop its own app.",
+  "ctaText": "Drop your email and we'll send the next batch of operational templates — handoff logs, reconciliations, sign-off boards — when they ship.",
+  "ctaButton": "Get back-office drops",
+  "classics": [
+    {
+      "author": "og",
+      "slug": "dublin-raven-6120",
+      "description": "Drag-and-drop kanban board with backlog / active / done columns; pointer-based dragging; task detail view. The whiteboard you stop having to update by hand."
+    },
+    {
+      "author": "og",
+      "slug": "galactic-tube-2241",
+      "description": "Pointer-driven kanban with smooth drag-and-drop and a task-detail panel. Same idea as dublin-raven, alt styling — useful when you want a second-take to remix."
+    },
+    {
+      "author": "og",
+      "slug": "neon-loki-6571",
+      "description": "Billable session timer at your hourly rate. Live timer, history, money-blast animation when you stop. Useful for solo consultants and any hourly desk."
+    },
+    {
+      "author": "og",
+      "slug": "bach-zeus-4099",
+      "description": "Paste a suspicious link, email, or SMS; AI returns calibrated spam and fraud scores tuned to your industry. The front-desk safety check."
+    },
+    {
+      "author": "og",
+      "slug": "mozart-magnet-2691",
+      "description": "Email-fraud detector. Paste a suspicious message; AI flags blackmail vs harmless, extracts crypto wallets, links to fraud databases. For any inbox that handles money."
+    }
+  ],
+  "groups": [
+    {
+      "description": "Real-estate office prospect/listing pipeline — kanban from Lead → Showing → Offer → Under Contract → Closed; cards with property, lead, agent, last-touch aging; per-stage totals. Your office adds a \"Stale 30 Days\" stage between Showing and Offer that most pipelines skip. Clone it and insert that stage.",
+      "variants": [
+        { "author": "og", "slug": "listing-pipeline" }
+      ]
+    },
+    {
+      "description": "End-of-shift cash + tip reconciliation board — closers enter cash, card total, tip pool, voids; app computes deposit envelope + flags discrepancies vs POS; sign-off per closer. Your bar splits tips differently on weekends than weekdays and no off-the-shelf POS handles the split. Clone this and add a day-of-week toggle that applies the right formula.",
+      "variants": [
+        { "author": "og", "slug": "shift-cash-board" }
+      ]
+    },
+    {
+      "description": "Sunday school roster + lesson schedule — class list with teacher and room, weekly curriculum reference, per-Sunday attendance check-off saved as Fireproof docs. Your congregation has three simultaneous age groups sharing two rooms on a rotating basis. Clone this and add a room-rotation scheduler so teachers know which space they're in each week.",
+      "variants": [
+        { "author": "og", "slug": "sunday-school-classes" }
+      ]
+    },
+    {
+      "description": "Trade desk end-of-day handoff log — open positions, pending orders, client touches, must-know notes; incoming shift acknowledges-read with a checkbox so nothing falls through. Your desk has a compliance rule that certain note categories must be signed off by the senior trader before the outgoing shift leaves. Clone this and add a required senior-sign-off gate on flagged entries.",
+      "variants": [
+        { "author": "og", "slug": "trade-desk-handoff" }
+      ]
+    },
+    {
+      "description": "Front-desk walk-in + reservation queue — today's slots in a timeline; tap to add a name+phone+service+duration; check-in or no-show; running-late slots highlighted. Your Pilates studio has six named reformers and clients book specific machines, not just time slots. Clone this and add a per-machine column to the timeline.",
+      "variants": [
+        { "author": "og", "slug": "front-desk-queue" }
+      ]
+    },
+    {
+      "description": "Restaurant prep list by station — sauté, grill, garde manger, pastry; each item has owner, due-time, done check; chef view shows everyone's board so missed prep is obvious before service. Your kitchen runs a different station configuration on Sundays and the current sheet always has the wrong column headers. Clone this and create a Sunday template with your actual five stations.",
+      "variants": [
+        { "author": "og", "slug": "prep-list-by-section" }
+      ]
+    },
+    {
+      "description": "Multi-person closing sign-off checklist — configurable stations (lights, safe, alarm, back door); each must be checked AND initialed before the lock-up indicator turns green. Your dental office has a HIPAA-required step that must be completed by the practice manager specifically, not any closer. Clone this and add a role-restricted checkbox that only unlocks for that role.",
+      "variants": [
+        { "author": "og", "slug": "closing-sign-off-checklist" }
+      ]
+    }
+  ]
+}
+--}}
+
+<style>
+  body {
+    background-color: #f7f4ec;
+    background-image:
+      linear-gradient(to right, rgba(26, 58, 108, 0.06) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(26, 58, 108, 0.06) 1px, transparent 1px);
+    background-size: 40px 40px;
+  }
+  .prop-card {
+    border-color: #1a3a6c !important;
+    box-shadow: 6px 6px 0 #1a3a6c !important;
+  }
+  h2,
+  .classics-spine,
+  .place-num {
+    font-family: "JetBrains Mono", "Courier New", monospace;
+    letter-spacing: 0.06em;
+  }
+  .hero .card,
+  .hero-card {
+    border-left: 6px solid #1a3a6c;
+  }
+</style>
+
+{{> featured-app-body}}

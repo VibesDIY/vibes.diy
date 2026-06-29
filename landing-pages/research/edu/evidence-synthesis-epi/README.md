@@ -1,0 +1,22 @@
+# evidence-synthesis-epi
+
+> A national public health agency's evidence review unit produces guidance documents that translate epidemiologic evidence into evidence-based public health recommendations affecting millions of people — vaccination schedules, screening guidelines, environmental standards. They need a mission-critical synthesis tool that helps the review committee handle the full evidence base behind a single recommendation with consistency, transparency, and full auditability. For a given guideline topic, the committee inventories every relevant study, classifying each by cohort study design, case-control study design, cross-sectional studies, randomized trial, or other observational study analysis, and extracting the population, exposure or intervention, outcome, measure of association reported, and the authors' handling of confounding and selection bias. The app should support the committee in attaching its own directed acyclic graph for the body of evidence, distinct from any one study's framing, and recording how each study's design either supports or fails to support the causal question of interest. It should track effect modification across studies — whether the association differs by age, sex, comorbidity, dose — and surface heterogeneity that the committee must explain. The app then helps the committee summarize the body of evidence using the disease surveillance and observational study analysis traditions the agency has formalized, generating a draft recommendation along with the strength of evidence grade, the dissenting opinions of committee members, and the planned reassessment trigger (e.g., revisit when new randomized data appears). Every revision is preserved because guidance documents are public-facing, may be litigated, and are referenced by clinicians, policymakers, and journalists. The system should also produce the public-facing technical appendix and the committee's internal deliberation record as separate, linked artifacts.
+
+Live at [https://vibes.diy/vibe/edu/evidence-synthesis-epi](https://vibes.diy/vibe/edu/evidence-synthesis-epi)
+
+Single-file React app built with [vibes.diy](https://vibes.diy). Visit the live url to manage access.
+
+## Run it
+
+```sh
+npx vibes-diy push     # uploads App.jsx, prints a live HTTPS URL
+```
+
+Edit [App.jsx](App.jsx) and push again to iterate.
+
+## Commands
+
+- `npx vibes-diy push` — deploy the current directory
+- `npx vibes-diy push --instant-join` — deploy with auto-accept sharing
+- `npx vibes-diy generate "prompt"` — generate a new app from a prompt
+- `npx vibes-diy help` — full command list

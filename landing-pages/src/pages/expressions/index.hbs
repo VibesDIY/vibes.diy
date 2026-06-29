@@ -1,0 +1,271 @@
+{{!--
+{
+  "layout": "standard",
+  "title": "Expressions | Vibes DIY",
+  "description": "Vibes as expression — the shape of a group's life, not its task list. Custom apps for ambient presence, group play, run-of-show, and the long tail of role-shaped tools.",
+  "ogUrl": "https://good.vibes.diy/expressions/",
+  "source": "expressions"
+}
+--}}
+
+<style>
+  @import url("https://fonts.cdnfonts.com/css/alte-haas-grotesk");
+
+  :root {
+    --black: #231f20;
+    --ivory: #fffff0;
+    --grid-gray: #cccdc8;
+    --os-gray: #7a7a7a;
+    --grid-line: rgba(255, 255, 255, 0.5);
+    --ruby: #da291c;
+    --bluey: #009ace;
+    --goldenrod: #fedd00;
+    --sprout-green: #16a34a;
+    --puppy-pink: #ff70a6;
+    --flame-orange: #ff6b00;
+    --indigo: #5b4fff;
+    --teal: #00a39a;
+    --mauve: #b96ac9;
+    --sand: #c7a87a;
+  }
+
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+  body {
+    font-family: "Alte Haas Grotesk", sans-serif;
+    background-color: var(--grid-gray);
+    color: var(--black);
+    line-height: 1.6;
+    background-image:
+      linear-gradient(var(--grid-line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
+    background-size: 40px 40px;
+    min-height: 100vh;
+  }
+
+  header {
+    padding: 1.5rem 2rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: linear-gradient(to bottom, var(--grid-gray) 60%, transparent);
+  }
+  .logo-link {
+    display: block;
+    text-decoration: none;
+  }
+  .logo-img {
+    height: 56px;
+    width: auto;
+    display: block;
+  }
+
+  .breadcrumb {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 2rem;
+    font-size: 0.9rem;
+    color: var(--os-gray);
+  }
+  .breadcrumb a {
+    color: var(--os-gray);
+    text-decoration: none;
+  }
+  .breadcrumb a:hover {
+    color: var(--black);
+  }
+
+  .hero {
+    max-width: 900px;
+    margin: 2rem auto 4rem;
+    padding: 0 2rem;
+    text-align: center;
+  }
+  .hero h1 {
+    font-size: clamp(2.5rem, 5vw, 4rem);
+    line-height: 1.05;
+    margin-bottom: 1.25rem;
+    font-weight: 900;
+  }
+  .hero p {
+    font-size: 1.2rem;
+    color: var(--black);
+    max-width: 640px;
+    margin: 0 auto;
+  }
+
+  .grid {
+    max-width: 1100px;
+    margin: 0 auto 5rem;
+    padding: 0 2rem;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 2rem;
+  }
+
+  .cat-card {
+    background: var(--ivory);
+    border: 3px solid var(--black);
+    border-radius: 0;
+    padding: 1.75rem;
+    text-decoration: none;
+    color: inherit;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    box-shadow: 6px 6px 0 var(--accent, var(--black));
+    transition:
+      transform 0.15s ease,
+      box-shadow 0.15s ease;
+  }
+  .cat-card:hover {
+    transform: translate(-2px, -2px);
+    box-shadow: 8px 8px 0 var(--accent, var(--black));
+  }
+  .cat-card .accent-bar {
+    width: 48px;
+    height: 6px;
+    border-radius: 0;
+    background: var(--accent, var(--black));
+  }
+  .cat-card h2 {
+    font-size: 1.4rem;
+    font-weight: 900;
+    line-height: 1.2;
+  }
+  .cat-card p {
+    font-size: 0.95rem;
+    color: var(--black);
+    flex: 1;
+  }
+  .cat-card .meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 0.5rem;
+    font-size: 0.85rem;
+    color: var(--os-gray);
+  }
+  .cat-card .meta .arrow {
+    font-weight: 800;
+    color: var(--accent, var(--black));
+  }
+
+  .cat-card.coming-soon {
+    opacity: 0.55;
+    pointer-events: none;
+  }
+  .cat-card.coming-soon .meta .arrow::after {
+    content: " soon";
+  }
+</style>
+
+<nav class="breadcrumb">
+  <a href="/">Home</a>
+  &nbsp;›&nbsp; Expressions
+</nav>
+
+<main>
+  <section class="hero">
+    <h1>Expressions</h1>
+    <p>Vibes as the shape of a group's life, not its task list. Tiny custom apps
+      for how a few people show up, sync up, and feel like themselves.</p>
+  </section>
+
+  <section class="grid">
+
+    <a href="ambient-presence.html" class="cat-card" style="--accent: var(--bluey);">
+      <span class="accent-bar"></span>
+      <h2>Ambient Presence</h2>
+      <p>ASCII webcam streams, push-to-talk video walkies, breath circles,
+        heartbeat rooms. Show up for each other without quite being on a call.</p>
+      <span class="meta"><span></span><span class="arrow">→</span></span>
+    </a>
+
+    <a href="group-play.html" class="cat-card" style="--accent: var(--ruby);">
+      <span class="accent-bar"></span>
+      <h2>Group Play</h2>
+      <p>Vote-on-anything, charades-by-emoji, mood-ring rooms, synchronized
+        stretch breaks. Tiny multiplayer rounds that turn whoever's around into
+        the room.</p>
+      <span class="meta"><span></span><span class="arrow">→</span></span>
+    </a>
+
+    <a href="media-drops.html" class="cat-card" style="--accent: var(--goldenrod);">
+      <span class="accent-bar"></span>
+      <h2>Constrained Media Drops</h2>
+      <p>Disposable-camera rolls, six-word stories, sound photos, receipt
+        theater. The constraint is the social object — limits make the share
+        sticky.</p>
+      <span class="meta"><span></span><span class="arrow">→</span></span>
+    </a>
+
+    <a
+      href="one-bit-status.html"
+      class="cat-card"
+      style="--accent: var(--sprout-green);"
+    >
+      <span class="accent-bar"></span>
+      <h2>One-Bit Status</h2>
+      <p>Light's-on, pet status, nap declarations, phone-flipped-busy. The
+        lowest-bandwidth way of being known to your people.</p>
+      <span class="meta"><span></span><span class="arrow">→</span></span>
+    </a>
+
+    <a href="embodied-weird.html" class="cat-card" style="--accent: var(--puppy-pink);">
+      <span class="accent-bar"></span>
+      <h2>Embodied &amp; Weird</h2>
+      <p>Whisper-only voice, phone tug-of-war, side-eye cam,
+        scream-into-the-void Tuesday. Your body is the controller and the vibe
+        is the point.</p>
+      <span class="meta"><span></span><span class="arrow">→</span></span>
+    </a>
+
+    <a
+      href="run-of-show.html"
+      class="cat-card"
+      style="--accent: var(--flame-orange);"
+    >
+      <span class="accent-bar"></span>
+      <h2>Day-of Run-of-Show</h2>
+      <p>All-hands cue sheets, IPO roadshow choreography, layoff-day timing,
+        board rundowns. The morning-of app for things too consequential for a
+        Sheet.</p>
+      <span class="meta"><span></span><span class="arrow">→</span></span>
+    </a>
+
+    <a href="shadow-inventory.html" class="cat-card" style="--accent: var(--sand);">
+      <span class="accent-bar"></span>
+      <h2>Shadow Inventory</h2>
+      <p>Swag closets, demo-unit pools, AV gear, loaner laptops. The stuff every
+        team owns that no IT system actually tracks.</p>
+      <span class="meta"><span></span><span class="arrow">→</span></span>
+    </a>
+
+    <a href="briefing-books.html" class="cat-card" style="--accent: var(--indigo);">
+      <span class="accent-bar"></span>
+      <h2>Self-Service Briefing Books</h2>
+      <p>Exec briefings per principal, board prep per chairman, post-mortems per
+        service. Role-shaped tools for the practitioner, not the average user.</p>
+      <span class="meta"><span></span><span class="arrow">→</span></span>
+    </a>
+
+    <a href="nahui-ollin.html" class="cat-card" style="--accent: #c9a84c;">
+      <span class="accent-bar"></span>
+      <h2>Nahui Ollin</h2>
+      <p>Day-sign calculators, the Five Suns myth, the Ollin earthquake glyph,
+        directional cosmos, patron deities, and the New Fire ceremony. The Aztec
+        calendar, alive.</p>
+      <span class="meta"><span></span><span class="arrow">→</span></span>
+    </a>
+
+  </section>
+</main>
+{{> newsletter}}

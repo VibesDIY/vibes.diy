@@ -1,0 +1,310 @@
+{{!--
+{
+  "layout": "raw",
+  "title": "Arcade — Thirty Mini Games | Vibes DIY",
+  "description": "Thirty mini games across five themed worlds — pinball, retro arcade, platformer, modern casual, sports. Each one a single-file React app deployed live on Vibes DIY.",
+  "ogUrl": "https://good.vibes.diy/arcade/"
+,
+  "source": "arcade"
+}
+--}}
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Games · The Hub</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: "Inter", system-ui, sans-serif;
+    background: #0a0a0f;
+    color: #fff;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+  header {
+    padding: 64px 32px 32px;
+    text-align: center;
+    position: relative;
+  }
+  .kicker {
+    color: #ffd23a;
+    font-size: 12px;
+    letter-spacing: 0.4em;
+    text-transform: uppercase;
+    margin-bottom: 16px;
+  }
+  h1 {
+    margin: 0;
+    font-size: clamp(48px, 9vw, 132px);
+    font-weight: 900;
+    letter-spacing: -0.04em;
+    line-height: 0.92;
+    background:
+      linear-gradient(180deg, #fff 0%, #c1c1c1 60%, #5a5a5a 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    text-shadow: 0 0 60px rgba(255, 60, 165, 0.18);
+  }
+  .lead {
+    max-width: 680px;
+    margin: 22px auto 0;
+    color: #b6b6c8;
+    font-size: 16px;
+    line-height: 1.6;
+  }
+  .mosaic {
+    display: grid;
+    grid-template-columns: repeat(12, 1fr);
+    grid-auto-rows: 200px;
+    gap: 18px;
+    padding: 40px 32px 80px;
+    max-width: 1440px;
+    margin: 0 auto;
+  }
+  .tile {
+    position: relative;
+    border-radius: 18px;
+    overflow: hidden;
+    text-decoration: none;
+    color: inherit;
+    display: flex;
+    align-items: flex-end;
+    transition: transform 0.4s cubic-bezier(.2,.7,.2,1);
+    isolation: isolate;
+  }
+  .tile:hover { transform: translateY(-4px) scale(1.005); }
+  .tile .label {
+    position: relative;
+    z-index: 3;
+    padding: 28px;
+    width: 100%;
+  }
+  .tile h2 {
+    margin: 0 0 6px;
+    font-size: clamp(28px, 3vw, 48px);
+    font-weight: 800;
+    letter-spacing: -0.02em;
+  }
+  .tile .sub {
+    font-size: 12px;
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+    opacity: 0.92;
+  }
+  .tile .num {
+    position: absolute;
+    top: 22px; right: 26px;
+    z-index: 3;
+    font-size: 13px;
+    letter-spacing: 0.3em;
+    opacity: 0.75;
+  }
+  /* size grid */
+  .tile.pinball       { grid-column: span 7; grid-row: span 2; }
+  .tile.retro-arcade  { grid-column: span 5; grid-row: span 2; }
+  .tile.platformer    { grid-column: span 5; grid-row: span 2; }
+  .tile.modern        { grid-column: span 4; grid-row: span 2; }
+  .tile.sports        { grid-column: span 3; grid-row: span 2; }
+  @media (max-width: 900px) {
+    .tile { grid-column: span 12 !important; grid-row: span 2 !important; }
+  }
+
+  /* PINBALL skin */
+  .tile.pinball {
+    background:
+      radial-gradient(ellipse at 50% -10%, #2b0d3a 0%, #0a0612 60%, #000 100%);
+    border: 3px solid #c9d1e0;
+    box-shadow: inset 0 0 40px rgba(255,62,165,0.35), 0 0 30px rgba(255,62,165,0.25);
+  }
+  .tile.pinball::before {
+    content:""; position:absolute; inset: 14px 14px auto 14px;
+    height: 28px;
+    background:
+      radial-gradient(circle at 12% 50%, #ffd23a 0 8px, transparent 9px),
+      radial-gradient(circle at 50% 50%, #36e3ff 0 8px, transparent 9px),
+      radial-gradient(circle at 88% 50%, #ff3ea5 0 8px, transparent 9px);
+    filter: drop-shadow(0 0 8px rgba(255,210,58,.6));
+  }
+  .tile.pinball::after {
+    content:""; position:absolute; left: 16px; right: 16px; bottom: 10px; height: 14px;
+    background:
+      linear-gradient(90deg, #c9d1e0 0 90px, transparent 90px 100%),
+      linear-gradient(270deg, #c9d1e0 0 90px, transparent 90px 100%);
+    background-position: left, right;
+    background-repeat: no-repeat;
+    transform-origin: center;
+    opacity: 0.6;
+  }
+  .tile.pinball h2 {
+    color: #fff;
+    text-shadow: 0 0 24px rgba(255,62,165,0.6);
+  }
+  .tile.pinball .sub { color: #ffd23a; }
+
+  /* RETRO ARCADE skin */
+  .tile.retro-arcade {
+    background: #0c1a0c;
+    border: 4px solid #2a2a2a;
+    font-family: "Press Start 2P", monospace;
+  }
+  .tile.retro-arcade::before {
+    content:""; position:absolute; inset: 0;
+    background: repeating-linear-gradient(
+      to bottom, transparent 0 2px, rgba(57,255,20,0.16) 3px, transparent 4px
+    );
+    pointer-events: none;
+    z-index: 1;
+  }
+  .tile.retro-arcade::after {
+    content:""; position:absolute; inset: 0;
+    background: radial-gradient(ellipse at center, transparent 40%, rgba(0,0,0,0.85) 100%);
+    z-index: 1;
+  }
+  .tile.retro-arcade h2 {
+    color: #39ff14;
+    font-family: "Press Start 2P", monospace;
+    font-size: clamp(20px, 2.2vw, 32px);
+    text-shadow: 2px 2px 0 #ff2e4c, -2px -2px 0 #4ec5ff;
+    letter-spacing: 0.06em;
+  }
+  .tile.retro-arcade .sub {
+    color: #ffae00;
+    font-family: "Press Start 2P", monospace;
+    font-size: 9px;
+  }
+
+  /* PLATFORMER skin */
+  .tile.platformer {
+    background:
+      linear-gradient(180deg, #5c94fc 0%, #87b8ff 55%, #00a86b 55%, #006a3a 100%);
+    border: 4px solid #1a1325;
+    box-shadow: 6px 6px 0 #1a1325;
+    image-rendering: pixelated;
+  }
+  .tile.platformer::before {
+    content:""; position:absolute; left: 24px; top: 28px; width: 60px; height: 60px;
+    background:
+      radial-gradient(circle at 30% 30%, #fff 0 8px, transparent 9px),
+      radial-gradient(circle at 60% 30%, #fff 0 6px, transparent 7px),
+      radial-gradient(circle at 45% 50%, #fff 0 10px, transparent 11px);
+    opacity: 0.85;
+  }
+  .tile.platformer::after {
+    content:""; position:absolute; left: 24px; right: 24px; bottom: 30%; height: 24px;
+    background:
+      linear-gradient(180deg, #d96a3a 0%, #8a3814 100%);
+    border: 3px solid #1a1325;
+    border-radius: 4px;
+    box-shadow:
+      120px 0 0 -3px #d96a3a, 120px 0 0 0 #1a1325;
+  }
+  .tile.platformer h2 {
+    color: #fff;
+    text-shadow: 3px 3px 0 #8a3814, 6px 6px 0 #1a1325;
+  }
+  .tile.platformer .sub { color: #ffcc00; }
+
+  /* MODERN skin */
+  .tile.modern {
+    background:
+      radial-gradient(circle at 80% 10%, #ffe7e0 0%, transparent 55%),
+      radial-gradient(circle at 10% 90%, #e0e8ff 0%, transparent 55%),
+      #f5f4f0;
+    color: #131214;
+    border: 1px solid rgba(0,0,0,0.08);
+  }
+  .tile.modern h2 { color: #131214; font-weight: 600; letter-spacing: -0.02em; }
+  .tile.modern h2 em { font-style: normal; color: #ff5a3c; }
+  .tile.modern .sub { color: #6b6a72; }
+  .tile.modern .num { color: #6b6a72; }
+
+  /* SPORTS skin */
+  .tile.sports {
+    background:
+      repeating-linear-gradient(
+        90deg,
+        #1c8a3e 0 50px,
+        #0f5a26 50px 100px
+      );
+    border: 3px solid #f8c61c;
+  }
+  .tile.sports::before {
+    content:"★"; position:absolute; top: 18px; left: 50%; transform: translateX(-50%);
+    color: #f8c61c; font-size: 22px;
+  }
+  .tile.sports h2 {
+    color: #fff;
+    font-style: italic;
+    text-transform: uppercase;
+    text-shadow: 2px 2px 0 #0c2340, 4px 4px 0 #f8c61c;
+    font-size: clamp(22px, 2.4vw, 34px);
+  }
+  .tile.sports .sub { color: #f8c61c; font-weight: 700; }
+
+  footer {
+    text-align: center;
+    padding: 24px 24px 60px;
+    color: #6b6b80;
+    font-size: 13px;
+    letter-spacing: 0.16em;
+  }
+</style>
+</head>
+<body>
+  <header>
+    <div class="kicker">/games/ · the hub</div>
+    <h1>Thirty mini games.<br>Five worlds.</h1>
+    <p class="lead">Each tile below is a themed sub-page styled in its own world, holding six original mini games generated and deployed live. Pick a skin and dive in.</p>
+  </header>
+
+  <main class="mosaic">
+    <a class="tile pinball" href="pinball.html">
+      <span class="num">01</span>
+      <div class="label">
+        <div class="sub">Flippers · Bumpers · Multiball</div>
+        <h2>Pinball</h2>
+      </div>
+    </a>
+
+    <a class="tile retro-arcade" href="retro-arcade.html">
+      <span class="num">02</span>
+      <div class="label">
+        <div class="sub">Insert Coin</div>
+        <h2>Retro Arcade</h2>
+      </div>
+    </a>
+
+    <a class="tile platformer" href="platformer.html">
+      <span class="num">03</span>
+      <div class="label">
+        <div class="sub">Run · Jump · Coin</div>
+        <h2>Platformer</h2>
+      </div>
+    </a>
+
+    <a class="tile modern" href="modern.html">
+      <span class="num">04</span>
+      <div class="label">
+        <div class="sub">Minimal · Casual</div>
+        <h2>Modern <em>quiet</em></h2>
+      </div>
+    </a>
+
+    <a class="tile sports" href="sports.html">
+      <span class="num">05</span>
+      <div class="label">
+        <div class="sub">Game On</div>
+        <h2>Sports</h2>
+      </div>
+    </a>
+  </main>
+
+  <footer>· Built with vibes.diy · Open any HTML file locally to preview ·</footer>
+</body>
+</html>
+{{> newsletter}}

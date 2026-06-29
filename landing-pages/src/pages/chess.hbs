@@ -1,0 +1,419 @@
+{{!--
+{
+  "layout": "webring",
+  "title": "Chess Variants Lab | Vibes DIY",
+  "description": "Six chess apps: standard coverage puzzle, toroidal wrap-around board, Glinski's hex chess, 3D multi-layer chess, AI opponent, and position scanner. Clone any and remix.",
+  "ogUrl": "https://good.vibes.diy/chess/",
+  "source": "chess",
+  "ogImage": "https://good.vibes.diy/images/screenshots/chess.jpg",
+  "apps": [
+    {
+      "num": "01",
+      "slug": "chess-duel",
+      "author": "chess",
+      "live": true,
+      "title": "Coverage Chess",
+      "tagline": "Eight-by-eight. How few pieces cover every square?",
+      "desc": "Classic chess piece placement puzzle on a standard 8×8 board. Choose your goal: cover all squares with minimum pieces, pack in the maximum non-attacking configuration, or experiment freely in sandbox mode. Piece-type restrictions, block limits, leaderboard by configuration. Fireproof persistence — your best solutions are saved.",
+      "fork": "Want it seeded for a specific piece type challenge — queens only, or knights only? Clone it and restrict the palette."
+    },
+    {
+      "num": "02",
+      "slug": "chess-toroidal",
+      "author": "chess",
+      "live": true,
+      "title": "Toroidal Chess",
+      "tagline": "The board folds into a donut. Rules stay sharp.",
+      "desc": "Coverage puzzle on a toroidal board: top edge connects to bottom, left connects to right. A rook on a1 attacks h1. A bishop's diagonal wraps continuously. The usual minimum-coverage answers don't apply here — fewer pieces can cover more when they attack through the wrap. Adjustable board size, piece restrictions, AI hint on demand.",
+      "fork": "Want a different wrap geometry — cylinder (horizontal only) instead of torus? Clone it and remove the vertical wrap from the attack logic."
+    },
+    {
+      "num": "03",
+      "slug": "chess-hex-coverage",
+      "author": "chess",
+      "live": true,
+      "title": "Hex Coverage",
+      "tagline": "Glinski's rules. Six directions. Different geometry.",
+      "desc": "Piece placement puzzle using Glinski's hexagonal chess movement rules on a configurable hex board. Rooks move along 6 orthogonal axes, bishops along 6 diagonals, knights leap to distance-3 hexes. Ferz and Wazir pieces round out the toolset. Four goal modes, leaderboard by board radius, JSON solution export. Hover any piece to see its attack pattern.",
+      "fork": "Want it restricted to just queens and knights — the most asymmetric hex cover problem? Clone it and lock the piece palette."
+    },
+    {
+      "num": "04",
+      "slug": "chess-3d",
+      "author": "chess",
+      "live": true,
+      "title": "3D Chess",
+      "tagline": "Depth as a real axis. Pieces attack vertically.",
+      "desc": "Chess across multiple stacked boards rendered in 3D. Bishops can ascend through layers. Rooks control columns through the full vertical stack. A queen at layer 0 threatens all layers simultaneously. The opening theory does not yet exist. Coverage goals, attack visualization, adjustable board dimensions across all three axes.",
+      "fork": "Want it as a pure two-player game instead of a puzzle? Clone it and replace the goal system with turn-based move tracking."
+    },
+    {
+      "num": "05",
+      "slug": "chess-vs-ai",
+      "author": "chess",
+      "live": true,
+      "title": "AI Match",
+      "tagline": "It doesn't forget your blunders.",
+      "desc": "Full chess against an AI opponent — Light vs. Dark. En passant, castling, promotion, all standard rules. The AI generates moves from the current position. No clocks by default: play at your own pace. Fireproof persistence means you can close the tab and come back to the same game.",
+      "fork": "Want it with time controls or ELO-style difficulty tuning? Clone it and add a timer state and difficulty parameter to the AI prompt."
+    },
+    {
+      "num": "06",
+      "slug": "chess-scanner",
+      "author": "chess",
+      "live": true,
+      "title": "Position Scanner",
+      "tagline": "Point camera. Get lines.",
+      "desc": "Take a photo of any chess position — tournament board, book diagram, puzzle page, or screen grab. The app reads the position using vision AI, converts to FEN notation if possible, and returns a strategic analysis: material count, tactical themes, candidate moves, and a plain-English assessment of who's better. Useful for post-game review and puzzle study.",
+      "fork": "Want it to output Stockfish-ready FEN for further engine analysis? Clone it and add a FEN copy button and stockfish.wasm integration."
+    }
+  ]
+}
+--}}
+
+<style>
+  @import url("https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=JetBrains+Mono:wght@400;500;700&display=optional");
+
+  :root {
+    --bg:        #1a1a1a;
+    --surface:   #222;
+    --surface-2: #2a2a2a;
+    --sq-light:  #f0d9b5;
+    --sq-dark:   #b58863;
+    --text:      #e8e0d0;
+    --text-dim:  #9a8870;
+    --border:    rgba(240, 217, 181, 0.18);
+    --gold:      #f0d9b5;
+    --gold-dim:  rgba(240, 217, 181, 0.55);
+  }
+
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html, body {
+    background-color: var(--bg);
+    background-image:
+      repeating-conic-gradient(rgba(240,217,181,0.028) 0% 25%, transparent 0% 50%);
+    background-size: 40px 40px;
+    color: var(--text);
+    font-family: "JetBrains Mono", monospace;
+    line-height: 1.55;
+    min-height: 100vh;
+  }
+
+  a { color: var(--gold); text-decoration: none; }
+  a:hover { color: var(--sq-dark); }
+
+  .layout { max-width: 1100px; margin: 0 auto; padding: 0 1.25rem; border-left: 1px solid var(--border); border-right: 1px solid var(--border); }
+
+  /* ── Topbar ── */
+  .topbar {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 1.1rem 0;
+    border-bottom: 2px solid var(--border);
+  }
+  .topbar .brand {
+    font-family: "Cinzel", serif;
+    font-weight: 700; font-size: 1.15rem; letter-spacing: 0.1em;
+    color: var(--gold);
+  }
+  .topbar .meta {
+    font-size: 0.6rem; letter-spacing: 0.25em; text-transform: uppercase;
+    color: var(--text-dim);
+  }
+  .topbar .meta b { color: var(--gold); }
+
+  /* ── Crumb ── */
+  .crumb {
+    padding: 0.55rem 0;
+    font-size: 0.65rem; letter-spacing: 0.18em; text-transform: uppercase;
+    border-bottom: 1px solid var(--border);
+    color: var(--text-dim);
+  }
+  .crumb a { color: var(--text-dim); }
+  .crumb a:hover { color: var(--gold); }
+
+  /* ── Hero ── */
+  .hero {
+    padding: 4rem 0 3.5rem;
+    border-bottom: 2px solid var(--border);
+    position: relative;
+  }
+  .hero .label {
+    font-size: 0.6rem; letter-spacing: 0.35em; text-transform: uppercase;
+    margin-bottom: 1.5rem;
+    display: inline-block;
+    padding: 4px 12px;
+    background: var(--sq-dark); color: #fff;
+    font-weight: 700;
+  }
+  .hero h1 {
+    font-family: "Cinzel", serif;
+    font-size: clamp(2.8rem, 8vw, 6.5rem);
+    font-weight: 900;
+    line-height: 0.95;
+    letter-spacing: 0.02em;
+    margin-bottom: 1.75rem;
+    color: var(--gold);
+  }
+  .hero h1 .accent {
+    color: var(--sq-dark);
+  }
+  .hero p.lead {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 1rem;
+    max-width: 700px;
+    line-height: 1.65;
+    color: var(--text-dim);
+  }
+  .hero .marker { color: var(--gold); font-weight: 700; }
+
+  /* ── Stats ── */
+  .stats {
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    border-bottom: 2px solid var(--border);
+  }
+  @media (max-width: 700px) { .stats { grid-template-columns: repeat(2, 1fr); } }
+  .stat-cell {
+    padding: 1.25rem 1.5rem;
+    border-right: 1px solid var(--border);
+  }
+  .stat-cell:last-child { border-right: none; }
+  @media (max-width: 700px) {
+    .stat-cell { border-bottom: 1px solid var(--border); }
+    .stat-cell:nth-child(2n) { border-right: none; }
+  }
+  .stat-cell .k {
+    font-size: 0.55rem; letter-spacing: 0.25em; text-transform: uppercase;
+    margin-bottom: 0.4rem; color: var(--text-dim);
+  }
+  .stat-cell .v {
+    font-family: "Cinzel", serif;
+    font-weight: 700; font-size: 1.3rem; letter-spacing: 0.02em;
+    color: var(--gold);
+  }
+
+  /* ── Section label ── */
+  .section-label {
+    padding: 1.5rem 0 0.75rem;
+    font-size: 0.6rem; letter-spacing: 0.3em; text-transform: uppercase;
+    border-bottom: 1px dashed var(--border);
+    margin-bottom: 1.5rem;
+    color: var(--text-dim);
+  }
+  .section-label::before { content: "// "; color: var(--sq-dark); }
+
+  /* ── Apps ── */
+  .apps {
+    display: flex; flex-direction: column;
+    border-top: 1px solid var(--border);
+    border-bottom: 2px solid var(--border);
+  }
+  .app {
+    padding: 2.5rem 0;
+    border-bottom: 1px solid var(--border);
+    display: grid;
+    grid-template-columns: 72px 1fr 300px;
+    gap: 2rem;
+    align-items: start;
+    transition: background 0.15s;
+  }
+  .app:last-child { border-bottom: none; }
+  @media (max-width: 800px) { .app { grid-template-columns: 1fr; gap: 1.2rem; } }
+  .app:hover { background: rgba(240,217,181,0.03); }
+
+  .app .num-cell {
+    display: flex; flex-direction: column; gap: 0.4rem;
+  }
+  .app .num {
+    font-family: "Cinzel", serif;
+    font-weight: 900; font-size: 2.8rem; line-height: 0.9;
+    letter-spacing: -0.02em; color: var(--sq-dark);
+  }
+  .app .status {
+    font-size: 0.5rem; letter-spacing: 0.22em; text-transform: uppercase;
+    padding: 3px 6px;
+    border: 1px solid var(--border);
+    text-align: center; color: var(--text-dim);
+  }
+  .app--live .status { border-color: var(--sq-dark); color: var(--gold); }
+
+  .app .body { display: flex; flex-direction: column; gap: 0.75rem; }
+  .app .body .title {
+    font-family: "Cinzel", serif;
+    font-size: 1.9rem; font-weight: 700; letter-spacing: 0.04em;
+    line-height: 1.1; color: var(--gold);
+  }
+  .app .body .tagline {
+    font-size: 0.8rem; letter-spacing: 0.06em;
+    padding: 5px 10px;
+    background: rgba(181,136,99,0.15);
+    border-left: 2px solid var(--sq-dark);
+    display: inline-block; align-self: flex-start;
+    color: var(--text-dim);
+  }
+  .app .body .desc { font-size: 0.9rem; line-height: 1.65; color: var(--text); }
+
+  .app .right { display: flex; flex-direction: column; gap: 0.6rem; }
+  .app .shot {
+    display: block; aspect-ratio: 16/9; overflow: hidden;
+    border: 1px solid var(--border);
+    background: var(--surface-2);
+    transition: border-color 0.15s;
+  }
+  .app .shot:hover { border-color: var(--sq-dark); }
+  .app .shot img { width: 100%; height: 100%; object-fit: cover; }
+  .app .shot-placeholder {
+    padding: 1rem; height: 100%; display: flex; align-items: center; justify-content: center;
+    font-size: 0.65rem; letter-spacing: 0.2em; text-transform: uppercase;
+    color: var(--text-dim);
+  }
+  .app .ctas {
+    display: grid; grid-template-columns: repeat(3, 1fr);
+    border: 1px solid var(--border);
+  }
+  .app .ctas--single { grid-template-columns: 1fr; }
+  .btn {
+    text-align: center;
+    padding: 0.55rem 0.5rem;
+    background: transparent;
+    border-right: 1px solid var(--border);
+    font-size: 0.6rem; letter-spacing: 0.18em; text-transform: uppercase; font-weight: 700;
+    color: var(--text-dim);
+    cursor: pointer;
+    transition: background 0.12s, color 0.12s;
+  }
+  .btn:last-child { border-right: none; }
+  .btn:hover { background: rgba(181,136,99,0.15); color: var(--gold); }
+
+  .prompt-link {
+    font-size: 0.6rem; letter-spacing: 0.04em; color: var(--text-dim);
+  }
+  .prompt-link:hover { color: var(--gold); text-decoration: underline; }
+
+  .fork-note {
+    font-size: 0.65rem;
+    line-height: 1.55;
+    color: var(--text-dim);
+    border-left: 2px solid var(--sq-dark);
+    padding-left: 0.6rem;
+    margin-top: 0.15rem;
+  }
+
+  /* ── Epilogue ── */
+  .epilogue {
+    padding: 3rem 0;
+    border-bottom: 2px solid var(--border);
+  }
+  .epilogue h2 {
+    font-size: 0.6rem; letter-spacing: 0.3em; text-transform: uppercase;
+    margin-bottom: 1.25rem; color: var(--text-dim);
+  }
+  .epilogue h2::before { content: "// "; color: var(--sq-dark); }
+  .epilogue p {
+    font-size: 1rem; max-width: 720px; line-height: 1.65;
+    color: var(--text);
+  }
+  .epilogue p + p { margin-top: 1rem; }
+  .epilogue .hl { color: var(--gold); font-weight: 700; }
+
+  /* ── Footer ── */
+  footer.term-footer {
+    padding: 1.1rem 0;
+    font-size: 0.58rem; letter-spacing: 0.2em; text-transform: uppercase;
+    display: flex; justify-content: space-between;
+    color: var(--text-dim);
+  }
+  footer.term-footer a:hover { color: var(--gold); }
+</style>
+
+<div class="layout">
+  <header class="topbar">
+    <a class="brand" href="https://links.vibes.diy/homepage">VIBES.DIY</a>
+    <span class="meta"><b>CHESS VARIANTS LAB</b> · six playable apps</span>
+  </header>
+
+  <nav class="crumb">
+    <a href="/">Home</a> &nbsp;›&nbsp; Chess
+  </nav>
+
+  <section class="hero">
+    <span class="label">Chess Variants Lab</span>
+    <h1>The board<br/>is just<br/><span class="accent">one assumption.</span></h1>
+    <p class="lead">
+      Six chess apps that each break a different rule: <span class="marker">standard 8×8 coverage</span>, <span class="marker">toroidal wrap-around</span>, <span class="marker">hexagonal Glinski rules</span>, <span class="marker">3D multi-layer</span>, <span class="marker">AI opponent</span>, <span class="marker">position scanner</span>. Clone any, remix to your variant.
+    </p>
+  </section>
+
+  <div class="stats">
+    <div class="stat-cell">
+      <div class="k">Apps</div>
+      <div class="v">Six</div>
+    </div>
+    <div class="stat-cell">
+      <div class="k">Genre</div>
+      <div class="v">Strategy / Puzzle</div>
+    </div>
+    <div class="stat-cell">
+      <div class="k">Persistence</div>
+      <div class="v">Fireproof</div>
+    </div>
+    <div class="stat-cell">
+      <div class="k">Skin</div>
+      <div class="v">Tournament Hall</div>
+    </div>
+  </div>
+
+  <div class="section-label">The Variant Suite</div>
+
+  <section class="apps">
+    {{#each apps}}
+      <article class="app {{#if live}}app--live{{else}}app--pending{{/if}}">
+        <div class="num-cell">
+          <div class="num">{{num}}</div>
+          <div class="status">{{#if live}}Live{{else}}Pending{{/if}}</div>
+        </div>
+        <div class="body">
+          <h2 class="title">{{title}}</h2>
+          <span class="tagline">{{tagline}}</span>
+          <p class="desc">{{desc}}</p>
+        </div>
+        <div class="right">
+          {{#if live}}
+            <a class="shot" href="https://vibes.diy/vibe/{{author}}/{{slug}}" aria-label="{{title}} screenshot">
+              <img src="https://{{slug}}--{{author}}.prod-v2.vibesdiy.net/screenshot.jpg" alt="{{slug}}" onerror="this.onerror=null; this.src='{{@root.assetPrefix}}images/og-preview.png';"/>
+            </a>
+            <div class="ctas">
+              <a class="btn" href="https://vibes.diy/vibe/{{author}}/{{slug}}">Play</a>
+              <a class="btn" href="https://vibes.diy/remix/{{author}}/{{slug}}?skipChat=true">Clone</a>
+              <a class="btn" href="https://vibes.diy/remix/{{author}}/{{slug}}">Remix</a>
+            </div>
+            <a class="prompt-link" href="https://vibes.diy/chat/prompt?prompt64={{prompt64 desc}}">// start fresh from this prompt — describe your variant</a>
+            {{#if fork}}<p class="fork-note">{{fork}}</p>{{/if}}
+          {{else}}
+            <div class="shot"><div class="shot-placeholder">awaiting deploy</div></div>
+            <div class="ctas ctas--single">
+              <a class="btn" href="https://vibes.diy/chat/prompt?prompt64={{prompt64 desc}}">Start From Prompt</a>
+            </div>
+          {{/if}}
+        </div>
+      </article>
+    {{/each}}
+  </section>
+
+  <div class="epilogue">
+    <h2>On Variants</h2>
+    <p>
+      Standard chess has been played for five hundred years. <span class="hl">Every rule you know is a choice someone made.</span> Eight by eight: a choice. Flat board: a choice. Edges that stop pieces: definitely a choice. These six apps explore what happens when you don't accept those choices — when the board wraps, when it gets a third axis, when the squares become hexagons.
+    </p>
+    <p>
+      Coverage puzzles — the first three apps — are underrated as chess study tools. They force you to think about how pieces interact in the abstract, without the pressure of an opponent. <span class="hl">Clone any of these and describe your variant.</span> A queen-only toroidal coverage puzzle is four lines of change away.
+    </p>
+  </div>
+
+  {{> newsletter}}
+
+  <footer class="term-footer">
+    <span>Vibes.diy · <a href="https://links.vibes.diy/homepage">homepage</a> · <a href="/games/">games</a></span>
+    <span>// END VARIANT SUITE</span>
+  </footer>
+</div>

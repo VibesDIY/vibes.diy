@@ -1,0 +1,256 @@
+{{!--
+{
+  "layout": "webring",
+  "title": "World Cup Pool Organizer | Vibes DIY",
+  "description": "Run your 2026 World Cup prediction pool from one link — bracket picks, score predictions, watch party planning, fan loyalty wall, live standings. No accounts, no spreadsheet.",
+  "ogUrl": "https://good.vibes.diy/world-cup-pool/",
+  "source": "world-cup-pool",
+  "apps": [
+    {
+      "num": "01",
+      "slug": "world-cup-bracket-picks",
+      "author": "og",
+      "live": true,
+      "title": "Bracket Picks",
+      "tagline": "Everyone locks in their bracket before kickoff.",
+      "desc": "Group members enter their stage-by-stage picks before the tournament starts. Points auto-calculate as results come in. Leaderboard stays live through the whole competition."
+    },
+    {
+      "num": "02",
+      "slug": "match-score-predictor",
+      "author": "og",
+      "live": true,
+      "title": "Score Predictor",
+      "tagline": "Call the exact score. Earn bonus points for precision.",
+      "desc": "Players predict exact scorelines before each match. Points for getting the outcome right, plus a bonus for nailing the exact score. Running standings update after every game."
+    },
+    {
+      "num": "03",
+      "slug": "watch-party-planner",
+      "author": "og",
+      "live": true,
+      "title": "Watch Party Planner",
+      "tagline": "Vote on where to watch. Someone picks the snacks.",
+      "desc": "Propose venues and kickoff times, let the group vote. Confirm the plan and share the link. Works for the whole tournament schedule."
+    },
+    {
+      "num": "04",
+      "slug": "fan-loyalty-wall",
+      "author": "og",
+      "live": true,
+      "title": "Fan Loyalty Wall",
+      "tagline": "Claim your country. Show off when they win.",
+      "desc": "Each person picks their national team. A live wall tracks whose countries are still alive through each stage. Celebrate wins, mourn upsets, trash talk freely."
+    },
+    {
+      "num": "05",
+      "slug": "pool-standings-board",
+      "author": "og",
+      "live": true,
+      "title": "Pool Standings",
+      "tagline": "One link. Everyone's score. No spreadsheet.",
+      "desc": "Commissioner enters match results. Everyone watches their pool ranking update in real time. One shareable link for the whole group — no Excel, no Google Sheets."
+    }
+  ],
+  "ogImage": "https://good.vibes.diy/images/screenshots/world-cup-pool.jpg"
+}
+--}}
+
+<style>
+  @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&family=JetBrains+Mono:wght@400;700&display=optional");
+
+  :root {
+    --pitch:      oklch(0.22 0.09 145);
+    --pitch-mid:  oklch(0.28 0.08 145);
+    --pitch-card: oklch(0.18 0.08 145);
+    --line:       oklch(1 0 0 / 0.14);
+    --gold:       oklch(0.88 0.18 95);
+    --white:      oklch(0.99 0 0);
+    --dim:        oklch(1 0 0 / 0.55);
+  }
+
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body {
+    background: var(--pitch);
+    color: var(--white);
+    font-family: "Inter", system-ui, sans-serif;
+    line-height: 1.55;
+    min-height: 100vh;
+  }
+  a { color: inherit; text-decoration: none; }
+
+  .layout { max-width: 1100px; margin: 0 auto; padding: 0 1.25rem; }
+
+  .topbar {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 1rem 0;
+    border-bottom: 2px solid var(--line);
+  }
+  .topbar .brand { font-weight: 900; letter-spacing: -0.02em; font-size: 1.25rem; }
+  .topbar .meta { font-family: "JetBrains Mono", monospace; font-size: 0.6rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--dim); }
+  .topbar .meta b { background: var(--gold); color: oklch(0.10 0 0); padding: 2px 6px; }
+
+  .crumb { padding: 0.55rem 0; font-family: "JetBrains Mono", monospace; font-size: 0.65rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--dim); border-bottom: 1px solid var(--line); }
+  .crumb a { color: var(--dim); }
+  .crumb a:hover { color: var(--gold); }
+
+  .hero { padding: 4.5rem 0 3.5rem; border-bottom: 2px solid var(--line); }
+  .hero .label {
+    display: inline-block; padding: 4px 12px; margin-bottom: 1.5rem;
+    background: var(--gold); color: oklch(0.10 0 0);
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.6rem; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase;
+  }
+  .hero h1 {
+    font-size: clamp(3rem, 8vw, 6.5rem);
+    font-weight: 900; line-height: 0.9; letter-spacing: -0.04em;
+    margin-bottom: 1.5rem;
+  }
+  .hero h1 .hi { color: var(--gold); }
+  .hero p.lead { font-size: 1.15rem; max-width: 720px; line-height: 1.55; color: var(--dim); }
+  .hero .marker { color: var(--gold); }
+
+  .stats {
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    border-top: 2px solid var(--line); border-bottom: 2px solid var(--line);
+    margin: 2rem 0;
+  }
+  @media (max-width: 700px) { .stats { grid-template-columns: repeat(2, 1fr); } }
+  .stat-cell { padding: 1.25rem 1.5rem; border-right: 1px solid var(--line); }
+  .stat-cell:last-child { border-right: none; }
+  @media (max-width: 700px) { .stat-cell { border-bottom: 1px solid var(--line); } .stat-cell:nth-child(2n) { border-right: none; } }
+  .stat-cell .k { font-family: "JetBrains Mono", monospace; font-size: 0.55rem; letter-spacing: 0.25em; text-transform: uppercase; color: var(--dim); margin-bottom: 0.4rem; }
+  .stat-cell .v { font-weight: 900; font-size: 1.4rem; letter-spacing: -0.02em; }
+
+  .section-label { padding: 1rem 0 0.5rem; font-family: "JetBrains Mono", monospace; font-size: 0.6rem; letter-spacing: 0.25em; text-transform: uppercase; color: var(--dim); }
+  .section-label::before { content: "// "; }
+
+  .apps { display: flex; flex-direction: column; border-top: 2px solid var(--line); border-bottom: 2px solid var(--line); }
+  .app {
+    padding: 2rem 0; border-bottom: 1px solid var(--line);
+    display: grid; grid-template-columns: 80px 1fr 320px;
+    gap: 2rem; align-items: start;
+    transition: background 0.15s;
+  }
+  .app:last-child { border-bottom: none; }
+  @media (max-width: 800px) { .app { grid-template-columns: 1fr; gap: 1rem; } }
+  .app:hover { background: var(--pitch-mid); }
+
+  .num-cell { font-family: "JetBrains Mono", monospace; display: flex; flex-direction: column; gap: 0.4rem; }
+  .app .num { font-weight: 900; font-size: 3rem; line-height: 0.85; letter-spacing: -0.04em; color: var(--gold); }
+  .app .status { font-family: "JetBrains Mono", monospace; font-size: 0.55rem; letter-spacing: 0.2em; text-transform: uppercase; padding: 3px 6px; border: 1px solid var(--line); text-align: center; }
+  .app--live .status { background: var(--gold); color: oklch(0.10 0 0); border-color: var(--gold); }
+
+  .body { display: flex; flex-direction: column; gap: 0.7rem; }
+  .body .title { font-size: 2rem; font-weight: 900; letter-spacing: -0.02em; line-height: 1.05; }
+  .body .tagline { font-family: "JetBrains Mono", monospace; font-size: 0.85rem; padding: 5px 10px; background: var(--pitch-card); border-left: 3px solid var(--gold); display: inline-block; }
+  .body .desc { font-size: 1rem; line-height: 1.55; color: var(--dim); }
+
+  .right { display: flex; flex-direction: column; gap: 0.6rem; }
+  .shot { display: block; aspect-ratio: 16/9; overflow: hidden; border: 1px solid var(--line); background: var(--pitch-mid); }
+  .shot img { width: 100%; height: 100%; object-fit: cover; }
+  .shot-placeholder { padding: 1rem; height: 100%; display: flex; align-items: center; justify-content: center; font-family: "JetBrains Mono", monospace; font-size: 0.7rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--dim); text-align: center; }
+
+  .ctas { display: grid; grid-template-columns: repeat(3, 1fr); border: 1px solid var(--line); }
+  .ctas--single { grid-template-columns: 1fr; }
+  .btn { text-align: center; padding: 0.6rem 0.5rem; background: transparent; border-right: 1px solid var(--line); font-family: "JetBrains Mono", monospace; font-size: 0.65rem; letter-spacing: 0.15em; text-transform: uppercase; font-weight: 700; color: var(--white); cursor: pointer; transition: background 0.12s; }
+  .btn:last-child { border-right: none; }
+  .btn:hover { background: var(--gold); color: oklch(0.10 0 0); }
+
+  .prompt-link { font-family: "JetBrains Mono", monospace; font-size: 0.7rem; text-decoration: underline; color: var(--dim); }
+  .prompt-link:hover { color: var(--gold); }
+
+  .epilogue { padding: 2.5rem 0; border-bottom: 2px solid var(--line); }
+  .epilogue h2 { font-family: "JetBrains Mono", monospace; font-size: 0.6rem; letter-spacing: 0.25em; text-transform: uppercase; color: var(--dim); margin-bottom: 1rem; }
+  .epilogue h2::before { content: "// "; }
+  .epilogue p { font-size: 1.1rem; max-width: 720px; line-height: 1.55; color: var(--dim); }
+  .epilogue .hl { color: var(--gold); }
+
+  footer.foot { padding: 1rem 0; font-family: "JetBrains Mono", monospace; font-size: 0.6rem; letter-spacing: 0.2em; text-transform: uppercase; display: flex; justify-content: space-between; color: var(--dim); }
+  footer.foot a:hover { color: var(--gold); }
+</style>
+
+<div class="layout">
+  <header class="topbar">
+    <a class="brand" href="https://links.vibes.diy/homepage">VIBES.DIY</a>
+    <span class="meta"><b>WORLD CUP 2026</b> &middot; five pool tools</span>
+  </header>
+
+  <nav class="crumb">
+    <a href="/">Home</a> &nbsp;&rsaquo;&nbsp; World Cup Pool
+  </nav>
+
+  <section class="hero">
+    <span class="label">For World Cup Fans</span>
+    <h1>Run your pool.<br/><span class="hi">Not a spreadsheet.</span></h1>
+    <p class="lead">
+      Five apps for running a <span class="marker">World Cup prediction pool</span> your whole group can use from their phone.
+      <span class="marker">Bracket picks</span>, <span class="marker">score predictions</span>,
+      <span class="marker">watch party votes</span>, <span class="marker">fan loyalty wall</span>,
+      <span class="marker">live standings</span>. No accounts. No install. Results update live.
+    </p>
+  </section>
+
+  <div class="stats">
+    <div class="stat-cell"><div class="k">Apps</div><div class="v">Five</div></div>
+    <div class="stat-cell"><div class="k">Audience</div><div class="v">Pools &amp; Groups</div></div>
+    <div class="stat-cell"><div class="k">Persistence</div><div class="v">Fireproof</div></div>
+    <div class="stat-cell"><div class="k">Skin</div><div class="v">Pitch Board</div></div>
+  </div>
+
+  <div class="section-label">The Toolkit</div>
+
+  <section class="apps">
+    {{#each apps}}
+    <article class="app {{#if live}}app--live{{else}}app--pending{{/if}}">
+      <div class="num-cell">
+        <div class="num">{{num}}</div>
+        <div class="status">{{#if live}}Live{{else}}Pending{{/if}}</div>
+      </div>
+      <div class="body">
+        <h2 class="title">{{title}}</h2>
+        <span class="tagline">{{tagline}}</span>
+        <p class="desc">{{desc}}</p>
+      </div>
+      <div class="right">
+        {{#if live}}
+          <a class="shot" href="https://vibes.diy/vibe/{{author}}/{{slug}}" aria-label="{{title}} screenshot"><img src="https://{{slug}}--{{author}}.prod-v2.vibesdiy.net/screenshot.jpg" alt="{{slug}}" onerror="this.onerror=null; this.src='{{@root.assetPrefix}}images/og-preview.png';"/></a>
+          <div class="ctas">
+            <a class="btn" href="https://vibes.diy/vibe/{{author}}/{{slug}}">Join</a>
+            <a class="btn" href="https://vibes.diy/remix/{{author}}/{{slug}}?skipChat=true">Clone</a>
+            <a class="btn" href="https://vibes.diy/remix/{{author}}/{{slug}}">Remix</a>
+          </div>
+          <a class="prompt-link" href="https://vibes.diy/chat/prompt?prompt64={{prompt64 desc}}">// start fresh from this prompt</a>
+          <span class="prompt-link" style="opacity:0.55; text-decoration:none; font-size:0.6rem;">The prompt that built this. Describe your pool&rsquo;s rules instead.</span>
+        {{else}}
+          <div class="shot"><div class="shot-placeholder">awaiting deploy</div></div>
+          <div class="ctas ctas--single">
+            <a class="btn" href="https://vibes.diy/chat/prompt?prompt64={{prompt64 desc}}">Start From Prompt</a>
+          </div>
+        {{/if}}
+      </div>
+    </article>
+    {{/each}}
+  </section>
+
+  <div class="epilogue">
+    <h2>Read Me</h2>
+    <p>
+      The 2026 World Cup runs from June through July. Your group chat is already a mess.
+      These five apps give the pool an actual home — <span class="hl">one link per tool</span>,
+      no signup required, Fireproof-backed so nothing disappears between matches.
+    </p>
+    <p style="margin-top:1rem;">
+      Your pool awards double points for penalty shootout calls — clone the Score Predictor and add the bonus field.
+      Your group always fights about watch party location and nobody ever commits — clone the Watch Party Planner and add a deadline.
+      Your fan loyalty wall needs a custom elimination animation for your group&rsquo;s rival country — clone it and describe that moment.
+      The pool your group actually uses is a prompt away.
+    </p>
+  </div>
+
+  {{> newsletter}}
+<footer class="foot">
+    <span>Vibes.diy &middot; <a href="https://links.vibes.diy/homepage">homepage</a> &middot; <a href="/fantasy-league.html">fantasy league</a></span>
+    <span>// END OF TOOLKIT</span>
+  </footer>
+</div>

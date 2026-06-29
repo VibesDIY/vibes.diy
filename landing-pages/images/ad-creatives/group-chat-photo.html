@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { width: 1200px; height: 630px; overflow: hidden; font-family: 'Georgia', serif; position: relative; }
+.bg {
+  position: absolute; inset: 0;
+  background:
+    linear-gradient(rgba(0,0,0,0.48), rgba(0,0,0,0.65)),
+    url('https://images.unsplash.com/photo-1511988617509-a57c8a288659?w=1920&q=80&fit=crop') center/cover no-repeat;
+}
+.content {
+  position: relative; z-index: 1; height: 100%;
+  display: flex; flex-direction: column; justify-content: center;
+  padding: 80px 90px;
+}
+.headline { font-size: 64px; font-weight: 700; color: #fff; line-height: 1.08; max-width: 820px; margin-bottom: 24px; letter-spacing: -1px; text-shadow: 0 2px 12px rgba(0,0,0,0.45); }
+.body { font-size: 26px; color: rgba(255,255,255,0.85); max-width: 640px; line-height: 1.55; font-family: -apple-system, sans-serif; font-weight: 400; }
+.wordmark { position: absolute; bottom: 44px; right: 60px; font-family: -apple-system, sans-serif; font-size: 21px; font-weight: 700; color: rgba(255,255,255,0.60); letter-spacing: 0.3px; }
+</style>
+</head>
+<body>
+<div class="bg"></div>
+<div class="content">
+  <div class="headline">Your group deserves a real home.</div>
+  <div class="body">Plans, RSVPs, and notes. Yours to change.</div>
+</div>
+<div class="wordmark">vibes.diy</div>
+</body>
+</html>

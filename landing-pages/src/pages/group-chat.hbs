@@ -1,0 +1,413 @@
+{{!--
+{
+  "layout": "webring",
+  "title": "Group Chat Mods | Vibes DIY",
+  "description": "Reply Roulette, Pirate Mode, Colbert's Here, Mood Board. Four tools to remix how your group talks. Open source — clone any of them.",
+  "ogUrl": "https://good.vibes.diy/group-chat/",
+  "source": "group-chat",
+  "ogImage": "https://good.vibes.diy/images/screenshots/group-chat.jpg"
+}
+--}}
+
+<style>
+  @import url('https://fonts.cdnfonts.com/css/alte-haas-grotesk');
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=optional');
+
+  :root {
+    --amber: #fbbf24;
+    --amber-dark: #d97706;
+    --amber-deep: #92400e;
+    --ivory: #fffbeb;
+    --ivory-warm: #fef3c7;
+    --ink: #000000;
+    --muted: #78350f;
+    --card-shadow: 3px 3px 0 #000;
+  }
+
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html, body {
+    font-family: 'Inter', system-ui, sans-serif;
+    background: var(--ivory);
+    color: var(--ink);
+    line-height: 1.5;
+  }
+
+  a { color: inherit; text-decoration: none; }
+
+  .layout { max-width: 1100px; margin: 0 auto; padding: 0 1.5rem; }
+
+  /* NAV */
+  .nav {
+    background: var(--ivory);
+    border-bottom: 2px solid var(--ink);
+    padding: 0.85rem 0;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .nav-inner { display: flex; justify-content: space-between; align-items: center; }
+  .nav-logo {
+    font-family: 'Alte Haas Grotesk', sans-serif;
+    font-weight: 700;
+    font-size: 1.1rem;
+    letter-spacing: 0.04em;
+  }
+  .nav-back { font-size: 0.82rem; color: var(--amber-dark); font-weight: 600; }
+  .nav-back:hover { text-decoration: underline; }
+
+  /* HERO */
+  .hero {
+    background: var(--amber);
+    border-bottom: 3px solid var(--ink);
+    padding: 3.5rem 0;
+  }
+  .hero-badge {
+    display: inline-block;
+    background: var(--ink);
+    color: var(--amber);
+    font-family: 'Alte Haas Grotesk', sans-serif;
+    font-size: 0.68rem;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    font-weight: 700;
+    padding: 3px 12px;
+    margin-bottom: 1rem;
+  }
+  .hero h1 {
+    font-family: 'Alte Haas Grotesk', sans-serif;
+    font-size: clamp(2.4rem, 6vw, 4rem);
+    font-weight: 700;
+    line-height: 1.08;
+    margin-bottom: 1rem;
+  }
+  .hero-sub {
+    font-size: 1.05rem;
+    color: var(--muted);
+    max-width: 520px;
+    margin-bottom: 1.8rem;
+    line-height: 1.6;
+  }
+  .hero-ctas { display: flex; gap: 0.75rem; flex-wrap: wrap; }
+  .btn-primary {
+    background: var(--ink); color: var(--amber);
+    font-family: 'Alte Haas Grotesk', sans-serif;
+    font-size: 0.85rem; letter-spacing: 0.08em; font-weight: 700;
+    padding: 0.65rem 1.4rem; border: 2px solid var(--ink); text-transform: uppercase;
+    display: inline-block;
+  }
+  .btn-outline {
+    background: transparent; color: var(--ink);
+    font-family: 'Alte Haas Grotesk', sans-serif;
+    font-size: 0.85rem; letter-spacing: 0.08em; font-weight: 700;
+    padding: 0.65rem 1.4rem; border: 2px solid var(--ink); text-transform: uppercase;
+    display: inline-block;
+  }
+  .btn-primary:hover { background: var(--amber-deep); border-color: var(--amber-deep); }
+  .btn-outline:hover { background: var(--ink); color: var(--amber); }
+
+  /* APP LEAD */
+  .app-lead {
+    padding: 3rem 0;
+    border-bottom: 3px solid var(--ink);
+  }
+  .app-lead-inner {
+    display: grid;
+    grid-template-columns: 1fr 300px;
+    gap: 2.5rem;
+    align-items: start;
+  }
+  @media (max-width: 720px) { .app-lead-inner { grid-template-columns: 1fr; } }
+  .app-lead h2 {
+    font-family: 'Alte Haas Grotesk', sans-serif;
+    font-size: clamp(1.8rem, 4vw, 2.6rem);
+    font-weight: 700;
+    line-height: 1.1;
+    margin-bottom: 0.4rem;
+  }
+  .app-tagline { font-size: 1rem; font-weight: 600; color: var(--amber-dark); margin-bottom: 0.6rem; }
+  .app-desc { font-size: 0.95rem; color: #444; line-height: 1.65; margin-bottom: 1.1rem; }
+  .spectrum-preview {
+    background: var(--ivory-warm);
+    border: 2px solid var(--amber-dark);
+    padding: 0.9rem 1rem;
+    margin-bottom: 1.2rem;
+    display: flex; flex-direction: column; gap: 0.45rem;
+  }
+  .spectrum-row { display: flex; gap: 0.6rem; align-items: baseline; font-size: 0.87rem; }
+  .sl {
+    font-family: 'Alte Haas Grotesk', sans-serif;
+    font-size: 0.68rem; font-weight: 700;
+    padding: 1px 6px; min-width: 22px; text-align: center; flex-shrink: 0;
+  }
+  .sl-a, .sl-b { background: var(--ink); color: var(--amber); }
+  .sl-c { background: var(--amber-dark); color: #fff; }
+  .sl-d { background: #dc2626; color: #fff; }
+  .app-links { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+  .app-link {
+    font-family: 'Alte Haas Grotesk', sans-serif;
+    font-size: 0.68rem; letter-spacing: 0.12em; font-weight: 700; text-transform: uppercase;
+    padding: 4px 10px; border: 2px solid var(--ink); display: inline-block;
+  }
+  .app-link.primary { background: var(--amber); }
+  .app-link:hover { background: var(--ink); color: var(--ivory); }
+  .app-shot {
+    border: 3px solid var(--ink);
+    box-shadow: var(--card-shadow);
+    overflow: hidden;
+    aspect-ratio: 4/3;
+    background: var(--ivory-warm);
+  }
+  .app-shot img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+  /* GALLERY */
+  .gallery { padding: 2.5rem 0; border-bottom: 3px solid var(--ink); background: #fff8e1; }
+  .gallery-label {
+    font-family: 'Alte Haas Grotesk', sans-serif;
+    font-size: 0.62rem; letter-spacing: 0.22em; text-transform: uppercase;
+    color: #888; font-weight: 700; margin-bottom: 1.2rem;
+  }
+  .gallery-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.2rem; }
+  @media (max-width: 560px) { .gallery-grid { grid-template-columns: 1fr; } }
+  .gallery-card {
+    background: var(--ivory);
+    border: 3px solid var(--ink);
+    box-shadow: var(--card-shadow);
+    padding: 1.2rem;
+  }
+  .gallery-card-title {
+    font-family: 'Alte Haas Grotesk', sans-serif;
+    font-size: 1.1rem; font-weight: 700; margin-bottom: 0.35rem;
+  }
+  .gallery-card-desc { font-size: 0.87rem; color: #555; line-height: 1.55; margin-bottom: 0.8rem; }
+  .gallery-shot {
+    width: 100%; aspect-ratio: 4/3;
+    background: var(--ivory-warm);
+    border: 2px solid var(--amber-dark);
+    overflow: hidden; margin-bottom: 0.8rem;
+  }
+  .gallery-shot img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .gallery-links {
+    font-family: 'Alte Haas Grotesk', sans-serif;
+    font-size: 0.65rem; letter-spacing: 0.1em; font-weight: 700;
+    text-transform: uppercase; color: var(--amber-dark);
+    display: flex; gap: 0.4rem; align-items: center;
+  }
+  .gallery-links a:hover { text-decoration: underline; }
+  .gallery-links .sep { color: #ccc; }
+
+  /* MOOD HERO */
+  .mood-hero {
+    background: linear-gradient(135deg, #1c1917, #292524);
+    border-top: 3px solid var(--ink);
+    border-bottom: 3px solid var(--ink);
+    padding: 3.5rem 0;
+    position: relative; overflow: hidden;
+  }
+  .mood-hero::before {
+    content: '';
+    position: absolute; inset: 0;
+    background: repeating-linear-gradient(
+      45deg,
+      rgba(251,191,36,0.03) 0, rgba(251,191,36,0.03) 1px,
+      transparent 1px, transparent 24px
+    );
+    pointer-events: none;
+  }
+  .mood-inner { position: relative; z-index: 1; }
+  .mood-label {
+    font-family: 'Alte Haas Grotesk', sans-serif;
+    font-size: 0.62rem; letter-spacing: 0.28em; text-transform: uppercase;
+    color: var(--amber); font-weight: 700; margin-bottom: 0.6rem;
+  }
+  .mood-hero h2 {
+    font-family: 'Alte Haas Grotesk', sans-serif;
+    font-size: clamp(2rem, 5vw, 3.5rem);
+    font-weight: 700; color: #fff; line-height: 1.1; margin-bottom: 0.7rem;
+  }
+  .mood-desc {
+    font-size: 1rem; color: #a8a29e;
+    max-width: 520px; line-height: 1.6; margin-bottom: 1.8rem;
+  }
+  .mood-samples {
+    display: grid; grid-template-columns: 1fr 1fr 1fr;
+    gap: 0.75rem; margin-bottom: 1.8rem; max-width: 640px;
+  }
+  .mood-sample {
+    aspect-ratio: 4/3; overflow: hidden;
+    border: 2px solid rgba(251,191,36,0.3);
+  }
+  .mood-sample img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .mood-links { display: flex; gap: 0.75rem; flex-wrap: wrap; }
+  .btn-amber {
+    background: var(--amber); color: var(--ink);
+    font-family: 'Alte Haas Grotesk', sans-serif;
+    font-size: 0.85rem; letter-spacing: 0.08em; font-weight: 700;
+    padding: 0.65rem 1.4rem; border: 2px solid var(--amber); text-transform: uppercase;
+    display: inline-block;
+  }
+  .btn-amber-outline {
+    background: transparent; color: var(--amber);
+    font-family: 'Alte Haas Grotesk', sans-serif;
+    font-size: 0.85rem; letter-spacing: 0.08em; font-weight: 700;
+    padding: 0.65rem 1.4rem; border: 2px solid var(--amber); text-transform: uppercase;
+    display: inline-block;
+  }
+  .btn-amber:hover { background: var(--amber-dark); border-color: var(--amber-dark); }
+  .btn-amber-outline:hover { background: var(--amber); color: var(--ink); }
+
+  /* CTA FOOTER */
+  .cta-footer { background: var(--ink); color: var(--amber); padding: 2.5rem 0; text-align: center; }
+  .cta-footer h2 {
+    font-family: 'Alte Haas Grotesk', sans-serif;
+    font-size: clamp(1.4rem, 3vw, 2rem); font-weight: 700; margin-bottom: 0.5rem;
+  }
+  .cta-footer p { font-size: 0.9rem; color: #a16207; margin-bottom: 1.4rem; }
+</style>
+
+<!-- NAV -->
+<nav class="nav">
+  <div class="layout nav-inner">
+    <a class="nav-logo" href="https://links.vibes.diy/homepage">Vibes DIY</a>
+    <a class="nav-back" href="https://good.vibes.diy/">← all tools</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="layout">
+    <div class="hero-badge">Make it yours</div>
+    <h1>Your group chat.<br/>Your rules.</h1>
+    <p class="hero-sub">Four tools that remix how your group talks. Open source — clone any of them and make the experience yours.</p>
+    <div class="hero-ctas">
+      <a class="btn-primary" href="https://vibes.diy/vibe/og/group-reply-picker">Try Reply Roulette</a>
+      <a class="btn-outline" href="#mods">See all apps ↓</a>
+    </div>
+  </div>
+</section>
+
+<!-- REPLY ROULETTE -->
+<section class="app-lead" id="mods">
+  <div class="layout">
+    <div class="app-lead-inner">
+      <div>
+        <h2>Reply Roulette</h2>
+        <p class="app-tagline">Four AI replies, ranked from smart to saucy.</p>
+        <p class="app-desc">Pick one, write your own, or flip on auto mode and let two people have a whole conversation without typing a word.</p>
+        <div class="spectrum-preview">
+          <div class="spectrum-row"><span class="sl sl-a">A</span><span>That makes total sense, I see where you're coming from.</span></div>
+          <div class="spectrum-row"><span class="sl sl-b">B</span><span>Yeah honestly same, no notes.</span></div>
+          <div class="spectrum-row"><span class="sl sl-c">C</span><span>Bold take. I respect the chaos.</span></div>
+          <div class="spectrum-row"><span class="sl sl-d">D</span><span>Absolutely unhinged, I'm in.</span></div>
+        </div>
+        <div class="app-links">
+          <a class="app-link primary" href="https://vibes.diy/vibe/og/group-reply-picker">Join</a>
+          <a class="app-link" href="https://vibes.diy/remix/og/group-reply-picker?skipChat=true">Clone</a>
+          <a class="app-link" href="https://vibes.diy/remix/og/group-reply-picker">Remix</a>
+          <a class="app-link" href="https://vibes.diy/chat/prompt?prompt64={{prompt64 'Reply Roulette — four AI replies ranked smart to saucy, with optional human message and auto mode'}}">Start fresh</a>
+        </div>
+      </div>
+      <div>
+        <div class="app-shot">
+          <img
+            src="https://group-reply-picker--og.prod-v2.vibesdiy.net/screenshot.jpg"
+            alt="Reply Roulette"
+            onerror="this.onerror=null; this.src='{{assetPrefix}}images/og-preview.png';"
+          />
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- GALLERY -->
+<section class="gallery">
+  <div class="layout">
+    <div class="gallery-label">More mods</div>
+    <div class="gallery-grid">
+
+      <div class="gallery-card">
+        <div class="gallery-card-title">Pirate Mode ☠️</div>
+        <p class="gallery-card-desc">Every message, rewritten in pirate. Paste in what they said — get back what a pirate would've said.</p>
+        <div class="gallery-shot">
+          <img
+            src="https://pirate-chat-filter--og.prod-v2.vibesdiy.net/screenshot.jpg"
+            alt="Pirate Mode"
+            onerror="this.onerror=null; this.src='{{assetPrefix}}images/og-preview.png';"
+          />
+        </div>
+        <div class="gallery-links">
+          <a href="https://vibes.diy/vibe/og/pirate-chat-filter">Join</a>
+          <span class="sep">·</span>
+          <a href="https://vibes.diy/remix/og/pirate-chat-filter?skipChat=true">Clone</a>
+          <span class="sep">·</span>
+          <a href="https://vibes.diy/remix/og/pirate-chat-filter">Remix</a>
+        </div>
+      </div>
+
+      <div class="gallery-card">
+        <div class="gallery-card-title">Colbert's Here 🎙️</div>
+        <p class="gallery-card-desc">The man himself weighs in on your thread. Drop your topic — get a hot take with a punchline.</p>
+        <div class="gallery-shot">
+          <img
+            src="https://colbert-room--og.prod-v2.vibesdiy.net/screenshot.jpg"
+            alt="Colbert's Here"
+            onerror="this.onerror=null; this.src='{{assetPrefix}}images/og-preview.png';"
+          />
+        </div>
+        <div class="gallery-links">
+          <a href="https://vibes.diy/vibe/og/colbert-room">Join</a>
+          <span class="sep">·</span>
+          <a href="https://vibes.diy/remix/og/colbert-room?skipChat=true">Clone</a>
+          <span class="sep">·</span>
+          <a href="https://vibes.diy/remix/og/colbert-room">Remix</a>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- MOOD BOARD BOTTOM HERO -->
+<section class="mood-hero">
+  <div class="layout mood-inner">
+    <div class="mood-label">Ambient</div>
+    <h2>Mood Board</h2>
+    <p class="mood-desc">Your last few messages become an image. The vibe, visualized. Refreshes as the conversation moves.</p>
+    <div class="mood-samples">
+      <div class="mood-sample">
+        <img
+          src="https://ambient-chat-art--og.prod-v2.vibesdiy.net/screenshot.jpg"
+          alt="Mood Board"
+          onerror="this.onerror=null; this.src='{{assetPrefix}}images/og-preview.png';"
+        />
+      </div>
+      <div class="mood-sample">
+        <img
+          src="https://images.unsplash.com/photo-1579546929518-9e396f3cc809?w=600&q=80"
+          alt="ambient color field"
+        />
+      </div>
+      <div class="mood-sample">
+        <img
+          src="https://images.unsplash.com/photo-1557682224-5b8590cd9ec5?w=600&q=80"
+          alt="ambient mood"
+        />
+      </div>
+    </div>
+    <div class="mood-links">
+      <a class="btn-amber" href="https://vibes.diy/vibe/og/ambient-chat-art">Join</a>
+      <a class="btn-amber-outline" href="https://vibes.diy/remix/og/ambient-chat-art?skipChat=true">Clone it</a>
+      <a class="btn-amber-outline" href="https://vibes.diy/remix/og/ambient-chat-art">Remix</a>
+    </div>
+  </div>
+</section>
+
+<!-- CTA FOOTER -->
+<footer class="cta-footer">
+  <div class="layout">
+    <h2>Build your own mod →</h2>
+    <p>Start from any of these or prompt from scratch on vibes.diy</p>
+    <a class="btn-amber" href="https://links.vibes.diy/homepage">Open Vibes DIY</a>
+  </div>
+</footer>

@@ -1,0 +1,128 @@
+{
+  "source": "University of Texas at Austin — HB2504",
+  "location": "Austin, TX",
+  "region": "South/Central",
+  "fetched": "2026-05-19",
+  "items": [
+    {
+      "title": "E 316L: British Literature (Masterworks of Literature: British)",
+      "department": "Literature / Creative Writing",
+      "year": 2024,
+      "url": "https://utdirect.utexas.edu/apps/student/coursedocs/courses/nlogon/download/13873880/",
+      "fetch_method": "direct",
+      "topics": [
+        "British literature",
+        "Middle Ages",
+        "close reading",
+        "gender roles",
+        "national identity",
+        "imperialism",
+        "religious consciousness",
+        "political consciousness",
+        "Global Cultures flag",
+        "literary periods"
+      ],
+      "source_text": "This course introduces students to British literature from the Middle Ages to the twentieth century. While the reading selections represent a broad range of literary forms and genres, the course focuses on themes and how they change through different periods and cultural contexts, including women and gender roles, British self- and national identity, imperialism, and religious and political consciousness."
+    },
+    {
+      "title": "HIS 305L / ANS 301M: History of East Asia Since 1800",
+      "department": "History",
+      "year": 2024,
+      "url": "https://utdirect.utexas.edu/apps/student/coursedocs/courses/nlogon/download/13546574/",
+      "fetch_method": "direct",
+      "topics": [
+        "modern East Asia",
+        "China",
+        "Japan",
+        "Korea",
+        "Vietnam",
+        "transnational history",
+        "decolonial perspective",
+        "modernization",
+        "state building",
+        "regional politics"
+      ],
+      "source_text": "HIS 305L is a survey course on the modern history of China, Japan, Korea, and Vietnam from the early 19th century to the present day. The course takes a transnational and decolonial perspective, exploring regional politics, economics, philosophy, and culture."
+    },
+    {
+      "title": "PHL 301L: Early Modern Philosophy",
+      "department": "Philosophy / Ethics",
+      "year": 2023,
+      "url": "https://utdirect.utexas.edu/apps/student/coursedocs/nlogon/download/10269627/",
+      "fetch_method": "direct",
+      "topics": [
+        "early modern philosophy",
+        "Descartes",
+        "Berkeley",
+        "Hume",
+        "Kant",
+        "skepticism",
+        "epistemology",
+        "metaphysics",
+        "empiricism",
+        "rationalism"
+      ],
+      "source_text": "PHL 301L is an introduction to the philosophical achievements of the seventeenth and eighteenth centuries, concentrating on such figures as Descartes, Hume, and Kant. The course begins with Descartes' attempt to found all of human understanding on firm foundations by refuting skepticism and proving the existence of God by reason alone, proceeding by way of Berkeley's challenging picture of a world entirely composed of minds and their contents, to Hume's skeptical empiricism."
+    },
+    {
+      "title": "RTF 345: Contemporary Horror",
+      "department": "Film / Media Studies",
+      "year": 2020,
+      "url": "https://utdirect.utexas.edu/apps/student/coursedocs/nlogon/download/10518126/",
+      "fetch_method": "direct",
+      "topics": [
+        "horror genre",
+        "contemporary horror film",
+        "international cinema",
+        "race in horror",
+        "ethnicity",
+        "gender in film",
+        "sexuality in film",
+        "monstrous",
+        "cultural politics of horror",
+        "genre theory"
+      ],
+      "source_text": "RTF 345 examines contemporary examples of the horror genre from both American and international film contexts, focusing on the peculiar appeal of the scary, the shocking, and the monstrous. Throughout the semester, the course delves into how the horror genre explores varied themes of difference in films related to race, ethnicity, gender, and sexuality. The course considers the genre's enduring popularity and why the horrific serves as such a fertile ground for a broad range of cultural and political perspectives."
+    },
+    {
+      "title": "MUS 307: Jazz Appreciation",
+      "department": "Music / Sound Studies",
+      "year": 2023,
+      "url": "https://utdirect.utexas.edu/apps/student/coursedocs/courses/nlogon/download/12640005/",
+      "fetch_method": "direct",
+      "topics": [
+        "jazz idiom",
+        "jazz history",
+        "critical listening",
+        "music criticism",
+        "jazz instruments",
+        "jazz musicians",
+        "music and society",
+        "cultural diversity flag",
+        "jazz styles",
+        "African American music"
+      ],
+      "source_text": "MUS 307 introduces you to the jazz idiom, emphasizing listening skills and developing critical thinking and writing skills that allow you to comment intelligently about music and its place in society. By achieving the objectives below, you will understand jazz in a variety of contexts, including historical, cultural, and social; and you will appreciate the processes and products associated with the art form. This course satisfies the cultural diversity in the United States flag requirement, as the vast majority of the course grade is based on content dealing with the culture, perspectives, and history of one or more underrepresented cultural groups."
+    },
+    {
+      "title": "ARH 347N / LAS 327: Aztec Art and Civilization",
+      "department": "Art History / Visual Culture",
+      "year": 2020,
+      "url": "https://utdirect.utexas.edu/apps/student/coursedocs/nlogon/download/10537281/",
+      "fetch_method": "direct",
+      "topics": [
+        "Aztec art",
+        "visual culture",
+        "pre-Columbian Mesoamerica",
+        "symbolism",
+        "stone monuments",
+        "pictorial manuscripts",
+        "Aztec mythology",
+        "ritual violence",
+        "architecture",
+        "codices"
+      ],
+      "source_text": "ARH 347N is an introduction to the art, symbolism, and visual culture of the ancient Aztecs, with subjects including representations of history and mythology in architecture, stone monuments, and pictorial manuscripts. Key course questions addressed include what the ancient Aztec kings, priests and artists tried to communicate to their audiences, how social and political forces gave rise to distinctive qualities of Aztec art, and what role art played in ritual violence."
+    }
+  ]
+}

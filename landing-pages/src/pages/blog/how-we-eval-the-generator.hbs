@@ -1,0 +1,413 @@
+{{!--
+{
+  "layout": "standard",
+  "title": "How we eval the generator | Vibes DIY Blog",
+  "description": "Every edit to the Vibes DIY system prompt changes every app anyone generates. Here's the harness we use to measure generation quality — 46 prompts in three sets, scored 1–5, fanned out across a Workflow pipeline.",
+  "ogUrl": "https://good.vibes.diy/blog/how-we-eval-the-generator.html",
+  "source": "blog-how-we-eval-the-generator"
+}
+--}}
+
+<style>
+        @import url('https://fonts.cdnfonts.com/css/alte-haas-grotesk');
+
+        :root {
+            --os-gray: #7A7A7A;
+            --grid-gray: #CCCDC8;
+            --goldenrod: #FEDD00;
+            --ruby: #DA291C;
+            --bluey: #009ACE;
+            --sprout-green: #16A34A;
+            --ivory: #FFFFF0;
+            --black: #231F20;
+            --white: #FFFFFF;
+            --grid-line: rgba(255, 255, 255, 0.5);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Alte Haas Grotesk', sans-serif;
+            background-color: var(--grid-gray);
+            color: var(--black);
+            line-height: 1.7;
+            background-image:
+                linear-gradient(var(--grid-line) 1px, transparent 1px),
+                linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
+            background-size: 40px 40px;
+            min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        header {
+            padding: 1.5rem 2rem;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: linear-gradient(to bottom, var(--grid-gray) 60%, transparent);
+        }
+        .logo-link { display: block; text-decoration: none; }
+        .logo-img { height: 72px; width: auto; display: block; }
+
+        .mono { font-family: 'SFMono-Regular', 'Menlo', 'Consolas', monospace; }
+
+        .post-wrap { max-width: 880px; margin: 0 auto; padding: 1rem 1.5rem 4rem; }
+
+        .post-breadcrumb {
+            font-size: 0.75rem;
+            letter-spacing: 0.18em;
+            text-transform: uppercase;
+            color: var(--os-gray);
+            margin-bottom: 1.25rem;
+        }
+        .post-breadcrumb a { color: var(--os-gray); text-decoration: none; }
+        .post-breadcrumb a:hover { color: var(--black); }
+
+        .post-card {
+            background: var(--white);
+            border: 3px solid var(--black);
+            border-radius: 22px;
+            box-shadow: 8px 8px 0 var(--black);
+            padding: clamp(1.75rem, 4vw, 3.5rem);
+            overflow: hidden;
+        }
+
+        .post-overline {
+            font-size: 0.72rem;
+            letter-spacing: 0.28em;
+            text-transform: uppercase;
+            color: var(--bluey);
+            margin-bottom: 1rem;
+        }
+        .post-card h1 {
+            font-size: clamp(2rem, 5vw, 3.1rem);
+            font-weight: bold;
+            line-height: 1.04;
+            letter-spacing: -0.03em;
+            margin-bottom: 0.9rem;
+        }
+        .post-meta {
+            font-size: 0.9rem;
+            color: var(--os-gray);
+            border-bottom: 2px solid var(--black);
+            padding-bottom: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .prose h2 {
+            font-size: clamp(1.4rem, 3vw, 1.9rem);
+            letter-spacing: -0.02em;
+            margin: 2.75rem 0 1rem;
+            line-height: 1.15;
+        }
+        .prose h3 {
+            font-size: 1.2rem;
+            letter-spacing: -0.01em;
+            margin: 2rem 0 0.75rem;
+        }
+        .prose p { margin: 0 0 1.2rem; font-size: 1.07rem; }
+        .prose ul { margin: 0 0 1.4rem 1.2rem; }
+        .prose li { margin-bottom: 0.5rem; font-size: 1.05rem; }
+        .prose a { color: var(--bluey); text-decoration: underline; text-underline-offset: 2px; text-decoration-thickness: 1.5px; }
+        .prose a:hover { color: var(--black); }
+        .prose strong { font-weight: bold; }
+        .prose em { font-style: italic; }
+        .prose code {
+            font-family: 'SFMono-Regular', 'Menlo', 'Consolas', monospace;
+            font-size: 0.88em;
+            background: #f1f1ea;
+            border: 1px solid #ddddd2;
+            border-radius: 5px;
+            padding: 0.08em 0.4em;
+            white-space: nowrap;
+        }
+
+        .prose blockquote {
+            margin: 0 0 1.5rem;
+            padding: 1.1rem 1.4rem;
+            background: #f0f9ff;
+            border-left: 5px solid var(--bluey);
+            border-radius: 0 10px 10px 0;
+            font-size: 1.0rem;
+            color: #1c3a47;
+        }
+        .prose blockquote p { margin: 0; }
+        .prose blockquote code { background: #e2effa; border-color: #c8e2f3; white-space: normal; }
+
+        .prose figure { margin: 1.75rem 0 2rem; }
+        .prose figure img {
+            width: 100%;
+            height: auto;
+            display: block;
+            border: 3px solid var(--black);
+            border-radius: 14px;
+            box-shadow: 5px 5px 0 var(--black);
+        }
+        .prose figcaption {
+            margin-top: 0.7rem;
+            font-size: 0.85rem;
+            color: var(--os-gray);
+            font-style: italic;
+            line-height: 1.45;
+        }
+
+        /* A/B comparison grid */
+        .compare {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.1rem;
+            margin: 1.75rem 0 0.8rem;
+        }
+        .compare figure { margin: 0; }
+        .compare .ab-label {
+            font-family: 'SFMono-Regular', 'Menlo', 'Consolas', monospace;
+            font-size: 0.72rem;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            margin-bottom: 0.5rem;
+            font-weight: bold;
+        }
+        .compare .ab-a { color: var(--os-gray); }
+        .compare .ab-b { color: var(--sprout-green); }
+        .compare-caption {
+            font-size: 0.85rem;
+            color: var(--os-gray);
+            font-style: italic;
+            margin-bottom: 2rem;
+            line-height: 1.45;
+        }
+
+        .prose pre {
+            background: var(--black);
+            color: var(--ivory);
+            border-radius: 12px;
+            padding: 1.25rem 1.35rem;
+            overflow-x: auto;
+            margin: 0 0 1.6rem;
+            position: relative;
+            border: 2px solid var(--black);
+        }
+        .prose pre code {
+            font-family: 'SFMono-Regular', 'Menlo', 'Consolas', monospace;
+            font-size: 0.84rem;
+            line-height: 1.6;
+            background: none;
+            border: none;
+            padding: 0;
+            white-space: pre;
+            color: inherit;
+        }
+        .prose pre .lang {
+            position: absolute;
+            top: 0; right: 0;
+            font-size: 0.62rem;
+            letter-spacing: 0.16em;
+            text-transform: uppercase;
+            color: var(--goldenrod);
+            background: rgba(255,255,255,0.06);
+            padding: 0.25rem 0.6rem;
+            border-radius: 0 10px 0 8px;
+        }
+
+        .table-scroll { overflow-x: auto; margin: 0 0 1.8rem; }
+        .prose table {
+            border-collapse: collapse;
+            width: 100%;
+            font-size: 0.95rem;
+            border: 2px solid var(--black);
+        }
+        .prose th, .prose td {
+            border: 1px solid #d8d8cf;
+            padding: 0.7rem 0.85rem;
+            text-align: left;
+            vertical-align: top;
+        }
+        .prose thead th {
+            background: var(--black);
+            color: var(--ivory);
+            font-weight: bold;
+            border-color: var(--black);
+        }
+        .prose tbody tr:nth-child(even) { background: #faf9f2; }
+        .prose td.score { text-align: center; font-weight: bold; font-family: 'SFMono-Regular','Menlo',monospace; }
+
+        .prose hr { border: none; border-top: 2px solid #e2e2d8; margin: 2.5rem 0; }
+
+        .post-cta {
+            margin-top: 2.5rem;
+            background: var(--black);
+            color: var(--ivory);
+            border-radius: 18px;
+            padding: 2.25rem 2rem;
+            text-align: center;
+        }
+        .post-cta h3 { font-size: 1.5rem; letter-spacing: -0.02em; margin-bottom: 0.4rem; color: var(--ivory); }
+        .post-cta p { opacity: 0.7; margin-bottom: 1.4rem; }
+        .post-cta .btn {
+            display: inline-block;
+            background: var(--goldenrod);
+            color: var(--black);
+            padding: 0.85rem 1.8rem;
+            border-radius: 50px;
+            font-weight: 600;
+            text-decoration: none;
+            border: 2px solid var(--goldenrod);
+            transition: transform 0.15s ease;
+        }
+        .post-cta .btn:hover { transform: translateY(-2px); }
+
+        @media (max-width: 560px) {
+            .post-card { box-shadow: 5px 5px 0 var(--black); }
+            .compare { grid-template-columns: 1fr; }
+        }
+    </style>
+
+<main class="post-wrap">
+    <div class="post-breadcrumb"><a href="../">Vibes DIY</a> / <a href="./">Blog</a></div>
+
+    <article class="post-card">
+        <div class="post-overline">From the build log</div>
+        <h1>How we eval the generator</h1>
+        <div class="post-meta mono">June 9, 2026 · Vibes DIY</div>
+
+        <div class="prose">
+
+            <p>The <a href="can-a-prompt-rebuild-the-pickathon-app.html">last post</a> was a one-off: we hand-ran a prompt through the generator a few times and eyeballed whether it rebuilt a real app. Fun, but not a process. This is the process — how we actually measure whether vibes.diy's code generator produces good, working apps, and how we catch it when a change to the system prompt makes things worse.</p>
+
+            <h2>Why eval at all</h2>
+            <p>The generator is a moving target. Every time we edit the system prompt (<code>prompts/pkg/system-prompt.md</code>) — to teach it the Firefly access function, to change how it scaffolds, to add a new hook — we're changing the behavior of <em>every</em> app anyone generates. A wording tweak that helps sharing apps can quietly break timers. You cannot tell by reading the diff. You have to run real prompts through it and look at what comes out.</p>
+            <p>So we keep a catalog of prompts, generate apps from them on demand, score the results, and watch the averages move when we change the prompt. The unit of truth is <strong>a working app</strong>, not a clever-looking diff.</p>
+
+            <h2>The shape of one eval</h2>
+            <p>The main harness is the <strong>access-function eval</strong>. Every run is the same three moves:</p>
+            <pre><span class="lang">sh</span><code>npx vibes-diy@latest generate "&lt;prompt&gt;" --app-slug eval-&lt;id&gt; --verbose
+npx vibes-diy@latest pull eval-&lt;id&gt;      # download App.jsx + access.js
+# read the files, score 1-5</code></pre>
+            <p>Generate, pull, score. Do it for 46 prompts, some of them three times, and you have a picture of the generator's current quality.</p>
+
+            <h2>Three prompt sets</h2>
+            <p>The catalog (46 prompts) is split into three sets, and the split is the whole idea:</p>
+            <ul>
+                <li><strong>Set A — as-is (20 prompts).</strong> Real home-page prompts run verbatim. This is the regression control: if a system-prompt change drops Set A's average, we broke something that used to work.</li>
+                <li><strong>Set B — enhanced (20 prompts).</strong> The <em>same concepts</em> as Set A, rewritten so the user describes sharing and privacy in plain language — "we each have our own," "only I can," "everyone sees" — with no platform vocabulary. This tests whether permission-shaped requests produce the right access model. Pairing each B with its A control lets us measure the delta cleanly.</li>
+                <li><strong>Set C — new capabilities (6 prompts).</strong> Business apps that were impossible before anonymous writes and channel isolation — contact forms, surveys, sign-up sheets. No baseline; these are net-new.</li>
+            </ul>
+            <p>The Set C prompts read exactly like a non-technical person describing an idea. The <code>contact-form-new</code> prompt, in full:</p>
+            <blockquote><p>Contact page for my landscaping business. Visitors fill out their name, phone number, and what they need done — they don't have to sign up or anything. I get a list of all the requests so I can call them back.</p></blockquote>
+            <p>No mention of channels, anonymous access, or owner roles. The eval is whether the generator hears "they don't have to sign up" + "I get a list" and produces public-write, owner-only-read — without being told the words.</p>
+
+            <h3>Set A vs Set B, in one pair</h3>
+            <p>To make the A/B mechanic concrete, here's the <code>goals</code> pair run through the generator today. Same domain — goals with milestones — but Set B swaps in plain team-language.</p>
+
+            <p><strong>Set A (<code>goals-asis</code>):</strong></p>
+            <blockquote><p>Goal tracker with milestones, a visual progress bar, and celebratory animations on completion.</p></blockquote>
+
+            <p><strong>Set B (<code>goals-enh</code>):</strong></p>
+            <blockquote><p>Team goals where the lead sets the milestones and everyone posts updates on their piece. Only the lead marks milestones complete.</p></blockquote>
+
+            <p>The as-is prompt produces a private, single-user tracker — "QUEST TRACKER," every doc in the author's own channel. The enhanced prompt produces "TEAMTRACK," complete with a <strong>LEAD</strong> badge and a milestone form only the lead can use:</p>
+
+            <div class="compare">
+                <figure>
+                    <div class="ab-label ab-a">Set A — goals-asis (single-user)</div>
+                    <img src="{{assetPrefix}}images/blog/eval-process/goals-asis-before.png" alt="Single-user Quest Tracker generated from the as-is prompt" loading="lazy">
+                </figure>
+                <figure>
+                    <div class="ab-label ab-b">Set B — goals-enh (team, role-gated)</div>
+                    <img src="{{assetPrefix}}images/blog/eval-process/goals-enh-after.png" alt="Team TeamTrack with a LEAD badge generated from the enhanced prompt" loading="lazy">
+                </figure>
+            </div>
+            <div class="compare-caption">Same domain, two prompts: the as-is prompt yields a private single-user "Quest Tracker"; two sentences of plain team-language yield "TeamTrack" with a LEAD badge and lead-only milestones.</div>
+
+            <p>The difference shows up most sharply in the generated <code>access.js</code>. <strong>Before</strong> — one private channel per user, no roles:</p>
+            <pre><span class="lang">js</span><code>// goals-asis: each user gets one private channel holding all their quests.
+export default function (doc, oldDoc, user) {
+  if (!user) throw { forbidden: "sign in to track quests" }
+  if (doc.createdBy && doc.createdBy !== user.userHandle) throw { forbidden: "not author" }
+  const mine = `user:${user.userHandle}`
+  return { channels: [mine], grant: { users: { [user.userHandle]: [mine] } } }
+}</code></pre>
+
+            <p><strong>After</strong> — two doc types with a lead/member split, the whole team on one shared board, milestone writes gated on <code>isOwner</code>:</p>
+            <pre><span class="lang">js</span><code>// goals-enh: "milestone" (owner-only writes) and "update" (any signed-in author).
+export default function (doc, oldDoc, user) {
+  if (!user) throw { forbidden: "sign in" }
+  const channel = "team-board"
+  if (doc.type === "milestone") {
+    if (!user.isOwner) throw { forbidden: "lead only" }   // "only the lead marks complete"
+    return { channels: [channel], grant: { public: [channel] } }
+  }
+  if (doc.type === "update") {
+    if (doc.authorHandle !== user.userHandle) throw { forbidden: "not author" }
+    return { channels: [channel], grant: { public: [channel] } }
+  }
+  throw { forbidden: "unknown document type" }
+}</code></pre>
+
+            <p>Two sentences of plain team-language — "the lead sets the milestones," "only the lead marks milestones complete" — flipped a private app into a role-gated team board, <code>LEAD</code> badge and all. That delta is exactly what the A/B pairing exists to measure: not "did it work," but "did the permission model bend to the words." (Live: <a href="https://vibes.diy/vibe/garden-gnome/eval-goals-asis">goals-asis</a> · <a href="https://vibes.diy/vibe/garden-gnome/eval-goals-enh">goals-enh</a>.)</p>
+
+            <h2>Scoring: one number, plus signals</h2>
+            <p>Each app gets a single 1–5 score for <strong>quality</strong>, not for whether it used any particular feature:</p>
+            <div class="table-scroll">
+            <table>
+                <thead><tr><th>Score</th><th>Meaning</th></tr></thead>
+                <tbody>
+                    <tr><td class="score">5</td><td>Renders, all features work, UI coherent, workflow connects</td></tr>
+                    <tr><td class="score">4</td><td>Renders, most features work, minor gap</td></tr>
+                    <tr><td class="score">3</td><td>Renders but a key feature is broken or missing</td></tr>
+                    <tr><td class="score">2</td><td>Renders with errors or crashes on basic interaction</td></tr>
+                    <tr><td class="score">1</td><td>Fails to render or fundamentally broken</td></tr>
+                </tbody>
+            </table>
+            </div>
+            <p>Crucially, <strong>we don't score whether <code>access.js</code> was emitted.</strong> The access function is part of the platform now; if the model reaches for it, great, if not, fine — what matters is whether the app does what the prompt asked. We <em>track</em> access usage as informational signals alongside the score: did it emit <code>access.js</code>, use <code>access.hasChannel()</code> / <code>access.hasRole()</code>, gate management UI on <code>isOwner</code>, render authors with <code>ViewerTag</code>, use <code>allowAnonymous</code>. Those tell us how the access function is being adopted without letting "used the fancy feature" inflate a quality number.</p>
+
+            <h2>The orchestration: a Workflow pipeline</h2>
+            <p>Running 60 generations by hand would take a day and you'd lose track. So the eval is a <strong>Workflow</strong> that fans the work out across agents in three phases:</p>
+            <ul>
+                <li><strong>Generate</strong> — one agent per run shells out <code>vibes-diy generate</code>.</li>
+                <li><strong>Pull + Score</strong> — as each generation finishes, an agent pulls the files, reads <code>App.jsx</code> + <code>access.js</code>, and returns a <strong>structured score</strong> (validated against a JSON schema, so the model can't hand back malformed data).</li>
+                <li><strong>Report</strong> — a final agent takes all the scores and computes per-set averages, triple-run variance, access-function adoption rates, and top/bottom findings.</li>
+            </ul>
+            <p>It's a <em>pipeline</em>, not a barrier: a prompt that finishes generating gets pulled and scored immediately while others are still generating. The run list is derived from the catalog — each prompt once, plus the seven <code>triple: true</code> prompts three times — so the totals come from the data, never a hardcoded number.</p>
+            <p>The triple-runs are the variance probe. <code>focus-timer-asis</code> is a deliberate calibrator (should score 4–5 every time); a wide range there means the generator is flaky, not that the prompt is hard. Picks like <code>contact-form-new</code> and <code>survey-new</code> were chosen over gamier prompts because they isolate the access-function signal instead of bundling in render/game complexity.</p>
+
+            <h2>The corpus lives in the repo</h2>
+            <p>The generated apps don't evaporate. They're pulled into <code>vibes/eval/</code> with a naming convention that encodes the set — <code>-asis</code>, <code>-enh</code>, <code>-new</code>, and <code>-r1</code>/<code>-r2</code> for the repeat runs:</p>
+            <pre><span class="lang">text</span><code>vibes/eval/contact-form-new/    vibes/eval/contact-form-new-r1/   ...-r2/
+vibes/eval/brain-dump-asis/     vibes/eval/brain-dump-enh/
+vibes/eval/survey-new/          vibes/eval/meet-up-enh/           ...</code></pre>
+            <p>Keeping the corpus checked in means a regression is a <em>diff</em>: when an app's score drops, you can read exactly what the generator produced this time versus last, instead of re-deriving it from a number.</p>
+
+            <h2>What a run tells us</h2>
+            <p>From the 2026-06-03 results (60 scored runs):</p>
+            <ul>
+                <li><strong>Set averages:</strong> as-is 3.54, enhanced 3.33, new 3.08. Quality slips as the ask gets more permission-shaped and more net-new — exactly the gradient you'd want the eval to expose.</li>
+                <li><strong>Distribution is bimodal:</strong> ~42% score a perfect 5, but ~35% score 1–2. The generator either nails it or face-plants; the middle is thin. That's a more actionable finding than the 3.37 overall mean, and you only see it because every app is scored individually.</li>
+                <li><strong><code>access.js</code> adoption: 100% across all three sets.</strong> The sharing language reliably triggers an access function; <code>isOwner</code> and <code>ViewerTag</code> are the dominant patterns. The unreliability is in app wiring, not in whether the permission model shows up.</li>
+            </ul>
+            <p>Findings like "bimodal, and the failures cluster in net-new business apps" are what send us back to the system prompt with a specific thing to fix — then we re-run and watch the bottom mode shrink.</p>
+
+            <h2>Two more harnesses for the edges</h2>
+            <p>The access-function eval measures <em>first-shot quality</em>. Two sibling runbooks cover the parts that one prompt can't:</p>
+            <ul>
+                <li><strong>Codegen-edit against local dev</strong> — drives the <code>codegen-edit</code> harness at a local Vite dev server so we can correlate eval outcomes with <em>server-side recovery markers</em> (apply-errors, recovery-orchestrator events). This is how we tell "the model wrote bad code" apart from "the apply/recovery loop dropped an edit." It comes with the gotchas you only learn the hard way: the dev server is ready when <code>/api</code> returns <strong>426</strong>, and you must <code>grep -a</code> the log because pnpm's TUI prefix hides worker JSON behind a wall of spaces.</li>
+                <li><strong>Web → CLI edit fidelity</strong> — generate an app in the web chat, then send a follow-up through <code>vibes-diy edit</code> on the CLI, and verify the edit preserved the app (same database name, same features, only the files you asked for). A <code>db:inspect</code> cross-check confirms the chat actually carried context to the LLM rather than starting fresh. This guards the promise that a CLI edit behaves like a web second prompt — they share the same server path, so they should be indistinguishable.</li>
+            </ul>
+            <p>Both the local-dev and access-function evals also have a <strong>browser-driven mode</strong>: submit the prompt through the UI with Chrome MCP (using React's native setter so the state actually updates), wait 60–180s, then read the generated <code>App.jsx</code> + <code>access.js</code> against a review checklist — <code>viewer</code> gates writes, <code>access.hasChannel()</code> for permissions, <code>isOwner</code> for management UI, deterministic channel <code>_id</code>s, no stray emojis or <code>callAI</code>.</p>
+
+            <h2>The human-in-the-loop version</h2>
+            <p>Which brings it back to the Pickathon experiment. That was this exact loop, run by hand: pick a prompt, <code>generate</code>, <code>pull</code>, read the <code>access.js</code>, then load the deployed app in Chrome and check it does the thing. The harness just does it sixty times in parallel, scores each with a schema-validated agent, and rolls the result into one report — so when we change the system prompt, we know within a coffee break whether festival apps (and contact forms, and team boards) got better or worse.</p>
+
+            <div class="post-cta">
+                <h3>Type a sentence. Get a working app.</h3>
+                <p>The thing we measure is the thing you get to build.</p>
+                <a href="https://links.vibes.diy/homepage" class="btn">Start building →</a>
+            </div>
+
+        </div>
+    </article>
+</main>

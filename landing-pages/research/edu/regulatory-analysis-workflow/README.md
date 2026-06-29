@@ -1,0 +1,22 @@
+# regulatory-analysis-workflow
+
+> A policy analyst at a federal agency Office of Policy and Evaluation handles a rolling portfolio of policy analyses — regulatory cost-benefit analyses for proposed rules, decision memos for the Secretary, structured reviews of program performance — and needs an operational workflow app for the recurring rhythm of the role. The current process is a mix of Word documents, Excel sheets, and email threads, and important methodological decisions get lost between projects. Build an operational workflow app where each policy analysis is a structured project. The analyst starts each project by defining the decision being supported, the alternatives, the time horizon, the affected population, and the analytic methods on the plan — cost-benefit analysis, decision analysis under uncertainty, multi-criteria evaluation, optimization modeling, or risk analysis methods. For cost-benefit analyses, the workflow steps through inventorying impact categories, identifying which require shadow pricing or willingness to pay valuation, picking the social discount rate per agency convention, and structuring a sensitivity analysis on the load-bearing assumptions. For decision analyses under genuine uncertainty in policy analysis, the workflow supports decision trees, expected value calculations, and value-of-information analyses. The app maintains a library of agency-standard assumptions — the standard discount rate, the value of statistical life used in agency CBAs, monetization conventions for time savings, health benefits, and environmental amenities — so analysts use consistent inputs across projects. Stakeholder analysis is templated for each project. Welfare economics framing — Kaldor-Hicks compensation tests, distributional weighting — is explicit so the analyst documents which assumption is being used. Every project produces a structured analytic appendix in the standardized format the agency requires for cross-project comparability and for the regulatory record.
+
+Live at [https://vibes.diy/vibe/edu/regulatory-analysis-workflow](https://vibes.diy/vibe/edu/regulatory-analysis-workflow)
+
+Single-file React app built with [vibes.diy](https://vibes.diy). Visit the live url to manage access.
+
+## Run it
+
+```sh
+npx vibes-diy push     # uploads App.jsx, prints a live HTTPS URL
+```
+
+Edit [App.jsx](App.jsx) and push again to iterate.
+
+## Commands
+
+- `npx vibes-diy push` — deploy the current directory
+- `npx vibes-diy push --instant-join` — deploy with auto-accept sharing
+- `npx vibes-diy generate "prompt"` — generate a new app from a prompt
+- `npx vibes-diy help` — full command list

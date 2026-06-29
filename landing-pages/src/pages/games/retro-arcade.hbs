@@ -1,0 +1,313 @@
+{{!--
+{
+  "layout": "webring",
+  "title": "Retro Arcade // Games // Vibes DIY",
+  "description": "Snake, breakout, asteroids, invaders, maze chase, frog hop. The coin-op canon redone in CRT phosphor — six remixable single-file React apps.",
+  "ogUrl": "https://good.vibes.diy/games/retro-arcade",
+  "source": "games-retro-arcade",
+  "apps": [
+    {"num":"01","slug":"crt-snake","author":"jchris","live":true,"title":"SNAKE PRISM","tagline":"CRT scanlines. Chiptune per move.","desc":"Classic snake on a 20×20 grid. Eat fruit, grow, wrap edges. CRT scanline filter, chiptune beep per move, pixel-font score."},
+    {"num":"02","slug":"block-smasher","author":"jchris","live":true,"title":"BREAKOUT BLAST","tagline":"Paddle, ball, falling powerups.","desc":"Paddle and ball, five rows of bricks. Powerups drop: wider paddle, multi-ball, fireball. CRT bezel frame, pixel-perfect look."},
+    {"num":"03","slug":"mono-pong","author":"jchris","live":true,"title":"PONG RUMBLE","tagline":"Mouse vs AI. First to eleven.","desc":"Two-player pong, mouse controls left paddle, AI on right. First to eleven. Ball speeds up each volley. Monochrome pixel look."},
+    {"num":"04","slug":"space-rocks","author":"jchris","live":true,"title":"ASTEROID HOP","tagline":"Rotate. Thrust. Wrap.","desc":"Top-down asteroids: rotate, thrust, shoot. Rocks split into smaller ones. Wrap-around screen, local hi-score, vector aesthetic."},
+    {"num":"05","slug":"lily-leap","author":"jchris","live":true,"title":"FROG CROSS","tagline":"Four lanes. One river. Five pads.","desc":"Cross four lanes of traffic and a river of logs to reach five lily pads. Five lives, score per lily, increasing speed."},
+    {"num":"06","slug":"alien-barrage","author":"jchris","live":true,"title":"SPACE DEFENDER","tagline":"5×10 grid descends. Bunkers crumble.","desc":"Fixed-shooter: 5×10 grid of descending aliens, speed up as fewer remain. Destructible bunkers absorb fire. Pixel-art retro."}
+  ]
+}
+--}}
+
+<style>
+  @import url("https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=optional");
+
+  :root {
+    --crt-black: #07060c;
+    --crt-bg: #0e0a18;
+    --neon-pink: #ff2bd6;
+    --neon-cyan: #00fff5;
+    --neon-yellow: #fff300;
+    --neon-green: #39ff7c;
+    --neon-purple: #a661ff;
+    --phosphor: #d9faff;
+    --dim: #6e5a90;
+  }
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body {
+    font-family: "VT323", monospace;
+    background: var(--crt-black);
+    color: var(--phosphor);
+    min-height: 100vh;
+    line-height: 1.5;
+    background-image:
+      radial-gradient(ellipse at center, rgba(20,12,40,1) 0%, rgba(7,6,12,1) 80%),
+      repeating-linear-gradient(0deg, rgba(255,255,255,0.04) 0px, rgba(255,255,255,0.04) 1px, transparent 1px, transparent 3px);
+  }
+  body::before {
+    content: "";
+    position: fixed; inset: 0; pointer-events: none; z-index: 9999;
+    background:
+      repeating-linear-gradient(0deg, rgba(0,0,0,0.18) 0px, rgba(0,0,0,0.18) 2px, transparent 2px, transparent 4px),
+      radial-gradient(ellipse at center, transparent 30%, rgba(0,0,0,0.45) 100%);
+  }
+  a { color: var(--neon-cyan); text-decoration: none; }
+  a:hover { color: var(--neon-pink); text-shadow: 0 0 10px var(--neon-pink); }
+
+  .container { max-width: 1080px; margin: 0 auto; padding: 0 1.5rem; }
+
+  .topbar {
+    border-bottom: 1px solid var(--neon-purple);
+    padding: 1rem 1.5rem;
+    display: flex; justify-content: space-between; align-items: center;
+    font-family: "Press Start 2P", monospace;
+    font-size: 0.65rem;
+    text-transform: uppercase; letter-spacing: 0.15em;
+    background: linear-gradient(to bottom, #1a0e3a, #0a0612);
+    color: var(--phosphor);
+  }
+  .topbar a { color: var(--neon-pink); text-shadow: 0 0 8px var(--neon-pink); }
+
+  .crumb {
+    padding: 0.7rem 1.5rem;
+    font-size: 0.95rem; letter-spacing: 0.18em; text-transform: uppercase;
+    border-bottom: 1px solid var(--neon-purple); color: var(--dim);
+  }
+  .crumb a { color: var(--dim); }
+  .crumb a:hover { color: var(--neon-cyan); }
+
+  .hero {
+    padding: 4rem 0 3rem;
+    text-align: center;
+    position: relative;
+    border-bottom: 1px solid var(--neon-purple);
+  }
+  .hero .label {
+    font-family: "Press Start 2P", monospace;
+    font-size: 0.55rem;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--neon-yellow);
+    margin-bottom: 1.5rem;
+    text-shadow: 0 0 8px rgba(255,243,0,0.7);
+  }
+  .hero h1 {
+    font-family: "Press Start 2P", monospace;
+    font-size: clamp(2rem, 6vw, 4rem);
+    line-height: 1.1;
+    color: var(--neon-cyan);
+    letter-spacing: 0.04em;
+    text-shadow:
+      0 0 8px var(--neon-cyan),
+      4px 4px 0 var(--neon-pink),
+      8px 8px 0 var(--neon-purple);
+  }
+  .hero .tag { font-size: 1.5rem; color: var(--neon-yellow); margin: 1.5rem 0 1.5rem; letter-spacing: 0.1em; text-shadow: 0 0 8px rgba(255,243,0,0.5); }
+  .hero p { max-width: 680px; margin: 0 auto; font-size: 1.1rem; color: var(--phosphor); }
+
+  .marquee {
+    background: var(--crt-bg);
+    border-top: 1px solid var(--neon-purple);
+    border-bottom: 1px solid var(--neon-purple);
+    font-family: "Press Start 2P", monospace;
+    font-size: 0.6rem;
+    letter-spacing: 0.2em;
+    text-align: center;
+    padding: 0.7rem 1rem;
+    text-transform: uppercase;
+    color: var(--neon-pink);
+    text-shadow: 0 0 10px var(--neon-pink);
+  }
+
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0;
+    border-bottom: 1px solid var(--neon-purple);
+  }
+  @media (max-width: 700px) { .stats { grid-template-columns: repeat(2, 1fr); } }
+  .stat-cell { padding: 1.25rem; border-right: 1px solid var(--neon-purple); }
+  .stat-cell:last-child { border-right: none; }
+  .stat-cell .k {
+    font-family: "Press Start 2P", monospace;
+    font-size: 0.5rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--dim);
+    margin-bottom: 0.4rem;
+  }
+  .stat-cell .v {
+    font-family: "Press Start 2P", monospace;
+    font-size: 0.75rem;
+    color: var(--neon-green);
+    letter-spacing: 0.04em;
+    text-shadow: 0 0 8px rgba(57,255,124,0.5);
+  }
+
+  .apps { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.5rem; padding: 2.5rem 0; }
+  @media (max-width: 800px) { .apps { grid-template-columns: 1fr; } }
+
+  .app {
+    background: var(--crt-bg);
+    border: 2px solid var(--neon-purple);
+    box-shadow: 0 0 14px rgba(166,97,255,0.25), 4px 4px 0 rgba(255,43,214,0.18);
+    padding: 1.25rem;
+    position: relative;
+    display: flex; flex-direction: column; gap: 0.75rem;
+  }
+  .app .head {
+    display: flex; justify-content: space-between; align-items: baseline;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px dashed var(--neon-purple);
+  }
+  .app .num {
+    font-family: "Press Start 2P", monospace;
+    font-size: 0.55rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--neon-yellow);
+    text-shadow: 0 0 6px rgba(255,243,0,0.5);
+  }
+  .app .status {
+    font-family: "Press Start 2P", monospace;
+    font-size: 0.55rem;
+    color: var(--dim);
+    letter-spacing: 0.15em;
+  }
+  .app--live .status { color: var(--neon-green); text-shadow: 0 0 6px var(--neon-green); }
+  .app .title {
+    font-family: "Press Start 2P", monospace;
+    font-size: 0.95rem;
+    line-height: 1.3;
+    color: var(--neon-cyan);
+    letter-spacing: 0.04em;
+    text-shadow: 0 0 8px rgba(0,255,245,0.5);
+  }
+  .app .tagline {
+    font-size: 1.05rem;
+    color: var(--neon-pink);
+    border-left: 3px solid var(--neon-pink);
+    padding-left: 0.75rem;
+    text-shadow: 0 0 6px rgba(255,43,214,0.4);
+  }
+  .app .desc { font-size: 1rem; flex: 1; color: var(--phosphor); }
+  .app .shot {
+    display: block; border: 1px solid var(--neon-purple);
+    aspect-ratio: 16/9; overflow: hidden; background: #000;
+  }
+  .app .shot img { width: 100%; height: 100%; object-fit: cover; filter: saturate(1.1) contrast(1.05); }
+  .app .shot-placeholder {
+    padding: 1rem;
+    font-family: "Press Start 2P", monospace;
+    font-size: 0.55rem;
+    color: var(--neon-pink);
+    text-align: center;
+    height: 100%; display: flex; align-items: center; justify-content: center;
+    letter-spacing: 0.2em; text-transform: uppercase;
+    text-shadow: 0 0 10px var(--neon-pink);
+  }
+  .app .ctas { display: flex; gap: 0.5rem; }
+  .btn {
+    flex: 1; text-align: center;
+    padding: 0.65rem 0.75rem;
+    background: transparent;
+    border: 2px solid var(--neon-cyan);
+    font-family: "Press Start 2P", monospace;
+    font-size: 0.55rem;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    color: var(--neon-cyan);
+    cursor: pointer;
+  }
+  .btn:hover {
+    background: var(--neon-cyan); color: var(--crt-black);
+    box-shadow: 0 0 12px var(--neon-cyan);
+  }
+  .prompt-link { font-size: 1.05rem; color: var(--dim); }
+  .prompt-link:hover { color: var(--neon-yellow); text-shadow: 0 0 8px var(--neon-yellow); }
+
+  .epilogue {
+    border-top: 1px solid var(--neon-purple);
+    padding: 2rem 1.5rem;
+    font-size: 1.05rem;
+    color: var(--phosphor);
+    background: var(--crt-bg);
+  }
+  .epilogue strong {
+    color: var(--neon-yellow);
+    font-family: "Press Start 2P", monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+  footer.term-footer {
+    padding: 1rem 1.5rem;
+    border-top: 1px solid var(--neon-purple);
+    font-family: "Press Start 2P", monospace;
+    font-size: 0.5rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    text-align: center;
+    color: var(--dim);
+  }
+</style>
+
+<header class="topbar">
+  <a href="https://links.vibes.diy/homepage">VIBES.DIY</a>
+  <span>Retro Arcade — Press Start</span>
+</header>
+<nav class="crumb">
+  <a href="/">Home</a> &nbsp;›&nbsp; <a href="/games/">Games</a> &nbsp;›&nbsp; Retro Arcade
+</nav>
+
+<main class="container">
+  <section class="hero">
+    <div class="label">Shelf · 02 of 05 · 6 cabinets</div>
+    <h1>RETRO ARCADE</h1>
+    <div class="tag">snake · breakout · asteroids</div>
+    <p>The coin-op canon redone in CRT phosphor. Six classic mechanics, six small cabinets, one shelf.</p>
+  </section>
+
+  <div class="marquee">★ INSERT COIN ★ HIGH SCORE: AAA ★ 1UP ★ READY ★</div>
+
+  <section class="stats">
+    <div class="stat-cell"><div class="k">Mode</div><div class="v">CRT</div></div>
+    <div class="stat-cell"><div class="k">Cabinets</div><div class="v">06</div></div>
+    <div class="stat-cell"><div class="k">Save</div><div class="v">Fireproof</div></div>
+    <div class="stat-cell"><div class="k">Coins</div><div class="v">∞</div></div>
+  </section>
+
+  <section class="apps">
+    {{#each apps}}
+      <article class="app {{#if live}}app--live{{else}}app--pending{{/if}}">
+        <div class="head">
+          <span class="num">№ {{num}} · {{slug}}</span>
+          <span class="status">{{#if live}}LIVE{{else}}PENDING{{/if}}</span>
+        </div>
+        <h2 class="title">{{title}}</h2>
+        <p class="tagline">{{tagline}}</p>
+        <p class="desc">{{desc}}</p>
+        {{#if live}}
+          <a class="shot" href="https://vibes.diy/vibe/{{author}}/{{slug}}" aria-label="{{title}} screenshot"><img src="https://{{slug}}--{{author}}.prod-v2.vibesdiy.net/screenshot.jpg" alt="{{slug}}" onerror="this.onerror=null; this.src='{{@root.assetPrefix}}images/og-preview.png';"/></a>
+          <div class="ctas">
+            <a class="btn" href="https://vibes.diy/vibe/{{author}}/{{slug}}">Play</a>
+            <a class="btn" href="https://vibes.diy/remix/{{author}}/{{slug}}?skipChat=true">Clone</a>
+            <a class="btn" href="https://vibes.diy/remix/{{author}}/{{slug}}">Remix</a>
+          </div>
+          <a class="prompt-link" href="https://vibes.diy/chat/prompt?prompt64={{prompt64 desc}}">— start fresh from this prompt</a>
+        {{else}}
+          <div class="shot"><div class="shot-placeholder">PRESS START</div></div>
+          <div class="ctas">
+            <a class="btn" href="https://vibes.diy/chat/prompt?prompt64={{prompt64 desc}}">Start From Prompt</a>
+          </div>
+        {{/if}}
+      </article>
+    {{/each}}
+  </section>
+
+  <section class="epilogue">
+    <p><strong>Game over.</strong> Six familiar shapes you already know how to play, redone in single-file React. The fun is remixing one into a private cabinet for your friend group — your initials, your rules, your high score.</p>
+  </section>
+</main>
+
+{{> newsletter}}
+<footer class="term-footer">
+  Vibes.diy · <a href="https://links.vibes.diy/homepage">homepage</a> · <a href="/games/">games</a> · GAME OVER
+</footer>

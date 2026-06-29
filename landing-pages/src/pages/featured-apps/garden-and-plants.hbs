@@ -1,0 +1,93 @@
+{{!--
+{
+  "layout": "standard",
+  "title": "Vibes for Garden & Plant Care | Vibes DIY",
+  "description": "Green-thumb logs — plant beds mapped, watering reminders set, and a livestream so the audience can vote on which branch to prune.",
+  "ogUrl": "https://good.vibes.diy/featured-apps/garden-and-plants",
+  "source": "garden-and-plants",
+  "accent": "#16a34a",
+  "breadcrumbTitle": "Garden & Plants",
+  "heroTitle": "Garden & ",
+  "heroAccentWord": "Plants",
+  "heroDesc": "Green-thumb logs — plant beds mapped, watering reminders set, and a livestream so the audience can vote on which branch to prune.",
+  "stories": "Real gardeners are already pressing these vibes into the rhythm of their seasons — the raised-bed map that remembers last year's tomatoes, the watering reminder that knows your basil from your fig, the livestream where viewers vote on which branch to prune. <strong>None of these exist as products because the audience is one backyard.</strong> They exist as vibes because making one takes a sentence.",
+  "ctaTitle": "Make your garden its own herbarium.",
+  "ctaText": "Drop your email and we'll send the next batch of garden templates — bed maps, bloom trackers, pruning livestreams, and more — when they ship.",
+  "ctaButton": "Get garden drops",
+  "classics": [
+    {
+      "author": "og",
+      "slug": "beethoven-comet-5323",
+      "description": "Donate to campus causes and grow a seasonal flower garden; unlock rare blooms and butterflies as totals rise."
+    },
+    {
+      "author": "og",
+      "slug": "radiant-thor-7884",
+      "description": "3D Three.js bee flight game where you buzz through a rose garden collecting nectar and dodging butterflies."
+    },
+    {
+      "author": "og",
+      "slug": "repulsive-bat-2171",
+      "description": "Healing encyclopedia for cataloging herbs, minerals, and roots with AI-generated entries, categories, and protocols."
+    },
+    {
+      "author": "og",
+      "slug": "urban-hera-6845",
+      "description": "Bloom-for-good: virtual seasonal garden that grows as you donate to textbooks, meals, or wellness causes."
+    }
+  ],
+  "groups": [
+    {
+      "description": "Garden plant tracker — log plantings; map beds; suggest rotations/soil needs; reminders for watering/fertilizing. Your beds are containers on a balcony instead of raised ground plots? Clone it and rename the bed types.",
+      "variants": [
+        { "author": "garden-gnome", "slug": "garden-plant-tracker" },
+        { "author": "jchris", "slug": "plant-care-diary" }
+      ]
+    },
+    {
+      "description": "Prune-or-not livestream — live feed; audience votes; overlay \"cut here\"; record decisions. Your stream decides which seedlings to keep instead of branches to cut? Clone it and update the overlay labels.",
+      "variants": [
+        { "author": "jchris", "slug": "prune-or-not-live" }
+      ]
+    }
+  ]
+}
+--}}
+
+<style>
+  /* HERBARIUM skin — pressed botanical, vellum cream, kraft-brown notes */
+  body {
+    background-color: #f5efe0;
+    background-image: radial-gradient(
+      rgba(110, 80, 30, 0.06) 1px,
+      transparent 1px
+    );
+    background-size: 12px 12px;
+  }
+
+  header {
+    background: linear-gradient(to bottom, #f5efe0 60%, transparent);
+  }
+
+  .prop-card {
+    border-color: #6e3a0c;
+  }
+
+  h2 {
+    font-style: italic;
+  }
+
+  .card {
+    position: relative;
+  }
+  .card::before {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    content: "🌿";
+    opacity: 0.4;
+    font-size: 1.2rem;
+  }
+</style>
+
+{{> featured-app-body}}

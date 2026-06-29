@@ -1,0 +1,313 @@
+{{!--
+{
+  "layout": "webring",
+  "title": "The New Suburban History | H-Net H-Urban + H-LatAm | Vibes DIY Edu",
+  "description": "The New Suburban History (History — Urban, 2003) — suburban sprawl, racial segregation in housing, suburbanization, urban periphery and more. Linked to Vibes DIY study tools.",
+  "ogUrl": "https://good.vibes.diy/edu/h-net-urban/the-new-suburban-history/"
+,
+  "source": "edu-h-net-urban-the-new-suburban-history"
+}
+--}}
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: 'Helvetica Neue', Arial, sans-serif;
+  background: #f4f4f0;
+  color: #1a1a1a;
+  font-size: 14px;
+  line-height: 1.5;
+}
+.topbar {
+  position: sticky; top: 0; z-index: 100;
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 0.6rem 1.25rem;
+  background: #231F20; color: #FFFFF0;
+  border-bottom: 2px solid #000;
+  font-size: 0.75rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase;
+}
+.topbar a { color: inherit; text-decoration: none; opacity: 0.7; }
+.topbar a:hover { opacity: 1; }
+.topbar .sep { opacity: 0.35; margin: 0 0.4rem; }
+.topbar-logo { height: 22px; width: auto; opacity: 0.85; vertical-align: middle; margin-right: 0.5rem; }
+.wrap { max-width: 860px; margin: 0 auto; padding: 2rem 1.25rem 5rem; }
+.breadcrumb { font-size: 0.75rem; color: #888; margin-bottom: 1.5rem; }
+.breadcrumb a { color: #0070c9; text-decoration: none; }
+.breadcrumb a:hover { text-decoration: underline; }
+.breadcrumb .sep { opacity: 0.5; margin: 0 0.3rem; }
+.course-card {
+  background: white;
+  border: 2px solid #231F20;
+  border-radius: 10px;
+  padding: 1.5rem 1.75rem;
+  margin-bottom: 1.5rem;
+}
+.course-title { font-size: 1.4rem; font-weight: 800; line-height: 1.2; margin-bottom: 0.5rem; }
+.course-meta { font-size: 0.8rem; color: #666; margin-bottom: 1rem; display: flex; flex-wrap: wrap; gap: 0.6rem; }
+.meta-pill {
+  background: #f4f4f0; border: 1px solid #ccc; border-radius: 4px;
+  padding: 0.15rem 0.5rem; font-size: 0.72rem;
+}
+.section-label {
+  font-size: 0.68rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
+  color: #999; margin-bottom: 0.6rem;
+}
+.tags { display: flex; flex-wrap: wrap; gap: 0.3rem; margin-bottom: 1.25rem; }
+.tag {
+  font-size: 0.7rem; padding: 0.15rem 0.45rem;
+  background: rgba(35,31,32,0.06); border: 1px solid rgba(35,31,32,0.15);
+  border-radius: 3px; color: #444;
+}
+.source-link {
+  display: inline-flex; align-items: center; gap: 0.3rem;
+  font-size: 0.78rem; font-weight: 600; color: #0070c9;
+  text-decoration: none; padding: 0.35rem 0.75rem;
+  border: 1.5px solid #0070c9; border-radius: 5px;
+  transition: background 0.12s, color 0.12s;
+}
+.source-link:hover { background: #0070c9; color: white; }
+.cluster-section { margin-top: 1.25rem; padding-top: 1.25rem; border-top: 1px solid #eee; }
+.cluster-links { display: flex; flex-wrap: wrap; gap: 0.35rem; margin-top: 0.5rem; }
+.cluster-link {
+  display: inline-flex; align-items: center; gap: 0.25rem;
+  font-size: 0.72rem; font-weight: 600;
+  padding: 0.2rem 0.6rem;
+  background: rgba(0,112,201,0.07); border: 1.5px solid #0070c9;
+  color: #0070c9; border-radius: 4px; text-decoration: none;
+  transition: background 0.12s, color 0.12s;
+}
+.cluster-link:hover { background: #0070c9; color: white; }
+.cluster-link::after { content: " →"; font-size: 0.6rem; opacity: 0.7; }
+
+/* ── App cards ── */
+.apps-block { margin-bottom: 2rem; }
+.apps-block-header {
+  display: flex; justify-content: space-between; align-items: baseline;
+  margin-bottom: 0.75rem; padding-bottom: 0.4rem;
+  border-bottom: 2px solid #231F20;
+}
+.cluster-full-link {
+  font-size: 0.72rem; font-weight: 700; color: #0070c9; text-decoration: none;
+}
+.cluster-full-link:hover { text-decoration: underline; }
+.apps-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 1rem;
+}
+.app-card {
+  background: white;
+  border: 1.5px solid #231F20;
+  border-radius: 8px;
+  overflow: hidden;
+  display: flex; flex-direction: column;
+}
+.app-card-header {
+  display: flex; gap: 0.6rem; align-items: flex-start;
+  padding: 0.9rem 0.9rem 0.6rem;
+}
+.app-card-num {
+  font-size: 1.5rem; font-weight: 800; color: #ccc;
+  line-height: 1; flex-shrink: 0; margin-top: 0.1rem;
+}
+.app-card-meta { flex: 1; min-width: 0; }
+.app-card-title {
+  display: block; font-size: 0.9rem; font-weight: 700; color: #1a1a1a;
+  text-decoration: none; line-height: 1.25; margin-bottom: 0.2rem;
+}
+.app-card-title:hover { color: #0070c9; }
+.app-live-tag {
+  display: inline-block; font-size: 0.55rem; font-weight: 700;
+  letter-spacing: 0.1em; text-transform: uppercase;
+  background: #0070c9; color: white; padding: 1px 4px; border-radius: 2px;
+  vertical-align: middle; margin-left: 0.3rem;
+}
+.app-card-tagline {
+  font-size: 0.72rem; color: #666; line-height: 1.4; font-style: italic;
+}
+.app-shot-wrap {
+  display: block; aspect-ratio: 16/9; overflow: hidden;
+  background: #f4f4f0; border-top: 1px solid #eee; border-bottom: 1px solid #eee;
+}
+.app-shot-wrap img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.3s; }
+.app-shot-wrap:hover img { transform: scale(1.03); }
+.app-card-actions {
+  display: grid; grid-template-columns: repeat(3, 1fr);
+  border-top: 1px solid #eee;
+}
+.act-btn {
+  display: block; text-align: center; padding: 0.45rem 0.25rem;
+  font-size: 0.65rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase;
+  color: #555; text-decoration: none; border-right: 1px solid #eee;
+  transition: background 0.1s, color 0.1s;
+}
+.act-btn:last-child { border-right: none; }
+.act-btn:hover { background: #0070c9; color: white; }
+.act-btn.act-open { color: #0070c9; }
+
+/* ── CTA ── */
+.cta-card {
+  background: #231F20; color: #FFFFF0;
+  border-radius: 10px; padding: 1.25rem 1.75rem;
+  margin-bottom: 1.25rem;
+  display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem;
+}
+.cta-card p { font-size: 0.85rem; opacity: 0.85; max-width: 480px; }
+.cta-btn {
+  display: inline-block;
+  background: #FEDD00; color: #231F20;
+  font-size: 0.8rem; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase;
+  padding: 0.5rem 1.1rem; border-radius: 5px; text-decoration: none; white-space: nowrap;
+}
+.cta-btn:hover { background: #ffea47; }
+.footer { text-align: center; padding: 2rem 1rem; font-size: 0.78rem; color: #999; border-top: 1px solid #ccc; margin-top: 2rem; }
+.footer a { color: inherit; }
+</style>
+
+<nav class="topbar">
+  <div>
+    <a href="https://links.vibes.diy/homepage"><img src="{{assetPrefix}}Vibes-Toggle-1-Transparent.png" alt="Vibes DIY" class="topbar-logo"></a>
+    <span class="sep">/</span>
+    <a href="../syllabi.html">Edu Portal</a>
+    <span class="sep">/</span>
+    <a href="index.html">H-Net H-Urban + H-LatAm</a>
+  </div>
+  <div>2003</div>
+</nav>
+
+<div class="wrap">
+  <div class="breadcrumb"><a href="../syllabi.html">Syllabi</a> <span class="sep">/</span> <a href="index.html">H-Net H-Urban + H-LatAm</a> <span class="sep">/</span> The New Suburban History</div>
+
+  <div class="course-card">
+    <div class="course-title">The New Suburban History</div>
+    <div class="course-meta">
+      <span class="meta-pill">H-Net H-Urban + H-LatAm</span>
+      <span class="meta-pill">History — Urban</span>
+      <span class="meta-pill">2003</span>
+    </div>
+
+    <div class="section-label">Topics</div>
+    <div class="tags">
+      <span class="tag">suburban sprawl</span>
+      <span class="tag">racial segregation in housing</span>
+      <span class="tag">suburbanization</span>
+      <span class="tag">urban periphery</span>
+      <span class="tag">streetcar suburbs</span>
+      <span class="tag">land use patterns</span>
+      <span class="tag">environmental history of suburbs</span>
+      <span class="tag">working-class suburbs</span>
+    </div>
+
+    <a href="https://networks.h-net.org/node/22277/pages/41733/seligman-new-suburban-history-2003" target="_blank" rel="noopener" class="source-link">View syllabus ↗</a>
+
+    <div class="cluster-section">
+      <div class="section-label">Related clusters</div>
+      <div class="cluster-links">
+        <a href="../urban-race-housing.html" class="cluster-link">Urban, Race &amp; Housing</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="apps-block">
+    <div class="apps-block-header">
+      <span class="section-label">Apps — Urban, Race &amp; Housing</span>
+      <a href="../urban-race-housing.html" class="cluster-full-link">full cluster →</a>
+    </div>
+    <div class="apps-grid">
+      <div class="app-card">
+        <div class="app-card-header">
+          <span class="app-card-num">01</span>
+          <div class="app-card-meta">
+            <a href="https://vibes.diy/vibe/edu/suburbanization-timeline" target="_blank" rel="noopener" class="app-card-title">Suburban Divide</a><span class="app-live-tag">live</span>
+            <div class="app-card-tagline">Pick a metro area. Trace the postwar expansion and who was excluded.</div>
+          </div>
+        </div>
+        <a href="https://vibes.diy/vibe/edu/suburbanization-timeline" target="_blank" rel="noopener" class="app-shot-wrap">
+          <img src="https://suburbanization-timeline--edu.prod-v2.vibesdiy.net/screenshot.jpg" alt="Suburban Divide screenshot" loading="lazy" onerror="this.onerror=null;this.src='../../../images/og-preview.png'">
+        </a>
+        <div class="app-card-actions">
+          <a href="https://vibes.diy/vibe/edu/suburbanization-timeline" target="_blank" rel="noopener" class="act-btn act-open">Open</a>
+          <a href="https://vibes.diy/remix/edu/suburbanization-timeline?skipChat=true" target="_blank" rel="noopener" class="act-btn">Clone</a>
+          <a href="https://vibes.diy/remix/edu/suburbanization-timeline" target="_blank" rel="noopener" class="act-btn">Remix</a>
+        </div>
+      </div>
+<div class="app-card">
+        <div class="app-card-header">
+          <span class="app-card-num">02</span>
+          <div class="app-card-meta">
+            <a href="https://vibes.diy/vibe/edu/redlining-explorer" target="_blank" rel="noopener" class="app-card-title">Redlining Explorer</a><span class="app-live-tag">live</span>
+            <div class="app-card-tagline">Pick a city and decade. See how neighborhood grades shaped wealth for generations.</div>
+          </div>
+        </div>
+        <a href="https://vibes.diy/vibe/edu/redlining-explorer" target="_blank" rel="noopener" class="app-shot-wrap">
+          <img src="https://redlining-explorer--edu.prod-v2.vibesdiy.net/screenshot.jpg" alt="Redlining Explorer screenshot" loading="lazy" onerror="this.onerror=null;this.src='../../../images/og-preview.png'">
+        </a>
+        <div class="app-card-actions">
+          <a href="https://vibes.diy/vibe/edu/redlining-explorer" target="_blank" rel="noopener" class="act-btn act-open">Open</a>
+          <a href="https://vibes.diy/remix/edu/redlining-explorer?skipChat=true" target="_blank" rel="noopener" class="act-btn">Clone</a>
+          <a href="https://vibes.diy/remix/edu/redlining-explorer" target="_blank" rel="noopener" class="act-btn">Remix</a>
+        </div>
+      </div>
+<div class="app-card">
+        <div class="app-card-header">
+          <span class="app-card-num">03</span>
+          <div class="app-card-meta">
+            <a href="https://vibes.diy/vibe/edu/urban-reform-timeline" target="_blank" rel="noopener" class="app-card-title">Critical Timeline</a><span class="app-live-tag">live</span>
+            <div class="app-card-tagline">Pick an urban problem. Trace the reform movement that responded.</div>
+          </div>
+        </div>
+        <a href="https://vibes.diy/vibe/edu/urban-reform-timeline" target="_blank" rel="noopener" class="app-shot-wrap">
+          <img src="https://urban-reform-timeline--edu.prod-v2.vibesdiy.net/screenshot.jpg" alt="Critical Timeline screenshot" loading="lazy" onerror="this.onerror=null;this.src='../../../images/og-preview.png'">
+        </a>
+        <div class="app-card-actions">
+          <a href="https://vibes.diy/vibe/edu/urban-reform-timeline" target="_blank" rel="noopener" class="act-btn act-open">Open</a>
+          <a href="https://vibes.diy/remix/edu/urban-reform-timeline?skipChat=true" target="_blank" rel="noopener" class="act-btn">Clone</a>
+          <a href="https://vibes.diy/remix/edu/urban-reform-timeline" target="_blank" rel="noopener" class="act-btn">Remix</a>
+        </div>
+      </div>
+<div class="app-card">
+        <div class="app-card-header">
+          <span class="app-card-num">04</span>
+          <div class="app-card-meta">
+            <a href="https://vibes.diy/vibe/edu/ethnic-neighborhood-formation" target="_blank" rel="noopener" class="app-card-title">Neighborhood Archive</a><span class="app-live-tag">live</span>
+            <div class="app-card-tagline">Who came first, who replaced them, and what economic structures made each group's foothold possible.</div>
+          </div>
+        </div>
+        <a href="https://vibes.diy/vibe/edu/ethnic-neighborhood-formation" target="_blank" rel="noopener" class="app-shot-wrap">
+          <img src="https://ethnic-neighborhood-formation--edu.prod-v2.vibesdiy.net/screenshot.jpg" alt="Neighborhood Archive screenshot" loading="lazy" onerror="this.onerror=null;this.src='../../../images/og-preview.png'">
+        </a>
+        <div class="app-card-actions">
+          <a href="https://vibes.diy/vibe/edu/ethnic-neighborhood-formation" target="_blank" rel="noopener" class="act-btn act-open">Open</a>
+          <a href="https://vibes.diy/remix/edu/ethnic-neighborhood-formation?skipChat=true" target="_blank" rel="noopener" class="act-btn">Clone</a>
+          <a href="https://vibes.diy/remix/edu/ethnic-neighborhood-formation" target="_blank" rel="noopener" class="act-btn">Remix</a>
+        </div>
+      </div>
+<div class="app-card">
+        <div class="app-card-header">
+          <span class="app-card-num">05</span>
+          <div class="app-card-meta">
+            <a href="https://vibes.diy/vibe/edu/political-incorporation-tracker" target="_blank" rel="noopener" class="app-card-title">Incorporation Ledger</a><span class="app-live-tag">live</span>
+            <div class="app-card-tagline">From exclusion to political representation — coalitions, machines, protest, electoral success.</div>
+          </div>
+        </div>
+        <a href="https://vibes.diy/vibe/edu/political-incorporation-tracker" target="_blank" rel="noopener" class="app-shot-wrap">
+          <img src="https://political-incorporation-tracker--edu.prod-v2.vibesdiy.net/screenshot.jpg" alt="Incorporation Ledger screenshot" loading="lazy" onerror="this.onerror=null;this.src='../../../images/og-preview.png'">
+        </a>
+        <div class="app-card-actions">
+          <a href="https://vibes.diy/vibe/edu/political-incorporation-tracker" target="_blank" rel="noopener" class="act-btn act-open">Open</a>
+          <a href="https://vibes.diy/remix/edu/political-incorporation-tracker?skipChat=true" target="_blank" rel="noopener" class="act-btn">Clone</a>
+          <a href="https://vibes.diy/remix/edu/political-incorporation-tracker" target="_blank" rel="noopener" class="act-btn">Remix</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="cta-card">
+    <p>Build flashcard decks, quiz tools, or study apps for any of these topics — no code needed.</p>
+    <a href="https://links.vibes.diy/homepage" class="cta-btn">Try Vibes DIY</a>
+  </div>
+</div>
+
+{{> newsletter}}
+<footer class="footer">
+  <a href="https://links.vibes.diy/homepage">Vibes DIY</a> — build your own app from any topic in this corpus
+</footer>

@@ -1,0 +1,564 @@
+{{!--
+{
+  "layout": "webring",
+  "title": "For Knowledge Creators | Vibes DIY",
+  "description": "Five tools for ebook authors, paid newsletter operators, and course sellers. Price your course, map your curriculum, build a waitlist, grow your list, answer your students.",
+  "ogUrl": "https://good.vibes.diy/creators/",
+  "source": "creators",
+  "apps": [
+    {
+      "num": "01",
+      "slug": "course-price-calculator",
+      "author": "og",
+      "live": true,
+      "spotlight": true,
+      "title": "The Pricing Room",
+      "tagline": "What should you charge? Run the numbers.",
+      "desc": "Calculator for course creators. Enter email list size, estimated conversion rate, and target monthly revenue. Shows the price point needed, expected sales, and breakeven analysis. Simple numeric inputs, clear output table.",
+      "fork": "Selling a membership instead of a one-time course? Clone this and swap the conversion math for monthly churn and lifetime value."
+    },
+    {
+      "num": "02",
+      "slug": "course-outline-builder",
+      "author": "og",
+      "live": true,
+      "title": "Chapter by Chapter",
+      "tagline": "Map your course before you build it.",
+      "desc": "Outline builder for online courses. Input your topic and target audience, get a structured curriculum with modules, lessons, and learning objectives. Reorder items. Export as markdown.",
+      "fork": "Writing a book, not a course? Clone this and relabel modules as chapters — same scaffolding, different end product."
+    },
+    {
+      "num": "03",
+      "slug": "launch-waitlist-countdown",
+      "author": "og",
+      "live": true,
+      "title": "The Waitlist",
+      "tagline": "Build anticipation. Open on launch day.",
+      "desc": "Launch waitlist for a digital product. Email signup form, countdown timer to a configurable launch date, live subscriber count. Clean and shareable.",
+      "fork": "Running a cohort with limited seats instead of an open launch? Clone this and replace the countdown with a seats-remaining counter."
+    },
+    {
+      "num": "04",
+      "slug": "lead-magnet-quiz",
+      "author": "og",
+      "live": true,
+      "title": "The Hook Quiz",
+      "tagline": "Qualify your readers. Grow your list.",
+      "desc": "Lead magnet quiz for newsletter growth. Five questions that qualify readers by interest or skill level. Results page with personalized recommendations and email capture field.",
+      "fork": "Your audience splits into beginners vs. advanced learners with completely different content paths. Clone this and build two distinct result tracks."
+    },
+    {
+      "num": "05",
+      "slug": "student-qa-board",
+      "author": "og",
+      "live": true,
+      "title": "Ask the Author",
+      "tagline": "Your students have questions. Capture them all.",
+      "desc": "Q and A board for online course students. Students post questions, upvote others. Instructor marks questions answered. Organized by module. Compact and focused.",
+      "fork": "Running a paid community instead of a course? Clone this and remove the module structure — let questions float free."
+    }
+  ],
+  "ogImage": "https://good.vibes.diy/images/screenshots/creators.jpg"
+}
+--}}
+
+<style>
+  @import url("https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=Inter:wght@400;500;600&display=optional");
+
+  :root {
+    --bg:          #141210;
+    --bg-raised:   #1e1a16;
+    --amber:       #c9952a;
+    --amber-light: #e8b84b;
+    --amber-dim:   rgba(201, 149, 42, 0.15);
+    --text:        #f0ebe1;
+    --text-muted:  rgba(240, 235, 225, 0.55);
+    --border:      rgba(240, 235, 225, 0.1);
+    --border-amber: rgba(201, 149, 42, 0.4);
+    --card-bg:     rgba(255, 255, 255, 0.04);
+  }
+
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html, body {
+    font-family: "Inter", system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    min-height: 100vh;
+  }
+
+  a { color: inherit; text-decoration: none; }
+
+  .layout { max-width: 1080px; margin: 0 auto; padding: 0 1.5rem; }
+
+  /* ── Topbar ── */
+  .topbar {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 1.1rem 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .topbar .brand {
+    font-family: "Playfair Display", serif;
+    font-weight: 700;
+    font-size: 1.15rem;
+    letter-spacing: 0.01em;
+    color: var(--amber-light);
+  }
+  .topbar .meta {
+    font-size: 0.65rem; letter-spacing: 0.2em; text-transform: uppercase;
+    color: var(--text-muted);
+  }
+
+  .crumb {
+    padding: 0.6rem 0;
+    font-size: 0.65rem; letter-spacing: 0.18em; text-transform: uppercase;
+    color: var(--text-muted);
+    border-bottom: 1px solid var(--border);
+  }
+  .crumb a { color: inherit; }
+  .crumb a:hover { color: var(--amber); }
+
+  /* ── Hero ── */
+  .hero {
+    padding: 5rem 0 3.5rem;
+    border-bottom: 1px solid var(--border);
+    text-align: center;
+  }
+  .hero .label {
+    display: inline-block;
+    padding: 5px 14px;
+    background: var(--amber-dim);
+    border: 1px solid var(--border-amber);
+    border-radius: 999px;
+    font-size: 0.6rem; letter-spacing: 0.22em; text-transform: uppercase;
+    font-weight: 600;
+    color: var(--amber-light);
+    margin-bottom: 1.5rem;
+  }
+  .hero h1 {
+    font-family: "Playfair Display", serif;
+    font-size: clamp(2.6rem, 7vw, 5.5rem);
+    font-weight: 900;
+    line-height: 1.0;
+    letter-spacing: -0.03em;
+    margin-bottom: 1.5rem;
+  }
+  .hero h1 em {
+    font-style: italic;
+    color: var(--amber-light);
+  }
+  .hero p.lead {
+    max-width: 660px; margin: 0 auto;
+    font-size: 1.1rem; line-height: 1.65;
+    color: var(--text-muted);
+  }
+
+  /* ── Stats bar ── */
+  .stats {
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    margin: 2.5rem 0;
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    overflow: hidden;
+  }
+  @media (max-width: 640px) { .stats { grid-template-columns: repeat(2, 1fr); } }
+  .stat-cell {
+    padding: 1.1rem 1.4rem;
+    border-right: 1px solid var(--border);
+  }
+  .stat-cell:last-child { border-right: none; }
+  @media (max-width: 640px) {
+    .stat-cell { border-bottom: 1px solid var(--border); }
+    .stat-cell:nth-child(2n) { border-right: none; }
+  }
+  .stat-cell .k {
+    font-size: 0.58rem; letter-spacing: 0.2em; text-transform: uppercase;
+    color: var(--text-muted); margin-bottom: 0.3rem;
+  }
+  .stat-cell .v {
+    font-family: "Playfair Display", serif;
+    font-size: 1.3rem; font-weight: 700;
+  }
+
+  .section-label {
+    padding: 1.2rem 0 0.4rem;
+    font-size: 0.6rem; letter-spacing: 0.25em; text-transform: uppercase;
+    color: var(--text-muted);
+  }
+
+  /* ── Spotlight ── */
+  .spotlight {
+    background: var(--bg-raised);
+    border: 1px solid var(--border-amber);
+    border-radius: 22px;
+    padding: 2.5rem;
+    margin-bottom: 2rem;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2.5rem;
+    align-items: start;
+  }
+  @media (max-width: 780px) {
+    .spotlight { grid-template-columns: 1fr; }
+  }
+  .spotlight .sp-content { display: flex; flex-direction: column; gap: 1.2rem; }
+  .spotlight .sp-badge {
+    display: inline-flex; align-items: center; gap: 0.5rem;
+    font-size: 0.58rem; letter-spacing: 0.2em; text-transform: uppercase;
+    color: var(--amber); font-weight: 600;
+  }
+  .spotlight .sp-badge::before {
+    content: '';
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--amber);
+    flex-shrink: 0;
+  }
+  .spotlight h2 {
+    font-family: "Playfair Display", serif;
+    font-size: clamp(2rem, 4vw, 3rem);
+    font-weight: 900;
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+  }
+  .spotlight .sp-tagline {
+    font-style: italic;
+    font-size: 1.1rem;
+    color: var(--amber-light);
+  }
+  .spotlight .sp-editorial {
+    font-size: 0.95rem;
+    line-height: 1.7;
+    color: var(--text-muted);
+    border-left: 2px solid var(--border-amber);
+    padding-left: 1rem;
+  }
+  .spotlight .sp-cta {
+    display: inline-block;
+    padding: 0.85rem 2rem;
+    background: var(--amber);
+    color: var(--bg);
+    border-radius: 999px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    letter-spacing: 0.03em;
+    transition: background 0.15s;
+    align-self: flex-start;
+  }
+  .spotlight .sp-cta:hover { background: var(--amber-light); }
+  .spotlight .sp-prompt {
+    font-size: 0.8rem; font-style: italic;
+    color: var(--text-muted);
+  }
+  .spotlight .sp-prompt a { color: var(--text-muted); }
+  .spotlight .sp-prompt a:hover { color: var(--amber); }
+  .spotlight .sp-visual { display: flex; flex-direction: column; gap: 0.8rem; }
+  .spotlight .shot {
+    display: block;
+    aspect-ratio: 16/10;
+    overflow: hidden;
+    border-radius: 14px;
+    border: 1px solid var(--border);
+    background: var(--bg);
+  }
+  .spotlight .shot img { width: 100%; height: 100%; object-fit: cover; }
+  .spotlight .shot-placeholder {
+    height: 100%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.65rem; letter-spacing: 0.2em; text-transform: uppercase;
+    color: var(--text-muted); text-align: center;
+  }
+  .spotlight .sp-secondaries {
+    display: grid; grid-template-columns: repeat(3, 1fr);
+    gap: 0.5rem;
+  }
+
+  /* ── Supporting apps grid ── */
+  .apps {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.25rem;
+    padding: 0.5rem 0 4rem;
+  }
+  @media (max-width: 700px) { .apps { grid-template-columns: 1fr; } }
+
+  .app {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    padding: 1.75rem;
+    display: flex; flex-direction: column; gap: 0.9rem;
+    transition: border-color 0.15s, transform 0.15s;
+  }
+  .app:hover {
+    border-color: var(--border-amber);
+    transform: translateY(-2px);
+  }
+  .app .head {
+    display: flex; justify-content: space-between; align-items: center;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--border);
+  }
+  .app .num {
+    font-size: 0.6rem; letter-spacing: 0.2em; text-transform: uppercase;
+    color: var(--amber);
+  }
+  .app .status {
+    font-size: 0.58rem; letter-spacing: 0.18em; text-transform: uppercase;
+    padding: 3px 9px;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    color: var(--text-muted);
+  }
+  .app--live .status {
+    background: rgba(201, 149, 42, 0.2);
+    border-color: var(--border-amber);
+    color: var(--amber-light);
+  }
+  .app h2 {
+    font-family: "Playfair Display", serif;
+    font-size: 1.9rem; font-weight: 700;
+    line-height: 1.05; letter-spacing: -0.02em;
+  }
+  .app .tagline {
+    font-style: italic;
+    font-size: 0.95rem;
+    color: var(--amber-light);
+  }
+  .app .desc {
+    font-size: 0.9rem; line-height: 1.65;
+    color: var(--text-muted);
+    flex: 1;
+  }
+  .app .shot {
+    display: block;
+    aspect-ratio: 16/10;
+    overflow: hidden;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    background: var(--bg);
+  }
+  .app .shot img { width: 100%; height: 100%; object-fit: cover; }
+  .app .shot-placeholder {
+    height: 100%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.62rem; letter-spacing: 0.2em; text-transform: uppercase;
+    color: var(--text-muted);
+  }
+  .app .ctas { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.4rem; }
+  .app .ctas--single { grid-template-columns: 1fr; }
+
+  /* ── Buttons ── */
+  .btn {
+    text-align: center; padding: 0.6rem 0.5rem;
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    font-family: "Inter", sans-serif;
+    font-size: 0.65rem; letter-spacing: 0.15em; text-transform: uppercase;
+    font-weight: 600;
+    color: var(--text-muted);
+    transition: all 0.12s;
+    cursor: pointer;
+  }
+  .btn:hover { background: var(--amber-dim); border-color: var(--border-amber); color: var(--amber-light); }
+  .btn.btn-primary {
+    background: var(--amber);
+    border-color: var(--amber);
+    color: var(--bg);
+    font-weight: 700;
+  }
+  .btn.btn-primary:hover { background: var(--amber-light); border-color: var(--amber-light); }
+  .prompt-link {
+    font-size: 0.8rem; font-style: italic;
+    color: var(--text-muted);
+  }
+  .prompt-link:hover { color: var(--amber); }
+  .fork-hint {
+    font-size: 0.8rem; font-style: italic;
+    color: var(--text-muted);
+    border-left: 2px solid var(--border-amber);
+    padding-left: 0.75rem;
+    line-height: 1.6;
+  }
+  .sp-fork {
+    font-size: 0.8rem; font-style: italic;
+    color: var(--text-muted);
+    border-left: 2px solid var(--border-amber);
+    padding-left: 0.75rem;
+    line-height: 1.6;
+  }
+
+  /* ── Ladder / epilogue ── */
+  .epilogue {
+    padding: 2.5rem;
+    background: var(--bg-raised);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    margin-bottom: 3rem;
+  }
+  .epilogue h2 {
+    font-size: 0.6rem; letter-spacing: 0.25em; text-transform: uppercase;
+    color: var(--amber); margin-bottom: 1rem;
+  }
+  .epilogue p {
+    font-size: 1.05rem; line-height: 1.7;
+    max-width: 700px;
+  }
+  .epilogue .hl {
+    color: var(--amber-light);
+    font-style: italic;
+    font-weight: 600;
+  }
+
+  footer.term-footer {
+    padding: 1.5rem 0;
+    border-top: 1px solid var(--border);
+    font-size: 0.65rem; letter-spacing: 0.18em; text-transform: uppercase;
+    display: flex; justify-content: space-between;
+    color: var(--text-muted);
+  }
+  footer.term-footer a { color: inherit; }
+  footer.term-footer a:hover { color: var(--amber); }
+</style>
+
+<div class="layout">
+  <header class="topbar">
+    <a class="brand" href="https://links.vibes.diy/homepage">vibes.diy</a>
+    <span class="meta">For Creators · five tools</span>
+  </header>
+
+  <nav class="crumb">
+    <a href="/">Home</a> &nbsp;›&nbsp; Knowledge Creators
+  </nav>
+
+  <section class="hero">
+    <span class="label">For Knowledge Creators</span>
+    <h1>Build the tools your<br>audience <em>actually pays for.</em></h1>
+    <p class="lead">
+      Whether you sell ebooks, run a paid newsletter, or launch courses —
+      the software you need doesn't exist yet. These five apps do exactly
+      what your creator business is missing. Use them, fork them, make them yours.
+    </p>
+  </section>
+
+  <div class="stats">
+    <div class="stat-cell">
+      <div class="k">Apps</div>
+      <div class="v">Five</div>
+    </div>
+    <div class="stat-cell">
+      <div class="k">Persistence</div>
+      <div class="v">Fireproof</div>
+    </div>
+    <div class="stat-cell">
+      <div class="k">Skin</div>
+      <div class="v">Vault</div>
+    </div>
+    <div class="stat-cell">
+      <div class="k">Audience</div>
+      <div class="v">Creators</div>
+    </div>
+  </div>
+
+  <div class="section-label">// spotlight</div>
+
+  {{#each apps}}{{#if spotlight}}
+  <section class="spotlight">
+    <div class="sp-content">
+      <span class="sp-badge">Hero App · №&nbsp;{{num}}</span>
+      <h2>{{title}}</h2>
+      <p class="sp-tagline">{{tagline}}</p>
+      <p class="sp-editorial">
+        Every creator stares at the same blank spreadsheet.
+        List size. Conversion rate. Target revenue.
+        <em>What should I charge?</em>
+        Stop guessing. Run the numbers.
+      </p>
+      {{#if live}}
+        <a class="sp-cta" href="https://vibes.diy/vibe/{{author}}/{{slug}}">Open The Pricing Room →</a>
+        <p class="sp-prompt"><a href="https://vibes.diy/chat/prompt?prompt64={{prompt64 desc}}">↳ the prompt that made this app — describe your version instead</a></p>
+        {{#if fork}}<p class="sp-fork">{{fork}}</p>{{/if}}
+      {{else}}
+        <a class="sp-cta" href="https://vibes.diy/chat/prompt?prompt64={{prompt64 desc}}">Start From Prompt →</a>
+        {{#if fork}}<p class="sp-fork">{{fork}}</p>{{/if}}
+      {{/if}}
+    </div>
+    <div class="sp-visual">
+      {{#if live}}
+        <a class="shot" href="https://vibes.diy/vibe/{{author}}/{{slug}}" aria-label="{{title}} screenshot">
+          <img src="https://{{slug}}--{{author}}.prod-v2.vibesdiy.net/screenshot.jpg" alt="{{slug}}"
+               onerror="this.onerror=null; this.src='{{@root.assetPrefix}}images/og-preview.png';"/>
+        </a>
+        <div class="sp-secondaries">
+          <a class="btn" href="https://vibes.diy/vibe/{{author}}/{{slug}}">Join</a>
+          <a class="btn" href="https://vibes.diy/remix/{{author}}/{{slug}}?skipChat=true">Clone</a>
+          <a class="btn" href="https://vibes.diy/remix/{{author}}/{{slug}}">Remix</a>
+        </div>
+      {{else}}
+        <div class="shot"><div class="shot-placeholder">Deploying…</div></div>
+      {{/if}}
+    </div>
+  </section>
+  {{/if}}{{/each}}
+
+  <div class="section-label">// the tools</div>
+
+  <section class="apps">
+    {{#each apps}}{{^if spotlight}}
+      <article class="app {{#if live}}app--live{{/if}}">
+        <div class="head">
+          <span class="num">№&nbsp;{{num}} · {{slug}}</span>
+          <span class="status">{{#if live}}Live{{else}}Pending{{/if}}</span>
+        </div>
+        <h2>{{title}}</h2>
+        <p class="tagline">{{tagline}}</p>
+        <p class="desc">{{desc}}</p>
+        {{#if live}}
+          <a class="shot" href="https://vibes.diy/vibe/{{author}}/{{slug}}" aria-label="{{title}} screenshot">
+            <img src="https://{{slug}}--{{author}}.prod-v2.vibesdiy.net/screenshot.jpg" alt="{{slug}}"
+                 onerror="this.onerror=null; this.src='{{@root.assetPrefix}}images/og-preview.png';"/>
+          </a>
+          <div class="ctas">
+            <a class="btn" href="https://vibes.diy/vibe/{{author}}/{{slug}}">Join</a>
+            <a class="btn" href="https://vibes.diy/remix/{{author}}/{{slug}}?skipChat=true">Clone</a>
+            <a class="btn" href="https://vibes.diy/remix/{{author}}/{{slug}}">Remix</a>
+          </div>
+          <a class="prompt-link" href="https://vibes.diy/chat/prompt?prompt64={{prompt64 desc}}">↳ the prompt that made this app — describe your version instead</a>
+          {{#if fork}}<p class="fork-hint">{{fork}}</p>{{/if}}
+        {{else}}
+          <div class="shot"><div class="shot-placeholder">Awaiting deploy</div></div>
+          <div class="ctas ctas--single">
+            <a class="btn btn-primary" href="https://vibes.diy/chat/prompt?prompt64={{prompt64 desc}}">Start From Prompt</a>
+          </div>
+          {{#if fork}}<p class="fork-hint">{{fork}}</p>{{/if}}
+        {{/if}}
+      </article>
+    {{/if}}{{/each}}
+  </section>
+
+  <section class="epilogue">
+    <h2>// the ladder</h2>
+    <p>
+      These five tools trace a line from
+      <span class="hl">curiosity to revenue</span>:
+      a quiz grows your list, a waitlist earns the launch,
+      the pricing room sets the number, the outline builds the thing,
+      and the Q&amp;A board keeps students coming back.
+      Each one is remixable — clone the shape, change the subject,
+      make it yours in an afternoon.
+    </p>
+    <p style="margin-top: 1rem;">
+      Every creator business runs differently. <span class="hl">Clone whichever is closest</span>
+      and describe your version — your audience, your offer, your content model.
+    </p>
+  </section>
+
+  {{> newsletter}}
+<footer class="term-footer">
+    <span>Vibes.diy · <a href="https://links.vibes.diy/homepage">homepage</a> · <a href="/expressions/">expressions</a> · <a href="/dating.html">dating</a> · <a href="/college.html">college</a></span>
+    <span>// fin</span>
+  </footer>
+</div>

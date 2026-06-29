@@ -1,0 +1,163 @@
+{{!--
+{
+  "layout": "standard",
+  "title": "Vibes for Photo Identifiers | Vibes DIY",
+  "description": "Snap a photo of something in the wild and get back a name, a gallery, and a place to log it.",
+  "ogUrl": "https://good.vibes.diy/featured-apps/photo-identifiers",
+  "source": "photo-identifiers",
+  "accent": "#00a39a",
+  "breadcrumbTitle": "Photo Identifiers",
+  "heroTitle": "Photo ",
+  "heroAccentWord": "Identifiers",
+  "heroDesc": "Snap a photo of something in the wild and get back a name, a gallery, and a place to log it.",
+  "stories": "Field guides used to weigh five pounds and live on a shelf. Now the guide is in your pocket — and it can be specific to <strong>your</strong> tide pool, your typeface obsession, your kid's rock collection. Real people are already using vibes like these as a daily logbook for the world they pay attention to: a beachcomber tagging anemones with the season, a designer cataloging fonts spotted on storefronts, a family voting on what shape the cloud is. None of these exist as products because the audience is small. They exist as vibes because making one takes a sentence.",
+  "ctaTitle": "Make a field guide for your weird thing.",
+  "ctaText": "Drop your email and we'll send the next batch of identifier templates — birds, plants, fonts, rocks, pasta — when they ship.",
+  "ctaButton": "Get identifier drops",
+  "classics": [
+    {
+      "author": "og",
+      "slug": "various-wolverine-2852",
+      "description": "Smart wardrobe app: photograph clothes, get them sorted and categorized, browse outfit combos with profile."
+    },
+    {
+      "author": "og",
+      "slug": "vibrant-synth-9634",
+      "description": "Animals of Africa: tap to explore lions, elephants, zebras and parrots — illustrated wildlife cards with habitat facts."
+    }
+  ],
+  "groups": [
+    {
+      "description": "Tide pool species log — photo creatures at the shore; ID suggestions from public datasets; season/location tags; compare finds with friends. You study a single cove that has three hyperlocal species the public datasets misidentify. Clone this and add a local-override list so your team's corrections take precedence.",
+      "variants": [
+        { "author": "jchris", "slug": "milk-dropped-happen" },
+        { "author": "jchris", "slug": "tide-pool-species" },
+        { "author": "jchris", "slug": "intertidal-field-notes" }
+      ]
+    },
+    {
+      "description": "Font spotter — photo text in the wild; font gets identified and logged; personal collection gallery; \"seen in\" locations. You're cataloging hand-lettered signs in your city before they get demolished, not digital fonts. Clone this and add a \"hand-lettered\" flag and an at-risk designation field.",
+      "variants": [
+        { "author": "jchris", "slug": "fierce-music-stepped" },
+        { "author": "jchris", "slug": "type-identifier" },
+        { "author": "jchris", "slug": "wave-locate-depend" }
+      ]
+    },
+    {
+      "description": "Cloud shape voting — photo a cloud; friends vote on what it looks like; gallery of best interpretations; daily challenge. Your elementary class does this every Friday as a writing warm-up and wants to keep a yearbook of the best ones. Clone it and add a teacher-picks gallery that only the instructor can curate.",
+      "variants": [
+        { "author": "jchris", "slug": "straw-call-planning" },
+        { "author": "jchris", "slug": "vote-the-clouds" }
+      ]
+    },
+    {
+      "description": "Bird ID app — photo/audio in; match to public datasets; play calls; quick facts. Your backyard list has 47 species and you want to log which feeder each one visits, not just the sighting. Clone this and add a per-feeder location tag to every entry.",
+      "variants": [
+        { "author": "jchris", "slug": "feather-finder" }
+      ]
+    },
+    {
+      "description": "Pasta identifier — image in; top-3 guesses; confidence; crowd corrections. You make regional pasta shapes your Italian grandmother taught you that have no standard name in any database. Clone this and add a family-recipe field so you can name and describe the shape yourself.",
+      "variants": [
+        { "author": "jchris", "slug": "pasta-identifier" }
+      ]
+    },
+    {
+      "description": "Skittles size tracker — photo with reference; measure pixels→mm; compare by region; aggregate stats. Your quality-control team needs to track a different small manufactured part, not candy. Clone it and rename the fields to your part number and tolerance spec.",
+      "variants": [
+        { "author": "jchris", "slug": "skittle-measure-log" }
+      ]
+    },
+    {
+      "description": "Rock collection catalog — photo specimens; crowd-ID rock type; rarity ratings; trade offers with friends. Your kid has 200 specimens and wants to track which ones came from which field trip. Clone it and add a provenance field with trip name and date.",
+      "variants": [
+        { "author": "jchris", "slug": "my-rock-library" }
+      ]
+    }
+  ]
+}
+--}}
+
+<style>
+  /* FIELD GUIDE skin — naturalist observation log */
+  body {
+    background-color: #f7f1e3;
+    background-image:
+      radial-gradient(circle, rgba(0, 163, 154, 0.08) 1px, transparent 1px);
+    background-size: 16px 16px;
+  }
+
+  header {
+    background: linear-gradient(to bottom, #f7f1e3 60%, transparent);
+  }
+
+  /* Field-note teal borders on cards */
+  .scroller .variant,
+  .classic {
+    border-color: #00a39a;
+    box-shadow: 6px 6px 0 #00a39a;
+  }
+  .scroller .variant .shot {
+    border-bottom-color: #00a39a;
+  }
+  .scroller .variant a.btn {
+    border-right-color: #00a39a;
+  }
+
+  .hero-badge {
+    border-color: #00a39a;
+  }
+
+  /* Monospace metadata captions — lat/long, plate numbers, spine */
+  .case-tag,
+  .place-num,
+  .classics-spine,
+  .takes-tag,
+  .breadcrumb,
+  .hero-badge,
+  .brand-btn,
+  .scroller .variant a.btn {
+    font-family: "JetBrains Mono", "Courier New", monospace;
+    letter-spacing: 0.05em;
+  }
+
+  /* Field-guide accent rule on the spine */
+  .classics-spine {
+    border-right: 2px dotted #00a39a;
+  }
+
+  /* Dotted dividers between sections — observation log feel */
+  .section-head {
+    position: relative;
+    padding-bottom: 1.25rem;
+    border-bottom: 2px dotted #00a39a;
+  }
+
+  .gallery + .gallery {
+    border-top: 2px dotted #00a39a;
+    padding-top: 4rem;
+  }
+
+  /* Field-note metadata strip above each "place" — mimics lat/long header */
+  .place-body {
+    border-left-color: #00a39a;
+  }
+  .place-num {
+    -webkit-text-stroke: 1px #00a39a;
+  }
+
+  /* Stories block: italic naturalist log entry */
+  .stories p {
+    font-style: italic;
+    border-top: 2px dotted #00a39a;
+    border-bottom: 2px dotted #00a39a;
+    padding: 1.5rem 0;
+  }
+
+  .cta-card {
+    border-color: #00a39a;
+    box-shadow: 6px 6px 0 #00a39a;
+  }
+</style>
+
+{{> featured-app-body}}

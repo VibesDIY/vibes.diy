@@ -1,0 +1,284 @@
+{{!--
+{
+  "layout": "raw",
+  "title": "Sports — Six Pickup Games | Arcade · Vibes DIY",
+  "description": "Six pickup sports games — mini soccer, hoop shot, tennis rally, golf putt, track dash, bowling strike.",
+  "ogUrl": "https://good.vibes.diy/arcade/sports"
+,
+  "source": "arcade-sports"
+}
+--}}
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Sports — Games Landing</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
+  :root {
+    --field: #1c8a3e;
+    --field-dark: #0f5a26;
+    --line: #ffffff;
+    --jersey-red: #c8102e;
+    --jersey-navy: #0c2340;
+    --gold: #f8c61c;
+    --whistle: #fefcf6;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: "Helvetica Neue", "Inter", system-ui, sans-serif;
+    background:
+      repeating-linear-gradient(
+        90deg,
+        var(--field) 0 80px,
+        var(--field-dark) 80px 160px
+      );
+    color: #fff;
+    min-height: 100vh;
+    padding: 40px 24px 80px;
+  }
+  header {
+    text-align: center;
+    margin-bottom: 56px;
+    max-width: 1240px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .banner {
+    display: inline-block;
+    background: linear-gradient(180deg, var(--jersey-red) 0%, #8a0a20 100%);
+    color: #fff;
+    padding: 8px 24px;
+    font-weight: 800;
+    letter-spacing: 0.32em;
+    text-transform: uppercase;
+    font-size: 13px;
+    border-top: 4px solid var(--gold);
+    border-bottom: 4px solid var(--gold);
+    margin-bottom: 22px;
+    box-shadow: 0 8px 28px rgba(0,0,0,0.4);
+  }
+  h1 {
+    font-size: clamp(40px, 7vw, 96px);
+    margin: 0;
+    font-weight: 900;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    font-style: italic;
+    color: #fff;
+    text-shadow:
+      3px 3px 0 var(--jersey-navy),
+      6px 6px 0 var(--gold),
+      8px 8px 24px rgba(0,0,0,0.6);
+  }
+  .sub {
+    font-size: 14px;
+    letter-spacing: 0.32em;
+    text-transform: uppercase;
+    margin-top: 18px;
+    opacity: 0.92;
+  }
+  nav { margin-top: 22px; }
+  nav a {
+    display: inline-block;
+    background: var(--jersey-navy);
+    color: #fff;
+    padding: 10px 18px;
+    text-decoration: none;
+    font-weight: 700;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    font-size: 12px;
+    border-radius: 4px;
+    border: 2px solid var(--gold);
+  }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(330px, 1fr));
+    gap: 28px;
+    max-width: 1240px;
+    margin: 0 auto;
+  }
+  .card {
+    position: relative;
+    background: var(--whistle);
+    color: var(--jersey-navy);
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: 0 18px 40px rgba(0,0,0,0.45);
+    border: 3px solid var(--gold);
+  }
+  .stripe {
+    height: 14px;
+    background: repeating-linear-gradient(
+      45deg,
+      var(--jersey-red) 0 14px,
+      var(--whistle) 14px 28px,
+      var(--jersey-navy) 28px 42px,
+      var(--whistle) 42px 56px
+    );
+  }
+  .shot-wrap {
+    position: relative;
+    padding: 14px;
+    background: linear-gradient(180deg, #fff 0%, #efece2 100%);
+  }
+  .shot {
+    display: block;
+    width: 100%;
+    aspect-ratio: 16/10;
+    object-fit: cover;
+    border-radius: 8px;
+    background: var(--field);
+    border: 2px solid var(--jersey-navy);
+  }
+  .ribbon {
+    position: absolute;
+    top: 22px; left: -8px;
+    background: var(--jersey-red);
+    color: #fff;
+    font-weight: 900;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    font-size: 11px;
+    padding: 6px 14px 6px 16px;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.25);
+    clip-path: polygon(0 0, 100% 0, 92% 50%, 100% 100%, 0 100%);
+  }
+  .body { padding: 18px 20px 22px; }
+  h2 {
+    margin: 0 0 6px;
+    font-size: 22px;
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    font-style: italic;
+  }
+  .meta {
+    color: var(--jersey-red);
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    font-size: 11px;
+    margin-bottom: 10px;
+  }
+  .prompt {
+    margin: 0 0 16px;
+    font-size: 14px;
+    line-height: 1.55;
+    color: #1a1a1a;
+    min-height: 92px;
+  }
+  .play {
+    display: inline-block;
+    background: var(--jersey-navy);
+    color: #fff;
+    padding: 12px 22px;
+    border-radius: 4px;
+    text-decoration: none;
+    font-weight: 800;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    font-size: 13px;
+    border-bottom: 4px solid var(--gold);
+  }
+  .play:hover { background: var(--jersey-red); border-bottom-color: var(--jersey-navy); }
+</style>
+</head>
+<body>
+  <header>
+    <div class="banner">★ Season Highlights ★ Six Sports ★</div>
+    <h1>The Sports Pack</h1>
+    <div class="sub">Hit play. Pick a team. Beat the clock.</div>
+    <nav><a href="index.html">← All themes</a></nav>
+  </header>
+
+  <main class="grid">
+    <article class="card">
+      <div class="stripe"></div>
+      <div class="shot-wrap">
+        <a href="https://vibes.diy/vibe/jchris/mini-soccer"><img class="shot" src="https://mini-soccer--jchris.prod-v2.vibesdiy.net/screenshot.jpg" alt=""></a>
+      </div>
+      <span class="ribbon">Soccer</span>
+      <div class="body">
+        <h2>Mini Soccer</h2>
+        <div class="meta">1 v 1 · Top-Down · First to 3</div>
+        <p class="prompt">Arrow keys move, space kicks. AI opponent on a small pitch. First to three goals wins, stadium crowd-cue when you score.</p>
+        <a class="play" href="https://vibes.diy/vibe/jchris/mini-soccer">▶ Play</a>
+      </div>
+    </article>
+
+    <article class="card">
+      <div class="stripe"></div>
+      <div class="shot-wrap">
+        <a href="https://vibes.diy/vibe/jchris/swish-shooter"><img class="shot" src="https://swish-shooter--jchris.prod-v2.vibesdiy.net/screenshot.jpg" alt=""></a>
+      </div>
+      <span class="ribbon">Basketball</span>
+      <div class="body">
+        <h2>Hoop Shot</h2>
+        <div class="meta">Free Throws · 10 Shots</div>
+        <p class="prompt">Drag-and-release to aim direction and power; arc shifts with power. Ten shots per round, perfect-swish bonuses, wooden-gym backdrop.</p>
+        <a class="play" href="https://vibes.diy/vibe/jchris/swish-shooter">▶ Play</a>
+      </div>
+    </article>
+
+    <article class="card">
+      <div class="stripe"></div>
+      <div class="shot-wrap">
+        <a href="https://vibes.diy/vibe/jchris/net-game"><img class="shot" src="https://net-game--jchris.prod-v2.vibesdiy.net/screenshot.jpg" alt=""></a>
+      </div>
+      <span class="ribbon">Tennis</span>
+      <div class="body">
+        <h2>Tennis Rally</h2>
+        <div class="meta">Best of 5 · Click to Swing</div>
+        <p class="prompt">Side-view tennis vs AI. Click to swing as the ball arrives. Best-of-five rallies on a grass court with crisp white lines.</p>
+        <a class="play" href="https://vibes.diy/vibe/jchris/net-game">▶ Play</a>
+      </div>
+    </article>
+
+    <article class="card">
+      <div class="stripe"></div>
+      <div class="shot-wrap">
+        <a href="https://vibes.diy/vibe/jchris/mini-golf"><img class="shot" src="https://mini-golf--jchris.prod-v2.vibesdiy.net/screenshot.jpg" alt=""></a>
+      </div>
+      <span class="ribbon">Mini Golf</span>
+      <div class="body">
+        <h2>Golf Putt</h2>
+        <div class="meta">9 Holes · Putting</div>
+        <p class="prompt">Aim with mouse, set power with a charging bar, putt across nine holes with windmills and ramps. Top-down view, scorecard kept.</p>
+        <a class="play" href="https://vibes.diy/vibe/jchris/mini-golf">▶ Play</a>
+      </div>
+    </article>
+
+    <article class="card">
+      <div class="stripe"></div>
+      <div class="shot-wrap">
+        <a href="https://vibes.diy/vibe/jchris/hundred-meter-dash"><img class="shot" src="https://hundred-meter-dash--jchris.prod-v2.vibesdiy.net/screenshot.jpg" alt=""></a>
+      </div>
+      <span class="ribbon">Track</span>
+      <div class="body">
+        <h2>Track Dash</h2>
+        <div class="meta">100m · Arrow Mash</div>
+        <p class="prompt">Alternate left/right arrow keys as fast as possible to accelerate. Race three AI runners in a stadium-track view with lane markings.</p>
+        <a class="play" href="https://vibes.diy/vibe/jchris/hundred-meter-dash">▶ Play</a>
+      </div>
+    </article>
+
+    <article class="card">
+      <div class="stripe"></div>
+      <div class="shot-wrap">
+        <a href="https://vibes.diy/vibe/jchris/lane-strike"><img class="shot" src="https://lane-strike--jchris.prod-v2.vibesdiy.net/screenshot.jpg" alt=""></a>
+      </div>
+      <span class="ribbon">Bowling</span>
+      <div class="body">
+        <h2>Bowling Strike</h2>
+        <div class="meta">10 Frames · Drag & Roll</div>
+        <p class="prompt">Drag to aim, drag again to set power, watch the ball roll. Ten frames per game with proper strike-and-spare scoring.</p>
+        <a class="play" href="https://vibes.diy/vibe/jchris/lane-strike">▶ Play</a>
+      </div>
+    </article>
+  </main>
+</body>
+</html>
+{{> newsletter}}

@@ -1,0 +1,372 @@
+{{!--
+{
+  "layout": "webring",
+  "title": "For Volunteer Coordinators | Vibes DIY",
+  "description": "Sign-up sheets, shift schedulers, check-in kiosks, hours trackers, onboarding flows. Five coordination tools built for nonprofits, community programs, and event volunteer teams.",
+  "ogUrl": "https://good.vibes.diy/volunteer-coordinators",
+  "source": "volunteer-coordinators",
+  "apps": [
+    {
+      "num": "01",
+      "slug": "volunteer-shift-signup",
+      "author": "og",
+      "live": true,
+      "title": "Shift Sign-Up",
+      "tagline": "One link. Every slot filled.",
+      "desc": "Tablet-ready sign-up kiosk for volunteer shifts. Pick a time slot, choose your role from a preset list, enter your name. No login required. Coordinator sees every sign-up in a live list as it happens."
+    },
+    {
+      "num": "02",
+      "slug": "volunteer-checkin-kiosk",
+      "author": "og",
+      "live": true,
+      "title": "Check-In Station",
+      "tagline": "Set it on a table. Walk away.",
+      "desc": "Volunteer check-in for event day. Find your name from today's roster, tap to check in. Shows your arrival time and assigned role. Coordinator gets a live board: who's here, who's still incoming, who's a no-show."
+    },
+    {
+      "num": "03",
+      "slug": "volunteer-hours-log",
+      "author": "og",
+      "live": true,
+      "title": "Hours Log",
+      "tagline": "Every hour accounted for.",
+      "desc": "Volunteers submit hours after each shift: name, date, event, time worked, tasks completed. Coordinator reviews and approves. Totals roll up by volunteer and by event — useful for grant reporting, recognition, and tax letters."
+    },
+    {
+      "num": "04",
+      "slug": "event-roster-slots",
+      "author": "og",
+      "live": true,
+      "title": "Roster Builder",
+      "tagline": "Who's covering which station.",
+      "desc": "Build a volunteer roster before the event. Create role slots with times and headcounts. Share the link — volunteers claim slots with their name and contact info. Coordinator sees filled vs open at a glance and can close full slots."
+    },
+    {
+      "num": "05",
+      "slug": "volunteer-onboarding",
+      "author": "og",
+      "live": true,
+      "title": "Onboarding Form",
+      "tagline": "Ready before they show up.",
+      "desc": "New volunteer intake in one link. Collects emergency contact, role preferences, photo release consent, and a simple liability waiver. Marks completion status. Coordinator reviews submitted forms and can track who still needs to finish."
+    }
+  ],
+  "ogImage": "https://good.vibes.diy/images/screenshots/volunteer-coordinators.jpg"
+}
+--}}
+
+<style>
+  @import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=optional");
+
+  :root {
+    --base: oklch(0.97 0.01 50);
+    --signal: oklch(0.55 0.18 22);
+    --signal-bright: oklch(0.65 0.20 22);
+    --signal-pale: oklch(0.93 0.05 22);
+    --signal-mid: oklch(0.78 0.12 22);
+    --black: oklch(0.12 0 0);
+    --muted: oklch(0.55 0 0);
+    --border: oklch(0.80 0 0);
+  }
+
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html, body {
+    background: var(--base);
+    color: var(--black);
+    font-family: "Space Grotesk", system-ui, sans-serif;
+    line-height: 1.55;
+    min-height: 100vh;
+    background-image:
+      radial-gradient(ellipse at 5% 0%, oklch(0.88 0.07 22 / 0.20), transparent 50%),
+      radial-gradient(ellipse at 95% 100%, oklch(0.88 0.05 50 / 0.15), transparent 50%);
+  }
+  a { color: inherit; text-decoration: none; }
+  .mono { font-family: "Space Mono", monospace; }
+
+  .layout { max-width: 1100px; margin: 0 auto; padding: 0 1.25rem; border-left: 2px solid var(--black); border-right: 2px solid var(--black); }
+
+  .topbar {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 1rem 1.25rem;
+    border-bottom: 4px solid var(--black);
+    margin: 0 -1.25rem;
+    padding-left: 1.25rem; padding-right: 1.25rem;
+  }
+  .topbar .brand {
+    font-family: "Space Grotesk", sans-serif; font-weight: 700; letter-spacing: -0.02em;
+    font-size: 1.25rem;
+  }
+  .topbar .meta {
+    font-family: "Space Mono", monospace;
+    font-size: 0.6rem; letter-spacing: 0.18em; text-transform: uppercase;
+  }
+  .topbar .meta b { background: var(--signal-pale); padding: 2px 6px; border: 1px solid var(--signal); }
+
+  .crumb {
+    padding: 0.55rem 0;
+    font-family: "Space Mono", monospace;
+    font-size: 0.65rem; letter-spacing: 0.18em; text-transform: uppercase;
+    border-bottom: 2px solid var(--black);
+  }
+  .crumb a:hover { background: var(--signal-pale); }
+
+  .hero {
+    padding: 4rem 0 3.5rem;
+    border-bottom: 4px solid var(--black);
+    position: relative;
+  }
+  .hero .label {
+    font-family: "Space Mono", monospace;
+    font-size: 0.6rem; letter-spacing: 0.25em; text-transform: uppercase;
+    margin-bottom: 1.5rem;
+    display: inline-block;
+    padding: 4px 10px;
+    background: var(--signal); color: var(--base);
+  }
+  .hero h1 {
+    font-size: clamp(3rem, 9vw, 6.5rem);
+    font-weight: 700;
+    line-height: 0.92;
+    letter-spacing: -0.04em;
+    margin-bottom: 1.5rem;
+  }
+  .hero h1 .hi {
+    background: var(--signal);
+    color: var(--base);
+    padding: 0 0.15em;
+    display: inline-block;
+    transform: rotate(-1deg);
+    box-shadow: 5px 5px 0 var(--black);
+    margin: 0.08em 0;
+  }
+  .hero p.lead {
+    font-size: 1.15rem;
+    max-width: 720px;
+    line-height: 1.55;
+  }
+  .hero .marker {
+    background: var(--signal-pale);
+    padding: 1px 5px;
+    border-bottom: 2px solid var(--signal);
+  }
+
+  .stats {
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    border-bottom: 4px solid var(--black);
+  }
+  @media (max-width: 700px) { .stats { grid-template-columns: repeat(2, 1fr); } }
+  .stat-cell {
+    padding: 1.25rem 1.5rem;
+    border-right: 2px solid var(--black);
+  }
+  .stat-cell:last-child { border-right: none; }
+  @media (max-width: 700px) {
+    .stat-cell { border-bottom: 2px solid var(--black); }
+    .stat-cell:nth-child(2n) { border-right: none; }
+  }
+  .stat-cell .k {
+    font-family: "Space Mono", monospace;
+    font-size: 0.55rem; letter-spacing: 0.25em; text-transform: uppercase;
+    margin-bottom: 0.4rem; color: var(--muted);
+  }
+  .stat-cell .v {
+    font-family: "Space Grotesk", sans-serif; font-weight: 700;
+    font-size: 1.4rem; letter-spacing: -0.02em;
+  }
+
+  .section-label {
+    padding: 1.5rem 0 0.75rem;
+    font-family: "Space Mono", monospace;
+    font-size: 0.6rem; letter-spacing: 0.25em; text-transform: uppercase;
+    border-bottom: 2px dashed var(--black);
+    margin-bottom: 1.5rem;
+  }
+  .section-label::before { content: "// "; }
+
+  .apps {
+    display: flex; flex-direction: column; gap: 0;
+    border-top: 2px solid var(--black);
+    border-bottom: 4px solid var(--black);
+  }
+  .app {
+    padding: 2rem 1.5rem;
+    border-bottom: 2px solid var(--black);
+    display: grid;
+    grid-template-columns: 80px 1fr 320px;
+    gap: 2rem;
+    align-items: start;
+    transition: background 0.15s;
+  }
+  .app:last-child { border-bottom: none; }
+  @media (max-width: 800px) { .app { grid-template-columns: 1fr; gap: 1rem; } }
+  .app:hover { background: var(--signal-pale); }
+
+  .app .num-cell {
+    font-family: "Space Mono", monospace;
+    display: flex; flex-direction: column; gap: 0.4rem;
+  }
+  .app .num {
+    font-family: "Space Grotesk", sans-serif; font-weight: 700;
+    font-size: 3rem; line-height: 0.85; letter-spacing: -0.04em;
+  }
+  .app .status {
+    font-family: "Space Mono", monospace;
+    font-size: 0.55rem; letter-spacing: 0.2em; text-transform: uppercase;
+    padding: 3px 6px; border: 2px solid var(--black);
+    text-align: center;
+  }
+  .app--live .status { background: var(--signal); color: var(--base); border-color: var(--signal); }
+
+  .app .body { display: flex; flex-direction: column; gap: 0.7rem; }
+  .app .body .title {
+    font-size: 2.2rem; font-weight: 700; letter-spacing: -0.03em;
+    line-height: 1.0;
+  }
+  .app .body .tagline {
+    font-family: "Space Mono", monospace;
+    font-size: 0.82rem; padding: 6px 10px;
+    background: var(--signal); color: var(--base);
+    display: inline-block; align-self: flex-start;
+  }
+  .app .body .desc { font-size: 1rem; line-height: 1.55; }
+
+  .app .right { display: flex; flex-direction: column; gap: 0.6rem; }
+  .app .shot { display: block; aspect-ratio: 16/9; overflow: hidden; border: 2px solid var(--black); background: var(--signal-pale); }
+  .app .shot img { width: 100%; height: 100%; object-fit: cover; }
+  .app .shot-placeholder {
+    padding: 1rem; height: 100%; display: flex; align-items: center; justify-content: center;
+    font-family: "Space Mono", monospace;
+    font-size: 0.7rem; letter-spacing: 0.2em; text-transform: uppercase;
+    text-align: center; color: var(--muted);
+  }
+  .app .ctas { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0; border: 2px solid var(--black); }
+  .app .ctas--single { grid-template-columns: 1fr; }
+  .btn {
+    text-align: center;
+    padding: 0.55rem 0.5rem;
+    background: transparent;
+    border-right: 2px solid var(--black);
+    font-family: "Space Mono", monospace;
+    font-size: 0.65rem; letter-spacing: 0.15em; text-transform: uppercase; font-weight: 700;
+    color: var(--black);
+    cursor: pointer;
+    transition: background 0.12s;
+  }
+  .btn:last-child { border-right: none; }
+  .btn:hover { background: var(--signal-pale); }
+  .prompt-link {
+    font-family: "Space Mono", monospace;
+    font-size: 0.7rem;
+    text-decoration: underline;
+    color: var(--muted);
+  }
+  .prompt-link:hover { background: var(--signal-pale); color: var(--black); }
+
+  .epilogue {
+    padding: 2.5rem 0;
+    border-bottom: 4px solid var(--black);
+  }
+  .epilogue h2 {
+    font-family: "Space Mono", monospace;
+    font-size: 0.6rem; letter-spacing: 0.25em; text-transform: uppercase;
+    margin-bottom: 1rem;
+  }
+  .epilogue h2::before { content: "// "; }
+  .epilogue p { font-size: 1.1rem; max-width: 720px; line-height: 1.55; }
+  .epilogue .hl { background: var(--signal-pale); padding: 1px 4px; border-bottom: 2px solid var(--signal); }
+
+  footer.term-footer {
+    padding: 1rem 0;
+    font-family: "Space Mono", monospace;
+    font-size: 0.6rem; letter-spacing: 0.2em; text-transform: uppercase;
+    display: flex; justify-content: space-between;
+  }
+  footer.term-footer a:hover { background: var(--signal-pale); }
+</style>
+
+<div class="layout">
+  <header class="topbar">
+    <a class="brand" href="https://links.vibes.diy/homepage">VIBES.DIY</a>
+    <span class="meta"><b>FOR VOLUNTEER COORDINATORS</b> · five coordination tools</span>
+  </header>
+
+  <nav class="crumb">
+    <a href="/">Home</a> &nbsp;›&nbsp; Volunteer Coordinators
+  </nav>
+
+  <section class="hero">
+    <span class="label">For Volunteer Coordinators</span>
+    <h1>Tools that run<br/>the <span class="hi">operation.</span></h1>
+    <p class="lead">
+      Five apps for the people who make volunteer programs actually work — from first sign-up to final hours report. <span class="marker">No spreadsheets</span>. <span class="marker">No login walls for volunteers</span>. <span class="marker">No duct tape</span>. Describe what you need. Have it running before the next shift starts.
+    </p>
+  </section>
+
+  <div class="stats">
+    <div class="stat-cell">
+      <div class="k">Apps</div>
+      <div class="v">Five</div>
+    </div>
+    <div class="stat-cell">
+      <div class="k">Audience</div>
+      <div class="v">Coordinators</div>
+    </div>
+    <div class="stat-cell">
+      <div class="k">Persistence</div>
+      <div class="v">Fireproof</div>
+    </div>
+    <div class="stat-cell">
+      <div class="k">Skin</div>
+      <div class="v">Signal</div>
+    </div>
+  </div>
+
+  <div class="section-label">The Coordination Toolkit</div>
+
+  <section class="apps">
+    {{#each apps}}
+      <article class="app {{#if live}}app--live{{else}}app--pending{{/if}}">
+        <div class="num-cell">
+          <div class="num">{{num}}</div>
+          <div class="status">{{#if live}}Live{{else}}Pending{{/if}}</div>
+        </div>
+        <div class="body">
+          <h2 class="title">{{title}}</h2>
+          <span class="tagline">{{tagline}}</span>
+          <p class="desc">{{desc}}</p>
+        </div>
+        <div class="right">
+          {{#if live}}
+            <a class="shot" href="https://vibes.diy/vibe/{{author}}/{{slug}}" aria-label="{{title}} screenshot"><img src="https://{{slug}}--{{author}}.prod-v2.vibesdiy.net/screenshot.jpg" alt="{{slug}}" onerror="this.onerror=null; this.src='{{@root.assetPrefix}}images/og-preview.png';"/></a>
+            <div class="ctas">
+              <a class="btn" href="https://vibes.diy/vibe/{{author}}/{{slug}}">Join</a>
+              <a class="btn" href="https://vibes.diy/remix/{{author}}/{{slug}}?skipChat=true">Clone</a>
+              <a class="btn" href="https://vibes.diy/remix/{{author}}/{{slug}}">Remix</a>
+            </div>
+            <a class="prompt-link" href="https://vibes.diy/chat/prompt?prompt64={{prompt64 desc}}">// start fresh from this prompt</a>
+          {{else}}
+            <div class="shot"><div class="shot-placeholder">awaiting deploy</div></div>
+            <div class="ctas ctas--single">
+              <a class="btn" href="https://vibes.diy/chat/prompt?prompt64={{prompt64 desc}}">Start From Prompt</a>
+            </div>
+          {{/if}}
+        </div>
+      </article>
+    {{/each}}
+  </section>
+
+  <div class="epilogue">
+    <h2>Read Me</h2>
+    <p>
+      Volunteer coordinators spend half their time managing <span class="hl">tools that weren't built for them</span>. A sign-up form that breaks on mobile. A check-in spreadsheet that only works if you're standing next to the laptop. An hours log that requires a new email account. Your program has two role tiers, a Spanish-language check-in kiosk, and a county grant that requires hours logged by program area? Describe that. These five apps show what it looks like when the tool is built around the coordinator's actual workflow — <span class="hl">remix any one</span> and have it fit your program, not a generic template.
+    </p>
+  </div>
+
+  {{> newsletter}}
+<footer class="term-footer">
+    <span>Vibes.diy · <a href="https://links.vibes.diy/homepage">homepage</a> · <a href="/featured-apps/">featured apps</a></span>
+    <span>// END OF COORDINATION TOOLKIT</span>
+  </footer>
+</div>

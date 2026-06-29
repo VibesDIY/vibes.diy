@@ -1,0 +1,144 @@
+{{!--
+{
+  "layout": "webring",
+  "title": "SFPC Courses | Vibes DIY Edu",
+  "description": "6 courses from SFPC — New York, NY. Browse syllabi and study tools.",
+  "ogUrl": "https://good.vibes.diy/edu/sfpc/"
+,
+  "source": "edu-sfpc"
+}
+--}}
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Helvetica Neue', Arial, sans-serif; background: #f4f4f0; color: #1a1a1a; font-size: 14px; line-height: 1.5; }
+.topbar {
+  position: sticky; top: 0; z-index: 100;
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 0.6rem 1.25rem; background: #231F20; color: #FFFFF0;
+  border-bottom: 2px solid #000; font-size: 0.75rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase;
+}
+.topbar a { color: inherit; text-decoration: none; opacity: 0.7; }
+.topbar a:hover { opacity: 1; }
+.topbar .sep { opacity: 0.35; margin: 0 0.4rem; }
+.topbar-logo { height: 22px; width: auto; opacity: 0.85; vertical-align: middle; margin-right: 0.5rem; }
+.wrap { max-width: 860px; margin: 0 auto; padding: 2rem 1.25rem 5rem; }
+.breadcrumb { font-size: 0.75rem; color: #888; margin-bottom: 1.5rem; }
+.breadcrumb a { color: #0070c9; text-decoration: none; }
+.breadcrumb a:hover { text-decoration: underline; }
+.breadcrumb .sep { opacity: 0.5; margin: 0 0.3rem; }
+.inst-hero { margin-bottom: 1.75rem; }
+.inst-hero h1 { font-size: 1.8rem; font-weight: 800; line-height: 1.15; margin-bottom: 0.25rem; }
+.inst-hero p { font-size: 0.85rem; color: #666; }
+.course-row {
+  display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem;
+  background: white; border: 2px solid #231F20; border-radius: 8px;
+  padding: 1.1rem 1.25rem; margin-bottom: 0.75rem;
+  text-decoration: none; color: inherit;
+  transition: background 0.1s, border-color 0.1s;
+}
+.course-row:hover { background: #FFFFF0; border-color: #0070c9; }
+.course-row-body { flex: 1; min-width: 0; }
+.course-row-title { font-size: 0.95rem; font-weight: 700; margin-bottom: 0.2rem; line-height: 1.3; }
+.course-row:hover .course-row-title { color: #0070c9; }
+.course-row-meta { font-size: 0.72rem; color: #888; margin-bottom: 0.5rem; }
+.course-row-arrow { font-size: 1.1rem; color: #ccc; flex-shrink: 0; margin-top: 0.1rem; transition: color 0.1s; }
+.course-row:hover .course-row-arrow { color: #0070c9; }
+.tags { display: flex; flex-wrap: wrap; gap: 0.25rem; margin-bottom: 0.5rem; }
+.tag { font-size: 0.67rem; padding: 0.12rem 0.4rem; background: rgba(35,31,32,0.06); border: 1px solid rgba(35,31,32,0.12); border-radius: 3px; color: #444; }
+.cluster-links { display: flex; flex-wrap: wrap; gap: 0.25rem; }
+.cluster-link {
+  display: inline-flex; align-items: center; gap: 0.2rem;
+  font-size: 0.65rem; font-weight: 600; padding: 0.12rem 0.45rem;
+  background: rgba(0,112,201,0.07); border: 1.5px solid #0070c9;
+  color: #0070c9; border-radius: 3px; text-decoration: none;
+  transition: background 0.1s, color 0.1s;
+}
+.cluster-link:hover { background: #0070c9; color: white; }
+.cluster-link::after { content: " →"; font-size: 0.58rem; opacity: 0.7; }
+.footer { text-align: center; padding: 2rem 1rem; font-size: 0.78rem; color: #999; border-top: 1px solid #ccc; margin-top: 2rem; }
+.footer a { color: inherit; }
+</style>
+
+<nav class="topbar">
+  <div>
+    <a href="https://links.vibes.diy/homepage"><img src="{{assetPrefix}}Vibes-Toggle-1-Transparent.png" alt="Vibes DIY" class="topbar-logo"></a>
+    <span class="sep">/</span>
+    <a href="../syllabi.html">Edu Portal</a>
+    <span class="sep">/</span>
+    SFPC
+  </div>
+  <div>6 courses</div>
+</nav>
+
+<div class="wrap">
+  <div class="breadcrumb">
+    <a href="../syllabi.html">Syllabi</a>
+    <span class="sep">/</span>
+    SFPC
+  </div>
+
+  <div class="inst-hero">
+    <h1>SFPC</h1>
+    <p>New York, NY · 6 courses</p>
+  </div>
+
+  <a href="code-societies-orientation.html" class="course-row">
+      <div class="course-row-body">
+        <div class="course-row-title">Code Societies Orientation</div>
+        <div class="course-row-meta">Interdisciplinary Humanities · 2020</div>
+        <div class="tags"><span class="tag">code as social and political technology</span> <span class="tag">algorithms and power</span> <span class="tag">surveillance</span> <span class="tag">social media infrastructure</span> <span class="tag">interface and ideology</span> <span class="tag">modes of seeing and feeling</span></div>
+        <div class="cluster-links"><a href="../critical-algorithms.html" class="cluster-link">Critical Algorithms</a></div>
+      </div>
+      <span class="course-row-arrow">→</span>
+    </a>
+<a href="surveillance-studies.html" class="course-row">
+      <div class="course-row-body">
+        <div class="course-row-title">Surveillance Studies</div>
+        <div class="course-row-meta">Interdisciplinary Humanities · 2020</div>
+        <div class="tags"><span class="tag">surveillance of Blackness</span> <span class="tag">archive of slavery</span> <span class="tag">predictive policing</span> <span class="tag">biometric technologies</span> <span class="tag">direct-to-consumer DNA testing</span> <span class="tag">acts of refusal</span></div>
+        <div class="cluster-links"><a href="../critical-algorithms.html" class="cluster-link">Critical Algorithms</a></div>
+      </div>
+      <span class="course-row-arrow">→</span>
+    </a>
+<a href="black-mirrors-reimagining-race-technology-and-justice.html" class="course-row">
+      <div class="course-row-body">
+        <div class="course-row-title">Black Mirrors: Reimagining Race, Technology, and Justice</div>
+        <div class="course-row-meta">Philosophy / Ethics · 2020</div>
+        <div class="tags"><span class="tag">discriminatory design</span> <span class="tag">racial hierarchies in algorithms</span> <span class="tag">biased bots</span> <span class="tag">altruistic algorithms</span> <span class="tag">encoded inequity</span> <span class="tag">sociologically informed skepticism</span></div>
+        <div class="cluster-links"><a href="../critical-algorithms.html" class="cluster-link">Critical Algorithms</a></div>
+      </div>
+      <span class="course-row-arrow">→</span>
+    </a>
+<a href="the-unfinished-sentence-algorithmic-text-generation.html" class="course-row">
+      <div class="course-row-body">
+        <div class="course-row-title">The Unfinished Sentence: Algorithmic Text Generation</div>
+        <div class="course-row-meta">Literature / Creative Writing · 2020</div>
+        <div class="tags"><span class="tag">Oulipo and constrained writing</span> <span class="tag">algorithmic text generation</span> <span class="tag">language models</span> <span class="tag">aleatoric writing</span> <span class="tag">agency and authorship</span> <span class="tag">alienation and appropriation</span></div>
+        <div class="cluster-links"><a href="../algorithmic-creative-writing.html" class="cluster-link">Algorithmic Writing</a></div>
+      </div>
+      <span class="course-row-arrow">→</span>
+    </a>
+<a href="computational-exploration-of-magical-and-divinatory-language.html" class="course-row">
+      <div class="course-row-body">
+        <div class="course-row-title">Computational Exploration of Magical and Divinatory Language</div>
+        <div class="course-row-meta">Music / Sound Studies · 2020</div>
+        <div class="tags"><span class="tag">magic words as material</span> <span class="tag">phoneme-to-grapheme models</span> <span class="tag">ineffable meanings</span> <span class="tag">linguistic expression as space</span> <span class="tag">divinatory ontologies</span> <span class="tag">semantic space of Tarot</span></div>
+        <div class="cluster-links"><a href="../music-sound-culture.html" class="cluster-link">Music, Sound &amp; Culture</a> <a href="../algorithmic-creative-writing.html" class="cluster-link">Algorithmic Writing</a></div>
+      </div>
+      <span class="course-row-arrow">→</span>
+    </a>
+<a href="dark-matters.html" class="course-row">
+      <div class="course-row-body">
+        <div class="course-row-title">Dark Matters</div>
+        <div class="course-row-meta">Art History / Visual Culture · 2018</div>
+        <div class="tags"><span class="tag">surveillance of Blackness</span> <span class="tag">Black Gooey Universe</span> <span class="tag">white as neutral in interfaces</span> <span class="tag">biometric surveillance</span> <span class="tag">algorithmic policing</span> <span class="tag">radical imagination in artistic practice</span></div>
+        
+      </div>
+      <span class="course-row-arrow">→</span>
+    </a>
+</div>
+
+{{> newsletter}}
+<footer class="footer">
+  <a href="https://links.vibes.diy/homepage">Vibes DIY</a> — build your own app from any topic in this corpus
+</footer>

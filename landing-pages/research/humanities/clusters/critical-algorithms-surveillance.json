@@ -1,0 +1,34 @@
+{
+  "slug": "critical-algorithms-surveillance",
+  "page_url": "/edu/critical-algorithms.html",
+  "label": "Critical Algorithms & Surveillance",
+  "department": "Interdisciplinary Humanities / Media Studies",
+  "vocabulary": [
+    "code as social and political technology",
+    "algorithms and power",
+    "surveillance",
+    "biometric technologies",
+    "discriminatory design",
+    "racial hierarchies in algorithms",
+    "algorithmic justice",
+    "predictive policing",
+    "carceral capitalism",
+    "interface and ideology",
+    "surveillance of Blackness",
+    "encoded inequity",
+    "acts of refusal",
+    "critical technology studies"
+  ],
+  "sources": [
+    { "institution": "SFPC", "title": "Code Societies Orientation", "url": "https://sfpc.study/classes" },
+    { "institution": "SFPC", "title": "Surveillance Studies", "url": "https://sfpc.study/classes" },
+    { "institution": "SFPC", "title": "Black Mirrors: Reimagining Race, Technology, and Justice", "url": "https://sfpc.study/classes" }
+  ],
+  "app_prompts": [
+    "Algorithmic bias case explorer: user picks a domain (hiring, lending, facial recognition, predictive policing) and sees how racial hierarchies get encoded in training data and model design.",
+    "Surveillance timeline: user picks a surveillance technology (biometric database, social media monitoring, predictive policing tool) and traces its origins, its stated purpose, and its actual use.",
+    "Discriminatory design quiz: user looks at a real interface or system design and identifies the assumptions encoded in it — whose experience was centered, whose was excluded.",
+    "Carceral capitalism explainer: user explores how incarceration intersects with economic structures — prison labor, bail bonds, private prisons, the school-to-prison pipeline.",
+    "Acts of refusal case study: user reads about a community that resisted surveillance or algorithmic control — facial recognition bans, data strikes, encryption adoption — and traces what worked and why."
+  ]
+}

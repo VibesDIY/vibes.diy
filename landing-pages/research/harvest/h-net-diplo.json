@@ -1,0 +1,105 @@
+{
+  "source": "H-Net H-Diplo",
+  "location": "Multi-institutional",
+  "region": "National",
+  "domain": "humanities",
+  "fetched": "2026-05-20",
+  "items": [
+    {
+      "title": "History of U.S. Foreign Policy (1890s-present)",
+      "department": "History — Diplomatic/International",
+      "year": 2013,
+      "url": "https://networks.h-net.org/node/28443/pages/52537/syllabus-history-us-foreign-policy-1890s-present-hershberg",
+      "topics": [
+        "American imperialism",
+        "containment strategy",
+        "détente",
+        "declassification",
+        "Cold War historiography",
+        "triangular diplomacy",
+        "humanitarian intervention",
+        "Soviet-American relations"
+      ]
+    },
+    {
+      "title": "U.S. Diplomatic History—20th Century",
+      "department": "History — Diplomatic/International",
+      "year": 2013,
+      "url": "https://networks.h-net.org/node/28443/pages/52531/syllabus-us-diplomatic-history%E2%80%9420th-century-hershberg",
+      "topics": [
+        "isolationism",
+        "interventionism",
+        "crisis diplomacy",
+        "Open Door policy",
+        "Dollar Diplomacy",
+        "NSC 68",
+        "declassified documents",
+        "FRUS (Foreign Relations of the United States)"
+      ]
+    },
+    {
+      "title": "The U.S. and the Modern World",
+      "department": "History — Diplomatic/International",
+      "year": 2014,
+      "url": "https://networks.h-net.org/node/28443/pages/51872/syllabus-us-and-modern-world-irwin",
+      "topics": [
+        "internationalism",
+        "American exceptionalism",
+        "transnational history",
+        "non-state actors",
+        "colonial legacy",
+        "human rights activism",
+        "cosmopolitanism",
+        "modernization theory"
+      ]
+    },
+    {
+      "title": "U.S. Foreign Relations Since 1914",
+      "department": "History — Diplomatic/International",
+      "year": 2014,
+      "url": "https://networks.h-net.org/node/28443/pages/48003/syllabus-u-s-foreign-relations-1914-matray",
+      "topics": [
+        "Missionary Diplomacy",
+        "Versailles Settlement",
+        "appeasement",
+        "containment",
+        "hegemony",
+        "détente",
+        "presidential diplomacy",
+        "Korean War strategy"
+      ]
+    },
+    {
+      "title": "U.S. Foreign Relations to 1914",
+      "department": "History — Diplomatic/International",
+      "year": 2014,
+      "url": "https://networks.h-net.org/node/28443/pages/48002/syllabus-us-foreign-relations-1914-matray",
+      "topics": [
+        "Manifest Design",
+        "revolutionary diplomacy",
+        "westward expansion",
+        "Spanish-American War",
+        "American imperialism",
+        "gender politics in foreign relations",
+        "Big Stick diplomacy",
+        "Open Door policy"
+      ]
+    },
+    {
+      "title": "Rethinking Cold War History",
+      "department": "History — Diplomatic/International",
+      "year": 2014,
+      "url": "https://networks.h-net.org/node/28443/pages/52536/syllabus-rethinking-cold-war-history-hershberg",
+      "topics": [
+        "Cold War historiography",
+        "superpower rivalry",
+        "Sino-Soviet split",
+        "containment strategy",
+        "covert operations",
+        "triangular diplomacy",
+        "Cuban Missile Crisis",
+        "détente"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,101 @@
+{{!--
+{
+  "layout": "webring",
+  "title": "Box Chain | Mind Games",
+  "description": "Letters on edges, words on chains. Four letter-boxed variations — each one a live deployed app.",
+  "ogUrl": "https://good.vibes.diy/mind-games/letter-boxed.html",
+  "source": "mind-games-letter-boxed"
+}
+--}}
+
+<style>
+  @import url("https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap");
+
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    font-family:'JetBrains Mono', ui-monospace, monospace;
+    background:#eaf2fb;
+    color:#0c2444;
+    min-height:100vh;
+    background-image:linear-gradient(#0c2444 .5px, transparent .5px) 0 0 / 24px 24px, linear-gradient(90deg, #0c2444 .5px, transparent .5px) 0 0 / 24px 24px;
+    background-attachment:fixed;
+  }
+  a{color:inherit;text-decoration:none}
+  .wrap{max-width:1100px;margin:0 auto;padding:64px 24px 96px;position:relative;z-index:1}
+  header.top{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:48px;gap:24px;flex-wrap:wrap}
+  header.top a.back{color:#0c2444;text-decoration:none;opacity:.6;font-size:14px}
+  header.top a.back:hover{opacity:1}
+  h1{font-family:'JetBrains Mono', monospace;font-size:clamp(40px,7vw,84px);margin:0;line-height:.95;letter-spacing:-.02em}
+  .desc{max-width:560px;font-size:18px;opacity:.75;margin:16px 0 0}
+  .accent-bar{display:inline-block;height:6px;width:120px;background:#1a4caa;margin:24px 0 0}
+  .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:32px;margin-top:56px}
+  @media (max-width:720px){.grid{grid-template-columns:1fr}}
+  .card{background:#ffffff;border:1px solid #0c2444;border-radius:0;box-shadow:0 1px 0 #0c2444;overflow:hidden;display:flex;flex-direction:column;transition:transform .15s ease}
+  .card:hover{transform:translateY(-2px)}
+  .shot{display:block;aspect-ratio:16/10;background:#eaf2fb;overflow:hidden;border-bottom:1px solid #0c2444}
+  .shot img{width:100%;height:100%;object-fit:cover;display:block}
+  .meta{padding:20px 22px 24px}
+  .meta h3{margin:0 0 10px;font-family:'JetBrains Mono', monospace;font-size:24px;letter-spacing:-.01em}
+  .meta h3 a{color:inherit;text-decoration:none}
+  .meta h3 a:hover{color:#1a4caa}
+  .prompt{margin:0 0 16px;font-size:14px;line-height:1.55;opacity:.78}
+  .play{display:inline-flex;align-items:center;gap:6px;color:#1a4caa;font-weight:700;text-decoration:none;font-size:14px;letter-spacing:.02em}
+  .play:hover{text-decoration:underline}
+  footer{margin-top:64px;font-size:13px;opacity:.5}
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div>
+      <h1>Box Chain</h1>
+      <p class="desc">Letters on edges, words on chains. Four variations on the theme, each one a live deployed app you can poke at.</p>
+      <div class="accent-bar"></div>
+    </div>
+    <a class="back" href="./index.html">&larr; Mind Games hub</a>
+  </header>
+  <main class="grid">
+    <article class="card">
+      <a class="shot" href="https://vibes.diy/vibe/jchris/letter-boxed" target="_blank" rel="noopener">
+        <img src="https://letter-boxed--jchris.prod-v2.vibesdiy.net/screenshot.jpg" alt="Squareplay preview" loading="lazy"/>
+      </a>
+      <div class="meta">
+        <h3><a href="https://vibes.diy/vibe/jchris/letter-boxed" target="_blank" rel="noopener">Squareplay</a></h3>
+        <p class="prompt">Twelve letters on four sides of a square. Form chain of words where each starts with previous word's last letter. Cannot use consecutive letters from the same side.</p>
+        <a class="play" href="https://vibes.diy/vibe/jchris/letter-boxed" target="_blank" rel="noopener">Play live &rarr;</a>
+      </div>
+    </article>
+    <article class="card">
+      <a class="shot" href="https://vibes.diy/vibe/jchris/triangle-words" target="_blank" rel="noopener">
+        <img src="https://triangle-words--jchris.prod-v2.vibesdiy.net/screenshot.jpg" alt="Tri-Box preview" loading="lazy"/>
+      </a>
+      <div class="meta">
+        <h3><a href="https://vibes.diy/vibe/jchris/triangle-words" target="_blank" rel="noopener">Tri-Box</a></h3>
+        <p class="prompt">Nine letters on three sides of a triangle. Chain rule: last letter starts next word. Minimum two words to solve. Used letters dimmed visibly.</p>
+        <a class="play" href="https://vibes.diy/vibe/jchris/triangle-words" target="_blank" rel="noopener">Play live &rarr;</a>
+      </div>
+    </article>
+    <article class="card">
+      <a class="shot" href="https://vibes.diy/vibe/jchris/pentagon-words" target="_blank" rel="noopener">
+        <img src="https://pentagon-words--jchris.prod-v2.vibesdiy.net/screenshot.jpg" alt="Penta-Box preview" loading="lazy"/>
+      </a>
+      <div class="meta">
+        <h3><a href="https://vibes.diy/vibe/jchris/pentagon-words" target="_blank" rel="noopener">Penta-Box</a></h3>
+        <p class="prompt">Fifteen letters on five pentagon sides. Form word chain; cannot use adjacent same-side letters consecutively. Goal: cover all letters in three words or fewer.</p>
+        <a class="play" href="https://vibes.diy/vibe/jchris/pentagon-words" target="_blank" rel="noopener">Play live &rarr;</a>
+      </div>
+    </article>
+    <article class="card">
+      <a class="shot" href="https://vibes.diy/vibe/jchris/letter-square" target="_blank" rel="noopener">
+        <img src="https://letter-square--jchris.prod-v2.vibesdiy.net/screenshot.jpg" alt="Theme Box preview" loading="lazy"/>
+      </a>
+      <div class="meta">
+        <h3><a href="https://vibes.diy/vibe/jchris/letter-square" target="_blank" rel="noopener">Theme Box</a></h3>
+        <p class="prompt">Twelve letters on a square. All valid words must belong to a daily theme (animals, food). Chain rule applies. Show theme up top.</p>
+        <a class="play" href="https://vibes.diy/vibe/jchris/letter-square" target="_blank" rel="noopener">Play live &rarr;</a>
+      </div>
+    </article>
+  </main>
+  {{> newsletter}}
+<footer>Built with vibes.diy. Each card is a one-prompt mini-app.</footer>
+</div>

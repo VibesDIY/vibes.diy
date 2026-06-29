@@ -1,0 +1,144 @@
+{{!--
+{
+  "layout": "webring",
+  "title": "UT Austin Courses | Vibes DIY Edu",
+  "description": "6 courses from UT Austin — Austin, TX. Browse syllabi and study tools.",
+  "ogUrl": "https://good.vibes.diy/edu/ut-austin/"
+,
+  "source": "edu-ut-austin"
+}
+--}}
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Helvetica Neue', Arial, sans-serif; background: #f4f4f0; color: #1a1a1a; font-size: 14px; line-height: 1.5; }
+.topbar {
+  position: sticky; top: 0; z-index: 100;
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 0.6rem 1.25rem; background: #231F20; color: #FFFFF0;
+  border-bottom: 2px solid #000; font-size: 0.75rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase;
+}
+.topbar a { color: inherit; text-decoration: none; opacity: 0.7; }
+.topbar a:hover { opacity: 1; }
+.topbar .sep { opacity: 0.35; margin: 0 0.4rem; }
+.topbar-logo { height: 22px; width: auto; opacity: 0.85; vertical-align: middle; margin-right: 0.5rem; }
+.wrap { max-width: 860px; margin: 0 auto; padding: 2rem 1.25rem 5rem; }
+.breadcrumb { font-size: 0.75rem; color: #888; margin-bottom: 1.5rem; }
+.breadcrumb a { color: #0070c9; text-decoration: none; }
+.breadcrumb a:hover { text-decoration: underline; }
+.breadcrumb .sep { opacity: 0.5; margin: 0 0.3rem; }
+.inst-hero { margin-bottom: 1.75rem; }
+.inst-hero h1 { font-size: 1.8rem; font-weight: 800; line-height: 1.15; margin-bottom: 0.25rem; }
+.inst-hero p { font-size: 0.85rem; color: #666; }
+.course-row {
+  display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem;
+  background: white; border: 2px solid #231F20; border-radius: 8px;
+  padding: 1.1rem 1.25rem; margin-bottom: 0.75rem;
+  text-decoration: none; color: inherit;
+  transition: background 0.1s, border-color 0.1s;
+}
+.course-row:hover { background: #FFFFF0; border-color: #0070c9; }
+.course-row-body { flex: 1; min-width: 0; }
+.course-row-title { font-size: 0.95rem; font-weight: 700; margin-bottom: 0.2rem; line-height: 1.3; }
+.course-row:hover .course-row-title { color: #0070c9; }
+.course-row-meta { font-size: 0.72rem; color: #888; margin-bottom: 0.5rem; }
+.course-row-arrow { font-size: 1.1rem; color: #ccc; flex-shrink: 0; margin-top: 0.1rem; transition: color 0.1s; }
+.course-row:hover .course-row-arrow { color: #0070c9; }
+.tags { display: flex; flex-wrap: wrap; gap: 0.25rem; margin-bottom: 0.5rem; }
+.tag { font-size: 0.67rem; padding: 0.12rem 0.4rem; background: rgba(35,31,32,0.06); border: 1px solid rgba(35,31,32,0.12); border-radius: 3px; color: #444; }
+.cluster-links { display: flex; flex-wrap: wrap; gap: 0.25rem; }
+.cluster-link {
+  display: inline-flex; align-items: center; gap: 0.2rem;
+  font-size: 0.65rem; font-weight: 600; padding: 0.12rem 0.45rem;
+  background: rgba(0,112,201,0.07); border: 1.5px solid #0070c9;
+  color: #0070c9; border-radius: 3px; text-decoration: none;
+  transition: background 0.1s, color 0.1s;
+}
+.cluster-link:hover { background: #0070c9; color: white; }
+.cluster-link::after { content: " →"; font-size: 0.58rem; opacity: 0.7; }
+.footer { text-align: center; padding: 2rem 1rem; font-size: 0.78rem; color: #999; border-top: 1px solid #ccc; margin-top: 2rem; }
+.footer a { color: inherit; }
+</style>
+
+<nav class="topbar">
+  <div>
+    <a href="https://links.vibes.diy/homepage"><img src="{{assetPrefix}}Vibes-Toggle-1-Transparent.png" alt="Vibes DIY" class="topbar-logo"></a>
+    <span class="sep">/</span>
+    <a href="../syllabi.html">Edu Portal</a>
+    <span class="sep">/</span>
+    UT Austin
+  </div>
+  <div>6 courses</div>
+</nav>
+
+<div class="wrap">
+  <div class="breadcrumb">
+    <a href="../syllabi.html">Syllabi</a>
+    <span class="sep">/</span>
+    UT Austin
+  </div>
+
+  <div class="inst-hero">
+    <h1>UT Austin</h1>
+    <p>Austin, TX · 6 courses</p>
+  </div>
+
+  <a href="eco-348k-causal-inference.html" class="course-row">
+      <div class="course-row-body">
+        <div class="course-row-title">ECO 348K Causal Inference</div>
+        <div class="course-row-meta">Data Science / Stats · 2023</div>
+        <div class="tags"><span class="tag">potential outcomes causal model</span> <span class="tag">randomized controlled trials</span> <span class="tag">regression discontinuity design</span> <span class="tag">regression kink design</span> <span class="tag">instrumental variables</span> <span class="tag">difference-in-differences</span></div>
+        <div class="cluster-links"><a href="../causal-inference.html" class="cluster-link">Causal Inference</a></div>
+      </div>
+      <span class="course-row-arrow">→</span>
+    </a>
+<a href="crp-386-urban-gis.html" class="course-row">
+      <div class="course-row-body">
+        <div class="course-row-title">CRP 386 Urban GIS</div>
+        <div class="course-row-meta">Urban Planning · 2023</div>
+        <div class="tags"><span class="tag">spatial analysis</span> <span class="tag">spatial statistics</span> <span class="tag">3D urban modeling</span> <span class="tag">GPS integration</span> <span class="tag">cartographic representation</span> <span class="tag">urban data visualization</span></div>
+        <div class="cluster-links"><a href="../spatial-analysis-gis.html" class="cluster-link">Spatial Analysis &amp; GIS</a></div>
+      </div>
+      <span class="course-row-arrow">→</span>
+    </a>
+<a href="eco-370m-behavioral-economics.html" class="course-row">
+      <div class="course-row-body">
+        <div class="course-row-title">ECO 370M Behavioral Economics</div>
+        <div class="course-row-meta">Behavioral Economics · 2024</div>
+        <div class="tags"><span class="tag">heuristics and biases</span> <span class="tag">prospect theory</span> <span class="tag">choice under uncertainty</span> <span class="tag">intertemporal choice</span> <span class="tag">hyperbolic discounting</span> <span class="tag">behavioral finance</span></div>
+        <div class="cluster-links"><a href="../behavioral-economics.html" class="cluster-link">Behavioral Economics</a></div>
+      </div>
+      <span class="course-row-arrow">→</span>
+    </a>
+<a href="pbh-354-introduction-to-epidemiology.html" class="course-row">
+      <div class="course-row-body">
+        <div class="course-row-title">PBH 354 Introduction to Epidemiology</div>
+        <div class="course-row-meta">Public Health · 2024</div>
+        <div class="tags"><span class="tag">descriptive epidemiology</span> <span class="tag">disease surveillance</span> <span class="tag">association and causation</span> <span class="tag">cohort and case-control study design</span> <span class="tag">measures of association</span> <span class="tag">confounding and bias</span></div>
+        <div class="cluster-links"><a href="../epidemiology-study-design.html" class="cluster-link">Epidemiology</a></div>
+      </div>
+      <span class="course-row-arrow">→</span>
+    </a>
+<a href="grg-333k-climate-change.html" class="course-row">
+      <div class="course-row-body">
+        <div class="course-row-title">GRG 333K Climate Change</div>
+        <div class="course-row-meta">Environmental Studies · 2024</div>
+        <div class="tags"><span class="tag">climate system dynamics</span> <span class="tag">paleoclimatology</span> <span class="tag">greenhouse gas forcing</span> <span class="tag">climate projections</span> <span class="tag">physical and ecological impacts</span> <span class="tag">climate vulnerability assessment</span></div>
+        <div class="cluster-links"><a href="../climate-change-policy.html" class="cluster-link">Climate &amp; Environment</a></div>
+      </div>
+      <span class="course-row-arrow">→</span>
+    </a>
+<a href="grg-470c-advanced-geographic-information-systems.html" class="course-row">
+      <div class="course-row-body">
+        <div class="course-row-title">GRG 470C Advanced Geographic Information Systems</div>
+        <div class="course-row-meta">Urban Planning · 2024</div>
+        <div class="tags"><span class="tag">spatial analysis methods</span> <span class="tag">vector and raster GIS modeling</span> <span class="tag">GIS system design</span> <span class="tag">network analysis</span> <span class="tag">spatial interpolation</span> <span class="tag">geostatistics</span></div>
+        <div class="cluster-links"><a href="../spatial-analysis-gis.html" class="cluster-link">Spatial Analysis &amp; GIS</a></div>
+      </div>
+      <span class="course-row-arrow">→</span>
+    </a>
+</div>
+
+{{> newsletter}}
+<footer class="footer">
+  <a href="https://links.vibes.diy/homepage">Vibes DIY</a> — build your own app from any topic in this corpus
+</footer>

@@ -1,0 +1,116 @@
+{
+  "source": "University of Wisconsin–Madison",
+  "location": "Madison, WI",
+  "region": "Midwest",
+  "fetched": "2026-05-18",
+  "items": [
+    {
+      "title": "STAT 992: Topics in Causal Inference",
+      "department": "Data Science / Stats",
+      "year": 2024,
+      "url": "https://pages.cs.wisc.edu/~hyunseung/stat992_sp24/",
+      "fetch_method": "web-search",
+      "topics": [
+        "potential outcomes framework",
+        "average treatment effect (ATE)",
+        "average treatment effect on the treated (ATT)",
+        "strong ignorability (conditional exchangeability)",
+        "instrumental variables",
+        "identification under unmeasured confounding",
+        "optimal treatment regimes (OTR)",
+        "influence functions and von Mises calculus"
+      ],
+      "source_text": "The course covers basic concepts in causal inference and randomized experiments, and identification under strong ignorability (i.e., no unmeasured confounding), including identification of the average treatment effect (ATE), the average treatment effect on the treated (ATT), and identification of static, single-time optimal treatment regime (OTR). Additional topics include identification under unmeasured confounding with instrumental variables."
+    },
+    {
+      "title": "ENVIR ST 413: Preserving Nature",
+      "department": "Environmental Studies",
+      "year": 2024,
+      "url": "https://faculty.nelson.wisc.edu/treves/reports/ES413%20Preserving%20Nature%20Syllabus%20.pdf",
+      "fetch_method": "web-search",
+      "topics": [
+        "biodiversity conservation",
+        "extinction threats",
+        "environmental governance",
+        "ethics of nature preservation",
+        "federal-state-tribal environmental law",
+        "civil society and conservation activism",
+        "scientific intervention design",
+        "global conservation case studies"
+      ],
+      "source_text": "The course aims to help students understand the theory and practice the skills of effective, scientific, ethical, and legitimate preservation of nature including biodiversity, the atmosphere, water, and more. Students learn from global lessons in how to intervene against threats to nature, and the roles of ethics, law, and research in preserving nature, including environmental provisions in national constitutions and U.S. federal-state-tribal governance as they relate to environmental protection."
+    },
+    {
+      "title": "CIV ENGR 571: Urban Transportation Planning",
+      "department": "Urban Planning",
+      "year": 2022,
+      "url": "https://cavh.cee.wisc.edu/wp-content/uploads/sites/1758/2022/09/CEE571-URBAN-TRANSPORTATION-PLANNING-Syllabus-2022.pdf",
+      "fetch_method": "web-search",
+      "topics": [
+        "travel demand forecasting",
+        "land use and mobility interaction",
+        "transportation demand management",
+        "smart growth and context-sensitive design",
+        "transit planning",
+        "multimodal network analysis",
+        "transportation policy frameworks",
+        "planning evaluation methods"
+      ],
+      "source_text": "The course provides a broad overview of the elements of transportation planning, from policy and design to analysis and evaluation, covering planning frameworks, land use planning, modeling, and transportation demand management. The course examines the relationship between land use and mobility, with an emphasis on connecting land use decision-making with mobility planning, including smart growth and context-sensitive design practices."
+    },
+    {
+      "title": "POP HLTH 849: Genetic Epidemiology",
+      "department": "Public Health",
+      "year": 2024,
+      "url": "https://engelmanlab.pophealth.wisc.edu/wp-content/uploads/sites/875/2021/03/POP-HLTH-849-Syllabus-to-Distribute.pdf",
+      "fetch_method": "web-search",
+      "topics": [
+        "Mendelian and complex inheritance",
+        "genome-wide association studies (GWAS)",
+        "participant ascertainment and phenotype definition",
+        "genotyping and sequencing quality control",
+        "analytic method selection",
+        "genetic study design",
+        "covariate measurement",
+        "data analysis and results presentation"
+      ],
+      "source_text": "The course provides an introduction to genetic epidemiology, particularly genetic association studies. Topics include a general overview of genetics and Mendelian and complex inheritance, as well as various elements of study design, including participant ascertainment; phenotype definition; biologic sample selection; genotyping, sequencing, and quality control; measurement of covariates, and choice of analytic methods."
+    },
+    {
+      "title": "PA 881: Cost-Benefit Analysis",
+      "department": "Behavioral Economics",
+      "year": 2024,
+      "url": "https://lafollette.wisc.edu/course/pa-881-cost-benefit-analysis/",
+      "fetch_method": "web-search",
+      "topics": [
+        "welfare economics foundations",
+        "social discount rate",
+        "willingness to pay valuation",
+        "uncertainty in benefit-cost estimation",
+        "welfare weights",
+        "shadow pricing",
+        "environmental and social policy case studies",
+        "applied benefit-cost reporting"
+      ],
+      "source_text": "The course presents the welfare economics underpinnings for evaluating the social benefits and costs of government activities. Issues such as uncertainty, the social discount rate, and welfare weights are discussed, with case studies from the environmental, social policy, and agricultural areas. Students work with real-world clients in the public, non-governmental, and private sectors to conduct a cost-benefit analysis and produce a report."
+    },
+    {
+      "title": "ED PSYCH 560: Foundations in Quantitative and Qualitative Research Methods",
+      "department": "Education Research",
+      "year": 2024,
+      "url": "https://learninganalytics.education.wisc.edu/qualitative-and-quantitative-research-methods-course/",
+      "fetch_method": "web-search",
+      "topics": [
+        "regression analysis",
+        "quantitative data analysis with R",
+        "qualitative coding schemes",
+        "observational and interview methods",
+        "mixed methods research design",
+        "theoretical foundations of social science inquiry",
+        "peer review of research",
+        "scaffolded research project development"
+      ],
+      "source_text": "EdPsych 560 presents introductory research procedures in the social sciences, including the exploration of theoretical foundations and practical use of basic tools and programs needed for quantitative and qualitative data analysis. Students discover the theoretical foundations of regression analysis and apply it to real datasets using R software, and for the qualitative project, students perform observations and interviews and create qualitative coding schemes."
+    }
+  ]
+}

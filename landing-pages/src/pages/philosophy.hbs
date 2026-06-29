@@ -1,0 +1,433 @@
+{{!--
+{
+  "layout": "standard",
+  "title": "Philosophy Apps — Vibes DIY",
+  "description": "Seven interactive philosophy apps exploring tacit knowledge, embodied cognition, phenomenology, situated knowledges, virtue epistemology, and the AI consciousness boundary.",
+  "ogUrl": "https://good.vibes.diy/philosophy/",
+  "ogImage": "https://good.vibes.diy/images/screenshots/philosophy.jpg",
+  "source": "philosophy"
+}
+--}}
+
+<style>
+  @import url('https://fonts.cdnfonts.com/css/alte-haas-grotesk');
+
+  :root {
+    --black: #231F20;
+    --ivory: #FFFFF0;
+    --grid-gray: #CCCDC8;
+    --os-gray: #7A7A7A;
+    --grid-line: rgba(255, 255, 255, 0.5);
+    --indigo: #3B2F8C;
+  }
+
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Alte Haas Grotesk', sans-serif;
+    background-color: var(--grid-gray);
+    color: var(--black);
+    line-height: 1.6;
+    background-image:
+      linear-gradient(var(--grid-line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
+    background-size: 40px 40px;
+    min-height: 100vh;
+  }
+
+  /* Standard layout provides <header> with logo + <footer> partial */
+  header {
+    padding: 1.5rem 2rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: linear-gradient(to bottom, var(--grid-gray) 60%, transparent);
+  }
+  .logo-link { display: block; text-decoration: none; }
+  .logo-img { height: 56px; width: auto; display: block; }
+
+  /* Hero */
+  .hero {
+    max-width: 900px;
+    margin: 2rem auto 4rem;
+    padding: 0 2rem;
+    text-align: center;
+  }
+  .hero-badge {
+    display: inline-block;
+    background: var(--black);
+    color: var(--ivory);
+    padding: 0.5rem 1.25rem;
+    border-radius: 50px;
+    font-size: 0.85rem;
+    font-weight: 500;
+    margin-bottom: 1.5rem;
+    letter-spacing: 0.5px;
+  }
+  .hero h1 {
+    font-size: clamp(2rem, 5vw, 3.25rem);
+    font-weight: 700;
+    line-height: 1.2;
+    margin-bottom: 1.5rem;
+    letter-spacing: -0.5px;
+  }
+  .hero h1 span { color: var(--indigo); }
+  .hero p {
+    font-size: 1.25rem;
+    color: #555;
+    max-width: 650px;
+    margin: 0 auto 2rem;
+  }
+  .cta-buttons { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
+  .btn {
+    padding: 1rem 2rem;
+    border-radius: 50px;
+    font-family: 'Alte Haas Grotesk', sans-serif;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-block;
+    transition: transform 0.1s, box-shadow 0.1s;
+    border: 3px solid var(--black);
+  }
+  .btn:hover { transform: translate(-2px, -2px); box-shadow: 4px 4px 0 var(--black); }
+  .btn-primary { background: var(--indigo); color: var(--ivory); }
+  .btn-secondary { background: var(--ivory); color: var(--black); }
+
+  /* Section layout */
+  .section { max-width: 1100px; margin: 0 auto; padding: 4rem 2rem; }
+  .section-title {
+    font-size: 1.75rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    letter-spacing: -0.3px;
+  }
+  .section-subtitle { color: var(--os-gray); margin-bottom: 2.5rem; font-size: 1.1rem; }
+
+  /* Card base */
+  .card {
+    background: var(--ivory);
+    border-radius: 20px;
+    border: 3px solid var(--black);
+    padding: 2.5rem;
+    box-shadow: 6px 6px 0 var(--black);
+  }
+
+  /* Value props */
+  .props-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
+  }
+  @media (max-width: 768px) { .props-grid { grid-template-columns: 1fr; } }
+  .prop-card {
+    background: var(--ivory);
+    border-radius: 20px;
+    border: 3px solid var(--indigo);
+    padding: 2rem;
+    box-shadow: 6px 6px 0 var(--indigo);
+  }
+  .prop-icon { font-size: 2rem; margin-bottom: 1rem; }
+  .prop-title { font-size: 1.15rem; font-weight: 700; margin-bottom: 0.5rem; }
+  .prop-desc { color: #555; font-size: 0.95rem; line-height: 1.5; }
+
+  /* How it works */
+  .steps { list-style: none; display: flex; flex-direction: column; gap: 1.25rem; }
+  .step { display: flex; gap: 1.25rem; align-items: flex-start; }
+  .step-num {
+    background: var(--indigo);
+    color: var(--ivory);
+    width: 2.25rem;
+    height: 2.25rem;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 0.95rem;
+    flex-shrink: 0;
+    margin-top: 0.1rem;
+  }
+  .step-text { font-size: 1rem; }
+  .step-text strong { font-weight: 700; }
+
+  /* Apps grid */
+  .apps-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1.75rem;
+  }
+  .app-card {
+    background: var(--ivory);
+    border-radius: 20px;
+    border: 3px solid var(--black);
+    box-shadow: 6px 6px 0 var(--black);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    transition: transform 0.1s, box-shadow 0.1s;
+  }
+  .app-card:hover { transform: translate(-2px, -2px); box-shadow: 8px 8px 0 var(--black); }
+  .app-screenshot { width: 100%; aspect-ratio: 16/9; object-fit: cover; display: block; background: var(--grid-gray); }
+  .app-body { padding: 1.5rem; display: flex; flex-direction: column; flex: 1; }
+  .app-title { font-size: 1.1rem; font-weight: 700; margin-bottom: 0.5rem; }
+  .app-desc { color: #555; font-size: 0.9rem; line-height: 1.5; flex: 1; margin-bottom: 1.25rem; }
+  .app-links { display: flex; gap: 0.75rem; flex-wrap: wrap; }
+  .app-link {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--black);
+    text-decoration: none;
+    padding: 0.35rem 0.85rem;
+    border: 2px solid var(--black);
+    border-radius: 50px;
+    transition: background 0.1s;
+  }
+  .app-link:hover { background: var(--indigo); color: var(--ivory); border-color: var(--indigo); }
+  .app-link.primary { background: var(--black); color: var(--ivory); }
+  .app-link.primary:hover { background: var(--indigo); border-color: var(--indigo); }
+  .app-fork {
+    font-size: 0.82rem; color: #666; line-height: 1.55;
+    border-left: 2px solid var(--indigo); padding-left: 0.65rem;
+    margin-top: 0.5rem; font-style: italic;
+  }
+  .make-it-yours {
+    max-width: 800px; margin: 0 auto 2.5rem;
+    padding: 1.5rem 2rem;
+    background: var(--ivory);
+    border-radius: 20px;
+    border: 3px solid var(--indigo);
+    box-shadow: 6px 6px 0 var(--indigo);
+    text-align: center;
+  }
+  .make-it-yours p { font-size: 1.05rem; color: #555; line-height: 1.65; }
+
+  /* Dark CTA */
+  .cta-dark {
+    background: var(--black);
+    color: var(--ivory);
+    text-align: center;
+    padding: 4rem 2rem;
+    border-radius: 20px;
+    max-width: 800px;
+    margin: 0 auto 4rem;
+  }
+  .cta-dark h2 { font-size: 2rem; font-weight: 700; margin-bottom: 1rem; }
+  .cta-dark p { font-size: 1.15rem; margin-bottom: 2rem; opacity: 0.85; }
+  .btn-cta {
+    background: var(--ivory);
+    color: var(--black);
+    padding: 1rem 2.5rem;
+    border-radius: 50px;
+    font-weight: 700;
+    font-size: 1.05rem;
+    text-decoration: none;
+    display: inline-block;
+    border: 3px solid var(--ivory);
+    transition: background 0.15s, color 0.15s;
+  }
+  .btn-cta:hover { background: var(--indigo); color: var(--ivory); border-color: var(--indigo); }
+</style>
+
+<!-- Hero -->
+<div class="hero">
+  <span class="hero-badge">Explore Philosophy</span>
+  <h1>What does it mean<br>to <span>know</span> something?</h1>
+  <p>Seven interactive thought experiments drawn from the Stanford Encyclopedia of Philosophy — tacit knowledge, the knowing body, situated epistemology, and the AI consciousness boundary.</p>
+  <div class="cta-buttons">
+    <a href="https://links.vibes.diy/homepage" class="btn btn-primary">Start Exploring</a>
+    <a href="https://links.vibes.diy/discord" class="btn btn-secondary">Join Discord</a>
+  </div>
+</div>
+
+<!-- Value props -->
+<div class="section">
+  <div class="props-grid">
+    <div class="prop-card">
+      <div class="prop-icon">⟳</div>
+      <div class="prop-title">Beyond Propositions</div>
+      <p class="prop-desc">Ryle's regress shows that skills can't be fully reduced to rules — applying any rule requires knowing how to apply it, all the way down.</p>
+    </div>
+    <div class="prop-card">
+      <div class="prop-icon">◎</div>
+      <div class="prop-title">The Knowing Body</div>
+      <p class="prop-desc">Cognition isn't housed in the brain and borrowed by the body — it's constituted by the body's engagement with the world.</p>
+    </div>
+    <div class="prop-card">
+      <div class="prop-icon">⊕</div>
+      <div class="prop-title">Who Knows What</div>
+      <p class="prop-desc">The knower's position isn't bias to subtract — it's epistemically constitutive. Objectivity requires locating yourself, not erasing yourself.</p>
+    </div>
+  </div>
+</div>
+
+<!-- How it works -->
+<div class="section" style="padding-top: 0;">
+  <div class="card">
+    <h2 class="section-title">How it works</h2>
+    <p class="section-subtitle">Each app is a thought experiment, not a lecture.</p>
+    <ol class="steps">
+      <li class="step">
+        <div class="step-num">1</div>
+        <div class="step-text"><strong>Pick a topic</strong> — choose one of the seven philosophical threads below.</div>
+      </li>
+      <li class="step">
+        <div class="step-num">2</div>
+        <div class="step-text"><strong>Engage the argument</strong> — the app walks you through the key positions and challenges your assumptions.</div>
+      </li>
+      <li class="step">
+        <div class="step-num">3</div>
+        <div class="step-text"><strong>Work through it</strong> — write, respond, try to defeat the argument. Your reasoning is saved so you can return to it.</div>
+      </li>
+      <li class="step">
+        <div class="step-num">4</div>
+        <div class="step-text"><strong>Build your own view</strong> — every app ends with the AI implication: how does this bear on what AI can and can't know?</div>
+      </li>
+    </ol>
+  </div>
+</div>
+
+<!-- Apps -->
+<div class="section">
+  <h2 class="section-title">Seven apps. Seven arguments.</h2>
+  <p class="section-subtitle">Each draws directly from a Stanford Encyclopedia of Philosophy entry.</p>
+  <div class="apps-grid">
+
+    <div class="app-card">
+      <img class="app-screenshot"
+        src="https://knowing-how-vs-knowing-that--edu.prod-v2.vibesdiy.net/screenshot.jpg"
+        alt="Knowing How vs. Knowing That"
+        onerror="this.onerror=null; this.src='{{assetPrefix}}images/og-preview.png';">
+      <div class="app-body">
+        <div class="app-title">Knowing How vs. Knowing That</div>
+        <p class="app-desc">Try to reduce a skill to a list of propositions — Ryle's regress argument shows why it always fails.</p>
+        <div class="app-links">
+          <a href="https://vibes.diy/vibe/edu/knowing-how-vs-knowing-that" class="app-link primary">Visit</a>
+          <a href="https://vibes.diy/remix/edu/knowing-how-vs-knowing-that?skipChat=true" class="app-link">Clone</a>
+          <a href="https://vibes.diy/remix/edu/knowing-how-vs-knowing-that" class="app-link">Remix</a>
+        </div>
+        <p class="app-fork">Teaching this argument in a unit on philosophy of sport or martial arts? Clone it and swap the examples — the regress structure is the same.</p>
+      </div>
+    </div>
+
+    <div class="app-card">
+      <img class="app-screenshot"
+        src="https://embodied-cognition-explorer--edu.prod-v2.vibesdiy.net/screenshot.jpg"
+        alt="Embodied Cognition Explorer"
+        onerror="this.onerror=null; this.src='{{assetPrefix}}images/og-preview.png';">
+      <div class="app-body">
+        <div class="app-title">Embodied Cognition Explorer</div>
+        <p class="app-desc">Four thought experiments where you can't separate cognition from the body — the cane, the dancer, the native speaker, the phantom limb.</p>
+        <div class="app-links">
+          <a href="https://vibes.diy/vibe/edu/embodied-cognition-explorer" class="app-link primary">Visit</a>
+          <a href="https://vibes.diy/remix/edu/embodied-cognition-explorer?skipChat=true" class="app-link">Clone</a>
+          <a href="https://vibes.diy/remix/edu/embodied-cognition-explorer" class="app-link">Remix</a>
+        </div>
+        <p class="app-fork">Focusing on disability studies and prosthetics as extended cognition? Clone it and reframe the cases around assistive technology and phenomenology of disability.</p>
+      </div>
+    </div>
+
+    <div class="app-card">
+      <img class="app-screenshot"
+        src="https://phenomenology-first-person--edu.prod-v2.vibesdiy.net/screenshot.jpg"
+        alt="Phenomenology: First-Person"
+        onerror="this.onerror=null; this.src='{{assetPrefix}}images/og-preview.png';">
+      <div class="app-body">
+        <div class="app-title">Phenomenology: First-Person</div>
+        <p class="app-desc">A guided phenomenological exercise — Husserl's intentionality, Heidegger's tool-being, Merleau-Ponty's body schema.</p>
+        <div class="app-links">
+          <a href="https://vibes.diy/vibe/edu/phenomenology-first-person" class="app-link primary">Visit</a>
+          <a href="https://vibes.diy/remix/edu/phenomenology-first-person?skipChat=true" class="app-link">Clone</a>
+          <a href="https://vibes.diy/remix/edu/phenomenology-first-person" class="app-link">Remix</a>
+        </div>
+        <p class="app-fork">Pairing this with Sartre's being-for-others or Beauvoir's situated freedom? Clone it and add a fourth exercise foregrounding intersubjectivity.</p>
+      </div>
+    </div>
+
+    <div class="app-card">
+      <img class="app-screenshot"
+        src="https://situated-knowledges--edu.prod-v2.vibesdiy.net/screenshot.jpg"
+        alt="Situated Knowledges"
+        onerror="this.onerror=null; this.src='{{assetPrefix}}images/og-preview.png';">
+      <div class="app-body">
+        <div class="app-title">Situated Knowledges</div>
+        <p class="app-desc">Haraway's view from nowhere, Harding's standpoint epistemology, Fricker's epistemic injustice — the knower's position as epistemically constitutive.</p>
+        <div class="app-links">
+          <a href="https://vibes.diy/vibe/edu/situated-knowledges" class="app-link primary">Visit</a>
+          <a href="https://vibes.diy/remix/edu/situated-knowledges?skipChat=true" class="app-link">Clone</a>
+          <a href="https://vibes.diy/remix/edu/situated-knowledges" class="app-link">Remix</a>
+        </div>
+        <p class="app-fork">Running this as part of a science studies or STS course? Clone it and center Collins and Evans on expertise alongside Haraway — the situated/objective tension maps directly.</p>
+      </div>
+    </div>
+
+    <div class="app-card">
+      <img class="app-screenshot"
+        src="https://virtue-epistemology--edu.prod-v2.vibesdiy.net/screenshot.jpg"
+        alt="Virtue Epistemology"
+        onerror="this.onerror=null; this.src='{{assetPrefix}}images/og-preview.png';">
+      <div class="app-body">
+        <div class="app-title">Virtue Epistemology</div>
+        <p class="app-desc">Four vignettes — evaluate the reasoner's intellectual character, not just their conclusion. Sosa's reliabilism vs. Zagzebski's responsibilism.</p>
+        <div class="app-links">
+          <a href="https://vibes.diy/vibe/edu/virtue-epistemology" class="app-link primary">Visit</a>
+          <a href="https://vibes.diy/remix/edu/virtue-epistemology?skipChat=true" class="app-link">Clone</a>
+          <a href="https://vibes.diy/remix/edu/virtue-epistemology" class="app-link">Remix</a>
+        </div>
+        <p class="app-fork">Want vignettes drawn from scientific reasoning and testimony rather than everyday belief? Clone it and swap the cases — intellectual humility and open-mindedness read differently in lab contexts.</p>
+      </div>
+    </div>
+
+    <div class="app-card">
+      <img class="app-screenshot"
+        src="https://ai-consciousness-boundary--edu.prod-v2.vibesdiy.net/screenshot.jpg"
+        alt="The AI Consciousness Boundary"
+        onerror="this.onerror=null; this.src='{{assetPrefix}}images/og-preview.png';">
+      <div class="app-body">
+        <div class="app-title">The AI Consciousness Boundary</div>
+        <p class="app-desc">Chalmers' hard problem, Nagel's bat, Searle's Chinese Room, philosophical zombies — why language production isn't proof of interiority.</p>
+        <div class="app-links">
+          <a href="https://vibes.diy/vibe/edu/ai-consciousness-boundary" class="app-link primary">Visit</a>
+          <a href="https://vibes.diy/remix/edu/ai-consciousness-boundary?skipChat=true" class="app-link">Clone</a>
+          <a href="https://vibes.diy/remix/edu/ai-consciousness-boundary" class="app-link">Remix</a>
+        </div>
+        <p class="app-fork">Teaching this alongside Dennett's heterophenomenology or Hofstadter on strange loops? Clone it and add a counterargument track — the deflationary position deserves its own set of challenges.</p>
+      </div>
+    </div>
+
+    <div class="app-card">
+      <img class="app-screenshot"
+        src="https://extended-mind--edu.prod-v2.vibesdiy.net/screenshot.jpg"
+        alt="The Extended Mind"
+        onerror="this.onerror=null; this.src='{{assetPrefix}}images/og-preview.png';">
+      <div class="app-body">
+        <div class="app-title">The Extended Mind</div>
+        <p class="app-desc">Clark & Chalmers: Otto's notebook is part of his memory. Four escalating cases — does AI extend your mind or shrink it?</p>
+        <div class="app-links">
+          <a href="https://vibes.diy/vibe/edu/extended-mind" class="app-link primary">Visit</a>
+          <a href="https://vibes.diy/remix/edu/extended-mind?skipChat=true" class="app-link">Clone</a>
+          <a href="https://vibes.diy/remix/edu/extended-mind" class="app-link">Remix</a>
+        </div>
+        <p class="app-fork">Want to end the exercise with a debate prompt rather than a reflective question? Clone it and add a structured for/against format at the final step.</p>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Make it yours -->
+<div class="make-it-yours">
+  <p>Every philosophy course has a different canon and a different set of arguments it wants to foreground. Clone whichever app is closest to your syllabus and describe your version — your thinkers, your cases, your pedagogical stakes.</p>
+</div>
+
+<!-- Dark CTA -->
+<div class="cta-dark">
+  <h2>Build your own philosophy app</h2>
+  <p>Every app here started as a single prompt. Pick any argument that interests you and build your own version — in minutes.</p>
+  <a href="https://links.vibes.diy/homepage" class="btn-cta">Start on Vibes DIY</a>
+</div>
+{{> newsletter}}

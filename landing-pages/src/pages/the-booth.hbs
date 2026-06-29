@@ -1,0 +1,401 @@
+{{!--
+{
+  "layout": "webring",
+  "title": "Software for the Basketball Commentary Crew | Vibes DIY",
+  "description": "Run the booth like a broadcast. A live scoreboard everyone updates, a glossary for your made-up plays, weekly MVP power rankings, a hot-take accountability board, and a run-of-show. Call your own game.",
+  "ogUrl": "https://good.vibes.diy/the-booth/",
+  "source": "the-booth",
+  "ogImage": "https://good.vibes.diy/images/screenshots/the-booth.jpg",
+  "spotlight": {
+    "slug": "live-basketball-scoreboard",
+    "author": "og",
+    "live": true,
+    "title": "The Big Board",
+    "tagline": "Tap to score. The whole crew sees it live.",
+    "desc": "A live basketball scoreboard the whole crew updates from their phones — tap +1/+2/+3, foul counts, quarter selector, and a game clock you can start, stop, and reset."
+  },
+  "apps": [
+    {
+      "slug": "basketball-slang-glossary",
+      "author": "og",
+      "live": true,
+      "title": "Hoops Lexicon",
+      "tagline": "Every made-up play name, finally defined.",
+      "desc": "A shared glossary for a basketball crew's invented slang and play names. Add a term, a definition, and an example. Search alphabetically and upvote the best entries."
+    },
+    {
+      "slug": "basketball-mvp-rankings",
+      "author": "og",
+      "live": true,
+      "title": "MVP Power Rankings",
+      "tagline": "Cast your vote. Watch the chart move.",
+      "desc": "A weekly basketball MVP power ranking. Add players, cast votes each week, and see a ranked bar chart. Track how the ranking shifts week over week."
+    },
+    {
+      "slug": "sports-hot-take-tracker",
+      "author": "og",
+      "live": true,
+      "title": "Hot Take Court",
+      "tagline": "Log the take. Grade it later. No backsies.",
+      "desc": "A hot-take accountability board for a sports commentary crew. Post a bold prediction with who said it. Later mark each take Correct or Cooked and rank who's most often right."
+    },
+    {
+      "slug": "broadcast-rundown-board",
+      "author": "og",
+      "live": true,
+      "title": "Booth Rundown",
+      "tagline": "Who's on the call, segment by segment.",
+      "desc": "A run-of-show board for a basketball broadcast crew. List segments in order with a time, the host on the mic, and the topic. Reorder, check them off as they air, and total the runtime."
+    }
+  ]
+}
+--}}
+
+<style>
+  @import url("https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&family=Inter:wght@400;500;600;700;800;900&family=Space+Mono:wght@400;700&display=optional");
+
+  :root {
+    --court: #0d0e12;
+    --panel: #15171f;
+    --card: #181b24;
+    --chalk: #f5f3ec;
+    --led: #ff9e00;
+    --led-soft: rgba(255, 158, 0, 0.14);
+    --hardwood: #c8853b;
+    --home: #ff453a;
+    --away: #2b8cff;
+    --line: rgba(245, 243, 236, 0.12);
+    --mut: #9a9caa;
+    --shadow: 6px 6px 0 #000;
+  }
+
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html, body {
+    background: var(--court);
+    color: var(--chalk);
+    font-family: "Inter", system-ui, sans-serif;
+    line-height: 1.55;
+    min-height: 100vh;
+    background-image:
+      linear-gradient(var(--line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--line) 1px, transparent 1px);
+    background-size: 48px 48px;
+  }
+
+  a { color: inherit; text-decoration: none; }
+  .mono { font-family: "Space Mono", monospace; }
+
+  .layout { max-width: 1140px; margin: 0 auto; padding: 0 1.5rem; }
+
+  /* -- LED scoreboard strip -- */
+  .led-strip {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1.2rem;
+    background: #000;
+    border-bottom: 3px solid var(--led);
+    padding: 0.5rem 0;
+    font-family: "Space Mono", monospace;
+    font-size: 0.75rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--led);
+  }
+  .led-strip .dot { color: var(--home); }
+  .led-strip .num { color: var(--chalk); }
+
+  /* -- Nav -- */
+  .topbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 0;
+    border-bottom: 3px solid var(--chalk);
+  }
+  .topbar .brand { font-weight: 900; font-size: 1.25rem; letter-spacing: -0.02em; }
+  .topbar .crew-label {
+    font-family: "Space Mono", monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    padding: 4px 11px;
+    background: var(--led);
+    color: #000;
+    font-weight: 700;
+  }
+
+  /* -- Hero / spotlight -- */
+  .hero {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2.5rem;
+    align-items: center;
+    padding: 3.5rem 0 3rem;
+    border-bottom: 3px solid var(--chalk);
+  }
+  @media (max-width: 820px) { .hero { grid-template-columns: 1fr; gap: 2rem; } }
+
+  .hero .provocation {
+    font-family: "Space Mono", monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    display: inline-block;
+    padding: 4px 12px;
+    background: var(--led);
+    color: #000;
+    font-weight: 700;
+    margin-bottom: 1.4rem;
+  }
+  .hero h1 {
+    font-family: "Oswald", "Inter", sans-serif;
+    font-weight: 700;
+    font-size: clamp(2.8rem, 6.5vw, 5rem);
+    line-height: 0.95;
+    letter-spacing: 0.01em;
+    text-transform: uppercase;
+    margin-bottom: 1.3rem;
+  }
+  .hero h1 .hi { color: var(--led); }
+  .hero .lead { font-size: 1.12rem; color: var(--mut); max-width: 30rem; margin-bottom: 1.8rem; }
+  .hero .lead strong { color: var(--chalk); font-weight: 700; }
+
+  .btn-primary {
+    display: inline-block;
+    padding: 1rem 2rem;
+    background: var(--led);
+    color: #000;
+    font-family: "Space Mono", monospace;
+    font-size: 0.85rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    font-weight: 700;
+    border: 3px solid var(--led);
+    box-shadow: var(--shadow);
+    transition: transform 0.1s, box-shadow 0.1s;
+  }
+  .btn-primary:hover { transform: translate(3px, 3px); box-shadow: 3px 3px 0 #000; }
+  .hero .micro {
+    display: block;
+    margin-top: 0.9rem;
+    font-family: "Space Mono", monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.06em;
+    color: var(--mut);
+  }
+  .hero .micro a { color: var(--led); border-bottom: 1px solid var(--led-soft); }
+
+  /* -- Spotlight monitor -- */
+  .monitor {
+    background: #000;
+    border: 3px solid var(--chalk);
+    box-shadow: var(--shadow);
+    overflow: hidden;
+  }
+  .monitor .scrn { aspect-ratio: 16/10; overflow: hidden; background: var(--panel); display: block; }
+  .monitor .scrn img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .monitor .bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.6rem 0.9rem;
+    border-top: 3px solid var(--chalk);
+    font-family: "Space Mono", monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+  }
+  .monitor .bar .live-dot { color: var(--home); }
+  .monitor .bar .name { color: var(--led); font-weight: 700; }
+  .monitor .bar .tag { color: var(--mut); }
+
+  /* -- Section labels -- */
+  .apps-label {
+    padding: 2.25rem 0 0.75rem;
+    font-family: "Space Mono", monospace;
+    font-size: 0.62rem;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--led);
+    border-bottom: 2px dashed var(--line);
+    margin-bottom: 1.5rem;
+  }
+
+  /* -- Gallery -- */
+  .apps-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    padding-bottom: 2.5rem;
+    border-bottom: 3px solid var(--chalk);
+  }
+  @media (max-width: 700px) { .apps-grid { grid-template-columns: 1fr; } }
+
+  .app-card {
+    background: var(--card);
+    border: 3px solid var(--chalk);
+    box-shadow: var(--shadow);
+    display: flex;
+    flex-direction: column;
+  }
+  .app-card .app-shot { aspect-ratio: 16/9; overflow: hidden; border-bottom: 3px solid var(--chalk); background: var(--panel); }
+  .app-card .app-shot img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .app-card .app-info { padding: 1.25rem; display: flex; flex-direction: column; gap: 0.45rem; flex: 1; }
+  .app-card .app-title { font-family: "Oswald", sans-serif; text-transform: uppercase; font-size: 1.45rem; font-weight: 700; letter-spacing: 0.01em; }
+  .app-card .app-tagline { font-family: "Space Mono", monospace; font-size: 0.75rem; color: var(--mut); }
+  .app-card .app-ctas { display: grid; grid-template-columns: repeat(3, 1fr); border-top: 3px solid var(--chalk); margin-top: auto; }
+  .btn-card {
+    text-align: center;
+    padding: 0.6rem 0.4rem;
+    font-family: "Space Mono", monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    font-weight: 700;
+    border-right: 3px solid var(--chalk);
+    transition: background 0.12s, color 0.12s;
+  }
+  .btn-card:last-child { border-right: none; }
+  .btn-card:hover { background: var(--led); color: #000; }
+
+  /* -- Manifesto -- */
+  .manifesto { padding: 3rem 0; border-bottom: 3px solid var(--chalk); }
+  .manifesto h2 {
+    font-family: "Space Mono", monospace;
+    font-size: 0.62rem;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--led);
+    margin-bottom: 1.25rem;
+  }
+  .manifesto .pull {
+    font-family: "Oswald", sans-serif;
+    text-transform: uppercase;
+    font-weight: 700;
+    font-size: clamp(1.7rem, 3.8vw, 2.8rem);
+    line-height: 1.05;
+    margin: 1rem 0;
+    max-width: 46rem;
+  }
+  .manifesto .pull .hi { color: var(--led); }
+  .manifesto p { font-size: 1.05rem; color: var(--mut); max-width: 44rem; margin-bottom: 0.85rem; }
+  .manifesto p strong { color: var(--chalk); }
+
+  /* -- CTA -- */
+  .cta-bar { background: var(--led); color: #000; padding: 2.75rem 0; text-align: center; }
+  .cta-bar h2 { font-family: "Oswald", sans-serif; text-transform: uppercase; font-size: clamp(1.6rem, 3.5vw, 2.4rem); font-weight: 700; margin-bottom: 0.5rem; }
+  .cta-bar p { font-family: "Space Mono", monospace; font-size: 0.8rem; opacity: 0.8; margin-bottom: 1.3rem; }
+  .btn-cta {
+    display: inline-block;
+    padding: 1rem 2.5rem;
+    background: #000;
+    color: var(--led);
+    font-family: "Space Mono", monospace;
+    font-size: 0.85rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    font-weight: 700;
+    border: 3px solid #000;
+    box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.25);
+    transition: transform 0.1s, box-shadow 0.1s;
+  }
+  .btn-cta:hover { transform: translate(2px, 2px); box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.25); }
+
+  /* -- Footer -- */
+  .crew-footer {
+    padding: 1.1rem 0;
+    font-family: "Space Mono", monospace;
+    font-size: 0.6rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--mut);
+    display: flex;
+    justify-content: space-between;
+    border-top: 3px solid var(--chalk);
+  }
+  .crew-footer a:hover { color: var(--led); }
+</style>
+
+<div class="led-strip">
+  <span><span class="dot">●</span> HOME <span class="num">102</span></span>
+  <span>4TH &middot; 2:41</span>
+  <span><span class="num">99</span> AWAY <span class="dot">●</span></span>
+</div>
+
+<div class="layout">
+  <header class="topbar">
+    <a class="brand" href="https://links.vibes.diy/homepage">VIBES.DIY</a>
+    <span class="crew-label">CREW // THE BOOTH</span>
+  </header>
+
+  <section class="hero">
+    <div>
+      <span class="provocation">For the basketball commentary crew</span>
+      <h1>Call your<br/>own <span class="hi">game</span>.</h1>
+      <p class="lead">
+        You and the group already do play-by-play from the couch &mdash; the takes, the nicknames, the running score nobody can agree on. <strong>The Big Board</strong> is the live scoreboard the whole crew updates from their phones. One link. Everyone scores. Settle it on the board.
+      </p>
+      <a class="btn-primary" href="https://vibes.diy/vibe/{{spotlight.author}}/{{spotlight.slug}}">Run the Scoreboard →</a>
+      <span class="micro">No install. Share the link &middot; <a href="https://vibes.diy/chat/prompt?prompt64={{prompt64 spotlight.desc}}">or build your own from a prompt</a></span>
+    </div>
+    <div class="monitor">
+      <a class="scrn" href="https://vibes.diy/vibe/{{spotlight.author}}/{{spotlight.slug}}">
+        <img src="https://{{spotlight.slug}}--{{spotlight.author}}.prod-v2.vibesdiy.net/screenshot.jpg"
+             alt="{{spotlight.title}}"
+             onerror="this.onerror=null; this.src='{{assetPrefix}}images/og-preview.png';"/>
+      </a>
+      <div class="bar">
+        <span><span class="live-dot">●</span> LIVE</span>
+        <span class="name">{{spotlight.title}}</span>
+        <span class="tag">{{spotlight.tagline}}</span>
+      </div>
+    </div>
+  </section>
+
+  <div class="apps-label">The rest of the booth kit</div>
+
+  <div class="apps-grid">
+    {{#each apps}}
+    <article class="app-card">
+      <a class="app-shot" href="https://vibes.diy/vibe/{{author}}/{{slug}}">
+        <img src="https://{{slug}}--{{author}}.prod-v2.vibesdiy.net/screenshot.jpg"
+             alt="{{title}}"
+             onerror="this.onerror=null; this.src='{{@root.assetPrefix}}images/og-preview.png';"/>
+      </a>
+      <div class="app-info">
+        <h3 class="app-title">{{title}}</h3>
+        <span class="app-tagline">{{tagline}}</span>
+      </div>
+      <div class="app-ctas">
+        <a class="btn-card" href="https://vibes.diy/vibe/{{author}}/{{slug}}">Open</a>
+        <a class="btn-card" href="https://vibes.diy/remix/{{author}}/{{slug}}?skipChat=true">Clone</a>
+        <a class="btn-card" href="https://vibes.diy/remix/{{author}}/{{slug}}">Remix</a>
+      </div>
+    </article>
+    {{/each}}
+  </div>
+
+  <section class="manifesto">
+    <h2>Built for the booth</h2>
+    <p class="pull">The broadcast truck is <span class="hi">five phones</span> and a group chat.</p>
+    <p>Real broadcasts have a scoreboard operator, a stats team, a producer running the rundown, and an analyst with the hot takes. Your crew already does all of that &mdash; just louder and with worse snacks. <strong>Every app here is live and yours to change.</strong> Open the link, hit Clone, and rename the teams to your people.</p>
+    <p>Built a better stat? A spicier take meter? Share the link and anyone in the crew can change it. Not &ldquo;request a feature.&rdquo; Just: change it.</p>
+  </section>
+
+  <section class="cta-bar">
+    <div class="layout">
+      <h2>Tip-off in 30 seconds.</h2>
+      <p>Start from any app above or build your own.</p>
+      <a class="btn-cta" href="https://links.vibes.diy/homepage">Open Vibes DIY</a>
+    </div>
+  </section>
+
+  {{> newsletter}}
+
+  <footer class="crew-footer">
+    <span>Vibes.diy &middot; <a href="https://links.vibes.diy/homepage">homepage</a> &middot; <a href="/expressions/">expressions</a></span>
+    <span>// CALL YOUR OWN GAME</span>
+  </footer>
+</div>

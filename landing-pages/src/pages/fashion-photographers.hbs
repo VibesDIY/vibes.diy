@@ -1,0 +1,539 @@
+{{!--
+{
+  "layout": "webring",
+  "title": "For Freelance Fashion Photographers | Back of House Tools | Vibes DIY",
+  "description": "Six apps for freelance fashion photographers — bid tracking, Instagram leads, client log, crew kudos, model feedback, and a daily confidence booster.",
+  "ogUrl": "https://good.vibes.diy/fashion-photographers",
+  "source": "fashion-photographers",
+  "apps": [
+    {
+      "num": "01",
+      "slug": "photo-bid-pipeline",
+      "author": "og",
+      "live": true,
+      "title": "Bid Manager",
+      "tagline": "Know what's in flight, what you won, and what died in your inbox.",
+      "desc": "Photography bid tracker. Each job: client name, shoot type, quoted rate, submission date, status (sent / negotiating / won / lost / ghosted). Pipeline view of all active bids.",
+      "fork": "You shoot video as well as stills and track them separately. Clone this and add a medium column — your retainer and day-rate logic will differ."
+    },
+    {
+      "num": "02",
+      "slug": "insta-inquiry-crm",
+      "author": "og",
+      "live": true,
+      "title": "Instagram Lead CRM",
+      "tagline": "Every DM that could turn into a job — tracked.",
+      "desc": "Instagram inbound lead tracker. Log each inquiry: username, date, what they want, rough budget, follow-up status. Know who's warm, who needs a nudge, who's gone cold.",
+      "fork": "Your leads come in from email and Linktree, not just DMs. Clone this and add a source column — the follow-up logic is the same."
+    },
+    {
+      "num": "03",
+      "slug": "shoot-client-log",
+      "author": "og",
+      "live": true,
+      "title": "Client Log",
+      "tagline": "Every client, every shoot, every rate you agreed to.",
+      "desc": "Freelance client record. Each entry: name, contact, shoot history, day rate agreed, usage rights, notes, next steps. Never forget what you charged or what you promised.",
+      "fork": "You work with agencies as well as direct clients, and agency rates, usage rights, and contacts all differ. Clone this and add an agency vs. direct toggle."
+    },
+    {
+      "num": "04",
+      "slug": "daily-wins-log",
+      "author": "og",
+      "live": true,
+      "title": "Self-Esteem Booster",
+      "tagline": "The compliments you forgot you got. The wins you forgot you had.",
+      "desc": "Daily confidence log for creative freelancers. Write down a win, a compliment received, or a moment you're proud of. Builds a running feed of good things to read on the hard days.",
+      "fork": "You want to use this as a team ritual, not a solo journal. Clone it and make it shared — everyone on the crew can post, and the feed shows all names."
+    },
+    {
+      "num": "05",
+      "slug": "crew-shoutout-board",
+      "author": "og",
+      "live": true,
+      "title": "Crew Kudos",
+      "tagline": "Your assistant moved mountains. Say so publicly.",
+      "desc": "Shoot crew appreciation board. After each job, post a shout-out for an assistant, stylist, MUA, or grip. Name, shoot, what they did. Shared with the team.",
+      "fork": "You want shout-outs tied to specific jobs so you can pull them when writing referrals. Clone this and add a job reference field."
+    },
+    {
+      "num": "06",
+      "slug": "model-collab-notes",
+      "author": "og",
+      "live": true,
+      "title": "Model Feedback",
+      "tagline": "What worked. What to try differently next time.",
+      "desc": "Post-shoot collaboration notes per model. Date, shoot, what direction landed, what felt off, what to explore next session. Builds your personal creative record.",
+      "fork": "You work with the same talent on different brands and need to keep the client context separate. Clone this and add a client column alongside each session note."
+    }
+  ],
+  "ogImage": "https://good.vibes.diy/images/screenshots/fashion-photographers.jpg"
+}
+--}}
+
+<style>
+  @import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,600;0,700;1,400&family=IBM+Plex+Sans:wght@400;500;600;700;800;900&display=optional");
+
+  :root {
+    --bg: #111111;
+    --surface: #1a1a1a;
+    --surface-hi: #212121;
+    --amber: #D4902A;
+    --amber-dim: rgba(212, 144, 42, 0.12);
+    --amber-bright: #E8A842;
+    --slate: #8AABBC;
+    --slate-dim: rgba(138, 171, 188, 0.12);
+    --live: #39d353;
+    --text: #F0EDE8;
+    --muted: #666660;
+    --border: rgba(255, 255, 255, 0.07);
+    --border-hi: rgba(255, 255, 255, 0.12);
+  }
+
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: "IBM Plex Sans", system-ui, sans-serif;
+    line-height: 1.55;
+    min-height: 100vh;
+  }
+  a { color: inherit; text-decoration: none; }
+
+  .layout { max-width: 1100px; margin: 0 auto; padding: 0 1.5rem; }
+
+  /* Film-leader stripe */
+  .stripe {
+    height: 6px;
+    background: repeating-linear-gradient(
+      90deg,
+      var(--amber) 0px,
+      var(--amber) 18px,
+      var(--bg) 18px,
+      var(--bg) 22px
+    );
+  }
+
+  /* Topbar */
+  .topbar {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 1rem 0;
+    border-bottom: 1px solid var(--border-hi);
+  }
+  .topbar .brand {
+    font-family: "IBM Plex Mono", monospace; font-weight: 700;
+    font-size: 1.1rem; letter-spacing: -0.02em;
+    color: var(--amber);
+  }
+  .topbar .meta {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.6rem; letter-spacing: 0.2em; text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  /* Crumb */
+  .crumb {
+    padding: 0.55rem 0;
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.65rem; letter-spacing: 0.15em; text-transform: uppercase;
+    color: var(--muted);
+    border-bottom: 1px solid var(--border);
+  }
+  .crumb a { color: var(--muted); }
+  .crumb a:hover { color: var(--amber); }
+
+  /* Hero */
+  .hero {
+    padding: 4.5rem 0 3.5rem;
+    border-bottom: 1px solid var(--border-hi);
+  }
+  .hero .label {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.6rem; letter-spacing: 0.25em; text-transform: uppercase;
+    color: var(--amber);
+    margin-bottom: 1.25rem;
+    display: inline-block;
+    border: 1px solid var(--amber);
+    padding: 4px 10px;
+    border-radius: 3px;
+  }
+  .hero h1 {
+    font-size: clamp(3rem, 8vw, 6.5rem);
+    font-weight: 900;
+    line-height: 0.92;
+    letter-spacing: -0.04em;
+    margin-bottom: 1.5rem;
+  }
+  .hero h1 .hi { color: var(--amber); }
+  .hero p.lead {
+    font-size: 1.2rem; max-width: 680px; line-height: 1.55;
+    opacity: 0.85;
+  }
+
+  /* Spotlight */
+  .spotlight {
+    padding: 3rem 0;
+    border-bottom: 1px solid var(--border-hi);
+  }
+  .spotlight-label {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.6rem; letter-spacing: 0.25em; text-transform: uppercase;
+    color: var(--amber); margin-bottom: 1.5rem;
+  }
+  .spotlight-card {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 3rem; align-items: center;
+    background: var(--surface);
+    border: 1px solid var(--amber);
+    border-radius: 4px; padding: 2.5rem;
+    position: relative; overflow: hidden;
+  }
+  .spotlight-card::before {
+    content: "FRAME 01";
+    position: absolute; top: 1.25rem; right: 1.5rem;
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.6rem; letter-spacing: 0.2em; text-transform: uppercase;
+    color: var(--amber); opacity: 0.4;
+  }
+  .spotlight-card::after {
+    content: "";
+    position: absolute; bottom: 0; right: 0;
+    width: 80px; height: 80px;
+    background-image: radial-gradient(circle, var(--amber-dim) 1.5px, transparent 1.5px);
+    background-size: 8px 8px;
+    pointer-events: none;
+  }
+  @media (max-width: 800px) {
+    .spotlight-card { grid-template-columns: 1fr; gap: 1.5rem; }
+    .spotlight-shot { order: -1; }
+  }
+  .spotlight-num {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.6rem; letter-spacing: 0.2em; text-transform: uppercase;
+    color: var(--amber); margin-bottom: 0.75rem;
+  }
+  .spotlight-title {
+    font-size: clamp(2.5rem, 5vw, 4.5rem);
+    font-weight: 900; line-height: 0.95; letter-spacing: -0.04em;
+    margin-bottom: 0.75rem;
+  }
+  .spotlight-tagline {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.82rem; color: var(--amber);
+    margin-bottom: 1.25rem; line-height: 1.5;
+  }
+  .spotlight-desc {
+    font-size: 1rem; line-height: 1.65; opacity: 0.85;
+    margin-bottom: 2rem;
+  }
+  .btn-spotlight {
+    display: inline-block;
+    padding: 0.85rem 2.25rem;
+    background: var(--amber); color: var(--bg);
+    border: none; border-radius: 3px;
+    font-family: "IBM Plex Mono", monospace; font-weight: 700;
+    font-size: 0.75rem; letter-spacing: 0.15em; text-transform: uppercase;
+    cursor: pointer; transition: all .12s; margin-bottom: 1rem;
+  }
+  .btn-spotlight:hover { background: var(--amber-bright); }
+  .spotlight-secondary { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+  .spotlight-shot {
+    aspect-ratio: 16/10; overflow: hidden;
+    border: 1px solid var(--border-hi); border-radius: 4px;
+    background: var(--surface-hi);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .spotlight-shot a { display: block; width: 100%; height: 100%; }
+  .spotlight-shot img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .shot-placeholder-lg {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.6rem; letter-spacing: 0.2em; text-transform: uppercase;
+    text-align: center; color: var(--muted); line-height: 2.5;
+  }
+
+  /* Stats bar */
+  .stats {
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    border: 1px solid var(--border-hi); border-radius: 4px;
+    overflow: hidden; margin: 2rem 0;
+    background: var(--surface);
+  }
+  @media (max-width: 700px) { .stats { grid-template-columns: repeat(2, 1fr); } }
+  .stat-cell {
+    padding: 1.25rem 1.5rem;
+    border-right: 1px solid var(--border);
+  }
+  .stat-cell:last-child { border-right: none; }
+  @media (max-width: 700px) {
+    .stat-cell { border-bottom: 1px solid var(--border); }
+    .stat-cell:nth-child(2n) { border-right: none; }
+  }
+  .stat-cell .k {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.55rem; letter-spacing: 0.2em; text-transform: uppercase;
+    color: var(--muted); margin-bottom: 0.4rem;
+  }
+  .stat-cell .v { font-weight: 800; font-size: 1.4rem; letter-spacing: -0.02em; color: var(--amber); }
+
+  /* Section label */
+  .section-label {
+    padding: 1.5rem 0 0.75rem;
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.6rem; letter-spacing: 0.25em; text-transform: uppercase;
+    color: var(--muted);
+    border-bottom: 1px dashed var(--border-hi);
+    margin-bottom: 1.5rem;
+  }
+
+  /* App list */
+  .apps {
+    display: flex; flex-direction: column;
+    border: 1px solid var(--border-hi); border-radius: 4px;
+    overflow: hidden; background: var(--surface);
+  }
+  .app {
+    padding: 2rem 1.75rem;
+    border-bottom: 1px solid var(--border);
+    display: grid; grid-template-columns: 72px 1fr 300px;
+    gap: 2rem; align-items: start;
+    transition: background 0.15s;
+  }
+  .app:last-child { border-bottom: none; }
+  @media (max-width: 800px) { .app { grid-template-columns: 1fr; gap: 1rem; } }
+  .app:hover { background: var(--surface-hi); }
+
+  .app .num-cell { display: flex; flex-direction: column; gap: 0.4rem; padding-top: 0.25rem; }
+  .app .num {
+    font-family: "IBM Plex Mono", monospace; font-weight: 700;
+    font-size: 2.8rem; line-height: 0.9; letter-spacing: -0.04em; color: var(--amber);
+  }
+  .app .status {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.5rem; letter-spacing: 0.2em; text-transform: uppercase;
+    padding: 3px 6px; border: 1px solid var(--border-hi);
+    color: var(--muted); text-align: center; border-radius: 3px;
+  }
+  .app--live .status { background: var(--live); color: var(--bg); border-color: var(--live); font-weight: 700; }
+
+  .app .body { display: flex; flex-direction: column; gap: 0.6rem; }
+  .app .body .title { font-size: 2rem; font-weight: 800; letter-spacing: -0.03em; line-height: 1.0; }
+  .app .body .tagline {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.78rem; line-height: 1.5; color: var(--amber);
+  }
+  .app .body .desc { font-size: 0.98rem; line-height: 1.55; opacity: 0.85; }
+
+  /* People apps (04–06) get slate accent — they're nth-child 3, 4, 5 in the list */
+  .app:nth-child(n+3) .num { color: var(--slate); }
+  .app:nth-child(n+3) .tagline { color: var(--slate); }
+  .app:nth-child(n+3).app--live .status { background: var(--slate); border-color: var(--slate); }
+
+  .app .right { display: flex; flex-direction: column; gap: 0.6rem; }
+  .app .shot {
+    display: block; aspect-ratio: 16/9; overflow: hidden;
+    border: 1px solid var(--border-hi); border-radius: 4px;
+    background: var(--surface-hi);
+  }
+  .app .shot img { width: 100%; height: 100%; object-fit: cover; }
+  .app .shot-placeholder {
+    padding: 1rem; height: 100%; display: flex; align-items: center; justify-content: center;
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.6rem; letter-spacing: 0.2em; text-transform: uppercase;
+    text-align: center; color: var(--muted);
+  }
+  .app .ctas {
+    display: grid; grid-template-columns: repeat(3, 1fr);
+    border: 1px solid var(--border-hi); border-radius: 3px; overflow: hidden;
+  }
+  .app .ctas--single { grid-template-columns: 1fr; }
+  .btn {
+    text-align: center; padding: 0.55rem 0.5rem;
+    background: transparent; border-right: 1px solid var(--border-hi);
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.6rem; letter-spacing: 0.15em; text-transform: uppercase;
+    color: var(--text); cursor: pointer; transition: background 0.12s;
+  }
+  .btn:last-child { border-right: none; }
+  .btn:hover { background: var(--amber-dim); color: var(--amber); }
+  .app:nth-child(n+3) .btn:hover { background: var(--slate-dim); color: var(--slate); }
+  .prompt-link {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.65rem; color: var(--muted); text-decoration: underline;
+  }
+  .prompt-link:hover { color: var(--amber); }
+  .app:nth-child(n+3) .prompt-link:hover { color: var(--slate); }
+  .fork-hint {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.62rem; line-height: 1.6; color: var(--muted);
+    border-left: 2px solid var(--amber); padding-left: 0.65rem;
+    margin-top: 0.35rem;
+  }
+  .spotlight-fork {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.65rem; line-height: 1.6; color: var(--muted);
+    border-left: 2px solid var(--amber); padding-left: 0.75rem;
+    margin-top: 0.75rem;
+  }
+  .make-it-yours {
+    padding: 1.25rem 0 0;
+  }
+  .make-it-yours p {
+    font-size: 1.05rem; max-width: 680px; line-height: 1.65; opacity: 0.85;
+  }
+  .make-it-yours .hl { color: var(--amber); font-weight: 600; }
+
+  /* Epilogue */
+  .epilogue {
+    padding: 3rem 0; border-bottom: 1px solid var(--border-hi); margin-top: 2rem;
+  }
+  .epilogue h2 {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.6rem; letter-spacing: 0.25em; text-transform: uppercase;
+    color: var(--amber); margin-bottom: 1rem;
+  }
+  .epilogue p { font-size: 1.1rem; max-width: 720px; line-height: 1.6; opacity: 0.85; }
+  .epilogue .hl { color: var(--amber); font-weight: 600; }
+
+  /* Footer */
+  footer.term-footer {
+    padding: 1.25rem 0;
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.6rem; letter-spacing: 0.2em; text-transform: uppercase;
+    display: flex; justify-content: space-between; color: var(--muted);
+  }
+  footer.term-footer a:hover { color: var(--amber); }
+</style>
+
+<div class="stripe"></div>
+<div class="layout">
+  <header class="topbar">
+    <a class="brand" href="https://links.vibes.diy/homepage">VIBES.DIY</a>
+    <span class="meta">For Fashion Photographers &middot; six back-of-house tools</span>
+  </header>
+
+  <nav class="crumb">
+    <a href="/">Home</a> &nbsp;/&nbsp; Freelance Fashion Photographers
+  </nav>
+
+  <section class="hero">
+    <span class="label">For Freelance Fashion Photographers</span>
+    <h1>Back of<br><span class="hi">house.</span></h1>
+    <p class="lead">
+      Six apps for photographers who do more than shoot &mdash; bid jobs, manage clients,
+      track leads from Instagram, credit your crew, and remember you&rsquo;re actually good at this.
+    </p>
+  </section>
+
+  <section class="spotlight">
+    <div class="spotlight-label">// spotlight &mdash; bid manager</div>
+    <div class="spotlight-card">
+      <div class="spotlight-info">
+        <div class="spotlight-num">APP 01 &middot; photo-bid-pipeline</div>
+        <h2 class="spotlight-title">Bid<br>Manager</h2>
+        <p class="spotlight-tagline">Know what&rsquo;s in flight, what you won, and what died in your inbox.</p>
+        <p class="spotlight-desc">
+          Every job you&rsquo;ve quoted, laid out in a pipeline. Client, shoot type, rate,
+          date sent, current status. Whether it&rsquo;s being negotiated, won and booked,
+          lost, or just went quiet &mdash; you always know where you stand.
+        </p>
+        {{#with (lookup apps 0)}}
+          {{#if live}}
+            <a class="btn-spotlight" href="https://vibes.diy/vibe/{{author}}/{{slug}}">Open Bid Manager &rarr;</a>
+            <div class="spotlight-secondary">
+              <a class="btn" href="https://vibes.diy/remix/{{author}}/{{slug}}?skipChat=true">Clone</a>
+              <a class="btn" href="https://vibes.diy/remix/{{author}}/{{slug}}">Remix</a>
+              <a class="btn" href="https://vibes.diy/chat/prompt?prompt64={{prompt64 desc}}">Start fresh</a>
+            </div>
+            {{#if fork}}<p class="spotlight-fork">{{fork}}</p>{{/if}}
+          {{else}}
+            <a class="btn-spotlight" href="https://vibes.diy/chat/prompt?prompt64={{prompt64 desc}}">Start From Prompt &rarr;</a>
+            {{#if fork}}<p class="spotlight-fork">{{fork}}</p>{{/if}}
+          {{/if}}
+        {{/with}}
+      </div>
+      <div class="spotlight-shot">
+        {{#with (lookup apps 0)}}
+          {{#if live}}
+            <a href="https://vibes.diy/vibe/{{author}}/{{slug}}" aria-label="Bid Manager screenshot">
+              <img src="https://{{slug}}--{{author}}.prod-v2.vibesdiy.net/screenshot.jpg"
+                   alt="Bid Manager"
+                   onerror="this.onerror=null; this.src='{{@root.assetPrefix}}images/og-preview.png';">
+            </a>
+          {{else}}
+            <div class="shot-placeholder-lg">// FRAME 01<br>awaiting deploy</div>
+          {{/if}}
+        {{/with}}
+      </div>
+    </div>
+  </section>
+
+  <div class="stats">
+    <div class="stat-cell"><div class="k">Apps</div><div class="v">Six</div></div>
+    <div class="stat-cell"><div class="k">Audience</div><div class="v">Freelancers</div></div>
+    <div class="stat-cell"><div class="k">Persistence</div><div class="v">Fireproof</div></div>
+    <div class="stat-cell"><div class="k">Skin</div><div class="v">Contact Sheet</div></div>
+  </div>
+
+  <div class="section-label">// supporting tools</div>
+
+  <section class="apps">
+    {{#each apps}}
+      {{#unless @first}}
+      <article class="app {{#if live}}app--live{{else}}app--pending{{/if}}">
+        <div class="num-cell">
+          <div class="num">{{num}}</div>
+          <div class="status">{{#if live}}Live{{else}}Pending{{/if}}</div>
+        </div>
+        <div class="body">
+          <h2 class="title">{{title}}</h2>
+          <p class="tagline">{{tagline}}</p>
+          <p class="desc">{{desc}}</p>
+        </div>
+        <div class="right">
+          {{#if live}}
+            <a class="shot" href="https://vibes.diy/vibe/{{author}}/{{slug}}" aria-label="{{title}} screenshot">
+              <img src="https://{{slug}}--{{author}}.prod-v2.vibesdiy.net/screenshot.jpg"
+                   alt="{{slug}}"
+                   onerror="this.onerror=null; this.src='{{@root.assetPrefix}}images/og-preview.png';"/>
+            </a>
+            <div class="ctas">
+              <a class="btn" href="https://vibes.diy/vibe/{{author}}/{{slug}}">Join</a>
+              <a class="btn" href="https://vibes.diy/remix/{{author}}/{{slug}}?skipChat=true">Clone</a>
+              <a class="btn" href="https://vibes.diy/remix/{{author}}/{{slug}}">Remix</a>
+            </div>
+            <a class="prompt-link" href="https://vibes.diy/chat/prompt?prompt64={{prompt64 desc}}">// start fresh from this prompt &mdash; describe your version instead</a>
+            {{#if fork}}<p class="fork-hint">{{fork}}</p>{{/if}}
+          {{else}}
+            <div class="shot"><div class="shot-placeholder">awaiting deploy</div></div>
+            <div class="ctas ctas--single">
+              <a class="btn" href="https://vibes.diy/chat/prompt?prompt64={{prompt64 desc}}">Start From Prompt</a>
+            </div>
+            {{#if fork}}<p class="fork-hint">{{fork}}</p>{{/if}}
+          {{/if}}
+        </div>
+      </article>
+      {{/unless}}
+    {{/each}}
+  </section>
+
+  <div class="make-it-yours">
+    <p>Every freelance practice is different. <span class="hl">Clone whichever is closest</span> and describe your version &mdash; your client types, your workflow, your handoff.</p>
+  </div>
+
+  <div class="epilogue">
+    <h2>// read me</h2>
+    <p>
+      Fashion photography is 10% shooting and 90% everything else &mdash;
+      chasing bids, replying to DMs, tracking down what you charged that client two years ago,
+      and making sure the assistant who saved the shoot knows you noticed.
+      <span class="hl">These six tools handle the back of house</span> so you can show up
+      to the shoot with your head clear and your crew taken care of.
+    </p>
+  </div>
+
+  {{> newsletter}}
+<footer class="term-footer">
+    <span>Vibes.diy &middot; <a href="https://links.vibes.diy/homepage">homepage</a> &middot; <a href="https://links.vibes.diy/discord">discord</a></span>
+    <span>// CONTACT SHEET</span>
+  </footer>
+</div>

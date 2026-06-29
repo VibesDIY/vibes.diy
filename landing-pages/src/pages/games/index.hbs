@@ -1,0 +1,192 @@
+{{!--
+{
+  "layout": "standard",
+  "title": "Games | Vibes DIY",
+  "description": "Five shelves of tiny playable games — pinball, retro arcade, classic platformer, modern casual, and sports. Each one a remixable single-file React app.",
+  "ogUrl": "https://good.vibes.diy/games/",
+  "source": "games"
+}
+--}}
+
+<style>
+  @import url("https://fonts.cdnfonts.com/css/alte-haas-grotesk");
+
+  :root {
+    --black: #231f20;
+    --ivory: #fffff0;
+    --grid-gray: #cccdc8;
+    --os-gray: #7a7a7a;
+    --grid-line: rgba(255, 255, 255, 0.5);
+    --ruby: #da291c;
+    --bluey: #009ace;
+    --goldenrod: #fedd00;
+    --sprout-green: #16a34a;
+    --puppy-pink: #ff70a6;
+    --flame-orange: #ff6b00;
+    --indigo: #5b4fff;
+    --teal: #00a39a;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: "Alte Haas Grotesk", sans-serif;
+    background-color: var(--grid-gray);
+    color: var(--black);
+    line-height: 1.6;
+    background-image:
+      linear-gradient(var(--grid-line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
+    background-size: 40px 40px;
+    min-height: 100vh;
+  }
+
+  header {
+    padding: 1.5rem 2rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: linear-gradient(to bottom, var(--grid-gray) 60%, transparent);
+  }
+  .logo-link { display: block; text-decoration: none; }
+  .logo-img { height: 56px; width: auto; display: block; }
+
+  .breadcrumb {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 2rem;
+    font-size: 0.9rem;
+    color: var(--os-gray);
+  }
+  .breadcrumb a { color: var(--os-gray); text-decoration: none; }
+  .breadcrumb a:hover { color: var(--black); }
+
+  .hero {
+    max-width: 900px;
+    margin: 2rem auto 4rem;
+    padding: 0 2rem;
+    text-align: center;
+  }
+  .hero h1 {
+    font-size: clamp(2.5rem, 5vw, 4rem);
+    line-height: 1.05;
+    margin-bottom: 1.25rem;
+    font-weight: 900;
+  }
+  .hero p {
+    font-size: 1.2rem;
+    color: var(--black);
+    max-width: 640px;
+    margin: 0 auto;
+  }
+
+  .grid {
+    max-width: 1100px;
+    margin: 0 auto 5rem;
+    padding: 0 2rem;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 2rem;
+  }
+
+  .cat-card {
+    background: var(--ivory);
+    border: 3px solid var(--black);
+    border-radius: 0;
+    padding: 1.75rem;
+    text-decoration: none;
+    color: inherit;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    box-shadow: 6px 6px 0 var(--accent, var(--black));
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+  }
+  .cat-card:hover {
+    transform: translate(-2px, -2px);
+    box-shadow: 8px 8px 0 var(--accent, var(--black));
+  }
+  .cat-card .accent-bar {
+    width: 48px;
+    height: 6px;
+    border-radius: 0;
+    background: var(--accent, var(--black));
+  }
+  .cat-card h2 { font-size: 1.4rem; font-weight: 900; line-height: 1.2; }
+  .cat-card p { font-size: 0.95rem; color: var(--black); flex: 1; }
+  .cat-card .meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 0.5rem;
+    font-size: 0.85rem;
+    color: var(--os-gray);
+  }
+  .cat-card .meta .arrow { font-weight: 800; color: var(--accent, var(--black)); }
+
+  .cat-card.coming-soon { opacity: 0.55; pointer-events: none; }
+  .cat-card.coming-soon .meta .arrow::after { content: " soon"; }
+</style>
+
+<nav class="breadcrumb">
+  <a href="/">Home</a>
+  &nbsp;›&nbsp; Games
+</nav>
+
+<main>
+  <section class="hero">
+    <h1>Games</h1>
+    <p>Five shelves of tiny playable things. Each cluster picks a visual era —
+      pinball, retro arcade, classic platformer, modern mobile, sports — and
+      ships six small games in that key. Single-file React, Fireproof for the
+      scores, remix to your own.</p>
+  </section>
+
+  <section class="grid">
+
+    <a href="pinball.html" class="cat-card" style="--accent: var(--flame-orange);">
+      <span class="accent-bar"></span>
+      <h2>Pinball</h2>
+      <p>Flipper physics, pop bumpers, dot-matrix replays, tilt-controlled
+        paddles. Six takes on the arcade cabinet's loudest corner.</p>
+      <span class="meta"><span>6 apps</span><span class="arrow">→</span></span>
+    </a>
+
+    <a href="retro-arcade.html" class="cat-card" style="--accent: var(--puppy-pink);">
+      <span class="accent-bar"></span>
+      <h2>Retro Arcade</h2>
+      <p>Snake, breakout, asteroids, invaders, maze chase, frog hop. The
+        coin-op canon, redone in CRT phosphor.</p>
+      <span class="meta"><span>6 apps</span><span class="arrow">→</span></span>
+    </a>
+
+    <a href="classic-platformer.html" class="cat-card" style="--accent: var(--bluey);">
+      <span class="accent-bar"></span>
+      <h2>Classic Platformer</h2>
+      <p>Jump, dash, climb, slide. Six side-scrollers from the brick-and-coin
+        era — auto-runner to precision dasher.</p>
+      <span class="meta"><span>6 apps</span><span class="arrow">→</span></span>
+    </a>
+
+    <a href="modern.html" class="cat-card" style="--accent: var(--indigo);">
+      <span class="accent-bar"></span>
+      <h2>Modern Casual</h2>
+      <p>One-tap runners, merge stacks, idle clickers, swipe puzzles, bubble
+        pops, rhythm taps. The hyper-casual shelf.</p>
+      <span class="meta"><span>6 apps</span><span class="arrow">→</span></span>
+    </a>
+
+    <a href="sports.html" class="cat-card" style="--accent: var(--ruby);">
+      <span class="accent-bar"></span>
+      <h2>Sports</h2>
+      <p>Mini putt, arc basketball, darts, bowling, air hockey, penalty kicks.
+        Six pickup games in stadium colors.</p>
+      <span class="meta"><span>6 apps</span><span class="arrow">→</span></span>
+    </a>
+
+  </section>
+</main>
+{{> newsletter}}

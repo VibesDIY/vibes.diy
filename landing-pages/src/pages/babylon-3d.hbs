@@ -1,0 +1,557 @@
+{{!--
+{
+  "layout": "webring",
+  "title": "Babylon 3D + WebXR | Vibes DIY",
+  "description": "Build immersive VR and AR experiences with Babylon.js and Fireproof — particle galaxies, hand tracking, AR anchors, beat-reactive visuals, and more. One skill, one prompt.",
+  "ogUrl": "https://good.vibes.diy/babylon-3d/",
+  "source": "babylon-3d",
+  "apps": [
+    {"num":"01","slug":"particle-galaxy-vr","author":"og","live":true,"title":"Particle Galaxy","tagline":"Enter an infinite star field in VR.","desc":"SolidParticleSystem with 2000 instances and a rainbow GLSL shader. Put on a headset and float inside a living galaxy."},
+    {"num":"02","slug":"ar-tap-anchor","author":"og","live":true,"title":"AR Tap-to-Place","tagline":"Plant objects on real surfaces. They stay.","desc":"WebXR hit-testing anchors objects to your floor or table. Fireproof makes them survive reload."},
+    {"num":"03","slug":"hand-grab-ui","author":"og","live":true,"title":"Hand Grab UI","tagline":"Reach out and grab with your bare hands.","desc":"Fingertip tracking and pinch gestures let you pick up floating orbs. No controllers needed."},
+    {"num":"04","slug":"procedural-rooms-vr","author":"og","live":true,"title":"Procedural Rooms","tagline":"Walk through rooms you have never seen before.","desc":"MeshBuilder ribbons and tubes generate endless architecture. Fireproof syncs the seed for shared-space exploration."},
+    {"num":"05","slug":"beat-visualizer-vr","author":"og","live":true,"title":"Beat Visualizer","tagline":"Stand inside the music.","desc":"Web Audio FFT drives particle emitRate and shader uniforms in real time. Switch to VR and live inside the beat."},
+    {"num":"06","slug":"ar-couch-fit","author":"og","live":true,"title":"AR Couch Fit","tagline":"Does it actually fit?","desc":"Tap to anchor a couch-sized box on your real floor. Walk around it before you buy anything."},
+    {"num":"07","slug":"vr-graffiti-wall","author":"og","live":true,"title":"VR Graffiti Wall","tagline":"Your strokes survive. Others see them too.","desc":"Squeeze trigger to spray 3D particle strokes. Fireproof persists every mark so the wall keeps building."},
+    {"num":"08","slug":"mesh-explosion-vr","author":"og","live":true,"title":"Mesh Explosion","tagline":"Fire 250 physics spheres at 72fps.","desc":"InstancedMesh and Ammo.js physics. Fire from a controller. Quest handles it at full framerate."}
+  ],
+  "ogImage": "https://good.vibes.diy/images/screenshots/babylon-3d.jpg"
+}
+--}}
+
+<style>
+  @import url("https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&display=optional");
+
+  :root {
+    --bg:        #0d0a0a;
+    --bg-elev:   #1a1212;
+    --bg-card:   rgba(255,255,240,0.025);
+    --ruby:      #DA291C;
+    --bluey:     #009ACE;
+    --goldenrod: #FEDD00;
+    --green:     #5ddb8f;
+    --ink:       #FFFFF0;
+    --muted:     #7A7A7A;
+    --line:      rgba(254,221,0,0.35);
+    --line-soft: rgba(254,221,0,0.12);
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: "Share Tech Mono", "JetBrains Mono", ui-monospace, monospace;
+    line-height: 1.6;
+    min-height: 100vh;
+  }
+
+  /* CRT scanlines */
+  body::before {
+    content: "";
+    position: fixed; inset: 0;
+    pointer-events: none; z-index: 100;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent 0px, transparent 2px,
+      rgba(255,255,255,0.03) 2px, rgba(255,255,255,0.03) 3px
+    );
+    mix-blend-mode: overlay;
+  }
+
+  a { color: var(--bluey); text-decoration: none; transition: color 0.15s; }
+  a:hover { color: var(--goldenrod); }
+
+  h1, h2, h3 {
+    font-family: Orbitron, "Share Tech Mono", monospace;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+    margin: 0;
+  }
+
+  /* ── NAV ── */
+  .nav {
+    position: sticky; top: 0; z-index: 50;
+    background: rgba(5,5,5,0.92);
+    backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--line);
+    font-size: 0.82rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+  }
+  .nav__inner {
+    max-width: 1200px; margin: 0 auto;
+    padding: 0.65rem 1.5rem;
+    display: flex; align-items: center; gap: 1rem;
+  }
+  .nav__brand {
+    color: var(--ruby);
+    font-weight: 700;
+    font-family: Orbitron, monospace;
+    font-size: 0.9rem;
+    letter-spacing: 0.08em;
+    border: none;
+    filter: drop-shadow(0 0 6px rgba(218,41,28,0.6));
+  }
+  .nav__brand:hover { color: var(--ruby); }
+  .nav__skill {
+    margin-left: auto;
+    font-size: 0.72rem;
+    color: var(--bluey);
+    border: 1px solid rgba(0,154,206,0.4);
+    padding: 0.25rem 0.7rem;
+    letter-spacing: 0.2em;
+  }
+
+  /* ── HERO ── */
+  .hero {
+    position: relative;
+    padding: 5rem 1.5rem 3.5rem;
+    text-align: center;
+    border-bottom: 1px solid var(--line);
+    background:
+      radial-gradient(ellipse 70% 50% at 50% 0%, rgba(218,41,28,0.15) 0%, transparent 55%),
+      linear-gradient(#0d0a0a 0%, #120808 100%);
+    overflow: hidden;
+  }
+
+  /* corner brackets */
+  .hero::before, .hero::after {
+    content: "";
+    position: absolute;
+    width: 32px; height: 32px;
+    border: 2px solid var(--yellow);
+    pointer-events: none;
+  }
+  .hero::before { top: 1.5rem; left: 1.5rem; border-right: none; border-bottom: none; }
+  .hero::after  { bottom: 1.5rem; right: 1.5rem; border-left: none; border-top: none; }
+  .hero__br-tr, .hero__br-bl {
+    position: absolute;
+    width: 32px; height: 32px;
+    border: 2px solid var(--yellow);
+    pointer-events: none;
+  }
+  .hero__br-tr { top: 1.5rem; right: 1.5rem; border-left: none; border-bottom: none; }
+  .hero__br-bl { bottom: 1.5rem; left: 1.5rem; border-right: none; border-top: none; }
+
+  .hero__id {
+    font-size: 0.78rem;
+    color: var(--green);
+    letter-spacing: 0.45em;
+    margin-bottom: 1rem;
+    text-transform: uppercase;
+  }
+
+  .hero h1 {
+    font-size: clamp(2.2rem, 7vw, 5rem);
+    font-weight: 900;
+    line-height: 0.95;
+    letter-spacing: -0.02em;
+  }
+  .hero h1 em {
+    color: var(--ruby);
+    font-style: normal;
+    filter: drop-shadow(0 0 12px rgba(218,41,28,0.6));
+  }
+
+  .hero__sub {
+    font-size: clamp(0.85rem, 1.5vw, 1.05rem);
+    letter-spacing: 0.35em;
+    margin: 1rem 0 0.5rem;
+    color: var(--goldenrod);
+    text-transform: uppercase;
+  }
+
+  .hero__body {
+    max-width: 560px; margin: 1.2rem auto 0;
+    color: var(--muted);
+    font-size: 0.95rem;
+    line-height: 1.7;
+  }
+
+  .hero__build {
+    display: inline-block;
+    margin-top: 1rem;
+    font-size: 0.75rem;
+    color: var(--muted);
+    letter-spacing: 0.3em;
+    border: 1px solid var(--ruby);
+    padding: 0.3rem 0.85rem;
+    background: rgba(218,41,28,0.05);
+  }
+  .hero__build span { color: var(--ruby); }
+
+  .hero__cta { margin-top: 2rem; display: flex; gap: 0.75rem; justify-content: center; flex-wrap: wrap; }
+
+  .btn {
+    display: inline-flex; align-items: center; gap: 0.5rem;
+    padding: 0.7rem 1.4rem;
+    border: 1px solid var(--goldenrod);
+    color: var(--goldenrod);
+    font-family: "Share Tech Mono", monospace;
+    font-size: 0.82rem;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    background: rgba(254,221,0,0.06);
+    transition: 120ms;
+  }
+  .btn:hover { background: var(--goldenrod); color: var(--bg); border-color: var(--goldenrod); }
+  .btn--ruby { border-color: var(--ruby); color: var(--ruby); background: rgba(218,41,28,0.08); }
+  .btn--ruby:hover { background: var(--ruby); color: var(--ink); }
+  .btn--bluey { border-color: var(--bluey); color: var(--bluey); background: rgba(0,154,206,0.06); }
+  .btn--bluey:hover { background: var(--bluey); color: var(--ink); }
+
+  /* ── SPOTLIGHT EMBED ── */
+  .spotlight {
+    max-width: 1200px; margin: 3rem auto 0;
+    padding: 0 1.5rem;
+  }
+  .spotlight__label {
+    font-size: 0.72rem;
+    color: var(--green);
+    letter-spacing: 0.4em;
+    text-transform: uppercase;
+    margin-bottom: 0.75rem;
+  }
+  .spotlight__frame {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 16/9;
+    border: 1px solid var(--line);
+    background: var(--bg-elev);
+    overflow: hidden;
+  }
+  .spotlight__frame::before, .spotlight__frame::after {
+    content: "";
+    position: absolute;
+    width: 20px; height: 20px;
+    border: 2px solid var(--ruby);
+    pointer-events: none;
+    z-index: 2;
+  }
+  .spotlight__frame::before { top: 0.5rem; left: 0.5rem; border-right: none; border-bottom: none; }
+  .spotlight__frame::after  { bottom: 0.5rem; right: 0.5rem; border-left: none; border-top: none; }
+  .spotlight__frame img {
+    width: 100%; height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+  .spotlight__actions {
+    margin-top: 0.75rem;
+    display: flex; gap: 0.5rem; align-items: center;
+    font-size: 0.8rem;
+    color: var(--muted);
+  }
+
+  /* ── SKILL STRIP ── */
+  .skill-strip {
+    border-top: 1px solid var(--line-soft);
+    border-bottom: 1px solid var(--line-soft);
+    padding: 1rem 1.5rem;
+    text-align: center;
+    background: var(--bg-elev);
+    font-size: 0.78rem;
+    letter-spacing: 0.3em;
+    color: var(--muted);
+    text-transform: uppercase;
+  }
+  .skill-strip code {
+    color: var(--yellow);
+    background: rgba(255,234,0,0.08);
+    border: 1px solid var(--line-soft);
+    padding: 0.15em 0.5em;
+    font-family: inherit;
+  }
+
+  /* ── SECTION HEADER ── */
+  .section {
+    max-width: 1200px; margin: 0 auto;
+    padding: 3rem 1.5rem;
+  }
+  .section__header {
+    display: flex; align-items: baseline; gap: 1rem;
+    margin-bottom: 2rem;
+    border-bottom: 1px solid var(--line-soft);
+    padding-bottom: 0.75rem;
+  }
+  .section__title {
+    font-family: Orbitron, monospace;
+    font-size: clamp(1.1rem, 2.5vw, 1.5rem);
+    font-weight: 700;
+    color: var(--ink);
+  }
+  .section__count {
+    font-size: 0.72rem;
+    color: var(--muted);
+    letter-spacing: 0.3em;
+  }
+
+  /* ── APP GRID ── */
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 1.5rem;
+  }
+
+  .app-card {
+    border: 1px solid var(--line-soft);
+    background: var(--bg-card);
+    transition: border-color 0.15s, background 0.15s;
+    position: relative;
+    overflow: hidden;
+  }
+  .app-card:hover {
+    border-color: rgba(255,234,0,0.6);
+    background: rgba(255,255,255,0.04);
+  }
+
+  .app-card__thumb {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 16/9;
+    background: var(--bg-elev);
+    overflow: hidden;
+  }
+  .app-card__thumb::before {
+    content: "";
+    position: absolute;
+    top: 0.4rem; left: 0.4rem;
+    width: 14px; height: 14px;
+    border-top: 1px solid var(--yellow);
+    border-left: 1px solid var(--yellow);
+    z-index: 2;
+    pointer-events: none;
+  }
+  .app-card__thumb img {
+    width: 100%; height: 100%;
+    object-fit: cover;
+    display: block;
+    transition: opacity 0.2s;
+  }
+  .app-card__num {
+    position: absolute;
+    bottom: 0.4rem; right: 0.5rem;
+    font-size: 0.62rem;
+    color: var(--muted);
+    letter-spacing: 0.25em;
+    z-index: 2;
+  }
+
+  .app-card__body { padding: 1rem; }
+
+  .app-card__title {
+    font-family: Orbitron, monospace;
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--ink);
+    margin-bottom: 0.3rem;
+  }
+  .app-card__tagline {
+    font-size: 0.8rem;
+    color: var(--bluey);
+    letter-spacing: 0.05em;
+    margin-bottom: 0.6rem;
+  }
+  .app-card__desc {
+    font-size: 0.82rem;
+    color: var(--muted);
+    line-height: 1.6;
+    margin-bottom: 0.9rem;
+  }
+
+  .app-card__actions {
+    display: flex; gap: 0.4rem; flex-wrap: wrap;
+  }
+  .action-btn {
+    display: inline-flex; align-items: center;
+    padding: 0.35rem 0.75rem;
+    font-family: "Share Tech Mono", monospace;
+    font-size: 0.7rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    border: 1px solid;
+    transition: 120ms;
+    white-space: nowrap;
+  }
+  .action-btn--join   { border-color: var(--ruby); color: var(--ruby); background: rgba(218,41,28,0.06); }
+  .action-btn--join:hover   { background: var(--ruby); color: var(--ink); }
+  .action-btn--clone  { border-color: var(--line); color: var(--muted); }
+  .action-btn--clone:hover  { border-color: var(--goldenrod); color: var(--goldenrod); }
+  .action-btn--remix  { border-color: var(--line); color: var(--muted); }
+  .action-btn--remix:hover  { border-color: var(--bluey); color: var(--bluey); }
+
+  /* ── CLOSING CTA ── */
+  .cta-section {
+    border-top: 1px solid var(--line);
+    background: linear-gradient(#0d0a0a 0%, #080d12 100%);
+    padding: 4rem 1.5rem;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .cta-section::before {
+    content: "";
+    position: absolute; inset: 0;
+    background: radial-gradient(ellipse 60% 60% at 50% 100%, rgba(0,154,206,0.12) 0%, transparent 60%);
+    pointer-events: none;
+  }
+  .cta-section__id {
+    font-size: 0.72rem;
+    color: var(--green);
+    letter-spacing: 0.45em;
+    text-transform: uppercase;
+    margin-bottom: 0.75rem;
+  }
+  .cta-section h2 {
+    font-size: clamp(1.5rem, 4vw, 2.8rem);
+    font-weight: 900;
+    margin-bottom: 0.75rem;
+  }
+  .cta-section p {
+    color: var(--muted);
+    font-size: 0.95rem;
+    max-width: 480px;
+    margin: 0 auto 2rem;
+    line-height: 1.7;
+  }
+  .cta-section__btns {
+    display: flex; gap: 0.75rem; justify-content: center; flex-wrap: wrap;
+  }
+
+  /* ── FOOTER ── */
+  .footer {
+    border-top: 1px solid var(--line-soft);
+    background: var(--bg);
+    padding: 1.2rem 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 0.72rem;
+    color: var(--muted);
+    letter-spacing: 0.12em;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+  .footer a { color: var(--muted); }
+  .footer a:hover { color: var(--yellow); }
+  .footer__build {
+    color: var(--bluey);
+    font-size: 0.68rem;
+    letter-spacing: 0.25em;
+  }
+
+  @media (max-width: 640px) {
+    .hero { padding: 3.5rem 1rem 2.5rem; }
+    .section { padding: 2rem 1rem; }
+    .grid { grid-template-columns: 1fr; }
+    .footer { flex-direction: column; text-align: center; }
+  }
+</style>
+
+<div class="nav">
+  <div class="nav__inner">
+    <a href="https://links.vibes.diy/homepage" class="nav__brand">VIBES DIY</a>
+    <span class="nav__skill">SKILL // WEBXR + BABYLON.JS</span>
+  </div>
+</div>
+
+{{#with (lookup apps 0) as |spotlight|}}
+<section class="hero">
+  <div class="hero__br-tr"></div>
+  <div class="hero__br-bl"></div>
+
+  <p class="hero__id">[ SKILL :: BABYLON_3D // WEBXR ]</p>
+
+  <h1>BUILD FOR<br><em>THE HEADSET</em></h1>
+
+  <p class="hero__sub">// VR · AR · Hand Tracking · Spatial Computing //</p>
+
+  <p class="hero__body">
+    One prompt. A fully deployed Babylon.js + WebXR experience with particle systems,
+    GLSL shaders, hit-testing, Fireproof persistence — running on Quest, Vision Pro, and any WebXR browser.
+  </p>
+
+  <div class="hero__build">BUILD: <span>SKILL webxr</span> // STATUS: <span>LIVE</span></div>
+
+  <div class="hero__cta">
+    <a href="https://vibes.diy/vibe/{{spotlight.author}}/{{spotlight.slug}}" class="btn btn--ruby">▶ Enter Galaxy VR</a>
+    <a href="https://vibes.diy/chat/prompt?prompt64={{prompt64 spotlight.desc}}" class="btn">Start from Prompt</a>
+  </div>
+  <p style="margin-top:1rem;font-size:0.78rem;color:var(--muted);letter-spacing:0.08em;">// The prompt that made this galaxy. Describe your scene instead — aurora tubes, a nebula you can walk through, your band's visual&nbsp;identity.</p>
+</section>
+
+<div class="spotlight">
+  <div class="spotlight__label">> FEATURED_VIBE :: {{spotlight.title}}</div>
+  <div class="spotlight__frame">
+    <img
+      src="https://{{spotlight.slug}}--{{spotlight.author}}.prod-v2.vibesdiy.net/screenshot.jpg"
+      alt="{{spotlight.title}}"
+      onerror="this.onerror=null; this.src='../images/og-preview.png';"
+    />
+  </div>
+  <div class="spotlight__actions">
+    <a href="https://vibes.diy/remix/{{spotlight.author}}/{{spotlight.slug}}?skipChat=true" class="action-btn action-btn--clone">Clone</a>
+    <a href="https://vibes.diy/remix/{{spotlight.author}}/{{spotlight.slug}}" class="action-btn action-btn--remix">Remix</a>
+    <span style="margin-left:auto;font-size:0.72rem;letter-spacing:0.2em;color:var(--muted);">{{spotlight.tagline}}</span>
+  </div>
+</div>
+{{/with}}
+
+<div class="skill-strip">
+  <code>npx vibes-diy@latest generate --app-slug my-vr-app "Babylon.js WebXR …"</code>
+  &nbsp;·&nbsp; webxr skill activates automatically
+</div>
+
+<section class="section">
+  <div class="section__header">
+    <h2 class="section__title">ALL VIBES</h2>
+    <span class="section__count">[ 08 DEPLOYED ]</span>
+  </div>
+
+  <div class="grid">
+    {{#each apps}}
+    <div class="app-card">
+      <div class="app-card__thumb">
+        <img
+          src="https://{{this.slug}}--{{this.author}}.prod-v2.vibesdiy.net/screenshot.jpg"
+          alt="{{this.title}}"
+          onerror="this.onerror=null; this.src='../images/og-preview.png';"
+          loading="lazy"
+        />
+        <span class="app-card__num">{{numIdx @index}}</span>
+      </div>
+      <div class="app-card__body">
+        <div class="app-card__title">{{this.title}}</div>
+        <div class="app-card__tagline">> {{this.tagline}}</div>
+        <div class="app-card__desc">{{this.desc}}</div>
+        <div class="app-card__actions">
+          <a href="https://vibes.diy/vibe/{{this.author}}/{{this.slug}}" class="action-btn action-btn--join">Join</a>
+          <a href="https://vibes.diy/remix/{{this.author}}/{{this.slug}}?skipChat=true" class="action-btn action-btn--clone">Clone</a>
+          <a href="https://vibes.diy/remix/{{this.author}}/{{this.slug}}" class="action-btn action-btn--remix">Remix</a>
+        </div>
+      </div>
+    </div>
+    {{/each}}
+  </div>
+  <p style="max-width:640px;margin:2rem auto 0;font-size:0.85rem;color:var(--muted);letter-spacing:0.06em;text-align:center;">Every card above is a starting prompt, not a finished product. Clone any of them and describe your version — a different particle count, a different space, a different object to throw physics at. The webxr skill handles the Babylon.js plumbing either&nbsp;way.</p>
+</section>
+
+<section class="cta-section">
+  <p class="cta-section__id">[ BUILD YOUR OWN ]</p>
+  <h2>One Prompt.<br>Deployed to <em style="color:var(--bluey);font-style:normal;">VR.</em></h2>
+  <p>
+    Describe the XR experience you want. The webxr skill handles Babylon.js setup,
+    WebXR session management, Fireproof sync, and Quest optimization automatically.
+  </p>
+  <div class="cta-section__btns">
+    <a href="https://links.vibes.diy/homepage" class="btn btn--ruby">Start Building</a>
+    <a href="https://links.vibes.diy/discord" class="btn btn--bluey">Join Discord</a>
+  </div>
+</section>
+
+{{> newsletter}}
+<footer class="footer">
+  <span>© 2026 VIBES DIY // BABYLON 3D + WEBXR</span>
+  <span class="footer__build">v1.0 // BUILD 2026-05-19</span>
+  <a href="https://links.vibes.diy/homepage">vibes.diy →</a>
+</footer>

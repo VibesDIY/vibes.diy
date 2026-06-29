@@ -1,0 +1,131 @@
+{{!--
+{
+  "layout": "editorial",
+  "title": "Fitness & Sports Stats — Scoreboards, Stat Trackers & Workout Dice | Vibes DIY",
+  "description": "Score and reps — dice for workouts, scoreboards for the season, and stat trackers for the back-pocket coach.",
+  "ogUrl": "https://good.vibes.diy/featured-apps/fitness-and-sports",
+  "source": "fitness-and-sports",
+  "breadcrumbTitle": "Fitness & Sports",
+  "heroTitle": "Score and reps. ",
+  "heroAccentWord": "Game on.",
+  "heroDesc": "Score and reps — dice for workouts, scoreboards for the season, and stat trackers for the back-pocket coach.",
+  "heroPunch": "Built in a halftime.<br>For the locker room.<br>From a single prompt.",
+  "heroStatNumber": "3 apps",
+  "heroStatLabel": "one season's worth of stats. Each one ~120 lines of single-file React.",
+  "whyLabel": "Why these exist",
+  "whyTitle": "When the cost of building drops, every coach gets a&nbsp;stat&nbsp;crew.",
+  "whyDesc": "Nobody is going to fund a SaaS for tracking your kid's basketball MVP stats, or for rolling dice on micro-workouts with a friend. The audience is one team, one family, one group chat. That used to mean you tracked it in a spreadsheet or not at all. Now it's a vibe — built in an evening, shareable in a link, remixable by anyone who thinks they can score harder.",
+  "parallels": [
+    { "before": "A spreadsheet", "after": "A live scoreboard", "accent": "red" },
+    { "before": "\"Did you work out?\"", "after": "Roll the dice", "accent": "yellow" },
+    { "before": "A box score", "after": "An MVP leaderboard", "accent": "red" },
+    { "before": "Six players", "after": "Six million datapoints", "accent": "yellow" }
+  ],
+  "appsLabel": "The Lineup",
+  "appsTitle": "On the bench",
+  "appsIntro": "Each one is a single-file React app you can run, clone, or remix. Hit <strong>Visit</strong> to play with the live version, <strong>Remix</strong> to fork it and reshape with AI, or <strong>Start fresh</strong> to launch a new vibe from the same prompt. Your dice game rolls for stretch routines instead of reps? Clone Workout Dice and rewrite the exercise list.",
+  "classics": [
+    {
+      "author": "og",
+      "slug": "dublin-maat-1008",
+      "description": "CSGO chat sentiment dashboard; tracks positive/negative interactions, word clouds, weekly trends, and harmony nudges."
+    },
+    {
+      "author": "og",
+      "slug": "expansive-ishtar-4021",
+      "description": "Pickleball score tracker with cloud sync, tournament brackets, and live player win/loss leaderboards."
+    },
+    {
+      "author": "og",
+      "slug": "expansive-phoenix-7930",
+      "description": "Gaming wellness dashboard: log sessions, breaks, hydration, and mood with a 14-day chart of healthy habits."
+    },
+    {
+      "author": "og",
+      "slug": "fancy-heron-8339",
+      "description": "Sports team check-in app with QR scans, coach/player auth, photo rosters, and practice notification reminders."
+    },
+    {
+      "author": "og",
+      "slug": "male-ptarmigan-6554",
+      "description": "Baseball scorekeeper that tracks innings, at-bats, pitches, and player stats with live batting averages."
+    },
+    {
+      "author": "og",
+      "slug": "neon-loki-6571",
+      "description": "Track gaming sessions at your hourly rate; live timer, log past sessions, session history, money-blast animation."
+    },
+    {
+      "author": "og",
+      "slug": "resonant-enterprise-2809",
+      "description": "Portland golf round organizer: book tee times across five city courses and coordinate friends with group voting."
+    },
+    {
+      "author": "og",
+      "slug": "vivaldi-patch-2991",
+      "description": "Gaming wellness dashboard: track sessions, spend, time limits, mood journal with AI coach, charts, and break prompts."
+    },
+    {
+      "author": "og",
+      "slug": "vivaldi-zeppelin-7007",
+      "description": "Responsible gaming dashboard with d3 charts of daily play time and weekly spend against your set limits."
+    },
+    {
+      "author": "og",
+      "slug": "wild-indra-3898",
+      "description": "Gaming wellness tracker with AI coach, d3 charts of session minutes, mood/energy logging, and reflections."
+    },
+    {
+      "author": "og",
+      "slug": "zurich-amp-2404",
+      "description": "Game-time wellness tracker with timed sessions, weekday/weekend goals, daily reflections, and excess warnings."
+    }
+  ],
+  "groups": [
+    {
+      "title": "Workout Dice",
+      "description": "Micro-workout dice — roll for exercise and reps; log completions; challenge a friend to the same roll; weekly streaks.",
+      "variants": [
+        { "author": "jchris", "slug": "this-hollow-nearest" },
+        { "author": "jchris", "slug": "fitness-roll" },
+        { "author": "jchris", "slug": "flight-salmon-diameter" }
+      ]
+    },
+    {
+      "title": "MVP Scoreboard",
+      "description": "Basketball scoreboard / MVP stats tracker for end of year — track points, assists, rebounds per game; auto totals; leaderboards; export season summary.",
+      "variants": [
+        { "author": "jchris", "slug": "basketball-mvp-board" }
+      ]
+    }
+  ],
+  "stories": "These apps got pushed in one batch. Most worked first try; a couple took a few edits. The point isn't the polish — it's that this was even worth doing. When the cost of building drops to one prompt, you build the scorebook, the dice game, the stat tracker for your kid's last season. None of this is a Product. All of it is a vibe.",
+  "storiesQuote": "One season. One scoreboard. The audience is your team — not&nbsp;the&nbsp;league.",
+  "storiesCite": "J. Chris Anderson, Vibes DIY",
+  "ctaTitle": "Get the next batch on the field.",
+  "ctaText": "Drop your email and we'll send the next round of stat trackers and dice rolls when they ship — plus the remix prompts behind them.",
+  "ctaButton": "Put me in, coach"
+}
+--}}
+
+<style>
+  /* SCOREBOARD skin — ruby/black/gold like a stadium */
+  body {
+    --red: #c7102d;
+    --cyan: #1a1a1a;
+    --yellow: #ffcc00;
+  }
+  .ed-hero-stat-number {
+    font-family: 'JetBrains Mono', 'Courier New', monospace;
+    font-size: clamp(2.5rem, 6vw, 5rem);
+    letter-spacing: -0.02em;
+  }
+  .ed-stripe { height: 12px; }
+  .ed-title {
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: -0.02em;
+  }
+</style>
+
+{{> featured-app-body-editorial}}

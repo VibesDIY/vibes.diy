@@ -1,0 +1,105 @@
+{
+  "source": "UW–Madison History Dept",
+  "location": "Madison, WI",
+  "region": "Midwest",
+  "domain": "humanities",
+  "fetched": "2026-05-20",
+  "items": [
+    {
+      "title": "History 315 – Gender, Race and Colonialism",
+      "department": "History",
+      "year": 2024,
+      "url": "https://history.wisc.edu/undergraduate-program/syllabi-library/syllabi-library-history-hsmt-300-399/history-315-gender-race-and-colonialism/",
+      "topics": [
+        "gender history",
+        "colonial history",
+        "race and empire",
+        "postcolonial studies",
+        "intersectionality",
+        "settler colonialism",
+        "feminist historiography",
+        "racial formation"
+      ]
+    },
+    {
+      "title": "History 329 – History of American Capitalism",
+      "department": "History",
+      "year": 2023,
+      "url": "https://history.wisc.edu/undergraduate-program/syllabi-library/syllabi-library-history-hsmt-300-399/history-329-history-of-american-capitalism/",
+      "topics": [
+        "history of capitalism",
+        "labor history",
+        "class formation",
+        "political economy",
+        "industrialization",
+        "financialization",
+        "primitive accumulation",
+        "market society"
+      ]
+    },
+    {
+      "title": "History 393 – Slavery, Civil War, and Reconstruction, 1848-1877",
+      "department": "History",
+      "year": 2026,
+      "url": "https://history.wisc.edu/syllabi-library/syllabi-library-history-hsmt-300-399/history-393-slavery-civil-war-and-reconstruction-1848-1877/",
+      "topics": [
+        "chattel slavery",
+        "abolition movement",
+        "emancipation history",
+        "Reconstruction amendments",
+        "freedpeople",
+        "racial capitalism",
+        "sectional crisis",
+        "Black political history"
+      ]
+    },
+    {
+      "title": "History 375 – The Cold War: From World War II to End of Soviet Empire",
+      "department": "History",
+      "year": 2024,
+      "url": "https://history.wisc.edu/syllabi-library/syllabi-library-history-hsmt-300-399/history-375-the-cold-war-from-world-war-ii-to-end-of-soviet-empire/",
+      "topics": [
+        "containment doctrine",
+        "superpower rivalry",
+        "nuclear deterrence",
+        "decolonization",
+        "Cold War culture",
+        "proxy wars",
+        "détente",
+        "Soviet collapse"
+      ]
+    },
+    {
+      "title": "History 321 – African American History Since 1900",
+      "department": "History",
+      "year": 2024,
+      "url": "https://history.wisc.edu/syllabi-library/syllabi-library-history-hsmt-300-399/history-321-african-american-history-since-1900/",
+      "topics": [
+        "Great Migration",
+        "Harlem Renaissance",
+        "Jim Crow",
+        "civil rights movement",
+        "Black Power",
+        "mass incarceration",
+        "racial uplift ideology",
+        "Black feminist thought"
+      ]
+    },
+    {
+      "title": "History 347 – The Caribbean and its Diasporas",
+      "department": "History",
+      "year": 2023,
+      "url": "https://history.wisc.edu/undergraduate-program/syllabi-library/syllabi-library-history-hsmt-300-399/history-347-the-caribbean-and-its-diasporas/",
+      "topics": [
+        "Atlantic slavery",
+        "plantation economy",
+        "Caribbean diaspora",
+        "creolization",
+        "decolonization",
+        "maroon history",
+        "sugar economy",
+        "Caribbean nationalism"
+      ]
+    }
+  ]
+}

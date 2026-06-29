@@ -1,0 +1,22 @@
+# ev-suitability-analysis
+
+> A senior planner at a regional transportation agency is leading a multi-month site suitability analysis to select locations for a new network of electric vehicle fast-charging stations across a metro area. The analysis must weigh competing criteria from policy goals, electrical capacity, equity, and travel demand. They need a serious analytic app that supports the structured suitability modeling they were trained to do, with full transparency about weights, layers, and tradeoffs. Build a professional analytic app where the planner sets up the candidate sites — every parcel meeting initial zoning and ownership eligibility — and the suitability criteria, each as its own layer drawn from the agency's geospatial database design: distance to high-volume corridors (proximity analysis), distance to existing chargers (network analysis on the road network), grid capacity availability (raster GIS surface from utility data), equity priority status (thematic mapping of disadvantaged community designations), travel demand for EV-eligible trips (interpolated demand surface from the regional travel model), and environmental constraints (spatial overlays for floodplains, wetlands, contamination). For each layer the planner specifies a scoring function — how raw distance translates into a 0-to-1 suitability score, with documented rationale — and assigns layer weights reflecting the agency's stated priorities. The app composes the layers into a weighted suitability surface and produces a ranked candidate list. Crucially the planner should be able to run multiple weighting scenarios side by side (equity-first, demand-first, balanced) and see how the top candidates shift, and run a structured sensitivity analysis on the scoring functions to see which layer assumptions matter most. The output is a publication-grade methodology report with reproducible cartographic representation of each scenario and a structured comparison of which sites are robust across weightings versus dependent on a single criterion. Every decision is logged so the analysis is defensible to the agency's board.
+
+Live at [https://vibes.diy/vibe/edu/ev-suitability-analysis](https://vibes.diy/vibe/edu/ev-suitability-analysis)
+
+Single-file React app built with [vibes.diy](https://vibes.diy). Visit the live url to manage access.
+
+## Run it
+
+```sh
+npx vibes-diy push     # uploads App.jsx, prints a live HTTPS URL
+```
+
+Edit [App.jsx](App.jsx) and push again to iterate.
+
+## Commands
+
+- `npx vibes-diy push` — deploy the current directory
+- `npx vibes-diy push --instant-join` — deploy with auto-accept sharing
+- `npx vibes-diy generate "prompt"` — generate a new app from a prompt
+- `npx vibes-diy help` — full command list

@@ -1,0 +1,171 @@
+{{!--
+{
+  "layout": "webring",
+  "title": "Creator Documentation — Vibes DIY",
+  "description": "Guides for building apps, scripting against your data, and shipping with Vibes DIY.",
+  "ogUrl": "https://good.vibes.diy/creator-documentation/",
+  "source": "creator-documentation",
+  "ogImage": "https://good.vibes.diy/images/screenshots/creator-documentation.jpg"
+}
+--}}
+
+<style>
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=optional");
+
+:root {
+  --bg: oklch(0.16 0.015 260);
+  --bg-elev: oklch(0.21 0.018 260);
+  --fg: oklch(0.97 0.005 260);
+  --fg-dim: oklch(0.65 0.015 260);
+  --fg-faint: oklch(0.45 0.015 260);
+  --border: oklch(1 0 0 / 0.08);
+  --border-strong: oklch(1 0 0 / 0.18);
+  --live: oklch(0.86 0.21 135);
+  --live-text: oklch(0.18 0.05 135);
+}
+
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: "Inter", system-ui, sans-serif;
+  background: var(--bg); color: var(--fg);
+  line-height: 1.6; font-size: 16px; min-height: 100vh;
+  background-image:
+    radial-gradient(circle at 8% 0%, rgba(180,255,140,0.05), transparent 35%),
+    radial-gradient(circle at 95% 100%, rgba(255,120,200,0.06), transparent 40%);
+  background-attachment: fixed;
+}
+a { color: var(--live); text-decoration: none; transition: color 0.15s; }
+a:hover { color: var(--fg); }
+
+.layout { max-width: 1000px; margin: 0 auto; padding: 0 1.5rem; }
+
+.topbar {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 1rem 0; border-bottom: 1px solid var(--border);
+}
+.topbar .brand {
+  font-family: "JetBrains Mono", monospace; font-weight: 700; font-size: 1rem;
+  color: var(--fg); text-decoration: none;
+}
+.topbar .brand:hover { color: var(--live); }
+.topbar .home-link { font-size: 0.85rem; color: var(--fg-faint); }
+.topbar .home-link:hover { color: var(--live); }
+
+.hero { padding: 4rem 0 3rem; }
+.hero .eyebrow {
+  font-family: "JetBrains Mono", monospace; font-size: 0.7rem;
+  letter-spacing: 0.3em; text-transform: uppercase; color: var(--live); margin-bottom: 1rem;
+}
+.hero h1 {
+  font-size: clamp(2.5rem, 7vw, 4.5rem); font-weight: 900;
+  letter-spacing: -0.04em; line-height: 1.0; margin-bottom: 1rem;
+}
+.hero .sub { font-size: 1.1rem; color: var(--fg-dim); max-width: 480px; line-height: 1.65; }
+
+.doc-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; margin: 0 0 4rem;
+}
+@media (max-width: 640px) { .doc-grid { grid-template-columns: 1fr; } }
+
+.doc-card {
+  display: flex; flex-direction: column;
+  background: var(--bg-elev); border: 1px solid var(--border);
+  border-radius: 14px; padding: 2rem; text-decoration: none;
+  transition: border-color 0.15s, transform 0.15s;
+}
+.doc-card:hover { border-color: var(--live); transform: translateY(-2px); }
+.doc-card .tag {
+  font-family: "JetBrains Mono", monospace; font-size: 0.65rem;
+  letter-spacing: 0.25em; text-transform: uppercase;
+  color: var(--live); margin-bottom: 0.75rem;
+}
+.doc-card h2 {
+  font-size: 1.3rem; font-weight: 800; letter-spacing: -0.02em;
+  color: var(--fg); margin-bottom: 0.5rem; line-height: 1.2;
+}
+.doc-card p { font-size: 0.9rem; color: var(--fg-dim); line-height: 1.55; flex: 1; }
+.doc-card .arrow {
+  display: block; margin-top: 1.25rem;
+  font-family: "JetBrains Mono", monospace; font-size: 0.8rem; color: var(--live);
+}
+
+footer.term-footer {
+  padding: 1.5rem 0; border-top: 1px solid var(--border);
+  font-family: "JetBrains Mono", monospace; font-size: 0.65rem;
+  letter-spacing: 0.18em; text-transform: uppercase; color: var(--fg-faint);
+  display: flex; justify-content: space-between; flex-wrap: wrap; gap: 1rem;
+}
+footer.term-footer a { color: var(--fg-faint); }
+footer.term-footer a:hover { color: var(--live); }
+</style>
+
+<div class="layout">
+  <header class="topbar">
+    <a href="https://links.vibes.diy/homepage" class="brand">vibes.diy</a>
+    <a href="https://links.vibes.diy/homepage" class="home-link">Home</a>
+  </header>
+
+  <section class="hero">
+    <div class="eyebrow">creator documentation</div>
+    <h1>Build, script,<br>and ship.</h1>
+    <p class="sub">Guides for making Vibes apps, connecting backend data, and deploying with the CLI. Every app you see on this site started from a prompt — these guides show you how to make one that's yours.</p>
+  </section>
+
+  <div class="doc-grid">
+    <a href="/how-to/" class="doc-card">
+      <div class="tag">// guide 01</div>
+      <h2>How to Make &amp; Share an App</h2>
+      <p>Step-by-step screenshot walkthrough — from prompt to live, shareable app in minutes. No coding required.</p>
+      <span class="arrow">Read the guide →</span>
+    </a>
+    <a href="/generate.html" class="doc-card">
+      <div class="tag">// guide 02</div>
+      <h2>CLI: npx vibes-diy generate</h2>
+      <p>One command deploys a live React app from a prompt. 85 apps built this way. Read the workflow.</p>
+      <span class="arrow">See the CLI →</span>
+    </a>
+    <a href="/connect-backend-data/" class="doc-card">
+      <div class="tag">// guide 03</div>
+      <h2>Connect Backend Data</h2>
+      <p>Read and write your app's live database from any JS backend — Node, Deno, Bun, or Cloudflare Workers.</p>
+      <span class="arrow">Read the guide →</span>
+    </a>
+    <a href="/vibes-connect/" class="doc-card">
+      <div class="tag">// guide 04</div>
+      <h2>Vibes Connect</h2>
+      <p>Real-time subscriptions, webhook fan-out, cron scripts, AI pipelines, and multi-surface sync. Every integration pattern in one place.</p>
+      <span class="arrow">See all patterns →</span>
+    </a>
+    <a href="/access-api/" class="doc-card">
+      <div class="tag">// api reference</div>
+      <h2>Access API</h2>
+      <p>Private channels, anonymous submissions, role-gated reads. One file controls who can write what and who can see it — server-enforced, no backend required.</p>
+      <span class="arrow">Read the API reference →</span>
+    </a>
+    <a href="/sharing/" class="doc-card">
+      <div class="tag">// reference</div>
+      <h2>Sharing &amp; Access</h2>
+      <p>Who sees your app. What they can do with it. Every grant state, Clone vs Remix, the pill, and all three sharing controls.</p>
+      <span class="arrow">Read the reference →</span>
+    </a>
+    <a href="/psu-hackathon/" class="doc-card">
+      <div class="tag">// event</div>
+      <h2>PSU Hackathon</h2>
+      <p>Claude Code Hackathon — Portland State University. Build something real with Vibes DIY and win lifetime access.</p>
+      <span class="arrow">See the event →</span>
+    </a>
+  </div>
+
+  {{> newsletter}}
+<footer class="term-footer">
+    <span>$ vibes.diy · creator docs</span>
+    <span>
+      <a href="https://links.vibes.diy/discord">discord</a>
+      &nbsp;·&nbsp;
+      <a href="https://links.vibes.diy/CLI">github</a>
+      &nbsp;·&nbsp;
+      <a href="https://links.vibes.diy/homepage">home</a>
+    </span>
+  </footer>
+</div>

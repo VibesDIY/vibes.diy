@@ -1,0 +1,300 @@
+{{!--
+{
+  "layout": "webring",
+  "title": "For PTA & PTO Coordinators | Vibes DIY",
+  "description": "Field day station signup, teacher appreciation assignments, graduation volunteer slots, officer handoff notes, class fundraiser tracker. Five tools for school parent coordinators.",
+  "ogUrl": "https://good.vibes.diy/pta-pto/",
+  "source": "pta-pto",
+  "apps": [
+    {
+      "num": "01",
+      "slug": "field-day-station-signup",
+      "author": "og",
+      "live": true,
+      "title": "Field Day Stations",
+      "tagline": "Every station covered before the bell.",
+      "desc": "Field day volunteer signup. Stations: sack race, relay, water balloons, tug of war, face painting, snack table. Each needs 2 volunteers. Parents sign up by name. Shows open slots."
+    },
+    {
+      "num": "02",
+      "slug": "teacher-appreciation-assignments",
+      "author": "og",
+      "live": true,
+      "title": "Teacher Appreciation",
+      "tagline": "One item per family. No duplicate flowers.",
+      "desc": "Teacher appreciation week contribution tracker. Each classroom listed. Items needed per class: flowers, snack, card, coffee gift card. Parents claim one item per class. No duplicates."
+    },
+    {
+      "num": "03",
+      "slug": "graduation-volunteer-signup",
+      "author": "og",
+      "live": true,
+      "title": "Graduation Volunteers",
+      "tagline": "Parking, programs, reception — all covered.",
+      "desc": "Graduation ceremony volunteer slots. Roles: parking crew, program handout, reception table, chair setup, cleanup. Each role shows how many needed and how many signed up."
+    },
+    {
+      "num": "04",
+      "slug": "officer-handoff-notes",
+      "author": "og",
+      "live": true,
+      "title": "Officer Handoff",
+      "tagline": "What the new president needs to know.",
+      "desc": "PTA officer transition notes. Outgoing officers leave structured notes for their successor: Google Drive link, key contacts, recurring dates, what to watch out for. Read-only after submission."
+    },
+    {
+      "num": "05",
+      "slug": "class-fundraiser-tracker",
+      "author": "og",
+      "live": true,
+      "title": "Fundraiser Tracker",
+      "tagline": "Class vs class. Who's turning in forms.",
+      "desc": "School fundraiser tracker. Each class listed with a goal and current total. Teachers post updates. Parents see progress. Simple tally, no payment processing."
+    }
+  ],
+  "ogImage": "https://good.vibes.diy/images/screenshots/pta-pto.jpg"
+}
+--}}
+
+<style>
+  @import url("https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800;900&family=DM+Mono:wght@400;500&display=optional");
+
+  :root {
+    --red: #d92b2b;
+    --red-soft: rgba(217,43,43,0.08);
+    --blue: #1d5fcc;
+    --blue-soft: rgba(29,95,204,0.08);
+    --yellow: #f5c518;
+    --bg: #f7f7f5;
+    --white: #ffffff;
+    --ink: #1a1a1a;
+    --muted: #6b6b6b;
+    --border: rgba(26,26,26,0.1);
+    --border-strong: rgba(26,26,26,0.18);
+  }
+
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html, body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: "DM Sans", system-ui, sans-serif;
+    line-height: 1.55;
+    min-height: 100vh;
+  }
+  a { color: inherit; text-decoration: none; }
+
+  .layout { max-width: 1060px; margin: 0 auto; padding: 0 1.5rem; }
+
+  .topbar {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 1.25rem 0;
+    border-bottom: 3px solid var(--ink);
+  }
+  .topbar .brand { font-weight: 900; font-size: 1.1rem; letter-spacing: -0.01em; }
+  .topbar .meta {
+    font-family: "DM Mono", monospace;
+    font-size: 0.6rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--muted);
+  }
+
+  .crumb {
+    padding: 0.5rem 0; font-size: 0.68rem; color: var(--muted);
+    border-bottom: 1px solid var(--border);
+  }
+  .crumb a:hover { color: var(--red); }
+
+  .hero {
+    padding: 4rem 0 3.5rem;
+    border-bottom: 3px solid var(--ink);
+    position: relative;
+  }
+  .hero .label {
+    font-family: "DM Mono", monospace;
+    font-size: 0.6rem; letter-spacing: 0.2em; text-transform: uppercase;
+    background: var(--red); color: white; padding: 4px 12px;
+    margin-bottom: 1.5rem; display: inline-block;
+  }
+  .hero h1 {
+    font-size: clamp(2.8rem, 7vw, 5.5rem);
+    font-weight: 900; line-height: 0.95;
+    letter-spacing: -0.04em; margin-bottom: 1.5rem;
+  }
+  .hero h1 .hi {
+    background: var(--yellow);
+    padding: 0 0.12em;
+    box-shadow: 4px 4px 0 var(--ink);
+    display: inline-block;
+  }
+  .hero p.lead {
+    font-size: 1.15rem; max-width: 680px; line-height: 1.65; color: var(--muted);
+  }
+
+  .stats {
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    border: 2px solid var(--ink); margin: 2rem 0;
+    background: var(--white);
+  }
+  @media (max-width: 700px) { .stats { grid-template-columns: repeat(2, 1fr); } }
+  .stat-cell { padding: 1.25rem 1.5rem; border-right: 2px solid var(--ink); }
+  .stat-cell:last-child { border-right: none; }
+  .stat-cell .k { font-family: "DM Mono", monospace; font-size: 0.52rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--muted); margin-bottom: 0.4rem; }
+  .stat-cell .v { font-weight: 900; font-size: 1.3rem; }
+
+  .section-label {
+    padding: 1.5rem 0 0.75rem;
+    font-family: "DM Mono", monospace;
+    font-size: 0.6rem; letter-spacing: 0.2em; text-transform: uppercase;
+    color: var(--muted); border-bottom: 1px dashed var(--border); margin-bottom: 1.5rem;
+  }
+
+  .apps {
+    display: flex; flex-direction: column;
+    border: 2px solid var(--ink);
+    background: var(--white);
+  }
+  .app {
+    padding: 2rem 1.75rem;
+    border-bottom: 2px solid var(--ink);
+    display: grid; grid-template-columns: 72px 1fr 300px;
+    gap: 2rem; align-items: start;
+    transition: background 0.12s;
+  }
+  .app:last-child { border-bottom: none; }
+  @media (max-width: 800px) { .app { grid-template-columns: 1fr; gap: 1rem; } }
+  .app:hover { background: var(--red-soft); }
+
+  .app .num-cell { display: flex; flex-direction: column; gap: 0.4rem; }
+  .app .num { font-weight: 900; font-size: 2.8rem; line-height: 0.9; letter-spacing: -0.04em; color: rgba(26,26,26,0.12); }
+  .app--live .num { color: var(--red); }
+  .app .status {
+    font-family: "DM Mono", monospace;
+    font-size: 0.5rem; letter-spacing: 0.2em; text-transform: uppercase;
+    padding: 3px 6px; border: 2px solid var(--border-strong);
+    color: var(--muted); text-align: center;
+  }
+  .app--live .status { background: var(--red); color: white; border-color: var(--red); font-weight: 700; }
+
+  .app .body { display: flex; flex-direction: column; gap: 0.6rem; }
+  .app .body .title { font-size: 1.9rem; font-weight: 800; letter-spacing: -0.02em; line-height: 1.05; }
+  .app .body .tagline {
+    font-family: "DM Mono", monospace;
+    font-size: 0.78rem; line-height: 1.5; color: var(--red);
+  }
+  .app .body .desc { font-size: 0.97rem; line-height: 1.6; color: var(--muted); }
+
+  .app .right { display: flex; flex-direction: column; gap: 0.6rem; }
+  .app .shot { display: block; aspect-ratio: 16/9; overflow: hidden; border: 2px solid var(--ink); background: var(--bg); }
+  .app .shot img { width: 100%; height: 100%; object-fit: cover; }
+  .app .shot-placeholder {
+    padding: 1rem; height: 100%; display: flex; align-items: center; justify-content: center;
+    font-family: "DM Mono", monospace;
+    font-size: 0.58rem; letter-spacing: 0.2em; text-transform: uppercase;
+    text-align: center; color: var(--muted);
+  }
+  .app .ctas { display: grid; grid-template-columns: repeat(3, 1fr); border: 2px solid var(--ink); overflow: hidden; }
+  .app .ctas--single { grid-template-columns: 1fr; }
+  .btn {
+    text-align: center; padding: 0.55rem 0.5rem;
+    background: transparent; border-right: 1px solid var(--border-strong);
+    font-family: "DM Mono", monospace;
+    font-size: 0.6rem; letter-spacing: 0.15em; text-transform: uppercase; font-weight: 500;
+    color: var(--ink); cursor: pointer; transition: background 0.12s;
+  }
+  .btn:last-child { border-right: none; }
+  .btn:hover { background: var(--yellow); }
+  .prompt-link { font-family: "DM Mono", monospace; font-size: 0.65rem; color: var(--muted); text-decoration: underline; }
+  .prompt-link:hover { color: var(--red); }
+
+  .epilogue { padding: 3rem 0; border-top: 3px solid var(--ink); margin-top: 2rem; }
+  .epilogue h2 { font-family: "DM Mono", monospace; font-size: 0.6rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--red); margin-bottom: 1rem; }
+  .epilogue p { font-size: 1.1rem; max-width: 720px; line-height: 1.65; color: var(--muted); }
+  .epilogue .hl { color: var(--red); font-weight: 700; }
+
+  footer {
+    padding: 1.25rem 0; font-family: "DM Mono", monospace;
+    font-size: 0.6rem; letter-spacing: 0.15em; text-transform: uppercase;
+    display: flex; justify-content: space-between; color: var(--muted);
+    border-top: 1px solid var(--border);
+  }
+  footer a:hover { color: var(--red); }
+</style>
+
+<div class="layout">
+  <header class="topbar">
+    <a class="brand" href="https://links.vibes.diy/homepage">Vibes DIY</a>
+    <span class="meta">For PTA &amp; PTO &middot; five tools</span>
+  </header>
+
+  <nav class="crumb">
+    <a href="/">Home</a> &nbsp;/&nbsp; PTA &amp; PTO
+  </nav>
+
+  <section class="hero">
+    <span class="label">For PTA &amp; PTO Coordinators</span>
+    <h1>End of year.<br/><span class="hi">Organized.</span></h1>
+    <p class="lead">
+      Five tools for school parent coordinators — field day stations, teacher appreciation,
+      graduation volunteers, officer handoffs, and class fundraiser tracking.
+      Each one does one job. Share the link and go.
+    </p>
+  </section>
+
+  <div class="stats">
+    <div class="stat-cell"><div class="k">Tools</div><div class="v">Five</div></div>
+    <div class="stat-cell"><div class="k">Scope</div><div class="v">One job</div></div>
+    <div class="stat-cell"><div class="k">Login</div><div class="v">None</div></div>
+    <div class="stat-cell"><div class="k">Timing</div><div class="v">June peak</div></div>
+  </div>
+
+  <div class="section-label">The Tools</div>
+
+  <section class="apps">
+    {{#each apps}}
+    <article class="app {{#if live}}app--live{{else}}app--pending{{/if}}">
+      <div class="num-cell">
+        <div class="num">{{num}}</div>
+        <div class="status">{{#if live}}Live{{else}}Soon{{/if}}</div>
+      </div>
+      <div class="body">
+        <h2 class="title">{{title}}</h2>
+        <p class="tagline">{{tagline}}</p>
+        <p class="desc">{{desc}}</p>
+      </div>
+      <div class="right">
+        {{#if live}}
+          <a class="shot" href="https://vibes.diy/vibe/{{author}}/{{slug}}" aria-label="{{title}} screenshot"><img src="https://{{slug}}--{{author}}.prod-v2.vibesdiy.net/screenshot.jpg" alt="{{slug}}" onerror="this.onerror=null; this.src='{{@root.assetPrefix}}images/og-preview.png';"/></a>
+          <div class="ctas">
+            <a class="btn" href="https://vibes.diy/vibe/{{author}}/{{slug}}">Join</a>
+            <a class="btn" href="https://vibes.diy/remix/{{author}}/{{slug}}?skipChat=true">Clone</a>
+            <a class="btn" href="https://vibes.diy/remix/{{author}}/{{slug}}">Remix</a>
+          </div>
+          <a class="prompt-link" href="https://vibes.diy/chat/prompt?prompt64={{prompt64 desc}}">// start fresh from this prompt</a>
+        {{else}}
+          <div class="shot"><div class="shot-placeholder">generating</div></div>
+          <div class="ctas ctas--single">
+            <a class="btn" href="https://vibes.diy/chat/prompt?prompt64={{prompt64 desc}}">Start From Prompt</a>
+          </div>
+        {{/if}}
+      </div>
+    </article>
+    {{/each}}
+  </section>
+
+  <div class="epilogue">
+    <h2>The idea</h2>
+    <p>
+      Every PTA runs on one or two people who email everything from a Gmail account.
+      End-of-year piles up fast: field day, teacher appreciation, graduation, officer transitions,
+      fundraiser follow-through. These tools are <span class="hl">narrow on purpose</span> —
+      each one handles one thing, doesn't require an account, and works from a shared link.
+      Your school has a kindergarten parade, a fifth-grade breakfast, and a silent auction
+      all in the same week? Describe the slots you need. The app you build covers your school, not the generic one.
+    </p>
+  </div>
+
+  {{> newsletter}}
+<footer>
+    <span>Vibes.diy &middot; <a href="https://links.vibes.diy/homepage">homepage</a></span>
+    <span>// PTA &amp; PTO</span>
+  </footer>
+</div>

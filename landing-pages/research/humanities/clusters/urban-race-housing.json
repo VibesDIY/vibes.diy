@@ -1,0 +1,47 @@
+{
+  "slug": "urban-race-housing",
+  "page_url": "/edu/urban-race-housing.html",
+  "label": "Urban History, Race & Housing",
+  "department": "History — Urban",
+  "vocabulary": [
+    "suburbanization",
+    "racial segregation in housing",
+    "white flight",
+    "redlining",
+    "metropolitan decentralization",
+    "streetcar suburbs",
+    "neighborhood formation",
+    "residential segregation",
+    "ethnic niche economics",
+    "political incorporation",
+    "urban reform movements",
+    "municipal administration",
+    "urban demographic change",
+    "minority political representation",
+    "transnational community formation"
+  ],
+  "sources": [
+    {
+      "institution": "H-Net H-Urban",
+      "title": "The New Suburban History",
+      "url": "https://networks.h-net.org/node/22277/pages/40096/syllabus-archive-introduction"
+    },
+    {
+      "institution": "H-Net H-Urban",
+      "title": "Race, Immigration & Urban Politics",
+      "url": "https://networks.h-net.org/node/22277/pages/40096/syllabus-archive-introduction"
+    },
+    {
+      "institution": "H-Net H-Urban",
+      "title": "History of Urban Problems",
+      "url": "https://networks.h-net.org/node/22277/pages/40096/syllabus-archive-introduction"
+    }
+  ],
+  "app_prompts": [
+    "Suburbanization timeline: user picks a metro area and traces the postwar expansion — FHA loans, highway construction, white flight, the hollowing of the urban core, and who was excluded from the suburban boom.",
+    "Redlining explorer: user picks a city and decade and sees how neighborhood grades shaped mortgage access, school funding, and wealth accumulation — and whose neighborhoods were colored red.",
+    "Urban reform timeline: user picks a city problem (cholera, tenements, machine politics, highway construction) and traces the reform movement that responded — who organized, what changed, what stayed the same.",
+    "Ethnic neighborhood formation quiz: user reads a neighborhood history and identifies the ethnic succession — who came first, who replaced them, what economic structures enabled each group's foothold.",
+    "Political incorporation tracker: user picks an immigrant or minority group in a city and traces how they moved from exclusion to political representation — coalitions, machine politics, protest, electoral success."
+  ]
+}

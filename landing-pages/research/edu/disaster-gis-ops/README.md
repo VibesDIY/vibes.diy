@@ -1,0 +1,22 @@
+# disaster-gis-ops
+
+> A state emergency management agency runs mission-critical spatial analysis during active disaster events — hurricanes, wildfires, flood events, evacuations — where decisions made on the GIS team affect evacuation routing, shelter siting, resource staging, and life-safety messaging for millions of residents. The team needs a high-stakes operational app that brings together pre-event preparedness assets and live event spatial analysis with the auditability that post-disaster review and litigation require. Build a mission-critical app where the agency maintains a versioned geospatial database design that includes population data at the census block level, critical infrastructure (hospitals, dialysis centers, nursing homes, jails, schools), the transportation network with capacity attributes, designated shelters with capacities, evacuation zones, historical hazard layers, and shelter accessibility for vulnerable populations. When an event activates, the GIS lead opens an incident, and the team runs the standard initial spatial analyses: proximity analysis of population to evacuation routes, network analysis for evacuation travel times under degraded conditions, spatial interpolation of forecast hazard intensity over the affected area, site suitability analysis for emergency shelter activation given expected demand and remaining capacity, and spatial overlays of vulnerable population locations on the projected hazard footprint. The app should support rapid cartographic representation of operational maps for the incident commander, the public information officer, and field teams — each role getting the layers and styling appropriate to their decision-making — and should publish a public urban data visualization layer for residents to check evacuation status by address. Every analytic decision is logged with timestamp, analyst, layer versions, and inputs because the post-event after-action review will retrace these choices. The app should also support the training and exercise mode, replaying past events to drill the team on the workflow, so that on the day a real event begins, the team is operating muscle memory rather than improvising.
+
+Live at [https://vibes.diy/vibe/edu/disaster-gis-ops](https://vibes.diy/vibe/edu/disaster-gis-ops)
+
+Single-file React app built with [vibes.diy](https://vibes.diy). Visit the live url to manage access.
+
+## Run it
+
+```sh
+npx vibes-diy push     # uploads App.jsx, prints a live HTTPS URL
+```
+
+Edit [App.jsx](App.jsx) and push again to iterate.
+
+## Commands
+
+- `npx vibes-diy push` — deploy the current directory
+- `npx vibes-diy push --instant-join` — deploy with auto-accept sharing
+- `npx vibes-diy generate "prompt"` — generate a new app from a prompt
+- `npx vibes-diy help` — full command list

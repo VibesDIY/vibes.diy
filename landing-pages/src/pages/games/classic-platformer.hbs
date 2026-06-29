@@ -1,0 +1,339 @@
+{{!--
+{
+  "layout": "webring",
+  "title": "Classic Platformer // Games // Vibes DIY",
+  "description": "Jump, dash, climb, slide. Six side-scrollers from the brick-and-coin era — auto-runner to precision dasher. Single-file React, Fireproof saves, remix to your own.",
+  "ogUrl": "https://good.vibes.diy/games/classic-platformer",
+  "source": "games-classic-platformer",
+  "apps": [
+    {"num":"01","slug":"pixel-runner","author":"jchris","live":true,"title":"JUMP BLOCKS","tagline":"NES palette. Three short levels.","desc":"Side-scrolling platformer with a chunky square hero. Brick platforms, coin pickups, spike pits, three short levels in NES palette."},
+    {"num":"02","slug":"cave-gem-runner","author":"jchris","live":true,"title":"CAVE COINS","tagline":"Bats. Gems. Double-jump unlock.","desc":"Cave platformer with swooping bats and sparkling gems. Double-jump unlocks after the first gem. Parallax cave backdrop, dripping stalactites."},
+    {"num":"03","slug":"rainbow-ascent","author":"jchris","live":true,"title":"SKY SPRINT","tagline":"Clouds dissolve a second after you land.","desc":"Cloud-hopping race: clouds dissolve one second after you land. Reach the rainbow goal up top. Procedurally arranged clouds each run."},
+    {"num":"04","slug":"stone-keep-run","author":"jchris","live":true,"title":"CASTLE QUEST","tagline":"Fireballs. Slime stomps. Chiptune.","desc":"Moving stone platforms, arcing fireballs, one slime per level you defeat by jumping on it. Five short levels, eight-bit chiptune."},
+    {"num":"05","slug":"acorn-bounce","author":"jchris","live":true,"title":"MUSHROOM LEAP","tagline":"Bouncy caps. Ten golden acorns.","desc":"Bouncy mushroom caps launch the hero very high. Collect ten golden acorns across stacked platforms. Pixel-art trees foreground and back."},
+    {"num":"06","slug":"frostbound-run","author":"jchris","live":true,"title":"SNOWY SLIDE","tagline":"Slippery ice. Falling icicles.","desc":"Slippery ice, conveyor-belt snowdrifts that push you, icicles falling when you pass underneath. Earmuff hero, cool blue-and-white palette."}
+  ]
+}
+--}}
+
+<style>
+  @import url("https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Bungee&display=optional");
+
+  :root {
+    --sky-top: #6cb4ff;
+    --sky-mid: #a8d8ff;
+    --sky-bottom: #d6ebff;
+    --brick-red: #c33a1f;
+    --brick-dark: #7a2210;
+    --brick-mortar: #4a1408;
+    --grass: #2eb83f;
+    --grass-dark: #1e7a2a;
+    --coin-gold: #ffce1f;
+    --coin-shine: #fff5b0;
+    --ink: #1a0d05;
+    --cloud: #ffffff;
+  }
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body {
+    font-family: "Press Start 2P", monospace;
+    background: linear-gradient(to bottom, var(--sky-top) 0%, var(--sky-mid) 50%, var(--sky-bottom) 100%);
+    color: var(--ink);
+    min-height: 100vh;
+    line-height: 1.7;
+    image-rendering: pixelated;
+  }
+  body::before {
+    content: "";
+    position: fixed; left: 8%; top: 12%; width: 100px; height: 30px;
+    background: var(--cloud);
+    border-radius: 30px;
+    box-shadow:
+      30% 0 0 var(--cloud),
+      40% -50% 0 -30% var(--cloud),
+      40% -90% 0 -50% var(--cloud),
+      350px 80px 0 -10px var(--cloud),
+      380px 80px 0 -20px var(--cloud),
+      820px 40px 0 -5px var(--cloud);
+    pointer-events: none;
+    opacity: 0.85;
+  }
+  a { color: var(--brick-red); text-decoration: none; }
+  a:hover { color: var(--ink); }
+
+  .container { max-width: 1080px; margin: 0 auto; padding: 0 1.5rem; }
+
+  .topbar {
+    padding: 1rem 1.5rem;
+    display: flex; justify-content: space-between; align-items: center;
+    font-size: 0.6rem;
+    text-transform: uppercase; letter-spacing: 0.15em;
+    background: var(--brick-red);
+    color: #fff;
+    border-bottom: 4px solid var(--brick-dark);
+    box-shadow: inset 0 -8px 0 rgba(0,0,0,0.18);
+  }
+  .topbar a { color: var(--coin-gold); text-shadow: 2px 2px 0 var(--brick-mortar); }
+
+  .crumb {
+    padding: 0.8rem 1.5rem;
+    font-size: 0.55rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    background: var(--coin-gold);
+    color: var(--ink);
+    border-bottom: 4px solid var(--brick-mortar);
+  }
+  .crumb a { color: var(--brick-red); }
+  .crumb a:hover { color: var(--ink); }
+
+  .hero {
+    padding: 4rem 0 3rem;
+    text-align: center;
+    position: relative;
+  }
+  .hero .label {
+    font-size: 0.55rem;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--brick-red);
+    margin-bottom: 1.5rem;
+  }
+  .hero h1 {
+    font-family: "Press Start 2P", monospace;
+    font-size: clamp(1.8rem, 5vw, 3.4rem);
+    line-height: 1.2;
+    color: var(--brick-red);
+    letter-spacing: 0.04em;
+    text-shadow:
+      3px 3px 0 var(--ink),
+      6px 6px 0 var(--coin-gold);
+  }
+  .hero .tag {
+    font-family: "Bungee", sans-serif;
+    font-size: 1.4rem;
+    color: var(--ink);
+    margin: 1.75rem 0 1.5rem;
+    letter-spacing: 0.05em;
+  }
+  .hero p {
+    font-family: "Bungee", sans-serif;
+    max-width: 680px;
+    margin: 0 auto;
+    font-size: 1rem;
+    color: var(--ink);
+    letter-spacing: 0.02em;
+  }
+
+  /* brick stripe */
+  .brick {
+    background:
+      linear-gradient(to right, transparent 0, transparent 49%, var(--brick-mortar) 49%, var(--brick-mortar) 51%, transparent 51%),
+      linear-gradient(to bottom, var(--brick-red) 0, var(--brick-red) 49%, var(--brick-mortar) 49%, var(--brick-mortar) 51%, var(--brick-red) 51%);
+    background-size: 80px 40px;
+    height: 40px;
+    border-top: 3px solid var(--brick-dark);
+    border-bottom: 3px solid var(--brick-dark);
+  }
+
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0;
+    background: var(--ink);
+    color: var(--coin-gold);
+    border-top: 4px solid var(--coin-gold);
+    border-bottom: 4px solid var(--coin-gold);
+  }
+  @media (max-width: 700px) { .stats { grid-template-columns: repeat(2, 1fr); } }
+  .stat-cell { padding: 1rem 1.25rem; border-right: 2px solid var(--coin-gold); }
+  .stat-cell:last-child { border-right: none; }
+  .stat-cell .k {
+    font-size: 0.5rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--coin-shine);
+    margin-bottom: 0.5rem;
+  }
+  .stat-cell .v {
+    font-size: 0.7rem;
+    color: var(--coin-gold);
+    letter-spacing: 0.04em;
+  }
+
+  .apps { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.75rem; padding: 2.5rem 0; }
+  @media (max-width: 800px) { .apps { grid-template-columns: 1fr; } }
+
+  .app {
+    background: var(--cloud);
+    border: 4px solid var(--ink);
+    box-shadow: 6px 6px 0 var(--brick-dark);
+    padding: 1.25rem;
+    position: relative;
+    display: flex; flex-direction: column; gap: 0.85rem;
+  }
+  .app .head {
+    display: flex; justify-content: space-between; align-items: baseline;
+    padding-bottom: 0.5rem;
+    border-bottom: 3px dotted var(--ink);
+  }
+  .app .num {
+    font-size: 0.55rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--brick-red);
+  }
+  .app .status {
+    font-size: 0.55rem;
+    color: #888;
+    letter-spacing: 0.15em;
+  }
+  .app--live .status { color: var(--grass-dark); }
+  .app .title {
+    font-size: 0.95rem;
+    line-height: 1.3;
+    color: var(--ink);
+    letter-spacing: 0.04em;
+  }
+  .app .tagline {
+    font-family: "Bungee", sans-serif;
+    font-size: 1.05rem;
+    color: var(--brick-red);
+    border-left: 4px solid var(--coin-gold);
+    padding-left: 0.75rem;
+    letter-spacing: 0.02em;
+  }
+  .app .desc {
+    font-family: "Bungee", sans-serif;
+    font-size: 0.95rem;
+    flex: 1;
+    color: var(--ink);
+    letter-spacing: 0.01em;
+    line-height: 1.5;
+  }
+  .app .shot {
+    display: block; border: 3px solid var(--ink);
+    aspect-ratio: 16/9; overflow: hidden; background: var(--sky-mid);
+  }
+  .app .shot img { width: 100%; height: 100%; object-fit: cover; }
+  .app .shot-placeholder {
+    padding: 1rem;
+    font-size: 0.55rem;
+    color: var(--brick-red);
+    text-align: center;
+    height: 100%; display: flex; align-items: center; justify-content: center;
+    letter-spacing: 0.2em; text-transform: uppercase;
+    background: var(--sky-mid);
+  }
+  .app .ctas { display: flex; gap: 0.5rem; }
+  .btn {
+    flex: 1; text-align: center;
+    padding: 0.6rem 0.75rem;
+    background: var(--coin-gold);
+    border: 3px solid var(--ink);
+    font-family: "Press Start 2P", monospace;
+    font-size: 0.55rem;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    color: var(--ink);
+    cursor: pointer;
+    box-shadow: 3px 3px 0 var(--brick-dark);
+  }
+  .btn:hover {
+    background: var(--brick-red); color: var(--cloud);
+    transform: translate(1px, 1px);
+    box-shadow: 2px 2px 0 var(--brick-dark);
+  }
+  .prompt-link {
+    font-family: "Bungee", sans-serif;
+    font-size: 0.85rem;
+    color: var(--brick-red);
+  }
+  .prompt-link:hover { color: var(--ink); }
+
+  .epilogue {
+    background: var(--ink);
+    color: var(--cloud);
+    padding: 2rem 1.5rem;
+    font-family: "Bungee", sans-serif;
+    font-size: 1.05rem;
+    border-top: 4px solid var(--coin-gold);
+    letter-spacing: 0.02em;
+  }
+  .epilogue strong { color: var(--coin-gold); font-family: "Press Start 2P", monospace; font-size: 0.7rem; letter-spacing: 0.12em; text-transform: uppercase; }
+  footer.term-footer {
+    padding: 1rem 1.5rem;
+    background: var(--brick-red);
+    color: var(--coin-gold);
+    font-size: 0.5rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    text-align: center;
+    border-top: 4px solid var(--brick-dark);
+  }
+  footer.term-footer a { color: var(--cloud); }
+</style>
+
+<header class="topbar">
+  <a href="https://links.vibes.diy/homepage">VIBES.DIY</a>
+  <span>Classic Platformer — World 1-1</span>
+</header>
+<nav class="crumb">
+  <a href="/">Home</a> &nbsp;›&nbsp; <a href="/games/">Games</a> &nbsp;›&nbsp; Classic Platformer
+</nav>
+
+<main class="container">
+  <section class="hero">
+    <div class="label">Shelf · 03 of 05 · 6 levels</div>
+    <h1>CLASSIC PLATFORMER</h1>
+    <div class="tag">jump · dash · climb · slide</div>
+    <p>Six side-scrollers from the brick-and-coin era. Auto-runner to precision dasher, every one a tiny world.</p>
+  </section>
+</main>
+
+<div class="brick"></div>
+
+<section class="stats">
+  <div class="stat-cell"><div class="k">World</div><div class="v">1-3</div></div>
+  <div class="stat-cell"><div class="k">Levels</div><div class="v">06</div></div>
+  <div class="stat-cell"><div class="k">Time</div><div class="v">∞ : ∞∞</div></div>
+  <div class="stat-cell"><div class="k">Save</div><div class="v">Fireproof</div></div>
+</section>
+
+<main class="container">
+  <section class="apps">
+    {{#each apps}}
+      <article class="app {{#if live}}app--live{{else}}app--pending{{/if}}">
+        <div class="head">
+          <span class="num">№ {{num}} · {{slug}}</span>
+          <span class="status">{{#if live}}LIVE{{else}}PENDING{{/if}}</span>
+        </div>
+        <h2 class="title">{{title}}</h2>
+        <p class="tagline">{{tagline}}</p>
+        <p class="desc">{{desc}}</p>
+        {{#if live}}
+          <a class="shot" href="https://vibes.diy/vibe/{{author}}/{{slug}}" aria-label="{{title}} screenshot"><img src="https://{{slug}}--{{author}}.prod-v2.vibesdiy.net/screenshot.jpg" alt="{{slug}}" onerror="this.onerror=null; this.src='{{@root.assetPrefix}}images/og-preview.png';"/></a>
+          <div class="ctas">
+            <a class="btn" href="https://vibes.diy/vibe/{{author}}/{{slug}}">Play</a>
+            <a class="btn" href="https://vibes.diy/remix/{{author}}/{{slug}}?skipChat=true">Clone</a>
+            <a class="btn" href="https://vibes.diy/remix/{{author}}/{{slug}}">Remix</a>
+          </div>
+          <a class="prompt-link" href="https://vibes.diy/chat/prompt?prompt64={{prompt64 desc}}">— start fresh from this prompt</a>
+        {{else}}
+          <div class="shot"><div class="shot-placeholder">WORLD LOADING</div></div>
+          <div class="ctas">
+            <a class="btn" href="https://vibes.diy/chat/prompt?prompt64={{prompt64 desc}}">Start From Prompt</a>
+          </div>
+        {{/if}}
+      </article>
+    {{/each}}
+  </section>
+</main>
+
+<section class="epilogue">
+  <p><strong>End of world.</strong> Six platformers, one shelf. Steal the physics, change the avatar, swap the level — remix one into a game your kid actually beats.</p>
+</section>
+
+{{> newsletter}}
+<footer class="term-footer">
+  Vibes.diy · <a href="https://links.vibes.diy/homepage">homepage</a> · <a href="/games/">games</a> · THANK YOU MARIO
+</footer>

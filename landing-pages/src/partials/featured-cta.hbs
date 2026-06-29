@@ -1,0 +1,250 @@
+        <style>
+        .featured-cta-section {
+            max-width: 900px;
+            margin: 0 auto 5rem;
+            padding: 0 2rem;
+        }
+        .featured-cta-card {
+            background-color: #665d5d;
+            background-image: var(--halftone-dark);
+            background-size: 7px 7px;
+            color: var(--ivory);
+            padding: 3rem 2rem;
+            text-align: center;
+            border: 3px solid var(--black);
+            box-shadow: 6px 6px 0 var(--black);
+        }
+        .featured-cta-card h2 {
+            font-size: 2rem;
+            font-weight: 900;
+            margin-bottom: 0.75rem;
+            color: var(--ivory);
+        }
+        .featured-cta-card p {
+            color: var(--ivory);
+            margin-bottom: 1.75rem;
+            max-width: 540px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .featured-cta-form {
+            display: flex;
+            gap: 0.6rem;
+            max-width: 480px;
+            margin: 0 auto 1rem;
+        }
+        .featured-cta-form input[type="email"] {
+            flex: 1;
+            padding: 0.85rem 1.1rem;
+            border: 3px solid var(--black);
+            font-family: 'Alte Haas Grotesk', sans-serif;
+            font-size: 1rem;
+            background: var(--ivory);
+            color: var(--black);
+            outline: none;
+        }
+        .featured-cta-form input[type="email"]:focus {
+            border-color: var(--accent);
+        }
+        .featured-cta-form button[type="submit"] {
+            padding: 0.85rem 1.4rem;
+            background: var(--ivory);
+            color: var(--black);
+            border: 3px solid var(--black);
+            font-family: 'Alte Haas Grotesk', sans-serif;
+            font-size: 0.9rem;
+            font-weight: 800;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            cursor: pointer;
+            white-space: nowrap;
+            box-shadow:
+                6px 8px 0 0 var(--variant-yellow),
+                6px 8px 0 2px var(--black);
+            transition: transform 0.12s ease, box-shadow 0.12s ease;
+        }
+        .featured-cta-form button[type="submit"]:hover {
+            transform: translate(3px, 3px);
+            box-shadow:
+                3px 5px 0 0 var(--variant-yellow),
+                3px 5px 0 2px var(--black);
+        }
+        .featured-cta-response {
+            margin-top: 0.75rem;
+            font-size: 0.875rem;
+            min-height: 1.25em;
+        }
+        .featured-cta-response.is-loading { color: rgba(255,255,240,0.7); }
+        .featured-cta-response.is-success { color: var(--variant-yellow); }
+        .featured-cta-response.is-error { color: var(--variant-red); }
+        .featured-cta-fineprint {
+            font-size: 0.85rem;
+            opacity: 0.8;
+            margin-top: 1.25rem;
+        }
+        .featured-cta-fineprint a {
+            color: var(--variant-yellow);
+            font-weight: 700;
+            text-decoration: underline;
+        }
+        @media (max-width: 540px) {
+            .featured-cta-form { flex-direction: column; gap: 8px; }
+            .featured-cta-form input[type="email"] { border-right: 3px solid var(--black); }
+            .featured-cta-form button[type="submit"] { box-shadow: 4px 6px 0 0 var(--variant-yellow), 4px 6px 0 2px var(--black); }
+        }
+        </style>
+
+        <section class="featured-cta-section">
+            <div class="featured-cta-card">
+                <h2>{{ctaTitle}}</h2>
+                <p>{{ctaText}}</p>
+                <form class="featured-cta-form" action="https://diy.us9.list-manage.com/subscribe/post?u=3336ce5a9fc731f6f88b5bcad&amp;id=1cca0fb28b&amp;f_id=007b69e1f0&amp;SOURCE={{source}}" method="post" id="mc-embedded-subscribe-form" name="mc-embedded-subscribe-form" target="_blank">
+                    <input type="email" name="EMAIL" id="mce-EMAIL" placeholder="you@example.com" required aria-label="Email address" autocomplete="email">
+                    <button type="submit" name="subscribe" id="mc-embedded-subscribe">{{ctaButton}}</button>
+                    <input type="hidden" name="SOURCE" value="{{source}}">
+                    <div aria-hidden="true" style="position: absolute; left: -5000px;">
+                        <input type="text" name="b_3336ce5a9fc731f6f88b5bcad_1cca0fb28b" tabindex="-1" value="">
+                    </div>
+                </form>
+                <div class="featured-cta-response newsletter-response" aria-live="polite"></div>
+                <p class="featured-cta-fineprint">Or jump in: <a href="https://links.vibes.diy/homepage">build a vibe right now →</a></p>
+            </div>
+        </section>
+
+    <script>
+    (function() {
+        const INIT_FLAG = '__vibesMailchimpNewsletterAjax__';
+        if (window[INIT_FLAG]) return;
+        window[INIT_FLAG] = true;
+
+        const JSONP_NAMESPACE = '__vibesMailchimpCallbacks__';
+        if (!window[JSONP_NAMESPACE] || typeof window[JSONP_NAMESPACE] !== 'object') {
+            window[JSONP_NAMESPACE] = {};
+        }
+
+        function normalizeMailchimpMessage(message) {
+            const text = String(message).replace(/<[^>]*>/g, '').trim();
+            const cleaned = text.replace(/^\s*[01]\s*-\s*/, '').trim();
+            return cleaned || 'Something went wrong. Please try again.';
+        }
+
+        function jsonp(url, timeoutMs) {
+            return new Promise((resolve, reject) => {
+                if (!document.body) {
+                    reject(new Error('Document body not available for JSONP'));
+                    return;
+                }
+                if (!window[JSONP_NAMESPACE] || typeof window[JSONP_NAMESPACE] !== 'object') {
+                    window[JSONP_NAMESPACE] = {};
+                }
+                const callbackKey = `cb_${Math.random().toString(36).slice(2)}`;
+                const callbackRef = `${JSONP_NAMESPACE}.${callbackKey}`;
+                url.searchParams.set('c', callbackRef);
+                const script = document.createElement('script');
+                script.src = url.toString();
+                script.async = true;
+                let done = false;
+                const timeoutId = window.setTimeout(() => { finalize(new Error('Request timed out')); }, timeoutMs);
+                function cleanup() {
+                    window.clearTimeout(timeoutId);
+                    const ns = window[JSONP_NAMESPACE];
+                    if (ns && typeof ns === 'object') { delete ns[callbackKey]; }
+                    script.onerror = null;
+                    script.onload = null;
+                    if (script.parentNode) { script.parentNode.removeChild(script); }
+                }
+                function finalize(error, data) {
+                    if (done) return;
+                    done = true;
+                    cleanup();
+                    if (error) { reject(error); return; }
+                    resolve(data);
+                }
+                window[JSONP_NAMESPACE][callbackKey] = (data) => { finalize(null, data); };
+                script.onerror = () => { finalize(new Error('Network error')); };
+                document.body.appendChild(script);
+            });
+        }
+
+        function setResponse(el, state, message) {
+            const safeMessage = typeof message === 'string' ? message : String(message ?? '');
+            el.classList.remove('is-loading', 'is-success', 'is-error');
+            el.textContent = safeMessage;
+            if (state) el.classList.add(state);
+        }
+
+        const form = document.getElementById('mc-embedded-subscribe-form');
+        if (!(form instanceof HTMLFormElement)) return;
+
+        const responseEl = form.parentElement?.querySelector('.newsletter-response, .featured-cta-response');
+        const emailInput = form.querySelector('input[name="EMAIL"]');
+        const submitButton = form.querySelector('button[type="submit"]');
+        if (!responseEl || !emailInput || !submitButton) return;
+
+        const actionUrl = new URL(form.action);
+        const sourceParam = actionUrl.searchParams.get('SOURCE');
+        const sourceInputs = Array.from(form.querySelectorAll('input[name="SOURCE"]'));
+        const hiddenSourceValues = sourceInputs.map((input) => input.value).filter((value) => value);
+        const initialSourceValue = sourceParam !== null ? sourceParam : (hiddenSourceValues[0] || '');
+
+        if (!initialSourceValue) {
+            console.warn('Newsletter form: missing SOURCE.');
+        } else {
+            sourceInputs.forEach((input) => { input.value = initialSourceValue; });
+        }
+
+        let isSubmitting = false;
+        form.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            if (isSubmitting) return;
+            try {
+                if (typeof form.checkValidity === 'function' && !form.checkValidity()) {
+                    if (typeof form.reportValidity === 'function') { form.reportValidity(); }
+                    return;
+                }
+            } catch (err) { console.warn('Newsletter form: validation failed unexpectedly', err); }
+
+            isSubmitting = true;
+            submitButton.disabled = true;
+            setResponse(responseEl, 'is-loading', 'Subscribing...');
+
+            try {
+                const postJsonUrl = new URL(form.action);
+                const subscribePostPattern = /\/subscribe\/post\/?$/;
+                if (!subscribePostPattern.test(postJsonUrl.pathname)) {
+                    setResponse(responseEl, 'is-error', 'Subscription is temporarily unavailable. Please try again later.');
+                    return;
+                }
+                postJsonUrl.pathname = postJsonUrl.pathname.replace(subscribePostPattern, '/subscribe/post-json');
+
+                const formData = new FormData(form);
+                for (const [key, value] of formData.entries()) {
+                    if (key === 'EMAIL' || key === 'SOURCE' || key.startsWith('b_')) {
+                        postJsonUrl.searchParams.set(key, String(value));
+                    }
+                }
+
+                const data = await jsonp(postJsonUrl, 10000);
+                const isObject = data && typeof data === 'object';
+                if (isObject && data.result === 'success') {
+                    setResponse(responseEl, 'is-success', 'Subscribed. Check your inbox to confirm.');
+                    form.reset();
+                    if (initialSourceValue) {
+                        sourceInputs.forEach((input) => { input.value = initialSourceValue; });
+                    }
+                    return;
+                }
+                const message = isObject && typeof data.msg === 'string' && data.msg.trim()
+                    ? normalizeMailchimpMessage(data.msg)
+                    : 'Something went wrong. Please try again.';
+                setResponse(responseEl, 'is-error', message);
+            } catch (err) {
+                console.error('Newsletter JSONP subscription failed', err);
+                setResponse(responseEl, 'is-error', 'Could not connect. Please try again.');
+            } finally {
+                isSubmitting = false;
+                submitButton.disabled = false;
+            }
+        });
+    })();
+    </script>

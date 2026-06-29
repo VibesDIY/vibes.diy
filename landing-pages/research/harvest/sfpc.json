@@ -1,0 +1,105 @@
+{
+  "source": "School for Poetic Computation",
+  "location": "New York, NY",
+  "region": "Northeast",
+  "domain": "humanities",
+  "fetched": "2026-05-20",
+  "items": [
+    {
+      "title": "Code Societies Orientation",
+      "department": "Interdisciplinary Humanities",
+      "year": 2020,
+      "url": "https://github.com/SFPC/code-societies/blob/master/2020.html",
+      "topics": [
+        "code as social and political technology",
+        "algorithms and power",
+        "surveillance",
+        "social media infrastructure",
+        "interface and ideology",
+        "modes of seeing and feeling",
+        "systems of power",
+        "critical technology studies"
+      ]
+    },
+    {
+      "title": "Surveillance Studies",
+      "department": "Interdisciplinary Humanities",
+      "year": 2020,
+      "url": "https://github.com/SFPC/code-societies/blob/master/surveillance-studies.md",
+      "topics": [
+        "surveillance of Blackness",
+        "archive of slavery",
+        "predictive policing",
+        "biometric technologies",
+        "direct-to-consumer DNA testing",
+        "acts of refusal",
+        "hope as method",
+        "carceral capitalism"
+      ]
+    },
+    {
+      "title": "Black Mirrors: Reimagining Race, Technology, and Justice",
+      "department": "Philosophy / Ethics",
+      "year": 2020,
+      "url": "https://github.com/SFPC/code-societies/blob/master/2020.html",
+      "topics": [
+        "discriminatory design",
+        "racial hierarchies in algorithms",
+        "biased bots",
+        "altruistic algorithms",
+        "encoded inequity",
+        "sociologically informed skepticism",
+        "race and technology",
+        "algorithmic justice"
+      ]
+    },
+    {
+      "title": "The Unfinished Sentence: Algorithmic Text Generation",
+      "department": "Literature / Creative Writing",
+      "year": 2020,
+      "url": "https://docs.google.com/document/d/1l62d0RI3xRxkzNG30knARzCF5CfkWls0bcbi_xQmSTo/edit",
+      "topics": [
+        "Oulipo and constrained writing",
+        "algorithmic text generation",
+        "language models",
+        "aleatoric writing",
+        "agency and authorship",
+        "alienation and appropriation",
+        "programmatic situations",
+        "author-computer-reader relationship"
+      ]
+    },
+    {
+      "title": "Computational Exploration of Magical and Divinatory Language",
+      "department": "Music / Sound Studies",
+      "year": 2020,
+      "url": "https://github.com/aparrish/comexmadivla",
+      "topics": [
+        "magic words as material",
+        "phoneme-to-grapheme models",
+        "ineffable meanings",
+        "linguistic expression as space",
+        "divinatory ontologies",
+        "semantic space of Tarot",
+        "generative adversarial networks for language",
+        "ad-hoc ontologies"
+      ]
+    },
+    {
+      "title": "Dark Matters",
+      "department": "Art History / Visual Culture",
+      "year": 2018,
+      "url": "https://github.com/0ld-h3ad/DarkMatters-Fall2018",
+      "topics": [
+        "surveillance of Blackness",
+        "Black Gooey Universe",
+        "white as neutral in interfaces",
+        "biometric surveillance",
+        "algorithmic policing",
+        "radical imagination in artistic practice",
+        "critical access studies",
+        "software as ideology"
+      ]
+    }
+  ]
+}

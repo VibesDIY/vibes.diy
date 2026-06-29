@@ -1,0 +1,602 @@
+{{!--
+{
+  "layout": "webring",
+  "title": "Save the Date Apps — Vibes DIY",
+  "description": "You have a date. Apps for collecting addresses, tracking RSVPs, and keeping guests informed — before the invitation even goes out.",
+  "ogUrl": "https://good.vibes.diy/save-the-date/",
+  "source": "save-the-date",
+  "ogImage": "https://good.vibes.diy/images/screenshots/save-the-date.jpg"
+}
+--}}
+
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@600;700;800&display=optional');
+
+  :root {
+    --warm-bg: #faf5ef;
+    --warm-surface: #fff9f4;
+    --warm-deep: #2c1810;
+    --warm-mid: #5c4033;
+    --warm-muted: #8a7060;
+    --warm-line: #e8ddd2;
+    --gold: #c4944a;
+    --gold-soft: rgba(196, 148, 74, 0.12);
+    --gold-hover: #a87b3a;
+    --blush: #f0e4d8;
+  }
+
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Inter', system-ui, sans-serif;
+    color: var(--warm-deep);
+    line-height: 1.56;
+    background: var(--warm-bg);
+  }
+
+  a { color: inherit; text-decoration: none; }
+
+  .page { max-width: 1060px; margin: 0 auto; padding: 0 1.5rem 4rem; }
+
+  /* Nav */
+  .topbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 0;
+    border-bottom: 1px solid var(--warm-line);
+    font-size: 0.85rem;
+  }
+
+  .brand {
+    display: flex; align-items: center; gap: 0.6rem;
+    font-weight: 800; letter-spacing: 0.02em;
+  }
+
+  .brand img { height: 28px; width: auto; display: block; }
+
+  .nav-right { color: var(--warm-muted); font-weight: 600; font-size: 0.8rem; }
+
+  /* Hero */
+  .hero {
+    padding: 3.5rem 0 2.5rem;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2.5rem;
+    align-items: center;
+  }
+
+  @media (max-width: 760px) {
+    .hero { grid-template-columns: 1fr; gap: 1.5rem; padding: 2.5rem 0 2rem; }
+  }
+
+  .hero-text h1 {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: clamp(2.2rem, 5vw, 3.4rem);
+    font-weight: 800;
+    line-height: 1.06;
+    margin-bottom: 1rem;
+    color: var(--warm-deep);
+  }
+
+  .hero-text h1 em {
+    font-style: normal;
+    color: var(--gold);
+  }
+
+  .hero-lead {
+    font-size: 1.05rem;
+    color: var(--warm-mid);
+    max-width: 480px;
+    margin-bottom: 1.5rem;
+    line-height: 1.65;
+  }
+
+  .hero-cta {
+    display: inline-block;
+    background: var(--gold);
+    color: #fff;
+    font-weight: 700;
+    font-size: 0.88rem;
+    border-radius: 8px;
+    padding: 0.85rem 1.5rem;
+    transition: background 0.12s;
+  }
+
+  .hero-cta:hover { background: var(--gold-hover); }
+
+  .hero-visual {
+    position: relative;
+  }
+
+  .hero-screenshot {
+    width: 100%;
+    border-radius: 12px;
+    border: 1px solid var(--warm-line);
+    box-shadow: 0 12px 40px rgba(44, 24, 16, 0.1);
+    display: block;
+  }
+
+  .hero-photo {
+    position: absolute;
+    bottom: -16px;
+    right: -16px;
+    width: 140px;
+    height: 140px;
+    object-fit: cover;
+    border-radius: 12px;
+    border: 4px solid var(--warm-bg);
+    box-shadow: 0 4px 16px rgba(44, 24, 16, 0.15);
+  }
+
+  @media (max-width: 760px) {
+    .hero-photo { width: 100px; height: 100px; bottom: -10px; right: -4px; }
+  }
+
+  /* Value strip */
+  .value-strip {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1px;
+    background: var(--warm-line);
+    border-radius: 12px;
+    overflow: hidden;
+    margin-bottom: 3rem;
+  }
+
+  @media (max-width: 600px) { .value-strip { grid-template-columns: 1fr; } }
+
+  .value-cell {
+    background: var(--warm-surface);
+    padding: 1.25rem 1.2rem;
+    text-align: center;
+  }
+
+  .value-cell strong {
+    display: block;
+    font-size: 0.95rem;
+    font-weight: 700;
+    margin-bottom: 0.25rem;
+    color: var(--warm-deep);
+  }
+
+  .value-cell span {
+    font-size: 0.84rem;
+    color: var(--warm-muted);
+    line-height: 1.45;
+  }
+
+  /* Apps section */
+  .apps-header {
+    font-size: 0.6rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--warm-muted);
+    font-weight: 700;
+    margin-bottom: 1.25rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--warm-line);
+  }
+
+  /* Spotlight app */
+  .spotlight {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0;
+    background: var(--warm-surface);
+    border: 1px solid var(--warm-line);
+    border-radius: 16px;
+    overflow: hidden;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 2px 12px rgba(44, 24, 16, 0.04);
+  }
+
+  @media (max-width: 700px) {
+    .spotlight { grid-template-columns: 1fr; }
+    .spotlight-shot { order: -1; }
+  }
+
+  .spotlight-body {
+    padding: 2rem 2rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 0.6rem;
+  }
+
+  .spotlight-num {
+    font-size: 0.6rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--gold);
+    font-weight: 700;
+  }
+
+  .spotlight-title {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: clamp(1.6rem, 3.5vw, 2.2rem);
+    font-weight: 700;
+    line-height: 1.08;
+    color: var(--warm-deep);
+  }
+
+  .spotlight-tagline {
+    font-size: 0.95rem;
+    color: var(--warm-mid);
+    line-height: 1.55;
+  }
+
+  .spotlight-fork {
+    font-size: 0.82rem;
+    color: var(--gold);
+    font-style: italic;
+  }
+
+  .spotlight-actions {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    margin-top: 0.25rem;
+  }
+
+  .btn-gold {
+    display: inline-block;
+    background: var(--gold);
+    color: #fff;
+    font-weight: 700;
+    font-size: 0.78rem;
+    letter-spacing: 0.05em;
+    padding: 0.6rem 1.2rem;
+    border-radius: 6px;
+    transition: background 0.12s;
+  }
+
+  .btn-gold:hover { background: var(--gold-hover); }
+
+  .btn-outline {
+    display: inline-block;
+    background: transparent;
+    color: var(--warm-mid);
+    font-weight: 700;
+    font-size: 0.78rem;
+    letter-spacing: 0.05em;
+    padding: 0.6rem 1rem;
+    border-radius: 6px;
+    border: 1px solid var(--warm-line);
+    transition: background 0.12s;
+  }
+
+  .btn-outline:hover { background: var(--gold-soft); }
+
+  .spotlight-shot a {
+    display: block;
+    width: 100%;
+    height: 100%;
+    min-height: 260px;
+  }
+
+  .spotlight-shot img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    min-height: 260px;
+  }
+
+  /* App card grid */
+  .apps-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.25rem;
+    margin-bottom: 3rem;
+  }
+
+  @media (max-width: 640px) { .apps-grid { grid-template-columns: 1fr; } }
+
+  .app-card {
+    background: var(--warm-surface);
+    border: 1px solid var(--warm-line);
+    border-radius: 14px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 2px 8px rgba(44, 24, 16, 0.03);
+    transition: transform 0.12s, box-shadow 0.12s;
+  }
+
+  .app-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(44, 24, 16, 0.08);
+  }
+
+  .app-card .shot-wrap {
+    display: block;
+    aspect-ratio: 16/9;
+    overflow: hidden;
+    border-bottom: 1px solid var(--warm-line);
+    background: var(--blush);
+  }
+
+  .app-card .shot-wrap img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  .card-body {
+    padding: 1.25rem;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+  }
+
+  .card-num {
+    font-size: 0.58rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--gold);
+    font-weight: 700;
+  }
+
+  .card-title {
+    font-size: 1.15rem;
+    font-weight: 800;
+    color: var(--warm-deep);
+    line-height: 1.2;
+  }
+
+  .card-tagline {
+    font-size: 0.88rem;
+    color: var(--warm-muted);
+    line-height: 1.5;
+  }
+
+  .card-fork {
+    font-size: 0.8rem;
+    color: var(--gold);
+    font-style: italic;
+    margin-top: auto;
+    padding-top: 0.25rem;
+  }
+
+  .card-ctas {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    border-top: 1px solid var(--warm-line);
+    margin-top: auto;
+  }
+
+  .cta-btn {
+    text-align: center;
+    padding: 0.6rem;
+    font-size: 0.7rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    font-weight: 700;
+    color: var(--warm-mid);
+    transition: background 0.12s;
+  }
+
+  .cta-btn:first-child { border-right: 1px solid var(--warm-line); }
+  .cta-btn:hover { background: var(--gold-soft); }
+  .cta-btn.primary { color: var(--gold); }
+  .cta-btn.primary:hover { background: var(--gold-soft); }
+
+  /* Closing CTA */
+  .closing {
+    background: var(--warm-deep);
+    color: var(--warm-bg);
+    border-radius: 16px;
+    padding: 3rem 2.5rem;
+    text-align: center;
+  }
+
+  .closing h2 {
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: clamp(1.6rem, 3.5vw, 2.4rem);
+    font-weight: 700;
+    margin-bottom: 0.75rem;
+    line-height: 1.1;
+  }
+
+  .closing p {
+    font-size: 1rem;
+    opacity: 0.85;
+    max-width: 520px;
+    margin: 0 auto 1.5rem;
+    line-height: 1.6;
+  }
+
+  .btn-light {
+    display: inline-block;
+    background: var(--gold);
+    color: #fff;
+    font-weight: 700;
+    font-size: 0.88rem;
+    border-radius: 8px;
+    padding: 0.85rem 2rem;
+    transition: background 0.12s;
+  }
+
+  .btn-light:hover { background: var(--gold-hover); }
+
+  /* Footer */
+  .page-footer {
+    padding: 1.5rem 0 0;
+    margin-top: 2rem;
+    border-top: 1px solid var(--warm-line);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+
+  .footer-links { display: flex; gap: 1.5rem; }
+  .footer-links a {
+    font-size: 0.72rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--warm-muted);
+    transition: color 0.12s;
+  }
+
+  .footer-links a:hover { color: var(--gold); }
+
+  .footer-copy {
+    font-size: 0.7rem;
+    color: var(--warm-muted);
+  }
+</style>
+
+<div class="page">
+  <header class="topbar">
+    <a class="brand" href="https://links.vibes.diy/homepage">
+      <img src="{{assetPrefix}}Vibes-Toggle-1-Transparent.png" alt="Vibes DIY" />
+    </a>
+    <span class="nav-right">save-the-date apps</span>
+  </header>
+
+  <!-- Hero: continues the "Who has your address" thread -->
+  <section class="hero">
+    <div class="hero-text">
+      <h1>Who has your address.<br/><em>Who doesn't.</em></h1>
+      <p class="hero-lead">RSVPs, addresses, dietary notes, plus-ones, parking questions. Five apps for the gap between having a date and sending invitations.</p>
+      <a class="hero-cta" href="https://vibes.diy/vibe/og/guest-address-book" target="_blank" rel="noopener">Start with addresses</a>
+    </div>
+    <div class="hero-visual">
+      <img class="hero-screenshot"
+        src="https://guest-address-book--og.prod-v2.vibesdiy.net/screenshot.jpg"
+        alt="Guest Address Book app"
+        onerror="this.onerror=null; this.src='{{assetPrefix}}images/og-preview.png';">
+      <img class="hero-photo"
+        src="https://images.unsplash.com/photo-1519741497674-611481863552?w=300&q=80&auto=format"
+        alt="Wedding planning moment">
+    </div>
+  </section>
+
+  <!-- Value strip -->
+  <div class="value-strip">
+    <div class="value-cell"><strong>Free</strong><span>Open each app instantly. No signup needed.</span></div>
+    <div class="value-cell"><strong>Yours to change</strong><span>Clone any app and adjust it for your event.</span></div>
+    <div class="value-cell"><strong>Share one link</strong><span>Guests fill in their own details.</span></div>
+  </div>
+
+  <!-- Spotlight: Guest Address Book -->
+  <div class="apps-header">Five apps for the pre-invitation window</div>
+
+  <div class="spotlight">
+    <div class="spotlight-body">
+      <div class="spotlight-num">App 01 of 05</div>
+      <h2 class="spotlight-title">Guest Address Book</h2>
+      <p class="spotlight-tagline">One link. Guests fill in their own mailing address. You stop chasing texts that say "I'll send it later."</p>
+      <p class="spotlight-fork">Collecting emails instead of mailing addresses? Clone it and swap the fields.</p>
+      <div class="spotlight-actions">
+        <a class="btn-gold" href="https://vibes.diy/vibe/og/guest-address-book" target="_blank" rel="noopener">Open app</a>
+        <a class="btn-outline" href="https://vibes.diy/remix/og/guest-address-book?skipChat=true" target="_blank" rel="noopener">Clone it</a>
+        <a class="btn-outline" href="https://vibes.diy/remix/og/guest-address-book" target="_blank" rel="noopener">Remix</a>
+      </div>
+    </div>
+    <div class="spotlight-shot">
+      <a href="https://vibes.diy/vibe/og/guest-address-book" target="_blank" rel="noopener" aria-label="Guest Address Book screenshot">
+        <img src="https://guest-address-book--og.prod-v2.vibesdiy.net/screenshot.jpg"
+             alt="Guest Address Book"
+             onerror="this.onerror=null; this.src='{{assetPrefix}}images/og-preview.png';">
+      </a>
+    </div>
+  </div>
+
+  <!-- Remaining apps as cards with screenshots -->
+  <div class="apps-grid">
+    <article class="app-card">
+      <a class="shot-wrap" href="https://vibes.diy/vibe/og/quick-rsvp" target="_blank" rel="noopener" aria-label="Quick RSVP screenshot">
+        <img src="https://quick-rsvp--og.prod-v2.vibesdiy.net/screenshot.jpg"
+             alt="Quick RSVP"
+             onerror="this.onerror=null; this.src='{{assetPrefix}}images/og-preview.png';">
+      </a>
+      <div class="card-body">
+        <div class="card-num">App 02</div>
+        <h3 class="card-title">Quick RSVP</h3>
+        <p class="card-tagline">Yes, no, or "I'll let you know." Track who's coming before the real invitation goes out.</p>
+        <p class="card-fork">Need meal choices or song requests on the same form? Clone and add fields.</p>
+      </div>
+      <div class="card-ctas">
+        <a class="cta-btn primary" href="https://vibes.diy/vibe/og/quick-rsvp" target="_blank" rel="noopener">Open</a>
+        <a class="cta-btn" href="https://vibes.diy/remix/og/quick-rsvp?skipChat=true" target="_blank" rel="noopener">Clone</a>
+      </div>
+    </article>
+
+    <article class="app-card">
+      <a class="shot-wrap" href="https://vibes.diy/vibe/og/plus-one-tracker" target="_blank" rel="noopener" aria-label="Plus One Tracker screenshot">
+        <img src="https://plus-one-tracker--og.prod-v2.vibesdiy.net/screenshot.jpg"
+             alt="Plus One Tracker"
+             onerror="this.onerror=null; this.src='{{assetPrefix}}images/og-preview.png';">
+      </a>
+      <div class="card-body">
+        <div class="card-num">App 03</div>
+        <h3 class="card-title">Plus One Tracker</h3>
+        <p class="card-tagline">Who's bringing someone. Who's not sure. One place so the headcount stays real.</p>
+        <p class="card-fork">Tracking kids, accessibility needs, or hotel blocks? Clone and add the column.</p>
+      </div>
+      <div class="card-ctas">
+        <a class="cta-btn primary" href="https://vibes.diy/vibe/og/plus-one-tracker" target="_blank" rel="noopener">Open</a>
+        <a class="cta-btn" href="https://vibes.diy/remix/og/plus-one-tracker?skipChat=true" target="_blank" rel="noopener">Clone</a>
+      </div>
+    </article>
+
+    <article class="app-card">
+      <a class="shot-wrap" href="https://vibes.diy/vibe/og/event-info-page" target="_blank" rel="noopener" aria-label="Event Info Page screenshot">
+        <img src="https://event-info-page--og.prod-v2.vibesdiy.net/screenshot.jpg"
+             alt="Event Info Page"
+             onerror="this.onerror=null; this.src='{{assetPrefix}}images/og-preview.png';">
+      </a>
+      <div class="card-body">
+        <div class="card-num">App 04</div>
+        <h3 class="card-title">Event Info Page</h3>
+        <p class="card-tagline">Where to park. Which hotel. What to wear. One link that answers every text you'd get five times.</p>
+        <p class="card-fork">Multiple events across the weekend? Clone one per day.</p>
+      </div>
+      <div class="card-ctas">
+        <a class="cta-btn primary" href="https://vibes.diy/vibe/og/event-info-page" target="_blank" rel="noopener">Open</a>
+        <a class="cta-btn" href="https://vibes.diy/remix/og/event-info-page?skipChat=true" target="_blank" rel="noopener">Clone</a>
+      </div>
+    </article>
+
+    <article class="app-card">
+      <a class="shot-wrap" href="https://vibes.diy/vibe/og/event-countdown-clock" target="_blank" rel="noopener" aria-label="Event Countdown Clock screenshot">
+        <img src="https://event-countdown-clock--og.prod-v2.vibesdiy.net/screenshot.jpg"
+             alt="Event Countdown Clock"
+             onerror="this.onerror=null; this.src='{{assetPrefix}}images/og-preview.png';">
+      </a>
+      <div class="card-body">
+        <div class="card-num">App 05</div>
+        <h3 class="card-title">Event Countdown Clock</h3>
+        <p class="card-tagline">The big day, ticking closer. Share it so everyone feels the same urgency you do.</p>
+        <p class="card-fork">Countdown to the rehearsal dinner or bachelor party instead? Clone and set the date.</p>
+      </div>
+      <div class="card-ctas">
+        <a class="cta-btn primary" href="https://vibes.diy/vibe/og/event-countdown-clock" target="_blank" rel="noopener">Open</a>
+        <a class="cta-btn" href="https://vibes.diy/remix/og/event-countdown-clock?skipChat=true" target="_blank" rel="noopener">Clone</a>
+      </div>
+    </article>
+  </div>
+
+  <!-- Closing CTA -->
+  <section class="closing">
+    <h2>Start with addresses. Everything else follows.</h2>
+    <p>Open Guest Address Book, share the link, and stop chasing people for their mailing info. The rest of the planning gets easier from here.</p>
+    <a class="btn-light" href="https://vibes.diy/vibe/og/guest-address-book" target="_blank" rel="noopener">Open Guest Address Book</a>
+  </section>
+
+  <!-- Footer -->
+  <footer class="page-footer">
+    <div class="footer-links">
+      <a href="https://links.vibes.diy/homepage">Home</a>
+      <a href="https://links.vibes.diy/discord">Discord</a>
+      <a href="https://links.vibes.diy/Substack">Substack</a>
+    </div>
+    <span class="footer-copy">&copy; Vibes DIY</span>
+  </footer>
+</div>

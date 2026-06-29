@@ -1,0 +1,101 @@
+{
+  "slug": "spatial-analysis-gis",
+  "page_url": "https://good.vibes.diy/edu/spatial-analysis-gis/",
+  "label": "Spatial Analysis and GIS",
+  "department": "Urban Planning",
+  "vocabulary": [
+    "spatial analysis",
+    "geodatabases",
+    "cartographic representation",
+    "thematic mapping",
+    "spatial overlays",
+    "network analysis",
+    "raster GIS",
+    "spatial interpolation",
+    "site suitability analysis",
+    "urban data visualization",
+    "geospatial database design",
+    "proximity analysis"
+  ],
+  "sources": [
+    {
+      "institution": "MIT",
+      "title": "11.520 A Workshop on Geographic Information Systems",
+      "url": "https://ocw.mit.edu/courses/11-520-a-workshop-on-geographic-information-systems-fall-2005/"
+    },
+    {
+      "institution": "Carnegie Mellon",
+      "title": "94-802 Geographic Information Systems",
+      "url": "https://www.heinz.cmu.edu/current-students/courses/94-802"
+    },
+    {
+      "institution": "UT Austin",
+      "title": "CRP 386 Urban GIS",
+      "url": "https://soa.utexas.edu/programs/community-and-regional-planning/courses"
+    },
+    {
+      "institution": "UT Austin",
+      "title": "GRG 470C Advanced Geographic Information Systems",
+      "url": "https://catalog.utexas.edu/general-information/coursesatoz/grg/"
+    },
+    {
+      "institution": "UNC Chapel Hill",
+      "title": "PLAN 741: Land Use and Environmental Planning",
+      "url": "https://planning.unc.edu/wp-content/uploads/sites/399/2017/08/PLAN-741-LandUseEnvironPlanning-Song.pdf"
+    },
+    {
+      "institution": "University of Washington",
+      "title": "URBDP 520: Quantitative Methods in Urban Design and Planning",
+      "url": "https://urbdp.be.uw.edu/wp-content/uploads/sites/10/2025/05/520-syll-ver1.pdf"
+    }
+  ],
+  "app_prompts": [
+    "A high school student got curious about why some neighborhoods in their city feel walkable and others do not, and they want a casual exploratory tool to build intuition for what spatial analysis even looks like — without committing to a full GIS software stack. They want to noodle with map layers, see how a place changes when you overlay different information on it, and learn the vocabulary as they go. Build a playful exploration app where the student picks a city or neighborhood they care about and assembles thematic mapping layers from a small built-in library: parks, schools, transit stops, grocery stores, hills, historic redlining boundaries, and population density. The app should walk them through what each layer represents and let them stack spatial overlays to see, for example, whether neighborhoods with the most parks are the same as the neighborhoods with the most grocery stores. It should introduce proximity analysis casually — 'circle every home within 10 minutes' walk of a park' — and show them what happens when the buffer distance changes. It should let them experiment with a simple site suitability analysis: 'pretend you are siting a new branch library; show me places that are far from existing branches, near transit, and in dense residential areas.' The app should explain each concept they touch in plain language as they touch it, building a glossary of spatial analysis terms tied to what they just did, and let them save their maps as little urban data visualization stories they can share with a friend. The point is to develop an eye for spatial pattern, not to produce a publication-quality map.",
+    "A neighborhood organizing committee is preparing testimony for a city council hearing about a proposed bus route restructuring and wants a shared workspace where members can collect and discuss the spatial evidence they think the council should see. The committee includes a retired transit planner, three regular bus riders, a parent who walks kids to a school the proposed route would no longer serve, and a small business owner. They need a coordination app where members can each contribute spatial observations and the committee can stitch them together into a coherent argument. Build a community mapping app where a member can drop a pin on a location and write up what they observe — a bus stop with broken shelter, a stretch where the proposed reroute would force a long walk along a street with no sidewalk, a school dismissal location that depends on the current route — and tag it with the relevant concern. The committee should be able to lay these observations on top of city-provided base layers and conduct simple network analysis from key locations like the elementary school: how does walking time and transfer count change under the current route versus the proposal? Proximity analysis around each major destination shows what fraction of which census blocks are within 10-minute access today and under the proposal. Members can comment on each other's pins, draft a collaborative narrative about the equity implications using urban data visualization that anyone in the group can revise, and produce a public-facing version of the map for the council hearing. The app should also support generating a brief packet of cartographic representations the committee can hand to council members, with each map captioned and sourced from the underlying observations.",
+    "A GIS technician at a county planning department handles the routine spatial workflows that feed the department's day-to-day decisions: subdivision plat reviews, floodplain determinations, hazard buffer checks, environmental constraints overlays, and ad-hoc map requests from elected officials. The technician needs an operational workflow app because the current setup is a hairball of one-off project files and the geospatial database design is informal, leading to inconsistent results across analysts. Build an operational workflow app where the technician's recurring tasks are templated. For each subdivision review, the technician enters the parcel ID and the app pulls the relevant layers from the county geodatabases — zoning, environmental overlays, transportation network, utility easements — runs the standard spatial overlays needed for the review checklist, computes setback and buffer compliance using proximity analysis, and surfaces any conflicts the technician must flag. For floodplain determinations, the workflow steps the technician through pulling FEMA layers, conducting the spatial interpolation for areas between cross-sections, and generating the structured letter the county sends back to the requesting party. The app maintains versioned geospatial database design documentation so the technician (or a successor) can always trace which version of which layer was used in a given determination. A library of cartographic representation templates produces the maps the department's letters require — consistent legends, north arrows, scale bars, source citations — so every output looks like it came from the same office. The technician also has a simple ad-hoc map mode for elected officials' urgent requests, with a queue of pending requests and turnaround time tracked. The output is a more reliable, more auditable workflow that also surfaces metrics on backlog and recurring layer issues.",
+    "A senior planner at a regional transportation agency is leading a multi-month site suitability analysis to select locations for a new network of electric vehicle fast-charging stations across a metro area. The analysis must weigh competing criteria from policy goals, electrical capacity, equity, and travel demand. They need a serious analytic app that supports the structured suitability modeling they were trained to do, with full transparency about weights, layers, and tradeoffs. Build a professional analytic app where the planner sets up the candidate sites — every parcel meeting initial zoning and ownership eligibility — and the suitability criteria, each as its own layer drawn from the agency's geospatial database design: distance to high-volume corridors (proximity analysis), distance to existing chargers (network analysis on the road network), grid capacity availability (raster GIS surface from utility data), equity priority status (thematic mapping of disadvantaged community designations), travel demand for EV-eligible trips (interpolated demand surface from the regional travel model), and environmental constraints (spatial overlays for floodplains, wetlands, contamination). For each layer the planner specifies a scoring function — how raw distance translates into a 0-to-1 suitability score, with documented rationale — and assigns layer weights reflecting the agency's stated priorities. The app composes the layers into a weighted suitability surface and produces a ranked candidate list. Crucially the planner should be able to run multiple weighting scenarios side by side (equity-first, demand-first, balanced) and see how the top candidates shift, and run a structured sensitivity analysis on the scoring functions to see which layer assumptions matter most. The output is a publication-grade methodology report with reproducible cartographic representation of each scenario and a structured comparison of which sites are robust across weightings versus dependent on a single criterion. Every decision is logged so the analysis is defensible to the agency's board.",
+    "A state emergency management agency runs mission-critical spatial analysis during active disaster events — hurricanes, wildfires, flood events, evacuations — where decisions made on the GIS team affect evacuation routing, shelter siting, resource staging, and life-safety messaging for millions of residents. The team needs a high-stakes operational app that brings together pre-event preparedness assets and live event spatial analysis with the auditability that post-disaster review and litigation require. Build a mission-critical app where the agency maintains a versioned geospatial database design that includes population data at the census block level, critical infrastructure (hospitals, dialysis centers, nursing homes, jails, schools), the transportation network with capacity attributes, designated shelters with capacities, evacuation zones, historical hazard layers, and shelter accessibility for vulnerable populations. When an event activates, the GIS lead opens an incident, and the team runs the standard initial spatial analyses: proximity analysis of population to evacuation routes, network analysis for evacuation travel times under degraded conditions, spatial interpolation of forecast hazard intensity over the affected area, site suitability analysis for emergency shelter activation given expected demand and remaining capacity, and spatial overlays of vulnerable population locations on the projected hazard footprint. The app should support rapid cartographic representation of operational maps for the incident commander, the public information officer, and field teams — each role getting the layers and styling appropriate to their decision-making — and should publish a public urban data visualization layer for residents to check evacuation status by address. Every analytic decision is logged with timestamp, analyst, layer versions, and inputs because the post-event after-action review will retrace these choices. The app should also support the training and exercise mode, replaying past events to drill the team on the workflow, so that on the day a real event begins, the team is operating muscle memory rather than improvising."
+  ],
+  "apps": [
+    {
+      "num": "01",
+      "slug": "neighborhood-gis-explorer",
+      "author": "edu",
+      "live": true,
+      "title": "Neighborhood Explorer",
+      "tagline": "Stack map layers. Run proximity analysis. Build a spatial intuition."
+    },
+    {
+      "num": "02",
+      "slug": "community-mapping-workspace",
+      "author": "edu",
+      "live": true,
+      "title": "Community Map",
+      "tagline": "Drop a pin. Write up what you observe. Stitch the evidence into a council argument."
+    },
+    {
+      "num": "03",
+      "slug": "planning-gis-workflow",
+      "author": "edu",
+      "live": true,
+      "title": "Planning Workflow",
+      "tagline": "Subdivision review, floodplain determination, hazard buffer check — templated and auditable."
+    },
+    {
+      "num": "04",
+      "slug": "ev-suitability-analysis",
+      "author": "edu",
+      "live": true,
+      "title": "Suitability Analysis",
+      "tagline": "Weight the criteria. Build the surface. Compare equity-first vs. demand-first scenarios."
+    },
+    {
+      "num": "05",
+      "slug": "disaster-gis-ops",
+      "author": "edu",
+      "live": true,
+      "title": "Disaster GIS Ops",
+      "tagline": "Population to routes. Shelter capacity. Hazard footprint. Every decision timestamped."
+    }
+  ]
+}

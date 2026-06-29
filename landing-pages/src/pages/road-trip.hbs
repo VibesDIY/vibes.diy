@@ -1,0 +1,247 @@
+{{!--
+{
+  "layout": "webring",
+  "title": "Road Trip Apps | Vibes DIY — The Road Finds Its People",
+  "description": "Apps for the romance of the road — trade routes, share resources, and relax around the same fire.",
+  "ogUrl": "https://good.vibes.diy/road-trip/",
+  "source": "road-trip",
+  "ogImage": "https://good.vibes.diy/images/screenshots/road-trip.jpg"
+}
+--}}
+
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@600;700&display=optional');
+
+  :root {
+    --bg: #17100d;
+    --surface: #231913;
+    --ink: #f8e3ca;
+    --muted: #d2b89d;
+    --line: #3a2d25;
+    --brand: #f2a86b;
+    --brand-strong: #c97033;
+    --pill: #6f3e1f;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    font-family: 'Inter', system-ui, sans-serif;
+    color: var(--ink);
+    line-height: 1.55;
+    background: radial-gradient(circle at 10% 0, #302017 0, var(--bg) 40%), var(--bg);
+  }
+
+  a { color: inherit; text-decoration: none; }
+
+  .page { max-width: 980px; margin: 0 auto; padding: 0 1.25rem 4rem; }
+
+  .topbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.1rem 0;
+    border-bottom: 1px solid var(--line);
+    font-size: 0.85rem;
+  }
+
+  .brand { font-weight: 700; color: var(--brand); }
+  .path { color: var(--muted); }
+
+  .hero { padding: 3.1rem 0 2.1rem; }
+  .eyebrow {
+    display: inline-block;
+    background: var(--pill);
+    color: #ffd8b2;
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    padding: 0.28rem 0.55rem;
+    border-radius: 999px;
+    margin-bottom: 1rem;
+  }
+
+  h1 {
+    margin: 0;
+    font-family: 'Playfair Display', Georgia, serif;
+    font-size: clamp(2.2rem, 5vw, 3.4rem);
+    line-height: 1.08;
+  }
+
+  .lead {
+    margin: 1rem 0 1.35rem;
+    color: var(--muted);
+    max-width: 62ch;
+    font-size: 1.03rem;
+  }
+
+  .primary-cta {
+    display: inline-block;
+    background: var(--brand);
+    color: #2a170d;
+    font-weight: 800;
+    padding: 0.82rem 1.2rem;
+    border-radius: 0.62rem;
+  }
+
+  .primary-cta:hover { background: #ffc795; }
+
+  .hero-img {
+    width: 100%;
+    height: 320px;
+    object-fit: cover;
+    border-radius: 0.9rem;
+    margin: 1.6rem 0 0;
+    border: 1px solid var(--line);
+  }
+
+  .hero-img-credit { display: block; text-align: right; font-size: 0.65rem; color: var(--muted); margin: 0.3rem 0 0; }
+
+  .proof {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.8rem;
+    margin: 0 0 2rem;
+  }
+
+  .proof-card {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 0.8rem;
+    padding: 0.95rem;
+  }
+
+  .proof-card strong { display: block; margin-bottom: 0.3rem; }
+  .proof-card span { color: var(--muted); font-size: 0.86rem; }
+
+  .section-title { margin: 0 0 0.9rem; font-size: 1.1rem; font-weight: 800; }
+
+  .apps-grid { display: grid; gap: 0.9rem; }
+
+  .app-card {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 0.9rem;
+    padding: 1rem;
+  }
+
+  .app-head { display: flex; align-items: baseline; gap: 0.6rem; margin-bottom: 0.3rem; }
+  .app-index { color: var(--brand); font-size: 0.72rem; font-weight: 800; letter-spacing: 0.12em; }
+  .app-title { margin: 0; font-size: 1.06rem; font-weight: 800; }
+  .app-desc { margin: 0; color: var(--muted); font-size: 0.92rem; }
+
+  .actions { margin-top: 0.82rem; display: flex; align-items: center; gap: 0.78rem; flex-wrap: wrap; }
+
+  .open-btn {
+    border: 1px solid var(--brand);
+    border-radius: 0.55rem;
+    padding: 0.5rem 0.9rem;
+    font-size: 0.84rem;
+    font-weight: 700;
+    color: #ffe5ca;
+  }
+
+  .open-btn:hover { background: rgba(242, 168, 107, 0.1); }
+
+  .minor-link {
+    font-size: 0.8rem;
+    color: var(--muted);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+
+  .closing {
+    margin-top: 2rem;
+    background: #f2a86b;
+    color: #2f1708;
+    border-radius: 0.95rem;
+    padding: 1.3rem;
+  }
+
+  .closing h2 { margin: 0 0 0.45rem; font-size: 1.2rem; }
+  .closing p { margin: 0 0 0.9rem; }
+
+  @media (max-width: 760px) {
+    .proof { grid-template-columns: 1fr; }
+  }
+</style>
+
+<div class="page">
+  <header class="topbar">
+    <a class="brand" href="https://links.vibes.diy/homepage">Vibes DIY</a>
+    <span class="path">/road-trip/</span>
+  </header>
+
+  <section class="hero">
+    <p class="eyebrow">Road crew apps</p>
+    <h1>Less planning chaos.<br>More miles with your people.</h1>
+    <p class="lead">A tight set of road-trip tools for route notes, shared resources, and decisions your group usually leaves to one overwhelmed driver.</p>
+    <a class="primary-cta" href="https://vibes.diy/vibe/og/road-signpost" target="_blank" rel="noopener">Open Road Signpost</a>
+    <img class="hero-img" src="https://images.unsplash.com/photo-1469854523086-cc02fe5d8800?w=1200&q=80&auto=format" alt="Open road winding through golden hills at sunset" loading="eager">
+    <a class="hero-img-credit" href="https://unsplash.com/@jcotten" target="_blank" rel="noopener">Photo by Jake Givens / Unsplash</a>
+  </section>
+
+  <section class="proof" aria-label="Road-trip proof strip">
+    <article class="proof-card"><strong>Built for groups</strong><span>Everyone can view and update from one link.</span></article>
+    <article class="proof-card"><strong>Fast to start</strong><span>No dashboard setup before the first stop.</span></article>
+    <article class="proof-card"><strong>Remix-friendly</strong><span>Tweak each app to match your route style.</span></article>
+  </section>
+
+  <section>
+    <h2 class="section-title">Open the exact app you need</h2>
+    <div class="apps-grid">
+      <article class="app-card">
+        <div class="app-head"><span class="app-index">APP 01</span><h3 class="app-title">Road Signpost</h3></div>
+        <p class="app-desc">Pin key waypoints, leave notes for each stop, and keep the whole car on the same plan.</p>
+        <div class="actions">
+          <a class="open-btn" href="https://vibes.diy/vibe/og/road-signpost" target="_blank" rel="noopener">Open app</a>
+          <a class="minor-link" href="https://vibes.diy/remix/og/road-signpost" target="_blank" rel="noopener">Remix</a>
+        </div>
+      </article>
+
+      <article class="app-card">
+        <div class="app-head"><span class="app-index">APP 02</span><h3 class="app-title">Road Party Finder</h3></div>
+        <p class="app-desc">Coordinate riders and meetup points so no one gets left behind at fuel or food stops.</p>
+        <div class="actions">
+          <a class="open-btn" href="https://vibes.diy/vibe/og/road-party-finder" target="_blank" rel="noopener">Open app</a>
+          <a class="minor-link" href="https://vibes.diy/remix/og/road-party-finder" target="_blank" rel="noopener">Remix</a>
+        </div>
+      </article>
+
+      <article class="app-card">
+        <div class="app-head"><span class="app-index">APP 03</span><h3 class="app-title">Road Resource Share</h3></div>
+        <p class="app-desc">Track shared supplies, links, and handoffs between vehicles without another group-thread spiral.</p>
+        <div class="actions">
+          <a class="open-btn" href="https://vibes.diy/vibe/og/road-resource-share" target="_blank" rel="noopener">Open app</a>
+          <a class="minor-link" href="https://vibes.diy/remix/og/road-resource-share" target="_blank" rel="noopener">Remix</a>
+        </div>
+      </article>
+
+      <article class="app-card">
+        <div class="app-head"><span class="app-index">APP 04</span><h3 class="app-title">Road Encounters</h3></div>
+        <p class="app-desc">Capture memorable moments on the route so your stories stay vivid after the trip ends.</p>
+        <div class="actions">
+          <a class="open-btn" href="https://vibes.diy/vibe/og/road-encounters" target="_blank" rel="noopener">Open app</a>
+          <a class="minor-link" href="https://vibes.diy/remix/og/road-encounters" target="_blank" rel="noopener">Remix</a>
+        </div>
+      </article>
+
+      <article class="app-card">
+        <div class="app-head"><span class="app-index">APP 05</span><h3 class="app-title">Route Advisor</h3></div>
+        <p class="app-desc">Compare route options quickly and choose the path that matches your time, budget, and vibe.</p>
+        <div class="actions">
+          <a class="open-btn" href="https://vibes.diy/vibe/og/route-advisor" target="_blank" rel="noopener">Open app</a>
+          <a class="minor-link" href="https://vibes.diy/remix/og/route-advisor" target="_blank" rel="noopener">Remix</a>
+        </div>
+      </article>
+    </div>
+  </section>
+
+  <section class="closing">
+    <h2>Open Signpost first, then layer in the rest.</h2>
+    <p>Start with one route source of truth. Add the other apps only when they solve a real planning gap.</p>
+    <a class="primary-cta" href="https://vibes.diy/vibe/og/road-signpost" target="_blank" rel="noopener">Open Road Signpost</a>
+  </section>
+</div>

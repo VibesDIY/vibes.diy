@@ -1,0 +1,237 @@
+{{!--
+{
+  "layout": "raw",
+  "title": "Platformer — Six Levels | Arcade · Vibes DIY",
+  "description": "Six classic platformers — jump blocks, cave coins, sky sprint, castle quest, mushroom leap, snowy slide.",
+  "ogUrl": "https://good.vibes.diy/arcade/platformer"
+,
+  "source": "arcade-platformer"
+}
+--}}
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Classic Platformer — Games Landing</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
+  :root {
+    --sky: #5c94fc;
+    --sky-deep: #2347a1;
+    --brick: #d96a3a;
+    --brick-dark: #8a3814;
+    --grass: #00a86b;
+    --coin: #ffcc00;
+    --ink: #1a1325;
+  }
+  * { box-sizing: border-box; image-rendering: pixelated; }
+  body {
+    margin: 0;
+    font-family: ui-monospace, "SF Mono", Menlo, monospace;
+    background:
+      linear-gradient(180deg, var(--sky) 0%, #87b8ff 60%, var(--grass) 60%, #006a3a 100%);
+    min-height: 100vh;
+    padding: 40px 24px 80px;
+    color: var(--ink);
+    position: relative;
+    overflow-x: hidden;
+  }
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background:
+      radial-gradient(ellipse at 15% 22%, #fff 0 12px, transparent 13px),
+      radial-gradient(ellipse at 18% 20%, #fff 0 14px, transparent 15px),
+      radial-gradient(ellipse at 21% 24%, #fff 0 10px, transparent 11px),
+      radial-gradient(ellipse at 78% 18%, #fff 0 14px, transparent 15px),
+      radial-gradient(ellipse at 82% 20%, #fff 0 12px, transparent 13px),
+      radial-gradient(ellipse at 85% 16%, #fff 0 10px, transparent 11px);
+    pointer-events: none;
+    z-index: 0;
+  }
+  header { text-align: center; position: relative; z-index: 2; margin-bottom: 56px; }
+  .hud {
+    display: inline-flex;
+    gap: 24px;
+    background: var(--ink);
+    color: #fff;
+    padding: 10px 20px;
+    border-radius: 4px;
+    font-size: 12px;
+    letter-spacing: 0.14em;
+    box-shadow: 4px 4px 0 #000;
+  }
+  .hud span:nth-child(odd) { color: var(--coin); }
+  h1 {
+    margin: 22px 0 8px;
+    font-size: clamp(36px, 7vw, 80px);
+    color: #fff;
+    text-shadow:
+      4px 4px 0 var(--brick-dark),
+      8px 8px 0 var(--ink);
+    letter-spacing: 0.05em;
+  }
+  .sub { color: var(--ink); font-size: 14px; letter-spacing: 0.18em; }
+  nav { margin-top: 20px; }
+  nav a {
+    background: var(--ink);
+    color: #fff;
+    padding: 8px 14px;
+    text-decoration: none;
+    font-size: 12px;
+    letter-spacing: 0.14em;
+    box-shadow: 3px 3px 0 #000;
+  }
+  .grid {
+    position: relative; z-index: 2;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 30px;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+  .block {
+    background:
+      linear-gradient(180deg, var(--brick) 0%, var(--brick-dark) 100%);
+    border: 4px solid var(--ink);
+    border-radius: 6px;
+    padding: 16px;
+    box-shadow: 6px 6px 0 var(--ink);
+    position: relative;
+  }
+  .block::before, .block::after {
+    content: "";
+    position: absolute;
+    top: 6px; bottom: 6px;
+    width: 4px;
+    background: rgba(0,0,0,0.35);
+  }
+  .block::before { left: 32%; }
+  .block::after { left: 66%; }
+  .shot-frame {
+    background: #000;
+    border: 3px solid var(--ink);
+    border-radius: 4px;
+    padding: 0;
+    margin-bottom: 14px;
+    position: relative;
+    z-index: 1;
+  }
+  .shot {
+    display: block;
+    width: 100%;
+    aspect-ratio: 16/10;
+    object-fit: cover;
+    background: var(--sky-deep);
+  }
+  .coin-row {
+    margin-bottom: 8px;
+    display: flex; gap: 6px;
+  }
+  .coin {
+    display: inline-block;
+    width: 14px; height: 14px;
+    background: var(--coin);
+    border: 2px solid var(--brick-dark);
+    border-radius: 50%;
+    box-shadow: inset -2px -2px 0 rgba(0,0,0,0.3), 0 2px 0 var(--brick-dark);
+  }
+  h2 {
+    color: #fffce0;
+    margin: 0 0 10px;
+    font-size: 18px;
+    letter-spacing: 0.06em;
+    text-shadow: 2px 2px 0 var(--brick-dark);
+  }
+  .prompt {
+    color: #fff;
+    font-size: 13px;
+    line-height: 1.55;
+    background: rgba(0,0,0,0.28);
+    padding: 10px;
+    border-radius: 4px;
+    min-height: 90px;
+    margin-bottom: 14px;
+  }
+  .play {
+    display: inline-block;
+    background: var(--coin);
+    color: var(--ink);
+    padding: 10px 18px;
+    font-weight: 800;
+    letter-spacing: 0.16em;
+    text-decoration: none;
+    border: 3px solid var(--ink);
+    box-shadow: 4px 4px 0 var(--ink);
+    font-size: 13px;
+    text-transform: uppercase;
+  }
+  .play:hover { transform: translate(2px, 2px); box-shadow: 2px 2px 0 var(--ink); }
+</style>
+</head>
+<body>
+  <header>
+    <div class="hud">
+      <span>WORLD</span><span>1-1</span>
+      <span>×</span><span>06</span>
+      <span>COINS</span><span>×06</span>
+      <span>TIME</span><span>∞∞∞</span>
+    </div>
+    <h1>PLATFORMER</h1>
+    <div class="sub">SIX CLASSIC JUMP-AND-RUN ADVENTURES</div>
+    <nav><a href="index.html">← ALL THEMES</a></nav>
+  </header>
+
+  <main class="grid">
+    <article class="block">
+      <div class="shot-frame"><a href="https://vibes.diy/vibe/jchris/pixel-runner"><img class="shot" src="https://pixel-runner--jchris.prod-v2.vibesdiy.net/screenshot.jpg" alt=""></a></div>
+      <div class="coin-row"><span class="coin"></span><span class="coin"></span><span class="coin"></span></div>
+      <h2>JUMP BLOCKS</h2>
+      <p class="prompt">Side-scrolling platformer with a chunky square hero. Brick platforms, coin pickups, spike pits, three short levels in NES palette.</p>
+      <a class="play" href="https://vibes.diy/vibe/jchris/pixel-runner">▶ Play</a>
+    </article>
+
+    <article class="block">
+      <div class="shot-frame"><a href="https://vibes.diy/vibe/jchris/cave-gem-runner"><img class="shot" src="https://cave-gem-runner--jchris.prod-v2.vibesdiy.net/screenshot.jpg" alt=""></a></div>
+      <div class="coin-row"><span class="coin"></span><span class="coin"></span><span class="coin"></span></div>
+      <h2>CAVE COINS</h2>
+      <p class="prompt">Cave platformer with swooping bats and sparkling gems. Double-jump unlocks after the first gem. Parallax cave backdrop, dripping stalactites.</p>
+      <a class="play" href="https://vibes.diy/vibe/jchris/cave-gem-runner">▶ Play</a>
+    </article>
+
+    <article class="block">
+      <div class="shot-frame"><a href="https://vibes.diy/vibe/jchris/rainbow-ascent"><img class="shot" src="https://rainbow-ascent--jchris.prod-v2.vibesdiy.net/screenshot.jpg" alt=""></a></div>
+      <div class="coin-row"><span class="coin"></span><span class="coin"></span><span class="coin"></span></div>
+      <h2>SKY SPRINT</h2>
+      <p class="prompt">Cloud-hopping race: clouds dissolve one second after you land. Reach the rainbow goal up top. Procedurally arranged clouds each run.</p>
+      <a class="play" href="https://vibes.diy/vibe/jchris/rainbow-ascent">▶ Play</a>
+    </article>
+
+    <article class="block">
+      <div class="shot-frame"><a href="https://vibes.diy/vibe/jchris/stone-keep-run"><img class="shot" src="https://stone-keep-run--jchris.prod-v2.vibesdiy.net/screenshot.jpg" alt=""></a></div>
+      <div class="coin-row"><span class="coin"></span><span class="coin"></span><span class="coin"></span></div>
+      <h2>CASTLE QUEST</h2>
+      <p class="prompt">Moving stone platforms, arcing fireballs, one slime per level you defeat by jumping on it. Five short levels, eight-bit chiptune.</p>
+      <a class="play" href="https://vibes.diy/vibe/jchris/stone-keep-run">▶ Play</a>
+    </article>
+
+    <article class="block">
+      <div class="shot-frame"><a href="https://vibes.diy/vibe/jchris/acorn-bounce"><img class="shot" src="https://acorn-bounce--jchris.prod-v2.vibesdiy.net/screenshot.jpg" alt=""></a></div>
+      <div class="coin-row"><span class="coin"></span><span class="coin"></span><span class="coin"></span></div>
+      <h2>MUSHROOM LEAP</h2>
+      <p class="prompt">Bouncy mushroom caps launch the hero very high. Collect ten golden acorns across stacked platforms. Pixel-art trees foreground and back.</p>
+      <a class="play" href="https://vibes.diy/vibe/jchris/acorn-bounce">▶ Play</a>
+    </article>
+
+    <article class="block">
+      <div class="shot-frame"><a href="https://vibes.diy/vibe/jchris/frostbound-run"><img class="shot" src="https://frostbound-run--jchris.prod-v2.vibesdiy.net/screenshot.jpg" alt=""></a></div>
+      <div class="coin-row"><span class="coin"></span><span class="coin"></span><span class="coin"></span></div>
+      <h2>SNOWY SLIDE</h2>
+      <p class="prompt">Slippery ice, conveyor-belt snowdrifts that push you, icicles falling when you pass underneath. Earmuff hero, cool blue-and-white palette.</p>
+      <a class="play" href="https://vibes.diy/vibe/jchris/frostbound-run">▶ Play</a>
+    </article>
+  </main>
+</body>
+</html>
+{{> newsletter}}

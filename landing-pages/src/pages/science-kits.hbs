@@ -1,0 +1,382 @@
+{{!--
+{
+  "layout": "webring",
+  "title": "For Science Kit Creators | Build Companion Apps | Vibes DIY",
+  "description": "Science kit creators use Vibes DIY to build step-by-step experiment companions, data loggers, and teacher dashboards — one per kit SKU, in minutes.",
+  "ogUrl": "https://good.vibes.diy/science-kits",
+  "source": "science-kits",
+  "apps": [
+    {
+      "num": "01",
+      "slug": "chemistry-reaction-log",
+      "author": "og",
+      "live": true,
+      "title": "Reaction Logger",
+      "tagline": "Every reaction, timestamped.",
+      "desc": "Log observations during a chemistry experiment — step label, color change, temperature, pH, notes, photo. Timestamped entries. Shareable result card at the end.",
+      "fork": "Your kit tracks different variables — crystallization stages, titration end-points, gas production? Clone it and replace the observation fields with your kit's specific data points."
+    },
+    {
+      "num": "02",
+      "slug": "circuit-build-guide",
+      "author": "og",
+      "live": true,
+      "title": "Circuit Guide",
+      "tagline": "From components to complete.",
+      "desc": "Step-by-step assembly checklist for an electronics kit. Check off each component as you place it. Flag where you're stuck. Show completion percentage.",
+      "fork": "Your kit has a different component list, a soldering step, or multiple build variants? Clone it and describe your specific assembly sequence."
+    },
+    {
+      "num": "03",
+      "slug": "plant-growth-tracker",
+      "author": "og",
+      "live": true,
+      "title": "Grow Tracker",
+      "tagline": "Day one to harvest.",
+      "desc": "Daily measurement log for a plant biology kit. Height, photo upload, prediction vs actual. Auto-generates a growth timeline chart. Shareable.",
+      "fork": "Growing something other than a generic plant — microgreens, mushrooms, a specific seed comparison experiment? Clone it and tailor the measurement fields and timeline to your kit."
+    },
+    {
+      "num": "04",
+      "slug": "rocket-launch-log",
+      "author": "og",
+      "live": true,
+      "title": "Mission Debrief",
+      "tagline": "Pre-flight to post-flight.",
+      "desc": "Pre-launch checklist, launch data entry (weather, angle, altitude estimate), post-flight notes. Shareable mission debrief card.",
+      "fork": "Your kit has a specific engine type, a recovery system to check, or a classroom competition format? Clone it and update the checklist steps and data fields to match."
+    },
+    {
+      "num": "05",
+      "slug": "experiment-discovery-board",
+      "author": "og",
+      "live": true,
+      "title": "Discovery Board",
+      "tagline": "Show what you found.",
+      "desc": "Gallery of completed experiments — title, photo, result summary, star rating. Shareable link. Works across any kit type.",
+      "fork": "Want it scoped to a specific kit line as an ongoing showcase for customers? Clone it and set it up around your brand and your kit's specific outcome types."
+    }
+  ],
+  "ogImage": "https://good.vibes.diy/images/screenshots/science-kits.jpg"
+}
+--}}
+
+<style>
+  @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=optional");
+
+  :root {
+    --concrete: oklch(0.88 0 0);
+    --acid: oklch(0.83 0.22 145);
+    --black: oklch(0.10 0 0);
+    --ink: oklch(0 0 0);
+    --hover: oklch(1 0 0 / 0.4);
+  }
+
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html, body {
+    background: var(--concrete);
+    color: var(--black);
+    font-family: "Inter", system-ui, sans-serif;
+    line-height: 1.55;
+    min-height: 100vh;
+    background-image:
+      radial-gradient(circle at 20% 10%, rgba(0,0,0,0.03), transparent 50%),
+      radial-gradient(circle at 80% 90%, rgba(0,0,0,0.04), transparent 50%);
+  }
+  a { color: inherit; text-decoration: none; }
+  .mono { font-family: "JetBrains Mono", monospace; }
+
+  .layout { max-width: 1100px; margin: 0 auto; padding: 0 1.25rem; border-left: 2px solid var(--black); border-right: 2px solid var(--black); }
+
+  .topbar {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 1rem 1.25rem;
+    border-bottom: 4px solid var(--black);
+    margin: 0 -1.25rem;
+    padding-left: 1.25rem; padding-right: 1.25rem;
+  }
+  .topbar .brand {
+    font-family: "Inter", sans-serif; font-weight: 900; letter-spacing: -0.02em;
+    font-size: 1.25rem;
+  }
+  .topbar .meta {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.6rem; letter-spacing: 0.18em; text-transform: uppercase;
+  }
+  .topbar .meta b { background: var(--acid); padding: 2px 6px; }
+
+  .crumb {
+    padding: 0.55rem 0;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.65rem; letter-spacing: 0.18em; text-transform: uppercase;
+    border-bottom: 2px solid var(--black);
+  }
+  .crumb a:hover { background: var(--acid); }
+
+  .hero {
+    padding: 4rem 0 3.5rem;
+    border-bottom: 4px solid var(--black);
+    position: relative;
+  }
+  .hero .label {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.6rem; letter-spacing: 0.25em; text-transform: uppercase;
+    margin-bottom: 1.5rem;
+    display: inline-block;
+    padding: 4px 10px;
+    background: var(--black); color: var(--concrete);
+  }
+  .hero h1 {
+    font-size: clamp(3rem, 9vw, 7rem);
+    font-weight: 900;
+    line-height: 0.92;
+    letter-spacing: -0.04em;
+    margin-bottom: 1.5rem;
+  }
+  .hero h1 .hi {
+    background: var(--acid);
+    padding: 0 0.18em;
+    display: inline-block;
+    transform: rotate(-1.5deg);
+    box-shadow: 6px 6px 0 var(--black);
+    margin: 0.1em 0;
+  }
+  .hero p.lead {
+    font-size: 1.2rem;
+    max-width: 720px;
+    line-height: 1.5;
+  }
+  .hero .marker {
+    background: var(--acid);
+    padding: 1px 4px;
+  }
+
+  .stats {
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    border-bottom: 4px solid var(--black);
+  }
+  @media (max-width: 700px) { .stats { grid-template-columns: repeat(2, 1fr); } }
+  .stat-cell {
+    padding: 1.25rem 1.5rem;
+    border-right: 2px solid var(--black);
+  }
+  .stat-cell:last-child { border-right: none; }
+  @media (max-width: 700px) {
+    .stat-cell { border-bottom: 2px solid var(--black); }
+    .stat-cell:nth-child(2n) { border-right: none; }
+  }
+  .stat-cell .k {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.55rem; letter-spacing: 0.25em; text-transform: uppercase;
+    margin-bottom: 0.4rem;
+  }
+  .stat-cell .v {
+    font-family: "Inter", sans-serif; font-weight: 900;
+    font-size: 1.4rem; letter-spacing: -0.02em;
+  }
+
+  .section-label {
+    padding: 1.5rem 0 0.75rem;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.6rem; letter-spacing: 0.25em; text-transform: uppercase;
+    border-bottom: 2px dashed var(--black);
+    margin-bottom: 1.5rem;
+  }
+  .section-label::before { content: "// "; }
+
+  .apps {
+    display: flex; flex-direction: column; gap: 0;
+    border-top: 2px solid var(--black);
+    border-bottom: 4px solid var(--black);
+  }
+  .app {
+    padding: 2rem 1.5rem;
+    border-bottom: 2px solid var(--black);
+    display: grid;
+    grid-template-columns: 80px 1fr 320px;
+    gap: 2rem;
+    align-items: start;
+    transition: background 0.15s;
+  }
+  .app:last-child { border-bottom: none; }
+  @media (max-width: 800px) { .app { grid-template-columns: 1fr; gap: 1rem; } }
+  .app:hover { background: rgba(0,0,0,0.04); }
+
+  .app .num-cell {
+    font-family: "JetBrains Mono", monospace;
+    display: flex; flex-direction: column; gap: 0.4rem;
+  }
+  .app .num {
+    font-family: "Inter", sans-serif; font-weight: 900;
+    font-size: 3rem; line-height: 0.85; letter-spacing: -0.04em;
+  }
+  .app .status {
+    font-size: 0.55rem; letter-spacing: 0.2em; text-transform: uppercase;
+    padding: 3px 6px; border: 2px solid var(--black);
+    text-align: center;
+  }
+  .app--live .status { background: var(--acid); }
+
+  .app .body { display: flex; flex-direction: column; gap: 0.7rem; }
+  .app .body .title {
+    font-size: 2rem; font-weight: 900; letter-spacing: -0.02em;
+    line-height: 1.05;
+  }
+  .app .body .tagline {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.85rem; padding: 6px 10px;
+    background: var(--acid); display: inline-block; align-self: flex-start;
+  }
+  .app .body .desc { font-size: 1rem; line-height: 1.55; }
+
+  .app .right { display: flex; flex-direction: column; gap: 0.6rem; }
+  .app .shot { display: block; aspect-ratio: 16/9; overflow: hidden; border: 2px solid var(--black); background: var(--concrete); }
+  .app .shot img { width: 100%; height: 100%; object-fit: cover; }
+  .app .shot-placeholder {
+    padding: 1rem; height: 100%; display: flex; align-items: center; justify-content: center;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.7rem; letter-spacing: 0.2em; text-transform: uppercase;
+    text-align: center;
+  }
+  .app .ctas { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0; border: 2px solid var(--black); }
+  .app .ctas--single { grid-template-columns: 1fr; }
+  .btn {
+    text-align: center;
+    padding: 0.55rem 0.5rem;
+    background: transparent;
+    border-right: 2px solid var(--black);
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.65rem; letter-spacing: 0.15em; text-transform: uppercase; font-weight: 700;
+    color: var(--black);
+    cursor: pointer;
+    transition: background 0.12s;
+  }
+  .btn:last-child { border-right: none; }
+  .btn:hover { background: var(--acid); }
+  .prompt-link {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.7rem;
+    text-decoration: underline;
+  }
+  .prompt-link:hover { background: var(--acid); }
+  .fork-note {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.65rem;
+    line-height: 1.5;
+    color: oklch(0.35 0 0);
+    border-left: 2px solid var(--black);
+    padding-left: 0.6rem;
+    margin-top: 0.2rem;
+  }
+
+  .epilogue {
+    padding: 2.5rem 0;
+    border-bottom: 4px solid var(--black);
+  }
+  .epilogue h2 {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.6rem; letter-spacing: 0.25em; text-transform: uppercase;
+    margin-bottom: 1rem;
+  }
+  .epilogue h2::before { content: "// "; }
+  .epilogue p { font-size: 1.1rem; max-width: 720px; line-height: 1.55; }
+  .epilogue .hl { background: var(--acid); padding: 1px 4px; }
+
+  footer.term-footer {
+    padding: 1rem 0;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.6rem; letter-spacing: 0.2em; text-transform: uppercase;
+    display: flex; justify-content: space-between;
+  }
+  footer.term-footer a:hover { background: var(--acid); }
+</style>
+
+<div class="layout">
+  <header class="topbar">
+    <a class="brand" href="https://links.vibes.diy/homepage">VIBES.DIY</a>
+    <span class="meta"><b>FOR SCIENCE KIT CREATORS</b> · five kit companion apps</span>
+  </header>
+
+  <nav class="crumb">
+    <a href="/">Home</a> &nbsp;›&nbsp; Science Kits
+  </nav>
+
+  <section class="hero">
+    <span class="label">For Science Kit Creators</span>
+    <h1>Apps that ship<br/>with the <span class="hi">kit.</span></h1>
+    <p class="lead">
+      Five companion apps for science kit creators — one per kit type. Each turns a physical product into a <span class="marker">living experiment</span> with <span class="marker">data logging</span>, <span class="marker">step-by-step guidance</span>, and <span class="marker">shareable results</span>. Describe what your kit needs. Watch it appear.
+    </p>
+  </section>
+
+  <div class="stats">
+    <div class="stat-cell">
+      <div class="k">Apps</div>
+      <div class="v">Five</div>
+    </div>
+    <div class="stat-cell">
+      <div class="k">Audience</div>
+      <div class="v">Kit Creators</div>
+    </div>
+    <div class="stat-cell">
+      <div class="k">Persistence</div>
+      <div class="v">Fireproof</div>
+    </div>
+    <div class="stat-cell">
+      <div class="k">Skin</div>
+      <div class="v">Phosphor Lab</div>
+    </div>
+  </div>
+
+  <div class="section-label">The Kit Library</div>
+
+  <section class="apps">
+    {{#each apps}}
+      <article class="app {{#if live}}app--live{{else}}app--pending{{/if}}">
+        <div class="num-cell">
+          <div class="num">{{num}}</div>
+          <div class="status">{{#if live}}Live{{else}}Pending{{/if}}</div>
+        </div>
+        <div class="body">
+          <h2 class="title">{{title}}</h2>
+          <span class="tagline">{{tagline}}</span>
+          <p class="desc">{{desc}}</p>
+        </div>
+        <div class="right">
+          {{#if live}}
+            <a class="shot" href="https://vibes.diy/vibe/{{author}}/{{slug}}" aria-label="{{title}} screenshot"><img src="https://{{slug}}--{{author}}.prod-v2.vibesdiy.net/screenshot.jpg" alt="{{slug}}" onerror="this.onerror=null; this.src='{{@root.assetPrefix}}images/og-preview.png';"/></a>
+            <div class="ctas">
+              <a class="btn" href="https://vibes.diy/vibe/{{author}}/{{slug}}">Join</a>
+              <a class="btn" href="https://vibes.diy/remix/{{author}}/{{slug}}?skipChat=true">Clone</a>
+              <a class="btn" href="https://vibes.diy/remix/{{author}}/{{slug}}">Remix</a>
+            </div>
+            <a class="prompt-link" href="https://vibes.diy/chat/prompt?prompt64={{prompt64 desc}}">// start fresh from this prompt — describe your kit instead</a>
+            {{#if fork}}<p class="fork-note">{{fork}}</p>{{/if}}
+          {{else}}
+            <div class="shot"><div class="shot-placeholder">awaiting deploy</div></div>
+            <div class="ctas ctas--single">
+              <a class="btn" href="https://vibes.diy/chat/prompt?prompt64={{prompt64 desc}}">Start From Prompt</a>
+            </div>
+          {{/if}}
+        </div>
+      </article>
+    {{/each}}
+  </section>
+
+  <div class="epilogue">
+    <h2>Read Me</h2>
+    <p>
+      The best science kit isn't just a box of components. It's a physical product with a <span class="hl">digital layer</span> — something that guides the experiment, captures the data, and shares the discovery. These five apps show what that layer looks like across five kit types. <span class="hl">Remix any one</span> to match your kit specifically.
+    </p>
+    <p style="margin-top:1rem;">
+      These five cover five generic kit categories. Your SKU probably has its own specific steps, its own data fields, its own way kids celebrate finishing. Clone whichever kit type is closest and describe what makes your kit different — the steps, the measurements, the outcome your customer is trying to share.
+    </p>
+  </div>
+
+  {{> newsletter}}
+<footer class="term-footer">
+    <span>Vibes.diy · <a href="https://links.vibes.diy/homepage">homepage</a> · <a href="/featured-apps/">featured apps</a></span>
+    <span>// END OF KIT LIBRARY</span>
+  </footer>
+</div>

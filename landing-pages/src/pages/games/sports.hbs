@@ -1,0 +1,330 @@
+{{!--
+{
+  "layout": "webring",
+  "title": "Sports // Games // Vibes DIY",
+  "description": "Mini putt, arc basketball, darts, bowling, air hockey, penalty kicks. Six pickup sports games in stadium colors — single-file React, Fireproof scores, remix to your own.",
+  "ogUrl": "https://good.vibes.diy/games/sports",
+  "source": "games-sports",
+  "apps": [
+    {"num":"01","slug":"mini-soccer","author":"jchris","live":true,"title":"MINI SOCCER","tagline":"Arrows + space. First to three.","desc":"Arrow keys move, space kicks. AI opponent on a small pitch. First to three goals wins, stadium crowd-cue when you score."},
+    {"num":"02","slug":"swish-shooter","author":"jchris","live":true,"title":"HOOP SHOT","tagline":"Drag, release, swish.","desc":"Drag-and-release to aim direction and power; arc shifts with power. Ten shots per round, perfect-swish bonuses, wooden-gym backdrop."},
+    {"num":"03","slug":"net-game","author":"jchris","live":true,"title":"TENNIS RALLY","tagline":"Best-of-five on a grass court.","desc":"Side-view tennis vs AI. Click to swing as the ball arrives. Best-of-five rallies on a grass court with crisp white lines."},
+    {"num":"04","slug":"mini-golf","author":"jchris","live":true,"title":"GOLF PUTT","tagline":"Nine holes. Windmills. Ramps.","desc":"Aim with mouse, set power with a charging bar, putt across nine holes with windmills and ramps. Top-down view, scorecard kept."},
+    {"num":"05","slug":"hundred-meter-dash","author":"jchris","live":true,"title":"TRACK DASH","tagline":"Mash left-right. Race three AIs.","desc":"Alternate left/right arrow keys as fast as possible to accelerate. Race three AI runners in a stadium-track view with lane markings."},
+    {"num":"06","slug":"lane-strike","author":"jchris","live":true,"title":"BOWLING STRIKE","tagline":"Drag aim. Drag power. Ten frames.","desc":"Drag to aim, drag again to set power, watch the ball roll. Ten frames per game with proper strike-and-spare scoring."}
+  ]
+}
+--}}
+
+<style>
+  @import url("https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Oswald:wght@700&family=JetBrains+Mono:wght@500;700&display=optional");
+
+  :root {
+    --field-green: #1f6b3a;
+    --field-green-dark: #134324;
+    --field-line: #f5f1e6;
+    --court-red: #c11425;
+    --court-red-dark: #8a0d18;
+    --board-black: #0d0d0e;
+    --board-dim: #1e1e22;
+    --varsity-white: #f7f3e8;
+    --score-amber: #ffb020;
+    --score-yellow: #ffe14a;
+    --halftone: rgba(0,0,0,0.06);
+    --ink: #0d0d0e;
+  }
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body {
+    font-family: "JetBrains Mono", monospace;
+    background: var(--varsity-white);
+    color: var(--ink);
+    min-height: 100vh;
+    line-height: 1.55;
+    background-image:
+      radial-gradient(circle at 1px 1px, var(--halftone) 1px, transparent 1px);
+    background-size: 6px 6px;
+  }
+  a { color: var(--court-red); text-decoration: none; }
+  a:hover { color: var(--ink); }
+
+  .container { max-width: 1080px; margin: 0 auto; padding: 0 1.5rem; }
+
+  .topbar {
+    padding: 1rem 1.5rem;
+    display: flex; justify-content: space-between; align-items: center;
+    font-family: "Bebas Neue", sans-serif;
+    font-size: 1.15rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    background: var(--board-black);
+    color: var(--score-amber);
+    border-bottom: 4px solid var(--court-red);
+  }
+  .topbar a { color: var(--score-yellow); letter-spacing: 0.15em; }
+
+  .crumb {
+    padding: 0.7rem 1.5rem;
+    font-size: 0.78rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    background: var(--court-red);
+    color: var(--varsity-white);
+    border-bottom: 4px solid var(--court-red-dark);
+  }
+  .crumb a { color: var(--score-yellow); }
+  .crumb a:hover { color: var(--varsity-white); }
+
+  .hero {
+    padding: 4rem 0 2.5rem;
+    text-align: center;
+    position: relative;
+    background: linear-gradient(to bottom, var(--varsity-white) 0%, var(--varsity-white) 70%, transparent 100%);
+  }
+  .hero .label {
+    font-family: "Bebas Neue", sans-serif;
+    font-size: 1.05rem;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--court-red);
+    margin-bottom: 1rem;
+  }
+  .hero h1 {
+    font-family: "Bebas Neue", sans-serif;
+    font-size: clamp(4rem, 10vw, 7.5rem);
+    line-height: 0.95;
+    color: var(--ink);
+    letter-spacing: 0.02em;
+    -webkit-text-stroke: 1.5px var(--ink);
+  }
+  .hero .tag {
+    font-family: "Oswald", sans-serif;
+    font-size: 1.4rem;
+    color: var(--court-red);
+    margin: 1.25rem 0 1.5rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+  }
+  .hero p {
+    max-width: 680px; margin: 0 auto;
+    font-size: 1rem; color: var(--ink);
+    font-family: "JetBrains Mono", monospace;
+  }
+
+  /* SCOREBOARD */
+  .scoreboard {
+    background: var(--board-black);
+    border-top: 4px solid var(--court-red);
+    border-bottom: 4px solid var(--court-red);
+    padding: 1.5rem 1rem;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1px;
+    color: var(--score-amber);
+  }
+  @media (max-width: 700px) { .scoreboard { grid-template-columns: repeat(2, 1fr); } }
+  .scoreboard .cell {
+    text-align: center;
+    padding: 0.5rem;
+    border-right: 1px solid var(--board-dim);
+  }
+  .scoreboard .cell:last-child { border-right: none; }
+  .scoreboard .k {
+    font-family: "Bebas Neue", sans-serif;
+    font-size: 0.8rem;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--varsity-white);
+    margin-bottom: 0.4rem;
+  }
+  .scoreboard .v {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 1.7rem;
+    font-weight: 700;
+    color: var(--score-yellow);
+    letter-spacing: 0.04em;
+    text-shadow: 0 0 14px rgba(255,225,74,0.5);
+  }
+
+  .apps { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.5rem; padding: 2.5rem 0; }
+  @media (max-width: 800px) { .apps { grid-template-columns: 1fr; } }
+
+  .app {
+    background: var(--varsity-white);
+    border: 3px solid var(--ink);
+    box-shadow: 5px 5px 0 var(--court-red);
+    padding: 1.25rem;
+    position: relative;
+    display: flex; flex-direction: column; gap: 0.85rem;
+  }
+  .app::before {
+    content: "";
+    position: absolute;
+    left: 0; top: 0; right: 0;
+    height: 8px;
+    background: linear-gradient(to right, var(--court-red) 0 33%, var(--ink) 33% 66%, var(--score-amber) 66% 100%);
+  }
+  .app .head {
+    display: flex; justify-content: space-between; align-items: baseline;
+    padding: 0.5rem 0;
+    border-bottom: 2px solid var(--ink);
+    margin-top: 0.3rem;
+  }
+  .app .num {
+    font-family: "Bebas Neue", sans-serif;
+    font-size: 1rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--court-red);
+  }
+  .app .status {
+    font-family: "Bebas Neue", sans-serif;
+    font-size: 1rem;
+    color: #777;
+    letter-spacing: 0.15em;
+  }
+  .app--live .status { color: var(--field-green-dark); }
+  .app .title {
+    font-family: "Bebas Neue", sans-serif;
+    font-size: 2rem;
+    line-height: 1;
+    color: var(--ink);
+    letter-spacing: 0.03em;
+  }
+  .app .tagline {
+    font-family: "Oswald", sans-serif;
+    font-size: 1rem;
+    color: var(--court-red);
+    border-left: 4px solid var(--score-amber);
+    padding-left: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  .app .desc { font-size: 0.85rem; flex: 1; color: var(--ink); }
+  .app .shot {
+    display: block; border: 2px solid var(--ink);
+    aspect-ratio: 16/9; overflow: hidden; background: var(--field-green);
+  }
+  .app .shot img { width: 100%; height: 100%; object-fit: cover; }
+  .app .shot-placeholder {
+    padding: 1rem;
+    font-family: "Bebas Neue", sans-serif;
+    font-size: 1.2rem;
+    color: var(--score-amber);
+    text-align: center;
+    height: 100%; display: flex; align-items: center; justify-content: center;
+    letter-spacing: 0.25em; text-transform: uppercase;
+    background: var(--board-black);
+  }
+  .app .ctas { display: flex; gap: 0.5rem; }
+  .btn {
+    flex: 1; text-align: center;
+    padding: 0.55rem 0.75rem;
+    background: var(--ink);
+    border: 0;
+    font-family: "Bebas Neue", sans-serif;
+    font-size: 1rem;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    color: var(--score-amber);
+    cursor: pointer;
+  }
+  .btn:hover { background: var(--court-red); color: var(--varsity-white); }
+  .prompt-link {
+    font-family: "Oswald", sans-serif;
+    font-size: 0.85rem;
+    color: var(--ink);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+  }
+  .prompt-link:hover { color: var(--court-red); }
+
+  .epilogue {
+    background: var(--ink);
+    color: var(--varsity-white);
+    padding: 2rem 1.5rem;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.95rem;
+    border-top: 4px solid var(--score-amber);
+  }
+  .epilogue strong {
+    color: var(--score-amber);
+    font-family: "Bebas Neue", sans-serif;
+    font-size: 1.4rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+  footer.term-footer {
+    padding: 1rem 1.5rem;
+    background: var(--court-red);
+    color: var(--varsity-white);
+    font-family: "Bebas Neue", sans-serif;
+    font-size: 1rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    text-align: center;
+  }
+  footer.term-footer a { color: var(--score-yellow); }
+</style>
+
+<header class="topbar">
+  <a href="https://links.vibes.diy/homepage">VIBES.DIY</a>
+  <span>Sports — Game On</span>
+</header>
+<nav class="crumb">
+  <a href="/">Home</a> &nbsp;›&nbsp; <a href="/games/">Games</a> &nbsp;›&nbsp; Sports
+</nav>
+
+<main class="container">
+  <section class="hero">
+    <div class="label">Shelf · 05 of 05 · 6 events</div>
+    <h1>SPORTS</h1>
+    <div class="tag">putt · arc · throw · roll · slap · kick</div>
+    <p>Mini putt, arc basketball, darts, bowling, air hockey, penalty kicks. Six pickup games in stadium colors.</p>
+  </section>
+</main>
+
+<section class="scoreboard">
+  <div class="cell"><div class="k">Events</div><div class="v">06</div></div>
+  <div class="cell"><div class="k">Quarter</div><div class="v">∞</div></div>
+  <div class="cell"><div class="k">Time</div><div class="v">00:00</div></div>
+  <div class="cell"><div class="k">Save</div><div class="v">FP</div></div>
+</section>
+
+<main class="container">
+  <section class="apps">
+    {{#each apps}}
+      <article class="app {{#if live}}app--live{{else}}app--pending{{/if}}">
+        <div class="head">
+          <span class="num">№ {{num}} · {{slug}}</span>
+          <span class="status">{{#if live}}LIVE{{else}}PENDING{{/if}}</span>
+        </div>
+        <h2 class="title">{{title}}</h2>
+        <p class="tagline">{{tagline}}</p>
+        <p class="desc">{{desc}}</p>
+        {{#if live}}
+          <a class="shot" href="https://vibes.diy/vibe/{{author}}/{{slug}}" aria-label="{{title}} screenshot"><img src="https://{{slug}}--{{author}}.prod-v2.vibesdiy.net/screenshot.jpg" alt="{{slug}}" onerror="this.onerror=null; this.src='{{@root.assetPrefix}}images/og-preview.png';"/></a>
+          <div class="ctas">
+            <a class="btn" href="https://vibes.diy/vibe/{{author}}/{{slug}}">Play</a>
+            <a class="btn" href="https://vibes.diy/remix/{{author}}/{{slug}}?skipChat=true">Clone</a>
+            <a class="btn" href="https://vibes.diy/remix/{{author}}/{{slug}}">Remix</a>
+          </div>
+          <a class="prompt-link" href="https://vibes.diy/chat/prompt?prompt64={{prompt64 desc}}">— start fresh from this prompt</a>
+        {{else}}
+          <div class="shot"><div class="shot-placeholder">PRE-GAME</div></div>
+          <div class="ctas">
+            <a class="btn" href="https://vibes.diy/chat/prompt?prompt64={{prompt64 desc}}">Start From Prompt</a>
+          </div>
+        {{/if}}
+      </article>
+    {{/each}}
+  </section>
+</main>
+
+<section class="epilogue">
+  <p><strong>Final whistle.</strong> Six pickup games in one shelf. Each one is a single-file React app with persistent scores — remix any of them into a team-versus-team season for your group.</p>
+</section>
+
+{{> newsletter}}
+<footer class="term-footer">
+  Vibes.diy · <a href="https://links.vibes.diy/homepage">homepage</a> · <a href="/games/">games</a> · GG
+</footer>

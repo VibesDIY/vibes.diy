@@ -1,0 +1,715 @@
+{{!--
+{
+  "layout": "webring",
+  "title": "Day-of Run-of-Show // Expressions // Vibes DIY",
+  "description": "All-hands cue sheets, IPO roadshow choreography, layoff-day timing, board rundowns. The morning-of app for things too consequential for a Sheet.",
+  "ogUrl": "https://good.vibes.diy/expressions/run-of-show",
+  "source": "expressions-run-of-show",
+  "apps": [
+    {
+      "num": "01",
+      "slug": "ipo-roadshow",
+      "author": "theme",
+      "live": true,
+      "title": "IPO Roadshow Choreography",
+      "tagline": "14 cities, 200 meetings, no SaaS covers it.",
+      "desc": "Cities and per-city meetings as rows. Owners, rooms, a status that cycles upcoming → in progress → done → missed. Every change is timestamped."
+    },
+    {
+      "num": "02",
+      "slug": "earnings-rehearsal",
+      "author": "theme",
+      "live": true,
+      "title": "Earnings Call Rehearsal Cards",
+      "tagline": "Live cue prompts for IR, CEO, CFO.",
+      "desc": "A deck of Q&A cards with prepared answers and key talking points. Shuffle, reveal, mark nailed-it / needs-work — track which questions still need rehearsal."
+    },
+    {
+      "num": "03",
+      "slug": "site-visit-minutes",
+      "author": "theme",
+      "live": true,
+      "title": "Customer Site-Visit Minute Board",
+      "tagline": "Eight hours, thirty handoffs.",
+      "desc": "A vertical timeline of slots — demo, deep-dive, exec lunch — with a moving NOW line and a one-tap [ HANDOFF ] button on each row. In-room notes drop into the slot."
+    },
+    {
+      "num": "04",
+      "slug": "ma-signing-day",
+      "author": "theme",
+      "live": true,
+      "title": "M&A Signing-Day Script",
+      "tagline": "Lawyers, bankers, PR, EAs on a 4-hour clock.",
+      "desc": "Numbered task list with dependencies. Tasks unlock as their deps complete. Drift alarm if total elapsed exceeds budget. Every status change written to the audit log."
+    },
+    {
+      "num": "05",
+      "slug": "launch-war-room",
+      "author": "theme",
+      "live": true,
+      "title": "Product Launch War Room",
+      "tagline": "PR embargo timer, regional rollout dependencies.",
+      "desc": "A countdown to embargo lift, a region grid (US-East, EU, APAC) of go-live items as small status squares, and a one-line incident feed for anything stuck in CMS approval."
+    },
+    {
+      "num": "06",
+      "slug": "board-rundown",
+      "author": "theme",
+      "live": true,
+      "title": "Board Meeting Rundown",
+      "tagline": "Motion tracking, vote tallies, materials cued.",
+      "desc": "Pre-loaded agenda with per-item stopwatches. YEA / NAY / ABSTAIN counters for vote items. A motion log builds in real time, exportable as plain-text minutes."
+    },
+    {
+      "num": "07",
+      "slug": "crisis-comms",
+      "author": "theme",
+      "live": true,
+      "title": "Crisis Comms Live Playbook",
+      "tagline": "PR / legal / exec choreography, first 6 hours.",
+      "desc": "T+0 ASSESS, T+15 LEGAL HOLD, T+30 EXEC ALIGN, T+45 DRAFT, T+1H STATEMENT, T+2H CUSTOMER, T+4H PRESS, T+6H POST-MORTEM. A decision log runs alongside."
+    },
+    {
+      "num": "08",
+      "slug": "layoff-day",
+      "author": "theme",
+      "live": true,
+      "title": "Layoff Day Choreography",
+      "tagline": "HR / IT / Slack / badge timing — one mistake = lawsuit.",
+      "desc": "A cohort grid sorted by meeting time. Status per row: SCHEDULED → IN MEETING → NOTIFIED → IT DONE → FAREWELL SENT. Escalations flow to legal/HR resolution. Procedural and quiet."
+    },
+    {
+      "num": "09",
+      "slug": "all-hands-cue",
+      "author": "theme",
+      "live": true,
+      "title": "All-Hands Cue Sheet",
+      "tagline": "Speaker order, demo cues, Q&A moderation.",
+      "desc": "A giant per-speaker timer with a [ TIME WARNING ] indicator at 80% of budget. Q&A queue is reorderable. Drift counter shows scheduled vs actual."
+    },
+    {
+      "num": "10",
+      "slug": "investor-day",
+      "author": "theme",
+      "live": true,
+      "title": "Investor Day Rundown",
+      "tagline": "Eight hours, executive rotations, three stages.",
+      "desc": "A three-column board: EXECS / SEGMENTS / STAGES, with a NOW line cutting through. The handoff pane previews the next two transitions; a drift counter floats up top."
+    }
+  ]
+}
+--}}
+
+<style>
+  /* ============================================================
+     BROADSHEET — strict black-on-white grid, hairline borders.
+     The morning-of paper rundown for things too consequential.
+     ============================================================ */
+
+  :root {
+    --black: #000;
+    --white: #fff;
+    --muted: #666;
+    --hair: 1px solid #000;
+  }
+
+  *,
+  *::before,
+  *::after {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+  html,
+  body {
+    background: var(--white);
+    color: var(--black);
+    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    font-size: 16px;
+    line-height: 1.5;
+    min-height: 100vh;
+  }
+
+  a {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  .layout {
+    max-width: 1100px;
+    margin: 0 auto;
+    border-left: var(--hair);
+    border-right: var(--hair);
+    min-height: 100vh;
+  }
+
+  /* === NAV === */
+  .nav {
+    display: flex;
+    border-bottom: var(--hair);
+  }
+  .nav-cell {
+    padding: 0.75rem 1.25rem;
+    border-right: var(--hair);
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .nav-cell:last-child {
+    border-right: none;
+  }
+  .nav-cell.brand {
+    background: var(--black);
+    color: var(--white);
+  }
+  .nav-cell:hover {
+    background: var(--black);
+    color: var(--white);
+  }
+  .nav-cell.spacer {
+    flex: 1;
+    cursor: default;
+  }
+  .nav-cell.spacer:hover {
+    background: var(--white);
+    color: var(--black);
+  }
+
+  /* === BREADCRUMB === */
+  .crumb {
+    display: flex;
+    border-bottom: var(--hair);
+  }
+  .crumb-cell {
+    padding: 0.55rem 1.25rem;
+    border-right: var(--hair);
+    font-size: 0.6rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--muted);
+  }
+  .crumb-cell a {
+    color: var(--muted);
+  }
+  .crumb-cell a:hover {
+    color: var(--black);
+  }
+  .crumb-cell:last-child {
+    border-right: none;
+    color: var(--black);
+  }
+
+  /* === HERO === */
+  .hero-row {
+    display: grid;
+    grid-template-columns: 240px 1fr 240px;
+    border-bottom: var(--hair);
+  }
+  @media (max-width: 800px) {
+    .hero-row {
+      grid-template-columns: 1fr;
+    }
+  }
+  .hero-side {
+    padding: 1.5rem 1.25rem;
+    border-right: var(--hair);
+    font-size: 0.6rem;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    color: var(--muted);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 1rem;
+  }
+  .hero-side:last-child {
+    border-right: none;
+    border-left: var(--hair);
+  }
+  @media (max-width: 800px) {
+    .hero-side {
+      border-right: none;
+      border-left: none;
+      border-bottom: var(--hair);
+    }
+    .hero-side:last-child {
+      border-left: none;
+    }
+  }
+  .hero-side .stat-num {
+    font-size: 2.5rem;
+    color: var(--black);
+    letter-spacing: -0.03em;
+    font-weight: 900;
+    line-height: 1;
+  }
+  .hero-side .stat-label {
+    font-size: 0.55rem;
+  }
+  .hero-center {
+    padding: 3.5rem 2rem 3rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+  }
+  .giant-outline {
+    font-size: clamp(2.4rem, 8vw, 5.5rem);
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: -0.04em;
+    -webkit-text-stroke: 2px var(--black);
+    color: transparent;
+    line-height: 0.92;
+  }
+  .giant-solid {
+    -webkit-text-stroke: 0;
+    color: var(--black);
+    display: block;
+  }
+  .hero-sub {
+    margin-top: 1.5rem;
+    max-width: 720px;
+    font-size: 1rem;
+    color: var(--black);
+  }
+
+  /* === SECTION LABEL (filled) === */
+  .section-label {
+    font-size: 0.6rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    padding: 0.75rem 1.25rem;
+    border-bottom: var(--hair);
+    background: var(--black);
+    color: var(--white);
+    display: flex;
+    justify-content: space-between;
+  }
+  .section-label .meta {
+    color: var(--white);
+    opacity: 0.6;
+  }
+
+  /* === STATS BAR === */
+  .stats-bar {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    border-bottom: var(--hair);
+  }
+  @media (max-width: 700px) {
+    .stats-bar {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+  .stat-cell {
+    padding: 1.25rem 1.25rem;
+    border-right: var(--hair);
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+  .stat-cell:last-child {
+    border-right: none;
+  }
+  @media (max-width: 700px) {
+    .stat-cell {
+      border-bottom: var(--hair);
+    }
+    .stat-cell:nth-child(2n) {
+      border-right: none;
+    }
+  }
+  .stat-cell .k {
+    font-size: 0.55rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--muted);
+  }
+  .stat-cell .v {
+    font-size: 1.75rem;
+    font-weight: 900;
+    letter-spacing: -0.03em;
+    line-height: 1;
+  }
+
+  /* === APPS TABLE === */
+  .apps-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    border-bottom: var(--hair);
+  }
+  @media (max-width: 800px) {
+    .apps-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+  .app {
+    padding: 1.5rem 1.25rem;
+    border-right: var(--hair);
+    border-bottom: var(--hair);
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+    background: var(--white);
+    transition: background 0.12s;
+  }
+  .app:nth-child(2n) {
+    border-right: none;
+  }
+  @media (max-width: 800px) {
+    .app {
+      border-right: none;
+    }
+  }
+  .app:hover {
+    background: #f5f5f5;
+  }
+  .app .app-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    border-bottom: var(--hair);
+    padding-bottom: 0.6rem;
+  }
+  .app .num {
+    font-size: 0.55rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--muted);
+  }
+  .app .status-tag {
+    font-size: 0.55rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    padding: 2px 6px;
+    border: var(--hair);
+  }
+  .app--pending .status-tag {
+    background: var(--white);
+    color: var(--black);
+  }
+  .app--live .status-tag {
+    background: var(--black);
+    color: var(--white);
+  }
+  .app .title {
+    font-size: 1.4rem;
+    font-weight: 900;
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+    text-transform: uppercase;
+  }
+  .app .tagline {
+    font-size: 0.85rem;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    border-top: 1px dashed #000;
+    border-bottom: 1px dashed #000;
+    padding: 0.4rem 0;
+  }
+  .app .desc {
+    font-size: 0.95rem;
+    color: var(--black);
+    line-height: 1.55;
+    flex: 1;
+  }
+  .app .shot {
+    display: block;
+    border: var(--hair);
+    aspect-ratio: 16 / 9;
+    overflow: hidden;
+    background: var(--white);
+  }
+  .app .shot img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    filter: grayscale(1) contrast(1.05);
+  }
+  .app .ascii-frame {
+    font-family: "Courier New", ui-monospace, monospace;
+    font-size: 11px;
+    line-height: 1.2;
+    text-align: center;
+    color: var(--muted);
+    margin: 0;
+    white-space: pre;
+    padding: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+  }
+  .app .ctas {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0;
+    border: var(--hair);
+  }
+  .app .btn {
+    text-align: center;
+    padding: 0.65rem 0.5rem;
+    background: var(--white);
+    border-right: var(--hair);
+    color: var(--black);
+    font-size: 0.6rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    cursor: pointer;
+    transition: all 0.12s;
+  }
+  .app .btn:last-child {
+    border-right: none;
+  }
+  .app .btn:hover {
+    background: var(--black);
+    color: var(--white);
+  }
+  .app .btn--single {
+    grid-column: 1 / -1;
+    border-right: none;
+  }
+  .app .prompt-link {
+    font-size: 0.65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--muted);
+    text-align: right;
+  }
+  .app .prompt-link:hover {
+    color: var(--black);
+  }
+
+  /* === EPILOGUE === */
+  .epilogue {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    border-bottom: var(--hair);
+  }
+  @media (max-width: 700px) {
+    .epilogue {
+      grid-template-columns: 1fr;
+    }
+  }
+  .epilogue-cell {
+    padding: 1.5rem 1.25rem;
+    border-right: var(--hair);
+    font-size: 0.95rem;
+    line-height: 1.55;
+  }
+  .epilogue-cell:last-child {
+    border-right: none;
+  }
+  @media (max-width: 700px) {
+    .epilogue-cell {
+      border-right: none;
+      border-bottom: var(--hair);
+    }
+    .epilogue-cell:last-child {
+      border-bottom: none;
+    }
+  }
+  .epilogue-cell .e-label {
+    font-size: 0.55rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--muted);
+    margin-bottom: 0.5rem;
+  }
+
+  /* === FOOTER === */
+  .term-footer {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.75rem 1.25rem;
+    font-size: 0.55rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--muted);
+  }
+</style>
+
+<main class="layout">
+  <nav class="nav">
+    <a class="nav-cell brand" href="https://links.vibes.diy/homepage">VIBES.DIY</a>
+    <a class="nav-cell" href="/expressions/">Expressions</a>
+    <span class="nav-cell spacer"></span>
+    <a class="nav-cell" href="https://links.vibes.diy/discord">Discord</a>
+    <a class="nav-cell" href="https://links.vibes.diy/CLI">CLI</a>
+  </nav>
+
+  <div class="crumb">
+    <span class="crumb-cell"><a href="/">Home</a></span>
+    <span class="crumb-cell"><a href="/expressions/">Expressions</a></span>
+    <span class="crumb-cell">Day-of Run-of-Show</span>
+  </div>
+
+  <div class="hero-row">
+    <aside class="hero-side">
+      <div>
+        <div>Cluster</div>
+        <div class="stat-num" style="margin-top: .35rem;">06</div>
+        <div class="stat-label">/ ten clusters</div>
+      </div>
+      <div>
+        <div>Source</div>
+        <div class="stat-label" style="font-size:.7rem; letter-spacing:.05em; color:#000;">tilted-enterprise-tail</div>
+        <div class="stat-label">entries 51–60</div>
+      </div>
+    </aside>
+    <div class="hero-center">
+      <h1 class="giant-outline">Day-of<br /><span class="giant-solid">Run-of-Show</span></h1>
+      <p class="hero-sub">All-hands cue sheets, IPO roadshow choreography, layoff-day
+        timing, board rundowns. The morning-of app for things too
+        consequential for a Sheet — time horizon: hours; stakes:
+        career-visible.</p>
+    </div>
+    <aside class="hero-side">
+      <div>
+        <div>Apps</div>
+        <div class="stat-num" style="margin-top: .35rem;">10</div>
+        <div class="stat-label">/ in this rundown</div>
+      </div>
+      <div>
+        <div>Skin</div>
+        <div class="stat-label" style="font-size:.7rem; letter-spacing:.05em; color:#000;">Broadsheet</div>
+        <div class="stat-label">strict b/w grid</div>
+      </div>
+    </aside>
+  </div>
+
+  <div class="section-label">
+    <span>The Rundown</span>
+    <span class="meta">10 apps · 06 / 10 clusters</span>
+  </div>
+
+  <div class="stats-bar">
+    <div class="stat-cell">
+      <span class="k">Persistence</span>
+      <span class="v">Fireproof</span>
+    </div>
+    <div class="stat-cell">
+      <span class="k">Time Horizon</span>
+      <span class="v">Hours</span>
+    </div>
+    <div class="stat-cell">
+      <span class="k">Stakes</span>
+      <span class="v">High</span>
+    </div>
+    <div class="stat-cell">
+      <span class="k">Buyer</span>
+      <span class="v">Team Lead</span>
+    </div>
+  </div>
+
+  <section class="apps-grid">
+    {{#each apps}}
+      <article class="app {{#if live}}app--live{{else}}app--pending{{/if}}">
+        <div class="app-head">
+          <span class="num">No. {{num}} · {{slug}}</span>
+          {{#if live}}
+            <span class="status-tag">Live</span>
+          {{else}}
+            <span class="status-tag">Pending</span>
+          {{/if}}
+        </div>
+        <h2 class="title">{{title}}</h2>
+        <p class="tagline">{{tagline}}</p>
+        <p class="desc">{{desc}}</p>
+        {{#if live}}
+          <a
+            class="shot"
+            href="https://vibes.diy/vibe/{{author}}/{{slug}}"
+            aria-label="{{title}} screenshot"
+          >
+            <img
+              src="https://{{slug}}--{{author}}.prod-v2.vibesdiy.net/screenshot.jpg"
+              alt="{{slug}}"
+              onerror="this.onerror=null; this.src='{{@root.assetPrefix}}images/og-preview.png';"
+            />
+          </a>
+          <div class="ctas">
+            <a class="btn" href="https://vibes.diy/vibe/{{author}}/{{slug}}">Join</a>
+            <a class="btn" href="https://vibes.diy/remix/{{author}}/{{slug}}?skipChat=true">Clone</a>
+            <a class="btn" href="https://vibes.diy/remix/{{author}}/{{slug}}">Remix</a>
+          </div>
+          <a
+            class="prompt-link"
+            href="https://vibes.diy/chat/prompt?prompt64={{prompt64 desc}}"
+          >› Start Fresh from this prompt</a>
+        {{else}}
+          <div class="shot">
+            <pre class="ascii-frame">+----------------------+
+|                      |
+|   awaiting deploy    |
+|                      |
++----------------------+</pre>
+          </div>
+          <div class="ctas">
+            <a
+              class="btn btn--single"
+              href="https://vibes.diy/chat/prompt?prompt64={{prompt64 desc}}"
+            >Start From This Prompt</a>
+          </div>
+        {{/if}}
+      </article>
+    {{/each}}
+  </section>
+
+  <div class="section-label">
+    <span>Endnotes</span>
+    <span class="meta">read me · hack</span>
+  </div>
+
+  <div class="epilogue">
+    <div class="epilogue-cell">
+      <div class="e-label">READ ME</div>
+      <p>Ten takes on the same shape — a workflow that lives or dies on the
+        morning of the event, when the rundown lives in a Sheet that nobody
+        trusts. Replaces shared Sheets, paper rundowns, and "did we cue the
+        slides?" panic. Time horizon: hours. Stakes: career-visible.</p>
+    </div>
+    <div class="epilogue-cell">
+      <div class="e-label">HACK</div>
+      <p>Hit
+        <a
+          href="https://vibes.diy/remix/og/ipo-roadshow?skipChat=true"
+          style="text-decoration: underline;"
+        >Clone</a>
+        on any rundown to spin up your own copy, or
+        <a
+          href="https://vibes.diy/remix/og/ipo-roadshow"
+          style="text-decoration: underline;"
+        >Remix</a>
+        to ask the model to reshape the code. Pending entries link straight to
+        the prompt that built them.</p>
+    </div>
+  </div>
+
+  {{> newsletter}}
+<footer class="term-footer">
+    <span>Vibes.diy
+      ·
+      <a href="https://links.vibes.diy/homepage" style="text-decoration: underline;">homepage</a>
+      ·
+      <a href="/expressions/" style="text-decoration: underline;">expressions</a></span>
+    <span>End of rundown</span>
+  </footer>
+</main>

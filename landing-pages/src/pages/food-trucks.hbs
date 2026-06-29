@@ -1,0 +1,379 @@
+{{!--
+{
+  "layout": "webring",
+  "title": "For Food Trucks & Restaurants | Vibes DIY",
+  "description": "Five apps for small restaurant and food truck owners: daily specials board, catering quote form, kitchen prep checklist, loyalty stamp card, location ping. Each remixable into your own version.",
+  "ogUrl": "https://good.vibes.diy/food-trucks/",
+  "source": "food-trucks",
+  "apps": [
+    {
+      "num": "01",
+      "slug": "daily-specials-board",
+      "author": "og",
+      "live": true,
+      "title": "Daily Specials",
+      "tagline": "Update today's menu from your phone. Customers scan a QR, no app needed.",
+      "desc": "Digital whiteboard for today's specials. Owner types the dish, price, and a note from their phone; a public view shows it live. Resets each morning.",
+      "fork": "You run a bar and want a nightly cocktail board instead of food specials. Clone this and rename the fields — same update flow, different content."
+    },
+    {
+      "num": "02",
+      "slug": "catering-quote-form",
+      "author": "og",
+      "live": true,
+      "title": "Catering Intake",
+      "tagline": "Clients fill out event details. You get a clean summary ready to quote.",
+      "desc": "Catering inquiry form. Client fills event date, headcount, dietary needs, budget. Owner sees a clean summary and can mark it quoted or booked.",
+      "fork": "You do pop-ups and want clients to request a spot at your next one, not a full private event. Clone this and replace the catering fields with a pop-up interest form."
+    },
+    {
+      "num": "03",
+      "slug": "kitchen-prep-checklist",
+      "author": "og",
+      "live": true,
+      "title": "Prep Checklist",
+      "tagline": "Opening and closing tasks. Tracks who did what, shift by shift.",
+      "desc": "Opening and closing checklist for a kitchen. Staff check off tasks each shift. Shows who checked what and when. Resets daily.",
+      "fork": "You have different task lists for weekday service vs. weekend brunch. Clone this and add a shift-type selector that loads the right list."
+    },
+    {
+      "num": "04",
+      "slug": "loyalty-stamp-card",
+      "author": "og",
+      "live": true,
+      "title": "Loyalty Card",
+      "tagline": "Ten stamps earns a free item. No app install, no login.",
+      "desc": "Digital loyalty punch card. Tap to add a stamp. Ten stamps earns a free item. Owner sets the reward. No app install needed.",
+      "fork": "You want five stamps for a small reward and ten for the big one. Clone this and build two tiers — the stamp count is just a number."
+    },
+    {
+      "num": "05",
+      "slug": "food-truck-location-ping",
+      "author": "og",
+      "live": true,
+      "title": "Where Are We",
+      "tagline": "One-tap location update. Regulars always know where to find you.",
+      "desc": "Food truck location board. Owner posts where they're parked today with a one-tap update. Regulars check the current spot. Auto-archives at midnight.",
+      "fork": "You run two trucks and need a separate location page for each. Clone it twice and give each one its own URL."
+    }
+  ],
+  "ogImage": "https://good.vibes.diy/images/screenshots/food-trucks.jpg"
+}
+--}}
+
+<style>
+  :root {
+    --paper:    #f4f1e8;
+    --ink:      #111111;
+    --ink-soft: #555550;
+    --tomato:   #d4321a;
+    --tomato-d: #a82514;
+    --rule:     #111111;
+    --card-bg:  #fffef9;
+  }
+
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html, body {
+    font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    background: var(--paper);
+    color: var(--ink);
+    line-height: 1.5;
+    min-height: 100vh;
+  }
+  a { color: inherit; text-decoration: none; }
+  a:hover { color: var(--tomato); }
+
+  .layout {
+    max-width: 1100px; margin: 0 auto; padding: 0 1.5rem;
+    border-left: 2px solid var(--rule);
+    border-right: 2px solid var(--rule);
+    min-height: 100vh;
+  }
+
+  /* ── Header ── */
+  .topbar {
+    display: flex; justify-content: space-between; align-items: stretch;
+    border-bottom: 4px solid var(--rule);
+  }
+  .topbar .brand {
+    font-size: 1.15rem; font-weight: 900; letter-spacing: -0.02em;
+    text-transform: uppercase; padding: 1rem 1.5rem 1rem 0;
+    border-right: 2px solid var(--rule);
+  }
+  .topbar .meta {
+    font-size: 0.58rem; font-weight: 700; letter-spacing: 0.18em;
+    text-transform: uppercase; color: var(--ink-soft);
+    display: flex; align-items: center; padding: 0 1.5rem;
+  }
+  .topbar .edition {
+    font-size: 0.58rem; font-weight: 700; letter-spacing: 0.12em;
+    text-transform: uppercase; color: var(--ink);
+    background: var(--tomato); color: #fff;
+    display: flex; align-items: center; padding: 0 1rem; margin-left: auto;
+  }
+
+  /* ── Crumb ── */
+  .crumb {
+    padding: 0.6rem 0;
+    font-size: 0.6rem; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase;
+    color: var(--ink-soft); border-bottom: 1px solid var(--rule);
+  }
+  .crumb a { color: inherit; }
+  .crumb a:hover { color: var(--tomato); }
+
+  /* ── Hero ── */
+  .hero {
+    display: grid; grid-template-columns: 1fr 280px;
+    border-bottom: 2px solid var(--rule);
+  }
+  @media (max-width: 780px) { .hero { grid-template-columns: 1fr; } }
+  .hero-main {
+    padding: 3rem 2rem 3rem 0;
+    border-right: 2px solid var(--rule);
+  }
+  @media (max-width: 780px) { .hero-main { border-right: none; border-bottom: 2px solid var(--rule); } }
+  .hero-eyebrow {
+    font-size: 0.58rem; font-weight: 700; letter-spacing: 0.22em; text-transform: uppercase;
+    color: var(--tomato); margin-bottom: 1rem;
+  }
+  .hero h1 {
+    font-size: clamp(2.8rem, 7vw, 5rem);
+    font-weight: 900; line-height: 0.9; letter-spacing: -0.04em;
+    text-transform: uppercase; margin-bottom: 1.25rem;
+  }
+  .hero h1 .outline {
+    -webkit-text-stroke: 2px var(--ink); color: transparent;
+  }
+  .hero p.lead {
+    font-size: 1rem; line-height: 1.6; color: var(--ink-soft);
+    max-width: 520px;
+  }
+  .hero-side {
+    padding: 2rem 1.5rem;
+    display: flex; flex-direction: column; gap: 1.5rem;
+  }
+  .side-stat { border-bottom: 1px solid var(--rule); padding-bottom: 1rem; }
+  .side-stat:last-child { border-bottom: none; padding-bottom: 0; }
+  .side-stat .k {
+    font-size: 0.52rem; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase;
+    color: var(--ink-soft); margin-bottom: 0.3rem;
+  }
+  .side-stat .v {
+    font-size: 1.4rem; font-weight: 900; letter-spacing: -0.02em; text-transform: uppercase;
+  }
+  .side-stat .v.red { color: var(--tomato); }
+
+  /* ── Section label ── */
+  .section-label {
+    font-size: 0.55rem; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid var(--rule);
+    color: var(--ink-soft);
+  }
+
+  /* ── App grid ── */
+  .apps {
+    display: grid; grid-template-columns: repeat(2, 1fr);
+    gap: 0; padding: 1.5rem 0 3rem;
+    row-gap: 1.5rem; column-gap: 1.5rem;
+  }
+  @media (max-width: 780px) { .apps { grid-template-columns: 1fr; } }
+
+  .app {
+    background: var(--card-bg);
+    border: 2px solid var(--rule);
+    padding: 1.75rem;
+    display: flex; flex-direction: column; gap: 0.85rem;
+    position: relative;
+    transition: transform 0.15s, box-shadow 0.15s;
+  }
+  .app:hover {
+    transform: translate(-3px, -3px);
+    box-shadow: 5px 5px 0 var(--rule);
+  }
+  .app .head {
+    display: flex; justify-content: space-between; align-items: center;
+    padding-bottom: 0.75rem; border-bottom: 2px solid var(--rule);
+  }
+  .app .num {
+    font-size: 0.58rem; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase;
+    color: var(--tomato);
+  }
+  .app .status {
+    font-size: 0.5rem; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase;
+    padding: 3px 8px; border: 1px solid var(--rule); color: var(--ink-soft);
+  }
+  .app--live .status {
+    background: var(--tomato); color: #fff; border-color: var(--tomato);
+  }
+  .app .title {
+    font-size: 2rem; font-weight: 900; letter-spacing: -0.03em;
+    text-transform: uppercase; line-height: 0.95;
+  }
+  .app .tagline {
+    font-size: 0.78rem; font-weight: 400; line-height: 1.5;
+    border-left: 3px solid var(--tomato); padding-left: 0.75rem;
+    color: var(--ink-soft);
+  }
+  .app .desc { font-size: 0.88rem; line-height: 1.6; color: var(--ink-soft); flex: 1; }
+
+  .app .shot {
+    display: block; aspect-ratio: 16/10; overflow: hidden;
+    border: 1px solid var(--rule); background: var(--paper);
+  }
+  .app .shot img { width: 100%; height: 100%; object-fit: cover; }
+  .app .shot-placeholder {
+    padding: 1rem; height: 100%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.55rem; font-weight: 700; letter-spacing: 0.22em; text-transform: uppercase;
+    color: var(--ink-soft);
+  }
+
+  .app .ctas { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem; }
+  .app .ctas--single { grid-template-columns: 1fr; }
+  .btn {
+    text-align: center; padding: 0.65rem 0.5rem;
+    background: transparent; border: 1px solid var(--rule);
+    font-size: 0.55rem; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase;
+    color: var(--ink); transition: all 0.12s;
+  }
+  .btn:hover { background: var(--tomato); color: #fff; border-color: var(--tomato); }
+  .prompt-link {
+    font-size: 0.72rem; font-style: italic; color: var(--ink-soft);
+  }
+  .prompt-link:hover { color: var(--tomato); }
+  .fork-hint {
+    font-size: 0.72rem; font-style: italic; color: var(--ink-soft);
+    border-left: 3px solid var(--tomato); padding-left: 0.65rem;
+    line-height: 1.6;
+  }
+
+  /* ── Epilogue ── */
+  .epilogue {
+    padding: 2rem 0 3rem;
+    border-top: 4px solid var(--rule);
+    display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;
+  }
+  @media (max-width: 600px) { .epilogue { grid-template-columns: 1fr; } }
+  .epilogue h2 {
+    font-size: 0.55rem; font-weight: 700; letter-spacing: 0.22em; text-transform: uppercase;
+    color: var(--tomato); margin-bottom: 0.75rem;
+  }
+  .epilogue p { font-size: 0.9rem; line-height: 1.7; color: var(--ink-soft); }
+  .epilogue .hl { font-weight: 700; color: var(--ink); }
+
+  /* ── Footer ── */
+  footer.foot {
+    padding: 1rem 0;
+    border-top: 2px solid var(--rule);
+    font-size: 0.55rem; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase;
+    display: flex; justify-content: space-between; color: var(--ink-soft);
+  }
+</style>
+
+<div class="layout">
+  <header class="topbar">
+    <a class="brand" href="https://links.vibes.diy/homepage">Vibes.diy</a>
+    <span class="meta">For Food Trucks &amp; Restaurants</span>
+    <span class="edition">5 Live Apps</span>
+  </header>
+
+  <nav class="crumb">
+    <a href="/">Home</a> &nbsp;›&nbsp; Food Trucks
+  </nav>
+
+  <section class="hero">
+    <div class="hero-main">
+      <div class="hero-eyebrow">// For Small Restaurants &amp; Food Trucks</div>
+      <h1>Run your<br><span class="outline">service</span><br>not a spreadsheet.</h1>
+      <p class="lead">
+        Five apps built for the people behind the counter. Daily specials you
+        update from your phone. A catering form that doesn't embarrass you.
+        Checklists your whole crew can actually use. No IT department required.
+      </p>
+    </div>
+    <div class="hero-side">
+      <div class="side-stat">
+        <div class="k">Apps</div>
+        <div class="v">Five</div>
+      </div>
+      <div class="side-stat">
+        <div class="k">Persistence</div>
+        <div class="v">Fireproof</div>
+      </div>
+      <div class="side-stat">
+        <div class="k">Skin</div>
+        <div class="v red">Broadsheet</div>
+      </div>
+      <div class="side-stat">
+        <div class="k">Stance</div>
+        <div class="v">No-Code</div>
+      </div>
+    </div>
+  </section>
+
+  <div class="section-label">// the apps</div>
+
+  <section class="apps">
+    {{#each apps}}
+      <article class="app {{#if live}}app--live{{else}}app--pending{{/if}}">
+        <div class="head">
+          <span class="num">№ {{num}} · {{slug}}</span>
+          <span class="status">{{#if live}}Live{{else}}Pending{{/if}}</span>
+        </div>
+        <h2 class="title">{{title}}</h2>
+        <p class="tagline">{{tagline}}</p>
+        <p class="desc">{{desc}}</p>
+        {{#if live}}
+          <a class="shot" href="https://vibes.diy/vibe/{{author}}/{{slug}}" aria-label="{{title}} screenshot"><img src="https://{{slug}}--{{author}}.prod-v2.vibesdiy.net/screenshot.jpg" alt="{{slug}}" onerror="this.onerror=null; this.src='{{@root.assetPrefix}}images/og-preview.png';"/></a>
+          <div class="ctas">
+            <a class="btn" href="https://vibes.diy/vibe/{{author}}/{{slug}}">Join</a>
+            <a class="btn" href="https://vibes.diy/remix/{{author}}/{{slug}}?skipChat=true">Clone</a>
+            <a class="btn" href="https://vibes.diy/remix/{{author}}/{{slug}}">Remix</a>
+          </div>
+          <a class="prompt-link" href="https://vibes.diy/chat/prompt?prompt64={{prompt64 desc}}">↳ the prompt that made this app — describe your version instead</a>
+          {{#if fork}}<p class="fork-hint">{{fork}}</p>{{/if}}
+        {{else}}
+          <div class="shot"><div class="shot-placeholder">Awaiting deploy</div></div>
+          <div class="ctas ctas--single">
+            <a class="btn" href="https://vibes.diy/chat/prompt?prompt64={{prompt64 desc}}">Start From Prompt</a>
+          </div>
+          {{#if fork}}<p class="fork-hint">{{fork}}</p>{{/if}}
+        {{/if}}
+      </article>
+    {{/each}}
+  </section>
+
+  <section class="epilogue">
+    <div>
+      <h2>// read me</h2>
+      <p>
+        These five break the assumption that small operators need a developer
+        or a SaaS subscription to run simple tools. <span class="hl">A specials
+        board, a catering form, a prep checklist, a punch card, a location
+        ping.</span> Each one is a shape — remix it into exactly the version
+        your operation needs.
+      </p>
+    </div>
+    <div>
+      <h2>// remix it</h2>
+      <p>
+        Every app is open to clone or remix. Change the stamp count. Rename
+        the checklist tasks. Add your own menu categories. The code is yours
+        the moment you hit Clone — no lock-in, no vendor, no monthly bill
+        for five checkboxes.
+      </p>
+      <p style="margin-top: 0.85rem;">
+        Every operation is different. <span class="hl">Clone whichever is closest</span>
+        and describe your version — your service style, your staff setup, your customers.
+      </p>
+    </div>
+  </section>
+
+  {{> newsletter}}
+<footer class="foot">
+    <span>Vibes.diy · <a href="https://links.vibes.diy/homepage">homepage</a> · <a href="/college.html">college</a> · <a href="/dating.html">dating</a></span>
+    <span>// fin</span>
+  </footer>
+</div>

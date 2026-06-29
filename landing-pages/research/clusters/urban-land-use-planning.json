@@ -1,0 +1,91 @@
+{
+  "slug": "urban-land-use-planning",
+  "page_url": "https://good.vibes.diy/edu/urban-land-use-planning/",
+  "label": "Urban and Land Use Planning",
+  "department": "Urban Planning",
+  "vocabulary": [
+    "zoning and comprehensive plans",
+    "land use regulation",
+    "housing policy",
+    "transportation planning",
+    "community engagement",
+    "smart growth",
+    "sustainable city planning",
+    "urban growth management",
+    "travel demand forecasting",
+    "environmental impact assessment",
+    "land classification plans",
+    "participatory plan-making"
+  ],
+  "sources": [
+    {
+      "institution": "Stanford",
+      "title": "EARTHSYS 168: Land Use: Planning for Sustainable Cities",
+      "url": "https://publicpolicy.stanford.edu/courses/land-use-planning-sustainable-cities"
+    },
+    {
+      "institution": "UC Berkeley",
+      "title": "CY PLAN 110 Introduction to City Planning",
+      "url": "https://classes.berkeley.edu/content/2024-fall-cyplan-110-001-lec-001"
+    },
+    {
+      "institution": "UW Madison",
+      "title": "CIV ENGR 571: Urban Transportation Planning",
+      "url": "https://cavh.cee.wisc.edu/wp-content/uploads/sites/1758/2022/09/CEE571-URBAN-TRANSPORTATION-PLANNING-Syllabus-2022.pdf"
+    },
+    {
+      "institution": "UNC Chapel Hill",
+      "title": "PLAN 741: Land Use and Environmental Planning",
+      "url": "https://planning.unc.edu/wp-content/uploads/sites/399/2017/08/PLAN-741-LandUseEnvironPlanning-Song.pdf"
+    }
+  ],
+  "app_prompts": [
+    "A renter in their late twenties just discovered that their city's zoning and comprehensive plans determine why their neighborhood has no corner stores, no apartments, and no bus that runs after 7 PM, and they want a casual introductory tool to understand what their own city's land use regulation actually says. They have heard terms like single-family zoning, missing middle housing, parking minimums, and smart growth but cannot connect them to the official documents that govern their block. Build a playful exploration app where the renter picks their city (or types in their address) and the app walks them through the basics of how land use regulation works: what zoning and comprehensive plans are, who writes them, how they are amended, what each zone designation actually allows on the ground. The app should let them browse a simplified version of their own city's land classification plans, showing what is allowed where, and let them experiment with hypotheticals: what if duplexes were allowed in single-family zones? What if parking minimums were eliminated near transit? It should introduce companion concepts like housing policy, transportation planning, and smart growth, showing how they fit together and where the user's city falls on each. The app should also point to upcoming opportunities for community engagement — the next planning commission hearing, an open comment period on a draft plan amendment, a participatory plan-making workshop in their neighborhood — so the renter sees that the rules they just learned about are actively being rewritten. The goal is not to make them a planner but to give them a coherent map of how the system works, so they can engage with their own city's planning process as an informed resident.",
+    "A neighborhood association is preparing for the city's once-in-a-decade comprehensive plan update and the board wants a shared workspace to organize community engagement across the year-long process. The association represents about 800 households and wants real participatory plan-making rather than the usual two-meeting consultation. Members include a mix of homeowners, renters, small business owners, parents with school-age kids, retirees, and a few professional planners who happen to live in the area. Build a coordination app where the association can run its parallel community process. The board lays out the planning topics that will be addressed in the comprehensive plan — housing policy, transportation planning, parks and open space, economic development, environmental impact assessment, urban growth management — and creates a working group for each. Members sign up to working groups based on interest, and each group can hold its own discussions, draft position papers, and propose neighborhood priorities. The app should help the association document the diversity of voices contributing — who is showing up, who is not, where outreach needs to be expanded — and support multiple modes of engagement: synchronous workshops, asynchronous comment threads, and lightweight surveys for residents who cannot attend meetings. Each working group's outputs roll up into a draft neighborhood position document on the comprehensive plan, which the full membership can comment on before the board adopts it. The app should also track every official city engagement opportunity, schedule speakers for hearings, and produce talking points for residents who want to testify. After the city adopts the new plan, the workspace preserves the association's positions, the city's responses, and the final language, becoming the institutional memory for the next plan cycle.",
+    "A senior planner at a city planning department manages the recurring intake of development applications — rezonings, conditional use permits, subdivision plats, variances — and shepherds each through the procedural workflow from intake to planning commission to council. They need an operational workflow app for the daily and weekly tasks of the role because the current case management system makes it hard to track where a given application is in the process and which staff actions are pending. Build an operational workflow app where each application has a case file with the parcel, the applicant, the requested action, and the relevant existing zoning and comprehensive plans designations. The app should walk staff through the standard review steps: completeness check, distribution to affected departments (transportation planning, utilities, environmental review), neighborhood notification, comment period management, staff report drafting, planning commission hearing scheduling, council scheduling. For each step the workflow documents who is responsible, what is required, and what the application's status is. Environmental impact assessment cases follow a separate but related workflow with the additional documentation steps that the state environmental policy act requires. Land classification plans amendments and comprehensive plan amendments follow yet another workflow because they involve different procedural steps. The app should support the recurring administrative work of community engagement — sending notices, posting hearing schedules, accepting and logging written comments — and produce the public-facing case page that residents can search. The staff report drafting workflow has templates aligned with each application type, ensuring consistency across planners and across years. The app maintains the planning department's institutional memory: how similar cases have been decided in the past, what staff recommendations were on past comparable rezonings, and what the planning commission's discussion has tended to focus on.",
+    "A regional metropolitan planning organization is leading the long-range transportation planning update that will allocate billions of dollars in federal and state funding over the next twenty years across a metro region with several million residents. The lead planner needs a serious analytic app that integrates travel demand forecasting, land use regulation scenarios, and project prioritization under multiple plausible futures. Build a professional regional planning app where the analyst defines the planning horizon, the regional growth assumptions, and the scenarios under consideration — a smart growth scenario concentrating growth in existing centers, an urban growth management scenario with stronger boundaries, a trend-continuation scenario, and a sustainable city planning scenario emphasizing transit and infill. For each scenario the app supports specifying the underlying land use forecast — distribution of households and jobs by zone — and the travel demand forecasting outputs at the corridor level for vehicle miles traveled, transit ridership, and walk/bike trips. The analyst can evaluate proposed transportation projects (a new rail extension, a bus rapid transit corridor, a highway widening, a network of separated bike lanes) for their performance under each scenario, with each project carrying its capital cost, operating cost, environmental impact assessment results, and equity impact analysis. The app supports a structured project prioritization workflow where regional goals (greenhouse gas reduction, housing access, equity, congestion relief) are weighted and projects are scored, with sensitivity analysis on the weights. Participatory plan-making is integrated: every scenario and project carries the public comment record and the response, and the analyst can produce engagement-ready materials at each milestone. The output is the long-range plan document itself, with full traceability from regional goals through scenario analysis to project list, defensible to the federal funding partners, the regional board, and a litigious development community.",
+    "A state housing and community development agency is implementing a new statutory mandate that requires every local jurisdiction in the state to update its zoning and comprehensive plans to demonstrably accommodate a state-assigned share of regional housing need, with the agency reviewing and certifying each plan. The agency's review team needs a mission-critical compliance app because the certifications affect access to state infrastructure funding, are scrutinized by the legislature, and are routinely litigated by both housing advocates and local governments. Build a high-stakes review app where each jurisdiction's submitted housing element opens a structured case file. The reviewer logs the jurisdiction's assigned housing need by income category, the inventory of candidate sites the jurisdiction has proposed, and the land use regulation framework the jurisdiction asserts will permit the needed units. The app walks the reviewer through the statutory checklist: are the sites realistically available for development, are the densities sufficient for affordable housing development, does the analysis of constraints address environmental impact assessment requirements honestly, is the community engagement record meaningful or a paper exercise, do the land classification plans align with the housing element, are the transportation planning assumptions consistent with where the housing is sited? For each finding the reviewer documents the specific evidence in the jurisdiction's submission and the statutory provision it relates to. Smart growth and sustainable city planning considerations are explicit review categories where applicable. The app supports a structured correspondence record with the jurisdiction — every request for additional information and the response — and a draft findings document the reviewer prepares. A second reviewer is assigned for jurisdictions above a population threshold or with a history of non-compliance, and the app reconciles the two reviews. The final certification (or non-certification) decision is published with the full evidentiary record, ready to defend in any subsequent litigation and to inform the legislature's oversight of the program."
+  ],
+  "apps": [
+    {
+      "num": "01",
+      "slug": "zoning-explorer",
+      "author": "edu",
+      "live": true,
+      "title": "Zoning Explorer",
+      "tagline": "Why does your neighborhood have no corner stores? Your city's land use regulation has the answer."
+    },
+    {
+      "num": "02",
+      "slug": "comp-plan-coordination",
+      "author": "edu",
+      "live": true,
+      "title": "Comp Plan Coordination",
+      "tagline": "Coordinate real participatory plan-making across 800 households."
+    },
+    {
+      "num": "03",
+      "slug": "development-case-workflow",
+      "author": "edu",
+      "live": true,
+      "title": "Development Review",
+      "tagline": "Rezoning, conditional use permit, subdivision plat — templated workflow from intake to council."
+    },
+    {
+      "num": "04",
+      "slug": "regional-transport-plan",
+      "author": "edu",
+      "live": true,
+      "title": "Regional Transport Plan",
+      "tagline": "Smart growth scenario, urban growth management, trend continuation — allocate billions across futures."
+    },
+    {
+      "num": "05",
+      "slug": "housing-element-review",
+      "author": "edu",
+      "live": true,
+      "title": "Housing Element Review",
+      "tagline": "Sites realistically available? Densities sufficient? Community engagement meaningful or paper exercise?"
+    }
+  ]
+}

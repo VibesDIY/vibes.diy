@@ -1,0 +1,573 @@
+{{!--
+{
+  "layout": "webring",
+  "title": "App Audit — Direct-to-App Campaign Candidates",
+  "description": "Visual audit of all 18 apps being upgraded for direct-to-app Meta ad campaigns.",
+  "ogUrl": "https://good.vibes.diy/audit/",
+  "source": "audit"
+}
+--}}
+
+<style>
+  @import url('https://fonts.cdnfonts.com/css/alte-haas-grotesk');
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg: #1A1A2E;
+    --surface: rgba(255,255,240,0.04);
+    --border: rgba(255,255,240,0.08);
+    --ivory: #FFFFF0;
+    --mint: #00C9A7;
+    --dim: rgba(255,255,240,0.5);
+  }
+
+  body {
+    font-family: 'Alte Haas Grotesk', Arial, sans-serif;
+    background: var(--bg);
+    color: var(--ivory);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .mono { font-family: 'JetBrains Mono', monospace; }
+
+  .page-header {
+    padding: 3rem 2rem 1.5rem;
+    max-width: 1400px;
+    margin: 0 auto;
+  }
+  .page-header h1 {
+    font-size: 1.8rem;
+    font-weight: 900;
+    margin-bottom: 0.25rem;
+  }
+  .page-header p {
+    color: var(--dim);
+    font-size: 0.95rem;
+  }
+  .page-header .count {
+    display: inline-block;
+    background: var(--mint);
+    color: var(--bg);
+    font-weight: 800;
+    font-size: 0.75rem;
+    padding: 0.2rem 0.6rem;
+    border-radius: 100px;
+    margin-left: 0.5rem;
+    vertical-align: middle;
+  }
+
+  .group {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 2rem 2rem;
+  }
+  .group-label {
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--mint);
+    margin-bottom: 1rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--border);
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+    gap: 1.25rem;
+  }
+
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    transition: border-color 0.2s;
+  }
+  .card:hover { border-color: var(--mint); }
+
+  .card-img {
+    position: relative;
+    background: #111;
+  }
+  .card-img img {
+    width: 100%;
+    aspect-ratio: 1200/630;
+    object-fit: cover;
+    display: block;
+  }
+  .card-img .tier {
+    position: absolute;
+    top: 0.5rem;
+    right: 0.5rem;
+    font-size: 0.6rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 0.2rem 0.5rem;
+    border-radius: 4px;
+    backdrop-filter: blur(8px);
+  }
+  .tier-1 { background: rgba(0,201,167,0.8); color: var(--bg); }
+  .tier-2 { background: rgba(254,221,0,0.8); color: var(--bg); }
+  .tier-3 { background: rgba(255,255,240,0.15); color: var(--ivory); }
+
+  .card-body {
+    padding: 0.75rem 1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.75rem;
+  }
+  .card-info h3 {
+    font-size: 0.95rem;
+    font-weight: 700;
+    line-height: 1.2;
+  }
+  .card-info .slug {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--dim);
+  }
+  .card-info .page-from {
+    font-size: 0.7rem;
+    color: var(--dim);
+    margin-top: 0.15rem;
+  }
+
+  .card-links {
+    display: flex;
+    gap: 0.4rem;
+    flex-shrink: 0;
+  }
+  .card-links a {
+    display: inline-block;
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    text-decoration: none;
+    padding: 0.3rem 0.6rem;
+    border-radius: 6px;
+    transition: background 0.2s;
+    white-space: nowrap;
+  }
+  .btn-open {
+    background: var(--mint);
+    color: var(--bg);
+  }
+  .btn-open:hover { background: #00e0bb; }
+  .btn-remix {
+    background: rgba(255,255,240,0.1);
+    color: var(--ivory);
+  }
+  .btn-remix:hover { background: rgba(255,255,240,0.2); }
+
+  .refresh-note {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 1rem 2rem 3rem;
+    text-align: center;
+    font-size: 0.8rem;
+    color: var(--dim);
+  }
+
+  @media (max-width: 900px) {
+    .grid { grid-template-columns: 1fr; }
+    .card-body { flex-direction: column; align-items: flex-start; }
+  }
+</style>
+
+<div class="page-header">
+  <h1>Direct-to-App Audit <span class="count">18 apps</span></h1>
+  <p>Unsplash-upgraded apps for direct ad campaigns. Screenshots are live — hard-refresh to see latest pushes.</p>
+</div>
+
+<!-- TIER 1 -->
+<div class="group">
+  <div class="group-label">Tier 1 — Run First (strongest signal)</div>
+  <div class="grid">
+
+    <div class="card">
+      <div class="card-img">
+        <img src="https://book-exchange-log--og.prod-v2.vibesdiy.net/screenshot.jpg"
+             alt="Book Exchange Log"
+             onerror="this.onerror=null; this.src='{{assetPrefix}}images/og-preview.png';" />
+        <span class="tier tier-1">Tier 1</span>
+      </div>
+      <div class="card-body">
+        <div class="card-info">
+          <h3>Book Exchange Log</h3>
+          <div class="slug">og/book-exchange-log</div>
+          <div class="page-from">from: free-library &middot; 61 clicks &middot; 3.79% CTR</div>
+        </div>
+        <div class="card-links">
+          <a class="btn-open" href="https://vibes.diy/vibe/og/book-exchange-log" target="_blank">Open</a>
+          <a class="btn-remix" href="https://vibes.diy/remix/og/book-exchange-log" target="_blank">Remix</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-img">
+        <img src="https://guest-address-book--og.prod-v2.vibesdiy.net/screenshot.jpg"
+             alt="Guest Address Book"
+             onerror="this.onerror=null; this.src='{{assetPrefix}}images/og-preview.png';" />
+        <span class="tier tier-1">Tier 1</span>
+      </div>
+      <div class="card-body">
+        <div class="card-info">
+          <h3>Guest Address Book</h3>
+          <div class="slug">og/guest-address-book</div>
+          <div class="page-from">from: save-the-date &middot; 11 clicks &middot; 4.42% CTR</div>
+        </div>
+        <div class="card-links">
+          <a class="btn-open" href="https://vibes.diy/vibe/og/guest-address-book" target="_blank">Open</a>
+          <a class="btn-remix" href="https://vibes.diy/remix/og/guest-address-book" target="_blank">Remix</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-img">
+        <img src="https://live-run-sheet--og.prod-v2.vibesdiy.net/screenshot.jpg"
+             alt="Live Run Sheet"
+             onerror="this.onerror=null; this.src='{{assetPrefix}}images/og-preview.png';" />
+        <span class="tier tier-1">Tier 1</span>
+      </div>
+      <div class="card-body">
+        <div class="card-info">
+          <h3>Live Run Sheet</h3>
+          <div class="slug">og/live-run-sheet</div>
+          <div class="page-from">from: organizers &middot; 16 clicks &middot; 2.71% CTR</div>
+        </div>
+        <div class="card-links">
+          <a class="btn-open" href="https://vibes.diy/vibe/og/live-run-sheet" target="_blank">Open</a>
+          <a class="btn-remix" href="https://vibes.diy/remix/og/live-run-sheet" target="_blank">Remix</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-img">
+        <img src="https://garage-sale-coordinator--og.prod-v2.vibesdiy.net/screenshot.jpg"
+             alt="Garage Sale Coordinator"
+             onerror="this.onerror=null; this.src='{{assetPrefix}}images/og-preview.png';" />
+        <span class="tier tier-1">Tier 1</span>
+      </div>
+      <div class="card-body">
+        <div class="card-info">
+          <h3>Garage Sale Coordinator</h3>
+          <div class="slug">og/garage-sale-coordinator</div>
+          <div class="page-from">from: garage-sale &middot; 11 clicks &middot; 18.2% LPV</div>
+        </div>
+        <div class="card-links">
+          <a class="btn-open" href="https://vibes.diy/vibe/og/garage-sale-coordinator" target="_blank">Open</a>
+          <a class="btn-remix" href="https://vibes.diy/remix/og/garage-sale-coordinator" target="_blank">Remix</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-img">
+        <img src="https://pub-trivia-night--jchris.prod-v2.vibesdiy.net/screenshot.jpg"
+             alt="Pub Trivia Night"
+             onerror="this.onerror=null; this.src='{{assetPrefix}}images/og-preview.png';" />
+        <span class="tier tier-1">Tier 1</span>
+      </div>
+      <div class="card-body">
+        <div class="card-info">
+          <h3>Pub Trivia Night</h3>
+          <div class="slug">jchris/pub-trivia-night</div>
+          <div class="page-from">from: trivia-night &middot; 10 organic clicks &middot; no paid</div>
+        </div>
+        <div class="card-links">
+          <a class="btn-open" href="https://vibes.diy/vibe/jchris/pub-trivia-night" target="_blank">Open</a>
+          <a class="btn-remix" href="https://vibes.diy/remix/jchris/pub-trivia-night" target="_blank">Remix</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-img">
+        <img src="https://skee-ball-alley--og.prod-v2.vibesdiy.net/screenshot.jpg"
+             alt="Skee-Ball Alley"
+             onerror="this.onerror=null; this.src='{{assetPrefix}}images/og-preview.png';" />
+        <span class="tier tier-1">Tier 1</span>
+      </div>
+      <div class="card-body">
+        <div class="card-info">
+          <h3>Skee-Ball Alley</h3>
+          <div class="slug">og/skee-ball-alley</div>
+          <div class="page-from">from: carnival &middot; 8 clicks &middot; 12% LPV</div>
+        </div>
+        <div class="card-links">
+          <a class="btn-open" href="https://vibes.diy/vibe/og/skee-ball-alley" target="_blank">Open</a>
+          <a class="btn-remix" href="https://vibes.diy/remix/og/skee-ball-alley" target="_blank">Remix</a>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- TIER 2 -->
+<div class="group">
+  <div class="group-label">Tier 2 — Run After Tier 1 Learnings</div>
+  <div class="grid">
+
+    <div class="card">
+      <div class="card-img">
+        <img src="https://neighbor-wish-board--og.prod-v2.vibesdiy.net/screenshot.jpg"
+             alt="Neighbor Wish Board"
+             onerror="this.onerror=null; this.src='{{assetPrefix}}images/og-preview.png';" />
+        <span class="tier tier-2">Tier 2</span>
+      </div>
+      <div class="card-body">
+        <div class="card-info">
+          <h3>Neighbor Wish Board</h3>
+          <div class="slug">og/neighbor-wish-board</div>
+          <div class="page-from">from: free-library &middot; 11 clicks</div>
+        </div>
+        <div class="card-links">
+          <a class="btn-open" href="https://vibes.diy/vibe/og/neighbor-wish-board" target="_blank">Open</a>
+          <a class="btn-remix" href="https://vibes.diy/remix/og/neighbor-wish-board" target="_blank">Remix</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-img">
+        <img src="https://camping-adventure-story--og.prod-v2.vibesdiy.net/screenshot.jpg"
+             alt="Camping Adventure Story"
+             onerror="this.onerror=null; this.src='{{assetPrefix}}images/og-preview.png';" />
+        <span class="tier tier-2">Tier 2</span>
+      </div>
+      <div class="card-body">
+        <div class="card-info">
+          <h3>Camping Adventure Story</h3>
+          <div class="slug">og/camping-adventure-story</div>
+          <div class="page-from">from: camping &middot; 5 clicks &middot; $0.13 CPC</div>
+        </div>
+        <div class="card-links">
+          <a class="btn-open" href="https://vibes.diy/vibe/og/camping-adventure-story" target="_blank">Open</a>
+          <a class="btn-remix" href="https://vibes.diy/remix/og/camping-adventure-story" target="_blank">Remix</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-img">
+        <img src="https://camp-gear-list--og.prod-v2.vibesdiy.net/screenshot.jpg"
+             alt="Camp Gear List"
+             onerror="this.onerror=null; this.src='{{assetPrefix}}images/og-preview.png';" />
+        <span class="tier tier-2">Tier 2</span>
+      </div>
+      <div class="card-body">
+        <div class="card-info">
+          <h3>Camp Gear List</h3>
+          <div class="slug">og/camp-gear-list</div>
+          <div class="page-from">from: camping &middot; 3 clicks &middot; $0.13 CPC</div>
+        </div>
+        <div class="card-links">
+          <a class="btn-open" href="https://vibes.diy/vibe/og/camp-gear-list" target="_blank">Open</a>
+          <a class="btn-remix" href="https://vibes.diy/remix/og/camp-gear-list" target="_blank">Remix</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-img">
+        <img src="https://group-gift-claimer--og.prod-v2.vibesdiy.net/screenshot.jpg"
+             alt="Group Gift Claimer"
+             onerror="this.onerror=null; this.src='{{assetPrefix}}images/og-preview.png';" />
+        <span class="tier tier-2">Tier 2</span>
+      </div>
+      <div class="card-body">
+        <div class="card-info">
+          <h3>Group Gift Claimer</h3>
+          <div class="slug">og/group-gift-claimer</div>
+          <div class="page-from">from: wishlist &middot; 5 clicks &middot; 17.1% LPV</div>
+        </div>
+        <div class="card-links">
+          <a class="btn-open" href="https://vibes.diy/vibe/og/group-gift-claimer" target="_blank">Open</a>
+          <a class="btn-remix" href="https://vibes.diy/remix/og/group-gift-claimer" target="_blank">Remix</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-img">
+        <img src="https://rate-my-thrift--og.prod-v2.vibesdiy.net/screenshot.jpg"
+             alt="Rate My Thrift"
+             onerror="this.onerror=null; this.src='{{assetPrefix}}images/og-preview.png';" />
+        <span class="tier tier-2">Tier 2</span>
+      </div>
+      <div class="card-body">
+        <div class="card-info">
+          <h3>Rate My Thrift</h3>
+          <div class="slug">og/rate-my-thrift</div>
+          <div class="page-from">from: garage-sale &middot; 3.90% CTR &middot; 12.2% LPV</div>
+        </div>
+        <div class="card-links">
+          <a class="btn-open" href="https://vibes.diy/vibe/og/rate-my-thrift" target="_blank">Open</a>
+          <a class="btn-remix" href="https://vibes.diy/remix/og/rate-my-thrift" target="_blank">Remix</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-img">
+        <img src="https://bad-movie-draft--og.prod-v2.vibesdiy.net/screenshot.jpg"
+             alt="Bad Movie Draft"
+             onerror="this.onerror=null; this.src='{{assetPrefix}}images/og-preview.png';" />
+        <span class="tier tier-2">Tier 2</span>
+      </div>
+      <div class="card-body">
+        <div class="card-info">
+          <h3>Bad Movie Draft</h3>
+          <div class="slug">og/bad-movie-draft</div>
+          <div class="page-from">from: crew/the-bit &middot; 3 clicks &middot; social shareability</div>
+        </div>
+        <div class="card-links">
+          <a class="btn-open" href="https://vibes.diy/vibe/og/bad-movie-draft" target="_blank">Open</a>
+          <a class="btn-remix" href="https://vibes.diy/remix/og/bad-movie-draft" target="_blank">Remix</a>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- TIER 3 -->
+<div class="group">
+  <div class="group-label">Tier 3 — Worth Testing</div>
+  <div class="grid">
+
+    <div class="card">
+      <div class="card-img">
+        <img src="https://bachelorette-planner--og.prod-v2.vibesdiy.net/screenshot.jpg"
+             alt="Bachelorette Planner"
+             onerror="this.onerror=null; this.src='{{assetPrefix}}images/og-preview.png';" />
+        <span class="tier tier-3">Tier 3</span>
+      </div>
+      <div class="card-body">
+        <div class="card-info">
+          <h3>Bachelorette Planner</h3>
+          <div class="slug">og/bachelorette-planner</div>
+          <div class="page-from">from: bridesmaids &middot; 3.72% CTR &middot; $0.18 CPC</div>
+        </div>
+        <div class="card-links">
+          <a class="btn-open" href="https://vibes.diy/vibe/og/bachelorette-planner" target="_blank">Open</a>
+          <a class="btn-remix" href="https://vibes.diy/remix/og/bachelorette-planner" target="_blank">Remix</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-img">
+        <img src="https://frogger-crossing--og.prod-v2.vibesdiy.net/screenshot.jpg"
+             alt="Frogger Crossing"
+             onerror="this.onerror=null; this.src='{{assetPrefix}}images/og-preview.png';" />
+        <span class="tier tier-3">Tier 3</span>
+      </div>
+      <div class="card-body">
+        <div class="card-info">
+          <h3>Frogger Crossing</h3>
+          <div class="slug">og/frogger-crossing</div>
+          <div class="page-from">from: game-maker &middot; 3.59% CTR &middot; nostalgia hook</div>
+        </div>
+        <div class="card-links">
+          <a class="btn-open" href="https://vibes.diy/vibe/og/frogger-crossing" target="_blank">Open</a>
+          <a class="btn-remix" href="https://vibes.diy/remix/og/frogger-crossing" target="_blank">Remix</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-img">
+        <img src="https://camp-meal-plan--og.prod-v2.vibesdiy.net/screenshot.jpg"
+             alt="Camp Meal Plan"
+             onerror="this.onerror=null; this.src='{{assetPrefix}}images/og-preview.png';" />
+        <span class="tier tier-3">Tier 3</span>
+      </div>
+      <div class="card-body">
+        <div class="card-info">
+          <h3>Camp Meal Plan</h3>
+          <div class="slug">og/camp-meal-plan</div>
+          <div class="page-from">from: camping &middot; 3.72% CTR &middot; $0.16 CPC</div>
+        </div>
+        <div class="card-links">
+          <a class="btn-open" href="https://vibes.diy/vibe/og/camp-meal-plan" target="_blank">Open</a>
+          <a class="btn-remix" href="https://vibes.diy/remix/og/camp-meal-plan" target="_blank">Remix</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-img">
+        <img src="https://group-reply-picker--og.prod-v2.vibesdiy.net/screenshot.jpg"
+             alt="Group Reply Picker"
+             onerror="this.onerror=null; this.src='{{assetPrefix}}images/og-preview.png';" />
+        <span class="tier tier-3">Tier 3</span>
+      </div>
+      <div class="card-body">
+        <div class="card-info">
+          <h3>Group Reply Picker</h3>
+          <div class="slug">og/group-reply-picker</div>
+          <div class="page-from">from: group-chat &middot; 3 clicks &middot; fun/viral</div>
+        </div>
+        <div class="card-links">
+          <a class="btn-open" href="https://vibes.diy/vibe/og/group-reply-picker" target="_blank">Open</a>
+          <a class="btn-remix" href="https://vibes.diy/remix/og/group-reply-picker" target="_blank">Remix</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-img">
+        <img src="https://block-party-setup-crew--og.prod-v2.vibesdiy.net/screenshot.jpg"
+             alt="Block Party Setup Crew"
+             onerror="this.onerror=null; this.src='{{assetPrefix}}images/og-preview.png';" />
+        <span class="tier tier-3">Tier 3</span>
+      </div>
+      <div class="card-body">
+        <div class="card-info">
+          <h3>Block Party Setup Crew</h3>
+          <div class="slug">og/block-party-setup-crew</div>
+          <div class="page-from">from: block-party &middot; 3 clicks &middot; 7.1% LPV</div>
+        </div>
+        <div class="card-links">
+          <a class="btn-open" href="https://vibes.diy/vibe/og/block-party-setup-crew" target="_blank">Open</a>
+          <a class="btn-remix" href="https://vibes.diy/remix/og/block-party-setup-crew" target="_blank">Remix</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-img">
+        <img src="https://scifi-since-2000--og.prod-v2.vibesdiy.net/screenshot.jpg"
+             alt="Sci-Fi Since 2000"
+             onerror="this.onerror=null; this.src='{{assetPrefix}}images/og-preview.png';" />
+        <span class="tier tier-3">Tier 3</span>
+      </div>
+      <div class="card-body">
+        <div class="card-info">
+          <h3>Sci-Fi Since 2000</h3>
+          <div class="slug">og/scifi-since-2000</div>
+          <div class="page-from">from: group-ranker &middot; 3 clicks &middot; debate-bait</div>
+        </div>
+        <div class="card-links">
+          <a class="btn-open" href="https://vibes.diy/vibe/og/scifi-since-2000" target="_blank">Open</a>
+          <a class="btn-remix" href="https://vibes.diy/remix/og/scifi-since-2000" target="_blank">Remix</a>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<p class="refresh-note">Screenshots load live from each app's subdomain. Hard-refresh (Cmd+Shift+R) to see the latest after upgrades push.</p>

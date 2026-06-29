@@ -1,0 +1,188 @@
+{{!--
+{
+  "layout": "webring",
+  "title": "Group Play // Expressions // Vibes DIY",
+  "description": "Vote-on-anything, charades-by-emoji, mood rings, synchronized stretch breaks. Tiny multiplayer rounds that turn whoever's around into the room.",
+  "ogUrl": "https://good.vibes.diy/expressions/group-play",
+  "source": "expressions-group-play",
+  "apps": [
+    {"num":"01","slug":"vote-on-anything","author":"jchris","live":true,"title":"Vote-On-Anything","tagline":"Drop a question. The room reacts.","desc":"YES / NO / HMMM stamps; live tally renders as handwritten tally marks. Past questions pinned below as polaroids."},
+    {"num":"02","slug":"group-mad-libs","author":"jchris","live":true,"title":"Group Mad Libs","tagline":"Fill blanks live; the result reads aloud at the end.","desc":"Story template with [BLANKS] auto-assigned to players. Once full, read the assembled story sentence-by-sentence."},
+    {"num":"03","slug":"camera-roll-trivia","author":"jchris","live":true,"title":"Camera-Roll Trivia","tagline":"Friends guess what's in your photos.","desc":"Host blurs a photo; friends submit one-line guesses. Host votes closest / funniest / meh. Persistent leaderboard."},
+    {"num":"04","slug":"hot-or-not-fridge","author":"jchris","live":true,"title":"Hot-or-Not the Fridge","tagline":"Rate your roommate's groceries.","desc":"Snap items in the fridge; roommates rate hot/not. Most-loved leaderboard, most-hated wall of shame."},
+    {"num":"05","slug":"couch-karaoke","author":"jchris","live":true,"title":"Couch Karaoke","tagline":"Shared lyric stream; everyone hears each other.","desc":"Host pastes lyrics + title. Lyrics scroll; mic levels render as colored aura per tile. Thumbs-up loudest singer per line."},
+    {"num":"06","slug":"charades-emoji","author":"jchris","live":true,"title":"Charades-by-Emoji","tagline":"Describe a movie in three emoji.","desc":"Host enters title + 3 emoji. First correct guess wins. Partial credit by edit-distance. Scoreboard across rounds."},
+    {"num":"07","slug":"group-mood-ring","author":"jchris","live":true,"title":"Group Mood Ring","tagline":"Each member's hex blends into one room hue.","desc":"Pick a color via hue picker. Whole-screen background = average of all current colors weighted by recency."},
+    {"num":"08","slug":"synchronized-stretch","author":"jchris","live":true,"title":"Synchronized Stretch Break","tagline":"Phones chime; everyone stands up together.","desc":"Schedule a stretch; at time, every device flashes/buzzes and shows a 60s guided stretch. Tap I-DID-IT to log attendance."},
+    {"num":"09","slug":"humming-tuner","author":"jchris","live":true,"title":"Group Humming Tuner","tagline":"Match the others; the room locks to the chord.","desc":"Each user picks a pentatonic note and hums it. Pitch detection per device; when all are within ±20 cents, chord locks."},
+    {"num":"10","slug":"shake-to-cheer","author":"jchris","live":true,"title":"Shake-to-Cheer","tagline":"Accelerometers, simultaneous chime.","desc":"Host calls a cheer with a 5s countdown. Every shake during the window contributes a chime. Tally + combined chime."}
+  ]
+}
+--}}
+
+<style>
+  @import url("https://fonts.googleapis.com/css2?family=Caveat:wght@500;700&family=Inter:wght@400;600;800&display=optional");
+
+  :root {
+    --desk: oklch(0.93 0.03 130);
+    --paper: oklch(0.97 0.01 80);
+    --ink: oklch(0.12 0.01 0);
+    --yellow: oklch(0.93 0.12 95);
+    --pink: oklch(0.90 0.06 10);
+    --blue: oklch(0.90 0.05 240);
+    --muted: oklch(0.45 0.01 0);
+    --tape: oklch(0.85 0.04 60 / 0.7);
+  }
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body {
+    font-family: "Inter", system-ui, sans-serif;
+    background: var(--desk);
+    color: var(--ink);
+    min-height: 100vh;
+    line-height: 1.55;
+    background-image:
+      repeating-linear-gradient(45deg, rgba(0,0,0,0.015) 0px, rgba(0,0,0,0.015) 2px, transparent 2px, transparent 8px);
+  }
+  h1, h2, h3, .cursive { font-family: "Caveat", cursive; font-weight: 700; }
+  a { color: var(--ink); text-decoration: none; }
+
+  .container { max-width: 1100px; margin: 0 auto; padding: 0 1.5rem; }
+
+  .topbar {
+    padding: 1rem 1.5rem;
+    display: flex; justify-content: space-between; align-items: center;
+    font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.15em; font-weight: 800;
+    border-bottom: 2px dashed var(--ink);
+  }
+  .topbar a { font-family: "Caveat", cursive; font-size: 1.5rem; letter-spacing: 0.02em; text-transform: none; }
+
+  .crumb { padding: 0.5rem 1.5rem; font-size: 0.75rem; letter-spacing: 0.12em; text-transform: uppercase; font-weight: 600; color: var(--muted); }
+  .crumb a { color: var(--muted); border-bottom: 1px dashed var(--muted); }
+  .crumb a:hover { color: var(--ink); border-bottom-color: var(--ink); }
+
+  .hero { padding: 3.5rem 0 2rem; text-align: center; }
+  .hero .label { font-size: 0.75rem; letter-spacing: 0.2em; text-transform: uppercase; font-weight: 800; color: var(--muted); margin-bottom: 0.8rem; }
+  .hero h1 { font-size: clamp(3rem, 9vw, 6.5rem); line-height: 0.95; transform: rotate(-1.5deg); display: inline-block; }
+  .hero h1 span { color: var(--pink); display: inline-block; transform: rotate(2deg); }
+  .hero p { max-width: 680px; margin: 1.5rem auto 0; font-size: 1.05rem; color: var(--muted); }
+
+  .stats { display: flex; flex-wrap: wrap; gap: 0.75rem; justify-content: center; margin: 2rem 0; }
+  .stat-card {
+    background: var(--paper); border: 2px solid var(--ink); padding: 0.7rem 1rem;
+    transform: rotate(-1deg); position: relative;
+    box-shadow: 3px 3px 0 var(--ink);
+    min-width: 130px; text-align: center;
+  }
+  .stat-card:nth-child(2n) { transform: rotate(1.5deg); background: var(--yellow); }
+  .stat-card:nth-child(3n) { transform: rotate(-0.5deg); background: var(--pink); }
+  .stat-card:nth-child(4n) { transform: rotate(0.8deg); background: var(--blue); }
+  .stat-card .k { font-size: 0.6rem; letter-spacing: 0.18em; text-transform: uppercase; font-weight: 800; color: var(--muted); }
+  .stat-card .v { font-family: "Caveat", cursive; font-weight: 700; font-size: 1.6rem; line-height: 1; }
+
+  .apps { display: grid; grid-template-columns: repeat(2, 1fr); gap: 2rem; padding: 2rem 0 4rem; }
+  @media (max-width: 800px) { .apps { grid-template-columns: 1fr; } }
+
+  .app {
+    background: var(--paper);
+    border: 2px solid var(--ink);
+    padding: 1.5rem;
+    box-shadow: 5px 5px 0 var(--ink);
+    position: relative;
+    transition: transform .15s ease;
+    display: flex; flex-direction: column; gap: 0.8rem;
+  }
+  .app:nth-child(3n+1) { transform: rotate(-0.8deg); background: var(--paper); }
+  .app:nth-child(3n+2) { transform: rotate(0.6deg); background: var(--yellow); }
+  .app:nth-child(3n) { transform: rotate(-0.3deg); background: var(--blue); }
+  .app:nth-child(5n) { background: var(--pink); transform: rotate(1deg); }
+  .app:hover { transform: rotate(0deg) translate(-2px, -2px); box-shadow: 7px 7px 0 var(--ink); }
+  .app::before {
+    content: ""; position: absolute; top: -10px; left: 50%; transform: translateX(-50%) rotate(-3deg);
+    width: 80px; height: 18px; background: var(--tape);
+    border: 1px dashed rgba(0,0,0,.15);
+  }
+  .app .head { display: flex; justify-content: space-between; align-items: baseline; padding-bottom: 0.4rem; border-bottom: 2px dashed var(--ink); }
+  .app .num { font-size: 0.65rem; letter-spacing: 0.18em; text-transform: uppercase; font-weight: 800; color: var(--muted); }
+  .app .status { font-family: "Caveat", cursive; font-size: 1.25rem; line-height: 1; padding: 2px 8px; background: var(--ink); color: var(--paper); transform: rotate(-3deg); display: inline-block; }
+  .app--pending .status { background: transparent; color: var(--muted); border: 1px dashed var(--muted); }
+  .app .title { font-size: 2rem; line-height: 1; color: var(--ink); }
+  .app .tagline { font-style: italic; color: var(--muted); font-size: 0.95rem; padding-left: 0.75rem; border-left: 3px solid var(--ink); }
+  .app .desc { flex: 1; font-size: 0.95rem; }
+  .app .shot { display: block; border: 2px solid var(--ink); aspect-ratio: 16/9; overflow: hidden; background: var(--paper); }
+  .app .shot img { width: 100%; height: 100%; object-fit: cover; }
+  .app .shot-placeholder { padding: 1rem; height: 100%; display: flex; align-items: center; justify-content: center; font-family: "Caveat", cursive; font-size: 1.4rem; color: var(--muted); text-align: center; }
+  .app .ctas { display: flex; gap: 0.5rem; }
+  .btn {
+    flex: 1; text-align: center; padding: 0.5rem 0.75rem;
+    background: var(--ink); color: var(--paper); border: 2px solid var(--ink);
+    font-weight: 800; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.12em;
+    cursor: pointer;
+  }
+  .btn:hover { background: var(--paper); color: var(--ink); }
+  .prompt-link { font-family: "Caveat", cursive; font-size: 1.05rem; color: var(--muted); }
+  .prompt-link:hover { color: var(--ink); }
+
+  .epilogue { padding: 2rem 1.5rem; border-top: 2px dashed var(--ink); border-bottom: 2px dashed var(--ink); margin-top: 2rem; }
+  .epilogue strong { font-family: "Caveat", cursive; font-weight: 700; font-size: 1.4rem; }
+  footer.term-footer { padding: 1rem 1.5rem; text-align: center; font-size: 0.7rem; letter-spacing: 0.15em; text-transform: uppercase; font-weight: 700; color: var(--muted); }
+</style>
+
+<header class="topbar">
+  <a href="https://links.vibes.diy/homepage">vibes.diy</a>
+  <span>Group Play · scrap pile</span>
+</header>
+<nav class="crumb">
+  <a href="/">Home</a> &nbsp;›&nbsp; <a href="/expressions/">Expressions</a> &nbsp;›&nbsp; Group Play
+</nav>
+
+<main class="container">
+  <section class="hero">
+    <div class="label">Cluster · 02 of 10 · toy tail #11–20</div>
+    <h1>Group <span>Play</span></h1>
+    <p>Vote-on-anything, charades-by-emoji, mood rings, synchronized stretch breaks. Tiny multiplayer rounds that turn whoever's around into the room.</p>
+  </section>
+
+  <div class="stats">
+    <div class="stat-card"><div class="k">Source</div><div class="v">Tilted</div></div>
+    <div class="stat-card"><div class="k">Apps</div><div class="v">Ten</div></div>
+    <div class="stat-card"><div class="k">Persistence</div><div class="v">Fireproof</div></div>
+    <div class="stat-card"><div class="k">Skin</div><div class="v">Scrapbook</div></div>
+  </div>
+
+  <section class="apps">
+    {{#each apps}}
+      <article class="app {{#if live}}app--live{{else}}app--pending{{/if}}">
+        <div class="head">
+          <span class="num">№ {{num}} · {{slug}}</span>
+          <span class="status">{{#if live}}live{{else}}pending{{/if}}</span>
+        </div>
+        <h2 class="title">{{title}}</h2>
+        <p class="tagline">{{tagline}}</p>
+        <p class="desc">{{desc}}</p>
+        {{#if live}}
+          <a class="shot" href="https://vibes.diy/vibe/{{author}}/{{slug}}" aria-label="{{title}} screenshot"><img src="https://{{slug}}--{{author}}.prod-v2.vibesdiy.net/screenshot.jpg" alt="{{slug}}" onerror="this.onerror=null; this.src='{{@root.assetPrefix}}images/og-preview.png';"/></a>
+          <div class="ctas">
+            <a class="btn" href="https://vibes.diy/vibe/{{author}}/{{slug}}">Join</a>
+            <a class="btn" href="https://vibes.diy/remix/{{author}}/{{slug}}?skipChat=true">Clone</a>
+            <a class="btn" href="https://vibes.diy/remix/{{author}}/{{slug}}">Remix</a>
+          </div>
+          <a class="prompt-link" href="https://vibes.diy/chat/prompt?prompt64={{prompt64 desc}}">↳ start fresh from this prompt</a>
+        {{else}}
+          <div class="shot"><div class="shot-placeholder">drying on the line</div></div>
+          <div class="ctas">
+            <a class="btn" href="https://vibes.diy/chat/prompt?prompt64={{prompt64 desc}}">Start From Prompt</a>
+          </div>
+        {{/if}}
+      </article>
+    {{/each}}
+  </section>
+
+  <section class="epilogue">
+    <p><strong>Read me.</strong> Ten little party tricks. Drop one in front of a few people in a room and watch how fast a small group can become the room.</p>
+  </section>
+</main>
+
+{{> newsletter}}
+<footer class="term-footer">
+  Vibes.diy · <a href="https://links.vibes.diy/homepage">homepage</a> · <a href="/expressions/">expressions</a>
+</footer>

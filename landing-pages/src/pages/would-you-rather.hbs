@@ -1,0 +1,458 @@
+{{!--
+{
+  "layout": "webring",
+  "title": "Would You Rather | Vibes DIY",
+  "description": "Six Would You Rather generators for parties, deep thinkers, foodies, superhero fans, mundane micro-decisions, and family game night.",
+  "ogUrl": "https://good.vibes.diy/would-you-rather/",
+  "source": "would-you-rather",
+  "ogImage": "https://good.vibes.diy/images/screenshots/would-you-rather.jpg",
+  "apps": [
+    {
+      "num": "01",
+      "slug": "wyr-party-mode",
+      "author": "og",
+      "live": true,
+      "spotlight": true,
+      "title": "Party Mode",
+      "tagline": "Two choices. Everyone votes. Someone's lying.",
+      "desc": "Would You Rather party game. Two wild options flash on screen, everyone in the room votes in real time, the split reveals who's boring and who's feral. Hot takes, social chaos, instant replay."
+    },
+    {
+      "num": "02",
+      "slug": "wyr-deep-cuts",
+      "author": "og",
+      "live": true,
+      "title": "Deep Cuts",
+      "tagline": "Big questions. Small comfort.",
+      "desc": "Philosophical Would You Rather. Time vs money, fame vs anonymity, knowing the day you die vs not knowing. Moody and contemplative. See how the world split on each question."
+    },
+    {
+      "num": "03",
+      "slug": "wyr-food-battle",
+      "author": "og",
+      "live": true,
+      "title": "Food Battle",
+      "tagline": "Pizza vs tacos. The stakes are personal.",
+      "desc": "Food-only Would You Rather face-offs. Pizza vs tacos, sushi vs burgers, hot coffee vs iced. Real-time vote percentage after you answer. Crown the most divisive food."
+    },
+    {
+      "num": "04",
+      "slug": "wyr-superpower-showdown",
+      "author": "og",
+      "live": true,
+      "title": "Superpower Showdown",
+      "tagline": "Fly or invisible. Choose wisely.",
+      "desc": "Superpower Would You Rather. Fly vs invisible, read minds vs see the future, super strength vs teleportation. Reveal what your picks say about your personality."
+    },
+    {
+      "num": "05",
+      "slug": "wyr-tiny-decisions",
+      "author": "og",
+      "live": true,
+      "title": "Tiny Decisions",
+      "tagline": "Absurd micro-stakes. Deadpan delivery.",
+      "desc": "Mundane everyday Would You Rather. Always 10 minutes late vs always 10 minutes early. Never use punctuation vs never use capitals. Absurd micro-stakes decisions with deadpan presentation."
+    },
+    {
+      "num": "06",
+      "slug": "wyr-family-silly",
+      "author": "og",
+      "live": true,
+      "title": "Family Silly",
+      "tagline": "Safe for grandma. Hilarious to grandkids.",
+      "desc": "Kid-safe Would You Rather for family game night. Silly animal and food scenarios — be a talking dog vs a flying cat, eat only pizza vs only ice cream forever. Big choices, zero consequences."
+    }
+  ]
+}
+--}}
+
+<style>
+  @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=optional");
+
+  :root {
+    --bg: #0b0b0b;
+    --hot: #ff2d78;
+    --volt: #dfff00;
+    --white: #f5f5f0;
+    --dim: rgba(245,245,240,0.08);
+    --border: rgba(245,245,240,0.2);
+  }
+
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html, body {
+    background: var(--bg);
+    color: var(--white);
+    font-family: "Inter", system-ui, sans-serif;
+    line-height: 1.55;
+    min-height: 100vh;
+  }
+  a { color: inherit; text-decoration: none; }
+
+  .layout { max-width: 1100px; margin: 0 auto; padding: 0 1.25rem; border-left: 1px solid var(--border); border-right: 1px solid var(--border); }
+
+  /* ── topbar ─────────────────────────────────────── */
+  .topbar {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 1rem 1.25rem;
+    border-bottom: 1px solid var(--border);
+    margin: 0 -1.25rem;
+  }
+  .topbar .brand { font-weight: 900; letter-spacing: -0.02em; font-size: 1.1rem; }
+  .topbar .brand span { color: var(--hot); }
+  .topbar .meta {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.6rem; letter-spacing: 0.2em; text-transform: uppercase;
+    color: rgba(245,245,240,0.45);
+  }
+
+  /* ── hero ───────────────────────────────────────── */
+  .hero {
+    padding: 5rem 0 4rem;
+    border-bottom: 1px solid var(--border);
+  }
+  .hero .eyebrow {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.6rem; letter-spacing: 0.3em; text-transform: uppercase;
+    color: var(--hot);
+    margin-bottom: 1.5rem;
+  }
+  .hero h1 {
+    font-size: clamp(4rem, 14vw, 10rem);
+    font-weight: 900;
+    line-height: 0.88;
+    letter-spacing: -0.04em;
+    margin-bottom: 0.15em;
+  }
+  .hero h1 .or {
+    display: block;
+    color: var(--hot);
+  }
+  .hero .sub {
+    margin-top: 2rem;
+    font-size: 1.2rem;
+    color: rgba(245,245,240,0.6);
+    max-width: 580px;
+    line-height: 1.5;
+  }
+  .hero .sub b { color: var(--white); }
+
+  /* ── spotlight ──────────────────────────────────── */
+  .spotlight {
+    padding: 3.5rem 0;
+    border-bottom: 1px solid var(--border);
+    display: grid;
+    grid-template-columns: 1fr 400px;
+    gap: 3rem;
+    align-items: start;
+  }
+  @media (max-width: 800px) { .spotlight { grid-template-columns: 1fr; gap: 2rem; } }
+
+  .spotlight .left .kicker {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.55rem; letter-spacing: 0.3em; text-transform: uppercase;
+    color: var(--hot);
+    margin-bottom: 1rem;
+  }
+  .spotlight .left .kicker::before { content: "// "; }
+  .spotlight .left h2 {
+    font-size: clamp(2.2rem, 5vw, 3.8rem);
+    font-weight: 900;
+    letter-spacing: -0.03em;
+    line-height: 1;
+    margin-bottom: 1rem;
+  }
+  .spotlight .left .tagline {
+    display: inline-block;
+    background: var(--hot);
+    color: var(--bg);
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    padding: 5px 12px;
+    margin-bottom: 1.25rem;
+  }
+  .spotlight .left .desc {
+    font-size: 1.05rem;
+    line-height: 1.6;
+    color: rgba(245,245,240,0.75);
+    margin-bottom: 2rem;
+    max-width: 520px;
+  }
+  .spotlight .left .cta-join {
+    display: inline-block;
+    background: var(--hot);
+    color: var(--bg);
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    padding: 1rem 2.5rem;
+    border: 2px solid var(--hot);
+    transition: background 0.15s, color 0.15s;
+  }
+  .spotlight .left .cta-join:hover { background: transparent; color: var(--hot); }
+
+  .spotlight .right { display: flex; flex-direction: column; gap: 0.75rem; }
+  .spotlight .shot {
+    display: block;
+    aspect-ratio: 16/9;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    background: var(--dim);
+    position: relative;
+  }
+  .spotlight .shot::after {
+    content: "";
+    position: absolute; inset: 0;
+    background: linear-gradient(135deg, rgba(255,45,120,0.15), transparent 60%);
+    pointer-events: none;
+  }
+  .spotlight .shot img { width: 100%; height: 100%; object-fit: cover; }
+  .spotlight .shot-placeholder {
+    width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.65rem; letter-spacing: 0.2em; text-transform: uppercase;
+    color: rgba(245,245,240,0.3);
+  }
+  .spotlight .mini-ctas {
+    display: grid; grid-template-columns: repeat(2, 1fr); gap: 0;
+    border: 1px solid var(--border);
+  }
+  .mini-btn {
+    text-align: center;
+    padding: 0.55rem;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.6rem; letter-spacing: 0.18em; text-transform: uppercase;
+    color: rgba(245,245,240,0.6);
+    border-right: 1px solid var(--border);
+    transition: color 0.12s, background 0.12s;
+  }
+  .mini-btn:last-child { border-right: none; }
+  .mini-btn:hover { color: var(--white); background: var(--dim); }
+
+  /* ── divider ────────────────────────────────────── */
+  .section-head {
+    padding: 1.5rem 0 1rem;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.55rem; letter-spacing: 0.3em; text-transform: uppercase;
+    color: rgba(245,245,240,0.4);
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 0;
+  }
+  .section-head::before { content: "// "; }
+
+  /* ── gallery ────────────────────────────────────── */
+  .gallery {
+    border-bottom: 1px solid var(--border);
+  }
+  .app {
+    display: grid;
+    grid-template-columns: 64px 1fr 300px;
+    gap: 2rem;
+    align-items: start;
+    padding: 1.75rem 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .app:last-child { border-bottom: none; }
+  @media (max-width: 750px) { .app { grid-template-columns: 1fr; gap: 1rem; } }
+
+  .app .num {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 2.5rem; font-weight: 700;
+    color: rgba(245,245,240,0.18);
+    line-height: 1;
+  }
+  .app .live-dot {
+    display: inline-block;
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--hot);
+    margin-top: 0.75rem;
+  }
+  .app .pending-dot {
+    display: inline-block;
+    width: 6px; height: 6px; border-radius: 50%;
+    background: rgba(245,245,240,0.2);
+    margin-top: 0.75rem;
+  }
+  .app .body h3 {
+    font-size: 1.6rem; font-weight: 900;
+    letter-spacing: -0.02em; line-height: 1.05;
+    margin-bottom: 0.4rem;
+  }
+  .app .body .tagline {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.75rem;
+    color: var(--hot);
+    margin-bottom: 0.75rem;
+  }
+  .app .body .desc {
+    font-size: 0.95rem;
+    line-height: 1.55;
+    color: rgba(245,245,240,0.6);
+  }
+  .app .right { display: flex; flex-direction: column; gap: 0.5rem; }
+  .app .shot {
+    display: block;
+    aspect-ratio: 16/9;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    background: var(--dim);
+  }
+  .app .shot img { width: 100%; height: 100%; object-fit: cover; }
+  .app .shot-placeholder {
+    width: 100%; height: 100%; display: flex; align-items: center; justify-content: center;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.6rem; letter-spacing: 0.18em; text-transform: uppercase;
+    color: rgba(245,245,240,0.2);
+  }
+  .app .ctas {
+    display: grid; grid-template-columns: repeat(3, 1fr);
+    border: 1px solid var(--border);
+  }
+  .app .ctas--single { grid-template-columns: 1fr; }
+  .btn {
+    text-align: center;
+    padding: 0.5rem;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.55rem; letter-spacing: 0.15em; text-transform: uppercase;
+    color: rgba(245,245,240,0.5);
+    border-right: 1px solid var(--border);
+    transition: color 0.12s, background 0.12s;
+  }
+  .btn:last-child { border-right: none; }
+  .btn:hover { color: var(--white); background: var(--dim); }
+  .prompt-link {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.6rem;
+    color: rgba(245,245,240,0.3);
+    text-decoration: underline;
+  }
+  .prompt-link:hover { color: var(--hot); }
+
+  /* ── closing ────────────────────────────────────── */
+  .closing {
+    padding: 3rem 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .closing p {
+    font-size: 1.1rem;
+    max-width: 680px;
+    line-height: 1.6;
+    color: rgba(245,245,240,0.65);
+  }
+  .closing p .hl { color: var(--white); }
+  .closing p .hot { color: var(--hot); }
+
+  /* ── footer ─────────────────────────────────────── */
+  footer {
+    padding: 1rem 0;
+    display: flex; justify-content: space-between;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.55rem; letter-spacing: 0.2em; text-transform: uppercase;
+    color: rgba(245,245,240,0.25);
+  }
+  footer a { color: inherit; }
+  footer a:hover { color: var(--hot); }
+</style>
+
+<div class="layout">
+  <header class="topbar">
+    <a class="brand" href="https://links.vibes.diy/homepage">VIBES<span>.</span>DIY</a>
+    <span class="meta">six would you rather generators</span>
+  </header>
+
+  <section class="hero">
+    <div class="eyebrow">Vibes DIY · Interactive Collection</div>
+    <h1>
+      WOULD<br/>
+      YOU<br/>
+      <span class="or">RATHER?</span>
+    </h1>
+    <p class="sub">
+      <b>Six games built on one question.</b> For parties where someone always picks the wrong one, for road trips that need a detour, for families who argue about everything, for the 2am crowd that needs a verdict.
+    </p>
+  </section>
+
+  {{#with (lookup apps 0)}}
+  <section class="spotlight">
+    <div class="left">
+      <div class="kicker">Spotlight · {{num}}</div>
+      <h2>{{title}}</h2>
+      <span class="tagline">{{tagline}}</span>
+      <p class="desc">{{desc}}</p>
+      {{#if live}}
+        <a class="cta-join" href="https://vibes.diy/vibe/{{author}}/{{slug}}">Play Now →</a>
+      {{else}}
+        <a class="cta-join" href="https://vibes.diy/chat/prompt?prompt64={{prompt64 desc}}">Start From Prompt →</a>
+      {{/if}}
+    </div>
+    <div class="right">
+      {{#if live}}
+        <a class="shot" href="https://vibes.diy/vibe/{{author}}/{{slug}}">
+          <img src="https://{{slug}}--{{author}}.prod-v2.vibesdiy.net/screenshot.jpg" alt="{{title}}" onerror="this.onerror=null; this.src='{{@root.assetPrefix}}images/og-preview.png';"/>
+        </a>
+        <div class="mini-ctas">
+          <a class="mini-btn" href="https://vibes.diy/remix/{{author}}/{{slug}}?skipChat=true">Clone</a>
+          <a class="mini-btn" href="https://vibes.diy/remix/{{author}}/{{slug}}">Remix</a>
+        </div>
+      {{else}}
+        <div class="shot"><div class="shot-placeholder">generating…</div></div>
+      {{/if}}
+    </div>
+  </section>
+  {{/with}}
+
+  <div class="section-head">The other five</div>
+
+  <section class="gallery">
+    {{#each apps}}
+      {{#unless @first}}
+        <article class="app">
+          <div>
+            <div class="num">{{num}}</div>
+            {{#if live}}<span class="live-dot"></span>{{else}}<span class="pending-dot"></span>{{/if}}
+          </div>
+          <div class="body">
+            <h3>{{title}}</h3>
+            <div class="tagline">{{tagline}}</div>
+            <p class="desc">{{desc}}</p>
+          </div>
+          <div class="right">
+            {{#if live}}
+              <a class="shot" href="https://vibes.diy/vibe/{{author}}/{{slug}}">
+                <img src="https://{{slug}}--{{author}}.prod-v2.vibesdiy.net/screenshot.jpg" alt="{{slug}}" onerror="this.onerror=null; this.src='{{@root.assetPrefix}}images/og-preview.png';"/>
+              </a>
+              <div class="ctas">
+                <a class="btn" href="https://vibes.diy/vibe/{{author}}/{{slug}}">Join</a>
+                <a class="btn" href="https://vibes.diy/remix/{{author}}/{{slug}}?skipChat=true">Clone</a>
+                <a class="btn" href="https://vibes.diy/remix/{{author}}/{{slug}}">Remix</a>
+              </div>
+              <a class="prompt-link" href="https://vibes.diy/chat/prompt?prompt64={{prompt64 desc}}">// start fresh from this prompt</a>
+              <span class="prompt-link" style="opacity:0.4; text-decoration:none; font-size:0.58rem;">The prompt that made this. Write your group&rsquo;s questions instead.</span>
+            {{else}}
+              <div class="shot"><div class="shot-placeholder">generating…</div></div>
+              <div class="ctas ctas--single">
+                <a class="btn" href="https://vibes.diy/chat/prompt?prompt64={{prompt64 desc}}">Start From Prompt</a>
+              </div>
+            {{/if}}
+          </div>
+        </article>
+      {{/unless}}
+    {{/each}}
+  </section>
+
+  <div class="closing">
+    <p>
+      Every question is a <span class="hl">Rorschach test</span>. The point isn't the answer — it's the argument. These six games give you the stage for the argument. <span class="hot">Remix any one</span> to add your own impossible choices, your own group's running jokes, your own stakes.
+    </p>
+  </div>
+
+  {{> newsletter}}
+<footer>
+    <span>Vibes.diy · <a href="https://links.vibes.diy/homepage">homepage</a> · <a href="https://links.vibes.diy/discord">discord</a></span>
+    <span>// would · you · rather</span>
+  </footer>
+</div>

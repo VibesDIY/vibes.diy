@@ -1,0 +1,101 @@
+{
+  "slug": "research-methods-regression",
+  "page_url": "https://good.vibes.diy/edu/research-methods-regression/",
+  "label": "Research Methods and Regression Modeling",
+  "department": "Education Research",
+  "vocabulary": [
+    "regression analysis",
+    "multiple regression",
+    "multilevel models",
+    "hierarchical linear modeling",
+    "mixed methods research design",
+    "quasi-experimental research design",
+    "fixed effects estimators",
+    "panel data methods",
+    "qualitative coding schemes",
+    "interaction terms",
+    "model diagnostics",
+    "random effects models"
+  ],
+  "sources": [
+    {
+      "institution": "Stanford",
+      "title": "EDUC 255C: Applied Quasi-Experimental Research in Education",
+      "url": "https://ed.stanford.edu/saen/educ-255c"
+    },
+    {
+      "institution": "UW Madison",
+      "title": "ED PSYCH 560: Foundations in Quantitative and Qualitative Research Methods",
+      "url": "https://learninganalytics.education.wisc.edu/qualitative-and-quantitative-research-methods-course/"
+    },
+    {
+      "institution": "UNC Chapel Hill",
+      "title": "EDUC 935: Multilevel Modeling",
+      "url": "https://www.coursicle.com/unc/courses/EDUC/935/"
+    },
+    {
+      "institution": "University of Washington",
+      "title": "BIOST 518: Applied Biostatistics II",
+      "url": "https://www.biostat.washington.edu/academics/courses/BIOST/518"
+    },
+    {
+      "institution": "University of Washington",
+      "title": "EDPSY 591: Methods of Educational Research",
+      "url": "https://education.uw.edu/node/25227"
+    },
+    {
+      "institution": "University of Washington",
+      "title": "URBDP 520: Quantitative Methods in Urban Design and Planning",
+      "url": "https://urbdp.be.uw.edu/wp-content/uploads/sites/10/2025/05/520-syll-ver1.pdf"
+    }
+  ],
+  "app_prompts": [
+    "A first-year doctoral student in education research keeps confusing themselves when reading papers that use regression analysis — they cannot quickly tell whether the paper is doing simple multiple regression, multilevel models, hierarchical linear modeling, fixed effects estimators in panel data methods, or a mixed methods research design with a regression component. They want a casual study tool to build fluency by working through real published abstracts and methods sections. Build a playful study companion app where the student pastes in an abstract or a paragraph from a methods section, and the app walks them through identifying the study's research question, the unit of analysis, the structure of the data (cross-sectional, longitudinal panel, nested students within classrooms within schools), and from those, the appropriate model family. The app should explain why a study with students nested in classrooms requires multilevel models or hierarchical linear modeling rather than treating observations as independent, why a study tracking the same individuals over time often uses fixed effects estimators within panel data methods, when random effects models are preferred and when they are not, and what role interaction terms play when the paper claims that an effect differs across subgroups. The student should be able to log papers they have worked through and tag each with the method, the substantive education research question, and any model diagnostics the authors reported (or skipped). Over weeks the app should track which method families the student is confidently spotting and which still trip them up, serving more practice in weak areas. The point is not to make the student run a regression but to develop the methodological literacy to read the literature critically.",
+    "A research methods peer group at a college of education brings together six doctoral candidates spread across different substantive interests but united by methodological needs. They want a shared workspace to practice their quantitative chops together, swap notes on tricky regression analysis decisions, and avoid each of them solving the same methodological puzzle in isolation. Build a community methods workspace where each member can post a methodological question from their own dissertation work — 'My data has students nested in schools nested in districts, and the district-level variation looks small; should I drop the district level from my hierarchical linear modeling specification?' — and other members can weigh in with their reasoning, references to relevant texts, and analogues from their own work. The workspace should support sharing structured project descriptions: the research question, the data structure, the proposed quasi-experimental research design or observational design, the candidate model specifications, the planned model diagnostics, and the interpretation strategy. For members doing mixed methods research design, the workspace should accommodate the qualitative coding schemes side of the work alongside the quantitative regression analysis, treating them as integrated. The group can hold scheduled methodological work-throughs where one member presents a tricky decision — choosing between fixed effects estimators and random effects models, deciding whether to include an interaction term that is theoretically motivated but statistically marginal, handling panel data with attrition — and the group discusses live. A library of resolved questions becomes the group's reference for future cohorts. The workspace also tracks reading group selections, with each book or paper getting a discussion thread tied to the methodological decisions the readings clarify.",
+    "An education researcher on faculty at a school of education runs a small lab with two doctoral students and a postdoc, conducting a steady stream of analyses on a long-running district-partner data system. They need an operational workflow app for the recurring research tasks the lab handles: new research questions arriving from district partners, analyses requested for conferences and journals, manuscript revisions in response to reviewers. The current setup is a tangle of shared folders and the principal investigator keeps having to re-explain the same methodological conventions to each new student. Build an operational workflow app where each analysis project has a structured project page. The principal investigator (or a student under their supervision) defines the research question, the unit of analysis, the data sources from the district partnership, and the analytic plan. For most projects the plan involves multiple regression, multilevel models for nested data (students in classrooms, classrooms in schools, schools in years), panel data methods with fixed effects estimators for the longitudinal questions, and occasionally a quasi-experimental research design when a natural policy variation can be exploited. The app should support the lab's standardized workflow: data extraction request from the district data system, variable construction documented with the qualitative coding schemes the lab has adopted, exploratory analysis with model diagnostics, primary specification, robustness specifications including alternative interaction terms and random effects models, sensitivity analysis on key assumptions, and a structured results section. Each project lives alongside the lab's institutional conventions document — what the lab considers appropriate model diagnostics, when to prefer multilevel models over fixed effects, how to handle missing data — so doctoral students can learn the conventions by working with them rather than being told. Manuscript drafts attach to projects, with reviewer comments and the lab's responses tracked. The workflow surfaces what the lab is working on at any time, which projects are blocked, and which are ready for the next milestone.",
+    "A senior education researcher is leading a four-year longitudinal study of a complex educational intervention rolled out across about 80 schools in 12 districts, with student-level outcomes measured annually and teacher-level survey data collected at intervals. The analytic complexity demands a serious design and analysis companion app. The study has the structure of students nested in classrooms in schools in districts, with the intervention assigned at the school level over staggered timing — a setting that requires careful integration of multilevel models, panel data methods, and quasi-experimental research design. Build a professional analytic companion app where the researcher articulates the formal analytic plan and pre-registers it before unblinding analyses. The app walks the researcher through specifying the levels of the data hierarchy and which variables sit at which level, choosing between hierarchical linear modeling specifications with random effects models at school and district levels versus fixed effects estimators for school, defending the choice on substantive and statistical grounds. The researcher specifies the primary outcome, the secondary outcomes, and the planned heterogeneity analysis using interaction terms — does the intervention work differently for students who entered with lower baseline achievement, in schools with higher teacher turnover, in districts with stronger implementation support? Mixed methods research design integration is supported: the researcher describes how the qualitative coding schemes from teacher and principal interviews will be analyzed alongside the regression analysis, and how findings will be triangulated. Model diagnostics are pre-specified — what residual patterns would trigger a re-specification, what sensitivity analyses will probe the parallel-trends assumption underlying the quasi-experimental difference-in-differences comparison. The app produces a complete pre-analysis plan suitable for posting to a public registry, with the full multilevel models specification, the planned interaction terms, the robustness checks, and the threshold for declaring the intervention's effect statistically and practically meaningful. Every analytic decision is logged so the analysis is defensible to funders, journal reviewers, and the participating districts.",
+    "A national education research clearinghouse evaluates submitted impact studies for inclusion in its evidence base, which informs federal program decisions, state adoption choices, and district purchasing decisions affecting tens of millions of students. The review staff need a mission-critical evidence review app that applies consistent methodological standards across hundreds of submissions per year. Build a high-stakes evidence review app where each submitted study opens a structured case file. The reviewer logs the study's research question, target population, intervention description, comparison condition, outcome measures, and the design (randomized trial, quasi-experimental research design with matching, regression discontinuity, interrupted time series, or other) along with the analytic approach (multiple regression, multilevel models, hierarchical linear modeling, panel data methods with fixed effects estimators, mixed methods research design with both quantitative and qualitative coding schemes components). The app walks the reviewer through the clearinghouse's structured methodological rubric: was the design adequate to support the causal claim, was the analysis appropriately matched to the data structure (does the multilevel models specification respect the nesting, do the fixed effects estimators capture the unobserved confounders the design relies on), are the planned interaction terms theoretically grounded or fishing for subgroup effects, are model diagnostics adequate, are random effects models versus fixed effects estimators justified rather than defaulted to? The reviewer evaluates the strength of evidence each finding supports, the populations to which it generalizes, and any sample restrictions that bound the conclusions. For mixed methods studies the qualitative side is reviewed for trustworthiness and integration with the quantitative findings. Every review is independently conducted by two reviewers and reconciled, with disagreements adjudicated by a senior methodologist. The app maintains the clearinghouse's complete evidence database with the methodological metadata, supporting both the public-facing evidence ratings and the internal research that informs the clearinghouse's standards. Every review is preserved because the clearinghouse's ratings affect federal funding eligibility and are routinely challenged by both program developers and competing researchers."
+  ],
+  "apps": [
+    {
+      "num": "01",
+      "slug": "regression-literacy",
+      "author": "edu",
+      "live": true,
+      "title": "Regression Literacy",
+      "tagline": "Paste a methods section. Identify the model family. Spot the nesting structure."
+    },
+    {
+      "num": "02",
+      "slug": "methods-peer-group",
+      "author": "edu",
+      "live": true,
+      "title": "Methods Peer Group",
+      "tagline": "Post a methodological question from your dissertation. Get the group's reasoning."
+    },
+    {
+      "num": "03",
+      "slug": "research-lab-workflow",
+      "author": "edu",
+      "live": true,
+      "title": "Lab Workflow",
+      "tagline": "Research question to analytic plan to manuscript — one workflow for the whole lab."
+    },
+    {
+      "num": "04",
+      "slug": "longitudinal-study-plan",
+      "author": "edu",
+      "live": true,
+      "title": "Study Plan Builder",
+      "tagline": "Nested data. Staggered rollout. Pre-registered before unblinding."
+    },
+    {
+      "num": "05",
+      "slug": "evidence-clearinghouse",
+      "author": "edu",
+      "live": true,
+      "title": "Evidence Clearinghouse",
+      "tagline": "Design adequacy. Analytic match. Subgroup fishing. Two reviewers. Full audit trail."
+    }
+  ]
+}

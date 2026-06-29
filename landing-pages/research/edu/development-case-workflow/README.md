@@ -1,0 +1,22 @@
+# development-case-workflow
+
+> A senior planner at a city planning department manages the recurring intake of development applications — rezonings, conditional use permits, subdivision plats, variances — and shepherds each through the procedural workflow from intake to planning commission to council. They need an operational workflow app for the daily and weekly tasks of the role because the current case management system makes it hard to track where a given application is in the process and which staff actions are pending. Build an operational workflow app where each application has a case file with the parcel, the applicant, the requested action, and the relevant existing zoning and comprehensive plans designations. The app should walk staff through the standard review steps: completeness check, distribution to affected departments (transportation planning, utilities, environmental review), neighborhood notification, comment period management, staff report drafting, planning commission hearing scheduling, council scheduling. For each step the workflow documents who is responsible, what is required, and what the application's status is. Environmental impact assessment cases follow a separate but related workflow with the additional documentation steps that the state environmental policy act requires. Land classification plans amendments and comprehensive plan amendments follow yet another workflow because they involve different procedural steps. The app should support the recurring administrative work of community engagement — sending notices, posting hearing schedules, accepting and logging written comments — and produce the public-facing case page that residents can search. The staff report drafting workflow has templates aligned with each application type, ensuring consistency across planners and across years. The app maintains the planning department's institutional memory: how similar cases have been decided in the past, what staff recommendations were on past comparable rezonings, and what the planning commission's discussion has tended to focus on.
+
+Live at [https://vibes.diy/vibe/edu/development-case-workflow](https://vibes.diy/vibe/edu/development-case-workflow)
+
+Single-file React app built with [vibes.diy](https://vibes.diy). Visit the live url to manage access.
+
+## Run it
+
+```sh
+npx vibes-diy push     # uploads App.jsx, prints a live HTTPS URL
+```
+
+Edit [App.jsx](App.jsx) and push again to iterate.
+
+## Commands
+
+- `npx vibes-diy push` — deploy the current directory
+- `npx vibes-diy push --instant-join` — deploy with auto-accept sharing
+- `npx vibes-diy generate "prompt"` — generate a new app from a prompt
+- `npx vibes-diy help` — full command list

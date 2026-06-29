@@ -1,0 +1,184 @@
+{{!--
+{
+  "layout": "webring",
+  "title": "Self-Service Briefing Books // Expressions // Vibes DIY",
+  "description": "Exec briefings per principal, board prep per chairman, post-mortems per service. Role-shaped tools for the practitioner, not the average user.",
+  "ogUrl": "https://good.vibes.diy/expressions/briefing-books",
+  "source": "expressions-briefing-books",
+  "apps": [
+    {"num":"01","slug":"recruiter-pipeline","author":"jchris","live":true,"title":"Recruiter Pipeline Tracker","tagline":"Per recruiter. Flat ATS doesn't fit.","desc":"Custom stages per recruiter; candidates with role, source, last-touch. Stale auto-flag. Weekly metrics: in/moved/lost."},
+    {"num":"02","slug":"account-plan-template","author":"jchris","live":true,"title":"Sales Rep Account Plan","tagline":"Top 10 accounts, owned by the rep — not Salesforce.","desc":"Per account: contact map, key dates, threats, opportunities, recent touches. Quarterly export as a one-page briefing."},
+    {"num":"03","slug":"csm-health-scorecard","author":"jchris","live":true,"title":"CSM Customer Health Scorecard","tagline":"Bespoke per CSM. Weights are the rep's.","desc":"Tunable signals (usage, exec touch, NPS, tickets, renewal window) → 0-100 score. Rank by health. Weekly mover digest."},
+    {"num":"04","slug":"campaign-retro","author":"jchris","live":true,"title":"Marketing Campaign Retro","tagline":"Owned per campaign. Dies in 90 days.","desc":"Goal vs actual; what worked / what didn't / lessons. Multiple contributors. Auto-archives at 90d. Export a one-pager."},
+    {"num":"05","slug":"finance-close","author":"jchris","live":true,"title":"Finance Close Checklist","tagline":"Line items per ledger; signoff trail.","desc":"Tasks per ledger (AR/AP/GL/PAYROLL/REVENUE) with owners + due-dates. Blocked surfaces. Controller marks ledger CLOSED."},
+    {"num":"06","slug":"nda-triage","author":"jchris","live":true,"title":"Legal NDA Triage","tagline":"Bucketed by risk. Replaces folder-based queue.","desc":"Incoming NDAs with counterparty, type, risk auto-suggested. Triage to attorney or self-handle. SLA tracker."},
+    {"num":"07","slug":"rfp-comparison","author":"jchris","live":true,"title":"Procurement RFP Comparison","tagline":"Buyer-specific weighting matrix.","desc":"Define criteria + weights summing to 100%. Each vendor scored 1-5 per criterion. Live weighted total. Export the matrix."},
+    {"num":"08","slug":"exec-briefing-book","author":"jchris","live":true,"title":"Exec Briefing Book","tagline":"One EA, recurring content cadence.","desc":"Weekly per-principal briefing: meetings, travel, decisions, follow-ups, news. Numbered exhibits. Read-only exec link."},
+    {"num":"09","slug":"board-prep-packet","author":"jchris","live":true,"title":"Board Prep Packet","tagline":"Chair-specific narrative. Materials cued.","desc":"Per-meeting agenda items with materials, talking points, decisions sought. Chair gets a sequential MARK READ workflow."},
+    {"num":"10","slug":"post-mortem-template","author":"jchris","live":true,"title":"Service Post-Mortem Template","tagline":"SRE / eng-owned. Not generic.","desc":"Per-incident: summary, timeline, root-cause, action items, customer impact, severity. Blameless narrative. Numbered exhibit."}
+  ]
+}
+--}}
+
+<style>
+  @import url("https://fonts.googleapis.com/css2?family=Archivo+Black&family=Roboto+Mono:wght@400;500;700&display=optional");
+
+  :root {
+    --bg: oklch(0.16 0 0);
+    --card: oklch(0 0 0);
+    --fg: oklch(1 0 0);
+    --border: oklch(0.28 0.03 257);
+    --muted: oklch(0.72 0.02 260);
+  }
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body {
+    font-family: "Roboto Mono", monospace;
+    background: var(--bg);
+    color: var(--fg);
+    line-height: 1.55;
+    min-height: 100vh;
+    font-size: 15px;
+  }
+  a { color: var(--fg); text-decoration: none; }
+  p a, li a, .crumb a { text-decoration: underline; }
+  h1, h2, h3, .display { font-family: "Archivo Black", sans-serif; }
+  body::before {
+    content: ""; position: fixed; inset: 0;
+    background: repeating-linear-gradient(0deg, rgba(255,255,255,0.015) 0, rgba(255,255,255,0.015) 1px, transparent 1px, transparent 4px);
+    pointer-events: none; z-index: 1;
+  }
+
+  .container { max-width: 1100px; margin: 0 auto; padding: 0 1.5rem; position: relative; z-index: 2; }
+
+  .topbar { padding: 1rem 1.5rem; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; background: var(--card); position: relative; z-index: 2; }
+  .topbar .brand { font-family: "Archivo Black", sans-serif; letter-spacing: -0.02em; }
+  .topbar .seal { font-size: 0.65rem; letter-spacing: 0.25em; color: var(--muted); }
+
+  .crumb { padding: 0.6rem 1.5rem; font-size: 0.65rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--muted); border-bottom: 1px solid var(--border); position: relative; z-index: 2; }
+
+  .hero {
+    padding: 5rem 0 3rem;
+    border-bottom: 1px solid var(--border);
+    background: var(--card);
+  }
+  .hero .stamp { display: inline-block; padding: 4px 12px; border: 2px solid var(--fg); font-family: "Archivo Black", sans-serif; font-size: 0.7rem; letter-spacing: 0.25em; text-transform: uppercase; transform: rotate(-2deg); margin-bottom: 1.5rem; }
+  .hero h1 { font-size: clamp(3rem, 8vw, 6rem); font-weight: 900; line-height: 0.92; letter-spacing: -0.04em; text-transform: uppercase; margin-bottom: 1rem; }
+  .hero h1 span { display: inline-block; background: var(--fg); color: var(--bg); padding: 0 0.3em; }
+  .hero p { max-width: 700px; margin-top: 1.5rem; font-size: 0.95rem; color: var(--fg); }
+  .hero .meta-row { margin-top: 2rem; display: flex; gap: 2rem; flex-wrap: wrap; font-size: 0.65rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--muted); }
+  .hero .meta-row b { color: var(--fg); font-family: "Archivo Black", sans-serif; }
+
+  .stats { display: grid; grid-template-columns: repeat(4, 1fr); border-bottom: 1px solid var(--border); }
+  @media (max-width: 700px) { .stats { grid-template-columns: repeat(2, 1fr); } }
+  .stat-cell { padding: 1.25rem 1.5rem; border-right: 1px solid var(--border); }
+  .stat-cell:last-child { border-right: none; }
+  .stat-cell .k { font-size: 0.6rem; letter-spacing: 0.25em; text-transform: uppercase; color: var(--muted); margin-bottom: 0.4rem; }
+  .stat-cell .v { font-family: "Archivo Black", sans-serif; font-size: 1.6rem; letter-spacing: -0.01em; }
+
+  .section-label { padding: 1.75rem 0 0.75rem; font-size: 0.65rem; letter-spacing: 0.3em; text-transform: uppercase; color: var(--muted); font-family: "Archivo Black", sans-serif; }
+
+  .apps { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.25rem; padding-bottom: 4rem; }
+  @media (max-width: 800px) { .apps { grid-template-columns: 1fr; } }
+
+  .app {
+    background: var(--card);
+    border: 1px solid var(--border);
+    padding: 1.5rem;
+    display: flex; flex-direction: column; gap: 0.85rem;
+  }
+  .app .head {
+    display: flex; justify-content: space-between; align-items: center;
+    padding-bottom: 0.6rem; border-bottom: 1px solid var(--border);
+  }
+  .app .num { font-family: "Archivo Black", sans-serif; font-size: 0.7rem; letter-spacing: 0.18em; }
+  .app .status { font-size: 0.6rem; letter-spacing: 0.2em; text-transform: uppercase; padding: 3px 8px; border: 1px solid var(--border); }
+  .app--live .status { background: var(--fg); color: var(--bg); border-color: var(--fg); }
+  .app .title { font-family: "Archivo Black", sans-serif; font-size: 1.4rem; line-height: 1.1; letter-spacing: -0.02em; text-transform: uppercase; }
+  .app .tagline { color: var(--muted); font-size: 0.9rem; padding: 0.3rem 0; border-top: 1px dashed var(--border); border-bottom: 1px dashed var(--border); }
+  .app .desc { font-size: 0.9rem; color: var(--fg); flex: 1; }
+  .app .shot { display: block; aspect-ratio: 16/10; overflow: hidden; border: 1px solid var(--border); background: var(--bg); }
+  .app .shot img { width: 100%; height: 100%; object-fit: cover; filter: grayscale(0.85) contrast(1.1); }
+  .app .shot-placeholder { padding: 1rem; height: 100%; display: flex; align-items: center; justify-content: center; font-family: "Archivo Black", sans-serif; font-size: 0.7rem; letter-spacing: 0.25em; text-transform: uppercase; color: var(--muted); text-align: center; }
+  .app .ctas { display: grid; grid-template-columns: repeat(3, 1fr); border: 1px solid var(--border); }
+  .app .ctas--single { grid-template-columns: 1fr; }
+  .btn { text-align: center; padding: 0.55rem 0.5rem; background: transparent; color: var(--fg); border-right: 1px solid var(--border); font-family: "Archivo Black", sans-serif; font-size: 0.65rem; letter-spacing: 0.18em; text-transform: uppercase; }
+  .btn:last-child { border-right: none; }
+  .btn:hover { background: var(--fg); color: var(--bg); }
+  .prompt-link { font-size: 0.65rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--muted); }
+
+  .epilogue { padding: 2.5rem 0; border-top: 1px solid var(--border); }
+  .epilogue h2 { font-family: "Archivo Black", sans-serif; font-size: 0.7rem; letter-spacing: 0.3em; text-transform: uppercase; color: var(--muted); margin-bottom: 1rem; }
+  .epilogue p { max-width: 720px; }
+  footer.term-footer { padding: 1.5rem; border-top: 1px solid var(--border); display: flex; justify-content: space-between; font-size: 0.65rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--muted); position: relative; z-index: 2; }
+</style>
+
+<header class="topbar">
+  <span class="brand">VIBES.DIY</span>
+  <span class="seal">DOSSIER · CONFIDENTIAL · LIMITED CIRCULATION</span>
+</header>
+<nav class="crumb">
+  <a href="/">HOME</a> &nbsp;›&nbsp; <a href="/expressions/">EXPRESSIONS</a> &nbsp;›&nbsp; SELF-SERVICE BRIEFING BOOKS
+</nav>
+
+<main class="container">
+  <section class="hero">
+    <div class="container">
+      <div class="stamp">Briefing 06/10</div>
+      <h1>Self-Service<br /><span>Briefing Books</span></h1>
+      <p>Ten role-shaped tools for the practitioner, not the average user. Standard SaaS averages across the role; each individual practitioner has their own way of working that the standard tool flattens. The opportunity is the long-tail of role-specific micro-tools that role-based SaaS will never ship.</p>
+      <div class="meta-row">
+        <span><b>SOURCE:</b> tilted-enterprise-tail #91–100</span>
+        <span><b>BUYER:</b> the practitioner</span>
+        <span><b>HORIZON:</b> recurring</span>
+      </div>
+    </div>
+  </section>
+
+  <div class="stats">
+    <div class="stat-cell"><div class="k">SOURCE</div><div class="v">TILTED</div></div>
+    <div class="stat-cell"><div class="k">EXHIBITS</div><div class="v">10</div></div>
+    <div class="stat-cell"><div class="k">PERSISTENCE</div><div class="v">FIREPROOF</div></div>
+    <div class="stat-cell"><div class="k">SKIN</div><div class="v">DOSSIER</div></div>
+  </div>
+
+  <div class="section-label">EXHIBIT INDEX</div>
+
+  <section class="apps">
+    {{#each apps}}
+      <article class="app {{#if live}}app--live{{else}}app--pending{{/if}}">
+        <div class="head">
+          <span class="num">EXHIBIT {{num}} · {{slug}}</span>
+          <span class="status">{{#if live}}LIVE{{else}}PENDING{{/if}}</span>
+        </div>
+        <h2 class="title">{{title}}</h2>
+        <p class="tagline">// {{tagline}}</p>
+        <p class="desc">{{desc}}</p>
+        {{#if live}}
+          <a class="shot" href="https://vibes.diy/vibe/{{author}}/{{slug}}" aria-label="{{title}} screenshot"><img src="https://{{slug}}--{{author}}.prod-v2.vibesdiy.net/screenshot.jpg" alt="{{slug}}" onerror="this.onerror=null; this.src='{{@root.assetPrefix}}images/og-preview.png';"/></a>
+          <div class="ctas">
+            <a class="btn" href="https://vibes.diy/vibe/{{author}}/{{slug}}">FILE</a>
+            <a class="btn" href="https://vibes.diy/remix/{{author}}/{{slug}}?skipChat=true">COPY</a>
+            <a class="btn" href="https://vibes.diy/remix/{{author}}/{{slug}}">AMEND</a>
+          </div>
+          <a class="prompt-link" href="https://vibes.diy/chat/prompt?prompt64={{prompt64 desc}}">— START FRESH FROM PROMPT</a>
+        {{else}}
+          <div class="shot"><div class="shot-placeholder">AWAITING FILING</div></div>
+          <div class="ctas ctas--single">
+            <a class="btn" href="https://vibes.diy/chat/prompt?prompt64={{prompt64 desc}}">START FROM PROMPT</a>
+          </div>
+        {{/if}}
+      </article>
+    {{/each}}
+  </section>
+
+  <section class="epilogue">
+    <h2>READ ME</h2>
+    <p>Ten role-shaped briefing books. The thing every practitioner already builds in a Sheet because the role-based SaaS averages too hard. Generated software lets the carpenter make the tool, not commission it.</p>
+  </section>
+</main>
+
+{{> newsletter}}
+<footer class="term-footer">
+  <span>VIBES.DIY · <a href="https://links.vibes.diy/homepage">HOMEPAGE</a> · <a href="/expressions/">EXPRESSIONS</a></span>
+  <span>END OF BRIEFING</span>
+</footer>

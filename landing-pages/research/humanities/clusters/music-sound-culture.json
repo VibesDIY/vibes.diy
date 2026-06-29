@@ -1,0 +1,47 @@
+{
+  "slug": "music-sound-culture",
+  "page_url": "/edu/music-sound-culture.html",
+  "label": "Music, Sound & Culture",
+  "department": "Music / Sound Studies",
+  "vocabulary": [
+    "jazz improvisation",
+    "non-western traditions",
+    "free improvisation",
+    "jazz history",
+    "critical listening",
+    "music criticism",
+    "African American music",
+    "jazz idiom",
+    "jazz styles",
+    "composition vs. performance",
+    "ensemble improvisation",
+    "music and society",
+    "algorithmic text generation",
+    "computational music",
+    "phoneme-to-grapheme models"
+  ],
+  "sources": [
+    {
+      "institution": "MIT OCW SHASS",
+      "title": "Musical Improvisation",
+      "url": "https://ocw.mit.edu/courses/music-and-theater-arts/"
+    },
+    {
+      "institution": "UT Austin",
+      "title": "MUS 307: Jazz Appreciation",
+      "url": "https://utdirect.utexas.edu/apps/student/coursedocs/nlogon/"
+    },
+    {
+      "institution": "SFPC",
+      "title": "Computational Exploration of Magical and Divinatory Language",
+      "url": "https://sfpc.study/classes"
+    }
+  ],
+  "app_prompts": [
+    "Jazz improvisation explainer: user picks a jazz standard and traces the chord changes, the modes available over each chord, and how improvisers navigate the form — bebop, modal, free.",
+    "Jazz history timeline: user picks a decade and sees the key recordings, the musicians, the venues, the social context — how jazz evolved from New Orleans through bebop, cool, free, and fusion.",
+    "Critical listening guide: user picks a jazz recording and gets a framework for hearing it — instrumentation, form, soloists, rhythm section interaction, how it fits its historical moment.",
+    "Music and society case study: user picks a musical genre and traces its social context — who made it, who consumed it, how it was received by the mainstream, what it meant to its community.",
+    "Improvisation traditions comparison: user picks two improvisation traditions (jazz vs. Indian classical, free jazz vs. gamelan) and sees how each approaches melody, rhythm, and the individual-ensemble relationship."
+  ]
+}
