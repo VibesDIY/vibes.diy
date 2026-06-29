@@ -94,16 +94,15 @@ gate that work will carry — see the preservation principle in
   declaration from all 18 non-identity packages. `@fireproof/core-runtime` now lives
   only in `vibes.diy/identity`, the seam. Split into two commits (internal/test, then
   published/browser) so the publish-risky half is independently revertible.
-- **Phase 4 — remaining, to reach zero `@fireproof/core-runtime`** (planned in
-  [`docs/superpowers/plans/2026-06-29-bucket-e-phase4-identity-core-runtime-lift.md`](../plans/2026-06-29-bucket-e-phase4-identity-core-runtime-lift.md)):
-  - **Replace the identity package's own `core-runtime` use with in-repo impls.** The
-    seam still imports `sts`, `ensureSuperThis`, `deepFreeze`, `hashObjectAsync`,
-    `hashStringAsync`/`hashStringSync` from `core-runtime` (device-id crypto, keybag,
-    CA, clerk-token). Lifting these is the crypto-adjacent finish line (gated by the
-    wire-compat harness).
-  - **Optional type-tightening (not dep-blocking):** widen `RuntimeContext` to carry
-    `logger` (the `cf-serve.ts` case) and narrow the downstream signatures
-    (`createDeviceIdGetToken`, `QueueCtx`, `sts.*`, the api impl) so the "keep" sites
-    can accept `RuntimeContext` instead of full `SuperThis`. Pure type hygiene now —
-    no longer a dep-removal blocker, since all non-identity packages already route
-    through the seam.
+- **Phase 4 — ✅ DONE** (#2844/#2852/#2854 + the T5 drop;
+  [plan](../plans/2026-06-29-bucket-e-phase4-identity-core-runtime-lift.md)): lifted the
+  identity package's own `core-runtime` use in-repo — hashing (T2), the `sts` JWK/JWT
+  crypto (T3), and the `SuperThis` cement-glue context (T4) — then froze the
+  extracted⇄fireproof cross-checks into `golden-fixtures.ts` and **dropped
+  `@fireproof/core-runtime` entirely** (T5). Zero `@fireproof/core-runtime` references
+  remain repo-wide. **Bucket E (#2468) is complete.**
+  - **Optional type-tightening (not dep-blocking, deferred):** widen `RuntimeContext` to
+    carry `logger` (the `cf-serve.ts` case) and narrow the downstream signatures
+    (`createDeviceIdGetToken`, `QueueCtx`, `sts.*`, the api impl) so the "keep" sites can
+    accept `RuntimeContext` instead of full `SuperThis`. Pure type hygiene; not required
+    for the dep removal, which is done.
