@@ -77,6 +77,33 @@ export interface UnifiedVibeCardProps {
   className?: string;
 }
 
+// Dark-mode support for the card's inline-styled surfaces. The chips and text
+// already flip via Tailwind `dark:` utilities (compiled for BOTH a `.dark`
+// ancestor AND `prefers-color-scheme: dark`), but the card surface, handle tag
+// and dividers are plain inline styles reading `var(--color-light-*)` — which no
+// `dark:` variant can reach. So in dark mode they stayed light: a white card with
+// dark chips and washed-out text. Scoping a remap of the light tokens to the dark
+// palette (under either dark trigger, matching the utilities) flips those inline
+// surfaces too, with no change to the JSX. Literal fallbacks keep it self-contained
+// when the `--color-dark-*` tokens aren't defined in the host iframe.
+const UNIFIED_VIBE_CARD_DARK_VARS = `
+  --color-light-primary: var(--color-dark-primary, #e0e0e0);
+  --color-light-secondary: var(--color-dark-secondary, #e0e0e0);
+  --color-light-decorative-00: var(--color-dark-decorative-00, #333333);
+  --color-light-decorative-01: var(--color-dark-decorative-01, #444444);
+  --color-light-decorative-02: var(--color-dark-decorative-02, #e0e0e0);
+  --color-light-background-00: var(--color-dark-background-00, #1a1a1a);
+  --color-light-background-01: var(--color-dark-background-01, #222222);
+  --color-light-background-02: var(--color-dark-background-02, #222222);`;
+
+const unifiedVibeCardDarkCss = `
+@media (prefers-color-scheme: dark) {
+  [data-unified-vibe-card] {${UNIFIED_VIBE_CARD_DARK_VARS}
+  }
+}
+.dark [data-unified-vibe-card] {${UNIFIED_VIBE_CARD_DARK_VARS}
+}`;
+
 export function UnifiedVibeCard(props: UnifiedVibeCardProps) {
   const { appTitle, appSlug, isTwinkling, open: controlledOpen, onOpenChange } = props;
   const [internalOpen, setInternalOpen] = useState(false);
@@ -127,6 +154,7 @@ export function UnifiedVibeCard(props: UnifiedVibeCardProps) {
 
   return (
     <>
+      <style>{unifiedVibeCardDarkCss}</style>
       {/* Click-away backdrop: while the card is open, a transparent full-viewport
           layer sits above the running app (which lives in an iframe, so a
           document-level mousedown listener can't see clicks landing on it) and
@@ -144,6 +172,7 @@ export function UnifiedVibeCard(props: UnifiedVibeCardProps) {
         <div
           role="dialog"
           aria-label="Vibe menu"
+          data-unified-vibe-card
           className={props.className}
           style={{
             position: "absolute",
