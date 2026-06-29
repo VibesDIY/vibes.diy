@@ -1,15 +1,19 @@
 import { exception2Result } from "@adviser/cement";
 import { FileSystemItem } from "@vibes.diy/api-types";
 // The slice-2 executor seam is server-only (it pulls react-dom/server, kept off
-// the vibe-runtime client entry by the browser-iframe guard). The api worker is
-// bundled from monorepo source, so these are reached relatively — the same way
-// the slice-2 tests deep-import render-vibes.js — not via the package root.
-import { selectExecutor, parseVibesSsrMode, type VibesSsrMode } from "../../../vibe/runtime/vibe-executor.js";
+// the vibe-runtime client entry by the browser-iframe guard). These are reached
+// through the `@vibes.diy/vibe-runtime` PACKAGE via subpath imports — a real
+// package edge, not the package root (so the client-entry guard still holds) and
+// not a `../../../vibe/runtime` relative reach into another package's source. The
+// relative form resolved in the esbuild worker bundle but broke the standalone
+// `@vibes.diy/api-svc` npm publish build (TS2307), because that build copies only
+// this package's sources, leaving the out-of-package paths dangling (#2855).
+import { selectExecutor, parseVibesSsrMode, type VibesSsrMode } from "@vibes.diy/vibe-runtime/vibe-executor.js";
 
 // Re-exported so render-vibe.ts has a single import surface for the SSR wiring.
 export { parseVibesSsrMode };
-import { type WorkerLoaderBinding } from "../../../vibe/runtime/worker-loader-executor.js";
-import { hasRelativeImports } from "../../../vibe/runtime/ssr-source-check.js";
+import { type WorkerLoaderBinding } from "@vibes.diy/vibe-runtime/worker-loader-executor.js";
+import { hasRelativeImports } from "@vibes.diy/vibe-runtime/ssr-source-check.js";
 
 /**
  * Why an SSR attempt did (`ok`) or did not produce HTML. Every non-`ok` outcome
