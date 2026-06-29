@@ -48,15 +48,16 @@ export interface BackendInvokeInput {
   readonly trigger: BackendTrigger;
 }
 
-export interface BackendInvokeResult {
-  /** Handler `Response` status (`fetch`), or `204` for `scheduled`/`onChange`, or `404` when the export is absent. */
-  readonly status: number;
-  /** Response body text. */
-  readonly body: string;
-}
-
 export interface BackendExecutor {
-  invoke(input: BackendInvokeInput): Promise<BackendInvokeResult>;
+  /**
+   * Invoke a backend handler and return the isolate's `Response` **verbatim** —
+   * status, headers, and body flow through unchanged, so an `_api` route (B3) can
+   * return exactly what a `fetch` handler produced (redirects via `Location`,
+   * cookies via `Set-Cookie`, `content-type`, …) without silently dropping any of
+   * them (per Codex review). `scheduled`/`onChange` resolve to a `204`, and an
+   * absent export resolves to a `404`.
+   */
+  invoke(input: BackendInvokeInput): Promise<Response>;
 }
 
 /**
@@ -89,6 +90,11 @@ export interface SelectBackendExecutorOptions {
    * Egress-policy / binding-schema version. Part of the isolate identity surface
    * (invariant #1): bumping it forces a new isolate id so a policy change can't be
    * served by a stale cached isolate. Stable across triggers.
+   *
+   * Opaque string in B1 (deliberately — @CharlieHelps). At B8, derive this from
+   * structured components (`egressPolicyVersion` + `bindingSchemaVersion`) in one
+   * canonical place and hash the derived string, so the simple identity input here
+   * doesn't drift from the real policy surface.
    */
   readonly policyVersion?: string;
 }
