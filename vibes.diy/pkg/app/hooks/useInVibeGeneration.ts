@@ -371,6 +371,17 @@ export function useInVibeGeneration(opts: UseInVibeGenerationOpts): InVibeGenera
       onSavedFsId?.(settledFsId);
       return;
     }
+    // Terminal connection failure (reconnect gave up): the reducer sets
+    // connection "failed" but does NOT clear inFlightStreamId, so the cleared-id
+    // fallback below would never fire and the save would wedge on "Saving…"
+    // forever (editor read-only, Retry never re-enabled). Treat it as a failure,
+    // keeping pendingSaveRef so Retry resubmits the same edit. (Charlie #2, #2869)
+    if (promptState.connection === "failed") {
+      dispatchSave({ type: "failed" });
+      savePromptIdRef.current = null;
+      sawSaveInflightRef.current = false;
+      return;
+    }
     // Note our promptId reached the reducer before reading a cleared id as done.
     if (promptState.inFlightStreamId === savePromptIdRef.current) {
       sawSaveInflightRef.current = true;
@@ -381,7 +392,7 @@ export function useInVibeGeneration(opts: UseInVibeGenerationOpts): InVibeGenera
       savePromptIdRef.current = null;
       sawSaveInflightRef.current = false;
     }
-  }, [saveState, persistedFsRef, promptState.inFlightStreamId, onSavedFsId]);
+  }, [saveState, persistedFsRef, promptState.inFlightStreamId, promptState.connection, onSavedFsId]);
 
   return {
     phase,
