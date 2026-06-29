@@ -1,6 +1,7 @@
 /**
  * Cached-read chip lane + system-owned cached-fork infra — the READ half of the
- * chip model (#2801). Browser-safe, dependency-free, pure.
+ * chip model (#2801). Browser-safe and pure (only a type-only intra-package
+ * import, which erases at runtime).
  *
  * The epic's core boundary is **cached chip = read** (navigate to an
  * already-generated vibe — no codegen, no login, nothing forked) vs **Other /
@@ -22,6 +23,11 @@
  * Design source: notes/2026-06-26-agent-in-vibe-ux-epic.md §1a/§2/§8 and
  * docs/superpowers/specs/2026-06-28-cached-fork-infra-design.md.
  */
+
+import type { ResGetAppByFsId } from "./app.js";
+
+/** The grant union `getAppByFsId` returns for a viewer on an app. */
+type AppGrant = ResGetAppByFsId["grant"];
 
 /**
  * The reserved platform/system handle that owns pre-made (cached) forks.
@@ -137,6 +143,27 @@ export function cachedForkHref(ref: CachedForkRef): string {
   return `/vibe/${ref.ownerHandle}/${ref.appSlug}`;
 }
 
+// Explicit allowlist over the FULL grant union (not a denylist), so a future
+// grant added to `getAppByFsId` can't silently default to "readable": the
+// `Record<AppGrant, …>` makes the literal fail to compile until the new grant is
+// classified, and an unrecognized runtime string falls through to `false`
+// (write lane). Readable = the viewer can really load the app; everything that
+// gates or is absent is not. (Charlie review — guard against grant drift.)
+const READABLE_CACHED_GRANT: Record<AppGrant, boolean> = {
+  "public-access": true,
+  owner: true,
+  "granted-access.editor": true,
+  "granted-access.viewer": true,
+  "granted-access.submitter": true,
+  "accepted-email-invite": true,
+  "revoked-access": false,
+  "pending-request": false,
+  "not-found": false,
+  "not-grant": false,
+  "req-login.invite": false,
+  "req-login.request": false,
+};
+
 /**
  * Whether a `getAppByFsId` grant means the cached system fork is actually
  * readable by THIS viewer — so navigating to it is a real page-view, not a gate.
@@ -146,13 +173,7 @@ export function cachedForkHref(ref: CachedForkRef): string {
  * lane.
  */
 export function isReadableCachedGrant(grant: string): boolean {
-  return (
-    grant !== "not-found" &&
-    grant !== "not-grant" &&
-    grant !== "revoked-access" &&
-    grant !== "pending-request" &&
-    !grant.startsWith("req-login")
-  );
+  return READABLE_CACHED_GRANT[grant as AppGrant] === true;
 }
 
 export type CachedReadDecision =
