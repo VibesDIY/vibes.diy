@@ -158,6 +158,26 @@ describe("shard gate (#2714)", { timeout: 30000 }, () => {
     expect(rGet.Ok().status).toBe("ok");
   });
 
+  it("allows a shared-safe op carrying a FOREIGN vibe key on a vibe shard (asset-upload-grant for _profile)", async () => {
+    // The avatar-upload regression: on a vibe page sharedApi === vibeApi, so an
+    // ALL_SHARDS grant request for `<owner>--_profile` rides THIS vibe's shard.
+    // It carries ownerHandle/appSlug inline (structurally "vibe-keyed"), but it's
+    // shard-stateless, so the identity gate must NOT reject it for not matching
+    // the connection's shardId. Set the shard to the legit app and request a
+    // grant for a different appSlug (_profile) under the same owner.
+    setShardIdentity({ kind: "vibe", shardId: vibeKey });
+
+    const rRes = await api.requestAssetUploadGrant({ ownerHandle, appSlug: "_profile", mimeType: "image/png" });
+    // Not a wrong-shard rejection — the gate let it through to the handler. (The
+    // handler may still deny on access, but never with a shard error.)
+    if (rRes.isErr()) {
+      expect(errCode(rRes.Err())).not.toBe("wrong-shard");
+      expect(errCode(rRes.Err())).not.toBe("wrong-shard-kind");
+    } else {
+      expect(rRes.Ok().type).toBe("vibes.diy.res-asset-upload-grant");
+    }
+  });
+
   it("rejects open-chat {mode:img} whose resolved app != vibe shard (post-resolution wrong-shard)", async () => {
     // img mode is allowed on the vibe shard (kind+mode gate passes), so the
     // post-resolution identity gate in open-chat is what must catch a resolved

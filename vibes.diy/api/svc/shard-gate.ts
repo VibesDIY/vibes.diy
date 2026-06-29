@@ -80,7 +80,17 @@ export function gated(reqType: string, handler: EventoHandler): EventoHandler {
       // inline (ownerHandle/appSlug), so assert it BEFORE any write/broadcast.
       // Chat ops (open-chat / prompt) resolve their canonical target only after
       // the lookup, so they run the same check post-resolution in their handler.
-      if (id.kind === "vibe") {
+      //
+      // Only vibe-SCOPED ops (those a shared shard can't serve) get the identity
+      // gate. Shared-safe ops (ALL_SHARDS: grants, D1 reads, membership) are
+      // stateless — they write no vibe-shard doc state and may legitimately
+      // address a DIFFERENT vibe key than the shard they were multiplexed onto.
+      // The canonical case: requesting an avatar-upload grant for `<handle>--_profile`
+      // over a vibe page's connection, which is pinned to that page's vibe shard
+      // (`sharedApi === vibeApi`). Gating those by identity would reject a valid
+      // cross-key grant (#2714 was too broad; the split-brain defense only needs
+      // the doc ops). `allowed` includes "shared" exactly for the ALL_SHARDS ops.
+      if (id.kind === "vibe" && !allowed.includes("shared")) {
         const keyed = vibeKeyedReq(req);
         if (keyed !== undefined) {
           const oErr = shardIdentityError(id, keyed.ownerHandle, keyed.appSlug);
