@@ -41,6 +41,12 @@ describe("buildVibeWorkerCode", () => {
     expect(main).toMatch(/fetch/);
     expect(main).toMatch(/renderVibeToString/);
   });
+
+  it("pins globalOutbound to null (no inherited edge network access)", () => {
+    // Worker Loader defaults a missing globalOutbound to inheriting the parent
+    // worker's network — untrusted vibe code must not get that by omission.
+    expect(code.globalOutbound).toBeNull();
+  });
 });
 
 describe("WorkerLoaderExecutor.render (fake binding)", () => {

@@ -47,6 +47,21 @@ describe("NodeExecutor", () => {
     expect(html).toContain("count-7");
   });
 
+  it("does not rewrite import-looking text inside a rendered string literal", async () => {
+    const exec = new NodeExecutor();
+    // The body string contains `import … from "react"`; the bare-specifier
+    // rewrite must leave it verbatim and only touch the real top import.
+    const { html } = await exec.render({
+      source: `import { useState } from "react";
+        export default function App(){ useState(0); return <code>{'import x from "react"'}</code>; }`,
+      mountParams: { usrEnv: {} },
+    });
+    // React HTML-escapes the inner quotes, but the literal text must survive and
+    // must NOT have been turned into a resolved file:// URL.
+    expect(html).toContain("import x from");
+    expect(html).not.toContain("file://");
+  });
+
   it("forwards mountParams into the validating slice-1 renderer", async () => {
     const exec = new NodeExecutor();
     await expect(
