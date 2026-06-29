@@ -28,6 +28,12 @@ prompts/pkg/system-prompt.md
 prompts/pkg/system-prompt-initial.md
 prompts/pkg/llms/
 
+# Migrated good.vibes.diy site (#2849). Mostly prompt-generated example-app
+# source (App.jsx/access.js, same style-exempt rationale as vibes/* above) plus
+# hand-tuned .hbs landing pages whose inline CSS prettier must not reflow.
+# Exempt the whole subdir for now; the SSG's own source is kept tidy by hand.
+landing-pages/
+
 # License files — canonical legal text must stay byte-exact for GitHub's
 # license detection (licensee); prettier must not reflow them.
 LICENSE.md
