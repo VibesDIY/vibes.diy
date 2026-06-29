@@ -7,9 +7,21 @@ import { type Executor, type VibeExecuteInput, type VibeExecuteResult } from "./
 // a scheme (`http:`, `file:`, `node:`, `data:`). Only bare names need resolving.
 const ALREADY_RESOLVED = /^(?:\.\.?\/|\/|[a-z][a-z0-9+.-]*:)/i;
 
-// `import` begins a declaration (not a dynamic `import(...)` call) when the next
-// char is whitespace or one of the import-clause openers `{ " ' *`.
-const IMPORT_DECL_HEAD = /^import(?=[\s{"'*])/;
+// True when an `import` *declaration* (static import/side-effect import) begins
+// at `i` — as opposed to a dynamic `import(...)` call or an identifier that
+// merely starts with "import". A declaration continues (after optional
+// whitespace) with a clause opener `{ * " '` or a binding identifier; a dynamic
+// import continues with `(`, which is excluded so `import("x")` / `import ("x")`
+// are left untouched.
+function isImportDeclAt(code: string, i: number): boolean {
+  if (code.slice(i, i + 6) !== "import") return false;
+  const n = code.length;
+  let j = i + 6;
+  if (j < n && /[A-Za-z0-9_$]/.test(code[j])) return false; // "importFoo"
+  while (j < n && /\s/.test(code[j])) j++;
+  const c = code[j];
+  return c === "{" || c === "*" || c === '"' || c === "'" || /[A-Za-z_$]/.test(c ?? "");
+}
 
 // Advance past whitespace, line/block comments, and `;` statement separators
 // between top-level statements. Used only between import declarations, never
@@ -69,7 +81,7 @@ function resolveBareSpecifiers(code: string, resolve: (spec: string) => string):
     const sepStart = i;
     i = skipSeparators(code, i);
     out += code.slice(sepStart, i); // copy whitespace/comments/`;` verbatim
-    if (i >= n || !IMPORT_DECL_HEAD.test(code.slice(i, i + 7))) {
+    if (i >= n || !isImportDeclAt(code, i)) {
       out += code.slice(i); // module body — never rewritten
       break;
     }
