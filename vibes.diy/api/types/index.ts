@@ -5,6 +5,7 @@ export * from "./vibes-diy-serv-ctx.js";
 export * from "./common.js";
 export * from "./app.js";
 export * from "./chat.js";
+export * from "./chat-chips.js";
 export * from "./settings.js";
 export * from "./invite-flow.js";
 export * from "./request-access.js";

@@ -386,6 +386,39 @@ export function isResGetChatResponse(obj: unknown): obj is ResGetChatResponse {
   return !(resGetChatResponse(obj) instanceof type.errors);
 }
 
+// Anonymous suggestion-chips read path (#2755). A dedicated projection endpoint
+// over the private chat: it returns ONLY the latest turn's `▸` suggestion chips
+// (an explicit allowlist projection, capped server-side), never the chat body.
+// `auth` is OPTIONAL — the handler runs under `optAuth` and gates on app-access
+// visibility (public-readable, or a signed-in member/owner), NOT owner-scope, so
+// a stranger landing on a public vibe sees its curated transforms. `fsId` lets
+// the caller pin chips to the code version being viewed (else newest turn wins).
+export const reqGetVibeChips = type({
+  type: "'vibes.diy.req-get-vibe-chips'",
+  "auth?": dashAuthType,
+  ownerHandle: "string",
+  appSlug: "string",
+  "fsId?": "string",
+});
+export type ReqGetVibeChips = typeof reqGetVibeChips.infer;
+export function isReqGetVibeChips(obj: unknown): obj is ReqGetVibeChips {
+  return !(reqGetVibeChips(obj) instanceof type.errors);
+}
+
+// Only the chip strings — nothing else from the chat. Empty `chips` is the
+// normal "no curated transforms / not visible to this viewer" answer and the
+// card falls back to its text-input-only form.
+export const resGetVibeChips = type({
+  type: "'vibes.diy.res-get-vibe-chips'",
+  ownerHandle: "string",
+  appSlug: "string",
+  chips: ["string", "[]"],
+});
+export type ResGetVibeChips = typeof resGetVibeChips.infer;
+export function isResGetVibeChips(obj: unknown): obj is ResGetVibeChips {
+  return !(resGetVibeChips(obj) instanceof type.errors);
+}
+
 export const evtNewFsId = type({
   type: "'vibes.diy.evt-new-fs-id'",
   ownerHandle: "string",

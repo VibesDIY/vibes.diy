@@ -233,14 +233,15 @@ export default function VibeIframeWrapper() {
 
   // The edit card's suggestion chips are the vibe's OWN latest suggestions — the
   // trailing `▸` options the model emitted on the last codegen turn — not a
-  // hardcoded placeholder. Owner-gated read (the owner's chat is private), so
-  // non-owners get the text-input-only card. (#2704-adjacent regression fix, §1a.)
+  // hardcoded placeholder. Sourced from the `getVibeChips` projection endpoint,
+  // which returns ONLY the chip strings (never the private chat body) and gates
+  // on app-access visibility, so anonymous visitors and non-owners landing on a
+  // public vibe now see its curated transforms too — no owner gate. (#2755)
   const editChips = useLatestVibeChips({
     sharedApi: vctx.sharedApi,
     ownerHandle,
     appSlug,
     fsId,
-    enabled: isOwner,
   });
 
   const generation = useInVibeGeneration({
