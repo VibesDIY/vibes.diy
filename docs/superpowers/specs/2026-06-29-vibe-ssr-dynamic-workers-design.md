@@ -345,14 +345,28 @@ outcome ships the empty container.
   imports); a vibe with relative imports cleanly **falls back to client-only** (per above) rather than
   rendering wrong. Multi-file SSR rides the slice-2 dep-resolution carry-forward, landed when the data
   path / bundling does.
-- **Production stays `off`.** `NodeExecutor` cannot run on the Cloudflare Worker (it uses
-  `Buffer` / `import.meta.resolve` / `data:`-URL import — Node-only); the Worker path needs
-  `WorkerLoaderExecutor` (beta, gated). So in prod `VIBES_SSR=off` until Loader is GA — slice 4 lands
-  the **fully-tested wiring + marker contract dormant behind the flag**, exactly as slice 2 landed the
-  executors dormant. CI exercises the wiring with `VIBES_SSR=node` (node env) / an injected executor.
-  **To be explicit (per @CharlieHelps): `node`-mode CI validates the wiring + marker + fallback
-  contract, NOT live WorkerLoader/edge parity** — the Loader path's isolate behavior, dep-bundling,
-  and React-version pinning are proven when slice 3's bundling lands, not here.
+- **Production stays `off`, and the live route admits ONLY the isolate-backed executor.**
+  `NodeExecutor` cannot run on the Cloudflare Worker (it uses `Buffer` / `import.meta.resolve` /
+  `data:`-URL import — Node-only); the Worker path needs `WorkerLoaderExecutor` (beta, gated). So in
+  prod `VIBES_SSR=off` until Loader is GA — slice 4 lands the **fully-tested wiring + marker contract
+  dormant behind the flag**, exactly as slice 2 landed the executors dormant.
+  - **SECURITY — `node` is barred from the live render path (per Codex review).** `render-vibe.ts`
+    renders **untrusted, persisted** vibe source, and `NodeExecutor` imports it **in-process with full
+    Node privileges** (`node:fs`, `process.env`, …). So `render-vibe.ts` maps any non-`loader` mode to
+    `off`: only the isolate-backed `loader` executor may ever touch live traffic; `node` would be
+    server-side code execution / secret exposure on a node/container deploy. `node` stays a
+    **CI/test-only** mode, exercised by calling `attemptVibeSsr` **directly** with trusted test source
+    (the merged unit tests) — never through the live route. So `node`-mode CI validates the
+    orchestration + marker + fallback contract, NOT live WorkerLoader/edge parity.
+- **Caching carry-forward — vary the validator when SSR can change the body (per Codex review).** The
+  root-HTML ETag (`serv-entry-point.ts`, keyed on `fsId` + meta) is computed and may 304 **before**
+  `renderVibe` runs. While `loader` is unplumbed the live body is **SSR-invariant** (always the
+  empty-container shell), so there is no stale-body bug today. But the moment the Loader path enables
+  an SSR-varying body, the validator MUST include the SSR mode/version (or bypass early 304s) — else a
+  cache that validated the client-only shell keeps getting 304s after SSR is enabled (and stale SSR
+  after a rollback). This lands with the Loader-binding plumbing and is already covered by the Phase A
+  **"SSR cache-key contract is canonical + complete — any content-affecting change flips the key"**
+  acceptance criterion.
 - **Caching + OG/meta unchanged this cut.** The serve path already does ETag + `no-cache,
 must-revalidate` (unversioned) / `max-age=86400` (versioned), and the ETag already keys on
   `fs.meta`; that's adequate for an SSR payload derived from the same `fsId`+meta. An SSR-HTML
