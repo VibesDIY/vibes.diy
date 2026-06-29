@@ -16,6 +16,44 @@ export function pinnedIframeFsId(fsId: string | undefined, draftFsId: string | u
   return fsId ?? draftFsId;
 }
 
+// #2772 — a fresh in-place edit settling (the generation falling out of flight)
+// means the owner now has an unpublished draft server-side. The draft resolver's
+// own deps (owner/fsId/slug/publish) don't change on a follow-up edit, so the badge
+// + banner would otherwise stay stale until a reload. Detect the true→false
+// transition to know when to re-resolve.
+export function generationSettled(prevGenerating: boolean, nowGenerating: boolean): boolean {
+  return prevGenerating && !nowGenerating;
+}
+
+// The owner-latest resolve, reduced to the two UI decisions: does the badge/banner
+// show (`isDraft`), and should the iframe (re)pin to this draft fsId. A `dev` row
+// owned by the viewer is the only draft; anything else is "up to date" → no badge,
+// clear the pin. On a post-edit recheck (`isRecheck`) the iframe already shows the
+// draft (the generation hot-swapped its source in place), so we keep the badge but
+// skip the re-pin — flipping `draftFsId` would change the iframe `src` and reload the
+// runtime for identical code (a visible flash after every edit). Mount/publish runs
+// (isRecheck=false) still pin.
+export interface OwnerLatestResolve {
+  readonly error?: unknown;
+  readonly grant?: string;
+  readonly fsId?: string;
+  readonly mode?: string;
+}
+
+export interface OwnerDraftDecision {
+  readonly isDraft: boolean;
+  /** fsId to pass to `setDraftFsId` when `repin` is true. */
+  readonly pinFsId: string | undefined;
+  /** Whether to call `setDraftFsId(pinFsId)` at all (false on a post-edit recheck). */
+  readonly repin: boolean;
+}
+
+export function resolveOwnerDraft(res: OwnerLatestResolve, isRecheck: boolean): OwnerDraftDecision {
+  const isDevDraft = !res.error && res.grant === "owner" && !!res.fsId && res.mode === "dev";
+  if (!isDevDraft) return { isDraft: false, pinFsId: undefined, repin: true };
+  return { isDraft: true, pinFsId: res.fsId, repin: !isRecheck };
+}
+
 export interface PinnedIframeUrlOpts {
   readonly hostnameBase: string;
   readonly protocol: string; // "https" | "http"
