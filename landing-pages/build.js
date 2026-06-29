@@ -2,9 +2,64 @@
 const fs = require("fs");
 const path = require("path");
 const Handlebars = require("handlebars");
+const matter = require("gray-matter");
+const { marked } = require("marked");
 
 const SRC = path.join(__dirname, "src");
 const OUT = path.join(__dirname, "_site");
+
+// Render fenced code blocks with the post style's lang label + escaped body.
+// Written to tolerate both the (code, infostring) and ({ text, lang }) renderer
+// signatures across marked majors.
+function renderCodeBlock(codeOrToken, infostring) {
+  let code, lang;
+  if (codeOrToken && typeof codeOrToken === "object") {
+    code = codeOrToken.text;
+    lang = codeOrToken.lang;
+  } else {
+    code = codeOrToken;
+    lang = infostring;
+  }
+  lang = (lang || "").trim().split(/\s+/)[0];
+  const escaped = String(code == null ? "" : code)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+  const label = lang ? `<span class="lang">${lang}</span>` : "";
+  return `<pre>${label}<code>${escaped}</code></pre>\n`;
+}
+// marked passes raw HTML through by default (no sanitize), so posts can embed
+// figures, A/B grids, tables, and <iframe> vibe demos as raw HTML.
+marked.use({ renderer: { code: renderCodeBlock } });
+
+const MONTHS = [
+  "January",
+  "February",
+  "March",
+  "April",
+  "May",
+  "June",
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December",
+];
+// Format a YAML date (js-yaml gives a Date) as "June 9, 2026", read in UTC so
+// a midnight-UTC date never slips to the previous day.
+function formatDate(value) {
+  const d = new Date(value);
+  return `${MONTHS[d.getUTCMonth()]} ${d.getUTCDate()}, ${d.getUTCFullYear()}`;
+}
+function xmlEscape(s) {
+  return String(s == null ? "" : s)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&apos;");
+}
 
 // Clean output
 fs.rmSync(OUT, { recursive: true, force: true });
@@ -146,6 +201,163 @@ for (const fullPath of walk(pagesDir)) {
   if (data.description) record.description = data.description;
   if (data.source) record.source = data.source;
   sitemapStream.write(JSON.stringify(record) + "\n");
+}
+
+// ---- Blog pass: markdown posts -> HTML, generated index, Atom + RSS feeds ----
+const postsDir = path.join(SRC, "posts");
+const blogOut = path.join(OUT, "blog");
+const BLOG_TITLE = "Vibes DIY Blog";
+const BLOG_SUBTITLE =
+  "Field notes, evals, and stories from building the no-code app builder that turns a sentence into a working app.";
+const BLOG_URL = `${BASE_URL}/blog/`;
+
+if (fs.existsSync(postsDir)) {
+  fs.mkdirSync(blogOut, { recursive: true });
+
+  const posts = [];
+  for (const file of fs.readdirSync(postsDir)) {
+    if (!file.endsWith(".md")) continue;
+    const slug = path.basename(file, ".md");
+    const { data, content } = matter(
+      fs.readFileSync(path.join(postsDir, file), "utf8"),
+    );
+    if (data.draft) continue;
+    if (!data.date) {
+      console.error(`Post ${file} has no date, skipping`);
+      continue;
+    }
+    posts.push({
+      slug,
+      title: data.title || slug,
+      date: new Date(data.date),
+      summary: data.summary || "",
+      description: data.description || data.summary || "",
+      author: data.author || "Vibes DIY",
+      thumb: data.thumb || null,
+      glyph: data.glyph || "// the build log",
+      html: marked.parse(content),
+    });
+  }
+
+  // Canonical post list: newest first.
+  posts.sort((a, b) => b.date - a.date);
+
+  // Per-post pages.
+  for (const post of posts) {
+    const rendered = layouts["blog-post"]({
+      metaPixelId: META_PIXEL_ID,
+      title: `${post.title} | ${BLOG_TITLE}`,
+      heading: post.title,
+      description: post.description,
+      ogUrl: `${BASE_URL}/blog/${post.slug}`,
+      ogImage: post.thumb ? BASE_URL + post.thumb : undefined,
+      displayDate: formatDate(post.date),
+      author: post.author,
+      body: post.html,
+    });
+    const outFile = path.join(blogOut, `${post.slug}.html`);
+    fs.writeFileSync(outFile, rendered);
+    console.log(`  posts/${post.slug}.md -> blog/${post.slug}.html`);
+
+    sitemapStream.write(
+      JSON.stringify({
+        type: "page",
+        url: `${BASE_URL}/blog/${post.slug}`,
+        path: `blog/${post.slug}.html`,
+        section: "blog",
+        title: post.title,
+        description: post.summary || undefined,
+        source: `blog-${post.slug}`,
+      }) + "\n",
+    );
+  }
+
+  // Generated index.
+  const indexHtml = layouts["blog-index"]({
+    metaPixelId: META_PIXEL_ID,
+    title: `${BLOG_TITLE} | Notes from the build log`,
+    description: BLOG_SUBTITLE,
+    ogUrl: BLOG_URL,
+    posts: posts.map((p) => ({
+      slug: p.slug,
+      heading: p.title,
+      summary: p.summary,
+      thumb: p.thumb,
+      glyph: p.glyph,
+      displayDate: formatDate(p.date),
+    })),
+  });
+  fs.writeFileSync(path.join(blogOut, "index.html"), indexHtml);
+  console.log("  blog/index.html written");
+  sitemapStream.write(
+    JSON.stringify({
+      type: "page",
+      url: BLOG_URL.replace(/\/$/, ""),
+      path: "blog/index.html",
+      section: "blog",
+      title: BLOG_TITLE,
+      source: "blog-index",
+    }) + "\n",
+  );
+
+  // Feeds (summary entries) from the same sorted post list.
+  const updated = posts.length ? posts[0].date.toISOString() : new Date(0).toISOString();
+  const atom = [
+    '<?xml version="1.0" encoding="utf-8"?>',
+    '<feed xmlns="http://www.w3.org/2005/Atom">',
+    `  <title>${xmlEscape(BLOG_TITLE)}</title>`,
+    `  <subtitle>${xmlEscape(BLOG_SUBTITLE)}</subtitle>`,
+    `  <link href="${BASE_URL}/blog/feed.xml" rel="self"/>`,
+    `  <link href="${BLOG_URL}"/>`,
+    `  <id>${BLOG_URL}</id>`,
+    `  <updated>${updated}</updated>`,
+    ...posts.map((p) => {
+      const url = `${BASE_URL}/blog/${p.slug}.html`;
+      const iso = p.date.toISOString();
+      return [
+        "  <entry>",
+        `    <title>${xmlEscape(p.title)}</title>`,
+        `    <link href="${url}"/>`,
+        `    <id>${url}</id>`,
+        `    <updated>${iso}</updated>`,
+        `    <published>${iso}</published>`,
+        `    <author><name>${xmlEscape(p.author)}</name></author>`,
+        `    <summary>${xmlEscape(p.summary)}</summary>`,
+        "  </entry>",
+      ].join("\n");
+    }),
+    "</feed>",
+    "",
+  ].join("\n");
+  fs.writeFileSync(path.join(blogOut, "feed.xml"), atom);
+
+  const rss = [
+    '<?xml version="1.0" encoding="utf-8"?>',
+    '<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">',
+    "  <channel>",
+    `    <title>${xmlEscape(BLOG_TITLE)}</title>`,
+    `    <link>${BLOG_URL}</link>`,
+    `    <description>${xmlEscape(BLOG_SUBTITLE)}</description>`,
+    `    <atom:link href="${BASE_URL}/blog/rss.xml" rel="self" type="application/rss+xml"/>`,
+    `    <lastBuildDate>${posts.length ? posts[0].date.toUTCString() : new Date(0).toUTCString()}</lastBuildDate>`,
+    ...posts.map((p) => {
+      const url = `${BASE_URL}/blog/${p.slug}.html`;
+      return [
+        "    <item>",
+        `      <title>${xmlEscape(p.title)}</title>`,
+        `      <link>${url}</link>`,
+        `      <guid isPermaLink="true">${url}</guid>`,
+        `      <pubDate>${p.date.toUTCString()}</pubDate>`,
+        `      <description>${xmlEscape(p.summary)}</description>`,
+        "    </item>",
+      ].join("\n");
+    }),
+    "  </channel>",
+    "</rss>",
+    "",
+  ].join("\n");
+  fs.writeFileSync(path.join(blogOut, "rss.xml"), rss);
+  console.log(`  blog feeds written (${posts.length} posts): feed.xml + rss.xml`);
 }
 
 sitemapStream.end();
