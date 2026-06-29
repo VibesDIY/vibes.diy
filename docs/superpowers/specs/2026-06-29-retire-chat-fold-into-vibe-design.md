@@ -1,0 +1,135 @@
+# Retire `/chat`: fold the editor surface into `/vibe` (design)
+
+> **Status: design-level**, approved by jchris in the #2518 brainstorm
+> (2026-06-29). Ready for `writing-plans`. Tracks **#2518** (Track C of the
+> DO-split finish); supersedes the open-decision list in
+> [`docs/superpowers/plans/2026-06-20-do-split-finish/05-chat-route-deprecation.md`](../plans/2026-06-20-do-split-finish/05-chat-route-deprecation.md),
+> which predates the #2714 DO collapse and the #2837 spike.
+
+## Thesis
+
+The agent lives _in_ the vibe. The running app on `/vibe/:owner/:slug` is the
+surface and the only shareable URL; the codegen agent and the editor tools float
+_on top of it_. `/chat` — a separate route that made the editor the container and
+the app a preview pane inside it — goes away. The deleted surface area is the
+deliverable.
+
+Most of the backend that made this hard is already done: #2714 collapsed the
+three Durable Objects into one shard-keyed class, `chatApi` is already lazy
+(`makeLazyChatApi`), and `/vibe` already runs codegen in place
+(`useInVibeGeneration`). #2837 shipped the first user-facing step — a brand-new
+vibe now builds in place on `/vibe` instead of hopping to `/chat`. What remains is
+folding the **editor tools** onto `/vibe` and retiring the `/chat` route.
+
+## Decisions (from the brainstorm)
+
+| Topic                | Decision                                                                                                                                                      |
+| -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Editor surface**   | Absorb the editor tools into `/vibe` as an **in-page expandable state** (overlay / grown card), not a separate route. (Q1)                                    |
+| **URL**              | The page URL is **always the running vibe**. Opening the editor changes **no URL**. `/chat/:o/:s` → `/vibe/:o/:s`. (Q2)                                       |
+| **img-gen (#2350)**  | Keep the `imgGenAppSessionStopgapHandlers` stopgap on AppSessions; the heavy/light-session split is a **separate follow-up**, not on this critical path. (Q3) |
+| **`vibesMsgEvento`** | Leave the monolith evento alone here; its retirement is isolated cleanup in **#2846**. (Q4)                                                                   |
+
+### What "the editor surface" actually is (corrected)
+
+There is **no terminal/console pane**. The `/chat` editor is exactly the
+`ResultPreview` view-switcher (`ViewType` = `preview` | `code` | `data`) plus the
+chat log:
+
+- **Preview** — the live app. This is already what `/vibe` _is_; nothing to move.
+- **Code** — the Monaco editor (`CodeEditor.tsx`) to view/edit generated source.
+- **Data** — the vibe's documents (`DataView.tsx`).
+- **Chat history / stream** — the scrollable message log. Build/runtime **errors
+  surface inline in the chat**, as they do today — there is no separate error pane
+  to build.
+
+So "absorb the IDE-grade surface" = surface **Code**, **Data**, and **full chat
+history** as an in-page expandable layer over the running app, with errors inline
+in chat.
+
+## Components
+
+### 1. In-page expandable editor surface on `/vibe` (the build)
+
+An affordance on the running vibe (from the unified card / overlay layer) expands
+to a layer showing the **Code** and **Data** views and the **full chat history**,
+over the running app. No URL change (Q2). Reuses the existing
+`ResultPreview` pieces — `CodeEditor`, `DataView`, and the chat-history rendering
+(`ChatInterface` / `PromptAndBlockMsgs`) — rather than re-implementing them.
+
+- **Keep Monaco lazy.** `ResultPreview.tsx` already loads the editor via
+  `const CodeEditor = lazy(() => import("./CodeEditor.js"))`, which code-splits
+  Monaco + shiki out of the initial bundle. The `/vibe` surface **must preserve
+  this**: import `CodeEditor` only through `lazy(() => import())` and mount it
+  **only when the Code view is opened**, so a normal `/vibe` page view never
+  parses Monaco. (Monaco is the single heaviest dependency on this surface; a
+  static import would regress `/vibe`'s first paint for every viewer.)
+- `chatApi` opens lazily on demand (already true) when the history/stream is shown.
+
+### 2. Redirect + route teardown
+
+- **`/chat/:ownerHandle/:appSlug/:fsId?` → `/vibe/:ownerHandle/:appSlug/:fsId?`**,
+  a **301** (permanent — the running vibe is the canonical URL forever, per Q2).
+  Preserve the `fsId` segment (versioned views) and carry through any query
+  params. Confirm PostHog/GTM pageview + key events fire on the `/vibe`
+  destination after the redirect (a 301 lands a real `/vibe` navigation, so SPA
+  analytics fire there — verify nothing keyed on the `/chat` path).
+- **Retire `routes/chat/chat.$ownerHandle.$appSlug.tsx`.** Its editor behavior is
+  re-expressed by component 1; the route becomes a redirect.
+- **`/chat/prompt`** already redirects into `/vibe` (shipped #2837). Leave as-is.
+
+### 3. Type extraction (prerequisite gotcha)
+
+`CodeEditor.tsx` (and other `ResultPreview` files) import shared types
+(`PromptState`, `PromptBlock`, `HydratedCodeViewFile`) **from the chat route file
+being retired** (`routes/chat/chat.$ownerHandle.$appSlug.tsx`). Before that file
+can go, those types must move to a neutral module (e.g. alongside
+`routes/chat/prompt-state.ts` or a dedicated `types/` file) and all importers
+repointed. Mechanical, but it gates the route deletion — do it as its own commit.
+
+### 4. Untouched (deferred to follow-ups)
+
+- **img-gen** keeps riding AppSessions via the stopgap (#2350).
+- **`vibesMsgEvento`** monolith stays (#2846).
+
+## Phasing (each its own mergeable PR under #2518)
+
+- **Phase 0 — shipped (#2837).** New-vibe entry → first build in place on `/vibe`.
+- **Phase 1 — in-page editor surface on `/vibe`.** Surface Code + Data + full chat
+  history as the expandable layer (Monaco stays lazy; extract the shared types,
+  component 3). _Biggest piece. Must land before Phase 2 so the editor tools are
+  never missing._
+- **Phase 2 — redirect + teardown.** 301 `/chat/:o/:s` → `/vibe`, retire
+  `chat.$ownerHandle.$appSlug.tsx`, verify analytics. **This is the "deleted
+  surface = deliverable" moment** and closes #2518.
+- **Follow-ups (separate issues).** img-gen heavy/light split (#2350);
+  `vibesMsgEvento` retirement (#2846).
+
+**Sequencing constraint:** Phase 1 before Phase 2 — redirecting `/chat` away
+before the editor tools exist on `/vibe` would briefly strip Code/Data/history
+from power users. Phase 1 first keeps the retirement loss-free.
+
+## Open questions (resolve in `writing-plans` / Phase 1)
+
+1. **Trigger affordance.** What control on the unified card / overlay opens the
+   editor layer, and how does it relate to the existing `💬` chat-history toggle
+   (#2677) — same control with tabs (Code / Data / Chat), or separate entry
+   points? (UI detail; Storybook + screenshot loop applies.)
+2. **Code editing vs viewing on `/vibe`.** `/chat` allows editing source in
+   Monaco. Does the `/vibe` layer keep full edit-and-save, or start
+   view-with-edit-via-prompt? (Affects how much of `CodeEditor`'s save path moves.)
+3. **Mobile.** The editor layer is an overlay over a full-bleed app on mobile
+   (epic is mobile-first); confirm Code/Data are usable at 390px or gated to a
+   larger viewport.
+4. **Analytics parity check.** Enumerate the PostHog/GTM events currently fired on
+   `/chat/:o/:s` and confirm each has a `/vibe` equivalent post-redirect.
+
+## References
+
+- Issue: #2518 (Track C). Epic: #2675. Predecessors: #2714 (DO collapse), #2517
+  (lazy ChatSessions), #2837 (Phase 0 spike, merged).
+- Follow-ups: #2350 (img-gen heavy/light), #2846 (`vibesMsgEvento`).
+- Code: `routes/vibe.$ownerHandle.$appSlug.tsx`, `routes/chat/chat.$ownerHandle.$appSlug.tsx`,
+  `components/ResultPreview/` (`ResultPreview.tsx`, `CodeEditor.tsx`, `DataView.tsx`, `ViewControls.tsx`),
+  `hooks/useInVibeGeneration.ts`.
+- Supersedes: `docs/superpowers/plans/2026-06-20-do-split-finish/05-chat-route-deprecation.md`.
