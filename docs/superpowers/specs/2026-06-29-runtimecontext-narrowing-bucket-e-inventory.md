@@ -94,7 +94,8 @@ gate that work will carry — see the preservation principle in
   declaration from all 18 non-identity packages. `@fireproof/core-runtime` now lives
   only in `vibes.diy/identity`, the seam. Split into two commits (internal/test, then
   published/browser) so the publish-risky half is independently revertible.
-- **Phase 4 — remaining, to reach zero `@fireproof/core-runtime`:**
+- **Phase 4 — remaining, to reach zero `@fireproof/core-runtime`** (planned in
+  [`docs/superpowers/plans/2026-06-29-bucket-e-phase4-identity-core-runtime-lift.md`](../plans/2026-06-29-bucket-e-phase4-identity-core-runtime-lift.md)):
   - **Replace the identity package's own `core-runtime` use with in-repo impls.** The
     seam still imports `sts`, `ensureSuperThis`, `deepFreeze`, `hashObjectAsync`,
     `hashStringAsync`/`hashStringSync` from `core-runtime` (device-id crypto, keybag,
