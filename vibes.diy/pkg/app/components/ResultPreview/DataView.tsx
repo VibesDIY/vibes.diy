@@ -6,8 +6,13 @@ import { useVibesDiy } from "../../vibes-diy-provider.js";
 import { calcEntryPointUrl } from "@vibes.diy/api-pkg";
 import { useAuth } from "@clerk/react";
 
-export function DataView({ promptState: _p }: { promptState: PromptState }) {
-  const { ownerHandle, appSlug, fsId } = useParams<{ ownerHandle: string; appSlug: string; fsId?: string }>();
+export function DataView({ promptState: _p, fsId: fsIdProp }: { promptState: PromptState; fsId?: string }) {
+  const params = useParams<{ ownerHandle: string; appSlug: string; fsId?: string }>();
+  const { ownerHandle, appSlug } = params;
+  // Prefer an explicit fsId (the /vibe editor surface passes the resolved
+  // effective fsId, since the primary `/vibe/:owner/:app` URL has no route
+  // `fsId`); fall back to the route param for the chat route's usage. (#2518)
+  const fsId = fsIdProp ?? params.fsId;
   const { webVars: svcVars, sharedApi } = useVibesDiy();
   const { isSignedIn } = useAuth();
   const [isOwner, setIsOwner] = useState(false);
