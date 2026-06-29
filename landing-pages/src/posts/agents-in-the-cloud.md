@@ -1,12 +1,12 @@
 ---
-title: "We want our agents in the cloud, not on a laptop"
+title: "Why our agents don't get a laptop"
 date: 2026-06-28T12:00:00Z
 author: "Vibes DIY"
 summary: "A capability that only works on a hand-configured laptop quietly pushes all the work back to the laptop. Here's why we made cloud containers the default home for agent QA — and three war stories from getting browser validation to run there."
 glyph: "☁ not 💻"
 ---
 
-We want agent work — including browser QA — to happen in ephemeral cloud containers by default. Not as a heroic stunt, but as the boring, standard place it runs. The reasoning is almost embarrassingly simple: a capability that only works on a hand-configured laptop quietly pushes everything back toward the laptop.
+The fastest way to make an agent's work reproducible is to stop running it on your machine. We want agent work — including browser QA — to happen in ephemeral cloud containers by default: not as a heroic stunt, but as the boring, standard place it runs. The reasoning is almost embarrassingly simple — a capability that only works on a hand-configured laptop quietly pushes everything back toward the laptop.
 
 Look at what it takes to drive a browser QA pass on a workstation. It's a real checklist: install Chrome, authenticate `gh`, and the genuinely fiddly one — seed a Google Workspace session into a specific chrome-devtools profile directory, once per engineer, being careful not to pollute it. That's per-person onboarding that rots, drifts, and silently differs between machines. "Works on mine." The cloud version is a SessionStart hook: every session, every agent, identical setup, zero steps. The capability stops being a thing a few people have configured and becomes a thing the fleet just *has*.
 

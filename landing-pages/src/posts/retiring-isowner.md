@@ -1,12 +1,12 @@
 ---
-title: "Retiring isOwner: why 'owner' was the wrong primitive inside a vibe's access function"
+title: "The vibe that locked out its owner"
 date: 2026-06-23T12:00:00Z
 author: "Vibes DIY"
 summary: "A vibe locked its own owner out of saving. The fix wasn't a better isOwner check — it was deleting isOwner and treating 'owner' as a seeded, revocable role instead of an ambient super-user."
 glyph: "isOwner ✗"
 ---
 
-A real vibe locked its own owner out of saving. Not a stranger, not an edge-case account — the person who deployed it, staring at their own app, unable to write to it.
+A vibe locked its own creator out of saving. The bug wasn't the rule — it was the word *owner*. Not a stranger, not an edge-case account: the person who deployed the app, staring at it, unable to write to it.
 
 The cause was a single magic boolean. Write authority ran through `user.isOwner`, and the generated access function granted owner-write *only* via that flag. The trouble is that `isOwner` was resolved across three independent code paths — and the moment it came back false in any one of them, the owner fell through to a `requireRole("editor")` they had never been granted. A multi-handle user, a handle-binding gap, a client-side predictor disagreeing with the server: any of these flipped the boolean, and the owner was locked out of their own data.
 

@@ -1,12 +1,12 @@
 ---
-title: "One iframe surface: the design that deletes the preview pane"
+title: "We deleted the preview pane"
 date: 2026-06-28T08:00:00Z
 author: "Vibes DIY"
 summary: "We moved first-generation onto the deployed app itself — stream into the card, hot-swap the running iframe, de-blur the app forming behind it — and in doing so deleted the separate preview pane entirely. The risk was the simplification."
 glyph: "one iframe surface"
 ---
 
-For a while, building a Vibe meant two surfaces. You'd prompt over on `/chat`, watch a *preview* app assemble in one iframe, and only later land on `/vibe` — a second iframe running the *real*, deployed app. Two iframes, two routes, one app. The preview pane existed because nobody wanted to risk generating code directly into a live deployment.
+For a year, watching your app get built meant staring at a second panel. We deleted it. Building a Vibe used to mean two surfaces: you'd prompt over on `/chat`, watch a *preview* app assemble in one iframe, and only later land on `/vibe` — a second iframe running the *real*, deployed app. Two iframes, two routes, one app. The preview pane existed because nobody wanted to risk generating code directly into a live deployment.
 
 This is the story of deciding to take that risk, and discovering it paid for itself in deletions.
 

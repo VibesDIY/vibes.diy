@@ -1,12 +1,12 @@
 ---
-title: "Collapsing three Durable Object classes into one"
+title: "We only needed one Durable Object"
 date: 2026-06-28T10:00:00Z
 author: "Vibes DIY"
 summary: "We had three Durable Object classes that were really one handler surface opened against three shard keys. Here's how we collapsed them into a single class — and which 'separate-class' argument fell apart the moment we pushed on it."
 glyph: "3 DO → 1"
 ---
 
-The realtime layer underneath Vibes DIY ran on three Durable Object classes: `ChatSessions` for codegen streams, `AppSessions` for live vibes, `SharedSessions` for shared reads. Three classes, three "APIs" (`chatApi`, `vibeApi`, `sharedApi`), and a three-way handler manifest (`sharedHandlers` / `appHandlers` / `chatHandlers`) deciding which connection could serve which operation.
+Three classes, three bindings, three things to keep straight — and a case for keeping them apart that sounded airtight until it met production. The realtime layer underneath Vibes DIY ran on three Durable Object classes: `ChatSessions` for codegen streams, `AppSessions` for live vibes, `SharedSessions` for shared reads. Three classes, three "APIs" (`chatApi`, `vibeApi`, `sharedApi`), and a three-way handler manifest (`sharedHandlers` / `appHandlers` / `chatHandlers`) deciding which connection could serve which operation.
 
 By the time we got to this work, those three classes were the *same handler surface opened against a different shard key*. This is the build log for collapsing them into one.
 
