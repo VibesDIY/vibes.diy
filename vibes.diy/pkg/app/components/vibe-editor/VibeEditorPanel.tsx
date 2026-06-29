@@ -20,6 +20,13 @@ const TAB_LABELS: Record<EditorTab, string> = {
  * A thin composition: a tab row over four existing bodies (Code/Data/Chat/
  * Settings). It does not navigate — Chat's `onClick` is a no-op by design — and
  * does not re-implement any of the underlying panels.
+ *
+ * Phase 1 limitation: the Code tab hydrates from the persisted file system, but
+ * the Chat tab's message history is NOT replayed here (that needs the heavier
+ * chat-session replay, deferred to #2677). When `blocks` is empty we say the
+ * history is "not loaded" — it exists, it just isn't hydrated into this view —
+ * rather than implying there is none. The `💬` shortcut that opens straight to
+ * this tab also lands with #2677 (no such affordance exists on /vibe yet).
  */
 export function VibeEditorPanel({
   tab,
@@ -68,7 +75,14 @@ export function VibeEditorPanel({
       <div className="min-h-0 flex-1 overflow-auto">
         {tab === "code" && <CodeViewPanel model={resolveCodeView(promptState)} />}
         {tab === "data" && <DataView promptState={promptState} />}
-        {tab === "chat" && <ChatInterface promptState={promptState} onClick={() => undefined} />}
+        {tab === "chat" &&
+          (promptState.blocks.length > 0 ? (
+            <ChatInterface promptState={promptState} onClick={() => undefined} />
+          ) : (
+            <div className="flex h-full items-center justify-center p-6 text-center text-sm text-gray-500 dark:text-gray-400">
+              Chat history isn’t loaded here yet.
+            </div>
+          ))}
         {tab === "settings" && <SettingsTabScoped ownerHandle={ownerHandle} appSlug={appSlug} />}
       </div>
     </div>
