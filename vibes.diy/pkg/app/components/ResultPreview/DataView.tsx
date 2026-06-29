@@ -1,5 +1,5 @@
 import { useParams } from "react-router";
-import { PromptState } from "../../routes/chat/chat.$ownerHandle.$appSlug.js";
+import type { PromptState } from "../../routes/chat/prompt-state.js";
 import React, { useEffect, useMemo, useState } from "react";
 import { BuildURI, URI } from "@adviser/cement";
 import { useVibesDiy } from "../../vibes-diy-provider.js";

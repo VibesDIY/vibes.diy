@@ -1,6 +1,6 @@
 import { SetURLSearchParams } from "react-router";
 import { ViewControlsType, ViewType } from "@vibes.diy/prompts";
-import { PromptState } from "../routes/chat/chat.$ownerHandle.$appSlug.js";
+import type { PromptState } from "../routes/chat/prompt-state.js";
 
 // Helper to detect mobile viewport
 export const isMobileViewport = () => {

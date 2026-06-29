@@ -8,7 +8,7 @@ import { PreviewApp } from "./PreviewApp.js";
 import { DataView } from "./DataView.js";
 import { SettingsTab } from "../mine/settings-tab/index.js";
 import { SharingTab } from "../mine/sharing-tab/SharingTab.js";
-import { PromptState } from "../../routes/chat/chat.$ownerHandle.$appSlug.js";
+import type { PromptState } from "../../routes/chat/prompt-state.js";
 import { EditorState } from "../../types/code-editor.js";
 // import { useTheme } from "../../contexts/ThemeContext.js";
 

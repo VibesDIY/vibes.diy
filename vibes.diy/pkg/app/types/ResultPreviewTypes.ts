@@ -2,7 +2,7 @@
 // import { TitleSrc, ViewType } from "@vibes.diy/prompts";
 // import { RuntimeError } from "@vibes.diy/use-vibes-types";
 import { ViewType } from "@vibes.diy/prompts";
-import { PromptState } from "../routes/chat/chat.$ownerHandle.$appSlug.js";
+import type { PromptState } from "../routes/chat/prompt-state.js";
 import { EditorState } from "./code-editor.js";
 // import { CodeEvent } from "./code-editor.js";
 

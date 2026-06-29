@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { isCodeEnd } from "@vibes.diy/call-ai-v2";
-import type { PromptState } from "../routes/chat/chat.$ownerHandle.$appSlug.js";
+import type { PromptState } from "../routes/chat/prompt-state.js";
 
 /**
  * Detect the "first codegen of a brand-new chat or remix" window — the slug
