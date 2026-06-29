@@ -42,6 +42,17 @@ describe("SuperThis lift cross-verification (extracted ⇄ fireproof)", () => {
     expect(a.str.slice(0, 13)).toBe(b.str.slice(0, 13));
   });
 
+  it("timeOrderedNextId: the variant nibble is always 'b' (random-byte transform), matching fireproof", () => {
+    // The `bin[1]` low nibble is forced to 0x0b, so the 4th UUID group always
+    // starts with 'b'. This lives in the RANDOM portion, so it only shows up
+    // across many samples — pinning it here catches an operator-precedence drift
+    // in the `(bin[1] & 0xf0) | 0x0b` transform (Codex review #2854).
+    for (let i = 0; i < 256; i++) {
+      expect(ex.timeOrderedNextId(1_700_000_000_000 + i).str.split("-")[3][0]).toBe("b");
+      expect(fp.timeOrderedNextId(1_700_000_000_000 + i).str.split("-")[3][0]).toBe("b");
+    }
+  });
+
   it("env get / set / sets / delete round-trip (the full mutation surface consumers use)", () => {
     ex.env.set("BUCKET_E_T4", "x");
     expect(ex.env.get("BUCKET_E_T4")).toBe("x");
