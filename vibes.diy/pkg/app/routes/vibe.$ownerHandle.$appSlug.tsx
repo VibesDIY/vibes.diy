@@ -460,15 +460,15 @@ export default function VibeIframeWrapper() {
   // up-to-date → leave the production paint as is. Versioned URLs (route-param `fsId`)
   // and non-owners are guarded out, so the public surface is unchanged.
   //
-  // The resolver also re-runs after an in-place edit PERSISTS — `generation.persistedFsId`
-  // (the fsId of the canonical post-persist `block.end`) is in the deps, so a settled
+  // The resolver also re-runs after an in-place edit PERSISTS — `generation.persistedFsRef`
+  // (the fsRef of the canonical post-persist `block.end`) is in the deps, so a settled
   // edit re-triggers it. On that path the iframe is already showing the new draft (the
   // generation hot-swapped its source in place), and `resolveOwnerDraft` detects this by
-  // comparing the resolved fsId against the hot-swapped one — skipping the re-pin so a
-  // `draftFsId` change doesn't reload identical code. The comparison is timing-independent,
-  // so cross-vibe navigation can't synthesize a skipped pin (Charlie review #2839): a
-  // different vibe's resolved fsId never equals this one's persistedFsId. Mount and publish
-  // both pin (no hot-swap / the resolve flips to production).
+  // comparing the resolved draft against the hot-swapped fsRef — by FULL vibe identity
+  // (ownerHandle/appSlug/fsId), since a fork shares its source's fsId. When they match it
+  // skips the re-pin so a `draftFsId` change doesn't reload identical code. The comparison
+  // is timing-independent, so cross-vibe navigation can't synthesize a skipped pin (Charlie
+  // review #2839) — even between a fork and its source. Mount and publish both pin.
   useEffect(() => {
     if (!isOwner || fsId || !ownerHandle || !appSlug) {
       setIsDraft(false);
@@ -478,16 +478,23 @@ export default function VibeIframeWrapper() {
     let cancelled = false;
     void vctx.sharedApi.getAppByFsId({ appSlug, ownerHandle, selectMode: "ownerLatest" }).then((rRes) => {
       if (cancelled || rRes.isErr()) return;
-      const { isDraft: nextIsDraft, pinFsId, repin } = resolveOwnerDraft(rRes.Ok(), generation.persistedFsId);
+      const {
+        isDraft: nextIsDraft,
+        pinFsId,
+        repin,
+      } = resolveOwnerDraft(rRes.Ok(), generation.persistedFsRef, {
+        ownerHandle,
+        appSlug,
+      });
       setIsDraft(nextIsDraft);
-      // Skip the re-pin only when the iframe already shows this exact draft via the
-      // in-place hot-swap — otherwise a `draftFsId` change would force a redundant reload.
+      // Skip the re-pin only when the iframe already shows this exact draft (same vibe +
+      // fsId) via the in-place hot-swap — otherwise a `draftFsId` change forces a reload.
       if (repin) setDraftFsId(pinFsId);
     });
     return () => {
       cancelled = true;
     };
-  }, [isOwner, fsId, ownerHandle, appSlug, publishBump, generation.persistedFsId, vctx.sharedApi]);
+  }, [isOwner, fsId, ownerHandle, appSlug, publishBump, generation.persistedFsRef, vctx.sharedApi]);
 
   useEffect(() => {
     if (!isOwner || !ownerHandle || !appSlug) {
