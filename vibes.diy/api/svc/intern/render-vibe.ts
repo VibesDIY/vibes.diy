@@ -197,10 +197,19 @@ export async function renderVibe({
   // structured reason and we ship the empty container (client-only, today's
   // path), never a 500. The LOADER binding is a beta follow-up, so `loader` is
   // undefined for now (VIBES_SSR=loader degrades to client-only via select_error).
+  //
+  // SECURITY (per Codex review): this route renders UNTRUSTED, persisted vibe
+  // `App.jsx`. `NodeExecutor` runs the module in-process with full Node
+  // privileges (`node:fs`, `process.env`, …) — see the SECURITY note in
+  // node-executor.ts — so it must NEVER touch untrusted live traffic. The live
+  // route admits ONLY the isolate-backed `loader` executor; `node` is treated as
+  // disabled here (it stays a CI/test-only mode, exercised by calling
+  // `attemptVibeSsr` directly with trusted source). Any other value ⇒ off.
+  const liveSsrMode = parseVibesSsrMode(vctx.params.vibes.env.VIBES_SSR) === "loader" ? "loader" : "off";
   let ssrHtml: string | undefined;
   if (ctx.request.method !== "HEAD") {
     const ssr = await attemptVibeSsr({
-      mode: parseVibesSsrMode(vctx.params.vibes.env.VIBES_SSR),
+      mode: liveSsrMode,
       loader: undefined,
       fsItems,
       mountParams: { usrEnv, ...(viewerEnv ? { viewerEnv } : {}), ...(accessFnBindings ? { accessFnBindings } : {}) },
