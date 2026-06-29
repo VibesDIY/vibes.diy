@@ -1049,7 +1049,7 @@ describe("VibesDiyApi", { timeout: (inject("DB_FLAVOUR" as never) as string) ===
   it("can open chat", async () => {
     // console.log("Testing openChat");
     const rChatRes = await api.openChat({
-      mode: "chat",
+      mode: "codegen",
     });
     // console.log("openChat res", rChatRes);
     expect(rChatRes.isOk()).toBe(true);
@@ -1092,7 +1092,7 @@ describe("VibesDiyApi", { timeout: (inject("DB_FLAVOUR" as never) as string) ===
 
     const rNext = await api.openChat({
       chatId: chat.chatId,
-      mode: "chat",
+      mode: "codegen",
     });
     const nextFn = vi.fn();
     await processStream(rNext.Ok().sectionStream, (msg) => {
@@ -1110,7 +1110,7 @@ describe("VibesDiyApi", { timeout: (inject("DB_FLAVOUR" as never) as string) ===
 
   it("queries the llm", async () => {
     const rChatRes = await api.openChat({
-      mode: "chat",
+      mode: "codegen",
     });
     expect(rChatRes.isOk()).toBe(true);
     const chat = rChatRes.Ok();
@@ -1129,7 +1129,7 @@ describe("VibesDiyApi", { timeout: (inject("DB_FLAVOUR" as never) as string) ===
     // Re-open the same chat — replays persisted blocks
     const rNext = await api.openChat({
       chatId: chat.chatId,
-      mode: "chat",
+      mode: "codegen",
     });
     const nextFn = vi.fn();
     await processStream(rNext.Ok().sectionStream, async (msg) => {
@@ -1147,7 +1147,7 @@ describe("VibesDiyApi", { timeout: (inject("DB_FLAVOUR" as never) as string) ===
 
   it("promptFS", async () => {
     const rChatRes = await api.openChat({
-      mode: "chat",
+      mode: "codegen",
     });
     expect(rChatRes.isOk()).toBe(true);
     const chat = rChatRes.Ok();
@@ -1171,7 +1171,7 @@ describe("VibesDiyApi", { timeout: (inject("DB_FLAVOUR" as never) as string) ===
     // Re-open the same chat — replays persisted blocks
     const rNext = await api.openChat({
       chatId: chat.chatId,
-      mode: "chat",
+      mode: "codegen",
     });
     const nextFn = vi.fn();
     await processStream(rNext.Ok().sectionStream, async (msg) => {
@@ -1192,7 +1192,7 @@ describe("VibesDiyApi", { timeout: (inject("DB_FLAVOUR" as never) as string) ===
   // fsRef-bearing block.end AND a terminal prompt.block-end for replay (covered
   // by the promptFS replay assertions above + seed-chat-section).
   it("emits prompt.block-end before the fsRef-bearing block.end (early UI release)", async () => {
-    const chat = (await api.openChat({ mode: "chat" })).Ok();
+    const chat = (await api.openChat({ mode: "codegen" })).Ok();
     const rPrompt = await chat.promptFS([
       {
         type: "code-block",
@@ -1624,7 +1624,7 @@ describe("VibesDiyApi", { timeout: (inject("DB_FLAVOUR" as never) as string) ===
         },
       },
       type: "vibes.diy.res-prompt-chat-section",
-      mode: "chat",
+      mode: "codegen",
     } as unknown as ReqWithVerifiedAuth<ReqPromptChatSection>;
 
     const bp = BlockMsgs.or(PromptMsgs);
@@ -1663,7 +1663,7 @@ describe("VibesDiyApi", { timeout: (inject("DB_FLAVOUR" as never) as string) ===
         resChat: {
           appSlug: "example-app",
           ownerHandle: "example-user",
-          mode: "chat",
+          mode: "codegen",
         },
         promptId,
         blockSeq: collectedMsgs.length,

@@ -126,7 +126,7 @@ async function runEntry(args: RunArgs, entry: CorpusEntry): Promise<void> {
   const rChat = await api.openChat({
     ownerHandle: args.ownerHandle,
     prompt: entry.create,
-    mode: "chat",
+    mode: "codegen",
   });
   if (rChat.isErr()) {
     await api.close().catch(() => undefined);

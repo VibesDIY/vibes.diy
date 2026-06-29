@@ -77,7 +77,7 @@ describe("promptChatSection handler with selected+slots", () => {
 
   it("dryRun with selected:{kind:draft,files} renders SELECTED_DRAFT as canonical", async () => {
     const { appSlug, ownerHandle } = await ctx.createApp();
-    const rOpen = await ctx.api.openChat({ ownerHandle, appSlug, mode: "chat" });
+    const rOpen = await ctx.api.openChat({ ownerHandle, appSlug, mode: "codegen" });
     expect(rOpen.isOk()).toBe(true);
     const chat = rOpen.Ok();
 
@@ -106,7 +106,7 @@ describe("promptChatSection handler with selected+slots", () => {
 
   it("dryRun without selected does not render SELECTED_DRAFT", async () => {
     const { appSlug, ownerHandle } = await ctx.createApp();
-    const rOpen = await ctx.api.openChat({ ownerHandle, appSlug, mode: "chat" });
+    const rOpen = await ctx.api.openChat({ ownerHandle, appSlug, mode: "codegen" });
     expect(rOpen.isOk()).toBe(true);
     const chat = rOpen.Ok();
 
@@ -134,7 +134,7 @@ describe("promptChatSection handler with selected+slots", () => {
         return new Response("", { status: 200 });
       },
     });
-    const rOpen = await local.api.openChat({ mode: "chat" });
+    const rOpen = await local.api.openChat({ mode: "codegen" });
     expect(rOpen.isOk()).toBe(true);
     const chat = rOpen.Ok();
 
@@ -188,7 +188,7 @@ describe("promptChatSection handler with selected+slots", () => {
         return new Response("", { status: 200 });
       },
     });
-    const rOpen = await local.api.openChat({ mode: "chat" });
+    const rOpen = await local.api.openChat({ mode: "codegen" });
     expect(rOpen.isOk()).toBe(true);
     const chat = rOpen.Ok();
 
@@ -216,7 +216,7 @@ describe("promptChatSection handler with selected+slots", () => {
         return new Response("bad request", { status: 400, statusText: "Bad Request" });
       },
     });
-    const rOpen = await local.api.openChat({ mode: "chat" });
+    const rOpen = await local.api.openChat({ mode: "codegen" });
     expect(rOpen.isOk()).toBe(true);
     const chat = rOpen.Ok();
 
@@ -247,7 +247,7 @@ describe("promptChatSection handler with selected+slots", () => {
         throw new Error("socket reset");
       },
     });
-    const rOpen = await local.api.openChat({ mode: "chat" });
+    const rOpen = await local.api.openChat({ mode: "codegen" });
     expect(rOpen.isOk()).toBe(true);
     const chat = rOpen.Ok();
 
@@ -284,7 +284,7 @@ describe("promptChatSection handler with selected+slots", () => {
         return new Response("transient", status);
       },
     });
-    const rOpen = await local.api.openChat({ mode: "chat" });
+    const rOpen = await local.api.openChat({ mode: "codegen" });
     expect(rOpen.isOk()).toBe(true);
     const chat = rOpen.Ok();
 
@@ -325,7 +325,7 @@ describe("promptChatSection handler with selected+slots", () => {
         });
       },
     });
-    const rOpen = await local.api.openChat({ mode: "chat" });
+    const rOpen = await local.api.openChat({ mode: "codegen" });
     expect(rOpen.isOk()).toBe(true);
     const chat = rOpen.Ok();
     let promptReqTimeout: ReturnType<typeof setTimeout> | null = null;
@@ -405,7 +405,7 @@ describe("promptChatSection handler with selected+slots", () => {
         return new Response("", { status: 200 });
       },
     });
-    const rOpen = await local.api.openChat({ mode: "chat" });
+    const rOpen = await local.api.openChat({ mode: "codegen" });
     expect(rOpen.isOk()).toBe(true);
     const chat = rOpen.Ok();
 
@@ -459,7 +459,7 @@ describe("promptChatSection handler with selected+slots", () => {
         });
       },
     });
-    const rOpen = await local.api.openChat({ mode: "chat" });
+    const rOpen = await local.api.openChat({ mode: "codegen" });
     expect(rOpen.isOk()).toBe(true);
     const chat = rOpen.Ok();
 
@@ -486,7 +486,7 @@ describe("promptChatSection handler with selected+slots", () => {
     expect(primary.event).toEqual(
       expect.objectContaining({
         phase: "initial",
-        mode: "chat",
+        mode: "codegen",
         model: PRIMARY_MODEL,
         status: 503,
         statusText: "Service Unavailable",

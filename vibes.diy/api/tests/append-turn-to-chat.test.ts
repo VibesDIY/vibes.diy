@@ -32,7 +32,7 @@ describe("appendTurnToChat", () => {
     const { appSlug, ownerHandle } = await ctx.createApp();
     const userId = await userIdForSlug(ctx, ownerHandle);
 
-    const r1 = await ctx.api.openChat({ ownerHandle, appSlug, mode: "chat" });
+    const r1 = await ctx.api.openChat({ ownerHandle, appSlug, mode: "codegen" });
     expect(r1.isOk()).toBe(true);
     const chat = r1.Ok();
     const vctx = ctx.appCtx.vibesCtx;
@@ -86,7 +86,7 @@ describe("appendTurnToChat", () => {
     const { appSlug, ownerHandle } = await ctx.createApp();
     const userId = await userIdForSlug(ctx, ownerHandle);
 
-    const r1 = await ctx.api.openChat({ ownerHandle, appSlug, mode: "chat" });
+    const r1 = await ctx.api.openChat({ ownerHandle, appSlug, mode: "codegen" });
     expect(r1.isOk()).toBe(true);
     const chat = r1.Ok();
     const vctx = ctx.appCtx.vibesCtx;

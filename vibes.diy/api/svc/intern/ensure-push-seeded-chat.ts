@@ -65,10 +65,10 @@ export interface EnsurePushSeededChatResult {
  *
  * Seeded rows (all keyed off the same chatId / promptId):
  *
- * 1. ChatContexts: enables `openChat({mode:"chat"})` → `ensureChatId` to
+ * 1. ChatContexts: enables `openChat({mode:"codegen"})` → `ensureChatId` to
  *    resolve the (ownerHandle, appSlug) pair back to a chatId. CLI `edit`
  *    (edit-cmd.ts) and the web continuation (chat.$ownerHandle.$appSlug.tsx)
- *    both use mode "chat" and this table. (Mode "app"/"img" goes through
+ *    both use mode "codegen" and this table. (Mode "runtime"/"img" goes through
  *    applicationChats via ensureApplicationChatId, but those are iframe
  *    sandbox flows, not user-editing.)
  * 2. PromptContexts: links chatId → fsId so `loadVersionTimeline`

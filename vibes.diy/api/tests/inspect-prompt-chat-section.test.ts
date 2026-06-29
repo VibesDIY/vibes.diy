@@ -50,7 +50,7 @@ describe("promptChatSection dry-run (chat mode)", () => {
 
   it("returns assembled {model, messages} as a section-stream block without writing to PromptContexts or ChatSections", async () => {
     const { appSlug, ownerHandle } = await ctx.createApp();
-    const rOpen = await ctx.api.openChat({ ownerHandle, appSlug, mode: "chat" });
+    const rOpen = await ctx.api.openChat({ ownerHandle, appSlug, mode: "codegen" });
     expect(rOpen.isOk()).toBe(true);
     const chat = rOpen.Ok();
 
@@ -92,7 +92,7 @@ describe("promptChatSection dry-run (chat mode)", () => {
 
     // No ownerHandle/appSlug supplied — the persistence-free path synthesizes
     // both in-memory rather than allocating bindings.
-    const rOpen = await freshCtx.api.openChat({ mode: "chat", dryRun: true });
+    const rOpen = await freshCtx.api.openChat({ mode: "codegen", dryRun: true });
     expect(rOpen.isOk()).toBe(true);
     const chat = rOpen.Ok();
 
@@ -123,18 +123,18 @@ describe("promptChatSection dry-run (chat mode)", () => {
   it("dry-run openChat rejects an explicit handle owned by another user (#2364 review)", async () => {
     // api2 owns a handle (real chat created below); api — a different user —
     // must not be able to preview against it just because dry-run is read-only.
-    const rOpen2 = await ctx.api2.openChat({ mode: "chat" });
+    const rOpen2 = await ctx.api2.openChat({ mode: "codegen" });
     expect(rOpen2.isOk()).toBe(true);
     const foreignHandle = rOpen2.Ok().ownerHandle;
     await rOpen2.Ok().close();
 
-    const rDry = await ctx.api.openChat({ ownerHandle: foreignHandle, mode: "chat", dryRun: true });
+    const rDry = await ctx.api.openChat({ ownerHandle: foreignHandle, mode: "codegen", dryRun: true });
     expect(rDry.isOk()).toBe(false);
   });
 
   it("forged dry-run with inline slugs cannot reconstruct another user's chat (#2364 review)", async () => {
     // api2 opens a real chat (persisted chatContexts row).
-    const rOpen2 = await ctx.api2.openChat({ mode: "chat" });
+    const rOpen2 = await ctx.api2.openChat({ mode: "codegen" });
     expect(rOpen2.isOk()).toBe(true);
     const victim = rOpen2.Ok();
 
@@ -144,7 +144,7 @@ describe("promptChatSection dry-run (chat mode)", () => {
     // chatId-scoped history.
     const forged = {
       type: "vibes.diy.req-prompt-chat-section" as const,
-      mode: "chat" as const,
+      mode: "codegen" as const,
       chatId: victim.chatId,
       outerTid: ctx.sthis.nextId(12).str,
       prompt: { messages: [{ role: "user" as const, content: [{ type: "text" as const, text: "leak please" }] }] },
@@ -164,14 +164,14 @@ describe("promptChatSection dry-run (chat mode)", () => {
     // persisted) chatId — so the ephemeral shortcut is taken — but names api2's
     // owner/app inline to try to probe their model defaults. The owner-ownership
     // gate must reject it.
-    const rOpen2 = await ctx.api2.openChat({ mode: "chat" });
+    const rOpen2 = await ctx.api2.openChat({ mode: "codegen" });
     expect(rOpen2.isOk()).toBe(true);
     const victim = rOpen2.Ok();
     await victim.close();
 
     const forged = {
       type: "vibes.diy.req-prompt-chat-section" as const,
-      mode: "chat" as const,
+      mode: "codegen" as const,
       chatId: ctx.sthis.nextId(12).str, // fresh — no chatContexts row exists
       outerTid: ctx.sthis.nextId(12).str,
       prompt: { messages: [{ role: "user" as const, content: [{ type: "text" as const, text: "probe defaults" }] }] },
@@ -196,7 +196,7 @@ describe("promptChatSection dry-run (chat mode)", () => {
     const appSlug = `edit-dry-${ctx.sthis.nextId(6).str}`;
     expect((await db.select().from(tables.chatContexts).where(eq(tables.chatContexts.appSlug, appSlug))).length).toBe(0);
 
-    const rOpen = await ctx.api.openChat({ ownerHandle, appSlug, mode: "chat", dryRun: true });
+    const rOpen = await ctx.api.openChat({ ownerHandle, appSlug, mode: "codegen", dryRun: true });
     expect(rOpen.isOk()).toBe(true);
     const chat = rOpen.Ok();
     // Ephemeral: the returned chatId was not inserted.
@@ -226,7 +226,7 @@ describe("promptChatSection dry-run (chat mode)", () => {
 
     // A dry-run openChat for the same app reuses the seeded chatId and adds no
     // row, so the preview assembles against the app's real history.
-    const rDry = await ctx.api.openChat({ ownerHandle, appSlug, mode: "chat", dryRun: true });
+    const rDry = await ctx.api.openChat({ ownerHandle, appSlug, mode: "codegen", dryRun: true });
     expect(rDry.isOk()).toBe(true);
     const dryChat = rDry.Ok();
     expect(dryChat.chatId).toBe(seeded[0].chatId);
@@ -245,7 +245,7 @@ describe("promptChatSection dry-run (chat mode)", () => {
     const seeded = await db.select().from(tables.chatContexts).where(eq(tables.chatContexts.appSlug, appSlug));
     expect(seeded.length).toBe(1);
 
-    const rDry = await ctx.api.openChat({ appSlug, mode: "chat", dryRun: true });
+    const rDry = await ctx.api.openChat({ appSlug, mode: "codegen", dryRun: true });
     expect(rDry.isOk()).toBe(true);
     const dryChat = rDry.Ok();
     expect(dryChat.ownerHandle).toBe(ownerHandle);
@@ -255,7 +255,7 @@ describe("promptChatSection dry-run (chat mode)", () => {
 
   it("rejects requests with no new user message", async () => {
     const { appSlug, ownerHandle } = await ctx.createApp();
-    const rOpen = await ctx.api.openChat({ ownerHandle, appSlug, mode: "chat" });
+    const rOpen = await ctx.api.openChat({ ownerHandle, appSlug, mode: "codegen" });
     const chat = rOpen.Ok();
 
     const ack = await chat.prompt({ messages: [] }, { dryRun: true });
@@ -265,14 +265,14 @@ describe("promptChatSection dry-run (chat mode)", () => {
 
   it("returns an error for a chat the caller does not own", async () => {
     const { appSlug, ownerHandle } = await ctx.createApp();
-    const rOpen = await ctx.api.openChat({ ownerHandle, appSlug, mode: "chat" });
+    const rOpen = await ctx.api.openChat({ ownerHandle, appSlug, mode: "codegen" });
     const chat = rOpen.Ok();
     await chat.close();
 
     // api2 opens a chat session against api's chatId by calling prompt
     // directly through openChat — but the ownership check rejects on
     // openChat. So we use api2.request directly with the raw payload.
-    const rOpen2 = await ctx.api2.openChat({ ownerHandle, appSlug, mode: "chat" });
+    const rOpen2 = await ctx.api2.openChat({ ownerHandle, appSlug, mode: "codegen" });
     // openChat behavior for non-owner: may succeed because chat-create or
     // may error. We only need to confirm THAT chat (whatever it is) is
     // not the same as `chat.chatId` AND that a dry-run against

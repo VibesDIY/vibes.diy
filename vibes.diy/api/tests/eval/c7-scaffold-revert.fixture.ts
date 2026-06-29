@@ -26,7 +26,7 @@ export const c7Scenario = {
     const vctx = ctx.appCtx.vibesCtx;
 
     // openChat gives us the chatId. createApp() seeds turn 0 (scaffold/original).
-    const rOpen = await ctx.api.openChat({ ownerHandle, appSlug, mode: "chat" });
+    const rOpen = await ctx.api.openChat({ ownerHandle, appSlug, mode: "codegen" });
     if (rOpen.isOk() === false) throw new Error(`openChat failed: ${String(rOpen.Err())}`);
     const chat = rOpen.Ok();
     const chatId = chat.chatId;

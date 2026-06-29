@@ -35,7 +35,7 @@ describe("loadVersionTimeline", () => {
     // promptContexts row as the seed for the app.  openChat resolves to that same
     // chatId, so a fresh timeline is never empty — it always contains the seed entry.
     const { appSlug, ownerHandle } = await ctx.createApp();
-    const rOpen = await ctx.api.openChat({ ownerHandle, appSlug, mode: "chat" });
+    const rOpen = await ctx.api.openChat({ ownerHandle, appSlug, mode: "codegen" });
     const chat = rOpen.Ok();
 
     const tl = (await loadVersionTimeline(ctx.appCtx.vibesCtx, chat.chatId)).Ok();
@@ -58,7 +58,7 @@ describe("loadVersionTimeline", () => {
     const { appSlug, ownerHandle } = await ctx.createApp();
     const userId = await userIdForSlug(ctx, ownerHandle);
 
-    const rOpen = await ctx.api.openChat({ ownerHandle, appSlug, mode: "chat" });
+    const rOpen = await ctx.api.openChat({ ownerHandle, appSlug, mode: "codegen" });
     const chat = rOpen.Ok();
     const vctx = ctx.appCtx.vibesCtx;
 
@@ -120,7 +120,7 @@ describe("loadVersionTimeline", () => {
     const { appSlug, ownerHandle } = await ctx.createApp();
     const userId = await userIdForSlug(ctx, ownerHandle);
 
-    const rOpen = await ctx.api.openChat({ ownerHandle, appSlug, mode: "chat" });
+    const rOpen = await ctx.api.openChat({ ownerHandle, appSlug, mode: "codegen" });
     const chat = rOpen.Ok();
     const vctx = ctx.appCtx.vibesCtx;
 
@@ -180,7 +180,7 @@ describe("loadVersionTimeline", () => {
     const { appSlug, ownerHandle } = await ctx.createApp();
     const _userId = await userIdForSlug(ctx, ownerHandle);
 
-    const rOpen = await ctx.api.openChat({ ownerHandle, appSlug, mode: "chat" });
+    const rOpen = await ctx.api.openChat({ ownerHandle, appSlug, mode: "codegen" });
     const chat = rOpen.Ok();
     const vctx = ctx.appCtx.vibesCtx;
 
@@ -200,7 +200,7 @@ describe("loadVersionTimeline", () => {
     const { appSlug, ownerHandle } = await ctx.createApp();
     const userId = await userIdForSlug(ctx, ownerHandle);
 
-    const rOpen = await ctx.api.openChat({ ownerHandle, appSlug, mode: "chat" });
+    const rOpen = await ctx.api.openChat({ ownerHandle, appSlug, mode: "codegen" });
     const chat = rOpen.Ok();
     const vctx = ctx.appCtx.vibesCtx;
 
