@@ -76,12 +76,31 @@ really mean it") is answered by "we kept the bytes." Soft unpublish is the 90%
 use case — the `system/bloom` orphan, a fat-fingered slug, a renamed app — and
 it's safe by construction.
 
-### 2. Re-publish / restore is just clearing the tombstone
+### 2. `publish` means "make it live" — promote the draft *and* clear the tombstone
 
-`vibes-diy push` to a tombstoned slug, or an explicit `vibes-diy publish`
-(restore), clears `unpublishedAt` back to `""`. Because the `Apps` history is
-intact, restore is exact — same `fsId`, same data, same grants. No "recreate a
-deleted slug and serve stale esm.sh" hazard (see §5).
+`publish` is the inverse of `unpublish`, but it is **not** just "clear the
+tombstone." A bare restore-only verb would be a confusing synonym for `push`;
+the verb earns its name by also being the CLI surface for the existing
+draft→production promotion (`publishApp` / `mintProductionRelease`, the same
+mechanism the web "publish" switch uses). So `vibes-diy publish <vibe>`:
+
+1. **Promotes** the owner's latest dev draft to a new top-of-stack production
+   release (`releaseSeq = MAX+1`; old production stays as history, no demote).
+   An explicit `--fsId` publishes a specific older version instead. Idempotent:
+   if the chosen content is already the highest production, it's a no-op
+   "up to date" success.
+2. **Clears** any `unpublishedAt` tombstone in the same step, so the public URL
+   resolves again.
+
+Because the `Apps` history is never deleted, the restore half is exact — same
+`fsId`, same data, same grants. No "recreate a deleted slug and serve stale
+esm.sh" hazard (see §5). The server's `set-unpublish` response returns the value
+it replaced, so `publish` can truthfully report whether it actually *restored* a
+tombstoned vibe vs just promoted a draft.
+
+(`vibes-diy push` to a tombstoned slug also clears the tombstone as part of
+deploying new content — push is the create/overwrite path, `publish` is the
+promote-existing-draft path.)
 
 ### 3. Hard delete is a separate, later, guarded operation — out of scope for v1
 
@@ -212,7 +231,9 @@ These were open questions in the first draft; resolved in PR #2811 review
 
 1. **Naming.** `unpublish` is the canonical verb. We **reserve `delete`** for the
    future irreversible hard-delete, and ship **no `rm` alias in v1** — `rm` reads
-   as destructive, which misrepresents a reversible action.
+   as destructive, which misrepresents a reversible action. `publish` is the
+   inverse and earns its name by promoting the latest draft to production (not
+   just clearing the tombstone) — see §2.
 2. **Explicit-fsId visibility after unpublish.** Explicit-fsId reads **keep
    resolving for everyone, including non-owners**, in v1 — this preserves
    permalinks/lineage and avoids cache/identity weirdness. Framed as product
@@ -240,8 +261,11 @@ The smallest-correct first cut landed exactly the scope above:
   the tombstone, not the row mode.
 - **Owner list** — `list-recent-vibes` surfaces the `unpublishedAt` marker
   (owner-scoped), and the CLI `list` prints `[unpublished]`.
-- **CLI** — `vibes-diy unpublish <vibe>` + `vibes-diy publish <vibe>`
-  (`cli/cmds/unpublish-cmd.ts`), no `rm` alias.
+- **CLI** — `vibes-diy unpublish <vibe>` (tombstone) + `vibes-diy publish
+  <vibe> [--fsId <fsId>]` (promote latest draft → production via `publishApp`,
+  then clear the tombstone) (`cli/cmds/unpublish-cmd.ts`), no `rm` alias.
+  `set-unpublish` now also returns `previousUnpublishedAt` so `publish` reports
+  `restored` accurately.
 - **Tests** — `api/tests/set-unpublish.test.ts` (round-trip; non-owner
   serve/remix/versions hidden; explicit-fsId + owner still resolve; restore
   exact; non-owner + nonexistent-slug rejected without creating a binding) and

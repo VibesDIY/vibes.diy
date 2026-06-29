@@ -46,7 +46,7 @@ export const setUnpublishEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqSet
       // caller owns the handle. A missing or non-owned slug returns no row —
       // we error rather than create anything.
       const appRow = await vctx.sql.db
-        .select({ ownerHandle: asb.ownerHandle, appSlug: asb.appSlug })
+        .select({ ownerHandle: asb.ownerHandle, appSlug: asb.appSlug, unpublishedAt: asb.unpublishedAt })
         .from(asb)
         .innerJoin(usb, and(eq(usb.handle, asb.ownerHandle), eq(usb.userId, userId)))
         .where(and(eq(asb.ownerHandle, req.ownerHandle), eq(asb.appSlug, req.appSlug)))
@@ -63,6 +63,7 @@ export const setUnpublishEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqSet
         return Result.Ok(EventoResult.Continue);
       }
 
+      const previousUnpublishedAt = appRow.unpublishedAt;
       const unpublishedAt = req.unpublish ? new Date().toISOString() : "";
       await vctx.sql.db
         .update(asb)
@@ -74,6 +75,7 @@ export const setUnpublishEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqSet
         ownerHandle: req.ownerHandle,
         appSlug: req.appSlug,
         unpublishedAt,
+        previousUnpublishedAt,
       } satisfies ResSetUnpublish);
 
       return Result.Ok(EventoResult.Continue);
