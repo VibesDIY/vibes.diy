@@ -71,6 +71,49 @@ The body is plain markdown rendered by `marked`, with a few conventions:
   tables, code, CTA) in the layout — only one-off art goes inline. See
   `src/posts/upgrading-apps-with-screenshots.md` for an example.
 
+## Screenshots — generate a purpose-built vibe to art-direct the shot
+
+You can't fabricate screenshots, but you don't have to settle for whatever a
+random app looks like either. Generate a vibe **for the post** with the `vibes-diy`
+CLI, art-directing the look, then capture it. This is the repeatable way to get a
+clean, on-message image (minimal chrome, a chosen hue, a feature mid-action).
+
+1. **Generate, art-directed.** Put the aesthetic in the prompt — "no header or
+   buttons, almost no text," "greenish-teal," "full-bleed," "show N items already
+   present." The device is logged in (`VIBES_DEVICE_ID` is set in CI/cloud):
+   ```sh
+   npx vibes-diy@latest generate "A full-screen ambient orb … no text … teal-green glow" --app-slug blog-demo-<slug>
+   ```
+   It deploys live and prints `https://vibes.diy/vibe/<handle>/blog-demo-<slug>`.
+2. **Make the feature visible (the auth gotcha).** A logged-out capture won't show
+   data that requires a signed-in write — the app's own seed effect is gated on
+   `can.create`, so a guest sees an *empty* app. Seed demo data as the owner so the
+   public view is populated:
+   ```sh
+   npx vibes-diy@latest db put --vibe <handle>/blog-demo-<slug> --db <dbName> \
+     --id seed-1 '{"type":"flower","x":12,"y":78,"authorHandle":"<your-handle>", ...}'
+   ```
+   `authorHandle` must equal your own handle (author-owned access rules). Repeat per
+   doc. (Alternative: hand-tweak the pulled `App.jsx` and `npx vibes-diy push`.)
+   Note: the streaming `edit` subcommand can drop mid-turn in cloud sessions and
+   roll back ("Recovered N files from snapshots") — prefer `db put` / `push` for
+   deterministic art-direction.
+3. **Capture the app, not the chrome.** With the chrome-devtools MCP: set a mobile
+   viewport (`resize_page` 390×844), `navigate_page` to the `/vibe` URL (the bare
+   `*--*.prod-v2.vibesdiy.net` URL redirects there), `take_snapshot` to get the
+   `Iframe` element's `uid`, then `take_screenshot` with that `uid` — that captures
+   only the app (the floating Vibes switch and nav are excluded). The app embeds a
+   small VIBES·DIY watermark, which is fine for the blog.
+4. **Place + embed.** Save to `images/blog/<post-slug>/<name>.png` and reference it
+   with a root-absolute path in a `<figure>` (see "Writing the body"). Caption it
+   honestly and link the live vibe.
+
+The capture is fine on cloud headless Chromium when the app supplies its own
+colors (no forced-dark distortion); if a shot looks wrongly darkened, re-capture
+from a real browser. See `src/posts/in-place-generation.md` and
+`teaching-codegen-defaults.md` for generated-vibe figures, and
+`the-vibe-owner-viewer-experience.md` for an expanded-switch capture of a live app.
+
 ## How it's wired (for reference)
 
 - `build.js` blog pass reads `src/posts/*.md`, renders with `marked` +

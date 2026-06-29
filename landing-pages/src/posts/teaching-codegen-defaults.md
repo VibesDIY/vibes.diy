@@ -8,6 +8,11 @@ glyph: "author-owned ▸ default"
 
 Ask a model to build an app and it quietly assumes one boss and a wall of permissions. That single default — buried in the system prompt — was making generated apps wrong by reflex. Here are the three moves it took to teach the generator that the default owner is just *you*. (Companion to the [generator eval post](how-we-eval-the-generator.html), which was about measuring quality.)
 
+<figure>
+    <img src="/images/blog/teaching-codegen-defaults/shared-meadow-mobile.png" alt="A shared meadow vibe on mobile: a dozen-plus colorful flowers scattered across a soft green gradient, with a faint 'tap the grass to plant a flower' hint at the bottom" loading="lazy">
+    <figcaption>What "author-owned, multiplayer by default" produces: a meadow generated from one plain-language prompt, where every signed-in visitor plants flowers everyone sees — no owner gate, no permission wall. (Live: <a href="https://vibes.diy/vibe/garden-gnome/blog-demo-garden">blog-demo-garden</a>.)</figcaption>
+</figure>
+
 ## The bug was a default, not a line of code
 
 The old codegen guidance reflexively reached for owner-gating. Faced with any permission-shaped request, the model would write the equivalent of `if (!user.isOwner) throw "owner only"` and call it done. That made "the owner must grant roles before anyone can participate" the *default shape of every generated app*.
