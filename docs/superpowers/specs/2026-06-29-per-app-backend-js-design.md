@@ -209,14 +209,37 @@ Generalize the executor to **invoke a named handler**, not just render. Lives in
   trigger identities ⇒ same loader id; (b) no cross-invocation identity bleed (identity in the request,
   never the WorkerCode); (c) policyVersion bump ⇒ new id.**
 
-### Slice B2 — Push-time discovery + config validation (`processBackendBindings`)
+### Slice B2 — Push-time discovery + config validation
 
-Clone `processAccessBindings`: detect `/backend.js`, store a `backendFunctionBindings` row
-(`{ownerHandle, appSlug, cid, config, schedule}`), delete on removal.
+Split into a pure parsing cut and a persistence cut so the schema migration doesn't ride along with
+the parser (sharp, lower-risk).
 
-- Parse `config.scheduled.interval`; **reject sub-5s** and `> 1h` at push time with a clear error.
-- Record which exports exist (so routing/alarm/onChange wiring know what to invoke).
-- **Tests:** detection, interval bounds, removal, multi-export recording. No DO yet.
+#### B2a — `parseBackendConfig` (pure, library-only) — ✅ implemented
+
+`vibes.diy/vibe/runtime/parse-backend-config.ts`. Given `backend.js` source, report which trigger
+exports exist (`fetch`/`scheduled`/`onChange`, plus whether a `config` export is present) and validate
+the schedule.
+
+- Parses `config.scheduled.interval` (scoped to the `scheduled:` block so a stray `interval:` is
+  ignored) and **rejects sub-5s, over-1h, and malformed intervals at push time with a clear error** —
+  never silently clamped. A `scheduled` handler with no interval is an error; an interval with no
+  `scheduled` handler is ignored.
+- Detects exports across `function` / `const`-arrow / `export { x as fetch }` forms; word-boundaried so
+  `prefetch` ≠ `fetch`.
+- Pure, Workers-safe, zero I/O — the push path (B2b) consumes the result.
+- **Tests** (`tests/app/ssr/parse-backend-config.test.ts`): handler detection across export forms;
+  interval units + inclusive boundaries (5s, 1h); sub-5s / over-1h / malformed rejection;
+  scheduled-without-interval error; interval-without-scheduled ignored; substring guard.
+
+#### B2b — `processBackendBindings` + the `backendFunctionBindings` table (persistence + wiring) — _next_
+
+Clone `processAccessBindings`: detect `/backend.js`, upsert a `backendFunctionBindings` row
+(`{ownerHandle, appSlug, cid, assetUri, handlers, intervalMs, updated}`) using the B2a parse result,
+delete on removal; wire it into the push path (`ensure-app-slug-item.ts`) next to
+`processAccessBindings`. Carries the new D1/pg table + Drizzle migration — intentionally landed with
+(or just before) B3's DO that reads it, so no unused schema ships early.
+
+- **Tests:** detection, upsert/delete on removal, handlers + interval persisted from the parse result.
 
 ### Slice B3 — `_api` routing → BackendDO.fetch → isolate
 
@@ -391,6 +414,38 @@ defaults above into testable guarantees (the follow-up pass @CharlieHelps offere
 - [ ] **Delivery + idempotency.** `onChange` is delivered at-least-once with zero subscribed sockets;
       handlers are documented idempotent; no ordering guarantee is promised. _Tests: delivery with no
       sockets; duplicate delivery tolerated._
+
+## Rollout runbook (flag-gated the whole way; staged flip for final review)
+
+Nothing reaches end users until the operator flips a flag. Two independent gates:
+
+1. **Platform flag `BACKEND_JS`** (worker env var, per-environment — the `VIBES_SSR` analog). `off`
+   (default) = inert; `loader` = live. There is no `node` mode.
+2. **Per-vibe + per-author** — even with the flag on, a vibe gets backend behavior only if it ships a
+   `backend.js` _and_ its author passes the gate (verified-login at launch; KYC pluggable follow-on).
+   So flipping the flag touches no existing vibe; it only lets opted-in ones run a backend.
+
+**Every slice (B1–B9) lands dormant behind `BACKEND_JS=off`.** Merging them ships zero runtime change.
+`loader` mode cannot do anything useful until **B8** (egress proxy replaces `globalOutbound: null`) and
+**#2845** (dep bundling) land — and `env.LOADER` reaches GA (open beta today). That's why B1–B7 are
+safe to merge while dark.
+
+**Final-review process before opening to users** (per resolved default #7 — staged env flip, not a
+trusted-author prod allowlist):
+
+1. Merge B1–B7 dormant; prod unaffected.
+2. Land B8 + #2845 (still default-off).
+3. **Flip `BACKEND_JS=loader` in a non-prod env first** (dev/preview canary). Hands-on review: push a
+   vibe with a real `backend.js` and exercise an OAuth/webhook (`fetch`), a poller (`scheduled`), and an
+   email-on-write (`onChange`); watch the egress proxy, DO alarms, and that writes land through
+   `access.js`.
+4. **Verify the must-hold invariants** (above) on real traffic: cache-key isolation, write-path parity,
+   loop-guard, egress locus, delivery/idempotency.
+5. **Flip prod** — still gated per author by verified-login. The reversible escape hatch throughout is
+   flipping `BACKEND_JS` back to `off`.
+
+Caveat: this assumes `env.LOADER` reaches GA. If it's still beta when B8 lands, the canary happens but
+the prod flip waits on Cloudflare — same posture as SSR.
 
 ## Risks / caveats
 
