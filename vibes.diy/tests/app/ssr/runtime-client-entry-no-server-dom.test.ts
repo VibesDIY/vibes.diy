@@ -30,4 +30,18 @@ describe("vibe-runtime client entry stays free of react-dom/server", () => {
   it("render-vibes.ts is the file that owns the server import", () => {
     expect(runtimeFile("render-vibes.ts")).toMatch(/["']react-dom\/server["']/);
   });
+
+  // Slice 2 (#2802): the SSR executors reach `react-dom/server` (NodeExecutor
+  // deep-imports render-vibes.js; the Worker Loader code embeds it as a string),
+  // so they must also stay off the client root. Server callers deep-import them.
+  it("index.ts does not re-export the SSR executor modules", () => {
+    const index = runtimeFile("index.ts");
+    expect(index).not.toMatch(/from\s+["']\.\/node-executor\.js["']/);
+    expect(index).not.toMatch(/from\s+["']\.\/worker-loader-executor\.js["']/);
+  });
+
+  it("node-executor.ts deep-imports the slice-1 renderer (not the package root)", () => {
+    const node = runtimeFile("node-executor.ts");
+    expect(node).toMatch(/from\s+["']\.\/render-vibes\.js["']/);
+  });
 });

@@ -126,6 +126,110 @@ Package: `@vibes.diy/vibe-runtime` (`vibes.diy/vibe/runtime`), which already dep
    content. Acceptance: authorized vs unauthorized viewers get different, correct no-JS output
    for the same gated vibe, matching the `getDoc`/`queryDocs` visibility decision.
 
+## Slice 2 (this PR) — transform + executor interface
+
+Builds directly on slice 1's `renderVibeToString` (#2823). Everything here lives in
+`@vibes.diy/vibe-runtime` (`vibes.diy/vibe/runtime`). Library-only: **no route wiring, no env
+plumbing into the real worker, no caching, no data path** — all later slices. The deliverable is
+the transform step plus a flag-selectable executor abstraction with the two impls the design
+named, and the tests that can run in CI today.
+
+### `transformVibeSource(src) → { module }`
+
+Pure Sucrase TSX→JS. `transforms: ["jsx", "typescript"]`, `production: true`,
+`jsxRuntime: "automatic"` — the same options the existing hot-swap path uses
+(`register-dependencies.ts` `applyHotSwap`), plus `"typescript"` so `.tsx` type annotations are
+stripped. Returns `{ module }` where `module` is the compiled ESM source string. No import-map
+resolution here — that is the executor's concern (Node) or the isolate's (Loader). Sucrase is
+Workers-safe (no wasm, no `eval`), so this same function runs in both executors.
+
+### `Executor` interface
+
+```ts
+interface VibeExecuteInput {
+  source: string;
+  mountParams: unknown;
+} // raw TSX + mount ctx
+interface VibeExecuteResult {
+  html: string;
+}
+interface Executor {
+  render(input: VibeExecuteInput): Promise<VibeExecuteResult>;
+}
+```
+
+`source` is raw vibe TSX; each executor calls `transformVibeSource` itself (so the transform is
+shared, not duplicated by callers). `mountParams` is the slice-1 `VibeMountParams` shape, passed
+straight through to `renderVibeToString`. Both executors converge on the same slice-1 renderer —
+deep-imported as `@vibes.diy/vibe-runtime/render-vibes.js` (Node) or imported inside the isolate
+module (Loader) — never pulled through the package root (the `react-dom/server` guard test).
+
+- **`NodeExecutor`** — runs the compiled module in this process. `transformVibeSource` → rewrite
+  the transform's bare specifiers (`react/jsx-runtime`, `react`, …) to resolved `file://` URLs via
+  `import.meta.resolve` (a `data:` URL has no parent path for bare resolution) → dynamic-`import`
+  the `data:` URL → take `.default` as the component → `renderVibeToString([Comp], mountParams)`.
+  Resolving through the runtime package's own `node_modules` keeps a **single React instance**
+  shared with `react-dom/server`, which is what makes hydration-parity markup come out right. This
+  is the CI-testable executor and the container fallback. Bare-specifier resolution beyond React
+  (full vibe dependency graphs / import maps) is a later slice; slice 2 resolves what
+  `import.meta.resolve` can reach, and leaves unresolvable bare specifiers untouched (they throw at
+  import time with a clear message rather than silently mis-resolving).
+- **`WorkerLoaderExecutor`** — the edge path. `transformVibeSource` → `buildVibeWorkerCode({ module,
+mountParams })` shapes a Cloudflare Worker Loader `WorkerCode` (`{ mainModule, modules,
+compatibilityDate }`): a `main` module string that imports `renderVibeToString` from
+  `@vibes.diy/vibe-runtime/render-vibes.js`, imports the vibe component from a sibling module
+  carrying `module`, and `export default { async fetch() }`s the rendered HTML as a
+  `text/html` `Response`, with `mountParams` JSON-embedded. The executor then
+  `env.LOADER.get(sha, () => workerCode).getEntrypoint().fetch(...)` and returns the response text.
+  `sha` is a content hash of the worker code so identical source reuses the isolate. **The
+  `env.LOADER` binding is open beta and absent from CI**, so `render()` is guarded behind the flag
+  and the binding's presence; we unit-test the pure **`buildVibeWorkerCode` shaping logic** and the
+  executor's orchestration against a **fake LOADER binding** (a stub `get`/`getEntrypoint`/`fetch`
+  that echoes), never a live isolate load.
+
+### `VIBES_SSR=off|node|loader` flag
+
+`parseVibesSsrMode(raw): "off" | "node" | "loader"` — unknown/undefined ⇒ `"off"` (the safe
+default the Risks section mandates until Loader is GA). `selectExecutor(mode, { loader? })` returns
+`undefined` for `"off"`, a `NodeExecutor` for `"node"`, and a `WorkerLoaderExecutor` for
+`"loader"` (throwing if no `loader` binding is supplied). No call site wires this into the real
+worker yet — that is slice 4; here it is a pure factory with unit coverage.
+
+### File layout & the `react-dom/server` guard
+
+New files in `vibes.diy/vibe/runtime`: `transform-vibe-source.ts` (pure, root-safe),
+`vibe-executor.ts` (interface + flag + `selectExecutor`), `node-executor.ts` (deep-imports
+`render-vibes.js`, so transitively pulls `react-dom/server`), `worker-loader-executor.ts`
+(`buildVibeWorkerCode` + the executor; pulls `react-dom/server` only as a _string_, not an import).
+Like `render-vibes.ts`, the executor modules are **not** re-exported from `index.ts` (the client
+entry loaded natively in the iframe, where `react-dom/server` is not in the import map). Server
+callers deep-import them. The existing `runtime-client-entry-no-server-dom.test.ts` guard is
+extended to assert `index.ts` re-exports none of the SSR-executor modules.
+
+### Tests (all CI-runnable today)
+
+- **Node SSR project** (`vibes.diy/tests/app/ssr`, `environment: node`):
+  - `transformVibeSource` turns TSX (typed props + JSX) into JS that imports `react/jsx-runtime`
+    and strips types.
+  - `NodeExecutor.render` of a TSX source returns HTML containing the component output and a
+    `mountParams`-derived value (a component reading `useVibeContext()`), proving the executor →
+    slice-1 renderer round-trip with `globalThis.window` undefined.
+  - `buildVibeWorkerCode` produces a `WorkerCode` whose `main` module deep-imports
+    `render-vibes.js`, embeds the transformed module + JSON `mountParams`, and exposes a `fetch`
+    default export.
+  - `WorkerLoaderExecutor.render` against a **fake LOADER** drives `get → getEntrypoint → fetch`
+    and returns the response text (orchestration only; no live isolate).
+  - `parseVibesSsrMode` / `selectExecutor`: `off`→`undefined`, `node`→`NodeExecutor`,
+    `loader`→`WorkerLoaderExecutor` (and throws without a binding); unknown ⇒ `off`.
+- **Guard** (`runtime-client-entry-no-server-dom.test.ts`): `index.ts` does not re-export
+  `node-executor` / `worker-loader-executor` / `render-vibes`.
+
+### Out of scope for slice 2 (explicit YAGNI)
+
+Route wiring, caching, OG/meta, the live-query/quiesce data path, full vibe dependency-graph /
+import-map resolution in the Node path, a live Worker Loader load, and access-consistent
+per-viewer SSR. All deferred to slices 3–6 above.
+
 ## SEO & the iframe boundary
 
 The vibe must run in a cross-origin **sandboxed iframe** for safety (untrusted code execution).
