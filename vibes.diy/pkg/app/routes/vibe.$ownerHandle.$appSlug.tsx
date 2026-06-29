@@ -974,10 +974,7 @@ export default function VibeIframeWrapper() {
           sidebar over the landing card in these states (Codex P2). */}
       {!isAccessGranted && (
         <div
-          className={cx(
-            "flex h-screen w-screen items-center justify-center",
-            liftCardOverApp ? "fixed inset-0" : gridBackground
-          )}
+          className={cx("flex h-screen w-screen items-center justify-center", liftCardOverApp ? "fixed inset-0" : gridBackground)}
           style={
             liftCardOverApp
               ? { zIndex: 5, background: "rgba(0,0,0,0.6)", backdropFilter: "blur(3px)", WebkitBackdropFilter: "blur(3px)" }
