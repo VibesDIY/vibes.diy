@@ -17,4 +17,3 @@ downstream signature, which is a separate auth-and-core-touching refactor you do
 without a byte-compat gate. The trade-off: a thin-looking PR that's actually the correct
 Phase 1, with an inventory doc that turns "fix the rest" into a scoped follow-up instead of a
 risky barrel-ahead.
-</content>
