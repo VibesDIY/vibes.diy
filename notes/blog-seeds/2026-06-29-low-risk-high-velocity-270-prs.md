@@ -22,6 +22,25 @@ risk-control mechanism, not the thing you trade against it** — small revertibl
 turning a caution dial per-PR beats big-bang merges guarded by hope. Three migrations prove it
 (retiring `/chat` for the `/vibe` route, de-fireproofing identity, and building the eval
 harnesses that let prompt/model changes be measured instead of guessed), and none of them ever
-existed as one terrifying PR. The trade-off/gotcha: this only works if slices are *independently
-shippable* (the `vibeApi ?? chatApi` fallback, flags-default-off, spec-first design PRs before
-code) — slicing without that discipline just gives you 270 ways to half-break prod.
+existed as one terrifying PR.
+
+Two deeper threads the founder/indie cut should lead with. **(1) The real bottleneck was never
+the code — it was focus.** jchris's framing: "I would not have been able to maintain focus for
+these tasks; the agent holds the context, and I dip in when decisions are required, so I can
+shepherd a flock of workstreams without the risk that comes from fractured focus." The agent
+absorbs the context-switch tax, so you get the throughput of many parallel threads without the
+attention-splitting risk. The hard part of building was always *deciding what matters*, not
+typing. **(2) The tools improve on demand, and that's why the speed compounds.** The `agents/`
+directory is the evidence — 22 docs touched in the window, new ones pulled into existence by real
+walls: `github-mcp-limits.md` (slim `gh-runs.sh` wrapper, #2640, June 25), `cloud-browser-setup.md`
++ `authed-browser-debugging.md` (chrome-devtools MCP screenshots out-of-the-box in cloud sessions,
+June 28), `identity-ship-verify.md` (headless `DEVICE_ID` prod-verify round-trip, June 29). The
+forcing function was getting everything to run in **cloud sessions** — started as a latency hack
+(jchris on a Greek island, codebase across an ocean), became the way of working: most work now
+ships from a phone at the beach, *faster and better*, because using the product under real-world
+conditions calls forth the next improvement without breaking stride.
+
+The trade-off/gotcha: this only works if slices are *independently shippable* (the
+`vibeApi ?? chatApi` fallback, flags-default-off, spec-first design PRs before code) and if every
+tool improvement is demand-driven and written down — slicing without that discipline just gives
+you 270 ways to half-break prod, and speculative tooling just burns the time the slicing saved.

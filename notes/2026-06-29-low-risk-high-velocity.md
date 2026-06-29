@@ -1,38 +1,66 @@
-# The Bot Shepherd: 270 PRs in 17 Days, and Why Going Fast Was the Safe Choice
+# The Bot Shepherd: 270 PRs in 17 Days, Mostly From a Beach
 
-*A founder's-eye view of what high-velocity shipping actually looks like up close — and why
-the speed was the safety mechanism, not the thing we traded against it.*
+*A founder's-eye view of what high-velocity shipping actually looks like up close — why the
+speed was the safety mechanism, why the real bottleneck was never the code, and how the tools
+got better every time a task needed them to.*
 
 ---
 
-## The number that started this
+## Where this was written
 
-I pulled the git stats for our last sprint — June 12 to June 29, seventeen days — expecting a
-churn total and a vague sense of "we did a lot." Here's what came back:
+I'm on a Greek island. Officially, on vacation. The codebase lives on the other side of an
+ocean, and my laptop's token streams did not enjoy the swim — so I pushed as much of my work as
+possible into cloud sessions, where the agent runs next to a copy of the repo instead of next to
+me.
+
+That started as a latency hack. It turned into the way I work now. Most of what I ship lately, I
+ship from my phone, from a beach. And it comes out *faster and better* than when I was hunched
+over a laptop with full focus — because the hard part of building was never the coding. It was
+deciding what matters.
+
+Here's what came out of those seventeen days (June 12–29):
 
 - **270 pull requests merged**
-- **~223,000 lines of churn** (+168,886 / −54,086) across 2,650 file-changes
+- **~223,000 lines of churn** across 2,650 file-changes
 - **median PR: 196 lines, 5 files**
 - **median time-to-merge: 0.8 hours** — 80% merged in under six hours, 95% within a day
 - **95% of PRs were agent-authored**; I personally merged 261 of them
 - a steady ~16 PRs/day, peaking at **47 merged on June 28**
 
-If you're an indie builder, the instinct when you see "270 PRs, one reviewer" is to flinch.
-That's the rubber-stamp zone. That's where quality goes to die and prod goes down on a Friday.
+If you're an indie builder, "270 PRs, one reviewer, from a phone" should set off alarms. That's
+the rubber-stamp zone, where quality dies and prod goes down on a Friday. It didn't. And the
+reason it didn't is the thing I actually want to write about.
 
-Except it didn't. And when I went looking for *why*, the answer flipped my mental model:
-**we weren't fast despite being careful. We were careful by being fast.**
+## The real bottleneck was never the code. It was focus.
+
+I could not have done this work the old way — not because I can't write the code, but because I
+cannot hold *that many threads* in my head at once. A migration here, an eval harness there, a
+routing change, a dependency extraction, a UI polish pass. Switching between them by hand is
+brutal: every context switch dumps the stack, and rebuilding it costs twenty minutes and a
+little bit of will. Fractured focus is the tax every solo builder pays, and it's the real reason
+"just ship faster" usually means "ship sloppier."
+
+The agent removes that tax. **It holds the context so I don't have to.** Each workstream keeps
+its own state — what's done, what's blocked, what's next — and I dip in only when a decision is
+required. I'm not maintaining ten mental stacks; I'm answering ten questions, each one already
+framed for me with the relevant context attached.
+
+That changes what I am. I'm not a coder going fast. I'm a **shepherd moving a flock** — many
+workstreams grazing forward in parallel, and me walking the edge of the field, nudging direction
+where it's needed. The thing that used to make parallel work dangerous — fractured attention,
+half-remembered state, the change you forgot you started — is exactly the thing the agent
+absorbs. So I get the *throughput* of many parallel threads without the *risk* that normally
+comes with splitting your focus across them.
 
 ## High velocity is a slicing problem
 
-Look again at that median: **196 lines.** The *mean* PR was 826 lines — more than four times
-bigger — which tells you the average is a lie. A handful of giant PRs drag it up: the top 10 PRs
-account for **53% of all churn**, the top 20 for **63%**. And those giants aren't features —
-they're a CI prettier-format split (59k lines, mechanical), a vendored-skills import (18k), a
-dead-code prune (5.9k). Obvious, low-judgment sweeps you can review by skimming the *shape* of
-the diff.
+Look again at that median: **196 lines.** The *mean* was 826 — more than four times bigger —
+which tells you the average is a lie. A handful of giants drag it up: a CI prettier-format split
+(59k lines, mechanical), a vendored-skills import (18k), a dead-code prune (5.9k). The top 10
+PRs are **53% of all churn**; strip those obvious sweeps and the typical change is a couple
+hundred lines you can read in one sitting.
 
-Strip those out and the real texture appears:
+The real texture:
 
 | PR size (churn) | share |
 |---|---|
@@ -43,10 +71,8 @@ Strip those out and the real texture appears:
 | >1,000 | 16% |
 
 **Half of every PR was 200 lines or fewer. Seventy percent were under 500.** A 200-line diff is
-something one person can hold in their head, reason about completely, and *revert without
-ceremony* if it misbehaves. That's the whole game.
-
-And the speed tracks the size, cleanly:
+something you can reason about completely on a phone screen and *revert without ceremony* if it
+misbehaves. And the speed tracks the size, cleanly:
 
 | PR size | median time-to-merge | merged same-day |
 |---|---|---|
@@ -56,121 +82,116 @@ And the speed tracks the size, cleanly:
 | 501–1,000 | 1.2h | 89% |
 | >1,000 | 2.8h | **64%** |
 
-The big PRs are the *only* bucket where same-day merge rate falls off a cliff. Size is where
-latency lives, and latency is where risk lives. Small isn't just faster — small is the thing
-that *keeps review real* instead of theater.
+The big PRs are the *only* bucket where same-day merge falls off a cliff. Size is where latency
+lives, and latency is where risk lives. The decomposition shows up in the titles too: **18% say
+*slice*, *phase*, *step*, or *bucket*; 29% reference a parent issue.** Big work didn't arrive as
+a big-bang. It arrived as a chain — and a chain of small things is exactly what a shepherd can
+hold when an agent is carrying the state.
 
-The decomposition shows up in the titles, too: **18% literally say *slice*, *phase*, *step*, or
-*bucket*; 29% reference a parent issue or PR.** Big work didn't arrive as a big-bang. It arrived
-as a chain.
+## Same week, same hand, four different caution dials
 
-## The human element isn't gatekeeping. It's shepherding.
+When agents write 95% of the code, the human's job is no longer authorship. It's **choosing
+where to go, and how carefully to tread — dialed to risk and reward, per change.** The agents
+are extraordinary at producing correct, tested, well-scoped slices. What they can't decide is
+how much it would hurt if *this particular* slice were wrong in prod. That judgment is the job,
+and it's almost the entire job.
 
-Here's the part I want indie builders to sit with, because it reframes what your job becomes
-when agents write 95% of the code.
+Four PRs from one migration, same week, with the dial set four ways:
 
-I'm not the gatekeeper. A gatekeeper stands at a door saying yes or no, line by line, trying to
-out-read the machine. That doesn't scale to 47 merges a day and it's not where a human adds
-value anyway.
-
-I'm the **shepherd**. I choose *where we go* — which migration is worth starting, which corner
-of the product to push on next. And, just as much, I choose **how carefully we tread** — and
-that caution dial gets *set per-PR, by risk and reward.* The agents are extraordinary at
-producing correct, tested, well-scoped slices. What they can't do is decide how much it would
-hurt if this particular slice were wrong in prod. That judgment is mine, and it's almost the
-entire job.
-
-The best illustration is four PRs from the same migration, same week, with the dial set to four
-different places:
-
-- **#2827 — sidebar links point at the `/vibe` route.** Blast radius: a URL string prefix
-  (`/chat/...` → `/vibe/...`). Reward: every "My Apps" tap now opens the running app instead of
-  the editor. I shipped it **hot, no flag, merged 25 minutes after it opened.** Dial: wide open.
+- **#2827 — sidebar links point at the `/vibe` route.** Blast radius: a URL string prefix.
+  Shipped **hot, no flag, merged 25 minutes after it opened.** Dial wide open.
 - **#2837 — a brand-new vibe builds *in place* on `/vibe`** instead of bouncing to `/chat`.
-  Higher stakes (it's the first-run experience for every new app), so: shipped **on**, but only
-  after an end-to-end run on the preview deploy and a fix for a P1 a reviewer caught (a
-  brand-new vibe has no database row yet, so the route latched "App not available"). Dial:
-  open, with a verification gate.
-- **#2835 — server-side rendering for vibes.** Genuinely risky surface. It landed **dormant
-  behind a flag, with production explicitly `off`** — fully built, fully tested, shipped *dark*.
-  And the PR was *spec-first*: a design doc opened for review **before any code**. Dial: nearly
-  closed.
-- **#2494 — moving doc operations onto a new connection plane.** This one carried a hold I wrote
-  by hand: *"⚠️ Do not merge until after the next prod deploy of `main`... land the current main
-  to prod first (clean baseline), then merge this so the change deploys in isolation and any
-  regression is unambiguously attributable."* Dial: closed, sequenced deliberately so that if
-  something broke, there'd be exactly one suspect.
+  Higher stakes (first-run for every new app): shipped **on**, but only after an end-to-end run
+  on the preview deploy and a fix for a P1 a reviewer caught. Dial open, with a gate.
+- **#2835 — server-side rendering for vibes.** Risky surface. Landed **dormant behind a flag,
+  production explicitly `off`** — fully built, shipped *dark* — and the PR was *spec-first*: a
+  design doc opened for review **before any code.** Dial nearly closed.
+- **#2494 — moving doc operations onto a new connection plane.** Carried a hold I wrote by hand:
+  *"⚠️ Do not merge until after the next prod deploy of `main`... so the change deploys in
+  isolation and any regression is unambiguously attributable."* Dial closed, sequenced on
+  purpose so a regression would have exactly one suspect.
 
-Same shepherd. Same migration. Four completely different levels of caution — each one a
-deliberate read of "what does it cost if this is wrong?" *That's* the craft. Not typing the
-code. Setting the dial.
+Same shepherd, same migration, four reads of "what does it cost if this is wrong?" That's the
+craft. Not the typing — the dial.
+
+## The tools got better every time a task needed them
+
+Here's the part that makes the speed compound instead of burn out: **we improve the tooling as
+we go, and every improvement is pulled into existence by a real task, never speculative.** The
+record of this lives in our `agents/` directory — the shared playbook the agents read before
+they work. We touched **22 of those docs** in the window, and the new ones map one-to-one onto
+walls we hit:
+
+- **June 25 — `github-mcp-limits.md`.** The GitHub MCP's `actions_list` output was too bloated
+  to be useful mid-session, so we built a slim wrapper (`scripts/gh-runs.sh`) and wrote down
+  when to reach for it. Friction → fix → documented.
+- **June 28 — `cloud-browser-setup.md` + `authed-browser-debugging.md`.** This is the forcing
+  function paying off. To QA from a beach I needed screenshots from the cloud session — so we
+  made the `chrome-devtools` MCP work *out of the box* via a SessionStart hook, then wrote the
+  recipe for driving a *logged-in* browser for ad-hoc debugging. Suddenly I can see the product,
+  not just the diff, from my phone.
+- **June 29 — `identity-ship-verify.md`.** The identity migration (below) needed a way to prove
+  a ship was safe on prod *without re-logging-in everyone* — a headless `DEVICE_ID` round-trip.
+  The migration called the runbook into being; the runbook made the next identity slice cheaper.
+
+Each of these is a small investment that lowers the cost and risk of everything after it. The
+cloud forcing function — born from a latency problem on an island — is *why* low-risk shipping
+from a phone is even possible. And because the improvements are demand-driven, none of them is
+wasted: we only built the tool the moment a task proved we needed it. The agentic flow puts me
+in the product under real-world conditions (on mobile, on flaky beach wifi, as an actual user),
+which surfaces the next improvement to call forth — **without ever breaking my stride.**
 
 ## Three migrations that never existed as one scary PR
 
-The thesis — *go fast to stay safe* — only earns its keep on the work that's genuinely
-dangerous. Big migrations are where teams reach for the big-bang merge and a prayer. We didn't.
-Here are three from the window, each delivered as a chain of revertible slices.
+The thesis only earns its keep on work that's genuinely dangerous. Big migrations are where
+teams reach for the big-bang merge and a prayer. We didn't.
 
-### 1. Retiring `/chat` for the `/vibe` route
+**Retiring `/chat` for the `/vibe` route.** Two parallel route families for the same app; the
+goal was to make `/vibe` the front door. It came as a staircase — point the sidebar over
+(#2827), route new-vibe builds in place (#2837), SSR groundwork behind a flag (#2835) — each
+step keeping `/chat` alive as a fallback. Always shippable, because no slice removed the old
+path until the new one was proven.
 
-We had two parallel route families for the same app: `/chat/...` (the editor) and `/vibe/...`
-(the running app). The goal was to make `/vibe` the front door. A naive version of this is one
-enormous PR that reroutes everything and holds its breath on deploy.
+**De-fireproofing identity.** The scariest work of the sprint: untangling our identity and
+device-credential layer from an embedded dependency — the canonical "touch it wrong and everyone
+gets logged out" nightmare. It moved in buckets and phases: collapse three session services into
+one (#2714), lift the device-id keybag in-repo (#2735), tighten cert verification (#2671), route
+imports through a clean seam one module at a time. One slice's whole job was *triage*: of ~90
+call sites that supposedly needed changing, ~80 were test harnesses and only **two** real ones
+fit the narrower contract — so we narrowed those two and *documented why the rest couldn't be*.
 
-Instead it came as a staircase: point the sidebar links over (#2827), then route a brand-new
-vibe to build in place (#2837), then the SSR groundwork behind a flag (#2835) — each step
-keeping `/chat` fully alive as a fallback. The migration was *always shippable*, because no
-single slice removed the old path until the new one was proven.
+**The eval harnesses.** The least glamorous, quietly most important: the measurement
+infrastructure that lets us change prompts and swap models on *evidence* instead of vibes —
+cross-model codegen evals (#2542), a one-shot-vs-agentic harness (#2638), an autoresearch loop
+that iterates against a metric (#2596). The single highest-risk change you can make to an AI
+product is to its prompts; before this, that was a guess. Now it's a number — the instrument
+panel for the dial.
 
-### 2. De-fireproofing identity
+## If you're building solo (or nearly)
 
-The deepest, scariest work of the sprint: untangling our identity and device-credential layer
-from an embedded dependency. Auth migrations are the canonical "touch it wrong and everyone gets
-logged out" nightmare.
+1. **Let the agent hold the context; spend your focus on decisions, not threads.** The win isn't
+   typing speed. It's never paying the context-switch tax again. Shepherd many workstreams; don't
+   juggle them.
+2. **Make slices independently shippable.** Keep the old path alive, add fallbacks
+   (`vibeApi ?? chatApi`), land risky features flag-off. A slice that can't ship alone isn't a
+   slice — it's a time bomb with extra steps.
+3. **Set the caution dial per change, not per project.** Match ceremony to blast radius. Ship
+   cheap-to-revert work hot; sequence and gate the expensive stuff.
+4. **Improve the tools on demand, and write it down.** Every wall you hit is a chance to lower
+   the cost of the next mile — but only build the tool the task actually calls for, and capture
+   the recipe so it compounds.
+5. **Use your own product under real conditions.** The beach, the phone, the flaky wifi surfaced
+   improvements a desk never would.
 
-It moved in *buckets and phases* — collapse three session services into one
-(#2714), lift the device-id keybag in-repo and drop the external dependency (#2735), tighten
-cert verification to check the signing authority and not just the name (#2671), route imports
-through a clean seam one module at a time. One slice's whole job was *triage*: of ~90 call sites
-that supposedly needed changing, ~80 turned out to be test harnesses and only **two** real ones
-actually fit the narrower contract — so we narrowed those two and *wrote down why the rest
-couldn't be*, turning "fix the other 88" from a risky barrel-ahead into a scoped follow-up.
-That's velocity buying safety again: a thin, correct Phase 1 beats a heroic, fragile rewrite.
-
-### 3. The eval harnesses
-
-The least glamorous and quietly most important: we built the measurement infrastructure that
-lets us change prompts and swap models on *evidence* instead of vibes. A cross-model codegen
-eval (#2542), a two-mode harness that separates one-shot from agentic performance (#2638), an
-autoresearch loop that iterates against a metric and keeps or discards changes automatically
-(#2596), and a model-access eval (#2621).
-
-Why does this belong in a *safety* story? Because the single highest-risk change you can make to
-an AI product is to its prompts — and before this, that change was a guess. The eval harnesses
-turn "I think this prompt is better" into a number. They're the dial's instrument panel.
-
-## What this means if you're building solo (or nearly)
-
-You don't need 270 PRs or a team of agents to use this. The mechanism is portable:
-
-1. **Make slices independently shippable.** The `/vibe` migration kept `/chat` alive. Doc-plane
-   changes shipped with a `vibeApi ?? chatApi` fallback. Risky features land flag-off. If a
-   slice can't ship on its own without breaking prod, it's not a slice — it's a time bomb with
-   extra steps.
-2. **Set the caution dial per-change, not per-project.** A string-prefix change and an auth
-   migration do not deserve the same process. Matching ceremony to blast radius is most of the
-   skill. Ship the cheap-to-revert stuff hot; sequence and gate the expensive stuff.
-3. **Prefer many small PRs to one big one — for safety, not just speed.** A 200-line diff is
-   reviewable, reasoning-complete, and trivially revertible. A 2,000-line diff is hope.
-4. **Build the instruments before you need the readings.** Evals, preview deploys, and
-   spec-first design PRs are what let you turn the dial *down* with confidence instead of fear.
-
-The headline number — 270 PRs in 17 days — looks like a story about speed. It isn't. It's a
-story about how a stack of small, revertible, well-instrumented changes, with a human turning a
-caution dial over each one, is *both* faster and safer than the careful-looking alternative of
-big, rare, heavily-guarded merges. Velocity wasn't the risk. Velocity was the control.
+The headline — 270 PRs in 17 days — looks like a story about speed. It isn't. It's a story about
+where the bottleneck actually was. The hard part was never the code; it was holding focus across
+everything that matters and deciding what to do next. Hand the context-holding to the agent, keep
+the deciding for yourself, slice the scary things small, and improve your tools every time a task
+demands it — and you can move a whole flock forward at once. From a beach. Going *faster*,
+and *safer*, than careful ever was.
 
 ---
 
 *Numbers from a PR-level analysis of all 270 PRs merged into `vibesdiy/vibes.diy` between
-2026-06-12 and 2026-06-29. Seed: `notes/blog-seeds/2026-06-29-low-risk-high-velocity-270-prs.md`.*
+2026-06-12 and 2026-06-29. The tooling arc is the `agents/` directory's own commit history over
+the same window. Seed: `notes/blog-seeds/2026-06-29-low-risk-high-velocity-270-prs.md`.*
