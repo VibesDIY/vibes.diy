@@ -26,6 +26,11 @@ export interface AvatarConfirmRequest {
   // one image while a different CID is saved (#2418). Absent when the host has
   // no recorded URI for `cid`, in which case the modal shows no preview.
   readonly getURL?: string;
+  // The handle the avatar will be saved to. Shown on the consent card ("for
+  // handle @xyz") so the user knows which identity they're changing — avatars
+  // are per-handle (#2434) and the active handle is switchable. Absent → the
+  // line is omitted.
+  readonly handle?: string;
 }
 
 export interface PendingAvatarConfirm extends AvatarConfirmRequest {
@@ -56,6 +61,7 @@ class AvatarConfirmController {
         cid: req.cid,
         ...(req.mimeType ? { mimeType: req.mimeType } : {}),
         ...(req.getURL ? { getURL: req.getURL } : {}),
+        ...(req.handle ? { handle: req.handle } : {}),
         resolve: (confirmed: boolean) => {
           if (settled) return;
           settled = true;

@@ -198,6 +198,7 @@ export function vibeUpdateAvatarCid(sandbox: VibeApiCapableSandbox): EventoHandl
           cid,
           ...(mimeType ? { mimeType } : {}),
           ...(getURL ? { getURL } : {}),
+          ...(handle ? { handle } : {}),
         });
         if (!confirmed) {
           await ctx.send.send(ctx, {

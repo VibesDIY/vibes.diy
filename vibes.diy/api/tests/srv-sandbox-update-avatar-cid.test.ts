@@ -24,13 +24,13 @@ function fakeMessageEvent(data: unknown, origin: string, source: Window): Messag
 }
 
 function setupSandbox(opts: {
-  confirmAvatarUpdate?: (req: { cid: string; mimeType?: string; getURL?: string }) => Promise<boolean>;
+  confirmAvatarUpdate?: (req: { cid: string; mimeType?: string; getURL?: string; handle?: string }) => Promise<boolean>;
 }): {
   sandbox: vibesDiySrvSandbox;
   captured: CapturedMsg[];
   iframe: Window;
   ensureCalls: { handle: string; cid: string; mime?: string }[];
-  confirmCalls: { cid: string; mimeType?: string; getURL?: string }[];
+  confirmCalls: { cid: string; mimeType?: string; getURL?: string; handle?: string }[];
 } {
   const captured: CapturedMsg[] = [];
   const iframe = {
@@ -38,7 +38,7 @@ function setupSandbox(opts: {
   } as unknown as Window;
 
   const ensureCalls: { handle: string; cid: string; mime?: string }[] = [];
-  const confirmCalls: { cid: string; mimeType?: string; getURL?: string }[] = [];
+  const confirmCalls: { cid: string; mimeType?: string; getURL?: string; handle?: string }[] = [];
 
   const fakeApi = {
     onDocChanged: () => () => {
@@ -72,7 +72,7 @@ function setupSandbox(opts: {
     },
     ...(opts.confirmAvatarUpdate
       ? {
-          confirmAvatarUpdate: ((decide) => (req: { cid: string; mimeType?: string; getURL?: string }) => {
+          confirmAvatarUpdate: ((decide) => (req: { cid: string; mimeType?: string; getURL?: string; handle?: string }) => {
             confirmCalls.push(req);
             return decide(req);
           })(opts.confirmAvatarUpdate),
@@ -109,7 +109,7 @@ describe("vibeUpdateAvatarCid host handler", () => {
     postUpdate(sandbox, iframe, { mimeType: "image/png" });
     await new Promise((r) => setTimeout(r, 50));
 
-    expect(confirmCalls).toEqual([{ cid: "bafycid1", mimeType: "image/png" }]);
+    expect(confirmCalls).toEqual([{ cid: "bafycid1", mimeType: "image/png", handle: "alice" }]);
     expect(ensureCalls).toHaveLength(1);
     expect(ensureCalls[0]).toEqual({ handle: "alice", cid: "bafycid1", mime: "image/png" });
     const msg = captured.find((c) => (c.data as { type?: string }).type === "vibe.res.updateAvatarCid");
@@ -128,7 +128,7 @@ describe("vibeUpdateAvatarCid host handler", () => {
     postUpdate(sandbox, iframe, { mimeType: "image/png" });
     await new Promise((r) => setTimeout(r, 50));
 
-    expect(confirmCalls).toEqual([{ cid: "bafycid1", mimeType: "image/png", getURL: "fp:store/bafycid1" }]);
+    expect(confirmCalls).toEqual([{ cid: "bafycid1", mimeType: "image/png", getURL: "fp:store/bafycid1", handle: "alice" }]);
     // The written handle + cid are unaffected by the preview URI.
     expect(ensureCalls[0]).toEqual({ handle: "alice", cid: "bafycid1", mime: "image/png" });
   });

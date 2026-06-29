@@ -65,6 +65,11 @@ export function AvatarConfirmModal(): React.ReactElement | null {
     >
       <div className="flex w-full max-w-sm flex-col items-center gap-5 rounded-[5px] border-2 border-black bg-white p-6 shadow-[4px_4px_0px_0px_black] dark:bg-gray-900 dark:text-gray-100">
         <span className="text-sm font-bold uppercase tracking-wider">Set this as your avatar?</span>
+        {pending.handle && (
+          <span className="-mt-3 text-xs text-gray-500 dark:text-gray-400">
+            for handle <span className="font-semibold">@{pending.handle}</span>
+          </span>
+        )}
 
         <div
           className="flex h-32 w-32 items-center justify-center overflow-hidden rounded-full border-2 border-black dark:border-gray-600"
