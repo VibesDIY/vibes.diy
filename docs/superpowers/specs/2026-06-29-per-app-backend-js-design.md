@@ -155,9 +155,12 @@ All in `vibes.diy/vibe/runtime/` unless noted:
                                             putDoc → invokeAccessFn (QuickJS) — same gate as frontend writes
 ```
 
-- **BackendDO** (new DO class, keyed `{ownerHandle}/{appSlug}`) holds the _delta_ SSR never needed:
-  alarm scheduling, single-flight, retry-with-backoff, and durable token/task state. It is the
-  **orchestrator**, not the sandbox.
+- **BackendDO** (new DO class, keyed `{ownerHandle}/{appSlug}`) is the **control plane** for the
+  _delta_ SSR never needed: alarm scheduling, retry/backoff, dedupe windows, and durable token/task
+  state. It is the **orchestrator**, not the sandbox. Single-flight is scoped to **`scheduled`**
+  (one tick at a time per vibe) — `fetch`/`onChange` execution stays as **unblocked** as possible,
+  _not_ serialized behind one lane (per @CharlieHelps). Ship contention/queue-latency instrumentation
+  from day one so any "split the DO" decision is data-driven.
 - **The isolate** runs the actual `backend.js` via a `buildBackendWorkerCode` that dispatches to
   the requested export (`fetch`/`scheduled`/`onChange`) — the backend analog of
   `buildVibeWorkerCode`. `ctx` is supplied through `WorkerCode.env` + RPC bindings (db reader/writer
@@ -211,10 +214,11 @@ eviction — SSR pattern), runs the `fetch` handler in the isolate, returns the 
 ### Slice B4 — Durable layer: alarms (`scheduled`), single-flight, retry/backoff
 
 The genuinely-new work. BackendDO arms an alarm from `config.scheduled.interval`; on `alarm()` it
-runs the `scheduled` handler in the isolate, then re-arms. **No concurrent execution** (single-flight
-per vibe); if a tick overruns, the next starts after it finishes. Handler throw → exponential
-backoff retry. Push with a new interval re-arms; removing `scheduled` stops re-arming; deleting the
-vibe destroys the DO + alarms.
+runs the `scheduled` handler in the isolate, then re-arms. **No concurrent execution _of `scheduled`_**
+(single-flight is scoped to the timer lane, per vibe); if a tick overruns, the next starts after it
+finishes. `fetch`/`onChange` are **not** serialized behind this lane — they run unblocked (per
+@CharlieHelps). Handler throw → exponential backoff retry. Push with a new interval re-arms; removing
+`scheduled` stops re-arming; deleting the vibe destroys the DO + alarms.
 
 - **Tests** (fake binding, DO test harness): arm/fire/re-arm; interval change; single-flight
   (overlapping ticks serialize); backoff on throw; stop on removal.
@@ -235,11 +239,15 @@ BackendDO.invokeOnChange → isolate. **Fire-and-forget**: the write succeeds re
 > [#2306](https://github.com/VibesDIY/vibes.diy/issues/2306) "don't overload `dbName`" lesson when
 > shaping the payload.
 
-- **Loop-breaking:** a backend `ctx.db.put` inside `onChange` can re-enqueue another `onChange` — ship
-  a depth cap / source-tag in B5 itself, not as a follow-up (see open question 2).
+- **Delivery contract:** **at-least-once, no strict ordering** per `(dbName, _id)` at launch (per
+  @CharlieHelps). Document handler **idempotency** expectations + an optional dedupe-key the handler
+  can supply.
+- **Loop-breaking (in B5, not a follow-up):** a backend `ctx.db.put` inside `onChange` can re-enqueue
+  another `onChange` — use **source-tagging _and_ a depth cap together** (per @CharlieHelps).
 - **Tests:** event shape (create/update/delete via `doc`/`oldDoc` nullness); write succeeds even when
-  `onChange` throws; at-least-once delivery + handler idempotency; **delivered even with zero
-  subscribed sockets** (the regression guard against the evt-doc-changed mistake).
+  `onChange` throws; at-least-once delivery + handler idempotency; loop guard (source-tag + depth cap);
+  **delivered even with zero subscribed sockets** (the regression guard against the evt-doc-changed
+  mistake).
 
 ### Slice B6 — Write-back-through-access as the trigger identity
 
@@ -268,9 +276,12 @@ platform-level. **Remix runs with the remixer's hierarchy — original creator's
 
 Replace the isolate's `globalOutbound: null` with a controlled proxy/allowlist binding where egress
 policy + per-vibe rate limiting live. This is the abuse boundary; it is **required** before any live
-backend traffic.
+backend traffic. The **egress proxy binding is the policy source-of-truth** (per @CharlieHelps):
+`config` may _declare_ a requested policy and the DO may cache/coordinate, but **neither is the policy
+authority** — enforcement happens at the proxy.
 
-- **Tests:** outbound goes through the proxy binding; rate-limit trip; disallowed egress blocked.
+- **Tests:** outbound goes through the proxy binding; rate-limit trip; disallowed egress blocked;
+  `config`-declared policy is advisory, proxy decision wins.
 
 ### Slice B9 — Codegen docs + signal detection (`backend-js.llms.md`)
 
@@ -296,38 +307,67 @@ once. Live `loader` mode for both SSR and backend.js is gated on it.
 - **Secrets never leave the server**, resolved per the hierarchy, remix-isolated.
 - **Writes always go through `access.js`** as a real `userHandle` — no system-write backdoor; the
   access function can't tell a backend write from a frontend write.
-- **KYC gate (open question — see below).** The HTML proposes KYC-gating backend.js (because it makes
-  outbound requests) while `access.js` stays ungated. Whether launch requires verified-login vs a
-  separate KYC step is **still open** and designed alongside the access path.
-- **Resource limits.** Per-isolate CPU/memory/duration caps; alarm single-flight; DO eviction as
+- **Gating: verified-login at launch; KYC as a pluggable follow-on.** The HTML proposes KYC-gating
+  backend.js (because it makes outbound requests). Decided (per @CharlieHelps): a **verified-login /
+  claims gate is sufficient for launch**; design KYC as a **pluggable follow-on gate at the same
+  decision point**, not a hard launch blocker.
+- **Resource limits.** Per-isolate CPU/memory/duration caps; `scheduled` single-flight; DO eviction as
   natural cleanup.
 
-## Open questions (carried from #2202, annotated; for @CharlieHelps review)
+## Resolved defaults (decided with @CharlieHelps; [PR #2859 review](https://github.com/VibesDIY/vibes.diy/pull/2859))
 
-1. **Stored `backend.js` vs precompiled artifact?** Lean **stored-source + transform-at-load**
-   (reuse `transformVibeSource`), mirroring how SSR/`render-vibe` handles `App.jsx`. Confirm we
-   don't want a publish-time compiled artifact instead.
-2. **`ctx` wiring through the isolate.** SSR currently JSON-embeds `mountParams` into the hashed
-   `main` (forks the cache key). For backend.js, `ctx` (db RPC handle, resolved secrets, identity) is
-   **per-trigger and secret-bearing**, so it must ride `WorkerCode.env`/RPC, _not_ the hashed source.
-   Does the Worker Loader `env`/RPC surface comfortably carry a bidirectional `ctx.db` proxy whose
-   writes re-enter the **production `putDoc`/`invokeAccessFn` gate** (not the `access-runner` mirror),
-   or do we need a dedicated reader/writer service binding?
-3. **`onChange` delivery substrate.** A **new dedicated post-commit message on `VIBES_SERVICE`** (the
-   `evt-doc-changed` WebSocket stream is unsuitable — Codex P2, now reflected in B5). At-least-once
-   with handler idempotency is assumed — acceptable, or do we need de-dupe/ordering guarantees per
-   `(dbName, _id)`?
-4. **Single-flight + alarm ownership in the DO.** One BackendDO per `{owner}/{slug}` owns _all three_
-   triggers' execution serialization, or separate concerns (e.g. alarms in the DO, `fetch`/`onChange`
-   stateless)? The HTML implies one DO; SSR has no DO at all, so this is net-new and worth a sanity
-   check.
-5. **Egress policy shape.** Allowlist per vibe, global rate limit, or both? Where does the policy
-   live (the proxy binding vs DO state vs config), and what's the default for a brand-new backend?
-6. **KYC / gating.** Verified-login sufficient at launch, or a separate KYC step before a BackendDO is
-   created? Does an un-approved author's pushed `backend.js` compile-check and store but stay dormant?
-7. **Dep-bundling sequencing (#2845).** backend.js live mode is blocked on it just like SSR — should
-   B1–B7 land dormant first (no live `loader`) and B8 + #2845 unblock live together, or do we want a
-   trusted-author allowlist to exercise the live path sooner?
+The seven open questions are now settled with these defaults; the must-hold invariants below make them
+testable.
+
+1. **Stored `backend.js` vs precompiled artifact** → **stored-source + transform-at-load** (reuse
+   `transformVibeSource`), mirroring how SSR/`render-vibe` handles `App.jsx`. No publish-time compiled
+   artifact.
+2. **`ctx` through the isolate** → keep `ctx` **entirely out of the hashed module source**; carry
+   per-trigger identity/secrets via `WorkerCode.env`/RPC only. `ctx.db` is a **narrow RPC surface**
+   (`get`/`query`/`put`/`del`); **writes re-enter the access-enforced `putDoc` path** as the trigger's
+   active `userHandle`. Avoid a separate privileged reader/writer binding **unless it is purely
+   transport and still re-enters the same access policy path**.
+3. **`onChange` delivery** → **new dedicated post-commit message on `VIBES_SERVICE`** (not
+   `evt-doc-changed`); **at-least-once, no strict ordering** at launch; loop-breaking via
+   **source-tag + depth-cap together**, in B5; document idempotency + optional dedupe-key.
+4. **DO ownership** → DO is the **control plane** (alarms, retry/backoff, durable token/state, dedupe
+   windows). Keep `fetch`/`onChange` execution **unblocked**; single-flight only on the `scheduled`
+   lane. One DO per app to start, **with contention/queue-latency instrumentation from day one** so a
+   future split is data-driven.
+5. **Egress policy** → enforcement at the **egress proxy binding (source-of-truth)**; `config` declares
+   _requested_ policy, the DO may cache/coordinate, but neither is the authority.
+6. **Gating** → **verified-login/claims gate sufficient for launch**; KYC is a **pluggable follow-on
+   gate at the same decision point**, not a launch blocker.
+7. **Sequencing vs #2845** → land **B1–B7 dormant** (`BACKEND_JS=off`); enable live **only with B8 +
+   #2845 together**. Earlier exercise happens via **non-prod env-level canaries**, _not_ trusted-author
+   prod allowlists.
+
+## Must-hold invariants & acceptance checks
+
+Modeled on the SSR design's Phase A acceptance criteria; these gate the live cut and turn the
+defaults above into testable guarantees (the follow-up pass @CharlieHelps offered, folded in here).
+
+- [ ] **Cache-key isolation.** No per-trigger `ctx` (identity, secrets, request/event payload) ever
+      enters the hashed `WorkerCode` source. Same `backend.js` ⇒ same `sha` across triggers/requests;
+      different identities reuse one isolate without cross-contamination. _Tests: hash stability across
+      identities; identity never present in `modules`._
+- [ ] **Write-path parity.** Every `ctx.db.put` goes through the production `putDoc`/`invokeAccessFn`
+      (QuickJS) gate with the `AccessFnOutputs` sidecar — never the `access-runner` mirror. A backend
+      write and an identical frontend write produce the same allow/deny + sidecar outcome. _Tests:
+      allow/deny parity, cold/empty `accessFnOutputs`, owner-only `{ as }` impersonation._
+- [ ] **Loop-guard semantics.** `onChange`-induced writes carry a source-tag and a bounded depth;
+      beyond the cap, no further `onChange` is enqueued. _Tests: self-write loop terminates at the cap;
+      source-tagged writes don't re-trigger their own handler._
+- [ ] **Egress enforcement locus.** All isolate outbound traverses the proxy binding; a
+      `config`-declared policy that the proxy disallows is still blocked. `globalOutbound` is never
+      `null` and never inherit-parent on the live path. _Tests: proxy decision overrides config;
+      disallowed egress blocked; rate-limit trip._
+- [ ] **Dormant-by-default + flag discipline.** `BACKEND_JS=off` ships the entire feature dark; a
+      misconfigured `loader` with no `env.LOADER` binding degrades safely (no 500), mirroring SSR's
+      `select_error` fallback. _Tests: off ⇒ no DO/route/alarm; missing-binding ⇒ structured fallback._
+- [ ] **Delivery + idempotency.** `onChange` is delivered at-least-once with zero subscribed sockets;
+      handlers are documented idempotent; no ordering guarantee is promised. _Tests: delivery with no
+      sockets; duplicate delivery tolerated._
 
 ## Risks / caveats
 
