@@ -1,0 +1,100 @@
+name: Deploy good.vibes.diy (landing-pages)
+
+# Builds the static good.vibes.diy site (the SSG under landing-pages/) and
+# deploys it to the Cloudflare Pages project `landing-pages` — same project +
+# Cloudflare account the monorepo already deploys to. Path-scoped so unrelated
+# monorepo commits don't redeploy.
+#
+# Anti-wedge gate: the build step runs on every PR that touches landing-pages/**
+# and must be green before merge — a broken build never reaches good.vibes.diy.
+# Deploys are skipped on fork PRs (no secrets); same-repo PRs get a preview
+# deployment, push-to-main + manual dispatch go to production.
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'landing-pages/**'
+  pull_request:
+    paths:
+      - 'landing-pages/**'
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy to'
+        required: true
+        default: 'production'
+        type: choice
+        options:
+          - production
+          - preview
+
+concurrency:
+  # One in-flight deploy per ref so the two repos / multiple runs never fight
+  # over the same Pages project.
+  group: landing-pages-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Setup runtime environment
+        uses: ./actions/runtime
+
+      # landing-pages/ is intentionally NOT a pnpm workspace member, so install
+      # it standalone — --ignore-workspace stops the monorepo root from claiming
+      # it.
+      - name: Install landing-pages dependencies
+        run: |
+          cd landing-pages
+          pnpm install --ignore-workspace
+
+      # Anti-wedge gate: this must pass before anything can touch the live site.
+      - name: Build site
+        run: |
+          cd landing-pages
+          pnpm build
+          test -f _site/index.html
+          test -f _site/blog/index.html
+          test -f _site/blog/feed.xml
+          test -f _site/blog/rss.xml
+
+      - name: Deploy to Cloudflare Pages
+        # Skip on fork PRs, which don't have repo secrets. Push to main and
+        # manual dispatch always deploy; same-repo PRs deploy a preview.
+        if: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          cd landing-pages
+
+          PROJECT_NAME="landing-pages"
+          if [[ "${{ github.event_name }}" == "push" ]] || [[ "${{ github.event.inputs.environment }}" == "production" ]]; then
+            DEPLOY_ARGS=""
+            echo "🚀 Deploying to production (good.vibes.diy)..."
+          else
+            # Preview deployment on the same project; a non-production --branch
+            # yields a preview URL and never touches the production alias.
+            if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+              BRANCH="pr-${{ github.event.number }}"
+            else
+              BRANCH="manual-preview"
+            fi
+            DEPLOY_ARGS="--branch=${BRANCH}"
+            echo "🚀 Deploying preview (${BRANCH})..."
+          fi
+
+          for attempt in 1 2 3; do
+            npx wrangler pages deploy _site --project-name="${PROJECT_NAME}" ${DEPLOY_ARGS} && break
+            if [ "$attempt" -eq 3 ]; then echo "wrangler pages deploy failed after 3 attempts"; exit 1; fi
+            echo "wrangler pages deploy attempt $attempt failed, retrying in 15s..."
+            sleep 15
+          done
+
+          echo "✅ Deployment complete!"
