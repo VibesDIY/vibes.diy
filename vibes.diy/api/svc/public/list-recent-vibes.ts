@@ -142,6 +142,7 @@ export const listRecentVibesEvento: EventoHandler<
           appSlug: asb.appSlug,
           updated: asb.updated,
           pinnedAt: asb.pinnedAt,
+          unpublishedAt: asb.unpublishedAt,
           settings: settings.settings,
         })
         .from(usb)
@@ -173,6 +174,11 @@ export const listRecentVibesEvento: EventoHandler<
         if (titleEntry) item.title = titleEntry.title;
         if (icon) item.icon = icon;
         if (row.pinnedAt.length > 0) item.pinnedAt = row.pinnedAt;
+        // Owner-scoped list (joined on usb.userId), so it's safe to surface the
+        // tombstone marker: an unpublished vibe stays visible to its owner here
+        // for restore, while the public take-down happens at the serving layer
+        // (#2688). Non-owners never reach this row.
+        if (row.unpublishedAt.length > 0) item.unpublishedAt = row.unpublishedAt;
         return item;
       });
 

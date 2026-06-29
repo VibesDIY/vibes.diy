@@ -1,6 +1,6 @@
 # Delete / unpublish a deployed vibe — design
 
-Status: **reviewed — model accepted, open questions settled** (resolves the design half of [#2688](https://github.com/VibesDIY/vibes.diy/issues/2688))
+Status: **implemented in this PR** — v1 soft-unpublish shipped; model reviewed and open questions settled (resolves [#2688](https://github.com/VibesDIY/vibes.diy/issues/2688))
 Filed-from: [#2688](https://github.com/VibesDIY/vibes.diy/issues/2688), which itself spun out of [#2683](https://github.com/VibesDIY/vibes.diy/pull/2683).
 
 ## The problem in one line
@@ -62,8 +62,11 @@ reversible tombstone, not a row delete.
   a tombstoned binding as `not-found` (same 404 + `grant: "not-found"` already
   returned for a missing slug). **Explicit `fsId` reads still resolve** — see §4
   (lineage/permalinks must not break).
-- The slug disappears from `list` and recent-vibes (it already filters through
-  `AppSlugBindings`); `versions` continues to show history to the owner.
+- The slug is hidden from public discovery and serving, but stays visible **to
+  its owner** in `list`/recent-vibes with an `[unpublished]` marker (that list is
+  owner-scoped, joined on the caller's `userId`, so this is not a public leak) —
+  hiding it from the owner too would strand an orphan with no way to find it for
+  restore. `versions` continues to show full history to the owner.
 - **Nothing in `Apps`, `AppDocuments`, grants, or chat history is touched.** Code
   versions, data, and lineage are all preserved. This is deliberately the
   cheapest correct thing and it's fully reversible.
@@ -218,9 +221,31 @@ These were open questions in the first draft; resolved in PR #2811 review
 3. **Hard delete surface.** Deferred. Stays **ops/admin-only** until the lineage +
    member-data guards and failure UX are proven; no CLI surface in v1.
 
----
+## As-built (v1, this PR)
 
-*Implementation note for whoever picks this up:* the smallest correct first PR is
-just the `unpublishedAt` column + the two mutations + the serving-path filter +
-the CLI verb. Everything else in the map (data, grants, chat, assets) is
+The smallest-correct first cut landed exactly the scope above:
+
+- **Schema** — `unpublishedAt` column on `AppSlugBindings` (sqlite + pg),
+  `default("")`, same zero-downtime push pattern as `pinnedAt`.
+- **Mutation** — `set-unpublish` handler (`svc/public/set-unpublish.ts`) cloned
+  from the pin handler: read-only owner check (join `AppSlugBindings` ×
+  `UserSlugBindings` on the caller's `userId`, **not** `ensureSlugBinding`), then
+  a single-column write. Types in `api/types/app.ts` (`reqSetUnpublish` /
+  `resSetUnpublish`), client `setUnpublish()` in `api/impl`, registered in the
+  handler manifest + `shard-policy`.
+- **Resolver gate** — one shared helper (`svc/public/unpublished-binding.ts`,
+  `isHiddenForCaller` / `getUnpublishedAt`) consulted by all three no-fsId
+  resolvers: `get-app-by-fsid` (no-fsId serve), `fork-app` (no-`srcFsId` remix),
+  `list-versions` (non-owner). Explicit-fsId and owner reads untouched; keyed on
+  the tombstone, not the row mode.
+- **Owner list** — `list-recent-vibes` surfaces the `unpublishedAt` marker
+  (owner-scoped), and the CLI `list` prints `[unpublished]`.
+- **CLI** — `vibes-diy unpublish <vibe>` + `vibes-diy publish <vibe>`
+  (`cli/cmds/unpublish-cmd.ts`), no `rm` alias.
+- **Tests** — `api/tests/set-unpublish.test.ts` (round-trip; non-owner
+  serve/remix/versions hidden; explicit-fsId + owner still resolve; restore
+  exact; non-owner + nonexistent-slug rejected without creating a binding) and
+  `cli/cmds/unpublish-cmd.test.ts`.
+
+Everything else in the map (data, grants, chat, assets, hard delete) is
 intentionally left alone in v1.

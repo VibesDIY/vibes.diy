@@ -41,6 +41,12 @@ export const sqlAppSlugBinding = sqliteTable(
     // Empty = unpinned, ISO timestamp = pinned. Value also acts as the
     // sort key (newest pin first) when multiple rows are pinned.
     pinnedAt: text().notNull().default(""),
+    // Empty = published, ISO timestamp = unpublished (soft tombstone, #2688).
+    // A non-empty value de-indexes the slug and blocks every no-fsId public
+    // resolver (serve / no-srcFsId remix / non-owner versions); explicit-fsId
+    // reads and owner reads are unaffected. Same default-"" zero-downtime push
+    // pattern as pinnedAt: existing rows backfill to published.
+    unpublishedAt: text().notNull().default(""),
   },
   (table) => [
     primaryKey({ columns: [table.appSlug, table.ownerHandle] }),

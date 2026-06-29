@@ -264,6 +264,11 @@ export const resRecentVibesItem = type({
   // ISO timestamp when the row was pinned by this user; absent or empty
   // string means unpinned. The server orders pinned rows first.
   "pinnedAt?": "string",
+  // ISO timestamp when the owner unpublished (soft-tombstoned) this slug;
+  // absent or empty string means published. Surfaced only to the owner so
+  // an unpublished vibe stays findable/restorable in their own list — the
+  // public take-down happens at the serving/resolver layer, not here (#2688).
+  "unpublishedAt?": "string",
 });
 export type ResRecentVibesItem = typeof resRecentVibesItem.infer;
 
@@ -300,6 +305,34 @@ export const resPinRecentVibe = type({
 export type ResPinRecentVibe = typeof resPinRecentVibe.infer;
 export function isResPinRecentVibe(obj: unknown): obj is ResPinRecentVibe {
   return !(resPinRecentVibe(obj) instanceof type.errors);
+}
+
+// Soft-unpublish (tombstone) or republish a (ownerHandle, appSlug) row owned by
+// the caller (#2688). unpublish:true sets unpublishedAt to now; false clears it.
+// Owner-only, enforced by a read-only binding read in the handler (NOT
+// ensureSlugBinding, which would create a binding on a typo'd slug).
+export const reqSetUnpublish = type({
+  type: "'vibes.diy.req-set-unpublish'",
+  auth: dashAuthType,
+  ownerHandle: "string",
+  appSlug: "string",
+  unpublish: "boolean",
+});
+export type ReqSetUnpublish = typeof reqSetUnpublish.infer;
+export function isReqSetUnpublish(obj: unknown): obj is ReqSetUnpublish {
+  return !(reqSetUnpublish(obj) instanceof type.errors);
+}
+
+export const resSetUnpublish = type({
+  type: "'vibes.diy.res-set-unpublish'",
+  ownerHandle: "string",
+  appSlug: "string",
+  // Empty string when published, ISO timestamp when unpublished.
+  unpublishedAt: "string",
+});
+export type ResSetUnpublish = typeof resSetUnpublish.infer;
+export function isResSetUnpublish(obj: unknown): obj is ResSetUnpublish {
+  return !(resSetUnpublish(obj) instanceof type.errors);
 }
 
 export type ReqGetByUserSlugAppSlug = typeof reqGetByUserSlugAppSlug.infer;

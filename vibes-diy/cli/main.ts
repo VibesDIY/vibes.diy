@@ -43,6 +43,7 @@ import { listCmd, isResVibesList, type ResVibesList } from "./cmds/list-cmd.js";
 import { mcpCmd } from "./cmds/mcp-cmd.js";
 import { pullCmd, isResPull, type ResPull } from "./cmds/pull-cmd.js";
 import { versionsCmd, isResVersions, type ResVersions } from "./cmds/versions-cmd.js";
+import { unpublishCmd, publishCmd, isResSetUnpublishCli, type ResSetUnpublishCli } from "./cmds/unpublish-cmd.js";
 import { CliCtx, defaultCliOutput } from "./cli-ctx.js";
 import { cmdTsEvento, isCmdProgress, WrapCmdTSMsg } from "./cmd-evento.js";
 import { seedDeviceIdFromEnv, VIBES_DEVICE_ID_ENV } from "./device-id-env.js";
@@ -141,6 +142,8 @@ async function main(): Promise<number> {
         mcp: mcpCmd(ctx),
         pull: pullCmd(ctx),
         push: pushCmd(ctx),
+        publish: publishCmd(ctx),
+        unpublish: unpublishCmd(ctx),
         versions: versionsCmd(ctx),
         "put-asset": putAssetCmd(ctx),
         skills: skillsCmd(ctx),
@@ -385,7 +388,8 @@ async function main(): Promise<number> {
             } else {
               for (const item of items) {
                 const label = item.title ? `  ${item.title}` : "";
-                console.log(`${item.ownerHandle}/${item.appSlug}${label}`);
+                const state = item.unpublishedAt ? "  [unpublished]" : "";
+                console.log(`${item.ownerHandle}/${item.appSlug}${label}${state}`);
               }
             }
             break;
@@ -405,6 +409,17 @@ async function main(): Promise<number> {
                 const tag = item.published ? " (published)" : item.mode === "dev" ? " (draft)" : "";
                 console.log(`${marker} ${item.fsId}  ${item.mode}  seq=${item.releaseSeq}  ${item.created}${tag}`);
               }
+            }
+            break;
+          }
+          case isResSetUnpublishCli(msg): {
+            const u = msg as ResSetUnpublishCli;
+            if (wmsg.cmdTs.outputFormat === "json") {
+              console.log(JSON.stringify(u));
+            } else if (u.unpublishedAt.length > 0) {
+              console.log(`Unpublished ${u.ownerHandle}/${u.appSlug} at ${u.unpublishedAt} (restore with 'vibes-diy publish').`);
+            } else {
+              console.log(`Published ${u.ownerHandle}/${u.appSlug} — its public URL resolves again.`);
             }
             break;
           }

@@ -79,6 +79,7 @@ export const SHARD_POLICY = {
   "vibes.diy.req-list-user-slug-app-slug": ALL_SHARDS,
   "vibes.diy.req-list-recent-vibes": ALL_SHARDS,
   "vibes.diy.req-pin-recent-vibe": ALL_SHARDS,
+  "vibes.diy.req-set-unpublish": ALL_SHARDS,
   "vibes.diy.req-get-app-by-fsid": ALL_SHARDS,
   "vibes.diy.req-list-versions": ALL_SHARDS,
   "vibes.diy.req-ensure-app-settings": ALL_SHARDS,
