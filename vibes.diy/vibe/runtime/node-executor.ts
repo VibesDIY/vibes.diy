@@ -52,12 +52,29 @@ async function resolveBareSpecifiers(code: string, resolve: (spec: string) => st
 
 /**
  * Runs a freshly-compiled vibe module in THIS process and renders it (#2802,
- * slice 2). This is the CI-testable executor and the Node/Deno container
- * fallback. The edge counterpart is `WorkerLoaderExecutor`.
+ * slice 2). This is the CI-testable executor and the container fallback. The
+ * edge counterpart is `WorkerLoaderExecutor`.
  *
  * Pipeline: `transformVibeSource` → resolve bare specifiers → dynamic-`import` a
  * `data:` URL → take the default export as the vibe component → slice-1
  * `renderVibeToString`.
+ *
+ * SECURITY — read before reusing this beyond CI/dev. The `import()` below runs
+ * the vibe module IN THIS PROCESS with full Node privileges; `import()`/`vm` is
+ * NOT a sandbox. That is acceptable only while the input is TRUSTED (CI inputs,
+ * local dev). The moment a non-edge fallback must render UNTRUSTED published
+ * vibes, this in-process path is unsafe and must not be the answer — the design
+ * mandates per-request isolation for untrusted code (see the Risks section of
+ * docs/superpowers/specs/2026-06-29-vibe-ssr-dynamic-workers-design.md).
+ *
+ * The path forward for an untrusted container fallback is **Deno**: a sibling
+ * `DenoExecutor` (deny-by-default permissions: `--allow-none` + granular grants,
+ * process/Worker-per-request) drops in behind the same `Executor` interface and
+ * the `VIBES_SSR` flag (e.g. a `deno` mode). Deno's permission model is a real
+ * runtime sandbox, and its Web-standard APIs mirror the Cloudflare Worker Loader
+ * isolate more closely than Node — so the fallback behaves like the edge target.
+ * Do NOT widen this Node executor to untrusted traffic; reach for Deno (or a
+ * process-isolated / microVM runner) instead.
  */
 export class NodeExecutor implements Executor {
   async render(input: VibeExecuteInput): Promise<VibeExecuteResult> {
