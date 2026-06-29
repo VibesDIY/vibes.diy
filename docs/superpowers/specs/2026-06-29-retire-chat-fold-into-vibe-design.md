@@ -32,20 +32,24 @@ folding the **editor tools** onto `/vibe` and retiring the `/chat` route.
 
 ### What "the editor surface" actually is (corrected)
 
-There is **no terminal/console pane**. The `/chat` editor is exactly the
-`ResultPreview` view-switcher (`ViewType` = `preview` | `code` | `data`) plus the
-chat log:
+There is **no terminal/console pane**. The `/chat` editor is the `ResultPreview`
+view-switcher — `ViewType` = `preview` | `code` | `data` | `chat` | `settings`
+(verified, `prompts/pkg/view-state.ts`):
 
 - **Preview** — the live app. This is already what `/vibe` _is_; nothing to move.
 - **Code** — the Monaco editor (`CodeEditor.tsx`) to view/edit generated source.
 - **Data** — the vibe's documents (`DataView.tsx`).
-- **Chat history / stream** — the scrollable message log. Build/runtime **errors
-  surface inline in the chat**, as they do today — there is no separate error pane
-  to build.
+- **Chat** — the scrollable message log. Build/runtime **errors surface inline in
+  the chat**, as they do today — there is no separate error pane to build.
+- **Settings** — `AppSettingsPanel` (app settings + sharing), shown when
+  `currentView === "settings"` (`ResultPreview.tsx`). **Partly already on `/vibe`**:
+  the unified card's Share view (`SharePanelView`, #2680) covers the sharing half.
+  Phase 1 must fold the rest of `AppSettingsPanel` into the `/vibe` layer (or map it
+  onto the card's settings) and handle `?view=settings` deep-links on the 301.
 
-So "absorb the IDE-grade surface" = surface **Code**, **Data**, and **full chat
-history** as an in-page expandable layer over the running app, with errors inline
-in chat.
+So "absorb the editor surface" = surface **Code**, **Data**, **full chat history**,
+and **Settings** (reusing `/vibe`'s existing Share affordance where it overlaps) as
+an in-page expandable layer over the running app, with errors inline in chat.
 
 ## Components
 
@@ -76,16 +80,27 @@ over the running app. No URL change (Q2). Reuses the existing
   analytics fire there — verify nothing keyed on the `/chat` path).
 - **Retire `routes/chat/chat.$ownerHandle.$appSlug.tsx`.** Its editor behavior is
   re-expressed by component 1; the route becomes a redirect.
-- **`/chat/prompt`** already redirects into `/vibe` (shipped #2837). Leave as-is.
+- **`/chat/prompt`** already redirects into `/vibe` (shipped #2837), but it still
+  **imports and renders `<Chat>`** from the doomed file as its auth/openChat loading
+  screen (`prompt.tsx:6,90`). Phase 2 must rewrite that loading UI to a lightweight
+  placeholder (no `Chat` dependency) before `chat.$ownerHandle.$appSlug.tsx` can be
+  deleted — see prerequisite 3b.
 
-### 3. Type extraction (prerequisite gotcha)
+### 3. Prerequisites before deleting the chat route component (gotchas)
 
-`CodeEditor.tsx` (and other `ResultPreview` files) import shared types
-(`PromptState`, `PromptBlock`, `HydratedCodeViewFile`) **from the chat route file
-being retired** (`routes/chat/chat.$ownerHandle.$appSlug.tsx`). Before that file
-can go, those types must move to a neutral module (e.g. alongside
-`routes/chat/prompt-state.ts` or a dedicated `types/` file) and all importers
-repointed. Mechanical, but it gates the route deletion — do it as its own commit.
+Two things still depend on `routes/chat/chat.$ownerHandle.$appSlug.tsx` and must be
+severed before it can be deleted:
+
+- **3a — Type extraction.** `CodeEditor.tsx` (and other `ResultPreview` files)
+  import shared types (`PromptState`, `PromptBlock`, `HydratedCodeViewFile`) **from
+  that file**. Move them to a neutral module (e.g. alongside
+  `routes/chat/prompt-state.ts` or a dedicated `types/` file) and repoint importers.
+  Mechanical; its own commit.
+- **3b — `prompt.tsx` renders `<Chat>`.** `routes/chat/prompt.tsx` imports the named
+  `Chat` export (`:6`) and renders `<Chat inConstruction …>` as its loading screen
+  while auth/openChat resolve (`:90`). Rewrite that to a lightweight placeholder with
+  no `Chat` dependency — otherwise the supposedly-deleted `Chat` has to stay alive
+  just for `prompt.tsx`.
 
 ### 4. Untouched (deferred to follow-ups)
 
@@ -96,11 +111,12 @@ repointed. Mechanical, but it gates the route deletion — do it as its own comm
 
 - **Phase 0 — shipped (#2837).** New-vibe entry → first build in place on `/vibe`.
 - **Phase 1 — in-page editor surface on `/vibe`.** Surface Code + Data + full chat
-  history as the expandable layer (Monaco stays lazy; extract the shared types,
-  component 3). _Biggest piece. Must land before Phase 2 so the editor tools are
-  never missing._
-- **Phase 2 — redirect + teardown.** 301 `/chat/:o/:s` → `/vibe`, retire
-  `chat.$ownerHandle.$appSlug.tsx`, verify analytics. **This is the "deleted
+  history + Settings (`AppSettingsPanel`, reusing the card's Share where it overlaps)
+  as the expandable layer (Monaco stays lazy; extract the shared types, 3a).
+  _Biggest piece. Must land before Phase 2 so the editor tools are never missing._
+- **Phase 2 — redirect + teardown.** 301 `/chat/:o/:s` → `/vibe` (incl.
+  `?view=settings` deep-links), rewrite `prompt.tsx`'s loading UI off `<Chat>` (3b),
+  retire `chat.$ownerHandle.$appSlug.tsx`, verify analytics. **This is the "deleted
   surface = deliverable" moment** and closes #2518.
 - **Follow-ups (separate issues).** img-gen heavy/light split (#2350);
   `vibesMsgEvento` retirement (#2846).
