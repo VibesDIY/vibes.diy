@@ -247,7 +247,12 @@ export async function createVibeDiyTestCtx(
     // #2802 slice 4: opt-in SSR. render-vibe.ts only honors `loader` on the live
     // route (it maps any non-`loader` mode to off for security), so the e2e SSR
     // harness drives the loader executor via the injected fake binding below.
-    ...(opts.ssrLoader !== undefined ? { VIBES_SSR: "loader" } : {}),
+    // Set explicitly in BOTH branches (not a conditional spread): createAppContext
+    // writes this into the shared `sthis.env` via `env.sets`, so omitting the key
+    // would leave a prior `loader` value sticky for a later default-off context in
+    // the same worker (Codex P2 on #2853). "off" is the parseVibesSsrMode default,
+    // so default-off contexts are unchanged.
+    VIBES_SSR: opts.ssrLoader !== undefined ? "loader" : "off",
   };
 
   const defaultModels: Model[] = [
