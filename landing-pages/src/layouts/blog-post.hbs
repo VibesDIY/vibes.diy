@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+{{> head}}
+    <link rel="alternate" type="application/atom+xml" title="Vibes DIY Blog" href="/blog/feed.xml">
+    <link rel="alternate" type="application/rss+xml" title="Vibes DIY Blog" href="/blog/rss.xml">
+    <style>
+        @import url('https://fonts.cdnfonts.com/css/alte-haas-grotesk');
+
+        :root {
+            --os-gray: #7A7A7A;
+            --grid-gray: #CCCDC8;
+            --goldenrod: #FEDD00;
+            --ruby: #DA291C;
+            --bluey: #009ACE;
+            --sprout-green: #16A34A;
+            --ivory: #FFFFF0;
+            --black: #231F20;
+            --white: #FFFFFF;
+            --grid-line: rgba(255, 255, 255, 0.5);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Alte Haas Grotesk', sans-serif;
+            background-color: var(--grid-gray);
+            color: var(--black);
+            line-height: 1.7;
+            background-image:
+                linear-gradient(var(--grid-line) 1px, transparent 1px),
+                linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
+            background-size: 40px 40px;
+            min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        header {
+            padding: 1.5rem 2rem;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: linear-gradient(to bottom, var(--grid-gray) 60%, transparent);
+        }
+        .logo-link { display: block; text-decoration: none; }
+        .logo-img { height: 72px; width: auto; display: block; }
+
+        .mono { font-family: 'SFMono-Regular', 'Menlo', 'Consolas', monospace; }
+
+        .post-wrap { max-width: 880px; margin: 0 auto; padding: 1rem 1.5rem 4rem; }
+
+        .post-breadcrumb {
+            font-size: 0.75rem;
+            letter-spacing: 0.18em;
+            text-transform: uppercase;
+            color: var(--os-gray);
+            margin-bottom: 1.25rem;
+        }
+        .post-breadcrumb a { color: var(--os-gray); text-decoration: none; }
+        .post-breadcrumb a:hover { color: var(--black); }
+
+        .post-card {
+            background: var(--white);
+            border: 3px solid var(--black);
+            border-radius: 22px;
+            box-shadow: 8px 8px 0 var(--black);
+            padding: clamp(1.75rem, 4vw, 3.5rem);
+            overflow: hidden;
+        }
+
+        .post-overline {
+            font-size: 0.72rem;
+            letter-spacing: 0.28em;
+            text-transform: uppercase;
+            color: var(--bluey);
+            margin-bottom: 1rem;
+        }
+        .post-card h1 {
+            font-size: clamp(2rem, 5vw, 3.1rem);
+            font-weight: bold;
+            line-height: 1.04;
+            letter-spacing: -0.03em;
+            margin-bottom: 0.9rem;
+        }
+        .post-meta {
+            font-size: 0.9rem;
+            color: var(--os-gray);
+            border-bottom: 2px solid var(--black);
+            padding-bottom: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .prose h2 {
+            font-size: clamp(1.4rem, 3vw, 1.9rem);
+            letter-spacing: -0.02em;
+            margin: 2.75rem 0 1rem;
+            line-height: 1.15;
+        }
+        .prose h3 {
+            font-size: 1.2rem;
+            letter-spacing: -0.01em;
+            margin: 2rem 0 0.75rem;
+        }
+        .prose p { margin: 0 0 1.2rem; font-size: 1.07rem; }
+        .prose ul, .prose ol { margin: 0 0 1.4rem 1.2rem; }
+        .prose li { margin-bottom: 0.5rem; font-size: 1.05rem; }
+        .prose a { color: var(--bluey); text-decoration: underline; text-underline-offset: 2px; text-decoration-thickness: 1.5px; }
+        .prose a:hover { color: var(--black); }
+        .prose strong { font-weight: bold; }
+        .prose em { font-style: italic; }
+        .prose code {
+            font-family: 'SFMono-Regular', 'Menlo', 'Consolas', monospace;
+            font-size: 0.88em;
+            background: #f1f1ea;
+            border: 1px solid #ddddd2;
+            border-radius: 5px;
+            padding: 0.08em 0.4em;
+            white-space: nowrap;
+        }
+
+        .prose blockquote {
+            margin: 0 0 1.5rem;
+            padding: 1.1rem 1.4rem;
+            background: #f0f9ff;
+            border-left: 5px solid var(--bluey);
+            border-radius: 0 10px 10px 0;
+            font-size: 1.0rem;
+            color: #1c3a47;
+        }
+        .prose blockquote p { margin: 0; }
+        .prose blockquote code { background: #e2effa; border-color: #c8e2f3; white-space: normal; }
+
+        .prose figure { margin: 1.75rem 0 2rem; }
+        .prose figure img {
+            width: 100%;
+            height: auto;
+            display: block;
+            border: 3px solid var(--black);
+            border-radius: 14px;
+            box-shadow: 5px 5px 0 var(--black);
+        }
+        .prose figcaption {
+            margin-top: 0.7rem;
+            font-size: 0.85rem;
+            color: var(--os-gray);
+            font-style: italic;
+            line-height: 1.45;
+        }
+
+        /* A/B comparison grid */
+        .compare {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.1rem;
+            margin: 1.75rem 0 0.8rem;
+        }
+        .compare figure { margin: 0; }
+        .compare .ab-label {
+            font-family: 'SFMono-Regular', 'Menlo', 'Consolas', monospace;
+            font-size: 0.72rem;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            margin-bottom: 0.5rem;
+            font-weight: bold;
+        }
+        .compare .ab-a { color: var(--os-gray); }
+        .compare .ab-b { color: var(--sprout-green); }
+        .compare-caption {
+            font-size: 0.85rem;
+            color: var(--os-gray);
+            font-style: italic;
+            margin-bottom: 2rem;
+            line-height: 1.45;
+        }
+
+        .prose pre {
+            background: var(--black);
+            color: var(--ivory);
+            border-radius: 12px;
+            padding: 1.25rem 1.35rem;
+            overflow-x: auto;
+            margin: 0 0 1.6rem;
+            position: relative;
+            border: 2px solid var(--black);
+        }
+        .prose pre code {
+            font-family: 'SFMono-Regular', 'Menlo', 'Consolas', monospace;
+            font-size: 0.84rem;
+            line-height: 1.6;
+            background: none;
+            border: none;
+            padding: 0;
+            white-space: pre;
+            color: inherit;
+        }
+        .prose pre .lang {
+            position: absolute;
+            top: 0; right: 0;
+            font-size: 0.62rem;
+            letter-spacing: 0.16em;
+            text-transform: uppercase;
+            color: var(--goldenrod);
+            background: rgba(255,255,255,0.06);
+            padding: 0.25rem 0.6rem;
+            border-radius: 0 10px 0 8px;
+        }
+
+        .table-scroll { overflow-x: auto; margin: 0 0 1.8rem; }
+        .prose table {
+            border-collapse: collapse;
+            width: 100%;
+            font-size: 0.95rem;
+            border: 2px solid var(--black);
+        }
+        .prose th, .prose td {
+            border: 1px solid #d8d8cf;
+            padding: 0.7rem 0.85rem;
+            text-align: left;
+            vertical-align: top;
+        }
+        .prose thead th {
+            background: var(--black);
+            color: var(--ivory);
+            font-weight: bold;
+            border-color: var(--black);
+        }
+        .prose tbody tr:nth-child(even) { background: #faf9f2; }
+        .prose td.score { text-align: center; font-weight: bold; font-family: 'SFMono-Regular','Menlo',monospace; }
+
+        .prose hr { border: none; border-top: 2px solid #e2e2d8; margin: 2.5rem 0; }
+
+        .post-cta {
+            margin-top: 2.5rem;
+            background: var(--black);
+            color: var(--ivory);
+            border-radius: 18px;
+            padding: 2.25rem 2rem;
+            text-align: center;
+        }
+        .post-cta h3 { font-size: 1.5rem; letter-spacing: -0.02em; margin-bottom: 0.4rem; color: var(--ivory); }
+        .post-cta p { opacity: 0.7; margin-bottom: 1.4rem; }
+        .post-cta .btn {
+            display: inline-block;
+            background: var(--goldenrod);
+            color: var(--black);
+            padding: 0.85rem 1.8rem;
+            border-radius: 50px;
+            font-weight: 600;
+            text-decoration: none;
+            border: 2px solid var(--goldenrod);
+            transition: transform 0.15s ease;
+        }
+        .post-cta .btn:hover { transform: translateY(-2px); }
+
+        @media (max-width: 560px) {
+            .post-card { box-shadow: 5px 5px 0 var(--black); }
+            .compare { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <a href="https://links.vibes.diy/homepage" class="logo-link">
+            <img src="/Vibes-Toggle-1-Transparent.png" alt="Vibes DIY" class="logo-img">
+        </a>
+    </header>
+
+    <main class="post-wrap">
+        <div class="post-breadcrumb"><a href="/">Vibes DIY</a> / <a href="/blog/">Blog</a></div>
+
+        <article class="post-card">
+            <div class="post-overline">From the build log</div>
+            <h1>{{heading}}</h1>
+            <div class="post-meta mono">{{displayDate}} · {{author}}</div>
+
+            <div class="prose">
+{{{body}}}
+            </div>
+        </article>
+    </main>
+
+{{> footer}}
+</body>
+</html>
