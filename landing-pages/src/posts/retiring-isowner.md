@@ -24,6 +24,26 @@ Once you frame it that way, `isOwner` stops being a feature and starts being a b
 
 Instead of extracting owner-ness at runtime, have the **generator declare** the roles the owner should be seeded with at deploy time. The model already wrote the access function. It already knows the role names it just invented — `lead`, `editor`, whatever the app calls them. Declaration beats runtime extraction precisely because the information exists at authoring time; you don't have to go re-derive it from a user object three different ways.
 
+The shape of the access function changes accordingly.
+
+### Before
+
+```js
+// owner-write rides on an ambient super-user boolean,
+// resolved at runtime across three independent code paths
+if (user.isOwner) return allow; // false anywhere => owner locked out
+requireRole("editor"); // ...and falls through to a role they never had
+```
+
+### After
+
+```js
+// no ambient flag — owner is just user #1 holding a seeded role.
+// the grant lives in docContributions, declared at deploy time,
+// so requireRole("editor") sees a role the owner actually holds
+requireRole("editor");
+```
+
 This is worth dwelling on, because at a glance a reserved, always-seeded `owner` role looks like the thing we just deleted. It isn't. A boolean evaluated in three places is invisible, implicit, and unstable. A grant is a thing you can *see*: it shows up as a role the owner holds, and it is therefore revocable and transferable. The deployer can hand it off. They can take it away from themselves. None of that is expressible as `user.isOwner`, because a property of a user is not a thing you can give to someone else.
 
 There's a related trap the new model makes obvious — call it the Form-A trap. An owner-only app is invisibly broken to the only person who can verify it works. If you can only see the app working when you're the owner, "owner-only" isn't a permission style; it's a defect. Deleting `isOwner` forces the question into the open: who, exactly, gets to read and write this, and how did they get that grant?

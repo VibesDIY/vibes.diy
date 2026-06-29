@@ -6,6 +6,52 @@ summary: "We moved first-generation onto the deployed app itself — stream into
 glyph: "one iframe surface"
 ---
 
+<style>
+  /* Post-specific: the before -> after flow diagram. Modelled on the loop
+     diagram in upgrading-apps-with-screenshots; renamed to .flow so the
+     selectors don't collide. Shared chrome/prose comes from the layout. */
+  .flow {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: stretch;
+    gap: 0.6rem;
+    margin: 0.5rem 0 1rem;
+  }
+  .flow .lane {
+    flex-basis: 100%;
+    font-family: 'SFMono-Regular','Menlo',monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-bottom: 0.1rem;
+  }
+  .flow .lane.was { color: var(--os-gray); }
+  .flow .lane.now { color: var(--sprout-green); margin-top: 0.9rem; }
+  .flow .step {
+    flex: 1 1 120px;
+    background: var(--ivory);
+    border: 2px solid var(--black);
+    border-radius: 12px;
+    padding: 0.9rem 0.9rem;
+    position: relative;
+  }
+  .flow .step.live {
+    border-color: var(--bluey);
+    box-shadow: 4px 4px 0 var(--bluey);
+  }
+  .flow .step .t { font-weight: bold; font-size: 0.98rem; line-height: 1.2; }
+  .flow .step .d { font-size: 0.8rem; color: var(--os-gray); margin-top: 0.25rem; line-height: 1.35; }
+  .flow .arrow { align-self: center; color: var(--os-gray); font-weight: bold; }
+  .flow .verdict {
+    flex-basis: 100%;
+    text-align: center;
+    font-size: 0.82rem;
+    color: var(--sprout-green);
+    font-style: italic;
+    margin-top: 0.4rem;
+  }
+</style>
+
 For a year, watching your app get built meant staring at a second panel. We deleted it. Building a Vibe used to mean two surfaces: you'd prompt over on `/chat`, watch a *preview* app assemble in one iframe, and only later land on `/vibe` — a second iframe running the *real*, deployed app. Two iframes, two routes, one app. The preview pane existed because nobody wanted to risk generating code directly into a live deployment.
 
 This is the story of deciding to take that risk, and discovering it paid for itself in deletions.
@@ -15,6 +61,25 @@ This is the story of deciding to take that risk, and discovering it paid for its
 The open question for in-place first-generation was which iframe forms behind the streaming card. Two options. Swap in `/chat`'s `PreviewApp` preview iframe for the duration — safe, familiar, but it keeps the second surface alive. Or hot-swap the deployed `/vibe` iframe directly — risky, because that iframe runs a *real* app, not a preview shell.
 
 jchris took the risky one, with a rule attached: it's okay to do something risky if it's on the direct line toward core product value. Then he named the prize. If generation can drive the deployed iframe, the preview iframe stops earning its keep. **Retire it. One iframe surface.** The risk *is* the simplification — you don't get the deletion without taking the bet.
+
+The shape of the change is the whole argument — two surfaces collapsing into one:
+
+<div class="flow">
+    <div class="lane was">Was — two iframes, two routes</div>
+    <div class="step"><span class="t">Prompt on /chat</span><span class="d">Type into a separate chat route.</span></div>
+    <div class="arrow">→</div>
+    <div class="step"><span class="t">Preview iframe</span><span class="d">A throwaway <code>PreviewApp</code> shell assembles the app.</span></div>
+    <div class="arrow">→</div>
+    <div class="step"><span class="t">Land on /vibe</span><span class="d">A <em>second</em> iframe runs the real, deployed app.</span></div>
+
+    <div class="lane now">Now — one iframe surface</div>
+    <div class="step live"><span class="t">Edit on /vibe</span><span class="d">Prompt right on the deployed app — no hop.</span></div>
+    <div class="arrow">→</div>
+    <div class="step live"><span class="t">Stream &amp; hot-swap</span><span class="d"><code>pushSource</code> lands in the running iframe; <code>blurPx</code> de-blurs as it forms.</span></div>
+    <div class="arrow">→</div>
+    <div class="step live"><span class="t">Already live</span><span class="d">The surface taking shape <em>is</em> the one that ships.</span></div>
+    <div class="verdict">↓ delete the middle iframe — the deployed runtime already accepted the swap</div>
+</div>
 
 ## Reading the runtime turned a guess into a fact
 

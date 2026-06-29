@@ -25,6 +25,16 @@ That cashes out two different ways depending on the job:
 
 Step-gate to keep a required check reporting; job-skip when the entire job is throwaway. Same goal, two mechanisms, picked by what branch protection needs to see.
 
+<div class="table-scroll">
+<table>
+    <thead><tr><th>Job</th><th>Why</th><th>Mechanism</th><th>Required-check effect</th></tr></thead>
+    <tbody>
+        <tr><td><code>compile_test</code></td><td>Must keep a required check green</td><td>Step-gate: skip the build + docker-test steps; the job still runs to completion</td><td>Status reports green because the job genuinely ran — it just did less</td></tr>
+        <tr><td>pg-concurrency lane</td><td>Whole job is disposable, and it boots service containers a step-guard can't stop</td><td>Job-skip via job-level <code>if:</code></td><td>A skipped job posts a <code>skipped</code> conclusion, which branch protection counts as passing</td></tr>
+    </tbody>
+</table>
+</div>
+
 ## Allowlist docs — and treat everything unknown as code
 
 Detection is one question: is _every_ changed file under a docs path? The allowlist is explicit — `docs/`, `notes/`, `agents/`, `.agents/`, `.claude/`, root `*.md`, and `LICENSE`.

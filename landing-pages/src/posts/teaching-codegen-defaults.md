@@ -24,6 +24,16 @@ The subtle enabler was a runtime change. Owner-only documents now gate on `ctx.r
 ctx.requireRole("owner")
 ```
 
+The flip is easiest to see side by side — the reflex the old guidance reached for, versus what the runtime now guarantees:
+
+```js
+// Before — the reflexive default: gate everything on the creator
+if (!user.isOwner) throw "owner only";
+
+// After — author-owned; owner-only docs ask for a role the platform seeds
+ctx.requireRole("owner");
+```
+
 That works with *zero declaration* because the runtime always seeds the owner into a reserved `owner` role. The generated `access.js` no longer has to know it's special — it just asks for a role that the platform guarantees exists.
 
 That change forced a clean separation we'd been muddling: public-versus-private is the owner's ACL envelope, never something `access.js` implements. The access function describes *who can do what with which object*; whether the whole app is published is a layer above it. Keeping those apart is what lets author-owned be the honest default.
@@ -54,6 +64,19 @@ Two disciplines make the loop trustworthy:
 Success isn't a number; it's the metric *plateauing*. Predict the gain before spending a batch, run at least 8 reps, accept only gains beyond noise, verify twice. The discipline is the deliverable, codified in `agents/access-model-autoresearch.md`.
 
 One footgun the run surfaced: the system prompt is backend-served, so the loop iterates against a per-PR preview env that redeploys on every push — not local files. Get that wrong and you're grading a prompt nobody is running.
+
+## The three moves, side by side
+
+<div class="table-scroll">
+<table>
+    <thead><tr><th>Move</th><th>The reflex it replaces</th><th>What it does instead</th></tr></thead>
+    <tbody>
+        <tr><td>Flip the default to author-owned</td><td><code>if (!user.isOwner) throw "owner only"</code></td><td><code>ctx.requireRole("owner")</code> — owner-only demoted to the advanced case; anyone signed-in creates and edits their own</td></tr>
+        <tr><td>Steer toward multiplayer without saying "don't"</td><td>Telling the model "don't make owner-only apps" — the negative-tokenization tripwire</td><td>A positive litmus: "when a stranger opens the app, can they do the thing it's <em>for</em>?" — no anti-pattern named</td></tr>
+        <tr><td>Freeze a metric so the prompt can iterate itself</td><td>Hand-tuning against a fuzzy feedback loop</td><td>A frozen grader scoring <code>mean(PASS=1/SOFT=.5/FAIL=0)</code> over an 8-prompt × 8-rep matrix; only <code>prompts/pkg/**</code> may change</td></tr>
+    </tbody>
+</table>
+</div>
 
 <div class="post-cta">
   <h3>Built for the second visitor, by default.</h3>

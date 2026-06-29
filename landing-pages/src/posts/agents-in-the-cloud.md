@@ -16,6 +16,17 @@ There's a principle hiding in here worth saying out loud: **reproducibility beat
 
 But wanting agents in the cloud and actually getting them to *see* the product there are two different things. Three war stories from the getting-there.
 
+<div class="table-scroll">
+<table>
+    <thead><tr><th>Symptom</th><th>Cause</th><th>Fix</th></tr></thead>
+    <tbody>
+        <tr><td>Every HTTPS navigation dies <code>net::ERR_CONNECTION_CLOSED</code>, but <code>curl</code> through the same proxy returns 200</td><td>Chrome's TLS 1.3 ClientHello (PQ key share + GREASE) spans two TCP segments; the egress proxy's SNI parser reads only the first and resets</td><td><code>--ssl-version-max=tls1.2</code> for a compact single-segment ClientHello — not a verification downgrade</td></tr>
+        <tr><td>CLI against a PR preview worker fails <code>[authentication_required]</code> with the normal device cert</td><td>Previews share dev's bindings, so their certs come from the <code>DEV</code> CA, not <code>vibes.diy</code></td><td>A second headless cert, <code>VIBES_DEVICE_ID_PREVIEW</code> (delete <code>~/.fireproof/keybag/</code> first — an existing login always wins)</td></tr>
+        <tr><td><code>POST /cdn-cgi/rum</code> 404s on every page load</td><td>Automatic RUM setup points the beacon at your own zone path, but <code>/cdn-cgi/*</code> never reaches the SSR Worker</td><td>Manual "JS Snippet" install gated by <code>enableCfRum = env.ENVIRONMENT === "prod" && request.cf?.isEUCountry !== "1"</code>, posting to <code>cloudflareinsights.com</code></td></tr>
+    </tbody>
+</table>
+</div>
+
 ## The TLS handshake that broke every screenshot
 
 Pointing `mcp__chrome-devtools__*` at vibes.diy from a cloud session meant clearing four layers. Three were boring: no Chrome binary at the expected path (shim to the Playwright Chromium), runs as root (`--no-sandbox`), no display (`Xvfb`). The fourth was the interesting one.
