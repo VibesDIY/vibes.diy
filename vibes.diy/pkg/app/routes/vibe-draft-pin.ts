@@ -16,13 +16,18 @@ export function pinnedIframeFsId(fsId: string | undefined, draftFsId: string | u
   return fsId ?? draftFsId;
 }
 
-// #2772 — a fresh in-place edit settling (the generation falling out of flight)
-// means the owner now has an unpublished draft server-side. The draft resolver's
-// own deps (owner/fsId/slug/publish) don't change on a follow-up edit, so the badge
-// + banner would otherwise stay stale until a reload. Detect the true→false
-// transition to know when to re-resolve.
-export function generationSettled(prevGenerating: boolean, nowGenerating: boolean): boolean {
-  return prevGenerating && !nowGenerating;
+// #2772/#2839 — a fresh in-place edit settling means the owner now has an
+// unpublished draft server-side. The draft resolver's own deps (owner/fsId/slug/
+// publish) don't change on a follow-up edit, so the badge + banner would otherwise
+// stay stale until a reload. Re-resolve when a NEW persisted fsId arrives — the fsId
+// of the canonical post-persist `block.end` (BlockEndMsg with fsRef), which lands
+// only after the server's R2/DB persist. We deliberately key off this, NOT the early
+// `prompt.block-end` that flips the in-flight flag (it fires BEFORE the persist, so
+// re-resolving then races a stale `ownerLatest` read; #2839 review). Gated on
+// `hasLocalEdit` so replayed history block.ends (baseline, no edit this session)
+// don't fire a spurious recheck.
+export function isFreshPersistedEdit(prevFsId: string | undefined, nextFsId: string | undefined, hasLocalEdit: boolean): boolean {
+  return hasLocalEdit && nextFsId !== undefined && nextFsId !== prevFsId;
 }
 
 // The owner-latest resolve, reduced to the two UI decisions: does the badge/banner

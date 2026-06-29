@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 import {
   pinnedIframeFsId,
   buildPinnedIframeUrl,
-  generationSettled,
+  isFreshPersistedEdit,
   resolveOwnerDraft,
 } from "~/vibes.diy/app/routes/vibe-draft-pin.js";
 
@@ -56,19 +56,23 @@ describe("buildPinnedIframeUrl", () => {
 });
 
 // An in-place edit completing must surface the "Unpublished changes" badge/banner
-// WITHOUT a reload. The resolver re-runs only when the generation settles (true→false).
-describe("generationSettled", () => {
-  it("fires only on the true→false transition (edit just completed)", () => {
-    expect(generationSettled(true, false)).toBe(true);
+// WITHOUT a reload — but the recheck must wait for the PERSISTED `block.end` fsId, not
+// the early in-flight flag, or it races a stale `ownerLatest` read (#2839 review).
+describe("isFreshPersistedEdit", () => {
+  it("fires when a new persisted fsId arrives after a local edit", () => {
+    expect(isFreshPersistedEdit(undefined, "zDRAFT1", true)).toBe(true);
+    expect(isFreshPersistedEdit("zOLD", "zNEW", true)).toBe(true);
   });
 
-  it("does NOT fire when a turn starts (false→true) or stays running (true→true)", () => {
-    expect(generationSettled(false, true)).toBe(false);
-    expect(generationSettled(true, true)).toBe(false);
+  it("does NOT fire for replayed history (no local edit this session)", () => {
+    // Opening the codegen chat replays past block.ends; that baseline must not
+    // trip a recheck that would skip the iframe re-pin.
+    expect(isFreshPersistedEdit(undefined, "zHISTORY", false)).toBe(false);
   });
 
-  it("does NOT fire while idle (false→false)", () => {
-    expect(generationSettled(false, false)).toBe(false);
+  it("does NOT fire when the persisted fsId is unchanged or absent", () => {
+    expect(isFreshPersistedEdit("zSAME", "zSAME", true)).toBe(false);
+    expect(isFreshPersistedEdit("zOLD", undefined, true)).toBe(false);
   });
 });
 

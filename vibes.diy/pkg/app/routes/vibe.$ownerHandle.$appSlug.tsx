@@ -37,7 +37,7 @@ import { isMetaScreenShot, isMetaTitle, type ResGetAppByFsId, type VibesFPApiPar
 import { computeCardVariant } from "./vibe-card-variant.js";
 import { readIntent, withIntent, withoutIntent } from "./vibe-intent.js";
 import { forkDestination } from "./vibe-fork.js";
-import { buildPinnedIframeUrl, generationSettled, resolveOwnerDraft } from "./vibe-draft-pin.js";
+import { buildPinnedIframeUrl, isFreshPersistedEdit, resolveOwnerDraft } from "./vibe-draft-pin.js";
 import { notifyRecentVibesChanged } from "../hooks/useRecentVibes.js";
 import { adminModeStorageKey } from "../lib/admin-mode.js";
 import { RUNTIME_PREVIEW_IFRAME_ALLOW, RUNTIME_PREVIEW_IFRAME_SANDBOX } from "../lib/iframe-policy.js";
@@ -278,16 +278,19 @@ export default function VibeIframeWrapper() {
     setCardChips(generation.hasLocalEdit ? generation.suggestionChips : editChips);
   }, [generation.isGenerating, generation.hasLocalEdit, generation.suggestionChips, editChips]);
 
-  // When an in-place edit settles (isGenerating falls true→false), the owner's
-  // latest dev fsId now exists server-side. Bump the draft resolver so the badge +
-  // banner surface right away — the resolver's own deps (isOwner/fsId/slug/publish)
-  // don't change on a follow-up edit, so without this it'd stay stale until reload.
-  const prevGeneratingRef = useRef(generation.isGenerating);
+  // When an in-place edit PERSISTS (a new fsId arrives on the canonical post-persist
+  // `block.end`), the owner's latest dev fsId now exists server-side. Bump the draft
+  // resolver so the badge + banner surface right away — the resolver's own deps
+  // (isOwner/fsId/slug/publish) don't change on a follow-up edit, so without this it'd
+  // stay stale until reload. Keyed on the persisted fsId rather than the in-flight
+  // flag falling: that flag drops at the EARLY `prompt.block-end`, before the server
+  // persist, so re-resolving then could read a stale `ownerLatest` row (#2839 review).
+  const prevPersistedFsIdRef = useRef(generation.persistedFsId);
   useEffect(() => {
-    const settled = generationSettled(prevGeneratingRef.current, generation.isGenerating);
-    prevGeneratingRef.current = generation.isGenerating;
-    if (settled) setDraftRecheckBump((n) => n + 1);
-  }, [generation.isGenerating]);
+    const fresh = isFreshPersistedEdit(prevPersistedFsIdRef.current, generation.persistedFsId, generation.hasLocalEdit);
+    prevPersistedFsIdRef.current = generation.persistedFsId;
+    if (fresh) setDraftRecheckBump((n) => n + 1);
+  }, [generation.persistedFsId, generation.hasLocalEdit]);
 
   // On the forked /vibe page (?prompt64 carried from a seamless non-owner fork),
   // auto-fire the generation once ownership resolves to us — only when isOwner is
