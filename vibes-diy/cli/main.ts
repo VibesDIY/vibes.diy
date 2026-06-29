@@ -43,7 +43,14 @@ import { listCmd, isResVibesList, type ResVibesList } from "./cmds/list-cmd.js";
 import { mcpCmd } from "./cmds/mcp-cmd.js";
 import { pullCmd, isResPull, type ResPull } from "./cmds/pull-cmd.js";
 import { versionsCmd, isResVersions, type ResVersions } from "./cmds/versions-cmd.js";
-import { unpublishCmd, publishCmd, isResSetUnpublishCli, type ResSetUnpublishCli } from "./cmds/unpublish-cmd.js";
+import {
+  unpublishCmd,
+  publishCmd,
+  isResSetUnpublishCli,
+  type ResSetUnpublishCli,
+  isResPublishCli,
+  type ResPublishCli,
+} from "./cmds/unpublish-cmd.js";
 import { CliCtx, defaultCliOutput } from "./cli-ctx.js";
 import { cmdTsEvento, isCmdProgress, WrapCmdTSMsg } from "./cmd-evento.js";
 import { seedDeviceIdFromEnv, VIBES_DEVICE_ID_ENV } from "./device-id-env.js";
@@ -417,9 +424,23 @@ async function main(): Promise<number> {
             if (wmsg.cmdTs.outputFormat === "json") {
               console.log(JSON.stringify(u));
             } else if (u.unpublishedAt.length > 0) {
-              console.log(`Unpublished ${u.ownerHandle}/${u.appSlug} at ${u.unpublishedAt} (restore with 'vibes-diy publish').`);
+              console.log(
+                `Unpublished ${u.ownerHandle}/${u.appSlug} at ${u.unpublishedAt} (bring it back with 'vibes-diy publish').`
+              );
             } else {
               console.log(`Published ${u.ownerHandle}/${u.appSlug} — its public URL resolves again.`);
+            }
+            break;
+          }
+          case isResPublishCli(msg): {
+            const p = msg as ResPublishCli;
+            if (wmsg.cmdTs.outputFormat === "json") {
+              console.log(JSON.stringify(p));
+            } else {
+              const head = p.released
+                ? `Published ${p.ownerHandle}/${p.appSlug} → production fsId ${p.fsId} (seq ${p.releaseSeq}).`
+                : `${p.ownerHandle}/${p.appSlug} already up to date at fsId ${p.fsId} (seq ${p.releaseSeq}).`;
+              console.log(p.restored ? `${head} Restored from unpublished — public URL live again.` : `${head} Live.`);
             }
             break;
           }

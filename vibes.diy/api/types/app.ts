@@ -329,6 +329,9 @@ export const resSetUnpublish = type({
   appSlug: "string",
   // Empty string when published, ISO timestamp when unpublished.
   unpublishedAt: "string",
+  // The value this write replaced — lets a caller tell whether the row actually
+  // changed (e.g. `publish` reporting it cleared a tombstone vs no-op).
+  previousUnpublishedAt: "string",
 });
 export type ResSetUnpublish = typeof resSetUnpublish.infer;
 export function isResSetUnpublish(obj: unknown): obj is ResSetUnpublish {

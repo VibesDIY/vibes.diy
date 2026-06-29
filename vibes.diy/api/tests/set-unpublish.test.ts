@@ -87,10 +87,15 @@ describe("setUnpublish", { timeout: (inject("DB_FLAVOUR" as never) as string) ==
     const rUnpub = await api.setUnpublish({ ownerHandle: app.ownerHandle, appSlug: app.appSlug, unpublish: true });
     if (rUnpub.isErr()) assert.fail(rUnpub.Err().message);
     expect(rUnpub.Ok().unpublishedAt.length).toBeGreaterThan(0);
+    // First unpublish replaced the published ("") state.
+    expect(rUnpub.Ok().previousUnpublishedAt).toBe("");
 
     const rRepub = await api.setUnpublish({ ownerHandle: app.ownerHandle, appSlug: app.appSlug, unpublish: false });
     if (rRepub.isErr()) assert.fail(rRepub.Err().message);
     expect(rRepub.Ok().unpublishedAt).toBe("");
+    // Republish reports the tombstone it cleared — this is what `publish`
+    // reads to know it `restored` a previously-unpublished vibe.
+    expect(rRepub.Ok().previousUnpublishedAt.length).toBeGreaterThan(0);
   });
 
   it("hides the no-fsId public serve from a non-owner, but keeps explicit-fsId and owner reads", async () => {
