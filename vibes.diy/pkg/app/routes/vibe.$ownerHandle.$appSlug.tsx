@@ -20,7 +20,7 @@ import {
   resolveBuilderOriginFrom,
 } from "@vibes.diy/base";
 import type { ShareMember, ShareViewer, ShareAccess, HandleOption } from "@vibes.diy/base";
-import { isUserSettingDefaultHandle } from "@vibes.diy/api-types";
+import { isUserSettingDefaultHandle, isSystemCacheHandle, isReadableCachedGrant, resolveCachedRead } from "@vibes.diy/api-types";
 import { switchActiveHandle, createAndUseHandle, handleAvatarUrl } from "./handle-picker-actions.js";
 import { uploadHandleAvatar } from "../lib/upload-avatar.js";
 import { useYoursNowToast } from "../hooks/use-yours-now-toast.js";
@@ -339,41 +339,79 @@ export default function VibeIframeWrapper() {
     (text: string) => {
       const trimmed = text.trim();
       if (!trimmed || !ownerHandle || !appSlug) return;
-      // Owner: generate in place (PR-A).
-      if (isOwner) {
-        generation.sendPrompt(trimmed);
-        return;
-      }
-      const prompt64 = vctx.sthis.txt.base64.encode(trimmed);
-      // Logged-out non-owner: keep the existing /remix hop (it handles
-      // login -> fork -> prompt). Seamless inline fork needs a signed-in user.
-      if (!authSignedIn) {
-        void navigate(`/remix/${ownerHandle}/${appSlug}?${new URLSearchParams({ prompt64 }).toString()}`);
-        return;
-      }
-      // Signed-in non-owner: make-it-yours INLINE, then land on the fork's /vibe
-      // page carrying the prompt. The fork must complete (and the URL must point
-      // at the fork) before any codegen opens. Anchor the destination on the
-      // returned ResForkApp fields, not the pre-fork route params. The in-flight
-      // guard stops a rapid double-tap from minting two forks.
-      if (forkingRef.current) return;
-      forkingRef.current = true;
-      const tid = toast.loading("Making it yours…");
-      void (async () => {
-        const rFork = await vctx.chatApi.forkApp({ srcUserSlug: ownerHandle, srcAppSlug: appSlug, srcFsId: fsId });
-        if (rFork.isErr()) {
-          forkingRef.current = false; // allow a retry
-          toast.error(`Couldn't make it yours: ${rFork.Err().message}`, { id: tid });
+
+      // The write lane (today's behavior): owner generates in place, non-owner
+      // makes it yours. Extracted so the cached-read lane below can fall through
+      // to it on a miss.
+      const runWriteLane = () => {
+        // Owner: generate in place (PR-A).
+        if (isOwner) {
+          generation.sendPrompt(trimmed);
           return;
         }
-        toast.dismiss(tid);
-        notifyRecentVibesChanged();
-        // On success we navigate to the fork; the slug-keyed reset effect clears
-        // forkingRef so the new page can fork again later if needed.
-        void navigate(forkDestination(rFork.Ok(), prompt64), { replace: true });
-      })();
+        const prompt64 = vctx.sthis.txt.base64.encode(trimmed);
+        // Logged-out non-owner: keep the existing /remix hop (it handles
+        // login -> fork -> prompt). Seamless inline fork needs a signed-in user.
+        if (!authSignedIn) {
+          void navigate(`/remix/${ownerHandle}/${appSlug}?${new URLSearchParams({ prompt64 }).toString()}`);
+          return;
+        }
+        // Signed-in non-owner: make-it-yours INLINE, then land on the fork's /vibe
+        // page carrying the prompt. The fork must complete (and the URL must point
+        // at the fork) before any codegen opens. Anchor the destination on the
+        // returned ResForkApp fields, not the pre-fork route params. The in-flight
+        // guard stops a rapid double-tap from minting two forks.
+        if (forkingRef.current) return;
+        forkingRef.current = true;
+        const tid = toast.loading("Making it yours…");
+        void (async () => {
+          const rFork = await vctx.chatApi.forkApp({ srcUserSlug: ownerHandle, srcAppSlug: appSlug, srcFsId: fsId });
+          if (rFork.isErr()) {
+            forkingRef.current = false; // allow a retry
+            toast.error(`Couldn't make it yours: ${rFork.Err().message}`, { id: tid });
+            return;
+          }
+          toast.dismiss(tid);
+          notifyRecentVibesChanged();
+          // On success we navigate to the fork; the slug-keyed reset effect clears
+          // forkingRef so the new page can fork again later if needed.
+          void navigate(forkDestination(rFork.Ok(), prompt64), { replace: true });
+        })();
+      };
+
+      // Cached-read lane (#2801): ONLY on a system/curated vibe — every normal
+      // vibe skips this entirely, so existing flows are byte-for-byte unchanged
+      // and pay zero lookup latency. On a system-owned vibe a chip whose
+      // (source, transform) content-addresses a readable precached fork is a
+      // READ: navigate, no login/codegen/fork. A miss (the no-precache-yet case
+      // today) or any lookup error soft-fails to the write lane. The decision is
+      // made before anything commits — the read/write (and login/fork) boundary.
+      if (isSystemCacheHandle(ownerHandle)) {
+        void (async () => {
+          const decision = await resolveCachedRead({
+            source: { ownerHandle, appSlug, ...(fsId ? { fsId } : {}) },
+            transform: trimmed,
+            lookup: async (ref) => {
+              const r = await vctx.sharedApi.getAppByFsId({
+                ownerHandle: ref.ownerHandle,
+                appSlug: ref.appSlug,
+                selectMode: "published",
+              });
+              return r.isOk() && isReadableCachedGrant(r.Ok().grant);
+            },
+          });
+          if (decision.kind === "read") {
+            void navigate(decision.href);
+            return;
+          }
+          runWriteLane();
+        })();
+        return;
+      }
+
+      runWriteLane();
     },
-    [isOwner, authSignedIn, ownerHandle, appSlug, fsId, navigate, vctx.sthis, vctx.chatApi, generation.sendPrompt]
+    [isOwner, authSignedIn, ownerHandle, appSlug, fsId, navigate, vctx.sthis, vctx.chatApi, vctx.sharedApi, generation.sendPrompt]
   );
 
   // #2772 D2: publish the owner's current draft. Mints a new top-of-stack production
