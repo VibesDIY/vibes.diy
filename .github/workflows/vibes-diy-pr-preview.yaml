@@ -3,6 +3,11 @@ name: 'Deploy vibes.diy PR Preview'
 on:
   pull_request:
     types: [opened, synchronize, reopened]
+    # NOTE: this paths filter means a follow-up commit that touches ONLY
+    # non-app files (e.g. a devDependency bump under tests/, root tooling)
+    # will NOT redeploy the preview — the worker stays on the last app-path
+    # build, which is correct (the bundle is byte-identical) but leaves the
+    # preview comment's commit SHA behind HEAD. Touch a path below to refresh.
     paths:
       - 'vibes.diy/**/*'
       - 'prompts/**/*'
