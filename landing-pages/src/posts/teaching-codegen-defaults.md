@@ -1,12 +1,12 @@
 ---
-title: "Teaching the generator that the default owner is you, not 'the owner'"
+title: "Teaching an AI you're not 'the owner'"
 date: 2026-06-27T09:00:00Z
 author: "Vibes DIY"
 summary: "Generated apps used to default to owner-gated permissions — broken for everyone but the creator. Here's how we flipped the default to author-owned, steered the model toward multiplayer without ever saying 'don't,' and built a metric so the prompt could iterate itself."
 glyph: "author-owned ▸ default"
 ---
 
-The [generator eval post](how-we-eval-the-generator.html) was about measuring quality. This one is about a single default buried in the system prompt that was quietly making thousands of generated apps wrong — and the three moves it took to fix it.
+Ask a model to build an app and it quietly assumes one boss and a wall of permissions. That single default — buried in the system prompt — was making generated apps wrong by reflex. Here are the three moves it took to teach the generator that the default owner is just *you*. (Companion to the [generator eval post](how-we-eval-the-generator.html), which was about measuring quality.)
 
 ## The bug was a default, not a line of code
 

@@ -1,12 +1,12 @@
 ---
-title: "Make it yours: fork, publish, and knowing which hat you're wearing on /vibe"
+title: "Edit a stranger's app, and it's yours"
 date: 2026-06-28T11:00:00Z
 author: "Vibes DIY"
 summary: "The /vibe page now meets you where you are: a non-owner edit forks the app to your handle in place, owners get a private draft they can publish in one tap, and small indicators always tell you whether you're the author, an admin, or a read-only guest."
 glyph: "make it yours →"
 ---
 
-Every Vibe lives at a `/vibe` page — a single card you can land on whether you built the app or stumbled onto someone else's. The hard part of that page isn't showing the app. It's that two very different people show up to the same URL: the owner, who wants to keep editing, and a visitor, who wants to make the thing their own. For a while those two stories pulled the page in opposite directions. This is how we untangled them, so the page does the right thing no matter which person you are.
+You land on someone else's vibe, change one line, and hit save. You don't own it — so where does that edit go? Every Vibe lives at one `/vibe` page, and two very different people show up to the same URL: the owner, who wants to keep editing, and a visitor, who wants to make the thing their own. For a while those two stories pulled the page in opposite directions. This is how we untangled them, so the page does the right thing no matter which person you are.
 
 ## A visitor edits, and the app quietly becomes theirs
 

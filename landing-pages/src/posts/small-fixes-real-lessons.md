@@ -1,12 +1,12 @@
 ---
-title: "Small fixes, real lessons"
+title: "The NUL byte that broke every write (+7 more)"
 date: 2026-06-27T15:00:00Z
 author: "Vibes DIY"
 summary: "Eight little fixes from the build log — a NUL byte that took down every Postgres write, an iOS audio-unlock race, a markdown blank line that clobbered a file — each with a lesson bigger than the diff."
 glyph: "small fix · real lesson"
 ---
 
-Most fixes are one line. The diff is forgettable; the reason it was wrong is not. We keep a seed note for every change that touched the build, because the line gets merged and forgotten, but the lesson — *clever encodings break at boundaries, defaults hide bugs, the real engine is the only honest test* — outlives it and shows up again next week wearing a different hat. Here are eight from the recent log.
+A single NUL byte once took down every Postgres write we made. The fix was one line; the lesson wasn't. Most fixes are like that — the diff is forgettable, the reason it was wrong is not. We keep a seed note for every change that touched the build, because the line gets merged and forgotten, but the lesson — *clever encodings break at boundaries, defaults hide bugs, the real engine is the only honest test* — outlives it and shows up again next week wearing a different hat. Here are eight from the recent log, starting with that NUL byte.
 
 ## The clever NUL separator that took down every Postgres write
 

@@ -1,12 +1,12 @@
 ---
-title: "Shard the runners: free, parallel CI on a public repo"
+title: "We almost paid for faster CI"
 date: 2026-06-28T07:00:00Z
 author: "Vibes DIY"
 summary: "We almost bought a bigger CI machine. Instead we fanned the test suite across free standard runners — and put the failed-test names where triage actually looks."
 glyph: "shard the runners"
 ---
 
-The ticket started simple: CI feels slow, give it a bigger machine. The obvious move is a GitHub-hosted larger runner — more cores, faster suite, done. We almost did it. Then we pulled the Actions log first, and the answer changed.
+The ticket said: CI is slow, buy a bigger machine. We almost did — then we pulled the Actions log first, and the answer turned out to be free. The obvious move was a GitHub-hosted larger runner: more cores, faster suite, done. The log changed the plan.
 
 ## The log changed the plan
 

@@ -1,12 +1,12 @@
 ---
-title: "Lifting the identity runtime: pulling auth out of a dependency without touching a call site"
+title: "We deleted our auth dependency. Nothing changed."
 date: 2026-06-28T09:00:00Z
 author: "Vibes DIY"
 summary: "We moved our device-id PKI and Clerk token verifiers in-house, out of @fireproof/*, with zero call-site changes — gated by a byte-compatible golden harness so the lift was provably identical before we cut the dependency."
 glyph: "lift the runtime ↑"
 ---
 
-Dropping `@fireproof/*` from our identity surface looked like a delete. It was a lift.
+Dropping `@fireproof/*` from our login path looked like a one-line delete. It was a heart transplant — and the whole trick was making nothing above the cut notice.
 
 An earlier round of "facade" work had already relocated *where* the imports lived — everything routed through `@vibes.diy/identity`. But the runtime values were still `export … from "@fireproof/*"`: the device-id key/sign/CSR/verify crypto, the server CA, the keybag, the Clerk token verifier, the dashboard client, the auth wire-types. The package boundary had moved; the code hadn't. This is the story of pulling a live PKI runtime in-house without changing a single thing above that boundary — and the gates that made it not-reckless.
 
@@ -20,7 +20,7 @@ That also reframed an issue we'd filed against ourselves. A "coordinate with ups
 
 Vendoring security-critical code is a real trade: you own the PKI, you own the bugs. The gate that makes it survivable is proving the lifted crypto is identical to the original *before* the dependency is cut, not after.
 
-So we extended the golden harness with an extracted ⇄ fireproof cross-verification step, and — crucially — we wrote the golden auth-verify harness (#2703) **before** the lift, routed through the `@vibes.diy/identity/server` facade so the same suite covers both upstream-now and in-repo-after. Every lifted symbol also carries source-lock provenance: annotated with the upstream it was copied from, so a future upstream fix is a deliberate re-sync, not a silent drift. "We forked this" never becomes "we forgot where this came from."
+So we extended the golden harness with an extracted ⇄ fireproof cross-verification step, and — crucially — we wrote the golden auth-verify harness (#2703) **before** the lift, routed through the `@vibes.diy/identity/server` facade so the same suite covers both upstream-now and in-repo-after. The rule we set: every lifted symbol carries source-lock provenance — annotated with the upstream it was copied from — so a future upstream fix is a deliberate re-sync, not a silent drift. "We forked this" never becomes "we forgot where this came from."
 
 ## The patch you delete is never where you think it is
 
