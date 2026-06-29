@@ -7,9 +7,11 @@
  */
 
 import { Lazy } from "@adviser/cement";
-import { ensureSuperThis, runtimeFn } from "@vibes.diy/identity";
+import { ensureRuntimeContext, runtimeFn } from "@vibes.diy/identity";
 
-const sthis = Lazy(() => ensureSuperThis());
+// This module only needs `nextId()` for instance-id generation, so it depends on
+// the narrow `RuntimeContext` seam rather than recovering a full `SuperThis`.
+const rt = Lazy(() => ensureRuntimeContext());
 
 // Default fallback app slug when detection fails
 const DEFAULT_APP_SLUG = "atmospheric-tiger-9377";
@@ -136,7 +138,7 @@ export function isProductionEnvironment(): boolean {
  * @returns A random instance ID (e.g., "abc123def456")
  */
 export function generateRandomInstanceId(): string {
-  return sthis().nextId().str;
+  return rt().nextId().str;
 }
 
 /**
