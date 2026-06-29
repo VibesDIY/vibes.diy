@@ -8,6 +8,11 @@ glyph: "make it yours →"
 
 You land on someone else's vibe, change one line, and hit save. You don't own it — so where does that edit go? Every Vibe lives at one `/vibe` page, and two very different people show up to the same URL: the owner, who wants to keep editing, and a visitor, who wants to make the thing their own. For a while those two stories pulled the page in opposite directions. This is how we untangled them, so the page does the right thing no matter which person you are.
 
+<figure>
+    <img src="/images/blog/the-vibe-owner-viewer-experience/bloom-says-switch-mobile.png" alt="The expanded /vibe switch on mobile: a 'Make it your own…' box, three suggestion chips, and Home / Edit / Share controls below the running app" loading="lazy">
+    <figcaption>The <code>/vibe</code> switch, expanded on mobile. A visitor gets a "Make it your own…" box, edit suggestions, and one-tap Home / Edit / Share — the same surface the owner uses to keep building. (App: <a href="https://vibes.diy/vibe/system/bloom-says">bloom-says</a>.)</figcaption>
+</figure>
+
 ## A visitor edits, and the app quietly becomes theirs
 
 Start with the visitor. You're signed in, you're looking at someone else's app, and you type a change into the "describe a change" box or tap a suggestion chip. What should happen?
