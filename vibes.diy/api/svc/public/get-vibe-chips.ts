@@ -18,7 +18,7 @@ import { ensureLogger } from "@vibes.diy/identity";
 import { unwrapMsgBase } from "../unwrap-msg-base.js";
 import { VibesApiSQLCtx } from "../types.js";
 import { optAuth } from "../check-auth.js";
-import { isPublicReadable, checkDocAccess } from "./access-helpers.js";
+import { isPublicReadable, isWorldReadable, checkDocAccess } from "./access-helpers.js";
 import { selectLatestAppPerSlug } from "./select-app.js";
 import { isHiddenForCaller } from "./unpublished-binding.js";
 import { and, eq } from "drizzle-orm/sql/expressions";
@@ -89,28 +89,36 @@ export const getVibeChipsEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqGet
         isMember = access !== "none";
       }
 
-      // (b) Anonymous / non-member public path. Mirror getAppByFsId's non-owner
-      // read EXACTLY: the slug must resolve to a PRODUCTION row, must NOT be
+      // (b) Non-member path — "if you can see the app, you can see the chips."
+      // Mirror getAppByFsId's non-owner READ visibility: the slug must resolve to
+      // a PRODUCTION row (non-owners only ever see production) that is NOT
       // soft-unpublished (isHiddenForCaller — setUnpublish leaves publicAccess
-      // untouched, so the tombstone is the real gate), AND must be publicly
-      // readable. publicAccess alone is honored in dev for access-fn grants
-      // (#2308), so it is NOT sufficient here — without these two extra gates a
-      // dev-only or soft-unpublished slug carrying publicAccess would leak its
-      // chip projection to anonymous callers (Codex review, #2755). A first-time
-      // invite-token / auto-accept visitor whose grant getAppByFsId mints on its
-      // own read is intentionally NOT auto-granted here — a read endpoint must
-      // not mutate grants — so they briefly get []; the card settles once their
-      // grant lands. (#2755)
-      const publicVisible =
-        !!app &&
+      // untouched, so the tombstone is the real gate), and the viewer must be
+      // able to get in:
+      //   - anonymous → publicAccess only (isPublicReadable), matching the
+      //     getAppByFsId "public-access" grant that anonymous callers receive;
+      //   - signed-in → also auto-accept-request vibes (isWorldReadable),
+      //     matching the auto-join grant getAppByFsId mints for signed-in
+      //     visitors. We do NOT mint the grant here (a read must not mutate), but
+      //     we still surface the chips they're entitled to see.
+      // The production + tombstone gates stay in both arms, so a dev-only or
+      // soft-unpublished slug carrying publicAccess never leaks (Codex review).
+      let publicVisible = false;
+      if (
+        !isMember &&
+        app &&
         app.mode === "production" &&
         !(await isHiddenForCaller(vctx, {
           ownerHandle: app.ownerHandle,
           appSlug: app.appSlug,
           ownerUserId: app.userId,
           callerUserId,
-        })) &&
-        (await isPublicReadable(vctx, req.appSlug, req.ownerHandle));
+        }))
+      ) {
+        publicVisible = callerUserId
+          ? await isWorldReadable(vctx, req.appSlug, req.ownerHandle)
+          : await isPublicReadable(vctx, req.appSlug, req.ownerHandle);
+      }
 
       if (!isMember && !publicVisible) {
         logger.Debug().Str("ownerHandle", req.ownerHandle).Str("appSlug", req.appSlug).Msg("chips not visible to caller");

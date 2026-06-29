@@ -239,6 +239,21 @@ describe("getVibeChips access gate", { timeout: (inject("DB_FLAVOUR" as never) a
     expect(r.Ok().chips).toEqual(["Published chip"]);
   });
 
+  // "If you can see the app, you can see the chips" (jchris): a production vibe
+  // that's joinable by auto-accept (enableRequest + autoAcceptRole) but has NO
+  // explicit publicAccess is still world-readable to a signed-in visitor — they
+  // can get in, so they get chips, even before their grant is minted.
+  it("serves chips to a signed-in visitor on an auto-accept (world-readable) vibe", async () => {
+    const { appSlug, ownerHandle, fsId } = await createApp("production");
+    await seedChipChat(appSlug, ownerHandle, CHIP_LINES, { fsId });
+    // Auto-accept join, but NOT publicAccess.
+    await api.ensureAppSettings({ appSlug, ownerHandle, request: { enable: true, autoAcceptRole: "viewer" } });
+
+    const r = await api2.getVibeChips({ ownerHandle, appSlug });
+    if (r.isErr()) assert.fail("Expected getVibeChips to succeed: " + JSON.stringify(r.Err()));
+    expect(r.Ok().chips).toEqual(["Add sound", "Add a timer"]);
+  });
+
   // Codex P2 (#2755): the gate must mirror getAppByFsId's non-owner read, which
   // honors publicAccess only for PRODUCTION rows. publicAccess is honored in dev
   // for access-fn grants, so a dev-only slug carrying it must NOT leak chips.
