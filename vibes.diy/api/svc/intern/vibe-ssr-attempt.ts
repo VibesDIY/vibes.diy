@@ -4,7 +4,10 @@ import { FileSystemItem } from "@vibes.diy/api-types";
 // the vibe-runtime client entry by the browser-iframe guard). The api worker is
 // bundled from monorepo source, so these are reached relatively — the same way
 // the slice-2 tests deep-import render-vibes.js — not via the package root.
-import { selectExecutor, type VibesSsrMode } from "../../../vibe/runtime/vibe-executor.js";
+import { selectExecutor, parseVibesSsrMode, type VibesSsrMode } from "../../../vibe/runtime/vibe-executor.js";
+
+// Re-exported so render-vibe.ts has a single import surface for the SSR wiring.
+export { parseVibesSsrMode };
 import { type WorkerLoaderBinding } from "../../../vibe/runtime/worker-loader-executor.js";
 import { hasRelativeImports } from "../../../vibe/runtime/ssr-source-check.js";
 

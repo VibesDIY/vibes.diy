@@ -18,6 +18,7 @@ import { resolveWhoAmI } from "../public/who-am-i.js";
 // import { VibeEnv, vibesEnvSchema } from "@vibes.diy/use-vibes-base";
 import { ExtractedHostToBindings } from "../entry-point-utils.js";
 import { VibePage } from "./components/vibe-page.js";
+import { attemptVibeSsr, parseVibesSsrMode } from "./vibe-ssr-attempt.js";
 import { renderToReadableStream } from "react-dom/server";
 import { serialize as cookieSerialize } from "cookie";
 import { Dependencies, render_esm_sh, resolveVersionRegistry } from "./import-map.js";
@@ -190,12 +191,46 @@ export async function renderVibe({
 
   const title = metaTitle?.title ?? fs.appSlug;
 
+  // #2802 slice 4: optionally server-render the entry component and inject its
+  // HTML into the vibe-app-container (behind VIBES_SSR; "off" by default). HEAD
+  // does no executor work. attemptVibeSsr never throws — any failure yields a
+  // structured reason and we ship the empty container (client-only, today's
+  // path), never a 500. The LOADER binding is a beta follow-up, so `loader` is
+  // undefined for now (VIBES_SSR=loader degrades to client-only via select_error).
+  let ssrHtml: string | undefined;
+  if (ctx.request.method !== "HEAD") {
+    const ssr = await attemptVibeSsr({
+      mode: parseVibesSsrMode(vctx.params.vibes.env.VIBES_SSR),
+      loader: undefined,
+      fsItems,
+      mountParams: { usrEnv, ...(viewerEnv ? { viewerEnv } : {}), ...(accessFnBindings ? { accessFnBindings } : {}) },
+      loadSource: async (item) => {
+        const r = await vctx.storage.fetch(item.assetURI);
+        if (isFetchErrResult(r) || isFetchNotFoundResult(r)) {
+          throw new Error(`vibe SSR source fetch failed for ${item.assetURI}`);
+        }
+        return vctx.sthis.txt.decode(await stream2uint8array(r.data));
+      },
+    });
+    if (ssr.reason === "ok") {
+      ssrHtml = ssr.ssrHtml;
+    } else if (ssr.reason !== "ssr_disabled") {
+      vctx.logger
+        .Warn()
+        .Str("appSlug", fs.appSlug)
+        .Str("fsId", fs.fsId)
+        .Str("ssrReason", ssr.reason)
+        .Msg("vibe SSR fell back to client-only render");
+    }
+  }
+
   const vsctx = {
     wrapper: {
       state: "waiting",
     },
     usrEnv,
     svcEnv: vctx.params.vibes.env,
+    ...(ssrHtml !== undefined ? { ssrHtml } : {}),
     importMap: {
       imports: importMap,
     },

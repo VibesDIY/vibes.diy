@@ -21,6 +21,10 @@ export const vibesSvcEnv = type({
 
   VIBES_DIY_PUBLIC_BASE_URL: "string",
 
+  // Vibe SSR mode (#2802 slice 4): "off" (default) | "node" | "loader". Anything
+  // unrecognized parses to "off", so SSR stays dark unless explicitly enabled.
+  "VIBES_SSR?": "string",
+
   // GTM_CONTAINER_ID: "string",
   // POSTHOG_KEY: "string",
   // POSTHOG_HOST: "string",
