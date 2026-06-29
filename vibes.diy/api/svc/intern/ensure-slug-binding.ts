@@ -15,6 +15,7 @@ import {
   parseArrayWarning,
 } from "@vibes.diy/api-types";
 import { ensureLogger } from "@vibes.diy/identity";
+import { toRFC2822_32ByteLength } from "@vibes.diy/vibe-types";
 
 export type AppSlugBindingParam = Partial<NeedOneAppSlugUserSlug> & {
   userId: string;
@@ -370,16 +371,12 @@ export async function ensureSlugBinding(ctx: VibesApiSQLCtx, binding: AppSlugBin
   });
 }
 
-export function toRFC2822_32ByteLength(slug: string): string {
-  // if (!slug) return undefined;
-
-  return slug
-    .toLowerCase()
-    .replace(/[^a-z0-9-]/g, "-")
-    .replace(/-+/g, "-")
-    .replace(/^-+|-+$/g, "")
-    .slice(0, 32);
-}
+// The slug sanitizer now lives in the shared leaf @vibes.diy/vibe-types so the
+// handle-picker preview (base) and this write path share one implementation —
+// the client output is a fixed point, so re-sanitizing on write is a no-op and
+// the persisted handle matches the preview (#2825). Re-exported here so the
+// existing importers of `../intern/ensure-slug-binding.js` keep working.
+export { toRFC2822_32ByteLength };
 
 //  const sanitizedAppSlug = toRFC2822_32ByteLength(req.appSlug);
 //   const sanitizedUserSlug = toRFC2822_32ByteLength(req.ownerHandle);

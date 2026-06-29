@@ -11,6 +11,11 @@ export * from "./img-gen.js";
 export type { DbAcl, DbAclSubject } from "./db-acl-eval.js";
 export { canRead, canWrite, inGroup, aclAllows } from "./db-acl-eval.js";
 
+// Handle/app slug sanitizer — single source of truth shared by api-svc (write
+// path) and base (handle-picker preview). LEAF MODULE (imports nothing). See
+// handle-slug.ts for why slice-before-trim keeps it idempotent (#2825).
+export { toRFC2822_32ByteLength } from "./handle-slug.js";
+
 // The api-types `dbAcl` arktype validator, re-exported so browser-side runtime
 // code (vibe.ts) can validate the viewer-env wire shape without keeping its own
 // inline copy. The arktype value is dependency-free — re-exporting it pulls no
