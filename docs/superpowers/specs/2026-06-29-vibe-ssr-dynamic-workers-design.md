@@ -106,15 +106,25 @@ Package: `@vibes.diy/vibe-runtime` (`vibes.diy/vibe/runtime`), which already dep
    payload, not incidental child nodes — replaces the slice-1 `hasChildNodes()` heuristic),
    emit per-vibe meta/OG tags, hydrate on the client, LRU/Cache-API the rendered HTML.
 5. **Markdown SEO / no-JS layer (public vibes).** On the view-time render path, derive
-   Markdown from the SSR HTML and embed it in the **parent** document under the canonical vibe
-   URL, as the genuine no-JS / crawler view (humans with JS still get the live iframe). Solves
-   the cross-origin-iframe SEO gap; see [SEO model](#seo--the-iframe-boundary). Gated on
-   `isWorldReadable` (Phase A).
+   Markdown from the SSR HTML, then render that Markdown to **semantic HTML** (headings/lists/
+   links — not raw Markdown text) into the **parent** document under the canonical vibe URL, as
+   the genuine no-JS / crawler view (humans with JS still get the live iframe). Strict rule:
+   never surface iframe HTML directly in the parent — only `HTML → Markdown → trusted renderer`
+   with raw-HTML off + URL-scheme allowlist. Solves the cross-origin-iframe SEO gap; see
+   [SEO model](#seo--the-iframe-boundary). Gated on `isWorldReadable` (Phase A).
 6. **Access-consistent per-viewer SSR (do-later).** Carry viewer identity + grants through the
    view-time quiesce render so the no-JS view is correct per viewer — authorized → granted
-   content, unauthorized → the existing no-grant result — with **no fork of the access path**
-   (reuse `access-runner` / grants / `canSeeDoc`, not a parallel impl). Acceptance: authorized
-   vs unauthorized viewers get different, correct no-JS output for the same gated vibe.
+   content, unauthorized → the existing no-grant result — with **no fork of the access path**.
+   Concretely (per @CharlieHelps review), SSR must call the **same** server-side grant/channel
+   visibility evaluator the `getDoc`/`queryDocs` paths use, not an SSR-specific one — the access
+   seams are already distributed across `vibe/runtime/access-runner.ts`,
+   `api/svc/public/channel-read-filter.ts`, `api/svc/public/app-documents-read-eventos.ts`,
+   `api/svc/public/who-am-i.ts`, `api/svc/public/grant-reduce.ts`, so parity drift is the real
+   risk. Preserve viewer resolution exactly (`resolve-active-handle.ts` + grant-reduce +
+   wildcard-binding behavior), and **explicitly define SSR behavior for cold/empty
+   `accessFnOutputs`** (backfill windows) so a render never accidentally widens or hides
+   content. Acceptance: authorized vs unauthorized viewers get different, correct no-JS output
+   for the same gated vibe, matching the `getDoc`/`queryDocs` visibility decision.
 
 ## SEO & the iframe boundary
 
@@ -176,10 +186,22 @@ parallel implementation.
   view via the shared access path.
 
 **The real cost to respect:** Phase A still puts full vibe execution + DB-quiesce on the hot
-path of every _uncached public view_, including every crawl. So the quiesce deadline, the
-public-render cache (key by `dataVersion` or a content hash of the view-time SSR HTML), and a
-timeout → "empty fallback, let the iframe fill it" path are load-bearing, not nice-to-haves —
-they're what stop a crawler from melting the render fleet.
+path of every _uncached public view_, including every crawl — so the protections below are
+load-bearing, not nice-to-haves. They're what stop a crawler from melting the render fleet
+(refined per @CharlieHelps review):
+
+- **Quiesce deadline**, hard and server-side.
+- **Public-render cache.** Key on more than `dataVersion`: `app/runtime version + dataVersion
+(or SSR-HTML content hash) + canonical route/search + locale + renderer version`, so a
+  renderer or runtime bump can't serve stale-shaped output.
+- **Timeout fallback = stale-last-good public render** (when one exists), not an empty page —
+  avoids repeated "thin page" crawls degrading the canonical URL. Empty / iframe-fill is only
+  the cold-start fallback when there is no last-good render.
+- **Load-shedding:** a per-vibe concurrency cap + a global circuit breaker that serves
+  stale/fallback fast under pressure.
+- **No crawler-only rendering gate** as the primary strategy — that invites parity/cloaking
+  risk. Keep one canonical parent output path for humans and bots alike, and control the crawl
+  surface with sitemap + `rel=canonical` hygiene instead.
 
 ## Risks / caveats
 
