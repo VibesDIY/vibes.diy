@@ -142,6 +142,22 @@ describe("useInVibeGeneration", () => {
     expect(view.result.current.hasLocalEdit).toBe(false);
   });
 
+  it("exposes persistedFsId only once the canonical post-persist block.end (with fsRef) lands", async () => {
+    // #2839: the badge re-resolve must key off the DURABLE block.end fsId, not the
+    // early prompt.block-end. persistedFsId stays undefined through streaming + the
+    // first code.end, and only takes the fsRef.fsId when block.end arrives.
+    const { view, fakeChat } = setup();
+    await waitFor(() => expect(view.result.current.phase).toBe("idle"));
+    expect(view.result.current.persistedFsId).toBeUndefined();
+    act(() => view.result.current.sendPrompt("make it blue"));
+    await act(async () => fakeChat.emitBlockBegin());
+    await act(async () => fakeChat.emitCodeEnd());
+    // code.end ≠ persisted: the in-flight flag may drop here, but no fsId yet.
+    expect(view.result.current.persistedFsId).toBeUndefined();
+    await act(async () => fakeChat.emitBlockEnd("zDRAFT-NEW"));
+    await waitFor(() => expect(view.result.current.persistedFsId).toBe("zDRAFT-NEW"));
+  });
+
   it("hasLocalEdit flips true on a local sendPrompt and resets when the vibe changes", async () => {
     const fakeChat = makeControllableLLMChat({ chatId: "A" });
     const nextChat = makeControllableLLMChat({ chatId: "B" });

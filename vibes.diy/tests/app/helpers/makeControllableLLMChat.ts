@@ -23,6 +23,9 @@ export interface ControllableLLMChat {
   // Emits the assistant's toplevel narration lines (block.toplevel.line) — the
   // carrier for the trailing `▸` suggestion-chip group the model appends.
   emitToplevelLines(lines: string[], blockId?: string): void;
+  // Emits the canonical post-persist `block.end` (BlockEndMsg) carrying an fsRef —
+  // the durable signal a turn has settled server-side. `mode` defaults to "dev".
+  emitBlockEnd(fsId: string, opts?: { blockId?: string; mode?: "dev" | "production" }): void;
 }
 
 export function makeControllableLLMChat(opts: { chatId?: string } = {}): ControllableLLMChat {
@@ -162,6 +165,27 @@ export function makeControllableLLMChat(opts: { chatId?: string } = {}): Control
             }) as PromptAndBlockMsgs
         )
       );
+    },
+    emitBlockEnd(fsId, opts = {}) {
+      const { blockId = "b1", mode = "dev" } = opts;
+      const stat = { lines: 1, bytes: 1 };
+      const usage = {
+        given: [{ prompt_tokens: 1, completion_tokens: 1, total_tokens: 2 }],
+        calculated: { prompt_tokens: 1, completion_tokens: 1, total_tokens: 2 },
+      };
+      result.pushBlocks([
+        {
+          type: "block.end",
+          blockId,
+          streamId: "stream-1",
+          seq: 99,
+          blockNr: 1,
+          timestamp: new Date(),
+          stats: { toplevel: stat, code: stat, image: stat, total: stat },
+          usage,
+          fsRef: { appSlug: "app", ownerHandle: "owner", mode, fsId },
+        } as unknown as PromptAndBlockMsgs,
+      ]);
     },
   };
   return result;

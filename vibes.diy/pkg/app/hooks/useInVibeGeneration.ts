@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from "react";
 import type { Conn, LLMChatEntry } from "@vibes.diy/api-types";
-import { isCodeEnd, isToplevelLine, type ToplevelLineMsg } from "@vibes.diy/call-ai-v2";
+import { isBlockEnd, isCodeEnd, isToplevelLine, type ToplevelLineMsg } from "@vibes.diy/call-ai-v2";
 import { promptReducer, type PromptState } from "../routes/chat/prompt-state.js";
 import { useChatSession } from "./useChatSession.js";
 import { getCode } from "../components/ResultPreview/get-code.js";
@@ -32,6 +32,14 @@ export interface InVibeGeneration {
   // streamed chips" on this, not on the mere presence of blocks, to avoid
   // overriding fsId-scoped persisted chips on a versioned view. (Charlie review)
   readonly hasLocalEdit: boolean;
+  // The fsId carried by the latest canonical POST-PERSIST `block.end` (BlockEndMsg
+  // with an fsRef). This is the durable signal an in-place edit has settled
+  // server-side — distinct from `isGenerating` falling, which is driven by the
+  // EARLY `prompt.block-end` (before the R2/DB persist; prompt-state.ts §block-end).
+  // Re-resolving owner-draft state on this (not on the early flag) avoids reading a
+  // stale `ownerLatest` row before the new draft is durable (#2839 review). undefined
+  // until a turn produces a persisted block.end this session.
+  readonly persistedFsId: string | undefined;
   readonly sendPrompt: (text: string) => void;
   // Open the codegen chat lazily, on the owner's first edit intent. The host
   // calls this when the edit UI (the UnifiedVibeCard) opens, so passive
@@ -219,6 +227,22 @@ export function useInVibeGeneration(opts: UseInVibeGenerationOpts): InVibeGenera
     return chipsFromNarration(text);
   }, [promptState.blocks]);
 
+  // The fsId of the most recent canonical post-persist `block.end` (the
+  // convergence event that carries fsRef once the server has persisted the turn).
+  // Scanning newest-first stops at the latest settled edit. Used by the host to
+  // re-resolve the owner-draft badge AFTER the persist, sidestepping the
+  // early-`prompt.block-end` race the in-flight flag would otherwise expose.
+  const persistedFsId = useMemo(() => {
+    for (let i = promptState.blocks.length - 1; i >= 0; i--) {
+      const msgs = promptState.blocks[i].msgs;
+      for (let j = msgs.length - 1; j >= 0; j--) {
+        const msg = msgs[j];
+        if (isBlockEnd(msg) && msg.fsRef) return msg.fsRef.fsId;
+      }
+    }
+    return undefined;
+  }, [promptState.blocks]);
+
   return {
     phase,
     isGenerating,
@@ -227,6 +251,7 @@ export function useInVibeGeneration(opts: UseInVibeGenerationOpts): InVibeGenera
     counts,
     suggestionChips,
     hasLocalEdit,
+    persistedFsId,
     sendPrompt,
     activate,
   };
