@@ -18,4 +18,3 @@ type-checker. `tsc` was happy with two imports from the same specifier; eslint's
 `import/no-duplicates` is what caught the file that already imported from the seam, forcing
 the merge. The gotcha is that "route everything through the seam" quietly collides with
 "one import per module," and only the lint rule sees it.
-</content>
