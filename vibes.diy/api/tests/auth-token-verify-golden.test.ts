@@ -15,14 +15,13 @@
 // rejected, a genuine CA-signed token verifies, and the enforcement is gated by
 // DEVICE_ID_REQUIRE_CA_SIGNATURE (default-off for older-CLI compat during rollout).
 import { describe, it, expect, beforeAll, afterEach } from "vitest";
-import { ensureSuperThis } from "@fireproof/core-runtime";
 import { createTestDeviceCA, createTestUser, DeviceIdKey, DeviceIdSignMsg, DeviceIdCSR } from "@fireproof/core-device-id";
 import { generateKeyPair, exportJWK, SignJWT } from "jose";
 import type { SuperThis } from "@fireproof/core-types-base";
 // SUT via the facade — currently upstream, in-repo after the cutover.
 import { tokenApi } from "@vibes.diy/identity/server";
 // Browser `.` facade — what VibesDiyApi.getTokenClaims() actually imports.
-import { ClerkApiToken } from "@vibes.diy/identity";
+import { ClerkApiToken, ensureSuperThis } from "@vibes.diy/identity";
 // The owned device-id signer (Node facade) — the only one that can embed the
 // CA-signed cert chain (`x5c#jwt`) the #2671 hardening requires. The fireproof
 // signer above is kept to construct the legacy / forged (CA-unsigned) shapes.

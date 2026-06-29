@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { ensureSuperThis } from "@fireproof/core-runtime";
+import { ensureSuperThis } from "@vibes.diy/identity";
 import { createUtf8StreamDecoder, encodeUtf8, utf8ByteLength } from "./utf8-stream.js";
 
 const sthis = ensureSuperThis();

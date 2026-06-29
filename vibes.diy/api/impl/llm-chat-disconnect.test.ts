@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { OnFunc, Result } from "@adviser/cement";
-import { ensureSuperThis } from "@fireproof/core-runtime";
+import { ensureSuperThis } from "@vibes.diy/identity";
 import { LLMChatImpl } from "./llm-chat.js";
 import { VibeDiyApiConnection } from "./api-connection.js";
 import { W3CWebSocketCloseEvent, W3CWebSocketErrorEvent, W3CWebSocketMessageEvent } from "@vibes.diy/api-types";

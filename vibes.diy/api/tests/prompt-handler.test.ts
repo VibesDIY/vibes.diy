@@ -1,6 +1,6 @@
 import { beforeAll, describe, expect, it } from "vitest";
 import { processStream, MockLogger } from "@adviser/cement";
-import { ensureSuperThis } from "@fireproof/core-runtime";
+import { ensureSuperThis } from "@vibes.diy/identity";
 import { type } from "arktype";
 import type { PromptAndBlockMsgs } from "@vibes.diy/api-types";
 import { isSectionEvent } from "@vibes.diy/api-types";

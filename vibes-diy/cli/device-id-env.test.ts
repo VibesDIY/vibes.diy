@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { ensureSuperThis } from "@fireproof/core-runtime";
+import { ensureSuperThis } from "@vibes.diy/identity";
 import { getKeyBag } from "@vibes.diy/identity/node";
 import type { SuperThis } from "@fireproof/core";
 import type { JWKPrivate, DeviceIdKeyBagItem, DeviceIdResult } from "@fireproof/core-types-base";

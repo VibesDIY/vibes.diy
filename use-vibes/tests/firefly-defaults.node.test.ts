@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { ensureSuperThis } from "@fireproof/core-runtime";
+import { ensureSuperThis } from "@vibes.diy/identity";
 import { loadDeviceIdGetToken } from "../base/firefly-defaults.node.js";
 
 function inMemorySthis() {

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { ensureSuperThis } from "@fireproof/core-runtime";
+import { ensureSuperThis } from "@vibes.diy/identity";
 import { createAssetSessionSigner, createAssetGrantSigner } from "@vibes.diy/api-svc";
 
 // Same test secret pattern as asset-grant.test.ts — base58btc-encoded JSON
