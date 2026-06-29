@@ -14,6 +14,30 @@ The slow thing wasn't "CI." It was one job. The single `compile_test` job runs a
 
 Then the twist that killed the larger-runner plan: **`vibes.diy` is a public repo.** Standard runners are free, unlimited, and concurrent on public repos — CI costs us $0 today. Larger runners are *not* free even on public repos; they bill per-minute and require upgrading the org to a paid Team plan. The "bigger machine" route flips CI from $0 to paying on two axes. The free path was sitting right there: don't buy one fast runner, fan the suite out across several free standard ones.
 
+The log makes the trade-off obvious once you put the lanes next to their cost. The thing the bigger machine was meant to fix is one ~4-minute slice of one job — and the route to fixing it that way bills per-minute and requires a paid plan, while splitting that slice across free standard runners stays at $0:
+
+<div class="table-scroll">
+<table>
+    <thead><tr><th>Lane</th><th>Duration</th><th>What it is</th></tr></thead>
+    <tbody>
+        <tr><td><code>compile_test</code></td><td>~6 min</td><td>One job — almost all of it the <code>./actions/base</code> composite</td></tr>
+        <tr><td>↳ Docker Playwright/vitest suite</td><td>~4 min</td><td>The actual slow part, inside <code>compile_test</code></td></tr>
+        <tr><td>pg-concurrency</td><td>~2 min</td><td>Separate lane, already cheap</td></tr>
+        <tr><td>PR preview</td><td>~90s</td><td>Separate lane, already cheap</td></tr>
+    </tbody>
+</table>
+</div>
+
+<div class="table-scroll">
+<table>
+    <thead><tr><th>Approach</th><th>Cost</th><th>Plan</th></tr></thead>
+    <tbody>
+        <tr><td>One larger runner (paid)</td><td>Billed per-minute</td><td>Requires upgrading the org to a paid Team plan</td></tr>
+        <tr><td>N free standard shards</td><td>$0</td><td>Free, unlimited, and concurrent on public repos</td></tr>
+    </tbody>
+</table>
+</div>
+
 `vitest --shard` made that nearly free to wire up. The root `test` is one `vitest --run` over a 17-project, 353-file workspace; `--shard=i/N` splits the sorted file list with no per-project plumbing. The only duplicated cost is the `api/tests` libsql `globalSetup` — a few-second `drizzle-kit push` — re-running per shard, which is trivial against a 4-minute suite. The heavy Postgres setup stays in its own lane, untouched.
 
 Two things made the split safe rather than scary:

@@ -18,6 +18,56 @@ So ownership decides at the moment of the write. A non-owner's edit *forks* — 
 
 We didn't build a new backend for this. The `/remix` route already calls `forkApp` — a code-only copy to your handle with a `remixOf` anchor recording where it came from. It already does the login gate (login-on-first-write, for free) and seeds the lineage. The seamless version on `/vibe` reuses that machinery verbatim and just changes the *destination*: instead of landing in a chat, you land on the fork's own `/vibe` page and the generation fires there. For a signed-in visitor, the card never even unmounts — the URL becomes `/vibe/$yours/$forkSlug`, and the iframe de-blurs into your fresh copy. (Logged-out visitors keep the existing `/remix` hop, which already handles the sign-in round-trip; the seamless logged-out path is a deliberate follow-up.)
 
+<style>
+  /* Post-specific decoration: the visitor→owner flow diagram (numbered step
+     cards). Shared chrome/prose styling comes from the blog-post layout. */
+  .flow {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: stretch;
+    gap: 0.6rem;
+    margin: 0.5rem 0 2rem;
+  }
+  .flow .step {
+    flex: 1 1 120px;
+    background: var(--ivory);
+    border: 2px solid var(--black);
+    border-radius: 12px;
+    padding: 0.9rem 0.9rem;
+    position: relative;
+  }
+  .flow .step .n {
+    font-family: 'SFMono-Regular','Menlo',monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.12em;
+    color: var(--bluey);
+    display: block;
+    margin-bottom: 0.35rem;
+  }
+  .flow .step .t { font-weight: bold; font-size: 0.98rem; line-height: 1.2; }
+  .flow .step .d { font-size: 0.8rem; color: var(--os-gray); margin-top: 0.25rem; line-height: 1.35; }
+  .flow .arrow { align-self: center; color: var(--os-gray); font-weight: bold; }
+  .flow .repeat {
+    flex-basis: 100%;
+    text-align: center;
+    font-size: 0.82rem;
+    color: var(--sprout-green);
+    font-style: italic;
+    margin-top: 0.2rem;
+  }
+</style>
+
+<div class="flow">
+    <div class="step"><span class="n">01</span><span class="t">Land on a stranger's vibe</span><span class="d">Signed in, looking at an app you don't own.</span></div>
+    <div class="arrow">→</div>
+    <div class="step"><span class="n">02</span><span class="t">Hit edit</span><span class="d">Type into "describe a change" or tap a suggestion chip.</span></div>
+    <div class="arrow">→</div>
+    <div class="step"><span class="n">03</span><span class="t">Forks to your handle, in place</span><span class="d">The card never unmounts — the URL becomes <code>/vibe/$yours/$forkSlug</code> and the iframe de-blurs into your copy.</span></div>
+    <div class="arrow">→</div>
+    <div class="step"><span class="n">04</span><span class="t">Your prompt threads on the fork</span><span class="d">It generates in <em>your</em> copy, not the owner's chat — once <code>isOwner</code> resolves true on the page you now own.</span></div>
+    <div class="repeat">one URL, no detour — the edit makes the app yours</div>
+</div>
+
 The detail that makes this clean is that **the prompt rides the URL, not component state.** Your typed change gets base64-encoded into `?prompt64` on the fork's URL. The forked page decodes it once `isOwner` resolves true, fires the generation, then scrubs the param so a reload doesn't re-fire it. Because the prompt lives in the URL, it survives the navigation, the fork, and even a Clerk sign-in redirect without any closure to carry.
 
 `isOwner` is the safety gate, and it's checked twice — the chat hook is `enabled: isOwner`, and the auto-fire effect is *also* gated on `isOwner`. On the owner's original app a visitor is `isOwner: false`, so nothing fires there. Codegen only ever happens on a page you actually own. One predicate enforces the whole constraint at both layers.

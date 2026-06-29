@@ -23,6 +23,19 @@ What makes that safe is splitting *why* a handler was shard-bound into two categ
 
 The manifest unifies **code**, never **topology**. A nice side effect: the old `imgGenAppSessionStopgapHandlers` array — a special case that re-exposed `open-chat` / `prompt` on the vibe plane — stopped being a stopgap and became `allowed: ["stream", "vibe"]` on two handlers. The whole concept of "a separate array to remember to keep in sync" went away. Re-homing a capability is now a one-line `allowed` edit, no DO migration ever again.
 
+Here's the whole collapse on one screen — three classes, three "APIs", three handler arrays, all folding into the single `Sessions` class that derives its plane from the request path:
+
+<div class="table-scroll">
+<table>
+  <thead><tr><th>Old class</th><th>Purpose</th><th>Old "API"</th><th>Old handler array</th><th>→ Unified</th></tr></thead>
+  <tbody>
+    <tr><td><code>ChatSessions</code></td><td>codegen streams</td><td><code>chatApi</code></td><td><code>chatHandlers</code></td><td rowspan="3"><code>Sessions</code> — one class. Kind comes from <code>shardKindForPath</code>; each plane's set is <code>handlersForShard(kind)</code>, a filter over one list keyed on per-handler <code>allowed: ShardKind[]</code>.</td></tr>
+    <tr><td><code>AppSessions</code></td><td>live vibes</td><td><code>vibeApi</code></td><td><code>appHandlers</code></td></tr>
+    <tr><td><code>SharedSessions</code></td><td>shared reads</td><td><code>sharedApi</code></td><td><code>sharedHandlers</code></td></tr>
+  </tbody>
+</table>
+</div>
+
 ## The isolation argument that didn't survive contact
 
 The first draft of the three-vs-two-vs-one-class decision leaned on keeping codegen in its own class, so a runaway codegen stream couldn't pressure the always-warm read plane. It sounds right. It isn't.
