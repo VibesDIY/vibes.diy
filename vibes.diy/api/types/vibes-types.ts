@@ -1,6 +1,9 @@
 import { type } from "arktype";
 import { FPApiParameters } from "@vibes.diy/identity";
 import { VibesSvcEnv } from "./vibes-diy-serv-ctx.js";
+// Type-only (erased at runtime): the SSR isolate binding lives in vibe-runtime;
+// the api worker bundles from monorepo source, so the type is reached relatively.
+import type { WorkerLoaderBinding } from "../../vibe/runtime/worker-loader-executor.js";
 
 export interface PkgRepos {
   readonly workspace: string;
@@ -37,6 +40,9 @@ export type VibesFPApiParameters = Pick<FPApiParameters, "cloudPublicKeys" | "cl
       port?: string; // optional, default to 443 for https and 80 for http
     };
     env: VibesSvcEnv;
+    // The Cloudflare Worker Loader (env.LOADER) binding for vibe SSR's isolate
+    // executor (#2802 slice 4). Beta; undefined until plumbed (#2845).
+    loader?: WorkerLoaderBinding;
   };
   assetCacheUrl: string; // https://asset-cache.vibes.app/{assetId}
   // importMapProps: ImportMapProps;
