@@ -35,9 +35,11 @@ export type SaveEvent =
 export function nextSaveState(cur: SaveState, event: SaveEvent): SaveState {
   switch (event.type) {
     case "request":
-      // From idle or a prior error (retry) → queued. Re-requesting while already
-      // queued is idempotent. A request mid-save is ignored (one save at a time).
-      return cur === "idle" || cur === "error" || cur === "queued" ? "queued" : cur;
+      // Start (or restart) a save from any settled state: idle, a prior error
+      // (retry), or a completed save (rebuilt — the owner edited again). Re-
+      // requesting while already queued is idempotent. A request mid-save
+      // (saving) is ignored — one save at a time.
+      return cur === "saving" ? cur : "queued";
     case "submitted":
       return cur === "queued" ? "saving" : cur;
     case "settled":

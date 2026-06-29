@@ -260,6 +260,11 @@ export default function VibeIframeWrapper() {
     sharedApi: vctx.sharedApi,
     srvVibeSandbox: vctx.srvVibeSandbox,
     enabled: isOwner,
+    // A manual Code-tab save re-pins the owner draft to the saved fsId so the
+    // running app reloads to it with the URL unchanged (Phase 2, #2518). Only
+    // takes effect on the unversioned owner view (effectiveFsId = fsId ??
+    // draftFsId ?? …), so a versioned /vibe/:fsId is unaffected. (#2866 guardrail)
+    onSavedFsId: setDraftFsId,
   });
 
   // The chips the edit card displays. Once an in-place edit has run we prefer the
@@ -1279,6 +1284,10 @@ export default function VibeIframeWrapper() {
                         fsId={effectiveFsId}
                         promptState={editorPromptState}
                         onActivateChat={() => generation.activate()}
+                        canEdit={isOwner && !fsId}
+                        saveCode={generation.saveCode}
+                        saveState={generation.saveState}
+                        isSaving={generation.isSaving}
                       />
                     ) : shareViewOpen ? (
                       <SharePanelView
