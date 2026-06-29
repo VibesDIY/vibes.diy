@@ -196,7 +196,16 @@ fi
 log "mirror serving on http://127.0.0.1:$PORT"
 
 log "running playwright install (chromium + headless-shell) from the mirror…"
-PLAYWRIGHT_BROWSERS_PATH="$PW_CACHE" PLAYWRIGHT_DOWNLOAD_HOST="http://127.0.0.1:$PORT" \
+# PLAYWRIGHT_SKIP_BROWSER_GC=1 is critical here. `playwright install` normally
+# runs a browser-GC pass FIRST, deleting any browser dir in $PW_CACHE not
+# referenced by a registered .links entry. Our scratch playwright-core only
+# links the 1228 build, so without this the GC would delete the image's bundled
+# chromium-1194 BEFORE downloading 1228 — and if the download then fails partway
+# (proxy hiccup, a future image missing ffmpeg, etc.) the cache is left with NO
+# usable Chromium, breaking the chrome-devtools MCP shim too. We only ever add
+# browsers here; we never want to remove the bundled one.
+PLAYWRIGHT_SKIP_BROWSER_GC=1 PLAYWRIGHT_BROWSERS_PATH="$PW_CACHE" \
+  PLAYWRIGHT_DOWNLOAD_HOST="http://127.0.0.1:$PORT" \
   node "$PW_CORE_DIR/cli.js" install chromium chromium-headless-shell
 
 # --- 5. Verify -------------------------------------------------------------
