@@ -326,10 +326,18 @@ export function useInVibeGeneration(opts: UseInVibeGenerationOpts): InVibeGenera
   // version, not the saved one (Codex P1, #2869). Waiting for the prior turn to
   // fully settle also makes the pre-save baseline = the prior turn's fsId, so the
   // save only completes when persistedFsRef moves PAST it.
+  //
+  // EXCEPT when the connection has terminally failed: `reconnectFailed` leaves a
+  // stale `inFlightStreamId` set (it only flips connection to "failed"), so a
+  // Retry would otherwise re-wedge in `queued`/read-only forever. A terminal
+  // give-up means the prior turn is dead and will never deliver its block.end, so
+  // we stop treating its leftover streamId as "pending" and let the retry flush
+  // proceed. (Charlie #2 follow-up, #2869)
   useEffect(() => {
     if (saveState !== "queued" || submitInFlightRef.current) return;
     const pending = pendingSaveRef.current;
-    if (!pending || chat === null || isGenerating || promptState.inFlightStreamId !== undefined) return;
+    const priorTurnPending = promptState.inFlightStreamId !== undefined && promptState.connection !== "failed";
+    if (!pending || chat === null || isGenerating || priorTurnPending) return;
     submitInFlightRef.current = true;
     const filename = normalizeCodeViewPath(pending.filePath || "/App.jsx");
     const lang = pending.lang || inferCodeViewLanguage(filename, "text/javascript");
@@ -353,7 +361,7 @@ export function useInVibeGeneration(opts: UseInVibeGenerationOpts): InVibeGenera
         console.error("saveCode promptFS threw", err);
         dispatchSave({ type: "failed" });
       });
-  }, [saveState, chat, isGenerating, persistedFsRef, promptState.inFlightStreamId]);
+  }, [saveState, chat, isGenerating, persistedFsRef, promptState.inFlightStreamId, promptState.connection]);
 
   // Settle a submitted save. Success = the canonical post-persist block.end
   // advances persistedFsRef PAST the pre-save baseline → re-pin via onSavedFsId
