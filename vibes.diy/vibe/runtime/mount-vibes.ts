@@ -44,12 +44,15 @@ export function mountVibe(
 
   if (activeRoot === undefined) {
     const container = element[0];
-    // When the container already holds server-rendered markup, hydrate it
-    // (reuse the existing DOM) rather than re-rendering from scratch — that's
-    // the whole point of SSR. An empty container means client-only render
-    // (today's published-vibe path, and live builder sessions). hydrateRoot
-    // both creates the root and performs the initial render in one call.
-    if (container.hasChildNodes()) {
+    // Hydrate only when the server explicitly marked this container as an SSR
+    // payload (`data-vibe-ssr`, set by render-vibe.ts when the executor ran).
+    // An explicit marker — rather than slice 1's `hasChildNodes()` heuristic —
+    // means incidental child nodes (e.g. a loading placeholder, a stray text
+    // node) can never be mistaken for SSR markup and trigger a hydration that
+    // mismatches and blanks the iframe. No marker ⇒ client-only render (today's
+    // published-vibe path, live builder sessions, and any non-SSR document).
+    // hydrateRoot both creates the root and performs the initial render.
+    if (container.getAttribute("data-vibe-ssr") !== null) {
       activeRoot = hydrateRoot(container, providerElement);
       return;
     }
