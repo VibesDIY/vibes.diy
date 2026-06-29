@@ -505,6 +505,20 @@ export default function VibeIframeWrapper() {
   // would change the iframe `src` and reload the runtime, discarding the hot-swap for
   // identical code (a visible flash after every edit). Mount/publish runs still pin.
   const draftRecheckHandledRef = useRef(draftRecheckBump);
+  // Scope the draft-recheck tracking to the CURRENT vibe. This route component is
+  // reused across client-side navigation between /vibe pages, so the tracking refs
+  // would otherwise carry the previous vibe's state — and a generation still settling
+  // across the nav could mark the next vibe's FIRST resolve as a recheck and skip its
+  // iframe pin (Charlie review #2839). Reset synchronously during render (mirrors the
+  // hook's activeVibeKeyRef guard) so it lands before any effect reads the refs:
+  // `prevPersistedFsId` clears (no fsId carries across vibes) and `handledRef` re-syncs
+  // to the current bump (the new vibe's mount resolve reads isRecheck=false → pins).
+  const recheckVibeKeyRef = useRef(`${ownerHandle}/${appSlug}`);
+  if (recheckVibeKeyRef.current !== `${ownerHandle}/${appSlug}`) {
+    recheckVibeKeyRef.current = `${ownerHandle}/${appSlug}`;
+    prevPersistedFsIdRef.current = undefined;
+    draftRecheckHandledRef.current = draftRecheckBump;
+  }
   useEffect(() => {
     const isRecheck = draftRecheckBump !== draftRecheckHandledRef.current;
     draftRecheckHandledRef.current = draftRecheckBump;

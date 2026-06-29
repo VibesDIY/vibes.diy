@@ -184,6 +184,37 @@ describe("useInVibeGeneration", () => {
     await waitFor(() => expect(view.result.current.hasLocalEdit).toBe(false));
   });
 
+  it("clears persistedFsId when the vibe changes so a fsId never carries across vibes (#2839)", async () => {
+    // The route scopes its draft-recheck tracking to the vibe key; that relies on the
+    // hook NOT leaking a settled fsId across a client-side nav. After a persisted
+    // block.end on vibe A, navigating to B must reset persistedFsId to undefined — else
+    // B's first recheck could compare against A's fsId and skip B's iframe pin.
+    const chatA = makeControllableLLMChat({ chatId: "A" });
+    const chatB = makeControllableLLMChat({ chatId: "B" });
+    const opened = [chatA.chat, chatB.chat];
+    let openIdx = 0;
+    const openChat = vi.fn(async () => Result.Ok(opened[Math.min(openIdx++, opened.length - 1)]));
+    const chatApi = { openChat } as never;
+    const sharedApi = {
+      getAppByFsId: vi.fn(async () => Result.Ok({ fsId: "FS-1" })),
+      ensureAppSettings: vi.fn(async () => Result.Err("no settings")),
+    } as never;
+    const srvVibeSandbox = { pushSource: vi.fn(() => true) } as never;
+    const view = renderHook(
+      (p: { ownerHandle: string; appSlug: string }) =>
+        useInVibeGeneration({ ownerHandle: p.ownerHandle, appSlug: p.appSlug, fsId: "FS-1", chatApi, sharedApi, srvVibeSandbox }),
+      { initialProps: { ownerHandle: "owner", appSlug: "appA" } }
+    );
+    await waitFor(() => expect(view.result.current.phase).toBe("idle"));
+    act(() => view.result.current.sendPrompt("make it green"));
+    await act(async () => chatA.emitBlockBegin());
+    await act(async () => chatA.emitCodeEnd());
+    await act(async () => chatA.emitBlockEnd("zDRAFT-A"));
+    await waitFor(() => expect(view.result.current.persistedFsId).toBe("zDRAFT-A"));
+    view.rerender({ ownerHandle: "owner", appSlug: "appB" });
+    await waitFor(() => expect(view.result.current.persistedFsId).toBeUndefined());
+  });
+
   it("does not open a chat when disabled", async () => {
     const { view, openChat } = setup({ enabled: false });
     expect(view.result.current.phase).toBe("idle");
