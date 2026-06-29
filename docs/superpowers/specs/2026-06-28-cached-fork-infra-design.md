@@ -67,6 +67,36 @@ content has an **owner**:
   "cached" extends past curated content. Out of scope for v1; the `(source,
 transform)` key is designed to make it a later toggle, not a rewrite.
 
+## Resolved by the read-lane PR (`claude/curated-cached-starter-vibe-9ro0vn`)
+
+The first slice ships the **decidable, safe-no-op core** of the read lane — the
+two infra primitives as pure browser-safe code plus the client decision point —
+and in doing so settles three of the open questions below:
+
+- **OQ#1 (where the dedupe index lives) — the `apps` table itself.** The
+  content-address key _is_ a slug under the system handle, so a precached fork is
+  found by an ordinary `getAppByFsId` read — no separate D1 table or read shard.
+  (`SYSTEM_CACHE_HANDLE`, `cachedForkKey`, both in `@vibes.diy/api-types`.)
+- **OQ#2 (transform normalization) — `normalizeTransform`.** Strips the `▸`
+  marker, lowercases, collapses whitespace, trims, drops trailing punctuation;
+  model/version folds into the key separately via `cachedForkKey`'s `model`
+  field. Slug-safe, ≤32 chars.
+- **OQ#5 (anonymous read access) — confirmed via `getAppByFsId`.** It is
+  `optAuth`, gates on app-access visibility, and returns `not-found`/`not-grant`
+  for a miss/private app — so a logged-out viewer only resolves a _public_ system
+  fork (the "no login" promise holds). `isReadableCachedGrant` encodes this.
+
+The client wiring (`resolveCachedRead` in `handleEditPrompt`,
+`vibe.$ownerHandle.$appSlug.tsx`) is **gated on `isSystemCacheHandle(ownerHandle)`**,
+so every normal vibe is byte-for-byte unchanged and the lane activates the moment
+curated content is provisioned under the handle.
+
+**Still open (the backend provisioning half — deferred, brainstorm-gated):**
+reserving `SYSTEM_CACHE_HANDLE` out of the user handle space (OQ#4), the precache
+trigger + spend ceiling (OQ#3), and minting a fork under the system handle from a
+`(source, transform)`. Until those land the lookup always misses → the read lane
+is a correct no-op.
+
 ## Open questions (resolve in brainstorm before planning)
 
 1. **Where the dedupe index lives.** D1 table keyed by a hash of `(source,
