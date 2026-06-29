@@ -1,8 +1,19 @@
 # Landing-pages → public monorepo + markdown blog with feeds
 
 **Date:** 2026-06-29
-**Status:** Design approved, spec under review
+**Status:** Design finalized — all open questions resolved (see Decisions); ready for planning
 **Owner:** jchris
+
+## Decisions (resolved)
+
+- **Cutover:** downtime acceptable; priority is not getting wedged. Gate on a green/verified
+  build before it can touch the live site, not on zero-overlap.
+- **Package layout:** standalone (not a pnpm workspace member); CI uses `--ignore-workspace`.
+- **Blog stack:** `marked` + `gray-matter` with raw-HTML passthrough. **MDX rejected** (no
+  React/bundler in this SSG; iframes cover interactivity).
+- **Generated apps:** stay under `landing-pages/` alongside the site.
+- **Feeds:** both Atom 1.0 and RSS 2.0, summary entries.
+- **CF account:** same account the monorepo already deploys to; reuse existing credentials.
 
 ## Problem
 
@@ -101,14 +112,19 @@ is deleted from the private repo so there is exactly **one copy** of each thing.
 - Working dir / lockfile note: `package-lock.json` is gitignored in the source repo; the
   tracked lockfile is `pnpm-lock.yaml`. CI uses pnpm.
 
-### Cutover sequence (no double-deploy, no downtime)
+### Cutover sequence (downtime OK, just don't get wedged)
 
-1. Monorepo PR adds `landing-pages/` + the workflow; CI build + preview verified to produce
-   an equivalent `_site` (spot-check `good.vibes.diy` pages + blog + feeds).
+Owner decision: a little downtime is acceptable — the priority is **never landing in a wedged
+state** (broken build deployed, or both repos fighting over the Pages project). So the gate is
+"build is verified green before it can touch the live site," not "zero overlap."
+
+1. Monorepo PR adds `landing-pages/` + the workflow; **CI build + PR preview must be green and
+   verified** to produce an equivalent `_site` (spot-check `good.vibes.diy` pages + blog +
+   feeds) before merge. This is the anti-wedge gate — a broken build never reaches good.vibes.diy.
 2. Merge → monorepo deploys `good.vibes.diy` from the new workflow.
-3. **Immediately** remove the old repo's `.github/workflows/deploy.yml` so two repos never
-   race-deploy to the same Pages project. (A brief overlap is harmless — identical content —
-   but we close it fast.)
+3. Remove the old repo's `.github/workflows/deploy.yml` so the two repos don't both deploy to
+   the same Pages project. A brief overlap or short gap is fine (content is identical) — the
+   only thing to avoid is leaving both live indefinitely.
 4. Delete the moved (public) content from the private repo; add the move note there.
 5. Confirm `good.vibes.diy` still serves correctly post-cutover.
 
@@ -127,6 +143,21 @@ is deleted from the private repo so there is exactly **one copy** of each thing.
   - Collect all non-draft posts, sort by `date` descending → the canonical post list.
 - Landing pages stay `.hbs`. Only the **blog** moves to markdown. The page walk keeps working
   for `.hbs`; the blog pass is additive and reads `src/posts/`.
+
+### Rich content without MDX (decision)
+
+MDX was considered and **rejected** for this stack. The SSG is plain Node + Handlebars with
+**no React and no bundler**; MDX would require `@mdx-js/mdx` + a React/Preact SSR runtime +
+a bundler (esbuild) — either bloating the standalone package or coupling the blog build to the
+app's React/vite toolchain (undoing the standalone decision). Its main payoff (inline React
+components) is largely redundant here because **every Vibe is an embeddable iframe**, so a
+live interactive demo in a post is just an `<iframe>`. Instead:
+
+- `marked` is configured to **pass raw HTML through**, so a `.md` post can include styled
+  callouts, custom blocks, and `<iframe>` embeds of live vibes when richer content is needed.
+- If a rich pattern starts repeating, add a small **shortcode/partial** vocabulary later — no
+  React required. Revisit MDX only if we hit a concrete need to SSR _shared React components_
+  inside posts.
 
 ### Generated index + feeds (from the one post list)
 
@@ -187,5 +218,7 @@ markdown under the new template:
 - Moving ad tooling to a third repo (biz-ops) — rejected in favor of leaving it in the
   now-private-only `landing-pages` repo.
 - Making `landing-pages/` a pnpm workspace member.
+- MDX / inline React components in posts — rejected; raw-HTML passthrough + iframe embeds
+  cover rich content for now.
 - Full-content (vs summary) feed entries.
 - Archiving the `landing-pages` repo (it stays as the private ad-tooling home).
