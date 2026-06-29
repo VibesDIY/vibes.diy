@@ -20,7 +20,7 @@ Team-shared agent instructions live in the [`agents/`](agents/) directory. These
 - [vibe-pkg.md](agents/vibe-pkg.md) — Self-hosted package serving via /vibe-pkg/
 - [dev-state.md](agents/dev-state.md) — Which caches are safe to delete, and which destroy local dev data
 - [flaky-tests.md](agents/flaky-tests.md) — Rerun (or run the suite in isolation) before treating a `pnpm check` failure as real; log to VibesDIY/vibes.diy#1515
-- [pr-lifecycle.md](agents/pr-lifecycle.md) — Spec-first workflow, feature-goal PR titles, autonomous feedback handling, ready-to-merge signal, closing fixed issues on merge (auto-close is unreliable here)
+- [pr-lifecycle.md](agents/pr-lifecycle.md) — Spec-first workflow, feature-goal PR titles, autonomous feedback handling, ready-to-merge signal, the autonomous merge loop (hold for Charlie → green → merge → continue → blog post) and its hold-for-human-deploy exception (schema/DO/bindings/risky, any size), closing fixed issues on merge (auto-close is unreliable here)
 - [codegen-matrix-eval.md](agents/codegen-matrix-eval.md) — Running the cross-model codegen eval harness (generate → score → report), trimmed first run, config & cost filter
 - [codegen-agentic-eval.md](agents/codegen-agentic-eval.md) — Two-mode (one-shot vs agentic) tenability eval: isolates the tool-loop to measure open-weight viability + real $/acceptable
 - [autoresearch-outer-loop.md](agents/autoresearch-outer-loop.md) — Running the vendored autoresearch loop unattended: goal + success predicate, per-iteration state/branch persistence, resume, guardrails, scheduling caveats
