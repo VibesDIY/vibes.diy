@@ -163,6 +163,47 @@ describe("promptChatSection handler with selected+slots", () => {
     );
   });
 
+  it("times out a stalled connect/first-byte, retries, falls back, then surfaces prompt.error", async () => {
+    // Regression for VibesDIY/vibes.diy#2838: a provider that accepts the socket
+    // but never returns a response would park the dispatch await indefinitely
+    // (the ~5-min zero-token zombie). The per-attempt first-byte deadline must
+    // abort it, classify it as RETRYABLE so primary-retry → fallback still run,
+    // and ultimately surface a typed prompt.error instead of hanging forever.
+    const calls: string[] = [];
+    // Small dispatch timeouts so the test runs in ~0.5s, not 45s.
+    const sthis = ensureSuperThis();
+    const local = await createApiTestCtx({
+      seqUserIdBase: HANDLER_SEQ_BASE + 1000,
+      apiUrlPort: 8797,
+      sthis,
+      // Hangs until aborted, then rejects — emulating a stalled upstream.
+      llmRequest: (prompt, opts) =>
+        new Promise<Response>((_resolve, reject) => {
+          if (typeof prompt.model === "string") calls.push(prompt.model);
+          opts?.signal?.addEventListener("abort", () => reject(new Error("aborted by first-byte deadline")));
+        }),
+    });
+    sthis.env.sets({ DISPATCH_FIRST_TOKEN_TIMEOUT_MS: "50", DISPATCH_TOTAL_BUDGET_MS: "5000" });
+
+    const rOpen = await local.api.openChat({ mode: "codegen" });
+    expect(rOpen.isOk()).toBe(true);
+    const chat = rOpen.Ok();
+
+    const rPrompt = await chat.prompt({
+      model: PRIMARY_MODEL,
+      messages: [{ role: "user", content: [{ type: "text", text: "build a todo app" }] }],
+    });
+    expect(rPrompt.isOk()).toBe(true);
+    const blocks = await collectBlocksUntil(chat, (bs) => bs.some((b) => b.type === "prompt.error"));
+
+    // Every layer was attempted: a timed-out attempt is retryable, so the loop
+    // ran primary → primary-retry → fallback rather than bailing on attempt one.
+    expect(calls).toEqual([PRIMARY_MODEL, PRIMARY_MODEL, FALLBACK_MODEL]);
+    const error = blocks.find((b) => b.type === "prompt.error");
+    expect(error).toBeDefined();
+    expect((error as { error: string }).error).toContain("timed out");
+  });
+
   it("drains failed response bodies before retrying", async () => {
     const drained: string[] = [];
     const calls: string[] = [];

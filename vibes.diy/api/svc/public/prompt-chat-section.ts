@@ -156,6 +156,30 @@ const FALLBACK_RETRY_DELAY_MS = 250;
 // pin the request handler open for an arbitrary duration.
 const MAX_RETRY_AFTER_MS = 10_000;
 const MAX_ATTEMPT_BODY_SNIPPET_CHARS = 2000;
+// Per-attempt ceiling on how long we wait for the model provider to return a
+// streamable response — the connect + first-byte window that `vctx.llmRequest`
+// awaits. A provider that accepts the socket but never sends response headers
+// would otherwise park that await indefinitely: the ~5-minute, zero-token,
+// zero-CPU zombie observed in VibesDIY/vibes.diy#2838. On expiry we abort the
+// attempt and surface it as a *retryable* failure so the catalog fallback still
+// runs. Healthy first-token latency for these models is single-digit seconds, so
+// 45s leaves wide margin against false positives.
+const DISPATCH_FIRST_TOKEN_TIMEOUT_MS = 45_000;
+// Wall-clock ceiling across ALL attempts (primary + primary-retry + fallback,
+// including inter-attempt backoff). Bounds the stacked-timeout worst case so a
+// stuck turn surfaces a typed `prompt.error` to the creator within ~2 min
+// instead of hanging until the client idle-timeout gives up.
+const DISPATCH_TOTAL_BUDGET_MS = 120_000;
+
+// Both dispatch timeouts are env-overridable (so they're tunable in prod without
+// a redeploy, and a test can inject a tiny value). A missing, non-numeric, or
+// non-positive value falls back to the constant above.
+function envPositiveInt(vctx: VibesApiSQLCtx, key: string, fallback: number): number {
+  const raw = vctx.sthis.env.get(key);
+  if (typeof raw !== "string") return fallback;
+  const n = Number.parseInt(raw, 10);
+  return Number.isFinite(n) && n > 0 ? n : fallback;
+}
 
 type LlmAttemptLabel = "primary" | "primary-retry" | "fallback";
 
@@ -185,7 +209,17 @@ interface LlmExceptionAttemptFailure extends LlmAttemptFailureBase {
   readonly error: string;
 }
 
-type LlmAttemptFailure = LlmHttpStatusAttemptFailure | LlmMissingBodyAttemptFailure | LlmExceptionAttemptFailure;
+interface LlmTimeoutAttemptFailure extends LlmAttemptFailureBase {
+  readonly kind: "timeout";
+  // Wall time we waited before aborting the connect/first-byte await.
+  readonly elapsedMs: number;
+}
+
+type LlmAttemptFailure =
+  | LlmHttpStatusAttemptFailure
+  | LlmMissingBodyAttemptFailure
+  | LlmExceptionAttemptFailure
+  | LlmTimeoutAttemptFailure;
 
 interface LlmAttemptOk {
   readonly ok: true;
@@ -250,6 +284,8 @@ function formatAttemptFailure(failure: LlmAttemptFailure): string {
     }
     case "exception":
       return `${prefix} failed with error ${failure.error}`;
+    case "timeout":
+      return `${prefix} timed out after ${failure.elapsedMs}ms with no response`;
   }
 }
 
@@ -458,16 +494,50 @@ interface AttemptLlmRequestArgs {
   readonly diag: LlmAttemptDiagnosticsCtx;
   readonly llmReq: LLMRequestWithHeaders;
   readonly label: LlmAttemptLabel;
+  // Ceiling on the connect/first-byte await before we abort and treat the
+  // attempt as a retryable timeout. See DISPATCH_FIRST_TOKEN_TIMEOUT_MS.
+  readonly firstTokenTimeoutMs: number;
 }
 
 async function attemptLlmRequest(args: AttemptLlmRequestArgs): Promise<LlmAttemptOk | LlmAttemptErr> {
-  const { vctx, diag, llmReq, label } = args;
+  const { vctx, diag, llmReq, label, firstTokenTimeoutMs } = args;
   const abort = new AbortController();
   const startedAt = Date.now();
+  // Bound the await: a provider that accepts the socket but never returns a
+  // streamable response would otherwise hang here indefinitely (#2838). On
+  // expiry we abort; the resulting AbortError is reclassified below as a
+  // *retryable* timeout so the caller's primary-retry → fallback path runs.
+  let timedOut = false;
+  const timer = setTimeout(() => {
+    timedOut = true;
+    abort.abort();
+  }, firstTokenTimeoutMs);
   const rRes = await exception2Result(() => vctx.llmRequest(llmReq, { signal: abort.signal }));
+  clearTimeout(timer);
   const elapsedMs = Date.now() - startedAt;
   if (rRes.isErr()) {
     abort.abort();
+    if (timedOut) {
+      logLlmAttemptFailure({
+        vctx,
+        diag,
+        label,
+        model: llmReq.model,
+        elapsedMs,
+        details: { kind: "timeout", retryable: true, timeoutMs: firstTokenTimeoutMs },
+      });
+      return {
+        ok: false,
+        abort,
+        failure: {
+          kind: "timeout",
+          label,
+          model: llmReq.model,
+          elapsedMs,
+          retryable: true,
+        },
+      };
+    }
     const error = String(rRes.Err());
     logLlmAttemptFailure({
       vctx,
@@ -574,6 +644,26 @@ async function dispatchLlmRequestWithFallback(args: DispatchLlmRequestWithFallba
     mode: args.mode,
   };
 
+  // Total wall-clock budget across every attempt. Each attempt's first-byte
+  // timeout is additionally capped at the budget remaining, so the stacked
+  // worst case (primary + retry + fallback) can't exceed DISPATCH_TOTAL_BUDGET_MS
+  // by more than one in-flight attempt's slack.
+  const firstTokenTimeoutMs = envPositiveInt(args.vctx, "DISPATCH_FIRST_TOKEN_TIMEOUT_MS", DISPATCH_FIRST_TOKEN_TIMEOUT_MS);
+  const totalBudgetMs = envPositiveInt(args.vctx, "DISPATCH_TOTAL_BUDGET_MS", DISPATCH_TOTAL_BUDGET_MS);
+  const dispatchDeadline = Date.now() + totalBudgetMs;
+  const attemptTimeoutMs = (): number => Math.min(firstTokenTimeoutMs, Math.max(0, dispatchDeadline - Date.now()));
+  const budgetExhausted = (): LlmDispatchErr => {
+    const abort = new AbortController();
+    abort.abort();
+    const note = `LLM dispatch exceeded ${totalBudgetMs}ms budget before a response`;
+    const error = attempts.length > 0 ? `${formatLlmAttemptFailures(attempts)}; ${note}` : note;
+    args.vctx.logger
+      .Warn()
+      .Any("event", { chatId: args.chatId, promptId: args.promptId, phase: args.phase, mode: args.mode, attempts: attempts.length })
+      .Msg("llm-dispatch-budget-exhausted");
+    return { ok: false, llmReq: args.llmReq, abort, attempts, error };
+  };
+
   // Primary then one retry on the same model. Bail immediately on a
   // non-retryable failure; otherwise fall through to the fallback model.
   let lastPrimary: LlmAttemptErr | undefined;
@@ -581,7 +671,14 @@ async function dispatchLlmRequestWithFallback(args: DispatchLlmRequestWithFallba
     if (lastPrimary) {
       await waitMs(delayForAttempt(lastPrimary.failure, PRIMARY_RETRY_DELAY_MS));
     }
-    const attempt = await attemptLlmRequest({ vctx: args.vctx, diag, llmReq: args.llmReq, label });
+    if (Date.now() >= dispatchDeadline) return budgetExhausted();
+    const attempt = await attemptLlmRequest({
+      vctx: args.vctx,
+      diag,
+      llmReq: args.llmReq,
+      label,
+      firstTokenTimeoutMs: attemptTimeoutMs(),
+    });
     if (attempt.ok) return { ok: true, res: attempt.res, llmReq: args.llmReq, abort: attempt.abort, attempts };
     attempts.push(attempt.failure);
     if (attempt.failure.retryable === false) {
@@ -602,7 +699,14 @@ async function dispatchLlmRequestWithFallback(args: DispatchLlmRequestWithFallba
   const fallbackModel = rFallbackModel.Ok();
   const fallbackReq: LLMRequestWithHeaders = { ...args.llmReq, model: fallbackModel };
   await waitMs(delayForAttempt(failedPrimary.failure, FALLBACK_RETRY_DELAY_MS));
-  const fallback = await attemptLlmRequest({ vctx: args.vctx, diag, llmReq: fallbackReq, label: "fallback" });
+  if (Date.now() >= dispatchDeadline) return budgetExhausted();
+  const fallback = await attemptLlmRequest({
+    vctx: args.vctx,
+    diag,
+    llmReq: fallbackReq,
+    label: "fallback",
+    firstTokenTimeoutMs: attemptTimeoutMs(),
+  });
   if (fallback.ok) {
     args.vctx.logger
       .Info()
@@ -1074,6 +1178,11 @@ async function handlerLlmRequest({
     })
     .do();
 
+  // Breadcrumb the dispatch boundary. Before this, a stalled connect/first-byte
+  // emitted no logs at all (#2838) — a 5-min hang was invisible in logpush. The
+  // start/settled pair makes the dispatch window and its outcome self-evident.
+  const dispatchStartedAt = Date.now();
+  vctx.logger.Info().Any("event", { chatId: req.chatId, promptId, mode: req.mode, model: modelId }).Msg("llm-dispatch-start");
   const dispatch = await dispatchLlmRequestWithFallback({
     vctx,
     mode: req.mode,
@@ -1082,6 +1191,18 @@ async function handlerLlmRequest({
     promptId,
     phase: "initial",
   });
+  vctx.logger
+    .Info()
+    .Any("event", {
+      chatId: req.chatId,
+      promptId,
+      mode: req.mode,
+      ok: dispatch.ok,
+      model: dispatch.llmReq.model,
+      attempts: dispatch.attempts.length,
+      elapsedMs: Date.now() - dispatchStartedAt,
+    })
+    .Msg("llm-dispatch-settled");
   const res = await scope
     .evalResult<Response>(async () => {
       return dispatch.ok ? Result.Ok(dispatch.res) : Result.Err(dispatch.error);
