@@ -14,18 +14,18 @@ The **CLI is unchanged** — it never passes a `shardKey`, so it keeps the rando
 
 ## Decisions (locked)
 
-| Decision | Choice |
-| --- | --- |
+| Decision              | Choice                                                                                                                                                           |
+| --------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Website codegen shard | Deterministic per-user: `userNotifyShardFor(userId)` (the existing `notify-user-<uid>` string), deferred until `clerk.loaded` (mirror `deferredSharedReadShard`) |
-| Anonymous users | Keep `crypto.randomUUID()` (no stable identity to pin to) |
-| CLI | Unchanged — never passes `shardKey`, never rolls |
-| Admission limit | **3** concurrent **codegen streams** per DO instance; 4th admission attempt is rejected |
-| Overload signal | Server **sends** a coded `ResError` `code: "shard-overloaded"` and stops dispatch (does NOT rely on catching a hard CF CPU/memory limit) |
-| Counted unit | In-flight codegen streams (`open-chat` / `prompt-chat-section` with a codegen mode), not open WebSocket connections |
-| Next-shard function | `base` for n=0; `` `${base}~${n}` `` for n≥1, monotonically increasing |
-| Roll trigger | Client receives `shard-overloaded` (or the open handshake fails on a pinned shard) |
-| Roll stickiness | Persist the current index in `sessionStorage` keyed by user, so reconnects/reloads land on the working shard, not back on `~0` |
-| Shard mutability | The `VibesDiyApi` instance rewrites its own `?shard=` and reconnects; the provider's URL-keyed instance cache key stays the **original** per-user URL |
+| Anonymous users       | Keep `crypto.randomUUID()` (no stable identity to pin to)                                                                                                        |
+| CLI                   | Unchanged — never passes `shardKey`, never rolls                                                                                                                 |
+| Admission limit       | **3** concurrent **codegen streams** per DO instance; 4th admission attempt is rejected                                                                          |
+| Overload signal       | Server **sends** a coded `ResError` `code: "shard-overloaded"` and stops dispatch (does NOT rely on catching a hard CF CPU/memory limit)                         |
+| Counted unit          | In-flight codegen streams (`open-chat` / `prompt-chat-section` with a codegen mode), not open WebSocket connections                                              |
+| Next-shard function   | `base` for n=0; `` `${base}~${n}` `` for n≥1, monotonically increasing                                                                                           |
+| Roll trigger          | Client receives `shard-overloaded` (or the open handshake fails on a pinned shard)                                                                               |
+| Roll stickiness       | Persist the current index in `sessionStorage` keyed by user, so reconnects/reloads land on the working shard, not back on `~0`                                   |
+| Shard mutability      | The `VibesDiyApi` instance rewrites its own `?shard=` and reconnects; the provider's URL-keyed instance cache key stays the **original** per-user URL            |
 
 ### Why 3, and why streams not connections
 
@@ -57,7 +57,7 @@ The DO is the unified `Sessions` class (`vibes.diy/pkg/workers/sessions.ts`); th
   - else increment, run the stream, and decrement in a `finally` (covering completion, error, and WS close mid-stream).
 - `MAX_CONCURRENT_CODEGEN_STREAMS` and the `"shard-overloaded"` code live in `api-types` next to `SHARD_POLICY` so client and worker share one source of truth.
 
-This is admission control, not crash-detection: the limit is enforced *before* heavy work, so the signal is deterministic and testable, and we never depend on surviving a hard CF CPU/memory kill to emit it.
+This is admission control, not crash-detection: the limit is enforced _before_ heavy work, so the signal is deterministic and testable, and we never depend on surviving a hard CF CPU/memory kill to emit it.
 
 ### 3. Deterministic next-shard family + generalized guard
 
@@ -67,7 +67,7 @@ This is admission control, not crash-detection: the limit is enforced *before* h
   - `codegenShardForUser(userId, n)` → `n===0 ? base : ` `` `${base}~${n}` `` (single source for the family).
   - `shardBelongsToUser(shard, userId)` → true if `shard === base || shard.startsWith(`${base}~`)` with a numeric suffix.
 - Replace the exact-equality checks in `session-callbacks.ts:88` and `:98` with `shardBelongsToUser(shard, userId)`. This keeps the anti-forgery property (a client still can't register a shard outside its own user's family) while admitting rolled shards.
-- Registration semantics on a rolled shard: build-complete `notifyUser` already fires unconditionally (`session-callbacks.ts:67`); on the website, notifications ride `sharedApi`, not the codegen shard, so the roll does not change notification delivery. The guard generalization is about *not silently warning/no-oping* on legitimate rolled shards.
+- Registration semantics on a rolled shard: build-complete `notifyUser` already fires unconditionally (`session-callbacks.ts:67`); on the website, notifications ride `sharedApi`, not the codegen shard, so the roll does not change notification delivery. The guard generalization is about _not silently warning/no-oping_ on legitimate rolled shards.
 
 ### 4. Rollable client connection
 
@@ -82,7 +82,7 @@ The shard is baked into `cfg.apiUrl` at construction (`index.ts:290`), `cfg` is 
 ## Edge cases
 
 - **Reconnect stability.** Reconnect (`index.ts:387` `onClose` → `getReadyConnection`) must reuse `currentShardIndex`, not reset it — otherwise a mid-turn disconnect would drop back to `~0` and lose continuity. Index lives on the instance + `sessionStorage`, not in the URL key.
-- **Multiple tabs / devices.** Each client rolls independently when *it* hits overload; `sessionStorage` is per-tab, so convergence is soft, not guaranteed. That's acceptable — the admission limit is what enforces isolation; the roll just finds headroom.
+- **Multiple tabs / devices.** Each client rolls independently when _it_ hits overload; `sessionStorage` is per-tab, so convergence is soft, not guaranteed. That's acceptable — the admission limit is what enforces isolation; the roll just finds headroom.
 - **Anonymous → signed-in transition.** Anon uses random UUID; once Clerk loads with a user, the lazy `chatApi` rebuilds on the per-user shard (the provider already reacts to `clerk.loaded`). No special-casing beyond the existing deferral.
 - **DO eviction resets the counter.** Correct: a cold DO has zero active streams. No persistence of `activeStreams` needed.
 - **Decrement on abnormal close.** The `finally`/decrement must fire on WS close mid-stream, not just clean completion, or the counter leaks and the DO wedges at "full." Tie the decrement to stream teardown, and as a backstop derive the count from live stream state rather than a free-running integer if teardown paths are hard to make exhaustive.
