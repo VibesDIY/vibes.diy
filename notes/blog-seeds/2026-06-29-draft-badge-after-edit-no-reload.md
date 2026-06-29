@@ -42,15 +42,25 @@ Findings worth a full post:
   `hasLocalEdit` for one render and synthesize a bogus "fresh edit" → skip the *new* vibe's first pin.
   Every patch (gate on `hasLocalEdit`, a render-phase vibe-key guard to reset the refs) narrowed the
   window but kept the fragility. The fix that ended it was to stop inferring: **skip the re-pin iff
-  the resolved draft fsId equals the fsId already hot-swapped into the live iframe**
-  (`resolveOwnerDraft(res, generation.persistedFsId)` → `repin: res.fsId !== hotSwappedFsId`). fsIds
-  are globally unique, so a *different* vibe's persistedFsId can never collide with this vibe's
-  resolved fsId — navigation cannot manufacture a skip, no matter the effect ordering. The whole
-  bump/recheck-ref/vibe-key-guard apparatus deleted; the trigger is just `persistedFsId` in the
-  resolver's dep array. Timing-independent invariants beat timing-sensitive heuristics every time.
+  the resolved draft is the same one already hot-swapped into the live iframe** — comparing identity,
+  not a timing signal. The whole bump/recheck-ref/vibe-key-guard apparatus deleted; the trigger is
+  just `persistedFsRef` in the resolver's dep array. Timing-independent invariants beat
+  timing-sensitive heuristics every time.
+
+- **…but "identity" means the *whole* identity, because fsId isn't unique across vibes.** The first
+  cut of the identity check compared `res.fsId === persistedFsId` — and a reviewer immediately found
+  the hole: storage is content-addressed, and `forkApp` inserts the new vibe's row with
+  `fsId: src.fsId` (the fork *shares* the source's fsId, no copy) and seeds its `block.end` fsRef
+  with that same fsId. So a source and its fork are two different vibes with the *same* fsId, and
+  fsId-equality would suppress the destination's first pin when you navigate between them. The fix is
+  to carry the **full vibe identity** on the hot-swap signal — `persistedFsRef` is
+  `{ ownerHandle, appSlug, fsId }`, lifted straight off the `block.end` fsRef — and skip the re-pin
+  only when all three match the current vibe. Lesson within the lesson: "compare identity not timing"
+  is right, but make sure your identity key is actually unique for the thing you're identifying.
 
 - **Pure functions over the route, again.** Following the `pinnedIframeFsId` precedent,
-  `resolveOwnerDraft(res, hotSwappedFsId)` (→ `{ isDraft, pinFsId, repin }`) holds the decision so
-  the heavy `/vibe` route needn't be mounted to test it: mount pins (hotSwapped undefined), an
-  in-place edit skips (resolved === hotSwapped), a cross-vibe hot-swapped fsId still pins (they
-  differ), publish clears (not-a-draft), and non-owner/error/no-fsId reject.
+  `resolveOwnerDraft(res, hotSwapped, current)` (→ `{ isDraft, pinFsId, repin }`) holds the decision
+  so the heavy `/vibe` route needn't be mounted to test it: mount pins (hotSwapped undefined), an
+  in-place edit skips (same vibe + fsId), a cross-vibe nav pins even when the two vibes **share an
+  fsId** (fork reuse — the regression case), publish clears (not-a-draft), and
+  non-owner/error/no-fsId reject.

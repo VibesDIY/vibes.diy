@@ -52,28 +52,41 @@ describe("buildPinnedIframeUrl", () => {
 
 // The draft resolver's two UI outputs: show the badge (`isDraft`) and whether to
 // (re)pin the iframe to the draft fsId. The re-pin decision is a timing-independent
-// comparison against the fsId already hot-swapped into the live iframe (#2839 review).
+// comparison against the FULL vibe identity (ownerHandle/appSlug/fsId) already
+// hot-swapped into the live iframe — keyed on identity, not fsId alone (#2839 review).
 describe("resolveOwnerDraft", () => {
   const devDraft = { grant: "owner", fsId: "zDRAFT123", mode: "dev" };
+  const here = { ownerHandle: "meghan", appSlug: "bloom" };
+  const hotHere = { ownerHandle: "meghan", appSlug: "bloom", fsId: "zDRAFT123" };
 
   it("flags a draft and PINS it on mount (nothing hot-swapped yet — hotSwapped undefined)", () => {
-    expect(resolveOwnerDraft(devDraft, undefined)).toEqual({ isDraft: true, pinFsId: "zDRAFT123", repin: true });
+    expect(resolveOwnerDraft(devDraft, undefined, here)).toEqual({ isDraft: true, pinFsId: "zDRAFT123", repin: true });
   });
 
   it("flags the draft but SKIPS the re-pin when the iframe already shows this exact draft", () => {
     // After an in-place edit the generation hot-swapped THIS draft's source in place,
     // so draftFsId is left untouched — no reload of identical code.
-    expect(resolveOwnerDraft(devDraft, "zDRAFT123")).toEqual({ isDraft: true, pinFsId: "zDRAFT123", repin: false });
+    expect(resolveOwnerDraft(devDraft, hotHere, here)).toEqual({ isDraft: true, pinFsId: "zDRAFT123", repin: false });
   });
 
-  it("PINS when the hot-swapped fsId belongs to a different draft (e.g. cross-vibe nav)", () => {
-    // A different vibe's persistedFsId can never equal this vibe's resolved fsId, so
-    // the destination vibe's first resolve always pins — no synthetic skip.
-    expect(resolveOwnerDraft(devDraft, "zOTHER-VIBE")).toEqual({ isDraft: true, pinFsId: "zDRAFT123", repin: true });
+  it("PINS when the hot-swapped draft belongs to a different vibe (cross-vibe nav)", () => {
+    const hotElsewhere = { ownerHandle: "meghan", appSlug: "other-vibe", fsId: "zOTHER" };
+    expect(resolveOwnerDraft(devDraft, hotElsewhere, here)).toEqual({ isDraft: true, pinFsId: "zDRAFT123", repin: true });
+  });
+
+  it("PINS on cross-vibe nav even when the two vibes SHARE an fsId (fork reuse) (#2839)", () => {
+    // A fork shares its source's fsId (content-addressed storage), so fsId equality
+    // alone would wrongly suppress the destination vibe's first pin. Identity-scoping
+    // (different appSlug/ownerHandle) keeps the pin. This is the regression Charlie flagged.
+    const forkSource = { ownerHandle: "meghan", appSlug: "bloom-source", fsId: "zDRAFT123" };
+    expect(resolveOwnerDraft(devDraft, forkSource, here)).toEqual({ isDraft: true, pinFsId: "zDRAFT123", repin: true });
+    // Same fsId, different owner (someone else's source) — still pins.
+    const otherOwner = { ownerHandle: "ahmed", appSlug: "bloom", fsId: "zDRAFT123" };
+    expect(resolveOwnerDraft(devDraft, otherOwner, here).repin).toBe(true);
   });
 
   it("clears the draft (up to date) when the latest is production", () => {
-    expect(resolveOwnerDraft({ grant: "owner", fsId: "zPROD1", mode: "production" }, "zDRAFT123")).toEqual({
+    expect(resolveOwnerDraft({ grant: "owner", fsId: "zPROD1", mode: "production" }, hotHere, here)).toEqual({
       isDraft: false,
       pinFsId: undefined,
       repin: true,
@@ -81,11 +94,11 @@ describe("resolveOwnerDraft", () => {
   });
 
   it("ignores a non-owner grant or an error result", () => {
-    expect(resolveOwnerDraft({ grant: "viewer", fsId: "zX", mode: "dev" }, undefined).isDraft).toBe(false);
-    expect(resolveOwnerDraft({ error: "boom", grant: "owner", fsId: "zX", mode: "dev" }, undefined).isDraft).toBe(false);
+    expect(resolveOwnerDraft({ grant: "viewer", fsId: "zX", mode: "dev" }, undefined, here).isDraft).toBe(false);
+    expect(resolveOwnerDraft({ error: "boom", grant: "owner", fsId: "zX", mode: "dev" }, undefined, here).isDraft).toBe(false);
   });
 
   it("ignores a dev result with no fsId", () => {
-    expect(resolveOwnerDraft({ grant: "owner", mode: "dev" }, undefined).isDraft).toBe(false);
+    expect(resolveOwnerDraft({ grant: "owner", mode: "dev" }, undefined, here).isDraft).toBe(false);
   });
 });

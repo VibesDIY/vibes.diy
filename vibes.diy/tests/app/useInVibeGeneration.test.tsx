@@ -142,20 +142,23 @@ describe("useInVibeGeneration", () => {
     expect(view.result.current.hasLocalEdit).toBe(false);
   });
 
-  it("exposes persistedFsId only once the canonical post-persist block.end (with fsRef) lands", async () => {
-    // #2839: the badge re-resolve must key off the DURABLE block.end fsId, not the
-    // early prompt.block-end. persistedFsId stays undefined through streaming + the
-    // first code.end, and only takes the fsRef.fsId when block.end arrives.
+  it("exposes persistedFsRef only once the canonical post-persist block.end (with fsRef) lands", async () => {
+    // #2839: the badge re-resolve must key off the DURABLE block.end fsRef, not the
+    // early prompt.block-end. persistedFsRef stays undefined through streaming + the
+    // first code.end, and only takes the fsRef (with vibe identity) when block.end arrives.
     const { view, fakeChat } = setup();
     await waitFor(() => expect(view.result.current.phase).toBe("idle"));
-    expect(view.result.current.persistedFsId).toBeUndefined();
+    expect(view.result.current.persistedFsRef).toBeUndefined();
     act(() => view.result.current.sendPrompt("make it blue"));
     await act(async () => fakeChat.emitBlockBegin());
     await act(async () => fakeChat.emitCodeEnd());
-    // code.end ≠ persisted: the in-flight flag may drop here, but no fsId yet.
-    expect(view.result.current.persistedFsId).toBeUndefined();
+    // code.end ≠ persisted: the in-flight flag may drop here, but no fsRef yet.
+    expect(view.result.current.persistedFsRef).toBeUndefined();
     await act(async () => fakeChat.emitBlockEnd("zDRAFT-NEW"));
-    await waitFor(() => expect(view.result.current.persistedFsId).toBe("zDRAFT-NEW"));
+    // Carries the FULL identity (the emitter stamps ownerHandle "owner" / appSlug "app").
+    await waitFor(() =>
+      expect(view.result.current.persistedFsRef).toEqual({ ownerHandle: "owner", appSlug: "app", fsId: "zDRAFT-NEW" })
+    );
   });
 
   it("hasLocalEdit flips true on a local sendPrompt and resets when the vibe changes", async () => {
@@ -184,11 +187,11 @@ describe("useInVibeGeneration", () => {
     await waitFor(() => expect(view.result.current.hasLocalEdit).toBe(false));
   });
 
-  it("clears persistedFsId when the vibe changes so a fsId never carries across vibes (#2839)", async () => {
-    // The route scopes its draft-recheck tracking to the vibe key; that relies on the
-    // hook NOT leaking a settled fsId across a client-side nav. After a persisted
-    // block.end on vibe A, navigating to B must reset persistedFsId to undefined — else
-    // B's first recheck could compare against A's fsId and skip B's iframe pin.
+  it("clears persistedFsRef when the vibe changes so an fsRef never carries across vibes (#2839)", async () => {
+    // The route's skip-repin decision compares the resolved draft against persistedFsRef
+    // by full vibe identity; this also confirms the hook doesn't leak a settled fsRef
+    // across a client-side nav. After a persisted block.end on vibe A, navigating to B
+    // must reset persistedFsRef to undefined.
     const chatA = makeControllableLLMChat({ chatId: "A" });
     const chatB = makeControllableLLMChat({ chatId: "B" });
     const opened = [chatA.chat, chatB.chat];
@@ -210,9 +213,9 @@ describe("useInVibeGeneration", () => {
     await act(async () => chatA.emitBlockBegin());
     await act(async () => chatA.emitCodeEnd());
     await act(async () => chatA.emitBlockEnd("zDRAFT-A"));
-    await waitFor(() => expect(view.result.current.persistedFsId).toBe("zDRAFT-A"));
+    await waitFor(() => expect(view.result.current.persistedFsRef?.fsId).toBe("zDRAFT-A"));
     view.rerender({ ownerHandle: "owner", appSlug: "appB" });
-    await waitFor(() => expect(view.result.current.persistedFsId).toBeUndefined());
+    await waitFor(() => expect(view.result.current.persistedFsRef).toBeUndefined());
   });
 
   it("does not open a chat when disabled", async () => {
