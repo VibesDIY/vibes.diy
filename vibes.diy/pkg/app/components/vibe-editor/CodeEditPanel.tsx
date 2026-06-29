@@ -82,7 +82,9 @@ export function CodeEditPanel({ model, saveState, isSaving, onSave }: CodeEditPa
         )}
         <span
           aria-live="polite"
-          className={"ml-auto text-xs " + (saveState === "error" ? "text-red-600 dark:text-red-400" : "text-gray-500 dark:text-gray-400")}
+          className={
+            "ml-auto text-xs " + (saveState === "error" ? "text-red-600 dark:text-red-400" : "text-gray-500 dark:text-gray-400")
+          }
         >
           {status}
         </span>
