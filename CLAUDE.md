@@ -29,6 +29,7 @@ Team-shared agent instructions live in the [`agents/`](agents/) directory. These
 - [cloud-browser-setup.md](agents/cloud-browser-setup.md) — chrome-devtools MCP screenshots work out of the box in cloud sessions (SessionStart hook + `scripts/setup-cloud-browser.sh`); why the TLS 1.2 cap, and what to run if it ever fails
 - [chrome-mcp-debug.md](agents/chrome-mcp-debug.md) — Chrome DevTools MCP debugging loop: add breadcrumbs, reproduce, inspect structured snapshots, fix, re-verify
 - [authed-browser-debugging.md](agents/authed-browser-debugging.md) — drive a _logged-in_ Vibes browser for ad-hoc debugging/screenshots in cloud sessions: `clerk-qa-login.mjs --storage` → `clerk-authed-shot.mjs`; why you can't `--cdp` the chrome-devtools MCP browser (pipe transport), route-nav > sidebar cards, wait-for-iframe, never print/commit the storage-state cookie
+- [identity-ship-verify.md](agents/identity-ship-verify.md) — verify a de-fireproof identity/device-id ship on prod with no re-login: browser sign-in + headless `$VIBES_DEVICE_ID` device-id round-trip + driving the interactive `vibes-diy login` CA-callback headlessly (the agent-proxy-rejects-localhost and 5s-redirect-timer gotchas, with the `context.route` → Node `http.get` fix)
 
 ## Team-shared skills
 

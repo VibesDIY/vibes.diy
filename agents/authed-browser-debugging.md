@@ -80,6 +80,14 @@ a long-lived connection open, so the page never reaches `networkidle` and
 `clerk-authed-shot.mjs` itself uses `networkidle`, so a card route may screenshot
 empty/timeout there — drive it from your own script with `domcontentloaded`.
 
+**Gotcha — driving the interactive `vibes-diy login` CA callback.** If you need
+the authed browser to complete a real device-cert enrollment (not just
+screenshot), the `http://localhost:<port>/cert` callback the CLI waits on is
+**routed through the agent proxy** (which rejects plain-HTTP) even with
+`proxy.bypass` set — intercept it with `context.route()` and service it via a
+direct Node `http.get`. Full recipe + the 5s-redirect-timer gotcha:
+[identity-ship-verify.md § Step 3](identity-ship-verify.md#step-3--interactive-vibes-diy-login-headlessly-the-real-ca-callback-enroll-write).
+
 **Unified vibe card selectors** (the merged agent-in-vibe surface, #2676/#2680) —
 these are the stable `aria-label`s, found in `vibes.diy/base/components/UnifiedVibeCard.tsx`:
 
