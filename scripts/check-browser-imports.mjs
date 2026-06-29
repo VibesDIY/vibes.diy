@@ -40,6 +40,7 @@ const excludePatterns = [
   // client entry never reaches them.
   /node-executor\.ts$/,
   /worker-loader-executor\.ts$/,
+  /ssr-source-check\.ts$/,
 ];
 
 // Packages that are bundled INTO the privateNpm packages at build time
