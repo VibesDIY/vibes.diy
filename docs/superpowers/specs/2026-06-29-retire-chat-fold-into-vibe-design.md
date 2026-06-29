@@ -58,11 +58,21 @@ an in-page expandable layer over the running app, with errors inline in chat.
 ### 1. In-page expandable editor surface on `/vibe` (the build)
 
 An affordance on the running vibe (from the unified card / overlay layer) expands
-to a layer showing the **Code** and **Data** views and the **full chat history**,
-over the running app. No URL change (Q2). Reuses the existing
-`ResultPreview` pieces — `CodeEditor`, `DataView`, and the chat-history rendering
-(`ChatInterface` / `PromptAndBlockMsgs`) — rather than re-implementing them.
+to a layer showing the **Code** and **Data** views, the **full chat history**, and
+**Settings** (§"editor surface") over the running app. No URL change (Q2). Reuses
+the existing `ResultPreview` pieces — `CodeEditor`, `DataView`, the chat-history
+rendering (`ChatInterface` / `PromptAndBlockMsgs`), and the settings tabs — rather
+than re-implementing them.
 
+- **Full code edit-and-save (decided, jchris).** The Code view keeps Monaco's full
+  **edit-and-save**, not view-only — port `CodeEditor`'s save path (`onCode` /
+  `agent-autosave`) so an owner edits source directly in the layer, and the
+  save → rebuild → hot-swap loop updates the running app behind it. Prefer reusing
+  `useInVibeGeneration`'s `srvVibeSandbox.pushSource` hot-swap over a split-pane
+  reload, so the app under the layer updates in place.
+- **Always mobile (decided, jchris).** The layer must be usable at **390px** — Code
+  and Data are **not** gated to a larger viewport. Mobile is the primary target, not
+  a fallback; design Monaco/`DataView` to work in a phone-sized overlay.
 - **Keep Monaco lazy.** `ResultPreview.tsx` already loads the editor via
   `const CodeEditor = lazy(() => import("./CodeEditor.js"))`, which code-splits
   Monaco + shiki out of the initial bundle. The `/vibe` surface **must preserve
@@ -127,19 +137,20 @@ severed before it can be deleted:
 before the editor tools exist on `/vibe` would briefly strip Code/Data/history
 from power users. Phase 1 first keeps the retirement loss-free.
 
-## Open questions (resolve in `writing-plans` / Phase 1)
+**Decided (jchris):** the Code view keeps **full edit-and-save** (not view-only),
+and the layer is **always mobile** (usable at 390px, not gated to a larger
+viewport). Both folded into component 1.
+
+Still open (resolve in `writing-plans` / Phase 1):
 
 1. **Trigger affordance.** What control on the unified card / overlay opens the
    editor layer, and how does it relate to the existing `💬` chat-history toggle
-   (#2677) — same control with tabs (Code / Data / Chat), or separate entry
-   points? (UI detail; Storybook + screenshot loop applies.)
-2. **Code editing vs viewing on `/vibe`.** `/chat` allows editing source in
-   Monaco. Does the `/vibe` layer keep full edit-and-save, or start
-   view-with-edit-via-prompt? (Affects how much of `CodeEditor`'s save path moves.)
-3. **Mobile.** The editor layer is an overlay over a full-bleed app on mobile
-   (epic is mobile-first); confirm Code/Data are usable at 390px or gated to a
-   larger viewport.
-4. **Analytics parity check.** Enumerate the PostHog/GTM events currently fired on
+   (#2677) — same control with tabs (Code / Data / Chat / Settings), or separate
+   entry points? (UI detail; Storybook + screenshot loop applies.)
+2. **Settings fold (#2850).** Which Settings controls move into the `/vibe` layer
+   vs a "manage in `/vibes/mine`" link — lean: fold env vars + title/theme/icon,
+   link out model settings, sharing-manage stays #2680.
+3. **Analytics parity check.** Enumerate the PostHog/GTM events currently fired on
    `/chat/:o/:s` and confirm each has a `/vibe` equivalent post-redirect.
 
 ## References
