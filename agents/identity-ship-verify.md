@@ -127,7 +127,8 @@ browser is launched with `proxy: { server: HTTPS_PROXY }` (required for the HTTP
 **through that proxy**, which only accepts HTTPS CONNECT tunnels and answers with
 the `agent-proxy relay: this proxy only accepts HTTPS CONNECT tunnels` error — so
 the cert never reaches the CLI server. **`proxy.bypass: "localhost,127.0.0.1"`
-did NOT fix it.** The fix that works: **intercept localhost requests with
+did NOT fix it** (observed in our cloud session — scoped empirical behavior, not
+a universal guarantee). The fix that works: **intercept localhost requests with
 `context.route()` and service them with a direct Node `http.get` (no proxy), then
 `route.fulfill()` the response back.** That Node GET delivers the cert to the
 CLI's local server and completes enrollment:
