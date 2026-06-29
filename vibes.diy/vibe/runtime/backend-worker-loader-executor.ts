@@ -1,7 +1,7 @@
 import { TxtEnDecoderSingleton } from "@adviser/cement";
 import { transformBackendSource } from "./transform-backend-source.js";
 import { type WorkerCode, type WorkerLoaderBinding } from "./worker-loader-executor.js";
-import { type BackendExecutor, type BackendInvokeInput, type BackendInvokeResult } from "./backend-executor.js";
+import { type BackendExecutor, type BackendInvokeInput } from "./backend-executor.js";
 
 const MAIN_MODULE = "main.js";
 const BACKEND_MODULE = "backend.js";
@@ -50,6 +50,14 @@ export function buildBackendWorkerCode(input: { module: string; policyVersion?: 
     `export default {`,
     `  async fetch(request) {`,
     `    const { handler, trigger } = await request.json();`,
+    // Fail-closed allowlist (per @CharlieHelps): only the three trigger exports may
+    // be dispatched, so a request can never reach `default`, `config`, or any other
+    // module export via `handlers[handler]`. `hasOwnProperty` so prototype keys
+    // (`constructor`, `__proto__`, …) are rejected too.
+    `    const ALLOWED_HANDLERS = { fetch: true, scheduled: true, onChange: true };`,
+    `    if (!Object.prototype.hasOwnProperty.call(ALLOWED_HANDLERS, handler)) {`,
+    `      return new Response("invalid backend handler: " + handler, { status: 400 });`,
+    `    }`,
     // B1 stub ctx — real db/secrets/appInfo wiring is B3/B6/B7, also via the request.
     `    const ctx = {`,
     `      appInfo: (trigger && trigger.appInfo) || null,`,
@@ -112,7 +120,7 @@ export class WorkerLoaderBackendExecutor implements BackendExecutor {
     private readonly opts: { readonly policyVersion?: string } = {}
   ) {}
 
-  async invoke(input: BackendInvokeInput): Promise<BackendInvokeResult> {
+  async invoke(input: BackendInvokeInput): Promise<Response> {
     const { module } = transformBackendSource(input.source);
     const code = buildBackendWorkerCode({ module, policyVersion: this.opts.policyVersion });
     const id = await hashBackendWorkerCode(code);
@@ -122,7 +130,9 @@ export class WorkerLoaderBackendExecutor implements BackendExecutor {
       headers: { "content-type": "application/json" },
       body: JSON.stringify({ handler: input.handler, trigger: input.trigger }),
     });
-    const response = await stub.getEntrypoint().fetch(request);
-    return { status: response.status, body: await response.text() };
+    // Return the isolate Response verbatim — never decompose to status/body, or a
+    // fetch handler's headers (Location, Set-Cookie, content-type) get dropped on
+    // the way to the B3 `_api` route (per Codex review).
+    return stub.getEntrypoint().fetch(request);
   }
 }

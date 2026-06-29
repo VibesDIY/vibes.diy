@@ -45,6 +45,15 @@ describe("buildBackendWorkerCode", () => {
     expect(code.modules[code.mainModule]).toMatch(/no backend handler/);
   });
 
+  it("fail-closes to an allowlist of handler names before dispatch (@CharlieHelps)", () => {
+    const main = code.modules[code.mainModule];
+    expect(main).toMatch(/ALLOWED_HANDLERS/);
+    expect(main).toMatch(/hasOwnProperty/);
+    expect(main).toMatch(/invalid backend handler/);
+    // the allowlist gate precedes the `handlers[handler]` lookup.
+    expect(main.indexOf("ALLOWED_HANDLERS")).toBeLessThan(main.indexOf("handlers[handler]"));
+  });
+
   it("pins globalOutbound to null (B8 replaces it with the egress proxy)", () => {
     expect(code.globalOutbound).toBeNull();
   });
@@ -64,7 +73,7 @@ interface FakeLoader {
   requests: { handler: string; trigger: { userHandle?: string | null } }[];
 }
 
-function fakeLoader(): FakeLoader {
+function fakeLoader(responseHeaders?: Record<string, string>): FakeLoader {
   const calls: FakeLoader["calls"] = [];
   const requests: FakeLoader["requests"] = [];
   const binding: WorkerLoaderBinding = {
@@ -79,7 +88,7 @@ function fakeLoader(): FakeLoader {
               requests.push(body);
               return new Response(JSON.stringify({ ok: true, handler: body.handler }), {
                 status: 200,
-                headers: { "content-type": "application/json" },
+                headers: { "content-type": "application/json", ...responseHeaders },
               });
             },
           };
@@ -91,7 +100,7 @@ function fakeLoader(): FakeLoader {
 }
 
 describe("WorkerLoaderBackendExecutor.invoke (fake binding)", () => {
-  it("drives get → getEntrypoint → fetch and returns status + body", async () => {
+  it("drives get → getEntrypoint → fetch and returns the Response verbatim", async () => {
     const { binding, requests } = fakeLoader();
     const exec = new WorkerLoaderBackendExecutor(binding);
     const res = await exec.invoke({
@@ -99,10 +108,26 @@ describe("WorkerLoaderBackendExecutor.invoke (fake binding)", () => {
       handler: "fetch",
       trigger: { userHandle: "alice", payload: { url: "https://vibe.internal/oauth" } },
     });
+    expect(res).toBeInstanceOf(Response);
     expect(res.status).toBe(200);
-    expect(res.body).toContain('"handler":"fetch"');
+    expect(await res.text()).toContain('"handler":"fetch"');
     // handler travels in the request, not the code.
     expect(requests[0].handler).toBe("fetch");
+  });
+
+  // Codex P2: a fetch handler's response headers (Location, Set-Cookie,
+  // content-type) must survive to the B3 `_api` route — invoke returns the
+  // Response verbatim rather than decomposing to status/body.
+  it("preserves fetch handler response headers (no silent drop)", async () => {
+    const { binding } = fakeLoader({ location: "https://example.com/next", "set-cookie": "sid=abc" });
+    const res = await new WorkerLoaderBackendExecutor(binding).invoke({
+      source: SONOS_BACKEND,
+      handler: "fetch",
+      trigger: { payload: {} },
+    });
+    expect(res.headers.get("location")).toBe("https://example.com/next");
+    expect(res.headers.get("set-cookie")).toBe("sid=abc");
+    expect(res.headers.get("content-type")).toBe("application/json");
   });
 
   // @CharlieHelps acceptance matrix (a): same code + different trigger identities ⇒ same loader id.
