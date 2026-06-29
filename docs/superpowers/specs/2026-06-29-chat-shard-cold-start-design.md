@@ -3,8 +3,9 @@
 **Status:** implemented (PR #2829)
 **Issue:** TBD (file before implementation)
 
+**Predecessors (shipped):** [#2714](https://github.com/VibesDIY/vibes.diy/issues/2714) — declarative shard-keyed API (`ShardKind`, `SHARD_POLICY`, branded shard keys); #2265 Track B — per-user `notify-user-<uid>` shared shard.
+
 > **Implemented.** Server admission control + the codegen-plane guard split landed first (behavior-preserving — admission is installed only on per-user notify-prefixed shards, so random-UUID CLI/anon traffic is untouched). Website per-user pinning + client roll are behind the `CODEGEN_PER_USER_SHARD` flag (off by default). `MAX_CONCURRENT_CODEGEN_STREAMS` is env-tunable. The `## Testing` cases below are now executable tests (`admission-gate.test.ts`, `notifications.test.ts`, `chat-sessions-notify.test.ts`, `shared-sessions-register.test.ts`).
-> **Predecessors (shipped):** [#2714](https://github.com/VibesDIY/vibes.diy/issues/2714) — declarative shard-keyed API (`ShardKind`, `SHARD_POLICY`, branded shard keys); #2265 Track B — per-user `notify-user-<uid>` shared shard.
 
 ## Summary
 
