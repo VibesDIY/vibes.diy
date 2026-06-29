@@ -34,6 +34,18 @@ Decisions worth a full post:
   should be one tap from public, and nothing private should be ambiguous about
   its privacy.
 
+- **The publish footgun: channels are the unit of read isolation, not docs.**
+  The first draft said "publish a chosen item: `grant.public = [ch]`" — and a
+  Codex review (P1) caught that if `ch` is the shared per-user `user:<handle>`
+  channel, flipping it public exposes _every_ private item routed there, not just
+  the one. The grant shape is literally `publicChannels: string[]`, so public is
+  channel-scoped. The fix: publish at channel granularity — route each
+  publishable item to its **own** channel (`entry:<id>`) and flip only that
+  channel's read-grant. Making the user's whole space public is fine when that's
+  the intent; leaking their other notes by publishing one is the trap. A good
+  reminder that a prompt that hand-waves the access mechanism will get the
+  mechanism wrong in generated apps.
+
 Trade-off: this is prompt-behavior guidance, not a code path, so its only test
 is generation quality — the access-model autoresearch eval is the place to watch
 for whether the affordance actually lands in generated apps.
