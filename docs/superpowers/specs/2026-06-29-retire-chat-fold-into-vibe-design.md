@@ -174,6 +174,24 @@ Tools-first keeps the retirement loss-free.
   can silently drift. Before the 301, add explicit `/vibe/:o/:s` parity mapping in
   dashboards/funnels (or emit canonical, path-independent funnel props). (Charlie.)
 
+## Acceptance criteria
+
+Charlie supplied a **Phase 1 acceptance checklist** (+ a separate Phase 2
+edit-and-save test block) on #2847 (2026-06-29); it is the acceptance basis for the
+plans. Load-bearing gates carried into `writing-plans`:
+
+- **Phase 1** — single entry point → one tabbed surface (no second overlay); tab
+  switching never navigates off `/vibe/:o/:s`; **Code tab is view-first (no edit
+  affordance / save state machine)**; Settings = the #2850 subset only; all tabs
+  reachable + usable on mobile (no gating); Monaco lazy boundary intact; shared
+  types extracted (3a). **Non-goals:** no teardown, no 301, no edit-and-save.
+- **Analytics parity must land before the 301** — explicit `/chat→/vibe` event
+  mapping (or path-independent props) + a parity-validation check + a recorded
+  **go/no-go criterion** gating the redirect.
+- **Phase 2** — save flow asserts the `queued → saving → rebuilt` sequence, an
+  agreed hot-swap timing threshold, and a recoverable/visible failure path; these
+  pass **before** Phase 3 teardown begins.
+
 ## References
 
 - Issue: #2518 (Track C). Epic: #2675. Predecessors: #2714 (DO collapse), #2517
