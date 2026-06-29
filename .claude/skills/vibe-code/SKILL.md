@@ -77,6 +77,20 @@ grep -n "<rule you changed>" /tmp/verify-sc/access.js
 
 End-to-end behavior (does the running app work?) still needs a human or `qa-pr` browser pass — re-pull only proves the bytes shipped.
 
+## Take a vibe down, or promote a draft: `unpublish` / `publish`
+
+A default `push` is already production **and live** (it mints a production release and, unless `--private`, enables public access). So you do **not** `push` then `publish` for a normal deploy. These two verbs are for the lifecycle around that:
+
+```bash
+npx vibes-diy unpublish garden-gnome/story-crossroads   # take it down (reversible)
+npx vibes-diy publish   garden-gnome/story-crossroads   # make it live again / promote a draft
+npx vibes-diy publish   garden-gnome/story-crossroads --fsId <fsId>   # publish a specific version
+```
+
+- **`unpublish <vibe>`** — a reversible soft take-down (#2688). It de-indexes the slug and makes the public URL, no-`fsId` remix, and non-owner `versions` listing all return not-found. **Nothing is deleted** — code, data, grants, and history are kept. Owners still see the vibe in their own `list` marked `[unpublished]`, and **explicit-`fsId` permalinks keep resolving** (so existing remix lineage doesn't break). There is no hard delete/`rm`.
+- **`publish <vibe>`** — "make it live." It does two things: (1) **promotes** the owner's latest `--mode dev` draft to a new production release (or an explicit `--fsId`; idempotent "up to date" no-op when nothing changed), and (2) **clears** any `unpublish` tombstone. Use it after iterating in `--mode dev`, or to bring an unpublished vibe back. It is **not** a deploy of working-dir files — that's `push`.
+- Both are **owner-only** and reversible. `unpublish` ⇄ `publish` is the toggle; `publish` also covers the dev-draft → production promotion the web "publish" switch exposes.
+
 ## Inspect the chat: why did the app turn out this way?
 
 When an app shipped wrong — a file is missing, two files got merged, the wrong code landed — read **what the model actually replied with**, not just the user prompt. `pull` gives you the current bytes; `codegen-log` gives you the generation that produced them. (For the deployed app's own _runtime_ chat data — a chat-bot vibe's messages — use `app-chats` instead.)
@@ -115,6 +129,8 @@ See `agents/environments.md` for the full dev/prod/cli/preview architecture.
 | Pull source            | `npx vibes-diy pull <handle>/<app> --dir <dir>`                                          |
 | Stage on cli first     | `cd <dir> && npx vibes-diy push --vibe <handle>/<app>` (default `--api-url` = cli)       |
 | Push to prod           | `cd <dir> && npx vibes-diy push --vibe <handle>/<app> --api-url https://vibes.diy/api`   |
+| Take a vibe down       | `npx vibes-diy unpublish <handle>/<app>` (reversible; code/data kept)                    |
+| Make live / promote    | `npx vibes-diy publish <handle>/<app> [--fsId <fsId>]`                                   |
 | AI follow-up edit      | `npx vibes-diy edit --help`                                                              |
 | Generate a new vibe    | `npx vibes-diy generate --help`                                                          |
 | List build turns       | `npx vibes-diy codegen-log <handle>/<app>`                                               |
@@ -127,6 +143,7 @@ See `agents/environments.md` for the full dev/prod/cli/preview architecture.
 - **Pushing the wrong directory** — `push` is always `cwd`; `cd` into the pulled folder first.
 - **Wrong env** — default is cli, not prod. Add `--api-url https://vibes.diy/api` for prod, and keep pull/push on the same plane.
 - **`--mode dev` is not the dev environment** — it's the app's deploy mode and does not change routing. Environment is the `--api-url` plane.
+- **`publish` is not `push`** — a normal `push` already ships to production live; you don't `push` then `publish`. `publish` promotes a `--mode dev` draft to production (or restores an `unpublish`ed vibe); it does **not** upload working-directory files.
 - **Nested files don't push** — `push` reads top-level files only; subdirectories are silently skipped. Keep source flat at the vibe root.
 - **`unknown document type`** — `access.js` doesn't return for a type the app writes (e.g. ImgGen's docs). Add a branch returning `{ channels, grant }` for it.
 - **No editor grant** — pushing under another handle needs write access on that vibe.

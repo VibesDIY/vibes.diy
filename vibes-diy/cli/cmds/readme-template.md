@@ -16,7 +16,8 @@ Edit [App.jsx](App.jsx) and push again to iterate.
 
 ## Commands
 
-- `npx vibes-diy push` — deploy the current directory
-- `npx vibes-diy push --instant-join` — deploy with auto-accept sharing
+- `npx vibes-diy push` — deploy the current directory (production + public by default)
+- `npx vibes-diy unpublish` — take this vibe down (reversible; code and data are kept)
+- `npx vibes-diy publish` — bring it back / promote the latest draft to production
 - `npx vibes-diy generate "prompt"` — generate a new app from a prompt
 - `npx vibes-diy help` — full command list
