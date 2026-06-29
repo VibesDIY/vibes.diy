@@ -87,7 +87,19 @@ describe("parseBackendConfig — interval validation", () => {
     const r = parseBackendConfig(`export async function scheduled(evt, ctx) {}`);
     expect(r.handlers).toEqual(["scheduled"]);
     expect(r.schedule).toBeUndefined();
-    expect(r.errors.join(" ")).toMatch(/requires a config\.scheduled\.interval/);
+    expect(r.errors.join(" ")).toMatch(/requires config\.scheduled\.interval/);
+  });
+
+  // Per @CharlieHelps: the interval must be a static string literal; a computed /
+  // indirect value (interval: SOME_CONST) is unsupported and fails at push.
+  it("rejects a computed/indirect interval (not a string literal)", () => {
+    const r = parseBackendConfig(`
+      const FIVE = "5m";
+      export async function scheduled(evt, ctx) {}
+      export const config = { scheduled: { interval: FIVE } };
+    `);
+    expect(r.schedule).toBeUndefined();
+    expect(r.errors.join(" ")).toMatch(/static string-literal|computed\/indirect/);
   });
 
   it("ignores an interval when there is no scheduled handler (not an error)", () => {
@@ -127,7 +139,7 @@ describe("parseBackendConfig — interval validation", () => {
     `);
     expect(r.hasConfig).toBe(false);
     expect(r.schedule).toBeUndefined();
-    expect(r.errors.join(" ")).toMatch(/requires a config\.scheduled\.interval/);
+    expect(r.errors.join(" ")).toMatch(/requires config\.scheduled\.interval/);
   });
 
   it("handles a config object with nested braces / sibling objects before scheduled", () => {

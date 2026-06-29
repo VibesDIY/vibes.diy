@@ -116,10 +116,14 @@ function extractIntervalLiteral(source: string): string | undefined {
  * Parse + validate a `backend.js` source at push time.
  *
  * - Detects which of `fetch`/`scheduled`/`onChange` are exported.
- * - If a `scheduled` handler is present, requires a parseable
- *   `config.scheduled.interval` within `[5s, 1h]`; anything faster, slower, or
- *   malformed is a push-time error (never silently clamped).
+ * - If a `scheduled` handler is present, requires `config.scheduled.interval` to
+ *   be a **static string-literal** duration (`"<n><s|m|h>"`) within `[5s, 1h]`;
+ *   anything faster, slower, malformed, or **computed/indirect** (`interval: FIVE`)
+ *   is a push-time error (never silently clamped, never deferred to first alarm).
  * - An `interval` with no `scheduled` handler is ignored (not an error).
+ *
+ * Contract (per @CharlieHelps): push-time discovery is deterministic and never
+ * evaluates untrusted `config`, so only a literal interval is supported.
  */
 export function parseBackendConfig(source: string | undefined): BackendConfigParseResult {
   const errors: string[] = [];
@@ -136,11 +140,15 @@ export function parseBackendConfig(source: string | undefined): BackendConfigPar
 
   if (hasScheduled) {
     if (rawInterval === undefined) {
-      errors.push('scheduled handler requires a config.scheduled.interval (e.g. { scheduled: { interval: "5m" } })');
+      errors.push(
+        'scheduled handler requires config.scheduled.interval as a static string-literal duration, e.g. { scheduled: { interval: "5m" } }; computed/indirect values are unsupported'
+      );
     } else {
       const intervalMs = parseDurationMs(rawInterval);
       if (intervalMs === undefined) {
-        errors.push(`config.scheduled.interval "${rawInterval}" is not a valid duration (use e.g. 5s, 1m, 1h)`);
+        errors.push(
+          `config.scheduled.interval "${rawInterval}" is not a valid duration — use a string literal like "5s", "1m", or "1h"`
+        );
       } else if (intervalMs < MIN_INTERVAL_MS) {
         errors.push(`config.scheduled.interval "${rawInterval}" is faster than the 5s minimum`);
       } else if (intervalMs > MAX_INTERVAL_MS) {
