@@ -5,7 +5,7 @@
 import { describe, it, expect } from "vitest";
 import { runtimeFn as cementRuntimeFn } from "@adviser/cement";
 import { ensureSuperThis as exEnsure, runtimeFn as exRuntimeFn } from "./superthis.js";
-import { TXT_BASE64, TXT_BASE58, TIME_ORDERED_PREFIX } from "../golden-fixtures.js";
+import { TXT_BASE64, TXT_BASE58, TXT_ENCODE_UTF8, TIME_ORDERED_PREFIX } from "../golden-fixtures.js";
 
 const ex = exEnsure();
 
@@ -16,6 +16,11 @@ describe("SuperThis lift — byte-compat against the frozen fireproof contract",
       expect(ex.txt.base58.encode(s)).toBe(TXT_BASE58[s]);
       expect(ex.txt.base64.decode(ex.txt.base64.encode(s))).toBe(s);
       expect(ex.txt.base58.decode(ex.txt.base58.encode(s))).toBe(s);
+    }
+    // Direct raw-UTF-8 byte contract (Charlie #2858) — not hidden behind a codec
+    // round-trip: a non-UTF-8 encode regression must fail here.
+    for (const s of Object.keys(TXT_ENCODE_UTF8)) {
+      expect([...ex.txt.encode(s)]).toEqual(TXT_ENCODE_UTF8[s]);
     }
   });
 

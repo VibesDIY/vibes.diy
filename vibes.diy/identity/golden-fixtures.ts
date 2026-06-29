@@ -40,6 +40,12 @@ export const TXT_BASE64: Record<string, string> = {
   "héllo-✓": "aMOpbGxvLeKckw==",
 };
 
+// Raw UTF-8 bytes of `txt.encode(...)` — a direct encoding contract so a raw
+// encoding regression can't hide behind a base64/base58 round-trip (Charlie #2858).
+export const TXT_ENCODE_UTF8: Record<string, readonly number[]> = {
+  "héllo-✓": [104, 195, 169, 108, 108, 111, 45, 226, 156, 147],
+};
+
 export const TXT_BASE58: Record<string, string> = {
   "": "z",
   "FIREProof:deviceId": "z3v5yMu4QcJsG8d2fQFEiDBJSf",
