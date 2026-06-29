@@ -1,7 +1,9 @@
 export * from "./db-acl-allows.js";
 export * from "./vibe.js";
 export * from "./mount-vibes.js";
-export { renderVibeToString, buildVibeTree } from "./render-vibes.js";
+// NOTE: `renderVibeToString` (render-vibes.js) is intentionally NOT re-exported
+// here — it imports `react-dom/server`, which is absent from the vibe iframe's
+// native import map. Server callers deep-import `@vibes.diy/vibe-runtime/render-vibes.js`.
 export * from "./register-dependencies.js";
 export {
   rewriteBareSpecifiers,

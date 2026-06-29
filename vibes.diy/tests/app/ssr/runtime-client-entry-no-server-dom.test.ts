@@ -1,0 +1,33 @@
+// Regression guard for #2823 (Codex P1): the vibe iframe loads
+// @vibes.diy/vibe-runtime natively via the generated import map
+// (api/svc/intern/grouped-vibe-import-map.ts), which maps `react-dom` and
+// `react-dom/client` but NOT `react-dom/server`. So no file reachable from the
+// client entry (index.ts → mount-vibes.ts → vibe-tree.ts) may statically import
+// `react-dom/server`, or native module resolution fails before hydration.
+//
+// `renderVibeToString` (render-vibes.ts) is the only file allowed to import it,
+// and it must stay off the root entry — server callers deep-import it.
+
+import { describe, it, expect } from "vitest";
+import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
+
+const runtimeFile = (name: string) =>
+  readFileSync(fileURLToPath(new URL(`../../../vibe/runtime/${name}`, import.meta.url)), "utf8");
+
+describe("vibe-runtime client entry stays free of react-dom/server", () => {
+  // Files reachable when a vibe page imports `mountVibe` and is loaded natively.
+  for (const name of ["index.ts", "mount-vibes.ts", "vibe-tree.ts"]) {
+    it(`${name} does not import react-dom/server`, () => {
+      expect(runtimeFile(name)).not.toMatch(/["']react-dom\/server["']/);
+    });
+  }
+
+  it("index.ts does not re-export the server renderer (render-vibes)", () => {
+    expect(runtimeFile("index.ts")).not.toMatch(/from\s+["']\.\/render-vibes\.js["']/);
+  });
+
+  it("render-vibes.ts is the file that owns the server import", () => {
+    expect(runtimeFile("render-vibes.ts")).toMatch(/["']react-dom\/server["']/);
+  });
+});
