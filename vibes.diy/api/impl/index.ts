@@ -17,6 +17,9 @@ import {
   ReqPinRecentVibe,
   ResPinRecentVibe,
   isResPinRecentVibe,
+  ReqSetUnpublish,
+  ResSetUnpublish,
+  isResSetUnpublish,
   ReqGetChatDetails,
   ResGetChatDetails,
   isResGetChatDetails,
@@ -457,6 +460,15 @@ export class VibesDiyApi implements VibesDiyApiIface<{
       { ...req, type: "vibes.diy.req-pin-recent-vibe" },
       {
         resMatch: isResPinRecentVibe,
+      }
+    );
+  }
+
+  setUnpublish(req: Req<ReqSetUnpublish>): Promise<Result<ResSetUnpublish, VibesDiyError>> {
+    return this.request(
+      { ...req, type: "vibes.diy.req-set-unpublish" },
+      {
+        resMatch: isResSetUnpublish,
       }
     );
   }

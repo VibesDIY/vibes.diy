@@ -1,6 +1,7 @@
 export * from "./cli-ctx.js";
 export * from "./cmds/login-cmd.js";
 export * from "./cmds/push-cmd.js";
+export * from "./cmds/unpublish-cmd.js";
 export * from "./cmds/skills-cmd.js";
 export * from "./cmds/themes-cmd.js";
 export * from "./cmds/system-cmd.js";

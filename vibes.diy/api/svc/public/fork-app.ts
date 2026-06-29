@@ -16,6 +16,7 @@ import {
 import { type } from "arktype";
 import { and, eq } from "drizzle-orm/sql/expressions";
 import { selectLatestAppPerSlug } from "./select-app.js";
+import { isHiddenForCaller } from "./unpublished-binding.js";
 import { generate } from "random-words";
 import { unwrapMsgBase } from "../unwrap-msg-base.js";
 import { VibesApiSQLCtx } from "../types.js";
@@ -80,6 +81,22 @@ export async function forkApp(
     src = await selectLatestAppPerSlug(vctx, { ownerHandle: req.srcUserSlug, appSlug: req.srcAppSlug });
   }
   if (!src) {
+    return Result.Err("app-not-found");
+  }
+
+  // Soft-unpublish gate (#2688): a tombstoned slug can't be remixed by a
+  // non-owner via the no-`srcFsId` path (which resolves the bare slug through
+  // selectLatestAppPerSlug). An explicit `srcFsId` remix still works, so a
+  // forked lineage that points at a specific version survives unpublish.
+  if (
+    !req.srcFsId &&
+    (await isHiddenForCaller(vctx, {
+      ownerHandle: src.ownerHandle,
+      appSlug: src.appSlug,
+      ownerUserId: src.userId,
+      callerUserId: userId,
+    }))
+  ) {
     return Result.Err("app-not-found");
   }
 

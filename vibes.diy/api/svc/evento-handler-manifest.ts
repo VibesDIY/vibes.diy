@@ -7,6 +7,7 @@ import { promptChatSection } from "./public/prompt-chat-section.js";
 import { listUserSlugAppSlugEvento } from "./public/list-user-slug-app-slug.js";
 import { listRecentVibesEvento } from "./public/list-recent-vibes.js";
 import { pinRecentVibeEvento } from "./public/pin-recent-vibe.js";
+import { setUnpublishEvento } from "./public/set-unpublish.js";
 import { getChatDetailsEvento } from "./public/get-chat-details.js";
 import { getChatResponseEvento } from "./public/get-chat-response.js";
 import { getAppByFsIdEvento } from "./public/get-app-by-fsid.js";
@@ -107,6 +108,7 @@ export const handlerManifest: readonly HandlerManifestEntry[] = [
   entry("vibes.diy.req-list-user-slug-app-slug", listUserSlugAppSlugEvento),
   entry("vibes.diy.req-list-recent-vibes", listRecentVibesEvento),
   entry("vibes.diy.req-pin-recent-vibe", pinRecentVibeEvento),
+  entry("vibes.diy.req-set-unpublish", setUnpublishEvento),
   entry("vibes.diy.req-get-app-by-fsid", getAppByFsIdEvento),
   entry("vibes.diy.req-ensure-app-settings", ensureAppSettingsEvento),
   entry("vibes.diy.req-ensure-user-settings", ensureUserSettingsEvento),

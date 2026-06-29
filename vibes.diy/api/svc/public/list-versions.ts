@@ -14,6 +14,7 @@ import { and, eq } from "drizzle-orm/sql/expressions";
 import { unwrapMsgBase } from "../unwrap-msg-base.js";
 import { VibesApiSQLCtx } from "../types.js";
 import { optAuth } from "../check-auth.js";
+import { getUnpublishedAt } from "./unpublished-binding.js";
 
 // List every Apps release for (ownerHandle, appSlug) — the CLI `versions` command
 // (#2772 D3). Mirrors get-app-by-fsid's owner gating: the owner sees ALL rows
@@ -49,6 +50,20 @@ export const listVersionsEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqLis
         .where(and(eq(vctx.sql.tables.apps.ownerHandle, req.ownerHandle), eq(vctx.sql.tables.apps.appSlug, req.appSlug)));
 
       const isOwner = callerUserId !== undefined && rows.some((r) => r.userId === callerUserId);
+
+      // Soft-unpublish gate (#2688): a non-owner listing a tombstoned slug gets
+      // no rows — same as a slug that doesn't exist — so unpublish hides the
+      // production fsIds it would otherwise hand out. Owners still see full
+      // history (drafts + production) so they can inspect and restore.
+      if (!isOwner && (await getUnpublishedAt(vctx, { ownerHandle: req.ownerHandle, appSlug: req.appSlug })).length > 0) {
+        await ctx.send.send(ctx, {
+          type: "vibes.diy.res-list-versions",
+          appSlug: req.appSlug,
+          ownerHandle: req.ownerHandle,
+          items: [],
+        } satisfies ResListVersions);
+        return Result.Ok(EventoResult.Continue);
+      }
 
       // The served public latest = the highest-releaseSeq production row.
       let topProdSeq = -Infinity;

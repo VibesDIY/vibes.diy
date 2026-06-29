@@ -24,6 +24,7 @@ import { VibesApiSQLCtx } from "../types.js";
 import { optAuth } from "../check-auth.js";
 import { and, desc, eq } from "drizzle-orm/sql/expressions";
 import { selectLatestAppPerSlug, selectLatestDraftOrPublished } from "./select-app.js";
+import { isHiddenForCaller } from "./unpublished-binding.js";
 import { deriveDisplayName } from "./derive-display-name.js";
 import { ensureAppSettings } from "./ensure-app-settings.js";
 import { hasAccessInvite, redeemInvite } from "./invite-flow.js";
@@ -126,6 +127,36 @@ export const getAppByFsIdEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqGet
       }
 
       if (!app) {
+        await ctx.send.send(ctx, {
+          type: "vibes.diy.res-get-app-by-fsid",
+          error: "app-not-found",
+          appSlug: req.appSlug,
+          ownerHandle: req.ownerHandle,
+          fsId: req.fsId,
+          grant: "not-found",
+          mode: "dev",
+          releaseSeq: -1,
+          env: {},
+          fileSystem: [],
+          meta: [],
+          created: new Date().toISOString(),
+        } satisfies ResGetAppByFsId);
+        return Result.Ok(EventoResult.Continue);
+      }
+
+      // Soft-unpublish gate (#2688): a tombstoned slug stops resolving for
+      // non-owners on the no-fsId path. Explicit-fsId reads (req.fsId set) keep
+      // resolving so permalinks and remix `srcFsId` lineage survive. Keyed on
+      // the tombstone, not app.mode — a dev-only slug is hidden too.
+      if (
+        !req.fsId &&
+        (await isHiddenForCaller(vctx, {
+          ownerHandle: app.ownerHandle,
+          appSlug: app.appSlug,
+          ownerUserId: app.userId,
+          callerUserId,
+        }))
+      ) {
         await ctx.send.send(ctx, {
           type: "vibes.diy.res-get-app-by-fsid",
           error: "app-not-found",
