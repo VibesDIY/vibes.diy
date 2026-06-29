@@ -3,7 +3,7 @@ import { useParams } from "react-router";
 // import type { ChatInterfaceProps } from "@vibes.diy/prompts";
 import MessageList from "./MessageList.js";
 import WelcomeScreen from "./WelcomeScreen.js";
-import { PromptState } from "../routes/chat/chat.$ownerHandle.$appSlug.js";
+import type { PromptState } from "../routes/chat/prompt-state.js";
 import { PromptError } from "@vibes.diy/api-types";
 
 function ChatInterface({

@@ -1,5 +1,5 @@
 import React, { memo, useEffect, useRef } from "react";
-import { PromptBlock } from "../routes/chat/chat.$ownerHandle.$appSlug.js";
+import type { PromptBlock } from "../routes/chat/prompt-state.js";
 import { parseOptionLines } from "../utils/option-lines.js";
 import {
   BlockBeginMsg,

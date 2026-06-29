@@ -1,6 +1,6 @@
 import { applyEdits, applyReplace, isBlockEnd, isCodeBegin, isCodeEnd, isCodeLine, parseFenceBody } from "@vibes.diy/call-ai-v2";
 import { AppCode } from "../../types/code-editor.js";
-import { PromptState } from "../../routes/chat/chat.$ownerHandle.$appSlug.js";
+import type { PromptState } from "../../routes/chat/prompt-state.js";
 
 // Files the AI may emit alongside `App.jsx` that are NOT part of the rendered
 // preview. `access.js` is a server-side access function — it never runs in the

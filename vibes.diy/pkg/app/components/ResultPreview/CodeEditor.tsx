@@ -7,7 +7,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { BundledLanguage, BundledTheme, HighlighterGeneric } from "shiki";
 import { useParams } from "react-router";
 import { useTheme } from "../../contexts/ThemeContext.js";
-import { HydratedCodeViewFile, PromptBlock, PromptState } from "../../routes/chat/chat.$ownerHandle.$appSlug.js";
+import type { HydratedCodeViewFile, PromptBlock, PromptState } from "../../routes/chat/prompt-state.js";
 import {
   EditorState,
   EditorStateEdit,
