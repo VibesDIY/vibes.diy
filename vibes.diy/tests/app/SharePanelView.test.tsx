@@ -113,6 +113,18 @@ describe("SharePanelView", () => {
     expect(screen.getByRole("radio", { name: /people you approve/i }).getAttribute("aria-checked")).toBe("true");
   });
 
+  it("non-owner: shows neutral copy while accessPending — never asserts a mode before it loads", () => {
+    // `access` is the loader's fallback until settings resolve; a viewer must not see
+    // "Anyone with the link can open this vibe" if the real setting is grant-required.
+    const { rerender } = render(<SharePanelView url="u" viewer="member" access="public" accessPending members={[]} />);
+    expect(screen.getByText(/checking who can open this vibe/i)).toBeTruthy();
+    expect(screen.queryByText(/anyone with the link can open/i)).toBeNull();
+    expect(screen.queryByText(/only approved members can access/i)).toBeNull();
+    // once it resolves, the real sentence appears
+    rerender(<SharePanelView url="u" viewer="member" access="request" members={[]} />);
+    expect(screen.getByText(/only approved members can access/i)).toBeTruthy();
+  });
+
   it("non-owner sees the access copy (reflecting the mode); the owner sees the toggle instead", () => {
     const { rerender } = render(<SharePanelView url="u" viewer="member" access="public" members={[]} />);
     expect(screen.getByText(/anyone with the link can open/i)).toBeTruthy();

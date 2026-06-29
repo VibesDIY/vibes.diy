@@ -165,6 +165,11 @@ export function SharePanelView({
             })}
           </div>
         </div>
+      ) : accessPending ? (
+        // The authoritative setting hasn't loaded yet — `access` is only the loader's
+        // `isWorldReadable` fallback. Don't assert "anyone can open" / "only approved"
+        // before it resolves; say nothing definite until we actually know.
+        <p className="text-xs text-light-secondary dark:text-dark-secondary">Checking who can open this vibe…</p>
       ) : (
         <p className="text-xs text-light-secondary dark:text-dark-secondary">
           {access === "public" ? "Anyone with the link can open this vibe." : "Only approved members can access this vibe."}

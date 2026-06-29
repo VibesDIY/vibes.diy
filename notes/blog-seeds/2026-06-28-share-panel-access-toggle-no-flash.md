@@ -26,11 +26,15 @@ Decisions worth a full post:
   (`!accessPending && opt.value === access`) makes both buttons read unchecked
   until the truth lands — visual state and interactive state now agree.
 
-Gotcha worth flagging: the non-author read-only sentence below the toggle still
-keys off `access === "public"` directly, so during the pending window a
-*viewer* briefly sees "Anyone with the link can open this vibe." That's lower
-stakes (it's a sentence, not a control that looks pre-decided) and out of scope
-here, but if it ever matters the same `accessPending` gate is the lever.
+- **The viewer's read-only sentence had the same lie, quieter.** Non-authors see
+  a sentence instead of the toggle — "Anyone with the link can open this vibe" /
+  "Only approved members can access this vibe" — and it keyed off the same
+  fallback `access`, so during the pending window a viewer could be told *anyone*
+  can open a vibe that's actually grant-required. A misleading sentence is worse
+  than a misleading button here, because there's no disabled-state cue telling
+  the reader "wait." So the same `accessPending` gate swaps in neutral copy —
+  "Checking who can open this vibe…" — until the truth lands. The honest move
+  when you don't know yet is to *say* you don't know, not to guess and correct.
 
 Test gotcha: `SharePanelView` tests run under vitest's Playwright browser
 provider, so asserting "neither radio is checked" is a real `aria-checked`
