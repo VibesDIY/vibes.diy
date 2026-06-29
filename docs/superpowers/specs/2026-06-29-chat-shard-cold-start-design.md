@@ -21,7 +21,7 @@ The **CLI is unchanged** — it never passes a `shardKey`, so it keeps the rando
 | CLI                   | Unchanged — never passes `shardKey`, never rolls                                                                                                                                                                     |
 | Admission limit       | **3** concurrent **codegen streams** per DO instance; 4th admission attempt is rejected                                                                                                                              |
 | Overload signal       | Server **sends** a coded `ResError` `code: "shard-overloaded"` and stops dispatch (does NOT rely on catching a hard CF CPU/memory limit)                                                                             |
-| Counted unit          | In-flight codegen streams (`open-chat` / `prompt-chat-section` with a codegen mode), not open WebSocket connections                                                                                                  |
+| Counted unit          | In-flight streams on the codegen DO (`open-chat` / `prompt-chat-section`), **any** mode that routes there — `codegen`, `runtime`, and `img`'s codegen leg all share one budget — not open WebSocket connections      |
 | Next-shard function   | `base` for n=0; `` `${base}~${n}` `` for n≥1, monotonically increasing                                                                                                                                               |
 | Roll trigger          | Client receives `shard-overloaded` (or the open handshake fails on a pinned shard)                                                                                                                                   |
 | Roll stickiness       | Persist the current index in `sessionStorage` keyed by user, so reconnects/reloads land on the working shard, not back on `~0`                                                                                       |
@@ -51,10 +51,11 @@ const shardKey = vibeMatch ? `${vibeMatch[1]}--${vibeMatch[2]}` : codegenShard; 
 
 ### 2. Admission control in the codegen DO
 
-The DO is the unified `Sessions` class (`vibes.diy/pkg/workers/sessions.ts`); the codegen branch is `sessions.ts:125-134`, dispatching via `chatMsgEvento`. The instance already holds `this.connections: Set<WSSendProvider>`. Add a per-instance counter for **active codegen streams**.
+The DO is the unified `Sessions` class (`vibes.diy/pkg/workers/sessions.ts`); the codegen branch is `sessions.ts:125-134`, dispatching via `chatMsgEvento`. The instance already holds `this.connections: Set<WSSendProvider>`. Add a per-instance counter for **active streams on this codegen DO**.
 
 - A small `CodegenAdmission` holder on the DO instance: `activeStreams: number` (in-memory; resets on DO eviction, which is correct — an evicted/cold DO has zero active streams).
-- Gate the codegen stream entry points — `open-chat` (`api/svc/public/open-chat.ts`) and `prompt-chat-section` (`api/svc/public/prompt-chat-section.ts`) — **only for codegen modes** (`chatShardsForMode(req.mode)` includes `"codegen"`; img-gen/runtime are out of scope here). At the point a stream is about to start:
+- **What counts toward the budget (resolves the runtime/img question — Charlie #1).** Every mode that opens a stream on the codegen shard counts, because the budget protects the DO's CPU regardless of which workload loaded it. Per `chatShardsForMode` (`api/types/shard-policy.ts`), **all three** chat modes route to codegen: `codegen → ["codegen"]`, `runtime → ["codegen"]`, `img → ["codegen","vibe"]`. So the counter is "active streams on this codegen DO instance," not "codegen-mode streams only" — `runtime` and the codegen leg of `img` share the same budget. (The earlier "codegen modes only" framing was wrong: runtime and img-gen also consume this DO.) If a future need arises to give `runtime`/`img` a separate budget, split the counter then; phase 1 keeps one budget for simplicity and correctness.
+- Gate the stream entry points — `open-chat` (`api/svc/public/open-chat.ts`) and `prompt-chat-section` (`api/svc/public/prompt-chat-section.ts`). At the point a stream is about to start:
   - if `activeStreams >= MAX_CONCURRENT_CODEGEN_STREAMS (3)` → send `ResError { code: "shard-overloaded" }` and return `EventoResult.Continue` (same fail-loud-and-stop shape as `shard-gate.ts:70`), **without** starting generation.
   - else increment, run the stream, and decrement in a `finally` (covering completion, error, and WS close mid-stream).
 - `MAX_CONCURRENT_CODEGEN_STREAMS` and the `"shard-overloaded"` code live in `api-types` next to `SHARD_POLICY` so client and worker share one source of truth.
@@ -63,13 +64,26 @@ This is admission control, not crash-detection: the limit is enforced _before_ h
 
 ### 3. Deterministic next-shard family + generalized guard
 
-`userNotifyShardFor(userId)` (`api/types/notifications.ts`) currently returns a single string; `session-callbacks.ts:88` guards with **exact equality** (`shard !== userNotifyShardFor(userId)`). Rolled shards (`notify-user-<uid>~1`) must (a) be addressable and (b) still pass the per-user guard so notify registration and the "one shard family per user" anti-forgery bound hold.
+`userNotifyShardFor(userId)` (`api/types/notifications.ts`) currently returns a single string; `session-callbacks.ts:88` guards with **exact equality** (`shard !== userNotifyShardFor(userId)`). Rolled shards (`notify-user-<uid>~1`) must (a) be addressable and (b) pass the per-user guard so the roll is legitimate — **without** weakening Track B's bounded-subscriber-set property.
 
 - Add to `api-types/notifications.ts`:
-  - `codegenShardForUser(userId, n)` → `n===0 ? base : ` `` `${base}~${n}` `` (single source for the family).
-  - `shardBelongsToUser(shard, userId)` → true if `shard === base || shard.startsWith(`${base}~`)` with a numeric suffix.
-- Replace the exact-equality checks in `session-callbacks.ts:88` and `:98` with `shardBelongsToUser(shard, userId)`. This keeps the anti-forgery property (a client still can't register a shard outside its own user's family) while admitting rolled shards.
-- Registration semantics on a rolled shard: build-complete `notifyUser` already fires unconditionally (`session-callbacks.ts:67`); on the website, notifications ride `sharedApi`, not the codegen shard, so the roll does not change notification delivery. The guard generalization is about _not silently warning/no-oping_ on legitimate rolled shards.
+  - `codegenShardForUser(userId, n)` → `n===0 ? base : ` `` `${base}~${n}` `` (single source for the family). `n` is bounded `0..MAX_ROLL_INDEX` (the same constant that caps the client roll in §4).
+  - `shardBelongsToUser(shard, userId)` → true iff `shard === base`, **or** `shard` is `` `${base}~${n}` `` with `n` a **strictly-parsed integer in `1..MAX_ROLL_INDEX`** (no leading zeros, no non-numeric suffix, no out-of-range). Strict parsing + a hard upper bound is what keeps the accepted set finite.
+
+- **Critical: do NOT generalize the shared plane (Charlie #3).** `shardBelongsToUser` preserves _ownership_ (a client can't register another user's family) but, used everywhere, it would let a user register an unbounded spray of suffix shards and **grow the UserNotify fan-out / subscriber set per user** — exactly the Track B invariant ("one shard per user, bounded subscribers") it would otherwise erode. So the guard is split by plane:
+  - **Shared plane** (`userNotifyCallbacksForSharedSessions`): keep **strict equality** `shard === userNotifyShardFor(userId)`. Unchanged. The shared singleton/notify shard stays exactly one per user.
+  - **Codegen plane** (`userNotifyCallbacksForChatSessions`, `session-callbacks.ts:88`/`:98`): use `shardBelongsToUser` — the bounded family — **only here**, because this is the only plane that rolls. The subscriber set per user is therefore capped at `MAX_ROLL_INDEX + 1`, not unbounded.
+- Registration semantics on a rolled shard: build-complete `notifyUser` already fires unconditionally (`session-callbacks.ts:67`); on the website, notifications ride `sharedApi` (strict, one shard), not the codegen shard, so the roll does not change notification delivery. The codegen-plane generalization is about _not silently warning/no-oping_ on legitimate rolled shards while keeping the fan-out bounded.
+
+### Security invariants (explicit, per Charlie #3)
+
+| Invariant                                                                             | Shared plane             | Codegen plane                                                      |
+| ------------------------------------------------------------------------------------- | ------------------------ | ------------------------------------------------------------------ |
+| **Ownership** — a client can only register a shard belonging to its verified `userId` | strict equality          | `shardBelongsToUser` (family)                                      |
+| **Bounded subscriber set** — fan-out cost per user is `O(1)`, not `O(shards seen)`    | exactly 1 (`base`)       | ≤ `MAX_ROLL_INDEX + 1` (hard cap)                                  |
+| **Suffix parsing** — no injection via crafted shard strings                           | n/a (no suffix accepted) | strict integer `1..MAX_ROLL_INDEX`, no leading zeros / non-numeric |
+
+The point of the split: rolling is a **codegen-only** affordance, so only the codegen plane relaxes from "exactly one" to "bounded family." The shared plane — which is where the original Track B subscriber-set bound lives — stays strictly one shard per user.
 
 ### 4. Rollable client connection
 
@@ -79,7 +93,7 @@ The shard is baked into `cfg.apiUrl` at construction (`index.ts:290`) and `cfg` 
 - On a received `shard-overloaded` `ResError` (or an open-handshake failure on a pinned shard): increment `currentShardIndex`, persist it to `sessionStorage` (key `vibes-codegen-shard-idx:<userId>`), drop `currentConnection`, and `getReadyConnection()` again. The pending request that triggered the roll is retried on the new shard.
 - On construction, seed `currentShardIndex` from `sessionStorage` so a reload returns to the last-working shard instead of cold-starting `~0` and immediately re-overflowing.
 - **Roll only when the instance carries per-user-codegen metadata — not merely `shardKey !== undefined`.** This is the subtle gate: the `/vibe/...` viewer path **also** passes a deterministic `shardKey` (`owner--app`), but it is **not** a per-user family. Gating on "a shardKey was supplied" would let an overloaded viewer connection roll `owner--app` → `owner--app~1`, which has no `userId` for the `sessionStorage` key / `shardBelongsToUser` guard and destroys the intended per-vibe pinning. So rolling is keyed off the explicit `codegenUserId` flag, which only the per-user path sets. Random-UUID (CLI, anon) and per-vibe (`owner--app`) instances never roll — the former gets a fresh DO per construction anyway, the latter must stay pinned to its vibe.
-- Bound the roll (e.g. max index 8) to avoid an unbounded climb if the whole codegen plane is saturated; past the bound, surface the error to the user instead of looping.
+- Bound the roll at `MAX_ROLL_INDEX` (the **same constant** the server guard accepts up to, §3 — they must agree, or the client could roll to a shard the registration guard rejects). Past the bound, surface the error to the user instead of looping.
 
 ## Edge cases
 
@@ -93,18 +107,19 @@ The shard is baked into `cfg.apiUrl` at construction (`index.ts:290`) and `cfg` 
 
 - **Unit (api-types):** `codegenShardForUser` / `shardBelongsToUser` family + suffix parsing; `MAX_CONCURRENT_CODEGEN_STREAMS` wired to the gate.
 - **Admission gate:** 3 concurrent codegen streams admitted; 4th gets `shard-overloaded` and starts no generation; decrement frees a slot (4th succeeds after one completes); decrement fires on mid-stream close.
-- **Guard generalization:** `shardBelongsToUser` accepts `base` and `base~3`, rejects another user's base and forged suffixes; notify registration no longer warns on rolled shards.
+- **Guard split (security invariants):** `shardBelongsToUser` accepts `base` and `base~3`, rejects another user's base, forged/non-numeric suffixes, leading zeros, and `n > MAX_ROLL_INDEX`. **Shared-plane registration stays strict** — assert `userNotifyCallbacksForSharedSessions` still rejects `base~1` (only the codegen plane admits the family), so the shared subscriber set stays exactly one per user.
 - **Client roll:** on `shard-overloaded`, index increments, URL rewrites to `~1`, request retries and succeeds; index persists across reconnect and across a simulated reload (seeded from `sessionStorage`); roll is a no-op for random-UUID (CLI/anon) instances; roll stops at the bound.
 - **CLI parity:** a CLI `VibesDiyApi` still gets a random UUID and never rolls (assert no `shardKey`, no index state).
 
 ## Rollout
 
-- Land server admission control + guard generalization first (behavior-preserving for random-UUID traffic; only adds a never-hit limit until clients pin).
-- Gate the website per-user pinning + client roll behind a flag (env/`stable-entry` group) so it can be enabled on dev/preview and measured (cold-start time, `shard-overloaded` rate, roll depth distribution) before prod.
-- Watch: `shard-overloaded` frequency (is 3 too low for power users?), roll-depth histogram (are users climbing far?), cold-start p50/p95 before vs after.
+- Land server admission control + the codegen-plane guard change first (behavior-preserving for random-UUID traffic; only adds a never-hit limit until clients pin). The shared-plane guard is **untouched**.
+- Gate the website per-user pinning + client roll behind a flag (env/`stable-entry` group) so it can be enabled on dev/preview and measured before prod.
+- **Make `MAX_CONCURRENT_CODEGEN_STREAMS` env-tunable, not a hard literal, and instrument from day one (Charlie #1):** admission **reject rate**, **active-stream high-watermark** per DO, and a **roll-index histogram**. Plus cold-start p50/p95 before vs after.
+- Watch: `shard-overloaded` frequency (is 3 too low for power users?), roll-depth histogram (are users climbing far → raise the limit or the bound?), and whether the per-user subscriber set stays within `MAX_ROLL_INDEX + 1`.
 
 ## Open questions
 
-1. **Is 3 right?** Starting value per the request; the rollout metrics (overload rate, roll depth) should confirm or tune it. Consider making it an env-tunable constant rather than a hard literal.
-2. **Roll bound + UX past it.** What does the user see if they exhaust the bound (whole-plane saturation)? Proposed: a normal "service busy, retry" error rather than an infinite silent climb.
-3. **Should the base shard be `userNotifyShardFor(userId)` (reuse the notify string) or a distinct `codegen-user-<uid>` prefix?** Reusing the notify string makes `n=0` pass the existing guard for free and co-locates nothing physically (different DO namespace from `shared:`); a distinct prefix is cleaner conceptually but needs the guard taught about a second family. Leaning reuse — flagged for review.
+1. **Is 3 right?** Starting value per the request; env-tunable (per Rollout), and the metrics (overload rate, roll depth) confirm or tune it. _Charlie #1: keep tunable + instrument from day one — folded into Rollout._
+2. **Roll bound + UX past it.** What does the user see if they exhaust `MAX_ROLL_INDEX` (whole-plane saturation)? Proposed: a normal "service busy, retry" error rather than an infinite silent climb.
+3. **Base shard: reuse `userNotifyShardFor(userId)` vs a distinct `codegen-user-<uid>` prefix.** _Resolved for phase 1 (Charlie #2): **reuse** the notify string — less churn, no physical collision (worker namespaces shard planes, `codegen:<…>` vs `shared:<…>`), and `n=0` passes the existing guard for free. The tradeoff is semantic coupling (one prefix now spans two planes); a distinct prefix stays a documented future option if we want stricter conceptual boundaries. Acceptable **because** the guard split (§3 Security invariants) keeps the codegen-family semantics tight._
