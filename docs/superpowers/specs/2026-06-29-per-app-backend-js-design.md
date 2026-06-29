@@ -97,9 +97,16 @@ All in `vibes.diy/vibe/runtime/` unless noted:
 - **`api/svc/intern/process-access-bindings.ts`** — `processAccessBindings` detects `/access.js` in
   the pushed filesystem and upserts an `accessFunctionBindings` row keyed by `{ownerHandle, appSlug}`.
   **Exact template for `processBackendBindings`** detecting `/backend.js`.
-- **`vibe/runtime/access-runner.ts`** — `evaluateWrite`/`makeClientCtx` — the **same** access
-  evaluator the `getDoc`/`queryDocs`/write paths use. backend.js writes go through this, not a fork
-  (SSR slice-6 principle).
+- **`api/svc/public/app-documents-write-eventos.ts`** — the production `putDoc` write gate:
+  `vctx.invokeAccessFn` (wired to `localInvokeAccessFn`/**QuickJS** in `cf-serve.ts`), source
+  lookup, active-handle/admin-mode resolution, grant-state reduction, fail-closed behavior, and the
+  `AccessFnOutputs` sidecar upsert. **This — not the runtime mirror — is the path backend writes
+  must reuse** (see the correction below).
+- **`vibe/runtime/access-runner.ts`** — `evaluateWrite`/`makeClientCtx`: the **runtime _mirror_** of
+  the access evaluator (used by SSR/tests). Note it compiles via `new Function` (`access-runner.ts:65`),
+  so it is explicitly **NOT** what backend writes route through on the live path — that would both
+  diverge from frontend writes and reintroduce in-process eval. It is useful only as the spec for
+  what `invokeAccessFn` must do.
 - **Worker plumbing** — `api/types/cf-env.ts` (DO + queue bindings), `pkg/wrangler.toml`
   (`[durable_objects]` `Sessions`/`UserNotify` classes + migrations; `VIBES_SERVICE` queue
   producer; `wrangler.queue-consumer.toml`), `api/types/vibes-types.ts` /
@@ -145,7 +152,7 @@ All in `vibes.diy/vibe/runtime/` unless noted:
                                                 └────────────┬─────────────┘
                                                              │ ctx.db.put as trigger identity
                                                              ▼
-                                                   access-runner (same evaluator)
+                                            putDoc → invokeAccessFn (QuickJS) — same gate as frontend writes
 ```
 
 - **BackendDO** (new DO class, keyed `{ownerHandle}/{appSlug}`) holds the _delta_ SSR never needed:
@@ -156,7 +163,10 @@ All in `vibes.diy/vibe/runtime/` unless noted:
   `buildVibeWorkerCode`. `ctx` is supplied through `WorkerCode.env` + RPC bindings (db reader/writer
   proxy, resolved secrets, identity), **not** baked into the hashed source (SSR's "keep per-request
   data out of the hashed module source" carry-forward — else the `sha` cache key forks per request).
-- **`ctx.db` proxies back through `access-runner`** as the trigger identity. No new access surface.
+- **`ctx.db` proxies back through the production `putDoc` path** (`invokeAccessFn`/QuickJS, with the
+  `AccessFnOutputs` sidecar + fail-closed behavior) as the trigger identity — the **same gate
+  frontend writes use**, _not_ the `access-runner` runtime mirror (which uses `new Function`). No new
+  access surface, and no second access implementation. (Corrected per Codex P1 review.)
 
 ## Slices (sharp, CI-verifiable cuts; mirror the SSR slicing discipline)
 
@@ -209,23 +219,39 @@ vibe destroys the DO + alarms.
 - **Tests** (fake binding, DO test harness): arm/fire/re-arm; interval change; single-flight
   (overlapping ticks serialize); backoff on throw; stop on removal.
 
-### Slice B5 — `onChange` after write commit (via the existing queue/event stream)
+### Slice B5 — `onChange` after write commit (a NEW dedicated post-commit queue message)
 
-After `putDoc` commits, enqueue an `onChange` event (`{ doc, oldDoc, dbName, userInfo }`) onto the
-existing `VIBES_SERVICE` queue → BackendDO.invokeOnChange → isolate. **Fire-and-forget**: the write
-succeeds regardless. Consume the **same** `vibes.diy.evt-doc-changed` / channel-routing stream —
-mind the [#2306](https://github.com/VibesDIY/vibes.diy/issues/2306) "don't overload `dbName`" lesson.
+After `putDoc` commits, enqueue a **new, dedicated** `onChange` message carrying the full
+`{ doc, oldDoc, dbName, userInfo }` payload onto the `VIBES_SERVICE` queue →
+BackendDO.invokeOnChange → isolate. **Fire-and-forget**: the write succeeds regardless.
 
+> **Do NOT reuse `vibes.diy.evt-doc-changed` for this** (corrected per Codex P2 review). That stream
+> is **local WebSocket fan-out** via `notifyDocChanged` (`cf-serve.ts`), not a durable queue event:
+> it "carries no document content" (`cf-serve.ts:117`) — only ids/channel — and it only reaches
+> currently-subscribed sockets. Consuming it for backend `onChange` would (a) **miss handlers** when
+> no client is subscribed, (b) **duplicate** per channel, and (c) arrive **without the document
+> payload** the handler needs. `VIBES_SERVICE` today carries other explicit queued events, so this is
+> a new message type on it, emitted in the same post-commit step as `putDoc`. Mind the
+> [#2306](https://github.com/VibesDIY/vibes.diy/issues/2306) "don't overload `dbName`" lesson when
+> shaping the payload.
+
+- **Loop-breaking:** a backend `ctx.db.put` inside `onChange` can re-enqueue another `onChange` — ship
+  a depth cap / source-tag in B5 itself, not as a follow-up (see open question 2).
 - **Tests:** event shape (create/update/delete via `doc`/`oldDoc` nullness); write succeeds even when
-  `onChange` throws; at-least-once delivery semantics.
+  `onChange` throws; at-least-once delivery + handler idempotency; **delivered even with zero
+  subscribed sockets** (the regression guard against the evt-doc-changed mistake).
 
 ### Slice B6 — Write-back-through-access as the trigger identity
 
-`ctx.db.put()` proxies to `access-runner.evaluateWrite` as the trigger's `userHandle`
-(`onChange` → original writer; `fetch` → session user; `scheduled` → owner). `{ as: "handle" }`
-override is **owner-code-only**, enforced by the runtime. **Explicitly define cold/empty
-`accessFnOutputs` behavior** (backfill windows) so a backend write never accidentally widens or
-hides — mirror SSR slice-6 backfill discipline.
+`ctx.db.put()` routes through the **production `putDoc` path** (`vctx.invokeAccessFn` →
+`localInvokeAccessFn`/QuickJS, with source lookup, active-handle/admin-mode resolution, grant-state
+reduction, fail-closed behavior, and the `AccessFnOutputs` sidecar upsert) as the trigger's
+`userHandle` (`onChange` → original writer; `fetch` → session user; `scheduled` → owner). This is the
+**same gate frontend writes use** — **not** `access-runner.evaluateWrite`, the `new Function`-based
+runtime mirror, which would diverge from frontend writes and reintroduce in-process eval (Codex P1).
+`{ as: "handle" }` override is **owner-code-only**, enforced by the runtime. **Explicitly define
+cold/empty `accessFnOutputs` behavior** (backfill windows) so a backend write never accidentally
+widens or hides — mirror SSR slice-6 backfill discipline.
 
 - **Tests:** identity passthrough per trigger; owner-only impersonation; access denial surfaces to
   the handler; cold-grant behavior.
@@ -284,11 +310,13 @@ once. Live `loader` mode for both SSR and backend.js is gated on it.
 2. **`ctx` wiring through the isolate.** SSR currently JSON-embeds `mountParams` into the hashed
    `main` (forks the cache key). For backend.js, `ctx` (db RPC handle, resolved secrets, identity) is
    **per-trigger and secret-bearing**, so it must ride `WorkerCode.env`/RPC, _not_ the hashed source.
-   Does the Worker Loader `env`/RPC surface comfortably carry a bidirectional `ctx.db` proxy (writes
-   that re-enter `access-runner`), or do we need a dedicated reader/writer service binding?
-3. **`onChange` delivery substrate.** Reuse the `VIBES_SERVICE` queue + `evt-doc-changed` stream, or
-   stand up a dedicated path? At-least-once with handler idempotency is assumed — acceptable, or do we
-   need de-dupe/ordering guarantees per `(dbName, _id)`?
+   Does the Worker Loader `env`/RPC surface comfortably carry a bidirectional `ctx.db` proxy whose
+   writes re-enter the **production `putDoc`/`invokeAccessFn` gate** (not the `access-runner` mirror),
+   or do we need a dedicated reader/writer service binding?
+3. **`onChange` delivery substrate.** A **new dedicated post-commit message on `VIBES_SERVICE`** (the
+   `evt-doc-changed` WebSocket stream is unsuitable — Codex P2, now reflected in B5). At-least-once
+   with handler idempotency is assumed — acceptable, or do we need de-dupe/ordering guarantees per
+   `(dbName, _id)`?
 4. **Single-flight + alarm ownership in the DO.** One BackendDO per `{owner}/{slug}` owns _all three_
    triggers' execution serialization, or separate concerns (e.g. alarms in the DO, `fetch`/`onChange`
    stateless)? The HTML implies one DO; SSR has no DO at all, so this is net-new and worth a sanity
@@ -314,5 +342,7 @@ once. Live `loader` mode for both SSR and backend.js is gated on it.
 - **Cache-key correctness** — per-trigger `ctx` must stay out of the hashed `WorkerCode` or the isolate
   cache forks per request (and worse, could leak one trigger's identity into another's isolate). This
   is the single most important invariant carried from SSR.
-- **Access parity drift** — backend writes must use the _same_ evaluator as app writes; a forked path
-  is the SSR slice-6 failure mode. Cover allow/deny + cold-grant in tests.
+- **Access parity drift** — backend writes must go through the **same production `putDoc`/
+  `invokeAccessFn` (QuickJS) gate** as app writes, including the `AccessFnOutputs` sidecar; the
+  `access-runner` `new Function` mirror is a forked path and the failure mode (Codex P1). Cover
+  allow/deny + cold-grant in tests.
