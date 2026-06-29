@@ -50,6 +50,19 @@ function vibesStyles(props: VibesDiyServCtx, path: string) {
   return BuildURI.from(props.svcEnv.VIBES_DIY_PUBLIC_BASE_URL).appendRelative(path).toString();
 }
 
+// The mount root. When the SSR executor produced HTML (`props.ssrHtml`), inject
+// it and mark the container `data-vibe-ssr` so `mountVibe` hydrates this exact
+// markup rather than re-rendering (#2802 slice 4). The injected string is
+// `renderVibeToString(comps, mountParams)` and `mountVibe` rebuilds the same
+// tree, so the markup lines up for hydration. No `ssrHtml` ⇒ today's empty,
+// marker-less container (client-only render).
+function VibeAppContainer({ ssrHtml }: VibesDiyServCtx) {
+  if (ssrHtml === undefined) {
+    return <div className="vibe-app-container" />;
+  }
+  return <div className="vibe-app-container" data-vibe-ssr dangerouslySetInnerHTML={{ __html: ssrHtml }} />;
+}
+
 export function VibePage(props: VibesDiyServCtx) {
   // const { appSlug } = props.bindings;
   return (
@@ -62,7 +75,7 @@ export function VibePage(props: VibesDiyServCtx) {
         <script type="module" src="https://esm.sh/@tailwindcss/browser@4" />
       </head>
       <body className="vibe-app-surface">
-        <div className="vibe-app-container" />
+        <VibeAppContainer {...props} />
         <MountVibe {...props} />
         {/* <VibeControls {...props} /> */}
       </body>

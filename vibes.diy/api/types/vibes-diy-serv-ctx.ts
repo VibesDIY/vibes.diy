@@ -52,6 +52,11 @@ export const vibesDiyServCtx = type({
   importMap: vibeImportMap,
   metaProps,
   mountJS: "string",
+  // Server-rendered vibe HTML to inject into the `vibe-app-container` (#2802
+  // slice 4). Present only when the SSR executor ran successfully; when absent
+  // the container ships empty (client-only render, today's path). Its presence
+  // is what flips `VibePage` to emit the `data-vibe-ssr` hydration marker.
+  "ssrHtml?": "string",
 }); // .and(vibesDiyMountParams);
 
 export type VibesDiyServCtx = typeof vibesDiyServCtx.infer;
