@@ -6,6 +6,11 @@ summary: "We moved first-generation onto the deployed app itself — stream into
 glyph: "one iframe surface"
 ---
 
+<figure>
+    <img src="/images/blog/in-place-generation/ambient-vibe-mobile.png" alt="A minimal ambient vibe — a single glowing teal-green orb on a near-black background — rendered full-bleed in its iframe on mobile" loading="lazy">
+    <figcaption>A vibe generated for this post, rendered in the one surface that's left: its own iframe. No preview pane, no second panel — just the live app, full-bleed. (Live: <a href="https://vibes.diy/vibe/garden-gnome/blog-demo-inplace">blog-demo-inplace</a>.)</figcaption>
+</figure>
+
 <style>
   /* Post-specific: the before -> after flow diagram. Modelled on the loop
      diagram in upgrading-apps-with-screenshots; renamed to .flow so the
