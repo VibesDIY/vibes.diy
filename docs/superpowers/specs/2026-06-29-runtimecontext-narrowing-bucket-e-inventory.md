@@ -53,9 +53,11 @@ the later `SuperThis` decision (drop `@fireproof/core-runtime`).
 The ~80 remaining `ensureSuperThis` hits are **test harnesses** that build a full
 runtime context on purpose (they exercise the real API impl, database, and auth
 flows). They are not "broad runtime recovery in a production path" and are out of
-scope for narrowing. A separate, lower-value consistency pass could route them
-through the `@vibes.diy/identity` seam instead of importing `@fireproof/core-runtime`
-directly, but that is cosmetic and not required by #2468's acceptance criteria.
+scope for narrowing. They import `ensureSuperThis` from `@fireproof/core-runtime`
+**directly**, which is cosmetic for _this_ narrowing and not required by #2468's
+acceptance criteria — but it is **load-bearing for the eventual "drop `core-runtime`"
+finish line**: that dep can't leave these packages until the imports are routed
+through the `@vibes.diy/identity` seam. Tracked as a Phase 2 prerequisite below.
 
 ## Why most source sites stay on `ensureSuperThis` (rationale)
 
@@ -85,4 +87,13 @@ gate that work will carry — see the preservation principle in
 - **Phase 2 (later, with the `SuperThis` decision):** narrow the downstream
   signatures (`createDeviceIdGetToken`, `QueueCtx`, `sts.*`, the api impl) so the
   remaining "keep" sites can accept `RuntimeContext`, then drop the broad recovery
-  and ultimately `@fireproof/core-runtime`.
+  and ultimately `@fireproof/core-runtime`. Two things this phase must explicitly
+  cover, or the `core-runtime` dep can't actually leave its packages:
+  - **Widen `RuntimeContext` to carry `logger`** (the `cf-serve.ts` case seeds one),
+    or thread the logger separately, so the logger-needing sites can narrow too.
+  - **Route the ~80 test-harness imports through the `@vibes.diy/identity` seam.**
+    They currently import `ensureSuperThis` from `@fireproof/core-runtime` _directly_
+    (cosmetic for narrowing, but load-bearing for dep removal): even after every
+    source site narrows, `@fireproof/core-runtime` cannot be dropped from those test
+    packages until the imports go through the seam. So this is a prerequisite of the
+    "drop `core-runtime`" finish line, not an optional cleanup.
