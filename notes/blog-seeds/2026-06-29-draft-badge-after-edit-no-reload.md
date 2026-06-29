@@ -14,8 +14,22 @@ Findings worth a full post:
   resolver (`getAppByFsId({ selectMode: "ownerLatest" })`) ran on `[isOwner, fsId, ownerHandle,
   appSlug, publishBump]`. A follow-up edit changes *none* of those — the URL stays unversioned,
   the route params are identical, and publishing is the only thing that bumps `publishBump`. So
-  the badge state was correct on mount and then frozen for the rest of the session. The completion
-  signal we *did* have was the generation hook's `isGenerating` flipping `true→false` at block-end.
+  the badge state was correct on mount and then frozen for the rest of the session.
+
+- **Not every "done" signal is durable — pick the post-persist one.** The obvious trigger was the
+  generation hook's `isGenerating` flipping `true→false`. But that flag is driven by
+  `prompt.block-end`, which `prompt-state.ts` documents as emitted *early* — before the server's
+  R2/DB persist — so the overlay drops and chips render the instant generation finishes. Re-running
+  `ownerLatest` on *that* edge races the persist and can read production or the previous draft, and
+  then nothing re-fires when the durable signal lands → still stale until reload (caught in review).
+  The fix keys off `block.end` (the canonical `BlockEndMsg` that carries `fsRef`), surfaced from the
+  hook as `persistedFsId`. Two events named almost the same thing — `prompt.block-end` (early UI
+  release) vs `block.end` (post-persist convergence) — and only one is safe to resolve against.
+
+- **Gate the re-resolve on a real edit, not history replay.** Opening the codegen chat replays past
+  `block.end`s, so `persistedFsId` takes a baseline value with no edit involved. The recheck is
+  gated on `hasLocalEdit` (`isFreshPersistedEdit(prev, next, hasLocalEdit)`) so that baseline
+  doesn't trip a recheck — which matters because a recheck deliberately *skips* the iframe re-pin.
 
 - **Re-resolving naively would have traded the bug for a worse one: an iframe reload after every
   edit.** The badge is driven by `setDraftFsId`, and `draftFsId` is also the iframe's pinned
