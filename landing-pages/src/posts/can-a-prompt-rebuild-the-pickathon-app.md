@@ -9,11 +9,11 @@ thumb: "/images/blog/pickathon-prompt-eval/generated-c2-real-data.png"
 
 ## Why we tried this
 
-For **Pickathon 2025**, Meghan Sinnot *vibed* a little schedule app in an afternoon to scratch her own itch — no hand-coding, just built on vibes.diy. Browse the lineup, star the sets you want, scribble private notes, block out your meal and volunteer times, and connect with friends so you can see each other's picks. It was never meant to be a big deal. But it got popular: people on the farm were actually pulling it up to plan their nights, sharing QR codes at the gate, comparing who starred what. A grassroots hit, from one person solving her own problem in a single sitting. That original is still live — and still pulling the real Pickathon schedule: [vibes.diy/vibe/og/cosmic-anansi-3972](https://vibes.diy/vibe/og/cosmic-anansi-3972).
+For **Pickathon 2025**, Meghan Sinnott *vibed* a little schedule app in an afternoon to scratch her own itch — no hand-coding, just built on vibes.diy. Browse the lineup, star the sets you want, scribble private notes, block out your meal and volunteer times, and connect with friends so you can see each other's picks. It was never meant to be a big deal. But it got popular: people on the farm were actually pulling it up to plan their nights, sharing QR codes at the gate, comparing who starred what. A grassroots hit, from one person solving her own problem in a single sitting. That original is still live — and still pulling the real Pickathon schedule: [vibes.diy/vibe/og/cosmic-anansi-3972](https://vibes.diy/vibe/og/cosmic-anansi-3972).
 
 <figure>
-    <img src="/images/blog/pickathon-prompt-eval/2025-original-cosmic-anansi.png" alt="Pickathon 2025 — Meghan Sinnot's original afternoon vibe, still live" loading="lazy">
-    <figcaption>Pickathon 2025 — Meghan Sinnot's original afternoon vibe, still live.</figcaption>
+    <img src="/images/blog/pickathon-prompt-eval/2025-original-cosmic-anansi.png" alt="Pickathon 2025 — Meghan Sinnott's original afternoon vibe, still live" loading="lazy">
+    <figcaption>Pickathon 2025 — Meghan Sinnott's original afternoon vibe, still live.</figcaption>
 </figure>
 
 That success is why the code we have now exists. **For 2026 we built it out into a proper version** (live at [vibes.diy/vibe/og/pickathon-picker](https://vibes.diy/vibe/og/pickathon-picker)) — still a vibe, but a fully-featured one: a React component, a Fireproof data model with four document types, and an `access.js` that encodes a genuinely fiddly permission model (some data public, some private, some shared only between connected friends). It even picked up a borderless restyle and system dark mode this spring.
