@@ -65,7 +65,23 @@ Before building anything, enumerate exactly what the lifted `sts-service` and `k
 | `sthis.logger`       | 1     | logger handle                                        |
 | `sthis.env.delete`   | 1     | env mutation                                         |
 
-So the in-repo context (Task 4) must provide **more than the narrow `RuntimeContext`**: full `env` (get/gets/set/delete), `txt` (base64/encode/decode), `nextId`, `logger`, `pathOps.join`, and a `start()` lifecycle. The `sts-service` signatures are `importJWK(jwk, alg, options)` (no sthis), `env2jwk(env, alg, sthis = ensureSuperThis())` (sthis defaulted — needs `env`/`txt`/crypto), `verifyToken(token, presetPubKey, wellKnownUrls, iopts)` (no sthis). Conclusion: the in-repo context is a **superset of `RuntimeContext`** (call it `IdentityRuntime`), and `env2jwk`'s `ensureSuperThis()` default must be repointed at it in Task 3.
+So _within identity_, the in-repo context must provide more than the narrow `RuntimeContext`: full `env` (get/gets/set/delete), `txt` (base64/encode/decode), `nextId`, `logger`, `pathOps.join`, and a `start()` lifecycle. The `sts-service` signatures are `importJWK(jwk, alg, options)` (no sthis), `env2jwk(env, alg, sthis = ensureSuperThis())` (sthis defaulted — needs `env`/`txt`/crypto), `verifyToken(token, presetPubKey, wellKnownUrls, iopts)` (no sthis).
+
+**Correction (Codex review #2841, P2) — the contract is repo-WIDE, not identity-internal.** Phase 2 routed _non-identity_ code through the facade's `ensureSuperThis` export too, so the real contract the facade must satisfy is the union of every `sthis.<member>` reached by **any** consumer of `@vibes.diy/identity`, not just identity's own files. Repo-wide audit surfaces members **beyond** the identity-internal set:
+
+| External member             | Example consumer                                                                              | Why it matters                                                                               |
+| --------------------------- | --------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
+| `sthis.timeOrderedNextId()` | `api/svc/public/asset-upload-grant.ts:66`, `app-documents-write-eventos.ts:217` (jti / docId) | distinct from `nextId()` — a thin context lacking it breaks production grant/doc-write paths |
+| `sthis.env.sets()` (batch)  | `api/svc/create-handler.ts:94`, `vibes-diy/cli/main.ts:96`                                    | distinct from `env.set`                                                                      |
+| `sthis.txt.base58`          | (repo-wide)                                                                                   | distinct from `base64`                                                                       |
+| `sthis.logger.Flush()`      | (repo-wide)                                                                                   | logger lifecycle                                                                             |
+
+**Conclusion (revised).** The facade's `ensureSuperThis` cannot be repointed at a thin context — its external consumers depend on a near-complete `SuperThis` (`timeOrderedNextId`, `env.sets`, `txt.base58`, `logger.Flush`, plus the identity-internal surface). Task 4 must therefore **preserve a fully-compatible `ensureSuperThis`**, which means one of:
+
+- **(4a) Reimplement the full `SuperThis`** (cement-backed: `envFactory`, `toCryptoRuntime`, `LoggerImpl`, `timeOrderedNextId`, all codecs) in-repo — large, and the genuine "SuperThis decision" the spec flagged; **or**
+- **(4b) Keep `core-runtime`'s `ensureSuperThis`/`SuperThis` as a documented residual** behind the facade, and declare Phase 4 "done" at lifting only the _crypto_ (hashes + `sts`), with `core-runtime` retained for `SuperThis` alone (the inventory doc's "remaining uses with rationale" pattern). This still shrinks the dep to one symbol but does **not** reach literal zero `@fireproof/core-runtime`.
+
+This decision gates whether **T5 (full dep drop) is reachable at all**; resolve it (with the human) before starting Task 4. `env2jwk`'s `ensureSuperThis()` default is repointed at whichever context results, in Task 3.
 
 ### Task 2 — Lift the pure/hash utilities in-repo (gated, but dep-drop deferred)
 
@@ -75,13 +91,16 @@ Create `vibes.diy/identity/runtime/hashing.ts` lifting `deepFreeze` + `hashStrin
 
 Create `vibes.diy/identity/sts/` lifting the used `sts-service` surface (`env2jwk`, `importJWK`, `verifyToken` + their transitive helpers) **verbatim**. Keep `jose` calls and the JWK/JWT field layout identical. Repoint `device-id/{validator,key,verify}.ts` and `dash-api/{clerk-token,token}.ts`. **Gate:** extend `auth-token-verify-golden` + `identity-wire-compat` with extracted ⇄ fireproof cross-verification (extracted-minted verifies under fireproof and vice-versa) — both green in CI. This is the highest-risk task; do not proceed to Task 5 unless both directions pass.
 
-### Task 4 — Replace `ensureSuperThis()` with a thin in-repo `RuntimeContext`
+### Task 4 — Resolve the `ensureSuperThis` facade contract (decision gate, then implement)
 
-Using Task 1's contract, implement `vibes.diy/identity/runtime/context.ts` providing exactly `env` (via `@adviser/cement` `envFactory`), `txt` codecs, `nextId`, `logger` (`LoggerImpl`), and any crypto runtime the lifted `sts`/keybag need. Repoint `runtime-context.ts`'s `ensureRuntimeContext()` and `dash-api/token.ts`'s default param at it. Keep `runtimeFn`/`ensureLogger` behavior. **Gate:** full api + identity suites green (the "no forced re-login" gate end-to-end).
+**This task starts with a decision, not code** (see the revised Task 1 conclusion): the facade `ensureSuperThis` is consumed repo-wide with a near-complete `SuperThis` surface, so it cannot become a thin context. Pick **4a (reimplement full `SuperThis` in-repo)** or **4b (retain `core-runtime` for `SuperThis` as a documented residual)** _with the human_ before writing code — it determines whether T5 is reachable.
 
-### Task 5 — Drop `@fireproof/core-runtime` from identity; final sweep
+- **If 4a:** implement `vibes.diy/identity/runtime/superthis.ts` providing the full audited surface (`env` get/gets/set/sets/delete, `txt` base64/base58/encode/decode, `nextId`, `timeOrderedNextId`, `logger` incl. `Flush`, `pathOps`, `start`, crypto runtime) on `@adviser/cement` primitives. Repoint `runtime-context.ts`, the facade `ensureSuperThis`/`ensureLogger`/`runtimeFn`, and `dash-api/token.ts`'s default. **Gate:** full api + identity suites green end-to-end.
+- **If 4b:** stop here; `SuperThis`/`ensureSuperThis` stays `core-runtime`-backed, and Phase 4 ships only the crypto lift (Tasks 2–3). Document the residual in the inventory doc and **skip Task 5's dep-drop** (the dep shrinks to one symbol but doesn't leave).
 
-Once Tasks 2–4 route every identity import in-repo, remove `@fireproof/core-runtime` from `vibes.diy/identity/package.json`, delete the facade re-export in `index.ts` (or repoint it in-repo), `pnpm install`, and run the full check + all three golden harnesses. Confirm repo-wide: `grep -rn "@fireproof/core-runtime"` returns **zero** outside `node_modules`/lockfile. Update this plan + the inventory doc to mark Bucket E **done** and close #2468.
+### Task 5 — Drop `@fireproof/core-runtime` from identity; final sweep _(only reachable under 4a)_
+
+Once Tasks 2–4(a) route **every** identity import _and_ the full external facade contract in-repo, remove `@fireproof/core-runtime` from `vibes.diy/identity/package.json`, delete/repoint the facade re-export in `index.ts`, `pnpm install`, and run the full check + all three golden harnesses. Confirm repo-wide: `grep -rn "@fireproof/core-runtime"` returns **zero** outside `node_modules`/lockfile. Update this plan + the inventory doc to mark Bucket E **done** and close #2468. Under **4b**, Bucket E closes with `SuperThis` documented as the single retained `core-runtime` symbol instead.
 
 ## Source-lock provenance (fill at lift time)
 
