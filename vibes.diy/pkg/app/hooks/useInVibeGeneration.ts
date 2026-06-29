@@ -189,6 +189,13 @@ export function useInVibeGeneration(opts: UseInVibeGenerationOpts): InVibeGenera
     const seenSeq = seenByBlockIdRef.current.get(latestBlockId) ?? -1;
     if (latestCodeEndSeq <= seenSeq) return;
     seenByBlockIdRef.current.set(latestBlockId, latestCodeEndSeq);
+    // A manual code-save (promptFS) streams its saved file back as a code block
+    // too, but a hand-edited full-file save must RELOAD via re-pin (setDraftFsId),
+    // not hot-swap — Charlie's guardrail: never pushSource + re-pin on the same
+    // manual-save event (#2866). Mark the block seen (above) so it can't push
+    // later, but skip the push now; the save's block.end advances persistedFsRef
+    // and the host re-pins. A non-null savePromptIdRef = a save is in flight.
+    if (savePromptIdRef.current !== null) return;
     const resolved = getCode(promptState).code.join("\n");
     if (resolved.length < 200 || !resolved.includes("export default")) return;
     const ok = opts.srvVibeSandbox.pushSource(resolved);

@@ -5,7 +5,11 @@ import type { Meta, StoryObj } from "@storybook/react-vite";
 // relative path — the same monorepo-source the app builds from — so these
 // stories track the real component, not a copy.
 import { VibeEditorPanel } from "../../pkg/app/components/vibe-editor/VibeEditorPanel.js";
+import { CodeEditPanel } from "../../pkg/app/components/vibe-editor/CodeEditPanel.js";
+import { ThemeProvider } from "../../pkg/app/contexts/ThemeContext.js";
 import type { PromptState } from "../../pkg/app/routes/chat/prompt-state.js";
+import type { CodeViewModel } from "../../pkg/app/components/vibe-editor/code-from-chat.js";
+import type { SaveState } from "../../pkg/app/hooks/save-state.js";
 import { type EditorTab } from "../../pkg/app/components/vibe-editor/editor-tab-state.js";
 
 /**
@@ -88,6 +92,29 @@ function Panel({ tab }: { readonly tab: EditorTab }) {
   return <VibeEditorPanel tab={tab} onTab={() => undefined} ownerHandle="demo" appSlug="demo-app" promptState={emptyChatState} />;
 }
 
+// --- Phase 2 edit-mode fixtures ----------------------------------------------------------
+
+const codeViewFixture: CodeViewModel = {
+  files: [{ fileName: "/App.jsx", lang: "jsx", code: ["export default function App(){", "  return <h1>Hello</h1>;", "}"] }],
+  activeFile: { fileName: "/App.jsx", lang: "jsx", code: ["export default function App(){", "  return <h1>Hello</h1>;", "}"] },
+  activeCode: "export default function App(){\n  return <h1>Hello</h1>;\n}",
+  language: "jsx",
+};
+
+/** The owner Monaco edit surface in a given save-state (#2518 Phase 2). */
+function EditPanel({ saveState }: { readonly saveState: SaveState }) {
+  return (
+    <ThemeProvider>
+      <CodeEditPanel
+        model={codeViewFixture}
+        saveState={saveState}
+        isSaving={saveState === "queued" || saveState === "saving"}
+        onSave={() => undefined}
+      />
+    </ThemeProvider>
+  );
+}
+
 const meta: Meta = {
   title: "sketches/VibeEditorPanel",
 };
@@ -151,6 +178,54 @@ export const SettingsMobile: Story = {
   render: () => (
     <Phone>
       <Panel tab="settings" />
+    </Phone>
+  ),
+};
+
+// --- Phase 2: the Monaco edit surface, one per save-state --------------------------------
+
+export const EditIdle: Story = {
+  name: "Code edit · idle (desktop)",
+  render: () => (
+    <Desk>
+      <EditPanel saveState="idle" />
+    </Desk>
+  ),
+};
+
+export const EditSaving: Story = {
+  name: "Code edit · saving (desktop)",
+  render: () => (
+    <Desk>
+      <EditPanel saveState="saving" />
+    </Desk>
+  ),
+};
+
+export const EditSaved: Story = {
+  name: "Code edit · saved (desktop)",
+  render: () => (
+    <Desk>
+      <EditPanel saveState="rebuilt" />
+    </Desk>
+  ),
+};
+
+export const EditError: Story = {
+  name: "Code edit · save failed (desktop)",
+  render: () => (
+    <Desk>
+      <EditPanel saveState="error" />
+    </Desk>
+  ),
+};
+
+export const EditMobile: Story = {
+  name: "Code edit · idle (390×844 mobile)",
+  parameters: { viewport: { defaultViewport: "tiny" } },
+  render: () => (
+    <Phone>
+      <EditPanel saveState="idle" />
     </Phone>
   ),
 };
