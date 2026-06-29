@@ -1,0 +1,128 @@
+import { TxtEnDecoderSingleton } from "@adviser/cement";
+import { transformBackendSource } from "./transform-backend-source.js";
+import { type WorkerCode, type WorkerLoaderBinding } from "./worker-loader-executor.js";
+import { type BackendExecutor, type BackendInvokeInput, type BackendInvokeResult } from "./backend-executor.js";
+
+const MAIN_MODULE = "main.js";
+const BACKEND_MODULE = "backend.js";
+// Pinned so the cache key (and isolate behavior) is reproducible. Bump
+// deliberately when the runtime contract changes. Matches the SSR loader path.
+const COMPATIBILITY_DATE = "2025-05-01";
+// Internal request URL — the dynamic worker only has the one fetch handler; the
+// real per-trigger handler + context ride the request body (see below).
+const BACKEND_REQUEST_URL = "https://vibe-backend.internal/";
+
+/**
+ * Shape the `WorkerCode` for a compiled `backend.js` module (#2856, slice B1) —
+ * the backend analog of `buildVibeWorkerCode`.
+ *
+ * Key difference from SSR, and the heart of invariant #1 (cache-key isolation):
+ * **neither the handler name nor any per-trigger context is baked into the hashed
+ * source.** The `main` module reads `{ handler, trigger }` from the incoming
+ * request on every invocation and dispatches to the matching export. So the
+ * `modules` map depends only on the vibe's `backend.js` bytes + `policyVersion` —
+ * one isolate per vibe serves all three handlers and every identity, and
+ * `env.LOADER.get(id, …)` reuses it because `id` (a hash of this code) is stable.
+ *
+ * `policyVersion` (egress-policy / binding-schema version) IS folded in, so a
+ * policy bump forces a new `id` — a stale isolate can't serve a changed policy.
+ *
+ * Pure string-shaping — the unit-testable part of the loader path, exercised
+ * without a live `env.LOADER` binding.
+ *
+ * KNOWN GAPs for the live path (later slices):
+ * - `ctx` here is a B1 stub. Real `ctx.db` (proxying back through the production
+ *   `putDoc`/`invokeAccessFn` gate), `ctx.secrets`, and `ctx.appInfo` wire up in
+ *   B3/B6/B7 — and arrive via the request/RPC args, never the hashed source.
+ * - `globalOutbound` is pinned `null` (the `WorkerCode` type's literal). B8
+ *   replaces it with the controlled egress-proxy binding; until then there is no
+ *   live load, so `null` (no network) is the safe placeholder.
+ * - Dependency bundling (#2845): the `backend.js` module's bare imports aren't
+ *   resolved here; that lands with the live-load wiring, shared with SSR.
+ */
+export function buildBackendWorkerCode(input: { module: string; policyVersion?: string }): WorkerCode {
+  const policyVersion = input.policyVersion ?? "v1";
+  const main = [
+    // policyVersion is embedded so it participates in the content hash (invariant
+    // #1c) — bumping it forces a new isolate id without changing behavior.
+    `// backend-isolate policy=${policyVersion}`,
+    `import * as handlers from "./${BACKEND_MODULE}";`,
+    `export default {`,
+    `  async fetch(request) {`,
+    `    const { handler, trigger } = await request.json();`,
+    // B1 stub ctx — real db/secrets/appInfo wiring is B3/B6/B7, also via the request.
+    `    const ctx = {`,
+    `      appInfo: (trigger && trigger.appInfo) || null,`,
+    `      userInfo: trigger && trigger.userHandle ? { userHandle: trigger.userHandle } : null,`,
+    `    };`,
+    `    const fn = handlers[handler];`,
+    `    if (typeof fn !== "function") {`,
+    `      return new Response("no backend handler: " + handler, { status: 404 });`,
+    `    }`,
+    `    if (handler === "fetch") {`,
+    `      const p = (trigger && trigger.payload) || {};`,
+    `      const userReq = new Request(p.url || "https://vibe.internal/", {`,
+    `        method: p.method, headers: p.headers, body: p.body,`,
+    `      });`,
+    `      return await fn(userReq, ctx);`,
+    `    }`,
+    `    await fn((trigger && trigger.payload) || {}, ctx);`,
+    `    return new Response(null, { status: 204 });`,
+    `  },`,
+    `};`,
+    ``,
+  ].join("\n");
+  return {
+    compatibilityDate: COMPATIBILITY_DATE,
+    mainModule: MAIN_MODULE,
+    modules: {
+      [MAIN_MODULE]: main,
+      [BACKEND_MODULE]: input.module,
+    },
+    globalOutbound: null,
+  };
+}
+
+/** Hex SHA-256 of the worker code — the `env.LOADER.get` id, so identical code reuses one isolate. */
+async function hashBackendWorkerCode(code: WorkerCode): Promise<string> {
+  const payload = `${code.compatibilityDate}\n${code.mainModule}\n${JSON.stringify(code.modules)}`;
+  // `TxtEnDecoderSingleton().encode` is the cement UTF-8 encoder `sthis.txt`
+  // wraps — rules-bag forbids `new TextEncoder` directly.
+  const digest = await crypto.subtle.digest("SHA-256", TxtEnDecoderSingleton().encode(payload));
+  return Array.from(new Uint8Array(digest))
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
+}
+
+/**
+ * Invokes a vibe's backend handler in a fresh Cloudflare Dynamic Worker isolate
+ * at the edge (#2856, slice B1). The `env.LOADER` binding is open beta and absent
+ * from CI, so this never loads a live isolate; its `buildBackendWorkerCode`
+ * shaping and `get → getEntrypoint → fetch` orchestration are unit-tested against
+ * a fake binding.
+ *
+ * The isolate `id` derives only from the (stable) code + `policyVersion`; the
+ * per-trigger `handler` + `trigger` ride the request body, so two invocations with
+ * different identities reuse one isolate without their contexts touching the
+ * cache key (invariant #1).
+ */
+export class WorkerLoaderBackendExecutor implements BackendExecutor {
+  constructor(
+    private readonly loader: WorkerLoaderBinding,
+    private readonly opts: { readonly policyVersion?: string } = {}
+  ) {}
+
+  async invoke(input: BackendInvokeInput): Promise<BackendInvokeResult> {
+    const { module } = transformBackendSource(input.source);
+    const code = buildBackendWorkerCode({ module, policyVersion: this.opts.policyVersion });
+    const id = await hashBackendWorkerCode(code);
+    const stub = this.loader.get(id, () => code);
+    const request = new Request(BACKEND_REQUEST_URL, {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ handler: input.handler, trigger: input.trigger }),
+    });
+    const response = await stub.getEntrypoint().fetch(request);
+    return { status: response.status, body: await response.text() };
+  }
+}

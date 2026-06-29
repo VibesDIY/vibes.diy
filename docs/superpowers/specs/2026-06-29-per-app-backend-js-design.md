@@ -182,23 +182,32 @@ All in `vibes.diy/vibe/runtime/` unless noted:
 Each slice is independently landable, defaults dormant, and is unit-tested against a **fake**
 `env.LOADER` where the live binding is needed. Order is roughly risk-ascending.
 
-### Slice B1 — Backend executor seam (library-only, fake-binding tested)
+### Slice B1 — Backend executor seam (library-only, fake-binding tested) — ✅ implemented
 
-Generalize the executor to **invoke a named handler**, not just render.
+Generalize the executor to **invoke a named handler**, not just render. Lives in
+`vibes.diy/vibe/runtime/` (`transform-backend-source.ts`, `backend-executor.ts`,
+`backend-worker-loader-executor.ts`).
 
 - `transformBackendSource(src)` — reuse `transformVibeSource` (no JSX needed but harmless; strips TS).
-- `buildBackendWorkerCode({ module, handler })` — sibling to `buildVibeWorkerCode`; the `main` module
-  imports the compiled `backend.js` and dispatches to `handler`, reading the request/event **and the
-  per-trigger context (identity, source-tag, depth, dedupe-key) from the incoming request/RPC args** —
-  **never** from the hashed source or `env`. `WorkerCode.env` is reserved for **stable
-  service/transport bindings** only. `config` is read at push time, not here.
-- `BackendExecutor` (loader-backed) + `selectBackendExecutor(mode, { loader })` with a
-  `BACKEND_JS=off|loader` flag (no `node` live path — CI-only, like SSR).
-- **Out of scope:** real `env.LOADER` load, dep bundling, the DO, routing, ctx wiring to real db.
-- **Tests:** `buildBackendWorkerCode` shaping per handler; `BackendExecutor` orchestration
-  (`get → getEntrypoint → fetch`) against a fake binding; flag parsing; **cache-key isolation
-  (@CharlieHelps's matrix): same code + different trigger identities ⇒ same loader id; no
-  cross-invocation identity bleed; egress-policy / binding-schema bump ⇒ new id.**
+- `buildBackendWorkerCode({ module, policyVersion? })` — sibling to `buildVibeWorkerCode`. The `main`
+  module imports the compiled `backend.js` and reads **both the handler name and the per-trigger
+  context** (identity, source-tag, depth, dedupe-key, request/event) from the **incoming request** on
+  each call, then dispatches to the matching export — **never** from the hashed source or `env`.
+  Because `handler` rides the request too, the `modules` map depends only on the vibe's `backend.js`
+  bytes + `policyVersion`, so **one isolate per vibe serves all three handlers and every identity**
+  (handler is not part of the cache key). `policyVersion` (egress-policy / binding-schema version) IS
+  folded into the hash so a policy bump forces a new isolate id. `config` is read at push time, not
+  here.
+- `WorkerLoaderBackendExecutor` (loader-backed, `invoke(input)`) + the `BackendExecutor` interface +
+  `parseBackendJsMode` + `selectBackendExecutor(mode, { loader, policyVersion })` with a
+  `BACKEND_JS=off|loader` flag (**no `node` mode at all** — in-process execution is never allowed).
+- **Out of scope:** real `env.LOADER` load, dep bundling, the DO, routing, real `ctx.db`/secrets
+  wiring (the `ctx` built in `main` is a B1 stub), the egress proxy (`globalOutbound` stays `null`).
+- **Tests** (`tests/app/ssr/backend-*.test.ts`): `buildBackendWorkerCode` shaping; orchestration
+  (`get → getEntrypoint → fetch`) against a fake binding; flag parsing; the client-entry guard extended
+  to backend modules; and **cache-key isolation (@CharlieHelps's matrix): (a) same code + different
+  trigger identities ⇒ same loader id; (b) no cross-invocation identity bleed (identity in the request,
+  never the WorkerCode); (c) policyVersion bump ⇒ new id.**
 
 ### Slice B2 — Push-time discovery + config validation (`processBackendBindings`)
 
