@@ -6,6 +6,8 @@ import { useChatSession } from "./useChatSession.js";
 import { getCode } from "../components/ResultPreview/get-code.js";
 import { chipsFromNarration } from "./useLatestVibeChips.js";
 import { shouldAcceptPrompt } from "../utils/submit-guard.js";
+import { nextSaveState, isSaving as isSavingState, type SaveState } from "./save-state.js";
+import { normalizeCodeViewPath, inferCodeViewLanguage } from "../components/ResultPreview/code-view-files.js";
 
 export type GenerationPhase = "idle" | "streaming" | "live";
 
@@ -50,6 +52,17 @@ export interface InVibeGeneration {
   // once already active. sendPrompt also activates, covering the fork
   // auto-fire path where the card never opens. (#2761)
   readonly activate: () => void;
+  // Persist a hand-edited code buffer (Phase 2, #2518). Mirrors the /chat
+  // Monaco save loop but RE-PINS instead of navigating: the new fsId is
+  // resolved from the canonical post-persist block.end (persistedFsRef) and
+  // reported via the host's onSavedFsId so the running app reloads to the saved
+  // version with the URL unchanged. Queues until the lazy chat handle exists
+  // and holds while a codegen turn is in flight (no interleaved promptFS).
+  readonly saveCode: (args: { buffer: string; filePath: string; lang: string }) => void;
+  // The manual-save lifecycle: idle | queued | saving | rebuilt | error.
+  readonly saveState: SaveState;
+  // True while a save is queued or in flight (queued | saving).
+  readonly isSaving: boolean;
 }
 
 export interface UseInVibeGenerationOpts {
@@ -66,6 +79,11 @@ export interface UseInVibeGenerationOpts {
   // even then the chat opens lazily (see `activate`), not on mount. Defaults to
   // treating an omitted flag as enabled.
   readonly enabled?: boolean;
+  // Called when a manual save settles server-side, with the new fsId resolved
+  // from the canonical post-persist block.end. The host wires this to
+  // setDraftFsId so the running app re-pins (reloads) to the saved version
+  // without navigating (the /vibe URL stays put — Phase 2, #2518). Memoize it.
+  readonly onSavedFsId?: (fsId: string) => void;
 }
 
 function initialState(appSlug: string): PromptState {
@@ -86,6 +104,7 @@ function initialState(appSlug: string): PromptState {
 
 export function useInVibeGeneration(opts: UseInVibeGenerationOpts): InVibeGeneration {
   const { ownerHandle, appSlug, fsId, chatApi, sharedApi } = opts;
+  const onSavedFsId = opts.onSavedFsId;
   const [promptState, dispatch] = useReducer(promptReducer, undefined, () => initialState(appSlug));
   const [promptToSend, sendPromptState] = useState<string | null>(null);
   const [hotSwapCount, setHotSwapCount] = useState(0);
@@ -100,6 +119,23 @@ export function useInVibeGeneration(opts: UseInVibeGenerationOpts): InVibeGenera
   // `enabled` flag still hard-gates non-owners off independent of activation.
   const [active, setActive] = useState(false);
   const activate = useCallback(() => setActive(true), []);
+
+  // Manual code-save lifecycle (Phase 2, #2518). The pure machine lives in
+  // save-state.ts; the refs below carry the async plumbing the reducer must not.
+  const [saveState, dispatchSave] = useReducer(nextSaveState, "idle" as SaveState);
+  // The buffer awaiting persistence — held until the lazy chat handle exists and
+  // any in-flight codegen turn settles. Kept across an `error` so Retry resubmits
+  // the SAME edit (no silent loss). Cleared only on a settled save.
+  const pendingSaveRef = useRef<{ buffer: string; filePath: string; lang: string } | null>(null);
+  // Re-entrancy latch so the flush effect submits a queued save exactly once.
+  const submitInFlightRef = useRef(false);
+  // promptId of the in-flight save, and whether its inFlightStreamId has reached
+  // the reducer yet (so a not-yet-propagated id can't be mistaken for completion).
+  const savePromptIdRef = useRef<string | null>(null);
+  const sawSaveInflightRef = useRef(false);
+  // persistedFsRef.fsId captured at submit time; a save completes when the
+  // canonical post-persist block.end advances persistedFsRef PAST this baseline.
+  const saveBaselineFsIdRef = useRef<string | undefined>(undefined);
 
   // Re-arm the lazy gate SYNCHRONOUSLY on a vibe-key change, mirroring
   // useChatSession's own render-phase slug guard. The slug-keyed reset effect
@@ -121,7 +157,7 @@ export function useInVibeGeneration(opts: UseInVibeGenerationOpts): InVibeGenera
   // no-op keeps useChatSession's contract satisfied.
   const navigateToFsId = useCallback((_targetFsId?: string) => undefined, []);
 
-  useChatSession({
+  const { chat } = useChatSession({
     ownerHandle,
     appSlug,
     fsId,
@@ -175,6 +211,14 @@ export function useInVibeGeneration(opts: UseInVibeGenerationOpts): InVibeGenera
     setHotSwapCount(0);
     setHasLocalEdit(false);
     sendPromptState(null);
+    // Drop any pending or in-flight manual save so it can't settle against the
+    // newly-loaded vibe (re-pinning the wrong app to a stale fsId).
+    dispatchSave({ type: "reset" });
+    pendingSaveRef.current = null;
+    submitInFlightRef.current = false;
+    savePromptIdRef.current = null;
+    sawSaveInflightRef.current = false;
+    saveBaselineFsIdRef.current = undefined;
     // Note: re-arming the lazy `active` gate happens synchronously during render
     // (the activeVibeKeyRef guard above), not here — an effect would run too late
     // to stop useChatSession's open effect firing once on the new vibe. (#2761)
@@ -192,7 +236,8 @@ export function useInVibeGeneration(opts: UseInVibeGenerationOpts): InVibeGenera
   // reducer block. Mirrors the chat surface's shouldAcceptPrompt guard. Read via
   // a ref so sendPrompt stays referentially stable (no callback churn).
   const inFlightRef = useRef(false);
-  inFlightRef.current = promptState.running || promptToSend !== null || promptState.optimisticPrompt !== undefined;
+  inFlightRef.current =
+    promptState.running || promptToSend !== null || promptState.optimisticPrompt !== undefined || isSavingState(saveState);
   const sendPrompt = useCallback((text: string) => {
     if (!shouldAcceptPrompt({ text, submitting: inFlightRef.current, running: false })) return;
     // A programmatic send (e.g. the fork auto-fire that never opens the edit UI)
@@ -248,6 +293,79 @@ export function useInVibeGeneration(opts: UseInVibeGenerationOpts): InVibeGenera
     return undefined;
   }, [promptState.blocks]);
 
+  // Record a save intent and bring up the lazy chat. The actual promptFS is
+  // deferred to the flush effect — `activate()` only flips state; useChatSession
+  // opens the LLMChat in a later effect, so `chat` is null in this same tick
+  // (Codex #2). Stash the buffer and let the flush effect submit it once the
+  // handle exists. Referentially stable (dispatchSave/setActive are stable).
+  const saveCode = useCallback((args: { buffer: string; filePath: string; lang: string }) => {
+    pendingSaveRef.current = args;
+    dispatchSave({ type: "request" });
+    setActive(true);
+  }, []);
+
+  // Flush a queued save once the chat handle exists and no codegen turn is in
+  // flight (interleaving guard — a manual save never races a generation's
+  // promptFS into the single reducer block). Submits exactly once via the
+  // re-entrancy latch; on submit we register the promptId so the matching
+  // post-persist block.end settles connection in the reducer (parity with /chat).
+  useEffect(() => {
+    if (saveState !== "queued" || submitInFlightRef.current) return;
+    const pending = pendingSaveRef.current;
+    if (!pending || chat === null || isGenerating) return;
+    submitInFlightRef.current = true;
+    const filename = normalizeCodeViewPath(pending.filePath || "/App.jsx");
+    const lang = pending.lang || inferCodeViewLanguage(filename, "text/javascript");
+    saveBaselineFsIdRef.current = persistedFsRef?.fsId;
+    sawSaveInflightRef.current = false;
+    chat
+      .promptFS({ update: [{ type: "code-block", filename, lang, content: pending.buffer }], remove: [] })
+      .then((r) => {
+        submitInFlightRef.current = false;
+        if (r.isErr()) {
+          console.error("saveCode promptFS failed", r.Err());
+          dispatchSave({ type: "failed" });
+          return;
+        }
+        savePromptIdRef.current = r.Ok().promptId;
+        dispatch({ type: "setInFlightStreamId", streamId: r.Ok().promptId });
+        dispatchSave({ type: "submitted" });
+      })
+      .catch((err: unknown) => {
+        submitInFlightRef.current = false;
+        console.error("saveCode promptFS threw", err);
+        dispatchSave({ type: "failed" });
+      });
+  }, [saveState, chat, isGenerating, persistedFsRef]);
+
+  // Settle a submitted save. Success = the canonical post-persist block.end
+  // advances persistedFsRef PAST the pre-save baseline → re-pin via onSavedFsId
+  // (the host's setDraftFsId). If inFlightStreamId instead clears with no new
+  // fsId (a stream error, or a no-op same-content save), fall back to `error` so
+  // the UI never wedges on "Saving…" and the buffer is kept for Retry.
+  useEffect(() => {
+    if (saveState !== "saving" || savePromptIdRef.current === null) return;
+    if (persistedFsRef?.fsId && persistedFsRef.fsId !== saveBaselineFsIdRef.current) {
+      const settledFsId = persistedFsRef.fsId;
+      dispatchSave({ type: "settled" });
+      pendingSaveRef.current = null;
+      savePromptIdRef.current = null;
+      sawSaveInflightRef.current = false;
+      onSavedFsId?.(settledFsId);
+      return;
+    }
+    // Note our promptId reached the reducer before reading a cleared id as done.
+    if (promptState.inFlightStreamId === savePromptIdRef.current) {
+      sawSaveInflightRef.current = true;
+      return;
+    }
+    if (sawSaveInflightRef.current && promptState.inFlightStreamId === undefined) {
+      dispatchSave({ type: "failed" }); // keep pendingSaveRef for Retry
+      savePromptIdRef.current = null;
+      sawSaveInflightRef.current = false;
+    }
+  }, [saveState, persistedFsRef, promptState.inFlightStreamId, onSavedFsId]);
+
   return {
     phase,
     isGenerating,
@@ -259,5 +377,8 @@ export function useInVibeGeneration(opts: UseInVibeGenerationOpts): InVibeGenera
     persistedFsRef,
     sendPrompt,
     activate,
+    saveCode,
+    saveState,
+    isSaving: isSavingState(saveState),
   };
 }
