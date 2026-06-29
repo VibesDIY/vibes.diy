@@ -40,14 +40,20 @@ export interface HandlePickerMenuProps {
 }
 
 /** Mirror of the server's `toRFC2822_32ByteLength` (ensure-slug-binding.ts) so the
- *  inline preview shows exactly the slug the binding will be created with. */
+ *  inline preview shows exactly the slug the binding will be created with.
+ *
+ *  We trim the dash edges AFTER the 32-char slice — the server slices last, which
+ *  means truncation can land on a dash (e.g. 31 letters then `!b` → `…a-b` → slice
+ *  → `…a-`). Trimming after the slice keeps this idempotent, so when the server
+ *  sanitizes our already-sanitized value a second time the result is unchanged and
+ *  the created handle matches the preview (Codex P2 on #2825). */
 export function sanitizeHandle(raw: string): string {
   return raw
     .toLowerCase()
     .replace(/[^a-z0-9-]/g, "-")
     .replace(/-+/g, "-")
-    .replace(/^-+|-+$/g, "")
-    .slice(0, 32);
+    .slice(0, 32)
+    .replace(/^-+|-+$/g, "");
 }
 
 export function HandlePickerMenu({

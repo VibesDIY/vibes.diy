@@ -1,13 +1,35 @@
 import React from "react";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
-import { HandlePickerMenu } from "@vibes.diy/base";
+import { HandlePickerMenu, sanitizeHandle } from "@vibes.diy/base";
 
 beforeEach(() => {
   globalThis.document.body.innerHTML = "";
 });
 
 const HANDLES = [{ slug: "meghan" }, { slug: "meghan_work", displayName: "@meghan_work" }];
+
+describe("sanitizeHandle", () => {
+  it("lowercases and maps unsupported characters to dashes", () => {
+    expect(sanitizeHandle("My Cool Handle!")).toBe("my-cool-handle");
+  });
+
+  it("collapses runs and trims edge dashes", () => {
+    expect(sanitizeHandle("--a__b--")).toBe("a-b");
+  });
+
+  it("is idempotent when truncation lands on a dash (so the server's re-sanitize is a no-op)", () => {
+    // 31 letters then `!b`: replace → `…a-b` (33 chars). Slicing must happen before
+    // the trailing-dash trim, or the preview keeps a `-` the server would later strip.
+    const raw = "a".repeat(31) + "!b";
+    const once = sanitizeHandle(raw);
+    expect(once).toBe("a".repeat(31));
+    expect(once.endsWith("-")).toBe(false);
+    expect(once.length).toBeLessThanOrEqual(32);
+    // Double sanitization (what the server does to our already-clean value) is stable.
+    expect(sanitizeHandle(once)).toBe(once);
+  });
+});
 
 describe("HandlePickerMenu", () => {
   it("lists handles under an 'Acting as' header plus a New handle row", () => {
