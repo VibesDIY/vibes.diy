@@ -1,6 +1,7 @@
 export * from "./db-acl-allows.js";
 export * from "./vibe.js";
 export * from "./mount-vibes.js";
+export { renderVibeToString, buildVibeTree } from "./render-vibes.js";
 export * from "./register-dependencies.js";
 export {
   rewriteBareSpecifiers,
