@@ -651,7 +651,13 @@ async function dispatchLlmRequestWithFallback(args: DispatchLlmRequestWithFallba
   const firstTokenTimeoutMs = envPositiveInt(args.vctx, "DISPATCH_FIRST_TOKEN_TIMEOUT_MS", DISPATCH_FIRST_TOKEN_TIMEOUT_MS);
   const totalBudgetMs = envPositiveInt(args.vctx, "DISPATCH_TOTAL_BUDGET_MS", DISPATCH_TOTAL_BUDGET_MS);
   const dispatchDeadline = Date.now() + totalBudgetMs;
-  const attemptTimeoutMs = (): number => Math.min(firstTokenTimeoutMs, Math.max(0, dispatchDeadline - Date.now()));
+  const budgetRemainingMs = (): number => Math.max(0, dispatchDeadline - Date.now());
+  const attemptTimeoutMs = (): number => Math.min(firstTokenTimeoutMs, budgetRemainingMs());
+  // Inter-attempt backoff (which can honor a Retry-After up to MAX_RETRY_AFTER_MS)
+  // is capped at the budget remaining, so a sleep near the boundary can't push
+  // total wall time past DISPATCH_TOTAL_BUDGET_MS before the deadline check runs.
+  const backoffMs = (failure: LlmAttemptFailure, defaultDelayMs: number): number =>
+    Math.min(delayForAttempt(failure, defaultDelayMs), budgetRemainingMs());
   const budgetExhausted = (): LlmDispatchErr => {
     const abort = new AbortController();
     abort.abort();
@@ -669,7 +675,7 @@ async function dispatchLlmRequestWithFallback(args: DispatchLlmRequestWithFallba
   let lastPrimary: LlmAttemptErr | undefined;
   for (const label of ["primary", "primary-retry"] as const) {
     if (lastPrimary) {
-      await waitMs(delayForAttempt(lastPrimary.failure, PRIMARY_RETRY_DELAY_MS));
+      await waitMs(backoffMs(lastPrimary.failure, PRIMARY_RETRY_DELAY_MS));
     }
     if (Date.now() >= dispatchDeadline) return budgetExhausted();
     const attempt = await attemptLlmRequest({
@@ -698,7 +704,7 @@ async function dispatchLlmRequestWithFallback(args: DispatchLlmRequestWithFallba
 
   const fallbackModel = rFallbackModel.Ok();
   const fallbackReq: LLMRequestWithHeaders = { ...args.llmReq, model: fallbackModel };
-  await waitMs(delayForAttempt(failedPrimary.failure, FALLBACK_RETRY_DELAY_MS));
+  await waitMs(backoffMs(failedPrimary.failure, FALLBACK_RETRY_DELAY_MS));
   if (Date.now() >= dispatchDeadline) return budgetExhausted();
   const fallback = await attemptLlmRequest({
     vctx: args.vctx,
