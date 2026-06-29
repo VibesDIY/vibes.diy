@@ -100,17 +100,36 @@ Create `vibes.diy/identity/sts/` lifting the used `sts-service` surface (`env2jw
 
 ### Task 5 — Drop `@fireproof/core-runtime` from identity; final sweep _(only reachable under 4a)_
 
-Once Tasks 2–4(a) route **every** identity import _and_ the full external facade contract in-repo, remove `@fireproof/core-runtime` from `vibes.diy/identity/package.json`, delete/repoint the facade re-export in `index.ts`, `pnpm install`, and run the full check + all three golden harnesses. Confirm repo-wide: `grep -rn "@fireproof/core-runtime"` returns **zero** outside `node_modules`/lockfile. Update this plan + the inventory doc to mark Bucket E **done** and close #2468. Under **4b**, Bucket E closes with `SuperThis` documented as the single retained `core-runtime` symbol instead.
+**Pre-T5 consumer-surface gate (Charlie review #2841).** Before removing the dep, prove the in-repo `SuperThis` covers **every** consumer's surface — the thin-context strand-risk must be impossible, not merely audited once:
 
-## Source-lock provenance (fill at lift time)
+1. Regenerate the repo-wide consumer surface: `grep -rhoE "sthis\.[a-zA-Z0-9_]+(\.[a-zA-Z0-9_]+)?" --include=*.ts . | grep -v node_modules | sort -u` and list each distinct member + an example consumer.
+2. Diff that set against the methods the in-repo `superthis.ts` actually implements. The diff **must be empty**; any member present in consumers but absent from the impl blocks T5.
+3. Record the consumer list + the empty-diff result in the T5 PR description (the proof, not a claim).
+
+Then remove `@fireproof/core-runtime` from `vibes.diy/identity/package.json`, delete/repoint the facade re-export in `index.ts`, `pnpm install`, and run the gate commands below. Confirm repo-wide: `grep -rn "@fireproof/core-runtime"` returns **zero** outside `node_modules`/lockfile. Update this plan + the inventory doc to mark Bucket E **done** and close #2468. Under **4b**, Bucket E closes with `SuperThis` documented as the single retained `core-runtime` symbol instead.
+
+## Gate commands — what "green" means (Charlie review #2841)
+
+"Green" is unambiguous; each task's gate is these exact commands + CI jobs, not a vibe:
+
+| Task             | Local gate (node-capable env)                                                                                                         | CI jobs that must pass                          | Fixture expectation                                                                                                                                                         |
+| ---------------- | ------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| T2 (hashes)      | `cd vibes.diy/identity && pnpm vitest --run keybag-golden` **and** `cd vibes.diy/api/tests && pnpm vitest --run identity-wire-compat` | `test (1)`–`test (4)`, `compile_test`, `checks` | extracted-hash `===` fireproof-hash for the same input (new cross-check assertions); existing keybag golden bytes unchanged                                                 |
+| T3 (`sts`)       | `cd vibes.diy/api/tests && pnpm vitest --run auth-token-verify-golden identity-wire-compat`                                           | `test (1)`–`test (4)`, `compile_test`, `checks` | extracted-minted token verifies under fireproof verifier **and** fireproof-minted verifies under extracted — both directions; golden token header/claim keys byte-identical |
+| T4 (`SuperThis`) | `pnpm check` (full api + identity suites)                                                                                             | all of the above + `pg_concurrency`             | no test diffs; `who-am-i` / asset-grant / doc-write paths (the `timeOrderedNextId` consumers) green                                                                         |
+| T5 (drop dep)    | `pnpm install && pnpm check` + the pre-T5 consumer-diff above                                                                         | full required set green                         | `grep -rn "@fireproof/core-runtime"` outside `node_modules`/lockfile = **0**                                                                                                |
+
+## Source-lock provenance (hard per-task merge gate)
 
 All symbols pinned at `@fireproof/core-runtime@0.24.19` (upstream tag `fireproof-storage/fireproof@v0.24.19`).
 
-| Lifted symbol(s)                                                 | Upstream file                       | Target in-repo module         | v0.24.19 SHA       |
-| ---------------------------------------------------------------- | ----------------------------------- | ----------------------------- | ------------------ |
-| `deepFreeze`, `hashString*`, `hashObject*`, `Hasher`             | `core-runtime/utils.js`             | `identity/runtime/hashing.ts` | _(record at lift)_ |
-| `sts-service` (`env2jwk`/`importJWK`/`verifyToken` + transitive) | `core-runtime/sts-service/index.js` | `identity/sts/`               | _(record at lift)_ |
-| `ensureSuperThis`/`ensureLogger`/`runtimeFn` surface             | `core-runtime` (cement-backed)      | `identity/runtime/context.ts` | _(record at lift)_ |
+**Provenance completion is a merge gate, not a "later" (Charlie review #2841).** A lift task's PR must **not merge** until its row below is fully filled — the upstream file path, the **exact symbol line-ranges** lifted, and the resolved **`v0.24.19` commit SHA** — recorded in the PR description. An empty/`_(record at lift)_` cell on a touched row blocks merge; this is how the managed-fork sync lane tracks upstream security fixes against known source.
+
+| Lifted symbol(s)                                                 | Upstream file (+ line range)                  | Target in-repo module         | v0.24.19 SHA       |
+| ---------------------------------------------------------------- | --------------------------------------------- | ----------------------------- | ------------------ |
+| `deepFreeze`, `hashString*`, `hashObject*`, `Hasher`             | `core-runtime/utils.js` _(L?–L?)_             | `identity/runtime/hashing.ts` | _(record at lift)_ |
+| `sts-service` (`env2jwk`/`importJWK`/`verifyToken` + transitive) | `core-runtime/sts-service/index.js` _(L?–L?)_ | `identity/sts/`               | _(record at lift)_ |
+| `ensureSuperThis`/`ensureLogger`/`runtimeFn` surface             | `core-runtime` (cement-backed) _(L?–L?)_      | `identity/runtime/context.ts` | _(record at lift)_ |
 
 ## Risk & rollback
 
