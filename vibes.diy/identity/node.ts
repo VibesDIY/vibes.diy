@@ -59,8 +59,12 @@ export async function createDeviceIdGetToken(
     throw rDevkey.Err();
   }
   // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-  const payload = devid.cert.Unwrap()!.certificatePayload;
-  const signer = new DeviceIdSignMsg(sthis.txt.base64, rDevkey.Ok(), payload);
+  const certResult = devid.cert.Unwrap()!;
+  // #2671: pass the keybag's CA-signed `certificateJWT` through so the minted token
+  // carries the `x5c#jwt` chain signature the verifier checks against the CA key.
+  // Existing keybags already store this alongside `certificatePayload`, so enrolled
+  // devices keep working without re-login.
+  const signer = new DeviceIdSignMsg(sthis.txt.base64, rDevkey.Ok(), certResult.certificatePayload, certResult.certificateJWT);
   let seq = 0;
   return Lazy(
     async (): Promise<Result<DashAuthType>> => {

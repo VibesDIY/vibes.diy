@@ -18,12 +18,19 @@ import type {
   VerifyWithCertificateResult,
 } from "@fireproof/core-types-device-id";
 
+// #2671: extra option (intersected onto the upstream type, which we can't edit)
+// that turns the CA-signature *presence* requirement on. When false/absent the
+// verifier still validates an `x5c#jwt` chain signature if the token carries one,
+// but won't reject a legacy token that omits it — so older published CLIs keep
+// authenticating until the flag is flipped after the new CLI is rolled out.
+type DeviceIdVerifyOptions = VerifyWithCertificateOptions & { readonly requireCASignature?: boolean };
+
 export class DeviceIdVerifyMsg {
   readonly #base64: BaseXXEndeCoder;
   readonly #trustedCAs: CertificatePayload[];
-  readonly #options: VerifyWithCertificateOptions;
+  readonly #options: DeviceIdVerifyOptions;
 
-  constructor(base64: BaseXXEndeCoder, trustedCAs: CACertResult[], options: VerifyWithCertificateOptions) {
+  constructor(base64: BaseXXEndeCoder, trustedCAs: CACertResult[], options: DeviceIdVerifyOptions) {
     this.#base64 = base64;
     this.#trustedCAs = trustedCAs.map((ca) => ca.certificate);
     this.#options = options;
@@ -94,6 +101,17 @@ export class DeviceIdVerifyMsg {
     const rCertValidation = await this.validateCertificate(certInfo.certificate);
     if (rCertValidation.isErr()) {
       return this.createVerifyWithCertificateError(rCertValidation, {
+        certificateExtracted: true,
+        certificateInfo: certInfo,
+        jwtSignatureValid: true,
+      }) as VerifyWithCertificateResult<S>;
+    }
+    // #2671: prove the embedded cert was actually signed by the trusted CA's key,
+    // not just that its `iss` string names the CA. validateCertificate above only
+    // does the (forgeable) issuer-NAME match; this verifies the CA signature.
+    const rChain = await this.validateCertificateChainSignature(certInfo);
+    if (rChain.isErr()) {
+      return this.createVerifyWithCertificateError(rChain, {
         certificateExtracted: true,
         certificateInfo: certInfo,
         jwtSignatureValid: true,
@@ -212,6 +230,50 @@ export class DeviceIdVerifyMsg {
     });
   }
 
+  // #2671: verify the embedded device cert was genuinely issued by the trusted CA,
+  // by checking the CA's ES256 signature over the cert chain — closing the
+  // auth-bypass where a client forges a self-issued cert that merely *names* the CA
+  // as `iss` and embeds its own key.
+  //
+  // The token carries the CA-signed cert as a `CERT+JWT` in the `x5c#jwt` protected
+  // header (the keybag already stores it). We `jwtVerify` it against the trusted
+  // CA's public key (taken from the CA cert payload the verifier was constructed
+  // with), then confirm the CA-signed cert is byte-identical (post-normalize) to the
+  // `x5c[0]` cert whose key signed the token — so a forger can neither omit it (with
+  // enforcement on) nor splice a real CA-signed cert over a different device key.
+  async validateCertificateChainSignature(certInfo: HeaderCertInfo): Promise<Result<true>> {
+    const caJwt = (certInfo as unknown as { rawHeader?: Record<string, unknown> }).rawHeader?.["x5c#jwt"];
+    if (typeof caJwt !== "string" || caJwt.length === 0) {
+      if (this.#options.requireCASignature) {
+        return Result.Err(new Error("Certificate not trusted: missing CA chain signature (x5c#jwt)"));
+      }
+      // Rollout transition: legacy token without a chain signature. Accept only
+      // because enforcement is off; the issuer-name + validity checks already ran.
+      return Result.Ok(true);
+    }
+    const cert = certInfo.certificate.asCert();
+    const trustedCA = this.findTrustedCA(cert, this.#trustedCAs);
+    if (!trustedCA) {
+      return Result.Err(new Error("Certificate not issued by a trusted CA"));
+    }
+    const rCaKey = await sts.importJWK(trustedCA.certificate.subjectPublicKeyInfo, "ES256");
+    if (rCaKey.isErr()) {
+      return Result.Err(rCaKey.Err());
+    }
+    const rVerified = await exception2Result(() => jwtVerify(caJwt, rCaKey.Ok().key, { typ: "CERT+JWT", algorithms: ["ES256"] }));
+    if (rVerified.isErr()) {
+      return Result.Err(new Error(`Certificate CA-signature verification failed: ${rVerified.Err().message}`));
+    }
+    // The CA signed THIS exact cert payload — bind it to the cert that actually
+    // verified the token (x5c[0]), so a real CA-signed cert can't be spliced onto a
+    // forged device key. Certor normalizes (sort) both, matching the signer's x5c.
+    const signedCert = Certor.fromUnverifiedJWT(this.#base64, caJwt);
+    if (signedCert.asBase64() !== certInfo.certificate.asBase64()) {
+      return Result.Err(new Error("Certificate not trusted: CA-signed cert does not match embedded certificate"));
+    }
+    return Result.Ok(true);
+  }
+
   getErrorCode(ierror: unknown): VerifyWithCertificateError["errorCode"] {
     const { message: errorMessage } = ierror as { message: string };
     if (errorMessage.includes("thumbprint mismatch")) return "CERT_THUMBPRINT_MISMATCH";
@@ -219,6 +281,7 @@ export class DeviceIdVerifyMsg {
     if (errorMessage.includes("not yet valid")) return "CERT_NOT_YET_VALID";
     if (errorMessage.includes("self-signed")) return "CERT_SELF_SIGNED";
     if (errorMessage.includes("not trusted")) return "CERT_NOT_TRUSTED";
+    if (errorMessage.includes("CA-signature")) return "CERT_NOT_TRUSTED";
     if (errorMessage.includes("revoked")) return "CERT_REVOKED";
     if (errorMessage.includes("signature verification failed")) return "JWT_SIGNATURE_INVALID";
     if (errorMessage.includes("No certificate")) return "CERT_NOT_FOUND";
