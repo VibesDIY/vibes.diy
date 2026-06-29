@@ -40,6 +40,8 @@ import {
   SelectedSlotInput,
   ReqGetChatResponse,
   ResGetChatResponse,
+  ReqGetVibeChips,
+  ResGetVibeChips,
 } from "./chat.js";
 import {
   ReqEnsureUserSettings,
@@ -190,6 +192,7 @@ export interface VibesDiyApiIface<_T = unknown> {
   pinRecentVibe(req: Req<ReqPinRecentVibe>): Promise<Result<ResPinRecentVibe, VibesDiyError>>;
   getChatDetails(req: Req<ReqGetChatDetails>): Promise<Result<ResGetChatDetails, VibesDiyError>>;
   getChatResponse(req: Req<ReqGetChatResponse>): Promise<Result<ResGetChatResponse, VibesDiyError>>;
+  getVibeChips(req: Req<ReqGetVibeChips>): Promise<Result<ResGetVibeChips, VibesDiyError>>;
   getAppByFsId(req: Req<ReqGetAppByFsId>): Promise<Result<ResGetAppByFsId, VibesDiyError>>;
   openChat(req: Req<ReqOpenChat>): Promise<Result<LLMChat>>;
   ensureUserSettings(req: Req<ReqEnsureUserSettings>): Promise<Result<ResEnsureUserSettings, VibesDiyError>>;
