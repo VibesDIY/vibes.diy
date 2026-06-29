@@ -14,18 +14,19 @@ The **CLI is unchanged** — it never passes a `shardKey`, so it keeps the rando
 
 ## Decisions (locked)
 
-| Decision              | Choice                                                                                                                                                           |
-| --------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Website codegen shard | Deterministic per-user: `userNotifyShardFor(userId)` (the existing `notify-user-<uid>` string), deferred until `clerk.loaded` (mirror `deferredSharedReadShard`) |
-| Anonymous users       | Keep `crypto.randomUUID()` (no stable identity to pin to)                                                                                                        |
-| CLI                   | Unchanged — never passes `shardKey`, never rolls                                                                                                                 |
-| Admission limit       | **3** concurrent **codegen streams** per DO instance; 4th admission attempt is rejected                                                                          |
-| Overload signal       | Server **sends** a coded `ResError` `code: "shard-overloaded"` and stops dispatch (does NOT rely on catching a hard CF CPU/memory limit)                         |
-| Counted unit          | In-flight codegen streams (`open-chat` / `prompt-chat-section` with a codegen mode), not open WebSocket connections                                              |
-| Next-shard function   | `base` for n=0; `` `${base}~${n}` `` for n≥1, monotonically increasing                                                                                           |
-| Roll trigger          | Client receives `shard-overloaded` (or the open handshake fails on a pinned shard)                                                                               |
-| Roll stickiness       | Persist the current index in `sessionStorage` keyed by user, so reconnects/reloads land on the working shard, not back on `~0`                                   |
-| Shard mutability      | The `VibesDiyApi` instance rewrites its own `?shard=` and reconnects; the provider's URL-keyed instance cache key stays the **original** per-user URL            |
+| Decision              | Choice                                                                                                                                                                                                               |
+| --------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Website codegen shard | Deterministic per-user: `userNotifyShardFor(userId)` (the existing `notify-user-<uid>` string), deferred until `clerk.loaded` (mirror `deferredSharedReadShard`)                                                     |
+| Anonymous users       | Keep `crypto.randomUUID()` (no stable identity to pin to)                                                                                                                                                            |
+| CLI                   | Unchanged — never passes `shardKey`, never rolls                                                                                                                                                                     |
+| Admission limit       | **3** concurrent **codegen streams** per DO instance; 4th admission attempt is rejected                                                                                                                              |
+| Overload signal       | Server **sends** a coded `ResError` `code: "shard-overloaded"` and stops dispatch (does NOT rely on catching a hard CF CPU/memory limit)                                                                             |
+| Counted unit          | In-flight codegen streams (`open-chat` / `prompt-chat-section` with a codegen mode), not open WebSocket connections                                                                                                  |
+| Next-shard function   | `base` for n=0; `` `${base}~${n}` `` for n≥1, monotonically increasing                                                                                                                                               |
+| Roll trigger          | Client receives `shard-overloaded` (or the open handshake fails on a pinned shard)                                                                                                                                   |
+| Roll stickiness       | Persist the current index in `sessionStorage` keyed by user, so reconnects/reloads land on the working shard, not back on `~0`                                                                                       |
+| Shard mutability      | The `VibesDiyApi` instance rewrites its own `?shard=` and reconnects; the provider's instance-cache key includes the **base (n=0) per-user shard**, and rolls advance an index inside the instance without re-keying |
+| Roll gating           | Explicit per-user-codegen metadata (`codegenUserId`) on the instance — **not** `shardKey !== undefined` (which also matches the per-vibe `owner--app` path)                                                          |
 
 ### Why 3, and why streams not connections
 
@@ -46,6 +47,7 @@ const shardKey = vibeMatch ? `${vibeMatch[1]}--${vibeMatch[2]}` : codegenShard; 
 - The `chatApi` is a lazy proxy (`makeLazyChatApi`), so deferring the shard decision until `clerk.loaded` costs no extra socket — same reasoning as `deferredSharedReadShard` (`pkg/app/shared-read-shard.ts:24`).
 - Base shard string is exactly `userNotifyShardFor(userId)`, so it **already satisfies** the per-user notify-registration guard (`session-callbacks.ts:88`) for `n=0`.
 - CLI path (`vibes-diy/cli/main.ts:67`) passes no `shardKey` → `crypto.randomUUID()` in `index.ts:294`. Untouched.
+- **The chatApi instance cache must be keyed by the codegen shard identity, not the bare `/api` URL.** Today the provider caches the lazy chat API under `vibesDiyApis.get(apiUrl).once()` with `apiUrl` = the base `/api` URL — identical for anon and signed-in. If any `chatApi` method is touched before Clerk loads (or after an account switch), that first instance (random-UUID or previous user) wins forever and later renders never move to `userNotifyShardFor(userId)`, silently defeating the per-user warm shard. Fix: include the resolved per-user codegen shard (n=0) / user id in the cache key — `vibesDiyApis.get(codegenCacheKey(apiUrl, codegenShard))` — so a shard/identity change yields a **new** instance, and close the superseded anon/previous-user instance on the transition (its socket must not linger). The cache key carries the **base** (n=0) shard only; rolls (§4) advance an index **inside** the instance and do **not** re-key the cache.
 
 ### 2. Admission control in the codegen DO
 
@@ -71,19 +73,19 @@ This is admission control, not crash-detection: the limit is enforced _before_ h
 
 ### 4. Rollable client connection
 
-The shard is baked into `cfg.apiUrl` at construction (`index.ts:290`), `cfg` is readonly, and the provider caches instances by URL (`vibesDiyApis.get(apiUrl).once()` in `vibes-diy-provider.tsx`). To roll without churning the cache key:
+The shard is baked into `cfg.apiUrl` at construction (`index.ts:290`) and `cfg` is readonly. The cache key now includes the base per-user shard (§1), so each per-user instance is distinct; rolls advance an index **inside** that instance without re-keying the cache:
 
-- Track a mutable `currentShardIndex` and a `baseApiUrl` (shard param stripped) inside the `VibesDiyApi` instance. `getReadyConnection()` (`index.ts:349`) builds the WS URL from `baseApiUrl` + `codegenShardForUser(userId, currentShardIndex)` instead of a frozen `cfg.apiUrl`.
+- Construct the per-user instance with explicit **rollable codegen metadata** — `{ codegenUserId, shardFamilyBase }` — set **only** on the website per-user-codegen path. Track a mutable `currentShardIndex` and a `baseApiUrl` (shard param stripped). `getReadyConnection()` (`index.ts:349`) builds the WS URL from `baseApiUrl` + `codegenShardForUser(codegenUserId, currentShardIndex)` instead of a frozen `cfg.apiUrl`.
 - On a received `shard-overloaded` `ResError` (or an open-handshake failure on a pinned shard): increment `currentShardIndex`, persist it to `sessionStorage` (key `vibes-codegen-shard-idx:<userId>`), drop `currentConnection`, and `getReadyConnection()` again. The pending request that triggered the roll is retried on the new shard.
 - On construction, seed `currentShardIndex` from `sessionStorage` so a reload returns to the last-working shard instead of cold-starting `~0` and immediately re-overflowing.
-- Roll is **only enabled when a deterministic `shardKey` was supplied** (website per-user path). Random-UUID shards (CLI, anon) get a fresh DO on every construction anyway, so rolling is meaningless there — guard the roll behind "started from a stable per-user shard."
+- **Roll only when the instance carries per-user-codegen metadata — not merely `shardKey !== undefined`.** This is the subtle gate: the `/vibe/...` viewer path **also** passes a deterministic `shardKey` (`owner--app`), but it is **not** a per-user family. Gating on "a shardKey was supplied" would let an overloaded viewer connection roll `owner--app` → `owner--app~1`, which has no `userId` for the `sessionStorage` key / `shardBelongsToUser` guard and destroys the intended per-vibe pinning. So rolling is keyed off the explicit `codegenUserId` flag, which only the per-user path sets. Random-UUID (CLI, anon) and per-vibe (`owner--app`) instances never roll — the former gets a fresh DO per construction anyway, the latter must stay pinned to its vibe.
 - Bound the roll (e.g. max index 8) to avoid an unbounded climb if the whole codegen plane is saturated; past the bound, surface the error to the user instead of looping.
 
 ## Edge cases
 
 - **Reconnect stability.** Reconnect (`index.ts:387` `onClose` → `getReadyConnection`) must reuse `currentShardIndex`, not reset it — otherwise a mid-turn disconnect would drop back to `~0` and lose continuity. Index lives on the instance + `sessionStorage`, not in the URL key.
 - **Multiple tabs / devices.** Each client rolls independently when _it_ hits overload; `sessionStorage` is per-tab, so convergence is soft, not guaranteed. That's acceptable — the admission limit is what enforces isolation; the roll just finds headroom.
-- **Anonymous → signed-in transition.** Anon uses random UUID; once Clerk loads with a user, the lazy `chatApi` rebuilds on the per-user shard (the provider already reacts to `clerk.loaded`). No special-casing beyond the existing deferral.
+- **Anonymous → signed-in transition (and account switch).** Anon uses random UUID; once Clerk loads with a user, the lazy `chatApi` must rebuild on the per-user shard. This works **only** because the instance cache is keyed by codegen shard identity (§1) — a URL-only key would reuse the anon instance forever. On the transition the superseded anon/previous-user instance is closed so its socket doesn't linger. Same applies to switching accounts (userId changes → new cache key → new instance, old one closed).
 - **DO eviction resets the counter.** Correct: a cold DO has zero active streams. No persistence of `activeStreams` needed.
 - **Decrement on abnormal close.** The `finally`/decrement must fire on WS close mid-stream, not just clean completion, or the counter leaks and the DO wedges at "full." Tie the decrement to stream teardown, and as a backstop derive the count from live stream state rather than a free-running integer if teardown paths are hard to make exhaustive.
 
