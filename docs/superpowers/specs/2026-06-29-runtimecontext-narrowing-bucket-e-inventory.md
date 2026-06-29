@@ -82,18 +82,27 @@ gate that work will carry — see the preservation principle in
 
 ## Phasing
 
-- **Phase 1 (this PR):** establish the inventory + contracts; migrate the two
+- **Phase 1 — DONE (#2826):** establish the inventory + contracts; migrate the two
   source sites that only need `nextId` to the narrow `ensureRuntimeContext()` seam.
-- **Phase 2 (later, with the `SuperThis` decision):** narrow the downstream
-  signatures (`createDeviceIdGetToken`, `QueueCtx`, `sts.*`, the api impl) so the
-  remaining "keep" sites can accept `RuntimeContext`, then drop the broad recovery
-  and ultimately `@fireproof/core-runtime`. Two things this phase must explicitly
-  cover, or the `core-runtime` dep can't actually leave its packages:
-  - **Widen `RuntimeContext` to carry `logger`** (the `cf-serve.ts` case seeds one),
-    or thread the logger separately, so the logger-needing sites can narrow too.
-  - **Route the ~80 test-harness imports through the `@vibes.diy/identity` seam.**
-    They currently import `ensureSuperThis` from `@fireproof/core-runtime` _directly_
-    (cosmetic for narrowing, but load-bearing for dep removal): even after every
-    source site narrows, `@fireproof/core-runtime` cannot be dropped from those test
-    packages until the imports go through the seam. So this is a prerequisite of the
-    "drop `core-runtime`" finish line, not an optional cleanup.
+- **Phase 2 — DONE (#2833):** route the 74 test-harness `ensureSuperThis` imports
+  from `@fireproof/core-runtime` through the `@vibes.diy/identity` seam (behavior-identical
+  re-export). This was the load-bearing prerequisite: even after every source site
+  narrows, the dep can't leave a package while its tests import core-runtime directly.
+- **Phase 3 — DONE (this PR):** with no file outside `vibes.diy/identity` importing
+  `@fireproof/core-runtime` anymore (verified by grep — no source/test imports, no
+  build-config or `exports`-map references), remove the now-unused dependency
+  declaration from all 18 non-identity packages. `@fireproof/core-runtime` now lives
+  only in `vibes.diy/identity`, the seam. Split into two commits (internal/test, then
+  published/browser) so the publish-risky half is independently revertible.
+- **Phase 4 — remaining, to reach zero `@fireproof/core-runtime`:**
+  - **Replace the identity package's own `core-runtime` use with in-repo impls.** The
+    seam still imports `sts`, `ensureSuperThis`, `deepFreeze`, `hashObjectAsync`,
+    `hashStringAsync`/`hashStringSync` from `core-runtime` (device-id crypto, keybag,
+    CA, clerk-token). Lifting these is the crypto-adjacent finish line (gated by the
+    wire-compat harness).
+  - **Optional type-tightening (not dep-blocking):** widen `RuntimeContext` to carry
+    `logger` (the `cf-serve.ts` case) and narrow the downstream signatures
+    (`createDeviceIdGetToken`, `QueueCtx`, `sts.*`, the api impl) so the "keep" sites
+    can accept `RuntimeContext` instead of full `SuperThis`. Pure type hygiene now —
+    no longer a dep-removal blocker, since all non-identity packages already route
+    through the seam.
