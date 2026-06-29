@@ -46,6 +46,8 @@ view-switcher — `ViewType` = `preview` | `code` | `data` | `chat` | `settings`
   the unified card's Share view (`SharePanelView`, #2680) covers the sharing half.
   Phase 1 must fold the rest of `AppSettingsPanel` into the `/vibe` layer (or map it
   onto the card's settings) and handle `?view=settings` deep-links on the 301.
+  **Full control-by-control audit + reachability (Title / Theme / Icon / model
+  settings / env vars / sharing, and what stays on `/vibes/mine`): #2850.**
 
 So "absorb the editor surface" = surface **Code**, **Data**, **full chat history**,
 and **Settings** (reusing `/vibe`'s existing Share affordance where it overlaps) as
