@@ -163,9 +163,15 @@ All in `vibes.diy/vibe/runtime/` unless noted:
   from day one so any "split the DO" decision is data-driven.
 - **The isolate** runs the actual `backend.js` via a `buildBackendWorkerCode` that dispatches to
   the requested export (`fetch`/`scheduled`/`onChange`) — the backend analog of
-  `buildVibeWorkerCode`. `ctx` is supplied through `WorkerCode.env` + RPC bindings (db reader/writer
-  proxy, resolved secrets, identity), **not** baked into the hashed source (SSR's "keep per-request
-  data out of the hashed module source" carry-forward — else the `sha` cache key forks per request).
+  `buildVibeWorkerCode`. Per-trigger context is split by where it can safely live (per @CharlieHelps,
+  who verified our `loader.get(id, …)` keys `id` on `compatibilityDate + mainModule + modules`):
+  - **Stable for the isolate identity** — hashed `modules` bytes, compat date/flags, **and**
+    `WorkerCode.env`, which carries **only** stable **service/transport bindings** (the db-RPC
+    transport, the egress-proxy binding). No per-trigger identity or secrets here.
+  - **Per-invocation, never in `env` or the hashed source** — `userHandle`, source-tag, depth,
+    dedupe-key, the request/event — passed via the **request payload/headers or RPC method args** on
+    each call. This is what keeps "stable hashed code, variable context" true: identical `backend.js`
+    ⇒ one isolate id across all triggers/identities, with no cross-invocation identity bleed.
 - **`ctx.db` proxies back through the production `putDoc` path** (`invokeAccessFn`/QuickJS, with the
   `AccessFnOutputs` sidecar + fail-closed behavior) as the trigger identity — the **same gate
   frontend writes use**, _not_ the `access-runner` runtime mirror (which uses `new Function`). No new
@@ -181,15 +187,18 @@ Each slice is independently landable, defaults dormant, and is unit-tested again
 Generalize the executor to **invoke a named handler**, not just render.
 
 - `transformBackendSource(src)` — reuse `transformVibeSource` (no JSX needed but harmless; strips TS).
-- `buildBackendWorkerCode({ module, handler, ctxWiring })` — sibling to `buildVibeWorkerCode`; the
-  `main` module imports the compiled `backend.js`, reads `handler` + the request/event from
-  `WorkerCode.env`/the request, dispatches to the matching export, and returns its result. `config`
-  is read at push time, not here.
+- `buildBackendWorkerCode({ module, handler })` — sibling to `buildVibeWorkerCode`; the `main` module
+  imports the compiled `backend.js` and dispatches to `handler`, reading the request/event **and the
+  per-trigger context (identity, source-tag, depth, dedupe-key) from the incoming request/RPC args** —
+  **never** from the hashed source or `env`. `WorkerCode.env` is reserved for **stable
+  service/transport bindings** only. `config` is read at push time, not here.
 - `BackendExecutor` (loader-backed) + `selectBackendExecutor(mode, { loader })` with a
   `BACKEND_JS=off|loader` flag (no `node` live path — CI-only, like SSR).
 - **Out of scope:** real `env.LOADER` load, dep bundling, the DO, routing, ctx wiring to real db.
 - **Tests:** `buildBackendWorkerCode` shaping per handler; `BackendExecutor` orchestration
-  (`get → getEntrypoint → fetch`) against a fake binding; flag parsing.
+  (`get → getEntrypoint → fetch`) against a fake binding; flag parsing; **cache-key isolation
+  (@CharlieHelps's matrix): same code + different trigger identities ⇒ same loader id; no
+  cross-invocation identity bleed; egress-policy / binding-schema bump ⇒ new id.**
 
 ### Slice B2 — Push-time discovery + config validation (`processBackendBindings`)
 
@@ -322,11 +331,13 @@ testable.
 1. **Stored `backend.js` vs precompiled artifact** → **stored-source + transform-at-load** (reuse
    `transformVibeSource`), mirroring how SSR/`render-vibe` handles `App.jsx`. No publish-time compiled
    artifact.
-2. **`ctx` through the isolate** → keep `ctx` **entirely out of the hashed module source**; carry
-   per-trigger identity/secrets via `WorkerCode.env`/RPC only. `ctx.db` is a **narrow RPC surface**
+2. **`ctx` through the isolate** → keep `ctx` **out of both the hashed module source _and_
+   `WorkerCode.env`** (env is part of the isolate identity, so it holds only stable service/transport
+   bindings). Carry per-trigger identity/secrets/source-tag/depth/dedupe-key via the **request payload
+   / RPC method args** on each invocation. `ctx.db` is a **narrow RPC surface**
    (`get`/`query`/`put`/`del`); **writes re-enter the access-enforced `putDoc` path** as the trigger's
-   active `userHandle`. Avoid a separate privileged reader/writer binding **unless it is purely
-   transport and still re-enters the same access policy path**.
+   active `userHandle`, never a privileged bypass. Avoid a separate reader/writer binding **unless it
+   is purely transport and still re-enters the same access policy path**.
 3. **`onChange` delivery** → **new dedicated post-commit message on `VIBES_SERVICE`** (not
    `evt-doc-changed`); **at-least-once, no strict ordering** at launch; loop-breaking via
    **source-tag + depth-cap together**, in B5; document idempotency + optional dedupe-key.
@@ -347,10 +358,13 @@ testable.
 Modeled on the SSR design's Phase A acceptance criteria; these gate the live cut and turn the
 defaults above into testable guarantees (the follow-up pass @CharlieHelps offered, folded in here).
 
-- [ ] **Cache-key isolation.** No per-trigger `ctx` (identity, secrets, request/event payload) ever
-      enters the hashed `WorkerCode` source. Same `backend.js` ⇒ same `sha` across triggers/requests;
-      different identities reuse one isolate without cross-contamination. _Tests: hash stability across
-      identities; identity never present in `modules`._
+- [ ] **Cache-key isolation.** Isolate identity is derived from **stable code + stable policy surface
+      only** — module bytes, compat date/flags, egress-policy version, binding-schema version
+      (optionally app scope) — and **`WorkerCode.env` is stable for that identity** (service/transport
+      bindings only). No per-trigger `ctx` (identity, secrets, request/event) enters the hashed source
+      _or_ `env`; it travels by request/RPC args. _Tests (B1/B5, per @CharlieHelps's matrix): (a) same
+      code + different trigger identities ⇒ **same loader id**; (b) **no cross-invocation identity
+      bleed**; (c) an egress-policy or binding-schema bump **forces a new id**._
 - [ ] **Write-path parity.** Every `ctx.db.put` goes through the production `putDoc`/`invokeAccessFn`
       (QuickJS) gate with the `AccessFnOutputs` sidecar — never the `access-runner` mirror. A backend
       write and an identical frontend write produce the same allow/deny + sidecar outcome. _Tests:
@@ -379,9 +393,11 @@ defaults above into testable guarantees (the follow-up pass @CharlieHelps offere
   watch fleet load when many vibes schedule at once.
 - **`onChange` amplification** — a backend `ctx.db.put` can itself trigger `onChange`; define
   loop-breaking (depth cap / source tagging) before B5 ships.
-- **Cache-key correctness** — per-trigger `ctx` must stay out of the hashed `WorkerCode` or the isolate
-  cache forks per request (and worse, could leak one trigger's identity into another's isolate). This
-  is the single most important invariant carried from SSR.
+- **Cache-key correctness** — per-trigger `ctx` must stay out of **both** the hashed `WorkerCode`
+  source **and** `WorkerCode.env` (which is part of the loader `id`'s identity surface), travelling by
+  request/RPC args instead; otherwise the isolate cache forks per request (and worse, a trigger's
+  identity could leak into another's isolate). This is the single most important invariant carried
+  from SSR — see invariant #1.
 - **Access parity drift** — backend writes must go through the **same production `putDoc`/
   `invokeAccessFn` (QuickJS) gate** as app writes, including the `AccessFnOutputs` sidecar; the
   `access-runner` `new Function` mirror is a forked path and the failure mode (Codex P1). Cover
