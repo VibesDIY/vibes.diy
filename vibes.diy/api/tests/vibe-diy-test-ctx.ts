@@ -10,6 +10,7 @@ import {
   type Model,
   MsgBase,
   S3Api,
+  type WorkerLoaderBinding,
 } from "@vibes.diy/api-types";
 import { StubS3Api } from "./stub-s3-api.js";
 import { createVibesApiTables, toDBFlavour, VibesSqlite } from "@vibes.diy/api-sql";
@@ -181,6 +182,18 @@ export interface CreateVibeDiyTestCtxOpts {
     };
     adminMode?: boolean;
   }): Promise<AccessDescriptor | { forbidden: string }>;
+  /**
+   * Opt-in vibe SSR for e2e tests (#2802 slice 4). When supplied, the env map
+   * gets `VIBES_SSR=loader` and `params.vibes.loader` is populated with this
+   * fake Worker Loader binding — so the live `render-vibe.ts` route drives the
+   * isolate-backed `loader` executor end-to-end without the beta `env.LOADER`
+   * binding (which is absent from CI). Default-off: omit it and existing tests
+   * are unaffected (no `VIBES_SSR`, `loader` stays `undefined`). The live route
+   * deliberately bars `node` for security (in-process Node privileges), so a
+   * fake `loader` binding is the only way to exercise SSR injection through the
+   * real handler.
+   */
+  ssrLoader?: WorkerLoaderBinding;
 }
 
 export async function createVibeDiyTestCtx(
@@ -230,6 +243,11 @@ export async function createVibeDiyTestCtx(
     MAX_APPS_PER_USER_ID: "50000",
 
     DB_FLAVOUR: flavour,
+
+    // #2802 slice 4: opt-in SSR. render-vibe.ts only honors `loader` on the live
+    // route (it maps any non-`loader` mode to off for security), so the e2e SSR
+    // harness drives the loader executor via the injected fake binding below.
+    ...(opts.ssrLoader !== undefined ? { VIBES_SSR: "loader" } : {}),
   };
 
   const defaultModels: Model[] = [
@@ -267,7 +285,7 @@ export async function createVibeDiyTestCtx(
     },
   ];
 
-  return createAppContext({
+  const created = await createAppContext({
     sthis,
 
     storageSystems: {
@@ -310,4 +328,14 @@ export async function createVibeDiyTestCtx(
     notifyDocChanged: opts.notifyDocChanged,
     ...(opts?.invokeAccessFn ? { invokeAccessFn: opts.invokeAccessFn } : {}),
   });
+
+  // #2802 slice 4: thread the injected fake Worker Loader binding into the same
+  // `params.vibes.loader` slot the real worker bootstrap populates (left
+  // `undefined` in create-handler.ts until the beta binding is plumbed, #2845),
+  // so `render-vibe.ts` reaches it through `vctx.params.vibes.loader`.
+  if (opts.ssrLoader !== undefined) {
+    created.vibesCtx.params.vibes.loader = opts.ssrLoader;
+  }
+
+  return created;
 }
