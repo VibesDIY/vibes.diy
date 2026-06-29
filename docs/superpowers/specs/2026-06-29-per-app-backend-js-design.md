@@ -220,10 +220,14 @@ the parser (sharp, lower-risk).
 exports exist (`fetch`/`scheduled`/`onChange`, plus whether a `config` export is present) and validate
 the schedule.
 
-- Parses `config.scheduled.interval` (scoped to the `scheduled:` block so a stray `interval:` is
-  ignored) and **rejects sub-5s, over-1h, and malformed intervals at push time with a clear error** —
-  never silently clamped. A `scheduled` handler with no interval is an error; an interval with no
-  `scheduled` handler is ignored.
+- Parses `config.scheduled.interval` (anchored to the exported `config` object so a stray `interval:`
+  in a helper/defaults object can't hijack or fabricate a schedule) and **rejects sub-5s, over-1h, and
+  malformed intervals at push time with a clear error** — never silently clamped. A `scheduled` handler
+  with no interval is an error; an interval with no `scheduled` handler is ignored.
+- **Contract (per @CharlieHelps):** `config.scheduled.interval` must be a **static string-literal**
+  duration (`"<n><s|m|h>"`) in `[5s, 1h]`. Push-time discovery never evaluates untrusted `config`, so a
+  computed/indirect value (`interval: SOME_CONST`) is unsupported and fails at push rather than being
+  deferred to first-alarm resolution.
 - Detects exports across `function` / `const`-arrow / `export { x as fetch }` forms; word-boundaried so
   `prefetch` ≠ `fetch`.
 - Pure, Workers-safe, zero I/O — the push path (B2b) consumes the result.
