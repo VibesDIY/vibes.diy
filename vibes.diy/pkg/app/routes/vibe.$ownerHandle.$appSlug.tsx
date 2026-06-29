@@ -955,14 +955,17 @@ export default function VibeIframeWrapper() {
   // (vibe-tour-chips-edit; supersedes the §1b phase gate.)
   const showGenStream = generation.isGenerating;
 
-  // An owner landing on their just-created vibe resolves not-found (no `apps` row
-  // until the first build persists). That isn't "App not available" — it's a
-  // first-build construction state: the generation (enabled via isOwner) is already
-  // firing from the carried ?prompt64. Render the stream here instead of the
-  // not-available text; the refetch effect above flips us to the granted/live view
-  // once the build persists. `prompt64` covers the window before the auto-fire
-  // scrubs it; `isGenerating` covers the rest — no flicker between the two.
-  const pendingFirstBuild = notFound && isOwner && (searchParam.get("prompt64") !== null || generation.isGenerating);
+  // A just-created vibe resolves not-found (no `apps` row until the first build
+  // persists). That isn't "App not available" — it's a first-build construction
+  // state. Detect it from the build INTENT (carried ?prompt64) or an in-flight
+  // generation, NOT from isOwner: isOwner resolves a beat after not-found latches
+  // (handle bindings round-trip), and gating on it flashed "App not available"
+  // during that window. Owner-gating still lives where it matters — the generation
+  // hook (enabled: isOwner) and the refetch effect — so a true non-owner never
+  // generates; they just see "Preparing…" instead of the not-available text in the
+  // (contrived) stray-?prompt64 case. `prompt64` covers the pre-auto-fire window;
+  // `isGenerating` covers the rest — no flicker between the two.
+  const pendingFirstBuild = notFound && (searchParam.get("prompt64") !== null || generation.isGenerating);
 
   return (
     <>
@@ -1106,13 +1109,17 @@ export default function VibeIframeWrapper() {
               </div>
             </div>
           ) : pendingFirstBuild ? (
-            <div style={{ maxWidth: 500, width: "100%", margin: "0 16px" }}>
-              <GenerationStreamView
-                blocks={generation.blocks}
-                messages={generation.counts.messages}
-                lines={generation.counts.lines}
-              />
-            </div>
+            generation.isGenerating || generation.blocks.length > 0 ? (
+              <div style={{ maxWidth: 500, width: "100%", margin: "0 16px" }}>
+                <GenerationStreamView
+                  blocks={generation.blocks}
+                  messages={generation.counts.messages}
+                  lines={generation.counts.lines}
+                />
+              </div>
+            ) : (
+              <div style={{ color: "var(--vibes-text-primary)" }}>Preparing…</div>
+            )
           ) : notFound ? (
             <div className="text-center text-lg font-semibold" style={{ color: "var(--vibes-text-primary)" }}>
               App not available
