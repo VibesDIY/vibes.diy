@@ -105,6 +105,8 @@ The shard is baked into `cfg.apiUrl` at construction (`index.ts:290`) and `cfg` 
 
 ## Testing
 
+> **This is the test plan to land _with the implementation_, not tests that exist yet — this PR is design-only (no code).** Each bullet becomes a test case when the corresponding piece is built (per the Rollout order).
+
 - **Unit (api-types):** `codegenShardForUser` / `shardBelongsToUser` family + suffix parsing; `MAX_CONCURRENT_CODEGEN_STREAMS` wired to the gate.
 - **Admission gate:** 3 concurrent codegen streams admitted; 4th gets `shard-overloaded` and starts no generation; decrement frees a slot (4th succeeds after one completes); decrement fires on mid-stream close.
 - **Guard split (security invariants):** `shardBelongsToUser` accepts `base` and `base~3`, rejects another user's base, forged/non-numeric suffixes, leading zeros, and `n > MAX_ROLL_INDEX`. **Shared-plane registration stays strict** — assert `userNotifyCallbacksForSharedSessions` still rejects `base~1` (only the codegen plane admits the family), so the shared subscriber set stays exactly one per user.
