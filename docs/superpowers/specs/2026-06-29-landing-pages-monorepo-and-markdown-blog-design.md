@@ -71,15 +71,33 @@ is deleted from the private repo so there is exactly **one copy** of each thing.
 
 ### Stays in private `landing-pages` (ad-posting/management gear)
 
-- `agents/meta-ads-setup.md`, `agents/handoff-meta-ads-access.md`,
-  `agents/task-business-ad-account-setup.md`, `agents/handoff-{chess,zine,free-library}-ads.md`,
-  and the ads playbooks (`agents/full-audience-playbook.md`,
-  `agents/lessons-from-good-ads*.md`, `agents/content-map-ads-vs-creator.md`).
-- `scripts/campaigns/`, `scripts/photo-ab-work.json`.
+> **Note:** the initial privacy audit undercounted this set. A precise scan during the staging
+> copy (commit `5ad9b84c6` on this branch is the **authoritative moved/public set**; the
+> private set is its complement) found substantially more ad tooling. The real exclusion set:
+
+- **Ad/marketing agents (24):** `agents/{ad-copy-rules,ad-preview-server,campaign-health-check,
+content-map-ads-vs-creator,fb-ads-campaign,fb-ads-zine,full-audience-playbook,geofence-campaigns,
+meta-ads-setup,new-audience-page,task-business-ad-account-setup,task-create-test-ad,
+lessons-from-good-ads,lessons-from-good-ads-bad-pages}.md` and every
+  `agents/handoff-*-ads.md` (camping, chess, free-library, group-chat, group-ranker,
+  growth-writers, meta-ads-access, stanford, tailgate, zine).
+- **Ad/marketing scripts (~18):** `scripts/campaigns/` and `scripts/{ab-report,ad-preview-server,
+backfill-utm-campaign,campaign-health,create-camping-ads,create-campus-ads,create-direct-ads,
+create-direct-ads-remix,create-garage-sale-ads,create-meta-ad,create-photo-ads-batch,
+fetch-adset-ids,fix-cta,fix-stanford-creatives,gen-photo-creatives,upload-photo-batch}.js`,
+  `scripts/photo-ab-work.json`.
+- **Ad-posting plan/spec docs:** `docs/superpowers/plans/2026-05-25-ut-austin-campus-ads.md`,
+  `docs/superpowers/plans/2026-05-27-road-trip-page.md` (both embed Meta Graph API ad-creation
+  code), and `docs/superpowers/specs/2026-05-25-ut-austin-campus-ads-design.md`.
 - `notes/web-advertising-strategy.md`.
+- **Not carried into the monorepo subdir** (repo-config / private-repo artifacts): the private
+  repo's `CLAUDE.md`, `.github/`, `.vscode/`, `.prettierignore`, `MIGRATION.md` — the subdir
+  gets its own scoped agents pointer instead.
 - Rationale: these contain real Meta business/app/page/account IDs, a personal FB ad account
   tied to a real name, internal budgets, geofence coordinates, and A/B ad copy — written for
-  the team, not the public.
+  the team, not the public. (No live secrets — only env-var names — but PII + ad strategy.)
+- **`vibes/og/**/\*.log`** run logs were left behind as cruft (the source `.gitignore` already
+  ignores them); not real content.
 
 ### Cross-repo bookkeeping
 
