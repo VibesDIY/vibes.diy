@@ -7,14 +7,31 @@ import { type Executor, type VibeExecuteInput, type VibeExecuteResult } from "./
 // a scheme (`http:`, `file:`, `node:`, `data:`). Only bare names need resolving.
 const ALREADY_RESOLVED = /^(?:\.\.?\/|\/|[a-z][a-z0-9+.-]*:)/i;
 
-// `import … from "x"` / `export … from "x"` specifiers. The `[^"';]*?` between
-// the keyword and `from` keeps the match inside one import/export statement, so
-// it can't wander into the module body. Sucrase emits double quotes, but we
-// accept single too for safety.
-const FROM_SPECIFIER = /\b(?:import|export)\b[^"';]*?\bfrom\s*(["'])([^"']+)\1/g;
-// Side-effect `import "x"`. The space-or-nothing before the quote excludes
-// dynamic `import("x")` (next char is `(`, not a quote).
-const SIDE_EFFECT_IMPORT = /\bimport\s*(["'])([^"']+)\1/g;
+// `import` begins a declaration (not a dynamic `import(...)` call) when the next
+// char is whitespace or one of the import-clause openers `{ " ' *`.
+const IMPORT_DECL_HEAD = /^import(?=[\s{"'*])/;
+
+// Advance past whitespace, line/block comments, and `;` statement separators
+// between top-level statements. Used only between import declarations, never
+// inside one — so it can't skip over module-body content.
+function skipSeparators(code: string, i: number): number {
+  const n = code.length;
+  while (i < n) {
+    const c = code[i];
+    if (c === " " || c === "\t" || c === "\n" || c === "\r" || c === ";") {
+      i++;
+    } else if (code.startsWith("//", i)) {
+      const nl = code.indexOf("\n", i);
+      i = nl === -1 ? n : nl + 1;
+    } else if (code.startsWith("/*", i)) {
+      const end = code.indexOf("*/", i);
+      i = end === -1 ? n : end + 2;
+    } else {
+      break;
+    }
+  }
+  return i;
+}
 
 /**
  * Rewrite the compiled module's bare specifiers (`react`, `react/jsx-runtime`,
@@ -24,23 +41,60 @@ const SIDE_EFFECT_IMPORT = /\bimport\s*(["'])([^"']+)\1/g;
  * shared with `react-dom/server`, which is what makes the SSR markup match what
  * the client hydrates.
  *
+ * Only the leading run of `import` declarations is rewritten — a small scanner
+ * walks them and rewrites each statement's module specifier in place, stopping
+ * at the first non-import statement. This deliberately never touches the module
+ * body, so import-looking text inside a string/template a vibe renders (e.g.
+ * `'import x from "react"'`) is left verbatim rather than corrupted.
+ *
  * Slice 2 resolves what `import.meta.resolve` can reach (React + anything in the
  * package's dependency tree). Full vibe dependency-graph / import-map resolution
  * is a later slice; an unresolvable bare specifier is left untouched, so it
  * throws at import time with a clear message rather than silently mis-resolving.
  */
 function resolveBareSpecifiers(code: string, resolve: (spec: string) => string): string {
-  const rewriteSpec = (match: string, quote: string, spec: string): string => {
-    if (ALREADY_RESOLVED.test(spec)) return match;
+  const rewriteSpec = (spec: string): string => {
+    if (ALREADY_RESOLVED.test(spec)) return spec;
     try {
-      return match.replace(`${quote}${spec}${quote}`, `${quote}${resolve(spec)}${quote}`);
+      return resolve(spec);
     } catch {
-      return match; // leave it — surfaces as a clear resolution error at import time
+      return spec; // leave it — surfaces as a clear resolution error at import time
     }
   };
-  return code
-    .replace(FROM_SPECIFIER, (m, q, spec) => rewriteSpec(m, q, spec))
-    .replace(SIDE_EFFECT_IMPORT, (m, q, spec) => rewriteSpec(m, q, spec));
+
+  const n = code.length;
+  let i = 0;
+  let out = "";
+  for (;;) {
+    const sepStart = i;
+    i = skipSeparators(code, i);
+    out += code.slice(sepStart, i); // copy whitespace/comments/`;` verbatim
+    if (i >= n || !IMPORT_DECL_HEAD.test(code.slice(i, i + 7))) {
+      out += code.slice(i); // module body — never rewritten
+      break;
+    }
+    // The only string literal in an import declaration is its module specifier,
+    // so the first quote after the keyword opens it and the declaration ends at
+    // its closing quote.
+    const dq = code.indexOf('"', i);
+    const sq = code.indexOf("'", i);
+    const q = dq === -1 ? sq : sq === -1 ? dq : Math.min(dq, sq);
+    if (q === -1) {
+      out += code.slice(i);
+      break;
+    }
+    const quote = code[q];
+    const qe = code.indexOf(quote, q + 1);
+    if (qe === -1) {
+      out += code.slice(i);
+      break;
+    }
+    out += code.slice(i, q + 1); // import head + opening quote
+    out += rewriteSpec(code.slice(q + 1, qe)); // resolved (or untouched) specifier
+    out += quote; // closing quote
+    i = qe + 1;
+  }
+  return out;
 }
 
 /**

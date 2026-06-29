@@ -10,6 +10,15 @@ export interface WorkerCode {
   readonly compatibilityDate: string;
   readonly mainModule: string;
   readonly modules: Record<string, string>;
+  /**
+   * Outbound-network policy for the loaded isolate. The Worker Loader API
+   * defaults a missing `globalOutbound` to INHERITING the parent worker's
+   * network access, so untrusted vibe code could `fetch()`/`connect()` the
+   * public Internet from the edge. We pin it to `null` (no outbound) as the
+   * secure default. Slice 3 will replace this with an explicit restricted
+   * binding (a Fireproof reader) when the data path needs proxied access.
+   */
+  readonly globalOutbound: null;
 }
 
 /** The entrypoint a loaded isolate exposes — a standard fetch handler. */
@@ -48,6 +57,15 @@ const SSR_REQUEST_URL = "https://vibe-ssr.internal/";
  *
  * Pure string-shaping — this is the part of the Worker Loader path that is
  * unit-testable without a live `env.LOADER` binding.
+ *
+ * KNOWN GAP for the live path (slice 3/4): the `modules` map carries only these
+ * two strings, but `main.js` imports `@vibes.diy/vibe-runtime/render-vibes.js`
+ * and the vibe module imports `react/jsx-runtime`. Cloudflare's Worker Loader
+ * does not resolve npm specifiers — dependencies must be BUNDLED into the
+ * `modules` map (or supplied as additional module entries) before a real isolate
+ * can load. That bundling step lands with the edge wiring + data path; slice 2
+ * only shapes and orchestrates against a fake binding, so the unresolved imports
+ * are intentional here and never hit a live `load()`.
  */
 export function buildVibeWorkerCode(input: { module: string; mountParams: unknown }): WorkerCode {
   const mountParamsJson = JSON.stringify(input.mountParams ?? null);
@@ -70,6 +88,7 @@ export function buildVibeWorkerCode(input: { module: string; mountParams: unknow
       [MAIN_MODULE]: main,
       [VIBE_MODULE]: input.module,
     },
+    globalOutbound: null,
   };
 }
 
