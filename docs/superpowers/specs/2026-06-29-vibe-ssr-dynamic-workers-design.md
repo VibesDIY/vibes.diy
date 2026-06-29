@@ -92,15 +92,94 @@ Package: `@vibes.diy/vibe-runtime` (`vibes.diy/vibe/runtime`), which already dep
    fallback) and `WorkerLoaderExecutor` (`env.LOADER.get(sha, () => WorkerCode)` →
    `getEntrypoint().fetch()`), selected by a `VIBES_SSR=off|node|loader` flag. Executors
    supply compiled comps + ctx and call `renderVibeToString` from slice 1.
-3. **Live-query / quiesce data path.** Pass the isolate a Fireproof reader binding/RPC via
-   `WorkerCode.env` (or proxy sync via `globalOutbound`); run the vibe's live queries to
-   quiescence behind a hard server-side deadline, then render. Cache key becomes
-   data-versioned `(appSlug, groupId, dataVersion)` — this is why publish-time pre-render
-   (the old "option 2") cannot stand alone.
+3. **Live-query / quiesce data path (view-time, public vibes first).** Pass the isolate a
+   Fireproof reader binding/RPC via `WorkerCode.env` (or proxy sync via `globalOutbound`); run
+   the vibe's live queries to quiescence behind a hard server-side deadline, then render. This
+   is **per request at view time**, not publish — the content is DB-hydrated and mutable, so a
+   publish-time snapshot is wrong by construction (this is why the old "option 2" cannot stand
+   alone). **Scope decided: render data content only for public vibes (`isWorldReadable`)
+   first** — one shared view per `(appSlug, dataVersion, urlState)`, no per-viewer dimension,
+   no access-evaluation in the isolate. See [SEO model](#seo--the-iframe-boundary) for why
+   public-first is the right de-risk.
 4. **Route wiring + caching + OG/meta + no-JS fallback.** Inject SSR HTML into the
    `vibe-app-container` (with a `data-vibe-ssr` marker so `mountVibe` hydrates only a real SSR
    payload, not incidental child nodes — replaces the slice-1 `hasChildNodes()` heuristic),
    emit per-vibe meta/OG tags, hydrate on the client, LRU/Cache-API the rendered HTML.
+5. **Markdown SEO / no-JS layer (public vibes).** On the view-time render path, derive
+   Markdown from the SSR HTML and embed it in the **parent** document under the canonical vibe
+   URL, as the genuine no-JS / crawler view (humans with JS still get the live iframe). Solves
+   the cross-origin-iframe SEO gap; see [SEO model](#seo--the-iframe-boundary). Gated on
+   `isWorldReadable` (Phase A).
+6. **Access-consistent per-viewer SSR (do-later).** Carry viewer identity + grants through the
+   view-time quiesce render so the no-JS view is correct per viewer — authorized → granted
+   content, unauthorized → the existing no-grant result — with **no fork of the access path**
+   (reuse `access-runner` / grants / `canSeeDoc`, not a parallel impl). Acceptance: authorized
+   vs unauthorized viewers get different, correct no-JS output for the same gated vibe.
+
+## SEO & the iframe boundary
+
+The vibe must run in a cross-origin **sandboxed iframe** for safety (untrusted code execution).
+That has a direct SEO consequence: an iframe's content is indexed as **its own document**
+(attributed to the sandbox subdomain `myapp--alice.vibesdiy.app`), not folded into the
+canonical vibe page (`vibes.diy/vibe/alice/myapp`). Cross-origin + `sandbox` push crawlers
+further toward "separate, untrusted resource." So **SSR-into-the-iframe buys first paint, not
+SEO** for the URL we care about.
+
+What the iframe boundary does **not** hurt: `<title>` / meta / OG / Twitter tags already live
+on the **parent** route (`vibe.$ownerHandle.$appSlug.tsx` `meta()`), which is trusted and
+SSR'd today. Social unfurls and the search snippet read the parent `<head>`. The part the
+iframe hurts is **crawlable body text attributed to the canonical URL**.
+
+**Key reframing: rendering ≠ executing.** The iframe exists to _execute_ untrusted code
+safely. SEO needs _rendered output_ in the parent, not execution. Emitting untrusted output as
+**Markdown** (not raw HTML) shrinks the trust boundary: HTML→Markdown is a lossy projection
+that drops `<script>`, event handlers, `<style>`, arbitrary attributes as a side effect of the
+format — turning "sanitize arbitrary HTML" into "render a Markdown string." Residual edges:
+render Markdown with **raw-HTML disabled** (`html:false` / no `rehype-raw`) and **allowlist
+link/image URL schemes** (`javascript:`/`data:` survive Markdown). Clean Markdown is also
+higher signal-to-noise for crawlers than the app DOM, and doubles as an OG description source
+and an LLM/agent-readable artifact.
+
+**It must be view-time, not publish.** The content is hydrated from the DB and mutable, so the
+Markdown must reflect live state at request time, run **to quiescence** — it rides the slice-3
+per-request execution path. Markdown only buys _safe embedding_; it does nothing for the data
+problem, which still mandates view-time execution + a quiesce deadline.
+
+**Two timescales — the server owes only the first:**
+
+1. **View-time freshness** — content as of this request's DB state. Server-rendered (read →
+   quiesce → `renderToString` → Markdown). Crawlers, no-JS, first paint need this.
+2. **Post-load interaction** — clicks/filters/writes that mutate the view _after_ load. That is
+   the live iframe app updating client-side; a crawler never interacts. The server Markdown
+   must **not** chase these. So: no server re-derive per interaction.
+
+Shareable/crawlable _interacted_ states must be **URL-encoded** so the server reproduces them
+deterministically; ephemeral in-memory state that isn't in the URL is not shareable/crawlable
+by definition and stays client-only.
+
+**Access is the mechanism — don't fork it.** Because access gating is consistent client/server,
+running the SSR through the **same** access path yields a correct per-viewer no-JS view for
+free (authorized → granted content; unauthorized → the existing no-grant result). No
+special-casing. The only requirement is to reuse `access-runner` / grants / `canSeeDoc`, not a
+parallel implementation.
+
+**Phased scope (decided):**
+
+- **Phase A — public vibes only (`isWorldReadable`).** One shared view per
+  `(appSlug, dataVersion, urlState)`; no per-viewer dimension, no access-eval in the isolate.
+  This is the right de-risk: it removes both the per-viewer cache explosion and the
+  access-in-isolate complexity from the first cut, and public content is exactly what should be
+  indexed anyway. The gate is literally `isWorldReadable` — non-public vibes keep today's
+  client-only iframe behavior until Phase B.
+- **Phase B — access-consistent per-viewer SSR (slice 6, do-later).** Carry viewer identity +
+  grants through the quiesce render so authenticated viewers get a correct personalized no-JS
+  view via the shared access path.
+
+**The real cost to respect:** Phase A still puts full vibe execution + DB-quiesce on the hot
+path of every _uncached public view_, including every crawl. So the quiesce deadline, the
+public-render cache (key by `dataVersion` or a content hash of the view-time SSR HTML), and a
+timeout → "empty fallback, let the iframe fill it" path are load-bearing, not nice-to-haves —
+they're what stop a crawler from melting the render fleet.
 
 ## Risks / caveats
 
@@ -111,3 +190,8 @@ Package: `@vibes.diy/vibe-runtime` (`vibes.diy/vibe/runtime`), which already dep
 - Quiesce must have a hard server deadline, else a slow/looping vibe stalls first paint.
 - Executing untrusted vibe code server-side is a sandbox-escape surface — per-request isolate
   isolation (exactly what Dynamic Workers give) is mandatory; never a shared isolate.
+- Markdown SEO layer: the renderer must run with raw-HTML disabled and URL schemes allowlisted,
+  or the format's safety property is lost. The iframe app and the Markdown snapshot must derive
+  from the **same** view-time render pass, or they drift across data versions.
+- Crawler load: an uncached public view triggers a full execute + DB-quiesce render. Without
+  the public-render cache + quiesce deadline, crawl traffic can melt the render fleet.
