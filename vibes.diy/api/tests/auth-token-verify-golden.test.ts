@@ -199,6 +199,43 @@ describe("auth token verify — golden (SUT via @vibes.diy/identity/server)", { 
     expect(r.isErr()).toBe(true);
   });
 
+  it("SECURITY #2671: a present-but-INVALID chain signature is rejected even when NOT enforcing", async () => {
+    // CharlieHelps follow-up: pin that a present x5c#jwt that does NOT verify
+    // against the CA is rejected regardless of the flag — only the *missing*-chain
+    // case is gated. The attacker even holds a real CA-signed cert here, but
+    // staples a chain signed by a NON-CA key, so jwtVerify against the CA fails.
+    sthis.env.set(ENFORCE_ENV, "false");
+    const attackerKey = await DeviceIdKey.create();
+    const csr = (await new DeviceIdCSR(sthis, attackerKey).createCSR({ commonName: "invalid-chain" })).Ok();
+    const issued = (await ca.processCSR(csr, clerkClaim() as never)).Ok();
+    // Re-sign the cert payload with a key the CA never authorized.
+    const { privateKey: nonCaKey } = await generateKeyPair("ES256", { extractable: true });
+    const forgedChain = await new SignJWT(issued.certificatePayload as unknown as Record<string, unknown>)
+      .setProtectedHeader({ alg: "ES256", typ: "CERT+JWT" })
+      .sign(nonCaKey);
+    const now = Math.floor(Date.now() / 1000);
+    const token = await new OwnedDeviceIdSignMsg(
+      sthis.txt.base64,
+      attackerKey as never,
+      issued.certificatePayload as never,
+      forgedChain
+    ).sign(
+      {
+        iss: "invalid-chain",
+        sub: "device-id",
+        deviceId: await attackerKey.fingerPrint(),
+        seq: 1,
+        exp: now + 120,
+        nbf: now - 2,
+        iat: now,
+        jti: "invalid-chain-jti",
+      },
+      "ES256"
+    );
+    const r = await api["device-id"].verify(token);
+    expect(r.isErr()).toBe(true);
+  });
+
   it("SECURITY #2671: a genuine CA-signed token still verifies when enforcing", async () => {
     sthis.env.set(ENFORCE_ENV, "true");
     const token = await mintCASignedToken();
