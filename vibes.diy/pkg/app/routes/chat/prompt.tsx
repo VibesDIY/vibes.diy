@@ -72,23 +72,16 @@ export default function ChatPrompt() {
           return;
         }
         const chat = rChat.Ok();
-        chat
-          .prompt({
-            messages: [
-              {
-                role: "user",
-                content: [{ type: "text", text: prompt }],
-              },
-            ],
-          })
-          .then((rPrompt) => {
-            if (rPrompt.isErr()) {
-              toast.error(`sendPrompt failed: ${rPrompt.Err().message}`);
-              return;
-            }
-            notifyRecentVibesChanged();
-            navigate(`/chat/${chat.ownerHandle}/${chat.appSlug}`);
-          });
+        notifyRecentVibesChanged();
+        // First-build on /vibe (experiment toward retiring /chat, #2518): the slug
+        // now exists, so the vibe route resolves the creator as owner and its
+        // ?prompt64 auto-fire drives first-generation IN PLACE (stream → hot-swap →
+        // de-blur) via useInVibeGeneration — same path as an in-place edit, just
+        // starting from an empty app. We mint the slug here but do NOT fire the
+        // prompt on the chat plane; /vibe owns the generation so the firstgen
+        // stream renders on the destination. /chat/$o/$s stays a live route.
+        const p64 = prompt64 ?? sthis.txt.base64.encode(prompt);
+        navigate(`/vibe/${chat.ownerHandle}/${chat.appSlug}?prompt64=${encodeURIComponent(p64)}`);
       });
   }, [effectivePrompt, isLoaded, isSignedIn]);
 
