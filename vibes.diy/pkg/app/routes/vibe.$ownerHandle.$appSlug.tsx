@@ -919,6 +919,14 @@ export default function VibeIframeWrapper() {
       ? undefined
       : { paddingLeft: 18, paddingRight: 18, paddingTop: 14, paddingBottom: 18, height: "auto" };
   const showCard = cardVariant === "request" || cardVariant === "invite" || cardVariant === "pending" || cardVariant === "revoked";
+  // A world-readable vibe renders the live app full-screen in the (fixed) iframe.
+  // The landing-card overlay below is in normal flow, so it paints BEHIND that
+  // iframe — the cream card backing is lost and the CTAs float unreadably over
+  // the running app (the logged-out non-public landing). For the persistent
+  // landing states (access card / not-found) lift the overlay above the iframe
+  // and dim the app behind a scrim so the card reads. The transient loading
+  // state and non-readable vibes keep the existing in-flow grid background.
+  const liftCardOverApp = isWorldReadable && (showCard || notFound);
   const requestAccessSubtitle = ownerDisplayName ? `Ask to collab with ${ownerDisplayName}.` : "Ask to join the collaboration.";
   // Show the codegen stream in the card for the WHOLE in-flight turn (until
   // block-end settles), not just the pre-first-code "streaming" phase. Gating on
@@ -956,9 +964,23 @@ export default function VibeIframeWrapper() {
       {isWorldReadable && cardGrant === undefined && (
         <div className="fixed inset-0 z-40" style={{ pointerEvents: "all" }} aria-hidden />
       )}
-      {/* Grid overlay — shown while grant is resolving or for card/not-found states */}
+      {/* Grid overlay — shown while grant is resolving or for card/not-found states.
+          When the vibe is world-readable the live app is already painting in the
+          fixed iframe, so lift this layer above it (fixed + z-index) and swap the
+          opaque grid for a dim, blurred scrim — otherwise the card paints behind
+          the running app and the CTAs read as floating, backing-less buttons. */}
       {!isAccessGranted && (
-        <div className={cx(gridBackground, "flex h-screen w-screen items-center justify-center")}>
+        <div
+          className={cx(
+            "flex h-screen w-screen items-center justify-center",
+            liftCardOverApp ? "fixed inset-0 z-30" : gridBackground
+          )}
+          style={
+            liftCardOverApp
+              ? { background: "rgba(0,0,0,0.6)", backdropFilter: "blur(3px)", WebkitBackdropFilter: "blur(3px)" }
+              : undefined
+          }
+        >
           {/* Top-left logo doubles as the sidebar toggle. Only show it on the
               persistent card / not-found screens — never during transient
               "loading" — so the logo doesn't flash top-left before reappearing

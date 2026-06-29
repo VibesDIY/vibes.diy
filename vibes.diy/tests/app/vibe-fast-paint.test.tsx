@@ -10,6 +10,16 @@ function showPointerBlocker(isWorldReadable: boolean, cardGrant: string | undefi
   return isWorldReadable && cardGrant === undefined;
 }
 
+// A world-readable vibe paints the live app full-screen in the FIXED iframe, so
+// the in-flow landing-card overlay would render behind it (the card backing is
+// lost and the CTAs float unreadably over the running app). For the persistent
+// landing states (access card / not-found) the overlay is lifted above the
+// iframe with a dim scrim; the transient loading state and non-readable vibes
+// keep the in-flow grid background. Mirror of `liftCardOverApp` in the route.
+function liftCardOverApp(isWorldReadable: boolean, showCard: boolean, notFound: boolean): boolean {
+  return isWorldReadable && (showCard || notFound);
+}
+
 describe("vibe route iframe visibility logic", () => {
   it("hidden by default (private app, grant unknown)", () => {
     expect(iframeVisible(false, false)).toBe(false);
@@ -35,5 +45,26 @@ describe("vibe route iframe visibility logic", () => {
 
   it("pointer-blocker never shown for private apps", () => {
     expect(showPointerBlocker(false, undefined)).toBe(false);
+  });
+});
+
+describe("landing-card overlay layering", () => {
+  it("lifts the card above the live app for a world-readable access-card vibe", () => {
+    // The bug: without lifting, the access card paints behind the full-screen
+    // iframe and the Install/Request CTAs read as backing-less floating buttons.
+    expect(liftCardOverApp(true, true, false)).toBe(true);
+  });
+
+  it("lifts the not-found message above the live app when world-readable", () => {
+    expect(liftCardOverApp(true, false, true)).toBe(true);
+  });
+
+  it("stays out of the way during the transient loading state (world-readable)", () => {
+    expect(liftCardOverApp(true, false, false)).toBe(false);
+  });
+
+  it("keeps the in-flow grid background for non-readable vibes (no live app behind)", () => {
+    expect(liftCardOverApp(false, true, false)).toBe(false);
+    expect(liftCardOverApp(false, false, true)).toBe(false);
   });
 });
