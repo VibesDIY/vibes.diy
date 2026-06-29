@@ -170,7 +170,7 @@ export function RecentVibes({ onNavigate, hideTitle = false, hideSeeAll = false 
                     </div>
                   ) : (
                     <Link
-                      to={`/chat/${item.ownerHandle}/${item.appSlug}`}
+                      to={`/vibe/${item.ownerHandle}/${item.appSlug}`}
                       onClick={onNavigate}
                       className="flex items-center gap-2 pl-2 pr-10 py-2 text-sm transition-colors hover:bg-black/5 dark:hover:bg-white/5"
                     >
