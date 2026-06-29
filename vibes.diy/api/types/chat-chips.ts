@@ -215,8 +215,29 @@ export function latestTurnChips(turns: readonly ResChatResponseTurn[], fsId?: st
   // globally newest. Turns come newest-first, so find()/[0] both pick the newest
   // qualifying turn. Fall back to the newest turn overall when no fsId is pinned
   // (e.g. `/vibe/$owner/$app` with no version) or none matches.
-  const turn = (fsId ? turns.find((t) => t.fsId === fsId) : undefined) ?? turns[0];
-  if (!turn) return [];
+  const pinned = (fsId ? turns.find((t) => t.fsId === fsId) : undefined) ?? turns[0];
+  if (!pinned) return [];
+  const pinnedChips = chipsForTurn(pinned);
+  if (pinnedChips.length > 0) return pinnedChips;
+
+  // The pinned turn carried no `▸` options — e.g. a CLI-seeded generation turn
+  // whose narration was just `File: /App.jsx`, or a code turn that ended without
+  // the interview tail. Rather than show an empty card, fall back to the newest
+  // OTHER turn that actually has chips. Callers pass an already access-filtered
+  // list (`getVibeChips` restricts non-members to the deployed version and its
+  // talk-only turns), so this can never surface an unpublished draft's chips —
+  // it's how a "talk-only" suggestions turn (fsId null, inheriting the deployed
+  // version) lights up the card.
+  for (const turn of turns) {
+    if (turn === pinned) continue;
+    const chips = chipsForTurn(turn);
+    if (chips.length > 0) return chips;
+  }
+  return pinnedChips;
+}
+
+/** Project ONE turn's assistant narration into its trailing `▸` chips. */
+function chipsForTurn(turn: ResChatResponseTurn): readonly string[] {
   const text = turn.sections
     .flatMap((s) => s.blocks)
     // NB: wrap the guard — `isToplevelLine(msg, streamId?)` takes an optional

@@ -75,6 +75,23 @@ describe("latestTurnChips", () => {
     const t = turn("2026-06-27T02:00:00Z", ["Built it.", "▸ Make it blue"], [promptReq()]);
     expect(latestTurnChips([t])).toEqual(["Make it blue"]);
   });
+
+  it("falls back to the next turn that has chips when the newest turn offered none", () => {
+    // The newest turn is a code edit that ended without an interview tail (no
+    // chips); the card should still light up from the next chip-bearing turn
+    // rather than going empty.
+    const newestNoChips = turn("2026-06-27T03:00:00Z", ["Refactored the grid.", "No options offered."]);
+    const olderWithChips = turn("2026-06-27T02:00:00Z", ["Built it.", "▸ Add sound", "▸ Add a timer"]);
+    expect(latestTurnChips([newestNoChips, olderWithChips])).toEqual(["Add sound", "Add a timer"]);
+  });
+
+  it("falls back past a chip-less pinned turn to an older turn at the same version", () => {
+    // The pinned version's newest turn (e.g. a CLI seed: `File: /App.jsx`) has no
+    // chips, but an older turn at the same fsId does — surface those.
+    const seedNoChips = turn("2026-06-27T03:00:00Z", ["File: /App.jsx"], [], "fs-v1");
+    const olderWithChips = turn("2026-06-27T02:00:00Z", ["Built it.", "▸ Add a high score"], [], "fs-v1");
+    expect(latestTurnChips([seedNoChips, olderWithChips], "fs-v1")).toEqual(["Add a high score"]);
+  });
 });
 
 describe("chipsFromNarration", () => {
