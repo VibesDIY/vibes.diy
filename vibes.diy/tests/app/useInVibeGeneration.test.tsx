@@ -4,7 +4,7 @@ import { Result } from "@adviser/cement";
 import { useInVibeGeneration } from "~/vibes.diy/app/hooks/useInVibeGeneration.js";
 import { makeControllableLLMChat } from "./helpers/makeControllableLLMChat.js";
 
-function setup(overrides: { enabled?: boolean } = {}) {
+function setup(overrides: { enabled?: boolean; onSavedFsId?: (fsId: string) => void } = {}) {
   const fakeChat = makeControllableLLMChat();
   const openChat = vi.fn(async () => Result.Ok(fakeChat.chat));
   const getAppByFsId = vi.fn(async () => Result.Ok({ fsId: "FS-1" }));
@@ -26,6 +26,11 @@ function setup(overrides: { enabled?: boolean } = {}) {
   );
   return { view, fakeChat, openChat, pushSource };
 }
+
+// A full, valid module so any hot-swap push guard (len>=200, includes
+// "export default") would pass — lets a save test also prove hot-swap is
+// suppressed during the save.
+const SAVE_BUFFER = `export default function App(){return null}\n${"// pad line\n".repeat(40)}`;
 
 describe("useInVibeGeneration", () => {
   beforeEach(() => vi.clearAllMocks());
@@ -280,6 +285,60 @@ describe("useInVibeGeneration", () => {
     await waitFor(() => expect(view.result.current.phase).toBe("idle"));
     expect(view.result.current.blocks).toHaveLength(0);
     expect(view.result.current.counts.messages).toBe(0);
+  });
+
+  it("queues the first manual save until the lazy chat handle exists, then flushes it (Phase 2, Codex #2)", async () => {
+    const { view, fakeChat, openChat } = setup();
+    await waitFor(() => expect(view.result.current.phase).toBe("idle"));
+    expect(openChat).not.toHaveBeenCalled();
+    // Save BEFORE the codegen chat is open. activate() only flips state; the
+    // LLMChat opens in a later effect — a naive synchronous chat.promptFS would
+    // drop this first save. It must queue instead.
+    act(() => view.result.current.saveCode({ buffer: SAVE_BUFFER, filePath: "/App.jsx", lang: "jsx" }));
+    expect(view.result.current.isSaving).toBe(true);
+    // saveCode activates the lazy chat...
+    await waitFor(() => expect(openChat).toHaveBeenCalledTimes(1));
+    // ...and once the handle exists the queued save flushes exactly once with the
+    // edited buffer (proving it was held, not dropped).
+    await waitFor(() => expect(fakeChat.chat.promptFS).toHaveBeenCalledTimes(1));
+    expect(fakeChat.chat.promptFS).toHaveBeenCalledWith(
+      expect.objectContaining({
+        update: [expect.objectContaining({ type: "code-block", filename: "/App.jsx", content: SAVE_BUFFER })],
+      })
+    );
+    await waitFor(() => expect(view.result.current.saveState).toBe("saving"));
+  });
+
+  it("a settled save re-pins via onSavedFsId(newFsId) and marks the state rebuilt", async () => {
+    const onSavedFsId = vi.fn();
+    const { view, fakeChat } = setup({ onSavedFsId });
+    await waitFor(() => expect(view.result.current.phase).toBe("idle"));
+    act(() => view.result.current.saveCode({ buffer: SAVE_BUFFER, filePath: "/App.jsx", lang: "jsx" }));
+    await waitFor(() => expect(view.result.current.saveState).toBe("saving"));
+    // The canonical post-persist block.end carries the new fsId; the hook resolves
+    // it from persistedFsRef and re-pins (not navigate).
+    await act(async () => fakeChat.emitBlockEnd("zSAVED-1"));
+    await waitFor(() => expect(view.result.current.saveState).toBe("rebuilt"));
+    expect(onSavedFsId).toHaveBeenCalledWith("zSAVED-1");
+    expect(view.result.current.isSaving).toBe(false);
+  });
+
+  it("a failed promptFS surfaces error, keeps the work recoverable, and retry settles (no silent loss)", async () => {
+    const onSavedFsId = vi.fn();
+    const { view, fakeChat } = setup({ onSavedFsId });
+    await waitFor(() => expect(view.result.current.phase).toBe("idle"));
+    // First submit fails at the promptFS boundary.
+    fakeChat.chat.promptFS.mockResolvedValueOnce(Result.Err("save boom"));
+    act(() => view.result.current.saveCode({ buffer: SAVE_BUFFER, filePath: "/App.jsx", lang: "jsx" }));
+    await waitFor(() => expect(view.result.current.saveState).toBe("error"));
+    expect(view.result.current.isSaving).toBe(false);
+    expect(onSavedFsId).not.toHaveBeenCalled();
+    // Retry (the edit is still recoverable) — promptFS now succeeds and the save settles.
+    act(() => view.result.current.saveCode({ buffer: SAVE_BUFFER, filePath: "/App.jsx", lang: "jsx" }));
+    await waitFor(() => expect(view.result.current.saveState).toBe("saving"));
+    await act(async () => fakeChat.emitBlockEnd("zSAVED-RETRY"));
+    await waitFor(() => expect(view.result.current.saveState).toBe("rebuilt"));
+    expect(onSavedFsId).toHaveBeenCalledWith("zSAVED-RETRY");
   });
 
   it("does NOT eagerly re-open codegen when client-navigating between vibes (#2761, Codex P2)", async () => {
