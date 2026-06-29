@@ -260,9 +260,6 @@ importers:
       '@fireproof/core':
         specifier: 0.24.19
         version: 0.24.19(bufferutil@4.1.0)(react@19.2.7)(typescript@6.0.3)(utf-8-validate@6.0.6)
-      '@fireproof/core-runtime':
-        specifier: 0.24.19
-        version: 0.24.19(typescript@6.0.3)
       '@fireproof/core-types-protocols-dashboard':
         specifier: 0.24.19
         version: 0.24.19(typescript@6.0.3)
@@ -702,9 +699,6 @@ importers:
         specifier: ~4.1.9
         version: 4.1.9(@opentelemetry/api@1.9.1)(@types/node@25.9.3)(@vitest/browser-playwright@4.1.9)(@vitest/coverage-v8@4.1.9)(@vitest/ui@4.1.9)(vite@7.3.5(@types/node@25.9.3)(jiti@2.7.0)(lightningcss@1.32.0)(terser@5.46.1)(tsx@4.22.4)(yaml@2.9.0))
     devDependencies:
-      '@fireproof/core-runtime':
-        specifier: 0.24.19
-        version: 0.24.19(typescript@6.0.3)
       '@playwright/test':
         specifier: ^1.61.0
         version: 1.61.0
@@ -1239,9 +1233,6 @@ importers:
         specifier: 4.20260617.1
         version: 4.20260617.1
       '@fireproof/core-device-id':
-        specifier: 0.24.19
-        version: 0.24.19(typescript@6.0.3)
-      '@fireproof/core-runtime':
         specifier: 0.24.19
         version: 0.24.19(typescript@6.0.3)
       '@fireproof/core-types-base':
