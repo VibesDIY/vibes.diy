@@ -188,7 +188,9 @@ MIRROR="$MIRROR" node -e '
   const http=require("http"),fs=require("fs"),path=require("path");
   const ROOT=path.resolve(process.env.MIRROR);
   const s=http.createServer((req,res)=>{
-    const rel=decodeURIComponent(req.url.split("?")[0]);
+    let rel;
+    try { rel=decodeURIComponent(req.url.split("?")[0]); }
+    catch (_) { process.stderr.write("BADREQ "+req.url+"\n");res.writeHead(400);return res.end(); }
     const f=path.resolve(path.join(ROOT,rel));
     if(f!==ROOT && !f.startsWith(ROOT+path.sep)){
       process.stderr.write("DENY "+req.url+"\n");res.writeHead(403);return res.end();
