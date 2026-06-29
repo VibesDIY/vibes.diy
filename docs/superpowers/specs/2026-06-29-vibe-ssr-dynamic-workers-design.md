@@ -185,7 +185,23 @@ compatibilityDate }`): a `main` module string that imports `renderVibeToString` 
   `env.LOADER` binding is open beta and absent from CI**, so `render()` is guarded behind the flag
   and the binding's presence; we unit-test the pure **`buildVibeWorkerCode` shaping logic** and the
   executor's orchestration against a **fake LOADER binding** (a stub `get`/`getEntrypoint`/`fetch`
-  that echoes), never a live isolate load.
+  that echoes), never a live isolate load. The slice-2 shape also pins
+  `globalOutbound: null` (Worker Loader otherwise inherits the parent worker's network, exposing
+  untrusted vibe code to the public Internet — per @CharlieHelps/Codex review); slice 3 replaces
+  `null` with a restricted Fireproof-reader binding when the data path needs proxied access.
+
+**Two slice-3 carry-forwards on the Loader path (recorded now, not built in slice 2):**
+
+- **Dependencies must be bundled before a live load.** Worker Loader does not resolve npm
+  specifiers, so the `modules` map's `@vibes.diy/vibe-runtime/render-vibes.js` + `react/jsx-runtime`
+  imports won't resolve in a real isolate — they must be bundled into `modules` (pairs with bundling
+  the reader binding). Documented in `buildVibeWorkerCode`; intentional for the fake-binding-only
+  slice-2 path.
+- **Keep per-request data out of the hashed module source.** `sha` is a content hash of the worker
+  code, and slice 2 JSON-embeds `mountParams` directly into `main`, so request-varying mount context
+  forks the isolate cache key and defeats reuse (per @CharlieHelps review). Slice 3 should pass
+  per-request `mountParams` via `WorkerCode.env` / the request, not baked into generated source, so
+  the hashed code stays stable across requests for the same vibe.
 
 ### `VIBES_SSR=off|node|loader` flag
 

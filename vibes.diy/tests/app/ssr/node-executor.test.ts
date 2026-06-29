@@ -62,6 +62,38 @@ describe("NodeExecutor", () => {
     expect(html).not.toContain("file://");
   });
 
+  it("leaves import-like text inside comments unchanged", async () => {
+    const exec = new NodeExecutor();
+    // A comment that mentions an import must not be rewritten into a file:// URL.
+    const { html } = await exec.render({
+      source: `// import x from "react"
+        /* import y from "react-dom" */
+        import { useState } from "react";
+        export default function App(){ useState(0); return <p>comment-ok</p>; }`,
+      mountParams: { usrEnv: {} },
+    });
+    expect(html).toContain("comment-ok");
+    expect(html).not.toContain("file://");
+  });
+
+  it("does not rewrite dynamic import() specifiers (left to fail loud by design)", async () => {
+    const exec = new NodeExecutor();
+    // The real top import (react) renders fine; the dynamic import lives in an
+    // unreached branch, so it never executes — but the point is the rewrite must
+    // not touch its specifier (treating it like a static import would corrupt it).
+    const { html } = await exec.render({
+      source: `import { useState } from "react";
+        export default function App(){
+          const [n] = useState(3);
+          const load = () => import("some-lazy-dep");
+          return <u>{"dyn-" + (typeof load) + "-" + n}</u>;
+        }`,
+      mountParams: { usrEnv: {} },
+    });
+    expect(html).toContain("dyn-function-3");
+    expect(html).not.toContain("file://");
+  });
+
   it("forwards mountParams into the validating slice-1 renderer", async () => {
     const exec = new NodeExecutor();
     await expect(
