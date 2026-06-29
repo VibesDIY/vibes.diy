@@ -2,9 +2,11 @@
 
 Source: `claude/git-diff-stats-june-12-syaw73` (PR-level churn analysis, June 12–29 window)
 
-Pulled the stats on every PR merged between June 12 and 29: **270 of them, ~223k lines of
-churn, a median PR of 196 lines / 5 files merged in a median 0.8 hours** (80% landed in under
-six hours). 95% were agent-authored; one human, jchris, merged 261 of them. The surprise wasn't
+Pulled the stats on the PRs merged between June 12 and 29 — **270 as of the analysis snapshot
+(midday June 29), ~223k lines of churn, a median PR of 196 lines / 5 files merged in a median
+0.8 hours** (80% landed in under six hours). A few more merged later that same day (the window
+kept filling as the analysis ran — itself a data point), so pin the headline to the snapshot
+rather than claiming "all"; percentages are computed over the 270. 95% were agent-authored; one human, jchris, merged 261 of them. The surprise wasn't
 the volume — it's that velocity and safety weren't in tension, they were the *same property*.
 The median PR is tiny because big work got sliced: 18% of titles literally say
 *slice/phase/step/bucket*, 29% reference a parent issue, and the scary churn is quarantined into
