@@ -9,7 +9,7 @@ import { JWKPrivateSchema, JWKPublicSchema } from "../types/wire.js";
 import type { JWKPrivate, JWKPublic } from "@fireproof/core-types-base";
 import type { DeviceIdKeyIf } from "@fireproof/core-types-device-id";
 import { generateKeyPair, exportJWK, calculateJwkThumbprint, type GenerateKeyPairOptions } from "jose";
-import { sts } from "@fireproof/core-runtime";
+import * as sts from "../sts/index.js";
 
 export class DeviceIdKey implements DeviceIdKeyIf {
   readonly #privateKey: CryptoKey;

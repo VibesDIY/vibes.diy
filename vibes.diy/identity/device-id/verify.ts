@@ -8,7 +8,7 @@
 import { jwtVerify, decodeProtectedHeader } from "jose";
 import { Certor } from "./certor.js";
 import { exception2Result, Result } from "@adviser/cement";
-import { sts } from "@fireproof/core-runtime";
+import * as sts from "../sts/index.js";
 import type { BaseXXEndeCoder, CertificatePayload } from "@fireproof/core-types-base";
 import type {
   CACertResult,

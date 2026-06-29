@@ -8,7 +8,8 @@
 // verify logic is byte-for-byte the same, gated by auth-token-verify-golden.test.ts
 // through the @vibes.diy/identity/server facade.
 import { Lazy, Result, param, exception2Result, isArrayBuffer, isUint8Array } from "@adviser/cement";
-import { sts, ensureSuperThis } from "@fireproof/core-runtime";
+import { ensureSuperThis } from "@fireproof/core-runtime";
+import * as sts from "../sts/index.js";
 import { decodeProtectedHeader, exportJWK } from "jose";
 import { ClerkClaimSchema } from "../clerk-claim.js";
 import { JWKPublicSchema, toJwksAlg } from "../types/wire.js";
