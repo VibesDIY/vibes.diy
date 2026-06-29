@@ -239,6 +239,48 @@ describe("getVibeChips access gate", { timeout: (inject("DB_FLAVOUR" as never) a
     expect(r.Ok().chips).toEqual(["Published chip"]);
   });
 
+  // #2755 follow-up: a "talk-only" chat turn (the model answered with suggestions
+  // but wrote no file → fsId null) inherits the deployed version's fsId, so its
+  // chips attach to the published app and surface to a public viewer — even
+  // though the original versioned turn (a CLI seed) carried no ▸ options. This is
+  // the system/bloom shape: CLI-created vibe, then one "give me ideas" chat turn.
+  it("surfaces a talk-only (fsId-null) turn's chips, inheriting the published version", async () => {
+    const { appSlug, ownerHandle, fsId } = await createApp("production");
+    // The versioned turn the production row pins to — no chips (CLI-seed shape).
+    await seedChipChat(appSlug, ownerHandle, ["File: /App.jsx"], { fsId, created: "2026-06-27T01:00:00Z" });
+    // A later talk-only turn: produced chips but wrote no file (fsId omitted → null).
+    await seedChipChat(appSlug, ownerHandle, CHIP_LINES, { created: "2026-06-27T02:00:00Z" });
+    await api.ensureAppSettings({ appSlug, ownerHandle, publicAccess: { enable: true } });
+
+    const r = await api2.getVibeChips({ ownerHandle, appSlug });
+    if (r.isErr()) assert.fail("Expected getVibeChips to succeed: " + JSON.stringify(r.Err()));
+    expect(r.Ok().chips).toEqual(["Add sound", "Add a timer"]);
+  });
+
+  // Safety counterpart: a talk-only turn that happened AFTER an unpublished draft
+  // inherits the DRAFT's fsId (the live version when it ran), not the published
+  // one — so it must NOT leak to a public viewer. Only the published chip shows.
+  it("does NOT leak a talk-only turn that inherited an unpublished draft's fsId", async () => {
+    const { appSlug, ownerHandle, fsId } = await createApp("production");
+    await seedChipChat(appSlug, ownerHandle, ["Published.", "▸ Published chip"], {
+      fsId,
+      created: "2026-06-27T01:00:00Z",
+    });
+    // Newer dev-draft turn on its own fsId, then a talk-only turn about that draft.
+    await seedChipChat(appSlug, ownerHandle, ["Draft.", "▸ Secret draft chip"], {
+      fsId: "dev-draft-fsid",
+      created: "2026-06-27T02:00:00Z",
+    });
+    await seedChipChat(appSlug, ownerHandle, ["More draft ideas.", "▸ Secret talk chip"], {
+      created: "2026-06-27T03:00:00Z",
+    });
+    await api.ensureAppSettings({ appSlug, ownerHandle, publicAccess: { enable: true } });
+
+    const r = await api2.getVibeChips({ ownerHandle, appSlug });
+    if (r.isErr()) assert.fail("Expected getVibeChips to succeed: " + JSON.stringify(r.Err()));
+    expect(r.Ok().chips).toEqual(["Published chip"]);
+  });
+
   // "If you can see the app, you can see the chips" (jchris): a production vibe
   // that's joinable by auto-accept (enableRequest + autoAcceptRole) but has NO
   // explicit publicAccess is still world-readable to a signed-in visitor — they

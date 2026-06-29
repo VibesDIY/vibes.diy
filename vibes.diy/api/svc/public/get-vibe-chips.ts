@@ -180,6 +180,27 @@ export const getVibeChipsEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqGet
       }
       const orderedTurns = Array.from(turns.values()).sort((a, b) => (a.created < b.created ? 1 : a.created > b.created ? -1 : 0));
 
+      // A "talk-only" turn (the model answered with suggestions but wrote no
+      // file) has no `fsId` of its own. Treat it as belonging to the code version
+      // that was LIVE when it happened — the `fsId` of the nearest OLDER turn —
+      // so its `▸` chips attach to that deployed version instead of being
+      // orphaned. Without this, two real flows land chip-less: a CLI-seeded vibe
+      // (whose only versioned turn is `File: /App.jsx`, no chips) and a chat
+      // "just give me ideas" turn (fsId null) that produced great chips but never
+      // pinned to a version (#2755 follow-up). orderedTurns is newest-first, so we
+      // walk oldest→newest carrying the most recent versioned fsId forward.
+      let inheritedFsId: string | undefined;
+      const normalizedTurns: ResChatResponseTurn[] = new Array(orderedTurns.length);
+      for (let i = orderedTurns.length - 1; i >= 0; i--) {
+        const turn = orderedTurns[i];
+        if (turn.fsId !== undefined) {
+          inheritedFsId = turn.fsId;
+          normalizedTurns[i] = turn;
+        } else {
+          normalizedTurns[i] = inheritedFsId !== undefined ? { ...turn, fsId: inheritedFsId } : turn;
+        }
+      }
+
       // Pin chips to the version the viewer actually sees. The caller may pin a
       // specific `fsId` (the version on screen); otherwise default to the
       // resolved app row's `fsId` rather than "globally newest turn", so a public
@@ -190,8 +211,11 @@ export const getVibeChipsEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqGet
       // For a public (non-member) viewer, go further than preferring the
       // published turn: HARD-restrict candidates to that version's turns, so even
       // if the pinned turn is missing we fall back to [] — never to a draft turn.
+      // Talk-only turns that INHERITED the published fsId (above) are included
+      // here — they're commentary on the deployed version, not an unpublished
+      // draft (a real draft keeps its own distinct fsId and is still excluded).
       // Members may see drafts, so they keep the normal newest-turn fallback.
-      const candidateTurns = !isMember && app?.fsId ? orderedTurns.filter((t) => t.fsId === app.fsId) : orderedTurns;
+      const candidateTurns = !isMember && app?.fsId ? normalizedTurns.filter((t) => t.fsId === app.fsId) : normalizedTurns;
 
       // The ONLY thing that leaves this endpoint: the projected chip strings.
       const chips = latestTurnChips(candidateTurns, effectiveFsId);
