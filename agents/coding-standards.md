@@ -31,6 +31,16 @@ Use dots (`.stable-entry.`) not `@` signs (`@stable-entry@`) for query parameter
 
 Never modify existing entries in setup logs or similar chronological docs — only append new information. Logs are a historical record; editing past entries destroys the timeline.
 
+## Screenshot styling work at wrap-up
+
+When a work stream is about styling a particular screen — visual/CSS/layout/theme changes to a specific view (a panel, a card, a page) — the chat wrap-up MUST include a screenshot of the new version of that screen. The diff and a colors table are not enough for visual work: the human asked for a look, so show the look. One image of the changed screen in its new state, attached to the closing message (use the file-send affordance, not just a path).
+
+Caveats that make the screenshot honest:
+
+- **Dark mode can't be screenshotted faithfully on the cloud headless Chromium** — it force-darkens _paint_ but not the CSSOM, so a broken light surface gets inverted on screen and looks fixed (and a correct dark surface can look wrong). For dark-mode work, capture the screenshot from a real browser or the deployed PR preview, or — if neither is reachable — say so plainly and back the claim with `getComputedStyle()` before/after values instead of a misleading image. Never present a force-dark-inverted screenshot as the result.
+- Prefer the **deployed PR preview URL** (or an authed real browser, see [authed-browser-debugging.md](authed-browser-debugging.md) / [cloud-browser-setup.md](cloud-browser-setup.md)) over a hand-built static harness when one exists — a harness verifies mechanics but isn't the real screen.
+- Show the state the user cares about (the mode/viewport they reported, e.g. mobile dark), not just the default.
+
 ## Say command timing & style
 
 Only use `echo 'message' | say` after a waiting period completes or when a full work epic finishes — never at the beginning of a job or right after kicking something off. The point is to call the human back when something they're waiting on is done, not to announce the start of work.
