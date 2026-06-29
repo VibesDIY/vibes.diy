@@ -3,6 +3,13 @@
   "version": "0.0.0",
   "type": "module",
   "main": "./index.js",
+  "exports": {
+    ".": "./index.js",
+    "./vibe-executor.js": "./vibe-executor.js",
+    "./worker-loader-executor.js": "./worker-loader-executor.js",
+    "./ssr-source-check.js": "./ssr-source-check.js",
+    "./render-vibes.js": "./render-vibes.js"
+  },
   "scripts": {
     "build": "core-cli tsc",
     "pack": "core-cli build --doPack",
