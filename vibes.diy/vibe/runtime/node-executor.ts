@@ -1,4 +1,5 @@
 import { type FunctionComponent } from "react";
+import { exception2Result } from "@adviser/cement";
 import { renderVibeToString } from "./render-vibes.js";
 import { transformVibeSource } from "./transform-vibe-source.js";
 import { type Executor, type VibeExecuteInput, type VibeExecuteResult } from "./vibe-executor.js";
@@ -67,11 +68,9 @@ function skipSeparators(code: string, i: number): number {
 function resolveBareSpecifiers(code: string, resolve: (spec: string) => string): string {
   const rewriteSpec = (spec: string): string => {
     if (ALREADY_RESOLVED.test(spec)) return spec;
-    try {
-      return resolve(spec);
-    } catch {
-      return spec; // leave it — surfaces as a clear resolution error at import time
-    }
+    // rules-bag: no bare try/catch — wrap the throwing resolver in a Result.
+    const resolved = exception2Result(() => resolve(spec));
+    return resolved.isOk() ? resolved.Ok() : spec; // unresolved → clear error at import time
   };
 
   const n = code.length;
@@ -81,7 +80,7 @@ function resolveBareSpecifiers(code: string, resolve: (spec: string) => string):
     const sepStart = i;
     i = skipSeparators(code, i);
     out += code.slice(sepStart, i); // copy whitespace/comments/`;` verbatim
-    if (i >= n || !isImportDeclAt(code, i)) {
+    if (i >= n || isImportDeclAt(code, i) === false) {
       out += code.slice(i); // module body — never rewritten
       break;
     }
