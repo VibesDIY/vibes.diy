@@ -615,8 +615,9 @@ export default function VibeIframeWrapper() {
   );
 
   const handleNewHandle = useCallback(
-    () =>
+    (handle?: string) =>
       createAndUseHandle({
+        ownerHandle: handle,
         sharedApi: vctx.sharedApi,
         setBusy: setHandlePickerBusy,
         setHandles: setMyHandles,
@@ -1085,7 +1086,7 @@ export default function VibeIframeWrapper() {
                   }
                   handles={myHandles}
                   onSelectHandle={(slug) => void handleSelectHandle(slug)}
-                  onNewHandle={() => void handleNewHandle()}
+                  onNewHandle={(handle) => void handleNewHandle(handle)}
                   // Owner-only: making a new avatar writes to the active handle.
                   // Pass the promise through (no `void`) so ViewerTagView's
                   // `await onPickFile` holds its uploading state through the

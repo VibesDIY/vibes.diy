@@ -26,14 +26,56 @@ describe("HandlePickerMenu", () => {
     expect(other.getAttribute("aria-current")).toBeNull();
   });
 
-  it("fires onSelect with the chosen slug and onNewHandle", () => {
+  it("fires onSelect with the chosen slug", () => {
     const onSelect = vi.fn();
-    const onNewHandle = vi.fn();
-    render(<HandlePickerMenu handles={HANDLES} activeSlug="meghan" onSelect={onSelect} onNewHandle={onNewHandle} />);
+    render(<HandlePickerMenu handles={HANDLES} activeSlug="meghan" onSelect={onSelect} />);
     fireEvent.click(screen.getByRole("menuitem", { name: /@meghan_work/i }));
     expect(onSelect).toHaveBeenCalledWith("meghan_work");
+  });
+
+  it("reveals the inline create form and submits the typed (sanitized) handle", () => {
+    const onNewHandle = vi.fn();
+    render(<HandlePickerMenu handles={HANDLES} activeSlug="meghan" onNewHandle={onNewHandle} />);
+    // Clicking "New handle" no longer creates one outright — it opens the form.
     fireEvent.click(screen.getByRole("menuitem", { name: /new handle/i }));
-    expect(onNewHandle).toHaveBeenCalled();
+    expect(onNewHandle).not.toHaveBeenCalled();
+    const input = screen.getByLabelText("New handle name") as HTMLInputElement;
+    fireEvent.change(input, { target: { value: "My Cool Handle!" } });
+    // Preview mirrors server sanitization.
+    expect(screen.getByText("@my-cool-handle")).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: /^create$/i }));
+    expect(onNewHandle).toHaveBeenCalledWith("my-cool-handle");
+  });
+
+  it("submits the typed handle on Enter", () => {
+    const onNewHandle = vi.fn();
+    render(<HandlePickerMenu handles={HANDLES} activeSlug="meghan" onNewHandle={onNewHandle} />);
+    fireEvent.click(screen.getByRole("menuitem", { name: /new handle/i }));
+    const input = screen.getByLabelText("New handle name");
+    fireEvent.change(input, { target: { value: "ziggy" } });
+    fireEvent.keyDown(input, { key: "Enter" });
+    expect(onNewHandle).toHaveBeenCalledWith("ziggy");
+  });
+
+  it("does not submit an empty/invalid handle (Create stays disabled)", () => {
+    const onNewHandle = vi.fn();
+    render(<HandlePickerMenu handles={HANDLES} activeSlug="meghan" onNewHandle={onNewHandle} />);
+    fireEvent.click(screen.getByRole("menuitem", { name: /new handle/i }));
+    const create = screen.getByRole("button", { name: /^create$/i }) as HTMLButtonElement;
+    expect(create.disabled).toBe(true);
+    fireEvent.change(screen.getByLabelText("New handle name"), { target: { value: "---" } });
+    expect(create.disabled).toBe(true);
+    fireEvent.click(create);
+    expect(onNewHandle).not.toHaveBeenCalled();
+  });
+
+  it("'Surprise me' mints a random handle (no argument)", () => {
+    const onNewHandle = vi.fn();
+    render(<HandlePickerMenu handles={HANDLES} activeSlug="meghan" onNewHandle={onNewHandle} />);
+    fireEvent.click(screen.getByRole("menuitem", { name: /new handle/i }));
+    fireEvent.click(screen.getByRole("button", { name: /surprise me/i }));
+    expect(onNewHandle).toHaveBeenCalledWith();
+    expect(onNewHandle.mock.calls[0][0]).toBeUndefined();
   });
 
   it("disables every row when busy", () => {

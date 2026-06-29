@@ -47,6 +47,9 @@ export async function switchActiveHandle({
 }
 
 export interface CreateAndUseHandleDeps {
+  /** The slug the user typed in the inline form. Omit (or pass empty) to let the
+   *  server mint a random one ("Surprise me"). Sanitized server-side either way. */
+  readonly ownerHandle?: string;
   readonly sharedApi: Conn<"shared">;
   readonly setBusy: (busy: boolean) => void;
   readonly setHandles: (updater: (prev: HandleOption[]) => HandleOption[]) => void;
@@ -54,11 +57,13 @@ export interface CreateAndUseHandleDeps {
   readonly refreshViewer: () => Promise<void>;
 }
 
-/** "New handle": mint a binding (server picks a random slug) and act as it. The
- *  binding is surfaced in the list as soon as it's created; the active handle only
- *  advances if persisting the default succeeds (otherwise the new handle stays in
- *  the list and the partial failure is reported). */
+/** "New handle": mint a binding and act as it. When `ownerHandle` is given the user
+ *  picked their own slug; otherwise the server picks a random one. The binding is
+ *  surfaced in the list as soon as it's created; the active handle only advances if
+ *  persisting the default succeeds (otherwise the new handle stays in the list and
+ *  the partial failure is reported). */
 export async function createAndUseHandle({
+  ownerHandle,
   sharedApi,
   setBusy,
   setHandles,
@@ -66,7 +71,7 @@ export async function createAndUseHandle({
   refreshViewer,
 }: CreateAndUseHandleDeps): Promise<void> {
   setBusy(true);
-  const r = await sharedApi.createHandleBinding({});
+  const r = await sharedApi.createHandleBinding(ownerHandle ? { ownerHandle } : {});
   if (r.isErr()) {
     setBusy(false);
     toast.error(`Couldn't create handle: ${r.Err().message}`);
@@ -86,5 +91,6 @@ export async function createAndUseHandle({
   setActiveHandle(created);
   await refreshViewer();
   setBusy(false);
-  toast.success(`Now acting as @${created}`);
+  // Nudge toward a photo: the avatar circle in the card header is the editor (#2666).
+  toast.success(`Now acting as @${created} — click the avatar circle to set a photo`);
 }
