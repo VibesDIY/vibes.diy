@@ -295,6 +295,11 @@ export default function VibeIframeWrapper() {
   // Guards against a rapid double-submit forking the same vibe twice (each fork
   // would mint a separate copy). Reset on vibe change (below) and on fork error.
   const forkingRef = useRef(false);
+  // Last-click-wins token for the async cached-read lane. Each chip submit on a
+  // system vibe bumps it; a resolveCachedRead completion only acts if its token
+  // is still current — so a slow cache-MISS can't fork/navigate after a newer
+  // click already resolved (network timing must not pick the result). (Codex P2)
+  const cachedReadSeqRef = useRef(0);
   useEffect(() => {
     if (autoFiredRef.current) return;
     const p64 = searchParam.get("prompt64");
@@ -387,6 +392,7 @@ export default function VibeIframeWrapper() {
       // today) or any lookup error soft-fails to the write lane. The decision is
       // made before anything commits — the read/write (and login/fork) boundary.
       if (isSystemCacheHandle(ownerHandle)) {
+        const submitSeq = ++cachedReadSeqRef.current;
         void (async () => {
           const decision = await resolveCachedRead({
             source: { ownerHandle, appSlug, ...(fsId ? { fsId } : {}) },
@@ -400,6 +406,11 @@ export default function VibeIframeWrapper() {
               return r.isOk() && isReadableCachedGrant(r.Ok().grant);
             },
           });
+          // Drop a completion a newer chip click has superseded (last-click-wins):
+          // otherwise a slow cache-MISS could runWriteLane/fork after a newer
+          // click already navigated to a cache-HIT, letting network timing pick
+          // the result. (Codex P2)
+          if (cachedReadSeqRef.current !== submitSeq) return;
           if (decision.kind === "read") {
             void navigate(decision.href);
             return;
