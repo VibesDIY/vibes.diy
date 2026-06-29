@@ -37,6 +37,10 @@ describe("save-state", () => {
     expect(nextSaveState("queued", { type: "request" })).toBe("queued");
   });
 
+  it("starts a fresh save after a completed one (rebuilt → queued on a new edit)", () => {
+    expect(nextSaveState("rebuilt", { type: "request" })).toBe("queued");
+  });
+
   it("ignores illegal events as no-ops (never wedges)", () => {
     // submit only advances from queued
     expect(nextSaveState("idle", { type: "submitted" })).toBe("idle");

@@ -1,11 +1,16 @@
-import React from "react";
+import React, { Suspense, lazy, useState } from "react";
 import type { PromptState } from "../../routes/chat/prompt-state.js";
+import type { SaveState } from "../../hooks/save-state.js";
 import { EDITOR_TABS, type EditorTab } from "./editor-tab-state.js";
 import { resolveCodeView } from "./code-from-chat.js";
 import { CodeViewPanel } from "./CodeViewPanel.js";
 import { SettingsTabScoped } from "./SettingsTabScoped.js";
 import { DataView } from "../ResultPreview/DataView.js";
 import ChatInterface from "../ChatInterface.js";
+
+// Monaco edit surface is lazy so the heavy editor chunk loads only when an owner
+// toggles into edit mode — never on /vibe first paint. (#2518 Phase 2)
+const CodeEditPanel = lazy(() => import("./CodeEditPanel.js"));
 
 const TAB_LABELS: Record<EditorTab, string> = {
   code: "Code",
@@ -35,6 +40,10 @@ export function VibeEditorPanel({
   appSlug,
   fsId,
   promptState,
+  canEdit = false,
+  saveCode,
+  saveState = "idle",
+  isSaving = false,
 }: {
   tab: EditorTab;
   onTab: (t: EditorTab) => void;
@@ -45,7 +54,15 @@ export function VibeEditorPanel({
   fsId?: string;
   promptState: PromptState;
   onActivateChat?: () => void;
+  /** Owner on the unversioned view: gates the Monaco Edit affordance. (#2518 Phase 2) */
+  canEdit?: boolean;
+  saveCode?: (args: { buffer: string; filePath: string; lang: string }) => void;
+  saveState?: SaveState;
+  isSaving?: boolean;
 }) {
+  // Whether the owner has toggled the Code tab into Monaco edit mode.
+  const [codeEditing, setCodeEditing] = useState(false);
+
   return (
     <div className="flex h-full min-h-0 flex-col">
       <div
@@ -77,7 +94,37 @@ export function VibeEditorPanel({
       </div>
 
       <div className="min-h-0 flex-1 overflow-auto">
-        {tab === "code" && <CodeViewPanel model={resolveCodeView(promptState)} />}
+        {tab === "code" && (
+          <div className="flex h-full min-h-0 flex-col">
+            {canEdit && saveCode && (
+              <div className="flex flex-shrink-0 justify-end border-b border-gray-200 bg-gray-50 px-2 py-1 dark:border-gray-700 dark:bg-gray-900">
+                <button
+                  type="button"
+                  aria-pressed={codeEditing}
+                  onClick={() => setCodeEditing((v) => !v)}
+                  className="rounded px-3 py-1 text-xs font-medium text-violet-700 hover:bg-violet-100 dark:text-violet-300 dark:hover:bg-violet-900/40"
+                >
+                  {codeEditing ? "Done" : "Edit"}
+                </button>
+              </div>
+            )}
+            <div className="min-h-0 flex-1">
+              {canEdit && saveCode && codeEditing ? (
+                <Suspense
+                  fallback={
+                    <div className="flex h-full items-center justify-center p-6 text-sm text-gray-500 dark:text-gray-400">
+                      Loading editor…
+                    </div>
+                  }
+                >
+                  <CodeEditPanel model={resolveCodeView(promptState)} saveState={saveState} isSaving={isSaving} onSave={saveCode} />
+                </Suspense>
+              ) : (
+                <CodeViewPanel model={resolveCodeView(promptState)} />
+              )}
+            </div>
+          </div>
+        )}
         {tab === "data" && <DataView promptState={promptState} fsId={fsId} />}
         {tab === "chat" &&
           (promptState.blocks.length > 0 ? (
