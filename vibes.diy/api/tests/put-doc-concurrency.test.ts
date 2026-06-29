@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { ensureSuperThis } from "@fireproof/core-runtime";
+import { ensureSuperThis } from "@vibes.diy/identity";
 import { createTestDeviceCA } from "@fireproof/core-device-id";
 import { and, desc, eq } from "drizzle-orm";
 import { allocateAndInsertRevision, docLockKey, isRetryableConflict, SeqConflictError } from "@vibes.diy/api-svc";

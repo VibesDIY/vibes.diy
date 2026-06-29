@@ -13,7 +13,7 @@ import {
 } from "./delta-stream.js";
 import { SseChunk, isSseBegin, isSseLine, isSseEnd, SseStreamMsg } from "./sse-stream.js";
 import { StatsCollectMsg } from "./stats-stream.js";
-import { ensureSuperThis } from "@fireproof/core-runtime";
+import { ensureSuperThis } from "@vibes.diy/identity";
 
 // Helper to collect all chunks from a stream
 async function collectStream<T>(stream: ReadableStream<T>): Promise<T[]> {

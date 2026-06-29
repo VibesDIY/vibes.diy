@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { ensureSuperThis } from "@fireproof/core-runtime";
+import { ensureSuperThis } from "@vibes.diy/identity";
 import { createTestDeviceCA } from "@fireproof/core-device-id";
 import { string2stream, URI } from "@adviser/cement";
 import { createVibeDiyTestCtx } from "./vibe-diy-test-ctx.js";

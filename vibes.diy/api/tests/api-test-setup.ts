@@ -1,7 +1,7 @@
 import { VibesDiyApi } from "@vibes.diy/api-impl";
 import { assert } from "vitest";
 import { Result, TestFetchPair, TestWSPair } from "@adviser/cement";
-import { ensureSuperThis } from "@fireproof/core-runtime";
+import { ensureSuperThis } from "@vibes.diy/identity";
 import type { SuperThis } from "@fireproof/core-types-base";
 import { createTestDeviceCA, createTestUser } from "@fireproof/core-device-id";
 import {

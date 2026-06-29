@@ -1,5 +1,5 @@
 import { Lazy } from "@adviser/cement";
-import { ensureSuperThis } from "@fireproof/core-runtime";
+import { ensureSuperThis } from "@vibes.diy/identity";
 import { describe, expect, it } from "vitest";
 import { buildSignupEmbed, verifyClerkWebhookSignature, ClerkUserCreatedData } from "../workers/clerk-webhook.js";
 

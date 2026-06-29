@@ -5,7 +5,7 @@
 // handle (the `npx vibes-diy push --handle john.doe` scenario) must end up
 // with a hyphenated, dot-free binding so the entry-point URL resolves.
 import { beforeAll, describe, expect, it } from "vitest";
-import { ensureSuperThis } from "@fireproof/core-runtime";
+import { ensureSuperThis } from "@vibes.diy/identity";
 import { createTestDeviceCA } from "@fireproof/core-device-id";
 import { ensureAppSlug, ensureUserSlug, VibesApiSQLCtx } from "@vibes.diy/api-svc";
 import { calcEntryPointUrl, extractHostToBindings } from "@vibes.diy/api-pkg";

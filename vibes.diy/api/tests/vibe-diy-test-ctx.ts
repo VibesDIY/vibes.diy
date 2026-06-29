@@ -1,6 +1,6 @@
 import { loadAsset, Result, string2stream } from "@adviser/cement";
 import { DeviceIdCA } from "@fireproof/core-device-id";
-import { ensureSuperThis, sts } from "@fireproof/core-runtime";
+import { ensureSuperThis, sts } from "@vibes.diy/identity";
 import { createAppContext, noopCache } from "@vibes.diy/api-svc";
 import {
   type AccessDescriptor,

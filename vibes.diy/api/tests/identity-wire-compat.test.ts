@@ -5,7 +5,7 @@
 // the impl-under-test through `./identity-extracted-factories` — repoint those
 // factories at the in-repo modules as each lift lands; the tests must stay green.
 import { describe, it, expect, beforeAll } from "vitest";
-import { ensureSuperThis } from "@fireproof/core-runtime";
+import { ensureSuperThis } from "@vibes.diy/identity";
 import {
   createTestDeviceCA,
   createTestUser,

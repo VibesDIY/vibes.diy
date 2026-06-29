@@ -1,5 +1,5 @@
 import { beforeAll, describe, expect, it } from "vitest";
-import { ensureSuperThis } from "@fireproof/core-runtime";
+import { ensureSuperThis } from "@vibes.diy/identity";
 import { createTestDeviceCA } from "@fireproof/core-device-id";
 import { ensureAppSlug, ensureUserSlug, writeAppSlugBinding, writeHandleBinding, VibesApiSQLCtx } from "@vibes.diy/api-svc";
 import type { ClerkClaim } from "@vibes.diy/api-types";

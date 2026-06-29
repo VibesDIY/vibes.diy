@@ -1,6 +1,6 @@
 import { beforeAll, describe, expect, it } from "vitest";
 import { TestWSPair } from "@adviser/cement";
-import { ensureSuperThis } from "@fireproof/core-runtime";
+import { ensureSuperThis } from "@vibes.diy/identity";
 import { createTestDeviceCA, createTestUser } from "@fireproof/core-device-id";
 import { processRequest, vibesMsgEvento, WSSendProvider } from "@vibes.diy/api-svc";
 import { createVibeDiyTestCtx } from "./vibe-diy-test-ctx.js";

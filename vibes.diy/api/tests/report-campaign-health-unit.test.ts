@@ -1,5 +1,5 @@
 import { beforeAll, describe, expect, it } from "vitest";
-import { ensureSuperThis } from "@fireproof/core-runtime";
+import { ensureSuperThis } from "@vibes.diy/identity";
 import { createTestDeviceCA } from "@fireproof/core-device-id";
 import { createVibeDiyTestCtx } from "./vibe-diy-test-ctx.js";
 import { fetchGoodVibesClickThroughs, fetchDirectAppLandings, extractDirectUtm } from "../svc/public/report-campaign-health.js";

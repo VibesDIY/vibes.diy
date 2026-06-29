@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { ensureSuperThis } from "@fireproof/core-runtime";
+import { ensureSuperThis } from "@vibes.diy/identity";
 import { createAssetGrantSigner } from "@vibes.diy/api-svc";
 
 // Test secret pulled from createVibeDiyTestCtx — a base58btc-encoded JSON

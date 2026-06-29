@@ -1,4 +1,4 @@
-import { ensureSuperThis } from "@fireproof/core-runtime";
+import { ensureSuperThis } from "@vibes.diy/identity";
 import { DeviceIdCAIf } from "@fireproof/core-types-device-id";
 import { DeviceIdCSR, DeviceIdKey, DeviceIdSignMsg } from "@fireproof/core-device-id";
 
