@@ -32,7 +32,7 @@ import {
   isBlockEnd,
   isBlockBegin,
 } from "./index.js";
-import { ensureSuperThis } from "@vibes.diy/identity";
+import { ensureRuntimeContext } from "@vibes.diy/identity";
 import mime from "mime";
 import { createUtf8StreamDecoder } from "./utf8-stream.js";
 
@@ -216,18 +216,20 @@ const app = command({
 
       body = response.body;
     }
-    const sthis = ensureSuperThis();
+    // Only `nextId()` is needed here (stream/section ids), so depend on the
+    // narrow `RuntimeContext` seam rather than a full `SuperThis`.
+    const rt = ensureRuntimeContext();
 
     if (all || line || data || sse || delta || full || block || stats || image || imageDir) {
-      const streamId = sthis.nextId().str;
+      const streamId = rt.nextId().str;
       const intervalMs = parseInt(statsInterval, 10) || 1000;
       const pipeline = body
         .pipeThrough(createStatsCollector(streamId, intervalMs))
         .pipeThrough(createLineStream(streamId))
         .pipeThrough(createDataStream(streamId))
         .pipeThrough(createSseStream(streamId))
-        .pipeThrough(createDeltaStream(streamId, () => sthis.nextId().str))
-        .pipeThrough(createSectionsStream(streamId, () => sthis.nextId().str));
+        .pipeThrough(createDeltaStream(streamId, () => rt.nextId().str))
+        .pipeThrough(createSectionsStream(streamId, () => rt.nextId().str));
       // .pipeThrough(createImageStream(streamId))
       // .pipeThrough((all || full) ? createFullStream(streamId) : passthrough<unknown, unknown>(() => {}));
 
