@@ -293,6 +293,25 @@ export default function VibeIframeWrapper() {
     setSearchParam(next, { replace: true });
   }, [isOwner, searchParam, setSearchParam, generation.sendPrompt, vctx.sthis]);
 
+  // First-build refetch (#2518 / #2677 from-scratch case). A brand-new vibe has no
+  // `apps` row until codegen persists its first build, so getAppByFsId resolves
+  // not-found and the route latches `notFound` — and nothing else ever refetches
+  // (setRetryCount is otherwise only bumped by the access-request flow). Once the
+  // owner's first build has streamed its first code block (phase "live"), the dev
+  // row is being written, so poll the grant until it flips to owner and the live
+  // app loads. Self-cancels when `notFound` clears (deps change tears down the
+  // interval); a failed turn never reaches "live", so this never polls forever,
+  // and a 10× cap bounds the worst case (~20s) if the write never lands.
+  useEffect(() => {
+    if (!(notFound && isOwner) || generation.phase !== "live") return;
+    let tries = 0;
+    const id = setInterval(() => {
+      setRetryCount((c) => c + 1);
+      if (++tries >= 10) clearInterval(id);
+    }, 2000);
+    return () => clearInterval(id);
+  }, [notFound, isOwner, generation.phase]);
+
   // The edit affordance, routed by ownership at the moment of the write
   // (§2 "Ownership decides, at the write"):
   //   - Owner → generate in place: sendPrompt drives the in-card codegen stream.
@@ -936,6 +955,15 @@ export default function VibeIframeWrapper() {
   // (vibe-tour-chips-edit; supersedes the §1b phase gate.)
   const showGenStream = generation.isGenerating;
 
+  // An owner landing on their just-created vibe resolves not-found (no `apps` row
+  // until the first build persists). That isn't "App not available" — it's a
+  // first-build construction state: the generation (enabled via isOwner) is already
+  // firing from the carried ?prompt64. Render the stream here instead of the
+  // not-available text; the refetch effect above flips us to the granted/live view
+  // once the build persists. `prompt64` covers the window before the auto-fire
+  // scrubs it; `isGenerating` covers the rest — no flicker between the two.
+  const pendingFirstBuild = notFound && isOwner && (searchParam.get("prompt64") !== null || generation.isGenerating);
+
   return (
     <>
       {/* Iframe — rendered as soon as iframeUrl is known. Hidden behind the grid
@@ -1076,6 +1104,14 @@ export default function VibeIframeWrapper() {
                   </div>
                 </div>
               </div>
+            </div>
+          ) : pendingFirstBuild ? (
+            <div style={{ maxWidth: 500, width: "100%", margin: "0 16px" }}>
+              <GenerationStreamView
+                blocks={generation.blocks}
+                messages={generation.counts.messages}
+                lines={generation.counts.lines}
+              />
             </div>
           ) : notFound ? (
             <div className="text-center text-lg font-semibold" style={{ color: "var(--vibes-text-primary)" }}>
