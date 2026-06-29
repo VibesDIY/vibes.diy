@@ -85,9 +85,6 @@ importers:
       '@fireproof/core':
         specifier: 0.24.19
         version: 0.24.19(bufferutil@4.1.0)(react@19.2.7)(typescript@6.0.3)(utf-8-validate@6.0.6)
-      '@fireproof/core-runtime':
-        specifier: 0.24.19
-        version: 0.24.19(typescript@6.0.3)
       '@fireproof/core-types-base':
         specifier: 0.24.19
         version: 0.24.19(typescript@6.0.3)
@@ -184,9 +181,6 @@ importers:
       '@adviser/cement':
         specifier: ^0.5.34
         version: 0.5.34(patch_hash=2f6391e0a56fe610ad9ae72430b603360ee9c00812af21a792562791454613c7)(typescript@6.0.3)
-      '@fireproof/core-runtime':
-        specifier: 0.24.19
-        version: 0.24.19(typescript@6.0.3)
       '@vibes.diy/identity':
         specifier: workspace:*
         version: link:../../vibes.diy/identity
@@ -323,9 +317,6 @@ importers:
       '@fireproof/core':
         specifier: 0.24.19
         version: 0.24.19(bufferutil@4.1.0)(react@19.2.7)(typescript@6.0.3)(utf-8-validate@6.0.6)
-      '@fireproof/core-runtime':
-        specifier: 0.24.19
-        version: 0.24.19(typescript@6.0.3)
       '@fireproof/core-types-base':
         specifier: 0.24.19
         version: 0.24.19(typescript@6.0.3)
@@ -439,9 +430,6 @@ importers:
       '@fireproof/core':
         specifier: 0.24.19
         version: 0.24.19(bufferutil@4.1.0)(react@19.2.7)(typescript@6.0.3)(utf-8-validate@6.0.6)
-      '@fireproof/core-runtime':
-        specifier: 0.24.19
-        version: 0.24.19(typescript@6.0.3)
       '@fireproof/core-types-base':
         specifier: 0.24.19
         version: 0.24.19(typescript@6.0.3)
@@ -637,9 +625,6 @@ importers:
       '@fireproof/core':
         specifier: 0.24.19
         version: 0.24.19(bufferutil@4.1.0)(react@19.2.7)(typescript@6.0.3)(utf-8-validate@6.0.6)
-      '@fireproof/core-runtime':
-        specifier: 0.24.19
-        version: 0.24.19(typescript@6.0.3)
       '@fireproof/core-types-base':
         specifier: 0.24.19
         version: 0.24.19(typescript@6.0.3)
@@ -756,9 +741,6 @@ importers:
       '@fireproof/core':
         specifier: 0.24.19
         version: 0.24.19(bufferutil@4.1.0)(react@19.2.7)(typescript@6.0.3)(utf-8-validate@6.0.6)
-      '@fireproof/core-runtime':
-        specifier: 0.24.19
-        version: 0.24.19(typescript@6.0.3)
       '@fireproof/core-types-base':
         specifier: 0.24.19
         version: 0.24.19(typescript@6.0.3)
@@ -802,9 +784,6 @@ importers:
       '@fireproof/core-cli':
         specifier: 0.24.19
         version: 0.24.19(@pnpm/logger@5.2.0)(typescript@6.0.3)
-      '@fireproof/core-runtime':
-        specifier: 0.24.19
-        version: 0.24.19(typescript@6.0.3)
       '@fireproof/core-types-base':
         specifier: 0.24.19
         version: 0.24.19(typescript@6.0.3)
@@ -872,9 +851,6 @@ importers:
       '@adviser/cement':
         specifier: ^0.5.34
         version: 0.5.34(patch_hash=2f6391e0a56fe610ad9ae72430b603360ee9c00812af21a792562791454613c7)(typescript@6.0.3)
-      '@fireproof/core-runtime':
-        specifier: 0.24.19
-        version: 0.24.19(typescript@6.0.3)
       '@fireproof/core-types-base':
         specifier: 0.24.19
         version: 0.24.19(typescript@6.0.3)
@@ -940,9 +916,6 @@ importers:
       '@adviser/cement':
         specifier: ^0.5.34
         version: 0.5.34(patch_hash=2f6391e0a56fe610ad9ae72430b603360ee9c00812af21a792562791454613c7)(typescript@6.0.3)
-      '@fireproof/core-runtime':
-        specifier: 0.24.19
-        version: 0.24.19(typescript@6.0.3)
       '@fireproof/core-types-base':
         specifier: 0.24.19
         version: 0.24.19(typescript@6.0.3)
@@ -998,9 +971,6 @@ importers:
       '@cloudflare/puppeteer':
         specifier: ^1.1.0
         version: 1.1.0(bufferutil@4.1.0)(utf-8-validate@6.0.6)
-      '@fireproof/core-runtime':
-        specifier: 0.24.19
-        version: 0.24.19(typescript@6.0.3)
       '@fireproof/core-types-base':
         specifier: 0.24.19
         version: 0.24.19(typescript@6.0.3)
@@ -1047,9 +1017,6 @@ importers:
       '@cloudflare/workers-types':
         specifier: ^4.20260617.1
         version: 4.20260617.1
-      '@fireproof/core-runtime':
-        specifier: 0.24.19
-        version: 0.24.19(typescript@6.0.3)
       '@fireproof/core-types-base':
         specifier: 0.24.19
         version: 0.24.19(typescript@6.0.3)
@@ -1108,9 +1075,6 @@ importers:
       '@cloudflare/workers-types':
         specifier: 4.20260617.1
         version: 4.20260617.1
-      '@fireproof/core-runtime':
-        specifier: 0.24.19
-        version: 0.24.19(typescript@6.0.3)
       '@fireproof/core-types-base':
         specifier: 0.24.19
         version: 0.24.19(typescript@6.0.3)
@@ -1314,9 +1278,6 @@ importers:
       '@cloudflare/workers-types':
         specifier: 4.20260617.1
         version: 4.20260617.1
-      '@fireproof/core-runtime':
-        specifier: ^0.24.19
-        version: 0.24.19(typescript@6.0.3)
       '@fireproof/core-types-base':
         specifier: ^0.24.19
         version: 0.24.19(typescript@6.0.3)
@@ -1351,9 +1312,6 @@ importers:
       '@emotion/css':
         specifier: ^11.13.5
         version: 11.13.5
-      '@fireproof/core-runtime':
-        specifier: 0.24.19
-        version: 0.24.19(typescript@6.0.3)
       '@fireproof/use-fireproof':
         specifier: 0.24.19
         version: 0.24.19(@adviser/cement@0.5.34(patch_hash=2f6391e0a56fe610ad9ae72430b603360ee9c00812af21a792562791454613c7)(typescript@6.0.3))(bufferutil@4.1.0)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(typescript@6.0.3)(utf-8-validate@6.0.6)
@@ -1446,9 +1404,6 @@ importers:
       '@fireproof/core':
         specifier: 0.24.19
         version: 0.24.19(bufferutil@4.1.0)(react@19.2.7)(typescript@6.0.3)(utf-8-validate@6.0.6)
-      '@fireproof/core-runtime':
-        specifier: 0.24.19
-        version: 0.24.19(typescript@6.0.3)
       '@fireproof/core-types-protocols-dashboard':
         specifier: 0.24.19
         version: 0.24.19(typescript@6.0.3)
