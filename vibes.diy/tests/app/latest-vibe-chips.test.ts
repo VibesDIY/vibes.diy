@@ -92,6 +92,15 @@ describe("latestTurnChips", () => {
     const olderWithChips = turn("2026-06-27T02:00:00Z", ["Built it.", "▸ Add a high score"], [], "fs-v1");
     expect(latestTurnChips([seedNoChips, olderWithChips], "fs-v1")).toEqual(["Add a high score"]);
   });
+
+  it("keeps the chip fallback within the pinned fsId — never another version's draft (Codex P2)", () => {
+    // Pinned to fs-v1 (no chips); a NEWER draft on fs-v2 has chips. A member is
+    // passed both turns, but the fallback must stay on the viewed version, so the
+    // draft's chips must NOT leak onto the v1 snapshot.
+    const newerDraft = turn("2026-06-27T03:00:00Z", ["Draft work", "▸ Draft chip"], [], "fs-v2");
+    const pinnedNoChips = turn("2026-06-27T02:00:00Z", ["File: /App.jsx"], [], "fs-v1");
+    expect(latestTurnChips([newerDraft, pinnedNoChips], "fs-v1")).toEqual([]);
+  });
 });
 
 describe("chipsFromNarration", () => {

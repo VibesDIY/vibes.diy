@@ -223,12 +223,17 @@ export function latestTurnChips(turns: readonly ResChatResponseTurn[], fsId?: st
   // The pinned turn carried no `▸` options — e.g. a CLI-seeded generation turn
   // whose narration was just `File: /App.jsx`, or a code turn that ended without
   // the interview tail. Rather than show an empty card, fall back to the newest
-  // OTHER turn that actually has chips. Callers pass an already access-filtered
-  // list (`getVibeChips` restricts non-members to the deployed version and its
-  // talk-only turns), so this can never surface an unpublished draft's chips —
-  // it's how a "talk-only" suggestions turn (fsId null, inheriting the deployed
-  // version) lights up the card.
-  for (const turn of turns) {
+  // OTHER turn that actually has chips.
+  //
+  // When a version is PINNED, keep the fallback WITHIN that version (same fsId).
+  // Members are passed every turn (they may see drafts), so an unrestricted scan
+  // could surface a newer DIFFERENT-version draft's chips on the snapshot being
+  // viewed — breaking the version pinning this projection promises (Codex P2).
+  // With no fsId pinned (e.g. `/vibe/$owner/$app` with no version) we scan all,
+  // newest-first. Non-members are unaffected either way: `getVibeChips` already
+  // hard-restricts their candidate list to the deployed `fsId`.
+  const fallbackPool = fsId ? turns.filter((t) => t.fsId === fsId) : turns;
+  for (const turn of fallbackPool) {
     if (turn === pinned) continue;
     const chips = chipsForTurn(turn);
     if (chips.length > 0) return chips;
