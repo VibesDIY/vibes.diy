@@ -32,7 +32,16 @@ import { describe, it, expect } from "vitest";
 import { mkdtempSync, readdirSync, readFileSync, writeFileSync, existsSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { hashStringSync } from "@fireproof/core-runtime";
+import {
+  hashStringSync,
+  hashStringAsync as fpHashStringAsync,
+  hashObjectAsync as fpHashObjectAsync,
+} from "@fireproof/core-runtime";
+import {
+  hashStringSync as exHashStringSync,
+  hashStringAsync as exHashStringAsync,
+  hashObjectAsync as exHashObjectAsync,
+} from "../runtime/hashing.js";
 import { ensureSuperThis } from "../index.js";
 import { getKeyBag } from "../node.js";
 import type { JWKPrivate, DeviceIdKeyBagItem, SuperThis } from "../index.js";
@@ -151,6 +160,22 @@ describe("keybag golden — contract locks", () => {
     // equals this literal, which catches a change to the key STRING itself.
     expect(hashStringSync("FIREProof:deviceId")).toBe(DEVICE_ID);
     expect(`${DEVICE_ID}.json`).toBe(DEVICE_ID_FILENAME);
+  });
+
+  // Bucket E Phase 4 (T2) cross-verification: the in-repo lifted hashes must be
+  // byte-identical to the fireproof originals. The keybag now computes its on-disk
+  // keys via the EXTRACTED hashStringSync/Async (key-bag.ts), so this proves the
+  // lift can't silently relocate keys or alter the cert subjectKeyIdentifier.
+  it("extracted hashing == fireproof hashing (byte-identical)", async () => {
+    expect(exHashStringSync("FIREProof:deviceId")).toBe(DEVICE_ID);
+    expect(exHashStringSync("FIREProof:deviceId")).toBe(hashStringSync("FIREProof:deviceId"));
+    for (const s of ["", "FIREProof:deviceId", "https://vibes.diy/api/app?vibe=a--b", "héllo-✓"]) {
+      expect(exHashStringSync(s)).toBe(hashStringSync(s));
+      expect(await exHashStringAsync(s)).toBe(await fpHashStringAsync(s));
+    }
+    for (const o of [{ a: 1, b: "x" }, { z: [1, 2, 3], a: true }, { nested: { k: "v" } }]) {
+      expect(await exHashObjectAsync(o)).toBe(await fpHashObjectAsync(o));
+    }
   });
 });
 

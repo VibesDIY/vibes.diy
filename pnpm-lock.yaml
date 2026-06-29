@@ -1349,6 +1349,9 @@ importers:
       '@adviser/cement':
         specifier: ^0.5.34
         version: 0.5.34(patch_hash=2f6391e0a56fe610ad9ae72430b603360ee9c00812af21a792562791454613c7)(typescript@6.0.3)
+      '@adviser/ts-xxhash':
+        specifier: ~1.0.2
+        version: 1.0.2
       '@clerk/shared':
         specifier: ^4.22.0
         version: 4.22.0(react-dom@19.2.7(react@19.2.7))(react@19.2.7)

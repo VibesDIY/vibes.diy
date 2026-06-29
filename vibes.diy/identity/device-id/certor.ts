@@ -13,7 +13,7 @@ import { decodeJwt } from "jose";
 import { base58btc } from "multiformats/bases/base58";
 import { sha1 } from "multiformats/hashes/sha1";
 import { sha256 } from "multiformats/hashes/sha2";
-import { deepFreeze } from "@fireproof/core-runtime";
+import { deepFreeze } from "../runtime/hashing.js";
 
 export class Certor implements CertorIf {
   readonly #cert: CertificatePayload;
