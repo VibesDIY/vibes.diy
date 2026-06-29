@@ -1,5 +1,13 @@
 import { describe, expect, it } from "vitest";
-import { isBuildNotification, isUserNotifyShard, userNotifyShardFor, USER_NOTIFY_SHARD_PREFIX } from "@vibes.diy/api-types";
+import {
+  isBuildNotification,
+  isUserNotifyShard,
+  userNotifyShardFor,
+  USER_NOTIFY_SHARD_PREFIX,
+  codegenShardForUser,
+  shardBelongsToUser,
+  MAX_ROLL_INDEX,
+} from "@vibes.diy/api-types";
 
 // `isBuildNotification` is the single source of truth for the user-notify fan-out
 // rule: build notifications are delivered to every connection (including the
@@ -45,5 +53,47 @@ describe("user-notify shard", () => {
     expect(isUserNotifyShard("550e8400-e29b-41d4-a716-446655440000")).toBe(false);
     expect(isUserNotifyShard("alice--my-app")).toBe(false);
     expect(isUserNotifyShard("")).toBe(false);
+  });
+});
+
+// The per-user codegen shard FAMILY (cold-start + admission-control auto-roll).
+// `codegenShardForUser(u, n)` mints the n-th shard; `shardBelongsToUser` is the
+// codegen-plane registration guard — it must admit the bounded family while
+// rejecting forged / out-of-range suffixes so the per-user subscriber set stays
+// capped at MAX_ROLL_INDEX + 1.
+describe("codegen shard family", () => {
+  const uid = "user_123";
+  const base = userNotifyShardFor(uid);
+
+  it("n=0 is the base notify shard (passes the notify guard for free)", () => {
+    expect(codegenShardForUser(uid, 0)).toBe(base);
+    // negative/0 both collapse to base
+    expect(codegenShardForUser(uid, -1)).toBe(base);
+    expect(isUserNotifyShard(codegenShardForUser(uid, 0))).toBe(true);
+  });
+
+  it("n>=1 appends a ~n suffix and stays within the notify prefix", () => {
+    expect(codegenShardForUser(uid, 1)).toBe(`${base}~1`);
+    expect(codegenShardForUser(uid, MAX_ROLL_INDEX)).toBe(`${base}~${MAX_ROLL_INDEX}`);
+    // Rolled shards are still notify-prefixed, so the codegen registration's
+    // isUserNotifyShard gate lets them through to shardBelongsToUser.
+    expect(isUserNotifyShard(codegenShardForUser(uid, 3))).toBe(true);
+  });
+
+  it("shardBelongsToUser accepts the base and in-range suffixes", () => {
+    expect(shardBelongsToUser(base, uid)).toBe(true);
+    expect(shardBelongsToUser(`${base}~1`, uid)).toBe(true);
+    expect(shardBelongsToUser(`${base}~${MAX_ROLL_INDEX}`, uid)).toBe(true);
+  });
+
+  it("rejects another user's family, forged/non-numeric suffixes, and out-of-range", () => {
+    expect(shardBelongsToUser(userNotifyShardFor("user_999"), uid)).toBe(false);
+    expect(shardBelongsToUser(`${base}~0`, uid)).toBe(false); // 0 is not a roll suffix (base is unsuffixed)
+    expect(shardBelongsToUser(`${base}~01`, uid)).toBe(false); // leading zero
+    expect(shardBelongsToUser(`${base}~${MAX_ROLL_INDEX + 1}`, uid)).toBe(false); // out of range
+    expect(shardBelongsToUser(`${base}~`, uid)).toBe(false); // empty suffix
+    expect(shardBelongsToUser(`${base}~1a`, uid)).toBe(false); // non-numeric
+    expect(shardBelongsToUser(`${base}~1~2`, uid)).toBe(false); // nested
+    expect(shardBelongsToUser(`${base}extra`, uid)).toBe(false); // no separator
   });
 });

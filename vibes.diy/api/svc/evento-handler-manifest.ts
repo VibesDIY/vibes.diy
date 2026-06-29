@@ -1,6 +1,6 @@
 import { EventoHandler } from "@adviser/cement";
 import { PROBE_MODES, shardsForReq, type ReqType, type ShardKind } from "@vibes.diy/api-types";
-import { gated } from "./shard-gate.js";
+import { gated, admissionGated } from "./shard-gate.js";
 import { ensureAppSlugItemEvento } from "./public/ensure-app-slug-item.js";
 import { openChat } from "./public/open-chat.js";
 import { promptChatSection } from "./public/prompt-chat-section.js";
@@ -218,5 +218,15 @@ export function handlersForShard(kind: ShardKind): EventoHandler[] {
   // (vibe shard) the inline-key identity check run BEFORE the handler. `gated`
   // preserves `hash`/`validate`/`type`/`post`, so composition order and the
   // parity tests are unaffected.
-  return handlerManifest.filter((e) => allowedKinds(e.reqType).includes(kind)).map((e) => gated(e.reqType, e.handler));
+  //
+  // prompt-chat-section (the heavy codegen stream) additionally gets the codegen
+  // admission gate INSIDE `gated` — kind/identity first, then admission, so only
+  // legitimately-placed codegen streams count toward the per-user DO budget. The
+  // gate is a no-op unless a CodegenAdmission holder is present (codegen plane).
+  return handlerManifest
+    .filter((e) => allowedKinds(e.reqType).includes(kind))
+    .map((e) => {
+      const inner = e.reqType === "vibes.diy.req-prompt-chat-section" ? admissionGated(e.handler) : e.handler;
+      return gated(e.reqType, inner);
+    });
 }

@@ -20,6 +20,9 @@ export interface CFEnv {
   MAX_INVITES?: number;
   MAX_LEDGERS?: number;
   MAX_APPID_BINDINGS?: number;
+  // Codegen-DO admission limit (concurrent streams) — overrides
+  // MAX_CONCURRENT_CODEGEN_STREAMS default when set.
+  MAX_CONCURRENT_CODEGEN_STREAMS?: number;
 
   CLERK_PUBLISHABLE_KEY: string;
   CLOUD_SESSION_TOKEN_PUBLIC: string;

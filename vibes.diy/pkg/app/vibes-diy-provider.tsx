@@ -42,6 +42,10 @@ export interface VibesDiyWebVars {
     // VIBES_SVC_PORT: string;
 
     CLERK_PUBLISHABLE_KEY: string;
+    // Cold-start flag (opt-in): when "true", pin each authenticated user's heavy
+    // codegen chat to a stable per-user DO shard (warm reuse) with admission-control
+    // auto-roll, instead of a fresh random-UUID DO per chat. Off → legacy behavior.
+    CODEGEN_PER_USER_SHARD?: string;
   };
 }
 
@@ -251,20 +255,31 @@ function LiveCycleVibesDiyProvider({ children, webVars }: { children: React.Reac
   // first property access, so the heavy ChatSessions WS never opens on non-chat
   // pages (/settings, /vibes/mine, …) that only touch sharedApi/vibeApi.
   // (#2265 Track B, Phase 5 — Option C)
+  const perUserCodegenShard = realCtx.webVars.env.CODEGEN_PER_USER_SHARD === "true";
   realCtx.chatApi = makeLazyChatApi(
-    // vibesDiyApis.get(apiUrl).once(factory): module-level cache persists the
-    // instance across re-renders even though the proxy shell is recreated.
-    () =>
-      vibesDiyApis.get(apiUrl).once(() => {
-        // Perf hint: on a viewer route, pin this WS to a deterministic per-vibe
-        // DO shard so the user joins whatever DO is already warm for that vibe.
-        // The shard is decided once at construction; SPA navigation does not
-        // change it. For non-vibe routes we omit shardKey so codegen traffic
-        // keeps its random-UUID load-balancing.
-        const vibeMatch = typeof window !== "undefined" ? window.location.pathname.match(/^\/vibe\/([^/]+)\/([^/]+)/) : null;
-        const shardKey = vibeMatch ? `${vibeMatch[1]}--${vibeMatch[2]}` : undefined;
-        return new VibesDiyApi({ apiUrl, shardKey, getToken: clerkTokenSetup });
-      }) as VibesDiyApiIface
+    // The build() closure re-reads Clerk + route on each new proxy (recreated per
+    // render); the module-level `vibesDiyApis` cache keys identity, so the right
+    // instance is reused across re-renders.
+    () => {
+      const vibeMatch = typeof window !== "undefined" ? window.location.pathname.match(/^\/vibe\/([^/]+)\/([^/]+)/) : null;
+      // Per-user codegen pinning (flagged, cold-start design): on a NON-vibe route,
+      // an authenticated user pins their heavy codegen chat to a stable per-user
+      // shard family (warm reuse + admission-control auto-roll). Deferred until
+      // Clerk loads — same reasoning as deferredSharedReadShard.
+      const codegenUserId = perUserCodegenShard && !vibeMatch && clerk.loaded && clerk.user?.id ? clerk.user.id : undefined;
+      // Perf hint: on a viewer route, pin to a deterministic per-vibe DO shard so
+      // visitors join whatever DO is already warm for that vibe. For other non-vibe
+      // routes without per-user pinning, omit shardKey → random-UUID load-balancing.
+      const shardKey = vibeMatch ? `${vibeMatch[1]}--${vibeMatch[2]}` : undefined;
+      // Cache key MUST include the codegen shard identity, not the bare /api URL:
+      // otherwise a pre-Clerk/anon instance (or a previous user's) would win the
+      // cache forever and never move to the per-user shard (Codex review). Anon /
+      // per-vibe keep keying by apiUrl (legacy behavior).
+      const cacheKey = codegenUserId !== undefined ? `${apiUrl}#codegen-user:${codegenUserId}` : apiUrl;
+      return vibesDiyApis.get(cacheKey).once(() => {
+        return new VibesDiyApi({ apiUrl, shardKey, codegenUserId, getToken: clerkTokenSetup });
+      }) as VibesDiyApiIface;
+    }
   );
 
   // AppSessions connection factory, keyed by an arbitrary vibe key. Same data
