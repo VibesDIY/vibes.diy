@@ -28,6 +28,7 @@
     "test:coverage": "vitest run --coverage",
     "test:all": "cd vibes.diy/tests/app && pnpm run test && cd ../simple-chat && pnpm run test && cd ../../../prompts/tests && pnpm run test && cd ../../use-vibes/tests && pnpm run test && cd ../../call-ai/tests && pnpm run test",
     "playwright:claude": "playwright test -c claude-browse-vibes/playwright.config.js",
+    "playwright:install": "bash ./scripts/install-pw-chromium.sh",
     "test:screenshot:local": "node claude-browse-vibes/test-screenshot-api.js",
     "format": "prettier --write --log-level silent --cache --cache-strategy content --cache-location .prettiercache .",
     "format:check": "prettier --check --cache --cache-strategy content --cache-location .prettiercache .",
