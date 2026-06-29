@@ -75,8 +75,11 @@ Skip PR creation only when the user has explicitly said they don't want one yet,
 
 Changes that are purely in `docs/` or `notes/` directories can be committed and pushed directly to `main` — no topic branch or PR needed. These are documentation-only changes with no runtime impact, so the branch/PR overhead is unnecessary.
 
-## Ask before merging PRs
+## Merging PRs — autonomous by default, hold for human on risky/own-deploy changes
 
-Never merge PRs without explicit user confirmation. The workflow is: create PR → tag from PR branch → deploy and validate in prod → then merge only after the user says to.
+Merge policy lives in [`pr-lifecycle.md` § Autonomous merge loop](pr-lifecycle.md#autonomous-merge-loop--and-when-to-hold-for-a-human). In short:
 
-The user deploys and validates from the PR branch before merging. Merging prematurely bypasses that validation step and can't be easily undone. After creating a PR, ask before running `gh pr merge`. Same rule applies to setting auto-merge — the deploy tag goes on the PR branch commit, not on main.
+- **Garden-variety changes auto-merge** (rebase) once Charlie's happy and CI is green — no per-merge confirmation needed.
+- **Risky / own-deploy changes are held for an explicit human merge** — schema/migration, DO topology, new bindings/infra, anything with a non-trivial rollback story, at any size.
+
+For those **hold-for-human** cases, the workflow is the deploy-first one: create PR → tag from the PR branch → deploy and validate in prod → **merge only after the user says to** (the deploy tag goes on the PR-branch commit, not main; merging prematurely bypasses that validation and can't be easily undone). When in doubt which bucket a change is in, treat it as risky and hold.
