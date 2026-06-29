@@ -78,7 +78,8 @@ PASS = signed-in, list renders, a vibe opens (iframe paints), zero 4xx/5xx.
 ## Step 2 — CLI device-id round-trip, headless seed (keybag write→read→sign + worker verify)
 
 ```sh
-npx vibes-diy@latest --version          # must equal the npm `latest` dist-tag
+# Run the version check with VIBES_DEVICE_ID stripped — see the warning below.
+env -u VIBES_DEVICE_ID npx vibes-diy@latest --version   # must equal the npm `latest` dist-tag
 SCRATCH="$(mktemp -d)"
 HOME="$SCRATCH" VIBES_DEVICE_ID="$VIBES_DEVICE_ID" \
   npx vibes-diy@latest list --api-url 'https://vibes.diy/api?.stable-entry.=cli' \
@@ -87,6 +88,15 @@ echo "exit:$?  lines:$(wc -l < "$SCRATCH/out.txt")"
 head "$SCRATCH/out.txt"
 rm -rf "$SCRATCH"                        # delete the scratch keybag
 ```
+
+> **Any `vibes-diy` invocation seeds the keybag — even `--version`.** `main()`
+> calls `seedDeviceIdFromEnv(sthis)` (`vibes-diy/cli/main.ts`) **before** cmd-ts
+> parses the subcommand, so with `$VIBES_DEVICE_ID` set, a bare
+> `npx vibes-diy@latest --version` in your real shell writes the prod device cert
+> into `~/.fireproof/keybag` — outside the scratch `HOME`, so the later
+> `rm -rf "$SCRATCH"` won't remove it. **Run every non-`list` invocation (version,
+> `--help`) with `env -u VIBES_DEVICE_ID`, or inside the scratch `HOME`.** Only the
+> auth check (`list`) should see the cert, and only under an isolated `HOME`.
 
 PASS = exit 0 and a **personalized** listing of real vibes (proves seeded
 `setDeviceId` write → `getDeviceId` read → ES256 token sign → prod-worker
@@ -172,6 +182,10 @@ expected. Clean up the local `HOME`/keybag after.
 - `rm -rf` every scratch `HOME` (they hold device-cert keybags) and
   `rm -f /tmp/state.*.json` when done. Write storage-state files under `/tmp`,
   never in the repo (`clerk-authed-shot.mjs` refuses a repo-local path).
+- **Also check your real `~/.fireproof/keybag`** — any stray `vibes-diy` run with
+  `$VIBES_DEVICE_ID` set but no isolated `HOME` (e.g. an unguarded `--version`)
+  seeds the prod cert there. `ls ~/.fireproof/keybag` at the end and
+  `rm -rf ~/.fireproof/keybag` if anything landed.
 - Report a PASS/FAIL line per step with the real evidence (exit codes, a sample
   of the listing, error text + the matching `wrangler tail` line on failure). If
   green, state explicitly that **existing credentials verified with no re-login**.
