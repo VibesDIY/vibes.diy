@@ -59,7 +59,13 @@ export class DeviceIdApiToken implements FPApiToken {
     if (rCa.isErr()) {
       return Result.Err(rCa);
     }
-    const verify = new DeviceIdVerifyMsg(this.sthis.txt.base64, [rCa.Ok()], { maxAge: 3600, ...this.opts });
+    // #2671: when DEVICE_ID_REQUIRE_CA_SIGNATURE is enabled, reject device tokens
+    // that don't carry a CA-signature-verifiable cert chain (the `x5c#jwt` header).
+    // Default-off so older published CLIs keep authenticating during rollout; flip
+    // to "true" in the worker env once the CA-signing CLI is published & adopted.
+    // (A present-but-invalid chain signature is ALWAYS rejected, flag or not.)
+    const requireCASignature = this.sthis.env.get("DEVICE_ID_REQUIRE_CA_SIGNATURE") === "true";
+    const verify = new DeviceIdVerifyMsg(this.sthis.txt.base64, [rCa.Ok()], { maxAge: 3600, requireCASignature, ...this.opts });
     const res = await verify.verifyWithCertificate(token, FPDeviceIDSessionSchema);
     if (res.valid) {
       const creatingUser = (res.certificate.certificate.asCert() as { creatingUser?: { type?: string; claims?: unknown } })

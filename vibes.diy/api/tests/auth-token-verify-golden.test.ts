@@ -8,14 +8,13 @@
 // cutover (facade → in-repo lift). The lift must keep every LEGITIMATE-input
 // assertion green.
 //
-// SECURITY (#2671): we deliberately do NOT assert that a forged, CA-never-signed
-// certificate is accepted. The one security case below asserts the DESIRED
-// outcome (forged cert → rejected) and is marked `it.fails` because the current
-// verifier wrongly accepts it (issuer-NAME trust, not CA-signature). When #2671
-// is hardened the verifier will reject → `it.fails` flips to failing-because-it-
-// passed → we remove the marker. So this tracks the fix without ever locking in
-// the bad behavior.
-import { describe, it, expect, beforeAll } from "vitest";
+// SECURITY (#2671): FIXED. The verifier now checks the CA's signature over the
+// embedded cert (carried as a `CERT+JWT` in the `x5c#jwt` header), not just that
+// the cert's `iss` string names the CA. The cases below pin: a forged
+// (CA-never-signed) cert is rejected, a spliced real-cert-over-different-key is
+// rejected, a genuine CA-signed token verifies, and the enforcement is gated by
+// DEVICE_ID_REQUIRE_CA_SIGNATURE (default-off for older-CLI compat during rollout).
+import { describe, it, expect, beforeAll, afterEach } from "vitest";
 import { ensureSuperThis } from "@fireproof/core-runtime";
 import { createTestDeviceCA, createTestUser, DeviceIdKey, DeviceIdSignMsg, DeviceIdCSR } from "@fireproof/core-device-id";
 import { generateKeyPair, exportJWK, SignJWT } from "jose";
@@ -24,6 +23,14 @@ import type { SuperThis } from "@fireproof/core-types-base";
 import { tokenApi } from "@vibes.diy/identity/server";
 // Browser `.` facade — what VibesDiyApi.getTokenClaims() actually imports.
 import { ClerkApiToken } from "@vibes.diy/identity";
+// The owned device-id signer (Node facade) — the only one that can embed the
+// CA-signed cert chain (`x5c#jwt`) the #2671 hardening requires. The fireproof
+// signer above is kept to construct the legacy / forged (CA-unsigned) shapes.
+import {
+  DeviceIdSignMsg as OwnedDeviceIdSignMsg,
+  DeviceIdKey as OwnedDeviceIdKey,
+  DeviceIdCSR as OwnedDeviceIdCSR,
+} from "@vibes.diy/identity/node";
 
 const fullParams = {
   nick: "nick",
@@ -78,12 +85,49 @@ describe("auth token verify — golden (SUT via @vibes.diy/identity/server)", { 
   });
 
   // --- SECURITY #2671: forged self-issued cert (CA never signed it) -----------
-  // The verifier trusts the embedded x5c cert by issuer-NAME match + self-
-  // consistent thumbprint and verifies the token with the cert's OWN key — it
-  // never checks the cert was CA-signed. So an attacker can mint a cert naming
-  // the CA as issuer, embed their own public key, and self-sign a passing token.
-  // DESIRED behavior is rejection; today it is wrongly accepted → `it.fails`.
-  it.fails("SECURITY #2671: a forged (CA-never-signed) cert token MUST be rejected", async () => {
+  // The legacy verifier trusted the embedded x5c cert by issuer-NAME match + self-
+  // consistent thumbprint and verified the token with the cert's OWN key — it never
+  // checked the cert was CA-signed. So an attacker could mint a cert naming the CA
+  // as issuer, embed their own public key, and self-sign a passing token.
+  //
+  // The fix: tokens now carry the CA-signed cert as a `CERT+JWT` in the `x5c#jwt`
+  // header, and the verifier checks that signature against the trusted CA's key.
+  // Enforcement (reject tokens lacking a verifiable chain signature) is gated by
+  // DEVICE_ID_REQUIRE_CA_SIGNATURE so older published CLIs keep working until the
+  // CA-signing CLI is rolled out; these tests pin the behavior with it enabled.
+  const ENFORCE_ENV = "DEVICE_ID_REQUIRE_CA_SIGNATURE";
+  afterEach(() => sthis.env.set(ENFORCE_ENV, "false"));
+
+  // Mint a LEGITIMATE token via the owned signer, embedding the CA-signed cert
+  // chain (`x5c#jwt`) the same way createDeviceIdGetToken does from the keybag.
+  async function mintCASignedToken() {
+    const key = await OwnedDeviceIdKey.create();
+    const csr = (await new OwnedDeviceIdCSR(sthis, key).createCSR({ commonName: "ca-signed" })).Ok();
+    const issued = (await ca.processCSR(csr, clerkClaim() as never)).Ok();
+    const now = Math.floor(Date.now() / 1000);
+    const token = await new OwnedDeviceIdSignMsg(
+      sthis.txt.base64,
+      key,
+      issued.certificatePayload as never,
+      issued.certificateJWT
+    ).sign(
+      {
+        iss: "ca-signed",
+        sub: "device-id",
+        deviceId: await key.fingerPrint(),
+        seq: 1,
+        exp: now + 120,
+        nbf: now - 2,
+        iat: now,
+        jti: "ca-signed-jti",
+      },
+      "ES256"
+    );
+    return token;
+  }
+
+  it("SECURITY #2671: a forged (CA-never-signed) cert token MUST be rejected when enforcing", async () => {
+    sthis.env.set(ENFORCE_ENV, "true");
     // Real cert payload only to copy the exact CA-issued shape.
     const realKey = await DeviceIdKey.create();
     const realCsr = (await new DeviceIdCSR(sthis, realKey).createCSR({ commonName: "real" })).Ok();
@@ -112,8 +156,65 @@ describe("auth token verify — golden (SUT via @vibes.diy/identity/server)", { 
     );
 
     const r = await api["device-id"].verify(forgedToken);
-    // DESIRED: the forgery is rejected. (Currently fails → tracked by it.fails / #2671.)
     expect(r.isErr()).toBe(true);
+  });
+
+  it("SECURITY #2671: stapling a real CA-signed cert over a forged device cert is rejected", async () => {
+    sthis.env.set(ENFORCE_ENV, "true");
+    // A real, CA-signed cert (+ its CERT+JWT) for some legitimate device.
+    const realKey = await DeviceIdKey.create();
+    const realCsr = (await new DeviceIdCSR(sthis, realKey).createCSR({ commonName: "real-spliced" })).Ok();
+    const issued = (await ca.processCSR(realCsr, clerkClaim() as never)).Ok();
+
+    // Attacker forges an x5c[0] cert carrying THEIR key (so the token signature
+    // verifies and the thumbprint is self-consistent), then staples the victim's
+    // genuine CA-signed `x5c#jwt`. The chain signature verifies against the CA, but
+    // its payload binds the victim's key — the cert<->x5c#jwt mismatch must reject.
+    const attackerKey = await DeviceIdKey.create();
+    const forgedCert = {
+      ...issued.certificatePayload,
+      certificate: { ...issued.certificatePayload.certificate, subjectPublicKeyInfo: await attackerKey.publicKey() },
+    };
+    const now = Math.floor(Date.now() / 1000);
+    const splicedToken = await new OwnedDeviceIdSignMsg(
+      sthis.txt.base64,
+      attackerKey as never,
+      forgedCert as never,
+      issued.certificateJWT
+    ).sign(
+      {
+        iss: "spliced",
+        sub: "device-id",
+        deviceId: await attackerKey.fingerPrint(),
+        seq: 1,
+        exp: now + 120,
+        nbf: now - 2,
+        iat: now,
+        jti: "spliced-jti",
+      },
+      "ES256"
+    );
+
+    const r = await api["device-id"].verify(splicedToken);
+    expect(r.isErr()).toBe(true);
+  });
+
+  it("SECURITY #2671: a genuine CA-signed token still verifies when enforcing", async () => {
+    sthis.env.set(ENFORCE_ENV, "true");
+    const token = await mintCASignedToken();
+    const r = await api["device-id"].verify(token);
+    expect(r.isOk()).toBe(true);
+    if (r.isOk()) expect(r.Ok().type).toBe("device-id");
+  });
+
+  it("SECURITY #2671: a legacy CA-unsigned token is accepted when NOT enforcing, rejected when enforcing", async () => {
+    // The fireproof helper mints the legacy shape (no x5c#jwt). Default-off keeps
+    // older CLIs working; flipping the flag closes the bypass.
+    const legacy = await user.getDashBoardToken();
+    sthis.env.set(ENFORCE_ENV, "false");
+    expect((await api["device-id"].verify(legacy.token)).isOk()).toBe(true);
+    sthis.env.set(ENFORCE_ENV, "true");
+    expect((await api["device-id"].verify(legacy.token)).isErr()).toBe(true);
   });
 
   // --- Clerk RS256 token verify (legitimate) ---------------------------------
