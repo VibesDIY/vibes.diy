@@ -77,9 +77,11 @@ class SuperThisImpl {
     now = typeof now === "number" ? now : new Date().getTime();
     const t = (0x1000000000000 + now).toString(16).replace(/^1/, "");
     const bin = this.crypto.randomBytes(10);
-    // verbatim: upstream is `(bin[1] & 0xf0) | (bin[1] | (0x08 && 0x0b))`; the
-    // `0x08 && 0x0b` short-circuits to `0x0b`, inlined here to satisfy tsgo.
-    bin[1] = (bin[1] & 0xf0) | (bin[1] | 0x0b);
+    // verbatim: upstream `(bin[1] & 0xf0) | (bin[1] | 0x08 && 0x0b)` parses with
+    // `&&` BELOW `|`, i.e. `(bin[1] & 0xf0) | ((bin[1] | 0x08) && 0x0b)`. The left
+    // of `&&` is always truthy, so the result is always `(bin[1] & 0xf0) | 0x0b`
+    // (low nibble forced to `b`). Written out so the precedence can't be misread.
+    bin[1] = (bin[1] & 0xf0) | 0x0b;
     const hex = Array.from(bin)
       .map((i: number) => i.toString(16).padStart(2, "0"))
       .join("");
