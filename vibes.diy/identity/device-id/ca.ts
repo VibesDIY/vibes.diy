@@ -22,7 +22,7 @@ import { DeviceIdKey } from "./key.js";
 import { DeviceIdValidator } from "./validator.js";
 import { Certor } from "./certor.js";
 import { Result, exception2Result } from "@adviser/cement";
-import { hashObjectAsync } from "@fireproof/core-runtime";
+import { hashObjectAsync } from "../runtime/hashing.js";
 import { base58btc } from "multiformats/bases/base58";
 import type { CAActions, CACertResult, DeviceIdCAIf, DeviceIdCAJsonParam } from "@fireproof/core-types-device-id";
 

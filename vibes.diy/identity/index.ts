@@ -15,7 +15,10 @@ export { ensureRuntimeContext, type RuntimeContext } from "./runtime-context.js"
 export { ClerkClaimSchema, ClerkEmailTemplateClaimSchema, type ClerkClaim } from "./clerk-claim.js";
 
 // --- Runtime context / logging helpers (core-runtime is browser-safe) ---
-export { ensureSuperThis, ensureLogger, runtimeFn, hashObjectSync, sts } from "@fireproof/core-runtime";
+export { ensureSuperThis, ensureLogger, runtimeFn, sts } from "@fireproof/core-runtime";
+// hashObjectSync is lifted in-repo (Bucket E Phase 4, T2); the rest stay on
+// core-runtime until T3/T4.
+export { hashObjectSync } from "./runtime/hashing.js";
 
 // --- Auth wire-types (type-only; erased at build) ---
 // Owned in-repo (Task 4 / Bucket B):

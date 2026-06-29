@@ -14,7 +14,7 @@
 // inferred Zod type never crosses the package declaration boundary (TS2883).
 import { KeyedResolvOnce, Lazy, Option } from "@adviser/cement";
 import type { URI } from "@adviser/cement";
-import { hashStringAsync, hashStringSync } from "@fireproof/core-runtime";
+import { hashStringAsync, hashStringSync } from "../runtime/hashing.js";
 import type { SuperThis, DeviceIdResult, JWKPrivate, DeviceIdKeyBagItem } from "@fireproof/core-types-base";
 import { z } from "zod";
 import { JWKPrivateSchema } from "../types/wire.js";
