@@ -30,6 +30,7 @@ function createSqliteVibesApiTables() {
     missingVibeEvents: sqlite.sqlMissingVibeEvents,
     landingEvents: sqlite.sqlLandingEvents,
     accessFunctionBindings: sqlite.sqlAccessFunctionBindings,
+    backendFunctionBindings: sqlite.sqlBackendFunctionBindings,
     accessFnOutputs: sqlite.sqlAccessFnOutputs,
   };
 }
@@ -70,6 +71,7 @@ export function createVibesApiTables(flavour: DBFlavour): VibesApiTables {
       missingVibeEvents: pg.sqlMissingVibeEvents,
       landingEvents: pg.sqlLandingEvents,
       accessFunctionBindings: pg.sqlAccessFunctionBindings,
+      backendFunctionBindings: pg.sqlBackendFunctionBindings,
       accessFnOutputs: pg.sqlAccessFnOutputs,
     } as unknown as VibesApiTables;
   }

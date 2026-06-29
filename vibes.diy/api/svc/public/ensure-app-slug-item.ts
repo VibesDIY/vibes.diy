@@ -34,6 +34,8 @@ import { ensureAppMetadata } from "../intern/ensure-app-metadata.js";
 import { ensurePushSeededChat } from "../intern/ensure-push-seeded-chat.js";
 import { calcEntryPointUrl } from "../entry-point-utils.js";
 import { processAccessBindings } from "../intern/process-access-bindings.js";
+import { processBackendBindings } from "../intern/process-backend-bindings.js";
+import { parseBackendConfig } from "../../../vibe/runtime/parse-backend-config.js";
 
 // Build a preAllocate-friendly prompt from pushed code. Picks the first
 // code-block (typically App.jsx), takes the first 50 lines, and labels
@@ -66,6 +68,20 @@ export async function ensureAppSlugItem(
         code: "app-slug-invalid",
       },
     } satisfies ResEnsureAppSlugInvalid);
+  }
+
+  // Reject a backend.js with an invalid schedule BEFORE any storage/DB mutation
+  // (#2856 B2b) — "reject sub-5s / over-1h / malformed intervals at push time with
+  // a clear error", with no partial commit. Persistence happens after ensure below.
+  const backendFile = req.fileSystem.find((f) => f.filename === "/backend.js" || f.filename.endsWith("/backend.js"));
+  if (backendFile && (backendFile.type === "code-block" || backendFile.type === "str-asset-block")) {
+    const parsedBackend = parseBackendConfig(backendFile.content as string);
+    if (parsedBackend.errors.length > 0) {
+      return Result.Ok({
+        type: "vibes.diy.res-error",
+        error: { message: `backend.js: ${parsedBackend.errors.join("; ")}`, code: "app-slug-invalid" },
+      } satisfies ResEnsureAppSlugInvalid);
+    }
   }
 
   const rAppSlugBinding = await ensureSlugBinding(vctx, {
@@ -144,6 +160,21 @@ export async function ensureAppSlugItem(
     console.warn(
       `ensureAppSlugItem: access binding processing failed for ${ensured.ownerHandle}/${ensured.appSlug}:`,
       rAccessBindings.Err()
+    );
+  }
+
+  // Persist the backend.js binding (#2856 B2b). The schedule was already validated
+  // in the early pre-check above, so a real push reaches here error-free; we only
+  // log a storage/DB failure (parity with access bindings — never block the push).
+  const rBackendBindings = await processBackendBindings(vctx, {
+    ownerHandle: ensured.ownerHandle,
+    appSlug: ensured.appSlug,
+    fullFileSystem,
+  });
+  if (rBackendBindings.isErr()) {
+    console.warn(
+      `ensureAppSlugItem: backend binding processing failed for ${ensured.ownerHandle}/${ensured.appSlug}:`,
+      rBackendBindings.Err()
     );
   }
 
