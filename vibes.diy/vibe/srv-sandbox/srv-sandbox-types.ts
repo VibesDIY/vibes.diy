@@ -31,7 +31,7 @@ export interface VibesDiySrvSandboxArgs {
   //
   // Optional: if absent the write proceeds (server/test paths that have no UI);
   // the browser provider always wires it, so production gets the gate. See #1968.
-  confirmAvatarUpdate?: (req: { cid: string; mimeType?: string; getURL?: string }) => Promise<boolean>;
+  confirmAvatarUpdate?: (req: { cid: string; mimeType?: string; getURL?: string; handle?: string }) => Promise<boolean>;
   // Stage C: hook the asset-host cookie bridge into the iframe boot
   // handshake. Called BEFORE we post vibe.evt.runtime.ack — the iframe
   // gates every RPC on that ack, so any meta.url the iframe ever sees

@@ -63,7 +63,7 @@ export async function uploadHandleAvatar({
   const body = (await res.json()) as { cid: string; getURL: string; size: number; uploadId: string };
 
   // 3. Preview/confirm gate (#1968) — getURL is the trusted server response.
-  const confirmed = await avatarConfirmController.request({ cid: body.cid, mimeType: file.type, getURL: body.getURL });
+  const confirmed = await avatarConfirmController.request({ cid: body.cid, mimeType: file.type, getURL: body.getURL, handle });
   if (!confirmed) return { ok: false, cancelled: true };
 
   // 4. Write per-handle; the server re-validates ownership of `handle`.

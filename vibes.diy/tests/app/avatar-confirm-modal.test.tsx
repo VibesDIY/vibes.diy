@@ -52,6 +52,39 @@ describe("AvatarConfirmModal preview derivation", () => {
     });
   });
 
+  it("shows the target handle on the consent card when supplied", async () => {
+    render(<AvatarConfirmModal />);
+
+    let decision: Promise<boolean>;
+    await act(async () => {
+      decision = avatarConfirmController.request({ cid: "bafyAVATAR123", mimeType: "image/png", handle: "meghan" });
+    });
+
+    expect(screen.getByText(/for handle/i)).toBeInTheDocument();
+    expect(screen.getByText("@meghan")).toBeInTheDocument();
+
+    await act(async () => {
+      avatarConfirmController.current?.resolve(false);
+      await decision;
+    });
+  });
+
+  it("omits the handle line when none is supplied", async () => {
+    render(<AvatarConfirmModal />);
+
+    let decision: Promise<boolean>;
+    await act(async () => {
+      decision = avatarConfirmController.request({ cid: "bafyAVATAR123", mimeType: "image/png" });
+    });
+
+    expect(screen.queryByText(/for handle/i)).not.toBeInTheDocument();
+
+    await act(async () => {
+      avatarConfirmController.current?.resolve(false);
+      await decision;
+    });
+  });
+
   it("shows no image when the host supplied no getURL for the CID", async () => {
     render(<AvatarConfirmModal />);
 
