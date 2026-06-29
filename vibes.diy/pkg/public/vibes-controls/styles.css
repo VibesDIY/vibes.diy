@@ -72,6 +72,15 @@
 /* Dark mode - neon variant colors */
 @media (prefers-color-scheme: dark) {
   :root {
+    /* Button base colors — dark-aware. Without these overrides the panel
+       buttons stay cream (#fffff0) with a near-black border that vanishes
+       against the dark card. Mirrors semantic.dark.button.*DarkAware in
+       vibes.diy/base/theme/tokens.ts so the SSR panel matches the React
+       VibesButton in dark mode. See #vibe-button-dark-mode. */
+    --vibes-button-bg: #2a2a2a;
+    --vibes-button-text: #e0e0e0;
+    --vibes-button-border: var(--vibes-gray-mid);
+
     /* Button icon colors swap */
     --vibes-button-icon-bg: var(--vibes-white);
     --vibes-button-icon-fill: #2a2a2a;
