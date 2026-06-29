@@ -107,4 +107,35 @@ describe("parseBackendConfig — interval validation", () => {
     expect(r.schedule?.raw).toBe("5m");
     expect(r.errors).toEqual([]);
   });
+
+  // Codex P2: interval extraction must anchor to the EXPORTED config object, not the
+  // first `scheduled: { interval }` anywhere in the source.
+  it("ignores a scheduled block in a non-config object declared before config", () => {
+    const r = parseBackendConfig(`
+      const defaults = { scheduled: { interval: "1s" } };
+      export async function scheduled(evt, ctx) {}
+      export const config = { scheduled: { interval: "5m" } };
+    `);
+    expect(r.errors).toEqual([]);
+    expect(r.schedule?.raw).toBe("5m");
+  });
+
+  it("does not register a schedule from a non-config object when there is no config export", () => {
+    const r = parseBackendConfig(`
+      const sample = { scheduled: { interval: "30s" } };
+      export async function scheduled(evt, ctx) {}
+    `);
+    expect(r.hasConfig).toBe(false);
+    expect(r.schedule).toBeUndefined();
+    expect(r.errors.join(" ")).toMatch(/requires a config\.scheduled\.interval/);
+  });
+
+  it("handles a config object with nested braces / sibling objects before scheduled", () => {
+    const r = parseBackendConfig(`
+      export async function scheduled(evt, ctx) {}
+      export const config = { meta: { tags: ["a", "b"] }, scheduled: { interval: "15m" } };
+    `);
+    expect(r.schedule?.intervalMs).toBe(900_000);
+    expect(r.errors).toEqual([]);
+  });
 });

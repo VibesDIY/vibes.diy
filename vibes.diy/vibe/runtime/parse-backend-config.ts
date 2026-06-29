@@ -63,9 +63,52 @@ function parseDurationMs(raw: string): number | undefined {
   return n * mult;
 }
 
-/** Extract the `config.scheduled.interval` string literal, scoped to the `scheduled:` block so a stray `interval:` elsewhere is ignored. */
+/**
+ * Slice the balanced `{ … }` object literal starting at `openIdx` (the index of the `{`),
+ * skipping braces that appear inside string/template literals. Returns `undefined` if unbalanced.
+ */
+function sliceBalancedObject(source: string, openIdx: number): string | undefined {
+  let depth = 0;
+  let quote: string | null = null;
+  for (let i = openIdx; i < source.length; i++) {
+    const ch = source[i];
+    if (quote !== null) {
+      if (ch === "\\") {
+        i++; // skip the escaped char
+        continue;
+      }
+      if (ch === quote) quote = null;
+      continue;
+    }
+    if (ch === '"' || ch === "'" || ch === "`") {
+      quote = ch;
+    } else if (ch === "{") {
+      depth++;
+    } else if (ch === "}") {
+      depth--;
+      if (depth === 0) return source.slice(openIdx, i + 1);
+    }
+  }
+  return undefined;
+}
+
+/** The `config` binding's object literal (`[export] const|let|var config = { … }`), brace-balanced — or `undefined` if absent. */
+function extractConfigObject(source: string): string | undefined {
+  const decl = /(?:export\s+)?(?:const|let|var)\s+config\s*=\s*\{/.exec(source);
+  if (decl === null) return undefined;
+  const openIdx = decl.index + decl[0].length - 1; // the `{`
+  return sliceBalancedObject(source, openIdx);
+}
+
+/**
+ * Extract `config.scheduled.interval`, anchored to the **exported `config` object** so a stray
+ * `scheduled: { interval: … }` in a helper/defaults/sample object elsewhere in the file can neither
+ * hijack the schedule nor register one when no `config` export supplies it (per Codex review).
+ */
 function extractIntervalLiteral(source: string): string | undefined {
-  const m = /scheduled\s*:\s*\{[^}]*?\binterval\s*:\s*["']([^"']+)["']/s.exec(source);
+  const configObj = extractConfigObject(source);
+  if (configObj === undefined) return undefined;
+  const m = /scheduled\s*:\s*\{[^}]*?\binterval\s*:\s*["']([^"']+)["']/s.exec(configObj);
   return m?.[1];
 }
 
