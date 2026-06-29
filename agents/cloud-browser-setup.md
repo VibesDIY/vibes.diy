@@ -71,6 +71,59 @@ in the container's ephemeral filesystem and is gone when the container recycles.
 That's fine — the SessionStart hook rebuilds it at the start of the next session.
 Nothing here needs to be (or should be) committed except the script and this doc.
 
+## Running the repo's Playwright / vitest-browser tests in the cloud env
+
+The section above is about the **chrome-devtools MCP** browser (the one the agent
+drives to screenshot and QA). That uses the container's bundled Chromium
+(`chromium-1194`) and Just Works via the shim.
+
+The repo's **own** browser tests are a different thing. `@playwright/test` and
+`@vitest/browser-playwright` are pinned to `playwright@^1.61.1`, whose Chromium
+build is revision **1228** — but the cloud image only ships **1194**. So
+`playwright test` / vitest browser mode fail with:
+
+```
+browserType.launch: Executable doesn't exist at
+/opt/pw-browsers/chromium-1228/chrome-linux/chrome
+Please run … : playwright install
+```
+
+…and the naive `playwright install` ALSO fails in this env: its built-in
+downloader pulls the ~180 MiB zip in one shot with no resume, and the agent
+egress proxy drops the long transfer at ~80% every time
+(`Download failed: server closed connection`). The headless-shell build is worse
+— it's served (via the `dbazure` CDN path) from
+`playwright.download.prss.microsoft.com`, which the proxy hard-blocks
+(`HTTP 400 "GatewayExceptionResponse"`).
+
+**The fix — run this before the repo's browser tests in a cloud session:**
+
+```bash
+pnpm run playwright:install      # → scripts/install-pw-chromium.sh
+```
+
+It is idempotent (a fast no-op once `chromium-<rev>` is installed) and a no-op on
+a local workstation (no `/opt/pw-browsers`), so it's always safe to run. How it
+sidesteps the proxy:
+
+- The **Chrome-for-Testing** ("cft") artifacts — both the headful chrome and the
+  headless-shell — are served from `storage.googleapis.com`, which the proxy
+  **does** allow (unlike the MS host the `dbazure` path redirects to).
+- `curl -L -C -` follows the redirect **and resumes** across the proxy's
+  connection drops, so it fetches the whole zip reliably where Playwright's
+  one-shot downloader can't.
+- The script `curl`s the two cft zips into a localhost "mirror", serves them on
+  `http://127.0.0.1:<port>/`, and runs `playwright install … chromium
+chromium-headless-shell` with `PLAYWRIGHT_DOWNLOAD_HOST` pointed at the mirror
+  — so Playwright fetches from localhost (no proxy) and does its own unzip /
+  directory layout / `INSTALLATION_COMPLETE` markers / `.links` bookkeeping.
+
+`ffmpeg-1011` is a dependency of the chromium install but is already shipped in
+the image, so it's never re-downloaded. If a future image bumps Playwright, the
+script reads the wanted revision from the pinned `playwright-core`'s
+`browsers.json` automatically — no edit needed unless the cft download host
+itself changes.
+
 ## Local workstation
 
 None of the above applies on a developer's Mac/Linux workstation: there,
