@@ -14,6 +14,8 @@
 
 **Net:** `@fireproof/core-runtime` is now confined to `vibes.diy/identity` — the seam. Phase 4 is the finish line: lift the identity package's **own** use of it in-repo so the dep (and the `SuperThis`/`core-runtime` coupling) leaves the repo entirely.
 
+**Decision: 4a (reach zero `@fireproof/core-runtime`).** Confirmed feasible by reading the source: `core-runtime`'s `SuperThisImpl` + `ensureSuperThis` is **~200 lines of thin glue over `@adviser/cement`** (`envFactory`, `toCryptoRuntime`, `LoggerImpl`, `AppContext`) + `multiformats` `base58btc` + `TextEncoder/Decoder` — `nextId`, `timeOrderedNextId`, `pathOps`, the `txt` base64/base58 codecs, `start`, `clone`. There is **no bespoke crypto in the context itself**, so the `SuperThis` lift (Task 4) is **low-risk deterministic glue**, a verbatim copy of cement assembly — not a reimplementation. This re-scopes Phase 4: the byte-critical risk is concentrated in **Task 2 (hashes)** and **Task 3 (the `sts` JWT/JWK crypto)**, while Task 4 is mechanical. `cement` is already an identity dep, so the `SuperThis` lift adds no new dependency.
+
 ## Why this phase is different (read before touching code)
 
 Phases 1–3 were import-swaps and dead-dep deletions that `tsc` fully validated. Phase 4 **reimplements crypto**:
