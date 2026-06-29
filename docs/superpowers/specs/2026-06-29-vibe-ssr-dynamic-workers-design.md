@@ -174,6 +174,20 @@ module (Loader) — never pulled through the package root (the `react-dom/server
   (full vibe dependency graphs / import maps) is a later slice; slice 2 resolves what
   `import.meta.resolve` can reach, and leaves unresolvable bare specifiers untouched (they throw at
   import time with a clear message rather than silently mis-resolving).
+
+  **Untrusted-fallback carry-forward — Deno (slice 3+).** `NodeExecutor`'s `import()` runs the vibe
+  module **in-process with full Node privileges**; `import()`/`vm` is not a sandbox. That is safe
+  only while the input is TRUSTED (CI, local dev). The moment a non-edge fallback must render
+  _untrusted_ published vibes, this in-process path is unsafe — the Risks section mandates
+  per-request isolation for untrusted code. The intended path forward is a sibling **`DenoExecutor`**
+  (`VIBES_SSR=deno`): Deno's deny-by-default permission model (`--allow-none` + granular grants,
+  process/Worker-per-request) is a real runtime sandbox, and its Web-standard APIs mirror the Worker
+  Loader isolate more closely than Node — so the container fallback behaves like the edge target.
+  It drops in behind the existing `Executor` interface + flag with no change to the seam; this is a
+  sibling executor, not a rewrite. Until then, **do not widen `NodeExecutor` to untrusted traffic**
+  (reach for Deno or a process-isolated / microVM runner instead). A code comment in
+  `node-executor.ts` carries the same warning at the edit site.
+
 - **`WorkerLoaderExecutor`** — the edge path. `transformVibeSource` → `buildVibeWorkerCode({ module,
 mountParams })` shapes a Cloudflare Worker Loader `WorkerCode` (`{ mainModule, modules,
 compatibilityDate }`): a `main` module string that imports `renderVibeToString` from
