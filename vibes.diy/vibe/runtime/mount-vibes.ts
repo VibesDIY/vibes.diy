@@ -2,7 +2,7 @@ import { FunctionComponent } from "react";
 import { type Root, createRoot, hydrateRoot } from "react-dom/client";
 import { type } from "arktype";
 import { vibeMountParams } from "./vibe.js";
-import { buildVibeTree } from "./render-vibes.js";
+import { buildVibeTree } from "./vibe-tree.js";
 
 let activeRoot: Root | undefined;
 let activeProps: unknown;

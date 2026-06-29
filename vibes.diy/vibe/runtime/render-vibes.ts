@@ -1,23 +1,8 @@
-import React, { Fragment, type FunctionComponent, type ReactElement } from "react";
+import { type FunctionComponent } from "react";
 import { type } from "arktype";
 import { renderToString } from "react-dom/server";
-import { vibeMountParams, type VibeMountParams } from "./vibe.js";
-import { VibeContextProvider } from "./VibeContext.js";
-
-/**
- * Build the React tree for a vibe: every component rendered as a sibling inside
- * a single {@link VibeContextProvider}. Shared by {@link renderVibeToString}
- * (server) and `mountVibe` (client) so the server-rendered markup and the markup
- * the client hydrates are identical by construction — a divergence here would
- * make React discard the SSR pass and re-render from scratch, defeating SSR.
- */
-export function buildVibeTree(comps: FunctionComponent[], props: VibeMountParams): ReactElement {
-  const vibeElement = React.createElement(Fragment, null, ...comps.map((Comp, index) => React.createElement(Comp, { key: index })));
-  return React.createElement(VibeContextProvider, {
-    mountParams: { ...props },
-    children: vibeElement,
-  });
-}
+import { vibeMountParams } from "./vibe.js";
+import { buildVibeTree } from "./vibe-tree.js";
 
 /**
  * Server-side render of a vibe to an HTML string — the counterpart to
@@ -25,6 +10,11 @@ export function buildVibeTree(comps: FunctionComponent[], props: VibeMountParams
  * compiled) vibe component(s): a Node/Deno container today, or a Cloudflare
  * Dynamic Worker isolate once the Worker Loader executor lands (see
  * docs/superpowers/specs/2026-06-29-vibe-ssr-dynamic-workers-design.md, #2802).
+ *
+ * Imports `react-dom/server`, so it is intentionally NOT re-exported from the
+ * package root (index.ts): the vibe iframe loads this package natively in the
+ * browser, where `react-dom/server` is not in the import map. Server callers
+ * deep-import this module (`@vibes.diy/vibe-runtime/render-vibes.js`).
  *
  * The returned HTML is injected into the `vibe-app-container` element; the
  * client then calls `mountVibe`, which hydrates this markup rather than

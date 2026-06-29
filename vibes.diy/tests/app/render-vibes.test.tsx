@@ -7,7 +7,10 @@
 
 import React from "react";
 import { describe, it, expect, beforeEach, afterEach, vi } from "vitest";
-import { renderVibeToString, mountVibe, unmountVibe } from "@vibes.diy/vibe-runtime";
+import { mountVibe, unmountVibe } from "@vibes.diy/vibe-runtime";
+// Deep-import the server renderer: it pulls in `react-dom/server` and must stay
+// off the client root entry (see render-vibes.ts / index.ts).
+import { renderVibeToString } from "../../vibe/runtime/render-vibes.js";
 
 beforeEach(() => {
   unmountVibe();
