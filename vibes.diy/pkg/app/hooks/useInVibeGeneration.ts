@@ -316,10 +316,20 @@ export function useInVibeGeneration(opts: UseInVibeGenerationOpts): InVibeGenera
   // promptFS into the single reducer block). Submits exactly once via the
   // re-entrancy latch; on submit we register the promptId so the matching
   // post-persist block.end settles connection in the reducer (parity with /chat).
+  //
+  // We also hold until `inFlightStreamId === undefined`, not just `!isGenerating`.
+  // `isGenerating` drops at the EARLY `prompt.block-end`, but the prior turn's
+  // canonical `block.end` (carrying its fsRef) can still be pending with
+  // `inFlightStreamId` set. Submitting in that window would overwrite the live
+  // streamId, and the prior turn's late `block.end` would advance persistedFsRef
+  // and get mis-attributed to this save — re-pinning the iframe to the codegen
+  // version, not the saved one (Codex P1, #2869). Waiting for the prior turn to
+  // fully settle also makes the pre-save baseline = the prior turn's fsId, so the
+  // save only completes when persistedFsRef moves PAST it.
   useEffect(() => {
     if (saveState !== "queued" || submitInFlightRef.current) return;
     const pending = pendingSaveRef.current;
-    if (!pending || chat === null || isGenerating) return;
+    if (!pending || chat === null || isGenerating || promptState.inFlightStreamId !== undefined) return;
     submitInFlightRef.current = true;
     const filename = normalizeCodeViewPath(pending.filePath || "/App.jsx");
     const lang = pending.lang || inferCodeViewLanguage(filename, "text/javascript");
@@ -343,7 +353,7 @@ export function useInVibeGeneration(opts: UseInVibeGenerationOpts): InVibeGenera
         console.error("saveCode promptFS threw", err);
         dispatchSave({ type: "failed" });
       });
-  }, [saveState, chat, isGenerating, persistedFsRef]);
+  }, [saveState, chat, isGenerating, persistedFsRef, promptState.inFlightStreamId]);
 
   // Settle a submitted save. Success = the canonical post-persist block.end
   // advances persistedFsRef PAST the pre-save baseline → re-pin via onSavedFsId

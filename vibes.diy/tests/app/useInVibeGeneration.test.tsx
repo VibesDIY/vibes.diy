@@ -341,6 +341,45 @@ describe("useInVibeGeneration", () => {
     expect(onSavedFsId).toHaveBeenCalledWith("zSAVED-RETRY");
   });
 
+  it("does not mis-attribute a prior turn's late block.end to a save fired in the post-stream window (Codex P1, #2869)", async () => {
+    const onSavedFsId = vi.fn();
+    const { view, fakeChat } = setup({ onSavedFsId });
+    await waitFor(() => expect(view.result.current.phase).toBe("idle"));
+    // A codegen turn whose stream id equals its promptId, so the reducer's
+    // streamId-matching (setInFlightStreamId <- promptId; block.end clears by
+    // streamId) behaves like production.
+    fakeChat.chat.prompt.mockResolvedValueOnce(Result.Ok({ promptId: "stream-1" }));
+    act(() => view.result.current.sendPrompt("make a gen"));
+    await waitFor(() => expect(fakeChat.chat.prompt).toHaveBeenCalledTimes(1));
+    await act(async () => {
+      await Promise.resolve(); // let prompt().then set inFlightStreamId
+    });
+    await act(async () => fakeChat.emitBlockBegin("stream-1")); // running -> true
+    await act(async () => fakeChat.emitPromptReq("stream-1")); // clear the optimistic bubble
+    await act(async () => fakeChat.emitPromptBlockEnd("stream-1")); // EARLY: running -> false
+    // The window Codex flagged: generation looks done (isGenerating false) but the
+    // turn's canonical block.end (with fsRef) hasn't landed — inFlightStreamId still set.
+    await waitFor(() => expect(view.result.current.isGenerating).toBe(false));
+    // Save now. It must NOT submit while the prior turn's streamId is still in flight,
+    // or it would overwrite the streamId and adopt the gen's late block.end as its own.
+    act(() => view.result.current.saveCode({ buffer: SAVE_BUFFER, filePath: "/App.jsx", lang: "jsx" }));
+    await new Promise((r) => setTimeout(r, 30));
+    expect(fakeChat.chat.promptFS).not.toHaveBeenCalled();
+    expect(view.result.current.saveState).toBe("queued");
+    // The prior turn's canonical block.end lands -> persistedFsRef becomes the GEN fsId
+    // and inFlightStreamId clears. Only now may the save flush — with zGEN as baseline.
+    await act(async () => fakeChat.emitBlockEnd("zGEN", { streamId: "stream-1" }));
+    await waitFor(() => expect(fakeChat.chat.promptFS).toHaveBeenCalledTimes(1));
+    await waitFor(() => expect(view.result.current.saveState).toBe("saving"));
+    // The save must never re-pin to the gen fsId.
+    expect(onSavedFsId).not.toHaveBeenCalledWith("zGEN");
+    // The save's own block.end advances persistedFsRef PAST the baseline -> correct fsId.
+    await act(async () => fakeChat.emitBlockEnd("zSAVE", { streamId: "stream-1" }));
+    await waitFor(() => expect(view.result.current.saveState).toBe("rebuilt"));
+    expect(onSavedFsId).toHaveBeenCalledWith("zSAVE");
+    expect(onSavedFsId).not.toHaveBeenCalledWith("zGEN");
+  });
+
   it("does NOT eagerly re-open codegen when client-navigating between vibes (#2761, Codex P2)", async () => {
     const fakeChat = makeControllableLLMChat({ chatId: "A" });
     const nextChat = makeControllableLLMChat({ chatId: "B" });

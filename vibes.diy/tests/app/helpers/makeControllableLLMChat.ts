@@ -25,7 +25,17 @@ export interface ControllableLLMChat {
   emitToplevelLines(lines: string[], blockId?: string): void;
   // Emits the canonical post-persist `block.end` (BlockEndMsg) carrying an fsRef —
   // the durable signal a turn has settled server-side. `mode` defaults to "dev".
-  emitBlockEnd(fsId: string, opts?: { blockId?: string; mode?: "dev" | "production" }): void;
+  emitBlockEnd(fsId: string, opts?: { blockId?: string; mode?: "dev" | "production"; streamId?: string }): void;
+  // Emits the server echo of the submitted prompt (`prompt.req`) — clears the
+  // optimistic bubble for the matching streamId. Pass the streamId that matches
+  // the turn's inFlightStreamId so the reducer treats it as the own-echo.
+  emitPromptReq(streamId: string): void;
+  // Emits the EARLY `prompt.block-end` — flips the reducer's `running` to false
+  // (generation done) WITHOUT settling connection/inFlightStreamId. Distinct from
+  // the canonical `block.end` (emitBlockEnd), which carries fsRef and clears the
+  // in-flight streamId. Used to reproduce the window where isGenerating is false
+  // but a prior turn's canonical block.end is still pending. (#2869 P1)
+  emitPromptBlockEnd(streamId?: string): void;
 }
 
 export function makeControllableLLMChat(opts: { chatId?: string } = {}): ControllableLLMChat {
@@ -167,7 +177,7 @@ export function makeControllableLLMChat(opts: { chatId?: string } = {}): Control
       );
     },
     emitBlockEnd(fsId, opts = {}) {
-      const { blockId = "b1", mode = "dev" } = opts;
+      const { blockId = "b1", mode = "dev", streamId = "stream-1" } = opts;
       const stat = { lines: 1, bytes: 1 };
       const usage = {
         given: [{ prompt_tokens: 1, completion_tokens: 1, total_tokens: 2 }],
@@ -177,13 +187,38 @@ export function makeControllableLLMChat(opts: { chatId?: string } = {}): Control
         {
           type: "block.end",
           blockId,
-          streamId: "stream-1",
+          streamId,
           seq: 99,
           blockNr: 1,
           timestamp: new Date(),
           stats: { toplevel: stat, code: stat, image: stat, total: stat },
           usage,
           fsRef: { appSlug: "app", ownerHandle: "owner", mode, fsId },
+        } as unknown as PromptAndBlockMsgs,
+      ]);
+    },
+    emitPromptReq(streamId: string) {
+      result.pushBlocks([
+        {
+          type: "prompt.req",
+          streamId,
+          chatId,
+          seq: 0,
+          timestamp: new Date(),
+          request: { messages: [{ role: "user", content: [{ type: "text", text: "x" }] }] },
+        } as unknown as PromptAndBlockMsgs,
+      ]);
+    },
+    emitPromptBlockEnd(streamId = "stream-1") {
+      result.pushBlocks([
+        {
+          type: "prompt.block-end",
+          streamId,
+          chatId,
+          blockId: "b1",
+          seq: 98,
+          blockNr: 1,
+          timestamp: new Date(),
         } as unknown as PromptAndBlockMsgs,
       ]);
     },
