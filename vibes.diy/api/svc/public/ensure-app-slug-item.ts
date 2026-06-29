@@ -35,7 +35,8 @@ import { ensurePushSeededChat } from "../intern/ensure-push-seeded-chat.js";
 import { calcEntryPointUrl } from "../entry-point-utils.js";
 import { processAccessBindings } from "../intern/process-access-bindings.js";
 import { processBackendBindings } from "../intern/process-backend-bindings.js";
-import { parseBackendConfig } from "../../../vibe/runtime/parse-backend-config.js";
+// Package subpath import (not a `../../../vibe/runtime` relative reach) — per Codex review.
+import { parseBackendConfig } from "@vibes.diy/vibe-runtime/parse-backend-config.js";
 
 // Build a preAllocate-friendly prompt from pushed code. Picks the first
 // code-block (typically App.jsx), takes the first 50 lines, and labels
@@ -73,7 +74,8 @@ export async function ensureAppSlugItem(
   // Reject a backend.js with an invalid schedule BEFORE any storage/DB mutation
   // (#2856 B2b) — "reject sub-5s / over-1h / malformed intervals at push time with
   // a clear error", with no partial commit. Persistence happens after ensure below.
-  const backendFile = req.fileSystem.find((f) => f.filename === "/backend.js" || f.filename.endsWith("/backend.js"));
+  // Only the reserved top-level /backend.js counts — not a nested /src/backend.js (per Codex review).
+  const backendFile = req.fileSystem.find((f) => f.filename === "/backend.js");
   if (backendFile && (backendFile.type === "code-block" || backendFile.type === "str-asset-block")) {
     const parsedBackend = parseBackendConfig(backendFile.content as string);
     if (parsedBackend.errors.length > 0) {

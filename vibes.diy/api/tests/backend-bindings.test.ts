@@ -133,4 +133,15 @@ describe("BackendFunctionBindings discovery on backend.js push (#2856 B2b)", { t
     const rows = await bindingRows();
     expect(rows.length).toBe(0);
   });
+
+  // Codex P2: only the reserved top-level /backend.js is the app backend — a nested
+  // /src/backend.js is just a regular file, so even a bad interval there is ignored.
+  it("ignores a nested /src/backend.js (not the app backend)", async () => {
+    const nested = { type: "code-block" as const, lang: "js", filename: "/src/backend.js", content: BACKEND_BAD_INTERVAL };
+    const r = await ownerApi.ensureAppSlug({ mode: "dev", appSlug, fileSystem: [APP_JSX, nested] });
+    assert(r.isOk() && isResEnsureAppSlugOk(r.Ok()), "nested backend.js should not reject the push");
+
+    const rows = await bindingRows();
+    expect(rows.length).toBe(0);
+  });
 });

@@ -2,7 +2,10 @@ import { exception2Result, Result } from "@adviser/cement";
 import { and, eq } from "drizzle-orm";
 import type { StorageResult, VibeFile } from "@vibes.diy/api-types";
 import type { VibesApiSQLCtx } from "../types.js";
-import { parseBackendConfig } from "../../../vibe/runtime/parse-backend-config.js";
+// Package subpath import — a real `@vibes.diy/vibe-runtime` dependency, not a
+// `../../../vibe/runtime` relative reach into another package's source (matches
+// `vibe-ssr-attempt.ts`; per Codex review).
+import { parseBackendConfig } from "@vibes.diy/vibe-runtime/parse-backend-config.js";
 
 export interface ProcessBackendBindingsOpts {
   readonly ownerHandle: string;
@@ -42,9 +45,9 @@ export async function processBackendBindings(
 
     const del = () => vctx.sql.db.delete(tBfb).where(and(eq(tBfb.ownerHandle, ownerHandle), eq(tBfb.appSlug, appSlug)));
 
-    const backendEntry = fullFileSystem.find(
-      (e) => e.vibeFileItem.filename === "/backend.js" || e.vibeFileItem.filename.endsWith("/backend.js")
-    );
+    // Only the reserved top-level /backend.js is the app's server backend — a
+    // nested helper like /src/backend.js is NOT (per Codex review).
+    const backendEntry = fullFileSystem.find((e) => e.vibeFileItem.filename === "/backend.js");
 
     if (backendEntry === undefined) {
       await del();
