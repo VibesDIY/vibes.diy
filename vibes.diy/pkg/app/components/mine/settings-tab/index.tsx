@@ -13,6 +13,7 @@ import { toast } from "react-hot-toast";
 import { ModelSettingsCards } from "../../ModelSettingsCards.js";
 import { cidAssetUrl, getAppHostBaseUrl } from "../../../utils/vibeUrls.js";
 import { vibesThemes } from "@vibes.diy/prompts";
+import type { SettingKey } from "../../vibe-editor/settings-subset.js";
 
 // ── card wrapper ─────────────────────────────────────────────────────────────
 
@@ -226,9 +227,13 @@ type SettingsUpdate =
 interface SettingsTabProps {
   ownerHandle: string;
   appSlug: string;
+  // Optional set of setting cards to hide. Omitted (the default, e.g. the
+  // My Apps detail panel) renders every card exactly as before; the in-vibe
+  // editor passes a subset to scope which settings are managed in-place.
+  hide?: ReadonlySet<SettingKey>;
 }
 
-export function SettingsTab({ ownerHandle, appSlug }: SettingsTabProps) {
+export function SettingsTab({ ownerHandle, appSlug, hide }: SettingsTabProps) {
   const { sharedApi } = useVibesDiy();
 
   const [title, setTitle] = useState("");
@@ -417,116 +422,126 @@ export function SettingsTab({ ownerHandle, appSlug }: SettingsTabProps) {
 
   return (
     <ol className="space-y-5 text-sm">
-      <Card title="General">
-        <div className="space-y-2">
-          <Field label="Title" value={title} onChange={setTitle} placeholder={appSlug} />
-          <div className="flex justify-end">
-            <SaveBtn saving={savingTitle} onClick={() => setPending({ kind: "title", appSlug, ownerHandle, title })} />
+      {!hide?.has("title") && (
+        <Card title="General">
+          <div className="space-y-2">
+            <Field label="Title" value={title} onChange={setTitle} placeholder={appSlug} />
+            <div className="flex justify-end">
+              <SaveBtn saving={savingTitle} onClick={() => setPending({ kind: "title", appSlug, ownerHandle, title })} />
+            </div>
           </div>
-        </div>
-      </Card>
+        </Card>
+      )}
 
-      <Card title="Theme">
-        <div className="space-y-2">
-          <div className="flex items-center gap-3">
-            <label className="w-24 flex-shrink-0 text-xs text-gray-500 dark:text-gray-400">Theme</label>
-            <select
-              value={theme}
-              onChange={(e) => setTheme(e.target.value)}
-              className="flex-1 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-2 py-1 text-xs text-gray-800 dark:text-gray-200 outline-none focus:ring-1 focus:ring-blue-400"
-            >
-              <option value="">(none — auto-pick)</option>
-              {vibesThemes.map((t) => (
-                <option key={t.slug} value={t.slug}>
-                  {t.name}
-                </option>
-              ))}
-            </select>
-            {theme && (
-              <a
-                href={`/vibe/theme/${theme}`}
-                target="_blank"
-                rel="noreferrer"
-                className="text-xs text-blue-600 dark:text-blue-400 hover:underline"
-                title="View this theme as an exemplar app"
+      {!hide?.has("theme") && (
+        <Card title="Theme">
+          <div className="space-y-2">
+            <div className="flex items-center gap-3">
+              <label className="w-24 flex-shrink-0 text-xs text-gray-500 dark:text-gray-400">Theme</label>
+              <select
+                value={theme}
+                onChange={(e) => setTheme(e.target.value)}
+                className="flex-1 rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-2 py-1 text-xs text-gray-800 dark:text-gray-200 outline-none focus:ring-1 focus:ring-blue-400"
               >
-                preview
-              </a>
-            )}
-          </div>
-          <div className="flex justify-end">
-            <SaveBtn saving={savingTheme} onClick={() => setPending({ kind: "theme", appSlug, ownerHandle, theme })} />
-          </div>
-        </div>
-      </Card>
-
-      <Card title="Icon">
-        <div className="space-y-2">
-          <div className="flex items-center gap-3">
-            <div className="h-12 w-12 flex-shrink-0 rounded-full border border-gray-200 dark:border-gray-700 bg-white overflow-hidden flex items-center justify-center">
-              {icon ? (
-                <img
-                  src={cidAssetUrl(icon.cid, icon.mime, getAppHostBaseUrl())}
-                  alt=""
-                  className={"h-full w-full object-cover " + (iconWaitingFor !== undefined ? "opacity-50 animate-pulse" : "")}
-                />
-              ) : iconWaitingFor !== undefined ? (
-                <div className="h-4 w-4 animate-spin rounded-full border-t-2 border-b-2 border-blue-500" />
-              ) : (
-                <span className="text-xs text-gray-400">none</span>
+                <option value="">(none — auto-pick)</option>
+                {vibesThemes.map((t) => (
+                  <option key={t.slug} value={t.slug}>
+                    {t.name}
+                  </option>
+                ))}
+              </select>
+              {theme && (
+                <a
+                  href={`/vibe/theme/${theme}`}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-xs text-blue-600 dark:text-blue-400 hover:underline"
+                  title="View this theme as an exemplar app"
+                >
+                  preview
+                </a>
               )}
             </div>
-            <div className="flex-1">
-              <Field
-                label="Description"
-                value={iconDescription}
-                onChange={setIconDescription}
-                placeholder='e.g. "a fox on a record player"'
-              />
+            <div className="flex justify-end">
+              <SaveBtn saving={savingTheme} onClick={() => setPending({ kind: "theme", appSlug, ownerHandle, theme })} />
             </div>
           </div>
-          <div className="flex justify-end gap-2">
-            <button
-              type="button"
-              disabled={iconWaitingFor !== undefined || !iconDescription.trim()}
-              onClick={() => setPending({ kind: "iconRegen", appSlug, ownerHandle })}
-              className="rounded px-2 py-1 text-xs font-medium bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 disabled:opacity-50"
-            >
-              {iconWaitingFor !== undefined ? "Generating…" : "Regenerate"}
-            </button>
-            <button
-              type="button"
-              disabled={iconWaitingFor !== undefined}
-              onClick={() => setPending({ kind: "iconDescription", appSlug, ownerHandle, iconDescription })}
-              className="rounded px-2 py-1 text-xs font-medium bg-blue-100 text-blue-700 hover:bg-blue-200 dark:bg-blue-900/40 dark:text-blue-300 disabled:opacity-50"
-            >
-              {iconWaitingFor !== undefined ? "Generating…" : "Save"}
-            </button>
+        </Card>
+      )}
+
+      {!hide?.has("icon") && (
+        <Card title="Icon">
+          <div className="space-y-2">
+            <div className="flex items-center gap-3">
+              <div className="h-12 w-12 flex-shrink-0 rounded-full border border-gray-200 dark:border-gray-700 bg-white overflow-hidden flex items-center justify-center">
+                {icon ? (
+                  <img
+                    src={cidAssetUrl(icon.cid, icon.mime, getAppHostBaseUrl())}
+                    alt=""
+                    className={"h-full w-full object-cover " + (iconWaitingFor !== undefined ? "opacity-50 animate-pulse" : "")}
+                  />
+                ) : iconWaitingFor !== undefined ? (
+                  <div className="h-4 w-4 animate-spin rounded-full border-t-2 border-b-2 border-blue-500" />
+                ) : (
+                  <span className="text-xs text-gray-400">none</span>
+                )}
+              </div>
+              <div className="flex-1">
+                <Field
+                  label="Description"
+                  value={iconDescription}
+                  onChange={setIconDescription}
+                  placeholder='e.g. "a fox on a record player"'
+                />
+              </div>
+            </div>
+            <div className="flex justify-end gap-2">
+              <button
+                type="button"
+                disabled={iconWaitingFor !== undefined || !iconDescription.trim()}
+                onClick={() => setPending({ kind: "iconRegen", appSlug, ownerHandle })}
+                className="rounded px-2 py-1 text-xs font-medium bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-300 disabled:opacity-50"
+              >
+                {iconWaitingFor !== undefined ? "Generating…" : "Regenerate"}
+              </button>
+              <button
+                type="button"
+                disabled={iconWaitingFor !== undefined}
+                onClick={() => setPending({ kind: "iconDescription", appSlug, ownerHandle, iconDescription })}
+                className="rounded px-2 py-1 text-xs font-medium bg-blue-100 text-blue-700 hover:bg-blue-200 dark:bg-blue-900/40 dark:text-blue-300 disabled:opacity-50"
+              >
+                {iconWaitingFor !== undefined ? "Generating…" : "Save"}
+              </button>
+            </div>
           </div>
-        </div>
-      </Card>
+        </Card>
+      )}
 
-      <ModelSettingsCards
-        codegenConfig={codegenConfig}
-        runtimeConfig={runtimeConfig}
-        imgConfig={imgConfig}
-        savingCodegen={savingCodegen}
-        savingRuntime={savingRuntime}
-        savingImg={savingImg}
-        onSaveCodegen={(cfg) => setPending({ kind: "codegen", appSlug, ownerHandle, codegen: cfg })}
-        onSaveRuntime={(cfg) => setPending({ kind: "runtime", appSlug, ownerHandle, runtime: cfg })}
-        onSaveImg={(cfg) => setPending({ kind: "img", appSlug, ownerHandle, img: cfg })}
-        onResetCodegen={() => setPending({ kind: "resetCodegen", appSlug, ownerHandle })}
-        onResetRuntime={() => setPending({ kind: "resetRuntime", appSlug, ownerHandle })}
-        onResetImg={() => setPending({ kind: "resetImg", appSlug, ownerHandle })}
-        codegenPinned={codegenPinned}
-        runtimePinned={runtimePinned}
-        imgPinned={imgPinned}
-      />
+      {!hide?.has("model") && (
+        <ModelSettingsCards
+          codegenConfig={codegenConfig}
+          runtimeConfig={runtimeConfig}
+          imgConfig={imgConfig}
+          savingCodegen={savingCodegen}
+          savingRuntime={savingRuntime}
+          savingImg={savingImg}
+          onSaveCodegen={(cfg) => setPending({ kind: "codegen", appSlug, ownerHandle, codegen: cfg })}
+          onSaveRuntime={(cfg) => setPending({ kind: "runtime", appSlug, ownerHandle, runtime: cfg })}
+          onSaveImg={(cfg) => setPending({ kind: "img", appSlug, ownerHandle, img: cfg })}
+          onResetCodegen={() => setPending({ kind: "resetCodegen", appSlug, ownerHandle })}
+          onResetRuntime={() => setPending({ kind: "resetRuntime", appSlug, ownerHandle })}
+          onResetImg={() => setPending({ kind: "resetImg", appSlug, ownerHandle })}
+          codegenPinned={codegenPinned}
+          runtimePinned={runtimePinned}
+          imgPinned={imgPinned}
+        />
+      )}
 
-      <Card title="Environment Variables">
-        <EnvSection env={env} saving={savingEnv} onUpsert={upsertEnv} onDelete={deleteEnv} />
-      </Card>
+      {!hide?.has("env") && (
+        <Card title="Environment Variables">
+          <EnvSection env={env} saving={savingEnv} onUpsert={upsertEnv} onDelete={deleteEnv} />
+        </Card>
+      )}
     </ol>
   );
 }
