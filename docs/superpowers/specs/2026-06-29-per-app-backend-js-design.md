@@ -39,9 +39,15 @@ vibe-project/
 ```
 
 ```js
-export async function fetch(request, ctx)   { /* OAuth callbacks, webhooks, REST */ } // → Response
-export async function scheduled(event, ctx) { /* polling, periodic sync, cleanup  */ } // → void
-export async function onChange(event, ctx)  { /* notifications, external sync, log */ } // → void
+export async function fetch(request, ctx) {
+  /* OAuth callbacks, webhooks, REST */
+} // → Response
+export async function scheduled(event, ctx) {
+  /* polling, periodic sync, cleanup  */
+} // → void
+export async function onChange(event, ctx) {
+  /* notifications, external sync, log */
+} // → void
 export const config = { scheduled: { interval: "5m" } };
 ```
 
@@ -54,17 +60,17 @@ single-flight, retry-with-backoff); `onChange` is fire-and-forget after the writ
 
 Full handler examples (Sonos OAuth+poll, Stripe webhook+email) live in the design HTML.
 
-## Correction: the design HTML's *execution* model is superseded
+## Correction: the design HTML's _execution_ model is superseded
 
 The 2026-06-03 HTML's **author API is canonical**, but its **Runtime Architecture / Security
 Model** sections describe an execution model we now know is wrong and must not be built:
 
-| HTML says (2026-06-03) | This design (post-#2802) | Why |
-| --- | --- | --- |
-| Compile handlers with `new Function()` **inside the DO's own isolate** | DO owns state+alarms; it **drives a Worker Loader isolate** (`env.LOADER`) that runs the author code | In-process eval of untrusted, secret-bearing, network-capable code is a sandbox escape. Codex caught a **real RCE** in the SSR PR where persisted `App.jsx` reached `node:fs`/`process.env` via in-process Node execution. backend.js is strictly more dangerous. |
-| "via the `unsafe_eval` flag already present for `AccessFnDO`" | There is **no `AccessFnDO`** — it was retired in [#2265](https://github.com/VibesDIY/vibes.diy/issues/2265). Access functions run in a QuickJS isolate via `workers/access-fn.ts` (cross-script binding) | Stale reference; the access path is not a DO anymore. |
-| QuickJS rejected because handlers need real `fetch`/async | Correct conclusion, **right primitive**: Worker Loader gives real `fetch`/async **and** a V8 isolate boundary | We don't need to bridge async through QuickJS host fns; the isolate is a first-class Worker. |
-| `globalOutbound` unspecified | `globalOutbound` = a **controlled egress proxy/allowlist binding** (never `null`, never inherit-parent) | SSR pins `null` (no network); backend.js *needs* network but on a leash where rate-limiting + egress policy live. |
+| HTML says (2026-06-03)                                                 | This design (post-#2802)                                                                                                                                                                                 | Why                                                                                                                                                                                                                                                               |
+| ---------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Compile handlers with `new Function()` **inside the DO's own isolate** | DO owns state+alarms; it **drives a Worker Loader isolate** (`env.LOADER`) that runs the author code                                                                                                     | In-process eval of untrusted, secret-bearing, network-capable code is a sandbox escape. Codex caught a **real RCE** in the SSR PR where persisted `App.jsx` reached `node:fs`/`process.env` via in-process Node execution. backend.js is strictly more dangerous. |
+| "via the `unsafe_eval` flag already present for `AccessFnDO`"          | There is **no `AccessFnDO`** — it was retired in [#2265](https://github.com/VibesDIY/vibes.diy/issues/2265). Access functions run in a QuickJS isolate via `workers/access-fn.ts` (cross-script binding) | Stale reference; the access path is not a DO anymore.                                                                                                                                                                                                             |
+| QuickJS rejected because handlers need real `fetch`/async              | Correct conclusion, **right primitive**: Worker Loader gives real `fetch`/async **and** a V8 isolate boundary                                                                                            | We don't need to bridge async through QuickJS host fns; the isolate is a first-class Worker.                                                                                                                                                                      |
+| `globalOutbound` unspecified                                           | `globalOutbound` = a **controlled egress proxy/allowlist binding** (never `null`, never inherit-parent)                                                                                                  | SSR pins `null` (no network); backend.js _needs_ network but on a leash where rate-limiting + egress policy live.                                                                                                                                                 |
 
 Net: keep the HTML's three-handler API, `ctx` shape, identity-passthrough rule, secrets hierarchy,
 and `_api` routing. Replace its "DO runs `new Function()`" core with "**DO orchestrates a Worker
@@ -102,7 +108,7 @@ All in `vibes.diy/vibe/runtime/` unless noted:
 
 ### Five things #2802 already taught us (resolving #2202's open questions)
 
-1. **Worker Loader is the execution primitive; a DO is *not* the sandbox.** The DO owns
+1. **Worker Loader is the execution primitive; a DO is _not_ the sandbox.** The DO owns
    per-app state + alarms; it calls `env.LOADER.get(sha, () => WorkerCode).getEntrypoint().fetch()`
    for the untrusted execution. Never run author code in the DO's own isolate.
 2. **Isolate-only on the live path.** Any in-process/Node executor (`NodeExecutor`) is
@@ -142,7 +148,7 @@ All in `vibes.diy/vibe/runtime/` unless noted:
                                                    access-runner (same evaluator)
 ```
 
-- **BackendDO** (new DO class, keyed `{ownerHandle}/{appSlug}`) holds the *delta* SSR never needed:
+- **BackendDO** (new DO class, keyed `{ownerHandle}/{appSlug}`) holds the _delta_ SSR never needed:
   alarm scheduling, single-flight, retry-with-backoff, and durable token/task state. It is the
   **orchestrator**, not the sandbox.
 - **The isolate** runs the actual `backend.js` via a `buildBackendWorkerCode` that dispatches to
@@ -158,6 +164,7 @@ Each slice is independently landable, defaults dormant, and is unit-tested again
 `env.LOADER` where the live binding is needed. Order is roughly risk-ascending.
 
 ### Slice B1 — Backend executor seam (library-only, fake-binding tested)
+
 Generalize the executor to **invoke a named handler**, not just render.
 
 - `transformBackendSource(src)` — reuse `transformVibeSource` (no JSX needed but harmless; strips TS).
@@ -172,6 +179,7 @@ Generalize the executor to **invoke a named handler**, not just render.
   (`get → getEntrypoint → fetch`) against a fake binding; flag parsing.
 
 ### Slice B2 — Push-time discovery + config validation (`processBackendBindings`)
+
 Clone `processAccessBindings`: detect `/backend.js`, store a `backendFunctionBindings` row
 (`{ownerHandle, appSlug, cid, config, schedule}`), delete on removal.
 
@@ -180,6 +188,7 @@ Clone `processAccessBindings`: detect `/backend.js`, store a `backendFunctionBin
 - **Tests:** detection, interval bounds, removal, multi-export recording. No DO yet.
 
 ### Slice B3 — `_api` routing → BackendDO.fetch → isolate
+
 Route `/vibe/{owner}/{slug}/api/*` to the BackendDO; strip the `/api/` prefix so the handler sees a
 path relative to `/api/`. DO loads source from the asset store (cache-in-memory, recompile on
 eviction — SSR pattern), runs the `fetch` handler in the isolate, returns the `Response`.
@@ -190,6 +199,7 @@ eviction — SSR pattern), runs the `fetch` handler in the isolate, returns the 
 - **Tests:** route match/prefix-strip; DO dispatch to `fetch`; absent-handler → 404.
 
 ### Slice B4 — Durable layer: alarms (`scheduled`), single-flight, retry/backoff
+
 The genuinely-new work. BackendDO arms an alarm from `config.scheduled.interval`; on `alarm()` it
 runs the `scheduled` handler in the isolate, then re-arms. **No concurrent execution** (single-flight
 per vibe); if a tick overruns, the next starts after it finishes. Handler throw → exponential
@@ -200,6 +210,7 @@ vibe destroys the DO + alarms.
   (overlapping ticks serialize); backoff on throw; stop on removal.
 
 ### Slice B5 — `onChange` after write commit (via the existing queue/event stream)
+
 After `putDoc` commits, enqueue an `onChange` event (`{ doc, oldDoc, dbName, userInfo }`) onto the
 existing `VIBES_SERVICE` queue → BackendDO.invokeOnChange → isolate. **Fire-and-forget**: the write
 succeeds regardless. Consume the **same** `vibes.diy.evt-doc-changed` / channel-routing stream —
@@ -209,6 +220,7 @@ mind the [#2306](https://github.com/VibesDIY/vibes.diy/issues/2306) "don't overl
   `onChange` throws; at-least-once delivery semantics.
 
 ### Slice B6 — Write-back-through-access as the trigger identity
+
 `ctx.db.put()` proxies to `access-runner.evaluateWrite` as the trigger's `userHandle`
 (`onChange` → original writer; `fetch` → session user; `scheduled` → owner). `{ as: "handle" }`
 override is **owner-code-only**, enforced by the runtime. **Explicitly define cold/empty
@@ -219,6 +231,7 @@ hides — mirror SSR slice-6 backfill discipline.
   the handler; cold-grant behavior.
 
 ### Slice B7 — Secrets hierarchy (vibe → account → platform), remix-safe
+
 Resolve secrets server-side only, never to the browser. Vibe-level overrides account-level overrides
 platform-level. **Remix runs with the remixer's hierarchy — original creator's keys never exposed.**
 
@@ -226,6 +239,7 @@ platform-level. **Remix runs with the remixer's hierarchy — original creator's
   any client-visible payload.
 
 ### Slice B8 — `globalOutbound` egress proxy + rate limiting
+
 Replace the isolate's `globalOutbound: null` with a controlled proxy/allowlist binding where egress
 policy + per-vibe rate limiting live. This is the abuse boundary; it is **required** before any live
 backend traffic.
@@ -233,12 +247,14 @@ backend traffic.
 - **Tests:** outbound goes through the proxy binding; rate-limit trip; disallowed egress blocked.
 
 ### Slice B9 — Codegen docs + signal detection (`backend-js.llms.md`)
+
 Author the LLM codegen doc around **complete, copy-adaptable examples** per handler (path-router
 `fetch`, HMAC webhook, OAuth exchange, polling `scheduled`, type-filtered `onChange`). Wire the
 signal-word detection (webhook/OAuth → `fetch`; every/poll/cron → `scheduled`; when/notify/after →
 `onChange`) so prompts that need a backend get one, and static apps don't.
 
 ### Dependency-bundling (shared carry-forward, not a backend-only slice)
+
 Worker Loader can't resolve npm specifiers; handler imports (and the SSR renderer imports) must be
 bundled into `WorkerCode.modules` before any live load. This is **#2845, shared with SSR** — do it
 once. Live `loader` mode for both SSR and backend.js is gated on it.
@@ -267,13 +283,13 @@ once. Live `loader` mode for both SSR and backend.js is gated on it.
    don't want a publish-time compiled artifact instead.
 2. **`ctx` wiring through the isolate.** SSR currently JSON-embeds `mountParams` into the hashed
    `main` (forks the cache key). For backend.js, `ctx` (db RPC handle, resolved secrets, identity) is
-   **per-trigger and secret-bearing**, so it must ride `WorkerCode.env`/RPC, *not* the hashed source.
+   **per-trigger and secret-bearing**, so it must ride `WorkerCode.env`/RPC, _not_ the hashed source.
    Does the Worker Loader `env`/RPC surface comfortably carry a bidirectional `ctx.db` proxy (writes
    that re-enter `access-runner`), or do we need a dedicated reader/writer service binding?
 3. **`onChange` delivery substrate.** Reuse the `VIBES_SERVICE` queue + `evt-doc-changed` stream, or
    stand up a dedicated path? At-least-once with handler idempotency is assumed — acceptable, or do we
    need de-dupe/ordering guarantees per `(dbName, _id)`?
-4. **Single-flight + alarm ownership in the DO.** One BackendDO per `{owner}/{slug}` owns *all three*
+4. **Single-flight + alarm ownership in the DO.** One BackendDO per `{owner}/{slug}` owns _all three_
    triggers' execution serialization, or separate concerns (e.g. alarms in the DO, `fetch`/`onChange`
    stateless)? The HTML implies one DO; SSR has no DO at all, so this is net-new and worth a sanity
    check.
@@ -298,5 +314,5 @@ once. Live `loader` mode for both SSR and backend.js is gated on it.
 - **Cache-key correctness** — per-trigger `ctx` must stay out of the hashed `WorkerCode` or the isolate
   cache forks per request (and worse, could leak one trigger's identity into another's isolate). This
   is the single most important invariant carried from SSR.
-- **Access parity drift** — backend writes must use the *same* evaluator as app writes; a forked path
+- **Access parity drift** — backend writes must use the _same_ evaluator as app writes; a forked path
   is the SSR slice-6 failure mode. Cover allow/deny + cold-grant in tests.
