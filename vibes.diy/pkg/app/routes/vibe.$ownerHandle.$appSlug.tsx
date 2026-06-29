@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useReducer, useRef, useState } from "react";
 import { useMatches, useNavigate, useParams, useSearchParams } from "react-router";
 import { useVibesDiy } from "../vibes-diy-provider.js";
 import { BuildURI, URI } from "@adviser/cement";
@@ -30,10 +30,14 @@ import { ShareModal } from "../components/ResultPreview/ShareModal.js";
 import { useDocumentTitle } from "../hooks/useDocumentTitle.js";
 import { useLatestVibeChips } from "../hooks/useLatestVibeChips.js";
 import { useInVibeGeneration } from "../hooks/useInVibeGeneration.js";
+import { useChatHydration } from "../hooks/useChatHydration.js";
+import { promptReducer } from "./chat/prompt-state.js";
+import { VibeEditorPanel } from "../components/vibe-editor/VibeEditorPanel.js";
+import { type EditorTab } from "../components/vibe-editor/editor-tab-state.js";
 import { InVibeBlurOverlay } from "../components/InVibeBlurOverlay.js";
 import { GenerationStreamView } from "../components/GenerationStreamView.js";
 import { toast } from "react-hot-toast";
-import { isMetaScreenShot, isMetaTitle, type ResGetAppByFsId, type VibesFPApiParameters } from "@vibes.diy/api-types";
+import { isMetaScreenShot, isMetaTitle, LLMChatEntry, type ResGetAppByFsId, type VibesFPApiParameters } from "@vibes.diy/api-types";
 import { computeCardVariant } from "./vibe-card-variant.js";
 import { readIntent, withIntent, withoutIntent } from "./vibe-intent.js";
 import { forkDestination } from "./vibe-fork.js";
@@ -836,6 +840,37 @@ export default function VibeIframeWrapper() {
   // load (shareViewActive) without opening the legacy modal.
   const [shareViewOpen, setShareViewOpen] = useState(false);
 
+  // In-page tabbed editor surface (#2518 Phase 1). `editorTab` is null when the
+  // surface is closed (the card shows chips/Other or the Share view); a tab value
+  // opens VibeEditorPanel in the card body.
+  const [editorTab, setEditorTab] = useState<EditorTab | null>(null);
+
+  // PromptState for the editor panel. The view-first panel reads the Code tab off
+  // `hydratedFileSystem` (resolveCodeView) and the Chat tab off `blocks`. We own a
+  // local reducer here and feed it via useChatHydration — the SAME persisted-chat
+  // source the chat route hydrates — so an already-built vibe shows its source in
+  // the Code tab without a live codegen session. (Chat-history replay is not wired
+  // in Phase 1: an existing vibe with no in-session generation shows an empty Chat
+  // tab; the Code tab is the populated read-only surface.)
+  const [editorPromptState, editorDispatch] = useReducer(promptReducer, undefined, () => ({
+    chat: {} as LLMChatEntry,
+    running: false,
+    hasCode: false,
+    title: appSlug ?? "",
+    blocks: [],
+    searchParams: searchParam,
+    setSearchParams: setSearchParam,
+    agentSavedBlockIds: new Set<string>(),
+    connection: "live" as const,
+  }));
+  useChatHydration({
+    ownerHandle: ownerHandle ?? "",
+    appSlug: appSlug ?? "",
+    fsId,
+    sharedApi: vctx.sharedApi,
+    dispatch: editorDispatch,
+  });
+
   const shareModal = useShareModal({
     ownerHandle: ownerHandle ?? "",
     appSlug: appSlug ?? "",
@@ -1197,8 +1232,21 @@ export default function VibeIframeWrapper() {
                     // Reuses the createVibe helper's PR-origin detection.
                     window.open(resolveBuilderOriginFrom(window.location.origin), "_blank");
                   }}
-                  onEdit={() => setShareViewOpen(false)}
-                  onShare={() => setShareViewOpen(true)}
+                  onEdit={() => {
+                    setEditorTab(null);
+                    setShareViewOpen(false);
+                  }}
+                  onShare={() => {
+                    setEditorTab(null);
+                    setShareViewOpen(true);
+                  }}
+                  // #2518 Phase 1: open the in-page tabbed editor surface. Clears
+                  // the Share view; defaults to the Code tab on first open.
+                  editorActive={editorTab !== null}
+                  onOpenEditor={() => {
+                    setShareViewOpen(false);
+                    setEditorTab((t) => t ?? "code");
+                  }}
                   // Lazy codegen open (#2761): opening the edit card is the
                   // owner's first edit intent — bring up the codegen chat now
                   // rather than eagerly on /vibe mount, so passive browsing
@@ -1208,9 +1256,18 @@ export default function VibeIframeWrapper() {
                     if (cardOpen) generation.activate();
                   }}
                   shareButtonRef={shareModal.buttonRef}
-                  selectedNav={shareViewOpen ? "share" : "edit"}
+                  selectedNav={editorTab ?? (shareViewOpen ? "share" : "edit")}
                   body={
-                    shareViewOpen ? (
+                    editorTab ? (
+                      <VibeEditorPanel
+                        tab={editorTab}
+                        onTab={setEditorTab}
+                        ownerHandle={ownerHandle ?? ""}
+                        appSlug={appSlug ?? ""}
+                        promptState={editorPromptState}
+                        onActivateChat={() => generation.activate()}
+                      />
+                    ) : shareViewOpen ? (
                       <SharePanelView
                         url={shareModal.publishedUrl ?? `${window.location.origin}/vibe/${vibeSlug}`}
                         copied={shareModal.urlCopied}
