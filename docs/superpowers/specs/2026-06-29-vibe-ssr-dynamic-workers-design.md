@@ -55,7 +55,10 @@ Package: `@vibes.diy/vibe-runtime` (`vibes.diy/vibe/runtime`), which already dep
   (`container.hasChildNodes()`), create the root with `hydrateRoot(container, tree)` instead
   of `createRoot(container).render(tree)`. Empty container keeps today's behavior exactly
   (client-only render, hot-swap-safe root reuse). This satisfies the issue's "hydrate, not
-  re-render" acceptance item.
+  re-render" acceptance item. `hasChildNodes()` is the right default for this slice; once
+  route wiring lands (slice 4) it should be tightened to an explicit server marker
+  (`data-vibe-ssr` on the container) so incidental child nodes can't be mistaken for an SSR
+  payload. (Per @CharlieHelps review on #2823.)
 
 `VibeContextProvider` is already SSR-safe: every `document`/`window` access is guarded by a
 `typeof … === "undefined"` check or lives inside a `useEffect` (which does not run during
@@ -95,8 +98,9 @@ Package: `@vibes.diy/vibe-runtime` (`vibes.diy/vibe/runtime`), which already dep
    data-versioned `(appSlug, groupId, dataVersion)` — this is why publish-time pre-render
    (the old "option 2") cannot stand alone.
 4. **Route wiring + caching + OG/meta + no-JS fallback.** Inject SSR HTML into the
-   `vibe-app-container`, emit per-vibe meta/OG tags, hydrate on the client, LRU/Cache-API the
-   rendered HTML.
+   `vibe-app-container` (with a `data-vibe-ssr` marker so `mountVibe` hydrates only a real SSR
+   payload, not incidental child nodes — replaces the slice-1 `hasChildNodes()` heuristic),
+   emit per-vibe meta/OG tags, hydrate on the client, LRU/Cache-API the rendered HTML.
 
 ## Risks / caveats
 
