@@ -1,8 +1,8 @@
 ---
-title: "Shard the runners: a leaner CI cycle that costs $0"
+title: "Shard the runners: free, parallel CI on a public repo"
 date: 2026-06-28T07:00:00Z
 author: "Vibes DIY"
-summary: "We almost bought a bigger CI machine. Instead we fanned the suite across free runners, taught docs-only PRs to skip the heavy work, and put the failed-test names where triage actually looks."
+summary: "We almost bought a bigger CI machine. Instead we fanned the test suite across free standard runners — and put the failed-test names where triage actually looks."
 glyph: "shard the runners"
 ---
 
@@ -20,14 +20,6 @@ Two things made the split safe rather than scary:
 
 - **`build` is a typecheck, not a test prerequisite.** `pnpm run build` is `core-cli tsc`. The pg-concurrency lane and `test:all` already run the suite with no build step, which proves vitest resolves workspace deps straight from source. So the shards skip format/lint/build entirely (`run-checks: 'false'`) and those run once in a dedicated `checks` job instead of redundantly across every shard.
 - **Keep the required-check name on a gate job.** Splitting `compile_test` into `checks` plus a `test` matrix would have renamed the required branch-protection check — and broken the deploy-time "is this SHA `compile_test`-green?" lookup in `actions/base`. The fix is a tiny final job still *named* `compile_test` that `needs` the others and fails if any concluded non-success/non-skipped. It's `always()`-guarded so it can still report red, and it treats a skipped upstream as a pass.
-
-## A README typo doesn't need Postgres
-
-While we were in there, the second leak: we do a *lot* of docs-only commits — notes, `agents/`, blog seeds, READMEs — and every one was paying for the full `compile_test` suite plus the Postgres + Neon-proxy concurrency lane. We were booting containers to prove that prose didn't break the build.
-
-The naive fix is to slap `on.paths-ignore` on the CI workflows. That's a trap when those checks are *required* in branch protection: a workflow skipped at `on.paths` never posts a status, so the required check sits "Expected — waiting for status" forever and the PR can't merge. The rule that's safe whether or not a check is required: **never filter at the trigger; gate the work.** `compile_test` always runs to completion so its status always reports green — only the build and docker-test *steps* are skipped. The disposable pg lane is skipped via a job-level `if:`, and a skipped job posts a "skipped" conclusion, which branch protection counts as passing.
-
-Detection is an allowlist, not a file-type match: is *every* changed file under a docs path (`docs/ notes/ agents/ .agents/ .claude/`, root `*.md`, `LICENSE`)? It's deliberately not a `*.md` rule — `prompts/**/*.md` is prompt source, and the app imports legal markdown via `?url`. Anything outside the allowlist, including any newly-added top-level directory, is treated as code. The failure mode is always "ran too much CI," never "skipped a real change." And it fails open: a non-PR event, a base-fetch failure, an empty diff — all return `docs_only=false` and run the full cycle.
 
 ## Diagnostics in a pipe nobody reads
 
