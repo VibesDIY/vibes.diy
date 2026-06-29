@@ -14,13 +14,14 @@ possible into cloud sessions, where the agent runs next to a copy of the repo in
 me.
 
 That started as a latency hack. It turned into the way I work now. Most of what I ship lately, I
-ship from my phone, from a beach. And it comes out *faster and better* than when I was hunched
-over a laptop with full focus — because the hard part of building was never the coding. It was
-deciding what matters.
+ship from my phone, from a beach. And — across these seventeen days, in this one codebase, at
+least — it comes out *faster and better* than when I was hunched over a laptop with full focus.
+Because the hard part of building was never the coding. It was deciding what matters.
 
 Here's what came out of those seventeen days (June 12–29):
 
-- **270 pull requests merged**
+- **270 pull requests merged** *(the count as of my analysis snapshot midday June 29; a few
+  more landed later the same day — the window kept filling as I wrote, which is rather the point)*
 - **~223,000 lines of churn** across 2,650 file-changes
 - **median PR: 196 lines, 5 files**
 - **median time-to-merge: 0.8 hours** — 80% merged in under six hours, 95% within a day
@@ -88,7 +89,7 @@ lives, and latency is where risk lives. The decomposition shows up in the titles
 a big-bang. It arrived as a chain — and a chain of small things is exactly what a shepherd can
 hold when an agent is carrying the state.
 
-## Same week, same hand, four different caution dials
+## One hand, four different caution dials
 
 When agents write 95% of the code, the human's job is no longer authorship. It's **choosing
 where to go, and how carefully to tread — dialed to risk and reward, per change.** The agents
@@ -96,23 +97,26 @@ are extraordinary at producing correct, tested, well-scoped slices. What they ca
 how much it would hurt if *this particular* slice were wrong in prod. That judgment is the job,
 and it's almost the entire job.
 
-Four PRs from one migration, same week, with the dial set four ways:
+Four PRs from across the window — three different workstreams, two different weeks — with one
+hand setting the dial four different ways:
 
 - **#2827 — sidebar links point at the `/vibe` route.** Blast radius: a URL string prefix.
   Shipped **hot, no flag, merged 25 minutes after it opened.** Dial wide open.
 - **#2837 — a brand-new vibe builds *in place* on `/vibe`** instead of bouncing to `/chat`.
   Higher stakes (first-run for every new app): shipped **on**, but only after an end-to-end run
   on the preview deploy and a fix for a P1 a reviewer caught. Dial open, with a gate.
-- **#2835 — server-side rendering for vibes.** Risky surface. Landed **dormant behind a flag,
+- **#2835 — server-side rendering for vibes** (a separate epic from the route work above).
+  Risky surface. Landed **dormant behind a flag,
   production explicitly `off`** — fully built, shipped *dark* — and the PR was *spec-first*: a
   design doc opened for review **before any code.** Dial nearly closed.
-- **#2494 — moving doc operations onto a new connection plane.** Carried a hold I wrote by hand:
+- **#2494 — moving doc operations onto a new connection plane** (the earlier AppSessions split,
+  merged June 21 — eight days before the others). Carried a hold I wrote by hand:
   *"⚠️ Do not merge until after the next prod deploy of `main`... so the change deploys in
   isolation and any regression is unambiguously attributable."* Dial closed, sequenced on
   purpose so a regression would have exactly one suspect.
 
-Same shepherd, same migration, four reads of "what does it cost if this is wrong?" That's the
-craft. Not the typing — the dial.
+Same shepherd, four different bodies of work, four reads of "what does it cost if this is
+wrong?" That's the craft. Not the typing — the dial.
 
 ## The tools got better every time a task needed them
 
@@ -188,10 +192,13 @@ where the bottleneck actually was. The hard part was never the code; it was hold
 everything that matters and deciding what to do next. Hand the context-holding to the agent, keep
 the deciding for yourself, slice the scary things small, and improve your tools every time a task
 demands it — and you can move a whole flock forward at once. From a beach. Going *faster*,
-and *safer*, than careful ever was.
+and *safer*, than careful was for me — at least across this window, in this codebase. One
+founder's seventeen days, not a law of nature. But it was consistent enough to write down.
 
 ---
 
-*Numbers from a PR-level analysis of all 270 PRs merged into `vibesdiy/vibes.diy` between
-2026-06-12 and 2026-06-29. The tooling arc is the `agents/` directory's own commit history over
-the same window. Seed: `notes/blog-seeds/2026-06-29-low-risk-high-velocity-270-prs.md`.*
+*Numbers from a PR-level analysis of the PRs merged into `vibesdiy/vibes.diy` between 2026-06-12
+and 2026-06-29 — 270 as of a midday-June-29 snapshot (a handful more merged later that day; all
+percentages here are computed over that 270-PR snapshot). The tooling arc is the `agents/`
+directory's own commit history over the same window. Seed:
+`notes/blog-seeds/2026-06-29-low-risk-high-velocity-270-prs.md`.*
