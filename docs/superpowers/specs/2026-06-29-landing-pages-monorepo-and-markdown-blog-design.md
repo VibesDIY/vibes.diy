@@ -44,6 +44,7 @@ just the ad/marketing tooling. The public site moves out. After the move, the mo
 is deleted from the private repo so there is exactly **one copy** of each thing.
 
 ### Moves to public `vibes.diy/landing-pages/`
+
 - The SSG: `src/` (pages, layouts, partials), `build.js`, `package.json`, `pnpm-lock.yaml`.
 - Static assets: `images/`, `_headers`, `vibes-diy-logo.svg`, `Vibes-Toggle-1-Transparent.png`.
 - The **generated apps** (owner wants these public — interesting/useful):
@@ -58,6 +59,7 @@ is deleted from the private repo so there is exactly **one copy** of each thing.
   public by design (pixel ID `1310410873948425`).
 
 ### Stays in private `landing-pages` (ad-posting/management gear)
+
 - `agents/meta-ads-setup.md`, `agents/handoff-meta-ads-access.md`,
   `agents/task-business-ad-account-setup.md`, `agents/handoff-{chess,zine,free-library}-ads.md`,
   and the ads playbooks (`agents/full-audience-playbook.md`,
@@ -69,6 +71,7 @@ is deleted from the private repo so there is exactly **one copy** of each thing.
   the team, not the public.
 
 ### Cross-repo bookkeeping
+
 - Add `vibes.diy/landing-pages/agents/ad-tooling.md` (pointer): ad-posting/management tooling
   lives in the private `VibesDIY/landing-pages` repo.
 - Add a note in the private repo about the move (what left, where it went, the monorepo PR).
@@ -99,6 +102,7 @@ is deleted from the private repo so there is exactly **one copy** of each thing.
   tracked lockfile is `pnpm-lock.yaml`. CI uses pnpm.
 
 ### Cutover sequence (no double-deploy, no downtime)
+
 1. Monorepo PR adds `landing-pages/` + the workflow; CI build + preview verified to produce
    an equivalent `_site` (spot-check `good.vibes.diy` pages + blog + feeds).
 2. Merge → monorepo deploys `good.vibes.diy` from the new workflow.
@@ -111,6 +115,7 @@ is deleted from the private repo so there is exactly **one copy** of each thing.
 ## 3. Markdown blog + feeds
 
 ### Authoring model
+
 - Posts become **`src/posts/*.md`** with YAML front-matter:
   `title`, `date` (ISO `YYYY-MM-DD`), `summary`, `author`, `thumb` (optional image path),
   `draft` (optional bool, excluded from index/feed when true).
@@ -124,14 +129,15 @@ is deleted from the private repo so there is exactly **one copy** of each thing.
   for `.hbs`; the blog pass is additive and reads `src/posts/`.
 
 ### Generated index + feeds (from the one post list)
+
 - **Blog index** (`_site/blog/index.html`) is generated from the sorted post list via a
   `blog-index` template — no more hand-maintained cards. Replaces today's
   `src/pages/blog/index.hbs` card block.
 - **Feeds:** emit both
   - `_site/blog/feed.xml` — **Atom 1.0**
   - `_site/blog/rss.xml` — **RSS 2.0**
-  Entries are **summary** (front-matter `summary`) + canonical link + date (not full content).
-  Both built from the same post list using `BASE_URL` (already in `build.js`).
+    Entries are **summary** (front-matter `summary`) + canonical link + date (not full content).
+    Both built from the same post list using `BASE_URL` (already in `build.js`).
 - **Autodiscovery:** blog `<head>` gets
   `<link rel="alternate" type="application/atom+xml" href="/blog/feed.xml">` and the RSS
   equivalent. Add via the blog templates' `<head>` (blog-post + blog-index).
@@ -139,10 +145,12 @@ is deleted from the private repo so there is exactly **one copy** of each thing.
   generated posts stay in the sitemap.
 
 ### Migrating the 3 existing posts
+
 The current inline-HTML `.hbs` posts
 (`upgrading-apps-with-screenshots`, `how-we-eval-the-generator`,
 `can-a-prompt-rebuild-the-pickathon-app`) are converted **one-time** to content-only
 markdown under the new template:
+
 - Lift `title` → front-matter; set `date` (June 9, 2026 per current cards), `summary` from the
   existing card copy, `author`, and `thumb` where a card image exists.
 - Convert the prose body to markdown; drop the per-post `<style>` (now provided by the shared
@@ -152,14 +160,14 @@ markdown under the new template:
 
 ## Components & boundaries
 
-| Unit | Purpose | Depends on |
-|------|---------|------------|
-| `build.js` page walk | Render `.hbs` landing pages + sitemap (unchanged) | Handlebars, `src/pages/`, `src/layouts/` |
-| `build.js` blog pass (new) | md → HTML posts, generated index, Atom+RSS, sitemap entries | `marked`, `gray-matter`, `src/posts/`, blog templates, `BASE_URL` |
-| `blog-post` layout (new) | Shared chrome + styling + feed autodiscovery for a post | — |
-| `blog-index` template (new) | Render post cards from the sorted list | post list |
-| feed emitter (new, in `build.js`) | Serialize Atom + RSS from the post list | post list, `BASE_URL` |
-| deploy workflow (moved) | Build in `landing-pages/`, deploy to CF Pages | pnpm, `CLOUDFLARE_API_TOKEN`, account var |
+| Unit                              | Purpose                                                     | Depends on                                                        |
+| --------------------------------- | ----------------------------------------------------------- | ----------------------------------------------------------------- |
+| `build.js` page walk              | Render `.hbs` landing pages + sitemap (unchanged)           | Handlebars, `src/pages/`, `src/layouts/`                          |
+| `build.js` blog pass (new)        | md → HTML posts, generated index, Atom+RSS, sitemap entries | `marked`, `gray-matter`, `src/posts/`, blog templates, `BASE_URL` |
+| `blog-post` layout (new)          | Shared chrome + styling + feed autodiscovery for a post     | —                                                                 |
+| `blog-index` template (new)       | Render post cards from the sorted list                      | post list                                                         |
+| feed emitter (new, in `build.js`) | Serialize Atom + RSS from the post list                     | post list, `BASE_URL`                                             |
+| deploy workflow (moved)           | Build in `landing-pages/`, deploy to CF Pages               | pnpm, `CLOUDFLARE_API_TOKEN`, account var                         |
 
 ## Testing / verification
 
@@ -181,4 +189,3 @@ markdown under the new template:
 - Making `landing-pages/` a pnpm workspace member.
 - Full-content (vs summary) feed entries.
 - Archiving the `landing-pages` repo (it stays as the private ad-tooling home).
-```
