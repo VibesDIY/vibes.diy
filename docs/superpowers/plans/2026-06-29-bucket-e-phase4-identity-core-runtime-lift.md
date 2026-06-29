@@ -6,13 +6,19 @@
 > surface (device certs, keybag keys, JWTs); a silent drift = forced re-login for every
 > user. Tracking issue: [#2468](https://github.com/VibesDIY/vibes.diy/issues/2468).
 
-## Where Bucket E stands (Phases 1–3, all merged)
+## Status: ✅ DONE — Bucket E complete (#2468 closed)
+
+`@fireproof/core-runtime` is **gone repo-wide** (zero imports, zero `package.json` declarations outside `node_modules`/lockfile). All phases merged:
 
 - **Phase 1 (#2826):** narrowed the two `nextId`-only source sites onto `ensureRuntimeContext()`; wrote the inventory/contracts doc.
 - **Phase 2 (#2833):** routed the 74 test-harness `ensureSuperThis` imports through the `@vibes.diy/identity` seam.
 - **Phase 3 (#2834):** removed the now-unused `@fireproof/core-runtime` dep from all 18 non-identity packages.
+- **Phase 4 T2 (#2844):** lifted the hashing primitives (`hashString*`/`hashObject*`/`deepFreeze`) in-repo.
+- **Phase 4 T3 (#2852):** lifted the `sts` JWK/JWT crypto (`importJWK`/`env2jwk`/`jwk2env`/`verifyToken`) in-repo.
+- **Phase 4 T4 (#2854):** lifted the `SuperThis` cement-glue context (`ensureSuperThis`/`ensureLogger`, `runtimeFn` re-exported from cement) in-repo.
+- **Phase 4 T5 (this PR):** froze the extracted⇄fireproof cross-checks into `golden-fixtures.ts`, dropped the `@fireproof/core-runtime` dep from `identity`, and confirmed zero references repo-wide. The byte-compat gate survives as frozen golden fixtures.
 
-**Net:** `@fireproof/core-runtime` is now confined to `vibes.diy/identity` — the seam. Phase 4 is the finish line: lift the identity package's **own** use of it in-repo so the dep (and the `SuperThis`/`core-runtime` coupling) leaves the repo entirely.
+The historical plan below is retained for provenance.
 
 **Decision: 4a (reach zero `@fireproof/core-runtime`).** Confirmed feasible by reading the source: `core-runtime`'s `SuperThisImpl` + `ensureSuperThis` is **~200 lines of thin glue over `@adviser/cement`** (`envFactory`, `toCryptoRuntime`, `LoggerImpl`, `AppContext`) + `multiformats` `base58btc` + `TextEncoder/Decoder` — `nextId`, `timeOrderedNextId`, `pathOps`, the `txt` base64/base58 codecs, `start`, `clone`. There is **no bespoke crypto in the context itself**, so the `SuperThis` lift (Task 4) is **low-risk deterministic glue**, a verbatim copy of cement assembly — not a reimplementation. This re-scopes Phase 4: the byte-critical risk is concentrated in **Task 2 (hashes)** and **Task 3 (the `sts` JWT/JWK crypto)**, while Task 4 is mechanical. `cement` is already an identity dep, so the `SuperThis` lift adds no new dependency.
 

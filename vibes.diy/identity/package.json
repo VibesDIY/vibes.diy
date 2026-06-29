@@ -19,7 +19,6 @@
     "@adviser/ts-xxhash": "~1.0.2",
     "@clerk/shared": "^4.22.0",
     "@fireproof/core-cli": "0.24.19",
-    "@fireproof/core-runtime": "0.24.19",
     "@fireproof/core-types-base": "0.24.19",
     "@fireproof/core-types-device-id": "0.24.19",
     "@fireproof/core-types-protocols-dashboard": "0.24.19",

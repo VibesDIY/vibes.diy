@@ -1358,9 +1358,6 @@ importers:
       '@fireproof/core-cli':
         specifier: 0.24.19
         version: 0.24.19(@pnpm/logger@5.2.0)(typescript@6.0.3)
-      '@fireproof/core-runtime':
-        specifier: 0.24.19
-        version: 0.24.19(typescript@6.0.3)
       '@fireproof/core-types-base':
         specifier: 0.24.19
         version: 0.24.19(typescript@6.0.3)
