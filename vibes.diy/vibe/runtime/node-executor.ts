@@ -1,5 +1,6 @@
 import { type FunctionComponent } from "react";
 import { exception2Result } from "@adviser/cement";
+import { init as initLexer, parse as parseModule } from "es-module-lexer";
 import { renderVibeToString } from "./render-vibes.js";
 import { transformVibeSource } from "./transform-vibe-source.js";
 import { type Executor, type VibeExecuteInput, type VibeExecuteResult } from "./vibe-executor.js";
@@ -7,44 +8,6 @@ import { type Executor, type VibeExecuteInput, type VibeExecuteResult } from "./
 // A specifier that already resolves on its own — relative, absolute, or carrying
 // a scheme (`http:`, `file:`, `node:`, `data:`). Only bare names need resolving.
 const ALREADY_RESOLVED = /^(?:\.\.?\/|\/|[a-z][a-z0-9+.-]*:)/i;
-
-// True when an `import` *declaration* (static import/side-effect import) begins
-// at `i` — as opposed to a dynamic `import(...)` call or an identifier that
-// merely starts with "import". A declaration continues (after optional
-// whitespace) with a clause opener `{ * " '` or a binding identifier; a dynamic
-// import continues with `(`, which is excluded so `import("x")` / `import ("x")`
-// are left untouched.
-function isImportDeclAt(code: string, i: number): boolean {
-  if (code.slice(i, i + 6) !== "import") return false;
-  const n = code.length;
-  let j = i + 6;
-  if (j < n && /[A-Za-z0-9_$]/.test(code[j])) return false; // "importFoo"
-  while (j < n && /\s/.test(code[j])) j++;
-  const c = code[j];
-  return c === "{" || c === "*" || c === '"' || c === "'" || /[A-Za-z_$]/.test(c ?? "");
-}
-
-// Advance past whitespace, line/block comments, and `;` statement separators
-// between top-level statements. Used only between import declarations, never
-// inside one — so it can't skip over module-body content.
-function skipSeparators(code: string, i: number): number {
-  const n = code.length;
-  while (i < n) {
-    const c = code[i];
-    if (c === " " || c === "\t" || c === "\n" || c === "\r" || c === ";") {
-      i++;
-    } else if (code.startsWith("//", i)) {
-      const nl = code.indexOf("\n", i);
-      i = nl === -1 ? n : nl + 1;
-    } else if (code.startsWith("/*", i)) {
-      const end = code.indexOf("*/", i);
-      i = end === -1 ? n : end + 2;
-    } else {
-      break;
-    }
-  }
-  return i;
-}
 
 /**
  * Rewrite the compiled module's bare specifiers (`react`, `react/jsx-runtime`,
@@ -54,57 +17,36 @@ function skipSeparators(code: string, i: number): number {
  * shared with `react-dom/server`, which is what makes the SSR markup match what
  * the client hydrates.
  *
- * Only the leading run of `import` declarations is rewritten — a small scanner
- * walks them and rewrites each statement's module specifier in place, stopping
- * at the first non-import statement. This deliberately never touches the module
- * body, so import-looking text inside a string/template a vibe renders (e.g.
- * `'import x from "react"'`) is left verbatim rather than corrupted.
+ * Import positions come from `es-module-lexer` (the same lexer Vite/Rollup use),
+ * not a hand-rolled scanner: it finds every static `import`/`export … from`
+ * specifier anywhere in the module — including after a `"use client"` directive
+ * or other top-level statements (Sucrase does NOT hoist imports), and through a
+ * comment between `import` and its clause — while ignoring import-looking text
+ * inside string/template literals and comments. Dynamic `import(...)` is flagged
+ * (`d > -1`) and left untouched. (Per @CharlieHelps review: a leading-run
+ * scanner missed these valid forms and left `react` bare → SSR failure.)
  *
  * Slice 2 resolves what `import.meta.resolve` can reach (React + anything in the
  * package's dependency tree). Full vibe dependency-graph / import-map resolution
  * is a later slice; an unresolvable bare specifier is left untouched, so it
  * throws at import time with a clear message rather than silently mis-resolving.
  */
-function resolveBareSpecifiers(code: string, resolve: (spec: string) => string): string {
-  const rewriteSpec = (spec: string): string => {
-    if (ALREADY_RESOLVED.test(spec)) return spec;
-    // rules-bag: no bare try/catch — wrap the throwing resolver in a Result.
-    const resolved = exception2Result(() => resolve(spec));
-    return resolved.isOk() ? resolved.Ok() : spec; // unresolved → clear error at import time
-  };
-
-  const n = code.length;
-  let i = 0;
+async function resolveBareSpecifiers(code: string, resolve: (spec: string) => string): Promise<string> {
+  await initLexer;
+  const [imports] = parseModule(code);
   let out = "";
-  for (;;) {
-    const sepStart = i;
-    i = skipSeparators(code, i);
-    out += code.slice(sepStart, i); // copy whitespace/comments/`;` verbatim
-    if (i >= n || isImportDeclAt(code, i) === false) {
-      out += code.slice(i); // module body — never rewritten
-      break;
-    }
-    // The only string literal in an import declaration is its module specifier,
-    // so the first quote after the keyword opens it and the declaration ends at
-    // its closing quote.
-    const dq = code.indexOf('"', i);
-    const sq = code.indexOf("'", i);
-    const q = dq === -1 ? sq : sq === -1 ? dq : Math.min(dq, sq);
-    if (q === -1) {
-      out += code.slice(i);
-      break;
-    }
-    const quote = code[q];
-    const qe = code.indexOf(quote, q + 1);
-    if (qe === -1) {
-      out += code.slice(i);
-      break;
-    }
-    out += code.slice(i, q + 1); // import head + opening quote
-    out += rewriteSpec(code.slice(q + 1, qe)); // resolved (or untouched) specifier
-    out += quote; // closing quote
-    i = qe + 1;
+  let last = 0;
+  for (const imp of imports) {
+    if (imp.d > -1) continue; // dynamic import() / import.meta — leave untouched
+    if (imp.s < 0) continue; // no static specifier span
+    const spec = code.slice(imp.s, imp.e); // specifier text, without quotes
+    if (ALREADY_RESOLVED.test(spec)) continue;
+    const resolved = exception2Result(() => resolve(spec)); // rules-bag: no bare try/catch
+    if (resolved.isErr()) continue; // unresolved → leave bare, clear error at import time
+    out += code.slice(last, imp.s) + resolved.Ok();
+    last = imp.e;
   }
+  out += code.slice(last);
   return out;
 }
 
@@ -120,7 +62,7 @@ function resolveBareSpecifiers(code: string, resolve: (spec: string) => string):
 export class NodeExecutor implements Executor {
   async render(input: VibeExecuteInput): Promise<VibeExecuteResult> {
     const { module } = transformVibeSource(input.source);
-    const resolved = resolveBareSpecifiers(module, (spec) => import.meta.resolve(spec));
+    const resolved = await resolveBareSpecifiers(module, (spec) => import.meta.resolve(spec));
     const dataUrl = "data:text/javascript;base64," + Buffer.from(resolved, "utf8").toString("base64");
 
     const mod = (await import(/* @vite-ignore */ dataUrl)) as { default?: unknown };

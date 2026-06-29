@@ -94,6 +94,41 @@ describe("NodeExecutor", () => {
     expect(html).not.toContain("file://");
   });
 
+  it("resolves an import that follows a `use client` directive", async () => {
+    const exec = new NodeExecutor();
+    // Sucrase does not hoist imports; a leading-run scanner would stop at the
+    // directive and leave `react` bare → "Cannot find package 'react'".
+    const { html } = await exec.render({
+      source: `"use client";
+        import { useState } from "react";
+        export default function App(){ const [n] = useState(5); return <s>{"dir-" + n}</s>; }`,
+      mountParams: { usrEnv: {} },
+    });
+    expect(html).toContain("dir-5");
+  });
+
+  it("resolves an import with a comment between the keyword and clause", async () => {
+    const exec = new NodeExecutor();
+    const { html } = await exec.render({
+      source: `import /* note */ { useState } from "react";
+        export default function App(){ const [n] = useState(6); return <s>{"cmt-" + n}</s>; }`,
+      mountParams: { usrEnv: {} },
+    });
+    expect(html).toContain("cmt-6");
+  });
+
+  it("resolves an import that follows another top-level statement", async () => {
+    const exec = new NodeExecutor();
+    // `const` before the import — again, Sucrase keeps the order.
+    const { html } = await exec.render({
+      source: `const TAG = "pre";
+        import { useState } from "react";
+        export default function App(){ const [n] = useState(8); return <s>{TAG + "-" + n}</s>; }`,
+      mountParams: { usrEnv: {} },
+    });
+    expect(html).toContain("pre-8");
+  });
+
   it("forwards mountParams into the validating slice-1 renderer", async () => {
     const exec = new NodeExecutor();
     await expect(

@@ -32,6 +32,14 @@ const excludePatterns = [
   /vitest.*\.config\.ts$/,
   /\.storybook\//,
   /bare-specifier-rewrite\.ts$/,
+  // Server-only SSR executors (#2802): deep-imported by the SSR server (Node
+  // container / Worker isolate), never re-exported from index.ts and never
+  // loaded in the vibe iframe. Like render-vibes.ts they pull server-only deps
+  // (react-dom/server, es-module-lexer) that have no place in the browser map.
+  // A guard test (runtime-client-entry-no-server-dom.test.ts) enforces that the
+  // client entry never reaches them.
+  /node-executor\.ts$/,
+  /worker-loader-executor\.ts$/,
 ];
 
 // Packages that are bundled INTO the privateNpm packages at build time
