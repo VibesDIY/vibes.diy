@@ -2,7 +2,8 @@ name: "changed-scope"
 description: >-
   Detect whether a pull request's changes are confined to docs-only top-level
   paths, so callers can run a leaner CI cycle (skip build/test/preview/pg) when
-  nothing that affects the build changed. Outputs `docs_only` ("true"/"false").
+  nothing that affects the build changed. Outputs `docs_only` and
+  `api_svc_publish_needed` ("true"/"false").
 outputs:
   docs_only:
     description: >-
@@ -11,6 +12,12 @@ outputs:
       any changed file outside the docs allowlist — i.e. the safe default is to
       run the full CI cycle.
     value: ${{ steps.detect.outputs.docs_only }}
+  api_svc_publish_needed:
+    description: >-
+      "true" when a PR touches @vibes.diy/api-svc publish inputs. "false" for
+      non-PR events. Fails open to "true" on base-fetch/diff failures and empty
+      diffs so publish-build coverage is never skipped by diff uncertainty.
+    value: ${{ steps.detect.outputs.api_svc_publish_needed }}
 runs:
   using: composite
   steps:
@@ -22,13 +29,16 @@ runs:
       run: |
         set -euo pipefail
 
-        emit() { echo "docs_only=$1" >> "$GITHUB_OUTPUT"; }
+        emit() {
+          echo "docs_only=$1" >> "$GITHUB_OUTPUT"
+          echo "api_svc_publish_needed=$2" >> "$GITHUB_OUTPUT"
+        }
 
         # Only pull requests can be "docs-only". Pushes to main, tag deploys,
         # and workflow_dispatch always run the full cycle — there is no PR diff
         # to scope against, and main must never be deployed from a lean run.
         if [ "${EVENT_NAME}" != "pull_request" ]; then
-          emit false
+          emit false false
           echo "event '${EVENT_NAME}' is not a pull_request — full CI."
           exit 0
         fi
@@ -39,17 +49,17 @@ runs:
         # failure mode below fails OPEN (docs_only=false → full CI) so a flaky
         # fetch or shallow-checkout edge case can never silently skip coverage.
         if ! git fetch --no-tags --depth=1 origin "$BASE_SHA" 2>/dev/null; then
-          emit false
+          emit false true
           echo "::warning::could not fetch base ${BASE_SHA} — assuming code changed (full CI)."
           exit 0
         fi
         if ! CHANGED=$(git diff --name-only "$BASE_SHA" HEAD 2>/dev/null); then
-          emit false
+          emit false true
           echo "::warning::git diff against ${BASE_SHA} failed — assuming code changed (full CI)."
           exit 0
         fi
         if [ -z "$CHANGED" ]; then
-          emit false
+          emit false true
           echo "no changed files detected vs base — assuming code changed (full CI)."
           exit 0
         fi
@@ -70,12 +80,20 @@ runs:
         # work, not the trigger — required checks still report), while its own
         # deploy workflow runs.
         DOCS_RE='^(docs/|notes/|agents/|\.agents/|\.claude/|landing-pages/|[^/]+\.md$|LICENSE$)'
+        API_SVC_PUBLISH_RE='^(vibes\.diy/api/(svc|impl|pkg|sql|types)/|call-ai/v2/|vibes\.diy/identity/|prompts/pkg/|use-vibes/base/|vibes\.diy/vibe/(db-explorer|runtime|types)/|call-ai/pkg/|tsconfig\.dist\.json$|pnpm-lock\.yaml$)'
+
+        api_svc_publish_needed=false
+        if printf '%s\n' "$CHANGED" | grep -qE "$API_SVC_PUBLISH_RE"; then
+          api_svc_publish_needed=true
+          echo "@vibes.diy/api-svc publish inputs changed."
+          printf '%s\n' "$CHANGED" | grep -E "$API_SVC_PUBLISH_RE" | sed 's/^/  /'
+        fi
 
         if printf '%s\n' "$CHANGED" | grep -qvE "$DOCS_RE"; then
-          emit false
+          emit false "$api_svc_publish_needed"
           echo "non-docs files changed — full CI. Triggering paths:"
           printf '%s\n' "$CHANGED" | grep -vE "$DOCS_RE" | sed 's/^/  /'
         else
-          emit true
+          emit true "$api_svc_publish_needed"
           echo "docs-only change — lean CI (skipping build/test + pg concurrency lane)."
         fi
