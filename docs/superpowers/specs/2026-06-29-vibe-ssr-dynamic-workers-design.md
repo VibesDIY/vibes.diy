@@ -285,6 +285,12 @@ into the container:
 1. **Select the executor** from env in `render-vibe.ts`:
    `selectExecutor(parseVibesSsrMode(env.VIBES_SSR), { loader: env.LOADER })`. `off` (default) ⇒
    `undefined` ⇒ skip SSR, ship today's empty container (exact current behavior, zero risk).
+   **Selection is inside the fallback boundary.** `selectExecutor("loader", …)` _throws_ when the
+   binding is absent (slice 2's contract), so a **misconfigured** `VIBES_SSR=loader` on a Worker
+   without `env.LOADER` must not 500 the page. The route wraps selection **and** render in one
+   `exception2Result` (see Fallback discipline): any selection/config failure degrades to the empty
+   container exactly like a render failure. (Per Codex review — selection throwing pre-render was a
+   real 500 path.)
 2. **Acquire the entry source.** The executor needs the entry component's raw TSX. The
    convention-entry items (`/App.jsx` | `/App.tsx`, already resolved at render-vibe.ts:130) carry the
    source bytes served at `/~<fsId>~/<file>`; read those and hand the source to the executor.
@@ -303,11 +309,13 @@ into the container:
 
 ### Fallback discipline (load-bearing)
 
-SSR is an optimization, never a correctness dependency. If the executor throws, times out, or the
-source can't be acquired, `render-vibe.ts` **falls back to the empty container** (client-only render,
-today's path) and logs a structured reason — it never 500s the page or blocks first byte. This is the
-"never add a fallback — fix the real path" rule's _legitimate_ exception: the client render IS the
-real path; SSR is additive.
+SSR is an optimization, never a correctness dependency. The **entire** SSR attempt — executor
+_selection_ (which can throw on a missing-binding misconfig), source acquisition, and `render` (which
+can throw or time out) — is wrapped in one `exception2Result` in `render-vibe.ts`. On any failure the
+route **falls back to the empty container** (client-only render, today's path) and logs a structured
+reason — it never 500s the page or blocks first byte. This is the "never add a fallback — fix the real
+path" rule's _legitimate_ exception: the client render IS the real path; SSR is additive. A misconfigured
+`VIBES_SSR=loader` (flag on, binding absent) therefore renders exactly like `off`, never an error page.
 
 ### Scope decisions (sharp, CI-verifiable cut)
 
@@ -329,6 +337,18 @@ must-revalidate` (unversioned) / `max-age=86400` (versioned), and the ETag alrea
   LRU/Cache-API and content-derived OG/meta are deferred (the latter is the slice-5 Markdown layer).
   No crawler-visible change either: the iframe SSR is still inside the cross-origin sandbox (see SEO
   model) — slice 4 buys **first paint**, not SEO.
+- **React-version parity is a hydration prerequisite** (per Codex review). "Byte-identical" only
+  holds if the SSR-side React and the React the iframe client hydrates with are the **same version**.
+  The client iframe loads React via the import map pinned to `lockedVersions.REACT`
+  (`api/svc/intern/grouped-vibe-import-map.ts`), while a server render resolves React from whatever
+  the executor's runtime has. So: (a) **CI `node` mode is consistent by construction** — both the
+  server render and the browser-project `mountVibe` resolve React from the workspace `node_modules`,
+  so the test plan is valid as written; but (b) the **prod Loader path must render with the
+  import-map-pinned version**, i.e. `WorkerLoaderExecutor`'s bundled `react`/`react-dom/server` must
+  match `lockedVersions.REACT` (this rides the slice-2 "bundle deps before a live load"
+  carry-forward — the bundle pins the version). The implementation adds a parity check/assertion so a
+  drift between the runtime's React and `lockedVersions.REACT` is caught, not silently shipped as a
+  hydration mismatch. (React tolerates patch skew in practice, but the design must not _rely_ on it.)
 
 ### Tests (CI-runnable today)
 
@@ -338,6 +358,8 @@ must-revalidate` (unversioned) / `max-age=86400` (versioned), and the ETag alrea
   - `VIBES_SSR=off` (no executor) → empty `<div class="vibe-app-container">`, no marker (regression
     guard on today's behavior).
   - Executor throws → falls back to the empty container, no 500, structured reason logged.
+  - **Misconfig: `VIBES_SSR=loader` with no `env.LOADER` binding** → selection throws but the route
+    catches it → empty container, no 500 (renders exactly like `off`).
   - A vibe with a relative import → falls back to client-only (not a wrong render).
 - **Browser project** (`tests/app`, real DOM): `mountVibe` hydrates **only** when `data-vibe-ssr` is
   present; a marker-less container with incidental child nodes uses `createRoot` (tightening guard vs.
