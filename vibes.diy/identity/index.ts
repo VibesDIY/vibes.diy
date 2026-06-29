@@ -14,10 +14,11 @@
 export { ensureRuntimeContext, type RuntimeContext } from "./runtime-context.js";
 export { ClerkClaimSchema, ClerkEmailTemplateClaimSchema, type ClerkClaim } from "./clerk-claim.js";
 
-// --- Runtime context / logging helpers (core-runtime is browser-safe) ---
-export { ensureSuperThis, ensureLogger, runtimeFn } from "@fireproof/core-runtime";
-// hashObjectSync (T2) and the sts JWK/JWT crypto (T3) are lifted in-repo;
-// ensureSuperThis/ensureLogger/runtimeFn stay on core-runtime until T4.
+// --- Runtime context / logging helpers (in-repo cement-glue lift, T4) ---
+export { ensureSuperThis, ensureLogger, runtimeFn } from "./runtime/superthis.js";
+// hashObjectSync (T2), the sts JWK/JWT crypto (T3), and the SuperThis context
+// (T4) are all lifted in-repo; only the test cross-checks still import
+// @fireproof/core-runtime, removed when the dep is dropped in T5.
 export * as sts from "./sts/index.js";
 export { hashObjectSync } from "./runtime/hashing.js";
 

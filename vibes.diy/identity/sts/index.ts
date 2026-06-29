@@ -14,7 +14,7 @@ import { exportJWK, importJWK as joseImportJWK, jwtVerify, importSPKI } from "jo
 import type { JWK } from "jose";
 import { base58btc } from "multiformats/bases/base58";
 import { z } from "zod";
-import { ensureSuperThis } from "@fireproof/core-runtime";
+import { ensureSuperThis } from "../runtime/superthis.js";
 import type { SuperThis, JWKPublic, JWKPrivate } from "@fireproof/core-types-base";
 import { JWKPrivateSchema, JWKPublicSchema, toJwksAlg } from "../types/wire.js";
 import { mimeBlockParser, filterOk } from "./text-blocks.js";

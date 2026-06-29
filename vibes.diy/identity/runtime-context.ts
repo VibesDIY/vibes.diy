@@ -1,4 +1,4 @@
-import { ensureSuperThis } from "@fireproof/core-runtime";
+import { ensureSuperThis } from "./runtime/superthis.js";
 import type { SuperThis } from "@fireproof/core-types-base";
 
 /**
