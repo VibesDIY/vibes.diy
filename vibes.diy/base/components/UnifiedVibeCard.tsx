@@ -21,8 +21,9 @@ export interface UnifiedVibeCardProps {
   handles?: readonly HandleOption[];
   /** Switch the active handle (the host persists it via the `defaultHandle` setting). */
   onSelectHandle?: (slug: string) => void;
-  /** Create a new handle ("New handle" row). */
-  onNewHandle?: () => void;
+  /** Create a new handle ("New handle" row). Receives the user's chosen slug from
+   *  the inline form, or no argument when the server should mint a random one. */
+  onNewHandle?: (handle?: string) => void;
   /** Upload a new avatar for the active handle. When provided, the header tag's
    *  avatar becomes the click-to-edit affordance (the runtime ViewerTag's me-mode
    *  reused here): clicking the avatar opens a file picker and runs the host's
@@ -272,8 +273,8 @@ export function UnifiedVibeCard(props: UnifiedVibeCardProps) {
                         props.onSelectHandle?.(slug);
                         setPickerOpen(false);
                       }}
-                      onNewHandle={() => {
-                        props.onNewHandle?.();
+                      onNewHandle={(handle) => {
+                        props.onNewHandle?.(handle);
                         setPickerOpen(false);
                       }}
                     />

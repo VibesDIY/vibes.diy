@@ -280,14 +280,18 @@ describe("UnifiedVibeCard", () => {
     expect(document.querySelector('input[type="file"]')).toBeNull();
   });
 
-  it("fires onNewHandle from the picker", () => {
+  it("fires onNewHandle with the typed handle and closes the picker", () => {
     const onNewHandle = vi.fn();
     render(
       <UnifiedVibeCard appTitle="Bloom Machine" open handleSlug="meghan" handles={[{ slug: "meghan" }]} onNewHandle={onNewHandle} />
     );
     fireEvent.click(screen.getByRole("button", { name: /switch handle/i }));
     fireEvent.click(screen.getByRole("menuitem", { name: /new handle/i }));
-    expect(onNewHandle).toHaveBeenCalled();
+    fireEvent.change(screen.getByLabelText("New handle name"), { target: { value: "stardust" } });
+    fireEvent.click(screen.getByRole("button", { name: /^create$/i }));
+    expect(onNewHandle).toHaveBeenCalledWith("stardust");
+    // Picker closes after creating.
+    expect(screen.queryByRole("menu", { name: /acting as/i })).toBeNull();
   });
 
   it("forwards shareButtonRef to the Share nav button (so an external popover can anchor)", () => {
