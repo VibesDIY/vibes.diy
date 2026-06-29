@@ -28,9 +28,17 @@ describe("sts lift — byte-compat against the frozen fireproof contract", () =>
     expect(await exSts.jwk2env(pubKey as CryptoKey, sthis)).toBe(JWK2ENV_PUB);
   });
 
-  it("env2jwk: decodes the frozen env material back to one usable key", async () => {
+  it("env2jwk: decodes the frozen env material back to the exact frozen key (Charlie #2858)", async () => {
     const keys = await exSts.env2jwk(JWK2ENV_PUB, undefined, sthis);
     expect(keys.length).toBe(1);
+    // Pin the decoded key material both directions, not just the count.
+    const jwk = await exportJWK(keys[0]);
+    expect({ kty: jwk.kty, crv: jwk.crv, x: jwk.x, y: jwk.y }).toEqual({
+      kty: ES256_PUB_JWK.kty,
+      crv: ES256_PUB_JWK.crv,
+      x: ES256_PUB_JWK.x,
+      y: ES256_PUB_JWK.y,
+    });
   });
 
   it("importJWK: ES256 alg + ok", async () => {
