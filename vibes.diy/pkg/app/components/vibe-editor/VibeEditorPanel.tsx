@@ -33,12 +33,16 @@ export function VibeEditorPanel({
   onTab,
   ownerHandle,
   appSlug,
+  fsId,
   promptState,
 }: {
   tab: EditorTab;
   onTab: (t: EditorTab) => void;
   ownerHandle: string;
   appSlug: string;
+  /** The resolved effective fsId (route fsId ?? owner draft ?? served fsId), so
+   *  the Data tab works on the unversioned `/vibe/:owner/:app` URL. (#2518) */
+  fsId?: string;
   promptState: PromptState;
   onActivateChat?: () => void;
 }) {
@@ -74,7 +78,7 @@ export function VibeEditorPanel({
 
       <div className="min-h-0 flex-1 overflow-auto">
         {tab === "code" && <CodeViewPanel model={resolveCodeView(promptState)} />}
-        {tab === "data" && <DataView promptState={promptState} />}
+        {tab === "data" && <DataView promptState={promptState} fsId={fsId} />}
         {tab === "chat" &&
           (promptState.blocks.length > 0 ? (
             <ChatInterface promptState={promptState} onClick={() => undefined} />

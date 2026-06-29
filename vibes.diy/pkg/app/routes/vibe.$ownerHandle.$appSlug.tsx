@@ -155,6 +155,10 @@ export default function VibeIframeWrapper() {
   // unset for non-owners, versioned URLs, and owners whose latest is already published.
   // Declared here (above the iframe-sync effect) because that effect pins `draftFsId`.
   const [draftFsId, setDraftFsId] = useState<string | undefined>(undefined);
+  // The served app's fsId as resolved by getAppByFsId. The primary
+  // `/vibe/:owner/:app` URL carries no route `fsId`, so this is how the editor
+  // surface (Code hydration + Data tab) learns which version is on screen. (#2518)
+  const [resolvedFsId, setResolvedFsId] = useState<string | undefined>(undefined);
   const [isDraft, setIsDraft] = useState(false);
   // #2772 D2: publish-in-flight flag + a bump that re-runs the draft resolver after
   // a successful publish (so the badge + banner clear and the iframe re-pins to the
@@ -719,6 +723,9 @@ export default function VibeIframeWrapper() {
         toast.dismiss("vibe-access");
         return;
       }
+      // Capture the served fsId so the editor surface can hydrate without a
+      // route `fsId` (the primary /vibe URL is unversioned). (#2518)
+      if (res.fsId) setResolvedFsId(res.fsId);
       const shot = res.meta.find(isMetaScreenShot);
       if (shot) {
         setScreenshotUrl(`/assets/cid/?url=${encodeURIComponent(shot.assetUrl)}&mime=${encodeURIComponent(shot.mime)}`);
@@ -863,10 +870,15 @@ export default function VibeIframeWrapper() {
     agentSavedBlockIds: new Set<string>(),
     connection: "live" as const,
   }));
+  // Effective fsId the viewer is actually seeing: an explicit versioned URL wins,
+  // else the owner's pinned draft, else the served app resolved by getAppByFsId.
+  // Feeds the editor's Code hydration + Data tab so they work on the unversioned
+  // `/vibe/:owner/:app` URL (Codex review). (#2518)
+  const effectiveFsId = fsId ?? draftFsId ?? resolvedFsId;
   useChatHydration({
     ownerHandle: ownerHandle ?? "",
     appSlug: appSlug ?? "",
-    fsId,
+    fsId: effectiveFsId,
     sharedApi: vctx.sharedApi,
     dispatch: editorDispatch,
   });
@@ -1264,6 +1276,7 @@ export default function VibeIframeWrapper() {
                         onTab={setEditorTab}
                         ownerHandle={ownerHandle ?? ""}
                         appSlug={appSlug ?? ""}
+                        fsId={effectiveFsId}
                         promptState={editorPromptState}
                         onActivateChat={() => generation.activate()}
                       />
