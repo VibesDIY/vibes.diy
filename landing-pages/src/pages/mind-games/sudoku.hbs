@@ -1,0 +1,101 @@
+{{!--
+{
+  "layout": "webring",
+  "title": "Grid Logic | Mind Games",
+  "description": "Symbols in rows, columns, boxes. Four sudoku variations — each one a live deployed app.",
+  "ogUrl": "https://good.vibes.diy/mind-games/sudoku.html",
+  "source": "mind-games-sudoku"
+}
+--}}
+
+<style>
+  @import url("https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;700&display=swap");
+
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    font-family:'Cormorant Garamond', Georgia, serif;
+    background:#f7f3ec;
+    color:#1f1a17;
+    min-height:100vh;
+    background-image:linear-gradient(rgba(31,26,23,.05) 1px, transparent 1px) 0 0 / 30px 30px, linear-gradient(90deg, rgba(31,26,23,.05) 1px, transparent 1px) 0 0 / 30px 30px, linear-gradient(rgba(31,26,23,.18) 1px, transparent 1px) 0 0 / 90px 90px, linear-gradient(90deg, rgba(31,26,23,.18) 1px, transparent 1px) 0 0 / 90px 90px;
+    background-attachment:fixed;
+  }
+  a{color:inherit;text-decoration:none}
+  .wrap{max-width:1100px;margin:0 auto;padding:64px 24px 96px;position:relative;z-index:1}
+  header.top{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:48px;gap:24px;flex-wrap:wrap}
+  header.top a.back{color:#1f1a17;text-decoration:none;opacity:.6;font-size:14px}
+  header.top a.back:hover{opacity:1}
+  h1{font-family:'Cormorant Garamond', serif;font-size:clamp(40px,7vw,84px);margin:0;line-height:.95;letter-spacing:-.02em}
+  .desc{max-width:560px;font-size:18px;opacity:.75;margin:16px 0 0}
+  .accent-bar{display:inline-block;height:6px;width:120px;background:#a8341c;margin:24px 0 0}
+  .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:32px;margin-top:56px}
+  @media (max-width:720px){.grid{grid-template-columns:1fr}}
+  .card{background:#ffffff;border:1px solid #1f1a17;border-radius:2px;box-shadow:0 2px 0 rgba(31,26,23,.1);overflow:hidden;display:flex;flex-direction:column;transition:transform .15s ease}
+  .card:hover{transform:translateY(-2px)}
+  .shot{display:block;aspect-ratio:16/10;background:#f7f3ec;overflow:hidden;border-bottom:1px solid #1f1a17}
+  .shot img{width:100%;height:100%;object-fit:cover;display:block}
+  .meta{padding:20px 22px 24px}
+  .meta h3{margin:0 0 10px;font-family:'Cormorant Garamond', serif;font-size:24px;letter-spacing:-.01em}
+  .meta h3 a{color:inherit;text-decoration:none}
+  .meta h3 a:hover{color:#a8341c}
+  .prompt{margin:0 0 16px;font-size:14px;line-height:1.55;opacity:.78}
+  .play{display:inline-flex;align-items:center;gap:6px;color:#a8341c;font-weight:700;text-decoration:none;font-size:14px;letter-spacing:.02em}
+  .play:hover{text-decoration:underline}
+  footer{margin-top:64px;font-size:13px;opacity:.5}
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div>
+      <h1>Grid Logic</h1>
+      <p class="desc">Symbols in rows, columns, boxes. Four variations on the theme, each one a live deployed app you can poke at.</p>
+      <div class="accent-bar"></div>
+    </div>
+    <a class="back" href="./index.html">&larr; Mind Games hub</a>
+  </header>
+  <main class="grid">
+    <article class="card">
+      <a class="shot" href="https://vibes.diy/vibe/jchris/quick-sudoku" target="_blank" rel="noopener">
+        <img src="https://quick-sudoku--jchris.prod-v2.vibesdiy.net/screenshot.jpg" alt="Mini Doku preview" loading="lazy"/>
+      </a>
+      <div class="meta">
+        <h3><a href="https://vibes.diy/vibe/jchris/quick-sudoku" target="_blank" rel="noopener">Mini Doku</a></h3>
+        <p class="prompt">Four-by-four sudoku for quick solves. Highlight conflicts. Notes mode for candidates. Three difficulty levels. Timer and best-time per difficulty saved.</p>
+        <a class="play" href="https://vibes.diy/vibe/jchris/quick-sudoku" target="_blank" rel="noopener">Play live &rarr;</a>
+      </div>
+    </article>
+    <article class="card">
+      <a class="shot" href="https://vibes.diy/vibe/jchris/color-sudoku" target="_blank" rel="noopener">
+        <img src="https://color-sudoku--jchris.prod-v2.vibesdiy.net/screenshot.jpg" alt="Chroma Doku preview" loading="lazy"/>
+      </a>
+      <div class="meta">
+        <h3><a href="https://vibes.diy/vibe/jchris/color-sudoku" target="_blank" rel="noopener">Chroma Doku</a></h3>
+        <p class="prompt">Nine-by-nine sudoku using nine colors instead of digits. Tap cell, choose color from palette. Conflict highlight in red. Note mode shows mini swatches.</p>
+        <a class="play" href="https://vibes.diy/vibe/jchris/color-sudoku" target="_blank" rel="noopener">Play live &rarr;</a>
+      </div>
+    </article>
+    <article class="card">
+      <a class="shot" href="https://vibes.diy/vibe/jchris/glyph-sudoku" target="_blank" rel="noopener">
+        <img src="https://glyph-sudoku--jchris.prod-v2.vibesdiy.net/screenshot.jpg" alt="Glyph Doku preview" loading="lazy"/>
+      </a>
+      <div class="meta">
+        <h3><a href="https://vibes.diy/vibe/jchris/glyph-sudoku" target="_blank" rel="noopener">Glyph Doku</a></h3>
+        <p class="prompt">Six-by-six sudoku using six inline SVG glyphs as symbols. Glyph palette at bottom. Conflicts flash. Notes mode shows mini glyphs.</p>
+        <a class="play" href="https://vibes.diy/vibe/jchris/glyph-sudoku" target="_blank" rel="noopener">Play live &rarr;</a>
+      </div>
+    </article>
+    <article class="card">
+      <a class="shot" href="https://vibes.diy/vibe/jchris/killer-sudoku" target="_blank" rel="noopener">
+        <img src="https://killer-sudoku--jchris.prod-v2.vibesdiy.net/screenshot.jpg" alt="Killer Doku preview" loading="lazy"/>
+      </a>
+      <div class="meta">
+        <h3><a href="https://vibes.diy/vibe/jchris/killer-sudoku" target="_blank" rel="noopener">Killer Doku</a></h3>
+        <p class="prompt">Nine-by-nine killer sudoku with cages showing sum constraints. Tap cell to enter digit. Cage borders dotted. Auto-check sums on completion.</p>
+        <a class="play" href="https://vibes.diy/vibe/jchris/killer-sudoku" target="_blank" rel="noopener">Play live &rarr;</a>
+      </div>
+    </article>
+  </main>
+  {{> newsletter}}
+<footer>Built with vibes.diy. Each card is a one-prompt mini-app.</footer>
+</div>

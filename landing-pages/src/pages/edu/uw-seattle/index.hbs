@@ -1,0 +1,144 @@
+{{!--
+{
+  "layout": "webring",
+  "title": "UW Seattle Courses | Vibes DIY Edu",
+  "description": "6 courses from UW Seattle — Seattle, WA. Browse syllabi and study tools.",
+  "ogUrl": "https://good.vibes.diy/edu/uw-seattle/"
+,
+  "source": "edu-uw-seattle"
+}
+--}}
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Helvetica Neue', Arial, sans-serif; background: #f4f4f0; color: #1a1a1a; font-size: 14px; line-height: 1.5; }
+.topbar {
+  position: sticky; top: 0; z-index: 100;
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 0.6rem 1.25rem; background: #231F20; color: #FFFFF0;
+  border-bottom: 2px solid #000; font-size: 0.75rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase;
+}
+.topbar a { color: inherit; text-decoration: none; opacity: 0.7; }
+.topbar a:hover { opacity: 1; }
+.topbar .sep { opacity: 0.35; margin: 0 0.4rem; }
+.topbar-logo { height: 22px; width: auto; opacity: 0.85; vertical-align: middle; margin-right: 0.5rem; }
+.wrap { max-width: 860px; margin: 0 auto; padding: 2rem 1.25rem 5rem; }
+.breadcrumb { font-size: 0.75rem; color: #888; margin-bottom: 1.5rem; }
+.breadcrumb a { color: #0070c9; text-decoration: none; }
+.breadcrumb a:hover { text-decoration: underline; }
+.breadcrumb .sep { opacity: 0.5; margin: 0 0.3rem; }
+.inst-hero { margin-bottom: 1.75rem; }
+.inst-hero h1 { font-size: 1.8rem; font-weight: 800; line-height: 1.15; margin-bottom: 0.25rem; }
+.inst-hero p { font-size: 0.85rem; color: #666; }
+.course-row {
+  display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem;
+  background: white; border: 2px solid #231F20; border-radius: 8px;
+  padding: 1.1rem 1.25rem; margin-bottom: 0.75rem;
+  text-decoration: none; color: inherit;
+  transition: background 0.1s, border-color 0.1s;
+}
+.course-row:hover { background: #FFFFF0; border-color: #0070c9; }
+.course-row-body { flex: 1; min-width: 0; }
+.course-row-title { font-size: 0.95rem; font-weight: 700; margin-bottom: 0.2rem; line-height: 1.3; }
+.course-row:hover .course-row-title { color: #0070c9; }
+.course-row-meta { font-size: 0.72rem; color: #888; margin-bottom: 0.5rem; }
+.course-row-arrow { font-size: 1.1rem; color: #ccc; flex-shrink: 0; margin-top: 0.1rem; transition: color 0.1s; }
+.course-row:hover .course-row-arrow { color: #0070c9; }
+.tags { display: flex; flex-wrap: wrap; gap: 0.25rem; margin-bottom: 0.5rem; }
+.tag { font-size: 0.67rem; padding: 0.12rem 0.4rem; background: rgba(35,31,32,0.06); border: 1px solid rgba(35,31,32,0.12); border-radius: 3px; color: #444; }
+.cluster-links { display: flex; flex-wrap: wrap; gap: 0.25rem; }
+.cluster-link {
+  display: inline-flex; align-items: center; gap: 0.2rem;
+  font-size: 0.65rem; font-weight: 600; padding: 0.12rem 0.45rem;
+  background: rgba(0,112,201,0.07); border: 1.5px solid #0070c9;
+  color: #0070c9; border-radius: 3px; text-decoration: none;
+  transition: background 0.1s, color 0.1s;
+}
+.cluster-link:hover { background: #0070c9; color: white; }
+.cluster-link::after { content: " →"; font-size: 0.58rem; opacity: 0.7; }
+.footer { text-align: center; padding: 2rem 1rem; font-size: 0.78rem; color: #999; border-top: 1px solid #ccc; margin-top: 2rem; }
+.footer a { color: inherit; }
+</style>
+
+<nav class="topbar">
+  <div>
+    <a href="https://links.vibes.diy/homepage"><img src="{{assetPrefix}}Vibes-Toggle-1-Transparent.png" alt="Vibes DIY" class="topbar-logo"></a>
+    <span class="sep">/</span>
+    <a href="../syllabi.html">Edu Portal</a>
+    <span class="sep">/</span>
+    UW Seattle
+  </div>
+  <div>6 courses</div>
+</nav>
+
+<div class="wrap">
+  <div class="breadcrumb">
+    <a href="../syllabi.html">Syllabi</a>
+    <span class="sep">/</span>
+    UW Seattle
+  </div>
+
+  <div class="inst-hero">
+    <h1>UW Seattle</h1>
+    <p>Seattle, WA · 6 courses</p>
+  </div>
+
+  <a href="stat-534-statistical-computing.html" class="course-row">
+      <div class="course-row-body">
+        <div class="course-row-title">STAT 534: Statistical Computing</div>
+        <div class="course-row-meta">Data Science / Stats · 2024</div>
+        <div class="tags"><span class="tag">scientific programming in C++</span> <span class="tag">data structures and algorithms</span> <span class="tag">numerical computing</span> <span class="tag">object-oriented design</span> <span class="tag">modularization</span> <span class="tag">numerical graphics</span></div>
+        <div class="cluster-links"><a href="../research-methods-regression.html" class="cluster-link">Research Methods</a></div>
+      </div>
+      <span class="course-row-arrow">→</span>
+    </a>
+<a href="biost-518-applied-biostatistics-ii.html" class="course-row">
+      <div class="course-row-body">
+        <div class="course-row-title">BIOST 518: Applied Biostatistics II</div>
+        <div class="course-row-meta">Public Health · 2024</div>
+        <div class="tags"><span class="tag">multiple regression</span> <span class="tag">right-censored response variables</span> <span class="tag">dummy variables</span> <span class="tag">variable transformations</span> <span class="tag">interaction terms</span> <span class="tag">correlated outcome data</span></div>
+        <div class="cluster-links"><a href="../epidemiology-study-design.html" class="cluster-link">Epidemiology</a> <a href="../research-methods-regression.html" class="cluster-link">Research Methods</a></div>
+      </div>
+      <span class="course-row-arrow">→</span>
+    </a>
+<a href="urbdp-520-quantitative-methods-in-urban-design-and-planning.html" class="course-row">
+      <div class="course-row-body">
+        <div class="course-row-title">URBDP 520: Quantitative Methods in Urban Design and Planning</div>
+        <div class="course-row-meta">Urban Planning · 2024</div>
+        <div class="tags"><span class="tag">regression analysis</span> <span class="tag">matrix methods</span> <span class="tag">cohort-survival population models</span> <span class="tag">spatial analysis techniques</span> <span class="tag">demographic techniques</span> <span class="tag">statistical thinking</span></div>
+        <div class="cluster-links"><a href="../research-methods-regression.html" class="cluster-link">Research Methods</a></div>
+      </div>
+      <span class="course-row-arrow">→</span>
+    </a>
+<a href="envir-495-climate-justice.html" class="course-row">
+      <div class="course-row-body">
+        <div class="course-row-title">ENVIR 495: Climate Justice</div>
+        <div class="course-row-meta">Environmental Studies · 2024</div>
+        <div class="tags"><span class="tag">climate justice frameworks</span> <span class="tag">settler-colonialism and climate</span> <span class="tag">environmental racism</span> <span class="tag">intersectionality in climate policy</span> <span class="tag">climate crisis differentiated impacts</span> <span class="tag">systems of oppression in environmental policy</span></div>
+        <div class="cluster-links"><a href="../climate-change-policy.html" class="cluster-link">Climate &amp; Environment</a></div>
+      </div>
+      <span class="course-row-arrow">→</span>
+    </a>
+<a href="econ-411-behavioral-economics.html" class="course-row">
+      <div class="course-row-body">
+        <div class="course-row-title">ECON 411: Behavioral Economics</div>
+        <div class="course-row-meta">Behavioral Economics · 2024</div>
+        <div class="tags"><span class="tag">psychological biases in economic models</span> <span class="tag">systematic departures from rational choice</span> <span class="tag">nudge theory</span> <span class="tag">prospect theory</span> <span class="tag">bounded rationality</span> <span class="tag">behavioral policy design</span></div>
+        <div class="cluster-links"><a href="../behavioral-economics.html" class="cluster-link">Behavioral Economics</a></div>
+      </div>
+      <span class="course-row-arrow">→</span>
+    </a>
+<a href="edpsy-591-methods-of-educational-research.html" class="course-row">
+      <div class="course-row-body">
+        <div class="course-row-title">EDPSY 591: Methods of Educational Research</div>
+        <div class="course-row-meta">Education Research · 2024</div>
+        <div class="tags"><span class="tag">experimental research design</span> <span class="tag">quasi-experimental research design</span> <span class="tag">causal inference in education</span> <span class="tag">APA standards for empirical reporting</span> <span class="tag">applied social science research methods</span> <span class="tag">educational data analysis</span></div>
+        <div class="cluster-links"><a href="../research-methods-regression.html" class="cluster-link">Research Methods</a></div>
+      </div>
+      <span class="course-row-arrow">→</span>
+    </a>
+</div>
+
+{{> newsletter}}
+<footer class="footer">
+  <a href="https://links.vibes.diy/homepage">Vibes DIY</a> — build your own app from any topic in this corpus
+</footer>

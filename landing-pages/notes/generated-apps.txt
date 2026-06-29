@@ -1,0 +1,102 @@
+https://vibes.diy/vibe/garden-gnome/sunset-timelapse Daily sunset timelapse — daily photo prompt; align frames; auto timelapse; compare dates/angles.
+https://vibes.diy/vibe/garden-gnome/garden-plant-tracker Garden plant tracker — log plantings; map beds; suggest rotations/soil needs; reminders for watering/fertilizing.
+https://vibes.diy/vibe/garden-gnome/voice-passage-share Shared book passages (voice) — record clips; auto-transcribe; tag by theme/page; compile playlist for class.
+https://vibes.diy/vibe/jchris/putt-putt-randomizer Putt-putt rule randomizer — per-hole rule cards; penalties/bonuses; score adjustments; share game log.
+https://vibes.diy/vibe/jchris/soundboard-party-game Soundboard party game — 12-word pads; TTS playback; rotating questioner; turn highlight color; vote funniest.
+https://vibes.diy/vibe/jchris/would-you-rather Would-you-rather engine — submit dilemmas; friends vote; see split percentages; daily featured question; create themed decks.
+https://vibes.diy/vibe/jchris/parking-spot-memory Parking spot memory — drop a pin when you park; optional photo; timer for meters; share with carpool group.
+https://vibes.diy/vibe/jchris/mood-check-in-circle Mood check-in circle — daily emoji or one-word check-in; friends see the group vibe; weekly patterns; optional journaling.
+https://vibes.diy/vibe/jchris/scavenger-hunt-builder Scavenger hunt builder — create clue lists with photos/hints; share invite link; teams check off finds; live leaderboard; post-game gallery.
+https://vibes.diy/vibe/jchris/wolf-lie-result Campfire story chain — each person adds a paragraph on a timer; pass to next; vote on best story; illustrated recap.
+https://vibes.diy/vibe/jchris/milk-dropped-happen Tide pool species log — photo creatures at the shore; ID suggestions from public datasets; season/location tags; compare finds with friends.
+https://vibes.diy/vibe/jchris/this-hollow-nearest Micro-workout dice — roll for exercise and reps; log completions; challenge a friend to the same roll; weekly streaks.
+https://vibes.diy/vibe/jchris/fierce-music-stepped Font spotter — photo text in the wild; AI identifies the font; personal collection gallery; “seen in” locations.
+https://vibes.diy/vibe/jchris/straw-call-planning Cloud shape voting — photo a cloud; friends vote on what it looks like; gallery of best interpretations; daily challenge.
+https://vibes.diy/vibe/jchris/press-tie-difference Dog walker coordinator — schedule group walks; share routes; doggy playdate matching; photo highlights.
+https://vibes.diy/vibe/jchris/conversation-slabs-had Lunchbox idea spinner — dietary filters; random combo generator; photo your lunch; rate and remix others'.
+https://vibes.diy/vibe/jchris/capital-fox-all Secret handshake builder — step-by-step move sequence; practice mode with timing cues; share encrypted link with your partner only.
+https://vibes.diy/vibe/jchris/strip-busy-when Neighborhood sound map — record ambient audio at locations; pin to map; curated listening walks; seasonal comparisons.
+https://vibes.diy/vibe/jchris/oblique-strategies-deck Oblique Strategies deck — random prompt; favorites; session history; “apply to project” notes.
+https://vibes.diy/vibe/jchris/silly-teacher-names Silly teacher name generator — rhyme/alliteration variants; tone filter (kind/neutral); shareable list.
+https://vibes.diy/vibe/jchris/egg-master-guide Egg cooking guide — methods list; timers; doneness visuals; quick tips.
+https://vibes.diy/vibe/jchris/type-identifier Font spotter — photo text in the wild; AI identifies the font; personal collection gallery; "seen in" locations.
+https://vibes.diy/vibe/jchris/car-finder Parking spot memory — drop a pin when you park; optional photo; timer for meters; share with carpool group.
+https://vibes.diy/vibe/jchris/story-circle Campfire story chain — each person adds a paragraph on a timer; pass to next; vote on best story; illustrated recap.
+https://vibes.diy/vibe/jchris/shall-wheat-week Would-you-rather engine — submit dilemmas; friends vote; see split percentages; daily featured question; create themed decks.
+https://vibes.diy/vibe/jchris/fitness-roll Micro-workout dice — roll for exercise and reps; log completions; challenge a friend to the same roll; weekly streaks.
+https://vibes.diy/vibe/jchris/hunt-creator Scavenger hunt builder — create clue lists with photos/hints; share invite link; teams check off finds; live leaderboard; post-game gallery.
+https://vibes.diy/vibe/jchris/mood-circle Mood check-in circle — daily emoji or one-word check-in; friends see the group vibe; weekly patterns; optional journaling.
+https://vibes.diy/vibe/jchris/tide-pool-species Tide pool species log — photo creatures at the shore; ID suggestions from public datasets; season/location tags; compare finds with friends.
+https://vibes.diy/vibe/jchris/trading-sign-up-list Side-kits trading sign-up list — post items you have/want; claim/borrow flow; simple availability status; notifications for matches.
+https://vibes.diy/vibe/jchris/putt-putt-house-rules Putt-putt rule randomizer — per-hole rule cards; penalties/bonuses; score adjustments; share game log.
+https://vibes.diy/vibe/jchris/free-bots-swap Neighborhood free-bots swap — geo feed of free items; claimed/pending states; pickup notes; lightweight moderation.
+https://vibes.diy/vibe/jchris/team-task-board Team app tracker — list apps, ICPs, status; owner per app; quick demos; links to live vibes.
+https://vibes.diy/vibe/jchris/dish-brag-board Brag-on-a-recipe app — link to post; add notes, tweaks; reactions; remix into your own version.
+https://vibes.diy/vibe/jchris/repaint-my-house House repainting visualizer — camera overlay; segment walls; apply colors; save schemes; side-by-side compare.
+https://vibes.diy/vibe/jchris/thread-exchange Clothing swapper — upload pics; tag size/brand; filter by fit; swap requests; meetup coordination.
+https://vibes.diy/vibe/jchris/purple-puzzle-quest Purple-solution game — indicator-based challenges; fastest/strongest color change wins; timer + scoring.
+https://vibes.diy/vibe/jchris/surface-projection-tool Projection mapping graphics — camera-calibrated projection layout; drag shapes onto surfaces; save scenes; live edit on device.
+https://vibes.diy/vibe/jchris/soundboard-party Soundboard party game — 12-word pads; TTS playback; rotating questioner; turn highlight color; vote funniest.
+https://vibes.diy/vibe/jchris/freebot-swap-hub Neighborhood free-bots swap — geo feed of free items; “claimed/pending” states; pickup notes; lightweight moderation.
+https://vibes.diy/vibe/jchris/podcast-smash-notes Podcast show-notes smash buttons — large tappable topics; dismiss as covered; AI suggests next talking point; timer cues.
+https://vibes.diy/vibe/jchris/chore-chart-tracker Dynamic chore chart (points) — ad hoc tasks; assign points; claim/complete; redeem rewards; history.
+https://vibes.diy/vibe/jchris/side-kits-trading-list Side-kits trading sign-up list — post items you have/want; claim/borrow flow; simple availability status; notifications for matches.
+https://vibes.diy/vibe/jchris/whose-turn-tonight Who-picked-the-movie tracker — log picks; auto-rotate next chooser; tie-break rules; history view.
+https://vibes.diy/vibe/jchris/bat-rather-steam Brag-on-a-recipe app — link to post; add notes, tweaks; reactions; remix into your own version.
+https://vibes.diy/vibe/jchris/basketball-mvp-board Basketball scoreboard / MVP stats tracker for end of year — track points, assists, rebounds per game; auto totals; leaderboards; export season summary.
+https://vibes.diy/vibe/jchris/show-notes-buttons Podcast show-notes smash buttons — large tappable topics; dismiss as covered; AI suggests next talking point; timer cues.
+https://vibes.diy/vibe/jchris/community-freebot-board Neighborhood free-bots swap — geo feed of free items; “claimed/pending” states; pickup notes; lightweight moderation.
+https://vibes.diy/vibe/jchris/moonlight-ceremonies Full moon ritual planner — shared checklist; per-day contributions; countdown timer; synchronized “start now” moment.
+https://vibes.diy/vibe/jchris/closet-exchange Clothing swapper (size + photos) — upload pics; tag size/brand; filter by fit; swap requests; meetup coordination.
+https://vibes.diy/vibe/jchris/kill-drive-copy Basketball game — simple multiplayer mini-game; local or async turns; score, fouls, timers; remix rules; share link to play with friends.
+https://vibes.diy/vibe/jchris/open-projection-studio Projection mapping graphics (replace expensive $50/mo software) — camera-calibrated projection layout; drag shapes onto surfaces; save scenes; live edit on device.
+https://vibes.diy/vibe/jchris/voice-passages Shared book passages (voice) — record clips; auto-transcribe; tag by theme/page; compile playlist for class.
+https://vibes.diy/vibe/jchris/plant-care-diary Garden plant tracker — log plantings; map beds; suggest rotations/soil needs; reminders for watering/fertilizing.
+https://vibes.diy/vibe/jchris/prune-or-not-live Prune-or-not livestream — live feed; audience votes; overlay “cut here”; record decisions.
+https://vibes.diy/vibe/jchris/cat-spotter-map Neighborhood cat tracker — photo log; vote same/new cat; cluster sightings; simple map.
+https://vibes.diy/vibe/jchris/golden-hour-archive Daily sunset timelapse — daily photo prompt; align frames; auto timelapse; compare dates/angles.
+https://vibes.diy/vibe/jchris/rhyme-battle Rhyme tug-of-war — turn-based rhymes; score pulls rope; streak bonuses; difficulty words.
+https://vibes.diy/vibe/jchris/purple-mix-challenge Purple-solution game — indicator-based challenges; fastest/strongest color change wins; timer + scoring.
+https://vibes.diy/vibe/jchris/project-tracker Team app tracker — list apps, ICPs, status; owner per app; quick demos; links to live vibes.
+https://vibes.diy/vibe/jchris/reaction-lab Chemistry reaction game (energy/time) — choose safe modeled reactions; simulate output; compare scores.
+https://vibes.diy/vibe/jchris/home-color-preview House repainting visualizer — camera overlay; segment walls; apply colors; save schemes; side-by-side compare.
+https://vibes.diy/vibe/jchris/molecular-whistle-student Putt-putt rule randomizer — per-hole rule cards; penalties/bonuses; score adjustments; share game log.
+https://vibes.diy/vibe/jchris/reading-challenge-tracker Read-a-thon tracker — nightly prompt; streaks; goals; badges; leaderboard among friends.
+https://vibes.diy/vibe/jchris/points-chore-board Dynamic chore chart (points) — ad hoc tasks; assign points; claim/complete; redeem rewards; history.
+https://vibes.diy/vibe/jchris/party-sound-blast Soundboard party game — 12-word pads; TTS playback; rotating questioner; turn highlight color; vote funniest.
+https://vibes.diy/vibe/jchris/feather-finder Bird ID app — photo/audio in; match to public datasets; play calls; quick facts.
+https://vibes.diy/vibe/jchris/pasta-identifier Pasta identifier — image in; top-3 guesses; confidence; crowd corrections.
+https://vibes.diy/vibe/jchris/wacky-teacher-generator Silly teacher name generator — rhyme/alliteration variants; tone filter (kind/neutral); shareable list.
+https://vibes.diy/vibe/jchris/skittle-measure-log Skittles size tracker — photo with reference; measure pixels→mm; compare by region; aggregate stats.
+https://vibes.diy/vibe/jchris/swatch-catalog Paint sample tracker — photo walls; pin labels; store codes/brands; final palette record.
+https://vibes.diy/vibe/jchris/clean-sweep-reminders Cleaning reminders (push) — recurring tasks; snooze; completion log; simple streaks.
+https://vibes.diy/vibe/jchris/egg-master Egg cooking guide — methods list; timers; doneness visuals; quick tips.
+https://vibes.diy/vibe/jchris/friendship-bracelet-maker Friendship bracelet pattern designer — bead/thread color grids; step-by-step instructions; share patterns; difficulty ratings.
+https://vibes.diy/vibe/jchris/night-sky-journal Stargazing log — point phone at sky; identify constellations; log sightings with friends; track seasonal changes.
+https://vibes.diy/vibe/jchris/vote-the-clouds Cloud shape voting — photo a cloud; friends vote on what it looks like; gallery of best interpretations; daily challenge.
+https://vibes.diy/vibe/jchris/oblique-strategy-draw Oblique Strategies deck — random prompt; favorites; session history; “apply to project” notes.
+https://vibes.diy/vibe/jchris/paw-patrol-planner Dog walker coordinator — schedule group walks; share routes; doggy playdate matching; photo highlights.
+https://vibes.diy/vibe/jchris/lunch-spin Lunchbox idea spinner — dietary filters; random combo generator; photo your lunch; rate and remix others'.
+https://vibes.diy/vibe/jchris/my-rock-library Rock collection catalog — photo specimens; crowd-ID rock type; rarity ratings; trade offers with friends.
+https://vibes.diy/vibe/jchris/recipe-keeper Family recipe vault — voice-record recipes from relatives; auto-transcribe; tag cuisine/occasion; family tree attribution.
+https://vibes.diy/vibe/jchris/handshake-composer Secret handshake builder — step-by-step move sequence; practice mode with timing cues; share encrypted link with your partner only.
+https://vibes.diy/vibe/jchris/praise-blaster Compliment cannon — anonymous kind notes to classmates; teacher-moderated queue; daily digest; highlight wall.
+https://vibes.diy/vibe/jchris/produce-operation-funny Weather bet — friends predict tomorrow's high temp; closest wins points; streaks; season standings.
+https://vibes.diy/vibe/jchris/shared-bucket-list Bucket list collab — shared adventure list with friends; check off together; photo proof; reminisce timeline view.
+https://vibes.diy/vibe/jchris/cache-quest-journal Geocache adventure log — coordinates and hints; find-and-sign flow; photo proof; difficulty/terrain ratings; personal stats.
+https://vibes.diy/vibe/jchris/drawing-telephone-game Doodle telephone — draw something; next person describes it in words; next draws from that description; reveal the chain; vote funniest drift.
+https://vibes.diy/vibe/jchris/snack-showdown Snack bracket tournament — seed 16 snacks; head-to-head group votes; crown a champion; seasonal resets; hall of fame.
+https://vibes.diy/vibe/jchris/dreamscape-journal Dream journal with pattern finder — log dreams by voice or text; AI tags recurring themes; spot symbols over weeks; share anonymized highlights.
+https://vibes.diy/vibe/jchris/letter-starter Pen pal prompt starter — interests quiz; matched pairs; weekly conversation prompts; response streak tracking.
+https://vibes.diy/vibe/jchris/time-capsule Time capsule — write messages or upload photos locked until a chosen future date; group capsules; countdown reveal.
+https://vibes.diy/vibe/jchris/flashcard-battle-arena Study flashcard battle — collaborative decks; head-to-head quiz mode; spaced repetition scheduling; class leaderboard.
+https://vibes.diy/vibe/jchris/ministry-of-walks Silly walk generator — random movement instructions per segment; film yourself doing it; friends vote funniest; remix walks.
+https://vibes.diy/vibe/jchris/fireside-tales Campfire story chain — each person adds a paragraph on a timer; pass to next; vote on best story; illustrated recap.
+https://vibes.diy/vibe/jchris/wave-locate-depend Font spotter — photo text in the wild; AI identifies the font; personal collection gallery; “seen in” locations.
+https://vibes.diy/vibe/jchris/potluck-organizer Potluck planner — claim dishes; dietary tags; avoid duplicates; per-person shopping list; day-of coordination chat.
+https://vibes.diy/vibe/jchris/above-happily-birthday Parking spot memory — drop a pin when you park; optional photo; timer for meters; share with carpool group.
+https://vibes.diy/vibe/jchris/intertidal-field-notes Tide pool species log — photo creatures at the shore; ID suggestions from public datasets; season/location tags; compare finds with friends.
+https://vibes.diy/vibe/jchris/flight-salmon-diameter Micro-workout dice — roll for exercise and reps; log completions; challenge a friend to the same roll; weekly streaks.
+https://vibes.diy/vibe/jchris/visit-remain-enough Would-you-rather engine — submit dilemmas; friends vote; see split percentages; daily featured question; create themed decks.
+https://vibes.diy/vibe/jchris/feelings-circle Mood check-in circle — daily emoji or one-word check-in; friends see the group vibe; weekly patterns; optional journaling.
+https://vibes.diy/vibe/jchris/smoke-dozen-mental Scavenger hunt builder — create clue lists with photos/hints; share invite link; teams check off finds; live leaderboard; post-game gallery.

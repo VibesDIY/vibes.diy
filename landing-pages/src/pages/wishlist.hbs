@@ -1,0 +1,539 @@
+{{!--
+{
+  "layout": "webring",
+  "title": "Wishlist & Gift Registry Apps — Vibes DIY",
+  "description": "Group gift tracking, personal wishlists, baby registries, secret santa, and gift budgets. For weddings, birthdays, baby showers, and every gift-giving occasion.",
+  "ogUrl": "https://good.vibes.diy/wishlist/",
+  "source": "wishlist",
+  "apps": [
+    {
+      "num": "01",
+      "slug": "group-gift-claimer",
+      "author": "og",
+      "live": true,
+      "spotlight": true,
+      "title": "Group Gift Claimer",
+      "tagline": "No more 'did anyone get the stand mixer?' Three people got the stand mixer.",
+      "desc": "Group gift list where contributors can claim items to avoid duplicates. Owner adds items with name, link, price, quantity. Anyone visiting claims what they're buying. Claimed items show who's got it covered.",
+      "cta": "Share a link. Everyone claims what they're buying. Nobody doubles up."
+    },
+    {
+      "num": "02",
+      "slug": "personal-wishlist",
+      "author": "og",
+      "live": true,
+      "title": "Personal Wishlist",
+      "tagline": "What you actually want, with actual links, at actual prices.",
+      "desc": "Personal wishlist to share with family and friends. Items include name, link, price range, priority, and notes. No signup. Works for any occasion."
+    },
+    {
+      "num": "03",
+      "slug": "baby-registry-tracker",
+      "author": "og",
+      "live": true,
+      "title": "Baby Registry Tracker",
+      "tagline": "Everything on the list, who brought it, and whether you've thanked them yet.",
+      "desc": "Registry tracker for the expecting parent. Track items, stores, links, prices, quantities received, who gifted what, and thank-you note status. Progress bar shows list coverage."
+    },
+    {
+      "num": "04",
+      "slug": "gift-budget-tracker",
+      "author": "og",
+      "live": true,
+      "title": "Gift Budget Tracker",
+      "tagline": "Everyone you need to buy for. All in one place. No surprises in January.",
+      "desc": "Gift-giving budget tracker for the buyer. Add recipients with occasion, budget, gift idea or link, purchase status, and actual amount spent. Summary totals keep you honest."
+    },
+    {
+      "num": "05",
+      "slug": "secret-santa-organizer",
+      "author": "og",
+      "live": true,
+      "title": "Secret Santa Organizer",
+      "tagline": "Random. Fair. Nobody gets their own name.",
+      "desc": "Secret santa organizer. Add participants with wish list notes or preferences. Shuffle to assign recipients — no self-assignments, no mutual pairs. Each person looks up only their own match."
+    }
+  ],
+  "occasions": ["Wedding", "Birthday", "Baby Shower", "Holiday", "Secret Santa"],
+  "ogImage": "https://good.vibes.diy/images/screenshots/wishlist.jpg"
+}
+--}}
+
+<style>
+  @import url('https://fonts.cdnfonts.com/css/alte-haas-grotesk');
+
+  :root {
+    --coral: #FF6348;
+    --coral-dim: rgba(255, 99, 72, 0.12);
+    --coral-bright: #FF7A63;
+    --teal: #00B4A6;
+    --teal-dim: rgba(0, 180, 166, 0.12);
+    --plum: #3D0066;
+    --plum-dim: rgba(61, 0, 102, 0.08);
+    --cream: #FFF8F5;
+    --white: #FFFFFF;
+    --gray: #666;
+    --grid-bg: #FFF0EC;
+    --border: rgba(61, 0, 102, 0.18);
+  }
+
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+
+  html, body {
+    background-color: var(--grid-bg);
+    background-image:
+      linear-gradient(rgba(255,255,255,0.7) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.7) 1px, transparent 1px);
+    background-size: 40px 40px;
+    font-family: 'Alte Haas Grotesk', -apple-system, sans-serif;
+    color: var(--plum);
+    line-height: 1.55;
+    min-height: 100vh;
+  }
+  a { color: inherit; text-decoration: none; }
+
+  .layout { max-width: 1100px; margin: 0 auto; padding: 0 1.5rem; }
+
+  /* Header */
+  .topbar {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 1.25rem 0;
+    border-bottom: 3px solid var(--plum);
+  }
+  .topbar .brand {
+    display: flex; align-items: center; gap: 0.75rem;
+    font-size: 1.1rem; font-weight: 700; letter-spacing: -0.01em;
+    color: var(--plum);
+  }
+  .brand img { height: 32px; width: auto; display: block; }
+  .topbar .meta {
+    font-size: 0.7rem; letter-spacing: 0.2em; text-transform: uppercase;
+    color: var(--gray);
+  }
+
+  /* Hero */
+  .hero {
+    padding: 3.5rem 0 3rem;
+    background: var(--coral);
+    margin: 1.5rem -1.5rem 0;
+    padding-left: 1.5rem; padding-right: 1.5rem;
+    border: 3px solid var(--plum);
+    border-radius: 20px;
+    box-shadow: 6px 6px 0 var(--plum);
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::before {
+    content: "";
+    position: absolute; top: -40px; right: -40px;
+    width: 200px; height: 200px;
+    background: rgba(255,255,255,0.08);
+    border-radius: 50%;
+  }
+  .hero::after {
+    content: "";
+    position: absolute; bottom: -60px; right: 10%;
+    width: 280px; height: 280px;
+    background: rgba(255,255,255,0.05);
+    border-radius: 50%;
+  }
+  .hero-label {
+    display: inline-block;
+    background: var(--white);
+    color: var(--coral);
+    padding: 4px 14px;
+    border-radius: 999px;
+    border: 2px solid var(--plum);
+    font-size: 0.7rem; letter-spacing: 0.18em; text-transform: uppercase;
+    font-weight: 700;
+    margin-bottom: 1.5rem;
+  }
+  .hero h1 {
+    font-size: clamp(2.8rem, 7vw, 5.5rem);
+    font-weight: 700;
+    line-height: 0.95;
+    letter-spacing: -0.03em;
+    color: var(--white);
+    margin-bottom: 1.25rem;
+    position: relative;
+  }
+  .hero p.lead {
+    font-size: 1.15rem; max-width: 640px; line-height: 1.6;
+    color: rgba(255,255,255,0.92);
+    position: relative;
+  }
+  .hero-occasions {
+    display: flex; flex-wrap: wrap; gap: 0.5rem;
+    margin-top: 1.75rem;
+    position: relative;
+  }
+  .occ-badge {
+    background: rgba(255,255,255,0.2);
+    border: 1.5px solid rgba(255,255,255,0.5);
+    color: var(--white);
+    padding: 4px 12px;
+    border-radius: 999px;
+    font-size: 0.75rem; letter-spacing: 0.1em; text-transform: uppercase;
+    font-weight: 600;
+  }
+
+  /* Spotlight */
+  .spotlight {
+    margin: 2rem 0;
+  }
+  .spotlight-label {
+    font-size: 0.65rem; letter-spacing: 0.25em; text-transform: uppercase;
+    color: var(--gray);
+    margin-bottom: 1rem;
+    padding-top: 0.5rem;
+  }
+  .spotlight-card {
+    background: var(--white);
+    border: 3px solid var(--plum);
+    border-radius: 20px;
+    box-shadow: 6px 6px 0 var(--plum);
+    overflow: hidden;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0;
+  }
+  @media (max-width: 750px) {
+    .spotlight-card { grid-template-columns: 1fr; }
+    .spotlight-shot { order: -1; }
+  }
+  .spotlight-body {
+    padding: 2.5rem;
+    display: flex; flex-direction: column; gap: 0.75rem;
+    border-right: 3px solid var(--plum);
+  }
+  @media (max-width: 750px) {
+    .spotlight-body { border-right: none; border-bottom: 3px solid var(--plum); }
+  }
+  .spotlight-num {
+    font-size: 0.6rem; letter-spacing: 0.25em; text-transform: uppercase;
+    color: var(--coral); font-weight: 700;
+  }
+  .spotlight-title {
+    font-size: clamp(1.8rem, 4vw, 3rem);
+    font-weight: 700; line-height: 0.95; letter-spacing: -0.03em;
+  }
+  .spotlight-tagline {
+    background: var(--coral);
+    color: var(--white);
+    padding: 6px 14px;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    display: inline-block; align-self: flex-start;
+    font-weight: 600;
+  }
+  .spotlight-cta-text {
+    font-size: 1rem; line-height: 1.6; color: var(--gray);
+  }
+  .spotlight-actions {
+    display: flex; gap: 0.5rem; flex-wrap: wrap;
+    margin-top: 0.5rem;
+  }
+  .btn-primary {
+    display: inline-block;
+    padding: 0.7rem 1.75rem;
+    background: var(--coral);
+    color: var(--white);
+    border: 2px solid var(--plum);
+    border-radius: 10px;
+    font-size: 0.8rem; letter-spacing: 0.12em; text-transform: uppercase;
+    font-weight: 700;
+    transition: background 0.12s;
+    box-shadow: 3px 3px 0 var(--plum);
+  }
+  .btn-primary:hover { background: var(--coral-bright); }
+  .btn-secondary {
+    display: inline-block;
+    padding: 0.7rem 1.5rem;
+    background: transparent;
+    color: var(--plum);
+    border: 2px solid var(--plum);
+    border-radius: 10px;
+    font-size: 0.8rem; letter-spacing: 0.12em; text-transform: uppercase;
+    font-weight: 700;
+    transition: background 0.12s;
+    box-shadow: 3px 3px 0 var(--plum);
+  }
+  .btn-secondary:hover { background: var(--plum-dim); }
+  .spotlight-shot {
+    position: relative;
+  }
+  .spotlight-shot a {
+    display: block; width: 100%; height: 100%; min-height: 280px;
+  }
+  .spotlight-shot img {
+    width: 100%; height: 100%; object-fit: cover;
+    display: block;
+    min-height: 280px;
+  }
+
+  /* App gallery */
+  .gallery-label {
+    font-size: 0.65rem; letter-spacing: 0.25em; text-transform: uppercase;
+    color: var(--gray);
+    padding: 1.5rem 0 0.75rem;
+    border-bottom: 1px dashed var(--border);
+    margin-bottom: 1.5rem;
+  }
+  .gallery {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.25rem;
+    margin-bottom: 2rem;
+  }
+  @media (max-width: 700px) { .gallery { grid-template-columns: 1fr; } }
+
+  .app-card {
+    background: var(--white);
+    border: 3px solid var(--plum);
+    border-radius: 16px;
+    box-shadow: 5px 5px 0 var(--plum);
+    overflow: hidden;
+    display: flex; flex-direction: column;
+    transition: transform 0.12s, box-shadow 0.12s;
+  }
+  .app-card:hover {
+    transform: translate(-2px, -2px);
+    box-shadow: 7px 7px 0 var(--plum);
+  }
+  .app-card .shot-wrap {
+    display: block;
+    aspect-ratio: 16/9;
+    overflow: hidden;
+    border-bottom: 3px solid var(--plum);
+    background: var(--cream);
+  }
+  .app-card .shot-wrap img {
+    width: 100%; height: 100%; object-fit: cover; display: block;
+  }
+  .app-card .card-body {
+    padding: 1.5rem 1.5rem 0.75rem;
+    flex: 1; display: flex; flex-direction: column; gap: 0.5rem;
+  }
+  .app-card .card-num {
+    font-size: 0.6rem; letter-spacing: 0.25em; text-transform: uppercase;
+    color: var(--teal); font-weight: 700;
+  }
+  .app-card .card-title {
+    font-size: 1.5rem; font-weight: 700; letter-spacing: -0.02em; line-height: 1.1;
+  }
+  .app-card .card-tagline {
+    font-size: 0.85rem; line-height: 1.5; color: var(--gray);
+    font-style: italic;
+  }
+  .app-card .card-desc {
+    font-size: 0.9rem; line-height: 1.55; color: var(--plum);
+    opacity: 0.8;
+  }
+  .app-card .card-ctas {
+    display: grid; grid-template-columns: 1fr 1fr;
+    border-top: 3px solid var(--plum);
+    margin-top: auto;
+  }
+  .app-card .cta-btn {
+    text-align: center;
+    padding: 0.65rem 0.5rem;
+    font-size: 0.7rem; letter-spacing: 0.15em; text-transform: uppercase; font-weight: 700;
+    color: var(--plum);
+    border-right: 2px solid var(--plum);
+    transition: background 0.12s;
+  }
+  .app-card .cta-btn:last-child { border-right: none; }
+  .app-card .cta-btn:hover { background: var(--teal-dim); }
+  .app-card .cta-btn.primary-cta:hover { background: var(--coral-dim); }
+
+  /* Occasions row */
+  .occasions-section {
+    background: var(--white);
+    border: 3px solid var(--plum);
+    border-radius: 16px;
+    box-shadow: 5px 5px 0 var(--plum);
+    padding: 1.75rem 2rem;
+    margin-bottom: 2rem;
+    display: flex; align-items: center; gap: 1.5rem; flex-wrap: wrap;
+  }
+  .occasions-label {
+    font-size: 0.7rem; letter-spacing: 0.2em; text-transform: uppercase;
+    font-weight: 700; color: var(--gray);
+    white-space: nowrap;
+  }
+  .occasions-list { display: flex; flex-wrap: wrap; gap: 0.6rem; }
+  .occ-pill {
+    background: var(--teal);
+    color: var(--white);
+    border: 2px solid var(--plum);
+    padding: 5px 16px;
+    border-radius: 999px;
+    font-size: 0.8rem; font-weight: 700; letter-spacing: 0.05em;
+    box-shadow: 2px 2px 0 var(--plum);
+  }
+
+  /* Closing CTA */
+  .cta-section {
+    background: var(--plum);
+    color: var(--white);
+    border: 3px solid var(--plum);
+    border-radius: 20px;
+    box-shadow: 6px 6px 0 rgba(0,0,0,0.2);
+    padding: 3rem 2.5rem;
+    margin-bottom: 2.5rem;
+    text-align: center;
+  }
+  .cta-section h2 {
+    font-size: clamp(1.8rem, 4vw, 3rem);
+    font-weight: 700; letter-spacing: -0.02em; line-height: 1.1;
+    margin-bottom: 1rem;
+  }
+  .cta-section p {
+    font-size: 1.1rem; line-height: 1.6; opacity: 0.85;
+    max-width: 580px; margin: 0 auto 2rem;
+  }
+  .btn-cta-white {
+    display: inline-block;
+    padding: 0.85rem 2.5rem;
+    background: var(--white);
+    color: var(--plum);
+    border: 3px solid var(--white);
+    border-radius: 12px;
+    font-size: 0.85rem; letter-spacing: 0.12em; text-transform: uppercase;
+    font-weight: 700;
+    box-shadow: 4px 4px 0 rgba(0,0,0,0.2);
+    transition: background 0.12s, color 0.12s;
+  }
+  .btn-cta-white:hover { background: var(--coral); color: var(--white); border-color: var(--coral); }
+
+  /* Footer */
+  .page-footer {
+    padding: 1.5rem 0;
+    border-top: 3px solid var(--plum);
+    display: flex; justify-content: space-between; align-items: center;
+    flex-wrap: wrap; gap: 1rem;
+  }
+  .footer-links { display: flex; gap: 1.5rem; }
+  .footer-links a {
+    font-size: 0.75rem; letter-spacing: 0.15em; text-transform: uppercase;
+    color: var(--gray);
+    transition: color 0.12s;
+  }
+  .footer-links a:hover { color: var(--coral); }
+  .footer-copy {
+    font-size: 0.7rem; color: var(--gray);
+    letter-spacing: 0.05em;
+  }
+</style>
+
+<div class="layout">
+  <!-- Header -->
+  <header class="topbar">
+    <a class="brand" href="https://links.vibes.diy/homepage">
+      <img src="{{assetPrefix}}Vibes-Toggle-1-Transparent.png" alt="Vibes DIY" />
+    </a>
+    <span class="meta">Gift-giving apps · any occasion</span>
+  </header>
+
+  <!-- Hero -->
+  <section class="hero">
+    <div class="hero-label">Wishlist &amp; Gift Registry</div>
+    <h1>What people<br/>actually want.</h1>
+    <p class="lead">
+      Group gifts, personal wishlists, baby registries, holiday budgets, secret santas — five apps for every time gifts are involved and coordination is not.
+    </p>
+    <div class="hero-occasions">
+      <span class="occ-badge">Wedding ✓</span>
+      <span class="occ-badge">Birthday ✓</span>
+      <span class="occ-badge">Baby Shower ✓</span>
+      <span class="occ-badge">Holiday ✓</span>
+      <span class="occ-badge">Secret Santa ✓</span>
+    </div>
+  </section>
+
+  <!-- Spotlight: group-gift-claimer -->
+  <section class="spotlight">
+    <div class="spotlight-label">// spotlight · app 01</div>
+    <div class="spotlight-card">
+      <div class="spotlight-body">
+        <div class="spotlight-num">App 01 of 05</div>
+        <h2 class="spotlight-title">Group Gift Claimer</h2>
+        <span class="spotlight-tagline">No more 'did anyone get the stand mixer?'</span>
+        <p class="spotlight-cta-text">
+          Share a link. Everyone claims what they're buying. Nobody doubles up. Owner adds items with name, link, price, and quantity needed — visitors claim what they're covering.
+        </p>
+        <div class="spotlight-actions">
+          <a class="btn-primary" href="https://vibes.diy/vibe/og/group-gift-claimer">Join</a>
+          <a class="btn-secondary" href="https://vibes.diy/remix/og/group-gift-claimer?skipChat=true">Clone It</a>
+          <a class="btn-secondary" href="https://vibes.diy/remix/og/group-gift-claimer">Remix</a>
+        </div>
+      </div>
+      <div class="spotlight-shot">
+        <a href="https://vibes.diy/vibe/og/group-gift-claimer" aria-label="Group Gift Claimer screenshot">
+          <img src="https://group-gift-claimer--og.prod-v2.vibesdiy.net/screenshot.jpg"
+               alt="Group Gift Claimer app"
+               onerror="this.onerror=null; this.src='{{assetPrefix}}images/og-preview.png';" />
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Gallery: remaining 4 apps -->
+  <div class="gallery-label">// all five apps</div>
+  <div class="gallery">
+    {{#each apps}}
+      {{#unless spotlight}}
+      <article class="app-card {{#if live}}app--live{{/if}}">
+        <a class="shot-wrap" href="https://vibes.diy/vibe/{{author}}/{{slug}}" aria-label="{{title}} screenshot">
+          <img src="https://{{slug}}--{{author}}.prod-v2.vibesdiy.net/screenshot.jpg"
+               alt="{{title}}"
+               onerror="this.onerror=null; this.src='{{@root.assetPrefix}}images/og-preview.png';" />
+        </a>
+        <div class="card-body">
+          <div class="card-num">App {{num}}</div>
+          <h3 class="card-title">{{title}}</h3>
+          <p class="card-tagline">{{tagline}}</p>
+          <p class="card-desc">{{desc}}</p>
+        </div>
+        <div class="card-ctas">
+          <a class="cta-btn primary-cta" href="https://vibes.diy/vibe/{{author}}/{{slug}}">Join</a>
+          <a class="cta-btn" href="https://vibes.diy/remix/{{author}}/{{slug}}?skipChat=true">Clone</a>
+        </div>
+      </article>
+      {{/unless}}
+    {{/each}}
+  </div>
+
+  <!-- Occasions -->
+  <div class="occasions-section">
+    <span class="occasions-label">Works for</span>
+    <div class="occasions-list">
+      <span class="occ-pill">Wedding</span>
+      <span class="occ-pill">Birthday</span>
+      <span class="occ-pill">Baby Shower</span>
+      <span class="occ-pill">Holiday</span>
+      <span class="occ-pill">Secret Santa</span>
+      <span class="occ-pill">Just Because</span>
+    </div>
+  </div>
+
+  <!-- Closing CTA -->
+  <section class="cta-section">
+    <h2>All of these are yours to customize.</h2>
+    <p>
+      Add fields, change categories, rename everything to fit your people. No lock-in. Clone any app and make it exactly what you need.
+    </p>
+    <a class="btn-cta-white" href="https://links.vibes.diy/homepage">Explore Vibes DIY →</a>
+  </section>
+
+  <!-- Footer -->
+  <footer class="page-footer">
+    <div class="footer-links">
+      <a href="https://links.vibes.diy/homepage">Home</a>
+      <a href="https://links.vibes.diy/discord">Discord</a>
+      <a href="https://links.vibes.diy/Substack">Substack</a>
+    </div>
+    <span class="footer-copy">© Vibes DIY</span>
+  </footer>
+</div>

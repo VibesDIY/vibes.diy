@@ -1,0 +1,52 @@
+{
+  "slug": "gender-colonialism",
+  "page_url": "/edu/gender-colonialism.html",
+  "label": "Gender, Race & Colonialism",
+  "department": "History — Gender/Postcolonial",
+  "vocabulary": [
+    "gender history",
+    "colonial history",
+    "race and empire",
+    "postcolonial studies",
+    "intersectionality",
+    "settler colonialism",
+    "feminist historiography",
+    "racial formation",
+    "gender politics in foreign relations",
+    "indigenous resistance",
+    "creolization",
+    "maroon history",
+    "Caribbean diaspora",
+    "Caribbean nationalism",
+    "decolonization"
+  ],
+  "sources": [
+    {
+      "institution": "UW–Madison",
+      "title": "History 315 – Gender, Race and Colonialism",
+      "url": "https://history.wisc.edu/syllabi-library/"
+    },
+    {
+      "institution": "UW–Madison",
+      "title": "History 347 – The Caribbean and its Diasporas",
+      "url": "https://history.wisc.edu/syllabi-library/"
+    },
+    {
+      "institution": "H-Net H-Diplo",
+      "title": "U.S. Foreign Relations to 1914",
+      "url": "https://networks.h-net.org/node/28443/pages/59076/h-diplo-syllabus-archive"
+    },
+    {
+      "institution": "H-Net H-LatAm",
+      "title": "Colonial Latin American History",
+      "url": "https://networks.h-net.org/node/23910/pages/27764/h-latam-syllabi"
+    }
+  ],
+  "app_prompts": [
+    "Settler colonialism explainer: user picks a settler colonial context (North America, Australia, Palestine, South Africa) and traces the logic of elimination — how settler colonial states handled indigenous presence.",
+    "Intersectionality case study: user picks a historical figure or group and traces how gender, race, and class intersected to shape their experience — not one axis alone but all three together.",
+    "Caribbean diaspora timeline: user picks an island and traces the Atlantic slavery roots, emancipation, colonial rule, independence, and diaspora migration — who left, where they went, what they carried.",
+    "Feminist historiography explorer: user picks a historical topic (war, labor, religion, empire) and sees what questions feminist historians asked that conventional history missed — whose stories were left out.",
+    "Creolization and identity quiz: user reads about a Caribbean cultural practice — language, religion, food, music — and traces how it blended African, European, and indigenous elements under colonial conditions."
+  ]
+}

@@ -1,0 +1,610 @@
+<style>
+  @import url('https://fonts.cdnfonts.com/css/alte-haas-grotesk');
+
+  :root {
+    --black: #000000;
+    --near-black: #231f20;
+    --gray-dark: #333333;
+    --gray-mid: #6b6b6b;
+    --gray-light: #cccdc8;
+    --cream: #fffff0;
+    --red: #da291c;
+    --red-soft: rgba(218, 41, 28, 0.608);
+    --cyan: #009ace;
+    --cyan-soft: rgba(0, 154, 206, 0.608);
+    --yellow: #fedd00;
+    --yellow-soft: rgba(254, 221, 0, 0.608);
+
+    --font-main: 'Alte Haas Grotesk', -apple-system, 'Segoe UI', sans-serif;
+    --grid-size: 40px;
+    --card-border: 2px solid var(--black);
+    --gutter: clamp(1rem, 4vw, 3rem);
+  }
+
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+
+  body {
+    background-color: #cccdc8;
+    background-image:
+      linear-gradient(rgba(255,255,255,0.5) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.5) 1px, transparent 1px);
+    background-size: var(--grid-size) var(--grid-size);
+    color: var(--near-black);
+    font-family: var(--font-main);
+    font-size: clamp(1rem, 1.1vw, 1.125rem);
+    line-height: 1.6;
+    overflow-x: hidden;
+    min-height: 100vh;
+  }
+
+  ::selection { background: var(--yellow); color: var(--black); }
+  a { color: var(--red); text-decoration: underline; text-underline-offset: 2px; transition: color 0.2s; }
+  a:hover { color: var(--black); }
+  h1, h2, h3 { font-family: var(--font-main); font-weight: normal; line-height: 1.1; }
+
+  /* Nav */
+  .ed-nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    padding: 0.75rem var(--gutter);
+    display: flex; justify-content: space-between; align-items: center;
+    background: var(--cream); border-bottom: 3px solid var(--black);
+  }
+  .ed-nav-logo { text-decoration: none; display: flex; align-items: center; }
+  .ed-nav-logo img { height: 36px; width: auto; display: block; transition: opacity 0.2s; }
+  .ed-nav-logo:hover img { opacity: 0.85; }
+  .ed-nav-links { display: flex; gap: 1.25rem; align-items: center; }
+  .ed-nav-links a { color: var(--near-black); text-decoration: none; font-size: 0.85rem; }
+  .ed-nav-links a:hover { color: var(--red); }
+  .ed-nav-cta {
+    background: var(--red); color: var(--cream) !important;
+    padding: 0.5rem 1.2rem; text-decoration: none !important;
+    font-weight: bold; font-size: 0.85rem;
+    border: 2px solid var(--black);
+    transition: background 0.2s, transform 0.15s;
+  }
+  .ed-nav-cta:hover { background: var(--near-black); transform: translateY(-1px); color: var(--cream) !important; }
+
+  /* Page */
+  .ed-page { max-width: 1200px; margin: 0 auto; padding: calc(60px + 2rem) var(--gutter) 2rem; }
+
+  /* Card system */
+  .ed-card {
+    background: var(--cream);
+    border: var(--card-border);
+    padding: clamp(1.5rem, 4vw, 3rem);
+    margin-bottom: 1.5rem;
+    position: relative;
+  }
+  .ed-card--hero { padding: clamp(2rem, 6vw, 4rem); }
+  .ed-card--red { background: var(--red); color: var(--cream); }
+  .ed-card--cyan { background: var(--cyan); color: var(--cream); }
+  .ed-card--yellow { background: var(--yellow); color: var(--black); }
+  .ed-card--black { background: var(--black); color: var(--cream); }
+
+  /* Grids */
+  .ed-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem; }
+  .ed-grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; margin-bottom: 1.5rem; }
+  .ed-grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.5rem; margin-bottom: 1.5rem; }
+  .ed-grid-2-1 { display: grid; grid-template-columns: 2fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem; }
+
+  /* Hero */
+  .ed-hero h1 { font-size: clamp(2.5rem, 5.5vw, 4.5rem); line-height: 1.05; margin-bottom: 0.75rem; letter-spacing: -0.02em; }
+  .ed-hero h1 em { font-style: italic; color: var(--red); }
+  .ed-hero-sub { font-size: clamp(1.1rem, 2vw, 1.5rem); line-height: 1.4; color: var(--gray-dark); }
+  .ed-hero-stat-number { font-size: clamp(2rem, 4vw, 3.5rem); font-weight: bold; line-height: 1; margin-bottom: 0.25rem; }
+
+  /* Labels & titles */
+  .ed-label {
+    display: inline-block; font-size: 0.75rem; font-weight: bold;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    padding: 0.3rem 0.75rem; margin-bottom: 1rem;
+    border: 2px solid currentColor;
+  }
+  .ed-label--filled { background: var(--black); color: var(--cream); border-color: var(--black); }
+  .ed-title { font-size: clamp(2rem, 4.5vw, 3.5rem); line-height: 1.08; margin-bottom: 1rem; letter-spacing: -0.01em; }
+  .ed-intro { font-size: clamp(1rem, 1.5vw, 1.2rem); color: var(--gray-dark); max-width: 38em; margin-bottom: 2rem; line-height: 1.6; }
+
+  /* Pull quote */
+  .ed-quote { font-size: clamp(1.3rem, 2.8vw, 2rem); line-height: 1.35; font-style: italic; margin: 0; }
+  .ed-quote-cite { font-style: normal; font-size: 0.85rem; color: var(--gray-mid); margin-top: 0.75rem; display: block; }
+
+  /* Parallels */
+  .ed-parallel { text-align: center; padding: 1.5rem 1rem; }
+  .ed-parallel-before { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.08em; color: rgba(255,255,255,0.7); margin-bottom: 0.25rem; }
+  .ed-parallel-arrow { font-size: 1.5rem; margin: 0.25rem 0; opacity: 0.6; }
+  .ed-parallel-after { font-size: 1.1rem; font-weight: bold; }
+
+  /* App cards (used for classics + groups) */
+  .ed-app { padding: 0; overflow: hidden; display: flex; flex-direction: column; }
+  .ed-app-shot {
+    display: block; width: 100%; aspect-ratio: 16 / 10;
+    background: linear-gradient(135deg, var(--cyan-soft), var(--yellow-soft));
+    border-bottom: var(--card-border); overflow: hidden;
+  }
+  .ed-app-shot img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .ed-app:nth-child(3n+1) .ed-app-shot { background: linear-gradient(135deg, var(--red-soft), var(--yellow-soft)); }
+  .ed-app:nth-child(3n+2) .ed-app-shot { background: linear-gradient(135deg, var(--cyan-soft), var(--yellow-soft)); }
+  .ed-app:nth-child(3n) .ed-app-shot { background: linear-gradient(135deg, var(--yellow-soft), var(--red-soft)); }
+  .ed-app-body { padding: 1.25rem; flex: 1; display: flex; flex-direction: column; }
+  .ed-app-body h3 { font-size: 1.2rem; margin-bottom: 0.5rem; }
+  .ed-app-body p { font-size: 0.9rem; color: var(--gray-dark); margin-bottom: 1rem; line-height: 1.5; flex: 1; }
+  .ed-app-tag {
+    display: inline-block; font-size: 0.65rem; font-weight: bold;
+    text-transform: uppercase; letter-spacing: 0.08em;
+    padding: 0.2rem 0.5rem; border: 2px solid var(--red); color: var(--red);
+    margin-bottom: 0.6rem;
+  }
+  .ed-app-tag--classic { border-color: var(--cyan); color: var(--cyan); }
+
+  /* Classics category divider */
+  .ed-classics-cat {
+    display: flex;
+    align-items: baseline;
+    gap: 0.75rem;
+    margin: 2.5rem 0 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: var(--card-border);
+  }
+  .ed-classics-cat:first-of-type { margin-top: 1.5rem; }
+  .ed-classics-cat-title {
+    font-size: clamp(1.4rem, 2.4vw, 2rem);
+    font-weight: 800;
+    letter-spacing: -0.01em;
+    margin: 0;
+  }
+  .ed-classics-cat-count {
+    font-size: 0.75rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--gray-mid);
+    background: var(--cream);
+    border: 1px solid var(--near-black);
+    padding: 2px 8px;
+  }
+  .ed-app-actions { display: flex; gap: 0.5rem; border-top: 1px solid var(--gray-light); padding-top: 0.75rem; flex-wrap: wrap; }
+  .ed-app-actions a {
+    flex: 1; min-width: 0; text-align: center; font-size: 0.7rem;
+    font-weight: bold; text-transform: uppercase; letter-spacing: 0.05em;
+    padding: 0.45rem 0.4rem; text-decoration: none;
+    border: 2px solid var(--black); color: var(--near-black);
+    background: var(--cream);
+    transition: background 0.15s, color 0.15s, transform 0.15s;
+  }
+  .ed-app-actions a:hover { background: var(--black); color: var(--cream); transform: translateY(-1px); }
+  .ed-app-actions a.is-primary { background: var(--red); color: var(--cream); border-color: var(--black); }
+  .ed-app-actions a.is-primary:hover { background: var(--near-black); }
+  .ed-app-prompt {
+    display: block; padding: 0.55rem 0.7rem; margin-top: 0.6rem;
+    background: var(--yellow); color: var(--black);
+    border: 2px solid var(--black);
+    font-size: 0.7rem; font-weight: bold;
+    text-transform: uppercase; letter-spacing: 0.06em;
+    text-align: center; text-decoration: none;
+    transition: background 0.15s, transform 0.15s;
+  }
+  .ed-app-prompt:hover { background: var(--black); color: var(--yellow); transform: translateY(-1px); }
+  .ed-app-extra-shots { display: flex; gap: 4px; padding: 0.5rem; background: var(--cream); border-top: 1px solid var(--gray-light); }
+  .ed-app-extra-shots a { flex: 1; aspect-ratio: 4/3; border: 1px solid var(--gray-light); overflow: hidden; }
+  .ed-app-extra-shots img { width: 100%; height: 100%; object-fit: cover; }
+
+  /* Multi-variant shots row: replaces the big shot for groups with >1 variants */
+  .ed-app-shots-row { display: flex; gap: 1px; aspect-ratio: 16 / 6; background: var(--black); border-bottom: var(--card-border); overflow: hidden; }
+  .ed-app-shots-row .ed-app-shot { flex: 1; aspect-ratio: auto; border-bottom: none; }
+  .ed-app-shots-row .ed-app-shot img { object-position: top; }
+
+  /* Apps section layouts */
+  .ed-apps { margin-bottom: 1.5rem; }
+  .ed-apps--grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; }
+  .ed-apps--grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+  .ed-apps--featured { display: block; }
+  .ed-apps--featured .ed-app { display: grid; grid-template-columns: 1fr 1fr; padding: 0; min-height: 320px; }
+  .ed-apps--featured .ed-app-shot, .ed-apps--featured .ed-app-shots-row { aspect-ratio: auto; height: 100%; min-height: 320px; border-bottom: none; border-right: var(--card-border); }
+  .ed-apps--featured .ed-app-body { padding: 2rem; }
+  .ed-apps--featured .ed-app-body h3 { font-size: 1.6rem; }
+  .ed-apps--featured .ed-app-body p { font-size: 1.05rem; }
+
+  .ed-apps--list { display: flex; flex-direction: column; gap: 0.75rem; }
+  .ed-apps--list .ed-app { display: grid; grid-template-columns: 200px 1fr; padding: 0; }
+  .ed-apps--list .ed-app-shot, .ed-apps--list .ed-app-shots-row { aspect-ratio: auto; height: 100%; border-bottom: none; border-right: var(--card-border); }
+  .ed-apps--list .ed-app-shots-row { aspect-ratio: 4 / 5; }
+  .ed-apps--list .ed-app-body { padding: 1.5rem; }
+  .ed-apps--list .ed-app-body p { font-style: italic; color: var(--gray-mid); }
+
+  .ed-apps--compact { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.75rem; }
+  .ed-apps--compact .ed-app { padding: 1rem; display: flex; flex-direction: column; min-height: 0; }
+  .ed-apps--compact .ed-app-shot, .ed-apps--compact .ed-app-shots-row, .ed-apps--compact .ed-app-extra-shots { display: none; }
+  .ed-apps--compact .ed-app-body { padding: 0; }
+  .ed-apps--compact .ed-app-body h3 { font-size: 0.95rem; margin-bottom: 0.35rem; line-height: 1.2; }
+  .ed-apps--compact .ed-app-body p { font-size: 0.78rem; margin-bottom: 0.6rem; line-height: 1.35; -webkit-line-clamp: 3; display: -webkit-box; -webkit-box-orient: vertical; overflow: hidden; }
+  .ed-apps--compact .ed-app-actions { padding-top: 0.5rem; gap: 0.3rem; }
+  .ed-apps--compact .ed-app-actions a { font-size: 0.6rem; padding: 0.3rem 0.2rem; border-width: 1.5px; }
+  .ed-apps--compact .ed-app-prompt { display: none; }
+  .ed-apps--compact .ed-app-tag { display: none; }
+
+  .ed-apps--tiles { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.5rem; }
+  .ed-apps--tiles .ed-app { padding: 0; }
+  .ed-apps--tiles .ed-app-shot, .ed-apps--tiles .ed-app-shots-row { aspect-ratio: 16 / 11; }
+  .ed-apps--tiles .ed-app-body { padding: 1rem 1.25rem; }
+  .ed-apps--tiles .ed-app-body p { display: none; }
+
+  @media (max-width: 900px) {
+    .ed-apps--grid-3, .ed-apps--compact { grid-template-columns: 1fr 1fr; }
+    .ed-apps--featured .ed-app, .ed-apps--list .ed-app { grid-template-columns: 1fr; }
+    .ed-apps--featured .ed-app-shot, .ed-apps--list .ed-app-shot, .ed-apps--featured .ed-app-shots-row, .ed-apps--list .ed-app-shots-row { border-right: none; border-bottom: var(--card-border); }
+  }
+  @media (max-width: 600px) {
+    .ed-apps--grid-2, .ed-apps--grid-3, .ed-apps--compact, .ed-apps--tiles { grid-template-columns: 1fr; }
+  }
+
+  /* Channel cards */
+  .ed-channel { padding: 1.5rem; display: flex; flex-direction: column; transition: transform 0.15s; text-decoration: none !important; color: inherit; }
+  .ed-channel:hover { transform: translateY(-2px); }
+  .ed-channel h3 { font-size: 1.15rem; margin-bottom: 0.5rem; }
+  .ed-channel p { font-size: 0.9rem; color: var(--gray-dark); line-height: 1.5; flex: 1; margin-bottom: 1rem; }
+  .ed-channel-link { font-size: 0.8rem; font-weight: bold; text-transform: uppercase; letter-spacing: 0.05em; color: var(--red); }
+
+  /* Color stripe */
+  .ed-stripe { height: 8px; display: flex; margin-bottom: 1.5rem; }
+  .ed-stripe > div { flex: 1; }
+
+  /* Breadcrumb */
+  .ed-breadcrumb { font-size: 0.85rem; color: var(--gray-mid); margin-bottom: 1rem; }
+  .ed-breadcrumb a { color: var(--gray-mid); text-decoration: none; }
+  .ed-breadcrumb a:hover { color: var(--red); text-decoration: underline; }
+
+  /* Newsletter (overrides shared featured-cta styling for editorial fit) */
+  .ed-page .featured-cta-section { max-width: none; padding: 0; margin: 0 0 1.5rem; }
+  .ed-page .featured-cta-card {
+    border: 2px solid var(--black);
+    box-shadow: none;
+    padding: clamp(1.5rem, 4vw, 3rem);
+    color: var(--cream);
+  }
+  .ed-page .featured-cta-card h2 { color: var(--cream); font-size: clamp(1.6rem, 3vw, 2.4rem); }
+  .ed-page .featured-cta-card p { color: var(--cream); }
+  .ed-page .featured-cta-fineprint { color: rgba(255, 255, 240, 0.75); }
+  .ed-page .featured-cta-fineprint a { color: var(--yellow); }
+  .ed-page .featured-cta-form input[type="email"] { background: var(--cream); color: var(--black); border-color: var(--cream); }
+  .ed-page .featured-cta-form button[type="submit"] {
+    background: var(--yellow);
+    color: var(--black);
+    border-color: var(--black);
+    box-shadow: none;
+  }
+  .ed-page .featured-cta-form button[type="submit"]:hover {
+    background: var(--cream);
+    transform: translateY(-1px);
+    box-shadow: none;
+  }
+
+  /* Scroll reveal */
+  .ed-reveal { opacity: 0; transform: translateY(16px); transition: opacity 0.5s ease, transform 0.5s ease; }
+  .ed-reveal.visible { opacity: 1; transform: translateY(0); }
+
+  /* Responsive */
+  @media (max-width: 900px) {
+    .ed-grid-3, .ed-grid-4 { grid-template-columns: 1fr 1fr; }
+    .ed-grid-2-1 { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 600px) {
+    .ed-grid-2, .ed-grid-3, .ed-grid-4 { grid-template-columns: 1fr; }
+    .ed-nav { padding: 0.75rem 1rem; }
+    .ed-nav-links { gap: 0.75rem; }
+    .ed-nav-links a:not(.ed-nav-cta) { display: none; }
+  }
+</style>
+
+<nav class="ed-nav">
+  <a href="https://links.vibes.diy/homepage" class="ed-nav-logo" aria-label="Vibes DIY">
+    <img src="{{assetPrefix}}Vibes-Toggle-1-Transparent.png" alt="Vibes DIY">
+  </a>
+  <div class="ed-nav-links">
+    <a href="#apps">The Apps</a>
+    <a href="#why">Why</a>
+    <a href="#remix">Remix</a>
+    <a href="https://links.vibes.diy/homepage" class="ed-nav-cta">Build Your Own</a>
+  </div>
+</nav>
+
+<main class="ed-page">
+
+  <div class="ed-stripe ed-reveal">
+    <div style="background: var(--red);"></div>
+    <div style="background: var(--cyan);"></div>
+    <div style="background: var(--yellow);"></div>
+    <div style="background: var(--near-black);"></div>
+    <div style="background: var(--red);"></div>
+    <div style="background: var(--cyan);"></div>
+  </div>
+
+  <nav class="ed-breadcrumb" aria-label="Breadcrumb">
+    <a href="/">Home</a>
+    &nbsp;›&nbsp;
+    <a href="/featured-apps/">Featured Apps</a>
+    &nbsp;›&nbsp; {{breadcrumbTitle}}
+  </nav>
+
+  <!-- HERO -->
+  <div class="ed-grid-2-1 ed-reveal">
+    <div class="ed-card ed-card--hero ed-hero">
+      <h1>{{{heroTitle}}}<em>{{heroAccentWord}}</em></h1>
+      <p class="ed-hero-sub">{{heroDesc}}</p>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+      <div class="ed-card ed-card--red" style="flex: 1;">
+        <p style="font-size: clamp(1.1rem, 2vw, 1.5rem); font-weight: bold; line-height: 1.3;">{{{heroPunch}}}</p>
+      </div>
+      <div class="ed-card ed-card--yellow" style="flex: 0;">
+        <div class="ed-hero-stat-number">{{heroStatNumber}}</div>
+        <p style="font-weight: bold;">{{{heroStatLabel}}}</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- WHY -->
+  {{#if whyTitle}}
+  <section id="why">
+    <div class="ed-card ed-reveal">
+      <span class="ed-label ed-label--filled">{{whyLabel}}</span>
+      <h2 class="ed-title">{{{whyTitle}}}</h2>
+      <p class="ed-intro">{{{whyDesc}}}</p>
+    </div>
+
+    {{#if parallels}}
+    <div class="ed-grid-4 ed-reveal">
+      {{#each parallels}}
+      <div class="ed-card {{#if accent}}ed-card--{{accent}}{{else}}ed-card--cyan{{/if}} ed-parallel">
+        <div class="ed-parallel-before">{{before}}</div>
+        <div class="ed-parallel-arrow">↓</div>
+        <div class="ed-parallel-after">{{{after}}}</div>
+      </div>
+      {{/each}}
+    </div>
+    {{/if}}
+  </section>
+  {{/if}}
+
+  <!-- CLASSICS -->
+  {{#if classics}}
+  <section id="classics">
+    <div class="ed-card ed-reveal">
+      <span class="ed-label">The Classics</span>
+      <h2 class="ed-title">OG vibes from Vibes DIY 1.0</h2>
+      <p class="ed-intro">Pick one to clone or remix. These ran on the original platform and still hold up.</p>
+    </div>
+
+    {{#if classics.[0].category}}
+    {{#each (groupByCategory classics)}}
+      <div class="ed-classics-cat ed-reveal">
+        <h3 class="ed-classics-cat-title">{{category}}</h3>
+        <span class="ed-classics-cat-count">{{items.length}}</span>
+      </div>
+      <div class="ed-grid-3 ed-reveal">
+      {{#each items}}
+        <div class="ed-card ed-app">
+          <a class="ed-app-shot" href="https://vibes.diy/vibe/{{author}}/{{slug}}" aria-label="{{slug}}">
+            <img src="https://{{slug}}--{{author}}.prod-v2.vibesdiy.net/screenshot.jpg" alt="{{slug}}" onerror="this.onerror=null; this.src='{{@root.assetPrefix}}images/og-preview.png';">
+          </a>
+          <div class="ed-app-body">
+            <span class="ed-app-tag ed-app-tag--classic">{{../category}}</span>
+            <h3>{{slug}}</h3>
+            <p>{{description}}</p>
+            <div class="ed-app-actions">
+              <a class="is-primary" href="https://vibes.diy/vibe/{{author}}/{{slug}}">Visit</a>
+              <a href="https://vibes.diy/clone/{{author}}/{{slug}}">Clone</a>
+              <a href="https://vibes.diy/remix/{{author}}/{{slug}}">Remix</a>
+            </div>
+          </div>
+        </div>
+      {{/each}}
+      </div>
+    {{/each}}
+    {{else}}
+    <div class="ed-grid-3 ed-reveal">
+    {{#each classics}}
+      <div class="ed-card ed-app">
+        <a class="ed-app-shot" href="https://vibes.diy/vibe/{{author}}/{{slug}}" aria-label="{{slug}}">
+          <img src="https://{{slug}}--{{author}}.prod-v2.vibesdiy.net/screenshot.jpg" alt="{{slug}}" onerror="this.onerror=null; this.src='{{@root.assetPrefix}}images/og-preview.png';">
+        </a>
+        <div class="ed-app-body">
+          <span class="ed-app-tag ed-app-tag--classic">Classic</span>
+          <h3>{{slug}}</h3>
+          <p>{{description}}</p>
+          <div class="ed-app-actions">
+            <a class="is-primary" href="https://vibes.diy/vibe/{{author}}/{{slug}}">Visit</a>
+            <a href="https://vibes.diy/clone/{{author}}/{{slug}}">Clone</a>
+            <a href="https://vibes.diy/remix/{{author}}/{{slug}}">Remix</a>
+          </div>
+        </div>
+      </div>
+    {{/each}}
+    </div>
+    {{/if}}
+  </section>
+  {{/if}}
+
+  <!-- APPS — categorized sections -->
+  {{#if appsSections}}
+  {{#each appsSections}}
+  <section{{#if id}} id="{{id}}"{{else}} id="apps-{{@index}}"{{/if}}>
+    <div class="ed-card ed-reveal">
+      <span class="ed-label{{#if labelFilled}} ed-label--filled{{/if}}">{{label}}</span>
+      <h2 class="ed-title">{{{title}}}</h2>
+      {{#if intro}}<p class="ed-intro">{{{intro}}}</p>{{/if}}
+    </div>
+
+    <div class="ed-apps ed-apps--{{#if layout}}{{layout}}{{else}}grid-3{{/if}} ed-reveal">
+    {{#each groups}}
+      <div class="ed-card ed-app{{#if variants.[1]}} ed-app--multi{{/if}}">
+        {{#if variants.[1]}}
+          <div class="ed-app-shots-row">
+            {{#each variants}}
+              <a class="ed-app-shot" href="https://vibes.diy/vibe/{{author}}/{{slug}}" aria-label="{{slug}}">
+                <img src="https://{{slug}}--{{author}}.prod-v2.vibesdiy.net/screenshot.jpg" alt="{{slug}}" onerror="this.onerror=null; this.src='{{@root.assetPrefix}}images/og-preview.png';">
+              </a>
+            {{/each}}
+          </div>
+        {{else}}
+          {{#with variants.[0]}}
+          <a class="ed-app-shot" href="https://vibes.diy/vibe/{{author}}/{{slug}}" aria-label="{{slug}} screenshot">
+            <img src="https://{{slug}}--{{author}}.prod-v2.vibesdiy.net/screenshot.jpg" alt="{{slug}}" onerror="this.onerror=null; this.src='{{@root.assetPrefix}}images/og-preview.png';">
+          </a>
+          {{/with}}
+        {{/if}}
+        <div class="ed-app-body">
+          {{#if title}}<span class="ed-app-tag">Vibe</span><h3>{{title}}</h3>{{else}}<h3>{{variants.[0].slug}}</h3>{{/if}}
+          <p>{{description}}</p>
+          {{#with variants.[0]}}
+          <div class="ed-app-actions">
+            <a class="is-primary" href="https://vibes.diy/vibe/{{author}}/{{slug}}">Visit</a>
+            <a href="https://vibes.diy/clone/{{author}}/{{slug}}">Clone</a>
+            <a href="https://vibes.diy/remix/{{author}}/{{slug}}">Remix</a>
+          </div>
+          {{/with}}
+          <a class="ed-app-prompt" href="https://vibes.diy/chat/prompt?prompt64={{prompt64 description}}" title="Start a fresh vibe from this prompt">✦ Start fresh from this prompt →</a>
+        </div>
+      </div>
+    {{/each}}
+    </div>
+  </section>
+  {{/each}}
+  {{else if groups}}
+  <section id="apps">
+    <div class="ed-card ed-reveal">
+      <span class="ed-label">{{#if appsLabel}}{{appsLabel}}{{else}}The Generators{{/if}}</span>
+      <h2 class="ed-title">{{#if appsTitle}}{{{appsTitle}}}{{else}}Each one started as a single prompt{{/if}}</h2>
+      <p class="ed-intro">{{#if appsIntro}}{{{appsIntro}}}{{else}}Hit <strong>Visit</strong> to play with the live version, <strong>Remix</strong> to fork and reshape with AI, or <strong>Start fresh</strong> to launch a new vibe from the prompt.{{/if}}</p>
+    </div>
+
+    <div class="ed-apps ed-apps--grid-3 ed-reveal">
+    {{#each groups}}
+      <div class="ed-card ed-app{{#if variants.[1]}} ed-app--multi{{/if}}">
+        {{#if variants.[1]}}
+          <div class="ed-app-shots-row">
+            {{#each variants}}
+              <a class="ed-app-shot" href="https://vibes.diy/vibe/{{author}}/{{slug}}" aria-label="{{slug}}">
+                <img src="https://{{slug}}--{{author}}.prod-v2.vibesdiy.net/screenshot.jpg" alt="{{slug}}" onerror="this.onerror=null; this.src='{{@root.assetPrefix}}images/og-preview.png';">
+              </a>
+            {{/each}}
+          </div>
+        {{else}}
+          {{#with variants.[0]}}
+          <a class="ed-app-shot" href="https://vibes.diy/vibe/{{author}}/{{slug}}" aria-label="{{slug}} screenshot">
+            <img src="https://{{slug}}--{{author}}.prod-v2.vibesdiy.net/screenshot.jpg" alt="{{slug}}" onerror="this.onerror=null; this.src='{{@root.assetPrefix}}images/og-preview.png';">
+          </a>
+          {{/with}}
+        {{/if}}
+        <div class="ed-app-body">
+          {{#if title}}<span class="ed-app-tag">Vibe</span><h3>{{title}}</h3>{{else}}<h3>{{variants.[0].slug}}</h3>{{/if}}
+          <p>{{description}}</p>
+          {{#with variants.[0]}}
+          <div class="ed-app-actions">
+            <a class="is-primary" href="https://vibes.diy/vibe/{{author}}/{{slug}}">Visit</a>
+            <a href="https://vibes.diy/clone/{{author}}/{{slug}}">Clone</a>
+            <a href="https://vibes.diy/remix/{{author}}/{{slug}}">Remix</a>
+          </div>
+          {{/with}}
+          <a class="ed-app-prompt" href="https://vibes.diy/chat/prompt?prompt64={{prompt64 description}}" title="Start a fresh vibe from this prompt">✦ Start fresh from this prompt →</a>
+        </div>
+      </div>
+    {{/each}}
+    </div>
+  </section>
+  {{/if}}
+
+  <!-- STORIES PULL QUOTE -->
+  {{#if stories}}
+  <div class="ed-grid-2 ed-reveal">
+    <div class="ed-card ed-card--black">
+      <p class="ed-quote">"{{{storiesQuote}}}"</p>
+      <span class="ed-quote-cite" style="color: var(--gray-light);">— {{storiesCite}}</span>
+    </div>
+    <div class="ed-card">
+      <p style="color: var(--gray-dark);">{{{stories}}}</p>
+    </div>
+  </div>
+  {{/if}}
+
+  <!-- REMIX CTA -->
+  <section id="remix">
+    <div class="ed-card ed-card--red ed-reveal">
+      <span class="ed-label" style="border-color: var(--cream); color: var(--cream);">Remix</span>
+      <h2 class="ed-title" style="color: var(--cream);">Make a worse version. Or a better&nbsp;one.</h2>
+      <p style="font-size: 1.15rem; color: rgba(255,255,255,0.85); max-width: 36em;">Every app on this page is open. Click <strong>Remix</strong> on any of them, change the prompt, change the tone, change the entire premise. Vibes DIY rewrites the code with you.</p>
+    </div>
+
+    <div class="ed-grid-2 ed-reveal">
+      <a href="https://links.vibes.diy/homepage" class="ed-card ed-card--yellow ed-channel" style="text-align: center;">
+        <h3>Vibes DIY</h3>
+        <p>Describe what you want. Get a working app. No terminal required.</p>
+        <span class="ed-channel-link" style="color: var(--red);">Start a new vibe →</span>
+      </a>
+      <a href="https://links.vibes.diy/CLI" class="ed-card ed-card--black ed-channel" style="text-align: center;">
+        <h3 style="color: var(--cream);">Vibes CLI</h3>
+        <p style="color: var(--gray-light);">For people who live in the terminal. Push a single App.jsx, get a live HTTPS URL.</p>
+        <span class="ed-channel-link" style="color: var(--yellow);">npm i -g vibes-diy →</span>
+      </a>
+    </div>
+  </section>
+
+  <!-- NEWSLETTER -->
+  <section id="newsletter" class="ed-reveal">
+    {{> featured-cta}}
+  </section>
+
+  <!-- COMMUNITY -->
+  <section id="community">
+    <div class="ed-card ed-card--cyan ed-reveal">
+      <span class="ed-label" style="border-color: var(--cream); color: var(--cream);">Community</span>
+      <h2 class="ed-title" style="color: var(--cream);">Show us what you&nbsp;made</h2>
+      <p style="font-size: 1.1rem; color: rgba(255,255,255,0.85);">Drop your remix in the Discord. The cringer the better.</p>
+    </div>
+
+    <div class="ed-grid-4 ed-reveal">
+      <a href="https://links.vibes.diy/discord" class="ed-card ed-channel">
+        <h3>💬 Discord</h3>
+        <p>Where builders trade prompts and laugh at each other's parody apps.</p>
+        <span class="ed-channel-link">Join Discord →</span>
+      </a>
+      <a href="https://links.vibes.diy/YouTube" class="ed-card ed-channel">
+        <h3>▶ YouTube</h3>
+        <p>Demos and live builds — including how this whole batch shipped.</p>
+        <span class="ed-channel-link">Subscribe →</span>
+      </a>
+      <a href="https://links.vibes.diy/Substack" class="ed-card ed-channel">
+        <h3>✉ Substack</h3>
+        <p>What we built, what we learned, what's next.</p>
+        <span class="ed-channel-link">Sign up →</span>
+      </a>
+      <a href="https://links.vibes.diy/readme" class="ed-card ed-channel">
+        <h3>⌨ GitHub</h3>
+        <p>Everything is open source. Fork it, make it yours.</p>
+        <span class="ed-channel-link">Explore →</span>
+      </a>
+    </div>
+  </section>
+
+  <div class="ed-stripe" style="margin-top: 1.5rem;">
+    <div style="background: var(--red);"></div>
+    <div style="background: var(--cyan);"></div>
+    <div style="background: var(--yellow);"></div>
+    <div style="background: var(--near-black);"></div>
+    <div style="background: var(--red);"></div>
+    <div style="background: var(--cyan);"></div>
+  </div>
+
+</main>
+
+<script>
+  (function(){
+    const reveals = document.querySelectorAll('.ed-reveal');
+    if (!('IntersectionObserver' in window)) { reveals.forEach(el => el.classList.add('visible')); return; }
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) { entry.target.classList.add('visible'); observer.unobserve(entry.target); }
+      });
+    }, { threshold: 0.08, rootMargin: '0px 0px -30px 0px' });
+    reveals.forEach(el => observer.observe(el));
+  })();
+</script>

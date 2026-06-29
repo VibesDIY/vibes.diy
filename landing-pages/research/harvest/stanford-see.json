@@ -1,0 +1,109 @@
+{
+  "source": "Stanford University",
+  "location": "Stanford, CA",
+  "region": "West Coast",
+  "fetched": "2026-05-18",
+  "items": [
+    {
+      "title": "STATS 209: Introduction to Causal Inference",
+      "department": "Data Science / Stats",
+      "year": 2024,
+      "url": "https://explorecourses.stanford.edu/search?view=catalog&filter-coursestatus-Active=on&q=STATS+209:+Introduction+to+Causal+Inference&academicYear=20232024",
+      "fetch_method": "web-search",
+      "topics": [
+        "potential outcomes framework",
+        "randomization inference",
+        "matching estimators",
+        "augmented inverse propensity weighting (AIPW)",
+        "heterogeneous treatment effects",
+        "instrumental variables",
+        "regression discontinuity design",
+        "synthetic controls"
+      ],
+      "source_text": "Topics include potential outcomes, randomization, observational studies, matching, covariate adjustment, AIPW, heterogeneous treatment effects, instrumental variables, regression discontinuity, and synthetic controls. Prerequisites are STATS 116/118 and STATS 191/203."
+    },
+    {
+      "title": "EDUC 255C: Applied Quasi-Experimental Research in Education",
+      "department": "Education Research",
+      "year": 2024,
+      "url": "https://ed.stanford.edu/saen/educ-255c-applied-quasi-experimental-research-education-soc-258",
+      "fetch_method": "web-search",
+      "topics": [
+        "instrumental variables estimators",
+        "regression discontinuity estimators",
+        "difference-in-differences",
+        "matching estimators",
+        "fixed effects estimators",
+        "panel data methods"
+      ],
+      "source_text": "EDUC 255C provides hands-on practice in analysis of data from experimental and quasi-experimental research designs, including instrumental variables estimators, regression discontinuity estimators, difference-in-difference estimators, matching estimators, fixed effects estimators, and panel data methods."
+    },
+    {
+      "title": "EPI 225: Introduction to Epidemiologic and Clinical Research Methods",
+      "department": "Public Health",
+      "year": 2024,
+      "url": "https://online.stanford.edu/courses/epi225-introduction-epidemiologic-and-clinical-research-methods",
+      "fetch_method": "web-search",
+      "topics": [
+        "cohort study design",
+        "case-control study design",
+        "cross-sectional studies",
+        "measures of association",
+        "sample size estimation",
+        "confounding and effect modification",
+        "selection bias and information bias",
+        "diagnostic test assessment"
+      ],
+      "source_text": "Topics include epidemiologic concepts, sources of data, cohort studies, case-control studies, cross-sectional studies, sampling, measures of association, estimating sample size, and sources of bias. The course provides a broad foundation in methods including study designs, common study biases, measurement principles, sample size estimation, questionnaire design, development and assessment of diagnostic tests, and introduction to multivariate analysis."
+    },
+    {
+      "title": "EPI 247: Epidemic Intelligence: How to Identify, Investigate and Interrupt Outbreaks of Disease",
+      "department": "Public Health",
+      "year": 2024,
+      "url": "https://online.stanford.edu/courses/epi247-epidemic-intelligence-how-identify-investigate-and-interrupt-outbreaks-disease",
+      "fetch_method": "web-search",
+      "topics": [
+        "outbreak investigation",
+        "disease surveillance systems",
+        "field epidemiology study design",
+        "public health data visualization",
+        "bias identification in field studies",
+        "disease control implementation"
+      ],
+      "source_text": "The course covers the components of public health systems in the US; principles of outbreak investigation and disease surveillance; different types of study design for field investigation; visualization and interpretation of public health data, including identification and prevention of biases; and implementation of disease control by public health authorities."
+    },
+    {
+      "title": "EARTHSYS 168 / PUBLPOL 163: Land Use: Planning for Sustainable Cities",
+      "department": "Urban Planning",
+      "year": 2024,
+      "url": "https://publicpolicy.stanford.edu/courses/land-use-planning-sustainable-cities-amstud-163-earthsys-168-publpol-163",
+      "fetch_method": "web-search",
+      "topics": [
+        "land use policy history",
+        "zoning and NIMBYism",
+        "urban stakeholder analysis",
+        "discriminatory land use practices",
+        "sustainable city planning",
+        "Bay Area housing policy case studies"
+      ],
+      "source_text": "The course reviews the history and trends of land use policies and explores how urban areas function, how stakeholders influence land use choices, and how land use decisions contribute to positive and negative outcomes. The course also covers how land use has been used as a tool for discriminatory practices and NIMBYism, using case studies focused on the San Francisco Bay Area."
+    },
+    {
+      "title": "ECON 278: Behavioral and Experimental Economics I",
+      "department": "Behavioral Economics",
+      "year": 2024,
+      "url": "https://bernheim.people.stanford.edu/courses/2023-2024-econ-278",
+      "fetch_method": "web-search",
+      "topics": [
+        "psychology of economic decision-making",
+        "competing theoretical frameworks testing",
+        "laboratory experiment methods",
+        "prospect theory",
+        "loss aversion",
+        "behavioral welfare analysis",
+        "normative policy analysis"
+      ],
+      "source_text": "The sequence examines theories and evidence related to the psychology of economic decision making and introduces methods of experimental economics; it focuses on a series of experiments that build on one another in an effort to test between competing theoretical frameworks, with the objects of improving the explanatory and predictive performance of standard models, and of providing a foundation for more reliable normative analyses of policy issues."
+    }
+  ]
+}

@@ -1,0 +1,401 @@
+{{!--
+{
+  "layout": "standard",
+  "title": "Featured Apps | Vibes DIY",
+  "description": "Browse vibes by category — household, classroom, party games, photo identifiers, and more. Try the classics, remix your own.",
+  "ogUrl": "https://good.vibes.diy/featured-apps/",
+  "source": "featured-apps"
+}
+--}}
+
+<style>
+  @import url("https://fonts.cdnfonts.com/css/alte-haas-grotesk");
+
+  :root {
+    --black: #231f20;
+    --ivory: #fffff0;
+    --grid-gray: #cccdc8;
+    --os-gray: #7a7a7a;
+    --grid-line: rgba(255, 255, 255, 0.5);
+    --ruby: #da291c;
+    --bluey: #009ace;
+    --goldenrod: #fedd00;
+    --sprout-green: #16a34a;
+    --puppy-pink: #ff70a6;
+    --flame-orange: #ff6b00;
+    --indigo: #5b4fff;
+    --teal: #00a39a;
+    --mauve: #b96ac9;
+    --sand: #c7a87a;
+  }
+
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+  body {
+    font-family: "Alte Haas Grotesk", sans-serif;
+    background-color: var(--grid-gray);
+    color: var(--black);
+    line-height: 1.6;
+    background-image:
+      linear-gradient(var(--grid-line) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
+    background-size: 40px 40px;
+    min-height: 100vh;
+  }
+
+  header {
+    padding: 1.5rem 2rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: linear-gradient(to bottom, var(--grid-gray) 60%, transparent);
+  }
+  .logo-link {
+    display: block;
+    text-decoration: none;
+  }
+  .logo-img {
+    height: 56px;
+    width: auto;
+    display: block;
+  }
+
+  .breadcrumb {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 2rem;
+    font-size: 0.9rem;
+    color: var(--os-gray);
+  }
+  .breadcrumb a {
+    color: var(--os-gray);
+    text-decoration: none;
+  }
+  .breadcrumb a:hover {
+    color: var(--black);
+  }
+
+  .hero {
+    max-width: 900px;
+    margin: 2rem auto 4rem;
+    padding: 0 2rem;
+    text-align: center;
+  }
+  .hero h1 {
+    font-size: clamp(2.5rem, 5vw, 4rem);
+    line-height: 1.05;
+    margin-bottom: 1.25rem;
+    font-weight: 900;
+  }
+  .hero p {
+    font-size: 1.2rem;
+    color: var(--black);
+    max-width: 640px;
+    margin: 0 auto;
+  }
+
+  .grid {
+    max-width: 1100px;
+    margin: 0 auto 5rem;
+    padding: 0 2rem;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 2rem;
+  }
+
+  .cat-card {
+    background: var(--ivory);
+    border: 3px solid var(--black);
+    border-radius: 0;
+    padding: 1.75rem;
+    text-decoration: none;
+    color: inherit;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    box-shadow: 6px 6px 0 var(--accent, var(--black));
+    transition:
+      transform 0.15s ease,
+      box-shadow 0.15s ease;
+  }
+  .cat-card:hover {
+    transform: translate(-2px, -2px);
+    box-shadow: 8px 8px 0 var(--accent, var(--black));
+  }
+  .cat-card .accent-bar {
+    width: 48px;
+    height: 6px;
+    border-radius: 0;
+    background: var(--accent, var(--black));
+  }
+  .cat-card h2 {
+    font-size: 1.4rem;
+    font-weight: 900;
+    line-height: 1.2;
+  }
+  .cat-card p {
+    font-size: 0.95rem;
+    color: var(--black);
+    flex: 1;
+  }
+  .cat-card .meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 0.5rem;
+    font-size: 0.85rem;
+    color: var(--os-gray);
+  }
+  .cat-card .meta .arrow {
+    font-weight: 800;
+    color: var(--accent, var(--black));
+  }
+
+  .cat-card.coming-soon {
+    opacity: 0.55;
+    pointer-events: none;
+  }
+  .cat-card.coming-soon .meta .arrow::after {
+    content: " soon";
+  }
+</style>
+
+<nav class="breadcrumb">
+  <a href="/">Home</a>
+  &nbsp;›&nbsp; Featured Apps
+</nav>
+
+<main>
+<section class="hero">
+  <h1>Featured Apps</h1>
+  <p>Vibes grouped by what they're for. Try the classics in each category, then
+    remix one as your own.</p>
+</section>
+
+<section class="grid">
+
+  <a
+    href="household-logistics.html"
+    class="cat-card"
+    style="--accent: var(--bluey);"
+  >
+    <span class="accent-bar"></span>
+    <h2>Household Logistics</h2>
+    <p>Daily coordination — chores, cleanings, where you parked, and whose turn
+      it is to pick the movie.</p>
+    <span class="meta"><span></span><span class="arrow">→</span></span>
+  </a>
+
+  <a
+    href="rituals-and-goals.html"
+    class="cat-card"
+    style="--accent: var(--goldenrod);"
+  >
+    <span class="accent-bar"></span>
+    <h2>Rituals &amp; Shared Goals</h2>
+    <p>Group milestones over time — ceremonies, predictions, family lore, and
+      adventures you check off together.</p>
+    <span class="meta"><span></span><span class="arrow">→</span></span>
+  </a>
+
+  <a
+    href="party-games.html"
+    class="cat-card"
+    style="--accent: var(--ruby);"
+  >
+    <span class="accent-bar"></span>
+    <h2>Party &amp; Group Games</h2>
+    <p>Silly multiplayer rounds — turn-based games, voting, and party chaos for
+      friends in the room or async.</p>
+    <span class="meta"><span></span><span class="arrow">→</span></span>
+  </a>
+
+  <a
+    href="photo-identifiers.html"
+    class="cat-card"
+    style="--accent: var(--teal);"
+  >
+    <span class="accent-bar"></span>
+    <h2>Photo Identifiers</h2>
+    <p>Snap a photo of something in the wild and get back a name, a story, and a
+      gallery to log it in.</p>
+    <span class="meta"><span></span><span class="arrow">→</span></span>
+  </a>
+
+  <a
+    href="outdoor-logs.html"
+    class="cat-card"
+    style="--accent: var(--sprout-green);"
+  >
+    <span class="accent-bar"></span>
+    <h2>Outdoor Adventure Logs</h2>
+    <p>Log finds in the wild — photo timelines, location-pinned sightings, and
+      shared field notes from outside.</p>
+    <span class="meta"><span></span><span class="arrow">→</span></span>
+  </a>
+
+  <a
+    href="neighborhood-swaps.html"
+    class="cat-card"
+    style="--accent: var(--flame-orange);"
+  >
+    <span class="accent-bar"></span>
+    <h2>Neighborhood Swaps &amp; Lists</h2>
+    <p>Community circulation — post what you have, claim what you need, keep
+      stuff moving locally.</p>
+    <span class="meta"><span></span><span class="arrow">→</span></span>
+  </a>
+
+  <a
+    href="classroom-tools.html"
+    class="cat-card"
+    style="--accent: var(--bluey);"
+  >
+    <span class="accent-bar"></span>
+    <h2>Classroom Tools</h2>
+    <p>For teachers and students — kind words, study battles, voiced passages,
+      and classroom-friendly experiments.</p>
+    <span class="meta"><span></span><span class="arrow">→</span></span>
+  </a>
+
+  <a
+    href="mood-and-journals.html"
+    class="cat-card"
+    style="--accent: var(--mauve);"
+  >
+    <span class="accent-bar"></span>
+    <h2>Mood, Dreams &amp; Journals</h2>
+    <p>Inner-life logging — daily check-ins, dream patterns, written
+      reflections, and time-locked notes.</p>
+    <span class="meta"><span></span><span class="arrow">→</span></span>
+  </a>
+
+  <a
+    href="fitness-and-sports.html"
+    class="cat-card"
+    style="--accent: var(--ruby);"
+  >
+    <span class="accent-bar"></span>
+    <h2>Fitness &amp; Sports Stats</h2>
+    <p>Score and reps — dice for workouts, scoreboards for the season, and stat
+      trackers for the back-pocket coach.</p>
+    <span class="meta"><span></span><span class="arrow">→</span></span>
+  </a>
+
+  <a
+    href="kitchen-and-cooking.html"
+    class="cat-card"
+    style="--accent: var(--goldenrod);"
+  >
+    <span class="accent-bar"></span>
+    <h2>Kitchen &amp; Cooking</h2>
+    <p>Meals and dishes — lunchbox spinners, egg timers, recipe brags, and
+      potluck coordination.</p>
+    <span class="meta"><span></span><span class="arrow">→</span></span>
+  </a>
+
+  <a
+    href="creative-studios.html"
+    class="cat-card"
+    style="--accent: var(--indigo);"
+  >
+    <span class="accent-bar"></span>
+    <h2>Creative Studios</h2>
+    <p>Making things, with tools — projection mapping, bracelet patterns, prompt
+      decks, and visualizers.</p>
+    <span class="meta"><span></span><span class="arrow">→</span></span>
+  </a>
+
+  <a
+    href="garden-and-plants.html"
+    class="cat-card"
+    style="--accent: var(--sprout-green);"
+  >
+    <span class="accent-bar"></span>
+    <h2>Garden &amp; Plant Care</h2>
+    <p>Green-thumb logs — plant beds mapped, watering reminders set, livestreams
+      of which branch to prune.</p>
+    <span class="meta"><span></span><span class="arrow">→</span></span>
+  </a>
+
+  <a
+    href="pets.html"
+    class="cat-card"
+    style="--accent: var(--puppy-pink);"
+  >
+    <span class="accent-bar"></span>
+    <h2>Pets</h2>
+    <p>For the animals in your life — coordinate dog walks, log neighborhood
+      cats, keep tabs on four-legged regulars.</p>
+    <span class="meta"><span></span><span class="arrow">→</span></span>
+  </a>
+
+  <a
+    href="linkedin-influencers.html"
+    class="cat-card"
+    style="--accent: var(--bluey);"
+  >
+    <span class="accent-bar"></span>
+    <h2>LinkedIn Influencers</h2>
+    <p>Cringe-corporate parody generators — humblebrags, hashtag floods, fake
+      CEO quotes, and 10-part threads from a single thought.</p>
+    <span class="meta"><span></span><span class="arrow">→</span></span>
+  </a>
+
+  <a
+    href="hero-at-work.html"
+    class="cat-card"
+    style="--accent: var(--sand);"
+  >
+    <span class="accent-bar"></span>
+    <h2>Hero at Work</h2>
+    <p>Build the team's missing tool — quick internal apps, status boards, and
+      ICP trackers that beat waiting for IT.</p>
+    <span class="meta"><span></span><span class="arrow">→</span></span>
+  </a>
+
+  <a
+    href="house-rules.html"
+    class="cat-card"
+    style="--accent: var(--ruby);"
+  >
+    <span class="accent-bar"></span>
+    <h2>House Rules</h2>
+    <p>For the person who knows the real Farkle rules, who keeps the recipe,
+      who remembers what we brought to the potluck last year.</p>
+    <span class="meta"><span></span><span class="arrow">→</span></span>
+  </a>
+
+  <a
+    href="run-the-place.html"
+    class="cat-card"
+    style="--accent: var(--bluey);"
+  >
+    <span class="accent-bar"></span>
+    <h2>Run the Place</h2>
+    <p>For the small workplace teams that aren't software teams — restaurants,
+      real estate offices, Sunday school admin, the front desk.</p>
+    <span class="meta"><span></span><span class="arrow">→</span></span>
+  </a>
+
+  <a
+    href="image-generation.html"
+    class="cat-card"
+    style="--accent: var(--mauve);"
+  >
+    <span class="accent-bar"></span>
+    <h2>Image Generation</h2>
+    <p>Text in, image out — comics, plushies, vintage ads, dungeon scenes, and
+      six transformers that reshape what you already have.</p>
+    <span class="meta"><span></span><span class="arrow">→</span></span>
+  </a>
+
+</section>
+</main>

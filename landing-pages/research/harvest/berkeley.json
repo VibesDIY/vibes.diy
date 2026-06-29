@@ -1,0 +1,118 @@
+{
+  "source": "UC Berkeley",
+  "location": "Berkeley, CA",
+  "region": "West Coast",
+  "fetched": "2026-05-18",
+  "items": [
+    {
+      "title": "STAT 156 Causal Inference",
+      "department": "Data Science / Stats",
+      "year": 2024,
+      "url": "https://classes.berkeley.edu/content/2024-fall-stat-156-001-lec-001",
+      "fetch_method": "direct",
+      "topics": [
+        "potential outcomes framework",
+        "causal diagrams",
+        "randomized experiments",
+        "observational studies",
+        "instrumental variables",
+        "regression discontinuity",
+        "mediation analysis",
+        "sensitivity analysis"
+      ],
+      "source_text": "Topics include the potential outcomes framework, causal diagrams (DAGs), randomized experiments, and methods for observational studies including instrumental variables and regression discontinuity designs. The course also covers mediation analysis and sensitivity analysis for unobserved confounding."
+    },
+    {
+      "title": "DATA C100 Principles and Techniques of Data Science",
+      "department": "Data Science / Stats",
+      "year": 2024,
+      "url": "https://ds100.org/fa24/",
+      "fetch_method": "direct",
+      "topics": [
+        "pandas and data wrangling",
+        "ordinary least squares",
+        "gradient descent",
+        "feature engineering",
+        "cross-validation",
+        "regularization",
+        "principal component analysis",
+        "clustering",
+        "logistic regression",
+        "neural networks"
+      ],
+      "source_text": "The course covers the full data science pipeline: data wrangling with pandas, model fitting via ordinary least squares and gradient descent, feature engineering, cross-validation, and regularization. Later topics include dimensionality reduction via PCA, unsupervised clustering, logistic regression, and an introduction to neural networks."
+    },
+    {
+      "title": "PBHLTH 142 Introduction to Probability and Statistics in Biology and Public Health",
+      "department": "Public Health",
+      "year": 2024,
+      "url": "https://classes.berkeley.edu/content/2024-fall-pbhlth-142-001-lec-001",
+      "fetch_method": "direct",
+      "topics": [
+        "descriptive statistics",
+        "probability distributions",
+        "point and interval estimation",
+        "hypothesis testing",
+        "chi-square tests",
+        "correlation and regression",
+        "biostatistical inference",
+        "epidemiological study design"
+      ],
+      "source_text": "Course covers descriptive statistics, probability distributions, point and interval estimation, hypothesis testing, chi-square analysis, and correlation and regression with biomedical applications. Focus on statistical reasoning for public health decision-making and biostatistical inference relevant to epidemiological study design."
+    },
+    {
+      "title": "ECON 219A Foundations of Psychology and Economics",
+      "department": "Behavioral Economics",
+      "year": 2024,
+      "url": "https://classes.berkeley.edu/content/2024-fall-econ-219a-001-lec-001",
+      "fetch_method": "direct",
+      "topics": [
+        "bounded rationality",
+        "loss aversion",
+        "present bias",
+        "social preferences",
+        "reference-dependent utility",
+        "overconfidence",
+        "attention and salience",
+        "formal behavioral models"
+      ],
+      "source_text": "Examines psychological and experimental economics research demonstrating departures from perfect rationality, self-interest, and other classical assumptions. Topics include bounded rationality, loss aversion, present bias, social preferences, reference-dependent utility, and overconfidence; emphasis on converting behavioral evidence into formal mathematical models."
+    },
+    {
+      "title": "ESPM 155AC Sociology and Political Ecology of Agro-Food Systems",
+      "department": "Environmental Studies",
+      "year": 2024,
+      "url": "https://classes.berkeley.edu/content/2024-summer-espm-155ac-001-lec-001",
+      "fetch_method": "direct",
+      "topics": [
+        "political ecology",
+        "agro-food systems",
+        "food sovereignty",
+        "food justice",
+        "fair trade certification",
+        "organic agriculture",
+        "urban agriculture",
+        "environmental social movements"
+      ],
+      "source_text": "Examines the sociology and political ecology of agro-food systems, analyzing the nexus of agriculture, society, and the environment. Covers food justice and food sovereignty movements, fair trade certification, organic farming transitions, urban agriculture initiatives, and environmental social movements as responses to industrial food systems."
+    },
+    {
+      "title": "CY PLAN 110 Introduction to City Planning",
+      "department": "Urban Planning",
+      "year": 2024,
+      "url": "https://classes.berkeley.edu/content/2024-fall-cyplan-110-001-lec-001",
+      "fetch_method": "direct",
+      "topics": [
+        "urban planning history",
+        "land use regulation",
+        "zoning and comprehensive plans",
+        "urban growth management",
+        "housing policy",
+        "transportation planning",
+        "environmental impact assessment",
+        "community engagement"
+      ],
+      "source_text": "Survey of city planning as it has evolved in the United States since 1800 in response to physical, social, and economic problems. Covers major planning concepts including land use regulation, zoning, comprehensive plans, urban growth management, housing policy, transportation planning, environmental impact assessment, and community engagement processes used by city planners and local governments."
+    }
+  ]
+}

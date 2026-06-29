@@ -1,0 +1,295 @@
+{{!--
+{
+  "layout": "webring",
+  "title": "For Rec League Coordinators | Vibes DIY",
+  "description": "Sub finder, team roster, game day confirmation, season scoreboard, equipment checkout. Five tools for adult rec league captains and coordinators.",
+  "ogUrl": "https://good.vibes.diy/rec-league/",
+  "source": "rec-league",
+  "apps": [
+    {
+      "num": "01",
+      "slug": "league-sub-finder",
+      "author": "og",
+      "live": true,
+      "title": "Sub Finder",
+      "tagline": "Can't make it? Sub found before midnight.",
+      "desc": "Rec league substitute finder. Can't make the game? Post the game details and your position. Available subs respond with their name. One page, no account, link shared in the team chat."
+    },
+    {
+      "num": "02",
+      "slug": "league-roster-builder",
+      "author": "og",
+      "live": true,
+      "title": "Roster Builder",
+      "tagline": "Name, number, position — on one page.",
+      "desc": "Rec league team roster. Each player: name, phone, position, experience level (casual/competitive), t-shirt size. Captain can share a link for players to add themselves."
+    },
+    {
+      "num": "03",
+      "slug": "game-day-headcount",
+      "author": "og",
+      "live": true,
+      "title": "Game Day Confirm",
+      "tagline": "Know your headcount by Wednesday.",
+      "desc": "This week's game confirmation. Shows game time, field, and team roster. Players tap to confirm they're coming or mark themselves out. Captain sees headcount at a glance."
+    },
+    {
+      "num": "04",
+      "slug": "league-scoreboard",
+      "author": "og",
+      "live": true,
+      "title": "Season Scoreboard",
+      "tagline": "Wins, losses, grudge matches — all tracked.",
+      "desc": "Rec league season scoreboard. All games listed with date, opponent, and score. Anyone can update after the game. Running win/loss record at the top."
+    },
+    {
+      "num": "05",
+      "slug": "gear-checkout-board",
+      "author": "og",
+      "live": true,
+      "title": "Gear Checkout",
+      "tagline": "Who has the balls. Where is the pump.",
+      "desc": "Team equipment tracker. Items: game balls, training cones, pinnies (by color), first aid kit, pump. Player checks out an item with their name. Returns it when done. What's missing at a glance."
+    }
+  ],
+  "ogImage": "https://good.vibes.diy/images/screenshots/rec-league.jpg"
+}
+--}}
+
+<style>
+  @import url("https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;700;800;900&family=Barlow:wght@400;500;600;700&display=optional");
+
+  :root {
+    --turf: #1a2e1a;
+    --field: #2a4a2a;
+    --lime: #a8e63c;
+    --lime-soft: rgba(168,230,60,0.12);
+    --orange: #f57c1a;
+    --white: #f8faf4;
+    --ink: #0e1a0e;
+    --muted: #6a8a6a;
+    --border: rgba(168,230,60,0.2);
+    --border-hi: rgba(168,230,60,0.35);
+  }
+
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html, body {
+    background: var(--turf);
+    color: var(--white);
+    font-family: "Barlow", system-ui, sans-serif;
+    line-height: 1.55;
+    min-height: 100vh;
+    background-image:
+      repeating-linear-gradient(0deg, transparent, transparent 59px, rgba(168,230,60,0.04) 60px),
+      repeating-linear-gradient(90deg, transparent, transparent 59px, rgba(168,230,60,0.04) 60px);
+  }
+  a { color: inherit; text-decoration: none; }
+
+  .layout { max-width: 1060px; margin: 0 auto; padding: 0 1.5rem; }
+
+  .topbar {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 1.25rem 0;
+    border-bottom: 1px solid var(--border-hi);
+  }
+  .topbar .brand {
+    font-family: "Barlow Condensed", sans-serif; font-weight: 900;
+    font-size: 1.2rem; letter-spacing: 0.04em; color: var(--lime);
+  }
+  .topbar .meta {
+    font-size: 0.65rem; letter-spacing: 0.2em; text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  .crumb {
+    padding: 0.5rem 0; font-size: 0.62rem; letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--muted); border-bottom: 1px solid var(--border);
+  }
+  .crumb a { color: var(--muted); }
+  .crumb a:hover { color: var(--lime); }
+
+  .hero {
+    padding: 4rem 0 3.5rem;
+    border-bottom: 1px solid var(--border-hi);
+  }
+  .hero .label {
+    font-family: "Barlow Condensed", sans-serif; font-weight: 700;
+    font-size: 0.72rem; letter-spacing: 0.25em; text-transform: uppercase;
+    color: var(--lime); margin-bottom: 1.5rem;
+    display: inline-block;
+    border: 1px solid var(--lime); padding: 4px 12px;
+  }
+  .hero h1 {
+    font-family: "Barlow Condensed", sans-serif;
+    font-size: clamp(3.5rem, 9vw, 7rem);
+    font-weight: 900; line-height: 0.9;
+    letter-spacing: 0.01em; margin-bottom: 1.5rem;
+  }
+  .hero h1 .hi { color: var(--lime); }
+  .hero p.lead {
+    font-size: 1.15rem; max-width: 680px; line-height: 1.65; opacity: 0.75;
+  }
+
+  .stats {
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    border: 1px solid var(--border-hi); margin: 2rem 0;
+    background: rgba(255,255,255,0.03);
+  }
+  @media (max-width: 700px) { .stats { grid-template-columns: repeat(2, 1fr); } }
+  .stat-cell { padding: 1.25rem 1.5rem; border-right: 1px solid var(--border); }
+  .stat-cell:last-child { border-right: none; }
+  .stat-cell .k { font-size: 0.55rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--muted); margin-bottom: 0.4rem; }
+  .stat-cell .v { font-family: "Barlow Condensed", sans-serif; font-weight: 900; font-size: 1.5rem; color: var(--lime); letter-spacing: 0.02em; }
+
+  .section-label {
+    padding: 1.5rem 0 0.75rem;
+    font-size: 0.6rem; letter-spacing: 0.25em; text-transform: uppercase;
+    color: var(--muted); border-bottom: 1px dashed var(--border); margin-bottom: 1.5rem;
+  }
+
+  .apps {
+    display: flex; flex-direction: column;
+    border: 1px solid var(--border-hi);
+    background: rgba(0,0,0,0.2);
+  }
+  .app {
+    padding: 2rem 1.75rem;
+    border-bottom: 1px solid var(--border);
+    display: grid; grid-template-columns: 72px 1fr 300px;
+    gap: 2rem; align-items: start;
+    transition: background 0.12s;
+  }
+  .app:last-child { border-bottom: none; }
+  @media (max-width: 800px) { .app { grid-template-columns: 1fr; gap: 1rem; } }
+  .app:hover { background: var(--lime-soft); }
+
+  .app .num-cell { display: flex; flex-direction: column; gap: 0.4rem; }
+  .app .num { font-family: "Barlow Condensed", sans-serif; font-weight: 900; font-size: 3rem; line-height: 0.9; color: rgba(168,230,60,0.2); }
+  .app--live .num { color: var(--lime); }
+  .app .status {
+    font-size: 0.5rem; letter-spacing: 0.2em; text-transform: uppercase;
+    padding: 3px 6px; border: 1px solid var(--border);
+    color: var(--muted); text-align: center;
+  }
+  .app--live .status { background: var(--lime); color: var(--turf); border-color: var(--lime); font-weight: 700; }
+
+  .app .body { display: flex; flex-direction: column; gap: 0.6rem; }
+  .app .body .title { font-family: "Barlow Condensed", sans-serif; font-size: 2.2rem; font-weight: 800; letter-spacing: 0.01em; line-height: 1.0; }
+  .app .body .tagline { font-size: 0.88rem; line-height: 1.5; color: var(--lime); font-weight: 600; }
+  .app .body .desc { font-size: 0.97rem; line-height: 1.6; opacity: 0.7; }
+
+  .app .right { display: flex; flex-direction: column; gap: 0.6rem; }
+  .app .shot { display: block; aspect-ratio: 16/9; overflow: hidden; border: 1px solid var(--border-hi); background: rgba(0,0,0,0.3); }
+  .app .shot img { width: 100%; height: 100%; object-fit: cover; }
+  .app .shot-placeholder {
+    padding: 1rem; height: 100%; display: flex; align-items: center; justify-content: center;
+    font-size: 0.58rem; letter-spacing: 0.2em; text-transform: uppercase;
+    text-align: center; color: var(--muted);
+  }
+  .app .ctas { display: grid; grid-template-columns: repeat(3, 1fr); border: 1px solid var(--border-hi); overflow: hidden; }
+  .app .ctas--single { grid-template-columns: 1fr; }
+  .btn {
+    text-align: center; padding: 0.55rem 0.5rem;
+    background: transparent; border-right: 1px solid var(--border);
+    font-size: 0.6rem; letter-spacing: 0.15em; text-transform: uppercase; font-weight: 600;
+    color: var(--white); cursor: pointer; transition: background 0.12s;
+  }
+  .btn:last-child { border-right: none; }
+  .btn:hover { background: var(--lime-soft); color: var(--lime); }
+  .prompt-link { font-size: 0.62rem; color: var(--muted); text-decoration: underline; }
+  .prompt-link:hover { color: var(--lime); }
+
+  .epilogue { padding: 3rem 0; border-top: 1px solid var(--border-hi); margin-top: 2rem; }
+  .epilogue h2 { font-size: 0.6rem; letter-spacing: 0.25em; text-transform: uppercase; color: var(--lime); margin-bottom: 1rem; }
+  .epilogue p { font-size: 1.1rem; max-width: 720px; line-height: 1.65; opacity: 0.75; }
+  .epilogue .hl { color: var(--lime); font-weight: 600; }
+
+  footer {
+    padding: 1.25rem 0; font-size: 0.6rem; letter-spacing: 0.15em; text-transform: uppercase;
+    display: flex; justify-content: space-between; color: var(--muted);
+    border-top: 1px solid var(--border);
+  }
+  footer a:hover { color: var(--lime); }
+</style>
+
+<div class="layout">
+  <header class="topbar">
+    <a class="brand" href="https://links.vibes.diy/homepage">VIBES.DIY</a>
+    <span class="meta">For Rec Leagues &middot; five tools</span>
+  </header>
+
+  <nav class="crumb">
+    <a href="/">Home</a> &nbsp;/&nbsp; Rec League
+  </nav>
+
+  <section class="hero">
+    <span class="label">For Rec League Captains</span>
+    <h1>Show up.<br/><span class="hi">Play ball.</span></h1>
+    <p class="lead">
+      Five tools for rec league captains and coordinators — sub finder, roster builder,
+      game day confirmation, season scoreboard, and gear checkout.
+      One link. No app store. Works in the team chat.
+    </p>
+  </section>
+
+  <div class="stats">
+    <div class="stat-cell"><div class="k">Tools</div><div class="v">Five</div></div>
+    <div class="stat-cell"><div class="k">Scope</div><div class="v">One job</div></div>
+    <div class="stat-cell"><div class="k">Login</div><div class="v">None</div></div>
+    <div class="stat-cell"><div class="k">Season</div><div class="v">Year-round</div></div>
+  </div>
+
+  <div class="section-label">The Tools</div>
+
+  <section class="apps">
+    {{#each apps}}
+    <article class="app {{#if live}}app--live{{else}}app--pending{{/if}}">
+      <div class="num-cell">
+        <div class="num">{{num}}</div>
+        <div class="status">{{#if live}}Live{{else}}Soon{{/if}}</div>
+      </div>
+      <div class="body">
+        <h2 class="title">{{title}}</h2>
+        <p class="tagline">{{tagline}}</p>
+        <p class="desc">{{desc}}</p>
+      </div>
+      <div class="right">
+        {{#if live}}
+          <a class="shot" href="https://vibes.diy/vibe/{{author}}/{{slug}}" aria-label="{{title}} screenshot"><img src="https://{{slug}}--{{author}}.prod-v2.vibesdiy.net/screenshot.jpg" alt="{{slug}}" onerror="this.onerror=null; this.src='{{@root.assetPrefix}}images/og-preview.png';"/></a>
+          <div class="ctas">
+            <a class="btn" href="https://vibes.diy/vibe/{{author}}/{{slug}}">Join</a>
+            <a class="btn" href="https://vibes.diy/remix/{{author}}/{{slug}}?skipChat=true">Clone</a>
+            <a class="btn" href="https://vibes.diy/remix/{{author}}/{{slug}}">Remix</a>
+          </div>
+          <a class="prompt-link" href="https://vibes.diy/chat/prompt?prompt64={{prompt64 desc}}">// start fresh from this prompt</a>
+        {{else}}
+          <div class="shot"><div class="shot-placeholder">generating</div></div>
+          <div class="ctas ctas--single">
+            <a class="btn" href="https://vibes.diy/chat/prompt?prompt64={{prompt64 desc}}">Start From Prompt</a>
+          </div>
+        {{/if}}
+      </div>
+    </article>
+    {{/each}}
+  </section>
+
+  <div class="epilogue">
+    <h2>The idea</h2>
+    <p>
+      Rec league captains run three group chats by hand every week.
+      Who's in, who needs a sub, did anyone get the gear bag.
+      These tools are <span class="hl">one screen, one job</span> —
+      sub requests that actually get answered, rosters that stay current,
+      headcounts before Wednesday. Your league tracks "spirit points" for
+      showing up on time and buys the last-place team beer at the end of the season?
+      Describe it. Clone one, make it yours.
+    </p>
+  </div>
+
+  {{> newsletter}}
+<footer>
+    <span>Vibes.diy &middot; <a href="https://links.vibes.diy/homepage">homepage</a></span>
+    <span>// Rec League</span>
+  </footer>
+</div>

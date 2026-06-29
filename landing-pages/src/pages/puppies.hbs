@@ -1,0 +1,447 @@
+{{!--
+{
+  "layout": "webring",
+  "title": "For New Puppy Owners | Puppy Apps | Vibes DIY",
+  "description": "Daily routine logs, vet schedules, training trackers, feeding logs, and milestone journals. Five apps for new puppy owners.",
+  "ogUrl": "https://good.vibes.diy/puppies",
+  "source": "puppies",
+  "apps": [
+    {
+      "num": "01",
+      "slug": "puppy-daily-log",
+      "author": "og",
+      "live": true,
+      "title": "Daily Log",
+      "tagline": "Every meal, potty break, nap, and crate session — the whole day at a glance.",
+      "desc": "Puppy daily routine tracker. Log meals, potty breaks with success/accident, crate time, naps, and energy level. Shows the day's pattern at a glance. Indispensable from night one."
+    },
+    {
+      "num": "02",
+      "slug": "puppy-vet-schedule",
+      "author": "og",
+      "live": true,
+      "title": "Vet Schedule",
+      "tagline": "Every shot, booster, and check-up — shareable with your vet or sitter.",
+      "desc": "Puppy vet and vaccine timeline. Add vaccines with date given, next due date, and vet notes. Track deworming, flea/tick, heartworm. Share with vet or sitter."
+    },
+    {
+      "num": "03",
+      "slug": "training-cue-log",
+      "author": "og",
+      "live": true,
+      "title": "Training Cues",
+      "tagline": "Cue by cue, session by session — know exactly what to work on next.",
+      "desc": "Puppy training cue tracker. Each cue: name, goal behavior, current success rate, training notes. Log sessions with date and progress. Share with trainer."
+    },
+    {
+      "num": "04",
+      "slug": "puppy-feeding-log",
+      "author": "og",
+      "live": true,
+      "title": "Feeding Log",
+      "tagline": "Meals and treats logged, so changing food or portions is never a guess.",
+      "desc": "Puppy feeding and treat log. Each meal: time, amount, food brand, any reaction. Track treats separately. Helpful when changing food or adjusting portions."
+    },
+    {
+      "num": "05",
+      "slug": "puppy-milestone-journal",
+      "author": "og",
+      "live": true,
+      "title": "Milestone Journal",
+      "tagline": "First bath, first walk, first 'sit' — a timeline worth keeping.",
+      "desc": "Puppy milestone photo journal. Each entry: milestone name, date, photo, notes. First bath, first walk, first 'sit', first night through. Sharable as a timeline."
+    }
+  ],
+  "ogImage": "https://good.vibes.diy/images/screenshots/puppies.jpg"
+}
+--}}
+
+<style>
+  @import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,600;0,700;1,400&family=IBM+Plex+Sans:wght@400;500;600;700;800&display=optional");
+
+  :root {
+    --bg: #fdfcf8;
+    --surface: #faf6ee;
+    --surface-hi: #f3ece0;
+    --cue: #D97706;
+    --cue-dim: rgba(217, 119, 6, 0.12);
+    --cue-light: rgba(217, 119, 6, 0.08);
+    --live: #16a34a;
+    --text: #1c1a17;
+    --muted: #7a6f5e;
+    --border: rgba(28, 26, 23, 0.10);
+    --border-hi: rgba(28, 26, 23, 0.18);
+  }
+
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: "IBM Plex Sans", system-ui, sans-serif;
+    line-height: 1.55;
+    min-height: 100vh;
+  }
+  a { color: inherit; text-decoration: none; }
+  .mono { font-family: "IBM Plex Mono", monospace; }
+
+  .layout { max-width: 1100px; margin: 0 auto; padding: 0 1.5rem; }
+
+  .topbar {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 1rem 0;
+    border-bottom: 1px solid var(--border-hi);
+  }
+  .topbar .brand {
+    font-family: "IBM Plex Mono", monospace; font-weight: 700;
+    font-size: 1.1rem; letter-spacing: -0.02em;
+    color: var(--cue);
+  }
+  .topbar .meta {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.6rem; letter-spacing: 0.2em; text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  .crumb {
+    padding: 0.55rem 0;
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.65rem; letter-spacing: 0.15em; text-transform: uppercase;
+    color: var(--muted);
+    border-bottom: 1px solid var(--border);
+  }
+  .crumb a { color: var(--muted); }
+  .crumb a:hover { color: var(--cue); }
+
+  .hero {
+    padding: 4.5rem 0 3.5rem;
+    border-bottom: 1px solid var(--border-hi);
+  }
+  .hero .label {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.6rem; letter-spacing: 0.25em; text-transform: uppercase;
+    color: var(--cue);
+    margin-bottom: 1.25rem;
+    display: inline-block;
+    border: 1px solid var(--cue);
+    padding: 4px 10px;
+    border-radius: 3px;
+    background: var(--cue-light);
+  }
+  .hero h1 {
+    font-size: clamp(3rem, 8vw, 6.5rem);
+    font-weight: 800;
+    line-height: 0.92;
+    letter-spacing: -0.04em;
+    margin-bottom: 1.5rem;
+    color: var(--text);
+  }
+  .hero h1 .hi { color: var(--cue); }
+  .hero p.lead {
+    font-size: 1.2rem; max-width: 680px; line-height: 1.55;
+    color: var(--muted);
+  }
+
+  .spotlight {
+    padding: 3rem 0;
+    border-bottom: 1px solid var(--border-hi);
+  }
+  .spotlight-label {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.6rem; letter-spacing: 0.25em; text-transform: uppercase;
+    color: var(--cue); margin-bottom: 1.5rem;
+  }
+  .spotlight-card {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 3rem; align-items: center;
+    background: var(--surface);
+    border: 1px solid var(--cue);
+    border-radius: 8px; padding: 2.5rem;
+    position: relative; overflow: hidden;
+  }
+  .spotlight-card::before {
+    content: "DAY 01";
+    position: absolute; top: 1.25rem; right: 1.5rem;
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.6rem; letter-spacing: 0.2em; text-transform: uppercase;
+    color: var(--cue); opacity: 0.35;
+  }
+  @media (max-width: 800px) {
+    .spotlight-card { grid-template-columns: 1fr; gap: 1.5rem; }
+    .spotlight-shot { order: -1; }
+  }
+  .spotlight-num {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.6rem; letter-spacing: 0.2em; text-transform: uppercase;
+    color: var(--cue); margin-bottom: 0.75rem;
+  }
+  .spotlight-title {
+    font-size: clamp(2.5rem, 5vw, 4.5rem);
+    font-weight: 800; line-height: 0.95; letter-spacing: -0.03em;
+    margin-bottom: 0.75rem;
+    color: var(--text);
+  }
+  .spotlight-tagline {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.82rem; color: var(--cue);
+    margin-bottom: 1.25rem; line-height: 1.5;
+  }
+  .spotlight-desc {
+    font-size: 1rem; line-height: 1.65; color: var(--muted);
+    margin-bottom: 2rem;
+  }
+  .btn-spotlight {
+    display: inline-block;
+    padding: 0.85rem 2.25rem;
+    background: var(--cue); color: #fff;
+    border: none; border-radius: 4px;
+    font-family: "IBM Plex Mono", monospace; font-weight: 700;
+    font-size: 0.75rem; letter-spacing: 0.15em; text-transform: uppercase;
+    cursor: pointer; transition: all .12s; margin-bottom: 1rem;
+  }
+  .btn-spotlight:hover { background: var(--live); }
+  .spotlight-secondary { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+  .spotlight-shot a { display: block; }
+  .spotlight-shot img {
+    width: 100%; border-radius: 6px;
+    border: 1px solid var(--border-hi); display: block;
+    aspect-ratio: 16/10; object-fit: cover;
+    background: var(--surface-hi);
+  }
+
+  .stats {
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    border: 1px solid var(--border-hi); border-radius: 6px;
+    overflow: hidden; margin: 2rem 0;
+    background: var(--surface);
+  }
+  @media (max-width: 700px) { .stats { grid-template-columns: repeat(2, 1fr); } }
+  .stat-cell {
+    padding: 1.25rem 1.5rem;
+    border-right: 1px solid var(--border);
+  }
+  .stat-cell:last-child { border-right: none; }
+  @media (max-width: 700px) {
+    .stat-cell { border-bottom: 1px solid var(--border); }
+    .stat-cell:nth-child(2n) { border-right: none; }
+  }
+  .stat-cell .k {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.55rem; letter-spacing: 0.2em; text-transform: uppercase;
+    color: var(--muted); margin-bottom: 0.4rem;
+  }
+  .stat-cell .v { font-weight: 800; font-size: 1.4rem; letter-spacing: -0.02em; color: var(--cue); }
+
+  .section-label {
+    padding: 1.5rem 0 0.75rem;
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.6rem; letter-spacing: 0.25em; text-transform: uppercase;
+    color: var(--muted);
+    border-bottom: 1px dashed var(--border-hi);
+    margin-bottom: 1.5rem;
+  }
+
+  .apps {
+    display: flex; flex-direction: column;
+    border: 1px solid var(--border-hi); border-radius: 6px;
+    overflow: hidden; background: var(--surface);
+  }
+  .app {
+    padding: 2rem 1.75rem;
+    border-bottom: 1px solid var(--border);
+    display: grid; grid-template-columns: 72px 1fr 300px;
+    gap: 2rem; align-items: start;
+    transition: background 0.15s;
+  }
+  .app:last-child { border-bottom: none; }
+  @media (max-width: 800px) { .app { grid-template-columns: 1fr; gap: 1rem; } }
+  .app:hover { background: var(--surface-hi); }
+
+  .app .num-cell { display: flex; flex-direction: column; gap: 0.4rem; padding-top: 0.25rem; }
+  .app .num {
+    font-family: "IBM Plex Mono", monospace; font-weight: 700;
+    font-size: 2.8rem; line-height: 0.9; letter-spacing: -0.04em; color: var(--cue);
+  }
+  .app .status {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.5rem; letter-spacing: 0.2em; text-transform: uppercase;
+    padding: 3px 6px; border: 1px solid var(--border-hi);
+    color: var(--muted); text-align: center; border-radius: 3px;
+  }
+  .app--live .status { background: var(--live); color: #fff; border-color: var(--live); font-weight: 700; }
+
+  .app .body { display: flex; flex-direction: column; gap: 0.6rem; }
+  .app .body .title { font-size: 2rem; font-weight: 800; letter-spacing: -0.03em; line-height: 1.0; color: var(--text); }
+  .app .body .tagline {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.78rem; line-height: 1.5; color: var(--cue);
+  }
+  .app .body .desc { font-size: 0.98rem; line-height: 1.55; color: var(--muted); }
+
+  .app .right { display: flex; flex-direction: column; gap: 0.6rem; }
+  .app .shot {
+    display: block; aspect-ratio: 16/9; overflow: hidden;
+    border: 1px solid var(--border-hi); border-radius: 6px;
+    background: var(--surface-hi);
+  }
+  .app .shot img { width: 100%; height: 100%; object-fit: cover; }
+  .app .shot-placeholder {
+    padding: 1rem; height: 100%; display: flex; align-items: center; justify-content: center;
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.6rem; letter-spacing: 0.2em; text-transform: uppercase;
+    text-align: center; color: var(--muted);
+  }
+  .app .ctas {
+    display: grid; grid-template-columns: repeat(3, 1fr);
+    border: 1px solid var(--border-hi); border-radius: 4px; overflow: hidden;
+  }
+  .app .ctas--single { grid-template-columns: 1fr; }
+  .btn {
+    text-align: center; padding: 0.55rem 0.5rem;
+    background: transparent; border-right: 1px solid var(--border-hi);
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.6rem; letter-spacing: 0.15em; text-transform: uppercase;
+    color: var(--text); cursor: pointer; transition: background 0.12s;
+  }
+  .btn:last-child { border-right: none; }
+  .btn:hover { background: var(--cue-dim); color: var(--cue); }
+  .prompt-link {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.65rem; color: var(--muted); text-decoration: underline;
+  }
+  .prompt-link:hover { color: var(--cue); }
+
+  .epilogue {
+    padding: 3rem 0; border-bottom: 1px solid var(--border-hi); margin-top: 2rem;
+  }
+  .epilogue h2 {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.6rem; letter-spacing: 0.25em; text-transform: uppercase;
+    color: var(--cue); margin-bottom: 1rem;
+  }
+  .epilogue p { font-size: 1.1rem; max-width: 720px; line-height: 1.6; color: var(--muted); }
+  .epilogue .hl { color: var(--cue); font-weight: 600; }
+
+  footer.term-footer {
+    padding: 1.25rem 0;
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.6rem; letter-spacing: 0.2em; text-transform: uppercase;
+    display: flex; justify-content: space-between; color: var(--muted);
+  }
+  footer.term-footer a:hover { color: var(--cue); }
+</style>
+
+<div class="layout">
+  <header class="topbar">
+    <a class="brand" href="https://links.vibes.diy/homepage">VIBES.DIY</a>
+    <span class="meta">For Puppy Owners &middot; five puppy tools</span>
+  </header>
+
+  <nav class="crumb">
+    <a href="/">Home</a> &nbsp;/&nbsp; Puppies
+  </nav>
+
+  <section class="hero">
+    <span class="label">For New Puppy Owners</span>
+    <h1>Everything your puppy<br>needs, except <span class="hi">patience</span>.</h1>
+    <p class="lead">
+      Five apps for the first year &mdash; daily routines, vet timelines, training cues,
+      feeding logs, and milestone journals. All yours to clone, remix, and make your own.
+    </p>
+  </section>
+
+  <section class="spotlight">
+    <div class="spotlight-label">// spotlight &mdash; daily log</div>
+    <div class="spotlight-card">
+      <div class="spotlight-info">
+        <div class="spotlight-num">DAY 01 &middot; puppy-daily-log</div>
+        <h2 class="spotlight-title">Daily<br>Log</h2>
+        <p class="spotlight-tagline">Every meal, potty break, nap, and crate session<br>&mdash; the whole day at a glance.</p>
+        <p class="spotlight-desc">
+          Log meals, potty breaks with success or accident, crate time, naps, and
+          energy level. By evening you can see the day&rsquo;s whole pattern
+          at a glance &mdash; and spot what&rsquo;s working before you forget.
+          Start here, from night one.
+        </p>
+        <a class="btn-spotlight" href="https://vibes.diy/vibe/og/puppy-daily-log">Open Daily Log &rarr;</a>
+        <div class="spotlight-secondary">
+          <a class="btn" href="https://vibes.diy/remix/og/puppy-daily-log?skipChat=true">Clone</a>
+          <a class="btn" href="https://vibes.diy/remix/og/puppy-daily-log">Remix</a>
+          {{#with (lookup apps 0)}}<a class="btn" href="https://vibes.diy/chat/prompt?prompt64={{prompt64 desc}}">Start fresh</a>{{/with}}
+        </div>
+      </div>
+      <div class="spotlight-shot">
+        <a href="https://vibes.diy/vibe/og/puppy-daily-log" aria-label="Daily Log screenshot">
+          <img src="https://puppy-daily-log--og.prod-v2.vibesdiy.net/screenshot.jpg"
+               alt="Puppy Daily Log"
+               onerror="this.onerror=null; this.src='{{@root.assetPrefix}}images/og-preview.png';">
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <div class="stats">
+    <div class="stat-cell"><div class="k">Apps</div><div class="v">Five</div></div>
+    <div class="stat-cell"><div class="k">Audience</div><div class="v">Owners</div></div>
+    <div class="stat-cell"><div class="k">Persistence</div><div class="v">Fireproof</div></div>
+    <div class="stat-cell"><div class="k">Skin</div><div class="v">Passport</div></div>
+  </div>
+
+  <div class="section-label">// supporting tools</div>
+
+  <section class="apps">
+    {{#each apps}}
+      {{#unless @first}}
+      <article class="app {{#if live}}app--live{{else}}app--pending{{/if}}">
+        <div class="num-cell">
+          <div class="num">{{num}}</div>
+          <div class="status">{{#if live}}Live{{else}}Pending{{/if}}</div>
+        </div>
+        <div class="body">
+          <h2 class="title">{{title}}</h2>
+          <p class="tagline">{{tagline}}</p>
+          <p class="desc">{{desc}}</p>
+        </div>
+        <div class="right">
+          {{#if live}}
+            <a class="shot" href="https://vibes.diy/vibe/{{author}}/{{slug}}" aria-label="{{title}} screenshot"><img src="https://{{slug}}--{{author}}.prod-v2.vibesdiy.net/screenshot.jpg" alt="{{slug}}" onerror="this.onerror=null; this.src='{{@root.assetPrefix}}images/og-preview.png';"/></a>
+            <div class="ctas">
+              <a class="btn" href="https://vibes.diy/vibe/{{author}}/{{slug}}">Join</a>
+              <a class="btn" href="https://vibes.diy/remix/{{author}}/{{slug}}?skipChat=true">Clone</a>
+              <a class="btn" href="https://vibes.diy/remix/{{author}}/{{slug}}">Remix</a>
+            </div>
+            <a class="prompt-link" href="https://vibes.diy/chat/prompt?prompt64={{prompt64 desc}}">// start fresh from this prompt</a>
+          <span class="prompt-link" style="opacity:0.5; text-decoration:none; font-size:0.6rem;">The prompt that built this. Describe your puppy&rsquo;s situation instead.</span>
+          {{else}}
+            <div class="shot"><div class="shot-placeholder">awaiting deploy</div></div>
+            <div class="ctas ctas--single">
+              <a class="btn" href="https://vibes.diy/chat/prompt?prompt64={{prompt64 desc}}">Start From Prompt</a>
+            </div>
+          {{/if}}
+        </div>
+      </article>
+      {{/unless}}
+    {{/each}}
+  </section>
+
+  <div class="epilogue">
+    <h2>// read me</h2>
+    <p>
+      The first weeks with a puppy are <span class="hl">relentlessly logged on sticky notes, texts, and voice memos</span>.
+      Potty breaks, meals, nap times, training sessions &mdash; all scattered.
+      Clone any of these apps and pull it all into one place,
+      shareable with your household, trainer, or sitter with a single link.
+    </p>
+    <p style="margin-top:1rem;">
+      Your puppy is on a raw diet with specific protein rotations &mdash; clone the Feeding Log and add food-type tracking.
+      You&rsquo;re doing agility training, not just basic cues &mdash; clone Training Cues and add obstacle columns.
+      You share care between two households &mdash; clone the Daily Log and wire in a hand-off note field.
+      The app that fits your first year is one clone away.
+    </p>
+  </div>
+
+  {{> newsletter}}
+<footer class="term-footer">
+    <span>Vibes.diy &middot; <a href="https://links.vibes.diy/homepage">homepage</a> &middot; <a href="/teachers.html">teachers</a></span>
+    <span>// END OF LOG</span>
+  </footer>
+</div>

@@ -1,0 +1,484 @@
+{{!--
+{
+  "layout": "editorial",
+  "title": "Stay in the Loop — Vibes DIY",
+  "description": "Sign up to hear from Vibes when there's actual news: new features, launches worth checking out, and the occasional heads-up on what's coming.",
+  "ogUrl": "https://good.vibes.diy/newsletter/",
+  "source": "newsletter",
+  "ogImage": "https://good.vibes.diy/images/screenshots/newsletter.jpg"
+}
+--}}
+
+<style>
+  @import url('https://fonts.cdnfonts.com/css/alte-haas-grotesk');
+
+  :root {
+    --black: #000000;
+    --near-black: #231f20;
+    --gray-dark: #333333;
+    --gray-mid: #6b6b6b;
+    --gray-light: #cccdc8;
+    --cream: #fffff0;
+    --red: #da291c;
+    --cyan: #009ace;
+    --yellow: #fedd00;
+
+    --font-main: 'Alte Haas Grotesk', -apple-system, 'Segoe UI', sans-serif;
+    --card-border: 2px solid var(--black);
+    --gutter: clamp(1rem, 4vw, 3rem);
+    --grid-size: 40px;
+    --article-width: 860px;
+  }
+
+  *,
+  *::before,
+  *::after {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background-color: var(--gray-light);
+    background-image:
+      linear-gradient(rgba(255, 255, 255, 0.5) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255, 255, 255, 0.5) 1px, transparent 1px);
+    background-size: var(--grid-size) var(--grid-size);
+    color: var(--near-black);
+    font-family: var(--font-main);
+    font-size: clamp(1rem, 1.1vw, 1.125rem);
+    line-height: 1.6;
+    overflow-x: hidden;
+  }
+
+  ::selection {
+    background: var(--yellow);
+    color: var(--black);
+  }
+
+  a {
+    color: var(--red);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    transition: color 0.2s;
+  }
+
+  a:hover { color: var(--black); }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-family: var(--font-main);
+    font-weight: normal;
+    line-height: 1.1;
+  }
+
+  nav {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 100;
+    padding: 0.75rem var(--gutter);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: var(--cream);
+    border-bottom: 3px solid var(--black);
+  }
+
+  .nav-logo {
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+  }
+
+  .nav-logo-pill {
+    height: 36px;
+    width: auto;
+    display: block;
+    transition: opacity 0.2s;
+  }
+
+  .nav-logo:hover .nav-logo-pill { opacity: 0.85; }
+
+  .nav-links {
+    display: flex;
+    gap: 1.25rem;
+    align-items: center;
+  }
+
+  .nav-links a {
+    color: var(--near-black);
+    text-decoration: none;
+    font-size: 0.85rem;
+  }
+
+  .nav-links a:hover { color: var(--red); }
+
+  .nav-cta-btn {
+    background: var(--red);
+    color: var(--cream) !important;
+    padding: 0.5rem 1.2rem;
+    text-decoration: none !important;
+    font-weight: bold;
+    font-size: 0.85rem;
+    border: 2px solid var(--black);
+    transition: background 0.2s, transform 0.15s;
+  }
+
+  .nav-cta-btn:hover {
+    background: var(--near-black);
+    transform: translateY(-1px);
+  }
+
+  .page {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: calc(60px + 2.5rem) var(--gutter) 2rem;
+  }
+
+  .article {
+    max-width: var(--article-width);
+    margin: 0 auto;
+  }
+
+  .color-stripe {
+    height: 8px;
+    display: flex;
+    margin-bottom: 2rem;
+  }
+
+  .color-stripe > div { flex: 1; }
+
+  .hero-block {
+    border: var(--card-border);
+    background: var(--cream);
+    padding: clamp(2rem, 5vw, 3.5rem);
+    margin-bottom: 1.5rem;
+  }
+
+  .newsletter-eyebrow {
+    display: inline-block;
+    font-size: 0.68rem;
+    font-weight: bold;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 0.25rem 0.6rem;
+    border: 2px solid var(--black);
+    margin-bottom: 0.9rem;
+    background: var(--cream);
+  }
+
+  .hero-block h1 {
+    font-size: clamp(2.5rem, 5.5vw, 4rem);
+    letter-spacing: -0.02em;
+    margin-bottom: 0.75rem;
+  }
+
+  .hero-sub {
+    font-size: clamp(1.1rem, 1.8vw, 1.35rem);
+    color: var(--gray-dark);
+    max-width: 30em;
+    line-height: 1.5;
+  }
+
+  .signup-block {
+    border: var(--card-border);
+    background: var(--cream);
+    padding: clamp(1.5rem, 3vw, 2.25rem);
+  }
+
+  .signup-block h2 {
+    font-size: clamp(1.35rem, 2.4vw, 2rem);
+    margin-bottom: 0.5rem;
+  }
+
+  .signup-copy {
+    font-size: 1rem;
+    color: var(--gray-mid);
+    margin-bottom: 1.25rem;
+  }
+
+  .inline-form {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 0.75rem;
+    align-items: stretch;
+  }
+
+  .inline-input {
+    width: 100%;
+    padding: 0.85rem 1rem;
+    border: 2px solid var(--black);
+    font-family: var(--font-main);
+    font-size: 1rem;
+    background: white;
+    color: var(--black);
+    outline: none;
+  }
+
+  .inline-input:focus {
+    border-color: var(--cyan);
+    box-shadow: 0 0 0 2px rgba(0, 154, 206, 0.2);
+  }
+
+  .inline-submit {
+    padding: 0.85rem 1.25rem;
+    background: var(--red);
+    color: var(--cream);
+    border: 2px solid var(--black);
+    font-family: var(--font-main);
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background 0.15s, transform 0.15s;
+  }
+
+  .inline-submit:hover {
+    background: var(--near-black);
+    transform: translateY(-1px);
+  }
+
+  .inline-submit:disabled {
+    transform: none;
+    opacity: 0.75;
+    cursor: wait;
+  }
+
+  .form-response {
+    margin-top: 0.75rem;
+    font-size: 0.9rem;
+    min-height: 1.25em;
+  }
+
+  .form-response.is-loading { color: var(--gray-mid); }
+  .form-response.is-success { color: var(--cyan); }
+  .form-response.is-error { color: var(--red); }
+
+  .cta-block {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    margin: 1.5rem 0 0;
+  }
+
+  .cta-card {
+    display: block;
+    padding: 1.75rem;
+    text-align: center;
+    border: var(--card-border);
+    text-decoration: none !important;
+    transition: transform 0.15s;
+  }
+
+  .cta-card:hover { transform: translateY(-3px); }
+
+  .cta-card h3 {
+    font-size: 1.4rem;
+    margin-bottom: 0.4rem;
+  }
+
+  .cta-card p {
+    font-size: 0.95rem;
+    line-height: 1.5;
+  }
+
+  .cta-card--red {
+    background: var(--red);
+    color: var(--cream);
+  }
+
+  .cta-card--cyan {
+    background: var(--cyan);
+    color: var(--cream);
+  }
+
+  .cta-card--red p,
+  .cta-card--cyan p {
+    color: rgba(255, 255, 255, 0.8);
+  }
+
+  .color-stripe--bottom {
+    margin-top: 2rem;
+    margin-bottom: 0;
+  }
+
+  @media (max-width: 680px) {
+    .nav-links a:not(.nav-cta-btn) { display: none; }
+
+    .inline-form {
+      grid-template-columns: 1fr;
+      gap: 0.5rem;
+    }
+
+    .inline-submit {
+      width: 100%;
+    }
+
+    .cta-block {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+
+<nav>
+  <a href="https://links.vibes.diy/homepage" class="nav-logo" aria-label="Vibes DIY">
+    <img src="Vibes-Toggle-1-Transparent.png" alt="Vibes DIY" class="nav-logo-pill">
+  </a>
+  <div class="nav-links">
+    <a href="https://good.vibes.diy/how-to/">How-to</a>
+    <a href="#subscribe">Newsletter</a>
+    <a href="https://links.vibes.diy/homepage" class="nav-cta-btn">Try It Free</a>
+  </div>
+</nav>
+
+<div class="page">
+  <div class="article">
+    <div class="color-stripe">
+      <div style="background: var(--red);"></div>
+      <div style="background: var(--cyan);"></div>
+      <div style="background: var(--yellow);"></div>
+      <div style="background: var(--near-black);"></div>
+      <div style="background: var(--red);"></div>
+      <div style="background: var(--cyan);"></div>
+    </div>
+
+    <section class="hero-block">
+      <p class="newsletter-eyebrow">Vibes DIY Updates</p>
+      <h1>Let's be friends!</h1>
+      <p class="hero-sub">
+        Sign up to find out about upcoming events, product news, and other tidbits we think you'll vibe with.
+      </p>
+    </section>
+
+    <section class="signup-block" id="subscribe">
+      <h2>Get updates in your inbox</h2>
+      <p class="signup-copy">One email field. Real updates. No algorithm required.</p>
+
+      <form
+        class="inline-form"
+        action="https://diy.us9.list-manage.com/subscribe/post?u=3336ce5a9fc731f6f88b5bcad&amp;id=1cca0fb28b&amp;f_id=007b69e1f0&amp;SOURCE=newsletter"
+        method="post"
+        id="mc-embedded-subscribe-form"
+        name="mc-embedded-subscribe-form"
+        target="_blank"
+      >
+        <input
+          type="email"
+          name="EMAIL"
+          id="mce-EMAIL"
+          class="inline-input"
+          placeholder="you@example.com"
+          required
+          aria-label="Email address"
+        >
+        <button type="submit" name="subscribe" id="mc-embedded-subscribe" class="inline-submit">
+          Subscribe
+        </button>
+        <input type="hidden" name="SOURCE" value="newsletter">
+        <div aria-hidden="true" style="position: absolute; left: -5000px;">
+          <input type="text" name="b_3336ce5a9fc731f6f88b5bcad_1cca0fb28b" tabindex="-1" value="">
+        </div>
+      </form>
+      <div class="form-response" aria-live="polite"></div>
+    </section>
+
+    <div class="cta-block">
+      <a href="https://good.vibes.diy/how-to/" class="cta-card cta-card--cyan">
+        <h3>See How It Works</h3>
+        <p>Peek at the full make-and-share walkthrough.</p>
+      </a>
+      <a href="https://links.vibes.diy/homepage" class="cta-card cta-card--red">
+        <h3>Start Building</h3>
+        <p>Jump into vibes.diy and launch your first app.</p>
+      </a>
+    </div>
+
+    <div class="color-stripe color-stripe--bottom">
+      <div style="background: var(--red);"></div>
+      <div style="background: var(--cyan);"></div>
+      <div style="background: var(--yellow);"></div>
+      <div style="background: var(--near-black);"></div>
+      <div style="background: var(--red);"></div>
+      <div style="background: var(--cyan);"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  const JSONP_NS = '__vibesMailchimpCallbacks__';
+  if (!window[JSONP_NS]) window[JSONP_NS] = {};
+
+  function normalizeMsg(msg) {
+    return String(msg).replace(/<[^>]*>/g, '').replace(/^\s*[01]\s*-\s*/, '').trim()
+      || 'Something went wrong. Please try again.';
+  }
+
+  function jsonp(url, ms) {
+    return new Promise((resolve, reject) => {
+      const key = 'cb_' + Math.random().toString(36).slice(2);
+      const ref = JSONP_NS + '.' + key;
+      url.searchParams.set('c', ref);
+      const s = document.createElement('script');
+      s.src = url.toString();
+      let done = false;
+      const tid = setTimeout(() => fin(new Error('timeout')), ms);
+      function fin(err, data) {
+        if (done) return; done = true;
+        clearTimeout(tid);
+        delete window[JSONP_NS][key];
+        if (s.parentNode) s.parentNode.removeChild(s);
+        err ? reject(err) : resolve(data);
+      }
+      window[JSONP_NS][key] = (d) => fin(null, d);
+      s.onerror = () => fin(new Error('network error'));
+      document.body.appendChild(s);
+    });
+  }
+
+  function setRes(el, cls, msg) {
+    el.className = 'form-response' + (cls ? ' ' + cls : '');
+    el.textContent = msg;
+  }
+
+  const form = document.getElementById('mc-embedded-subscribe-form');
+  if (!(form instanceof HTMLFormElement)) return;
+  const resEl = form.parentElement.querySelector('.form-response');
+  const btn = form.querySelector('button[type="submit"]');
+  if (!resEl || !btn) return;
+
+  let busy = false;
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    if (busy) return;
+    busy = true;
+    btn.disabled = true;
+    setRes(resEl, 'is-loading', 'Subscribing…');
+    try {
+      const url = new URL(form.action);
+      url.pathname = url.pathname.replace(/\/subscribe\/post\/?$/, '/subscribe/post-json');
+      new FormData(form).forEach((v, k) => {
+        if (k === 'EMAIL' || k === 'SOURCE' || k.startsWith('b_')) url.searchParams.set(k, String(v));
+      });
+      const data = await jsonp(url, 10000);
+      if (data && data.result === 'success') {
+        setRes(resEl, 'is-success', 'Subscribed. Check your inbox to confirm.');
+        form.reset();
+      } else {
+        setRes(resEl, 'is-error', data && data.msg ? normalizeMsg(data.msg) : 'Something went wrong. Please try again.');
+      }
+    } catch {
+      setRes(resEl, 'is-error', 'Could not connect. Please try again.');
+    } finally {
+      busy = false;
+      btn.disabled = false;
+    }
+  });
+})();
+</script>

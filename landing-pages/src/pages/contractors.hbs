@@ -1,0 +1,498 @@
+{{!--
+{
+  "layout": "webring",
+  "title": "For Trades & Contractors | Jobsite Apps | Vibes DIY",
+  "description": "HVAC commissioning checklists, electrical punch lists, plumbing service forms, permit trackers, materials builders. Five jobsite apps for tradespeople who need tools that work on-site.",
+  "ogUrl": "https://good.vibes.diy/contractors",
+  "source": "contractors",
+  "apps": [
+    {
+      "num": "01",
+      "slug": "hvac-install-check",
+      "author": "og",
+      "live": true,
+      "title": "HVAC Install Check",
+      "tagline": "Equipment in, commissioning done, customer signed off.",
+      "desc": "HVAC install commissioning checklist. Fields: equipment model, serial number, each commissioning step with checkboxes, customer info, and a final sign-off summary. Designed for a tech on a jobsite.",
+      "fork": "Works for refrigeration commissioning, boiler startup, or any trade that signs off on equipment — clone it and rename the fields."
+    },
+    {
+      "num": "02",
+      "slug": "electrical-punch-log",
+      "author": "og",
+      "live": true,
+      "title": "Electrical Punch Log",
+      "tagline": "Rooms as sections. Every item: location, status, who owns it.",
+      "desc": "Electrical punch list tracker. Rooms as sections. Each item: location, description, status (open/in progress/done), and who's responsible. Designed for trim-out phase to closeout.",
+      "fork": "Running commercial finish-out where items are by zone, not room? Clone it and restructure the sections."
+    },
+    {
+      "num": "03",
+      "slug": "plumbing-service-form",
+      "author": "og",
+      "live": true,
+      "title": "Plumbing Service Form",
+      "tagline": "Parts used, labor notes, customer summary — one form.",
+      "desc": "Plumbing service call form. Capture: customer name, address, problem description, parts used with quantity, labor notes, and a customer-facing summary to share after the visit.",
+      "fork": "Your company texts the customer a summary link instead of handing them paper. Clone this and add a share-link output."
+    },
+    {
+      "num": "04",
+      "slug": "permit-status-tracker",
+      "author": "og",
+      "live": true,
+      "title": "Permit Tracker",
+      "tagline": "Jurisdiction, docs, submission, inspector notes — in one place.",
+      "desc": "Permit and inspection tracker for a job. Fields: jurisdiction, permit type, required documents checklist, submission date, status, inspector notes, and next action.",
+      "fork": "Multiple active jobs with overlapping jurisdictions and inspection windows? Clone it and add a project-level view across all permits."
+    },
+    {
+      "num": "05",
+      "slug": "materials-order-builder",
+      "author": "og",
+      "live": true,
+      "title": "Materials Builder",
+      "tagline": "Pick job type. Build parts list. Send to the supply house.",
+      "desc": "Materials and parts list builder per job type. Select job type, then build a standard parts list. Add job-specific extras. Export a clean list for the supply run.",
+      "fork": "Your supply house uses item numbers, not descriptions. Clone this and add a part-number column alongside each line item."
+    }
+  ],
+  "ogImage": "https://good.vibes.diy/images/screenshots/contractors.jpg"
+}
+--}}
+
+<style>
+  @import url("https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Inter:wght@400;500;600;700;800&display=optional");
+
+  :root {
+    --bg: oklch(0.10 0.02 55);
+    --surface: oklch(0.15 0.02 55);
+    --surface-hi: oklch(0.20 0.03 55);
+    --cue: oklch(0.74 0.18 65);
+    --cue-dim: oklch(0.74 0.18 65 / 0.15);
+    --live: oklch(0.68 0.20 145);
+    --text: oklch(0.95 0.01 80);
+    --muted: oklch(0.60 0.03 70);
+    --border: oklch(1 0 0 / 0.09);
+    --border-hi: oklch(1 0 0 / 0.16);
+  }
+
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: "Inter", system-ui, sans-serif;
+    line-height: 1.55;
+    min-height: 100vh;
+  }
+  a { color: inherit; text-decoration: none; }
+
+  /* Subtle grid texture */
+  body::before {
+    content: '';
+    position: fixed; inset: 0; pointer-events: none; z-index: 0;
+    background-image:
+      linear-gradient(oklch(1 0 0 / 0.025) 1px, transparent 1px),
+      linear-gradient(90deg, oklch(1 0 0 / 0.025) 1px, transparent 1px);
+    background-size: 60px 60px;
+  }
+
+  .layout { max-width: 1100px; margin: 0 auto; padding: 0 1.5rem; position: relative; z-index: 1; }
+
+  /* Topbar */
+  .topbar {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 1.1rem 0;
+    border-bottom: 1px solid var(--border-hi);
+  }
+  .topbar .brand {
+    font-family: "Space Mono", monospace; font-weight: 700;
+    font-size: 1rem; letter-spacing: 0.05em; text-transform: uppercase;
+    color: var(--cue);
+    display: flex; align-items: center; gap: 0.6rem;
+  }
+  .brand-dot {
+    width: 8px; height: 8px; background: var(--cue); border-radius: 2px;
+    transform: rotate(45deg);
+    box-shadow: 0 0 8px var(--cue);
+  }
+  .topbar .meta {
+    font-family: "Space Mono", monospace;
+    font-size: 0.58rem; letter-spacing: 0.18em; text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  /* Crumb */
+  .crumb {
+    padding: 0.55rem 0;
+    font-family: "Space Mono", monospace;
+    font-size: 0.6rem; letter-spacing: 0.15em; text-transform: uppercase;
+    color: var(--muted);
+    border-bottom: 1px solid var(--border);
+  }
+  .crumb a { color: var(--muted); }
+  .crumb a:hover { color: var(--cue); }
+
+  /* Hero */
+  .hero {
+    padding: 5rem 0 4rem;
+    border-bottom: 1px solid var(--border-hi);
+  }
+  .hero .label {
+    font-family: "Space Mono", monospace;
+    font-size: 0.58rem; letter-spacing: 0.3em; text-transform: uppercase;
+    color: var(--cue);
+    margin-bottom: 1.25rem; display: inline-block;
+    border: 1px solid var(--cue);
+    padding: 4px 10px; border-radius: 2px;
+  }
+  .hero h1 {
+    font-size: clamp(3rem, 9vw, 7rem);
+    font-weight: 800; line-height: 0.9; letter-spacing: -0.03em;
+    margin-bottom: 1.5rem;
+  }
+  .hero h1 .hi {
+    color: var(--cue);
+  }
+  .hero p.lead {
+    font-size: 1.15rem; max-width: 680px; line-height: 1.6;
+    color: var(--muted);
+  }
+
+  /* Spotlight */
+  .spotlight {
+    padding: 3rem 0;
+    border-bottom: 1px solid var(--border-hi);
+  }
+  .spotlight-label {
+    font-family: "Space Mono", monospace;
+    font-size: 0.58rem; letter-spacing: 0.25em; text-transform: uppercase;
+    color: var(--cue); margin-bottom: 1.5rem;
+  }
+  .spotlight-card {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 3rem; align-items: center;
+    background: var(--surface);
+    border: 1px solid var(--cue);
+    border-radius: 4px; padding: 2.5rem;
+    position: relative; overflow: hidden;
+  }
+  .spotlight-card::before {
+    content: "JOB 01";
+    position: absolute; top: 1.25rem; right: 1.5rem;
+    font-family: "Space Mono", monospace;
+    font-size: 0.58rem; letter-spacing: 0.2em; text-transform: uppercase;
+    color: var(--cue); opacity: 0.35;
+  }
+  @media (max-width: 800px) {
+    .spotlight-card { grid-template-columns: 1fr; gap: 1.5rem; }
+    .spotlight-shot { order: -1; }
+  }
+  .spotlight-num {
+    font-family: "Space Mono", monospace;
+    font-size: 0.58rem; letter-spacing: 0.2em; text-transform: uppercase;
+    color: var(--cue); margin-bottom: 0.75rem;
+  }
+  .spotlight-title {
+    font-size: clamp(2.5rem, 5vw, 4.5rem);
+    font-weight: 800; line-height: 0.95; letter-spacing: -0.03em;
+    margin-bottom: 0.75rem;
+  }
+  .spotlight-tagline {
+    font-family: "Space Mono", monospace;
+    font-size: 0.78rem; color: var(--cue);
+    margin-bottom: 1.25rem; line-height: 1.5;
+    border-left: 2px solid var(--cue);
+    padding-left: 0.75rem;
+  }
+  .spotlight-desc {
+    font-size: 1rem; line-height: 1.65; color: var(--muted);
+    margin-bottom: 2rem;
+  }
+  .btn-spotlight {
+    display: inline-block;
+    padding: 0.85rem 2.25rem;
+    background: var(--cue); color: var(--bg);
+    border: none; border-radius: 3px;
+    font-family: "Space Mono", monospace; font-weight: 700;
+    font-size: 0.7rem; letter-spacing: 0.15em; text-transform: uppercase;
+    cursor: pointer; transition: all .12s; margin-bottom: 1rem;
+    box-shadow: 0 0 16px oklch(0.74 0.18 65 / 0.3);
+  }
+  .btn-spotlight:hover {
+    background: oklch(0.80 0.20 65);
+    box-shadow: 0 0 24px oklch(0.74 0.18 65 / 0.5);
+  }
+  .spotlight-secondary { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+  .spotlight-shot a { display: block; }
+  .spotlight-shot img {
+    width: 100%; border-radius: 3px;
+    border: 1px solid var(--border-hi); display: block;
+    aspect-ratio: 16/10; object-fit: cover;
+    background: var(--surface-hi);
+  }
+
+  /* Stats bar */
+  .stats {
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    border: 1px solid var(--border-hi); border-radius: 4px;
+    overflow: hidden; margin: 2rem 0;
+    background: var(--surface);
+  }
+  @media (max-width: 700px) { .stats { grid-template-columns: repeat(2, 1fr); } }
+  .stat-cell {
+    padding: 1.25rem 1.5rem;
+    border-right: 1px solid var(--border);
+  }
+  .stat-cell:last-child { border-right: none; }
+  @media (max-width: 700px) {
+    .stat-cell { border-bottom: 1px solid var(--border); }
+    .stat-cell:nth-child(2n) { border-right: none; }
+  }
+  .stat-cell .k {
+    font-family: "Space Mono", monospace;
+    font-size: 0.52rem; letter-spacing: 0.2em; text-transform: uppercase;
+    color: var(--muted); margin-bottom: 0.4rem;
+  }
+  .stat-cell .v { font-weight: 800; font-size: 1.35rem; letter-spacing: -0.02em; color: var(--cue); }
+
+  /* Section label */
+  .section-label {
+    padding: 1.5rem 0 0.75rem;
+    font-family: "Space Mono", monospace;
+    font-size: 0.58rem; letter-spacing: 0.25em; text-transform: uppercase;
+    color: var(--muted);
+    border-bottom: 1px dashed var(--border-hi);
+    margin-bottom: 1.5rem;
+  }
+
+  /* Apps list */
+  .apps {
+    display: flex; flex-direction: column;
+    border: 1px solid var(--border-hi); border-radius: 4px;
+    overflow: hidden; background: var(--surface);
+  }
+  .app {
+    padding: 2rem 1.75rem;
+    border-bottom: 1px solid var(--border);
+    display: grid; grid-template-columns: 72px 1fr 300px;
+    gap: 2rem; align-items: start;
+    transition: background 0.15s;
+  }
+  .app:last-child { border-bottom: none; }
+  @media (max-width: 800px) { .app { grid-template-columns: 1fr; gap: 1rem; } }
+  .app:hover { background: var(--surface-hi); }
+
+  .app .num-cell { display: flex; flex-direction: column; gap: 0.4rem; padding-top: 0.25rem; }
+  .app .num {
+    font-family: "Space Mono", monospace; font-weight: 700;
+    font-size: 2.8rem; line-height: 0.9; letter-spacing: -0.04em; color: var(--cue);
+  }
+  .app .status {
+    font-family: "Space Mono", monospace;
+    font-size: 0.48rem; letter-spacing: 0.2em; text-transform: uppercase;
+    padding: 3px 6px; border: 1px solid var(--border-hi);
+    color: var(--muted); text-align: center; border-radius: 2px;
+  }
+  .app--live .status { background: var(--live); color: var(--bg); border-color: var(--live); font-weight: 700; }
+
+  .app .body { display: flex; flex-direction: column; gap: 0.6rem; }
+  .app .body .title { font-size: 2rem; font-weight: 800; letter-spacing: -0.03em; line-height: 1.0; }
+  .app .body .tagline {
+    font-family: "Space Mono", monospace;
+    font-size: 0.75rem; line-height: 1.5; color: var(--cue);
+  }
+  .app .body .desc { font-size: 0.95rem; line-height: 1.55; color: var(--muted); }
+
+  .app .right { display: flex; flex-direction: column; gap: 0.6rem; }
+  .app .shot {
+    display: block; aspect-ratio: 16/9; overflow: hidden;
+    border: 1px solid var(--border-hi); border-radius: 3px;
+    background: var(--surface-hi);
+  }
+  .app .shot img { width: 100%; height: 100%; object-fit: cover; }
+  .app .shot-placeholder {
+    padding: 1rem; height: 100%; display: flex; align-items: center; justify-content: center;
+    font-family: "Space Mono", monospace;
+    font-size: 0.55rem; letter-spacing: 0.2em; text-transform: uppercase;
+    text-align: center; color: var(--muted);
+  }
+  .app .ctas {
+    display: grid; grid-template-columns: repeat(3, 1fr);
+    border: 1px solid var(--border-hi); border-radius: 3px; overflow: hidden;
+  }
+  .app .ctas--single { grid-template-columns: 1fr; }
+  .btn {
+    text-align: center; padding: 0.55rem 0.5rem;
+    background: transparent; border-right: 1px solid var(--border-hi);
+    font-family: "Space Mono", monospace;
+    font-size: 0.55rem; letter-spacing: 0.15em; text-transform: uppercase;
+    color: var(--text); cursor: pointer; transition: background 0.12s;
+  }
+  .btn:last-child { border-right: none; }
+  .btn:hover { background: var(--cue-dim); color: var(--cue); }
+  .prompt-link {
+    font-family: "Space Mono", monospace;
+    font-size: 0.6rem; color: var(--muted); text-decoration: underline;
+  }
+  .prompt-link:hover { color: var(--cue); }
+  .fork-hint {
+    font-family: "Space Mono", monospace;
+    font-size: 0.62rem; line-height: 1.6; color: var(--muted);
+    border-left: 2px solid var(--cue); padding-left: 0.65rem;
+    margin-top: 0.4rem;
+  }
+  .spotlight-fork {
+    font-family: "Space Mono", monospace;
+    font-size: 0.65rem; line-height: 1.6; color: var(--muted);
+    border-left: 2px solid var(--cue); padding-left: 0.75rem;
+    margin-top: 0.75rem;
+  }
+  .make-it-yours {
+    padding: 1.5rem 0 0;
+  }
+  .make-it-yours p {
+    font-size: 1.05rem; max-width: 680px; line-height: 1.65; color: var(--muted);
+  }
+  .make-it-yours .hl { color: var(--cue); font-weight: 600; }
+
+  /* Epilogue */
+  .epilogue {
+    padding: 3rem 0; border-bottom: 1px solid var(--border-hi); margin-top: 2rem;
+  }
+  .epilogue h2 {
+    font-family: "Space Mono", monospace;
+    font-size: 0.58rem; letter-spacing: 0.25em; text-transform: uppercase;
+    color: var(--cue); margin-bottom: 1rem;
+  }
+  .epilogue p { font-size: 1.1rem; max-width: 720px; line-height: 1.65; color: var(--muted); }
+  .epilogue .hl { color: var(--cue); font-weight: 600; }
+
+  /* Footer */
+  footer.term-footer {
+    padding: 1.25rem 0;
+    font-family: "Space Mono", monospace;
+    font-size: 0.55rem; letter-spacing: 0.2em; text-transform: uppercase;
+    display: flex; justify-content: space-between; color: var(--muted);
+  }
+  footer.term-footer a:hover { color: var(--cue); }
+</style>
+
+<div class="layout">
+  <header class="topbar">
+    <a class="brand" href="https://links.vibes.diy/homepage">
+      <span class="brand-dot"></span>VIBES.DIY
+    </a>
+    <span class="meta">For Trades &amp; Contractors &middot; five jobsite tools</span>
+  </header>
+
+  <nav class="crumb">
+    <a href="/">Home</a> &nbsp;/&nbsp; Contractors
+  </nav>
+
+  <section class="hero">
+    <span class="label">For Trades &amp; Contractors</span>
+    <h1>Stop losing jobs<br>to a <span class="hi">clipboard</span>.</h1>
+    <p class="lead">
+      Five jobsite tools for HVAC techs, electricians, plumbers, and permit runners.
+      Commissioning checklists, punch lists, service forms, and materials builders&mdash;
+      built for the work, not the office.
+    </p>
+  </section>
+
+  <section class="spotlight">
+    <div class="spotlight-label">// spotlight &mdash; hvac install check</div>
+    <div class="spotlight-card">
+      <div class="spotlight-info">
+        <div class="spotlight-num">JOB 01 &middot; hvac-install-check</div>
+        <h2 class="spotlight-title">HVAC<br>Install Check</h2>
+        <p class="spotlight-tagline">Equipment in, commissioning done,<br>customer signed off.</p>
+        <p class="spotlight-desc">
+          Every commissioning step with checkboxes, equipment model and serial number,
+          customer info, and a final sign-off summary. Tech completes it on-site,
+          customer gets the summary before you leave the driveway. No paper, no re-keying.
+        </p>
+        <a class="btn-spotlight" href="https://vibes.diy/vibe/og/hvac-install-check">Open Checklist &rarr;</a>
+        <div class="spotlight-secondary">
+          <a class="btn" href="https://vibes.diy/remix/og/hvac-install-check?skipChat=true">Clone</a>
+          <a class="btn" href="https://vibes.diy/remix/og/hvac-install-check">Remix</a>
+          {{#with (lookup apps 0)}}<a class="btn" href="https://vibes.diy/chat/prompt?prompt64={{prompt64 desc}}">Start fresh</a>{{/with}}
+        </div>
+        {{#with (lookup apps 0)}}<p class="spotlight-fork">{{fork}}</p>{{/with}}
+      </div>
+      <div class="spotlight-shot">
+        <a href="https://vibes.diy/vibe/og/hvac-install-check" aria-label="HVAC Install Check screenshot">
+          <img src="https://hvac-install-check--og.prod-v2.vibesdiy.net/screenshot.jpg"
+               alt="HVAC Install Check"
+               onerror="this.onerror=null; this.src='{{@root.assetPrefix}}images/og-preview.png';">
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <div class="stats">
+    <div class="stat-cell"><div class="k">Apps</div><div class="v">Five</div></div>
+    <div class="stat-cell"><div class="k">Audience</div><div class="v">Trades</div></div>
+    <div class="stat-cell"><div class="k">Persistence</div><div class="v">Fireproof</div></div>
+    <div class="stat-cell"><div class="k">Skin</div><div class="v">Vault</div></div>
+  </div>
+
+  <div class="section-label">// more jobsite tools</div>
+
+  <section class="apps">
+    {{#each apps}}
+      {{#unless @first}}
+      <article class="app {{#if live}}app--live{{else}}app--pending{{/if}}">
+        <div class="num-cell">
+          <div class="num">{{num}}</div>
+          <div class="status">{{#if live}}Live{{else}}Pending{{/if}}</div>
+        </div>
+        <div class="body">
+          <h2 class="title">{{title}}</h2>
+          <p class="tagline">{{tagline}}</p>
+          <p class="desc">{{desc}}</p>
+        </div>
+        <div class="right">
+          {{#if live}}
+            <a class="shot" href="https://vibes.diy/vibe/{{author}}/{{slug}}" aria-label="{{title}} screenshot"><img src="https://{{slug}}--{{author}}.prod-v2.vibesdiy.net/screenshot.jpg" alt="{{slug}}" onerror="this.onerror=null; this.src='{{@root.assetPrefix}}images/og-preview.png';"/></a>
+            <div class="ctas">
+              <a class="btn" href="https://vibes.diy/vibe/{{author}}/{{slug}}">Join</a>
+              <a class="btn" href="https://vibes.diy/remix/{{author}}/{{slug}}?skipChat=true">Clone</a>
+              <a class="btn" href="https://vibes.diy/remix/{{author}}/{{slug}}">Remix</a>
+            </div>
+            <a class="prompt-link" href="https://vibes.diy/chat/prompt?prompt64={{prompt64 desc}}">// start fresh from this prompt &mdash; describe your version instead</a>
+            {{#if fork}}<p class="fork-hint">{{fork}}</p>{{/if}}
+          {{else}}
+            <div class="shot"><div class="shot-placeholder">awaiting deploy</div></div>
+            <div class="ctas ctas--single">
+              <a class="btn" href="https://vibes.diy/chat/prompt?prompt64={{prompt64 desc}}">Start From Prompt</a>
+            </div>
+            {{#if fork}}<p class="fork-hint">{{fork}}</p>{{/if}}
+          {{/if}}
+        </div>
+      </article>
+      {{/unless}}
+    {{/each}}
+  </section>
+
+  <div class="make-it-yours">
+    <p>Every trade runs differently. <span class="hl">Clone whichever is closest</span> and describe your version &mdash; your form fields, your workflow, your customer handoff.</p>
+  </div>
+
+  <div class="epilogue">
+    <h2>// read me</h2>
+    <p>
+      Tradespeople already run their jobs on <span class="hl">whichever clipboard is closest</span>&mdash;
+      a paper punch list, a text thread with the GC, a mental parts checklist.
+      These five apps do the same jobs without the paper, the re-keying, or the
+      &ldquo;where&rsquo;s the form?&rdquo; call at the end of the day.
+      Clone any one, adjust it to your trade and workflow, have it running before the next job.
+    </p>
+  </div>
+
+  {{> newsletter}}
+<footer class="term-footer">
+    <span>Vibes.diy &middot; <a href="https://links.vibes.diy/homepage">homepage</a> &middot; <a href="/coaches.html">coaches</a></span>
+    <span>// END OF JOB</span>
+  </footer>
+</div>

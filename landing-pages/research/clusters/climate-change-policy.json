@@ -1,0 +1,101 @@
+{
+  "slug": "climate-change-policy",
+  "page_url": "https://good.vibes.diy/edu/climate-change-policy/",
+  "label": "Climate Change and Environmental Policy",
+  "department": "Environmental Studies",
+  "vocabulary": [
+    "greenhouse gas emissions",
+    "climate risk assessment",
+    "climate adaptation strategies",
+    "carbon pricing mechanisms",
+    "mitigation strategies",
+    "climate justice",
+    "sustainability assessment",
+    "environmental racism",
+    "energy transition policy",
+    "climate policy frameworks",
+    "climate vulnerability assessment",
+    "life cycle analysis"
+  ],
+  "sources": [
+    {
+      "institution": "MIT",
+      "title": "1.020 Ecology II: Engineering for Sustainability",
+      "url": "https://ocw.mit.edu/courses/1-020-ecology-ii-engineering-for-sustainability-spring-2008/"
+    },
+    {
+      "institution": "UC Berkeley",
+      "title": "ESPM 155AC Sociology and Political Ecology of Agro-Food Systems",
+      "url": "https://classes.berkeley.edu/content/2024-summer-espm-155ac-001-lec-001"
+    },
+    {
+      "institution": "Carnegie Mellon",
+      "title": "19-629 Climate Change Science and Solutions",
+      "url": "http://coursecatalog.web.cmu.edu/schools-colleges/collegeofengineering/"
+    },
+    {
+      "institution": "UT Austin",
+      "title": "GRG 333K Climate Change",
+      "url": "https://catalog.utexas.edu/general-information/coursesatoz/grg/"
+    },
+    {
+      "institution": "UW Madison",
+      "title": "ENVIR ST 413: Preserving Nature",
+      "url": "https://faculty.nelson.wisc.edu/treves/reports/ES413%20Preserving%20Nature%20Syllabus%20.pdf"
+    },
+    {
+      "institution": "University of Washington",
+      "title": "ENVIR 495: Climate Justice",
+      "url": "https://sustainability.uw.edu/blog/2024-03/spring-course-climate-justice"
+    }
+  ],
+  "app_prompts": [
+    "A teenager who just watched a documentary about climate change wants to understand which of their own household behaviors actually matter for greenhouse gas emissions and which are basically symbolic, and they want a casual exploration tool rather than a guilt-inducing carbon calculator. Build a playful explorer app where the teenager logs the rough shape of their household — number of people, transportation patterns (car miles per week, flights per year, transit), home heating and electricity, diet patterns, big-ticket goods purchased per year — and the app walks them through a simplified life cycle analysis of each category, showing the order-of-magnitude greenhouse gas emissions associated with each. The app should help them see, for instance, that one transatlantic flight outweighs a year of careful recycling, or that home heating dominates in some climates and transportation in others. The teenager can play with hypothetical changes — what if I went vegetarian? what if my family switched to a heat pump? what if I biked to school? — and see how the household's footprint shifts. The app should introduce climate change vocabulary as it comes up: mitigation strategies versus climate adaptation strategies, the difference between a carbon pricing mechanism and a behavioral choice, why some actions are individual and others depend on broader energy transition policy. Crucially the app should also be honest about what individual action cannot do alone — most household emissions are downstream of the electricity grid mix, building codes, and transportation systems, so a section frames the teenager's individual choices alongside the kinds of policy advocacy that could change the system they are embedded in. The output is not a guilt score but a coherent personal picture of where their emissions actually come from.",
+    "A neighborhood climate resilience group of about 40 members is forming in a coastal community that has experienced repeated flooding events and a brutal heat wave last summer. The group wants a shared coordination workspace to organize collective action and prepare the community for compounding climate risks rather than waiting for government to lead. The membership is mixed: longtime residents, recent transplants, a couple of climate scientists, a retired city planner, several local renters and homeowners worried about insurance and affordability. Build a community coordination app where members can map the climate vulnerability assessment of their own block: which homes lack air conditioning, which residents have mobility issues that would slow evacuation, which intersections flood routinely, which streets have no tree canopy and become heat islands. Members contribute their observations to a shared block-by-block picture, and the group leadership can use it to plan focused climate adaptation strategies — a cool-room buddy network for the next heat wave, a sandbagging mutual aid team for predicted flood events, a tree-planting campaign for the worst heat-island blocks. The app should let the group discuss climate justice considerations honestly: who in the neighborhood is bearing the most climate risk, and is that pattern reflecting environmental racism in past planning decisions? It should provide a space for collective drafting of public comments on city resilience plans, with the working draft visible to all members, and a calendar for upcoming city council meetings and community workshops. The group should be able to share a public-facing version of its climate vulnerability assessment map with elected officials and request specific adaptation interventions, while keeping individual-household details private. Over time the workspace becomes the institutional memory of the group's actions, learnings, and the community changes they have driven.",
+    "A sustainability program manager at a mid-sized municipality runs the recurring workflows behind the city's climate action plan implementation: tracking progress against the city's greenhouse gas emissions reduction targets, coordinating the annual community greenhouse gas inventory, managing the portfolio of active mitigation strategies and adaptation projects, and producing the annual sustainability assessment report the council requires. The current process lives across spreadsheets, shared drives, and individual department contacts, and important context evaporates between annual cycles. Build an operational workflow app where the city's climate policy frameworks are the spine — emissions reduction targets by sector (buildings, transportation, waste, electricity supply) and resilience targets by hazard (heat, flood, drought, wildfire smoke) — and every active project is tagged to the targets it serves. For each project the manager logs the project lead in the relevant department, the expected emissions or vulnerability impact, the timeline, the budget, and the status. The annual greenhouse gas inventory workflow walks the manager through pulling data from each sector source, applying the city's chosen accounting protocol, computing the sectoral and total emissions, and producing the comparison-to-target chart. The annual climate risk assessment workflow steps through updating hazard exposure data, refreshing climate vulnerability assessment for priority populations, and updating the climate adaptation strategies portfolio. The app should support carbon pricing mechanism design if the city is considering one, walking through revenue projections, equity impact, and a stakeholder engagement plan. Every report the manager produces — for the council, for state filings, for the regional climate compact — pulls from the same underlying records, so consistency is automatic. The workflow also tracks community engagement obligations under climate justice commitments, ensuring frontline community voices are documented in the planning record.",
+    "A climate analyst at a state environmental agency is leading the technical analysis behind a proposed update to the state's energy transition policy package — a portfolio of mitigation strategies including a carbon pricing mechanism, a clean electricity standard, a building electrification incentive, and a transportation electrification program. They need a serious analytic app that helps structure the multi-policy assessment with the rigor the agency's economists and the state legislature will demand. Build a professional assessment app where the analyst defines each candidate policy with its design parameters and scope. For each policy, the analyst documents the greenhouse gas emissions reduction pathway it is expected to drive, the timeline, the affected sectors and populations, and the assumed costs. The app supports a structured life cycle analysis for the policies whose impact depends on supply-chain emissions (e.g., the electrification incentives turn on the assumed grid mix and the embodied emissions of replacement equipment). Climate justice and environmental racism considerations are first-class: for each policy the analyst documents the distributional impact on frontline communities, low-income households, and historically disinvested neighborhoods, with both quantitative metrics and qualitative narrative. Climate vulnerability assessment data is layered in so the analyst can map proposed adaptation funding against measured vulnerability. The app supports comparing policy packages — a more aggressive carbon pricing mechanism with weaker complementary policies versus a moderate price with stronger sectoral mandates — and surfacing the tradeoffs in emissions, equity, fiscal impact, and political feasibility. The output is a multi-chapter analytic report ready for legislative briefing and public comment, with full sourcing for every assumption and a structured uncertainty discussion. Every analytic decision is logged so the analysis is defensible at hearings and reproducible by a successor analyst.",
+    "A national climate office coordinates the federal government's quadrennial National Climate Assessment and related cross-agency reports that inform congressional action, federal rulemaking, and state and local planning affecting hundreds of millions of people. The office's coordinators need a mission-critical synthesis app that manages the massive multi-author drafting process, integrates climate science and policy analysis from dozens of contributing agencies, and produces the official assessment with the auditability and version control such a politically scrutinized document requires. Build a high-stakes coordination app where each chapter of the assessment has a lead agency, contributing authors, an outline, a draft text, and a structured evidence base. Contributors attach published studies to specific claims with full citation metadata, and the app tracks which claims are well-supported, which are emerging, and which are contested. The chapters span the full vocabulary of the field: greenhouse gas emissions trajectories, climate risk assessment across sectors, regional climate vulnerability assessment, climate adaptation strategies, mitigation strategies including carbon pricing mechanisms and sectoral policies, climate policy frameworks across federal-state-tribal-local governance, sustainability assessment of infrastructure and economic systems, climate justice and environmental racism in historical and current impacts, energy transition policy, and life cycle analysis for major federal decisions. The app supports the rigorous review process: every draft chapter goes through internal review, expert peer review, and public comment, with every comment logged and the author response documented. Sensitive scientific disagreements are surfaced for resolution by chapter conveners rather than being smoothed away. The system maintains versioned snapshots at every review stage because the assessment is foundational to federal policy and subject to FOIA, congressional inquiry, and litigation. The final published assessment carries an audit trail back to every contributor, every cited study, and every comment that shaped the text — meeting the standards of scientific integrity the office is statutorily required to maintain."
+  ],
+  "apps": [
+    {
+      "num": "01",
+      "slug": "household-carbon-explorer",
+      "author": "edu",
+      "live": true,
+      "title": "Household Carbon",
+      "tagline": "Which choices actually matter vs. which are symbolic."
+    },
+    {
+      "num": "02",
+      "slug": "climate-resilience-map",
+      "author": "edu",
+      "live": true,
+      "title": "Resilience Map",
+      "tagline": "Block-by-block vulnerability. Mutual aid for the next heat wave."
+    },
+    {
+      "num": "03",
+      "slug": "climate-action-tracker",
+      "author": "edu",
+      "live": true,
+      "title": "Climate Action Tracker",
+      "tagline": "Track progress against targets. Coordinate the annual inventory. Produce the council report."
+    },
+    {
+      "num": "04",
+      "slug": "energy-policy-assessment",
+      "author": "edu",
+      "live": true,
+      "title": "Policy Package Assessment",
+      "tagline": "Carbon price, clean electricity standard, building electrification — analyze the portfolio."
+    },
+    {
+      "num": "05",
+      "slug": "climate-assessment-synthesis",
+      "author": "edu",
+      "live": true,
+      "title": "Assessment Synthesis",
+      "tagline": "Multi-agency drafting. Full evidence base. Fully auditable."
+    }
+  ]
+}

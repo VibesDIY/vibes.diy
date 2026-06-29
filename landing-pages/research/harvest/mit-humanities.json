@@ -1,0 +1,105 @@
+{
+  "source": "MIT OCW — Humanities",
+  "location": "Cambridge, MA",
+  "region": "Northeast",
+  "domain": "humanities",
+  "fetched": "2026-05-20",
+  "items": [
+    {
+      "title": "21H.102 American History Since 1865",
+      "department": "History",
+      "year": 2018,
+      "url": "https://ocw.mit.edu/courses/21h-102-american-history-since-1865-spring-2018/",
+      "topics": [
+        "Reconstruction",
+        "Gilded Age industrialization",
+        "progressive reform",
+        "Jim Crow and racial segregation",
+        "New Deal",
+        "Cold War culture",
+        "Civil Rights Movement",
+        "Black Freedom Struggle"
+      ]
+    },
+    {
+      "title": "21H.009 The World: 1400-Present",
+      "department": "History",
+      "year": 2014,
+      "url": "https://ocw.mit.edu/courses/21h-009-the-world-1400-present-spring-2014/",
+      "topics": [
+        "world history methodology",
+        "Atlantic revolutions",
+        "the Great Divergence",
+        "imperialism and colonialism",
+        "global trade networks",
+        "Wilsonian moment",
+        "total war and mass society",
+        "Cold War as ideology"
+      ]
+    },
+    {
+      "title": "21L.002X Foundations of World Culture II: World Literatures and Texts",
+      "department": "Literature",
+      "year": 2012,
+      "url": "https://ocw.mit.edu/courses/21l-002x-foundations-of-world-culture-ii-world-literatures-and-texts-spring-2012/",
+      "topics": [
+        "Orientalism",
+        "postcolonial theory",
+        "the Enlightenment canon",
+        "feminist epistemology",
+        "disciplinary power (Foucault)",
+        "social contract and liberalism",
+        "Marxist critique",
+        "psychoanalytic criticism"
+      ]
+    },
+    {
+      "title": "21L.003 Introduction to Fiction",
+      "department": "Literature",
+      "year": 2003,
+      "url": "https://ocw.mit.edu/courses/21l-003-introduction-to-fiction-fall-2003/",
+      "topics": [
+        "close reading",
+        "narrative voice and point of view",
+        "Gothic fiction",
+        "the Bildungsroman",
+        "colonial encounter in fiction",
+        "war narrative",
+        "feminist literary criticism",
+        "modernist stream of consciousness"
+      ]
+    },
+    {
+      "title": "24.00 Problems of Philosophy",
+      "department": "Linguistics & Philosophy",
+      "year": 2019,
+      "url": "https://ocw.mit.edu/courses/24-00-problems-of-philosophy-fall-2019/",
+      "topics": [
+        "theism and the problem of evil",
+        "philosophy of mind and consciousness",
+        "dualism vs. physicalism",
+        "compatibilism and free will",
+        "personal identity over time",
+        "metaethics",
+        "moral subjectivism and objectivism",
+        "social construction of race and gender"
+      ]
+    },
+    {
+      "title": "24.118 Paradox and Infinity",
+      "department": "Linguistics & Philosophy",
+      "year": 2019,
+      "url": "https://ocw.mit.edu/courses/24-118-paradox-and-infinity-spring-2019/",
+      "topics": [
+        "infinite cardinalities",
+        "the higher infinite",
+        "omega-sequence paradoxes",
+        "time travel paradoxes",
+        "Newcomb's problem and decision theory",
+        "non-measurable sets",
+        "Banach-Tarski theorem",
+        "computability theory"
+      ]
+    }
+  ]
+}

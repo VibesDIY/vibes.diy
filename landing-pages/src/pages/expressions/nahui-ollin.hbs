@@ -1,0 +1,538 @@
+{{!--
+{
+  "layout": "webring",
+  "title": "Nahui Ollin // Expressions // Vibes DIY",
+  "description": "Ten apps for the Aztec cosmos — day-sign calculators, the Five Suns myth, the Ollin earthquake glyph, directional compass, patron deities, and the New Fire ceremony.",
+  "ogUrl": "https://good.vibes.diy/expressions/nahui-ollin",
+  "source": "expressions-nahui-ollin",
+  "ogImage": "https://good.vibes.diy/images/screenshots/expressions/nahui-ollin.jpg",
+  "calendarApps": [
+    {
+      "num": "01", "slug": "day-sign-calc", "author": "og", "live": true, "accent": "gold",
+      "title": "Day Sign Oracle",
+      "tagline": "Your Tonalpohualli sign, computed.",
+      "desc": "Enter any Gregorian date and get your 260-day calendar day sign and number (1-13), its presiding deity, and a traditional augury. The Tonalpohualli cycles through 20 signs paired with 13 numbers — 260 sacred combinations total."
+    },
+    {
+      "num": "02", "slug": "aztec-solar-wheel", "author": "og", "live": true, "accent": "gold",
+      "title": "365-Day Wheel",
+      "tagline": "Where does today fall in the solar year?",
+      "desc": "Shows today's position in the Xiuhpohualli: which of the 18 veintenas you're in, its presiding deity, days remaining in the month, and how many days until the five Nemontemi hollow days."
+    },
+    {
+      "num": "03", "slug": "calendar-round-timer", "author": "og", "live": true, "accent": "terracotta",
+      "title": "Calendar Round",
+      "tagline": "52 years. One great cycle.",
+      "desc": "The Calendar Round interlocks the 260-day and 365-day cycles into 18,980 unique days before any date repeats. Shows today's position in the current 52-year cycle and counts down to the next New Fire ceremony."
+    },
+    {
+      "num": "04", "slug": "year-bearer", "author": "og", "live": true, "accent": "terracotta",
+      "title": "Year Bearer",
+      "tagline": "Four signs carry the years in turn.",
+      "desc": "Only four Tonalpohualli day signs can open a solar year: Acatl (Reed), Tecpatl (Flint), Calli (House), Tochtli (Rabbit). Shows the current year's bearer, its number, associated direction, patron deity, and augury."
+    },
+    {
+      "num": "05", "slug": "nemontemi-watch", "author": "og", "live": true, "accent": "crimson",
+      "title": "Nemontemi Watcher",
+      "tagline": "Five hollow days. Walk carefully.",
+      "desc": "Counts down to the 5 unlucky epagomenal days ending the Aztec solar year — days when no new undertakings were begun. When inside the Nemontemi, the interface dims to a solemn dark mode."
+    }
+  ],
+  "oracleApps": [
+    {
+      "num": "06", "slug": "five-suns-cards", "author": "og", "live": true, "accent": "gold",
+      "title": "Five Suns",
+      "tagline": "Which world are you living in?",
+      "desc": "Flip cards for each of the five Aztec creation eras — Jaguar Sun, Wind Sun, Rain of Fire Sun, Water Sun, and the present Movement Sun — with the presiding deity, how each world ended, and what survived to seed the next."
+    },
+    {
+      "num": "07", "slug": "ollin-glyph", "author": "og", "live": true, "accent": "crimson",
+      "title": "Ollin Glyph",
+      "tagline": "The earthquake that ends the world.",
+      "desc": "Animated SVG of the Nahui Ollin / Movement glyph — the central symbol of the Aztec Sun Stone. On click, the glyph earthquakes: four petals crack outward, then reform. On mobile, responds to device tilt."
+    },
+    {
+      "num": "08", "slug": "directional-cosmos", "author": "og", "live": true, "accent": "jade",
+      "title": "Directional Cosmos",
+      "tagline": "Four corners, four colors, four fates.",
+      "desc": "Interactive compass of the Aztec quadrants: east/red/Tlaloc, north/black/Tezcatlipoca, west/white/Quetzalcoatl, south/blue/Huitzilopochtli, center/fire/Xiuhtecuhtli. Tap each direction to reveal day signs, trees, birds, and omens."
+    },
+    {
+      "num": "09", "slug": "patron-deity-finder", "author": "og", "live": true, "accent": "jade",
+      "title": "Patron Deity Finder",
+      "tagline": "Every birth day has a guardian.",
+      "desc": "Enter your birth date; compute your Tonalpohualli day sign; receive your patron deity — their domain, symbol, sacrificial association, and a personal augury drawn from the Borgia Codex tradition."
+    },
+    {
+      "num": "10", "slug": "new-fire-ceremony", "author": "og", "live": true, "accent": "terracotta",
+      "title": "New Fire Ceremony",
+      "tagline": "The sky goes dark. Only your coal remains.",
+      "desc": "A shared group ritual: one person sets the fire time; all members see a dark screen with a live countdown. When the host triggers ignition, a single ember appears — then erupts into conflagration visible to all at once."
+    }
+  ]
+}
+--}}
+
+<style>
+  @import url("https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700;900&family=Cinzel:wght@400;600;700&family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&display=optional");
+
+  :root {
+    --obsidian:      #06040a;
+    --stone:         #12100a;
+    --stone-elevated:#1e1a10;
+    --stone-border:  #2a2015;
+    --fg:            #d4c5a0;
+    --fg-muted:      #8a7a60;
+    --gold:          #c9a84c;
+    --gold-glow:     rgba(201,168,76,0.25);
+    --terracotta:    #c0522a;
+    --terra-glow:    rgba(192,82,42,0.25);
+    --jade:          #00c9a7;
+    --jade-glow:     rgba(0,201,167,0.25);
+    --crimson:       #b03030;
+    --crimson-glow:  rgba(176,48,48,0.25);
+  }
+
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html, body {
+    font-family: "Cormorant Garamond", Georgia, serif;
+    background: var(--obsidian);
+    color: var(--fg);
+    line-height: 1.65;
+    min-height: 100vh;
+  }
+
+  a { color: var(--fg); text-decoration: none; }
+  p a, li a { text-decoration: underline; }
+
+  h1, h2, h3 { font-family: "Cinzel", serif; }
+
+  .container { max-width: 1100px; margin: 0 auto; padding: 0 1.5rem; }
+
+  /* ---- CROWN BAR ---- */
+  .crown-bar {
+    height: 4px;
+    background: linear-gradient(90deg, var(--stone-border), var(--gold), var(--terracotta), var(--gold), var(--stone-border));
+  }
+
+  /* ---- TOPBAR ---- */
+  .topbar {
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid var(--stone-border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: var(--stone);
+  }
+  .topbar .brand {
+    font-family: "Cinzel", serif;
+    font-weight: 700;
+    letter-spacing: 0.2em;
+    font-size: 0.85rem;
+    color: var(--gold);
+    text-shadow: 0 0 10px var(--gold-glow);
+  }
+  .topbar .sigils { font-size: 1rem; color: var(--fg-muted); letter-spacing: 0.4em; }
+
+  /* ---- BREADCRUMB ---- */
+  .crumb {
+    padding: 0.6rem 1.5rem;
+    border-bottom: 1px solid var(--stone-border);
+    font-family: "Cinzel", serif;
+    font-size: 0.65rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--fg-muted);
+  }
+  .crumb a { color: var(--fg-muted); }
+  .crumb a:hover { color: var(--gold); }
+
+  /* ---- HERO ---- */
+  .hero {
+    padding: 4rem 0 3rem;
+    text-align: center;
+    border-bottom: 1px solid var(--stone-border);
+  }
+  .hero .label {
+    font-family: "Cinzel", serif;
+    font-size: 0.65rem;
+    letter-spacing: 0.35em;
+    text-transform: uppercase;
+    color: var(--fg-muted);
+    margin-bottom: 1.75rem;
+  }
+  .hero h1 {
+    font-family: "Cinzel Decorative", "Cinzel", serif;
+    font-size: clamp(2.2rem, 6vw, 4.5rem);
+    font-weight: 900;
+    letter-spacing: 0.12em;
+    line-height: 1.05;
+    color: var(--gold);
+    text-shadow: 0 0 30px var(--gold-glow);
+    margin-bottom: 0.75rem;
+    text-transform: uppercase;
+  }
+  .hero .subtitle {
+    font-family: "Cinzel", serif;
+    font-size: clamp(0.7rem, 1.5vw, 0.9rem);
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--terracotta);
+    margin-bottom: 1.5rem;
+  }
+  .hero .divider { color: var(--gold); margin: 1.5rem 0; letter-spacing: 0.5em; }
+  .hero p {
+    font-style: italic;
+    font-size: clamp(1rem, 2vw, 1.15rem);
+    color: var(--fg);
+    max-width: 660px;
+    margin: 0 auto;
+  }
+
+  /* ---- STATS ---- */
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    border-bottom: 1px solid var(--stone-border);
+  }
+  @media (max-width: 700px) { .stats { grid-template-columns: repeat(2, 1fr); } }
+  .stat-cell {
+    padding: 1.25rem 1.5rem;
+    border-right: 1px solid var(--stone-border);
+  }
+  .stat-cell:last-child { border-right: none; }
+  .stat-cell .k {
+    font-family: "Cinzel", serif;
+    font-size: 0.58rem;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--fg-muted);
+    margin-bottom: 0.4rem;
+  }
+  .stat-cell .v {
+    font-family: "Cinzel", serif;
+    font-weight: 700;
+    font-size: 1.3rem;
+    letter-spacing: 0.05em;
+    color: var(--gold);
+    text-shadow: 0 0 12px var(--gold-glow);
+  }
+
+  /* ---- SECTION LABELS ---- */
+  .section-label {
+    padding: 1.75rem 0 0.75rem;
+    font-family: "Cinzel", serif;
+    font-size: 0.65rem;
+    letter-spacing: 0.35em;
+    text-transform: uppercase;
+  }
+  .section-label--gold { color: var(--gold); }
+  .section-label--jade { color: var(--jade); }
+  .section-label::before { content: "◈  "; }
+
+  /* ---- APP CARDS ---- */
+  .apps {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.25rem;
+    padding: 1rem 0 3rem;
+  }
+  @media (max-width: 800px) { .apps { grid-template-columns: 1fr; } }
+
+  /* Accent variant: set --accent-color and --accent-glow on the card */
+  .app--gold    { --accent-color: var(--gold);       --accent-glow: var(--gold-glow);    }
+  .app--terracotta { --accent-color: var(--terracotta); --accent-glow: var(--terra-glow); }
+  .app--crimson { --accent-color: var(--crimson);    --accent-glow: var(--crimson-glow); }
+  .app--jade    { --accent-color: var(--jade);       --accent-glow: var(--jade-glow);    }
+
+  .app {
+    background: var(--stone);
+    border: 1px solid var(--stone-border);
+    padding: 1.75rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.9rem;
+    transition: border-color .2s, box-shadow .2s, background .2s;
+  }
+  .app:hover {
+    border-color: var(--accent-color);
+    box-shadow: 0 0 32px var(--accent-glow);
+    background: var(--stone-elevated);
+  }
+
+  .app .head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    padding-bottom: 0.6rem;
+    border-bottom: 1px solid var(--stone-border);
+  }
+  .app .num {
+    font-family: "Cinzel", serif;
+    font-size: 0.6rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--fg-muted);
+  }
+  .app .status {
+    font-family: "Cinzel", serif;
+    font-size: 0.6rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    padding: 3px 8px;
+    border: 1px solid var(--fg-muted);
+    color: var(--fg-muted);
+  }
+  .app--live .status {
+    background: var(--accent-color);
+    border-color: var(--accent-color);
+    color: var(--obsidian);
+  }
+
+  .app .title {
+    font-family: "Cinzel", serif;
+    font-weight: 700;
+    font-size: 1.25rem;
+    line-height: 1.2;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--accent-color);
+    text-shadow: 0 0 18px var(--accent-glow);
+  }
+  .app .tagline {
+    font-style: italic;
+    font-size: 1.05rem;
+    color: var(--fg);
+  }
+  .app .desc {
+    font-size: 0.98rem;
+    color: var(--fg);
+    flex: 1;
+  }
+
+  .app .shot {
+    display: block;
+    aspect-ratio: 16/10;
+    overflow: hidden;
+    border: 1px solid var(--stone-border);
+    background: var(--obsidian);
+  }
+  .app .shot img { width: 100%; height: 100%; object-fit: cover; }
+  .app .shot-placeholder {
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: "Cinzel", serif;
+    font-size: 0.75rem;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--fg-muted);
+    text-align: center;
+    padding: 1rem;
+  }
+
+  .app .ctas { display: flex; gap: 0.4rem; }
+  .btn {
+    flex: 1;
+    text-align: center;
+    padding: 0.55rem 0.5rem;
+    background: transparent;
+    border: 1px solid var(--fg-muted);
+    font-family: "Cinzel", serif;
+    font-size: 0.65rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--fg);
+    cursor: pointer;
+    transition: all .15s;
+    text-decoration: none;
+    display: block;
+  }
+  .btn:hover {
+    background: var(--accent-color);
+    border-color: var(--accent-color);
+    color: var(--obsidian);
+    box-shadow: 0 0 20px var(--accent-glow);
+  }
+  .prompt-link {
+    font-style: italic;
+    color: var(--fg-muted);
+    font-size: 0.92rem;
+  }
+  .prompt-link:hover { color: var(--accent-color); }
+
+  /* ---- DIVIDER ---- */
+  .codex-divider {
+    border: none;
+    border-top: 1px solid var(--stone-border);
+    text-align: center;
+    margin: 0;
+    overflow: visible;
+    line-height: 0;
+  }
+  .codex-divider::after {
+    content: "◈";
+    display: inline-block;
+    background: var(--obsidian);
+    padding: 0 0.75rem;
+    font-size: 0.85rem;
+    color: var(--gold);
+    position: relative;
+    top: -0.45rem;
+  }
+
+  /* ---- EPILOGUE ---- */
+  .epilogue {
+    padding: 2.5rem 0 2rem;
+    border-top: 1px solid var(--stone-border);
+  }
+  .epilogue h2 {
+    font-size: 0.65rem;
+    letter-spacing: 0.35em;
+    text-transform: uppercase;
+    color: var(--fg-muted);
+    margin-bottom: 1rem;
+  }
+  .epilogue p {
+    font-style: italic;
+    font-size: 1.1rem;
+    max-width: 720px;
+    color: var(--fg);
+  }
+
+  /* ---- FOOTER ---- */
+  footer.term-footer {
+    padding: 1.5rem;
+    border-top: 1px solid var(--stone-border);
+    text-align: center;
+    font-family: "Cinzel", serif;
+    font-size: 0.6rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--fg-muted);
+    background: var(--stone);
+  }
+  footer.term-footer a { color: var(--fg-muted); }
+  footer.term-footer a:hover { color: var(--gold); }
+</style>
+
+<div class="crown-bar"></div>
+
+<header class="topbar">
+  <span class="brand">VIBES.DIY</span>
+  <span class="sigils">◈  ◈  ◈</span>
+</header>
+
+<nav class="crumb">
+  <a href="/">Home</a> &nbsp;›&nbsp; <a href="/expressions/">Expressions</a> &nbsp;›&nbsp; Nahui Ollin
+</nav>
+
+<main class="container">
+  <section class="hero">
+    <div class="label">Cluster · 09 · Sacred Calendar &amp; Aztec Cosmos</div>
+    <h1>Nahui Ollin</h1>
+    <p class="subtitle">Four Movement &nbsp;·&nbsp; The Fifth Sun &nbsp;·&nbsp; The World That Ends in Earthquake</p>
+    <div class="divider">◈ ◈ ◈</div>
+    <p>The Aztec cosmos ran on interlocking calendars — a 260-day sacred round, a 365-day solar year, a 52-year binding cycle. This cluster is ten apps that compute, reveal, and perform that system: calendar tools that actually work and myth interfaces that put you inside the cosmology.</p>
+  </section>
+
+  <div class="stats">
+    <div class="stat-cell">
+      <div class="k">Sacred Round</div>
+      <div class="v">260 Days</div>
+    </div>
+    <div class="stat-cell">
+      <div class="k">Solar Year</div>
+      <div class="v">365 Days</div>
+    </div>
+    <div class="stat-cell">
+      <div class="k">Calendar Round</div>
+      <div class="v">52 Years</div>
+    </div>
+    <div class="stat-cell">
+      <div class="k">Creation Eras</div>
+      <div class="v">Five Suns</div>
+    </div>
+  </div>
+
+  <div class="section-label section-label--gold">Calendar Tools</div>
+
+  <section class="apps">
+    {{#each calendarApps}}
+      <article class="app {{#if live}}app--live{{else}}app--pending{{/if}} app--{{accent}}">
+        <div class="head">
+          <span class="num">№ {{num}} &nbsp;·&nbsp; {{slug}}</span>
+          <span class="status">{{#if live}}Inscribed{{else}}Pending{{/if}}</span>
+        </div>
+        <h2 class="title">{{title}}</h2>
+        <p class="tagline">{{tagline}}</p>
+        <p class="desc">{{desc}}</p>
+        {{#if live}}
+          <a class="shot" href="https://vibes.diy/vibe/{{author}}/{{slug}}" aria-label="{{title}} screenshot">
+            <img src="https://{{slug}}--{{author}}.prod-v2.vibesdiy.net/screenshot.jpg" alt="{{slug}}" onerror="this.onerror=null; this.src='{{@root.assetPrefix}}images/og-preview.png';" />
+          </a>
+          <div class="ctas">
+            <a class="btn" href="https://vibes.diy/vibe/{{author}}/{{slug}}">Consult</a>
+            <a class="btn" href="https://vibes.diy/remix/{{author}}/{{slug}}?skipChat=true">Mirror</a>
+            <a class="btn" href="https://vibes.diy/remix/{{author}}/{{slug}}">Reshape</a>
+          </div>
+          <a class="prompt-link" href="https://vibes.diy/chat/prompt?prompt64={{prompt64 desc}}">◈ start fresh from this prompt</a>
+        {{else}}
+          <div class="shot"><div class="shot-placeholder">Awaiting Inscription</div></div>
+          <div class="ctas">
+            <a class="btn" href="https://vibes.diy/chat/prompt?prompt64={{prompt64 desc}}">Start From Prompt</a>
+          </div>
+        {{/if}}
+      </article>
+    {{/each}}
+  </section>
+
+  <hr class="codex-divider" />
+
+  <div class="section-label section-label--jade">Myth &amp; Oracle</div>
+
+  <section class="apps">
+    {{#each oracleApps}}
+      <article class="app {{#if live}}app--live{{else}}app--pending{{/if}} app--{{accent}}">
+        <div class="head">
+          <span class="num">№ {{num}} &nbsp;·&nbsp; {{slug}}</span>
+          <span class="status">{{#if live}}Inscribed{{else}}Pending{{/if}}</span>
+        </div>
+        <h2 class="title">{{title}}</h2>
+        <p class="tagline">{{tagline}}</p>
+        <p class="desc">{{desc}}</p>
+        {{#if live}}
+          <a class="shot" href="https://vibes.diy/vibe/{{author}}/{{slug}}" aria-label="{{title}} screenshot">
+            <img src="https://{{slug}}--{{author}}.prod-v2.vibesdiy.net/screenshot.jpg" alt="{{slug}}" onerror="this.onerror=null; this.src='{{@root.assetPrefix}}images/og-preview.png';" />
+          </a>
+          <div class="ctas">
+            <a class="btn" href="https://vibes.diy/vibe/{{author}}/{{slug}}">Consult</a>
+            <a class="btn" href="https://vibes.diy/remix/{{author}}/{{slug}}?skipChat=true">Mirror</a>
+            <a class="btn" href="https://vibes.diy/remix/{{author}}/{{slug}}">Reshape</a>
+          </div>
+          <a class="prompt-link" href="https://vibes.diy/chat/prompt?prompt64={{prompt64 desc}}">◈ start fresh from this prompt</a>
+        {{else}}
+          <div class="shot"><div class="shot-placeholder">Awaiting Inscription</div></div>
+          <div class="ctas">
+            <a class="btn" href="https://vibes.diy/chat/prompt?prompt64={{prompt64 desc}}">Start From Prompt</a>
+          </div>
+        {{/if}}
+      </article>
+    {{/each}}
+  </section>
+
+  <section class="epilogue">
+    <h2>◈ Codex Note</h2>
+    <p>The Aztec calendar was not a metaphor. It was a computational system that governed every undertaking — when to plant, when to fight, when to build a temple, when to fear the dark. These apps run the same numbers, drawn from the same anchor points. The fifth sun still moves.</p>
+  </section>
+</main>
+
+{{> newsletter}}
+<footer class="term-footer">
+  Vibes.diy &nbsp;·&nbsp;
+  <a href="https://links.vibes.diy/homepage">homepage</a> &nbsp;·&nbsp;
+  <a href="/expressions/">expressions</a> &nbsp;·&nbsp;
+  ◈ &nbsp;·&nbsp; Nahui Ollin
+</footer>

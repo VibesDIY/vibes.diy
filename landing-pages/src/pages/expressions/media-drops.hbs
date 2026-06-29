@@ -1,0 +1,187 @@
+{{!--
+{
+  "layout": "webring",
+  "title": "Constrained Media Drops // Expressions // Vibes DIY",
+  "description": "Disposable-camera rolls, six-word stories, sound photos, receipt theater. The constraint is the social object — limits make the share sticky.",
+  "ogUrl": "https://good.vibes.diy/expressions/media-drops",
+  "source": "expressions-media-drops",
+  "apps": [
+    {"num":"01","slug":"disposable-camera","author":"jchris","live":true,"title":"Disposable Camera Roll","tagline":"24 photos. No preview. Develops at midnight.","desc":"The host names the event; participants take photos through the app. The roll opens at dev-time as one contact-sheet."},
+    {"num":"02","slug":"polaroid-a-day","author":"jchris","live":true,"title":"One-Polaroid-A-Day Wall","tagline":"Strict daily limit. The constraint is the social object.","desc":"Each member posts exactly one photo per local day with a one-line caption, pinned chronologically on the household wall."},
+    {"num":"03","slug":"long-exposure-photo","author":"jchris","live":true,"title":"Long-Exposure Group Photo","tagline":"Multiple phones combine over 10 seconds.","desc":"Each participant captures 10s of frames; the app averages them into a long-exposure-style image. Composite with others."},
+    {"num":"04","slug":"sound-photo","author":"jchris","live":true,"title":"Sound Photo","tagline":"A 3-second audio card, shareable like an image.","desc":"Record exactly 3 seconds. The card carries a waveform, a play button, location-of-capture, and a one-line caption."},
+    {"num":"05","slug":"smell-journal","author":"jchris","live":true,"title":"Smell Journal","tagline":"Text-only descriptions of today's smells.","desc":"Date, location, smell, emotion tag. No images. Surprisingly sticky. Browse by tag, search by keyword."},
+    {"num":"06","slug":"six-word-story","author":"jchris","live":true,"title":"Six-Word Story Room","tagline":"Daily prompt. Six words. No editing.","desc":"Members submit exactly six words. Stories render as a serif column attributed to the writer. After midnight the day closes."},
+    {"num":"07","slug":"anonymous-compliments","author":"jchris","live":true,"title":"Anonymous Compliments Box","tagline":"Fixed group, anonymous by default.","desc":"Tap a member to drop an anonymous compliment. Recipients see an inbox. Optional sign-with-handle if you want credit."},
+    {"num":"08","slug":"one-good-thing","author":"jchris","live":true,"title":"One Good Thing Room","tagline":"End-of-day post; closes at midnight.","desc":"Each member posts one good thing from their day. Past days browsable as a calendar; tap any day to read its entries."},
+    {"num":"09","slug":"receipt-theater","author":"jchris","live":true,"title":"Receipt Theater","tagline":"Drop a receipt; friends construct the story.","desc":"Upload a receipt; friends submit one-paragraph speculative narratives. Vote-up surfaces the funniest. Catalogued by month."},
+    {"num":"10","slug":"mixtape-30s","author":"jchris","live":true,"title":"30-Second Mixtape","tagline":"One half-minute clip per week, per member.","desc":"The week's mixtape plays sequentially in submission order. Past mixtapes archived as albums by week-of-year."}
+  ]
+}
+--}}
+
+<style>
+  @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400;1,700&display=optional");
+
+  :root {
+    --bg: oklch(0.95 0.01 70);
+    --page-bg: oklch(0.92 0.01 65);
+    --text: oklch(0.15 0.02 50);
+    --border: oklch(0.20 0.02 50);
+    --accent: oklch(0.35 0.04 50);
+    --accent-text: oklch(0.95 0.01 70);
+    --muted: oklch(0.42 0.02 50);
+  }
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body {
+    font-family: "Inter", system-ui, sans-serif;
+    background: var(--page-bg);
+    color: var(--text);
+    line-height: 1.55;
+    min-height: 100vh;
+  }
+  a { color: var(--text); text-decoration: none; }
+  p a, li a, .crumb a { text-decoration: underline; }
+  a:hover { color: var(--accent); }
+  h1, h2, h3, .display { font-family: "Playfair Display", Georgia, serif; }
+
+  .container { max-width: 980px; margin: 0 auto; padding: 0 2rem; }
+
+  .topbar {
+    border-bottom: 1px solid var(--border);
+    padding: 1rem 2rem;
+    display: flex; justify-content: space-between; align-items: center;
+    background: var(--bg);
+  }
+  .topbar .brand { font-family: "Playfair Display", serif; font-weight: 900; font-size: 1.4rem; letter-spacing: 0.02em; }
+  .topbar .meta { font-size: 0.55rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--muted); }
+
+  .crumb { padding: 0.7rem 2rem; border-bottom: 1px solid var(--border); font-size: 0.55rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--muted); }
+
+  .hero { padding: 5rem 0 3rem; border-bottom: 1px solid var(--border); }
+  .hero .label { font-size: 0.6rem; letter-spacing: 0.25em; text-transform: uppercase; color: var(--accent); margin-bottom: 1.5rem; }
+  .hero h1 { font-size: clamp(3rem, 7vw, 5rem); font-weight: 900; line-height: 1; letter-spacing: -0.02em; margin-bottom: 1rem; }
+  .hero h1 em { font-style: italic; font-weight: 400; color: var(--accent); }
+  .hero .lead {
+    font-size: 1.15rem; max-width: 640px;
+    color: var(--text); line-height: 1.55;
+  }
+  .hero .lead::first-letter { font-family: "Playfair Display", serif; font-size: 3.4rem; font-weight: 900; float: left; line-height: 0.85; padding: 0.3rem 0.5rem 0 0; color: var(--accent); }
+
+  .stats {
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    border-bottom: 1px solid var(--border);
+  }
+  @media (max-width: 700px) { .stats { grid-template-columns: repeat(2, 1fr); } }
+  .stat-cell { padding: 1.25rem 1.5rem; border-right: 1px solid var(--border); }
+  .stat-cell:last-child { border-right: none; }
+  .stat-cell .k { font-size: 0.55rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--muted); margin-bottom: 0.4rem; }
+  .stat-cell .v { font-family: "Playfair Display", serif; font-weight: 700; font-size: 1.6rem; line-height: 1; }
+
+  .section-label {
+    padding: 1.5rem 2rem 0.5rem;
+    font-size: 0.55rem; letter-spacing: 0.25em; text-transform: uppercase; color: var(--accent); font-weight: 600;
+  }
+
+  .apps { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+  @media (max-width: 800px) { .apps { grid-template-columns: 1fr; } }
+
+  .app {
+    background: var(--bg);
+    padding: 2rem;
+    border-right: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    display: flex; flex-direction: column; gap: 0.85rem;
+  }
+  .app:nth-child(2n) { border-right: none; }
+  @media (max-width: 800px) { .app { border-right: none; } }
+  .app .num { font-size: 0.55rem; letter-spacing: 0.25em; text-transform: uppercase; color: var(--muted); }
+  .app .head { display: flex; justify-content: space-between; align-items: baseline; }
+  .app .status-tag { font-size: 0.5rem; letter-spacing: 0.2em; text-transform: uppercase; padding: 3px 8px; border: 1px solid var(--border); }
+  .app--live .status-tag { background: var(--accent); color: var(--accent-text); border-color: var(--accent); }
+  .app .title { font-family: "Playfair Display", serif; font-weight: 900; font-size: 1.6rem; line-height: 1.1; letter-spacing: -0.01em; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border); }
+  .app .tagline { font-family: "Playfair Display", serif; font-style: italic; color: var(--accent); font-size: 1rem; }
+  .app .desc { font-size: 0.95rem; color: var(--text); flex: 1; }
+  .app .shot { display: block; aspect-ratio: 16/10; overflow: hidden; border: 1px solid var(--border); background: var(--page-bg); }
+  .app .shot img { width: 100%; height: 100%; object-fit: cover; filter: sepia(0.15) contrast(1.05); }
+  .app .shot-placeholder { padding: 1rem; height: 100%; display: flex; align-items: center; justify-content: center; font-family: "Playfair Display", serif; font-style: italic; color: var(--muted); text-align: center; }
+  .app .ctas { display: flex; gap: 0; border: 1px solid var(--border); }
+  .btn { flex: 1; text-align: center; padding: 0.55rem 0.5rem; font-size: 0.55rem; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; border-right: 1px solid var(--border); background: var(--bg); color: var(--text); }
+  .btn:last-child { border-right: none; }
+  .btn:hover { background: var(--accent); color: var(--accent-text); }
+  .prompt-link { font-family: "Playfair Display", serif; font-style: italic; font-size: 0.95rem; color: var(--accent); }
+
+  .epilogue { padding: 2rem; max-width: 700px; }
+  .epilogue h2 { font-size: 0.55rem; letter-spacing: 0.25em; text-transform: uppercase; color: var(--accent); font-weight: 600; margin-bottom: 1rem; font-family: "Inter", sans-serif; }
+  .epilogue p { font-family: "Playfair Display", serif; font-size: 1.2rem; font-style: italic; line-height: 1.5; color: var(--text); }
+
+  footer.term-footer {
+    padding: 1.5rem 2rem; border-top: 1px solid var(--border);
+    font-size: 0.55rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--muted);
+    display: flex; justify-content: space-between;
+  }
+</style>
+
+<header class="topbar">
+  <a class="brand" href="https://links.vibes.diy/homepage">Vibes.diy</a>
+  <span class="meta">Vol. 03 · Constrained Media · Spring 2026</span>
+</header>
+<nav class="crumb">
+  <a href="/">Home</a> &nbsp;›&nbsp; <a href="/expressions/">Expressions</a> &nbsp;›&nbsp; Constrained Media Drops
+</nav>
+
+<main class="container">
+  <section class="hero">
+    <div class="label">Cluster · 03 of 10 · toy tail #21–30</div>
+    <h1>Constrained <em>Media</em> Drops</h1>
+    <p class="lead">Disposable-camera rolls, six-word stories, sound photos, receipt theater. Ten takes on a single proposition: that the constraint, not the content, is the social object. The catalog below is rendered as exhibits in an archive.</p>
+  </section>
+
+  <div class="stats">
+    <div class="stat-cell"><div class="k">Source</div><div class="v">Tilted</div></div>
+    <div class="stat-cell"><div class="k">Exhibits</div><div class="v">Ten</div></div>
+    <div class="stat-cell"><div class="k">Persistence</div><div class="v">Fireproof</div></div>
+    <div class="stat-cell"><div class="k">Skin</div><div class="v">Archive</div></div>
+  </div>
+
+  <div class="section-label">The Catalog</div>
+
+  <section class="apps">
+    {{#each apps}}
+      <article class="app {{#if live}}app--live{{else}}app--pending{{/if}}">
+        <div class="head">
+          <span class="num">Exhibit {{num}} · {{slug}}</span>
+          <span class="status-tag">{{#if live}}Live{{else}}Pending{{/if}}</span>
+        </div>
+        <h2 class="title">{{title}}</h2>
+        <p class="tagline">{{tagline}}</p>
+        <p class="desc">{{desc}}</p>
+        {{#if live}}
+          <a class="shot" href="https://vibes.diy/vibe/{{author}}/{{slug}}" aria-label="{{title}} screenshot"><img src="https://{{slug}}--{{author}}.prod-v2.vibesdiy.net/screenshot.jpg" alt="{{slug}}" onerror="this.onerror=null; this.src='{{@root.assetPrefix}}images/og-preview.png';"/></a>
+          <div class="ctas">
+            <a class="btn" href="https://vibes.diy/vibe/{{author}}/{{slug}}">Join</a>
+            <a class="btn" href="https://vibes.diy/remix/{{author}}/{{slug}}?skipChat=true">Clone</a>
+            <a class="btn" href="https://vibes.diy/remix/{{author}}/{{slug}}">Remix</a>
+          </div>
+          <a class="prompt-link" href="https://vibes.diy/chat/prompt?prompt64={{prompt64 desc}}">— start fresh from this prompt</a>
+        {{else}}
+          <div class="shot"><div class="shot-placeholder">awaiting accession</div></div>
+          <div class="ctas">
+            <a class="btn" href="https://vibes.diy/chat/prompt?prompt64={{prompt64 desc}}">Start From Prompt</a>
+          </div>
+        {{/if}}
+      </article>
+    {{/each}}
+  </section>
+
+  <section class="epilogue">
+    <h2>Editor's Note</h2>
+    <p>The premise of every entry in this catalog is the same: a hard limit makes the contribution legible. Fewer photos, fewer words, fewer frames, fewer chances. The friction is the design.</p>
+  </section>
+</main>
+
+{{> newsletter}}
+<footer class="term-footer">
+  <span>Vibes.diy · <a href="https://links.vibes.diy/homepage">homepage</a> · <a href="/expressions/">expressions</a></span>
+  <span>End of catalog</span>
+</footer>

@@ -1,0 +1,450 @@
+{{!--
+{
+  "layout": "standard",
+  "title": "Can one English prompt rebuild our festival app? | Vibes DIY Blog",
+  "description": "We tried to recreate Pickathon's built-out 2026 festival app — data model, views, and a fiddly access policy — from a single plain-English prompt. Here's how close it got, and what closed the last gap.",
+  "ogUrl": "https://good.vibes.diy/blog/can-a-prompt-rebuild-the-pickathon-app.html",
+  "source": "blog-pickathon-prompt-eval"
+}
+--}}
+
+<style>
+        @import url('https://fonts.cdnfonts.com/css/alte-haas-grotesk');
+
+        :root {
+            --os-gray: #7A7A7A;
+            --grid-gray: #CCCDC8;
+            --goldenrod: #FEDD00;
+            --ruby: #DA291C;
+            --bluey: #009ACE;
+            --sprout-green: #16A34A;
+            --ivory: #FFFFF0;
+            --black: #231F20;
+            --white: #FFFFFF;
+            --grid-line: rgba(255, 255, 255, 0.5);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Alte Haas Grotesk', sans-serif;
+            background-color: var(--grid-gray);
+            color: var(--black);
+            line-height: 1.7;
+            background-image:
+                linear-gradient(var(--grid-line) 1px, transparent 1px),
+                linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
+            background-size: 40px 40px;
+            min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        header {
+            padding: 1.5rem 2rem;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: linear-gradient(to bottom, var(--grid-gray) 60%, transparent);
+        }
+        .logo-link { display: block; text-decoration: none; }
+        .logo-img { height: 72px; width: auto; display: block; }
+
+        .mono { font-family: 'SFMono-Regular', 'Menlo', 'Consolas', monospace; }
+
+        /* ── Article shell ── */
+        .post-wrap { max-width: 880px; margin: 0 auto; padding: 1rem 1.5rem 4rem; }
+
+        .post-breadcrumb {
+            font-size: 0.75rem;
+            letter-spacing: 0.18em;
+            text-transform: uppercase;
+            color: var(--os-gray);
+            margin-bottom: 1.25rem;
+        }
+        .post-breadcrumb a { color: var(--os-gray); text-decoration: none; }
+        .post-breadcrumb a:hover { color: var(--black); }
+
+        .post-card {
+            background: var(--white);
+            border: 3px solid var(--black);
+            border-radius: 22px;
+            box-shadow: 8px 8px 0 var(--black);
+            padding: clamp(1.75rem, 4vw, 3.5rem);
+            overflow: hidden;
+        }
+
+        .post-overline {
+            font-size: 0.72rem;
+            letter-spacing: 0.28em;
+            text-transform: uppercase;
+            color: var(--bluey);
+            margin-bottom: 1rem;
+        }
+        .post-card h1 {
+            font-size: clamp(2rem, 5vw, 3.1rem);
+            font-weight: bold;
+            line-height: 1.04;
+            letter-spacing: -0.03em;
+            margin-bottom: 0.9rem;
+        }
+        .post-meta {
+            font-size: 0.9rem;
+            color: var(--os-gray);
+            border-bottom: 2px solid var(--black);
+            padding-bottom: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        /* ── Prose ── */
+        .prose h2 {
+            font-size: clamp(1.4rem, 3vw, 1.9rem);
+            letter-spacing: -0.02em;
+            margin: 2.75rem 0 1rem;
+            line-height: 1.15;
+        }
+        .prose p { margin: 0 0 1.2rem; font-size: 1.07rem; }
+        .prose ul { margin: 0 0 1.4rem 1.2rem; }
+        .prose li { margin-bottom: 0.5rem; font-size: 1.05rem; }
+        .prose a { color: var(--bluey); text-decoration: underline; text-underline-offset: 2px; text-decoration-thickness: 1.5px; }
+        .prose a:hover { color: var(--black); }
+        .prose strong { font-weight: bold; }
+        .prose em { font-style: italic; }
+        .prose code {
+            font-family: 'SFMono-Regular', 'Menlo', 'Consolas', monospace;
+            font-size: 0.88em;
+            background: #f1f1ea;
+            border: 1px solid #ddddd2;
+            border-radius: 5px;
+            padding: 0.08em 0.4em;
+            white-space: nowrap;
+        }
+
+        /* prompt blockquote */
+        .prose blockquote {
+            margin: 0 0 1.5rem;
+            padding: 1.1rem 1.4rem;
+            background: #f0f9ff;
+            border-left: 5px solid var(--bluey);
+            border-radius: 0 10px 10px 0;
+            font-size: 1.0rem;
+            color: #1c3a47;
+        }
+        .prose blockquote p { margin: 0; }
+        .prose blockquote code { background: #e2effa; border-color: #c8e2f3; white-space: normal; }
+
+        /* figures */
+        .prose figure { margin: 1.75rem 0 2rem; }
+        .prose figure img {
+            width: 100%;
+            height: auto;
+            display: block;
+            border: 3px solid var(--black);
+            border-radius: 14px;
+            box-shadow: 5px 5px 0 var(--black);
+        }
+        .prose figcaption {
+            margin-top: 0.7rem;
+            font-size: 0.85rem;
+            color: var(--os-gray);
+            font-style: italic;
+            line-height: 1.45;
+        }
+
+        /* code blocks */
+        .prose pre {
+            background: var(--black);
+            color: var(--ivory);
+            border-radius: 12px;
+            padding: 1.25rem 1.35rem;
+            overflow-x: auto;
+            margin: 0 0 1.6rem;
+            position: relative;
+            border: 2px solid var(--black);
+        }
+        .prose pre code {
+            font-family: 'SFMono-Regular', 'Menlo', 'Consolas', monospace;
+            font-size: 0.84rem;
+            line-height: 1.6;
+            background: none;
+            border: none;
+            padding: 0;
+            white-space: pre;
+            color: inherit;
+        }
+        .prose pre .lang {
+            position: absolute;
+            top: 0; right: 0;
+            font-size: 0.62rem;
+            letter-spacing: 0.16em;
+            text-transform: uppercase;
+            color: var(--goldenrod);
+            background: rgba(255,255,255,0.06);
+            padding: 0.25rem 0.6rem;
+            border-radius: 0 10px 0 8px;
+        }
+
+        /* tables */
+        .table-scroll { overflow-x: auto; margin: 0 0 1.8rem; }
+        .prose table {
+            border-collapse: collapse;
+            width: 100%;
+            font-size: 0.95rem;
+            border: 2px solid var(--black);
+        }
+        .prose th, .prose td {
+            border: 1px solid #d8d8cf;
+            padding: 0.7rem 0.85rem;
+            text-align: left;
+            vertical-align: top;
+        }
+        .prose thead th {
+            background: var(--black);
+            color: var(--ivory);
+            font-weight: bold;
+            border-color: var(--black);
+        }
+        .prose tbody tr:nth-child(even) { background: #faf9f2; }
+        .prose td a { white-space: nowrap; }
+
+        .prose hr { border: none; border-top: 2px solid #e2e2d8; margin: 2.5rem 0; }
+        .post-foot-note { font-size: 0.92rem; color: var(--os-gray); font-style: italic; }
+
+        /* end CTA */
+        .post-cta {
+            margin-top: 2.5rem;
+            background: var(--black);
+            color: var(--ivory);
+            border-radius: 18px;
+            padding: 2.25rem 2rem;
+            text-align: center;
+        }
+        .post-cta h3 { font-size: 1.5rem; letter-spacing: -0.02em; margin-bottom: 0.4rem; }
+        .post-cta p { opacity: 0.7; margin-bottom: 1.4rem; }
+        .post-cta .btn {
+            display: inline-block;
+            background: var(--goldenrod);
+            color: var(--black);
+            padding: 0.85rem 1.8rem;
+            border-radius: 50px;
+            font-weight: 600;
+            text-decoration: none;
+            border: 2px solid var(--goldenrod);
+            transition: transform 0.15s ease;
+        }
+        .post-cta .btn:hover { transform: translateY(-2px); }
+
+        @media (max-width: 560px) {
+            .post-card { box-shadow: 5px 5px 0 var(--black); }
+        }
+    </style>
+
+<main class="post-wrap">
+    <div class="post-breadcrumb"><a href="../">Vibes DIY</a> / <a href="./">Blog</a></div>
+
+    <article class="post-card">
+        <div class="post-overline">From the build log</div>
+        <h1>Can one English prompt rebuild our festival app?</h1>
+        <div class="post-meta mono">June 9, 2026 · Vibes DIY</div>
+
+        <div class="prose">
+
+            <h2>Why we tried this</h2>
+            <p>For <strong>Pickathon 2025</strong>, Meghan Sinnot <em>vibed</em> a little schedule app in an afternoon to scratch her own itch — no hand-coding, just built on vibes.diy. Browse the lineup, star the sets you want, scribble private notes, block out your meal and volunteer times, and connect with friends so you can see each other's picks. It was never meant to be a big deal. But it got popular: people on the farm were actually pulling it up to plan their nights, sharing QR codes at the gate, comparing who starred what. A grassroots hit, from one person solving her own problem in a single sitting. That original is still live — and still pulling the real Pickathon schedule: <a href="https://vibes.diy/vibe/og/cosmic-anansi-3972">vibes.diy/vibe/og/cosmic-anansi-3972</a>.</p>
+
+            <figure>
+                <img src="{{assetPrefix}}images/blog/pickathon-prompt-eval/2025-original-cosmic-anansi.png" alt="Pickathon 2025 — Meghan Sinnot's original afternoon vibe, still live" loading="lazy">
+                <figcaption>Pickathon 2025 — Meghan Sinnot's original afternoon vibe, still live.</figcaption>
+            </figure>
+
+            <p>That success is why the code we have now exists. <strong>For 2026 we built it out into a proper version</strong> (live at <a href="https://vibes.diy/vibe/og/pickathon-picker">vibes.diy/vibe/og/pickathon-picker</a>) — still a vibe, but a fully-featured one: a React component, a Fireproof data model with four document types, and an <code>access.js</code> that encodes a genuinely fiddly permission model (some data public, some private, some shared only between connected friends). It even picked up a borderless restyle and system dark mode this spring.</p>
+
+            <p>So here's the twist that made this worth doing: the 2026 app is itself the product of <em>iterative</em> vibing — many prompts and edits layered over time. With the gates still weeks away, we wanted to know: <strong>could a single, well-aimed prompt recreate the whole thing in one shot?</strong> Not the pixels — we don't care about looks here — but the parts that are actually hard to get right: the <strong>data structures</strong>, the <strong>main views</strong>, and the <strong>access policy</strong>.</p>
+
+            <h2>What "the same app" actually means</h2>
+            <p>Before writing any prompt, we wrote down what the 2026 vibe does under the hood.</p>
+
+            <figure>
+                <img src="{{assetPrefix}}images/blog/pickathon-prompt-eval/2026-pickathon-picker.png" alt="Pickathon 2026 — the built-out vibe we set out to reproduce" loading="lazy">
+                <figcaption>Pickathon 2026 — the built-out vibe we set out to reproduce.</figcaption>
+            </figure>
+
+            <p><strong>Document types (Fireproof):</strong></p>
+            <ul>
+                <li><code>favorite</code> — a starred set. <em>Public</em> — everyone can read everyone's stars, which is what powers "12 people picked this" and "your friend starred this."</li>
+                <li><code>note</code> — a private note on a set. Only the author can read it.</li>
+                <li><code>shift</code> — a personal time block (a meal, a volunteer shift). Private, but optionally shareable with friends.</li>
+                <li><code>friend</code> — a connection between two people. Grants each side read access to the other's private channel.</li>
+            </ul>
+
+            <p><strong>Main views:</strong> Now (playing now / up next), Browse, Bands (by artist), Favorites, Friends, Extras (your blocks), My Schedule (a merged timeline).</p>
+
+            <p><strong>The access policy</strong> (<code>access.js</code>) is the crux. In English:</p>
+            <ul>
+                <li>You must be signed in to write anything.</li>
+                <li>Stars are public.</li>
+                <li>Notes and time blocks are private to you.</li>
+                <li>A friend connection opens a two-way window between your channel and theirs.</li>
+            </ul>
+            <p>That last part — channel isolation plus a bidirectional grant — is the kind of thing you'd normally expect to have to write by hand.</p>
+
+            <h2>The process</h2>
+            <p>We used the generator's own CLI, the same one the eval harness uses:</p>
+            <pre><span class="lang">sh</span><code>npx vibes-diy@latest generate "&lt;prompt&gt;" --app-slug &lt;slug&gt; --verbose
+npx vibes-diy@latest pull &lt;slug&gt;   # download App.jsx + access.js to inspect</code></pre>
+
+            <p>For each prompt we generated the app, pulled the files, read the <code>access.js</code> and the data layer, then loaded the deployed app in a real browser to confirm it rendered and the data actually flowed. We ran the shorter prompts more than once to get a feel for variance.</p>
+
+            <p>Crucially, the prompts contain <strong>no code and no field names</strong> — just the kind of sentences a product person would say out loud. The generator's system prompt has been taught to treat sharing language ("public," "only I can see," "shared with friends") as a signal to emit an <code>access.js</code>, so the whole experiment is really a test of whether plain intent maps to the right permission model.</p>
+
+            <h2>Round 1 — just describe it (no code, no URL)</h2>
+            <p>We wrote two prompts: a fuller one (136 words) and a deliberately tight one (93 words).</p>
+
+            <p><strong>Prompt A (fuller):</strong></p>
+            <blockquote><p>A music festival schedule planner. People sign in to save anything. Fetch the festival lineup and show what is playing right now and coming up next, let anyone browse every set and browse by artist. Signed-in users can star sets they want to see; stars are public so everyone sees how many people starred each set and which sets their friends starred. Users can write private notes on any set that only they can read. Users can add their own personal time blocks like meals or volunteer shifts that are private but can be shared with friends. Two users connect by sharing a link or QR code, and once connected each can see the others stars and shared blocks. Include a personal schedule view that merges a users starred sets and shared blocks into one timeline.</p></blockquote>
+
+            <p><strong>Prompt B (tight, 93 words):</strong></p>
+            <blockquote><p>A festival schedule app. Sign in to save. Show the lineup with now-playing and up-next, browse all sets and browse by artist. Signed-in users star sets; stars are public, so you see how many people starred each set and what your friends starred. Add private notes per set that only you can read. Add personal time blocks that are private but can be shared with friends. Connect with a friend by link or QR code to see each others stars and shared blocks. Include a combined personal schedule of your stars and blocks.</p></blockquote>
+
+            <p>We ran A twice and B once. <strong>All three emitted an <code>access.js</code>, and all three landed on the same permission model as the 2026 vibe</strong> — including the short one. Here's the access function the <em>93-word</em> prompt produced (lightly trimmed):</p>
+
+            <pre><span class="lang">js</span><code>export default function (doc, oldDoc, user, ctx) {
+  if (!user) throw { forbidden: "sign in" }
+  const mine = `user:${user.userHandle}`
+  const shared = `shared:${user.userHandle}`
+
+  if (doc.type === "star") {            // public — everyone reads, drives counts
+    return { channels: ["lineup"] }
+  }
+  if (doc.type === "note") {            // private to author
+    return { channels: [mine], grant: { users: { [user.userHandle]: [mine] } } }
+  }
+  if (doc.type === "block") {           // private, opt-in shared channel
+    const channels = [mine]
+    if (doc.shareWithFriends) channels.push(shared)
+    return { channels, grant: { users: { [user.userHandle]: [mine, shared] } } }
+  }
+  if (doc.type === "friendship") {      // grant the friend my shared channel
+    return { channels: [mine], grant: { users: {
+      [user.userHandle]: [mine],
+      [doc.toHandle]: [`shared:${user.userHandle}`],
+    } } }
+  }
+  // ...owner-curated lineup omitted
+}</code></pre>
+
+            <p>That is the original's model, rediscovered from a paragraph of plain English: public stars, private notes, opt-in shared blocks, a friendship doc that hands a friend read access to your shared channel.</p>
+
+            <p><strong>Data types and views matched too</strong> — <code>star</code> (= favorite), <code>note</code>, <code>block</code> (= shift), <code>friend</code>/<code>friendship</code>, and views for now/up-next, browse + artist search, schedule, and a friends/QR panel. The one wobble: one of the three runs dropped the private <code>note</code> type, so it's worth naming notes explicitly.</p>
+
+            <p><strong>The one consistent divergence:</strong> every Round-1 app turned "show the lineup" into an <em>owner-seeded</em> list of demo sets (a fifth, owner-only doc type) instead of fetching the real schedule. A reasonable reading of an ambiguous instruction — but not what the original does.</p>
+
+            <p><strong>Round 1 verdict:</strong> ~90% of the way there — data model, views, and access policy — with zero technical vocabulary.</p>
+
+            <h2>Round 2 — hand it the URL and the schema</h2>
+            <p>To close that last gap we gave the model the real data source and one sentence describing its shape. The 2026 vibe fetches <code>https://pickathon.com/wp-content/plugins/pickathon/schedule.php</code>, which returns an object keyed by venue, each venue holding an <code>events</code> array.</p>
+
+            <p><strong>Prompt C</strong> added exactly that (everything else unchanged):</p>
+            <blockquote><p>...Load the lineup by fetching this JSON URL: <code>https://pickathon.com/.../schedule.php</code> and cache it in the browser. The JSON is an object keyed by venue slug; each venue has a title, a color, and an events array; each event has an id, a title, start and end timestamps in the format "2026-07-30 10:00:00", a url, and a lineup object with an id like music, djs, or family and a color. Flatten every venue into one combined list of sets, and treat the lineup id as the category...</p></blockquote>
+
+            <p>The generated code did precisely the right thing:</p>
+            <pre><span class="lang">js</span><code>function flattenLineup(data) {
+  const out = []
+  for (const venueSlug of Object.keys(data || {})) {
+    const venue = data[venueSlug]
+    if (!venue?.events) continue
+    for (const ev of venue.events) {
+      out.push({
+        id: ev.id, title: ev.title,
+        venue: venue.title, venueColor: venue.color,
+        category: ev.lineup?.id || "music",
+        // ...start/end parsed from "2026-07-30 10:00:00"
+      })
+    }
+  }
+  return out
+}</code></pre>
+
+            <p>It walks the venues, flattens the events, maps <code>lineup.id</code> to a category, caches to <code>localStorage</code>, and <strong>drops the owner-managed lineup doc type entirely</strong> — because the lineup is now fetched, exactly like the original.</p>
+
+            <p>And in the browser, it just worked: the app loaded the <strong>live Pickathon schedule — all 249 real sets</strong>. "Typewriter Discovery with The Traveling Typist" at Coyote Crafts, Thursday 10:00 AM. DJ Maxx Bass, mintwhisper, Shakey Graves, Mary Halvorson — the real lineup, each row with a public star count, an artist search box, and category filters for family / djs / music. The "My Schedule" panel had blocks with a category dropdown and a "Share with friends" checkbox; the "Friends" panel had a QR code and a share link.</p>
+
+            <figure>
+                <img src="{{assetPrefix}}images/blog/pickathon-prompt-eval/generated-c2-real-data.png" alt="Generated from Prompt C — the real Pickathon lineup with public star counts, artist search, category filters, schedule blocks, and a friend QR" loading="lazy">
+                <figcaption>Generated from Prompt C — the real Pickathon lineup (249 sets) with public star counts, artist search, category filters, schedule blocks, and a friend QR.</figcaption>
+            </figure>
+
+            <h2>Scorecard</h2>
+            <div class="table-scroll">
+            <table>
+                <thead><tr><th>Axis</th><th>Round 1 (describe only)</th><th>Round 2 (+ URL &amp; schema)</th></tr></thead>
+                <tbody>
+                    <tr><td>Data structures</td><td>★★★★☆ (owner-seeded lineup)</td><td>★★★★★ (fetched + flattened)</td></tr>
+                    <tr><td>Main views</td><td>★★★★★</td><td>★★★★★</td></tr>
+                    <tr><td><code>access.js</code> policy</td><td>★★★★★</td><td>★★★★★</td></tr>
+                    <tr><td>Real festival data</td><td>—</td><td>✅ 249 live sets</td></tr>
+                </tbody>
+            </table>
+            </div>
+
+            <h2>Apps, screenshots &amp; artifacts</h2>
+            <p>Everything here is live and clickable — open any of them, sign in, star a few sets.</p>
+            <div class="table-scroll">
+            <table>
+                <thead><tr><th>What</th><th>Live app</th><th>Screenshot</th><th>Prompt</th></tr></thead>
+                <tbody>
+                    <tr>
+                        <td><strong>2025 original</strong> (Meghan's afternoon vibe)</td>
+                        <td><a href="https://vibes.diy/vibe/og/cosmic-anansi-3972">og/cosmic-anansi-3972</a></td>
+                        <td><a href="{{assetPrefix}}images/blog/pickathon-prompt-eval/2025-original-cosmic-anansi.png">view</a></td>
+                        <td>—</td>
+                    </tr>
+                    <tr>
+                        <td><strong>2026 build</strong> (the target)</td>
+                        <td><a href="https://vibes.diy/vibe/og/pickathon-picker">og/pickathon-picker</a></td>
+                        <td><a href="{{assetPrefix}}images/blog/pickathon-prompt-eval/2026-pickathon-picker.png">view</a></td>
+                        <td>—</td>
+                    </tr>
+                    <tr>
+                        <td>Round 1 — fuller prompt</td>
+                        <td><a href="https://vibes.diy/vibe/garden-gnome/eval-fest-a1">eval-fest-a1</a> · <a href="https://vibes.diy/vibe/garden-gnome/eval-fest-a2">a2</a></td>
+                        <td>—</td>
+                        <td>Prompt A (136 words)</td>
+                    </tr>
+                    <tr>
+                        <td>Round 1 — short prompt</td>
+                        <td><a href="https://vibes.diy/vibe/garden-gnome/eval-fest-b1">eval-fest-b1</a></td>
+                        <td>—</td>
+                        <td>Prompt B (93 words)</td>
+                    </tr>
+                    <tr>
+                        <td>Round 2 — URL + schema</td>
+                        <td><a href="https://vibes.diy/vibe/garden-gnome/eval-fest-c2">eval-fest-c2</a> · <a href="https://vibes.diy/vibe/garden-gnome/eval-fest-c1">c1</a></td>
+                        <td><a href="{{assetPrefix}}images/blog/pickathon-prompt-eval/generated-c2-real-data.png">view</a></td>
+                        <td>Prompt C (228 words, + URL)</td>
+                    </tr>
+                </tbody>
+            </table>
+            </div>
+
+            <h2>What we learned</h2>
+            <ul>
+                <li><strong>Sharing language is a programming language now.</strong> "Stars are public," "notes only you can read," "blocks you can share with friends," and "connect by link to see each other's" deterministically produced public channels, owner channels, opt-in shared channels, and bidirectional grants — across every run, including the 93-word prompt. The hard, fiddly <code>access.js</code> was the <em>most</em> reliable part to reproduce.</li>
+                <li><strong>Name every data type you care about.</strong> The lone failure mode was a run silently dropping private notes. One clause fixes it.</li>
+                <li><strong>A URL plus a one-sentence schema beats a long description.</strong> The single biggest jump in fidelity came not from more feature prose but from telling the model where the data lives and what shape it is. That one paragraph turned a plausible demo into a near-exact functional clone that loads the real schedule.</li>
+                <li><strong>What's left is cosmetic, not structural.</strong> The remaining differences were naming (<code>connection</code> vs <code>friend</code>) and a bonus feature one run invented (caching the fetched lineup as a shared Fireproof doc so peers don't each re-fetch). Nothing missing — a couple of things extra.</li>
+            </ul>
+
+            <p>A year ago this was an afternoon vibe by one festival-goer scratching her own itch. Today, the parts that made it worth building — the data model and the permission rules — fall out of a single paragraph you could say to a friend. The grassroots hit didn't need an engineer in 2025, and it needs even less of one in 2026.</p>
+
+            <div class="post-cta">
+                <h3>Try it with your own idea.</h3>
+                <p>Type one sentence. Get a working app — data model and all.</p>
+                <a href="https://links.vibes.diy/homepage" class="btn">Start building →</a>
+            </div>
+
+        </div>
+    </article>
+</main>

@@ -1,0 +1,49 @@
+{
+  "slug": "ethics-philosophy",
+  "page_url": "/edu/ethics-philosophy.html",
+  "label": "Ethics & Philosophy",
+  "department": "Linguistics & Philosophy",
+  "vocabulary": [
+    "philosophy of mind and consciousness",
+    "dualism vs. physicalism",
+    "compatibilism and free will",
+    "personal identity over time",
+    "metaethics",
+    "moral subjectivism and objectivism",
+    "social construction of race and gender",
+    "feminist epistemology",
+    "the absurd and meaning of life",
+    "animal ethics",
+    "global justice",
+    "consumer responsibility",
+    "climate ethics",
+    "normative frameworks",
+    "epistemology",
+    "empiricism",
+    "rationalism"
+  ],
+  "sources": [
+    {
+      "institution": "MIT OCW",
+      "title": "24.00 Problems of Philosophy",
+      "url": "https://ocw.mit.edu/courses/linguistics-and-philosophy/"
+    },
+    {
+      "institution": "MIT OCW SHASS",
+      "title": "Good Food: Ethics and Politics of Food",
+      "url": "https://ocw.mit.edu/courses/linguistics-and-philosophy/"
+    },
+    {
+      "institution": "UT Austin",
+      "title": "PHL 301L: Early Modern Philosophy",
+      "url": "https://utdirect.utexas.edu/apps/student/coursedocs/nlogon/"
+    }
+  ],
+  "app_prompts": [
+    "Philosophy of mind explainer: user explores dualism vs. physicalism — what each position says about consciousness, the mind-body problem, and what evidence could settle the debate.",
+    "Applied ethics case study: user picks a scenario (factory farming, climate change, global poverty, AI development) and works through it using utilitarian, deontological, and virtue ethics frameworks.",
+    "Free will and moral responsibility quiz: user reads a scenario and decides: is the person morally responsible? The app traces compatibilist and incompatibilist reasoning through the case.",
+    "Epistemology challenge: user picks an everyday belief and traces its justification — what would Descartes, Hume, or Kant say about how you know this? What skeptical challenge can be raised?",
+    "Metaethics explainer: user explores whether moral facts are objective or constructed — what moral subjectivism, relativism, and realism each claim, and what the stakes are for everyday moral judgments."
+  ]
+}

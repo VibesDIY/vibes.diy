@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      body { width: 1200px; height: 630px; overflow: hidden; font-family: "Inter", "Helvetica Neue", sans-serif; position: relative; }
+      .bg { position: absolute; inset: 0; background: linear-gradient(rgba(0,0,0,0.52), rgba(0,0,0,0.7)), url("https://images.unsplash.com/photo-1746635732312?w=1920&q=80&fit=crop") center/cover no-repeat; }
+      .content { position: relative; z-index: 1; height: 100%; display: flex; flex-direction: column; justify-content: center; padding: 80px; }
+      .headline { font-size: 64px; font-weight: 900; color: #fff; line-height: 1.05; max-width: 820px; margin-bottom: 24px; letter-spacing: -0.03em; }
+      .headline em { font-style: normal; color: #ff4d00; }
+      .body { font-size: 26px; color: rgba(255,255,255,0.82); max-width: 680px; line-height: 1.5; }
+      .wordmark { position: absolute; bottom: 44px; right: 60px; font-family: sans-serif; font-size: 20px; font-weight: 700; color: rgba(255,255,255,0.65); letter-spacing: 0.5px; }
+    </style>
+  </head>
+  <body>
+    <div class="bg"></div>
+    <div class="content">
+      <div class="headline">Someone just <em>changed the rules</em>. Again.</div>
+      <div class="body">Apps your crew can change mid-game. Yours to customize.</div>
+    </div>
+    <div class="wordmark">vibes.diy</div>
+  </body>
+</html>

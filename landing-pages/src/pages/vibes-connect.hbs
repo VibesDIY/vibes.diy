@@ -1,0 +1,554 @@
+{{!--
+{
+  "layout": "webring",
+  "title": "Vibes Connect — Real-Time Data for Any JS Backend",
+  "description": "Connect your Vibes app's live database to Node, Deno, Bun, or Cloudflare Workers. Subscribe to real-time changes, write from scripts, and sync across every surface.",
+  "ogUrl": "https://good.vibes.diy/vibes-connect/",
+  "source": "vibes-connect",
+  "ogImage": "https://good.vibes.diy/images/screenshots/vibes-connect.jpg"
+}
+--}}
+
+<style>
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=optional");
+
+:root {
+  --bg: oklch(0.13 0.02 255);
+  --bg-elev: oklch(0.19 0.02 255);
+  --bg-deep: oklch(0.09 0.02 255);
+  --fg: oklch(0.97 0.005 260);
+  --fg-dim: oklch(0.65 0.015 260);
+  --fg-faint: oklch(0.42 0.015 260);
+  --border: oklch(1 0 0 / 0.07);
+  --border-strong: oklch(1 0 0 / 0.16);
+  --live: oklch(0.82 0.22 160);
+  --live-text: oklch(0.14 0.06 160);
+  --punk: oklch(0.72 0.22 290);
+  --warn: oklch(0.88 0.19 75);
+  --cyan: oklch(0.78 0.16 215);
+  --accent: oklch(0.72 0.22 290);
+}
+
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: "Inter", system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--fg);
+  line-height: 1.6;
+  font-size: 16px;
+  background-image:
+    radial-gradient(ellipse at 0% 0%, oklch(0.72 0.22 290 / 0.07), transparent 45%),
+    radial-gradient(ellipse at 100% 100%, oklch(0.82 0.22 160 / 0.06), transparent 45%);
+  background-attachment: fixed;
+  min-height: 100vh;
+}
+a { color: var(--live); text-decoration: none; border-bottom: 1px dashed oklch(0.82 0.22 160 / 0.45); transition: color 0.14s, border-color 0.14s; }
+a:hover { color: var(--fg); border-bottom-color: var(--fg); }
+code { font-family: "JetBrains Mono", monospace; font-size: 0.85em; background: var(--bg-deep); color: var(--live); padding: 1px 6px; border-radius: 4px; }
+
+/* ── Layout ── */
+.layout { max-width: 900px; margin: 0 auto; padding: 0 1.5rem; }
+
+/* ── Topbar ── */
+.topbar {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 1.1rem 0; border-bottom: 1px solid var(--border);
+  margin-bottom: 0;
+}
+.topbar .brand {
+  font-family: "JetBrains Mono", monospace; font-weight: 700; font-size: 1rem;
+  color: var(--fg); text-decoration: none; border-bottom: none;
+}
+.topbar .brand:hover { color: var(--live); }
+.topbar .back-link {
+  font-family: "JetBrains Mono", monospace; font-size: 0.72rem;
+  letter-spacing: 0.1em; text-transform: uppercase;
+  color: var(--fg-faint); border-bottom: none;
+}
+.topbar .back-link:hover { color: var(--live); }
+
+/* ── Hero ── */
+.hero { padding: 4.5rem 0 3rem; }
+.hero .eyebrow {
+  font-family: "JetBrains Mono", monospace; font-size: 0.68rem;
+  letter-spacing: 0.32em; text-transform: uppercase;
+  color: var(--live); margin-bottom: 1.1rem;
+  display: flex; align-items: center; gap: 0.6rem;
+}
+.eyebrow-dot {
+  display: inline-block; width: 6px; height: 6px;
+  background: var(--live); border-radius: 50%;
+  animation: pulse 2s infinite;
+}
+@keyframes pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(0.7); }
+}
+.hero h1 {
+  font-size: clamp(2.2rem, 5.5vw, 3.8rem); font-weight: 900;
+  letter-spacing: -0.035em; line-height: 1.05; margin-bottom: 1.2rem;
+}
+.hero h1 em { font-style: normal; color: var(--live); }
+.hero .sub {
+  font-size: 1.1rem; color: var(--fg-dim); max-width: 580px;
+  line-height: 1.7; margin-bottom: 2.5rem;
+}
+.hero-actions { display: flex; gap: 0.75rem; flex-wrap: wrap; }
+
+/* ── Pill badges row ── */
+.runtime-row {
+  display: flex; gap: 0.5rem; flex-wrap: wrap; margin: 1.75rem 0 0;
+}
+.runtime-pill {
+  font-family: "JetBrains Mono", monospace; font-size: 0.65rem;
+  letter-spacing: 0.12em; text-transform: uppercase;
+  background: var(--bg-elev); border: 1px solid var(--border-strong);
+  border-radius: 20px; padding: 4px 12px; color: var(--fg-dim);
+}
+
+/* ── Section labels ── */
+.section-label {
+  padding: 3.5rem 0 0.4rem;
+  font-family: "JetBrains Mono", monospace; font-size: 0.68rem;
+  letter-spacing: 0.32em; text-transform: uppercase; color: var(--fg-faint);
+}
+.section-label::before { content: "// "; color: var(--live); }
+.section-title {
+  font-size: clamp(1.35rem, 3vw, 1.85rem); font-weight: 800;
+  letter-spacing: -0.025em; margin-bottom: 0.55rem; line-height: 1.2;
+}
+.section-sub { color: var(--fg-dim); font-size: 0.95rem; margin-bottom: 1.25rem; line-height: 1.65; max-width: 680px; }
+
+/* ── Feature grid ── */
+.feature-grid {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin: 1.25rem 0;
+}
+@media (max-width: 700px) { .feature-grid { grid-template-columns: 1fr; } }
+@media (min-width: 480px) and (max-width: 700px) { .feature-grid { grid-template-columns: 1fr 1fr; } }
+
+.feature-card {
+  background: var(--bg-elev); border: 1px solid var(--border);
+  border-radius: 12px; padding: 1.5rem;
+  transition: border-color 0.15s, transform 0.15s;
+}
+.feature-card:hover { border-color: var(--live); transform: translateY(-2px); }
+.feature-card .icon {
+  font-family: "JetBrains Mono", monospace; font-size: 1.1rem;
+  color: var(--live); margin-bottom: 0.75rem; display: block;
+}
+.feature-card h3 { font-size: 0.97rem; font-weight: 700; margin-bottom: 0.4rem; color: var(--fg); }
+.feature-card p { font-size: 0.85rem; color: var(--fg-dim); line-height: 1.55; }
+
+/* ── Code blocks ── */
+.cmd {
+  background: var(--bg-deep); border: 1px solid var(--border-strong);
+  border-radius: 12px; padding: 1.25rem 1.5rem;
+  font-family: "JetBrains Mono", monospace; font-size: 0.88rem; line-height: 1.85;
+  overflow-x: auto; margin: 1rem 0; position: relative;
+}
+.cmd::before {
+  content: "shell"; position: absolute; top: 0; right: 0;
+  padding: 4px 12px; background: var(--border); border-bottom-left-radius: 8px;
+  font-size: 0.58rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--fg-faint);
+}
+.cmd--js::before { content: "javascript"; }
+.cmd--ts::before { content: "typescript"; }
+.cmd--copy::before { display: none; }
+.cmd .p { color: var(--live); user-select: none; }
+.cmd .c { color: var(--fg-faint); }
+.cmd .k { color: var(--punk); }
+.cmd .s { color: var(--warn); }
+.cmd .b { color: var(--fg); font-weight: 600; }
+.cmd .fn { color: var(--live); }
+.cmd .raw { display: none; }
+
+.copy-btn {
+  position: absolute; top: 0; right: 0; padding: 6px 14px;
+  background: var(--border); color: var(--fg-faint); border: none;
+  border-bottom-left-radius: 8px; font-family: "JetBrains Mono", monospace;
+  font-size: 0.58rem; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase;
+  cursor: pointer; transition: background 0.12s, color 0.12s; z-index: 2;
+}
+.copy-btn:hover { background: var(--live); color: var(--live-text); }
+.copy-btn.copied { background: var(--live); color: var(--live-text); }
+
+/* ── Use-case cards ── */
+.use-case-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin: 1.25rem 0;
+}
+@media (max-width: 600px) { .use-case-grid { grid-template-columns: 1fr; } }
+
+.use-case-card {
+  background: var(--bg-elev); border: 1px solid var(--border);
+  border-radius: 12px; padding: 1.5rem;
+}
+.use-case-card .uc-tag {
+  display: inline-block; font-family: "JetBrains Mono", monospace;
+  font-size: 0.6rem; letter-spacing: 0.18em; text-transform: uppercase;
+  padding: 2px 8px; border-radius: 4px; margin-bottom: 0.75rem;
+  background: oklch(0.82 0.22 160 / 0.12); color: var(--live);
+  border: 1px solid oklch(0.82 0.22 160 / 0.25);
+}
+.use-case-card h3 { font-size: 1rem; font-weight: 700; margin-bottom: 0.4rem; }
+.use-case-card p { font-size: 0.87rem; color: var(--fg-dim); line-height: 1.55; }
+
+/* ── Callout list ── */
+.callout-list {
+  list-style: none; background: var(--bg-elev); border: 1px solid var(--border);
+  border-radius: 10px; padding: 1.25rem 1.5rem; margin: 1rem 0;
+}
+.callout-list li {
+  padding: 0.45rem 0; font-size: 0.93rem; color: var(--fg-dim); line-height: 1.55;
+  border-bottom: 1px solid var(--border);
+}
+.callout-list li:last-child { border-bottom: none; }
+
+/* ── Accent callout ── */
+.accent-callout {
+  background: oklch(0.82 0.22 160 / 0.07); border: 1px solid oklch(0.82 0.22 160 / 0.2);
+  border-radius: 10px; padding: 1.25rem 1.5rem; margin: 1.25rem 0;
+}
+.accent-callout ul { list-style: none; display: flex; flex-direction: column; gap: 0.55rem; }
+.accent-callout li { font-size: 0.93rem; color: var(--fg-dim); line-height: 1.55; }
+.accent-callout li::before { content: "→ "; color: var(--live); }
+
+/* ── How it works steps ── */
+.steps { display: flex; flex-direction: column; gap: 0; }
+.step-row {
+  display: grid; grid-template-columns: 2.75rem 1fr; gap: 1.25rem;
+  padding: 1.5rem 0; border-bottom: 1px solid var(--border);
+}
+.step-row:last-child { border-bottom: none; }
+.step-num {
+  font-family: "JetBrains Mono", monospace; font-size: 0.65rem;
+  letter-spacing: 0.2em; color: var(--live); font-weight: 700;
+  padding-top: 0.15rem; text-transform: uppercase;
+}
+.step-body h3 { font-size: 1rem; font-weight: 700; margin-bottom: 0.35rem; }
+.step-body p { font-size: 0.9rem; color: var(--fg-dim); line-height: 1.6; }
+
+/* ── Two-col layout ── */
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; margin: 1.25rem 0; }
+@media (max-width: 600px) { .two-col { grid-template-columns: 1fr; } }
+
+/* ── CTA block ── */
+.cta-block {
+  margin: 4rem 0 2rem; padding: 2.75rem;
+  background: var(--bg-elev); border: 1px solid var(--border-strong);
+  border-radius: 16px; position: relative; overflow: hidden;
+}
+.cta-block::before {
+  content: ""; position: absolute; inset: 0;
+  background: radial-gradient(ellipse at 100% 0%, oklch(0.72 0.22 290 / 0.08), transparent 60%);
+  pointer-events: none;
+}
+.cta-block h2 { font-size: 1.75rem; font-weight: 900; letter-spacing: -0.03em; margin-bottom: 0.6rem; }
+.cta-block p { color: var(--fg-dim); font-size: 0.97rem; margin-bottom: 1.5rem; max-width: 560px; }
+.cta-actions { display: flex; gap: 0.75rem; flex-wrap: wrap; }
+
+/* ── Buttons ── */
+.btn {
+  display: inline-block; padding: 0.65rem 1.5rem;
+  background: var(--live); color: var(--live-text) !important;
+  font-weight: 700; font-size: 0.9rem; border-radius: 8px;
+  text-decoration: none; border: none; border-bottom: none; transition: opacity 0.15s;
+}
+.btn:hover { opacity: 0.82; color: var(--live-text) !important; border-bottom: none; }
+.btn-ghost {
+  background: transparent; color: var(--fg) !important;
+  border: 1px solid var(--border-strong); border-bottom: 1px solid var(--border-strong) !important;
+  border-radius: 8px; padding: 0.65rem 1.5rem;
+}
+.btn-ghost:hover { border-color: var(--live) !important; color: var(--live) !important; }
+
+/* ── Footer ── */
+footer.term-footer {
+  padding: 1.5rem 0; border-top: 1px solid var(--border);
+  font-family: "JetBrains Mono", monospace; font-size: 0.63rem;
+  letter-spacing: 0.18em; text-transform: uppercase; color: var(--fg-faint);
+  display: flex; justify-content: space-between; flex-wrap: wrap; gap: 1rem;
+  margin-bottom: 2rem;
+}
+footer.term-footer a { color: var(--fg-faint); border-bottom: none; }
+footer.term-footer a:hover { color: var(--live); }
+</style>
+
+<div class="layout">
+  <header class="topbar">
+    <a href="https://links.vibes.diy/homepage" class="brand">vibes.diy</a>
+    <a href="/creator-documentation/" class="back-link">← Creator Docs</a>
+  </header>
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="eyebrow">
+      <span class="eyebrow-dot"></span>
+      vibes connect · use-vibes
+    </div>
+    <h1>Your app's data,<br><em>everywhere it needs to be.</em></h1>
+    <p class="sub">
+      The same Fireproof database that powers your Vibes app is reachable from any JavaScript runtime.
+      Subscribe to live changes, write records from cron jobs, build webhooks, sync to external services —
+      without ever leaving your stack.
+    </p>
+    <div class="hero-actions">
+      <a class="btn" href="#quickstart">Get started →</a>
+      <a class="btn-ghost btn" href="/connect-backend-data/">Full API reference</a>
+    </div>
+    <div class="runtime-row">
+      <span class="runtime-pill">Node.js</span>
+      <span class="runtime-pill">Deno</span>
+      <span class="runtime-pill">Bun</span>
+      <span class="runtime-pill">Cloudflare Workers</span>
+      <span class="runtime-pill">AWS Lambda</span>
+      <span class="runtime-pill">Any npm runtime</span>
+    </div>
+  </section>
+
+  <!-- WHAT IT IS -->
+  <div class="section-label">what it is</div>
+  <h2 class="section-title">One package. Every surface.</h2>
+  <p class="section-sub">
+    <code>use-vibes</code> is the bridge between the database inside your Vibes app and the rest of your infrastructure.
+    Install it anywhere npm packages run, point it at your app's <code>appSlug</code>, and you have full read/write access with live WebSocket subscriptions.
+  </p>
+
+  <div class="feature-grid">
+    <div class="feature-card">
+      <span class="icon">⚡</span>
+      <h3>Real-time subscriptions</h3>
+      <p>WebSocket-backed <code>subscribe()</code> fires your callback on every change — from any connected writer, anywhere in the world.</p>
+    </div>
+    <div class="feature-card">
+      <span class="icon">✍</span>
+      <h3>Full read/write</h3>
+      <p><code>put</code>, <code>get</code>, <code>del</code>, <code>query</code>. Write records from scripts, crons, or service workers. Read them back with index queries.</p>
+    </div>
+    <div class="feature-card">
+      <span class="icon">🔒</span>
+      <h3>Same auth, zero config</h3>
+      <p>Reuses the device cert from <code>npx vibes-diy login</code>. No API keys to rotate, no separate service account to manage.</p>
+    </div>
+    <div class="feature-card">
+      <span class="icon">∞</span>
+      <h3>Instance caching</h3>
+      <p>Multiple <code>fireproof()</code> calls in one process share one WebSocket connection. Scale to hundreds of databases without multiplying sockets.</p>
+    </div>
+    <div class="feature-card">
+      <span class="icon">⛓</span>
+      <h3>Works in Workers</h3>
+      <p>Deploy to Cloudflare Workers or AWS Lambda. Pass explicit <code>getToken</code> and <code>userSlug</code> for stateless, CI-friendly execution.</p>
+    </div>
+    <div class="feature-card">
+      <span class="icon">↗</span>
+      <h3>ESM-native</h3>
+      <p>Import from npm or directly via <code>esm.sh</code> for Deno / Bun. No build step required for scripting use cases.</p>
+    </div>
+  </div>
+
+  <!-- QUICKSTART -->
+  <div class="section-label" id="quickstart">quickstart</div>
+  <h2 class="section-title">Up in two commands</h2>
+
+  <div class="two-col">
+    <div>
+      <p class="section-sub" style="margin-bottom: 0.5rem;">Authenticate once per device.</p>
+      <div class="cmd cmd--copy">
+        <button class="copy-btn" type="button">COPY</button>
+        <span class="raw">npx vibes-diy login</span><span class="p">$</span> npx <span class="b">vibes-diy</span> login
+      </div>
+    </div>
+    <div>
+      <p class="section-sub" style="margin-bottom: 0.5rem;">Install the package.</p>
+      <div class="cmd cmd--copy">
+        <button class="copy-btn" type="button">COPY</button>
+        <span class="raw">npm install use-vibes</span><span class="p">$</span> npm install <span class="b">use-vibes</span>
+      </div>
+    </div>
+  </div>
+
+  <p class="section-sub" style="margin-top: 1rem;">Then connect to your app's database. You need the <code>appSlug</code> from its URL (<code>vibes.diy/vibe/&lt;userSlug&gt;/<b>appSlug</b></code>) and the database name your <code>App.jsx</code> passes to <code>fireproof()</code>.</p>
+
+  <div class="cmd cmd--js cmd--copy">
+    <button class="copy-btn" type="button">COPY</button>
+    <span class="raw">import { fireproof } from "use-vibes";
+
+const db = fireproof("todos", { appSlug: "my-todo-app" });
+
+// Read
+const { docs } = await db.query("status", { key: "open" });
+
+// Write
+const ok = await db.put({ type: "todo", text: "hello from Node", status: "open" });
+
+// Subscribe to live changes
+db.subscribe((changes) => {
+  console.log("update:", changes);
+}, true);</span><span class="k">import</span> { <span class="fn">fireproof</span> } <span class="k">from</span> <span class="s">"use-vibes"</span>;<br/><br/><span class="k">const</span> db = <span class="fn">fireproof</span>(<span class="s">"todos"</span>, { appSlug: <span class="s">"my-todo-app"</span> });<br/><br/><span class="c">// Read</span><br/><span class="k">const</span> { docs } = <span class="k">await</span> db.<span class="fn">query</span>(<span class="s">"status"</span>, { key: <span class="s">"open"</span> });<br/><br/><span class="c">// Write</span><br/><span class="k">const</span> ok = <span class="k">await</span> db.<span class="fn">put</span>({ type: <span class="s">"todo"</span>, text: <span class="s">"hello from Node"</span>, status: <span class="s">"open"</span> });<br/><br/><span class="c">// Subscribe to live changes</span><br/>db.<span class="fn">subscribe</span>((changes) => {<br/>&nbsp;&nbsp;console.<span class="fn">log</span>(<span class="s">"update:"</span>, changes);<br/>}, <span class="k">true</span>);
+  </div>
+
+  <ul class="callout-list">
+    <li>First arg to <code>fireproof()</code> is the database name — must match what your <code>App.jsx</code> uses</li>
+    <li><code>appSlug</code> scopes the connection to your vibe; pass it explicitly so scripts work from any directory</li>
+    <li><code>subscribe(fn, true)</code> — second arg fires immediately with current state before WebSocket events arrive</li>
+    <li>Same <code>fireproof("todos")</code> call returns the cached instance within a process — one socket per process</li>
+  </ul>
+
+  <!-- USE CASES -->
+  <div class="section-label">what people build</div>
+  <h2 class="section-title">Connect everything</h2>
+  <p class="section-sub">Once your app's data is reachable from a script, the integration surface is unlimited.</p>
+
+  <div class="use-case-grid">
+    <div class="use-case-card">
+      <span class="uc-tag">automation</span>
+      <h3>Cron-powered workflows</h3>
+      <p>Write a daily digest, expire old records, or seed fresh data on a schedule. A ten-line Node script + a cron is all it takes.</p>
+    </div>
+    <div class="use-case-card">
+      <span class="uc-tag">integration</span>
+      <h3>Webhook fan-out</h3>
+      <p>Subscribe to database changes and forward them to Slack, Discord, email, or any HTTP endpoint — without polling.</p>
+    </div>
+    <div class="use-case-card">
+      <span class="uc-tag">backend</span>
+      <h3>Serverless API layer</h3>
+      <p>Wrap your Vibes database in a Cloudflare Worker or Lambda to expose validated REST or GraphQL endpoints to other clients.</p>
+    </div>
+    <div class="use-case-card">
+      <span class="uc-tag">data</span>
+      <h3>Export &amp; reporting</h3>
+      <p>Pull records with <code>allDocs()</code> or indexed queries, transform them, and push to a data warehouse, spreadsheet, or BI tool.</p>
+    </div>
+    <div class="use-case-card">
+      <span class="uc-tag">devtools</span>
+      <h3>Seed &amp; migration scripts</h3>
+      <p>Batch-write initial data, migrate schema across document versions, or copy records between app slugs during development.</p>
+    </div>
+    <div class="use-case-card">
+      <span class="uc-tag">ai</span>
+      <h3>AI pipeline triggers</h3>
+      <p>Subscribe to new user submissions and pipe them into an LLM workflow — summarize, classify, embed, or generate replies automatically.</p>
+    </div>
+    <div class="use-case-card">
+      <span class="uc-tag">sync</span>
+      <h3>Multi-surface sync</h3>
+      <p>Keep a mobile app, a dashboard, and a backend script all reading the same live database with zero reconciliation code.</p>
+    </div>
+    <div class="use-case-card">
+      <span class="uc-tag">monitoring</span>
+      <h3>Health &amp; alerting</h3>
+      <p>Subscribe to error or event records written by your Vibes app and trigger PagerDuty, SMS, or email when thresholds are crossed.</p>
+    </div>
+  </div>
+
+  <!-- HOW IT WORKS -->
+  <div class="section-label">how it works</div>
+  <h2 class="section-title">Under the hood</h2>
+
+  <div class="cmd" style="margin-bottom: 1.5rem;">
+    <div class="steps">
+      <div class="step-row">
+        <div class="step-num">01</div>
+        <div class="step-body">
+          <h3>Login stores a device certificate</h3>
+          <p><code>npx vibes-diy login</code> authenticates you and stores a long-lived device cert in a local keybag. Every subsequent call to <code>fireproof()</code> picks it up automatically — no tokens to copy, no env vars to set for local use.</p>
+        </div>
+      </div>
+      <div class="step-row">
+        <div class="step-num">02</div>
+        <div class="step-body">
+          <h3>appSlug routes to your database namespace</h3>
+          <p>Vibes apps live at <code>vibes.diy/vibe/&lt;userSlug&gt;/&lt;appSlug&gt;</code>. When you pass <code>appSlug</code> to <code>fireproof()</code>, the library resolves your <code>userSlug</code> automatically from your logged-in account and opens the matching database namespace.</p>
+        </div>
+      </div>
+      <div class="step-row">
+        <div class="step-num">03</div>
+        <div class="step-body">
+          <h3>One WebSocket, many databases</h3>
+          <p>All <code>fireproof()</code> instances in a process share one multiplexed WebSocket to the Vibes sync server. Open ten databases — you still have one socket. Subscriptions are demultiplexed automatically.</p>
+        </div>
+      </div>
+      <div class="step-row">
+        <div class="step-num">04</div>
+        <div class="step-body">
+          <h3>Writes propagate to the browser instantly</h3>
+          <p>Records written from your backend script appear in the Vibes app's UI within milliseconds — the same sync path that handles browser-to-browser collaboration handles script-to-browser too.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CI / WORKERS CONFIG -->
+  <div class="section-label">ci &amp; serverless</div>
+  <h2 class="section-title">Explicit config for stateless environments</h2>
+  <p class="section-sub">For Cloudflare Workers, AWS Lambda, GitHub Actions, or any environment without a device keybag — pass all options explicitly.</p>
+
+  <div class="cmd cmd--ts cmd--copy">
+    <button class="copy-btn" type="button">COPY</button>
+    <span class="raw">import { fireproof } from "use-vibes";
+
+const db = fireproof("todos", {
+  apiUrl: "https://vibes.diy/api",
+  appSlug: "my-todo-app",
+  userSlug: "alice",
+  getToken: async () => ({ token: process.env.VIBES_TOKEN }),
+});</span><span class="k">import</span> { <span class="fn">fireproof</span> } <span class="k">from</span> <span class="s">"use-vibes"</span>;<br/><br/><span class="k">const</span> db = <span class="fn">fireproof</span>(<span class="s">"todos"</span>, {<br/>&nbsp;&nbsp;apiUrl: <span class="s">"https://vibes.diy/api"</span>,<br/>&nbsp;&nbsp;appSlug: <span class="s">"my-todo-app"</span>,<br/>&nbsp;&nbsp;userSlug: <span class="s">"alice"</span>,<br/>&nbsp;&nbsp;<span class="fn">getToken</span>: <span class="k">async</span> () => ({ token: process.env.<span class="b">VIBES_TOKEN</span> }),<br/>});
+  </div>
+
+  <div class="accent-callout">
+    <ul>
+      <li>Set <code>VIBES_APP_SLUG</code> in env to skip passing <code>appSlug</code> in every call — useful in single-app Workers</li>
+      <li>Set <code>VIBES_DIY_API_URL</code> to override the default API endpoint for staging or self-hosted installs</li>
+      <li>First call's connection options win for the whole process — later <code>fireproof()</code> calls with different db names inherit them</li>
+    </ul>
+  </div>
+
+  <!-- CTA -->
+  <div class="cta-block">
+    <h2>Start connecting today.</h2>
+    <p>
+      Open your Vibes app, copy the <code>appSlug</code> from its URL, find the <code>fireproof()</code> call in <code>App.jsx</code>,
+      and run <code>npx vibes-diy login</code>. You'll have live data in your script in under five minutes.
+    </p>
+    <div class="cta-actions">
+      <a class="btn" href="https://links.vibes.diy/homepage">Open Vibes DIY →</a>
+      <a class="btn-ghost btn" href="/connect-backend-data/">Full API Reference</a>
+      <a class="btn-ghost btn" href="/creator-documentation/">← All Docs</a>
+    </div>
+  </div>
+
+  {{> newsletter}}
+<footer class="term-footer">
+    <span>$ use-vibes · npm install use-vibes</span>
+    <span>
+      <a href="https://links.vibes.diy/discord">discord</a>
+      &nbsp;·&nbsp;
+      <a href="https://links.vibes.diy/CLI">github</a>
+      &nbsp;·&nbsp;
+      <a href="/creator-documentation/">docs</a>
+      &nbsp;·&nbsp;
+      <a href="https://links.vibes.diy/homepage">home</a>
+    </span>
+  </footer>
+</div>
+
+<script>
+  document.querySelectorAll('.copy-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const block = btn.closest('.cmd');
+      const raw = block.querySelector('.raw');
+      const text = raw ? raw.textContent.trim() : '';
+      if (!text) return;
+      navigator.clipboard.writeText(text).then(() => {
+        btn.textContent = 'COPIED ✓';
+        btn.classList.add('copied');
+        setTimeout(() => { btn.textContent = 'COPY'; btn.classList.remove('copied'); }, 1800);
+      }).catch(() => {
+        btn.textContent = 'FAILED';
+        setTimeout(() => { btn.textContent = 'COPY'; }, 1800);
+      });
+    });
+  });
+</script>

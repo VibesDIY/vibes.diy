@@ -1,0 +1,101 @@
+{{!--
+{
+  "layout": "webring",
+  "title": "Pattern Play | Mind Games",
+  "description": "Match, slide, fall, flip. Four tile-matching variations — each one a live deployed app.",
+  "ogUrl": "https://good.vibes.diy/mind-games/tiles.html",
+  "source": "mind-games-tiles"
+}
+--}}
+
+<style>
+  @import url("https://fonts.googleapis.com/css2?family=Yeseva+One&family=DM+Sans:wght@400;700&display=swap");
+
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    font-family:'DM Sans', system-ui, sans-serif;
+    background:#0f3d2e;
+    color:#fff8e7;
+    min-height:100vh;
+    background-image:repeating-linear-gradient(0deg, rgba(255,248,231,.04) 0 1px, transparent 1px 60px), repeating-linear-gradient(90deg, rgba(255,248,231,.04) 0 1px, transparent 1px 60px);
+    background-attachment:fixed;
+  }
+  a{color:inherit;text-decoration:none}
+  .wrap{max-width:1100px;margin:0 auto;padding:64px 24px 96px;position:relative;z-index:1}
+  header.top{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:48px;gap:24px;flex-wrap:wrap}
+  header.top a.back{color:#fff8e7;text-decoration:none;opacity:.6;font-size:14px}
+  header.top a.back:hover{opacity:1}
+  h1{font-family:'Yeseva One', 'DM Sans', serif;font-size:clamp(40px,7vw,84px);margin:0;line-height:.95;letter-spacing:-.02em}
+  .desc{max-width:560px;font-size:18px;opacity:.75;margin:16px 0 0}
+  .accent-bar{display:inline-block;height:6px;width:120px;background:#e8b54d;margin:24px 0 0}
+  .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:32px;margin-top:56px}
+  @media (max-width:720px){.grid{grid-template-columns:1fr}}
+  .card{background:#164a39;border:1px solid #e8b54d;border-radius:8px;box-shadow:0 6px 0 #082a1f;overflow:hidden;display:flex;flex-direction:column;transition:transform .15s ease}
+  .card:hover{transform:translateY(-2px)}
+  .shot{display:block;aspect-ratio:16/10;background:#0f3d2e;overflow:hidden;border-bottom:1px solid #e8b54d}
+  .shot img{width:100%;height:100%;object-fit:cover;display:block}
+  .meta{padding:20px 22px 24px}
+  .meta h3{margin:0 0 10px;font-family:'Yeseva One', 'DM Sans', serif;font-size:24px;letter-spacing:-.01em}
+  .meta h3 a{color:inherit;text-decoration:none}
+  .meta h3 a:hover{color:#e8b54d}
+  .prompt{margin:0 0 16px;font-size:14px;line-height:1.55;opacity:.78}
+  .play{display:inline-flex;align-items:center;gap:6px;color:#e8b54d;font-weight:700;text-decoration:none;font-size:14px;letter-spacing:.02em}
+  .play:hover{text-decoration:underline}
+  footer{margin-top:64px;font-size:13px;opacity:.5}
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div>
+      <h1>Pattern Play</h1>
+      <p class="desc">Match, slide, fall, flip. Four variations on the theme, each one a live deployed app you can poke at.</p>
+      <div class="accent-bar"></div>
+    </div>
+    <a class="back" href="./index.html">&larr; Mind Games hub</a>
+  </header>
+  <main class="grid">
+    <article class="card">
+      <a class="shot" href="https://vibes.diy/vibe/jchris/memory-tiles" target="_blank" rel="noopener">
+        <img src="https://memory-tiles--jchris.prod-v2.vibesdiy.net/screenshot.jpg" alt="Pair Patterns preview" loading="lazy"/>
+      </a>
+      <div class="meta">
+        <h3><a href="https://vibes.diy/vibe/jchris/memory-tiles" target="_blank" rel="noopener">Pair Patterns</a></h3>
+        <p class="prompt">Grid of pattern tiles; tap two to test pair match. Matching patterns vanish. Clear board in fewest moves. Three pattern difficulties.</p>
+        <a class="play" href="https://vibes.diy/vibe/jchris/memory-tiles" target="_blank" rel="noopener">Play live &rarr;</a>
+      </div>
+    </article>
+    <article class="card">
+      <a class="shot" href="https://vibes.diy/vibe/jchris/edge-connect" target="_blank" rel="noopener">
+        <img src="https://edge-connect--jchris.prod-v2.vibesdiy.net/screenshot.jpg" alt="Flow Tiles preview" loading="lazy"/>
+      </a>
+      <div class="meta">
+        <h3><a href="https://vibes.diy/vibe/jchris/edge-connect" target="_blank" rel="noopener">Flow Tiles</a></h3>
+        <p class="prompt">Slide pattern tiles on grid to connect matching edges into continuous paths. Locked tiles as obstacles. Levels with growing grid size.</p>
+        <a class="play" href="https://vibes.diy/vibe/jchris/edge-connect" target="_blank" rel="noopener">Play live &rarr;</a>
+      </div>
+    </article>
+    <article class="card">
+      <a class="shot" href="https://vibes.diy/vibe/jchris/memory-pairs" target="_blank" rel="noopener">
+        <img src="https://memory-pairs--jchris.prod-v2.vibesdiy.net/screenshot.jpg" alt="Memory Flip preview" loading="lazy"/>
+      </a>
+      <div class="meta">
+        <h3><a href="https://vibes.diy/vibe/jchris/memory-pairs" target="_blank" rel="noopener">Memory Flip</a></h3>
+        <p class="prompt">Memory pairs game. Tap tiles to flip; find pairs. Geometric patterns rather than emoji. Track moves and best score. Three grid sizes.</p>
+        <a class="play" href="https://vibes.diy/vibe/jchris/memory-pairs" target="_blank" rel="noopener">Play live &rarr;</a>
+      </div>
+    </article>
+    <article class="card">
+      <a class="shot" href="https://vibes.diy/vibe/jchris/triple-match" target="_blank" rel="noopener">
+        <img src="https://triple-match--jchris.prod-v2.vibesdiy.net/screenshot.jpg" alt="Cascade preview" loading="lazy"/>
+      </a>
+      <div class="meta">
+        <h3><a href="https://vibes.diy/vibe/jchris/triple-match" target="_blank" rel="noopener">Cascade</a></h3>
+        <p class="prompt">Match-three pattern game. Swap adjacent tiles; three or more same vanish. Tiles fall, chain combos score multiplier. Sixty-second daily mode.</p>
+        <a class="play" href="https://vibes.diy/vibe/jchris/triple-match" target="_blank" rel="noopener">Play live &rarr;</a>
+      </div>
+    </article>
+  </main>
+  {{> newsletter}}
+<footer>Built with vibes.diy. Each card is a one-prompt mini-app.</footer>
+</div>

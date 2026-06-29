@@ -1,0 +1,129 @@
+{
+  "source": "MIT OpenCourseWare — Humanities",
+  "location": "Cambridge, MA",
+  "region": "Northeast",
+  "fetched": "2026-05-19",
+  "items": [
+    {
+      "title": "21H.102 American History Since 1865",
+      "department": "History",
+      "year": 2018,
+      "url": "https://ocw.mit.edu/courses/21h-102-american-history-since-1865-spring-2018/",
+      "fetch_method": "direct",
+      "topics": [
+        "Reconstruction",
+        "Gilded Age industrialization",
+        "progressive reform",
+        "Jim Crow and racial segregation",
+        "New Deal",
+        "Cold War culture",
+        "Civil Rights Movement",
+        "Black Freedom Struggle",
+        "New Left",
+        "neoliberalism",
+        "historiography of primary sources"
+      ],
+      "source_text": "The course surveys United States history from the Civil War's end through the present. Students examine both secondary accounts and primary documents to understand major transformations in American development. Key topics include westward expansion conflicts, immigration and industrialization, U.S. global emergence, domestic and international Cold War dynamics, Civil Rights and social movements, and the digital age transition."
+    },
+    {
+      "title": "21H.009 The World: 1400-Present",
+      "department": "History",
+      "year": 2014,
+      "url": "https://ocw.mit.edu/courses/21h-009-the-world-1400-present-spring-2014/",
+      "fetch_method": "direct",
+      "topics": [
+        "world history methodology",
+        "Atlantic revolutions",
+        "the Great Divergence",
+        "imperialism and colonialism",
+        "global trade networks",
+        "Wilsonian moment",
+        "total war and mass society",
+        "Cold War as ideology",
+        "postcolonial migration",
+        "cross-cultural contact and conflict"
+      ],
+      "source_text": "The course surveys 'the economic and political evolution of societies and cultures from 1400 to the present,' examining increasing global interaction, Western Europe's rise, and divergence between regions. It explores 'evolving relationships, including human beings and their physical environment; religious and political systems; and sub-groups within communities, sorted by race, class, and gender,' using diverse source materials including architectural and visual evidence."
+    },
+    {
+      "title": "21L.002X Foundations of World Culture II: World Literatures and Texts",
+      "department": "Literature",
+      "year": 2012,
+      "url": "https://ocw.mit.edu/courses/21l-002x-foundations-of-world-culture-ii-world-literatures-and-texts-spring-2012/",
+      "fetch_method": "direct",
+      "topics": [
+        "Orientalism",
+        "postcolonial theory",
+        "the Enlightenment canon",
+        "feminist epistemology",
+        "disciplinary power (Foucault)",
+        "social contract and liberalism",
+        "Marxist critique",
+        "psychoanalytic criticism",
+        "subaltern studies",
+        "close reading of canonical texts"
+      ],
+      "source_text": "The course examines 'foundational texts of human culture, focusing on early modernity until the recent past.' Many readings challenge established traditions regarding women's status, colonialism, religion, and monarchical rule. Primary texts span Chinese literature (Cao Xuegin), philosophical works (Kant, Nietzsche, Mill), novels addressing colonialism and gender (Conrad, Salih, Kincaid), plus theoretical texts by Freud, Said, and Foucault."
+    },
+    {
+      "title": "21L.003 Introduction to Fiction",
+      "department": "Literature",
+      "year": 2003,
+      "url": "https://ocw.mit.edu/courses/21l-003-introduction-to-fiction-fall-2003/",
+      "fetch_method": "direct",
+      "topics": [
+        "close reading",
+        "narrative voice and point of view",
+        "Gothic fiction",
+        "the Bildungsroman",
+        "colonial encounter in fiction",
+        "war narrative",
+        "feminist literary criticism",
+        "modernist stream of consciousness",
+        "cross-cultural fiction",
+        "textual analysis"
+      ],
+      "source_text": "This course 'investigates the uses and boundaries of fiction in a range of novels and narrative styles — traditional and innovative, western and nonwestern,' exploring 'questions about the pleasures and meanings of verbal texts in different cultures, times, and forms.' Students are directed to a close reading guide addressing 'Why do we do close reading in literary study?' as a foundational approach framing the entire curriculum."
+    },
+    {
+      "title": "24.00 Problems of Philosophy",
+      "department": "Linguistics & Philosophy",
+      "year": 2019,
+      "url": "https://ocw.mit.edu/courses/24-00-problems-of-philosophy-fall-2019/",
+      "fetch_method": "direct",
+      "topics": [
+        "theism and the problem of evil",
+        "philosophy of mind and consciousness",
+        "dualism vs. physicalism",
+        "compatibilism and free will",
+        "personal identity over time",
+        "metaethics",
+        "moral subjectivism and objectivism",
+        "social construction of race and gender",
+        "feminist epistemology",
+        "the absurd and meaning of life"
+      ],
+      "source_text": "The syllabus describes the course as an introduction to 'problems in ethics, metaphysics, theory of knowledge, and philosophy of logic, language, and science,' with 'emphasis on examination and evaluation of proposed solutions to the problems.' Central questions include 'Can we prove the existence or nonexistence of a God?', 'What is the place of our consciousness in the physical world?', and 'Are there objective facts about what's good and bad?'"
+    },
+    {
+      "title": "24.118 Paradox and Infinity",
+      "department": "Linguistics & Philosophy",
+      "year": 2019,
+      "url": "https://ocw.mit.edu/courses/24-118-paradox-and-infinity-spring-2019/",
+      "fetch_method": "direct",
+      "topics": [
+        "infinite cardinalities",
+        "the higher infinite",
+        "omega-sequence paradoxes",
+        "time travel paradoxes",
+        "Newcomb's problem and decision theory",
+        "non-measurable sets",
+        "Banach-Tarski theorem",
+        "computability theory",
+        "Gödel's incompleteness theorems",
+        "philosophy of mathematics"
+      ],
+      "source_text": "The course presents 'highlights of the more technical side of philosophy' by examining 'a cluster of puzzles, paradoxes, and intellectual wonders — from the higher infinite to Gödel's Theorem' and their philosophical implications. Session topics progress from Infinite Cardinalities (Ch. 1) through The Higher Infinite (Ch. 2), Omega-Sequence Paradoxes (Ch. 3), Time Travel (Ch. 4), Newcomb's Problem (Ch. 5), Probability (Ch. 6), Non-Measurable Sets (Ch. 7), the Banach-Tarski Theorem (Ch. 8), Computability (Ch. 9), and Gödel's Theorem (Ch. 10)."
+    }
+  ]
+}

@@ -1,0 +1,414 @@
+{{!--
+{
+  "layout": "webring",
+  "title": "The Spreadsheet No One Updates | Vibes DIY",
+  "description": "Groceries, chores, IOUs, the thing someone made in Google Sheets that died in two weeks. Now everyone can change it because it's actually theirs.",
+  "ogUrl": "https://good.vibes.diy/crew/the-list/",
+  "source": "crew-the-list",
+  "ogImage": "https://good.vibes.diy/images/screenshots/crew/the-list.jpg",
+  "apps": [
+    {
+      "slug": "roommate-grocery-list",
+      "author": "og",
+      "live": true,
+      "title": "Grocery Run",
+      "tagline": "Anyone adds. Anyone claims. Running total."
+    },
+    {
+      "slug": "weekly-chore-rotation",
+      "author": "og",
+      "live": true,
+      "title": "Chore Rotation",
+      "tagline": "Rotating weekly. Anyone can swap."
+    },
+    {
+      "slug": "trip-expense-split",
+      "author": "og",
+      "live": true,
+      "title": "Expense Split",
+      "tagline": "Who paid. Who owes. Settle up."
+    },
+    {
+      "slug": "potluck-dish-signup",
+      "author": "og",
+      "live": true,
+      "title": "Potluck Signup",
+      "tagline": "Who's bringing what. No fourth potato salad."
+    }
+  ]
+}
+--}}
+
+<style>
+  @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=Space+Mono:wght@400;700&display=optional");
+
+  :root {
+    --bg: #f4f1ec;
+    --ink: #111;
+    --accent: #2563eb;
+    --accent-soft: rgba(37, 99, 235, 0.15);
+    --card-bg: #fff;
+    --rule: #111;
+    --shadow: 6px 6px 0 var(--ink);
+  }
+
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html, body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: "Inter", system-ui, sans-serif;
+    line-height: 1.55;
+    min-height: 100vh;
+    background-image:
+      repeating-conic-gradient(rgba(0,0,0,0.03) 0% 25%, transparent 0% 50%) 0 0 / 4px 4px;
+  }
+
+  a { color: inherit; text-decoration: none; }
+  .mono { font-family: "Space Mono", monospace; }
+
+  .layout {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 1.5rem;
+  }
+
+  /* -- Nav -- */
+  .topbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 0;
+    border-bottom: 4px solid var(--rule);
+  }
+  .topbar .brand {
+    font-weight: 900;
+    font-size: 1.25rem;
+    letter-spacing: -0.02em;
+  }
+  .topbar .crew-label {
+    font-family: "Space Mono", monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    padding: 3px 10px;
+    background: var(--accent);
+    color: var(--bg);
+    font-weight: 700;
+  }
+
+  /* -- Cluster nav -- */
+  .cluster-nav {
+    display: flex;
+    gap: 0;
+    border-bottom: 4px solid var(--rule);
+  }
+  .cluster-nav a {
+    flex: 1;
+    text-align: center;
+    padding: 0.7rem 0.5rem;
+    font-family: "Space Mono", monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    font-weight: 700;
+    border-right: 3px solid var(--ink);
+    transition: background 0.12s;
+  }
+  .cluster-nav a:last-child { border-right: none; }
+  .cluster-nav a:hover { background: var(--accent-soft); }
+  .cluster-nav a.active { background: var(--ink); color: var(--bg); }
+
+  /* -- Hero -- */
+  .hero {
+    padding: 4rem 0 3rem;
+    border-bottom: 4px solid var(--rule);
+  }
+  .hero .provocation {
+    font-family: "Space Mono", monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    margin-bottom: 1.5rem;
+    display: inline-block;
+    padding: 4px 12px;
+    background: var(--ink);
+    color: var(--bg);
+  }
+  .hero h1 {
+    font-size: clamp(3rem, 9vw, 7rem);
+    font-weight: 900;
+    line-height: 0.92;
+    letter-spacing: -0.04em;
+    margin-bottom: 1.5rem;
+  }
+  .hero h1 .hi {
+    background: var(--accent);
+    color: var(--bg);
+    padding: 0 0.15em;
+    display: inline-block;
+    transform: rotate(-1.5deg);
+    box-shadow: var(--shadow);
+    margin: 0.08em 0;
+  }
+  .hero .lead {
+    font-size: 1.15rem;
+    max-width: 700px;
+    line-height: 1.55;
+  }
+  .hero .lead strong { font-weight: 800; }
+
+  /* -- Tagline pair -- */
+  .tagline-pair {
+    padding: 2rem 0;
+    border-bottom: 4px solid var(--rule);
+    text-align: center;
+  }
+  .tagline-pair blockquote {
+    font-size: clamp(1.4rem, 3.5vw, 2.2rem);
+    font-weight: 900;
+    line-height: 1.2;
+    letter-spacing: -0.02em;
+    max-width: 700px;
+    margin: 0 auto;
+  }
+  .tagline-pair blockquote .paren {
+    color: var(--accent);
+  }
+  .tagline-pair .sub {
+    font-family: "Space Mono", monospace;
+    font-size: 0.75rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    margin-top: 0.75rem;
+    opacity: 0.6;
+  }
+
+  /* -- App grid -- */
+  .apps-label {
+    padding: 1.5rem 0 0.75rem;
+    font-family: "Space Mono", monospace;
+    font-size: 0.6rem;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    border-bottom: 2px dashed var(--rule);
+    margin-bottom: 1.5rem;
+  }
+
+  .apps-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    padding-bottom: 2rem;
+    border-bottom: 4px solid var(--rule);
+  }
+  @media (max-width: 700px) { .apps-grid { grid-template-columns: 1fr; } }
+
+  .app-card {
+    background: var(--card-bg);
+    border: 3px solid var(--ink);
+    box-shadow: var(--shadow);
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+  }
+  .app-card .app-shot {
+    aspect-ratio: 16/9;
+    overflow: hidden;
+    border-bottom: 3px solid var(--ink);
+    background: var(--bg);
+  }
+  .app-card .app-shot img {
+    width: 100%; height: 100%; object-fit: cover; display: block;
+  }
+  .app-card .app-info {
+    padding: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    flex: 1;
+  }
+  .app-card .app-title {
+    font-size: 1.3rem;
+    font-weight: 900;
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+  }
+  .app-card .app-tagline {
+    font-family: "Space Mono", monospace;
+    font-size: 0.75rem;
+    color: #555;
+  }
+  .app-card .app-ctas {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    border-top: 3px solid var(--ink);
+    margin-top: auto;
+  }
+  .btn-card {
+    text-align: center;
+    padding: 0.55rem 0.4rem;
+    font-family: "Space Mono", monospace;
+    font-size: 0.65rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    font-weight: 700;
+    border-right: 3px solid var(--ink);
+    transition: background 0.12s;
+  }
+  .btn-card:last-child { border-right: none; }
+  .btn-card:hover { background: var(--accent); color: var(--bg); }
+
+  /* -- Manifesto section -- */
+  .manifesto {
+    padding: 3rem 0;
+    border-bottom: 4px solid var(--rule);
+  }
+  .manifesto h2 {
+    font-family: "Space Mono", monospace;
+    font-size: 0.6rem;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    margin-bottom: 1.25rem;
+  }
+  .manifesto .pull {
+    font-weight: 900;
+    font-size: clamp(1.6rem, 3.5vw, 2.6rem);
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+    margin: 1rem 0;
+    max-width: 800px;
+  }
+  .manifesto .pull .hi {
+    background: var(--accent-soft);
+    padding: 0 0.2em;
+    box-decoration-break: clone;
+    -webkit-box-decoration-break: clone;
+  }
+  .manifesto p {
+    font-size: 1.05rem;
+    max-width: 700px;
+    line-height: 1.6;
+    margin-bottom: 0.85rem;
+  }
+
+  /* -- CTA -- */
+  .cta-bar {
+    background: var(--ink);
+    color: var(--bg);
+    padding: 2.5rem 0;
+    text-align: center;
+  }
+  .cta-bar h2 {
+    font-size: clamp(1.4rem, 3vw, 2rem);
+    font-weight: 900;
+    margin-bottom: 0.5rem;
+  }
+  .cta-bar p {
+    font-family: "Space Mono", monospace;
+    font-size: 0.8rem;
+    opacity: 0.6;
+    margin-bottom: 1.2rem;
+  }
+  .btn-cta {
+    display: inline-block;
+    padding: 1rem 2.5rem;
+    background: var(--accent);
+    color: var(--bg);
+    font-family: "Space Mono", monospace;
+    font-size: 0.85rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    font-weight: 700;
+    border: 3px solid var(--accent);
+    transition: transform 0.1s, box-shadow 0.1s;
+    box-shadow: 4px 4px 0 rgba(255,255,255,0.2);
+  }
+  .btn-cta:hover {
+    transform: translate(2px, 2px);
+    box-shadow: 2px 2px 0 rgba(255,255,255,0.2);
+  }
+
+  /* -- Footer -- */
+  .crew-footer {
+    padding: 1rem 0;
+    font-family: "Space Mono", monospace;
+    font-size: 0.6rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    display: flex;
+    justify-content: space-between;
+    border-top: 4px solid var(--rule);
+  }
+  .crew-footer a:hover { background: var(--accent-soft); }
+</style>
+
+<div class="layout">
+  <header class="topbar">
+    <a class="brand" href="https://links.vibes.diy/homepage">VIBES.DIY</a>
+    <span class="crew-label">CREW // THE LIST</span>
+  </header>
+
+  <nav class="cluster-nav">
+    <a href="{{assetPrefix}}crew/chaos">Chaos</a>
+    <a class="active" href="{{assetPrefix}}crew/the-list">The List</a>
+    <a href="{{assetPrefix}}crew/the-bit">The Bit</a>
+  </nav>
+
+  <section class="hero">
+    <span class="provocation">The spreadsheet no one updates</span>
+    <h1>The shared<br/>doc<br/><span class="hi">died</span><br/>in two weeks.<br/>This won&rsquo;t.</h1>
+    <p class="lead">
+      Groceries, chores, IOUs, the thing someone made in a spreadsheet that everyone ignored. The reason it died is nobody could change it without asking. Now everyone can change it. Because it&rsquo;s actually theirs.
+    </p>
+  </section>
+
+  <section class="tagline-pair">
+    <blockquote>Invite anyone you want to <span class="paren">(change)</span> your app.</blockquote>
+    <div class="sub">Your app is the party.</div>
+  </section>
+
+  <div class="apps-label">Lists that actually get used</div>
+
+  <div class="apps-grid">
+    {{#each apps}}
+    <article class="app-card">
+      <a class="app-shot" href="https://vibes.diy/vibe/{{author}}/{{slug}}">
+        <img src="https://{{slug}}--{{author}}.prod-v2.vibesdiy.net/screenshot.jpg"
+             alt="{{title}}"
+             onerror="this.onerror=null; this.src='{{@root.assetPrefix}}images/og-preview.png';"/>
+      </a>
+      <div class="app-info">
+        <h3 class="app-title">{{title}}</h3>
+        <span class="app-tagline">{{tagline}}</span>
+      </div>
+      <div class="app-ctas">
+        <a class="btn-card" href="https://vibes.diy/vibe/{{author}}/{{slug}}">Open</a>
+        <a class="btn-card" href="https://vibes.diy/remix/{{author}}/{{slug}}?skipChat=true">Clone</a>
+        <a class="btn-card" href="https://vibes.diy/remix/{{author}}/{{slug}}">Remix</a>
+      </div>
+    </article>
+    {{/each}}
+  </div>
+
+  <section class="manifesto">
+    <h2>Everyone edits</h2>
+    <p class="pull">The person who does the <span class="hi">most shopping</span> decides the categories. The person who hates vacuuming negotiates a swap. The list fits the house.</p>
+    <p>Shared docs die because one person owns them. These apps don&rsquo;t have an owner &mdash; they have a crew. Anyone with the link can change the structure, not just the data. Add a column. Rename a category. The app fits how you actually live.</p>
+  </section>
+
+  <section class="cta-bar">
+    <div class="layout">
+      <h2>Make something rowdy.</h2>
+      <p>Start from any of these or make your own.</p>
+      <a class="btn-cta" href="https://links.vibes.diy/homepage">Open Vibes DIY</a>
+    </div>
+  </section>
+
+  {{> newsletter}}
+
+  <footer class="crew-footer">
+    <span>Vibes.diy &middot; <a href="https://links.vibes.diy/homepage">homepage</a> &middot; <a href="/expressions/">expressions</a></span>
+    <span>// YOUR APP IS THE PARTY</span>
+  </footer>
+</div>

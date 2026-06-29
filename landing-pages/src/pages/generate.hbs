@@ -1,0 +1,664 @@
+{{!--
+{
+  "layout": "webring",
+  "title": "Generate — vibes.diy CLI propaganda",
+  "description": "npx vibes-diy generate. One command, one prompt, one live React app. This site was built with it — 85 apps across 11 pages. Here's the workflow.",
+  "ogUrl": "https://good.vibes.diy/generate/",
+  "source": "generate",
+  "ogImage": "https://good.vibes.diy/images/screenshots/generate.jpg"
+}
+--}}
+
+<style>
+  @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=optional");
+
+  :root {
+    --bg: oklch(0.16 0.015 260);
+    --bg-elev: oklch(0.21 0.018 260);
+    --bg-deep: oklch(0.12 0.018 260);
+    --fg: oklch(0.97 0.005 260);
+    --fg-dim: oklch(0.65 0.015 260);
+    --fg-faint: oklch(0.45 0.015 260);
+    --border: oklch(1 0 0 / 0.08);
+    --border-strong: oklch(1 0 0 / 0.18);
+    --live: oklch(0.86 0.21 135);
+    --live-text: oklch(0.18 0.05 135);
+    --punk: oklch(0.70 0.24 350);
+    --warn: oklch(0.85 0.18 80);
+  }
+
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html, body {
+    font-family: "Inter", system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--fg);
+    line-height: 1.55;
+    min-height: 100vh;
+    font-size: 16px;
+    background-image:
+      radial-gradient(circle at 8% 0%, rgba(180,255,140,0.05), transparent 35%),
+      radial-gradient(circle at 95% 100%, rgba(255,120,200,0.06), transparent 40%);
+    background-attachment: fixed;
+  }
+
+  a { color: inherit; text-decoration: none; }
+  .mono { font-family: "JetBrains Mono", monospace; }
+  .live-tag { color: var(--live); }
+  .punk-tag { color: var(--punk); }
+
+  .layout { max-width: 1100px; margin: 0 auto; padding: 0 1.5rem; }
+
+  /* === TOPBAR === */
+  .topbar {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 1rem 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .topbar .brand {
+    font-family: "JetBrains Mono", monospace;
+    font-weight: 700; letter-spacing: 0.04em; font-size: 1.05rem;
+  }
+  .topbar .brand::before { content: "$ "; color: var(--live); }
+  .topbar .pill {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.65rem; letter-spacing: 0.18em; text-transform: uppercase;
+    padding: 4px 12px; border: 1px solid var(--border-strong);
+    border-radius: 999px; color: var(--fg-dim);
+  }
+  .topbar .pill .dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--live); margin-right: 0.4rem; box-shadow: 0 0 8px var(--live); animation: pulse 2s ease infinite; }
+  @keyframes pulse { 50% { opacity: 0.4; } }
+
+  .crumb {
+    padding: 0.6rem 0;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.65rem; letter-spacing: 0.18em; text-transform: uppercase;
+    color: var(--fg-faint);
+    border-bottom: 1px solid var(--border);
+  }
+  .crumb a:hover { color: var(--live); }
+
+  /* === HERO === */
+  .hero { padding: 5.5rem 0 4.5rem; border-bottom: 1px solid var(--border); }
+  .hero .kicker {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.7rem; letter-spacing: 0.3em; text-transform: uppercase;
+    color: var(--live); margin-bottom: 1.5rem;
+  }
+  .hero .kicker::before { content: "// "; opacity: 0.6; }
+  .hero h1 {
+    font-size: clamp(3rem, 9vw, 6.5rem);
+    font-weight: 900; line-height: 0.92;
+    letter-spacing: -0.04em;
+    margin-bottom: 2rem;
+  }
+  .hero h1 .green { color: var(--live); }
+  .hero h1 .pink { color: var(--punk); }
+  .hero .lede {
+    font-size: 1.25rem; max-width: 720px;
+    color: var(--fg); opacity: 0.85;
+    margin-bottom: 2.5rem;
+  }
+  .hero .lede strong { color: var(--live); font-weight: 600; }
+
+  /* === CODE BLOCK === */
+  .cmd {
+    background: var(--bg-deep);
+    border: 1px solid var(--border-strong);
+    border-radius: 12px;
+    padding: 1.25rem 1.5rem;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.95rem;
+    line-height: 1.7;
+    overflow-x: auto;
+    margin: 1rem 0;
+    position: relative;
+  }
+  .cmd::before {
+    content: "shell";
+    position: absolute; top: 0; right: 0;
+    padding: 4px 12px;
+    background: var(--border);
+    border-bottom-left-radius: 8px;
+    font-size: 0.6rem; letter-spacing: 0.18em; text-transform: uppercase;
+    color: var(--fg-faint);
+  }
+  .cmd .p { color: var(--live); user-select: none; }
+  .cmd .c { color: var(--fg-faint); }
+  .cmd .k { color: var(--punk); }
+  .cmd .s { color: var(--warn); }
+  .cmd .b { color: var(--fg); font-weight: 600; }
+
+  /* Variant: cmd block with a copy button (suppresses the "shell" label) */
+  .cmd--copy::before { display: none; }
+  .copy-btn {
+    position: absolute; top: 0; right: 0;
+    padding: 6px 14px;
+    background: var(--border);
+    color: var(--fg-dim);
+    border: none;
+    border-bottom-left-radius: 8px;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.6rem; font-weight: 700;
+    letter-spacing: 0.18em; text-transform: uppercase;
+    cursor: pointer;
+    transition: background .12s ease, color .12s ease;
+    z-index: 2;
+  }
+  .copy-btn:hover {
+    background: var(--live);
+    color: var(--live-text);
+  }
+  .copy-btn.copied {
+    background: var(--live);
+    color: var(--live-text);
+  }
+
+  /* === STATS === */
+  .stats {
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    margin: 3rem 0;
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+  }
+  @media (max-width: 700px) { .stats { grid-template-columns: repeat(2, 1fr); } }
+  .stat-cell {
+    padding: 1.5rem 1.5rem;
+    border-right: 1px solid var(--border);
+  }
+  .stat-cell:last-child { border-right: none; }
+  @media (max-width: 700px) {
+    .stat-cell { border-bottom: 1px solid var(--border); }
+    .stat-cell:nth-child(2n) { border-right: none; }
+  }
+  .stat-cell .k {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.6rem; letter-spacing: 0.25em; text-transform: uppercase;
+    color: var(--fg-faint); margin-bottom: 0.4rem;
+  }
+  .stat-cell .v {
+    font-weight: 900; font-size: 2.2rem; line-height: 1; letter-spacing: -0.04em;
+  }
+  .stat-cell.green .v { color: var(--live); }
+  .stat-cell.pink .v { color: var(--punk); }
+
+  /* === SECTION HEADER === */
+  .section-label {
+    padding: 4rem 0 0.5rem;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.7rem; letter-spacing: 0.3em; text-transform: uppercase;
+    color: var(--fg-faint);
+  }
+  .section-label::before { content: "// "; color: var(--live); }
+  .section-title {
+    font-size: clamp(2rem, 4vw, 2.8rem);
+    font-weight: 900; letter-spacing: -0.03em; line-height: 1;
+    margin-bottom: 0.75rem;
+  }
+  .section-sub {
+    color: var(--fg-dim);
+    font-size: 1.05rem;
+    max-width: 720px;
+    margin-bottom: 2rem;
+  }
+
+  /* === THREE COLUMNS === */
+  .three-up {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.25rem;
+    margin: 2rem 0;
+  }
+  @media (max-width: 800px) { .three-up { grid-template-columns: 1fr; } }
+  .step {
+    background: var(--bg-elev);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 1.75rem;
+  }
+  .step .step-num {
+    font-family: "JetBrains Mono", monospace;
+    font-weight: 700;
+    font-size: 0.7rem; letter-spacing: 0.2em; color: var(--live);
+    margin-bottom: 0.6rem;
+  }
+  .step h3 {
+    font-size: 1.3rem; font-weight: 800; letter-spacing: -0.02em;
+    margin-bottom: 0.6rem;
+  }
+  .step p { color: var(--fg-dim); font-size: 0.95rem; line-height: 1.55; }
+  .step p code { font-family: "JetBrains Mono", monospace; font-size: 0.85rem; background: var(--bg-deep); padding: 1px 6px; border-radius: 4px; color: var(--live); }
+
+  /* === CASE STUDIES === */
+  .cases { display: flex; flex-direction: column; gap: 1.5rem; margin: 2rem 0; }
+  .case {
+    background: var(--bg-elev);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 2rem;
+    display: grid;
+    grid-template-columns: 200px 1fr;
+    gap: 2rem;
+    align-items: start;
+  }
+  @media (max-width: 800px) { .case { grid-template-columns: 1fr; gap: 1rem; } }
+  .case .side {
+    border-right: 1px solid var(--border);
+    padding-right: 1.5rem;
+  }
+  @media (max-width: 800px) {
+    .case .side { border-right: none; padding-right: 0; padding-bottom: 1rem; border-bottom: 1px solid var(--border); }
+  }
+  .case .side .num {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.65rem; letter-spacing: 0.2em; text-transform: uppercase;
+    color: var(--fg-faint);
+    margin-bottom: 0.5rem;
+  }
+  .case .side .big {
+    font-weight: 900; font-size: 3rem; line-height: 0.9; letter-spacing: -0.04em;
+    color: var(--live);
+  }
+  .case .side .big-sub {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.7rem; letter-spacing: 0.15em; text-transform: uppercase;
+    color: var(--fg-faint); margin-top: 0.5rem;
+  }
+  .case .body h3 {
+    font-size: 1.5rem; font-weight: 800; letter-spacing: -0.02em;
+    margin-bottom: 0.5rem;
+  }
+  .case .body .topline {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.7rem; letter-spacing: 0.18em; text-transform: uppercase;
+    color: var(--punk); margin-bottom: 1rem;
+  }
+  .case .body p { color: var(--fg); opacity: 0.9; font-size: 0.98rem; line-height: 1.6; margin-bottom: 0.85rem; }
+  .case .body p code, .case .body code { font-family: "JetBrains Mono", monospace; font-size: 0.85rem; color: var(--live); background: var(--bg-deep); padding: 1px 6px; border-radius: 4px; }
+  .case .body .meta-row {
+    margin-top: 1rem;
+    display: flex; gap: 1.5rem; flex-wrap: wrap;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.7rem; letter-spacing: 0.15em; text-transform: uppercase;
+    color: var(--fg-faint);
+  }
+  .case .body .meta-row a { color: var(--live); border-bottom: 1px dashed var(--live); }
+  .case .body .meta-row a:hover { color: var(--punk); border-bottom-color: var(--punk); }
+
+  /* === RULES === */
+  .rules {
+    display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem;
+    margin: 2rem 0;
+  }
+  @media (max-width: 700px) { .rules { grid-template-columns: 1fr; } }
+  .rule {
+    background: var(--bg-elev);
+    border-left: 3px solid var(--live);
+    padding: 1.25rem 1.5rem;
+    border-radius: 4px;
+  }
+  .rule h4 {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.7rem; letter-spacing: 0.18em; text-transform: uppercase;
+    color: var(--live); margin-bottom: 0.4rem;
+  }
+  .rule p { color: var(--fg-dim); font-size: 0.92rem; line-height: 1.5; }
+  .rule p code { font-family: "JetBrains Mono", monospace; color: var(--fg); background: var(--bg-deep); padding: 1px 5px; border-radius: 4px; font-size: 0.85rem; }
+  .rule.warn { border-left-color: var(--warn); }
+  .rule.warn h4 { color: var(--warn); }
+  .rule.punk { border-left-color: var(--punk); }
+  .rule.punk h4 { color: var(--punk); }
+
+  /* === BIG CTA === */
+  .cta {
+    margin: 5rem 0 3rem;
+    padding: 3rem 2.5rem;
+    background: linear-gradient(135deg, var(--bg-elev), var(--bg-deep));
+    border: 1px solid var(--border-strong);
+    border-radius: 18px;
+    text-align: center;
+  }
+  .cta h2 {
+    font-size: clamp(2rem, 5vw, 3rem); font-weight: 900;
+    letter-spacing: -0.03em; line-height: 1; margin-bottom: 1rem;
+  }
+  .cta h2 .green { color: var(--live); }
+  .cta p { color: var(--fg-dim); max-width: 600px; margin: 0 auto 2rem; font-size: 1.05rem; }
+  .cta-buttons { display: flex; gap: 0.8rem; justify-content: center; flex-wrap: wrap; }
+  .btn {
+    display: inline-block;
+    padding: 0.85rem 1.5rem;
+    background: var(--live);
+    color: var(--live-text);
+    border: 1px solid var(--live);
+    border-radius: 999px;
+    font-family: "JetBrains Mono", monospace;
+    font-weight: 700;
+    font-size: 0.8rem; letter-spacing: 0.1em; text-transform: uppercase;
+    cursor: pointer;
+    transition: transform .15s ease, box-shadow .15s ease;
+  }
+  .btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 30px -10px rgba(180,255,140,0.4);
+  }
+  .btn-secondary {
+    background: transparent;
+    color: var(--fg);
+    border-color: var(--border-strong);
+  }
+  .btn-secondary:hover {
+    background: var(--bg-elev);
+    box-shadow: 0 12px 30px -10px rgba(255,120,200,0.25);
+    border-color: var(--punk);
+  }
+
+  /* === FOOTER === */
+  footer.term-footer {
+    padding: 1.5rem 0;
+    border-top: 1px solid var(--border);
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.65rem; letter-spacing: 0.18em; text-transform: uppercase;
+    color: var(--fg-faint);
+    display: flex; justify-content: space-between; flex-wrap: wrap; gap: 1rem;
+  }
+  footer.term-footer a:hover { color: var(--live); }
+</style>
+
+<div class="layout">
+  <header class="topbar">
+    <a class="brand" href="https://links.vibes.diy/homepage">vibes-diy generate</a>
+    <span class="pill"><span class="dot"></span>v2.2.11 · npm</span>
+  </header>
+
+  <nav class="crumb">
+    <a href="/">Home</a> &nbsp;›&nbsp; <a href="https://links.vibes.diy/CLI">CLI</a> &nbsp;›&nbsp; Generate
+  </nav>
+
+  <section class="hero">
+    <div class="kicker">one command · one prompt · one live React app</div>
+    <h1>
+      Stop <span class="pink">commissioning</span> software.<br/>
+      <span class="green">Generate</span> it.
+    </h1>
+    <p class="lede">
+      <strong>npx vibes-diy generate</strong> turns a sentence into a deployed
+      single-file React app, persisted with Fireproof, live in under a minute
+      at a URL you can share. No project. No scaffold. No PR. No procurement.
+      This site was built with it.
+    </p>
+    <div class="cmd">
+      <span class="p">$</span> npx <span class="b">vibes-diy@latest</span> generate \<br/>
+      &nbsp;&nbsp;&nbsp;&nbsp;<span class="k">--user-slug</span>=<span class="s">og</span> \<br/>
+      &nbsp;&nbsp;&nbsp;&nbsp;<span class="k">--app-slug</span>=<span class="s">pizza-quiz</span> \<br/>
+      &nbsp;&nbsp;&nbsp;&nbsp;<span class="s">"Competitive study app. Each player submits a pizza order, then takes an AI-generated quiz on a topic. Top scorers get weighted votes on the final pizza. Save sessions in Fireproof."</span>
+      <br/><br/>
+      <span class="c">Generating...<br/>Requests enabled<br/>Deployed: og/pizza-quiz<br/>URL: https://vibes.diy/vibe/og/pizza-quiz</span>
+    </div>
+  </section>
+
+  <div class="stats">
+    <div class="stat-cell green">
+      <div class="k">apps deployed</div>
+      <div class="v">85+</div>
+    </div>
+    <div class="stat-cell">
+      <div class="k">themed pages</div>
+      <div class="v">11</div>
+    </div>
+    <div class="stat-cell pink">
+      <div class="k">dev hours</div>
+      <div class="v">~0</div>
+    </div>
+    <div class="stat-cell">
+      <div class="k">scaffolds</div>
+      <div class="v">0</div>
+    </div>
+  </div>
+
+  <div class="section-label">the workflow</div>
+  <h2 class="section-title">It's just shell. Background ten and wait.</h2>
+  <p class="section-sub">
+    Every <a href="/expressions/" style="color: var(--live); border-bottom: 1px dashed var(--live);">expressions</a>
+    cluster, every <a href="/college.html" style="color: var(--live); border-bottom: 1px dashed var(--live);">college</a>
+    audience page, every <a href="/dating.html" style="color: var(--live); border-bottom: 1px dashed var(--live);">dating</a>
+    take — built by backgrounding a stack of <code class="mono" style="background: var(--bg-deep); padding: 1px 6px; border-radius: 4px; color: var(--live); font-size: 0.9rem;">npx vibes-diy generate</code> calls
+    and waiting. No wrapper function needed. The CLI's defaults are fine.
+  </p>
+
+  <div class="cmd">
+    <span class="c"># cluster/_run.sh — fire ten in parallel, wait for them all</span><br/>
+    npx vibes-diy generate <span class="s">"Pizza-trivia study app..."</span> &amp;<br/>
+    npx vibes-diy generate <span class="s">"Reunite lonely socks after laundry..."</span> &amp;<br/>
+    npx vibes-diy generate <span class="s">"Anonymous dorm-mess roast leaderboard..."</span> &amp;<br/>
+    <span class="c"># ... seven more ...</span><br/>
+    <span class="k">wait</span>
+  </div>
+
+  <div class="three-up">
+    <div class="step">
+      <div class="step-num">/ 01 / WRITE</div>
+      <h3>One sentence per app.</h3>
+      <p>
+        Under 50 words. Don't dictate styling — the model picks its own.
+        Long style-pinning preambles overflow the server-side budget and
+        trigger a stuck <code>No files resolved</code> state.
+      </p>
+    </div>
+    <div class="step">
+      <div class="step-num">/ 02 / FIRE</div>
+      <h3>Background ten at once.</h3>
+      <p>
+        The CLI takes a few minutes per gen. A bash <code>gen()</code> function
+        running ten in parallel lands a whole themed page in the time it
+        takes to write the next prompt set.
+      </p>
+    </div>
+    <div class="step">
+      <div class="step-num">/ 03 / VERIFY</div>
+      <h3>One <code>curl</code> tells the truth.</h3>
+      <p>
+        Look for a real <code>fsId</code> and a <code>V1</code> import in the
+        deployed HTML. <code>fsId: pending</code> with <code>mountVibe([])</code>
+        means the slug registered but the code never landed — white-screen.
+      </p>
+    </div>
+  </div>
+
+  <div class="section-label">case studies — this site</div>
+  <h2 class="section-title">85 deployed apps. <span class="punk-tag">All from this CLI.</span></h2>
+  <p class="section-sub">
+    Every embedded app on every page of this site was generated by
+    <code class="mono" style="background: var(--bg-deep); padding: 1px 6px; border-radius: 4px; color: var(--live); font-size: 0.9rem;">npx vibes-diy generate</code>.
+    Eleven themed pages, eighty-five real React apps, each persisted with
+    Fireproof, each a single shell call.
+  </p>
+
+  <div class="cases">
+    <article class="case">
+      <div class="side">
+        <div class="num">// case 01</div>
+        <div class="big">80</div>
+        <div class="big-sub">apps · 8 pages · 1 weekend</div>
+      </div>
+      <div class="body">
+        <div class="topline">expressions/ — themed-cluster hub</div>
+        <h3>Eight visual languages, ten apps each.</h3>
+        <p>
+          Each cluster sub-page picks a fresh skin (Terminal CRT, Broadsheet,
+          Aether Brass, Scrapbook, Archive, Rune Interface, Vault, Dossier) and
+          fills with ten one-sentence prompts. The batch script kicks off ten
+          parallel gens; six minutes later the page has ten real apps.
+        </p>
+        <p>
+          The same scripts work for every cluster. The same one-line verify
+          command catches every stuck slug.
+        </p>
+        <div class="meta-row">
+          <span><a href="/expressions/">→ /expressions/</a></span>
+          <span>8 sub-pages</span>
+          <span>80 apps</span>
+        </div>
+      </div>
+    </article>
+
+    <article class="case">
+      <div class="side">
+        <div class="num">// case 02</div>
+        <div class="big">10</div>
+        <div class="big-sub">apps · single phosphor theme</div>
+      </div>
+      <div class="body">
+        <div class="topline">one-bit-status — the unified-skin demo</div>
+        <h3>The same theme preamble for every gen.</h3>
+        <p>
+          The Terminal CRT cluster (LIGHTS.ON, Pet Status Board, Nap
+          Declaration, Noon Wave...) shows what happens when the page and the
+          embedded apps share a visual register. The cards on the page and the
+          phosphor-green apps inside them feel like one product.
+        </p>
+        <p>
+          <a href="https://vibes.diy/vibe/og/lights-on" style="color: var(--live); border-bottom: 1px dashed var(--live);">og/lights-on</a>
+          is the canonical example — open it, tap the LIGHT, watch your dot turn on.
+        </p>
+        <div class="meta-row">
+          <span><a href="/expressions/one-bit-status.html">→ one-bit-status</a></span>
+          <span>10 apps</span>
+          <span>1 skin</span>
+        </div>
+      </div>
+    </article>
+
+    <article class="case">
+      <div class="side">
+        <div class="num">// case 03</div>
+        <div class="big">5</div>
+        <div class="big-sub">apps · audience landing page</div>
+      </div>
+      <div class="body">
+        <div class="topline">college.hbs — single afternoon</div>
+        <h3>From CSV to live in one sitting.</h3>
+        <p>
+          Five dorm-shaped prompts pasted from a spreadsheet, five SEO-style
+          slugs (pizza-quiz, sock-finder, study-buddy-pairing...), one batch
+          script, five live apps in fifteen minutes. The page itself follows
+          the existing audience-page convention.
+        </p>
+        <p>
+          Same shape on <a href="/dating.html" style="color: var(--live); border-bottom: 1px dashed var(--live);">/dating</a>
+          — five anti-swipe takes, all live, each a single sentence input.
+        </p>
+        <div class="meta-row">
+          <span><a href="/college.html">→ /college</a></span>
+          <span><a href="/dating.html">→ /dating</a></span>
+          <span>10 apps</span>
+        </div>
+      </div>
+    </article>
+  </div>
+
+  <div class="section-label">the rules</div>
+  <h2 class="section-title">Five things this site learned the hard way.</h2>
+  <p class="section-sub">
+    Pinned in <a href="https://github.com/VibesDIY/landing-pages/blob/main/src/pages/featured-apps/README.md" style="color: var(--live); border-bottom: 1px dashed var(--live);">the
+    README</a> and the agent's memory after the first cluster's worth of
+    surprises. Skip these and you'll burn a slug.
+  </p>
+
+  <div class="rules">
+    <div class="rule">
+      <h4>1. PIN --user-slug</h4>
+      <p>
+        The CLI's logged-in default drifts (account swap, re-auth, CLI upgrade).
+        Always pass <code>--user-slug=og</code> explicitly. Without it your
+        deploys land at <code>jchris/...</code> and your page hard-coded
+        <code>og/...</code> white-screens.
+      </p>
+    </div>
+    <div class="rule">
+      <h4>2. SEO slugs, not titles</h4>
+      <p>
+        Use <code>pizza-quiz</code> not <code>professor-pizza</code>. Slugs
+        become public URL paths; descriptive keywords aid discovery. The
+        branded title still lives in the page's <code>title</code> field.
+      </p>
+    </div>
+    <div class="rule warn">
+      <h4>3. Under 50 words</h4>
+      <p>
+        Long prompts (especially style-pinning preambles) overflow a
+        server-side budget and trigger a stuck <code>No files resolved</code>
+        response that returns the same byte count regardless of input.
+      </p>
+    </div>
+    <div class="rule">
+      <h4>4. Don't dictate styling</h4>
+      <p>
+        The model picks its own. If you want a coherent skin across the cluster,
+        skin the host page — the embedded app stands on its own.
+      </p>
+    </div>
+    <div class="rule punk">
+      <h4>5. Fresh slug on stuck</h4>
+      <p>
+        If a slug returns the same byte-count error on every retry, it's
+        poisoned. Don't keep retrying. Pick a fresh SEO slug, redeploy, update
+        the page.
+      </p>
+    </div>
+    <div class="rule">
+      <h4>6. Verify with curl</h4>
+      <p>
+        <code>curl -sL https://&lt;slug&gt;--og.prod-v2.vibesdiy.net/ | grep fsId</code>.
+        Real <code>fsId: "z..."</code> + <code>mountVibe([V1])</code> = live.
+        <code>fsId: "pending"</code> + <code>mountVibe([])</code> = empty stub.
+      </p>
+    </div>
+  </div>
+
+  <div class="section-label">try this</div>
+  <h2 class="section-title">Hand it to your agent.</h2>
+  <p class="section-sub">
+    The CLI is the primitive. Coding agents (Claude Code, Cursor, etc) are
+    great at driving it. Paste this into your agent and watch a whole themed
+    site assemble itself — five sub-pages, thirty deployed apps, batch-script
+    and verify included. Or swap "games" for whatever vertical you're actually building: cooking techniques, local bands, photography gear, anything with a natural taxonomy.
+  </p>
+  <div class="cmd cmd--copy">
+    <button
+      class="copy-btn"
+      type="button"
+      onclick="(function(b){const t=document.getElementById('games-prompt').textContent.trim();navigator.clipboard.writeText(t).then(()=>{const o=b.textContent;b.textContent='COPIED ✓';b.classList.add('copied');setTimeout(()=>{b.textContent=o;b.classList.remove('copied');},1600);}).catch(()=>{b.textContent='COPY FAILED';setTimeout(()=>{b.textContent='COPY';},1600);});})(this)"
+    >COPY</button>
+    <span class="c"># paste-into-agent prompt — 30 apps, 5 themed sub-pages, one /games/ hub</span><br/>
+    Build <span class="b">static HTML landing pages</span> (no framework): a <span class="b">/games/</span> hub plus five themed sub-pages — <span class="s">pinball</span>, <span class="s">retro arcade</span>, <span class="s">classic platformer</span>, <span class="s">modern</span>, <span class="s">sports</span>. Each sub-page picks its own visual skin and showcases <span class="b">6 deployed mini-games</span>. Run <span class="k">npx vibes-diy login</span> once, then generate each game via <span class="k">npx vibes-diy generate</span> with a sub-50-word prompt — you pick the specifics. The CLI prints each deploy URL and writes a local <span class="k">README.md</span> with the title and prompt; append <span class="k">/screenshot.jpg</span> to the deploy URL for an image, and link the URL itself for the live app. Embed both on every card. Preview by opening the HTML file locally, then deploy to <span class="b">Cloudflare Pages</span>.
+    <script type="text/plain" id="games-prompt">Build static HTML landing pages (no framework): a /games/ hub plus five themed sub-pages — pinball, retro arcade, classic platformer, modern, sports. Each sub-page picks its own visual skin and showcases 6 deployed mini-games. Run `npx vibes-diy login` once, then generate each game via `npx vibes-diy generate` with a sub-50-word prompt — you pick the specifics. The CLI prints each deploy URL and writes a local README.md with the title and prompt; append `/screenshot.jpg` to the deploy URL for an image, and link the URL itself for the live app. Embed both on every card. Preview by opening the HTML file locally, then deploy to Cloudflare Pages.</script>
+  </div>
+  <p style="color: var(--fg-faint); font-size: 0.85rem; margin-top: 0.75rem; font-family: 'JetBrains Mono', monospace; letter-spacing: 0.04em;">
+    // the agent picks the slugs, the per-app prompts, and the skins. Six apps × five categories = thirty deploys, batched in parallel.
+  </p>
+
+  <div class="cta">
+    <h2>One sentence. <span class="green">One app.</span> Go.</h2>
+    <p>
+      The CLI is on npm. The flow is bash. The deploys are real apps you can
+      Join, Clone, and Remix. Browse the eighty-five built for this site, then
+      build your own.
+    </p>
+    <div class="cta-buttons">
+      <a class="btn" href="https://links.vibes.diy/CLI">→ CLI on GitHub</a>
+      <a class="btn btn-secondary" href="/expressions/">Browse Expressions</a>
+      <a class="btn btn-secondary" href="https://links.vibes.diy/homepage">Vibes.diy Home</a>
+    </div>
+  </div>
+
+  {{> newsletter}}
+<footer class="term-footer">
+    <span>$ vibes-diy generate · open source · MIT</span>
+    <span>
+      <a href="https://links.vibes.diy/discord">discord</a>
+      &nbsp;·&nbsp;
+      <a href="https://links.vibes.diy/CLI">github</a>
+      &nbsp;·&nbsp;
+      <a href="/">home</a>
+    </span>
+  </footer>
+</div>

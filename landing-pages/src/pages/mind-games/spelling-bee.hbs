@@ -1,0 +1,101 @@
+{{!--
+{
+  "layout": "webring",
+  "title": "Letter Hive | Mind Games",
+  "description": "Hex letters, center mandatory. Four spelling-bee variations — each one a live deployed app.",
+  "ogUrl": "https://good.vibes.diy/mind-games/spelling-bee.html",
+  "source": "mind-games-spelling-bee"
+}
+--}}
+
+<style>
+  @import url("https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Source+Sans+3:wght@400;700&display=swap");
+
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    font-family:'Source Sans 3', system-ui, sans-serif;
+    background:#fffdf3;
+    color:#1a1a1a;
+    min-height:100vh;
+    background-image:radial-gradient(circle at 50% 50%, rgba(247,216,58,.15) 0 8px, transparent 9px) 0 0 / 36px 32px, radial-gradient(circle at 50% 50%, rgba(247,216,58,.15) 0 8px, transparent 9px) 18px 16px / 36px 32px;
+    background-attachment:fixed;
+  }
+  a{color:inherit;text-decoration:none}
+  .wrap{max-width:1100px;margin:0 auto;padding:64px 24px 96px;position:relative;z-index:1}
+  header.top{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:48px;gap:24px;flex-wrap:wrap}
+  header.top a.back{color:#1a1a1a;text-decoration:none;opacity:.6;font-size:14px}
+  header.top a.back:hover{opacity:1}
+  h1{font-family:'Bebas Neue', 'Source Sans 3', sans-serif;font-size:clamp(40px,7vw,84px);margin:0;line-height:.95;letter-spacing:-.02em}
+  .desc{max-width:560px;font-size:18px;opacity:.75;margin:16px 0 0}
+  .accent-bar{display:inline-block;height:6px;width:120px;background:#f7d83a;margin:24px 0 0}
+  .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:32px;margin-top:56px}
+  @media (max-width:720px){.grid{grid-template-columns:1fr}}
+  .card{background:#fff8d3;border:3px solid #1a1a1a;border-radius:14px;box-shadow:0 4px 0 #1a1a1a;overflow:hidden;display:flex;flex-direction:column;transition:transform .15s ease}
+  .card:hover{transform:translateY(-2px)}
+  .shot{display:block;aspect-ratio:16/10;background:#fffdf3;overflow:hidden;border-bottom:3px solid #1a1a1a}
+  .shot img{width:100%;height:100%;object-fit:cover;display:block}
+  .meta{padding:20px 22px 24px}
+  .meta h3{margin:0 0 10px;font-family:'Bebas Neue', 'Source Sans 3', sans-serif;font-size:24px;letter-spacing:-.01em}
+  .meta h3 a{color:inherit;text-decoration:none}
+  .meta h3 a:hover{color:#c9a800}
+  .prompt{margin:0 0 16px;font-size:14px;line-height:1.55;opacity:.78}
+  .play{display:inline-flex;align-items:center;gap:6px;color:#c9a800;font-weight:700;text-decoration:none;font-size:14px;letter-spacing:.02em}
+  .play:hover{text-decoration:underline}
+  footer{margin-top:64px;font-size:13px;opacity:.5}
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div>
+      <h1>Letter Hive</h1>
+      <p class="desc">Hex letters, center mandatory. Four variations on the theme, each one a live deployed app you can poke at.</p>
+      <div class="accent-bar"></div>
+    </div>
+    <a class="back" href="./index.html">&larr; Mind Games hub</a>
+  </header>
+  <main class="grid">
+    <article class="card">
+      <a class="shot" href="https://vibes.diy/vibe/jchris/spelling-hive" target="_blank" rel="noopener">
+        <img src="https://spelling-hive--jchris.prod-v2.vibesdiy.net/screenshot.jpg" alt="Hex Honey preview" loading="lazy"/>
+      </a>
+      <div class="meta">
+        <h3><a href="https://vibes.diy/vibe/jchris/spelling-hive" target="_blank" rel="noopener">Hex Honey</a></h3>
+        <p class="prompt">Seven hex letters, center mandatory, find all words at least four letters. Score by length. Pangram bonus celebration. Found words list and progress rank.</p>
+        <a class="play" href="https://vibes.diy/vibe/jchris/spelling-hive" target="_blank" rel="noopener">Play live &rarr;</a>
+      </div>
+    </article>
+    <article class="card">
+      <a class="shot" href="https://vibes.diy/vibe/jchris/letter-hive" target="_blank" rel="noopener">
+        <img src="https://letter-hive--jchris.prod-v2.vibesdiy.net/screenshot.jpg" alt="Triad preview" loading="lazy"/>
+      </a>
+      <div class="meta">
+        <h3><a href="https://vibes.diy/vibe/jchris/letter-hive" target="_blank" rel="noopener">Triad</a></h3>
+        <p class="prompt">Triangle of six letters with mandatory center. Form words of at least three letters using these letters; center required. Live word list, score, daily seed.</p>
+        <a class="play" href="https://vibes.diy/vibe/jchris/letter-hive" target="_blank" rel="noopener">Play live &rarr;</a>
+      </div>
+    </article>
+    <article class="card">
+      <a class="shot" href="https://vibes.diy/vibe/jchris/letter-ring" target="_blank" rel="noopener">
+        <img src="https://letter-ring--jchris.prod-v2.vibesdiy.net/screenshot.jpg" alt="Ring of Seven preview" loading="lazy"/>
+      </a>
+      <div class="meta">
+        <h3><a href="https://vibes.diy/vibe/jchris/letter-ring" target="_blank" rel="noopener">Ring of Seven</a></h3>
+        <p class="prompt">Eight letters arranged in a ring, center letter mandatory. Find words of at least four letters. Daily score history saved. Hint shows word lengths still undiscovered.</p>
+        <a class="play" href="https://vibes.diy/vibe/jchris/letter-ring" target="_blank" rel="noopener">Play live &rarr;</a>
+      </div>
+    </article>
+    <article class="card">
+      <a class="shot" href="https://vibes.diy/vibe/jchris/hex-spell" target="_blank" rel="noopener">
+        <img src="https://hex-spell--jchris.prod-v2.vibesdiy.net/screenshot.jpg" alt="Theme Hive preview" loading="lazy"/>
+      </a>
+      <div class="meta">
+        <h3><a href="https://vibes.diy/vibe/jchris/hex-spell" target="_blank" rel="noopener">Theme Hive</a></h3>
+        <p class="prompt">Hex-letter puzzle where valid words must match a daily theme (animals, foods, jobs). Theme banner up top. Found list grouped by length. Center letter mandatory.</p>
+        <a class="play" href="https://vibes.diy/vibe/jchris/hex-spell" target="_blank" rel="noopener">Play live &rarr;</a>
+      </div>
+    </article>
+  </main>
+  {{> newsletter}}
+<footer>Built with vibes.diy. Each card is a one-prompt mini-app.</footer>
+</div>

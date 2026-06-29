@@ -1,0 +1,738 @@
+{{!--
+{
+  "layout": "webring",
+  "title": "Your World. Your Signal. | Vibes DIY",
+  "description": "Build a zine, a band site, or an art archive. Public reads. You decide who writes. Full style control. No templates.",
+  "ogUrl": "https://good.vibes.diy/zine/",
+  "source": "zine-collective",
+  "ogImage": "https://good.vibes.diy/images/screenshots/zine.jpg",
+  "apps": [
+    {
+      "num": "01",
+      "slug": "ghost-static-band",
+      "author": "og",
+      "live": true,
+      "category": "band site",
+      "title": "Ghost Static",
+      "tagline": "Upload tracks. Approved bandmates post. World listens."
+    },
+    {
+      "num": "02",
+      "slug": "rough-draft-zine",
+      "author": "og",
+      "live": true,
+      "category": "zine collective",
+      "title": "Rough Draft",
+      "tagline": "Editor curates. Approved writers contribute. Anyone reads."
+    },
+    {
+      "num": "03",
+      "slug": "dead-letter-press",
+      "author": "og",
+      "live": true,
+      "category": "art archive",
+      "title": "Dead Letter Press",
+      "tagline": "Public gallery. Approved members add work. Locked studio."
+    },
+    {
+      "num": "04",
+      "slug": "void-transmissions",
+      "author": "og",
+      "live": true,
+      "category": "noise collective",
+      "title": "Void Transmissions",
+      "tagline": "Recordings, dates, field reports. Approved crew only."
+    },
+    {
+      "num": "05",
+      "slug": "silver-archive",
+      "author": "og",
+      "live": true,
+      "category": "photo zine",
+      "title": "Silver Archive",
+      "tagline": "Images in batches as issues. Public archive. Your edit."
+    },
+    {
+      "num": "06",
+      "slug": "dispatch-bureau",
+      "author": "og",
+      "live": true,
+      "category": "writers collective",
+      "title": "The Dispatch Bureau",
+      "tagline": "Submit pieces. Editor approves. Public reading room."
+    }
+  ]
+}
+--}}
+<link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400;700&family=Special+Elite&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --paper: #f0ead4;
+  --ink: #111;
+  --bg: #0d0d0d;
+  --accent: #c8e020;
+  --muted: #888;
+}
+
+html, body {
+  background: var(--bg);
+  color: var(--paper);
+  font-family: 'Special Elite', 'Courier New', monospace;
+  overflow-x: hidden;
+}
+
+a { color: inherit; text-decoration: none; }
+
+/* ── CORNER MARKS ── */
+.corner-mark {
+  position: fixed;
+  z-index: 9999;
+  background: var(--accent);
+  color: var(--ink);
+  font-family: 'Special Elite', monospace;
+  font-size: 1.1rem;
+  font-weight: 900;
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.corner-mark.tl { top: 0; left: 0; }
+.corner-mark.tr { top: 0; right: 0; }
+.corner-mark.bl { bottom: 0; left: 0; }
+.corner-mark.br { bottom: 0; right: 0; }
+
+/* ── HERO PHOTO ── */
+.hero-photo {
+  width: 100%;
+  height: 52vh;
+  min-height: 340px;
+  position: relative;
+  overflow: hidden;
+}
+.hero-photo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 40%;
+  filter: grayscale(0.45) contrast(1.6) brightness(0.82) sepia(0.12);
+  display: block;
+}
+.hero-photo::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(circle, #000 1.1px, transparent 1.1px);
+  background-size: 5px 5px;
+  opacity: 0.22;
+  pointer-events: none;
+}
+.hero-fade {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 45%;
+  background: linear-gradient(to bottom, transparent, var(--bg));
+  z-index: 2;
+}
+
+/* ── COLLAGE ZONE ── */
+.collage-zone {
+  position: relative;
+  min-height: 600px;
+  background: var(--bg);
+  overflow: hidden;
+}
+
+.tape-grid {
+  position: absolute;
+  inset: 0;
+  background-image:
+    repeating-linear-gradient(0deg, transparent, transparent 79px, rgba(255,255,255,0.04) 79px, rgba(255,255,255,0.04) 80px),
+    repeating-linear-gradient(90deg, transparent, transparent 79px, rgba(255,255,255,0.04) 79px, rgba(255,255,255,0.04) 80px);
+  background-size: 80px 80px;
+}
+
+.bg-text-repeat {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  opacity: 0.06;
+  color: #fff;
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  line-height: 2.4;
+  word-spacing: 1.2rem;
+  padding: 1rem;
+  user-select: none;
+  pointer-events: none;
+}
+
+/* portrait — large, screen blend, halftone */
+.col-portrait {
+  position: absolute;
+  top: -55px;
+  left: 55px;
+  width: 270px;
+  z-index: 10;
+}
+.col-portrait img {
+  width: 100%;
+  display: block;
+  filter: grayscale(1) contrast(2.8) brightness(1.05);
+  mix-blend-mode: screen;
+}
+.col-portrait::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(circle, rgba(0,0,0,0.88) 1.1px, transparent 1.1px);
+  background-size: 3.5px 3.5px;
+  mix-blend-mode: multiply;
+  pointer-events: none;
+}
+
+/* notation sheet */
+.col-notation {
+  position: absolute;
+  top: 28px;
+  left: 305px;
+  width: 310px;
+  background: #f8f5ea;
+  color: var(--ink);
+  padding: 1.1rem;
+  transform: rotate(1.4deg);
+  z-index: 12;
+  box-shadow: 4px 6px 22px rgba(0,0,0,0.65);
+}
+.col-notation::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='2' height='2'%3E%3Crect width='1' height='1' x='0' y='0' fill='%23000' opacity='0.03'/%3E%3C/svg%3E");
+  background-size: 2px 2px;
+  pointer-events: none;
+}
+.tape-piece {
+  position: absolute;
+  top: -10px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 48px;
+  height: 18px;
+  background: rgba(255,255,220,0.38);
+  border: 1px solid rgba(200,200,150,0.25);
+}
+.notation-header {
+  font-family: 'Caveat', cursive;
+  font-size: 0.7rem;
+  color: #444;
+  margin-bottom: 0.45rem;
+  line-height: 1.4;
+  position: relative;
+  z-index: 1;
+}
+.notation-title {
+  font-family: 'Caveat', cursive;
+  font-size: 2.4rem;
+  font-weight: 700;
+  color: var(--ink);
+  line-height: 0.88;
+  margin-bottom: 0.75rem;
+  letter-spacing: -0.02em;
+  position: relative;
+  z-index: 1;
+}
+.notation-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.15rem 0.3rem;
+  position: relative;
+  z-index: 1;
+}
+.notation-item {
+  font-family: 'Caveat', cursive;
+  font-size: 0.82rem;
+  color: #222;
+  display: flex;
+  gap: 0.35rem;
+  align-items: baseline;
+  padding: 0.05rem 0;
+}
+.notation-num {
+  font-size: 0.62rem;
+  color: #999;
+  min-width: 1.1rem;
+}
+.notation-footer {
+  margin-top: 0.7rem;
+  font-family: 'Caveat', cursive;
+  font-size: 0.6rem;
+  color: #888;
+  border-top: 1px solid #ddd;
+  padding-top: 0.35rem;
+  position: relative;
+  z-index: 1;
+}
+
+/* small tilted photo */
+.col-photo-b {
+  position: absolute;
+  top: 195px;
+  left: 18px;
+  width: 195px;
+  transform: rotate(-2.4deg);
+  z-index: 8;
+  border: 3px solid var(--bg);
+  box-shadow: 3px 5px 16px rgba(0,0,0,0.72);
+}
+.col-photo-b img {
+  width: 100%;
+  height: 160px;
+  object-fit: cover;
+  display: block;
+  filter: grayscale(1) contrast(2.1) brightness(0.74);
+}
+.col-photo-b::after {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  bottom: 22px;
+  background-image: radial-gradient(circle, rgba(0,0,0,0.85) 0.9px, transparent 0.9px);
+  background-size: 4px 4px;
+  opacity: 0.25;
+  pointer-events: none;
+}
+.photo-cap {
+  background: var(--bg);
+  color: #777;
+  font-size: 0.44rem;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  padding: 0.22rem 0.4rem;
+}
+
+/* sticker labels */
+.col-sticker {
+  position: absolute;
+  background: var(--paper);
+  border: 1.5px solid #333;
+  padding: 0.28rem 0.55rem;
+  font-size: 0.58rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--ink);
+  z-index: 15;
+  box-shadow: 2px 2px 0 #333;
+}
+.col-sticker.s1 { top: 375px; left: 245px; transform: rotate(-1.8deg); }
+.col-sticker.s2 { top: 428px; left: 490px; transform: rotate(1.1deg); }
+.col-sticker.s3 { top: 480px; left: 125px; transform: rotate(-0.7deg); }
+
+/* hazard stripe */
+.col-warning {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 8px;
+  background: repeating-linear-gradient(
+    -45deg,
+    var(--ink), var(--ink) 10px,
+    var(--accent) 10px, var(--accent) 20px
+  );
+}
+
+/* ── DEMO SECTION ── */
+.demo-section {
+  background: var(--paper);
+  color: var(--ink);
+  position: relative;
+}
+.demo-section::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='3' height='3'%3E%3Ccircle cx='0.75' cy='0.75' r='0.5' fill='%23000' opacity='0.04'/%3E%3C/svg%3E");
+  background-size: 3px 3px;
+  pointer-events: none;
+}
+
+.demo-header-bar {
+  background: var(--ink);
+  color: var(--paper);
+  padding: 0.6rem 1.4rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.62rem;
+  text-transform: uppercase;
+  letter-spacing: 0.16em;
+  position: relative;
+  z-index: 1;
+}
+
+/* shared photo halftone mixin via pseudo */
+.demo-photo-wrap {
+  position: relative;
+  overflow: hidden;
+  background: #1a1a1a;
+  flex-shrink: 0;
+}
+.demo-photo-wrap img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  filter: grayscale(1) contrast(2.0) brightness(0.72);
+  transition: filter 0.3s;
+}
+.demo-photo-wrap img:hover { filter: grayscale(0.5) contrast(1.5) brightness(0.85); }
+.demo-photo-wrap::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(circle, rgba(0,0,0,0.85) 0.9px, transparent 0.9px);
+  background-size: 4px 4px;
+  opacity: 0.2;
+  pointer-events: none;
+}
+
+/* ── HERO / SPOTLIGHT ── */
+.demo-hero {
+  display: grid;
+  grid-template-columns: 44% 1fr;
+  border-bottom: 3px solid var(--ink);
+  position: relative;
+  z-index: 1;
+}
+.demo-hero .demo-photo-wrap {
+  height: 640px;
+  border-right: 2px solid var(--ink);
+}
+.demo-hero-body {
+  padding: 1.6rem 1.8rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  background: var(--paper);
+}
+.spotlight-badge {
+  font-size: 0.48rem;
+  text-transform: uppercase;
+  letter-spacing: 0.28em;
+  background: var(--accent);
+  color: var(--ink);
+  display: inline-block;
+  padding: 3px 9px;
+  width: fit-content;
+}
+.hero-unit-id {
+  font-size: 0.5rem;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  color: var(--muted);
+}
+.hero-unit-name {
+  font-size: 2.4rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: -0.02em;
+  line-height: 0.92;
+  color: var(--ink);
+}
+.hero-unit-tagline {
+  font-size: 0.72rem;
+  color: #333;
+  line-height: 1.55;
+  border-left: 3px solid var(--ink);
+  padding-left: 0.7rem;
+  margin-top: 0.2rem;
+}
+.hero-unit-links {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: auto;
+  padding-top: 0.8rem;
+  border-top: 2px solid var(--ink);
+}
+.hero-unit-link {
+  font-size: 0.52rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  border: 1.5px solid var(--ink);
+  padding: 4px 10px;
+  color: var(--ink);
+  transition: background 0.1s, color 0.1s;
+}
+.hero-unit-link:hover { background: var(--ink); color: var(--paper); }
+
+/* ── LIST ITEMS ── */
+.demo-list {
+  position: relative;
+  z-index: 1;
+}
+.demo-item {
+  display: grid;
+  grid-template-columns: 440px 1fr;
+  border-bottom: 2px solid var(--ink);
+  background: var(--paper);
+  /* funky offsets via nth-child */
+}
+.demo-item .demo-photo-wrap {
+  height: 300px;
+  border-right: 2px solid var(--ink);
+}
+.demo-item:nth-child(1) { margin-left: 0;   border-left: none; }
+.demo-item:nth-child(2) { margin-left: 5%;  border-left: 2px solid var(--ink); }
+.demo-item:nth-child(3) { margin-left: 11%; border-left: 2px solid var(--ink); }
+.demo-item:nth-child(4) { margin-left: 3%;  border-left: 2px solid var(--ink); }
+.demo-item:nth-child(5) { margin-left: 8%;  border-left: 2px solid var(--ink); }
+
+.demo-item-body {
+  padding: 0.8rem 1.1rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0.3rem;
+}
+.unit-id {
+  font-size: 0.44rem;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  color: var(--muted);
+}
+.unit-name {
+  font-size: 1.15rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  color: var(--ink);
+  line-height: 1;
+}
+.unit-tagline {
+  font-size: 0.58rem;
+  color: #444;
+  line-height: 1.5;
+}
+.unit-links {
+  display: flex;
+  gap: 0.35rem;
+  padding-top: 0.4rem;
+  margin-top: 0.1rem;
+  border-top: 1px solid #bbb;
+}
+.unit-link {
+  font-size: 0.46rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  border: 1px solid #777;
+  padding: 2px 6px;
+  color: #333;
+  transition: background 0.1s, color 0.1s;
+}
+.unit-link:hover { background: var(--ink); color: var(--paper); }
+
+/* ── CTA BAR ── */
+.cta-bar {
+  background: var(--ink);
+  color: var(--paper);
+  padding: 2.2rem 1.8rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: relative;
+  overflow: hidden;
+}
+.cta-bar::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='4' height='4'%3E%3Ccircle cx='1' cy='1' r='0.75' fill='%23fff' opacity='0.04'/%3E%3C/svg%3E");
+  background-size: 4px 4px;
+  pointer-events: none;
+}
+.cta-headline {
+  font-size: 2rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  line-height: 1;
+  letter-spacing: -0.01em;
+  position: relative;
+}
+.cta-btn {
+  font-family: 'Special Elite', monospace;
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  border: 2px solid var(--paper);
+  padding: 0.75rem 1.6rem;
+  color: var(--paper);
+  background: transparent;
+  cursor: pointer;
+  position: relative;
+  box-shadow: 4px 4px 0 rgba(255,255,255,0.12);
+  transition: background 0.15s, color 0.15s;
+  display: inline-block;
+}
+.cta-btn:hover { background: var(--paper); color: var(--ink); }
+
+/* ── FOOTER ── */
+.doc-footer {
+  background: var(--paper);
+  color: var(--ink);
+  padding: 0.6rem 1.4rem;
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.46rem;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  border-top: 2px solid var(--ink);
+  position: relative;
+  z-index: 1;
+}
+
+/* ── MOBILE ── */
+@media (max-width: 700px) {
+  .collage-zone { min-height: 900px; }
+  .col-notation { left: 10px; top: 290px; width: calc(100% - 20px); transform: rotate(0.8deg); }
+  .col-sticker.s1 { top: 700px; left: 20px; }
+  .col-sticker.s2 { top: 750px; left: 180px; }
+  .col-sticker.s3 { top: 800px; left: 10px; }
+  .demo-hero { grid-template-columns: 1fr; }
+  .demo-hero .demo-photo-wrap { height: 320px; border-right: none; border-bottom: 2px solid var(--ink); }
+  .demo-item { grid-template-columns: 1fr; margin-left: 0 !important; border-left: none !important; }
+  .demo-item .demo-photo-wrap { height: 220px; border-right: none; border-bottom: 2px solid var(--ink); }
+  .cta-bar { flex-direction: column; gap: 1.2rem; text-align: center; }
+  .doc-footer { flex-direction: column; gap: 0.3rem; }
+}
+</style>
+
+<div class="corner-mark tl">V</div>
+<div class="corner-mark tr">V</div>
+<div class="corner-mark bl">V</div>
+<div class="corner-mark br">V</div>
+
+<section class="hero-photo">
+  <img src="https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=1400&q=85"
+       alt="industrial performance">
+  <div class="hero-fade"></div>
+</section>
+
+<section class="collage-zone">
+  <div class="tape-grid"></div>
+  <div class="bg-text-repeat">
+    your world your signal your world your signal your world your signal your world your signal
+    your world your signal your world your signal your world your signal your world your signal
+    your world your signal your world your signal your world your signal your world your signal
+    your world your signal your world your signal your world your signal your world your signal
+    your world your signal your world your signal your world your signal your world your signal
+    your world your signal your world your signal your world your signal your world your signal
+  </div>
+
+  <div class="col-portrait">
+    <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=400&q=80"
+         alt="operator portrait">
+  </div>
+
+  <div class="col-notation">
+    <div class="tape-piece"></div>
+    <div class="notation-header">S0728 L12 / 105418 ΔΔΔ ΛXBR—<br>S0730 LSS LLR 47639</div>
+    <div class="notation-title">YOUR<br>WORLD.</div>
+    <div class="notation-grid">
+      <div class="notation-item"><span class="notation-num">00</span> public read</div>
+      <div class="notation-item"><span class="notation-num">01</span> ☆ approved write</div>
+      <div class="notation-item"><span class="notation-num">02</span> ◻ full style</div>
+      <div class="notation-item"><span class="notation-num">03</span> mp3 uploads</div>
+      <div class="notation-item"><span class="notation-num">04</span> ⊙ collective</div>
+      <div class="notation-item"><span class="notation-num">05</span> ☆ band site</div>
+      <div class="notation-item"><span class="notation-num">06</span> zine / archive</div>
+      <div class="notation-item"><span class="notation-num">07</span> → clone remix</div>
+      <div class="notation-item"><span class="notation-num">08</span> no template</div>
+      <div class="notation-item"><span class="notation-num">09</span> ↓ your rules</div>
+    </div>
+    <div class="notation-footer">vibes.diy / collective system / rev.04</div>
+  </div>
+
+  <div class="col-photo-b">
+    <img src="https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=300&q=80"
+         alt="music performance">
+    <div class="photo-cap">FIG. 2 — BAND UNIT IN OPERATION</div>
+  </div>
+
+  <div class="col-sticker s1">⚠ public read · restricted write</div>
+  <div class="col-sticker s2">§ operator credentials required</div>
+  <div class="col-sticker s3">clone → remix → deploy</div>
+
+  <div class="col-warning"></div>
+</section>
+
+<section class="demo-section">
+  <div class="demo-header-bar">
+    <span>§ 04 — Demonstration Units / Six Operational Instances</span>
+    <span>DOC-VDY-COL-001 / Rev.04</span>
+  </div>
+
+  {{#each apps}}{{#if @first}}
+  <div class="demo-hero">
+    <div class="demo-photo-wrap">
+      <a href="https://vibes.diy/vibe/{{author}}/{{slug}}">
+        <img src="https://{{slug}}--{{author}}.prod-v2.vibesdiy.net/screenshot.jpg"
+             onerror="this.onerror=null; this.src='{{@root.assetPrefix}}images/og-preview.png';"
+             alt="{{title}}">
+      </a>
+    </div>
+    <div class="demo-hero-body">
+      <span class="spotlight-badge">★ Spotlight</span>
+      <div class="hero-unit-id">UNIT-{{num}} / {{category}}</div>
+      <div class="hero-unit-name">{{title}}</div>
+      <div class="hero-unit-tagline">{{tagline}}</div>
+      <div class="hero-unit-links">
+        <a class="hero-unit-link" href="https://vibes.diy/remix/{{author}}/{{slug}}?skipChat=true">Clone</a>
+        <a class="hero-unit-link" href="https://vibes.diy/remix/{{author}}/{{slug}}">Remix</a>
+        <a class="hero-unit-link" href="https://vibes.diy/vibe/{{author}}/{{slug}}">View ↗</a>
+      </div>
+    </div>
+  </div>
+  {{/if}}{{/each}}
+
+  <div class="demo-list">
+    {{#each apps}}{{#unless @first}}
+    <div class="demo-item">
+      <div class="demo-photo-wrap">
+        <a href="https://vibes.diy/vibe/{{author}}/{{slug}}">
+          <img src="https://{{slug}}--{{author}}.prod-v2.vibesdiy.net/screenshot.jpg"
+               onerror="this.onerror=null; this.src='{{@root.assetPrefix}}images/og-preview.png';"
+               alt="{{title}}">
+        </a>
+      </div>
+      <div class="demo-item-body">
+        <div class="unit-id">UNIT-{{num}} / {{category}}</div>
+        <div class="unit-name">{{title}}</div>
+        <div class="unit-tagline">{{tagline}}</div>
+        <div class="unit-links">
+          <a class="unit-link" href="https://vibes.diy/remix/{{author}}/{{slug}}?skipChat=true">Clone</a>
+          <a class="unit-link" href="https://vibes.diy/remix/{{author}}/{{slug}}">Remix</a>
+          <a class="unit-link" href="https://vibes.diy/vibe/{{author}}/{{slug}}">View ↗</a>
+        </div>
+      </div>
+    </div>
+    {{/unless}}{{/each}}
+  </div>
+</section>
+
+<section class="cta-bar">
+  <div class="cta-headline">Build your<br>world now.</div>
+  <a class="cta-btn" href="https://links.vibes.diy/homepage">↗ Start Building</a>
+</section>
+
+<footer class="doc-footer">
+  <span>Vibes DIY / Publication Division</span>
+  <span>DOC-VDY-COL-001 / Rev.04 / 2026</span>
+  <span>good.vibes.diy</span>
+</footer>

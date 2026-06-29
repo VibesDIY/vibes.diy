@@ -1,0 +1,294 @@
+{{!--
+{
+  "layout": "webring",
+  "title": "For Campers | Vibes DIY",
+  "description": "Park finder, packing list, meal planner, trail log, and a campfire storytime. Five tools for your next camping trip — all yours to customize.",
+  "ogUrl": "https://good.vibes.diy/camping/",
+  "source": "camping",
+  "apps": [
+    {
+      "num": "01",
+      "slug": "national-park-search",
+      "author": "og",
+      "live": true,
+      "title": "Park Finder",
+      "tagline": "63 parks. Which one's yours?",
+      "desc": "Browse and filter all 63 major US national parks by state, activity, and name. Each card shows the park photo, entrance fee, and top activities. Data lives in Fireproof — no internet required after first load.",
+      "fork": "Only hiking in the Southwest? Clone it and set the default state filter to AZ, UT, NM, or CO."
+    },
+    {
+      "num": "02",
+      "slug": "camp-gear-list",
+      "author": "og",
+      "live": true,
+      "title": "Packing List",
+      "tagline": "Who's got the bear canister?",
+      "desc": "Group gear checklist organized by category — Shelter, Kitchen, Safety, Navigation, Personal. Each item shows who's bringing it and what's still unclaimed.",
+      "fork": "Going on a canoe trip instead of backpacking? Clone it and swap the gear categories to match your kit."
+    },
+    {
+      "num": "03",
+      "slug": "camp-meal-plan",
+      "author": "og",
+      "live": true,
+      "title": "Meal Planner",
+      "tagline": "Day 3 dinner: somebody's problem.",
+      "desc": "Day-by-day meal grid for 2–7 days. Set each meal, note who's cooking dinner, and build a shared shopping list. No surprises at the trailhead.",
+      "fork": "Doing a 10-day trip? Clone it and extend the day count. Add dietary notes per slot."
+    },
+    {
+      "num": "04",
+      "slug": "group-trail-log",
+      "author": "og",
+      "live": true,
+      "title": "Trail Log",
+      "tagline": "We did that. Barely.",
+      "desc": "Group hiking log for a multi-day trip. Each entry: trail name, date, distance, elevation gain, difficulty, who hiked it, notes. Trip totals at the top.",
+      "fork": "Running a hiking club with year-round logs? Clone it and remove the trip-date filter — keep every hike ever."
+    },
+    {
+      "num": "05",
+      "slug": "camping-adventure-story",
+      "author": "og",
+      "live": true,
+      "title": "Story Time",
+      "tagline": "Chapter 2: the bear was right there.",
+      "desc": "Choose-your-own-adventure camping story to read aloud at the campfire. Three branching decision points, four different endings, pure CSS illustrated scenes. One ending involves a bear that is RIGHT THERE.",
+      "fork": "Want a river rafting adventure instead? Clone it and rewrite the opening scene — the branching structure is already built."
+    }
+  ],
+  "ogImage": "https://good.vibes.diy/images/screenshots/camping.jpg"
+}
+--}}
+
+<style>
+  @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Bitter:wght@600;700&display=optional");
+
+  :root {
+    --bg: #f4f1e7;
+    --surface: #fffdf8;
+    --ink: #1d3523;
+    --muted: #4f5f52;
+    --line: #d1d8c8;
+    --brand: #2f6b3f;
+    --brand-strong: #234f30;
+    --accent: #bf7e2f;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    font-family: "Inter", system-ui, sans-serif;
+    background: radial-gradient(circle at 0 0, #ebe4d3 0, var(--bg) 42%), var(--bg);
+    color: var(--ink);
+    line-height: 1.55;
+  }
+
+  a { color: inherit; text-decoration: none; }
+
+  .page { max-width: 980px; margin: 0 auto; padding: 0 1.25rem 4rem; }
+
+  .topbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.1rem 0;
+    border-bottom: 1px solid var(--line);
+    font-size: 0.85rem;
+  }
+
+  .brand { font-weight: 800; letter-spacing: 0.03em; }
+  .path { color: var(--muted); font-weight: 600; }
+
+  .hero { padding: 3.2rem 0 2.2rem; }
+  .eyebrow {
+    display: inline-block;
+    font-size: 0.72rem;
+    letter-spacing: 0.11em;
+    text-transform: uppercase;
+    font-weight: 700;
+    color: var(--brand);
+    margin-bottom: 1rem;
+  }
+
+  h1 {
+    margin: 0;
+    font-family: "Bitter", Georgia, serif;
+    font-size: clamp(2.2rem, 5vw, 3.6rem);
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+  }
+
+  .lead {
+    margin: 1rem 0 1.4rem;
+    max-width: 60ch;
+    color: var(--muted);
+    font-size: 1.06rem;
+  }
+
+  .primary-cta {
+    display: inline-block;
+    background: var(--brand);
+    color: #fff;
+    font-weight: 700;
+    padding: 0.82rem 1.2rem;
+    border-radius: 0.65rem;
+  }
+
+  .primary-cta:hover { background: var(--brand-strong); }
+
+  .hero-img {
+    width: 100%;
+    height: 320px;
+    object-fit: cover;
+    border-radius: 0.9rem;
+    margin: 1.6rem 0 0;
+    border: 1px solid var(--line);
+  }
+
+  .hero-img-credit { display: block; text-align: right; font-size: 0.65rem; color: var(--muted); margin: 0.3rem 0 0; }
+
+  .benefits {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.8rem;
+    margin: 0 0 2rem;
+  }
+
+  .benefit {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 0.8rem;
+    padding: 0.95rem;
+  }
+
+  .benefit strong { display: block; margin-bottom: 0.25rem; font-size: 0.95rem; }
+  .benefit span { color: var(--muted); font-size: 0.88rem; }
+
+  .section-title {
+    font-size: 1.1rem;
+    font-weight: 800;
+    margin: 0 0 0.9rem;
+  }
+
+  .apps-grid {
+    display: grid;
+    gap: 0.9rem;
+  }
+
+  .app-card {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 0.9rem;
+    padding: 1rem;
+  }
+
+  .app-top {
+    display: flex;
+    align-items: baseline;
+    gap: 0.6rem;
+    margin-bottom: 0.35rem;
+  }
+
+  .app-num {
+    font-size: 0.72rem;
+    font-weight: 800;
+    color: var(--accent);
+    letter-spacing: 0.12em;
+  }
+
+  .app-title {
+    margin: 0;
+    font-size: 1.06rem;
+    font-weight: 800;
+  }
+
+  .app-tagline { margin: 0 0 0.5rem; color: var(--brand); font-weight: 600; font-size: 0.9rem; }
+  .app-desc { margin: 0; color: var(--muted); font-size: 0.92rem; }
+  .fork-note { margin: 0.6rem 0 0; color: var(--muted); font-size: 0.8rem; }
+
+  .actions { margin-top: 0.8rem; display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: center; }
+
+  .open-btn {
+    background: #fff;
+    border: 1px solid var(--brand);
+    color: var(--brand-strong);
+    font-weight: 700;
+    border-radius: 0.55rem;
+    padding: 0.5rem 0.9rem;
+    font-size: 0.85rem;
+  }
+
+  .open-btn:hover { background: #eff8f1; }
+
+  .minor-actions { display: flex; gap: 0.65rem; }
+  .minor-actions a { color: var(--muted); font-size: 0.8rem; text-decoration: underline; text-underline-offset: 2px; }
+
+  .closing {
+    margin-top: 2rem;
+    padding: 1.35rem;
+    border-radius: 0.95rem;
+    background: #1f3f29;
+    color: #f1f7f2;
+  }
+
+  .closing h2 { margin: 0 0 0.45rem; font-size: 1.25rem; }
+  .closing p { margin: 0 0 0.9rem; opacity: 0.9; }
+
+  @media (max-width: 760px) {
+    .benefits { grid-template-columns: 1fr; }
+  }
+</style>
+
+<div class="page">
+  <header class="topbar">
+    <a class="brand" href="https://links.vibes.diy/homepage">Vibes DIY</a>
+    <span class="path">/camping/</span>
+  </header>
+
+  <section class="hero">
+    <p class="eyebrow">Camping toolkit</p>
+    <h1>Plan the trip. Hit the trail.</h1>
+    <p class="lead">Five focused apps for choosing your park, packing the right gear, assigning meals, tracking hikes, and ending the night with a campfire story.</p>
+    <a class="primary-cta" href="https://vibes.diy/vibe/og/national-park-search" target="_blank" rel="noopener">Open Park Finder</a>
+    <img class="hero-img" src="https://images.unsplash.com/photo-1504280390367-361c6d9f38f4?w=1200&q=80&auto=format" alt="Tent at a lakeside campsite at sunset" loading="eager">
+    <a class="hero-img-credit" href="https://unsplash.com/@scottagoodwill" target="_blank" rel="noopener">Photo by Scott Goodwill / Unsplash</a>
+  </section>
+
+  <section class="benefits" aria-label="Why campers use these apps">
+    <article class="benefit"><strong>Trip-lead approved</strong><span>Simple screens your crew can update from a phone.</span></article>
+    <article class="benefit"><strong>Fast setup</strong><span>Open one app and start planning in under a minute.</span></article>
+    <article class="benefit"><strong>Remix-ready</strong><span>Clone any tool when your trip has specific constraints.</span></article>
+  </section>
+
+  <section>
+    <h2 class="section-title">Choose the app you need right now</h2>
+    <div class="apps-grid">
+      {{#each apps}}
+      <article class="app-card">
+        <div class="app-top">
+          <span class="app-num">APP {{num}}</span>
+          <h3 class="app-title">{{title}}</h3>
+        </div>
+        <p class="app-tagline">{{tagline}}</p>
+        <p class="app-desc">{{desc}}</p>
+        {{#if fork}}<p class="fork-note">{{fork}}</p>{{/if}}
+        <div class="actions">
+          <a class="open-btn" href="https://vibes.diy/vibe/{{author}}/{{slug}}" target="_blank" rel="noopener">Open app</a>
+          <div class="minor-actions">
+            <a href="https://vibes.diy/remix/{{author}}/{{slug}}?skipChat=true" target="_blank" rel="noopener">Clone</a>
+            <a href="https://vibes.diy/remix/{{author}}/{{slug}}" target="_blank" rel="noopener">Remix</a>
+          </div>
+        </div>
+      </article>
+      {{/each}}
+    </div>
+  </section>
+
+  <section class="closing">
+    <h2>Start with one decision, then build momentum.</h2>
+    <p>Open Park Finder first, pick the destination, and share the rest of the apps as your route and group details lock in.</p>
+    <a class="primary-cta" href="https://vibes.diy/vibe/og/national-park-search" target="_blank" rel="noopener">Open Park Finder</a>
+  </section>
+</div>

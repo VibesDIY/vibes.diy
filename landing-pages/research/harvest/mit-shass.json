@@ -1,0 +1,105 @@
+{
+  "source": "MIT OCW — SHASS",
+  "location": "Cambridge, MA",
+  "region": "Northeast",
+  "domain": "humanities",
+  "fetched": "2026-05-20",
+  "items": [
+    {
+      "title": "Writing About Literature: Writing About Love",
+      "department": "Literature / Creative Writing",
+      "year": 2015,
+      "url": "https://ocw.mit.edu/courses/21l-000j-writing-about-literature-writing-about-love-fall-2015/",
+      "topics": [
+        "close reading",
+        "intimate bonds",
+        "heartbreak",
+        "graphic memoir",
+        "racial love",
+        "gendered love",
+        "queer love",
+        "literary analysis"
+      ]
+    },
+    {
+      "title": "Foundations of Western Culture: The Making of the Modern World",
+      "department": "Literature / Creative Writing",
+      "year": 2010,
+      "url": "https://ocw.mit.edu/courses/21l-002-foundations-of-western-culture-the-making-of-the-modern-world-spring-2010/",
+      "topics": [
+        "close analysis",
+        "individualism",
+        "ancient vs. modern",
+        "philosophical texts",
+        "literary texts",
+        "character and action",
+        "voice and form",
+        "humanism"
+      ]
+    },
+    {
+      "title": "How to Stage a Revolution",
+      "department": "History",
+      "year": 2013,
+      "url": "https://ocw.mit.edu/courses/21h-001-how-to-stage-a-revolution-fall-2013/",
+      "topics": [
+        "American Revolution",
+        "French Revolution",
+        "Haitian Revolution",
+        "Egyptian uprising",
+        "revolutionary declarations",
+        "constitutions",
+        "primary sources",
+        "memoirs"
+      ]
+    },
+    {
+      "title": "American History Since 1865",
+      "department": "History",
+      "year": 2018,
+      "url": "https://ocw.mit.edu/courses/21h-102-american-history-since-1865-spring-2018/",
+      "topics": [
+        "frontier settlement",
+        "immigration history",
+        "industrialization",
+        "U.S. as global power",
+        "Cold War",
+        "Civil Rights movement",
+        "social movements",
+        "digital age"
+      ]
+    },
+    {
+      "title": "Good Food: Ethics and Politics of Food",
+      "department": "Philosophy / Ethics",
+      "year": 2017,
+      "url": "https://ocw.mit.edu/courses/24-03-good-food-ethics-and-politics-of-food-spring-2017/",
+      "topics": [
+        "moral philosophy",
+        "animal ethics",
+        "global justice",
+        "consumer responsibility",
+        "climate ethics",
+        "normative frameworks",
+        "food policy",
+        "aesthetic values"
+      ]
+    },
+    {
+      "title": "Musical Improvisation",
+      "department": "Music / Sound Studies",
+      "year": 2013,
+      "url": "https://ocw.mit.edu/courses/21m-355-musical-improvisation-spring-2013/",
+      "topics": [
+        "jazz improvisation",
+        "non-western traditions",
+        "free improvisation",
+        "western concert music",
+        "film scoring",
+        "solo improvisation",
+        "ensemble improvisation",
+        "composition vs. performance"
+      ]
+    }
+  ]
+}

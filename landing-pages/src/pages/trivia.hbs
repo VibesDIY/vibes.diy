@@ -1,0 +1,431 @@
+{{!--
+{
+  "layout": "webring",
+  "title": "Trivia Night | Vibes DIY",
+  "description": "Five custom trivia-night apps for the bar, the family, the office, the faculty club, and the DJ meetup. Same live multi-team trivia primitive, five vibes.",
+  "ogUrl": "https://good.vibes.diy/trivia/",
+  "source": "trivia",
+  "apps": [
+    {
+      "num": "01",
+      "slug": "pub-trivia-night",
+      "author": "jchris",
+      "live": true,
+      "title": "Pub Night",
+      "venue": "The bar's regular Tuesday",
+      "tagline": "Chalkboard slate. Beer mats. Amber glow.",
+      "desc": "The bar's regular host taps Next Question and 12 tables flip to it at the same instant. No paper sheets, no clipboards, no Buzztime tablets. The host's phone is the rig; every table's phone is a buzzer; the answer reveal lands in unison and the room gasps or groans together. The last round's winners get their team name chalked at the top until next Tuesday."
+    },
+    {
+      "num": "02",
+      "slug": "family-trivia-room",
+      "author": "jchris",
+      "live": true,
+      "title": "Family Room",
+      "venue": "Saturday night, board-game table",
+      "tagline": "Primaries on cream. Big chunky cards. Grandparent-readable.",
+      "desc": "Trivia for the household where someone is six and someone is eighty. Bright primary cards, friendly rounded type, dice and pawn ornaments, big tap targets, no tiny grey type. Whoever picks the categories controls the night; whoever wins gets to pick the dessert. Persistent leaderboard across weeks lets the cousins argue about who's really the champion."
+    },
+    {
+      "num": "03",
+      "slug": "office-trivia-pulse",
+      "author": "jchris",
+      "live": true,
+      "title": "Office Offsite",
+      "venue": "Quarterly team meeting, 15 minutes before lunch",
+      "tagline": "Slate gray. Single blue accent. Slack-adjacent.",
+      "desc": "Trivia for the team that has thirty minutes between the strategy review and the catered burritos. Muted slate base, single brand-blue accent, clean sans, no childish clipart, no upgrade-to-Pro nags. Manager hits Generate 10 questions about Q3 product launches and the AI fills the deck. Teams are the breakout rooms. The leaderboard goes in the Monday recap."
+    },
+    {
+      "num": "04",
+      "slug": "faculty-trivia-hall",
+      "author": "jchris",
+      "live": true,
+      "title": "Faculty Hall",
+      "venue": "Thursday-night faculty club, after the seminar",
+      "tagline": "Burgundy leather. Brass. Crimson Pro serif. Donnish restraint.",
+      "desc": "Trivia for the people who say 'pace' as a Latin word. Burgundy leather background, brass team-name plates, parchment question cards, gold rule lines, Crimson Pro serif throughout. The leaderboard looks like a library stamp ledger. Categories run heavy on etymology, biographies of obscure mathematicians, and ferments. The winner gets nothing material but considerable face."
+    },
+    {
+      "num": "05",
+      "slug": "dj-decks-trivia",
+      "author": "jchris",
+      "live": true,
+      "title": "DJ Meetup",
+      "venue": "Late-night club, between sets",
+      "tagline": "Near-black. Magenta and cyan. VU-meter countdown.",
+      "desc": "Trivia for the after-hours crowd where the categories are obscure b-sides, sample sources, and which year that Boards of Canada track came out. Dark club-poster aesthetic, neon magenta and cyan, chunky display type, VU-meter style countdown, glitch shift on the answer reveal. The host is the resident DJ in the booth. The leaderboard scrolls across a phone propped on the mixer."
+    }
+  ],
+  "ogImage": "https://good.vibes.diy/images/screenshots/trivia.jpg"
+}
+--}}
+
+<style>
+  @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=optional");
+
+  :root {
+    --paper: oklch(0.97 0.01 80);
+    --ink: oklch(0.14 0.02 270);
+    --hot: oklch(0.72 0.20 25);
+    --hi: oklch(0.94 0.20 95);
+    --rule: oklch(0.14 0.02 270);
+  }
+
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html, body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: "Inter", system-ui, sans-serif;
+    line-height: 1.55;
+    min-height: 100vh;
+    background-image:
+      repeating-linear-gradient(0deg, rgba(20,20,40,0.04) 0 1px, transparent 1px 32px),
+      repeating-linear-gradient(90deg, rgba(20,20,40,0.04) 0 1px, transparent 1px 32px);
+  }
+  a { color: inherit; text-decoration: none; }
+  .mono { font-family: "JetBrains Mono", monospace; }
+
+  .layout {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 1.25rem;
+    border-left: 2px solid var(--rule);
+    border-right: 2px solid var(--rule);
+    background: var(--paper);
+  }
+
+  .topbar {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 1rem 1.25rem;
+    border-bottom: 4px solid var(--rule);
+    margin: 0 -1.25rem;
+    padding-left: 1.25rem; padding-right: 1.25rem;
+  }
+  .topbar .brand {
+    font-family: "Inter", sans-serif; font-weight: 900; letter-spacing: -0.02em;
+    font-size: 1.25rem;
+  }
+  .topbar .meta {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.6rem; letter-spacing: 0.18em; text-transform: uppercase;
+  }
+  .topbar .meta b { background: var(--hi); padding: 2px 6px; border: 1px solid var(--rule); }
+
+  .crumb {
+    padding: 0.55rem 0;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.65rem; letter-spacing: 0.18em; text-transform: uppercase;
+    border-bottom: 2px solid var(--rule);
+  }
+  .crumb a:hover { background: var(--hi); }
+
+  .hero {
+    padding: 4rem 0 3.5rem;
+    border-bottom: 4px solid var(--rule);
+    position: relative;
+  }
+  .hero .label {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.6rem; letter-spacing: 0.25em; text-transform: uppercase;
+    margin-bottom: 1.5rem;
+    display: inline-block;
+    padding: 4px 10px;
+    background: var(--ink); color: var(--paper);
+  }
+  .hero h1 {
+    font-size: clamp(3rem, 9vw, 7rem);
+    font-weight: 900;
+    line-height: 0.92;
+    letter-spacing: -0.04em;
+    margin-bottom: 1.5rem;
+  }
+  .hero h1 .hi {
+    background: var(--hi);
+    padding: 0 0.18em;
+    display: inline-block;
+    transform: rotate(-1.5deg);
+    box-shadow: 6px 6px 0 var(--rule);
+    margin: 0.1em 0;
+    border: 2px solid var(--rule);
+  }
+  .hero h1 .hot {
+    background: var(--hot);
+    color: var(--paper);
+    padding: 0 0.18em;
+    display: inline-block;
+    transform: rotate(1deg);
+    box-shadow: 6px 6px 0 var(--rule);
+    margin: 0.1em 0;
+    border: 2px solid var(--rule);
+  }
+  .hero p.lead {
+    font-size: 1.2rem;
+    max-width: 720px;
+    line-height: 1.5;
+  }
+  .hero .marker {
+    background: var(--hi);
+    padding: 1px 4px;
+  }
+
+  .stats {
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    border-bottom: 4px solid var(--rule);
+  }
+  @media (max-width: 700px) { .stats { grid-template-columns: repeat(2, 1fr); } }
+  .stat-cell {
+    padding: 1.25rem 1.5rem;
+    border-right: 2px solid var(--rule);
+  }
+  .stat-cell:last-child { border-right: none; }
+  @media (max-width: 700px) {
+    .stat-cell { border-bottom: 2px solid var(--rule); }
+    .stat-cell:nth-child(2n) { border-right: none; }
+  }
+  .stat-cell .k {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.55rem; letter-spacing: 0.25em; text-transform: uppercase;
+    margin-bottom: 0.4rem;
+  }
+  .stat-cell .v {
+    font-family: "Inter", sans-serif; font-weight: 900;
+    font-size: 1.4rem; letter-spacing: -0.02em;
+  }
+
+  .primitive {
+    padding: 2.5rem 0;
+    border-bottom: 4px solid var(--rule);
+  }
+  .primitive h2 {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.6rem; letter-spacing: 0.25em; text-transform: uppercase;
+    margin-bottom: 1.25rem;
+  }
+  .primitive h2::before { content: "// "; }
+  .primitive p { font-size: 1.05rem; max-width: 760px; line-height: 1.6; margin-bottom: 0.85rem; }
+  .primitive .pull {
+    font-family: "Inter", sans-serif; font-weight: 900;
+    font-size: clamp(1.6rem, 3.5vw, 2.6rem);
+    line-height: 1.1; letter-spacing: -0.02em;
+    margin: 1.25rem 0;
+    max-width: 800px;
+  }
+  .primitive .pull span { background: var(--hi); padding: 0 0.2em; box-decoration-break: clone; -webkit-box-decoration-break: clone; }
+
+  .section-label {
+    padding: 1.5rem 0 0.75rem;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.6rem; letter-spacing: 0.25em; text-transform: uppercase;
+    border-bottom: 2px dashed var(--rule);
+    margin-bottom: 1.5rem;
+  }
+  .section-label::before { content: "// "; }
+
+  .apps {
+    display: flex; flex-direction: column; gap: 0;
+    border-top: 2px solid var(--rule);
+    border-bottom: 4px solid var(--rule);
+  }
+  .app {
+    padding: 2rem 1.5rem;
+    border-bottom: 2px solid var(--rule);
+    display: grid;
+    grid-template-columns: 80px 1fr 320px;
+    gap: 2rem;
+    align-items: start;
+    transition: background 0.15s;
+  }
+  .app:last-child { border-bottom: none; }
+  @media (max-width: 800px) { .app { grid-template-columns: 1fr; gap: 1rem; } }
+  .app:hover { background: rgba(20,20,40,0.03); }
+
+  .app .num-cell {
+    font-family: "JetBrains Mono", monospace;
+    display: flex; flex-direction: column; gap: 0.4rem;
+  }
+  .app .num {
+    font-family: "Inter", sans-serif; font-weight: 900;
+    font-size: 3rem; line-height: 0.85; letter-spacing: -0.04em;
+  }
+  .app .status {
+    font-size: 0.55rem; letter-spacing: 0.2em; text-transform: uppercase;
+    padding: 3px 6px; border: 2px solid var(--rule);
+    text-align: center;
+  }
+  .app--live .status { background: var(--hi); }
+
+  .app .body { display: flex; flex-direction: column; gap: 0.7rem; }
+  .app .body .title {
+    font-size: 2rem; font-weight: 900; letter-spacing: -0.02em;
+    line-height: 1.05;
+  }
+  .app .body .venue {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.7rem; letter-spacing: 0.15em; text-transform: uppercase;
+    opacity: 0.7;
+  }
+  .app .body .tagline {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.8rem; padding: 6px 10px;
+    background: var(--hi); display: inline-block; align-self: flex-start;
+    border: 1px solid var(--rule);
+  }
+  .app .body .desc { font-size: 1rem; line-height: 1.55; }
+
+  .app .right { display: flex; flex-direction: column; gap: 0.6rem; }
+  .app .shot { display: block; aspect-ratio: 16/9; overflow: hidden; border: 2px solid var(--rule); background: var(--paper); }
+  .app .shot img { width: 100%; height: 100%; object-fit: cover; }
+  .app .shot-placeholder {
+    padding: 1rem; height: 100%; display: flex; align-items: center; justify-content: center;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.7rem; letter-spacing: 0.2em; text-transform: uppercase;
+    text-align: center;
+  }
+  .app .ctas { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0; border: 2px solid var(--rule); }
+  .app .ctas--single { grid-template-columns: 1fr; }
+  .btn {
+    text-align: center;
+    padding: 0.55rem 0.5rem;
+    background: transparent;
+    border-right: 2px solid var(--rule);
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.65rem; letter-spacing: 0.15em; text-transform: uppercase; font-weight: 700;
+    color: var(--ink);
+    cursor: pointer;
+    transition: background 0.12s;
+  }
+  .btn:last-child { border-right: none; }
+  .btn:hover { background: var(--hi); }
+  .prompt-link {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.7rem;
+    text-decoration: underline;
+  }
+  .prompt-link:hover { background: var(--hi); }
+
+  .epilogue {
+    padding: 2.5rem 0;
+    border-bottom: 4px solid var(--rule);
+  }
+  .epilogue h2 {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.6rem; letter-spacing: 0.25em; text-transform: uppercase;
+    margin-bottom: 1rem;
+  }
+  .epilogue h2::before { content: "// "; }
+  .epilogue p { font-size: 1.1rem; max-width: 720px; line-height: 1.55; margin-bottom: 0.75rem; }
+  .epilogue .hl { background: var(--hi); padding: 1px 4px; }
+
+  footer.term-footer {
+    padding: 1rem 0;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.6rem; letter-spacing: 0.2em; text-transform: uppercase;
+    display: flex; justify-content: space-between;
+  }
+  footer.term-footer a:hover { background: var(--hi); }
+</style>
+
+<div class="layout">
+  <header class="topbar">
+    <a class="brand" href="https://links.vibes.diy/homepage">VIBES.DIY</a>
+    <span class="meta"><b>TRIVIA NIGHT</b> · five rooms, one ritual</span>
+  </header>
+
+  <nav class="crumb">
+    <a href="/">Home</a> &nbsp;›&nbsp; Trivia Night
+  </nav>
+
+  <section class="hero">
+    <span class="label">Trivia Night</span>
+    <h1>The <span class="hi">URL</span><br/>is the<br/><span class="hot">buzzer</span>.</h1>
+    <p class="lead">
+      Five styles of live multi-team trivia, all running the same primitive: the host taps a button, every team's phone flips to the question at the same instant, the countdown ticks together, and the answer reveal lands in <span class="marker">unison gasps</span>. No tablets to rent, no franchise fee, no schoolish quiz tool with an upgrade prompt. Pick the room your night belongs in.
+    </p>
+  </section>
+
+  <div class="stats">
+    <div class="stat-cell">
+      <div class="k">Apps</div>
+      <div class="v">Five</div>
+    </div>
+    <div class="stat-cell">
+      <div class="k">Replaces</div>
+      <div class="v">Paper · Buzztime · Kahoot</div>
+    </div>
+    <div class="stat-cell">
+      <div class="k">Sync</div>
+      <div class="v">Wall-clock + Fireproof</div>
+    </div>
+    <div class="stat-cell">
+      <div class="k">Onboarding</div>
+      <div class="v">Scan QR · type a name</div>
+    </div>
+  </div>
+
+  <section class="primitive">
+    <h2>The Shape</h2>
+    <p>
+      One host, any number of teams, one URL per game. The host opens the host view, gets a four-letter code and a big QR. Teams scan and type a team name. When the host taps <strong>Next Question</strong>, every joined phone flips to it at the same instant — the timing comes from a shared wall-clock pinned to a Fireproof timestamp, not from a host-server in the loop. The 20-second countdown ticks in lockstep on every screen. Teams tap their answer; the option locks at zero. Host taps <strong>Show Answer</strong> — every phone reveals correct, scores update, leaderboard re-sorts in unison.
+    </p>
+    <p class="pull">
+      Paper sheets and a clipboard. Or a <span>$1,000/month Buzztime tablet rig</span>. Now it's a URL.
+    </p>
+    <p>
+      The same primitive runs the bar, the family kitchen, the boardroom, the faculty lounge, and the DJ booth. What changes between them isn't the engine — it's the typography, the palette, the tone of the leaderboard, and the kind of questions the AI is asked to fill the deck with. Five remixable starting points below.
+    </p>
+  </section>
+
+  <div class="section-label">The Five Rooms</div>
+
+  <section class="apps">
+    {{#each apps}}
+      <article class="app {{#if live}}app--live{{else}}app--pending{{/if}}">
+        <div class="num-cell">
+          <div class="num">{{num}}</div>
+          <div class="status">{{#if live}}Live{{else}}Pending{{/if}}</div>
+        </div>
+        <div class="body">
+          <h2 class="title">{{title}}</h2>
+          <span class="venue">{{venue}}</span>
+          <span class="tagline">{{tagline}}</span>
+          <p class="desc">{{desc}}</p>
+        </div>
+        <div class="right">
+          {{#if live}}
+            <a class="shot" href="https://vibes.diy/vibe/{{author}}/{{slug}}" aria-label="{{title}} screenshot"><img src="https://{{slug}}--{{author}}.prod-v2.vibesdiy.net/screenshot.jpg" alt="{{slug}}" onerror="this.onerror=null; this.src='{{@root.assetPrefix}}images/og-preview.png';"/></a>
+            <div class="ctas">
+              <a class="btn" href="https://vibes.diy/vibe/{{author}}/{{slug}}">Open</a>
+              <a class="btn" href="https://vibes.diy/remix/{{author}}/{{slug}}?skipChat=true">Clone</a>
+              <a class="btn" href="https://vibes.diy/remix/{{author}}/{{slug}}">Remix</a>
+            </div>
+            <a class="prompt-link" href="https://vibes.diy/chat/prompt?prompt64={{prompt64 desc}}">// start fresh from this prompt</a>
+            <span class="prompt-link" style="opacity:0.5; text-decoration:none; font-size:0.6rem;">The prompt that built this room. Describe your version &mdash; your venue, your categories, your crowd.</span>
+          {{else}}
+            <div class="shot"><div class="shot-placeholder">awaiting deploy</div></div>
+            <div class="ctas ctas--single">
+              <a class="btn" href="https://vibes.diy/chat/prompt?prompt64={{prompt64 desc}}">Start From Prompt</a>
+            </div>
+          {{/if}}
+        </div>
+      </article>
+    {{/each}}
+  </section>
+
+  <div class="epilogue">
+    <h2>Read Me</h2>
+    <p>
+      Trivia night is the canonical small-business application of <span class="hl">the URL is the beat</span>: three things — question reveal, countdown, answer reveal — all have to land at the same instant on every device in the room. Pre-AI the only options were paper-and-pencil (cheap, slow, error-prone) or rented tablet rigs (fast, expensive, locked to one franchise's question bank). The form factor of the transaction excluded everyone in between: the friend hosting a birthday quiz, the manager wanting Q3 product trivia, the faculty club, the DJ booth.
+    </p>
+    <p>
+      Generated software collapses the form factor. The host is whoever cares enough to type the questions or hit the AI button. The audience is whoever has a phone and the link. The aesthetic is whatever fits the room. <span class="hl">Remix any of the five</span> to make it specifically yours.
+    </p>
+  </div>
+
+  {{> newsletter}}
+<footer class="term-footer">
+    <span>Vibes.diy · <a href="https://links.vibes.diy/homepage">homepage</a> · <a href="/expressions/">expressions</a></span>
+    <span>// FIVE ROOMS, ONE RITUAL</span>
+  </footer>
+</div>

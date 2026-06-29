@@ -1,0 +1,647 @@
+{{!--
+{
+  "layout": "webring",
+  "title": "~ Pets ~ A Vibes DIY Webring",
+  "description": "For the animals in your life — coordinate dog walks, log neighborhood cats, and keep tabs on the four-legged regulars. Try a classic, then remix your own.",
+  "ogUrl": "https://good.vibes.diy/featured-apps/pets",
+  "source": "pets",
+  "classics": [
+    {
+      "author": "og",
+      "slug": "atmospheric-nova-4711",
+      "description": "Pixel-art owl pet; feed it, watch it fly and blink, dress it in seasonal accessories.",
+      "category": "Companions"
+    },
+    {
+      "author": "og",
+      "slug": "scary-leopon-8540",
+      "description": "Pet Harmony: paw-themed drawing canvas with rainbow brushes, auto-draw, animal icons, and saved artwork gallery.",
+      "category": "Companions"
+    }
+  ],
+  "groups": [
+    {
+      "description": "Dog walker coordinator — schedule group walks; share routes; doggy playdate matching; photo highlights. Your rescue tracks fosters, not owned pets, and needs a hand-off log when a dog moves between foster families. Clone it and rename the fields.",
+      "title": "Dog Walker Coordinator",
+      "variants": [
+        { "author": "jchris", "slug": "press-tie-difference" },
+        { "author": "jchris", "slug": "paw-patrol-planner" }
+      ]
+    },
+    {
+      "description": "Neighborhood cat tracker — photo log; vote same/new cat; cluster sightings; simple map. Your TNR colony manages 23 cats with individual ear-tip records and feeding station assignments. Clone this and add a per-cat profile with vet history.",
+      "title": "Neighborhood Cat Tracker",
+      "variants": [
+        { "author": "jchris", "slug": "cat-spotter-map" }
+      ]
+    },
+    {
+      "description": "Pet feeding log — track meals, portions, and treats; share between household members; spot missed feedings. You have three cats on three different prescription diets and the vet wants a two-week food diary. Clone it and add a per-cat diet profile so each entry is logged to the right prescription.",
+      "title": "Pet Feeding Log",
+      "variants": [
+        { "author": "jchris", "slug": "pet-feeding-log" }
+      ]
+    }
+  ]
+}
+--}}
+
+<style>
+  /* ~ * ~ * ~ Webring Lost-Pet Flyer ~ * ~ * ~ */
+
+  body {
+    margin: 0;
+    padding: 24px 0 64px;
+    font-family: "Times New Roman", Georgia, serif;
+    font-size: 14px;
+    color: #3a2418;
+    background-color: #f4e4d4;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='60' viewBox='0 0 60 60'%3E%3Cg fill='%238b4513' fill-opacity='0.08'%3E%3Cpath d='M15 18 c-1.5 0 -2.5 1.2 -2.5 2.8 c0 1.6 1 2.8 2.5 2.8 c1.5 0 2.5 -1.2 2.5 -2.8 c0 -1.6 -1 -2.8 -2.5 -2.8 z M11 14 c-1 0 -1.7 0.9 -1.7 2 c0 1.1 0.7 2 1.7 2 c1 0 1.7 -0.9 1.7 -2 c0 -1.1 -0.7 -2 -1.7 -2 z M19 14 c-1 0 -1.7 0.9 -1.7 2 c0 1.1 0.7 2 1.7 2 c1 0 1.7 -0.9 1.7 -2 c0 -1.1 -0.7 -2 -1.7 -2 z M9 19 c-0.9 0 -1.5 0.8 -1.5 1.8 c0 1 0.6 1.8 1.5 1.8 c0.9 0 1.5 -0.8 1.5 -1.8 c0 -1 -0.6 -1.8 -1.5 -1.8 z M21 19 c-0.9 0 -1.5 0.8 -1.5 1.8 c0 1 0.6 1.8 1.5 1.8 c0.9 0 1.5 -0.8 1.5 -1.8 c0 -1 -0.6 -1.8 -1.5 -1.8 z'/%3E%3Cpath d='M45 44 c-1.5 0 -2.5 1.2 -2.5 2.8 c0 1.6 1 2.8 2.5 2.8 c1.5 0 2.5 -1.2 2.5 -2.8 c0 -1.6 -1 -2.8 -2.5 -2.8 z M41 40 c-1 0 -1.7 0.9 -1.7 2 c0 1.1 0.7 2 1.7 2 c1 0 1.7 -0.9 1.7 -2 c0 -1.1 -0.7 -2 -1.7 -2 z M49 40 c-1 0 -1.7 0.9 -1.7 2 c0 1.1 0.7 2 1.7 2 c1 0 1.7 -0.9 1.7 -2 c0 -1.1 -0.7 -2 -1.7 -2 z M39 45 c-0.9 0 -1.5 0.8 -1.5 1.8 c0 1 0.6 1.8 1.5 1.8 c0.9 0 1.5 -0.8 1.5 -1.8 c0 -1 -0.6 -1.8 -1.5 -1.8 z M51 45 c-0.9 0 -1.5 0.8 -1.5 1.8 c0 1 0.6 1.8 1.5 1.8 c0.9 0 1.5 -0.8 1.5 -1.8 c0 -1 -0.6 -1.8 -1.5 -1.8 z'/%3E%3C/g%3E%3C/svg%3E");
+    background-attachment: fixed;
+    line-height: 1.5;
+    text-align: center;
+  }
+
+  /* the centered scroll */
+  .scroll {
+    width: 760px;
+    max-width: 95%;
+    margin: 0 auto;
+    background: #fffaf0;
+    border: 2px solid #8b4513;
+    box-shadow:
+      0 0 0 1px #d4a574,
+      4px 4px 0 rgba(139, 69, 19, 0.25);
+    padding: 28px 40px 36px;
+    text-align: left;
+  }
+  @media (max-width: 600px) {
+    .scroll { padding: 20px 16px; }
+  }
+
+  /* sparkly headers */
+  h1.title {
+    font-family: "Times New Roman", Georgia, serif;
+    font-style: italic;
+    text-align: center;
+    margin: 8px 0 4px;
+    font-size: 44px;
+    color: #5a2a0c;
+    text-shadow:
+      0 0 6px rgba(210, 105, 30, 0.3),
+      2px 2px 0 #f4e4d4;
+    letter-spacing: 0.5px;
+  }
+  .title-deco {
+    text-align: center;
+    color: #8b4513;
+    font-size: 18px;
+    letter-spacing: 4px;
+    margin-bottom: 4px;
+  }
+  .tagline {
+    text-align: center;
+    font-style: italic;
+    color: #6b4423;
+    font-size: 15px;
+    margin-bottom: 14px;
+  }
+
+  /* nav */
+  .toc {
+    text-align: center;
+    margin: 14px 0 20px;
+    font-size: 14px;
+  }
+  .toc a {
+    color: #d2691e;
+    text-decoration: underline;
+    margin: 0 4px;
+  }
+
+  a:link { color: #d2691e; text-decoration: underline; }
+  a:visited { color: #a0522d; }
+  a:hover { color: #5a2a0c; background: #fbe7d4; }
+
+  /* dividers */
+  hr.fancy {
+    border: 0;
+    height: 18px;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='18' viewBox='0 0 40 18'%3E%3Cg fill='none' stroke='%238b4513' stroke-width='1'%3E%3Cpath d='M0 9 H40' opacity='0.5'/%3E%3C/g%3E%3Cg fill='%238b4513'%3E%3Ccircle cx='20' cy='9' r='1.4'/%3E%3Ccircle cx='8' cy='9' r='1' opacity='0.7'/%3E%3Ccircle cx='32' cy='9' r='1' opacity='0.7'/%3E%3C/g%3E%3C/svg%3E");
+    background-repeat: repeat-x;
+    background-position: center;
+    margin: 22px 0;
+  }
+  hr.simple {
+    border: 0;
+    border-top: 1px solid #8b4513;
+    border-bottom: 1px solid #d4a574;
+    margin: 18px 0;
+  }
+
+  h2.section {
+    text-align: center;
+    font-style: italic;
+    color: #5a2a0c;
+    font-size: 24px;
+    margin: 6px 0 12px;
+    text-shadow: 0 0 4px rgba(210, 105, 30, 0.25);
+  }
+  .section-deco {
+    text-align: center;
+    color: #8b4513;
+    font-size: 14px;
+    letter-spacing: 2px;
+    margin-bottom: 14px;
+  }
+
+  /* welcome box */
+  .welcome {
+    border: 1px dashed #a0522d;
+    background: rgba(255, 235, 205, 0.6);
+    padding: 14px 18px;
+    margin: 18px 0;
+    text-align: center;
+  }
+  .welcome p { margin: 0; color: #3a2418; }
+  .welcome p + p { margin-top: 8px; }
+
+  /* Classics list — table-style */
+  table.sites {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 16px 0;
+    border: 1px solid #8b4513;
+  }
+  table.sites td {
+    padding: 12px 14px;
+    border: 1px solid #d4a574;
+    vertical-align: top;
+  }
+  table.sites .thumb-cell {
+    width: 200px;
+    background: #fbe7d4;
+  }
+  table.sites .thumb-cell a {
+    display: block;
+    border: 1px solid #8b4513;
+    background: #fffaf0;
+  }
+  table.sites .thumb-cell img {
+    display: block;
+    width: 100%;
+    height: auto;
+    aspect-ratio: 4 / 3;
+    object-fit: cover;
+    image-rendering: pixelated;
+    filter: contrast(1.05) saturate(0.95);
+  }
+  table.sites .desc-cell h3 {
+    font-size: 16px;
+    margin: 0 0 4px;
+    color: #5a2a0c;
+  }
+  table.sites .desc-cell p {
+    margin: 0 0 6px;
+    color: #6b4423;
+    font-size: 13px;
+  }
+  table.sites .desc-cell .links a {
+    margin-right: 10px;
+    font-size: 13px;
+  }
+  table.sites .cat-cell {
+    width: 120px;
+    background: #fbe7d4;
+    text-align: center;
+    font-size: 12px;
+  }
+  table.sites .cat-cell .cat-label {
+    display: block;
+    color: #8b4513;
+    margin-bottom: 4px;
+    font-style: italic;
+  }
+  table.sites .cat-cell .cat-name { color: #d2691e; }
+
+  /* Prompts list — vintage list with prompt link */
+  ul.prompts {
+    list-style: none;
+    padding: 0;
+    margin: 12px 0 0;
+  }
+  ul.prompts > li {
+    border-bottom: 1px dotted #a0522d;
+    padding: 14px 6px;
+  }
+  ul.prompts > li:last-child { border-bottom: none; }
+  ul.prompts .prompt-figures {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin: 8px 0 10px;
+  }
+  ul.prompts .prompt-figures a {
+    flex: 0 0 auto;
+    width: 135px;
+  }
+  ul.prompts .prompt-figures.multi a {
+    width: 105px;
+  }
+  ul.prompts .prompt-figures a {
+    display: block;
+    border: 1px solid #8b4513;
+    background: #fffaf0;
+    overflow: hidden;
+  }
+  ul.prompts .prompt-figures img {
+    display: block;
+    width: 100%;
+    height: auto;
+    aspect-ratio: 16 / 10;
+    object-fit: cover;
+    image-rendering: pixelated;
+    filter: contrast(1.05) saturate(0.9) brightness(1);
+    transition: filter 0.2s ease;
+  }
+  ul.prompts .prompt-figures a:hover img {
+    filter: contrast(1.1) saturate(1.05) brightness(1.05);
+  }
+  ul.prompts h3 {
+    margin: 0 0 4px;
+    color: #5a2a0c;
+    font-size: 17px;
+    font-style: italic;
+  }
+  ul.prompts h3 .moon { color: #8b4513; margin-right: 4px; }
+  ul.prompts .desc {
+    color: #6b4423;
+    font-size: 13px;
+    margin: 0 0 6px;
+  }
+  ul.prompts .actions a {
+    margin-right: 12px;
+    font-size: 13px;
+  }
+  ul.prompts .actions a.start-fresh {
+    color: #b8410e;
+    font-weight: bold;
+  }
+
+  /* Stories paragraph */
+  .stories {
+    border-left: 3px solid #d2691e;
+    padding: 4px 16px;
+    margin: 18px 8px;
+    color: #6b4423;
+    font-style: italic;
+  }
+  .stories strong { color: #5a2a0c; font-style: normal; }
+
+  /* Newsletter / guestbook box */
+  .guestbook {
+    text-align: center;
+    border: 2px ridge #a0522d;
+    padding: 18px 14px;
+    background: rgba(255, 235, 205, 0.55);
+    margin: 22px 0;
+  }
+  .guestbook h2 {
+    margin: 0 0 6px;
+    font-style: italic;
+    color: #b8410e;
+    font-size: 22px;
+  }
+  .guestbook p { margin: 0 0 12px; color: #3a2418; font-size: 13px; }
+  .guestbook form {
+    display: inline-flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .guestbook input[type="email"] {
+    padding: 6px 10px;
+    border: 1px solid #8b4513;
+    background: #fffaf0;
+    color: #3a2418;
+    font-family: "Times New Roman", Georgia, serif;
+    font-size: 14px;
+    min-width: 240px;
+  }
+  .guestbook button[type="submit"] {
+    padding: 6px 14px;
+    border: 2px outset #d2691e;
+    background: #d2691e;
+    color: #fffaf0;
+    font-family: "Times New Roman", Georgia, serif;
+    font-size: 14px;
+    font-weight: bold;
+    cursor: pointer;
+  }
+  .guestbook button[type="submit"]:hover { background: #b8410e; }
+  .guestbook button[type="submit"]:active { border-style: inset; }
+  .featured-cta-response { margin-top: 8px; font-size: 12px; min-height: 1em; color: #6b4423; }
+  .featured-cta-response.is-loading { color: #6b4423; }
+  .featured-cta-response.is-success { color: #b8410e; }
+  .featured-cta-response.is-error { color: #b22222; }
+
+  /* Webring footer */
+  .webring {
+    text-align: center;
+    margin: 28px 0 14px;
+    font-size: 13px;
+    color: #6b4423;
+  }
+  .webring .ring-name {
+    font-style: italic;
+    color: #5a2a0c;
+    font-size: 16px;
+    margin-bottom: 6px;
+  }
+  .webring .nav a { margin: 0 4px; color: #d2691e; }
+  .stamps {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 12px;
+    margin: 18px 0 8px;
+  }
+  .stamp {
+    border: 1px solid #8b4513;
+    background: #fbe7d4;
+    color: #3a2418;
+    padding: 6px 10px;
+    font-size: 11px;
+    font-family: "Courier New", monospace;
+  }
+  .stamp .counter {
+    background: #3a2418;
+    color: #ffd9a8;
+    border: 1px inset #8b4513;
+    padding: 2px 6px;
+    font-family: "Courier New", monospace;
+    margin-left: 4px;
+    letter-spacing: 1px;
+  }
+  .last-updated {
+    color: #a0522d;
+    font-size: 12px;
+    text-align: center;
+    margin-top: 10px;
+  }
+  .underconstruction {
+    text-align: center;
+    margin: 16px 0;
+    font-family: "Courier New", monospace;
+    font-size: 11px;
+    color: #b8410e;
+    letter-spacing: 2px;
+  }
+  .underconstruction span {
+    display: inline-block;
+    border: 1px solid #b8410e;
+    padding: 4px 10px;
+    background: #fbe7d4;
+  }
+
+  /* ASCII flair */
+  .ascii {
+    text-align: center;
+    color: #a0522d;
+    font-family: "Courier New", monospace;
+    font-size: 12px;
+    line-height: 1.2;
+    margin: 8px 0;
+    white-space: pre;
+  }
+
+  .blink-soft {
+    animation: blink-soft 1.5s step-start infinite;
+  }
+  @keyframes blink-soft {
+    50% { opacity: 0.4; }
+  }
+</style>
+
+<main class="scroll">
+
+  <p class="title-deco">🐾 🐾 🐾 🐾 🐾</p>
+  <h1 class="title">Pets</h1>
+  <p class="tagline">~ a vibes diy webring for the four-legged regulars in your life ~</p>
+
+  <p class="toc">
+    [ <a href="#about">About</a> ]
+    [ <a href="#sites">My Picks</a> ]
+    [ <a href="#prompts">Prompts</a> ]
+    [ <a href="#guestbook">Guestbook</a> ]
+    [ <a href="mailto:hello@vibes.diy">Email</a> ]
+    [ <a href="/featured-apps/">Webring</a> ]
+  </p>
+
+  <hr class="fancy">
+
+  <a id="about"></a>
+  <div class="welcome">
+    <p>🐾 <em>Welcome, friend of furry &amp; feathered.</em> 🐾</p>
+    <p>For the animals in your life — coordinate dog walks, log neighborhood cats, and keep tabs on the four-legged regulars. None of these are a Product. All of them are tiny vibes, made in an evening, for the people (and pets) who actually use them.</p>
+    <p class="blink-soft">🐾 Pull up a beanbag. The cat will join you. 🐾</p>
+  </div>
+
+  <hr class="fancy">
+
+  <a id="sites"></a>
+  <p class="section-deco">🐾 🐾 🐾 🐾 🐾</p>
+  <h2 class="section">My Favorite Pet Sites</h2>
+  <p class="section-deco">classic vibes from the OG vibes.diy era · click through, clone, or remix</p>
+
+  <table class="sites" cellspacing="0" cellpadding="0" role="presentation">
+    {{#each classics}}
+    <tr>
+      <td class="thumb-cell">
+        <a href="https://vibes.diy/vibe/{{author}}/{{slug}}">
+          <img src="https://{{slug}}--{{author}}.prod-v2.vibesdiy.net/screenshot.jpg" alt="{{slug}}" onerror="this.onerror=null; this.src='{{@root.assetPrefix}}images/og-preview.png';">
+        </a>
+      </td>
+      <td class="desc-cell">
+        <h3>🐾 <a href="https://vibes.diy/vibe/{{author}}/{{slug}}">{{slug}}</a></h3>
+        <p>{{description}}</p>
+        <p class="links">
+          <a href="https://vibes.diy/vibe/{{author}}/{{slug}}">visit</a>
+          <a href="https://vibes.diy/remix/{{author}}/{{slug}}?skipChat=true">clone</a>
+          <a href="https://vibes.diy/remix/{{author}}/{{slug}}">remix</a>
+        </p>
+      </td>
+      <td class="cat-cell">
+        <span class="cat-label">Category:</span>
+        <span class="cat-name">{{category}}</span>
+      </td>
+    </tr>
+    {{/each}}
+  </table>
+
+  <hr class="fancy">
+
+  <a id="prompts"></a>
+  <p class="section-deco">🐾 🐾 🐾 🐾 🐾</p>
+  <h2 class="section">Prompts You Can Remix</h2>
+  <p class="section-deco">point-and-click, then make it yours</p>
+
+  <ul class="prompts">
+    {{#each groups}}
+    <li>
+      <h3><span class="moon">🐾</span>{{title}}</h3>
+      <div class="prompt-figures{{#if variants.[1]}} multi{{/if}}">
+        {{#each variants}}
+        <a href="https://vibes.diy/vibe/{{author}}/{{slug}}" aria-label="{{slug}} screenshot">
+          <img src="https://{{slug}}--{{author}}.prod-v2.vibesdiy.net/screenshot.jpg" alt="{{slug}}" onerror="this.onerror=null; this.src='{{@root.assetPrefix}}images/og-preview.png';">
+        </a>
+        {{/each}}
+      </div>
+      <p class="desc">{{description}}</p>
+      <p class="actions">
+        {{#each variants}}
+        <a href="https://vibes.diy/vibe/{{author}}/{{slug}}">visit · {{slug}}</a>
+        <a href="https://vibes.diy/remix/{{author}}/{{slug}}?skipChat=true">clone</a>
+        <a href="https://vibes.diy/remix/{{author}}/{{slug}}">remix</a>
+        {{/each}}
+        <a class="start-fresh" href="https://vibes.diy/chat/prompt?prompt64={{prompt64 description}}">🐾 start fresh from this prompt →</a>
+      </p>
+    </li>
+    {{/each}}
+  </ul>
+
+  <hr class="fancy">
+
+  <p class="ascii">🐾   ·   🐾   ·   🐾   ·   🐾   ·   🐾</p>
+
+  <p class="stories">
+    Real households are running pet logistics on whatever scrap of software they can find — group chats, sticky notes on the fridge, half-broken spreadsheets. The dog-walk crew rotating through the park. The block tracking which orange tabby actually lives where. The roommates who can never remember whose turn it was to feed the cat. <strong>The audience is six people, not six million</strong> — so no one's going to ship a SaaS for it. But anyone can ship a vibe in the time it takes to describe it.
+  </p>
+
+  <hr class="fancy">
+
+  <a id="guestbook"></a>
+  <div class="guestbook">
+    <h2>~ Sign the Guestbook ~</h2>
+    <p>Drop your email and I'll send the next batch of pet templates when they ship.<br>
+    No spam. Unsubscribe whenever the cat decides.</p>
+
+    <form
+      action="https://diy.us9.list-manage.com/subscribe/post?u=3336ce5a9fc731f6f88b5bcad&amp;id=1cca0fb28b&amp;f_id=007b69e1f0&amp;SOURCE={{source}}"
+      method="post"
+      id="mc-embedded-subscribe-form"
+      name="mc-embedded-subscribe-form"
+      target="_blank"
+    >
+      <input type="email" name="EMAIL" placeholder="you@somewhere.net" required aria-label="Email" autocomplete="email">
+      <button type="submit" name="subscribe">Sign In 🐾</button>
+      <input type="hidden" name="SOURCE" value="{{source}}">
+      <div aria-hidden="true" style="position:absolute; left:-5000px;">
+        <input type="text" name="b_3336ce5a9fc731f6f88b5bcad_1cca0fb28b" tabindex="-1" value="">
+      </div>
+    </form>
+    <div class="featured-cta-response" aria-live="polite"></div>
+  </div>
+
+  <hr class="simple">
+
+  <div class="underconstruction">
+    <span>🐾 MORE TEMPLATES UNDER CONSTRUCTION 🐾</span>
+  </div>
+
+  <div class="webring">
+    <p class="ring-name">~ Member of the Vibes DIY Webring ~</p>
+    <p class="nav">
+      [ <a href="/featured-apps/rituals-and-goals.html">« Previous</a> ]
+      [ <a href="/featured-apps/">Random</a> ]
+      [ <a href="/featured-apps/">Next »</a> ]
+      [ <a href="https://links.vibes.diy/homepage">Join the Ring</a> ]
+    </p>
+  </div>
+
+  <div class="stamps">
+    <div class="stamp">
+      Visitors: <span class="counter">001234</span>
+    </div>
+    <div class="stamp">
+      Best viewed with a <strong>treat in hand</strong> · 800×600
+    </div>
+    <div class="stamp">
+      Hosted by <strong>vibes.diy</strong>
+    </div>
+  </div>
+
+  <p class="last-updated">~ Last updated: April 28, 2026 ~</p>
+
+</main>
+
+<script>
+(function() {
+  const INIT_FLAG = '__vibesMailchimpNewsletterAjax__';
+  if (window[INIT_FLAG]) return;
+  window[INIT_FLAG] = true;
+  const JSONP_NAMESPACE = '__vibesMailchimpCallbacks__';
+  if (!window[JSONP_NAMESPACE] || typeof window[JSONP_NAMESPACE] !== 'object') {
+    window[JSONP_NAMESPACE] = {};
+  }
+  function clean(m) { return String(m).replace(/<[^>]*>/g,'').replace(/^\s*[01]\s*-\s*/,'').trim() || 'Something went wrong.'; }
+  function jsonp(url, ms) {
+    return new Promise((resolve, reject) => {
+      const k = 'cb_' + Math.random().toString(36).slice(2);
+      url.searchParams.set('c', JSONP_NAMESPACE + '.' + k);
+      const s = document.createElement('script');
+      s.src = url.toString();
+      s.async = true;
+      let done = false;
+      const t = setTimeout(() => fin(new Error('Timeout')), ms);
+      function fin(e, d) {
+        if (done) return;
+        done = true;
+        clearTimeout(t);
+        delete window[JSONP_NAMESPACE][k];
+        s.remove();
+        e ? reject(e) : resolve(d);
+      }
+      window[JSONP_NAMESPACE][k] = (d) => fin(null, d);
+      s.onerror = () => fin(new Error('Network'));
+      document.body.appendChild(s);
+    });
+  }
+  function set(el, st, msg) {
+    el.classList.remove('is-loading','is-success','is-error');
+    el.textContent = msg;
+    if (st) el.classList.add(st);
+  }
+  const form = document.getElementById('mc-embedded-subscribe-form');
+  if (!(form instanceof HTMLFormElement)) return;
+  const r = form.parentElement.querySelector('.featured-cta-response');
+  const btn = form.querySelector('button[type="submit"]');
+  let busy = false;
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    if (busy) return;
+    if (!form.checkValidity()) return form.reportValidity();
+    busy = true; btn.disabled = true;
+    set(r, 'is-loading', '... fetching ...');
+    try {
+      const u = new URL(form.action);
+      u.pathname = u.pathname.replace(/\/subscribe\/post\/?$/, '/subscribe/post-json');
+      const fd = new FormData(form);
+      for (const [k,v] of fd.entries()) {
+        if (k === 'EMAIL' || k === 'SOURCE' || k.startsWith('b_')) u.searchParams.set(k, String(v));
+      }
+      const d = await jsonp(u, 10000);
+      if (d && d.result === 'success') {
+        set(r, 'is-success', '🐾 subscribed — check your inbox to confirm 🐾');
+        form.reset();
+      } else {
+        set(r, 'is-error', d && d.msg ? clean(d.msg) : 'Something went wrong.');
+      }
+    } catch(err) {
+      set(r, 'is-error', 'Could not connect. Please try again.');
+    } finally {
+      busy = false; btn.disabled = false;
+    }
+  });
+})();
+</script>

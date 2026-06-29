@@ -1,0 +1,72 @@
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{title}}</title>
+    {{#if description}}
+    <meta name="description" content="{{description}}" />
+    {{/if}}
+
+    <!-- Open Graph -->
+    <meta property="og:title" content="{{title}}" />
+    {{#if description}}
+    <meta property="og:description" content="{{description}}" />
+    {{/if}}
+    <meta property="og:image" content="{{#if ogImage}}{{ogImage}}{{else}}https://good.vibes.diy/images/og-preview.png{{/if}}" />
+    <meta property="og:url" content="{{ogUrl}}" />
+    <meta property="og:type" content="website" />
+
+    <!-- Twitter/X -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="{{title}}" />
+    {{#if description}}
+    <meta name="twitter:description" content="{{description}}" />
+    {{/if}}
+    <meta name="twitter:image" content="{{#if ogImage}}{{ogImage}}{{else}}https://good.vibes.diy/images/og-preview.png{{/if}}" />
+
+    {{#if metaPixelId}}
+    <script>
+    !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+    n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;
+    n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;
+    t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}(window,
+    document,'script','https://connect.facebook.net/en_US/fbevents.js');
+    fbq('init', '{{metaPixelId}}');
+    fbq('track', 'PageView');
+    </script>
+    <noscript><img height="1" width="1" style="display:none"
+    src="https://www.facebook.com/tr?id={{metaPixelId}}&ev=PageView&noscript=1"/></noscript>
+    {{/if}}
+    <script>
+      (() => {
+        const syncFbclidToVibesLinks = () => {
+          const params = new URLSearchParams(window.location.search);
+          const fbclid = params.get('fbclid');
+          if (!fbclid) return;
+
+          const utmParams = [...params.entries()].filter(([k]) => k.startsWith('utm_'));
+
+          document.querySelectorAll('a[href]').forEach((link) => {
+            let url;
+            try {
+              url = new URL(link.href);
+            } catch {
+              return;
+            }
+
+            const { hostname } = url;
+            const isVibesDomain = hostname === 'vibes.diy' || hostname.endsWith('.vibes.diy');
+            if (!isVibesDomain) return;
+
+            url.searchParams.set('fbclid', fbclid);
+            for (const [k, v] of utmParams) url.searchParams.set(k, v);
+            link.href = url.toString();
+          });
+        };
+
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', syncFbclidToVibesLinks);
+          return;
+        }
+
+        syncFbclidToVibesLinks();
+      })();
+    </script>

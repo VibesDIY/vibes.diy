@@ -1,0 +1,191 @@
+{{!--
+{
+  "layout": "webring",
+  "title": "Ambient Presence // Expressions // Vibes DIY",
+  "description": "ASCII webcam streams, push-to-talk video walkies, breath circles, heartbeat rooms. Show up for each other without quite being on a call.",
+  "ogUrl": "https://good.vibes.diy/expressions/ambient-presence",
+  "source": "expressions-ambient-presence",
+  "apps": [
+    {"num":"01","slug":"ascii-ptt-room","author":"jchris","live":true,"title":"ASCII PTT Room","tagline":"Push-to-talk video walkie-talkie at 10fps.","desc":"Hold to talk; webcam frames downsample to ASCII; the recipient sees the active speaker auto-play. Recordings persist."},
+    {"num":"02","slug":"crayon-video-chat","author":"jchris","live":true,"title":"Crayon-Rendered Video Chat","tagline":"The aesthetic is the privacy.","desc":"A 2–4 person video room where webcam pixels are redrawn as crayon strokes. Save frames into the paper scrapbook below."},
+    {"num":"03","slug":"8bit-live-avatar","author":"jchris","live":true,"title":"8-bit Live Avatar","tagline":"Face-tracked pixel sprite. No video on the wire.","desc":"The webcam runs locally for face-tracking only — head tilt, blink, mouth-open drive a 16x16 sprite. Reactions float over your tile."},
+    {"num":"04","slug":"phone-as-blacklight","author":"jchris","live":true,"title":"Phone-as-Blacklight","tagline":"Look what's invisible at the party.","desc":"A shared UV-simulation overlay on the camera feed. Tap SCAN to capture a freeze-frame, tag it, drop it into the party gallery."},
+    {"num":"05","slug":"ascii-doorbell","author":"jchris","live":true,"title":"ASCII Doorbell","tagline":"Group-house front-door cam in ASCII.","desc":"One phone is the door; roommates see the latest 30s loop in ASCII. Ring buzzes everyone; one tap claims the answer."},
+    {"num":"06","slug":"co-watch-ascii","author":"jchris","live":true,"title":"Co-Watch with ASCII Reactions","tagline":"Same stream, friends' reactions render as overlay.","desc":"Sync-watch a video URL; reactions float as ASCII text fading over 3s. A timestamped reaction log replays per viewer."},
+    {"num":"07","slug":"heartbeat-room","author":"jchris","live":true,"title":"Heartbeat Room","tagline":"Phone camera reads pulse, room visualizes the bpm wall.","desc":"Each user's bpm broadcasts to the room; tiles pulse at their rate. Average bpm and per-user sparklines below."},
+    {"num":"08","slug":"voice-as-instrument","author":"jchris","live":true,"title":"Voice-as-Instrument","tagline":"Your mic is one note in a shared loop.","desc":"Pick a pentatonic note; humming crossfades your tone into the room loop. Record 30s of the room as an audio doc."},
+    {"num":"09","slug":"knock-app","author":"jchris","live":true,"title":"Knock","tagline":"Tap to make a friend's phone thump in their pocket.","desc":"A list of friend tiles. Tap to send a vibration pattern; recipient sees a toast and can knock back. No words, just buzzes."},
+    {"num":"10","slug":"breath-circle","author":"jchris","live":true,"title":"Breath Circle","tagline":"Visible group breathing rhythm.","desc":"A ring of dots expanding and contracting on a 4-4-4-4 box-breathing loop. Tap each cycle to register attendance."}
+  ]
+}
+--}}
+
+<style>
+  @import url("https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@700&family=Homemade+Apple&family=Special+Elite&display=optional");
+
+  :root {
+    --parchment: #dcbfa6;
+    --parchment-dark: #c4a482;
+    --ink: #3e2723;
+    --leather: #2a1d15;
+    --brass-light: #fdf5bb;
+    --brass-mid: #cfa562;
+    --brass-dark: #745428;
+    --amber: #ffaa00;
+  }
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body {
+    font-family: "Special Elite", monospace;
+    background: var(--parchment);
+    color: var(--ink);
+    min-height: 100vh;
+    line-height: 1.5;
+    background-image:
+      repeating-linear-gradient(0deg, rgba(58,38,20,0.04) 0px, rgba(58,38,20,0.04) 1px, transparent 1px, transparent 4px),
+      repeating-linear-gradient(90deg, rgba(58,38,20,0.03) 0px, rgba(58,38,20,0.03) 1px, transparent 1px, transparent 5px);
+  }
+  a { color: var(--brass-dark); text-decoration: none; }
+  a:hover { color: var(--ink); }
+
+  .container { max-width: 1080px; margin: 0 auto; padding: 0 1.5rem; }
+
+  .topbar {
+    border-bottom: 2px double var(--ink);
+    padding: 1rem 1.5rem;
+    display: flex; justify-content: space-between; align-items: center;
+    font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.15em;
+    background: var(--parchment-dark);
+  }
+  .topbar a { font-family: "Cinzel Decorative", serif; color: var(--ink); letter-spacing: 0.18em; }
+
+  .crumb {
+    padding: 0.6rem 1.5rem;
+    font-size: 0.7rem; letter-spacing: 0.15em; text-transform: uppercase;
+    border-bottom: 1px solid var(--brass-dark); color: var(--brass-dark);
+  }
+  .crumb a { color: var(--brass-dark); }
+  .crumb a:hover { color: var(--ink); }
+
+  .hero { padding: 4rem 0 3rem; text-align: center; border-bottom: 2px double var(--brass-dark); }
+  .hero .label { font-size: 0.7rem; letter-spacing: 0.25em; text-transform: uppercase; color: var(--brass-dark); margin-bottom: 1.5rem; }
+  .hero h1 {
+    font-family: "Cinzel Decorative", serif;
+    font-size: clamp(2.5rem, 6vw, 4.5rem);
+    font-weight: 700;
+    color: var(--ink);
+    letter-spacing: 0.04em;
+    line-height: 1.05;
+    text-shadow: 1px 1px 0 var(--brass-mid);
+  }
+  .hero .sub-flourish { font-family: "Homemade Apple", cursive; color: var(--brass-dark); font-size: 1.5rem; margin: 1rem 0 1.5rem; }
+  .hero p { max-width: 680px; margin: 0 auto; font-size: 1rem; color: var(--leather); }
+
+  .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0; border-bottom: 2px double var(--brass-dark); }
+  @media (max-width: 700px) { .stats { grid-template-columns: repeat(2, 1fr); } }
+  .stat-cell { padding: 1.25rem; border-right: 1px solid var(--brass-dark); }
+  .stat-cell:last-child { border-right: none; }
+  .stat-cell .k { font-size: 0.6rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--brass-dark); margin-bottom: 0.3rem; }
+  .stat-cell .v { font-family: "Cinzel Decorative", serif; font-size: 1.4rem; color: var(--ink); letter-spacing: 0.04em; }
+
+  .apps { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.5rem; padding: 2.5rem 0; }
+  @media (max-width: 800px) { .apps { grid-template-columns: 1fr; } }
+
+  .app {
+    background: var(--brass-light);
+    border: 2px solid var(--ink);
+    box-shadow: 4px 4px 0 var(--brass-dark), 0 0 0 1px var(--ink) inset, 0 0 0 4px var(--brass-light) inset, 0 0 0 5px var(--brass-mid) inset;
+    padding: 1.5rem;
+    position: relative;
+    display: flex; flex-direction: column; gap: 0.75rem;
+  }
+  .app::before, .app::after {
+    content: "✦"; position: absolute; color: var(--brass-dark); font-size: 1rem;
+  }
+  .app::before { top: 4px; left: 8px; }
+  .app::after { bottom: 4px; right: 8px; }
+  .app .head { display: flex; justify-content: space-between; align-items: baseline; padding-bottom: 0.5rem; border-bottom: 1px dashed var(--brass-dark); }
+  .app .num { font-size: 0.65rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--brass-dark); }
+  .app .status { font-family: "Homemade Apple", cursive; font-size: 0.95rem; color: var(--brass-dark); }
+  .app--live .status { color: var(--ink); }
+  .app .title { font-family: "Cinzel Decorative", serif; font-size: 1.4rem; line-height: 1.15; color: var(--ink); letter-spacing: 0.03em; }
+  .app .tagline { font-style: italic; color: var(--brass-dark); font-size: 0.95rem; border-left: 3px solid var(--brass-mid); padding-left: 0.75rem; }
+  .app .desc { font-size: 0.95rem; flex: 1; color: var(--leather); }
+  .app .shot { display: block; border: 1px solid var(--ink); aspect-ratio: 16/9; overflow: hidden; background: var(--parchment); }
+  .app .shot img { width: 100%; height: 100%; object-fit: cover; filter: sepia(0.35) saturate(0.85); }
+  .app .shot-placeholder { padding: 1rem; font-size: 0.8rem; color: var(--brass-dark); text-align: center; height: 100%; display: flex; align-items: center; justify-content: center; font-family: "Homemade Apple", cursive; }
+  .app .ctas { display: flex; gap: 0.5rem; }
+  .btn {
+    flex: 1; text-align: center; padding: 0.5rem 0.75rem;
+    background: var(--parchment); border: 2px solid var(--ink);
+    font-family: "Cinzel Decorative", serif; font-size: 0.7rem;
+    text-transform: uppercase; letter-spacing: 0.12em; color: var(--ink);
+    cursor: pointer;
+  }
+  .btn:hover { background: var(--ink); color: var(--brass-light); }
+  .prompt-link { font-size: 0.75rem; color: var(--brass-dark); font-style: italic; }
+
+  .epilogue { border-top: 2px double var(--ink); padding: 2rem 1.5rem; font-style: italic; font-size: 0.95rem; color: var(--leather); }
+  .epilogue strong { font-style: normal; color: var(--ink); }
+  footer.term-footer { padding: 1rem 1.5rem; border-top: 1px solid var(--brass-dark); font-size: 0.7rem; letter-spacing: 0.15em; text-transform: uppercase; text-align: center; color: var(--brass-dark); }
+</style>
+
+<header class="topbar">
+  <a href="https://links.vibes.diy/homepage">VIBES.DIY</a>
+  <span>Ambient Presence — A Vibes DIY Transmission</span>
+</header>
+<nav class="crumb">
+  <a href="/">Home</a> &nbsp;›&nbsp; <a href="/expressions/">Expressions</a> &nbsp;›&nbsp; Ambient Presence
+</nav>
+
+<main class="container">
+  <section class="hero">
+    <div class="label">Cluster · 01 of 10 · toy tail #1–10</div>
+    <h1>Ambient Presence</h1>
+    <div class="sub-flourish">show up without showing up</div>
+    <p>ASCII webcam streams, push-to-talk video walkies, breath circles, heartbeat rooms. Ten takes on showing up for each other without quite being on a call.</p>
+  </section>
+
+  <section class="stats">
+    <div class="stat-cell"><div class="k">Source</div><div class="v">Tilted</div></div>
+    <div class="stat-cell"><div class="k">Apps</div><div class="v">Ten</div></div>
+    <div class="stat-cell"><div class="k">Persistence</div><div class="v">Fireproof</div></div>
+    <div class="stat-cell"><div class="k">Skin</div><div class="v">Aether Brass</div></div>
+  </section>
+
+  <section class="apps">
+    {{#each apps}}
+      <article class="app {{#if live}}app--live{{else}}app--pending{{/if}}">
+        <div class="head">
+          <span class="num">№ {{num}} · {{slug}}</span>
+          <span class="status">{{#if live}}live{{else}}pending{{/if}}</span>
+        </div>
+        <h2 class="title">{{title}}</h2>
+        <p class="tagline">{{tagline}}</p>
+        <p class="desc">{{desc}}</p>
+        {{#if live}}
+          <a class="shot" href="https://vibes.diy/vibe/{{author}}/{{slug}}" aria-label="{{title}} screenshot"><img src="https://{{slug}}--{{author}}.prod-v2.vibesdiy.net/screenshot.jpg" alt="{{slug}}" onerror="this.onerror=null; this.src='{{@root.assetPrefix}}images/og-preview.png';"/></a>
+          <div class="ctas">
+            <a class="btn" href="https://vibes.diy/vibe/{{author}}/{{slug}}">Join</a>
+            <a class="btn" href="https://vibes.diy/remix/{{author}}/{{slug}}?skipChat=true">Clone</a>
+            <a class="btn" href="https://vibes.diy/remix/{{author}}/{{slug}}">Remix</a>
+          </div>
+          <a class="prompt-link" href="https://vibes.diy/chat/prompt?prompt64={{prompt64 desc}}">— start fresh from this prompt</a>
+        {{else}}
+          <div class="shot"><div class="shot-placeholder">awaiting transmission</div></div>
+          <div class="ctas">
+            <a class="btn" href="https://vibes.diy/chat/prompt?prompt64={{prompt64 desc}}">Start From Prompt</a>
+          </div>
+        {{/if}}
+      </article>
+    {{/each}}
+  </section>
+
+  <section class="epilogue">
+    <p><strong>Read me.</strong> Ten transmissions across one frequency: a small group sharing presence at the lowest possible bandwidth — heartbeat, breath, glance, knock — without committing to a call. The aesthetic of these apps is the constraint of these apps.</p>
+  </section>
+</main>
+
+{{> newsletter}}
+<footer class="term-footer">
+  Vibes.diy · <a href="https://links.vibes.diy/homepage">homepage</a> · <a href="/expressions/">expressions</a> · End of transmission
+</footer>

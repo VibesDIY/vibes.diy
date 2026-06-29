@@ -1,0 +1,475 @@
+{{!--
+{
+  "layout": "webring",
+  "title": "For Hot Wheels Collectors | Collection Apps | Vibes DIY",
+  "description": "Collection catalogs, trade lists, treasure hunt logs, series checklists, and store run trackers. Five apps for serious Hot Wheels collectors.",
+  "ogUrl": "https://good.vibes.diy/hotwheels",
+  "source": "hotwheels",
+  "apps": [
+    {
+      "num": "01",
+      "slug": "hw-collection-catalog",
+      "author": "og",
+      "live": true,
+      "title": "Collection Catalog",
+      "tagline": "Every car you own, exactly how you track it.",
+      "desc": "Hot Wheels collection catalog. Each car: photo, name, series, year, color, wheel type, condition, estimated value. Searchable and sortable. Personal inventory."
+    },
+    {
+      "num": "02",
+      "slug": "hw-trade-list",
+      "author": "og",
+      "live": true,
+      "title": "Trade List",
+      "tagline": "Share your dupes and wants before you even get to the meetup.",
+      "desc": "Hot Wheels trade list builder. Two sections: Have (duplicates), Want (wishlist). Each entry: name, series, condition notes. Generate a shareable link for meetups."
+    },
+    {
+      "num": "03",
+      "slug": "treasure-hunt-log",
+      "author": "og",
+      "live": true,
+      "title": "Treasure Hunt Log",
+      "tagline": "Every Super TH find, dated and documented.",
+      "desc": "Hot Wheels treasure hunt and Super TH find logger. Date found, store, city, car name, photos, notes. Builds a personal find history."
+    },
+    {
+      "num": "04",
+      "slug": "mainline-series-check",
+      "author": "og",
+      "live": true,
+      "title": "Series Checklist",
+      "tagline": "See exactly how close you are to finishing the set.",
+      "desc": "Hot Wheels mainline series completion tracker. Select a series (Car Culture, Boulevard, Premium, mainline by year). Check off each car. See your completion percentage."
+    },
+    {
+      "num": "05",
+      "slug": "store-hunt-tracker",
+      "author": "og",
+      "live": true,
+      "title": "Store Hunt Tracker",
+      "tagline": "Know which stores are worth hitting — and when.",
+      "desc": "Hot Wheels store run tracker. Log each store visit: name, location, date, what you found, shelf status. Know which stores are worth hitting and when."
+    }
+  ],
+  "ogImage": "https://good.vibes.diy/images/screenshots/hotwheels.jpg"
+}
+--}}
+
+<style>
+  @import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,600;0,700;1,400&family=IBM+Plex+Sans:wght@400;500;600;700;800;900&display=optional");
+
+  :root {
+    --bg: #0d0d0d;
+    --surface: #161616;
+    --surface-hi: #1e1e1e;
+    --cue: #FF6B00;
+    --cue-dim: rgba(255, 107, 0, 0.15);
+    --cue-bright: #FF8C2A;
+    --live: #39d353;
+    --text: #f0ede8;
+    --muted: #7a7a7a;
+    --border: rgba(255, 255, 255, 0.08);
+    --border-hi: rgba(255, 255, 255, 0.14);
+  }
+
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: "IBM Plex Sans", system-ui, sans-serif;
+    line-height: 1.55;
+    min-height: 100vh;
+  }
+  a { color: inherit; text-decoration: none; }
+  .mono { font-family: "IBM Plex Mono", monospace; }
+
+  .layout { max-width: 1100px; margin: 0 auto; padding: 0 1.5rem; }
+
+  /* Topbar */
+  .topbar {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 1rem 0;
+    border-bottom: 1px solid var(--border-hi);
+  }
+  .topbar .brand {
+    font-family: "IBM Plex Mono", monospace; font-weight: 700;
+    font-size: 1.1rem; letter-spacing: -0.02em;
+    color: var(--cue);
+  }
+  .topbar .meta {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.6rem; letter-spacing: 0.2em; text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  /* Crumb */
+  .crumb {
+    padding: 0.55rem 0;
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.65rem; letter-spacing: 0.15em; text-transform: uppercase;
+    color: var(--muted);
+    border-bottom: 1px solid var(--border);
+  }
+  .crumb a { color: var(--muted); }
+  .crumb a:hover { color: var(--cue); }
+
+  /* Racetrack accent stripe */
+  .stripe {
+    height: 4px;
+    background: repeating-linear-gradient(
+      90deg,
+      var(--cue) 0px,
+      var(--cue) 24px,
+      transparent 24px,
+      transparent 32px
+    );
+    margin-bottom: 0;
+  }
+
+  /* Hero */
+  .hero {
+    padding: 4.5rem 0 3.5rem;
+    border-bottom: 1px solid var(--border-hi);
+  }
+  .hero .label {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.6rem; letter-spacing: 0.25em; text-transform: uppercase;
+    color: var(--cue);
+    margin-bottom: 1.25rem;
+    display: inline-block;
+    border: 1px solid var(--cue);
+    padding: 4px 10px;
+    border-radius: 3px;
+  }
+  .hero h1 {
+    font-size: clamp(3rem, 8vw, 6.5rem);
+    font-weight: 900;
+    line-height: 0.92;
+    letter-spacing: -0.04em;
+    margin-bottom: 1.5rem;
+  }
+  .hero h1 .hi { color: var(--cue); }
+  .hero p.lead {
+    font-size: 1.2rem; max-width: 680px; line-height: 1.55;
+    opacity: 0.85;
+  }
+
+  /* Spotlight */
+  .spotlight {
+    padding: 3rem 0;
+    border-bottom: 1px solid var(--border-hi);
+  }
+  .spotlight-label {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.6rem; letter-spacing: 0.25em; text-transform: uppercase;
+    color: var(--cue); margin-bottom: 1.5rem;
+  }
+  .spotlight-card {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 3rem; align-items: center;
+    background: var(--surface);
+    border: 1px solid var(--cue);
+    border-radius: 8px; padding: 2.5rem;
+    position: relative; overflow: hidden;
+  }
+  .spotlight-card::before {
+    content: "CAR 01";
+    position: absolute; top: 1.25rem; right: 1.5rem;
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.6rem; letter-spacing: 0.2em; text-transform: uppercase;
+    color: var(--cue); opacity: 0.4;
+  }
+  /* Checkered corner accent */
+  .spotlight-card::after {
+    content: "";
+    position: absolute; bottom: 0; right: 0;
+    width: 60px; height: 60px;
+    background-image:
+      repeating-conic-gradient(var(--cue-dim) 0% 25%, transparent 0% 50%);
+    background-size: 10px 10px;
+    opacity: 0.5;
+  }
+  @media (max-width: 800px) {
+    .spotlight-card { grid-template-columns: 1fr; gap: 1.5rem; }
+    .spotlight-shot { order: -1; }
+  }
+  .spotlight-num {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.6rem; letter-spacing: 0.2em; text-transform: uppercase;
+    color: var(--cue); margin-bottom: 0.75rem;
+  }
+  .spotlight-title {
+    font-size: clamp(2.5rem, 5vw, 4.5rem);
+    font-weight: 900; line-height: 0.95; letter-spacing: -0.04em;
+    margin-bottom: 0.75rem;
+  }
+  .spotlight-tagline {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.82rem; color: var(--cue);
+    margin-bottom: 1.25rem; line-height: 1.5;
+  }
+  .spotlight-desc {
+    font-size: 1rem; line-height: 1.65; opacity: 0.85;
+    margin-bottom: 2rem;
+  }
+  .btn-spotlight {
+    display: inline-block;
+    padding: 0.85rem 2.25rem;
+    background: var(--cue); color: var(--bg);
+    border: none; border-radius: 4px;
+    font-family: "IBM Plex Mono", monospace; font-weight: 700;
+    font-size: 0.75rem; letter-spacing: 0.15em; text-transform: uppercase;
+    cursor: pointer; transition: all .12s; margin-bottom: 1rem;
+  }
+  .btn-spotlight:hover { background: var(--cue-bright); }
+  .spotlight-secondary { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+  .spotlight-shot a { display: block; }
+  .spotlight-shot img {
+    width: 100%; border-radius: 6px;
+    border: 1px solid var(--border-hi); display: block;
+    aspect-ratio: 16/10; object-fit: cover;
+    background: var(--surface-hi);
+  }
+
+  /* Stats bar */
+  .stats {
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    border: 1px solid var(--border-hi); border-radius: 6px;
+    overflow: hidden; margin: 2rem 0;
+    background: var(--surface);
+  }
+  @media (max-width: 700px) { .stats { grid-template-columns: repeat(2, 1fr); } }
+  .stat-cell {
+    padding: 1.25rem 1.5rem;
+    border-right: 1px solid var(--border);
+  }
+  .stat-cell:last-child { border-right: none; }
+  @media (max-width: 700px) {
+    .stat-cell { border-bottom: 1px solid var(--border); }
+    .stat-cell:nth-child(2n) { border-right: none; }
+  }
+  .stat-cell .k {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.55rem; letter-spacing: 0.2em; text-transform: uppercase;
+    color: var(--muted); margin-bottom: 0.4rem;
+  }
+  .stat-cell .v { font-weight: 800; font-size: 1.4rem; letter-spacing: -0.02em; color: var(--cue); }
+
+  /* Section label */
+  .section-label {
+    padding: 1.5rem 0 0.75rem;
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.6rem; letter-spacing: 0.25em; text-transform: uppercase;
+    color: var(--muted);
+    border-bottom: 1px dashed var(--border-hi);
+    margin-bottom: 1.5rem;
+  }
+
+  /* App list */
+  .apps {
+    display: flex; flex-direction: column;
+    border: 1px solid var(--border-hi); border-radius: 6px;
+    overflow: hidden; background: var(--surface);
+  }
+  .app {
+    padding: 2rem 1.75rem;
+    border-bottom: 1px solid var(--border);
+    display: grid; grid-template-columns: 72px 1fr 300px;
+    gap: 2rem; align-items: start;
+    transition: background 0.15s;
+  }
+  .app:last-child { border-bottom: none; }
+  @media (max-width: 800px) { .app { grid-template-columns: 1fr; gap: 1rem; } }
+  .app:hover { background: var(--surface-hi); }
+
+  .app .num-cell { display: flex; flex-direction: column; gap: 0.4rem; padding-top: 0.25rem; }
+  .app .num {
+    font-family: "IBM Plex Mono", monospace; font-weight: 700;
+    font-size: 2.8rem; line-height: 0.9; letter-spacing: -0.04em; color: var(--cue);
+  }
+  .app .status {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.5rem; letter-spacing: 0.2em; text-transform: uppercase;
+    padding: 3px 6px; border: 1px solid var(--border-hi);
+    color: var(--muted); text-align: center; border-radius: 3px;
+  }
+  .app--live .status { background: var(--live); color: var(--bg); border-color: var(--live); font-weight: 700; }
+
+  .app .body { display: flex; flex-direction: column; gap: 0.6rem; }
+  .app .body .title { font-size: 2rem; font-weight: 800; letter-spacing: -0.03em; line-height: 1.0; }
+  .app .body .tagline {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.78rem; line-height: 1.5; color: var(--cue);
+  }
+  .app .body .desc { font-size: 0.98rem; line-height: 1.55; opacity: 0.85; }
+
+  .app .right { display: flex; flex-direction: column; gap: 0.6rem; }
+  .app .shot {
+    display: block; aspect-ratio: 16/9; overflow: hidden;
+    border: 1px solid var(--border-hi); border-radius: 6px;
+    background: var(--surface-hi);
+  }
+  .app .shot img { width: 100%; height: 100%; object-fit: cover; }
+  .app .shot-placeholder {
+    padding: 1rem; height: 100%; display: flex; align-items: center; justify-content: center;
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.6rem; letter-spacing: 0.2em; text-transform: uppercase;
+    text-align: center; color: var(--muted);
+  }
+  .app .ctas {
+    display: grid; grid-template-columns: repeat(3, 1fr);
+    border: 1px solid var(--border-hi); border-radius: 4px; overflow: hidden;
+  }
+  .app .ctas--single { grid-template-columns: 1fr; }
+  .btn {
+    text-align: center; padding: 0.55rem 0.5rem;
+    background: transparent; border-right: 1px solid var(--border-hi);
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.6rem; letter-spacing: 0.15em; text-transform: uppercase;
+    color: var(--text); cursor: pointer; transition: background 0.12s;
+  }
+  .btn:last-child { border-right: none; }
+  .btn:hover { background: var(--cue-dim); color: var(--cue); }
+  .prompt-link {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.65rem; color: var(--muted); text-decoration: underline;
+  }
+  .prompt-link:hover { color: var(--cue); }
+
+  /* Epilogue */
+  .epilogue {
+    padding: 3rem 0; border-bottom: 1px solid var(--border-hi); margin-top: 2rem;
+  }
+  .epilogue h2 {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.6rem; letter-spacing: 0.25em; text-transform: uppercase;
+    color: var(--cue); margin-bottom: 1rem;
+  }
+  .epilogue p { font-size: 1.1rem; max-width: 720px; line-height: 1.6; opacity: 0.85; }
+  .epilogue .hl { color: var(--cue); font-weight: 600; }
+
+  /* Footer */
+  footer.term-footer {
+    padding: 1.25rem 0;
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.6rem; letter-spacing: 0.2em; text-transform: uppercase;
+    display: flex; justify-content: space-between; color: var(--muted);
+  }
+  footer.term-footer a:hover { color: var(--cue); }
+</style>
+
+<div class="stripe"></div>
+<div class="layout">
+  <header class="topbar">
+    <a class="brand" href="https://links.vibes.diy/homepage">VIBES.DIY</a>
+    <span class="meta">For Collectors &middot; five track-tested tools</span>
+  </header>
+
+  <nav class="crumb">
+    <a href="/">Home</a> &nbsp;/&nbsp; Hot Wheels Collectors
+  </nav>
+
+  <section class="hero">
+    <span class="label">For Hot Wheels Collectors</span>
+    <h1>Your collection.<br>Your <span class="hi">tools</span>.</h1>
+    <p class="lead">
+      Five apps for serious Hot Wheels collectors. Catalog every car, build trade lists,
+      log your Treasure Hunt finds, track series completion, and map your best store runs.
+    </p>
+  </section>
+
+  <section class="spotlight">
+    <div class="spotlight-label">// spotlight &mdash; collection catalog</div>
+    <div class="spotlight-card">
+      <div class="spotlight-info">
+        <div class="spotlight-num">CAR 01 &middot; hw-collection-catalog</div>
+        <h2 class="spotlight-title">Collection<br>Catalog</h2>
+        <p class="spotlight-tagline">Every car you own, exactly how you track it.</p>
+        <p class="spotlight-desc">
+          Log your entire Hot Wheels collection with photos, series, year, color,
+          wheel type, condition, and estimated value. Search it by name, sort by value,
+          filter by series. Works on your phone at swap meets. Your inventory, your way.
+        </p>
+        <a class="btn-spotlight" href="https://vibes.diy/vibe/og/hw-collection-catalog">Open Catalog &rarr;</a>
+        <div class="spotlight-secondary">
+          <a class="btn" href="https://vibes.diy/remix/og/hw-collection-catalog?skipChat=true">Clone</a>
+          <a class="btn" href="https://vibes.diy/remix/og/hw-collection-catalog">Remix</a>
+          {{#with (lookup apps 0)}}<a class="btn" href="https://vibes.diy/chat/prompt?prompt64={{prompt64 desc}}">Start fresh</a>{{/with}}
+        </div>
+      </div>
+      <div class="spotlight-shot">
+        <a href="https://vibes.diy/vibe/og/hw-collection-catalog" aria-label="Collection Catalog screenshot">
+          <img src="https://hw-collection-catalog--og.prod-v2.vibesdiy.net/screenshot.jpg"
+               alt="Collection Catalog"
+               onerror="this.onerror=null; this.src='{{@root.assetPrefix}}images/og-preview.png';">
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <div class="stats">
+    <div class="stat-cell"><div class="k">Apps</div><div class="v">Five</div></div>
+    <div class="stat-cell"><div class="k">Audience</div><div class="v">Collectors</div></div>
+    <div class="stat-cell"><div class="k">Persistence</div><div class="v">Fireproof</div></div>
+    <div class="stat-cell"><div class="k">Skin</div><div class="v">Track Record</div></div>
+  </div>
+
+  <div class="section-label">// supporting tools</div>
+
+  <section class="apps">
+    {{#each apps}}
+      {{#unless @first}}
+      <article class="app {{#if live}}app--live{{else}}app--pending{{/if}}">
+        <div class="num-cell">
+          <div class="num">{{num}}</div>
+          <div class="status">{{#if live}}Live{{else}}Pending{{/if}}</div>
+        </div>
+        <div class="body">
+          <h2 class="title">{{title}}</h2>
+          <p class="tagline">{{tagline}}</p>
+          <p class="desc">{{desc}}</p>
+        </div>
+        <div class="right">
+          {{#if live}}
+            <a class="shot" href="https://vibes.diy/vibe/{{author}}/{{slug}}" aria-label="{{title}} screenshot"><img src="https://{{slug}}--{{author}}.prod-v2.vibesdiy.net/screenshot.jpg" alt="{{slug}}" onerror="this.onerror=null; this.src='{{@root.assetPrefix}}images/og-preview.png';"/></a>
+            <div class="ctas">
+              <a class="btn" href="https://vibes.diy/vibe/{{author}}/{{slug}}">Join</a>
+              <a class="btn" href="https://vibes.diy/remix/{{author}}/{{slug}}?skipChat=true">Clone</a>
+              <a class="btn" href="https://vibes.diy/remix/{{author}}/{{slug}}">Remix</a>
+            </div>
+            <a class="prompt-link" href="https://vibes.diy/chat/prompt?prompt64={{prompt64 desc}}">// start fresh from this prompt</a>
+          <span class="prompt-link" style="opacity:0.5; text-decoration:none; font-size:0.6rem;">The prompt that built this. Describe your collecting method instead.</span>
+          {{else}}
+            <div class="shot"><div class="shot-placeholder">awaiting deploy</div></div>
+            <div class="ctas ctas--single">
+              <a class="btn" href="https://vibes.diy/chat/prompt?prompt64={{prompt64 desc}}">Start From Prompt</a>
+            </div>
+          {{/if}}
+        </div>
+      </article>
+      {{/unless}}
+    {{/each}}
+  </section>
+
+  <div class="epilogue">
+    <h2>// read me</h2>
+    <p>
+      Generic inventory apps don&rsquo;t know a Redline from a Blackwall.
+      These five tools were built by and for serious collectors &mdash;
+      <span class="hl">the people who hit every Target and Walmart within twenty miles on restock day</span>.
+    </p>
+    <p style="margin-top:1rem;">
+      You track by casting country, not just series — clone the Collection Catalog and add the field.
+      You trade exclusively at regional conventions, not local meetups — clone the Trade List and add a convention column.
+      Your Treasure Hunt log needs a &ldquo;store tip source&rdquo; field because some informants are more reliable — clone it and add the column.
+      The app that fits your collecting habit is one fork away.
+    </p>
+  </div>
+
+  {{> newsletter}}
+<footer class="term-footer">
+    <span>Vibes.diy &middot; <a href="https://links.vibes.diy/homepage">homepage</a> &middot; <a href="/hobbies.html">more hobby tools</a></span>
+    <span>// TRACK RECORD</span>
+  </footer>
+</div>

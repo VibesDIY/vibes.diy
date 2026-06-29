@@ -1,0 +1,116 @@
+{
+  "source": "Carnegie Mellon University",
+  "location": "Pittsburgh, PA",
+  "region": "Mid-Atlantic",
+  "fetched": "2026-05-18",
+  "items": [
+    {
+      "title": "36-318 Introduction to Causal Inference",
+      "department": "Data Science / Stats",
+      "year": 2024,
+      "url": "https://www.stat.cmu.edu/~cshalizi/causal-inference/",
+      "fetch_method": "direct",
+      "topics": [
+        "propensity score methods",
+        "matching estimators",
+        "doubly robust estimation",
+        "instrumental variables",
+        "regression discontinuity",
+        "difference-in-differences",
+        "causal graphs",
+        "treatment effect heterogeneity"
+      ],
+      "source_text": "Topics include propensity score methods, matching estimators, doubly robust estimation, instrumental variables, and regression discontinuity designs. The course also covers difference-in-differences, causal graph models (DAGs), and treatment effect heterogeneity in observational data settings."
+    },
+    {
+      "title": "36-462 Statistical Machine Learning",
+      "department": "Data Science / Stats",
+      "year": 2024,
+      "url": "https://www.stat.cmu.edu/~ryantibs/statml/",
+      "fetch_method": "direct",
+      "topics": [
+        "clustering algorithms",
+        "dimensionality reduction",
+        "regression and regularization",
+        "classification methods",
+        "decision trees and random forests",
+        "boosting methods",
+        "cross-validation",
+        "model selection"
+      ],
+      "source_text": "The course covers clustering, dimensionality reduction, and supervised learning methods including regression with regularization, classification, decision trees, random forests, and boosting. Emphasis on model selection via cross-validation and understanding the statistical properties of machine learning algorithms."
+    },
+    {
+      "title": "19-629 Climate Change Science and Solutions",
+      "department": "Environmental Studies",
+      "year": 2024,
+      "url": "http://coursecatalog.web.cmu.edu/schools-colleges/collegeofengineering/departmentofengineeringandpublicpolicy/courses/",
+      "fetch_method": "direct",
+      "topics": [
+        "climate science fundamentals",
+        "greenhouse gas emissions",
+        "emission reduction technologies",
+        "climate adaptation strategies",
+        "energy transition policy",
+        "carbon pricing mechanisms",
+        "climate risk assessment",
+        "sustainable engineering"
+      ],
+      "source_text": "Provides an overview of climate science alongside projected climate consequences, emission reduction technologies, and public policy adaptation strategies. Covers greenhouse gas emissions accounting, energy transition policy, carbon pricing mechanisms, and climate risk assessment for engineering and policy applications."
+    },
+    {
+      "title": "19-701 Introduction to the Theory and Practice of Policy Analysis",
+      "department": "Public Health",
+      "year": 2024,
+      "url": "http://coursecatalog.web.cmu.edu/schools-colleges/collegeofengineering/departmentofengineeringandpublicpolicy/courses/",
+      "fetch_method": "direct",
+      "topics": [
+        "policy analysis frameworks",
+        "valuation of intangibles",
+        "uncertainty in policy analysis",
+        "risk analysis methods",
+        "behavioral decision theory",
+        "cost-benefit analysis",
+        "multi-criteria evaluation",
+        "stakeholder analysis"
+      ],
+      "source_text": "Examines analytical techniques for policy analysis including valuation of intangibles, uncertainty in policy analysis, selected topics in risk analysis, and behavioral decision theory. Covers cost-benefit analysis, multi-criteria evaluation frameworks, and stakeholder analysis for evidence-based policy decisions."
+    },
+    {
+      "title": "94-802 Geographic Information Systems",
+      "department": "Urban Planning",
+      "year": 2024,
+      "url": "https://www.heinz.cmu.edu/current-students/courses/94-802",
+      "fetch_method": "direct",
+      "topics": [
+        "spatial analysis",
+        "proximity analysis",
+        "risk surface modeling",
+        "site suitability analysis",
+        "spatial data mining",
+        "raster GIS",
+        "network analysis",
+        "geospatial visualization"
+      ],
+      "source_text": "A GIS provides storage, retrieval, and visualization of geographically referenced data and unique analytical tools for investigating spatial relationships, patterns, and processes. Topics include proximity analysis, risk surface modeling, site suitability analysis, spatial data mining, raster GIS, and network analysis using ArcGIS Pro and ArcGIS Online."
+    },
+    {
+      "title": "90-722 Management Science I: Optimization and Decision Modeling",
+      "department": "Behavioral Economics",
+      "year": 2024,
+      "url": "https://www.heinz.cmu.edu/current-students/courses/90-722",
+      "fetch_method": "direct",
+      "topics": [
+        "linear programming",
+        "optimization modeling",
+        "decision analysis",
+        "sensitivity analysis",
+        "multi-objective optimization",
+        "network flow problems",
+        "integer programming",
+        "policy decision frameworks"
+      ],
+      "source_text": "Core technique is optimization applied to public policy decision-making. Topics include linear programming, decision analysis, sensitivity analysis, multi-objective optimization, network flow problems, and integer programming. Students develop optimization models to evaluate policy alternatives and resource allocation decisions."
+    }
+  ]
+}

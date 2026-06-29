@@ -1,0 +1,22 @@
+# causation-vs-correlation
+
+> A curious undergraduate just finished a stats course and keeps second-guessing whether headlines are describing causal relationships or just correlations. They have real examples from news articles: a study claiming ice cream sales cause drownings, a paper saying coffee drinkers live longer, a policy claiming a job training program reduced unemployment, a viral chart showing countries with more chocolate consumption win more Nobel Prizes. They want to build an intuition for the difference between association and causation without learning a software package. Build an interactive explainer where they paste in a claim, see a breakdown of what causal language was used, draw or auto-suggest a directed acyclic graph capturing what they believe the data-generating process looks like, and walk through a checklist of what would need to be true for the claim to hold causally. The checklist should cover confounders that might explain both treatment and outcome, selection bias from who ended up in the study sample, reverse causation possibilities, and whether the cited study is a randomized controlled trial or some kind of observational comparison. For each headline they paste in, the app should help them name the alleged treatment and outcome, identify common third causes (heat causes both ice cream and swimming, which causes drowning), and ask them what evidence would shift their belief. The goal is not to label claims as true or false but to teach the student to think in the potential outcomes framework — what would have happened to the same units in the absence of treatment? — so they leave the session being able to spot the difference between a correlation and a causal claim in any new article they read. Include a small library of about a dozen real-world claims they can practice on, and let them save their own DAGs and reasoning notes alongside each one so they can revisit and revise as they learn.
+
+Live at [https://vibes.diy/vibe/edu/causation-vs-correlation](https://vibes.diy/vibe/edu/causation-vs-correlation)
+
+Single-file React app built with [vibes.diy](https://vibes.diy). Visit the live url to manage access.
+
+## Run it
+
+```sh
+npx vibes-diy push     # uploads App.jsx, prints a live HTTPS URL
+```
+
+Edit [App.jsx](App.jsx) and push again to iterate.
+
+## Commands
+
+- `npx vibes-diy push` — deploy the current directory
+- `npx vibes-diy push --instant-join` — deploy with auto-accept sharing
+- `npx vibes-diy generate "prompt"` — generate a new app from a prompt
+- `npx vibes-diy help` — full command list

@@ -1,0 +1,247 @@
+{{!--
+{
+  "layout": "editorial",
+  "title": "Wedding Planners | Build the Tools Your Couples Deserve | Vibes DIY",
+  "description": "Generic software wasn't built for your clients. Build custom vendor trackers, client portals, day-of timelines, and RSVP tools — one per wedding.",
+  "ogUrl": "https://wedding.vibes.diy",
+  "source": "wedding",
+  "ogImage": "https://good.vibes.diy/images/screenshots/wedding.jpg"
+}
+--}}
+
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Libre+Baskerville:wght@700&display=optional');
+
+  :root {
+    --bg: #f5efea;
+    --surface: #fffaf6;
+    --ink: #2b2220;
+    --muted: #6a5b56;
+    --line: #ddcfc6;
+    --brand: #8e4f57;
+    --brand-strong: #6f3d45;
+    --accent: #48685a;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    font-family: 'Inter', system-ui, sans-serif;
+    color: var(--ink);
+    line-height: 1.56;
+    background: radial-gradient(circle at 20% 0, #ebddd6 0, var(--bg) 43%), var(--bg);
+  }
+
+  a { color: inherit; text-decoration: none; }
+
+  .page { max-width: 980px; margin: 0 auto; padding: 0 1.25rem 4rem; }
+
+  .topbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.05rem 0;
+    border-bottom: 1px solid var(--line);
+    font-size: 0.85rem;
+  }
+
+  .brand { font-weight: 800; letter-spacing: 0.02em; }
+  .path { color: var(--muted); font-weight: 600; }
+
+  .hero { padding: 3rem 0 2.2rem; }
+
+  .eyebrow {
+    display: inline-block;
+    font-size: 0.7rem;
+    letter-spacing: 0.11em;
+    text-transform: uppercase;
+    font-weight: 700;
+    color: var(--brand);
+    margin-bottom: 0.9rem;
+  }
+
+  h1 {
+    margin: 0;
+    font-family: 'Libre Baskerville', Georgia, serif;
+    font-size: clamp(2.15rem, 5vw, 3.35rem);
+    line-height: 1.08;
+  }
+
+  .lead { margin: 1rem 0 1.35rem; max-width: 63ch; color: var(--muted); font-size: 1.03rem; }
+
+  .primary-cta {
+    display: inline-block;
+    background: var(--brand);
+    color: #fff;
+    font-weight: 700;
+    border-radius: 0.62rem;
+    padding: 0.8rem 1.16rem;
+  }
+
+  .primary-cta:hover { background: var(--brand-strong); }
+
+  .proof {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.8rem;
+    margin: 0 0 2rem;
+  }
+
+  .proof-card {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 0.8rem;
+    padding: 0.92rem;
+  }
+
+  .proof-card strong { display: block; margin-bottom: 0.3rem; font-size: 0.95rem; }
+  .proof-card span { color: var(--muted); font-size: 0.86rem; }
+
+  .section-title { margin: 0 0 0.9rem; font-size: 1.1rem; font-weight: 800; }
+
+  .apps-grid { display: grid; gap: 0.9rem; }
+
+  .app-card {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 0.9rem;
+    padding: 1rem;
+  }
+
+  .app-head { display: flex; align-items: baseline; gap: 0.58rem; margin-bottom: 0.3rem; }
+  .app-index { color: var(--accent); font-size: 0.72rem; font-weight: 800; letter-spacing: 0.12em; }
+  .app-title { margin: 0; font-size: 1.05rem; font-weight: 800; }
+  .app-desc { margin: 0; color: var(--muted); font-size: 0.92rem; }
+
+  .actions { margin-top: 0.82rem; display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; }
+
+  .open-btn {
+    border: 1px solid var(--brand);
+    border-radius: 0.55rem;
+    padding: 0.5rem 0.9rem;
+    font-size: 0.84rem;
+    font-weight: 700;
+    color: var(--brand-strong);
+    background: #fff;
+  }
+
+  .open-btn:hover { background: #fff1f4; }
+
+  .minor-actions { display: flex; gap: 0.65rem; }
+  .minor-actions a { color: var(--muted); font-size: 0.8rem; text-decoration: underline; text-underline-offset: 2px; }
+
+  .closing {
+    margin-top: 2rem;
+    background: #355144;
+    color: #f2f8f4;
+    border-radius: 0.95rem;
+    padding: 1.32rem;
+  }
+
+  .closing h2 { margin: 0 0 0.45rem; font-size: 1.22rem; }
+  .closing p { margin: 0 0 0.9rem; opacity: 0.92; }
+
+  @media (max-width: 760px) {
+    .proof { grid-template-columns: 1fr; }
+  }
+</style>
+
+<div class="page">
+  <header class="topbar">
+    <a class="brand" href="https://links.vibes.diy/homepage">Vibes DIY</a>
+    <span class="path">/wedding/</span>
+  </header>
+
+  <section class="hero">
+    <p class="eyebrow">Wedding planning app suite</p>
+    <h1>Run guest communication and logistics without tool sprawl.</h1>
+    <p class="lead">Use these wedding-ready apps to handle addresses, RSVPs, plus-ones, event details, countdowns, and shared gift coordination in one consistent flow.</p>
+    <a class="primary-cta" href="https://vibes.diy/vibe/og/guest-address-book" target="_blank" rel="noopener">Open Guest Address Book</a>
+  </section>
+
+  <section class="proof" aria-label="Wedding value strip">
+    <article class="proof-card"><strong>Planner-friendly</strong><span>Clear, narrow workflows your couple can understand quickly.</span></article>
+    <article class="proof-card"><strong>Built for momentum</strong><span>Start with one app and add others as decisions advance.</span></article>
+    <article class="proof-card"><strong>Custom when needed</strong><span>Clone and adjust for venue, schedule, and guest-list complexity.</span></article>
+  </section>
+
+  <section>
+    <h2 class="section-title">Open the workflow you need now</h2>
+    <div class="apps-grid">
+      <article class="app-card">
+        <div class="app-head"><span class="app-index">APP 01</span><h3 class="app-title">Guest Address Book</h3></div>
+        <p class="app-desc">Collect and maintain accurate mailing details before invitation deadlines tighten.</p>
+        <div class="actions">
+          <a class="open-btn" href="https://vibes.diy/vibe/og/guest-address-book" target="_blank" rel="noopener">Open app</a>
+          <div class="minor-actions">
+            <a href="https://vibes.diy/remix/og/guest-address-book?skipChat=true" target="_blank" rel="noopener">Clone</a>
+            <a href="https://vibes.diy/remix/og/guest-address-book" target="_blank" rel="noopener">Remix</a>
+          </div>
+        </div>
+      </article>
+
+      <article class="app-card">
+        <div class="app-head"><span class="app-index">APP 02</span><h3 class="app-title">Quick RSVP</h3></div>
+        <p class="app-desc">Capture attendance intent early so budget and seating assumptions stay realistic.</p>
+        <div class="actions">
+          <a class="open-btn" href="https://vibes.diy/vibe/og/quick-rsvp" target="_blank" rel="noopener">Open app</a>
+          <div class="minor-actions">
+            <a href="https://vibes.diy/remix/og/quick-rsvp?skipChat=true" target="_blank" rel="noopener">Clone</a>
+          </div>
+        </div>
+      </article>
+
+      <article class="app-card">
+        <div class="app-head"><span class="app-index">APP 03</span><h3 class="app-title">Plus One Tracker</h3></div>
+        <p class="app-desc">Track companion status so catering counts and floor plans stay accurate.</p>
+        <div class="actions">
+          <a class="open-btn" href="https://vibes.diy/vibe/og/plus-one-tracker" target="_blank" rel="noopener">Open app</a>
+          <div class="minor-actions">
+            <a href="https://vibes.diy/remix/og/plus-one-tracker?skipChat=true" target="_blank" rel="noopener">Clone</a>
+          </div>
+        </div>
+      </article>
+
+      <article class="app-card">
+        <div class="app-head"><span class="app-index">APP 04</span><h3 class="app-title">Event Info Page</h3></div>
+        <p class="app-desc">Give guests one reliable location for timing, venue details, and day-of answers.</p>
+        <div class="actions">
+          <a class="open-btn" href="https://vibes.diy/vibe/og/event-info-page" target="_blank" rel="noopener">Open app</a>
+          <div class="minor-actions">
+            <a href="https://vibes.diy/remix/og/event-info-page?skipChat=true" target="_blank" rel="noopener">Clone</a>
+          </div>
+        </div>
+      </article>
+
+      <article class="app-card">
+        <div class="app-head"><span class="app-index">APP 05</span><h3 class="app-title">Event Countdown Clock</h3></div>
+        <p class="app-desc">Keep key planning milestones visible so action stays ahead of deadlines.</p>
+        <div class="actions">
+          <a class="open-btn" href="https://vibes.diy/vibe/og/event-countdown-clock" target="_blank" rel="noopener">Open app</a>
+          <div class="minor-actions">
+            <a href="https://vibes.diy/remix/og/event-countdown-clock?skipChat=true" target="_blank" rel="noopener">Clone</a>
+          </div>
+        </div>
+      </article>
+
+      <article class="app-card">
+        <div class="app-head"><span class="app-index">APP 06</span><h3 class="app-title">Wedding Gift Split</h3></div>
+        <p class="app-desc">Coordinate shared gift contributions with transparent totals and payment status.</p>
+        <div class="actions">
+          <a class="open-btn" href="https://vibes.diy/vibe/og/wedding-gift-split" target="_blank" rel="noopener">Open app</a>
+          <div class="minor-actions">
+            <a href="https://vibes.diy/remix/og/wedding-gift-split?skipChat=true" target="_blank" rel="noopener">Clone</a>
+            <a href="https://vibes.diy/remix/og/wedding-gift-split" target="_blank" rel="noopener">Remix</a>
+          </div>
+        </div>
+      </article>
+    </div>
+  </section>
+
+  <section class="closing">
+    <h2>Open one app now and reduce planning noise.</h2>
+    <p>Start with Guest Address Book to stabilize your data foundation, then move directly into RSVP and event communication.</p>
+    <a class="primary-cta" href="https://vibes.diy/vibe/og/guest-address-book" target="_blank" rel="noopener">Open Guest Address Book</a>
+  </section>
+</div>

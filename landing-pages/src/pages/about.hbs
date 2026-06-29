@@ -1,0 +1,778 @@
+{{!--
+{
+  "layout": "webring",
+  "title": "About | good.vibes.diy",
+  "description": "Tiny software made for specific people and situations — teachers, coordinators, game makers, friend groups, and everyone with a thing. Live, cloneable, and yours.",
+  "ogUrl": "https://good.vibes.diy/about/",
+  "ogImage": "https://good.vibes.diy/images/screenshots/about.jpg",
+  "source": "about"
+}
+--}}
+
+<style>
+  @import url("https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,700;1,400&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap");
+
+  :root {
+    --parchment: #F5F1E8;
+    --ink: #1C1917;
+    --purple: #6B3FA0;
+    --purple-dim: rgba(107, 63, 160, 0.1);
+    --muted: #706B63;
+    --card: #FEFCF5;
+  }
+
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html, body {
+    background: var(--parchment);
+    color: var(--ink);
+    font-family: "Inter", system-ui, sans-serif;
+    line-height: 1.55;
+  }
+
+  a { color: inherit; text-decoration: none; }
+
+  /* ── Topbar ── */
+  .topbar {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 0.65rem 1.25rem;
+    background: var(--ink); color: var(--parchment);
+    position: sticky; top: 0; z-index: 100;
+  }
+  .topbar-logo { height: 22px; width: auto; opacity: 0.85; vertical-align: middle; }
+  .topbar-crumb {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.62rem; letter-spacing: 0.15em; text-transform: uppercase;
+  }
+  .topbar-crumb a { opacity: 0.6; }
+  .topbar-crumb a:hover { opacity: 1; }
+  .topbar-crumb .sep { margin: 0 0.35rem; opacity: 0.35; }
+
+  /* ── Wrap ── */
+  .wrap {
+    max-width: 1040px; margin: 0 auto; padding: 0 1.5rem;
+    border-left: 2px solid var(--ink); border-right: 2px solid var(--ink);
+    min-height: 100vh;
+  }
+
+  /* ── Hero ── */
+  .page-hero {
+    padding: 4rem 0 3rem;
+    border-bottom: 4px solid var(--ink);
+  }
+  .dept-label {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.6rem; letter-spacing: 0.28em; text-transform: uppercase;
+    color: var(--purple); margin-bottom: 0.9rem;
+  }
+  .page-hero h1 {
+    font-family: "EB Garamond", Georgia, serif;
+    font-size: clamp(2.2rem, 5vw, 3.8rem);
+    font-weight: 700; line-height: 1.08; letter-spacing: -0.01em;
+    margin-bottom: 1rem;
+  }
+  .page-desc {
+    font-size: 1.05rem; color: var(--muted);
+    max-width: 660px; margin-bottom: 1.75rem; line-height: 1.6;
+  }
+  .vocab-row { display: flex; flex-wrap: wrap; gap: 0.35rem; }
+  .vocab-tag {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.6rem; letter-spacing: 0.08em; text-transform: lowercase;
+    padding: 0.22rem 0.55rem;
+    background: var(--purple-dim); border: 1px solid var(--purple);
+    color: var(--purple); border-radius: 3px;
+  }
+
+  /* ── Section header ── */
+  .section-header {
+    padding: 2rem 0 1.25rem;
+    border-bottom: 2px solid var(--ink);
+    display: flex; justify-content: space-between; align-items: baseline; gap: 1rem; flex-wrap: wrap;
+  }
+  .section-title {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.6rem; letter-spacing: 0.28em; text-transform: uppercase; color: var(--muted);
+  }
+  .section-count {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.6rem; color: var(--muted);
+  }
+
+  /* ── Stat strip ── */
+  .stat-strip {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 0;
+    border-bottom: 4px solid var(--ink);
+  }
+  @media (max-width: 580px) { .stat-strip { grid-template-columns: repeat(2, 1fr); } }
+  .stat-cell {
+    padding: 1.75rem 1.5rem;
+    border-right: 2px solid var(--ink);
+  }
+  .stat-cell:last-child { border-right: none; }
+  @media (max-width: 580px) {
+    .stat-cell:nth-child(2n) { border-right: none; }
+    .stat-cell:nth-child(1), .stat-cell:nth-child(2) { border-bottom: 2px solid var(--ink); }
+  }
+  .stat-num {
+    font-family: "EB Garamond", Georgia, serif;
+    font-size: clamp(2rem, 4vw, 3rem); font-weight: 700; line-height: 1;
+    color: var(--ink); margin-bottom: 0.35rem;
+  }
+  .stat-label {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.58rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--muted);
+  }
+
+  /* ── Prose block ── */
+  .prose-block {
+    padding: 2.5rem 0;
+    border-bottom: 2px solid var(--ink);
+    max-width: 720px;
+  }
+  .prose-block h2 {
+    font-family: "EB Garamond", Georgia, serif;
+    font-size: 1.75rem; font-weight: 700; margin-bottom: 1rem; line-height: 1.15;
+  }
+  .prose-block p {
+    font-size: 0.97rem; line-height: 1.75; color: var(--ink); margin-bottom: 0.9rem;
+  }
+  .prose-block p:last-child { margin-bottom: 0; }
+  .prose-block a { color: var(--purple); text-decoration: underline; text-decoration-color: rgba(107,63,160,0.35); }
+  .prose-block a:hover { text-decoration-color: var(--purple); }
+
+  /* ── How it works row ── */
+  .how-row {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 0;
+    border-bottom: 2px solid var(--ink);
+  }
+  @media (max-width: 640px) { .how-row { grid-template-columns: 1fr; } }
+  .how-cell {
+    padding: 1.75rem 1.5rem;
+    border-right: 2px solid var(--ink);
+  }
+  .how-cell:last-child { border-right: none; }
+  .how-verb {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.62rem; letter-spacing: 0.22em; text-transform: uppercase;
+    color: var(--purple); margin-bottom: 0.55rem;
+  }
+  .how-cell h3 {
+    font-family: "EB Garamond", Georgia, serif;
+    font-size: 1.3rem; font-weight: 700; margin-bottom: 0.5rem;
+  }
+  .how-cell p { font-size: 0.875rem; color: var(--muted); line-height: 1.6; }
+
+  /* ── Directory grid ── */
+  .dir-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 0;
+    border-bottom: 2px solid var(--ink);
+  }
+  @media (max-width: 760px) { .dir-grid { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 480px) { .dir-grid { grid-template-columns: 1fr; } }
+
+  .dir-card {
+    padding: 1.5rem 1.5rem;
+    border-right: 2px solid var(--ink);
+    border-bottom: 2px solid var(--ink);
+    transition: background 0.15s;
+    display: flex; flex-direction: column; gap: 0.4rem;
+  }
+  .dir-card:nth-child(3n) { border-right: none; }
+  @media (max-width: 760px) {
+    .dir-card:nth-child(3n) { border-right: 2px solid var(--ink); }
+    .dir-card:nth-child(2n) { border-right: none; }
+  }
+  .dir-card:hover { background: var(--purple-dim); }
+
+  .dc-label {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.55rem; letter-spacing: 0.15em; text-transform: uppercase;
+    color: var(--muted);
+  }
+  .dc-title {
+    font-family: "EB Garamond", Georgia, serif;
+    font-size: 1.2rem; font-weight: 700; line-height: 1.2;
+  }
+  .dc-desc { font-size: 0.82rem; color: var(--muted); line-height: 1.5; }
+  .dc-cta {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.6rem; letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--purple); font-weight: 700; margin-top: auto; padding-top: 0.4rem;
+  }
+  .dc-cta:hover { text-decoration: underline; }
+
+  /* ── Two-column list ── */
+  .two-col-list {
+    display: grid; grid-template-columns: repeat(2, 1fr); gap: 0;
+    border-bottom: 2px solid var(--ink);
+  }
+  @media (max-width: 580px) { .two-col-list { grid-template-columns: 1fr; } }
+  .list-item {
+    display: flex; align-items: baseline; gap: 0.65rem;
+    padding: 0.9rem 1.25rem;
+    border-right: 2px solid var(--ink);
+    border-bottom: 1px solid rgba(28,25,23,0.12);
+    transition: background 0.12s;
+  }
+  .list-item:nth-child(2n) { border-right: none; }
+  .list-item:hover { background: var(--purple-dim); }
+  .li-name {
+    font-family: "EB Garamond", Georgia, serif;
+    font-size: 1.05rem; font-weight: 700;
+  }
+  .li-desc { font-size: 0.78rem; color: var(--muted); line-height: 1.4; }
+  .li-arrow {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.65rem; color: var(--purple);
+    margin-left: auto; white-space: nowrap;
+  }
+
+  /* ── Footer ── */
+  .page-footer {
+    padding: 2rem 0;
+    display: flex; gap: 1.5rem; align-items: center; flex-wrap: wrap;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.68rem; letter-spacing: 0.1em; text-transform: uppercase;
+    border-top: 4px solid var(--ink);
+  }
+  .page-footer a { color: var(--purple); }
+  .page-footer a:hover { text-decoration: underline; }
+  .page-footer .sep { opacity: 0.3; }
+</style>
+
+<nav class="topbar">
+  <a href="https://links.vibes.diy/homepage">
+    <img src="Vibes-Toggle-1-Transparent.png" alt="Vibes DIY" class="topbar-logo">
+  </a>
+  <div class="topbar-crumb">
+    <a href="/">good.vibes.diy</a>
+    <span class="sep">/</span>
+    <span>about</span>
+  </div>
+</nav>
+
+<div class="wrap">
+
+  <header class="page-hero">
+    <div class="dept-label">good.vibes.diy</div>
+    <h1>About this site</h1>
+    <p class="page-desc">A showcase of tiny software made for specific people and specific situations — teachers, coordinators, game makers, friend groups, and everyone with a thing. Everything here is live, cloneable, and yours.</p>
+    <div class="vocab-row">
+      <span class="vocab-tag">audience pages</span>
+      <span class="vocab-tag">featured app galleries</span>
+      <span class="vocab-tag">edu clusters</span>
+      <span class="vocab-tag">expressions</span>
+      <span class="vocab-tag">games &amp; arcade</span>
+    </div>
+  </header>
+
+  <!-- Stats -->
+  <div class="stat-strip">
+    <div class="stat-cell">
+      <div class="stat-num">760+</div>
+      <div class="stat-label">Apps live</div>
+    </div>
+    <div class="stat-cell">
+      <div class="stat-num">222</div>
+      <div class="stat-label">Pages</div>
+    </div>
+    <div class="stat-cell">
+      <div class="stat-num">133</div>
+      <div class="stat-label">Edu pages</div>
+    </div>
+    <div class="stat-cell">
+      <div class="stat-num">15</div>
+      <div class="stat-label">Universities</div>
+    </div>
+  </div>
+
+  <!-- What this site is -->
+  <div class="prose-block">
+    <h2>What good.vibes.diy is</h2>
+    <p>Vibes DIY is for making tiny custom software — things built for your specific situation, your specific people. You make the thing; it ships. good.vibes.diy is the public gallery of what people are making with it.</p>
+    <p>The site is organized around audiences and topics: pages for <a href="teachers.html">teachers</a>, <a href="coaches.html">coaches</a>, <a href="engineers.html">engineers</a>, <a href="homeschoolers.html">homeschoolers</a>, and more each show a curated cluster of apps built specifically for that use case. The <a href="edu/index.html">Edu section</a> has 22 subject clusters grounded in <a href="edu/syllabi.html">real university syllabi</a> — <a href="edu/about.html">read about the approach</a>. <a href="expressions/index.html">Expressions pages</a> explore more personal, ambient, and experimental uses. Every app is deployed on the <a href="https://links.vibes.diy/homepage">Vibes DIY platform</a> — not a mockup, not a prototype.</p>
+    <p>The goal is to show what specific people actually made — for their night, their group, their weird specific situation. If you see something useful, open it. If you see something close to what you need, clone it and make it yours.</p>
+  </div>
+
+  <!-- How it works -->
+  <div class="section-header">
+    <span class="section-title">How Apps Work</span>
+  </div>
+  <div class="how-row">
+    <div class="how-cell">
+      <div class="how-verb">Open →</div>
+      <h3>Use it directly</h3>
+      <p>Every app is live and ready to use. No login, no install. Open it in any browser and it works.</p>
+    </div>
+    <div class="how-cell">
+      <div class="how-verb">Clone →</div>
+      <h3>Start from a copy</h3>
+      <p>Clone any app into your own Vibes DIY account. You own the copy and can customize it however you like.</p>
+    </div>
+    <div class="how-cell">
+      <div class="how-verb">Remix →</div>
+      <h3>Make it your own</h3>
+      <p>Remix opens the app in the editor. Change what it does, keep what works, and ship something new in minutes.</p>
+    </div>
+  </div>
+
+  <!-- Audience pages -->
+  <div class="section-header">
+    <span class="section-title">Audience Pages</span>
+    <span class="section-count">curated clusters by use case</span>
+  </div>
+  <div class="two-col-list">
+    <a class="list-item" href="growth-writers.html">
+      <span class="li-name">Growth Writers</span>
+      <span class="li-desc">AI brief generator, cluster maps, idea scoring — tools for systematic publishers</span>
+      <span class="li-arrow">→</span>
+    </a>
+    <a class="list-item" href="teachers.html">
+      <span class="li-name">Teachers</span>
+      <span class="li-desc">Classroom tools, lesson helpers, and student apps</span>
+      <span class="li-arrow">→</span>
+    </a>
+    <a class="list-item" href="coaches.html">
+      <span class="li-name">Coaches</span>
+      <span class="li-desc">Team trackers, drill planners, and athlete tools</span>
+      <span class="li-arrow">→</span>
+    </a>
+    <a class="list-item" href="engineers.html">
+      <span class="li-name">Engineers</span>
+      <span class="li-desc">Dev utilities, spec checkers, and quick internal tools</span>
+      <span class="li-arrow">→</span>
+    </a>
+    <a class="list-item" href="homeschoolers.html">
+      <span class="li-name">Homeschoolers</span>
+      <span class="li-desc">Curriculum helpers, progress logs, and learning games</span>
+      <span class="li-arrow">→</span>
+    </a>
+    <a class="list-item" href="organizers.html">
+      <span class="li-name">Organizers</span>
+      <span class="li-desc">Event tools, sign-ups, and coordination apps</span>
+      <span class="li-arrow">→</span>
+    </a>
+    <a class="list-item" href="contractors.html">
+      <span class="li-name">Contractors</span>
+      <span class="li-desc">Job trackers, estimate tools, and client-facing apps</span>
+      <span class="li-arrow">→</span>
+    </a>
+    <a class="list-item" href="youtubers.html">
+      <span class="li-name">YouTubers</span>
+      <span class="li-desc">Viewer engagement, content planners, and community tools</span>
+      <span class="li-arrow">→</span>
+    </a>
+    <a class="list-item" href="builders.html">
+      <span class="li-name">Builders</span>
+      <span class="li-desc">An editorial deep-dive into the Vibes DIY builder ethos</span>
+      <span class="li-arrow">→</span>
+    </a>
+    <a class="list-item" href="chess.html">
+      <span class="li-name">Chess Variants Lab</span>
+      <span class="li-desc">Six chess apps: toroidal, hex, 3D, AI, scanner — Tournament Hall skin</span>
+      <span class="li-arrow">→</span>
+    </a>
+    <a class="list-item" href="college.html">
+      <span class="li-name">College</span>
+      <span class="li-desc">Campus life tools in the Slab Concrete skin</span>
+      <span class="li-arrow">→</span>
+    </a>
+    <a class="list-item" href="dating.html">
+      <span class="li-name">Dating</span>
+      <span class="li-desc">Async-first social apps in the Hearth skin</span>
+      <span class="li-arrow">→</span>
+    </a>
+    <a class="list-item" href="group-chat.html">
+      <span class="li-name">Group Chat Mods</span>
+      <span class="li-desc">Reply Roulette, Pirate Mode, Colbert's Here, Mood Board — remix how your group talks</span>
+      <span class="li-arrow">→</span>
+    </a>
+    <a class="list-item" href="crew/chaos.html">
+      <span class="li-name">Crew: Chaos</span>
+      <span class="li-desc">Game night, cookout, group trip — apps as rowdy as your crew</span>
+      <span class="li-arrow">→</span>
+    </a>
+    <a class="list-item" href="crew/the-list.html">
+      <span class="li-name">Crew: The List</span>
+      <span class="li-desc">Groceries, chores, IOUs — the shared doc that actually gets used</span>
+      <span class="li-arrow">→</span>
+    </a>
+    <a class="list-item" href="crew/the-bit.html">
+      <span class="li-name">Crew: The Bit</span>
+      <span class="li-desc">Bad movie draft, dinner tournament, superlatives — software for an inside joke</span>
+      <span class="li-arrow">→</span>
+    </a>
+    <a class="list-item" href="zine.html">
+      <span class="li-name">Zines &amp; Collectives</span>
+      <span class="li-desc">Band sites, art archives, and zines in the SRL xerox collage skin</span>
+      <span class="li-arrow">→</span>
+    </a>
+    <a class="list-item" href="relationships.html">
+      <span class="li-name">Relationships</span>
+      <span class="li-desc">Five shapes for relationships that don't fit in a DM thread</span>
+      <span class="li-arrow">→</span>
+    </a>
+    <a class="list-item" href="puppies.html">
+      <span class="li-name">Puppies</span>
+      <span class="li-desc">Dog walk coordination, neighborhood pet logs</span>
+      <span class="li-arrow">→</span>
+    </a>
+    <a class="list-item" href="fashion-photographers.html">
+      <span class="li-name">Fashion Photographers</span>
+      <span class="li-desc">Bid manager, lead CRM, client log, crew kudos, and model feedback</span>
+      <span class="li-arrow">→</span>
+    </a>
+    <a class="list-item" href="hotwheels.html">
+      <span class="li-name">Hot Wheels</span>
+      <span class="li-desc">Race day tools, track records, and collector apps</span>
+      <span class="li-arrow">→</span>
+    </a>
+    <a class="list-item" href="road-trip.html">
+      <span class="li-name">Road Trippers</span>
+      <span class="li-desc">Route tips, resource sharing, gatherings, and the people you meet</span>
+      <span class="li-arrow">→</span>
+    </a>
+    <a class="list-item" href="reshippers.html">
+      <span class="li-name">Reshippers</span>
+      <span class="li-desc">Package tracking and shipping logistics tools</span>
+      <span class="li-arrow">→</span>
+    </a>
+    <a class="list-item" href="wedding.html">
+      <span class="li-name">Wedding</span>
+      <span class="li-desc">Planning tools, guest apps, and day-of coordination</span>
+      <span class="li-arrow">→</span>
+    </a>
+    <a class="list-item" href="valentines.html">
+      <span class="li-name">Valentines</span>
+      <span class="li-desc">Seasonal love notes, date planners, and couple apps</span>
+      <span class="li-arrow">→</span>
+    </a>
+    <a class="list-item" href="volunteer-coordinators.html">
+      <span class="li-name">Volunteer Coordinators</span>
+      <span class="li-desc">Shift sign-ups, task boards, and team communication</span>
+      <span class="li-arrow">→</span>
+    </a>
+    <a class="list-item" href="philosophy.html">
+      <span class="li-name">Philosophy</span>
+      <span class="li-desc">Argument mappers, thought experiment tools, and debate aids</span>
+      <span class="li-arrow">→</span>
+    </a>
+    <a class="list-item" href="music-studio.html">
+      <span class="li-name">Music Studio</span>
+      <span class="li-desc">Creative music tools, composition helpers, and sonic toys</span>
+      <span class="li-arrow">→</span>
+    </a>
+    <a class="list-item" href="sharing.html">
+      <span class="li-name">Sharing &amp; Access</span>
+      <span class="li-desc">Who sees your thing, what they can do with it, Clone vs Remix</span>
+      <span class="li-arrow">→</span>
+    </a>
+    <a class="list-item" href="camping.html">
+      <span class="li-name">Camping</span>
+      <span class="li-desc">Park finder, packing list, meal planner, trail log, campfire storytime</span>
+      <span class="li-arrow">→</span>
+    </a>
+    <a class="list-item" href="newsletter.html">
+      <span class="li-name">Newsletter</span>
+      <span class="li-desc">Sign up to hear when Vibes ships something new</span>
+      <span class="li-arrow">→</span>
+    </a>
+  </div>
+
+  <!-- Featured App Galleries -->
+  <div class="section-header">
+    <span class="section-title">Featured App Galleries</span>
+    <span class="section-count">18 categories</span>
+  </div>
+  <div class="dir-grid">
+    <a class="dir-card" href="featured-apps/household-logistics.html">
+      <div class="dc-label">home</div>
+      <div class="dc-title">Household Logistics</div>
+      <div class="dc-desc">Chores, cleanings, where you parked, whose turn it is.</div>
+      <span class="dc-cta">Browse →</span>
+    </a>
+    <a class="dir-card" href="featured-apps/rituals-and-goals.html">
+      <div class="dc-label">group</div>
+      <div class="dc-title">Rituals &amp; Shared Goals</div>
+      <div class="dc-desc">Milestones, ceremonies, predictions, and family lore.</div>
+      <span class="dc-cta">Browse →</span>
+    </a>
+    <a class="dir-card" href="featured-apps/party-games.html">
+      <div class="dc-label">fun</div>
+      <div class="dc-title">Party &amp; Group Games</div>
+      <div class="dc-desc">Silly multiplayer rounds, voting, and party chaos.</div>
+      <span class="dc-cta">Browse →</span>
+    </a>
+    <a class="dir-card" href="featured-apps/photo-identifiers.html">
+      <div class="dc-label">field id</div>
+      <div class="dc-title">Photo Identifiers</div>
+      <div class="dc-desc">Snap a photo of something in the wild, get back a guess and a gallery.</div>
+      <span class="dc-cta">Browse →</span>
+    </a>
+    <a class="dir-card" href="featured-apps/outdoor-logs.html">
+      <div class="dc-label">outdoors</div>
+      <div class="dc-title">Outdoor Adventure Logs</div>
+      <div class="dc-desc">Photo timelines, location-pinned sightings, shared field notes.</div>
+      <span class="dc-cta">Browse →</span>
+    </a>
+    <a class="dir-card" href="featured-apps/neighborhood-swaps.html">
+      <div class="dc-label">community</div>
+      <div class="dc-title">Neighborhood Swaps</div>
+      <div class="dc-desc">Post what you have, claim what you need, keep stuff moving locally.</div>
+      <span class="dc-cta">Browse →</span>
+    </a>
+    <a class="dir-card" href="featured-apps/classroom-tools.html">
+      <div class="dc-label">education</div>
+      <div class="dc-title">Classroom Tools</div>
+      <div class="dc-desc">Kind words, study battles, voiced passages, and classroom experiments.</div>
+      <span class="dc-cta">Browse →</span>
+    </a>
+    <a class="dir-card" href="featured-apps/mood-and-journals.html">
+      <div class="dc-label">personal</div>
+      <div class="dc-title">Mood, Dreams &amp; Journals</div>
+      <div class="dc-desc">Daily check-ins, dream patterns, reflections, and time-locked notes.</div>
+      <span class="dc-cta">Browse →</span>
+    </a>
+    <a class="dir-card" href="featured-apps/fitness-and-sports.html">
+      <div class="dc-label">sports</div>
+      <div class="dc-title">Fitness &amp; Sports Stats</div>
+      <div class="dc-desc">Scoreboards, dice workouts, and stat trackers for the back-pocket coach.</div>
+      <span class="dc-cta">Browse →</span>
+    </a>
+    <a class="dir-card" href="featured-apps/kitchen-and-cooking.html">
+      <div class="dc-label">food</div>
+      <div class="dc-title">Kitchen &amp; Cooking</div>
+      <div class="dc-desc">Lunchbox spinners, egg timers, recipe brags, and potluck tools.</div>
+      <span class="dc-cta">Browse →</span>
+    </a>
+    <a class="dir-card" href="featured-apps/creative-studios.html">
+      <div class="dc-label">creative</div>
+      <div class="dc-title">Creative Studios</div>
+      <div class="dc-desc">Projection mapping, bracelet patterns, prompt decks, and visualizers.</div>
+      <span class="dc-cta">Browse →</span>
+    </a>
+    <a class="dir-card" href="featured-apps/garden-and-plants.html">
+      <div class="dc-label">garden</div>
+      <div class="dc-title">Garden &amp; Plant Care</div>
+      <div class="dc-desc">Plant beds mapped, watering reminders, and pruning guides.</div>
+      <span class="dc-cta">Browse →</span>
+    </a>
+    <a class="dir-card" href="featured-apps/pets.html">
+      <div class="dc-label">pets</div>
+      <div class="dc-title">Pets</div>
+      <div class="dc-desc">Dog walks, neighborhood cats, and tabs on four-legged regulars.</div>
+      <span class="dc-cta">Browse →</span>
+    </a>
+    <a class="dir-card" href="featured-apps/hero-at-work.html">
+      <div class="dc-label">work</div>
+      <div class="dc-title">Hero at Work</div>
+      <div class="dc-desc">Quick internal apps, status boards, and ICP trackers that beat waiting for IT.</div>
+      <span class="dc-cta">Browse →</span>
+    </a>
+    <a class="dir-card" href="featured-apps/run-the-place.html">
+      <div class="dc-label">small teams</div>
+      <div class="dc-title">Run the Place</div>
+      <div class="dc-desc">For restaurants, real estate offices, Sunday school admin, the front desk.</div>
+      <span class="dc-cta">Browse →</span>
+    </a>
+    <a class="dir-card" href="featured-apps/house-rules.html">
+      <div class="dc-label">home</div>
+      <div class="dc-title">House Rules</div>
+      <div class="dc-desc">The real Farkle rules, the family recipe, who brought what to the potluck.</div>
+      <span class="dc-cta">Browse →</span>
+    </a>
+    <a class="dir-card" href="featured-apps/image-generation.html">
+      <div class="dc-label">visual</div>
+      <div class="dc-title">Image Generation</div>
+      <div class="dc-desc">Comics, plushies, vintage ads, dungeon scenes, and image transformers.</div>
+      <span class="dc-cta">Browse →</span>
+    </a>
+    <a class="dir-card" href="featured-apps/linkedin-influencers.html">
+      <div class="dc-label">humor</div>
+      <div class="dc-title">LinkedIn Influencers</div>
+      <div class="dc-desc">Cringe-corporate parody generators and humblebrags.</div>
+      <span class="dc-cta">Browse →</span>
+    </a>
+  </div>
+
+  <!-- Edu clusters -->
+  <div class="section-header">
+    <span class="section-title">Edu — University Learning Tools</span>
+    <span class="section-count">13 clusters · 90 syllabi</span>
+  </div>
+  <div class="dir-grid">
+    <a class="dir-card" href="edu/literary-analysis.html">
+      <div class="dc-label">Literature / Creative Writing</div>
+      <div class="dc-title">Literary Analysis &amp; Close Reading</div>
+      <div class="dc-desc">Close reading, postcolonial theory, feminist criticism, Bildungsroman.</div>
+      <span class="dc-cta">5 tools →</span>
+    </a>
+    <a class="dir-card" href="edu/cold-war-history.html">
+      <div class="dc-label">History — Diplomatic</div>
+      <div class="dc-title">Cold War History</div>
+      <div class="dc-desc">Containment, proxy wars, détente, and declassified documents.</div>
+      <span class="dc-cta">5 tools →</span>
+    </a>
+    <a class="dir-card" href="edu/critical-algorithms.html">
+      <div class="dc-label">Media Studies</div>
+      <div class="dc-title">Critical Algorithms &amp; Surveillance</div>
+      <div class="dc-desc">Algorithmic bias, surveillance, and discriminatory design.</div>
+      <span class="dc-cta">5 tools →</span>
+    </a>
+    <a class="dir-card" href="edu/slavery-civil-rights.html">
+      <div class="dc-label">History — American</div>
+      <div class="dc-title">Slavery, Reconstruction &amp; Civil Rights</div>
+      <div class="dc-desc">Chattel slavery, Jim Crow, the civil rights movement, Reconstruction amendments.</div>
+      <span class="dc-cta">5 tools →</span>
+    </a>
+    <a class="dir-card" href="edu/us-foreign-policy.html">
+      <div class="dc-label">History — Diplomatic</div>
+      <div class="dc-title">U.S. Foreign Policy &amp; Diplomacy</div>
+      <div class="dc-desc">American imperialism, containment strategy, FRUS documents.</div>
+      <span class="dc-cta">5 tools →</span>
+    </a>
+    <a class="dir-card" href="edu/urban-race-housing.html">
+      <div class="dc-label">History — Urban</div>
+      <div class="dc-title">Urban History, Race &amp; Housing</div>
+      <div class="dc-desc">Suburbanization, redlining, white flight, residential segregation.</div>
+      <span class="dc-cta">5 tools →</span>
+    </a>
+    <a class="dir-card" href="edu/latin-american-history.html">
+      <div class="dc-label">History — Latin American</div>
+      <div class="dc-title">Latin American History</div>
+      <div class="dc-desc">Mestizaje, encomienda system, land reform, indigenous sovereignty.</div>
+      <span class="dc-cta">5 tools →</span>
+    </a>
+    <a class="dir-card" href="edu/ethics-philosophy.html">
+      <div class="dc-label">Philosophy</div>
+      <div class="dc-title">Ethics &amp; Philosophy</div>
+      <div class="dc-desc">Philosophy of mind, free will, metaethics, feminist epistemology.</div>
+      <span class="dc-cta">5 tools →</span>
+    </a>
+    <a class="dir-card" href="edu/revolutions-political-change.html">
+      <div class="dc-label">History — Comparative</div>
+      <div class="dc-title">Revolutions &amp; Political Change</div>
+      <div class="dc-desc">Atlantic revolutions, the Haitian Revolution, decolonization.</div>
+      <span class="dc-cta">5 tools →</span>
+    </a>
+    <a class="dir-card" href="edu/capitalism-labor-history.html">
+      <div class="dc-label">History — Economic / Social</div>
+      <div class="dc-title">History of Capitalism &amp; Labor</div>
+      <div class="dc-desc">Labor history, racial capitalism, financialization.</div>
+      <span class="dc-cta">5 tools →</span>
+    </a>
+    <a class="dir-card" href="edu/gender-colonialism.html">
+      <div class="dc-label">History — Gender / Postcolonial</div>
+      <div class="dc-title">Gender, Race &amp; Colonialism</div>
+      <div class="dc-desc">Settler colonialism, intersectionality, Caribbean diaspora, feminist historiography.</div>
+      <span class="dc-cta">5 tools →</span>
+    </a>
+    <a class="dir-card" href="edu/music-sound-culture.html">
+      <div class="dc-label">Music / Sound Studies</div>
+      <div class="dc-title">Music, Sound &amp; Culture</div>
+      <div class="dc-desc">Jazz improvisation, jazz history, critical listening, African American music.</div>
+      <span class="dc-cta">5 tools →</span>
+    </a>
+    <a class="dir-card" href="edu/algorithmic-creative-writing.html">
+      <div class="dc-label">Literature / Media Arts</div>
+      <div class="dc-title">Algorithmic &amp; Experimental Writing</div>
+      <div class="dc-desc">Oulipo constraints, aleatoric writing, and procedural text generation.</div>
+      <span class="dc-cta">5 tools →</span>
+    </a>
+  </div>
+
+  <!-- Expressions -->
+  <div class="section-header">
+    <span class="section-title">Expressions</span>
+    <span class="section-count">8 themed clusters</span>
+  </div>
+  <div class="dir-grid">
+    <a class="dir-card" href="expressions/ambient-presence.html">
+      <div class="dc-label">Aether Brass skin</div>
+      <div class="dc-title">Ambient Presence</div>
+      <div class="dc-desc">ASCII webcam streams, push-to-talk walkies, breath circles. Show up without quite being on a call.</div>
+      <span class="dc-cta">10 apps →</span>
+    </a>
+    <a class="dir-card" href="expressions/group-play.html">
+      <div class="dc-label">Scrapbook skin</div>
+      <div class="dc-title">Group Play</div>
+      <div class="dc-desc">Vote-on-anything, charades-by-emoji, mood-ring rooms, synchronized stretch breaks.</div>
+      <span class="dc-cta">10 apps →</span>
+    </a>
+    <a class="dir-card" href="expressions/media-drops.html">
+      <div class="dc-label">Archive skin</div>
+      <div class="dc-title">Constrained Media Drops</div>
+      <div class="dc-desc">Disposable-camera rolls, six-word stories, sound photos, receipt theater.</div>
+      <span class="dc-cta">10 apps →</span>
+    </a>
+    <a class="dir-card" href="expressions/one-bit-status.html">
+      <div class="dc-label">Terminal CRT skin</div>
+      <div class="dc-title">One-Bit Status</div>
+      <div class="dc-desc">Light's-on, pet status, nap declarations, phone-flipped-busy. Lowest bandwidth presence.</div>
+      <span class="dc-cta">10 apps →</span>
+    </a>
+    <a class="dir-card" href="expressions/embodied-weird.html">
+      <div class="dc-label">Rune Interface skin</div>
+      <div class="dc-title">Embodied &amp; Weird</div>
+      <div class="dc-desc">Whisper-only voice, phone tug-of-war, side-eye cam, scream-into-the-void Tuesday.</div>
+      <span class="dc-cta">10 apps →</span>
+    </a>
+    <a class="dir-card" href="expressions/run-of-show.html">
+      <div class="dc-label">Broadsheet skin</div>
+      <div class="dc-title">Day-of Run-of-Show</div>
+      <div class="dc-desc">All-hands cue sheets, IPO roadshow choreography, board rundowns.</div>
+      <span class="dc-cta">10 apps →</span>
+    </a>
+    <a class="dir-card" href="expressions/shadow-inventory.html">
+      <div class="dc-label">Vault skin</div>
+      <div class="dc-title">Shadow Inventory</div>
+      <div class="dc-desc">Swag closets, demo-unit pools, AV gear, loaner laptops. The stuff IT doesn't track.</div>
+      <span class="dc-cta">10 apps →</span>
+    </a>
+    <a class="dir-card" href="expressions/briefing-books.html">
+      <div class="dc-label">Dossier Card skin</div>
+      <div class="dc-title">Self-Service Briefing Books</div>
+      <div class="dc-desc">Exec briefings per principal, board prep per chairman, post-mortems per service.</div>
+      <span class="dc-cta">10 apps →</span>
+    </a>
+  </div>
+
+  <!-- Games & Arcade -->
+  <div class="section-header">
+    <span class="section-title">Games &amp; Arcade</span>
+    <span class="section-count">three collections</span>
+  </div>
+  <div class="dir-grid">
+    <a class="dir-card" href="mind-games/index.html">
+      <div class="dc-label">32 apps · 8 formats</div>
+      <div class="dc-title">Mind Games</div>
+      <div class="dc-desc">Word guess, grouping, crossword, letter hive, word trail, box chain, grid logic, and pattern play. Thirty-two puzzle apps, each live on first run.</div>
+      <span class="dc-cta">Play →</span>
+    </a>
+    <a class="dir-card" href="games/index.html">
+      <div class="dc-label">30 games live</div>
+      <div class="dc-title">Games</div>
+      <div class="dc-desc">Classic platformers, pinball, retro arcade, sports, and modern casual experiments — all playable in the browser.</div>
+      <span class="dc-cta">Hit Start →</span>
+    </a>
+    <a class="dir-card" href="arcade/index.html">
+      <div class="dc-label">arcade collection</div>
+      <div class="dc-title">Arcade</div>
+      <div class="dc-desc">A second set of arcade-style vibes: retro-arcade, platformers, sports, and pinball variants. None of this required a game engine.</div>
+      <span class="dc-cta">Insert Coin →</span>
+    </a>
+  </div>
+
+  {{> newsletter}}
+<footer class="page-footer">
+    <a href="/">← good.vibes.diy</a>
+    <span class="sep">·</span>
+    <a href="https://links.vibes.diy/homepage">Vibes DIY</a>
+    <span class="sep">·</span>
+    <a href="https://links.vibes.diy/discord">Discord</a>
+    <span class="sep">·</span>
+    <a href="https://links.vibes.diy/Substack">Substack</a>
+  </footer>
+
+</div>

@@ -1,0 +1,275 @@
+        <style>
+        .newsletter-section {
+            max-width: 700px;
+            margin: 0 auto;
+            padding: 0 2rem 4rem;
+        }
+        .newsletter-card { text-align: center; }
+        .newsletter-card h2 { font-size: 1.75rem; margin-bottom: 0.75rem; }
+        .newsletter-card > p { color: #555; margin-bottom: 1.75rem; }
+        .newsletter-form {
+            display: flex;
+            max-width: 480px;
+            margin: 0 auto;
+        }
+        .newsletter-input {
+            flex: 1;
+            padding: 0.9rem 1.5rem;
+            border: 2px solid var(--black, var(--near-black, #231f20));
+            border-right: none;
+            border-radius: 50px 0 0 50px;
+            font-family: 'Alte Haas Grotesk', sans-serif;
+            font-size: 1rem;
+            background: var(--ivory, var(--cream, #fffff0));
+            color: var(--black, var(--near-black, #231f20));
+            outline: none;
+        }
+        .newsletter-input:focus { border-color: var(--accent, var(--cyan, #009ace)); }
+        .newsletter-submit {
+            padding: 0.9rem 1.75rem;
+            background: var(--black, var(--near-black, #231f20));
+            color: var(--ivory, var(--cream, #fffff0));
+            border: 2px solid var(--black, var(--near-black, #231f20));
+            border-radius: 0 50px 50px 0;
+            font-family: 'Alte Haas Grotesk', sans-serif;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: background 0.2s, border-color 0.2s;
+        }
+        .newsletter-submit:hover {
+            background: var(--accent, var(--cyan, #009ace));
+            border-color: var(--accent, var(--cyan, #009ace));
+        }
+        .newsletter-response {
+            margin-top: 0.75rem;
+            font-size: 0.875rem;
+            min-height: 1.25em;
+        }
+        .newsletter-response.is-loading { color: var(--os-gray, #7a7a7a); }
+        .newsletter-response.is-success { color: var(--accent, var(--cyan, #009ace)); }
+        .newsletter-response.is-error { color: var(--ruby, var(--red, #da291c)); }
+        @media (max-width: 500px) {
+            .newsletter-form { flex-direction: column; }
+            .newsletter-input { border-right: 2px solid var(--black, var(--near-black, #231f20)); border-bottom: none; border-radius: 20px 20px 0 0; }
+            .newsletter-submit { border-radius: 0 0 20px 20px; }
+        }
+        </style>
+
+        <!-- Newsletter Section -->
+        <section class="newsletter-section">
+            <div class="card newsletter-card">
+                <h2>Stay in the loop</h2>
+                <p>Get notified when we publish new templates and tools.</p>
+                <form class="newsletter-form" action="https://diy.us9.list-manage.com/subscribe/post?u=3336ce5a9fc731f6f88b5bcad&amp;id=1cca0fb28b&amp;f_id=007b69e1f0&amp;SOURCE={{source}}" method="post" id="mc-embedded-subscribe-form" name="mc-embedded-subscribe-form" target="_blank">
+                    <input type="email" name="EMAIL" id="mce-EMAIL" class="newsletter-input" placeholder="you@example.com" required aria-label="Email address">
+                    <button type="submit" name="subscribe" id="mc-embedded-subscribe" class="newsletter-submit">Subscribe</button>
+                    <input type="hidden" name="SOURCE" value="{{source}}">
+                    <div aria-hidden="true" style="position: absolute; left: -5000px;">
+                        <input type="text" name="b_3336ce5a9fc731f6f88b5bcad_1cca0fb28b" tabindex="-1" value="">
+                    </div>
+                </form>
+                <div class="newsletter-response" aria-live="polite"></div>
+            </div>
+        </section>
+
+    <script>
+    (function() {
+        const INIT_FLAG = '__vibesMailchimpNewsletterAjax__';
+        if (window[INIT_FLAG]) return;
+        window[INIT_FLAG] = true;
+
+        const JSONP_NAMESPACE = '__vibesMailchimpCallbacks__';
+        if (!window[JSONP_NAMESPACE] || typeof window[JSONP_NAMESPACE] !== 'object') {
+            window[JSONP_NAMESPACE] = {};
+        }
+
+        function normalizeMailchimpMessage(message) {
+            const text = String(message).replace(/<[^>]*>/g, '').trim();
+            const cleaned = text.replace(/^\s*[01]\s*-\s*/, '').trim();
+            return cleaned || 'Something went wrong. Please try again.';
+        }
+
+        function jsonp(url, timeoutMs) {
+            return new Promise((resolve, reject) => {
+                if (!document.body) {
+                    reject(new Error('Document body not available for JSONP'));
+                    return;
+                }
+
+                if (!window[JSONP_NAMESPACE] || typeof window[JSONP_NAMESPACE] !== 'object') {
+                    window[JSONP_NAMESPACE] = {};
+                }
+
+                const callbackKey = `cb_${Math.random().toString(36).slice(2)}`;
+                const callbackRef = `${JSONP_NAMESPACE}.${callbackKey}`;
+                url.searchParams.set('c', callbackRef);
+
+                const script = document.createElement('script');
+                script.src = url.toString();
+                script.async = true;
+
+                let done = false;
+
+                const timeoutId = window.setTimeout(() => {
+                    finalize(new Error('Request timed out'));
+                }, timeoutMs);
+
+                function cleanup() {
+                    window.clearTimeout(timeoutId);
+
+                    const ns = window[JSONP_NAMESPACE];
+                    if (ns && typeof ns === 'object') {
+                        delete ns[callbackKey];
+                    }
+
+                    script.onerror = null;
+                    script.onload = null;
+
+                    if (script.parentNode) {
+                        script.parentNode.removeChild(script);
+                    }
+                }
+
+                function finalize(error, data) {
+                    if (done) return;
+                    done = true;
+
+                    cleanup();
+
+                    if (error) {
+                        reject(error);
+                        return;
+                    }
+
+                    resolve(data);
+                }
+
+                window[JSONP_NAMESPACE][callbackKey] = (data) => {
+                    finalize(null, data);
+                };
+
+                script.onerror = () => {
+                    finalize(new Error('Network error'));
+                };
+
+                document.body.appendChild(script);
+            });
+        }
+
+        function setResponse(el, state, message) {
+            const safeMessage = typeof message === 'string' ? message : String(message ?? '');
+            el.classList.remove('is-loading', 'is-success', 'is-error');
+            el.textContent = safeMessage;
+            if (state) el.classList.add(state);
+        }
+
+        const form = document.getElementById('mc-embedded-subscribe-form');
+        if (!(form instanceof HTMLFormElement)) return;
+
+        const responseEl = form.parentElement?.querySelector('.newsletter-response');
+        const emailInput = form.querySelector('input[name="EMAIL"]');
+        const submitButton = form.querySelector('button[type="submit"]');
+        if (!responseEl || !emailInput || !submitButton) return;
+
+        const actionUrl = new URL(form.action);
+        const sourceParam = actionUrl.searchParams.get('SOURCE');
+        const sourceInputs = Array.from(form.querySelectorAll('input[name="SOURCE"]'));
+        const hiddenSourceValues = sourceInputs.map((input) => input.value).filter((value) => value);
+
+        const initialSourceValue = sourceParam !== null ? sourceParam : (hiddenSourceValues[0] || '');
+
+        if (sourceParam && hiddenSourceValues.length && hiddenSourceValues.some((value) => value !== sourceParam)) {
+            console.warn('Newsletter form: SOURCE mismatch between action URL and hidden inputs.', {
+                actionSource: sourceParam,
+                hiddenSources: hiddenSourceValues,
+            });
+        }
+
+        if (!initialSourceValue) {
+            console.warn('Newsletter form: missing SOURCE.');
+        } else {
+            sourceInputs.forEach((input) => {
+                input.value = initialSourceValue;
+            });
+        }
+
+        let isSubmitting = false;
+
+        form.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            if (isSubmitting) return;
+
+            try {
+                if (typeof form.checkValidity === 'function' && !form.checkValidity()) {
+                    if (typeof form.reportValidity === 'function') {
+                        form.reportValidity();
+                    }
+                    return;
+                }
+            } catch (err) {
+                console.warn('Newsletter form: validation failed unexpectedly', err);
+            }
+
+            isSubmitting = true;
+            submitButton.disabled = true;
+            setResponse(responseEl, 'is-loading', 'Subscribing...');
+
+            try {
+                const postJsonUrl = new URL(form.action);
+                const subscribePostPattern = /\/subscribe\/post\/?$/;
+                if (!subscribePostPattern.test(postJsonUrl.pathname)) {
+                    console.warn('Newsletter form: unexpected Mailchimp action URL; cannot derive JSONP endpoint.', {
+                        pathname: postJsonUrl.pathname,
+                    });
+                    setResponse(responseEl, 'is-error', 'Subscription is temporarily unavailable. Please try again later.');
+                    return;
+                }
+
+                postJsonUrl.pathname = postJsonUrl.pathname.replace(subscribePostPattern, '/subscribe/post-json');
+
+                const formData = new FormData(form);
+                for (const [key, value] of formData.entries()) {
+                    if (key === 'EMAIL' || key === 'SOURCE' || key.startsWith('b_')) {
+                        postJsonUrl.searchParams.set(key, String(value));
+                    }
+                }
+
+                const data = await jsonp(postJsonUrl, 10000);
+
+                const isObject = data && typeof data === 'object';
+
+                if (isObject && data.result === 'success') {
+                    setResponse(responseEl, 'is-success', 'Subscribed. Check your inbox to confirm.');
+                    form.reset();
+                    if (initialSourceValue) {
+                        sourceInputs.forEach((input) => {
+                            input.value = initialSourceValue;
+                        });
+                    }
+                    return;
+                }
+
+                if (!isObject) {
+                    console.warn('Newsletter JSONP: unexpected response type', data);
+                }
+
+                const message =
+                    isObject &&
+                    typeof data.msg === 'string' &&
+                    data.msg.trim()
+                        ? normalizeMailchimpMessage(data.msg)
+                        : 'Something went wrong. Please try again.';
+
+                setResponse(responseEl, 'is-error', message);
+            } catch (err) {
+                console.error('Newsletter JSONP subscription failed', err);
+                setResponse(responseEl, 'is-error', 'Could not connect. Please try again.');
+            } finally {
+                isSubmitting = false;
+                submitButton.disabled = false;
+            }
+        });
+    })();
+    </script>

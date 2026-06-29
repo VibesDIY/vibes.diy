@@ -1,0 +1,116 @@
+{
+  "source": "University of Texas at Austin",
+  "location": "Austin, TX",
+  "region": "South/Central",
+  "fetched": "2026-05-18",
+  "items": [
+    {
+      "title": "ECO 348K Causal Inference",
+      "department": "Data Science / Stats",
+      "year": 2023,
+      "url": "https://utdirect.utexas.edu/apps/student/coursedocs/courses/nlogon/download/12638282/",
+      "fetch_method": "direct",
+      "topics": [
+        "potential outcomes causal model",
+        "randomized controlled trials",
+        "regression discontinuity design",
+        "regression kink design",
+        "instrumental variables",
+        "difference-in-differences",
+        "directed acyclic graphs",
+        "bunching analysis"
+      ],
+      "source_text": "The course introduces how economists infer causality from data, covering the potential outcomes causal model, randomized controlled trials, regression discontinuity design, regression kink design, instrumental variables, and difference-in-differences. Additional topics include directed acyclic graphs, selection bias, bunching analysis, and machine learning applications to causal inference."
+    },
+    {
+      "title": "CRP 386 Urban GIS",
+      "department": "Urban Planning",
+      "year": 2023,
+      "url": "https://soa.utexas.edu/programs/community-and-regional-planning/courses",
+      "fetch_method": "direct",
+      "topics": [
+        "spatial analysis",
+        "spatial statistics",
+        "3D urban modeling",
+        "GPS integration",
+        "cartographic representation",
+        "urban data visualization",
+        "site analysis",
+        "geodatabase management"
+      ],
+      "source_text": "Applied GIS course for planners covering spatial analysis, spatial statistics, 3D modeling of urban environments, GPS data integration, and cartographic representation for planning communication. Students develop skills in urban data visualization, site analysis, and geodatabase management using industry GIS platforms."
+    },
+    {
+      "title": "ECO 370M Behavioral Economics",
+      "department": "Behavioral Economics",
+      "year": 2024,
+      "url": "https://liberalarts.utexas.edu/economics/courses-in-economics/",
+      "fetch_method": "direct",
+      "topics": [
+        "heuristics and biases",
+        "prospect theory",
+        "choice under uncertainty",
+        "intertemporal choice",
+        "hyperbolic discounting",
+        "behavioral finance",
+        "nudge theory",
+        "social norms and behavior"
+      ],
+      "source_text": "Covers heuristics and biases, prospect theory, and departures from expected utility in choice under uncertainty. Topics include intertemporal choice with hyperbolic discounting, behavioral finance applications, nudge theory and libertarian paternalism, and the role of social norms in shaping economic behavior."
+    },
+    {
+      "title": "PBH 354 Introduction to Epidemiology",
+      "department": "Public Health",
+      "year": 2024,
+      "url": "https://catalog.utexas.edu/undergraduate/natural-sciences/degrees-and-programs/bs-public-health/",
+      "fetch_method": "direct",
+      "topics": [
+        "descriptive epidemiology",
+        "disease surveillance",
+        "association and causation",
+        "cohort and case-control study design",
+        "measures of association",
+        "confounding and bias",
+        "evidence-based public health",
+        "outbreak investigation"
+      ],
+      "source_text": "Introduction to epidemiologic methods covering descriptive epidemiology, disease surveillance systems, measures of association and causation, cohort and case-control study design, confounding and bias, and evidence-based decision analysis. Includes outbreak investigation methods and the application of epidemiologic evidence to public health policy."
+    },
+    {
+      "title": "GRG 333K Climate Change",
+      "department": "Environmental Studies",
+      "year": 2024,
+      "url": "https://catalog.utexas.edu/general-information/coursesatoz/grg/",
+      "fetch_method": "direct",
+      "topics": [
+        "climate system dynamics",
+        "paleoclimatology",
+        "greenhouse gas forcing",
+        "climate projections",
+        "physical and ecological impacts",
+        "climate vulnerability assessment",
+        "mitigation strategies",
+        "climate policy frameworks"
+      ],
+      "source_text": "Investigates climatic system changes across time scales and their effects on physical and ecological systems, examining past, present, and future climate conditions. Covers paleoclimatology, greenhouse gas forcing, climate projections, physical and ecological impacts of warming, climate vulnerability assessment, mitigation strategies, and climate policy frameworks."
+    },
+    {
+      "title": "GRG 470C Advanced Geographic Information Systems",
+      "department": "Urban Planning",
+      "year": 2024,
+      "url": "https://catalog.utexas.edu/general-information/coursesatoz/grg/",
+      "fetch_method": "direct",
+      "topics": [
+        "spatial analysis methods",
+        "vector and raster GIS modeling",
+        "GIS system design",
+        "network analysis",
+        "spatial interpolation",
+        "geostatistics",
+        "geospatial database design",
+        "advanced cartography"
+      ],
+      "source_text": "Study of methods of spatial analysis, design and implementation of a geographic information system, vector and raster modeling, and advanced applications. Covers spatial analysis methods, network analysis, spatial interpolation, geostatistics, geospatial database design, and advanced cartographic visualization for research and professional applications."
+    }
+  ]
+}

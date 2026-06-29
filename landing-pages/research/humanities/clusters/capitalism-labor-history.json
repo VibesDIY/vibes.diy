@@ -1,0 +1,51 @@
+{
+  "slug": "capitalism-labor-history",
+  "page_url": "/edu/capitalism-labor-history.html",
+  "label": "History of Capitalism & Labor",
+  "department": "History — Economic/Social",
+  "vocabulary": [
+    "history of capitalism",
+    "labor history",
+    "class formation",
+    "political economy",
+    "industrialization",
+    "financialization",
+    "primitive accumulation",
+    "market society",
+    "racial capitalism",
+    "Atlantic slavery",
+    "plantation economy",
+    "encomienda system",
+    "Gilded Age industrialization",
+    "progressive reform"
+  ],
+  "sources": [
+    {
+      "institution": "UW–Madison",
+      "title": "History 329 – History of American Capitalism",
+      "url": "https://history.wisc.edu/syllabi-library/"
+    },
+    {
+      "institution": "UW–Madison",
+      "title": "History 393 – Slavery, Civil War, and Reconstruction",
+      "url": "https://history.wisc.edu/syllabi-library/"
+    },
+    {
+      "institution": "MIT OCW",
+      "title": "21H.102 American History Since 1865",
+      "url": "https://ocw.mit.edu/courses/history/"
+    },
+    {
+      "institution": "MIT OCW SHASS",
+      "title": "Foundations of Western Culture: The Making of the Modern World",
+      "url": "https://ocw.mit.edu/courses/history/"
+    }
+  ],
+  "app_prompts": [
+    "History of capitalism timeline: user picks an era — mercantile capitalism, industrial capitalism, financialization — and traces how capital, labor, and the state related to each other.",
+    "Labor history case study: user picks a labor conflict (Homestead Strike, Triangle Shirtwaist, Flint Sit-Down) and traces what workers wanted, what employers did, what the state did, and what changed.",
+    "Racial capitalism explainer: user explores how racial hierarchy was integral to capital accumulation — slavery, convict leasing, racial wage differentials, redlining — not a distortion of capitalism but a feature.",
+    "Primitive accumulation case study: user picks an enclosure or dispossession — English commons, colonial land seizure, Native dispossession — and traces how pre-capitalist resources were converted into capital.",
+    "Financialization quiz: user reads about a financial instrument or crisis (mortgage-backed securities, private equity, credit default swaps) and traces how it connects to the real economy and who bore the risk."
+  ]
+}

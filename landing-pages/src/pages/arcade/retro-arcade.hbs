@@ -1,0 +1,238 @@
+{{!--
+{
+  "layout": "raw",
+  "title": "Retro Arcade — Six Cabinets | Arcade · Vibes DIY",
+  "description": "Six retro arcade cabinets — snake, breakout, pong, asteroids, frogger, invaders — single-file React vibes on a CRT.",
+  "ogUrl": "https://good.vibes.diy/arcade/retro-arcade"
+,
+  "source": "arcade-retro-arcade"
+}
+--}}
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Retro Arcade — Games Landing</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+  :root {
+    --crt: #0c1a0c;
+    --phos: #39ff14;
+    --amber: #ffae00;
+    --red: #ff2e4c;
+    --blue: #4ec5ff;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: "Press Start 2P", monospace;
+    background: #050505;
+    color: var(--phos);
+    min-height: 100vh;
+    padding: 40px 24px 80px;
+    position: relative;
+  }
+  body::before {
+    content:"";
+    position: fixed; inset: 0;
+    background: repeating-linear-gradient(
+      to bottom,
+      rgba(0,0,0,0) 0px,
+      rgba(0,0,0,0) 2px,
+      rgba(0,255,80,0.06) 3px,
+      rgba(0,0,0,0) 4px
+    );
+    pointer-events: none;
+    z-index: 100;
+  }
+  body::after {
+    content:"";
+    position: fixed; inset: 0;
+    background: radial-gradient(ellipse at center, transparent 50%, rgba(0,0,0,0.7) 100%);
+    pointer-events: none;
+    z-index: 99;
+  }
+  header { text-align: center; margin-bottom: 60px; }
+  .marquee {
+    font-size: 10px;
+    color: var(--amber);
+    letter-spacing: 0.3em;
+    margin-bottom: 24px;
+    animation: blink 1.6s steps(2, start) infinite;
+  }
+  @keyframes blink { 50% { opacity: 0.35; } }
+  h1 {
+    font-size: clamp(28px, 6vw, 56px);
+    margin: 0;
+    color: var(--phos);
+    text-shadow:
+      2px 2px 0 var(--red),
+      -2px -2px 0 var(--blue),
+      0 0 22px rgba(57, 255, 20, 0.6);
+    letter-spacing: 0.1em;
+  }
+  .insert {
+    font-size: 12px;
+    color: var(--amber);
+    margin-top: 18px;
+    letter-spacing: 0.18em;
+  }
+  nav a {
+    display: inline-block;
+    margin-top: 18px;
+    font-family: "Press Start 2P", monospace;
+    font-size: 9px;
+    color: var(--blue);
+    text-decoration: none;
+    border: 2px solid var(--blue);
+    padding: 8px 14px;
+    letter-spacing: 0.18em;
+  }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(310px, 1fr));
+    gap: 28px;
+    max-width: 1240px;
+    margin: 0 auto;
+  }
+  .cab {
+    position: relative;
+    background:
+      linear-gradient(180deg, #161a16 0%, #050805 100%);
+    border: 4px solid #2a2a2a;
+    border-radius: 12px;
+    padding: 18px;
+    box-shadow:
+      inset 0 0 0 2px #000,
+      inset 0 0 16px rgba(57,255,20,0.18),
+      0 12px 0 #000,
+      0 14px 30px rgba(0,0,0,0.7);
+  }
+  .bezel {
+    background: var(--crt);
+    border: 2px solid #1d3a1d;
+    border-radius: 8px;
+    padding: 10px;
+    margin-bottom: 14px;
+    position: relative;
+    overflow: hidden;
+  }
+  .shot {
+    display: block;
+    width: 100%;
+    aspect-ratio: 16/10;
+    object-fit: cover;
+    background: #032a08;
+    image-rendering: pixelated;
+    filter: contrast(1.05) saturate(1.2);
+  }
+  .label {
+    font-size: 9px;
+    color: var(--amber);
+    letter-spacing: 0.16em;
+    margin: 6px 0 4px;
+  }
+  h2 {
+    font-size: 13px;
+    color: var(--phos);
+    margin: 0 0 12px;
+    letter-spacing: 0.08em;
+    text-shadow: 0 0 6px rgba(57,255,20,0.5);
+  }
+  .prompt {
+    font-family: "Courier New", monospace;
+    font-size: 12px;
+    line-height: 1.55;
+    color: #d4ffd4;
+    min-height: 90px;
+    margin-bottom: 14px;
+  }
+  .btn {
+    display: inline-block;
+    font-family: "Press Start 2P", monospace;
+    font-size: 10px;
+    color: #000;
+    background: var(--phos);
+    padding: 10px 14px;
+    text-decoration: none;
+    border: 2px solid #002800;
+    box-shadow: 3px 3px 0 #002800;
+    letter-spacing: 0.18em;
+  }
+  .btn:hover { transform: translate(1px, 1px); box-shadow: 2px 2px 0 #002800; }
+  .joystick {
+    position: absolute; right: 14px; bottom: 14px;
+    width: 26px; height: 26px;
+    background: radial-gradient(circle at 30% 30%, var(--red), #6a0010);
+    border-radius: 50%;
+    box-shadow: 0 0 10px var(--red);
+  }
+</style>
+</head>
+<body>
+  <header>
+    <div class="marquee">▣ INSERT COIN ▣ 1 CREDIT ▣ HI-SCORE 999999 ▣</div>
+    <h1>RETRO ARCADE</h1>
+    <div class="insert">SIX CABINETS · PRESS START</div>
+    <nav><a href="index.html">← ALL THEMES</a></nav>
+  </header>
+
+  <main class="grid">
+    <article class="cab">
+      <div class="bezel"><a href="https://vibes.diy/vibe/jchris/crt-snake"><img class="shot" src="https://crt-snake--jchris.prod-v2.vibesdiy.net/screenshot.jpg" alt=""></a></div>
+      <div class="label">CAB 01</div>
+      <h2>SNAKE PRISM</h2>
+      <p class="prompt">Classic snake on a 20×20 grid. Eat fruit, grow, wrap edges. CRT scanline filter, chiptune beep per move, pixel-font score.</p>
+      <a class="btn" href="https://vibes.diy/vibe/jchris/crt-snake">▶ PLAY</a>
+      <span class="joystick"></span>
+    </article>
+
+    <article class="cab">
+      <div class="bezel"><a href="https://vibes.diy/vibe/jchris/block-smasher"><img class="shot" src="https://block-smasher--jchris.prod-v2.vibesdiy.net/screenshot.jpg" alt=""></a></div>
+      <div class="label">CAB 02</div>
+      <h2>BREAKOUT BLAST</h2>
+      <p class="prompt">Paddle and ball, five rows of bricks. Powerups drop: wider paddle, multi-ball, fireball. CRT bezel frame, pixel-perfect look.</p>
+      <a class="btn" href="https://vibes.diy/vibe/jchris/block-smasher">▶ PLAY</a>
+      <span class="joystick"></span>
+    </article>
+
+    <article class="cab">
+      <div class="bezel"><a href="https://vibes.diy/vibe/jchris/mono-pong"><img class="shot" src="https://mono-pong--jchris.prod-v2.vibesdiy.net/screenshot.jpg" alt=""></a></div>
+      <div class="label">CAB 03</div>
+      <h2>PONG RUMBLE</h2>
+      <p class="prompt">Two-player pong, mouse controls left paddle, AI on right. First to eleven. Ball speeds up each volley. Monochrome pixel look.</p>
+      <a class="btn" href="https://vibes.diy/vibe/jchris/mono-pong">▶ PLAY</a>
+      <span class="joystick"></span>
+    </article>
+
+    <article class="cab">
+      <div class="bezel"><a href="https://vibes.diy/vibe/jchris/space-rocks"><img class="shot" src="https://space-rocks--jchris.prod-v2.vibesdiy.net/screenshot.jpg" alt=""></a></div>
+      <div class="label">CAB 04</div>
+      <h2>ASTEROID HOP</h2>
+      <p class="prompt">Top-down asteroids: rotate, thrust, shoot. Rocks split into smaller ones. Wrap-around screen, local hi-score, vector aesthetic.</p>
+      <a class="btn" href="https://vibes.diy/vibe/jchris/space-rocks">▶ PLAY</a>
+      <span class="joystick"></span>
+    </article>
+
+    <article class="cab">
+      <div class="bezel"><a href="https://vibes.diy/vibe/jchris/lily-leap"><img class="shot" src="https://lily-leap--jchris.prod-v2.vibesdiy.net/screenshot.jpg" alt=""></a></div>
+      <div class="label">CAB 05</div>
+      <h2>FROG CROSS</h2>
+      <p class="prompt">Cross four lanes of traffic and a river of logs to reach five lily pads. Five lives, score per lily, increasing speed.</p>
+      <a class="btn" href="https://vibes.diy/vibe/jchris/lily-leap">▶ PLAY</a>
+      <span class="joystick"></span>
+    </article>
+
+    <article class="cab">
+      <div class="bezel"><a href="https://vibes.diy/vibe/jchris/alien-barrage"><img class="shot" src="https://alien-barrage--jchris.prod-v2.vibesdiy.net/screenshot.jpg" alt=""></a></div>
+      <div class="label">CAB 06</div>
+      <h2>SPACE DEFENDER</h2>
+      <p class="prompt">Fixed-shooter: 5×10 grid of descending aliens, speed up as fewer remain. Destructible bunkers absorb fire. Pixel-art retro.</p>
+      <a class="btn" href="https://vibes.diy/vibe/jchris/alien-barrage">▶ PLAY</a>
+      <span class="joystick"></span>
+    </article>
+  </main>
+</body>
+</html>
+{{> newsletter}}

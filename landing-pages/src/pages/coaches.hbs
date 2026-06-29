@@ -1,0 +1,651 @@
+{{!--
+{
+  "layout": "standard",
+  "title": "Vibes DIY for Coaches | Build a Team Hub That Runs the Season",
+  "description": "Build simple team tools for coaches—scoreboards, playbooks, schedules, rosters, and team updates. No enterprise sports software.",
+  "ogUrl": "https://good.vibes.diy/coaches",
+  "source": "coaches",
+  "ogImage": "https://good.vibes.diy/images/screenshots/coaches.jpg"
+}
+--}}
+
+<style>
+        @import url('https://fonts.cdnfonts.com/css/alte-haas-grotesk');
+
+        :root {
+            --registration: #231F20;
+            --os-gray: #7A7A7A;
+            --grid-gray: #CCCDC8;
+            --goldenrod: #FEDD00;
+            --ruby: #DA291C;
+            --bluey: #009ACE;
+            --ivory: #FFFFF0;
+            --black: #231F20;
+            --white: #FFFFFF;
+            --grid-line: rgba(255, 255, 255, 0.5);
+            --stadium-blue: #1E5AA8;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Alte Haas Grotesk', sans-serif;
+            background-color: var(--grid-gray);
+            color: var(--black);
+            line-height: 1.6;
+            background-image:
+                linear-gradient(var(--grid-line) 1px, transparent 1px),
+                linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
+            background-size: 40px 40px;
+            min-height: 100vh;
+        }
+
+        /* Header */
+        header {
+            padding: 1.5rem 2rem;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: linear-gradient(to bottom, var(--grid-gray) 60%, transparent);
+        }
+
+        .logo-link {
+            display: block;
+            text-decoration: none;
+        }
+
+        .logo-img {
+            height: 56px;
+            width: auto;
+            display: block;
+        }
+
+        /* Hero Section */
+        .hero {
+            max-width: 900px;
+            margin: 2rem auto 4rem;
+            padding: 0 2rem;
+            text-align: center;
+        }
+
+        .hero-badge {
+            display: inline-block;
+            background: var(--black);
+            color: var(--ivory);
+            padding: 0.5rem 1.25rem;
+            border-radius: 50px;
+            font-size: 0.85rem;
+            font-weight: 500;
+            margin-bottom: 1.5rem;
+            letter-spacing: 0.5px;
+        }
+
+        .hero h1 {
+            font-size: clamp(2rem, 5vw, 3.25rem);
+            font-weight: 700;
+            line-height: 1.2;
+            margin-bottom: 1.5rem;
+            letter-spacing: -0.5px;
+        }
+
+        .hero h1 span {
+            color: var(--stadium-blue);
+        }
+
+        .hero p {
+            font-size: 1.25rem;
+            color: #555;
+            max-width: 650px;
+            margin: 0 auto 2rem;
+        }
+
+        .cta-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 1rem 2rem;
+            border-radius: 50px;
+            font-family: 'Alte Haas Grotesk', sans-serif;
+            font-size: 1rem;
+            font-weight: 600;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            border: none;
+        }
+
+        .btn-primary {
+            background: var(--black);
+            color: var(--ivory);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+        }
+
+        .btn-secondary {
+            background: var(--ivory);
+            color: var(--black);
+            border: 2px solid var(--black);
+        }
+
+        .btn-secondary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+        }
+
+        /* Card Styles */
+        .card {
+            background: var(--ivory);
+            border-radius: 20px;
+            border: 3px solid var(--black);
+            padding: 2.5rem;
+            box-shadow: 6px 6px 0 var(--black);
+        }
+
+        /* Value Props Section */
+        .value-props {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 4rem 2rem;
+        }
+
+        .value-props h2 {
+            text-align: center;
+            font-size: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        .props-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+        }
+
+        .prop-card {
+            position: relative;
+        }
+
+        .prop-card.stadium { border-color: var(--stadium-blue); box-shadow: 6px 6px 0 var(--stadium-blue); }
+
+        .prop-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .stadium .prop-icon { background: var(--stadium-blue); color: var(--ivory); }
+
+        .prop-card h3 {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .prop-card p {
+            color: #555;
+            font-size: 1.05rem;
+        }
+
+        /* How It Works */
+        .how-it-works {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 4rem 2rem;
+        }
+
+        .how-it-works h2 {
+            text-align: center;
+            font-size: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        .steps {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .step {
+            display: flex;
+            align-items: flex-start;
+            gap: 1.5rem;
+        }
+
+        .step-number {
+            width: 50px;
+            height: 50px;
+            min-width: 50px;
+            background: var(--black);
+            color: var(--ivory);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 1.25rem;
+        }
+
+        .step-content h3 {
+            font-size: 1.25rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .step-content p {
+            color: #555;
+        }
+
+        /* Use Cases */
+        .use-cases {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 4rem 2rem;
+        }
+
+        .use-cases h2 {
+            text-align: center;
+            font-size: 2rem;
+            margin-bottom: 1rem;
+        }
+
+        .use-cases > p {
+            text-align: center;
+            color: #555;
+            max-width: 600px;
+            margin: 0 auto 3rem;
+        }
+
+        .cases-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .case-card {
+            background: var(--ivory);
+            border-radius: 16px;
+            border: 2px solid var(--black);
+            padding: 1.5rem;
+            transition: transform 0.3s ease;
+        }
+
+        .case-card:hover {
+            transform: translateY(-4px);
+        }
+
+        .case-tag {
+            display: inline-block;
+            padding: 0.3rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            border: 2px solid;
+        }
+
+        .case-tag.tracker, .case-tag.tool, .case-tag.app { background: rgba(30, 90, 168, 0.15); border-color: var(--stadium-blue); color: #174682; }
+
+        .case-card h3 {
+            font-size: 1.1rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .case-card p {
+            font-size: 0.95rem;
+            color: #555;
+        }
+
+        /* Quote Section */
+        .quote-section {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 4rem 2rem;
+        }
+
+        .quote-card {
+            text-align: center;
+            position: relative;
+        }
+
+        .quote-card::before {
+            content: '"';
+            font-size: 6rem;
+            color: var(--black);
+            opacity: 0.1;
+            position: absolute;
+            top: -20px;
+            left: 20px;
+            font-family: Georgia, serif;
+        }
+
+        .quote-card blockquote {
+            font-size: 1.75rem;
+            font-weight: 500;
+            line-height: 1.4;
+            margin-bottom: 1.5rem;
+        }
+
+        .quote-card cite {
+            font-style: normal;
+            color: #555;
+        }
+
+        /* CTA Section */
+        .cta-section {
+            max-width: 700px;
+            margin: 0 auto;
+            padding: 4rem 2rem 6rem;
+        }
+
+        .cta-card {
+            text-align: center;
+            background: var(--black);
+            color: var(--ivory);
+            border-color: var(--black);
+            box-shadow: none;
+        }
+
+        .cta-card h2 {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+        }
+
+        .cta-card p {
+            opacity: 0.9;
+            margin-bottom: 2rem;
+            font-size: 1.1rem;
+        }
+
+        .cta-card .btn-primary {
+            background: var(--ivory);
+            color: var(--black);
+        }
+
+        .cta-card .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+        }
+
+        /* Footer */
+        footer {
+            background: var(--ivory);
+            border-top: 2px solid var(--black);
+            padding: 2rem;
+            text-align: center;
+        }
+
+        .footer-links {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            flex-wrap: wrap;
+            margin-bottom: 1rem;
+        }
+
+        .footer-links a {
+            color: var(--black);
+            text-decoration: none;
+            font-size: 0.9rem;
+        }
+
+        .footer-links a:hover {
+            text-decoration: underline;
+        }
+
+        .footer-social {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .footer-social a {
+            width: 40px;
+            height: 40px;
+            border: 2px solid var(--black);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--black);
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+
+        .footer-social a:hover {
+            background: var(--black);
+            color: var(--ivory);
+        }
+
+        .footer-copyright {
+            font-size: 0.85rem;
+            color: #666;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .hero {
+                margin: 1rem auto 3rem;
+            }
+
+            .card {
+                padding: 1.75rem;
+            }
+
+            .step {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .step-number {
+                margin: 0 auto;
+            }
+        }
+    
+        /* Newsletter */
+        .newsletter-section {
+            max-width: 700px;
+            margin: 0 auto;
+            padding: 0 2rem 4rem;
+        }
+
+        .newsletter-card { text-align: center; }
+        .newsletter-card h2 { font-size: 1.75rem; margin-bottom: 0.75rem; }
+        .newsletter-card > p { color: #555; margin-bottom: 1.75rem; }
+
+        .newsletter-form {
+            display: flex;
+            max-width: 480px;
+            margin: 0 auto;
+        }
+
+        .newsletter-input {
+            flex: 1;
+            padding: 0.9rem 1.5rem;
+            border: 2px solid var(--black);
+            border-right: none;
+            border-radius: 50px 0 0 50px;
+            font-family: 'Alte Haas Grotesk', sans-serif;
+            font-size: 1rem;
+            background: var(--ivory);
+            color: var(--black);
+            outline: none;
+        }
+
+        .newsletter-input:focus { border-color: var(--bluey); }
+
+        .newsletter-submit {
+            padding: 0.9rem 1.75rem;
+            background: var(--black);
+            color: var(--ivory);
+            border: 2px solid var(--black);
+            border-radius: 0 50px 50px 0;
+            font-family: 'Alte Haas Grotesk', sans-serif;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: background 0.2s, border-color 0.2s;
+        }
+
+        .newsletter-submit:hover { background: var(--bluey); border-color: var(--bluey); }
+
+        .newsletter-response {
+            margin-top: 0.75rem;
+            font-size: 0.875rem;
+            min-height: 1.25em;
+        }
+
+        .newsletter-response.is-loading { color: var(--os-gray); }
+        .newsletter-response.is-success { color: var(--bluey); }
+        .newsletter-response.is-error { color: var(--ruby); }
+
+        @media (max-width: 500px) {
+            .newsletter-form { flex-direction: column; }
+            .newsletter-input { border-right: 2px solid var(--black); border-bottom: none; border-radius: 20px 20px 0 0; }
+            .newsletter-submit { border-radius: 0 0 20px 20px; }
+        }
+    </style>
+
+<main>
+        <!-- Hero Section -->
+        <section class="hero">
+            <span class="hero-badge">For Sports Coaches</span>
+            <h1>Spend more time coaching<br><span>and less time on admin</span></h1>
+            <p>Coaches at every level juggle practices, game days, communication, and paperwork. Build simple tools that just work — schedules, rosters, and updates that fit how you actually run your team.</p>
+            <div class="cta-buttons">
+                <a href="https://links.vibes.diy/homepage" class="btn btn-primary">Make Your Team Hub</a>
+                <a href="#how-it-works" class="btn btn-secondary">See How It Works</a>
+            </div>
+        </section>
+
+        <!-- Value Props -->
+        <section class="value-props">
+            <h2>Why coaches are building with Vibes</h2>
+            <div class="props-grid">
+                <div class="card prop-card stadium">
+                    <div class="prop-icon">
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
+                    </div>
+                    <h3>One hub for the whole season</h3>
+                    <p>Keep schedules, rosters, stats, and game-day scoring in one place. Stop digging through group chats and spreadsheet links.</p>
+                </div>
+                <div class="card prop-card stadium">
+                    <div class="prop-icon">
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+                    </div>
+                    <h3>Built for busy coaches</h3>
+                    <p>Describe what you need and get a working team app fast. Update it as your schedule changes&mdash;new players, new drills, new tournaments and events.</p>
+                </div>
+                <div class="card prop-card stadium">
+                    <div class="prop-icon">
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+                    </div>
+                    <h3>Clear info for the whole team</h3>
+                    <p>Share announcements, practice plans, and game details with a link. Keep everyone aligned without a dozen different threads.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- How It Works -->
+        <section class="how-it-works" id="how-it-works">
+            <h2>How it works</h2>
+            <div class="card">
+                <div class="steps">
+                    <div class="step">
+                        <div class="step-number">1</div>
+                        <div class="step-content">
+                            <h3>Describe what you want to build</h3>
+                            <p>Type something like "a seven-on-seven flag football hub where sacks count as negative yards, standings reset at week four, and each team can see their own stats but not the other teams'."</p>
+                        </div>
+                    </div>
+                    <div class="step">
+                        <div class="step-number">2</div>
+                        <div class="step-content">
+                            <h3>Make it match your league</h3>
+                            <p>Customize positions, divisions or levels, game formats, and the stats you track. Add fields as you go&mdash;no setup calls, no admin portal. Your league has a tiebreaker rule nobody else uses? Describe it. The app handles it.</p>
+                        </div>
+                    </div>
+                    <div class="step">
+                        <div class="step-number">3</div>
+                        <div class="step-content">
+                            <h3>Run the season from your phone</h3>
+                            <p>Update the schedule, record a score, message the team, or pull up the playbook on the sideline. No app store, no download&mdash;it just works.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Use Cases -->
+        <section class="use-cases">
+            <h2>What coaches are building</h2>
+            <p>From first practice to tournament weekend, build the tools that keep your team organized:</p>
+            <div class="cases-grid">
+                <div class="case-card">
+                    <span class="case-tag app">App</span>
+                    <h3>Scoreboards</h3>
+                    <p>Track live game scoring and show it on a phone or tablet. Keep a clean record of final scores for the season.</p>
+                </div>
+                <div class="case-card">
+                    <span class="case-tag tool">Tool</span>
+                    <h3>Playbooks</h3>
+                    <p>Diagram plays, add coaching notes, and share the latest version with assistants and players.</p>
+                </div>
+                <div class="case-card">
+                    <span class="case-tag tracker">Tracker</span>
+                    <h3>Schedules</h3>
+                    <p>Practice times, game days, locations, and tournament brackets. Keep everyone on the same calendar.</p>
+                </div>
+                <div class="case-card">
+                    <span class="case-tag tracker">Tracker</span>
+                    <h3>Score records</h3>
+                    <p>Season stats, game history, and player performance. Track what your team cares about without building a spreadsheet from scratch.</p>
+                </div>
+                <div class="case-card">
+                    <span class="case-tag tool">Tool</span>
+                    <h3>Roster management</h3>
+                    <p>Contact info, positions, availability, and emergency notes. Keep the roster current without searching through old emails.</p>
+                </div>
+                <div class="case-card">
+                    <span class="case-tag app">App</span>
+                    <h3>Communication</h3>
+                    <p>Team announcements and updates in one spot. Post changes once instead of repeating yourself everywhere.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Quote Section -->
+        <section class="quote-section">
+            <div class="card quote-card">
+                <blockquote>Coaching is about the team, not the admin.</blockquote>
+                <cite>The best coaches spend their time coaching&mdash;not chasing paperwork, spreadsheets, and logins.</cite>
+            </div>
+        </section>
+
+        <!-- CTA Section -->
+        <section class="cta-section">
+            <div class="card cta-card">
+                <h2>Build your team hub before the first whistle</h2>
+                <p>Scoreboards, playbooks, schedules, rosters, and updates. Describe your actual league&mdash;the weird tiebreakers, the mid-season format change, the stats only your team tracks&mdash;and that's exactly what gets built.</p>
+                <a href="https://links.vibes.diy/homepage" class="btn btn-primary">Make Your Team Hub</a>
+            </div>
+        </section>
+{{> newsletter}}
+    </main>

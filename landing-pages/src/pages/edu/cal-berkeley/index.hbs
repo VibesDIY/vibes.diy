@@ -1,0 +1,144 @@
+{{!--
+{
+  "layout": "webring",
+  "title": "UC Berkeley Courses | Vibes DIY Edu",
+  "description": "6 courses from UC Berkeley — Berkeley, CA. Browse syllabi and study tools.",
+  "ogUrl": "https://good.vibes.diy/edu/cal-berkeley/"
+,
+  "source": "edu-cal-berkeley"
+}
+--}}
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Helvetica Neue', Arial, sans-serif; background: #f4f4f0; color: #1a1a1a; font-size: 14px; line-height: 1.5; }
+.topbar {
+  position: sticky; top: 0; z-index: 100;
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 0.6rem 1.25rem; background: #231F20; color: #FFFFF0;
+  border-bottom: 2px solid #000; font-size: 0.75rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase;
+}
+.topbar a { color: inherit; text-decoration: none; opacity: 0.7; }
+.topbar a:hover { opacity: 1; }
+.topbar .sep { opacity: 0.35; margin: 0 0.4rem; }
+.topbar-logo { height: 22px; width: auto; opacity: 0.85; vertical-align: middle; margin-right: 0.5rem; }
+.wrap { max-width: 860px; margin: 0 auto; padding: 2rem 1.25rem 5rem; }
+.breadcrumb { font-size: 0.75rem; color: #888; margin-bottom: 1.5rem; }
+.breadcrumb a { color: #0070c9; text-decoration: none; }
+.breadcrumb a:hover { text-decoration: underline; }
+.breadcrumb .sep { opacity: 0.5; margin: 0 0.3rem; }
+.inst-hero { margin-bottom: 1.75rem; }
+.inst-hero h1 { font-size: 1.8rem; font-weight: 800; line-height: 1.15; margin-bottom: 0.25rem; }
+.inst-hero p { font-size: 0.85rem; color: #666; }
+.course-row {
+  display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem;
+  background: white; border: 2px solid #231F20; border-radius: 8px;
+  padding: 1.1rem 1.25rem; margin-bottom: 0.75rem;
+  text-decoration: none; color: inherit;
+  transition: background 0.1s, border-color 0.1s;
+}
+.course-row:hover { background: #FFFFF0; border-color: #0070c9; }
+.course-row-body { flex: 1; min-width: 0; }
+.course-row-title { font-size: 0.95rem; font-weight: 700; margin-bottom: 0.2rem; line-height: 1.3; }
+.course-row:hover .course-row-title { color: #0070c9; }
+.course-row-meta { font-size: 0.72rem; color: #888; margin-bottom: 0.5rem; }
+.course-row-arrow { font-size: 1.1rem; color: #ccc; flex-shrink: 0; margin-top: 0.1rem; transition: color 0.1s; }
+.course-row:hover .course-row-arrow { color: #0070c9; }
+.tags { display: flex; flex-wrap: wrap; gap: 0.25rem; margin-bottom: 0.5rem; }
+.tag { font-size: 0.67rem; padding: 0.12rem 0.4rem; background: rgba(35,31,32,0.06); border: 1px solid rgba(35,31,32,0.12); border-radius: 3px; color: #444; }
+.cluster-links { display: flex; flex-wrap: wrap; gap: 0.25rem; }
+.cluster-link {
+  display: inline-flex; align-items: center; gap: 0.2rem;
+  font-size: 0.65rem; font-weight: 600; padding: 0.12rem 0.45rem;
+  background: rgba(0,112,201,0.07); border: 1.5px solid #0070c9;
+  color: #0070c9; border-radius: 3px; text-decoration: none;
+  transition: background 0.1s, color 0.1s;
+}
+.cluster-link:hover { background: #0070c9; color: white; }
+.cluster-link::after { content: " →"; font-size: 0.58rem; opacity: 0.7; }
+.footer { text-align: center; padding: 2rem 1rem; font-size: 0.78rem; color: #999; border-top: 1px solid #ccc; margin-top: 2rem; }
+.footer a { color: inherit; }
+</style>
+
+<nav class="topbar">
+  <div>
+    <a href="https://links.vibes.diy/homepage"><img src="{{assetPrefix}}Vibes-Toggle-1-Transparent.png" alt="Vibes DIY" class="topbar-logo"></a>
+    <span class="sep">/</span>
+    <a href="../syllabi.html">Edu Portal</a>
+    <span class="sep">/</span>
+    UC Berkeley
+  </div>
+  <div>6 courses</div>
+</nav>
+
+<div class="wrap">
+  <div class="breadcrumb">
+    <a href="../syllabi.html">Syllabi</a>
+    <span class="sep">/</span>
+    UC Berkeley
+  </div>
+
+  <div class="inst-hero">
+    <h1>UC Berkeley</h1>
+    <p>Berkeley, CA · 6 courses</p>
+  </div>
+
+  <a href="stat-156-causal-inference.html" class="course-row">
+      <div class="course-row-body">
+        <div class="course-row-title">STAT 156 Causal Inference</div>
+        <div class="course-row-meta">Data Science / Stats · 2024</div>
+        <div class="tags"><span class="tag">potential outcomes framework</span> <span class="tag">causal diagrams</span> <span class="tag">randomized experiments</span> <span class="tag">observational studies</span> <span class="tag">instrumental variables</span> <span class="tag">regression discontinuity</span></div>
+        <div class="cluster-links"><a href="../causal-inference.html" class="cluster-link">Causal Inference</a></div>
+      </div>
+      <span class="course-row-arrow">→</span>
+    </a>
+<a href="data-c100-principles-and-techniques-of-data-science.html" class="course-row">
+      <div class="course-row-body">
+        <div class="course-row-title">DATA C100 Principles and Techniques of Data Science</div>
+        <div class="course-row-meta">Data Science / Stats · 2024</div>
+        <div class="tags"><span class="tag">pandas and data wrangling</span> <span class="tag">ordinary least squares</span> <span class="tag">gradient descent</span> <span class="tag">feature engineering</span> <span class="tag">cross-validation</span> <span class="tag">regularization</span></div>
+        <div class="cluster-links"><a href="../machine-learning-methods.html" class="cluster-link">Machine Learning</a></div>
+      </div>
+      <span class="course-row-arrow">→</span>
+    </a>
+<a href="pbhlth-142-introduction-to-probability-and-statistics-in-biology-and-public-health.html" class="course-row">
+      <div class="course-row-body">
+        <div class="course-row-title">PBHLTH 142 Introduction to Probability and Statistics in Biology and Public Health</div>
+        <div class="course-row-meta">Public Health · 2024</div>
+        <div class="tags"><span class="tag">descriptive statistics</span> <span class="tag">probability distributions</span> <span class="tag">point and interval estimation</span> <span class="tag">hypothesis testing</span> <span class="tag">chi-square tests</span> <span class="tag">correlation and regression</span></div>
+        
+      </div>
+      <span class="course-row-arrow">→</span>
+    </a>
+<a href="econ-219a-foundations-of-psychology-and-economics.html" class="course-row">
+      <div class="course-row-body">
+        <div class="course-row-title">ECON 219A Foundations of Psychology and Economics</div>
+        <div class="course-row-meta">Behavioral Economics · 2024</div>
+        <div class="tags"><span class="tag">bounded rationality</span> <span class="tag">loss aversion</span> <span class="tag">present bias</span> <span class="tag">social preferences</span> <span class="tag">reference-dependent utility</span> <span class="tag">overconfidence</span></div>
+        <div class="cluster-links"><a href="../behavioral-economics.html" class="cluster-link">Behavioral Economics</a></div>
+      </div>
+      <span class="course-row-arrow">→</span>
+    </a>
+<a href="espm-155ac-sociology-and-political-ecology-of-agro-food-systems.html" class="course-row">
+      <div class="course-row-body">
+        <div class="course-row-title">ESPM 155AC Sociology and Political Ecology of Agro-Food Systems</div>
+        <div class="course-row-meta">Environmental Studies · 2024</div>
+        <div class="tags"><span class="tag">political ecology</span> <span class="tag">agro-food systems</span> <span class="tag">food sovereignty</span> <span class="tag">food justice</span> <span class="tag">fair trade certification</span> <span class="tag">organic agriculture</span></div>
+        
+      </div>
+      <span class="course-row-arrow">→</span>
+    </a>
+<a href="cy-plan-110-introduction-to-city-planning.html" class="course-row">
+      <div class="course-row-body">
+        <div class="course-row-title">CY PLAN 110 Introduction to City Planning</div>
+        <div class="course-row-meta">Urban Planning · 2024</div>
+        <div class="tags"><span class="tag">urban planning history</span> <span class="tag">land use regulation</span> <span class="tag">zoning and comprehensive plans</span> <span class="tag">urban growth management</span> <span class="tag">housing policy</span> <span class="tag">transportation planning</span></div>
+        <div class="cluster-links"><a href="../urban-land-use-planning.html" class="cluster-link">Urban Land Use</a></div>
+      </div>
+      <span class="course-row-arrow">→</span>
+    </a>
+</div>
+
+{{> newsletter}}
+<footer class="footer">
+  <a href="https://links.vibes.diy/homepage">Vibes DIY</a> — build your own app from any topic in this corpus
+</footer>

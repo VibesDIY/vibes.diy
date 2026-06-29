@@ -1,0 +1,476 @@
+{{!--
+{
+  "layout": "webring",
+  "title": "Vibes DIY Edu — University Learning Tools",
+  "description": "Interactive tools for university-level learning, built from real syllabi. Browse by subject cluster or search the full corpus of 90 harvested courses.",
+  "ogUrl": "https://good.vibes.diy/edu/",
+  "ogImage": "https://good.vibes.diy/images/screenshots/edu/index.jpg",
+  "source": "edu-index"
+}
+--}}
+
+<style>
+  @import url("https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,700;1,400&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap");
+
+  :root {
+    --parchment: #F5F1E8;
+    --ink: #1C1917;
+    --purple: #6B3FA0;
+    --purple-dim: rgba(107, 63, 160, 0.1);
+    --muted: #706B63;
+    --card: #FEFCF5;
+  }
+
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { background: var(--parchment); color: var(--ink); font-family: "Inter", system-ui, sans-serif; line-height: 1.55; }
+  a { color: inherit; text-decoration: none; }
+
+  /* ── Topbar ── */
+  .topbar { display: flex; justify-content: space-between; align-items: center; padding: 0.65rem 1.25rem; background: var(--ink); color: var(--parchment); position: sticky; top: 0; z-index: 100; }
+  .topbar-logo { height: 22px; width: auto; opacity: 0.85; vertical-align: middle; }
+  .topbar-crumb { font-family: "JetBrains Mono", monospace; font-size: 0.62rem; letter-spacing: 0.15em; text-transform: uppercase; }
+  .topbar-crumb a { opacity: 0.6; }
+  .topbar-crumb a:hover { opacity: 1; }
+  .topbar-crumb .sep { margin: 0 0.35rem; opacity: 0.35; }
+
+  /* ── Wrap ── */
+  .wrap { max-width: 1040px; margin: 0 auto; padding: 0 1.5rem; border-left: 2px solid var(--ink); border-right: 2px solid var(--ink); min-height: 100vh; }
+
+  /* ── Hero ── */
+  .hero {
+    padding: 4rem 0 3.5rem;
+    border-bottom: 4px solid var(--ink);
+    display: grid; grid-template-columns: 1fr auto; gap: 2rem; align-items: end;
+  }
+  @media (max-width: 640px) { .hero { grid-template-columns: 1fr; } }
+  .hero-label { font-family: "JetBrains Mono", monospace; font-size: 0.6rem; letter-spacing: 0.28em; text-transform: uppercase; color: var(--purple); margin-bottom: 0.9rem; }
+  .hero h1 { font-family: "EB Garamond", Georgia, serif; font-size: clamp(2.4rem, 6vw, 4rem); font-weight: 700; line-height: 1.05; letter-spacing: -0.01em; margin-bottom: 1rem; }
+  .hero-desc { font-size: 1.05rem; color: var(--muted); max-width: 560px; line-height: 1.6; }
+  .hero-stat {
+    text-align: right;
+    font-family: "EB Garamond", Georgia, serif;
+  }
+  .hero-stat .big { font-size: 3.5rem; font-weight: 700; line-height: 1; color: var(--purple); }
+  .hero-stat .label { font-size: 0.85rem; color: var(--muted); font-style: italic; }
+
+  /* ── Section headers ── */
+  .section-header {
+    padding: 2rem 0 1.25rem;
+    border-bottom: 2px solid var(--ink);
+    display: flex; justify-content: space-between; align-items: baseline; gap: 1rem; flex-wrap: wrap;
+  }
+  .section-title { font-family: "JetBrains Mono", monospace; font-size: 0.6rem; letter-spacing: 0.28em; text-transform: uppercase; color: var(--muted); }
+  .section-count { font-family: "JetBrains Mono", monospace; font-size: 0.6rem; color: var(--muted); }
+
+  /* ── Resource cards (syllabi / study) ── */
+  .resource-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0; border-bottom: 2px solid var(--ink); }
+  @media (max-width: 600px) { .resource-grid { grid-template-columns: 1fr; } }
+  .resource-card {
+    padding: 2rem 1.75rem;
+    border-right: 2px solid var(--ink);
+    border-bottom: 2px solid var(--ink);
+    transition: background 0.15s;
+  }
+  .resource-card:last-child { border-right: none; }
+  .resource-card:hover { background: var(--purple-dim); }
+  .resource-card .rc-label { font-family: "JetBrains Mono", monospace; font-size: 0.58rem; letter-spacing: 0.22em; text-transform: uppercase; color: var(--purple); margin-bottom: 0.6rem; }
+  .resource-card h3 { font-family: "EB Garamond", Georgia, serif; font-size: 1.5rem; font-weight: 700; line-height: 1.15; margin-bottom: 0.5rem; }
+  .resource-card p { font-size: 0.88rem; color: var(--muted); line-height: 1.55; margin-bottom: 1rem; }
+  .resource-link { font-family: "JetBrains Mono", monospace; font-size: 0.68rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--purple); font-weight: 700; }
+  .resource-link:hover { text-decoration: underline; }
+
+  /* ── Cluster grid ── */
+  .cluster-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0; }
+  @media (max-width: 760px) { .cluster-grid { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 480px) { .cluster-grid { grid-template-columns: 1fr; } }
+
+  .cluster-card {
+    padding: 1.75rem;
+    border-right: 2px solid var(--ink);
+    border-bottom: 2px solid var(--ink);
+    transition: background 0.15s;
+  }
+  .cluster-card:nth-child(3n) { border-right: none; }
+  @media (max-width: 760px) { .cluster-card:nth-child(3n) { border-right: 2px solid var(--ink); } .cluster-card:nth-child(2n) { border-right: none; } }
+  .cluster-card:hover { background: var(--purple-dim); }
+
+  .cc-dept { font-family: "JetBrains Mono", monospace; font-size: 0.55rem; letter-spacing: 0.15em; text-transform: uppercase; color: var(--muted); margin-bottom: 0.5rem; }
+  .cc-title { font-family: "EB Garamond", Georgia, serif; font-size: 1.25rem; font-weight: 700; line-height: 1.2; margin-bottom: 0.6rem; }
+  .cc-vocab { display: flex; flex-wrap: wrap; gap: 0.25rem; margin-bottom: 0.9rem; }
+  .cc-tag { font-family: "JetBrains Mono", monospace; font-size: 0.55rem; letter-spacing: 0.06em; padding: 0.18rem 0.45rem; background: var(--purple-dim); border: 1px solid var(--purple); color: var(--purple); border-radius: 3px; }
+  .cc-cta { font-family: "JetBrains Mono", monospace; font-size: 0.62rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--purple); font-weight: 700; }
+  .cc-cta:hover { text-decoration: underline; }
+  .cc-count { font-family: "JetBrains Mono", monospace; font-size: 0.55rem; color: var(--muted); margin-top: 0.25rem; }
+
+  /* Coming soon clusters */
+  .cluster-card--soon { opacity: 0.45; pointer-events: none; }
+  .cc-soon { font-family: "JetBrains Mono", monospace; font-size: 0.55rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); margin-top: 0.5rem; }
+
+  /* ── Footer ── */
+  .page-footer { padding: 2rem 0; display: flex; gap: 1.5rem; align-items: center; flex-wrap: wrap; font-family: "JetBrains Mono", monospace; font-size: 0.68rem; letter-spacing: 0.1em; text-transform: uppercase; border-top: 4px solid var(--ink); }
+  .page-footer a { color: var(--purple); }
+  .page-footer a:hover { text-decoration: underline; }
+  .page-footer .sep { opacity: 0.3; }
+</style>
+
+<nav class="topbar">
+  <a href="https://links.vibes.diy/homepage">
+    <img src="{{assetPrefix}}Vibes-Toggle-1-Transparent.png" alt="Vibes DIY" class="topbar-logo">
+  </a>
+  <div class="topbar-crumb">
+    <a href="{{assetPrefix}}index.html">good.vibes.diy</a>
+    <span class="sep">/</span>
+    <span>edu</span>
+  </div>
+</nav>
+
+<div class="wrap">
+
+  <header class="hero">
+    <div>
+      <div class="hero-label">Vibes DIY · Edu</div>
+      <h1>University<br>Learning Tools</h1>
+      <p class="hero-desc">Interactive apps for university-level learning, built from real syllabi at MIT, Stanford, UC Berkeley, and more. Browse by subject cluster or search the full syllabus corpus.</p>
+    </div>
+    <div class="hero-stat">
+      <div class="big">90</div>
+      <div class="label">syllabi harvested</div>
+    </div>
+  </header>
+
+  <!-- Resources -->
+  <div class="section-header">
+    <span class="section-title">Resources</span>
+  </div>
+  <div class="resource-grid">
+    <a class="resource-card" href="syllabi.html">
+      <div class="rc-label">90 courses · 15 institutions</div>
+      <h3>Syllabus Corpus</h3>
+      <p>The full harvest: 90 real university syllabi across STEM and humanities, filterable by domain and keyword. Every cluster page is grounded here.</p>
+      <span class="resource-link">Browse the corpus →</span>
+    </a>
+    <a class="resource-card" href="study/index.html">
+      <div class="rc-label">9 tools · flashcards · quizzes</div>
+      <h3>Study Tools</h3>
+      <p>General-purpose learning tools — flashcard decks, quiz generators, focus timers, Cornell notes, habit trackers. AI-powered, remixable.</p>
+      <span class="resource-link">Open study tools →</span>
+    </a>
+  </div>
+
+  <!-- Live clusters -->
+  <div class="section-header">
+    <span class="section-title">Humanities Clusters</span>
+    <span class="section-count">13 of 13 live</span>
+  </div>
+
+  <div class="cluster-grid">
+
+    <a class="cluster-card" href="literary-analysis.html">
+      <div class="cc-dept">Literature / Creative Writing</div>
+      <div class="cc-title">Literary Analysis &amp; Close Reading</div>
+      <div class="cc-vocab">
+        <span class="cc-tag">close reading</span>
+        <span class="cc-tag">postcolonial theory</span>
+        <span class="cc-tag">feminist criticism</span>
+        <span class="cc-tag">Bildungsroman</span>
+      </div>
+      <div class="cc-cta">5 tools →</div>
+      <div class="cc-count">MIT OCW · UT Austin</div>
+    </a>
+
+    <a class="cluster-card" href="cold-war-history.html">
+      <div class="cc-dept">History — Diplomatic / International</div>
+      <div class="cc-title">Cold War History</div>
+      <div class="cc-vocab">
+        <span class="cc-tag">containment</span>
+        <span class="cc-tag">proxy wars</span>
+        <span class="cc-tag">détente</span>
+        <span class="cc-tag">declassified docs</span>
+      </div>
+      <div class="cc-cta">5 tools →</div>
+      <div class="cc-count">H-Net H-Diplo · UW–Madison · MIT OCW</div>
+    </a>
+
+    <a class="cluster-card" href="critical-algorithms.html">
+      <div class="cc-dept">Interdisciplinary Humanities / Media Studies</div>
+      <div class="cc-title">Critical Algorithms &amp; Surveillance</div>
+      <div class="cc-vocab">
+        <span class="cc-tag">algorithmic bias</span>
+        <span class="cc-tag">surveillance</span>
+        <span class="cc-tag">discriminatory design</span>
+      </div>
+      <div class="cc-cta">5 tools →</div>
+      <div class="cc-count">SFPC Code Societies</div>
+    </a>
+
+    <a class="cluster-card" href="slavery-civil-rights.html">
+      <div class="cc-dept">History — American</div>
+      <div class="cc-title">Slavery, Reconstruction &amp; Civil Rights</div>
+      <div class="cc-vocab">
+        <span class="cc-tag">chattel slavery</span>
+        <span class="cc-tag">Jim Crow</span>
+        <span class="cc-tag">civil rights movement</span>
+        <span class="cc-tag">Reconstruction amendments</span>
+      </div>
+      <div class="cc-cta">5 tools →</div>
+      <div class="cc-count">UW–Madison · MIT OCW · H-Net H-Urban</div>
+    </a>
+
+    <a class="cluster-card" href="us-foreign-policy.html">
+      <div class="cc-dept">History — Diplomatic / International</div>
+      <div class="cc-title">U.S. Foreign Policy &amp; Diplomacy</div>
+      <div class="cc-vocab">
+        <span class="cc-tag">American imperialism</span>
+        <span class="cc-tag">containment strategy</span>
+        <span class="cc-tag">FRUS documents</span>
+        <span class="cc-tag">archival diplomacy</span>
+      </div>
+      <div class="cc-cta">5 tools →</div>
+      <div class="cc-count">H-Net H-Diplo · MIT OCW</div>
+    </a>
+
+    <a class="cluster-card" href="urban-race-housing.html">
+      <div class="cc-dept">History — Urban</div>
+      <div class="cc-title">Urban History, Race &amp; Housing</div>
+      <div class="cc-vocab">
+        <span class="cc-tag">suburbanization</span>
+        <span class="cc-tag">redlining</span>
+        <span class="cc-tag">white flight</span>
+        <span class="cc-tag">residential segregation</span>
+      </div>
+      <div class="cc-cta">5 tools →</div>
+      <div class="cc-count">H-Net H-Urban</div>
+    </a>
+
+    <a class="cluster-card" href="latin-american-history.html">
+      <div class="cc-dept">History — Latin American</div>
+      <div class="cc-title">Latin American History</div>
+      <div class="cc-vocab">
+        <span class="cc-tag">mestizaje</span>
+        <span class="cc-tag">encomienda system</span>
+        <span class="cc-tag">land reform</span>
+        <span class="cc-tag">indigenous sovereignty</span>
+      </div>
+      <div class="cc-cta">5 tools →</div>
+      <div class="cc-count">H-Net H-LatAm · UT Austin</div>
+    </a>
+
+    <a class="cluster-card" href="ethics-philosophy.html">
+      <div class="cc-dept">Linguistics &amp; Philosophy</div>
+      <div class="cc-title">Ethics &amp; Philosophy</div>
+      <div class="cc-vocab">
+        <span class="cc-tag">philosophy of mind</span>
+        <span class="cc-tag">free will</span>
+        <span class="cc-tag">metaethics</span>
+        <span class="cc-tag">feminist epistemology</span>
+      </div>
+      <div class="cc-cta">5 tools →</div>
+      <div class="cc-count">MIT OCW · UT Austin</div>
+    </a>
+
+    <a class="cluster-card" href="revolutions-political-change.html">
+      <div class="cc-dept">History — Comparative</div>
+      <div class="cc-title">Revolutions &amp; Political Change</div>
+      <div class="cc-vocab">
+        <span class="cc-tag">Atlantic revolutions</span>
+        <span class="cc-tag">Haitian Revolution</span>
+        <span class="cc-tag">decolonization</span>
+        <span class="cc-tag">causes of revolution</span>
+      </div>
+      <div class="cc-cta">5 tools →</div>
+      <div class="cc-count">MIT OCW SHASS · H-Net H-LatAm</div>
+    </a>
+
+    <a class="cluster-card" href="capitalism-labor-history.html">
+      <div class="cc-dept">History — Economic / Social</div>
+      <div class="cc-title">History of Capitalism &amp; Labor</div>
+      <div class="cc-vocab">
+        <span class="cc-tag">history of capitalism</span>
+        <span class="cc-tag">labor history</span>
+        <span class="cc-tag">racial capitalism</span>
+        <span class="cc-tag">financialization</span>
+      </div>
+      <div class="cc-cta">5 tools →</div>
+      <div class="cc-count">UW–Madison · MIT OCW</div>
+    </a>
+
+    <a class="cluster-card" href="gender-colonialism.html">
+      <div class="cc-dept">History — Gender / Postcolonial</div>
+      <div class="cc-title">Gender, Race &amp; Colonialism</div>
+      <div class="cc-vocab">
+        <span class="cc-tag">settler colonialism</span>
+        <span class="cc-tag">intersectionality</span>
+        <span class="cc-tag">Caribbean diaspora</span>
+        <span class="cc-tag">feminist historiography</span>
+      </div>
+      <div class="cc-cta">5 tools →</div>
+      <div class="cc-count">UW–Madison · H-Net H-Diplo · H-Net H-LatAm</div>
+    </a>
+
+    <a class="cluster-card" href="music-sound-culture.html">
+      <div class="cc-dept">Music / Sound Studies</div>
+      <div class="cc-title">Music, Sound &amp; Culture</div>
+      <div class="cc-vocab">
+        <span class="cc-tag">jazz improvisation</span>
+        <span class="cc-tag">jazz history</span>
+        <span class="cc-tag">critical listening</span>
+        <span class="cc-tag">African American music</span>
+      </div>
+      <div class="cc-cta">5 tools →</div>
+      <div class="cc-count">MIT OCW SHASS · UT Austin · SFPC</div>
+    </a>
+
+    <a class="cluster-card" href="algorithmic-creative-writing.html">
+      <div class="cc-dept">Literature / Creative Writing / Media Arts</div>
+      <div class="cc-title">Algorithmic &amp; Experimental Writing</div>
+      <div class="cc-vocab">
+        <span class="cc-tag">Oulipo and constrained writing</span>
+        <span class="cc-tag">aleatoric writing</span>
+        <span class="cc-tag">algorithmic text generation</span>
+        <span class="cc-tag">procedural generation</span>
+      </div>
+      <div class="cc-cta">5 tools →</div>
+      <div class="cc-count">SFPC · MIT OCW SHASS</div>
+    </a>
+
+  </div>
+
+  <!-- STEM clusters -->
+  <div class="section-header">
+    <span class="section-title">STEM &amp; Social Science Clusters</span>
+    <span class="section-count">9 of 9 live</span>
+  </div>
+
+  <div class="cluster-grid">
+
+    <a class="cluster-card" href="behavioral-economics.html">
+      <div class="cc-dept">Economics / Social Science</div>
+      <div class="cc-title">Behavioral Economics</div>
+      <div class="cc-vocab">
+        <span class="cc-tag">prospect theory</span>
+        <span class="cc-tag">loss aversion</span>
+        <span class="cc-tag">present bias</span>
+        <span class="cc-tag">nudge theory</span>
+      </div>
+      <div class="cc-cta">5 tools →</div>
+      <div class="cc-count">MIT · Stanford · UC Berkeley · UT Austin</div>
+    </a>
+
+    <a class="cluster-card" href="causal-inference.html">
+      <div class="cc-dept">Data Science / Statistics</div>
+      <div class="cc-title">Causal Inference</div>
+      <div class="cc-vocab">
+        <span class="cc-tag">potential outcomes</span>
+        <span class="cc-tag">instrumental variables</span>
+        <span class="cc-tag">regression discontinuity</span>
+        <span class="cc-tag">difference-in-differences</span>
+      </div>
+      <div class="cc-cta">5 tools →</div>
+      <div class="cc-count">MIT · Stanford · UC Berkeley · CMU · UT Austin</div>
+    </a>
+
+    <a class="cluster-card" href="climate-change-policy.html">
+      <div class="cc-dept">Environmental Studies</div>
+      <div class="cc-title">Climate Change &amp; Environmental Policy</div>
+      <div class="cc-vocab">
+        <span class="cc-tag">greenhouse gas emissions</span>
+        <span class="cc-tag">climate adaptation</span>
+        <span class="cc-tag">carbon pricing</span>
+        <span class="cc-tag">climate risk</span>
+      </div>
+      <div class="cc-cta">5 tools →</div>
+      <div class="cc-count">MIT · UC Berkeley · CMU · UT Austin · UW</div>
+    </a>
+
+    <a class="cluster-card" href="epidemiology-study-design.html">
+      <div class="cc-dept">Public Health</div>
+      <div class="cc-title">Epidemiology &amp; Study Design</div>
+      <div class="cc-vocab">
+        <span class="cc-tag">cohort study design</span>
+        <span class="cc-tag">case-control</span>
+        <span class="cc-tag">confounding</span>
+        <span class="cc-tag">selection bias</span>
+      </div>
+      <div class="cc-cta">5 tools →</div>
+      <div class="cc-count">Stanford · UC Berkeley · UNC · UT Austin · UW</div>
+    </a>
+
+    <a class="cluster-card" href="machine-learning-methods.html">
+      <div class="cc-dept">Data Science / Statistics</div>
+      <div class="cc-title">Machine Learning Methods</div>
+      <div class="cc-vocab">
+        <span class="cc-tag">cross-validation</span>
+        <span class="cc-tag">regularization</span>
+        <span class="cc-tag">clustering algorithms</span>
+        <span class="cc-tag">dimensionality reduction</span>
+      </div>
+      <div class="cc-cta">5 tools →</div>
+      <div class="cc-count">MIT · UC Berkeley · CMU · UNC · UW</div>
+    </a>
+
+    <a class="cluster-card" href="policy-analysis-decision-modeling.html">
+      <div class="cc-dept">Public Policy</div>
+      <div class="cc-title">Policy Analysis &amp; Decision Modeling</div>
+      <div class="cc-vocab">
+        <span class="cc-tag">cost-benefit analysis</span>
+        <span class="cc-tag">decision analysis</span>
+        <span class="cc-tag">risk analysis</span>
+        <span class="cc-tag">uncertainty in policy</span>
+      </div>
+      <div class="cc-cta">5 tools →</div>
+      <div class="cc-count">CMU · MIT · UW Madison</div>
+    </a>
+
+    <a class="cluster-card" href="research-methods-regression.html">
+      <div class="cc-dept">Education Research</div>
+      <div class="cc-title">Research Methods &amp; Regression Modeling</div>
+      <div class="cc-vocab">
+        <span class="cc-tag">regression analysis</span>
+        <span class="cc-tag">multilevel models</span>
+        <span class="cc-tag">hierarchical linear modeling</span>
+        <span class="cc-tag">multiple regression</span>
+      </div>
+      <div class="cc-cta">5 tools →</div>
+      <div class="cc-count">Stanford · UNC · UW Madison · UW Seattle</div>
+    </a>
+
+    <a class="cluster-card" href="spatial-analysis-gis.html">
+      <div class="cc-dept">Urban Planning / Geography</div>
+      <div class="cc-title">Spatial Analysis &amp; GIS</div>
+      <div class="cc-vocab">
+        <span class="cc-tag">spatial analysis</span>
+        <span class="cc-tag">geodatabases</span>
+        <span class="cc-tag">cartographic representation</span>
+        <span class="cc-tag">thematic mapping</span>
+      </div>
+      <div class="cc-cta">5 tools →</div>
+      <div class="cc-count">MIT · CMU · UT Austin · UNC · UW</div>
+    </a>
+
+    <a class="cluster-card" href="urban-land-use-planning.html">
+      <div class="cc-dept">Urban Planning</div>
+      <div class="cc-title">Urban &amp; Land Use Planning</div>
+      <div class="cc-vocab">
+        <span class="cc-tag">zoning and comprehensive plans</span>
+        <span class="cc-tag">land use regulation</span>
+        <span class="cc-tag">housing policy</span>
+        <span class="cc-tag">transportation planning</span>
+      </div>
+      <div class="cc-cta">5 tools →</div>
+      <div class="cc-count">Stanford · UC Berkeley · UNC · UW Madison</div>
+    </a>
+
+  </div>
+
+  {{> newsletter}}
+<footer class="page-footer">
+    <a href="{{assetPrefix}}index.html">← good.vibes.diy</a>
+    <span class="sep">·</span>
+    <a href="https://links.vibes.diy/homepage">Vibes DIY</a>
+    <span class="sep">·</span>
+    <a href="https://links.vibes.diy/discord">Discord</a>
+    <span class="sep">·</span>
+    <a href="about.html">About the portal</a>
+  </footer>
+
+</div>

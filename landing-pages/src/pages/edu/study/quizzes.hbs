@@ -1,0 +1,279 @@
+{{!--
+{
+  "layout": "webring",
+  "title": "Quiz Apps | Vibes DIY edu/study",
+  "description": "Three quiz apps on a toy-to-key ladder — personality quiz, knowledge check, and timed exam practice. Same multiple-choice engine, three rungs.",
+  "ogUrl": "https://good.vibes.diy/edu/study/quizzes/",
+  "source": "edu-study-quizzes",
+  "ogImage": "https://good.vibes.diy/images/screenshots/edu/study/quizzes.jpg",
+  "apps": [
+    {
+      "num": "01",
+      "rung": "TOY",
+      "slug": "type-quiz-v2",
+      "author": "og",
+      "live": true,
+      "title": "What Type Are You?",
+      "tagline": "No right answers. Just archetypes.",
+      "desc": "Eight questions, no correct answers. Every option maps to one of four archetypes — Architect, Wildcard, Diplomat, Analyst. Your tally reveals which one fits. The result card names your archetype in six-inch type, gives you a three-sentence description, and produces a one-tap share text. Pass it around the table. It's a conversation starter that happens to also be a quiz."
+    },
+    {
+      "num": "02",
+      "rung": "MID",
+      "slug": "knowledge-check-v2",
+      "author": "og",
+      "live": true,
+      "title": "Knowledge Check",
+      "tagline": "Type a topic. Get ten questions. Find out what you actually know.",
+      "desc": "Type any subject and the AI generates a ten-question multiple-choice quiz in seconds. Answer one at a time, confirm your pick, see the correct answer and a short rationale. Score at the end: right out of ten, pass-or-needs-work badge at 70%. Review every question. Retry the same quiz or generate a fresh one. Saved quizzes persist so you can come back to the ones worth repeating."
+    },
+    {
+      "num": "03",
+      "rung": "KEY",
+      "slug": "exam-practice-v2",
+      "author": "og",
+      "live": true,
+      "title": "Exam Practice",
+      "tagline": "Timed. Sectioned. Scored. Pass or fail.",
+      "desc": "Twenty questions, divided into two or three named sections by the AI. A 45-second countdown per question — the bar goes orange at half, red at 20%, auto-advances at zero. After the last question: overall score, per-section breakdown, time stats, pass-or-fail verdict against a configurable threshold. Full question review with explanations. In-progress exams survive a page reload. Build your prep deck from any certification or course subject."
+    }
+  ]
+}
+--}}
+
+<style>
+  @import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800;900&display=optional");
+
+  :root {
+    --sheet:  oklch(0.96 0.005 240);
+    --blue:   oklch(0.58 0.22 250);
+    --ink:    oklch(0.10 0 0);
+    --muted:  oklch(0.55 0 0);
+    --line:   oklch(0.88 0.005 240);
+  }
+
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html, body {
+    background: var(--sheet);
+    background-image: repeating-linear-gradient(0deg, var(--line) 0 1px, transparent 1px 28px);
+    color: var(--ink);
+    font-family: "Inter", system-ui, sans-serif;
+    line-height: 1.55;
+    min-height: 100vh;
+  }
+  a { color: inherit; text-decoration: none; }
+
+  .layout {
+    max-width: 1100px; margin: 0 auto; padding: 0 1.25rem;
+    border-left: 2px solid var(--ink); border-right: 2px solid var(--ink);
+    background: var(--sheet);
+  }
+
+  .topbar {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 1rem 1.25rem; border-bottom: 4px solid var(--ink);
+    margin: 0 -1.25rem; padding-left: 1.25rem; padding-right: 1.25rem;
+  }
+  .topbar .brand { font-family: "Space Grotesk", sans-serif; font-weight: 700; letter-spacing: -0.02em; font-size: 1.25rem; }
+  .topbar .meta { font-family: "Inter", sans-serif; font-size: 0.6rem; letter-spacing: 0.18em; text-transform: uppercase; }
+  .topbar .meta b { background: var(--blue); color: #fff; padding: 2px 6px; }
+
+  .crumb {
+    padding: 0.55rem 0;
+    font-family: "Inter", sans-serif; font-size: 0.65rem; letter-spacing: 0.15em; text-transform: uppercase;
+    border-bottom: 2px solid var(--ink);
+  }
+  .crumb a:hover { background: oklch(0.82 0.08 250); color: #fff; }
+
+  .hero { padding: 4rem 0 3.5rem; border-bottom: 4px solid var(--ink); }
+  .hero .label {
+    font-family: "Inter", sans-serif; font-size: 0.6rem; letter-spacing: 0.25em; text-transform: uppercase;
+    margin-bottom: 1.5rem; display: inline-block; padding: 4px 10px;
+    background: var(--ink); color: var(--sheet);
+  }
+  .hero h1 {
+    font-family: "Space Grotesk", sans-serif;
+    font-size: clamp(3rem, 9vw, 6.5rem);
+    font-weight: 700; line-height: 0.92; letter-spacing: -0.03em; margin-bottom: 1.5rem;
+  }
+  .hero h1 .hl {
+    background: var(--blue); color: #fff; padding: 0 0.12em;
+    display: inline-block; transform: rotate(-0.5deg);
+    box-shadow: 5px 5px 0 var(--ink); border: 2px solid var(--ink); margin: 0.05em 0;
+  }
+  .hero p.lead { font-size: 1.1rem; max-width: 680px; line-height: 1.6; }
+
+  .stats { display: grid; grid-template-columns: repeat(3, 1fr); border-bottom: 4px solid var(--ink); }
+  .stat-cell { padding: 1.25rem 1.5rem; border-right: 2px solid var(--ink); }
+  .stat-cell:last-child { border-right: none; }
+  .stat-cell .k { font-family: "Inter", sans-serif; font-size: 0.55rem; letter-spacing: 0.25em; text-transform: uppercase; margin-bottom: 0.4rem; }
+  .stat-cell .v { font-family: "Space Grotesk", sans-serif; font-weight: 700; font-size: 1.3rem; letter-spacing: -0.02em; }
+
+  .primitive { padding: 2.5rem 0; border-bottom: 4px solid var(--ink); }
+  .primitive h2 { font-family: "Inter", sans-serif; font-size: 0.6rem; letter-spacing: 0.25em; text-transform: uppercase; margin-bottom: 1.25rem; }
+  .primitive h2::before { content: "// "; }
+  .primitive p { font-size: 1.05rem; max-width: 760px; line-height: 1.6; margin-bottom: 0.85rem; }
+  .primitive .pull {
+    font-family: "Space Grotesk", sans-serif; font-weight: 700;
+    font-size: clamp(1.6rem, 3.5vw, 2.6rem); line-height: 1.1; letter-spacing: -0.02em;
+    margin: 1.25rem 0; max-width: 800px;
+  }
+  .primitive .pull span { background: oklch(0.82 0.08 250); color: #fff; padding: 0 0.2em; box-decoration-break: clone; -webkit-box-decoration-break: clone; }
+
+  .section-label {
+    padding: 1.5rem 0 0.75rem;
+    font-family: "Inter", sans-serif; font-size: 0.6rem; letter-spacing: 0.25em; text-transform: uppercase;
+    border-bottom: 2px dashed var(--ink); margin-bottom: 1.5rem;
+  }
+  .section-label::before { content: "// "; }
+
+  .apps { display: flex; flex-direction: column; gap: 0; border-top: 2px solid var(--ink); border-bottom: 4px solid var(--ink); }
+  .app {
+    padding: 2rem 1.5rem; border-bottom: 2px solid var(--ink);
+    display: grid; grid-template-columns: 80px 1fr 320px; gap: 2rem; align-items: start;
+    transition: background 0.15s;
+  }
+  .app:last-child { border-bottom: none; }
+  @media (max-width: 800px) { .app { grid-template-columns: 1fr; gap: 1rem; } }
+  .app:hover { background: oklch(0.91 0.01 240); }
+
+  .app .num-cell { display: flex; flex-direction: column; gap: 0.4rem; }
+  .app .num { font-family: "Space Grotesk", sans-serif; font-weight: 700; font-size: 3rem; line-height: 0.85; letter-spacing: -0.04em; }
+  .app .rung-badge {
+    font-family: "Inter", sans-serif; font-size: 0.5rem; letter-spacing: 0.22em; text-transform: uppercase;
+    padding: 3px 7px; border: 2px solid var(--ink); text-align: center; display: inline-block;
+  }
+  .app--live .rung-badge { background: var(--blue); color: #fff; border-color: var(--blue); }
+
+  .app .body { display: flex; flex-direction: column; gap: 0.7rem; }
+  .app .body .title { font-family: "Space Grotesk", sans-serif; font-size: 2rem; font-weight: 700; letter-spacing: -0.02em; line-height: 1.05; }
+  .app .body .tagline {
+    font-family: "Inter", sans-serif; font-size: 0.75rem; padding: 5px 10px;
+    background: oklch(0.88 0.05 250); display: inline-block; align-self: flex-start; border: 1px solid var(--ink);
+  }
+  .app .body .desc { font-size: 1rem; line-height: 1.55; }
+
+  .app .right { display: flex; flex-direction: column; gap: 0.6rem; }
+  .app .shot { display: block; aspect-ratio: 16/9; overflow: hidden; border: 2px solid var(--ink); background: var(--sheet); }
+  .app .shot img { width: 100%; height: 100%; object-fit: cover; }
+  .app .shot-placeholder {
+    padding: 1rem; height: 100%; display: flex; align-items: center; justify-content: center;
+    font-family: "Inter", sans-serif; font-size: 0.7rem; letter-spacing: 0.2em; text-transform: uppercase; text-align: center;
+  }
+  .app .ctas { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0; border: 2px solid var(--ink); }
+  .app .ctas--single { grid-template-columns: 1fr; }
+  .btn {
+    text-align: center; padding: 0.55rem 0.5rem; background: transparent;
+    border-right: 2px solid var(--ink);
+    font-family: "Inter", sans-serif; font-size: 0.65rem; letter-spacing: 0.15em; text-transform: uppercase; font-weight: 700;
+    color: var(--ink); cursor: pointer; transition: background 0.12s;
+  }
+  .btn:last-child { border-right: none; }
+  .btn:hover { background: var(--blue); color: #fff; }
+  .prompt-link { font-family: "Inter", sans-serif; font-size: 0.7rem; text-decoration: underline; }
+  .prompt-link:hover { background: oklch(0.88 0.05 250); }
+
+  .epilogue { padding: 2.5rem 0; border-bottom: 4px solid var(--ink); }
+  .epilogue h2 { font-family: "Inter", sans-serif; font-size: 0.6rem; letter-spacing: 0.25em; text-transform: uppercase; margin-bottom: 1rem; }
+  .epilogue h2::before { content: "// "; }
+  .epilogue p { font-size: 1.1rem; max-width: 720px; line-height: 1.55; margin-bottom: 0.75rem; }
+  .epilogue .hl { background: oklch(0.88 0.05 250); padding: 1px 4px; }
+
+  footer.term-footer {
+    padding: 1rem 0; font-family: "Inter", sans-serif; font-size: 0.6rem; letter-spacing: 0.2em; text-transform: uppercase;
+    display: flex; justify-content: space-between;
+  }
+  footer.term-footer a:hover { background: oklch(0.88 0.05 250); }
+</style>
+
+<div class="layout">
+  <header class="topbar">
+    <a class="brand" href="https://links.vibes.diy/homepage">VIBES.DIY</a>
+    <span class="meta"><b>EDU / STUDY</b> · quiz apps</span>
+  </header>
+
+  <nav class="crumb">
+    <a href="{{assetPrefix}}index.html">Home</a> &nbsp;›&nbsp; edu / study &nbsp;›&nbsp; Quiz Apps
+  </nav>
+
+  <section class="hero">
+    <span class="label">edu / study</span>
+    <h1>What do you<br/>actually <span class="hl">know</span>?</h1>
+    <p class="lead">
+      Three quiz apps on a toy-to-key ladder. Same multiple-choice primitive — question, four options, confirm, see the answer — running from a personality reveal to a full timed practice exam. Pick the rung that matches your stakes.
+    </p>
+  </section>
+
+  <div class="stats">
+    <div class="stat-cell"><div class="k">Apps</div><div class="v">Three</div></div>
+    <div class="stat-cell"><div class="k">Ladder</div><div class="v">Toy → Key</div></div>
+    <div class="stat-cell"><div class="k">Engine</div><div class="v">Multiple choice + Fireproof</div></div>
+  </div>
+
+  <section class="primitive">
+    <h2>The Primitive</h2>
+    <p>
+      Every app here uses the same quiz engine: a question with four options, an AI that generates the deck from any topic, and a scoring loop that shows you what you got right and explains what you got wrong. The mechanics don't change — what changes is what you do with the score.
+    </p>
+    <p class="pull">
+      The question is the unit. <span>What you learn from the wrong answer is the point.</span>
+    </p>
+    <p>
+      Toy end: the questions have no correct answers — they reveal which archetype you are and you share the result. Key end: the questions come in timed sections with a pass/fail threshold and a full breakdown by topic. The middle: ten AI-generated questions on any subject, confirm and review, retry until it sticks.
+    </p>
+  </section>
+
+  <div class="section-label">The Ladder</div>
+
+  <section class="apps">
+    {{#each apps}}
+      <article class="app {{#if live}}app--live{{else}}app--pending{{/if}}">
+        <div class="num-cell">
+          <div class="num">{{num}}</div>
+          <div class="rung-badge">{{rung}}</div>
+        </div>
+        <div class="body">
+          <h2 class="title">{{title}}</h2>
+          <span class="tagline">{{tagline}}</span>
+          <p class="desc">{{desc}}</p>
+        </div>
+        <div class="right">
+          {{#if live}}
+            <a class="shot" href="https://vibes.diy/vibe/{{author}}/{{slug}}" aria-label="{{title}} screenshot">
+              <img src="https://{{slug}}--{{author}}.prod-v2.vibesdiy.net/screenshot.jpg" alt="{{slug}}"
+                onerror="this.onerror=null; this.src='{{@root.assetPrefix}}images/og-preview.png';"/>
+            </a>
+            <div class="ctas">
+              <a class="btn" href="https://vibes.diy/vibe/{{author}}/{{slug}}">Open</a>
+              <a class="btn" href="https://vibes.diy/remix/{{author}}/{{slug}}?skipChat=true">Clone</a>
+              <a class="btn" href="https://vibes.diy/remix/{{author}}/{{slug}}">Remix</a>
+            </div>
+            <a class="prompt-link" href="https://vibes.diy/chat/prompt?prompt64={{prompt64 desc}}">// start fresh from this prompt</a>
+          {{else}}
+            <div class="shot"><div class="shot-placeholder">awaiting deploy</div></div>
+            <div class="ctas ctas--single">
+              <a class="btn" href="https://vibes.diy/chat/prompt?prompt64={{prompt64 desc}}">Start From Prompt</a>
+            </div>
+          {{/if}}
+        </div>
+      </article>
+    {{/each}}
+  </section>
+
+  <div class="epilogue">
+    <h2>Read Me</h2>
+    <p>
+      The multiple-choice quiz is a strange form. At the toy end it's a mirror — no correct answer, just which option feels most like you. At the key end it's a gate — answer enough correctly in the time given or you don't pass. <span class="hl">Most quiz tools pick one end and stay there.</span> These three cover the whole range, same engine, different configuration.
+    </p>
+    <p>
+      All three are remixable. If the 45-second timer is wrong for your exam format, clone and adjust it. If you want 20 questions instead of 10 for the knowledge check, remix the prompt. The primitive is open — the rung labels are just a starting point.
+    </p>
+  </div>
+
+  {{> newsletter}}
+<footer class="term-footer">
+    <span>Vibes.diy · <a href="https://links.vibes.diy/homepage">homepage</a> · <a href="{{assetPrefix}}edu/study/flashcards.html">← flashcards</a></span>
+    <span>// THREE RUNGS, ONE PRIMITIVE</span>
+  </footer>
+</div>

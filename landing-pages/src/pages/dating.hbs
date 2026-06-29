@@ -1,0 +1,418 @@
+{{!--
+{
+  "layout": "webring",
+  "title": "For Dating | Vibes DIY",
+  "description": "Five dating apps that each break one assumption: Season (cohort), Vouched (sponsored entry), Slot (activity-as-listing), Letters (async), Foursome (group-first). Clone any and remix.",
+  "ogUrl": "https://good.vibes.diy/dating/",
+  "source": "dating",
+  "apps": [
+    {
+      "num": "01",
+      "slug": "dating-season",
+      "author": "og",
+      "live": true,
+      "title": "Season",
+      "tagline": "Cohort dating. Thirty strangers, six weeks, no browsing.",
+      "desc": "30 strangers join a six-week season together. Daily prompts, weekly group activities, pair off through real interaction or don't. The pool closes at season start. Alumni recruit the next season — \"I met X in S4.\" Week 4 is the week your roommate notices.",
+      "fork": "Want it for a smaller group — 15 people, three weeks, a different cadence? Fork it and change the cohort size, the duration, and what happens in week four."
+    },
+    {
+      "num": "02",
+      "slug": "vouched-dating",
+      "author": "og",
+      "live": true,
+      "title": "Vouched",
+      "tagline": "Sponsored entry. You can't sign up — someone has to nominate you.",
+      "desc": "An existing user stakes their reputation on you; bad behavior costs them visibility too. Every match shows \"introduced by [name], who has vouched for 7 others, all still active.\" The pool is the trust graph of all sponsors. Trust-network expansion is the recruitment mechanism.",
+      "fork": "Running it as a closed community for a specific friend circle rather than open nominations? Fork it and seed the initial vouchers yourself."
+    },
+    {
+      "num": "03",
+      "slug": "date-slot-board",
+      "author": "og",
+      "live": true,
+      "title": "Slot",
+      "tagline": "Post the date, not the person.",
+      "desc": "\"Ramen Tuesday 9pm Mission, I'll be wearing red.\" People claim the slot, not the profile. After the date, both decide if there's a second. Unclaimed slots disappear at the time they were scheduled — the listing dies if no one shows. The slot itself is shareable beyond the app.",
+      "fork": "Want it for a specific neighborhood or activity type — coffee only, gallery openings, outdoor stuff? Fork it and narrow what kinds of slots people can post."
+    },
+    {
+      "num": "04",
+      "slug": "slow-dating-letters",
+      "author": "og",
+      "live": true,
+      "title": "Letters",
+      "tagline": "Async deep correspondence. One reply per day.",
+      "desc": "Write to one person at a time, long-form, over two weeks. No photos until you both agree to meet. The app rate-limits to one reply per day. The day-7 prompt is \"what would surprise me about you.\" People share their best letters as essays — the writing itself recruits.",
+      "fork": "Want the rate limit at once a week for a slower, longer arc — or the day-7 prompt changed to something specific to your community? Fork it and adjust the pacing and the prompts."
+    },
+    {
+      "num": "05",
+      "slug": "group-dating-mixer",
+      "author": "og",
+      "live": true,
+      "title": "Foursome",
+      "tagline": "Group-date primary. No 1:1 until the four-person mixer.",
+      "desc": "1:1 dates are structurally forbidden until you've been on a four-person hangout together — you, your match, and one trusted friend each. First contact is always a curated mixer of two pairs. Friends are required to participate, so they become the recruitment vector.",
+      "fork": "Want to adapt it for polycule coordination or a chosen-family social structure where the group dynamic is the whole point? Fork it and describe your group's specific rules."
+    }
+  ],
+  "ogImage": "https://good.vibes.diy/images/screenshots/dating.jpg"
+}
+--}}
+
+<style>
+  @import url("https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:ital,wght@0,400;0,500;0,700;1,400&display=optional");
+
+  :root {
+    --bg-start: oklch(0.18 0.10 300);
+    --bg-end: oklch(0.12 0.09 300);
+    --primary: oklch(0.38 0.17 295);
+    --primary-dark: oklch(0.30 0.15 295);
+    --primary-light: oklch(0.47 0.18 295);
+    --accent-green: oklch(0.70 0.15 155);
+    --accent-gold: oklch(0.88 0.18 95);
+    --danger: oklch(0.55 0.20 25);
+    --text: oklch(1 0 0);
+    --text-purple: oklch(0.25 0.16 295);
+    --card-bg: oklch(0.38 0.17 295 / 0.4);
+    --border: oklch(1 0 0 / 0.12);
+  }
+
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body {
+    font-family: "Nunito", system-ui, sans-serif;
+    background: linear-gradient(180deg, var(--bg-start), var(--bg-end));
+    background-attachment: fixed;
+    color: var(--text);
+    line-height: 1.55;
+    min-height: 100vh;
+  }
+  a { color: var(--text); text-decoration: none; }
+  a:hover { color: var(--accent-gold); }
+
+  .display { font-family: "Fredoka", sans-serif; font-weight: 700; letter-spacing: -0.02em; }
+
+  .layout { max-width: 1100px; margin: 0 auto; padding: 0 1.5rem; }
+
+  .topbar {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 1.1rem 0; border-bottom: 1px solid var(--border);
+  }
+  .topbar .brand { font-family: "Fredoka", sans-serif; font-weight: 700; letter-spacing: 0.02em; font-size: 1.25rem; }
+  .topbar .meta { font-size: 0.7rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--text); opacity: 0.6; }
+
+  .crumb { padding: 0.7rem 0; font-size: 0.7rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--text); opacity: 0.6; border-bottom: 1px solid var(--border); }
+  .crumb a { color: inherit; }
+  .crumb a:hover { opacity: 1; color: var(--accent-gold); }
+
+  .hero {
+    padding: 5rem 0 3.5rem;
+    border-bottom: 1px solid var(--border);
+    text-align: center;
+    position: relative;
+  }
+  .hero .label {
+    display: inline-block;
+    padding: 6px 14px;
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    font-family: "Nunito", sans-serif;
+    font-weight: 700;
+    font-size: 0.65rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    margin-bottom: 1.5rem;
+  }
+  .hero h1 {
+    font-family: "Fredoka", sans-serif;
+    font-size: clamp(2.8rem, 7vw, 5.5rem);
+    font-weight: 700;
+    line-height: 0.95;
+    letter-spacing: -0.04em;
+    margin-bottom: 1.5rem;
+  }
+  .hero h1 .glow {
+    background: linear-gradient(90deg, var(--accent-gold), var(--accent-green));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .hero p.lead {
+    max-width: 720px; margin: 0 auto;
+    font-size: 1.15rem; line-height: 1.55;
+    color: var(--text); opacity: 0.85;
+  }
+
+  .stats {
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    margin: 2.5rem 0;
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    overflow: hidden;
+    backdrop-filter: blur(12px);
+  }
+  @media (max-width: 700px) { .stats { grid-template-columns: repeat(2, 1fr); } }
+  .stat-cell {
+    padding: 1.25rem 1.5rem;
+    border-right: 1px solid var(--border);
+  }
+  .stat-cell:last-child { border-right: none; }
+  @media (max-width: 700px) {
+    .stat-cell { border-bottom: 1px solid var(--border); }
+    .stat-cell:nth-child(2n) { border-right: none; }
+  }
+  .stat-cell .k {
+    font-size: 0.6rem; letter-spacing: 0.2em; text-transform: uppercase;
+    color: var(--text); opacity: 0.6;
+    margin-bottom: 0.4rem;
+  }
+  .stat-cell .v {
+    font-family: "Fredoka", sans-serif; font-weight: 700;
+    font-size: 1.4rem; letter-spacing: -0.02em;
+  }
+
+  .section-label {
+    padding: 1rem 0 0.5rem;
+    font-size: 0.65rem; letter-spacing: 0.25em; text-transform: uppercase;
+    color: var(--text); opacity: 0.7;
+  }
+
+  .apps {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem;
+    padding: 1.5rem 0 4rem;
+  }
+  @media (max-width: 800px) { .apps { grid-template-columns: 1fr; } }
+
+  .app {
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 22px;
+    padding: 2rem;
+    backdrop-filter: blur(12px);
+    transition: transform .15s ease, border-color .15s ease, box-shadow .2s ease;
+    display: flex; flex-direction: column; gap: 1rem;
+  }
+  .app:hover {
+    transform: translateY(-3px);
+    border-color: var(--accent-gold);
+    box-shadow: 0 18px 60px -20px rgba(255, 200, 100, 0.25);
+  }
+  .app .head {
+    display: flex; justify-content: space-between; align-items: center;
+    padding-bottom: 0.6rem;
+    border-bottom: 1px solid var(--border);
+  }
+  .app .num {
+    font-family: "Fredoka", sans-serif; font-weight: 700;
+    font-size: 0.7rem; letter-spacing: 0.2em; text-transform: uppercase;
+    color: var(--accent-gold);
+  }
+  .app .status {
+    font-size: 0.6rem; letter-spacing: 0.2em; text-transform: uppercase;
+    padding: 4px 10px;
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    color: var(--text); opacity: 0.7;
+  }
+  .app--live .status {
+    background: var(--accent-green);
+    color: var(--bg-end);
+    border-color: var(--accent-green);
+    opacity: 1;
+    font-weight: 700;
+  }
+  .app .title {
+    font-family: "Fredoka", sans-serif; font-weight: 700;
+    font-size: 2.4rem; line-height: 1; letter-spacing: -0.02em;
+  }
+  .app .tagline {
+    font-style: italic; font-size: 1.05rem;
+    color: var(--accent-gold);
+  }
+  .app .desc { font-size: 0.98rem; line-height: 1.6; opacity: 0.9; flex: 1; }
+
+  .app .shot {
+    display: block;
+    aspect-ratio: 16/10;
+    overflow: hidden;
+    border-radius: 14px;
+    border: 1px solid var(--border);
+    background: var(--bg-end);
+  }
+  .app .shot img { width: 100%; height: 100%; object-fit: cover; }
+  .app .shot-placeholder {
+    padding: 1rem; height: 100%;
+    display: flex; align-items: center; justify-content: center;
+    font-family: "Fredoka", sans-serif; font-weight: 600;
+    font-size: 0.7rem; letter-spacing: 0.25em; text-transform: uppercase;
+    color: var(--text); opacity: 0.5;
+    text-align: center;
+  }
+
+  .app .ctas {
+    display: grid; grid-template-columns: repeat(3, 1fr);
+    gap: 0.5rem;
+  }
+  .app .ctas--single { grid-template-columns: 1fr; }
+  .btn {
+    text-align: center; padding: 0.7rem 0.5rem;
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    font-family: "Nunito", sans-serif; font-weight: 700;
+    font-size: 0.7rem; letter-spacing: 0.18em; text-transform: uppercase;
+    color: var(--text);
+    cursor: pointer;
+    transition: all .12s;
+  }
+  .btn:hover {
+    background: var(--accent-gold);
+    color: var(--bg-end);
+    border-color: var(--accent-gold);
+  }
+  .prompt-link {
+    font-size: 0.85rem; font-style: italic;
+    color: var(--text); opacity: 0.7;
+  }
+  .prompt-link:hover { opacity: 1; color: var(--accent-gold); }
+  .fork-note {
+    font-size: 0.82rem; font-style: italic;
+    color: var(--text); opacity: 0.6;
+    border-left: 1px solid var(--border);
+    padding-left: 0.75rem;
+    line-height: 1.55;
+    margin-top: 0.2rem;
+  }
+
+  .epilogue {
+    padding: 3rem 2rem;
+    background: var(--card-bg);
+    border: 1px solid var(--border);
+    border-radius: 22px;
+    backdrop-filter: blur(12px);
+    margin-bottom: 3rem;
+  }
+  .epilogue h2 {
+    font-family: "Fredoka", sans-serif; font-weight: 700;
+    font-size: 0.7rem; letter-spacing: 0.25em; text-transform: uppercase;
+    color: var(--accent-gold);
+    margin-bottom: 1rem;
+  }
+  .epilogue p {
+    font-size: 1.1rem; max-width: 720px; line-height: 1.6;
+  }
+  .epilogue .hl {
+    background: linear-gradient(90deg, var(--accent-gold), var(--accent-green));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    font-style: italic;
+    font-weight: 700;
+  }
+
+  footer.term-footer {
+    padding: 1.5rem 0;
+    border-top: 1px solid var(--border);
+    font-size: 0.7rem; letter-spacing: 0.2em; text-transform: uppercase;
+    display: flex; justify-content: space-between;
+    color: var(--text); opacity: 0.7;
+  }
+</style>
+
+<div class="layout">
+  <header class="topbar">
+    <a class="brand" href="https://links.vibes.diy/homepage">vibes.diy</a>
+    <span class="meta">For Dating &middot; five takes</span>
+  </header>
+
+  <nav class="crumb">
+    <a href="/">Home</a> &nbsp;&rsaquo;&nbsp; Dating
+  </nav>
+
+  <section class="hero">
+    <span class="label">For Dating</span>
+    <h1>Five ways out of <span class="glow">the swipe</span>.</h1>
+    <p class="lead">
+      Every existing dating app is a permanent open marketplace optimized for instant chat and immediate photos.
+      These five aren&rsquo;t. Each one breaks one assumption &mdash; the open pool, the self-listing,
+      the 1:1 default, the photo-first ritual, the anonymous signup &mdash;
+      and lets you remix the remaining shape.
+    </p>
+  </section>
+
+  <div class="stats">
+    <div class="stat-cell">
+      <div class="k">Apps</div>
+      <div class="v">Five</div>
+    </div>
+    <div class="stat-cell">
+      <div class="k">Persistence</div>
+      <div class="v">Fireproof</div>
+    </div>
+    <div class="stat-cell">
+      <div class="k">Skin</div>
+      <div class="v">Hearth</div>
+    </div>
+    <div class="stat-cell">
+      <div class="k">Stance</div>
+      <div class="v">Anti-Swipe</div>
+    </div>
+  </div>
+
+  <div class="section-label">// the takes</div>
+
+  <section class="apps">
+    {{#each apps}}
+    <article class="app {{#if live}}app--live{{else}}app--pending{{/if}}">
+      <div class="head">
+        <span class="num">&numero; {{num}} &middot; {{slug}}</span>
+        <span class="status">{{#if live}}Live{{else}}Pending{{/if}}</span>
+      </div>
+      <h2 class="title display">{{title}}</h2>
+      <p class="tagline">{{tagline}}</p>
+      <p class="desc">{{desc}}</p>
+      {{#if live}}
+        <a class="shot" href="https://vibes.diy/vibe/{{author}}/{{slug}}" aria-label="{{title}} screenshot"><img src="https://{{slug}}--{{author}}.prod-v2.vibesdiy.net/screenshot.jpg" alt="{{slug}}" onerror="this.onerror=null; this.src='{{@root.assetPrefix}}images/og-preview.png';"/></a>
+        <div class="ctas">
+          <a class="btn" href="https://vibes.diy/vibe/{{author}}/{{slug}}">Join</a>
+          <a class="btn" href="https://vibes.diy/remix/{{author}}/{{slug}}?skipChat=true">Clone</a>
+          <a class="btn" href="https://vibes.diy/remix/{{author}}/{{slug}}">Remix</a>
+        </div>
+        <a class="prompt-link" href="https://vibes.diy/chat/prompt?prompt64={{prompt64 desc}}">&#8627; the prompt that made this — describe your version instead</a>
+        {{#if fork}}<p class="fork-note">{{fork}}</p>{{/if}}
+      {{else}}
+        <div class="shot"><div class="shot-placeholder">Awaiting deploy</div></div>
+        <div class="ctas ctas--single">
+          <a class="btn" href="https://vibes.diy/chat/prompt?prompt64={{prompt64 desc}}">Start From Prompt</a>
+        </div>
+      {{/if}}
+    </article>
+    {{/each}}
+  </section>
+
+  <section class="epilogue">
+    <h2>// read me</h2>
+    <p>
+      Each of these breaks one structural assumption built into every dating app shipped this decade.
+      The open pool, the self-listing, the 1:1 default, the photo-first ritual, the anonymous signup.
+      None of them are pretending to be the next category-killer.
+      <span class="hl">They&rsquo;re shapes to remix &mdash; fork Letters and change the rate-limit, fork Foursome for polycule coordination, fork Season for your friend group.</span>
+      Start with the one that bothers you most about how things usually work.
+    </p>
+    <p style="margin-top:1.1rem; opacity:0.8;">
+      These five were built around five specific structural breaks. Your situation probably has a sixth one nobody&rsquo;s named yet. Clone whichever is closest and describe the rule you want to change.
+    </p>
+  </section>
+
+  {{> newsletter}}
+<footer class="term-footer">
+    <span>Vibes.diy &middot; <a href="https://links.vibes.diy/homepage">homepage</a> &middot; <a href="/relationships.html">relationships</a> &middot; <a href="/college.html">college</a></span>
+    <span>// fin</span>
+  </footer>
+</div>

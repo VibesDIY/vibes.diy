@@ -1,0 +1,595 @@
+{{!--
+{
+  "layout": "webring",
+  "title": "Sharing & Access — vibes.diy",
+  "description": "Who sees your thing. What they can do with it. The complete reference for sharing, access, Clone, Remix, and roles on Vibes DIY.",
+  "ogUrl": "https://good.vibes.diy/sharing/",
+  "source": "sharing",
+  "ogImage": "https://good.vibes.diy/images/screenshots/sharing.jpg"
+}
+--}}
+
+<style>
+  @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=optional");
+
+  :root {
+    --bg: oklch(0.16 0.015 260);
+    --bg-elev: oklch(0.21 0.018 260);
+    --bg-deep: oklch(0.12 0.018 260);
+    --fg: oklch(0.97 0.005 260);
+    --fg-dim: oklch(0.65 0.015 260);
+    --fg-faint: oklch(0.45 0.015 260);
+    --border: oklch(1 0 0 / 0.08);
+    --border-strong: oklch(1 0 0 / 0.18);
+    --live: oklch(0.86 0.21 135);
+    --live-text: oklch(0.18 0.05 135);
+    --punk: oklch(0.70 0.24 350);
+    --warn: oklch(0.85 0.18 80);
+  }
+
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html, body {
+    font-family: "Inter", system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--fg);
+    line-height: 1.55;
+    min-height: 100vh;
+    font-size: 16px;
+    background-image:
+      radial-gradient(circle at 8% 0%, rgba(180,255,140,0.05), transparent 35%),
+      radial-gradient(circle at 95% 100%, rgba(255,120,200,0.06), transparent 40%);
+    background-attachment: fixed;
+  }
+
+  a { color: inherit; text-decoration: none; }
+
+  .layout { max-width: 1100px; margin: 0 auto; padding: 0 1.5rem; }
+
+  /* === TOPBAR === */
+  .topbar {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 1rem 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .topbar .brand {
+    font-family: "JetBrains Mono", monospace;
+    font-weight: 700; letter-spacing: 0.04em; font-size: 1.05rem;
+  }
+  .topbar .brand::before { content: "$ "; color: var(--live); }
+  .topbar .pill {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.65rem; letter-spacing: 0.18em; text-transform: uppercase;
+    padding: 4px 12px; border: 1px solid var(--border-strong);
+    border-radius: 999px; color: var(--fg-dim);
+  }
+  .topbar .pill .dot {
+    display: inline-block; width: 6px; height: 6px; border-radius: 50%;
+    background: var(--live); margin-right: 0.4rem;
+    box-shadow: 0 0 8px var(--live); animation: pulse 2s ease infinite;
+  }
+  @keyframes pulse { 50% { opacity: 0.4; } }
+
+  .crumb {
+    padding: 0.6rem 0;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.65rem; letter-spacing: 0.18em; text-transform: uppercase;
+    color: var(--fg-faint);
+    border-bottom: 1px solid var(--border);
+  }
+  .crumb a:hover { color: var(--live); }
+
+  /* === HERO === */
+  .hero { padding: 5.5rem 0 4.5rem; border-bottom: 1px solid var(--border); }
+  .hero .kicker {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.7rem; letter-spacing: 0.3em; text-transform: uppercase;
+    color: var(--live); margin-bottom: 1.5rem;
+  }
+  .hero .kicker::before { content: "// "; opacity: 0.6; }
+  .hero h1 {
+    font-size: clamp(3rem, 9vw, 6.5rem);
+    font-weight: 900; line-height: 0.92;
+    letter-spacing: -0.04em;
+    margin-bottom: 2rem;
+  }
+  .hero h1 .green { color: var(--live); }
+  .hero .lede {
+    font-size: 1.25rem; max-width: 720px;
+    color: var(--fg); opacity: 0.85;
+  }
+
+  /* === STATS === */
+  .stats {
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    margin: 3rem 0;
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+  }
+  @media (max-width: 700px) { .stats { grid-template-columns: repeat(2, 1fr); } }
+  .stat-cell {
+    padding: 1.5rem;
+    border-right: 1px solid var(--border);
+  }
+  .stat-cell:last-child { border-right: none; }
+  @media (max-width: 700px) {
+    .stat-cell { border-bottom: 1px solid var(--border); }
+    .stat-cell:nth-child(2n) { border-right: none; }
+  }
+  .stat-cell .k {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.6rem; letter-spacing: 0.25em; text-transform: uppercase;
+    color: var(--fg-faint); margin-bottom: 0.4rem;
+  }
+  .stat-cell .v {
+    font-weight: 900; font-size: 2.2rem; line-height: 1; letter-spacing: -0.04em;
+  }
+  .stat-cell.green .v { color: var(--live); }
+  .stat-cell.pink .v { color: var(--punk); }
+
+  /* === SECTION HEADERS === */
+  .section-label {
+    padding: 4rem 0 0.5rem;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.7rem; letter-spacing: 0.3em; text-transform: uppercase;
+    color: var(--fg-faint);
+  }
+  .section-label::before { content: "// "; color: var(--live); }
+  .section-title {
+    font-size: clamp(2rem, 4vw, 2.8rem);
+    font-weight: 900; letter-spacing: -0.03em; line-height: 1;
+    margin-bottom: 0.75rem;
+  }
+  .section-sub {
+    color: var(--fg-dim);
+    font-size: 1.05rem;
+    max-width: 720px;
+    margin-bottom: 2rem;
+  }
+  .section-sub code {
+    font-family: "JetBrains Mono", monospace;
+    background: var(--bg-deep); padding: 1px 6px; border-radius: 4px;
+    color: var(--live); font-size: 0.9rem;
+  }
+
+  /* === GRANT STATES TABLE === */
+  .ref-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.82rem;
+    margin: 0.5rem 0 2.5rem;
+    border: 1px solid var(--border-strong);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+  .ref-table th {
+    text-align: left;
+    padding: 0.65rem 1rem;
+    background: var(--bg-deep);
+    color: var(--fg-faint);
+    font-size: 0.6rem; letter-spacing: 0.22em; text-transform: uppercase;
+    border-bottom: 1px solid var(--border-strong);
+  }
+  .ref-table td {
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid var(--border);
+    color: var(--fg-dim);
+    vertical-align: top;
+    line-height: 1.5;
+  }
+  .ref-table tr:last-child td { border-bottom: none; }
+  .ref-table .state-live td:first-child { color: var(--live); }
+  .ref-table .state-door td:first-child { color: var(--warn); }
+  .ref-table .state-dead td:first-child { color: var(--fg-faint); }
+  .ref-table code {
+    background: var(--bg-deep);
+    padding: 1px 5px; border-radius: 4px;
+    color: var(--live); font-size: 0.78rem;
+  }
+  @media (max-width: 700px) {
+    .ref-table { font-size: 0.72rem; }
+    .ref-table td, .ref-table th { padding: 0.6rem 0.7rem; }
+  }
+
+  /* === THREE COLUMNS === */
+  .three-up {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.25rem;
+    margin: 2rem 0;
+  }
+  @media (max-width: 800px) { .three-up { grid-template-columns: 1fr; } }
+  .step {
+    background: var(--bg-elev);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 1.75rem;
+  }
+  .step .step-num {
+    font-family: "JetBrains Mono", monospace;
+    font-weight: 700;
+    font-size: 0.7rem; letter-spacing: 0.2em; color: var(--live);
+    margin-bottom: 0.6rem;
+  }
+  .step h3 {
+    font-size: 1.3rem; font-weight: 800; letter-spacing: -0.02em;
+    margin-bottom: 0.6rem;
+  }
+  .step p { color: var(--fg-dim); font-size: 0.95rem; line-height: 1.55; }
+  .step p + p { margin-top: 0.6rem; }
+  .step p code {
+    font-family: "JetBrains Mono", monospace; font-size: 0.85rem;
+    background: var(--bg-deep); padding: 1px 6px; border-radius: 4px; color: var(--live);
+  }
+  .tag {
+    display: inline-block; margin-top: 0.8rem;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.62rem; letter-spacing: 0.15em; text-transform: uppercase;
+    padding: 3px 10px; border-radius: 999px;
+  }
+  .tag + .tag { margin-left: 0.4rem; }
+  .tag--blue { background: rgba(0,120,200,0.18); color: oklch(0.75 0.18 240); }
+  .tag--yellow { background: rgba(255,200,0,0.15); color: var(--warn); }
+
+  /* === RULES === */
+  .rules {
+    display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem;
+    margin: 2rem 0;
+  }
+  @media (max-width: 700px) { .rules { grid-template-columns: 1fr; } }
+  .rule {
+    background: var(--bg-elev);
+    border-left: 3px solid var(--live);
+    padding: 1.25rem 1.5rem;
+    border-radius: 4px;
+  }
+  .rule h4 {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.7rem; letter-spacing: 0.18em; text-transform: uppercase;
+    color: var(--live); margin-bottom: 0.5rem;
+  }
+  .rule p { color: var(--fg-dim); font-size: 0.92rem; line-height: 1.55; }
+  .rule p + p { margin-top: 0.6rem; }
+  .rule p code {
+    font-family: "JetBrains Mono", monospace; color: var(--fg);
+    background: var(--bg-deep); padding: 1px 5px; border-radius: 4px; font-size: 0.85rem;
+  }
+  .rule.warn { border-left-color: var(--warn); }
+  .rule.warn h4 { color: var(--warn); }
+  .rule.punk { border-left-color: var(--punk); }
+  .rule.punk h4 { color: var(--punk); }
+  .rule.neutral {
+    border-left: none;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 1.75rem;
+    margin-bottom: 2.5rem;
+  }
+  .rule.neutral h4 { color: var(--fg-dim); letter-spacing: 0.1em; }
+
+  /* === PILL SUBMENU MINI-TABLE === */
+  .submenu {
+    margin-top: 1.2rem;
+    width: 100%;
+    border-collapse: collapse;
+    border: 1px solid var(--border);
+    border-radius: 8px; overflow: hidden;
+    font-family: "JetBrains Mono", monospace; font-size: 0.78rem;
+  }
+  .submenu-head {
+    text-align: left;
+    padding: 0.5rem 0.85rem;
+    background: var(--bg-deep);
+    font-size: 0.58rem; letter-spacing: 0.2em; text-transform: uppercase;
+    color: var(--fg-faint);
+    border-bottom: 1px solid var(--border);
+  }
+  .submenu-cell {
+    padding: 0.65rem 0.85rem;
+    border-bottom: 1px solid var(--border);
+    color: var(--fg-dim);
+    line-height: 1.4;
+  }
+  .submenu-cell.label { color: var(--live); font-weight: 700; }
+  .submenu-cell code {
+    font-family: "JetBrains Mono", monospace;
+    background: var(--bg-deep); padding: 1px 5px; border-radius: 4px;
+    color: var(--live); font-size: 0.75rem;
+  }
+  .submenu tbody tr:last-child .submenu-cell { border-bottom: none; }
+
+  /* === CTA === */
+  .cta {
+    margin: 5rem 0 3rem;
+    padding: 3rem 2.5rem;
+    background: linear-gradient(135deg, var(--bg-elev), var(--bg-deep));
+    border: 1px solid var(--border-strong);
+    border-radius: 18px;
+    text-align: center;
+  }
+  .cta h2 {
+    font-size: clamp(2rem, 5vw, 3rem); font-weight: 900;
+    letter-spacing: -0.03em; line-height: 1; margin-bottom: 1rem;
+  }
+  .cta h2 .green { color: var(--live); }
+  .cta p { color: var(--fg-dim); max-width: 600px; margin: 0 auto 2rem; font-size: 1.05rem; }
+  .cta-buttons { display: flex; gap: 0.8rem; justify-content: center; flex-wrap: wrap; }
+  .btn {
+    display: inline-block;
+    padding: 0.85rem 1.5rem;
+    background: var(--live);
+    color: var(--live-text);
+    border: 1px solid var(--live);
+    border-radius: 999px;
+    font-family: "JetBrains Mono", monospace;
+    font-weight: 700;
+    font-size: 0.8rem; letter-spacing: 0.1em; text-transform: uppercase;
+    cursor: pointer;
+    transition: transform .15s ease, box-shadow .15s ease;
+  }
+  .btn:hover { transform: translateY(-2px); box-shadow: 0 12px 30px -10px rgba(180,255,140,0.4); }
+  .btn-secondary {
+    background: transparent; color: var(--fg); border-color: var(--border-strong);
+  }
+  .btn-secondary:hover {
+    background: var(--bg-elev);
+    box-shadow: 0 12px 30px -10px rgba(255,120,200,0.25);
+    border-color: var(--punk);
+  }
+
+  /* === FOOTER === */
+  footer.term-footer {
+    padding: 1.5rem 0;
+    border-top: 1px solid var(--border);
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.65rem; letter-spacing: 0.18em; text-transform: uppercase;
+    color: var(--fg-faint);
+    display: flex; justify-content: space-between; flex-wrap: wrap; gap: 1rem;
+  }
+  footer.term-footer a:hover { color: var(--live); }
+</style>
+
+<div class="layout">
+  <header class="topbar">
+    <a class="brand" href="https://links.vibes.diy/homepage">vibes-diy sharing</a>
+    <span class="pill"><span class="dot"></span>13 states · 3 roles · docs</span>
+  </header>
+
+  <nav class="crumb">
+    <a href="/">Home</a> &nbsp;›&nbsp; Sharing &amp; Access
+  </nav>
+
+  <section class="hero">
+    <div class="kicker">who's in. who's out. what they can do.</div>
+    <h1>
+      You made your thing.<br>
+      <span class="green">Now run who sees it.</span>
+    </h1>
+    <p class="lede">
+      Every link you share lands someone on a decision: do they get in, or do they see a door?
+      This is the full reference — every access state, every control, Clone vs Remix, the pill, all of it.
+    </p>
+  </section>
+
+  <div class="stats">
+    <div class="stat-cell green">
+      <div class="k">access states</div>
+      <div class="v">13</div>
+    </div>
+    <div class="stat-cell">
+      <div class="k">roles</div>
+      <div class="v">3</div>
+    </div>
+    <div class="stat-cell pink">
+      <div class="k">sharing controls</div>
+      <div class="v">3</div>
+    </div>
+    <div class="stat-cell">
+      <div class="k">buttons on the door</div>
+      <div class="v">2</div>
+    </div>
+  </div>
+
+  <div class="section-label">the door</div>
+  <h2 class="section-title">Every state the door can be in.</h2>
+  <p class="section-sub">When someone follows your link, the platform resolves one state. Here's all of them.</p>
+
+  <table class="ref-table">
+    <thead>
+      <tr>
+        <th>state</th>
+        <th>what it means</th>
+        <th>what they see</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr class="state-live"><td><code>owner</code></td><td>It's their thing</td><td>Full controls — Edit, Share, Update</td></tr>
+      <tr class="state-live"><td><code>granted-access.editor</code></td><td>Approved as editor</td><td>App loads, can comment</td></tr>
+      <tr class="state-live"><td><code>granted-access.viewer</code></td><td>Approved as viewer</td><td>App loads, read-only</td></tr>
+      <tr class="state-live"><td><code>granted-access.submitter</code></td><td>Approved as submitter</td><td>App loads, submitter-level interaction</td></tr>
+      <tr class="state-live"><td><code>public-access</code></td><td>Public sharing is on; no personal grant</td><td>App loads as anonymous viewer</td></tr>
+      <tr class="state-live"><td><code>accepted-email-invite</code></td><td>Redeemed an email invite link</td><td>App loads, treated as editor</td></tr>
+      <tr class="state-door"><td><code>req-login.request</code></td><td>Private; visitor is logged out</td><td>Landing card: Fresh Install + Request access</td></tr>
+      <tr class="state-door"><td><code>req-login.invite</code></td><td>Has a pending invite; not logged in</td><td>Landing card: Fresh Install + Join collab</td></tr>
+      <tr class="state-door"><td><code>req-login.auto-join</code></td><td>Auto-approve is on; visitor not logged in</td><td>Landing card: Fresh Install + Join collab</td></tr>
+      <tr class="state-door"><td><code>pending-request</code></td><td>Request submitted; owner hasn't approved yet</td><td>Landing card: button disabled → "Requested"</td></tr>
+      <tr class="state-door"><td><code>revoked-access</code></td><td>Had access; it was revoked</td><td>Landing card: button disabled → "Revoked"</td></tr>
+      <tr class="state-dead"><td><code>not-found</code></td><td>Doesn't exist, or no grant on a private thing</td><td>"App not available"</td></tr>
+      <tr class="state-dead"><td><code>not-grant</code></td><td>Exists but this visitor has no grant</td><td>Same as not-found</td></tr>
+    </tbody>
+  </table>
+
+  <div class="section-label">the door, when you're outside</div>
+  <h2 class="section-title">What they see when they don't have access.</h2>
+  <p class="section-sub">A centered card over a grid background. App title, screenshot if one exists, two buttons side by side.</p>
+
+  <div class="three-up">
+    <div class="step">
+      <div class="step-num">/ 01 / SHOW UP</div>
+      <h3>They clicked your link.</h3>
+      <p>
+        They don't have access. Instead of the app, they see a card:
+        the thing's title, a screenshot if one's been generated, and two buttons.
+        No blank error page. Always the card.
+      </p>
+    </div>
+    <div class="step">
+      <div class="step-num">/ 02 / CHOOSE</div>
+      <h3>Two buttons. Two different transactions.</h3>
+      <p>
+        <strong style="color:oklch(0.75 0.18 240)">Fresh Install</strong> — makes their own copy,
+        running with their own data. They never touch yours.
+      </p>
+      <p>
+        <strong style="color:var(--warn)">Request access / Join collab</strong> — asks to join yours.
+        Label changes by state. "Requested" or "Revoked" means it's disabled.
+      </p>
+      <span class="tag tag--blue">Fresh Install</span>
+      <span class="tag tag--yellow">Request access</span>
+    </div>
+    <div class="step">
+      <div class="step-num">/ 03 / ROUTE</div>
+      <h3>Logged out? The platform remembers.</h3>
+      <p>
+        If they're not signed in and click either button, the URL gets
+        <code>?intent=install</code> or <code>?intent=join</code>,
+        a login screen appears, and the action fires automatically after sign-in.
+        No lost clicks.
+      </p>
+    </div>
+  </div>
+
+  <div class="section-label">the controls</div>
+  <h2 class="section-title">Three switches. One comments toggle.</h2>
+  <p class="section-sub">These live in the Share panel (bottom-right pill → Community button) and in App Settings → Sharing. Same data, both places.</p>
+
+  <div class="rules">
+    <div class="rule">
+      <h4>Public Sharing</h4>
+      <p>On: anyone gets in as an anonymous viewer. No account, no request, no door at all.</p>
+      <p>Off (default): visitors without a grant need either an invite or Requests to be enabled. Otherwise they get "App not available" — no landing card, no door.</p>
+    </div>
+    <div class="rule">
+      <h4>Requests</h4>
+      <p>Off (default): visitors with no grant see "App not available" — the landing card with Request access only exists when this is on.</p>
+      <p>On: visitors can knock. A live badge count appears on your Share button as requests come in. Auto-approve option: pick a role (viewer or editor) and every incoming request gets approved automatically — no individual approvals needed.</p>
+    </div>
+    <div class="rule">
+      <h4>Email Invitations</h4>
+      <p>Type an email, click Editor or Viewer. They get a one-time token link by email.</p>
+      <p>Logged in when they open it → app loads immediately. Logged out → sign in, app opens. Invite list shows pending / accepted / revoked with per-invite role toggle and revoke action.</p>
+    </div>
+    <div class="rule punk">
+      <h4>Comments</h4>
+      <p>"Only collaborators can comment" — off by default. Off means members (editors, viewers, owner) can post and delete. Public visitors on a public app are not members and cannot comment even with this off. On means editors and owner only.</p>
+      <p>Enforced server-side. The composer is also hidden client-side for viewers and anonymous users as a prefetch UX.</p>
+    </div>
+  </div>
+
+  <div class="section-label">copy the thing</div>
+  <h2 class="section-title">Clone lands you in the app. Remix lands you in the editor.</h2>
+  <p class="section-sub">Both create a new copy under your account. One flag changes where you land.</p>
+
+  <div class="rules">
+    <div class="rule">
+      <h4>Clone</h4>
+      <p>Skips the editor entirely. Your copy goes straight to production. You land at <code>/vibe/yourname/appname</code> — the live app, running with your data.</p>
+      <p>This is also what <strong style="color:oklch(0.75 0.18 240)">Fresh Install</strong> does from the landing card.</p>
+    </div>
+    <div class="rule warn">
+      <h4>Remix</h4>
+      <p>Opens the builder with <code>?view=code</code>. Your copy starts in dev mode. You land in the editor, ready to change the source.</p>
+      <p>Same fork under the hood — one flag (<code>skipChat</code>) decides where you land.</p>
+    </div>
+  </div>
+
+  <div class="section-label">what they can do</div>
+  <h2 class="section-title">Three roles. One not in the UI.</h2>
+  <p class="section-sub">Editor and Viewer are what you assign. Submitter exists in the code but no current control exposes it.</p>
+
+  <div class="three-up">
+    <div class="step">
+      <div class="step-num">/ EDITOR</div>
+      <h3>Full collaborator.</h3>
+      <p>Can interact with the app and write to its databases. The thing responds to them the way it responds to you.</p>
+    </div>
+    <div class="step">
+      <div class="step-num">/ VIEWER</div>
+      <h3>Read-only.</h3>
+      <p>Can see and use the app. Writes to the app's databases may be restricted depending on the app's <a href="/access-api/" style="color:var(--live)">access functions</a>.</p>
+    </div>
+    <div class="step">
+      <div class="step-num">/ SUBMITTER</div>
+      <h3>Not in the UI yet.</h3>
+      <p>Present in the type system and grant enum. Intended for form-submit or write-limited workflows — add data, can't read existing records. No control exposes it currently.</p>
+    </div>
+  </div>
+
+  <div class="section-label">the floating thing</div>
+  <h2 class="section-title">The pill in the corner.</h2>
+  <p class="section-sub">Bottom-right of any <code>/vibe/</code> page, after the app loads. Expands to three buttons.</p>
+
+  <div class="rule neutral">
+    <h4>Three Buttons · Two Badge Indicators</h4>
+    <p style="margin-bottom:0.85rem;">
+      <strong style="color:var(--fg)">Home</strong> opens vibes.diy.
+      <strong style="color:var(--fg)">Community</strong> opens the Share panel.
+      <strong style="color:var(--fg)">Vibe</strong> opens a vertical submenu.
+      Badge on Community (owner only): live count of pending access requests.
+      Dot to the left of the pill (owner only): you have unpublished changes.
+    </p>
+    <table class="submenu">
+      <thead>
+        <tr>
+          <th class="submenu-head">option</th>
+          <th class="submenu-head">who sees it</th>
+          <th class="submenu-head">what it does</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="submenu-cell label">Edit</td>
+          <td class="submenu-cell">Owner only</td>
+          <td class="submenu-cell">Opens the builder at <code>/chat/</code></td>
+        </tr>
+        <tr>
+          <td class="submenu-cell label">Clone</td>
+          <td class="submenu-cell">Everyone</td>
+          <td class="submenu-cell">Copies the thing, skips the editor — lands you in the live app</td>
+        </tr>
+        <tr>
+          <td class="submenu-cell label">Remix</td>
+          <td class="submenu-cell">Everyone</td>
+          <td class="submenu-cell">Copies the thing, opens the editor ready to change things</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="cta">
+    <h2>Make your thing. <span class="green">Run it for your crew.</span></h2>
+    <p>The sharing system is how your thing becomes their thing — or stays yours. Build it on Vibes DIY.</p>
+    <p style="color:var(--fg-dim); max-width:600px; margin:0 auto 1.5rem; font-size:0.95rem; font-family:'JetBrains Mono',monospace; text-align:left; background:var(--bg-deep); padding:1rem 1.25rem; border-radius:10px; border:1px solid var(--border);">
+      <span style="color:var(--live)">// want this for your specific app?</span><br/>
+      Clone any vibes.diy app and you get the full sharing system with it.<br/>
+      Public or locked down, invite-only or open door — the controls are the same.<br/>
+      Start from an existing app that does something close to what you need,<br/>
+      then describe what's different.
+    </p>
+    <div class="cta-buttons">
+      <a class="btn" href="https://links.vibes.diy/homepage">→ vibes.diy</a>
+      <a class="btn btn-secondary" href="/expressions/">Browse what people made</a>
+    </div>
+  </div>
+
+  {{> newsletter}}
+<footer class="term-footer">
+    <span>$ vibes-diy sharing · reference</span>
+    <span>
+      <a href="https://links.vibes.diy/discord">discord</a>
+      &nbsp;·&nbsp;
+      <a href="https://links.vibes.diy/readme">github</a>
+      &nbsp;·&nbsp;
+      <a href="/">home</a>
+    </span>
+  </footer>
+</div>

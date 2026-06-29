@@ -1,0 +1,426 @@
+{{!--
+{
+  "layout": "webring",
+  "title": "For Garage Sales | Vibes DIY",
+  "description": "The Coordinator, Sale Poster, Rate My Thrift, Gear List, Cash Box. Five apps for the person running the neighborhood sale.",
+  "ogUrl": "https://good.vibes.diy/garage-sale/",
+  "source": "garage-sale",
+  "apps": [
+    {
+      "num": "01",
+      "slug": "garage-sale-coordinator",
+      "author": "og",
+      "live": true,
+      "title": "The Coordinator",
+      "tagline": "One link. Everyone's in.",
+      "desc": "Neighborhood garage sale coordinator. Organizer sets the date and address. Neighbors sign up with their spot preference, what they're selling, and whether they need change. Live participant list. Shared link, no login.",
+      "fork": "Running a multi-block sale with assigned street sections? Clone it and add a street-segment field to each signup."
+    },
+    {
+      "num": "02",
+      "slug": "yard-sale-listing",
+      "author": "og",
+      "live": true,
+      "title": "Sale Poster",
+      "tagline": "Your sale. One link. Share anywhere.",
+      "desc": "Yard sale listing with a shareable ?listing= URL. Enter address, date, hours, item categories. Share the link — anyone sees your sale card with address prominent and a Google Maps tap-to-navigate.",
+      "fork": "Selling at a flea market stall instead of your driveway? Clone it and change the address field to stall number and venue name."
+    },
+    {
+      "num": "03",
+      "slug": "rate-my-thrift",
+      "author": "og",
+      "live": true,
+      "title": "Rate My Thrift",
+      "tagline": "Show off the find. Let the crowd judge.",
+      "desc": "Post your thrift find — photo, price, where you got it, one-line brag. Each item gets a ?item= link you can paste anywhere. People rate it: 🔥 steal, 💎 gem, 😬 overpaid, 🤌 perfect. Reactions show live.",
+      "fork": "Running a vintage market and want only your vendor's finds visible? Clone it and add a vendor filter to the feed."
+    },
+    {
+      "num": "04",
+      "slug": "sale-day-checklist",
+      "author": "og",
+      "live": true,
+      "title": "Gear List",
+      "tagline": "Tables, signs, bags — claimed or needed.",
+      "desc": "Shared equipment tracker for group sales. Folding tables, chairs, extension cords, price stickers, bags, poster board, cash box. Neighbors claim what they're bringing. Shows what's still unclaimed.",
+      "fork": "Hosting an estate sale with a professional setup list? Clone it and update the item list to match your specific needs."
+    },
+    {
+      "num": "05",
+      "slug": "cash-box-tracker",
+      "author": "og",
+      "live": true,
+      "title": "Cash Box",
+      "tagline": "Who sold what. Split at the end.",
+      "desc": "Multi-seller cash tracker for group sales. Sellers register, then anyone logs a transaction: seller, item, amount. Running total per seller shown live. End-of-day split summary.",
+      "fork": "Splitting proceeds with a charity? Clone it and add a charity percentage field that comes off the top before splitting."
+    }
+  ],
+  "ogImage": "https://good.vibes.diy/images/screenshots/garage-sale.jpg"
+}
+--}}
+
+<style>
+  @import url("https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=optional");
+
+  :root {
+    --newsprint: #f2ede4;
+    --ink: #1a1714;
+    --red: #c8102e;
+    --ink-muted: rgba(26,23,20,0.55);
+    --ink-faint: rgba(26,23,20,0.12);
+    --ink-rule: rgba(26,23,20,0.18);
+  }
+
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html, body {
+    background: var(--newsprint);
+    color: var(--ink);
+    font-family: "Inter", system-ui, sans-serif;
+    line-height: 1.55;
+    min-height: 100vh;
+  }
+  a { color: inherit; text-decoration: none; }
+
+  .layout { max-width: 1060px; margin: 0 auto; padding: 0 1.5rem; }
+
+  /* Masthead rule */
+  .masthead-stripe {
+    height: 10px;
+    background: var(--ink);
+    border-top: 4px solid var(--red);
+  }
+
+  /* Topbar */
+  .topbar {
+    display: flex; justify-content: space-between; align-items: baseline;
+    padding: 1rem 0 0.75rem;
+    border-bottom: 3px double var(--ink);
+    gap: 1rem;
+  }
+  .topbar .brand {
+    font-family: "Playfair Display", serif;
+    font-weight: 900; font-size: 1.6rem;
+    letter-spacing: -0.01em;
+    line-height: 1;
+  }
+  .topbar .edition {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.6rem; letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--ink-muted); text-align: right; line-height: 1.5;
+  }
+
+  /* Breadcrumb */
+  .crumb {
+    padding: 0.45rem 0;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.62rem; letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--ink-muted);
+    border-bottom: 1px solid var(--ink-rule);
+  }
+  .crumb a:hover { color: var(--red); }
+
+  /* Hero */
+  .hero {
+    padding: 2.75rem 0 2.5rem;
+    border-bottom: 3px double var(--ink);
+    display: grid;
+    grid-template-columns: 1fr 340px;
+    gap: 2.5rem;
+    align-items: start;
+  }
+  @media (max-width: 760px) { .hero { grid-template-columns: 1fr; } }
+
+  .hero-left .kicker {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.6rem; letter-spacing: 0.2em; text-transform: uppercase;
+    color: var(--red); font-weight: 700;
+    margin-bottom: 0.75rem;
+    display: block;
+  }
+  .hero-left h1 {
+    font-family: "Playfair Display", serif;
+    font-size: clamp(2.2rem, 5.5vw, 3.8rem);
+    font-weight: 900; line-height: 1.08;
+    letter-spacing: -0.01em;
+    margin-bottom: 1rem;
+  }
+  .hero-left .dek {
+    font-size: 1.05rem; line-height: 1.65;
+    color: var(--ink-muted);
+    max-width: 520px;
+    margin-bottom: 1.5rem;
+  }
+  .hero-cta {
+    display: inline-block;
+    padding: 0.7rem 1.4rem;
+    background: var(--red); color: #fff;
+    font-family: "Inter", sans-serif; font-weight: 700;
+    font-size: 0.85rem; letter-spacing: 0.02em;
+    border: 2px solid var(--red);
+    transition: background 0.12s, color 0.12s;
+  }
+  .hero-cta:hover { background: var(--ink); border-color: var(--ink); }
+
+  .hero-shot-wrap {
+    border: 2px solid var(--ink);
+    box-shadow: 5px 5px 0 var(--ink);
+    overflow: hidden;
+  }
+  .hero-shot-cap {
+    padding: 0.4rem 0.7rem;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.58rem; letter-spacing: 0.12em; text-transform: uppercase;
+    background: var(--ink); color: #fff;
+    border-bottom: 1px solid var(--ink);
+  }
+  .hero-shot {
+    display: block; aspect-ratio: 16/9; overflow: hidden;
+    background: var(--newsprint);
+  }
+  .hero-shot img { width: 100%; height: 100%; object-fit: cover; }
+
+  /* Section rule */
+  .section-rule {
+    display: flex; align-items: center; gap: 1rem;
+    padding: 1.25rem 0 1rem;
+    border-bottom: 1px solid var(--ink-rule);
+    margin-bottom: 1.5rem;
+  }
+  .section-rule .rule-label {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.58rem; letter-spacing: 0.18em; text-transform: uppercase;
+    color: var(--ink-muted); font-weight: 700;
+    white-space: nowrap;
+  }
+  .section-rule .rule-line {
+    flex: 1; height: 1px; background: var(--ink-rule);
+  }
+  .section-rule .rule-count {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.58rem; letter-spacing: 0.12em;
+    color: var(--red); font-weight: 700;
+    white-space: nowrap;
+  }
+
+  /* Apps gallery */
+  .apps {
+    display: flex; flex-direction: column;
+    border: 2px solid var(--ink);
+    box-shadow: 5px 5px 0 var(--ink);
+    background: var(--newsprint);
+    margin-bottom: 2rem;
+  }
+  .app {
+    padding: 2rem 1.75rem;
+    border-bottom: 2px solid var(--ink);
+    display: grid; grid-template-columns: 72px 1fr 300px;
+    gap: 2rem; align-items: start;
+    transition: background 0.12s;
+  }
+  .app:last-child { border-bottom: none; }
+  @media (max-width: 800px) { .app { grid-template-columns: 1fr; gap: 1rem; } }
+  .app:hover { background: rgba(26,23,20,0.03); }
+
+  .app .num-cell { display: flex; flex-direction: column; gap: 0.4rem; }
+  .app .num {
+    font-family: "Playfair Display", serif;
+    font-weight: 900; font-size: 2.8rem; line-height: 0.9;
+    letter-spacing: -0.02em; color: var(--ink-faint);
+  }
+  .app--live .num { color: var(--red); }
+  .app .status {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.5rem; letter-spacing: 0.2em; text-transform: uppercase;
+    padding: 3px 6px; border: 1px solid var(--ink-rule);
+    color: var(--ink-muted); text-align: center;
+  }
+  .app--live .status { background: var(--ink); color: #fff; border-color: var(--ink); }
+
+  .app .body { display: flex; flex-direction: column; gap: 0.6rem; }
+  .app .body .title {
+    font-family: "Playfair Display", serif;
+    font-size: 1.75rem; font-weight: 900;
+    letter-spacing: -0.01em; line-height: 1.1;
+  }
+  .app .body .tagline {
+    font-family: "Inter", sans-serif;
+    font-size: 0.88rem; line-height: 1.5;
+    color: var(--red); font-weight: 600; font-style: italic;
+  }
+  .app .body .desc { font-size: 0.95rem; line-height: 1.6; color: var(--ink-muted); }
+
+  .app .right { display: flex; flex-direction: column; gap: 0.6rem; }
+  .app .shot {
+    display: block; aspect-ratio: 16/9; overflow: hidden;
+    border: 2px solid var(--ink); background: rgba(26,23,20,0.05);
+  }
+  .app .shot img { width: 100%; height: 100%; object-fit: cover; }
+  .app .shot-placeholder {
+    padding: 1rem; height: 100%; display: flex; align-items: center; justify-content: center;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.62rem; letter-spacing: 0.15em; text-transform: uppercase;
+    color: var(--ink-muted); text-align: center;
+  }
+  .app .ctas { display: grid; grid-template-columns: repeat(3, 1fr); border: 2px solid var(--ink); overflow: hidden; }
+  .app .ctas--single { grid-template-columns: 1fr; }
+  .btn {
+    text-align: center; padding: 0.55rem 0.5rem;
+    background: transparent; border-right: 1px solid var(--ink-rule);
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.62rem; letter-spacing: 0.12em; text-transform: uppercase; font-weight: 700;
+    color: var(--ink); cursor: pointer; transition: background 0.12s;
+  }
+  .btn:last-child { border-right: none; }
+  .btn:hover { background: var(--red); color: #fff; }
+  .prompt-link {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.65rem; color: var(--ink-muted); text-decoration: underline;
+  }
+  .prompt-link:hover { color: var(--red); }
+  .fork-note {
+    font-size: 0.72rem; color: var(--ink-muted); line-height: 1.5;
+    border-left: 2px solid var(--red); padding-left: 0.6rem; margin-top: 0.3rem;
+    font-style: italic;
+  }
+
+  /* Epilogue */
+  .epilogue {
+    padding: 3rem 0;
+    border-top: 3px double var(--ink);
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 3rem;
+    margin-bottom: 2rem;
+  }
+  @media (max-width: 700px) { .epilogue { grid-template-columns: 1fr; gap: 1.5rem; } }
+  .epilogue-col h2 {
+    font-family: "Playfair Display", serif;
+    font-size: 1.1rem; font-weight: 900;
+    letter-spacing: -0.01em;
+    margin-bottom: 0.75rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--ink-rule);
+  }
+  .epilogue-col p { font-size: 0.97rem; line-height: 1.65; color: var(--ink-muted); }
+  .epilogue-col p + p { margin-top: 0.75rem; }
+  .epilogue-col .hl { color: var(--ink); font-weight: 600; }
+
+  /* Footer */
+  footer {
+    padding: 1.25rem 0; font-size: 0.68rem; font-weight: 600; color: var(--ink-muted);
+    display: flex; justify-content: space-between;
+    border-top: 1px solid var(--ink-rule);
+    font-family: "JetBrains Mono", monospace;
+    letter-spacing: 0.05em;
+  }
+  footer a:hover { color: var(--red); }
+</style>
+
+<div class="masthead-stripe"></div>
+<div class="layout">
+  <header class="topbar">
+    <a class="brand" href="https://links.vibes.diy/homepage">Vibes DIY</a>
+    <div class="edition">
+      For Garage Sales &middot; Five Tools<br/>
+      No group chat required
+    </div>
+  </header>
+
+  <nav class="crumb">
+    <a href="/">Home</a> &nbsp;/&nbsp; Garage Sale
+  </nav>
+
+  <section class="hero">
+    <div class="hero-left">
+      {{#with apps.[0]}}
+      <span class="kicker">Spotlight &mdash; App 01</span>
+      <h1>One link. Everyone's in. No group chat needed.</h1>
+      <p class="dek">
+        The Coordinator handles neighbor sign-ups, spot claims, and the who-needs-change list &mdash; so you can spend Saturday selling, not texting.
+      </p>
+      <a class="hero-cta" href="https://vibes.diy/vibe/og/garage-sale-coordinator">Start the Sign-Up &rarr;</a>
+      {{/with}}
+    </div>
+    <div class="hero-right">
+      {{#with apps.[0]}}
+      <div class="hero-shot-wrap">
+        <div class="hero-shot-cap">The Coordinator &mdash; Live</div>
+        <a class="hero-shot" href="https://vibes.diy/vibe/{{author}}/{{slug}}" aria-label="The Coordinator screenshot">
+          <img src="https://{{slug}}--{{author}}.prod-v2.vibesdiy.net/screenshot.jpg" alt="garage-sale-coordinator" onerror="this.onerror=null; this.src='{{@root.assetPrefix}}images/og-preview.png';"/>
+        </a>
+      </div>
+      {{/with}}
+    </div>
+  </section>
+
+  <div class="section-rule">
+    <span class="rule-label">Also in this issue</span>
+    <span class="rule-line"></span>
+    <span class="rule-count">4 more tools</span>
+  </div>
+
+  <section class="apps">
+    {{#each apps}}
+    {{#unless @first}}
+    <article class="app {{#if live}}app--live{{else}}app--pending{{/if}}">
+      <div class="num-cell">
+        <div class="num">{{num}}</div>
+        <div class="status">{{#if live}}Live{{else}}Soon{{/if}}</div>
+      </div>
+      <div class="body">
+        <h2 class="title">{{title}}</h2>
+        <p class="tagline">{{tagline}}</p>
+        <p class="desc">{{desc}}</p>
+      </div>
+      <div class="right">
+        {{#if live}}
+          <a class="shot" href="https://vibes.diy/vibe/{{author}}/{{slug}}" aria-label="{{title}} screenshot"><img src="https://{{slug}}--{{author}}.prod-v2.vibesdiy.net/screenshot.jpg" alt="{{slug}}" onerror="this.onerror=null; this.src='{{@root.assetPrefix}}images/og-preview.png';"/></a>
+          <div class="ctas">
+            <a class="btn" href="https://vibes.diy/vibe/{{author}}/{{slug}}">Join</a>
+            <a class="btn" href="https://vibes.diy/remix/{{author}}/{{slug}}?skipChat=true">Clone</a>
+            <a class="btn" href="https://vibes.diy/remix/{{author}}/{{slug}}">Remix</a>
+          </div>
+          <a class="prompt-link" href="https://vibes.diy/chat/prompt?prompt64={{prompt64 desc}}">// start fresh from this prompt</a>
+          {{#if fork}}<p class="fork-note">{{fork}}</p>{{/if}}
+        {{else}}
+          <div class="shot"><div class="shot-placeholder">generating</div></div>
+          <div class="ctas ctas--single">
+            <a class="btn" href="https://vibes.diy/chat/prompt?prompt64={{prompt64 desc}}">Start From Prompt</a>
+          </div>
+          {{#if fork}}<p class="fork-note">{{fork}}</p>{{/if}}
+        {{/if}}
+      </div>
+    </article>
+    {{/unless}}
+    {{/each}}
+  </section>
+
+  <div class="epilogue">
+    <div class="epilogue-col">
+      <h2>The situation</h2>
+      <p>
+        Every neighborhood sale runs on one person fielding forty texts. Who's setting up where. Who needs change. Who's bringing the card table. Who's out by noon. The Coordinator is <span class="hl">one link, shared in the group chat once</span> &mdash; neighbors sign themselves up, claim their spot, and flag what they need.
+      </p>
+      <p>
+        The other four handle what comes after: making your individual sale findable, tracking shared gear, rating the finds, and splitting the money at the end of the day without a spreadsheet argument.
+      </p>
+    </div>
+    <div class="epilogue-col">
+      <h2>Make it yours</h2>
+      <p>
+        These five were built for a standard neighborhood multi-family sale. Your situation is probably different &mdash; a church rummage, an estate clearout, a flea market stall, a community room booking. <span class="hl">Clone whichever is closest</span> and describe what's different about your setup.
+      </p>
+      <p>
+        Each app is yours to customize: change the fields, the categories, the split logic, the address prompt. You own the fork. No one else's sale lives in it.
+      </p>
+    </div>
+  </div>
+
+  {{> newsletter}}
+  <footer>
+    <span>Vibes.diy &middot; <a href="https://links.vibes.diy/homepage">homepage</a> &middot; <a href="https://links.vibes.diy/discord">discord</a></span>
+    <span>Garage Sale</span>
+  </footer>
+</div>

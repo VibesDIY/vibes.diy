@@ -1,0 +1,415 @@
+{{!--
+{
+  "layout": "webring",
+  "title": "Free Carnival Games | Vibes DIY",
+  "description": "Four free carnival games you can play right now: ring toss, balloon darts, whack-a-mole, and skee-ball. No downloads, no signups. Clone any game and make it yours.",
+  "ogUrl": "https://good.vibes.diy/carnival/",
+  "source": "carnival",
+  "ogImage": "https://good.vibes.diy/images/screenshots/carnival.jpg",
+  "apps": [
+    {
+      "num": "01",
+      "slug": "carnival-ring-toss",
+      "author": "og",
+      "live": true,
+      "title": "Ring Toss",
+      "tagline": "Drag to aim. Release to throw. Don't choke.",
+      "desc": "Classic carnival ring toss. Drag on the booth to aim your throw, release to send a ring sailing toward the pegs. Five pegs worth 10–25 points each. Five rings per round. High scores saved and shared with everyone at the booth.",
+      "fork": "Want bigger pegs? Smaller rings? A rigged version where the house always wins? Clone it."
+    },
+    {
+      "num": "02",
+      "slug": "dart-pop-carnival",
+      "author": "og",
+      "live": true,
+      "title": "Balloon Darts",
+      "tagline": "Wall of balloons. Ten sharp darts. Pop for points.",
+      "desc": "Colorful balloon wall in a grid. Tap to throw a dart — different colored balloons are worth different points. Ten darts per round. Satisfying pop animation when you nail one. Leaderboard tracks your best rounds.",
+      "fork": "Want water balloons that splash? Or balloons that move? Clone it and add your twist."
+    },
+    {
+      "num": "03",
+      "slug": "whack-a-mole-arcade",
+      "author": "og",
+      "live": true,
+      "title": "Whack-a-Mole",
+      "tagline": "They pop up. You smash them. They get faster.",
+      "desc": "Moles pop up from a 3x3 grid of holes. Tap before they duck back down. Speed ramps up as the 30-second clock ticks. Tracks hits, misses, and your hit rate. High scores persist across sessions.",
+      "fork": "Want gophers instead of moles? A 5x5 grid? Bonus golden moles worth triple? Clone it."
+    },
+    {
+      "num": "04",
+      "slug": "skee-ball-alley",
+      "author": "og",
+      "live": true,
+      "title": "Skee-Ball",
+      "tagline": "Roll it up the ramp. Aim for the bullseye.",
+      "desc": "Drag to roll a ball up the alley and into the scoring rings. Center bullseye is 100 points, outer rings scale down to 10. Nine balls per game. The drag mechanic determines speed and angle — too much power and you overshoot, too little and you fall short.",
+      "fork": "Want a longer alley? Moving targets? A two-player split-screen version? Clone it."
+    }
+  ]
+}
+--}}
+
+<style>
+  @import url("https://fonts.googleapis.com/css2?family=Bungee+Shade&family=Bungee&family=Inter:wght@400;600;700;900&display=optional");
+
+  :root {
+    --bg:         #0a0a1a;
+    --surface:    #141428;
+    --surface-2:  #1a1a35;
+    --neon-pink:  #ff2d95;
+    --neon-cyan:  #00f0ff;
+    --neon-yellow:#ffe100;
+    --neon-green: #39ff14;
+    --text:       #e8e0f0;
+    --text-dim:   #8a80a0;
+    --border:     rgba(255, 45, 149, 0.2);
+    --glow-pink:  0 0 20px rgba(255, 45, 149, 0.4), 0 0 40px rgba(255, 45, 149, 0.1);
+    --glow-cyan:  0 0 20px rgba(0, 240, 255, 0.4), 0 0 40px rgba(0, 240, 255, 0.1);
+  }
+
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html, body {
+    background-color: var(--bg);
+    background-image:
+      radial-gradient(ellipse at 20% 0%, rgba(255, 45, 149, 0.08) 0%, transparent 50%),
+      radial-gradient(ellipse at 80% 100%, rgba(0, 240, 255, 0.06) 0%, transparent 50%),
+      repeating-linear-gradient(0deg, transparent, transparent 59px, rgba(255, 45, 149, 0.04) 59px, rgba(255, 45, 149, 0.04) 60px),
+      repeating-linear-gradient(90deg, transparent, transparent 59px, rgba(0, 240, 255, 0.04) 59px, rgba(0, 240, 255, 0.04) 60px);
+    color: var(--text);
+    font-family: "Inter", sans-serif;
+    line-height: 1.55;
+    min-height: 100vh;
+  }
+
+  a { color: var(--neon-cyan); text-decoration: none; }
+  a:hover { color: var(--neon-pink); }
+
+  .layout { max-width: 1100px; margin: 0 auto; padding: 0 1.25rem; }
+
+  /* ── Topbar ── */
+  .topbar {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 1.1rem 0;
+    border-bottom: 2px solid var(--border);
+  }
+  .topbar .brand {
+    font-family: "Bungee", cursive;
+    font-size: 1.15rem; letter-spacing: 0.06em;
+    color: var(--neon-cyan);
+    text-shadow: var(--glow-cyan);
+  }
+  .topbar .meta {
+    font-size: 0.6rem; letter-spacing: 0.25em; text-transform: uppercase;
+    color: var(--text-dim);
+  }
+  .topbar .meta b { color: var(--neon-pink); text-shadow: var(--glow-pink); }
+
+  /* ── Hero ── */
+  .hero {
+    padding: 4.5rem 0 3.5rem;
+    border-bottom: 2px solid var(--border);
+    text-align: center;
+  }
+  .hero .badge {
+    display: inline-block;
+    font-size: 0.65rem; letter-spacing: 0.35em; text-transform: uppercase;
+    padding: 6px 18px;
+    background: var(--neon-pink);
+    color: #fff;
+    font-weight: 700;
+    margin-bottom: 1.5rem;
+    box-shadow: var(--glow-pink);
+  }
+  .hero h1 {
+    font-family: "Bungee Shade", cursive;
+    font-size: clamp(2.6rem, 9vw, 6rem);
+    line-height: 1.05;
+    letter-spacing: 0.02em;
+    margin-bottom: 1.5rem;
+    color: var(--neon-yellow);
+    text-shadow: 0 0 30px rgba(255, 225, 0, 0.4), 0 0 60px rgba(255, 225, 0, 0.15);
+  }
+  .hero h1 .accent { color: var(--neon-pink); text-shadow: var(--glow-pink); }
+  .hero p.lead {
+    font-size: 1.05rem;
+    max-width: 650px;
+    margin: 0 auto;
+    line-height: 1.7;
+    color: var(--text-dim);
+  }
+  .hero .hl { color: var(--neon-cyan); font-weight: 700; }
+
+  /* ── Stats ── */
+  .stats {
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    border-bottom: 2px solid var(--border);
+  }
+  @media (max-width: 700px) { .stats { grid-template-columns: repeat(2, 1fr); } }
+  .stat-cell {
+    padding: 1.25rem 1.5rem;
+    border-right: 1px solid var(--border);
+    text-align: center;
+  }
+  .stat-cell:last-child { border-right: none; }
+  @media (max-width: 700px) {
+    .stat-cell { border-bottom: 1px solid var(--border); }
+    .stat-cell:nth-child(2n) { border-right: none; }
+  }
+  .stat-cell .k {
+    font-size: 0.55rem; letter-spacing: 0.25em; text-transform: uppercase;
+    margin-bottom: 0.4rem; color: var(--text-dim);
+  }
+  .stat-cell .v {
+    font-family: "Bungee", cursive;
+    font-size: 1.2rem; letter-spacing: 0.02em;
+    color: var(--neon-cyan);
+    text-shadow: var(--glow-cyan);
+  }
+
+  /* ── Section label ── */
+  .section-label {
+    padding: 1.5rem 0 0.75rem;
+    font-size: 0.6rem; letter-spacing: 0.3em; text-transform: uppercase;
+    border-bottom: 1px dashed var(--border);
+    margin-bottom: 1.5rem;
+    color: var(--text-dim);
+  }
+  .section-label::before { content: "▸ "; color: var(--neon-pink); }
+
+  /* ── Apps ── */
+  .apps {
+    display: flex; flex-direction: column;
+    border-top: 1px solid var(--border);
+    border-bottom: 2px solid var(--border);
+  }
+  .app {
+    padding: 2.5rem 0;
+    border-bottom: 1px solid var(--border);
+    display: grid;
+    grid-template-columns: 72px 1fr 300px;
+    gap: 2rem;
+    align-items: start;
+    transition: background 0.15s;
+  }
+  .app:last-child { border-bottom: none; }
+  @media (max-width: 800px) { .app { grid-template-columns: 1fr; gap: 1.2rem; } }
+  .app:hover { background: rgba(255, 45, 149, 0.03); }
+
+  .app .num-cell {
+    display: flex; flex-direction: column; gap: 0.4rem;
+  }
+  .app .num {
+    font-family: "Bungee", cursive;
+    font-size: 2.8rem; line-height: 0.9;
+    letter-spacing: -0.02em; color: var(--neon-pink);
+    text-shadow: var(--glow-pink);
+  }
+  .app .status {
+    font-size: 0.5rem; letter-spacing: 0.22em; text-transform: uppercase;
+    padding: 3px 6px;
+    border: 1px solid var(--border);
+    text-align: center; color: var(--text-dim);
+  }
+  .app--live .status { border-color: var(--neon-green); color: var(--neon-green); }
+
+  .app .body { display: flex; flex-direction: column; gap: 0.75rem; }
+  .app .body .title {
+    font-family: "Bungee", cursive;
+    font-size: 1.7rem; letter-spacing: 0.04em;
+    line-height: 1.1; color: var(--neon-yellow);
+    text-shadow: 0 0 15px rgba(255, 225, 0, 0.3);
+  }
+  .app .body .tagline {
+    font-size: 0.8rem; letter-spacing: 0.06em;
+    padding: 5px 10px;
+    background: rgba(255, 45, 149, 0.12);
+    border-left: 2px solid var(--neon-pink);
+    display: inline-block; align-self: flex-start;
+    color: var(--text-dim);
+  }
+  .app .body .desc { font-size: 0.9rem; line-height: 1.65; color: var(--text); }
+
+  .app .right { display: flex; flex-direction: column; gap: 0.6rem; }
+  .app .shot {
+    display: block; aspect-ratio: 16/9; overflow: hidden;
+    border: 1px solid var(--border);
+    background: var(--surface-2);
+    transition: border-color 0.15s;
+  }
+  .app .shot:hover { border-color: var(--neon-cyan); box-shadow: var(--glow-cyan); }
+  .app .shot img { width: 100%; height: 100%; object-fit: cover; }
+  .app .shot-placeholder {
+    padding: 1rem; height: 100%; display: flex; align-items: center; justify-content: center;
+    font-size: 0.65rem; letter-spacing: 0.2em; text-transform: uppercase;
+    color: var(--text-dim);
+  }
+  .app .ctas {
+    display: grid; grid-template-columns: repeat(3, 1fr);
+    border: 1px solid var(--border);
+  }
+  .app .ctas--single { grid-template-columns: 1fr; }
+  .btn {
+    text-align: center;
+    padding: 0.55rem 0.5rem;
+    background: transparent;
+    border-right: 1px solid var(--border);
+    font-size: 0.6rem; letter-spacing: 0.18em; text-transform: uppercase; font-weight: 700;
+    color: var(--text-dim);
+    cursor: pointer;
+    transition: background 0.12s, color 0.12s;
+  }
+  .btn:last-child { border-right: none; }
+  .btn:hover { background: rgba(255, 45, 149, 0.12); color: var(--neon-pink); }
+
+  .prompt-link {
+    font-size: 0.6rem; letter-spacing: 0.04em; color: var(--text-dim);
+  }
+  .prompt-link:hover { color: var(--neon-cyan); text-decoration: underline; }
+
+  .fork-note {
+    font-size: 0.65rem;
+    line-height: 1.55;
+    color: var(--text-dim);
+    border-left: 2px solid var(--neon-pink);
+    padding-left: 0.6rem;
+    margin-top: 0.15rem;
+  }
+
+  /* ── CTA Banner ── */
+  .cta-banner {
+    padding: 3.5rem 2rem;
+    text-align: center;
+    border-bottom: 2px solid var(--border);
+    background:
+      radial-gradient(ellipse at center, rgba(255, 45, 149, 0.08) 0%, transparent 60%);
+  }
+  .cta-banner h2 {
+    font-family: "Bungee Shade", cursive;
+    font-size: clamp(1.6rem, 5vw, 3rem);
+    color: var(--neon-cyan);
+    text-shadow: var(--glow-cyan);
+    margin-bottom: 1rem;
+  }
+  .cta-banner p {
+    font-size: 1rem;
+    color: var(--text-dim);
+    max-width: 550px;
+    margin: 0 auto 1.5rem;
+    line-height: 1.65;
+  }
+  .cta-banner .big-btn {
+    display: inline-block;
+    padding: 1rem 2.5rem;
+    font-family: "Bungee", cursive;
+    font-size: 1rem;
+    letter-spacing: 0.08em;
+    background: var(--neon-pink);
+    color: #fff;
+    border: none;
+    cursor: pointer;
+    text-decoration: none;
+    box-shadow: var(--glow-pink);
+    transition: background 0.15s, box-shadow 0.15s;
+  }
+  .cta-banner .big-btn:hover {
+    background: var(--neon-cyan);
+    color: var(--bg);
+    box-shadow: var(--glow-cyan);
+  }
+
+  /* ── Footer ── */
+  footer.neon-footer {
+    padding: 1.1rem 0;
+    font-size: 0.58rem; letter-spacing: 0.2em; text-transform: uppercase;
+    display: flex; justify-content: space-between;
+    color: var(--text-dim);
+  }
+  footer.neon-footer a:hover { color: var(--neon-pink); }
+</style>
+
+<div class="layout">
+  <header class="topbar">
+    <a class="brand" href="https://links.vibes.diy/homepage">VIBES.DIY</a>
+    <span class="meta"><b>FREE CARNIVAL GAMES</b> · four playable apps</span>
+  </header>
+
+  <section class="hero">
+    <span class="badge">Step Right Up</span>
+    <h1>Free<br/>Carnival<br/><span class="accent">Games</span></h1>
+    <p class="lead">
+      Four midway classics you can play <span class="hl">right now in your browser</span>. No downloads, no signups, no quarters. Ring toss, balloon darts, whack-a-mole, skee-ball. <span class="hl">Every game is yours to clone and customize.</span>
+    </p>
+  </section>
+
+  <div class="stats">
+    <div class="stat-cell">
+      <div class="k">Games</div>
+      <div class="v">Four</div>
+    </div>
+    <div class="stat-cell">
+      <div class="k">Price</div>
+      <div class="v">Free</div>
+    </div>
+    <div class="stat-cell">
+      <div class="k">Multiplayer</div>
+      <div class="v">Real-time</div>
+    </div>
+    <div class="stat-cell">
+      <div class="k">Your Data</div>
+      <div class="v">Yours</div>
+    </div>
+  </div>
+
+  <div class="section-label">The Midway</div>
+
+  <section class="apps">
+    {{#each apps}}
+      <article class="app {{#if live}}app--live{{else}}app--pending{{/if}}">
+        <div class="num-cell">
+          <div class="num">{{num}}</div>
+          <div class="status">{{#if live}}Live{{else}}Pending{{/if}}</div>
+        </div>
+        <div class="body">
+          <h2 class="title">{{title}}</h2>
+          <span class="tagline">{{tagline}}</span>
+          <p class="desc">{{desc}}</p>
+        </div>
+        <div class="right">
+          {{#if live}}
+            <a class="shot" href="https://vibes.diy/vibe/{{author}}/{{slug}}" aria-label="{{title}} screenshot">
+              <img src="https://{{slug}}--{{author}}.prod-v2.vibesdiy.net/screenshot.jpg" alt="{{slug}}" onerror="this.onerror=null; this.src='{{@root.assetPrefix}}images/og-preview.png';"/>
+            </a>
+            <div class="ctas">
+              <a class="btn" href="https://vibes.diy/vibe/{{author}}/{{slug}}">Play</a>
+              <a class="btn" href="https://vibes.diy/remix/{{author}}/{{slug}}?skipChat=true">Clone</a>
+              <a class="btn" href="https://vibes.diy/remix/{{author}}/{{slug}}">Remix</a>
+            </div>
+            <a class="prompt-link" href="https://vibes.diy/chat/prompt?prompt64={{prompt64 desc}}">▸ start fresh from this prompt</a>
+            {{#if fork}}<p class="fork-note">{{fork}}</p>{{/if}}
+          {{else}}
+            <div class="shot"><div class="shot-placeholder">awaiting deploy</div></div>
+            <div class="ctas ctas--single">
+              <a class="btn" href="https://vibes.diy/chat/prompt?prompt64={{prompt64 desc}}">Start From Prompt</a>
+            </div>
+          {{/if}}
+        </div>
+      </article>
+    {{/each}}
+  </section>
+
+  <section class="cta-banner">
+    <h2>Build Your Own</h2>
+    <p>Every game here was made with Vibes DIY. Describe what you want, get a working app in seconds. No code required — but the code is yours if you want it.</p>
+    <a class="big-btn" href="https://links.vibes.diy/homepage">Start Building</a>
+  </section>
+
+  {{> newsletter}}
+
+  <footer class="neon-footer">
+    <span>Vibes.diy · <a href="https://links.vibes.diy/homepage">homepage</a> · <a href="https://links.vibes.diy/discord">discord</a></span>
+    <span>▸ END MIDWAY</span>
+  </footer>
+</div>

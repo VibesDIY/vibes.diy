@@ -1,0 +1,948 @@
+{{!--
+{
+  "layout": "webring",
+  "title": "Shared Rituals, Real Trust — Vibes DIY",
+  "description": "Most communities don't need enterprise software. They need social infrastructure — tools that respect the shape of how people already live together. An essay, illustrated with apps.",
+  "ogUrl": "https://good.vibes.diy/shared-rituals/",
+  "source": "shared-rituals"
+}
+--}}
+
+<style>
+  @import url("https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Inter:wght@400;500;600;700;800&display=swap");
+
+  :root {
+    --paper: #f3ead8;
+    --paper-deep: #ece1c8;
+    --ink: #1f1a14;
+    --ink-soft: #463b2b;
+    --ink-faint: #7a6a52;
+    --rule: rgba(31, 26, 20, 0.18);
+    --ember: #b23a1a;
+    --ember-deep: #7c2710;
+    --gold: #b08436;
+    --moss: #4a6235;
+  }
+
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: "EB Garamond", "Iowan Old Style", "Apple Garamond", Georgia, serif;
+    font-size: 1.18rem;
+    line-height: 1.62;
+    color: var(--ink);
+    background-color: var(--paper);
+    background-image:
+      radial-gradient(circle at 12% 8%, rgba(176, 132, 54, 0.07), transparent 38%),
+      radial-gradient(circle at 88% 92%, rgba(178, 58, 26, 0.05), transparent 40%);
+    background-attachment: fixed;
+    min-height: 100vh;
+  }
+
+  a { color: var(--ember-deep); text-decoration: underline; text-underline-offset: 2px; text-decoration-thickness: 1px; }
+  a:hover { color: var(--ink); }
+
+  ::selection { background: var(--gold); color: var(--ink); }
+
+  /* === NAV === */
+  .topnav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.4rem 2rem;
+    border-bottom: 1px solid var(--rule);
+    background: var(--paper);
+    position: sticky;
+    top: 0;
+    z-index: 50;
+  }
+  .topnav .mast {
+    font-family: "Inter", sans-serif;
+    font-size: 0.72rem;
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    font-weight: 700;
+    text-decoration: none;
+  }
+  .topnav .mast em { font-style: normal; color: var(--ember); }
+  .topnav .crumbs {
+    font-family: "Inter", sans-serif;
+    font-size: 0.7rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+  }
+  .topnav .crumbs a { color: var(--ink-faint); text-decoration: none; }
+  .topnav .crumbs a:hover { color: var(--ember); }
+
+  /* === ARTICLE === */
+  article {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 4rem 1.5rem 2rem;
+  }
+
+  .kicker {
+    font-family: "Inter", sans-serif;
+    font-size: 0.72rem;
+    letter-spacing: 0.32em;
+    text-transform: uppercase;
+    color: var(--ember);
+    font-weight: 700;
+    margin-bottom: 1.5rem;
+  }
+  .kicker::before { content: "§ "; opacity: 0.6; }
+
+  h1.title {
+    font-family: "EB Garamond", Georgia, serif;
+    font-weight: 600;
+    font-size: clamp(2.7rem, 6vw, 4.4rem);
+    line-height: 1.02;
+    letter-spacing: -0.015em;
+    margin-bottom: 1rem;
+  }
+  h1.title em {
+    font-style: italic;
+    color: var(--ember-deep);
+  }
+
+  .dek {
+    font-family: "EB Garamond", Georgia, serif;
+    font-style: italic;
+    font-size: 1.35rem;
+    line-height: 1.45;
+    color: var(--ink-soft);
+    margin-bottom: 1.5rem;
+    max-width: 36em;
+  }
+
+  .byline {
+    font-family: "Inter", sans-serif;
+    font-size: 0.72rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    padding-top: 1.25rem;
+    border-top: 1px solid var(--rule);
+    margin-bottom: 3rem;
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+  .byline strong { color: var(--ink); font-weight: 600; }
+
+  /* drop cap on first paragraph */
+  .lede::first-letter {
+    font-family: "EB Garamond", Georgia, serif;
+    font-weight: 700;
+    font-size: 4.6rem;
+    line-height: 0.85;
+    float: left;
+    padding: 0.35rem 0.55rem 0 0;
+    color: var(--ember-deep);
+  }
+
+  p {
+    margin-bottom: 1.25rem;
+  }
+
+  p.tight + p.tight { margin-top: -0.65rem; }
+  p.tight {
+    margin-bottom: 0.35rem;
+    font-size: 1.18rem;
+    line-height: 1.45;
+  }
+
+  /* short line emphasis */
+  .stanza {
+    margin: 1.5rem 0 1.75rem;
+    font-size: 1.22rem;
+    line-height: 1.5;
+  }
+  .stanza p { margin: 0; }
+
+  /* prose lists */
+  ul.prose-list, ol.prose-list {
+    list-style: none;
+    margin: 1.25rem 0 1.75rem;
+    padding-left: 1.25rem;
+  }
+  ul.prose-list li, ol.prose-list li {
+    font-size: 1.1rem;
+    line-height: 1.5;
+    margin-bottom: 0.4rem;
+    position: relative;
+    padding-left: 0.5rem;
+  }
+  ul.prose-list li::before {
+    content: "·";
+    position: absolute;
+    left: -0.75rem;
+    color: var(--ember);
+    font-size: 1.6rem;
+    line-height: 1;
+    top: -0.05em;
+  }
+
+  /* PULL QUOTE */
+  blockquote.pull {
+    margin: 3rem -1rem;
+    padding: 1.75rem 2rem;
+    border-top: 2px solid var(--ink);
+    border-bottom: 2px solid var(--ink);
+    font-style: italic;
+    font-size: clamp(1.45rem, 3vw, 1.9rem);
+    line-height: 1.32;
+    text-align: center;
+    color: var(--ink);
+  }
+  blockquote.pull span.em { color: var(--ember-deep); font-weight: 600; font-style: normal; }
+
+  /* divider */
+  .ornament {
+    text-align: center;
+    margin: 2.5rem 0 2rem;
+    font-family: "Inter", sans-serif;
+    font-size: 0.85rem;
+    letter-spacing: 0.5em;
+    color: var(--ink-faint);
+  }
+
+  /* SECTION HEADS */
+  h2.section-head {
+    font-family: "EB Garamond", Georgia, serif;
+    font-weight: 600;
+    font-size: clamp(1.75rem, 3.2vw, 2.4rem);
+    line-height: 1.1;
+    margin: 3rem 0 1rem;
+    letter-spacing: -0.01em;
+    color: var(--ink);
+  }
+  h2.section-head em { font-style: italic; color: var(--ember-deep); }
+
+  /* === APP FIGURE (inline) === */
+  figure.app {
+    margin: 2.5rem -1rem;
+    background: var(--paper-deep);
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    overflow: hidden;
+    display: grid;
+    grid-template-columns: 1.1fr 1fr;
+    box-shadow: 0 1px 0 rgba(31, 26, 20, 0.06);
+  }
+  @media (max-width: 640px) {
+    figure.app { grid-template-columns: 1fr; margin-left: 0; margin-right: 0; }
+  }
+  figure.app .shot {
+    background: var(--ink);
+    aspect-ratio: 16 / 10;
+    overflow: hidden;
+  }
+  figure.app .shot img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+  figure.app figcaption {
+    padding: 1.25rem 1.5rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    gap: 0.6rem;
+  }
+  figure.app .label {
+    font-family: "Inter", sans-serif;
+    font-size: 0.62rem;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    font-weight: 600;
+  }
+  figure.app .label::before { content: "→ "; color: var(--ember); }
+  figure.app h3 {
+    font-family: "EB Garamond", Georgia, serif;
+    font-weight: 600;
+    font-size: 1.35rem;
+    line-height: 1.15;
+    letter-spacing: -0.01em;
+  }
+  figure.app p {
+    font-family: "EB Garamond", Georgia, serif;
+    font-style: italic;
+    font-size: 1rem;
+    line-height: 1.45;
+    color: var(--ink-soft);
+    margin: 0;
+  }
+  figure.app .links {
+    display: flex;
+    gap: 0.4rem;
+    flex-wrap: wrap;
+    padding-top: 0.4rem;
+  }
+  figure.app .links a {
+    font-family: "Inter", sans-serif;
+    font-size: 0.66rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    font-weight: 600;
+    padding: 0.32rem 0.7rem;
+    border: 1px solid var(--ink);
+    border-radius: 999px;
+    color: var(--ink);
+    text-decoration: none;
+    transition: background 0.15s, color 0.15s;
+  }
+  figure.app .links a:hover { background: var(--ink); color: var(--paper); }
+  figure.app .links a.primary { background: var(--ink); color: var(--paper); }
+  figure.app .links a.primary:hover { background: var(--ember-deep); border-color: var(--ember-deep); }
+
+  /* === GALLERY (closing) === */
+  .gallery-wrap {
+    background: var(--paper-deep);
+    border-top: 1px solid var(--rule);
+    border-bottom: 1px solid var(--rule);
+    margin-top: 4rem;
+    padding: 4rem 0;
+  }
+  .gallery {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 1.5rem;
+  }
+  .gallery-kicker {
+    font-family: "Inter", sans-serif;
+    font-size: 0.72rem;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--ember);
+    font-weight: 700;
+    margin-bottom: 0.75rem;
+  }
+  .gallery-kicker::before { content: "§ "; opacity: 0.6; }
+  .gallery h2 {
+    font-family: "EB Garamond", Georgia, serif;
+    font-weight: 600;
+    font-size: clamp(2rem, 4vw, 3rem);
+    line-height: 1.05;
+    margin-bottom: 0.75rem;
+    letter-spacing: -0.015em;
+  }
+  .gallery h2 em { font-style: italic; color: var(--ember-deep); }
+  .gallery .gallery-lede {
+    font-family: "EB Garamond", Georgia, serif;
+    font-style: italic;
+    font-size: 1.2rem;
+    color: var(--ink-soft);
+    max-width: 36em;
+    margin-bottom: 2.5rem;
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.25rem;
+  }
+  @media (max-width: 900px) { .grid { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 540px) { .grid { grid-template-columns: 1fr; } }
+  .gcard {
+    background: var(--paper);
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+  .gcard:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 24px -12px rgba(31, 26, 20, 0.25);
+  }
+  .gcard .shot { aspect-ratio: 16 / 10; background: var(--ink); }
+  .gcard .shot img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .gcard .body {
+    padding: 1rem 1.1rem 1.2rem;
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    gap: 0.35rem;
+  }
+  .gcard .cat {
+    font-family: "Inter", sans-serif;
+    font-size: 0.58rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    font-weight: 600;
+  }
+  .gcard h3 {
+    font-family: "EB Garamond", Georgia, serif;
+    font-weight: 600;
+    font-size: 1.18rem;
+    line-height: 1.15;
+    margin-bottom: 0.2rem;
+  }
+  .gcard p {
+    font-family: "EB Garamond", Georgia, serif;
+    font-style: italic;
+    font-size: 0.95rem;
+    line-height: 1.4;
+    color: var(--ink-soft);
+    margin: 0;
+    flex: 1;
+  }
+  .gcard .links {
+    display: flex;
+    gap: 0.4rem;
+    flex-wrap: wrap;
+    margin-top: 0.7rem;
+  }
+  .gcard .links a {
+    font-family: "Inter", sans-serif;
+    font-size: 0.6rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    font-weight: 600;
+    padding: 0.28rem 0.6rem;
+    border: 1px solid var(--ink);
+    border-radius: 999px;
+    color: var(--ink);
+    text-decoration: none;
+  }
+  .gcard .links a:hover { background: var(--ink); color: var(--paper); }
+  .gcard .links a.primary { background: var(--ink); color: var(--paper); }
+  .gcard .links a.primary:hover { background: var(--ember-deep); border-color: var(--ember-deep); }
+
+  /* === CTA === */
+  .closing {
+    max-width: 760px;
+    margin: 5rem auto 4rem;
+    padding: 3rem 1.5rem;
+    text-align: center;
+  }
+  .closing h2 {
+    font-family: "EB Garamond", Georgia, serif;
+    font-weight: 600;
+    font-size: clamp(2.2rem, 5vw, 3.4rem);
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+    margin-bottom: 1rem;
+  }
+  .closing h2 em { color: var(--ember-deep); }
+  .closing p {
+    font-family: "EB Garamond", Georgia, serif;
+    font-style: italic;
+    font-size: 1.2rem;
+    color: var(--ink-soft);
+    max-width: 30em;
+    margin: 0 auto 2rem;
+  }
+  .cta-row {
+    display: flex;
+    gap: 0.75rem;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+  .btn {
+    font-family: "Inter", sans-serif;
+    font-size: 0.78rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    font-weight: 700;
+    padding: 0.95rem 1.6rem;
+    border: 2px solid var(--ink);
+    border-radius: 999px;
+    text-decoration: none;
+    transition: transform 0.15s, box-shadow 0.15s;
+  }
+  .btn.primary { background: var(--ink); color: var(--paper); }
+  .btn.primary:hover {
+    background: var(--ember-deep);
+    border-color: var(--ember-deep);
+    transform: translateY(-2px);
+    box-shadow: 0 10px 22px -10px rgba(124, 39, 16, 0.45);
+  }
+  .btn.secondary { background: transparent; color: var(--ink); }
+  .btn.secondary:hover { background: var(--ink); color: var(--paper); transform: translateY(-2px); }
+
+  /* === FOOTER === */
+  footer.colo {
+    border-top: 1px solid var(--rule);
+    padding: 2rem 1.5rem;
+    text-align: center;
+    font-family: "Inter", sans-serif;
+    font-size: 0.68rem;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+  }
+  footer.colo a { color: var(--ink-faint); text-decoration: none; margin: 0 0.5rem; }
+  footer.colo a:hover { color: var(--ember); }
+</style>
+
+<nav class="topnav">
+  <a class="mast" href="https://links.vibes.diy/homepage">Vibes <em>DIY</em> · Field Notes</a>
+  <div class="crumbs"><a href="/">Home</a> &nbsp;›&nbsp; Shared Rituals</div>
+</nav>
+
+<article>
+  <div class="kicker">An essay on social infrastructure</div>
+  <h1 class="title">Shared Rituals, <em>Real Trust</em>.</h1>
+  <p class="dek">Most communities don't need enterprise software. They need tools that respect the shape of how they already live.</p>
+  <div class="byline">
+    <span><strong>Vibes DIY</strong> · field notes</span>
+    <span>illustrated with apps from our community</span>
+  </div>
+
+  <p class="lede">There was a moment in the early internet when software felt different.</p>
+
+  <div class="stanza">
+    <p class="tight">Not smarter.</p>
+    <p class="tight">Not more optimized.</p>
+    <p class="tight"><em>More human.</em></p>
+  </div>
+
+  <p>People stayed in strangers' homes through Airbnb.</p>
+  <p>They edited Wikipedia with no expectation of ownership.</p>
+  <p>They hosted each other on couches.</p>
+  <p>They uploaded weird music.</p>
+  <p>They ran forums for obscure hobbies.</p>
+  <p>They built open-source software with people they had never met.</p>
+
+  <p>This was not because the technology was advanced.</p>
+
+  <p>It was because the <em>social boundary</em> was still visible.</p>
+
+  <p>The people using these systems felt:</p>
+
+  <ul class="prose-list">
+    <li>culturally aligned</li>
+    <li>experimentally minded</li>
+    <li>mutually legible</li>
+    <li>part of the same horizon</li>
+  </ul>
+
+  <p>The software did not create trust from nothing.</p>
+
+  <blockquote class="pull">It <span class="em">amplified</span> trust that already existed.</blockquote>
+
+  <p>Over time, the internet became optimized for scale instead of scenes. Platforms stopped feeling like places where communities coordinated themselves and started feeling like feeds competing for attention.</p>
+
+  <p>The result was software that became very good at engagement and very bad at belonging.</p>
+
+  <div class="ornament">· · ·</div>
+
+  <h2 class="section-head">But underneath all of this, people <em>never stopped</em> organizing themselves.</h2>
+
+  <p>House show networks still route touring bands through cities.</p>
+
+  <figure class="app">
+    <a class="shot" href="https://vibes.diy/vibe/og/crooked-cricket-2926">
+      <img
+        src="https://crooked-cricket-2926--og.prod-v2.vibesdiy.net/screenshot.jpg"
+        alt="Toronto Pride event finder"
+        onerror="this.onerror=null; this.src='{{assetPrefix}}images/og-preview.png';">
+    </a>
+    <figcaption>
+      <div class="label">Scenes that route themselves</div>
+      <h3>Event Finder for a City's Scene</h3>
+      <p>Searches the open web for parades, parties, and shows in a city, then saves them to a shared calendar. The scene already exists — the app just learns to read it.</p>
+      <div class="links">
+        <a class="primary" href="https://vibes.diy/vibe/og/crooked-cricket-2926">Visit</a>
+        <a href="https://vibes.diy/remix/og/crooked-cricket-2926?skipChat=true">Clone</a>
+        <a href="https://vibes.diy/remix/og/crooked-cricket-2926">Remix</a>
+      </div>
+    </figcaption>
+  </figure>
+
+  <p>Parents still coordinate carpools.</p>
+
+  <p>Restaurants still swap shifts in group chats.</p>
+
+  <figure class="app">
+    <a class="shot" href="https://vibes.diy/vibe/og/shift-cash-board">
+      <img
+        src="https://shift-cash-board--og.prod-v2.vibesdiy.net/screenshot.jpg"
+        alt="End-of-shift cash and tip reconciliation board"
+        onerror="this.onerror=null; this.src='{{assetPrefix}}images/og-preview.png';">
+    </a>
+    <figcaption>
+      <div class="label">Trust at shift change</div>
+      <h3>End-of-Shift Cash &amp; Tip Board</h3>
+      <p>Closers enter cash, card total, tip pool, voids. The app flags discrepancies and stores a per-closer sign-off. The handoff already happens — the app gives it memory.</p>
+      <div class="links">
+        <a class="primary" href="https://vibes.diy/vibe/og/shift-cash-board">Visit</a>
+        <a href="https://vibes.diy/remix/og/shift-cash-board?skipChat=true">Clone</a>
+        <a href="https://vibes.diy/remix/og/shift-cash-board">Remix</a>
+      </div>
+    </figcaption>
+  </figure>
+
+  <p>Neighborhoods still improvise mutual aid during storms.</p>
+
+  <figure class="app">
+    <a class="shot" href="https://vibes.diy/vibe/og/ancient-echo-1713">
+      <img
+        src="https://ancient-echo-1713--og.prod-v2.vibesdiy.net/screenshot.jpg"
+        alt="Shelter, food bank, and transit help directory"
+        onerror="this.onerror=null; this.src='{{assetPrefix}}images/og-preview.png';">
+    </a>
+    <figcaption>
+      <div class="label">Mutual aid, made legible</div>
+      <h3>Shelter &amp; Food Bank Finder</h3>
+      <p>A bilingual directory of shelters, food banks, and transit help — with offline mode and a QR share. Built so the people doing the work can hand it to anyone, anywhere.</p>
+      <div class="links">
+        <a class="primary" href="https://vibes.diy/vibe/og/ancient-echo-1713">Visit</a>
+        <a href="https://vibes.diy/remix/og/ancient-echo-1713?skipChat=true">Clone</a>
+        <a href="https://vibes.diy/remix/og/ancient-echo-1713">Remix</a>
+      </div>
+    </figcaption>
+  </figure>
+
+  <p>Friends still run trips, events, projects, rituals, clubs, scenes, and subcultures through spreadsheets and text threads.</p>
+
+  <figure class="app">
+    <a class="shot" href="https://vibes.diy/vibe/og/potluck-signup-board">
+      <img
+        src="https://potluck-signup-board--og.prod-v2.vibesdiy.net/screenshot.jpg"
+        alt="Potluck signup board"
+        onerror="this.onerror=null; this.src='{{assetPrefix}}images/og-preview.png';">
+    </a>
+    <figcaption>
+      <div class="label">The spreadsheet, redrawn</div>
+      <h3>Potluck Signup Board</h3>
+      <p>Who's bringing what, with dietary tags and a button to claim a missing category. The ritual is older than the internet. The board just stops the duplicate desserts.</p>
+      <div class="links">
+        <a class="primary" href="https://vibes.diy/vibe/og/potluck-signup-board">Visit</a>
+        <a href="https://vibes.diy/remix/og/potluck-signup-board?skipChat=true">Clone</a>
+        <a href="https://vibes.diy/remix/og/potluck-signup-board">Remix</a>
+      </div>
+      <p style="font-size:0.88rem; font-style:italic; color:var(--ink-faint); margin-top:0.5rem;">Clone this and describe your version — monthly book club, camping trip, holiday party — the shape is the&nbsp;same.</p>
+    </figcaption>
+  </figure>
+
+  <blockquote class="pull">The coordination <span class="em">already exists</span>.<br>The software just rarely respects its shape.</blockquote>
+
+  <div class="ornament">· · ·</div>
+
+  <h2 class="section-head">Most tools assume <em>the wrong shape</em>.</h2>
+
+  <p>Most tools assume:</p>
+
+  <ul class="prose-list">
+    <li>hierarchy</li>
+    <li>scale</li>
+    <li>monetization</li>
+    <li>formal process</li>
+    <li>endless onboarding</li>
+    <li>account trees</li>
+    <li>dashboards</li>
+  </ul>
+
+  <p>But many real communities operate differently.</p>
+
+  <p>They run on:</p>
+
+  <ul class="prose-list">
+    <li>trust</li>
+    <li>reputation</li>
+    <li>repeated interaction</li>
+    <li>lightweight norms</li>
+    <li>shared context</li>
+    <li>recurring rituals</li>
+  </ul>
+
+  <figure class="app">
+    <a class="shot" href="https://vibes.diy/vibe/og/holiday-card-roster">
+      <img
+        src="https://holiday-card-roster--og.prod-v2.vibesdiy.net/screenshot.jpg"
+        alt="Holiday card roster, year over year"
+        onerror="this.onerror=null; this.src='{{assetPrefix}}images/og-preview.png';">
+    </a>
+    <figcaption>
+      <div class="label">Memory across years</div>
+      <h3>Holiday Card Roster</h3>
+      <p>Per-year columns of sent, received, skipped. A small artifact of a household's repeated interaction — the kind of memory most software forgets.</p>
+      <div class="links">
+        <a class="primary" href="https://vibes.diy/vibe/og/holiday-card-roster">Visit</a>
+        <a href="https://vibes.diy/remix/og/holiday-card-roster?skipChat=true">Clone</a>
+        <a href="https://vibes.diy/remix/og/holiday-card-roster">Remix</a>
+      </div>
+    </figcaption>
+  </figure>
+
+  <p>These groups do not need enterprise software.</p>
+
+  <p>They need <em>social infrastructure</em>.</p>
+
+  <div class="stanza">
+    <p class="tight">Not social media.</p>
+    <p class="tight"><em>Social infrastructure.</em></p>
+  </div>
+
+  <p>That distinction matters.</p>
+
+  <blockquote class="pull">
+    Social media <span class="em">extracts</span> attention from communities.<br>
+    Social infrastructure <span class="em">strengthens</span> communities.
+  </blockquote>
+
+  <p>One turns people into audiences.</p>
+
+  <p>The other helps them coordinate their lives together.</p>
+
+  <div class="ornament">· · ·</div>
+
+  <h2 class="section-head">Why we care about <em>collaboration signals</em>, not clicks.</h2>
+
+  <p>A click tells you:</p>
+
+  <p style="font-style: italic; padding-left: 1.5rem; border-left: 2px solid var(--ember); color: var(--ink-soft);">"someone was curious."</p>
+
+  <p>A share tells you:</p>
+
+  <p style="font-style: italic; padding-left: 1.5rem; border-left: 2px solid var(--ember); color: var(--ink-soft);">"someone saw themselves and their people in this."</p>
+
+  <p>That is a much deeper signal.</p>
+
+  <p>When someone immediately invites collaborators into a tool, something important is happening:</p>
+
+  <ul class="prose-list">
+    <li>the workflow is real</li>
+    <li>the trust network already exists</li>
+    <li>the software fits the social shape</li>
+    <li>the ritual wants infrastructure</li>
+  </ul>
+
+  <figure class="app">
+    <a class="shot" href="https://vibes.diy/vibe/og/seder-run-of-show">
+      <img
+        src="https://seder-run-of-show--og.prod-v2.vibesdiy.net/screenshot.jpg"
+        alt="Holiday-host run-of-show checklist"
+        onerror="this.onerror=null; this.src='{{assetPrefix}}images/og-preview.png';">
+    </a>
+    <figcaption>
+      <div class="label">A ritual wants infrastructure</div>
+      <h3>Seder Run-of-Show</h3>
+      <p>Ordered steps with times and notes — when each dish goes in, who reads which passage — saved as a reusable template for next year. The host already knows the shape. The app just remembers it.</p>
+      <div class="links">
+        <a class="primary" href="https://vibes.diy/vibe/og/seder-run-of-show">Visit</a>
+        <a href="https://vibes.diy/remix/og/seder-run-of-show?skipChat=true">Clone</a>
+        <a href="https://vibes.diy/remix/og/seder-run-of-show">Remix</a>
+      </div>
+      <p style="font-size:0.88rem; font-style:italic; color:var(--ink-faint); margin-top:0.5rem;">Clone it and describe your ritual — Thanksgiving, Diwali dinner, quarterly family reunion — the structure holds for any recurring&nbsp;event.</p>
+    </figcaption>
+  </figure>
+
+  <div class="ornament">· · ·</div>
+
+  <h2 class="section-head">Invisible institutions, <em>waiting to become legible</em> to themselves.</h2>
+
+  <p>The internet is full of invisible institutions waiting to become legible to themselves.</p>
+
+  <p>Every scene already has:</p>
+
+  <ul class="prose-list">
+    <li>memory</li>
+    <li>rituals</li>
+    <li>coordination patterns</li>
+    <li>identity</li>
+    <li>governance</li>
+    <li>trust</li>
+  </ul>
+
+  <p>What they often lack is software that feels native to the way they already live.</p>
+
+  <p>That is the opportunity now.</p>
+
+  <p>Not building software for <em>"users."</em></p>
+
+  <p>Building software for <em>scenes</em>.</p>
+
+  <blockquote class="pull">
+    <span class="em">Shared rituals.</span> <span class="em">Real trust.</span>
+  </blockquote>
+</article>
+
+<!-- === GALLERY: Apps illustrated (and a few more) === -->
+<section class="gallery-wrap">
+  <div class="gallery">
+    <div class="gallery-kicker">Field examples</div>
+    <h2>Software that fits the <em>social shape</em>.</h2>
+    <p class="gallery-lede">A small bench of vibes built by and for the scenes that use them. Visit one, clone it for your crew, or remix it into something that fits the way you already live.</p>
+
+    <div class="grid">
+
+      <a class="gcard" href="https://vibes.diy/vibe/og/sunday-school-classes">
+        <div class="shot"><img
+          src="https://sunday-school-classes--og.prod-v2.vibesdiy.net/screenshot.jpg"
+          alt="Sunday school roster + lesson schedule"
+          onerror="this.onerror=null; this.src='{{assetPrefix}}images/og-preview.png';"></div>
+        <div class="body">
+          <div class="cat">Religious-ed admin</div>
+          <h3>Sunday School Roster</h3>
+          <p>Class list with teacher and room, weekly curriculum, per-Sunday attendance. The kind of memory a congregation already keeps in someone's binder.</p>
+          <div class="links">
+            <a class="primary" href="https://vibes.diy/vibe/og/sunday-school-classes">Visit</a>
+            <a href="https://vibes.diy/remix/og/sunday-school-classes">Remix</a>
+          </div>
+        </div>
+      </a>
+
+      <a class="gcard" href="https://vibes.diy/vibe/og/prep-list-by-section">
+        <div class="shot"><img
+          src="https://prep-list-by-section--og.prod-v2.vibesdiy.net/screenshot.jpg"
+          alt="Restaurant prep list by station"
+          onerror="this.onerror=null; this.src='{{assetPrefix}}images/og-preview.png';"></div>
+        <div class="body">
+          <div class="cat">Back of house</div>
+          <h3>Prep List by Section</h3>
+          <p>Sauté, grill, garde manger, pastry — owner, due-time, done check. The chef sees everyone's board so missed prep is visible before service.</p>
+          <div class="links">
+            <a class="primary" href="https://vibes.diy/vibe/og/prep-list-by-section">Visit</a>
+            <a href="https://vibes.diy/remix/og/prep-list-by-section">Remix</a>
+          </div>
+        </div>
+      </a>
+
+      <a class="gcard" href="https://vibes.diy/vibe/jchris/free-bots-swap">
+        <div class="shot"><img
+          src="https://free-bots-swap--jchris.prod-v2.vibesdiy.net/screenshot.jpg"
+          alt="Neighborhood free items swap"
+          onerror="this.onerror=null; this.src='{{assetPrefix}}images/og-preview.png';"></div>
+        <div class="body">
+          <div class="cat">Neighborhood swap</div>
+          <h3>Free-Bots Swap</h3>
+          <p>A geo feed of free items, with claimed and pending states and lightweight moderation. Keeps stuff moving locally instead of into the landfill.</p>
+          <div class="links">
+            <a class="primary" href="https://vibes.diy/vibe/jchris/free-bots-swap">Visit</a>
+            <a href="https://vibes.diy/remix/jchris/free-bots-swap">Remix</a>
+          </div>
+        </div>
+      </a>
+
+      <a class="gcard" href="https://vibes.diy/vibe/og/closing-sign-off-checklist">
+        <div class="shot"><img
+          src="https://closing-sign-off-checklist--og.prod-v2.vibesdiy.net/screenshot.jpg"
+          alt="Multi-person closing sign-off checklist"
+          onerror="this.onerror=null; this.src='{{assetPrefix}}images/og-preview.png';"></div>
+        <div class="body">
+          <div class="cat">Lock-up ritual</div>
+          <h3>Closing Sign-Off Checklist</h3>
+          <p>Configurable stations — lights, safe, alarm, back door — each one checked and initialed before the lock-up indicator turns green.</p>
+          <div class="links">
+            <a class="primary" href="https://vibes.diy/vibe/og/closing-sign-off-checklist">Visit</a>
+            <a href="https://vibes.diy/remix/og/closing-sign-off-checklist">Remix</a>
+          </div>
+        </div>
+      </a>
+
+      <a class="gcard" href="https://vibes.diy/vibe/og/shotgun-rotation-tracker">
+        <div class="shot"><img
+          src="https://shotgun-rotation-tracker--og.prod-v2.vibesdiy.net/screenshot.jpg"
+          alt="Road-trip shotgun rotation tracker"
+          onerror="this.onerror=null; this.src='{{assetPrefix}}images/og-preview.png';"></div>
+        <div class="body">
+          <div class="cat">Friend trip</div>
+          <h3>Shotgun Rotation Tracker</h3>
+          <p>Tracks who called shotgun on which leg and auto-suggests the next person owed a turn up front. A small rule, kept in software so nobody has to be the heavy.</p>
+          <div class="links">
+            <a class="primary" href="https://vibes.diy/vibe/og/shotgun-rotation-tracker">Visit</a>
+            <a href="https://vibes.diy/remix/og/shotgun-rotation-tracker">Remix</a>
+          </div>
+        </div>
+      </a>
+
+      <a class="gcard" href="https://vibes.diy/vibe/og/family-recipe-vault">
+        <div class="shot"><img
+          src="https://family-recipe-vault--og.prod-v2.vibesdiy.net/screenshot.jpg"
+          alt="Family recipe vault with voice memos"
+          onerror="this.onerror=null; this.src='{{assetPrefix}}images/og-preview.png';"></div>
+        <div class="body">
+          <div class="cat">Heritage</div>
+          <h3>Family Recipe Vault</h3>
+          <p>Recipe collection with optional voice-memo capture, tagged by occasion and contributor, with a print-friendly view of every card. A scene's memory, finally writeable.</p>
+          <div class="links">
+            <a class="primary" href="https://vibes.diy/vibe/og/family-recipe-vault">Visit</a>
+            <a href="https://vibes.diy/remix/og/family-recipe-vault">Remix</a>
+          </div>
+        </div>
+      </a>
+
+      <a class="gcard" href="https://vibes.diy/vibe/og/trade-desk-handoff">
+        <div class="shot"><img
+          src="https://trade-desk-handoff--og.prod-v2.vibesdiy.net/screenshot.jpg"
+          alt="Trade-desk end-of-day handoff log"
+          onerror="this.onerror=null; this.src='{{assetPrefix}}images/og-preview.png';"></div>
+        <div class="body">
+          <div class="cat">Shift change</div>
+          <h3>Trade Desk Handoff Log</h3>
+          <p>Open positions, pending orders, client touches, must-know notes. The incoming shift acknowledges-read so nothing falls through.</p>
+          <div class="links">
+            <a class="primary" href="https://vibes.diy/vibe/og/trade-desk-handoff">Visit</a>
+            <a href="https://vibes.diy/remix/og/trade-desk-handoff">Remix</a>
+          </div>
+        </div>
+      </a>
+
+      <a class="gcard" href="https://vibes.diy/vibe/jchris/side-kits-trading-list">
+        <div class="shot"><img
+          src="https://side-kits-trading-list--jchris.prod-v2.vibesdiy.net/screenshot.jpg"
+          alt="Side-kits trading sign-up list"
+          onerror="this.onerror=null; this.src='{{assetPrefix}}images/og-preview.png';"></div>
+        <div class="body">
+          <div class="cat">Trading network</div>
+          <h3>Side-Kits Trading List</h3>
+          <p>Post what you have or want; claim and borrow flow; simple availability status; notifications when matches appear. A small market, run by people who already know each other.</p>
+          <div class="links">
+            <a class="primary" href="https://vibes.diy/vibe/jchris/side-kits-trading-list">Visit</a>
+            <a href="https://vibes.diy/remix/jchris/side-kits-trading-list">Remix</a>
+          </div>
+        </div>
+      </a>
+
+      <a class="gcard" href="https://vibes.diy/vibe/og/front-desk-queue">
+        <div class="shot"><img
+          src="https://front-desk-queue--og.prod-v2.vibesdiy.net/screenshot.jpg"
+          alt="Front-desk walk-in and reservation queue"
+          onerror="this.onerror=null; this.src='{{assetPrefix}}images/og-preview.png';"></div>
+        <div class="body">
+          <div class="cat">Front of house</div>
+          <h3>Front-Desk Queue</h3>
+          <p>Today's slots in a timeline; tap to add a name, phone, service, duration; check-in or no-show; running-late slots highlighted. The clipboard at the door, in software.</p>
+          <div class="links">
+            <a class="primary" href="https://vibes.diy/vibe/og/front-desk-queue">Visit</a>
+            <a href="https://vibes.diy/remix/og/front-desk-queue">Remix</a>
+          </div>
+        </div>
+      </a>
+
+    </div>
+  </div>
+</section>
+
+<!-- === CTA === -->
+<div class="closing">
+  <h2>Build software for <em>your scene</em>.</h2>
+  <p>Every app on this page started as a single prompt by someone who already knew the shape of the thing. Start with yours.</p>
+  <div class="cta-row">
+    <a class="btn primary" href="https://links.vibes.diy/homepage">Start on Vibes DIY →</a>
+    <a class="btn secondary" href="/featured-apps/">Browse more apps</a>
+  </div>
+</div>
+
+{{> newsletter}}
+<footer class="colo">
+  <span>Vibes DIY · Field Notes</span>
+  &nbsp;·&nbsp;
+  <a href="https://links.vibes.diy/discord">Discord</a>
+  <a href="https://links.vibes.diy/Substack">Substack</a>
+  <a href="https://links.vibes.diy/YouTube">YouTube</a>
+  <a href="/">Home</a>
+</footer>

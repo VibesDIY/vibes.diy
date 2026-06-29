@@ -1,0 +1,258 @@
+{{!--
+{
+  "layout": "webring",
+  "title": "For Summer Camp Staff | Vibes DIY",
+  "description": "Cabin check-in, duty rotations, activity sign-ups, lost and found, pickup log. Five narrow-scope tools for camp coordinators who need one screen, not a spreadsheet.",
+  "ogUrl": "https://good.vibes.diy/summer-camp/",
+  "source": "summer-camp",
+  "apps": [
+    {
+      "num": "01",
+      "slug": "camp-arrival-board",
+      "author": "og",
+      "live": true,
+      "title": "Cabin Arrival Tracker",
+      "tagline": "Who's here. Who's still on the bus.",
+      "desc": "Camp check-in board. List of campers with name, cabin assignment, and arrival status (expected / arrived / on bus). Staff tap to mark arrived. One screen, no login."
+    },
+    {
+      "num": "02",
+      "slug": "staff-duty-board",
+      "author": "og",
+      "live": true,
+      "title": "Duty Board",
+      "tagline": "Today's rotation, no confusion.",
+      "desc": "Today's duty rotation for camp staff. Slots: kitchen, waterfront, flag ceremony, evening program, overnight. Each slot shows who's assigned. Swap button sends a notification."
+    },
+    {
+      "num": "03",
+      "slug": "camp-activity-signup",
+      "author": "og",
+      "live": true,
+      "title": "Activity Sign-Up",
+      "tagline": "Three blocks, one choice each. Done.",
+      "desc": "Summer camp activity sign-up. Three activity blocks per day (morning, afternoon, free choice). Each block has a list of activities with capacity. Campers add their name to one per block."
+    },
+    {
+      "num": "04",
+      "slug": "camp-lost-found",
+      "author": "og",
+      "live": true,
+      "title": "Lost & Found",
+      "tagline": "Post it. Claim it. Gone.",
+      "desc": "Camp lost-and-found board. Anyone posts an item: photo, description, location found. Claim button with your name. Items disappear once claimed."
+    },
+    {
+      "num": "05",
+      "slug": "camper-pickup-log",
+      "author": "og",
+      "live": true,
+      "title": "Pickup Log",
+      "tagline": "Who went home and when.",
+      "desc": "End-of-session pickup tracker. List of campers. Staff mark each one picked up: time, name of adult, relationship. Running total of who's still waiting."
+    }
+  ],
+  "ogImage": "https://good.vibes.diy/images/screenshots/summer-camp.jpg"
+}
+--}}
+
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Space+Grotesk:wght@600;700&display=optional');
+
+  :root {
+    --bg: #14251a;
+    --surface: #1f3627;
+    --ink: #edf5ee;
+    --muted: #b7ccb9;
+    --line: #365341;
+    --brand: #f19c42;
+    --brand-strong: #de7d1f;
+    --accent: #89c795;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    font-family: 'Inter', system-ui, sans-serif;
+    color: var(--ink);
+    line-height: 1.56;
+    background: radial-gradient(circle at 15% 0, #22412e 0, var(--bg) 40%), var(--bg);
+  }
+
+  a { color: inherit; text-decoration: none; }
+
+  .page { max-width: 980px; margin: 0 auto; padding: 0 1.25rem 4rem; }
+
+  .topbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.05rem 0;
+    border-bottom: 1px solid var(--line);
+    font-size: 0.85rem;
+  }
+
+  .brand { font-weight: 800; color: var(--brand); letter-spacing: 0.02em; }
+  .path { color: var(--muted); font-weight: 600; }
+
+  .hero { padding: 3rem 0 2.2rem; }
+
+  .eyebrow {
+    display: inline-block;
+    font-size: 0.7rem;
+    letter-spacing: 0.11em;
+    text-transform: uppercase;
+    font-weight: 700;
+    color: var(--accent);
+    margin-bottom: 0.9rem;
+  }
+
+  h1 {
+    margin: 0;
+    font-family: 'Space Grotesk', system-ui, sans-serif;
+    font-size: clamp(2.2rem, 5vw, 3.45rem);
+    line-height: 1.06;
+  }
+
+  .lead { margin: 1rem 0 1.35rem; max-width: 62ch; color: var(--muted); font-size: 1.02rem; }
+
+  .primary-cta {
+    display: inline-block;
+    background: var(--brand);
+    color: #1f2f22;
+    font-weight: 800;
+    border-radius: 0.62rem;
+    padding: 0.8rem 1.16rem;
+  }
+
+  .primary-cta:hover { background: #ffb86b; }
+
+  .hero-img {
+    width: 100%;
+    height: 320px;
+    object-fit: cover;
+    border-radius: 0.9rem;
+    margin: 1.6rem 0 0;
+    border: 1px solid var(--line);
+  }
+
+  .hero-img-credit { display: block; text-align: right; font-size: 0.65rem; color: var(--muted); margin: 0.3rem 0 0; }
+
+  .proof {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.8rem;
+    margin: 0 0 2rem;
+  }
+
+  .proof-card {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 0.8rem;
+    padding: 0.92rem;
+  }
+
+  .proof-card strong { display: block; margin-bottom: 0.3rem; font-size: 0.95rem; }
+  .proof-card span { color: var(--muted); font-size: 0.86rem; }
+
+  .section-title { margin: 0 0 0.9rem; font-size: 1.1rem; font-weight: 800; }
+
+  .apps-grid { display: grid; gap: 0.9rem; }
+
+  .app-card {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 0.9rem;
+    padding: 1rem;
+  }
+
+  .app-head { display: flex; align-items: baseline; gap: 0.58rem; margin-bottom: 0.3rem; }
+  .app-index { color: var(--brand); font-size: 0.72rem; font-weight: 800; letter-spacing: 0.12em; }
+  .app-title { margin: 0; font-size: 1.05rem; font-weight: 800; }
+  .app-tagline { margin: 0 0 0.45rem; font-size: 0.9rem; color: var(--accent); font-weight: 600; }
+  .app-desc { margin: 0; color: var(--muted); font-size: 0.92rem; }
+
+  .actions { margin-top: 0.82rem; display: flex; align-items: center; gap: 0.75rem; flex-wrap: wrap; }
+
+  .open-btn {
+    border: 1px solid var(--brand);
+    border-radius: 0.55rem;
+    padding: 0.5rem 0.9rem;
+    font-size: 0.84rem;
+    font-weight: 700;
+    color: #ffe2c5;
+    background: transparent;
+  }
+
+  .open-btn:hover { background: rgba(241, 156, 66, 0.12); }
+
+  .minor-actions { display: flex; gap: 0.65rem; }
+  .minor-actions a { color: var(--muted); font-size: 0.8rem; text-decoration: underline; text-underline-offset: 2px; }
+
+  .closing {
+    margin-top: 2rem;
+    background: #f19c42;
+    color: #243625;
+    border-radius: 0.95rem;
+    padding: 1.32rem;
+  }
+
+  .closing h2 { margin: 0 0 0.45rem; font-size: 1.22rem; }
+  .closing p { margin: 0 0 0.9rem; }
+
+  @media (max-width: 760px) {
+    .proof { grid-template-columns: 1fr; }
+  }
+</style>
+
+<div class="page">
+  <header class="topbar">
+    <a class="brand" href="https://links.vibes.diy/homepage">Vibes DIY</a>
+    <span class="path">/summer-camp/</span>
+  </header>
+
+  <section class="hero">
+    <p class="eyebrow">Camp staff operations</p>
+    <h1>Keep daily camp logistics moving without spreadsheet drag.</h1>
+    <p class="lead">Five practical staff apps for arrivals, duty rotation, activity signups, lost-and-found, and pickup tracking during peak camp days.</p>
+    <a class="primary-cta" href="https://vibes.diy/vibe/og/camp-arrival-board" target="_blank" rel="noopener">Open Cabin Arrival Tracker</a>
+    <img class="hero-img" src="https://images.unsplash.com/photo-1472745433479-4556f22e32c2?w=1200&q=80&auto=format" alt="Group of campers gathered around a campfire at dusk" loading="eager">
+    <a class="hero-img-credit" href="https://unsplash.com/@mischievous_penguins" target="_blank" rel="noopener">Photo by Mike Erskine / Unsplash</a>
+  </section>
+
+  <section class="proof" aria-label="Summer camp value strip">
+    <article class="proof-card"><strong>Built for rush hours</strong><span>Clear screens for check-in, transitions, and pickup windows.</span></article>
+    <article class="proof-card"><strong>Staff-friendly</strong><span>Low training overhead for seasonal teams and volunteers.</span></article>
+    <article class="proof-card"><strong>Adjustable fast</strong><span>Clone and tune each app for your own camp workflow.</span></article>
+  </section>
+
+  <section>
+    <h2 class="section-title">Open the operational app you need now</h2>
+    <div class="apps-grid">
+      {{#each apps}}
+      <article class="app-card">
+        <div class="app-head">
+          <span class="app-index">APP {{num}}</span>
+          <h3 class="app-title">{{title}}</h3>
+        </div>
+        <p class="app-tagline">{{tagline}}</p>
+        <p class="app-desc">{{desc}}</p>
+        <div class="actions">
+          <a class="open-btn" href="https://vibes.diy/vibe/{{author}}/{{slug}}" target="_blank" rel="noopener">Open app</a>
+          <div class="minor-actions">
+            <a href="https://vibes.diy/remix/{{author}}/{{slug}}?skipChat=true" target="_blank" rel="noopener">Clone</a>
+            <a href="https://vibes.diy/remix/{{author}}/{{slug}}" target="_blank" rel="noopener">Remix</a>
+          </div>
+        </div>
+      </article>
+      {{/each}}
+    </div>
+  </section>
+
+  <section class="closing">
+    <h2>Start with arrivals, then layer other workflows.</h2>
+    <p>Open Cabin Arrival Tracker first to stabilize check-in, then add duty, activity, and pickup tools as camp day pressure rises.</p>
+    <a class="primary-cta" href="https://vibes.diy/vibe/og/camp-arrival-board" target="_blank" rel="noopener">Open Cabin Arrival Tracker</a>
+  </section>
+</div>

@@ -1,0 +1,370 @@
+{{!--
+{
+  "layout": "webring",
+  "title": "About the Edu Portal | Vibes DIY",
+  "description": "90 syllabi from 15 real institutions. 22 subject clusters. Tools that do one specific thing — grounded in how MIT, Stanford, Berkeley, and others actually teach.",
+  "ogUrl": "https://good.vibes.diy/edu/about/",
+  "ogImage": "https://good.vibes.diy/images/screenshots/edu/about.jpg",
+  "source": "edu-about"
+}
+--}}
+
+<style>
+  @import url("https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,700;1,400&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap");
+
+  :root {
+    --parchment: #F5F1E8;
+    --ink: #1C1917;
+    --purple: #6B3FA0;
+    --purple-dim: rgba(107, 63, 160, 0.1);
+    --muted: #706B63;
+    --card: #FEFCF5;
+  }
+
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html, body {
+    background: var(--parchment);
+    color: var(--ink);
+    font-family: "Inter", system-ui, sans-serif;
+    line-height: 1.55;
+  }
+
+  a { color: inherit; text-decoration: none; }
+
+  /* ── Topbar ── */
+  .topbar {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 0.65rem 1.25rem;
+    background: var(--ink); color: var(--parchment);
+    position: sticky; top: 0; z-index: 100;
+  }
+  .topbar-logo { height: 22px; width: auto; opacity: 0.85; vertical-align: middle; }
+  .topbar-crumb {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.62rem; letter-spacing: 0.15em; text-transform: uppercase;
+  }
+  .topbar-crumb a { opacity: 0.6; }
+  .topbar-crumb a:hover { opacity: 1; }
+  .topbar-crumb .sep { margin: 0 0.35rem; opacity: 0.35; }
+
+  /* ── Wrap ── */
+  .wrap {
+    max-width: 1040px; margin: 0 auto; padding: 0 1.5rem;
+    border-left: 2px solid var(--ink); border-right: 2px solid var(--ink);
+    min-height: 100vh;
+  }
+
+  /* ── Hero ── */
+  .page-hero {
+    padding: 4rem 0 3rem;
+    border-bottom: 4px solid var(--ink);
+  }
+  .dept-label {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.6rem; letter-spacing: 0.28em; text-transform: uppercase;
+    color: var(--purple); margin-bottom: 0.9rem;
+  }
+  .page-hero h1 {
+    font-family: "EB Garamond", Georgia, serif;
+    font-size: clamp(2.2rem, 5vw, 3.8rem);
+    font-weight: 700; line-height: 1.08; letter-spacing: -0.01em;
+    margin-bottom: 1rem;
+  }
+  .page-desc {
+    font-size: 1.05rem; color: var(--muted);
+    max-width: 660px; margin-bottom: 1.75rem; line-height: 1.6;
+  }
+  .vocab-row { display: flex; flex-wrap: wrap; gap: 0.35rem; }
+  .vocab-tag {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.6rem; letter-spacing: 0.08em; text-transform: lowercase;
+    padding: 0.22rem 0.55rem;
+    background: var(--purple-dim); border: 1px solid var(--purple);
+    color: var(--purple); border-radius: 3px;
+  }
+
+  /* ── Section header ── */
+  .section-header {
+    padding: 2rem 0 1.25rem;
+    border-bottom: 2px solid var(--ink);
+    display: flex; justify-content: space-between; align-items: baseline; gap: 1rem; flex-wrap: wrap;
+  }
+  .section-title {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.6rem; letter-spacing: 0.28em; text-transform: uppercase; color: var(--muted);
+  }
+  .section-count {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.6rem; color: var(--muted);
+  }
+
+  /* ── Prose block ── */
+  .prose-block {
+    padding: 2.5rem 0;
+    border-bottom: 2px solid var(--ink);
+    max-width: 720px;
+  }
+  .prose-block h2 {
+    font-family: "EB Garamond", Georgia, serif;
+    font-size: 1.75rem; font-weight: 700; margin-bottom: 1rem; line-height: 1.15;
+  }
+  .prose-block p {
+    font-size: 0.97rem; line-height: 1.75; color: var(--ink); margin-bottom: 0.9rem;
+  }
+  .prose-block p:last-child { margin-bottom: 0; }
+  .prose-block a { color: var(--purple); text-decoration: underline; text-decoration-color: rgba(107,63,160,0.35); }
+  .prose-block a:hover { text-decoration-color: var(--purple); }
+  .prose-block strong { font-weight: 700; }
+
+  /* ── Three-column row ── */
+  .three-row {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 0;
+    border-bottom: 2px solid var(--ink);
+  }
+  @media (max-width: 640px) { .three-row { grid-template-columns: 1fr; } }
+  .three-cell {
+    padding: 1.75rem 1.5rem;
+    border-right: 2px solid var(--ink);
+  }
+  .three-cell:last-child { border-right: none; }
+  .cell-verb {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.62rem; letter-spacing: 0.22em; text-transform: uppercase;
+    color: var(--purple); margin-bottom: 0.55rem;
+  }
+  .three-cell h3 {
+    font-family: "EB Garamond", Georgia, serif;
+    font-size: 1.3rem; font-weight: 700; margin-bottom: 0.5rem;
+  }
+  .three-cell p { font-size: 0.875rem; color: var(--muted); line-height: 1.6; }
+
+  /* ── Stat row ── */
+  .stat-row {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 0;
+    border-bottom: 2px solid var(--ink);
+  }
+  @media (max-width: 640px) { .stat-row { grid-template-columns: 1fr; } }
+  .stat-cell {
+    padding: 2rem 1.5rem;
+    border-right: 2px solid var(--ink);
+    display: flex; flex-direction: column; gap: 0.35rem;
+  }
+  .stat-cell:last-child { border-right: none; }
+  .stat-big {
+    font-family: "EB Garamond", Georgia, serif;
+    font-size: 3.2rem; font-weight: 700; line-height: 1; color: var(--purple);
+  }
+  .stat-label {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.6rem; letter-spacing: 0.15em; text-transform: uppercase; color: var(--muted);
+  }
+  .stat-sub {
+    font-size: 0.78rem; color: var(--muted); line-height: 1.45; margin-top: 0.1rem;
+  }
+
+  /* ── Two-column list ── */
+  .two-col-list {
+    display: grid; grid-template-columns: repeat(2, 1fr); gap: 0;
+    border-bottom: 2px solid var(--ink);
+  }
+  @media (max-width: 580px) { .two-col-list { grid-template-columns: 1fr; } }
+  .list-item {
+    display: flex; align-items: baseline; gap: 0.65rem;
+    padding: 0.9rem 1.25rem;
+    border-right: 2px solid var(--ink);
+    border-bottom: 1px solid rgba(28,25,23,0.12);
+    transition: background 0.12s;
+  }
+  .list-item:nth-child(2n) { border-right: none; }
+  .list-item:hover { background: var(--purple-dim); }
+  .li-name {
+    font-family: "EB Garamond", Georgia, serif;
+    font-size: 1.05rem; font-weight: 700;
+  }
+  .li-desc { font-size: 0.78rem; color: var(--muted); line-height: 1.4; }
+  .li-arrow {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.65rem; color: var(--purple);
+    margin-left: auto; white-space: nowrap;
+  }
+
+  /* ── Pull quote ── */
+  .pull-quote {
+    padding: 2.5rem 0;
+    border-bottom: 2px solid var(--ink);
+  }
+  .pull-quote blockquote {
+    font-family: "EB Garamond", Georgia, serif;
+    font-size: clamp(1.3rem, 2.5vw, 1.75rem);
+    font-style: italic; line-height: 1.45;
+    color: var(--ink); max-width: 700px;
+    border-left: 4px solid var(--purple);
+    padding-left: 1.5rem;
+  }
+
+  /* ── Footer ── */
+  .page-footer {
+    padding: 2rem 0;
+    display: flex; gap: 1.5rem; align-items: center; flex-wrap: wrap;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.68rem; letter-spacing: 0.1em; text-transform: uppercase;
+    border-top: 4px solid var(--ink);
+  }
+  .page-footer a { color: var(--purple); }
+  .page-footer a:hover { text-decoration: underline; }
+  .page-footer .sep { opacity: 0.3; }
+</style>
+
+<nav class="topbar">
+  <a href="https://links.vibes.diy/homepage">
+    <img src="{{assetPrefix}}Vibes-Toggle-1-Transparent.png" alt="Vibes DIY" class="topbar-logo">
+  </a>
+  <div class="topbar-crumb">
+    <a href="{{assetPrefix}}index.html">good.vibes.diy</a>
+    <span class="sep">/</span>
+    <a href="index.html">edu</a>
+    <span class="sep">/</span>
+    <span>about</span>
+  </div>
+</nav>
+
+<div class="wrap">
+
+  <header class="page-hero">
+    <div class="dept-label">Vibes DIY · Edu</div>
+    <h1>Built from real syllabi.</h1>
+    <p class="page-desc">90 courses harvested from MIT, Stanford, Berkeley, and 12 more. 22 subject clusters. Tools that do one specific thing — grounded in how actual faculty at actual institutions actually teach.</p>
+    <div class="vocab-row">
+      <span class="vocab-tag">90 syllabi</span>
+      <span class="vocab-tag">15 institutions</span>
+      <span class="vocab-tag">22 clusters</span>
+      <span class="vocab-tag">humanities</span>
+      <span class="vocab-tag">stem &amp; social science</span>
+      <span class="vocab-tag">open · clone · remix</span>
+    </div>
+  </header>
+
+  <!-- What this is -->
+  <div class="prose-block">
+    <h2>What the edu portal is</h2>
+    <p>Most study tools are generic: describe a topic and get a study guide. This is not that.</p>
+    <p>Everything here starts from a specific syllabus. Courses at MIT, Stanford, UC Berkeley, Carnegie Mellon, UT Austin, UNC Chapel Hill, the University of Washington, UW–Madison, and H-Net discussion networks contributed the source material. Vocabulary, frameworks, and tools were drawn from those syllabi directly — not from a general model of "what college is like." When a cluster on <a href="causal-inference.html">Causal Inference</a> includes a difference-in-differences practice app, that concept appears because Berkeley and Stanford both teach it, in that language, in the courses we harvested.</p>
+    <p>The result is 22 subject clusters, each with 5 focused tools. A cluster on <a href="algorithmic-creative-writing.html">Algorithmic &amp; Experimental Writing</a> has an Oulipo constraint generator and a chance-based writing tool, built from SFPC and MIT OCW curricula. A cluster on <a href="epidemiology-study-design.html">Epidemiology &amp; Study Design</a> has study design drills and an outbreak investigation simulator grounded in Stanford and UNC public health courses. The tools are specific because the syllabi were specific.</p>
+    <p>The <a href="syllabi.html">full corpus</a> of 90 syllabi is browsable and filterable — by institution, domain, keyword. Every cluster page traces back to named courses at named institutions. The provenance is not decorative.</p>
+  </div>
+
+  <!-- Pull quote -->
+  <div class="pull-quote">
+    <blockquote>The tools are specific because the syllabi were specific.</blockquote>
+  </div>
+
+  <!-- How it's organized -->
+  <div class="section-header">
+    <span class="section-title">How it works</span>
+  </div>
+  <div class="three-row">
+    <div class="three-cell">
+      <div class="cell-verb">Source →</div>
+      <h3>Real syllabi</h3>
+      <p>Each cluster traces back to named courses from named institutions. Vocabulary and frameworks come from faculty who designed the courses, not from a general assumption about the subject.</p>
+    </div>
+    <div class="three-cell">
+      <div class="cell-verb">Build →</div>
+      <h3>Specific tools</h3>
+      <p>Each tool does one thing: a DAG-building exercise, a study design drill, an Oulipo constraint generator, a causal methods quiz. Not a general assistant — a specific instrument for a specific concept.</p>
+    </div>
+    <div class="three-cell">
+      <div class="cell-verb">Use →</div>
+      <h3>Open, clone, or remix</h3>
+      <p>Every live app is open in any browser, no account needed. Clone it into your Vibes DIY account to adapt it for your course or your students. Remix it to change what it does.</p>
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div class="stat-row">
+    <div class="stat-cell">
+      <div class="stat-big">90</div>
+      <div class="stat-label">Syllabi harvested</div>
+      <div class="stat-sub">Undergraduate and graduate courses. Lecture, seminar, and workshop formats. Some from the last decade; some reaching back to the archive.</div>
+    </div>
+    <div class="stat-cell">
+      <div class="stat-big">15</div>
+      <div class="stat-label">Institutions</div>
+      <div class="stat-sub">MIT · Stanford · UC Berkeley · Carnegie Mellon · UT Austin · UNC Chapel Hill · UW Seattle · UW–Madison · H-Net · SFPC · MIT OCW SHASS · and more.</div>
+    </div>
+    <div class="stat-cell">
+      <div class="stat-big">22</div>
+      <div class="stat-label">Subject clusters</div>
+      <div class="stat-sub">13 humanities clusters with live tools. 9 STEM &amp; social science clusters with prompt links — build any tool from the same source prompt.</div>
+    </div>
+  </div>
+
+  <!-- What it's not -->
+  <div class="prose-block">
+    <h2>What it's not</h2>
+    <p>This is not an AI study helper. There is no "chat with your syllabus." There is no assistant answering questions or generating summaries on demand.</p>
+    <p>Each tool is a small app that does something specific and does it well. A study design drill presents a scenario and asks you to identify the study type, the confounders, the bias. An Oulipo constraint generator gives you a writing rule and a prompt. A causal inference methods quiz tests whether you can distinguish instrumental variables from regression discontinuity. These are instruments, not interfaces.</p>
+    <p>The tools were built with Vibes DIY from prompts grounded in the source syllabi. They are deployed as real software — not mockups, not prototypes. The humanities cluster tools are live now. For the STEM clusters, each tool page includes a <strong>"build this app →"</strong> prompt link: the same prompt the tool was designed around, ready to run in Vibes DIY. A statistics instructor can take the causal inference methods quiz prompt, build it, and adjust it for their own course vocabulary in an afternoon.</p>
+    <p>That is the intent: specific tools, real provenance, and enough access to the source that you can make something yours.</p>
+  </div>
+
+  <!-- Where to start -->
+  <div class="section-header">
+    <span class="section-title">Where to start</span>
+  </div>
+  <div class="two-col-list">
+    <a class="list-item" href="syllabi.html">
+      <span class="li-name">Syllabus Corpus</span>
+      <span class="li-desc">90 courses · 15 institutions · filter by domain</span>
+      <span class="li-arrow">→</span>
+    </a>
+    <a class="list-item" href="index.html">
+      <span class="li-name">All Clusters</span>
+      <span class="li-desc">22 subject clusters · humanities + STEM</span>
+      <span class="li-arrow">→</span>
+    </a>
+    <a class="list-item" href="literary-analysis.html">
+      <span class="li-name">Literary Analysis</span>
+      <span class="li-desc">Close reading · postcolonial theory · Bildungsroman · 5 live tools</span>
+      <span class="li-arrow">→</span>
+    </a>
+    <a class="list-item" href="causal-inference.html">
+      <span class="li-name">Causal Inference</span>
+      <span class="li-desc">Potential outcomes · IV · RDD · diff-in-diff · 5 prompt tools</span>
+      <span class="li-arrow">→</span>
+    </a>
+    <a class="list-item" href="algorithmic-creative-writing.html">
+      <span class="li-name">Algorithmic Writing</span>
+      <span class="li-desc">Oulipo · aleatoric methods · authorship · 5 live tools</span>
+      <span class="li-arrow">→</span>
+    </a>
+    <a class="list-item" href="epidemiology-study-design.html">
+      <span class="li-name">Epidemiology</span>
+      <span class="li-desc">Study design · outbreak investigation · bias · 5 prompt tools</span>
+      <span class="li-arrow">→</span>
+    </a>
+    <a class="list-item" href="cold-war-history.html">
+      <span class="li-name">Cold War History</span>
+      <span class="li-desc">Containment · proxy wars · détente · declassified docs · 5 live tools</span>
+      <span class="li-arrow">→</span>
+    </a>
+    <a class="list-item" href="study/index.html">
+      <span class="li-name">Study Tools</span>
+      <span class="li-desc">Flashcards · quizzes · focus timers · Cornell notes</span>
+      <span class="li-arrow">→</span>
+    </a>
+  </div>
+
+  {{> newsletter}}
+<footer class="page-footer">
+    <a href="index.html">← Edu Portal</a>
+    <span class="sep">·</span>
+    <a href="syllabi.html">Syllabus Corpus</a>
+    <span class="sep">·</span>
+    <a href="https://links.vibes.diy/homepage">Vibes DIY</a>
+    <span class="sep">·</span>
+    <a href="{{assetPrefix}}about.html">About good.vibes.diy</a>
+  </footer>
+
+</div>

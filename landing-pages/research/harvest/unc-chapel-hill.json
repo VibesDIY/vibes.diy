@@ -1,0 +1,116 @@
+{
+  "source": "UNC Chapel Hill",
+  "location": "Chapel Hill, NC",
+  "region": "Southeast",
+  "fetched": "2026-05-18",
+  "items": [
+    {
+      "title": "EPID 710: Fundamentals of Epidemiology",
+      "department": "Public Health",
+      "year": 2024,
+      "url": "https://sph.unc.edu/epid/epid-courses-offered/",
+      "fetch_method": "web-search",
+      "topics": [
+        "causal inference in epidemiology",
+        "randomized trials",
+        "cohort study design",
+        "case-control study design",
+        "selection bias",
+        "directed acyclic graphs (DAGs)",
+        "confounding",
+        "effect modification"
+      ],
+      "source_text": "An intensive introduction to epidemiological concepts and methods from a perspective of causal inference. The course covers the basics of epidemiologic study designs including randomized trials, observational studies, cohort studies, and case-control studies, along with fundamentals of study conduct and analysis, including concepts such as confounding, effect modification, selection bias, and the use of directed acyclic graphs (DAGs) to identify confounders."
+    },
+    {
+      "title": "EPID 718: Analytic Methods in Observational Epidemiology",
+      "department": "Public Health",
+      "year": 2024,
+      "url": "https://catalog.unc.edu/courses/epid/",
+      "fetch_method": "web-search",
+      "topics": [
+        "observational study analysis",
+        "tabular analysis methods",
+        "regression modeling for epidemiology",
+        "study design and analysis integration",
+        "independent data analysis project",
+        "propensity score methods"
+      ],
+      "source_text": "This course provides an in-depth treatment of the analysis of data from observational epidemiologic studies, including both tabular and regression modeling approaches, with an emphasis on the importance of study design in developing and executing an analysis plan. A major focus of the course is a semester-long, independent data analysis project in which students apply and integrate the concepts covered in class to a dataset and research question of their choosing."
+    },
+    {
+      "title": "STOR 565: Machine Learning",
+      "department": "Data Science / Stats",
+      "year": 2024,
+      "url": "https://nobel.web.unc.edu/teaching/stor-565-machine-learning/stor-565-course-information/",
+      "fetch_method": "web-search",
+      "topics": [
+        "linear discriminant analysis",
+        "logistic regression classification",
+        "support vector machines",
+        "k-nearest neighbors",
+        "clustering algorithms",
+        "overfitting and estimation error",
+        "cross-validation",
+        "unsupervised vs supervised methods"
+      ],
+      "source_text": "Introduction to theory and methods of machine learning including classification; Bayes risk/rule, linear discriminant analysis, logistic regression, nearest neighbors, and support vector machines; clustering algorithms; overfitting, estimation error, cross validation. The course covers a smaller number of representative methods in greater detail, with the goal of illustrating core ideas that underlie many methods, divided into the study of unsupervised methods and supervised methods."
+    },
+    {
+      "title": "ECON 416: Behavioral Economics",
+      "department": "Behavioral Economics",
+      "year": 2024,
+      "url": "https://econ.unc.edu/wp-content/uploads/sites/1423/2025/03/ECON_416_001_A_2229.pdf",
+      "fetch_method": "web-search",
+      "topics": [
+        "prospect theory",
+        "loss aversion",
+        "endowment effect",
+        "menu effects",
+        "hyperbolic discounting",
+        "intertemporal choice",
+        "social preferences",
+        "rational choice model failures"
+      ],
+      "source_text": "Four themes of choice are the pillars of the course: choice under certainty (e.g. menu and endowment effects), choice under uncertainty (e.g. prospect theory), intertemporal choice (e.g. hyperbolic preferences), and strategic choices (e.g. social preferences, envy, altruism). First, the course starts with a quick review of the standard economic theory approach to a given topic. Second, data that conflicts with the predictions of the standard model is discussed. Third, alternative behavioral models are introduced."
+    },
+    {
+      "title": "PLAN 741: Land Use and Environmental Planning",
+      "department": "Urban Planning",
+      "year": 2024,
+      "url": "https://planning.unc.edu/wp-content/uploads/sites/399/2017/08/PLAN-741-LandUseEnvironPlanning-Song.pdf",
+      "fetch_method": "substituted",
+      "substituted_for": "https://planning.unc.edu/academics/courses/",
+      "substitution_reason": "Direct course page returned catalog listing only; this syllabus PDF is the authoritative public document for this standing course used in subsequent offerings",
+      "topics": [
+        "Smart Growth and sustainable development",
+        "suitability analysis for land planning",
+        "GIS-based spatial needs analysis",
+        "land classification plans",
+        "development management programs",
+        "participatory plan-making processes",
+        "intergovernmental land use context",
+        "community-wide urban land use design"
+      ],
+      "source_text": "These sessions introduce fundamental concepts that shape a practitioner's model of land use plan making, including the emerging Smart Growth and Sustainable Development movements; the evolving intergovernmental context for land use and environmental planning; principles of good plans and concepts of plan formats and participatory plan-making processes. The course includes inventory and classification of the environment, suitability analysis for land planning, and the use of GIS and spreadsheets to analyze land suitability and spatial needs."
+    },
+    {
+      "title": "EDUC 935: Multilevel Modeling",
+      "department": "Education Research",
+      "year": 2024,
+      "url": "https://www.coursicle.com/unc/courses/EDUC/935/",
+      "fetch_method": "web-search",
+      "topics": [
+        "multilevel models (MLM)",
+        "hierarchical linear modeling (HLM)",
+        "random coefficient models",
+        "random effects models",
+        "nested data structures",
+        "hierarchical data analysis",
+        "categorical and continuous dependent variables",
+        "contextual level effects"
+      ],
+      "source_text": "The primary goal of EDUC 935 is to assist students in learning to think deeply and critically about establishing research problems in social sciences, particularly when the investigation involves data that is meaningfully organized into multiple layers as a hierarchy, or contextual levels. Multilevel models (MLM) are also known as hierarchical linear models (HLM), random coefficient models, or random effects models, and can be used to analyze a variety of questions with either categorical or continuous dependent variables, and explained by many independent variables."
+    }
+  ]
+}

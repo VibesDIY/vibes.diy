@@ -1,0 +1,710 @@
+{{!--
+{
+  "layout": "webring",
+  "title": "Bike Summer | Vibes DIY",
+  "description": "Apps for Portland's Bike Summer — find today's rides, log your season, build your crew, host your first ride.",
+  "ogUrl": "https://good.vibes.diy/bike-summer/",
+  "source": "bike-summer",
+  "apps": [
+    {
+      "num": "02",
+      "slug": "bike-summer-ride-log",
+      "author": "jchris",
+      "live": true,
+      "title": "Ride Log",
+      "tagline": "Mark your season, one ride at a time.",
+      "desc": "Personal Bike Summer season tracker. Tap a ride title to mark it done, add a one-line note. Shows how many rides you've logged this season.",
+      "fork": "Tracking a different city's bike festival, or just your own personal riding goal for the summer? Clone it and rename the season and the ride list."
+    },
+    {
+      "num": "03",
+      "slug": "bike-crew-builder",
+      "author": "jchris",
+      "live": true,
+      "title": "Crew Builder",
+      "tagline": "See who else is rolling.",
+      "desc": "Bike ride crew builder. Enter a ride name from the shift2bikes calendar, share a link. Friends tap to join and show their face. Everyone sees who's rolling.",
+      "fork": "Want it for a recurring weekly group ride rather than festival events? Clone it and set it up around your crew's regular schedule."
+    },
+    {
+      "num": "04",
+      "slug": "bike-ride-host-kit",
+      "author": "jchris",
+      "live": true,
+      "title": "Host a Ride",
+      "tagline": "First time hosting? Here's the checklist.",
+      "desc": "Ride leader checklist for hosting a Pedalpalooza ride. Covers what to post, route planning, corking basics, no-drop etiquette.",
+      "fork": "Your ride has different logistics — a specific venue, a charity component, a dress code? Clone it and update the checklist items to match."
+    },
+    {
+      "num": "05",
+      "slug": "pedalpalooza-memory-wall",
+      "author": "jchris",
+      "live": true,
+      "title": "Memory Wall",
+      "tagline": "One-liners from the best rides.",
+      "desc": "Post-ride memory wall for Bike Summer. Drop a one-line story or emoji after a ride. Your crew sees all season posts in a live feed.",
+      "fork": "Want it for a specific recurring ride series, not the whole festival? Clone it and scope the wall to your crew's rides only."
+    }
+  ],
+  "ogImage": "https://good.vibes.diy/images/screenshots/bike-summer.jpg"
+}
+--}}
+
+<style>
+  @import url("https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800;900&family=Barlow:wght@400;500;600&display=optional");
+
+  :root {
+    --bg: #f9f5ec;
+    --paper: #f0ebe0;
+    --hot: #e83d6f;
+    --hot-dim: #c42f5a;
+    --go: #3e8c41;
+    --ink: #1c1c1c;
+    --muted: #6b6460;
+    --rule: #c8b99a;
+    --acid: #f5c518;
+  }
+
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html, body {
+    background: var(--bg);
+    color: var(--ink);
+    font-family: "Barlow", system-ui, sans-serif;
+    line-height: 1.55;
+    min-height: 100vh;
+  }
+  a { color: inherit; text-decoration: none; }
+
+  .layout {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 1.25rem;
+  }
+
+  /* ── TOPBAR ── */
+  .topbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.9rem 0;
+    border-bottom: 3px solid var(--ink);
+  }
+  .topbar .brand {
+    font-family: "Barlow Condensed", sans-serif;
+    font-weight: 800;
+    font-size: 1.1rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+  .topbar .season-badge {
+    font-family: "Barlow Condensed", sans-serif;
+    font-weight: 700;
+    font-size: 0.7rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    background: var(--hot);
+    color: #fff;
+    padding: 4px 10px;
+  }
+
+  /* ── PP BANNER ── */
+  .pp-banner-wrap {
+    margin: 0 -1.25rem;
+    overflow: hidden;
+    border-bottom: 3px solid var(--ink);
+    max-height: 380px;
+    background: var(--ink);
+  }
+  .pp-banner-wrap img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center top;
+    display: block;
+    opacity: 0.96;
+  }
+
+  /* ── HERO ── */
+  .hero {
+    padding: 3rem 0 2.5rem;
+    border-bottom: 3px solid var(--ink);
+  }
+  .hero .eyebrow {
+    font-family: "Barlow Condensed", sans-serif;
+    font-weight: 700;
+    font-size: 0.65rem;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 1rem;
+  }
+  .hero h1 {
+    font-family: "Barlow Condensed", sans-serif;
+    font-weight: 900;
+    font-size: clamp(3.5rem, 10vw, 7.5rem);
+    line-height: 0.9;
+    letter-spacing: -0.01em;
+    text-transform: uppercase;
+    margin-bottom: 1.5rem;
+  }
+  .hero h1 .hi {
+    color: var(--hot);
+    display: inline;
+  }
+  .hero .lead {
+    font-size: 1.15rem;
+    max-width: 680px;
+    line-height: 1.6;
+    color: var(--ink);
+  }
+  .hero .lead strong { background: var(--acid); padding: 1px 4px; font-weight: 600; }
+
+  /* ── FACT STRIP ── */
+  .facts {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    border-bottom: 3px solid var(--ink);
+  }
+  @media (max-width: 600px) { .facts { grid-template-columns: repeat(2, 1fr); } }
+  .fact {
+    padding: 1rem 1.25rem;
+    border-right: 2px solid var(--rule);
+  }
+  .fact:last-child { border-right: none; }
+  @media (max-width: 600px) {
+    .fact { border-bottom: 2px solid var(--rule); }
+    .fact:nth-child(2n) { border-right: none; }
+  }
+  .fact .k {
+    font-size: 0.6rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 0.3rem;
+    font-family: "Barlow Condensed", sans-serif;
+    font-weight: 700;
+  }
+  .fact .v {
+    font-family: "Barlow Condensed", sans-serif;
+    font-weight: 800;
+    font-size: 1.25rem;
+    letter-spacing: 0.01em;
+  }
+
+  /* ── SPOTLIGHT ── */
+  .spotlight-wrap {
+    padding: 3rem 0;
+    border-bottom: 3px solid var(--ink);
+  }
+  .spotlight-label {
+    font-family: "Barlow Condensed", sans-serif;
+    font-weight: 700;
+    font-size: 0.6rem;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--hot);
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .spotlight-label::before {
+    content: "";
+    display: inline-block;
+    width: 24px;
+    height: 3px;
+    background: var(--hot);
+    flex-shrink: 0;
+  }
+  .spotlight {
+    display: grid;
+    grid-template-columns: 1fr 420px;
+    gap: 3rem;
+    align-items: start;
+  }
+  @media (max-width: 780px) {
+    .spotlight { grid-template-columns: 1fr; gap: 1.5rem; }
+  }
+  .spotlight .num-tag {
+    font-family: "Barlow Condensed", sans-serif;
+    font-weight: 900;
+    font-size: 5rem;
+    line-height: 0.85;
+    color: var(--hot);
+    margin-bottom: 0.5rem;
+  }
+  .spotlight h2 {
+    font-family: "Barlow Condensed", sans-serif;
+    font-weight: 900;
+    font-size: clamp(2.2rem, 5vw, 3.5rem);
+    letter-spacing: -0.01em;
+    text-transform: uppercase;
+    margin-bottom: 0.5rem;
+    line-height: 1;
+  }
+  .spotlight .tagline {
+    display: inline-block;
+    background: var(--hot);
+    color: #fff;
+    font-family: "Barlow Condensed", sans-serif;
+    font-weight: 700;
+    font-size: 0.9rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 5px 12px;
+    margin-bottom: 1rem;
+  }
+  .spotlight .desc {
+    font-size: 1.05rem;
+    line-height: 1.6;
+    margin-bottom: 1.5rem;
+    max-width: 540px;
+  }
+  .spotlight .join-btn {
+    display: inline-block;
+    background: var(--hot);
+    color: #fff;
+    font-family: "Barlow Condensed", sans-serif;
+    font-weight: 800;
+    font-size: 1rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    padding: 0.75rem 2rem;
+    border: 3px solid var(--ink);
+    box-shadow: 4px 4px 0 var(--ink);
+    transition: transform 0.1s, box-shadow 0.1s;
+  }
+  .spotlight .join-btn:hover {
+    transform: translate(-2px, -2px);
+    box-shadow: 6px 6px 0 var(--ink);
+  }
+  .spotlight .secondary-links {
+    display: flex;
+    gap: 1.5rem;
+    margin-top: 1rem;
+    font-family: "Barlow Condensed", sans-serif;
+    font-weight: 700;
+    font-size: 0.8rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .spotlight .secondary-links a:hover { color: var(--hot); text-decoration: underline; }
+
+  .spotlight .shot {
+    display: block;
+    aspect-ratio: 9/16;
+    overflow: hidden;
+    border: 3px solid var(--ink);
+    box-shadow: 6px 6px 0 var(--ink);
+    background: var(--paper);
+  }
+  @media (max-width: 780px) {
+    .spotlight .shot { aspect-ratio: 16/9; }
+  }
+  .spotlight .shot img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: top;
+  }
+
+  /* ── GALLERY SECTION ── */
+  .gallery-header {
+    padding: 2rem 0 0.75rem;
+    display: flex;
+    align-items: baseline;
+    gap: 1rem;
+    border-bottom: 2px dashed var(--rule);
+    margin-bottom: 0;
+  }
+  .gallery-header h3 {
+    font-family: "Barlow Condensed", sans-serif;
+    font-weight: 800;
+    font-size: 0.65rem;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .gallery-header h3::before { content: "// "; }
+
+  .apps {
+    display: flex;
+    flex-direction: column;
+    border-top: 2px solid var(--ink);
+    border-bottom: 3px solid var(--ink);
+  }
+  .app {
+    display: grid;
+    grid-template-columns: 72px 1fr 300px;
+    gap: 2rem;
+    align-items: start;
+    padding: 2rem 0;
+    border-bottom: 2px solid var(--rule);
+    transition: background 0.12s;
+  }
+  .app:last-child { border-bottom: none; }
+  .app:hover { background: rgba(0,0,0,0.025); }
+  @media (max-width: 760px) { .app { grid-template-columns: 1fr; gap: 1rem; } }
+
+  .app .num-cell {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.4rem;
+    padding-top: 0.2rem;
+  }
+  .app .num {
+    font-family: "Barlow Condensed", sans-serif;
+    font-weight: 900;
+    font-size: 2.5rem;
+    line-height: 0.85;
+    color: var(--rule);
+  }
+  .app--live .num { color: var(--hot); }
+  .app .status {
+    font-family: "Barlow Condensed", sans-serif;
+    font-weight: 700;
+    font-size: 0.5rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    padding: 3px 7px;
+    border: 2px solid var(--rule);
+    color: var(--muted);
+  }
+  .app--live .status {
+    background: var(--acid);
+    border-color: var(--ink);
+    color: var(--ink);
+  }
+
+  .app .body { display: flex; flex-direction: column; gap: 0.6rem; }
+  .app .title {
+    font-family: "Barlow Condensed", sans-serif;
+    font-weight: 900;
+    font-size: 1.8rem;
+    letter-spacing: -0.01em;
+    line-height: 1;
+    text-transform: uppercase;
+  }
+  .app .tagline {
+    display: inline-block;
+    background: var(--paper);
+    border: 2px solid var(--rule);
+    font-family: "Barlow Condensed", sans-serif;
+    font-weight: 700;
+    font-size: 0.8rem;
+    letter-spacing: 0.08em;
+    padding: 4px 10px;
+    color: var(--muted);
+    align-self: flex-start;
+  }
+  .app--live .tagline {
+    background: var(--acid);
+    border-color: var(--ink);
+    color: var(--ink);
+  }
+  .app .desc { font-size: 0.95rem; line-height: 1.6; color: var(--ink); }
+
+  .app .right { display: flex; flex-direction: column; gap: 0.5rem; }
+  .app .shot {
+    display: block;
+    aspect-ratio: 16/9;
+    overflow: hidden;
+    border: 2px solid var(--ink);
+    background: var(--paper);
+  }
+  .app .shot img { width: 100%; height: 100%; object-fit: cover; }
+  .app .shot-placeholder {
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: "Barlow Condensed", sans-serif;
+    font-size: 0.7rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--rule);
+  }
+  .app .ctas {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    border: 2px solid var(--ink);
+  }
+  .app .ctas--single { grid-template-columns: 1fr; }
+  .btn {
+    text-align: center;
+    padding: 0.5rem 0.4rem;
+    font-family: "Barlow Condensed", sans-serif;
+    font-weight: 700;
+    font-size: 0.65rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    border-right: 2px solid var(--ink);
+    color: var(--ink);
+    transition: background 0.1s;
+  }
+  .btn:last-child { border-right: none; }
+  .btn:hover { background: var(--acid); }
+  .prompt-link {
+    font-size: 0.7rem;
+    color: var(--muted);
+    text-decoration: underline;
+    font-family: "Barlow Condensed", sans-serif;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+  }
+  .prompt-link:hover { color: var(--hot); }
+  .fork-note {
+    font-size: 0.72rem;
+    color: var(--muted);
+    font-family: "Barlow", sans-serif;
+    line-height: 1.5;
+    border-left: 2px solid var(--rule);
+    padding-left: 0.6rem;
+    margin-top: 0.2rem;
+  }
+
+  /* ── COMMUNITY SECTION ── */
+  .community {
+    padding: 3rem 0;
+    border-bottom: 3px solid var(--ink);
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 3rem;
+    align-items: center;
+  }
+  @media (max-width: 640px) { .community { grid-template-columns: 1fr; gap: 1.5rem; } }
+  .community .copy h2 {
+    font-family: "Barlow Condensed", sans-serif;
+    font-weight: 900;
+    font-size: 2.5rem;
+    text-transform: uppercase;
+    line-height: 0.95;
+    margin-bottom: 1rem;
+  }
+  .community .copy h2 em { font-style: normal; color: var(--hot); }
+  .community .copy p {
+    font-size: 1rem;
+    line-height: 1.65;
+    color: var(--ink);
+    margin-bottom: 1rem;
+  }
+  .community .copy .start-btn {
+    display: inline-block;
+    background: var(--go);
+    color: #fff;
+    font-family: "Barlow Condensed", sans-serif;
+    font-weight: 800;
+    font-size: 0.9rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    padding: 0.65rem 1.75rem;
+    border: 3px solid var(--ink);
+    box-shadow: 4px 4px 0 var(--ink);
+    transition: transform 0.1s, box-shadow 0.1s;
+  }
+  .community .copy .start-btn:hover {
+    transform: translate(-2px, -2px);
+    box-shadow: 6px 6px 0 var(--ink);
+  }
+  .community .glossary {
+    background: var(--paper);
+    border: 3px solid var(--ink);
+    padding: 1.5rem;
+  }
+  .community .glossary h3 {
+    font-family: "Barlow Condensed", sans-serif;
+    font-weight: 800;
+    font-size: 0.65rem;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 1rem;
+  }
+  .community .glossary dl {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 0.35rem 1rem;
+    font-size: 0.88rem;
+  }
+  .community .glossary dt {
+    font-family: "Barlow Condensed", sans-serif;
+    font-weight: 800;
+    color: var(--hot);
+    white-space: nowrap;
+    letter-spacing: 0.04em;
+    align-self: baseline;
+  }
+  .community .glossary dd { color: var(--ink); align-self: baseline; }
+
+  /* ── FOOTER ── */
+  footer.bs-footer {
+    padding: 1.25rem 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-family: "Barlow Condensed", sans-serif;
+    font-weight: 600;
+    font-size: 0.65rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--muted);
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+  footer.bs-footer a:hover { color: var(--hot); }
+</style>
+
+<div class="layout">
+
+  <header class="topbar">
+    <a class="brand" href="https://links.vibes.diy/homepage">Vibes.DIY</a>
+    <span class="season-badge">Bike Summer 2026</span>
+  </header>
+
+  <div class="pp-banner-wrap">
+    <img src="https://www.shift2bikes.org/images/pp/pp2026-banner.jpg"
+         alt="Pedalpalooza 2026 — Bike Summer Portland"
+         onerror="this.style.display='none'" />
+  </div>
+
+  <section class="hero">
+    <div class="eyebrow">Portland · Summer 2026 · Open-Source Festival</div>
+    <h1>Every ride.<br/><span class="hi">Every day.</span></h1>
+    <p class="lead">
+      Bike Summer is Portland's <strong>summer-long open-source festival</strong> where anyone can host a ride.
+      These apps are for the people who ride it — finding today's routes, logging a whole season,
+      building a crew, and remembering the best moments.
+    </p>
+  </section>
+
+  <div class="facts">
+    <div class="fact"><div class="k">Apps</div><div class="v">Five</div></div>
+    <div class="fact"><div class="k">Data</div><div class="v">shift2bikes.org</div></div>
+    <div class="fact"><div class="k">Entry</div><div class="v">Free</div></div>
+    <div class="fact"><div class="k">Host</div><div class="v">Anyone</div></div>
+  </div>
+
+  <!-- ── SPOTLIGHT: ROLLING TODAY ── -->
+  <section class="spotlight-wrap">
+    <div class="spotlight-label">Spotlight App</div>
+    <div class="spotlight">
+      <div class="spotlight-body">
+        <div class="num-tag">01</div>
+        <h2>Rolling Today</h2>
+        <span class="tagline">What's happening right now →</span>
+        <p class="desc">
+          Live list of today's Portland Bike Summer rides pulled from shift2bikes.org.
+          Auto-jumps to the next day when today is empty.
+          Tap any ride to see its route on the map. Favorite rides to show your avatar
+          — see who else from the crew is rolling the same route.
+        </p>
+        <a class="join-btn" href="https://vibes.diy/vibe/jchris/rolling-today">Open Rolling Today →</a>
+        <div class="secondary-links">
+          <a href="https://vibes.diy/remix/jchris/rolling-today?skipChat=true">Clone</a>
+          <a href="https://vibes.diy/remix/jchris/rolling-today">Remix</a>
+          <a href="https://vibes.diy/chat/prompt?prompt64={{prompt64 'Live list of today Portland Bike Summer rides from shift2bikes.org API. Auto-jump to next day with rides. Show map with markers. Favorite button shows avatars of who is rolling.'}}">Start fresh from prompt — describe your city's ride calendar instead</a>
+        </div>
+        <p class="fork-note" style="margin-top:0.75rem;">Running this for a different city's bike festival, or a weekly group ride series? Clone it and point it at your ride source.</p>
+      </div>
+      <a class="shot" href="https://vibes.diy/vibe/jchris/rolling-today" aria-label="Rolling Today screenshot">
+        <img src="https://rolling-today--jchris.prod-v2.vibesdiy.net/screenshot.jpg"
+             alt="Rolling Today app"
+             onerror="this.onerror=null; this.src='{{assetPrefix}}images/og-preview.png';" />
+      </a>
+    </div>
+  </section>
+
+  <!-- ── GALLERY ── -->
+  <div class="gallery-header">
+    <h3>More Tools for the Season</h3>
+  </div>
+
+  <section class="apps">
+    {{#each apps}}
+      <article class="app {{#if live}}app--live{{else}}app--pending{{/if}}">
+        <div class="num-cell">
+          <div class="num">{{num}}</div>
+          <div class="status">{{#if live}}Live{{else}}Soon{{/if}}</div>
+        </div>
+        <div class="body">
+          <h2 class="title">{{title}}</h2>
+          <span class="tagline">{{tagline}}</span>
+          <p class="desc">{{desc}}</p>
+        </div>
+        <div class="right">
+          {{#if live}}
+            <a class="shot" href="https://vibes.diy/vibe/{{author}}/{{slug}}" aria-label="{{title}} screenshot">
+              <img src="https://{{slug}}--{{author}}.prod-v2.vibesdiy.net/screenshot.jpg"
+                   alt="{{slug}}"
+                   onerror="this.onerror=null; this.src='{{@root.assetPrefix}}images/og-preview.png';" />
+            </a>
+            <div class="ctas">
+              <a class="btn" href="https://vibes.diy/vibe/{{author}}/{{slug}}">Join</a>
+              <a class="btn" href="https://vibes.diy/remix/{{author}}/{{slug}}?skipChat=true">Clone</a>
+              <a class="btn" href="https://vibes.diy/remix/{{author}}/{{slug}}">Remix</a>
+            </div>
+            <a class="prompt-link" href="https://vibes.diy/chat/prompt?prompt64={{prompt64 desc}}">// start fresh from this prompt — describe your version instead</a>
+            {{#if fork}}<p class="fork-note">{{fork}}</p>{{/if}}
+          {{else}}
+            <div class="shot"><div class="shot-placeholder">coming soon</div></div>
+            <div class="ctas ctas--single">
+              <a class="btn" href="https://vibes.diy/chat/prompt?prompt64={{prompt64 desc}}">Start From Prompt</a>
+            </div>
+          {{/if}}
+        </div>
+      </article>
+    {{/each}}
+  </section>
+
+  <!-- ── MAKE IT YOURS ── -->
+  <div style="padding:2rem 0 1.5rem; border-bottom:3px solid var(--ink); margin-bottom:0;">
+    <p style="font-family:'Barlow',sans-serif; font-size:1rem; line-height:1.65; color:var(--muted); max-width:680px;">
+      These five were built for Portland's Bike Summer — Pedalpalooza, shift2bikes, the specific chaos of this city's riding culture. Your city's bike scene has its own calendar, its own crew dynamics, its own inside terms. Clone whichever fits closest and describe what's different.
+    </p>
+  </div>
+
+  <!-- ── COMMUNITY CTA ── -->
+  <section class="community">
+    <div class="copy">
+      <h2>Anyone can<br/><em>host a ride.</em></h2>
+      <p>
+        Bike Summer runs entirely on community rides. No registration, no fee — just post a route on
+        shift2bikes.org and go. The calendar is open to everyone.
+        If you've ever thought about leading a ride, this is the summer to do it.
+      </p>
+      <a class="start-btn" href="https://www.shift2bikes.org/pages/post-a-ride/">Post a Ride on Shift →</a>
+    </div>
+    <div class="glossary">
+      <h3>Community Glossary</h3>
+      <dl>
+        <dt>PP</dt><dd>Pedalpalooza — the flagship event within Bike Summer</dd>
+        <dt>MMR</dt><dd>Midnight Mystery Ride</dd>
+        <dt>BonB</dt><dd>Breakfast on the Bridges</dd>
+        <dt>WNBR</dt><dd>World Naked Bike Ride</dd>
+        <dt>No-drop</dt><dd>Ride waits for all participants; no one gets left behind</dd>
+        <dt>Corking</dt><dd>Riders blocking traffic at intersections so the group flows through</dd>
+        <dt>R2R</dt><dd>Ride to the ride — biking to the starting point</dd>
+        <dt>VKS</dt><dd>Vera Katz Statue, Eastbank Esplanade — common meeting point</dd>
+      </dl>
+    </div>
+  </section>
+
+  {{> newsletter}}
+<footer class="bs-footer">
+    <span>
+      <a href="https://links.vibes.diy/homepage">Vibes.DIY</a>
+      &nbsp;·&nbsp;
+      <a href="/">Home</a>
+      &nbsp;·&nbsp;
+      <a href="https://www.shift2bikes.org/">Shift2Bikes</a>
+      &nbsp;·&nbsp;
+      <a href="https://www.bike-summer.org/">Bike Summer</a>
+    </span>
+    <span>Poster art by <a href="https://www.instagram.com/dandyliondrag/">DandyLion</a> · Bike Summer is a project of Umbrella</span>
+  </footer>
+
+</div>

@@ -1,0 +1,116 @@
+{
+  "slug": "epidemiology-study-design",
+  "page_url": "https://good.vibes.diy/edu/epidemiology-study-design/",
+  "label": "Epidemiology and Study Design",
+  "department": "Public Health",
+  "vocabulary": [
+    "cohort study design",
+    "case-control study design",
+    "confounding",
+    "selection bias",
+    "effect modification",
+    "directed acyclic graphs",
+    "measures of association",
+    "outbreak investigation",
+    "disease surveillance",
+    "observational study analysis",
+    "cross-sectional studies",
+    "evidence-based public health"
+  ],
+  "sources": [
+    {
+      "institution": "MIT",
+      "title": "HST.953 Collaborative Data Science in Medicine",
+      "url": "https://ocw.mit.edu/courses/hst-953-collaborative-data-science-in-medicine-fall-2019/"
+    },
+    {
+      "institution": "Stanford",
+      "title": "EPI 225: Introduction to Epidemiologic and Clinical Research Methods",
+      "url": "https://online.stanford.edu/courses/epi225"
+    },
+    {
+      "institution": "Stanford",
+      "title": "EPI 247: Epidemic Intelligence",
+      "url": "https://online.stanford.edu/courses/epi247"
+    },
+    {
+      "institution": "UC Berkeley",
+      "title": "PBHLTH 142 Introduction to Probability and Statistics in Biology and Public Health",
+      "url": "https://classes.berkeley.edu/content/2024-fall-pbhlth-142-001-lec-001"
+    },
+    {
+      "institution": "UT Austin",
+      "title": "PBH 354 Introduction to Epidemiology",
+      "url": "https://catalog.utexas.edu/undergraduate/natural-sciences/degrees-and-programs/bs-public-health/"
+    },
+    {
+      "institution": "UW Madison",
+      "title": "POP HLTH 849: Genetic Epidemiology",
+      "url": "https://engelmanlab.pophealth.wisc.edu/"
+    },
+    {
+      "institution": "UNC Chapel Hill",
+      "title": "EPID 710: Fundamentals of Epidemiology",
+      "url": "https://sph.unc.edu/epid/epid-courses-offered/"
+    },
+    {
+      "institution": "UNC Chapel Hill",
+      "title": "EPID 718: Analytic Methods in Observational Epidemiology",
+      "url": "https://catalog.unc.edu/courses/epid/"
+    },
+    {
+      "institution": "University of Washington",
+      "title": "BIOST 518: Applied Biostatistics II",
+      "url": "https://www.biostat.washington.edu/academics/courses/BIOST/518"
+    }
+  ],
+  "app_prompts": [
+    "A first-year public health student keeps mixing up cohort study design and case-control study design on practice exams — they can recite the textbook definitions but freeze when asked to map a real-world question onto the right design. They want a low-stakes way to drill the distinction by working through dozens of short scenarios. Build a playful study-buddy app that presents one scenario at a time: a researcher wants to know whether shift workers have higher rates of cardiovascular disease, an outbreak team wants to know whether a particular salad caused last week's gastroenteritis cluster, a city wants to know how common asthma is among children right now in a specific neighborhood, a journal article is investigating whether a rare congenital defect is associated with a common environmental exposure. For each scenario, the student picks among cohort study design, case-control study design, and cross-sectional studies, then writes a one-sentence justification. The app reveals whether their pick fits the question — explaining when a case-control study design is the right move because the outcome is rare, when a cohort study design is right because the exposure is rare or the temporal sequence matters, and when cross-sectional studies are appropriate for prevalence questions. After each scenario, the student is asked to name the appropriate measure of association the chosen design produces — odds ratio for case-control, risk ratio or rate ratio for cohort — and to flag at least one source of selection bias the design might introduce. Over time the app should track which design types the student gets wrong most often and serve more of those, building toward fluency in mapping public health questions to study designs. The app should also let the student write their own scenario from something they read in the news and submit it for self-grading.",
+    "A volunteer outbreak response group at a county health department is staffed by part-time student investigators and a few public health interns, and they need a shared workspace for managing local outbreak investigation each time a cluster gets reported. When a new outbreak is opened — say, a suspected foodborne illness from a community event — the lead investigator creates a case in the app, drafts the case definition with input from a supervising epidemiologist, and shares a link with the team. Team members can each pick up a few interviews, recording exposure histories from suspected cases in a structured questionnaire that the team has built collaboratively to fit this outbreak. As entries come in, the app tallies a working line list and surfaces the common exposures across cases, supporting the team in conducting an internal case-control study design analysis: pulling controls from non-ill attendees of the same event, computing odds ratios for each candidate exposure, and surfacing the strongest measures of association. The app should let the team add notes about confounding factors — multiple foods served together, attendees who arrived late — and flag selection bias risks in how controls were chosen. Each evening the lead investigator publishes an updated outbreak status note that everyone can comment on, and the supervising epidemiologist can approve the case definition for any external sharing. The investigation closes when the team agrees on a primary hypothesis, with a final write-up exported as a structured report that follows the outbreak investigation conventions taught in introductory epidemiology — descriptive epidemiology, hypothesis generation, analytic phase, control measures, and lessons learned for future disease surveillance.",
+    "A field epidemiologist embedded in a state department of health runs the routine disease surveillance workflow for a panel of reportable conditions, processing dozens of new case reports each week from clinical labs and clinicians and triaging which ones warrant follow-up investigation. The current spreadsheet-based system loses cases in inboxes and makes it hard to spot week-over-week trends. Build an operational workflow app that takes each new report — date of onset, county, age, sex, race, occupation if relevant, exposure history, lab confirmation status — and routes it into the standing line list for that condition. The app should compute weekly counts and incidence rates relative to historical baselines, flagging conditions exceeding their threshold so the epidemiologist knows when to open an outbreak investigation. For each open investigation it should support both cohort study design and case-control study design follow-up depending on how the cluster was identified, with structured fields for the case definition, the analytic plan, candidate measures of association, and notes on confounding and effect modification. Cross-sectional studies of prevalence among populations of interest — long-term care facility residents, schoolchildren in a district, a workplace — should be supported as a separate workflow with their own questionnaire builder. The app should produce the weekly surveillance bulletin the epidemiologist distributes internally, pulling in updated line lists, status of open investigations, and a short narrative section the epidemiologist drafts. It should also support handoff: when an investigation closes, all its artifacts are preserved for the program's institutional memory and indexed so a future investigator working a similar cluster can find the prior work quickly.",
+    "A senior epidemiologist at an academic medical center is leading the analysis of a long-running prospective cohort study with twenty years of follow-up on a panel of about 18,000 participants. They need a serious analytic companion for the design and pre-registration phase of each new analysis. The participant data includes baseline questionnaires, repeated biomarker measurements, linked electronic health record data, mortality follow-up, and detailed exposure assessment from validated instruments. The epidemiologist runs an observational study analysis on a defined research question — say, whether a particular dietary pattern is associated with incident colorectal cancer — and wants to articulate the design rigorously before touching the data. Build a professional design tool that walks them through: stating the research question as a comparison of exposure groups, drafting a directed acyclic graph that lays out the assumed causal structure including the exposure, outcome, and candidate confounders, identifying the minimal sufficient adjustment set from the graph, deciding on the appropriate measure of association (hazard ratio, risk ratio, risk difference), and pre-specifying which subgroup analyses will be conducted to test for effect modification by sex, race, age at baseline, and family history. The app should explicitly walk through threats to validity — selection bias from differential loss to follow-up, confounding from variables not measured at baseline, exposure misclassification in the dietary instrument — and the epidemiologist's planned mitigation for each. The output is a pre-analysis plan suitable for posting to a public registry before the analysis begins, time-stamped and version-controlled. The app should also support a parallel sensitivity analysis section where the analyst lists which assumptions they will probe with alternative specifications. This is the document a methodologically demanding journal will expect to see referenced when the paper is submitted.",
+    "A national public health agency's evidence review unit produces guidance documents that translate epidemiologic evidence into evidence-based public health recommendations affecting millions of people — vaccination schedules, screening guidelines, environmental standards. They need a mission-critical synthesis tool that helps the review committee handle the full evidence base behind a single recommendation with consistency, transparency, and full auditability. For a given guideline topic, the committee inventories every relevant study, classifying each by cohort study design, case-control study design, cross-sectional studies, randomized trial, or other observational study analysis, and extracting the population, exposure or intervention, outcome, measure of association reported, and the authors' handling of confounding and selection bias. The app should support the committee in attaching its own directed acyclic graph for the body of evidence, distinct from any one study's framing, and recording how each study's design either supports or fails to support the causal question of interest. It should track effect modification across studies — whether the association differs by age, sex, comorbidity, dose — and surface heterogeneity that the committee must explain. The app then helps the committee summarize the body of evidence using the disease surveillance and observational study analysis traditions the agency has formalized, generating a draft recommendation along with the strength of evidence grade, the dissenting opinions of committee members, and the planned reassessment trigger (e.g., revisit when new randomized data appears). Every revision is preserved because guidance documents are public-facing, may be litigated, and are referenced by clinicians, policymakers, and journalists. The system should also produce the public-facing technical appendix and the committee's internal deliberation record as separate, linked artifacts."
+  ],
+  "apps": [
+    {
+      "num": "01",
+      "slug": "study-design-drills",
+      "author": "edu",
+      "live": true,
+      "title": "Study Design Drill",
+      "tagline": "Cohort, case-control, or cross-sectional? Map real questions to the right design."
+    },
+    {
+      "num": "02",
+      "slug": "outbreak-investigation",
+      "author": "edu",
+      "live": true,
+      "title": "Outbreak Tracker",
+      "tagline": "Case definition, line list, odds ratios — work the cluster together."
+    },
+    {
+      "num": "03",
+      "slug": "disease-surveillance-workflow",
+      "author": "edu",
+      "live": true,
+      "title": "Surveillance Workflow",
+      "tagline": "Weekly counts, threshold flags, open investigations — one workflow for all reportable conditions."
+    },
+    {
+      "num": "04",
+      "slug": "cohort-analysis-plan",
+      "author": "edu",
+      "live": true,
+      "title": "Analysis Plan",
+      "tagline": "DAG, adjustment set, measure of association — pre-register before touching the data."
+    },
+    {
+      "num": "05",
+      "slug": "evidence-synthesis-epi",
+      "author": "edu",
+      "live": true,
+      "title": "Evidence Synthesis",
+      "tagline": "Every study classified. Every effect modification surfaced. Every finding graded."
+    }
+  ]
+}

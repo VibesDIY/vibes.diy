@@ -1,0 +1,456 @@
+{{!--
+{
+  "layout": "webring",
+  "title": "Little Free Library Apps — Vibes DIY",
+  "description": "Book exchange logs, wish boards, tool shelves, chore swaps, block bulletins, seed libraries. Apps for neighborhoods that share things.",
+  "ogUrl": "https://good.vibes.diy/free-library/",
+  "source": "free-library",
+  "ogImage": "https://good.vibes.diy/images/screenshots/free-library.jpg",
+  "apps": [
+    {
+      "num": "01",
+      "slug": "book-exchange-log",
+      "author": "og",
+      "live": true,
+      "title": "Book Exchange Log",
+      "tagline": "What's in the box right now.",
+      "desc": "Little free library tracker. Show current books in the box, log when someone takes a book or leaves one, add a note. Simple inventory for a neighborhood book exchange box.",
+      "fork": "Running a seed library or tool shelf instead of books? Fork it and rename the item type."
+    },
+    {
+      "num": "02",
+      "slug": "neighbor-wish-board",
+      "author": "og",
+      "live": true,
+      "title": "Wish Board",
+      "tagline": "Post what you're looking for. Get notified when it shows up.",
+      "desc": "Wish board for a little free library. People post what book they are looking for; steward marks it fulfilled when it shows up. Public read, anyone can post a request.",
+      "fork": "Want to scope it to a specific genre or age group — kids books, mysteries, cookbooks? Fork it and set the category."
+    },
+    {
+      "num": "03",
+      "slug": "tool-shelf",
+      "author": "og",
+      "live": true,
+      "title": "Tool Shelf",
+      "tagline": "Who's got the drill.",
+      "desc": "Tool lending library for neighbors. List tools available to borrow, claim one with your name and return date, mark it returned. See what is available right now.",
+      "fork": "Running it for camping gear, party supplies, or kitchen equipment instead of tools? Fork it and update the item categories."
+    },
+    {
+      "num": "04",
+      "slug": "chore-swap",
+      "author": "og",
+      "live": true,
+      "title": "Chore Swap",
+      "tagline": "I'll rake your leaves. You walk my dog.",
+      "desc": "Neighbor chore swap board. Post a chore you will do for someone, request a chore in return. No money, just neighbors trading favors.",
+      "fork": "Want to add skill-swaps or time-banking credits instead of pure barter? Fork it and define your exchange unit."
+    },
+    {
+      "num": "05",
+      "slug": "block-bulletin",
+      "author": "og",
+      "live": true,
+      "title": "Block Bulletin",
+      "tagline": "Found items. Community events. Neighborhood noise.",
+      "desc": "Neighborhood block bulletin board. Post found items, announcements, community events. Public read. Anyone can post.",
+      "fork": "Want to scope it to a single apartment building or cul-de-sac? Fork it and add a location tag."
+    },
+    {
+      "num": "06",
+      "slug": "seed-library",
+      "author": "og",
+      "live": true,
+      "title": "Seed Library",
+      "tagline": "Take a packet. Return seeds in the fall.",
+      "desc": "Seed and seedling lending library for a neighborhood. List seeds and starts available, claim a packet, return seeds at end of season if you can.",
+      "fork": "Want to include care notes, germination times, or a growing-season calendar? Fork it and add the fields your gardeners actually need."
+    }
+  ]
+}
+--}}
+
+<style>
+  @import url("https://fonts.googleapis.com/css2?family=Libre+Baskerville:ital,wght@0,400;0,700;1,400&family=Inter:wght@400;500;600;700&display=optional");
+
+  :root {
+    --kraft:    oklch(0.87 0.025 80);
+    --cream:    oklch(0.97 0.012 85);
+    --green:    oklch(0.35 0.10 145);
+    --green-lt: oklch(0.50 0.10 145);
+    --green-bg: oklch(0.94 0.04 145);
+    --ink:      oklch(0.14 0.01 80);
+    --muted:    oklch(0.45 0.02 80);
+    --rule:     oklch(0.35 0.10 145 / 0.3);
+  }
+
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html, body {
+    background: var(--kraft);
+    color: var(--ink);
+    font-family: "Inter", system-ui, sans-serif;
+    font-size: 16px;
+    line-height: 1.5;
+  }
+
+  a { color: inherit; text-decoration: none; }
+
+  .layout {
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 0 1.25rem;
+  }
+
+  /* ── header ───────────────────────────────────────────── */
+  header.topbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    padding: 1rem 0 0.75rem;
+    border-bottom: 2px solid var(--green);
+    margin-bottom: 0;
+  }
+  .brand {
+    font-family: "Libre Baskerville", Georgia, serif;
+    font-size: 1rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    color: var(--green);
+  }
+  .topbar-tag {
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  /* ── hero (spotlight) ─────────────────────────────────── */
+  .hero {
+    padding: 3rem 0 2rem;
+    border-bottom: 1px solid var(--rule);
+    margin-bottom: 2rem;
+  }
+  .eyebrow {
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--green);
+    margin-bottom: 0.75rem;
+  }
+  .hero h1 {
+    font-family: "Libre Baskerville", Georgia, serif;
+    font-size: clamp(2rem, 5vw, 3.2rem);
+    font-weight: 700;
+    line-height: 1.15;
+    margin-bottom: 1rem;
+  }
+  .hero h1 em {
+    font-style: normal;
+    color: var(--green);
+  }
+  .hero-lead {
+    font-size: 1.05rem;
+    color: var(--muted);
+    max-width: 600px;
+    margin-bottom: 2rem;
+    line-height: 1.6;
+  }
+
+  /* spotlight card */
+  .spotlight {
+    background: var(--cream);
+    border: 2px solid var(--green);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  .spotlight-shot {
+    display: block;
+    aspect-ratio: 16/9;
+    overflow: hidden;
+    border-bottom: 2px solid var(--green);
+  }
+  .spotlight-shot img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: opacity 0.2s;
+  }
+  .spotlight-body {
+    padding: 1.25rem 1.5rem;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+  }
+  .spotlight-text h2 {
+    font-family: "Libre Baskerville", Georgia, serif;
+    font-size: 1.25rem;
+    font-weight: 700;
+    margin-bottom: 0.25rem;
+  }
+  .spotlight-text .tagline {
+    font-size: 0.9rem;
+    color: var(--muted);
+  }
+  .spotlight-ctas {
+    display: flex;
+    gap: 0.5rem;
+    flex-shrink: 0;
+  }
+  .btn-primary {
+    background: var(--green);
+    color: var(--cream);
+    font-size: 0.78rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 0.6rem 1.2rem;
+    border-radius: 2px;
+    transition: background 0.12s;
+  }
+  .btn-primary:hover { background: var(--green-lt); }
+
+  /* ── section divider ─────────────────────────────────── */
+  .section-head {
+    font-family: "Libre Baskerville", Georgia, serif;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--green);
+    padding: 0.5rem 0 1.25rem;
+    border-bottom: 1px solid var(--rule);
+    margin-bottom: 1.5rem;
+  }
+
+  /* ── app gallery cards ───────────────────────────────── */
+  .apps { display: flex; flex-direction: column; gap: 0; }
+  .app {
+    display: grid;
+    grid-template-columns: 3.5rem 1fr 240px;
+    gap: 0;
+    border-bottom: 1px solid var(--rule);
+    padding: 1.5rem 0;
+  }
+  @media (max-width: 640px) {
+    .app { grid-template-columns: 1fr; gap: 1rem; }
+    .num-cell { display: none; }
+  }
+  .num-cell {
+    padding-top: 0.2rem;
+    color: var(--muted);
+  }
+  .num-cell .num {
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    font-variant-numeric: tabular-nums;
+  }
+  .num-cell .status {
+    font-size: 0.6rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--green);
+    margin-top: 0.25rem;
+  }
+  .app-body { padding-right: 1.25rem; }
+  .app-body .title {
+    font-family: "Libre Baskerville", Georgia, serif;
+    font-size: 1rem;
+    font-weight: 700;
+    margin-bottom: 0.2rem;
+  }
+  .app-body .tagline {
+    font-size: 0.82rem;
+    color: var(--green);
+    font-style: italic;
+    display: block;
+    margin-bottom: 0.5rem;
+  }
+  .app-body .desc {
+    font-size: 0.88rem;
+    color: var(--muted);
+    line-height: 1.55;
+    margin-bottom: 0.5rem;
+  }
+  .app-body .fork-note {
+    font-size: 0.75rem;
+    color: var(--muted);
+    border-left: 2px solid var(--green);
+    padding-left: 0.6rem;
+    line-height: 1.5;
+  }
+  .app-right { display: flex; flex-direction: column; gap: 0.5rem; }
+  .app-shot {
+    display: block;
+    aspect-ratio: 16/9;
+    overflow: hidden;
+    border: 1.5px solid var(--rule);
+    border-radius: 2px;
+    background: var(--green-bg);
+  }
+  .app-shot img { width: 100%; height: 100%; object-fit: cover; }
+  .app-ctas {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    border: 1.5px solid var(--green);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .btn-sm {
+    text-align: center;
+    padding: 0.4rem 0.25rem;
+    font-size: 0.62rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--green);
+    border-right: 1.5px solid var(--green);
+    transition: background 0.1s;
+  }
+  .btn-sm:last-child { border-right: none; }
+  .btn-sm:hover { background: var(--green-bg); }
+  .prompt-link {
+    font-size: 0.67rem;
+    color: var(--muted);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+    line-height: 1.4;
+  }
+  .prompt-link:hover { color: var(--green); }
+
+  /* ── closing ─────────────────────────────────────────── */
+  .closing {
+    padding: 2.5rem 0;
+    border-top: 2px solid var(--green);
+    margin-top: 1rem;
+  }
+  .closing h2 {
+    font-family: "Libre Baskerville", Georgia, serif;
+    font-size: 1.4rem;
+    font-weight: 700;
+    margin-bottom: 0.75rem;
+  }
+  .closing p {
+    font-size: 0.95rem;
+    color: var(--muted);
+    max-width: 560px;
+    line-height: 1.65;
+    margin-bottom: 1rem;
+  }
+  .closing-ctas { display: flex; gap: 0.75rem; flex-wrap: wrap; margin-top: 1.25rem; }
+
+  /* ── footer ──────────────────────────────────────────── */
+  footer.page-footer {
+    padding: 1.25rem 0 2rem;
+    border-top: 1px solid var(--rule);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.72rem;
+    color: var(--muted);
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+  footer.page-footer a:hover { color: var(--green); }
+</style>
+
+<div class="layout">
+
+  <header class="topbar">
+    <a class="brand" href="https://links.vibes.diy/homepage">Vibes DIY</a>
+    <span class="topbar-tag">Neighborhood Sharing Apps</span>
+  </header>
+
+  {{#each apps}}{{#if @first}}
+  <!-- ── spotlight (first app) ──────────────────────────── -->
+  <section class="hero">
+    <p class="eyebrow">Little Free Library · Tool Shelves · Chore Swaps · More</p>
+    <h1>Apps for neighbors<br/>who <em>share things.</em></h1>
+    <p class="hero-lead">
+      Book exchange logs. Wish boards. Tool lending libraries. Chore swaps. Bulletin boards. Seed libraries. Simple apps for the coordination layer your neighborhood already has — just without a working system.
+    </p>
+
+    <a class="spotlight" href="https://vibes.diy/vibe/{{author}}/{{slug}}">
+      <span class="spotlight-shot">
+        <img src="https://{{slug}}--{{author}}.prod-v2.vibesdiy.net/screenshot.jpg"
+             alt="{{title}} screenshot"
+             onerror="this.onerror=null; this.src='{{@root.assetPrefix}}images/og-preview.png';"/>
+      </span>
+    </a>
+    <div class="spotlight-body" style="background:var(--cream);border:2px solid var(--green);border-top:none;border-radius:0 0 4px 4px;padding:1.25rem 1.5rem;display:flex;align-items:flex-start;justify-content:space-between;gap:1.5rem;flex-wrap:wrap;">
+      <div class="spotlight-text">
+        <h2>{{title}}</h2>
+        <span class="tagline">{{tagline}}</span>
+      </div>
+      <div class="spotlight-ctas">
+        <a class="btn-primary" href="https://vibes.diy/vibe/{{author}}/{{slug}}">Open it →</a>
+      </div>
+    </div>
+  </section>
+  {{/if}}{{/each}}
+
+  <h2 class="section-head">Also in the neighborhood</h2>
+
+  <section class="apps">
+    {{#each apps}}{{#unless @first}}
+    <article class="app">
+      <div class="num-cell">
+        <div class="num">{{num}}</div>
+        <div class="status">{{#if live}}Live{{else}}Soon{{/if}}</div>
+      </div>
+      <div class="app-body">
+        <h3 class="title">{{title}}</h3>
+        <span class="tagline">{{tagline}}</span>
+        <p class="desc">{{desc}}</p>
+        {{#if fork}}<p class="fork-note">{{fork}}</p>{{/if}}
+        <a class="prompt-link" href="https://vibes.diy/chat/prompt?prompt64={{prompt64 desc}}">→ start fresh from this prompt</a>
+      </div>
+      <div class="app-right">
+        {{#if live}}
+          <a class="app-shot" href="https://vibes.diy/vibe/{{author}}/{{slug}}">
+            <img src="https://{{slug}}--{{author}}.prod-v2.vibesdiy.net/screenshot.jpg"
+                 alt="{{title}}"
+                 onerror="this.onerror=null; this.src='{{@root.assetPrefix}}images/og-preview.png';"/>
+          </a>
+          <div class="app-ctas">
+            <a class="btn-sm" href="https://vibes.diy/vibe/{{author}}/{{slug}}">Join</a>
+            <a class="btn-sm" href="https://vibes.diy/remix/{{author}}/{{slug}}?skipChat=true">Clone</a>
+            <a class="btn-sm" href="https://vibes.diy/remix/{{author}}/{{slug}}">Remix</a>
+          </div>
+        {{else}}
+          <div class="app-shot" style="display:flex;align-items:center;justify-content:center;font-size:0.7rem;color:var(--muted);">awaiting deploy</div>
+          <div class="app-ctas" style="grid-template-columns:1fr;">
+            <a class="btn-sm" href="https://vibes.diy/chat/prompt?prompt64={{prompt64 desc}}">Start From Prompt</a>
+          </div>
+        {{/if}}
+      </div>
+    </article>
+    {{/unless}}{{/each}}
+  </section>
+
+  <div class="closing">
+    <h2>Your neighborhood, your rules.</h2>
+    <p>
+      These apps are deployed and public — but every one is forkable. Your little free library has different hours, a different steward, a different quirk. Clone any app and describe what's different about yours.
+    </p>
+    <p>
+      Or start from a blank prompt and describe a sharing system your block actually needs.
+    </p>
+    <div class="closing-ctas">
+      <a class="btn-primary" href="https://links.vibes.diy/homepage">Start building →</a>
+      <a class="btn-primary" style="background:transparent;color:var(--green);border:2px solid var(--green);" href="https://links.vibes.diy/discord">Join the community</a>
+    </div>
+  </div>
+
+  {{> newsletter}}
+
+  <footer class="page-footer">
+    <span><a href="https://links.vibes.diy/homepage">Vibes DIY</a> · <a href="/">All pages</a></span>
+    <span>© 2025 Fireproof Storage</span>
+  </footer>
+
+</div>

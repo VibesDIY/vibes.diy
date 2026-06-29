@@ -1,0 +1,52 @@
+{
+  "slug": "latin-american-history",
+  "page_url": "/edu/latin-american-history.html",
+  "label": "Latin American History",
+  "department": "History — Latin American",
+  "vocabulary": [
+    "mestizaje",
+    "encomienda system",
+    "mita labor tribute",
+    "castas system",
+    "land reform and agrarian redistribution",
+    "liberation theology",
+    "anti-imperialism",
+    "guerrilla warfare",
+    "Mexican Revolution",
+    "Zapatista movement",
+    "Nicaraguan Revolution",
+    "indigenous sovereignty",
+    "historical memory and erasure",
+    "creole identity and independence movements",
+    "Bourbon Reforms"
+  ],
+  "sources": [
+    {
+      "institution": "H-Net H-LatAm",
+      "title": "Modern Central American History",
+      "url": "https://networks.h-net.org/node/23910/pages/27764/h-latam-syllabi"
+    },
+    {
+      "institution": "H-Net H-LatAm",
+      "title": "Reform and Revolution in Latin America",
+      "url": "https://networks.h-net.org/node/23910/pages/27764/h-latam-syllabi"
+    },
+    {
+      "institution": "H-Net H-LatAm",
+      "title": "Colonial Latin American History",
+      "url": "https://networks.h-net.org/node/23910/pages/27764/h-latam-syllabi"
+    },
+    {
+      "institution": "UT Austin",
+      "title": "ARH 347N: Aztec Art and Civilization",
+      "url": "https://utdirect.utexas.edu/apps/student/coursedocs/nlogon/"
+    }
+  ],
+  "app_prompts": [
+    "Colonial Latin America timeline: user picks a colonial institution (encomienda, mita, hacienda) and traces how it shaped labor, race, and land — from Spanish conquest through independence.",
+    "Latin American revolution explorer: user picks a 20th-century revolution (Mexico, Cuba, Nicaragua, El Salvador) and compares the causes, the outcome, and the US response.",
+    "Land reform case study: user picks a country and era — Mexico 1917, Guatemala 1952, Chile 1970 — and traces the agrarian reform: who got land, who resisted, what the US did.",
+    "Indigenous sovereignty timeline: user picks a region and traces indigenous resistance to colonial and postcolonial states — from the encomienda system to the Zapatista movement.",
+    "Historical memory quiz: user reads a description of a historical event (La Matanza, Guatemalan genocide, dirty wars) and traces how it was suppressed, remembered, and eventually recognized."
+  ]
+}

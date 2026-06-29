@@ -1,0 +1,242 @@
+{{!--
+{
+  "layout": "webring",
+  "title": "Rip City, By The Numbers | Vibes DIY",
+  "description": "Three interactive data toys about the Portland Moda Center arena deal. Peer subsidies, the payback clock, and a build-your-own fair deal. Public figures, allegedly controversial.",
+  "ogUrl": "https://good.vibes.diy/rip-city/",
+  "source": "rip-city",
+  "apps": [
+    {
+      "num": "01",
+      "slug": "arena-subsidy-scoreboard",
+      "author": "og",
+      "live": true,
+      "title": "The Subsidy Scoreboard",
+      "tagline": "How 16 cities split the bill. Portland is the short bar on the bottom.",
+      "desc": "An animated bar chart ranking 16 recent NBA and NHL arena projects by the share of construction cost paid with private capital. The Philadelphia 76ers paid 100 percent. The peer average is roughly 47 percent. The proposed Moda Center deal is the red bar at zero. Click any bar for the rent, the split, and the lease terms it locked in that Portland did not.",
+      "fork": "Think the comparison is unfair? Clone it, add the deals you think belong, and see if the average moves. The data is right there in the database."
+    },
+    {
+      "num": "02",
+      "slug": "arena-breakeven-timeline",
+      "author": "og",
+      "live": true,
+      "title": "The Payback Clock",
+      "tagline": "A 20-year lease. A 35-year break-even. You see the problem.",
+      "desc": "Drag the slider to pick how much the arena actually returns to the public each year — from the $17.9M in taxes the study could identify, up to $29M if you count every fee. The chart climbs the cumulative return against the ~$1.02B public commitment and marks the year they finally cross. Spoiler tucked into the axis labels: the lease ends at year 20, the math breaks even around year 35.",
+      "fork": "Disagree with the assumptions? Clone it and change the annual return or the total cost. The break-even line moves with you."
+    },
+    {
+      "num": "03",
+      "slug": "fair-deal-builder",
+      "author": "og",
+      "live": true,
+      "title": "Build Your Own Fair Deal",
+      "tagline": "Start at zero. Flip on the terms the owner already signed elsewhere.",
+      "desc": "The deal on the table returns the public roughly nothing: no rent, no revenue share, no payments in lieu of taxes, no relocation penalty. Toggle on each term — rent, a PILOT, parking, development on the tax rolls, an operator who pays for his own upgrades — each one drawn from this owner's Raleigh deal or a peer city. Watch the 20-year total climb from $0 toward $1.1 billion. Hit Select All to see the whole gap at once.",
+      "fork": "Have a number you trust more? Clone it, edit any term value in the database, and rebuild your own version of fair."
+    }
+  ],
+  "ogImage": "https://good.vibes.diy/images/screenshots/rip-city.jpg"
+}
+--}}
+
+<style>
+  @import url("https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,600;0,6..72,700;1,6..72,400&family=JetBrains+Mono:wght@400;500;700&display=optional");
+
+  :root {
+    --paper: #f4f1e8;
+    --ink: #1a1714;
+    --muted: #6b655c;
+    --ruby: #da291c;
+    --rule: #cfc8b8;
+    --paper-2: #fbf9f2;
+  }
+
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html, body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: "Newsreader", Georgia, serif;
+    line-height: 1.55;
+    min-height: 100vh;
+  }
+  a { color: inherit; text-decoration: none; }
+  .mono { font-family: "JetBrains Mono", monospace; }
+
+  .layout {
+    max-width: 1080px; margin: 0 auto; padding: 0 1.5rem;
+    border-left: 1px solid var(--rule); border-right: 1px solid var(--rule);
+    background: var(--paper-2);
+  }
+
+  .topbar {
+    display: flex; justify-content: space-between; align-items: baseline;
+    padding: 1rem 0;
+    border-bottom: 3px double var(--ink);
+  }
+  .topbar .brand { font-weight: 700; font-size: 1.2rem; letter-spacing: -0.01em; }
+  .topbar .meta {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.58rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--muted);
+  }
+
+  .stamp {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.6rem; letter-spacing: 0.2em; text-transform: uppercase;
+    color: var(--ruby);
+    border: 1.5px solid var(--ruby);
+    display: inline-block; padding: 4px 9px; transform: rotate(-1.5deg);
+    margin: 1.75rem 0 0.5rem;
+  }
+
+  .hero { padding: 0.5rem 0 2.5rem; border-bottom: 1px solid var(--rule); }
+  .hero h1 {
+    font-size: clamp(2.6rem, 7vw, 5rem); font-weight: 700; line-height: 0.98;
+    letter-spacing: -0.02em; margin: 0.5rem 0 1.25rem; max-width: 16ch;
+  }
+  .hero h1 em { font-style: italic; color: var(--ruby); }
+  .hero p.lead { font-size: 1.25rem; max-width: 60ch; color: var(--ink); }
+  .hero p.sub {
+    font-family: "JetBrains Mono", monospace; font-size: 0.72rem; line-height: 1.7;
+    color: var(--muted); max-width: 70ch; margin-top: 1.25rem;
+  }
+  .hero .redact { background: var(--ink); color: var(--ink); border-radius: 2px; padding: 0 2px; }
+  .hero .redact:hover { color: var(--paper-2); }
+
+  .figures { display: grid; grid-template-columns: repeat(4, 1fr); border-bottom: 1px solid var(--rule); }
+  @media (max-width: 720px) { .figures { grid-template-columns: repeat(2, 1fr); } }
+  .fig { padding: 1.25rem 1.25rem 1.25rem 0; border-right: 1px solid var(--rule); }
+  .fig:nth-child(4n) { border-right: none; padding-right: 0; }
+  @media (max-width: 720px) { .fig:nth-child(2n) { border-right: none; } }
+  .fig .v { font-family: "JetBrains Mono", monospace; font-size: 1.5rem; font-weight: 700; letter-spacing: -0.02em; }
+  .fig .v.red { color: var(--ruby); }
+  .fig .k { font-family: "JetBrains Mono", monospace; font-size: 0.56rem; letter-spacing: 0.16em; text-transform: uppercase; color: var(--muted); margin-top: 0.3rem; }
+
+  .section-label {
+    padding: 1.75rem 0 0.75rem;
+    font-family: "JetBrains Mono", monospace; font-size: 0.6rem; letter-spacing: 0.22em;
+    text-transform: uppercase; color: var(--muted);
+    border-bottom: 1px solid var(--rule); margin-bottom: 0;
+  }
+  .section-label::before { content: "§ "; color: var(--ruby); }
+
+  .apps { display: flex; flex-direction: column; }
+  .app {
+    padding: 2.25rem 0; border-bottom: 1px solid var(--rule);
+    display: grid; grid-template-columns: 64px 1fr 360px; gap: 2rem; align-items: start;
+  }
+  @media (max-width: 860px) { .app { grid-template-columns: 1fr; gap: 1.1rem; } }
+
+  .app .num { font-family: "JetBrains Mono", monospace; font-weight: 700; font-size: 2.4rem; line-height: 0.85; color: var(--ruby); }
+  .app .body { display: flex; flex-direction: column; gap: 0.7rem; }
+  .app .body .title { font-size: 1.9rem; font-weight: 700; letter-spacing: -0.02em; line-height: 1.05; }
+  .app .body .tagline { font-family: "JetBrains Mono", monospace; font-size: 0.78rem; color: var(--ruby); }
+  .app .body .desc { font-size: 1.02rem; color: var(--ink); }
+
+  .app .right { display: flex; flex-direction: column; gap: 0.6rem; }
+  .app .shot { display: block; aspect-ratio: 16/10; overflow: hidden; border: 1px solid var(--ink); background: var(--paper); }
+  .app .shot img { width: 100%; height: 100%; object-fit: cover; object-position: top; }
+  .app .ctas { display: grid; grid-template-columns: repeat(3, 1fr); border: 1px solid var(--ink); }
+  .btn {
+    text-align: center; padding: 0.5rem 0.4rem; border-right: 1px solid var(--ink);
+    font-family: "JetBrains Mono", monospace; font-size: 0.62rem; letter-spacing: 0.12em;
+    text-transform: uppercase; font-weight: 700; color: var(--ink); transition: background 0.12s, color 0.12s;
+  }
+  .btn:last-child { border-right: none; }
+  .btn:hover { background: var(--ruby); color: var(--paper-2); }
+  .prompt-link { font-family: "JetBrains Mono", monospace; font-size: 0.66rem; text-decoration: underline; color: var(--muted); }
+  .prompt-link:hover { color: var(--ruby); }
+  .fork-note {
+    font-family: "JetBrains Mono", monospace; font-size: 0.66rem; line-height: 1.5; color: var(--muted);
+    border-left: 2px solid var(--ruby); padding-left: 0.6rem; margin-top: 0.2rem;
+  }
+
+  .epilogue { padding: 2.5rem 0; border-bottom: 1px solid var(--rule); }
+  .epilogue h2 { font-family: "JetBrains Mono", monospace; font-size: 0.6rem; letter-spacing: 0.22em; text-transform: uppercase; color: var(--muted); margin-bottom: 1rem; }
+  .epilogue h2::before { content: "§ "; color: var(--ruby); }
+  .epilogue p { font-size: 1.12rem; max-width: 68ch; margin-bottom: 1rem; }
+  .epilogue p:last-child { margin-bottom: 0; }
+  .epilogue .hl { color: var(--ruby); font-style: italic; }
+  .epilogue .src { font-family: "JetBrains Mono", monospace; font-size: 0.66rem; color: var(--muted); line-height: 1.8; }
+  .epilogue .src a { text-decoration: underline; }
+  .epilogue .src a:hover { color: var(--ruby); }
+
+  footer.term-footer {
+    padding: 1.25rem 0; font-family: "JetBrains Mono", monospace; font-size: 0.58rem;
+    letter-spacing: 0.16em; text-transform: uppercase; color: var(--muted);
+    display: flex; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem;
+  }
+  footer.term-footer a:hover { color: var(--ruby); }
+</style>
+
+<div class="layout">
+  <header class="topbar">
+    <a class="brand" href="https://links.vibes.diy/homepage">VIBES.DIY</a>
+    <span class="meta">Rip City · By The Numbers · est. 2026</span>
+  </header>
+
+  <section class="hero">
+    <span class="stamp">⚠ Contains Publicly Available Numbers</span>
+    <h1>Rip City, <em>by the numbers</em>.</h1>
+    <p class="lead">
+      The City of Portland is being asked to put up to a billion dollars into a privately operated arena whose owner pays one dollar a year in rent. We made three interactive toys out of the public figures. Apparently this counts as taking a side now.
+    </p>
+    <p class="sub">
+      For legal and emotional safety we must disclose: every figure below comes from the city's own VSG study, the legislative record on SB 1501, or the <span class="redact">ripcitynotripoff.com</span> campaign. We simply put them on charts. Reader discretion is, evidently, advised.
+    </p>
+  </section>
+
+  <div class="figures">
+    <div class="fig"><div class="v">$4.25B</div><div class="k">Team sale price, Mar 2026</div></div>
+    <div class="fig"><div class="v red">$1 / yr</div><div class="k">Rent the owner pays</div></div>
+    <div class="fig"><div class="v">$1.02B</div><div class="k">20-yr public commitment</div></div>
+    <div class="fig"><div class="v red">$0</div><div class="k">Owner's renovation share</div></div>
+  </div>
+
+  <div class="section-label">Exhibits — three ways to look at the same deal</div>
+
+  <section class="apps">
+    {{#each apps}}
+      <article class="app">
+        <div class="num">{{num}}</div>
+        <div class="body">
+          <h2 class="title">{{title}}</h2>
+          <span class="tagline">{{tagline}}</span>
+          <p class="desc">{{desc}}</p>
+        </div>
+        <div class="right">
+          <a class="shot" href="https://vibes.diy/vibe/{{author}}/{{slug}}" aria-label="{{title}} screenshot"><img src="https://{{slug}}--{{author}}.prod-v2.vibesdiy.net/screenshot.jpg" alt="{{slug}}" onerror="this.onerror=null; this.src='{{@root.assetPrefix}}images/og-preview.png';"/></a>
+          <div class="ctas">
+            <a class="btn" href="https://vibes.diy/vibe/{{author}}/{{slug}}">Open</a>
+            <a class="btn" href="https://vibes.diy/remix/{{author}}/{{slug}}?skipChat=true">Clone</a>
+            <a class="btn" href="https://vibes.diy/remix/{{author}}/{{slug}}">Remix</a>
+          </div>
+          <a class="prompt-link" href="https://vibes.diy/chat/prompt?prompt64={{prompt64 desc}}">// or start fresh from this prompt</a>
+          {{#if fork}}<p class="fork-note">{{fork}}</p>{{/if}}
+        </div>
+      </article>
+    {{/each}}
+  </section>
+
+  <div class="epilogue">
+    <h2>The Footnote Nobody Asked For</h2>
+    <p>
+      None of these numbers are secret. The city paid a firm to study what the arena actually needs — about <span class="hl">$253 million</span> — and the public ask came back closer to <span class="hl">$600 million</span>. The claimed "$670M economic impact" is gross output; the tax revenue the study could actually find was <span class="hl">$17.9 million a year</span>. Every peer city that handed over public money got <em>something</em> back — rent, a cut of the suites, a penalty if the team leaves. The proposal on the table gets Portland a building it already owns and a tenant who pays a dollar.
+    </p>
+    <p>
+      We are not telling you what to think. We are telling you what the spreadsheet says, which has somehow become the controversial part. <span class="hl">Clone any of the three</span> and put your own numbers in — that is the whole point of a database you can open.
+    </p>
+    <p class="src">
+      Sources: <a href="https://www.ripcitynotripoff.com/">ripcitynotripoff.com</a> · Portland VSG facilities study · Oregon SB 1501 / SB 5701 legislative record · <a href="https://www.opb.org/article/2026/02/26/oregon-funding-aging-moda-center/">OPB</a> · <a href="https://www.kgw.com/article/news/investigations/blazers-fans-call-moda-center-deal-a-ripoff/283-e80005d3-4223-4012-8c27-89efa15fb98b">KGW</a>. Figures reflect the campaign's framing; ranges are theirs. Votes scheduled Aug 12 and Dec 17, 2026.
+    </p>
+  </div>
+
+  {{> newsletter}}
+
+  <footer class="term-footer">
+    <span>Vibes.diy · <a href="https://links.vibes.diy/homepage">homepage</a> · <a href="/expressions/">expressions</a></span>
+    <span>// End of exhibits</span>
+  </footer>
+</div>

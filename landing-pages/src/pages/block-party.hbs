@@ -1,0 +1,308 @@
+{{!--
+{
+  "layout": "webring",
+  "title": "For Block Party Committees | Vibes DIY",
+  "description": "Potluck dish signup, setup crew slots, neighbor contact list, permit task checklist, supply donation tracker. Five tools for neighborhood block party organizers.",
+  "ogUrl": "https://good.vibes.diy/block-party/",
+  "source": "block-party",
+  "apps": [
+    {
+      "num": "01",
+      "slug": "potluck-dish-signup",
+      "author": "og",
+      "live": true,
+      "title": "Potluck Signup",
+      "tagline": "Who's bringing what. No fourth potato salad.",
+      "desc": "Block party potluck signup. Categories: mains, sides, desserts, drinks, condiments. Each neighbor posts what they're bringing with how many servings. No duplicates within category.",
+      "fork": "Your event has different categories — a specific theme, dietary restrictions, a dessert competition? Clone it and update the categories and rules."
+    },
+    {
+      "num": "02",
+      "slug": "block-party-setup-crew",
+      "author": "og",
+      "live": true,
+      "title": "Setup Crew",
+      "tagline": "Three shifts. Six people each. Done.",
+      "desc": "Block party setup and teardown crew signup. Shifts: setup Saturday 9am, event crew noon, teardown 5pm. Each shift needs 6 people. Name and phone number to sign up.",
+      "fork": "Different shift times, different crew sizes, a Sunday instead of Saturday? Clone it and change the shift schedule and slot counts."
+    },
+    {
+      "num": "03",
+      "slug": "neighbor-contact-list",
+      "author": "og",
+      "live": true,
+      "title": "Neighbor Directory",
+      "tagline": "The directory your block never built.",
+      "desc": "Neighborhood contact directory. Each household: name, address on the block, phone, email (optional). Anyone on the block can add their entry. Shared link, no login.",
+      "fork": "Want to scope it to a specific condo building or apartment complex rather than a street? Clone it and describe your building's structure."
+    },
+    {
+      "num": "04",
+      "slug": "street-permit-checklist",
+      "author": "og",
+      "live": true,
+      "title": "Permit Checklist",
+      "tagline": "Every step tracked. No surprises.",
+      "desc": "Block party permit task list. Steps to get a street closure permit: contact city, submit form, notify utilities, post signs, confirm closure. Each task: who owns it, done or not.",
+      "fork": "Your city's permit process has different steps, or you're doing a park permit instead of a street closure? Clone it and describe your specific process."
+    },
+    {
+      "num": "05",
+      "slug": "supply-donation-list",
+      "author": "og",
+      "live": true,
+      "title": "Supply Tracker",
+      "tagline": "Tables, chairs, ice — claimed or needed.",
+      "desc": "Block party supply contribution list. Items needed: folding tables, folding chairs, extension cords, coolers, trash cans, canopies. Neighbors claim what they can bring. Shows what's still needed.",
+      "fork": "Your party needs different supplies — a bouncy castle, a PA system, a grill? Clone it and update the item list to match what your event actually needs."
+    }
+  ],
+  "ogImage": "https://good.vibes.diy/images/screenshots/block-party.jpg"
+}
+--}}
+
+<style>
+  @import url("https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,700;0,900;1,700&family=Inter:wght@400;500;600;700;800&display=optional");
+
+  :root {
+    --sun: #f5c023;
+    --sun-soft: rgba(245,192,35,0.15);
+    --tomato: #e8421a;
+    --tomato-soft: rgba(232,66,26,0.1);
+    --sky: #3a9bd5;
+    --grass: #3a9b5a;
+    --cream: #fefbf0;
+    --chalk: #f7f3e8;
+    --ink: #1c1a14;
+    --muted: #7a7060;
+    --border: rgba(28,26,20,0.12);
+  }
+
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html, body {
+    background: var(--cream);
+    color: var(--ink);
+    font-family: "Inter", system-ui, sans-serif;
+    line-height: 1.55;
+    min-height: 100vh;
+    background-image:
+      radial-gradient(circle at 10% 10%, rgba(245,192,35,0.1) 0%, transparent 40%),
+      radial-gradient(circle at 90% 90%, rgba(58,155,90,0.06) 0%, transparent 40%);
+  }
+  a { color: inherit; text-decoration: none; }
+
+  .layout { max-width: 1060px; margin: 0 auto; padding: 0 1.5rem; }
+
+  .banner {
+    height: 6px;
+    background: repeating-linear-gradient(90deg, var(--tomato) 0px, var(--tomato) 20px, var(--sun) 20px, var(--sun) 40px, var(--sky) 40px, var(--sky) 60px, var(--grass) 60px, var(--grass) 80px);
+  }
+
+  .topbar {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 1.25rem 0;
+    border-bottom: 2px solid var(--ink);
+  }
+  .topbar .brand { font-family: "Fraunces", serif; font-weight: 900; font-size: 1.1rem; }
+  .topbar .meta { font-size: 0.7rem; letter-spacing: 0.08em; color: var(--muted); font-weight: 600; }
+
+  .crumb {
+    padding: 0.5rem 0; font-size: 0.68rem; color: var(--muted);
+    border-bottom: 1px solid var(--border);
+  }
+  .crumb a:hover { color: var(--tomato); }
+
+  .hero {
+    padding: 4rem 0 3.5rem;
+    border-bottom: 2px solid var(--ink);
+  }
+  .hero .label {
+    font-size: 0.7rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase;
+    background: var(--sun); color: var(--ink); padding: 5px 14px;
+    display: inline-block; margin-bottom: 1.5rem;
+    box-shadow: 3px 3px 0 var(--ink);
+  }
+  .hero h1 {
+    font-family: "Fraunces", serif;
+    font-size: clamp(2.8rem, 7vw, 5.5rem);
+    font-weight: 900; line-height: 0.95;
+    letter-spacing: -0.02em; margin-bottom: 1.5rem;
+  }
+  .hero h1 .hi { color: var(--tomato); }
+  .hero p.lead {
+    font-size: 1.15rem; max-width: 680px; line-height: 1.65; color: var(--muted);
+  }
+
+  .stats {
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    border: 2px solid var(--ink); margin: 2rem 0;
+    background: var(--chalk);
+    box-shadow: 4px 4px 0 var(--ink);
+  }
+  @media (max-width: 700px) { .stats { grid-template-columns: repeat(2, 1fr); } }
+  .stat-cell { padding: 1.25rem 1.5rem; border-right: 2px solid var(--ink); }
+  .stat-cell:last-child { border-right: none; }
+  .stat-cell .k { font-size: 0.58rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--muted); font-weight: 700; margin-bottom: 0.4rem; }
+  .stat-cell .v { font-family: "Fraunces", serif; font-weight: 900; font-size: 1.4rem; }
+
+  .section-label {
+    padding: 1.5rem 0 0.75rem;
+    font-size: 0.68rem; letter-spacing: 0.15em; text-transform: uppercase;
+    color: var(--muted); font-weight: 700;
+    border-bottom: 1px dashed var(--border); margin-bottom: 1.5rem;
+  }
+
+  .apps {
+    display: flex; flex-direction: column;
+    border: 2px solid var(--ink);
+    background: white;
+    box-shadow: 5px 5px 0 var(--ink);
+  }
+  .app {
+    padding: 2rem 1.75rem;
+    border-bottom: 2px solid var(--ink);
+    display: grid; grid-template-columns: 72px 1fr 300px;
+    gap: 2rem; align-items: start;
+    transition: background 0.12s;
+  }
+  .app:last-child { border-bottom: none; }
+  @media (max-width: 800px) { .app { grid-template-columns: 1fr; gap: 1rem; } }
+  .app:hover { background: var(--sun-soft); }
+
+  .app .num-cell { display: flex; flex-direction: column; gap: 0.4rem; }
+  .app .num { font-family: "Fraunces", serif; font-weight: 900; font-size: 2.8rem; line-height: 0.9; letter-spacing: -0.02em; color: rgba(28,26,20,0.1); }
+  .app--live .num { color: var(--tomato); }
+  .app .status {
+    font-size: 0.5rem; letter-spacing: 0.2em; text-transform: uppercase; font-weight: 700;
+    padding: 3px 8px; border: 2px solid var(--border);
+    color: var(--muted); text-align: center;
+  }
+  .app--live .status { background: var(--grass); color: white; border-color: var(--grass); }
+
+  .app .body { display: flex; flex-direction: column; gap: 0.6rem; }
+  .app .body .title { font-family: "Fraunces", serif; font-size: 1.9rem; font-weight: 900; letter-spacing: -0.01em; line-height: 1.05; }
+  .app .body .tagline { font-size: 0.9rem; line-height: 1.5; color: var(--tomato); font-weight: 600; }
+  .app .body .desc { font-size: 0.97rem; line-height: 1.6; color: var(--muted); }
+
+  .app .right { display: flex; flex-direction: column; gap: 0.6rem; }
+  .app .shot { display: block; aspect-ratio: 16/9; overflow: hidden; border: 2px solid var(--ink); background: var(--chalk); }
+  .app .shot img { width: 100%; height: 100%; object-fit: cover; }
+  .app .shot-placeholder {
+    padding: 1rem; height: 100%; display: flex; align-items: center; justify-content: center;
+    font-size: 0.62rem; letter-spacing: 0.15em; text-transform: uppercase; font-weight: 600;
+    text-align: center; color: var(--muted);
+  }
+  .app .ctas { display: grid; grid-template-columns: repeat(3, 1fr); border: 2px solid var(--ink); overflow: hidden; }
+  .app .ctas--single { grid-template-columns: 1fr; }
+  .btn {
+    text-align: center; padding: 0.6rem 0.5rem;
+    background: transparent; border-right: 1px solid var(--border);
+    font-size: 0.65rem; letter-spacing: 0.1em; text-transform: uppercase; font-weight: 700;
+    color: var(--ink); cursor: pointer; transition: background 0.12s;
+  }
+  .btn:last-child { border-right: none; }
+  .btn:hover { background: var(--sun); }
+  .prompt-link { font-size: 0.67rem; color: var(--muted); text-decoration: underline; }
+  .prompt-link:hover { color: var(--tomato); }
+  .fork-note {
+    font-size: 0.72rem; color: var(--muted); line-height: 1.5;
+    border-left: 2px solid var(--border); padding-left: 0.6rem; margin-top: 0.3rem;
+  }
+
+  .epilogue { padding: 3rem 0; border-top: 2px solid var(--ink); margin-top: 2rem; }
+  .epilogue h2 { font-size: 0.68rem; letter-spacing: 0.15em; text-transform: uppercase; color: var(--tomato); font-weight: 700; margin-bottom: 1rem; }
+  .epilogue p { font-size: 1.1rem; max-width: 720px; line-height: 1.65; color: var(--muted); }
+  .epilogue .hl { color: var(--tomato); font-weight: 700; }
+
+  footer {
+    padding: 1.25rem 0; font-size: 0.68rem; font-weight: 600; color: var(--muted);
+    display: flex; justify-content: space-between;
+    border-top: 1px solid var(--border);
+  }
+  footer a:hover { color: var(--tomato); }
+</style>
+
+<div class="banner"></div>
+<div class="layout">
+  <header class="topbar">
+    <a class="brand" href="https://links.vibes.diy/homepage">Vibes DIY</a>
+    <span class="meta">For Block Parties &middot; five tools</span>
+  </header>
+
+  <nav class="crumb">
+    <a href="/">Home</a> &nbsp;/&nbsp; Block Party
+  </nav>
+
+  <section class="hero">
+    <span class="label">For Block Party Committees</span>
+    <h1>The block is<br/><span class="hi">covered.</span></h1>
+    <p class="lead">
+      Five tools for neighborhood block party organizers — potluck signup, setup crew,
+      neighbor directory, permit checklist, and supply tracker.
+      Share a link. Done before Friday.
+    </p>
+  </section>
+
+  <div class="stats">
+    <div class="stat-cell"><div class="k">Tools</div><div class="v">Five</div></div>
+    <div class="stat-cell"><div class="k">Scope</div><div class="v">One job</div></div>
+    <div class="stat-cell"><div class="k">Login</div><div class="v">None</div></div>
+    <div class="stat-cell"><div class="k">Season</div><div class="v">June–Aug</div></div>
+  </div>
+
+  <div class="section-label">The Tools</div>
+
+  <section class="apps">
+    {{#each apps}}
+    <article class="app {{#if live}}app--live{{else}}app--pending{{/if}}">
+      <div class="num-cell">
+        <div class="num">{{num}}</div>
+        <div class="status">{{#if live}}Live{{else}}Soon{{/if}}</div>
+      </div>
+      <div class="body">
+        <h2 class="title">{{title}}</h2>
+        <p class="tagline">{{tagline}}</p>
+        <p class="desc">{{desc}}</p>
+      </div>
+      <div class="right">
+        {{#if live}}
+          <a class="shot" href="https://vibes.diy/vibe/{{author}}/{{slug}}" aria-label="{{title}} screenshot"><img src="https://{{slug}}--{{author}}.prod-v2.vibesdiy.net/screenshot.jpg" alt="{{slug}}" onerror="this.onerror=null; this.src='{{@root.assetPrefix}}images/og-preview.png';"/></a>
+          <div class="ctas">
+            <a class="btn" href="https://vibes.diy/vibe/{{author}}/{{slug}}">Join</a>
+            <a class="btn" href="https://vibes.diy/remix/{{author}}/{{slug}}?skipChat=true">Clone</a>
+            <a class="btn" href="https://vibes.diy/remix/{{author}}/{{slug}}">Remix</a>
+          </div>
+          <a class="prompt-link" href="https://vibes.diy/chat/prompt?prompt64={{prompt64 desc}}">// start fresh from this prompt</a>
+        {{else}}
+          <div class="shot"><div class="shot-placeholder">generating</div></div>
+          <div class="ctas ctas--single">
+            <a class="btn" href="https://vibes.diy/chat/prompt?prompt64={{prompt64 desc}}">Start From Prompt</a>
+          </div>
+          {{#if fork}}<p class="fork-note">{{fork}}</p>{{/if}}
+        {{/if}}
+      </div>
+    </article>
+    {{/each}}
+  </section>
+
+  <div class="epilogue">
+    <h2>The idea</h2>
+    <p>
+      Every block party runs on one or two neighbors who end up sending forty texts.
+      These tools are <span class="hl">one screen, one job</span> — potluck dish claims,
+      setup crew slots, the directory your block never got around to building,
+      the permit checklist, and who's bringing the folding tables.
+      Clone any one, update the address, share the link.
+    </p>
+    <p style="margin-top:1rem;">
+      These five were built for a generic neighborhood block — a single street, a Saturday in summer. Your block has a specific cast of characters, a specific set of recurring problems, and probably a few items on that supply list that nobody else would think of. Clone whichever is closest and describe your block's specific situation.
+    </p>
+  </div>
+
+  {{> newsletter}}
+<footer>
+    <span>Vibes.diy &middot; <a href="https://links.vibes.diy/homepage">homepage</a></span>
+    <span>Block Party</span>
+  </footer>
+</div>

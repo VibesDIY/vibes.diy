@@ -1,0 +1,641 @@
+{{!--
+{
+  "layout": "standard",
+  "title": "Vibes DIY — Come Build With Us",
+  "description": "Open roles on the Vibes DIY launch team. Work on real problems in public — read-first entry, remix without the data cliff, surfacing the permissions model.",
+  "ogUrl": "https://good.vibes.diy/engineers",
+  "source": "engineers",
+  "ogImage": "https://good.vibes.diy/images/screenshots/engineers.jpg"
+}
+--}}
+
+<style>
+    @import url('https://fonts.cdnfonts.com/css/alte-haas-grotesk');
+
+    :root {
+        --registration: #231F20;
+        --os-gray: #7A7A7A;
+        --grid-gray: #CCCDC8;
+        --goldenrod: #FEDD00;
+        --ruby: #DA291C;
+        --bluey: #009ACE;
+        --ivory: #FFFFF0;
+        --black: #231F20;
+        --goldenrod: #FEDD00;
+        --grid-line: rgba(255, 255, 255, 0.5);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    /* ── Header / Logo ── */
+    header {
+        padding: 1.5rem 2rem;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        position: sticky;
+        top: 0;
+        z-index: 100;
+        background: linear-gradient(to bottom, var(--grid-gray) 60%, transparent);
+    }
+
+    .logo-img {
+        height: 56px;
+        width: auto;
+        display: block;
+    }
+
+    body {
+        font-family: 'Alte Haas Grotesk', sans-serif;
+        background-color: var(--grid-gray);
+        color: var(--black);
+        line-height: 1.6;
+        background-image:
+            linear-gradient(var(--grid-line) 1px, transparent 1px),
+            linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
+        background-size: 40px 40px;
+        min-height: 100vh;
+    }
+
+    /* ── Cards ── */
+    .card {
+        background: var(--ivory);
+        border-radius: 20px;
+        border: 3px solid var(--black);
+        padding: 2.5rem;
+        box-shadow: 6px 6px 0 var(--black);
+    }
+
+    /* ── Hero ── */
+    .hero {
+        max-width: 900px;
+        margin: 2rem auto 4rem;
+        padding: 0 2rem;
+        text-align: center;
+    }
+
+    .hero-badge {
+        display: inline-block;
+        background: var(--black);
+        color: var(--ivory);
+        padding: 0.5rem 1.25rem;
+        border-radius: 50px;
+        font-size: 0.85rem;
+        font-weight: 500;
+        margin-bottom: 1.5rem;
+        letter-spacing: 0.5px;
+    }
+
+    .hero h1 {
+        font-size: clamp(2.5rem, 6vw, 4rem);
+        font-weight: 700;
+        line-height: 1.1;
+        margin-bottom: 1.5rem;
+        letter-spacing: -1px;
+    }
+
+    .hero h1 span {
+        background: linear-gradient(135deg, var(--goldenrod), var(--ruby), var(--bluey));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+    }
+
+    .hero p {
+        font-size: 1.25rem;
+        color: #555;
+        max-width: 650px;
+        margin: 0 auto 2rem;
+    }
+
+    .cta-buttons {
+        display: flex;
+        gap: 1rem;
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+
+    /* ── Buttons ── */
+    .btn {
+        padding: 1rem 2rem;
+        border-radius: 50px;
+        font-family: 'Alte Haas Grotesk', sans-serif;
+        font-size: 1rem;
+        font-weight: 600;
+        text-decoration: none;
+        transition: all 0.3s ease;
+        cursor: pointer;
+        border: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .btn-primary {
+        background: var(--black);
+        color: var(--ivory);
+    }
+
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+    }
+
+    .btn-secondary {
+        background: var(--ivory);
+        color: var(--black);
+        border: 2px solid var(--black);
+    }
+
+    .btn-secondary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+    }
+
+    /* ── Value Props ── */
+    .value-props {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 4rem 2rem;
+    }
+
+    .value-props h2 {
+        text-align: center;
+        font-size: 2rem;
+        margin-bottom: 1rem;
+    }
+
+    .section-subtitle {
+        text-align: center;
+        font-size: 1.15rem;
+        color: var(--os-gray);
+        max-width: 640px;
+        margin: 0 auto 3rem;
+    }
+
+    .props-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 2rem;
+    }
+
+    .prop-card { position: relative; }
+
+    .prop-card.ruby    { border-color: var(--ruby);   box-shadow: 6px 6px 0 var(--ruby); }
+    .prop-card.bluey   { border-color: var(--bluey);  box-shadow: 6px 6px 0 var(--bluey); }
+    .prop-card.goldenrod  { border-color: var(--goldenrod); box-shadow: 6px 6px 0 var(--goldenrod); }
+
+    .prop-icon {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        margin-bottom: 1.5rem;
+    }
+
+    .ruby   .prop-icon { background: var(--ruby);   color: var(--ivory); }
+    .bluey  .prop-icon { background: var(--bluey);  color: var(--ivory); }
+    .goldenrod .prop-icon { background: var(--goldenrod); color: var(--black); }
+
+    .prop-card h3 { font-size: 1.5rem; margin-bottom: 1rem; }
+    .prop-card p  { color: #555; font-size: 1.05rem; }
+
+    /* ── Terminal section ── */
+    .terminal-section {
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 0 2rem 4rem;
+    }
+
+    .terminal-section h2 {
+        font-size: 2rem;
+        margin-bottom: 0.75rem;
+    }
+
+    .terminal-section > p {
+        color: #555;
+        font-size: 1.1rem;
+        margin-bottom: 2rem;
+    }
+
+    .terminal-card {
+        border-color: var(--goldenrod);
+        box-shadow: 6px 6px 0 var(--goldenrod);
+        padding: 0;
+        overflow: hidden;
+    }
+
+    .terminal-header {
+        background: var(--black);
+        color: var(--ivory);
+        padding: 1.25rem 1.75rem;
+        font-size: 1rem;
+        font-weight: 700;
+        border-bottom: 3px solid var(--black);
+    }
+
+    .terminal-body {
+        background: #0d0d14;
+        padding: 1.5rem 1.75rem;
+        font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
+        font-size: 0.85rem;
+        line-height: 2;
+        overflow-x: auto;
+    }
+
+    .t-prompt { color: #6affb0; }
+    .t-cmd    { color: #e0deff; }
+    .t-comment{ color: #6b6b8a; }
+    .t-out    { color: #ff6a9a; }
+    .t-ok     { color: #6affb0; }
+    .terminal-body a { color: inherit; text-decoration: underline; }
+
+    .cursor {
+        display: inline-block;
+        width: 9px;
+        height: 1.1em;
+        background: #6affb0;
+        vertical-align: middle;
+        animation: blink 1s step-end infinite;
+    }
+
+    @keyframes blink { 50% { opacity: 0; } }
+
+    /* ── Live demo (Nebula Flight) ── */
+    .demo-section {
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 0 2rem 4rem;
+        text-align: center;
+    }
+
+    .demo-tag {
+        display: inline-block;
+        background: var(--ruby);
+        color: var(--ivory);
+        padding: 4px 12px;
+        font-size: 0.75rem;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        font-weight: 700;
+        margin-bottom: 1rem;
+        border: 2px solid var(--black);
+    }
+
+    .demo-section h2 {
+        font-size: 2rem;
+        margin-bottom: 0.75rem;
+    }
+
+    .demo-section > p {
+        color: #555;
+        font-size: 1.1rem;
+        margin: 0 auto 1.75rem;
+        max-width: 60ch;
+    }
+
+    .demo-frame {
+        border: 3px solid var(--black);
+        background: #050510;
+        aspect-ratio: 16 / 10;
+        overflow: hidden;
+        border-radius: 20px;
+        box-shadow: 6px 6px 0 var(--ruby);
+    }
+
+    .demo-frame iframe {
+        width: 100%;
+        height: 100%;
+        border: 0;
+        display: block;
+    }
+
+    .demo-actions {
+        margin-top: 1.25rem;
+        font-size: 1rem;
+    }
+
+    .demo-actions a {
+        color: var(--black);
+        text-decoration: none;
+        border-bottom: 2px solid var(--ruby);
+        margin: 0 12px;
+        padding-bottom: 2px;
+        font-weight: 600;
+    }
+
+    .demo-actions a:hover {
+        color: var(--ruby);
+    }
+
+    /* ── Stack pills ── */
+    .stack-section {
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 0 2rem 4rem;
+    }
+
+    .stack-section h2 { font-size: 2rem; margin-bottom: 1rem; }
+    .stack-section > p { color: #555; font-size: 1.1rem; margin-bottom: 1.5rem; }
+
+    .pills {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.75rem;
+        margin-top: 1.5rem;
+    }
+
+    .pill {
+        font-family: 'Alte Haas Grotesk', sans-serif;
+        font-size: 0.9rem;
+        font-weight: 600;
+        padding: 0.4rem 1rem;
+        border-radius: 50px;
+        border: 2px solid var(--black);
+        background: var(--ivory);
+        color: var(--black);
+    }
+
+    .pill.goldenrod { border-color: var(--goldenrod); color: #8a7600; background: rgba(254,221,0,0.2); }
+    .pill.bluey  { border-color: var(--bluey);  color: var(--bluey);  background: rgba(0,154,206,0.08); }
+    .pill.ruby   { border-color: var(--ruby);   color: var(--ruby);   background: rgba(218,41,28,0.08); }
+
+    /* ── Open Problems ── */
+    .problems-section {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 4rem 2rem;
+    }
+
+    .problems-section h2 {
+        text-align: center;
+        font-size: 2rem;
+        margin-bottom: 1rem;
+    }
+
+    .problems-section > p {
+        text-align: center;
+        color: #555;
+        max-width: 600px;
+        margin: 0 auto 3rem;
+        font-size: 1.05rem;
+    }
+
+    .problems-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 2rem;
+    }
+
+    .problem-card {
+        position: relative;
+        transition: transform 0.2s ease;
+    }
+
+    .problem-card:hover { transform: translateY(-3px); }
+
+    .problem-number {
+        font-size: 0.8rem;
+        font-weight: 700;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--os-gray);
+        margin-bottom: 0.75rem;
+    }
+
+    .problem-card h3 {
+        font-size: 1.4rem;
+        margin-bottom: 1rem;
+    }
+
+    .problem-card p {
+        color: #555;
+        font-size: 1rem;
+    }
+
+    .problem-card code {
+        font-family: 'JetBrains Mono', 'Fira Code', monospace;
+        font-size: 0.85em;
+        background: rgba(0,0,0,0.07);
+        padding: 1px 5px;
+        border-radius: 3px;
+    }
+
+    /* ── Quote ── */
+    .quote-section {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 0 2rem 4rem;
+    }
+
+    .quote-card {
+        text-align: center;
+        position: relative;
+    }
+
+    .quote-card::before {
+        content: '"';
+        font-size: 6rem;
+        color: var(--black);
+        opacity: 0.1;
+        position: absolute;
+        top: -20px;
+        left: 20px;
+        font-family: Georgia, serif;
+    }
+
+    .quote-card blockquote {
+        font-size: 1.75rem;
+        font-weight: 500;
+        line-height: 1.4;
+        margin-bottom: 1.5rem;
+    }
+
+    .quote-card cite {
+        font-style: normal;
+        color: #555;
+    }
+
+    /* ── CTA ── */
+    .cta-section {
+        max-width: 700px;
+        margin: 0 auto;
+        padding: 0 2rem 6rem;
+    }
+
+    .cta-card {
+        text-align: center;
+        background: var(--black);
+        color: var(--ivory);
+        border-color: var(--black);
+        box-shadow: none;
+    }
+
+    .cta-card h2 { font-size: 2rem; margin-bottom: 1rem; }
+
+    .cta-card p {
+        opacity: 0.85;
+        margin-bottom: 2rem;
+        font-size: 1.1rem;
+    }
+
+    .cta-card .btn-primary {
+        background: var(--ivory);
+        color: var(--black);
+    }
+
+    .cta-card .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+    }
+
+    /* ── Responsive ── */
+    @media (max-width: 768px) {
+        .hero { margin: 1rem auto 3rem; }
+        .card { padding: 1.75rem; }
+    }
+</style>
+
+<main>
+
+    <!-- Hero -->
+    <section class="hero">
+        <span class="hero-badge">Launch Team · Open Roles</span>
+        <h1>Software is getting <span>weird</span> again.</h1>
+        <p>Secure state sandboxes. Simple social sharing. Built for the people, not the platform. We're a small team building something that matters&mdash;and we're looking for engineers who want to work in public.</p>
+        <div class="cta-buttons">
+            <a href="https://github.com/VibesDIY/vibes.diy" class="btn btn-primary" target="_blank">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
+                View the repo
+            </a>
+            <a href="https://vibes.diy" class="btn btn-secondary" target="_blank">Try Vibes DIY</a>
+        </div>
+    </section>
+
+    <!-- Who it's for -->
+    <section class="value-props">
+        <h2>Vibes are for everyone.</h2>
+        <p class="section-subtitle">Our mission is to make collaborative apps into a new media object, with social data sharing driven by our secure runtime.</p>
+        <div class="props-grid">
+            <div class="card prop-card ruby">
+                <h3>Built for your group chat</h3>
+                <p>Describe what you want, get a live app. Share the link. Your friends join instantly and see real data&mdash;no accounts, no setup, no "wait let me send you the invite."</p>
+            </div>
+            <div class="card prop-card bluey">
+                <h3>Actually collaborative</h3>
+                <p>Everyone in your vibe sees the same live state. Someone adds an item, everyone sees it. It works like a shared doc, except it's a full app you described into existence.</p>
+            </div>
+            <div class="card prop-card goldenrod">
+                <h3>Yours, not theirs</h3>
+                <p>Your data lives in your vibe. Private by default. You approve who gets in. No algorithm, no feed, no platform deciding what happens to your stuff.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- For agents too + Terminal -->
+    <section class="terminal-section">
+        <h2>The tightest deploy loop for agentic apps.</h2>
+        <p>One file. One push. A live URL with real persistent state. Agents skip the entire stack negotiation&mdash;no bundler, no backend, no environment drift.</p>
+        <div class="card terminal-card">
+            <div class="terminal-header">vibes-diy &mdash; golden-path.sh</div>
+            <div class="terminal-body">
+                <div><span class="t-prompt">$ </span><span class="t-cmd">npx vibes-diy login    <span class="t-comment"># once</span></span></div>
+                <div><span class="t-prompt">$ </span><span class="t-cmd">npx vibes-diy generate "game night win log"</span></div>
+                <div class="t-out">Generating...</div>
+                <div class="t-out">Requests enabled</div>
+                <div class="t-out">Deployed: og/game-night-wins</div>
+                <div class="t-out">URL: <a href="https://vibes.diy/vibe/og/game-night-wins" target="_blank" rel="noopener">https://vibes.diy/vibe/og/game-night-wins</a></div>
+                <div class="t-out">Created: ./game-night-wins<span class="cursor"></span></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Live Demo: Nebula Flight -->
+    <section class="demo-section">
+        <div class="demo-tag">Live · running in your browser</div>
+        <h2>Nebula Flight.</h2>
+        <p>One prompt. One file. A Three.js cosmic flight game with proximity audio synthesis and live persistence&mdash;hue maps to pitch across a pentatonic scale, so the chord shifts as you fly. Arrow keys steer, Shift boosts.</p>
+        <div class="demo-frame">
+            <iframe
+                src="https://nebula-flight--jchris.prod-v2.vibesdiy.net/"
+                title="Nebula Flight — drift through a wind chime made of light"
+                loading="lazy"
+                allow="autoplay; fullscreen"
+                referrerpolicy="no-referrer"
+            ></iframe>
+        </div>
+        <p class="demo-actions">
+            <a href="https://vibes.diy/vibe/jchris/nebula-flight" target="_blank" rel="noopener">Open full screen &rarr;</a>
+            <a href="https://vibes.diy/remix/jchris/nebula-flight" target="_blank" rel="noopener">Remix</a>
+        </p>
+        <p style="margin-top: 1rem; font-size: 0.95rem; color: #555; font-style: italic; max-width: 60ch; margin-left: auto; margin-right: auto;">
+            Want proximity audio that maps to rhythm instead of pitch, or visuals that react to microphone input? Remix it and describe your version — the source is yours.
+        </p>
+    </section>
+
+    <!-- The Stack -->
+    <section class="stack-section">
+        <h2>A featherlight runtime.</h2>
+        <p>Most agentic coding systems slow down the moment they try to become useful. Package drift, auth drift, backend sprawl, environment mismatch&mdash;they pile up fast across a batch of apps.</p>
+        <p>The answer isn't to maximize freedom everywhere. It's to <strong>constrain the parts that create operational drift</strong> and leave the creative surface open. That's the design point behind Vibes DIY.</p>
+        <p>Instead of asking an agent to assemble a modern web stack from scratch, we give it a tight app contract: one file, a shared importmap so dependencies don't bloat each app, live multiplayer state synced through a Cloudflare WebSocket-balanced edge, and a CLI that turns "generate" into "deploy" in a single instant push&mdash;live URL, no warmup. When an agent doesn't need to decide how to bundle dependencies, where to host realtime state, or how to invent a deployment pipeline&mdash;it can spend its attention on product logic. That's what lets us think in terms of 48-app or 96-app batches instead of one heroic demo at a time.</p>
+        <div class="pills">
+            <span class="pill bluey">Instant deploy</span>
+            <span class="pill goldenrod">importmap</span>
+            <span class="pill bluey">esm.sh</span>
+            <span class="pill ruby">callAI</span>
+            <span class="pill ruby">WS balancer</span>
+            <span class="pill goldenrod">React / single file</span>
+            <span class="pill bluey">Cloudflare Workers</span>
+        </div>
+        <p style="margin-top: 1.5rem; color: #555; font-size: 1rem; font-style: italic;">Constrained app shape. Open module ecosystem.</p>
+    </section>
+
+    <!-- Open Problems -->
+    <section class="problems-section">
+        <h2>Here's what we're actually solving.</h2>
+        <p>You'd work on these directly with JChris and Meno. In code. In public.</p>
+        <div class="problems-grid">
+            <div class="card problem-card">
+                <div class="problem-number">Problem 01</div>
+                <h3>Read-first entry</h3>
+                <p>Instant deploy lands a working URL in seconds, but invite links currently hit a Clerk auth wall before the visitor sees any value. The platform can render the live app from edge cache with no cloud token&mdash;defer auth until the first write action. Impulse clickers shouldn't bounce at a login wall.</p>
+            </div>
+            <div class="card problem-card">
+                <div class="problem-number">Problem 02</div>
+                <h3>Importmap drift across a batch</h3>
+                <p>Every Vibes app loads its dependencies through a shared importmap pinned at the platform layer. That keeps each app tiny and cache-friendly across a 96-app batch&mdash;but a single bad version pin can break every published app at once. We need a versioning model that lets the platform roll dependencies forward without forcing every app to re-deploy.</p>
+            </div>
+            <div class="card problem-card">
+                <div class="problem-number">Problem 03</div>
+                <h3>Surface the permissions model</h3>
+                <p>The CLI already supports <code>--reader</code> flags and D1 fully supports read-only membership&mdash;but the web UI omits it entirely. One toggle on the invite button takes this from prototyping toy to deployable enterprise tool. Zero new infrastructure.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Quote -->
+    <section class="quote-section">
+        <div class="card quote-card">
+            <blockquote>Vibes is an electric guitar. Now it's up to the world to invent rock-and-roll.</blockquote>
+            <cite>&mdash; Marcus Estes, Co-Founder of Vibes DIY</cite>
+        </div>
+    </section>
+
+    <!-- CTA -->
+    <section class="cta-section">
+        <div class="card cta-card">
+            <h2>Look under the hood.</h2>
+            <p>The whole thing is open source. Read the code, open an issue, send a PR. That's how it starts.</p>
+            <a href="https://github.com/VibesDIY/vibes.diy" class="btn btn-primary" target="_blank">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
+                github.com/VibesDIY
+            </a>
+        </div>
+    </section>
+
+{{> newsletter}}
+</main>

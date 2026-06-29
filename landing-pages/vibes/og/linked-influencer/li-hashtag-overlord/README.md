@@ -1,0 +1,22 @@
+# li-hashtag-overlord
+
+> Hashtag overload parody. User pastes any text. App uses AI to append 30+ cringe LinkedIn hashtags to it (#leadership #grindset #monday). Save and list each hashtagged post.
+
+Live at [https://vibes.diy/vibe/jchris/li-hashtag-overlord](https://vibes.diy/vibe/jchris/li-hashtag-overlord)
+
+Single-file React app built with [vibes.diy](https://vibes.diy). Visit the live url to manage access.
+
+## Run it
+
+```sh
+npx vibes-diy push     # uploads App.jsx, prints a live HTTPS URL
+```
+
+Edit [App.jsx](App.jsx) and push again to iterate.
+
+## Commands
+
+- `npx vibes-diy push` — deploy the current directory
+- `npx vibes-diy push --instant-join` — deploy with auto-accept sharing
+- `npx vibes-diy generate "prompt"` — generate a new app from a prompt
+- `npx vibes-diy help` — full command list

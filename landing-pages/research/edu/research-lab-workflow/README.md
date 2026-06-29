@@ -1,0 +1,22 @@
+# research-lab-workflow
+
+> An education researcher on faculty at a school of education runs a small lab with two doctoral students and a postdoc, conducting a steady stream of analyses on a long-running district-partner data system. They need an operational workflow app for the recurring research tasks the lab handles: new research questions arriving from district partners, analyses requested for conferences and journals, manuscript revisions in response to reviewers. The current setup is a tangle of shared folders and the principal investigator keeps having to re-explain the same methodological conventions to each new student. Build an operational workflow app where each analysis project has a structured project page. The principal investigator (or a student under their supervision) defines the research question, the unit of analysis, the data sources from the district partnership, and the analytic plan. For most projects the plan involves multiple regression, multilevel models for nested data (students in classrooms, classrooms in schools, schools in years), panel data methods with fixed effects estimators for the longitudinal questions, and occasionally a quasi-experimental research design when a natural policy variation can be exploited. The app should support the lab's standardized workflow: data extraction request from the district data system, variable construction documented with the qualitative coding schemes the lab has adopted, exploratory analysis with model diagnostics, primary specification, robustness specifications including alternative interaction terms and random effects models, sensitivity analysis on key assumptions, and a structured results section. Each project lives alongside the lab's institutional conventions document — what the lab considers appropriate model diagnostics, when to prefer multilevel models over fixed effects, how to handle missing data — so doctoral students can learn the conventions by working with them rather than being told. Manuscript drafts attach to projects, with reviewer comments and the lab's responses tracked. The workflow surfaces what the lab is working on at any time, which projects are blocked, and which are ready for the next milestone.
+
+Live at [https://vibes.diy/vibe/edu/research-lab-workflow](https://vibes.diy/vibe/edu/research-lab-workflow)
+
+Single-file React app built with [vibes.diy](https://vibes.diy). Visit the live url to manage access.
+
+## Run it
+
+```sh
+npx vibes-diy push     # uploads App.jsx, prints a live HTTPS URL
+```
+
+Edit [App.jsx](App.jsx) and push again to iterate.
+
+## Commands
+
+- `npx vibes-diy push` — deploy the current directory
+- `npx vibes-diy push --instant-join` — deploy with auto-accept sharing
+- `npx vibes-diy generate "prompt"` — generate a new app from a prompt
+- `npx vibes-diy help` — full command list

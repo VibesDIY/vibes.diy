@@ -1,0 +1,316 @@
+{{!--
+{
+  "layout": "webring",
+  "title": "Epidemiology & Study Design | Vibes DIY Edu",
+  "description": "Five tools for exploring cohort studies, case-control designs, confounding, and outbreak investigation — built from MIT, Stanford, UC Berkeley, UNC, and UW syllabi.",
+  "ogUrl": "https://good.vibes.diy/edu/epidemiology-study-design/",
+  "ogImage": "https://good.vibes.diy/images/screenshots/edu/epidemiology-study-design.jpg",
+  "source": "edu-epidemiology-study-design",
+  "dept": "Public Health",
+  "clusterSlug": "epidemiology-study-design",
+  "vocab": ["cohort study design", "case-control study design", "confounding", "selection bias", "effect modification", "directed acyclic graphs", "measures of association", "outbreak investigation", "disease surveillance", "observational study analysis", "cross-sectional studies", "evidence-based public health"],
+  "sources": [
+    { "institution": "MIT", "title": "HST.953 Collaborative Data Science in Medicine", "url": "https://ocw.mit.edu/courses/hst-953-collaborative-data-science-in-medicine-fall-2019/" },
+    { "institution": "Stanford", "title": "EPI 225: Introduction to Epidemiologic and Clinical Research Methods", "url": "https://online.stanford.edu/courses/epi225" },
+    { "institution": "Stanford", "title": "EPI 247: Epidemic Intelligence", "url": "https://online.stanford.edu/courses/epi247" },
+    { "institution": "UC Berkeley", "title": "PBHLTH 142 Introduction to Probability and Statistics in Biology and Public Health", "url": "https://classes.berkeley.edu/content/2024-fall-pbhlth-142-001-lec-001" },
+    { "institution": "UNC Chapel Hill", "title": "EPID 710: Fundamentals of Epidemiology", "url": "https://sph.unc.edu/epid/epid-courses-offered/" },
+    { "institution": "UNC Chapel Hill", "title": "EPID 718: Analytic Methods in Observational Epidemiology", "url": "https://catalog.unc.edu/courses/epid/" }
+  ],
+  "apps": [
+    {
+      "num": "01", "slug": "study-design-drills", "author": "edu", "live": true,
+      "title": "Study Design Drill",
+      "tagline": "Cohort, case-control, or cross-sectional? Map real questions to the right design.",
+      "desc": "Practice mapping public health questions to study designs: pick among cohort study design, case-control study design, and cross-sectional studies for each scenario, justify your choice, name the measure of association produced, and flag one source of selection bias."
+    },
+    {
+      "num": "02", "slug": "outbreak-investigation", "author": "edu", "live": true,
+      "title": "Outbreak Tracker",
+      "tagline": "Case definition, line list, odds ratios — work the cluster together.",
+      "desc": "Coordinate a local outbreak investigation: draft the case definition, collect exposure histories, build the working line list, compute odds ratios for candidate exposures, and produce a structured final report following standard outbreak investigation conventions."
+    },
+    {
+      "num": "03", "slug": "disease-surveillance-workflow", "author": "edu", "live": true,
+      "title": "Surveillance Workflow",
+      "tagline": "Weekly counts, threshold flags, open investigations — one workflow for all reportable conditions.",
+      "desc": "Track reportable disease cases week over week: compute incidence rates against historical baselines, flag conditions exceeding thresholds, manage open outbreak investigations, and produce the weekly surveillance bulletin — all in one workflow."
+    },
+    {
+      "num": "04", "slug": "cohort-analysis-plan", "author": "edu", "live": true,
+      "title": "Analysis Plan",
+      "tagline": "DAG, adjustment set, measure of association — pre-register before touching the data.",
+      "desc": "Pre-register an observational study analysis on a long-running cohort. Draw the directed acyclic graph, identify the minimal sufficient adjustment set, specify heterogeneity analysis by sex and race, document threats to validity, and produce a time-stamped pre-analysis plan for public registry."
+    },
+    {
+      "num": "05", "slug": "evidence-synthesis-epi", "author": "edu", "live": true,
+      "title": "Evidence Synthesis",
+      "tagline": "Every study classified. Every effect modification surfaced. Every finding graded.",
+      "desc": "Synthesize epidemiologic evidence for a public health guidance document: classify each study by design, extract measures of association and confounding handling, surface effect modification across studies, and produce the strength-of-evidence grade with dissenting opinions."
+    }
+  ]
+}
+--}}
+
+<style>
+  @import url("https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,700;1,400&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap");
+
+  :root {
+    --parchment: #F5F1E8;
+    --ink: #1C1917;
+    --purple: #6B3FA0;
+    --purple-dim: rgba(107, 63, 160, 0.1);
+    --muted: #706B63;
+    --card: #FEFCF5;
+  }
+
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html, body {
+    background: var(--parchment);
+    color: var(--ink);
+    font-family: "Inter", system-ui, sans-serif;
+    line-height: 1.55;
+  }
+
+  a { color: inherit; text-decoration: none; }
+
+  /* ── Topbar ── */
+  .topbar {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 0.65rem 1.25rem;
+    background: var(--ink); color: var(--parchment);
+    position: sticky; top: 0; z-index: 100;
+  }
+  .topbar-logo { height: 22px; width: auto; opacity: 0.85; vertical-align: middle; }
+  .topbar-crumb {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.62rem; letter-spacing: 0.15em; text-transform: uppercase;
+  }
+  .topbar-crumb a { opacity: 0.6; }
+  .topbar-crumb a:hover { opacity: 1; }
+  .topbar-crumb .sep { margin: 0 0.35rem; opacity: 0.35; }
+
+  /* ── Wrap ── */
+  .wrap {
+    max-width: 1040px; margin: 0 auto; padding: 0 1.5rem;
+    border-left: 2px solid var(--ink); border-right: 2px solid var(--ink);
+    min-height: 100vh;
+  }
+
+  /* ── Hero ── */
+  .cluster-hero {
+    padding: 4rem 0 3rem;
+    border-bottom: 4px solid var(--ink);
+  }
+  .dept-label {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.6rem; letter-spacing: 0.28em; text-transform: uppercase;
+    color: var(--purple); margin-bottom: 0.9rem;
+  }
+  .cluster-hero h1 {
+    font-family: "EB Garamond", Georgia, serif;
+    font-size: clamp(2.2rem, 5vw, 3.8rem);
+    font-weight: 700; line-height: 1.08; letter-spacing: -0.01em;
+    margin-bottom: 1rem;
+  }
+  .cluster-desc {
+    font-size: 1.05rem; color: var(--muted);
+    max-width: 660px; margin-bottom: 1.75rem; line-height: 1.6;
+  }
+  .vocab-row { display: flex; flex-wrap: wrap; gap: 0.35rem; }
+  .vocab-tag {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.6rem; letter-spacing: 0.08em; text-transform: lowercase;
+    padding: 0.22rem 0.55rem;
+    background: var(--purple-dim); border: 1px solid var(--purple);
+    color: var(--purple); border-radius: 3px;
+  }
+
+  /* ── Sources ── */
+  .sources-block {
+    padding: 1.5rem 0;
+    border-bottom: 2px solid var(--ink);
+  }
+  .section-label {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.6rem; letter-spacing: 0.25em; text-transform: uppercase;
+    color: var(--muted); margin-bottom: 0.75rem;
+  }
+  .source-list { list-style: none; display: flex; flex-direction: column; gap: 0.35rem; }
+  .source-list li { font-size: 0.85rem; display: flex; align-items: baseline; gap: 0.5rem; }
+  .source-inst {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.6rem; letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--muted); white-space: nowrap;
+  }
+  .source-list a {
+    color: var(--purple);
+    text-decoration: underline;
+    text-decoration-color: rgba(107,63,160,0.35);
+  }
+  .source-list a:hover { text-decoration-color: var(--purple); }
+
+  /* ── App List ── */
+  .apps-label {
+    padding: 1.5rem 0 0;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.6rem; letter-spacing: 0.25em; text-transform: uppercase;
+    color: var(--muted);
+  }
+  .app {
+    display: grid; grid-template-columns: 3.5rem 1fr 300px; gap: 2rem;
+    padding: 2.5rem 0; border-bottom: 2px solid var(--ink);
+    transition: background 0.15s, padding 0.15s, margin 0.15s;
+  }
+  .app:hover {
+    background: var(--purple-dim);
+    padding-left: 1rem; padding-right: 1rem;
+    margin-left: -1rem; margin-right: -1rem;
+  }
+  @media (max-width: 860px) {
+    .app { grid-template-columns: 3rem 1fr; gap: 1.25rem; }
+    .app .right { grid-column: 1 / -1; }
+  }
+
+  .num-cell { display: flex; flex-direction: column; align-items: center; gap: 0.4rem; padding-top: 0.15rem; }
+  .app-num {
+    font-family: "EB Garamond", Georgia, serif;
+    font-size: 2.2rem; font-weight: 700; color: var(--purple); line-height: 1;
+  }
+  .app-live {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.48rem; letter-spacing: 0.15em; text-transform: uppercase;
+    background: var(--purple); color: white; padding: 2px 5px; border-radius: 2px;
+  }
+
+  .body { display: flex; flex-direction: column; gap: 0.55rem; }
+  .body h2 {
+    font-family: "EB Garamond", Georgia, serif;
+    font-size: 1.75rem; font-weight: 700; line-height: 1.12;
+  }
+  .body .tagline {
+    font-family: "EB Garamond", Georgia, serif;
+    font-size: 1rem; color: var(--muted); font-style: italic;
+  }
+  .body .desc { font-size: 0.95rem; line-height: 1.65; color: var(--ink); }
+
+  .right { display: flex; flex-direction: column; gap: 0.6rem; }
+  .shot {
+    display: block; aspect-ratio: 16/9; overflow: hidden;
+    border: 2px solid var(--ink); background: var(--parchment);
+  }
+  .shot img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.3s ease; }
+  .shot:hover img { transform: scale(1.03); }
+  .ctas {
+    display: grid; grid-template-columns: repeat(3, 1fr);
+    border: 2px solid var(--ink);
+  }
+  .btn {
+    display: block; text-align: center; padding: 0.55rem 0.25rem;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.68rem; letter-spacing: 0.12em; text-transform: uppercase; font-weight: 700;
+    border-right: 1px solid var(--ink);
+    transition: background 0.12s, color 0.12s;
+  }
+  .btn:last-child { border-right: none; }
+  .btn:hover { background: var(--purple); color: white; }
+  .prompt-link {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.62rem; color: var(--muted); text-align: right;
+  }
+  .prompt-link:hover { color: var(--purple); text-decoration: underline; }
+
+  /* ── Footer ── */
+  .page-footer {
+    padding: 2rem 0;
+    display: flex; gap: 1.5rem; align-items: center; flex-wrap: wrap;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.68rem; letter-spacing: 0.1em; text-transform: uppercase;
+    border-top: 4px solid var(--ink);
+  }
+  .page-footer a { color: var(--purple); }
+  .page-footer a:hover { text-decoration: underline; }
+  .page-footer .sep { opacity: 0.3; }
+</style>
+
+<nav class="topbar">
+  <a href="https://links.vibes.diy/homepage">
+    <img src="{{assetPrefix}}Vibes-Toggle-1-Transparent.png" alt="Vibes DIY" class="topbar-logo">
+  </a>
+  <div class="topbar-crumb">
+    <a href="{{assetPrefix}}index.html">good.vibes.diy</a>
+    <span class="sep">/</span>
+    <a href="index.html">edu</a>
+    <span class="sep">/</span>
+    <span>epidemiology-study-design</span>
+  </div>
+</nav>
+
+<div class="wrap">
+
+  <header class="cluster-hero">
+    <div class="dept-label">{{dept}}</div>
+    <h1>Epidemiology &amp;<br>Study Design</h1>
+    <p class="cluster-desc">Tools for exploring cohort studies, case-control designs, confounding, and outbreak investigation — drawn from MIT, Stanford, UC Berkeley, UNC Chapel Hill, and UW curricula.</p>
+    <div class="vocab-row">
+      {{#each vocab}}<span class="vocab-tag">{{this}}</span>{{/each}}
+    </div>
+  </header>
+
+  <div class="sources-block">
+    <div class="section-label">From the syllabi</div>
+    <ul class="source-list">
+      {{#each sources}}
+      <li>
+        <span class="source-inst">{{institution}}</span>
+        <a href="{{url}}" target="_blank" rel="noopener">{{title}}</a>
+      </li>
+      {{/each}}
+    </ul>
+  </div>
+
+  <div class="apps-label">Exploration tools</div>
+
+  {{#each apps}}
+  <article class="app">
+    <div class="num-cell">
+      <div class="app-num">{{num}}</div>
+      {{#if live}}<div class="app-live">Live</div>{{/if}}
+    </div>
+    <div class="body">
+      <h2>{{title}}</h2>
+      <span class="tagline">{{tagline}}</span>
+      <p class="desc">{{desc}}</p>
+    </div>
+    <div class="right">
+      {{#if live}}
+        <a class="shot" href="https://vibes.diy/vibe/{{author}}/{{slug}}" aria-label="{{title}}">
+          <img src="https://{{slug}}--{{author}}.prod-v2.vibesdiy.net/screenshot.jpg" alt="{{slug}}"
+               onerror="this.onerror=null;this.src='{{@root.assetPrefix}}images/og-preview.png'">
+        </a>
+        <div class="ctas">
+          <a class="btn" href="https://vibes.diy/vibe/{{author}}/{{slug}}">Open</a>
+          <a class="btn" href="https://vibes.diy/remix/{{author}}/{{slug}}?skipChat=true">Clone</a>
+          <a class="btn" href="https://vibes.diy/remix/{{author}}/{{slug}}">Remix</a>
+        </div>
+        <a class="prompt-link" href="https://vibes.diy/chat/prompt?prompt64={{prompt64 desc}}">// start from this prompt</a>
+      {{else}}
+        <a class="prompt-link" href="https://vibes.diy/chat/prompt?prompt64={{prompt64 desc}}">// build this app →</a>
+      {{/if}}
+    </div>
+  </article>
+  {{/each}}
+
+  {{> newsletter}}
+<footer class="page-footer">
+    <a href="index.html">← Edu Index</a>
+    <span class="sep">·</span>
+    <a href="syllabi.html">Syllabus Corpus</a>
+    <span class="sep">·</span>
+    <a href="about.html">About</a>
+    <span class="sep">·</span>
+    <a href="https://links.vibes.diy/homepage">Vibes DIY</a>
+  </footer>
+
+</div>

@@ -1,0 +1,109 @@
+{{!--
+{
+  "layout": "webring",
+  "title": "Word Guess | Mind Games",
+  "description": "Five-letter daily deduction. Four variations on the theme — each one a live deployed app.",
+  "ogUrl": "https://good.vibes.diy/mind-games/wordle.html",
+  "source": "mind-games-wordle"
+}
+--}}
+
+<style>
+  @import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=Space+Grotesk:wght@500;700&family=Inter:wght@400;600;800&display=swap");
+
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    font-family:'IBM Plex Mono', ui-monospace, monospace;
+    background:#faf7f0;
+    color:#1a1a1a;
+    min-height:100vh;
+    background-image:repeating-linear-gradient(45deg, transparent 0 30px, rgba(0,0,0,.025) 30px 31px);
+    background-attachment:fixed;
+  }
+  a{color:inherit;text-decoration:none}
+  .wrap{max-width:1100px;margin:0 auto;padding:64px 24px 96px;position:relative;z-index:1}
+  header.top{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:48px;gap:24px;flex-wrap:wrap}
+  header.top a.back{color:#1a1a1a;text-decoration:none;opacity:.6;font-size:14px}
+  header.top a.back:hover{opacity:1}
+  h1{font-family:'IBM Plex Mono', monospace;font-size:clamp(40px,7vw,84px);margin:0;line-height:.95;letter-spacing:-.02em}
+  .desc{max-width:560px;font-size:18px;opacity:.75;margin:16px 0 0}
+  .accent-bar{display:inline-block;height:6px;width:120px;background:#6aaa64;margin:24px 0 0}
+  .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:32px;margin-top:56px}
+  @media (max-width:720px){.grid{grid-template-columns:1fr}}
+  .card{
+    background:#ffffff;
+    border:2px solid #1a1a1a;
+    border-radius:6px;
+    box-shadow:6px 6px 0 #1a1a1a;
+    overflow:hidden;
+    display:flex;flex-direction:column;
+    transition:transform .15s ease;
+  }
+  .card:hover{transform:translateY(-2px)}
+  .shot{display:block;aspect-ratio:16/10;background:#faf7f0;overflow:hidden;border-bottom:2px solid #1a1a1a}
+  .shot img{width:100%;height:100%;object-fit:cover;display:block}
+  .meta{padding:20px 22px 24px}
+  .meta h3{margin:0 0 10px;font-family:'IBM Plex Mono', monospace;font-size:24px;letter-spacing:-.01em}
+  .meta h3 a{color:inherit;text-decoration:none}
+  .meta h3 a:hover{color:#6aaa64}
+  .prompt{margin:0 0 16px;font-size:14px;line-height:1.55;opacity:.78}
+  .play{display:inline-flex;align-items:center;gap:6px;color:#6aaa64;font-weight:700;text-decoration:none;font-size:14px;letter-spacing:.02em}
+  .play:hover{text-decoration:underline}
+  footer{margin-top:64px;font-size:13px;opacity:.5}
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div>
+      <h1>Word Guess</h1>
+      <p class="desc">Five-letter daily deduction. Four variations on the theme, each one a live deployed app you can poke at.</p>
+      <div class="accent-bar"></div>
+    </div>
+    <a class="back" href="./index.html">&larr; Mind Games hub</a>
+  </header>
+  <main class="grid">
+    <article class="card">
+      <a class="shot" href="https://vibes.diy/vibe/jchris/hue-hunt" target="_blank" rel="noopener">
+        <img src="https://hue-hunt--jchris.prod-v2.vibesdiy.net/screenshot.jpg" alt="Prismatic Hues preview" loading="lazy"/>
+      </a>
+      <div class="meta">
+        <h3><a href="https://vibes.diy/vibe/jchris/hue-hunt" target="_blank" rel="noopener">Prismatic Hues</a></h3>
+        <p class="prompt">Five-letter color word guessing game. Each row reveals which hues are correct. Keyboard input, six guesses, animated reveal of color swatches replacing letters. Daily seed from date. Show win/lose modal with share button.</p>
+        <a class="play" href="https://vibes.diy/vibe/jchris/hue-hunt" target="_blank" rel="noopener">Play live &rarr;</a>
+      </div>
+    </article>
+    <article class="card">
+      <a class="shot" href="https://vibes.diy/vibe/jchris/emoji-combo" target="_blank" rel="noopener">
+        <img src="https://emoji-combo--jchris.prod-v2.vibesdiy.net/screenshot.jpg" alt="Emoji Five preview" loading="lazy"/>
+      </a>
+      <div class="meta">
+        <h3><a href="https://vibes.diy/vibe/jchris/emoji-combo" target="_blank" rel="noopener">Emoji Five</a></h3>
+        <p class="prompt">Daily 5-emoji combo puzzle. Pick from 30-emoji keyboard, six guesses, color feedback per slot. Theme rotates daily (foods, faces, animals). Show streak counter and shareable result grid.</p>
+        <a class="play" href="https://vibes.diy/vibe/jchris/emoji-combo" target="_blank" rel="noopener">Play live &rarr;</a>
+      </div>
+    </article>
+    <article class="card">
+      <a class="shot" href="https://vibes.diy/vibe/jchris/melodle" target="_blank" rel="noopener">
+        <img src="https://melodle--jchris.prod-v2.vibesdiy.net/screenshot.jpg" alt="Note Quest preview" loading="lazy"/>
+      </a>
+      <div class="meta">
+        <h3><a href="https://vibes.diy/vibe/jchris/melodle" target="_blank" rel="noopener">Note Quest</a></h3>
+        <p class="prompt">Five-note melody guessing game. Tap colored piano keys to guess. Six tries. Audio playback per guess with flashes showing right note correct position. Daily seed.</p>
+        <a class="play" href="https://vibes.diy/vibe/jchris/melodle" target="_blank" rel="noopener">Play live &rarr;</a>
+      </div>
+    </article>
+    <article class="card">
+      <a class="shot" href="https://vibes.diy/vibe/jchris/digit-dash" target="_blank" rel="noopener">
+        <img src="https://digit-dash--jchris.prod-v2.vibesdiy.net/screenshot.jpg" alt="Numerle preview" loading="lazy"/>
+      </a>
+      <div class="meta">
+        <h3><a href="https://vibes.diy/vibe/jchris/digit-dash" target="_blank" rel="noopener">Numerle</a></h3>
+        <p class="prompt">Guess a 5-digit number in six tries. After each guess, show high/low/exact arrow per digit. Math hint button gives sum parity. Streaks saved.</p>
+        <a class="play" href="https://vibes.diy/vibe/jchris/digit-dash" target="_blank" rel="noopener">Play live &rarr;</a>
+      </div>
+    </article>
+  </main>
+  {{> newsletter}}
+<footer>Built with vibes.diy. Each card is a one-prompt mini-app.</footer>
+</div>

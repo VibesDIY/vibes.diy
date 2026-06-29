@@ -1,0 +1,291 @@
+{{!--
+{
+  "layout": "webring",
+  "title": "Flashcard Decks | Vibes DIY edu/study",
+  "description": "Three flashcard apps on a toy-to-key ladder — party quotes, vocab builder, and exam drill. Same flip-deck primitive, three rungs.",
+  "ogUrl": "https://good.vibes.diy/edu/study/flashcards/",
+  "source": "edu-study-flashcards",
+  "ogImage": "https://good.vibes.diy/images/screenshots/edu/study/flashcards.jpg",
+  "apps": [
+    {
+      "num": "01",
+      "rung": "TOY",
+      "slug": "quote-flip-v2",
+      "author": "og",
+      "live": true,
+      "title": "Quote Flip",
+      "tagline": "Guess the character. Flip the card.",
+      "desc": "A deck of movie and TV quotes on the front, character and show on the back. Party game format — pass the phone, race to flip before someone shouts the answer. Generate a new deck from any genre or show with a single tap. The AI builds 20 cards; you burn through them in ten minutes. Party Mode passes the phone between players and tracks each person's score. Remix for your own fandom."
+    },
+    {
+      "num": "02",
+      "rung": "MID",
+      "slug": "vocab-deck-v2",
+      "author": "og",
+      "live": true,
+      "title": "Vocab Deck",
+      "tagline": "Type a topic, get a study deck.",
+      "desc": "Type any subject — Spanish irregular verbs, cell biology terminology, constitutional amendments — and the AI generates a 20-card study deck in seconds. Flip front to back, mark Known or Still Learning, watch the progress bar fill. Decks persist across sessions; your last deck loads automatically. Manual card add for your own terms. Clean, distraction-free, no subscription."
+    },
+    {
+      "num": "03",
+      "rung": "KEY",
+      "slug": "exam-drill-v2",
+      "author": "og",
+      "live": true,
+      "title": "Exam Drill",
+      "tagline": "Confidence-rated cards for high-stakes prep.",
+      "desc": "Three-button study mode: KNEW IT, UNSURE, MISSED IT. Cards you missed come back next. Cards you're unsure about cycle back in three. Only cards you aced twice in a row graduate to done. A dot indicator on each card shows your confidence level. Build decks from any certification domain — bar exam, NCLEX, AWS, PMP — or type your own. In-progress sessions resume on reload."
+    }
+  ]
+}
+--}}
+
+<style>
+  @import url("https://fonts.googleapis.com/css2?family=Crimson+Pro:ital,wght@0,400;0,600;1,400&family=Inter:wght@400;500;600;700;800;900&display=optional");
+
+  :root {
+    --cream: oklch(0.97 0.02 80);
+    --terra: oklch(0.72 0.18 40);
+    --ink:   oklch(0.10 0 0);
+    --muted: oklch(0.55 0 0);
+    --dot:   oklch(0.90 0.015 80);
+  }
+
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html, body {
+    background: var(--cream);
+    background-image: radial-gradient(circle, rgba(0,0,0,0.07) 1px, transparent 1px);
+    background-size: 24px 24px;
+    color: var(--ink);
+    font-family: "Inter", system-ui, sans-serif;
+    line-height: 1.55;
+    min-height: 100vh;
+  }
+  a { color: inherit; text-decoration: none; }
+
+  .layout {
+    max-width: 1100px; margin: 0 auto; padding: 0 1.25rem;
+    border-left: 2px solid var(--ink); border-right: 2px solid var(--ink);
+    background: var(--cream);
+  }
+
+  .topbar {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 1rem 1.25rem; border-bottom: 4px solid var(--ink);
+    margin: 0 -1.25rem; padding-left: 1.25rem; padding-right: 1.25rem;
+  }
+  .topbar .brand { font-family: "Inter", sans-serif; font-weight: 900; letter-spacing: -0.02em; font-size: 1.25rem; }
+  .topbar .meta { font-family: "Inter", monospace; font-size: 0.6rem; letter-spacing: 0.18em; text-transform: uppercase; }
+  .topbar .meta b { background: var(--terra); color: #fff; padding: 2px 6px; }
+
+  .crumb {
+    padding: 0.55rem 0;
+    font-family: "Inter", sans-serif; font-size: 0.65rem; letter-spacing: 0.15em; text-transform: uppercase;
+    border-bottom: 2px solid var(--ink);
+  }
+  .crumb a:hover { background: oklch(0.90 0.06 40); }
+
+  .hero {
+    padding: 4rem 0 3.5rem; border-bottom: 4px solid var(--ink);
+  }
+  .hero .label {
+    font-family: "Inter", sans-serif; font-size: 0.6rem; letter-spacing: 0.25em; text-transform: uppercase;
+    margin-bottom: 1.5rem; display: inline-block; padding: 4px 10px;
+    background: var(--ink); color: var(--cream);
+  }
+  .hero h1 {
+    font-family: "Crimson Pro", Georgia, serif;
+    font-size: clamp(3rem, 9vw, 6.5rem);
+    font-weight: 600; line-height: 0.95; letter-spacing: -0.02em; margin-bottom: 1.5rem;
+  }
+  .hero h1 .hl {
+    background: var(--terra); color: #fff; padding: 0 0.12em;
+    display: inline-block; transform: rotate(-1deg);
+    box-shadow: 5px 5px 0 var(--ink); border: 2px solid var(--ink); margin: 0.05em 0;
+  }
+  .hero p.lead { font-size: 1.1rem; max-width: 680px; line-height: 1.6; }
+
+  .stats {
+    display: grid; grid-template-columns: repeat(3, 1fr);
+    border-bottom: 4px solid var(--ink);
+  }
+  .stat-cell {
+    padding: 1.25rem 1.5rem; border-right: 2px solid var(--ink);
+  }
+  .stat-cell:last-child { border-right: none; }
+  .stat-cell .k { font-family: "Inter", sans-serif; font-size: 0.55rem; letter-spacing: 0.25em; text-transform: uppercase; margin-bottom: 0.4rem; }
+  .stat-cell .v { font-family: "Inter", sans-serif; font-weight: 900; font-size: 1.3rem; letter-spacing: -0.02em; }
+
+  .primitive {
+    padding: 2.5rem 0; border-bottom: 4px solid var(--ink);
+  }
+  .primitive h2 {
+    font-family: "Inter", sans-serif; font-size: 0.6rem; letter-spacing: 0.25em; text-transform: uppercase; margin-bottom: 1.25rem;
+  }
+  .primitive h2::before { content: "// "; }
+  .primitive p { font-size: 1.05rem; max-width: 760px; line-height: 1.6; margin-bottom: 0.85rem; }
+  .primitive .pull {
+    font-family: "Crimson Pro", Georgia, serif; font-weight: 600;
+    font-size: clamp(1.6rem, 3.5vw, 2.6rem); line-height: 1.15; letter-spacing: -0.01em;
+    margin: 1.25rem 0; max-width: 800px;
+  }
+  .primitive .pull span { background: oklch(0.90 0.06 40); padding: 0 0.2em; box-decoration-break: clone; -webkit-box-decoration-break: clone; }
+
+  .section-label {
+    padding: 1.5rem 0 0.75rem;
+    font-family: "Inter", sans-serif; font-size: 0.6rem; letter-spacing: 0.25em; text-transform: uppercase;
+    border-bottom: 2px dashed var(--ink); margin-bottom: 1.5rem;
+  }
+  .section-label::before { content: "// "; }
+
+  .apps { display: flex; flex-direction: column; gap: 0; border-top: 2px solid var(--ink); border-bottom: 4px solid var(--ink); }
+  .app {
+    padding: 2rem 1.5rem; border-bottom: 2px solid var(--ink);
+    display: grid; grid-template-columns: 80px 1fr 320px; gap: 2rem; align-items: start;
+    transition: background 0.15s;
+  }
+  .app:last-child { border-bottom: none; }
+  @media (max-width: 800px) { .app { grid-template-columns: 1fr; gap: 1rem; } }
+  .app:hover { background: oklch(0.93 0.025 80); }
+
+  .app .num-cell { display: flex; flex-direction: column; gap: 0.4rem; }
+  .app .num { font-family: "Inter", sans-serif; font-weight: 900; font-size: 3rem; line-height: 0.85; letter-spacing: -0.04em; }
+  .app .rung-badge {
+    font-family: "Inter", sans-serif; font-size: 0.5rem; letter-spacing: 0.22em; text-transform: uppercase;
+    padding: 3px 7px; border: 2px solid var(--ink); text-align: center; display: inline-block;
+  }
+  .app--live .rung-badge { background: var(--terra); color: #fff; border-color: var(--terra); }
+
+  .app .body { display: flex; flex-direction: column; gap: 0.7rem; }
+  .app .body .title { font-family: "Crimson Pro", Georgia, serif; font-size: 2.2rem; font-weight: 600; letter-spacing: -0.01em; line-height: 1.05; }
+  .app .body .tagline {
+    font-family: "Inter", sans-serif; font-size: 0.75rem; padding: 5px 10px;
+    background: oklch(0.90 0.06 40); display: inline-block; align-self: flex-start; border: 1px solid var(--ink);
+  }
+  .app .body .desc { font-size: 1rem; line-height: 1.55; }
+
+  .app .right { display: flex; flex-direction: column; gap: 0.6rem; }
+  .app .shot { display: block; aspect-ratio: 16/9; overflow: hidden; border: 2px solid var(--ink); background: var(--cream); }
+  .app .shot img { width: 100%; height: 100%; object-fit: cover; }
+  .app .shot-placeholder {
+    padding: 1rem; height: 100%; display: flex; align-items: center; justify-content: center;
+    font-family: "Inter", sans-serif; font-size: 0.7rem; letter-spacing: 0.2em; text-transform: uppercase; text-align: center;
+  }
+  .app .ctas { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0; border: 2px solid var(--ink); }
+  .app .ctas--single { grid-template-columns: 1fr; }
+  .btn {
+    text-align: center; padding: 0.55rem 0.5rem; background: transparent;
+    border-right: 2px solid var(--ink);
+    font-family: "Inter", sans-serif; font-size: 0.65rem; letter-spacing: 0.15em; text-transform: uppercase; font-weight: 700;
+    color: var(--ink); cursor: pointer; transition: background 0.12s;
+  }
+  .btn:last-child { border-right: none; }
+  .btn:hover { background: var(--terra); color: #fff; }
+  .prompt-link { font-family: "Inter", sans-serif; font-size: 0.7rem; text-decoration: underline; }
+  .prompt-link:hover { background: oklch(0.90 0.06 40); }
+
+  .epilogue { padding: 2.5rem 0; border-bottom: 4px solid var(--ink); }
+  .epilogue h2 { font-family: "Inter", sans-serif; font-size: 0.6rem; letter-spacing: 0.25em; text-transform: uppercase; margin-bottom: 1rem; }
+  .epilogue h2::before { content: "// "; }
+  .epilogue p { font-size: 1.1rem; max-width: 720px; line-height: 1.55; margin-bottom: 0.75rem; }
+  .epilogue .hl { background: oklch(0.90 0.06 40); padding: 1px 4px; }
+
+  footer.term-footer {
+    padding: 1rem 0; font-family: "Inter", sans-serif; font-size: 0.6rem; letter-spacing: 0.2em; text-transform: uppercase;
+    display: flex; justify-content: space-between;
+  }
+  footer.term-footer a:hover { background: oklch(0.90 0.06 40); }
+</style>
+
+<div class="layout">
+  <header class="topbar">
+    <a class="brand" href="https://links.vibes.diy/homepage">VIBES.DIY</a>
+    <span class="meta"><b>EDU / STUDY</b> · flashcard decks</span>
+  </header>
+
+  <nav class="crumb">
+    <a href="{{assetPrefix}}index.html">Home</a> &nbsp;›&nbsp; edu / study &nbsp;›&nbsp; Flashcard Decks
+  </nav>
+
+  <section class="hero">
+    <span class="label">edu / study</span>
+    <h1>The card<br/>is the <span class="hl">test</span>.</h1>
+    <p class="lead">
+      Three flashcard apps on a toy-to-key ladder. Same flip-deck primitive — front, back, mark it, move on — running from a party game to an exam drill. Pick the rung that matches your stakes.
+    </p>
+  </section>
+
+  <div class="stats">
+    <div class="stat-cell"><div class="k">Apps</div><div class="v">Three</div></div>
+    <div class="stat-cell"><div class="k">Ladder</div><div class="v">Toy → Key</div></div>
+    <div class="stat-cell"><div class="k">Engine</div><div class="v">Flip deck + Fireproof</div></div>
+  </div>
+
+  <section class="primitive">
+    <h2>The Primitive</h2>
+    <p>
+      Every app here uses the same flip-deck engine: a card with a front and a back, an AI that fills the deck from any topic you name, and a study loop that tracks what you know and what you don't. The mechanics don't change — what changes is the stakes, the tone, and what you do with the cards after you flip them.
+    </p>
+    <p class="pull">
+      Front is the question. Back is the answer. <span>What you do with the gap is the study.</span>
+    </p>
+    <p>
+      Toy end: the cards are movie quotes and the point is to shout the answer before your friend does. Key end: the cards are certification exam questions and the confidence tracker keeps drilling you on the ones you missed until you genuinely know them. The middle: your own vocab, your own subject, clean and fast and no sign-up required.
+    </p>
+  </section>
+
+  <div class="section-label">The Ladder</div>
+
+  <section class="apps">
+    {{#each apps}}
+      <article class="app {{#if live}}app--live{{else}}app--pending{{/if}}">
+        <div class="num-cell">
+          <div class="num">{{num}}</div>
+          <div class="rung-badge">{{rung}}</div>
+        </div>
+        <div class="body">
+          <h2 class="title">{{title}}</h2>
+          <span class="tagline">{{tagline}}</span>
+          <p class="desc">{{desc}}</p>
+        </div>
+        <div class="right">
+          {{#if live}}
+            <a class="shot" href="https://vibes.diy/vibe/{{author}}/{{slug}}" aria-label="{{title}} screenshot">
+              <img src="https://{{slug}}--{{author}}.prod-v2.vibesdiy.net/screenshot.jpg" alt="{{slug}}"
+                onerror="this.onerror=null; this.src='{{@root.assetPrefix}}images/og-preview.png';"/>
+            </a>
+            <div class="ctas">
+              <a class="btn" href="https://vibes.diy/vibe/{{author}}/{{slug}}">Open</a>
+              <a class="btn" href="https://vibes.diy/remix/{{author}}/{{slug}}?skipChat=true">Clone</a>
+              <a class="btn" href="https://vibes.diy/remix/{{author}}/{{slug}}">Remix</a>
+            </div>
+            <a class="prompt-link" href="https://vibes.diy/chat/prompt?prompt64={{prompt64 desc}}">// start fresh from this prompt</a>
+          {{else}}
+            <div class="shot"><div class="shot-placeholder">awaiting deploy</div></div>
+            <div class="ctas ctas--single">
+              <a class="btn" href="https://vibes.diy/chat/prompt?prompt64={{prompt64 desc}}">Start From Prompt</a>
+            </div>
+          {{/if}}
+        </div>
+      </article>
+    {{/each}}
+  </section>
+
+  <div class="epilogue">
+    <h2>Read Me</h2>
+    <p>
+      The flashcard is the oldest study technology that still works. Front, back, flip, mark, repeat. Pre-AI you either bought a printed deck or made your own by hand. The form factor put a hard ceiling on what topics were worth the effort — no one made 200 handwritten NCLEX cards more than once. <span class="hl">Generated software removes the ceiling.</span> Any topic, 20 cards, one generation call. The study loop is yours to keep.
+    </p>
+    <p>
+      All three apps here are remixable. If the party-game vibe is wrong for your use case, clone the Quote Flip and swap the generation prompt. If the exam drill's confidence algorithm doesn't match your subject, remix it. The primitive is open.
+    </p>
+  </div>
+
+  {{> newsletter}}
+<footer class="term-footer">
+    <span>Vibes.diy · <a href="https://links.vibes.diy/homepage">homepage</a> · <a href="{{assetPrefix}}edu/study/quizzes.html">quizzes →</a></span>
+    <span>// THREE RUNGS, ONE PRIMITIVE</span>
+  </footer>
+</div>

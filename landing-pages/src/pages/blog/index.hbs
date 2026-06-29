@@ -1,0 +1,177 @@
+{{!--
+{
+  "layout": "standard",
+  "title": "Vibes DIY Blog | Notes from the build log",
+  "description": "Field notes, evals, and stories from building Vibes DIY — the no-code app builder that turns a sentence into a working app.",
+  "ogUrl": "https://good.vibes.diy/blog/",
+  "source": "blog-index"
+}
+--}}
+
+<style>
+        @import url('https://fonts.cdnfonts.com/css/alte-haas-grotesk');
+
+        :root {
+            --os-gray: #7A7A7A;
+            --grid-gray: #CCCDC8;
+            --goldenrod: #FEDD00;
+            --ruby: #DA291C;
+            --bluey: #009ACE;
+            --ivory: #FFFFF0;
+            --black: #231F20;
+            --white: #FFFFFF;
+            --grid-line: rgba(255, 255, 255, 0.5);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Alte Haas Grotesk', sans-serif;
+            background-color: var(--grid-gray);
+            color: var(--black);
+            line-height: 1.6;
+            background-image:
+                linear-gradient(var(--grid-line) 1px, transparent 1px),
+                linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
+            background-size: 40px 40px;
+            min-height: 100vh;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        header {
+            padding: 1.5rem 2rem;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: linear-gradient(to bottom, var(--grid-gray) 60%, transparent);
+        }
+        .logo-link { display: block; text-decoration: none; }
+        .logo-img { height: 72px; width: auto; display: block; }
+        .mono { font-family: 'SFMono-Regular', 'Menlo', 'Consolas', monospace; }
+
+        .blog-wrap { max-width: 980px; margin: 0 auto; padding: 1rem 1.5rem 4rem; }
+
+        .blog-masthead {
+            margin-bottom: 2.5rem;
+        }
+        .blog-overline {
+            font-size: 0.72rem;
+            letter-spacing: 0.28em;
+            text-transform: uppercase;
+            color: var(--os-gray);
+            margin-bottom: 0.75rem;
+        }
+        .blog-masthead h1 {
+            font-size: clamp(2.4rem, 6vw, 4rem);
+            font-weight: bold;
+            line-height: 1.0;
+            letter-spacing: -0.03em;
+            margin-bottom: 0.75rem;
+        }
+        .blog-masthead p {
+            color: var(--os-gray);
+            font-size: 1.15rem;
+            max-width: 56ch;
+        }
+
+        .post-list { display: grid; gap: 1.5rem; }
+
+        .post-item {
+            display: grid;
+            grid-template-columns: 1.1fr 1fr;
+            background: var(--white);
+            border: 3px solid var(--black);
+            border-radius: 20px;
+            box-shadow: 6px 6px 0 var(--black);
+            overflow: hidden;
+            text-decoration: none;
+            color: var(--black);
+            transition: transform 0.18s ease, box-shadow 0.18s ease;
+        }
+        .post-item:hover { transform: translate(-3px, -3px); box-shadow: 9px 9px 0 var(--black); }
+        .post-thumb { background: #e8e8e0; min-height: 220px; }
+        .post-thumb img { width: 100%; height: 100%; object-fit: cover; display: block; }
+        .post-thumb.glyph {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background:
+                linear-gradient(135deg, #0b3a4a 0%, #231f20 100%),
+                repeating-linear-gradient(0deg, rgba(255,255,255,0.04) 0 1px, transparent 1px 40px);
+            color: var(--goldenrod);
+            font-family: 'SFMono-Regular', 'Menlo', 'Consolas', monospace;
+            font-size: 2.6rem;
+            letter-spacing: 0.1em;
+            text-align: center;
+        }
+        .post-body { padding: 1.85rem 1.85rem 1.65rem; display: flex; flex-direction: column; }
+        .post-date {
+            font-size: 0.75rem;
+            letter-spacing: 0.16em;
+            text-transform: uppercase;
+            color: var(--bluey);
+            margin-bottom: 0.6rem;
+        }
+        .post-item h2 {
+            font-size: 1.5rem;
+            line-height: 1.12;
+            letter-spacing: -0.02em;
+            margin-bottom: 0.6rem;
+        }
+        .post-item p { color: #555; font-size: 0.97rem; flex: 1; }
+        .post-readmore { margin-top: 1.1rem; font-weight: 600; color: var(--bluey); font-size: 0.9rem; }
+
+        @media (max-width: 680px) {
+            .post-item { grid-template-columns: 1fr; }
+            .post-thumb { min-height: 180px; }
+        }
+    </style>
+
+<main class="blog-wrap">
+    <div class="blog-masthead">
+        <div class="blog-overline mono">// the build log</div>
+        <h1>Vibes DIY Blog</h1>
+        <p>Field notes, evals, and stories from building the no-code app builder that turns a sentence into a working app.</p>
+    </div>
+
+    <div class="post-list">
+
+        <a href="upgrading-apps-with-screenshots.html" class="post-item">
+            <div class="post-thumb glyph">look&nbsp;→&nbsp;fix&nbsp;→&nbsp;push&nbsp;↺</div>
+            <div class="post-body">
+                <div class="post-date mono">June 9, 2026</div>
+                <h2>How we batch-upgrade apps with screenshots</h2>
+                <p>Every deployed Vibe serves both a live screenshot and its own source. That closes a visual feedback loop an agent can run alone — see the app, fix the code, push, look again — and fan out across dozens of apps at once.</p>
+                <span class="post-readmore">Read the post →</span>
+            </div>
+        </a>
+
+        <a href="how-we-eval-the-generator.html" class="post-item">
+            <div class="post-thumb">
+                <img src="{{assetPrefix}}images/blog/eval-process/goals-enh-after.png" alt="A role-gated team board generated from a plain-language prompt during an eval run" loading="lazy">
+            </div>
+            <div class="post-body">
+                <div class="post-date mono">June 9, 2026</div>
+                <h2>How we eval the generator</h2>
+                <p>Every edit to the system prompt changes every app anyone generates. Here's the harness that measures generation quality — 46 prompts in three sets, scored 1–5, fanned out across a Workflow pipeline — so we know within a coffee break whether a change made things better or worse.</p>
+                <span class="post-readmore">Read the post →</span>
+            </div>
+        </a>
+
+        <a href="can-a-prompt-rebuild-the-pickathon-app.html" class="post-item">
+            <div class="post-thumb">
+                <img src="{{assetPrefix}}images/blog/pickathon-prompt-eval/generated-c2-real-data.png" alt="The Pickathon app regenerated from a single prompt, loading the real festival lineup" loading="lazy">
+            </div>
+            <div class="post-body">
+                <div class="post-date mono">June 9, 2026</div>
+                <h2>Can one English prompt rebuild our festival app?</h2>
+                <p>We tried to recreate Pickathon's built-out 2026 app — data model, views, and a fiddly access policy — from a single plain-English prompt. It got ~90% there on description alone; a URL and a one-sentence schema closed the rest.</p>
+                <span class="post-readmore">Read the post →</span>
+            </div>
+        </a>
+
+    </div>
+</main>

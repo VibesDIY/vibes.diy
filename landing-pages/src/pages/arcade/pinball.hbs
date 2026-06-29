@@ -1,0 +1,244 @@
+{{!--
+{
+  "layout": "raw",
+  "title": "Pinball — Six Tables | Arcade · Vibes DIY",
+  "description": "Six pinball tables — flippers, bumpers, tilt, jackpots. Each a single-file React app deployed live on Vibes DIY.",
+  "ogUrl": "https://good.vibes.diy/arcade/pinball"
+,
+  "source": "arcade-pinball"
+}
+--}}
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Pinball — Games Landing</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
+  :root {
+    --chrome: #c9d1e0;
+    --neon-pink: #ff3ea5;
+    --neon-cyan: #36e3ff;
+    --neon-amber: #ffd23a;
+    --ink: #07070d;
+    --rail: #1a1c2c;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: "Segoe UI", system-ui, sans-serif;
+    background:
+      radial-gradient(ellipse at 50% -20%, #2b0d3a 0%, #0a0612 55%, #000 100%);
+    color: #f1f1ff;
+    min-height: 100vh;
+    padding: 40px 24px 80px;
+  }
+  header {
+    text-align: center;
+    margin-bottom: 56px;
+  }
+  .scoreboard {
+    display: inline-block;
+    padding: 14px 28px;
+    background: #0a0014;
+    border: 3px solid var(--chrome);
+    border-radius: 14px;
+    box-shadow:
+      inset 0 0 16px rgba(255, 62, 165, 0.45),
+      0 0 24px rgba(255, 62, 165, 0.35);
+    font-family: "Courier New", monospace;
+    color: var(--neon-amber);
+    letter-spacing: 0.3em;
+    font-size: 14px;
+    margin-bottom: 18px;
+  }
+  h1 {
+    margin: 0;
+    font-size: clamp(40px, 7vw, 88px);
+    font-weight: 900;
+    letter-spacing: 0.04em;
+    background: linear-gradient(180deg, #fff 0%, var(--neon-pink) 60%, #6a0033 100%);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    text-shadow: 0 0 30px rgba(255, 62, 165, 0.35);
+    text-transform: uppercase;
+  }
+  .tag { color: var(--neon-cyan); letter-spacing: 0.3em; font-size: 13px; }
+  nav { text-align: center; margin: 20px 0 0; }
+  nav a {
+    color: var(--neon-cyan);
+    text-decoration: none;
+    border: 1px solid var(--neon-cyan);
+    padding: 6px 14px;
+    border-radius: 999px;
+    font-size: 12px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+  }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 32px;
+    max-width: 1240px;
+    margin: 0 auto;
+  }
+  .card {
+    position: relative;
+    background:
+      radial-gradient(ellipse at 50% 0%, #2a0028 0%, #0c0410 70%),
+      var(--ink);
+    border: 3px solid var(--chrome);
+    border-radius: 28px 28px 80px 80px / 28px 28px 120px 120px;
+    padding: 24px 22px 32px;
+    box-shadow:
+      inset 0 0 30px rgba(54, 227, 255, 0.18),
+      0 18px 40px rgba(0, 0, 0, 0.6),
+      0 0 30px rgba(255, 62, 165, 0.18);
+    overflow: hidden;
+    transition: transform 0.18s ease, box-shadow 0.18s ease;
+  }
+  .card:hover {
+    transform: translateY(-4px);
+    box-shadow:
+      inset 0 0 30px rgba(54, 227, 255, 0.3),
+      0 24px 50px rgba(0, 0, 0, 0.7),
+      0 0 50px rgba(255, 62, 165, 0.4);
+  }
+  .bumpers {
+    position: absolute;
+    inset: 12px 12px auto 12px;
+    display: flex;
+    justify-content: space-between;
+    pointer-events: none;
+  }
+  .bumper {
+    width: 18px; height: 18px; border-radius: 50%;
+    background: radial-gradient(circle at 30% 30%, #fff, var(--neon-amber) 60%, #6b3a00);
+    box-shadow: 0 0 12px var(--neon-amber);
+  }
+  .bumper.c { background: radial-gradient(circle at 30% 30%, #fff, var(--neon-cyan) 60%, #003744); box-shadow: 0 0 12px var(--neon-cyan); }
+  .bumper.p { background: radial-gradient(circle at 30% 30%, #fff, var(--neon-pink) 60%, #4a0026); box-shadow: 0 0 12px var(--neon-pink); }
+  .shot {
+    display: block;
+    width: 100%;
+    aspect-ratio: 16/10;
+    object-fit: cover;
+    border-radius: 14px;
+    background: linear-gradient(135deg, #1a0028, #00131a);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    margin: 12px 0 18px;
+  }
+  .title {
+    font-family: "Courier New", monospace;
+    color: var(--neon-amber);
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    font-size: 18px;
+    margin: 4px 0 8px;
+    text-shadow: 0 0 8px rgba(255, 210, 58, 0.55);
+  }
+  .prompt {
+    font-size: 14px;
+    color: #d6d6ee;
+    line-height: 1.5;
+    min-height: 84px;
+    margin-bottom: 14px;
+  }
+  .play {
+    display: inline-block;
+    padding: 10px 18px;
+    background: linear-gradient(180deg, var(--neon-pink), #b8005c);
+    color: #fff;
+    font-weight: 800;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    text-decoration: none;
+    border-radius: 999px;
+    border: 2px solid var(--chrome);
+    box-shadow: 0 0 16px rgba(255, 62, 165, 0.65), inset 0 1px 0 rgba(255,255,255,0.4);
+    font-size: 12px;
+  }
+  .play:hover { filter: brightness(1.15); }
+  .flippers {
+    position: absolute;
+    left: 0; right: 0; bottom: -18px;
+    display: flex; justify-content: space-between; padding: 0 14px;
+    pointer-events: none;
+  }
+  .flip {
+    width: 80px; height: 18px;
+    background: linear-gradient(180deg, var(--chrome), #6b7286);
+    border-radius: 12px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.6);
+  }
+  .flip.l { transform: rotate(20deg); transform-origin: left center; }
+  .flip.r { transform: rotate(-20deg); transform-origin: right center; }
+</style>
+</head>
+<body>
+  <header>
+    <div class="scoreboard">▸ FLIPPER FUN ◂ TILT WARNING ◂ MULTI-BALL</div>
+    <h1>Pinball</h1>
+    <div class="tag">— Six original tables —</div>
+    <nav><a href="index.html">← All themes</a></nav>
+  </header>
+
+  <main class="grid">
+    <article class="card">
+      <div class="bumpers"><span class="bumper"></span><span class="bumper c"></span><span class="bumper p"></span></div>
+      <a href="https://vibes.diy/vibe/jchris/chrome-arcade-pinball"><img class="shot" src="https://chrome-arcade-pinball--jchris.prod-v2.vibesdiy.net/screenshot.jpg" alt=""></a>
+      <h2 class="title">Neon Flippers</h2>
+      <p class="prompt">Two flippers, three glowing bumpers, plunger launches the ball. Bumpers ricochet for points; gutter drains. Animated digital score readout, neon chrome aesthetic.</p>
+      <a class="play" href="https://vibes.diy/vibe/jchris/chrome-arcade-pinball">▶ Play</a>
+      <div class="flippers"><span class="flip l"></span><span class="flip r"></span></div>
+    </article>
+
+    <article class="card">
+      <div class="bumpers"><span class="bumper c"></span><span class="bumper p"></span><span class="bumper"></span></div>
+      <a href="https://vibes.diy/vibe/jchris/orbital-arcade"><img class="shot" src="https://orbital-arcade--jchris.prod-v2.vibesdiy.net/screenshot.jpg" alt=""></a>
+      <h2 class="title">Galaxy Drift</h2>
+      <p class="prompt">Space pinball: ball is a glowing comet, bumpers are planets, flippers are solar panels. Tilt warning if jostled. Persistent high-score table over starfield.</p>
+      <a class="play" href="https://vibes.diy/vibe/jchris/orbital-arcade">▶ Play</a>
+      <div class="flippers"><span class="flip l"></span><span class="flip r"></span></div>
+    </article>
+
+    <article class="card">
+      <div class="bumpers"><span class="bumper p"></span><span class="bumper"></span><span class="bumper c"></span></div>
+      <a href="https://vibes.diy/vibe/jchris/turbo-bumper"><img class="shot" src="https://turbo-bumper--jchris.prod-v2.vibesdiy.net/screenshot.jpg" alt=""></a>
+      <h2 class="title">Bumper Blitz</h2>
+      <p class="prompt">Speed pinball with shrinking timer. Three flippers in a triangle, heavy bumpers, multi-ball unlocks at 1000 points. Cracked-glass flash at milestones.</p>
+      <a class="play" href="https://vibes.diy/vibe/jchris/turbo-bumper">▶ Play</a>
+      <div class="flippers"><span class="flip l"></span><span class="flip r"></span></div>
+    </article>
+
+    <article class="card">
+      <div class="bumpers"><span class="bumper"></span><span class="bumper p"></span><span class="bumper c"></span></div>
+      <a href="https://vibes.diy/vibe/jchris/buccaneer-pinball"><img class="shot" src="https://buccaneer-pinball--jchris.prod-v2.vibesdiy.net/screenshot.jpg" alt=""></a>
+      <h2 class="title">Pirate Cove</h2>
+      <p class="prompt">Cannon plunger, treasure-chest bumpers, a kraken target that opens its jaws for a jackpot. Pieces-of-eight unlock multi-ball. Wooden plank borders.</p>
+      <a class="play" href="https://vibes.diy/vibe/jchris/buccaneer-pinball">▶ Play</a>
+      <div class="flippers"><span class="flip l"></span><span class="flip r"></span></div>
+    </article>
+
+    <article class="card">
+      <div class="bumpers"><span class="bumper c"></span><span class="bumper"></span><span class="bumper p"></span></div>
+      <a href="https://vibes.diy/vibe/jchris/melody-flipper"><img class="shot" src="https://melody-flipper--jchris.prod-v2.vibesdiy.net/screenshot.jpg" alt=""></a>
+      <h2 class="title">Jukebox Juke</h2>
+      <p class="prompt">Bumpers play synth notes when struck, building a melody. Multipliers when hits land on rhythm. Retro vinyl visuals and neon jukebox borders.</p>
+      <a class="play" href="https://vibes.diy/vibe/jchris/melody-flipper">▶ Play</a>
+      <div class="flippers"><span class="flip l"></span><span class="flip r"></span></div>
+    </article>
+
+    <article class="card">
+      <div class="bumpers"><span class="bumper p"></span><span class="bumper c"></span><span class="bumper"></span></div>
+      <a href="https://vibes.diy/vibe/jchris/wrecking-ball-city"><img class="shot" src="https://wrecking-ball-city--jchris.prod-v2.vibesdiy.net/screenshot.jpg" alt=""></a>
+      <h2 class="title">Skyline Bash</h2>
+      <p class="prompt">Skyscrapers are bumpers, ball is a wrecking ball. Topple buildings for points; they rebuild after ten seconds. Sunset gradient skyline backdrop.</p>
+      <a class="play" href="https://vibes.diy/vibe/jchris/wrecking-ball-city">▶ Play</a>
+      <div class="flippers"><span class="flip l"></span><span class="flip r"></span></div>
+    </article>
+  </main>
+</body>
+</html>
+{{> newsletter}}

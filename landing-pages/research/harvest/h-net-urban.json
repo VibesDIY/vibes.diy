@@ -1,0 +1,105 @@
+{
+  "source": "H-Net H-Urban + H-LatAm",
+  "location": "Multi-institutional",
+  "region": "National",
+  "domain": "humanities",
+  "fetched": "2026-05-20",
+  "items": [
+    {
+      "title": "History of Urban Problems",
+      "department": "History — Urban",
+      "year": 2002,
+      "url": "https://networks.h-net.org/node/22277/pages/41732/seligman-history-urban-problems-2002",
+      "topics": [
+        "urban reform movements",
+        "municipal administration",
+        "public health policy",
+        "cholera epidemics",
+        "urban historiography",
+        "social history of cities",
+        "neighborhood sanitation",
+        "urban reconstruction"
+      ]
+    },
+    {
+      "title": "The New Suburban History",
+      "department": "History — Urban",
+      "year": 2003,
+      "url": "https://networks.h-net.org/node/22277/pages/41733/seligman-new-suburban-history-2003",
+      "topics": [
+        "suburban sprawl",
+        "racial segregation in housing",
+        "suburbanization",
+        "urban periphery",
+        "streetcar suburbs",
+        "land use patterns",
+        "environmental history of suburbs",
+        "working-class suburbs"
+      ]
+    },
+    {
+      "title": "Race, Immigration & Urban Politics",
+      "department": "History — Urban",
+      "year": 1994,
+      "url": "https://networks.h-net.org/node/22277/pages/41579/mollenkopf-and-kasinitz-race-immigration-urban-politics-1994",
+      "topics": [
+        "residential segregation",
+        "ethnic niche economics",
+        "political incorporation",
+        "neighborhood formation",
+        "intergroup relations",
+        "labor market stratification",
+        "immigrant enclave",
+        "urban demographic change"
+      ]
+    },
+    {
+      "title": "Modern Central American History",
+      "department": "History — Latin American",
+      "year": 2021,
+      "url": "https://networks.h-net.org/node/9186338",
+      "topics": [
+        "US imperialism in Central America",
+        "banana economy",
+        "revolutionary movements",
+        "La Matanza (1932)",
+        "Nicaraguan Revolution",
+        "Salvadoran Civil War",
+        "Guatemalan armed conflict",
+        "indigenous sovereignty"
+      ]
+    },
+    {
+      "title": "Reform and Revolution in Latin America",
+      "department": "History — Latin American",
+      "year": 2019,
+      "url": "https://networks.h-net.org/reform-and-revolution-latin-america",
+      "topics": [
+        "land reform and agrarian redistribution",
+        "liberation theology",
+        "anti-imperialism",
+        "caudillismo",
+        "guerrilla warfare",
+        "Cold War geopolitics in Latin America",
+        "APRA party ideology",
+        "Mexican Revolution"
+      ]
+    },
+    {
+      "title": "Colonial Latin American History",
+      "department": "History — Latin American",
+      "year": 2018,
+      "url": "https://networks.h-net.org/colonial-latin-american-history",
+      "topics": [
+        "mestizaje",
+        "encomienda system",
+        "mita labor tribute",
+        "castas system",
+        "Bourbon Reforms",
+        "spiritual conquest and syncretism",
+        "hacienda system",
+        "indigenous resistance"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "private": true,
+  "scripts": {
+    "build": "node build.js",
+    "check": "node build.js",
+    "watch": "node --watch-path=src --watch-path=build.js build.js"
+  },
+  "devDependencies": {
+    "handlebars": "^4.7.8",
+    "puppeteer": "^25.0.4"
+  }
+}

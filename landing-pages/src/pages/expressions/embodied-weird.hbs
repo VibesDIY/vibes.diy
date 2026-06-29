@@ -1,0 +1,189 @@
+{{!--
+{
+  "layout": "webring",
+  "title": "Embodied & Weird // Expressions // Vibes DIY",
+  "description": "Whisper-only voice, phone tug-of-war, side-eye cam, scream-into-the-void Tuesday. Your body is the controller and the vibe is the point.",
+  "ogUrl": "https://good.vibes.diy/expressions/embodied-weird",
+  "source": "expressions-embodied-weird",
+  "apps": [
+    {"num":"01","slug":"whisper-only","author":"jchris","live":true,"title":"Whisper-Only Voice","tagline":"dB cap on the mic. You can't shout.","desc":"Tiles show mic-level meters; over-cap voices auto-mute for 3s. Past sessions surface 'most-restrained' streaks."},
+    {"num":"02","slug":"phone-tug-of-war","author":"jchris","live":true,"title":"Phone Tug-of-War","tagline":"Two phones. One rope.","desc":"Each phone reads its accelerometer's pull-strength; whichever is moving more wins rope-length. First to drag the knot past their goal."},
+    {"num":"03","slug":"side-eye-cam","author":"jchris","live":true,"title":"Side-Eye Cam","tagline":"Detects glance toward phone, logs the cadence.","desc":"Local face-tracking only. An embodied diary of when you can't help looking. SIDE-EYES PER HOUR rolls up across days."},
+    {"num":"04","slug":"phone-flipped","author":"jchris","live":true,"title":"Phone-Flipped Status","tagline":"Face-down on the table = busy.","desc":"Device-orientation API toggles your status to BUSY. Friends see a rune-grid roster — glow when present, dim when face-down."},
+    {"num":"05","slug":"group-horoscope","author":"jchris","live":true,"title":"Group Horoscope Remix","tagline":"Collective rewrite of today's horoscope.","desc":"Members rewrite the daily prompt with one twist; remixes can chain. Vote-up surfaces favorites. Branching ritual scroll."},
+    {"num":"06","slug":"gibberish-translator","author":"jchris","live":true,"title":"Gibberish Couple Translator","tagline":"Feeds your private vocabulary.","desc":"Two users build a shared lookup of (gibberish → real). The right pane substitutes matched words live. Glossary archive."},
+    {"num":"07","slug":"shared-rng","author":"jchris","live":true,"title":"Shared RNG of the Day","tagline":"Everyone gets the same number.","desc":"One deterministic random number per local day, shared by the room. >500 = YES, ≤500 = NO. Decide things together."},
+    {"num":"08","slug":"last-meal-gallery","author":"jchris","live":true,"title":"Last Meal Gallery","tagline":"One photo a day, no captions.","desc":"Strict daily limit. No captions, no comments, no reactions. The constraint is the silence. Past months in archive grid."},
+    {"num":"09","slug":"outfit-check","author":"jchris","live":true,"title":"Outfit Check","tagline":"3 friends thumb up/down before leaving.","desc":"Photo + destination, ping 3 chosen friends. 10-min window. Verdict: GO / RECONSIDER / NO MAJORITY."},
+    {"num":"10","slug":"scream-into-void","author":"jchris","live":true,"title":"Scream-Into-the-Void Tuesday","tagline":"Synchronized weekly mic-open.","desc":"Every Tuesday, a 60-second scream window opens. Tiles glow with each member's volume. Screams archive into a Tuesday vault."}
+  ]
+}
+--}}
+
+<style>
+  @import url("https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&display=optional");
+
+  :root {
+    --abyss: #020406;
+    --abyss-blue: #05101a;
+    --cyan-neon: #00ffcc;
+    --cyan-dim: #4dbfac;
+    --cyan-text: #ccfffa;
+    --purple-magic: #9d4eff;
+    --stone: #0d161f;
+    --stone-border: #1c2b38;
+    --stone-light: #162330;
+    --text: #b0c4cc;
+    --text-muted: #8a9fb0;
+  }
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body {
+    font-family: "Cormorant Garamond", Georgia, serif;
+    background: var(--abyss);
+    color: var(--text);
+    line-height: 1.6;
+    min-height: 100vh;
+    background-image:
+      radial-gradient(circle at 20% 10%, rgba(157,78,255,0.06), transparent 40%),
+      radial-gradient(circle at 80% 90%, rgba(0,255,204,0.05), transparent 40%);
+  }
+  a { color: var(--cyan-text); text-decoration: none; }
+  p a, li a, .crumb a { text-decoration: underline; }
+  a:hover { color: var(--cyan-neon); text-shadow: 0 0 12px rgba(0,255,204,0.6); }
+  h1, h2, h3, .display { font-family: "Cinzel", serif; }
+
+  .container { max-width: 1100px; margin: 0 auto; padding: 0 1.5rem; }
+
+  .topbar { padding: 1rem 1.5rem; border-bottom: 1px solid var(--stone-border); display: flex; justify-content: space-between; align-items: center; background: var(--abyss-blue); }
+  .topbar .brand { font-family: "Cinzel", serif; font-weight: 700; letter-spacing: 0.18em; color: var(--cyan-text); text-shadow: 0 0 8px rgba(0,255,204,0.4); }
+  .topbar .runes { font-size: 1.2rem; color: var(--cyan-dim); letter-spacing: 0.4em; }
+
+  .crumb { padding: 0.6rem 1.5rem; border-bottom: 1px solid var(--stone-border); font-size: 0.7rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--text-muted); }
+  .crumb a { color: var(--text-muted); }
+  .crumb a:hover { color: var(--cyan-neon); }
+
+  .hero { padding: 4rem 0 3rem; text-align: center; position: relative; }
+  .hero::before, .hero::after {
+    content: "ᚠ ᚱ ᛗ ᛒ ᛏ"; position: absolute; left: 0; right: 0; color: var(--cyan-dim); font-size: 1rem; letter-spacing: 0.5em; text-align: center;
+  }
+  .hero::before { top: 1rem; }
+  .hero::after { bottom: 1rem; }
+  .hero .label { font-size: 0.7rem; letter-spacing: 0.3em; text-transform: uppercase; color: var(--cyan-dim); margin-bottom: 1.5rem; }
+  .hero h1 { font-family: "Cinzel", serif; font-size: clamp(2.5rem, 6vw, 4.5rem); font-weight: 700; letter-spacing: 0.12em; line-height: 1.05; color: var(--cyan-text); text-shadow: 0 0 24px rgba(0,255,204,0.4); margin-bottom: 1rem; text-transform: uppercase; }
+  .hero h1 span { color: var(--purple-magic); text-shadow: 0 0 24px rgba(157,78,255,0.5); }
+  .hero p { max-width: 680px; margin: 1rem auto 0; font-size: 1.1rem; color: var(--text); }
+  .hero .divider { color: var(--cyan-neon); font-size: 1rem; margin: 1.5rem 0; }
+
+  .stats { display: grid; grid-template-columns: repeat(4, 1fr); border-top: 1px solid var(--stone-border); border-bottom: 1px solid var(--stone-border); }
+  @media (max-width: 700px) { .stats { grid-template-columns: repeat(2, 1fr); } }
+  .stat-cell { padding: 1.25rem 1.5rem; border-right: 1px solid var(--stone-border); }
+  .stat-cell:last-child { border-right: none; }
+  .stat-cell .k { font-size: 0.6rem; letter-spacing: 0.25em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 0.4rem; }
+  .stat-cell .v { font-family: "Cinzel", serif; font-weight: 700; font-size: 1.4rem; letter-spacing: 0.06em; color: var(--cyan-text); text-shadow: 0 0 12px rgba(0,255,204,0.3); }
+
+  .section-label { padding: 1.5rem 0 0.5rem; font-size: 0.7rem; letter-spacing: 0.3em; text-transform: uppercase; color: var(--cyan-dim); }
+  .section-label::before { content: "◇ "; color: var(--cyan-neon); }
+
+  .apps { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.5rem; padding: 2rem 0 4rem; }
+  @media (max-width: 800px) { .apps { grid-template-columns: 1fr; } }
+
+  .app {
+    background: var(--stone);
+    border: 1px solid var(--stone-border);
+    padding: 1.75rem;
+    display: flex; flex-direction: column; gap: 0.85rem;
+    transition: border-color .2s, box-shadow .2s, background .2s;
+    position: relative;
+  }
+  .app:hover { border-color: var(--cyan-neon); box-shadow: 0 0 36px rgba(0,255,204,0.15); background: var(--stone-light); }
+  .app .head { display: flex; justify-content: space-between; align-items: baseline; padding-bottom: 0.5rem; border-bottom: 1px solid var(--stone-border); }
+  .app .num { font-size: 0.65rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--text-muted); font-family: "Cinzel", serif; }
+  .app .status { font-size: 0.65rem; letter-spacing: 0.2em; text-transform: uppercase; padding: 3px 8px; border: 1px solid var(--cyan-dim); color: var(--cyan-dim); font-family: "Cinzel", serif; }
+  .app--live .status { background: var(--cyan-neon); color: var(--abyss); border-color: var(--cyan-neon); text-shadow: none; }
+  .app .title { font-family: "Cinzel", serif; font-weight: 700; font-size: 1.3rem; line-height: 1.2; color: var(--cyan-text); letter-spacing: 0.04em; text-transform: uppercase; }
+  .app .tagline { font-style: italic; color: var(--cyan-text); font-size: 1.05rem; }
+  .app .desc { font-size: 1rem; color: var(--text); flex: 1; }
+  .app .shot { display: block; aspect-ratio: 16/10; overflow: hidden; border: 1px solid var(--stone-border); background: var(--abyss); }
+  .app .shot img { width: 100%; height: 100%; object-fit: cover; filter: hue-rotate(140deg) saturate(0.8); }
+  .app .shot-placeholder { padding: 1rem; height: 100%; display: flex; align-items: center; justify-content: center; font-family: "Cinzel", serif; font-size: 0.8rem; letter-spacing: 0.3em; text-transform: uppercase; color: var(--cyan-dim); text-align: center; }
+  .app .ctas { display: flex; gap: 0.4rem; }
+  .btn {
+    flex: 1; text-align: center; padding: 0.55rem 0.5rem;
+    background: transparent; border: 1px solid var(--cyan-dim);
+    font-family: "Cinzel", serif; font-size: 0.7rem; letter-spacing: 0.18em;
+    text-transform: uppercase; color: var(--cyan-text); cursor: pointer;
+    transition: all .15s;
+  }
+  .btn:hover { background: var(--cyan-neon); color: var(--abyss); border-color: var(--cyan-neon); box-shadow: 0 0 24px rgba(0,255,204,0.4); }
+  .prompt-link { font-style: italic; color: var(--cyan-dim); font-size: 0.95rem; }
+  .prompt-link:hover { color: var(--cyan-neon); }
+
+  .epilogue { padding: 2rem 0; border-top: 1px solid var(--stone-border); }
+  .epilogue h2 { font-family: "Cinzel", serif; font-size: 0.7rem; letter-spacing: 0.3em; text-transform: uppercase; color: var(--cyan-dim); margin-bottom: 1rem; }
+  .epilogue p { font-style: italic; font-size: 1.1rem; max-width: 720px; color: var(--text); }
+  footer.term-footer { padding: 1.5rem; border-top: 1px solid var(--stone-border); text-align: center; font-size: 0.7rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--text-muted); }
+</style>
+
+<header class="topbar">
+  <span class="brand">VIBES.DIY</span>
+  <span class="runes">ᚠ ᚱ ᛗ ᛒ ᛏ</span>
+</header>
+<nav class="crumb">
+  <a href="/">Home</a> &nbsp;›&nbsp; <a href="/expressions/">Expressions</a> &nbsp;›&nbsp; Embodied & Weird
+</nav>
+
+<main class="container">
+  <section class="hero">
+    <div class="label">Cluster · 04 of 10 · toy tail #41–50</div>
+    <h1>Embodied <span>&amp;</span> Weird</h1>
+    <div class="divider">◇ ◇ ◇</div>
+    <p>Whisper-only voice, phone tug-of-war, side-eye cam, scream-into-the-void Tuesday. Ten interfaces where your body is the controller and the vibe is the point.</p>
+  </section>
+
+  <div class="stats">
+    <div class="stat-cell"><div class="k">Source</div><div class="v">Tilted</div></div>
+    <div class="stat-cell"><div class="k">Apps</div><div class="v">Ten</div></div>
+    <div class="stat-cell"><div class="k">Persistence</div><div class="v">Fireproof</div></div>
+    <div class="stat-cell"><div class="k">Skin</div><div class="v">Rune</div></div>
+  </div>
+
+  <div class="section-label">The Workings</div>
+
+  <section class="apps">
+    {{#each apps}}
+      <article class="app {{#if live}}app--live{{else}}app--pending{{/if}}">
+        <div class="head">
+          <span class="num">№ {{num}} · {{slug}}</span>
+          <span class="status">{{#if live}}Bound{{else}}Pending{{/if}}</span>
+        </div>
+        <h2 class="title">{{title}}</h2>
+        <p class="tagline">{{tagline}}</p>
+        <p class="desc">{{desc}}</p>
+        {{#if live}}
+          <a class="shot" href="https://vibes.diy/vibe/{{author}}/{{slug}}" aria-label="{{title}} screenshot"><img src="https://{{slug}}--{{author}}.prod-v2.vibesdiy.net/screenshot.jpg" alt="{{slug}}" onerror="this.onerror=null; this.src='{{@root.assetPrefix}}images/og-preview.png';"/></a>
+          <div class="ctas">
+            <a class="btn" href="https://vibes.diy/vibe/{{author}}/{{slug}}">Invoke</a>
+            <a class="btn" href="https://vibes.diy/remix/{{author}}/{{slug}}?skipChat=true">Mirror</a>
+            <a class="btn" href="https://vibes.diy/remix/{{author}}/{{slug}}">Reshape</a>
+          </div>
+          <a class="prompt-link" href="https://vibes.diy/chat/prompt?prompt64={{prompt64 desc}}">◇ start fresh from this prompt</a>
+        {{else}}
+          <div class="shot"><div class="shot-placeholder">Awaiting Binding</div></div>
+          <div class="ctas">
+            <a class="btn" href="https://vibes.diy/chat/prompt?prompt64={{prompt64 desc}}">Start From Prompt</a>
+          </div>
+        {{/if}}
+      </article>
+    {{/each}}
+  </section>
+
+  <section class="epilogue">
+    <h2>◇ Read me</h2>
+    <p>Ten interfaces that ask the body to do something, then turn that something into shared signal. Whisper, glance, flip, scream — the gestures are the protocol.</p>
+  </section>
+</main>
+
+{{> newsletter}}
+<footer class="term-footer">
+  Vibes.diy · <a href="https://links.vibes.diy/homepage">homepage</a> · <a href="/expressions/">expressions</a> · ◇ End of Working ◇
+</footer>

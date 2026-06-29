@@ -1,0 +1,679 @@
+{{!--
+{
+  "layout": "editorial",
+  "title": "Expanding Authorship — A Field Guide for the New Builders | Vibes DIY",
+  "description": "150 million people tried to learn to code and quit. Software used to require developers. Now it requires intent. A field guide for the new builders.",
+  "ogUrl": "https://good.vibes.diy/builders",
+  "source": "builders",
+  "ogImage": "https://good.vibes.diy/images/screenshots/builders.jpg"
+}
+--}}
+
+<style>
+  @import url('https://fonts.cdnfonts.com/css/alte-haas-grotesk');
+
+  :root {
+    --black: #000000;
+    --near-black: #231f20;
+    --gray-dark: #333333;
+    --gray-mid: #6b6b6b;
+    --gray-light: #cccdc8;
+    --cream: #fffff0;
+    --white: #ffffff;
+    --red: #da291c;
+    --red-soft: rgba(218, 41, 28, 0.608);
+    --cyan: #009ace;
+    --cyan-soft: rgba(0, 154, 206, 0.608);
+    --yellow: #fedd00;
+    --yellow-soft: rgba(254, 221, 0, 0.608);
+
+    --font-main: 'Alte Haas Grotesk', -apple-system, 'Segoe UI', sans-serif;
+
+    --grid-size: 40px;
+    --card-border: 2px solid var(--black);
+    --gutter: clamp(1rem, 4vw, 3rem);
+  }
+
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    background-color: #cccdc8;
+    background-image:
+      linear-gradient(rgba(255,255,255,0.5) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.5) 1px, transparent 1px);
+    background-size: var(--grid-size) var(--grid-size);
+    color: var(--near-black);
+    font-family: var(--font-main);
+    font-size: clamp(1rem, 1.1vw, 1.125rem);
+    line-height: 1.6;
+    overflow-x: hidden;
+    min-height: 100vh;
+  }
+
+  ::selection { background: var(--yellow); color: var(--black); }
+
+  a { color: var(--red); text-decoration: underline; text-underline-offset: 2px; transition: color 0.2s; }
+  a:hover { color: var(--black); }
+
+  h1, h2, h3 { font-family: var(--font-main); font-weight: normal; line-height: 1.1; }
+
+  /* Nav */
+  nav {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    z-index: 100;
+    padding: 0.75rem var(--gutter);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: var(--cream);
+    border-bottom: 3px solid var(--black);
+  }
+
+  .nav-logo { text-decoration: none; display: flex; align-items: center; }
+  .nav-logo-pill { height: 36px; width: auto; display: block; transition: opacity 0.2s; }
+  .nav-logo:hover .nav-logo-pill { opacity: 0.85; }
+
+  .nav-links { display: flex; gap: 1.25rem; align-items: center; }
+  .nav-links a { color: var(--near-black); text-decoration: none; font-size: 0.85rem; }
+  .nav-links a:hover { color: var(--red); }
+
+  .nav-cta-btn {
+    background: var(--red);
+    color: var(--cream) !important;
+    padding: 0.5rem 1.2rem;
+    text-decoration: none !important;
+    font-weight: bold;
+    font-size: 0.85rem;
+    border: 2px solid var(--black);
+    transition: background 0.2s, transform 0.15s;
+  }
+  .nav-cta-btn:hover { background: var(--near-black); transform: translateY(-1px); color: var(--cream) !important; }
+
+  /* Page wrapper */
+  .page {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: calc(60px + 2rem) var(--gutter) 2rem;
+  }
+
+  /* Card system */
+  .card {
+    background: var(--cream);
+    border: var(--card-border);
+    padding: clamp(1.5rem, 4vw, 3rem);
+    margin-bottom: 1.5rem;
+    position: relative;
+  }
+
+  .card--white { background: var(--cream); }
+  .card--hero { padding: clamp(2rem, 6vw, 4rem); }
+  .card--red { background: var(--red); color: var(--cream); }
+  .card--red a { color: var(--yellow); }
+  .card--cyan { background: var(--cyan); color: var(--cream); }
+  .card--cyan a { color: var(--yellow); }
+  .card--yellow { background: var(--yellow); color: var(--black); }
+  .card--yellow a { color: var(--red); }
+  .card--black { background: var(--black); color: var(--cream); }
+  .card--black a { color: var(--yellow); }
+
+  /* Grids */
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem; }
+  .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; margin-bottom: 1.5rem; }
+  .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.5rem; margin-bottom: 1.5rem; }
+  .grid-2-1 { display: grid; grid-template-columns: 2fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem; }
+
+  /* Hero */
+  .hero h1 { font-size: clamp(2.5rem, 5.5vw, 4.5rem); line-height: 1.05; margin-bottom: 0.75rem; letter-spacing: -0.02em; }
+  .hero-sub { font-size: clamp(1.1rem, 2vw, 1.5rem); line-height: 1.4; color: var(--gray-dark); }
+  .hero-stat-number { font-size: clamp(2rem, 4vw, 3.5rem); font-weight: bold; line-height: 1; margin-bottom: 0.25rem; }
+
+  /* Labels & titles */
+  .section-label {
+    display: inline-block;
+    font-size: 0.75rem;
+    font-weight: bold;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 0.3rem 0.75rem;
+    margin-bottom: 1rem;
+    border: 2px solid currentColor;
+  }
+  .section-label--filled { background: var(--black); color: var(--cream); border-color: var(--black); }
+
+  .section-title { font-size: clamp(2rem, 4.5vw, 3.5rem); line-height: 1.08; margin-bottom: 1rem; letter-spacing: -0.01em; }
+  .section-intro { font-size: clamp(1rem, 1.5vw, 1.2rem); color: var(--gray-dark); max-width: 38em; margin-bottom: 2rem; line-height: 1.6; }
+
+  /* Pull quote */
+  .pull-quote { font-size: clamp(1.3rem, 2.8vw, 2rem); line-height: 1.35; font-style: italic; margin: 0; }
+  .pull-quote-cite { font-style: normal; font-size: 0.85rem; color: var(--gray-mid); margin-top: 0.75rem; display: block; }
+
+  /* Parallels */
+  .parallel-item { text-align: center; padding: 1.5rem 1rem; }
+  .parallel-before { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.08em; color: rgba(255,255,255,0.7); margin-bottom: 0.25rem; }
+  .parallel-arrow { font-size: 1.5rem; margin: 0.25rem 0; opacity: 0.6; }
+  .parallel-after { font-size: 1.1rem; font-weight: bold; }
+
+  /* YouTube embed (lite facade) */
+  .yt-facade {
+    position: relative;
+    width: 100%;
+    aspect-ratio: 16/9;
+    overflow: hidden;
+    cursor: pointer;
+    background: var(--near-black);
+  }
+  .yt-facade img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+  .yt-facade .yt-play-btn {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.15);
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s;
+  }
+  .yt-facade:hover .yt-play-btn { background: rgba(0,0,0,0.3); }
+  .yt-facade iframe {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    border: 0;
+  }
+
+  .video-label { font-size: 0.8rem; color: var(--gray-mid); margin-top: 0.5rem; text-align: center; }
+
+  /* Gallery cards */
+  .gallery-card-img {
+    width: 100%;
+    aspect-ratio: 16/10;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 3rem;
+    border-bottom: var(--card-border);
+  }
+  .gallery-card-body { padding: 1.25rem; }
+  .gallery-card-body h3 { font-size: 1.2rem; margin-bottom: 0.5rem; }
+  .gallery-card-body p { font-size: 0.9rem; color: var(--gray-dark); margin-bottom: 1rem; line-height: 1.5; }
+  .gallery-card-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-top: 1px solid var(--gray-light);
+    padding-top: 0.75rem;
+    font-size: 0.8rem;
+  }
+  .gallery-card-footer .time { color: var(--gray-mid); text-transform: uppercase; letter-spacing: 0.05em; font-size: 0.7rem; }
+
+  /* Framework cards */
+  .framework-number { font-size: 3.5rem; font-weight: bold; color: var(--gray-light); line-height: 1; margin-bottom: 0.5rem; }
+  .framework h3 { font-size: 1.4rem; margin-bottom: 0.75rem; }
+  .framework p { color: var(--gray-dark); margin-bottom: 0.75rem; line-height: 1.6; }
+  .framework ul { list-style: none; margin: 1rem 0; }
+  .framework li { padding: 0.6rem 0 0.6rem 1.5rem; position: relative; color: var(--gray-dark); line-height: 1.5; }
+  .framework li::before { content: '→'; position: absolute; left: 0; color: var(--red); }
+  .framework li strong { color: var(--near-black); }
+
+  /* Resource list */
+  .resource-item { display: flex; align-items: center; gap: 1rem; padding: 1rem 0; border-bottom: 1px solid var(--gray-light); }
+  .resource-item:last-child { border-bottom: none; }
+  .resource-badge { font-size: 0.65rem; font-weight: bold; text-transform: uppercase; letter-spacing: 0.08em; padding: 0.2rem 0.6rem; border: 2px solid; white-space: nowrap; flex-shrink: 0; }
+  .resource-badge--blog { border-color: var(--red); color: var(--red); }
+  .resource-badge--video { border-color: var(--cyan); color: var(--cyan); }
+  .resource-info { flex: 1; }
+  .resource-info a { font-size: 1.05rem; font-weight: bold; color: var(--near-black); text-decoration: none; }
+  .resource-info a:hover { text-decoration: underline; }
+  .resource-theme { font-size: 0.85rem; color: var(--gray-mid); margin-top: 0.15rem; }
+
+  /* Channel cards */
+  .channel-card { padding: 1.5rem; display: flex; flex-direction: column; transition: transform 0.15s; text-decoration: none !important; color: inherit; }
+  .channel-card:hover { transform: translateY(-2px); }
+  .channel-card h3 { font-size: 1.15rem; margin-bottom: 0.5rem; }
+  .channel-card p { font-size: 0.9rem; color: var(--gray-dark); line-height: 1.5; flex: 1; margin-bottom: 1rem; }
+  .channel-link-text { font-size: 0.8rem; font-weight: bold; text-transform: uppercase; letter-spacing: 0.05em; color: var(--red); }
+
+
+  /* CTA paths */
+  .cta-path { display: block; padding: 2rem; text-align: center; text-decoration: none !important; transition: transform 0.15s; }
+  .cta-path:hover { transform: translateY(-3px); }
+  .cta-path h3 { font-size: 1.6rem; margin-bottom: 0.5rem; }
+  .cta-path p { font-size: 0.95rem; line-height: 1.5; }
+
+  /* Blog link card */
+  .blog-link-card {
+    display: block;
+    padding: 1rem 1.25rem;
+    background: var(--cream);
+    border: 2px solid var(--black);
+    border-left: 6px solid var(--red);
+    text-decoration: none !important;
+    color: var(--near-black);
+    transition: background 0.2s, transform 0.15s;
+    margin-top: 1rem;
+  }
+  .blog-link-card:hover { background: var(--ivory); transform: translateX(4px); }
+  .blog-link-label { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--gray-mid); font-weight: bold; }
+  .blog-link-title { font-size: 1.1rem; font-weight: bold; color: var(--near-black); }
+
+  /* Color stripe */
+  .color-stripe { height: 8px; display: flex; margin-bottom: 1.5rem; }
+  .color-stripe > div { flex: 1; }
+
+  /* Footer */
+  .footer-logo { height: 48px; width: auto; }
+  footer { margin-top: 1.5rem; padding: 2rem var(--gutter); text-align: center; font-size: 0.8rem; color: var(--near-black); }
+  footer a { color: var(--red); margin: 0 0.75rem; }
+
+  /* Scroll reveal */
+  .reveal { opacity: 0; transform: translateY(16px); transition: opacity 0.5s ease, transform 0.5s ease; }
+  .reveal.visible { opacity: 1; transform: translateY(0); }
+
+  /* Responsive */
+  @media (max-width: 900px) {
+    .grid-3, .grid-4 { grid-template-columns: 1fr 1fr; }
+    .grid-2-1 { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 600px) {
+    .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
+    nav { padding: 0.75rem 1rem; }
+    .nav-links { gap: 0.75rem; }
+    .nav-links a:not(.nav-cta-btn) { display: none; }
+  }
+</style>
+
+
+<!-- Nav -->
+<nav>
+  <a href="https://links.vibes.diy/homepage" class="nav-logo" aria-label="Vibes DIY">
+    <img src="Vibes-Toggle-1-Transparent.png" alt="Vibes DIY" class="nav-logo-pill">
+  </a>
+  <div class="nav-links">
+    <a href="#playbook">Playbook</a>
+    <a href="#deeper">Reading</a>
+    <a href="#community">Community</a>
+    <a href="https://links.vibes.diy/homepage" class="nav-cta-btn">Start Building</a>
+  </div>
+</nav>
+
+<div class="page">
+
+  <!-- Color stripe -->
+  <div class="color-stripe reveal">
+    <div style="background: var(--red);"></div>
+    <div style="background: var(--cyan);"></div>
+    <div style="background: var(--yellow);"></div>
+    <div style="background: var(--near-black);"></div>
+    <div style="background: var(--red);"></div>
+    <div style="background: var(--cyan);"></div>
+  </div>
+
+  <!-- 1. HERO -->
+  <div class="grid-2-1 reveal">
+    <div class="card card--hero hero">
+      <h1>You've had ideas for years. Now you can build&nbsp;them.</h1>
+      <p class="hero-sub">Software used to require developers. Now it requires <em>intent</em>. A field guide for the new builders.</p>
+    </div>
+    <div style="display: flex; flex-direction: column; gap: 1.5rem;">
+      <div class="card card--red" style="flex: 1;">
+        <p style="font-size: clamp(1.1rem, 2vw, 1.5rem); font-weight: bold; line-height: 1.3;">No coding experience required. Type an idea. Watch it become&nbsp;real.</p>
+      </div>
+      <div class="card card--yellow" style="flex: 0;">
+        <div class="hero-stat-number">150 million</div>
+        <p style="font-weight: bold;">people tried to learn to code and quit. This page is for&nbsp;them.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Hero video: "We Brought Code to AI" (https://links.vibes.diy/WeBroughtCodeToAI) -->
+  <div class="card reveal" style="padding: 0; overflow: hidden;">
+    <div class="yt-facade"
+         data-video-url="https://links.vibes.diy/WeBroughtCodeToAI">
+      <img src="images/og-preview.png" alt="We Brought Code to AI — watch on YouTube">
+      <button class="yt-play-btn" aria-label="Play: We Brought Code to AI">
+        <svg width="68" height="48" viewBox="0 0 68 48" aria-hidden="true">
+          <path d="M66.52 7.74c-.78-2.93-2.49-5.41-5.42-6.19C55.79.13 34 0 34 0S12.21.13 6.9 1.55c-2.93.78-4.63 3.26-5.42 6.19C.06 13.05 0 24 0 24s.06 10.95 1.48 16.26c.78 2.93 2.49 5.41 5.42 6.19C12.21 47.87 34 48 34 48s21.79-.13 27.1-1.55c2.93-.78 4.64-3.26 5.42-6.19C67.94 34.95 68 24 68 24s-.06-10.95-1.48-16.26z" fill="#f00"/>
+          <path d="M45 24 27 14v20" fill="#fff"/>
+        </svg>
+      </button>
+    </div>
+    <p class="video-label" style="padding: 0.75rem;">We Brought Code to AI</p>
+  </div>
+
+  <div style="text-align: center; margin: 1.5rem 0;">
+    <a href="#the-shift" style="color: var(--near-black); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.1em; text-decoration: none;">↓ Start reading ↓</a>
+  </div>
+
+  <!-- 2. THE SHIFT -->
+  <section id="the-shift">
+    <div class="card reveal">
+      <span class="section-label section-label--filled">What Changed</span>
+      <h2 class="section-title">AI didn't replace developers. It created new&nbsp;ones.</h2>
+      <p class="section-intro">There's a principle called <strong>Jevons Paradox</strong>: when something gets cheaper, people don't use less of it. They use more.</p>
+      <p style="max-width: 38em; color: var(--gray-dark);">When lighting got cheaper, cities lit up. When travel got cheaper, people went everywhere. When communication got cheaper, social media was born. The pattern holds: lower the cost of creation, and you don't get less. You get an&nbsp;explosion.</p>
+    </div>
+
+    <div class="grid-4 reveal">
+      <div class="card card--cyan parallel-item">
+        <div class="parallel-before">Lighting got cheaper</div>
+        <div class="parallel-arrow">↓</div>
+        <div class="parallel-after">Entire cities lit&nbsp;up</div>
+      </div>
+      <div class="card card--cyan parallel-item">
+        <div class="parallel-before">Travel got cheaper</div>
+        <div class="parallel-arrow">↓</div>
+        <div class="parallel-after">People went everywhere</div>
+      </div>
+      <div class="card card--cyan parallel-item">
+        <div class="parallel-before">Communication got cheaper</div>
+        <div class="parallel-arrow">↓</div>
+        <div class="parallel-after">Social media was&nbsp;born</div>
+      </div>
+      <div class="card card--red parallel-item">
+        <div class="parallel-before">Software got cheaper</div>
+        <div class="parallel-arrow">↓</div>
+        <div class="parallel-after">Everyone becomes a&nbsp;builder</div>
+      </div>
+    </div>
+
+    <div class="grid-2 reveal">
+      <div class="card">
+        <p style="color: var(--gray-dark); margin-bottom: 1rem;">The software being built is about to explode — not because companies need more enterprise apps, but because <em>people</em> want to build things.</p>
+        <p style="color: var(--gray-dark);">The kid making an app for his friend group. The jogging club. The sci-fi movie club for three people. None of that exists today because creation costs too much. Lower the cost and you don't get less — you get&nbsp;more.</p>
+      </div>
+      <div class="card card--black">
+        <p class="pull-quote">"There's a lot of people who never would have coded before who are going to get pulled into it because it's all of a sudden so&nbsp;easy."</p>
+        <span class="pull-quote-cite" style="color: var(--gray-light);">— J. Chris Anderson, Founder of Vibes&nbsp;DIY</span>
+      </div>
+    </div>
+
+    <div class="card card--yellow reveal">
+      <p style="font-size: clamp(1.2rem, 2.2vw, 1.6rem); font-weight: bold; line-height: 1.3;">Chris calls this <em>expanding authorship</em>. AI isn't replacing authors. It's creating new&nbsp;ones.</p>
+    </div>
+
+    <div class="reveal" style="margin-top: 1.5rem;">
+      <div class="card" style="display: flex; flex-direction: column; justify-content: center;">
+        <a href="#" class="blog-link-card">
+          <div class="blog-link-label">Read the full essay</div>
+          <div class="blog-link-title">Your AI Is a Fancy Paintbrush</div>
+        </a>
+        <a href="#" class="blog-link-card" style="border-left-color: var(--cyan);">
+          <div class="blog-link-label">The origin story</div>
+          <div class="blog-link-title">When's Your Site Gonna Be Back Up?</div>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3. THE EVIDENCE -->
+  <section id="evidence">
+    <div class="card reveal">
+      <span class="section-label">The Evidence</span>
+      <h2 class="section-title">What new builders are&nbsp;making</h2>
+      <p class="section-intro">The most frivolous apps prove the platform works. If it took real effort, no one would bother building something this small. The fact that they do is the&nbsp;point.</p>
+    </div>
+
+    <div class="grid-3 reveal">
+      <div class="card card--white" style="padding: 0; overflow: hidden;">
+        <div class="gallery-card-img" style="background: linear-gradient(135deg, var(--cyan-soft), var(--yellow-soft));">🎬</div>
+        <div class="gallery-card-body">
+          <h3>Sci-Fi Movie Club</h3>
+          <p>A movie-picking app for three friends. Built by Mike in minutes. The smallest app you could imagine — and he was excited to share&nbsp;it.</p>
+          <div class="gallery-card-footer">
+            <span class="time">Built in minutes</span>
+            <a href="#">View Source</a>
+          </div>
+        </div>
+      </div>
+
+      <div class="card card--white" style="padding: 0; overflow: hidden;">
+        <div class="gallery-card-img" style="background: linear-gradient(135deg, var(--red-soft), var(--yellow-soft));">🛹</div>
+        <div class="gallery-card-body">
+          <h3>The Kid's App</h3>
+          <p>"When's your site gonna be back up?" — A teenager who never thought he could build software, asking for his app&nbsp;back.</p>
+          <div class="gallery-card-footer">
+            <span class="time">Built by a teenager</span>
+            <a href="#">Read the story</a>
+          </div>
+        </div>
+      </div>
+
+      <div class="card card--white" style="padding: 0; overflow: hidden;">
+        <div class="gallery-card-img" style="background: linear-gradient(135deg, var(--yellow-soft), var(--cyan-soft));">🧩</div>
+        <div class="gallery-card-body">
+          <h3>Your App Here</h3>
+          <p>Join the Discord and share what you build. Community projects get featured here every&nbsp;week.</p>
+          <div class="gallery-card-footer">
+            <span class="time">Build something</span>
+            <a href="#community">Join Discord</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 4. THE PLAYBOOK -->
+  <section id="playbook">
+    <div class="card card--red reveal">
+      <span class="section-label" style="border-color: var(--cream); color: var(--cream);">The Playbook</span>
+      <h2 class="section-title" style="color: var(--cream);">How to build</h2>
+      <p style="font-size: 1.15rem; color: rgba(255,255,255,0.85); max-width: 36em;">AI is a paintbrush. An extraordinary one. But you still have to know what you're painting.</p>
+    </div>
+
+    <div class="grid-3 reveal">
+      <div class="card framework">
+        <div class="framework-number">01</div>
+        <h3>Floor, Not Ceiling</h3>
+        <p>AI gives you the average as a starting point. Your job is to push past it. Use AI to reach 80% — then spend your energy on the 20% that matters: the decisions, the taste, the thing that makes it <em>yours</em>.</p>
+        <a href="#" class="blog-link-card">
+          <div class="blog-link-label">Deep dive</div>
+          <div class="blog-link-title">Your AI Is a Fancy Paintbrush</div>
+        </a>
+      </div>
+
+      <div class="card framework">
+        <div class="framework-number">02</div>
+        <h3>The 3 Rules of Vibe Coding</h3>
+        <ul>
+          <li><strong>Start with the vibe, not the spec.</strong> Describe the feeling and purpose. The code follows.</li>
+          <li><strong>Iterate in conversation.</strong> Talk to the AI like a collaborator: "Make it warmer." "Too cluttered."</li>
+          <li><strong>Ship ugly, then polish.</strong> A working thing you can share beats a perfect thing in your head.</li>
+        </ul>
+      </div>
+
+      <div class="card framework">
+        <div class="framework-number">03</div>
+        <h3>Reduction Over Accumulation</h3>
+        <p>The lightest version is the best version. Every layer you strip away is one that can't break.</p>
+        <p><strong>"Projects, not pets"</strong> — build things that don't wake you up at night.</p>
+        <a href="#" class="blog-link-card" style="border-left-color: var(--cyan);">
+          <div class="blog-link-label">Deep dive</div>
+          <div class="blog-link-title">Almost All Code Is the Enemy</div>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- 5. THE READING LIST -->
+  <section id="deeper">
+    <div class="card reveal">
+      <span class="section-label section-label--filled">Go Deeper</span>
+      <h2 class="section-title">The reading list</h2>
+      <p class="section-intro">This isn't just a technical shift. It's a cultural one. Essays, interviews, and demos — updated as new work&nbsp;publishes.</p>
+
+      <div class="resource-item">
+        <span class="resource-badge resource-badge--video">Video</span>
+        <div class="resource-info">
+          <a href="#">Chris Anderson Interview — Part 1</a>
+          <div class="resource-theme">What is Vibes DIY?</div>
+        </div>
+      </div>
+
+      <div class="resource-item" style="opacity: 0.45;">
+        <span class="resource-badge resource-badge--blog">Blog</span>
+        <div class="resource-info">
+          <span style="font-size: 1.05rem; font-weight: bold;">Your AI Is a Fancy Paintbrush</span>
+          <div class="resource-theme">Coming soon</div>
+        </div>
+      </div>
+
+      <div class="resource-item" style="opacity: 0.45;">
+        <span class="resource-badge resource-badge--video">Video</span>
+        <div class="resource-info">
+          <span style="font-size: 1.05rem; font-weight: bold;">Chris Anderson Interview — Part 2</span>
+          <div class="resource-theme">Coming soon</div>
+        </div>
+      </div>
+
+      <div class="resource-item" style="opacity: 0.45;">
+        <span class="resource-badge resource-badge--video">Video</span>
+        <div class="resource-info">
+          <span style="font-size: 1.05rem; font-weight: bold;">Demo: Build an app in 60 seconds</span>
+          <div class="resource-theme">Coming soon</div>
+        </div>
+      </div>
+
+      <div class="resource-item" style="opacity: 0.45;">
+        <span class="resource-badge resource-badge--blog">Blog</span>
+        <div class="resource-info">
+          <span style="font-size: 1.05rem; font-weight: bold;">Almost All Code Is the Enemy</span>
+          <div class="resource-theme">Coming soon</div>
+        </div>
+      </div>
+
+      <div class="resource-item" style="opacity: 0.45;">
+        <span class="resource-badge resource-badge--video">Video</span>
+        <div class="resource-info">
+          <span style="font-size: 1.05rem; font-weight: bold;">When's Your Site Gonna Be Back Up?</span>
+          <div class="resource-theme">Coming soon</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 6. COMMUNITY -->
+  <section id="community">
+    <div class="card card--cyan reveal" style="margin-bottom: 1.5rem;">
+      <span class="section-label" style="border-color: var(--cream); color: var(--cream);">Community</span>
+      <h2 class="section-title" style="color: var(--cream);">Join the builders</h2>
+      <p style="font-size: 1.1rem; color: rgba(255,255,255,0.85);">Building alone is fine. Building with others is better.</p>
+    </div>
+
+    <div class="grid-4 reveal">
+      <a href="https://links.vibes.diy/discord" class="card card--white channel-card">
+        <h3>💬 Discord</h3>
+        <p>Where builders help each other. Weekly challenges, live builds, show-and-tell.</p>
+        <span class="channel-link-text">Join Discord →</span>
+      </a>
+      <a href="https://links.vibes.diy/YouTube" class="card card--white channel-card">
+        <h3>▶ YouTube</h3>
+        <p>Demos, tutorials, and conversations with the builders.</p>
+        <span class="channel-link-text">Subscribe →</span>
+      </a>
+      <a href="https://links.vibes.diy/Substack" class="card card--white channel-card">
+        <h3>✉ Substack</h3>
+        <p>What we built, what we learned, what's next.</p>
+        <span class="channel-link-text">Sign up →</span>
+      </a>
+      <a href="https://links.vibes.diy/readme" class="card card--white channel-card">
+        <h3>⌨ GitHub</h3>
+        <p>Everything is open source. View it, fork it, make it yours.</p>
+        <span class="channel-link-text">Explore →</span>
+      </a>
+    </div>
+
+    {{> newsletter}}
+    <style>
+      .newsletter-section { max-width: none; padding: 0; margin: 0; }
+      .newsletter-card { border-radius: 0; border: 2px solid var(--black); box-shadow: none; background: var(--cream); padding: 1.5rem 2rem; }
+      .newsletter-card h2 { font-size: 1.3rem; margin-bottom: 0.35rem; }
+      .newsletter-card > p { color: var(--gray-dark); font-size: 0.9rem; }
+      .newsletter-form { margin-top: 1.5rem; }
+      .newsletter-input { background: var(--cream); font-family: var(--font-main); }
+      .newsletter-input:focus { border-color: var(--cyan); }
+      .newsletter-submit { background: var(--red); font-family: var(--font-main); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em; }
+      .newsletter-submit:hover { background: var(--near-black); border-color: var(--near-black); }
+    </style>
+  </section>
+
+  <!-- 7. START BUILDING -->
+  <section id="start">
+    <div class="card reveal" style="text-align: center;">
+      <span class="section-label">Start Building</span>
+      <h2 class="section-title">The tool doesn't matter as much as the decision to&nbsp;start</h2>
+      <p class="section-intro" style="margin: 1rem auto 0; text-align: center;">But if you want the easiest path:</p>
+    </div>
+
+    <div class="grid-2 reveal">
+      <a href="https://links.vibes.diy/homepage" class="card card--yellow cta-path">
+        <h3>Vibes DIY</h3>
+        <p>Describe what you want. Get a working app. No terminal required.</p>
+      </a>
+      <a href="https://links.vibes.diy/CLI" class="card card--black cta-path">
+        <h3 style="color: var(--cream);">Vibes CLI</h3>
+        <p style="color: var(--gray-light);">For people who live in the terminal. Claude Code for people who don't code.</p>
+      </a>
+    </div>
+
+    <div class="card card--black reveal" style="text-align: center; padding: 3rem 2rem;">
+      <p class="pull-quote" style="color: var(--cream); max-width: 16em; margin: 0 auto;">"We're making the electric guitar. Let's see what happens after&nbsp;that."</p>
+      <span class="pull-quote-cite" style="color: var(--gray-mid);">— J. Chris Anderson</span>
+    </div>
+  </section>
+
+  <!-- Color stripe -->
+  <div class="color-stripe" style="margin-top: 1.5rem;">
+    <div style="background: var(--red);"></div>
+    <div style="background: var(--cyan);"></div>
+    <div style="background: var(--yellow);"></div>
+    <div style="background: var(--near-black);"></div>
+    <div style="background: var(--red);"></div>
+    <div style="background: var(--cyan);"></div>
+  </div>
+
+</div><!-- /.page -->
+
+<!-- Footer -->
+<script>
+  // Scroll reveal
+  const reveals = document.querySelectorAll('.reveal');
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('visible');
+        observer.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.08, rootMargin: '0px 0px -30px 0px' });
+  reveals.forEach(el => observer.observe(el));
+
+  // YouTube lite embed: click thumbnail to load iframe
+  document.querySelectorAll('.yt-facade').forEach(function(facade) {
+    facade.addEventListener('click', function() {
+      var videoUrl = facade.dataset.videoUrl;
+      var videoId = facade.dataset.videoId;
+      if (videoId) {
+        // Embed the iframe inline
+        facade.innerHTML = '<iframe src="https://www.youtube.com/embed/' + videoId + '?autoplay=1&rel=0" title="We Brought Code to AI" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>';
+        facade.style.cursor = 'default';
+      } else if (videoUrl) {
+        // Fallback: open in new tab until video ID is set
+        window.open(videoUrl, '_blank', 'noopener,noreferrer');
+      }
+    });
+  });
+</script>

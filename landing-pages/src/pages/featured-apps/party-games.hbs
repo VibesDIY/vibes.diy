@@ -1,0 +1,206 @@
+{{!--
+{
+  "layout": "editorial",
+  "title": "Party & Group Games — Multiplayer Chaos for the Group Chat | Vibes DIY",
+  "description": "Silly multiplayer rounds — turn-based games, voting, and party chaos for friends in the room or async. Soundboards, scavenger hunts, would-you-rather, doodle telephone, and more.",
+  "ogUrl": "https://good.vibes.diy/featured-apps/party-games",
+  "source": "party-games",
+  "breadcrumbTitle": "Party & Group Games",
+  "heroTitle": "Loud, dumb, multiplayer. ",
+  "heroAccentWord": "Built for the group chat.",
+  "heroDesc": "Silly multiplayer rounds — turn-based games, voting, and party chaos for friends in the room or async. Press a button, pass the phone, vote on the funniest answer.",
+  "heroPunch": "Pass the phone.<br>Vote the funniest.<br>Remix tomorrow night.",
+  "heroStatNumber": "13 games",
+  "heroStatLabel": "one party kit. Each one a single-file React app you can clone and re-skin for your crew.",
+  "whyLabel": "Why these exist",
+  "whyTitle": "Real party games are about your friends, not the&nbsp;publisher.",
+  "whyDesc": "Cards Against Humanity stopped being funny when your group chat had its own jokes. The best party game is the one with your roommates' nicknames, your weirdest shared memories, and rules you invented at 1am. Vibes lets you build that — a soundboard with your in-jokes, a would-you-rather seeded with your group's exact brain damage, a scavenger hunt for your specific apartment. Loud, dumb, yours.",
+  "parallels": [
+    { "before": "A board game box", "after": "A shared link", "accent": "cyan" },
+    { "before": "Generic prompts", "after": "Your group's in-jokes", "accent": "yellow" },
+    { "before": "One night, one game", "after": "Remix it tomorrow", "accent": "cyan" },
+    { "before": "Wait for everyone", "after": "Async turns, vote later", "accent": "red" }
+  ],
+  "appsSections": [
+    {
+      "id": "scorekeepers",
+      "label": "01 — House Rules Scorekeepers",
+      "labelFilled": true,
+      "title": "Score the variant your family actually plays",
+      "intro": "You're the one who knows the real rules — the four-of-a-kind multiplier your uncle insists on, the full-house value your grandma swears is 30, the nil bid your roommate calls 'blind' but plays 'open.' These are scorekeepers for the house rules, not the rulebook. Each one a single-file React app, live-synced via Fireproof, with player names saved per browser.",
+      "layout": "grid-3",
+      "groups": [
+        {
+          "title": "Farkle House Rules",
+          "description": "Farkle scorekeeper for up to 6 players, target 10000. Toggleable house variants (count 3 pairs, count straight, four-of-a-kind ×2 not ×4, lose-everything-on-zero, must-enter-at-500). Hot-dice tracking, current-turn running tally before bank.",
+          "variants": [{ "author": "og", "slug": "farkle-house-rules" }]
+        },
+        {
+          "title": "Yahtzee Cousin Edition",
+          "description": "Standard 13-category Yahtzee scorecard with house-rule overrides in a sidebar: joker rules toggle, full-house = 30 vs 25, five-of-a-kind bonus, upper-section bonus tracking. 2–6 named players, live cross-device.",
+          "variants": [{ "author": "og", "slug": "yahtzee-cousin-edition" }]
+        },
+        {
+          "title": "Spades Scoresheet",
+          "description": "Bid + made + nil tracker for partner-pair Spades. Per-hand entry of bids and tricks taken; auto-calculates score with bag penalties (every 10 bags = −100); blind-nil ±200; running totals per team.",
+          "variants": [{ "author": "og", "slug": "spades-scoresheet" }]
+        },
+        {
+          "title": "Mahjong Scoresheet",
+          "description": "Running scoresheet for a 4-player mahjong session. Per-hand winner + faan/han value + self-draw vs discard settlement, with East-doubled rule toggle. Session totals across many hands, dealer rotation, prevailing wind.",
+          "variants": [{ "author": "og", "slug": "mahjong-scoresheet" }]
+        }
+      ]
+    },
+    {
+      "id": "chaos",
+      "label": "02 — Party Chaos Generators",
+      "title": "Thirteen ways to make the room laugh",
+      "intro": "Each one is a single-file React app you can run, clone, or remix. Hit <strong>Visit</strong> to play with the live version, <strong>Remix</strong> to fork it and reshape with AI, or <strong>Start fresh</strong> to launch a new vibe from the same prompt. Your group has banned three words from Would You Rather and added a penalty shot. Clone it and hardcode those rules.",
+      "layout": "grid-3",
+      "groups": [
+    {
+      "title": "Putt-Putt House Rules",
+      "description": "Putt-putt rule randomizer — per-hole rule cards; penalties/bonuses; score adjustments; share game log.",
+      "variants": [
+        { "author": "jchris", "slug": "putt-putt-randomizer" },
+        { "author": "jchris", "slug": "putt-putt-house-rules" },
+        { "author": "jchris", "slug": "molecular-whistle-student" }
+      ]
+    },
+    {
+      "title": "Soundboard Showdown",
+      "description": "Soundboard party game — 12-word pads; TTS playback; rotating questioner; turn highlight color; vote funniest.",
+      "variants": [
+        { "author": "jchris", "slug": "soundboard-party-game" },
+        { "author": "jchris", "slug": "soundboard-party" },
+        { "author": "jchris", "slug": "party-sound-blast" }
+      ]
+    },
+    {
+      "title": "Would You Rather",
+      "description": "Would-you-rather engine — submit dilemmas; friends vote; see split percentages; daily featured question; create themed decks.",
+      "variants": [
+        { "author": "jchris", "slug": "would-you-rather" },
+        { "author": "jchris", "slug": "shall-wheat-week" },
+        { "author": "jchris", "slug": "visit-remain-enough" }
+      ]
+    },
+    {
+      "title": "Scavenger Hunt Builder",
+      "description": "Scavenger hunt builder — create clue lists with photos/hints; share invite link; teams check off finds; live leaderboard; post-game gallery.",
+      "variants": [
+        { "author": "jchris", "slug": "scavenger-hunt-builder" },
+        { "author": "jchris", "slug": "hunt-creator" },
+        { "author": "jchris", "slug": "smoke-dozen-mental" }
+      ]
+    },
+    {
+      "title": "Campfire Story Chain",
+      "description": "Campfire story chain — each person adds a paragraph on a timer; pass to next; vote on best story; illustrated recap.",
+      "variants": [
+        { "author": "jchris", "slug": "wolf-lie-result" },
+        { "author": "jchris", "slug": "story-circle" },
+        { "author": "jchris", "slug": "fireside-tales" }
+      ]
+    },
+    {
+      "title": "Purple Mix Challenge",
+      "description": "Purple-solution game — indicator-based challenges; fastest/strongest color change wins; timer + scoring.",
+      "variants": [
+        { "author": "jchris", "slug": "purple-puzzle-quest" },
+        { "author": "jchris", "slug": "purple-mix-challenge" }
+      ]
+    },
+    {
+      "title": "Pocket Hoops",
+      "description": "Basketball game — simple multiplayer mini-game; local or async turns; score, fouls, timers; remix rules; share link to play with friends.",
+      "variants": [{ "author": "jchris", "slug": "kill-drive-copy" }]
+    },
+    {
+      "title": "Rhyme Tug-of-War",
+      "description": "Rhyme tug-of-war — turn-based rhymes; score pulls rope; streak bonuses; difficulty words.",
+      "variants": [{ "author": "jchris", "slug": "rhyme-battle" }]
+    },
+    {
+      "title": "Doodle Telephone",
+      "description": "Doodle telephone — draw something; next person describes it in words; next draws from that description; reveal the chain; vote funniest drift.",
+      "variants": [{ "author": "jchris", "slug": "drawing-telephone-game" }]
+    },
+    {
+      "title": "Snack Showdown",
+      "description": "Snack bracket tournament — seed 16 snacks; head-to-head group votes; crown a champion; seasonal resets; hall of fame.",
+      "variants": [{ "author": "jchris", "slug": "snack-showdown" }]
+    },
+    {
+      "title": "Ministry of Silly Walks",
+      "description": "Silly walk generator — random movement instructions per segment; film yourself doing it; friends vote funniest; remix walks.",
+      "variants": [{ "author": "jchris", "slug": "ministry-of-walks" }]
+    },
+    {
+      "title": "Skate Through Time",
+      "description": "Endless-runner skate arcade through skateboarding history — 1950s sidewalk surf, 70s pool, 80s vert, 90s street. Ollie obstacles, grab tokens, survive the era. Pass the phone and chase high scores.",
+      "variants": [{ "author": "jchris", "slug": "skate-through-time" }]
+    },
+    {
+      "title": "Nebula Flight",
+      "description": "Three.js cosmic drift — steer through a wind chime made of light with proximity audio synthesis. Hue maps to pitch across a pentatonic scale, so the chord shifts as you fly. Arrow keys steer, Shift boosts.",
+      "variants": [{ "author": "jchris", "slug": "nebula-flight" }]
+    }
+      ]
+    }
+  ],
+  "classics": [
+    { "author": "og", "slug": "ancient-pickup-3272", "description": "Grimdark cosmic-horror text adventure; explore an unseelie nightmare realm with AI-generated images and ambient sound." },
+    { "author": "og", "slug": "atomic-trumpet-1880", "description": "Grimdark cosmic-horror adventure with AI-generated nightmare imagery and procedural eldritch ambience." },
+    { "author": "og", "slug": "bright-patch-4177", "description": "Roleplay chat with a roster of AI characters; tune personalities, swap models, and save conversations." },
+    { "author": "og", "slug": "cairo-ra-4286", "description": "Top-down car racing arcade game; dodge enemies, grab coins, and chase high scores with chip-tune effects." },
+    { "author": "og", "slug": "charming-shrimp-9651", "description": "Monkey Love Hut meme studio: upload a photo, AI generates love-themed meme captions, share across devices." },
+    { "author": "og", "slug": "cute-frog-9259", "description": "\"Who would most likely to...\" party game; add friends, generate AI questions, vote together, see results." },
+    { "author": "og", "slug": "elegant-willow-6264", "description": "AI-themed memory match game with custom decks, generated card art, timed modes, leaderboards, and achievements." },
+    { "author": "og", "slug": "exciting-hedgehog-6310", "description": "Chess coverage puzzle: place pieces to cover every square with goals, piece restrictions, and sandbox mode." },
+    { "author": "og", "slug": "expansive-ishtar-4021", "description": "Pickleball score tracker with cloud sync, tournament brackets, and live player win/loss leaderboards." },
+    { "author": "og", "slug": "fit-basilisk-8896", "description": "Glinski's hexagonal chess puzzle: place pieces on a hex board to cover all cells with goals and constraints." },
+    { "author": "og", "slug": "immense-shrimp-9469", "description": "Generate absurd reality-distortion phrases on any topic and hear them spoken word-by-word in shifting voices." },
+    { "author": "og", "slug": "indirect-smelt-7561", "description": "Toroidal chess coverage puzzle: cover every square on a wraparound board with goals and piece restrictions." },
+    { "author": "og", "slug": "lunar-fox-6611", "description": "Angry Grandma Garden: 3D Three.js chase game with custom drawn characters, dagger throws, and a live chat lobby." },
+    { "author": "og", "slug": "miniature-mouse-6448", "description": "Add your crew, AI generates wild \"who would most likely to...\" questions, vote and see results with vote bars." },
+    { "author": "og", "slug": "printed-marten-8570", "description": "Two-player chess with Fireproof real-time sync, game lobby, and optional simulated opponent." },
+    { "author": "og", "slug": "quiet-anansi-5051", "description": "Chain-link solitaire card game with easy/normal/hard modes, win tracking, and game history." },
+    { "author": "og", "slug": "round-bat-6533", "description": "Chess piece coverage puzzle: place pieces on a board to cover all squares with goal modes, attack rules, and piece restrictions." },
+    { "author": "og", "slug": "rubber-kite-4648", "description": "Playful French \"MouseGuard\" surveillance gag that tracks when your cursor leaves the window and escalates suspicion warnings." },
+    { "author": "og", "slug": "solar-orca-9393", "description": "Bilingual AI debate simulator where two characters argue heated religious topics across 28 faiths with auto or manual mode." },
+    { "author": "og", "slug": "sydney-pedal-3741", "description": "Don't-Point-At-Me grid game: two players (or AIs) place arrows on a board with holes, last to point legally wins." },
+    { "author": "og", "slug": "sydney-raven-8349", "description": "Don't-Point-At-Me on a hex board: human or AI players place arrows around holes in a turn-based pointing game." },
+    { "author": "og", "slug": "vicarious-sole-4445", "description": "Don't Point At Me: two-player hex board game with adjustable radius, hole placement, and AI opponents." },
+    { "author": "og", "slug": "vienna-mercury-8842", "description": "Memory match card game with AI-generated themed decks, achievements, daily challenges, time trials, and high scores." }
+  ],
+  "stories": "Every one of these is a single-file React app, built in an evening, and tuned for one specific group's brand of stupid. The point isn't a polished product. The point is that the soundboard has your roommate's catchphrase, the would-you-rather deck is seeded with the cursed dilemmas your group chat has been arguing about for six months, and the scavenger hunt knows where your weird neighbor's gnome lives. Build it tonight. Play it tonight. Remix it tomorrow.",
+  "storiesQuote": "The audience is six people on a couch, not six&nbsp;million.",
+  "storiesCite": "J. Chris Anderson, Vibes DIY",
+  "ctaTitle": "Get the next batch of party games.",
+  "ctaText": "Drop your email and we'll send the next round of multiplayer chaos when it ships — plus the remix prompts behind them.",
+  "ctaButton": "Send me the games"
+}
+--}}
+
+<style>
+  body {
+    --red: #ff2266;
+    --cyan: #00f0ff;
+    --yellow: #ff00cc;
+  }
+  body .ed-card--hero {
+    background-image: repeating-linear-gradient(
+      to bottom,
+      transparent 0 3px,
+      rgba(0, 0, 0, 0.04) 3px 4px
+    );
+  }
+  body .ed-label {
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+  }
+</style>
+
+{{> featured-app-body-editorial}}

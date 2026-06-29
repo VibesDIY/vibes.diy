@@ -1,0 +1,1076 @@
+{{!--
+{
+  "layout": "webring",
+  "title": "Dr. Deas Music Suite | Vibes DIY",
+  "description": "Three web audio instruments — drum machine, pattern library, chord synthesizer — and their 2026 remixes with Web Audio compression and tube warmth. Clone any of them or build fresh.",
+  "ogUrl": "https://good.vibes.diy/music-studio/",
+  "source": "music-studio",
+  "ogImage": "https://good.vibes.diy/images/screenshots/music-studio.jpg"
+}
+--}}
+
+<style>
+  @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;700&display=optional");
+
+  :root {
+    --bg:          oklch(0.12 0.012 40);
+    --bg-elev:     oklch(0.18 0.015 40);
+    --bg-deep:     oklch(0.09 0.010 35);
+    --fg:          oklch(0.96 0.005 60);
+    --fg-dim:      oklch(0.62 0.012 60);
+    --fg-faint:    oklch(0.38 0.010 55);
+    --border:      oklch(1 0 0 / 0.08);
+    --border-hi:   oklch(1 0 0 / 0.18);
+    --amber:       oklch(0.82 0.17 72);
+    --amber-text:  oklch(0.12 0.04 55);
+    --blue:        oklch(0.70 0.17 225);
+    --blue-text:   oklch(0.10 0.04 225);
+    --red:         oklch(0.62 0.22 22);
+  }
+
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html, body {
+    font-family: "Inter", system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--fg);
+    line-height: 1.55;
+    min-height: 100vh;
+    background-image:
+      radial-gradient(circle at 6% 0%, rgba(200, 130, 40, 0.07), transparent 35%),
+      radial-gradient(circle at 96% 98%, rgba(60, 140, 200, 0.07), transparent 42%);
+    background-attachment: fixed;
+  }
+
+  a { color: inherit; text-decoration: none; }
+
+  .layout { max-width: 1100px; margin: 0 auto; padding: 0 1.5rem; }
+
+  /* ── TOPBAR ── */
+  .topbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .brand {
+    font-family: "JetBrains Mono", monospace;
+    font-weight: 700;
+    font-size: 1.05rem;
+    letter-spacing: 0.04em;
+    transition: color 0.15s;
+  }
+  .brand::before { content: "▶ "; color: var(--amber); }
+  .brand:hover { color: var(--amber); }
+  .pill {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.62rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    padding: 4px 12px;
+    border: 1px solid var(--border-hi);
+    border-radius: 999px;
+    color: var(--fg-dim);
+  }
+  .pill .dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--amber);
+    box-shadow: 0 0 8px var(--amber);
+    animation: pulse 2s ease infinite;
+  }
+  @keyframes pulse { 50% { opacity: 0.3; } }
+
+  .crumb {
+    padding: 0.55rem 0;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.62rem;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--fg-faint);
+    border-bottom: 1px solid var(--border);
+  }
+  .crumb a:hover { color: var(--amber); }
+
+  /* ── HERO ── */
+  .hero {
+    padding: 5rem 0 4rem;
+    border-bottom: 1px solid var(--border);
+  }
+  .hero .kicker {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.68rem;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--amber);
+    margin-bottom: 1.5rem;
+  }
+  .hero .kicker::before { content: "// "; opacity: 0.5; }
+  .hero h1 {
+    font-size: clamp(2.8rem, 8vw, 6rem);
+    font-weight: 900;
+    line-height: 0.92;
+    letter-spacing: -0.04em;
+    margin-bottom: 2rem;
+  }
+  .hero h1 .aa { color: var(--amber); }
+  .hero h1 .ab { color: var(--blue); }
+  .hero .lede {
+    font-size: 1.15rem;
+    max-width: 680px;
+    color: var(--fg);
+    opacity: 0.82;
+    line-height: 1.65;
+  }
+  .hero .lede strong { color: var(--amber); font-weight: 600; }
+  .hero .lede a {
+    color: var(--amber);
+    border-bottom: 1px solid rgba(200, 130, 40, 0.4);
+    transition: border-color 0.15s;
+  }
+  .hero .lede a:hover { border-color: var(--amber); }
+
+  /* ── STATS ── */
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    margin: 3rem 0;
+  }
+  @media (max-width: 640px) { .stats { grid-template-columns: repeat(2, 1fr); } }
+  .stat-cell {
+    padding: 1.5rem;
+    border-right: 1px solid var(--border);
+  }
+  .stat-cell:last-child { border-right: none; }
+  @media (max-width: 640px) {
+    .stat-cell:nth-child(2n) { border-right: none; }
+    .stat-cell { border-bottom: 1px solid var(--border); }
+    .stat-cell:nth-child(3), .stat-cell:nth-child(4) { border-bottom: none; }
+  }
+  .sk {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.58rem;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--fg-faint);
+    margin-bottom: 0.35rem;
+  }
+  .sv {
+    font-weight: 900;
+    font-size: 2rem;
+    line-height: 1;
+    letter-spacing: -0.04em;
+    color: var(--amber);
+  }
+  .sv.blue { color: var(--blue); }
+  .sv.small {
+    font-size: 1.2rem;
+    font-family: "JetBrains Mono", monospace;
+    font-weight: 700;
+    color: var(--fg-dim);
+  }
+
+  /* ── SECTION HEAD ── */
+  .section-wrap {
+    padding: 3.5rem 0 4rem;
+  }
+  .section-head { margin-bottom: 2.5rem; }
+  .section-kicker {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.6rem;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    margin-bottom: 0.75rem;
+  }
+  .sk-amber { color: var(--amber); }
+  .sk-blue  { color: var(--blue); }
+  .section-head h2 {
+    font-size: clamp(2rem, 5vw, 3.5rem);
+    font-weight: 900;
+    letter-spacing: -0.035em;
+    line-height: 0.95;
+    margin-bottom: 0.9rem;
+  }
+  .section-head p {
+    font-size: 1rem;
+    color: var(--fg-dim);
+    max-width: 56ch;
+    line-height: 1.65;
+  }
+
+  /* ── APP GRID ── */
+  .app-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.25rem;
+  }
+  @media (max-width: 900px) { .app-grid { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 560px) { .app-grid { grid-template-columns: 1fr; } }
+
+  /* ── APP CARD ── */
+  .app-card {
+    background: var(--bg-elev);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    transition: border-color 0.18s, box-shadow 0.18s;
+  }
+  .app-card--orig:hover {
+    border-color: rgba(200, 130, 40, 0.5);
+    box-shadow: 0 0 0 1px rgba(200, 130, 40, 0.15), 0 4px 24px rgba(200, 130, 40, 0.10);
+  }
+  .app-card--remix:hover {
+    border-color: rgba(60, 140, 200, 0.5);
+    box-shadow: 0 0 0 1px rgba(60, 140, 200, 0.12), 0 4px 24px rgba(60, 140, 200, 0.10);
+  }
+
+  .card-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 1rem 0;
+  }
+  .card-badge {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.54rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    padding: 3px 8px;
+    border-radius: 3px;
+    font-weight: 700;
+  }
+  .badge-orig  { background: rgba(200, 130, 40, 0.14); color: var(--amber); border: 1px solid rgba(200, 130, 40, 0.32); }
+  .badge-remix { background: rgba(60, 140, 200, 0.12); color: var(--blue);  border: 1px solid rgba(60, 140, 200, 0.30); }
+  .card-num {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.56rem;
+    color: var(--fg-faint);
+  }
+
+  /* ── SCREENSHOT ── */
+  .card-shot {
+    margin: 0.75rem 1rem;
+    border-radius: 4px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    aspect-ratio: 16 / 9;
+    background: var(--bg-deep);
+    position: relative;
+    flex-shrink: 0;
+  }
+  .card-shot img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .shot-soon {
+    position: absolute; inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.6rem;
+  }
+  .shot-soon-glyph {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 1.75rem;
+    color: var(--blue);
+    opacity: 0.4;
+  }
+  .shot-soon-label {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.54rem;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--fg-faint);
+  }
+
+  /* ── CARD BODY ── */
+  .card-body { padding: 0 1rem; flex: 1; }
+  .card-title {
+    font-size: 1.12rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    line-height: 1.15;
+    margin-bottom: 0.3rem;
+  }
+  .card-tagline {
+    font-size: 0.78rem;
+    color: var(--fg-dim);
+    margin-bottom: 0.6rem;
+    line-height: 1.5;
+  }
+  .card-desc {
+    font-size: 0.74rem;
+    color: var(--fg-faint);
+    line-height: 1.72;
+    margin-bottom: 1rem;
+  }
+
+  /* ── CARD ACTIONS ── */
+  .card-actions {
+    display: flex;
+    gap: 0.4rem;
+    flex-wrap: wrap;
+    padding: 0 1rem 1rem;
+  }
+  .btn {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.57rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    padding: 0.38rem 0.8rem;
+    border-radius: 3px;
+    border: 1px solid transparent;
+    cursor: pointer;
+    line-height: 1;
+    transition: all 0.14s;
+    display: inline-block;
+  }
+  .btn-join  { background: var(--amber); color: var(--amber-text); font-weight: 700; }
+  .btn-join:hover  { opacity: 0.85; }
+  .btn-clone { border-color: var(--border-hi); color: var(--fg-dim); }
+  .btn-clone:hover { border-color: var(--fg-dim); color: var(--fg); }
+  .btn-remix { border-color: rgba(60, 140, 200, 0.4); color: var(--blue); }
+  .btn-remix:hover { background: rgba(60, 140, 200, 0.1); }
+  .btn-soon {
+    background: transparent;
+    border-color: var(--border);
+    color: var(--fg-faint);
+    cursor: default;
+    pointer-events: none;
+  }
+
+  /* ── FORK HINT ── */
+  .card-fork {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.62rem;
+    line-height: 1.65;
+    color: var(--fg-faint);
+    border-left: 2px solid rgba(200, 130, 40, 0.4);
+    padding: 0 1rem 0 0.85rem;
+    margin: 0 1rem 0.75rem;
+  }
+
+  /* ── PROMPT BLOCK ── */
+  .prompt-block {
+    margin: 0 1rem 1rem;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    background: var(--bg-deep);
+    overflow: hidden;
+    font-size: 0.75rem;
+  }
+  .prompt-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.44rem 0.75rem;
+    border-bottom: 1px solid var(--border);
+    background: rgba(200, 130, 40, 0.06);
+  }
+  .prompt-label {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.54rem;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--amber);
+  }
+  .copy-btn {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.5rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 3px 8px;
+    background: rgba(255,255,255,0.06);
+    border: none;
+    border-radius: 2px;
+    color: var(--fg-faint);
+    cursor: pointer;
+    transition: background 0.12s, color 0.12s;
+  }
+  .copy-btn:hover { background: var(--amber); color: var(--amber-text); }
+  .copy-btn.copied { background: var(--amber); color: var(--amber-text); }
+
+  .prompt-text {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.67rem;
+    line-height: 1.65;
+    color: var(--fg-dim);
+    white-space: pre-wrap;
+    word-break: break-word;
+    padding: 0.75rem;
+    display: block;
+  }
+
+  /* expandable spec */
+  .prompt-details summary {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.57rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--blue);
+    padding: 0.55rem 0.75rem;
+    cursor: pointer;
+    list-style: none;
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    transition: color 0.12s;
+    user-select: none;
+  }
+  .prompt-details summary:hover { color: var(--fg); }
+  .prompt-details summary::before { content: "▸"; transition: transform 0.15s; display: inline-block; }
+  .prompt-details[open] summary::before { transform: rotate(90deg); }
+  .prompt-details summary::-webkit-details-marker { display: none; }
+
+  /* ── REMIX BANNER ── */
+  .remix-banner {
+    background: var(--bg-deep);
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    padding: 2.5rem 0;
+  }
+  .remix-banner-inner {
+    display: flex;
+    align-items: center;
+    gap: 2.5rem;
+  }
+  @media (max-width: 700px) {
+    .remix-banner-inner { flex-direction: column; align-items: flex-start; gap: 0.75rem; }
+  }
+  .remix-banner-label {
+    font-size: clamp(2.2rem, 5.5vw, 3.75rem);
+    font-weight: 900;
+    letter-spacing: -0.04em;
+    color: var(--blue);
+    flex-shrink: 0;
+    line-height: 1;
+  }
+  .remix-banner-desc {
+    font-size: 0.9rem;
+    color: var(--fg-dim);
+    line-height: 1.68;
+    max-width: 54ch;
+  }
+  .remix-banner-desc strong { color: var(--blue); font-weight: 600; }
+
+  /* ── CTA ── */
+  .cta-wrap { padding: 5rem 0; }
+  .cta-block {
+    background: var(--bg-elev);
+    border: 1px solid var(--border-hi);
+    border-radius: 6px;
+    padding: 3.5rem 2.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 2rem;
+    flex-wrap: wrap;
+  }
+  .cta-kicker {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.6rem;
+    letter-spacing: 0.28em;
+    text-transform: uppercase;
+    color: var(--amber);
+    margin-bottom: 0.75rem;
+  }
+  .cta-block h2 {
+    font-size: clamp(1.75rem, 4vw, 2.75rem);
+    font-weight: 900;
+    letter-spacing: -0.035em;
+    line-height: 1;
+    margin-bottom: 0.75rem;
+  }
+  .cta-block p {
+    font-size: 0.9rem;
+    color: var(--fg-dim);
+    max-width: 44ch;
+    line-height: 1.68;
+  }
+  .cta-actions { display: flex; gap: 0.75rem; flex-wrap: wrap; align-items: center; flex-shrink: 0; }
+  .btn-cta-primary {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.68rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    padding: 0.75rem 1.5rem;
+    background: var(--amber);
+    color: var(--amber-text);
+    border: none;
+    border-radius: 4px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: opacity 0.14s;
+    display: inline-block;
+  }
+  .btn-cta-primary:hover { opacity: 0.85; }
+  .btn-cta-ghost {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.64rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 0.7rem 1.25rem;
+    background: transparent;
+    color: var(--fg-dim);
+    border: 1px solid var(--border-hi);
+    border-radius: 4px;
+    transition: border-color 0.14s, color 0.14s;
+    display: inline-block;
+  }
+  .btn-cta-ghost:hover { border-color: var(--fg-dim); color: var(--fg); }
+
+  /* ── FOOTER ── */
+  footer {
+    border-top: 1px solid var(--border);
+    padding: 2rem 0;
+  }
+  .footer-inner {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+  .footer-copy {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.54rem;
+    letter-spacing: 0.08em;
+    color: var(--fg-faint);
+  }
+  .footer-links { display: flex; gap: 1.5rem; }
+  .footer-links a {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.54rem;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--fg-faint);
+    transition: color 0.14s;
+  }
+  .footer-links a:hover { color: var(--amber); }
+</style>
+
+<!-- TOPBAR -->
+<div class="layout">
+  <div class="topbar">
+    <a href="https://links.vibes.diy/homepage" class="brand">vibes.diy</a>
+    <span class="pill"><span class="dot"></span>Live</span>
+  </div>
+  <div class="crumb">
+    <a href="https://links.vibes.diy/homepage">home</a> / music-studio
+  </div>
+</div>
+
+<!-- HERO -->
+<div class="layout">
+  <section class="hero">
+    <div class="kicker">Dr. Deas Music Suite</div>
+    <h1>Three tools.<br><span class="aa">Two generations.</span><br><span class="ab">Build yours.</span></h1>
+    <p class="lede">
+      A drum machine, a pattern library, and a chord synthesizer — deployed with
+      <a href="https://links.vibes.diy/CLI">npx vibes-diy</a>.
+      Clone any of them, or <strong>build fresh</strong> from the specs below.
+    </p>
+  </section>
+</div>
+
+<!-- STATS -->
+<div class="layout">
+  <div class="stats">
+    <div class="stat-cell">
+      <div class="sk">Originals</div>
+      <div class="sv">3</div>
+    </div>
+    <div class="stat-cell">
+      <div class="sk">Remixes</div>
+      <div class="sv blue">3</div>
+    </div>
+    <div class="stat-cell">
+      <div class="sk">Author</div>
+      <div class="sv small">og</div>
+    </div>
+    <div class="stat-cell">
+      <div class="sk">Audio</div>
+      <div class="sv small">Web API</div>
+    </div>
+  </div>
+</div>
+
+<!-- THE ORIGINALS -->
+<div class="layout">
+  <div class="section-wrap">
+    <div class="section-head">
+      <div class="section-kicker sk-amber">01 — Original run</div>
+      <h2>The Originals</h2>
+      <p>Three instruments deployed from short prompts. Shipped, used, iterated.</p>
+    </div>
+
+    <div class="app-grid">
+
+      <!-- Drum Machine -->
+      <article class="app-card app-card--orig">
+        <div class="card-meta">
+          <span class="card-badge badge-orig">Original</span>
+          <span class="card-num">01 / 03</span>
+        </div>
+        <div class="card-shot">
+          <img
+            src="https://excited-wombat-4753--og.prod-v2.vibesdiy.net/screenshot.jpg"
+            alt="Dr. Deas Drum Machine"
+            onerror="this.onerror=null; this.src='{{@root.assetPrefix}}images/og-preview.png';"
+          />
+        </div>
+        <div class="card-body">
+          <h3 class="card-title">Dr. Deas Drum Machine</h3>
+          <p class="card-tagline">Style-generated patterns. Custom samples. Solo and mute.</p>
+          <p class="card-desc">Describe your beat — dark trap, four-on-the-floor, reggaeton break — and all 8 tracks fill in at once. Adjust BPM, save patterns by name, solo and mute for mixing.</p>
+        </div>
+        <div class="card-actions">
+          <a href="https://vibes.diy/vibe/og/excited-wombat-4753" class="btn btn-join">Join</a>
+          <a href="https://vibes.diy/remix/og/excited-wombat-4753?skipChat=true" class="btn btn-clone">Clone</a>
+          <a href="https://vibes.diy/remix/og/excited-wombat-4753" class="btn btn-remix">Remix</a>
+        </div>
+        <p class="card-fork">Want a 12-track version with custom Latin percussion voices, or a 4-track minimal techno sequencer? Clone it and rewrite the track list and sound synthesis.</p>
+        <div class="prompt-block">
+          <div class="prompt-header">
+            <span class="prompt-label">// build fresh →</span>
+            <button class="copy-btn" onclick="copyFromBlock(this)">Copy</button>
+          </div>
+          <pre class="prompt-text">Step sequencer drum machine, 8 tracks, BPM control. AI beat generator: describe style and genre, fills all tracks. Solo, mute, save patterns by name.</pre>
+        </div>
+      </article>
+
+      <!-- Pattern Saver -->
+      <article class="app-card app-card--orig">
+        <div class="card-meta">
+          <span class="card-badge badge-orig">Original</span>
+          <span class="card-num">02 / 03</span>
+        </div>
+        <div class="card-shot">
+          <img
+            src="https://mass-bug-7792--og.prod-v2.vibesdiy.net/screenshot.jpg"
+            alt="Dr. Deas Pattern Saver"
+            onerror="this.onerror=null; this.src='{{@root.assetPrefix}}images/og-preview.png';"
+          />
+        </div>
+        <div class="card-body">
+          <h3 class="card-title">Dr. Deas Pattern Saver</h3>
+          <p class="card-tagline">Instrument-first workflow. LEVEL, TUNE, DECAY per track.</p>
+          <p class="card-desc">Select a drum voice, program 16 steps, dial in the feel. LEVEL, TUNE, and DECAY controls per instrument. Pattern generator and demo patterns included.</p>
+        </div>
+        <div class="card-actions">
+          <a href="https://vibes.diy/vibe/og/mass-bug-7792" class="btn btn-join">Join</a>
+          <a href="https://vibes.diy/remix/og/mass-bug-7792?skipChat=true" class="btn btn-clone">Clone</a>
+          <a href="https://vibes.diy/remix/og/mass-bug-7792" class="btn btn-remix">Remix</a>
+        </div>
+        <p class="card-fork">Your workflow is sample-based, not synthesis-based. Clone this and swap the procedural voices for a file-drop sample loader per track.</p>
+        <div class="prompt-block">
+          <div class="prompt-header">
+            <span class="prompt-label">// build fresh →</span>
+            <button class="copy-btn" onclick="copyFromBlock(this)">Copy</button>
+          </div>
+          <pre class="prompt-text">Drum machine with instrument-first 16-step sequencer. Per-track LEVEL, TUNE, and DECAY controls. AI generate button and demo patterns. Save patterns by name.</pre>
+        </div>
+      </article>
+
+      <!-- Chord Synth -->
+      <article class="app-card app-card--orig">
+        <div class="card-meta">
+          <span class="card-badge badge-orig">Original</span>
+          <span class="card-num">03 / 03</span>
+        </div>
+        <div class="card-shot">
+          <img
+            src="https://environmental-newt-5799--og.prod-v2.vibesdiy.net/screenshot.jpg"
+            alt="Dr. Deas Chord Synthesizer"
+            onerror="this.onerror=null; this.src='{{@root.assetPrefix}}images/og-preview.png';"
+          />
+        </div>
+        <div class="card-body">
+          <h3 class="card-title">Dr. Deas Chord Synthesizer</h3>
+          <p class="card-tagline">MIDI import, AI progressions, auto-rhythm.</p>
+          <p class="card-desc">Drag in a .mid file and hear it as chord progressions. Or describe your mood and get a progression with rhythm patterns generated automatically.</p>
+        </div>
+        <div class="card-actions">
+          <a href="https://vibes.diy/vibe/og/environmental-newt-5799" class="btn btn-join">Join</a>
+          <a href="https://vibes.diy/remix/og/environmental-newt-5799?skipChat=true" class="btn btn-clone">Clone</a>
+          <a href="https://vibes.diy/remix/og/environmental-newt-5799" class="btn btn-remix">Remix</a>
+        </div>
+        <p class="card-fork">You want to explore modal jazz voicings specifically, with Dorian and Lydian scale support. Clone it and extend the scale selector and diatonic chord grid.</p>
+        <div class="prompt-block">
+          <div class="prompt-header">
+            <span class="prompt-label">// build fresh →</span>
+            <button class="copy-btn" onclick="copyFromBlock(this)">Copy</button>
+          </div>
+          <pre class="prompt-text">Chord synthesizer with AI progression generator and MIDI file import. Auto-detect chords, generate rhythm patterns. Classic analog synthesis sounds.</pre>
+        </div>
+      </article>
+
+    </div>
+  </div>
+</div>
+
+<!-- REMIX BANNER -->
+<div class="remix-banner">
+  <div class="layout">
+    <div class="remix-banner-inner">
+      <div class="remix-banner-label">2026 Remix</div>
+      <div class="remix-banner-desc">
+        Same tools, rebuilt by hand: <strong>lookahead Web Audio scheduler</strong>,
+        <strong>DynamicsCompressor + tube warmth WaveShaper</strong> on the master bus,
+        richer controls, zero regressions. Expand any spec below to build your own version.
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 2026 REMIX -->
+<div class="layout">
+  <div class="section-wrap">
+    <div class="section-head">
+      <div class="section-kicker sk-blue">02 — Hand-tuned</div>
+      <h2>2026 Remix</h2>
+      <p>Rebuilt from the OG source: polish, bug fixes, showcase features. Expand any spec to build your own version.</p>
+    </div>
+
+    <div class="app-grid">
+
+      <!-- Drum Studio -->
+      <article class="app-card app-card--remix">
+        <div class="card-meta">
+          <span class="card-badge badge-remix">2026 Remix</span>
+          <span class="card-num">01 / 03</span>
+        </div>
+        <div class="card-shot">
+          <img
+            src="https://drum-studio--og.prod-v2.vibesdiy.net/screenshot.jpg"
+            alt="Drum Studio"
+            onerror="this.onerror=null; this.src='{{@root.assetPrefix}}images/og-preview.png';"
+          />
+        </div>
+        <div class="card-body">
+          <h3 class="card-title">Drum Studio</h3>
+          <p class="card-tagline">Pattern chains. Tube warmth. Dynamics compression.</p>
+          <p class="card-desc">Lookahead scheduler, DynamicsCompressor + WaveShaper tube warmth on the master bus. 16-step grid grouped by beat, per-track volume and tune.</p>
+        </div>
+        <div class="card-actions">
+          <a href="https://vibes.diy/vibe/og/drum-studio" class="btn btn-join">Join</a>
+          <a href="https://vibes.diy/remix/og/drum-studio?skipChat=true" class="btn btn-clone">Clone</a>
+          <a href="https://vibes.diy/remix/og/drum-studio" class="btn btn-remix">Remix</a>
+        </div>
+        <p class="card-fork">You need a polyrhythm mode where each track can run its own step count independently. Clone it and add a per-track length selector alongside the BPM control.</p>
+        <div class="prompt-block">
+          <div class="prompt-header">
+            <span class="prompt-label">// full build spec →</span>
+            <button class="copy-btn" onclick="copyFromBlock(this)">Copy</button>
+          </div>
+          <details class="prompt-details">
+            <summary>Show spec</summary>
+            <pre class="prompt-text">Build a 16-step drum sequencer with 8 tracks: Kick, Snare,
+Open Hat, Closed Hat, Hand Clap, Crash, Cowbell, Clave.
+
+Audio engine — Web Audio API, all sounds procedural:
+  Kick: sine oscillator, exponential frequency sweep 200Hz to 40Hz
+    in 80ms. Amplitude envelope: attack 0ms, decay 300ms.
+  Snare: filtered white noise (bandpass 180Hz to 2kHz) mixed 60/40
+    with a 200Hz sine, 150ms decay.
+  Closed hat: white noise through highpass at 8kHz, 60ms decay.
+  Open hat: same noise chain, 400ms decay.
+  Clap: 4 noise bursts 8ms apart, shared 200ms tail.
+  Crash: bandpass noise, 800ms decay.
+  Cowbell: two square waves at 540Hz and 800Hz, 8ms attack, 600ms decay.
+  Clave: sharp click, 40ms total.
+
+Timing: lookahead scheduler. Schedule notes 100ms ahead, tick every
+25ms via a scheduling interval. Never use setInterval or setTimeout
+to fire audio events directly — only for the scheduling loop itself.
+
+Step grid: 16 toggles per track, arranged as 4 groups of 4, with a
+thin visual rule separating each group. Active steps use the accent
+color. Playhead highlights the current step in a distinct pulse color.
+
+Track row controls:
+  Name label (click to select that track). Solo [S] and mute [M]
+  buttons. Volume slider 0 to 100. Tune slider -12 to +12 semitones,
+  default 0. Selected track row is highlighted with a subtle tint.
+
+Transport: BPM slider 60 to 200, default 120, with numeric readout.
+Play / Stop button. Clear active track only. Clear All with a
+confirmation dialog before wiping.
+
+Pattern management: Name input field. Save writes the complete state
+(all 8 tracks of steps, BPM, per-track volume and tune) to localStorage.
+Saved patterns panel: list of names, click any to load. New button
+creates a blank pattern. Patterns auto-save on every change with a
+"saved" indicator that fades out after 1 second.
+
+AI pattern generator: Text description input (e.g. "dark trap, heavy
+bass") plus genre dropdown (House, Trap, Drumline, Reggaeton, Jazz,
+Metal). Generate fills all 8 track grids. Show a loading spinner in
+the button during generation.
+
+Master effects chain, applied after all tracks mix:
+  1. DynamicsCompressorNode with four labeled knobs:
+       Threshold: -60 to 0 dB, default -24 dB
+       Ratio: 1:1 to 20:1, default 4:1
+       Attack: 0 to 200ms, default 3ms
+       Release: 50ms to 2000ms, default 250ms
+  2. WaveShaperNode with a tanh soft-clip curve. A pre-gain stage
+     (0.5x to 3x) feeds into it. Expose as a single Tube Warmth knob
+     (0 to 100) that maps linearly to pre-gain. Show the current
+     pre-gain value as a numeric label beside the knob.
+  3. Master volume GainNode, exposed as a final volume slider.
+
+All knob and slider values shown as numeric labels.
+Group the three master chain controls in a panel labeled "Master Bus".
+
+Persist the full session to localStorage on every change.
+Restore the last session on mount. Show a brief "session restored"
+toast on successful restore.</pre>
+          </details>
+        </div>
+      </article>
+
+      <!-- Pattern Vault -->
+      <article class="app-card app-card--remix">
+        <div class="card-meta">
+          <span class="card-badge badge-remix">2026 Remix</span>
+          <span class="card-num">02 / 03</span>
+        </div>
+        <div class="card-shot">
+          <img
+            src="https://pattern-vault--og.prod-v2.vibesdiy.net/screenshot.jpg"
+            alt="Pattern Vault"
+            onerror="this.onerror=null; this.src='{{@root.assetPrefix}}images/og-preview.png';"
+          />
+        </div>
+        <div class="card-body">
+          <h3 class="card-title">Pattern Vault</h3>
+          <p class="card-tagline">Tags, shareable URLs, two-panel layout.</p>
+          <p class="card-desc">Your patterns, organized: tag them, search them, share them as encoded URLs. Left panel browser, right panel sequencer, full library in localStorage.</p>
+        </div>
+        <div class="card-actions">
+          <a href="https://vibes.diy/vibe/og/pattern-vault" class="btn btn-join">Join</a>
+          <a href="https://vibes.diy/remix/og/pattern-vault?skipChat=true" class="btn btn-clone">Clone</a>
+          <a href="https://vibes.diy/remix/og/pattern-vault" class="btn btn-remix">Remix</a>
+        </div>
+        <p class="card-fork">You want a shared library your whole band can access, not just your local localStorage. Clone it and swap the storage layer for a Fireproof sync backend.</p>
+        <div class="prompt-block">
+          <div class="prompt-header">
+            <span class="prompt-label">// full build spec →</span>
+            <button class="copy-btn" onclick="copyFromBlock(this)">Copy</button>
+          </div>
+          <details class="prompt-details">
+            <summary>Show spec</summary>
+            <pre class="prompt-text">Build a drum pattern library with a two-panel layout:
+300px left panel (pattern browser) and flex-1 right panel (live sequencer).
+
+Right panel — step sequencer:
+  8 tracks: Kick, Snare, Open Hat, Closed Hat, Hand Clap, Crash,
+  Cowbell, Clave. 16 steps each.
+  Web Audio API procedural synthesis: kick = exponential freq-sweep
+  sine; snare = noise burst + short sine; hats = filtered noise at
+  different decay lengths; clap = burst of noise pulses; cowbell =
+  two square waves mixed.
+  Per-track controls: volume slider 0 to 100, mute button.
+  BPM slider 60 to 200. Play / Stop / New / Save buttons.
+  Playhead animates during playback. Steps group visually into 4 beats.
+
+Left panel — pattern browser, scrollable:
+  Each saved pattern as a card: name, tag chips, BPM label, and a
+  mini 8x16 dot-grid preview (read-only, each step a 4x4px dot).
+  Clicking a card loads it into the right panel sequencer.
+  Active card highlighted. Sorted by most recently saved first.
+
+Tags: free-text tags on each pattern. On Save, show a modal: name
+input and tags input (type and press Enter to add each tag, click chip
+to remove). Tag filter row above the pattern list — clicking a tag
+filters to patterns with that tag only. A "Clear filter" button resets.
+Search input filters by name substring in real time.
+Tags are case-insensitive and de-duplicated.
+
+Pattern URL sharing: encode the full pattern state (8 tracks of 16
+booleans, BPM, per-track volumes, pattern name) as base64 JSON in
+window.location.hash. A Share button copies the current URL to clipboard
+and briefly shows "Copied!" beside the button.
+On mount, if a hash is present decode it and load the pattern directly
+(skip localStorage restore). Handle malformed hash with an error toast
+and load empty state instead.
+
+Import / Export:
+  Export: download the full library as a JSON file. Each entry has
+    id (uuid), name, tags array, bpm, tracks (object mapping track
+    name to 16 booleans), volumes object, createdAt ISO timestamp.
+  Import: file picker for .json, parse and merge into localStorage.
+    On name collision, append " (imported)" suffix.
+    Show a count toast: "Imported 5 patterns."
+
+UX rules:
+  New: clears sequencer state only, does not affect saved patterns.
+  Save with an existing name: confirm overwrite with an inline prompt.
+  Delete: per-card icon button with inline "Sure?" confirm (no modal).
+  Auto-save draft to a separate localStorage key every 10 seconds
+  so no changes are lost between explicit saves.
+
+Mobile (viewport narrower than 768px): single column; a toggle button
+switches between Browse and Play panels. Animate the panel transition
+with a 200ms slide.</pre>
+          </details>
+        </div>
+      </article>
+
+      <!-- Chord Studio -->
+      <article class="app-card app-card--remix">
+        <div class="card-meta">
+          <span class="card-badge badge-remix">2026 Remix</span>
+          <span class="card-num">03 / 03</span>
+        </div>
+        <div class="card-shot">
+          <img
+            src="https://chord-studio--og.prod-v2.vibesdiy.net/screenshot.jpg"
+            alt="Chord Studio"
+            onerror="this.onerror=null; this.src='{{@root.assetPrefix}}images/og-preview.png';"
+          />
+        </div>
+        <div class="card-body">
+          <h3 class="card-title">Chord Studio</h3>
+          <p class="card-tagline">Arpeggiator, voicings, piano visual, tube warmth.</p>
+          <p class="card-desc">Chord synth rebuilt: close/open/drop-2 voicings, rate-gated arpeggiator, two-octave keyboard visual, tube warmth + reverb master chain.</p>
+        </div>
+        <div class="card-actions">
+          <a href="https://vibes.diy/vibe/og/chord-studio" class="btn btn-join">Join</a>
+          <a href="https://vibes.diy/remix/og/chord-studio?skipChat=true" class="btn btn-clone">Clone</a>
+          <a href="https://vibes.diy/remix/og/chord-studio" class="btn btn-remix">Remix</a>
+        </div>
+        <p class="card-fork">You want a guitar-oriented version with a fretboard visual instead of a piano keyboard, and open-string chord shapes highlighted. Clone it and swap the keyboard for a fretboard grid.</p>
+        <div class="prompt-block">
+          <div class="prompt-header">
+            <span class="prompt-label">// full build spec →</span>
+            <button class="copy-btn" onclick="copyFromBlock(this)">Copy</button>
+          </div>
+          <details class="prompt-details">
+            <summary>Show spec</summary>
+            <pre class="prompt-text">Build a chord synthesizer in three sections: chord selector (top),
+keyboard visual (middle), controls and playback (bottom).
+
+Chord selector:
+  Root note picker: C through B, 12 chromatic buttons in a row.
+  Scale dropdown: Major, Natural Minor, Harmonic Minor, Dorian,
+  Phrygian, Mixolydian, Pentatonic Major, Pentatonic Minor, Blues.
+  Diatonic chord grid: all chords built on each scale degree, labeled
+  with Roman numerals (I, ii, iii, IV, V, vi, vii) and chord names
+  (e.g. Cmaj, Dm, G7). Clicking a chord plays it. Octave selector 3 to 6.
+
+Voicing selector (global, applies to every chord):
+  Close: all notes stacked within one octave in thirds.
+  Open: notes spread across two octaves — root, fifth up one octave,
+    third up two octaves.
+  Drop-2: take close voicing, lower the second-highest note one octave.
+  Voicing changes the exact MIDI note numbers triggered.
+
+Keyboard visual: two-octave piano starting at the root note.
+  When a chord plays, highlight all active notes in the accent color.
+  In Arpeggio mode, highlight each individual note as it fires.
+  Non-diatonic keys for the current scale are visually dimmed (not hidden).
+
+Two playback modes (radio toggle):
+  Chord mode: all notes trigger simultaneously on click. Sustained
+    until a new chord is clicked or Stop is pressed.
+  Arpeggio mode: notes fire one at a time in a repeating loop.
+    Controls: Rate (1/4, 1/8, or 1/16 note at current BPM),
+    Direction (Up, Down, Up-Down, Random), Gate (20% to 100% — ratio
+    of note-on time to step duration). BPM input 60 to 200.
+    Each arpeggio step re-triggers the amplitude envelope:
+    attack 10ms, release equals gate multiplied by step duration minus 10ms.
+    Stop ends the loop cleanly without cutting mid-note.
+
+Synthesis per note:
+  OscillatorNode with waveform selector: sine, triangle, sawtooth, square.
+  Each note through a GainNode amplitude envelope: attack 10ms, release
+  400ms. All note gains mix to a shared master bus.
+
+Master chain:
+  1. DynamicsCompressorNode: threshold -20dB, ratio 6:1, attack 5ms,
+     release 100ms. Hardcoded — not exposed as user controls.
+  2. WaveShaperNode: tanh soft-clip with pre-gain stage. Tube Warmth
+     knob 0 to 100 controls pre-gain 0.5x to 3x. Show numeric value.
+  3. ConvolverNode reverb: synthetic impulse response (exponential white
+     noise decay, 1.5s length). Reverb Mix knob 0 to 100 controls
+     wet/dry ratio via two parallel GainNodes.
+
+AI chord progression generator:
+  Text input: describe mood or genre.
+  Length selector: 4 chords or 8 chords.
+  Generate returns a sequence of diatonic chord names from the
+  current root and scale. Display as a row of numbered step buttons.
+  Play Sequence: plays each chord in order, one chord per bar at
+  current BPM. Highlight the active step. Works in both Chord and
+  Arpeggio modes. Stop halts cleanly.
+
+MIDI file import:
+  Drag-drop zone for .mid files. Parse note events, group notes
+  within a 50ms window into a chord, identify chord names. Display
+  the detected sequence in the same step-row UI. Play button runs it.
+
+Saved progressions:
+  Name input plus Save stores the current sequence to localStorage.
+  Load dropdown lists all saved progressions. Delete button per entry.</pre>
+          </details>
+        </div>
+      </article>
+
+    </div>
+  </div>
+</div>
+
+<!-- CTA -->
+<div class="layout">
+  <div class="cta-wrap">
+    <div class="cta-block">
+      <div>
+        <div class="cta-kicker">// start building</div>
+        <h2>Build your own instrument.</h2>
+        <p>One command, one prompt. Vibes DIY deploys a live React app in under a minute. No bundler, no config, no account required.</p>
+      </div>
+      <div class="cta-actions">
+        <a href="https://links.vibes.diy/homepage" class="btn-cta-primary">Start Building</a>
+        <a href="https://links.vibes.diy/discord" class="btn-cta-ghost">Join Discord</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- FOOTER -->
+{{> newsletter}}
+<footer>
+  <div class="layout">
+    <div class="footer-inner">
+      <span class="footer-copy">© 2026 Vibes DIY — no-code apps</span>
+      <nav class="footer-links">
+        <a href="https://links.vibes.diy/discord">Discord</a>
+        <a href="https://links.vibes.diy/YouTube">YouTube</a>
+        <a href="https://links.vibes.diy/Substack">Substack</a>
+        <a href="https://links.vibes.diy/Bluesky">Bluesky</a>
+      </nav>
+    </div>
+  </div>
+</footer>
+
+<script>
+function copyFromBlock(btn) {
+  var block = btn.closest('.prompt-block');
+  var pre = block.querySelector('.prompt-text');
+  if (!pre) return;
+  navigator.clipboard.writeText(pre.textContent.trim()).then(function() {
+    var orig = btn.textContent;
+    btn.textContent = 'Copied!';
+    btn.classList.add('copied');
+    setTimeout(function() { btn.textContent = orig; btn.classList.remove('copied'); }, 1600);
+  });
+}
+</script>

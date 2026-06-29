@@ -1,0 +1,626 @@
+{{!--
+{
+  "layout": "webring",
+  "title": "Landing Page Showcase — Vibes DIY",
+  "description": "Our top-performing landing pages: real stats, real clicks, real apps. See what works.",
+  "ogUrl": "https://good.vibes.diy/showcase/",
+  "source": "showcase",
+  "ogImage": "https://good.vibes.diy/images/screenshots/free-library.jpg"
+}
+--}}
+
+<style>
+  @import url('https://fonts.cdnfonts.com/css/alte-haas-grotesk');
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&display=swap');
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --black: #231F20;
+    --ivory: #FFFFF0;
+    --mint: #00C9A7;
+    --deep: #1A1A2E;
+  }
+
+  body {
+    font-family: 'Alte Haas Grotesk', Arial, sans-serif;
+    background: var(--deep);
+    color: var(--ivory);
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .mono { font-family: 'JetBrains Mono', monospace; }
+
+  /* === HERO === */
+  .hero {
+    text-align: center;
+    padding: 5rem 2rem 3rem;
+    max-width: 900px;
+    margin: 0 auto;
+  }
+  .hero-badge {
+    display: inline-block;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--mint);
+    border: 2px solid var(--mint);
+    border-radius: 100px;
+    padding: 0.35rem 1.2rem;
+    margin-bottom: 1.5rem;
+  }
+  .hero h1 {
+    font-size: clamp(2.4rem, 6vw, 4rem);
+    line-height: 1.1;
+    font-weight: 900;
+    margin-bottom: 1rem;
+  }
+  .hero h1 .accent { color: var(--mint); }
+  .hero p {
+    font-size: 1.15rem;
+    color: rgba(255,255,240,0.7);
+    max-width: 600px;
+    margin: 0 auto;
+  }
+
+  /* === STATS BAR === */
+  .stats-bar {
+    display: flex;
+    justify-content: center;
+    gap: 3rem;
+    padding: 2rem;
+    margin: 0 auto 3rem;
+    max-width: 800px;
+    border-top: 1px solid rgba(255,255,240,0.1);
+    border-bottom: 1px solid rgba(255,255,240,0.1);
+  }
+  .stat-item { text-align: center; }
+  .stat-num {
+    font-size: 2rem;
+    font-weight: 900;
+    color: var(--mint);
+  }
+  .stat-label {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: rgba(255,255,240,0.5);
+    margin-top: 0.25rem;
+  }
+
+  /* === CAMPAIGN CARDS === */
+  .campaigns {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 2rem 4rem;
+    display: flex;
+    flex-direction: column;
+    gap: 2.5rem;
+  }
+  .campaign-card {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    background: rgba(255,255,240,0.04);
+    border: 1px solid rgba(255,255,240,0.08);
+    border-radius: 16px;
+    overflow: hidden;
+    transition: border-color 0.3s, transform 0.2s;
+  }
+  .campaign-card:hover {
+    border-color: var(--mint);
+    transform: translateY(-2px);
+  }
+  .campaign-card.featured {
+    border-color: var(--mint);
+    background: rgba(0,201,167,0.04);
+  }
+  .campaign-card.featured .card-rank { background: var(--mint); color: var(--deep); }
+
+  .card-screenshot {
+    position: relative;
+    overflow: hidden;
+  }
+  .card-screenshot img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    transition: transform 0.4s;
+  }
+  .campaign-card:hover .card-screenshot img {
+    transform: scale(1.03);
+  }
+  .card-rank {
+    position: absolute;
+    top: 1rem;
+    left: 1rem;
+    width: 2.2rem;
+    height: 2.2rem;
+    border-radius: 50%;
+    background: rgba(255,255,240,0.15);
+    backdrop-filter: blur(8px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 900;
+    font-size: 0.85rem;
+  }
+
+  .card-body {
+    padding: 2rem 2.5rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+  .card-category {
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--mint);
+    margin-bottom: 0.5rem;
+  }
+  .card-body h2 {
+    font-size: 1.6rem;
+    font-weight: 900;
+    margin-bottom: 0.5rem;
+    line-height: 1.2;
+  }
+  .card-body .desc {
+    color: rgba(255,255,240,0.6);
+    font-size: 0.9rem;
+    margin-bottom: 1.5rem;
+    line-height: 1.6;
+  }
+
+  .metrics {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+    margin-bottom: 1.5rem;
+  }
+  .metric {
+    background: rgba(255,255,240,0.05);
+    border-radius: 8px;
+    padding: 0.6rem 0.8rem;
+  }
+  .metric-val {
+    font-size: 1.3rem;
+    font-weight: 900;
+  }
+  .metric-val.mint { color: var(--mint); }
+  .metric-val.gold { color: #FEDD00; }
+  .metric-label {
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: rgba(255,255,240,0.4);
+  }
+
+  .card-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--mint);
+    text-decoration: none;
+    font-weight: 700;
+    font-size: 0.9rem;
+    transition: gap 0.2s;
+  }
+  .card-link:hover { gap: 0.8rem; }
+  .card-link .arrow { font-size: 1.1rem; transition: transform 0.2s; }
+  .card-link:hover .arrow { transform: translateX(3px); }
+
+  /* === ORGANIC SECTION === */
+  .organic-section {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 2rem 4rem;
+  }
+  .section-header {
+    text-align: center;
+    margin-bottom: 2.5rem;
+  }
+  .section-header h2 {
+    font-size: 1.8rem;
+    font-weight: 900;
+    margin-bottom: 0.5rem;
+  }
+  .section-header p {
+    color: rgba(255,255,240,0.5);
+    font-size: 0.95rem;
+  }
+
+  .organic-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 1.5rem;
+  }
+  .organic-card {
+    background: rgba(255,255,240,0.04);
+    border: 1px solid rgba(255,255,240,0.08);
+    border-radius: 12px;
+    overflow: hidden;
+    transition: border-color 0.3s, transform 0.2s;
+    text-decoration: none;
+    color: var(--ivory);
+    display: block;
+  }
+  .organic-card:hover {
+    border-color: rgba(255,255,240,0.25);
+    transform: translateY(-2px);
+  }
+  .organic-card img {
+    width: 100%;
+    aspect-ratio: 1200/630;
+    object-fit: cover;
+    display: block;
+  }
+  .organic-card-body {
+    padding: 1rem 1.25rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .organic-card h3 {
+    font-size: 1rem;
+    font-weight: 700;
+  }
+  .organic-card .organic-stats {
+    display: flex;
+    gap: 1rem;
+    font-size: 0.8rem;
+    color: rgba(255,255,240,0.5);
+  }
+  .organic-card .organic-stats strong {
+    color: var(--mint);
+    font-weight: 700;
+  }
+
+  /* === CTA === */
+  .cta-section {
+    text-align: center;
+    padding: 4rem 2rem 5rem;
+    max-width: 650px;
+    margin: 0 auto;
+  }
+  .cta-section h2 {
+    font-size: 2rem;
+    font-weight: 900;
+    margin-bottom: 0.75rem;
+  }
+  .cta-section p {
+    color: rgba(255,255,240,0.6);
+    margin-bottom: 2rem;
+  }
+  .cta-btn {
+    display: inline-block;
+    background: var(--mint);
+    color: var(--deep);
+    font-weight: 800;
+    font-size: 1rem;
+    padding: 0.9rem 2.5rem;
+    border-radius: 100px;
+    text-decoration: none;
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+  .cta-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 30px rgba(0,201,167,0.3);
+  }
+
+  /* === RESPONSIVE === */
+  @media (max-width: 768px) {
+    .campaign-card { grid-template-columns: 1fr; }
+    .card-body { padding: 1.5rem; }
+    .stats-bar { gap: 1.5rem; flex-wrap: wrap; }
+    .hero { padding: 3rem 1.5rem 2rem; }
+    .organic-card-body { flex-direction: column; align-items: flex-start; gap: 0.25rem; }
+  }
+</style>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-badge">Campaign Performance</div>
+  <h1>Pages that <span class="accent">actually convert</span></h1>
+  <p>Real landing pages. Real Meta ads. Real click-through rates. Here's what's working.</p>
+</section>
+
+<!-- SUMMARY STATS -->
+<div class="stats-bar">
+  <div class="stat-item">
+    <div class="stat-num">62</div>
+    <div class="stat-label">Campaigns Run</div>
+  </div>
+  <div class="stat-item">
+    <div class="stat-num">180K</div>
+    <div class="stat-label">Impressions</div>
+  </div>
+  <div class="stat-item">
+    <div class="stat-num">$0.13</div>
+    <div class="stat-label">Best CPC</div>
+  </div>
+  <div class="stat-item">
+    <div class="stat-num">4.42%</div>
+    <div class="stat-label">Best CTR</div>
+  </div>
+</div>
+
+<!-- TOP CAMPAIGNS -->
+<div class="campaigns">
+
+  <!-- #1 Save the Date -->
+  <div class="campaign-card featured">
+    <div class="card-screenshot">
+      <img src="{{assetPrefix}}images/screenshots/save-the-date.jpg" alt="Save the Date landing page" />
+      <div class="card-rank">1</div>
+    </div>
+    <div class="card-body">
+      <div class="card-category">Highest CTR</div>
+      <h2>Save the Date</h2>
+      <p class="desc">Guest address books, RSVP trackers, event countdowns. The page that stopped more thumbs than anything else we've run.</p>
+      <div class="metrics">
+        <div class="metric">
+          <div class="metric-val gold">4.42%</div>
+          <div class="metric-label">Click-through rate</div>
+        </div>
+        <div class="metric">
+          <div class="metric-val mint">$0.15</div>
+          <div class="metric-label">Cost per click</div>
+        </div>
+      </div>
+      <a class="card-link" href="https://good.vibes.diy/save-the-date">Visit page <span class="arrow">&rarr;</span></a>
+    </div>
+  </div>
+
+  <!-- #2 College -->
+  <div class="campaign-card">
+    <div class="card-screenshot">
+      <img src="{{assetPrefix}}images/screenshots/college.jpg" alt="College landing page" />
+      <div class="card-rank">2</div>
+    </div>
+    <div class="card-body">
+      <div class="card-category">Highest Volume + High CTR</div>
+      <h2>College</h2>
+      <p class="desc">Study roulette, safety meeting check-ins, pizza ordering, mess leaderboards. Five apps for the dorm floor.</p>
+      <div class="metrics">
+        <div class="metric">
+          <div class="metric-val gold">3.96%</div>
+          <div class="metric-label">Click-through rate</div>
+        </div>
+        <div class="metric">
+          <div class="metric-val mint">$0.30</div>
+          <div class="metric-label">Cost per click</div>
+        </div>
+      </div>
+      <a class="card-link" href="https://good.vibes.diy/college">Visit page <span class="arrow">&rarr;</span></a>
+    </div>
+  </div>
+
+  <!-- #3 Free Library -->
+  <div class="campaign-card featured">
+    <div class="card-screenshot">
+      <img src="{{assetPrefix}}images/screenshots/free-library.jpg" alt="Free Library landing page" />
+      <div class="card-rank">3</div>
+    </div>
+    <div class="card-body">
+      <div class="card-category">Best Downstream Engagement</div>
+      <h2>Free Library</h2>
+      <p class="desc">Book exchange logs, wish boards, tool shelves, seed libraries. Our most-clicked page by a mile — people don't just visit, they use the apps.</p>
+      <div class="metrics">
+        <div class="metric">
+          <div class="metric-val mint">3.79%</div>
+          <div class="metric-label">Click-through rate</div>
+        </div>
+        <div class="metric">
+          <div class="metric-val mint">$0.32</div>
+          <div class="metric-label">Cost per click</div>
+        </div>
+      </div>
+      <a class="card-link" href="https://good.vibes.diy/free-library">Visit page <span class="arrow">&rarr;</span></a>
+    </div>
+  </div>
+
+  <!-- #4 Camping -->
+  <div class="campaign-card">
+    <div class="card-screenshot">
+      <img src="{{assetPrefix}}images/screenshots/camping.jpg" alt="Camping landing page" />
+      <div class="card-rank">4</div>
+    </div>
+    <div class="card-body">
+      <div class="card-category">Cheapest Clicks</div>
+      <h2>Camping</h2>
+      <p class="desc">Trip planners, meal plans, adventure story logs, gear lists. Three campaigns, all under 16 cents a click.</p>
+      <div class="metrics">
+        <div class="metric">
+          <div class="metric-val mint">3.72%</div>
+          <div class="metric-label">Click-through rate</div>
+        </div>
+        <div class="metric">
+          <div class="metric-val gold">$0.13</div>
+          <div class="metric-label">Cost per click</div>
+        </div>
+      </div>
+      <a class="card-link" href="https://good.vibes.diy/camping">Visit page <span class="arrow">&rarr;</span></a>
+    </div>
+  </div>
+
+  <!-- #5 Bridesmaids -->
+  <div class="campaign-card">
+    <div class="card-screenshot">
+      <img src="{{assetPrefix}}images/screenshots/bridesmaids.jpg" alt="Bridesmaids landing page" />
+      <div class="card-rank">5</div>
+    </div>
+    <div class="card-body">
+      <div class="card-category">Strong Performer</div>
+      <h2>Bridesmaids</h2>
+      <p class="desc">Bachelorette planning, dress voting, day-of timelines. Consistently high CTR across three separate campaigns.</p>
+      <div class="metrics">
+        <div class="metric">
+          <div class="metric-val mint">3.72%</div>
+          <div class="metric-label">Click-through rate</div>
+        </div>
+        <div class="metric">
+          <div class="metric-val mint">$0.18</div>
+          <div class="metric-label">Cost per click</div>
+        </div>
+      </div>
+      <a class="card-link" href="https://good.vibes.diy/bridesmaids">Visit page <span class="arrow">&rarr;</span></a>
+    </div>
+  </div>
+
+  <!-- #6 Garage Sale -->
+  <div class="campaign-card">
+    <div class="card-screenshot">
+      <img src="{{assetPrefix}}images/screenshots/garage-sale.jpg" alt="Garage Sale landing page" />
+      <div class="card-rank">6</div>
+    </div>
+    <div class="card-body">
+      <div class="card-category">Best Landing Page View Rate</div>
+      <h2>Garage Sale</h2>
+      <p class="desc">Coordinators, sale posters, thrift raters. The highest app-open rate of any campaign — 18% of clickers actually opened an app.</p>
+      <div class="metrics">
+        <div class="metric">
+          <div class="metric-val mint">3.90%</div>
+          <div class="metric-label">Click-through rate</div>
+        </div>
+        <div class="metric">
+          <div class="metric-val mint">$0.32</div>
+          <div class="metric-label">Cost per click</div>
+        </div>
+      </div>
+      <a class="card-link" href="https://good.vibes.diy/garage-sale">Visit page <span class="arrow">&rarr;</span></a>
+    </div>
+  </div>
+
+  <!-- #7 Organizers -->
+  <div class="campaign-card">
+    <div class="card-screenshot">
+      <img src="{{assetPrefix}}images/screenshots/organizers.jpg" alt="Organizers landing page" />
+      <div class="card-rank">7</div>
+    </div>
+    <div class="card-body">
+      <div class="card-category">Active Campaign</div>
+      <h2>Organizers</h2>
+      <p class="desc">Live run sheets, gear checklists, crew rosters. Steady performer — currently running and still pulling clicks.</p>
+      <div class="metrics">
+        <div class="metric">
+          <div class="metric-val mint">2.71%</div>
+          <div class="metric-label">Click-through rate</div>
+        </div>
+        <div class="metric">
+          <div class="metric-val mint">$0.35</div>
+          <div class="metric-label">Cost per click</div>
+        </div>
+      </div>
+      <a class="card-link" href="https://good.vibes.diy/organizers">Visit page <span class="arrow">&rarr;</span></a>
+    </div>
+  </div>
+
+  <!-- #8 Edu -->
+  <div class="campaign-card">
+    <div class="card-screenshot">
+      <img src="{{assetPrefix}}images/screenshots/edu/index.jpg" alt="Edu landing page" />
+      <div class="card-rank">8</div>
+    </div>
+    <div class="card-body">
+      <div class="card-category">Edu Pilot</div>
+      <h2>UT Austin + Stanford</h2>
+      <p class="desc">Course-specific study tools — behavioral econ journals, causal inference notebooks, epidemiology trackers. Two campus pilots running side by side.</p>
+      <div class="metrics">
+        <div class="metric">
+          <div class="metric-val">1.76%</div>
+          <div class="metric-label">CTR (UT Austin)</div>
+        </div>
+        <div class="metric">
+          <div class="metric-val">1.38%</div>
+          <div class="metric-label">CTR (Stanford)</div>
+        </div>
+      </div>
+      <a class="card-link" href="https://good.vibes.diy/edu/">Visit page <span class="arrow">&rarr;</span></a>
+    </div>
+  </div>
+
+</div>
+
+<!-- MORE PAGES WITH AD DATA -->
+<section class="organic-section">
+  <div class="section-header">
+    <h2>More tested pages</h2>
+    <p>Every page below ran at least one paid campaign.</p>
+  </div>
+  <div class="organic-grid">
+    <a class="organic-card" href="https://good.vibes.diy/game-maker">
+      <img src="{{assetPrefix}}images/screenshots/game-maker.jpg" alt="Game Maker" />
+      <div class="organic-card-body">
+        <h3>Game Maker</h3>
+        <div class="organic-stats"><strong>3.59%</strong> CTR &middot; <strong>$0.23</strong> CPC</div>
+      </div>
+    </a>
+    <a class="organic-card" href="https://good.vibes.diy/wishlist">
+      <img src="{{assetPrefix}}images/screenshots/wishlist.jpg" alt="Wishlist" />
+      <div class="organic-card-body">
+        <h3>Wishlist</h3>
+        <div class="organic-stats"><strong>3.44%</strong> CTR &middot; <strong>$0.33</strong> CPC</div>
+      </div>
+    </a>
+    <a class="organic-card" href="https://good.vibes.diy/road-trip">
+      <img src="{{assetPrefix}}images/screenshots/road-trip.jpg" alt="Road Trip" />
+      <div class="organic-card-body">
+        <h3>Road Trip</h3>
+        <div class="organic-stats"><strong>3.45%</strong> CTR &middot; <strong>$0.19</strong> CPC</div>
+      </div>
+    </a>
+    <a class="organic-card" href="https://good.vibes.diy/wedding">
+      <img src="{{assetPrefix}}images/screenshots/wedding.jpg" alt="Wedding" />
+      <div class="organic-card-body">
+        <h3>Wedding</h3>
+        <div class="organic-stats"><strong>3.51%</strong> CTR &middot; <strong>$0.35</strong> CPC</div>
+      </div>
+    </a>
+    <a class="organic-card" href="https://good.vibes.diy/summer-camp">
+      <img src="{{assetPrefix}}images/screenshots/summer-camp.jpg" alt="Summer Camp" />
+      <div class="organic-card-body">
+        <h3>Summer Camp</h3>
+        <div class="organic-stats"><strong>3.32%</strong> CTR &middot; <strong>$0.34</strong> CPC</div>
+      </div>
+    </a>
+    <a class="organic-card" href="https://good.vibes.diy/trivia-night">
+      <img src="{{assetPrefix}}images/screenshots/trivia-night.jpg" alt="Trivia Night" />
+      <div class="organic-card-body">
+        <h3>Trivia Night</h3>
+        <div class="organic-stats">16 organic clicks &middot; no paid yet</div>
+      </div>
+    </a>
+    <a class="organic-card" href="https://good.vibes.diy/chess">
+      <img src="{{assetPrefix}}images/screenshots/chess.jpg" alt="Chess" />
+      <div class="organic-card-body">
+        <h3>Chess</h3>
+        <div class="organic-stats"><strong>2.57%</strong> CTR &middot; <strong>$0.23</strong> CPC</div>
+      </div>
+    </a>
+    <a class="organic-card" href="https://good.vibes.diy/carnival">
+      <img src="{{assetPrefix}}images/screenshots/carnival.jpg" alt="Carnival" />
+      <div class="organic-card-body">
+        <h3>Carnival</h3>
+        <div class="organic-stats"><strong>2.13%</strong> CTR &middot; <strong>$0.33</strong> CPC</div>
+      </div>
+    </a>
+    <a class="organic-card" href="https://good.vibes.diy/block-party">
+      <img src="{{assetPrefix}}images/screenshots/block-party.jpg" alt="Block Party" />
+      <div class="organic-card-body">
+        <h3>Block Party</h3>
+        <div class="organic-stats"><strong>2.34%</strong> CTR &middot; <strong>$0.40</strong> CPC</div>
+      </div>
+    </a>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="cta-section">
+  <h2>Want a page like these?</h2>
+  <p>Every page is built with Vibes DIY — the apps are real, deployed, and ready to use.</p>
+  <a class="cta-btn" href="https://links.vibes.diy/homepage">Start building</a>
+</section>

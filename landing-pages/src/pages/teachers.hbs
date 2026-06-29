@@ -1,0 +1,447 @@
+{{!--
+{
+  "layout": "webring",
+  "title": "For Educators | Classroom Apps | Vibes DIY",
+  "description": "Live vocab quizzes, instant polls, countdown timers, exit tickets, group project trackers. Five classroom apps for teachers who want real-time tools without the account setup.",
+  "ogUrl": "https://good.vibes.diy/teachers",
+  "source": "educators",
+  "apps": [
+    {
+      "num": "01",
+      "slug": "live-vocab-quiz",
+      "author": "og",
+      "live": true,
+      "title": "Live Vocab Quiz",
+      "tagline": "Teacher adds words. Students compete. Leaderboard updates live.",
+      "desc": "Live vocabulary quiz game. Teacher adds word and definition pairs. Students get randomized questions and submit answers. Live leaderboard updates as results come in. No install, works on any phone."
+    },
+    {
+      "num": "02",
+      "slug": "classroom-quick-poll",
+      "author": "og",
+      "live": true,
+      "title": "Quick Poll",
+      "tagline": "Fire a question. Get live answers. Takes 30 seconds.",
+      "desc": "Instant classroom poll. Teacher types a yes/no or multiple-choice question and shares a link. Students tap their answer. Live bar chart updates in real time on the teacher's screen. No accounts."
+    },
+    {
+      "num": "03",
+      "slug": "class-countdown-timer",
+      "author": "og",
+      "live": true,
+      "title": "Class Timer",
+      "tagline": "Teacher sets it from their desk. Every student screen shows it.",
+      "desc": "Classroom countdown timer. Teacher sets duration from their desk; a big visible countdown shows on every student device. Plays a sound at zero. Works for timed writing, group work, transitions. No login."
+    },
+    {
+      "num": "04",
+      "slug": "exit-ticket-collector",
+      "author": "og",
+      "live": true,
+      "title": "Exit Ticket",
+      "tagline": "One question. Anonymous answers. Live before the bell rings.",
+      "desc": "End-of-class exit ticket. Students type one takeaway or one question before leaving — anonymous by default. Teacher sees a live list of responses and can flag any for tomorrow's discussion."
+    },
+    {
+      "num": "05",
+      "slug": "group-project-tracker",
+      "author": "og",
+      "live": true,
+      "title": "Group Tracker",
+      "tagline": "Who's behind — one page, all groups.",
+      "desc": "Per-group project tracker. Teacher sets shared milestone checklist. Each group checks off their own progress. Teacher sees all groups on one page — spots who is behind before the due date."
+    }
+  ],
+  "ogImage": "https://good.vibes.diy/images/screenshots/teachers.jpg"
+}
+--}}
+
+<style>
+  @import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700;800&family=IBM+Plex+Mono:ital,wght@0,400;0,600;0,700;1,400&display=optional");
+
+  :root {
+    --bg: #FFFFF0;
+    --surface: #ffffff;
+    --surface-alt: #f0f4ff;
+    --cue: #1565C0;
+    --cue-dim: rgba(21, 101, 192, 0.12);
+    --cue-light: #e3ecfa;
+    --live: #2e7d32;
+    --live-light: #e8f5e9;
+    --black: #12100f;
+    --muted: #5a5a5a;
+    --border: #d0d0d0;
+    --border-hi: #b0b0b0;
+  }
+
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body {
+    background: var(--bg);
+    color: var(--black);
+    font-family: "IBM Plex Sans", system-ui, sans-serif;
+    line-height: 1.55;
+    min-height: 100vh;
+  }
+  a { color: inherit; text-decoration: none; }
+  .mono { font-family: "IBM Plex Mono", monospace; }
+
+  .layout { max-width: 1100px; margin: 0 auto; padding: 0 1.5rem; }
+
+  .topbar {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 1rem 0;
+    border-bottom: 3px solid var(--black);
+  }
+  .topbar .brand {
+    font-family: "IBM Plex Sans", sans-serif; font-weight: 800;
+    font-size: 1.15rem; letter-spacing: -0.02em;
+    color: var(--cue);
+  }
+  .topbar .meta {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.6rem; letter-spacing: 0.15em; text-transform: uppercase;
+    color: var(--muted);
+  }
+  .topbar .meta b {
+    background: var(--cue-light); padding: 2px 6px; color: var(--cue);
+  }
+
+  .crumb {
+    padding: 0.55rem 0;
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.65rem; letter-spacing: 0.15em; text-transform: uppercase;
+    color: var(--muted);
+    border-bottom: 1px solid var(--border);
+  }
+  .crumb a { color: var(--muted); }
+  .crumb a:hover { color: var(--cue); }
+
+  .hero {
+    padding: 4.5rem 0 3.5rem;
+    border-bottom: 3px solid var(--black);
+  }
+  .hero .label {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.6rem; letter-spacing: 0.25em; text-transform: uppercase;
+    background: var(--cue); color: white;
+    padding: 4px 10px; margin-bottom: 1.25rem;
+    display: inline-block;
+  }
+  .hero h1 {
+    font-size: clamp(3rem, 8vw, 6.5rem);
+    font-weight: 800; line-height: 0.92; letter-spacing: -0.04em;
+    margin-bottom: 1.5rem;
+  }
+  .hero h1 .hi { color: var(--cue); }
+  .hero p.lead {
+    font-size: 1.2rem; max-width: 680px; line-height: 1.55;
+    color: var(--muted);
+  }
+
+  .spotlight {
+    padding: 3rem 0;
+    border-bottom: 3px solid var(--black);
+  }
+  .spotlight-label {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.6rem; letter-spacing: 0.25em; text-transform: uppercase;
+    color: var(--cue); margin-bottom: 1.5rem;
+  }
+  .spotlight-card {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 3rem; align-items: center;
+    background: var(--surface);
+    border: 3px solid var(--black);
+    box-shadow: 6px 6px 0 var(--cue);
+    padding: 2.5rem;
+    position: relative;
+  }
+  .spotlight-card::before {
+    content: "LESSON 01";
+    position: absolute; top: 1.25rem; right: 1.5rem;
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.6rem; letter-spacing: 0.2em; text-transform: uppercase;
+    color: var(--cue); opacity: 0.35;
+  }
+  @media (max-width: 800px) {
+    .spotlight-card { grid-template-columns: 1fr; gap: 1.5rem; }
+    .spotlight-shot { order: -1; }
+  }
+  .spotlight-num {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.6rem; letter-spacing: 0.2em; text-transform: uppercase;
+    color: var(--cue); margin-bottom: 0.75rem;
+  }
+  .spotlight-title {
+    font-size: clamp(2.5rem, 5vw, 5rem);
+    font-weight: 800; line-height: 0.9; letter-spacing: -0.04em;
+    margin-bottom: 0.75rem;
+  }
+  .spotlight-tagline {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.82rem; color: var(--cue);
+    margin-bottom: 1.25rem; line-height: 1.5;
+    border-left: 3px solid var(--cue);
+    padding-left: 0.75rem;
+  }
+  .spotlight-desc {
+    font-size: 1rem; line-height: 1.65; color: var(--muted);
+    margin-bottom: 2rem;
+  }
+  .btn-spotlight {
+    display: inline-block;
+    padding: 0.85rem 2.25rem;
+    background: var(--cue); color: white;
+    border: 3px solid var(--black);
+    box-shadow: 4px 4px 0 var(--black);
+    font-family: "IBM Plex Sans", sans-serif; font-weight: 700;
+    font-size: 0.9rem; letter-spacing: -0.01em;
+    cursor: pointer; transition: all .12s; margin-bottom: 1rem;
+  }
+  .btn-spotlight:hover {
+    background: #1976d2;
+    box-shadow: 2px 2px 0 var(--black);
+    transform: translate(2px, 2px);
+  }
+  .spotlight-secondary { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+  .spotlight-shot a { display: block; }
+  .spotlight-shot img {
+    width: 100%; border: 3px solid var(--black);
+    box-shadow: 5px 5px 0 var(--black);
+    display: block; aspect-ratio: 16/10; object-fit: cover;
+    background: var(--cue-light);
+  }
+
+  .stats {
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    border: 3px solid var(--black);
+    margin: 2rem 0;
+    background: var(--surface);
+  }
+  @media (max-width: 700px) { .stats { grid-template-columns: repeat(2, 1fr); } }
+  .stat-cell {
+    padding: 1.25rem 1.5rem;
+    border-right: 2px solid var(--black);
+  }
+  .stat-cell:last-child { border-right: none; }
+  @media (max-width: 700px) {
+    .stat-cell { border-bottom: 2px solid var(--black); }
+    .stat-cell:nth-child(2n) { border-right: none; }
+  }
+  .stat-cell .k {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.55rem; letter-spacing: 0.2em; text-transform: uppercase;
+    color: var(--muted); margin-bottom: 0.4rem;
+  }
+  .stat-cell .v { font-weight: 800; font-size: 1.4rem; letter-spacing: -0.02em; color: var(--cue); }
+
+  .section-label {
+    padding: 1.5rem 0 0.75rem;
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.6rem; letter-spacing: 0.25em; text-transform: uppercase;
+    color: var(--muted);
+    border-bottom: 2px dashed var(--border-hi);
+    margin-bottom: 1.5rem;
+  }
+
+  .apps {
+    display: flex; flex-direction: column;
+    border: 3px solid var(--black);
+    background: var(--surface);
+  }
+  .app {
+    padding: 2rem 1.75rem;
+    border-bottom: 2px solid var(--black);
+    display: grid; grid-template-columns: 72px 1fr 300px;
+    gap: 2rem; align-items: start;
+    transition: background 0.15s;
+  }
+  .app:last-child { border-bottom: none; }
+  @media (max-width: 800px) { .app { grid-template-columns: 1fr; gap: 1rem; } }
+  .app:hover { background: var(--cue-light); }
+
+  .app .num-cell { display: flex; flex-direction: column; gap: 0.4rem; padding-top: 0.25rem; }
+  .app .num {
+    font-family: "IBM Plex Mono", monospace; font-weight: 700;
+    font-size: 2.8rem; line-height: 0.9; letter-spacing: -0.04em; color: var(--cue);
+  }
+  .app .status {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.5rem; letter-spacing: 0.2em; text-transform: uppercase;
+    padding: 3px 6px; border: 2px solid var(--border-hi);
+    color: var(--muted); text-align: center;
+  }
+  .app--live .status { background: var(--live); color: white; border-color: var(--live); font-weight: 700; }
+
+  .app .body { display: flex; flex-direction: column; gap: 0.6rem; }
+  .app .body .title { font-size: 2rem; font-weight: 800; letter-spacing: -0.03em; line-height: 1.0; }
+  .app .body .tagline {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.78rem; line-height: 1.5; color: var(--cue);
+  }
+  .app .body .desc { font-size: 0.98rem; line-height: 1.55; color: var(--muted); }
+
+  .app .right { display: flex; flex-direction: column; gap: 0.6rem; }
+  .app .shot {
+    display: block; aspect-ratio: 16/9; overflow: hidden;
+    border: 2px solid var(--black);
+    background: var(--cue-light);
+  }
+  .app .shot img { width: 100%; height: 100%; object-fit: cover; }
+  .app .shot-placeholder {
+    padding: 1rem; height: 100%; display: flex; align-items: center; justify-content: center;
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.6rem; letter-spacing: 0.2em; text-transform: uppercase;
+    text-align: center; color: var(--muted);
+  }
+  .app .ctas {
+    display: grid; grid-template-columns: repeat(3, 1fr);
+    border: 2px solid var(--black); overflow: hidden;
+  }
+  .app .ctas--single { grid-template-columns: 1fr; }
+  .btn {
+    text-align: center; padding: 0.55rem 0.5rem;
+    background: transparent; border-right: 2px solid var(--black);
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.6rem; letter-spacing: 0.15em; text-transform: uppercase;
+    color: var(--black); cursor: pointer; transition: background 0.12s;
+  }
+  .btn:last-child { border-right: none; }
+  .btn:hover { background: var(--cue-dim); color: var(--cue); }
+  .prompt-link {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.65rem; color: var(--muted); text-decoration: underline;
+  }
+  .prompt-link:hover { color: var(--cue); }
+
+  .epilogue {
+    padding: 3rem 0; border-bottom: 3px solid var(--black); margin-top: 2rem;
+  }
+  .epilogue h2 {
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.6rem; letter-spacing: 0.25em; text-transform: uppercase;
+    color: var(--cue); margin-bottom: 1rem;
+  }
+  .epilogue p { font-size: 1.1rem; max-width: 720px; line-height: 1.6; color: var(--muted); }
+  .epilogue .hl { background: var(--cue-light); padding: 1px 4px; color: var(--black); }
+
+  footer.term-footer {
+    padding: 1.25rem 0;
+    font-family: "IBM Plex Mono", monospace;
+    font-size: 0.6rem; letter-spacing: 0.2em; text-transform: uppercase;
+    display: flex; justify-content: space-between; color: var(--muted);
+  }
+  footer.term-footer a:hover { color: var(--cue); }
+</style>
+
+<div class="layout">
+  <header class="topbar">
+    <a class="brand" href="https://links.vibes.diy/homepage">VIBES.DIY</a>
+    <span class="meta"><b>FOR EDUCATORS</b> &middot; five classroom tools</span>
+  </header>
+
+  <nav class="crumb">
+    <a href="/">Home</a> &nbsp;/&nbsp; Teachers
+  </nav>
+
+  <section class="hero">
+    <span class="label">For Educators</span>
+    <h1>Stop hacking<br><span class="hi">Google Sheets</span>.</h1>
+    <p class="lead">
+      Five real-time classroom apps for teachers who already cobble together
+      timers, trackers, and quiz boards from whatever&rsquo;s available.
+      These work better &mdash; and take about three minutes to have running.
+    </p>
+  </section>
+
+  <section class="spotlight">
+    <div class="spotlight-label">// spotlight &mdash; live vocab quiz</div>
+    <div class="spotlight-card">
+      <div class="spotlight-info">
+        <div class="spotlight-num">LESSON 01 &middot; live-vocab-quiz</div>
+        <h2 class="spotlight-title">Live<br>Vocab Quiz</h2>
+        <p class="spotlight-tagline">Teacher adds words. Students compete. Leaderboard updates live.</p>
+        <p class="spotlight-desc">
+          Add your word and definition pairs, share a link. Students get
+          randomized questions and race to submit answers. The live leaderboard
+          updates as results come in. No accounts, no install &mdash; works on
+          any phone or Chromebook. Replace the Kahoot login wall for good.
+        </p>
+        <a class="btn-spotlight" href="https://vibes.diy/vibe/og/live-vocab-quiz">Start a Quiz &rarr;</a>
+        <div class="spotlight-secondary">
+          <a class="btn" href="https://vibes.diy/remix/og/live-vocab-quiz?skipChat=true">Clone</a>
+          <a class="btn" href="https://vibes.diy/remix/og/live-vocab-quiz">Remix</a>
+          {{#with (lookup apps 0)}}<a class="btn" href="https://vibes.diy/chat/prompt?prompt64={{prompt64 desc}}">Start fresh</a>{{/with}}
+        </div>
+      </div>
+      <div class="spotlight-shot">
+        <a href="https://vibes.diy/vibe/og/live-vocab-quiz" aria-label="Live Vocab Quiz screenshot">
+          <img src="https://live-vocab-quiz--og.prod-v2.vibesdiy.net/screenshot.jpg"
+               alt="Live Vocab Quiz"
+               onerror="this.onerror=null; this.src='{{@root.assetPrefix}}images/og-preview.png';">
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <div class="stats">
+    <div class="stat-cell"><div class="k">Apps</div><div class="v">Five</div></div>
+    <div class="stat-cell"><div class="k">Audience</div><div class="v">Teachers</div></div>
+    <div class="stat-cell"><div class="k">Persistence</div><div class="v">Fireproof</div></div>
+    <div class="stat-cell"><div class="k">Skin</div><div class="v">Classroom</div></div>
+  </div>
+
+  <div class="section-label">// more classroom tools</div>
+
+  <section class="apps">
+    {{#each apps}}
+      {{#unless @first}}
+      <article class="app {{#if live}}app--live{{else}}app--pending{{/if}}">
+        <div class="num-cell">
+          <div class="num">{{num}}</div>
+          <div class="status">{{#if live}}Live{{else}}Pending{{/if}}</div>
+        </div>
+        <div class="body">
+          <h2 class="title">{{title}}</h2>
+          <p class="tagline">{{tagline}}</p>
+          <p class="desc">{{desc}}</p>
+        </div>
+        <div class="right">
+          {{#if live}}
+            <a class="shot" href="https://vibes.diy/vibe/{{author}}/{{slug}}" aria-label="{{title}} screenshot"><img src="https://{{slug}}--{{author}}.prod-v2.vibesdiy.net/screenshot.jpg" alt="{{slug}}" onerror="this.onerror=null; this.src='{{@root.assetPrefix}}images/og-preview.png';"/></a>
+            <div class="ctas">
+              <a class="btn" href="https://vibes.diy/vibe/{{author}}/{{slug}}">Join</a>
+              <a class="btn" href="https://vibes.diy/remix/{{author}}/{{slug}}?skipChat=true">Clone</a>
+              <a class="btn" href="https://vibes.diy/remix/{{author}}/{{slug}}">Remix</a>
+            </div>
+            <a class="prompt-link" href="https://vibes.diy/chat/prompt?prompt64={{prompt64 desc}}">// start fresh from this prompt</a>
+          {{else}}
+            <div class="shot"><div class="shot-placeholder">awaiting deploy</div></div>
+            <div class="ctas ctas--single">
+              <a class="btn" href="https://vibes.diy/chat/prompt?prompt64={{prompt64 desc}}">Start From Prompt</a>
+            </div>
+          {{/if}}
+        </div>
+      </article>
+      {{/unless}}
+    {{/each}}
+  </section>
+
+  <div class="epilogue">
+    <h2>// read me</h2>
+    <p>
+      Teachers already build their own coordination tools out of
+      <span class="hl">whatever&rsquo;s available</span> &mdash;
+      Google Form exit tickets, spreadsheet timers, Kahoot quizzes that require accounts.
+      These five apps do the same jobs with less friction.
+      Clone any one, adjust it to your class, grade level, or subject.
+      Describe what you need. Have it running before next period.
+    </p>
+  </div>
+
+  {{> newsletter}}
+<footer class="term-footer">
+    <span>Vibes.diy &middot; <a href="https://links.vibes.diy/homepage">homepage</a> &middot; <a href="/college.html">college</a></span>
+    <span>// END OF CLASS</span>
+  </footer>
+</div>

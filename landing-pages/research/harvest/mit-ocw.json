@@ -1,0 +1,116 @@
+{
+  "source": "MIT OpenCourseWare",
+  "location": "Cambridge, MA",
+  "region": "Northeast",
+  "fetched": "2026-05-18",
+  "items": [
+    {
+      "title": "6.S897 Machine Learning for Healthcare",
+      "department": "Data Science / Stats",
+      "year": 2019,
+      "url": "https://ocw.mit.edu/courses/6-s897-machine-learning-for-healthcare-spring-2019/",
+      "fetch_method": "direct",
+      "topics": [
+        "risk stratification",
+        "disease progression modeling",
+        "precision medicine",
+        "clinical diagnosis",
+        "subtype discovery",
+        "clinical workflow improvement",
+        "survival analysis",
+        "electronic health records"
+      ],
+      "source_text": "Topics include: clinical risk stratification, disease progression modeling, precision medicine, subtype discovery, and clinical workflow improvement. The course covers survival analysis and working with electronic health records (EHR) data in healthcare settings."
+    },
+    {
+      "title": "14.32 Econometrics",
+      "department": "Data Science / Stats",
+      "year": 2007,
+      "url": "https://ocw.mit.edu/courses/14-32-econometrics-spring-2007/",
+      "fetch_method": "direct",
+      "topics": [
+        "differences-in-differences",
+        "instrumental variables",
+        "regression discontinuity designs",
+        "two-stage least squares",
+        "omitted variable bias",
+        "panel data methods",
+        "causal inference",
+        "program evaluation"
+      ],
+      "source_text": "The course covers core causal inference techniques: differences-in-differences, instrumental variables estimation, two-stage least squares, and regression discontinuity designs. Emphasis on program evaluation and identifying causal effects in the presence of omitted variable bias."
+    },
+    {
+      "title": "11.520 A Workshop on Geographic Information Systems",
+      "department": "Urban Planning",
+      "year": 2005,
+      "url": "https://ocw.mit.edu/courses/11-520-a-workshop-on-geographic-information-systems-fall-2005/",
+      "fetch_method": "direct",
+      "topics": [
+        "thematic mapping",
+        "spatial buffering",
+        "address matching",
+        "spatial overlays",
+        "spatial analysis",
+        "geodatabases",
+        "cartographic representation",
+        "urban data visualization"
+      ],
+      "source_text": "Workshop covers thematic mapping, buffering, address matching, and spatial overlays as core GIS operations. Students apply spatial analysis and geodatabase management to urban planning problems, with emphasis on cartographic representation and data visualization for decision-making."
+    },
+    {
+      "title": "14.13 Psychology and Economics",
+      "department": "Behavioral Economics",
+      "year": 2020,
+      "url": "https://ocw.mit.edu/courses/14-13-psychology-and-economics-spring-2020/",
+      "fetch_method": "direct",
+      "topics": [
+        "time preferences",
+        "present bias",
+        "risk preferences",
+        "reference-dependent preferences",
+        "defaults and nudges",
+        "framing effects",
+        "preference malleability",
+        "behavioral welfare economics"
+      ],
+      "source_text": "Topics include time preferences and present bias, risk preferences, reference-dependent preferences, and the role of defaults and nudges in shaping behavior. The course addresses framing effects, preference malleability, and the implications for behavioral welfare economics and policy design."
+    },
+    {
+      "title": "1.020 Ecology II: Engineering for Sustainability",
+      "department": "Environmental Studies",
+      "year": 2008,
+      "url": "https://ocw.mit.edu/courses/1-020-ecology-ii-engineering-for-sustainability-spring-2008/",
+      "fetch_method": "direct",
+      "topics": [
+        "mass balance analysis",
+        "energy balance",
+        "resource economics",
+        "life cycle analysis",
+        "human environmental impacts",
+        "economic valuation of natural resources",
+        "environmental systems modeling",
+        "sustainability assessment"
+      ],
+      "source_text": "The course integrates mass balance and energy balance with resource economics and life cycle analysis to assess human environmental impacts. Students learn economic valuation of natural resources and environmental systems modeling for sustainability assessment of engineered solutions."
+    },
+    {
+      "title": "HST.953 Collaborative Data Science in Medicine",
+      "department": "Public Health",
+      "year": 2020,
+      "url": "https://ocw.mit.edu/courses/hst-953-collaborative-data-science-in-medicine-fall-2019/",
+      "fetch_method": "direct",
+      "topics": [
+        "clinical data science",
+        "public health informatics",
+        "critical care data",
+        "machine learning in medicine",
+        "reproducible research",
+        "cohort studies",
+        "healthcare outcomes research",
+        "open-source health data"
+      ],
+      "source_text": "This collaborative seminar focuses on clinical data science and public health informatics using open-source health datasets. Students work with critical care data on reproducible research methodology, cohort study design, and applying machine learning in medicine to healthcare outcomes research."
+    }
+  ]
+}

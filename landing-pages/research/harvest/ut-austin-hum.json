@@ -1,0 +1,105 @@
+{
+  "source": "UT Austin — HB2504",
+  "location": "Austin, TX",
+  "region": "South",
+  "domain": "humanities",
+  "fetched": "2026-05-20",
+  "items": [
+    {
+      "title": "E 316L: British Literature (Masterworks of Literature: British)",
+      "department": "Literature / Creative Writing",
+      "year": 2024,
+      "url": "https://utdirect.utexas.edu/apps/student/coursedocs/courses/nlogon/download/13873880/",
+      "topics": [
+        "British literature",
+        "Middle Ages",
+        "close reading",
+        "gender roles",
+        "national identity",
+        "imperialism",
+        "religious consciousness",
+        "political consciousness"
+      ]
+    },
+    {
+      "title": "HIS 305L / ANS 301M: History of East Asia Since 1800",
+      "department": "History",
+      "year": 2024,
+      "url": "https://utdirect.utexas.edu/apps/student/coursedocs/courses/nlogon/download/13546574/",
+      "topics": [
+        "modern East Asia",
+        "China",
+        "Japan",
+        "Korea",
+        "Vietnam",
+        "transnational history",
+        "decolonial perspective",
+        "modernization"
+      ]
+    },
+    {
+      "title": "PHL 301L: Early Modern Philosophy",
+      "department": "Philosophy / Ethics",
+      "year": 2023,
+      "url": "https://utdirect.utexas.edu/apps/student/coursedocs/nlogon/download/10269627/",
+      "topics": [
+        "early modern philosophy",
+        "Descartes",
+        "Berkeley",
+        "Hume",
+        "Kant",
+        "skepticism",
+        "epistemology",
+        "metaphysics"
+      ]
+    },
+    {
+      "title": "RTF 345: Contemporary Horror",
+      "department": "Film / Media Studies",
+      "year": 2020,
+      "url": "https://utdirect.utexas.edu/apps/student/coursedocs/nlogon/download/10518126/",
+      "topics": [
+        "horror genre",
+        "contemporary horror film",
+        "international cinema",
+        "race in horror",
+        "ethnicity",
+        "gender in film",
+        "sexuality in film",
+        "monstrous"
+      ]
+    },
+    {
+      "title": "MUS 307: Jazz Appreciation",
+      "department": "Music / Sound Studies",
+      "year": 2023,
+      "url": "https://utdirect.utexas.edu/apps/student/coursedocs/courses/nlogon/download/12640005/",
+      "topics": [
+        "jazz idiom",
+        "jazz history",
+        "critical listening",
+        "music criticism",
+        "jazz instruments",
+        "jazz musicians",
+        "music and society",
+        "cultural diversity flag"
+      ]
+    },
+    {
+      "title": "ARH 347N / LAS 327: Aztec Art and Civilization",
+      "department": "Art History / Visual Culture",
+      "year": 2020,
+      "url": "https://utdirect.utexas.edu/apps/student/coursedocs/nlogon/download/10537281/",
+      "topics": [
+        "Aztec art",
+        "visual culture",
+        "pre-Columbian Mesoamerica",
+        "symbolism",
+        "stone monuments",
+        "pictorial manuscripts",
+        "Aztec mythology",
+        "ritual violence"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,259 @@
+{{!--
+{
+  "layout": "webring",
+  "title": "Fantasy League Commissioner Tools | Vibes DIY",
+  "description": "Build custom tools your fantasy league actually uses — live draft board, power rankings, trade tracker, trash talk wall, waiver wire log. Your rules, your data.",
+  "ogUrl": "https://good.vibes.diy/fantasy-league/",
+  "source": "fantasy-league",
+  "apps": [
+    {
+      "num": "01",
+      "slug": "fantasy-draft-board",
+      "author": "og",
+      "live": true,
+      "title": "Live Draft Board",
+      "tagline": "Real-time pick tracking. Everyone sees it at once.",
+      "desc": "Commissioner runs the board. Each pick logs instantly. Everyone in the room sees the same view update — no spreadsheet on a projector, no refresh lag."
+    },
+    {
+      "num": "02",
+      "slug": "fantasy-power-rankings",
+      "author": "og",
+      "live": true,
+      "title": "Power Rankings",
+      "tagline": "Commissioner's take. League debates.",
+      "desc": "Post weekly power rankings with a hot take per team. League members comment and react. The bulletin board fuel is the whole point — post early, stir the pot."
+    },
+    {
+      "num": "03",
+      "slug": "trade-proposal-tracker",
+      "author": "og",
+      "live": true,
+      "title": "Trade Tracker",
+      "tagline": "Propose it. Review it. Vote to veto.",
+      "desc": "Log trade proposals between teams. League votes approve or veto. Every deal on record for the full season. No disputed trades, no \"wait, I never agreed to that.\""
+    },
+    {
+      "num": "04",
+      "slug": "fantasy-trash-talk-wall",
+      "author": "og",
+      "live": true,
+      "title": "Trash Talk Wall",
+      "tagline": "The banter belongs somewhere.",
+      "desc": "Dedicated feed for smack talk, victory laps, and reactions after big wins or crushing upsets. Keeps the main group chat clean. Threads, reactions, full chaos."
+    },
+    {
+      "num": "05",
+      "slug": "waiver-wire-log",
+      "author": "og",
+      "live": true,
+      "title": "Waiver Wire Log",
+      "tagline": "Who dropped who. Who picked up who. No disputes.",
+      "desc": "Log every waiver claim and free agent pickup across the season. Track priority order. Searchable history. Nobody questions what happened in Week 9."
+    }
+  ],
+  "ogImage": "https://good.vibes.diy/images/screenshots/fantasy-league.jpg"
+}
+--}}
+
+<style>
+  @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&family=Barlow+Condensed:wght@700;800;900&family=JetBrains+Mono:wght@400;700&display=optional");
+
+  :root {
+    --field:  oklch(0.10 0.04 265);
+    --card:   oklch(0.15 0.04 265);
+    --line:   oklch(1 0 0 / 0.12);
+    --red:    oklch(0.50 0.22 25);
+    --red-hi: oklch(0.55 0.22 25);
+    --gold:   oklch(0.88 0.18 95);
+    --white:  oklch(0.99 0 0);
+    --dim:    oklch(1 0 0 / 0.5);
+  }
+
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body {
+    background: var(--field);
+    color: var(--white);
+    font-family: "Inter", system-ui, sans-serif;
+    line-height: 1.55;
+    min-height: 100vh;
+  }
+  a { color: inherit; text-decoration: none; }
+
+  .layout { max-width: 1100px; margin: 0 auto; padding: 0 1.25rem; }
+
+  .topbar {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 1rem 0;
+    border-bottom: 3px solid var(--red);
+  }
+  .topbar .brand { font-family: "Barlow Condensed", sans-serif; font-weight: 900; letter-spacing: 0.02em; font-size: 1.4rem; }
+  .topbar .meta { font-family: "JetBrains Mono", monospace; font-size: 0.6rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--dim); }
+  .topbar .meta b { background: var(--red); padding: 2px 6px; }
+
+  .crumb { padding: 0.55rem 0; font-family: "JetBrains Mono", monospace; font-size: 0.65rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--dim); border-bottom: 1px solid var(--line); }
+  .crumb a:hover { color: var(--gold); }
+
+  .hero { padding: 4.5rem 0 3.5rem; border-bottom: 3px solid var(--red); }
+  .hero .label {
+    display: inline-block; padding: 4px 12px; margin-bottom: 1.5rem;
+    background: var(--red); color: var(--white);
+    font-family: "JetBrains Mono", monospace;
+    font-size: 0.6rem; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase;
+  }
+  .hero h1 {
+    font-family: "Barlow Condensed", sans-serif;
+    font-size: clamp(4rem, 11vw, 8.5rem);
+    font-weight: 900; line-height: 0.88; letter-spacing: 0.01em;
+    text-transform: uppercase;
+    margin-bottom: 1.5rem;
+  }
+  .hero h1 .hi { color: var(--red); }
+  .hero p.lead { font-size: 1.15rem; max-width: 720px; line-height: 1.55; color: var(--dim); }
+  .hero .marker { color: var(--gold); }
+
+  .stats {
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    border-top: 2px solid var(--line); border-bottom: 2px solid var(--line);
+    margin: 2rem 0;
+  }
+  @media (max-width: 700px) { .stats { grid-template-columns: repeat(2, 1fr); } }
+  .stat-cell { padding: 1.25rem 1.5rem; border-right: 1px solid var(--line); }
+  .stat-cell:last-child { border-right: none; }
+  @media (max-width: 700px) { .stat-cell { border-bottom: 1px solid var(--line); } .stat-cell:nth-child(2n) { border-right: none; } }
+  .stat-cell .k { font-family: "JetBrains Mono", monospace; font-size: 0.55rem; letter-spacing: 0.25em; text-transform: uppercase; color: var(--dim); margin-bottom: 0.4rem; }
+  .stat-cell .v { font-family: "Barlow Condensed", sans-serif; font-weight: 700; font-size: 1.4rem; letter-spacing: 0.01em; }
+
+  .section-label { padding: 1rem 0 0.5rem; font-family: "JetBrains Mono", monospace; font-size: 0.6rem; letter-spacing: 0.25em; text-transform: uppercase; color: var(--dim); }
+  .section-label::before { content: "// "; }
+
+  .apps { display: flex; flex-direction: column; border-top: 2px solid var(--line); border-bottom: 2px solid var(--line); }
+  .app {
+    padding: 2rem 0; border-bottom: 1px solid var(--line);
+    display: grid; grid-template-columns: 80px 1fr 320px;
+    gap: 2rem; align-items: start;
+    transition: background 0.15s;
+  }
+  .app:last-child { border-bottom: none; }
+  @media (max-width: 800px) { .app { grid-template-columns: 1fr; gap: 1rem; } }
+  .app:hover { background: var(--card); }
+
+  .num-cell { display: flex; flex-direction: column; gap: 0.4rem; }
+  .app .num { font-family: "Barlow Condensed", sans-serif; font-weight: 900; font-size: 3.5rem; line-height: 0.85; letter-spacing: 0.01em; color: var(--red); }
+  .app .status { font-family: "JetBrains Mono", monospace; font-size: 0.55rem; letter-spacing: 0.2em; text-transform: uppercase; padding: 3px 6px; border: 1px solid var(--line); text-align: center; }
+  .app--live .status { background: var(--red); border-color: var(--red); }
+
+  .body { display: flex; flex-direction: column; gap: 0.7rem; }
+  .body .title { font-family: "Barlow Condensed", sans-serif; font-size: 2.4rem; font-weight: 900; line-height: 0.95; text-transform: uppercase; letter-spacing: 0.01em; }
+  .body .tagline { font-family: "JetBrains Mono", monospace; font-size: 0.82rem; padding: 5px 10px; background: var(--card); border-left: 3px solid var(--red); display: inline-block; color: var(--dim); }
+  .body .desc { font-size: 1rem; line-height: 1.55; color: var(--dim); }
+
+  .right { display: flex; flex-direction: column; gap: 0.6rem; }
+  .shot { display: block; aspect-ratio: 16/9; overflow: hidden; border: 1px solid var(--line); background: var(--card); }
+  .shot img { width: 100%; height: 100%; object-fit: cover; }
+  .shot-placeholder { padding: 1rem; height: 100%; display: flex; align-items: center; justify-content: center; font-family: "JetBrains Mono", monospace; font-size: 0.7rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--dim); text-align: center; }
+
+  .ctas { display: grid; grid-template-columns: repeat(3, 1fr); border: 1px solid var(--line); }
+  .ctas--single { grid-template-columns: 1fr; }
+  .btn { text-align: center; padding: 0.6rem 0.5rem; background: transparent; border-right: 1px solid var(--line); font-family: "JetBrains Mono", monospace; font-size: 0.65rem; letter-spacing: 0.15em; text-transform: uppercase; font-weight: 700; color: var(--white); cursor: pointer; transition: background 0.12s; }
+  .btn:last-child { border-right: none; }
+  .btn:hover { background: var(--red); border-color: var(--red); }
+
+  .prompt-link { font-family: "JetBrains Mono", monospace; font-size: 0.7rem; text-decoration: underline; color: var(--dim); }
+  .prompt-link:hover { color: var(--gold); }
+
+  .epilogue { padding: 2.5rem 0; border-bottom: 2px solid var(--line); }
+  .epilogue h2 { font-family: "JetBrains Mono", monospace; font-size: 0.6rem; letter-spacing: 0.25em; text-transform: uppercase; color: var(--dim); margin-bottom: 1rem; }
+  .epilogue h2::before { content: "// "; }
+  .epilogue p { font-size: 1.1rem; max-width: 720px; line-height: 1.55; color: var(--dim); }
+  .epilogue .hl { color: var(--gold); }
+
+  footer.foot { padding: 1rem 0; font-family: "JetBrains Mono", monospace; font-size: 0.6rem; letter-spacing: 0.2em; text-transform: uppercase; display: flex; justify-content: space-between; color: var(--dim); }
+  footer.foot a:hover { color: var(--gold); }
+</style>
+
+<div class="layout">
+  <header class="topbar">
+    <a class="brand" href="https://links.vibes.diy/homepage">VIBES.DIY</a>
+    <span class="meta"><b>FANTASY LEAGUE</b> &middot; five commissioner tools</span>
+  </header>
+
+  <nav class="crumb">
+    <a href="/">Home</a> &nbsp;&rsaquo;&nbsp; Fantasy League
+  </nav>
+
+  <section class="hero">
+    <span class="label">For Fantasy Commissioners</span>
+    <h1>Your league.<br/><span class="hi">Your tools.</span></h1>
+    <p class="lead">
+      Five custom tools for fantasy leagues that want more than ESPN and Discord threads.
+      <span class="marker">Live draft board</span>, <span class="marker">power rankings</span>,
+      <span class="marker">trade tracker</span>, <span class="marker">trash talk wall</span>,
+      <span class="marker">waiver log</span>. Your rules, your data, no platform owning it.
+    </p>
+  </section>
+
+  <div class="stats">
+    <div class="stat-cell"><div class="k">Apps</div><div class="v">Five</div></div>
+    <div class="stat-cell"><div class="k">Audience</div><div class="v">Commissioners</div></div>
+    <div class="stat-cell"><div class="k">Persistence</div><div class="v">Fireproof</div></div>
+    <div class="stat-cell"><div class="k">Skin</div><div class="v">Blitz</div></div>
+  </div>
+
+  <div class="section-label">The Playbook</div>
+
+  <section class="apps">
+    {{#each apps}}
+    <article class="app {{#if live}}app--live{{else}}app--pending{{/if}}">
+      <div class="num-cell">
+        <div class="num">{{num}}</div>
+        <div class="status">{{#if live}}Live{{else}}Pending{{/if}}</div>
+      </div>
+      <div class="body">
+        <h2 class="title">{{title}}</h2>
+        <span class="tagline">{{tagline}}</span>
+        <p class="desc">{{desc}}</p>
+      </div>
+      <div class="right">
+        {{#if live}}
+          <a class="shot" href="https://vibes.diy/vibe/{{author}}/{{slug}}" aria-label="{{title}} screenshot"><img src="https://{{slug}}--{{author}}.prod-v2.vibesdiy.net/screenshot.jpg" alt="{{slug}}" onerror="this.onerror=null; this.src='{{@root.assetPrefix}}images/og-preview.png';"/></a>
+          <div class="ctas">
+            <a class="btn" href="https://vibes.diy/vibe/{{author}}/{{slug}}">Join</a>
+            <a class="btn" href="https://vibes.diy/remix/{{author}}/{{slug}}?skipChat=true">Clone</a>
+            <a class="btn" href="https://vibes.diy/remix/{{author}}/{{slug}}">Remix</a>
+          </div>
+          <a class="prompt-link" href="https://vibes.diy/chat/prompt?prompt64={{prompt64 desc}}">// start fresh from this prompt</a>
+          <span class="prompt-link" style="opacity:0.55; text-decoration:none; font-size:0.6rem;">The prompt that built this. Describe your league&rsquo;s version instead.</span>
+        {{else}}
+          <div class="shot"><div class="shot-placeholder">awaiting deploy</div></div>
+          <div class="ctas ctas--single">
+            <a class="btn" href="https://vibes.diy/chat/prompt?prompt64={{prompt64 desc}}">Start From Prompt</a>
+          </div>
+        {{/if}}
+      </div>
+    </article>
+    {{/each}}
+  </section>
+
+  <div class="epilogue">
+    <h2>Read Me</h2>
+    <p>
+      ESPN and Yahoo lock you into their format. Discord threads bury everything.
+      Draft day is always chaos. These five give the commissioner
+      <span class="hl">actual tools sized to an actual league</span> — not enterprise software,
+      not a glorified group chat.
+    </p>
+    <p style="margin-top:1rem;">
+      Your league does keepers differently — clone the Draft Board and add a keeper slot per team.
+      Your power rankings need to track playoff odds, not just hot takes — clone it and add the column.
+      Your trash talk wall is the whole point of the league — clone it and wire in a season trophy display at the top.
+      Every rule your league invented is a reason to fork.
+    </p>
+  </div>
+
+  {{> newsletter}}
+<footer class="foot">
+    <span>Vibes.diy &middot; <a href="https://links.vibes.diy/homepage">homepage</a> &middot; <a href="/world-cup-pool.html">world cup</a> &middot; <a href="/golf-league.html">golf</a></span>
+    <span>// COMMISSIONER OUT</span>
+  </footer>
+</div>

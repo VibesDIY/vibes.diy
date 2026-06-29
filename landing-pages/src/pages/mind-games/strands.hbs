@@ -1,0 +1,101 @@
+{{!--
+{
+  "layout": "webring",
+  "title": "Word Trail | Mind Games",
+  "description": "Theme search with a spangram. Four word-trail variations — each one a live deployed app.",
+  "ogUrl": "https://good.vibes.diy/mind-games/strands.html",
+  "source": "mind-games-strands"
+}
+--}}
+
+<style>
+  @import url("https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;600;800&display=swap");
+
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    font-family:'Inter', system-ui, sans-serif;
+    background:#0c1224;
+    color:#e9e9f4;
+    min-height:100vh;
+    background-image:radial-gradient(circle at 20% 30%, #fbcf63 0 2px, transparent 3px), radial-gradient(circle at 70% 70%, #7a9bff 0 2px, transparent 3px), radial-gradient(circle at 40% 80%, #e9e9f4 0 1px, transparent 2px), radial-gradient(circle at 80% 20%, #fbcf63 0 1px, transparent 2px), radial-gradient(circle at 10% 60%, #7a9bff 0 2px, transparent 3px);
+    background-attachment:fixed;
+  }
+  a{color:inherit;text-decoration:none}
+  .wrap{max-width:1100px;margin:0 auto;padding:64px 24px 96px;position:relative;z-index:1}
+  header.top{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:48px;gap:24px;flex-wrap:wrap}
+  header.top a.back{color:#e9e9f4;text-decoration:none;opacity:.6;font-size:14px}
+  header.top a.back:hover{opacity:1}
+  h1{font-family:'Space Grotesk', 'Inter', sans-serif;font-size:clamp(40px,7vw,84px);margin:0;line-height:.95;letter-spacing:-.02em}
+  .desc{max-width:560px;font-size:18px;opacity:.75;margin:16px 0 0}
+  .accent-bar{display:inline-block;height:6px;width:120px;background:#7a9bff;margin:24px 0 0}
+  .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:32px;margin-top:56px}
+  @media (max-width:720px){.grid{grid-template-columns:1fr}}
+  .card{background:#161e3a;border:1px solid #2a3358;border-radius:10px;box-shadow:0 8px 32px rgba(0,0,0,.5);overflow:hidden;display:flex;flex-direction:column;transition:transform .15s ease}
+  .card:hover{transform:translateY(-2px)}
+  .shot{display:block;aspect-ratio:16/10;background:#0c1224;overflow:hidden;border-bottom:1px solid #2a3358}
+  .shot img{width:100%;height:100%;object-fit:cover;display:block}
+  .meta{padding:20px 22px 24px}
+  .meta h3{margin:0 0 10px;font-family:'Space Grotesk', 'Inter', sans-serif;font-size:24px;letter-spacing:-.01em}
+  .meta h3 a{color:inherit;text-decoration:none}
+  .meta h3 a:hover{color:#7a9bff}
+  .prompt{margin:0 0 16px;font-size:14px;line-height:1.55;opacity:.78}
+  .play{display:inline-flex;align-items:center;gap:6px;color:#7a9bff;font-weight:700;text-decoration:none;font-size:14px;letter-spacing:.02em}
+  .play:hover{text-decoration:underline}
+  footer{margin-top:64px;font-size:13px;opacity:.5}
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div>
+      <h1>Word Trail</h1>
+      <p class="desc">Theme search with a spangram. Four variations on the theme, each one a live deployed app you can poke at.</p>
+      <div class="accent-bar"></div>
+    </div>
+    <a class="back" href="./index.html">&larr; Mind Games hub</a>
+  </header>
+  <main class="grid">
+    <article class="card">
+      <a class="shot" href="https://vibes.diy/vibe/jchris/strand-search" target="_blank" rel="noopener">
+        <img src="https://strand-search--jchris.prod-v2.vibesdiy.net/screenshot.jpg" alt="Theme Trail preview" loading="lazy"/>
+      </a>
+      <div class="meta">
+        <h3><a href="https://vibes.diy/vibe/jchris/strand-search" target="_blank" rel="noopener">Theme Trail</a></h3>
+        <p class="prompt">Themed word search on six-by-eight letter grid. Find all theme words plus one spangram spanning grid. Drag-trace to select cells. Hint after three non-theme finds.</p>
+        <a class="play" href="https://vibes.diy/vibe/jchris/strand-search" target="_blank" rel="noopener">Play live &rarr;</a>
+      </div>
+    </article>
+    <article class="card">
+      <a class="shot" href="https://vibes.diy/vibe/jchris/snake-words" target="_blank" rel="noopener">
+        <img src="https://snake-words--jchris.prod-v2.vibesdiy.net/screenshot.jpg" alt="Snake Words preview" loading="lazy"/>
+      </a>
+      <div class="meta">
+        <h3><a href="https://vibes.diy/vibe/jchris/snake-words" target="_blank" rel="noopener">Snake Words</a></h3>
+        <p class="prompt">Word find where letter chains snake in any direction including curves. Drag to trace. Found words highlighted; daily theme banner. Auto-shuffle on completion.</p>
+        <a class="play" href="https://vibes.diy/vibe/jchris/snake-words" target="_blank" rel="noopener">Play live &rarr;</a>
+      </div>
+    </article>
+    <article class="card">
+      <a class="shot" href="https://vibes.diy/vibe/jchris/stellar-search" target="_blank" rel="noopener">
+        <img src="https://stellar-search--jchris.prod-v2.vibesdiy.net/screenshot.jpg" alt="Constellation preview" loading="lazy"/>
+      </a>
+      <div class="meta">
+        <h3><a href="https://vibes.diy/vibe/jchris/stellar-search" target="_blank" rel="noopener">Constellation</a></h3>
+        <p class="prompt">Dark word-search grid; finding theme words reveals stars connecting into a constellation. Drag-trace selection. Star count tracker. Daily astronomy theme.</p>
+        <a class="play" href="https://vibes.diy/vibe/jchris/stellar-search" target="_blank" rel="noopener">Play live &rarr;</a>
+      </div>
+    </article>
+    <article class="card">
+      <a class="shot" href="https://vibes.diy/vibe/jchris/glyph-search" target="_blank" rel="noopener">
+        <img src="https://glyph-search--jchris.prod-v2.vibesdiy.net/screenshot.jpg" alt="Glyph Search preview" loading="lazy"/>
+      </a>
+      <div class="meta">
+        <h3><a href="https://vibes.diy/vibe/jchris/glyph-search" target="_blank" rel="noopener">Glyph Search</a></h3>
+        <p class="prompt">Word search using small SVG glyphs as letters. Drag to select. Glyph legend at side maps to letters. Daily themed glyph palette.</p>
+        <a class="play" href="https://vibes.diy/vibe/jchris/glyph-search" target="_blank" rel="noopener">Play live &rarr;</a>
+      </div>
+    </article>
+  </main>
+  {{> newsletter}}
+<footer>Built with vibes.diy. Each card is a one-prompt mini-app.</footer>
+</div>

@@ -1,0 +1,52 @@
+{
+  "slug": "revolutions-political-change",
+  "page_url": "/edu/revolutions-political-change.html",
+  "label": "Revolutions & Political Change",
+  "department": "History — Comparative",
+  "vocabulary": [
+    "American Revolution",
+    "French Revolution",
+    "Haitian Revolution",
+    "revolutionary declarations",
+    "constitutions",
+    "causes of revolution",
+    "Atlantic revolutions",
+    "comparative history",
+    "Egyptian uprising",
+    "decolonization",
+    "anti-imperialism",
+    "caudillismo",
+    "guerrilla warfare",
+    "liberation theology",
+    "Mexican Revolution"
+  ],
+  "sources": [
+    {
+      "institution": "MIT OCW SHASS",
+      "title": "How to Stage a Revolution",
+      "url": "https://ocw.mit.edu/courses/history/"
+    },
+    {
+      "institution": "MIT OCW",
+      "title": "21H.009 The World: 1400-Present",
+      "url": "https://ocw.mit.edu/courses/history/"
+    },
+    {
+      "institution": "H-Net H-LatAm",
+      "title": "Reform and Revolution in Latin America",
+      "url": "https://networks.h-net.org/node/23910/pages/27764/h-latam-syllabi"
+    },
+    {
+      "institution": "H-Net H-LatAm",
+      "title": "Modern Central American History",
+      "url": "https://networks.h-net.org/node/23910/pages/27764/h-latam-syllabi"
+    }
+  ],
+  "app_prompts": [
+    "Atlantic revolutions comparison: user picks two of the four Atlantic revolutions (American, French, Haitian, Latin American independence) and sees how the causes, ideologies, and outcomes compare.",
+    "Revolutionary document close reading: user picks a founding document (Declaration of Independence, Declaration of the Rights of Man, Haitian Declaration) and sees who was included, who was excluded, and why.",
+    "Causes of revolution analyzer: user picks a revolution and traces the structural conditions — economic crisis, political exclusion, ideological challenge, state weakness — that made it possible.",
+    "Decolonization timeline: user picks a region (Africa, Asia, Caribbean) and traces how colonized peoples won independence — negotiation, armed struggle, Cold War leverage, international pressure.",
+    "Revolutionary aftermath quiz: user reads about a revolutionary outcome and traces what happened next — consolidation, betrayal, reaction, or new revolution. What patterns repeat across cases?"
+  ]
+}

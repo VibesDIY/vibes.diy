@@ -1,0 +1,34 @@
+{
+  "slug": "cold-war-history",
+  "page_url": "/edu/cold-war-history.html",
+  "label": "Cold War History",
+  "department": "History — Diplomatic/International",
+  "vocabulary": [
+    "containment doctrine",
+    "détente",
+    "superpower rivalry",
+    "nuclear deterrence",
+    "Cold War historiography",
+    "triangular diplomacy",
+    "proxy wars",
+    "declassified documentation",
+    "covert operations",
+    "Cuban Missile Crisis",
+    "Sino-Soviet split",
+    "Cold War culture"
+  ],
+  "sources": [
+    { "institution": "H-Net H-Diplo", "title": "Rethinking Cold War History", "url": "https://networks.h-net.org/node/28443/pages/59076/h-diplo-syllabus-archive" },
+    { "institution": "H-Net H-Diplo", "title": "History of U.S. Foreign Policy", "url": "https://networks.h-net.org/node/28443/pages/59076/h-diplo-syllabus-archive" },
+    { "institution": "UW–Madison", "title": "History 375 – The Cold War", "url": "https://history.wisc.edu/syllabi-library/" },
+    { "institution": "MIT OCW", "title": "21H.102 American History Since 1865", "url": "https://ocw.mit.edu/courses/history/" },
+    { "institution": "MIT OCW", "title": "21H.009 The World: 1400-Present", "url": "https://ocw.mit.edu/courses/history/" }
+  ],
+  "app_prompts": [
+    "Cold War timeline explorer: user picks a year 1945–1991 and sees what was happening on both sides — US and Soviet key decisions, proxy conflicts, cultural moments. Include détente, Cuban Missile Crisis, Sino-Soviet split.",
+    "Declassified document analyzer: user pastes text from an NSC memo, FRUS document, or declassified CIA report and gets historical context — what was happening, who wrote it, what vocabulary signals the era.",
+    "Cold War historiography comparison: user selects two historical interpretations (orthodox vs. revisionist vs. post-revisionist) and sees how each frames the same event — containment, Korean War, détente.",
+    "Proxy war mapper: user picks a Cold War conflict (Korea, Vietnam, Angola, Afghanistan) and traces the superpower rivalry underneath — military aid, covert operations, diplomatic maneuvering.",
+    "Nuclear deterrence explainer: user explores deterrence concepts — MAD, first strike, second strike, escalation dominance — through historical crises where these doctrines were actually tested."
+  ]
+}

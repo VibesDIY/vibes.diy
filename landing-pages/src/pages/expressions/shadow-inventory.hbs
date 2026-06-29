@@ -1,0 +1,194 @@
+{{!--
+{
+  "layout": "webring",
+  "title": "Shadow Inventory // Expressions // Vibes DIY",
+  "description": "Swag closets, demo-unit pools, AV gear, loaner laptops. The stuff every team owns that no IT system actually tracks.",
+  "ogUrl": "https://good.vibes.diy/expressions/shadow-inventory",
+  "source": "expressions-shadow-inventory",
+  "apps": [
+    {"num":"01","slug":"swag-closet","author":"jchris","live":true,"title":"Marketing Swag Closet","tagline":"T-shirts, stickers, tumblers — nobody owns it.","desc":"Items with SKU, sizes, colors, counts. Checkouts logged with who, how many, when. Low-stock auto-flag. Audit log."},
+    {"num":"02","slug":"demo-unit-pool","author":"jchris","live":true,"title":"Sales Demo Unit Pool","tagline":"\"Where is the demo?\"","desc":"Each device with status pip + holder + last-action date. Filter by location, model, available-only. Hold-too-long flags."},
+    {"num":"03","slug":"booth-gear","author":"jchris","live":true,"title":"Conference Booth Gear","tagline":"Banners, scanners, cables — lives in a Sheet.","desc":"Categorized inventory; commit items to events with checkout/return dates. Double-booking warnings."},
+    {"num":"04","slug":"sample-ledger","author":"jchris","live":true,"title":"Lab Sample Chain of Custody","tagline":"Below LIMS scale.","desc":"Each sample a unique ID with type, custodian, location. Every handoff a doc. Red flag for lost-touch >7 days."},
+    {"num":"05","slug":"training-kit-returns","author":"jchris","live":true,"title":"Training Kit Returns","tagline":"Trainers' equipment circulating.","desc":"Assign kits to events with return-dates. Overdue surfaces in red. Trainer leaderboard for on-time returns."},
+    {"num":"06","slug":"brand-asset-rights","author":"jchris","live":true,"title":"Brand Asset Rights Timer","tagline":"Image rights expire; nobody tracks.","desc":"Assets sorted by expiry-date soonest-first. Expiring-30d amber, expired red and locked. Renewal-request workflow."},
+    {"num":"07","slug":"customer-gift-inventory","author":"jchris","live":true,"title":"Customer Gift Inventory","tagline":"Country regulatory caps + rep request log.","desc":"Reps request gifts; app validates against country gifting cap. Approved or flagged for legal review. Quarterly spend."},
+    {"num":"08","slug":"loaner-laptop-pool","author":"jchris","live":true,"title":"Loaner-Laptop Pool","tagline":"Execs and contractors; IT inventory ignores it.","desc":"Self-service request form; admin assigns from available pool. Returns include damage notes + IT-checkup checklist."},
+    {"num":"09","slug":"gear-checkout","author":"jchris","live":true,"title":"Prototype Hardware Checkout","tagline":"Engineering loaners; no IT system covers.","desc":"Prototypes with serials, hardware versions, current owner, state. NDA flag gates visibility. Field-deployment view."},
+    {"num":"10","slug":"av-gear-pool","author":"jchris","live":true,"title":"Internal AV Gear Pool","tagline":"5 cameras, 12 lavs — tracked in nothing.","desc":"Cameras, lavs, lights, tripods. Producers reserve gear for shoots. Daily check-in for malfunctions. Lost-item log."}
+  ]
+}
+--}}
+
+<style>
+  @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=optional");
+
+  :root {
+    --bg: oklch(0.08 0.03 280);
+    --card-bg: oklch(0.12 0.03 280 / 0.7);
+    --text: oklch(0.93 0.02 80);
+    --border: oklch(0.65 0.15 80 / 0.18);
+    --accent: oklch(0.72 0.15 75);
+    --accent-text: oklch(0.10 0.03 280);
+    --muted: oklch(0.50 0.04 290);
+    --purple: oklch(0.55 0.18 300);
+    --danger: oklch(0.62 0.22 25);
+  }
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body {
+    font-family: "Inter", system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.55;
+    min-height: 100vh;
+    background-image:
+      radial-gradient(circle at 30% 0%, rgba(157,78,255,0.08), transparent 50%),
+      radial-gradient(circle at 70% 100%, rgba(218,170,80,0.06), transparent 50%);
+  }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { color: var(--text); }
+  .mono { font-family: "Space Mono", monospace; }
+
+  .container { max-width: 1100px; margin: 0 auto; padding: 0 1.5rem; }
+
+  .topbar {
+    padding: 0.85rem 1.5rem; border-bottom: 1px solid var(--border);
+    display: flex; justify-content: space-between; align-items: center; gap: 1rem;
+    backdrop-filter: blur(10px);
+  }
+  .topbar .brand { font-family: "Space Mono", monospace; font-weight: 700; letter-spacing: 0.18em; color: var(--accent); }
+  .topbar .meta { font-family: "Space Mono", monospace; font-size: 0.7rem; color: var(--muted); letter-spacing: 0.15em; }
+
+  .crumb { padding: 0.6rem 1.5rem; font-family: "Space Mono", monospace; font-size: 0.7rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--muted); border-bottom: 1px solid var(--border); }
+  .crumb a { color: var(--muted); }
+  .crumb a:hover { color: var(--accent); }
+
+  .hero { padding: 4rem 0 2.5rem; }
+  .hero .label { font-family: "Space Mono", monospace; font-size: 0.7rem; letter-spacing: 0.25em; text-transform: uppercase; color: var(--accent); margin-bottom: 1.25rem; }
+  .hero h1 { font-size: clamp(3rem, 7vw, 5rem); font-weight: 700; letter-spacing: -0.02em; line-height: 1; }
+  .hero h1 span { color: var(--accent); }
+  .hero p { max-width: 700px; margin-top: 1.5rem; font-size: 1.1rem; color: var(--text); opacity: 0.85; }
+
+  .stats { display: grid; grid-template-columns: repeat(4, 1fr); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); margin-top: 2rem; }
+  @media (max-width: 700px) { .stats { grid-template-columns: repeat(2, 1fr); } }
+  .stat-cell { padding: 1.25rem; border-right: 1px solid var(--border); }
+  .stat-cell:last-child { border-right: none; }
+  .stat-cell .k { font-family: "Space Mono", monospace; font-size: 0.6rem; letter-spacing: 0.25em; text-transform: uppercase; color: var(--muted); margin-bottom: 0.4rem; }
+  .stat-cell .v { font-family: "Space Mono", monospace; font-weight: 700; font-size: 1.3rem; color: var(--accent); }
+
+  .section-label { padding: 1.5rem 0 0.5rem; font-family: "Space Mono", monospace; font-size: 0.7rem; letter-spacing: 0.25em; text-transform: uppercase; color: var(--muted); }
+
+  .apps { display: grid; grid-template-columns: 1fr; gap: 1px; background: var(--border); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); margin: 1rem 0 3rem; }
+
+  .app {
+    background: var(--card-bg);
+    backdrop-filter: blur(8px);
+    padding: 1.5rem;
+    display: grid;
+    grid-template-columns: 100px 1fr 280px;
+    gap: 1.5rem;
+    align-items: start;
+    transition: background .2s;
+  }
+  @media (max-width: 900px) {
+    .app { grid-template-columns: 1fr; }
+  }
+  .app:hover { background: oklch(0.15 0.04 280 / 0.8); }
+  .app .ledger { font-family: "Space Mono", monospace; }
+  .app .sku { font-size: 0.65rem; letter-spacing: 0.18em; color: var(--muted); margin-bottom: 0.4rem; }
+  .app .pip { display: inline-block; width: 8px; height: 8px; background: var(--muted); margin-right: 0.4rem; }
+  .app--live .pip { background: var(--accent); box-shadow: 0 0 8px var(--accent); }
+  .app .status { font-size: 0.7rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--muted); }
+  .app--live .status { color: var(--accent); }
+  .app .body .title { font-size: 1.4rem; font-weight: 700; line-height: 1.15; margin-bottom: 0.4rem; }
+  .app .body .tagline { font-family: "Space Mono", monospace; font-size: 0.85rem; color: var(--accent); margin-bottom: 0.6rem; }
+  .app .body .desc { font-size: 0.95rem; color: var(--text); opacity: 0.85; }
+
+  .app .right { display: flex; flex-direction: column; gap: 0.6rem; }
+  .app .shot { display: block; aspect-ratio: 16/10; overflow: hidden; border: 1px solid var(--border); background: var(--bg); }
+  .app .shot img { width: 100%; height: 100%; object-fit: cover; filter: saturate(0.85) brightness(0.95); }
+  .app .shot-placeholder { padding: 1rem; height: 100%; display: flex; align-items: center; justify-content: center; font-family: "Space Mono", monospace; font-size: 0.7rem; letter-spacing: 0.2em; color: var(--muted); text-transform: uppercase; text-align: center; }
+  .app .ctas { display: flex; gap: 0.4rem; }
+  .btn {
+    flex: 1; text-align: center; padding: 0.5rem 0.5rem;
+    background: transparent; border: 1px solid var(--border);
+    font-family: "Space Mono", monospace; font-size: 0.65rem;
+    letter-spacing: 0.18em; text-transform: uppercase; color: var(--text);
+    cursor: pointer; transition: all .15s;
+  }
+  .btn:hover { background: var(--accent); color: var(--accent-text); border-color: var(--accent); }
+  .prompt-link { font-family: "Space Mono", monospace; font-size: 0.7rem; letter-spacing: 0.1em; color: var(--muted); }
+  .prompt-link:hover { color: var(--accent); }
+
+  .epilogue { padding: 2.5rem 0; border-top: 1px solid var(--border); }
+  .epilogue h2 { font-family: "Space Mono", monospace; font-size: 0.7rem; letter-spacing: 0.25em; text-transform: uppercase; color: var(--muted); margin-bottom: 1rem; }
+  .epilogue p { font-size: 1.05rem; max-width: 720px; color: var(--text); opacity: 0.9; }
+  footer.term-footer { padding: 1.5rem; border-top: 1px solid var(--border); font-family: "Space Mono", monospace; font-size: 0.7rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--muted); text-align: center; }
+</style>
+
+<header class="topbar">
+  <span class="brand">VAULT.VIBES.DIY</span>
+  <span class="meta">SHADOW.INVENTORY ◆ DRAWER 71-80</span>
+</header>
+<nav class="crumb">
+  <a href="/">HOME</a> &nbsp;›&nbsp; <a href="/expressions/">EXPRESSIONS</a> &nbsp;›&nbsp; SHADOW INVENTORY
+</nav>
+
+<main class="container">
+  <section class="hero">
+    <div class="label">Cluster · 05 of 10 · enterprise tail #71–80</div>
+    <h1>Shadow <span>Inventory</span></h1>
+    <p>Swag closets, demo-unit pools, AV gear, loaner laptops. Ten ledger apps for the stuff every team owns that no IT system actually tracks — the back-of-house deposit that lives in a Sheet plus a Slack thread.</p>
+  </section>
+
+  <div class="stats">
+    <div class="stat-cell"><div class="k">SOURCE</div><div class="v">TILTED</div></div>
+    <div class="stat-cell"><div class="k">LEDGERS</div><div class="v">10</div></div>
+    <div class="stat-cell"><div class="k">PERSISTENCE</div><div class="v">FIREPROOF</div></div>
+    <div class="stat-cell"><div class="k">SKIN</div><div class="v">VAULT</div></div>
+  </div>
+
+  <div class="section-label">// THE DRAWERS</div>
+
+  <section class="apps">
+    {{#each apps}}
+      <article class="app {{#if live}}app--live{{else}}app--pending{{/if}}">
+        <div class="ledger">
+          <div class="sku">SKU.{{num}}</div>
+          <div class="status"><span class="pip"></span>{{#if live}}LIVE{{else}}PENDING{{/if}}</div>
+        </div>
+        <div class="body">
+          <h2 class="title">{{title}}</h2>
+          <div class="tagline">// {{tagline}}</div>
+          <p class="desc">{{desc}}</p>
+        </div>
+        <div class="right">
+          {{#if live}}
+            <a class="shot" href="https://vibes.diy/vibe/{{author}}/{{slug}}" aria-label="{{title}} screenshot"><img src="https://{{slug}}--{{author}}.prod-v2.vibesdiy.net/screenshot.jpg" alt="{{slug}}" onerror="this.onerror=null; this.src='{{@root.assetPrefix}}images/og-preview.png';"/></a>
+            <div class="ctas">
+              <a class="btn" href="https://vibes.diy/vibe/{{author}}/{{slug}}">JOIN</a>
+              <a class="btn" href="https://vibes.diy/remix/{{author}}/{{slug}}?skipChat=true">CLONE</a>
+              <a class="btn" href="https://vibes.diy/remix/{{author}}/{{slug}}">REMIX</a>
+            </div>
+            <a class="prompt-link" href="https://vibes.diy/chat/prompt?prompt64={{prompt64 desc}}">// start fresh from prompt</a>
+          {{else}}
+            <div class="shot"><div class="shot-placeholder">AWAITING DEPLOY</div></div>
+            <div class="ctas">
+              <a class="btn" href="https://vibes.diy/chat/prompt?prompt64={{prompt64 desc}}">START FROM PROMPT</a>
+            </div>
+          {{/if}}
+        </div>
+      </article>
+    {{/each}}
+  </section>
+
+  <section class="epilogue">
+    <h2>// READ ME</h2>
+    <p>Ten ledgers for stuff that costs real money but never makes it onto the BOM. A swag closet, a demo unit, a loaner laptop, an open lavalier mic. The buyer is the team lead. The system of record is a sticky note. The fix is a ledger that fits the actual workflow, not the IT system's idea of one.</p>
+  </section>
+</main>
+
+{{> newsletter}}
+<footer class="term-footer">
+  Vibes.diy ◆ <a href="https://links.vibes.diy/homepage">HOMEPAGE</a> ◆ <a href="/expressions/">EXPRESSIONS</a>
+</footer>

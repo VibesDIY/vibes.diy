@@ -1,0 +1,36 @@
+{
+  "slug": "literary-analysis",
+  "page_url": "/edu/literary-analysis.html",
+  "label": "Literary Analysis & Close Reading",
+  "department": "Literature / Creative Writing",
+  "vocabulary": [
+    "close reading",
+    "postcolonial theory",
+    "Orientalism",
+    "narrative voice and point of view",
+    "feminist literary criticism",
+    "modernist stream of consciousness",
+    "the Bildungsroman",
+    "Gothic fiction",
+    "subaltern studies",
+    "textual analysis",
+    "canonical texts",
+    "disciplinary power (Foucault)",
+    "social contract and liberalism",
+    "Marxist critique",
+    "psychoanalytic criticism"
+  ],
+  "sources": [
+    { "institution": "MIT OCW", "title": "21L.002X Foundations of World Culture II", "url": "https://ocw.mit.edu/courses/literature/" },
+    { "institution": "MIT OCW", "title": "21L.003 Introduction to Fiction", "url": "https://ocw.mit.edu/courses/literature/" },
+    { "institution": "MIT OCW SHASS", "title": "Writing About Literature: Writing About Love", "url": "https://ocw.mit.edu/courses/literature/" },
+    { "institution": "UT Austin", "title": "E 316L: British Literature (Masterworks)", "url": "https://utdirect.utexas.edu/apps/student/coursedocs/nlogon/" }
+  ],
+  "app_prompts": [
+    "Close reading practice: user pastes a paragraph of fiction and gets prompts to identify narrative voice, point of view, figurative language, and what the passage reveals about character or theme.",
+    "Literary theory lens selector: user picks a text and a critical lens — Marxist, psychoanalytic, feminist, postcolonial — and sees what questions each approach would ask of the same passage.",
+    "Postcolonial reading guide: user selects a canonical text (Conrad, Kipling, Forster) and sees what a postcolonial reading reveals — Orientalism, the civilizing mission, the subaltern perspective missing from the narrative.",
+    "Genre identification quiz: user reads an excerpt and identifies the genre markers — Gothic, Bildungsroman, modernist stream of consciousness — and explains what conventions the text uses.",
+    "Feminist literary criticism explainer: user picks a text and traces how feminist critics have read it differently than the original canon — what was ignored, what was recovered, whose perspective was centered."
+  ]
+}

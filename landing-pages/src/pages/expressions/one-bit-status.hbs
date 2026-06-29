@@ -1,0 +1,629 @@
+{{!--
+{
+  "layout": "webring",
+  "title": "One-Bit Status // Expressions // Vibes DIY",
+  "description": "Light's-on, pet status, nap declarations, phone-flipped-busy. The lowest-bandwidth way of being known to your people. Try a take, then remix.",
+  "ogUrl": "https://good.vibes.diy/expressions/one-bit-status",
+  "source": "expressions-one-bit-status",
+  "apps": [
+    {
+      "num": "01",
+      "slug": "lights-on",
+      "author": "og",
+      "live": true,
+      "title": "LIGHTS-ON",
+      "tagline": "One bit per friend, on or off, that's it.",
+      "desc": "Toggle a single dot to broadcast presence to your friend group. Latest toggle wins; the row of dots is the entire interface."
+    },
+    {
+      "num": "02",
+      "slug": "pet-status-board",
+      "author": "theme",
+      "live": true,
+      "title": "PET STATUS BOARD",
+      "tagline": "Current pet state, one tap.",
+      "desc": "LOAF / ROCKET / DEMANDING / ASLEEP / ZOOMIES / CLOAKED — cycle the state for each pet in the household. ASCII glyph for the room to see."
+    },
+    {
+      "num": "03",
+      "slug": "sleep-overlap",
+      "author": "theme",
+      "live": true,
+      "title": "SLEEP OVERLAP",
+      "tagline": "When 3+ friends are simultaneously awake.",
+      "desc": "Each member declares their wake/sleep hours; the app draws a 24-hour timeline and surfaces the windows when the room is mostly up."
+    },
+    {
+      "num": "04",
+      "slug": "reading-room",
+      "author": "theme",
+      "live": true,
+      "title": "READING ROOM",
+      "tagline": "Book + page, presence-as-bookmark.",
+      "desc": "Each member's current book and current page, updated by tap. Live progress bars; a feed of page bumps and book switches."
+    },
+    {
+      "num": "05",
+      "slug": "what-im-cooking",
+      "author": "theme",
+      "live": true,
+      "title": "WHAT I'M COOKING",
+      "tagline": "Live feed of stovetops.",
+      "desc": "Dish + current step (\"sweating onions\", \"resting\") + ETA. The kitchen feed updates as you cook. Voyeurism plus dinner ideas."
+    },
+    {
+      "num": "06",
+      "slug": "nap-declaration",
+      "author": "theme",
+      "live": true,
+      "title": "NAP DECLARATION",
+      "tagline": "\"Napping, ETA 25.\"",
+      "desc": "One giant button. Pick a duration, broadcast a live countdown to your people. Wake bumps the row out of the active feed."
+    },
+    {
+      "num": "07",
+      "slug": "dog-walk-announcer",
+      "author": "theme",
+      "live": true,
+      "title": "DOG WALK ANNOUNCER",
+      "tagline": "\"Walking Pickles, 20 min — neighbors can join.\"",
+      "desc": "Start a walk with a route description and ETA; nearby members join with one tap. Streak counter for consecutive walking days."
+    },
+    {
+      "num": "08",
+      "slug": "virtual-cafe",
+      "author": "theme",
+      "live": true,
+      "title": "VIRTUAL CAFE",
+      "tagline": "Co-working presence without the call.",
+      "desc": "A grid of seats with names, current tasks, and shared 25-minute Pomodoro timers. A side feed for ambient one-line chatter."
+    },
+    {
+      "num": "09",
+      "slug": "home-in-5",
+      "author": "theme",
+      "live": true,
+      "title": "HOME-IN-5",
+      "tagline": "One-button doorbell-to-housemates.",
+      "desc": "Tap a single button — your roommates see your live ETA pulse for five minutes, then dim into history. Pattern view by week."
+    },
+    {
+      "num": "10",
+      "slug": "noon-wave",
+      "author": "theme",
+      "live": true,
+      "title": "NOON WAVE",
+      "tagline": "30 seconds at noon, every day.",
+      "desc": "A 30-second window opens at local noon. Drop a line, an ASCII glyph, and a mood word. Late submissions render dim. 30-day calendar grid below."
+    }
+  ]
+}
+--}}
+
+<style>
+  @import url("https://fonts.googleapis.com/css2?family=VT323&display=optional");
+
+  :root {
+    --bg: oklch(0.16 0 0);
+    --terminal: oklch(0 0 0 / 0.85);
+    --green: oklch(0.87 0.3 142);
+    --green-dim: oklch(0.87 0.3 142 / 0.7);
+    --green-border: oklch(0.87 0.3 142 / 0.3);
+    --green-faint: oklch(0.87 0.3 142 / 0.1);
+    --green-glow: oklch(0.87 0.3 142 / 0.5);
+    --white: oklch(1 0 0);
+    --glow: 0 0 10px oklch(0.87 0.3 142 / 0.7);
+    --dot-glow: 0 0 8px oklch(0.87 0.3 142 / 0.6);
+  }
+
+  *,
+  *::before,
+  *::after {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+  html,
+  body {
+    background: var(--bg);
+    color: var(--green);
+    font-family: "VT323", monospace;
+    font-size: 18px;
+    line-height: 1.4;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  a {
+    color: var(--green);
+    text-decoration: none;
+  }
+  p a, li a, .breadcrumb a { text-decoration: underline; }
+
+  /* CRT scanline overlay */
+  .crt-overlay {
+    position: fixed;
+    inset: 0;
+    background: repeating-linear-gradient(
+      0deg,
+      rgba(0, 255, 0, 0.03) 0px,
+      rgba(0, 255, 0, 0.03) 1px,
+      transparent 1px,
+      transparent 3px
+    );
+    pointer-events: none;
+    z-index: 99;
+  }
+  .scan-line {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(
+      to bottom,
+      transparent,
+      var(--green-glow),
+      transparent
+    );
+    animation: scan 8s linear infinite;
+    pointer-events: none;
+    z-index: 100;
+  }
+  @keyframes scan {
+    0% {
+      top: -3px;
+    }
+    100% {
+      top: 100vh;
+    }
+  }
+
+  /* Header */
+  .term-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 24px;
+    border-bottom: 1px solid var(--green-border);
+    font-size: 14px;
+    color: var(--green-dim);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+  .term-header .left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .term-header a.brand {
+    color: var(--green);
+    text-shadow: var(--glow);
+    letter-spacing: 0.15em;
+  }
+  .dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--green);
+    box-shadow: var(--dot-glow);
+    flex-shrink: 0;
+    animation: dotpulse 2s ease infinite;
+  }
+  @keyframes dotpulse {
+    0%,
+    100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.4;
+    }
+  }
+
+  .breadcrumb {
+    padding: 10px 24px;
+    border-bottom: 1px solid var(--green-border);
+    font-size: 14px;
+    color: var(--green-dim);
+    letter-spacing: 0.05em;
+  }
+  .breadcrumb a {
+    color: var(--green-dim);
+  }
+  .breadcrumb a:hover {
+    color: var(--green);
+    text-shadow: var(--glow);
+  }
+  .breadcrumb .sep {
+    margin: 0 0.6em;
+    opacity: 0.6;
+  }
+
+  /* Hero */
+  .hero {
+    max-width: 1100px;
+    margin: 64px auto 48px;
+    padding: 0 24px;
+  }
+  .hero .label {
+    font-size: 14px;
+    color: var(--green-dim);
+    letter-spacing: 0.2em;
+    margin-bottom: 8px;
+    text-transform: uppercase;
+  }
+  .hero h1 {
+    font-size: clamp(2.5rem, 6vw, 4.5rem);
+    line-height: 1;
+    text-shadow: var(--glow);
+    text-transform: uppercase;
+    margin-bottom: 18px;
+    letter-spacing: 0.04em;
+  }
+  .hero .desc {
+    font-size: 1.25rem;
+    max-width: 720px;
+    color: var(--green);
+  }
+  .hero .desc .dim {
+    color: var(--green-dim);
+  }
+  .hero .blink::after {
+    content: "▌";
+    margin-left: 0.2em;
+    animation: blink 0.8s step-end infinite;
+  }
+  @keyframes blink {
+    50% {
+      opacity: 0;
+    }
+  }
+
+  /* Status block under hero */
+  .status-bar {
+    max-width: 1100px;
+    margin: 0 auto 48px;
+    padding: 16px 24px;
+    border-top: 1px solid var(--green-border);
+    border-bottom: 1px solid var(--green-border);
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 24px;
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+  .status-bar .cell {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .status-bar .cell .k {
+    color: var(--green-dim);
+    font-size: 12px;
+  }
+  .status-bar .cell .v {
+    color: var(--green);
+    text-shadow: var(--glow);
+    font-size: 18px;
+    letter-spacing: 0.04em;
+  }
+
+  /* Apps grid */
+  .grid-wrap {
+    max-width: 1100px;
+    margin: 0 auto 80px;
+    padding: 0 24px;
+  }
+  .grid-label {
+    font-size: 14px;
+    color: var(--green-dim);
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    margin-bottom: 18px;
+    border-bottom: 1px dashed var(--green-border);
+    padding-bottom: 6px;
+  }
+  .apps {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 24px;
+  }
+
+  .app {
+    border: 1px solid var(--green-border);
+    background: var(--terminal);
+    padding: 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    position: relative;
+    transition:
+      border-color 0.15s ease,
+      box-shadow 0.15s ease;
+  }
+  .app:hover {
+    border-color: var(--green);
+    box-shadow: 0 0 24px oklch(0.87 0.3 142 / 0.15) inset;
+  }
+  .app .head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    border-bottom: 1px dashed var(--green-border);
+    padding-bottom: 8px;
+  }
+  .app .num {
+    font-size: 13px;
+    color: var(--green-dim);
+    letter-spacing: 0.1em;
+  }
+  .app .title {
+    font-size: 1.5rem;
+    text-shadow: var(--glow);
+    letter-spacing: 0.04em;
+  }
+  .app .tagline {
+    font-size: 1rem;
+    color: var(--green);
+    font-style: italic;
+    opacity: 0.9;
+  }
+  .app .desc {
+    font-size: 0.95rem;
+    color: var(--green-dim);
+    flex: 1;
+  }
+  .app .shot {
+    display: block;
+    border: 1px solid var(--green-border);
+    background: var(--bg);
+    aspect-ratio: 16 / 10;
+    overflow: hidden;
+    position: relative;
+  }
+  .app .shot img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    filter: hue-rotate(60deg) saturate(0.6) brightness(0.9) contrast(1.1);
+    opacity: 0.92;
+  }
+  .app .shot::after {
+    /* phosphor tint over screenshots */
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: oklch(0.87 0.3 142 / 0.08);
+    mix-blend-mode: screen;
+    pointer-events: none;
+  }
+  .app .ctas {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+  }
+  .app .btn {
+    flex: 1;
+    text-align: center;
+    padding: 6px 8px;
+    border: 1px solid var(--green-border);
+    color: var(--green);
+    font-family: inherit;
+    font-size: 0.95rem;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    transition: all 0.12s ease;
+    background: transparent;
+    cursor: pointer;
+  }
+  .app .btn:hover {
+    background: var(--green);
+    color: var(--bg);
+    text-shadow: none;
+    border-color: var(--green);
+  }
+  .app .prompt-link {
+    display: inline-block;
+    font-size: 13px;
+    color: var(--green-dim);
+    letter-spacing: 0.05em;
+    margin-top: 4px;
+  }
+  .app .prompt-link:hover {
+    color: var(--green);
+    text-shadow: var(--glow);
+  }
+
+  .app--pending {
+    opacity: 0.78;
+  }
+  .app--pending .title {
+    text-shadow: none;
+    color: var(--green-dim);
+  }
+  .pending-tag {
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    color: var(--green-dim);
+    border: 1px solid var(--green-border);
+    padding: 2px 8px;
+    text-transform: uppercase;
+  }
+  .shot--placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--green-dim);
+  }
+  .shot--placeholder .ascii-frame {
+    font-family: inherit;
+    font-size: 14px;
+    line-height: 1.1;
+    text-align: center;
+    color: var(--green-dim);
+    margin: 0;
+    white-space: pre;
+  }
+
+  /* Bottom block / footer */
+  .epilogue {
+    max-width: 1100px;
+    margin: 0 auto 64px;
+    padding: 24px;
+    border: 1px dashed var(--green-border);
+    color: var(--green-dim);
+    font-size: 1rem;
+  }
+  .epilogue strong {
+    color: var(--green);
+    font-weight: normal;
+    text-shadow: var(--glow);
+  }
+
+  footer.term-footer {
+    border-top: 1px solid var(--green-border);
+    padding: 18px 24px;
+    text-align: center;
+    color: var(--green-dim);
+    font-size: 14px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+  }
+  footer.term-footer a {
+    color: var(--green);
+  }
+</style>
+
+<div class="crt-overlay"></div>
+<div class="scan-line"></div>
+
+<header class="term-header">
+  <div class="left">
+    <span class="dot"></span>
+    <a class="brand" href="https://links.vibes.diy/homepage">VIBES.DIY</a>
+    <span>// EXPRESSIONS // ONE-BIT-STATUS</span>
+  </div>
+  <div>SESSION
+    {{source}}</div>
+</header>
+
+<nav class="breadcrumb">
+  <a href="/">HOME</a>
+  <span class="sep">›</span>
+  <a href="/expressions/">EXPRESSIONS</a>
+  <span class="sep">›</span>
+  ONE-BIT-STATUS
+</nav>
+
+<main>
+  <section class="hero">
+    <div class="label">SYS: cluster_31_to_40 // tilted-toy-tail</div>
+    <h1>One-Bit Status</h1>
+    <p class="desc"><span class="dim">&gt;</span>
+      Light's-on. Pet status. Nap declarations. Phone-flipped-busy. The lowest
+      possible bandwidth for being known to your people — one tap, one bit, one
+      line of context, broadcast to a tiny group of named humans.<span
+        class="blink"
+      ></span></p>
+  </section>
+
+  <section class="status-bar">
+    <div class="cell"><span class="k">CLUSTER</span><span class="v">ONE-BIT-STATUS</span></div>
+    <div class="cell"><span class="k">APPS</span><span class="v">10</span></div>
+    <div class="cell"><span class="k">PERSISTENCE</span><span class="v">FIREPROOF</span></div>
+    <div class="cell"><span class="k">SKIN</span><span class="v">TERMINAL CRT</span></div>
+  </section>
+
+  <section class="grid-wrap">
+    <div class="grid-label">FEED // active processes</div>
+    <div class="apps">
+      {{#each apps}}
+        <article class="app{{#unless live}} app--pending{{/unless}}">
+          <div class="head">
+            <span class="num">PROC.{{num}}</span>
+            {{#if live}}
+              <span class="dot"></span>
+            {{else}}
+              <span class="pending-tag">PENDING DEPLOY</span>
+            {{/if}}
+          </div>
+          <h2 class="title">{{title}}</h2>
+          <p class="tagline">{{tagline}}</p>
+          {{#if live}}
+            <a
+              class="shot"
+              href="https://vibes.diy/vibe/{{author}}/{{slug}}"
+              aria-label="{{title}} screenshot"
+            >
+              <img
+                src="https://{{slug}}--{{author}}.prod-v2.vibesdiy.net/screenshot.jpg"
+                alt="{{slug}}"
+                onerror="this.onerror=null; this.src='{{@root.assetPrefix}}images/og-preview.png';"
+              />
+            </a>
+          {{else}}
+            <div class="shot shot--placeholder" aria-hidden="true">
+              <pre class="ascii-frame">
+&gt; awaiting build...
+░░░░░░░░░░░░░░░░░
+▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒▒
+▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓
+              </pre>
+            </div>
+          {{/if}}
+          <p class="desc">{{desc}}</p>
+          {{#if live}}
+            <div class="ctas">
+              <a class="btn" href="https://vibes.diy/vibe/{{author}}/{{slug}}">[
+                JOIN ]</a>
+              <a class="btn" href="https://vibes.diy/remix/{{author}}/{{slug}}?skipChat=true">[
+                CLONE ]</a>
+              <a class="btn" href="https://vibes.diy/remix/{{author}}/{{slug}}">[
+                REMIX ]</a>
+            </div>
+            <a
+              class="prompt-link"
+              href="https://vibes.diy/chat/prompt?prompt64={{prompt64 desc}}"
+            >› start fresh from this prompt</a>
+          {{else}}
+            <div class="ctas">
+              <a
+                class="btn"
+                href="https://vibes.diy/chat/prompt?prompt64={{prompt64 desc}}"
+              >[ START FROM PROMPT ]</a>
+            </div>
+          {{/if}}
+        </article>
+      {{/each}}
+    </div>
+  </section>
+
+  <section class="epilogue">
+    <p>&gt; <strong>READ ME:</strong> ten takes on the same primitive — a single
+      bit (or a single tap, or a single line) broadcast to a small, known group.
+      No threads. No replies. No notifications. The point is presence at the
+      lowest possible bandwidth, where the constraint is the social object.</p>
+    <p style="margin-top: 12px;">&gt; <strong>HACK:</strong> hit
+      <a href="https://vibes.diy/remix/jchris/lights-on?skipChat=true">[ CLONE ]</a>
+      on any process to spin up your own copy, or
+      <a href="https://vibes.diy/remix/jchris/lights-on">[ REMIX ]</a>
+      to ask the model to reshape the code.</p>
+  </section>
+</main>
+
+{{> newsletter}}
+<footer class="term-footer">
+  <span>VIBES.DIY //</span>
+  <a href="https://links.vibes.diy/homepage">homepage</a>
+  ·
+  <a href="https://links.vibes.diy/discord">discord</a>
+  ·
+  <a href="https://links.vibes.diy/CLI">cli</a>
+  ·
+  <a href="/expressions/">expressions</a>
+  <span>// EOF</span>
+</footer>

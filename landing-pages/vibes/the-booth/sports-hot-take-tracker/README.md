@@ -1,0 +1,54 @@
+# sports-hot-take-tracker
+
+> Theme: ---
+name: Poster
+typography:
+  body-md:
+    fontFamily: Inter
+    fontSize: 1rem
+    fontWeight: "400"
+---
+
+## Brand & Style
+
+Poster design system. A dark, atmospheric theme with Bebas Neue and Inter and Space Mono typography. Use this design system\'s color tokens, spacing, and typographic choices consistently across all generated components. This theme **respects the visitor's system color scheme** — dark by default, with a light variant that auto-applies on `@media (prefers-color-scheme: light)`. Apply both color sets via CSS variables in a `<style>` block; never hard-code one mode only.
+
+## Colors
+
+- **bg** (oklch(0.11 0.01 270)): Use for backgrounds.
+- **card-bg** (oklch(0.13 0.01 270)): Use for backgrounds.
+- **text** (oklch(0.93 0.01 270)): Use for text content.
+- **border** (oklch(0.22 0.01 270)): Use for borders and dividers.
+- **accent** (oklch(0.65 0.18 290)): Use for primary actions and accents.
+- **accent-text** (oklch(0.10 0.01 270)): Use for text content.
+- **muted** (oklch(0.42 0.01 270)): Use for secondary/muted content.
+
+## Typography
+
+Load fonts from Google Fonts: Bebas Neue, Inter, Space Mono. Use display=optional.
+Primary body font: 'Inter', sans-serif.
+
+## Components
+
+Apply the color tokens and typography consistently to all interactive elements (buttons, inputs, cards, modals). Ensure sufficient contrast between text and background colors for accessibility.
+
+A hot-take accountability board for a sports commentary crew. Post a bold prediction with who said it and the date. Later mark each take Correct or Cooked and keep a running scoreboard of who is most often right.
+
+Live at [https://vibes.diy/vibe/og/sports-hot-take-tracker](https://vibes.diy/vibe/og/sports-hot-take-tracker)
+
+Single-file React app built with [vibes.diy](https://vibes.diy). Visit the live url to manage access.
+
+## Run it
+
+```sh
+npx vibes-diy push     # uploads App.jsx, prints a live HTTPS URL
+```
+
+Edit [App.jsx](App.jsx) and push again to iterate.
+
+## Commands
+
+- `npx vibes-diy push` — deploy the current directory
+- `npx vibes-diy push --instant-join` — deploy with auto-accept sharing
+- `npx vibes-diy generate "prompt"` — generate a new app from a prompt
+- `npx vibes-diy help` — full command list

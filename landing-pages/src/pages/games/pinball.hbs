@@ -1,0 +1,329 @@
+{{!--
+{
+  "layout": "webring",
+  "title": "Pinball // Games // Vibes DIY",
+  "description": "Flipper physics, pop bumpers, dot-matrix replays, tilt-controlled paddles. Six pinball games — single-file React, Fireproof high scores, remix to your own.",
+  "ogUrl": "https://good.vibes.diy/games/pinball",
+  "source": "games-pinball",
+  "apps": [
+    {"num":"01","slug":"chrome-arcade-pinball","author":"jchris","live":true,"title":"NEON FLIPPERS","tagline":"Two flippers. Three glowing bumpers.","desc":"Two flippers, three glowing bumpers, plunger launches the ball. Bumpers ricochet for points; gutter drains. Animated digital score readout, neon chrome aesthetic."},
+    {"num":"02","slug":"orbital-arcade","author":"jchris","live":true,"title":"GALAXY DRIFT","tagline":"Comet ball. Planet bumpers.","desc":"Space pinball: ball is a glowing comet, bumpers are planets, flippers are solar panels. Tilt warning if jostled. Persistent high-score table over starfield."},
+    {"num":"03","slug":"turbo-bumper","author":"jchris","live":true,"title":"BUMPER BLITZ","tagline":"Shrinking timer. Triangle flippers.","desc":"Speed pinball with shrinking timer. Three flippers in a triangle, heavy bumpers, multi-ball unlocks at 1000 points. Cracked-glass flash at milestones."},
+    {"num":"04","slug":"buccaneer-pinball","author":"jchris","live":true,"title":"PIRATE COVE","tagline":"Cannon plunger. Kraken jackpot.","desc":"Cannon plunger, treasure-chest bumpers, a kraken target that opens its jaws for a jackpot. Pieces-of-eight unlock multi-ball. Wooden plank borders."},
+    {"num":"05","slug":"melody-flipper","author":"jchris","live":true,"title":"JUKEBOX JUKE","tagline":"Bumpers play synth notes.","desc":"Bumpers play synth notes when struck, building a melody. Multipliers when hits land on rhythm. Retro vinyl visuals and neon jukebox borders."},
+    {"num":"06","slug":"wrecking-ball-city","author":"jchris","live":true,"title":"SKYLINE BASH","tagline":"Skyscrapers as bumpers.","desc":"Skyscrapers are bumpers, ball is a wrecking ball. Topple buildings for points; they rebuild after ten seconds. Sunset gradient skyline backdrop."}
+  ]
+}
+--}}
+
+<style>
+  @import url("https://fonts.googleapis.com/css2?family=VT323&family=Bungee&family=Share+Tech+Mono&display=optional");
+
+  :root {
+    --cabinet: #0c0c0e;
+    --rail: #1a1a1c;
+    --chrome: #c8c8cc;
+    --chrome-dark: #6e6e72;
+    --dmd-on: #ff6a00;
+    --dmd-glow: #ffb066;
+    --dmd-off: #2a1a08;
+    --bumper-red: #e3163c;
+    --bumper-yellow: #ffd000;
+    --bumper-cyan: #00d1ff;
+    --bumper-green: #4cff7c;
+    --score-ink: #ffe6a8;
+  }
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body {
+    font-family: "Share Tech Mono", monospace;
+    background: var(--cabinet);
+    color: var(--score-ink);
+    min-height: 100vh;
+    line-height: 1.5;
+    background-image:
+      radial-gradient(ellipse 60% 40% at 50% 0%, rgba(255,106,0,0.18) 0%, transparent 60%),
+      repeating-linear-gradient(0deg, rgba(255,255,255,0.02) 0px, rgba(255,255,255,0.02) 1px, transparent 1px, transparent 3px);
+  }
+  a { color: var(--dmd-on); text-decoration: none; }
+  a:hover { color: var(--dmd-glow); }
+
+  .container { max-width: 1080px; margin: 0 auto; padding: 0 1.5rem; }
+
+  .topbar {
+    border-bottom: 1px solid var(--chrome-dark);
+    padding: 1rem 1.5rem;
+    display: flex; justify-content: space-between; align-items: center;
+    font-family: "VT323", monospace;
+    font-size: 1rem;
+    text-transform: uppercase; letter-spacing: 0.2em;
+    background: linear-gradient(to bottom, #18181a, #0c0c0e);
+    color: var(--chrome);
+  }
+  .topbar a { font-family: "Bungee", sans-serif; color: var(--dmd-on); letter-spacing: 0.1em; }
+
+  .crumb {
+    padding: 0.6rem 1.5rem;
+    font-size: 0.85rem; letter-spacing: 0.18em; text-transform: uppercase;
+    border-bottom: 1px solid var(--rail); color: var(--chrome-dark);
+    font-family: "VT323", monospace;
+  }
+  .crumb a { color: var(--chrome-dark); }
+  .crumb a:hover { color: var(--dmd-on); }
+
+  .hero {
+    padding: 4rem 0 3rem;
+    text-align: center;
+    border-bottom: 1px solid var(--chrome-dark);
+    position: relative;
+  }
+  .hero .label {
+    font-family: "VT323", monospace;
+    font-size: 1.1rem;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    color: var(--dmd-on);
+    margin-bottom: 1rem;
+    text-shadow: 0 0 8px rgba(255,106,0,0.6);
+  }
+  .hero h1 {
+    font-family: "Bungee", sans-serif;
+    font-size: clamp(3rem, 8vw, 6rem);
+    line-height: 1;
+    color: var(--chrome);
+    letter-spacing: 0.04em;
+    text-shadow:
+      2px 2px 0 var(--bumper-red),
+      4px 4px 0 var(--bumper-yellow),
+      6px 6px 0 var(--cabinet);
+  }
+  .hero .tag {
+    font-family: "VT323", monospace;
+    font-size: 1.4rem;
+    color: var(--dmd-glow);
+    margin: 1rem 0 1.5rem;
+    letter-spacing: 0.1em;
+  }
+  .hero p { max-width: 680px; margin: 0 auto; font-size: 1rem; color: var(--chrome); }
+
+  /* DMD ticker */
+  .dmd {
+    margin: 0;
+    background: #0a0a0c;
+    border-top: 2px solid var(--chrome-dark);
+    border-bottom: 2px solid var(--chrome-dark);
+    font-family: "VT323", monospace;
+    color: var(--dmd-on);
+    text-shadow: 0 0 6px rgba(255,106,0,0.7);
+    font-size: 1.5rem;
+    letter-spacing: 0.2em;
+    text-align: center;
+    padding: 0.6rem 1rem;
+    text-transform: uppercase;
+    background-image:
+      radial-gradient(circle at 50% 50%, rgba(0,0,0,0) 30%, rgba(0,0,0,0.6) 100%),
+      repeating-linear-gradient(0deg, rgba(255,106,0,0.12) 0px, rgba(255,106,0,0.12) 1px, transparent 1px, transparent 3px),
+      repeating-linear-gradient(90deg, rgba(255,106,0,0.12) 0px, rgba(255,106,0,0.12) 1px, transparent 1px, transparent 3px);
+  }
+
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0;
+    border-bottom: 1px solid var(--chrome-dark);
+    background: #0a0a0c;
+  }
+  @media (max-width: 700px) { .stats { grid-template-columns: repeat(2, 1fr); } }
+  .stat-cell { padding: 1.25rem; border-right: 1px solid var(--rail); }
+  .stat-cell:last-child { border-right: none; }
+  .stat-cell .k {
+    font-family: "VT323", monospace;
+    font-size: 0.85rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--chrome-dark);
+    margin-bottom: 0.3rem;
+  }
+  .stat-cell .v {
+    font-family: "Bungee", sans-serif;
+    font-size: 1.2rem;
+    color: var(--score-ink);
+    letter-spacing: 0.04em;
+  }
+
+  .apps { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.5rem; padding: 2.5rem 0; }
+  @media (max-width: 800px) { .apps { grid-template-columns: 1fr; } }
+
+  .app {
+    background: linear-gradient(to bottom, #161618, #0d0d0f);
+    border: 2px solid var(--chrome-dark);
+    box-shadow:
+      0 0 0 1px var(--cabinet) inset,
+      0 0 18px rgba(255,106,0,0.08),
+      4px 4px 0 #000;
+    padding: 1.25rem;
+    position: relative;
+    display: flex; flex-direction: column; gap: 0.75rem;
+    border-radius: 4px;
+  }
+  .app::before {
+    content: "";
+    position: absolute;
+    top: -3px; left: 1rem; right: 1rem;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--chrome), transparent);
+  }
+  .app .head {
+    display: flex; justify-content: space-between; align-items: baseline;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px dashed var(--rail);
+  }
+  .app .num {
+    font-family: "VT323", monospace;
+    font-size: 0.95rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--dmd-on);
+  }
+  .app .status {
+    font-family: "VT323", monospace;
+    font-size: 0.95rem;
+    color: var(--chrome-dark);
+    letter-spacing: 0.1em;
+  }
+  .app--live .status { color: var(--bumper-green); text-shadow: 0 0 5px rgba(76,255,124,0.5); }
+  .app .title {
+    font-family: "Bungee", sans-serif;
+    font-size: 1.2rem;
+    line-height: 1.1;
+    color: var(--chrome);
+    letter-spacing: 0.03em;
+  }
+  .app .tagline {
+    font-family: "VT323", monospace;
+    font-size: 1.05rem;
+    color: var(--dmd-glow);
+    border-left: 3px solid var(--bumper-yellow);
+    padding-left: 0.75rem;
+  }
+  .app .desc { font-size: 0.9rem; flex: 1; color: var(--chrome); }
+  .app .shot {
+    display: block;
+    border: 1px solid var(--chrome-dark);
+    aspect-ratio: 16/9;
+    overflow: hidden;
+    background: #000;
+  }
+  .app .shot img { width: 100%; height: 100%; object-fit: cover; filter: saturate(0.9) contrast(1.05); }
+  .app .shot-placeholder {
+    padding: 1rem; font-size: 0.95rem; color: var(--dmd-on); text-align: center;
+    height: 100%; display: flex; align-items: center; justify-content: center;
+    font-family: "VT323", monospace; letter-spacing: 0.2em; text-transform: uppercase;
+    text-shadow: 0 0 6px rgba(255,106,0,0.6);
+  }
+  .app .ctas { display: flex; gap: 0.5rem; }
+  .btn {
+    flex: 1; text-align: center;
+    padding: 0.55rem 0.75rem;
+    background: linear-gradient(to bottom, #2a2a2c, #16161a);
+    border: 1px solid var(--chrome);
+    border-radius: 999px;
+    font-family: "Bungee", sans-serif;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--chrome);
+    cursor: pointer;
+  }
+  .btn:hover {
+    background: var(--dmd-on); color: var(--cabinet); border-color: var(--dmd-on);
+    box-shadow: 0 0 12px rgba(255,106,0,0.6);
+  }
+  .prompt-link {
+    font-family: "VT323", monospace;
+    font-size: 1rem;
+    color: var(--chrome-dark);
+  }
+  .prompt-link:hover { color: var(--dmd-on); }
+
+  .epilogue {
+    border-top: 1px solid var(--chrome-dark);
+    padding: 2rem 1.5rem;
+    font-size: 0.95rem;
+    color: var(--chrome);
+    background: #0a0a0c;
+  }
+  .epilogue strong { color: var(--score-ink); font-family: "Bungee", sans-serif; letter-spacing: 0.05em; }
+  footer.term-footer {
+    padding: 1rem 1.5rem;
+    border-top: 1px solid var(--rail);
+    font-family: "VT323", monospace;
+    font-size: 0.95rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    text-align: center;
+    color: var(--chrome-dark);
+  }
+</style>
+
+<header class="topbar">
+  <a href="https://links.vibes.diy/homepage">VIBES.DIY</a>
+  <span>Pinball — Insert Coin To Continue</span>
+</header>
+<nav class="crumb">
+  <a href="/">Home</a> &nbsp;›&nbsp; <a href="/games/">Games</a> &nbsp;›&nbsp; Pinball
+</nav>
+
+<main class="container">
+  <section class="hero">
+    <div class="label">Shelf · 01 of 05 · 6 cabinets</div>
+    <h1>PINBALL</h1>
+    <div class="tag">tilt · multiball · replay · drain</div>
+    <p>Flipper physics, pop bumpers, dot-matrix replays, tilt-controlled paddles. Six takes on the loudest corner of the arcade.</p>
+  </section>
+
+  <div class="dmd">►  H I G H &nbsp; S C O R E S &nbsp; · &nbsp; M U L T I B A L L &nbsp; R E A D Y &nbsp; · &nbsp; T I L T  ◄</div>
+
+  <section class="stats">
+    <div class="stat-cell"><div class="k">Style</div><div class="v">DMD Cabinet</div></div>
+    <div class="stat-cell"><div class="k">Cabinets</div><div class="v">Six</div></div>
+    <div class="stat-cell"><div class="k">Persistence</div><div class="v">Fireproof</div></div>
+    <div class="stat-cell"><div class="k">Coin</div><div class="v">Free Play</div></div>
+  </section>
+
+  <section class="apps">
+    {{#each apps}}
+      <article class="app {{#if live}}app--live{{else}}app--pending{{/if}}">
+        <div class="head">
+          <span class="num">№ {{num}} · {{slug}}</span>
+          <span class="status">{{#if live}}● LIVE{{else}}○ PENDING{{/if}}</span>
+        </div>
+        <h2 class="title">{{title}}</h2>
+        <p class="tagline">{{tagline}}</p>
+        <p class="desc">{{desc}}</p>
+        {{#if live}}
+          <a class="shot" href="https://vibes.diy/vibe/{{author}}/{{slug}}" aria-label="{{title}} screenshot"><img src="https://{{slug}}--{{author}}.prod-v2.vibesdiy.net/screenshot.jpg" alt="{{slug}}" onerror="this.onerror=null; this.src='{{@root.assetPrefix}}images/og-preview.png';"/></a>
+          <div class="ctas">
+            <a class="btn" href="https://vibes.diy/vibe/{{author}}/{{slug}}">Play</a>
+            <a class="btn" href="https://vibes.diy/remix/{{author}}/{{slug}}?skipChat=true">Clone</a>
+            <a class="btn" href="https://vibes.diy/remix/{{author}}/{{slug}}">Remix</a>
+          </div>
+          <a class="prompt-link" href="https://vibes.diy/chat/prompt?prompt64={{prompt64 desc}}">— start fresh from this prompt</a>
+        {{else}}
+          <div class="shot"><div class="shot-placeholder">AWAITING DEPLOY</div></div>
+          <div class="ctas">
+            <a class="btn" href="https://vibes.diy/chat/prompt?prompt64={{prompt64 desc}}">Start From Prompt</a>
+          </div>
+        {{/if}}
+      </article>
+    {{/each}}
+  </section>
+
+  <section class="epilogue">
+    <p><strong>Game over screen.</strong> Six small cabinets on the same shelf. Different mechanics, same vocabulary: a ball, some bumpers, a flipper, a score. Remix one into a private cabinet for your group.</p>
+  </section>
+</main>
+
+{{> newsletter}}
+<footer class="term-footer">
+  Vibes.diy · <a href="https://links.vibes.diy/homepage">homepage</a> · <a href="/games/">games</a> · TILT
+</footer>

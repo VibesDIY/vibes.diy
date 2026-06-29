@@ -1,0 +1,343 @@
+{{!--
+{
+  "layout": "webring",
+  "title": "Modern Casual // Games // Vibes DIY",
+  "description": "One-tap runners, merge stacks, idle clickers, swipe puzzles, bubble pops, rhythm taps. Six modern casual games — single-file React, Fireproof saves, remix to your own.",
+  "ogUrl": "https://good.vibes.diy/games/modern",
+  "source": "games-modern",
+  "apps": [
+    {"num":"01","slug":"pair-flip","author":"jchris","live":true,"title":"Tile Fold","tagline":"4×4 pastel cards. Match removes.","desc":"A 4×4 grid of pastel cards. Flip two, match removes the pair. Time tracked, glass-morphism UI, gentle haptics."},
+    {"num":"02","slug":"arc-strike","author":"jchris","live":true,"title":"Orbit Dot","tagline":"Tap as the arc shrinks.","desc":"A dot orbits the center. Tap as it crosses the target arc; the arc shrinks each round. Streaks award bonuses."},
+    {"num":"03","slug":"color-cascade","author":"jchris","live":true,"title":"Color Merge","tagline":"2048 in evolving hues.","desc":"A 2048-style swipe merger. Combining same-colored tiles evolves their hue along a smooth gradient toward a final color."},
+    {"num":"04","slug":"lane-drop","author":"jchris","live":true,"title":"Rhythm Tap","tagline":"Three lanes. Sixty seconds.","desc":"Three falling-note lanes, sixty-second song. Tap the matching key as each note hits the bar. Crisp particle feedback per hit."},
+    {"num":"05","slug":"zen-geometry","author":"jchris","live":true,"title":"Zen Shape","tagline":"No timer. Ambient flow.","desc":"Drag basic shapes into silhouettes to fill them. Twenty short puzzles, no timer, no fail state — just a soft, ambient flow."},
+    {"num":"06","slug":"color-connect","author":"jchris","live":true,"title":"Flow Link","tagline":"Non-crossing paths. Cover the grid.","desc":"Connect colored dot pairs on a grid with non-crossing paths that cover every cell. Twelve hand-tuned levels of rising challenge."}
+  ]
+}
+--}}
+
+<style>
+  @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&family=Space+Grotesk:wght@500;700&display=optional");
+
+  :root {
+    --bg-1: #f6ecff;
+    --bg-2: #ffe9f5;
+    --ink: #1b1734;
+    --ink-soft: #4a4374;
+    --glass: rgba(255, 255, 255, 0.55);
+    --glass-strong: rgba(255, 255, 255, 0.75);
+    --glass-border: rgba(255, 255, 255, 0.9);
+    --accent-1: #6e4cff;
+    --accent-2: #ff5db1;
+    --accent-3: #ffce4a;
+    --accent-4: #2dd4bf;
+    --shadow-soft: 0 12px 30px rgba(110, 76, 255, 0.18);
+    --shadow-deep: 0 24px 60px rgba(27, 23, 52, 0.18);
+  }
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body {
+    font-family: "Inter", sans-serif;
+    background:
+      radial-gradient(ellipse 70% 60% at 20% 0%, rgba(255,93,177,0.35) 0%, transparent 60%),
+      radial-gradient(ellipse 80% 70% at 100% 30%, rgba(110,76,255,0.30) 0%, transparent 60%),
+      radial-gradient(ellipse 80% 60% at 30% 100%, rgba(45,212,191,0.25) 0%, transparent 60%),
+      linear-gradient(to bottom right, var(--bg-1), var(--bg-2));
+    color: var(--ink);
+    min-height: 100vh;
+    line-height: 1.55;
+  }
+  a { color: var(--accent-1); text-decoration: none; }
+  a:hover { color: var(--accent-2); }
+
+  .container { max-width: 1080px; margin: 0 auto; padding: 0 1.5rem; }
+
+  .topbar {
+    padding: 1rem 1.5rem;
+    display: flex; justify-content: space-between; align-items: center;
+    font-size: 0.85rem;
+    font-weight: 600;
+    background: var(--glass);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--glass-border);
+    color: var(--ink);
+  }
+  .topbar a { font-weight: 800; color: var(--accent-1); letter-spacing: -0.01em; }
+
+  .crumb {
+    padding: 0.8rem 1.5rem;
+    font-size: 0.8rem;
+    color: var(--ink-soft);
+    background: rgba(255,255,255,0.3);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+  }
+  .crumb a { color: var(--ink-soft); }
+  .crumb a:hover { color: var(--accent-1); }
+
+  .hero {
+    padding: 5rem 1.5rem 4rem;
+    text-align: center;
+    position: relative;
+  }
+  .hero .label {
+    display: inline-block;
+    font-size: 0.7rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    background: var(--glass-strong);
+    border: 1px solid var(--glass-border);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    padding: 0.4rem 0.9rem;
+    border-radius: 999px;
+    margin-bottom: 1.5rem;
+    font-weight: 600;
+  }
+  .hero h1 {
+    font-family: "Inter", sans-serif;
+    font-size: clamp(3rem, 7vw, 5.5rem);
+    line-height: 1;
+    color: var(--ink);
+    letter-spacing: -0.04em;
+    font-weight: 900;
+    background: linear-gradient(120deg, var(--accent-1), var(--accent-2) 60%, var(--accent-3));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  .hero .tag {
+    font-family: "Space Grotesk", sans-serif;
+    font-size: 1.15rem;
+    color: var(--ink-soft);
+    margin: 1.5rem auto 1.5rem;
+    letter-spacing: 0.01em;
+    max-width: 540px;
+  }
+  .hero p { max-width: 620px; margin: 0 auto; font-size: 1.05rem; color: var(--ink); }
+
+  .stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1rem;
+    max-width: 1080px;
+    margin: 0 auto;
+    padding: 0 1.5rem 1rem;
+  }
+  @media (max-width: 700px) { .stats { grid-template-columns: repeat(2, 1fr); } }
+  .stat-cell {
+    padding: 1.1rem 1.25rem;
+    background: var(--glass);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid var(--glass-border);
+    border-radius: 18px;
+    box-shadow: var(--shadow-soft);
+  }
+  .stat-cell .k {
+    font-size: 0.65rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    margin-bottom: 0.4rem;
+    font-weight: 600;
+  }
+  .stat-cell .v {
+    font-size: 1.1rem;
+    color: var(--ink);
+    font-weight: 800;
+    letter-spacing: -0.01em;
+  }
+
+  .apps {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem;
+    padding: 2.5rem 0;
+  }
+  @media (max-width: 800px) { .apps { grid-template-columns: 1fr; } }
+
+  .app {
+    background: var(--glass-strong);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border: 1px solid var(--glass-border);
+    box-shadow: var(--shadow-deep);
+    border-radius: 28px;
+    padding: 1.5rem;
+    position: relative;
+    display: flex; flex-direction: column; gap: 0.85rem;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+  .app:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 30px 80px rgba(27, 23, 52, 0.22);
+  }
+  .app .head {
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .app .num {
+    font-size: 0.7rem;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    font-weight: 700;
+  }
+  .app .status {
+    font-size: 0.7rem;
+    color: var(--ink-soft);
+    background: rgba(255,255,255,0.6);
+    border: 1px solid var(--glass-border);
+    border-radius: 999px;
+    padding: 0.25rem 0.7rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+  .app--live .status {
+    color: #0f7a3f;
+    background: linear-gradient(120deg, #b8f5d0, #7be5c5);
+    border-color: #7be5c5;
+  }
+  .app .title {
+    font-size: 1.5rem;
+    line-height: 1.15;
+    color: var(--ink);
+    font-weight: 900;
+    letter-spacing: -0.02em;
+  }
+  .app .tagline {
+    font-family: "Space Grotesk", sans-serif;
+    font-size: 1rem;
+    color: var(--accent-1);
+    font-weight: 600;
+  }
+  .app .desc { font-size: 0.95rem; flex: 1; color: var(--ink-soft); }
+  .app .shot {
+    display: block; border-radius: 16px;
+    aspect-ratio: 16/9; overflow: hidden;
+    background: linear-gradient(135deg, var(--bg-1), var(--bg-2));
+    border: 1px solid var(--glass-border);
+  }
+  .app .shot img { width: 100%; height: 100%; object-fit: cover; }
+  .app .shot-placeholder {
+    padding: 1rem; font-size: 0.85rem;
+    color: var(--ink-soft); text-align: center;
+    height: 100%; display: flex; align-items: center; justify-content: center;
+    font-weight: 600; letter-spacing: 0.04em;
+  }
+  .app .ctas { display: flex; gap: 0.5rem; }
+  .btn {
+    flex: 1; text-align: center;
+    padding: 0.7rem 1rem;
+    background: linear-gradient(120deg, var(--accent-1), var(--accent-2));
+    border: 0;
+    border-radius: 999px;
+    font-family: "Inter", sans-serif;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: white;
+    cursor: pointer;
+    box-shadow: 0 8px 16px rgba(110,76,255,0.3);
+    letter-spacing: 0.01em;
+  }
+  .btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 12px 22px rgba(110,76,255,0.4);
+  }
+  .btn.btn-secondary {
+    background: var(--glass-strong);
+    color: var(--ink);
+    border: 1px solid var(--glass-border);
+    box-shadow: var(--shadow-soft);
+  }
+  .prompt-link {
+    font-family: "Space Grotesk", sans-serif;
+    font-size: 0.85rem;
+    color: var(--ink-soft);
+    font-style: italic;
+  }
+  .prompt-link:hover { color: var(--accent-2); }
+
+  .epilogue {
+    padding: 2.5rem 1.75rem;
+    margin: 1rem 0 0;
+    background: var(--glass-strong);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border: 1px solid var(--glass-border);
+    border-radius: 24px;
+    box-shadow: var(--shadow-deep);
+    color: var(--ink);
+    font-size: 1rem;
+  }
+  .epilogue strong { color: var(--accent-1); font-weight: 800; }
+  footer.term-footer {
+    padding: 1.5rem 1.5rem;
+    font-size: 0.85rem;
+    text-align: center;
+    color: var(--ink-soft);
+  }
+</style>
+
+<header class="topbar">
+  <a href="https://links.vibes.diy/homepage">vibes.diy</a>
+  <span>Modern Casual — open in your thumbs</span>
+</header>
+<nav class="crumb">
+  <a href="/">Home</a> &nbsp;›&nbsp; <a href="/games/">Games</a> &nbsp;›&nbsp; Modern Casual
+</nav>
+
+<main class="container">
+  <section class="hero">
+    <div class="label">Shelf · 04 of 05 · 6 games</div>
+    <h1>Modern Casual</h1>
+    <div class="tag">tap · merge · swipe · idle · pop · beat</div>
+    <p>The hyper-casual shelf. Six small games for the thumbs — runners, mergers, idle clickers, swipe puzzles, bubble pops, rhythm taps.</p>
+  </section>
+
+  <div class="stats">
+    <div class="stat-cell"><div class="k">Surface</div><div class="v">Glass</div></div>
+    <div class="stat-cell"><div class="k">Games</div><div class="v">06</div></div>
+    <div class="stat-cell"><div class="k">Save</div><div class="v">Fireproof</div></div>
+    <div class="stat-cell"><div class="k">Input</div><div class="v">Thumbs</div></div>
+  </div>
+
+  <section class="apps">
+    {{#each apps}}
+      <article class="app {{#if live}}app--live{{else}}app--pending{{/if}}">
+        <div class="head">
+          <span class="num">№ {{num}} · {{slug}}</span>
+          <span class="status">{{#if live}}live{{else}}pending{{/if}}</span>
+        </div>
+        <h2 class="title">{{title}}</h2>
+        <p class="tagline">{{tagline}}</p>
+        <p class="desc">{{desc}}</p>
+        {{#if live}}
+          <a class="shot" href="https://vibes.diy/vibe/{{author}}/{{slug}}" aria-label="{{title}} screenshot"><img src="https://{{slug}}--{{author}}.prod-v2.vibesdiy.net/screenshot.jpg" alt="{{slug}}" onerror="this.onerror=null; this.src='{{@root.assetPrefix}}images/og-preview.png';"/></a>
+          <div class="ctas">
+            <a class="btn" href="https://vibes.diy/vibe/{{author}}/{{slug}}">Play</a>
+            <a class="btn btn-secondary" href="https://vibes.diy/remix/{{author}}/{{slug}}?skipChat=true">Clone</a>
+            <a class="btn btn-secondary" href="https://vibes.diy/remix/{{author}}/{{slug}}">Remix</a>
+          </div>
+          <a class="prompt-link" href="https://vibes.diy/chat/prompt?prompt64={{prompt64 desc}}">— start fresh from this prompt</a>
+        {{else}}
+          <div class="shot"><div class="shot-placeholder">deploying soon</div></div>
+          <div class="ctas">
+            <a class="btn" href="https://vibes.diy/chat/prompt?prompt64={{prompt64 desc}}">Start From Prompt</a>
+          </div>
+        {{/if}}
+      </article>
+    {{/each}}
+  </section>
+
+  <section class="epilogue">
+    <p><strong>The hyper-casual shelf.</strong> Built for one hand and three minutes at a time. Each one is a single-file React app with persistent state — remix any of them into a private leaderboard for your group chat.</p>
+  </section>
+</main>
+
+{{> newsletter}}
+<footer class="term-footer">
+  Vibes.diy · <a href="https://links.vibes.diy/homepage">homepage</a> · <a href="/games/">games</a>
+</footer>

@@ -1,0 +1,312 @@
+{{!--
+{
+  "layout": "webring",
+  "title": "For Church Summer Programming | Vibes DIY",
+  "description": "VBS station signup, snack contributions, kids camp roster, small group finder, Sunday volunteer slots. Five tools for church summer coordinators.",
+  "ogUrl": "https://good.vibes.diy/church-summer/",
+  "source": "church-summer",
+  "apps": [
+    {
+      "num": "01",
+      "slug": "vbs-station-signup",
+      "author": "og",
+      "live": true,
+      "title": "VBS Station Signup",
+      "tagline": "Every station covered before Sunday.",
+      "desc": "VBS volunteer station signup. Stations: Bible story, crafts, snacks, games, music, check-in. Each station needs 2 volunteers per day. People add their name to a slot. Shows gaps at a glance.",
+      "fork": "Your VBS has different stations, different volunteer counts per slot, or a multi-week run? Clone it and describe your specific station lineup and staffing needs."
+    },
+    {
+      "num": "02",
+      "slug": "snack-contribution-list",
+      "author": "og",
+      "live": true,
+      "title": "Snack Signup",
+      "tagline": "Who's bringing what. No duplicates.",
+      "desc": "Church event snack signup. Upcoming events listed. Each event has items needed (drinks, fruit, chips, paper goods). People claim one item. No duplicates, no coordinator calls.",
+      "fork": "Running it for a different kind of event — a potluck dinner, a VBS closing celebration, a fundraiser reception? Clone it and update the event list and item categories."
+    },
+    {
+      "num": "03",
+      "slug": "kids-camp-roster",
+      "author": "og",
+      "live": true,
+      "title": "Kids Camp Roster",
+      "tagline": "Names, allergies, contacts — one place.",
+      "desc": "Summer kids camp roster. Each child: name, age, grade, parent contact, allergy notes, cabin or group. Staff can view and filter. No login required to read.",
+      "fork": "Your camp has specific cabin names, a permission slip field, or a bus assignment column? Clone it and add the fields your staff actually needs."
+    },
+    {
+      "num": "04",
+      "slug": "summer-smallgroup-finder",
+      "author": "og",
+      "live": true,
+      "title": "Small Group Finder",
+      "tagline": "Find your summer group in 30 seconds.",
+      "desc": "Church summer small groups directory. Each group: topic, day/time, location, leader name, spots left. Tap to express interest. Simple, no account.",
+      "fork": "Want it for a fall semester or a year-round ministry rather than summer groups? Clone it and update the group list and the topic categories."
+    },
+    {
+      "num": "05",
+      "slug": "sunday-volunteer-slots",
+      "author": "og",
+      "live": true,
+      "title": "Sunday Slots",
+      "tagline": "Kids room coverage, six Sundays out.",
+      "desc": "Sunday kids room volunteer schedule. Six Sundays listed. Each Sunday has roles: greeter, teacher, helper. People add their name to a slot. Shows who still needs coverage.",
+      "fork": "Your church has different rooms, more Sundays to cover, or different role names? Clone it and describe your specific volunteer structure."
+    }
+  ],
+  "ogImage": "https://good.vibes.diy/images/screenshots/church-summer.jpg"
+}
+--}}
+
+<style>
+  @import url("https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&family=Nunito+Sans:wght@400;600;700&display=optional");
+
+  :root {
+    --warm: #fdf3e3;
+    --honey: #e8a42a;
+    --amber: #d4831a;
+    --amber-light: rgba(232,164,42,0.15);
+    --sage: #6b9a72;
+    --sky: #5b9bd5;
+    --ink: #2a2318;
+    --muted: #8a7a6a;
+    --surface: #fff8ed;
+    --border: rgba(42,35,24,0.12);
+  }
+
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html, body {
+    background: var(--warm);
+    color: var(--ink);
+    font-family: "Nunito", system-ui, sans-serif;
+    line-height: 1.55;
+    min-height: 100vh;
+    background-image:
+      radial-gradient(ellipse at 30% 20%, rgba(232,164,42,0.08) 0%, transparent 60%),
+      radial-gradient(ellipse at 70% 80%, rgba(107,154,114,0.06) 0%, transparent 50%);
+  }
+  a { color: inherit; text-decoration: none; }
+
+  .layout { max-width: 1060px; margin: 0 auto; padding: 0 1.5rem; }
+
+  .topbar {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 1.25rem 0;
+    border-bottom: 2px solid var(--border);
+  }
+  .topbar .brand {
+    font-family: "Nunito", sans-serif; font-weight: 900;
+    font-size: 1.05rem; letter-spacing: -0.01em; color: var(--amber);
+  }
+  .topbar .meta {
+    font-size: 0.72rem; letter-spacing: 0.08em; color: var(--muted); font-weight: 600;
+  }
+
+  .crumb {
+    padding: 0.5rem 0;
+    font-size: 0.7rem; color: var(--muted);
+    border-bottom: 1px solid var(--border);
+  }
+  .crumb a { color: var(--muted); }
+  .crumb a:hover { color: var(--amber); }
+
+  .hero {
+    padding: 4rem 0 3.5rem;
+    border-bottom: 2px solid var(--border);
+  }
+  .hero .label {
+    font-size: 0.72rem; letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--amber); font-weight: 700;
+    margin-bottom: 1.5rem; display: inline-block;
+    background: var(--amber-light);
+    padding: 5px 12px; border-radius: 20px;
+  }
+  .hero h1 {
+    font-size: clamp(2.8rem, 7vw, 5.5rem);
+    font-weight: 900; line-height: 1.0;
+    letter-spacing: -0.03em; margin-bottom: 1.5rem;
+  }
+  .hero h1 .hi { color: var(--amber); }
+  .hero p.lead {
+    font-size: 1.15rem; max-width: 680px; line-height: 1.65;
+    color: var(--ink); opacity: 0.75;
+  }
+
+  .stats {
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    border: 2px solid var(--border); border-radius: 12px;
+    overflow: hidden; margin: 2rem 0;
+    background: var(--surface);
+  }
+  @media (max-width: 700px) { .stats { grid-template-columns: repeat(2, 1fr); } }
+  .stat-cell { padding: 1.25rem 1.5rem; border-right: 1px solid var(--border); }
+  .stat-cell:last-child { border-right: none; }
+  .stat-cell .k { font-size: 0.62rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); font-weight: 700; margin-bottom: 0.4rem; }
+  .stat-cell .v { font-weight: 800; font-size: 1.3rem; color: var(--amber); }
+
+  .section-label {
+    padding: 1.5rem 0 0.75rem;
+    font-size: 0.68rem; letter-spacing: 0.12em; text-transform: uppercase;
+    color: var(--muted); font-weight: 700;
+    border-bottom: 1px dashed var(--border); margin-bottom: 1.5rem;
+  }
+
+  .apps {
+    display: flex; flex-direction: column;
+    border: 2px solid var(--border); border-radius: 12px;
+    overflow: hidden; background: var(--surface);
+  }
+  .app {
+    padding: 2rem 1.75rem;
+    border-bottom: 1px solid var(--border);
+    display: grid; grid-template-columns: 72px 1fr 300px;
+    gap: 2rem; align-items: start;
+    transition: background 0.15s;
+  }
+  .app:last-child { border-bottom: none; }
+  @media (max-width: 800px) { .app { grid-template-columns: 1fr; gap: 1rem; } }
+  .app:hover { background: var(--amber-light); }
+
+  .app .num-cell { display: flex; flex-direction: column; gap: 0.4rem; }
+  .app .num { font-weight: 900; font-size: 2.8rem; line-height: 0.9; letter-spacing: -0.04em; color: rgba(42,35,24,0.15); }
+  .app--live .num { color: var(--honey); }
+  .app .status {
+    font-size: 0.52rem; letter-spacing: 0.2em; text-transform: uppercase;
+    padding: 3px 8px; border: 1.5px solid var(--border);
+    color: var(--muted); text-align: center; border-radius: 20px;
+    font-weight: 700;
+  }
+  .app--live .status { background: var(--honey); color: white; border-color: var(--honey); }
+
+  .app .body { display: flex; flex-direction: column; gap: 0.6rem; }
+  .app .body .title { font-size: 1.9rem; font-weight: 800; letter-spacing: -0.02em; line-height: 1.05; }
+  .app .body .tagline { font-size: 0.88rem; line-height: 1.5; color: var(--amber); font-weight: 600; }
+  .app .body .desc { font-size: 0.97rem; line-height: 1.6; opacity: 0.7; }
+
+  .app .right { display: flex; flex-direction: column; gap: 0.6rem; }
+  .app .shot { display: block; aspect-ratio: 16/9; overflow: hidden; border: 1.5px solid var(--border); border-radius: 8px; background: var(--warm); }
+  .app .shot img { width: 100%; height: 100%; object-fit: cover; }
+  .app .shot-placeholder {
+    padding: 1rem; height: 100%; display: flex; align-items: center; justify-content: center;
+    font-size: 0.65rem; letter-spacing: 0.15em; text-transform: uppercase;
+    text-align: center; color: var(--muted); opacity: 0.5; font-weight: 600;
+  }
+  .app .ctas { display: grid; grid-template-columns: repeat(3, 1fr); border: 1.5px solid var(--border); border-radius: 8px; overflow: hidden; }
+  .app .ctas--single { grid-template-columns: 1fr; }
+  .btn {
+    text-align: center; padding: 0.6rem 0.5rem;
+    background: transparent; border-right: 1px solid var(--border);
+    font-size: 0.65rem; letter-spacing: 0.1em; text-transform: uppercase; font-weight: 700;
+    color: var(--ink); cursor: pointer; transition: background 0.12s;
+  }
+  .btn:last-child { border-right: none; }
+  .btn:hover { background: var(--amber-light); color: var(--amber); }
+  .prompt-link {
+    font-size: 0.68rem; color: var(--muted); text-decoration: underline;
+  }
+  .prompt-link:hover { color: var(--amber); }
+  .fork-note {
+    font-size: 0.72rem; color: var(--muted); line-height: 1.5;
+    border-left: 2px solid var(--border); padding-left: 0.6rem; margin-top: 0.3rem;
+    opacity: 0.8;
+  }
+
+  .epilogue { padding: 3rem 0; border-top: 2px solid var(--border); margin-top: 2rem; }
+  .epilogue h2 { font-size: 0.68rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--amber); font-weight: 700; margin-bottom: 1rem; }
+  .epilogue p { font-size: 1.1rem; max-width: 720px; line-height: 1.65; opacity: 0.75; }
+  .epilogue .hl { color: var(--amber); font-weight: 700; }
+
+  footer {
+    padding: 1.25rem 0; font-size: 0.7rem; color: var(--muted); font-weight: 600;
+    display: flex; justify-content: space-between;
+    border-top: 1px solid var(--border);
+  }
+  footer a:hover { color: var(--amber); }
+</style>
+
+<div class="layout">
+  <header class="topbar">
+    <a class="brand" href="https://links.vibes.diy/homepage">Vibes DIY</a>
+    <span class="meta">For Church Summer &middot; five tools</span>
+  </header>
+
+  <nav class="crumb">
+    <a href="/">Home</a> &nbsp;/&nbsp; Church Summer
+  </nav>
+
+  <section class="hero">
+    <span class="label">For Church Summer Programming</span>
+    <h1>Summer is<br/><span class="hi">coordinated.</span></h1>
+    <p class="lead">
+      Five tools for church summer coordinators — VBS stations, snack signups,
+      kids camp rosters, small group directories, and Sunday volunteer schedules.
+      Each one does one job. Share the link with your congregation.
+    </p>
+  </section>
+
+  <div class="stats">
+    <div class="stat-cell"><div class="k">Tools</div><div class="v">Five</div></div>
+    <div class="stat-cell"><div class="k">Scope</div><div class="v">One job</div></div>
+    <div class="stat-cell"><div class="k">Login</div><div class="v">None</div></div>
+    <div class="stat-cell"><div class="k">Setup</div><div class="v">Minutes</div></div>
+  </div>
+
+  <div class="section-label">The Tools</div>
+
+  <section class="apps">
+    {{#each apps}}
+    <article class="app {{#if live}}app--live{{else}}app--pending{{/if}}">
+      <div class="num-cell">
+        <div class="num">{{num}}</div>
+        <div class="status">{{#if live}}Live{{else}}Soon{{/if}}</div>
+      </div>
+      <div class="body">
+        <h2 class="title">{{title}}</h2>
+        <p class="tagline">{{tagline}}</p>
+        <p class="desc">{{desc}}</p>
+      </div>
+      <div class="right">
+        {{#if live}}
+          <a class="shot" href="https://vibes.diy/vibe/{{author}}/{{slug}}" aria-label="{{title}} screenshot"><img src="https://{{slug}}--{{author}}.prod-v2.vibesdiy.net/screenshot.jpg" alt="{{slug}}" onerror="this.onerror=null; this.src='{{@root.assetPrefix}}images/og-preview.png';"/></a>
+          <div class="ctas">
+            <a class="btn" href="https://vibes.diy/vibe/{{author}}/{{slug}}">Join</a>
+            <a class="btn" href="https://vibes.diy/remix/{{author}}/{{slug}}?skipChat=true">Clone</a>
+            <a class="btn" href="https://vibes.diy/remix/{{author}}/{{slug}}">Remix</a>
+          </div>
+          <a class="prompt-link" href="https://vibes.diy/chat/prompt?prompt64={{prompt64 desc}}">// start fresh from this prompt</a>
+        {{else}}
+          <div class="shot"><div class="shot-placeholder">generating</div></div>
+          <div class="ctas ctas--single">
+            <a class="btn" href="https://vibes.diy/chat/prompt?prompt64={{prompt64 desc}}">Start From Prompt</a>
+          </div>
+          {{#if fork}}<p class="fork-note">{{fork}}</p>{{/if}}
+        {{/if}}
+      </div>
+    </article>
+    {{/each}}
+  </section>
+
+  <div class="epilogue">
+    <h2>The idea</h2>
+    <p>
+      Summer programming runs on coordinator energy and group texts.
+      VBS week alone generates a hundred "who's bringing the snacks" messages.
+      These tools are <span class="hl">each one screen, one job</span> —
+      built to be cloned, renamed to your church's context, and shared with a link.
+      No account. No training required.
+    </p>
+    <p style="margin-top:1rem; opacity:0.75;">
+      These five were built for a generic church summer program. Your congregation has specific station names, specific event dates, specific quirks in how volunteers sign up. Clone whichever is closest, rename it to match your church, and share the link Sunday morning.
+    </p>
+  </div>
+
+  {{> newsletter}}
+<footer>
+    <span>Vibes.diy &middot; <a href="https://links.vibes.diy/homepage">homepage</a></span>
+    <span>Church Summer</span>
+  </footer>
+</div>

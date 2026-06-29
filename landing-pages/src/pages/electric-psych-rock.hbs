@@ -1,0 +1,581 @@
+{{!--
+{
+  "layout": "webring",
+  "title": "Deep Cuts | Vibes DIY",
+  "description": "Five apps for the psych-curious: rabbit-hole navigators, deep-cut oracles, coordinated listening sessions, dig logs, and a canon quiz. Build your own or remix ours.",
+  "ogUrl": "https://good.vibes.diy/electric-psych-rock/",
+  "source": "electric-psych-rock",
+  "apps": [
+    {
+      "num": "01",
+      "slug": "psych-rabbit-hole",
+      "author": "og",
+      "live": true,
+      "title": "Rabbit Hole",
+      "tagline": "Enter a band. Follow the maze.",
+      "desc": "Type any band from the psych canon and get five similar artists with a one-line note on the connection. Includes shuffle for random starting points. A crate-digger's compass for the late-60s ecosystem.",
+      "fork": "Your canon is Afrobeat and funk-fusion, not late-60s psych. Clone it and retrain the connections around Fela, Tony Allen, and the Lagos and New York scenes."
+    },
+    {
+      "num": "02",
+      "slug": "b-side-oracle",
+      "author": "og",
+      "live": true,
+      "title": "B-Side Oracle",
+      "tagline": "One deep cut at a time.",
+      "desc": "Name a famous album or band. The Oracle returns one obscure recommendation from the same era with a short note on what makes it singular. Press again for another pull from the stack.",
+      "fork": "You want this for jazz — enter a Blue Note classic and get one overlooked session leader from the same year. Clone it and focus the oracle on a different era and scene."
+    },
+    {
+      "num": "03",
+      "slug": "psych-listen-along",
+      "author": "og",
+      "live": true,
+      "title": "Listen Along",
+      "tagline": "Everybody drops the needle at the same time.",
+      "desc": "Host picks an album and a start time. Friends join with their name. Countdown begins. Notes appear after each side. Coordinated listening across distance, no platform required.",
+      "fork": "You run a book club, not a record club. Clone this and replace the album fields with title, author, and chapter markers — the synchronized countdown still works."
+    },
+    {
+      "num": "04",
+      "slug": "dig-log",
+      "author": "og",
+      "live": true,
+      "title": "Dig Log",
+      "tagline": "Track what's frying your brain this week.",
+      "desc": "Log an album: title, artist, year, one-line impression. Browse your history. Share a read-only link. A crate digger's journal — lightweight, fast, yours.",
+      "fork": "You want to track films alongside records — same lightweight journal format, same share-link output. Clone it and add a media-type toggle."
+    },
+    {
+      "num": "05",
+      "slug": "psych-canon-quiz",
+      "author": "og",
+      "live": true,
+      "title": "Canon Quiz",
+      "tagline": "Silver Apples or Soft Machine — which came first?",
+      "desc": "Multiple-choice questions about the psych canon 1965–1975. Albums, connections, eras, personnel. Score tracker. Good for settling arguments at the record shop.",
+      "fork": "Your canon quiz is about krautrock, or free jazz, or Detroit techno. Clone it and write your own questions — the quiz engine is the same."
+    }
+  ],
+  "ogImage": "https://good.vibes.diy/images/screenshots/electric-psych-rock.jpg"
+}
+--}}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  {{> head}}
+  <style>
+    @import url("https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400;1,600&family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Inter:wght@400;500;600&display=optional");
+
+    :root {
+      --void:  #0c0905;
+      --amber: #c89010;
+      --glow:  #f0cc50;
+      --cream: #ece4c8;
+      --muted: #8a7a58;
+      --deep:  #1a1208;
+      --teal:  #186858;
+      --ghost: rgba(236, 228, 200, 0.07);
+    }
+
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    html, body {
+      background: var(--void);
+      color: var(--cream);
+      font-family: 'Space Mono', monospace;
+      min-height: 100vh;
+      background-image:
+        radial-gradient(ellipse 80% 40% at 50% -10%, rgba(200, 144, 16, 0.14) 0%, transparent 100%),
+        radial-gradient(ellipse 60% 40% at 20% 110%, rgba(24, 104, 88, 0.07) 0%, transparent 100%);
+    }
+
+    a { color: inherit; text-decoration: none; }
+    img { display: block; max-width: 100%; }
+
+    /* ── NAV ── */
+    .nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1.25rem 2rem;
+      border-bottom: 1px solid rgba(200, 144, 16, 0.25);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      background: rgba(12, 9, 5, 0.92);
+      backdrop-filter: blur(8px);
+    }
+    .nav-logo {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.85rem;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      color: var(--cream);
+    }
+    .nav-logo em {
+      font-style: normal;
+      color: var(--amber);
+    }
+    .nav-section {
+      font-size: 0.55rem;
+      letter-spacing: 0.35em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    /* ── POSTER KICKER ── */
+    .kicker {
+      text-align: center;
+      padding: 2.5rem 1rem 0;
+      font-size: 0.55rem;
+      letter-spacing: 0.45em;
+      text-transform: uppercase;
+      color: var(--amber);
+      opacity: 0.65;
+    }
+    .kicker::before, .kicker::after { content: ' ◈ '; }
+
+    /* ── SPOTLIGHT ── */
+    .spotlight {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 2.5rem 2rem 4rem;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 5rem;
+      align-items: center;
+      border-bottom: 1px solid rgba(200, 144, 16, 0.18);
+    }
+    @media (max-width: 820px) {
+      .spotlight { grid-template-columns: 1fr; gap: 2.5rem; padding: 2rem 1.5rem 3rem; }
+    }
+
+    .spotlight-num {
+      font-size: 0.55rem;
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      color: var(--amber);
+      margin-bottom: 1.25rem;
+    }
+    .spotlight-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-style: italic;
+      font-weight: 300;
+      font-size: clamp(5rem, 13vw, 10rem);
+      line-height: 0.85;
+      letter-spacing: -0.02em;
+      color: var(--cream);
+      margin-bottom: 1.75rem;
+    }
+    .spotlight-title span {
+      color: var(--glow);
+      display: block;
+    }
+    .spotlight-tagline {
+      font-size: 0.8rem;
+      color: var(--muted);
+      line-height: 1.7;
+      margin-bottom: 1rem;
+    }
+    .spotlight-desc {
+      font-size: 0.78rem;
+      line-height: 1.9;
+      color: rgba(236, 228, 200, 0.6);
+      margin-bottom: 2.25rem;
+      max-width: 44ch;
+    }
+    .btn-primary {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: var(--amber);
+      color: var(--void);
+      padding: 0.8rem 1.75rem;
+      font-family: 'Space Mono', monospace;
+      font-weight: 700;
+      font-size: 0.65rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      transition: background 0.15s, transform 0.1s;
+    }
+    .btn-primary:hover { background: var(--glow); transform: translateY(-2px); }
+    .btn-primary::after { content: '↗'; font-style: normal; }
+
+    /* ── SCREENSHOT ── */
+    .spotlight-visual {}
+    .screenshot-wrap {
+      border: 1px solid rgba(200, 144, 16, 0.3);
+      background: rgba(200, 144, 16, 0.04);
+      aspect-ratio: 4 / 3;
+      overflow: hidden;
+      position: relative;
+    }
+    .screenshot-wrap img {
+      width: 100%; height: 100%; object-fit: cover;
+    }
+    .screenshot-placeholder {
+      position: absolute; inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 0.75rem;
+      color: var(--amber);
+      opacity: 0.25;
+    }
+    .placeholder-glyph {
+      font-family: 'Cormorant Garamond', serif;
+      font-size: 6rem;
+      font-style: italic;
+      line-height: 1;
+    }
+    .placeholder-label {
+      font-size: 0.5rem;
+      letter-spacing: 0.4em;
+      text-transform: uppercase;
+    }
+
+    /* ── DIVIDER ── */
+    .section-divider {
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
+      max-width: 1200px;
+      margin: 3.5rem auto 2.5rem;
+      padding: 0 2rem;
+    }
+    .section-divider::before, .section-divider::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: rgba(200, 144, 16, 0.25);
+    }
+    .section-divider-label {
+      font-size: 0.5rem;
+      letter-spacing: 0.4em;
+      text-transform: uppercase;
+      color: var(--muted);
+      white-space: nowrap;
+    }
+
+    /* ── GALLERY ── */
+    .gallery {
+      max-width: 1200px;
+      margin: 0 auto 5rem;
+      padding: 0 2rem;
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1.25rem;
+    }
+    @media (max-width: 720px) {
+      .gallery { grid-template-columns: 1fr; padding: 0 1.5rem; }
+    }
+
+    .app-card {
+      border: 1px solid rgba(200, 144, 16, 0.2);
+      background: var(--ghost);
+      padding: 1.75rem;
+      transition: border-color 0.2s, background 0.2s;
+    }
+    .app-card:hover {
+      border-color: rgba(200, 144, 16, 0.5);
+      background: rgba(200, 144, 16, 0.06);
+    }
+
+    .card-num {
+      font-size: 0.5rem;
+      letter-spacing: 0.35em;
+      text-transform: uppercase;
+      color: var(--amber);
+      margin-bottom: 0.65rem;
+    }
+    .card-title {
+      font-family: 'Cormorant Garamond', serif;
+      font-style: italic;
+      font-weight: 300;
+      font-size: 2.25rem;
+      line-height: 1;
+      color: var(--cream);
+      margin-bottom: 0.5rem;
+    }
+    .card-tagline {
+      font-size: 0.65rem;
+      color: var(--muted);
+      margin-bottom: 1rem;
+      line-height: 1.6;
+    }
+    .card-shot {
+      aspect-ratio: 16 / 9;
+      border: 1px solid rgba(200, 144, 16, 0.15);
+      background: rgba(200, 144, 16, 0.03);
+      overflow: hidden;
+      margin-bottom: 1.25rem;
+      position: relative;
+    }
+    .card-shot img {
+      width: 100%; height: 100%; object-fit: cover;
+    }
+    .card-shot-placeholder {
+      position: absolute; inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Cormorant Garamond', serif;
+      font-style: italic;
+      font-size: 1.5rem;
+      color: var(--amber);
+      opacity: 0.2;
+    }
+    .card-desc {
+      font-size: 0.72rem;
+      line-height: 1.85;
+      color: rgba(236, 228, 200, 0.55);
+      margin-bottom: 1.5rem;
+    }
+    .card-actions {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+    }
+    .btn-sm {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.55rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      padding: 0.45rem 0.9rem;
+      border: 1px solid;
+      transition: all 0.15s;
+      cursor: pointer;
+    }
+    .btn-join  { border-color: var(--amber); color: var(--amber); }
+    .btn-join:hover  { background: var(--amber); color: var(--void); }
+    .btn-clone { border-color: var(--muted); color: var(--muted); }
+    .btn-clone:hover { border-color: var(--cream); color: var(--cream); }
+    .btn-remix { border-color: var(--teal); color: var(--teal); }
+    .btn-remix:hover { background: var(--teal); color: var(--cream); }
+    .card-fork {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.62rem;
+      line-height: 1.7;
+      color: var(--muted);
+      border-left: 2px solid rgba(200, 144, 16, 0.45);
+      padding-left: 0.65rem;
+      margin-top: 0.5rem;
+    }
+    .spotlight-fork {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.65rem;
+      line-height: 1.7;
+      color: var(--muted);
+      border-left: 2px solid rgba(200, 144, 16, 0.45);
+      padding-left: 0.75rem;
+      margin-top: 1rem;
+      max-width: 44ch;
+    }
+    .prompt-note {
+      font-family: 'Space Mono', monospace;
+      font-size: 0.6rem;
+      color: var(--muted);
+      margin-top: 0.5rem;
+    }
+    .prompt-note a { color: var(--amber); text-decoration: underline; }
+
+    /* ── CLOSING ── */
+    .closing {
+      max-width: 1200px;
+      margin: 0 auto 4rem;
+      padding: 0 2rem;
+    }
+    .closing-inner {
+      border: 1px solid rgba(200, 144, 16, 0.25);
+      padding: 4rem 2rem;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+      background: var(--ghost);
+    }
+    .closing-inner::before {
+      content: '';
+      position: absolute; inset: 0;
+      background: radial-gradient(ellipse 60% 60% at 50% 50%, rgba(200, 144, 16, 0.06) 0%, transparent 100%);
+      pointer-events: none;
+    }
+    .closing-kicker {
+      font-size: 0.5rem;
+      letter-spacing: 0.45em;
+      text-transform: uppercase;
+      color: var(--amber);
+      margin-bottom: 1.25rem;
+    }
+    .closing-head {
+      font-family: 'Cormorant Garamond', serif;
+      font-style: italic;
+      font-weight: 300;
+      font-size: clamp(2.5rem, 6vw, 5rem);
+      color: var(--cream);
+      line-height: 1;
+      margin-bottom: 1.25rem;
+    }
+    .closing-sub {
+      font-size: 0.75rem;
+      color: var(--muted);
+      max-width: 48ch;
+      margin: 0 auto 2.5rem;
+      line-height: 1.8;
+    }
+    .closing-actions {
+      display: flex;
+      justify-content: center;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+
+    /* ── FOOTER ── */
+    .footer {
+      border-top: 1px solid rgba(200, 144, 16, 0.15);
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+    .footer-copy {
+      font-size: 0.55rem;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+    }
+    .footer-links {
+      display: flex;
+      gap: 1.75rem;
+    }
+    .footer-links a {
+      font-size: 0.55rem;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--muted);
+      transition: color 0.15s;
+    }
+    .footer-links a:hover { color: var(--amber); }
+  </style>
+</head>
+<body>
+
+<nav class="nav">
+  <a href="https://links.vibes.diy/homepage" class="nav-logo">Vibes <em>DIY</em></a>
+  <span class="nav-section">Deep Cuts</span>
+</nav>
+
+<p class="kicker">Presented for the psych-curious</p>
+
+{{#each apps}}
+{{#if @first}}
+
+<section class="spotlight">
+  <div class="spotlight-text">
+    <div class="spotlight-num">App {{num}} — Spotlight</div>
+    <h1 class="spotlight-title">
+      Rabbit<span>Hole</span>
+    </h1>
+    <p class="spotlight-tagline">{{tagline}}</p>
+    <p class="spotlight-desc">{{desc}}</p>
+    <a href="https://vibes.diy/vibe/{{author}}/{{slug}}" class="btn-primary">Open the Rabbit Hole</a>
+    <div style="display: flex; gap: 0.5rem; margin-top: 0.75rem; flex-wrap: wrap;">
+      <a href="https://vibes.diy/remix/{{author}}/{{slug}}?skipChat=true" class="btn-sm btn-clone">Clone</a>
+      <a href="https://vibes.diy/remix/{{author}}/{{slug}}" class="btn-sm btn-remix">Remix</a>
+      <a href="https://vibes.diy/chat/prompt?prompt64={{prompt64 desc}}" class="btn-sm btn-clone">Start fresh</a>
+    </div>
+    {{#if fork}}<p class="spotlight-fork">{{fork}}</p>{{/if}}
+  </div>
+  <div class="spotlight-visual">
+    <div class="screenshot-wrap">
+      {{#if live}}
+      <img
+        src="https://{{slug}}--{{author}}.prod-v2.vibesdiy.net/screenshot.jpg"
+        alt="{{title}} — psychedelic music explorer"
+        onerror="this.onerror=null; this.src='{{@root.assetPrefix}}images/og-preview.png';"
+      />
+      {{else}}
+      <div class="screenshot-placeholder">
+        <div class="placeholder-glyph">◈</div>
+        <div class="placeholder-label">Deploying soon</div>
+      </div>
+      {{/if}}
+    </div>
+  </div>
+</section>
+
+{{else}}
+{{/if}}
+{{/each}}
+
+<div class="section-divider">
+  <span class="section-divider-label">Also on the bill</span>
+</div>
+
+<div class="gallery">
+  {{#each apps}}
+  {{#unless @first}}
+  <article class="app-card">
+    <div class="card-num">App {{num}}</div>
+    <h2 class="card-title">{{title}}</h2>
+    <p class="card-tagline">{{tagline}}</p>
+    <div class="card-shot">
+      {{#if live}}
+      <img
+        src="https://{{slug}}--{{author}}.prod-v2.vibesdiy.net/screenshot.jpg"
+        alt="{{title}}"
+        onerror="this.onerror=null; this.src='{{@root.assetPrefix}}images/og-preview.png';"
+      />
+      {{else}}
+      <div class="card-shot-placeholder">{{title}}</div>
+      {{/if}}
+    </div>
+    <p class="card-desc">{{desc}}</p>
+    <div class="card-actions">
+      <a href="https://vibes.diy/vibe/{{author}}/{{slug}}" class="btn-sm btn-join">Join</a>
+      <a href="https://vibes.diy/remix/{{author}}/{{slug}}?skipChat=true" class="btn-sm btn-clone">Clone</a>
+      <a href="https://vibes.diy/remix/{{author}}/{{slug}}" class="btn-sm btn-remix">Remix</a>
+    </div>
+    {{#if fork}}<p class="card-fork">{{fork}}</p>{{/if}}
+    <p class="prompt-note"><a href="https://vibes.diy/chat/prompt?prompt64={{prompt64 desc}}">The prompt that made this — describe your version instead.</a></p>
+  </article>
+  {{/unless}}
+  {{/each}}
+</div>
+
+<div class="closing">
+  <div class="closing-inner">
+    <p class="closing-kicker">Build your own</p>
+    <h2 class="closing-head">Start from a prompt.</h2>
+    <p class="closing-sub">
+      Every crate-digger has a different canon. Clone whichever app is closest
+      to your scene — your era, your genre, your arguments — and describe your version.
+      Vibes DIY builds it, deploys it, and hands you the source.
+    </p>
+    <div class="closing-actions">
+      <a href="https://links.vibes.diy/homepage" class="btn-primary">Start Building</a>
+      <a href="https://links.vibes.diy/discord" class="btn-sm btn-clone" style="padding: 0.8rem 1.75rem;">Join Discord</a>
+    </div>
+  </div>
+</div>
+
+{{> newsletter}}
+<footer class="footer">
+  <span class="footer-copy">© 2025 Vibes DIY — No-code apps</span>
+  <nav class="footer-links">
+    <a href="https://links.vibes.diy/discord">Discord</a>
+    <a href="https://links.vibes.diy/YouTube">YouTube</a>
+    <a href="https://links.vibes.diy/Substack">Substack</a>
+    <a href="https://links.vibes.diy/Bluesky">Bluesky</a>
+  </nav>
+</footer>
+
+</body>
+</html>
