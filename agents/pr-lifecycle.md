@@ -134,6 +134,29 @@ Don't post this comment until the work is genuinely complete, CI is green, and `
 
 When posting the Rollout watch comment, also add the `ready-to-merge` label to the PR. The comment gives humans context; the label makes merge queue triage faster.
 
+## Autonomous merge loop — and when to hold for a human
+
+This loop governs how **already-scoped** work gets _executed_; it doesn't replace scoping. Genuinely big or net-new work still goes through the **spec-first process first** (design issue → spec → review) per [Spec-first workflow](#spec-first-workflow) and [`CONTRIBUTING.md § Scope`](../CONTRIBUTING.md#scope-small-and-sharp-by-default). Once the spec is agreed and broken into shippable pieces, _this_ is the cadence those pieces follow.
+
+When the human hands off a stream of work — a single change or a multi-slice epic — the **default cadence is autonomous**:
+
+> **Hold for Charlie → CI green → merge → continue to the next thing.** Repeat until the work (or epic) is done; for an epic, finish by **writing a blog post**.
+
+Drive this without asking for permission on each merge. "Hold for Charlie" means: @-mention `@CharlieHelps`, resolve **every** review thread (Charlie's _and_ Codex's), and only then treat it as mergeable. "Green" means all required checks pass (re-kick known-flaky/infra failures; don't merge red). Merge with `rebase` (never squash). Then immediately start the next thing.
+
+**The exception — hold for an explicit _human_ merge (never auto-merge):** any change that should **go out on its own deploy** or carries a **non-trivial rollback story**. Concretely:
+
+- **schema / migration changes** (new tables or columns, `drizzle-kit push`),
+- **Durable Object topology** (new DO classes, alarm wiring, DO migrations),
+- **new bindings / infrastructure** (queues, egress proxies, env-gated runtime, secrets plumbing),
+- anything **riskier** than garden-variety, or where rollback is **not** a clean `git revert`.
+
+**This holds regardless of size** — a small schema tweak still ships on its own deploy. For these, drive the PR all the way to **green + `ready-to-merge` + the Rollout watch comment**, then **stop and hand it to the human to merge**, and say _explicitly_ in the Rollout watch note that it's a hold-for-human deploy and why (so it lands deliberately and can be watched / rolled back). Do **not** merge it yourself even though everything is green.
+
+**Garden-variety changes auto-merge** per the loop: pure library code behind an off-by-default flag, docs, tests, blog seeds, small non-risky fixes — anything whose rollback is a clean revert with no deploy coupling.
+
+**When unsure which bucket a change is in, treat it as risky and hold.** The cost of a needless hold is one human click; the cost of an auto-merged risky change is a bad deploy.
+
 ## Close the issues a PR fixes (don't trust auto-close)
 
 GitHub's keyword auto-close (`Fixes #N` / `Closes #N` in the PR body closing the issue on merge) **rarely fires reliably in this repo** — so treat closing fixed issues as a step you own, not one the platform handles for you.
