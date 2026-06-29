@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type { Dispatch } from "react";
 import { processStream } from "@adviser/cement";
 import { type } from "arktype";
-import { sectionEvent } from "@vibes.diy/api-types";
+import { sectionEvent, isResError, SHARD_OVERLOADED_CODE } from "@vibes.diy/api-types";
 import type { Conn, LLMChat } from "@vibes.diy/api-types";
 import { getThemeBySlug } from "@vibes.diy/prompts";
 import { useStreamWatchdog } from "./useStreamWatchdog.js";
@@ -95,6 +95,12 @@ export function useChatSession(opts: ChatSessionOpts): ChatSession {
   // dropped instead of merged.
   const streamGenerationRef = useRef(0);
 
+  // Holds a prompt that hit `shard-overloaded` and was rolled to the next shard.
+  // The reconnect loop reopens the chat on that shard, then re-fires this prompt
+  // (handleReconnectAttempt) — NOT via promptToSend, which could race the old
+  // (closed) chat handle before reconnect replaces it. (Charlie review, #2829)
+  const retryPromptRef = useRef<string | null>(null);
+
   const attachSectionStream = useCallback(
     (chatHandle: LLMChat) => {
       const myGeneration = (streamGenerationRef.current += 1);
@@ -161,6 +167,45 @@ export function useChatSession(opts: ChatSessionOpts): ChatSession {
     return r.Ok();
   }, [chatApi, ownerHandle, appSlug]);
 
+  // Fire a prompt on a specific chat handle, with codegen admission-roll recovery.
+  // On `shard-overloaded` the api has already rolled to the next shard in the
+  // user's family (rollCodegenShard) and dropped the old socket; we stash the
+  // prompt and force a reconnect so the chat reopens on the rolled shard and the
+  // reconnect loop re-fires it. rollCodegenShard() returns false at MAX_ROLL_INDEX
+  // (or when not rollable), so we then surface the error instead of looping.
+  const firePrompt = useCallback(
+    (chatHandle: LLMChat, text: string) => {
+      dispatch({ type: "setOptimisticPrompt", text });
+      chatHandle
+        .prompt({ messages: [{ role: "user", content: [{ type: "text", text }] }] })
+        .then((r) => {
+          if (r.isErr()) {
+            const err = r.Err();
+            if (isResError(err) && err.error.code === SHARD_OVERLOADED_CODE && chatApi.rollCodegenShard()) {
+              // Keep the optimistic bubble visible through the brief roll; the
+              // retry replaces it. Leave `submitting` latched (no onSendSettled).
+              retryPromptRef.current = text;
+              dispatch({ type: "rollReconnect" });
+              return;
+            }
+            console.error(`PromptSend failed`, err);
+            dispatch({ type: "setOptimisticPrompt", text: undefined });
+            onSendSettled?.(false);
+          } else {
+            dispatch({ type: "setInFlightStreamId", streamId: r.Ok().promptId });
+            notifyRecentVibesChanged();
+            onSendSettled?.(true);
+          }
+        })
+        .catch((err: unknown) => {
+          console.error(`PromptSend threw`, err);
+          dispatch({ type: "setOptimisticPrompt", text: undefined });
+          onSendSettled?.(false);
+        });
+    },
+    [chatApi, dispatch, onSendSettled]
+  );
+
   const handleReconnectAttempt = useCallback(
     (newChat: LLMChat) => {
       // Tear down the stream we're superseding before replaying onto a fresh
@@ -175,11 +220,28 @@ export function useChatSession(opts: ChatSessionOpts): ChatSession {
       dispatch({ type: "initChat", chat: newChat });
       attachSectionStream(newChat);
       refreshAppSettings();
+      // Overload-roll retry: now that the chat is reopened on the rolled shard
+      // (with chat context bound), fire the stashed prompt here — exactly once
+      // (the ref is cleared), so later reconnect attempts replay rather than
+      // re-send.
+      const retry = retryPromptRef.current;
+      if (retry !== null) {
+        retryPromptRef.current = null;
+        firePrompt(newChat, retry);
+      }
     },
-    [attachSectionStream, refreshAppSettings, dispatch]
+    [attachSectionStream, refreshAppSettings, dispatch, firePrompt]
   );
 
-  const handleReconnectGiveUp = useCallback(() => dispatch({ type: "reconnectFailed" }), [dispatch]);
+  const handleReconnectGiveUp = useCallback(() => {
+    // If a rolled prompt was waiting to retry and reconnect gave up, release the
+    // submit guard so the composer doesn't wedge (the retry never landed).
+    if (retryPromptRef.current !== null) {
+      retryPromptRef.current = null;
+      onSendSettled?.(false);
+    }
+    dispatch({ type: "reconnectFailed" });
+  }, [dispatch, onSendSettled]);
 
   useReconnectLoop({
     connection: promptState.connection,
@@ -201,34 +263,9 @@ export function useChatSession(opts: ChatSessionOpts): ChatSession {
         // Clear promptToSend BEFORE firing so any re-render of this effect
         // (e.g. searchParams change) sees null and skips the branch.
         sendPrompt(null);
-        // Show the prompt instantly as an optimistic bubble (see #2352). The
-        // server echo clears it; a failed send drops it.
-        dispatch({ type: "setOptimisticPrompt", text: sentPrompt });
-        chat
-          .prompt({
-            messages: [
-              {
-                role: "user",
-                content: [{ type: "text", text: sentPrompt }],
-              },
-            ],
-          })
-          .then((r) => {
-            if (r.isErr()) {
-              console.error(`PromptSend failed`, r.Err());
-              dispatch({ type: "setOptimisticPrompt", text: undefined });
-              onSendSettled?.(false);
-            } else {
-              dispatch({ type: "setInFlightStreamId", streamId: r.Ok().promptId });
-              notifyRecentVibesChanged();
-              onSendSettled?.(true);
-            }
-          })
-          .catch((err: unknown) => {
-            console.error(`PromptSend threw`, err);
-            dispatch({ type: "setOptimisticPrompt", text: undefined });
-            onSendSettled?.(false);
-          });
+        // Fire on the current chat handle. firePrompt shows the optimistic bubble
+        // (#2352), settles the submit guard, and handles shard-overloaded rolls.
+        firePrompt(chat, sentPrompt);
       }
       return; // Already opened or opening
     }
@@ -264,7 +301,7 @@ export function useChatSession(opts: ChatSessionOpts): ChatSession {
     // `inConstruction` is listed so a lazy host (useInVibeGeneration, #2761)
     // that flips it false on first edit re-runs this effect and opens the chat;
     // in the /chat route it's constant per mount, so it adds no extra runs.
-  }, [ownerHandle, appSlug, chat, openingRef, chatApi, sharedApi, promptToSend, onSendSettled, inConstruction]);
+  }, [ownerHandle, appSlug, chat, openingRef, chatApi, sharedApi, promptToSend, onSendSettled, inConstruction, firePrompt]);
 
   return { chat };
 }

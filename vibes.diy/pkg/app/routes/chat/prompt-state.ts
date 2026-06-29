@@ -209,6 +209,21 @@ function isSetOptimisticPrompt(msg: unknown): msg is SetOptimisticPrompt {
   return typeof msg === "object" && msg !== null && (msg as { type?: unknown }).type === "setOptimisticPrompt";
 }
 
+// Codegen admission roll (cold-start design). When chat.prompt() returns
+// `shard-overloaded`, the client has rolled to the next shard in the user's
+// family and dropped the old socket — but the new socket has NO chat context
+// bound (the server requires openChat on the same connection). Unlike a bare
+// idle `streamDisconnected` (a no-op), this FORCES `connection: "reconnecting"`
+// so the reconnect loop re-opens the chat on the rolled shard; the route then
+// re-queues the prompt to retry there. Without this, an overload-triggered roll
+// would strand the chat on a context-less socket. (Charlie review, #2829)
+interface RollReconnect {
+  type: "rollReconnect";
+}
+function isRollReconnect(msg: unknown): msg is RollReconnect {
+  return typeof msg === "object" && msg !== null && (msg as { type?: unknown }).type === "rollReconnect";
+}
+
 export type PromptAction =
   | PromptAndBlockMsgs
   | InitChat
@@ -223,6 +238,7 @@ export type PromptAction =
   | StreamDisconnected
   | ReplayReset
   | ReconnectFailed
+  | RollReconnect
   | SetInFlightStreamId
   | SetOptimisticPrompt;
 
@@ -258,6 +274,15 @@ export function promptReducer(state: PromptState, block: PromptAction): PromptSt
       if (!turnInFlight || state.connection !== "live") return state;
       return { ...state, connection: "reconnecting" };
     }
+
+    case isRollReconnect(block):
+      // Force reconnect regardless of turn state. A shard-overloaded roll happens
+      // before any block arrives (running=false, no inFlightStreamId), so the
+      // turnInFlight guard in streamDisconnected would drop it — but the socket
+      // DID change shards and needs openChat re-run. Idempotent: already
+      // reconnecting/failed stays as-is.
+      if (state.connection === "reconnecting") return state;
+      return { ...state, connection: "reconnecting" };
 
     case isReplayReset(block):
       return { ...state, blocks: [], current: undefined, running: false, hasCode: false };
