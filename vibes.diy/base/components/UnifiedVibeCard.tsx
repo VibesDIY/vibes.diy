@@ -78,8 +78,15 @@ export interface UnifiedVibeCardProps {
    *  suggestion chips don't sit visible behind it. Ignored while `body` is set
    *  (Share view wins). (vibe-tour-chips-edit) */
   streamBody?: React.ReactNode;
-  /** Which bottom-nav affordance reads as selected. Defaults to "edit". */
-  selectedNav?: "edit" | "share";
+  /** Which bottom-nav affordance reads as selected. Defaults to "edit". The
+   *  editor-tab values ("code"/"data"/"chat"/"settings") all light the Editor
+   *  nav button — the route passes the active tab straight through. */
+  selectedNav?: "edit" | "share" | "code" | "data" | "chat" | "settings";
+  /** Open the in-page editor surface (#2518 Phase 1). Wired to the new Editor
+   *  nav button; omit to hide nothing — the button still renders but is inert. */
+  onOpenEditor?: () => void;
+  /** Lights the Editor nav button's selected ring while the editor surface is open. */
+  editorActive?: boolean;
   className?: string;
 }
 
@@ -367,6 +374,33 @@ export function UnifiedVibeCard(props: UnifiedVibeCardProps) {
                 >
                   <path d="M12 20h9" />
                   <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z" />
+                </svg>
+              </NavIcon>
+              <NavIcon
+                label="Editor"
+                color="#8b5cf6"
+                selected={
+                  props.editorActive ||
+                  props.selectedNav === "code" ||
+                  props.selectedNav === "data" ||
+                  props.selectedNav === "chat" ||
+                  props.selectedNav === "settings"
+                }
+                onClick={props.onOpenEditor}
+              >
+                <svg
+                  width="17"
+                  height="17"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth={2.2}
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden="true"
+                >
+                  <path d="M8 6l-6 6 6 6" />
+                  <path d="M16 6l6 6-6 6" />
                 </svg>
               </NavIcon>
               <NavIcon
