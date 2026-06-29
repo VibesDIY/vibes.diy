@@ -203,6 +203,39 @@ load-bearing, not nice-to-haves. They're what stop a crawler from melting the re
   risk. Keep one canonical parent output path for humans and bots alike, and control the crawl
   surface with sitemap + `rel=canonical` hygiene instead.
 
+## Phase A acceptance criteria (slices 3–5)
+
+Authored by @CharlieHelps ([#2823 review](https://github.com/VibesDIY/vibes.diy/pull/2823)).
+These gate the public-vibe (`isWorldReadable`) cut before it ships.
+
+- [ ] **SSR cache-key contract is canonical + complete**
+  - Key includes: `app/runtime version` + (`dataVersion` **or** deterministic `ssrInputHash`) +
+    canonical `route/search` + `locale` + `renderer version`.
+  - Canonicalization is deterministic (same semantic input ⇒ same key; query-order / ignored-param
+    noise does not fork keys).
+  - Any content-affecting change flips the key.
+  - Unit tests cover key stability + invalidation.
+- [ ] **Quiesce-deadline semantics are explicit + enforced**
+  - SSR waits for live-query settling only until `quiesceDeadlineMs`.
+  - On deadline, render uses the last settled safe snapshot (no unbounded wait).
+  - Outcome is recorded as a structured reason (`quiesced` | `deadline` | `error`) plus timing.
+  - Tests cover: settles-before-deadline, deadline-hit-with-partial-data, no work admitted after cutoff.
+- [ ] **Crawler hot-path fallback is resilient**
+  - Timeout/error fallback is **stale-last-good public render**.
+  - Empty / iframe-fill fallback only on cold start (no stale render exists).
+  - Per-vibe concurrency cap + global circuit-breaker behavior defined and test-covered.
+  - No crawler-only render gate; crawl surface controlled via sitemap + `rel=canonical`.
+- [ ] **Access parity with app reads is guaranteed**
+  - SSR calls the same evaluator path as `getDoc`/`queryDocs` (reuse the seams named in slice 6).
+  - Viewer-resolution parity preserved (`resolve-active-handle.ts` + grant-reduce + wildcard binding).
+  - Cold/empty `accessFnOutputs` behavior explicitly defined (backfill-safe).
+  - Parity tests cover allow/deny, channel-read filtering, wildcard bindings, anonymous vs signed-in.
+  - SSR output never includes docs/fields the same viewer could not read through normal app APIs.
+- [ ] **Phase A observability + reviewability**
+  - Structured logs/metrics include cache outcome, quiesce outcome, fallback path, access-eval mode.
+  - At least one end-to-end test proves: warm hit, stale fallback on timeout, hydrate parity on the
+    same route.
+
 ## Risks / caveats
 
 - Worker Loader is open beta on Workers Paid — confirm production-readiness before it backs
