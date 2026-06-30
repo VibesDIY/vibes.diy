@@ -60,6 +60,30 @@ describe("worker routeDecision", () => {
     expect(decide({ hostname: "myapp--alice.vibesdiy.net", pathname: "/_files/db/doc/key" })).toBe("cf-serve");
   });
 
+  // backend.js _api (#2856 B3): both request forms reach BackendDO, decided before
+  // cf-serve (app subdomain) and the /vibe SSR/redirect branches.
+  it("app-subdomain /_api/* → backend-api (before cf-serve)", () => {
+    expect(decide({ hostname: "myapp--alice.vibesdiy.net", pathname: "/_api" })).toBe("backend-api");
+    expect(decide({ hostname: "myapp--alice.vibesdiy.net", pathname: "/_api/webhooks/stripe", method: "POST" })).toBe(
+      "backend-api"
+    );
+  });
+
+  it("viewer URL /vibe/{owner}/{slug}/_api/* → backend-api (before ssr)", () => {
+    expect(decide({ pathname: "/vibe/alice/todo/_api" })).toBe("backend-api");
+    expect(decide({ pathname: "/vibe/alice/todo/_api/webhooks/stripe", method: "POST" })).toBe("backend-api");
+  });
+
+  it("regression: a non-_api path on the app subdomain still → cf-serve", () => {
+    expect(decide({ hostname: "myapp--alice.vibesdiy.net", pathname: "/api-docs" })).toBe("cf-serve");
+    expect(decide({ hostname: "myapp--alice.vibesdiy.net", pathname: "/_apiary" })).toBe("cf-serve");
+  });
+
+  it("regression: a non-_api /vibe page path still → ssr (not backend-api)", () => {
+    expect(decide({ pathname: "/vibe/alice/todo" })).toBe("ssr");
+    expect(decide({ pathname: "/vibe/alice/todo/settings" })).toBe("ssr");
+  });
+
   it("/assets/cid* → cf-serve (read endpoint)", () => {
     expect(decide({ pathname: "/assets/cid?url=foo" })).toBe("cf-serve");
     expect(decide({ pathname: "/assets/cid", method: "HEAD" })).toBe("cf-serve");

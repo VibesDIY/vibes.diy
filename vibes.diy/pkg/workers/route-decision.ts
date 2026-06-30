@@ -11,6 +11,7 @@ export type Route =
   | "app-api" // /api/app → AppSessions DO (vibe-scoped WebSocket)
   | "shared-do" // /api/shared → SharedSessions DO (singleton/per-user shared-plane WS)
   | "api-do" // /api/* → ChatSessions DO (WebSocket)
+  | "backend-api" // /_api/* (app subdomain) or /vibe/{o}/{s}/_api/* → BackendDO (per-vibe backend.js, #2856 B3)
   | "vibe-pkg" // /vibe-pkg/* → npm package serving
   | "cf-serve" // app subdomain *--*.host, /assets/cid, POST/OPTIONS /assets
   | "reports-config" // /reports/config.json → JSON of public env (Clerk pub key)
@@ -48,6 +49,23 @@ export function routeDecision(req: RouteInput): Route {
 
   // App subdomain: hostname is `<app>--<user>.<base>`.
   const isAppSubdomain = hostname.endsWith(hostnameBase) && hostname.slice(0, -hostnameBase.length).includes("--");
+
+  // Per-app `backend.js` `_api` route (#2856 B3). The reserved `_api` prefix
+  // reaches a vibe by two request forms; both must be decided BEFORE the
+  // `cf-serve` (app-subdomain) and `/vibe/*` SSR/redirect branches below, or the
+  // request gets served as a static app file / 404 instead of reaching BackendDO.
+  // `routeDecision` only classifies; `app.ts` extracts (owner, slug) from the host
+  // or path. The `_api` token is underscore-prefixed so it can't collide with an
+  // app's own `/api/...` client routes.
+  const isBackendApiPath = pathname === "/_api" || pathname.startsWith("/_api/");
+  // (1) Published / runtime host: `<slug>--<owner>.<base>/_api/...` (webhooks, iframe `fetch('/_api/…')`).
+  if (isAppSubdomain && isBackendApiPath) {
+    return "backend-api";
+  }
+  // (2) Viewer URL: `<base>/vibe/{owner}/{slug}/_api/...` (logged-in viewer).
+  if (/^\/vibe\/[^/]+\/[^/]+\/_api(?:\/.*)?$/.test(pathname)) {
+    return "backend-api";
+  }
 
   // Asset host: hostname is `assets.<base>`. Singleton per env. Carries
   // the /_files/<u>/<a>/<db>/<doc>/<key> read endpoint and the

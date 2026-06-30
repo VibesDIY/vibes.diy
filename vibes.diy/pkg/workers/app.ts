@@ -167,6 +167,20 @@ export default {
       return obj.fetch(request); // handle WebSocket upgrade and API requests in the unified Sessions Durable Object
     }
 
+    if (route === "backend-api") {
+      // Per-app `backend.js` `_api` route (#2856 B3). `routeDecision` classified
+      // this as a backend request (app-subdomain `<slug>--<owner>.<base>/_api/*`
+      // or viewer `/vibe/{owner}/{slug}/_api/*`). The BackendDO dispatch + the
+      // selected-release gate land in the next B3 increment; until then the route
+      // is dark and returns 404 (no vibe serves `_api` today, and `BACKEND_JS` is
+      // `off` in every env), so this is the `attemptVibeSsr`-style "no usable
+      // backend" fallback rather than a 500.
+      return new Response("backend.js _api is not enabled", {
+        status: 404,
+        headers: { "Content-Type": "text/plain" },
+      }) as unknown as CFResponse;
+    }
+
     if (route === "vibe-pkg") {
       // console.log("Handling package vibe-pkg request for", url.pathname);
       const cache = caches.default;
