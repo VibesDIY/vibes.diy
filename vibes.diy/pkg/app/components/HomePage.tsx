@@ -200,8 +200,8 @@ export default function HomePage() {
 
           <div style={getContainerStyle(mobile)}>
             <h1 style={getTitle(mobile, isDarkMode)}>
-              Instant apps — easy to&nbsp;
-              <span style={{ textDecoration: "underline" }}>share</span>.
+              Instant apps — from the group chat to the&nbsp;
+              <span style={{ textDecoration: "underline" }}>front counter</span>.
             </h1>
 
             {/* Chat input form */}
@@ -219,7 +219,7 @@ export default function HomePage() {
                       handleSubmit();
                     }
                   }}
-                  placeholder="Describe your app in plain words — it builds instantly and changes as you type."
+                  placeholder="Describe your app in plain words — a trivia night, or an order form that takes payments. It builds instantly and changes as you type."
                   style={getTextareaStyle()}
                 />
                 <button

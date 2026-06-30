@@ -8,12 +8,34 @@ with what people **make and share**, not the engine underneath.
 > Vibes lets you make a real web app just by describing it — it's live instantly,
 > you share it with a link, and you keep changing it by talking to it.
 
+## Two audiences, one voice (read this first)
+
+Vibes serves two crowds with **the exact same sentence**, and we should stop writing
+as if only the first one exists:
+
+- **The group chat** — friends, hobbies, a bit, a night out. Build for fun.
+- **The front counter** — the taco truck, the contractor, the clinic, the shop with
+  a spreadsheet held together with duct tape. Build to *get something done*: take an
+  order, take a payment, replace the spreadsheet, see a dashboard, give a customer a
+  portal, count the inventory.
+
+The move is identical for both: **describe it → it's live at a link → you keep
+changing it → you decide who's in.** Lead with whichever end a given channel wants,
+but **never change the voice** to do it. The day we reach for "workflow automation
+platform" or "digital transformation," we've become the generic offer — and generic
+("we build apps") is the *weakest* thing we can say. Stay concrete and situation-shaped:
+"takes the order," "kills the spreadsheet," "see today's numbers."
+
+The biggest hole we're filling: for a long time nothing in our copy mentioned **money**.
+Commerce — taking an order and a payment — is the strongest "this is a real tool, not a
+toy" signal we have. Say it.
+
 ## The story, in order
 
 People landing cold have three doubts. Answer them in this order:
 
-1. **Fun** — build for any reason, or no reason.
-2. **Done** — it's a real app, live at its own link. Not a prototype.
+1. **Fun** — build for any reason, or no reason. (Or: build because the spreadsheet is killing you.)
+2. **Done** — it's a real app, live at its own link. Not a prototype. It can take an order and a payment.
 3. **Alive** — keep talking to it and it keeps changing. So can anyone you share it with.
 
 That's the whole pitch: **fun, done, and alive.** Everything else is detail.
@@ -57,6 +79,9 @@ When in doubt, talk about **control and access**, never **secrecy from the platf
 | Your data lives in your vibe / stays local / portable | You control your app's data |
 | Live URL with persistent state, no bundler/backend/env drift | It's a real, live app at its own link — nothing to set up |
 | Constrained app shape, open module ecosystem, stack negotiation | *(cut — that's developer talk, not a customer benefit)* |
+| Workflow automation platform / digital transformation / internal tooling | It kills the spreadsheet, takes the order, and shows you the dashboard |
+| E-commerce solution / payment processing integration | It takes the order and the payment the moment it's live |
+| Just for fun / toy apps / for your friends *(as the **whole** story)* | From the group chat to the front counter — fun *and* the thing that runs the shop |
 
 ## "What's it built on?" / "What happened to Fireproof?"
 
@@ -74,6 +99,14 @@ For a **developer** audience only (keep out of consumer copy):
 - "Impress the group chat. Describe what you want, get a live app. Share the link."
 - "No gatekeeping, no walled garden — your code, your app."
 - "Vibes are for everyone. You and your friends aren't users anymore. You're makers."
+
+**New lines this direction mints (use freely):**
+
+- "Make apps with your friends — or run your whole operation."
+- "Impress the group chat. Run the front counter."
+- "Takes the order. Takes the payment."
+- "Kill the spreadsheet."
+- "From the group chat to the front counter."
 
 ## Who it's for (use cases)
 
@@ -103,6 +136,28 @@ remixed. That's the medium: seeing a vibe makes you want to change it.
 - **Indie musician.** Tweaks a chord-progression vibe to match her style; fans remix
   their own versions — listeners become co-creators of the next track.
 
+**People who are getting something done (the front counter)**
+
+Same move, same voice — these people aren't building for fun, they're building because
+the spreadsheet broke. Every one is a job-to-be-done, and every one is a real market:
+
+- **Food truck / small restaurant.** A daily-specials board that takes the order *and*
+  the payment, a prep checklist the whole counter shares, a loyalty card. Replaces a
+  whiteboard and a Square terminal.
+- **Contractor / trades.** Jobsite checklists, a work-order tracker, a customer portal
+  where each client sees their job status and invoice. Replaces texts and a clipboard.
+- **The spreadsheet-heavy shop.** The shared spreadsheet everyone fights over becomes a
+  real app: a form to add things, a dashboard to see them, one source of truth.
+- **The offline business going digital.** A clinic, gym, school, or local retailer that
+  needs booking, intake, scheduling, payments, and a page customers can actually open.
+- **The operator outgrowing five SaaS tools.** Stitch the disconnected tools into one
+  internal app with the dashboard nobody sold them.
+
+This is where **private-by-default / "you choose who can read, write, and open"** stops
+being a social nicety and becomes a *trust* asset — the regulated or money-handling
+operator needs exactly that access control. (Still scope it to *other people*, never to
+secrecy from the platform — the guardrail above does not change.)
+
 **Distribution wedges (how it spreads through a community)**
 
 - **Music festivals.** A little schedule app where people star their favorite acts and
@@ -117,9 +172,11 @@ remixed. That's the medium: seeing a vibe makes you want to change it.
   "build from scratch." (Aligns with the Instant Starter Stack direction.)
 - Every example turns **users into makers** — the payoff of the "publish to the world"
   control. Private-by-default is the start; the magic is what happens once it's shared.
-- The homepage use-case strip should pull from *these* — a character bot, a neighborhood
-  tracker, a trivia game, a festival schedule — concrete and community-shaped, not SaaS
-  categories.
+- The homepage use-case strip should pull from *both* lanes — a character bot, a
+  neighborhood tracker, a trivia game **and** an order-taking specials board, a
+  spreadsheet-killer, a booking/intake app, an inventory count, a customer portal.
+  Concrete and situation-shaped, never SaaS-category abstractions. Lead with the ones
+  that handle money or kill a spreadsheet — they prove it's a real tool.
 
 ## The test for any homepage/marketing section
 
