@@ -3,8 +3,7 @@ import { Result, Option, param, envFactory, EventoHandler, EventoResultType, Han
 import { type } from "arktype";
 import * as path from "node:path";
 import fs from "node:fs/promises";
-import { CliCtx } from "../cli-ctx.js";
-import { sendMsg, WrapCmdTSMsg } from "../cmd-evento.js";
+import { CliCtx, sendMsg, WrapCmdTSMsg } from "@vibes.diy/cmd-harness";
 
 // In `@fireproof/core-cli` this was `rt.sts.envKeyDefaults.PUBLIC` from
 // `@fireproof/core-runtime`. We inline the literal so the rehomed deploy command

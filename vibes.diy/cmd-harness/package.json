@@ -1,10 +1,11 @@
 {
-  "name": "@vibes.diy/deploy-cli",
+  "name": "@vibes.diy/cmd-harness",
   "version": "0.0.0",
   "private": true,
   "type": "module",
-  "bin": {
-    "deploy-cli": "run.js"
+  "main": "./index.js",
+  "exports": {
+    ".": "./index.js"
   },
   "scripts": {
     "build": "core-cli tsc",
@@ -14,13 +15,12 @@
   },
   "dependencies": {
     "@adviser/cement": "^0.5.34",
-    "@vibes.diy/cmd-harness": "workspace:*",
+    "@vibes.diy/cmd-tools": "workspace:*",
     "arktype": "^2.2.1",
     "cmd-ts": "^0.15.0",
-    "tsx": "^4.21.0"
+    "zx": "^8.8.5"
   },
   "devDependencies": {
-    "@vibes.diy/build-cli": "workspace:*",
     "vitest": "~4.1.9"
   },
   "repository": {

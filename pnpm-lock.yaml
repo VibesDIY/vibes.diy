@@ -1379,6 +1379,9 @@ importers:
       '@pnpm/lockfile-file':
         specifier: ^9.1.3
         version: 9.1.3(@pnpm/logger@5.2.0)
+      '@vibes.diy/cmd-harness':
+        specifier: workspace:*
+        version: link:../cmd-harness
       arktype:
         specifier: ^2.2.1
         version: 2.2.1
@@ -1411,6 +1414,28 @@ importers:
         specifier: ~4.1.9
         version: 4.1.9(@opentelemetry/api@1.9.1)(@types/node@25.9.3)(@vitest/browser-playwright@4.1.9)(@vitest/coverage-v8@4.1.9)(@vitest/ui@4.1.9)(vite@7.3.5(@types/node@25.9.3)(jiti@2.7.0)(lightningcss@1.32.0)(terser@5.46.1)(tsx@4.22.4)(yaml@2.9.0))
 
+  vibes.diy/cmd-harness:
+    dependencies:
+      '@adviser/cement':
+        specifier: ^0.5.34
+        version: 0.5.34(patch_hash=2f6391e0a56fe610ad9ae72430b603360ee9c00812af21a792562791454613c7)(typescript@6.0.3)
+      '@vibes.diy/cmd-tools':
+        specifier: workspace:*
+        version: link:../cmd-tools
+      arktype:
+        specifier: ^2.2.1
+        version: 2.2.1
+      cmd-ts:
+        specifier: ^0.15.0
+        version: 0.15.0
+      zx:
+        specifier: ^8.8.5
+        version: 8.8.5
+    devDependencies:
+      vitest:
+        specifier: ~4.1.9
+        version: 4.1.9(@opentelemetry/api@1.9.1)(@types/node@25.9.3)(@vitest/browser-playwright@4.1.9)(@vitest/coverage-v8@4.1.9)(@vitest/ui@4.1.9)(vite@7.3.5(@types/node@25.9.3)(jiti@2.7.0)(lightningcss@1.32.0)(terser@5.46.1)(tsx@4.22.4)(yaml@2.9.0))
+
   vibes.diy/cmd-tools:
     dependencies:
       '@adviser/cement':
@@ -1432,6 +1457,9 @@ importers:
       '@adviser/cement':
         specifier: ^0.5.34
         version: 0.5.34(patch_hash=2f6391e0a56fe610ad9ae72430b603360ee9c00812af21a792562791454613c7)(typescript@6.0.3)
+      '@vibes.diy/cmd-harness':
+        specifier: workspace:*
+        version: link:../cmd-harness
       arktype:
         specifier: ^2.2.1
         version: 2.2.1
@@ -1441,9 +1469,6 @@ importers:
       tsx:
         specifier: ^4.21.0
         version: 4.22.4
-      zx:
-        specifier: ^8.8.5
-        version: 8.8.5
     devDependencies:
       '@vibes.diy/build-cli':
         specifier: workspace:*

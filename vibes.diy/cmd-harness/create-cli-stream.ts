@@ -1,5 +1,5 @@
 import { command } from "cmd-ts";
-import { WrapCmdTSMsg } from "./cmd-evento.js";
+import { WrapCmdTSMsg } from "@vibes.diy/cmd-tools";
 
 export type EnqueueFn<Args extends readonly unknown[], Return, RealReturn = unknown> = (fn: (...a: Args) => RealReturn) => Return;
 

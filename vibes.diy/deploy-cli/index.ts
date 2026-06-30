@@ -1,4 +1,2 @@
-export * from "./cli-ctx.js";
-export * from "./cmd-evento.js";
-export * from "./create-cli-stream.js";
+export * from "@vibes.diy/cmd-harness";
 export * from "./cmds/index.js";
