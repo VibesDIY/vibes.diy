@@ -529,3 +529,29 @@ export type EvtBackendArm = typeof evtBackendArm.infer;
 export function isEvtBackendArm(obj: unknown): obj is EvtBackendArm {
   return !(evtBackendArm(obj) instanceof type.errors);
 }
+
+// Per-app backend.js onChange event (#2856 B5). Emitted in the post-commit step
+// of both putDoc (create/update) and deleteDoc (tombstone), carrying the full
+// document payload onto VIBES_SERVICE → the queue consumer pokes the vibe's
+// BackendDO to run the `onChange` handler in the per-vibe isolate. NOT the
+// evt-doc-changed WebSocket fan-out (which has no payload and misses unsubscribed
+// handlers). `seq`/`docId` are the idempotency key; `depth` is the loop-guard
+// generation; `writerUserId` is captured for the B6 identity seam (unused in B5).
+export const evtBackendOnChange = type({
+  type: "'vibes.diy.evt-backend-onChange'",
+  ownerHandle: "string",
+  appSlug: "string",
+  dbName: "string",
+  docId: "string",
+  seq: "number",
+  deleted: "boolean",
+  doc: "unknown",
+  "oldDoc?": "unknown | null",
+  depth: "number",
+  "writerUserId?": "string | null",
+});
+export type EvtBackendOnChange = typeof evtBackendOnChange.infer;
+
+export function isEvtBackendOnChange(obj: unknown): obj is EvtBackendOnChange {
+  return !(evtBackendOnChange(obj) instanceof type.errors);
+}
