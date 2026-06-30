@@ -1,7 +1,8 @@
 import { stream2uint8array } from "@adviser/cement";
 import { and, eq, inArray, sql } from "drizzle-orm";
+import { isDirectChannel, directChannelParticipants } from "@vibes.diy/api-types";
 import { VibesApiSQLCtx } from "../types.js";
-import { DM_APP_SLUG, DM_BUILTIN_CID, DM_BUILTIN_SOURCE } from "./dm-access-fn.js";
+import { DM_BUILTIN_CID, DM_BUILTIN_SOURCE } from "./dm-access-fn.js";
 
 export interface ResolvedAccessBinding {
   readonly accessFnCid: string;
@@ -15,10 +16,16 @@ export interface ResolvedAccessBinding {
 
 // Resolve the effective access-fn binding for a (ownerHandle, appSlug, dbName).
 //
-// Direct-message dbs (appSlug "dm") have no `/access.js` and no
-// AccessFunctionBindings row — they resolve to the compiled-in DM access fn via
-// a synthetic binding, so DM reads/writes flow through the same access-fn +
-// channel-gating path as every other channelized db (#2290).
+// Direct-message dbs have no `/access.js` and no AccessFunctionBindings row —
+// they resolve to the compiled-in DM access fn via a synthetic binding, so DM
+// reads/writes flow through the same access-fn + channel-gating path as every
+// other channelized db (#2290).
+//
+// The DM discriminator is the `_d.<a>.<b>` ownerHandle slug (isDirectChannel),
+// NOT the appSlug: a user-created vibe can legitimately have the slug "dm"
+// (ensureAppSlug doesn't reserve it), and that real app must keep using the
+// normal ACL / access-fn path — only the synthetic `_d.` channel namespace is a
+// DM db (Codex review).
 //
 // For all other apps this is the binding lookup that was previously duplicated
 // inline in putDoc / deleteDoc / queryDocs / subscribeDocs: a named dbName
@@ -29,7 +36,7 @@ export async function resolveAccessBinding(
   appSlug: string,
   dbName: string
 ): Promise<ResolvedAccessBinding | undefined> {
-  if (appSlug === DM_APP_SLUG) {
+  if (isDirectChannel(ownerHandle)) {
     return { accessFnCid: DM_BUILTIN_CID, dbName };
   }
   const tAfb = vctx.sql.tables.accessFunctionBindings;
@@ -42,6 +49,30 @@ export async function resolveAccessBinding(
     .then((r) => r[0]);
   if (!row) return undefined;
   return { accessFnCid: row.accessFnCid, accessFnAssetUri: row.accessFnAssetUri ?? undefined, dbName: row.dbName };
+}
+
+// Resolve which of the channel's two participant handles the caller owns, for a
+// DM db. A user with multiple handles can be addressed at a handle that is not
+// their active/default one, so the access fn (and the read channel filter) must
+// act as the handle that actually appears in the `_d.<a>.<b>` slug — not the
+// global active handle. Returns undefined if the caller owns neither participant
+// handle (the access fn then forbids the write / the filter shows nothing).
+// This restores the old checkDirectChannelAccess "any bound participant handle"
+// behavior (Codex review).
+export async function resolveDmParticipantHandle(
+  vctx: VibesApiSQLCtx,
+  userId: string,
+  channelSlug: string
+): Promise<string | undefined> {
+  const participants = directChannelParticipants(channelSlug);
+  if (!participants) return undefined;
+  const t = vctx.sql.tables.handleBinding;
+  const row = await vctx.sql.db
+    .select({ handle: t.handle })
+    .from(t)
+    .where(and(eq(t.userId, userId), inArray(t.handle, participants)))
+    .then((r) => r[0]);
+  return row?.handle;
 }
 
 // Resolve the raw access.js source bytes for a CID. The synthetic DM binding's

@@ -442,10 +442,12 @@ describe("DM channel-gated reads", { timeout: 20000 }, () => {
   let bobApi: VibesDiyApi;
   let bobUserSlug: string;
   let malloryApi: VibesDiyApi;
+  let sharedVibesCtx: Awaited<ReturnType<typeof createVibeDiyTestCtx>>["vibesCtx"];
 
   beforeAll(async () => {
     const deviceCA = await createTestDeviceCA(sthis);
     const appCtx = await createVibeDiyTestCtx(sthis, deviceCA, { invokeAccessFn: dmInvokeAccessFn });
+    sharedVibesCtx = appCtx.vibesCtx;
 
     const aliceUser = await createTestUser({ sthis, deviceCA, seqUserId: 5001 });
     const bobUser = await createTestUser({ sthis, deviceCA, seqUserId: 5002 });
@@ -559,5 +561,139 @@ describe("DM channel-gated reads", { timeout: 20000 }, () => {
     const bobRead = await bobApi.queryDocs({ ownerHandle: channel, appSlug: "dm", dbName: "messages" });
     expect(bobRead.isErr()).toBe(false);
     expect((bobRead.Ok().docs as { _id: string }[]).some((d) => d._id === docId)).toBe(false);
+  });
+
+  it("legacy DM docs with no access-fn output are never returned (fail closed, no migration)", async () => {
+    // Simulate a message written before #2290: a real AppDocuments row with NO
+    // AccessFnOutputs sidecar (the old direct-channel path never invoked an
+    // access fn). Without the fail-closed filter, the channel filter's
+    // "no outputs → return all" branch would hand this to anyone who knows the
+    // _d.<a>.<b> slug. We deliberately don't migrate it; it must stay invisible.
+    const channel = directChannelUserSlug(aliceUserSlug, bobUserSlug);
+    const legacyId = "legacy-no-output";
+    const tDocs = sharedVibesCtx.sql.tables.appDocuments;
+    await sharedVibesCtx.sql.db.insert(tDocs).values({
+      ownerHandle: channel,
+      appSlug: "dm",
+      dbName: "legacy-thread",
+      docId: legacyId,
+      seq: 1,
+      userId: "legacy-user",
+      data: { body: "pre-2290 secret", authorHandle: aliceUserSlug },
+      deleted: 0,
+      created: new Date().toISOString(),
+    });
+
+    // Non-participant must not see it.
+    const malloryRead = await malloryApi.queryDocs({ ownerHandle: channel, appSlug: "dm", dbName: "legacy-thread" });
+    expect(malloryRead.isErr()).toBe(false);
+    expect(malloryRead.Ok().docs.length).toBe(0);
+
+    // And neither does a participant — output-less legacy rows are dropped, not
+    // migrated (acceptable per the issue; the security property is the point).
+    const bobRead = await bobApi.queryDocs({ ownerHandle: channel, appSlug: "dm", dbName: "legacy-thread" });
+    expect(bobRead.isErr()).toBe(false);
+    expect(bobRead.Ok().docs.length).toBe(0);
+  });
+});
+
+// A user with several handles can be addressed at a handle that is not their
+// active/default one. DM access must act as the handle that appears in the
+// channel slug, not the global active handle (#2290 Codex review).
+describe("DM multi-handle access", { timeout: 20000 }, () => {
+  it("write/read use the channel-participant handle, not the active/default handle", async () => {
+    const sthis = ensureSuperThis();
+    const deviceCA = await createTestDeviceCA(sthis);
+    const appCtx = await createVibeDiyTestCtx(sthis, deviceCA, { invokeAccessFn: dmInvokeAccessFn });
+
+    const aliceUser = await createTestUser({ sthis, deviceCA, seqUserId: 6001 });
+    const bobUser = await createTestUser({ sthis, deviceCA, seqUserId: 6002 });
+    const malloryUser = await createTestUser({ sthis, deviceCA, seqUserId: 6003 });
+
+    const sharedApiUrl = uniqueApiUrl();
+    const wsPair = TestWSPair.create();
+    const wsEvento = vibesMsgEvento();
+    const wsSendProvider = new WSSendProvider(wsPair.p2 as unknown as WebSocket);
+    appCtx.vibesCtx.connections.add(wsSendProvider);
+    wsPair.p2.onmessage = (event: MessageEvent) => {
+      wsEvento.trigger({ ctx: appCtx.appCtx, request: { type: "MessageEvent", event }, send: wsSendProvider });
+    };
+
+    const mkApi = (user: Awaited<ReturnType<typeof createTestUser>>) =>
+      new VibesDiyApi({
+        apiUrl: sharedApiUrl,
+        ws: wsPair.p1 as unknown as WebSocket,
+        timeoutMs: 10000,
+        getToken: async () => Result.Ok(await user.getDashBoardToken()),
+      });
+    const aliceApi = mkApi(aliceUser);
+    const bobApi = mkApi(bobUser);
+    const malloryApi = mkApi(malloryUser);
+
+    const ensure = async (api: VibesDiyApi, content: string) => {
+      const r = await api.ensureAppSlug({
+        mode: "dev",
+        fileSystem: [{ type: "code-block", lang: "jsx", filename: "/App.jsx", content }],
+      });
+      if (r.isErr()) throw new Error(`ensureAppSlug failed: ${r.Err().message}`);
+      const res = r.Ok();
+      if (!isResEnsureAppSlugOk(res)) throw new Error("ensureAppSlug not ok");
+      return res.ownerHandle;
+    };
+
+    // Alice gets two handles; bob and mallory one each.
+    const aliceSlug1 = await ensure(aliceApi, `function App() { return <div>a1</div>; } App();`);
+    const aliceSlug2 = await ensure(aliceApi, `function App() { return <div>a2</div>; } App();`);
+    const bobSlug = await ensure(bobApi, `function App() { return null; } App();`);
+    await ensure(malloryApi, `function App() { return <div>m</div>; } App();`);
+
+    // Force alice's ACTIVE handle to slug2 (NOT the participant handle), so the
+    // test fails if any DM path falls back to resolveActiveHandle.
+    const vctx = appCtx.vibesCtx;
+    const hb = vctx.sql.tables.handleBinding;
+    const aliceUserId = await vctx.sql.db
+      .select({ userId: hb.userId })
+      .from(hb)
+      .where(eq(hb.handle, aliceSlug1))
+      .then((r) => r[0]?.userId);
+    if (!aliceUserId) throw new Error("could not resolve alice userId");
+    const us = vctx.sql.tables.userSettings;
+    const nowIso = new Date().toISOString();
+    await vctx.sql.db
+      .insert(us)
+      .values({
+        userId: aliceUserId,
+        settings: [{ type: "defaultHandle", ownerHandle: aliceSlug2 }],
+        updated: nowIso,
+        created: nowIso,
+      })
+      .onConflictDoUpdate({ target: us.userId, set: { settings: [{ type: "defaultHandle", ownerHandle: aliceSlug2 }] } });
+
+    // Thread is keyed to alice's slug1 (the non-default handle).
+    const channel = directChannelUserSlug(aliceSlug1, bobSlug);
+
+    // Write succeeds only if the writer handle is resolved to slug1 (the
+    // participant), not slug2 (the active/default) — which the fn would reject.
+    const put = await aliceApi.putDoc({
+      ownerHandle: channel,
+      appSlug: "dm",
+      dbName: "messages",
+      doc: { body: "hi from slug1", authorHandle: aliceSlug1, createdAt: new Date().toISOString() },
+    });
+    expect(put.isErr()).toBe(false);
+
+    // Alice reads as slug1 (her participant handle) and sees the message.
+    const aliceRead = await aliceApi.queryDocs({ ownerHandle: channel, appSlug: "dm", dbName: "messages" });
+    expect(aliceRead.isErr()).toBe(false);
+    expect(aliceRead.Ok().docs.length).toBe(1);
+
+    // Bob (the other participant) sees it; mallory does not.
+    const bobRead = await bobApi.queryDocs({ ownerHandle: channel, appSlug: "dm", dbName: "messages" });
+    expect(bobRead.isErr()).toBe(false);
+    expect(bobRead.Ok().docs.length).toBe(1);
+
+    const malloryRead = await malloryApi.queryDocs({ ownerHandle: channel, appSlug: "dm", dbName: "messages" });
+    expect(malloryRead.isErr()).toBe(false);
+    expect(malloryRead.Ok().docs.length).toBe(0);
   });
 });
