@@ -21,6 +21,7 @@ import {
   MsgBase,
   S3Api,
   VibesFPApiParameters,
+  type WorkerLoaderBinding,
 } from "@vibes.diy/api-types";
 import { createSQLPeer, CreateSQLPeerParams, createVibesApiTables, DBFlavour, toDBFlavour, VibesSqlite } from "@vibes.diy/api-sql";
 import { ensureStorage } from "@vibes.diy/api-pkg";
@@ -36,6 +37,13 @@ export interface CreateHandlerParams<T extends VibesSqlite> {
   logger?: Logger;
   cache: CfCacheIf;
   env: Record<string, string>; // | Env;
+  // The Cloudflare Worker Loader (`env.LOADER`) binding for vibe SSR's isolate
+  // executor (#2802 slice 4, plumbed in #2845). A binding object, not a string,
+  // so it rides its own param field rather than the string `env` map; populated
+  // from the Cloudflare bindings object at the CF worker bootstrap (cf-serve.ts)
+  // and left undefined elsewhere (node serve / tests), where SSR degrades to
+  // client-only. Flows into `params.vibes.loader` → `attemptVibeSsr`.
+  loader?: WorkerLoaderBinding;
   connections: Set<WSSendProvider>;
   storageSystems: {
     sql: CreateSQLPeerParams;
@@ -225,13 +233,14 @@ export async function createAppContext<T extends VibesSqlite>(
         protocol: envVals.VIBES_SVC_PROTOCOL as "https" | "http",
         port: envVals.VIBES_SVC_PORT,
       },
-      // The Worker Loader (env.LOADER) binding for the `loader` SSR executor.
-      // Beta + not yet plumbed from the Cloudflare bindings object — left
-      // undefined here, so VIBES_SSR=loader degrades to client-only (select_error)
-      // until the binding lands (tracked in #2845). render-vibe.ts passes it to
-      // attemptVibeSsr; the param slot is what lets it be populated (or injected
-      // in tests) without further wiring.
-      loader: undefined,
+      // The Worker Loader (env.LOADER) binding for the `loader` SSR executor
+      // (#2845). Threaded from the Cloudflare bindings object at the CF worker
+      // bootstrap (cf-serve.ts) via `params.loader`; undefined on the node-serve
+      // path and in tests that pass no binding, where VIBES_SSR=loader degrades
+      // to client-only (select_error). render-vibe.ts reads this slot and passes
+      // it to attemptVibeSsr. The binding is open beta and absent until GA, so in
+      // practice this stays undefined in prod until the env flips to `loader`.
+      loader: params.loader,
       env: {
         CLERK_PUBLISHABLE_KEY: envVals.CLERK_PUBLISHABLE_KEY,
         VIBES_DIY_API_URL: envVals.VIBES_DIY_API_URL,

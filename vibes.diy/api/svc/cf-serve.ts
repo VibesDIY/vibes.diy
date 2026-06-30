@@ -20,6 +20,7 @@ import {
   CFEnv,
   type EvtRequestGrant,
   MsgBase,
+  type WorkerLoaderBinding,
 } from "@vibes.diy/api-types";
 import { cfDrizzle, createVibesApiTables, toDBFlavour, VibesSqlite } from "@vibes.diy/api-sql";
 import { R2ToS3Api } from "./peers/r2-to-s3api.js";
@@ -453,6 +454,14 @@ export async function cfServeAppCtx(
     netHash,
     llmRequest: ctx.llmRequest,
     env: env as unknown as Record<string, string>,
+    // #2845: the Worker Loader binding (open beta) for vibe SSR's isolate
+    // executor. A binding object, not a string, so it can't ride the string
+    // `env` map above — thread it through its own param. Absent (undefined) until
+    // the beta binding is enabled on the deploy, in which case SSR degrades to
+    // client-only. Typed `unknown` on CFEnv to avoid a vibe-runtime dep in
+    // api-types; the structural `WorkerLoaderBinding` shape is what render-vibe
+    // consumes, so cast at this single seam.
+    ...(env.LOADER ? { loader: env.LOADER as WorkerLoaderBinding } : {}),
     // No default invokeAccessFn. Access-fn evaluation runs LOCALLY (QuickJS) on
     // the DOs that need it — AppSessions and ChatSessions both pass a
     // localInvokeAccessFn override below. env.ACCESS_FN_DO has been retired
