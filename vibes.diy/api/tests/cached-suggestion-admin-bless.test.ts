@@ -262,5 +262,38 @@ describe(
       if (rOwner.isErr()) assert.fail("ensureAppSettings(read) failed: " + JSON.stringify(rOwner.Err()));
       expect(rOwner.Ok().settings.entry.settings.title).not.toBe("admin-hijacked-title");
     });
+
+    it("a COMBINED admin request (bless + produce + title) only blesses — extra fields are inert (Codex P1)", async () => {
+      // ArkType objects allow extra keys and the owner mutation switch is
+      // first-match, so a request that co-submits `cachedSuggestion` (produce) /
+      // `title` alongside a valid `cachedSuggestionBless` must NOT mutate those —
+      // otherwise an admin could seed the produce map then bless it, defeating the
+      // "admin can only bless what the OWNER produced" bound.
+      const { appSlug, ownerHandle, sourceFsId, stagedFsId } = await publicAppWithStagedVersion();
+      const key = cachedSuggestionKey({ source: { ownerHandle, appSlug, fsId: sourceFsId }, transform: "combined payload" });
+
+      // Owner has produced NOTHING. Admin sends one request carrying ALL three
+      // fields. Sent via a structural cast since the typed client only models a
+      // single mutation per request (the server must defend regardless).
+      const combined = {
+        appSlug,
+        ownerHandle,
+        cachedSuggestion: { key, fsId: stagedFsId, sourceFsId },
+        title: "admin-combined-hijack",
+        cachedSuggestionBless: { key, fsId: stagedFsId, sourceFsId, op: "bless" as const },
+      };
+      await api3.ensureAppSettings(combined as unknown as Parameters<typeof api3.ensureAppSettings>[0]);
+
+      const rOwner = await api.ensureAppSettings({ appSlug, ownerHandle });
+      if (rOwner.isErr()) assert.fail("ensureAppSettings(read) failed: " + JSON.stringify(rOwner.Err()));
+      const owned = rOwner.Ok().settings.entry;
+      // The admin neither seeded the produce map nor changed the title…
+      expect(owned.cachedSuggestions?.[key]).toBeUndefined();
+      expect(owned.settings.title).not.toBe("admin-combined-hijack");
+      // …and the bless itself was rejected (no matching produced entry), so nothing serves.
+      expect(owned.cachedSuggestionBlesses?.[key]).toBeUndefined();
+      expect(await grantOf(stagedFsId, { appSlug, ownerHandle })).not.toBe("public-access");
+      expect(await readerFsId({ appSlug, ownerHandle, key })).toBeUndefined();
+    });
   }
 );

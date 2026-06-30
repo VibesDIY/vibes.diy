@@ -233,6 +233,83 @@ function adminUserIdSet(vctx: VibesApiSQLCtx): Set<string> {
   );
 }
 
+// Apply a cached-suggestion bless/revoke (#2929 items 3) — extracted so BOTH the
+// owner switch-case and the admin-on-behalf early dispatch run the IDENTICAL
+// logic. Factoring it out is what lets the admin path be bless-ONLY: the admin
+// never enters the general first-match switch (where a co-submitted field could
+// win on an ArkType object that allows extra keys — Codex P1 #2942). Fail-closed
+// if handed a non-bless request. Enforces produce-before-bless + full-tuple match
+// for bless, and full-tuple match for revoke; stamps `approvedBy` from the
+// verified approver; audits the on-behalf (non-owner) case.
+async function applyCachedSuggestionBless(
+  vctx: VibesApiSQLCtx,
+  req: ReqEnsureAppSettings,
+  res: ResEnsureAppSettings,
+  settings: ActiveEntry[],
+  approverUserId: string,
+  ownerUserId: string,
+  now: string
+): Promise<[AppSettings, string?]> {
+  if (!isReqEnsureAppSettingsCachedSuggestionBless(req)) {
+    // Only a bless request may reach here; refuse anything else rather than
+    // silently no-op (this is the bless-only boundary made explicit).
+    return [res.settings, "expected a cached-suggestion bless request"];
+  }
+  const b = req.cachedSuggestionBless;
+  if (approverUserId !== ownerUserId) {
+    // Admin-on-behalf: audit every non-owner bless/revoke that passed the
+    // allowlist gate. Logged as an ATTEMPT — the produce-before-bless / tuple
+    // check below can still reject it, so the message stays neutral.
+    ensureLogger(vctx.sthis, "ensureAppSettings")
+      .Info()
+      .Str("reason", "adminOnBehalfBless")
+      .Str("op", b.op)
+      .Str("approvedBy", approverUserId)
+      .Str("ownerHandle", req.ownerHandle)
+      .Str("appSlug", req.appSlug)
+      .Str("key", b.key)
+      .Str("fsId", b.fsId)
+      .Msg("admin on-behalf cached-suggestion bless/revoke (allowlisted)");
+  }
+  if (b.op === "revoke") {
+    // Match the FULL tuple, not just the key (Codex #2915): a key can be
+    // re-produced/re-blessed to a new fsId, so a stale revoke carrying the OLD
+    // tuple must no-op rather than unpublish the current blessed result.
+    return await sqlRemove(
+      vctx,
+      res,
+      settings,
+      (e) => isActiveCachedSuggestionBless(e) && e.key === b.key && e.fsId === b.fsId && e.sourceFsId === b.sourceFsId
+    );
+  }
+  // Bless depends on produce (Codex #2915): only an EXISTING produced result
+  // (matching active.cached-suggestion tuple) may be blessed — a bless can't
+  // conjure an arbitrary unpublished fsId into the serve map. This is also what
+  // bounds admin-on-behalf: the produce map is owner-write-only, so an admin can
+  // only bless a result the OWNER actually produced.
+  const produced = settings.find(
+    (e) => isActiveCachedSuggestion(e) && e.key === b.key && e.fsId === b.fsId && e.sourceFsId === b.sourceFsId
+  );
+  if (!produced) {
+    return [res.settings, "cannot bless a cached suggestion with no matching produced entry"];
+  }
+  return await sqlUpsert(
+    vctx,
+    res,
+    settings,
+    (e) => isActiveCachedSuggestionBless(e) && e.key === b.key,
+    () =>
+      ({
+        type: "active.cached-suggestion-bless",
+        key: b.key,
+        fsId: b.fsId,
+        sourceFsId: b.sourceFsId,
+        approvedBy: approverUserId,
+        approvedAt: now,
+      }) satisfies ActiveCachedSuggestionBless
+  );
+}
+
 export async function ensureAppSettings(
   vctx: VibesApiSQLCtx,
   req: ReqEnsureAppSettings,
@@ -348,6 +425,17 @@ export async function ensureAppSettings(
     updated: now,
     created: record.AppSettings.created,
   } satisfies ResEnsureAppSettings;
+  // Admin-on-behalf (#2929 item 3) is bless-ONLY. A non-owner only reaches here
+  // via the `isAdminBless` gate, which required a valid `cachedSuggestionBless`.
+  // But ArkType objects allow EXTRA keys and the owner switch below is first-match,
+  // so a request co-submitting `cachedSuggestion` / `title` / `publicAccess` would
+  // otherwise fall into one of those earlier cases and mutate the owner's row
+  // (Codex P1 #2942). Dispatch the admin path straight to the bless logic and skip
+  // the general switch entirely, so no other field can ever take effect.
+  if (approverUserId !== ownerUserId) {
+    [res.settings, res.error] = await applyCachedSuggestionBless(vctx, req, res, settings, approverUserId, ownerUserId, now);
+    return Result.Ok(await withModelDefaults(vctx, res));
+  }
   switch (true) {
     // case isReqEnsureAppSettingsAcl(req):
     // await aclAction(vctx, req, res, settings);
@@ -577,72 +665,12 @@ export async function ensureAppSettings(
           }) satisfies ActiveCachedSuggestion
       );
       break;
-    case isReqEnsureAppSettingsCachedSuggestionBless(req): {
-      // Reached by the OWNER, or by an allowlisted platform admin on-behalf
-      // (#2929 item 3) — the ONLY non-owner write that passes the gate. Either
-      // way the entry lands in the owner's row (`res.userId === ownerUserId`);
-      // `approvedBy` records the verified APPROVER (owner or admin) for audit.
-      // Bless upserts the serve-eligibility entry; revoke removes it so the
-      // result forks again (fail-to-fork). The produce-before-bless + tuple-match
-      // checks below are identical for owner and admin, so an admin can only bless
-      // a result the OWNER actually produced (the produce map is owner-write-only).
-      const b = req.cachedSuggestionBless;
-      if (approverUserId !== ownerUserId) {
-        // Admin-on-behalf: audit every non-owner bless/revoke that reaches this
-        // branch (i.e. passed the allowlist gate). Logged as an ATTEMPT — the
-        // produce-before-bless / tuple-match check below can still reject it, so
-        // the message stays neutral about whether the write landed.
-        ensureLogger(vctx.sthis, "ensureAppSettings")
-          .Info()
-          .Str("reason", "adminOnBehalfBless")
-          .Str("op", b.op)
-          .Str("approvedBy", approverUserId)
-          .Str("ownerHandle", req.ownerHandle)
-          .Str("appSlug", req.appSlug)
-          .Str("key", b.key)
-          .Str("fsId", b.fsId)
-          .Msg("admin on-behalf cached-suggestion bless/revoke (allowlisted)");
-      }
-      if (b.op === "revoke") {
-        // Match the FULL tuple, not just the key (Codex #2915): a key can be
-        // re-produced/re-blessed to a new fsId, so a stale revoke carrying the
-        // OLD tuple must no-op rather than unpublish the current blessed result.
-        [res.settings, res.error] = await sqlRemove(
-          vctx,
-          res,
-          settings,
-          (e) => isActiveCachedSuggestionBless(e) && e.key === b.key && e.fsId === b.fsId && e.sourceFsId === b.sourceFsId
-        );
-      } else {
-        // Bless depends on produce (Codex #2915): only an EXISTING produced
-        // result (matching active.cached-suggestion tuple) may be blessed, so a
-        // bless can't conjure an arbitrary unpublished fsId into the serve map.
-        // The check is in-memory over the already-loaded entries (no extra query).
-        const produced = settings.find(
-          (e) => isActiveCachedSuggestion(e) && e.key === b.key && e.fsId === b.fsId && e.sourceFsId === b.sourceFsId
-        );
-        if (!produced) {
-          res.error = "cannot bless a cached suggestion with no matching produced entry";
-          break;
-        }
-        [res.settings, res.error] = await sqlUpsert(
-          vctx,
-          res,
-          settings,
-          (e) => isActiveCachedSuggestionBless(e) && e.key === b.key,
-          () =>
-            ({
-              type: "active.cached-suggestion-bless",
-              key: b.key,
-              fsId: b.fsId,
-              sourceFsId: b.sourceFsId,
-              approvedBy: approverUserId,
-              approvedAt: now,
-            }) satisfies ActiveCachedSuggestionBless
-        );
-      }
+    case isReqEnsureAppSettingsCachedSuggestionBless(req):
+      // Owner bless/revoke. The admin-on-behalf path runs the SAME helper above,
+      // before this switch (so it can be bless-only); both stamp `approvedBy` from
+      // the verified approver and enforce produce-before-bless + tuple match.
+      [res.settings, res.error] = await applyCachedSuggestionBless(vctx, req, res, settings, approverUserId, ownerUserId, now);
       break;
-    }
     case isReqEnsureAppSettingsDbAcl(req):
       [res.settings, res.error] = await sqlUpsert(
         vctx,
