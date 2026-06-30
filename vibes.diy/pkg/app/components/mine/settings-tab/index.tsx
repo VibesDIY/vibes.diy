@@ -18,6 +18,13 @@ import type { SettingKey } from "../../vibe-editor/settings-subset.js";
 
 // ── theme thumbnail ───────────────────────────────────────────────────────────
 
+// Catalog themes whose `/themes/<slug>.html` showcase asset doesn't exist
+// (the exemplar App.jsx is present but its static HTML was never rendered, so
+// the route serves the SPA "Page Not Found" page). For these we skip the iframe
+// and show a colour swatch card instead of a broken 404 preview. Tracked in
+// VibesDIY/vibes.diy#2924 — drop the slug here once its showcase HTML lands.
+const THEMES_WITHOUT_EXEMPLAR: ReadonlySet<string> = new Set(["brutalist"]);
+
 // Inline preview of a theme's exemplar page. Renders the same static
 // `/themes/<slug>.html` the picker modal scales into cards, so picking a theme
 // shows what it looks like without navigating away from the vibe page (the old
@@ -28,19 +35,22 @@ function ThemeThumbnail({ theme }: { theme: VibesTheme }) {
   const WIDTH = 1400;
   const HEIGHT = 900;
   const SCALE = 0.18;
+  const hasExemplar = !THEMES_WITHOUT_EXEMPLAR.has(theme.slug);
   return (
     <div
       className="relative overflow-hidden rounded border border-gray-300 dark:border-gray-600"
       style={{ width: WIDTH * SCALE, height: HEIGHT * SCALE, backgroundColor: theme.bgColor }}
     >
-      <iframe
-        src={`/themes/${theme.slug}.html`}
-        title={`${theme.name} preview`}
-        sandbox="allow-same-origin"
-        loading="lazy"
-        className="pointer-events-none absolute left-0 top-0 origin-top-left border-0"
-        style={{ width: WIDTH, height: HEIGHT, transform: `scale(${SCALE})` }}
-      />
+      {hasExemplar && (
+        <iframe
+          src={`/themes/${theme.slug}.html`}
+          title={`${theme.name} preview`}
+          sandbox="allow-same-origin"
+          loading="lazy"
+          className="pointer-events-none absolute left-0 top-0 origin-top-left border-0"
+          style={{ width: WIDTH, height: HEIGHT, transform: `scale(${SCALE})` }}
+        />
+      )}
       <span
         className="absolute bottom-1.5 left-1.5 inline-block h-5 w-5 rounded-full border-2 border-black/30 dark:border-white/40"
         style={{ backgroundColor: theme.accentColor }}
