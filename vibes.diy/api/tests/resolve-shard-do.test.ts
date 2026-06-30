@@ -30,6 +30,23 @@ describe("resolveShardDO", () => {
     expect(result.name).toBe("codegen:foo:bar");
   });
 
+  it("app:foo:bar (known prefix, multi-colon suffix) → SESSIONS, full name kept intact", () => {
+    // Only the FIRST colon delimits the prefix; the remaining `foo:bar` stays in
+    // the physical name verbatim, matching the string app.ts feeds idFromName.
+    const result = resolveShardDO("app:foo:bar", env);
+    expect(result.ns).toBe(SESSIONS);
+    expect(result.name).toBe("app:foo:bar");
+  });
+
+  it("app: (known prefix, empty suffix) → SESSIONS, physical name 'app:'", () => {
+    // Empty suffix still resolves on the prefix binding — the full id (trailing
+    // colon and all) is the physical name, so it can't collide with a bare
+    // codegen `app` registration (which would resolve to 'codegen:app').
+    const result = resolveShardDO("app:", env);
+    expect(result.ns).toBe(SESSIONS);
+    expect(result.name).toBe("app:");
+  });
+
   it("app:foo--bar → SESSIONS with the full vibe-keyed physical name", () => {
     const result = resolveShardDO("app:foo--bar", env);
     expect(result.ns).toBe(SESSIONS);
