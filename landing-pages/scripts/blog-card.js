@@ -63,8 +63,23 @@ async function loadPhotoB64(photo) {
   return Buffer.from(await res.arrayBuffer()).toString("base64");
 }
 
-function html(bgB64, overline, glyph, title) {
-  const len = glyph.length;
+// Escape HTML-significant chars so a title/overline/glyph containing `<`, `>`,
+// `&`, or quotes (e.g. a code-style glyph like `<App/>`) renders as literal
+// text instead of being parsed as markup by setContent.
+function esc(s) {
+  return String(s)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+function html(bgB64, overlineRaw, glyphRaw, titleRaw) {
+  const overline = esc(overlineRaw);
+  const glyph = esc(glyphRaw);
+  const title = esc(titleRaw);
+  const len = glyphRaw.length;
   const glyphSize = len > 16 ? 92 : len > 11 ? 116 : 150;
   return `<!DOCTYPE html><html><head><meta charset="utf-8">
 <style>
