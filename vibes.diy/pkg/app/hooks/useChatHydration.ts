@@ -40,12 +40,13 @@ export function useChatHydration(opts: ChatHydrationOpts): ChatHydration {
   const [remixOf, setRemixOf] = useState<string | undefined>(undefined);
   useEffect(() => {
     try {
-      const stashed = sessionStorage.getItem(`remixOf:${appSlug}`);
+      // Keyed on owner+slug to match the remix route (slugs collide across owners).
+      const stashed = sessionStorage.getItem(`remixOf:${ownerHandle}/${appSlug}`);
       if (stashed) setRemixOf(stashed);
     } catch {
       // sessionStorage unavailable (SSR / privacy mode) — skip the indicator.
     }
-  }, [appSlug]);
+  }, [ownerHandle, appSlug]);
 
   // Hydrate code-view files from the canonical Apps.fileSystem for the
   // current fsId. The code panel renders from this snapshot (file-system-
