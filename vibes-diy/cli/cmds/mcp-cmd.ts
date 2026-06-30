@@ -10,7 +10,7 @@ import type { ResGetDoc } from "@vibes.diy/api-types";
 // @ts-expect-error "charwise" has no types
 import charwise from "charwise";
 import type { CliCtx } from "../cli-ctx.js";
-import { resolveUserSlug } from "./db/shared.js";
+import { resolveDocId, resolveUserSlug } from "./db/shared.js";
 
 import type { VibesDiyApi } from "@vibes.diy/api-impl";
 
@@ -159,7 +159,7 @@ export function createMcpServer(deps: McpServerDeps): McpServer {
     "Create or update a document in a database",
     {
       doc: z.record(z.unknown()).describe("Document to store"),
-      id: z.string().optional().describe("Document ID (_id); generated if omitted"),
+      id: z.string().optional().describe("Document ID (_id); falls back to the body _id, else generated"),
       db: z.string().optional().describe("Database name (default: 'default')"),
     },
     { readOnlyHint: false, destructiveHint: true, idempotentHint: false },
@@ -168,7 +168,7 @@ export function createMcpServer(deps: McpServerDeps): McpServer {
         const slug = args.appSlug;
         const dbName = params.db ?? "default";
         const adapter = new FireflyApiAdapter(api, slug, { ownerHandle });
-        const docId = params.id;
+        const docId = resolveDocId(params.id, params.doc);
         const r = await adapter.putDoc(params.doc, docId, dbName);
         if (r.isErr()) {
           return { content: [{ type: "text" as const, text: `Error: ${r.Err()}` }] };

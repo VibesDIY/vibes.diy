@@ -8,7 +8,7 @@ import { isResPutDoc } from "@vibes.diy/api-types";
 import type { CliCtx } from "../../cli-ctx.js";
 import { cmdTsDefaultArgs } from "../../cli-ctx.js";
 import { sendMsg, WrapCmdTSMsg } from "../../cmd-evento.js";
-import { dbCommonArgs, openVibeDbApi, resolveDbVibeArgs } from "./shared.js";
+import { dbCommonArgs, openVibeDbApi, resolveDbVibeArgs, resolveDocId } from "./shared.js";
 
 export const ReqDbPut = type({
   type: "'vibes-diy.cli.db.put'",
@@ -54,7 +54,7 @@ export const dbPutEvento: EventoHandler<WrapCmdTSMsg<unknown>, ReqDbPut, ResDbPu
     if (rApi.isErr()) return Result.Err(rApi.Err());
     const { api, ownerHandle } = rApi.Ok();
     const adapter = new FireflyApiAdapter(api, ctx.validated.appSlug, { ownerHandle });
-    const docId = ctx.validated.docId === "" ? undefined : ctx.validated.docId;
+    const docId = resolveDocId(ctx.validated.docId, doc);
     const r = await adapter.putDoc(doc, docId, ctx.validated.dbName);
     if (r.isErr()) return Result.Err(r.Err());
     const res = r.Ok();
@@ -83,7 +83,7 @@ export function dbPutCmd(ctx: CliCtx) {
       }),
       docId: option({
         long: "id",
-        description: "Document ID (_id); generated if omitted",
+        description: "Document ID (_id); falls back to the body _id, else generated",
         type: string,
         defaultValue: () => "",
         defaultValueIsSerializable: true,

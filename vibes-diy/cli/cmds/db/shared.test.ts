@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { basename } from "node:path";
 import type { CliCtx } from "../../cli-ctx.js";
 import type { VibesDiyApi } from "@vibes.diy/api-impl";
-import { openVibeDbApi, resolveDbVibeArgs } from "./shared.js";
+import { openVibeDbApi, resolveDbVibeArgs, resolveDocId } from "./shared.js";
 
 // Minimal CliCtx stub exposing just the env lookup resolveDbVibeArgs needs.
 function ctxWithEnv(env: Record<string, string | undefined> = {}): CliCtx {
@@ -61,6 +61,45 @@ describe("resolveDbVibeArgs", () => {
       appSlug: basename(process.cwd()),
       ownerHandle: "",
     });
+  });
+});
+
+// #2668: `put` must honor a body `_id` when no explicit --id is given, instead
+// of silently dropping it and letting the server mint a UUID (orphan docs +
+// id-based upsert/delete that look like they worked but didn't).
+describe("resolveDocId (#2668)", () => {
+  it("honors body _id when no explicit id is given", () => {
+    const warn = vi.fn();
+    expect(resolveDocId("", { _id: "my-doc", msg: "hi" }, warn)).toBe("my-doc");
+    expect(resolveDocId(undefined, { _id: "my-doc", msg: "hi" }, warn)).toBe("my-doc");
+    expect(warn).not.toHaveBeenCalled();
+  });
+
+  it("uses the explicit id and ignores a matching body _id without warning", () => {
+    const warn = vi.fn();
+    expect(resolveDocId("my-doc", { _id: "my-doc", msg: "hi" }, warn)).toBe("my-doc");
+    expect(warn).not.toHaveBeenCalled();
+  });
+
+  it("lets the explicit id win over a conflicting body _id, with a warning", () => {
+    const warn = vi.fn();
+    expect(resolveDocId("flag-wins", { _id: "body-loses", msg: "conflict" }, warn)).toBe("flag-wins");
+    expect(warn).toHaveBeenCalledTimes(1);
+    expect(warn.mock.calls[0][0]).toContain("flag-wins");
+    expect(warn.mock.calls[0][0]).toContain("body-loses");
+  });
+
+  it("returns undefined (server generates) when neither an explicit nor a body _id is present", () => {
+    const warn = vi.fn();
+    expect(resolveDocId("", { msg: "hi" }, warn)).toBeUndefined();
+    expect(warn).not.toHaveBeenCalled();
+  });
+
+  it("warns and falls through to generation when a body _id is present but not a usable string", () => {
+    const warn = vi.fn();
+    expect(resolveDocId("", { _id: 42, msg: "hi" }, warn)).toBeUndefined();
+    expect(resolveDocId("", { _id: "", msg: "hi" }, warn)).toBeUndefined();
+    expect(warn).toHaveBeenCalledTimes(2);
   });
 });
 
