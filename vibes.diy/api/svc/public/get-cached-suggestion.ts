@@ -101,9 +101,11 @@ export const getCachedSuggestionEvento: EventoHandler<
         return Result.Ok(EventoResult.Continue);
       }
 
-      // Read the source app's cached-suggestion map and resolve the staged fsId
-      // for this key, re-verifying the source version was public (same helper the
-      // grant uses).
+      // Resolve the staged fsId from the BLESS map — the serve-eligibility layer.
+      // A produced-but-unblessed (or revoked) result is absent here, so it
+      // uniformly misses → the client forks (deny-by-default / fail-to-fork). Only
+      // a result the owner explicitly blessed is servable as an in-namespace stay.
+      // The source-was-public recheck still runs (same helper the grant uses).
       const rAppSet = await ensureAppSettings(vctx, {
         type: "vibes.diy.req-ensure-app-settings",
         appSlug: req.appSlug,
@@ -113,8 +115,8 @@ export const getCachedSuggestionEvento: EventoHandler<
         await ctx.send.send(ctx, miss);
         return Result.Ok(EventoResult.Continue);
       }
-      const cachedSuggestions = rAppSet.Ok().settings.entry.cachedSuggestions;
-      const entry = cachedSuggestions?.[req.key];
+      const cachedSuggestionBlesses = rAppSet.Ok().settings.entry.cachedSuggestionBlesses;
+      const entry = cachedSuggestionBlesses?.[req.key];
       if (!entry) {
         await ctx.send.send(ctx, miss);
         return Result.Ok(EventoResult.Continue);

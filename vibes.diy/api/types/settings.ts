@@ -2,7 +2,12 @@ import { type } from "arktype";
 import { dashAuthType, Role } from "./common.js";
 import { AIParams, ActiveEntry, EnablePublicAccess, EnableRequest, ActiveACL, KVString } from "./invite.js";
 import { dbAcl, DbAcl } from "./db-acls.js";
-import { cachedSuggestionRecord, type CachedSuggestionRecord } from "./cached-suggestion.js";
+import {
+  cachedSuggestionRecord,
+  type CachedSuggestionRecord,
+  cachedSuggestionBlessRecord,
+  type CachedSuggestionBlessRecord,
+} from "./cached-suggestion.js";
 
 export const sharingGrantItem = type({
   grant: "'allow' | 'deny'",
@@ -316,6 +321,26 @@ export function isReqEnsureAppSettingsCachedSuggestion(obj: unknown): obj is Req
   return !(reqEnsureAppSettingsCachedSuggestion(obj) instanceof type.errors);
 }
 
+// Bless (`op: "bless"`) or revoke (`op: "revoke"`) the staged result of one cached
+// suggestion, keyed by its content-address `key`. Owner-gated (the write only
+// reaches the mutation branch when the caller is the app owner). Blessing is what
+// makes a produced result servable as an in-namespace "stay"; revoking removes it
+// so the result forks again (fail-to-fork). `approvedBy`/`approvedAt` are stamped
+// server-side from the authenticated owner, never trusted from the client.
+export const reqEnsureAppSettingsCachedSuggestionBless = type({
+  cachedSuggestionBless: type({
+    key: "string",
+    fsId: "string",
+    sourceFsId: "string",
+    op: "'bless' | 'revoke'",
+  }),
+}).and(reqEnsureAppSettingsBase);
+
+export type ReqEnsureAppSettingsCachedSuggestionBless = typeof reqEnsureAppSettingsCachedSuggestionBless.infer;
+export function isReqEnsureAppSettingsCachedSuggestionBless(obj: unknown): obj is ReqEnsureAppSettingsCachedSuggestionBless {
+  return !(reqEnsureAppSettingsCachedSuggestionBless(obj) instanceof type.errors);
+}
+
 // Remove the ACL entry for a single dbName, falling back to the resolver
 // default (lazy COMMENTS_DEFAULT_ACL for "comments", undefined elsewhere).
 export const reqEnsureAppSettingsDbAclRemove = type({
@@ -346,6 +371,7 @@ export type ReqEnsureAppSettings =
   | ReqEnsureAppSettingsDbAcl
   | ReqEnsureAppSettingsDbAclRemove
   | ReqEnsureAppSettingsCachedSuggestion
+  | ReqEnsureAppSettingsCachedSuggestionBless
   | ReqEnsureAppSettingsBase;
 
 export function isReqEnsureAppSettings(obj: unknown): obj is ReqEnsureAppSettings {
@@ -364,6 +390,7 @@ export function isReqEnsureAppSettings(obj: unknown): obj is ReqEnsureAppSetting
     isReqEnsureAppSettingsDbAcl(obj) ||
     isReqEnsureAppSettingsDbAclRemove(obj) ||
     isReqEnsureAppSettingsCachedSuggestion(obj) ||
+    isReqEnsureAppSettingsCachedSuggestionBless(obj) ||
     isReqEnsureAppSettingsBase(obj)
   );
 }
@@ -389,12 +416,17 @@ export const AppSettings = type({
     // Cached suggestion-chip results: cacheKey -> { staged fsId, source fsId }.
     // Composed (dbAcls-style) from active.cached-suggestion entries. (#2801)
     "cachedSuggestions?": type({ "[string]": cachedSuggestionRecord }),
+    // Blessed cached suggestions: cacheKey -> { fsId, sourceFsId, approvedBy, approvedAt }.
+    // The serve-eligibility map — the reader/grant read THIS, not cachedSuggestions;
+    // unblessed/revoked = absent = fork. Composed from active.cached-suggestion-bless. (#2801)
+    "cachedSuggestionBlesses?": type({ "[string]": cachedSuggestionBlessRecord }),
   }),
 });
 export type AppSettings = typeof AppSettings.infer;
-export interface AppSettingsEntry extends Omit<AppSettings["entry"], "dbAcls" | "cachedSuggestions"> {
+export interface AppSettingsEntry extends Omit<AppSettings["entry"], "dbAcls" | "cachedSuggestions" | "cachedSuggestionBlesses"> {
   dbAcls?: Record<string, DbAcl>;
   cachedSuggestions?: Record<string, CachedSuggestionRecord>;
+  cachedSuggestionBlesses?: Record<string, CachedSuggestionBlessRecord>;
 }
 
 export const resEnsureAppSettings = type({

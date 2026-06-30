@@ -411,19 +411,40 @@ branch **does not exist yet**. Because jchris owns the system/starter vibes,
 owner-only already covers ~all near-term value. Admin-on-behalf ("fast-path other
 owners' vibes without them participating") is cleanly additive later.
 
-### Delta from the current build (what must change)
+### Delta from the current build — RESOLVED (bless gate shipped)
 
-The §"Implementation plan" reader/grant currently serves a **stay** for _any_
-produced result whose source was public — i.e. it **auto-stays**, with no blessing
-gate. That contradicts invariant 3 and is exactly the "owner clicks a bad chip and
-it's instantly live as a stay" hazard. **Required change:** gate the stay on an
-**approval entry** — produced-but-unblessed results must **fork**, not stay. Until
-that gate lands, the lane must remain **preview-flag-only** (it already is;
-`VIBES_CACHED_SUGGESTIONS="on"` in `[env.preview]`). The blessing gate is also the
-**real resolution of Finding A**: a human owner vouching for a specific result _is_
-the provenance verification the grant otherwise can't do automatically — so adding
-it upgrades Finding A from "won't-fix while preview-only" to "resolved by
-curation," a prerequisite for any prod enablement.
+The first enablement slice (#2890, merged) served a **stay** for _any_ produced
+result whose source was public — it **auto-stayed**, with no blessing gate, which
+contradicted invariant 3 ("owner clicks a bad chip and it's instantly live as a
+stay"). **This is now closed by the bless gate** (follow-up PR): a produced result
+is deny-by-default and **forks** until the owner explicitly **blesses** it.
+
+What shipped (matches Charlie's acceptance criteria below):
+
+- **Bless record + revoke** — `active.cached-suggestion-bless` composes into
+  `entry.cachedSuggestionBlesses: { [key]: { fsId, sourceFsId, approvedBy,
+approvedAt } }`. The write is owner-gated (the `ensureAppSettings` non-owner
+  early-return), keyed per content-address; `op: "revoke"` removes it. `approvedBy`
+  /`approvedAt` are stamped server-side from the authenticated owner — the
+  approver is the forward hook for admin-on-behalf without a schema change.
+- **Reader + grant require the bless** — the reader (`getCachedSuggestion`) and the
+  grant (`get-app-by-fsid` `cachedSuggestionGrant`) read the **bless** map, not the
+  produce map. Unblessed/revoked = absent = uniform miss / deny → **fork**
+  (fail-to-fork). The grant-time source-public recheck is kept.
+- **Bless ⇒ produce, by construction** — the bless map is the serve-eligibility
+  layer; the produce map (`cachedSuggestions`) is just the owner's record of what
+  was generated (for the bless UI / future fast-fork-seed / telemetry) and no
+  longer affects serving.
+
+This is the **real resolution of Finding A**: a human owner vouching for a specific
+result _is_ the provenance verification the grant can't do automatically. The lane
+**stays preview-flag-only** (`VIBES_CACHED_SUGGESTIONS="on"` in `[env.preview]`)
+until prod enablement is separately decided; the gate is the prerequisite, now met.
+
+**Still to do for preview validation (usability, not security):** an owner-facing
+**bless / unbless control** in the vibe route so an owner can elevate a produced
+result to a stay (and revoke). Until that lands, the lane is safe but inert
+(nothing is blessed → everything forks). Tracked as the immediate follow-up.
 
 Two precisions the build must hold to:
 
@@ -484,15 +505,20 @@ No blockers. The substantive additions:
   creation (already noted).
 
 **Prod-enable minimum checklist (Charlie) — acceptance criteria for the bless
-gate:**
+gate. All DONE (follow-up PR):**
 
-1. Add an explicit **bless record** (`{cacheKey, fsId, sourceFsId}`, owner-authed)
-   **+ a revoke path**.
-2. **Require the bless** in both the `getCachedSuggestion` reader and the
-   `get-app-by-fsid` stay allowance.
-3. Keep the **grant-time source-public recheck**.
-4. Tests for: **unblessed → fork**, **blessed → stay**, **revoked → fork**,
-   **non-owner cannot bless / cannot write the mapping**.
+1. ✅ Explicit **bless record** (`{key, fsId, sourceFsId, approvedBy, approvedAt}`,
+   owner-authed) **+ a revoke path** (`op: "revoke"`).
+2. ✅ **Require the bless** in both the `getCachedSuggestion` reader and the
+   `get-app-by-fsid` stay allowance (both read the bless map).
+3. ✅ **Grant-time source-public recheck** kept (`cachedSuggestionSourceIsPublic`).
+4. ✅ Tests: **unblessed → fork**, **blessed → stay**, **revoked → fork**,
+   **non-owner cannot bless**, **non-owner cannot produce** (plus source-not-public,
+   app-not-public, and Finding-B-after-unpublish all still hold under a bless).
+
+Remaining before a prod flip is a **product decision**, not new gate code: the
+owner-facing bless UI (for real preview validation) and the explicit go-ahead to
+enable `VIBES_CACHED_SUGGESTIONS` in prod.
 
 ## Open questions (resolve in brainstorm before planning)
 

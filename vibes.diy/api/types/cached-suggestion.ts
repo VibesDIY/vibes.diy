@@ -76,6 +76,53 @@ export function isActiveCachedSuggestion(obj: unknown): obj is ActiveCachedSugge
   return !(ActiveCachedSuggestion(obj) instanceof type.errors);
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// The BLESS half (#2801 follow-up) — the serve-eligibility layer.
+//
+// `active.cached-suggestion` above records what an owner *produced* (a generated
+// result, deny-by-default). It does NOT make the result servable to visitors. An
+// owner must additionally **bless** a specific produced result before it becomes
+// a fast-path in-namespace "stay"; everything unblessed forks. Blessing is an
+// explicit owner action (the write is owner-gated in `ensureAppSettings`) recorded
+// over the exact `{key, fsId, sourceFsId}` tuple (Charlie #2890), independently
+// revocable. The serve path (reader + grant) reads ONLY the bless map: not-blessed
+// or revoked ⇒ absent ⇒ fork (fail-to-fork). `approvedBy`/`approvedAt` are the
+// audit trail (and the forward hook for admin-on-behalf blessing later).
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * The map value for one blessed suggestion: the same `{fsId, sourceFsId}` the
+ * grant verifies (source-was-public) plus who blessed it and when. `approvedBy`
+ * is the blessing owner's userId today; it is the seam for a future
+ * admin-on-behalf approver without a schema change.
+ */
+export const cachedSuggestionBlessRecord = type({
+  fsId: "string",
+  sourceFsId: "string",
+  approvedBy: "string",
+  approvedAt: "string",
+});
+export type CachedSuggestionBlessRecord = typeof cachedSuggestionBlessRecord.infer;
+
+/** ActiveEntry variant — one bless row per content-address `key` inside AppSettings. */
+export const ActiveCachedSuggestionBless = type({
+  type: "'active.cached-suggestion-bless'",
+  /** The content-address key from {@link cachedSuggestionKey}. */
+  key: "string",
+  /** The staged result version this bless vouches for (must match the produced entry). */
+  fsId: "string",
+  /** The public-HEAD source version the result was derived from. */
+  sourceFsId: "string",
+  /** The owner userId that blessed this result (audit + future admin-on-behalf seam). */
+  approvedBy: "string",
+  /** ISO timestamp of the bless. */
+  approvedAt: "string",
+});
+export type ActiveCachedSuggestionBless = typeof ActiveCachedSuggestionBless.infer;
+export function isActiveCachedSuggestionBless(obj: unknown): obj is ActiveCachedSuggestionBless {
+  return !(ActiveCachedSuggestionBless(obj) instanceof type.errors);
+}
+
 /** The vibe version a transform is applied to (its precomputed result is keyed off this). */
 export interface CachedSuggestionSource {
   readonly ownerHandle: string;

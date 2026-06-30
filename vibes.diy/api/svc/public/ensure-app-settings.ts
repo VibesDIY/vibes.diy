@@ -1,6 +1,7 @@
 import { EventoHandler, Result, Option, EventoResultType, HandleTriggerCtx, EventoResult, exception2Result } from "@adviser/cement";
 import {
   ActiveCachedSuggestion,
+  ActiveCachedSuggestionBless,
   ActiveDbAcl,
   ActiveEntry,
   ActiveIconDescription,
@@ -17,6 +18,7 @@ import {
   EvtAppSetting,
   EvtIconGen,
   isActiveCachedSuggestion,
+  isActiveCachedSuggestionBless,
   isActiveDbAcl,
   isActiveEnv,
   isActiveIcon,
@@ -40,6 +42,7 @@ import {
   isReqEnsureAppSettingsRuntime,
   isReqEnsureAppSettingsCodegen,
   isReqEnsureAppSettingsCachedSuggestion,
+  isReqEnsureAppSettingsCachedSuggestionBless,
   isReqEnsureAppSettingsDbAcl,
   isReqEnsureAppSettingsDbAclRemove,
   isReqEnsureAppSettingsEnv,
@@ -138,6 +141,15 @@ export function buildEnsureEntryResult(entries: ActiveEntry[]): AppSettings {
       case isActiveCachedSuggestion(e):
         result.entry.cachedSuggestions = result.entry.cachedSuggestions ?? {};
         result.entry.cachedSuggestions[e.key] = { fsId: e.fsId, sourceFsId: e.sourceFsId };
+        break;
+      case isActiveCachedSuggestionBless(e):
+        result.entry.cachedSuggestionBlesses = result.entry.cachedSuggestionBlesses ?? {};
+        result.entry.cachedSuggestionBlesses[e.key] = {
+          fsId: e.fsId,
+          sourceFsId: e.sourceFsId,
+          approvedBy: e.approvedBy,
+          approvedAt: e.approvedAt,
+        };
         break;
       case isActiveDbAcl(e):
         result.entry.dbAcls = result.entry.dbAcls ?? {};
@@ -523,6 +535,36 @@ export async function ensureAppSettings(
             sourceFsId: req.cachedSuggestion.sourceFsId,
           }) satisfies ActiveCachedSuggestion
       );
+      break;
+    case isReqEnsureAppSettingsCachedSuggestionBless(req):
+      // Owner-gated by construction: this switch only runs after the non-owner
+      // read-only early return, so `res.userId` is always the app owner. Bless
+      // upserts the serve-eligibility entry (stamping approver server-side);
+      // revoke removes it so the result forks again (fail-to-fork).
+      if (req.cachedSuggestionBless.op === "revoke") {
+        [res.settings, res.error] = await sqlRemove(
+          vctx,
+          res,
+          settings,
+          (e) => isActiveCachedSuggestionBless(e) && e.key === req.cachedSuggestionBless.key
+        );
+      } else {
+        [res.settings, res.error] = await sqlUpsert(
+          vctx,
+          res,
+          settings,
+          (e) => isActiveCachedSuggestionBless(e) && e.key === req.cachedSuggestionBless.key,
+          () =>
+            ({
+              type: "active.cached-suggestion-bless",
+              key: req.cachedSuggestionBless.key,
+              fsId: req.cachedSuggestionBless.fsId,
+              sourceFsId: req.cachedSuggestionBless.sourceFsId,
+              approvedBy: res.userId,
+              approvedAt: now,
+            }) satisfies ActiveCachedSuggestionBless
+        );
+      }
       break;
     case isReqEnsureAppSettingsDbAcl(req):
       [res.settings, res.error] = await sqlUpsert(
