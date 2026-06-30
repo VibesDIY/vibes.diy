@@ -419,6 +419,37 @@ export function isResGetVibeChips(obj: unknown): obj is ResGetVibeChips {
   return !(resGetVibeChips(obj) instanceof type.errors);
 }
 
+// Anonymous cached-suggestion lookup (#2801). The read-lane reader: given a
+// content-address `key` for a source vibe, return the staged result `fsId` IFF
+// the app is visible to the caller (same public/member gate as getVibeChips) AND
+// a cached entry exists whose recorded source version was itself public. `auth`
+// is OPTIONAL (optAuth) so a logged-out visitor resolves it. A miss / non-public
+// returns the SAME shape with `fsId` absent — never an existence oracle.
+export const reqGetCachedSuggestion = type({
+  type: "'vibes.diy.req-get-cached-suggestion'",
+  "auth?": dashAuthType,
+  ownerHandle: "string",
+  appSlug: "string",
+  key: "string",
+});
+export type ReqGetCachedSuggestion = typeof reqGetCachedSuggestion.infer;
+export function isReqGetCachedSuggestion(obj: unknown): obj is ReqGetCachedSuggestion {
+  return !(reqGetCachedSuggestion(obj) instanceof type.errors);
+}
+
+export const resGetCachedSuggestion = type({
+  type: "'vibes.diy.res-get-cached-suggestion'",
+  ownerHandle: "string",
+  appSlug: "string",
+  key: "string",
+  // The staged result version. Absent = miss / not visible (no oracle).
+  "fsId?": "string",
+});
+export type ResGetCachedSuggestion = typeof resGetCachedSuggestion.infer;
+export function isResGetCachedSuggestion(obj: unknown): obj is ResGetCachedSuggestion {
+  return !(resGetCachedSuggestion(obj) instanceof type.errors);
+}
+
 export const evtNewFsId = type({
   type: "'vibes.diy.evt-new-fs-id'",
   ownerHandle: "string",

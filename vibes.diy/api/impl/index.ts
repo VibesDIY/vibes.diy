@@ -29,6 +29,9 @@ import {
   ReqGetVibeChips,
   ResGetVibeChips,
   isResGetVibeChips,
+  ReqGetCachedSuggestion,
+  ResGetCachedSuggestion,
+  isResGetCachedSuggestion,
   ReqGetAppByFsId,
   ResGetAppByFsId,
   isResGetAppByFsId,
@@ -596,6 +599,15 @@ export class VibesDiyApi implements VibesDiyApiIface<{
       { ...req, type: "vibes.diy.req-get-vibe-chips" },
       {
         resMatch: isResGetVibeChips,
+      }
+    );
+  }
+
+  getCachedSuggestion(req: Req<ReqGetCachedSuggestion>): Promise<Result<ResGetCachedSuggestion, VibesDiyError>> {
+    return this.request(
+      { ...req, type: "vibes.diy.req-get-cached-suggestion" },
+      {
+        resMatch: isResGetCachedSuggestion,
       }
     );
   }
