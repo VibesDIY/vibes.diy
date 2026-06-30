@@ -30,23 +30,45 @@ const BACKEND_REQUEST_URL = "https://vibe-backend.internal/";
  * Pure string-shaping — the unit-testable part of the loader path, exercised
  * without a live `env.LOADER` binding.
  *
+ * Per-vibe identity (#2856, slice B3): when `vibe` is supplied, `{ownerHandle,
+ * appSlug}` is baked into the hashed `main` as the `VIBE` constant. That does two
+ * things at once: it sets `ctx.appInfo` to a value the handler **cannot spoof via
+ * the per-trigger request** (it's compiled in, not read off `trigger`), and it
+ * folds the vibe identity into the content hash so **two different vibes with
+ * byte-identical `backend.js` never share an isolate** (the tenant boundary). The
+ * `JSON.stringify` encoding is inherently unambiguous — `{owner:"a",slug:"bc"}`
+ * and `{owner:"ab",slug:"c"}` serialize to distinct strings — so no separate
+ * length-prefixing is needed. Per-trigger context (`userHandle`, payload, …) still
+ * rides the request, never the hash (invariant #1).
+ *
  * KNOWN GAPs for the live path (later slices):
- * - `ctx` here is a B1 stub. Real `ctx.db` (proxying back through the production
- *   `putDoc`/`invokeAccessFn` gate), `ctx.secrets`, and `ctx.appInfo` wire up in
- *   B3/B6/B7 — and arrive via the request/RPC args, never the hashed source.
+ * - `ctx.db`/`ctx.secrets` are **present but throw** until their slices wire them
+ *   (B6 / B7) — a handler that reaches for them fails loudly rather than seeing
+ *   `undefined`. `ctx.appInfo`/`ctx.userInfo` are wired (B3).
  * - `globalOutbound` is pinned `null` (the `WorkerCode` type's literal). B8
  *   replaces it with the controlled egress-proxy binding; until then there is no
  *   live load, so `null` (no network) is the safe placeholder.
  * - Dependency bundling (#2845): the `backend.js` module's bare imports aren't
  *   resolved here; that lands with the live-load wiring, shared with SSR.
  */
-export function buildBackendWorkerCode(input: { module: string; policyVersion?: string }): WorkerCode {
+export function buildBackendWorkerCode(input: {
+  module: string;
+  policyVersion?: string;
+  vibe?: { ownerHandle: string; appSlug: string };
+}): WorkerCode {
   const policyVersion = input.policyVersion ?? "v1";
+  // Baked, per-vibe — folds the vibe identity into the content hash (tenant
+  // partition) and supplies an unspoofable `ctx.appInfo`. `null` when no vibe is
+  // given (B1 library callers / tests), matching the prior appInfo-absent behavior.
+  const vibeLiteral = input.vibe ? JSON.stringify({ ownerHandle: input.vibe.ownerHandle, appSlug: input.vibe.appSlug }) : "null";
   const main = [
     // policyVersion is embedded so it participates in the content hash (invariant
     // #1c) — bumping it forces a new isolate id without changing behavior.
     `// backend-isolate policy=${policyVersion}`,
     `import * as handlers from "./${BACKEND_MODULE}";`,
+    // Per-vibe identity — part of the hashed source (tenant partition) and the
+    // unspoofable source of ctx.appInfo.
+    `const VIBE = ${vibeLiteral};`,
     `export default {`,
     `  async fetch(request) {`,
     `    const { handler, trigger } = await request.json();`,
@@ -58,10 +80,14 @@ export function buildBackendWorkerCode(input: { module: string; policyVersion?: 
     `    if (!Object.prototype.hasOwnProperty.call(ALLOWED_HANDLERS, handler)) {`,
     `      return new Response("invalid backend handler: " + handler, { status: 400 });`,
     `    }`,
-    // B1 stub ctx — real db/secrets/appInfo wiring is B3/B6/B7, also via the request.
+    // ctx: appInfo is baked (unspoofable, B3); userInfo rides the trigger (B3).
+    // db/secrets are PRESENT BUT THROW until B6/B7 wire them — a handler that
+    // reaches for them fails loudly instead of seeing `undefined`.
     `    const ctx = {`,
-    `      appInfo: (trigger && trigger.appInfo) || null,`,
+    `      appInfo: VIBE,`,
     `      userInfo: trigger && trigger.userHandle ? { userHandle: trigger.userHandle } : null,`,
+    `      get db() { throw new Error("ctx.db is not available yet (wired in #2856 slice B6)"); },`,
+    `      get secrets() { throw new Error("ctx.secrets is not available yet (wired in #2856 slice B7)"); },`,
     `    };`,
     `    const fn = handlers[handler];`,
     `    if (typeof fn !== "function") {`,
@@ -117,12 +143,12 @@ async function hashBackendWorkerCode(code: WorkerCode): Promise<string> {
 export class WorkerLoaderBackendExecutor implements BackendExecutor {
   constructor(
     private readonly loader: WorkerLoaderBinding,
-    private readonly opts: { readonly policyVersion?: string } = {}
+    private readonly opts: { readonly policyVersion?: string; readonly vibe?: { ownerHandle: string; appSlug: string } } = {}
   ) {}
 
   async invoke(input: BackendInvokeInput): Promise<Response> {
     const { module } = transformBackendSource(input.source);
-    const code = buildBackendWorkerCode({ module, policyVersion: this.opts.policyVersion });
+    const code = buildBackendWorkerCode({ module, policyVersion: this.opts.policyVersion, vibe: this.opts.vibe });
     const id = await hashBackendWorkerCode(code);
     const stub = this.loader.get(id, () => code);
     const request = new Request(BACKEND_REQUEST_URL, {

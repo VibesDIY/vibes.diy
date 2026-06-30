@@ -97,6 +97,13 @@ export interface SelectBackendExecutorOptions {
    * doesn't drift from the real policy surface.
    */
   readonly policyVersion?: string;
+  /**
+   * Per-vibe identity (#2856, slice B3). Folded into the isolate id so two
+   * different vibes with byte-identical `backend.js` never share an isolate (the
+   * tenant boundary), and baked into the handler's `ctx.appInfo` as an unspoofable
+   * value. The DO is per-vibe, so this is set once per executor.
+   */
+  readonly vibe?: { readonly ownerHandle: string; readonly appSlug: string };
 }
 
 /**
@@ -114,6 +121,6 @@ export function selectBackendExecutor(mode: BackendJsMode, opts: SelectBackendEx
       if (opts.loader === undefined) {
         throw new Error("BACKEND_JS=loader requires a Worker Loader (env.LOADER) binding");
       }
-      return new WorkerLoaderBackendExecutor(opts.loader, { policyVersion: opts.policyVersion });
+      return new WorkerLoaderBackendExecutor(opts.loader, { policyVersion: opts.policyVersion, vibe: opts.vibe });
   }
 }

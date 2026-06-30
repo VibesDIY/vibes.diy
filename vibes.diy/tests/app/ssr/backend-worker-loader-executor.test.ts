@@ -65,6 +65,35 @@ describe("buildBackendWorkerCode", () => {
     expect(v2.modules[v2.mainModule]).toContain("policy=v2");
     expect(v1.modules[v1.mainModule]).not.toBe(v2.modules[v2.mainModule]);
   });
+
+  // B3: per-vibe identity is baked into the hashed main (tenant partition + an
+  // unspoofable ctx.appInfo).
+  it("bakes the vibe identity into main and varies it by (owner, slug)", () => {
+    const a = buildBackendWorkerCode({ module: "x", vibe: { ownerHandle: "alice", appSlug: "todo" } });
+    const b = buildBackendWorkerCode({ module: "x", vibe: { ownerHandle: "bob", appSlug: "todo" } });
+    expect(a.modules[a.mainModule]).toContain('"ownerHandle":"alice"');
+    expect(a.modules[a.mainModule]).toContain("appInfo: VIBE");
+    // Different vibe ⇒ different main ⇒ different content hash ⇒ different isolate.
+    expect(a.modules[a.mainModule]).not.toBe(b.modules[b.mainModule]);
+  });
+
+  it("encodes (owner, slug) unambiguously — no aliasing across the split boundary", () => {
+    // {owner:"a",slug:"bc"} must not collide with {owner:"ab",slug:"c"}.
+    const x = buildBackendWorkerCode({ module: "x", vibe: { ownerHandle: "a", appSlug: "bc" } });
+    const y = buildBackendWorkerCode({ module: "x", vibe: { ownerHandle: "ab", appSlug: "c" } });
+    expect(x.modules[x.mainModule]).not.toBe(y.modules[y.mainModule]);
+  });
+
+  it("with no vibe, appInfo is null (B1 library-callers / unchanged behavior)", () => {
+    const code = buildBackendWorkerCode({ module: "x" });
+    expect(code.modules[code.mainModule]).toContain("const VIBE = null;");
+  });
+
+  it("ctx.db and ctx.secrets are present but throw (wired in B6/B7)", () => {
+    const main = buildBackendWorkerCode({ module: "x" }).modules[buildBackendWorkerCode({ module: "x" }).mainModule];
+    expect(main).toMatch(/get db\(\) \{ throw new Error\("ctx\.db is not available yet/);
+    expect(main).toMatch(/get secrets\(\) \{ throw new Error\("ctx\.secrets is not available yet/);
+  });
 });
 
 interface FakeLoader {
@@ -154,6 +183,36 @@ describe("WorkerLoaderBackendExecutor.invoke (fake binding)", () => {
     expect(code).not.toContain("alice-secret-handle");
     expect(code).not.toContain("tag-xyz");
     expect(f.requests[0].trigger.userHandle).toBe("alice-secret-handle");
+  });
+
+  // B3 tenant boundary: two different vibes with byte-identical backend.js get
+  // DIFFERENT isolate ids — no cross-vibe isolate sharing.
+  it("(b2) different vibes with identical source ⇒ different loader ids", async () => {
+    const f1 = fakeLoader();
+    const f2 = fakeLoader();
+    await new WorkerLoaderBackendExecutor(f1.binding, { vibe: { ownerHandle: "alice", appSlug: "todo" } }).invoke({
+      source: SONOS_BACKEND,
+      handler: "fetch",
+      trigger: {},
+    });
+    await new WorkerLoaderBackendExecutor(f2.binding, { vibe: { ownerHandle: "bob", appSlug: "todo" } }).invoke({
+      source: SONOS_BACKEND,
+      handler: "fetch",
+      trigger: {},
+    });
+    expect(f1.calls[0].id).not.toBe(f2.calls[0].id);
+  });
+
+  it("(b3) same vibe + identical source ⇒ same loader id (isolate reuse)", async () => {
+    const f = fakeLoader();
+    const vibe = { ownerHandle: "alice", appSlug: "todo" };
+    await new WorkerLoaderBackendExecutor(f.binding, { vibe }).invoke({ source: SONOS_BACKEND, handler: "fetch", trigger: {} });
+    await new WorkerLoaderBackendExecutor(f.binding, { vibe }).invoke({
+      source: SONOS_BACKEND,
+      handler: "scheduled",
+      trigger: {},
+    });
+    expect(f.calls[0].id).toBe(f.calls[1].id);
   });
 
   // @CharlieHelps acceptance matrix (c): a policy/binding-schema bump ⇒ new id.
