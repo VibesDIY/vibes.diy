@@ -60,18 +60,39 @@ the job of removing `@fireproof/core-cli` entirely. Note them when you open the 
 
 ## Verified inventory (build-tool surface)
 
-From the merged decision record, re-confirmed against current `main`:
+Re-confirmed against current `main` (HEAD `fe1a4d0`):
 
-- **33** workspace packages invoke `core-cli` in `scripts`.
+- **34** workspace packages invoke `core-cli` in `scripts`.
 - **22** `@fireproof/core-cli` declarations = **20 `devDependencies` + 2 runtime
   `dependencies`** (the 2 runtime deps are the seam owners `vibes-diy` and
   `vibes.diy/identity` — _not_ build-tool consumers; leave them for follow-ons #2/#3).
+- **20** packages run a _real_ (non-`echo`-stub) `core-cli build` publish.
 - Scripts split: `core-cli tsc` (build/typecheck, often `&& vite build` /
   `&& wrangler build` / `&& react-router build` / `&& storybook build`) and
   `core-cli build [--doPack]` / `core-cli build -x '^' [--doPack]` (pack/publish).
-- Package roles (who runs a _real_ publish vs echo-stub vs build-only) are tabled
-  in the decision record's "Packages by publish role" — use it as the migration
-  worklist.
+
+> **Build the worklist from a live scan, not the merged table.** The decision
+> record's "Packages by publish role" table is a useful starting shape, but it was
+> taken at base `43f168b` and the tree has drifted: `vibes.diy/cmd-tools`
+> (`@vibes.diy/cmd-tools`) was **added** — a real-publish internal package
+> (`build: core-cli tsc`, `pack: core-cli build --doPack`, `publish: core-cli
+build`) that is **absent from that table** — and `vibes.diy/api/queue`'s publish
+> role **changed** (it's no longer a real publish after the `81ef2bc`/`c8b6d08`
+> private-package sweep). So re-derive the worklist on the tree you migrate:
+>
+> ```sh
+> # every script consumer (expect 34 today)
+> grep -rl "core-cli" --include=package.json --exclude-dir=node_modules .
+> # real publishers vs echo-stubs: inspect each package's publish script
+> ```
+>
+> **`@vibes.diy/cmd-tools` is the trap to watch:** it invokes `core-cli` in
+> `build`/`pack`/`publish` but **declares no `@fireproof/core-cli` of its own** — it
+> resolves the bin via root/hoisted install. When you swap the bin provider to
+> `@vibes.diy/build-cli`, a package with no declared dependency can be left with no
+> bin and silently break (or keep resolving the old hoisted one). Give it (and any
+> other no-own-declaration consumer the live scan finds) an explicit devDep on the
+> new package so the pack guard covers the whole workspace.
 
 ## Anatomy of the lift target (from `@fireproof/core-cli@0.24.19`, published dist)
 
