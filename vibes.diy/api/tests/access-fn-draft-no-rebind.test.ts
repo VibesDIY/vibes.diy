@@ -40,7 +40,7 @@ async function setup() {
     timeoutMs: 10000,
     getToken: async () => Result.Ok(await owner.getDashBoardToken()),
   });
-  return { ctx, api };
+  return { ctx, api, sthis };
 }
 
 async function bindingCid(
@@ -56,10 +56,16 @@ async function bindingCid(
   return rows.find((r) => r.dbName === "*")?.accessFnCid;
 }
 
-async function ensure(api: VibesDiyApi, appSlug: string | undefined, access: string) {
+async function ensure(
+  api: VibesDiyApi,
+  appSlug: string | undefined,
+  access: string,
+  opts: { mode?: "dev" | "production"; runId?: string } = {}
+) {
   const r = await api.ensureAppSlug({
     ...(appSlug ? { appSlug } : {}),
-    mode: "dev",
+    mode: opts.mode ?? "dev",
+    ...(opts.runId ? { runId: opts.runId } : {}),
     fileSystem: [
       { type: "code-block", lang: "jsx", filename: "/App.jsx", content: `function App() { return null; } App();` },
       { type: "code-block", lang: "js", filename: "/access.js", content: access },
@@ -73,11 +79,13 @@ async function ensure(api: VibesDiyApi, appSlug: string | undefined, access: str
 describe("#2902 dev draft does not re-bind a published app's access fn", { timeout: 30000 }, () => {
   let ctx: Awaited<ReturnType<typeof createVibeDiyTestCtx>>;
   let api: VibesDiyApi;
+  let sthis: ReturnType<typeof ensureSuperThis>;
 
   beforeAll(async () => {
     const s = await setup();
     ctx = s.ctx;
     api = s.api;
+    sthis = s.sthis;
   }, 30000);
 
   it("a never-published app's latest dev draft governs the binding", async () => {
@@ -116,5 +124,21 @@ describe("#2902 dev draft does not re-bind a published app's access fn", { timeo
     const cidAfter = await bindingCid(ctx, ownerHandle, appSlug);
     expect(cidAfter).toBeDefined();
     expect(cidAfter).not.toBe(cidRestrictive);
+  });
+
+  it("a same-runId late dev write does not re-bind the published access fn (Codex/Charlie P1)", async () => {
+    // A production write lands first under runId R (creates the production row +
+    // binds restrictive). A later dev write with the SAME runId reconciles in
+    // place — ensureApps returns the canonical PRODUCTION mode even though these
+    // files are the dev draft. Binding must use the request lane (dev), so the
+    // permissive draft stays inert; binding by ensured.mode would flip it live.
+    const runId = sthis.nextId(12).str;
+    const prod = await ensure(api, undefined, ACCESS_RESTRICTIVE, { mode: "production", runId });
+    const { appSlug, ownerHandle } = prod;
+    const cidRestrictive = await bindingCid(ctx, ownerHandle, appSlug);
+    expect(cidRestrictive).toBeDefined();
+
+    await ensure(api, appSlug, ACCESS_PERMISSIVE, { mode: "dev", runId });
+    expect(await bindingCid(ctx, ownerHandle, appSlug)).toBe(cidRestrictive);
   });
 });
