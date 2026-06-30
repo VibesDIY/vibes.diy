@@ -271,18 +271,17 @@ Two findings, both **bounded to owner-self-exposure** (no third-party victim):
   the no-`fsId` path and the grant requires `fsId` (and `publicAccess` stays
   enabled across unpublish). The grant now re-checks `isHiddenForCaller`, mirroring
   the reader, so unpublishing a vibe also stops serving its staged cached versions.
-- **Finding A — KNOWN LIMITATION, follow-up.** The grant verifies the **source**
+- **Finding A — WON'T FIX (accepted, jchris).** The grant verifies the **source**
   version was public but does **not** verify the staged `fsId` is genuinely a
   chip-derived transform of it — the owner-written map entry is trusted for the
-  served fsId. So a malicious/buggy owner could register one of their own
-  _unpublished draft_ fsIds and have its `env`/`fileSystem` served anonymously.
-  Impact is bounded to the owner exposing **their own** app's content (they could
-  publish it anyway); the normal producer never does this (it registers the chip
-  result). The proper fix is the **provenance tag** this spec already anticipated:
-  stamp staged chip versions in `meta` at codegen time and have the grant require
-  the served row to carry it + reference `sourceFsId` as parent — deferred because
-  it needs codegen-side stamping. Until then, the producer policy (offered chips
-  only, public source) is the only "is it chip-derived" gate, and it's client-side.
+  served fsId. So an owner could register one of their own _unpublished draft_
+  fsIds and have its `env`/`fileSystem` served anonymously. **Accepted as
+  won't-fix:** impact is bounded to the owner exposing **their own** app's content
+  (which they could publish anyway), and triggering it requires the owner to
+  deliberately work around the normal flow (the producer only ever registers the
+  actual chip result). No third-party victim. If we ever want to close it, the fix
+  is a codegen-time provenance `meta` tag the grant verifies — not worth the
+  codegen-side plumbing for owner-self-exposure.
 
 ## Open questions (resolve in brainstorm before planning)
 
