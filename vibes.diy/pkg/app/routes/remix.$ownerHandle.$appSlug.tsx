@@ -2,12 +2,8 @@ import React, { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router";
 import { useAuth } from "@clerk/react";
 import { toast } from "react-hot-toast";
-import { exception2Result } from "@adviser/cement";
-import { fireproof } from "@fireproof/use-fireproof";
-import type { VibeDocument } from "@vibes.diy/prompts";
 import { cx, gridBackground } from "@vibes.diy/base";
 import { useVibesDiy } from "../vibes-diy-provider.js";
-import { encodeTitle } from "../components/SessionSidebar/utils.js";
 import { useDocumentTitle } from "../hooks/useDocumentTitle.js";
 import { notifyRecentVibesChanged } from "../hooks/useRecentVibes.js";
 
@@ -43,24 +39,14 @@ export default function RemixRoute() {
       const fork = rFork.Ok();
       notifyRecentVibesChanged();
 
-      // Seed the local Fireproof VibeDocument so ChatHeaderContent shows the
-      // "remix of" link later if the user navigates into the chat editor.
-      // The snapshot slugs come from the server's live resolution at fork
-      // time; future renders can re-resolve via srcFsId if the source was
-      // renamed.
-      const rSeed = await exception2Result(async () => {
-        const db = fireproof(`vibe-${fork.appSlug}`);
-        const title = `${skipChat ? "Clone" : "Remix"} of ${fork.srcAppSlug}`;
-        await db.put({
-          _id: "vibe",
-          title,
-          encodedTitle: encodeTitle(title),
-          remixOf: `${fork.srcUserSlug}/${fork.srcAppSlug}`,
-          created_at: Date.now(),
-        } satisfies VibeDocument);
-      });
-      if (rSeed.isErr()) {
-        // Non-fatal: local VibeDocument is best-effort header metadata.
+      // Stash the "remix of" indicator for the chat/vibe header to read
+      // (sessionStorage, keyed by the forked appSlug). Best-effort metadata —
+      // the exact source slugs come straight from the fork response, so no
+      // server resolution is needed. (Was a local Fireproof doc — #2934.)
+      try {
+        sessionStorage.setItem(`remixOf:${fork.appSlug}`, `${fork.srcUserSlug}/${fork.srcAppSlug}`);
+      } catch {
+        // sessionStorage unavailable — the indicator is non-essential.
       }
 
       if (skipChat) {
