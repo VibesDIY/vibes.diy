@@ -57,7 +57,7 @@ export async function fetch(request, ctx) {
 }
 ```
 
-Always **verify webhook signatures** with the provider's secret before writing anything. Tell the user their webhook URL in the UI/setup copy so they can register it with the third party (it's `https://vibes.diy/vibe/{ownerHandle}/{appSlug}/api/…`).
+Always **verify webhook signatures** with the provider's secret before writing anything. Tell the user their webhook URL in the UI/setup copy so they can register it with the third party (it's `https://vibes.diy/vibe/{ownerHandle}/{appSlug}/api/…`). _This is a template — swap the paths, provider secret names, and doc `type`s for your app, and delete the branches you don't use._
 
 ## `scheduled(event, ctx)` — polling on a timer
 
@@ -80,7 +80,7 @@ export async function scheduled(event, ctx) {
 }
 ```
 
-**`config.scheduled.interval` must be a static string literal**, one of `"5s" | "30s" | "1m" | "5m" | "15m" | "1h"` (any `<n>s|m|h` works; **min 5s, max 1h**). A faster, slower, malformed, or **computed/indirect** value (`interval: SOME_CONST`) is rejected at push time — write the literal directly. One `scheduled` run at a time per app; if a tick overruns, the next starts after it finishes.
+**`config.scheduled.interval` must be a static string literal**, one of `"5s" | "30s" | "1m" | "5m" | "15m" | "1h"` (any `<n>s|m|h` works; **min 5s, max 1h**). A faster, slower, malformed, or **computed/indirect** value (`interval: SOME_CONST`) is rejected at push time — write the literal directly. One `scheduled` run at a time per app; if a tick overruns, the next starts after it finishes. _Adapt the endpoint, auth header, and stored doc shape to your provider; drop the guards you don't need._
 
 ## `onChange(event, ctx)` — side effects after a write
 
@@ -109,12 +109,22 @@ export async function onChange(event, ctx) {
 }
 ```
 
-Detect create/update/delete from `doc`/`oldDoc` nullness (create = `doc && !oldDoc`; update = both; delete = `oldDoc && !doc` or `doc.deleted`). **Filter narrowly** (by `type` and create-vs-update) so you don't fire on every write. If `onChange` itself calls `ctx.db.put`, guard against an infinite loop (only write when something actually changed, and don't re-write the doc that triggered you).
+Detect create/update/delete from `doc`/`oldDoc` nullness (create = `doc && !oldDoc`; update = both; delete = `oldDoc && !doc` or `doc.deleted`). **Filter narrowly** (by `type` and create-vs-update) so you don't fire on every write. If `onChange` itself calls `ctx.db.put`, guard against an infinite loop (only write when something actually changed, and don't re-write the doc that triggered you). _Adapt the `type` filter and the outbound call to your app; remove the example branches you don't use._
 
 ## Identity on writes — keep `access.js` honest
 
 Every `ctx.db.put(doc)` writes as a real `userHandle` (the trigger's): `onChange` passes through the **original writer**, `fetch` uses the **session user** (or owner for webhooks), `scheduled` uses the **owner**. So `access.js` validates a backend write exactly like a frontend one. Only the **vibe owner's** code may impersonate another user with `ctx.db.put(doc, { as: "alice" })`; reach for it rarely.
 
+## Before you emit it — the negative gate
+
+`backend.js` is the exception, not the default. Emit it **only if at least one** of these is true:
+
+- an **inbound webhook / OAuth callback** the app must receive (`fetch`), **or**
+- **periodic external polling** on a timer (`scheduled`), **or**
+- a **post-write server-side side effect** like email/external sync (`onChange`).
+
+If **none** hold — the app's data just lives in Fireproof and round-trips to the UI — **do not emit `backend.js`.** In a borderline or data-only app, **omission wins**.
+
 ## Output format
 
-Emit `backend.js` as its **own** file block (never inside `App.jsx` or `access.js`) — the filename line is how the system routes it. Put the `config` export in the same file. Keep handlers small and copy the shapes above, adapting the paths, doc `type`s, and secret names to the app.
+When you emit `backend.js`, precede it with a **one-line rationale** — `backend needed because <reason>` — then emit it as its **own** file block (never inside `App.jsx` or `access.js`); the filename line is how the system routes it. Put the `config` export in the same file. If the app needs no server-side logic, say **`No backend.js needed`** and emit none. Keep handlers small and adapt the shapes above — swap paths, doc `type`s, and secret names; delete branches you don't use.
