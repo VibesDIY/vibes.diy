@@ -14,11 +14,18 @@ export type SsrIsolateDepModules = Record<string, string>;
 export interface SsrIsolateDeps {
   /** Map of isolate import specifier → pre-bundled module source. */
   readonly modules: SsrIsolateDepModules;
-  /** React version baked into the bundle — folded into the isolate cache key and parity-checked. */
+  /** React version baked into the bundle — parity-checked against the import map. */
   readonly reactVersion: string;
+  /**
+   * Content digest over ALL dep module sources — the value folded into the
+   * isolate cache key, so any change to the bundled runtime (render-vibes,
+   * react-dom/server, arktype, shims) re-keys the isolate, not just a React
+   * version bump (#2967 Codex P2).
+   */
+  readonly depsVersion: string;
 }
 
-const EMPTY: SsrIsolateDeps = { modules: {}, reactVersion: "" };
+const EMPTY: SsrIsolateDeps = { modules: {}, reactVersion: "", depsVersion: "" };
 
 let cached: Promise<SsrIsolateDeps> | undefined;
 
@@ -28,6 +35,7 @@ export function loadSsrIsolateDeps(): Promise<SsrIsolateDeps> {
       .then((m) => ({
         modules: m.SSR_ISOLATE_DEP_MODULES ?? {},
         reactVersion: m.SSR_ISOLATE_REACT_VERSION ?? "",
+        depsVersion: m.SSR_ISOLATE_DEPS_VERSION ?? "",
       }))
       .catch(() => EMPTY);
   }
