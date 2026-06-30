@@ -19,9 +19,97 @@
 // portably in an emitted `.d.ts`, and only the schemas below cross the package's
 // module boundary.
 import { z } from "zod";
-import type { Subject, Extensions, FPDeviceIDCSRPayload, FPDeviceIDSession } from "@fireproof/core-types-base";
-import { JWKPublicSchema } from "./wire.js";
-import { ClerkClaimSchema } from "../clerk-claim.js";
+import { JWKPublicSchema, type JWKPublic } from "./wire.js";
+import { ClerkClaimSchema, type ClerkClaim } from "../clerk-claim.js";
+
+// --- Owned device-id payload TYPES (#2937) --------------------------------
+// Hand-written to match the schemas below exactly (the verbatim lift of
+// `core-types-base`'s `fp-device-id-payload.zod` / `jwt-payload.zod` @ 0.24.19),
+// written as explicit types — not `z.infer<typeof Schema>` — so the emitted
+// `.d.ts` names no zod-internal symbol (TS2883). The `.readonly()` on the CSR /
+// session schemas maps to `Readonly<…>` so the owned type is structurally
+// identical to the dropped `@fireproof/core-types-base` export.
+
+export interface JWTPayload {
+  azp?: string;
+  iss?: string;
+  sub?: string;
+  aud?: string | string[];
+  exp?: number;
+  nbf?: number;
+  iat?: number;
+  jti?: string;
+}
+
+export interface Subject {
+  commonName: string;
+  countryName?: string;
+  stateOrProvinceName?: string;
+  locality?: string;
+  organization?: string;
+  organizationalUnitName?: string;
+  emailAddress?: string;
+  serialNumber?: string;
+  streetAddress?: string;
+  postalCode?: string;
+  businessCategory?: string;
+  jurisdictionCountryName?: string;
+  jurisdictionStateOrProvinceName?: string;
+  jurisdictionLocalityName?: string;
+}
+
+export interface Extensions {
+  subjectAltName?: string[];
+  keyUsage?: (
+    | "digitalSignature"
+    | "nonRepudiation"
+    | "keyEncipherment"
+    | "dataEncipherment"
+    | "keyAgreement"
+    | "keyCertSign"
+    | "cRLSign"
+    | "encipherOnly"
+    | "decipherOnly"
+  )[];
+  extendedKeyUsage?: (
+    | "serverAuth"
+    | "clientAuth"
+    | "codeSigning"
+    | "emailProtection"
+    | "timeStamping"
+    | "OCSPSigning"
+    | "ipsecIKE"
+    | "msCodeInd"
+    | "msCodeCom"
+    | "msCTLSign"
+    | "msEFS"
+  )[];
+  basicConstraints?: { cA?: boolean; pathLenConstraint?: number };
+  authorityKeyIdentifier?: string;
+  subjectKeyIdentifier?: string;
+  certificatePolicies?: { policyIdentifier: string; policyQualifiers?: string[] }[];
+  crlDistributionPoints?: string[];
+  authorityInfoAccess?: { ocsp?: string[]; caIssuers?: string[] };
+  nameConstraints?: { permitted?: string[]; excluded?: string[] };
+}
+
+export type FPDeviceIDCSRPayload = Readonly<
+  JWTPayload & {
+    creatingUser?: { type: "clerk"; claims: ClerkClaim };
+    csr: Readonly<{
+      subject: Subject;
+      publicKey: JWKPublic;
+      extensions?: Extensions;
+    }>;
+  }
+>;
+
+export type FPDeviceIDSession = Readonly<
+  JWTPayload & {
+    deviceId: string;
+    seq: number;
+  }
+>;
 
 const JWTPayloadSchema = z.object({
   azp: z.string().optional(),

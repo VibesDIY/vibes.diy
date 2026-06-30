@@ -6,7 +6,7 @@
 // dynamic gateway imports now point at the in-repo node/deno wrappers.
 import { runtimeFn, ResolveOnce } from "@adviser/cement";
 import type { URI } from "@adviser/cement";
-import type { SysFileSystem } from "@fireproof/core-types-base";
+import type { SysFileSystem } from "../../types/sthis.js";
 
 const nodeFs = new ResolveOnce<SysFileSystem>();
 const denoFs = new ResolveOnce<SysFileSystem>();

@@ -14,9 +14,6 @@
   "dependencies": {
     "@adviser/cement": "^0.5.34",
     "@cloudflare/workers-types": "4.20260617.1",
-    "@fireproof/core-device-id": "0.24.19",
-    "@fireproof/core-types-base": "0.24.19",
-    "@fireproof/core-types-device-id": "0.24.19",
     "@libsql/client": "^0.17.4",
     "@neondatabase/serverless": "^1.1.0",
     "@vibes.diy/api-impl": "workspace:*",

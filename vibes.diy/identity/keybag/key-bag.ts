@@ -15,7 +15,9 @@
 import { KeyedResolvOnce, Lazy, Option } from "@adviser/cement";
 import type { URI } from "@adviser/cement";
 import { hashStringAsync, hashStringSync } from "../runtime/hashing.js";
-import type { SuperThis, DeviceIdResult, JWKPrivate, DeviceIdKeyBagItem } from "@fireproof/core-types-base";
+import type { SuperThis } from "../types/sthis.js";
+import type { JWKPrivate } from "../types/wire.js";
+import type { DeviceIdResult, DeviceIdKeyBagItem } from "../types/keybag-item.js";
 import { z } from "zod";
 import { JWKPrivateSchema } from "../types/wire.js";
 import { CertificatePayloadSchema } from "../types/cert-payload.js";

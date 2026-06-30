@@ -2,7 +2,7 @@ import { VibesDiyApi } from "@vibes.diy/api-impl";
 import { assert, beforeAll, describe, expect, inject, it, vi } from "vitest";
 import { loadAsset, processStream, Result, TestFetchPair, TestWSPair } from "@adviser/cement";
 import { ensureSuperThis } from "@vibes.diy/identity";
-import { createTestDeviceCA, createTestUser } from "@fireproof/core-device-id";
+import { createTestDeviceCA, createTestUser } from "@vibes.diy/identity/testing";
 import {
   calcEntryPointUrl,
   CFInject,

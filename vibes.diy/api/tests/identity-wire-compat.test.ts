@@ -1,11 +1,19 @@
-// Golden wire-compat harness. Pins the CURRENT (@fireproof/* 0.24.19) device-id
-// token / CSR->cert / verify contract so the extracted @vibes.diy/identity impl
-// can be proven equivalent. The cross-verification block at the bottom proves
-// extracted-mints verify under the fireproof verifier and vice-versa, by routing
-// the impl-under-test through `./identity-extracted-factories` — repoint those
-// factories at the in-repo modules as each lift lands; the tests must stay green.
+// Device-id wire-contract harness (owned impl; #2937).
+//
+// Originally a cross-verification gate between the upstream @fireproof/* device-id
+// crypto and the in-repo extraction. With #2937 the upstream `@fireproof/core-device-id`
+// dependency is dropped, so this suite now exercises the OWNED impl end-to-end:
+// the device-id token header/payload shape, the CSR -> cert issuance contract, the
+// minted-token-verifies-under-its-CA round-trip, and the load-bearing Certor
+// normalize-then-hash invariant (incomplete claim ⇒ thumbprint mismatch).
+//
+// The BYTE-LEVEL parity against the dropped upstream path lives in
+// `identity/device-id/wire-golden.test.ts`, which pins the owned signer's JWT
+// header bytes to a fixture frozen from @fireproof/core-device-id@0.24.19. This
+// suite covers behavior; that one covers byte equality.
 import { describe, it, expect, beforeAll } from "vitest";
 import { ensureSuperThis } from "@vibes.diy/identity";
+import type { SuperThis } from "@vibes.diy/identity";
 import {
   createTestDeviceCA,
   createTestUser,
@@ -13,14 +21,13 @@ import {
   DeviceIdKey,
   DeviceIdSignMsg,
   DeviceIdCSR,
-} from "@fireproof/core-device-id";
-import type { SuperThis } from "@fireproof/core-types-base";
-import { extracted } from "./identity-extracted-factories.js";
+  DeviceIdCA,
+} from "@vibes.diy/identity/testing";
 
 const decodeSeg = (seg: string) => JSON.parse(Buffer.from(seg, "base64url").toString("utf8"));
 const SESSION_CLAIM_KEYS = ["deviceId", "exp", "iat", "iss", "jti", "nbf", "seq", "sub"];
 
-describe("identity wire-compat (baseline: @fireproof/* 0.24.19)", { timeout: 30000 }, () => {
+describe("identity wire-contract (owned device-id crypto)", { timeout: 30000 }, () => {
   const sthis: SuperThis = ensureSuperThis();
   let ca: Awaited<ReturnType<typeof createTestDeviceCA>>;
   let user: Awaited<ReturnType<typeof createTestUser>>;
@@ -87,8 +94,8 @@ describe("identity wire-compat (baseline: @fireproof/* 0.24.19)", { timeout: 300
     const rIssued = await ca.processCSR(csr, { sub: "user_csr", email: "csr@example.com" } as never);
     expect(rIssued.isOk()).toBe(true);
     const issued = rIssued.Ok();
-    // Issuance wire-contract: a JWT cert whose payload binds the requested
-    // subject to the issuing CA. The extracted CA must reproduce this shape.
+    // Issuance wire-contract: a JWT cert whose payload binds the requested subject
+    // to the issuing CA.
     expect(typeof issued.certificateJWT).toBe("string");
     const cert = issued.certificatePayload.certificate;
     expect(cert.subject.commonName).toBe("csr-test");
@@ -97,12 +104,10 @@ describe("identity wire-compat (baseline: @fireproof/* 0.24.19)", { timeout: 300
     expect(issued.certificatePayload.sub).toBe("csr-test");
   });
 
-  // Regression for the Certor normalize-then-hash ordering (requested on #2667):
-  // the cert thumbprint is computed AFTER CertificatePayloadSchema.parse fills the
-  // patched `.catch("")` params defaults, so the issuing claim must be fully
-  // populated or the signer's x5t (pre-parse) disagrees with the verifier's
-  // (post-parse). Pin BOTH outcomes so a future extracted CA/verifier that drops
-  // the normalize step is caught here. The extracted CA (Task 3) must preserve it.
+  // Regression for the Certor normalize-then-hash ordering (#2667): the cert
+  // thumbprint is computed AFTER CertificatePayloadSchema.parse fills the patched
+  // `.catch("")` params defaults, so the issuing claim must be fully populated or
+  // the signer's x5t (pre-parse) disagrees with the verifier's (post-parse).
   it("regression: Certor normalize-then-hash — incomplete claim ⇒ thumbprint mismatch, full claim ⇒ x5t match", async () => {
     const mintWith = async (params: Record<string, unknown>) => {
       const key = await DeviceIdKey.create();
@@ -140,20 +145,15 @@ describe("identity wire-compat (baseline: @fireproof/* 0.24.19)", { timeout: 300
       );
     };
 
-    // Assert against the OWNED verifier (what we ship). It uses the owned, lenient
-    // CertificatePayloadSchema, so the normalize-then-hash invariant holds
-    // independently of the dropped core-types-base patch. (The fireproof baseline
-    // verifier now parses strictly and rejects incomplete claims earlier, which is
-    // why this targets the extracted verifier.)
-    const extractedVerifier = new extracted.DeviceIdVerifyMsg(sthis.txt.base64, [(await ca.caCertificate()).Ok()], {
+    const ownedVerifier = new DeviceIdVerifyMsg(sthis.txt.base64, [(await ca.caCertificate()).Ok()], {
       clockTolerance: 5,
       deviceIdCA: ca as never,
     });
 
-    // Incomplete params (missing first/image_url/last/name) ⇒ owned schema fills them
-    // on the verifier's re-parse ⇒ thumbprint mismatch.
+    // Incomplete params ⇒ owned schema fills first/image_url/last/name on the
+    // verifier's re-parse ⇒ thumbprint mismatch.
     const incomplete = await mintWith({ email: "regr@example.com", email_verified: true, public_meta: "{}" });
-    const vrBad = await extractedVerifier.verifyWithCertificate(incomplete);
+    const vrBad = await ownedVerifier.verifyWithCertificate(incomplete);
     expect(vrBad.valid).toBe(false);
     if (!vrBad.valid) expect((vrBad as { errorCode?: string }).errorCode).toBe("CERT_THUMBPRINT_MISMATCH");
 
@@ -168,117 +168,14 @@ describe("identity wire-compat (baseline: @fireproof/* 0.24.19)", { timeout: 300
       name: "name-regr",
       public_meta: "{}",
     });
-    const vrGood = await extractedVerifier.verifyWithCertificate(full);
+    const vrGood = await ownedVerifier.verifyWithCertificate(full);
     expect(vrGood.valid).toBe(true);
     const header = decodeSeg(full.split(".")[0]);
     expect(header).toHaveProperty("x5t");
     expect(header).toHaveProperty("x5t#S256");
   });
 
-  // --- Cross-verification gate -------------------------------------------------
-  // The proof obligation every extraction step must keep green: a token minted by
-  // the EXTRACTED impl verifies under the FIREPROOF verifier, and a fireproof-minted
-  // token verifies under the EXTRACTED verifier. While the factories delegate to
-  // fireproof (v1) these are tautological; they bite the moment a factory is
-  // repointed at an in-repo module (a byte mismatch in the lifted crypto fails here).
-
-  it("cross-verify: fireproof-minted token verifies under the extracted verifier", async () => {
-    const tok = await user.getDashBoardToken();
-    const caCert = (await ca.caCertificate()).Ok();
-    const extractedVerifier = new extracted.DeviceIdVerifyMsg(sthis.txt.base64, [caCert], {
-      clockTolerance: 0,
-      deviceIdCA: ca,
-    });
-    const vr = await extractedVerifier.verifyWithCertificate(tok.token);
-    expect(vr.valid).toBe(true);
-    if (!vr.valid) throw new Error(String(vr.error));
-    expect((vr.payload as { sub?: string }).sub).toBe("device-id");
-  });
-
-  it("cross-verify: extracted signer's header is byte-identical to fireproof + verifies under it", async () => {
-    // Build the extracted signer from a publicly-issued cert (never from private
-    // signer state): mint a key, run the CSR -> cert path, read the public
-    // certificatePayload — the same field createDeviceIdGetToken reads from the keybag.
-    const key = await extracted.DeviceIdKey.create();
-    const csr = (await new extracted.DeviceIdCSR(sthis, key).createCSR({ commonName: "xverify-cn" })).Ok();
-    // The verifier re-validates the cert's embedded Clerk claim, so issuance needs
-    // the full claim shape (params/role/userId), mirroring createTestUser.
-    const nowIssue = Math.floor(Date.now() / 1000);
-    const issued = (
-      await ca.processCSR(csr, {
-        azp: "test-app-xverify",
-        exp: nowIssue + 3600,
-        iat: nowIssue,
-        iss: "test-issuer",
-        jti: "xverify-cert-jti",
-        nbf: nowIssue,
-        // Fully-populated params: CertificatePayloadSchema fills first/image_url/
-        // last/name defaults on parse, and Certor hashes the cert AFTER parse, so an
-        // under-specified claim makes the signer's x5t (pre-parse) disagree with the
-        // verifier's (post-parse) → CERT_THUMBPRINT_MISMATCH. Supply every field.
-        params: {
-          nick: "nick-xverify",
-          email: "xverify@example.com",
-          email_verified: true,
-          first: "first-xverify",
-          image_url: "http://example.com/image-xverify.png",
-          last: "last-xverify",
-          name: "name-xverify",
-          public_meta: '{ "role": "tester" }',
-        },
-        role: "device-id",
-        sub: "device-id-subject-xverify",
-        userId: "user-id-xverify",
-        aud: ["http://test-audience.localhost/"],
-      } as never)
-    ).Ok();
-    const claims = {
-      iss: "wire-compat",
-      sub: "device-id",
-      deviceId: await key.fingerPrint(),
-      seq: 1,
-      exp: nowIssue + 120,
-      nbf: nowIssue - 2,
-      iat: nowIssue,
-      jti: "xverify-jti",
-    };
-
-    // Sign the SAME key + cert + claims with both the extracted and the fireproof
-    // signer. The JWT header is deterministic (kid/x5c/x5t/x5t#S256 derive from the
-    // key+cert; alg/typ are fixed), so the header segment must be byte-identical.
-    // This catches header field-order / extra-field / missing-`typ` drift that a
-    // decode-and-check-properties assertion would miss — the byte-level gate before
-    // dropping the fireproof signer.
-    const extractedTok = await new extracted.DeviceIdSignMsg(sthis.txt.base64, key, issued.certificatePayload).sign(
-      claims,
-      "ES256"
-    );
-    // The fireproof signer is nominally typed to fireproof's DeviceIdKey; `key` is
-    // the in-repo class (structurally identical). Cast to bridge the #private brand
-    // purely so we can prove the two signers emit byte-identical headers at runtime.
-    const fireproofTok = await new DeviceIdSignMsg(sthis.txt.base64, key as never, issued.certificatePayload).sign(claims, "ES256");
-    expect(extractedTok.split(".")[0]).toBe(fireproofTok.split(".")[0]);
-
-    // Exact header shape (not just property presence).
-    const header = decodeSeg(extractedTok.split(".")[0]);
-    expect(header.typ).toBe("JWT");
-    expect(header.alg).toBe("ES256");
-    expect(Object.keys(header).sort()).toEqual(["alg", "kid", "typ", "x5c", "x5t", "x5t#S256"].sort());
-
-    // The extracted-minted token verifies under the fireproof verifier, carrying
-    // the exact FPDeviceIDSession claim set.
-    const vr = await verifier.verifyWithCertificate(extractedTok);
-    expect(vr.valid).toBe(true);
-    if (!vr.valid) throw new Error(String(vr.error));
-    const payload = decodeSeg(extractedTok.split(".")[1]);
-    expect(Object.keys(payload).sort()).toEqual(SESSION_CLAIM_KEYS);
-  });
-
-  // Task 3: full server round-trip on the in-repo CA + verifier. Proves the
-  // lifted DeviceIdCA issues certs whose tokens verify under BOTH the fireproof
-  // and the in-repo verifier, and that the in-repo CA+verifier preserve the
-  // Certor normalize-then-hash invariant (incomplete claim ⇒ thumbprint mismatch).
-  it("cross-verify: in-repo CA issues certs verifiable under both verifiers; preserves thumbprint invariant", async () => {
+  it("a freshly-built CA issues certs verifiable under its own verifier; preserves thumbprint invariant", async () => {
     const fullParams = {
       nick: "nick-ca",
       email: "ca@example.com",
@@ -306,8 +203,8 @@ describe("identity wire-compat (baseline: @fireproof/* 0.24.19)", { timeout: 300
       };
     };
 
-    const caKey = await extracted.DeviceIdKey.create();
-    const inRepoCA = new extracted.DeviceIdCA({
+    const caKey = await DeviceIdKey.create();
+    const inRepoCA = new DeviceIdCA({
       base64: sthis.txt.base64,
       caKey,
       caSubject: {
@@ -322,10 +219,10 @@ describe("identity wire-compat (baseline: @fireproof/* 0.24.19)", { timeout: 300
     const caCert = (await inRepoCA.caCertificate()).Ok();
 
     const mintViaInRepoCA = async (params: Record<string, unknown>) => {
-      const devKey = await extracted.DeviceIdKey.create();
-      const csr = (await new extracted.DeviceIdCSR(sthis, devKey).createCSR({ commonName: "ca-dev" })).Ok();
+      const devKey = await DeviceIdKey.create();
+      const csr = (await new DeviceIdCSR(sthis, devKey).createCSR({ commonName: "ca-dev" })).Ok();
       const issued = (await inRepoCA.processCSR(csr, claimFor(params) as never)).Ok();
-      const signer = new extracted.DeviceIdSignMsg(sthis.txt.base64, devKey, issued.certificatePayload);
+      const signer = new DeviceIdSignMsg(sthis.txt.base64, devKey, issued.certificatePayload);
       const now = Math.floor(Date.now() / 1000);
       return signer.sign(
         {
@@ -342,21 +239,15 @@ describe("identity wire-compat (baseline: @fireproof/* 0.24.19)", { timeout: 300
       );
     };
 
-    // Full claim ⇒ valid under both the fireproof and the in-repo verifier.
     const token = await mintViaInRepoCA(fullParams);
-    const fpVerifier = new DeviceIdVerifyMsg(sthis.txt.base64, [caCert] as never, {
+    const inRepoVerifier = new DeviceIdVerifyMsg(sthis.txt.base64, [caCert], {
       clockTolerance: 0,
       deviceIdCA: inRepoCA as never,
     });
-    const inRepoVerifier = new extracted.DeviceIdVerifyMsg(sthis.txt.base64, [caCert], {
-      clockTolerance: 0,
-      deviceIdCA: inRepoCA as never,
-    });
-    expect((await fpVerifier.verifyWithCertificate(token)).valid).toBe(true);
     expect((await inRepoVerifier.verifyWithCertificate(token)).valid).toBe(true);
 
-    // Incomplete claim ⇒ the in-repo verifier rejects with CERT_THUMBPRINT_MISMATCH,
-    // proving the lifted CA+verifier preserve the normalize-then-hash ordering.
+    // Incomplete claim ⇒ CERT_THUMBPRINT_MISMATCH, proving the CA+verifier preserve
+    // the normalize-then-hash ordering.
     const badToken = await mintViaInRepoCA({ email: "ca@example.com", email_verified: true, public_meta: "{}" });
     const vrBad = await inRepoVerifier.verifyWithCertificate(badToken);
     expect(vrBad.valid).toBe(false);

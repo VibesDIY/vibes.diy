@@ -16,8 +16,6 @@
     "@adviser/scopey": "^0.0.4",
     "@cf-wasm/quickjs": "^0.2.5",
     "@cloudflare/workers-types": "4.20260617.1",
-    "@fireproof/core-types-base": "0.24.19",
-    "@fireproof/core-types-device-id": "0.24.19",
     "@fireproof/core-types-protocols-cloud": "0.24.19",
     "@fireproof/core-types-protocols-dashboard": "0.24.19",
     "@libsql/client": "^0.17.4",

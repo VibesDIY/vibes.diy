@@ -14,10 +14,76 @@
 // `fp-device-id-payload.zod` (`CreatingUserSchema`) @ 0.24.19, with only the
 // Clerk-claim reference swapped to the owned schema.
 import { z } from "zod";
-import { SubjectSchema, ExtensionsSchema } from "./device-id-payload.js";
-import type { CertificatePayload } from "@fireproof/core-types-base";
-import { JWKPublicSchema } from "./wire.js";
-import { ClerkClaimSchema } from "../clerk-claim.js";
+import { SubjectSchema, ExtensionsSchema, type Subject, type Extensions } from "./device-id-payload.js";
+import { JWKPublicSchema, type JWKPublic } from "./wire.js";
+import { ClerkClaimSchema, type ClerkClaim } from "../clerk-claim.js";
+
+// --- Owned cert-payload TYPES (#2937) -------------------------------------
+// Hand-written to match the schemas below (the verbatim lift of
+// `core-types-base`'s `fp-ca-cert-payload.zod` @ 0.24.19), as explicit types —
+// not `z.infer` — so the emitted `.d.ts` names no zod-internal symbol (TS2883).
+// `CertificatePayloadSchema` is `.readonly()` (top-level readonly); the embedded
+// `Certificate` sub-schema is a plain `z.object` (mutable), matching upstream.
+export interface Certificate {
+  version: "3";
+  serialNumber: string;
+  subject: Subject;
+  issuer: Subject;
+  validity: { notBefore: string; notAfter: string };
+  subjectPublicKeyInfo: JWKPublic;
+  signatureAlgorithm: "ES256";
+  keyUsage: (
+    | "digitalSignature"
+    | "nonRepudiation"
+    | "keyEncipherment"
+    | "dataEncipherment"
+    | "keyAgreement"
+    | "keyCertSign"
+    | "cRLSign"
+    | "encipherOnly"
+    | "decipherOnly"
+  )[];
+  extendedKeyUsage: (
+    | "serverAuth"
+    | "clientAuth"
+    | "codeSigning"
+    | "emailProtection"
+    | "timeStamping"
+    | "OCSPSigning"
+    | "ipsecIKE"
+    | "msCodeInd"
+    | "msCodeCom"
+    | "msCTLSign"
+    | "msEFS"
+  )[];
+  extensions?: Extensions;
+}
+
+export type CertificatePayload = Readonly<{
+  iss: string;
+  sub: string;
+  aud: string | string[];
+  iat: number;
+  nbf: number;
+  exp: number;
+  jti: string;
+  certificate: Certificate;
+  creatingUser?: { type: "clerk"; claims: ClerkClaim };
+}>;
+
+// `IssueCertificateResult` is the CA issuance result (reproduced from
+// `core-types-base`'s `device-id.d.ts`); owned here alongside `CertificatePayload`
+// which it embeds.
+export interface IssueCertificateResult {
+  readonly certificateJWT: string;
+  readonly certificatePayload: CertificatePayload;
+  readonly format: "JWS";
+  readonly serialNumber: string;
+  readonly issuer: string;
+  readonly subject: string;
+  readonly validityPeriod: { readonly notBefore: Date; readonly notAfter: Date };
+  readonly publicKey: JWKPublic;
+}
 
 // `CreatingUserSchema` / `CertificateSchema` are internal building blocks for
 // `CertificatePayloadSchema` (nothing imports them directly). They are NOT

@@ -7,7 +7,7 @@
 // harness). `isNotFoundError` is lifted verbatim from `core-types-base/types.js`.
 import { Result } from "@adviser/cement";
 import type { URI } from "@adviser/cement";
-import type { SuperThis } from "@fireproof/core-types-base";
+import type { SuperThis } from "../types/sthis.js";
 import { sysFileSystemFactory } from "./sys-file-system/factory.js";
 
 function isNotFoundError(e: unknown): boolean {

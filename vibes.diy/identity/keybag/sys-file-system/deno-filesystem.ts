@@ -7,7 +7,7 @@
 // `Deno` is the deno global (typed via the `@types/deno` devDependency); this
 // module only runs under deno, where the global exists natively.
 import { Lazy, to_uint8 } from "@adviser/cement";
-import type { SysFileSystem } from "@fireproof/core-types-base";
+import type { SysFileSystem } from "../../types/sthis.js";
 
 export class DenoFileSystem implements SysFileSystem {
   fs = Lazy(() => {

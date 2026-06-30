@@ -13,7 +13,9 @@
 // the cross-verification harness green and lets older tokens keep flowing during
 // the rollout — the verifier only *requires* `x5c#jwt` once enforcement is enabled.
 import { calculateJwkThumbprint, SignJWT, type JWTHeaderParameters, type JWTPayload as JoseJWTPayload } from "jose";
-import type { BaseXXEndeCoder, CertificatePayload, JWTPayload } from "@fireproof/core-types-base";
+import type { BaseXXEndeCoder } from "../types/sthis.js";
+import type { CertificatePayload } from "../types/cert-payload.js";
+import type { JWTPayload } from "../types/device-id-payload.js";
 import { Certor } from "./certor.js";
 import { DeviceIdKey } from "./key.js";
 
@@ -49,7 +51,11 @@ export class DeviceIdSignMsg {
     if (this.#certificateJWT) {
       protectedHeader["x5c#jwt"] = this.#certificateJWT;
     }
-    return await new SignJWT(payload as JoseJWTPayload)
+    // The owned `JWTPayload` (no index signature, matching upstream's
+    // `core-types-base` `JWTPayload`) is assignable to jose's index-signatured
+    // `JWTPayload`, so the payload passes structurally — the `as unknown` bridges
+    // the generic `T` to jose's exact param type without widening the call site.
+    return await new SignJWT(payload as unknown as JoseJWTPayload)
       .setProtectedHeader(protectedHeader)
       .setIssuedAt()
       .setExpirationTime("1h")

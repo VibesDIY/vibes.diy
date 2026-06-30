@@ -6,7 +6,7 @@
 // with a hyphenated, dot-free binding so the entry-point URL resolves.
 import { beforeAll, describe, expect, it } from "vitest";
 import { ensureSuperThis } from "@vibes.diy/identity";
-import { createTestDeviceCA } from "@fireproof/core-device-id";
+import { createTestDeviceCA } from "@vibes.diy/identity/testing";
 import { ensureAppSlug, ensureUserSlug, VibesApiSQLCtx } from "@vibes.diy/api-svc";
 import { calcEntryPointUrl, extractHostToBindings } from "@vibes.diy/api-pkg";
 import type { ClerkClaim } from "@vibes.diy/api-types";

@@ -799,9 +799,6 @@ importers:
       '@fireproof/core':
         specifier: 0.24.19
         version: 0.24.19(bufferutil@4.1.0)(react@19.2.7)(typescript@6.0.3)(utf-8-validate@6.0.6)
-      '@fireproof/core-types-base':
-        specifier: 0.24.19
-        version: 0.24.19(typescript@6.0.3)
       '@fireproof/core-types-protocols-cloud':
         specifier: 0.24.19
         version: 0.24.19(typescript@6.0.3)
@@ -872,9 +869,6 @@ importers:
       '@adviser/cement':
         specifier: ^0.5.34
         version: 0.5.34(patch_hash=2f6391e0a56fe610ad9ae72430b603360ee9c00812af21a792562791454613c7)(typescript@6.0.3)
-      '@fireproof/core-types-base':
-        specifier: 0.24.19
-        version: 0.24.19(typescript@6.0.3)
       '@fireproof/core-types-protocols-dashboard':
         specifier: 0.24.19
         version: 0.24.19(typescript@6.0.3)
@@ -937,12 +931,6 @@ importers:
       '@adviser/cement':
         specifier: ^0.5.34
         version: 0.5.34(patch_hash=2f6391e0a56fe610ad9ae72430b603360ee9c00812af21a792562791454613c7)(typescript@6.0.3)
-      '@fireproof/core-types-base':
-        specifier: 0.24.19
-        version: 0.24.19(typescript@6.0.3)
-      '@fireproof/core-types-device-id':
-        specifier: 0.24.19
-        version: 0.24.19(typescript@6.0.3)
       '@fireproof/core-types-protocols-cloud':
         specifier: 0.24.19
         version: 0.24.19(typescript@6.0.3)
@@ -992,9 +980,6 @@ importers:
       '@cloudflare/puppeteer':
         specifier: ^1.1.0
         version: 1.1.0(bufferutil@4.1.0)(utf-8-validate@6.0.6)
-      '@fireproof/core-types-base':
-        specifier: 0.24.19
-        version: 0.24.19(typescript@6.0.3)
       '@vibes.diy/api-pkg':
         specifier: workspace:*
         version: link:../pkg
@@ -1038,9 +1023,6 @@ importers:
       '@cloudflare/workers-types':
         specifier: ^4.20260617.1
         version: 4.20260617.1
-      '@fireproof/core-types-base':
-        specifier: 0.24.19
-        version: 0.24.19(typescript@6.0.3)
       '@fireproof/core-types-protocols-dashboard':
         specifier: 0.24.19
         version: 0.24.19(typescript@6.0.3)
@@ -1096,12 +1078,6 @@ importers:
       '@cloudflare/workers-types':
         specifier: 4.20260617.1
         version: 4.20260617.1
-      '@fireproof/core-types-base':
-        specifier: 0.24.19
-        version: 0.24.19(typescript@6.0.3)
-      '@fireproof/core-types-device-id':
-        specifier: 0.24.19
-        version: 0.24.19(typescript@6.0.3)
       '@fireproof/core-types-protocols-cloud':
         specifier: 0.24.19
         version: 0.24.19(typescript@6.0.3)
@@ -1220,15 +1196,6 @@ importers:
       '@cloudflare/workers-types':
         specifier: 4.20260617.1
         version: 4.20260617.1
-      '@fireproof/core-device-id':
-        specifier: 0.24.19
-        version: 0.24.19(typescript@6.0.3)
-      '@fireproof/core-types-base':
-        specifier: 0.24.19
-        version: 0.24.19(typescript@6.0.3)
-      '@fireproof/core-types-device-id':
-        specifier: 0.24.19
-        version: 0.24.19(typescript@6.0.3)
       '@libsql/client':
         specifier: ^0.17.4
         version: 0.17.4(bufferutil@4.1.0)(utf-8-validate@6.0.6)
@@ -1302,9 +1269,6 @@ importers:
       '@cloudflare/workers-types':
         specifier: 4.20260617.1
         version: 4.20260617.1
-      '@fireproof/core-types-base':
-        specifier: ^0.24.19
-        version: 0.24.19(typescript@6.0.3)
       '@fireproof/core-types-protocols-cloud':
         specifier: ^0.24.19
         version: 0.24.19(typescript@6.0.3)
@@ -1488,12 +1452,6 @@ importers:
       '@clerk/shared':
         specifier: ^4.22.0
         version: 4.22.0(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
-      '@fireproof/core-types-base':
-        specifier: 0.24.19
-        version: 0.24.19(typescript@6.0.3)
-      '@fireproof/core-types-device-id':
-        specifier: 0.24.19
-        version: 0.24.19(typescript@6.0.3)
       '@fireproof/core-types-protocols-dashboard':
         specifier: 0.24.19
         version: 0.24.19(typescript@6.0.3)

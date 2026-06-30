@@ -3,7 +3,8 @@
 // checks the header/payload public keys agree. Imports only adjusted.
 import { FPDeviceIDCSRPayloadSchema } from "../types/device-id-payload.js";
 import { JWKPublicSchema } from "../types/wire.js";
-import type { FPDeviceIDCSRPayload, JWKPublic } from "@fireproof/core-types-base";
+import type { FPDeviceIDCSRPayload } from "../types/device-id-payload.js";
+import type { JWKPublic } from "../types/wire.js";
 import { jwtVerify, decodeProtectedHeader, calculateJwkThumbprint, type JWK } from "jose";
 import * as sts from "../sts/index.js";
 

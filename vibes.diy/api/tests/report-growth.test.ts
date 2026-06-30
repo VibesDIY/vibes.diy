@@ -2,7 +2,7 @@ import { VibesDiyApi } from "@vibes.diy/api-impl";
 import { beforeAll, describe, expect, inject, it } from "vitest";
 import { Result, TestFetchPair, TestWSPair } from "@adviser/cement";
 import { ensureSuperThis } from "@vibes.diy/identity";
-import { createTestDeviceCA } from "@fireproof/core-device-id";
+import { createTestDeviceCA } from "@vibes.diy/identity/testing";
 import { cfServe, CFInject, noopCache, vibesMsgEvento, WSSendProvider } from "@vibes.diy/api-svc";
 import { Request as CFRequest, ExecutionContext } from "@cloudflare/workers-types";
 import { createVibeDiyTestCtx } from "./vibe-diy-test-ctx.js";

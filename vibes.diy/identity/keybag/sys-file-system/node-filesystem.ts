@@ -3,7 +3,7 @@
 // thin wrapper over `node:fs/promises`. Imports only adjusted; behavior
 // byte-identical (same dynamic `import("fs/promises")` indirection, same
 // `toArrayBuffer` on read).
-import type { SysFileSystem } from "@fireproof/core-types-base";
+import type { SysFileSystem } from "../../types/sthis.js";
 import { toArrayBuffer } from "./to-array-buffer.js";
 
 type FsPromises = typeof import("node:fs/promises");

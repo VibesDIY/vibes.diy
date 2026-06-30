@@ -16,7 +16,7 @@ import { Lazy, Result, param, exception2Result } from "@adviser/cement";
 import * as sts from "../sts/index.js";
 import { decodeJwt, jwtVerify, type JWK } from "jose";
 import { ClerkClaimSchema, FPClerkClaimSchema } from "../clerk-claim.js";
-import type { SuperThis } from "@fireproof/core-types-base";
+import type { SuperThis } from "../types/sthis.js";
 import type { FPApiToken, VerifiedClaimsResult } from "../types/wire.js";
 
 export class ClerkApiToken implements FPApiToken {

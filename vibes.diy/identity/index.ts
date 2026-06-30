@@ -35,21 +35,17 @@ export type {
   FPApiToken,
 } from "./types/wire.js";
 
-// Still upstream-sourced (deferred): VerifiedResult pulls the User type graph;
-// SuperThis/DocTypes are Bucket E (runtime context); the JWK TYPES + FPDeviceIDSession /
-// DeviceIdKeyBagItem / DeviceIdResult / DeviceIdCAIf stay upstream to preserve
-// type-identity — only the JWK schema VALUES are owned (below).
+// VerifiedResult pulls the User type graph and stays upstream-sourced (the
+// `core-types-protocols-dashboard` types are out of scope for #2937). Everything
+// else — the SuperThis context, the JWK / cert / session types, the keybag item
+// types, and the device-id CA interface — is now OWNED in-repo (#2937), so the
+// device-id/keybag crypto and its base types no longer touch `@fireproof/core-*`.
 export type { VerifiedResult } from "@fireproof/core-types-protocols-dashboard";
-export type {
-  SuperThis,
-  FPDeviceIDSession,
-  DocTypes,
-  JWKPrivate,
-  JWKPublic,
-  DeviceIdKeyBagItem,
-  DeviceIdResult,
-} from "@fireproof/core-types-base";
-export type { DeviceIdCAIf } from "@fireproof/core-types-device-id";
+export type { SuperThis, DocTypes } from "./types/sthis.js";
+export type { JWKPrivate, JWKPublic } from "./types/wire.js";
+export type { FPDeviceIDSession } from "./types/device-id-payload.js";
+export type { DeviceIdKeyBagItem, DeviceIdResult } from "./types/keybag-item.js";
+export type { DeviceIdCAIf } from "./types/device-id-types.js";
 
 // --- Schemas (zod; browser-safe runtime values; owned in-repo, Task 4) ---
 export { JWKPrivateSchema, JWKPublicSchema } from "./types/wire.js";

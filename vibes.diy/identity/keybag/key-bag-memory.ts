@@ -3,7 +3,7 @@
 // provider used by tests (`memory://…`). Preserved because it is live (tests rely
 // on it); the same on-disk JSON shape is kept in RAM. Imports only adjusted.
 import type { URI } from "@adviser/cement";
-import type { SuperThis } from "@fireproof/core-types-base";
+import type { SuperThis } from "../types/sthis.js";
 
 const memoryKeyBag = new Map<string, Uint8Array>();
 

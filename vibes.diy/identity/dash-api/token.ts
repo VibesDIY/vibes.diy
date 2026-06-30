@@ -14,12 +14,12 @@ import { decodeProtectedHeader, exportJWK } from "jose";
 import { ClerkClaimSchema } from "../clerk-claim.js";
 import { JWKPublicSchema, toJwksAlg } from "../types/wire.js";
 import { FPDeviceIDSessionSchema } from "../types/device-id-payload.js";
-import type { SuperThis, JWKPublic } from "@fireproof/core-types-base";
-import type { VerifyWithCertificateOptions } from "@fireproof/core-types-device-id";
+import type { SuperThis } from "../types/sthis.js";
+import type { VerifyWithCertificateOptions } from "../types/device-id-types.js";
 import { DeviceIdCA } from "../device-id/ca.js";
 import { DeviceIdVerifyMsg } from "../device-id/verify.js";
 import { ClerkApiToken } from "./clerk-token.js";
-import type { FPApiToken, VerifiedClaimsResult } from "../types/wire.js";
+import type { FPApiToken, VerifiedClaimsResult, JWKPublic } from "../types/wire.js";
 
 // `ClerkApiToken` lives in the browser-safe `./clerk-token.js` (no device-id
 // crypto) and is re-exported here so existing `dash-api/token.js` importers and
