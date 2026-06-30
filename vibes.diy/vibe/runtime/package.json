@@ -28,6 +28,7 @@
     "sucrase": "^3.35.1"
   },
   "devDependencies": {
+    "@vibes.diy/build-cli": "workspace:*",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3"
   },

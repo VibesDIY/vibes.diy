@@ -34,7 +34,7 @@
     "drizzle-orm": "^0.45.2"
   },
   "devDependencies": {
-    "@fireproof/core-cli": "0.24.19",
+    "@vibes.diy/build-cli": "workspace:*",
     "@vitest/ui": "~4.1.9",
     "jose": "~6.2.2",
     "vitest": "~4.1.9",

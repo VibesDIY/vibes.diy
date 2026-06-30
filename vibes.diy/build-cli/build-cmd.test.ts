@@ -1,0 +1,265 @@
+import { PackageJson, Version, buildJsrConf, getVersion, patchPackageJson, sanitizeNpmrc } from "./cmds/build-cmd.js";
+import { expect, it } from "vitest";
+
+const mock = {
+  readJSON: async (): Promise<unknown> => {
+    return {
+      name: "@fireproof/core-cli",
+      version: "0.0.0",
+      description: "Live ledger for the web.",
+      type: "module",
+      keywords: ["ledger", "JSON", "document", "IPLD", "CID", "IPFS"],
+      contributors: ["J Chris Anderson", "Alan Shaw", "Travis Vachon", "Mikeal Rogers", "Meno Abels"],
+      author: "J Chris Anderson",
+      license: "AFL-2.0",
+      scripts: {
+        build: "core-cli tsc",
+        pack: "core-cli build --doPack",
+        publish: "core-cli build",
+      },
+      dependencies: {
+        "@fireproof/vendor": "workspace:0.0.0",
+        "cmd-ts": "^0.13.0",
+      },
+      devDependencies: {
+        "@fireproof/core-cli": "workspace:0.0.0",
+        vitest: "^3.2.4",
+      },
+    };
+  },
+};
+
+it("getVersion emptyString", async () => {
+  expect(await getVersion("", { xenv: {} })).toContain("0.0.0-smoke");
+});
+
+it("should set package version but leave workspace dependencies as-is", async () => {
+  const version = new Version("0.0.0-smoke", "^");
+  const { patchedPackageJson } = await patchPackageJson("package.json", version, { mock });
+  expect(patchedPackageJson.version).toBe("0.0.0-smoke");
+  // Workspace dependencies are no longer replaced by patchPackageJson - use VersionPinner for that
+  expect(patchedPackageJson.dependencies).toHaveProperty("@fireproof/vendor", "workspace:0.0.0");
+});
+
+it("should only use prefix version in dependencies", async () => {
+  const version = new Version("0.0.0-smoke", "^");
+  const { patchedPackageJson } = await patchPackageJson("package.json", version, { mock });
+  const originalPackageJson = (await mock.readJSON()) as unknown as PackageJson;
+  const jsrConf = await buildJsrConf({ originalPackageJson, patchedPackageJson }, version.prefixedVersion);
+  expect(jsrConf.version).toBe("0.0.0-smoke");
+  expect(jsrConf.imports).toHaveProperty("@fireproof/vendor", "jsr:@fireproof/vendor@^0.0.0-smoke");
+});
+
+it("ILLEGAL Version", async () => {
+  expect(
+    await getVersion(undefined, {
+      xenv: { GITHUB_REF: "a/b/cdkdkdkdk" },
+    })
+  ).toContain("0.0.0-smoke-");
+});
+
+it("ILLEGAL Version with gitref", async () => {
+  expect(
+    await getVersion("wo", {
+      xenv: { GITHUB_REF: "a/b/cdkdkdkdk" },
+      xfs: {
+        existsSync: () => false,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      } as any,
+    })
+  ).toContain("0.0.0-smoke-");
+});
+
+it("GITHUB_REF set and file", async () => {
+  expect(
+    await getVersion("wurst", {
+      xenv: { GITHUB_REF: "a/b/cdkdkdkdk" },
+      xfs: {
+        existsSync: () => true,
+        readFile: (_x: string, _y = "utf-8") => Promise.resolve("v0.0.48-smoke"),
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      } as any,
+    })
+  ).toBe("0.0.48-smoke");
+});
+
+it("GITHUB_REF set and not exist file", async () => {
+  expect(
+    await getVersion("wurst", {
+      xenv: { GITHUB_REF: "a/b/c0.0.45-xx" },
+      xfs: {
+        existsSync: () => false,
+        readFile: (_x: string, _y = "utf-8") => Promise.resolve("v0.0.48-smoke"),
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      } as any,
+    })
+  ).toBe("0.0.45-xx");
+});
+
+it("getVersion file with v", async () => {
+  expect(
+    await getVersion("wurst", {
+      xfs: {
+        existsSync: () => true,
+        readFile: (_x: string, _y = "utf-8") => Promise.resolve("v0.0.48-smoke"),
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      } as any,
+      xenv: {},
+    })
+  ).toContain("0.0.48-smoke");
+});
+
+it("getVersion file without ", async () => {
+  expect(
+    await getVersion("wurst", {
+      xfs: {
+        existsSync: () => true,
+        readFile: (_x: string, _y = "utf-8") => Promise.resolve("0.0.48-smoke"),
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      } as any,
+      xenv: {},
+    })
+  ).toContain("0.0.48-smoke");
+});
+
+it("getVersion file with scope", async () => {
+  expect(
+    await getVersion("wurst", {
+      xfs: {
+        existsSync: () => true,
+        readFile: (_x: string, _y = "utf-8") => Promise.resolve("wost@0.0.48-smoke"),
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      } as any,
+      xenv: {},
+    })
+  ).toContain("0.0.48-smoke");
+});
+
+it("getVersion file with scope and v", async () => {
+  expect(
+    await getVersion("wurst", {
+      xfs: {
+        existsSync: () => true,
+        readFile: (_x: string, _y = "utf-8") => Promise.resolve("wost@v0.0.48-smoke"),
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      } as any,
+      xenv: {},
+    })
+  ).toContain("0.0.48-smoke");
+});
+
+it("getVersion file with ref", async () => {
+  expect(
+    await getVersion("wurst", {
+      xfs: {
+        existsSync: () => true,
+        readFile: (_x: string, _y = "utf-8") => Promise.resolve("d/d/wost@0.0.48-smoke"),
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      } as any,
+      xenv: {},
+    })
+  ).toContain("0.0.48-smoke");
+});
+
+it("getVersion with v", async () => {
+  expect(await getVersion(undefined, { xenv: { GITHUB_REF: "v0.0.8-smoke" } })).toContain("0.0.8-smoke");
+});
+
+it("getVersion with scope and v", async () => {
+  expect(await getVersion(undefined, { xenv: { GITHUB_REF: "blub@v0.0.8-smoke" } })).toContain("0.0.8-smoke");
+});
+
+it("getVersion with scope and no v", async () => {
+  expect(await getVersion(undefined, { xenv: { GITHUB_REF: "blub@0.0.8-smoke" } })).toContain("0.0.8-smoke");
+});
+
+it("getVersion without", async () => {
+  expect(await getVersion(undefined, { xenv: { GITHUB_REF: "0.0.9-smoke" } })).toContain("0.0.9-smoke");
+});
+
+it("getVersion ref without", async () => {
+  expect(await getVersion(undefined, { xenv: { GITHUB_REF: "v0.0.9-smoke" } })).toContain("0.0.9-smoke");
+});
+
+it("getVersion ref with v", async () => {
+  expect(await getVersion(undefined, { xenv: { GITHUB_REF: "a/ref/v0.0.8-smoke" } })).toContain("0.0.8-smoke");
+});
+
+it("getVersion ref with scope and v", async () => {
+  expect(await getVersion(undefined, { xenv: { GITHUB_REF: "a/ref/blub@v0.0.8-smoke" } })).toContain("0.0.8-smoke");
+});
+
+it("getVersion ref with scope and no v", async () => {
+  expect(await getVersion(undefined, { xenv: { GITHUB_REF: "a/ref/blub@0.0.8-smoke" } })).toContain("0.0.8-smoke");
+});
+
+it("getVersion ref without", async () => {
+  expect(await getVersion(undefined, { xenv: { GITHUB_REF: "a/ref/0.0.9-smoke" } })).toContain("0.0.9-smoke");
+});
+
+it("sanitizeNpmrc with // lhs", async () => {
+  const npmrc = [
+    "; .npmrc",
+    "enable-pre-post-scripts=true",
+    "registry=http://localhost:4873",
+    "@fireproof:registry=http://localhost:4873",
+    '//localhost:4873:_authToken="Zjk5MjVhZTg4ZTlkNzQ3MW"',
+  ].join("\n");
+  const niceNpmrc = sanitizeNpmrc(npmrc);
+  expect(niceNpmrc).toBe(
+    [
+      "; .npmrc",
+      "enable-pre-post-scripts=true",
+      "registry=http://localhost:4873/",
+      "@fireproof:registry=http://localhost:4873/",
+      '//localhost:4873/:_authToken="Zjk5MjVhZTg4ZTlkNzQ3MW"',
+    ].join("\n")
+  );
+});
+
+it("unmodified dependencies", async () => {
+  const pjson = {
+    version: "0.0.0",
+    scripts: {
+      pack: "core-cli build --doPack x",
+      publish: "core-cli build x",
+    },
+    dependencies: {
+      "@fireproof/vendor": "workspace:*",
+      "xcmd-ts": "^0.13.0",
+      "ycmd-ts": "~0.13.0",
+      "zcmd-ts": "0.13.0",
+    },
+  };
+  const patchedPjson = await patchPackageJson("package.json", new Version("1.2.3", ""), { mock: { readJSON: async () => pjson } });
+  expect(patchedPjson.patchedPackageJson).toEqual({
+    scripts: {},
+    version: "1.2.3",
+    dependencies: {
+      "@fireproof/vendor": "workspace:*",
+      "xcmd-ts": "^0.13.0",
+      "ycmd-ts": "~0.13.0",
+      "zcmd-ts": "0.13.0",
+    },
+  });
+});
+
+it("sanitizeNpmrc with http lhs", async () => {
+  const npmrc = [
+    "; .npmrc",
+    "enable-pre-post-scripts=true",
+    "registry=http://localhost:4873",
+    "@fireproof:registry=http://localhost:4873",
+    'http://localhost:4873/meno:_authToken="Zjk5MjVhZTg4ZTlkNzQ3MW"',
+  ].join("\n");
+  const niceNpmrc = sanitizeNpmrc(npmrc);
+  expect(niceNpmrc).toBe(
+    [
+      "; .npmrc",
+      "enable-pre-post-scripts=true",
+      "registry=http://localhost:4873/",
+      "@fireproof:registry=http://localhost:4873/",
+      '//localhost:4873/meno/:_authToken="Zjk5MjVhZTg4ZTlkNzQ3MW"',
+    ].join("\n")
+  );
+});

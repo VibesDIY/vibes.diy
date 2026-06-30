@@ -29,6 +29,7 @@
     "use-fireproof": "0.24.19"
   },
   "devDependencies": {
+    "@vibes.diy/build-cli": "workspace:*",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3"
   },

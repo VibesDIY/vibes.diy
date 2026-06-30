@@ -22,6 +22,7 @@
     "react-dom": "^19.2.7"
   },
   "devDependencies": {
+    "@vibes.diy/build-cli": "workspace:*",
     "@cloudflare/vite-plugin": "^1.39.0",
     "@types/cookie": "^1.0.0",
     "@types/react": "^19.2.14",
