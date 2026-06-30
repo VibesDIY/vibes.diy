@@ -25,20 +25,15 @@ import { checkAuth, optAuth } from "../check-auth.js";
 import { eq, and, sql, inArray, desc } from "drizzle-orm";
 import { type } from "arktype";
 import { checkDocAccess } from "./access-helpers.js";
-import {
-  enforceAllowAnonymous,
-  ForbiddenError,
-  extractExportSource,
-  isReadableResult,
-  type AccessDescriptor,
-} from "./access-function.js";
+import { type AccessDescriptor } from "./access-function.js";
 import { aclAllows, resolveDbAcl } from "./db-acl-resolver.js";
-import { resolveAccessBinding, resolveAccessFnSource, resolveDmParticipantHandle } from "./access-binding-resolver.js";
+import { resolveAccessBinding, resolveDmParticipantHandle } from "./access-binding-resolver.js";
 import { GrantReduce, extractContribution, newSeededReduce } from "./grant-reduce.js";
 import { isFileMeta } from "./files-url-mint.js";
 import { clientWsSend, connectionAdminMode } from "./app-documents-shared.js";
 import { normalizeChannels } from "./normalize-channels.js";
 import { emitBackendOnChange } from "../intern/emit-backend-onchange.js";
+import { runPutAccessGate } from "../intern/put-access-gate.js";
 import { allocateAndInsertRevision, SeqConflictError } from "./seq-allocation.js";
 import { docContentEqual } from "./doc-content-equal.js";
 import type { VibesSqlite } from "@vibes.diy/api-sql";
@@ -249,7 +244,6 @@ export const putDocEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqPutDoc>, 
       }
 
       if (afbRow?.accessFnCid && vctx.invokeAccessFn) {
-        const fnCid = afbRow.accessFnCid;
         // Resolve the writer's handle from userId — req.ownerHandle is the DB
         // owner, not the writer. For a DM the writer must act as the handle that
         // appears in the `_d.` channel slug (a multi-handle user can be addressed
@@ -271,95 +265,38 @@ export const putDocEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqPutDoc>, 
         // Loaded once above as headRow (reused by the no-op check below).
         const oldDoc: unknown | null = headRow?.data ?? null;
 
-        // Resolve the access.js source (per-DO CID cache → asset store; the
-        // built-in DM source is compiled in). See resolveAccessFnSource / #2512.
-        // extractExportSource is dbName-dependent (cheap, in-memory string work),
-        // so it runs per write against the resolved source rather than caching
-        // the extracted result — the CID-keyed cache only elides the R2 fetch.
-        const rawSource = await resolveAccessFnSource(vctx, fnCid, afbRow.accessFnAssetUri);
-        const accessFnSource = rawSource !== undefined ? (extractExportSource(rawSource, afbRow.dbName) ?? rawSource) : undefined;
-
-        // Build reduce from stored outputs for grant state
-        const tOutputs = vctx.sql.tables.accessFnOutputs;
-        const storedOutputs = await vctx.sql.db
-          .select({ docId: tOutputs.docId, output: tOutputs.output })
-          .from(tOutputs)
-          .where(
-            and(
-              eq(tOutputs.ownerHandle, req.ownerHandle),
-              eq(tOutputs.appSlug, req.appSlug),
-              eq(tOutputs.dbName, req.dbName),
-              eq(tOutputs.fnCid, fnCid),
-              eq(tOutputs.hasGrants, 1)
-            )
-          );
-
-        const reduce = newSeededReduce(req.ownerHandle);
-        for (const row of storedOutputs) {
-          reduce.addDoc(row.docId, extractContribution(JSON.parse(row.output) as AccessDescriptor));
-        }
-        grantsReduceBefore = reduce;
-
-        const grantState = {
-          members: Object.fromEntries(Array.from(reduce.effectiveMembers).map(([k, v]) => [k, Array.from(v)])),
-          roleGrants: Object.fromEntries(Array.from(reduce.roleGrants).map(([k, v]) => [k, Array.from(v)])),
-          userGrants: Object.fromEntries(Array.from(reduce.userGrants).map(([k, v]) => [k, Array.from(v)])),
-        };
-
         const adminActive = isOwner && connectionAdminMode(ctx);
-        const invokeResult = await vctx.invokeAccessFn({
-          cid: fnCid,
-          doc: { ...req.doc, _id: docId },
-          oldDoc,
-          user: userContext,
-          source: accessFnSource,
-          grantState,
-          adminMode: adminActive,
+
+        // Run the pure-decision access gate (source resolve → grant-state reduce →
+        // invokeAccessFn → forbidden/anonymous/readability enforcement). The
+        // caller-resolved bits (userContext, adminMode, oldDoc) are passed in;
+        // B6's backend caller resolves them differently. See put-access-gate.ts.
+        const gate = await runPutAccessGate(vctx, {
           ownerHandle: req.ownerHandle,
+          appSlug: req.appSlug,
+          dbName: req.dbName,
+          fnCid: afbRow.accessFnCid,
+          accessFnAssetUri: afbRow.accessFnAssetUri,
+          accessFnDbName: afbRow.dbName,
+          docId,
+          doc: req.doc,
+          oldDoc,
+          userContext,
+          adminMode: adminActive,
         });
 
-        if ("forbidden" in invokeResult) {
+        if (gate.kind === "deny") {
           await ctx.send.send(ctx, {
             type: "vibes.diy.res-error",
             // `access-denied` lets the client surface this reason verbatim in the
             // write-fail toast (vs. the generic "Failed to save" copy). See #2330.
-            error: { message: invokeResult.forbidden, code: "access-denied" },
+            error: { message: gate.message, code: gate.code },
           } satisfies ResError);
           return Result.Ok(EventoResult.Continue);
         }
 
-        try {
-          enforceAllowAnonymous(invokeResult, userContext);
-        } catch (err: unknown) {
-          const reason = err instanceof ForbiddenError ? err.forbidden : String(err);
-          await ctx.send.send(ctx, {
-            type: "vibes.diy.res-error",
-            error: { message: reason, code: "access-denied" },
-          } satisfies ResError);
-          return Result.Ok(EventoResult.Continue);
-        }
-
-        // Reject writes that place the doc in zero channels: the read gate
-        // refuses any channel-less doc (no owner bypass), so persisting it
-        // would create a doc unreadable by everyone, silently. Point the
-        // builder at the existing channel+grant pattern. Doc-local check —
-        // we do not chase the cross-doc grant graph here.
-        if (!isReadableResult(invokeResult)) {
-          await ctx.send.send(ctx, {
-            type: "vibes.diy.res-error",
-            error: {
-              code: "unreadable",
-              message:
-                "Unreadable write: access.js placed this doc in no channel, so no one can read it — not even its author. " +
-                "Return a channel + grant. Private to author: " +
-                "return { channels: [doc._id], grant: { users: { [user.userHandle]: [doc._id] } } }. " +
-                "Public: return { channels: [doc._id], grant: { public: [doc._id] } }.",
-            },
-          } satisfies ResError);
-          return Result.Ok(EventoResult.Continue);
-        }
-
-        accessResult = invokeResult;
+        accessResult = gate.descriptor;
+        grantsReduceBefore = gate.grantsReduceBefore;
       }
 
       // Content-identical no-op (#2644). Once the write has passed the access
