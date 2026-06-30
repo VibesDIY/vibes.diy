@@ -229,12 +229,10 @@ jobs:
             echo "No schema files changed vs base — skipping drizzle push"
           fi
 
-          # Set secrets on the preview worker. Bucket F swaps the root
-          # `core-cli` bin provider to `@vibes.diy/build-cli`, which only
-          # carries the lifted `tsc`/`build` commands. `writeEnv` still lives
-          # on the runtime-seam `@fireproof/core-cli` package retained by
-          # `vibes-diy`, so call that package explicitly here.
-          SECRETS=$(node ../../vibes-diy/node_modules/@fireproof/core-cli/run.js writeEnv --out - --json \
+          # Set secrets on the preview worker. `writeEnv` now lives in the
+          # monorepo-owned `@vibes.diy/deploy-cli` package (#2905), invoked by
+          # direct workspace path. `../` from vibes.diy/pkg reaches vibes.diy/.
+          SECRETS=$(node ../deploy-cli/run.js writeEnv --out - --json \
             --fromEnv CLOUD_SESSION_TOKEN_PUBLIC \
             --fromEnv CLERK_PUBLISHABLE_KEY \
             --fromEnv DEVICE_ID_CA_PRIV_KEY \

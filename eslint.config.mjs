@@ -65,6 +65,7 @@ const opts = tseslint.config(
       "**/*.d.ts.map",
       "**/pkg/*.js",
       "vibes.diy/build-cli/run.js",
+      "vibes.diy/deploy-cli/run.js",
     ],
   },
   {
