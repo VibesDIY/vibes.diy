@@ -50,7 +50,7 @@ function grantedAccess(role: "editor" | "viewer" | "submitter") {
 // code, never an owner's unpublished draft (Codex P1). Defense in depth: the
 // producer only registers public-HEAD-sourced entries, but the grant never trusts
 // the producer alone. Returns the matched sourceFsId (for the audit log) or null.
-async function grantableCachedSuggestionSource(
+export async function grantableCachedSuggestionSource(
   vctx: VibesApiSQLCtx,
   args: {
     readonly ownerHandle: string;
