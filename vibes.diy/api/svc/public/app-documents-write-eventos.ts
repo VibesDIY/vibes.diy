@@ -34,6 +34,7 @@ import { clientWsSend, connectionAdminMode } from "./app-documents-shared.js";
 import { normalizeChannels } from "./normalize-channels.js";
 import { emitBackendOnChange } from "../intern/emit-backend-onchange.js";
 import { runPutAccessGate } from "../intern/put-access-gate.js";
+import { runDeleteAccessGate } from "../intern/delete-access-gate.js";
 import { allocateAndInsertRevision, SeqConflictError } from "./seq-allocation.js";
 import { docContentEqual } from "./doc-content-equal.js";
 import type { VibesSqlite } from "@vibes.diy/api-sql";
@@ -640,8 +641,8 @@ export const deleteDocEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqDelete
       const dbName = req.dbName;
 
       // Resolve the EFFECTIVE access-fn binding for this db (named dbName beats
-      // the wildcard '*'). It gates DM deletes (the built-in DM fn's participant
-      // check, #2290) AND drives the revocation/notify logic below.
+      // the wildcard '*'). It drives the revocation/notify logic below (the delete
+      // gate itself resolves its own binding for the DM participant check).
       //
       // Stored AccessFnOutputs rows are NOT cleaned up when a binding goes away —
       // processAccessBindings drops AccessFunctionBindings when /access.js is
@@ -655,37 +656,21 @@ export const deleteDocEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqDelete
       const afbRow = await resolveAccessBinding(vctx, req.ownerHandle, req.appSlug, dbName);
       const effectiveFnCid = afbRow?.accessFnCid;
 
-      if (isDirectChannel(req.ownerHandle)) {
-        // DM deletes flow through the built-in DM access fn, not the ACL path:
-        // only a participant may delete. The fn ignores `doc`, gating purely on
-        // `user` + `ctx.ownerHandle` (the channel slug). Resolve the caller's
-        // channel-participant handle (a multi-handle user can be addressed at a
-        // non-default handle). Fail closed when no invoker is available, mirroring
-        // the putDoc gate. (#2290, Codex review)
-        const writerHandle = await resolveDmParticipantHandle(vctx, userId, req.ownerHandle);
-        const dmSource = afbRow ? await resolveAccessFnSource(vctx, afbRow.accessFnCid, afbRow.accessFnAssetUri) : undefined;
-        const gate =
-          afbRow && vctx.invokeAccessFn
-            ? await vctx.invokeAccessFn({
-                cid: afbRow.accessFnCid,
-                doc: { _id: req.docId },
-                oldDoc: null,
-                user: writerHandle ? { userHandle: writerHandle, isOwner: false } : null,
-                source: dmSource !== undefined ? (extractExportSource(dmSource, afbRow.dbName) ?? dmSource) : undefined,
-                ownerHandle: req.ownerHandle,
-              })
-            : { forbidden: "access function unavailable" };
-        if ("forbidden" in gate) {
-          await ctx.send.send(ctx, { type: "vibes.diy.res-error", error: { message: "Access denied" } } satisfies ResError);
-          return Result.Ok(EventoResult.Continue);
-        }
-      } else {
-        const { access } = await checkDocAccess(vctx, userId, req.appSlug, req.ownerHandle, connectionAdminMode(ctx));
-        const rAcl = await resolveDbAcl(vctx, req.ownerHandle, req.appSlug, req.dbName);
-        if (rAcl.isErr() || !aclAllows(rAcl.Ok(), "delete", access)) {
-          await ctx.send.send(ctx, { type: "vibes.diy.res-error", error: { message: "Access denied" } } satisfies ResError);
-          return Result.Ok(EventoResult.Continue);
-        }
+      // Run the pure-decision delete gate (DM → the built-in DM access-fn
+      // participant check (#2290); every other db → the db ACL's `delete` action).
+      // `adminMode` is caller-resolved; B6's backend ctx.db.delete resolves it
+      // differently. Shared with the backend path. See delete-access-gate.ts.
+      const delGate = await runDeleteAccessGate(vctx, {
+        ownerHandle: req.ownerHandle,
+        appSlug: req.appSlug,
+        dbName: req.dbName,
+        docId: req.docId,
+        userId,
+        adminMode: connectionAdminMode(ctx),
+      });
+      if (delGate.kind === "deny") {
+        await ctx.send.send(ctx, { type: "vibes.diy.res-error", error: { message: delGate.message } } satisfies ResError);
+        return Result.Ok(EventoResult.Continue);
       }
 
       const tOutputs = vctx.sql.tables.accessFnOutputs;
