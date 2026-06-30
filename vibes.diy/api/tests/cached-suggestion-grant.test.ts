@@ -156,6 +156,53 @@ describe(
       return r.Ok().fsId;
     }
 
+    // Cross-slug VIBE link (#2941): bless/revoke a chip → target-vibe navigation.
+    async function blessVibe(
+      who: VibesDiyApi,
+      a: {
+        appSlug: string;
+        ownerHandle: string;
+        key: string;
+        targetOwnerHandle: string;
+        targetAppSlug: string;
+        op: "bless" | "revoke";
+      }
+    ) {
+      await who.ensureAppSettings({
+        appSlug: a.appSlug,
+        ownerHandle: a.ownerHandle,
+        cachedSuggestionBless: { key: a.key, targetOwnerHandle: a.targetOwnerHandle, targetAppSlug: a.targetAppSlug, op: a.op },
+      });
+    }
+
+    async function readerTarget(a: { appSlug: string; ownerHandle: string; key: string }) {
+      const r = await api2.getCachedSuggestion({ ownerHandle: a.ownerHandle, appSlug: a.appSlug, key: a.key });
+      if (r.isErr()) assert.fail("getCachedSuggestion failed: " + JSON.stringify(r.Err()));
+      const res = r.Ok();
+      return res.targetOwnerHandle && res.targetAppSlug
+        ? { ownerHandle: res.targetOwnerHandle, appSlug: res.targetAppSlug }
+        : undefined;
+    }
+
+    // A bare public production app (a navigable cross-slug target), no staged version.
+    async function publicApp() {
+      const now = sthis.nextId(8).str;
+      const r = await api.ensureAppSlug({
+        mode: "production",
+        fileSystem: [
+          {
+            type: "code-block",
+            lang: "jsx",
+            filename: "/App.jsx",
+            content: `function App(){return <div>tgt ${now}</div>;} App();`,
+          },
+        ],
+      });
+      if (!isResEnsureAppSlugOk(r.Ok())) assert.fail("publicApp ensureAppSlug failed");
+      const { appSlug, ownerHandle } = r.Ok() as { appSlug: string; ownerHandle: string };
+      return { appSlug, ownerHandle };
+    }
+
     it("PRODUCED but UNBLESSED → forks (grant denies, reader misses)", async () => {
       const { appSlug, ownerHandle, sourceFsId, stagedFsId } = await publicAppWithStagedVersion();
       const key = cachedSuggestionKey({ source: { ownerHandle, appSlug, fsId: sourceFsId }, transform: "make it loud" });
@@ -322,6 +369,104 @@ describe(
 
       expect(await grantOf(stagedFsId, { appSlug, ownerHandle })).not.toBe("public-access");
       expect(await readerFsId({ appSlug, ownerHandle, key })).toBeUndefined();
+    });
+
+    // ── Cross-slug VIBE link (#2941) — the chip navigates to another curated public
+    // vibe via the bless map, instead of a same-slug staged fsId. No produce step. ──
+
+    it("cross-slug VIBE bless → reader returns the target vibe (no produce step)", async () => {
+      const src = await publicAppWithStagedVersion(); // public source
+      const tgt = await publicApp(); // public target
+      await api.ensureAppSettings({ appSlug: tgt.appSlug, ownerHandle: tgt.ownerHandle, publicAccess: { enable: true } });
+      const key = cachedSuggestionKey({
+        source: { ownerHandle: src.ownerHandle, appSlug: src.appSlug, fsId: src.sourceFsId },
+        transform: "make it a drum machine",
+      });
+      // No produce — a curated link is not a generated artifact.
+      await blessVibe(api, {
+        appSlug: src.appSlug,
+        ownerHandle: src.ownerHandle,
+        key,
+        targetOwnerHandle: tgt.ownerHandle,
+        targetAppSlug: tgt.appSlug,
+        op: "bless",
+      });
+
+      expect(await readerTarget({ appSlug: src.appSlug, ownerHandle: src.ownerHandle, key })).toEqual({
+        ownerHandle: tgt.ownerHandle,
+        appSlug: tgt.appSlug,
+      });
+      // It's a cross-slug link, not a same-slug stay: no fsId comes back.
+      expect(await readerFsId({ appSlug: src.appSlug, ownerHandle: src.ownerHandle, key })).toBeUndefined();
+    });
+
+    it("cross-slug serve requires the TARGET to be public (no oracle)", async () => {
+      const src = await publicAppWithStagedVersion();
+      const tgt = await publicApp(); // production but publicAccess NOT enabled
+      const key = cachedSuggestionKey({
+        source: { ownerHandle: src.ownerHandle, appSlug: src.appSlug, fsId: src.sourceFsId },
+        transform: "private target",
+      });
+      await blessVibe(api, {
+        appSlug: src.appSlug,
+        ownerHandle: src.ownerHandle,
+        key,
+        targetOwnerHandle: tgt.ownerHandle,
+        targetAppSlug: tgt.appSlug,
+        op: "bless",
+      });
+      expect(await readerTarget({ appSlug: src.appSlug, ownerHandle: src.ownerHandle, key })).toBeUndefined();
+    });
+
+    it("cross-slug VIBE revoke → forks again (reader misses)", async () => {
+      const src = await publicAppWithStagedVersion();
+      const tgt = await publicApp();
+      await api.ensureAppSettings({ appSlug: tgt.appSlug, ownerHandle: tgt.ownerHandle, publicAccess: { enable: true } });
+      const key = cachedSuggestionKey({
+        source: { ownerHandle: src.ownerHandle, appSlug: src.appSlug, fsId: src.sourceFsId },
+        transform: "revoke vibe",
+      });
+      await blessVibe(api, {
+        appSlug: src.appSlug,
+        ownerHandle: src.ownerHandle,
+        key,
+        targetOwnerHandle: tgt.ownerHandle,
+        targetAppSlug: tgt.appSlug,
+        op: "bless",
+      });
+      expect(await readerTarget({ appSlug: src.appSlug, ownerHandle: src.ownerHandle, key })).toEqual({
+        ownerHandle: tgt.ownerHandle,
+        appSlug: tgt.appSlug,
+      });
+
+      await blessVibe(api, {
+        appSlug: src.appSlug,
+        ownerHandle: src.ownerHandle,
+        key,
+        targetOwnerHandle: tgt.ownerHandle,
+        targetAppSlug: tgt.appSlug,
+        op: "revoke",
+      });
+      expect(await readerTarget({ appSlug: src.appSlug, ownerHandle: src.ownerHandle, key })).toBeUndefined();
+    });
+
+    it("a NON-OWNER cannot cross-slug bless (owner-gated)", async () => {
+      const src = await publicAppWithStagedVersion();
+      const tgt = await publicApp();
+      await api.ensureAppSettings({ appSlug: tgt.appSlug, ownerHandle: tgt.ownerHandle, publicAccess: { enable: true } });
+      const key = cachedSuggestionKey({
+        source: { ownerHandle: src.ownerHandle, appSlug: src.appSlug, fsId: src.sourceFsId },
+        transform: "nonowner vibe",
+      });
+      await blessVibe(api2, {
+        appSlug: src.appSlug,
+        ownerHandle: src.ownerHandle,
+        key,
+        targetOwnerHandle: tgt.ownerHandle,
+        targetAppSlug: tgt.appSlug,
+        op: "bless",
+      });
+      expect(await readerTarget({ appSlug: src.appSlug, ownerHandle: src.ownerHandle, key })).toBeUndefined();
     });
   }
 );

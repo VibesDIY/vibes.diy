@@ -91,6 +91,50 @@ and `vibes.diy/api/types/chat-chips.ts`):
   asserts a shield. Bless/unbless controls are owner-only.
 - **No `/start` route exists** yet (`vibes.diy/pkg/app/routes/` has no `start.tsx`).
 
+## Architecture revision (2026-06-30, jchris) — cross-slug routing lives in the bless map
+
+The "checked-in curated graph + `handleEditPrompt` pre-check" framing in the next
+two sections is **superseded for the routing**. jchris's better, narrower design:
+**a chip's destination is resolved server-side by `getCachedSuggestion`, for both
+kinds.** A cached-suggestion **bless record** now has two shapes (`cached-suggestion.ts`):
+
+- **same-slug STAY** — `{ fsId, sourceFsId }` (existing): the chip stays on this
+  vibe at a staged version. The 🛡 shield.
+- **cross-slug VIBE link** — `{ targetOwnerHandle, targetAppSlug }` (#2941): the
+  chip navigates to ANOTHER curated public vibe (a new namespace). The `→` jump.
+
+So **both kinds are blessed data in `AppSettings`, keyed by the same content-address
+`cachedSuggestionKey(source, transform)`**, and the existing read lane resolves
+them — the cross-slug edge is just another blessed cached-suggestion. This **removes
+the separate client graph + pre-check entirely**: there is no runtime curated graph.
+The implemented surface:
+
+- **Reader** (`get-cached-suggestion`): a cross-slug bless returns the target;
+  the safety analog of the stay's source-public check is **"the TARGET vibe is
+  public"** (navigating to it must be a real anonymous read). Same no-oracle miss
+  shape. The same-slug path is unchanged (it falls through the new branch).
+- **Bless write** (`ensure-app-settings`): a cross-slug bless/revoke variant with
+  **no produce-before-bless** step — a curated link to already-public content is
+  not a generated artifact, so there's no PII provenance to verify and nothing
+  produced to match. Owner-gated like every bless. The same-slug bless is unchanged.
+- **Client**: the read-lane lookup navigates cross-slug on a target hit; the glyph
+  (🛡 vs `→`) is driven by **which the server returned** (`fsId` vs `targetAppSlug`)
+  — server-authoritative, never a client assertion (preserves the OQ-C / Charlie
+  #2950 anti-phishing property). `curatedEdgeTarget` + `jumpChips` are deleted.
+- **`starter-graph.ts`** is now **setup-only config**: `STARTER_CATEGORIES` (the
+  `/start` tiles) + `CURATED_EDGES` (the single source the post-deploy setup reads
+  to seed chip labels AND bless `chipLabel → targetVibe` links). Not a runtime resolver.
+
+The **within-vibe (same-slug) fsId bless path is behaviorally unchanged** — the
+cross-slug branch is additive; stays fall through it. (Schemas loosened `fsId`/
+`sourceFsId` to optional so one record covers both shapes, with runtime guards at
+every serve/write site so a malformed stay fails safe.) Tests: same-slug grant/
+reader/bless (10) + cross-slug bless/target-public/revoke/owner-gated (4) all green.
+
+> Sections below describe the original curated-graph approach; read them for the
+> product intent (the tree, the seed chats, the `/start` tiles), but the **routing**
+> is the bless-map model above, not a client graph or a `handleEditPrompt` pre-check.
+
 ## What's new (small)
 
 ### 1. The curated graph — a checked-in config, the single source of truth
