@@ -7,6 +7,11 @@ export default [
 
   // Protected routes - wrapped by auth layout (no path segment added)
   layout("./routes/auth.tsx", [
+    // New-build entry: mints the slug then redirects to /vibe. Served under both
+    // /vibe/prompt (the canonical entry the homepage uses) and /chat/prompt (kept
+    // as a legacy redirect that still works for anyone who hits it). Retiring
+    // /chat from the UI — see #2876.
+    route("vibe/prompt", "./routes/chat/prompt.tsx", { id: "vibe-prompt" }),
     route("chat/prompt", "./routes/chat/prompt.tsx"),
     route("chat/:ownerHandle/:appSlug/:fsId?", "./routes/chat/chat.$ownerHandle.$appSlug.tsx"),
     route("remix/:ownerHandle/:appSlug/:fsId?", "./routes/remix.$ownerHandle.$appSlug.tsx"),

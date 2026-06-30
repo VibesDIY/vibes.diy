@@ -20,8 +20,10 @@ export function VibeCardData({ vibeId }: VibeCardDataProps) {
 
   // Navigation functions
   const handleEditClick = (id: string, encodedTitle: string) => {
-    console.log(`t-2`, id);
-    navigate(`/chat/${id}/${encodedTitle}/app`);
+    // Open the vibe on /vibe (the editor lives there now, #2876). Drop the old
+    // trailing `/app` segment — on /chat it was a tolerated view hint, but on
+    // /vibe it would be read as an fsId ("app") and fail to resolve.
+    navigate(`/vibe/${id}/${encodedTitle}`);
   };
 
   const handleRemixClick = (slug: string, event: React.MouseEvent<HTMLButtonElement>) => {

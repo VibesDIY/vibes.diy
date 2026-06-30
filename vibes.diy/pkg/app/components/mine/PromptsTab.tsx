@@ -91,10 +91,10 @@ export function PromptsTab({ isLoading, chatDetails, screenshots, onToggleMode }
               </a>
               <button
                 type="button"
-                onClick={() => navigate(`/chat/${chatDetails.ownerHandle}/${chatDetails.appSlug}/${p.fsId}`)}
+                onClick={() => navigate(`/vibe/${chatDetails.ownerHandle}/${chatDetails.appSlug}/${p.fsId}`)}
                 className="inline-flex items-center gap-1 rounded-md bg-gray-100 dark:bg-gray-700 px-2.5 py-1 text-xs font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors whitespace-nowrap"
               >
-                Continue chat
+                Open
               </button>
               {/* Mode pill — clickable to toggle. The label is "dev" / "production"
                   and clicking flips it. Shows a "→" hint on hover so the toggle

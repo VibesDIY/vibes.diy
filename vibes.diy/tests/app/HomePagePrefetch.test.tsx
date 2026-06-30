@@ -25,16 +25,16 @@ const render = (ui: React.ReactElement, options?: Parameters<typeof rtlRender>[1
     ...options,
   });
 
-// The chat route chunk is warmed on interaction intent via a hidden
-// <Link to="/chat/prompt" prefetch="render">. These tests assert that
+// The new-build route chunk is warmed on interaction intent via a hidden
+// <Link to="/vibe/prompt" prefetch="render">. These tests assert that
 // behavior at the component level: the link is absent until the user shows
-// intent, then appears pointing at /chat/prompt. react-router is real
+// intent, then appears pointing at /vibe/prompt. react-router is real
 // (MemoryRouter in vibesWrapper), so we assert on the rendered anchor's href.
 
 // ---- dependency mocks (must be declared before importing the component) ----
 
 // Locates the prefetch <Link> by its destination once it renders.
-const prefetchLink = () => document.querySelector('a[href="/chat/prompt"]');
+const prefetchLink = () => document.querySelector('a[href="/vibe/prompt"]');
 
 // VibesDiy context is injected via vibesWrapper (see local render above).
 
@@ -91,7 +91,7 @@ describe("HomePage chat-route prefetch", () => {
     const textarea = await renderHomePage();
     fireEvent.focus(textarea);
     await waitFor(() => expect(prefetchLink()).not.toBeNull());
-    expect(prefetchLink()).toHaveAttribute("href", "/chat/prompt");
+    expect(prefetchLink()).toHaveAttribute("href", "/vibe/prompt");
   });
 
   it("prefetches the chat route when a suggestion is selected", async () => {
@@ -99,6 +99,6 @@ describe("HomePage chat-route prefetch", () => {
     expect(prefetchLink()).toBeNull();
     fireEvent.click(screen.getAllByText(quickSuggestions[0].label)[0]);
     await waitFor(() => expect(prefetchLink()).not.toBeNull());
-    expect(prefetchLink()).toHaveAttribute("href", "/chat/prompt");
+    expect(prefetchLink()).toHaveAttribute("href", "/vibe/prompt");
   });
 });

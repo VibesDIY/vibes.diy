@@ -229,7 +229,7 @@ function AppIconCard({ item, appHostBaseUrl, isMobile, index, onOpenInfo }: AppI
         </div>
 
         <Link
-          to={`/chat/${item.ownerHandle}/${item.appSlug}`}
+          to={`/vibe/${item.ownerHandle}/${item.appSlug}`}
           aria-label={`Open ${label}`}
           style={getVibeCardMainIconContainerStyle(isHovered, isMobile)}
         >
@@ -463,7 +463,7 @@ export function AppDetailPanel({ item, appHostBaseUrl, onClose }: AppDetailPanel
 
               <div className="flex flex-col gap-3 mt-auto pt-4">
                 <Link
-                  to={`/chat/${item.ownerHandle}/${item.appSlug}`}
+                  to={`/vibe/${item.ownerHandle}/${item.appSlug}`}
                   onClick={onClose}
                   className="flex items-center justify-center px-4 py-3 bg-blue-500 hover:bg-blue-600 text-white text-sm font-bold uppercase tracking-widest border-2 border-[var(--vibes-near-black)] rounded-md shadow-[4px_4px_0_0_var(--vibes-near-black)] hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0_0_var(--vibes-near-black)] transition-all duration-150"
                 >

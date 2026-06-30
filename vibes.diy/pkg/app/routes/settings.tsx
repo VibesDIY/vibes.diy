@@ -98,7 +98,7 @@ function GrantsList() {
                 </button>
               </td>
               <td className="py-2 pr-4 font-mono">
-                <Link to={`/chat/${g.ownerHandle}/${g.appSlug}`} className="hover:underline">
+                <Link to={`/vibe/${g.ownerHandle}/${g.appSlug}`} className="hover:underline">
                   {g.ownerHandle}/{g.appSlug}
                 </Link>
               </td>
