@@ -12,12 +12,14 @@ import { type VibesApiSQLCtx } from "@vibes.diy/api-svc/types.js";
 import { attemptBackendFetch } from "@vibes.diy/api-svc/intern/attempt-backend-fetch.js";
 import { resolveBackendSchedule } from "@vibes.diy/api-svc/intern/load-selected-backend.js";
 import { attemptBackendScheduled } from "@vibes.diy/api-svc/intern/attempt-backend-scheduled.js";
+import { attemptBackendOnChange } from "@vibes.diy/api-svc/intern/attempt-backend-onchange.js";
 import { armDecision, nextTickDecision } from "@vibes.diy/api-svc/intern/backend-alarm-policy.js";
 import {
   BACKEND_OWNER_HEADER,
   BACKEND_SLUG_HEADER,
   BACKEND_OP_HEADER,
   BACKEND_OP_ARM,
+  BACKEND_OP_ONCHANGE,
 } from "@vibes.diy/api-svc/intern/backend-do-addr.js";
 
 declare const Response: typeof CFResponse;
@@ -74,9 +76,14 @@ export class BackendDO implements DurableObject {
       return new Response("backend: missing vibe target", { status: 400 });
     }
 
-    // A queue poke re-evaluates the schedule; everything else is an `_api` fetch.
-    if (request.headers.get(BACKEND_OP_HEADER) === BACKEND_OP_ARM) {
+    // A queue poke re-evaluates the schedule; the onChange poke runs the handler;
+    // everything else is an `_api` fetch.
+    const op = request.headers.get(BACKEND_OP_HEADER);
+    if (op === BACKEND_OP_ARM) {
       return this.arm(request, ownerHandle, appSlug);
+    }
+    if (op === BACKEND_OP_ONCHANGE) {
+      return this.invokeOnChange(request, ownerHandle, appSlug);
     }
 
     const vctx = await this.buildVctx(request);
@@ -126,6 +133,44 @@ export class BackendDO implements DurableObject {
       await this.state.storage.put<AlarmState>(ALARM_STATE_KEY, { ...stored, ownerHandle, appSlug });
     }
     return new Response("ok", { status: 200 });
+  }
+
+  /**
+   * Run the `onChange` handler for one committed write (#2856 B5). Fire-and-forget at
+   * the queue level, but the DO answers so the queue knows whether to retry: 2xx when
+   * the handler ran or there was nothing to run (flag off / no `onChange` export);
+   * 5xx only on a retryable failure (executor/handler error). Not single-flighted —
+   * `onChange` runs unblocked alongside `fetch` and the timer lane.
+   */
+  private async invokeOnChange(request: CFRequest, ownerHandle: string, appSlug: string): Promise<CFResponse> {
+    const body = (await (request as unknown as Request).json()) as {
+      dbName: string;
+      docId: string;
+      seq: number;
+      deleted: boolean;
+      doc: unknown;
+      oldDoc?: unknown | null;
+    };
+    const vctx = await this.buildVctx(request);
+    const outcome = await attemptBackendOnChange(vctx, {
+      ownerHandle,
+      appSlug,
+      dbName: body.dbName,
+      docId: body.docId,
+      seq: body.seq,
+      deleted: body.deleted,
+      doc: body.doc,
+      oldDoc: body.oldDoc ?? null,
+      backendJs: this.env.BACKEND_JS,
+      loader: this.env.LOADER,
+      policyVersion: this.env.BACKEND_POLICY_VERSION,
+    });
+
+    if (outcome.ran || outcome.reason === "backend_disabled" || outcome.reason === "no_onChange_handler") {
+      return new Response("ok", { status: 200 });
+    }
+    // executor_error / handler_error ⇒ retryable; the queue re-delivers.
+    return new Response(`backend onChange: ${outcome.reason}`, { status: 500 });
   }
 
   /** The `scheduled` tick. Cloudflare invokes this when the alarm fires. */

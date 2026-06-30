@@ -30,6 +30,11 @@ export const vibesSvcEnv = type({
   // [env.preview] so we validate in the PR preview without touching prod.
   "VIBES_CACHED_SUGGESTIONS?": "string",
 
+  // Per-app backend.js mode (#2856): "loader" | "off" (default). Anything but
+  // "loader" keeps backend.js dark. Read on the putDoc/deleteDoc path to gate the
+  // onChange emit (B5) so writes enqueue nothing while the feature is off.
+  "BACKEND_JS?": "string",
+
   // GTM_CONTAINER_ID: "string",
   // POSTHOG_KEY: "string",
   // POSTHOG_HOST: "string",

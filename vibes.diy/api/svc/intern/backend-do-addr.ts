@@ -9,6 +9,8 @@ export const BACKEND_SLUG_HEADER = "x-vibe-slug";
 /** Set by the schedule poke so the DO re-evaluates instead of serving an `_api` request. */
 export const BACKEND_OP_HEADER = "x-backend-op";
 export const BACKEND_OP_ARM = "arm";
+/** Set by the post-commit onChange poke (#2856 B5); the DO runs the `onChange` handler. */
+export const BACKEND_OP_ONCHANGE = "onchange";
 
 /**
  * Stable, collision-safe physical name for a vibe's `BackendDO` instance. The

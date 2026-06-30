@@ -127,6 +127,9 @@ export async function createAppContext<T extends VibesSqlite>(
     // Cached-suggestion read lane (#2801): "on" in [env.preview] to validate
     // there; off everywhere else.
     VIBES_CACHED_SUGGESTIONS: param.OPTIONAL,
+    // Per-app backend.js mode (#2856): "loader" | "off" (default). Gates the B5
+    // onChange emit on the write path so writes enqueue nothing while dark.
+    BACKEND_JS: param.OPTIONAL,
 
     RESEND_API_KEY: param.REQUIRED,
     VIBES_DIY_PUBLIC_BASE_URL: param.REQUIRED,
@@ -233,6 +236,7 @@ export async function createAppContext<T extends VibesSqlite>(
         VIBES_DIY_API_URL: envVals.VIBES_DIY_API_URL,
         VIBES_SSR: envVals.VIBES_SSR,
         VIBES_CACHED_SUGGESTIONS: envVals.VIBES_CACHED_SUGGESTIONS,
+        BACKEND_JS: envVals.BACKEND_JS,
 
         GTM_CONTAINER_ID: envVals.GTM_CONTAINER_ID,
         POSTHOG_KEY: envVals.POSTHOG_KEY,
