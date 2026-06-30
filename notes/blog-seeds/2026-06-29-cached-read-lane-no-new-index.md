@@ -26,15 +26,17 @@ Two more lessons worth a post:
   same slug. The key is a 2×FNV-1a hash of a newline-joined, normalized tuple,
   fit into the 32-char slug budget — a tiny pure function that carries the entire
   correctness weight.
-- **Gate on the click, not the content.** The first instinct was to gate the
-  read-lane on "is this a system/curated vibe?" — but that bakes in
-  "cached == curated" and kills the whole future of lazy-caching a popular *user*
-  vibe's chips. The right boundary is ownership of the *click*: only a **non-owner**
-  can ever take a cached read (an owner click is always an in-place write — and if
-  their own vibe were cached, an un-gated lookup would wrongly navigate them away
-  instead of editing). The cache still *lives* under a system handle, but that's
-  storage, not a constraint on the source. The lesson: a gate chosen for
-  "make the no-op cheap" can quietly amputate the feature's roadmap — gate on the
-  invariant (owner ≠ reader), not on today's only data source. Reads soft-fail to
-  the write lane; writes keep fail-loud semantics — the cache-hit *is* the
-  read/write (and login/fork) boundary.
+- **The read decision is the cache-hit, and *only* the cache-hit.** This took two
+  wrong gates to get right. First instinct: gate on "is this a system/curated
+  vibe?" — bakes in "cached == curated," kills lazy-caching user vibes. Second
+  try: gate on "is the clicker a non-owner?" — still wrong, because it smuggles
+  identity into a decision that has nothing to do with identity. The actual
+  question a chip click asks is "has this `(source, transform)` already been
+  generated?" — full stop. If yes, it's a read; if no, it's a generate. *Who*
+  you are only changes what a **write** does (owner edits in place, non-owner
+  forks) — never whether the click is a read. The lesson: when you catch yourself
+  adding an identity check to a content-addressed lookup, you've probably confused
+  the read decision with the write behavior. Separate them. The one thing left
+  open is downstream of the hit, not the decision: for the owner of a cached
+  source, does a hit *navigate* to the result or *adopt* it in place as their next
+  version — a write-path question, deferred until precache can actually fire.

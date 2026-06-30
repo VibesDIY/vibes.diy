@@ -87,17 +87,26 @@ and in doing so settles three of the open questions below:
   fork (the "no login" promise holds). `isReadableCachedGrant` encodes this.
 
 The client wiring (`resolveCachedRead` in `handleEditPrompt`,
-`vibe.$ownerHandle.$appSlug.tsx`) fires for **any non-owner click on any vibe** —
-the boundary is the cache-_hit_, not who owns the source (per §1a "keep the
-boundary defined by cache-hit, not is-it-a-curated-chip"). The cache is keyed by
-`(source, transform)`, so the source can be a curated/system vibe **or a popular
-user vibe whose chips we later lazy-cache**; the precached result always lives
-under `SYSTEM_CACHE_HANDLE` (that handle is cache _storage_, not a constraint on
-the source). **Owners are gated out** (`!isOwner`): an owner click is always an
-in-place write, and an un-gated lookup on a cached-own vibe would wrongly
-navigate them to the fork instead of editing. Until precaching exists the lookup
-always misses → non-owner clicks fall through to today's fork/remix write lane
-unchanged.
+`vibe.$ownerHandle.$appSlug.tsx`) makes the read/write decision **purely on the
+cache-hit, with zero reference to identity** (per §1a "keep the boundary defined
+by cache-hit, not is-it-a-curated-chip"): every chip click — owner or not — asks
+"has this `(source, transform)` already been generated?" The cache is keyed by
+`(source, transform)`, so the source can be a curated/system vibe **or any user
+vibe whose chips get precached**; the result always lives under
+`SYSTEM_CACHE_HANDLE` (storage, not a source constraint). A HIT is a read
+(navigate to the precomputed result, no codegen). A miss or lookup error
+soft-fails to the write lane — and **identity matters only there** (owner edits
+in place, non-owner forks). Until precaching exists every lookup misses, so all
+clicks fall through to today's write lane unchanged.
+
+**Open for when precache lands — what a hit does for the OWNER of the source.**
+The decision (read vs generate) is identity-free, but the _action on a hit_ for
+someone who owns the source is still to settle: navigate to the system fork (as
+wired now), or **adopt** the precomputed result in place as their next `fsId`
+(skip codegen but keep it in their slug/data namespace, §2). Adopt-in-place is
+the nicer owner outcome but needs new plumbing (feed a cached result into the
+in-place write path); it's deferred because the lookup can't fire until precache
+exists.
 
 **Still open (the backend provisioning half — deferred, brainstorm-gated):**
 reserving `SYSTEM_CACHE_HANDLE` out of the user handle space (OQ#4), the precache
