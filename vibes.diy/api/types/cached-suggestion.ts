@@ -203,6 +203,17 @@ export function cachedSuggestionKey(input: CachedSuggestionKeyInput): string {
   return `cf-${hashToBase36(canonical)}`;
 }
 
+// The canonical content-address shape produced by {@link cachedSuggestionKey}:
+// `cf-<base36>-<base36>`, `[a-z0-9-]`, ≤32 chars. Public read endpoints accept
+// `key` as a free string (the arktype schema only requires `string`), so a
+// non-UI caller can pass arbitrary data there. Use this to gate what's safe to
+// echo into logs/telemetry — a key that fails this check is attacker-controlled
+// input, not a content-address, and must not be persisted raw.
+const cachedSuggestionKeyShape = /^cf-[0-9a-z]+-[0-9a-z]+$/u;
+export function isCachedSuggestionKeyShape(key: string): boolean {
+  return key.length <= 32 && cachedSuggestionKeyShape.test(key);
+}
+
 /**
  * A staged (precomputed) suggestion result: a specific code version under the
  * SOURCE vibe's own owner/slug. Same `(ownerHandle, appSlug)` as the source; a

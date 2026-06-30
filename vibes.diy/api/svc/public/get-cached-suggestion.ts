@@ -7,6 +7,7 @@ import {
   VibesDiyError,
   W3CWebSocketEvent,
   ReqWithOptionalAuth,
+  isCachedSuggestionKeyShape,
 } from "@vibes.diy/api-types";
 import { type } from "arktype";
 import { ensureLogger } from "@vibes.diy/identity";
@@ -73,9 +74,14 @@ export const getCachedSuggestionEvento: EventoHandler<
       // hit / miss / lookup-error — so the fail-to-fork (soft-miss) behavior
       // can't silently mask an infra regression once prod traffic hits the lane.
       // `lookup-error` is the only outcome that's degraded rather than a genuine
-      // answer (settings read failed → client forks/writes). The key is a
-      // content-address of an OFFERED chip (never a custom prompt), so it carries
-      // no PII.
+      // answer (settings read failed → client forks/writes).
+      //
+      // This is a public endpoint whose schema accepts any string for `key`, so a
+      // non-UI caller could smuggle PII/oversized data into prod logs. Only the
+      // canonical content-address shape (`cf-<hash>-<hash>`, an offered-chip key —
+      // never a custom prompt) is echoed raw; anything else is redacted to
+      // shape+length, which stays debuggable without persisting attacker input.
+      const safeKey = isCachedSuggestionKeyShape(req.key) ? req.key : `<non-canonical:${req.key.length}>`;
       const emit = (res: ResGetCachedSuggestion, outcome: "hit" | "miss" | "lookup-error", reason?: string) => {
         logger
           .Info()
@@ -84,7 +90,7 @@ export const getCachedSuggestionEvento: EventoHandler<
             ...(reason ? { reason } : {}),
             ownerHandle: req.ownerHandle,
             appSlug: req.appSlug,
-            key: req.key,
+            key: safeKey,
             ...(res.fsId ? { fsId: res.fsId } : {}),
           })
           .Msg("cached-suggestion-read");
