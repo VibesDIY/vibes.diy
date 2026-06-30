@@ -39,6 +39,34 @@ export interface BackendTrigger {
   readonly payload?: unknown;
 }
 
+/**
+ * One `ctx.db` operation the isolate forwards to the host (#2856 B6). The handler
+ * supplies ONLY the doc/id and the target db; identity and loop-guard depth are
+ * bound host-side into the `BackendDbCallback`, never carried here (so handler
+ * code can neither forge them nor read them off this op).
+ */
+export type BackendDbOp =
+  | { readonly kind: "put"; readonly db: string; readonly doc: unknown; readonly docId: string | null }
+  | { readonly kind: "delete"; readonly db: string; readonly docId: string };
+
+/** Result of a `ctx.db` op. `ok:false` carries the gate's deny reason (and the
+ *  `access-denied`/`unreadable`/`conflict` code where one applies) so the
+ *  isolate's `ctx.db.put`/`delete` can reject with a faithful error. */
+export type BackendDbResult =
+  | { readonly ok: true; readonly id: string }
+  | { readonly ok: false; readonly error: string; readonly code?: string };
+
+/**
+ * Host capability backing `ctx.db` (#2856 B6). Provided per-invocation by the
+ * api-svc layer, where it closes over the request-scoped `vctx`, the resolved
+ * trigger identity, and the trusted loop-guard depth. It re-enters the SAME
+ * production write gate frontend writes use (`runPutAccessGate` /
+ * `runDeleteAccessGate` → `allocateAndInsertRevision`), so a backend write and an
+ * identical frontend write produce the same allow/deny + sidecar outcome. The
+ * Promise resolves only AFTER the host commit.
+ */
+export type BackendDbCallback = (op: BackendDbOp) => Promise<BackendDbResult>;
+
 export interface BackendInvokeInput {
   /** Raw `backend.js` source (JS/TSX). The executor transforms it itself. */
   readonly source: string;
@@ -46,6 +74,12 @@ export interface BackendInvokeInput {
   readonly handler: BackendHandler;
   /** Per-trigger context — carried in the request, never the hashed code. */
   readonly trigger: BackendTrigger;
+  /**
+   * Host capability backing `ctx.db` (#2856 B6). Wired into the isolate `env` as
+   * the identity-free `__VIBES_DB` transport. Absent for B1 library callers and
+   * any path that doesn't grant write access — then `ctx.db` throws on use.
+   */
+  readonly db?: BackendDbCallback;
 }
 
 export interface BackendExecutor {

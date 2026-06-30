@@ -38,7 +38,7 @@ describe("buildBackendWorkerCode", () => {
     expect(main).toMatch(/request\.json\(\)/);
     expect(main).toMatch(/handlers\[handler\]/);
     expect(main).toMatch(/export default/);
-    expect(main).toMatch(/async fetch\(request\)/);
+    expect(main).toMatch(/async fetch\(request, env\)/);
   });
 
   it("returns 404 for an absent handler export", () => {
@@ -89,10 +89,31 @@ describe("buildBackendWorkerCode", () => {
     expect(code.modules[code.mainModule]).toContain("const VIBE = null;");
   });
 
-  it("ctx.db and ctx.secrets are present but throw (wired in B6/B7)", () => {
+  it("ctx.db is wired to the host env binding (B6); ctx.secrets still throws (B7)", () => {
     const main = buildBackendWorkerCode({ module: "x" }).modules[buildBackendWorkerCode({ module: "x" }).mainModule];
-    expect(main).toMatch(/get db\(\) \{ throw new Error\("ctx\.db is not available yet/);
+    // ctx.db is constructed from the env transport, no longer a throwing getter.
+    expect(main).toContain("db: makeDb(env, trigger)");
+    expect(main).toContain("env.__VIBES_DB");
+    expect(main).not.toMatch(/get db\(\)/);
+    // The fetch handler now receives `env` so the binding can flow into ctx.db.
+    expect(main).toMatch(/async fetch\(request, env\)/);
+    // secrets remains a throwing getter until B7.
     expect(main).toMatch(/get secrets\(\) \{ throw new Error\("ctx\.secrets is not available yet/);
+  });
+
+  it("embeds the binding-schema version so it participates in the content hash (Charlie watch-out)", () => {
+    const main = buildBackendWorkerCode({ module: "x" }).modules[buildBackendWorkerCode({ module: "x" }).mainModule];
+    expect(main).toMatch(/bindings=v1/);
+  });
+
+  it("ctx.db.put/delete require a db and reach only the host binding (unforgeable)", () => {
+    const main = buildBackendWorkerCode({ module: "x" }).modules[buildBackendWorkerCode({ module: "x" }).mainModule];
+    // put/delete post a typed op to the binding; default db comes from the trigger.
+    expect(main).toMatch(/kind: "put"/);
+    expect(main).toMatch(/kind: "delete"/);
+    expect(main).toMatch(/requires a db name/);
+    // The only outbound channel is the binding's fetch — never a bare global fetch.
+    expect(main).toContain("bind.fetch(");
   });
 });
 
@@ -213,6 +234,48 @@ describe("WorkerLoaderBackendExecutor.invoke (fake binding)", () => {
       trigger: {},
     });
     expect(f.calls[0].id).toBe(f.calls[1].id);
+  });
+
+  // B6: the host db callback is wired as the identity-free `__VIBES_DB` env
+  // transport, and an op posted by the isolate reaches it verbatim.
+  it("wires the db callback as the __VIBES_DB env transport and routes ops to it", async () => {
+    const f = fakeLoader();
+    const seen: unknown[] = [];
+    const db = async (op: unknown) => {
+      seen.push(op);
+      return { ok: true as const, id: "doc-1" };
+    };
+    await new WorkerLoaderBackendExecutor(f.binding).invoke({
+      source: SONOS_BACKEND,
+      handler: "onChange",
+      trigger: {},
+      db,
+    });
+    const code = f.calls[0].code as { env?: Record<string, { fetch: (r: Request) => Promise<Response> }> };
+    expect(code.env).toBeDefined();
+    const binding = code.env?.__VIBES_DB;
+    if (!binding) throw new Error("expected __VIBES_DB binding");
+    // Simulate the isolate posting a put op through the binding.
+    const res = await binding.fetch(
+      new Request("https://db.internal/op", {
+        method: "POST",
+        body: JSON.stringify({ kind: "put", db: "todos", doc: { t: 1 }, docId: null }),
+      })
+    );
+    expect(await res.json()).toEqual({ ok: true, id: "doc-1" });
+    expect(seen[0]).toEqual({ kind: "put", db: "todos", doc: { t: 1 }, docId: null });
+  });
+
+  // env is excluded from the isolate hash: the same source with a different db
+  // callback instance must reuse the same isolate id (no cache fragmentation).
+  it("env transport is excluded from the isolate id (no cache fragmentation)", async () => {
+    const f = fakeLoader();
+    const exec = new WorkerLoaderBackendExecutor(f.binding);
+    await exec.invoke({ source: SONOS_BACKEND, handler: "fetch", trigger: {}, db: async () => ({ ok: true, id: "a" }) });
+    await exec.invoke({ source: SONOS_BACKEND, handler: "fetch", trigger: {}, db: async () => ({ ok: true, id: "b" }) });
+    await exec.invoke({ source: SONOS_BACKEND, handler: "fetch", trigger: {} }); // no db at all
+    expect(f.calls[0].id).toBe(f.calls[1].id);
+    expect(f.calls[1].id).toBe(f.calls[2].id);
   });
 
   // @CharlieHelps acceptance matrix (c): a policy/binding-schema bump ⇒ new id.

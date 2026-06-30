@@ -1,13 +1,27 @@
 import { TxtEnDecoderSingleton } from "@adviser/cement";
 import { transformBackendSource } from "./transform-backend-source.js";
-import { type WorkerCode, type WorkerLoaderBinding } from "./worker-loader-executor.js";
-import { type BackendExecutor, type BackendInvokeInput } from "./backend-executor.js";
+import { type IsolateFetcher, type WorkerCode, type WorkerLoaderBinding } from "./worker-loader-executor.js";
+import { type BackendDbCallback, type BackendDbOp, type BackendExecutor, type BackendInvokeInput } from "./backend-executor.js";
 
 const MAIN_MODULE = "main.js";
 const BACKEND_MODULE = "backend.js";
 // Pinned so the cache key (and isolate behavior) is reproducible. Bump
 // deliberately when the runtime contract changes. Matches the SSR loader path.
 const COMPATIBILITY_DATE = "2025-05-01";
+// Version of the isolate `env`-binding schema (the shape of `ctx.db` and the
+// `__VIBES_DB` transport, #2856 B6). Folded into the hashed `main` so a binding
+// change forces a fresh isolate id — an `env`-binding change can NEVER be served
+// by a stale cached isolate (Charlie watch-out). Bump on any change to the
+// `__VIBES_DB` request/response contract or the `ctx.db` surface below.
+const BINDING_SCHEMA_VERSION = "v1";
+// The host db-capability binding name. The generated `ctx.db` reaches the
+// production write gate ONLY through this binding — never general `fetch` (which
+// stays `globalOutbound: null` until B8), so the capability is unforgeable from
+// handler code (Charlie watch-out).
+const DB_BINDING = "__VIBES_DB";
+// Internal URL the isolate posts db ops to; the host transport ignores it (it
+// routes by the binding, not the URL) — present only because `fetch` needs one.
+const DB_OP_URL = "https://db.internal/op";
 // Internal request URL — the dynamic worker only has the one fetch handler; the
 // real per-trigger handler + context ride the request body (see below).
 const BACKEND_REQUEST_URL = "https://vibe-backend.internal/";
@@ -62,15 +76,47 @@ export function buildBackendWorkerCode(input: {
   // given (B1 library callers / tests), matching the prior appInfo-absent behavior.
   const vibeLiteral = input.vibe ? JSON.stringify({ ownerHandle: input.vibe.ownerHandle, appSlug: input.vibe.appSlug }) : "null";
   const main = [
-    // policyVersion is embedded so it participates in the content hash (invariant
-    // #1c) — bumping it forces a new isolate id without changing behavior.
-    `// backend-isolate policy=${policyVersion}`,
+    // policyVersion + the binding-schema version are embedded so they participate
+    // in the content hash (invariant #1c) — bumping either forces a new isolate id
+    // without changing behavior, so a stale isolate can't serve a changed policy or
+    // a changed `env`-binding shape (Charlie watch-out).
+    `// backend-isolate policy=${policyVersion} bindings=${BINDING_SCHEMA_VERSION}`,
     `import * as handlers from "./${BACKEND_MODULE}";`,
     // Per-vibe identity — part of the hashed source (tenant partition) and the
     // unspoofable source of ctx.appInfo.
     `const VIBE = ${vibeLiteral};`,
+    // ctx.db (#2856 B6) — the production write gate, reached ONLY through the host
+    // `${DB_BINDING}` env binding (never general fetch). The handler supplies just
+    // the doc/id/db; identity + loop-guard depth are host-side, never read from
+    // here. `put`/`delete` resolve AFTER the host commits (same semantics as a
+    // frontend write). When no binding is wired the methods throw (B1 callers / a
+    // mode that didn't supply one) rather than silently no-op.
+    `function makeDb(env, trigger) {`,
+    `  const bind = env && env.${DB_BINDING};`,
+    `  const defaultDb = trigger && trigger.payload && trigger.payload.dbName;`,
+    `  async function rpc(body) {`,
+    `    if (!bind) throw new Error("ctx.db is not available (no host db binding wired)");`,
+    `    const r = await bind.fetch(${JSON.stringify(DB_OP_URL)}, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });`,
+    `    const out = await r.json();`,
+    `    if (!out || out.ok !== true) throw new Error((out && out.error) || "ctx.db op failed");`,
+    `    return out.id;`,
+    `  }`,
+    `  return {`,
+    `    put(doc, options) {`,
+    `      const db = (options && options.db) || defaultDb;`,
+    `      if (!db) throw new Error("ctx.db.put requires a db name — pass { db } (no default db for this trigger)");`,
+    `      const docId = (options && options.id) || (doc && doc._id) || null;`,
+    `      return rpc({ kind: "put", db: db, doc: doc, docId: docId });`,
+    `    },`,
+    `    delete(id, options) {`,
+    `      const db = (options && options.db) || defaultDb;`,
+    `      if (!db) throw new Error("ctx.db.delete requires a db name — pass { db } (no default db for this trigger)");`,
+    `      return rpc({ kind: "delete", db: db, docId: id });`,
+    `    },`,
+    `  };`,
+    `}`,
     `export default {`,
-    `  async fetch(request) {`,
+    `  async fetch(request, env) {`,
     `    const { handler, trigger } = await request.json();`,
     // Fail-closed allowlist (per @CharlieHelps): only the three trigger exports may
     // be dispatched, so a request can never reach `default`, `config`, or any other
@@ -80,13 +126,14 @@ export function buildBackendWorkerCode(input: {
     `    if (!Object.prototype.hasOwnProperty.call(ALLOWED_HANDLERS, handler)) {`,
     `      return new Response("invalid backend handler: " + handler, { status: 400 });`,
     `    }`,
-    // ctx: appInfo is baked (unspoofable, B3); userInfo rides the trigger (B3).
-    // db/secrets are PRESENT BUT THROW until B6/B7 wire them — a handler that
-    // reaches for them fails loudly instead of seeing `undefined`.
+    // ctx: appInfo is baked (unspoofable, B3); userInfo rides the trigger (B3); db
+    // is the production write gate via the host binding (B6). secrets is PRESENT
+    // BUT THROWS until B7 wires it — a handler that reaches for it fails loudly
+    // instead of seeing `undefined`.
     `    const ctx = {`,
     `      appInfo: VIBE,`,
     `      userInfo: trigger && trigger.userHandle ? { userHandle: trigger.userHandle } : null,`,
-    `      get db() { throw new Error("ctx.db is not available yet (wired in #2856 slice B6)"); },`,
+    `      db: makeDb(env, trigger),`,
     `      get secrets() { throw new Error("ctx.secrets is not available yet (wired in #2856 slice B7)"); },`,
     `    };`,
     `    const fn = handlers[handler];`,
@@ -149,8 +196,18 @@ export class WorkerLoaderBackendExecutor implements BackendExecutor {
   async invoke(input: BackendInvokeInput): Promise<Response> {
     const { module } = transformBackendSource(input.source);
     const code = buildBackendWorkerCode({ module, policyVersion: this.opts.policyVersion, vibe: this.opts.vibe });
+    // The isolate id is hashed from `code` BEFORE the env transport is attached, so
+    // the per-invocation db binding never enters the hash (env is excluded by
+    // construction) and never fragments the isolate cache. The binding-schema
+    // version is what the hash already folds in (via the `main` comment).
     const id = await hashBackendWorkerCode(code);
-    const stub = this.loader.get(id, () => code);
+    // Attach the host db capability (#2856 B6) as the `__VIBES_DB` env transport.
+    // Identity-free: it routes the op to the supplied host callback; the trigger
+    // identity + loop-guard depth are bound into that callback host-side, never
+    // carried in env. Absent `input.db` (B1 callers), env stays unset and ctx.db
+    // throws on use.
+    const wired: WorkerCode = input.db ? { ...code, env: { [DB_BINDING]: makeDbBinding(input.db) } } : code;
+    const stub = this.loader.get(id, () => wired);
     const request = new Request(BACKEND_REQUEST_URL, {
       method: "POST",
       headers: { "content-type": "application/json" },
@@ -161,4 +218,22 @@ export class WorkerLoaderBackendExecutor implements BackendExecutor {
     // the way to the B3 `_api` route (per Codex review).
     return stub.getEntrypoint().fetch(request);
   }
+}
+
+/**
+ * Wrap the host `ctx.db` callback as the identity-free `Fetcher` transport placed
+ * in the isolate `env` (#2856 B6). The isolate's generated `ctx.db` POSTs a
+ * `BackendDbOp` JSON body; this unwraps it, runs the host callback (the production
+ * write gate, bound to the trigger identity + depth), and returns the
+ * `BackendDbResult` as a JSON `Response`. The handler can only reach this through
+ * `ctx.db` — never general `fetch` — so the write capability is unforgeable.
+ */
+function makeDbBinding(db: BackendDbCallback): IsolateFetcher {
+  return {
+    async fetch(request: Request): Promise<Response> {
+      const op = (await request.json()) as BackendDbOp;
+      const result = await db(op);
+      return new Response(JSON.stringify(result), { headers: { "content-type": "application/json" } });
+    },
+  };
 }
