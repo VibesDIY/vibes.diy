@@ -60,14 +60,13 @@ fork-free; only the "same data namespace" property differs, and an on-ramp visit
 has no data to carry yet. So a spine jump is a **first-class, instant, curated**
 affordance — not second-class.
 
-**Affordance is OQ-C (open).** Whether the spine jump reuses the same shield glyph
-(unified affordance, the shield's _meaning_ broadening to "instant · curated · no
-codegen · no login") or gets a **distinct glyph** while keeping that same promise
-is unresolved. jchris leaned unified; Charlie (#2950 review) recommends a distinct
-glyph so the shield keeps its precise, server-authoritative same-namespace meaning
-(a client-asserted "stays here" is a documented phishing risk). Both keep the jump
-instant + curated + no-login; only the visual differs. Resolved before the plan —
-see OQ-C.
+**Affordance — decided (jchris, on Charlie's #2950 rec): a distinct glyph.** The
+🛡 shield keeps its precise, server-authoritative meaning — "you stay in this same
+namespace" — and is never drawn for a cross-slug jump (a client-asserted "stays
+here" is a documented phishing risk). The cross-slug curated jump gets its **own
+distinct glyph** (e.g. `→`) that signals "instant · curated · no-login" without
+impersonating the same-namespace stay. Both are first-class and instant; only the
+mark differs.
 
 ## Grounding in the current code
 
@@ -221,14 +220,11 @@ This design re-grounds the pre-cached-model children; it does not re-file them:
   deployed `fsId` (so a later starter version can re-aim or drop an edge), or
   slug-scoped (match on any resolved version of the slug)? v1 keys to the deployed
   production version, which the resolved version equals on the canonical starter URL.
-- **OQ-C — affordance rendering (needs jchris's call).** Does the spine jump reuse
-  the existing shield glyph (unified), or get a distinct glyph (e.g. "→") while
-  keeping the same instant + curated + no-login promise? **Charlie (#2950)
-  recommends distinct** — keep the shield's precise, server-authoritative
-  same-namespace "stays here" meaning, since a client-asserted "stays here" is a
-  documented phishing risk. jchris leaned unified. Either way the same-slug stay
-  shield stays server-authoritative; only the cross-slug jump's glyph is in
-  question. Pure presentation; decide before the plan.
+- **OQ-C — affordance rendering (settled, jchris on Charlie's #2950 rec).**
+  **Distinct glyph.** The shield stays server-authoritative and strictly
+  same-namespace ("stays here"); it is never drawn for a cross-slug jump. The
+  cross-slug curated jump gets its own glyph (e.g. `→`) signaling "instant ·
+  curated · no-login." See §"Why 'new namespace is appropriate'".
 - **OQ-D — Q3 trust boundary (settled, Charlie #2950).** The cross-slug nav target
   coming from the checked-in curated graph (client config) is acceptable **because
   it is navigation-only** — no grant/serve truth rides on it. The destination
