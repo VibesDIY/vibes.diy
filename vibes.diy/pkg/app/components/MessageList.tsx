@@ -653,11 +653,12 @@ function MessageList({
           // acc.push(<CodeMsg key={codeBegin!.sectionId} begin={codeBegin!} lines={collectedMsg} />);
           break;
         case isCodeEnd(msg):
-          // Orphaned end with no open begin: drop it (keep rendering the rest).
-          if (!codeBegin) {
-            collectedMsg = [];
-            break;
-          }
+          // Orphaned end with no open begin: drop it and keep rendering the
+          // rest. Leave collectedMsg untouched — code and toplevel lines share
+          // one buffer, so when this end replays mid-stream the buffer belongs
+          // to a *different* still-open section; clearing it would swallow that
+          // section's lines (Codex review on #2958).
+          if (!codeBegin) break;
           blockMsgs.push({
             type: "Code",
             begin: codeBegin,
@@ -709,6 +710,9 @@ function MessageList({
           // and onClick is a no-op (no navigable target). An orphaned truncate
           // with no open begin (same reconnect failure mode as #2652) is
           // dropped — the preceding blocks were already drained above.
+          // Only consume the shared line buffer when this truncate actually
+          // owns it (a begin is open). An orphaned truncate leaves another
+          // open section's buffered lines intact (Codex review on #2958).
           if (codeBegin) {
             acc.push(
               <CodeMsg
@@ -721,16 +725,15 @@ function MessageList({
                 }}
               />
             );
+            collectedMsg = [];
+            codeBegin = undefined;
           }
-          collectedMsg = [];
-          codeBegin = undefined;
           break;
         case isToplevelEnd(msg):
-          // Orphaned end with no open begin: drop it (keep rendering the rest).
-          if (!toplevelBegin) {
-            collectedMsg = [];
-            break;
-          }
+          // Orphaned end with no open begin: drop it and keep rendering the
+          // rest. Leave collectedMsg untouched — the shared line buffer belongs
+          // to a different still-open section here (Codex review on #2958).
+          if (!toplevelBegin) break;
           blockMsgs.push({
             type: "TopLevel",
             begin: toplevelBegin,
