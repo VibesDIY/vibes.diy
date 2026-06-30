@@ -122,10 +122,11 @@ legitimate A→B→A chain; a depth cap alone can't tell a backend-induced write
   handler at generation _N_ writes (B6), that write is tagged `depth = N`; its commit emits `onChange` at
   `depth = N + 1` — but **only if `N < MAX_ONCHANGE_DEPTH`**. At the cap, the post-commit step **skips
   emission** (and logs the suppression). Proposed `MAX_ONCHANGE_DEPTH = 4`.
-- **Source tag on the write.** The depth travels **with the write request** (an internal
-  `req.backendOrigin?: { depth }`), set only by B6's `ctx.db.put` and **absent for frontend writes** (⇒
-  treated as `depth 0`, so its `onChange` is `depth 1`). The tag is also what lets B6's access gate know
-  a write is backend-originated.
+- **Source tag on the write.** The depth travels on a **trusted internal channel** (NOT the
+  client-facing request body — a client-readable depth is spoofable and could suppress the guard, Charlie
+  blocker 2). In B5 there are no backend writes, so the emit sites pass a hardcoded `originDepth: 0` (every
+  frontend write is generation 0 ⇒ `onChange` at depth 1). B6 sets the trusted generation for
+  `ctx.db.put` internally; the tag is also what lets B6's access gate know a write is backend-originated.
 
 **In B5 this guard is built and unit-tested but dormant**: `ctx.db` throws, so no handler can write, so
 every emitted message is `depth 1` and no chain ever forms. We still (a) thread `depth` through the
@@ -233,3 +234,16 @@ No new binding work: B4 already cross-script-bound `BACKEND_DO` into `wrangler.q
 3. **`seq` in the envelope.** The delivery contract uses `seq` as the idempotency key and the emit test
    asserts it, but the canonical payload omitted it. Now added to the Arktype type and forwarded through
    the DO/executor body (`docId` too, for addressing the `seq - 1` lookup).
+
+## Charlie review round 2 folded in (implementation, 2 blockers)
+
+1. **The whole emit is fire-and-forget, not just the enqueue.** The `seq - 1` predecessor read sat
+   outside the `try/catch`, so under flag-on a DB read error could bubble through the awaiting
+   `putDoc`/`deleteDoc` handler and fail the already-committed write. Now the entire side effect (read +
+   enqueue) is wrapped — any failure is swallowed + logged (`backend_onchange_enqueue_failed`), never
+   propagated. Tested with a throwing predecessor read.
+2. **The loop-guard depth is not client-spoofable.** The emit originally read `req.backendOrigin?.depth`
+   from the request body; since extra keys pass through, a client could send `depth >= 4` and suppress
+   `onChange`. Now the emit sites pass a hardcoded `originDepth: 0` (frontend writes are always generation
+   0); the trusted generation for handler-induced writes is threaded by B6 on an internal channel, never
+   from `req`.

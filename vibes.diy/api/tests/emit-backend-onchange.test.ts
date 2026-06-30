@@ -120,4 +120,24 @@ describe("emitBackendOnChange (#2856 B5)", { timeout: 30000 }, () => {
       posted.push(msg);
     };
   });
+
+  it("never throws when the predecessor read fails — the committed write survives (Charlie blocker 1)", async () => {
+    const realSql = ctx.vibesCtx.sql;
+    // Make the seq-1 predecessor read throw; the emit must swallow it, not bubble
+    // up through the awaiting putDoc/deleteDoc handler and fail the request.
+    ctx.vibesCtx.sql = {
+      ...realSql,
+      db: {
+        select: () => {
+          throw new Error("db read down");
+        },
+      },
+    } as unknown as typeof realSql;
+    try {
+      await expect(emitBackendOnChange(ctx.vibesCtx, base({ docId: "read-down", seq: 2 }))).resolves.toBeUndefined();
+      expect(posted).toHaveLength(0);
+    } finally {
+      ctx.vibesCtx.sql = realSql;
+    }
+  });
 });

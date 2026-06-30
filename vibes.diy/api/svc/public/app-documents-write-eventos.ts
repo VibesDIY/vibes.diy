@@ -545,7 +545,11 @@ export const putDocEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqPutDoc>, 
         seq: nextSeq,
         deleted: false,
         doc: req.doc,
-        originDepth: (req as { backendOrigin?: { depth?: number } }).backendOrigin?.depth ?? 0,
+        // Frontend writes are always generation 0. Do NOT read a depth from the
+        // request body — it's client-controllable and a spoofed depth could
+        // suppress the loop guard (Charlie). B6 threads the *trusted* generation
+        // for handler-induced writes via an internal channel, not req.
+        originDepth: 0,
         writerUserId: userId,
       });
 
@@ -858,7 +862,9 @@ export const deleteDocEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqDelete
           seq: delAlloc.seq,
           deleted: true,
           doc: {},
-          originDepth: (req as { backendOrigin?: { depth?: number } }).backendOrigin?.depth ?? 0,
+          // Frontend deletes are always generation 0 — never trust a client-sent
+          // depth (Charlie). B6 threads the trusted generation internally.
+          originDepth: 0,
           writerUserId: req._auth.verifiedAuth.claims.userId,
         });
       }
