@@ -13,10 +13,11 @@
 // rejected, a genuine CA-signed token verifies, and the enforcement is gated by
 // DEVICE_ID_REQUIRE_CA_SIGNATURE (default-off for older-CLI compat during rollout).
 import { describe, it, expect, beforeAll, afterEach } from "vitest";
+import { MockLogger } from "@adviser/cement";
 import { createTestDeviceCA, createTestUser, DeviceIdKey, DeviceIdSignMsg, DeviceIdCSR } from "@vibes.diy/identity/testing";
 import { generateKeyPair, exportJWK, SignJWT } from "jose";
 import type { SuperThis } from "@vibes.diy/identity";
-import { tokenApi } from "@vibes.diy/identity/server";
+import { tokenApi, DeviceIdApiToken } from "@vibes.diy/identity/server";
 // Browser `.` facade — what VibesDiyApi.getTokenClaims() actually imports.
 import { ClerkApiToken, ensureSuperThis } from "@vibes.diy/identity";
 
@@ -235,6 +236,29 @@ describe("auth token verify — golden (SUT via @vibes.diy/identity/server)", { 
     expect((await api["device-id"].verify(legacy.token)).isOk()).toBe(true);
     sthis.env.set(ENFORCE_ENV, "true");
     expect((await api["device-id"].verify(legacy.token)).isErr()).toBe(true);
+  });
+
+  // --- #2824 adoption visibility ---------------------------------------------
+  // While DEVICE_ID_REQUIRE_CA_SIGNATURE is still gated off, verify() emits a
+  // per-token log of whether the CA-signed cert chain (`x5c#jwt`) is present, so
+  // the rollout can flip enforcement when `chainSignature:absent` ≈ 0 instead of
+  // guessing a calendar date. Pin that both token shapes are reported correctly.
+  it("#2824: verify() logs chainSignature present for a 3.0 token and absent for a legacy one", async () => {
+    const { logger, logCollector } = MockLogger();
+    // Construct DeviceIdApiToken directly (not via the Lazy-memoized `tokenApi`,
+    // which would hand back the shared-sthis instance) so verify() logs through
+    // this MockLogger and the collector captures the structured rows.
+    const logSthis = ensureSuperThis({ logger });
+    const logToken = new DeviceIdApiToken(logSthis, { deviceIdCA: ca, clockTolerance: 5, maxAge: 3600 } as never);
+
+    await logToken.verify(await mintCASignedToken()); // 3.0 shape → present
+    await logToken.verify((await user.getDashBoardToken()).token); // legacy shape → absent
+
+    await logger.Flush();
+    const sigs = (logCollector.Logs() as Record<string, unknown>[])
+      .filter((l) => l.msg === "device-id-chain-signature")
+      .map((l) => l.chainSignature);
+    expect(sigs).toEqual(["present", "absent"]);
   });
 
   // --- Clerk RS256 token verify (legitimate) ---------------------------------
