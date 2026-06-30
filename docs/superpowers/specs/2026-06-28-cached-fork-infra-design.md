@@ -120,10 +120,24 @@ the instant precache starts staging versions.
 staged-fsId` map is needed: likely a tag in the staged version's `meta` plus a
   list/lookup over that vibe's versions, or a small KV/D1 map. The
   `cachedSuggestionKey` is the key it's keyed on.
-- **OQ#5 (anonymous read access) — reframed.** Can a non-owner read a staged-but-
-  **unpublished** version of a public app via an explicit-`fsId` read?
-  `isReadableCachedGrant` encodes the grant check; confirm the published-state
-  path serves an explicit staged version to a logged-out viewer.
+- **OQ#5 (anonymous read access) — reframed, with a PII boundary.** Two parts:
+  (a) Can a non-owner read a staged-but-**unpublished** version of a public app
+  via an explicit-`fsId` read? (b) **What's safe to serve anonymously?** Only
+  **chip-derived** results — the transform is a curated, finite, known
+  suggestion chip, applied to already-public source code, and data is never in
+  the code, so a chip result adds no new PII. A **custom "Other" / free-text**
+  prompt can inject PII into the generated code, so its result must **never**
+  become a publicly-readable cached page — and it doesn't need to, since a custom
+  prompt is always a write (login-gated, fork-on-non-owner). The boundary:
+  **anonymous cached reads are restricted to the offered-chip allowlist.**
+  Enforcement is two-layer — the client only attempts the read lane when the
+  click matches an offered chip (shipped: `cardChips` allowlist in
+  `handleEditPrompt`), and the AUTHORITATIVE server gate is precache staging only
+  chip-derived transforms + tagging them with a narrow "chip-derived,
+  public-read-eligible" visibility state (distinct from owner-publish) that the
+  anonymous serve path requires. This new visibility state is the real answer to
+  "unpublished yet anonymously readable": readable because the platform staged a
+  curated-chip result and marked it public-safe, not because the owner published.
 - **OQ#3 (precache trigger + spend ceiling)** — what stages versions and how much
   we'll spend, given no GC. Plus **read-lane outcome telemetry**
   (`hit`/`miss`/`lookup-error→write`) so soft-fail can't mask an infra regression.
