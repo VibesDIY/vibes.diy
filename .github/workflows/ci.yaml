@@ -36,21 +36,33 @@ jobs:
     if: ${{ !contains(github.event.pull_request.title, '[skip ci]') }}
     outputs:
       docs_only: ${{ steps.scope.outputs.docs_only }}
-      api_svc_publish_needed: ${{ steps.scope.outputs.api_svc_publish_needed }}
     steps:
       - uses: actions/checkout@v5
       - id: scope
         uses: ./actions/changed-scope
 
-  # Publish-build guard for @vibes.diy/api-svc. This intentionally runs as a
-  # separate job so the compile_test required-check gate can assert its result.
-  # Use the `pack` script (core-cli build --doPack), NOT `publish`: both run the
-  # same `core-cli build` path, but `publish` (core-cli build) actually pushes to
-  # the npm registry and would fail in PR CI where no NPM_TOKEN exists, while
-  # `--doPack` exercises the publish build + packs a tarball without publishing.
-  publish_build_api_svc:
+  # Publish-build guard for every published workspace package. `compile_test`
+  # builds the worker via esbuild against the whole monorepo tree, so it can't
+  # catch a break that only surfaces when a single package is compiled in
+  # isolation for npm (an out-of-package relative import, a missing declared
+  # dependency, an exports-map gap). This job runs each package's own publish
+  # build so that class of regression fails the PR instead of a later release
+  # (#2862; the api-svc instance of it was #2855).
+  #
+  # `pnpm -r run --if-present pack` runs every package's `pack` script in
+  # topological order: the real ones (`core-cli build --doPack`) compile in
+  # isolation and pack a tarball; the `echo`-stub and test packages no-op;
+  # packages without a `pack` script (eval/*, examples) are skipped. `pack`
+  # (--doPack), NOT `publish` (core-cli build): both run the same compile, but
+  # `publish` pushes to the npm registry and would fail in PR CI where no
+  # NPM_TOKEN exists, while `--doPack` exercises the publish build without
+  # publishing. Gated on docs_only (skipped only on docs-only PRs, same as the
+  # test matrix) and runs concurrently with it on a free runner, so it adds no
+  # PR wall-clock. A shared-dependency change rebuilds dependents for free since
+  # every package is built.
+  publish_build:
     needs: scope
-    if: ${{ needs.scope.outputs.api_svc_publish_needed == 'true' }}
+    if: ${{ needs.scope.outputs.docs_only != 'true' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -58,7 +70,7 @@ jobs:
         with:
           run-checks: 'false'
           run-tests: 'false'
-      - run: pnpm --filter @vibes.diy/api-svc run pack
+      - run: pnpm -r run --if-present pack
 
   # Non-shardable work: install + format-check + lint + build(typecheck). Runs
   # once. `run-tests: 'false'` skips the Docker suite here; docs-only still skips
@@ -100,7 +112,7 @@ jobs:
   # (docs-only test, or a [skip ci] cascade) counts as a pass. Mirrors the old
   # job's `[skip ci]` skip so that path is unchanged.
   compile_test:
-    needs: [scope, checks, test, publish_build_api_svc]
+    needs: [scope, checks, test, publish_build]
     if: ${{ always() && !contains(github.event.pull_request.title, '[skip ci]') }}
     runs-on: ubuntu-latest
     steps:
@@ -109,12 +121,11 @@ jobs:
           SCOPE_RESULT: ${{ needs.scope.result }}
           CHECKS_RESULT: ${{ needs.checks.result }}
           TEST_RESULT: ${{ needs.test.result }}
-          PUBLISH_BUILD_API_SVC_RESULT: ${{ needs.publish_build_api_svc.result }}
+          PUBLISH_BUILD_RESULT: ${{ needs.publish_build.result }}
           DOCS_ONLY: ${{ needs.scope.outputs.docs_only }}
-          API_SVC_PUBLISH_NEEDED: ${{ needs.scope.outputs.api_svc_publish_needed }}
         shell: bash
         run: |
-          echo "scope=${SCOPE_RESULT} checks=${CHECKS_RESULT} test=${TEST_RESULT} publish_build_api_svc=${PUBLISH_BUILD_API_SVC_RESULT} docs_only=${DOCS_ONLY} api_svc_publish_needed=${API_SVC_PUBLISH_NEEDED}"
+          echo "scope=${SCOPE_RESULT} checks=${CHECKS_RESULT} test=${TEST_RESULT} publish_build=${PUBLISH_BUILD_RESULT} docs_only=${DOCS_ONLY}"
           rc=0
           # scope and checks must genuinely succeed — never accept a bare
           # "skipped" for them. If scope errors (checkout / changed-scope),
@@ -145,24 +156,22 @@ jobs:
             *) echo "::error::the test matrix concluded '${TEST_RESULT}'"; rc=1 ;;
           esac
 
-          # publish_build_api_svc is required only when the scope job says this
-          # PR touches @vibes.diy/api-svc publish inputs.
-          case "${PUBLISH_BUILD_API_SVC_RESULT}" in
-            success)
-              ;;
+          # publish_build runs the per-package publish build for every published
+          # workspace package. Like the test matrix it may legitimately be
+          # "skipped" ONLY via its `if: docs_only != 'true'` docs-only path; any
+          # other skip fails the required check instead of silently passing.
+          case "${PUBLISH_BUILD_RESULT}" in
+            success) ;;
             skipped)
-              if [ "${API_SVC_PUBLISH_NEEDED}" = "true" ]; then
-                echo "::error::publish_build_api_svc was skipped but api_svc_publish_needed=true"
+              if [ "${DOCS_ONLY}" != "true" ]; then
+                echo "::error::publish_build was skipped but this is not a docs-only PR (docs_only=${DOCS_ONLY})"
                 rc=1
               fi
               ;;
-            *)
-              echo "::error::publish_build_api_svc concluded '${PUBLISH_BUILD_API_SVC_RESULT}'"
-              rc=1
-              ;;
+            *) echo "::error::publish_build concluded '${PUBLISH_BUILD_RESULT}'"; rc=1 ;;
           esac
 
           if [ "$rc" -eq 0 ]; then
-            echo "All required CI jobs passed (test skipped only on docs-only PRs; api-svc publish build skipped only when not needed)."
+            echo "All required CI jobs passed (test + publish build skipped only on docs-only PRs)."
           fi
           exit "$rc"
