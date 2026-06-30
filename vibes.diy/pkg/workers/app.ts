@@ -15,7 +15,8 @@ import { cfServe, CfCacheIf } from "@vibes.diy/api-svc";
 import { CFInjectMutable, cfServeAppCtx, isInternalReferer } from "@vibes.diy/api-svc/cf-serve.js";
 import { BuildURI, NPMPackage, URI } from "@adviser/cement";
 import { CFEnv } from "@vibes.diy/api-types";
-import { routeDecision } from "./route-decision.js";
+import { backendDoName, parseBackendApiTarget, routeDecision } from "./route-decision.js";
+import { BACKEND_OWNER_HEADER, BACKEND_SLUG_HEADER } from "./backend-do.js";
 import { vibePkgCacheControl } from "./vibe-pkg-cache.js";
 import { sendCapiPageView, sendCapiViewContent } from "./meta-capi.js";
 import { sendCapiCompleteRegistration } from "./capi-complete-registration.js";
@@ -32,6 +33,8 @@ import {
 // unified `Sessions` class serves all three planes.
 export { Sessions } from "./sessions.js";
 export { UserNotify } from "./user-notify.js";
+// Per-app backend.js runtime (#2856 B3). Registered in wrangler.toml v11.
+export { BackendDO } from "./backend-do.js";
 // import { cfServe } from "@vibes.diy/api-svc";
 // import { CfCacheIf } from "@vibes.diy/api-svc/api.js";
 
@@ -168,17 +171,30 @@ export default {
     }
 
     if (route === "backend-api") {
-      // Per-app `backend.js` `_api` route (#2856 B3). `routeDecision` classified
-      // this as a backend request (app-subdomain `<slug>--<owner>.<base>/_api/*`
-      // or viewer `/vibe/{owner}/{slug}/_api/*`). The BackendDO dispatch + the
-      // selected-release gate land in the next B3 increment; until then the route
-      // is dark and returns 404 (no vibe serves `_api` today, and `BACKEND_JS` is
-      // `off` in every env), so this is the `attemptVibeSsr`-style "no usable
-      // backend" fallback rather than a 500.
-      return new Response("backend.js _api is not enabled", {
-        status: 404,
-        headers: { "Content-Type": "text/plain" },
-      }) as unknown as CFResponse;
+      // Per-app `backend.js` `_api` route (#2856 B3). Resolve (owner, slug) + the
+      // handler-relative path from either request form, then dispatch to the vibe's
+      // BackendDO. The path is rewritten to the stripped `backendPath` so the
+      // handler sees a root-relative path; (owner, slug) ride internal headers so
+      // the DO needn't re-parse the host/path. Dark behind `BACKEND_JS` (the DO
+      // returns 404 when off), so an unconfigured `_api` is "not found", not a 500.
+      const target = parseBackendApiTarget({
+        hostname: url.hostname,
+        pathname: url.pathname,
+        method: request.method,
+        hostnameBase: env.VIBES_SVC_HOSTNAME_BASE,
+      });
+      if (!target) {
+        return new Response("backend.js _api: not found", {
+          status: 404,
+          headers: { "Content-Type": "text/plain" },
+        }) as unknown as CFResponse;
+      }
+      const fwdUrl = BuildURI.from(request.url).pathname(target.backendPath).toString();
+      const fwd = new Request(fwdUrl, request as unknown as Request);
+      fwd.headers.set(BACKEND_OWNER_HEADER, target.ownerHandle);
+      fwd.headers.set(BACKEND_SLUG_HEADER, target.appSlug);
+      const id = env.BACKEND_DO.idFromName(backendDoName(target.ownerHandle, target.appSlug));
+      return env.BACKEND_DO.get(id).fetch(fwd as unknown as CFRequest);
     }
 
     if (route === "vibe-pkg") {

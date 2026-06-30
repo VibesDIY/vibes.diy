@@ -47,6 +47,17 @@ export interface CFEnv {
   SESSIONS: DurableObjectNamespace;
   CODEGEN_SESSIONS: DurableObjectNamespace;
   USER_NOTIFY: DurableObjectNamespace;
+
+  // Per-app backend.js (#2856). BACKEND_DO is the per-vibe backend Durable Object
+  // (B3). BACKEND_JS gates the runtime ("off" | "loader"); absent/anything-else ⇒
+  // off, so the backend stays dark. LOADER is the Cloudflare Worker Loader binding
+  // (open beta, absent until GA) — typed loosely here to avoid a vibe-runtime dep
+  // in api-types; the BackendDO casts it. Undefined LOADER ⇒ no live isolate.
+  BACKEND_DO: DurableObjectNamespace;
+  BACKEND_JS?: string;
+  LOADER?: unknown;
+  BACKEND_POLICY_VERSION?: string;
+
   VIBES_SERVICE: Queue;
   BROWSER: Fetcher; // screenshotter uses Cloudflare's Browser Rendering API, which is accessed via a Fetcher binding
   META_CAPI_TOKEN?: string;
