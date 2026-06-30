@@ -17,7 +17,7 @@ import { isPublicReadable, isWorldReadable, checkDocAccess } from "./access-help
 import { selectLatestAppPerSlug } from "./select-app.js";
 import { isHiddenForCaller } from "./unpublished-binding.js";
 import { ensureAppSettings } from "./ensure-app-settings.js";
-import { grantableCachedSuggestionSource } from "./get-app-by-fsid.js";
+import { cachedSuggestionSourceIsPublic } from "./get-app-by-fsid.js";
 
 // Anonymous cached-suggestion read path (#2801) — the read lane's reader.
 //
@@ -119,13 +119,14 @@ export const getCachedSuggestionEvento: EventoHandler<
         await ctx.send.send(ctx, miss);
         return Result.Ok(EventoResult.Continue);
       }
-      const sourceFsId = await grantableCachedSuggestionSource(vctx, {
+      // Key-specific source-was-public check on THIS exact entry (not an fsId
+      // first-match across entries; Charlie #2890), same predicate the grant uses.
+      const sourcePublic = await cachedSuggestionSourceIsPublic(vctx, {
         ownerHandle: req.ownerHandle,
         appSlug: req.appSlug,
-        requestedFsId: entry.fsId,
-        cachedSuggestions,
+        sourceFsId: entry.sourceFsId,
       });
-      if (!sourceFsId) {
+      if (!sourcePublic) {
         // Entry exists but its source version is no longer public → not servable.
         await ctx.send.send(ctx, miss);
         return Result.Ok(EventoResult.Continue);

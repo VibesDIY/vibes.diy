@@ -42,14 +42,40 @@ function grantedAccess(role: "editor" | "viewer" | "submitter") {
   }
 }
 
-// cachedSuggestionGrant support (#2801/#2890): is `requestedFsId` the staged
-// result of a cached suggestion whose SOURCE version was itself published/public?
-// The cachedSuggestions map records `sourceFsId`; we (re-)verify a production row
-// with that fsId exists for this (ownerHandle, appSlug). The source-was-public
-// check is the PII boundary — a cached read must be a transform of already-public
-// code, never an owner's unpublished draft (Codex P1). Defense in depth: the
-// producer only registers public-HEAD-sourced entries, but the grant never trusts
-// the producer alone. Returns the matched sourceFsId (for the audit log) or null.
+// cachedSuggestionGrant support (#2801/#2890). The source-was-public check is the
+// PII boundary — a cached read must be a transform of already-public code, never
+// an owner's unpublished draft (Codex P1). Defense in depth: the producer only
+// registers public-HEAD-sourced entries, but the grant never trusts the producer
+// alone.
+
+// Is `sourceFsId` a published/public (production) version of this app? The
+// key-specific check — callers that hold a specific entry pass that entry's
+// `sourceFsId` directly (no fsId first-match across entries; Charlie #2890).
+export async function cachedSuggestionSourceIsPublic(
+  vctx: VibesApiSQLCtx,
+  args: { readonly ownerHandle: string; readonly appSlug: string; readonly sourceFsId: string }
+): Promise<boolean> {
+  const srcProd = await vctx.sql.db
+    .select({ fsId: vctx.sql.tables.apps.fsId })
+    .from(vctx.sql.tables.apps)
+    .where(
+      and(
+        eq(vctx.sql.tables.apps.fsId, args.sourceFsId),
+        eq(vctx.sql.tables.apps.appSlug, args.appSlug),
+        eq(vctx.sql.tables.apps.ownerHandle, args.ownerHandle),
+        eq(vctx.sql.tables.apps.mode, "production")
+      )
+    )
+    .limit(1)
+    .then((r) => r[0]);
+  return !!srcProd;
+}
+
+// Grant path: it resolves by `requestedFsId` and has no `key`, so it considers
+// EVERY entry that maps this fsId — granting iff at least one such entry's
+// `sourceFsId` was public. Iterating (not first-match) avoids a non-public entry
+// masking a valid public-sourced one. Returns the matched sourceFsId (for the
+// audit log) or null.
 export async function grantableCachedSuggestionSource(
   vctx: VibesApiSQLCtx,
   args: {
@@ -59,22 +85,15 @@ export async function grantableCachedSuggestionSource(
     readonly cachedSuggestions: Record<string, { fsId: string; sourceFsId: string }> | undefined;
   }
 ): Promise<string | null> {
-  const match = Object.values(args.cachedSuggestions ?? {}).find((v) => v.fsId === args.requestedFsId);
-  if (!match) return null;
-  const srcProd = await vctx.sql.db
-    .select({ fsId: vctx.sql.tables.apps.fsId })
-    .from(vctx.sql.tables.apps)
-    .where(
-      and(
-        eq(vctx.sql.tables.apps.fsId, match.sourceFsId),
-        eq(vctx.sql.tables.apps.appSlug, args.appSlug),
-        eq(vctx.sql.tables.apps.ownerHandle, args.ownerHandle),
-        eq(vctx.sql.tables.apps.mode, "production")
-      )
-    )
-    .limit(1)
-    .then((r) => r[0]);
-  return srcProd ? match.sourceFsId : null;
+  for (const v of Object.values(args.cachedSuggestions ?? {})) {
+    if (v.fsId !== args.requestedFsId) continue;
+    if (
+      await cachedSuggestionSourceIsPublic(vctx, { ownerHandle: args.ownerHandle, appSlug: args.appSlug, sourceFsId: v.sourceFsId })
+    ) {
+      return v.sourceFsId;
+    }
+  }
+  return null;
 }
 
 function resolveOwnerDisplayName(ownerSettings: unknown[] | undefined, ownerClaims: ClerkClaim | undefined): string | undefined {
