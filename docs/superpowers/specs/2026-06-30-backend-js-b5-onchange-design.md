@@ -34,15 +34,29 @@ So B5 emits a **new, dedicated** queue message — `vibes.diy.evt-backend-onChan
 mirrors B4's `evt-backend-arm` exactly: a new `evt-*` type → queue consumer → a handler that pokes
 `BackendDO` → the isolate.
 
-### Where it's emitted
+### Where it's emitted — **two** commit paths, not one (Codex P2)
 
-`putDocEvento.handle()` (`api/svc/public/app-documents-write-eventos.ts`), **after**
-`allocateAndInsertRevision` returns with `alloc.inserted === true` (i.e. a real revision committed — the
-content-identical no-op at `:527` is correctly skipped, same as the other downstream side effects). At
-that point everything the payload needs is in scope: `req.ownerHandle`, `req.appSlug`, `dbName`,
-`req.doc` (new), the prior head data (the `headRow?.data` already loaded upstream for the access fn),
-and the writer's `userId`. Emission is `await vctx.postQueue(...)` — the same injected helper
-(`cf-serve.ts`, `env.VIBES_SERVICE.send`) that B4's poke uses.
+Both write paths in `api/svc/public/app-documents-write-eventos.ts` commit via
+`allocateAndInsertRevision` and **both** must emit `onChange`:
+
+- **`putDocEvento.handle()`** — create/update. Emit **after** the call returns `alloc.inserted === true`
+  (the content-identical no-op at `:527` is correctly skipped, same as the other downstream side effects).
+- **`deleteDocEvento.handle()`** — delete. It inserts a **tombstone row** (`data: {}`, `deleted: 1`) via
+  the same allocator (shared per-doc lock key, `:806`). Emitting only from `putDoc` would mean **normal
+  `deleteDoc` calls never fire `onChange`** — the gap Codex caught. So `deleteDoc` emits too, with a
+  delete-shaped payload built from the actual tombstone row.
+
+To keep one emit path, factor a shared `emitBackendOnChange(vctx, { ownerHandle, appSlug, dbName, docId,
+seq, deleted, doc, oldDoc, writerUserId, depth })` helper that both handlers call after their commit.
+
+**`oldDoc` must be the committed predecessor, derived under the lock — not the pre-read head (Codex
+P2).** The access-fn path reads `headRow?.data` _before_ `allocateAndInsertRevision`, but the allocator
+serializes commits in its per-doc critical section. Two concurrent updates can both read head `A`, then
+commit `B` and `C`; `onChange` for `C` would then report `oldDoc = A` instead of its true predecessor
+`B`. Fix: derive `oldDoc` from the committed `seq - 1` row (the allocator returns the committed `seq`),
+i.e. read the predecessor revision **after** the commit, rather than trusting the racy pre-read. (For a
+create, there is no `seq - 1` for that docId ⇒ `oldDoc = null`.) Emission is `await vctx.postQueue(...)`
+— the same injected helper (`cf-serve.ts`, `env.VIBES_SERVICE.send`) B4's poke uses.
 
 ## Components
 
@@ -56,6 +70,9 @@ export const evtBackendOnChange = type({
   ownerHandle: "string",
   appSlug: "string",
   dbName: "string",
+  docId: "string",
+  seq: "number", // committed revision seq — idempotency key (Codex P2)
+  deleted: "boolean", // true ⇒ tombstone (from deleteDoc); false ⇒ create/update
   doc: "unknown",
   "oldDoc?": "unknown | null",
   depth: "number", // loop-guard generation (see §4); user writes emit depth 1
@@ -74,11 +91,11 @@ In the post-commit block, **best-effort**:
 await exception2Result(() => vctx.postQueue({ payload: { type: "vibes.diy.evt-backend-onChange", … } satisfies … }));
 ```
 
-The write has already committed; we swallow any enqueue error (log only). The event shape derives from
-nullness: **create** = `oldDoc` null/absent + `doc` present; **update** = both present; **delete** =
-`doc` carries the Fireproof tombstone marker (`_deleted`) with `oldDoc` the prior — the handler reads
-`doc._deleted` (the existing write path always inserts `deleted: 0` rows; delete-shaped writes arrive as
-docs flagged in their data — confirm in §Open-questions).
+The write has already committed; we swallow any enqueue error (log only). The event shape is explicit via
+the `deleted` flag (sourced from which handler emitted, not guessed from doc contents):
+**create** = `deleted:false`, `oldDoc` null; **update** = `deleted:false`, both present;
+**delete** = `deleted:true`, `doc` is the tombstone row (`data: {}`) and `oldDoc` the prior committed
+document (the `seq - 1` revision). Handlers branch on `deleted` rather than sniffing `doc._deleted`.
 
 ### 3. The queue handler (`api/queue/handlers/evt-backend-onChange.ts`)
 
@@ -116,8 +133,9 @@ writes, the guard is already proven, not retrofitted.
 
 - `QueueCtx.invokeOnChange(payload)` addresses `BACKEND_DO.idFromName(backendDoName(owner, slug))` and
   POSTs to the DO with `BACKEND_OP_HEADER: BACKEND_OP_ONCHANGE` (a new constant in `backend-do-addr.ts`),
-  the `x-vibe-owner`/`x-vibe-slug` headers, and the `{ dbName, doc, oldDoc, depth, writerUserId }` **as
-  the request body** (too big/structured for headers). Returns `Err` on non-2xx/throw (→ retry).
+  the `x-vibe-owner`/`x-vibe-slug` headers, and the `{ dbName, docId, seq, deleted, doc, oldDoc, depth,
+writerUserId }` **as the request body** (too big/structured for headers). Returns `Err` on
+  non-2xx/throw (→ retry).
 - `BackendDO.fetch()` gains a third op branch (after `arm`): `BACKEND_OP_ONCHANGE` → `invokeOnChange()`,
   which `buildVctx(request)` (B4's synthetic-request bootstrap is unnecessary here — `onChange` **has** a
   real incoming request) and calls the new `attemptBackendOnChange(vctx, …)`. **Not single-flighted** —
@@ -136,7 +154,7 @@ export type OnChangeOutcome =
 
 …select executor (off ⇒ `backend_disabled`), `loadSelectedBackend` (no `onChange` in `handlers` ⇒
 `no_onChange_handler`), then `executor.invoke({ source, handler: "onChange", trigger: { userHandle: null,
-payload: { doc, oldDoc, dbName } } })`; isolate ≥500 ⇒ `handler_error`. Never throws — a structured
+payload: { doc, oldDoc, dbName, docId, seq, deleted } } })`; isolate ≥500 ⇒ `handler_error`. Never throws — a structured
 outcome the handler turns into ack-vs-retry. `userHandle: null` is the **B6 seam** (B6 resolves the
 writer's identity); `writerUserId` rides the envelope now so B6 needs no emit-site change.
 
@@ -163,7 +181,13 @@ No new binding work: B4 already cross-script-bound `BACKEND_DO` into `wrangler.q
 - **Emit:** a committed `putDoc` (real revision) enqueues exactly one `evt-backend-onChange` with the
   right `{ownerHandle, appSlug, dbName, doc, oldDoc, depth: 1, seq}`; a content-identical no-op
   (`alloc.inserted === false`) enqueues **nothing**.
-- **Event shape:** create (`oldDoc` null), update (both), delete (`doc._deleted`) surface correctly.
+- **Event shape:** create (`deleted:false`, `oldDoc` null), update (`deleted:false`, both present),
+  delete (`deleted:true`, tombstone `doc`, prior `oldDoc`) surface correctly.
+- **Delete path emits (Codex regression guard):** a `deleteDoc` commit enqueues an `evt-backend-onChange`
+  with `deleted:true` and the prior document as `oldDoc` — not just `putDoc`.
+- **`oldDoc` under concurrency (Codex regression guard):** two racing updates to the same docId yield
+  `onChange` events whose `oldDoc` is each one's true committed predecessor (`seq - 1`), not a shared
+  stale pre-read.
 - **Write-succeeds-on-emit-failure:** a `postQueue` that throws does **not** fail the write (the
   fire-and-forget guarantee).
 - **Handler dispatch:** `attemptBackendOnChange` runs `handler: "onChange"` against the fake loader and
@@ -201,6 +225,18 @@ No new binding work: B4 already cross-script-bound `BACKEND_DO` into `wrangler.q
    message, so B6 resolves identity without touching the emit site and handlers get a natural dedupe key.
    Carry them now, or keep the envelope minimal and re-plumb in B6?
 
-5. **Delete representation.** The existing write path inserts `deleted: 0` rows; delete-shaped writes
-   arrive as docs flagged in their data (`_deleted`). Confirm `onChange` should surface deletes as
-   `doc` = the tombstone (with `_deleted: true`) + `oldDoc` = prior, rather than `doc: null`.
+5. ~~**Delete representation.**~~ **Resolved by Codex** — deletes have their own `deleteDocEvento` (a
+   tombstone row, not a `_deleted`-flagged `putDoc`), so B5 emits from **both** handlers via a shared
+   helper and carries an explicit `deleted` flag (see § _Where it's emitted_). No longer a question.
+
+## Codex review folded in (P2 ×3)
+
+1. **`oldDoc` derived under the lock.** The pre-read `headRow?.data` races the per-doc seq allocator —
+   two concurrent updates could give `onChange` the wrong predecessor. Now: derive `oldDoc` from the
+   committed `seq - 1` revision after commit, not the racy pre-read.
+2. **Delete path.** `deleteDocEvento` (tombstone, `deleted: 1`) is a separate commit path; emitting only
+   from `putDoc` would silently never fire `onChange` on deletes. Now: both paths emit via a shared
+   `emitBackendOnChange` helper, with an explicit `deleted` flag and the tombstone as `doc`.
+3. **`seq` in the envelope.** The delivery contract uses `seq` as the idempotency key and the emit test
+   asserts it, but the canonical payload omitted it. Now added to the Arktype type and forwarded through
+   the DO/executor body (`docId` too, for addressing the `seq - 1` lookup).
