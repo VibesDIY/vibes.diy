@@ -207,19 +207,32 @@ This design re-grounds the pre-cached-model children; it does not re-file them:
   nav) vs write-lane (streaming build) contrast already distinguishes them by
   construction; any amplification is a downstream polish pass.
 
+## Implementation status (this PR)
+
+The **client spine is built**: the curated graph (`routes/starter-graph.ts` +
+unit tests), the `handleEditPrompt` cross-slug pre-check (curated-edge-wins,
+slug-scoped, no producer capture), the distinct `→` jump glyph in
+`UnifiedVibeCard` (never the shield), and the public `/start` route. It's a
+**correct no-op until the seed chats land** — like the read lane, it lights up the
+instant the Blooms surface their curated chips. **Remaining: OQ-A** (synthetic seed
+chats — the D1 write path so `getVibeChips` returns the curated chips for the four
+Blooms; non-producible by construction since seeding writes only chat narration,
+never a `cachedSuggestions` produce entry).
+
 ## Open questions (resolve in `writing-plans`)
 
 - **OQ-A — synthetic-chat persistence.** Where/how is the seed turn written so
   `getVibeChips` returns it for the deployed `fsId`? (A CLI/script that posts a
   curated turn into the vibe's chat store, vs a build-time fixture, vs a small
   server seed path.) Must be idempotent and re-runnable when the graph changes.
-- **OQ-B — curated-edge matching key.** Resolved in §3: the pre-check matches on
-  `(ownerHandle, appSlug, effectiveResolvedFsId, normalizedChipLabel)` where the
-  effective version is `fsId ?? draftFsId ?? resolvedFsId` — never the raw route
-  param. Remaining sub-question for the plan: are edges keyed to a specific
-  deployed `fsId` (so a later starter version can re-aim or drop an edge), or
-  slug-scoped (match on any resolved version of the slug)? v1 keys to the deployed
-  production version, which the resolved version equals on the canonical starter URL.
+- **OQ-B — curated-edge matching key. Resolved: slug-scoped (v1, implemented).**
+  Edges match on `(ownerHandle, appSlug, normalizedChipLabel)` and ignore `fsId`
+  entirely, so the lookup is correct on the canonical `/vibe/<owner>/<slug>` URL
+  where the route `fsId` is absent (sidesteps the Codex #2950 trap without needing
+  the `fsId ?? draftFsId ?? resolvedFsId` canonicalization for the match). A
+  visitor's fork has a different owner/slug, so an edge can only fire on the
+  curated starter itself. A future per-`fsId` keying (to re-aim/drop an edge on a
+  new starter version) remains an easy extension. See `routes/starter-graph.ts`.
 - **OQ-C — affordance rendering (settled, jchris on Charlie's #2950 rec).**
   **Distinct glyph.** The shield stays server-authoritative and strictly
   same-namespace ("stays here"); it is never drawn for a cross-slug jump. The

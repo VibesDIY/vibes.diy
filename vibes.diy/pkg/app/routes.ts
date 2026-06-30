@@ -33,6 +33,10 @@ export default [
 
   route("about", "./routes/about.tsx", { id: "about" }),
   route("help", "./routes/help.tsx", { id: "help" }),
+  // The Instant Starter Stack on-ramp (#2941/#1896): category tiles → a live
+  // curated starter vibe. Public/anonymous (NOT under the auth layout) — the
+  // whole point is "land in a running app with no sign-in".
+  route("start", "./routes/start.tsx", { id: "start" }),
   // route("sso-callback", "./routes/sso-callback.tsx", { id: "sso-callback" }),
 
   route("legal/privacy", "./routes/legal/privacy.tsx", {

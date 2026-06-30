@@ -35,6 +35,12 @@ export interface UnifiedVibeCardProps {
    *  Drives the server-authoritative shield badge and the owner-only
    *  bless/unbless control. Omit to render plain chips. */
   chipFastPaths?: Record<string, ChipFastPathState>;
+  /** Chips that are curated cross-slug spine jumps (#2941), by display string.
+   *  A jump chip wears a distinct `→` glyph and NEVER the same-namespace shield —
+   *  clicking it navigates to another curated vibe (a new namespace), so the
+   *  shield's "stays here" promise must not be shown for it (OQ-C / Charlie #2950).
+   *  Jump takes precedence over the shield when both would apply. */
+  jumpChips?: readonly string[];
   /** Owner-only: feature a produced chip result as a fast-path "stay" (bless).
    *  Wire only for the owner — the control is hidden otherwise. */
   onBlessChip?: (chip: string) => void;
@@ -628,6 +634,15 @@ function PublishBanner({ onPublish, publishing }: { readonly onPublish: () => vo
 // bless/unbless control as an OptionButtons `OptionDecoration`. The badge sits
 // inside the chip button; the control is a sibling (a button can't nest a button).
 function decorateChip(option: string, props: UnifiedVibeCardProps): OptionDecoration | undefined {
+  // A curated cross-slug jump (#2941) wears its own `→` glyph and NEVER the
+  // shield: the shield means "stays here, same namespace" and a jump goes to a
+  // different curated vibe, so showing the shield would be a false promise (the
+  // exact phishing-shaped risk Charlie flagged, #2950 / OQ-C). Jump wins over the
+  // shield, and a jump chip has no bless/unbless control (it's not a same-slug
+  // produced result).
+  if (props.jumpChips?.includes(option)) {
+    return { badge: <ChipJumpBadge /> };
+  }
   const fp = props.chipFastPaths?.[option];
   if (!fp) return undefined;
   const badge = fp.shielded ? <ChipShieldBadge /> : undefined;
@@ -640,6 +655,36 @@ function decorateChip(option: string, props: UnifiedVibeCardProps): OptionDecora
       <FastPathToggle onClick={() => props.onBlessChip?.(option)} />
     ) : undefined;
   return badge || aside ? { badge, aside } : undefined;
+}
+
+// The distinct cross-slug curated-jump glyph (#2941). Its meaning: "instant ·
+// curated · no-login — opens another curated app." Deliberately NOT the shield
+// (which means same-namespace "stays here"): a jump lands in a new namespace, so
+// it must read as a different affordance (OQ-C, Charlie #2950).
+function ChipJumpBadge() {
+  return (
+    <span
+      role="img"
+      aria-label="Opens another app"
+      title="Instant curated jump — opens another app (no sign-in)"
+      style={{ display: "inline-flex", flexShrink: 0, color: "#2563eb" }}
+    >
+      <svg
+        width="14"
+        height="14"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth={2}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        aria-hidden="true"
+      >
+        <path d="M5 12h14" />
+        <path d="M13 6l6 6-6 6" />
+      </svg>
+    </span>
+  );
 }
 
 // The server-authoritative "stays here" shield on a chip (#2917) — rendered ONLY
