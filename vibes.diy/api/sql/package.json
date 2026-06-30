@@ -28,7 +28,7 @@
     "url": "git+https://github.com/VibesDIY/vibes.diy.git"
   },
   "devDependencies": {
-    "@fireproof/core-cli": "0.24.19",
+    "@vibes.diy/build-cli": "workspace:*",
     "@types/ws": "^8.18.1"
   }
 }

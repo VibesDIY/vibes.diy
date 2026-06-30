@@ -1,0 +1,35 @@
+{
+  "name": "@vibes.diy/build-cli",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "bin": {
+    "core-cli": "run.js"
+  },
+  "scripts": {
+    "build": "core-cli tsc",
+    "test": "vitest --run",
+    "pack": "echo core-cli build --doPack",
+    "publish": "echo core-cli build"
+  },
+  "dependencies": {
+    "@adviser/cement": "^0.5.34",
+    "@pnpm/lockfile-file": "^9.1.3",
+    "arktype": "^2.2.1",
+    "cmd-ts": "^0.15.0",
+    "find-up": "^8.0.0",
+    "fs-extra": "^11.3.4",
+    "semver": "^7.7.4",
+    "zx": "^8.8.5"
+  },
+  "devDependencies": {
+    "@types/fs-extra": "^11.0.4",
+    "@types/semver": "^7.7.1",
+    "tsx": "^4.21.0",
+    "vitest": "~4.1.9"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/VibesDIY/vibes.diy.git"
+  }
+}

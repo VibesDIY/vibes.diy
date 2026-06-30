@@ -24,7 +24,7 @@
     "react-dom": "^19.2.7"
   },
   "devDependencies": {
-    "@fireproof/core-cli": "0.24.19",
+    "@vibes.diy/build-cli": "workspace:*",
     "@types/react": "^19.2.8",
     "@types/react-dom": "^19.2.3"
   },

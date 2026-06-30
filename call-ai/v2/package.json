@@ -24,6 +24,7 @@
     "zx": "^8.8.5"
   },
   "devDependencies": {
+    "@vibes.diy/build-cli": "workspace:*",
     "@vitest/browser": "~4.1.9",
     "@vitest/browser-playwright": "~4.1.9",
     "eslint": "^10.6.0",

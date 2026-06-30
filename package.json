@@ -65,8 +65,9 @@
     }
   },
   "devDependencies": {
+    "tsx": "^4.21.0",
     "@eslint/js": "^10.0.1",
-    "@fireproof/core-cli": "0.24.19",
+    "@vibes.diy/build-cli": "workspace:*",
     "@playwright/test": "^1.61.1",
     "@types/deno": "^2.7.0",
     "@types/node": "^25.9.2",
