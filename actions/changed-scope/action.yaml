@@ -82,17 +82,21 @@ runs:
         DOCS_RE='^(docs/|notes/|agents/|\.agents/|\.claude/|landing-pages/|[^/]+\.md$|LICENSE$)'
         API_SVC_PUBLISH_RE='^(vibes\.diy/api/(svc|impl|pkg|sql|types)/|call-ai/v2/|vibes\.diy/identity/|prompts/pkg/|use-vibes/base/|vibes\.diy/vibe/(db-explorer|runtime|types)/|call-ai/pkg/|tsconfig\.dist\.json$|pnpm-lock\.yaml$)'
 
+        # Use here-strings (not `printf | grep -q`) for the match tests: under
+        # `set -o pipefail`, `grep -q` exits on the first match and can SIGPIPE
+        # the still-writing `printf`, making the pipeline exit non-zero even
+        # though a line matched — a false negative on long changed-file lists.
         api_svc_publish_needed=false
-        if printf '%s\n' "$CHANGED" | grep -qE "$API_SVC_PUBLISH_RE"; then
+        if grep -qE "$API_SVC_PUBLISH_RE" <<< "$CHANGED"; then
           api_svc_publish_needed=true
           echo "@vibes.diy/api-svc publish inputs changed."
-          printf '%s\n' "$CHANGED" | grep -E "$API_SVC_PUBLISH_RE" | sed 's/^/  /'
+          grep -E "$API_SVC_PUBLISH_RE" <<< "$CHANGED" | sed 's/^/  /'
         fi
 
-        if printf '%s\n' "$CHANGED" | grep -qvE "$DOCS_RE"; then
+        if grep -qvE "$DOCS_RE" <<< "$CHANGED"; then
           emit false "$api_svc_publish_needed"
           echo "non-docs files changed — full CI. Triggering paths:"
-          printf '%s\n' "$CHANGED" | grep -vE "$DOCS_RE" | sed 's/^/  /'
+          grep -vE "$DOCS_RE" <<< "$CHANGED" | sed 's/^/  /'
         else
           emit true "$api_svc_publish_needed"
           echo "docs-only change — lean CI (skipping build/test + pg concurrency lane)."
