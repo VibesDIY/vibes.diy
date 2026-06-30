@@ -222,6 +222,21 @@ dbName?: string): void` — **fire-and-forget, no request/response, no await** s
   `normalizeChannels` for the routing key.)
 - `VibesApiSQLCtx` (`api/svc/types.ts`, `api/svc/create-handler.ts`) gains an
   optional `notifyDocEphemeral?(evt, senderConnId)` alongside `notifyDocChanged`.
+- **Payload-size cap (day one).** The handler rejects (drops + counts, never
+  throws to the caller) any ephemeral whose snapshot exceeds a small byte ceiling
+  (constant, env-tunable — presence docs are tiny; a multi-KB ephemeral is a
+  misuse). Keeps a buggy app from pushing large bodies through the never-store
+  relay.
+- **Server-side circuit breaker (ephemerals only).** A per-connection rate ceiling
+  on `evt-doc-ephemeral`: above it, drop + increment a counter + `console.warn`
+  (same spirit as the existing 200-conn warn). This is a safety net against a
+  buggy/malicious client, _not_ the primary backpressure (that stays sender-side,
+  Piece 2). It must not touch the roster/persisted (`notifyDocChanged`) flows.
+- **Instrumentation (day one).** Counters for ephemeral in / out / dropped
+  (size-cap, rate-breaker, no-subscriber) plus fan-out timing, so we can _prove_
+  whether the shared `Sessions` DO path needs a dedicated transport later rather
+  than guessing. Reusing the existing fan-out for v1 is deliberate; the metrics
+  are how we'll know when to revisit it.
 
 ### 4. Receiver overlay (the hidden bit)
 
@@ -234,11 +249,12 @@ In [`FireflyDatabase`](../../../vibes.diy/vibe/runtime/firefly-database.ts):
   the existing `evt-doc-changed` filter): upsert the slice (latest `seq` wins),
   update `peerDocs`, then `notifyListeners([{ _id: docId }])` — reusing the exact
   notify→refetch path. The server's exact-channel routing (Piece 3) is the
-  authoritative read gate; the client filter stays `dbName`-based to match the
-  existing `evt-doc-changed` path. (Defense-in-depth — dropping any ephemeral
-  whose `channel` isn't in the viewer's granted set from `viewerEnv.grants` — is
-  noted as an optional hardening, not required for correctness since routing
-  already gates.)
+  authoritative read gate. As **defense-in-depth (v1)**, the receiver also drops
+  any ephemeral whose `channel` isn't in the viewer's granted set
+  (`viewerEnv.grants`) before folding it in — this catches races/bugs (e.g. a
+  slice still arriving in the window after a grant is revoked), but it is _not_
+  the primary auth; routing is. The `dbName` match is retained to mirror the
+  existing `evt-doc-changed` filter.
 - **Overlay applied inside the read methods** so hooks need zero changes:
   - `get(id)` → `{ ...persisted, ...overlay[id]?.doc }` (and returns the overlay
     snapshot directly when there is no persisted doc).
@@ -250,14 +266,26 @@ In [`FireflyDatabase`](../../../vibes.diy/vibe/runtime/firefly-database.ts):
   refetch (so local `setDoc` wins); remote peers have `updateHappenedRef ===
 false` and refetch normally. No change needed there.
 
-### 5. Disconnect cleanup
+### 5. Disconnect cleanup (close-hook + TTL backstop)
 
-- `cf-serve.ts` already removes a connection on close/error. Hook there to emit
-  `evt-doc-ephemeral-drop { originPeer }` to the remaining peers on that vibe.
-- Receivers purge every overlay slice whose `originPeer` matches (via `peerDocs`),
-  then `notifyListeners` the affected `_id`s, so a departed user's cursor vanishes
-  automatically. A shared-`_id` slice last written by a still-connected peer
-  survives, because each slice records its writer.
+Two mechanisms, because a clean close is not guaranteed:
+
+- **Close-hook drop (primary).** `cf-serve.ts` already removes a connection on
+  close/error. Hook there to emit `evt-doc-ephemeral-drop { originPeer }` to the
+  remaining peers on that vibe. Receivers purge every overlay slice whose
+  `originPeer` matches (via `peerDocs`), then `notifyListeners` the affected
+  `_id`s, so a departed user's cursor vanishes immediately. A shared-`_id` slice
+  last written by a still-connected peer survives, because each slice records its
+  writer.
+- **Receiver TTL backstop.** A clean WS close isn't always delivered (crash,
+  network partition, mobile backgrounding). So each overlay slice also carries a
+  last-seen timestamp and expires after a slice-level TTL (~10–15s default,
+  constant/env-tunable); an expired slice is purged and its `_id` re-notified.
+  Continuous signals (cursors) refresh well within the TTL, so this is invisible
+  for them. **One-shot-ish signals (a "typing" flag set once) must be refreshed
+  periodically while active** — the recommended app pattern — so TTL expiry is the
+  intended "they stopped" behavior, not flicker. (Documented in the app-facing
+  recipe.)
 
 ## Testing
 
@@ -274,6 +302,12 @@ false` and refetch normally. No change needed there.
   channel) receives an `evt-doc-changed` ping for a channel write but **does not**
   receive the `evt-doc-ephemeral` snapshot for that channel.
 - Disconnect: closing A's connection delivers `evt-doc-ephemeral-drop` to B.
+- **Payload-size cap:** an ephemeral whose snapshot exceeds the byte ceiling is
+  dropped (counter increments) and not fanned out; the sender's connection is not
+  errored.
+- **Circuit breaker:** a connection exceeding the per-conn ephemeral rate ceiling
+  has excess ephemerals dropped + counted, while a concurrent `notifyDocChanged`
+  / persisted write on the same connection is unaffected.
 
 ### Receiver overlay (unit, against `FireflyDatabase`)
 
@@ -282,11 +316,16 @@ false` and refetch normally. No change needed there.
 - Last-write-wins on a shared `_id`.
 - Drop-by-peer removes only that peer's slices; a co-written `_id` kept alive by
   another peer survives.
+- **TTL backstop:** a slice not refreshed within the TTL is purged and its `_id`
+  re-notified, even with no `evt-doc-ephemeral-drop` (simulating an unclean
+  disconnect).
+- **Defense-in-depth gate:** an ephemeral on a `channel` absent from
+  `viewerEnv.grants` is dropped, not folded in.
 
 ### Sender (unit)
 
-- Coalescer collapses a burst to one send per frame, keeping the merged latest
-  partial per `_id`; distinct `_id`s are not collapsed together.
+- Coalescer collapses a burst to one send per frame, keeping the latest merged
+  snapshot per `_id`; distinct `_id`s are not collapsed together.
 
 ### Manual
 
@@ -302,14 +341,47 @@ false` and refetch normally. No change needed there.
   collection and cannot pre-declare `_id`s; v1 routes by channel/db and throttles
   at the sender. Channel scope is the granularity that serves both
   `useDocument(id)` and `useLiveQuery` rosters, and it already exists.
-- **A `merge()` opt-out flag.** None added; the `_id` gate is the only switch.
-- **The `trip:current` wart.** A _form_ on an already-`_id`'d singleton
-  (`useDocument({ _id: "trip:current" })` edited keystroke-by-keystroke) will
-  broadcast in-progress input. It is self-correcting (the `save()` value replaces
-  the overlay) and accepted as the price of a flag-free surface.
+- **A `merge()` opt-out flag — not implemented, but its shape is reserved.** v1
+  ships flag-free (the `_id` gate is the only switch). To avoid painting us into a
+  corner if real usage demands it, the spec reserves the **shape** of the
+  escape hatch — a `useDocument(initial, { ephemeral: false })` (equivalently a
+  `useFireproof(name, { ephemeral: false })`) option that forces page-only — as
+  the agreed extension point. No behavior is built for it now.
+- **The `trip:current` wart — accepted, and documented.** A _form_ on an
+  already-`_id`'d singleton (`useDocument({ _id: "trip:current" })` edited
+  keystroke-by-keystroke) will broadcast in-progress input. It is self-correcting
+  (the `save()` value replaces the overlay) and accepted as the price of a
+  flag-free surface. The app-facing recipe must call out two things explicitly:
+  (a) a singleton-`_id` form broadcasts in-progress values to peers; (b) for a
+  **private draft**, keep it page-local (no `_id`, or local component state) until
+  `save()` mints the persisted doc.
 - **Cross-DO / cross-shard fan-out.** Out of scope by the same reasoning as the
   rest of the live-data-fanout work (#2328): everyone lands on the same per-vibe
   `Sessions` DO via `/api/app`. Do not resurrect a cross-DO coordinator.
+
+## Review decisions (resolved on PR #2968)
+
+Five open questions were put to review; the design above incorporates the
+answers. Net: core design intact, with two cheap v1 safety nets — **receiver TTL
+backstop** and **server ephemeral circuit breaker + metrics**.
+
+1. **Disconnect cleanup** — ship **both** close-hook drop _and_ a receiver TTL
+   backstop (~10–15s slice-level). (Piece 5)
+2. **60Hz relay** — reuse the `Sessions` DO fan-out for v1; add a payload-size cap
+   - in/out/drop counters + fan-out timing now, so a transport split is data-driven
+     later. (Piece 3)
+3. **Channel gating** — server routing is the auth boundary (exact channel key, no
+   db fallback); receiver "am I still subscribed?" is defense-in-depth, not primary.
+   (Pieces 3–4)
+4. **Backpressure** — sender-side coalescing stays primary; add a tiny server-side
+   per-conn circuit breaker for ephemerals only, never touching roster/persisted
+   flows. (Pieces 2–3)
+5. **Flag-free `_id` gate** — ship flag-free; document the singleton-`_id` form
+   broadcast + the private-draft pattern; reserve the `{ ephemeral: false }`
+   escape-hatch shape without building it. (Out of scope)
+
+Codex review (P1 bare-db leak, P2 indexed fields) folded in earlier in the same
+PR.
 
 ## Related
 
