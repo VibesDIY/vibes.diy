@@ -116,6 +116,11 @@ export interface UnifiedVibeCardProps {
   onOpenEditor?: () => void;
   /** Lights the Editor nav button's selected ring while the editor surface is open. */
   editorActive?: boolean;
+  /** Controls rendered just above the chips/Other composer in the Edit view —
+   *  e.g. the theme + palette changer. Shown only in the default (chips/Other)
+   *  body, never when `body` (Share view / editor tabs) replaces the middle, and
+   *  hidden+inert while a turn streams (it rides inside the chips region). */
+  composerControls?: React.ReactNode;
   className?: string;
 }
 
@@ -344,6 +349,7 @@ export function UnifiedVibeCard(props: UnifiedVibeCardProps) {
                     inert={props.streamBody ? true : undefined}
                     style={props.streamBody ? { visibility: "hidden" } : undefined}
                   >
+                    {props.composerControls && <div style={{ marginBottom: 8 }}>{props.composerControls}</div>}
                     {props.chips && props.chips.length > 0 && (
                       <OptionButtons
                         options={props.chips}
