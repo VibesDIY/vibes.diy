@@ -238,8 +238,8 @@ the schedule.
 #### B2b — `processBackendBindings` + the `active.backend` AppSettings entry (persistence + wiring) — ✅ implemented
 
 Detects `/backend.js` and upserts a single `active.backend` entry into the app's **AppSettings** row
-(`{handlers, cid, assetUri, intervalMs?}`) from the B2a parse result, removing it on removal. Wired into
-the push path (`ensure-app-slug-item.ts`) next to `processAccessBindings`.
+(`{handlers, intervalMs?}`) from the B2a parse result, removing it on removal. Wired into the push path
+(`ensure-app-slug-item.ts`) next to `processAccessBindings`.
 
 - **No dedicated table — AppSettings instead.** The original draft added a `BackendFunctionBindings`
   table mirroring `AccessFunctionBindings`, but that table exists because `invokeAccessFn`'s CID is read
@@ -249,6 +249,20 @@ the push path (`ensure-app-slug-item.ts`) next to `processAccessBindings`.
   `ActiveBackend` arktype entry in the `ActiveEntry` union — written with the same direct-`appSettings`-
   update pattern as `ensureAppMetadata` (push path, no user request/auth). This **drops the migration**
   (no new DDL), which makes B2b a garden-variety change rather than a deploy-first one.
+- **Minimal entry — discovery facts only.** The entry carries `handlers` + optional `intervalMs`, **not**
+  a `cid`/`assetUri` source pointer (per Charlie's review). The runtime DO (B3) derives its route target
+  from the canonical `Apps.fileSystem` for the selected release, so duplicating a source locator here
+  would be a second source of truth that drifts across publish/reconcile flows.
+- **Canonical-driven, not request-driven.** Discovery reads the `/backend.js` of the **canonical**
+  persisted filesystem (`ensured.fileSystem`), not the request files. After a same-`runId` reconcile (a
+  late dev publish that no-ops against a finalized production release) the persisted row is a different
+  snapshot than the request pushed; the request's content is matched to the canonical entry by storage
+  URI, and if it isn't present the authoritative push already wrote the right entry, so this one skips.
+- **Conflict-safe persistence.** The read-merge-write goes through a `mutateBackendEntry` helper that
+  retries on a first-write PK conflict (two concurrent pushes both seeing no row), so backend
+  persistence never silently drops. Concurrent _updates_ still last-writer-win on the non-backend
+  entries of the blob — the same non-transactional limitation `ensureAppMetadata` carries; a
+  CAS/version column is the follow-up if that becomes a problem.
 - **Interval rejection is an early pre-check.** The schedule is validated against `req.fileSystem`
   **before** any storage/DB mutation, so a bad interval returns a clean `app-slug-invalid` `res-error`
   with **no partial commit**; persistence runs after `ensureApps`, by which point the config is known
@@ -256,7 +270,8 @@ the push path (`ensure-app-slug-item.ts`) next to `processAccessBindings`.
 - **Tests** (`api/tests/backend-bindings.test.ts`, end-to-end via `ensureAppSlug` against a real test
   DB): registers handlers + interval on first push; updates interval on re-push; removes the entry when
   `backend.js` is dropped; rejects a sub-5s interval (`app-slug-invalid`) and writes no entry; ignores a
-  nested `/src/backend.js`.
+  nested `/src/backend.js`; and a same-`runId` reconcile regression — a delayed dev publish does not
+  regress the production `active.backend`.
 
 ### Slice B3 — `_api` routing → BackendDO.fetch → isolate
 

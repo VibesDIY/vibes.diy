@@ -25,6 +25,13 @@ the migration — turning a deploy-first change into a garden-variety one. Three
 (1) the general "validate before you mutate" principle for any multi-step write pipeline, and how a pure
 parser makes the early gate cheap; (2) "do you even need a table?" — copying an existing pattern is the
 default, but the precedent only applies if the *reason* for it (a hot path) also applies; the cheapest
-schema change is the one you don't make; and (3) the subtlety that a client transport can surface a
+schema change is the one you don't make; (3) the subtlety that a client transport can surface a
 server "res-error" as a `Result.Err` rather than an `Ok(error)` — the kind of contract you only
-discover by reading how the existing rejection tests assert, not by guessing.
+discover by reading how the existing rejection tests assert, not by guessing; and (4) the review pass
+that turned a working-but-naive write into a correct one — derive from the *canonical persisted*
+filesystem rather than the request files (so a late same-`runId` dev publish that no-ops against a
+finalized production release can't repoint the binding at a stale snapshot), keep the entry to
+discovery facts so there's no second source of truth to drift, and make the read-merge-write
+conflict-safe so concurrent first-writers don't silently drop persistence on a PK race. The lesson:
+"persist what the push declared" is wrong in a system with reconcile semantics — persist what the
+system *resolved*.

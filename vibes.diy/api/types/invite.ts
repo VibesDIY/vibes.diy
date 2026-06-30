@@ -439,21 +439,24 @@ export function isActiveEnv(obj: unknown): obj is ActiveEnv {
 }
 
 // Per-app `/backend.js` discovery (#2856 B2b). Written at push time from the
-// pure `parseBackendConfig` parse of the reserved top-level `/backend.js`:
-// `handlers` are the recognized trigger exports (fetch/scheduled/onChange),
-// `cid`/`assetUri` point at the stored source so the runtime DO (B3) can load
-// the right isolate without re-reading `Apps.fileSystem`, and `intervalMs` is
-// the validated schedule (present only when a `scheduled` handler exists).
+// pure `parseBackendConfig` parse of the reserved top-level `/backend.js` in the
+// *canonical* persisted `Apps.fileSystem`: `handlers` are the recognized trigger
+// exports (fetch/scheduled/onChange) and `intervalMs` is the validated schedule
+// (present only when a `scheduled` handler exists).
 //
-// This lives in AppSettings rather than a dedicated table because the backend
-// source already lives in `Apps.fileSystem` and there is no per-write hot path
-// reading it (unlike `accessFunctionBindings`, read on every `putDoc`). A push
-// with no `/backend.js` — or one exporting no trigger — removes this entry.
+// Deliberately minimal — no source pointers (cid/assetUri). The runtime DO (B3)
+// derives its route target from the canonical `Apps.fileSystem` for the selected
+// release, so duplicating a cid/assetUri here would be a second source of truth
+// that drifts across publish/reconcile flows (per Charlie's review). This is a
+// cache of discovery *facts*, not a source locator.
+//
+// Lives in AppSettings rather than a dedicated table because the backend source
+// already lives in `Apps.fileSystem` and there is no per-write hot path reading
+// it (unlike `accessFunctionBindings`, read on every `putDoc`). A push with no
+// `/backend.js` — or one exporting no trigger — removes this entry.
 export const ActiveBackend = type({
   type: "'active.backend'",
   handlers: type("string").array(),
-  cid: "string",
-  assetUri: "string",
   "intervalMs?": "number",
 });
 export type ActiveBackend = typeof ActiveBackend.infer;

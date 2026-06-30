@@ -168,10 +168,14 @@ export async function ensureAppSlugItem(
   // Persist the backend.js binding (#2856 B2b). The schedule was already validated
   // in the early pre-check above, so a real push reaches here error-free; we only
   // log a storage/DB failure (parity with access bindings — never block the push).
+  // Discovery is driven from the *canonical* persisted filesystem (`ensured.fileSystem`)
+  // so a same-runId reconcile / late-dev-publish no-op can't repoint the entry at a
+  // stale snapshot; `fullFileSystem` only supplies the in-memory source content.
   const rBackendBindings = await processBackendBindings(vctx, {
     userId: req._auth.verifiedAuth.claims.userId,
     ownerHandle: ensured.ownerHandle,
     appSlug: ensured.appSlug,
+    canonicalFileSystem: ensured.fileSystem,
     fullFileSystem,
   });
   if (rBackendBindings.isErr()) {

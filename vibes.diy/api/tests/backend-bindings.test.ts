@@ -56,12 +56,12 @@ describe("active.backend discovery on backend.js push (#2856 B2b)", { timeout: 3
   // The push-time discovery is the only writer of an `active.backend` entry, and
   // metadata generation is fail-closed in tests (preAllocate errors), so the
   // app's settings carry at most this one entry. Return it (or undefined).
-  const backendEntries = async () => {
+  const backendEntries = async (handle = ownerHandle, slug = appSlug) => {
     const tAppSettings = appCtx.vibesCtx.sql.tables.appSettings;
     const rows = await appCtx.vibesCtx.sql.db
       .select()
       .from(tAppSettings)
-      .where(and(eq(tAppSettings.ownerHandle, ownerHandle), eq(tAppSettings.appSlug, appSlug)));
+      .where(and(eq(tAppSettings.ownerHandle, handle), eq(tAppSettings.appSlug, slug)));
     const settings = rows.flatMap((r) => parseArrayWarning(r.settings ?? [], ActiveEntry).filtered);
     return settings.filter(isActiveBackend);
   };
@@ -96,7 +96,6 @@ describe("active.backend discovery on backend.js push (#2856 B2b)", { timeout: 3
     expect(entries.length).toBe(1);
     expect(entries[0].handlers).toEqual(["fetch", "scheduled"]);
     expect(entries[0].intervalMs).toBe(300_000);
-    expect(entries[0].cid).toBeTruthy();
   });
 
   it("updates the interval on re-push", async () => {
@@ -148,5 +147,59 @@ describe("active.backend discovery on backend.js push (#2856 B2b)", { timeout: 3
 
     const entries = await backendEntries();
     expect(entries.length).toBe(0);
+  });
+
+  // Charlie review (blocking #1): a late same-runId dev publish no-ops against a
+  // finalized production release (see api.test "does not let a delayed dev publish
+  // regress..."). Discovery is driven from the *canonical* persisted filesystem,
+  // so the stale dev push must NOT repoint active.backend at its own backend.js.
+  it("does not let a delayed dev publish regress the production active.backend", async () => {
+    const reconcileSlug = "backend-reconcile-app";
+    const runId = "backend-reconcile-run";
+
+    // Dev publish: backend A (scheduled, 15m).
+    const rDev0 = await ownerApi.ensureAppSlug({
+      mode: "dev",
+      appSlug: reconcileSlug,
+      ownerHandle,
+      runId,
+      fileSystem: [APP_JSX, backendFile(BACKEND_SCHED_15M)],
+    });
+    assert(rDev0.isOk() && isResEnsureAppSlugOk(rDev0.Ok()), "dev publish failed");
+
+    // Production push finalizes the run with backend B (fetch + scheduled, 5m).
+    const rProd = await ownerApi.ensureAppSlug({
+      mode: "production",
+      appSlug: reconcileSlug,
+      ownerHandle,
+      runId,
+      fileSystem: [APP_JSX, backendFile(BACKEND_FETCH_SCHED_5M)],
+    });
+    const prod = rProd.Ok();
+    assert(isResEnsureAppSlugOk(prod), "production push failed");
+
+    const afterProd = await backendEntries(ownerHandle, reconcileSlug);
+    expect(afterProd.length).toBe(1);
+    expect(afterProd[0].handlers).toEqual(["fetch", "scheduled"]);
+    expect(afterProd[0].intervalMs).toBe(300_000);
+
+    // Delayed dev publish for the same run arrives AFTER production finalized,
+    // carrying the stale dev backend A. It no-ops to the production fsId.
+    const rDev = await ownerApi.ensureAppSlug({
+      mode: "dev",
+      appSlug: reconcileSlug,
+      ownerHandle,
+      runId,
+      fileSystem: [APP_JSX, backendFile(BACKEND_SCHED_15M)],
+    });
+    const dev = rDev.Ok();
+    assert(isResEnsureAppSlugOk(dev), "late dev publish failed");
+    expect(dev.fsId).toBe(prod.fsId); // proves the reconcile no-op
+
+    // active.backend must still reflect production B, not the stale dev A.
+    const afterLateDev = await backendEntries(ownerHandle, reconcileSlug);
+    expect(afterLateDev.length).toBe(1);
+    expect(afterLateDev[0].handlers).toEqual(["fetch", "scheduled"]);
+    expect(afterLateDev[0].intervalMs).toBe(300_000);
   });
 });
