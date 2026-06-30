@@ -193,20 +193,34 @@ Codex's spec pass caught two real gaps, both now reflected above:
   handler against production source). The gate is now derived from the **selected release's**
   `/backend.js`, the same source we run.
 
-## Open questions for review (Charlie)
+## Open questions — resolved (Charlie's review)
 
-1. **Selected-release resolver.** B3 needs "the `/backend.js` of the release this request should serve"
-   (production for a published vibe, the dev row in dev). Is there an existing canonical "resolve the
-   active release for (owner, slug) at serve time" helper the page/SSR path already uses that I should
-   reuse, so backend and page render can never disagree about which release is live? (This is the lynchpin
-   of the release-scoped gate above.)
-2. **`userInfo` resolution on `_api`.** Reuse the same session-auth path the page/SSR uses (cookie/
-   session → user), treating absent auth as `null`? Webhooks are unauthenticated by definition, so
-   `null` must be a first-class, supported case (not an error) — confirm that's the intended contract
-   before B6 hangs write-identity off it.
-3. **DO migration shape.** `BackendDO` as a `new_classes` entry (like `AppSessions`/`UserNotify`).
-   Since nothing deploys until the epic completes, the migration rides the final deploy — any concern
-   with introducing the class now but not exercising it live until B8?
-4. **B4 heads-up (not a B3 blocker).** Because the gate is now release-scoped, B4's alarm-arming must
-   make the same "which release's `config.scheduled`" choice explicitly — the release-agnostic
-   `active.backend` entry can't be the sole authority there either. Flagging so it's not a surprise.
+1. **Intercept layer → `routeDecision`.** Confirmed: intercept in `workers/route-decision.ts` /
+   `app.ts` before `cfServe`/SSR, matching the existing top-level DO-dispatch pattern
+   (`app-api`/`shared-do`/`api-do`) and keeping `_api` out of render fallthrough.
+2. **Selected-release resolver → extract a shared one.** There is **no single canonical serve-time
+   release resolver today** — selection is split (`servEntryPoint` and `getVibeRouteHints` both do
+   production-release selection; `select-app` paths carry different owner-latest semantics). **Decision:
+   B3 extracts one shared serve-time release resolver** and routes both page render and the backend
+   gate/source through it, so they can never disagree about which app row is live. This is part of B3's
+   scope (a small, well-bounded extraction), not a side quest — it's the lynchpin of the release-scoped
+   gate, and a `route-decision`/parity-style test pins render and backend to the same row.
+3. **`userInfo` on `_api` → unauthenticated is `null`.** Confirmed, aligned with existing
+   `optAuth`/`resolveWhoAmI`/access-fn `user | null` contracts. **Implementation note (Charlie):** the
+   render HTTP path does **not** auto-populate auth, so the `_api` handler must **explicitly** perform
+   auth extraction/verification for authenticated calls (and fall to `null` when absent), rather than
+   assuming an ambient session.
+4. **DO migration → `new_classes` now is good.** Confirmed, provided migration tags stay
+   **append-only/sequential across every env's migration array** and traffic stays gated behind
+   `BACKEND_JS` until B8.
+
+### Carried forward to B4 (not a B3 blocker)
+
+Because the gate is now release-scoped, **B4's alarm-arming must make the same
+"which release's `config.scheduled`" choice explicitly** — the release-agnostic `active.backend` entry
+can't be the sole authority there either. Flagged so it's not a surprise when B4 starts.
+
+### Charlie's offered follow-up
+
+Charlie offered a focused pass on **route ordering + release-selection parity** once implementation
+commits are up, ahead of full code review — take him up on it.
