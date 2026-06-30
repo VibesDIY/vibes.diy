@@ -169,6 +169,7 @@ export async function ensureAppSlugItem(
   // in the early pre-check above, so a real push reaches here error-free; we only
   // log a storage/DB failure (parity with access bindings — never block the push).
   const rBackendBindings = await processBackendBindings(vctx, {
+    userId: req._auth.verifiedAuth.claims.userId,
     ownerHandle: ensured.ownerHandle,
     appSlug: ensured.appSlug,
     fullFileSystem,

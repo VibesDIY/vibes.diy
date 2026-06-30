@@ -413,23 +413,10 @@ export const sqlAccessFunctionBindings = pgTable(
   ]
 );
 
-// One backend.js per app (#2856 B2b), keyed by (ownerHandle, appSlug). CID-keyed
-// like AccessFunctionBindings. `handlers` is a JSON array of the trigger exports
-// present (e.g. ["fetch","scheduled"]); `intervalMs` is the validated
-// config.scheduled.interval in ms (null = no schedule).
-export const sqlBackendFunctionBindings = pgTable(
-  "BackendFunctionBindings",
-  {
-    ownerHandle: text("userSlug").notNull(),
-    appSlug: text().notNull(),
-    backendCid: text().notNull(),
-    backendAssetUri: text(), // nullable — full storage URI
-    handlers: text().notNull(), // JSON array of trigger export names
-    intervalMs: integer(), // nullable — validated scheduled interval in ms
-    updated: text().notNull(),
-  },
-  (table) => [primaryKey({ columns: [table.ownerHandle, table.appSlug] })]
-);
+// Per-app /backend.js discovery (#2856 B2b) is stored as an `active.backend`
+// entry in AppSettings, not a dedicated table — the source already lives in
+// Apps.fileSystem and there's no per-write hot path reading it. See the
+// `ActiveBackend` type and `processBackendBindings`.
 
 export const sqlAccessFnOutputs = pgTable(
   "AccessFnOutputs",

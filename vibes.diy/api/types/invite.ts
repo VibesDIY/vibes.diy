@@ -438,6 +438,29 @@ export function isActiveEnv(obj: unknown): obj is ActiveEnv {
   return !(ActiveEnv(obj) instanceof type.errors);
 }
 
+// Per-app `/backend.js` discovery (#2856 B2b). Written at push time from the
+// pure `parseBackendConfig` parse of the reserved top-level `/backend.js`:
+// `handlers` are the recognized trigger exports (fetch/scheduled/onChange),
+// `cid`/`assetUri` point at the stored source so the runtime DO (B3) can load
+// the right isolate without re-reading `Apps.fileSystem`, and `intervalMs` is
+// the validated schedule (present only when a `scheduled` handler exists).
+//
+// This lives in AppSettings rather than a dedicated table because the backend
+// source already lives in `Apps.fileSystem` and there is no per-write hot path
+// reading it (unlike `accessFunctionBindings`, read on every `putDoc`). A push
+// with no `/backend.js` — or one exporting no trigger — removes this entry.
+export const ActiveBackend = type({
+  type: "'active.backend'",
+  handlers: type("string").array(),
+  cid: "string",
+  assetUri: "string",
+  "intervalMs?": "number",
+});
+export type ActiveBackend = typeof ActiveBackend.infer;
+export function isActiveBackend(obj: unknown): obj is ActiveBackend {
+  return !(ActiveBackend(obj) instanceof type.errors);
+}
+
 export const ActiveEntry = EnablePublicAccess.or(ActiveRequest)
   .or(ActiveInvite)
   .or(EnableRequest)
@@ -451,6 +474,7 @@ export const ActiveEntry = EnablePublicAccess.or(ActiveRequest)
   .or(ActiveEnrichedPrompt)
   .or(ActiveModelSetting)
   .or(ActiveEnv)
+  .or(ActiveBackend)
   .or(ActiveDbAcl);
 
 export function isActiveAcl(obj: unknown): obj is typeof ActiveACL.infer {
