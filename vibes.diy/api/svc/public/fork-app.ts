@@ -12,6 +12,7 @@ import {
   isResHasAccessInviteAccepted,
   isResHasAccessRequestApproved,
   isFetchOkResult,
+  isCachedSuggestionKeyShape,
 } from "@vibes.diy/api-types";
 import { type } from "arktype";
 import { and, eq } from "drizzle-orm/sql/expressions";
@@ -111,7 +112,11 @@ export async function forkApp(
           .Str("reason", "fastForkFromCache")
           .Str("ownerHandle", req.srcUserSlug)
           .Str("appSlug", req.srcAppSlug)
-          .Str("cacheKey", req.cacheKey)
+          // `cacheKey` is client-supplied; only echo it raw when it matches the
+          // canonical content-address shape, mirroring the read-lane telemetry
+          // redaction. (It IS canonical on this success path — it resolved a real
+          // produce entry — but keep the log boundary defensive, not trusting.)
+          .Str("cacheKey", isCachedSuggestionKeyShape(req.cacheKey) ? req.cacheKey : `<non-canonical:${req.cacheKey.length}>`)
           .Str("seedFsId", produced.fsId)
           .Str("sourceFsId", produced.sourceFsId)
           .Msg("seeding a fork from a produced (unblessed) cached-suggestion result");
