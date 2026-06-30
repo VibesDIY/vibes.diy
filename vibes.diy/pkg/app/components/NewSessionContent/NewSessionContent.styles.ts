@@ -61,7 +61,10 @@ export const getSuggestionsInnerStyle = (offset: number, isAnimating: boolean): 
 
 // Title style - responsive
 export const getTitle = (isMobile: boolean, isDarkMode: boolean): CSSProperties => ({
-  fontSize: isMobile ? "22px" : "44px",
+  // 28px desktop keeps the long hero line ("From inside jokes to invoices — instant,
+  // live, yours.") on one line within the 800px container; the brand line below shares
+  // this style and stays matched.
+  fontSize: isMobile ? "22px" : "28px",
   fontFamily: "Alte Haas Grotesk, Inter, sans-serif",
   color: isDarkMode ? "var(--color-dark-primary)" : "var(--vibes-near-black)",
   // Plain centered block (not flex): the hero mixes a text node, an underlined
