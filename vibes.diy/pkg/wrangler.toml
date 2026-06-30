@@ -390,7 +390,14 @@ binding = "VIBES_SERVICE"
 
 [env.prod]
 name = "vibes-diy-v2-prod"
-vars = { ENVIRONMENT = "prod" }
+# VIBES_CACHED_SUGGESTIONS="on" enables the cached-suggestion read lane (#2801) in
+# production (#2928). Gate before flipping (Finding A — owner-written serve map
+# trusted without provenance) is closed by the bless gate (#2915): blessing is a
+# server-authenticated owner action over a specific {key, fsId, sourceFsId} tuple
+# and the reader/grant require a matching produced+blessed record, so an owner
+# can't conjure an arbitrary unpublished fsId into the serve map. Validated
+# end-to-end in PR preview before enablement here.
+vars = { ENVIRONMENT = "prod", VIBES_CACHED_SUGGESTIONS = "on" }
 logpush = true
 routes = [
   { pattern = "prod-v2.vibesdiy.net/*", zone_name = "vibesdiy.net" },
