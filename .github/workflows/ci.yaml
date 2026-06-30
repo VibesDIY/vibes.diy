@@ -44,6 +44,10 @@ jobs:
 
   # Publish-build guard for @vibes.diy/api-svc. This intentionally runs as a
   # separate job so the compile_test required-check gate can assert its result.
+  # Use the `pack` script (core-cli build --doPack), NOT `publish`: both run the
+  # same `core-cli build` path, but `publish` (core-cli build) actually pushes to
+  # the npm registry and would fail in PR CI where no NPM_TOKEN exists, while
+  # `--doPack` exercises the publish build + packs a tarball without publishing.
   publish_build_api_svc:
     needs: scope
     if: ${{ needs.scope.outputs.api_svc_publish_needed == 'true' }}
@@ -54,7 +58,7 @@ jobs:
         with:
           run-checks: 'false'
           run-tests: 'false'
-      - run: pnpm --filter @vibes.diy/api-svc run publish
+      - run: pnpm --filter @vibes.diy/api-svc run pack
 
   # Non-shardable work: install + format-check + lint + build(typecheck). Runs
   # once. `run-tests: 'false'` skips the Docker suite here; docs-only still skips
