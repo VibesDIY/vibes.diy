@@ -1,5 +1,5 @@
 import { ExportedHandler, MessageBatch } from "@cloudflare/workers-types";
-import { AppContext, EventoSendProvider, HandleTriggerCtx, Result } from "@adviser/cement";
+import { AppContext, EventoSendProvider, HandleTriggerCtx, Result, TriggerResult } from "@adviser/cement";
 import { CFEnv } from "@vibes.diy/api-types";
 import { vibesQueueEvento } from "./queue-evento.js";
 import { QueueCtx } from "./queue-ctx.js";
@@ -10,6 +10,23 @@ class NoopQueueSendProvider implements EventoSendProvider<unknown, unknown, unkn
   async send<T>(_ctx: HandleTriggerCtx<unknown, unknown, unknown>, _data: unknown): Promise<Result<T>> {
     return Result.Ok();
   }
+}
+
+/**
+ * Decide whether a queue message should be retried after `evento.trigger`.
+ *
+ * The pinned `@adviser/cement` `Evento.trigger` records a handler's returned
+ * `Err` in `stepCtx.error`, runs the `EventoType.Error` handlers, and then still
+ * returns `Result.Ok(stepCtx)`. So a handler `Err` (e.g. a failed BackendDO
+ * `/arm` poke) does NOT surface as `rTrigger.isErr()` — it surfaces as
+ * `rTrigger.Ok().error` being set. Retry on either signal; ack only when the
+ * trigger is Ok *and* carries no recorded error.
+ */
+export function shouldRetryTrigger(rTrigger: Result<TriggerResult<unknown, unknown, unknown>>): boolean {
+  if (rTrigger.isErr()) {
+    return true;
+  }
+  return rTrigger.Ok().error !== undefined;
 }
 
 export default {
@@ -46,8 +63,9 @@ export default {
     for (const message of batch.messages) {
       console.info("message", message);
       const rTrigger = await evento.trigger({ ctx, send, request: message.body });
-      if (rTrigger.isErr()) {
-        console.error("Failed to process queue message:", message.id, rTrigger.Err());
+      if (shouldRetryTrigger(rTrigger)) {
+        const err = rTrigger.isErr() ? rTrigger.Err() : rTrigger.Ok().error;
+        console.error("Failed to process queue message:", message.id, err);
         message.retry();
       } else {
         message.ack();
