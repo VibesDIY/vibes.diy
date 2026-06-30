@@ -42,6 +42,41 @@ function grantedAccess(role: "editor" | "viewer" | "submitter") {
   }
 }
 
+// cachedSuggestionGrant support (#2801/#2890): is `requestedFsId` the staged
+// result of a cached suggestion whose SOURCE version was itself published/public?
+// The cachedSuggestions map records `sourceFsId`; we (re-)verify a production row
+// with that fsId exists for this (ownerHandle, appSlug). The source-was-public
+// check is the PII boundary — a cached read must be a transform of already-public
+// code, never an owner's unpublished draft (Codex P1). Defense in depth: the
+// producer only registers public-HEAD-sourced entries, but the grant never trusts
+// the producer alone. Returns the matched sourceFsId (for the audit log) or null.
+async function grantableCachedSuggestionSource(
+  vctx: VibesApiSQLCtx,
+  args: {
+    readonly ownerHandle: string;
+    readonly appSlug: string;
+    readonly requestedFsId: string;
+    readonly cachedSuggestions: Record<string, { fsId: string; sourceFsId: string }> | undefined;
+  }
+): Promise<string | null> {
+  const match = Object.values(args.cachedSuggestions ?? {}).find((v) => v.fsId === args.requestedFsId);
+  if (!match) return null;
+  const srcProd = await vctx.sql.db
+    .select({ fsId: vctx.sql.tables.apps.fsId })
+    .from(vctx.sql.tables.apps)
+    .where(
+      and(
+        eq(vctx.sql.tables.apps.fsId, match.sourceFsId),
+        eq(vctx.sql.tables.apps.appSlug, args.appSlug),
+        eq(vctx.sql.tables.apps.ownerHandle, args.ownerHandle),
+        eq(vctx.sql.tables.apps.mode, "production")
+      )
+    )
+    .limit(1)
+    .then((r) => r[0]);
+  return srcProd ? match.sourceFsId : null;
+}
+
 function resolveOwnerDisplayName(ownerSettings: unknown[] | undefined, ownerClaims: ClerkClaim | undefined): string | undefined {
   for (const item of ownerSettings ?? []) {
     if (!isUserSettingProfile(item)) continue;
@@ -221,7 +256,36 @@ export const getAppByFsIdEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqGet
       } else {
         const reqUserId = req._auth?.verifiedAuth?.claims.userId;
 
-        if (settings.entry.publicAccess?.enable && app.mode === "production") {
+        // cachedSuggestionGrant (#2801): a staged chip-result version is
+        // unpublished (mode !== "production"), so the public-access check below
+        // won't fire for it. Grant anonymous public-access for THIS exact fsId
+        // only when ALL hold: an explicit version was requested; the app is
+        // currently public; the requested fsId is registered in this app's
+        // cachedSuggestions map; AND the entry's recorded source version was
+        // itself published/public (the PII boundary — verified in the helper).
+        // A private app fails the publicAccess check; a tombstoned/hidden slug is
+        // already gated above. Emits an audit reason on grant.
+        const cachedSource =
+          req.fsId && settings.entry.publicAccess?.enable
+            ? await grantableCachedSuggestionSource(vctx, {
+                ownerHandle: app.ownerHandle,
+                appSlug: app.appSlug,
+                requestedFsId: app.fsId,
+                cachedSuggestions: settings.entry.cachedSuggestions,
+              })
+            : null;
+
+        if (cachedSource) {
+          grant = "public-access";
+          vctx.logger
+            .Info()
+            .Str("reason", "cachedSuggestionGrant")
+            .Str("ownerHandle", app.ownerHandle)
+            .Str("appSlug", app.appSlug)
+            .Str("fsId", app.fsId)
+            .Str("sourceFsId", cachedSource)
+            .Msg("granted anonymous read of a staged cached-suggestion version");
+        } else if (settings.entry.publicAccess?.enable && app.mode === "production") {
           grant = "public-access";
           // Signed-in users on apps with autoAcceptRole get promoted above public-access.
           // Check for an existing approved request first; if none, auto-fire one.
