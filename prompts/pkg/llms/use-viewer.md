@@ -198,7 +198,9 @@ Key points:
 <ViewerTag userHandle={member.userHandle} style={{ borderRadius: 8, fontSize: 12 }} />
 ```
 
-**The current viewer is system chrome, not app UI.** A no-prop `<ViewerTag />` renders the current viewer (with a sign-in button when anonymous and a dashed edit ring when signed in), but you almost never need it: the platform already shows the current user — and lets them sign in and change their avatar — inside the Vibes Switch that opens from the logo. Don't add a no-prop `<ViewerTag />` as a header pill or login button; reach for `userHandle` to render someone else instead.
+**The current viewer's identity and sign-in are system chrome, not app UI.** The platform already shows the current user — and offers a "Sign in" button to anonymous viewers — inside the Vibes Switch that opens from the logo. So don't add a no-prop `<ViewerTag />` as a header pill or login button just to show who's signed in; reach for `userHandle` to render someone else instead.
+
+**The one in-app reason to render a no-prop `<ViewerTag />` is inline avatar self-edit.** A no-prop tag shows the signed-in viewer a dashed edit ring that lets them change their _own_ avatar in place, and that works for **every** signed-in viewer — the Switch's avatar editing is owner-only. So if your app wants any member (not just the owner) to update their photo without leaving the app, render a guarded `{viewer && <ViewerTag />}` for that — otherwise leave the current-viewer pill to the Switch.
 
 **Undefined safety.** If `userHandle` is present in props but falsy (e.g. a missing field from a loop lookup), `ViewerTag` renders a dim italic placeholder instead of the edit ring. This prevents a broken data source from accidentally granting photo-edit access to an arbitrary pill.
 
@@ -206,4 +208,4 @@ Key points:
 
 **Theming.** `ViewerTag` reads `--accent`, `--accent-text`, `--card-bg`, `--border`, `--text`, and `--muted` from the app's CSS variables with sensible fallbacks. If your app defines these on `:root` (which most generated themes do), `ViewerTag` inherits the theme automatically with no extra props.
 
-Pass `<ViewerTag userHandle={...} />` to render other people. The no-prop `<ViewerTag />` (current user) exists, but the logo's Vibes Switch already covers identity and sign-in.
+Pass `<ViewerTag userHandle={...} />` to render other people. The no-prop `<ViewerTag />` (current user) covers identity and sign-in too, but the logo's Vibes Switch already does that — reach for it only when you specifically want inline avatar self-edit for any signed-in member.
