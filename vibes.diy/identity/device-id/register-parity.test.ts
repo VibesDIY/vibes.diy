@@ -16,10 +16,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { AppContext, Evento, Result } from "@adviser/cement";
 import type { EventoHandler } from "@adviser/cement";
-import {
-  deviceIdRegisterEvento as oldEvento,
-  isResDeviceIdRegister as oldIsRes,
-} from "@fireproof/core-cli";
+import { deviceIdRegisterEvento as oldEvento, isResDeviceIdRegister as oldIsRes } from "@fireproof/core-cli";
 import { ensureSuperThis } from "../index.js";
 import type { JWKPrivate, DeviceIdKeyBagItem, SuperThis } from "../index.js";
 import { deviceIdRegisterEvento as newEvento, isResDeviceIdRegister as newIsRes } from "./register.js";
