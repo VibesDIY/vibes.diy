@@ -21,6 +21,9 @@ const base = (over: Record<string, unknown>) => ({
 const codeBegin = (sectionId: string) => base({ type: "block.code.begin", sectionId, lang: "tsx", path: "App.jsx" });
 const codeLine = (sectionId: string, line: string, lineNr: number) =>
   base({ type: "block.code.line", sectionId, lang: "tsx", path: "App.jsx", lineNr, line });
+const toplevelBegin = (sectionId: string) => base({ type: "block.toplevel.begin", sectionId });
+const toplevelLine = (sectionId: string, line: string, lineNr: number) =>
+  base({ type: "block.toplevel.line", sectionId, lineNr, line });
 const codeEnd = (sectionId: string) =>
   base({ type: "block.code.end", sectionId, lang: "tsx", path: "App.jsx", stats: { lines: 1, bytes: 42 } });
 const toplevelEnd = (sectionId: string) => base({ type: "block.toplevel.end", sectionId, stats: { lines: 1, bytes: 10 } });
@@ -70,5 +73,28 @@ describe("MessageList orphaned section-end handling (#2652)", () => {
     const blocks = asBlocks([blockBegin(), toplevelEnd("section-orphan"), blockEnd()]);
 
     expect(() => renderList(blocks)).not.toThrow();
+  });
+
+  it("does not swallow an open section's buffered lines when dropping an orphan", () => {
+    // Code and toplevel lines share one buffer. An orphan code.end arriving
+    // while a toplevel section is mid-stream must not consume that section's
+    // already-buffered lines (Codex review on #2958).
+    const blocks = asBlocks([
+      blockBegin(),
+      toplevelBegin("section-tl"),
+      toplevelLine("section-tl", "alphaword", 0),
+      // Orphan end for a section whose begin was lost on the superseded stream.
+      codeEnd("section-orphan"),
+      toplevelLine("section-tl", "betaword", 1),
+      toplevelEnd("section-tl"),
+      blockEnd(),
+    ]);
+
+    const { container } = renderList(blocks);
+    const tl = container.querySelector('[data-section-id="section-tl"]');
+    expect(tl).not.toBeNull();
+    // Both the pre-orphan and post-orphan lines survive.
+    expect(tl?.textContent).toContain("alphaword");
+    expect(tl?.textContent).toContain("betaword");
   });
 });
