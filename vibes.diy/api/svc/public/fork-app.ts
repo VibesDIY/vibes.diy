@@ -17,6 +17,7 @@ import { type } from "arktype";
 import { and, eq } from "drizzle-orm/sql/expressions";
 import { selectLatestAppPerSlug } from "./select-app.js";
 import { isHiddenForCaller } from "./unpublished-binding.js";
+import { cachedSuggestionSourceIsPublic } from "./get-app-by-fsid.js";
 import { generate } from "random-words";
 import { unwrapMsgBase } from "../unwrap-msg-base.js";
 import { VibesApiSQLCtx } from "../types.js";
@@ -63,15 +64,73 @@ export async function forkApp(
   userId: string,
   claims: ReqWithVerifiedAuth<ReqForkApp>["_auth"]["verifiedAuth"]["claims"]
 ): Promise<Result<ResForkApp>> {
-  // 1. Locate the source app row. Mirrors get-app-by-fsid.ts selection.
+  // 0. Fast-fork-from-cache (#2929 item 1). When the caller passes a `cacheKey`,
+  //    try to resolve a PRODUCED (unblessed) result under the source app and seed
+  //    the fork from THAT code (the chip already applied) instead of regenerating.
+  //    Gated exactly like the stay grant MINUS the bless: the source app must be
+  //    public + not tombstoned, AND the produced entry's recorded source version
+  //    must itself have been public (the PII boundary — a fork seed must be an
+  //    offered-chip transform of already-public code). On ANY miss we leave
+  //    `seedFsId` undefined and fall back to the normal fork. Serving an unblessed
+  //    produced fsId here is safe BECAUSE it forks (the forker's own namespace, no
+  //    owner data travels) and the code is content the forker could already obtain
+  //    by forking the public source and running the same offered chip themselves.
+  //    The produced fsId is resolved server-side and never returned to the client.
+  let seedFsId: string | undefined;
+  let seededFromCache = false;
+  if (req.cacheKey) {
+    const rSeedSet = await ensureAppSettings(vctx, {
+      type: "vibes.diy.req-ensure-app-settings",
+      appSlug: req.srcAppSlug,
+      ownerHandle: req.srcUserSlug,
+    });
+    if (rSeedSet.isOk()) {
+      const seedSettings = rSeedSet.Ok();
+      const produced = seedSettings.settings.entry.cachedSuggestions?.[req.cacheKey];
+      const appPublic =
+        seedSettings.settings.entry.publicAccess?.enable &&
+        !(await isHiddenForCaller(vctx, {
+          ownerHandle: req.srcUserSlug,
+          appSlug: req.srcAppSlug,
+          ownerUserId: seedSettings.userId,
+          callerUserId: userId,
+        }));
+      if (
+        produced &&
+        appPublic &&
+        (await cachedSuggestionSourceIsPublic(vctx, {
+          ownerHandle: req.srcUserSlug,
+          appSlug: req.srcAppSlug,
+          sourceFsId: produced.sourceFsId,
+        }))
+      ) {
+        seedFsId = produced.fsId;
+        seededFromCache = true;
+        vctx.logger
+          .Info()
+          .Str("reason", "fastForkFromCache")
+          .Str("ownerHandle", req.srcUserSlug)
+          .Str("appSlug", req.srcAppSlug)
+          .Str("cacheKey", req.cacheKey)
+          .Str("seedFsId", produced.fsId)
+          .Str("sourceFsId", produced.sourceFsId)
+          .Msg("seeding a fork from a produced (unblessed) cached-suggestion result");
+      }
+    }
+  }
+
+  // 1. Locate the source app row. Mirrors get-app-by-fsid.ts selection. A cache
+  //    seed pins the produced fsId (an explicit version); otherwise the requested
+  //    srcFsId, else the published HEAD.
+  const lookupFsId = seedFsId ?? req.srcFsId;
   let src: typeof vctx.sql.tables.apps.$inferSelect | undefined;
-  if (req.srcFsId) {
+  if (lookupFsId) {
     src = await vctx.sql.db
       .select()
       .from(vctx.sql.tables.apps)
       .where(
         and(
-          eq(vctx.sql.tables.apps.fsId, req.srcFsId),
+          eq(vctx.sql.tables.apps.fsId, lookupFsId),
           eq(vctx.sql.tables.apps.appSlug, req.srcAppSlug),
           eq(vctx.sql.tables.apps.ownerHandle, req.srcUserSlug)
         )
@@ -87,10 +146,11 @@ export async function forkApp(
 
   // Soft-unpublish gate (#2688): a tombstoned slug can't be remixed by a
   // non-owner via the no-`srcFsId` path (which resolves the bare slug through
-  // selectLatestAppPerSlug). An explicit `srcFsId` remix still works, so a
-  // forked lineage that points at a specific version survives unpublish.
+  // selectLatestAppPerSlug). An explicit fsId remix still works, so a forked
+  // lineage that points at a specific version survives unpublish. A cache seed
+  // pins an explicit fsId AND re-checked the tombstone above, so it skips here too.
   if (
-    !req.srcFsId &&
+    !lookupFsId &&
     (await isHiddenForCaller(vctx, {
       ownerHandle: src.ownerHandle,
       appSlug: src.appSlug,
@@ -117,7 +177,12 @@ export async function forkApp(
     if (rAppSet.isErr()) return Result.Err("app-settings-not-found");
     const settings = rAppSet.Ok().settings;
     const isPublic = settings.entry.publicAccess?.enable && src.mode === "production";
-    let granted = !!isPublic;
+    // A cache seed is its own grant (#2929 item 1): step 0 already verified the
+    // source app is public + not tombstoned AND the produced entry's source was
+    // public, so the (unpublished, dev) produced fsId is forkable here even though
+    // the normal `isPublic` check requires production mode. Without this the seeded
+    // dev fsId would be denied (not-grant).
+    let granted = seededFromCache || !!isPublic;
     if (!granted) {
       const rInvite = await hasAccessInvite(vctx, { appSlug: src.appSlug, ownerHandle: src.ownerHandle, grantUserId: userId });
       if (rInvite.isOk() && isResHasAccessInviteAccepted(rInvite.Ok())) granted = true;
@@ -288,6 +353,7 @@ export async function forkApp(
     srcFsId: src.fsId,
     srcUserSlug: src.ownerHandle,
     srcAppSlug: src.appSlug,
+    ...(seededFromCache ? { seededFromCache: true } : {}),
   } satisfies ResForkApp);
 }
 

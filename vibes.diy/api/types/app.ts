@@ -367,6 +367,15 @@ export const reqForkApp = type({
   // must request access (no auto-accept). Client is expected to redirect
   // straight to /vibe/ instead of /chat/. Default false = classic remix.
   "skipChat?": "boolean",
+  // Fast-fork-from-cache (#2929 item 1). A content-address key (from
+  // `cachedSuggestionKey`) for an OFFERED chip. When set and a *produced*
+  // (unblessed) result exists for it under the source app — AND the source app
+  // is public + that result's source version was public — the fork is SEEDED
+  // from the produced result's code (the chip already applied) instead of the
+  // requested srcFsId, so the forker skips the codegen wait. Any miss falls back
+  // silently to the normal fork; the response's `seededFromCache` says which
+  // happened (the client uses it to decide whether codegen still needs to run).
+  "cacheKey?": "string",
 });
 export type ReqForkApp = typeof reqForkApp.infer;
 export function isReqForkApp(obj: unknown): obj is ReqForkApp {
@@ -386,6 +395,12 @@ export const resForkApp = type({
   // slug renames are followed.
   srcUserSlug: "string",
   srcAppSlug: "string",
+  // Fast-fork-from-cache (#2929 item 1). True iff a `cacheKey` was supplied AND
+  // resolved to a servable produced result, so this fork was seeded from the
+  // chip-applied code and the client should NOT re-run codegen for the chip.
+  // Absent/false ⇒ a normal fork from the requested source (the client runs the
+  // chip's codegen as before).
+  "seededFromCache?": "boolean",
 });
 export type ResForkApp = typeof resForkApp.infer;
 export function isResForkApp(obj: unknown): obj is ResForkApp {
