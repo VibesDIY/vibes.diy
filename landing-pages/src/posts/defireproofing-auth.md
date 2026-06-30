@@ -3,12 +3,17 @@ title: "We deleted our auth dependency. Nothing changed."
 date: 2026-06-28T09:00:00Z
 author: "Vibes DIY"
 summary: "We moved our device-id PKI and Clerk token verifiers in-house, out of @fireproof/*, with zero call-site changes — gated by a byte-compatible golden harness so the lift was provably identical before we cut the dependency."
-glyph: "lift the runtime ↑"
+thumb: "/images/blog/defireproofing-auth/card.jpg"
 ---
 
 Dropping `@fireproof/*` from our login path looked like a one-line delete. It was a heart transplant — and the whole trick was making nothing above the cut notice.
 
 An earlier round of "facade" work had already relocated *where* the imports lived — everything routed through `@vibes.diy/identity`. But the runtime values were still `export … from "@fireproof/*"`: the device-id key/sign/CSR/verify crypto, the server CA, the keybag, the Clerk token verifier, the dashboard client, the auth wire-types. The package boundary had moved; the code hadn't. This is the story of pulling a live PKI runtime in-house without changing a single thing above that boundary — and the gates that made it not-reckless.
+
+<figure>
+    <img src="/images/blog/defireproofing-auth/card.jpg" alt="Illustration card: “lift the runtime ↑” set over a rocket lifting off, in the Vibes DIY teal-and-goldenrod style." loading="lazy">
+    <figcaption>Lifting a live PKI runtime in-house behind an unchanged facade — proven byte-for-byte identical before the cut.</figcaption>
+</figure>
 
 ## Lift verbatim behind an unchanged facade
 

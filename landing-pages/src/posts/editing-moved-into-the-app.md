@@ -3,10 +3,15 @@ title: "The edit button that was secretly a save loop"
 date: 2026-06-29T09:00:00Z
 author: "Vibes DIY"
 summary: "We made the code editor live inside the running app — no hop to a separate chat route. 'Make the Code tab editable' sounded like a UI task. It was a distributed save loop in disguise, and the whole thing hinged on one decision: re-pin, don't navigate."
-glyph: "re-pin ≠ navigate"
+thumb: "/images/blog/editing-moved-into-the-app/card.jpg"
 ---
 
 Once first-generation moved onto the deployed app itself, the next surface to fold in was the editor. Building and tweaking a Vibe used to mean a separate `/chat` route: a chat pane, a Monaco code view, a data browser, settings — a whole second place you went to *work on* the app, distinct from `/vibe`, the place the app actually *ran*. This is the story of collapsing that second place into the first, in two phases — and of the moment "make the Code tab editable" turned out to be a much bigger ask than it read.
+
+<figure>
+    <img src="/images/blog/editing-moved-into-the-app/card.jpg" alt="Illustration card: “re-pin ≠ navigate” set over a laptop on a desk, in the Vibes DIY teal-and-goldenrod style." loading="lazy">
+    <figcaption>Folding the editor into the running app hinged on one call: re-pin the iframe, don't navigate.</figcaption>
+</figure>
 
 ## Phase 1: the editor surface was mostly composition
 
