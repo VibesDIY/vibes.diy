@@ -13,7 +13,8 @@
 // message type) so consumers and any in-flight messages are unaffected.
 
 import { type } from "arktype";
-import type { HandleTriggerCtx } from "@adviser/cement";
+import { EventoResult, Result } from "@adviser/cement";
+import type { EventoResultType, HandleTriggerCtx } from "@adviser/cement";
 
 // A streamed cmd-ts request/response envelope. `result` is left `unknown` here;
 // `WrapCmdTSMsg<T>` narrows it per-command at the call site.
@@ -45,6 +46,19 @@ export type CmdProgress = typeof CmdProgress.infer;
 
 export function isCmdProgress(u: unknown): u is CmdProgress {
   return !(CmdProgress(u) instanceof type.errors);
+}
+
+// Stream a command's result back on its channel, preserving the request envelope,
+// and signal the evento to continue.
+export async function sendMsg<Q, S>(
+  ctx: HandleTriggerCtx<WrapCmdTSMsg<unknown>, Q, S>,
+  result: S
+): Promise<Result<EventoResultType>> {
+  await ctx.send.send(ctx, {
+    ...ctx.request,
+    result,
+  });
+  return Result.Ok(EventoResult.Continue);
 }
 
 // Stream a progress notification on the same channel as the command's result.

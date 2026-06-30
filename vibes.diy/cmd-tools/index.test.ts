@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { isCmdProgress, isCmdTSMsg, sendProgress, type WrapCmdTSMsg } from "./index.js";
+import { isCmdProgress, isCmdTSMsg, sendMsg, sendProgress, type WrapCmdTSMsg } from "./index.js";
 
 describe("cmd-ts framework primitives", () => {
   const validCmdTSMsg = {
@@ -75,6 +75,25 @@ describe("cmd-ts framework primitives", () => {
         result: { type: "core-cli.progress", level: "warn", message: "halfway there" },
       });
       expect(isCmdProgress(payload.result)).toBe(true);
+    });
+  });
+
+  describe("sendMsg", () => {
+    it("streams the result on the request's channel and resolves to Continue", async () => {
+      const request: WrapCmdTSMsg<unknown> = validCmdTSMsg as WrapCmdTSMsg<unknown>;
+      const send = vi.fn().mockResolvedValue(undefined);
+      const ctx = { request, send: { send } } as never;
+
+      const out = await sendMsg(ctx, { type: "core-cli.res-thing", output: "done" });
+
+      expect(send).toHaveBeenCalledTimes(1);
+      const [passedCtx, payload] = send.mock.calls[0];
+      expect(passedCtx).toBe(ctx);
+      expect(payload).toEqual({
+        ...validCmdTSMsg,
+        result: { type: "core-cli.res-thing", output: "done" },
+      });
+      expect(out.isOk()).toBe(true);
     });
   });
 });

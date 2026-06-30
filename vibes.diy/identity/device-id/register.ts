@@ -15,20 +15,20 @@
 // arktype→zod re-type is a deliberate follow-up, not part of this lift.
 //
 // The two `ctx.send.send`-based streaming helpers (`sendMsg` / `sendProgress`)
-// are generic cmd-ts framework glue (the cli-kit seam, #2478) — kept here as
-// module-private copies rather than imported, so identity carries no value
-// import from core-cli. Only the `WrapCmdTSMsg` / `CmdProgress` *types* are
-// referenced from core-cli, which the #2894 acceptance criteria allow
-// (type-only or none).
+// and the `WrapCmdTSMsg` envelope type are generic cmd-ts framework glue — now
+// owned by `@vibes.diy/cmd-tools` (the in-tree home for the slice that used to
+// live in `@fireproof/core-cli`; see #2895/#2899). Importing them from there
+// removes the last `@fireproof/core-cli` reference (formerly the type-only
+// `WrapCmdTSMsg` / `CmdProgress` import #2894 left in place) from this module.
 import { decodeJwt } from "jose";
 import { Hono } from "hono";
 import { serve } from "@hono/node-server";
 import open from "open";
-import { Future, timeouted, isSuccess, isTimeout, BuildURI, Result, Option, EventoResult } from "@adviser/cement";
-import type { EventoHandler, HandleTriggerCtx, ValidateTriggerCtx, EventoResultType } from "@adviser/cement";
+import { Future, timeouted, isSuccess, isTimeout, BuildURI, Result, Option } from "@adviser/cement";
+import type { EventoHandler, HandleTriggerCtx, ValidateTriggerCtx } from "@adviser/cement";
 import { type } from "arktype";
 import type { Subject, SuperThis } from "@fireproof/core-types-base";
-import type { WrapCmdTSMsg, CmdProgress } from "@fireproof/core-cli";
+import { sendMsg, sendProgress, type WrapCmdTSMsg } from "@vibes.diy/cmd-tools";
 import { getKeyBag } from "../keybag/keybag.js";
 import { DeviceIdKey } from "./key.js";
 import { DeviceIdCSR } from "./csr.js";
@@ -39,31 +39,6 @@ import { CertificatePayloadSchema } from "../types/cert-payload.js";
 // CLI's `CliCtx` (which is the wrong direction — the CLI depends on identity).
 interface CliCtxLike {
   readonly sthis: SuperThis;
-}
-
-// --- cmd-ts streaming glue (cli-kit seam, lifted from core-cli cmd-evento.js) ---
-// Kept module-private so the public identity surface gains no framework API.
-async function sendMsg<Q, S>(ctx: HandleTriggerCtx<WrapCmdTSMsg<unknown>, Q, S>, result: S): Promise<Result<EventoResultType>> {
-  await ctx.send.send(ctx, {
-    ...ctx.request,
-    result,
-  });
-  return Result.Ok(EventoResult.Continue);
-}
-
-async function sendProgress<Q, S>(
-  ctx: HandleTriggerCtx<WrapCmdTSMsg<unknown>, Q, S>,
-  level: CmdProgress["level"],
-  message: string
-): Promise<void> {
-  await ctx.send.send(ctx, {
-    ...ctx.request,
-    result: {
-      type: "core-cli.progress",
-      level,
-      message,
-    },
-  });
 }
 
 function buildSubject(args: ReqDeviceIdRegister): Subject {
