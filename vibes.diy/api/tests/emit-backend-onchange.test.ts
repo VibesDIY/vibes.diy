@@ -5,7 +5,7 @@
 import { beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { MsgBase } from "@vibes.diy/api-types";
 import { ensureSuperThis } from "@vibes.diy/identity";
-import { createTestDeviceCA } from "@fireproof/core-device-id";
+import { createTestDeviceCA } from "@vibes.diy/identity/testing";
 import { emitBackendOnChange } from "@vibes.diy/api-svc/intern/emit-backend-onchange.js";
 import { MAX_ONCHANGE_DEPTH } from "@vibes.diy/api-svc/intern/backend-onchange-policy.js";
 import { createVibeDiyTestCtx } from "./vibe-diy-test-ctx.js";
