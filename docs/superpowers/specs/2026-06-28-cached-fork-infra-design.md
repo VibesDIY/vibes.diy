@@ -457,6 +457,43 @@ appSlug)` access function for the whole namespace, no publish/consent. The cache
   handled separately from the read lane. The offered-chip allowlist should also
   avoid data-destructive transforms.
 
+### Charlie's safety validation (#2890, 2026-06-30)
+
+Charlie validated the converged model against the current branch (spec +
+reader/grant + writer auth). **Verdict: directionally correct; the bless gate is
+the right prerequisite for prod; keep the lane preview-flag-only until it lands.**
+No blockers. The substantive additions:
+
+- **Finding A resolution holds — with one condition.** Blessing resolves Finding A
+  **iff** the bless is a **server-authenticated owner action over a specific
+  `{cacheKey, fsId, sourceFsId}` tuple**, and the grant **requires that bless
+  record** (plus the grant-time source-public recheck). If bless is just another
+  unverified map write, Finding A remains. Owner-self-bless in v1 is acceptable
+  self-exposure, not a new third-party exposure.
+- **Invariants are sufficient _if enforced server-side_.** Current code status he
+  confirmed: (a) owner-only in-place code edit — **enforced** (`isOwner` lane +
+  server chat-ownership checks); (b) non-owner stay read-only — **enforced** for
+  the code path (non-owner edit → fork/remix); (c) produce ≠ bless — **not
+  implemented yet** (map is `{fsId, sourceFsId}` only); (d) fail-to-fork —
+  lookup/projection failures already degrade to fork, though a staged-URL grant
+  failure currently lands in `not-grant` UI (safe, but not full auto-fork UX); (e)
+  server-authoritative shield — modeled in spec, **not yet in grant logic**.
+- **Parked hazards confirmed out-of-scope.** #2902 and destructive-evaluation are
+  correctly adjacent; read-lane gating is **not** load-bearing on those fixes —
+  the one caveat is that producer/staging must not re-bind access during stage
+  creation (already noted).
+
+**Prod-enable minimum checklist (Charlie) — acceptance criteria for the bless
+gate:**
+
+1. Add an explicit **bless record** (`{cacheKey, fsId, sourceFsId}`, owner-authed)
+   **+ a revoke path**.
+2. **Require the bless** in both the `getCachedSuggestion` reader and the
+   `get-app-by-fsid` stay allowance.
+3. Keep the **grant-time source-public recheck**.
+4. Tests for: **unblessed → fork**, **blessed → stay**, **revoked → fork**,
+   **non-owner cannot bless / cannot write the mapping**.
+
 ## Open questions (resolve in brainstorm before planning)
 
 1. **Where the dedupe index lives.** D1 table keyed by a hash of `(source,
