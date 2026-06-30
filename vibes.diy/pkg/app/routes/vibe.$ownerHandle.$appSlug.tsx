@@ -522,12 +522,19 @@ export default function VibeIframeWrapper() {
       .catch(() => undefined);
   }, [generation.persistedFsRef, isOwner, ownerHandle, appSlug, vctx.sharedApi]);
 
-  // The production-HEAD version a cached suggestion is keyed against — NEVER the
-  // owner's draft pin (`draftFsId`), which the producer skips (a draft isn't
-  // public). Keeping this identical to the source fsId the producer and a visitor
-  // use is what makes the shield/bless keys line up across owner and visitor. On
-  // the canonical /vibe URL this is `resolvedFsId` (the served production HEAD);
-  // on a versioned URL it's the route `fsId`. (#2917)
+  // Two source versions key the two different jobs (#2917):
+  //
+  //   • `clickSourceFsId` — what a chip CLICK keys against (`resolveCachedRead` in
+  //     handleEditPrompt): `fsId ?? draftFsId ?? resolvedFsId`. The SHIELD is keyed
+  //     on this so it only ever appears when a click would actually hit. On an
+  //     owner draft this is the draft pin, which has no bless entry → no shield AND
+  //     the click misses to the write lane: the shield never makes a promise the
+  //     click won't keep (Codex P2).
+  //   • `cacheSourceFsId` — the production HEAD the producer keys a result against,
+  //     NEVER the draft (`fsId ?? resolvedFsId`). The owner's bless/unbless CONTROL
+  //     is keyed on this so it finds the produce/bless entries regardless of the
+  //     draft pin — owner management, not a read promise.
+  const clickSourceFsId = fsId ?? draftFsId ?? resolvedFsId;
   const cacheSourceFsId = fsId ?? resolvedFsId;
 
   // Derive each visible chip's fast-path state (#2917). The shield is
@@ -539,7 +546,7 @@ export default function VibeIframeWrapper() {
   // capture the exact tuples the writes need. Gated on the preview flag, so prod
   // stays a no-op. Best-effort: any lookup error just leaves a chip un-decorated.
   useEffect(() => {
-    if (!cachedSuggestionsEnabled || !ownerHandle || !appSlug || !cacheSourceFsId || cardChips.length === 0) {
+    if (!cachedSuggestionsEnabled || !ownerHandle || !appSlug || (!clickSourceFsId && !cacheSourceFsId) || cardChips.length === 0) {
       setChipFastPaths({});
       chipFastPathTuplesRef.current = {};
       return;
@@ -561,31 +568,39 @@ export default function VibeIframeWrapper() {
       const tuples: typeof chipFastPathTuplesRef.current = {};
       await Promise.all(
         cardChips.map(async (chip) => {
-          const key = cachedSuggestionKey({ source: { ownerHandle, appSlug, fsId: cacheSourceFsId }, transform: chip });
+          // Shield key = the CLICK key, so the badge and the click lane agree.
           let shielded = false;
-          try {
-            const r = await vctx.sharedApi.getCachedSuggestion({ ownerHandle, appSlug, key });
-            shielded = r.isOk() && Boolean(r.Ok().fsId);
-          } catch {
-            // Soft-fail: leave the chip un-shielded (it falls to the write lane on click).
+          if (clickSourceFsId) {
+            const shieldKey = cachedSuggestionKey({ source: { ownerHandle, appSlug, fsId: clickSourceFsId }, transform: chip });
+            try {
+              const r = await vctx.sharedApi.getCachedSuggestion({ ownerHandle, appSlug, key: shieldKey });
+              shielded = r.isOk() && Boolean(r.Ok().fsId);
+            } catch {
+              // Soft-fail: leave the chip un-shielded (it falls to the write lane on click).
+            }
           }
-          const produced = produceMap[key];
-          const blessed = blessMap[key];
+          // Control key = the production-HEAD key the produce/bless entries live under.
+          const prodKey = cacheSourceFsId
+            ? cachedSuggestionKey({ source: { ownerHandle, appSlug, fsId: cacheSourceFsId }, transform: chip })
+            : undefined;
+          const produced = prodKey ? produceMap[prodKey] : undefined;
+          const blessed = prodKey ? blessMap[prodKey] : undefined;
           states[chip] = {
             shielded,
-            // Owner can bless a produced-but-not-shielded result, and unbless a
-            // shielded (blessed) one. The shield is the server's word on "blessed".
-            canBless: isOwner && Boolean(produced) && !shielded,
-            canUnbless: isOwner && shielded,
+            // Bless/unbless availability comes from the bless MAP, not the shield —
+            // so a latent bless (blessed but app currently private → no shield) stays
+            // revocable instead of flipping back to "Feature" (Codex P2).
+            canBless: isOwner && Boolean(produced) && !blessed,
+            canUnbless: isOwner && Boolean(blessed),
           };
           tuples[chip] = {
-            ...(produced ? { bless: { key, fsId: produced.fsId, sourceFsId: produced.sourceFsId } } : {}),
+            ...(produced && prodKey ? { bless: { key: prodKey, fsId: produced.fsId, sourceFsId: produced.sourceFsId } } : {}),
             // Revoke matches the FULL blessed tuple; fall back to the produce tuple
             // if the bless map is momentarily absent.
-            ...(blessed
-              ? { revoke: { key, fsId: blessed.fsId, sourceFsId: blessed.sourceFsId } }
-              : produced
-                ? { revoke: { key, fsId: produced.fsId, sourceFsId: produced.sourceFsId } }
+            ...(blessed && prodKey
+              ? { revoke: { key: prodKey, fsId: blessed.fsId, sourceFsId: blessed.sourceFsId } }
+              : produced && prodKey
+                ? { revoke: { key: prodKey, fsId: produced.fsId, sourceFsId: produced.sourceFsId } }
                 : {}),
           };
         })
@@ -597,7 +612,17 @@ export default function VibeIframeWrapper() {
     return () => {
       cancelled = true;
     };
-  }, [cachedSuggestionsEnabled, isOwner, ownerHandle, appSlug, cacheSourceFsId, cardChips, vctx.sharedApi, fastPathBump]);
+  }, [
+    cachedSuggestionsEnabled,
+    isOwner,
+    ownerHandle,
+    appSlug,
+    clickSourceFsId,
+    cacheSourceFsId,
+    cardChips,
+    vctx.sharedApi,
+    fastPathBump,
+  ]);
 
   // Owner blesses a produced chip → it becomes a fast-path "stay" (the shield
   // appears). Best-effort, owner-gated server-side; re-derives the fast-path state
