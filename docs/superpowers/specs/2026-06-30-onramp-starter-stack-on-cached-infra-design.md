@@ -57,10 +57,17 @@ slug (a different curated app), so it is **not** a same-namespace stay. jchris's
 call: for the curated spine, **a new namespace is appropriate** — the destination
 is a pre-built, public, curated app, so the jump is still instant, login-free, and
 fork-free; only the "same data namespace" property differs, and an on-ramp visitor
-has no data to carry yet. So spine jumps and same-slug stays share **one** instant
-affordance; the shield's _meaning_ broadens from "stay in this exact namespace" to
-"**instant · curated · no codegen · no login**," which a new-namespace curated read
-satisfies.
+has no data to carry yet. So a spine jump is a **first-class, instant, curated**
+affordance — not second-class.
+
+**Affordance is OQ-C (open).** Whether the spine jump reuses the same shield glyph
+(unified affordance, the shield's _meaning_ broadening to "instant · curated · no
+codegen · no login") or gets a **distinct glyph** while keeping that same promise
+is unresolved. jchris leaned unified; Charlie (#2950 review) recommends a distinct
+glyph so the shield keeps its precise, server-authoritative same-namespace meaning
+(a client-asserted "stays here" is a documented phishing risk). Both keep the jump
+instant + curated + no-login; only the visual differs. Resolved before the plan —
+see OQ-C.
 
 ## Grounding in the current code
 
@@ -108,11 +115,21 @@ text is generated **from the curated graph**, so the graph stays the single sour
 of truth and the seed chat can't drift from it. The seed turn is pinned to the
 vibe's deployed `fsId` (version-scoped chip semantics).
 
+> **Guardrail — seed turns are display-only and non-producible (Charlie #2950).**
+> A synthetic seed turn supplies chip _labels_ only. It must be explicitly marked
+> non-producible (excluded from produce registration) so a produce→bless tuple can
+> **only** originate from real codegen output, never from a fabricated turn. The
+> serve path stays the sole authority (blessed tuple + visibility + source recheck
+> in `get-cached-suggestion` / `get-app-by-fsid` / `ensure-app-settings`); the seed
+> chat never becomes a producible source. (Precision, Charlie #2950: the enforced
+> source condition is **production/public source version**, not strict "latest
+> public HEAD" latestness — phrase it that way throughout.)
+
 > The authoring tool that writes these seed turns is an implementation concern; the
 > spec's requirement is only **what must be true**: each curated starter carries a
 > turn whose narration yields its curated chips through the unmodified
-> `getVibeChips` projection. (Open question OQ-A below: exactly where/how the seed
-> turn is persisted.)
+> `getVibeChips` projection, and that turn is non-producible. (Open question OQ-A
+> below: exactly where/how the seed turn is persisted.)
 
 ### 3. The dispatch pre-check — the only change to `handleEditPrompt`
 
@@ -203,12 +220,20 @@ This design re-grounds the pre-cached-model children; it does not re-file them:
   param. Remaining sub-question for the plan: are edges keyed to a specific
   deployed `fsId` (so a later starter version can re-aim or drop an edge), or
   slug-scoped (match on any resolved version of the slug)? v1 keys to the deployed
-  HEAD, which the resolved version equals on the canonical starter URL.
-- **OQ-C — affordance rendering.** The unified instant affordance covers both spine
-  jumps (cross-slug) and same-slug stays. Does the spine jump reuse the existing
-  shield decoration as-is, or get a subtly distinct glyph (e.g. "→") while keeping
-  the same "instant · curated" promise? (Pure presentation; the shield stays
-  server-authoritative for same-slug stays.)
+  production version, which the resolved version equals on the canonical starter URL.
+- **OQ-C — affordance rendering (needs jchris's call).** Does the spine jump reuse
+  the existing shield glyph (unified), or get a distinct glyph (e.g. "→") while
+  keeping the same instant + curated + no-login promise? **Charlie (#2950)
+  recommends distinct** — keep the shield's precise, server-authoritative
+  same-namespace "stays here" meaning, since a client-asserted "stays here" is a
+  documented phishing risk. jchris leaned unified. Either way the same-slug stay
+  shield stays server-authoritative; only the cross-slug jump's glyph is in
+  question. Pure presentation; decide before the plan.
+- **OQ-D — Q3 trust boundary (settled, Charlie #2950).** The cross-slug nav target
+  coming from the checked-in curated graph (client config) is acceptable **because
+  it is navigation-only** — no grant/serve truth rides on it. The destination
+  keeps the full server-authoritative path: public-visibility check + the same
+  miss-shape / no-oracle behavior; client nav never implies shield or grant truth.
 
 ## References
 
