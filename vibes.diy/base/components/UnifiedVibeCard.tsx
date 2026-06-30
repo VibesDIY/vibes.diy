@@ -768,7 +768,7 @@ function OtherRow({ onSubmitOther }: { readonly onSubmitOther?: (text: string) =
       <input
         value={value}
         onChange={(e) => setValue(e.target.value)}
-        placeholder="Make it your own…"
+        placeholder="Describe a change…"
         className="flex-1 bg-transparent text-sm text-light-primary dark:text-dark-primary outline-none placeholder:text-light-secondary dark:placeholder:text-dark-secondary"
       />
       {/* Round submit button mirroring the homepage / chat composer's send
