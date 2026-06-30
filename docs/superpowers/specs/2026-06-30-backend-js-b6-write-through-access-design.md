@@ -12,11 +12,17 @@ the dormant loop-guard + the `userInfo: null`/`originDepth: 0` seams this slice 
 ## Goal
 
 Make a backend handler's `ctx.db.put(doc)` / `ctx.db.delete(id)` **real** — routed through the **exact
-production write gate** the frontend uses (`putDocEvento`/`deleteDocEvento` → `localInvokeAccessFn` →
-grant-state reduce → fail-closed → `AccessFnOutputs` sidecar), acting as the **trigger's identity**
-(`onChange`→original writer, `fetch`→session user, `scheduled`→owner). Today `ctx.db` throws (the B1–B5
-seam); B6 wires it. This also turns B5's dormant loop-guard **live** (a handler write now carries a
-trusted generation depth) and fills every `userInfo: null` seam.
+production write paths the frontend uses**, acting as the **trigger's identity** (`onChange`→original
+writer, `fetch`→session user, `scheduled`→owner). Today `ctx.db` throws (the B1–B5 seam); B6 wires it.
+This also turns B5's dormant loop-guard **live** (a handler write now carries a trusted generation depth)
+and fills every `userInfo: null` seam.
+
+**Put and delete are different gates (Codex) — B6 must NOT conflate them.** `putDocEvento` runs the full
+access-fn gate (`localInvokeAccessFn` → grant-state reduce → fail-closed → `AccessFnOutputs` upsert);
+`deleteDocEvento` does **not** call `invokeAccessFn` or rebuild grant state — it runs the ACL/DM checks and
+**removes** the stored `AccessFnOutputs` row via the tombstone sidecar. A backend write must reuse
+**whichever** of the two paths matches the op, so backend allow/deny + sidecar behavior is identical to
+frontend writes.
 
 Non-goals: secrets (B7), real egress (B8). Reuse the production access invoker **unchanged** — do **not**
 introduce a second enforcement path.
@@ -41,14 +47,21 @@ The isolate must call **out** to the host. Three structural choices:
 **Proposed: option 1.** Confirm the Worker Loader supports passing a service-binding/Fetcher into a
 dynamically-loaded isolate's `env` (open question 1).
 
-## The server entry — reuse the gate, don't fork it
+## The server entry — reuse the two paths, don't fork them
 
-The host db-callback handler must call the **same** sequence the frontend write path runs
-(`app-documents-write-eventos.ts`), not a copy. Plan: **extract the gate** (steps: load access binding →
-fail-closed invoker check → `resolveActiveHandle` → load access.js by CID → build grant-state reduce from
-stored `AccessFnOutputs` → `localInvokeAccessFn` → enforce anonymous/zero-channel contracts → upsert
-`AccessFnOutputs` inside the seq critical section) into a reusable function that **both** the WS evento
-handler and the backend db-callback call, so there is provably one gate. Identity differences:
+The host db-callback must call the **same** sequence the matching frontend path runs
+(`app-documents-write-eventos.ts`), not a copy — **one path per op**:
+
+- **`put`** → extract `putDocEvento`'s gate (load access binding → fail-closed invoker check →
+  `resolveActiveHandle` → load access.js by CID → build grant-state reduce from stored `AccessFnOutputs` →
+  `localInvokeAccessFn` → enforce anonymous/zero-channel contracts → **upsert** `AccessFnOutputs` inside the
+  seq critical section) into a reusable function both `putDocEvento` and the backend put-callback call.
+- **`delete`** → extract `deleteDocEvento`'s path (ACL/DM checks → tombstone insert → **remove** the stored
+  `AccessFnOutputs` row via the delete sidecar). **No** `invokeAccessFn`, no grant-state rebuild — matching
+  the frontend delete exactly (Codex). Backend deletes must not accidentally run the put gate.
+
+Both extractions give one shared function per op, so backend and frontend writes provably share behavior.
+Identity differences (same for both ops):
 
 | Trigger     | `user` passed to the gate                                                                              |
 | ----------- | ------------------------------------------------------------------------------------------------------ |
@@ -69,12 +82,22 @@ host db-callback as `originDepth`; the host passes it to `emitBackendOnChange` (
 `0`). The depth is **never** read from handler/client input — it rides the same trusted internal channel
 as identity. B5's policy + the suppression test already exist; B6 just feeds them real values.
 
-## Backfill / cold grant-state discipline
+## Backfill / cold grant-state discipline (put path)
 
-Mirror the frontend exactly: build grant-state from stored `AccessFnOutputs`; pass an empty seed only
-when no outputs exist (cold/backfill), live grants otherwise; always pass the real `oldDoc`; always upsert
-the output sidecar inside the seq critical section. A backend write must never widen or hide access by
-skipping the sidecar (the epic's explicit B6 requirement).
+Mirror the frontend **put** path exactly: build grant-state from stored `AccessFnOutputs`; pass an empty
+seed only when no outputs exist (cold/backfill), live grants otherwise; always pass the real `oldDoc`;
+always upsert the output sidecar inside the seq critical section. A backend put must never widen or hide
+access by skipping the sidecar (the epic's explicit B6 requirement). The **delete** path doesn't rebuild
+grant-state — it removes the sidecar row — so this discipline applies to puts only.
+
+## Codex review folded in
+
+**Put and delete are different gates.** The first draft described `ctx.db.delete` as flowing through
+`localInvokeAccessFn` + grant-state + an `AccessFnOutputs` upsert. Verified against
+`app-documents-write-eventos.ts`: only `putDocEvento` calls `invokeAccessFn` (`:249/:257/:338`);
+`deleteDocEvento` (`:710+`) runs ACL/DM checks and **removes** the output row, with no access-fn
+invocation. The spec now splits the two and points backend deletes at the existing tombstone/output-removal
+path, so backend allow/deny + sidecar behavior matches the frontend per-op.
 
 ## Open questions for Charlie
 
