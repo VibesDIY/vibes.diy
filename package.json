@@ -21,7 +21,7 @@
     "build:prod": "pnpm --filter vibes-diy build",
     "serve:prod": "pnpm exec serve -s vibes.diy/pkg/build/client",
     "growth-report": "pnpm --filter @vibes.diy/api-svc run db:inspect-report",
-    "lint": "node ./scripts/check-rules-bag-constructors.mjs && node ./scripts/check-browser-imports.mjs && node ./scripts/check-vendored-skills.mjs && NODE_OPTIONS=--max-old-space-size=8192 eslint . --cache --cache-strategy content",
+    "lint": "node ./scripts/check-rules-bag-constructors.mjs && node ./scripts/check-browser-imports.mjs && node ./scripts/check-workspace-pack-scripts.mjs && node ./scripts/check-vendored-skills.mjs && NODE_OPTIONS=--max-old-space-size=8192 eslint . --cache --cache-strategy content",
     "rules-bag:constructors": "node ./scripts/check-rules-bag-constructors.mjs",
     "knip": "knip",
     "test": "vitest --run",

@@ -1,0 +1,9 @@
+# Workspace packages intentionally using echo-based `scripts.pack` stubs.
+# Keep this allowlist short and remove entries as real pack scripts land.
+
+@vibes.diy/stable-entry
+@vibes.diy/stories
+@vibes.diy/api-test
+@vibes-diy/pkg
+@vibes.diy/app-tests
+@vibes.diy/simple-chat-tests
