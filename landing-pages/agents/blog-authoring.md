@@ -11,6 +11,10 @@ boilerplate, no hand-editing an index, no touching `build.js`.
 2. Add YAML front-matter (see the table below) and write the body in markdown.
 3. Put any images under `landing-pages/images/blog/<slug>/` and reference them
    with **root-absolute** paths: `/images/blog/<slug>/whatever.png`.
+3a. **Give the post an image — every post ships a `thumb`.** If you have a real
+   screenshot, use it. If you don't, generate a branded title card (see
+   "No screenshot? Generate a title card") so the index card and feed image are
+   never a bare text tile. Embed that same image in the body too.
 4. Build + eyeball: `cd landing-pages && pnpm install --ignore-workspace && pnpm build`,
    then open `_site/blog/<slug>.html`, `_site/blog/index.html`, and check
    `_site/blog/feed.xml` / `rss.xml` list the post.
@@ -38,8 +42,11 @@ draft: true # optional — excluded from the build (index, feeds, page) while tr
 - **Same-day ordering:** if two posts share a `date`, give the newer one a later
   time so the index order is deterministic, e.g. `date: 2026-07-01T12:00:00Z`
   vs `...T10:00:00Z`. The displayed date still reads as the calendar day.
-- **`thumb` vs `glyph`:** provide a `thumb` for an image card; omit it and set
-  `glyph` for a monospace text tile instead.
+- **`thumb` vs `glyph`:** **every post should ship a `thumb`** — an image card.
+  Use a real screenshot, or generate a title card (next section). `glyph` is a
+  legacy text-tile fallback only; don't ship a new post with `glyph` and no
+  `thumb`, because the index then shows a flat block of text where every other
+  card has art.
 
 ## Writing the body
 
@@ -113,6 +120,44 @@ colors (no forced-dark distortion); if a shot looks wrongly darkened, re-capture
 from a real browser. See `src/posts/in-place-generation.md` and
 `teaching-codegen-defaults.md` for generated-vibe figures, and
 `the-vibe-owner-viewer-experience.md` for an expanded-switch capture of a live app.
+
+## No screenshot? Generate a title card
+
+Not every post has a natural screenshot — infra, CI, and refactor stories
+especially. Those still need an image so the index isn't a wall of text tiles.
+The standard fallback is a **branded title card**: a duotone (teal → goldenrod)
+treatment of a topical [Unsplash](https://unsplash.com) photo with the post's
+glyph, an overline, and the title set over it, matching the house style of the
+blog index's glyph cards. `scripts/blog-card.js` builds one:
+
+```sh
+node scripts/blog-card.js \
+  --slug retiring-isowner \
+  --photo photo-1582139329536-e7284fece509 \
+  --overline "Access control" \
+  --glyph "isOwner ✗" \
+  --title "The vibe that locked out its owner"
+# → images/blog/retiring-isowner/card.jpg  (1600×900, ~120 KB JPEG)
+```
+
+- **`--photo`** takes an Unsplash photo id (`photo-…`), a full `https://images.unsplash.com/…`
+  URL, or a local file path. Pick something topical — a vault door for an
+  access-control post, runners on a track for CI sharding — the duotone +
+  goldenrod overlay ties any photo back to the brand. To find an id, open the
+  photo on unsplash.com and copy the `photo-…` slug from its CDN `src`.
+- **`--glyph`** is the same short monospace tagline you'd otherwise put in
+  front-matter `glyph` (arrows/symbols like `→ ↑ ✗ ↺ ≠ ·` render fine); it's the
+  hero line of the card. `--overline` is a short uppercase category.
+- The script auto-finds Chromium in cloud sessions (Playwright's under
+  `/opt/pw-browsers`); locally it uses puppeteer's bundled Chrome. Set
+  `PUPPETEER_EXECUTABLE_PATH` to override.
+
+Then wire it into the post exactly like any other image: set
+`thumb: "/images/blog/<slug>/card.jpg"` in front-matter (instead of `glyph`), and
+embed the same card in the body with a `<figure>` after the lede so the post
+carries its own art, not just the index. Caption it for what it illustrates —
+it's a title card, so a thematic one-liner tied to the post's thesis is honest;
+don't caption it as a screenshot.
 
 ## How it's wired (for reference)
 

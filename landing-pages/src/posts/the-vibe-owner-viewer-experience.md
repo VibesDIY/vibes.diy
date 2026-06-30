@@ -3,10 +3,15 @@ title: "Edit a stranger's app, and it's yours"
 date: 2026-06-28T11:00:00Z
 author: "Vibes DIY"
 summary: "The /vibe page now meets you where you are: a non-owner edit forks the app to your handle in place, owners get a private draft they can publish in one tap, and small indicators always tell you whether you're the author, an admin, or a read-only guest."
-glyph: "make it yours →"
+thumb: "/images/blog/the-vibe-owner-viewer-experience/card.jpg"
 ---
 
 You land on someone else's vibe, change one line, and hit save. You don't own it — so where does that edit go? Every Vibe lives at one `/vibe` page, and two very different people show up to the same URL: the owner, who wants to keep editing, and a visitor, who wants to make the thing their own. For a while those two stories pulled the page in opposite directions. This is how we untangled them, so the page does the right thing no matter which person you are.
+
+<figure>
+    <img src="/images/blog/the-vibe-owner-viewer-experience/card.jpg" alt="Illustration card: “make it yours →” set over a glowing neon arrow, in the Vibes DIY teal-and-goldenrod style." loading="lazy">
+    <figcaption>Edit a stranger's app and it forks to your handle, in place — make it yours.</figcaption>
+</figure>
 
 <figure>
     <img src="/images/blog/the-vibe-owner-viewer-experience/bloom-says-switch-mobile.png" alt="The expanded /vibe switch on mobile: a 'Make it your own…' box, three suggestion chips, and Home / Edit / Share controls below the running app" loading="lazy">

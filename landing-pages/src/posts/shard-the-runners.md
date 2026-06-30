@@ -3,10 +3,15 @@ title: "We almost paid for faster CI"
 date: 2026-06-28T07:00:00Z
 author: "Vibes DIY"
 summary: "We almost bought a bigger CI machine. Instead we fanned the test suite across free standard runners — and put the failed-test names where triage actually looks."
-glyph: "shard the runners"
+thumb: "/images/blog/shard-the-runners/card.jpg"
 ---
 
 The ticket said: CI is slow, buy a bigger machine. We almost did — then we pulled the Actions log first, and the answer turned out to be free. The obvious move was a GitHub-hosted larger runner: more cores, faster suite, done. The log changed the plan.
+
+<figure>
+    <img src="/images/blog/shard-the-runners/card.jpg" alt="Illustration card: “shard the runners” set over runners on a track, in the Vibes DIY teal-and-goldenrod style." loading="lazy">
+    <figcaption>Don't buy one fast runner — fan the suite across several free standard ones.</figcaption>
+</figure>
 
 ## The log changed the plan
 

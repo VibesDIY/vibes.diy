@@ -3,7 +3,7 @@ title: "Why our agents don't get a laptop"
 date: 2026-06-28T12:00:00Z
 author: "Vibes DIY"
 summary: "A capability that only works on a hand-configured laptop quietly pushes all the work back to the laptop. Here's why we made cloud containers the default home for agent QA — and three war stories from getting browser validation to run there."
-glyph: "☁ not 💻"
+thumb: "/images/blog/agents-in-the-cloud/card.jpg"
 ---
 
 The fastest way to make an agent's work reproducible is to stop running it on your machine. We want agent work — including browser QA — to happen in ephemeral cloud containers by default: not as a heroic stunt, but as the boring, standard place it runs. The reasoning is almost embarrassingly simple — a capability that only works on a hand-configured laptop quietly pushes everything back toward the laptop.
@@ -15,6 +15,11 @@ That difference is the whole point. A check that needs setup gets skipped under 
 There's a principle hiding in here worth saying out loud: **reproducibility beats power.** The cloud Chromium is not more capable than a developer's Chrome. It's more *uniform*. For an agent, a clean, identical, disposable environment every run is worth more than a powerful bespoke one, because it removes the entire class of "it behaved differently on my setup" failures and makes a result something anyone can re-run and trust.
 
 But wanting agents in the cloud and actually getting them to *see* the product there are two different things. Three war stories from the getting-there.
+
+<figure>
+    <img src="/images/blog/agents-in-the-cloud/card.jpg" alt="Illustration card: “☁ not 💻” set over a dim server room, in the Vibes DIY teal-and-goldenrod style." loading="lazy">
+    <figcaption>Agents don't get a laptop — they get an identical, disposable cloud container every run.</figcaption>
+</figure>
 
 <div class="table-scroll">
 <table>

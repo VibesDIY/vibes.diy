@@ -4,7 +4,7 @@ date: 2026-06-09T12:00:00Z
 author: "Vibes DIY"
 summary: "Every deployed Vibe serves both a live screenshot and its own source. That closes a visual feedback loop an agent can run alone — see the app, fix the code, push, look again — and fan out across dozens of apps at once."
 description: "Every deployed Vibes app exposes a live screenshot and its own source. That closes a visual feedback loop an agent can run by itself — see the app, fix the code, push, look again — and fan out across dozens of apps at once."
-glyph: "look → fix → push ↺"
+thumb: "/images/blog/upgrading-apps-with-screenshots/card.jpg"
 ---
 
 <style>
@@ -81,6 +81,11 @@ glyph: "look → fix → push ↺"
 This site you're reading embeds *hundreds* of live Vibes apps — games, trackers, schedule boards, party tools, one per card across dozens of landing pages. They get generated fast, and fast-generated apps have rough edges: a button hugging the viewport edge, text that's white-on-pale, a game board that overflows on mobile. Polishing them one by one, by hand, in a browser, would be a full-time job nobody wants.
 
 So we don't. We let an agent do it — and the trick that makes that possible is that **every deployed Vibe is both *visible* and *editable* over plain HTTP.**
+
+<figure>
+    <img src="/images/blog/upgrading-apps-with-screenshots/card.jpg" alt="Illustration card: “look → fix → push ↺” set over a backlit keyboard, in the Vibes DIY teal-and-goldenrod style." loading="lazy">
+    <figcaption>Every deployed Vibe serves a live screenshot and its own source — look, fix, push, repeat.</figcaption>
+</figure>
 
 ## Two URLs are the whole story
 

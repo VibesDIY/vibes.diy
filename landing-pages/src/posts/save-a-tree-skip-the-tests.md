@@ -3,7 +3,7 @@ title: "Save a tree, skip the tests: leaner CI for docs-only PRs"
 date: 2026-06-28T06:30:00Z
 author: "Vibes DIY"
 summary: "A README typo doesn't need a Playwright suite and a Postgres cluster. Teaching docs-only PRs to skip the heavy CI work — without falling into the 'required check stuck pending' trap."
-glyph: "docs? skip the suite"
+thumb: "/images/blog/save-a-tree-skip-the-tests/card.jpg"
 ---
 
 A README typo doesn't need a 7.5-minute Playwright suite and a Postgres cluster. But for a long time that's exactly what it got. We make a _lot_ of docs-only commits — notes, `agents/`, blog seeds, READMEs — and every one was paying for the full `compile_test` suite plus the Postgres + Neon-proxy concurrency lane. We were booting service containers to prove that prose didn't break the build.
@@ -11,6 +11,11 @@ A README typo doesn't need a 7.5-minute Playwright suite and a Postgres cluster.
 The preview deploy was already path-filtered, so that part was fine. The waste was the build, the docker test suite, and the pg lane. The goal was narrow: docs-only PRs run install + format-check + lint only (formatting still matters for prose), everything else runs the full cycle, and adding a code commit mid-PR re-enables the full cycle automatically.
 
 What made it interesting wasn't the filter. It was everything that goes wrong if you write the filter the obvious way.
+
+<figure>
+    <img src="/images/blog/save-a-tree-skip-the-tests/card.jpg" alt="Illustration card: “docs? skip the suite” set over a redwood forest, in the Vibes DIY teal-and-goldenrod style." loading="lazy">
+    <figcaption>A README typo doesn't need a Playwright suite — gate the work, never the trigger.</figcaption>
+</figure>
 
 ## The hazard isn't the filter — it's required-check semantics
 

@@ -3,10 +3,15 @@ title: "Teaching an AI you're not 'the owner'"
 date: 2026-06-27T09:00:00Z
 author: "Vibes DIY"
 summary: "Generated apps used to default to owner-gated permissions — broken for everyone but the creator. Here's how we flipped the default to author-owned, steered the model toward multiplayer without ever saying 'don't,' and built a metric so the prompt could iterate itself."
-glyph: "author-owned ▸ default"
+thumb: "/images/blog/teaching-codegen-defaults/card.jpg"
 ---
 
 Ask a model to build an app and it quietly assumes one boss and a wall of permissions. That single default — buried in the system prompt — was making generated apps wrong by reflex. Here are the three moves it took to teach the generator that the default owner is just *you*. (Companion to the [generator eval post](how-we-eval-the-generator.html), which was about measuring quality.)
+
+<figure>
+    <img src="/images/blog/teaching-codegen-defaults/card.jpg" alt="Illustration card: “author-owned ▸ default” set over a macro circuit board, in the Vibes DIY teal-and-goldenrod style." loading="lazy">
+    <figcaption>Teaching the generator that the default owner is just you — author-owned, multiplayer by default.</figcaption>
+</figure>
 
 <figure>
     <img src="/images/blog/teaching-codegen-defaults/shared-meadow-mobile.png" alt="A shared meadow vibe on mobile: a dozen-plus colorful flowers scattered across a soft green gradient, with a faint 'tap the grass to plant a flower' hint at the bottom" loading="lazy">
