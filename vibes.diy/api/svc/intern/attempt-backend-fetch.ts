@@ -1,12 +1,8 @@
-import { exception2Result, stream2uint8array } from "@adviser/cement";
-import type { FileSystemItem } from "@vibes.diy/api-types";
+import { exception2Result } from "@adviser/cement";
 import { parseBackendJsMode, selectBackendExecutor, type BackendExecutor } from "@vibes.diy/vibe-runtime/backend-executor.js";
 import { type WorkerLoaderBinding } from "@vibes.diy/vibe-runtime/worker-loader-executor.js";
-import { parseBackendConfig } from "@vibes.diy/vibe-runtime/parse-backend-config.js";
 import type { VibesApiSQLCtx } from "../types.js";
-import { selectLatestAppPerSlug } from "../public/select-app.js";
-
-const BACKEND_FILENAME = "/backend.js";
+import { loadSelectedBackend } from "./load-selected-backend.js";
 
 /**
  * Why a `fetch` to a vibe's `_api` didn't run, so the caller can render the right
@@ -73,44 +69,23 @@ export async function attemptBackendFetch(vctx: VibesApiSQLCtx, input: AttemptBa
   const executor = rExec.Ok();
   if (executor === undefined) return { reason: "backend_disabled" };
 
-  // 2. Resolve the selected release (production-preferring; same row the viewer sees).
-  const rRow = await exception2Result(() =>
-    selectLatestAppPerSlug(vctx, { ownerHandle: input.ownerHandle, appSlug: input.appSlug })
-  );
-  if (rRow.isErr()) return { reason: "no_release" };
-  const row = rRow.Ok();
-  if (row === undefined) return { reason: "no_release" };
+  // 2. Resolve the selected release + load + parse its /backend.js (shared with the
+  //    B4 scheduled path, so gate and source can't disagree). no_release /
+  //    no_backend_file / source_unreadable map straight to a fallback reason.
+  const loaded = await loadSelectedBackend(vctx, input.ownerHandle, input.appSlug);
+  if (!loaded.ok) return { reason: loaded.reason };
 
-  // 3. Find /backend.js in the canonical filesystem of that release.
-  const fileSystem = (row.fileSystem ?? []) as FileSystemItem[];
-  const backendItem = fileSystem.find((f) => f.fileName === BACKEND_FILENAME);
-  if (backendItem === undefined) return { reason: "no_backend_file" };
-
-  // 4. Load the source bytes from storage.
-  const rSource = await exception2Result(() => loadSource(vctx, backendItem.assetURI));
-  if (rSource.isErr()) return { reason: "source_unreadable" };
-  const source = rSource.Ok();
-  if (source.length === 0) return { reason: "source_unreadable" };
-
-  // 5. Gate: parse THIS release's source. No `fetch` export (or parse errors) ⇒ 404
+  // 3. Gate on THIS release's parse. No `fetch` export (or parse errors) ⇒ 404
   //    without spinning the isolate.
-  const parsed = parseBackendConfig(source);
-  if (!parsed.handlers.includes("fetch")) return { reason: "no_fetch_handler" };
+  if (!loaded.parsed.handlers.includes("fetch")) return { reason: "no_fetch_handler" };
 
-  // 6. Invoke the isolate; return its Response verbatim.
+  // 4. Invoke the isolate; return its Response verbatim.
   const rRes = await exception2Result(async () => {
     const payload = await serializeRequest(input.request);
-    return executor.invoke({ source, handler: "fetch", trigger: { userHandle: input.userHandle ?? null, payload } });
+    return executor.invoke({ source: loaded.source, handler: "fetch", trigger: { userHandle: input.userHandle ?? null, payload } });
   });
   if (rRes.isErr()) return { reason: "executor_error" };
   return { reason: "ok", response: rRes.Ok() };
-}
-
-/** Read a FileSystemItem's stored bytes as text (the render-vibe source-read pattern). */
-async function loadSource(vctx: VibesApiSQLCtx, assetURI: string): Promise<string> {
-  const r = await vctx.storage.fetch(assetURI);
-  if (r.type !== "fetch.ok") throw new Error(`backend source fetch ${r.type} for ${assetURI}`);
-  return vctx.sthis.txt.decode(await stream2uint8array(r.data));
 }
 
 /**
