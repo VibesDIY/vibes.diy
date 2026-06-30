@@ -314,8 +314,22 @@ stacks). The leaves (`bloom-drums`, `bloom-says`) have no outgoing edges, so no 
   where the route `fsId` is absent (sidesteps the Codex #2950 trap without needing
   the `fsId ?? draftFsId ?? resolvedFsId` canonicalization for the match). A
   visitor's fork has a different owner/slug, so an edge can only fire on the
-  curated starter itself. A future per-`fsId` keying (to re-aim/drop an edge on a
-  new starter version) remains an easy extension. See `routes/starter-graph.ts`.
+  curated starter itself.
+
+  **Update (post-redesign): the bless-map move re-coupled this to the source
+  `fsId`; now decoupled again (jchris).** When cross-slug routing moved into the
+  cached-suggestion bless map, the bless became content-addressed under the
+  source's _resolved deployed `fsId`_ (the version-pinned `cachedSuggestionKey`).
+  That meant updating a source Bloom minted a new `fsId` → orphaned the curated
+  edge → forced an administrative re-bless. Fixed by keying curated cross-slug
+  links on the **slug alone** via `cachedSuggestionVibeLinkKey({ ownerHandle,
+appSlug, transform })` (no `fsId`, model-agnostic). `resolveCachedRead` now
+  tries the version-pinned **stay** key first, then falls back to the slug-scoped
+  **link** key, so a same-slug stay (a specific version's cached result, which
+  _should_ break on update) stays `fsId`-pinned while a curated vibe link survives
+  every source-vibe update with zero re-bless. See `api/types/cached-suggestion.ts`
+  and `routes/vibe.$ownerHandle.$appSlug.tsx`.
+
 - **OQ-C — affordance rendering (settled, jchris on Charlie's #2950 rec).**
   **Distinct glyph.** The shield stays server-authoritative and strictly
   same-namespace ("stays here"); it is never drawn for a cross-slug jump. The
