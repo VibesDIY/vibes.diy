@@ -20,7 +20,7 @@ import {
   resolveBuilderOriginFrom,
 } from "@vibes.diy/base";
 import type { ShareMember, ShareViewer, ShareAccess, HandleOption } from "@vibes.diy/base";
-import { isUserSettingDefaultHandle, resolveCachedRead, normalizeTransform } from "@vibes.diy/api-types";
+import { isUserSettingDefaultHandle, resolveCachedRead, normalizeTransform, cachedSuggestionKey } from "@vibes.diy/api-types";
 import { switchActiveHandle, createAndUseHandle, handleAvatarUrl } from "./handle-picker-actions.js";
 import { uploadHandleAvatar } from "../lib/upload-avatar.js";
 import { useYoursNowToast } from "../hooks/use-yours-now-toast.js";
@@ -300,6 +300,11 @@ export default function VibeIframeWrapper() {
   // is still current — so a slow cache-MISS can't fork/navigate after a newer
   // click already resolved (network timing must not pick the result). (Codex P2)
   const cachedReadSeqRef = useRef(0);
+  // Producer (#2801): set when the OWNER runs an offered chip, holding the
+  // (transform, source version) to register as a cached suggestion once the turn
+  // settles. Cleared on any non-offered/non-owner click so a custom prompt is
+  // never cached. The settle effect (below) does the best-effort write.
+  const pendingProduceRef = useRef<{ readonly transform: string; readonly sourceFsId: string } | null>(null);
   useEffect(() => {
     if (autoFiredRef.current) return;
     const p64 = searchParam.get("prompt64");
@@ -399,6 +404,20 @@ export default function VibeIframeWrapper() {
       // anonymous serve path serves an unpublished staged version only when the
       // source app is public AND that tag is present. (#2801)
       const isOfferedChip = cardChips.some((c) => normalizeTransform(c) === normalizeTransform(trimmed));
+
+      // Producer capture (#2801): when the OWNER runs an offered chip, remember
+      // the (transform, source version) so the settle effect registers the cached
+      // suggestion. ONLY offered chips (a custom prompt is never cached — PII),
+      // and skip the owner's unpublished draft as the source — a cached read must
+      // be a transform of PUBLIC source code (the server grant/reader also enforce
+      // this; this is the best-effort client policy, Charlie #2890). Any other
+      // click clears a stale capture. Canonicalize the served fsId ONCE here.
+      const produceSourceFsId = fsId ?? draftFsId ?? resolvedFsId;
+      pendingProduceRef.current =
+        isOwner && isOfferedChip && produceSourceFsId && produceSourceFsId !== draftFsId
+          ? { transform: trimmed, sourceFsId: produceSourceFsId }
+          : null;
+
       if (!isOfferedChip) {
         runWriteLane();
         return;
@@ -439,8 +458,40 @@ export default function VibeIframeWrapper() {
         runWriteLane();
       })();
     },
-    [isOwner, authSignedIn, ownerHandle, appSlug, fsId, navigate, vctx.sthis, vctx.chatApi, generation.sendPrompt, cardChips]
+    [
+      isOwner,
+      authSignedIn,
+      ownerHandle,
+      appSlug,
+      fsId,
+      draftFsId,
+      resolvedFsId,
+      navigate,
+      vctx.sthis,
+      vctx.chatApi,
+      generation.sendPrompt,
+      cardChips,
+    ]
   );
+
+  // Producer settle (#2801): once an owner's in-place chip turn PERSISTS
+  // (persistedFsRef carries the new fsId), register the cached suggestion so the
+  // next visitor's identical chip click is an O(1) read. Best-effort and
+  // idempotent (ensureAppSettings upserts by key) — it must NEVER block or fail
+  // the owner's edit flow (Charlie #2890), so errors are swallowed. Gated on the
+  // pending capture set at click time (offered chips only, public source only).
+  useEffect(() => {
+    const pf = generation.persistedFsRef;
+    const pending = pendingProduceRef.current;
+    if (!pf || !pending || !isOwner || !ownerHandle || !appSlug) return;
+    // Only register for THIS vibe's own settle (persistedFsRef carries full identity).
+    if (pf.ownerHandle !== ownerHandle || pf.appSlug !== appSlug) return;
+    pendingProduceRef.current = null;
+    const key = cachedSuggestionKey({ source: { ownerHandle, appSlug, fsId: pending.sourceFsId }, transform: pending.transform });
+    void vctx.sharedApi
+      .ensureAppSettings({ ownerHandle, appSlug, cachedSuggestion: { key, fsId: pf.fsId, sourceFsId: pending.sourceFsId } })
+      .catch(() => undefined);
+  }, [generation.persistedFsRef, isOwner, ownerHandle, appSlug, vctx.sharedApi]);
 
   // #2772 D2: publish the owner's current draft. Mints a new top-of-stack production
   // server-side (no demote); on success bump the draft resolver so the badge + banner
