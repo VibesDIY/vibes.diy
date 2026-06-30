@@ -1,5 +1,6 @@
 {
   "name": "@vibes.diy/stories",
+  "private": true,
   "type": "module",
   "main": "./index.js",
   "scripts": {
