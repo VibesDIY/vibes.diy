@@ -17,13 +17,13 @@
     "react-dom": "^19.2.7"
   },
   "devDependencies": {
-    "@fireproof/core-cli": "^0.24.19",
     "@storybook/addon-a11y": "^10.4.6",
     "@storybook/addon-docs": "^10.4.6",
     "@storybook/react-vite": "^10.4.6",
     "@tailwindcss/vite": "^4.3.1",
     "storybook": "^10.4.6",
-    "tailwindcss": "^4.3.1"
+    "tailwindcss": "^4.3.1",
+    "@vibes.diy/build-cli": "workspace:*"
   },
   "repository": {
     "type": "git",

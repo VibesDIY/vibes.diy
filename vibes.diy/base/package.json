@@ -22,7 +22,8 @@
   "devDependencies": {
     "@types/qrcode": "^1.5.5",
     "@types/react": "^19.2.14",
-    "@types/react-dom": "^19.2.3"
+    "@types/react-dom": "^19.2.3",
+    "@vibes.diy/build-cli": "workspace:*"
   },
   "repository": {
     "type": "git",

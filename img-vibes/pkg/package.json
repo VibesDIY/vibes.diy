@@ -30,6 +30,6 @@
   ],
   "license": "Apache-2.0",
   "devDependencies": {
-    "@fireproof/core-cli": "0.24.19"
+    "@vibes.diy/build-cli": "workspace:*"
   }
 }

@@ -44,7 +44,8 @@
     "@types/react-dom": "~19.2.2",
     "@vitejs/plugin-react": "5.2.0",
     "typescript": "^6.0.3",
-    "vite": "^7.3.5"
+    "vite": "^7.3.5",
+    "@vibes.diy/build-cli": "workspace:*"
   },
   "repository": {
     "type": "git",

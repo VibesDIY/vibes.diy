@@ -21,7 +21,7 @@
     "arktype": "^2.2.1"
   },
   "devDependencies": {
-    "@fireproof/core-cli": "0.24.19"
+    "@vibes.diy/build-cli": "workspace:*"
   },
   "repository": {
     "type": "git",

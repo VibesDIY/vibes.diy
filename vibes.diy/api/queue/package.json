@@ -25,9 +25,9 @@
   },
   "devDependencies": {
     "@cloudflare/workers-types": "4.20260617.1",
-    "@fireproof/core-cli": "0.24.19",
     "typescript": "^6.0.3",
-    "wrangler": "^4.99.0"
+    "wrangler": "^4.99.0",
+    "@vibes.diy/build-cli": "workspace:*"
   },
   "repository": {
     "type": "git",

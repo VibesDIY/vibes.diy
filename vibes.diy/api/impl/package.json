@@ -21,8 +21,8 @@
     "ws": "^8.21.0"
   },
   "devDependencies": {
-    "@fireproof/core-cli": "0.24.19",
-    "@types/ws": "^8.18.1"
+    "@types/ws": "^8.18.1",
+    "@vibes.diy/build-cli": "workspace:*"
   },
   "repository": {
     "type": "git",

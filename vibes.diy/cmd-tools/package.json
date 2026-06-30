@@ -17,7 +17,8 @@
     "arktype": "^2.2.1"
   },
   "devDependencies": {
-    "vitest": "~4.1.9"
+    "vitest": "~4.1.9",
+    "@vibes.diy/build-cli": "workspace:*"
   },
   "repository": {
     "type": "git",

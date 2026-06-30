@@ -32,7 +32,8 @@
   },
   "devDependencies": {
     "@types/deno": "~2.5.0",
-    "vitest": "~4.1.9"
+    "vitest": "~4.1.9",
+    "@vibes.diy/build-cli": "workspace:*"
   },
   "repository": {
     "type": "git",
