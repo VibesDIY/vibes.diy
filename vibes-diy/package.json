@@ -40,6 +40,7 @@
     "@vibes.diy/api-impl": "workspace:*",
     "@vibes.diy/api-types": "workspace:*",
     "@vibes.diy/call-ai-v2": "workspace:*",
+    "@vibes.diy/cmd-tools": "workspace:*",
     "@vibes.diy/identity": "workspace:*",
     "@vibes.diy/prompts": "workspace:*",
     "arktype": "^2.2.1",

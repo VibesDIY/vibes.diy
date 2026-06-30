@@ -8,6 +8,7 @@ export default defineConfig({
       "vibes.diy/tests/app/ssr/vitest.config.ts",
       "vibes.diy/api/tests/vitest.config.ts",
       "vibes.diy/api/impl/vitest.config.ts",
+      "vibes.diy/cmd-tools/vitest.config.ts",
       "vibes.diy/identity/vitest.config.ts",
       "vibes.diy/pkg/test/vitest.config.ts",
       "call-ai/v2/vitest.browser.config.ts",

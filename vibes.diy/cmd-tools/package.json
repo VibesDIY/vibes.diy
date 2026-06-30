@@ -1,0 +1,26 @@
+{
+  "name": "@vibes.diy/cmd-tools",
+  "version": "0.0.0",
+  "type": "module",
+  "main": "./index.js",
+  "exports": {
+    ".": "./index.js"
+  },
+  "scripts": {
+    "build": "core-cli tsc",
+    "pack": "core-cli build --doPack",
+    "publish": "core-cli build",
+    "test": "vitest --run"
+  },
+  "dependencies": {
+    "@adviser/cement": "^0.5.34",
+    "arktype": "^2.2.1"
+  },
+  "devDependencies": {
+    "vitest": "~4.1.9"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/VibesDIY/vibes.diy.git"
+  }
+}
