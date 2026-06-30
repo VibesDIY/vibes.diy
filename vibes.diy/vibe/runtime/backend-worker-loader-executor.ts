@@ -1,7 +1,13 @@
 import { TxtEnDecoderSingleton } from "@adviser/cement";
 import { transformBackendSource } from "./transform-backend-source.js";
 import { type IsolateFetcher, type WorkerCode, type WorkerLoaderBinding } from "./worker-loader-executor.js";
-import { type BackendDbCallback, type BackendDbOp, type BackendExecutor, type BackendInvokeInput } from "./backend-executor.js";
+import {
+  type BackendDbCallback,
+  type BackendDbOp,
+  type BackendDbResult,
+  type BackendExecutor,
+  type BackendInvokeInput,
+} from "./backend-executor.js";
 
 const MAIN_MODULE = "main.js";
 const BACKEND_MODULE = "backend.js";
@@ -22,6 +28,37 @@ const DB_BINDING = "__VIBES_DB";
 // Internal URL the isolate posts db ops to; the host transport ignores it (it
 // routes by the binding, not the URL) — present only because `fetch` needs one.
 const DB_OP_URL = "https://db.internal/op";
+
+/**
+ * Module-level registry correlating a per-invocation nonce to that invocation's
+ * db callback (#2856 B6 — Charlie's warm-isolate fix). The `__VIBES_DB` env
+ * transport (`dbTransport` below) is a SINGLE stable, identity-free object that
+ * closes over THIS map — never over any per-trigger identity/depth/vctx. So when
+ * `LOADER.get(id, factory)` reuses a warm isolate (whose `env` was captured at
+ * first load, because `id` excludes `env`), each `ctx.db` call still routes to the
+ * CURRENT invocation's callback by the nonce the host minted for it. The isolate
+ * only ever carries the opaque nonce, so handler code can neither forge another
+ * invocation's identity nor read it — identity + loop-guard depth live entirely
+ * host-side in the registered callback. Entries are added before the isolate runs
+ * and removed in a `finally`, so a nonce is live only for its own invocation.
+ */
+const dbCallbackRegistry = new Map<string, BackendDbCallback>();
+
+/**
+ * The single, stable `__VIBES_DB` transport handed to every backend isolate. It
+ * holds NO per-invocation state: it reads `{ nonce, op }` posted by the isolate's
+ * `ctx.db`, looks the callback up by nonce, and runs it. A missing/expired nonce
+ * (a call outside an active invocation) fails closed rather than guessing an
+ * identity — so a warm isolate can never serve a stale or cross-trigger callback.
+ */
+const dbTransport: IsolateFetcher = {
+  async fetch(request: Request): Promise<Response> {
+    const { nonce, op } = (await request.json()) as { nonce?: string; op: BackendDbOp };
+    const cb = nonce ? dbCallbackRegistry.get(nonce) : undefined;
+    const result: BackendDbResult = cb ? await cb(op) : { ok: false, error: "ctx.db is not available (no active call context)" };
+    return new Response(JSON.stringify(result), { headers: { "content-type": "application/json" } });
+  },
+};
 // Internal request URL — the dynamic worker only has the one fetch handler; the
 // real per-trigger handler + context ride the request body (see below).
 const BACKEND_REQUEST_URL = "https://vibe-backend.internal/";
@@ -87,16 +124,18 @@ export function buildBackendWorkerCode(input: {
     `const VIBE = ${vibeLiteral};`,
     // ctx.db (#2856 B6) — the production write gate, reached ONLY through the host
     // `${DB_BINDING}` env binding (never general fetch). The handler supplies just
-    // the doc/id/db; identity + loop-guard depth are host-side, never read from
-    // here. `put`/`delete` resolve AFTER the host commits (same semantics as a
-    // frontend write). When no binding is wired the methods throw (B1 callers / a
-    // mode that didn't supply one) rather than silently no-op.
-    `function makeDb(env, trigger) {`,
+    // the doc/id/db; identity + loop-guard depth are host-side, keyed by the
+    // per-invocation `dbNonce` the host minted for THIS call — never read from or
+    // forgeable here. `put`/`delete` resolve AFTER the host commits (same semantics
+    // as a frontend write; you must `await` them). When no binding/nonce is wired
+    // (B1 callers / a mode without write access) the methods throw rather than
+    // silently no-op.
+    `function makeDb(env, trigger, dbNonce) {`,
     `  const bind = env && env.${DB_BINDING};`,
     `  const defaultDb = trigger && trigger.payload && trigger.payload.dbName;`,
-    `  async function rpc(body) {`,
-    `    if (!bind) throw new Error("ctx.db is not available (no host db binding wired)");`,
-    `    const r = await bind.fetch(${JSON.stringify(DB_OP_URL)}, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) });`,
+    `  async function rpc(op) {`,
+    `    if (!bind || !dbNonce) throw new Error("ctx.db is not available (no host db binding wired)");`,
+    `    const r = await bind.fetch(${JSON.stringify(DB_OP_URL)}, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ nonce: dbNonce, op: op }) });`,
     `    const out = await r.json();`,
     `    if (!out || out.ok !== true) throw new Error((out && out.error) || "ctx.db op failed");`,
     `    return out.id;`,
@@ -117,7 +156,7 @@ export function buildBackendWorkerCode(input: {
     `}`,
     `export default {`,
     `  async fetch(request, env) {`,
-    `    const { handler, trigger } = await request.json();`,
+    `    const { handler, trigger, dbNonce } = await request.json();`,
     // Fail-closed allowlist (per @CharlieHelps): only the three trigger exports may
     // be dispatched, so a request can never reach `default`, `config`, or any other
     // module export via `handlers[handler]`. `hasOwnProperty` so prototype keys
@@ -133,7 +172,7 @@ export function buildBackendWorkerCode(input: {
     `    const ctx = {`,
     `      appInfo: VIBE,`,
     `      userInfo: trigger && trigger.userHandle ? { userHandle: trigger.userHandle } : null,`,
-    `      db: makeDb(env, trigger),`,
+    `      db: makeDb(env, trigger, dbNonce),`,
     `      get secrets() { throw new Error("ctx.secrets is not available yet (wired in #2856 slice B7)"); },`,
     `    };`,
     `    const fn = handlers[handler];`,
@@ -197,43 +236,36 @@ export class WorkerLoaderBackendExecutor implements BackendExecutor {
     const { module } = transformBackendSource(input.source);
     const code = buildBackendWorkerCode({ module, policyVersion: this.opts.policyVersion, vibe: this.opts.vibe });
     // The isolate id is hashed from `code` BEFORE the env transport is attached, so
-    // the per-invocation db binding never enters the hash (env is excluded by
-    // construction) and never fragments the isolate cache. The binding-schema
-    // version is what the hash already folds in (via the `main` comment).
+    // the (stable, shared) db binding never enters the hash and never fragments the
+    // isolate cache. The binding-schema version is what the hash already folds in
+    // (via the `main` comment).
     const id = await hashBackendWorkerCode(code);
-    // Attach the host db capability (#2856 B6) as the `__VIBES_DB` env transport.
-    // Identity-free: it routes the op to the supplied host callback; the trigger
-    // identity + loop-guard depth are bound into that callback host-side, never
-    // carried in env. Absent `input.db` (B1 callers), env stays unset and ctx.db
-    // throws on use.
-    const wired: WorkerCode = input.db ? { ...code, env: { [DB_BINDING]: makeDbBinding(input.db) } } : code;
-    const stub = this.loader.get(id, () => wired);
-    const request = new Request(BACKEND_REQUEST_URL, {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ handler: input.handler, trigger: input.trigger }),
-    });
-    // Return the isolate Response verbatim — never decompose to status/body, or a
-    // fetch handler's headers (Location, Set-Cookie, content-type) get dropped on
-    // the way to the B3 `_api` route (per Codex review).
-    return stub.getEntrypoint().fetch(request);
+    // Mint a per-invocation nonce correlating THIS call's `ctx.db` ops to its host
+    // callback, then attach the SINGLE stable `dbTransport` to env. The identity +
+    // loop-guard depth live in the callback (host-side, keyed by the nonce); env
+    // carries no per-trigger state, so a warm isolate reused across triggers can't
+    // bleed identity/depth (Charlie). Absent `input.db` (B1 callers / no write
+    // access), no nonce is minted and ctx.db throws on use. `env` is always the
+    // same stable transport so isolate `env`-presence can't depend on whichever
+    // invocation loaded the warm isolate first.
+    const nonce = input.db ? crypto.randomUUID() : undefined;
+    if (nonce && input.db) dbCallbackRegistry.set(nonce, input.db);
+    const wired: WorkerCode = { ...code, env: { [DB_BINDING]: dbTransport } };
+    try {
+      const stub = this.loader.get(id, () => wired);
+      const request = new Request(BACKEND_REQUEST_URL, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ handler: input.handler, trigger: input.trigger, dbNonce: nonce }),
+      });
+      // Return the isolate Response verbatim — never decompose to status/body, or a
+      // fetch handler's headers (Location, Set-Cookie, content-type) get dropped on
+      // the way to the B3 `_api` route (per Codex review). `await` so the nonce
+      // stays live for the whole invocation (ctx.db resolves after commit) and is
+      // cleaned up only once the handler — and its awaited writes — finish.
+      return await stub.getEntrypoint().fetch(request);
+    } finally {
+      if (nonce) dbCallbackRegistry.delete(nonce);
+    }
   }
-}
-
-/**
- * Wrap the host `ctx.db` callback as the identity-free `Fetcher` transport placed
- * in the isolate `env` (#2856 B6). The isolate's generated `ctx.db` POSTs a
- * `BackendDbOp` JSON body; this unwraps it, runs the host callback (the production
- * write gate, bound to the trigger identity + depth), and returns the
- * `BackendDbResult` as a JSON `Response`. The handler can only reach this through
- * `ctx.db` — never general `fetch` — so the write capability is unforgeable.
- */
-function makeDbBinding(db: BackendDbCallback): IsolateFetcher {
-  return {
-    async fetch(request: Request): Promise<Response> {
-      const op = (await request.json()) as BackendDbOp;
-      const result = await db(op);
-      return new Response(JSON.stringify(result), { headers: { "content-type": "application/json" } });
-    },
-  };
 }

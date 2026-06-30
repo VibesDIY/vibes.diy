@@ -10,7 +10,7 @@
 
 import { describe, it, expect } from "vitest";
 import { WorkerLoaderBackendExecutor, buildBackendWorkerCode } from "../../../vibe/runtime/backend-worker-loader-executor.js";
-import { type WorkerLoaderBinding } from "../../../vibe/runtime/worker-loader-executor.js";
+import { type WorkerCode, type WorkerLoaderBinding } from "../../../vibe/runtime/worker-loader-executor.js";
 
 const SONOS_BACKEND = `
 export async function fetch(request, ctx) { return new Response("ok"); }
@@ -92,7 +92,7 @@ describe("buildBackendWorkerCode", () => {
   it("ctx.db is wired to the host env binding (B6); ctx.secrets still throws (B7)", () => {
     const main = buildBackendWorkerCode({ module: "x" }).modules[buildBackendWorkerCode({ module: "x" }).mainModule];
     // ctx.db is constructed from the env transport, no longer a throwing getter.
-    expect(main).toContain("db: makeDb(env, trigger)");
+    expect(main).toContain("db: makeDb(env, trigger, dbNonce)");
     expect(main).toContain("env.__VIBES_DB");
     expect(main).not.toMatch(/get db\(\)/);
     // The fetch handler now receives `env` so the binding can flow into ctx.db.
@@ -236,34 +236,82 @@ describe("WorkerLoaderBackendExecutor.invoke (fake binding)", () => {
     expect(f.calls[0].id).toBe(f.calls[1].id);
   });
 
-  // B6: the host db callback is wired as the identity-free `__VIBES_DB` env
-  // transport, and an op posted by the isolate reaches it verbatim.
-  it("wires the db callback as the __VIBES_DB env transport and routes ops to it", async () => {
-    const f = fakeLoader();
-    const seen: unknown[] = [];
-    const db = async (op: unknown) => {
-      seen.push(op);
-      return { ok: true as const, id: "doc-1" };
+  // B6: the host db callback is reached through the stable `__VIBES_DB` env
+  // transport, correlated by the per-invocation `dbNonce` the executor mints. This
+  // loader models the isolate calling `ctx.db.put` → `env.__VIBES_DB.fetch({ nonce,
+  // op })` using the nonce from the request body — the real path.
+  function dbRoutingLoader(op: unknown) {
+    const cache = new Map<string, WorkerCode>(); // models get(id, factory) caching first per id
+    const calls: { id: string; warm: boolean }[] = [];
+    const binding: WorkerLoaderBinding = {
+      get(id, factory) {
+        const warm = cache.has(id);
+        let code = cache.get(id);
+        if (!code) {
+          code = factory() as WorkerCode;
+          cache.set(id, code);
+        }
+        calls.push({ id, warm });
+        const env = code.env as Record<string, { fetch: (r: Request) => Promise<Response> }> | undefined;
+        return {
+          getEntrypoint() {
+            return {
+              fetch: async (req: Request) => {
+                const { dbNonce } = (await req.json()) as { dbNonce?: string };
+                const bind = env?.__VIBES_DB;
+                if (!bind) throw new Error("expected __VIBES_DB binding");
+                // Isolate posts the op wrapped with ITS nonce — never the identity.
+                const r = await bind.fetch(
+                  new Request("https://db.internal/op", { method: "POST", body: JSON.stringify({ nonce: dbNonce, op }) })
+                );
+                return new Response(JSON.stringify(await r.json()), { status: 200 });
+              },
+            };
+          },
+        };
+      },
     };
-    await new WorkerLoaderBackendExecutor(f.binding).invoke({
+    return { binding, calls };
+  }
+
+  it("routes a ctx.db op to the host callback via the per-invocation nonce", async () => {
+    const seen: unknown[] = [];
+    const f = dbRoutingLoader({ kind: "put", db: "todos", doc: { t: 1 }, docId: null });
+    const res = await new WorkerLoaderBackendExecutor(f.binding).invoke({
       source: SONOS_BACKEND,
       handler: "onChange",
       trigger: {},
-      db,
+      db: async (o) => {
+        seen.push(o);
+        return { ok: true, id: "doc-1" };
+      },
     });
-    const code = f.calls[0].code as { env?: Record<string, { fetch: (r: Request) => Promise<Response> }> };
-    expect(code.env).toBeDefined();
-    const binding = code.env?.__VIBES_DB;
-    if (!binding) throw new Error("expected __VIBES_DB binding");
-    // Simulate the isolate posting a put op through the binding.
-    const res = await binding.fetch(
-      new Request("https://db.internal/op", {
-        method: "POST",
-        body: JSON.stringify({ kind: "put", db: "todos", doc: { t: 1 }, docId: null }),
-      })
-    );
-    expect(await res.json()).toEqual({ ok: true, id: "doc-1" });
+    expect(JSON.parse(await res.text())).toEqual({ ok: true, id: "doc-1" });
     expect(seen[0]).toEqual({ kind: "put", db: "todos", doc: { t: 1 }, docId: null });
+  });
+
+  // Charlie's warm-isolate regression: a reused isolate (same id, `env` captured at
+  // first load) must NOT bleed identity/depth. Two invocations of the SAME source
+  // with DIFFERENT callbacks — the second hits the warm cached env, yet its ctx.db
+  // op must route to ITS OWN callback, not the first invocation's.
+  it("no identity/depth bleed across a warm (reused) isolate", async () => {
+    const f = dbRoutingLoader({ kind: "put", db: "d", doc: {}, docId: null });
+    // Distinct callbacks stand in for distinct trigger identities/depths.
+    const res1 = await new WorkerLoaderBackendExecutor(f.binding).invoke({
+      source: SONOS_BACKEND,
+      handler: "fetch",
+      trigger: {},
+      db: async () => ({ ok: true, id: "writer-A" }),
+    });
+    const res2 = await new WorkerLoaderBackendExecutor(f.binding).invoke({
+      source: SONOS_BACKEND,
+      handler: "fetch",
+      trigger: {},
+      db: async () => ({ ok: true, id: "writer-B" }),
+    });
+    expect(f.calls[1].warm).toBe(true); // isolate was reused (same id), env captured at first load
+    expect(JSON.parse(await res1.text()).id).toBe("writer-A");
+    expect(JSON.parse(await res2.text()).id).toBe("writer-B"); // routed to B's callback, not A's
   });
 
   // env is excluded from the isolate hash: the same source with a different db
