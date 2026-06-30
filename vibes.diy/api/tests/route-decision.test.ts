@@ -191,6 +191,12 @@ describe("worker routeDecision", () => {
     expect(decide({ pathname: "/vibe/some-app-slug" })).toBe("legacy-vibe-redirect");
   });
 
+  it("/vibe/prompt (new-build entry) → ssr, NOT legacy-vibe-redirect (#2876)", () => {
+    // A document load of the new-build entry must reach React Router (ChatPrompt),
+    // not 301 to /vibe/og/prompt like a legacy single-segment slug would.
+    expect(decide({ pathname: "/vibe/prompt" })).toBe("ssr");
+  });
+
   it("/vibe/og/<slug> (three segments, og user) → ssr (no double-redirect)", () => {
     expect(decide({ pathname: "/vibe/og/satie-trumpet-8293" })).toBe("ssr");
   });

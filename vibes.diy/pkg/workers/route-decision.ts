@@ -107,6 +107,15 @@ export function routeDecision(req: RouteInput): Route {
     return "vibe-trailing-slash-redirect";
   }
 
+  // /vibe/prompt is the new-build entry (mints a slug then redirects to the real
+  // vibe — the homepage's first-build path, #2876). It looks like a single-segment
+  // legacy vibe slug but is NOT one: a document load of /vibe/prompt?prompt64=…
+  // (OAuth fallback, refresh, copied URL) must reach React Router and render
+  // ChatPrompt, not 301 to /vibe/og/prompt. Exempt it before the legacy rule.
+  if (pathname === "/vibe/prompt") {
+    return "ssr";
+  }
+
   // Legacy two-segment vibe paths: /vibe/<slug> → redirect to /vibe/og/<slug>.
   // Must not match /vibe/og/… (three segments) or any deeper path.
   if (/^\/vibe\/[^/]+$/.test(pathname)) {
