@@ -55,45 +55,47 @@ export async function emitBackendOnChange(vctx: VibesApiSQLCtx, input: EmitBacke
     return;
   }
 
-  // Committed predecessor → oldDoc. A tombstone/absent predecessor reads as null.
-  const tDocs = vctx.sql.tables.appDocuments;
-  const prev = await vctx.sql.db
-    .select({ data: tDocs.data, deleted: tDocs.deleted })
-    .from(tDocs)
-    .where(
-      and(
-        eq(tDocs.ownerHandle, input.ownerHandle),
-        eq(tDocs.appSlug, input.appSlug),
-        eq(tDocs.dbName, input.dbName),
-        eq(tDocs.docId, input.docId),
-        lt(tDocs.seq, input.seq)
-      )
-    )
-    .orderBy(desc(tDocs.seq))
-    .limit(1)
-    .then((r) => r[0]);
-  const oldDoc = prev && prev.deleted !== 1 ? prev.data : null;
-
-  const payload: EvtBackendOnChange = {
-    type: "vibes.diy.evt-backend-onChange",
-    ownerHandle: input.ownerHandle,
-    appSlug: input.appSlug,
-    dbName: input.dbName,
-    docId: input.docId,
-    seq: input.seq,
-    deleted: input.deleted,
-    doc: input.doc,
-    oldDoc,
-    depth: decision.depth,
-    writerUserId: input.writerUserId ?? null,
-  };
-
+  // The write has ALREADY committed — nothing below may fail it. Wrap the whole
+  // side effect (predecessor read AND enqueue) so any failure — a DB read error,
+  // not just an enqueue error — is swallowed + logged, never propagated (Charlie).
   try {
+    // Committed predecessor → oldDoc. A tombstone/absent predecessor reads as null.
+    const tDocs = vctx.sql.tables.appDocuments;
+    const prev = await vctx.sql.db
+      .select({ data: tDocs.data, deleted: tDocs.deleted })
+      .from(tDocs)
+      .where(
+        and(
+          eq(tDocs.ownerHandle, input.ownerHandle),
+          eq(tDocs.appSlug, input.appSlug),
+          eq(tDocs.dbName, input.dbName),
+          eq(tDocs.docId, input.docId),
+          lt(tDocs.seq, input.seq)
+        )
+      )
+      .orderBy(desc(tDocs.seq))
+      .limit(1)
+      .then((r) => r[0]);
+    const oldDoc = prev && prev.deleted !== 1 ? prev.data : null;
+
+    const payload: EvtBackendOnChange = {
+      type: "vibes.diy.evt-backend-onChange",
+      ownerHandle: input.ownerHandle,
+      appSlug: input.appSlug,
+      dbName: input.dbName,
+      docId: input.docId,
+      seq: input.seq,
+      deleted: input.deleted,
+      doc: input.doc,
+      oldDoc,
+      depth: decision.depth,
+      writerUserId: input.writerUserId ?? null,
+    };
+
     await vctx.postQueue({ payload, tid: "queue-event", src: "emitBackendOnChange", dst: "vibes-service", ttl: 1 });
   } catch (err) {
-    // The write already committed — never fail it for an enqueue error. But make
-    // the loss visible (Charlie): a systemic enqueue outage is a stream of dropped
-    // onChange events, observable here rather than silent.
+    // Make the loss visible (Charlie): a systemic emit/enqueue outage is a stream
+    // of dropped onChange events, observable here rather than silent.
     vctx.logger.Error().Err(err).Str("docId", input.docId).Msg("backend_onchange_enqueue_failed");
   }
 }
