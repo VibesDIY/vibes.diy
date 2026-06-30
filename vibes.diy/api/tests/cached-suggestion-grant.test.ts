@@ -220,6 +220,40 @@ describe(
       expect(await readerFsId({ appSlug, ownerHandle, key })).toBeUndefined();
     });
 
+    it("cannot bless a key/tuple with NO matching produced entry (bless depends on produce; Codex)", async () => {
+      const { appSlug, ownerHandle, sourceFsId, stagedFsId } = await publicAppWithStagedVersion();
+
+      // (a) Bless WITHOUT producing first → rejected, nothing servable.
+      const keyA = cachedSuggestionKey({ source: { ownerHandle, appSlug, fsId: sourceFsId }, transform: "never produced" });
+      await bless(api, { appSlug, ownerHandle, key: keyA, fsId: stagedFsId, sourceFsId, op: "bless" });
+      expect(await grantOf(stagedFsId, { appSlug, ownerHandle })).not.toBe("public-access");
+      expect(await readerFsId({ appSlug, ownerHandle, key: keyA })).toBeUndefined();
+
+      // (b) Produce one fsId, then bless a DIFFERENT fsId for the same key → rejected.
+      const keyB = cachedSuggestionKey({ source: { ownerHandle, appSlug, fsId: sourceFsId }, transform: "tuple mismatch" });
+      await produce(api, { appSlug, ownerHandle, key: keyB, fsId: stagedFsId, sourceFsId });
+      await bless(api, { appSlug, ownerHandle, key: keyB, fsId: "z-other-unpublished-fsid", sourceFsId, op: "bless" });
+      expect(await grantOf("z-other-unpublished-fsid", { appSlug, ownerHandle })).not.toBe("public-access");
+      expect(await readerFsId({ appSlug, ownerHandle, key: keyB })).toBeUndefined();
+    });
+
+    it("a STALE revoke (wrong tuple) does NOT unpublish the current bless (Codex)", async () => {
+      const { appSlug, ownerHandle, sourceFsId, stagedFsId } = await publicAppWithStagedVersion();
+      const key = cachedSuggestionKey({ source: { ownerHandle, appSlug, fsId: sourceFsId }, transform: "stale revoke" });
+      await produce(api, { appSlug, ownerHandle, key, fsId: stagedFsId, sourceFsId });
+      await bless(api, { appSlug, ownerHandle, key, fsId: stagedFsId, sourceFsId, op: "bless" });
+      expect(await grantOf(stagedFsId, { appSlug, ownerHandle })).toBe("public-access");
+
+      // Revoke carrying a STALE fsId → no-op; the current bless survives.
+      await bless(api, { appSlug, ownerHandle, key, fsId: "z-stale-old-fsid", sourceFsId, op: "revoke" });
+      expect(await grantOf(stagedFsId, { appSlug, ownerHandle })).toBe("public-access");
+      expect(await readerFsId({ appSlug, ownerHandle, key })).toBe(stagedFsId);
+
+      // Revoke with the correct tuple → removed (forks again).
+      await bless(api, { appSlug, ownerHandle, key, fsId: stagedFsId, sourceFsId, op: "revoke" });
+      expect(await grantOf(stagedFsId, { appSlug, ownerHandle })).not.toBe("public-access");
+    });
+
     it("does NOT serve a BLESSED result when the source was NOT public (dev source)", async () => {
       const { appSlug, ownerHandle, stagedFsId } = await publicAppWithStagedVersion();
       // Bless with a bogus sourceFsId that has no production row → source-was-public fails.
