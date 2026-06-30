@@ -9,7 +9,8 @@
     "./worker-loader-executor.js": "./worker-loader-executor.js",
     "./ssr-source-check.js": "./ssr-source-check.js",
     "./render-vibes.js": "./render-vibes.js",
-    "./parse-backend-config.js": "./parse-backend-config.js"
+    "./parse-backend-config.js": "./parse-backend-config.js",
+    "./backend-executor.js": "./backend-executor.js"
   },
   "scripts": {
     "build": "core-cli tsc",
