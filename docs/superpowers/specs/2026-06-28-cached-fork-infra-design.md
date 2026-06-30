@@ -228,6 +228,34 @@ Negative: a custom prompt never resolves to a read.
 **Still deferred after this PR:** auto/background precompute + spend ceiling
 (OQ#3), read-lane outcome telemetry, and the owner's adopt-in-place-on-hit option.
 
+### Review guardrails (Charlie, #2890 — folded into the implementation)
+
+Charlie approved the direction; these guardrails are committed constraints for the
+implementation:
+
+1. **Storage.** `sourceFsId` is **required** cache metadata, not optional, so the
+   security check and future cleanup are deterministic. Add **bounded retention**
+   (cap older source-versions/chips per app) and **size/count telemetry** so we
+   see when per-row JSON growth becomes the bottleneck (the table-vs-JSON
+   re-evaluation trigger).
+2. **Grant.** Implement as a clearly-named branch (`cachedSuggestionGrant`) in
+   `get-app-by-fsid` (the single access choke point — not a separate serve path
+   that can drift), gated on ALL of: app currently public; requested `fsId`
+   explicitly in that app's cached-suggestion map; the mapping carries
+   `sourceFsId` and that source version is/was public; **deny if the app is
+   tombstoned / unpublished / private**. Emit an **audit reason** whenever this
+   path grants access.
+3. **Producer.** Registration is **idempotent and best-effort — it must never
+   block or fail the owner's generation flow** — and fires only for offered chips.
+   Compute/store the key from the served `effectiveFsId` **at write time** to
+   avoid param drift.
+4. **Reader.** Returns `null` for miss/non-public so it can't become an
+   **existence oracle**, and **reuses `getVibeChips`'s public-visibility
+   semantics** to avoid policy skew.
+5. **Keying.** Treat the route `fsId` as a **hint only**; canonicalize the served
+   `effectiveFsId` **once** and use that same value in both producer and reader
+   paths.
+
 ## Open questions (resolve in brainstorm before planning)
 
 1. **Where the dedupe index lives.** D1 table keyed by a hash of `(source,
