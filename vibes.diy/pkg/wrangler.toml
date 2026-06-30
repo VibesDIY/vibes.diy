@@ -499,7 +499,14 @@ binding = "VIBES_SERVICE"
 
 [env.cli]
 name = "vibes-diy-v2-cli"
-vars = { ENVIRONMENT = "cli" }
+# VIBES_ADMIN_USER_IDS mirrors [env.prod]: cli is an exact prod clone sharing the
+# same prod Clerk/Neon/data plane, and the CLI default route targets
+# `?.stable-entry.=cli` → cli-v2. Admin-on-behalf bless (#2942) is server-only
+# (invoked via the authed API/CLI), and `adminUserIdSet()` reads the CURRENT
+# worker's env — so without this entry an admin bless/revoke routed through cli
+# would fail closed while operating on the prod DB (Codex review). Same prod Clerk
+# instance ⇒ same userId as [env.prod].
+vars = { ENVIRONMENT = "cli", VIBES_ADMIN_USER_IDS = "user_35qSx41QMpmEitTV4nltiIT4I7f" }
 logpush = true
 routes = [
   { pattern = "cli-v2.vibesdiy.net/*", zone_name = "vibesdiy.net" },
