@@ -129,7 +129,28 @@ The **within-vibe (same-slug) fsId bless path is behaviorally unchanged** — th
 cross-slug branch is additive; stays fall through it. (Schemas loosened `fsId`/
 `sourceFsId` to optional so one record covers both shapes, with runtime guards at
 every serve/write site so a malformed stay fails safe.) Tests: same-slug grant/
-reader/bless (10) + cross-slug bless/target-public/revoke/owner-gated (4) all green.
+reader/bless (10) + cross-slug bless/target-public/revoke/owner-gated + hardening (8) all green.
+
+### Charlie #2941 safety review — resolutions
+
+Verdict: **approve-with-conditions; no new data-exposure bypass.** Resolutions:
+
+- **No produce-before-bless for a cross-slug link** — accepted as curated
+  navigation. **Condition met:** malformed/mixed bless payloads (partial `target*`
+  tuple, or a stay+link mix) are **rejected at write time** in `ensure-app-settings`,
+  not just missed at read. (Tests: "rejects malformed/mixed bless payloads at WRITE
+  time".)
+- **Cross-owner linking — open, no restriction (jchris).** "Target must be public"
+  is sufficient for confidentiality (no hidden data served); the residual is
+  social/trust, accepted. A source owner may link a chip at any **public** vibe,
+  any owner. Kept a non-gating telemetry line (`crossOwnerCuratedLink`) for
+  visibility only.
+- **Optional-schema + runtime guards (v1) → `kind` discriminated union (later).**
+  Ships on optional+guards (fail-safe; Charlie confirmed no serve/grant bypass).
+  The `kind`-union migration is an aftertask: **#2965**.
+- **Hardening assertions added** (Charlie's list): grant-lane isolation (a
+  cross-slug bless never grants a staged `fsId`), uniform no-oracle miss shape
+  across reasons, and target-visibility-flip (public → not) → immediate miss.
 
 > Sections below describe the original curated-graph approach; read them for the
 > product intent (the tree, the seed chats, the `/start` tiles), but the **routing**
