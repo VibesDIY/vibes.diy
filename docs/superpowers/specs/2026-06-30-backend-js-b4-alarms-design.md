@@ -81,10 +81,21 @@ owner` — `scheduled` acts as the vibe owner).
 
 ### 4. State (DO storage)
 
-`{ intervalMs: number | null, attempt: number, lastRunAt?: string }`. The `(ownerHandle, appSlug)`
-identity is recovered from the DO name / the arm route's headers (same `x-vibe-*` convention as B3), so
-no separate identity write. Building `VibesApiSQLCtx` inside `alarm()` — which has **no incoming
-request** — synthesizes a minimal internal `Request` for `cfServeAppCtx` (open question 3).
+`{ ownerHandle: string, appSlug: string, intervalMs: number | null, attempt: number, lastRunAt?: string }`.
+
+**The identity MUST be persisted, not recovered from the DO name (Codex review).** `idFromName` is a
+one-way hash, so `backendDoName(owner, slug)` can't be reversed; and `alarm()` has **no incoming
+request**, so the `x-vibe-*` headers the `fetch`/`arm` paths read aren't available either. If the DO is
+evicted between `/arm` and the tick (the normal cold-start case), `alarm()` would have no way to know
+_which vibe to run_ — it could neither `selectLatestAppPerSlug(owner, slug)` nor set
+`trigger.userHandle`, so the `scheduled` handler would fail or silently skip. So the `/arm` route
+**writes `{ownerHandle, appSlug}` into DO storage** (alongside the interval/attempt state), and `alarm()`
+reads its identity from there. A self-check: an `alarm()` that finds no stored identity (e.g. an alarm
+that somehow outlived its state) clears itself (`deleteAlarm`) rather than throwing.
+
+Building `VibesApiSQLCtx` inside `alarm()` — which has no incoming request — synthesizes a minimal
+internal `Request` for `cfServeAppCtx` (open question 3); the vibe identity comes from storage, not that
+synthetic request.
 
 ## Lifecycle summary
 
@@ -110,6 +121,17 @@ request** — synthesizes a minimal internal `Request` for `cfServeAppCtx` (open
 - **Release-scope:** the armed interval follows the **production** release, not a later dev push (the
   B3 release-skew regression, applied to scheduling).
 - **fetch not gated:** a `fetch` during a running tick is served (not blocked behind the timer lane).
+- **Cold-start identity (Codex):** an `alarm()` on a freshly-constructed DO (state read from storage,
+  no prior `fetch`/`arm` in memory) recovers `(owner, slug)` from storage and runs the right vibe; an
+  `alarm()` with no stored identity self-clears instead of throwing.
+
+## Codex review folded in
+
+Codex caught that the original state shape omitted the vibe identity, so a DO evicted between `/arm` and
+the tick couldn't know which vibe to run (`idFromName` is one-way; `alarm()` has no request headers).
+Fixed above: `/arm` persists `{ownerHandle, appSlug}` to DO storage and `alarm()` reads it from there
+(with a self-clear when absent). This also settles part of open question 3 — the identity is durable
+state, independent of the synthetic request used only to build `vctx`.
 
 ## Open questions for review (Charlie)
 
