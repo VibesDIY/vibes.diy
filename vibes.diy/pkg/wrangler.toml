@@ -294,7 +294,9 @@ binding = "VIBES_SERVICE"
 [env.preview]
 name = "vibes-diy-v2-preview"
 workers_dev = true
-vars = { ENVIRONMENT = "preview" }
+# VIBES_CACHED_SUGGESTIONS="on" enables the cached-suggestion read lane (#2801)
+# in PR previews only, so it can be validated end-to-end without touching prod.
+vars = { ENVIRONMENT = "preview", VIBES_CACHED_SUGGESTIONS = "on" }
 # No routes here — the builder SPA + API are served on the workers.dev URL.
 # The PR-preview workflow ALSO attaches per-PR routes on the CLI
 # (`wrangler deploy --route pr-<N>.vibespreview.dev/* --route *.pr-<N>.vibespreview.dev/*`)

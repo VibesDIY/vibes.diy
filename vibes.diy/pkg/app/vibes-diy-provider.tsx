@@ -46,6 +46,10 @@ export interface VibesDiyWebVars {
     // codegen chat to a stable per-user DO shard (warm reuse) with admission-control
     // auto-roll, instead of a fresh random-UUID DO per chat. Off → legacy behavior.
     CODEGEN_PER_USER_SHARD?: string;
+    // Cached-suggestion read lane (#2801): "on" enables the client producer +
+    // read-lane lookup. Set in [env.preview] so it's validated in PR previews
+    // only; off (undefined) everywhere else.
+    VIBES_CACHED_SUGGESTIONS?: string;
   };
 }
 

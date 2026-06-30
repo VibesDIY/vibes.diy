@@ -25,6 +25,11 @@ export const vibesSvcEnv = type({
   // unrecognized parses to "off", so SSR stays dark unless explicitly enabled.
   "VIBES_SSR?": "string",
 
+  // Cached-suggestion read lane (#2801): "on" enables the client producer +
+  // read-lane lookup; anything else (incl. undefined) keeps it dark. Set in
+  // [env.preview] so we validate in the PR preview without touching prod.
+  "VIBES_CACHED_SUGGESTIONS?": "string",
+
   // GTM_CONTAINER_ID: "string",
   // POSTHOG_KEY: "string",
   // POSTHOG_HOST: "string",

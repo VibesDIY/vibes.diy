@@ -132,6 +132,9 @@ export default function VibeIframeWrapper() {
   useDocumentTitle(`${ownerHandle} - ${appSlug} - vibes.diy`);
   // const [searchParam] = useSearchParams();
   const vctx = useVibesDiy();
+  // Cached-suggestion read lane (#2801): gated on the preview env flag so prod
+  // stays inert (no producer writes, no read-lane lookups) until validated.
+  const cachedSuggestionsEnabled = vctx.webVars.env.VIBES_CACHED_SUGGESTIONS === "on";
   // Vibe-scoped doc-plane ops (e.g. subscribeViewerGrants) run on AppSessions
   // (vibeApi) so doc-changed fan-out + local access-fn eval happen locally.
   // These are VIBE_ONLY ops, so there is no codegen fallback — when vibeApi is
@@ -411,11 +414,14 @@ export default function VibeIframeWrapper() {
       // and skip the owner's unpublished draft as the source — a cached read must
       // be a transform of PUBLIC source code (the server grant/reader also enforce
       // this; this is the best-effort client policy, Charlie #2890). Any other
-      // click clears a stale capture. Canonicalize the served fsId ONCE here.
-      const produceSourceFsId = fsId ?? draftFsId ?? resolvedFsId;
+      // click clears a stale capture. Canonicalize the served fsId ONCE here and
+      // reuse it for BOTH the producer capture and the read-lane lookup (Charlie:
+      // canonicalize effectiveFsId once; route `fsId` is a hint). Gated on the
+      // preview flag so prod stays inert.
+      const sourceFsId = fsId ?? draftFsId ?? resolvedFsId;
       pendingProduceRef.current =
-        isOwner && isOfferedChip && produceSourceFsId && produceSourceFsId !== draftFsId
-          ? { transform: trimmed, sourceFsId: produceSourceFsId }
+        cachedSuggestionsEnabled && isOwner && isOfferedChip && sourceFsId && sourceFsId !== draftFsId
+          ? { transform: trimmed, sourceFsId }
           : null;
 
       if (!isOfferedChip) {
@@ -436,15 +442,18 @@ export default function VibeIframeWrapper() {
       const submitSeq = ++cachedReadSeqRef.current;
       void (async () => {
         const decision = await resolveCachedRead({
-          source: { ownerHandle, appSlug, ...(fsId ? { fsId } : {}) },
+          source: { ownerHandle, appSlug, ...(sourceFsId ? { fsId: sourceFsId } : {}) },
           transform: trimmed,
-          // The precache index — a (source-version, transform) → staged-fsId map,
-          // gated readable by isReadableCachedGrant — is the deferred backend half
-          // (#2801). Until it exists there is nothing to resolve, so the lookup
-          // returns null and every chip is a write: a correct no-op that lights up
-          // the instant precache starts staging versions. This is the single seam
-          // the backend plugs into.
-          lookup: async () => null,
+          // Resolve the staged result via the anonymous getCachedSuggestion
+          // projection. Gated on the preview flag (off in prod until validated);
+          // when off the lookup returns null and every chip is a write — a correct
+          // no-op. A miss / not-visible returns no fsId → write lane.
+          lookup: async ({ key }) => {
+            if (!cachedSuggestionsEnabled) return null;
+            const r = await vctx.sharedApi.getCachedSuggestion({ ownerHandle, appSlug, key });
+            const hitFsId = r.isOk() ? r.Ok().fsId : undefined;
+            return hitFsId ? { ownerHandle, appSlug, fsId: hitFsId } : null;
+          },
         });
         // Drop a completion a newer chip click has superseded (last-click-wins):
         // otherwise a slow cache-MISS could runWriteLane/fork after a newer click
@@ -469,8 +478,10 @@ export default function VibeIframeWrapper() {
       navigate,
       vctx.sthis,
       vctx.chatApi,
+      vctx.sharedApi,
       generation.sendPrompt,
       cardChips,
+      cachedSuggestionsEnabled,
     ]
   );
 
