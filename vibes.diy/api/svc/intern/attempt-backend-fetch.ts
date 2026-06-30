@@ -1,6 +1,6 @@
 import { exception2Result, stream2uint8array } from "@adviser/cement";
 import type { FileSystemItem } from "@vibes.diy/api-types";
-import { selectBackendExecutor, type BackendExecutor, type BackendJsMode } from "@vibes.diy/vibe-runtime/backend-executor.js";
+import { parseBackendJsMode, selectBackendExecutor, type BackendExecutor } from "@vibes.diy/vibe-runtime/backend-executor.js";
 import { type WorkerLoaderBinding } from "@vibes.diy/vibe-runtime/worker-loader-executor.js";
 import { parseBackendConfig } from "@vibes.diy/vibe-runtime/parse-backend-config.js";
 import type { VibesApiSQLCtx } from "../types.js";
@@ -31,10 +31,13 @@ export interface AttemptBackendFetchInput {
   readonly request: Request;
   /** Resolved session user for an authenticated call, or `null` (webhook / anonymous). */
   readonly userHandle?: string | null;
-  /** `parseBackendJsMode(env.BACKEND_JS)` — `off` leaves the path dark. */
-  readonly mode: BackendJsMode;
-  /** The Cloudflare `env.LOADER` Worker Loader binding (required for `loader` mode). */
-  readonly loader?: WorkerLoaderBinding;
+  /** Raw `env.BACKEND_JS` value; parsed here. Anything but `loader` ⇒ off (dark). */
+  readonly backendJs?: string;
+  /**
+   * The Cloudflare `env.LOADER` Worker Loader binding (required for `loader` mode).
+   * Typed `unknown` so callers (the DO) don't need a vibe-runtime dep; cast here.
+   */
+  readonly loader?: unknown;
   /** Egress-policy / binding-schema version, folded into the isolate id. */
   readonly policyVersion?: string;
 }
@@ -60,8 +63,8 @@ export async function attemptBackendFetch(vctx: VibesApiSQLCtx, input: AttemptBa
   // 1. Executor (flag gate). `off` ⇒ undefined; a misconfigured `loader` throws
   //    inside the fallback boundary rather than 500-ing.
   const rExec = exception2Result((): BackendExecutor | undefined =>
-    selectBackendExecutor(input.mode, {
-      loader: input.loader,
+    selectBackendExecutor(parseBackendJsMode(input.backendJs), {
+      loader: input.loader as WorkerLoaderBinding | undefined,
       policyVersion: input.policyVersion,
       vibe: { ownerHandle: input.ownerHandle, appSlug: input.appSlug },
     })

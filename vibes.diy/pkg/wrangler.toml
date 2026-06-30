@@ -24,6 +24,10 @@ bindings = [
   { name = "SESSIONS", class_name = "Sessions" },
   { name = "CODEGEN_SESSIONS", class_name = "Sessions" },
   { name = "USER_NOTIFY", class_name = "UserNotify" },
+  # Per-app backend.js (#2856 B3): per-vibe backend Durable Object. Local class in
+  # every env (no cross-script) so there's no 10061 ordering trap; traffic stays
+  # gated behind BACKEND_JS until B8.
+  { name = "BACKEND_DO", class_name = "BackendDO" },
 ]
 
 [[migrations]]
@@ -88,6 +92,12 @@ new_classes = ["Sessions"]
 tag = "v10"
 deleted_classes = ["ChatSessions", "AppSessions", "SharedSessions"]
 
+# v11: BackendDO — per-app backend.js runtime (#2856 B3). Local class in every env
+# (no cross-script binding), so append-only with no prod-before-cli ordering trap.
+[[migrations]]
+tag = "v11"
+new_classes = ["BackendDO"]
+
 [[d1_databases]]
 binding = "DB"
 database_name = "dev-vibes-diy-v2"
@@ -121,6 +131,10 @@ bindings = [
   { name = "SESSIONS", class_name = "Sessions" },
   { name = "CODEGEN_SESSIONS", class_name = "Sessions" },
   { name = "USER_NOTIFY", class_name = "UserNotify" },
+  # Per-app backend.js (#2856 B3): per-vibe backend Durable Object. Local class in
+  # every env (no cross-script) so there's no 10061 ordering trap; traffic stays
+  # gated behind BACKEND_JS until B8.
+  { name = "BACKEND_DO", class_name = "BackendDO" },
 ]
 
 [[env.local.migrations]]
@@ -165,6 +179,11 @@ new_classes = ["Sessions"]
 [[env.local.migrations]]
 tag = "v10"
 deleted_classes = ["ChatSessions", "AppSessions", "SharedSessions"]
+
+# v11: BackendDO — per-app backend.js runtime (#2856 B3).
+[[env.local.migrations]]
+tag = "v11"
+new_classes = ["BackendDO"]
 
 [[env.local.d1_databases]]
 binding = "DB"
@@ -205,6 +224,10 @@ bindings = [
   { name = "SESSIONS", class_name = "Sessions" },
   { name = "CODEGEN_SESSIONS", class_name = "Sessions" },
   { name = "USER_NOTIFY", class_name = "UserNotify" },
+  # Per-app backend.js (#2856 B3): per-vibe backend Durable Object. Local class in
+  # every env (no cross-script) so there's no 10061 ordering trap; traffic stays
+  # gated behind BACKEND_JS until B8.
+  { name = "BACKEND_DO", class_name = "BackendDO" },
 ]
 
 [[env.dev.migrations]]
@@ -249,6 +272,11 @@ new_classes = ["Sessions"]
 [[env.dev.migrations]]
 tag = "v10"
 deleted_classes = ["ChatSessions", "AppSessions", "SharedSessions"]
+
+# v11: BackendDO — per-app backend.js runtime (#2856 B3).
+[[env.dev.migrations]]
+tag = "v11"
+new_classes = ["BackendDO"]
 
 [[env.dev.d1_databases]]
 binding = "DB"
@@ -291,6 +319,10 @@ bindings = [
   { name = "SESSIONS", class_name = "Sessions" },
   { name = "CODEGEN_SESSIONS", class_name = "Sessions" },
   { name = "USER_NOTIFY", class_name = "UserNotify" },
+  # Per-app backend.js (#2856 B3): per-vibe backend Durable Object. Local class in
+  # every env (no cross-script) so there's no 10061 ordering trap; traffic stays
+  # gated behind BACKEND_JS until B8.
+  { name = "BACKEND_DO", class_name = "BackendDO" },
 ]
 
 [[env.preview.migrations]]
@@ -336,6 +368,11 @@ new_classes = ["Sessions"]
 tag = "v10"
 deleted_classes = ["ChatSessions", "AppSessions", "SharedSessions"]
 
+# v11: BackendDO — per-app backend.js runtime (#2856 B3).
+[[env.preview.migrations]]
+tag = "v11"
+new_classes = ["BackendDO"]
+
 [[env.preview.d1_databases]]
 binding = "DB"
 database_name = "dev-vibes-diy-v2"
@@ -376,6 +413,10 @@ bindings = [
   { name = "SESSIONS", class_name = "Sessions" },
   { name = "CODEGEN_SESSIONS", class_name = "Sessions" },
   { name = "USER_NOTIFY", class_name = "UserNotify" },
+  # Per-app backend.js (#2856 B3): per-vibe backend Durable Object. Local class in
+  # every env (no cross-script) so there's no 10061 ordering trap; traffic stays
+  # gated behind BACKEND_JS until B8.
+  { name = "BACKEND_DO", class_name = "BackendDO" },
 ]
 
 [[env.prod.migrations]]
@@ -420,6 +461,11 @@ new_classes = ["Sessions"]
 [[env.prod.migrations]]
 tag = "v10"
 deleted_classes = ["ChatSessions", "AppSessions", "SharedSessions"]
+
+# v11: BackendDO — per-app backend.js runtime (#2856 B3).
+[[env.prod.migrations]]
+tag = "v11"
+new_classes = ["BackendDO"]
 
 [[env.prod.d1_databases]]
 binding = "DB"
@@ -478,6 +524,9 @@ bindings = [
   # "Sessions" appears both local and cross-script — disambiguated by script_name.
   { name = "SESSIONS", class_name = "Sessions", script_name = "vibes-diy-v2-prod" },
   { name = "CODEGEN_SESSIONS", class_name = "Sessions" },
+  # Per-app backend.js (#2856 B3): local on cli (no cross-script), so cli runs its
+  # own BackendDO with no prod-before-cli ordering dependency.
+  { name = "BACKEND_DO", class_name = "BackendDO" },
 ]
 
 [[env.cli.migrations]]
@@ -548,6 +597,12 @@ new_classes = ["Sessions"]
 [[env.cli.migrations]]
 tag = "v10"
 deleted_classes = ["ChatSessions", "AppSessions", "SharedSessions"]
+
+# v11: BackendDO — per-app backend.js runtime (#2856 B3). cli runs a LOCAL BackendDO
+# (no cross-script binding), so no prod-before-cli ordering dependency.
+[[env.cli.migrations]]
+tag = "v11"
+new_classes = ["BackendDO"]
 
 [[env.cli.d1_databases]]
 binding = "DB"

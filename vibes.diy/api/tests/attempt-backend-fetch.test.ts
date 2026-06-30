@@ -103,7 +103,7 @@ describe("attemptBackendFetch (#2856 B3)", { timeout: 30000 }, () => {
       appSlug,
       request: new Request("https://vibe.internal/webhooks/x", { method: "POST", body: "{}" }),
       userHandle: "alice",
-      mode: "loader",
+      backendJs: "loader",
       loader: f.binding,
     });
     assert(out.reason === "ok", `expected ok, got ${out.reason}`);
@@ -123,7 +123,7 @@ describe("attemptBackendFetch (#2856 B3)", { timeout: 30000 }, () => {
       ownerHandle,
       appSlug,
       request: new Request("https://vibe.internal/"),
-      mode: "off",
+      backendJs: "off",
     });
     expect(out.reason).toBe("backend_disabled");
   });
@@ -135,7 +135,7 @@ describe("attemptBackendFetch (#2856 B3)", { timeout: 30000 }, () => {
       ownerHandle,
       appSlug,
       request: new Request("https://vibe.internal/"),
-      mode: "loader",
+      backendJs: "loader",
       loader: fakeLoader().binding,
     });
     expect(out.reason).toBe("no_backend_file");
@@ -149,7 +149,7 @@ describe("attemptBackendFetch (#2856 B3)", { timeout: 30000 }, () => {
       ownerHandle,
       appSlug,
       request: new Request("https://vibe.internal/"),
-      mode: "loader",
+      backendJs: "loader",
       loader: f.binding,
     });
     expect(out.reason).toBe("no_fetch_handler");
@@ -162,7 +162,7 @@ describe("attemptBackendFetch (#2856 B3)", { timeout: 30000 }, () => {
       ownerHandle,
       appSlug: "does-not-exist",
       request: new Request("https://vibe.internal/"),
-      mode: "loader",
+      backendJs: "loader",
       loader: fakeLoader().binding,
     });
     expect(out.reason).toBe("no_release");
