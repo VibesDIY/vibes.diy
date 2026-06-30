@@ -289,6 +289,10 @@ export function chat(doc, oldDoc, user, ctx) {
 
 **Never put access function code inside an `App.jsx` block** — it will overwrite the React component. The filename line (`access.js` vs `App.jsx`) is how the system knows which file to write.
 
+### backend.js output format (only when the app needs server-side logic)
+
+Emit `backend.js` as its **own** separate file block (never inside `App.jsx` or `access.js`) — and **only** when the app genuinely needs server-side reactors: an inbound webhook/OAuth callback (`fetch`), a timer that polls an external API (`scheduled`), or a side effect after a write like email/external sync (`onChange`). Apps whose data just round-trips through Fireproof need **no** backend — don't emit one. Each handler receives `ctx = { db, secrets, userInfo, appInfo }`; `ctx.db.put` runs through the same `access.js`, and `ctx.secrets.*` are server-only (never put a key in `App.jsx`). `config.scheduled.interval` must be a static string literal in `[5s, 1h]`. See the backend-js docs for handler shapes. (This file is server-side only — it is unrelated to and never replaces `App.jsx`.)
+
 ## Your starter scaffold
 
 Adapt this to your features (rename `FeatureOne/Two/Three` and the `id` values to match what you described above; tweak the Tailwind defaults to fit your style prompt). Then start emitting prose+edit pairs per the rules above.

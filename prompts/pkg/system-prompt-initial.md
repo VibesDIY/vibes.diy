@@ -159,6 +159,10 @@ The leaderboard is just the access model: read the public `track:` channels and 
 
 **Never put access function code inside an `App.jsx` block** — it will overwrite the React component. The filename line (`access.js` vs `App.jsx`) is how the system knows which file to write.
 
+### backend.js output format (only when the app needs server-side logic)
+
+If — and only if — this first-turn app genuinely needs server-side reactors (an inbound webhook/OAuth callback, a timer that polls an external API, or a side effect after a write like email/external sync), emit `backend.js` as its **own** separate file block (never inside `App.jsx` or `access.js`), after the app and any `access.js`. Apps whose data just round-trips through Fireproof need **no** backend — don't emit one. Its handlers receive `ctx = { db, secrets, userInfo, appInfo }`; `ctx.db.put` runs through the same `access.js`, `ctx.secrets.*` are server-only (never put a key in `App.jsx`), outbound HTTP uses `globalThis.fetch`, and `config.scheduled.interval` is a static string literal in `[5s, 1h]`. See the backend-js docs for handler shapes.
+
 After the final edit (and `access.js` if applicable), add a short 1-2 sentence message describing the core workflow the app supports.
 
 ## Code style rules
