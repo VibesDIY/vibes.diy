@@ -3,6 +3,7 @@ import { parseBackendJsMode, selectBackendExecutor, type BackendExecutor } from 
 import { type WorkerLoaderBinding } from "@vibes.diy/vibe-runtime/worker-loader-executor.js";
 import type { VibesApiSQLCtx } from "../types.js";
 import { loadSelectedBackend } from "./load-selected-backend.js";
+import { makeBackendDbCallback, resolveBackendWriteIdentity } from "./backend-db-callback.js";
 
 /**
  * Why a `fetch` to a vibe's `_api` didn't run, so the caller can render the right
@@ -25,8 +26,15 @@ export interface AttemptBackendFetchInput {
   readonly appSlug: string;
   /** The `_api` request, already prefix-stripped to a path rooted at `/`. */
   readonly request: Request;
-  /** Resolved session user for an authenticated call, or `null` (webhook / anonymous). */
+  /** Resolved session user handle for an authenticated call, or `null` (webhook / anonymous) — surfaces as `ctx.userInfo`. */
   readonly userHandle?: string | null;
+  /**
+   * The verified session `userId` for an authenticated `_api` call, or `null`
+   * (webhook / anonymous). B6 binds it into `ctx.db` so a fetch handler's write
+   * acts AS the session user through the production gate — never read from handler
+   * input.
+   */
+  readonly userId?: string | null;
   /** Raw `env.BACKEND_JS` value; parsed here. Anything but `loader` ⇒ off (dark). */
   readonly backendJs?: string;
   /**
@@ -79,10 +87,23 @@ export async function attemptBackendFetch(vctx: VibesApiSQLCtx, input: AttemptBa
   //    without spinning the isolate.
   if (!loaded.parsed.handlers.includes("fetch")) return { reason: "no_fetch_handler" };
 
-  // 4. Invoke the isolate; return its Response verbatim.
+  // 4. Invoke the isolate; return its Response verbatim. B6: bind the session
+  //    user's identity into ctx.db (generation 0 — a fetch write has no onChange
+  //    parent, so its commits emit onChange at depth 1).
+  const identity = await resolveBackendWriteIdentity(vctx, {
+    ownerHandle: input.ownerHandle,
+    appSlug: input.appSlug,
+    userId: input.userId ?? null,
+  });
+  const db = makeBackendDbCallback(vctx, { ownerHandle: input.ownerHandle, appSlug: input.appSlug, identity, originDepth: 0 });
   const rRes = await exception2Result(async () => {
     const payload = await serializeRequest(input.request);
-    return executor.invoke({ source: loaded.source, handler: "fetch", trigger: { userHandle: input.userHandle ?? null, payload } });
+    return executor.invoke({
+      source: loaded.source,
+      handler: "fetch",
+      trigger: { userHandle: identity.userContext?.userHandle ?? input.userHandle ?? null, payload },
+      db,
+    });
   });
   if (rRes.isErr()) return { reason: "executor_error" };
   return { reason: "ok", response: rRes.Ok() };

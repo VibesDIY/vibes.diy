@@ -3,6 +3,7 @@ import { parseBackendJsMode, selectBackendExecutor, type BackendExecutor } from 
 import { type WorkerLoaderBinding } from "@vibes.diy/vibe-runtime/worker-loader-executor.js";
 import type { VibesApiSQLCtx } from "../types.js";
 import { loadSelectedBackend } from "./load-selected-backend.js";
+import { makeBackendDbCallback, resolveOwnerWriteIdentity } from "./backend-db-callback.js";
 
 /**
  * Outcome of one `scheduled` tick (#2856 B4). `ran: true` ⇒ the handler completed
@@ -58,11 +59,17 @@ export async function attemptBackendScheduled(
     return { ran: false, reason: "no_schedule" };
   }
 
+  // B6: a scheduled handler's ctx.db writes act AS the vibe owner; generation 0
+  // (no onChange parent), so its commits emit onChange at depth 1.
+  const identity = await resolveOwnerWriteIdentity(vctx, { ownerHandle: input.ownerHandle, appSlug: input.appSlug });
+  const db = makeBackendDbCallback(vctx, { ownerHandle: input.ownerHandle, appSlug: input.appSlug, identity, originDepth: 0 });
+
   const rRes = await exception2Result(async () =>
     executor.invoke({
       source: loaded.source,
       handler: "scheduled",
       trigger: { userHandle: input.ownerHandle, payload: { scheduledTime: input.scheduledTime } },
+      db,
     })
   );
   if (rRes.isErr()) return { ran: false, reason: "handler_error" };

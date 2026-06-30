@@ -3,6 +3,7 @@ import { parseBackendJsMode, selectBackendExecutor, type BackendExecutor } from 
 import { type WorkerLoaderBinding } from "@vibes.diy/vibe-runtime/worker-loader-executor.js";
 import type { VibesApiSQLCtx } from "../types.js";
 import { loadSelectedBackend } from "./load-selected-backend.js";
+import { makeBackendDbCallback, resolveBackendWriteIdentity } from "./backend-db-callback.js";
 
 /**
  * Outcome of one `onChange` invocation (#2856 B5). `ran: true` ⇒ the handler
@@ -26,6 +27,18 @@ export interface AttemptBackendOnChangeInput {
   readonly deleted: boolean;
   readonly doc: unknown;
   readonly oldDoc?: unknown | null;
+  /**
+   * The original writer's user id, carried on the B5 queue envelope. B6 resolves it
+   * to the writer's active handle so a handler's `ctx.db` write acts AS the original
+   * writer — never read from handler input.
+   */
+  readonly writerUserId?: string | null;
+  /**
+   * The TRUSTED loop-guard generation of this onChange (B5 envelope `depth`). A
+   * handler-induced `ctx.db.put` commits and emits its onChange at `depth + 1`,
+   * suppressed past the cap. Rides the trusted internal channel, never handler input.
+   */
+  readonly depth?: number;
   /** Raw `env.BACKEND_JS`; anything but `loader` ⇒ off (dark). */
   readonly backendJs?: string;
   /** The Cloudflare `env.LOADER` Worker Loader binding (typed `unknown`; cast here). */
@@ -39,8 +52,9 @@ export interface AttemptBackendOnChangeInput {
  * **selected release** (shared `loadSelectedBackend`, so `onChange` runs the same
  * code `_api`/cron serve), runs the `onChange` export in the per-vibe isolate.
  *
- * `userHandle: null` is the **B6 seam** — B5 does not yet resolve the writer's
- * identity (it rides the queue envelope as `writerUserId` for B6 to plumb).
+ * B6 resolves the writer's identity from the envelope's `writerUserId` and binds it
+ * (plus the trusted generation `depth`) into `ctx.db`, so a handler write acts AS
+ * the original writer through the production gate.
  *
  * Never throws — every failure is a structured `OnChangeOutcome` the queue handler
  * turns into ack-vs-retry.
@@ -63,12 +77,28 @@ export async function attemptBackendOnChange(vctx: VibesApiSQLCtx, input: Attemp
     return { ran: false, reason: "no_onChange_handler" };
   }
 
+  // B6: resolve the original writer's identity (`writerUserId` off the B5 envelope)
+  // and bind it + the trusted generation depth into ctx.db. A handler write acts AS
+  // the writer and re-enters the production gate; its own onChange emits at
+  // `depth + 1` (loop guard goes live).
+  const identity = await resolveBackendWriteIdentity(vctx, {
+    ownerHandle: input.ownerHandle,
+    appSlug: input.appSlug,
+    userId: input.writerUserId ?? null,
+  });
+  const db = makeBackendDbCallback(vctx, {
+    ownerHandle: input.ownerHandle,
+    appSlug: input.appSlug,
+    identity,
+    originDepth: input.depth ?? 0,
+  });
+
   const rRes = await exception2Result(async () =>
     executor.invoke({
       source: loaded.source,
       handler: "onChange",
       trigger: {
-        userHandle: null,
+        userHandle: identity.userContext?.userHandle ?? null,
         payload: {
           doc: input.doc,
           oldDoc: input.oldDoc ?? null,
@@ -78,6 +108,7 @@ export async function attemptBackendOnChange(vctx: VibesApiSQLCtx, input: Attemp
           deleted: input.deleted,
         },
       },
+      db,
     })
   );
   if (rRes.isErr()) return { ran: false, reason: "handler_error" };
