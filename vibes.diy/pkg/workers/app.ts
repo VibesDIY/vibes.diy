@@ -16,7 +16,7 @@ import { CFInjectMutable, cfServeAppCtx, isInternalReferer } from "@vibes.diy/ap
 import { BuildURI, NPMPackage, URI } from "@adviser/cement";
 import { CFEnv } from "@vibes.diy/api-types";
 import { parseBackendApiTarget, routeDecision } from "./route-decision.js";
-import { backendDoName, BACKEND_OWNER_HEADER, BACKEND_SLUG_HEADER } from "@vibes.diy/api-svc/intern/backend-do-addr.js";
+import { backendDoName, sanitizeBackendApiForwardHeaders } from "@vibes.diy/api-svc/intern/backend-do-addr.js";
 import { vibePkgCacheControl } from "./vibe-pkg-cache.js";
 import { sendCapiPageView, sendCapiViewContent } from "./meta-capi.js";
 import { sendCapiCompleteRegistration } from "./capi-complete-registration.js";
@@ -191,8 +191,10 @@ export default {
       }
       const fwdUrl = BuildURI.from(request.url).pathname(target.backendPath).toString();
       const fwd = new Request(fwdUrl, request as unknown as Request);
-      fwd.headers.set(BACKEND_OWNER_HEADER, target.ownerHandle);
-      fwd.headers.set(BACKEND_SLUG_HEADER, target.appSlug);
+      // Trust boundary: strip the client-controllable `x-backend-op` and pin
+      // owner/slug to the resolved target, so a public `_api` request can't invoke
+      // a control-plane op (arm/onChange) or redirect to another vibe (Charlie).
+      sanitizeBackendApiForwardHeaders(fwd.headers, { ownerHandle: target.ownerHandle, appSlug: target.appSlug });
       const id = env.BACKEND_DO.idFromName(backendDoName(target.ownerHandle, target.appSlug));
       return env.BACKEND_DO.get(id).fetch(fwd as unknown as CFRequest);
     }

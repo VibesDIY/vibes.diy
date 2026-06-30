@@ -247,3 +247,11 @@ No new binding work: B4 already cross-script-bound `BACKEND_DO` into `wrangler.q
    `onChange`. Now the emit sites pass a hardcoded `originDepth: 0` (frontend writes are always generation
    0); the trusted generation for handler-induced writes is threaded by B6 on an internal channel, never
    from `req`.
+3. **The internal `x-backend-op` dispatch is not client-reachable.** The `_api` forward in `app.ts` cloned
+   the client request (`new Request(fwdUrl, request)`) with caller headers intact and only overwrote
+   owner/slug, so a public `/_api/...` request carrying `x-backend-op: onchange` (or `arm`) would invoke a
+   control-plane op directly — running the handler outside the post-commit path with an attacker-controlled
+   body. Now `app.ts` runs `sanitizeBackendApiForwardHeaders` before forwarding: it **strips
+   `BACKEND_OP_HEADER`** (so `_api` traffic reaches the DO with no op → falls through to fetch) and pins
+   owner/slug to the route-resolved target (no cross-vibe redirect). Unit-tested. This also closes the same
+   vector for B4's `arm`.
