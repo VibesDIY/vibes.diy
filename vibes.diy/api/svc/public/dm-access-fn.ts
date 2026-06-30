@@ -17,14 +17,11 @@
 import { sha256 } from "@noble/hashes/sha2.js";
 import { base58btc } from "multiformats/bases/base58";
 
-/** The synthetic appSlug every DM db uses. */
-export const DM_APP_SLUG = "dm";
-/** The single dbName DM messages live in (and the access-fn export name). */
-export const DM_DB_NAME = "messages";
-
-// Source string for the built-in DM access function. The export name MUST be
-// the DM db name ("messages") so extractExportSource / the invoker pick it up.
-// `ctx.ownerHandle` is the channel slug "_d.<a>.<b>" (participants sorted).
+// Source string for the built-in DM access function. The export name MUST be the
+// DM db name ("messages") so extractExportSource / the invoker pick it up. DM dbs
+// are identified by the `_d.` ownerHandle slug (isDirectChannel), under appSlug
+// "dm" / dbName "messages". `ctx.ownerHandle` is the channel slug "_d.<a>.<b>"
+// (participants sorted).
 export const DM_BUILTIN_SOURCE = `export function messages(doc, oldDoc, user, ctx) {
   const slug = ctx.ownerHandle;
   if (!slug || slug.indexOf("_d.") !== 0) {

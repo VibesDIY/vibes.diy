@@ -84,4 +84,32 @@ describe("filterDocsByChannel (unit)", () => {
     const result = filterDocsByChannel(docs, outputs, "user-a", effectiveChannels, new Set(), true);
     expect(result).toEqual(docs); // both returned despite "secret" not in effectiveChannels
   });
+
+  // requireOutput (#2290 fail-closed): a db like DMs, where every legitimate doc
+  // has an access-fn output, must NOT fall into the "no outputs → return all"
+  // path for legacy/output-less docs we deliberately don't migrate.
+  it("requireOutput drops every doc when there are no outputs (no world-readable legacy rows)", () => {
+    const docs = [
+      { _id: "d1", title: "legacy-dm" },
+      { _id: "d2", title: "legacy-dm-2" },
+    ];
+    expect(filterDocsByChannel(docs, [], "user-a", new Set(), new Set(), false, true)).toEqual([]);
+    // default (requireOutput=false) keeps the old behavior: empty outputs → all docs.
+    expect(filterDocsByChannel(docs, [], "user-a", new Set(), new Set(), false, false)).toEqual(docs);
+  });
+
+  it("requireOutput drops a doc with no output row even when others have one", () => {
+    const docs = [
+      { _id: "d1", title: "channelized" },
+      { _id: "d2", title: "no-output-legacy" },
+    ];
+    const outputs = [mkOutput("d1", { channels: ["c"] })];
+    const result = filterDocsByChannel(docs, outputs, "user-a", new Set(["c"]), new Set(), false, true);
+    expect(result.map((d) => d._id)).toEqual(["d1"]);
+  });
+
+  it("requireOutput overrides adminOverride (a DM admin still can't see output-less rows)", () => {
+    const docs = [{ _id: "d1", title: "legacy-dm" }];
+    expect(filterDocsByChannel(docs, [], "user-a", new Set(), new Set(), true, true)).toEqual([]);
+  });
 });

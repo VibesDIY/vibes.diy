@@ -33,8 +33,7 @@ import {
   type AccessDescriptor,
 } from "./access-function.js";
 import { aclAllows, resolveDbAcl } from "./db-acl-resolver.js";
-import { resolveAccessBinding, resolveAccessFnSource } from "./access-binding-resolver.js";
-import { DM_APP_SLUG } from "./dm-access-fn.js";
+import { resolveAccessBinding, resolveAccessFnSource, resolveDmParticipantHandle } from "./access-binding-resolver.js";
 import { GrantReduce, extractContribution, newSeededReduce } from "./grant-reduce.js";
 import { isFileMeta } from "./files-url-mint.js";
 import { clientWsSend, connectionAdminMode } from "./app-documents-shared.js";
@@ -151,6 +150,10 @@ export const putDocEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqPutDoc>, 
       const req = ctx.validated.payload;
       const vctx = ctx.ctx.getOrThrow<VibesApiSQLCtx>("vibesApiCtx");
       const userId = req._auth?.verifiedAuth.claims.userId ?? null;
+      // DM dbs are identified by the `_d.<a>.<b>` ownerHandle slug, not the
+      // appSlug — a user-created vibe can legitimately use the slug "dm" and must
+      // keep the normal ACL path (Codex review).
+      const isDm = isDirectChannel(req.ownerHandle);
       let isOwner = false;
 
       // DM dbs (#2290) are governed entirely by the built-in DM access fn
@@ -158,7 +161,7 @@ export const putDocEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqPutDoc>, 
       // so a participant's authenticated write reaches the fn (the fn denies
       // non-participants and anonymous writers). Every other authenticated write
       // still passes the standard ACL gate first.
-      if (userId && req.appSlug !== DM_APP_SLUG) {
+      if (userId && !isDm) {
         // Authenticated user: standard ACL gate
         const docAccessResult = await checkDocAccess(vctx, userId, req.appSlug, req.ownerHandle, connectionAdminMode(ctx));
         const access = docAccessResult.access;
@@ -247,14 +250,21 @@ export const putDocEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqPutDoc>, 
 
       if (afbRow?.accessFnCid && vctx.invokeAccessFn) {
         const fnCid = afbRow.accessFnCid;
-        // Resolve writer's ACTIVE handle from userId — req.ownerHandle is the DB
-        // owner, not the writer. resolveActiveHandle (defaultHandle setting, else
-        // any bound handle) is the same resolver who-am-i uses for the viewer
+        // Resolve the writer's handle from userId — req.ownerHandle is the DB
+        // owner, not the writer. For a DM the writer must act as the handle that
+        // appears in the `_d.` channel slug (a multi-handle user can be addressed
+        // at a non-default handle, and the built-in fn checks participation by
+        // handle). For every other db it's their ACTIVE handle (defaultHandle,
+        // else any bound handle) — the same resolver who-am-i uses for the viewer
         // payload, so a multi-handle writer's published authorHandle matches the
-        // handle the access fn validates against — no spurious "not author"
-        // (#2275). Anonymous writers have no userId; userContext stays null so the
-        // access fn must opt in via allowAnonymous.
-        const writerHandle = userId ? await resolveActiveHandle(vctx, userId) : undefined;
+        // handle the access fn validates against (#2275, Codex review). Anonymous
+        // writers have no userId; userContext stays null so the access fn must opt
+        // in via allowAnonymous.
+        const writerHandle = userId
+          ? isDm
+            ? await resolveDmParticipantHandle(vctx, userId, req.ownerHandle)
+            : await resolveActiveHandle(vctx, userId)
+          : undefined;
         const userContext = writerHandle ? { userHandle: writerHandle, isOwner } : null;
 
         // Existing doc so the access fn can enforce update-ownership checks.
@@ -708,12 +718,14 @@ export const deleteDocEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqDelete
       const afbRow = await resolveAccessBinding(vctx, req.ownerHandle, req.appSlug, dbName);
       const effectiveFnCid = afbRow?.accessFnCid;
 
-      if (req.appSlug === DM_APP_SLUG) {
+      if (isDirectChannel(req.ownerHandle)) {
         // DM deletes flow through the built-in DM access fn, not the ACL path:
         // only a participant may delete. The fn ignores `doc`, gating purely on
-        // `user` + `ctx.ownerHandle` (the channel slug). Fail closed when no
-        // invoker is available, mirroring the putDoc gate. (#2290)
-        const writerHandle = await resolveActiveHandle(vctx, userId);
+        // `user` + `ctx.ownerHandle` (the channel slug). Resolve the caller's
+        // channel-participant handle (a multi-handle user can be addressed at a
+        // non-default handle). Fail closed when no invoker is available, mirroring
+        // the putDoc gate. (#2290, Codex review)
+        const writerHandle = await resolveDmParticipantHandle(vctx, userId, req.ownerHandle);
         const dmSource = afbRow ? await resolveAccessFnSource(vctx, afbRow.accessFnCid, afbRow.accessFnAssetUri) : undefined;
         const gate =
           afbRow && vctx.invokeAccessFn

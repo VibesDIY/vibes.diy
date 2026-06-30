@@ -22,6 +22,7 @@ import {
   VibesDiyError,
   ResError,
   W3CWebSocketEvent,
+  isDirectChannel,
 } from "@vibes.diy/api-types";
 import { unwrapMsgBase } from "../unwrap-msg-base.js";
 import { VibesApiSQLCtx } from "../types.js";
@@ -31,8 +32,7 @@ import { type } from "arktype";
 import { checkDocAccess, DocAccessLevel, canRead, isPublicReadable } from "./access-helpers.js";
 import type { AccessDescriptor } from "./access-function.js";
 import { resolveDbAcl } from "./db-acl-resolver.js";
-import { resolveAccessBinding } from "./access-binding-resolver.js";
-import { DM_APP_SLUG } from "./dm-access-fn.js";
+import { resolveAccessBinding, resolveDmParticipantHandle } from "./access-binding-resolver.js";
 import { extractContribution, newSeededReduce } from "./grant-reduce.js";
 import { normalizeChannels } from "./normalize-channels.js";
 import { filterDocsByChannel } from "./channel-read-filter.js";
@@ -220,8 +220,9 @@ export const queryDocsEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqQueryD
       const afbRowQ = await resolveAccessBinding(vctx, req.ownerHandle, req.appSlug, req.dbName);
 
       // Access check: ACL-aware (read defaults to canRead || isPublicReadable).
+      const isDm = isDirectChannel(req.ownerHandle);
       let access: DocAccessLevel = "none";
-      if (req.appSlug === DM_APP_SLUG) {
+      if (isDm) {
         // DM reads are gated entirely by channel membership — the front gate
         // defers to the channel filter below (the synthetic DM binding has no
         // app-level read access to pass readAllowed). `access` stays "none" so
@@ -311,11 +312,17 @@ export const queryDocsEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqQueryD
           reduce.addDoc(row.docId, extractContribution(JSON.parse(row.output) as AccessDescriptor));
         }
 
-        // Reader's ACTIVE handle (defaultHandle setting, else any bound handle) —
-        // shared with the write path and the viewer payload so a multi-handle
-        // reader's channel/grant access is computed for the handle they're
-        // actually acting as, not an arbitrary bound one (#2275).
-        const userHandle = req._auth ? ((await resolveActiveHandle(vctx, req._auth.verifiedAuth.claims.userId)) ?? null) : null;
+        // Reader's effective handle. For a DM the reader must act as the handle
+        // that appears in the `_d.` channel slug (a multi-handle user can be
+        // addressed at a non-default handle); for every other db it's their
+        // ACTIVE handle (defaultHandle, else any bound handle), shared with the
+        // write path and viewer payload so channel/grant access is computed for
+        // the handle they're acting as (#2275, Codex review).
+        const userHandle = req._auth
+          ? isDm
+            ? ((await resolveDmParticipantHandle(vctx, req._auth.verifiedAuth.claims.userId, req.ownerHandle)) ?? null)
+            : ((await resolveActiveHandle(vctx, req._auth.verifiedAuth.claims.userId)) ?? null)
+          : null;
 
         const effectiveChannels = userHandle !== null ? reduce.resolveEffectiveChannels(userHandle) : new Set<string>();
         channelFilteredDocs = filterDocsByChannel(
@@ -324,7 +331,9 @@ export const queryDocsEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqQueryD
           userHandle,
           effectiveChannels,
           reduce.publicChannels,
-          access === "override"
+          access === "override",
+          // DM dbs fail closed: an output-less legacy message is never returned.
+          isDm
         );
       }
 
@@ -363,8 +372,9 @@ export const subscribeDocsEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqSu
       const afbRowS = await resolveAccessBinding(vctx, req.ownerHandle, req.appSlug, req.dbName);
 
       // Access check: ACL-aware (read defaults to canRead || isPublicReadable).
+      const isDm = isDirectChannel(req.ownerHandle);
       let access: DocAccessLevel = "none";
-      if (req.appSlug === DM_APP_SLUG) {
+      if (isDm) {
         // DM subscriptions are gated entirely by channel membership — the front
         // gate defers to the channel filter below. `access` stays "none" so the
         // owner-override bypass can never reach another user's DMs.
@@ -448,9 +458,14 @@ export const subscribeDocsEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqSu
             reduce.addDoc(row.docId, extractContribution(JSON.parse(row.output) as AccessDescriptor));
           }
 
-          // Reader's ACTIVE handle (see note above) so subscription channel keys
-          // match the handle this reader is acting as (#2275).
-          const userHandle = req._auth ? ((await resolveActiveHandle(vctx, req._auth.verifiedAuth.claims.userId)) ?? null) : null;
+          // Reader's effective handle so subscription channel keys match the
+          // handle this reader is acting as: the DM channel-participant handle
+          // for a DM, else their ACTIVE handle (#2275, Codex review).
+          const userHandle = req._auth
+            ? isDm
+              ? ((await resolveDmParticipantHandle(vctx, req._auth.verifiedAuth.claims.userId, req.ownerHandle)) ?? null)
+              : ((await resolveActiveHandle(vctx, req._auth.verifiedAuth.claims.userId)) ?? null)
+            : null;
 
           const effectiveChannels = userHandle !== null ? reduce.resolveEffectiveChannels(userHandle) : new Set<string>();
           const rawGrantChannels = [...effectiveChannels, ...reduce.publicChannels];
