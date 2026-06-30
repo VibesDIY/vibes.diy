@@ -7,7 +7,14 @@ import { createTestDeviceCA, createTestUser } from "@vibes.diy/identity/testing"
 import { vibesMsgEvento, WSSendProvider } from "@vibes.diy/api-svc";
 import { directChannelUserSlug, isResEnsureAppSlugOk } from "@vibes.diy/api-types";
 import { createVibeDiyTestCtx } from "./vibe-diy-test-ctx.js";
+import { localInvokeAccessFn } from "../svc/cf-serve.js";
 import { eq } from "drizzle-orm";
+
+// DM access is now expressed as the built-in DM access fn (#2290), so the test
+// ctx needs a real QuickJS invoker (production wires the same localInvokeAccessFn).
+// Lazy: QuickJS only loads on the first actual access-fn invoke.
+const quickjsRef = { module: null };
+const dmInvokeAccessFn = (params: Parameters<typeof localInvokeAccessFn>[1]) => localInvokeAccessFn(quickjsRef, params);
 
 // Each unique apiUrl gets its own cached WS connection. Use a per-call
 // counter as a URL query param so each mkUser/test-setup gets an isolated
@@ -20,7 +27,7 @@ function uniqueApiUrl(): string {
 async function mkUser(seqUserId: number) {
   const sthis = ensureSuperThis();
   const deviceCA = await createTestDeviceCA(sthis);
-  const appCtx = await createVibeDiyTestCtx(sthis, deviceCA);
+  const appCtx = await createVibeDiyTestCtx(sthis, deviceCA, { invokeAccessFn: dmInvokeAccessFn });
 
   const user = await createTestUser({ sthis, deviceCA, seqUserId });
 
@@ -96,7 +103,7 @@ describe("DM DirectChannelIndex", { timeout: 20000 }, () => {
 
   beforeAll(async () => {
     const deviceCA = await createTestDeviceCA(sthis);
-    const appCtx = await createVibeDiyTestCtx(sthis, deviceCA);
+    const appCtx = await createVibeDiyTestCtx(sthis, deviceCA, { invokeAccessFn: dmInvokeAccessFn });
     sharedVibesCtx = appCtx.vibesCtx;
 
     const aliceUser = await createTestUser({ sthis, deviceCA, seqUserId: 1030 });
@@ -173,7 +180,7 @@ describe("listDmThreads", { timeout: 20000 }, () => {
 
   beforeAll(async () => {
     const deviceCA = await createTestDeviceCA(sthis);
-    const appCtx = await createVibeDiyTestCtx(sthis, deviceCA);
+    const appCtx = await createVibeDiyTestCtx(sthis, deviceCA, { invokeAccessFn: dmInvokeAccessFn });
 
     const aliceUser = await createTestUser({ sthis, deviceCA, seqUserId: 2001 });
     const bobUser = await createTestUser({ sthis, deviceCA, seqUserId: 2002 });
@@ -253,7 +260,7 @@ describe("DM sender identification with multi-slug user", { timeout: 20000 }, ()
   it("listDmThreads shows the correct otherUserSlug when sender has multiple slugs", async () => {
     const sthis = ensureSuperThis();
     const deviceCA = await createTestDeviceCA(sthis);
-    const appCtx = await createVibeDiyTestCtx(sthis, deviceCA);
+    const appCtx = await createVibeDiyTestCtx(sthis, deviceCA, { invokeAccessFn: dmInvokeAccessFn });
 
     const aliceUser = await createTestUser({ sthis, deviceCA, seqUserId: 4001 });
     const bobUser = await createTestUser({ sthis, deviceCA, seqUserId: 4002 });
@@ -355,7 +362,7 @@ describe("markDmRead", { timeout: 20000 }, () => {
 
   beforeAll(async () => {
     const deviceCA = await createTestDeviceCA(sthis);
-    const appCtx = await createVibeDiyTestCtx(sthis, deviceCA);
+    const appCtx = await createVibeDiyTestCtx(sthis, deviceCA, { invokeAccessFn: dmInvokeAccessFn });
 
     const aliceUser = await createTestUser({ sthis, deviceCA, seqUserId: 3001 });
     const bobUser = await createTestUser({ sthis, deviceCA, seqUserId: 3002 });
@@ -420,5 +427,137 @@ describe("markDmRead", { timeout: 20000 }, () => {
     const listResult = await bobApi.listDmThreads({});
     expect(listResult.isErr()).toBe(false);
     expect(listResult.Ok().items[0].unreadCount).toBe(0);
+  });
+});
+
+// Channel-gated DM reads (#2290): the built-in DM access fn places each message
+// in a channel granting only the two participants, so reads flow through the
+// ordinary channel filter. The owner-override read bypass can never reach a DM
+// the caller is not part of — `access` stays "none" for DM dbs, so even an
+// admin-mode query returns nothing.
+describe("DM channel-gated reads", { timeout: 20000 }, () => {
+  const sthis = ensureSuperThis();
+  let aliceApi: VibesDiyApi;
+  let aliceUserSlug: string;
+  let bobApi: VibesDiyApi;
+  let bobUserSlug: string;
+  let malloryApi: VibesDiyApi;
+
+  beforeAll(async () => {
+    const deviceCA = await createTestDeviceCA(sthis);
+    const appCtx = await createVibeDiyTestCtx(sthis, deviceCA, { invokeAccessFn: dmInvokeAccessFn });
+
+    const aliceUser = await createTestUser({ sthis, deviceCA, seqUserId: 5001 });
+    const bobUser = await createTestUser({ sthis, deviceCA, seqUserId: 5002 });
+    const malloryUser = await createTestUser({ sthis, deviceCA, seqUserId: 5003 });
+
+    const sharedApiUrl = uniqueApiUrl();
+    const wsPair = TestWSPair.create();
+    const wsEvento = vibesMsgEvento();
+    const wsSendProvider = new WSSendProvider(wsPair.p2 as unknown as WebSocket);
+    appCtx.vibesCtx.connections.add(wsSendProvider);
+    wsPair.p2.onmessage = (event: MessageEvent) => {
+      wsEvento.trigger({ ctx: appCtx.appCtx, request: { type: "MessageEvent", event }, send: wsSendProvider });
+    };
+
+    const mkApi = (user: Awaited<ReturnType<typeof createTestUser>>) =>
+      new VibesDiyApi({
+        apiUrl: sharedApiUrl,
+        ws: wsPair.p1 as unknown as WebSocket,
+        timeoutMs: 10000,
+        getToken: async () => Result.Ok(await user.getDashBoardToken()),
+      });
+
+    aliceApi = mkApi(aliceUser);
+    bobApi = mkApi(bobUser);
+    malloryApi = mkApi(malloryUser);
+
+    const ensure = async (api: VibesDiyApi, label: string) => {
+      const r = await api.ensureAppSlug({
+        mode: "dev",
+        fileSystem: [{ type: "code-block", lang: "jsx", filename: "/App.jsx", content: `function App() { return null; } App();` }],
+      });
+      if (r.isErr()) throw new Error(`ensureAppSlug (${label}) failed: ${r.Err().message}`);
+      const res = r.Ok();
+      if (!isResEnsureAppSlugOk(res)) throw new Error(`ensureAppSlug (${label}) not ok`);
+      return res.ownerHandle;
+    };
+    aliceUserSlug = await ensure(aliceApi, "alice");
+    bobUserSlug = await ensure(bobApi, "bob");
+    await ensure(malloryApi, "mallory");
+  });
+
+  it("only the two participants can read the conversation", async () => {
+    const channel = directChannelUserSlug(aliceUserSlug, bobUserSlug);
+    const put = await aliceApi.putDoc({
+      ownerHandle: channel,
+      appSlug: "dm",
+      dbName: "messages",
+      doc: { body: "secret for bob", authorHandle: aliceUserSlug, createdAt: new Date().toISOString() },
+    });
+    expect(put.isErr()).toBe(false);
+
+    // Bob (participant) sees the message.
+    const bobRead = await bobApi.queryDocs({ ownerHandle: channel, appSlug: "dm", dbName: "messages" });
+    expect(bobRead.isErr()).toBe(false);
+    expect(bobRead.Ok().docs.length).toBe(1);
+    expect((bobRead.Ok().docs[0] as { body?: string }).body).toBe("secret for bob");
+
+    // Alice (participant + author) sees it too.
+    const aliceRead = await aliceApi.queryDocs({ ownerHandle: channel, appSlug: "dm", dbName: "messages" });
+    expect(aliceRead.isErr()).toBe(false);
+    expect(aliceRead.Ok().docs.length).toBe(1);
+
+    // Mallory (non-participant) sees nothing — the channel filter drops it.
+    const malloryRead = await malloryApi.queryDocs({ ownerHandle: channel, appSlug: "dm", dbName: "messages" });
+    expect(malloryRead.isErr()).toBe(false);
+    expect(malloryRead.Ok().docs.length).toBe(0);
+  });
+
+  it("owner/admin override cannot read a DM the caller is not part of", async () => {
+    const channel = directChannelUserSlug(aliceUserSlug, bobUserSlug);
+    await aliceApi.putDoc({
+      ownerHandle: channel,
+      appSlug: "dm",
+      dbName: "messages",
+      doc: { body: "still private", authorHandle: aliceUserSlug, createdAt: new Date().toISOString() },
+    });
+
+    // Even asking for admin/override mode, a non-participant gets nothing: DM
+    // reads leave access = "none", so the override bypass never engages.
+    const malloryAdmin = await malloryApi.queryDocs({
+      ownerHandle: channel,
+      appSlug: "dm",
+      dbName: "messages",
+      adminMode: true,
+    });
+    expect(malloryAdmin.isErr()).toBe(false);
+    expect(malloryAdmin.Ok().docs.length).toBe(0);
+  });
+
+  it("only a participant can delete a DM (delete routes through the built-in fn)", async () => {
+    const channel = directChannelUserSlug(aliceUserSlug, bobUserSlug);
+    const docId = "dm-del-target";
+    const put = await aliceApi.putDoc({
+      ownerHandle: channel,
+      appSlug: "dm",
+      dbName: "messages",
+      docId,
+      doc: { body: "delete me", authorHandle: aliceUserSlug, createdAt: new Date().toISOString() },
+    });
+    expect(put.isErr()).toBe(false);
+
+    // Non-participant delete is denied by the built-in DM fn's participant check.
+    const malloryDel = await malloryApi.deleteDoc({ ownerHandle: channel, appSlug: "dm", dbName: "messages", docId });
+    expect(malloryDel.isErr()).toBe(true);
+
+    // Participant delete succeeds.
+    const bobDel = await bobApi.deleteDoc({ ownerHandle: channel, appSlug: "dm", dbName: "messages", docId });
+    expect(bobDel.isErr()).toBe(false);
+
+    // Gone for the participant who deleted it.
+    const bobRead = await bobApi.queryDocs({ ownerHandle: channel, appSlug: "dm", dbName: "messages" });
+    expect(bobRead.isErr()).toBe(false);
+    expect((bobRead.Ok().docs as { _id: string }[]).some((d) => d._id === docId)).toBe(false);
   });
 });

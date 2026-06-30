@@ -90,6 +90,8 @@ export interface VibesApiSQLCtx {
       userGrants: Record<string, string[]>;
     };
     adminMode?: boolean;
+    // The db's ownerHandle, passed to the access fn as `ctx.ownerHandle` (#2290).
+    ownerHandle?: string;
   }): Promise<AccessDescriptor | { forbidden: string }>;
   /**
    * Per-DO cache of `access.js` source bytes keyed by access-fn CID. The source
