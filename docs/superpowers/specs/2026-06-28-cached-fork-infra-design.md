@@ -279,9 +279,20 @@ Two findings, both **bounded to owner-self-exposure** (no third-party victim):
   won't-fix:** impact is bounded to the owner exposing **their own** app's content
   (which they could publish anyway), and triggering it requires the owner to
   deliberately work around the normal flow (the producer only ever registers the
-  actual chip result). No third-party victim. If we ever want to close it, the fix
-  is a codegen-time provenance `meta` tag the grant verifies — not worth the
-  codegen-side plumbing for owner-self-exposure.
+  actual chip result). No third-party victim. The fix, if ever wanted, is a
+  codegen-time provenance `meta` tag the grant verifies.
+
+  > **Gate before PRODUCTION enablement (Charlie #2890).** Won't-fix holds while
+  > the lane is **preview-flag-only** (`VIBES_CACHED_SUGGESTIONS="on"` in
+  > `[env.preview]`). Before flipping the flag on in **prod**, revisit the
+  > provenance enforcement — owner-only writes + preview-only is what makes the
+  > current bound acceptable; prod enablement widens exposure to all owners.
+
+- **Key-specific source check (Charlie #2890) — DONE.** The source-was-public
+  verification is per-entry: the reader checks THIS entry's `sourceFsId` (by key),
+  and the grant (which resolves by fsId, no key) iterates EVERY entry mapping that
+  fsId and grants iff at least one has a public source — no fsId first-match
+  masking. (`cachedSuggestionSourceIsPublic` / `grantableCachedSuggestionSource`.)
 
 ## Open questions (resolve in brainstorm before planning)
 
