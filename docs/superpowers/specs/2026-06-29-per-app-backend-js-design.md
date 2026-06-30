@@ -410,10 +410,16 @@ defaults above into testable guarantees (the follow-up pass @CharlieHelps offere
       (service/transport bindings only). No per-trigger `ctx` (identity, secrets, request/event) enters
       the hashed source _or_ `env`; it travels by request/RPC args. The vibe scope makes the isolate
       **one-per-`(vibe, code, policy)`** so two different vibes with identical `backend.js` never share
-      one (tenant boundary; see B3). _Tests (B1/B3/B5, per @CharlieHelps's matrix): (a) same vibe + same
-      code + different trigger identities ⇒ **same loader id**; (b) **no cross-invocation identity
-      bleed**; (c) an egress-policy / binding-schema bump **forces a new id**; (d) two different vibes
-      with identical code ⇒ **different ids**._
+      one (tenant boundary; see B3). _Tests (B1/B3/B5, per @CharlieHelps's matrix):_
+  - (a) same vibe + same code + different trigger identities ⇒ **same loader id**;
+  - (b) **no cross-invocation identity bleed**;
+  - (c) an egress-policy / binding-schema bump **forces a new id**;
+  - (d) two different vibes with identical code ⇒ **different ids**;
+  - (e) **handler mode excluded** — same `(vibe, code, policy)` invoked via `fetch`/`scheduled`/`onChange` keeps the **same id**;
+  - (f) **compat surface included** — changing `compatibilityDate`/`compatibilityFlags` **rotates** the id;
+  - (g) **per-invocation context excluded** — varying user identity, secrets _values_, payload, source-tag/depth, or dedupe key **does not** change the id;
+  - (h) **tuple encoding is collision-safe** — `{owner:"ab", slug:"c"}` cannot hash-collide with `{owner:"a", slug:"bc"}` (length-prefix / delimiter the scope, never bare concatenation);
+  - (i) **behavioral isolation proof** (integration) — mutate a module-global in vibe A's isolate, then assert vibe B with identical code **cannot observe it**.
 - [ ] **Write-path parity.** Every `ctx.db.put` goes through the production `putDoc`/`invokeAccessFn`
       (QuickJS) gate with the `AccessFnOutputs` sidecar — never the `access-runner` mirror. A backend
       write and an identical frontend write produce the same allow/deny + sidecar outcome. _Tests:
