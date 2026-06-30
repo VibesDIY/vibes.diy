@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useReducer, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useReducer, useRef, useState } from "react";
 import { useMatches, useNavigate, useParams, useSearchParams } from "react-router";
 import { useVibesDiy } from "../vibes-diy-provider.js";
 import { BuildURI, URI } from "@adviser/cement";
@@ -27,6 +27,7 @@ import {
   normalizeTransform,
   cachedSuggestionKey,
 } from "@vibes.diy/api-types";
+import { curatedEdgeTarget, starterVibeHref } from "./starter-graph.js";
 import { switchActiveHandle, createAndUseHandle, handleAvatarUrl } from "./handle-picker-actions.js";
 import { uploadHandleAvatar } from "../lib/upload-avatar.js";
 import { useYoursNowToast } from "../hooks/use-yours-now-toast.js";
@@ -314,6 +315,15 @@ export default function VibeIframeWrapper() {
     setCardChips(generation.hasLocalEdit ? generation.suggestionChips : editChips);
   }, [generation.isGenerating, generation.hasLocalEdit, generation.suggestionChips, editChips]);
 
+  // Which visible chips are curated cross-slug spine jumps (#2941) — drives the
+  // distinct `→` glyph (never the shield). Slug-scoped, so this is empty for any
+  // vibe that isn't a curated starter (incl. a visitor's fork).
+  const jumpChips = useMemo(
+    () =>
+      ownerHandle && appSlug ? cardChips.filter((c) => curatedEdgeTarget({ ownerHandle, appSlug, chipLabel: c }) !== null) : [],
+    [cardChips, ownerHandle, appSlug]
+  );
+
   // On the forked /vibe page (?prompt64 carried from a seamless non-owner fork),
   // auto-fire the generation once ownership resolves to us — only when isOwner is
   // true (i.e. the page is already our own fork), so we never send against the
@@ -377,6 +387,24 @@ export default function VibeIframeWrapper() {
     (text: string) => {
       const trimmed = text.trim();
       if (!trimmed || !ownerHandle || !appSlug) return;
+
+      // Curated spine pre-check (#2941): if this chip is a hand-tuned cross-slug
+      // edge for the current starter vibe, it's an instant public read — navigate
+      // to the target curated vibe (a different slug / new namespace, which is
+      // appropriate for the on-ramp; no login, no codegen, no fork). Slug-scoped,
+      // so it only fires on the curated starter itself, never a visitor's fork.
+      // Takes precedence over the same-slug read/write dispatch below
+      // (curated-edge-wins) and never registers a producer capture — a spine jump
+      // is navigation, not a same-slug produce. The destination keeps the full
+      // server-authoritative visibility path; this client target carries no
+      // grant/serve truth (Charlie #2950, nav-only). The cross-slug jump wears a
+      // distinct `→` glyph, never the same-namespace shield (OQ-C).
+      const curatedTarget = curatedEdgeTarget({ ownerHandle, appSlug, chipLabel: trimmed });
+      if (curatedTarget) {
+        pendingProduceRef.current = null;
+        void navigate(starterVibeHref(curatedTarget));
+        return;
+      }
 
       // The write lane (today's behavior): owner generates in place, non-owner
       // makes it yours. Extracted so the cached-read lane below can fall through
@@ -1747,6 +1775,9 @@ ${rootCssBlock}
                   // Cached-suggestion fast paths (#2917): the server-authoritative
                   // shield badge for everyone + the owner-only bless/unbless control.
                   chipFastPaths={chipFastPaths}
+                  // Curated cross-slug spine jumps (#2941) — distinct `→` glyph,
+                  // never the same-namespace shield.
+                  jumpChips={jumpChips}
                   onBlessChip={isOwner ? handleBlessChip : undefined}
                   onUnblessChip={isOwner ? handleUnblessChip : undefined}
                   onHome={() => {
