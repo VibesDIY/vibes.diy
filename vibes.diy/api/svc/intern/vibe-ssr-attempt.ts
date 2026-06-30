@@ -12,6 +12,41 @@ import { selectExecutor, parseVibesSsrMode, type VibesSsrMode } from "@vibes.diy
 
 // Re-exported so render-vibe.ts has a single import surface for the SSR wiring.
 export { parseVibesSsrMode };
+
+// Bump when the SSR-injected root-HTML body shape changes (the hydrate marker,
+// the mount contract, a future slice-5 markdown layer, …) so caches that
+// validated an older body shape revalidate. Part of the canonical SSR cache-key
+// contract (#2845 cb3): any content-affecting change must flip the key.
+export const SSR_BODY_VERSION = "v1";
+
+/**
+ * The SSR mode that actually runs on live traffic. The live render route admits
+ * ONLY the isolate-backed `loader` executor — `node` is barred for security and
+ * everything else is `off` (see render-vibe.ts). Single source of truth shared by
+ * render-vibe (which mode to run) and the cache validator (whether the body can
+ * vary), so the two can never disagree.
+ */
+export function liveVibeSsrMode(rawSsrEnv: string | undefined): "loader" | "off" {
+  return parseVibesSsrMode(rawSsrEnv) === "loader" ? "loader" : "off";
+}
+
+/**
+ * The body-affecting SSR signature folded into the root-HTML cache validator
+ * (#2845 cb3). The served body is SSR-varying ONLY when the flag is `loader` AND
+ * the Worker Loader binding is actually present on this deploy — otherwise
+ * `loader` degrades to the empty client-only shell via `select_error`. Keying on
+ * the env flag alone would leave a stale-body hole: a cache validated under
+ * (flag=loader, binding absent) holding the empty shell would keep 304ing once
+ * the binding lands and the body becomes SSR. So the binding presence is part of
+ * the key, and the flip is symmetric on rollback (binding removed ⇒ signature
+ * reverts ⇒ revalidate). Over-invalidation — e.g. a relative-import vibe that
+ * still falls back to client-only under loader+binding — is the safe direction:
+ * one extra revalidation, never a stale body.
+ */
+export function ssrBodySignature(opts: { readonly rawSsrEnv: string | undefined; readonly loaderPresent: boolean }): string {
+  const active = liveVibeSsrMode(opts.rawSsrEnv) === "loader" && opts.loaderPresent;
+  return active ? `loader.${SSR_BODY_VERSION}` : "off";
+}
 import { type WorkerLoaderBinding } from "@vibes.diy/vibe-runtime/worker-loader-executor.js";
 import { hasRelativeImports } from "@vibes.diy/vibe-runtime/ssr-source-check.js";
 
