@@ -16,20 +16,19 @@ Pass the Fireproof database name you are writing to. You get:
 
 ## The rule
 
-Gate every write affordance on `can.*`. Render `reason` when denied. Never branch write permission on `viewer`, `access.hasRole()`/`access.hasChannel()`, or document fields — those drift from what `access.js` actually does. Identity display (avatars, "signed in as") comes from `useViewer()`'s `ViewerTag`, not from `useVibe`.
+Gate every write affordance on `can.*`. Render `reason` when denied. Never branch write permission on `viewer`, `access.hasRole()`/`access.hasChannel()`, or document fields — those drift from what `access.js` actually does. Rendering **other** users (authors, rosters) is `useViewer()`'s `<ViewerTag userHandle={...} />`, not `useVibe`. The current viewer's own pill and the "signed in as" / sign-in button are system chrome in the Vibes Switch (the logo) — don't build them into the app.
 
 ```jsx
-import { useVibe, useViewer } from "use-vibes";
+import { useVibe } from "use-vibes";
 
 function PromptBar({ database }) {
   const { can, ready, me } = useVibe("aestheticBoard");
-  const { ViewerTag } = useViewer();
   if (!ready) return <div className="skeleton" />;
   const v = can.create({ type: "tile", authorHandle: me?.userHandle });
   if (!v.ok) return <p className="muted">{v.reason}</p>; // e.g. "authentication required"
   return (
     <form onSubmit={/* … */}>
-      <ViewerTag />
+      {/* no current-user pill — identity + sign-in live in the Vibes Switch (the logo) */}
       <input placeholder="Add a tile…" />
       <button type="submit">Post</button>
     </form>

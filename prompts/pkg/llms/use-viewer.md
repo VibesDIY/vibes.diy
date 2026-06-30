@@ -1,12 +1,14 @@
 # useViewer Hook
 
-`useViewer()` is a **read-only window** into viewer identity. The platform owns the rules — who's the owner, who has been granted read or write — and `useViewer()` lets your app see who's signed in and render their identity. You cannot grant or revoke access from code; you can only reflect the runtime's verdict in your UI.
+`useViewer()` is a **read-only window** into viewer identity. The platform owns the rules — who's the owner, who has been granted read or write — and `useViewer()` lets your app see who's signed in and render identity. You cannot grant or revoke access from code; you can only reflect the runtime's verdict in your UI.
 
-Use `useViewer()` for identity and display only — `ViewerTag`, avatars, and showing who's signed in. **Write surfaces are gated with `useVibe(dbName).can`** (see use-vibe docs), not with `viewer`/`access.*`.
+**The signed-in viewer's own pill and the Sign in button are system chrome — you don't build them.** The platform shows the current user (and a "Sign in" button when anonymous) inside the **Vibes Switch**, the panel that opens when you click the logo. A visitor always has a way to see who they are and sign in from there, so your app does **not** need to add a header pill or a login button for the current viewer — don't render a no-prop `<ViewerTag />` just to show "who's signed in" or to offer sign-in. To find the login button, click the logo.
+
+Use `useViewer()` to render **other** people's identity — comment authors, rosters, "added by" labels — with `<ViewerTag userHandle={...} />`, and to read `viewer`/`can` when your UI needs to branch on who's looking. **Write surfaces are gated with `useVibe(dbName).can`** (see use-vibe docs), not with `viewer`/`access.*`.
 
 ## Basic Usage
 
-Start with a minimal component that shows the viewer identity:
+Start with a minimal component that reads the viewer identity. You don't render a sign-in button or a current-user pill — those live in the Vibes Switch (click the logo). Just branch on `viewer` for any welcome/empty copy your app needs:
 
 App.jsx
 
@@ -16,17 +18,15 @@ import { useFireproof } from "use-fireproof";
 import { useViewer } from "use-vibes";
 
 export default function App() {
-  const { viewer, isViewerPending, ViewerTag } = useViewer();
+  const { viewer, isViewerPending } = useViewer();
 
   if (isViewerPending) return null;
 
   return (
     <div>
-      <header>
-        <ViewerTag />
-      </header>
-      {!viewer && <p>Sign in.</p>}
-      {viewer && <p>Welcome back!</p>}
+      {/* No sign-in button here — the logo opens the Vibes Switch, which shows
+          the current user and a "Sign in" button as system chrome. */}
+      {viewer ? <p>Welcome back, {viewer.displayName ?? viewer.userHandle}!</p> : <p>Sign in from the logo menu to get started.</p>}
     </div>
   );
 }
@@ -41,7 +41,7 @@ export default function App() {
 
 ## Gating UI
 
-Add a "commenting as" label and a write-gated form. Use `useVibe("comments").can` to gate the form; `ViewerTag` handles sign-in/identity display:
+Gate the comment form on `useVibe("comments").can` — not on `viewer`. The current viewer never needs a pill here (that's in the Vibes Switch); just render the gated form and its `reason` when denied:
 
 App.jsx
 
@@ -57,9 +57,9 @@ App.jsx
 
 ```jsx
 <<<<<<< SEARCH
-  const { viewer, isViewerPending, ViewerTag } = useViewer();
+  const { viewer, isViewerPending } = useViewer();
 =======
-  const { viewer, isViewerPending, ViewerTag } = useViewer();
+  const { viewer, isViewerPending } = useViewer();
   const { can, ready, me } = useVibe("comments");
 >>>>>>> REPLACE
 ```
@@ -68,15 +68,8 @@ App.jsx
 
 ```jsx
 <<<<<<< SEARCH
-      {!viewer && <p>Sign in.</p>}
-      {viewer && <p>Welcome back!</p>}
+      {viewer ? <p>Welcome back, {viewer.displayName ?? viewer.userHandle}!</p> : <p>Sign in from the logo menu to get started.</p>}
 =======
-      {/* identity display */}
-      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-        {viewer && <span style={{ fontSize: 13, color: "var(--muted, #888)" }}>commenting as</span>}
-        <ViewerTag />
-      </div>
-
       {/* write gate: useVibe().can, not viewer */}
       {!ready ? null : (() => {
         const v = can.create({ type: "comment", authorHandle: me?.userHandle });
@@ -111,7 +104,7 @@ import { useFireproof } from "use-fireproof";
 
 ```jsx
 <<<<<<< SEARCH
-  const { viewer, isViewerPending, ViewerTag } = useViewer();
+  const { viewer, isViewerPending } = useViewer();
   const { can, ready, me } = useVibe("comments");
 =======
   const { viewer, isViewerPending, ViewerTag } = useViewer();
@@ -137,6 +130,7 @@ import { useFireproof } from "use-fireproof";
         );
       })()}
 =======
+      {/* render OTHER users with userHandle — that's what ViewerTag is for here */}
       <ul>
         {comments.map((c) => (
           <li key={c._id}>
@@ -145,12 +139,6 @@ import { useFireproof } from "use-fireproof";
           </li>
         ))}
       </ul>
-
-      {/* identity display */}
-      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-        {viewer && <span style={{ fontSize: 13, color: "var(--muted, #888)" }}>commenting as</span>}
-        <ViewerTag />
-      </div>
 
       {/* write gate: useVibe().can, not viewer */}
       {!ready ? null : (() => {
@@ -201,36 +189,21 @@ Key points:
 
 ## ViewerTag
 
-`ViewerTag` is a ready-made inline user pill returned alongside `viewer` from `useViewer()`. It is not a separate import — you get it from the hook.
-
-Show the current viewer (edit ring appears — they can tap to change their avatar):
-
-App.jsx
+`ViewerTag` is a ready-made inline user pill returned alongside `viewer` from `useViewer()`. It is not a separate import — you get it from the hook. **Use it to render _other_ people** — comment authors, roster rows, "added by" labels — by passing `userHandle`:
 
 ```jsx
-<<<<<<< SEARCH
-      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-        {viewer && <span style={{ fontSize: 13, color: "var(--muted, #888)" }}>commenting as</span>}
-        <ViewerTag />
-      </div>
-=======
-      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-        {viewer && <span style={{ fontSize: 13, color: "var(--muted, #888)" }}>commenting as</span>}
-        <ViewerTag />
-        {/* Show another user read-only (no edit affordance): */}
-        <ViewerTag userHandle={comments[0]?.authorHandle} />
-        {/* Style override: */}
-        <ViewerTag style={{ borderRadius: 8, fontSize: 12 }} />
-      </div>
->>>>>>> REPLACE
+{/* Show another user read-only: */}
+<ViewerTag userHandle={comment.authorHandle} />
+{/* Style override: */}
+<ViewerTag userHandle={member.userHandle} style={{ borderRadius: 8, fontSize: 12 }} />
 ```
 
-**Self-detection is automatic.** When `ViewerTag` renders the current viewer it shows a dashed indigo ring and pencil overlay on the avatar. Clicking it opens a file picker; the upload and profile save happen internally.
+**The current viewer is system chrome, not app UI.** A no-prop `<ViewerTag />` renders the current viewer (with a sign-in button when anonymous and a dashed edit ring when signed in), but you almost never need it: the platform already shows the current user — and lets them sign in and change their avatar — inside the Vibes Switch that opens from the logo. Don't add a no-prop `<ViewerTag />` as a header pill or login button; reach for `userHandle` to render someone else instead.
 
 **Undefined safety.** If `userHandle` is present in props but falsy (e.g. a missing field from a loop lookup), `ViewerTag` renders a dim italic placeholder instead of the edit ring. This prevents a broken data source from accidentally granting photo-edit access to an arbitrary pill.
 
-**Anonymous safety.** `ViewerTag` is always safe to call regardless of login state — it never throws. When the viewer is anonymous and no `userHandle` prop is given, it renders a "Sign in" button that opens the platform login UI when clicked. Wrap it in a `{viewer && <ViewerTag />}` guard if you want to suppress it entirely for anonymous users.
+**Anonymous & always-safe.** `ViewerTag` never throws regardless of login state. A no-prop `<ViewerTag />` would render a "Sign in" button for anonymous viewers, but you don't need to place one for sign-in — the logo's Vibes Switch already offers it.
 
 **Theming.** `ViewerTag` reads `--accent`, `--accent-text`, `--card-bg`, `--border`, `--text`, and `--muted` from the app's CSS variables with sensible fallbacks. If your app defines these on `:root` (which most generated themes do), `ViewerTag` inherits the theme automatically with no extra props.
 
-Use `<ViewerTag />` (no props) for the current user and `<ViewerTag userHandle={...} />` for others. That's the whole API.
+Pass `<ViewerTag userHandle={...} />` to render other people. The no-prop `<ViewerTag />` (current user) exists, but the logo's Vibes Switch already covers identity and sign-in.
