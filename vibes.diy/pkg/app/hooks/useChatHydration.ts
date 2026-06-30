@@ -1,8 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import type { Dispatch } from "react";
 import { exception2Result } from "@adviser/cement";
-import { fireproof } from "@fireproof/use-fireproof";
-import type { VibeDocument } from "@vibes.diy/prompts";
 import type { Conn } from "@vibes.diy/api-types";
 import type { PromptAction, HydratedCodeViewFile } from "../routes/chat/prompt-state.js";
 import {
@@ -22,36 +20,31 @@ export interface ChatHydrationOpts {
 }
 
 export interface ChatHydration {
-  // The "remix of" title sourced from the local VibeDocument, or undefined.
+  // The "remix of" title (`ownerHandle/appSlug`) stashed by the remix route, or undefined.
   readonly remixOf: string | undefined;
 }
 
 /**
- * Owns the chat route's read-only hydration: the local VibeDocument "remix of"
- * indicator, and the code-view file-system hydration for the current fsId.
+ * Owns the chat route's read-only hydration: the "remix of" header indicator,
+ * and the code-view file-system hydration for the current fsId.
  * Behavior-preserving extraction from the Chat component
  * (VibesDIY/vibes.diy#2015).
  */
 export function useChatHydration(opts: ChatHydrationOpts): ChatHydration {
   const { ownerHandle, appSlug, fsId, sharedApi, dispatch } = opts;
 
-  // Read the local VibeDocument (seeded by the remix route) to show the
-  // "remix of" indicator in the header. Best-effort: if the doc is missing
-  // or malformed we just render the plain title.
+  // Show the "remix of" indicator the remix route stashed in sessionStorage
+  // (keyed by appSlug). Best-effort header metadata: it survives reloads within
+  // the session; on a cold load of someone else's remix it's simply absent and
+  // we render the plain title. (Was a local Fireproof doc — VibesDIY/vibes.diy#2934.)
   const [remixOf, setRemixOf] = useState<string | undefined>(undefined);
   useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      const r = await exception2Result(async () => {
-        const db = fireproof(`vibe-${appSlug}`);
-        return (await db.get("vibe")) as VibeDocument;
-      });
-      if (cancelled) return;
-      if (r.isOk() && r.Ok().remixOf) setRemixOf(r.Ok().remixOf);
-    })();
-    return () => {
-      cancelled = true;
-    };
+    try {
+      const stashed = sessionStorage.getItem(`remixOf:${appSlug}`);
+      if (stashed) setRemixOf(stashed);
+    } catch {
+      // sessionStorage unavailable (SSR / privacy mode) — skip the indicator.
+    }
   }, [appSlug]);
 
   // Hydrate code-view files from the canonical Apps.fileSystem for the
