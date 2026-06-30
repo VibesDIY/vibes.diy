@@ -1,29 +1,14 @@
-import type { ToCloudAttachable, TokenStrategie } from "@fireproof/core-types-protocols-cloud";
-import { useCallback, useEffect, useState } from "react";
-import {
-  Attached,
-  ImgFile,
-  isDatabase,
-  toCloud as originalToCloud,
-  useFireproof as originalUseFireproof,
-  UseFireproof,
-  UseFPConfig,
-  type Database,
-  type UseFpToCloudParam,
-} from "@fireproof/use-fireproof";
-import { useVibeContext, Vibe } from "./contexts/VibeContext.js";
-import { constructVibesDatabaseName } from "./utils/databaseName.js";
 import { callAI } from "call-ai";
-import { ResolveOnce } from "@adviser/cement";
 import { type } from "arktype";
 
 export * from "./contexts/VibeContext.js";
 
-export { ImgFile };
 export { fireproof, type FireproofOpts } from "./fireproof-node.js";
 
-// Re-export all types under a namespace
-export type * as Fireproof from "@fireproof/use-fireproof";
+// `useFireproof` is the Firefly-backed drop-in from the vibe runtime — the same
+// implementation the iframe import map aliases `use-vibes` → `@vibes.diy/vibe-runtime`
+// resolves to, so the published SDK and the sandbox agree on one DB surface.
+export { useFireproof } from "@vibes.diy/vibe-runtime";
 
 export const vibesEnvSchema = type({
   FPCLOUD_URL: "string",
@@ -55,129 +40,6 @@ export const vibesDiyMountParams = type({
   env: vibeEnv.and(vibesEnvSchema),
 });
 export type VibesDiyMountParams = typeof vibesDiyMountParams.infer;
-
-// Extended options for toCloud with Clerk token support
-interface ToCloudWithClerkOpts extends UseFpToCloudParam {
-  readonly env: VibesEnv;
-  readonly fpCloudStrategie?: TokenStrategie;
-}
-
-let injectedVibesCtx: Vibe | undefined = undefined;
-
-function defVibesCtx(): Vibe {
-  if (!injectedVibesCtx) {
-    throw new Error("VibesCtx not injected. Please call injectDefaultVibes");
-  }
-  return injectedVibesCtx;
-}
-
-export function injectDefaultVibesCtx(ctx: Vibe) {
-  injectedVibesCtx = ctx;
-}
-
-// Helper function to create toCloud configuration
-export function toCloud(iopts?: ToCloudWithClerkOpts): ToCloudAttachable {
-  const defCtx = defVibesCtx();
-  const opts = {
-    ...defCtx,
-    ...iopts,
-  };
-  // console.log('[toCloud] Creating cloud config with opts:', opts);
-
-  const attachable = originalToCloud({
-    strategy: opts.strategy,
-    dashboardURI: opts.env.DASHBOARD_URL,
-    urls: { base: opts.env.FPCLOUD_URL },
-  });
-  return attachable;
-}
-
-export interface AttachState {
-  readonly state: "detached" | "attaching" | "attached" | "detaching" | "error";
-  readonly error?: Error;
-  readonly attach?: Attached;
-}
-
-export interface UseVibesFireproof extends UseFireproof {
-  readonly doAttach: () => void;
-  readonly doDetach: () => void;
-  readonly attachState: AttachState;
-}
-
-// Custom useFireproof hook with implicit cloud sync and button integration
-export function useFireproof(nameOrDatabase: string | Database, config?: UseFPConfig): UseVibesFireproof {
-  // Read vibe context if available (for inline rendering with proper ledger naming)
-  const vibeCtx = useVibeContext();
-
-  // Construct the full database name with vibe metadata
-  // Format: vf-{titleId}-{installId}-{baseName}
-  let dbName: string;
-  if (isDatabase(nameOrDatabase)) {
-    // If passed an existing database, use its stored AppId or name
-    dbName = nameOrDatabase.ledger.ctx.get("UseVibes.AppId") || nameOrDatabase.name;
-  } else {
-    // Construct augmented database name with vibe metadata (titleId + installId)
-    dbName = constructVibesDatabaseName(vibeCtx.bindings, nameOrDatabase);
-  }
-
-  let fpRet: UseFireproof;
-  if (isDatabase(nameOrDatabase)) {
-    fpRet = originalUseFireproof(nameOrDatabase, config);
-  } else {
-    fpRet = originalUseFireproof(dbName, config);
-  }
-  if (!fpRet.database.ledger.ctx.get("UseVibes.AppId")) {
-    fpRet.database.ledger.ctx.set("UseVibes.AppId", dbName as string);
-  }
-  if (!fpRet.database.ledger.ctx.get("UseVibes.Mutex")) {
-    fpRet.database.ledger.ctx.set("UseVibes.Mutex", new ResolveOnce());
-  }
-
-  const mutexAttachState = fpRet.database.ledger.ctx.get("UseVibes.Mutex") as ResolveOnce<void>;
-  const [attachState, setAttachState] = useState<AttachState>({ state: "detached" });
-  const doAttach = useCallback(
-    (/* in future we will be able to override defVibesCtx */) => {
-      if (!vibeCtx.sessionReady()) {
-        console.error("Session not ready for attach");
-        setAttachState({ state: "error", error: new Error("Session not ready for attach") });
-      }
-      setAttachState({ state: "attaching" });
-    },
-    []
-  );
-
-  const doDetach = useCallback(() => {
-    if (attachState.state !== "attached") {
-      return;
-    }
-    setAttachState({ ...attachState, state: "detaching" });
-    mutexAttachState.reset(() => {
-      attachState.attach
-        ?.detach()
-        .then(() => {
-          setAttachState({ state: "detached" });
-        })
-        .catch((err) => {
-          console.error("Database detach failed:", err);
-          setAttachState({ state: "error", error: err });
-        });
-    });
-  }, []);
-
-  useEffect(() => {
-    if (vibeCtx.sessionReady()) {
-      doAttach();
-    } else {
-      doDetach();
-    }
-  });
-  return {
-    ...fpRet,
-    doAttach,
-    doDetach,
-    attachState,
-  };
-}
 
 // Re-export specific functions and types from call-ai
 

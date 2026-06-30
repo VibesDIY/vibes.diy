@@ -1,12 +1,9 @@
 // Clean consumer API - ONLY exports for user vibes
 export {
-  // Core Fireproof integration
+  // Core Firefly-backed database integration
   useFireproof,
   fireproof,
   type FireproofOpts,
-  ImgFile,
-  toCloud,
-  type Fireproof,
 
   // AI integration
   callAI,

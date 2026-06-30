@@ -8,32 +8,19 @@ Vibes DIY apps are React components that combine Fireproof database, CallAI for 
 
 ```javascript
 import React from "react"
-import { callAI, useFireproof, toCloud } from "use-vibes"
+import { callAI, useFireproof } from "use-vibes"
 ```
 
-## Fireproof Setup
+## Database Setup
 
 ### Basic Setup
 ```javascript
 const { useDocument, useLiveQuery, database } = useFireproof("myDatabase")
 ```
 
-### With Cloud Sync (No Tenant/Ledger)
-```javascript
-const { useDocument, useLiveQuery, database, attach } = useFireproof("myDatabase", { 
-  attach: toCloud() 
-})
-```
-
-### With Cloud Sync (Specific Tenant/Ledger)
-```javascript
-const { useDocument, useLiveQuery, database, attach } = useFireproof("myDatabase", { 
-  attach: toCloud({
-    tenant: "tenant-id",
-    ledger: "ledger-id"
-  })
-})
-```
+Cloud sync is automatic — each named database is a per-(user, app) cloud peer on
+the vibes.diy runtime, so there is no `toCloud()`/`attach` step. Just call
+`useFireproof("name")` and writes sync for everyone with access.
 
 ## Document Management
 

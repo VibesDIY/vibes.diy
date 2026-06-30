@@ -1,13 +1,10 @@
 import { useState, useEffect, useRef } from "react";
-import { useFireproof } from "@fireproof/use-fireproof";
-import { imgGen as defaultImgGen } from "@vibes.diy/vibe-runtime";
-import type { DocSet } from "@fireproof/use-fireproof";
+import { useFireproof, imgGen as defaultImgGen } from "@vibes.diy/vibe-runtime";
 
-// The Fireproof hook ImgGen binds to. Defaults to @fireproof/use-fireproof, but
-// is injectable so callers (and tests) can supply the firefly-backed drop-in
-// without globally module-mocking @fireproof/use-fireproof — which bleeds across
-// files under isolate:false. Firefly-first: the sandbox/runtime can inject its
-// own useFireproof here too.
+// The hook ImgGen binds to. Defaults to the Firefly-backed `useFireproof` from
+// the vibe runtime, but stays injectable so callers (and tests) can swap in a
+// synthetic implementation without module-mocking — which bleeds across files
+// under isolate:false.
 export type UseFireproofHook = typeof useFireproof;
 import type {
   FileMeta,
@@ -31,7 +28,7 @@ interface InjectedDeps {
   // Hook-test hatch: allow the test to swap in a synthetic generator
   // without reaching into the iframe runtime.
   imgGen?: (prompt: string, inputImage?: ImgGenInputImage, model?: string) => Promise<Result<ImgGenFile[]>>;
-  // Injectable Fireproof hook (defaults to @fireproof/use-fireproof). See
+  // Injectable database hook (defaults to the runtime's `useFireproof`). See
   // UseFireproofHook above.
   useFireproof?: UseFireproofHook;
 }
@@ -156,11 +153,10 @@ export function useImgGen(opts: Partial<UseImgGenOptions> & InjectedDeps): UseIm
         if (existingDoc?._id && (isRegen || !modelMatch)) {
           const fresh = (await db.get(existingDoc._id)) as PartialImageDocument;
           const updated = addNewVersion(fresh, fileMeta, promptText, model);
-          // `DocSet<ImageDocumentPlain>` requires `_files` entries to satisfy
-          // `DocFileMeta` (which requires `cid`); our wire `FileMeta` carries
-          // `uploadId` instead. Tracked upstream — see
-          // https://github.com/fireproof-storage/fireproof/issues/1812.
-          await db.put<ImageDocumentPlain>(updated as unknown as DocSet<ImageDocumentPlain>);
+          // Our wire `FileMeta` carries `uploadId` rather than the `cid` a
+          // strict file-meta type wants; the platform mints `meta.url` on read,
+          // so cast through the Firefly `put` doc shape.
+          await db.put<ImageDocumentPlain>(updated as unknown as ImageDocumentPlain & { _id?: string });
           const saved = (await db.get(existingDoc._id)) as PartialImageDocument;
           setDocument(saved);
         } else {
@@ -185,7 +181,7 @@ export function useImgGen(opts: Partial<UseImgGenOptions> & InjectedDeps): UseIm
             currentPromptKey: "p1",
             prompts: { p1: { text: promptText, created: now } },
             _files: { ...sanitizeFiles(existingDoc?._files), v1: fileMeta },
-          } as unknown as DocSet<ImageDocumentPlain>);
+          } as unknown as ImageDocumentPlain & { _id?: string });
           const saved = (await db.get(_id)) as PartialImageDocument;
           setDocument(saved);
         }

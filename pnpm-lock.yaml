@@ -424,15 +424,9 @@ importers:
       '@clerk/react':
         specifier: ^6.11.1
         version: 6.11.1(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
-      '@fireproof/core-types-protocols-cloud':
-        specifier: 0.24.19
-        version: 0.24.19(typescript@6.0.3)
       '@fireproof/core-types-protocols-dashboard':
         specifier: 0.24.19
         version: 0.24.19(typescript@6.0.3)
-      '@fireproof/use-fireproof':
-        specifier: 0.24.19
-        version: 0.24.19(@adviser/cement@0.5.34(patch_hash=2f6391e0a56fe610ad9ae72430b603360ee9c00812af21a792562791454613c7)(typescript@6.0.3))(bufferutil@4.1.0)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(typescript@6.0.3)(utf-8-validate@6.0.6)
       '@vibes.diy/api-impl':
         specifier: workspace:*
         version: link:../../vibes.diy/api/impl
@@ -616,12 +610,6 @@ importers:
 
   use-vibes/pkg:
     dependencies:
-      '@fireproof/core-types-protocols-cloud':
-        specifier: 0.24.19
-        version: 0.24.19(typescript@6.0.3)
-      '@fireproof/use-fireproof':
-        specifier: 0.24.19
-        version: 0.24.19(@adviser/cement@0.5.34(patch_hash=2f6391e0a56fe610ad9ae72430b603360ee9c00812af21a792562791454613c7)(typescript@6.0.3))(bufferutil@4.1.0)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(typescript@6.0.3)(utf-8-validate@6.0.6)
       '@vibes.diy/use-vibes-base':
         specifier: workspace:*
         version: link:../base
@@ -729,12 +717,9 @@ importers:
 
   use-vibes/types:
     dependencies:
-      '@fireproof/core-types-protocols-cloud':
-        specifier: 0.24.19
-        version: 0.24.19(typescript@6.0.3)
-      '@fireproof/use-fireproof':
-        specifier: 0.24.19
-        version: 0.24.19(@adviser/cement@0.5.34(patch_hash=2f6391e0a56fe610ad9ae72430b603360ee9c00812af21a792562791454613c7)(typescript@6.0.3))(bufferutil@4.1.0)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(typescript@6.0.3)(utf-8-validate@6.0.6)
+      '@vibes.diy/vibe-runtime':
+        specifier: workspace:*
+        version: link:../../vibes.diy/vibe/runtime
       call-ai:
         specifier: workspace:*
         version: link:../../call-ai/pkg
@@ -1264,9 +1249,6 @@ importers:
       '@emotion/css':
         specifier: ^11.13.5
         version: 11.13.5
-      '@fireproof/use-fireproof':
-        specifier: 0.24.19
-        version: 0.24.19(@adviser/cement@0.5.34(patch_hash=2f6391e0a56fe610ad9ae72430b603360ee9c00812af21a792562791454613c7)(typescript@6.0.3))(bufferutil@4.1.0)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(typescript@6.0.3)(utf-8-validate@6.0.6)
       '@vibes.diy/use-vibes-types':
         specifier: workspace:*
         version: link:../../use-vibes/types
