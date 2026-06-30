@@ -3,10 +3,11 @@ import React from "react";
 
 export function meta() {
   return [
-    { title: "Vibes DIY — Easy custom apps, securely share with friends." },
+    { title: "Vibes DIY — Instant custom apps. Share with friends, sell to customers." },
     {
       name: "description",
-      content: "Instant apps, easy to share. Describe your app in plain words — it builds instantly and changes as you type.",
+      content:
+        "Instant apps, easy to share. Describe your app in plain words — it builds instantly and changes as you type. Take orders, kill the spreadsheet, run the front counter.",
     },
   ];
 }

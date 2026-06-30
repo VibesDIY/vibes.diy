@@ -5,7 +5,7 @@ import SessionSidebar from "../components/SessionSidebar.js";
 export function meta() {
   return [
     { title: "About - Vibes DIY" },
-    { name: "description", content: "Make apps with your friends, so easy even AI can do it" },
+    { name: "description", content: "Make apps with your friends — or run your whole operation. So easy even AI can do it." },
   ];
 }
 
@@ -15,9 +15,30 @@ const link: React.CSSProperties = {
   cursor: "pointer",
 };
 
-// Use cases — every one is the same move: start from someone else's vibe, tweak it
-// to fit you, share it, and the people you share with remix their own version.
+// Use cases span the whole range — a group-chat bit and a taco truck's order flow are
+// the same move: start from someone else's vibe, tweak it to fit you, share it, and the
+// people you share with remix their own version. Lead with the ones that do real work.
 const useCases: { title: string; body: string }[] = [
+  {
+    title: "Take orders and payments",
+    body: "Stand up a daily-specials board that takes the order and the payment, plus a prep checklist the whole counter shares.",
+  },
+  {
+    title: "Kill the spreadsheet",
+    body: "Turn the shared spreadsheet everyone fights over into a real app — a form to add things, a dashboard to see them, one source of truth.",
+  },
+  {
+    title: "Book the appointment",
+    body: "A booking and intake app your clients fill out themselves: scheduling, reminders, and notes all in one place.",
+  },
+  {
+    title: "Count the inventory",
+    body: "A phone-friendly stock count with low-stock flags and a live dashboard — no clipboard, no end-of-month scramble.",
+  },
+  {
+    title: "A portal for your customers",
+    body: "Give each client a private page for their order, their job status, their invoice. You decide who gets in.",
+  },
   {
     title: "Fan fiction that talks back",
     body: "Start from a character bot, make it answer in your voice, and run a shared story with your friends.",
@@ -27,20 +48,8 @@ const useCases: { title: string; body: string }[] = [
     body: "Copy a resource tracker, fit it to your city, and share a live tool at the next town meeting — no grant, no dev team.",
   },
   {
-    title: "Hobby logs",
-    body: "A restoration tracker you tweak for your garage, then share with the whole car club.",
-  },
-  {
     title: "Class games",
     body: "Remix a flashcard app into collaborative trivia your students change live as they play.",
-  },
-  {
-    title: "Shared routines",
-    body: "A workout tracker each client makes their own — and a whole gym starts swapping routines.",
-  },
-  {
-    title: "Listeners become makers",
-    body: "Tweak a chord-progression vibe to your style; fans remix their own and feed your next track.",
   },
 ];
 
@@ -82,7 +91,9 @@ export default function About() {
               <h1 style={{ fontWeight: "bold", fontSize: 56, lineHeight: "56px", color: "rgb(83, 152, 201)" }}>
                 Software is getting weird again.
               </h1>
-              <p style={{ marginTop: 16, fontSize: 20, maxWidth: 600 }}>Make apps with your friends, so easy even AI can do it.</p>
+              <p style={{ marginTop: 16, fontSize: 20, maxWidth: 640 }}>
+                Make apps with your friends&mdash;or run your whole operation. So easy even AI can do it.
+              </p>
             </div>
           </div>
 
@@ -109,10 +120,12 @@ export default function About() {
                   padding: "24px 24px",
                 }}
               >
-                <h2 style={{ fontWeight: "bold", fontSize: 40, lineHeight: "40px" }}>Impress the group chat</h2>
+                <h2 style={{ fontWeight: "bold", fontSize: 40, lineHeight: "40px" }}>
+                  Impress the group chat. Run the front counter.
+                </h2>
                 <p style={{ marginTop: 14, fontSize: 15, opacity: 0.7 }}>
-                  Describe what you want, get a live app. Share the link. Your friends join instantly and see real data&mdash;no
-                  setup, no &ldquo;wait let me send you the invite.&rdquo;
+                  Describe what you want, get a live app. Share the link. Your friends&mdash;or your customers&mdash;join instantly
+                  and see real data, no setup, no &ldquo;wait let me send you the invite.&rdquo;
                 </p>
               </div>
             </div>
@@ -150,9 +163,31 @@ export default function About() {
               Actually collaborative
             </h2>
             <p style={{ marginTop: 16, fontSize: 18, color: "rgb(34, 31, 32)" }}>
-              Everyone in your vibe sees the same live state. Someone adds an item, everyone sees it. It works like a shared doc,
-              except it&rsquo;s a full app you described into existence.
+              Everyone in your vibe sees the same live state. Someone adds a row, takes an order, checks a box&mdash;everyone sees
+              it instantly. It works like a shared doc, except it&rsquo;s a full app you described into existence.
             </p>
+          </div>
+
+          {/* Money beat — green, full width. The thing that was missing: real commerce. */}
+          <div style={{ marginBottom: 60, border: "1px solid rgb(13, 110, 50)", boxShadow: "0 2px 4px rgba(0,0,0,0.1)" }}>
+            <div
+              style={{
+                height: 10,
+                width: "100%",
+                backgroundColor: "rgba(22, 163, 74, 0.608)",
+                borderBottom: "1px solid rgb(13, 110, 50)",
+              }}
+            />
+            <div style={{ padding: "28px 28px", backgroundColor: "rgb(22, 163, 74)", color: "white" }}>
+              <h2 style={{ fontWeight: "bold", fontSize: 40, lineHeight: "42px" }}>Takes the order. Takes the payment.</h2>
+              <p style={{ marginTop: 12, fontWeight: "bold", fontSize: 18, lineHeight: "24px" }}>
+                Real commerce, not a mockup&mdash;your app can take an order and a payment the moment it&rsquo;s live.
+              </p>
+              <p style={{ marginTop: 10, fontSize: 14, opacity: 0.9, maxWidth: 620 }}>
+                Sell a thing, book a slot, collect a deposit. The same app that impresses the group chat can run the front
+                counter&mdash;and replace the spreadsheet you&rsquo;ve been duct-taping together.
+              </p>
+            </div>
           </div>
 
           {/* Red + Blue accent row */}
@@ -231,7 +266,7 @@ export default function About() {
               Vibes are for everyone.
             </p>
             <p style={{ marginTop: 12, fontSize: 14, opacity: 0.6, color: "rgb(34, 31, 32)" }}>
-              You and your friends aren&rsquo;t users anymore. You&rsquo;re makers.
+              You and your friends&mdash;or you and your whole team&mdash;aren&rsquo;t users anymore. You&rsquo;re makers.
             </p>
           </div>
 

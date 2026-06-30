@@ -8,6 +8,94 @@ export interface Suggestion {
 
 export const quickSuggestions: Suggestion[] = [
   {
+    label: "Order Form",
+    text: "Create an order form for my small business where customers pick items, add quantities, see a running total, and check out — collect their name, contact, and pickup or delivery choice. Show me a live dashboard of incoming orders with status (new, prepping, ready, done) that everyone behind the counter can update together.",
+  },
+  {
+    label: "Daily Specials",
+    text: "Create a daily-specials board for a food truck or cafe: I post today's menu with prices, customers tap to order and pay a deposit, and the kitchen sees a shared prep queue that updates live. Let me reuse yesterday's menu as a starting point and mark items sold out.",
+  },
+  {
+    label: "Kill the Spreadsheet",
+    text: "Turn the shared spreadsheet my team fights over into a real app: a simple form to add rows, the fields we actually use, filters and search, and a dashboard with the totals and counts up top. One source of truth, and let me control who can edit versus just view.",
+  },
+  {
+    label: "Booking & Intake",
+    text: "Create a booking and intake app for my service business where clients pick an available time slot, fill out an intake form with the details I need, and get a confirmation. Show me a calendar of upcoming appointments and a list of intake responses I can mark as contacted or done.",
+  },
+  {
+    label: "Inventory Count",
+    text: "Create a phone-friendly inventory counter where I add products with a current count and a low-stock threshold, tap plus/minus to adjust on the floor, and see a dashboard that flags anything running low. Let me share it with staff so we count together and it stays in sync.",
+  },
+  {
+    label: "Client Portal",
+    text: "Create a customer portal where each of my clients gets their own private page showing their order or job status, files, and invoice — and I see an admin view of everyone. I decide exactly who can open which page; clients only see their own.",
+  },
+  {
+    label: "Invoice Sender",
+    text: "Create an invoicing app for my business: I add a client and line items, it totals the amount with tax, and generates a clean invoice I can share by link. Each client sees only their own invoices marked paid or unpaid, and I get a dashboard of what's outstanding.",
+  },
+  {
+    label: "Lead Pipeline",
+    text: "Create a simple CRM where I track leads through stages — new, contacted, quoted, won, lost. Each lead has a name, contact info, value, and notes. Show me a pipeline board I can drag cards across and a dashboard with totals per stage. Let me share read-only access with a teammate.",
+  },
+  {
+    label: "Online Storefront",
+    text: "Create a small online storefront where I list products with photos, prices, and stock, customers add to a cart and check out with their details, and I see incoming orders with a status I can update. Let me mark items sold out and feature a few on the front page.",
+  },
+  {
+    label: "Staff Scheduler",
+    text: "Create a staff scheduling app where I lay out shifts across the week, assign people to them, and staff can see their own schedule and request swaps. Flag conflicts and unfilled shifts, and show a weekly grid everyone shares.",
+  },
+  {
+    label: "Time Clock",
+    text: "Create a time clock where staff tap to clock in and out from their phones, breaks included, and I get a dashboard of hours per person per week ready for payroll. Let me correct entries and export the totals.",
+  },
+  {
+    label: "Sales Dashboard",
+    text: "Create a sales dashboard where I enter or paste daily numbers — revenue, transactions, top items — and it charts trends over time with week-over-week and month-over-month comparisons. Highlight my best and worst days and let me filter by date range.",
+  },
+  {
+    label: "Work Orders",
+    text: "Create a work-order app for my field crew: I create a job with customer, address, task, and priority, assign it to a tech, and they update status and add photos from their phone. Show me a dispatch board of everything open, in progress, and done.",
+  },
+  {
+    label: "Loyalty Card",
+    text: "Create a digital loyalty card where customers collect a stamp each visit and earn a reward at ten, all from a link on their phone — no app to install. I get a dashboard of active members and redemptions, and can run a double-stamp day.",
+  },
+  {
+    label: "Table Waitlist",
+    text: "Create a restaurant waitlist app where the host adds a party with size and phone, sees the live queue with wait estimates, and marks them seated. Guests get a link to check their place in line. Show turnover stats for the night.",
+  },
+  {
+    label: "Expense Tracker",
+    text: "Create a business expense tracker where I log expenses with amount, category, vendor, and a photo of the receipt, and see a dashboard of spend by category and month. Let me flag tax-deductible items and export a summary for my accountant.",
+  },
+  {
+    label: "Tip Split",
+    text: "Create a tip-pooling app where I enter the shift's total tips and each person's hours, and it splits the pool fairly and shows everyone their cut. Keep a history by date and let staff see their own totals over time.",
+  },
+  {
+    label: "Membership Tracker",
+    text: "Create a membership tracker for my gym or club: members with plan type, start date, and renewal date, flagged when they're about to lapse. Show me a dashboard of active, expiring, and churned members, and let members check their own status by link.",
+  },
+  {
+    label: "Class Signups",
+    text: "Create a class booking app for my studio where I post classes with date, time, and capacity, clients reserve a spot and join a waitlist when full, and I see the roster for each session. Let clients cancel and free their spot automatically.",
+  },
+  {
+    label: "Supplier Orders",
+    text: "Create a purchasing app where I track orders to suppliers — what I ordered, quantity, cost, expected date, and received status. Show me what's outstanding and overdue, and total spend per supplier. Let me reorder a past order in one tap.",
+  },
+  {
+    label: "Feedback Collector",
+    text: "Create a customer feedback app where I share a link after a purchase, customers leave a star rating and a comment, and I see a dashboard of average rating over time with the latest reviews. Let me feature the best ones on a public page.",
+  },
+  {
+    label: "Fundraiser Tracker",
+    text: "Create a fundraiser tracker for my nonprofit or team where supporters pledge or donate, a goal thermometer fills toward the target, and recent contributions show on a public page. I get an admin view of every donor and the running total.",
+  },
+  {
     label: "Character Bot",
     text: "Create a chat app where I design a character — name, personality, and speaking style — then have a conversation with them. Let me edit the character's style anytime, keep my drafts private, and publish the ones I like to a public gallery others can chat with.",
   },
@@ -84,10 +172,6 @@ export const quickSuggestions: Suggestion[] = [
     text: "Interview me about my loans, income, savings rate, and retirement goals, then use createVibe to open a personal finance app with my numbers already loaded — payoff curves, compound interest projections, and retirement timeline built around my actual situation.",
   },
   {
-    label: "Pigment Studio",
-    text: "Full-screen painting app with only natural earth pigments on the palette and one gloriously oversized brush.",
-  },
-  {
     label: "Emoji Chef",
     text: "AI recipe generator that uses emoji for ingredients. An AI food critic tastes your creations and roasts them with scores.",
   },
@@ -96,28 +180,8 @@ export const quickSuggestions: Suggestion[] = [
     text: "Create a shared availability poll — invite people to mark when they're free and AI instantly finds the best overlapping time to meet.",
   },
   {
-    label: "Sky Gradient",
-    text: "Fetch real weather from the National Weather Service API for Key West, Florida and render the sky as a live CSS gradient.",
-  },
-  {
     label: "Focus Timer",
     text: "Pomodoro timer with multiple concurrent timers, work/break intervals, and session stats. Persists across page refreshes.",
-  },
-  {
-    label: "Zen Toggle",
-    text: "A single checkbox on a blank page. Checked: pure white. Unchecked: total darkness.",
-  },
-  {
-    label: "Ocean Palette",
-    text: "Color picker for maritime and ocean hues. Pick a color and AI names it, or type a poetic name and AI finds the shade.",
-  },
-  {
-    label: "Literary Vistas",
-    text: "Three famous landscape descriptions from American literature. Choose one and AI renders it as an image.",
-  },
-  {
-    label: "Cat Portrait",
-    text: "Pick an emoji from a board and AI generates a photorealistic portrait of an orange Persian tabby incorporating your choice.",
   },
   {
     label: "Loop Machine",
@@ -138,14 +202,6 @@ export const quickSuggestions: Suggestion[] = [
   {
     label: "Flash Study",
     text: "Flashcard app — pick any topic and AI generates a study deck you can flip through and shuffle.",
-  },
-  {
-    label: "ASCII Cam",
-    text: "Live camera feed converted to ASCII art in real time. Watch yourself rendered in characters.",
-  },
-  {
-    label: "Still Life 3D",
-    text: "Three.js scene recreating Paul Cézanne's The Basket of Apples in navigable 3D.",
   },
   {
     label: "Guitar",
