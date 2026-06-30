@@ -20,7 +20,7 @@ import {
   resolveBuilderOriginFrom,
 } from "@vibes.diy/base";
 import type { ShareMember, ShareViewer, ShareAccess, HandleOption } from "@vibes.diy/base";
-import { isUserSettingDefaultHandle, isReadableCachedGrant, resolveCachedRead } from "@vibes.diy/api-types";
+import { isUserSettingDefaultHandle, resolveCachedRead } from "@vibes.diy/api-types";
 import { switchActiveHandle, createAndUseHandle, handleAvatarUrl } from "./handle-picker-actions.js";
 import { uploadHandleAvatar } from "../lib/upload-avatar.js";
 import { useYoursNowToast } from "../hooks/use-yours-now-toast.js";
@@ -384,35 +384,28 @@ export default function VibeIframeWrapper() {
         })();
       };
 
-      // Cached-read lane (#2801): the read/write decision is purely "has this
-      // (source, transform) already been generated?" — it has NOTHING to do with
-      // who is clicking. The cache is keyed by (source, transform), so the source
-      // can be a curated/system vibe OR any user vibe whose chips get precached
-      // (lazily, by a background job, whatever); the precached result always lives
-      // under SYSTEM_CACHE_HANDLE (that handle is storage, not a source
-      // constraint). A cache HIT is a READ: navigate to the precomputed result —
-      // no codegen. A miss, or any lookup error, soft-fails to the write lane,
-      // where identity DOES legitimately matter (owner edits in place, non-owner
-      // forks). So identity is out of the read decision and stays only in the
-      // write behavior. The decision is made before anything commits.
-      //
-      // (Open for when precache lands: what a hit does for the OWNER of the
-      // source — navigate to the system fork as below, or ADOPT the precomputed
-      // result in place as their next fsId, skipping codegen. Today the lookup
-      // always misses, so this never fires and the choice is deferred. #2801.)
+      // Cached-suggestion read lane (#2801): the read/write decision is purely
+      // "has this (source, transform) already been generated?" — it has NOTHING
+      // to do with who is clicking. A precomputed chip result is staged as a new
+      // fsId under THIS vibe's own owner/slug (same slug + new fsId = new code,
+      // data carried; §2), unpublished until the owner publishes. A cache HIT is
+      // a READ: navigate to that staged version — no codegen. A miss, or any
+      // lookup error, soft-fails to the write lane, where identity DOES matter
+      // (owner edits in place, non-owner forks). So identity is out of the read
+      // decision and stays only in the write behavior. The decision is made
+      // before anything commits.
       const submitSeq = ++cachedReadSeqRef.current;
       void (async () => {
         const decision = await resolveCachedRead({
           source: { ownerHandle, appSlug, ...(fsId ? { fsId } : {}) },
           transform: trimmed,
-          lookup: async (ref) => {
-            const r = await vctx.sharedApi.getAppByFsId({
-              ownerHandle: ref.ownerHandle,
-              appSlug: ref.appSlug,
-              selectMode: "published",
-            });
-            return r.isOk() && isReadableCachedGrant(r.Ok().grant);
-          },
+          // The precache index — a (source-version, transform) → staged-fsId map,
+          // gated readable by isReadableCachedGrant — is the deferred backend half
+          // (#2801). Until it exists there is nothing to resolve, so the lookup
+          // returns null and every chip is a write: a correct no-op that lights up
+          // the instant precache starts staging versions. This is the single seam
+          // the backend plugs into.
+          lookup: async () => null,
         });
         // Drop a completion a newer chip click has superseded (last-click-wins):
         // otherwise a slow cache-MISS could runWriteLane/fork after a newer click
@@ -426,7 +419,7 @@ export default function VibeIframeWrapper() {
         runWriteLane();
       })();
     },
-    [isOwner, authSignedIn, ownerHandle, appSlug, fsId, navigate, vctx.sthis, vctx.chatApi, vctx.sharedApi, generation.sendPrompt]
+    [isOwner, authSignedIn, ownerHandle, appSlug, fsId, navigate, vctx.sthis, vctx.chatApi, generation.sendPrompt]
   );
 
   // #2772 D2: publish the owner's current draft. Mints a new top-of-stack production
