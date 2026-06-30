@@ -486,6 +486,12 @@ export default function VibeIframeWrapper() {
         // result. (Codex P2)
         if (cachedReadSeqRef.current !== submitSeq) return;
         if (decision.kind === "read") {
+          // A read hit means NO codegen runs for this click, so drop the producer
+          // capture set at click time — otherwise it lingers (adopt doesn't navigate
+          // away) and a LATER unrelated persist (e.g. a manual code save) would settle
+          // it, registering that unrelated fsId under THIS chip's cache key (Codex P2,
+          // #2938). Cleared for both adopt and navigate outcomes.
+          pendingProduceRef.current = null;
           // Identity-AWARE routing of a hit (#2929 item 4), layered on top of the
           // identity-FREE resolveCachedRead. The OWNER doesn't get shunted to a
           // versioned permalink (read-only editor, no Publish) — they ADOPT the
@@ -707,12 +713,21 @@ export default function VibeIframeWrapper() {
   // #2772 D2: publish the owner's current draft. Mints a new top-of-stack production
   // server-side (no demote); on success bump the draft resolver so the badge + banner
   // clear and the iframe re-pins to the now-published production.
+  //
+  // Publish the EXACT pinned draft (`draftFsId`), not "latest dev": the Publish
+  // control only shows on the unversioned owner-draft view, where `draftFsId` is the
+  // version on screen. The no-`fsId` publishApp path resolves selectLatestDraftOrPublished,
+  // which can differ from the pinned version once adopt-in-place (#2929 item 4) pins an
+  // OLDER cached result as the draft — so clicking Publish would release a different
+  // version than the iframe shows (Codex P1, #2938). Passing the pinned fsId makes
+  // Publish ship exactly what's displayed; in the normal edit flow `draftFsId` already
+  // IS the latest dev row, so this is byte-equivalent there.
   const handlePublish = useCallback(() => {
     if (!isOwner || !ownerHandle || !appSlug || publishing) return;
     setPublishing(true);
     const tid = toast.loading("Publishing…");
     void (async () => {
-      const rPub = await vctx.chatApi.publishApp({ ownerHandle, appSlug });
+      const rPub = await vctx.chatApi.publishApp({ ownerHandle, appSlug, ...(draftFsId ? { fsId: draftFsId } : {}) });
       setPublishing(false);
       if (rPub.isErr()) {
         toast.error(`Couldn't publish: ${rPub.Err().message}`, { id: tid });
@@ -722,7 +737,7 @@ export default function VibeIframeWrapper() {
       notifyRecentVibesChanged();
       setPublishBump((n) => n + 1);
     })();
-  }, [isOwner, ownerHandle, appSlug, publishing, vctx.chatApi]);
+  }, [isOwner, ownerHandle, appSlug, publishing, draftFsId, vctx.chatApi]);
 
   const adminStorageKey = ownerHandle && appSlug ? adminModeStorageKey(ownerHandle, appSlug) : "";
   const [adminMode, setAdminMode] = useState(() => {
