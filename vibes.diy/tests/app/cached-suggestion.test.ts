@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import {
   normalizeTransform,
   cachedSuggestionKey,
+  isCachedSuggestionKeyShape,
   cachedVibeHref,
   isReadableCachedGrant,
   resolveCachedRead,
@@ -65,6 +66,25 @@ describe("cachedSuggestionKey", () => {
     const k1 = cachedSuggestionKey({ source: { ownerHandle: "ab", appSlug: "c" }, transform: "x" });
     const k2 = cachedSuggestionKey({ source: { ownerHandle: "a", appSlug: "bc" }, transform: "x" });
     expect(k1).not.toBe(k2);
+  });
+});
+
+describe("isCachedSuggestionKeyShape", () => {
+  it("accepts the canonical content-address shape produced by cachedSuggestionKey", () => {
+    const key = cachedSuggestionKey({ source: { ownerHandle: "meghan", appSlug: "bloom" }, transform: "Make it loud" });
+    expect(isCachedSuggestionKeyShape(key)).toBe(true);
+    expect(isCachedSuggestionKeyShape("cf-1bekku3-13qsuzt")).toBe(true);
+  });
+
+  it("rejects attacker-controlled input so the public read endpoint never logs it raw", () => {
+    // The read endpoint's schema only requires `key: string`, so these are all
+    // values a non-UI caller could send. None may be echoed into prod logs.
+    expect(isCachedSuggestionKeyShape("a custom prompt with PII: jane@example.com")).toBe(false);
+    expect(isCachedSuggestionKeyShape("CF-UPPER-CASE")).toBe(false);
+    expect(isCachedSuggestionKeyShape("cf-onlyonepart")).toBe(false);
+    expect(isCachedSuggestionKeyShape("")).toBe(false);
+    expect(isCachedSuggestionKeyShape("cf-" + "a".repeat(40) + "-b")).toBe(false); // over the 32-char budget
+    expect(isCachedSuggestionKeyShape("cf-abc-d\nef")).toBe(false); // embedded newline
   });
 });
 
