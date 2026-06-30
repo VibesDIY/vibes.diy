@@ -1,8 +1,9 @@
 # The package the guard quietly skipped
 
-Source: `claude/merge-2864-4x9ffe` — adding `pack`/`publish` scripts to
+Source: `claude/merge-2864-4x9ffe` — adding a `pack` script (only) to
 `@vibes.diy/api-logpush-etl` so the all-packages publish-build guard (#2888)
-actually covers it. The concrete instance of watchout #1 in #2889.
+actually covers it, without enrolling the worker in npm publishing. The concrete
+instance of watchout #1 in #2889.
 
 The guard runs `pnpm -r run --if-present pack`. That `--if-present` is load-
 bearing — it lets eval/* and examples (no `pack` script) ride along without
