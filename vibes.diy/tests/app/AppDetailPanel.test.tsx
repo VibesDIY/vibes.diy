@@ -101,12 +101,12 @@ describe("AppDetailPanel (issue #2011)", () => {
     expect(screen.getByText(/Created by/)).toHaveTextContent("Created by @grace");
   });
 
-  it("still renders the Enter link to the chat route", () => {
+  it("renders the Enter link to the vibe route (#2876 — /chat de-linked from the UI)", () => {
     getAppByFsId.mockResolvedValue(okResult({ meta: [] }));
     const item = makeItem({ ownerHandle: "owner-d", appSlug: "app-d" });
 
     render(<AppDetailPanel item={item} appHostBaseUrl="https://example.com" onClose={vi.fn()} />);
 
-    expect(screen.getByText("Enter").closest("a")).toHaveAttribute("href", "/chat/owner-d/app-d");
+    expect(screen.getByText("Enter").closest("a")).toHaveAttribute("href", "/vibe/owner-d/app-d");
   });
 });
