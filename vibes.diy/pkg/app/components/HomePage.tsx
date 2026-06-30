@@ -200,8 +200,8 @@ export default function HomePage() {
 
           <div style={getContainerStyle(mobile)}>
             <h1 style={getTitle(mobile, isDarkMode)}>
-              Instant apps — from the group chat to the&nbsp;
-              <span style={{ textDecoration: "underline" }}>front counter</span>.
+              From inside jokes to invoices — instant, live,&nbsp;
+              <span style={{ textDecoration: "underline" }}>yours</span>.
             </h1>
 
             {/* Chat input form */}
@@ -233,8 +233,8 @@ export default function HomePage() {
               </div>
             </div>
 
-            {/* Brand line beneath the prompt input — matches the hero ("Instant apps") typography */}
-            <div style={getTitle(mobile, isDarkMode)}>Vibes are fun, done, and alive.</div>
+            {/* Brand line beneath the prompt input — matches the hero typography */}
+            <div style={getTitle(mobile, isDarkMode)}>Your life is custom. Your software should be too.</div>
 
             {/* Carousel */}
             <div style={getCarouselWrapperStyle(mobile)}>
