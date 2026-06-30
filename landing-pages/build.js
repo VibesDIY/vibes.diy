@@ -367,6 +367,9 @@ console.log("  sitemap.ndjson written");
 const statics = [
   "vibes-diy-logo.svg",
   "Vibes-Toggle-1-Transparent.png",
+  "favicon.svg",
+  "favicon.ico",
+  "apple-touch-icon.png",
   "_headers",
   "specs",
 ];
