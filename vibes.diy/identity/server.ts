@@ -6,4 +6,4 @@
 // from "./node" so worker code (e.g. create-handler.ts) never drags the Node-only
 // keybag chain — which imports `find-up`/`unicorn-magic` and breaks the workerd build.
 
-export { deviceIdCAFromEnv, getCloudPubkeyFromEnv, tokenApi } from "./dash-api/token.js";
+export { deviceIdCAFromEnv, getCloudPubkeyFromEnv, tokenApi, DeviceIdApiToken } from "./dash-api/token.js";

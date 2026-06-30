@@ -66,6 +66,19 @@ export class DeviceIdApiToken implements FPApiToken {
     // to "true" in the worker env once the CA-signing CLI is published & adopted.
     // (A present-but-invalid chain signature is ALWAYS rejected, flag or not.)
     const requireCASignature = this.sthis.env.get("DEVICE_ID_REQUIRE_CA_SIGNATURE") === "true";
+    // #2824 adoption visibility: while enforcement is gated off, log whether each
+    // device-id token already carries the CA-signed cert chain (the `x5c#jwt`
+    // header). That turns "bake a few days" into "flip when chainSignature:absent
+    // ≈ 0" — a measured rollout instead of a calendar guess. Header decode is
+    // best-effort; a garbage token logs `absent` and still falls through to the
+    // verifier's own rejection below.
+    const rHeader = await exception2Result(() => decodeProtectedHeader(token));
+    const chainSignature =
+      !rHeader.isErr() && typeof (rHeader.Ok() as { "x5c#jwt"?: unknown })["x5c#jwt"] === "string" ? "present" : "absent";
+    this.sthis.logger
+      .Info()
+      .Any({ event: "device-id-verify", chainSignature, requireCASignature })
+      .Msg("device-id-chain-signature");
     const verify = new DeviceIdVerifyMsg(this.sthis.txt.base64, [rCa.Ok()], { maxAge: 3600, requireCASignature, ...this.opts });
     const res = await verify.verifyWithCertificate(token, FPDeviceIDSessionSchema);
     if (res.valid) {
