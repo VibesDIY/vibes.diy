@@ -152,10 +152,32 @@ describe("ShareModal", () => {
   });
 
   describe("closed", () => {
+    // ShareModal portals its dialog into document.body, which `screen` queries
+    // globally. Under isolate:false the body is shared across files in a worker,
+    // so asserting global *absence* of a dialog is order-dependent: a dialog
+    // leaked by an earlier file fails this test (passes when sharding scatters
+    // that file elsewhere). Assert the delta instead — a closed ShareModal must
+    // add no dialog of its own, whatever else is already in the DOM.
     it("renders nothing when closed", () => {
+      const dialogsBefore = document.querySelectorAll('[role="dialog"]').length;
       const modal = createMockModal({ isOpen: false });
       render(<ShareModal modal={modal} isOwner />);
-      expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+      expect(document.querySelectorAll('[role="dialog"]')).toHaveLength(dialogsBefore);
+    });
+
+    it("renders nothing when closed even if another file leaked a dialog", () => {
+      const leaked = document.createElement("div");
+      leaked.setAttribute("role", "dialog");
+      leaked.textContent = "leaked from another test file";
+      document.body.appendChild(leaked);
+      try {
+        const dialogsBefore = document.querySelectorAll('[role="dialog"]').length;
+        const modal = createMockModal({ isOpen: false });
+        render(<ShareModal modal={modal} isOwner />);
+        expect(document.querySelectorAll('[role="dialog"]')).toHaveLength(dialogsBefore);
+      } finally {
+        leaked.remove();
+      }
     });
   });
 
