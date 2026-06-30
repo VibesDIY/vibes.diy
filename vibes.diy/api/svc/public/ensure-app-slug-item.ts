@@ -159,8 +159,12 @@ export async function ensureAppSlugItem(
     fullFileSystem,
     // #2902: dev drafts never re-bind a published app's live access function;
     // publishApp re-binds the published version. A direct production push
-    // (CLI deploy) still binds here.
-    mode: ensured.mode,
+    // (CLI deploy) still binds here. Use req.mode — the lane that produced
+    // `fullFileSystem` — NOT ensured.mode: a same-runId dev ensure that loses
+    // the reconcile race gets back the canonical production row's mode while
+    // these files are still the dev draft, and binding *those* as production
+    // would reintroduce the live-policy flip (Codex review).
+    mode: req.mode,
   });
   if (rAccessBindings.isErr()) {
     console.warn(
