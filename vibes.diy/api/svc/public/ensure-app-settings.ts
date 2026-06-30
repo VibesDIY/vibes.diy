@@ -212,6 +212,27 @@ function recentlyRegenerated(entries: ActiveEntry[]): boolean {
   return Date.now() - headCreated < ICON_REGEN_MIN_INTERVAL_MS;
 }
 
+// Admin-on-behalf bless (#2929 item 3) — the platform-admin allowlist.
+//
+// There is no pre-existing server-side admin authority (the client `adminMode`
+// flag is self-asserted and only ever elevates the *owner*). So admin-on-behalf
+// blessing introduces one, deliberately minimal: a comma-separated allowlist of
+// VERIFIED Clerk userIds in `VIBES_ADMIN_USER_IDS`. Unset/empty ⇒ the set is
+// empty ⇒ nobody is an admin ⇒ the whole capability is inert (no behavior change
+// in any environment until an operator explicitly populates it). The userId
+// checked against it always comes from a verified token (`_auth`), never the
+// request body.
+function adminUserIdSet(vctx: VibesApiSQLCtx): Set<string> {
+  const raw = vctx.sthis.env.get("VIBES_ADMIN_USER_IDS");
+  if (!raw) return new Set();
+  return new Set(
+    raw
+      .split(",")
+      .map((s) => s.trim())
+      .filter((s) => s.length > 0)
+  );
+}
+
 export async function ensureAppSettings(
   vctx: VibesApiSQLCtx,
   req: ReqEnsureAppSettings,
@@ -249,7 +270,18 @@ export async function ensureAppSettings(
   const record = rPrev.Ok();
   const now = new Date().toISOString();
 
-  if (!userId || userId !== record?.UserSlugBindings.userId) {
+  // The owner is the only identity that may mutate settings — EXCEPT the one
+  // additive case below. `isAdminBless` lets an allowlisted platform admin pass
+  // the gate for a SINGLE request type (a cached-suggestion bless/revoke) on an
+  // app they don't own — admin-on-behalf curation (#2929 item 3). It requires the
+  // app to exist (`record`), the caller to NOT be the owner, the request to be a
+  // bless, and the verified caller to be in the admin allowlist. Every other
+  // settings mutation by a non-owner still falls through to the read-only return.
+  const isOwner = !!userId && userId === record?.UserSlugBindings.userId;
+  const isAdminBless =
+    !!userId && !!record && !isOwner && isReqEnsureAppSettingsCachedSuggestionBless(req) && adminUserIdSet(vctx).has(userId);
+
+  if (!userId || (!isOwner && !isAdminBless)) {
     if (!record) {
       return Result.Ok({
         type: "vibes.diy.res-ensure-app-settings",
@@ -295,9 +327,18 @@ export async function ensureAppSettings(
   if (settingsWarning2.length > 0) {
     ensureLogger(vctx.sthis, "ensureAppSettings").Warn().Any({ parseErrors: settingsWarning2 }).Msg("skip");
   }
+  // The settings row this write lands in is ALWAYS owned by the app owner — even
+  // on the admin-on-behalf path, where `userId` is the admin's. Keying it on the
+  // owner is what makes the bless land in the row the reader/grant actually read
+  // (they resolve via the owner's handle binding); an admin's id here would mint a
+  // stray row keyed on `(adminUserId, ownerHandle, appSlug)` that nothing serves.
+  // The *approver* identity (the verified caller — owner or admin) is captured
+  // separately for the bless audit (`approvedBy`).
+  const ownerUserId = record.UserSlugBindings.userId;
+  const approverUserId = userId;
   const res = {
     type: "vibes.diy.res-ensure-app-settings",
-    userId,
+    userId: ownerUserId,
     appSlug: req.appSlug,
     ledger: record.AppSlugBindings.ledger,
     ownerHandle: req.ownerHandle,
@@ -537,11 +578,31 @@ export async function ensureAppSettings(
       );
       break;
     case isReqEnsureAppSettingsCachedSuggestionBless(req): {
-      // Owner-gated by construction: this switch only runs after the non-owner
-      // read-only early return, so `res.userId` is always the app owner. Bless
-      // upserts the serve-eligibility entry (stamping approver server-side);
-      // revoke removes it so the result forks again (fail-to-fork).
+      // Reached by the OWNER, or by an allowlisted platform admin on-behalf
+      // (#2929 item 3) — the ONLY non-owner write that passes the gate. Either
+      // way the entry lands in the owner's row (`res.userId === ownerUserId`);
+      // `approvedBy` records the verified APPROVER (owner or admin) for audit.
+      // Bless upserts the serve-eligibility entry; revoke removes it so the
+      // result forks again (fail-to-fork). The produce-before-bless + tuple-match
+      // checks below are identical for owner and admin, so an admin can only bless
+      // a result the OWNER actually produced (the produce map is owner-write-only).
       const b = req.cachedSuggestionBless;
+      if (approverUserId !== ownerUserId) {
+        // Admin-on-behalf: audit every non-owner bless/revoke that reaches this
+        // branch (i.e. passed the allowlist gate). Logged as an ATTEMPT — the
+        // produce-before-bless / tuple-match check below can still reject it, so
+        // the message stays neutral about whether the write landed.
+        ensureLogger(vctx.sthis, "ensureAppSettings")
+          .Info()
+          .Str("reason", "adminOnBehalfBless")
+          .Str("op", b.op)
+          .Str("approvedBy", approverUserId)
+          .Str("ownerHandle", req.ownerHandle)
+          .Str("appSlug", req.appSlug)
+          .Str("key", b.key)
+          .Str("fsId", b.fsId)
+          .Msg("admin on-behalf cached-suggestion bless/revoke (allowlisted)");
+      }
       if (b.op === "revoke") {
         // Match the FULL tuple, not just the key (Codex #2915): a key can be
         // re-produced/re-blessed to a new fsId, so a stale revoke carrying the
@@ -575,7 +636,7 @@ export async function ensureAppSettings(
               key: b.key,
               fsId: b.fsId,
               sourceFsId: b.sourceFsId,
-              approvedBy: res.userId,
+              approvedBy: approverUserId,
               approvedAt: now,
             }) satisfies ActiveCachedSuggestionBless
         );
