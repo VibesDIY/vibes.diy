@@ -536,36 +536,52 @@ export async function ensureAppSettings(
           }) satisfies ActiveCachedSuggestion
       );
       break;
-    case isReqEnsureAppSettingsCachedSuggestionBless(req):
+    case isReqEnsureAppSettingsCachedSuggestionBless(req): {
       // Owner-gated by construction: this switch only runs after the non-owner
       // read-only early return, so `res.userId` is always the app owner. Bless
       // upserts the serve-eligibility entry (stamping approver server-side);
       // revoke removes it so the result forks again (fail-to-fork).
-      if (req.cachedSuggestionBless.op === "revoke") {
+      const b = req.cachedSuggestionBless;
+      if (b.op === "revoke") {
+        // Match the FULL tuple, not just the key (Codex #2915): a key can be
+        // re-produced/re-blessed to a new fsId, so a stale revoke carrying the
+        // OLD tuple must no-op rather than unpublish the current blessed result.
         [res.settings, res.error] = await sqlRemove(
           vctx,
           res,
           settings,
-          (e) => isActiveCachedSuggestionBless(e) && e.key === req.cachedSuggestionBless.key
+          (e) => isActiveCachedSuggestionBless(e) && e.key === b.key && e.fsId === b.fsId && e.sourceFsId === b.sourceFsId
         );
       } else {
+        // Bless depends on produce (Codex #2915): only an EXISTING produced
+        // result (matching active.cached-suggestion tuple) may be blessed, so a
+        // bless can't conjure an arbitrary unpublished fsId into the serve map.
+        // The check is in-memory over the already-loaded entries (no extra query).
+        const produced = settings.find(
+          (e) => isActiveCachedSuggestion(e) && e.key === b.key && e.fsId === b.fsId && e.sourceFsId === b.sourceFsId
+        );
+        if (!produced) {
+          res.error = "cannot bless a cached suggestion with no matching produced entry";
+          break;
+        }
         [res.settings, res.error] = await sqlUpsert(
           vctx,
           res,
           settings,
-          (e) => isActiveCachedSuggestionBless(e) && e.key === req.cachedSuggestionBless.key,
+          (e) => isActiveCachedSuggestionBless(e) && e.key === b.key,
           () =>
             ({
               type: "active.cached-suggestion-bless",
-              key: req.cachedSuggestionBless.key,
-              fsId: req.cachedSuggestionBless.fsId,
-              sourceFsId: req.cachedSuggestionBless.sourceFsId,
+              key: b.key,
+              fsId: b.fsId,
+              sourceFsId: b.sourceFsId,
               approvedBy: res.userId,
               approvedAt: now,
             }) satisfies ActiveCachedSuggestionBless
         );
       }
       break;
+    }
     case isReqEnsureAppSettingsDbAcl(req):
       [res.settings, res.error] = await sqlUpsert(
         vctx,
