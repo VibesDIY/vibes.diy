@@ -157,6 +157,10 @@ export async function ensureAppSlugItem(
     ownerHandle: ensured.ownerHandle,
     appSlug: ensured.appSlug,
     fullFileSystem,
+    // #2902: dev drafts never re-bind a published app's live access function;
+    // publishApp re-binds the published version. A direct production push
+    // (CLI deploy) still binds here.
+    mode: ensured.mode,
   });
   if (rAccessBindings.isErr()) {
     console.warn(

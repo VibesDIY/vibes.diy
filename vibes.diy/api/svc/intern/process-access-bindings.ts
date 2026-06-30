@@ -1,6 +1,6 @@
-import { exception2Result, Result } from "@adviser/cement";
+import { exception2Result, Result, stream2uint8array } from "@adviser/cement";
 import { and, eq, notInArray, sql } from "drizzle-orm";
-import type { AccessDescriptor, StorageResult, VibeFile } from "@vibes.diy/api-types";
+import type { AccessDescriptor, FileSystemItem, StorageResult, VibeFile } from "@vibes.diy/api-types";
 import type { VibesApiSQLCtx } from "../types.js";
 import { extractExportSource } from "../public/access-function.js";
 
@@ -8,12 +8,27 @@ export interface ProcessAccessBindingsOpts {
   readonly ownerHandle: string;
   readonly appSlug: string;
   readonly fullFileSystem: readonly { readonly vibeFileItem: VibeFile; readonly storage: StorageResult }[];
+  // Which lane is writing the binding (#2902). The AccessFunctionBindings row is
+  // keyed per (ownerHandle, appSlug, dbName) with no version dimension and is read
+  // by every write-time enforcement, so the LAST writer governs the whole live
+  // namespace. Once an app has a *published* (production) version, an unpublished
+  // dev draft must NOT re-bind that live access function — publishing is the
+  // consent step. While no production version exists yet, the latest dev draft
+  // governs so an owner can iterate on access.js before first publish.
+  readonly mode: "dev" | "production";
 }
 
 export async function processAccessBindings(vctx: VibesApiSQLCtx, opts: ProcessAccessBindingsOpts): Promise<Result<void>> {
   return exception2Result(async () => {
-    const { ownerHandle, appSlug, fullFileSystem } = opts;
+    const { ownerHandle, appSlug, fullFileSystem, mode } = opts;
     const tAfb = vctx.sql.tables.accessFunctionBindings;
+
+    // #2902: a dev draft is inert once the app has a published version — the
+    // published version's access.js governs the live data namespace until the
+    // owner publishes again (see publishAccessBindings, called from publishApp).
+    if (mode === "dev" && (await hasPublishedVersion(vctx, ownerHandle, appSlug))) {
+      return;
+    }
 
     const accessJsEntry = fullFileSystem.find(
       (e) => e.vibeFileItem.filename === "/access.js" || e.vibeFileItem.filename.endsWith("/access.js")
@@ -80,6 +95,71 @@ export async function processAccessBindings(vctx: VibesApiSQLCtx, opts: ProcessA
     } else {
       await vctx.sql.db.delete(tAfb).where(and(eq(tAfb.ownerHandle, ownerHandle), eq(tAfb.appSlug, appSlug)));
     }
+  });
+}
+
+// True when a production (published) Apps row exists for (ownerHandle, appSlug).
+// Soft-unpublish (#2688) only tombstones AppSlugBindings — it never removes the
+// production rows — so existence is the stable "has ever been published" signal.
+async function hasPublishedVersion(vctx: VibesApiSQLCtx, ownerHandle: string, appSlug: string): Promise<boolean> {
+  const tApps = vctx.sql.tables.apps;
+  const row = await vctx.sql.db
+    .select({ fsId: tApps.fsId })
+    .from(tApps)
+    .where(and(eq(tApps.ownerHandle, ownerHandle), eq(tApps.appSlug, appSlug), eq(tApps.mode, "production")))
+    .limit(1)
+    .then((r) => r[0]);
+  return row !== undefined;
+}
+
+// Re-bind the live access function to a *published* version's access.js (#2902).
+// Called from publishApp after a production release is minted, so the binding the
+// write-time gate reads tracks the published version rather than whatever dev draft
+// was saved last. The stored filesystem only carries content-addressed refs, so we
+// re-hydrate the access.js source bytes (parseExportNames needs real source) and
+// hand a synthetic in-memory entry to processAccessBindings in production mode.
+export async function publishAccessBindings(
+  vctx: VibesApiSQLCtx,
+  opts: { readonly ownerHandle: string; readonly appSlug: string; readonly fileSystem: readonly FileSystemItem[] }
+): Promise<Result<void>> {
+  const { ownerHandle, appSlug, fileSystem } = opts;
+  const accessItem = fileSystem.find((f) => f.fileName === "/access.js" || f.fileName.endsWith("/access.js"));
+
+  // Published version has no access.js → clear any stale binding from a prior
+  // published version (processAccessBindings deletes when no access.js is present).
+  if (accessItem === undefined) {
+    return processAccessBindings(vctx, { ownerHandle, appSlug, fullFileSystem: [], mode: "production" });
+  }
+
+  const rSource = await exception2Result(async () => {
+    const rFetch = await vctx.storage.fetch(accessItem.assetURI);
+    if (rFetch.type !== "fetch.ok") {
+      throw new Error(`failed to fetch access.js source from ${accessItem.assetURI}`);
+    }
+    return vctx.sthis.txt.decode(await stream2uint8array(rFetch.data));
+  });
+  if (rSource.isErr()) {
+    return Result.Err(`publishAccessBindings: ${rSource.Err().message}`);
+  }
+
+  const vibeFileItem: VibeFile = {
+    type: "code-block",
+    lang: "js",
+    filename: accessItem.fileName,
+    content: rSource.Ok(),
+  };
+  const storage: StorageResult = {
+    cid: accessItem.assetId,
+    getURL: accessItem.assetURI,
+    mode: "existing",
+    created: new Date(),
+    size: accessItem.size,
+  };
+  return processAccessBindings(vctx, {
+    ownerHandle,
+    appSlug,
+    fullFileSystem: [{ vibeFileItem, storage }],
+    mode: "production",
   });
 }
 

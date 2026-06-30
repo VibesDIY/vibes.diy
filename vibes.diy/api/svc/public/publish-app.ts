@@ -17,6 +17,8 @@ import { checkAuth } from "../check-auth.js";
 import { calcEntryPointUrl } from "../entry-point-utils.js";
 import { selectLatestDraftOrPublished } from "./select-app.js";
 import { mintProductionRelease } from "./app-seq-allocation.js";
+import { publishAccessBindings } from "../intern/process-access-bindings.js";
+import type { FileSystemItem } from "@vibes.diy/api-types";
 
 // Publish an app's draft to production (#2772 D2). Owner-only. The chosen content
 // is re-released as a NEW top-of-stack production row (`releaseSeq = MAX+1`) — old
@@ -73,6 +75,41 @@ export async function publishApp(vctx: VibesApiSQLCtx, req: ReqPublishApp, userI
     return Result.Err(`publish-app: failed to mint production release: ${rMint.Err().message}`);
   }
   const mint = rMint.Ok();
+
+  // 3b. Re-bind the live access function to the published version's access.js
+  //     (#2902). Publishing is the consent step: dev drafts left the binding
+  //     untouched, so the binding here may still reflect a prior published
+  //     version (or nothing). Resolve the published fsId's stored filesystem and
+  //     re-bind from it. Parity with ensureAppSlugItem: a binding failure is
+  //     logged, not fatal — a stale binding keeps the OLD published policy
+  //     (fail-closed), never a draft's.
+  const publishedRow =
+    target.fsId === mint.fsId
+      ? target
+      : await vctx.sql.db
+          .select({ fileSystem: vctx.sql.tables.apps.fileSystem })
+          .from(vctx.sql.tables.apps)
+          .where(
+            and(
+              eq(vctx.sql.tables.apps.ownerHandle, req.ownerHandle),
+              eq(vctx.sql.tables.apps.appSlug, req.appSlug),
+              eq(vctx.sql.tables.apps.fsId, mint.fsId)
+            )
+          )
+          .limit(1)
+          .then((r) => r[0]);
+  if (publishedRow) {
+    const rBind = await publishAccessBindings(vctx, {
+      ownerHandle: req.ownerHandle,
+      appSlug: req.appSlug,
+      fileSystem: publishedRow.fileSystem as FileSystemItem[],
+    });
+    if (rBind.isErr()) {
+      console.warn(`publishApp: access binding re-bind failed for ${req.ownerHandle}/${req.appSlug}:`, rBind.Err());
+    }
+  } else {
+    console.warn(`publishApp: could not resolve published filesystem for ${req.ownerHandle}/${req.appSlug} fsId=${mint.fsId}`);
+  }
 
   // 4. Emit evt-new-fs-id with parity to other production updates (Discord,
   //    caches, recency) — only when the served latest actually changed.

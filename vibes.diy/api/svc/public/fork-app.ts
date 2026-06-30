@@ -27,6 +27,7 @@ import { ensureAppSettings } from "./ensure-app-settings.js";
 import { hasAccessInvite } from "./invite-flow.js";
 import { hasAccessRequest } from "./request-flow.js";
 import { seedChatSection } from "../intern/seed-chat-section.js";
+import { publishAccessBindings } from "../intern/process-access-bindings.js";
 
 function sanitizeSlug(raw: string): string {
   return raw
@@ -189,6 +190,21 @@ export async function forkApp(
     })
   );
   if (rIns.isErr()) return Result.Err(`Failed to insert forked app: ${rIns.Err().message}`);
+
+  // 5b. Bind the forked app's access function from its (shared) filesystem
+  //     (#2902). Forks insert the Apps row directly rather than through
+  //     ensureAppSlugItem, so without this they'd carry no AccessFunctionBindings
+  //     row at all — and the dev-draft gate (which leaves a published app's
+  //     binding untouched) would otherwise never let a clone acquire one. A
+  //     binding failure is logged, not fatal (parity with ensureAppSlugItem).
+  const rForkBind = await publishAccessBindings(vctx, {
+    ownerHandle: destUserSlug,
+    appSlug: destAppSlug,
+    fileSystem: src.fileSystem as FileSystemItem[],
+  });
+  if (rForkBind.isErr()) {
+    vctx.logger.Warn().Err(rForkBind).Msg("fork-app: access binding failed");
+  }
 
   // 6. Create the chat-context row so the client's openChat finds this pair.
   const chatId = vctx.sthis.nextId(12).str;

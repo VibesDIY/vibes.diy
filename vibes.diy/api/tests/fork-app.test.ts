@@ -114,6 +114,34 @@ describe("forkApp", { timeout: (inject("DB_FLAVOUR" as never) as string) === "pg
     expect(remixMeta && "srcFsId" in remixMeta ? remixMeta.srcFsId : "").toBe(src.fsId);
   });
 
+  it("forking an app with access.js binds the forked app's access function (#2902)", async () => {
+    // A source app whose access.js exports a default fn → a '*' binding.
+    const rSrc = await api.ensureAppSlug({
+      mode: "production",
+      fileSystem: [
+        { type: "code-block", lang: "jsx", filename: "/App.jsx", content: `function App() { return null; } App();` },
+        {
+          type: "code-block",
+          lang: "js",
+          filename: "/access.js",
+          content: `export default function (doc) { return { allowAnonymous: false }; }`,
+        },
+      ],
+    });
+    const src = rSrc.Ok();
+    if (!isResEnsureAppSlugOk(src)) assert.fail("Expected ensureAppSlug ok");
+
+    const rFork = await api.forkApp({ srcUserSlug: src.ownerHandle, srcAppSlug: src.appSlug });
+    if (rFork.isErr()) assert.fail("Expected forkApp to succeed: " + JSON.stringify(rFork.Err()));
+    const fork = rFork.Ok();
+
+    // The forked app — which inserts its Apps row directly, bypassing
+    // ensureAppSlugItem — must still carry its own AccessFunctionBindings row.
+    const tAfb = appCtx.vibesCtx.sql.tables.accessFunctionBindings;
+    const bindings = await appCtx.vibesCtx.sql.db.select({ dbName: tAfb.dbName }).from(tAfb).where(eq(tAfb.appSlug, fork.appSlug));
+    expect(bindings.some((b) => b.dbName === "*")).toBe(true);
+  });
+
   it("non-owner can fork a publicAccess app", async () => {
     const src = await createProdApp("hello-public");
     await api.ensureAppSettings({ appSlug: src.appSlug, ownerHandle: src.ownerHandle, publicAccess: { enable: true } });
