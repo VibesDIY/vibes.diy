@@ -280,8 +280,9 @@ export const getAppByFsIdEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqGet
         // won't fire for it. Grant anonymous public-access for THIS exact fsId
         // only when ALL hold: an explicit version was requested; the app is
         // currently public; the requested fsId is registered in this app's
-        // cachedSuggestions map; AND the entry's recorded source version was
-        // itself published/public (the PII boundary — verified in the helper).
+        // BLESS map (the owner explicitly blessed it — produced-but-unblessed
+        // forks); AND the entry's recorded source version was itself
+        // published/public (the PII boundary — verified in the helper).
         // A private app fails the publicAccess check. The tombstone (soft-unpublish)
         // gate above runs ONLY on the no-fsId path, and this branch REQUIRES
         // req.fsId — so we re-check isHiddenForCaller here, mirroring the reader
@@ -301,7 +302,8 @@ export const getAppByFsIdEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqGet
                 ownerHandle: app.ownerHandle,
                 appSlug: app.appSlug,
                 requestedFsId: app.fsId,
-                cachedSuggestions: settings.entry.cachedSuggestions,
+                // Gate on the BLESS map: only an owner-blessed result is grantable.
+                cachedSuggestions: settings.entry.cachedSuggestionBlesses,
               })
             : null;
 
