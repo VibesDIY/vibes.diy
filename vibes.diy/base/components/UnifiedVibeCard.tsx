@@ -16,8 +16,13 @@ import { HandlePickerMenu, type HandleOption } from "./HandlePickerMenu.js";
  * `onBlessChip`/`onUnblessChip`.
  */
 export interface ChipFastPathState {
-  /** A blessed, servable stay exists for this chip — render the shield badge. */
+  /** A blessed same-slug stay exists for this chip — render the 🛡 shield badge
+   *  ("stays here, same data"). Server-authoritative (a stay-`fsId` came back). */
   readonly shielded?: boolean;
+  /** A blessed CROSS-SLUG link exists for this chip (#2941) — render the `→` jump
+   *  badge ("opens another app"). Server-authoritative (a target vibe came back).
+   *  Never combined with the shield; jump wins. */
+  readonly jump?: boolean;
   /** Owner-only: a result was produced for this chip and can be blessed. */
   readonly canBless?: boolean;
   /** Owner-only: this chip is blessed and can be unblessed (revoked). */
@@ -35,12 +40,6 @@ export interface UnifiedVibeCardProps {
    *  Drives the server-authoritative shield badge and the owner-only
    *  bless/unbless control. Omit to render plain chips. */
   chipFastPaths?: Record<string, ChipFastPathState>;
-  /** Chips that are curated cross-slug spine jumps (#2941), by display string.
-   *  A jump chip wears a distinct `→` glyph and NEVER the same-namespace shield —
-   *  clicking it navigates to another curated vibe (a new namespace), so the
-   *  shield's "stays here" promise must not be shown for it (OQ-C / Charlie #2950).
-   *  Jump takes precedence over the shield when both would apply. */
-  jumpChips?: readonly string[];
   /** Owner-only: feature a produced chip result as a fast-path "stay" (bless).
    *  Wire only for the owner — the control is hidden otherwise. */
   onBlessChip?: (chip: string) => void;
@@ -634,24 +633,20 @@ function PublishBanner({ onPublish, publishing }: { readonly onPublish: () => vo
 // bless/unbless control as an OptionButtons `OptionDecoration`. The badge sits
 // inside the chip button; the control is a sibling (a button can't nest a button).
 function decorateChip(option: string, props: UnifiedVibeCardProps): OptionDecoration | undefined {
-  // A curated cross-slug jump (#2941) wears its own `→` glyph and NEVER the
-  // shield: the shield means "stays here, same namespace" and a jump goes to a
-  // different curated vibe, so showing the shield would be a false promise (the
-  // exact phishing-shaped risk Charlie flagged, #2950 / OQ-C). Jump wins over the
-  // shield, and a jump chip has no bless/unbless control (it's not a same-slug
-  // produced result).
-  if (props.jumpChips?.includes(option)) {
-    return { badge: <ChipJumpBadge /> };
-  }
   const fp = props.chipFastPaths?.[option];
   if (!fp) return undefined;
-  const badge = fp.shielded ? <ChipShieldBadge /> : undefined;
+  // A cross-slug jump (#2941) wears its own `→` glyph and NEVER the shield: the
+  // shield means "stays here, same namespace" and a jump goes to a different vibe,
+  // so showing the shield would be a false promise (the phishing-shaped risk
+  // Charlie flagged, #2950 / OQ-C). Jump wins over the shield, and a jump chip has
+  // no bless/unbless control (it's curated via setup, not a same-slug produce).
+  const badge = fp.jump ? <ChipJumpBadge /> : fp.shielded ? <ChipShieldBadge /> : undefined;
   // Owner-only: unbless a blessed (shielded) chip, or bless a produced one. Gated
   // on the host wiring the callback (the route only passes them for the owner).
   const aside =
-    fp.canUnbless && props.onUnblessChip ? (
+    !fp.jump && fp.canUnbless && props.onUnblessChip ? (
       <FastPathToggle blessed onClick={() => props.onUnblessChip?.(option)} />
-    ) : fp.canBless && props.onBlessChip ? (
+    ) : !fp.jump && fp.canBless && props.onBlessChip ? (
       <FastPathToggle onClick={() => props.onBlessChip?.(option)} />
     ) : undefined;
   return badge || aside ? { badge, aside } : undefined;

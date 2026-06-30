@@ -145,8 +145,12 @@ export function buildEnsureEntryResult(entries: ActiveEntry[]): AppSettings {
       case isActiveCachedSuggestionBless(e):
         result.entry.cachedSuggestionBlesses = result.entry.cachedSuggestionBlesses ?? {};
         result.entry.cachedSuggestionBlesses[e.key] = {
-          fsId: e.fsId,
-          sourceFsId: e.sourceFsId,
+          // STAY (fsId+sourceFsId) or cross-slug VIBE link (target*) — carry
+          // whichever the entry holds (#2941).
+          ...(e.fsId ? { fsId: e.fsId } : {}),
+          ...(e.sourceFsId ? { sourceFsId: e.sourceFsId } : {}),
+          ...(e.targetOwnerHandle ? { targetOwnerHandle: e.targetOwnerHandle } : {}),
+          ...(e.targetAppSlug ? { targetAppSlug: e.targetAppSlug } : {}),
           approvedBy: e.approvedBy,
           approvedAt: e.approvedAt,
         };
@@ -256,6 +260,8 @@ async function applyCachedSuggestionBless(
     return [res.settings, "expected a cached-suggestion bless request"];
   }
   const b = req.cachedSuggestionBless;
+  // A cross-slug VIBE link (#2941) names a target vibe instead of a staged fsId.
+  const isVibeLink = typeof b.targetAppSlug === "string" && b.targetAppSlug.length > 0;
   if (approverUserId !== ownerUserId) {
     // Admin-on-behalf: audit every non-owner bless/revoke that passed the
     // allowlist gate. Logged as an ATTEMPT — the produce-before-bless / tuple
@@ -268,9 +274,50 @@ async function applyCachedSuggestionBless(
       .Str("ownerHandle", req.ownerHandle)
       .Str("appSlug", req.appSlug)
       .Str("key", b.key)
-      .Str("fsId", b.fsId)
+      .Str("fsId", b.fsId ?? (isVibeLink ? `vibe:${b.targetOwnerHandle}/${b.targetAppSlug}` : ""))
       .Msg("admin on-behalf cached-suggestion bless/revoke (allowlisted)");
   }
+
+  if (isVibeLink) {
+    // Cross-slug VIBE link: bless/revoke a chip → target-vibe navigation. NO
+    // produce-before-bless step (there's no generated artifact — it's a curated
+    // link to already-public content; the reader checks the target is public at
+    // serve time). Match the FULL tuple (key + target) so a stale revoke no-ops.
+    if (b.op === "revoke") {
+      return await sqlRemove(
+        vctx,
+        res,
+        settings,
+        (e) =>
+          isActiveCachedSuggestionBless(e) &&
+          e.key === b.key &&
+          e.targetOwnerHandle === b.targetOwnerHandle &&
+          e.targetAppSlug === b.targetAppSlug
+      );
+    }
+    return await sqlUpsert(
+      vctx,
+      res,
+      settings,
+      (e) => isActiveCachedSuggestionBless(e) && e.key === b.key,
+      () =>
+        ({
+          type: "active.cached-suggestion-bless",
+          key: b.key,
+          targetOwnerHandle: b.targetOwnerHandle,
+          targetAppSlug: b.targetAppSlug,
+          approvedBy: approverUserId,
+          approvedAt: now,
+        }) satisfies ActiveCachedSuggestionBless
+    );
+  }
+
+  // Same-slug STAY (the existing path) — requires fsId+sourceFsId.
+  if (!b.fsId || !b.sourceFsId) {
+    return [res.settings, "a stay bless requires fsId and sourceFsId (or a target vibe for a cross-slug link)"];
+  }
+  const blessFsId = b.fsId;
+  const blessSourceFsId = b.sourceFsId;
   if (b.op === "revoke") {
     // Match the FULL tuple, not just the key (Codex #2915): a key can be
     // re-produced/re-blessed to a new fsId, so a stale revoke carrying the OLD
@@ -279,7 +326,7 @@ async function applyCachedSuggestionBless(
       vctx,
       res,
       settings,
-      (e) => isActiveCachedSuggestionBless(e) && e.key === b.key && e.fsId === b.fsId && e.sourceFsId === b.sourceFsId
+      (e) => isActiveCachedSuggestionBless(e) && e.key === b.key && e.fsId === blessFsId && e.sourceFsId === blessSourceFsId
     );
   }
   // Bless depends on produce (Codex #2915): only an EXISTING produced result
@@ -288,7 +335,7 @@ async function applyCachedSuggestionBless(
   // bounds admin-on-behalf: the produce map is owner-write-only, so an admin can
   // only bless a result the OWNER actually produced.
   const produced = settings.find(
-    (e) => isActiveCachedSuggestion(e) && e.key === b.key && e.fsId === b.fsId && e.sourceFsId === b.sourceFsId
+    (e) => isActiveCachedSuggestion(e) && e.key === b.key && e.fsId === blessFsId && e.sourceFsId === blessSourceFsId
   );
   if (!produced) {
     return [res.settings, "cannot bless a cached suggestion with no matching produced entry"];
@@ -302,8 +349,8 @@ async function applyCachedSuggestionBless(
       ({
         type: "active.cached-suggestion-bless",
         key: b.key,
-        fsId: b.fsId,
-        sourceFsId: b.sourceFsId,
+        fsId: blessFsId,
+        sourceFsId: blessSourceFsId,
         approvedBy: approverUserId,
         approvedAt: now,
       }) satisfies ActiveCachedSuggestionBless

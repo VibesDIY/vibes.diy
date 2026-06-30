@@ -82,10 +82,15 @@ export async function grantableCachedSuggestionSource(
     readonly ownerHandle: string;
     readonly appSlug: string;
     readonly requestedFsId: string;
-    readonly cachedSuggestions: Record<string, { fsId: string; sourceFsId: string }> | undefined;
+    // The bless map values: a same-slug STAY ({fsId, sourceFsId}) or a cross-slug
+    // VIBE link (target*, no fsId/sourceFsId — #2941). The grant only serves a
+    // same-slug staged fsId, so cross-slug entries naturally fall through both
+    // guards below (no matching fsId, no sourceFsId).
+    readonly cachedSuggestions: Record<string, { fsId?: string; sourceFsId?: string }> | undefined;
   }
 ): Promise<string | null> {
   for (const v of Object.values(args.cachedSuggestions ?? {})) {
+    if (!v.fsId || !v.sourceFsId) continue;
     if (v.fsId !== args.requestedFsId) continue;
     if (
       await cachedSuggestionSourceIsPublic(vctx, { ownerHandle: args.ownerHandle, appSlug: args.appSlug, sourceFsId: v.sourceFsId })

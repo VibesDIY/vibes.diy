@@ -442,8 +442,12 @@ export const resGetCachedSuggestion = type({
   ownerHandle: "string",
   appSlug: "string",
   key: "string",
-  // The staged result version. Absent = miss / not visible (no oracle).
+  // A HIT is EITHER a same-slug stay (`fsId`) OR a cross-slug vibe link
+  // (`targetOwnerHandle`+`targetAppSlug`, #2941). All absent = miss / not visible
+  // (no oracle — the uniform fail-to-fork answer).
   "fsId?": "string",
+  "targetOwnerHandle?": "string",
+  "targetAppSlug?": "string",
 });
 export type ResGetCachedSuggestion = typeof resGetCachedSuggestion.infer;
 export function isResGetCachedSuggestion(obj: unknown): obj is ResGetCachedSuggestion {

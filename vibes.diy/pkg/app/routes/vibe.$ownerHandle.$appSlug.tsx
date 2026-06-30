@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useReducer, useRef, useState } from "react";
+import React, { useCallback, useEffect, useReducer, useRef, useState } from "react";
 import { useMatches, useNavigate, useParams, useSearchParams } from "react-router";
 import { useVibesDiy } from "../vibes-diy-provider.js";
 import { BuildURI, URI } from "@adviser/cement";
@@ -27,7 +27,6 @@ import {
   normalizeTransform,
   cachedSuggestionKey,
 } from "@vibes.diy/api-types";
-import { curatedEdgeTarget, starterVibeHref } from "./starter-graph.js";
 import { switchActiveHandle, createAndUseHandle, handleAvatarUrl } from "./handle-picker-actions.js";
 import { uploadHandleAvatar } from "../lib/upload-avatar.js";
 import { useYoursNowToast } from "../hooks/use-yours-now-toast.js";
@@ -315,15 +314,6 @@ export default function VibeIframeWrapper() {
     setCardChips(generation.hasLocalEdit ? generation.suggestionChips : editChips);
   }, [generation.isGenerating, generation.hasLocalEdit, generation.suggestionChips, editChips]);
 
-  // Which visible chips are curated cross-slug spine jumps (#2941) — drives the
-  // distinct `→` glyph (never the shield). Slug-scoped, so this is empty for any
-  // vibe that isn't a curated starter (incl. a visitor's fork).
-  const jumpChips = useMemo(
-    () =>
-      ownerHandle && appSlug ? cardChips.filter((c) => curatedEdgeTarget({ ownerHandle, appSlug, chipLabel: c }) !== null) : [],
-    [cardChips, ownerHandle, appSlug]
-  );
-
   // On the forked /vibe page (?prompt64 carried from a seamless non-owner fork),
   // auto-fire the generation once ownership resolves to us — only when isOwner is
   // true (i.e. the page is already our own fork), so we never send against the
@@ -387,24 +377,6 @@ export default function VibeIframeWrapper() {
     (text: string) => {
       const trimmed = text.trim();
       if (!trimmed || !ownerHandle || !appSlug) return;
-
-      // Curated spine pre-check (#2941): if this chip is a hand-tuned cross-slug
-      // edge for the current starter vibe, it's an instant public read — navigate
-      // to the target curated vibe (a different slug / new namespace, which is
-      // appropriate for the on-ramp; no login, no codegen, no fork). Slug-scoped,
-      // so it only fires on the curated starter itself, never a visitor's fork.
-      // Takes precedence over the same-slug read/write dispatch below
-      // (curated-edge-wins) and never registers a producer capture — a spine jump
-      // is navigation, not a same-slug produce. The destination keeps the full
-      // server-authoritative visibility path; this client target carries no
-      // grant/serve truth (Charlie #2950, nav-only). The cross-slug jump wears a
-      // distinct `→` glyph, never the same-namespace shield (OQ-C).
-      const curatedTarget = curatedEdgeTarget({ ownerHandle, appSlug, chipLabel: trimmed });
-      if (curatedTarget) {
-        pendingProduceRef.current = null;
-        void navigate(starterVibeHref(curatedTarget));
-        return;
-      }
 
       // The write lane (today's behavior): owner generates in place, non-owner
       // makes it yours. Extracted so the cached-read lane below can fall through
@@ -518,8 +490,15 @@ export default function VibeIframeWrapper() {
           lookup: async ({ key }) => {
             if (!cachedSuggestionsEnabled) return null;
             const r = await vctx.sharedApi.getCachedSuggestion({ ownerHandle, appSlug, key });
-            const hitFsId = r.isOk() ? r.Ok().fsId : undefined;
-            return hitFsId ? { ownerHandle, appSlug, fsId: hitFsId } : null;
+            if (r.isErr()) return null;
+            const res = r.Ok();
+            // A cross-slug VIBE link (#2941) → navigate to the target vibe's
+            // canonical URL (no fsId). A same-slug STAY → the staged fsId under
+            // this vibe. Either is a server-authoritative hit; a miss returns null.
+            if (res.targetOwnerHandle && res.targetAppSlug) {
+              return { ownerHandle: res.targetOwnerHandle, appSlug: res.targetAppSlug };
+            }
+            return res.fsId ? { ownerHandle, appSlug, fsId: res.fsId } : null;
           },
         });
         // Drop a completion a newer chip click has superseded (last-click-wins):
@@ -641,7 +620,11 @@ export default function VibeIframeWrapper() {
       // Owner-only: the produce map gives the bless tuple, the bless map the revoke
       // tuple. Non-owners read neither and get no controls (only the shield).
       let produceMap: Record<string, { fsId: string; sourceFsId: string }> = {};
-      let blessMap: Record<string, { fsId: string; sourceFsId: string }> = {};
+      // The bless map now holds same-slug stays ({fsId, sourceFsId}) AND cross-slug
+      // vibe links (targetAppSlug, no fsId — #2941). The in-vibe bless/unbless
+      // controls stay same-slug-only (a cross-slug link is curated via setup, not
+      // the chip UI), so we only treat fsId-bearing entries as blessable here.
+      let blessMap: Record<string, { fsId?: string; sourceFsId?: string; targetAppSlug?: string }> = {};
       if (isOwner) {
         const rSet = await vctx.sharedApi.ensureAppSettings({ ownerHandle, appSlug });
         if (rSet.isOk()) {
@@ -653,15 +636,23 @@ export default function VibeIframeWrapper() {
       const tuples: typeof chipFastPathTuplesRef.current = {};
       await Promise.all(
         cardChips.map(async (chip) => {
-          // Shield key = the CLICK key, so the badge and the click lane agree.
+          // Server-authoritative affordance: ask getCachedSuggestion on the CLICK
+          // key, so badge and click lane agree. A stay-`fsId` → shield ("stays
+          // here"); a `targetAppSlug` → the `→` jump glyph ("opens another app",
+          // #2941). Both come from the server; the client never asserts either.
           let shielded = false;
+          let jump = false;
           if (clickSourceFsId) {
             const shieldKey = cachedSuggestionKey({ source: { ownerHandle, appSlug, fsId: clickSourceFsId }, transform: chip });
             try {
               const r = await vctx.sharedApi.getCachedSuggestion({ ownerHandle, appSlug, key: shieldKey });
-              shielded = r.isOk() && Boolean(r.Ok().fsId);
+              if (r.isOk()) {
+                const res = r.Ok();
+                shielded = Boolean(res.fsId);
+                jump = Boolean(res.targetAppSlug);
+              }
             } catch {
-              // Soft-fail: leave the chip un-shielded (it falls to the write lane on click).
+              // Soft-fail: leave the chip un-decorated (it falls to the write lane on click).
             }
           }
           // Control key = the production-HEAD key the produce/bless entries live under.
@@ -669,9 +660,13 @@ export default function VibeIframeWrapper() {
             ? cachedSuggestionKey({ source: { ownerHandle, appSlug, fsId: cacheSourceFsId }, transform: chip })
             : undefined;
           const produced = prodKey ? produceMap[prodKey] : undefined;
-          const blessed = prodKey ? blessMap[prodKey] : undefined;
+          // Same-slug-only: a cross-slug bless (no fsId) is not blessable/revocable
+          // via the chip UI, so ignore it for the controls.
+          const blessedRec = prodKey ? blessMap[prodKey] : undefined;
+          const blessed = blessedRec && blessedRec.fsId && blessedRec.sourceFsId ? blessedRec : undefined;
           states[chip] = {
             shielded,
+            jump,
             // Bless/unbless availability comes from the bless MAP, not the shield —
             // so a latent bless (blessed but app currently private → no shield) stays
             // revocable instead of flipping back to "Feature" (Codex P2).
@@ -682,7 +677,7 @@ export default function VibeIframeWrapper() {
             ...(produced && prodKey ? { bless: { key: prodKey, fsId: produced.fsId, sourceFsId: produced.sourceFsId } } : {}),
             // Revoke matches the FULL blessed tuple; fall back to the produce tuple
             // if the bless map is momentarily absent.
-            ...(blessed && prodKey
+            ...(blessed && blessed.fsId && blessed.sourceFsId && prodKey
               ? { revoke: { key: prodKey, fsId: blessed.fsId, sourceFsId: blessed.sourceFsId } }
               : produced && prodKey
                 ? { revoke: { key: prodKey, fsId: produced.fsId, sourceFsId: produced.sourceFsId } }
@@ -1775,9 +1770,6 @@ ${rootCssBlock}
                   // Cached-suggestion fast paths (#2917): the server-authoritative
                   // shield badge for everyone + the owner-only bless/unbless control.
                   chipFastPaths={chipFastPaths}
-                  // Curated cross-slug spine jumps (#2941) — distinct `→` glyph,
-                  // never the same-namespace shield.
-                  jumpChips={jumpChips}
                   onBlessChip={isOwner ? handleBlessChip : undefined}
                   onUnblessChip={isOwner ? handleUnblessChip : undefined}
                   onHome={() => {
