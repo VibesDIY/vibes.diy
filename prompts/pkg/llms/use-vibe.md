@@ -16,7 +16,7 @@ Pass the Fireproof database name you are writing to. You get:
 
 ## The rule
 
-Gate every write affordance on `can.*`. Render `reason` when denied. Never branch write permission on `viewer`, `access.hasRole()`/`access.hasChannel()`, or document fields — those drift from what `access.js` actually does. Rendering **other** users (authors, rosters) is `useViewer()`'s `<ViewerTag userHandle={...} />`, not `useVibe`. The current viewer's own pill and the "signed in as" / sign-in button are system chrome in the Vibes Switch (the logo) — don't build them into the app.
+Gate every write affordance on `can.*`. Render `reason` when denied. Never branch write permission on `viewer`, `access.hasRole()`/`access.hasChannel()`, or document fields — those drift from what `access.js` actually does. Rendering **other** users (authors, rosters) is `useViewer()`'s `<ViewerTag userHandle={...} />`, not `useVibe`. The current viewer's own pill and the "signed in as" / sign-in button are system chrome in the Vibes Switch (the logo) — don't build them into the app. (The one exception is inline avatar self-edit: a guarded no-prop `{viewer && <ViewerTag />}` lets any signed-in member change their own photo in place — see use-viewer docs.)
 
 ```jsx
 import { useVibe } from "use-vibes";

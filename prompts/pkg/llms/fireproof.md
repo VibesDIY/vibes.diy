@@ -434,7 +434,7 @@ This example shows the full round-trip — access.js declares channels and grant
 - **Channel identity:** Channel docs use `_id: "ch:" + name` so names are unique. The `_id` is the channel identifier everywhere — in `channels`, `grant`, and `ctx.requireAccess()`.
 - **Channel grant:** A channel document grants the creator (`grant.users`), adds `grant.public` so all members can read, and `grant.roles` so posters can write.
 - **Write surfaces** are gated with `useVibe(dbName).can.create/edit/delete` — it runs this same access function, so the UI verdict matches the server. Render `.reason` when denied. (See use-vibe docs.)
-- **`ViewerTag`** takes `userHandle` to render another user (authors, rosters). The current viewer's own pill and sign-in button are system chrome in the Vibes Switch (the logo) — don't add one to the app's UI.
+- **`ViewerTag`** takes `userHandle` to render another user (authors, rosters). The current viewer's own pill and sign-in button are system chrome in the Vibes Switch (the logo) — don't add one to the app's UI, except a guarded no-prop `{viewer && <ViewerTag />}` when you want inline avatar self-edit for any signed-in member (see use-viewer docs).
 
 access.js
 
