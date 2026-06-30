@@ -13,6 +13,8 @@
     "./backend-executor.js": "./backend-executor.js"
   },
   "scripts": {
+    "gen:ssr-deps": "node scripts/build-ssr-isolate-deps.mjs",
+    "prebuild": "pnpm run gen:ssr-deps",
     "build": "core-cli tsc",
     "pack": "core-cli build --doPack",
     "publish": "core-cli build"
@@ -31,7 +33,8 @@
   "devDependencies": {
     "@vibes.diy/build-cli": "workspace:*",
     "@types/react": "^19.2.14",
-    "@types/react-dom": "^19.2.3"
+    "@types/react-dom": "^19.2.3",
+    "esbuild": "^0.25.0"
   },
   "repository": {
     "type": "git",

@@ -1988,6 +1988,9 @@ importers:
       '@vibes.diy/build-cli':
         specifier: workspace:*
         version: link:../../build-cli
+      esbuild:
+        specifier: ^0.25.0
+        version: 0.25.12
 
   vibes.diy/vibe/srv-sandbox:
     dependencies:
