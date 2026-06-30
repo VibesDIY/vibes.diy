@@ -69,6 +69,28 @@ export const getCachedSuggestionEvento: EventoHandler<
         key: req.key,
       };
 
+      // Read-lane outcome telemetry (#2928): one structured line per lookup —
+      // hit / miss / lookup-error — so the fail-to-fork (soft-miss) behavior
+      // can't silently mask an infra regression once prod traffic hits the lane.
+      // `lookup-error` is the only outcome that's degraded rather than a genuine
+      // answer (settings read failed → client forks/writes). The key is a
+      // content-address of an OFFERED chip (never a custom prompt), so it carries
+      // no PII.
+      const emit = (res: ResGetCachedSuggestion, outcome: "hit" | "miss" | "lookup-error", reason?: string) => {
+        logger
+          .Info()
+          .Any("event", {
+            outcome,
+            ...(reason ? { reason } : {}),
+            ownerHandle: req.ownerHandle,
+            appSlug: req.appSlug,
+            key: req.key,
+            ...(res.fsId ? { fsId: res.fsId } : {}),
+          })
+          .Msg("cached-suggestion-read");
+        return ctx.send.send(ctx, res).then(() => Result.Ok(EventoResult.Continue));
+      };
+
       const callerUserId = req._auth?.verifiedAuth.claims.userId;
       const app = await selectLatestAppPerSlug(vctx, { ownerHandle: req.ownerHandle, appSlug: req.appSlug });
 
@@ -97,8 +119,7 @@ export const getCachedSuggestionEvento: EventoHandler<
           : await isPublicReadable(vctx, req.appSlug, req.ownerHandle);
       }
       if (!isMember && !publicVisible) {
-        await ctx.send.send(ctx, miss);
-        return Result.Ok(EventoResult.Continue);
+        return emit(miss, "miss", "not-visible");
       }
 
       // Resolve the staged fsId from the BLESS map — the serve-eligibility layer.
@@ -112,14 +133,12 @@ export const getCachedSuggestionEvento: EventoHandler<
         ownerHandle: req.ownerHandle,
       });
       if (rAppSet.isErr()) {
-        await ctx.send.send(ctx, miss);
-        return Result.Ok(EventoResult.Continue);
+        return emit(miss, "lookup-error", "settings-read-failed");
       }
       const cachedSuggestionBlesses = rAppSet.Ok().settings.entry.cachedSuggestionBlesses;
       const entry = cachedSuggestionBlesses?.[req.key];
       if (!entry) {
-        await ctx.send.send(ctx, miss);
-        return Result.Ok(EventoResult.Continue);
+        return emit(miss, "miss", "unblessed");
       }
       // Key-specific source-was-public check on THIS exact entry (not an fsId
       // first-match across entries; Charlie #2890), same predicate the grant uses.
@@ -130,24 +149,19 @@ export const getCachedSuggestionEvento: EventoHandler<
       });
       if (!sourcePublic) {
         // Entry exists but its source version is no longer public → not servable.
-        await ctx.send.send(ctx, miss);
-        return Result.Ok(EventoResult.Continue);
+        return emit(miss, "miss", "source-not-public");
       }
 
-      logger
-        .Debug()
-        .Str("ownerHandle", req.ownerHandle)
-        .Str("appSlug", req.appSlug)
-        .Str("fsId", entry.fsId)
-        .Msg("cached-suggestion hit");
-      await ctx.send.send(ctx, {
-        type: "vibes.diy.res-get-cached-suggestion",
-        ownerHandle: req.ownerHandle,
-        appSlug: req.appSlug,
-        key: req.key,
-        fsId: entry.fsId,
-      } satisfies ResGetCachedSuggestion);
-      return Result.Ok(EventoResult.Continue);
+      return emit(
+        {
+          type: "vibes.diy.res-get-cached-suggestion",
+          ownerHandle: req.ownerHandle,
+          appSlug: req.appSlug,
+          key: req.key,
+          fsId: entry.fsId,
+        } satisfies ResGetCachedSuggestion,
+        "hit"
+      );
     }
   ),
 };
