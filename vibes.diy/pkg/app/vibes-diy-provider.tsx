@@ -13,12 +13,11 @@ import { PostHogProvider } from "posthog-js/react";
 import { PkgRepos, VibesDiyApiIface } from "@vibes.diy/api-types";
 import type { Conn } from "@vibes.diy/api-types";
 import { vibesDiySrvSandbox, VibesDiySrvSandbox } from "@vibes.diy/vibe-srv-sandbox";
-import { ensureSuperThis, type SuperThis } from "@vibes.diy/identity";
+import { ensureSuperThis, type DashAuthType, type SuperThis } from "@vibes.diy/identity";
 import { toast } from "react-hot-toast";
 import { ensureAssetSession, tearDownAssetSession } from "./lib/asset-session.js";
 import { avatarConfirmController } from "./lib/avatar-confirm.js";
 import { AvatarConfirmModal } from "./components/AvatarConfirmModal.js";
-import type { DashAuthType } from "@vibes.diy/identity";
 // import { PkgRepos } from "@vibes.diy/api-types";
 
 export interface VibesDiyWebVars {
