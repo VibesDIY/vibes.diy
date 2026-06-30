@@ -219,7 +219,7 @@ export default function HomePage() {
                       handleSubmit();
                     }
                   }}
-                  placeholder="Describe your app in plain words — a trivia night, or an order form that takes payments. It builds instantly and changes as you type."
+                  placeholder="Describe your app in plain words — a trivia night, or an order form for your shop. It builds instantly and changes as you type."
                   style={getTextareaStyle()}
                 />
                 <button
