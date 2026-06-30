@@ -13,7 +13,42 @@ import { toast } from "react-hot-toast";
 import { ModelSettingsCards } from "../../ModelSettingsCards.js";
 import { cidAssetUrl, getAppHostBaseUrl } from "../../../utils/vibeUrls.js";
 import { vibesThemes } from "@vibes.diy/prompts";
+import type { VibesTheme } from "@vibes.diy/prompts";
 import type { SettingKey } from "../../vibe-editor/settings-subset.js";
+
+// ── theme thumbnail ───────────────────────────────────────────────────────────
+
+// Inline preview of a theme's exemplar page. Renders the same static
+// `/themes/<slug>.html` the picker modal scales into cards, so picking a theme
+// shows what it looks like without navigating away from the vibe page (the old
+// "preview" link opened /vibe/theme/<slug> in a new tab).
+function ThemeThumbnail({ theme }: { theme: VibesTheme }) {
+  // The exemplar pages are authored at 1400×900; scaling that down keeps the
+  // layout faithful instead of reflowing a tiny viewport.
+  const WIDTH = 1400;
+  const HEIGHT = 900;
+  const SCALE = 0.18;
+  return (
+    <div
+      className="relative overflow-hidden rounded border border-gray-300 dark:border-gray-600"
+      style={{ width: WIDTH * SCALE, height: HEIGHT * SCALE, backgroundColor: theme.bgColor }}
+    >
+      <iframe
+        src={`/themes/${theme.slug}.html`}
+        title={`${theme.name} preview`}
+        sandbox="allow-same-origin"
+        loading="lazy"
+        className="pointer-events-none absolute left-0 top-0 origin-top-left border-0"
+        style={{ width: WIDTH, height: HEIGHT, transform: `scale(${SCALE})` }}
+      />
+      <span
+        className="absolute bottom-1.5 left-1.5 inline-block h-5 w-5 rounded-full border-2 border-black/30 dark:border-white/40"
+        style={{ backgroundColor: theme.accentColor }}
+        aria-hidden
+      />
+    </div>
+  );
+}
 
 // ── card wrapper ─────────────────────────────────────────────────────────────
 
@@ -450,18 +485,15 @@ export function SettingsTab({ ownerHandle, appSlug, hide }: SettingsTabProps) {
                   </option>
                 ))}
               </select>
-              {theme && (
-                <a
-                  href={`/vibe/theme/${theme}`}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="text-xs text-blue-600 dark:text-blue-400 hover:underline"
-                  title="View this theme as an exemplar app"
-                >
-                  preview
-                </a>
-              )}
             </div>
+            {(() => {
+              const selected = vibesThemes.find((t) => t.slug === theme);
+              return selected ? (
+                <div className="pl-[6.75rem]">
+                  <ThemeThumbnail theme={selected} />
+                </div>
+              ) : null;
+            })()}
             <div className="flex justify-end">
               <SaveBtn saving={savingTheme} onClick={() => setPending({ kind: "theme", appSlug, ownerHandle, theme })} />
             </div>
