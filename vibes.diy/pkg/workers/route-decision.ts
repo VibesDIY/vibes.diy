@@ -154,3 +154,57 @@ export function shardKindForPath(pathname: string): ShardKind {
   if (pathname === "/api/shared" || pathname.startsWith("/api/shared/")) return "shared";
   return "codegen"; // "/api" or "/api/*" (the api-do route)
 }
+
+// ── backend.js `_api` target extraction (#2856 B3) ────────────────────────────
+
+export interface BackendApiTarget {
+  readonly ownerHandle: string;
+  readonly appSlug: string;
+  /** The handler-relative path: `…/_api/webhooks/x` → `/webhooks/x`; bare `_api` → `/`. */
+  readonly backendPath: string;
+}
+
+// Mirrors `extractHostToBindings`'s host regex (api/pkg): appSlug is the first
+// label, ownerHandle the second, split on the FIRST `--`, both lowercased — so the
+// backend and the page resolve the same vibe from the same subdomain.
+const APP_SUBDOMAIN_RE = /^([a-zA-Z0-9][a-zA-Z0-9-]*?)--([a-zA-Z0-9][a-zA-Z0-9-]+)/;
+const VIEWER_API_RE = /^\/vibe\/([^/]+)\/([^/]+)\/_api(\/.*)?$/;
+
+/**
+ * Resolve `(ownerHandle, appSlug)` + the handler-relative path for a `backend-api`
+ * request, from either request form (#2856 B3). Returns `undefined` if neither
+ * matches (the caller 404s). Pairs with `routeDecision` returning `"backend-api"`.
+ */
+export function parseBackendApiTarget(req: RouteInput): BackendApiTarget | undefined {
+  const { hostname, pathname, hostnameBase } = req;
+
+  // Viewer URL: /vibe/{owner}/{slug}/_api(/rest)?
+  const viewer = VIEWER_API_RE.exec(pathname);
+  if (viewer) {
+    return { ownerHandle: viewer[1].toLowerCase(), appSlug: viewer[2].toLowerCase(), backendPath: viewer[3] || "/" };
+  }
+
+  // App subdomain: <slug>--<owner>.<base>, path /_api(/rest)?
+  const isAppSubdomain = hostname.endsWith(hostnameBase) && hostname.slice(0, -hostnameBase.length).includes("--");
+  if (isAppSubdomain && (pathname === "/_api" || pathname.startsWith("/_api/"))) {
+    const label = hostname.slice(0, -hostnameBase.length).replace(/\.$/, "");
+    const m = APP_SUBDOMAIN_RE.exec(label);
+    if (!m) return undefined;
+    const rest = pathname.slice("/_api".length);
+    return { ownerHandle: m[2].toLowerCase(), appSlug: m[1].toLowerCase(), backendPath: rest || "/" };
+  }
+
+  return undefined;
+}
+
+/**
+ * Stable, collision-safe physical name for a vibe's `BackendDO` instance. The
+ * length-prefix makes `("ab","c")` and `("a","bc")` distinct, so two vibes can
+ * never co-tenant one DO (the per-vibe boundary that pairs with the per-vibe
+ * isolate id). The `backend:` prefix mirrors the `app:`/`shared:`/`codegen:`
+ * convention — though BackendDO is its own class, so there's no cross-plane risk.
+ */
+export function backendDoName(ownerHandle: string, appSlug: string): string {
+  const lenc = (s: string) => `${s.length}:${s}`;
+  return `backend:${lenc(ownerHandle)}/${lenc(appSlug)}`;
+}
