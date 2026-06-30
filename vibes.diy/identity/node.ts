@@ -30,7 +30,7 @@ export { DeviceIdCA } from "./device-id/ca.js";
 // Login device-id-register flow (the localhost cert handler — Bucket C / #1616),
 // now lifted in-repo (#2894) and wired to the owned keybag / device-id crypto.
 // This was the last `@fireproof/core-cli` *value* import on identity's runtime
-// path; it now imports nothing of value from core-cli (types only). Generic
+// path; it now imports nothing from core-cli. Generic
 // cmd-ts streaming primitives (isCmdProgress/sendProgress/…) are NOT re-exported
 // here: they're CLI-framework, not identity, and stay behind the cli-kit seam.
 export { deviceIdRegisterEvento, isResDeviceIdRegister } from "./device-id/register.js";

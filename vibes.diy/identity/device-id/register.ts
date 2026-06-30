@@ -17,9 +17,8 @@
 // The two `ctx.send.send`-based streaming helpers (`sendMsg` / `sendProgress`)
 // are generic cmd-ts framework glue (the cli-kit seam, #2478) — kept here as
 // module-private copies rather than imported, so identity carries no value
-// import from core-cli. Only the `WrapCmdTSMsg` / `CmdProgress` *types* are
-// referenced from core-cli, which the #2894 acceptance criteria allow
-// (type-only or none).
+// import from core-cli. The `WrapCmdTSMsg` / `CmdProgress` types come from the
+// in-repo `@vibes.diy/cmd-tools` package (the owned cli-kit seam).
 import { decodeJwt } from "jose";
 import { Hono } from "hono";
 import { serve } from "@hono/node-server";
@@ -27,8 +26,8 @@ import open from "open";
 import { Future, timeouted, isSuccess, isTimeout, BuildURI, Result, Option, EventoResult } from "@adviser/cement";
 import type { EventoHandler, HandleTriggerCtx, ValidateTriggerCtx, EventoResultType } from "@adviser/cement";
 import { type } from "arktype";
+import type { WrapCmdTSMsg, CmdProgress } from "@vibes.diy/cmd-tools";
 import type { Subject, SuperThis } from "@fireproof/core-types-base";
-import type { WrapCmdTSMsg, CmdProgress } from "@fireproof/core-cli";
 import { getKeyBag } from "../keybag/keybag.js";
 import { DeviceIdKey } from "./key.js";
 import { DeviceIdCSR } from "./csr.js";

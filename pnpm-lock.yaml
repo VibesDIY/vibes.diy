@@ -1374,9 +1374,6 @@ importers:
       '@clerk/shared':
         specifier: ^4.22.0
         version: 4.22.0(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
-      '@fireproof/core-cli':
-        specifier: 0.24.19
-        version: 0.24.19(@pnpm/logger@5.2.0)(typescript@6.0.3)
       '@fireproof/core-types-base':
         specifier: 0.24.19
         version: 0.24.19(typescript@6.0.3)
@@ -1389,6 +1386,9 @@ importers:
       '@hono/node-server':
         specifier: ~1.19.14
         version: 1.19.14(hono@4.12.14)
+      '@vibes.diy/cmd-tools':
+        specifier: workspace:*
+        version: link:../cmd-tools
       arktype:
         specifier: ~2.2.0
         version: 2.2.1
