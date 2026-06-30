@@ -384,49 +384,47 @@ export default function VibeIframeWrapper() {
         })();
       };
 
-      // Cached-read lane (#2801): for any NON-OWNER click on ANY vibe — the cache
-      // is keyed by (source, transform), so the source can be a curated/system
-      // vibe OR (in future) a popular user vibe whose chips we've lazy-cached;
-      // the precached result always lives under SYSTEM_CACHE_HANDLE. If that
-      // (source, transform) content-addresses a readable precached fork, the
-      // click is a READ: navigate, no login/codegen/fork. A miss (the
-      // no-precache-yet case) or any lookup error soft-fails to the write lane.
-      // The decision is made before anything commits — the read/write (and
-      // login/fork) boundary, defined by the cache-HIT, not by who owns the
-      // source. Owners are excluded on purpose: an owner click is always an
-      // in-place write (advance their fsId), and if their own vibe were cached an
-      // un-gated lookup would wrongly navigate them to the fork instead of
-      // editing. So owners fall straight through to runWriteLane below.
-      if (!isOwner) {
-        const submitSeq = ++cachedReadSeqRef.current;
-        void (async () => {
-          const decision = await resolveCachedRead({
-            source: { ownerHandle, appSlug, ...(fsId ? { fsId } : {}) },
-            transform: trimmed,
-            lookup: async (ref) => {
-              const r = await vctx.sharedApi.getAppByFsId({
-                ownerHandle: ref.ownerHandle,
-                appSlug: ref.appSlug,
-                selectMode: "published",
-              });
-              return r.isOk() && isReadableCachedGrant(r.Ok().grant);
-            },
-          });
-          // Drop a completion a newer chip click has superseded (last-click-wins):
-          // otherwise a slow cache-MISS could runWriteLane/fork after a newer
-          // click already navigated to a cache-HIT, letting network timing pick
-          // the result. (Codex P2)
-          if (cachedReadSeqRef.current !== submitSeq) return;
-          if (decision.kind === "read") {
-            void navigate(decision.href);
-            return;
-          }
-          runWriteLane();
-        })();
-        return;
-      }
-
-      runWriteLane();
+      // Cached-read lane (#2801): the read/write decision is purely "has this
+      // (source, transform) already been generated?" — it has NOTHING to do with
+      // who is clicking. The cache is keyed by (source, transform), so the source
+      // can be a curated/system vibe OR any user vibe whose chips get precached
+      // (lazily, by a background job, whatever); the precached result always lives
+      // under SYSTEM_CACHE_HANDLE (that handle is storage, not a source
+      // constraint). A cache HIT is a READ: navigate to the precomputed result —
+      // no codegen. A miss, or any lookup error, soft-fails to the write lane,
+      // where identity DOES legitimately matter (owner edits in place, non-owner
+      // forks). So identity is out of the read decision and stays only in the
+      // write behavior. The decision is made before anything commits.
+      //
+      // (Open for when precache lands: what a hit does for the OWNER of the
+      // source — navigate to the system fork as below, or ADOPT the precomputed
+      // result in place as their next fsId, skipping codegen. Today the lookup
+      // always misses, so this never fires and the choice is deferred. #2801.)
+      const submitSeq = ++cachedReadSeqRef.current;
+      void (async () => {
+        const decision = await resolveCachedRead({
+          source: { ownerHandle, appSlug, ...(fsId ? { fsId } : {}) },
+          transform: trimmed,
+          lookup: async (ref) => {
+            const r = await vctx.sharedApi.getAppByFsId({
+              ownerHandle: ref.ownerHandle,
+              appSlug: ref.appSlug,
+              selectMode: "published",
+            });
+            return r.isOk() && isReadableCachedGrant(r.Ok().grant);
+          },
+        });
+        // Drop a completion a newer chip click has superseded (last-click-wins):
+        // otherwise a slow cache-MISS could runWriteLane/fork after a newer click
+        // already navigated to a cache-HIT, letting network timing pick the
+        // result. (Codex P2)
+        if (cachedReadSeqRef.current !== submitSeq) return;
+        if (decision.kind === "read") {
+          void navigate(decision.href);
+          return;
+        }
+        runWriteLane();
+      })();
     },
     [isOwner, authSignedIn, ownerHandle, appSlug, fsId, navigate, vctx.sthis, vctx.chatApi, vctx.sharedApi, generation.sendPrompt]
   );
