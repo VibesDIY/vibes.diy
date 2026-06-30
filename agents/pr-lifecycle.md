@@ -119,7 +119,7 @@ Full CLI command reference lives in the [`vibe-data`](../.claude/skills/vibe-dat
 
 ## Ready-to-merge signal
 
-A PR is ready for the human to consider merging when there's a comment at the bottom of the PR thread with this structure:
+A PR has reached the `ready-to-merge` **state** — feedback resolved, work complete, CI green — when there's a comment at the bottom of the PR thread with this structure. (This is a state signal, not necessarily a hand-off: garden-variety changes you merge yourself from here; a human merges only the risky hold bucket — see step 6 above and the note below.)
 
 > **Rollout watch** 🔭
 >
