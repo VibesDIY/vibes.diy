@@ -13,6 +13,7 @@ packages:
   - "vibes.diy/base"
   - "vibes.diy/build-cli"
   - "vibes.diy/cmd-tools"
+  - "vibes.diy/deploy-cli"
   - "vibes.diy/identity"
   - "vibes.diy/stories"
   - "vibes.diy/pkg"

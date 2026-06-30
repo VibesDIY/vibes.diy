@@ -161,10 +161,10 @@ runs:
         else
           pnpm run drizzle:d1-remote
         fi
-        # writeEnv lives on the runtime-seam @fireproof/core-cli (build-cli only
-        # carries tsc/build); call vibes-diy's retained copy by path. ../../ from
-        # vibes.diy/pkg reaches the workspace root.
-        SECRETS=$(node ../../vibes-diy/node_modules/@fireproof/core-cli/run.js writeEnv --out - --json \
+        # writeEnv now lives in the monorepo-owned @vibes.diy/deploy-cli package
+        # (#2905), invoked by direct workspace path. ../ from vibes.diy/pkg
+        # reaches vibes.diy/, then into deploy-cli.
+        SECRETS=$(node ../deploy-cli/run.js writeEnv --out - --json \
           --fromEnv CLOUD_SESSION_TOKEN_PUBLIC \
           --fromEnv CLERK_PUBLISHABLE_KEY \
           --fromEnv DEVICE_ID_CA_PRIV_KEY \
@@ -249,10 +249,10 @@ runs:
         DISCORD_WEBHOOK_URL: ${{ inputs.DISCORD_WEBHOOK_URL }}
         CLERK_WEBHOOK_SECRET: ${{ inputs.CLERK_WEBHOOK_SECRET }}
       run: |
-        # writeEnv lives on the runtime-seam @fireproof/core-cli (build-cli only
-        # carries tsc/build); call vibes-diy's retained copy by path. ../../../
-        # from vibes.diy/api/queue reaches the workspace root.
-        SECRETS=$(node ../../../vibes-diy/node_modules/@fireproof/core-cli/run.js writeEnv --out - --json \
+        # writeEnv now lives in the monorepo-owned @vibes.diy/deploy-cli package
+        # (#2905), invoked by direct workspace path. ../../ from
+        # vibes.diy/api/queue reaches vibes.diy/, then into deploy-cli.
+        SECRETS=$(node ../../deploy-cli/run.js writeEnv --out - --json \
           --fromEnv CLOUD_SESSION_TOKEN_PUBLIC \
           --fromEnv CLERK_PUBLISHABLE_KEY \
           --fromEnv DEVICE_ID_CA_PRIV_KEY \
@@ -298,10 +298,10 @@ runs:
         CLOUDFLARE_ENV: ${{ inputs.CLOUDFLARE_ENV }}
         NEON_DATABASE_URL: ${{ inputs.NEON_DATABASE_URL }}
       run: |
-        # writeEnv lives on the runtime-seam @fireproof/core-cli (build-cli only
-        # carries tsc/build); call vibes-diy's retained copy by path. ../../../
-        # from vibes.diy/api/logpush-etl reaches the workspace root.
-        SECRETS=$(node ../../../vibes-diy/node_modules/@fireproof/core-cli/run.js writeEnv --out - --json \
+        # writeEnv now lives in the monorepo-owned @vibes.diy/deploy-cli package
+        # (#2905), invoked by direct workspace path. ../../ from
+        # vibes.diy/api/logpush-etl reaches vibes.diy/, then into deploy-cli.
+        SECRETS=$(node ../../deploy-cli/run.js writeEnv --out - --json \
           --fromEnv NEON_DATABASE_URL)
         for attempt in 1 2 3; do
           echo "$SECRETS" | pnpm exec wrangler -c ./wrangler.toml secret --env ${{inputs.CLOUDFLARE_ENV}} bulk && break

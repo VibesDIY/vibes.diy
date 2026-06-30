@@ -7,9 +7,15 @@ follow-on 1 of 2). Sits on top of the Bucket F build-tool lift
 and the identity follow-on
 ([#2906](https://github.com/VibesDIY/vibes.diy/issues/2906)).
 
-**Status: DESIGN — for review before implementation.** No code lands from this
-file; it settles _what_ to build and _where_, and surfaces the open questions a
-reviewer should weigh in on. The implementation PR follows on the same branch.
+**Status: IMPLEMENTED on this branch.** The design below was reviewed and
+approved by @CharlieHelps; the implementation followed on the same branch
+(recommended option A — a dedicated `@vibes.diy/deploy-cli` package — plus the
+three review refinements: unique bin name, the empty-string-as-missing semantics
+preserved, and the validation gate). One discovery during implementation: cement's
+`env.gets()` already treats an empty-string env value as **missing** for a
+required key (confirming @CharlieHelps' flag), and because the rehomed command
+uses that same cement machinery the behavior is preserved exactly — a blanked
+secret errors loudly instead of being pushed empty.
 
 ## What #2905 actually asks for now (re-scoped)
 
