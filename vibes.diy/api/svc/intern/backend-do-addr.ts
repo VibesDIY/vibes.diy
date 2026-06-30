@@ -6,11 +6,40 @@
 /** Stamped by the worker/queue so the DO knows its vibe without re-parsing the URL. */
 export const BACKEND_OWNER_HEADER = "x-vibe-owner";
 export const BACKEND_SLUG_HEADER = "x-vibe-slug";
-/** Set by the schedule poke so the DO re-evaluates instead of serving an `_api` request. */
+/**
+ * Set by the schedule poke / onChange poke so the DO runs a control-plane op
+ * instead of serving an `_api` request. **Internal-only** — it must never survive
+ * client `_api` forwarding (see `sanitizeBackendApiForwardHeaders`), or a public
+ * request could invoke `arm`/`onChange` directly with an attacker-controlled body.
+ */
 export const BACKEND_OP_HEADER = "x-backend-op";
 export const BACKEND_OP_ARM = "arm";
 /** Set by the post-commit onChange poke (#2856 B5); the DO runs the `onChange` handler. */
 export const BACKEND_OP_ONCHANGE = "onchange";
+
+/** Minimal Headers surface used by the `_api` forward sanitizer (worker `Headers` or undici). */
+interface MutableHeaders {
+  set(name: string, value: string): void;
+  delete(name: string): void;
+}
+
+/**
+ * Sanitize the headers of a client `_api` request before forwarding it to a vibe's
+ * `BackendDO` (#2856). Two trust-boundary guarantees:
+ *
+ * 1. **Strip the internal control header** (`BACKEND_OP_HEADER`). A client could
+ *    otherwise set `x-backend-op: onchange`/`arm` on a public `/_api/...` request and
+ *    invoke a control-plane op directly — running the handler outside the post-commit
+ *    queue path with an arbitrary payload (security blocker, Charlie). `_api` traffic
+ *    must reach the DO with **no** op so it falls through to the fetch path.
+ * 2. **Overwrite owner/slug** with the values the worker resolved from the route, so a
+ *    client-supplied `x-vibe-owner`/`x-vibe-slug` can't redirect to another vibe.
+ */
+export function sanitizeBackendApiForwardHeaders(headers: MutableHeaders, target: { ownerHandle: string; appSlug: string }): void {
+  headers.delete(BACKEND_OP_HEADER);
+  headers.set(BACKEND_OWNER_HEADER, target.ownerHandle);
+  headers.set(BACKEND_SLUG_HEADER, target.appSlug);
+}
 
 /**
  * Stable, collision-safe physical name for a vibe's `BackendDO` instance. The
