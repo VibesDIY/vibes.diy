@@ -20,7 +20,7 @@ import {
   resolveBuilderOriginFrom,
 } from "@vibes.diy/base";
 import type { ShareMember, ShareViewer, ShareAccess, HandleOption } from "@vibes.diy/base";
-import { isUserSettingDefaultHandle, isSystemCacheHandle, isReadableCachedGrant, resolveCachedRead } from "@vibes.diy/api-types";
+import { isUserSettingDefaultHandle, isReadableCachedGrant, resolveCachedRead } from "@vibes.diy/api-types";
 import { switchActiveHandle, createAndUseHandle, handleAvatarUrl } from "./handle-picker-actions.js";
 import { uploadHandleAvatar } from "../lib/upload-avatar.js";
 import { useYoursNowToast } from "../hooks/use-yours-now-toast.js";
@@ -384,14 +384,20 @@ export default function VibeIframeWrapper() {
         })();
       };
 
-      // Cached-read lane (#2801): ONLY on a system/curated vibe — every normal
-      // vibe skips this entirely, so existing flows are byte-for-byte unchanged
-      // and pay zero lookup latency. On a system-owned vibe a chip whose
-      // (source, transform) content-addresses a readable precached fork is a
-      // READ: navigate, no login/codegen/fork. A miss (the no-precache-yet case
-      // today) or any lookup error soft-fails to the write lane. The decision is
-      // made before anything commits — the read/write (and login/fork) boundary.
-      if (isSystemCacheHandle(ownerHandle)) {
+      // Cached-read lane (#2801): for any NON-OWNER click on ANY vibe — the cache
+      // is keyed by (source, transform), so the source can be a curated/system
+      // vibe OR (in future) a popular user vibe whose chips we've lazy-cached;
+      // the precached result always lives under SYSTEM_CACHE_HANDLE. If that
+      // (source, transform) content-addresses a readable precached fork, the
+      // click is a READ: navigate, no login/codegen/fork. A miss (the
+      // no-precache-yet case) or any lookup error soft-fails to the write lane.
+      // The decision is made before anything commits — the read/write (and
+      // login/fork) boundary, defined by the cache-HIT, not by who owns the
+      // source. Owners are excluded on purpose: an owner click is always an
+      // in-place write (advance their fsId), and if their own vibe were cached an
+      // un-gated lookup would wrongly navigate them to the fork instead of
+      // editing. So owners fall straight through to runWriteLane below.
+      if (!isOwner) {
         const submitSeq = ++cachedReadSeqRef.current;
         void (async () => {
           const decision = await resolveCachedRead({

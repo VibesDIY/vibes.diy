@@ -26,9 +26,15 @@ Two more lessons worth a post:
   same slug. The key is a 2×FNV-1a hash of a newline-joined, normalized tuple,
   fit into the 32-char slug budget — a tiny pure function that carries the entire
   correctness weight.
-- **Gate the hot path so the no-op is free.** The client read-lane only runs when
-  `isSystemCacheHandle(ownerHandle)` — so every normal vibe skips the lookup
-  entirely and pays zero latency, while the feature activates the instant curated
-  content is provisioned under the reserved handle. Reads soft-fail to the write
-  lane; writes keep fail-loud semantics — the cache-hit boundary *is* the
+- **Gate on the click, not the content.** The first instinct was to gate the
+  read-lane on "is this a system/curated vibe?" — but that bakes in
+  "cached == curated" and kills the whole future of lazy-caching a popular *user*
+  vibe's chips. The right boundary is ownership of the *click*: only a **non-owner**
+  can ever take a cached read (an owner click is always an in-place write — and if
+  their own vibe were cached, an un-gated lookup would wrongly navigate them away
+  instead of editing). The cache still *lives* under a system handle, but that's
+  storage, not a constraint on the source. The lesson: a gate chosen for
+  "make the no-op cheap" can quietly amputate the feature's roadmap — gate on the
+  invariant (owner ≠ reader), not on today's only data source. Reads soft-fail to
+  the write lane; writes keep fail-loud semantics — the cache-hit *is* the
   read/write (and login/fork) boundary.

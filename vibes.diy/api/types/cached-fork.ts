@@ -30,14 +30,17 @@ import type { ResGetAppByFsId } from "./app.js";
 type AppGrant = ResGetAppByFsId["grant"];
 
 /**
- * The reserved platform/system handle that owns pre-made (cached) forks.
+ * The reserved platform/system handle that OWNS pre-made (cached) forks — i.e.
+ * where the cache is *stored*, NOT a constraint on what gets cached. Curated
+ * starters, precached transforms, and (in future) lazy-cached chips of a popular
+ * USER vibe all land here as ordinary public apps; the source they were keyed
+ * from can be any vibe (`cachedForkKey` takes the source as input). An anonymous
+ * browser reading the cached tree is just reading system-owned public apps.
  *
- * Curated starters and precached transforms live under this handle as ordinary
- * public apps; an anonymous browser reading the cached tree is just reading
- * system-owned public apps. It MUST be a valid lowercase slug and MUST be
- * reserved out of the normal user-handle space so no real account can register
- * it — enforcing that reservation in the handle-provisioning path is the backend
- * follow-up; this constant is the single source of truth both sides key off.
+ * It MUST be a valid lowercase slug and MUST be reserved out of the normal
+ * user-handle space so no real account can register it — enforcing that
+ * reservation in the handle-provisioning path is the backend follow-up; this
+ * constant is the single source of truth both sides key off.
  */
 export const SYSTEM_CACHE_HANDLE = "system";
 
