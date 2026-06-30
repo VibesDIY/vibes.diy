@@ -11,14 +11,34 @@ issue asked for "before any code."**
 
 ## Problem
 
-The runtime coupling to `@fireproof/core-cli` is now contained behind the
-`cli-kit.ts` seam (#2478). What remains untouched and unowned is the **build-tool**
-coupling: `core-cli tsc` / `core-cli build` / `pack` / `publish` wired through
-package `scripts` across the monorepo, plus the `@fireproof/core-cli`
-devDependency that backs them. The #2478 spec explicitly carved this out as
-"Bucket F (build toolchain), a separate concern. Not this issue." This document
-inventories that surface and records a decision on whether to extract/replace it
-now or defer.
+The CLI-framework runtime coupling to `@fireproof/core-cli` is now contained
+behind the `cli-kit.ts` seam (#2478). What remains untouched and unowned is the
+**build-tool** coupling: `core-cli tsc` / `core-cli build` / `pack` / `publish`
+wired through package `scripts` across the monorepo, plus the
+`@fireproof/core-cli` devDependency that backs them. The #2478 spec explicitly
+carved this out as "Bucket F (build toolchain), a separate concern. Not this
+issue." This document inventories that **build-tool** surface and records a
+decision on whether to extract/replace it now or defer.
+
+### Not Bucket F: the remaining _runtime_ core-cli imports (already owned)
+
+To be precise about scope — Bucket F is the build tool, **not** every reference to
+`@fireproof/core-cli`. Two runtime _source_ imports of the package still exist,
+and both are deliberately owned elsewhere and out of scope here:
+
+- **`vibes-diy/cli/cli-kit.ts`** — the CLI-framework (`cmd-ts`) progress/streaming
+  primitives, contained behind the #2478 seam.
+- **`vibes.diy/identity/node.ts:33-34`** — the login/device-id symbols
+  (`deviceIdRegisterEvento`, `isResDeviceIdRegister`, `ReqDeviceIdRegister`),
+  owned by `@vibes.diy/identity` per #2459. Note this is the **one place
+  `@fireproof/core-cli` is a runtime `dependency`** (not a devDependency) — in
+  `vibes.diy/identity/package.json`. It rides along with the identity seam, not
+  the build tool, so retiring the build-tool devDependency would _not_ remove it.
+
+So the build-tool coupling this spec governs is package `scripts` + the
+devDependency; the runtime symbol coupling is two already-owned seams, called out
+here only so the inventory below isn't read as "the only core-cli left is the
+build tool."
 
 ## What the tool actually does (two distinct surfaces)
 
@@ -71,11 +91,17 @@ re-validating the guard against it.
   per-package; higher when counted per-script-entry because `pack` + `publish` +
   `build` each name it).
 
-### devDependency
+### Dependency declarations
 
-- **22** `@fireproof/core-cli` devDependency declarations (matches the issue's
-  "~22 devDeps"). **21 pin `0.24.19` exactly; 1 outlier**
-  (`vibes.diy/stories/package.json`) uses `^0.24.19`. See "Reduce where practical."
+- **22** `@fireproof/core-cli` declarations (matches the issue's "~22 devDeps"),
+  split **20 `devDependencies` + 2 runtime `dependencies`**. The 2 runtime
+  `dependencies` are exactly the two runtime-seam owners — `vibes-diy`
+  (the CLI, `cli-kit.ts`) and `vibes.diy/identity` (the login/device-id seam) —
+  i.e. not the build-tool surface; see "Not Bucket F" above. The 20 devDeps are
+  the build-tool consumers.
+- Versions: **21 pin `0.24.19` exactly; 1 outlier**
+  (`vibes.diy/stories/package.json`, a devDep) uses `^0.24.19`. See "Reduce where
+  practical."
 
 ### Packages by publish role
 
@@ -97,7 +123,9 @@ front-end.
 - **Cost:** none. **Risk:** none.
 - The build-time coupling is single-versioned (`0.24.19`) and centralized through
   package scripts; it is already _contained_ in the sense that no source file
-  imports the build tool — it is only ever invoked as a script.
+  invokes the build tool by import — it is only ever called as a script. (The two
+  runtime _symbol_ imports of `@fireproof/core-cli` are the already-owned identity
+  / `cli-kit` seams above, not this build-tool surface.)
 - The publish-build behavior is exercised on every PR by the `publish_build`
   required check, so regressions in _our_ use of it surface immediately.
 
