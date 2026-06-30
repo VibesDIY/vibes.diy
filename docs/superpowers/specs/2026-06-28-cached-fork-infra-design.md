@@ -159,9 +159,12 @@ index lives in the per-app `AppSettings` JSON, not a new table or column.
 `AppSettings.entry.settings` is composed by `buildEnsureEntryResult` from an array
 of `type`-tagged `ActiveEntry` variants; `dbAcls` is the precedent for _many of a
 kind_ composing into a keyed map (`{ [dbName]: acl }`). So add an
-`active.cached-suggestion` entry `{ type, key, fsId }` (one appended per cached
-chip) composing into **`entry.settings.cachedSuggestions: { [cacheKey]: fsId }`**,
-plus a `reqEnsureAppSettingsCachedSuggestion` write. The `AppSettings_ownerHandle_appSlug_idx`
+`active.cached-suggestion` entry `{ type, key, fsId, sourceFsId }` (one appended
+per cached chip) composing into
+**`entry.settings.cachedSuggestions: { [cacheKey]: { fsId, sourceFsId } }`**, plus
+a `reqEnsureAppSettingsCachedSuggestion` write. (`sourceFsId` records the
+public-HEAD version the result was derived from, so the serve path can verify the
+PII boundary — Codex P1, §5.) The `AppSettings_ownerHandle_appSlug_idx`
 already serves the lookup; the `settings` column is already JSON, so this is a
 code-only arktype change — **no `drizzle-kit push` migration**.
 
@@ -181,6 +184,15 @@ owner runs a chip, it's cached for every later visitor — reusing the codegen p
 that already exists. Auto/background precompute + spend ceiling stay deferred
 (OQ#3).
 
+> **The source version must itself be public (Codex P1, #2890).** The PII-safety
+> invariant is "a cached read is a transform of _already-public_ source code." So
+> the producer registers an entry **only when `servedVersion` was the app's public
+> production HEAD** — never when the owner is pinned to an unpublished `draftFsId`
+> (a draft's code isn't public and could carry unreleased/PII content forward into
+> the staged result). The entry records the **source fsId** it was derived from, so
+> the boundary is verifiable, not just inferred from "the app is public now."
+> Chips run against a draft simply aren't cached (they stay a normal in-place edit).
+
 **4. Reader — an anonymous `getCachedSuggestion` projection (mirrors `getVibeChips`
 #2755).** Given `(ownerHandle, appSlug, key)`, return the staged `fsId` iff the
 app is public and the entry exists. `optAuth`, gated on app-access visibility, so
@@ -192,11 +204,15 @@ a logged-out visitor can resolve it. The client `resolveCachedRead` `lookup` (th
 `get-app-by-fsid` grants anonymous `public-access` only when
 `app.mode === "production"`, so a staged _unpublished_ version is `not-found`
 today. Add a narrow rule: **if the requested `fsId` is registered in the source
-app's `cachedSuggestions` map AND the app is public, grant `public-access` for
-that exact fsId even when `mode !== "production"`.** Staged versions stay genuinely
-unpublished (never the HEAD, not "published"); the map entry is the single,
-auditable source of truth for "anonymously readable staged version." This change
-gets a dedicated `/security-review` pass.
+app's `cachedSuggestions` map, the app is public, AND the entry's recorded source
+version was itself publicly readable (the production HEAD), grant `public-access`
+for that exact fsId even when `mode !== "production"`.** The source-was-public
+check (Codex P1) is what keeps the PII boundary intact — without it, a result
+derived from an owner's unpublished draft on a public app would leak anonymously.
+Staged versions stay genuinely unpublished (never the HEAD, not "published"); the
+map entry — `{ key, fsId, sourceFsId }` — is the single, auditable source of truth
+for "anonymously readable staged version." This change gets a dedicated
+`/security-review` pass.
 
 **6. Client — flag + the chip allowlist (PII boundary).** The read-lane lookup is
 gated behind a preview env flag (default off; on in `[env.preview]`) so prod stays
