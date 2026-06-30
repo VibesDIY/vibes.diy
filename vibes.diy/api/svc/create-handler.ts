@@ -124,6 +124,9 @@ export async function createAppContext<T extends VibesSqlite>(
     // Vibe SSR mode (#2802 slice 4): off (default) | node | loader. Unrecognized
     // ⇒ off. render-vibe.ts only honors `loader` on the live route.
     VIBES_SSR: param.OPTIONAL,
+    // Cached-suggestion read lane (#2801): "on" in [env.preview] to validate
+    // there; off everywhere else.
+    VIBES_CACHED_SUGGESTIONS: param.OPTIONAL,
 
     RESEND_API_KEY: param.REQUIRED,
     VIBES_DIY_PUBLIC_BASE_URL: param.REQUIRED,
@@ -229,6 +232,7 @@ export async function createAppContext<T extends VibesSqlite>(
         CLERK_PUBLISHABLE_KEY: envVals.CLERK_PUBLISHABLE_KEY,
         VIBES_DIY_API_URL: envVals.VIBES_DIY_API_URL,
         VIBES_SSR: envVals.VIBES_SSR,
+        VIBES_CACHED_SUGGESTIONS: envVals.VIBES_CACHED_SUGGESTIONS,
 
         GTM_CONTAINER_ID: envVals.GTM_CONTAINER_ID,
         POSTHOG_KEY: envVals.POSTHOG_KEY,
