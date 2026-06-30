@@ -37,6 +37,7 @@ import { GrantReduce, extractContribution, newSeededReduce } from "./grant-reduc
 import { isFileMeta } from "./files-url-mint.js";
 import { clientWsSend, connectionAdminMode } from "./app-documents-shared.js";
 import { normalizeChannels } from "./normalize-channels.js";
+import { emitBackendOnChange } from "../intern/emit-backend-onchange.js";
 import { allocateAndInsertRevision, SeqConflictError } from "./seq-allocation.js";
 import { docContentEqual } from "./doc-content-equal.js";
 import type { VibesSqlite } from "@vibes.diy/api-sql";
@@ -534,6 +535,20 @@ export const putDocEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqPutDoc>, 
       }
       const nextSeq = alloc.seq;
 
+      // Per-app backend.js onChange (#2856 B5). Fire-and-forget after the commit;
+      // dark unless BACKEND_JS=loader, so this is a no-op on the write path today.
+      await emitBackendOnChange(vctx, {
+        ownerHandle: req.ownerHandle,
+        appSlug: req.appSlug,
+        dbName,
+        docId,
+        seq: nextSeq,
+        deleted: false,
+        doc: req.doc,
+        originDepth: (req as { backendOrigin?: { depth?: number } }).backendOrigin?.depth ?? 0,
+        writerUserId: userId,
+      });
+
       // Upsert DirectChannelIndex so both participants appear in listDmThreads
       if (isDirectChannel(req.ownerHandle)) {
         const participants = directChannelParticipants(req.ownerHandle);
@@ -802,8 +817,9 @@ export const deleteDocEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqDelete
 
       // Insert tombstone. Shares the same per-doc lock key as putDoc (derived
       // from owner/app/db/docId) so a delete cannot interleave a put (#2506).
+      let delAlloc: { seq: number; inserted: boolean };
       try {
-        await allocateAndInsertRevision({
+        delAlloc = await allocateAndInsertRevision({
           db: vctx.sql.db,
           flavour: vctx.sql.flavour,
           table: t,
@@ -828,6 +844,23 @@ export const deleteDocEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqDelete
           return Result.Ok(EventoResult.Continue);
         }
         throw err;
+      }
+
+      // Per-app backend.js onChange (#2856 B5) for the delete path — a tombstone
+      // commit fires onChange too (deleted:true, prior doc as oldDoc). Dark unless
+      // BACKEND_JS=loader; fire-and-forget. Skip if no revision was written.
+      if (delAlloc.inserted) {
+        await emitBackendOnChange(vctx, {
+          ownerHandle: req.ownerHandle,
+          appSlug: req.appSlug,
+          dbName,
+          docId: req.docId,
+          seq: delAlloc.seq,
+          deleted: true,
+          doc: {},
+          originDepth: (req as { backendOrigin?: { depth?: number } }).backendOrigin?.depth ?? 0,
+          writerUserId: req._auth.verifiedAuth.claims.userId,
+        });
       }
 
       // Notify subscribers of the doc change via per-vibe local fan-out. On access-fn vibes,

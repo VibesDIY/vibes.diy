@@ -9,7 +9,9 @@ import {
   BACKEND_SLUG_HEADER,
   BACKEND_OP_HEADER,
   BACKEND_OP_ARM,
+  BACKEND_OP_ONCHANGE,
 } from "@vibes.diy/api-svc/intern/backend-do-addr.js";
+import { EvtBackendOnChange } from "@vibes.diy/api-types";
 import { SuperThis } from "@vibes.diy/identity";
 
 export interface QueueCtxParams {
@@ -163,6 +165,45 @@ export class QueueCtx {
     );
     if (rRes.isErr()) return Result.Err(rRes);
     if (rRes.Ok().status >= 300) return Result.Err(`backend arm poke got ${rRes.Ok().status}`);
+    return Result.Ok();
+  }
+
+  /**
+   * Poke a vibe's `BackendDO` to run its `onChange` handler for one committed write
+   * (#2856 B5). Like `armBackend`, returns `Err` on a failed poke so the queue
+   * worker's `message.retry()` fires (at-least-once delivery); a no-op when the
+   * binding is absent. The full document payload travels in the request body (too
+   * big/structured for headers); the addressing headers route it to the vibe.
+   */
+  async invokeOnChange(payload: EvtBackendOnChange): Promise<Result<void>> {
+    const ns = this.params.cf?.BACKEND_DO;
+    if (!ns) return Result.Ok();
+    const stub = ns.get(ns.idFromName(backendDoName(payload.ownerHandle, payload.appSlug)));
+    const rRes = await exception2Result(() =>
+      stub.fetch(
+        new Request("https://internal/__backend_onchange", {
+          method: "POST",
+          headers: {
+            [BACKEND_OWNER_HEADER]: payload.ownerHandle,
+            [BACKEND_SLUG_HEADER]: payload.appSlug,
+            [BACKEND_OP_HEADER]: BACKEND_OP_ONCHANGE,
+            "content-type": "application/json",
+          },
+          body: JSON.stringify({
+            dbName: payload.dbName,
+            docId: payload.docId,
+            seq: payload.seq,
+            deleted: payload.deleted,
+            doc: payload.doc,
+            oldDoc: payload.oldDoc ?? null,
+            depth: payload.depth,
+            writerUserId: payload.writerUserId ?? null,
+          }),
+        }) as unknown as Parameters<typeof stub.fetch>[0]
+      )
+    );
+    if (rRes.isErr()) return Result.Err(rRes);
+    if (rRes.Ok().status >= 300) return Result.Err(`backend onChange poke got ${rRes.Ok().status}`);
     return Result.Ok();
   }
 
