@@ -78,6 +78,21 @@ The trim is the same one `tsc` got in build-cli: **swap `SuperThis.env.gets` for
 **zero** `@fireproof/core-*` dependency (direct or transitive) — the same hard
 gate Bucket F's build-cli had to satisfy.
 
+**Semantics to preserve _deliberately_ in the trim (per @CharlieHelps' review).**
+The `--fromEnv KEY` happy path is straightforward, but `SuperThis.env.gets` has
+edge behavior a naive `process.env[KEY]` lookup would silently change. Decide
+each on purpose, not by accident:
+
+- **`--fromEnv KEY=value` literal fallback** — the upstream command accepts an
+  inline default (`KEY=value`) the deploy doesn't use today but that exists in the
+  contract. Keep it (or consciously drop it and assert no call site relies on it).
+- **Empty string treated as missing in required mode** — the resolver treats an
+  empty-string env value as absent for required keys. A bare `process.env[KEY]`
+  would emit `""` instead of erroring; preserve the empty-is-missing rule so a
+  blanked secret fails loudly rather than pushing an empty secret.
+- **Missing-key error shape** — the thrown/printed shape may change; lower stakes
+  than the behavior above, but note it so the failure stays diagnosable.
+
 > **Implementation gate (do this first):** pull the real upstream
 > `cli/cmds/write-env-cmd.ts` source and replicate its `--fromEnv` /
 > required-vs-optional / JSON-shape behavior **exactly** before repointing any
@@ -93,9 +108,10 @@ Three options:
 
 **(A) New `@vibes.diy/deploy-cli` workspace package — RECOMMENDED.** A small
 package mirroring `vibes.diy/build-cli`'s shape (trimmed `cli-ctx` / `cmd-evento`
-/ `create-cli-stream` / `main` harness + one `cmds/write-env-cmd.ts`), `bin: {
-"core-cli": "run.js" }` so the `… run.js writeEnv` call shape is preserved with
-only a path change.
+/ `create-cli-stream` / `main` harness + one `cmds/write-env-cmd.ts`). Give it a
+**unique bin name** (`deploy-cli`, _not_ `core-cli`) — see Decision 2; the call
+sites invoke `run.js` by path, so the bin name doesn't need to match `core-cli`,
+and reusing it only re-creates the collision we're trying to avoid.
 
 - _Pros:_ keeps build-cli's **build-only charter and its zero-`core-*` hard gate
   clean** (no risk of dragging `core-runtime` back in); gives deploy-secrets
@@ -141,11 +157,20 @@ With **(A)**, the simplest repoint is the workspace package's own checked-out pa
 indirection entirely and no longer depends on `vibes-diy` having the package
 installed.
 
-Open sub-question for the reviewer: prefer the **direct workspace path**
-(`vibes.diy/deploy-cli/run.js`) or routing through a **`pnpm exec` / bin on
-PATH** (more robust to layout changes, but the bin name `core-cli` now collides
-with build-cli's bin — they'd both claim `core-cli`). The path form sidesteps the
-bin-name collision; recommend it.
+**Resolved (per @CharlieHelps' review): use the direct workspace path, and do
+not reuse the `core-cli` bin name.** In pnpm only one shim wins per `.bin` name,
+so two packages both claiming `core-cli` would make the deploy path depend on
+precedence/tie-break behavior — exactly what you don't want in a secrets-push
+step. The reliable forms are:
+
+- **direct path** — `node vibes.diy/deploy-cli/run.js writeEnv` (recommended;
+  drops the `vibes-diy/node_modules/...` indirection and no longer needs
+  `vibes-diy` to have the package installed), or
+- **package-targeted** — `pnpm --filter @vibes.diy/deploy-cli exec …`.
+
+If PATH-style ergonomics are wanted later, give `deploy-cli` its **own** bin name
+rather than reusing `core-cli`. Recommend the direct-path form for the four sites
+(adjust `../` depth per working dir).
 
 ## Decision 3 — the trivial last step (drop the dep)
 
@@ -181,6 +206,13 @@ Validation plan, before flipping prod:
    this PR — verify the preview worker comes up with its secrets set.
 3. **Stage on `@c` (cli env)** through `vibes.diy/actions/deploy/action.yaml`
    before prod, then watch the prod deploy deliberately.
+4. **Hard gate before the prod flip (per @CharlieHelps' review):** in the `@c`
+   stage, run **both** the old `@fireproof/core-cli` generator and the rehomed one
+   against the same env set and **fail on any diff** — bytes _and_ parsed
+   object/key-set. This catches semantic drift (e.g. an empty-string key that
+   should have been dropped) before `wrangler secret bulk` ever touches prod.
+   This is a stronger bar than the unit test in (1): it runs against the real
+   staged env, not a fixture.
 
 ## Acceptance criteria (closes #2905)
 
@@ -192,19 +224,21 @@ Validation plan, before flipping prod:
   scripts run on an explicit `@vibes.diy/build-cli` devDep.
 - `vibes-diy` vitest + full `pnpm build` + `publish_build` pack guard green;
   output-byte-equivalence test green.
-- Validated on preview + `@c` before the prod deploy; PR held for a human merge.
+- Validated on preview + `@c` (incl. the old-vs-new same-env diff gate) before the
+  prod deploy; PR held for a human merge.
 
 ## Open questions for review
 
+Decision 2 (bin-name collision) is **resolved** by @CharlieHelps' review — direct
+workspace path, unique bin name; folded into the spec above. Remaining:
+
 1. **Package vs. script (Decision 1):** new `@vibes.diy/deploy-cli` (A,
-   recommended) vs. a standalone `write-env.mjs` (C)? Is a one-command package
-   worth its overhead, or is the script the better fit for a command this narrow?
-2. **Bin-name collision (Decision 2):** confirm the **direct workspace path**
-   repoint (avoiding a second package claiming the `core-cli` bin name) over a
-   PATH/`pnpm exec` form.
-3. **Source access:** can we get `fireproof-storage/fireproof` in scope to lift
+   recommended, endorsed by @CharlieHelps) vs. a standalone `write-env.mjs` (C)?
+   Charlie favors the dedicated package kept intentionally tiny; flagging it here
+   only so the owner can veto the package overhead if preferred.
+2. **Source access:** can we get `fireproof-storage/fireproof` in scope to lift
    the real `write-env-cmd.ts`, or do we vendor from the published dist tarball?
-4. **Scope creep:** lift only `writeEnv`, or also the other deploy-adjacent cmds
+3. **Scope creep:** lift only `writeEnv`, or also the other deploy-adjacent cmds
    (`set-scripts`, `update-deps`) now while we're building the home? (Inventory
    says only `writeEnv` is invoked at runtime — recommend `writeEnv` only.)
 
