@@ -536,8 +536,13 @@ function MessageList({
     // Only show the streaming indicator on the latest AI message
     // const isLatestAiMessage = promptProcessing && i === latestAiMessageIndex && msg.type === "ai";
     let collectedMsg: LineMsg[] = [];
-    let codeBegin: CodeBeginMsg;
-    let toplevelBegin: ToplevelBeginMsg;
+    // Tracked per open section; reset to undefined once consumed by an end so a
+    // later orphaned end can't reuse a stale begin. A section-end with no open
+    // begin (reconnect replays an end whose matching begin lived on a now-
+    // superseded stream — VibesDIY/vibes.diy#2652) is dropped rather than
+    // building a block with no opening frame and throwing on begin.sectionId.
+    let codeBegin: CodeBeginMsg | undefined;
+    let toplevelBegin: ToplevelBeginMsg | undefined;
     let hasPromptReq = false;
     // let traceBlockId: BlockEndMsg | undefined
     const nprompt = fixCurrentStreaming(promptBlock);
@@ -648,14 +653,19 @@ function MessageList({
           // acc.push(<CodeMsg key={codeBegin!.sectionId} begin={codeBegin!} lines={collectedMsg} />);
           break;
         case isCodeEnd(msg):
+          // Orphaned end with no open begin: drop it (keep rendering the rest).
+          if (!codeBegin) {
+            collectedMsg = [];
+            break;
+          }
           blockMsgs.push({
             type: "Code",
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            begin: codeBegin!,
+            begin: codeBegin,
             lines: collectedMsg,
             end: msg,
           });
           collectedMsg = [];
+          codeBegin = undefined;
           break;
         case isCodeTruncated(msg):
           // The recovery's block.begin clears blockMsgs before the original
@@ -696,31 +706,39 @@ function MessageList({
 
           // Render the truncated block. Push to acc so the recovery's later
           // block.begin doesn't erase it. The truncated card has no fsRef
-          // and onClick is a no-op (no navigable target).
-          acc.push(
-            <CodeMsg
-              // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-              key={`truncated-${codeBegin!.sectionId}`}
-              // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-              begin={codeBegin!}
-              lines={collectedMsg}
-              truncated={{ reason: msg.reason, kind: msg.kind, truncatedAtLine: msg.truncatedAtLine }}
-              onClick={() => {
-                /* no-op: truncated blocks have no navigable target */
-              }}
-            />
-          );
+          // and onClick is a no-op (no navigable target). An orphaned truncate
+          // with no open begin (same reconnect failure mode as #2652) is
+          // dropped — the preceding blocks were already drained above.
+          if (codeBegin) {
+            acc.push(
+              <CodeMsg
+                key={`truncated-${codeBegin.sectionId}`}
+                begin={codeBegin}
+                lines={collectedMsg}
+                truncated={{ reason: msg.reason, kind: msg.kind, truncatedAtLine: msg.truncatedAtLine }}
+                onClick={() => {
+                  /* no-op: truncated blocks have no navigable target */
+                }}
+              />
+            );
+          }
           collectedMsg = [];
+          codeBegin = undefined;
           break;
         case isToplevelEnd(msg):
+          // Orphaned end with no open begin: drop it (keep rendering the rest).
+          if (!toplevelBegin) {
+            collectedMsg = [];
+            break;
+          }
           blockMsgs.push({
             type: "TopLevel",
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            begin: toplevelBegin!,
+            begin: toplevelBegin,
             lines: collectedMsg,
             end: msg,
           });
           collectedMsg = [];
+          toplevelBegin = undefined;
           break;
       }
     }
