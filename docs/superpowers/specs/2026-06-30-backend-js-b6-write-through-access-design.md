@@ -5,9 +5,10 @@ Epic design: [`2026-06-29-per-app-backend-js-design.md`](./2026-06-29-per-app-ba
 Predecessors: **B3** (`_api`→DO→isolate), **B4** (`scheduled` timer), **B5** (`onChange` post-commit +
 the dormant loop-guard + the `userInfo: null`/`originDepth: 0` seams this slice fills).
 
-> **Status: spec-first.** Design only; implementation follows after Charlie's feedback. Built **dark**
-> behind `BACKEND_JS=off`. **Risky slice** (write/access path) — merge dormant to `main`, hold the actual
-> deploy for a human.
+> **Status: design approved** (Codex put/delete split folded in; Charlie signed off all 5 questions + 2
+> implementation watch-outs — see § _Design questions — resolved_). Implementation follows on this branch.
+> Built **dark** behind `BACKEND_JS=off`. **Risky slice** (write/access path) — merge dormant to `main`,
+> hold the actual deploy for a human.
 
 ## Goal
 
@@ -99,17 +100,32 @@ grant-state — it removes the sidecar row — so this discipline applies to put
 invocation. The spec now splits the two and points backend deletes at the existing tombstone/output-removal
 path, so backend allow/deny + sidecar behavior matches the frontend per-op.
 
-## Open questions for Charlie
+## Design questions — resolved (Charlie's review)
 
-1. **RPC channel → host binding in the isolate `env` (option 1).** Right call vs. `globalOutbound`?
-   And does Worker Loader support a service-binding/Fetcher in a dynamically-loaded isolate's `env`
-   today, or does the callback need a different transport (HTTP to a signed internal URL)?
-2. **`ctx.db.put` is async** (returns a Promise) and **read-after-write** within a handler reads the
-   handler's own committed writes. Acceptable, or do we want a batched/transactional shape?
-3. **Concurrent handler + user writes to the same doc** ride the existing per-doc seq allocator
-   (single-writer per doc via the lock). Confirm the backend write takes the same lock, so it serializes
-   with frontend writes (no special ordering).
-4. **Gate extraction surface** — extract the frontend gate into one shared function both callers use.
-   Confirm that's preferable to a thinner shared core, given how much state the WS handler threads.
-5. **Identity for `fetch`** — extract the session user from the `_api` request auth now (B6), or keep
-   `fetch`→null until there's a consumer? (onChange + scheduled are the writers that matter for B6.)
+1. **RPC channel → dedicated host callback binding in the isolate `env` (confirmed).** Right shape; keep
+   `globalOutbound: null` until B8. Implementation note: the loader wiring today only exposes
+   `globalOutbound`, so **B6 needs a small loader extension to pass `WorkerCode.env` bindings** into the
+   dynamically-loaded isolate. Dynamic Workers **do** support service bindings in `env`, so use that —
+   not a signed-internal-URL transport — unless we hit an implementation blocker.
+2. **`ctx.db.put` async + read-after-write → confirmed.** Keep it async; the Promise resolves **only
+   after the write path commits** (same semantics as the existing gate). Defer any batched/transactional
+   API until there's a concrete multi-write atomicity need.
+3. **Concurrent handler + user writes → confirmed, no special ordering layer** — **provided** the backend
+   callback writes go through the **same per-doc seq/allocator path** as frontend writes (preserving the
+   existing single-writer-per-doc serialization). This is a hard requirement on the implementation.
+4. **Gate extraction → per-op shared functions (confirmed).** Extract the `put` gate and the `delete`
+   gate **separately** (they're intentionally different — put runs access-fn + outputs-sidecar upsert;
+   delete runs ACL/DM + output-row removal); a thinner generic core would be riskier.
+5. **`fetch` identity → extract the `_api` session user in B6 now** (not `fetch`→null). And in the same
+   pass, **finish the onChange identity/depth plumbing end-to-end**: the writer + depth are already
+   carried on the B5 queue envelope but are currently **dropped before handler invoke** — B6 wires them
+   through so all three triggers land with consistent identity/depth behavior.
+
+### Implementation watch-outs (Charlie — bake into the build)
+
+- **Isolate cache keying must include the binding shape.** If the per-vibe isolate id / cache key ignores
+  the `env`-binding schema, an `env`-binding change could **reuse a stale isolate**. Add a version/hash of
+  the binding schema to the isolate cache key so a schema change forces a fresh isolate.
+- **The callback capability must be unforgeable from handler code** — exposed **only** through `ctx.db`,
+  never reachable via general `fetch` (which stays `globalOutbound: null`). Same trust-boundary discipline
+  as B5's `x-backend-op` strip.
