@@ -380,8 +380,14 @@ export default function VibeIframeWrapper() {
 
       // The write lane (today's behavior): owner generates in place, non-owner
       // makes it yours. Extracted so the cached-read lane below can fall through
-      // to it on a miss.
-      const runWriteLane = () => {
+      // to it on a miss. `cacheKey` (offered chips only) enables fast-fork-from-
+      // cache (#2929 item 1): the signed-in non-owner fork passes it to forkApp,
+      // which — if a produced (unblessed) result exists for it on a public source
+      // — seeds the fork from that chip-applied code and reports `seededFromCache`,
+      // so we skip the codegen auto-fire (no prompt64) and the user lands instantly
+      // on their fork with the chip already applied. Any miss forks normally (the
+      // chip's codegen still runs). Custom prompts pass no cacheKey (never cached).
+      const runWriteLane = (cacheKey?: string) => {
         // Owner: generate in place (PR-A).
         if (isOwner) {
           generation.sendPrompt(trimmed);
@@ -403,7 +409,12 @@ export default function VibeIframeWrapper() {
         forkingRef.current = true;
         const tid = toast.loading("Making it yours…");
         void (async () => {
-          const rFork = await vctx.chatApi.forkApp({ srcUserSlug: ownerHandle, srcAppSlug: appSlug, srcFsId: fsId });
+          const rFork = await vctx.chatApi.forkApp({
+            srcUserSlug: ownerHandle,
+            srcAppSlug: appSlug,
+            srcFsId: fsId,
+            ...(cacheKey ? { cacheKey } : {}),
+          });
           if (rFork.isErr()) {
             forkingRef.current = false; // allow a retry
             toast.error(`Couldn't make it yours: ${rFork.Err().message}`, { id: tid });
@@ -411,9 +422,12 @@ export default function VibeIframeWrapper() {
           }
           toast.dismiss(tid);
           notifyRecentVibesChanged();
-          // On success we navigate to the fork; the slug-keyed reset effect clears
-          // forkingRef so the new page can fork again later if needed.
-          void navigate(forkDestination(rFork.Ok(), prompt64), { replace: true });
+          // Fast fork: the server seeded the fork from the produced (chip-applied)
+          // code, so the chip is already in place — drop prompt64 so the forked page
+          // does NOT re-run codegen on top of it. Otherwise carry prompt64 to
+          // auto-fire the chip's generation as before.
+          const seeded = rFork.Ok().seededFromCache === true;
+          void navigate(forkDestination(rFork.Ok(), seeded ? null : prompt64), { replace: true });
         })();
       };
 
@@ -512,7 +526,17 @@ export default function VibeIframeWrapper() {
           void navigate(decision.href);
           return;
         }
-        runWriteLane();
+        // A bless-MISS for an offered chip: fall to the write lane, but hand it the
+        // content-address key so a signed-in non-owner gets a FAST fork seeded from
+        // the produced (unblessed) result when one exists (#2929 item 1). Same key
+        // the read lane just used; gated on the preview flag so prod stays inert.
+        const fastForkKey = cachedSuggestionsEnabled
+          ? cachedSuggestionKey({
+              source: { ownerHandle, appSlug, ...(sourceFsId ? { fsId: sourceFsId } : {}) },
+              transform: trimmed,
+            })
+          : undefined;
+        runWriteLane(fastForkKey);
       })();
     },
     [
