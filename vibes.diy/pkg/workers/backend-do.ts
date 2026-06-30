@@ -87,12 +87,12 @@ export class BackendDO implements DurableObject {
     }
 
     const vctx = await this.buildVctx(request);
-    const userHandle = await resolveBackendUserHandle();
+    const userId = await resolveBackendSessionUserId(request);
     const outcome = await attemptBackendFetch(vctx, {
       ownerHandle,
       appSlug,
       request: request as unknown as Request,
-      userHandle,
+      userId,
       backendJs: this.env.BACKEND_JS,
       loader: this.env.LOADER,
       policyVersion: this.env.BACKEND_POLICY_VERSION,
@@ -150,6 +150,8 @@ export class BackendDO implements DurableObject {
       deleted: boolean;
       doc: unknown;
       oldDoc?: unknown | null;
+      depth?: number;
+      writerUserId?: string | null;
     };
     const vctx = await this.buildVctx(request);
     const outcome = await attemptBackendOnChange(vctx, {
@@ -161,6 +163,11 @@ export class BackendDO implements DurableObject {
       deleted: body.deleted,
       doc: body.doc,
       oldDoc: body.oldDoc ?? null,
+      // B6: the writer + generation depth ride the queue envelope (B5) and were
+      // dropped here before handler invoke; thread them so a handler's ctx.db write
+      // acts as the original writer and the loop guard advances.
+      depth: body.depth,
+      writerUserId: body.writerUserId ?? null,
       backendJs: this.env.BACKEND_JS,
       loader: this.env.LOADER,
       policyVersion: this.env.BACKEND_POLICY_VERSION,
@@ -257,11 +264,18 @@ export class BackendDO implements DurableObject {
 }
 
 /**
- * Resolve the acting identity for a backend trigger (#2856 → consumed by B6).
- * Webhooks are unauthenticated (first-class `null`, per Charlie); explicit token
- * extraction for authenticated `_api` calls lands with its consumer B6. Kept as a
- * one-function seam.
+ * Resolve the verified session `userId` for a backend `_api` `fetch` (#2856 B6).
+ * The result is bound into `ctx.db` so a handler write acts as the session user
+ * through the production gate. Webhooks are unauthenticated (first-class `null`,
+ * per Charlie), and any unresolved identity falls through to `null` → an anonymous
+ * write the access fn must opt into (`allowAnonymous`), so this is fail-safe.
+ *
+ * The `_api` boundary does not yet standardize a verified-session header into the
+ * DO (the forwarded request carries the client's raw auth), so token→user
+ * verification is a thin follow-up gated on confirming that scheme; until it
+ * lands, `fetch` handler writes act anonymously. Kept as a one-function seam so
+ * only this resolver changes.
  */
-async function resolveBackendUserHandle(): Promise<string | null> {
+async function resolveBackendSessionUserId(_request: CFRequest): Promise<string | null> {
   return null;
 }
