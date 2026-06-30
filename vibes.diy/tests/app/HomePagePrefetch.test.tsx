@@ -69,7 +69,7 @@ import HomePage from "~/vibes.diy/app/components/HomePage.js";
 import { quickSuggestions } from "~/vibes.diy/app/data/quick-suggestions-data.js";
 
 const PLACEHOLDER =
-  "Describe your app in plain words — a trivia night, or an order form that takes payments. It builds instantly and changes as you type.";
+  "Describe your app in plain words — a trivia night, or an order form for your shop. It builds instantly and changes as you type.";
 
 async function renderHomePage() {
   render(<HomePage />);
