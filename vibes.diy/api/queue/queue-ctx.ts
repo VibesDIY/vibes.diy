@@ -3,6 +3,13 @@ import { RawEmailWithoutFrom, S3Api } from "@vibes.diy/api-types";
 import { D1Database, DurableObjectNamespace, Fetcher, R2Bucket } from "@cloudflare/workers-types";
 import { createVibesApiTables, cfDrizzle, CreateSQLPeerParams, toDBFlavour, VibesApiTables } from "@vibes.diy/api-sql";
 import { R2ToS3Api } from "@vibes.diy/api-svc";
+import {
+  backendDoName,
+  BACKEND_OWNER_HEADER,
+  BACKEND_SLUG_HEADER,
+  BACKEND_OP_HEADER,
+  BACKEND_OP_ARM,
+} from "@vibes.diy/api-svc/intern/backend-do-addr.js";
 import { SuperThis } from "@vibes.diy/identity";
 
 export interface QueueCtxParams {
@@ -12,6 +19,7 @@ export interface QueueCtxParams {
     D1: D1Database;
     FS_IDS_BUCKET?: R2Bucket;
     USER_NOTIFY?: DurableObjectNamespace;
+    BACKEND_DO?: DurableObjectNamespace;
   };
   vibes: {
     env: {
@@ -127,6 +135,35 @@ export class QueueCtx {
     const jsonTxt = await res.text();
     const rJson = exception2Result(() => JSON.parse(jsonTxt));
     return Result.Ok({ result: rJson.isOk() ? rJson.Ok() : jsonTxt });
+  }
+
+  /**
+   * Poke a vibe's `BackendDO` to re-evaluate its `scheduled` alarm (#2856 B4).
+   * Returns `Err` on a failed poke so the queue worker's `message.retry()` fires —
+   * deliberately NOT the swallow-and-continue pattern `notifyUser` uses, or a poke
+   * lost to a transient DO miss would leave the schedule stale (per Charlie). When
+   * the binding is absent (unit tests / envs without the DO) it's a no-op, not an
+   * error.
+   */
+  async armBackend(ownerHandle: string, appSlug: string): Promise<Result<void>> {
+    const ns = this.params.cf?.BACKEND_DO;
+    if (!ns) return Result.Ok();
+    const stub = ns.get(ns.idFromName(backendDoName(ownerHandle, appSlug)));
+    const rRes = await exception2Result(() =>
+      stub.fetch(
+        new Request("https://internal/__backend_arm", {
+          method: "POST",
+          headers: {
+            [BACKEND_OWNER_HEADER]: ownerHandle,
+            [BACKEND_SLUG_HEADER]: appSlug,
+            [BACKEND_OP_HEADER]: BACKEND_OP_ARM,
+          },
+        }) as unknown as Parameters<typeof stub.fetch>[0]
+      )
+    );
+    if (rRes.isErr()) return Result.Err(rRes);
+    if (rRes.Ok().status >= 300) return Result.Err(`backend arm poke got ${rRes.Ok().status}`);
+    return Result.Ok();
   }
 
   async notifyUser(

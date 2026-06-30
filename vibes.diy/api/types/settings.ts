@@ -513,3 +513,19 @@ export type EvtAppSetting = typeof evtAppSetting.infer;
 export function isEvtAppSetting(obj: unknown): obj is EvtAppSetting {
   return !(evtAppSetting(obj) instanceof type.errors);
 }
+
+// Per-app backend.js schedule poke (#2856 B4). Emitted at push time after the
+// `active.backend` discovery; the queue consumer addresses the vibe's BackendDO
+// and tells it to re-evaluate its `scheduled` alarm from the selected release.
+// Payload-agnostic by design — it only addresses the vibe; the DO recomputes the
+// cadence itself, so a stale interval can never reach the alarm.
+export const evtBackendArm = type({
+  type: "'vibes.diy.evt-backend-arm'",
+  ownerHandle: "string",
+  appSlug: "string",
+});
+export type EvtBackendArm = typeof evtBackendArm.infer;
+
+export function isEvtBackendArm(obj: unknown): obj is EvtBackendArm {
+  return !(evtBackendArm(obj) instanceof type.errors);
+}
