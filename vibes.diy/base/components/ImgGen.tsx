@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useMemo } from "react";
-import type { Database } from "@fireproof/use-fireproof";
+import type { Database } from "@vibes.diy/vibe-runtime";
 import type { FileMeta, ImgGenFile, ImgGenInputImage } from "@vibes.diy/vibe-types";
 import type { Result } from "@adviser/cement";
 import { useImgGen, type UseFireproofHook } from "../hooks/img-gen/use-img-gen.js";
@@ -18,9 +18,8 @@ export interface ImgGenProps {
   showControls?: boolean;
   model?: string;
   imgGen?: (prompt: string, inputImage?: ImgGenInputImage, model?: string) => Promise<Result<ImgGenFile[]>>;
-  // Injectable Fireproof hook (defaults to @fireproof/use-fireproof). Lets the
-  // firefly runtime / tests supply a backend without globally module-mocking
-  // @fireproof/use-fireproof.
+  // Injectable database hook (defaults to the Firefly-backed `useFireproof`
+  // from the vibe runtime). Lets tests supply a synthetic backend.
   useFireproof?: UseFireproofHook;
 }
 

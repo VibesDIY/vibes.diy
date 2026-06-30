@@ -1,10 +1,9 @@
 import React, { createContext, useContext, type ReactNode } from "react";
 import { type } from "arktype";
-import { injectDefaultVibesCtx, VibeBindings, VibesDiyMountParams, VibesEnv } from "../index.js";
+import { VibeBindings, VibesDiyMountParams, VibesEnv } from "../index.js";
 import { clerkDashApi, DashboardApiImpl } from "@vibes.diy/identity";
 import { ClerkProvider, useClerk } from "@clerk/react";
-import { TokenStrategie } from "@fireproof/core-types-protocols-cloud";
-import { Database } from "@fireproof/use-fireproof";
+import type { Database } from "@vibes.diy/vibe-runtime";
 import { OnFunc, OnFuncReturn, ReturnOnFunc } from "@adviser/cement";
 
 /**
@@ -46,10 +45,6 @@ class DefVibe implements Vibe {
   }
   #notReady<R>(action: string): R {
     throw new Error(`Vibe Provider is not Ready: ${action}`);
-  }
-
-  fpCloudStrategie(): TokenStrategie {
-    return this.#notReady("fpCloudStrategie");
   }
 
   onDatabaseOpen = ((_fn: (...a: Database[]) => OnFuncReturn): (() => unknown) => {
@@ -108,7 +103,6 @@ function LiveCycleVibeContextProvider({ mountParams, children }: VibeContextProv
     },
     ...mountParams,
   };
-  injectDefaultVibesCtx(ctx);
   return <VibeContext.Provider value={ctx}>{children}</VibeContext.Provider>;
 }
 

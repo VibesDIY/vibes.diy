@@ -1,4 +1,4 @@
-import type { Database, DocWithId } from "@fireproof/use-fireproof";
+import type { Database, DocWithId } from "@vibes.diy/vibe-runtime";
 
 export interface PromptEntry {
   readonly text: string;
