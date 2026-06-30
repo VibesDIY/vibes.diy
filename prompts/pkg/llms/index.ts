@@ -8,6 +8,7 @@ import { webxrConfig } from "./webxr.js";
 import { useViewerConfig } from "./use-viewer.js";
 import { useVibeConfig } from "./use-vibe.js";
 import { createVibeConfig } from "./create-vibe.js";
+import { backendJsConfig } from "./backend-js.js";
 
 export { callaiConfig } from "./callai.js";
 export { fireproofConfig } from "./fireproof.js";
@@ -19,6 +20,7 @@ export { webxrConfig } from "./webxr.js";
 export { useViewerConfig } from "./use-viewer.js";
 export { useVibeConfig } from "./use-vibe.js";
 export { createVibeConfig } from "./create-vibe.js";
+export { backendJsConfig } from "./backend-js.js";
 export type { LlmConfig } from "./types.js";
 
 // Array of all configs for easy iteration
@@ -33,4 +35,5 @@ export const allConfigs = [
   useViewerConfig,
   useVibeConfig,
   createVibeConfig,
+  backendJsConfig,
 ] as const;
