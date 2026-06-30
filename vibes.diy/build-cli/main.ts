@@ -1,9 +1,14 @@
-import { CliCtx, createCliStream, runCli } from "@vibes.diy/cmd-harness";
+import { CliCtx, createCliStream, loadCliEnv, runCli } from "@vibes.diy/cmd-harness";
 
 import { buildCmd, buildEvento, isResBuild } from "./cmds/build-cmd.js";
 import { handleTsc, tscCmd, tscEvento, isResTsc } from "./cmds/tsc-cmd.js";
 
 async function main() {
+  // Load .env / FP_ENV before the tsc bypass so an FP_TSC override set via .env
+  // is honored for `core-cli tsc` — the bypass returns before runCli (which also
+  // loads it) would get the chance. loadCliEnv is idempotent.
+  loadCliEnv();
+
   // tsc bypass: called directly before cmd-ts runs
   if (process.argv[2] === "tsc") {
     return handleTsc(process.argv.slice(3));

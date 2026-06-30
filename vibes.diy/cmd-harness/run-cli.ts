@@ -22,6 +22,13 @@ export class OutputSelector implements EventoSendProvider<unknown, unknown, unkn
   }
 }
 
+// Load .env / the FP_ENV-named env file into process.env. Idempotent — dotenv
+// does not override already-set vars, so it is safe to call more than once (e.g.
+// build-cli loads it before its `tsc` bypass *and* runCli loads it again).
+export function loadCliEnv(): void {
+  dotenv.config(process.env.FP_ENV ?? ".env");
+}
+
 export interface RunCliOptions {
   readonly name: string;
   readonly description: string;
@@ -39,7 +46,7 @@ export interface RunCliOptions {
 // Used by every command CLI in the monorepo (build-cli, deploy-cli, …) so the
 // streaming plumbing lives in exactly one place.
 export async function runCli(opts: RunCliOptions): Promise<void> {
-  dotenv.config(process.env.FP_ENV ?? ".env");
+  loadCliEnv();
 
   const rs = await runSafely(
     subcommands({
