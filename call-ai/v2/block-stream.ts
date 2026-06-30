@@ -242,13 +242,16 @@ export type BeginMsg = typeof BeginMsg.infer;
 
 // Optional streamId filter shared by the type guards below.
 //
-// Footgun guard rail (VibesDIY/vibes.diy#2707): these guards are often passed
+// Footgun guard rail (VibesDIY/vibes.diy#2707): these guards are easy to pass
 // *bare* as `Array.filter`/`.map`/`.some`/`.find` callbacks. JS supplies the
-// element **index** (a number) in the second-arg slot, which would otherwise be
-// mistaken for a real streamId and silently drop every element past index 0
-// (real streamIds are generated id strings, never numbers). Treating only an
-// actual string as a filter makes the guards safe to pass bare while preserving
-// the genuine stream-scoped use (e.g. filesystem-stream.ts).
+// element **index** (a number) in the second-arg slot, which a naive
+// `!streamId || msg.streamId === streamId` body would mistake for a real
+// streamId and silently drop every element past index 0 (real streamIds are
+// generated id strings, never numbers). TypeScript already rejects a bare typed
+// `.filter(isToplevelLine)` (number index vs `streamId?: string`), so this
+// guards the untyped paths — plain JS, `as any` arrays — while preserving the
+// genuine stream-scoped use (e.g. filesystem-stream.ts). Treating only an actual
+// string as a filter is what makes a numeric second arg a no-op.
 const streamIdMatches = (msg: unknown, streamId?: string): boolean =>
   typeof streamId !== "string" || (msg as { streamId?: string }).streamId === streamId;
 
