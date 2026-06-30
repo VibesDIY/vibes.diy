@@ -209,22 +209,40 @@ This design re-grounds the pre-cached-model children; it does not re-file them:
 
 ## Implementation status (this PR)
 
-The **client spine is built**: the curated graph (`routes/starter-graph.ts` +
-unit tests), the `handleEditPrompt` cross-slug pre-check (curated-edge-wins,
-slug-scoped, no producer capture), the distinct `→` jump glyph in
-`UnifiedVibeCard` (never the shield), and the public `/start` route. It's a
-**correct no-op until the seed chats land** — like the read lane, it lights up the
-instant the Blooms surface their curated chips. **Remaining: OQ-A** (synthetic seed
-chats — the D1 write path so `getVibeChips` returns the curated chips for the four
-Blooms; non-producible by construction since seeding writes only chat narration,
-never a `cachedSuggestions` produce entry).
+**The full v1 is built.**
+
+- **Client spine** — the curated graph (`routes/starter-graph.ts` + unit tests),
+  the `handleEditPrompt` cross-slug pre-check (curated-edge-wins, slug-scoped, no
+  producer capture), the distinct `→` jump glyph in `UnifiedVibeCard` (never the
+  shield), and the public `/start` route.
+- **Seed mechanism (OQ-A, resolved)** — `seedStarterChips` (`api/svc/intern/seed-starter-chips.ts`)
+  writes a talk-only narration turn so `getVibeChips` surfaces the curated chips;
+  idempotent; **non-producible by construction** (writes only chat narration). An
+  **owner-gated handler** (`seedStarterChips` evento + `api.seedStarterChips`)
+  exposes it so the curator runs it against prod. `starterSeedPlan()` turns the
+  curated graph into the exact per-vibe seed calls. Round-trip + idempotency +
+  owner-gating tests pass.
+
+It's a **correct no-op until the seed is run** — like the read lane, it lights up
+the instant the Blooms surface their curated chips.
+
+### Operating the seed (post-deploy)
+
+After this ships to prod, the owner of the `system` handle runs the seed once to
+set up the tree. `starterSeedPlan()` yields the calls (v1): seed `system/bloom-root`
+with `["Add a pattern sequencer", "Make it a memory game"]` and `system/bloom-machine`
+with `["Make it a drum machine"]` — one `api.seedStarterChips({ ownerHandle, appSlug, chips })`
+each, authed as the `system` owner. Re-running is safe (idempotent: replaces, never
+stacks). The leaves (`bloom-drums`, `bloom-says`) have no outgoing edges, so no seed.
 
 ## Open questions (resolve in `writing-plans`)
 
-- **OQ-A — synthetic-chat persistence.** Where/how is the seed turn written so
-  `getVibeChips` returns it for the deployed `fsId`? (A CLI/script that posts a
-  curated turn into the vibe's chat store, vs a build-time fixture, vs a small
-  server seed path.) Must be idempotent and re-runnable when the graph changes.
+- **OQ-A — synthetic-chat persistence. Resolved/implemented.** A talk-only
+  narration turn written via the owner-gated `seedStarterChips` server path
+  (`api/svc/intern/seed-starter-chips.ts` + the evento handler), idempotent under a
+  deterministic seed `promptId`, re-runnable from `starterSeedPlan()` whenever the
+  graph changes. The turn inherits the deployed `fsId` (no version coupling) and is
+  non-producible (chat narration only). See "Operating the seed" above.
 - **OQ-B — curated-edge matching key. Resolved: slug-scoped (v1, implemented).**
   Edges match on `(ownerHandle, appSlug, normalizedChipLabel)` and ignore `fsId`
   entirely, so the lookup is correct on the canonical `/vibe/<owner>/<slug>` URL

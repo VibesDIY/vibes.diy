@@ -12,6 +12,7 @@ import { getChatDetailsEvento } from "./public/get-chat-details.js";
 import { getChatResponseEvento } from "./public/get-chat-response.js";
 import { getVibeChipsEvento } from "./public/get-vibe-chips.js";
 import { getCachedSuggestionEvento } from "./public/get-cached-suggestion.js";
+import { seedStarterChipsEvento } from "./public/seed-starter-chips-handler.js";
 import { getAppByFsIdEvento } from "./public/get-app-by-fsid.js";
 import { ensureUserSettingsEvento } from "./public/ensure-user-settings.js";
 import { ensureHandleAvatarEvento } from "./public/ensure-handle-avatar.js";
@@ -162,6 +163,7 @@ export const handlerManifest: readonly HandlerManifestEntry[] = [
   entry("vibes.diy.req-get-chat-response", getChatResponseEvento),
   entry("vibes.diy.req-get-vibe-chips", getVibeChipsEvento),
   entry("vibes.diy.req-get-cached-suggestion", getCachedSuggestionEvento),
+  entry("vibes.diy.req-seed-starter-chips", seedStarterChipsEvento),
   entry("vibes.diy.req-list-application-chats", listApplicationChats),
   entry("vibes.diy.req-list-codegen-chats", listCodegenChats),
   entry("vibes.diy.req-get-application-chat", getApplicationChatEvento),

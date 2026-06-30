@@ -44,6 +44,8 @@ import {
   ResGetVibeChips,
   ReqGetCachedSuggestion,
   ResGetCachedSuggestion,
+  ReqSeedStarterChips,
+  ResSeedStarterChips,
 } from "./chat.js";
 import {
   ReqEnsureUserSettings,
@@ -203,6 +205,7 @@ export interface VibesDiyApiIface<_T = unknown> {
   getChatResponse(req: Req<ReqGetChatResponse>): Promise<Result<ResGetChatResponse, VibesDiyError>>;
   getVibeChips(req: Req<ReqGetVibeChips>): Promise<Result<ResGetVibeChips, VibesDiyError>>;
   getCachedSuggestion(req: Req<ReqGetCachedSuggestion>): Promise<Result<ResGetCachedSuggestion, VibesDiyError>>;
+  seedStarterChips(req: Req<ReqSeedStarterChips>): Promise<Result<ResSeedStarterChips, VibesDiyError>>;
   getAppByFsId(req: Req<ReqGetAppByFsId>): Promise<Result<ResGetAppByFsId, VibesDiyError>>;
   openChat(req: Req<ReqOpenChat>): Promise<Result<LLMChat>>;
   ensureUserSettings(req: Req<ReqEnsureUserSettings>): Promise<Result<ResEnsureUserSettings, VibesDiyError>>;

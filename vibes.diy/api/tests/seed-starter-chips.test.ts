@@ -110,4 +110,29 @@ describe("seedStarterChips", () => {
     const r = await seedStarterChips(ctx.appCtx.vibesCtx, { ownerHandle, appSlug, chips: [] });
     expect(r.isErr()).toBe(true);
   });
+
+  it("the owner can seed through the API handler; getVibeChips then surfaces the chips", async () => {
+    const { appSlug, ownerHandle } = await ctx.createApp();
+    const chips = ["Add a pattern sequencer", "Make it a memory game"];
+
+    const r = await ctx.api.seedStarterChips({ ownerHandle, appSlug, chips });
+    if (r.isErr()) throw new Error("seedStarterChips (api) failed: " + JSON.stringify(r.Err()));
+    expect(r.Ok().seededChips).toEqual(chips);
+
+    const got = await ctx.api.getVibeChips({ ownerHandle, appSlug });
+    if (got.isErr()) throw new Error("getVibeChips failed: " + JSON.stringify(got.Err()));
+    expect(got.Ok().chips).toEqual(chips);
+  });
+
+  it("rejects a non-owner through the API handler (owner-gated)", async () => {
+    const { appSlug, ownerHandle } = await ctx.createApp(); // owned by api (user 1)
+    // api2 is a different user → not the owner of ownerHandle.
+    const r = await ctx.api2.seedStarterChips({ ownerHandle, appSlug, chips: ["nope"] });
+    expect(r.isErr()).toBe(true);
+
+    // And nothing was seeded: the owner still sees no chips.
+    const got = await ctx.api.getVibeChips({ ownerHandle, appSlug });
+    if (got.isErr()) throw new Error("getVibeChips failed: " + JSON.stringify(got.Err()));
+    expect(got.Ok().chips).toEqual([]);
+  });
 });

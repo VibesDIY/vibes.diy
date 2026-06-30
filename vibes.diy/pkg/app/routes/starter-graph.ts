@@ -102,3 +102,32 @@ export function curatedEdgeTarget(args: {
 export function starterVibeHref(ref: StarterVibeRef): string {
   return `/vibe/${ref.ownerHandle}/${ref.appSlug}`;
 }
+
+/** One starter vibe's seed: the chips to surface on it (its outgoing edges). */
+export interface StarterSeed {
+  readonly ownerHandle: string;
+  readonly appSlug: string;
+  readonly chips: readonly string[];
+}
+
+/**
+ * Group the curated edges into one {@link StarterSeed} per source vibe — the plan
+ * the operator runs (one `seedStarterChips` call each) to set up the on-ramp tree
+ * after deploy. The chips are exactly each source's outgoing edge labels, so the
+ * seeded chips, the rendered chips, and the navigable edges are all the same list
+ * (one source of truth: this graph). For v1: `bloom-root` → 2 chips,
+ * `bloom-machine` → 1 chip (the leaves have no outgoing edges, so no seed).
+ */
+export function starterSeedPlan(edges: readonly CuratedEdge[] = CURATED_EDGES): readonly StarterSeed[] {
+  const bySource = new Map<string, { ownerHandle: string; appSlug: string; chips: string[] }>();
+  for (const e of edges) {
+    const key = `${e.source.ownerHandle}/${e.source.appSlug}`;
+    let seed = bySource.get(key);
+    if (!seed) {
+      seed = { ownerHandle: e.source.ownerHandle, appSlug: e.source.appSlug, chips: [] };
+      bySource.set(key, seed);
+    }
+    seed.chips.push(e.chipLabel);
+  }
+  return [...bySource.values()];
+}
