@@ -105,12 +105,12 @@ re-validating the guard against it.
 
 ### Packages by publish role
 
-| Role                                     | Pack/publish                    | Packages                                                                                                                                         |
-| ---------------------------------------- | ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **External npm** (caret-rewrite publish) | `core-cli build -x '^'`         | `call-ai/pkg`, `call-ai/v2`, `img-vibes/pkg`, `prompts/pkg`, `use-vibes/base`, `use-vibes/pkg`, `use-vibes/types`, `vibes-diy`                   |
-| **Internal `@vibes.diy/*`**              | `core-cli build`                | `vibes.diy/api/{impl,pkg,queue,sql,svc,types}`, `vibes.diy/base`, `vibes.diy/identity`, `vibes.diy/vibe/{db-explorer,runtime,srv-sandbox,types}` |
-| **App / not published** (stub)           | `echo core-cli build …` (no-op) | `vibes.diy/{pkg,stable-entry,stories}`, `vibes.diy/api/tests`, `vibes.diy/tests/{app,simple-chat}`                                               |
-| **Build-only** (no publish)              | — (just `core-cli tsc`)         | root `package.json`, `call-ai/tests/{integration,unit}`, `prompts/tests`, `use-vibes/tests`, `use-vibes/examples/react-example`                  |
+| Role                                     | Pack/publish                    | Packages                                                                                                                                                                           |
+| ---------------------------------------- | ------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **External npm** (caret-rewrite publish) | `core-cli build -x '^'`         | `call-ai/pkg`, `call-ai/v2`, `img-vibes/pkg`, `prompts/pkg`, `use-vibes/base`, `use-vibes/pkg`, `use-vibes/types`, `vibes-diy`                                                     |
+| **Internal `@vibes.diy/*`**              | `core-cli build`                | `vibes.diy/api/{impl,pkg,queue,sql,svc,types}`, `vibes.diy/base`, `vibes.diy/identity`, `vibes.diy/vibe/{db-explorer,runtime,srv-sandbox,types}`                                   |
+| **App / not published** (stub)           | `echo core-cli build …` (no-op) | `vibes.diy/{pkg,stable-entry,stories}`, `vibes.diy/api/tests`, `vibes.diy/tests/{app,simple-chat}`                                                                                 |
+| **Build-only** (no publish)              | — (just `core-cli tsc`)         | root `package.json`, `vibes.diy/api/logpush-etl` (`&& wrangler build`), `call-ai/tests/{integration,unit}`, `prompts/tests`, `use-vibes/tests`, `use-vibes/examples/react-example` |
 
 So **20 packages** run a _real_ `core-cli build` publish (8 external + 12
 internal); 6 are echo-stubs that build nothing; the rest only use the `tsc`
