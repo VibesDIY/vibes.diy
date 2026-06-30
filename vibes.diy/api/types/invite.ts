@@ -3,6 +3,7 @@ import { CoercedDate } from "@vibes.diy/call-ai-v2";
 import { Model } from "./chat.js";
 import { Role } from "./common.js";
 import { ActiveDbAcl } from "./db-acls.js";
+import { ActiveCachedSuggestion } from "./cached-suggestion.js";
 
 export const KVString = type({ key: "string", value: "string" });
 export type KVString = typeof KVString.infer;
@@ -478,7 +479,8 @@ export const ActiveEntry = EnablePublicAccess.or(ActiveRequest)
   .or(ActiveModelSetting)
   .or(ActiveEnv)
   .or(ActiveBackend)
-  .or(ActiveDbAcl);
+  .or(ActiveDbAcl)
+  .or(ActiveCachedSuggestion);
 
 export function isActiveAcl(obj: unknown): obj is typeof ActiveACL.infer {
   return !(ActiveACL(obj) instanceof type.errors);

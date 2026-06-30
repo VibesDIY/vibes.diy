@@ -1,5 +1,6 @@
 import { EventoHandler, Result, Option, EventoResultType, HandleTriggerCtx, EventoResult, exception2Result } from "@adviser/cement";
 import {
+  ActiveCachedSuggestion,
   ActiveDbAcl,
   ActiveEntry,
   ActiveIconDescription,
@@ -15,6 +16,7 @@ import {
   EnableRequest,
   EvtAppSetting,
   EvtIconGen,
+  isActiveCachedSuggestion,
   isActiveDbAcl,
   isActiveEnv,
   isActiveIcon,
@@ -37,6 +39,7 @@ import {
   isReqEnsureAppSettings,
   isReqEnsureAppSettingsRuntime,
   isReqEnsureAppSettingsCodegen,
+  isReqEnsureAppSettingsCachedSuggestion,
   isReqEnsureAppSettingsDbAcl,
   isReqEnsureAppSettingsDbAclRemove,
   isReqEnsureAppSettingsEnv,
@@ -131,6 +134,10 @@ export function buildEnsureEntryResult(entries: ActiveEntry[]): AppSettings {
         break;
       case isActiveEnv(e):
         result.entry.settings.env.push(...e.env);
+        break;
+      case isActiveCachedSuggestion(e):
+        result.entry.cachedSuggestions = result.entry.cachedSuggestions ?? {};
+        result.entry.cachedSuggestions[e.key] = { fsId: e.fsId, sourceFsId: e.sourceFsId };
         break;
       case isActiveDbAcl(e):
         result.entry.dbAcls = result.entry.dbAcls ?? {};
@@ -499,6 +506,22 @@ export async function ensureAppSettings(
               ...req.env,
             ],
           }) satisfies ActiveEnv
+      );
+      break;
+    case isReqEnsureAppSettingsCachedSuggestion(req):
+      [res.settings, res.error] = await sqlUpsert(
+        vctx,
+        res,
+        settings,
+        // Match per-(content-address key) — each cached chip gets its own row.
+        (e) => isActiveCachedSuggestion(e) && e.key === req.cachedSuggestion.key,
+        () =>
+          ({
+            type: "active.cached-suggestion",
+            key: req.cachedSuggestion.key,
+            fsId: req.cachedSuggestion.fsId,
+            sourceFsId: req.cachedSuggestion.sourceFsId,
+          }) satisfies ActiveCachedSuggestion
       );
       break;
     case isReqEnsureAppSettingsDbAcl(req):

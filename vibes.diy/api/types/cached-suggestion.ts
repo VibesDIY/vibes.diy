@@ -33,10 +33,48 @@
  * docs/superpowers/specs/2026-06-28-cached-fork-infra-design.md.
  */
 
+import { type } from "arktype";
 import type { ResGetAppByFsId } from "./app.js";
 
 /** The grant union `getAppByFsId` returns for a viewer on an app. */
 type AppGrant = ResGetAppByFsId["grant"];
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Storage shape — a cached suggestion result is staged as a new fsId under the
+// SOURCE vibe's own (ownerHandle, appSlug) and recorded in that app's
+// `AppSettings` JSON (no new table). The record is an `active.cached-suggestion`
+// ActiveEntry, one per cached chip, composing (dbAcls-style) into the keyed map
+// `entry.cachedSuggestions: { [cacheKey]: { fsId, sourceFsId } }`. (#2801, #2890)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * The map value for one cached suggestion: the staged result version (`fsId`)
+ * and the SOURCE version it was derived from (`sourceFsId`). `sourceFsId` is
+ * REQUIRED (Charlie #2890) — the serve path verifies that source version was
+ * publicly readable before serving the staged result anonymously, which is what
+ * keeps the PII boundary intact (a cached read must be a transform of
+ * already-public source code, never an owner's unpublished draft — Codex P1).
+ */
+export const cachedSuggestionRecord = type({
+  fsId: "string",
+  sourceFsId: "string",
+});
+export type CachedSuggestionRecord = typeof cachedSuggestionRecord.infer;
+
+/** ActiveEntry variant — one row per content-address `key` inside AppSettings. */
+export const ActiveCachedSuggestion = type({
+  type: "'active.cached-suggestion'",
+  /** The content-address key from {@link cachedSuggestionKey}. */
+  key: "string",
+  /** The staged result version. */
+  fsId: "string",
+  /** The public-HEAD source version the result was derived from. */
+  sourceFsId: "string",
+});
+export type ActiveCachedSuggestion = typeof ActiveCachedSuggestion.infer;
+export function isActiveCachedSuggestion(obj: unknown): obj is ActiveCachedSuggestion {
+  return !(ActiveCachedSuggestion(obj) instanceof type.errors);
+}
 
 /** The vibe version a transform is applied to (its precomputed result is keyed off this). */
 export interface CachedSuggestionSource {
