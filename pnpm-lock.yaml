@@ -88,9 +88,6 @@ importers:
       '@fireproof/core':
         specifier: 0.24.19
         version: 0.24.19(bufferutil@4.1.0)(react@19.2.7)(typescript@6.0.3)(utf-8-validate@6.0.6)
-      '@fireproof/core-types-base':
-        specifier: 0.24.19
-        version: 0.24.19(typescript@6.0.3)
       '@fireproof/core-types-protocols-cloud':
         specifier: 0.24.19
         version: 0.24.19(typescript@6.0.3)
@@ -326,9 +323,6 @@ importers:
       '@fireproof/core':
         specifier: 0.24.19
         version: 0.24.19(bufferutil@4.1.0)(react@19.2.7)(typescript@6.0.3)(utf-8-validate@6.0.6)
-      '@fireproof/core-types-base':
-        specifier: 0.24.19
-        version: 0.24.19(typescript@6.0.3)
       '@fireproof/core-types-protocols-cloud':
         specifier: 0.24.19
         version: 0.24.19(typescript@6.0.3)
@@ -442,9 +436,6 @@ importers:
       '@fireproof/core':
         specifier: 0.24.19
         version: 0.24.19(bufferutil@4.1.0)(react@19.2.7)(typescript@6.0.3)(utf-8-validate@6.0.6)
-      '@fireproof/core-types-base':
-        specifier: 0.24.19
-        version: 0.24.19(typescript@6.0.3)
       '@fireproof/core-types-protocols-cloud':
         specifier: 0.24.19
         version: 0.24.19(typescript@6.0.3)
@@ -640,9 +631,6 @@ importers:
       '@fireproof/core':
         specifier: 0.24.19
         version: 0.24.19(bufferutil@4.1.0)(react@19.2.7)(typescript@6.0.3)(utf-8-validate@6.0.6)
-      '@fireproof/core-types-base':
-        specifier: 0.24.19
-        version: 0.24.19(typescript@6.0.3)
       '@fireproof/core-types-protocols-cloud':
         specifier: 0.24.19
         version: 0.24.19(typescript@6.0.3)
@@ -759,9 +747,6 @@ importers:
       '@fireproof/core':
         specifier: 0.24.19
         version: 0.24.19(bufferutil@4.1.0)(react@19.2.7)(typescript@6.0.3)(utf-8-validate@6.0.6)
-      '@fireproof/core-types-base':
-        specifier: 0.24.19
-        version: 0.24.19(typescript@6.0.3)
       '@fireproof/core-types-protocols-cloud':
         specifier: 0.24.19
         version: 0.24.19(typescript@6.0.3)
