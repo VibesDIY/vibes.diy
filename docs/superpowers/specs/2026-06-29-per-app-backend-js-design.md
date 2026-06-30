@@ -136,7 +136,7 @@ All in `vibes.diy/vibe/runtime/` unless noted:
 ```
                        push time                         live triggers
    ┌──────────────┐  processBackendBindings   ┌────────────────────────────┐
-   │  /backend.js │ ───────────────────────▶  │  backendFunctionBindings   │ (D1 row: CID, config, schedule)
+   │  /backend.js │ ───────────────────────▶  │  AppSettings active.backend│ (entry: CID, handlers, schedule)
    └──────────────┘  (detect, compile-check,  └────────────────────────────┘
                       validate interval, arm)              │
                                                            ▼
@@ -235,23 +235,28 @@ the schedule.
   interval units + inclusive boundaries (5s, 1h); sub-5s / over-1h / malformed rejection;
   scheduled-without-interval error; interval-without-scheduled ignored; substring guard.
 
-#### B2b — `processBackendBindings` + the `backendFunctionBindings` table (persistence + wiring) — ✅ implemented
+#### B2b — `processBackendBindings` + the `active.backend` AppSettings entry (persistence + wiring) — ✅ implemented
 
-Clones `processAccessBindings`: detects `/backend.js`, upserts a single `backendFunctionBindings` row
-keyed by `{ownerHandle, appSlug}` (`{backendCid, backendAssetUri, handlers (JSON), intervalMs, updated}`)
-from the B2a parse result, deletes on removal. Wired into the push path (`ensure-app-slug-item.ts`)
-next to `processAccessBindings`.
+Detects `/backend.js` and upserts a single `active.backend` entry into the app's **AppSettings** row
+(`{handlers, cid, assetUri, intervalMs?}`) from the B2a parse result, removing it on removal. Wired into
+the push path (`ensure-app-slug-item.ts`) next to `processAccessBindings`.
 
-- **Table:** `BackendFunctionBindings` added to both pg + sqlite schemas and the tables registry. The
-  repo is schema-as-source-of-truth (`drizzle-kit push`), so there's **no hand-written migration**;
-  test/dev/prod DBs converge to the schema on push.
+- **No dedicated table — AppSettings instead.** The original draft added a `BackendFunctionBindings`
+  table mirroring `AccessFunctionBindings`, but that table exists because `invokeAccessFn`'s CID is read
+  on the every-write `putDoc` hot path. Backend discovery has **no equivalent hot path**: the source
+  already lives in `Apps.fileSystem`, and the runtime DO (B3) reads the binding once per cold-start, not
+  per write. So the discovery result rides in the existing, already-loaded AppSettings store as an
+  `ActiveBackend` arktype entry in the `ActiveEntry` union — written with the same direct-`appSettings`-
+  update pattern as `ensureAppMetadata` (push path, no user request/auth). This **drops the migration**
+  (no new DDL), which makes B2b a garden-variety change rather than a deploy-first one.
 - **Interval rejection is an early pre-check.** The schedule is validated against `req.fileSystem`
   **before** any storage/DB mutation, so a bad interval returns a clean `app-slug-invalid` `res-error`
   with **no partial commit**; persistence runs after `ensureApps`, by which point the config is known
   valid.
 - **Tests** (`api/tests/backend-bindings.test.ts`, end-to-end via `ensureAppSlug` against a real test
-  DB): registers handlers + interval on first push; updates interval on re-push; removes the row when
-  `backend.js` is dropped; rejects a sub-5s interval (`app-slug-invalid`) and writes no binding.
+  DB): registers handlers + interval on first push; updates interval on re-push; removes the entry when
+  `backend.js` is dropped; rejects a sub-5s interval (`app-slug-invalid`) and writes no entry; ignores a
+  nested `/src/backend.js`.
 
 ### Slice B3 — `_api` routing → BackendDO.fetch → isolate
 

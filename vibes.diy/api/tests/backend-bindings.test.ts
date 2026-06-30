@@ -1,7 +1,7 @@
-// Slice B2b (#2856): push-time discovery persists a BackendFunctionBindings row,
-// updates it on re-push, removes it when backend.js is dropped, and rejects a push
-// whose config.scheduled.interval is out of bounds — all driven end-to-end through
-// ensureAppSlug against a real test DB.
+// Slice B2b (#2856): push-time discovery persists an `active.backend` entry in
+// AppSettings, updates it on re-push, removes it when backend.js is dropped, and
+// rejects a push whose config.scheduled.interval is out of bounds — all driven
+// end-to-end through ensureAppSlug against a real test DB.
 
 import { assert, beforeAll, describe, expect, it } from "vitest";
 import { and, eq } from "drizzle-orm";
@@ -10,7 +10,7 @@ import { ensureSuperThis } from "@vibes.diy/identity";
 import { createTestDeviceCA, createTestUser } from "@fireproof/core-device-id";
 import { VibesDiyApi } from "@vibes.diy/api-impl";
 import { vibesMsgEvento, WSSendProvider } from "@vibes.diy/api-svc";
-import { isResEnsureAppSlugOk } from "@vibes.diy/api-types";
+import { ActiveEntry, isActiveBackend, isResEnsureAppSlugOk, parseArrayWarning } from "@vibes.diy/api-types";
 import { createVibeDiyTestCtx } from "./vibe-diy-test-ctx.js";
 
 const APP_JSX = { type: "code-block" as const, lang: "jsx", filename: "/App.jsx", content: "function App(){return null;} App();" };
@@ -47,18 +47,23 @@ async function setupCtx() {
   return { ctx, wsPair, sthis, deviceCA };
 }
 
-describe("BackendFunctionBindings discovery on backend.js push (#2856 B2b)", { timeout: 30000 }, () => {
+describe("active.backend discovery on backend.js push (#2856 B2b)", { timeout: 30000 }, () => {
   let appCtx: Awaited<ReturnType<typeof createVibeDiyTestCtx>>;
   let ownerApi: VibesDiyApi;
   let appSlug: string;
   let ownerHandle: string;
 
-  const bindingRows = () => {
-    const tBfb = appCtx.vibesCtx.sql.tables.backendFunctionBindings;
-    return appCtx.vibesCtx.sql.db
+  // The push-time discovery is the only writer of an `active.backend` entry, and
+  // metadata generation is fail-closed in tests (preAllocate errors), so the
+  // app's settings carry at most this one entry. Return it (or undefined).
+  const backendEntries = async () => {
+    const tAppSettings = appCtx.vibesCtx.sql.tables.appSettings;
+    const rows = await appCtx.vibesCtx.sql.db
       .select()
-      .from(tBfb)
-      .where(and(eq(tBfb.ownerHandle, ownerHandle), eq(tBfb.appSlug, appSlug)));
+      .from(tAppSettings)
+      .where(and(eq(tAppSettings.ownerHandle, ownerHandle), eq(tAppSettings.appSlug, appSlug)));
+    const settings = rows.flatMap((r) => parseArrayWarning(r.settings ?? [], ActiveEntry).filtered);
+    return settings.filter(isActiveBackend);
   };
 
   beforeAll(async () => {
@@ -87,11 +92,11 @@ describe("BackendFunctionBindings discovery on backend.js push (#2856 B2b)", { t
     });
     assert(r.isOk() && isResEnsureAppSlugOk(r.Ok()), "push with backend.js failed");
 
-    const rows = await bindingRows();
-    expect(rows.length).toBe(1);
-    expect(JSON.parse(rows[0].handlers)).toEqual(["fetch", "scheduled"]);
-    expect(rows[0].intervalMs).toBe(300_000);
-    expect(rows[0].backendCid).toBeTruthy();
+    const entries = await backendEntries();
+    expect(entries.length).toBe(1);
+    expect(entries[0].handlers).toEqual(["fetch", "scheduled"]);
+    expect(entries[0].intervalMs).toBe(300_000);
+    expect(entries[0].cid).toBeTruthy();
   });
 
   it("updates the interval on re-push", async () => {
@@ -102,21 +107,21 @@ describe("BackendFunctionBindings discovery on backend.js push (#2856 B2b)", { t
     });
     assert(r.isOk() && isResEnsureAppSlugOk(r.Ok()), "re-push failed");
 
-    const rows = await bindingRows();
-    expect(rows.length).toBe(1);
-    expect(JSON.parse(rows[0].handlers)).toEqual(["scheduled"]);
-    expect(rows[0].intervalMs).toBe(900_000);
+    const entries = await backendEntries();
+    expect(entries.length).toBe(1);
+    expect(entries[0].handlers).toEqual(["scheduled"]);
+    expect(entries[0].intervalMs).toBe(900_000);
   });
 
-  it("removes the binding when backend.js is dropped", async () => {
+  it("removes the entry when backend.js is dropped", async () => {
     const r = await ownerApi.ensureAppSlug({ mode: "dev", appSlug, fileSystem: [APP_JSX] });
     assert(r.isOk() && isResEnsureAppSlugOk(r.Ok()), "push without backend.js failed");
 
-    const rows = await bindingRows();
-    expect(rows.length).toBe(0);
+    const entries = await backendEntries();
+    expect(entries.length).toBe(0);
   });
 
-  it("rejects a push with a sub-5s interval and writes no binding", async () => {
+  it("rejects a push with a sub-5s interval and writes no entry", async () => {
     const r = await ownerApi.ensureAppSlug({
       mode: "dev",
       appSlug,
@@ -129,9 +134,9 @@ describe("BackendFunctionBindings discovery on backend.js push (#2856 B2b)", { t
     expect(errStr).toMatch(/backend\.js/);
     expect(errStr).toMatch(/5s minimum/);
 
-    // No binding written by the rejected push (still empty from the previous test).
-    const rows = await bindingRows();
-    expect(rows.length).toBe(0);
+    // No entry written by the rejected push (still empty from the previous test).
+    const entries = await backendEntries();
+    expect(entries.length).toBe(0);
   });
 
   // Codex P2: only the reserved top-level /backend.js is the app backend — a nested
@@ -141,7 +146,7 @@ describe("BackendFunctionBindings discovery on backend.js push (#2856 B2b)", { t
     const r = await ownerApi.ensureAppSlug({ mode: "dev", appSlug, fileSystem: [APP_JSX, nested] });
     assert(r.isOk() && isResEnsureAppSlugOk(r.Ok()), "nested backend.js should not reject the push");
 
-    const rows = await bindingRows();
-    expect(rows.length).toBe(0);
+    const entries = await backendEntries();
+    expect(entries.length).toBe(0);
   });
 });
