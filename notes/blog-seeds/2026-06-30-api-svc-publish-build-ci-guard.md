@@ -7,10 +7,19 @@ Most CI catches what `pnpm build`/`test` catch. But a package's *publish* build
 path — the dist-only tsconfig, the export map, the lockfile inputs — can break
 in ways the dev build never exercises, and you only find out during release
 prep. This change adds a dedicated `publish_build_api_svc` job that runs
-`pnpm --filter @vibes.diy/api-svc run publish` on PRs, gated by a new
+`pnpm --filter @vibes.diy/api-svc run pack` on PRs, gated by a new
 `api_svc_publish_needed` output from the `changed-scope` action.
 
 Worth a note:
+
+- **A "publish build" guard must not actually publish.** The first cut ran the
+  `publish` script — but that script is `core-cli build`, the same command the
+  credentialed release workflow runs to push to npm. In PR CI there is no
+  `NPM_TOKEN`, so it would have reddened every api-svc PR after a clean build.
+  The fix is the `pack` script (`core-cli build --doPack`): identical build
+  path, packs a tarball instead of publishing. The lesson: when you want to
+  *exercise* a publish path in CI, reach for the dry-run/pack variant, never the
+  real publish — the goal is coverage, not a release.
 
 - **Fail open on diff uncertainty.** The scope detector emits
   `api_svc_publish_needed=true` whenever the base fetch fails, the diff errors,
