@@ -256,6 +256,34 @@ implementation:
    `effectiveFsId` **once** and use that same value in both producer and reader
    paths.
 
+### Security-review findings (#2890 `/security-review`)
+
+The owner-gated write is the key control: an anonymous/non-owner caller's `_auth`
+is undefined and fails the owner check in `ensureAppSettings`, so **only an app's
+own owner can register its `cachedSuggestions`** — the "register a victim's
+private fsId" / cross-tenant attack is not possible. Cross-app confusion and
+injection are also closed (all lookups are owner/slug-scoped, parameterized).
+
+Two findings, both **bounded to owner-self-exposure** (no third-party victim):
+
+- **Finding B — FIXED.** The `cachedSuggestionGrant` ran for a soft-unpublished
+  (tombstoned) app, because the `isHiddenForCaller` tombstone gate only runs on
+  the no-`fsId` path and the grant requires `fsId` (and `publicAccess` stays
+  enabled across unpublish). The grant now re-checks `isHiddenForCaller`, mirroring
+  the reader, so unpublishing a vibe also stops serving its staged cached versions.
+- **Finding A — KNOWN LIMITATION, follow-up.** The grant verifies the **source**
+  version was public but does **not** verify the staged `fsId` is genuinely a
+  chip-derived transform of it — the owner-written map entry is trusted for the
+  served fsId. So a malicious/buggy owner could register one of their own
+  _unpublished draft_ fsIds and have its `env`/`fileSystem` served anonymously.
+  Impact is bounded to the owner exposing **their own** app's content (they could
+  publish it anyway); the normal producer never does this (it registers the chip
+  result). The proper fix is the **provenance tag** this spec already anticipated:
+  stamp staged chip versions in `meta` at codegen time and have the grant require
+  the served row to carry it + reference `sourceFsId` as parent — deferred because
+  it needs codegen-side stamping. Until then, the producer policy (offered chips
+  only, public source) is the only "is it chip-derived" gate, and it's client-side.
+
 ## Open questions (resolve in brainstorm before planning)
 
 1. **Where the dedupe index lives.** D1 table keyed by a hash of `(source,

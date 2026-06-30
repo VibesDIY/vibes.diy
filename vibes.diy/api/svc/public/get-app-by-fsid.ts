@@ -263,10 +263,21 @@ export const getAppByFsIdEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqGet
         // currently public; the requested fsId is registered in this app's
         // cachedSuggestions map; AND the entry's recorded source version was
         // itself published/public (the PII boundary — verified in the helper).
-        // A private app fails the publicAccess check; a tombstoned/hidden slug is
-        // already gated above. Emits an audit reason on grant.
+        // A private app fails the publicAccess check. The tombstone (soft-unpublish)
+        // gate above runs ONLY on the no-fsId path, and this branch REQUIRES
+        // req.fsId — so we re-check isHiddenForCaller here, mirroring the reader
+        // (get-cached-suggestion), so unpublishing a vibe also stops serving its
+        // staged cached versions (publicAccess stays enabled across unpublish, so
+        // it can't be the gate). Emits an audit reason on grant.
         const cachedSource =
-          req.fsId && settings.entry.publicAccess?.enable
+          req.fsId &&
+          settings.entry.publicAccess?.enable &&
+          !(await isHiddenForCaller(vctx, {
+            ownerHandle: app.ownerHandle,
+            appSlug: app.appSlug,
+            ownerUserId: app.userId,
+            callerUserId,
+          }))
             ? await grantableCachedSuggestionSource(vctx, {
                 ownerHandle: app.ownerHandle,
                 appSlug: app.appSlug,
