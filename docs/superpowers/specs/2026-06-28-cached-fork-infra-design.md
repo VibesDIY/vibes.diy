@@ -2,10 +2,14 @@
 
 > **Status: design-level.** The product model is resolved (jchris, in
 > `notes/2026-06-26-agent-in-vibe-ux-epic.md` §1a/§2/§8); this spec collects it
-> into one implementable place. Before building, run `brainstorming` then
-> `writing-plans` to settle the open questions at the end. Tracking issue: **#2801**
-> (decision to build, not drop, taken on #2796). Tracks the cached-read half of the
-> agent-in-vibe epic (#2675) — only the **write** lane shipped (#2677).
+> into one implementable place. **The converged product model — produce / bless /
+> publish, fork-by-default — is in §"Converged model (2026-06-30)"; read that
+> first**, as it supersedes earlier framings on the stay-vs-fork default and names
+> the one change the current build still needs (an explicit _blessing_ gate before
+> a produced result becomes a visitor stay). Before building, run `brainstorming`
+> then `writing-plans` to settle the open questions at the end. Tracking issue:
+> **#2801** (decision to build, not drop, taken on #2796). Tracks the cached-read
+> half of the agent-in-vibe epic (#2675) — only the **write** lane shipped (#2677).
 
 ## Why this exists
 
@@ -293,6 +297,165 @@ Two findings, both **bounded to owner-self-exposure** (no third-party victim):
   and the grant (which resolves by fsId, no key) iterates EVERY entry mapping that
   fsId and grants iff at least one has a public source — no fsId first-match
   masking. (`cachedSuggestionSourceIsPublic` / `grantableCachedSuggestionSource`.)
+
+## Converged model (2026-06-30, jchris) — produce / bless / publish, fork-by-default
+
+A long design pass with jchris closed the model. It is best stated as **three
+distinct verbs an owner's chip result can pass through**, a **default**, and a
+small set of **invariants**. Everything below is the target; the §"Implementation
+plan" build is _behind_ it on one consequential point (see "Delta from the current
+build").
+
+### The three verbs (don't conflate them)
+
+- **Produced** = _generated_. The codegen ran for an offered chip; a result
+  `fsId` exists and is cached (staged as an unpublished draft under the source's
+  `(ownerHandle, appSlug)`). Automatic, happens on the relevant click. **This is
+  deny-by-default.**
+- **Blessed** = the owner _explicitly elevated that produced result_ to a
+  fast-path **stay**. Pinned to the exact result `fsId` / content-address — never
+  to the abstract chip. This is the new middle tier.
+- **Published** = the owner promoted code to the **production HEAD** — the default
+  landing you get with **no `fsId` param**. The existing, heaviest act; it governs
+  the namespace.
+
+Blessing is **not a new permission system** — _publish-to-production is the
+blessing primitive we already have_, and production sits at the top of the
+hierarchy (it's what you get by default). The chip work adds only the **middle
+tier**: a way to elevate a _draft_ result to a fast-path stay **without** promoting
+it to HEAD — so an owner can feature an alternative/ending variant without
+replacing their actual app. The two elevations (bless-as-stay, publish-as-HEAD)
+are independent and both explicit.
+
+### The default: fork is the normal behavior; stay is the marked exception
+
+Inverting the earlier framing is what makes the UX non-surprising. **A click forks
+by default**; staying in the source namespace is the rare, _curated_, explicitly
+marked case. Because forking is the advertised default ("remix makes a copy" — an
+idiom users already hold), the one surprising-if-unannounced behavior (you stayed
+on the owner's namespace + data) only ever happens **announced**.
+
+The announcement is a **shield** on the chip = _"this one stays here, in the same
+namespace, on the same data."_ There is no separate "fast" indicator: once warm,
+**everything** is fast (see "Universal cache"), so "fast" isn't a distinguishing
+signal — the shield's single, honest meaning is "stays."
+
+### Universal cache; blessing only routes stay-vs-fork
+
+Two **independent** bits doing two jobs:
+
+- **`cached`** (materialization) — warm every _offered_ chip we can. Used by both
+  paths.
+- **`blessed`** (approval) — decides whether a warm result is a stay or a fork.
+
+The cached `fsId` is therefore used two ways: **blessed → navigate-and-stay**
+(shield, read-only, source namespace); **unblessed → seed the fork** (no codegen
+wait — a _fast fork_ instead of a slow one). Blessing never gates _caching_; it
+gates only the one capability that matters (staying).
+
+### The result lifecycle is linear (no "blessed but cold")
+
+You bless a **result**, not a chip — so there is nothing to bless until a result
+exists. `blessed ⊃ cached`. The states are a progression, not a 2×2:
+
+| state | what a non-owner click does |
+| --- | --- |
+| **cold** (no result yet) | codegen → **slow fork** |
+| **cached, unblessed** | **fast fork** (seeded from the result) |
+| **blessed** (necessarily cached) | **fast stay** (shield) |
+
+### Invariants (the load-bearing rules)
+
+1. **Only the owner edits the codebase in place.** Everyone else — anonymous,
+   member, outsider — **forks on a code edit.** (Members can write _data_ under the
+   access function; that's an orthogonal axis the cache never touches. There is no
+   "member edits code in place" case.) The fork-on-edit boundary is exactly
+   **is-owner**, not `checkDocAccess`.
+2. **Stay is strictly read-only for every non-owner.** The first code edit forks.
+   The shield promises a fast _read_, never a write capability.
+3. **Produce ≠ bless.** Clicking is _exploration_, and exploration includes
+   clicking bad ideas (the "this chip deletes all my data" case). So a produced
+   result is **deny-by-default**; it becomes a visitor-facing stay **only** via an
+   explicit, revocable, content-pinned bless. A regretted result just sits as an
+   unblessed cache entry doing nothing.
+4. **Fail-to-fork.** Every failure — cold, unblessed, bless revoked, source went
+   private, network error, model bump (→ new key) — degrades to a **fork**. No
+   failure path degrades to an _unsafe stay_. This is what makes the whole thing
+   robust rather than a stack of gates that must all hold.
+5. **Shield is server-authoritative.** Rendered **only** when the server actually
+   returns a stay-`fsId` (`blessed AND source-public AND visible`) — never from a
+   client heuristic. A client-assertable shield would be a phishing vector.
+
+### Data model
+
+The cached result is a staged **draft** `fsId`; production results need no
+approval entry (they're stays by default via the existing no-`fsId`→HEAD
+resolver). Two composed entries (dbAcls-style), keyed by the content-address:
+
+- **production entry** `{ key, fsId, sourceFsId }` — "owner _produced_ this."
+- **approval entry** `{ key, approvedBy, approvedAt }` — "owner _blessed_ this."
+
+The approval entry **depends on** the production entry (you can't bless a `key`
+with no result) — the structural expression of invariant 3. `approvedBy` is the
+forward hook for admin-on-behalf (a different identity blesses), defaulted to the
+owner today. **Note:** enabling that future case needs more than the field — the
+AppSettings owner-gate (`ensure-app-settings.ts`) currently blocks any non-owner
+write, so admin approvals will need their own write-path. Out of scope here.
+
+### Scope: owner-only for v1
+
+The approver is the **owner**, blessing **their own** content — which is just the
+owner-self-exposure already accepted (Finding A). No delegation, no third-party
+consent, no audit-of-who-vouched requirement, so the entire admin-governance
+branch **does not exist yet**. Because jchris owns the system/starter vibes,
+owner-only already covers ~all near-term value. Admin-on-behalf ("fast-path other
+owners' vibes without them participating") is cleanly additive later.
+
+### Delta from the current build (what must change)
+
+The §"Implementation plan" reader/grant currently serves a **stay** for _any_
+produced result whose source was public — i.e. it **auto-stays**, with no blessing
+gate. That contradicts invariant 3 and is exactly the "owner clicks a bad chip and
+it's instantly live as a stay" hazard. **Required change:** gate the stay on an
+**approval entry** — produced-but-unblessed results must **fork**, not stay. Until
+that gate lands, the lane must remain **preview-flag-only** (it already is;
+`VIBES_CACHED_SUGGESTIONS="on"` in `[env.preview]`). The blessing gate is also the
+**real resolution of Finding A**: a human owner vouching for a specific result _is_
+the provenance verification the grant otherwise can't do automatically — so adding
+it upgrades Finding A from "won't-fix while preview-only" to "resolved by
+curation," a prerequisite for any prod enablement.
+
+Two precisions the build must hold to:
+
+- **Cache only _offered_ chips, never custom prompts.** A custom/free-text prompt
+  can carry PII in code → never produced-into-cache, never seeds a fork, never
+  stays; it is always a fresh-codegen write/fork. The cache key binds the
+  **pristine offered-chip output `fsId`**, so an owner's later hand-edits to a
+  result don't leak through a fork-seed. ("Cache all the chips" = all _offered_
+  chips.)
+- **Cache is owner-produced only in v1.** A non-owner's miss does a fresh-codegen
+  fork and writes **nothing** under the owner's namespace (preserves invariant 1).
+  The "lazy-cache on heavy anonymous traffic" aspiration is deferred — it needs a
+  producing identity that is _not_ the visitor writing into someone else's
+  namespace.
+
+The **fast-fork-from-cache** path (serving a cached result as a fork _seed_ for
+unblessed clicks) is **additive and not yet built** — today's reader serves only
+the stay path. Recorded here as the intended next capability, not something shipped.
+
+### Adjacent hazards (parked — not fixed by this model)
+
+- **#2902** — saving an unpublished dev draft re-binds the live per-`(ownerHandle,
+  appSlug)` access function for the whole namespace, no publish/consent. The cache
+  read lane introduces no new instance of this (reads never re-bind), but the
+  **producer/staging** path must not re-bind access when it stages a result. Filed
+  separately.
+- **Destructive-evaluation.** Invariant 3 stops a regretted result reaching
+  _visitors_, but an owner _reviewing_ a destructive chip still runs it against
+  their **live** data before deciding not to bless. That's a producer/evaluation
+  safety concern (same family as #2902: staging/evaluating must be non-destructive),
+  handled separately from the read lane. The offered-chip allowlist should also
+  avoid data-destructive transforms.
 
 ## Open questions (resolve in brainstorm before planning)
 
