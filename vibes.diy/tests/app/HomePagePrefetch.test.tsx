@@ -68,7 +68,8 @@ vi.mock("~/vibes.diy/app/components/PillPortal.js", async (importOriginal) => ({
 import HomePage from "~/vibes.diy/app/components/HomePage.js";
 import { quickSuggestions } from "~/vibes.diy/app/data/quick-suggestions-data.js";
 
-const PLACEHOLDER = "Describe your app in plain words — it builds instantly and changes as you type.";
+const PLACEHOLDER =
+  "Describe your app in plain words — a trivia night, or an order form that takes payments. It builds instantly and changes as you type.";
 
 async function renderHomePage() {
   render(<HomePage />);
