@@ -2,7 +2,7 @@
 // putDoc/deleteDoc. Dark-gated, loop-guarded, fire-and-forget, oldDoc from the
 // committed predecessor.
 
-import { assert, beforeAll, beforeEach, describe, expect, it } from "vitest";
+import { beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { MsgBase } from "@adviser/cement";
 import { ensureSuperThis } from "@vibes.diy/identity";
 import { createTestDeviceCA } from "@fireproof/core-device-id";
