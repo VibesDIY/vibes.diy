@@ -5,8 +5,9 @@ Epic design: [`2026-06-29-per-app-backend-js-design.md`](./2026-06-29-per-app-ba
 Predecessors: **B3** (`BackendDO` + `_api` → isolate + `attemptBackendFetch`), **B4** (the durable timer
 lane: `evt-backend-arm` queue poke, `attemptBackendScheduled`, `loadSelectedBackend`).
 
-> **Status: spec-first.** Design only; implementation follows on the branch after Charlie's feedback.
-> Built **dark** behind `BACKEND_JS=off` — whole-epic deploy at the end.
+> **Status: design approved** (Codex P2 ×3 folded in; Charlie signed off all 5 questions — see § _Design
+> questions — resolved_). Implementation follows on this branch. Built **dark** behind `BACKEND_JS=off` —
+> whole-epic deploy at the end.
 
 ## Goal
 
@@ -91,7 +92,10 @@ In the post-commit block, **best-effort**:
 await exception2Result(() => vctx.postQueue({ payload: { type: "vibes.diy.evt-backend-onChange", … } satisfies … }));
 ```
 
-The write has already committed; we swallow any enqueue error (log only). The event shape is explicit via
+The write has already committed; an enqueue error does **not** fail the write, but it must **not** be
+silent (Charlie): log it at `error` **and** emit a counter/metric (`backend_onchange_enqueue_failed`)
+so a systemic enqueue outage is observable rather than a quiet stream of dropped `onChange`s. The event
+shape is explicit via
 the `deleted` flag (sourced from which handler emitted, not guessed from doc contents):
 **create** = `deleted:false`, `oldDoc` null; **update** = `deleted:false`, both present;
 **delete** = `deleted:true`, `doc` is the tombstone row (`data: {}`) and `oldDoc` the prior committed
@@ -202,32 +206,21 @@ No new binding work: B4 already cross-script-bound `BACKEND_DO` into `wrangler.q
 - **Release-scope:** `onChange` runs the **production** release's code, not a later dev push (the B3/B4
   release-skew carry-forward, applied to `onChange`).
 
-## Open questions for Charlie
+## Design questions — resolved (Charlie's review)
 
-1. **Loop-guard shape — depth-on-message + tag-on-write, `MAX_ONCHANGE_DEPTH = 4`.** Is the split right
-   (generation count rides the `onChange` message; the source-tag/depth rides the **write request** via an
-   internal `req.backendOrigin`, absent for frontend writes)? And is building it **dormant** in B5
-   (handlers can't write yet) — threaded + unit-tested via a simulated tagged write — the right call,
-   versus deferring the wiring to B6 when writes actually exist? Is 4 a sane cap?
-
-2. **onChange via `BackendDO` vs. inline in the queue consumer.** I propose routing through
-   `BackendDO.invokeOnChange` (consistent with the epic diagram; reuses `buildVctx` + per-vibe isolate
-   addressing + the one "all backend exec goes through the DO" invariant) — **even though** `onChange`
-   needs no durable state and no single-flight. The alternative (run `attemptBackendOnChange` directly in
-   the consumer) is lighter but forks a second vctx-build path. Keep it on the DO?
-
-3. **Fire-and-forget + the commit→enqueue gap.** Emit best-effort after commit, swallow enqueue errors so
-   the user write never fails, and accept the narrow at-most-once edge (worker dies between commit and
-   enqueue) — **no outbox in B5**. Acceptable at launch, or do you want a transactional outbox now?
-
-4. **Carry `writerUserId` (+ `seq`) on the envelope now (B6 seam + idempotency).** B5 passes
-   `userHandle: null` to the executor but stashes the writer's `userId` and the committed `seq` in the
-   message, so B6 resolves identity without touching the emit site and handlers get a natural dedupe key.
-   Carry them now, or keep the envelope minimal and re-plumb in B6?
-
-5. ~~**Delete representation.**~~ **Resolved by Codex** — deletes have their own `deleteDocEvento` (a
-   tombstone row, not a `_deleted`-flagged `putDoc`), so B5 emits from **both** handlers via a shared
-   helper and carries an explicit `deleted` flag (see § _Where it's emitted_). No longer a question.
+1. **Loop-guard shape/cap → keep the split as proposed.** `depth` on the `onChange` message +
+   `backendOrigin` on internal writes; wire it in **B5 (dormant)** with tests; `MAX_ONCHANGE_DEPTH = 4`
+   is a good launch default. (Confirmed.)
+2. **onChange via `BackendDO` → keep it on the DO.** Preserves the "backend execution goes through the
+   DO" invariant and avoids duplicating `buildVctx`/isolate routing in consumer code. (Confirmed.)
+3. **Fire-and-forget, no outbox in B5 → accepted for launch**, with **one requirement**: enqueue failure
+   must be **visible** — log + metric, not silent — and the at-most-once commit→enqueue gap stays
+   explicit in the spec. (Folded into § _The emit_ and § _Delivery contract_.)
+4. **Carry `writerUserId` + `seq` (+ `docId`) now → yes.** Keep `userHandle: null` as the B6 seam, but
+   preserve provenance/idempotency fields in B5 so B6 needs no emit-site replumbing. (Confirmed.)
+5. ~~**Delete representation.**~~ **Resolved by Codex** (Charlie concurs) — deletes have their own
+   `deleteDocEvento` (a tombstone row, not a `_deleted`-flagged `putDoc`), so B5 emits from **both**
+   handlers via a shared helper and carries an explicit `deleted` flag (see § _Where it's emitted_).
 
 ## Codex review folded in (P2 ×3)
 
