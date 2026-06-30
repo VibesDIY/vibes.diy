@@ -87,9 +87,17 @@ and in doing so settles three of the open questions below:
   fork (the "no login" promise holds). `isReadableCachedGrant` encodes this.
 
 The client wiring (`resolveCachedRead` in `handleEditPrompt`,
-`vibe.$ownerHandle.$appSlug.tsx`) is **gated on `isSystemCacheHandle(ownerHandle)`**,
-so every normal vibe is byte-for-byte unchanged and the lane activates the moment
-curated content is provisioned under the handle.
+`vibe.$ownerHandle.$appSlug.tsx`) fires for **any non-owner click on any vibe** —
+the boundary is the cache-_hit_, not who owns the source (per §1a "keep the
+boundary defined by cache-hit, not is-it-a-curated-chip"). The cache is keyed by
+`(source, transform)`, so the source can be a curated/system vibe **or a popular
+user vibe whose chips we later lazy-cache**; the precached result always lives
+under `SYSTEM_CACHE_HANDLE` (that handle is cache _storage_, not a constraint on
+the source). **Owners are gated out** (`!isOwner`): an owner click is always an
+in-place write, and an un-gated lookup on a cached-own vibe would wrongly
+navigate them to the fork instead of editing. Until precaching exists the lookup
+always misses → non-owner clicks fall through to today's fork/remix write lane
+unchanged.
 
 **Still open (the backend provisioning half — deferred, brainstorm-gated):**
 reserving `SYSTEM_CACHE_HANDLE` out of the user handle space (OQ#4), the precache
