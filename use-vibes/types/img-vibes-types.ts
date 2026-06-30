@@ -5,6 +5,18 @@ export interface PromptEntry {
   readonly created: number;
 }
 
+// Per-version file metadata on `_files.<versionId>`. Mirrors the runtime shape
+// in `@vibes.diy/vibe-types`; the platform mints `url` on read. The Firefly
+// `DocWithId` only adds `_id`, so (unlike Fireproof's `DocBase`) it does not
+// carry `_files` — declare it on the doc itself to keep it on the public type.
+export interface FileMeta {
+  readonly uploadId: string;
+  readonly type: string;
+  readonly size: number;
+  readonly lastModified?: number;
+  readonly url?: string;
+}
+
 export interface ImageDocumentPlain {
   readonly type: "image";
   readonly created: number;
@@ -13,6 +25,7 @@ export interface ImageDocumentPlain {
   readonly currentPromptKey: string;
   readonly prompts?: Record<string, PromptEntry>;
   readonly prompt?: string; // Legacy field, superseded by prompts/currentPromptKey
+  readonly _files?: Record<string, FileMeta>;
 }
 
 export type ImageDocument = DocWithId<ImageDocumentPlain>;
