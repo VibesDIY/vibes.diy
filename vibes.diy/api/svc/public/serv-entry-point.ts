@@ -25,6 +25,7 @@ import {
 } from "@vibes.diy/api-types";
 import { type } from "arktype";
 import { renderVibe, renderPendingVibe } from "../intern/render-vibe.js";
+import { ssrBodySignature } from "../intern/vibe-ssr-attempt.js";
 import { parse } from "cookie";
 import { renderToReadableStream } from "react-dom/server";
 import { renderDBExplorer } from "../intern/render-db-explorer.js";
@@ -114,8 +115,17 @@ async function sendFetchOk(
   return Result.Ok(EventoResult.Continue);
 }
 
-async function rootHtmlValidatorTag(fsId: string, meta: unknown): Promise<string> {
-  const validatorInput = `${fsId}:${JSON.stringify(meta ?? null)}`;
+// #2845 cb3: the SSR signature is folded into the validator input so the
+// root-HTML ETag flips when the loader path makes the body SSR-varying (and
+// flips back on rollback). Without it, the validator — computed from fsId+meta
+// BEFORE renderVibe runs — would 304 a cache holding the pre-SSR empty shell even
+// after SSR is enabled (and serve stale SSR after a rollback). `off` ⇒ today's
+// tag is unchanged, so existing caches keep validating with no spurious churn.
+async function rootHtmlValidatorTag(fsId: string, meta: unknown, ssrSignature: string): Promise<string> {
+  const validatorInput =
+    ssrSignature === "off"
+      ? `${fsId}:${JSON.stringify(meta ?? null)}`
+      : `${fsId}:${JSON.stringify(meta ?? null)}:ssr=${ssrSignature}`;
   const hashBuffer = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(validatorInput));
   const hashHex = Array.from(new Uint8Array(hashBuffer), (byte) => byte.toString(16).padStart(2, "0")).join("");
   return `${fsId}.${hashHex}`;
@@ -271,7 +281,14 @@ export const servEntryPoint: EventoHandler<Request, ExtractedHostToBindings, unk
       return Result.Ok(EventoResult.Stop);
     }
 
-    const rootHtmlTag = isRootHtmlPath ? await rootHtmlValidatorTag(fs.fsId, fs.meta) : fs.fsId;
+    // The body is SSR-varying only when VIBES_SSR=loader AND the Worker Loader
+    // binding is present on this deploy; otherwise the signature is "off" and the
+    // validator is byte-identical to today's (no cache churn). See ssrBodySignature.
+    const ssrSignature = ssrBodySignature({
+      rawSsrEnv: vctx.params.vibes.env.VIBES_SSR,
+      loaderPresent: vctx.params.vibes.loader !== undefined,
+    });
+    const rootHtmlTag = isRootHtmlPath ? await rootHtmlValidatorTag(fs.fsId, fs.meta, ssrSignature) : fs.fsId;
     const rootHtmlEtag = quoteEtag(rootHtmlTag);
     const isUnversionedPublishedRootHtml = !requestedFsId && isRootHtmlPath;
     const rootHtmlCacheControl = isUnversionedPublishedRootHtml ? "public, no-cache, must-revalidate" : "public, max-age=86400";

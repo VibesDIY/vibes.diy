@@ -4,7 +4,14 @@
 // for the loader path. loadSource is injected, so no asset store is needed.
 
 import { describe, it, expect } from "vitest";
-import { attemptVibeSsr, selectConventionEntry, type AttemptVibeSsrInput } from "../../../api/svc/intern/vibe-ssr-attempt.js";
+import {
+  attemptVibeSsr,
+  selectConventionEntry,
+  liveVibeSsrMode,
+  ssrBodySignature,
+  SSR_BODY_VERSION,
+  type AttemptVibeSsrInput,
+} from "../../../api/svc/intern/vibe-ssr-attempt.js";
 import type { WorkerLoaderBinding } from "../../../vibe/runtime/worker-loader-executor.js";
 import type { FileSystemItem } from "@vibes.diy/api-types";
 
@@ -40,6 +47,36 @@ describe("selectConventionEntry", () => {
   });
   it("reports ambiguous when both App.jsx and App.tsx exist", () => {
     expect(selectConventionEntry([entryItem("/App.jsx", "a"), entryItem("/App.tsx", "b")]).kind).toBe("ambiguous");
+  });
+});
+
+describe("liveVibeSsrMode", () => {
+  it("only `loader` survives — node is barred on the live route, everything else is off", () => {
+    expect(liveVibeSsrMode("loader")).toBe("loader");
+    expect(liveVibeSsrMode("node")).toBe("off");
+    expect(liveVibeSsrMode("off")).toBe("off");
+    expect(liveVibeSsrMode(undefined)).toBe("off");
+    expect(liveVibeSsrMode("garbage")).toBe("off");
+  });
+});
+
+describe("ssrBodySignature (the #2845 cb3 cache-key contract)", () => {
+  it("is `off` whenever the body is the empty client-only shell", () => {
+    // flag off, with or without a binding
+    expect(ssrBodySignature({ rawSsrEnv: "off", loaderPresent: false })).toBe("off");
+    expect(ssrBodySignature({ rawSsrEnv: "off", loaderPresent: true })).toBe("off");
+    // node is barred ⇒ off even with a binding
+    expect(ssrBodySignature({ rawSsrEnv: "node", loaderPresent: true })).toBe("off");
+    // the load-bearing case: flag=loader but NO binding ⇒ select_error ⇒ empty
+    // shell ⇒ must share the `off` key, else the body flips silently when the
+    // binding later lands and a stale shell keeps 304ing.
+    expect(ssrBodySignature({ rawSsrEnv: "loader", loaderPresent: false })).toBe("off");
+  });
+
+  it("flips to a distinct, versioned key only when loader AND a binding are both present", () => {
+    expect(ssrBodySignature({ rawSsrEnv: "loader", loaderPresent: true })).toBe(`loader.${SSR_BODY_VERSION}`);
+    // and it is genuinely different from the off key (so caches revalidate)
+    expect(ssrBodySignature({ rawSsrEnv: "loader", loaderPresent: true })).not.toBe("off");
   });
 });
 

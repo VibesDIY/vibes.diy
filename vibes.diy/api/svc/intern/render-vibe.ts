@@ -26,7 +26,7 @@ import { resolveWhoAmI } from "../public/who-am-i.js";
 // import { VibeEnv, vibesEnvSchema } from "@vibes.diy/use-vibes-base";
 import { ExtractedHostToBindings } from "../entry-point-utils.js";
 import { VibePage } from "./components/vibe-page.js";
-import { attemptVibeSsr, parseVibesSsrMode } from "./vibe-ssr-attempt.js";
+import { attemptVibeSsr, liveVibeSsrMode } from "./vibe-ssr-attempt.js";
 import { renderToReadableStream } from "react-dom/server";
 import { serialize as cookieSerialize } from "cookie";
 import { Dependencies, render_esm_sh, resolveVersionRegistry } from "./import-map.js";
@@ -214,7 +214,7 @@ export async function renderVibe({
   // route admits ONLY the isolate-backed `loader` executor; `node` is treated as
   // disabled here (it stays a CI/test-only mode, exercised by calling
   // `attemptVibeSsr` directly with trusted source). Any other value ⇒ off.
-  const liveSsrMode = parseVibesSsrMode(vctx.params.vibes.env.VIBES_SSR) === "loader" ? "loader" : "off";
+  const liveSsrMode = liveVibeSsrMode(vctx.params.vibes.env.VIBES_SSR);
   let ssrHtml: string | undefined;
   if (ctx.request.method !== "HEAD") {
     const ssr = await attemptVibeSsr({
