@@ -32,6 +32,9 @@ import {
   ReqGetCachedSuggestion,
   ResGetCachedSuggestion,
   isResGetCachedSuggestion,
+  ReqSeedStarterChips,
+  ResSeedStarterChips,
+  isResSeedStarterChips,
   ReqGetAppByFsId,
   ResGetAppByFsId,
   isResGetAppByFsId,
@@ -608,6 +611,15 @@ export class VibesDiyApi implements VibesDiyApiIface<{
       { ...req, type: "vibes.diy.req-get-cached-suggestion" },
       {
         resMatch: isResGetCachedSuggestion,
+      }
+    );
+  }
+
+  seedStarterChips(req: Req<ReqSeedStarterChips>): Promise<Result<ResSeedStarterChips, VibesDiyError>> {
+    return this.request(
+      { ...req, type: "vibes.diy.req-seed-starter-chips" },
+      {
+        resMatch: isResSeedStarterChips,
       }
     );
   }

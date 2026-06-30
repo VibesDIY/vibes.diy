@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import {
   curatedEdgeTarget,
   starterVibeHref,
+  starterSeedPlan,
   CURATED_EDGES,
   STARTER_CATEGORIES,
   type CuratedEdge,
@@ -77,5 +78,14 @@ describe("v1 Bloom graph (shipped content)", () => {
   it("ships the Music category tile pointing at bloom-root", () => {
     const music = STARTER_CATEGORIES.find((c) => c.category === "Music");
     expect(music?.entry).toEqual({ ownerHandle: "system", appSlug: "bloom-root" });
+  });
+
+  it("starterSeedPlan groups edges into one seed per source vibe (the post-deploy plan)", () => {
+    const plan = starterSeedPlan();
+    // bloom-root has two outgoing edges; bloom-machine one; the leaves none.
+    expect(plan).toEqual([
+      { ownerHandle: "system", appSlug: "bloom-root", chips: ["Add a pattern sequencer", "Make it a memory game"] },
+      { ownerHandle: "system", appSlug: "bloom-machine", chips: ["Make it a drum machine"] },
+    ]);
   });
 });

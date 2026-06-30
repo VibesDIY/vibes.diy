@@ -450,6 +450,35 @@ export function isResGetCachedSuggestion(obj: unknown): obj is ResGetCachedSugge
   return !(resGetCachedSuggestion(obj) instanceof type.errors);
 }
 
+// Seed a starter vibe's curated suggestion chips (#2941). Owner-gated WRITE: the
+// caller must own `ownerHandle` (the system/curator handle the Blooms live under).
+// Persists a talk-only narration turn carrying the `▸` chips so `getVibeChips`
+// surfaces them — DISPLAY-ONLY, never a producible cached-suggestion (Charlie
+// #2950). Idempotent: re-seeding replaces the prior seed turn.
+export const reqSeedStarterChips = type({
+  type: "'vibes.diy.req-seed-starter-chips'",
+  "auth?": dashAuthType,
+  ownerHandle: "string",
+  appSlug: "string",
+  chips: "string[]",
+  "leadLine?": "string",
+});
+export type ReqSeedStarterChips = typeof reqSeedStarterChips.infer;
+export function isReqSeedStarterChips(obj: unknown): obj is ReqSeedStarterChips {
+  return !(reqSeedStarterChips(obj) instanceof type.errors);
+}
+
+export const resSeedStarterChips = type({
+  type: "'vibes.diy.res-seed-starter-chips'",
+  ownerHandle: "string",
+  appSlug: "string",
+  seededChips: "string[]",
+});
+export type ResSeedStarterChips = typeof resSeedStarterChips.infer;
+export function isResSeedStarterChips(obj: unknown): obj is ResSeedStarterChips {
+  return !(resSeedStarterChips(obj) instanceof type.errors);
+}
+
 export const evtNewFsId = type({
   type: "'vibes.diy.evt-new-fs-id'",
   ownerHandle: "string",
