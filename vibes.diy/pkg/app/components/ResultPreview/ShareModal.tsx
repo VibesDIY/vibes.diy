@@ -536,6 +536,12 @@ export function ShareModal({
                   <PinterestShareRow shareUrl={modal.pinterestShareUrl} />
                 ) : null}
                 {modal.publishError ? <p className="text-xs text-red-600 dark:text-red-400">{modal.publishError}</p> : null}
+                {modal.settingsLoaded && !modal.isUpToDate ? (
+                  <p className="text-xs text-yellow-700 dark:text-yellow-300">
+                    You have unpublished changes. The live version everyone sees — including its access rules (access.js) — won't
+                    change until you publish.
+                  </p>
+                ) : null}
                 <Button
                   variant={modal.isUpToDate ? "cool" : "blue"}
                   size="fixed"
