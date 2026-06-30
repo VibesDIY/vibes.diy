@@ -20,7 +20,13 @@ import {
   resolveBuilderOriginFrom,
 } from "@vibes.diy/base";
 import type { ShareMember, ShareViewer, ShareAccess, HandleOption, ChipFastPathState } from "@vibes.diy/base";
-import { isUserSettingDefaultHandle, resolveCachedRead, normalizeTransform, cachedSuggestionKey } from "@vibes.diy/api-types";
+import {
+  isUserSettingDefaultHandle,
+  resolveCachedRead,
+  resolveCachedHit,
+  normalizeTransform,
+  cachedSuggestionKey,
+} from "@vibes.diy/api-types";
 import { switchActiveHandle, createAndUseHandle, handleAvatarUrl } from "./handle-picker-actions.js";
 import { uploadHandleAvatar } from "../lib/upload-avatar.js";
 import { useYoursNowToast } from "../hooks/use-yours-now-toast.js";
@@ -480,6 +486,23 @@ export default function VibeIframeWrapper() {
         // result. (Codex P2)
         if (cachedReadSeqRef.current !== submitSeq) return;
         if (decision.kind === "read") {
+          // Identity-AWARE routing of a hit (#2929 item 4), layered on top of the
+          // identity-FREE resolveCachedRead. The OWNER doesn't get shunted to a
+          // versioned permalink (read-only editor, no Publish) — they ADOPT the
+          // staged version in place as their working draft: pin it (re-pins the
+          // iframe, keeps the canonical URL + slug + data namespace) and surface the
+          // Draft badge + Publish, mirroring the saveCode re-pin (onSavedFsId →
+          // setDraftFsId). No codegen, no fork. Scoped to the canonical (no route
+          // `fsId`) view so the owner-draft resolver — which re-runs only on
+          // mount/persist/publish, not on this pin — can't race it; on a versioned
+          // URL we keep the plain navigate. Everyone else keeps the read-lane page-view.
+          const outcome = resolveCachedHit({ hit: decision.hit, isOwner });
+          if (outcome.kind === "adopt" && !fsId) {
+            setDraftFsId(outcome.fsId);
+            setIsDraft(true);
+            toast.success("Adopted — this version is your draft now.");
+            return;
+          }
           void navigate(decision.href);
           return;
         }

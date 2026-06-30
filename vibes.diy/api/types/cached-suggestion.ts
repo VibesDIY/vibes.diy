@@ -291,3 +291,32 @@ export async function resolveCachedRead(args: {
   }
   return { kind: "write" };
 }
+
+/**
+ * What a cache HIT does for the clicking viewer, once identity is known. This is
+ * the identity-AWARE half, applied AFTER the identity-FREE {@link resolveCachedRead}
+ * returns a `read` — so the read/write boundary stays "does the result exist?"
+ * (never "who clicks?"), and identity only routes the *outcome* of a hit:
+ *
+ *  - **adopt** (owner) — the staged version is already a real version under the
+ *    owner's OWN `(ownerHandle, appSlug)`, so the owner doesn't navigate to a
+ *    versioned permalink (where the editor is read-only and Publish is hidden).
+ *    Instead they ADOPT it in place as their working draft on the canonical URL:
+ *    skip codegen, keep their slug + data namespace, land on an editable/
+ *    publishable surface with the cached variant loaded (#2929 item 4).
+ *  - **navigate** (everyone else) — the existing read-lane page-view: navigate to
+ *    `/vibe/<owner>/<slug>/<fsId>` at the staged version (no login, no codegen).
+ */
+export type CachedHitOutcome =
+  | { readonly kind: "adopt"; readonly fsId: string; readonly hit: CachedSuggestionHit }
+  | { readonly kind: "navigate"; readonly href: string; readonly hit: CachedSuggestionHit };
+
+/**
+ * Route a cache hit by viewer identity (see {@link CachedHitOutcome}). The owner
+ * adopts the staged version in place; everyone else navigates to it. Kept pure so
+ * the owner-vs-visitor split is unit-testable without mounting the route.
+ */
+export function resolveCachedHit(args: { readonly hit: CachedSuggestionHit; readonly isOwner: boolean }): CachedHitOutcome {
+  if (args.isOwner) return { kind: "adopt", fsId: args.hit.fsId, hit: args.hit };
+  return { kind: "navigate", href: cachedVibeHref(args.hit), hit: args.hit };
+}

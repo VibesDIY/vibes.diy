@@ -6,6 +6,7 @@ import {
   cachedVibeHref,
   isReadableCachedGrant,
   resolveCachedRead,
+  resolveCachedHit,
   type CachedSuggestionHit,
 } from "@vibes.diy/api-types";
 
@@ -148,5 +149,29 @@ describe("resolveCachedRead", () => {
       },
     });
     expect(decision.kind).toBe("write");
+  });
+});
+
+describe("resolveCachedHit", () => {
+  const hit: CachedSuggestionHit = { ownerHandle: "meghan", appSlug: "bloom", fsId: "z3staged" };
+
+  it("the OWNER adopts the staged version in place (keeps the fsId, no permalink nav)", () => {
+    const outcome = resolveCachedHit({ hit, isOwner: true });
+    expect(outcome.kind).toBe("adopt");
+    if (outcome.kind === "adopt") {
+      // Adopt advances the owner's draft to the staged version's own fsId — same
+      // owner/slug, so the data namespace is preserved; no versioned permalink.
+      expect(outcome.fsId).toBe("z3staged");
+      expect(outcome.hit).toEqual(hit);
+    }
+  });
+
+  it("a NON-OWNER navigates to the staged version (the existing read lane)", () => {
+    const outcome = resolveCachedHit({ hit, isOwner: false });
+    expect(outcome.kind).toBe("navigate");
+    if (outcome.kind === "navigate") {
+      expect(outcome.href).toBe(cachedVibeHref(hit));
+      expect(outcome.hit).toEqual(hit);
+    }
   });
 });
