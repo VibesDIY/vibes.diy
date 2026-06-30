@@ -70,23 +70,26 @@ export function optAuth<IReq, TReq extends MsgBase<X>, TRes, X extends { type: s
 ): (ctx: HandleTriggerCtx<IReq, TReq, TRes>) => Promise<Result<EventoResultType>> {
   return async (ctx: HandleTriggerCtx<IReq, TReq, TRes>) => {
     const payload = ctx.validated.payload;
+    // `_auth` is a SERVER-ONLY field — it must NEVER be trusted from the wire.
+    // arktype preserves undeclared keys, so a client can smuggle a forged `_auth`
+    // in the request body; downstream owner/admin gating reads
+    // `req._auth?.verifiedAuth.claims.userId`, so a trusted `_auth` is an
+    // auth-spoof / privilege-escalation path. Set it ONLY from a server-verified
+    // token, and overwrite it on EVERY path — spread `payload` FIRST so our value
+    // always wins, and assign unconditionally so the no-token case strips a forged
+    // `_auth` instead of leaving it intact. (Charlie #2942)
+    let verified: VerifiedResult | undefined = undefined;
     if (payload.auth) {
       const rAuth = await verifyAuth(ctx.ctx.getOrThrow("vibesApiCtx"), payload as WithAuth);
       if (rAuth.isOk() && rAuth.Ok().type === "VerifiedAuthResult") {
-        ctx.validated.payload = {
-          _auth: rAuth.Ok(),
-          ...payload,
-        };
-        // (payload as unknown as { auth: VerifiedResult }).auth = rAuth.Ok();
-      } else {
-        ctx.validated.payload = {
-          ...payload,
-          _auth: undefined,
-        };
-        // Auth provided but invalid — treat as unauthenticated
-        // (payload as unknown as { auth: undefined }).auth = undefined;
+        verified = rAuth.Ok();
       }
+      // Auth provided but invalid → treat as unauthenticated (verified stays undefined).
     }
+    ctx.validated.payload = {
+      ...payload,
+      _auth: verified,
+    };
     return fn(ctx as unknown as HandleTriggerCtx<IReq, MsgBase<ReqWithOptionalAuth<X>>, TRes>);
   };
 }

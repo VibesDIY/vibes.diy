@@ -295,5 +295,29 @@ describe(
       expect(await grantOf(stagedFsId, { appSlug, ownerHandle })).not.toBe("public-access");
       expect(await readerFsId({ appSlug, ownerHandle, key })).toBeUndefined();
     });
+
+    it("a client-supplied `_auth` is IGNORED — auth is server-authoritative (Charlie #2942)", async () => {
+      // The owner/admin gates trust `req._auth.verifiedAuth.claims.userId`. arktype
+      // preserves undeclared keys, so a caller could smuggle a forged `_auth` in the
+      // body; optAuth must overwrite it with the server-verified value (or undefined).
+      const { appSlug, ownerHandle } = await publicAppWithStagedVersion();
+      const rOwnerRead = await api.ensureAppSettings({ appSlug, ownerHandle });
+      if (rOwnerRead.isErr()) assert.fail("ensureAppSettings(read) failed: " + JSON.stringify(rOwnerRead.Err()));
+      const ownerUserId = rOwnerRead.Ok().userId;
+
+      // NON-owner (api2) sends its OWN valid token but FORGES `_auth` to claim the
+      // owner, attempting an owner-only mutation (title). Must be a no-op.
+      const spoof = {
+        appSlug,
+        ownerHandle,
+        title: "spoofed-via-forged-_auth",
+        _auth: { type: "VerifiedAuthResult", verifiedAuth: { type: "clerk", claims: { userId: ownerUserId } } },
+      };
+      await api2.ensureAppSettings(spoof as unknown as Parameters<typeof api2.ensureAppSettings>[0]);
+
+      const rAfter = await api.ensureAppSettings({ appSlug, ownerHandle });
+      if (rAfter.isErr()) assert.fail("ensureAppSettings(read) failed: " + JSON.stringify(rAfter.Err()));
+      expect(rAfter.Ok().settings.entry.settings.title).not.toBe("spoofed-via-forged-_auth");
+    });
   }
 );
