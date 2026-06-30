@@ -40,7 +40,14 @@ Worth a note:
   workspace consumer and none was ever really published (their publish was an
   `echo`), so the change is inert at runtime but makes the invariant exact:
   **every non-private package now has a real `pack`, and nothing else does.**
-  The #2889 assertion can finally be allowlist-free.
+- **Then lock the invariant in so it can't rot.** A clean state decays the
+  moment the next package is added. So this PR also adds the assertion #2889
+  asked for — `scripts/check-publish-pack-coverage.mjs`, wired into `lint`:
+  every non-private workspace package must define a real (non-`echo`) `pack`,
+  or CI fails with the two fixes spelled out (add a real `pack`, or mark it
+  `private`). Because the cleanup above made the invariant exact first, the
+  assertion needs **no allowlist** — the thing that would have made it ugly is
+  gone. Order matters: clean, *then* enforce.
 - **Coverage questions and scope questions are the same question.** "Is this
   package covered by the guard?" and "should this package exist in the guard's
   world at all?" looked like two problems; they had one answer. The audit that
