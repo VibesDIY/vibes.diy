@@ -118,11 +118,21 @@ vibe's deployed `fsId` (version-scoped chip semantics).
 
 Before the existing dispatch, add one branch: if the clicked chip (normalized the
 same way the cache key normalizes) matches a **curated edge** for the current
-`(ownerHandle, appSlug, fsId)`, `navigate(/vibe/<target>)` — an instant public
-read. **Everything else runs the existing dispatch verbatim** (offered chip →
-#2928 read lane; else write/fork). Precedence: **a curated edge wins** over a
-same-slug blessed version for the same label (the hand-tuned app is the intended
-destination).
+source, `navigate(/vibe/<target>)` — an instant public read. **Everything else
+runs the existing dispatch verbatim** (offered chip → #2928 read lane; else
+write/fork). Precedence: **a curated edge wins** over a same-slug blessed version
+for the same label (the hand-tuned app is the intended destination).
+
+> **Match on the effective resolved source version, never the raw route param
+> (Codex P2).** The `/start` tile lands the visitor on `/vibe/<owner>/<slug>` with
+> **no** route `fsId`, so the pre-check must canonicalize the source the SAME way
+> the cached-chip path already does — `fsId ?? draftFsId ?? resolvedFsId` (the
+> `sourceFsId` at `vibes.diy/pkg/app/routes/vibe.$ownerHandle.$appSlug.tsx:460`) —
+> and match the edge against that resolved version. The synthetic seed chat is
+> pinned to the same resolved deployed `fsId`, so the chip renders and the edge
+> matches on the same value. Matching the bare optional route param (undefined on
+> the canonical starter URL) would miss every v1 edge and fall through to
+> codegen/fork — the exact bug this note exists to prevent.
 
 ### 4. The `/start` route (#2245)
 
@@ -187,10 +197,13 @@ This design re-grounds the pre-cached-model children; it does not re-file them:
   `getVibeChips` returns it for the deployed `fsId`? (A CLI/script that posts a
   curated turn into the vibe's chat store, vs a build-time fixture, vs a small
   server seed path.) Must be idempotent and re-runnable when the graph changes.
-- **OQ-B — curated-edge matching key.** The pre-check matches on
-  `(ownerHandle, appSlug, fsId, normalizedChipLabel)`. Confirm the edge is keyed to
-  the deployed `fsId` (so a later version of a starter can re-aim or drop an edge)
-  vs the slug alone.
+- **OQ-B — curated-edge matching key.** Resolved in §3: the pre-check matches on
+  `(ownerHandle, appSlug, effectiveResolvedFsId, normalizedChipLabel)` where the
+  effective version is `fsId ?? draftFsId ?? resolvedFsId` — never the raw route
+  param. Remaining sub-question for the plan: are edges keyed to a specific
+  deployed `fsId` (so a later starter version can re-aim or drop an edge), or
+  slug-scoped (match on any resolved version of the slug)? v1 keys to the deployed
+  HEAD, which the resolved version equals on the canonical starter URL.
 - **OQ-C — affordance rendering.** The unified instant affordance covers both spine
   jumps (cross-slug) and same-slug stays. Does the spine jump reuse the existing
   shield decoration as-is, or get a subtly distinct glyph (e.g. "→") while keeping
