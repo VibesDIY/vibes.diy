@@ -282,7 +282,18 @@ eviction — SSR pattern), runs the `fetch` handler in the isolate, returns the 
 - `ctx.userInfo` = session user or `null` (webhooks); default write identity = vibe owner.
 - **Fallback discipline** like `attemptVibeSsr`: a missing/empty/uncompilable `backend.js` → 404 for
   `_api`, never a 500 of the page.
-- **Tests:** route match/prefix-strip; DO dispatch to `fetch`; absent-handler → 404.
+- **Scope the isolate id per vibe.** B1 hashes only the code (+ `policyVersion`), so two _different_
+  vibes with byte-identical `backend.js` would collide on the same loader id and **share an isolate**.
+  B3 — the first slice with real owner context — must fold `{ownerHandle, appSlug}` into the id so the
+  isolate is **one-per-`(vibe, code, policy)`**: a tenant boundary first, reuse second. A reused isolate
+  carries mutable module-level state across calls, so cross-vibe sharing would turn a leaky author
+  module-global (a cached `ctx.secrets.X`) into a **cross-tenant secret/data leak**. Within one vibe the
+  same leak is benign (your own data → yourself), which is why per-vibe is the right default boundary.
+  (Cross-vibe sharing for remix/template fleets is a worthwhile **future optimization** — see the note
+  in [Risks](#risks--caveats) — but only behind a static no-mutable-module-state guarantee or trusted
+  platform code, never off a bare content hash.)
+- **Tests:** route match/prefix-strip; DO dispatch to `fetch`; absent-handler → 404; two vibes with
+  identical `backend.js` get **distinct** loader ids (per-vibe scoping).
 
 ### Slice B4 — Durable layer: alarms (`scheduled`), single-flight, retry/backoff
 
@@ -422,13 +433,21 @@ testable.
 Modeled on the SSR design's Phase A acceptance criteria; these gate the live cut and turn the
 defaults above into testable guarantees (the follow-up pass @CharlieHelps offered, folded in here).
 
-- [ ] **Cache-key isolation.** Isolate identity is derived from **stable code + stable policy surface
-      only** — module bytes, compat date/flags, egress-policy version, binding-schema version
-      (optionally app scope) — and **`WorkerCode.env` is stable for that identity** (service/transport
-      bindings only). No per-trigger `ctx` (identity, secrets, request/event) enters the hashed source
-      _or_ `env`; it travels by request/RPC args. _Tests (B1/B5, per @CharlieHelps's matrix): (a) same
-      code + different trigger identities ⇒ **same loader id**; (b) **no cross-invocation identity
-      bleed**; (c) an egress-policy or binding-schema bump **forces a new id**._
+- [ ] **Cache-key isolation.** Isolate identity is derived from **stable code + stable policy surface + the vibe scope** — module bytes, compat date/flags, egress-policy version, binding-schema
+      version, **and `{ownerHandle, appSlug}`** — and **`WorkerCode.env` is stable for that identity**
+      (service/transport bindings only). No per-trigger `ctx` (identity, secrets, request/event) enters
+      the hashed source _or_ `env`; it travels by request/RPC args. The vibe scope makes the isolate
+      **one-per-`(vibe, code, policy)`** so two different vibes with identical `backend.js` never share
+      one (tenant boundary; see B3). _Tests (B1/B3/B5, per @CharlieHelps's matrix):_
+  - (a) same vibe + same code + different trigger identities ⇒ **same loader id**;
+  - (b) **no cross-invocation identity bleed**;
+  - (c) an egress-policy / binding-schema bump **forces a new id**;
+  - (d) two different vibes with identical code ⇒ **different ids**;
+  - (e) **handler mode excluded** — same `(vibe, code, policy)` invoked via `fetch`/`scheduled`/`onChange` keeps the **same id**;
+  - (f) **compat surface included** — changing `compatibilityDate`/`compatibilityFlags` **rotates** the id;
+  - (g) **per-invocation context excluded** — varying user identity, secrets _values_, payload, source-tag/depth, or dedupe key **does not** change the id;
+  - (h) **tuple encoding is collision-safe** — `{owner:"ab", slug:"c"}` cannot hash-collide with `{owner:"a", slug:"bc"}` (length-prefix / delimiter the scope, never bare concatenation);
+  - (i) **behavioral isolation proof** (integration) — mutate a module-global in vibe A's isolate, then assert vibe B with identical code **cannot observe it**.
 - [ ] **Write-path parity.** Every `ctx.db.put` goes through the production `putDoc`/`invokeAccessFn`
       (QuickJS) gate with the `AccessFnOutputs` sidecar — never the `access-runner` mirror. A backend
       write and an identical frontend write produce the same allow/deny + sidecar outcome. _Tests:
@@ -494,6 +513,15 @@ the prod flip waits on Cloudflare — same posture as SSR.
   request/RPC args instead; otherwise the isolate cache forks per request (and worse, a trigger's
   identity could leak into another's isolate). This is the single most important invariant carried
   from SSR — see invariant #1.
+- **Cross-vibe isolate sharing — default OFF; a guarded future optimization.** Because the B1 id is a
+  bare content hash, two _different_ vibes with identical `backend.js` would share one isolate by
+  accident. B3 scopes the id per vibe (`{ownerHandle, appSlug}`) so they don't — a reused isolate keeps
+  mutable module-level state across calls, so a shared isolate would let a leaky author module-global
+  (e.g. a cached `ctx.secrets.X`) bridge **two tenants**. There is a real efficiency prize in sharing
+  for **remix/template fleets** (many vibes, one backend → far fewer cold starts), but it's only safe
+  when the isolate is provably stateless between calls. Pursue it later **only** behind (a) a static
+  "no module-level mutable state" check on the source, or (b) restriction to trusted platform/identical
+  code — never as a default off the content hash. Tracked as a separate future-optimization issue.
 - **Access parity drift** — backend writes must go through the **same production `putDoc`/
   `invokeAccessFn` (QuickJS) gate** as app writes, including the `AccessFnOutputs` sidecar; the
   `access-runner` `new Function` mirror is a forked path and the failure mode (Codex P1). Cover
