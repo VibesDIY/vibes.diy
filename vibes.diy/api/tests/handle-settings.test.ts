@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { ensureSuperThis } from "@vibes.diy/identity";
-import { createTestDeviceCA } from "@fireproof/core-device-id";
+import { createTestDeviceCA } from "@vibes.diy/identity/testing";
 import {
   readHandleAvatar,
   writeHandleAvatar,

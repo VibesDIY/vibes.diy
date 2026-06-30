@@ -4,7 +4,8 @@
 // payload shape and header are the enrollment wire contract.
 import { calculateJwkThumbprint, SignJWT, type JWTPayload as JoseJWTPayload } from "jose";
 import { FPDeviceIDCSRPayloadSchema } from "../types/device-id-payload.js";
-import type { Subject, Extensions, FPDeviceIDCSRPayload, SuperThis } from "@fireproof/core-types-base";
+import type { Subject, Extensions, FPDeviceIDCSRPayload } from "../types/device-id-payload.js";
+import type { SuperThis } from "../types/sthis.js";
 import { exception2Result, Result } from "@adviser/cement";
 import { DeviceIdKey } from "./key.js";
 

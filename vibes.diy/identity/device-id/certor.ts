@@ -7,8 +7,9 @@
 // for thumbprint equality (pinned by the wire-compat harness). Imports only adjusted.
 import { toSortedObject } from "@adviser/cement";
 import { CertificatePayloadSchema } from "../types/cert-payload.js";
-import type { BaseXXEndeCoder, CertificatePayload } from "@fireproof/core-types-base";
-import type { CertorIf } from "@fireproof/core-types-device-id";
+import type { BaseXXEndeCoder } from "../types/sthis.js";
+import type { CertificatePayload } from "../types/cert-payload.js";
+import type { CertorIf } from "../types/device-id-types.js";
 import { decodeJwt } from "jose";
 import { base58btc } from "multiformats/bases/base58";
 import { sha1 } from "multiformats/hashes/sha1";

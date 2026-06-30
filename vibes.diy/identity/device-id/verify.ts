@@ -9,14 +9,15 @@ import { jwtVerify, decodeProtectedHeader } from "jose";
 import { Certor } from "./certor.js";
 import { exception2Result, Result } from "@adviser/cement";
 import * as sts from "../sts/index.js";
-import type { BaseXXEndeCoder, CertificatePayload } from "@fireproof/core-types-base";
+import type { BaseXXEndeCoder } from "../types/sthis.js";
+import type { CertificatePayload } from "../types/cert-payload.js";
 import type {
   CACertResult,
   HeaderCertInfo,
   VerifyWithCertificateError,
   VerifyWithCertificateOptions,
   VerifyWithCertificateResult,
-} from "@fireproof/core-types-device-id";
+} from "../types/device-id-types.js";
 
 // #2671: extra option (intersected onto the upstream type, which we can't edit)
 // that turns the CA-signature *presence* requirement on. When false/absent the

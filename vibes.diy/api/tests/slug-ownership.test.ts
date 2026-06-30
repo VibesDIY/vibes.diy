@@ -1,6 +1,6 @@
 import { beforeAll, describe, expect, it } from "vitest";
 import { ensureSuperThis } from "@vibes.diy/identity";
-import { createTestDeviceCA } from "@fireproof/core-device-id";
+import { createTestDeviceCA } from "@vibes.diy/identity/testing";
 import { ensureAppSlug, ensureUserSlug, writeAppSlugBinding, writeHandleBinding, VibesApiSQLCtx } from "@vibes.diy/api-svc";
 import type { ClerkClaim } from "@vibes.diy/api-types";
 import { eq } from "drizzle-orm/sql/expressions";

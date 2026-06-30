@@ -24,7 +24,7 @@ import {
 } from "@adviser/cement";
 import type { Logger } from "@adviser/cement";
 import { base58btc } from "multiformats/bases/base58";
-import type { SuperThis, SuperThisOpts, PathOps, TextEndeCoder } from "@fireproof/core-types-base";
+import type { SuperThis, SuperThisOpts, PathOps, TextEndeCoder } from "../types/sthis.js";
 
 type CryptoRuntime = ReturnType<typeof toCryptoRuntime>;
 interface NextIdResult {

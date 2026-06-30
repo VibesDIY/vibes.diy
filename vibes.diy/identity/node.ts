@@ -5,7 +5,8 @@
 // Kept on a separate subpath so the browser-safe "./index.js" never links them.
 
 import { Lazy, Result } from "@adviser/cement";
-import type { SuperThis, FPDeviceIDSession } from "@fireproof/core-types-base";
+import type { SuperThis } from "./types/sthis.js";
+import type { FPDeviceIDSession } from "./types/device-id-payload.js";
 import type { DashAuthType } from "@fireproof/core-types-protocols-dashboard";
 import { getKeyBag } from "./keybag/keybag.js";
 import { DeviceIdKey } from "./device-id/key.js";

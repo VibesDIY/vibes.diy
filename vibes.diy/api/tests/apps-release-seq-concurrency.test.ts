@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { ensureSuperThis } from "@vibes.diy/identity";
-import { createTestDeviceCA } from "@fireproof/core-device-id";
+import { createTestDeviceCA } from "@vibes.diy/identity/testing";
 import { and, eq } from "drizzle-orm";
 import { PgDialect } from "drizzle-orm/pg-core";
 import { allocateAndInsertApp, appReleaseLockKey, buildInsertIfAbsent, formatDbErrorChain } from "@vibes.diy/api-svc";

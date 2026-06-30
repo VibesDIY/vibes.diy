@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import { convertImageEvtToFileRef } from "@vibes.diy/api-svc";
 import { eq } from "drizzle-orm";
 import { ensureSuperThis } from "@vibes.diy/identity";
-import { createTestDeviceCA } from "@fireproof/core-device-id";
+import { createTestDeviceCA } from "@vibes.diy/identity/testing";
 import { createVibeDiyTestCtx } from "./vibe-diy-test-ctx.js";
 import type { BlockImageMsg } from "@vibes.diy/call-ai-v2";
 

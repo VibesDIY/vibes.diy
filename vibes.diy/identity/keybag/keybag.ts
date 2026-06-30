@@ -9,7 +9,7 @@
 // not lifted (skip dead-on-arrival; the later cleanup pass owns that boundary).
 // The deno filesystem stays live inside `file:`'s provider (sysFileSystemFactory).
 import { URI, runtimeFn, KeyedResolvOnce } from "@adviser/cement";
-import type { SuperThis } from "@fireproof/core-types-base";
+import type { SuperThis } from "../types/sthis.js";
 import { KeyBag, type KeyBagProvider, type KeyBagRuntime } from "./key-bag.js";
 import { KeyBagProviderFile } from "./key-bag-file.js";
 import { KeyBagProviderMemory } from "./key-bag-memory.js";

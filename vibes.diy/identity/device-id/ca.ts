@@ -7,16 +7,11 @@
 // are the in-repo lifts).
 import { JWKPrivateSchema } from "../types/wire.js";
 import { CertificatePayloadSchema } from "../types/cert-payload.js";
-import type {
-  BaseXXEndeCoder,
-  Extensions,
-  FPDeviceIDCSRPayload,
-  IssueCertificateResult,
-  JWKPublic,
-  Subject,
-  SuperThis,
-  ClerkClaim,
-} from "@fireproof/core-types-base";
+import type { BaseXXEndeCoder, SuperThis } from "../types/sthis.js";
+import type { Extensions, FPDeviceIDCSRPayload, Subject } from "../types/device-id-payload.js";
+import type { IssueCertificateResult } from "../types/cert-payload.js";
+import type { JWKPublic } from "../types/wire.js";
+import type { ClerkClaim } from "../clerk-claim.js";
 import { SignJWT, jwtVerify } from "jose";
 import { DeviceIdKey } from "./key.js";
 import { DeviceIdValidator } from "./validator.js";
@@ -24,7 +19,7 @@ import { Certor } from "./certor.js";
 import { Result, exception2Result } from "@adviser/cement";
 import { hashObjectAsync } from "../runtime/hashing.js";
 import { base58btc } from "multiformats/bases/base58";
-import type { CAActions, CACertResult, DeviceIdCAIf, DeviceIdCAJsonParam } from "@fireproof/core-types-device-id";
+import type { CAActions, CACertResult, DeviceIdCAIf, DeviceIdCAJsonParam } from "../types/device-id-types.js";
 
 interface DeviceIdCAOpts {
   readonly base64: BaseXXEndeCoder;

@@ -1,12 +1,10 @@
-// Golden auth-verify harness (de-fireproof Task 5 — hardening BEFORE the lift).
-//
-// These paths had ZERO direct coverage and are exactly what the Task 5 cutover
-// replaces: the server token verifiers behind `tokenApi` (Clerk RS256 verify +
-// device-id cert verify). The System-Under-Test is imported through the
-// `@vibes.diy/identity/server` FACADE, so this same suite gates the behavior both
-// now (facade → upstream `@fireproof/core-protocols-dashboard`) and after the
-// cutover (facade → in-repo lift). The lift must keep every LEGITIMATE-input
-// assertion green.
+// Golden auth-verify harness for the server token verifiers behind `tokenApi`
+// (Clerk RS256 verify + device-id cert verify). The System-Under-Test is imported
+// through the `@vibes.diy/identity/server` FACADE; with #2937 every device-id
+// primitive — the test CA/user harness, the signer, the verifier — is the in-repo
+// owned impl (no `@fireproof/core-device-id` left). The 3-arg `DeviceIdSignMsg`
+// (no `certificateJWT`) constructs the legacy / forged (CA-unsigned) shapes; the
+// 4-arg form embeds the CA-signed cert chain (`x5c#jwt`).
 //
 // SECURITY (#2671): FIXED. The verifier now checks the CA's signature over the
 // embedded cert (carried as a `CERT+JWT` in the `x5c#jwt` header), not just that
@@ -15,21 +13,12 @@
 // rejected, a genuine CA-signed token verifies, and the enforcement is gated by
 // DEVICE_ID_REQUIRE_CA_SIGNATURE (default-off for older-CLI compat during rollout).
 import { describe, it, expect, beforeAll, afterEach } from "vitest";
-import { createTestDeviceCA, createTestUser, DeviceIdKey, DeviceIdSignMsg, DeviceIdCSR } from "@fireproof/core-device-id";
+import { createTestDeviceCA, createTestUser, DeviceIdKey, DeviceIdSignMsg, DeviceIdCSR } from "@vibes.diy/identity/testing";
 import { generateKeyPair, exportJWK, SignJWT } from "jose";
-import type { SuperThis } from "@fireproof/core-types-base";
-// SUT via the facade — currently upstream, in-repo after the cutover.
+import type { SuperThis } from "@vibes.diy/identity";
 import { tokenApi } from "@vibes.diy/identity/server";
 // Browser `.` facade — what VibesDiyApi.getTokenClaims() actually imports.
 import { ClerkApiToken, ensureSuperThis } from "@vibes.diy/identity";
-// The owned device-id signer (Node facade) — the only one that can embed the
-// CA-signed cert chain (`x5c#jwt`) the #2671 hardening requires. The fireproof
-// signer above is kept to construct the legacy / forged (CA-unsigned) shapes.
-import {
-  DeviceIdSignMsg as OwnedDeviceIdSignMsg,
-  DeviceIdKey as OwnedDeviceIdKey,
-  DeviceIdCSR as OwnedDeviceIdCSR,
-} from "@vibes.diy/identity/node";
 
 const fullParams = {
   nick: "nick",
@@ -100,16 +89,11 @@ describe("auth token verify — golden (SUT via @vibes.diy/identity/server)", { 
   // Mint a LEGITIMATE token via the owned signer, embedding the CA-signed cert
   // chain (`x5c#jwt`) the same way createDeviceIdGetToken does from the keybag.
   async function mintCASignedToken() {
-    const key = await OwnedDeviceIdKey.create();
-    const csr = (await new OwnedDeviceIdCSR(sthis, key).createCSR({ commonName: "ca-signed" })).Ok();
+    const key = await DeviceIdKey.create();
+    const csr = (await new DeviceIdCSR(sthis, key).createCSR({ commonName: "ca-signed" })).Ok();
     const issued = (await ca.processCSR(csr, clerkClaim() as never)).Ok();
     const now = Math.floor(Date.now() / 1000);
-    const token = await new OwnedDeviceIdSignMsg(
-      sthis.txt.base64,
-      key,
-      issued.certificatePayload as never,
-      issued.certificateJWT
-    ).sign(
+    const token = await new DeviceIdSignMsg(sthis.txt.base64, key, issued.certificatePayload as never, issued.certificateJWT).sign(
       {
         iss: "ca-signed",
         sub: "device-id",
@@ -175,7 +159,7 @@ describe("auth token verify — golden (SUT via @vibes.diy/identity/server)", { 
       certificate: { ...issued.certificatePayload.certificate, subjectPublicKeyInfo: await attackerKey.publicKey() },
     };
     const now = Math.floor(Date.now() / 1000);
-    const splicedToken = await new OwnedDeviceIdSignMsg(
+    const splicedToken = await new DeviceIdSignMsg(
       sthis.txt.base64,
       attackerKey as never,
       forgedCert as never,
@@ -213,7 +197,7 @@ describe("auth token verify — golden (SUT via @vibes.diy/identity/server)", { 
       .setProtectedHeader({ alg: "ES256", typ: "CERT+JWT" })
       .sign(nonCaKey);
     const now = Math.floor(Date.now() / 1000);
-    const token = await new OwnedDeviceIdSignMsg(
+    const token = await new DeviceIdSignMsg(
       sthis.txt.base64,
       attackerKey as never,
       issued.certificatePayload as never,

@@ -15,9 +15,40 @@
 import { Result } from "@adviser/cement";
 import { z } from "zod";
 import type { ClerkClaim } from "../clerk-claim.js";
-// JWKPublic TYPE stays upstream-sourced to preserve type-identity across the
-// codebase; only the zod schema VALUES are owned here (the parity artifacts).
-import type { JWKPublic } from "@fireproof/core-types-base";
+
+// --- JWK TYPES (owned in-repo; #2937) -------------------------------------
+// Hand-written to match `JWKPublicSchema` / `JWKPrivateSchema` below exactly
+// (reproduced from `core-types-base`'s `jwk-public.zod` / `jwk-private.zod` @
+// 0.24.19). Written as explicit types rather than `z.infer<typeof Schema>` so
+// the emitted `.d.ts` names no zod-internal symbol (TS2883) and the JWK type is
+// portable across the package boundary — the JWK TYPE is now owned alongside the
+// schema VALUE, so nothing imports it from `@fireproof/core-types-base`.
+interface JWKCommonFields {
+  use?: "sig" | "enc";
+  key_ops?: ("sign" | "verify" | "encrypt" | "decrypt" | "wrapKey" | "unwrapKey" | "deriveKey" | "deriveBits")[];
+  alg?: string;
+  kid?: string;
+  x5u?: string;
+  x5c?: string[];
+  x5t?: string;
+  "x5t#S256"?: string;
+}
+
+export type JWKPublic = JWKCommonFields &
+  (
+    | { kty: "RSA"; n: string; e: string }
+    | { kty: "EC"; crv: "P-256" | "P-384" | "P-521" | "secp256k1"; x: string; y: string }
+    | { kty: "oct"; k: string }
+    | { kty: "OKP"; crv: "Ed25519" | "Ed448" | "X25519" | "X448"; x: string }
+  );
+
+export type JWKPrivate = JWKCommonFields &
+  (
+    | { kty: "RSA"; n: string; e: string; d: string; p: string; q: string; dp: string; dq: string; qi: string }
+    | { kty: "EC"; crv: "P-256" | "P-384" | "P-521" | "secp256k1"; x: string; y: string; d: string }
+    | { kty: "oct"; k: string }
+    | { kty: "OKP"; crv: "Ed25519" | "Ed448" | "X25519" | "X448"; x: string; d: string }
+  );
 
 // --- JWK zod schemas (lifted verbatim from core-types-base @ 0.24.19) ---
 

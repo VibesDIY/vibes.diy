@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { ensureSuperThis } from "@vibes.diy/identity";
-import { createTestDeviceCA } from "@fireproof/core-device-id";
+import { createTestDeviceCA } from "@vibes.diy/identity/testing";
 import { string2stream, URI } from "@adviser/cement";
 import { createVibeDiyTestCtx } from "./vibe-diy-test-ctx.js";
 import { StubS3Api } from "./stub-s3-api.js";

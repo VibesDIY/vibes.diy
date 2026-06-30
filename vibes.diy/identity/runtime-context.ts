@@ -1,5 +1,5 @@
 import { ensureSuperThis } from "./runtime/superthis.js";
-import type { SuperThis } from "@fireproof/core-types-base";
+import type { SuperThis } from "./types/sthis.js";
 
 /**
  * The minimal runtime surface identity code needs: env access, text codecs

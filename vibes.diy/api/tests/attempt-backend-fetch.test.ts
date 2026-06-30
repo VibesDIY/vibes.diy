@@ -6,7 +6,7 @@
 import { assert, beforeAll, describe, expect, it } from "vitest";
 import { Result, TestWSPair } from "@adviser/cement";
 import { ensureSuperThis } from "@vibes.diy/identity";
-import { createTestDeviceCA, createTestUser } from "@fireproof/core-device-id";
+import { createTestDeviceCA, createTestUser } from "@vibes.diy/identity/testing";
 import { VibesDiyApi } from "@vibes.diy/api-impl";
 import { vibesMsgEvento, WSSendProvider } from "@vibes.diy/api-svc";
 import { isResEnsureAppSlugOk } from "@vibes.diy/api-types";

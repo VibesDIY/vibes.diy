@@ -1,6 +1,5 @@
-import { ensureSuperThis } from "@vibes.diy/identity";
-import { DeviceIdCAIf } from "@fireproof/core-types-device-id";
-import { DeviceIdCSR, DeviceIdKey, DeviceIdSignMsg } from "@fireproof/core-device-id";
+import { ensureSuperThis, type DeviceIdCAIf } from "@vibes.diy/identity";
+import { DeviceIdCSR, DeviceIdKey, DeviceIdSignMsg } from "@vibes.diy/identity/testing";
 
 // Local variant of @fireproof/core-device-id's createTestUser that takes
 // a custom public_meta. The shipped helper hardcodes
