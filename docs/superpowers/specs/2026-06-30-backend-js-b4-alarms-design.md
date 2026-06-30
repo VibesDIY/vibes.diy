@@ -71,17 +71,18 @@ owner` — `scheduled` acts as the vibe owner).
 ### 3. Retry / backoff
 
 - On `scheduled` handler throw (or isolate error), **don't** re-arm at `intervalMs`; set a **backoff**
-  alarm `min(intervalMs, base · 2^attempt)` capped (e.g. base 5s, cap 5 min), increment `attempt` in
-  storage.
-- On success, reset `attempt = 0` and re-arm at `intervalMs`.
-- **Give-up policy (open question 2):** after `MAX_ATTEMPTS` consecutive failures, stop retrying and
-  resume the normal interval on the next natural tick (so a permanently-broken handler degrades to
-  "runs once per interval, fails, waits" instead of hammering). Alternative: keep backing off at the cap
-  indefinitely. Proposal: cap-and-resume-interval.
+  alarm `min(intervalMs, base · 2^attempt)` capped (e.g. base 5s, cap 5 min), increment `attempt`, and
+  record `lastErrorAt` + a short `lastError` summary in storage (observability).
+- On success, reset `attempt = 0` (clear `lastError*`) and re-arm at `intervalMs`.
+- **Give-up policy (resolved — cap-and-resume-interval):** after `MAX_ATTEMPTS` consecutive failures,
+  stop the exponential backoff, **reset `attempt` at the cap**, and resume the normal interval on the
+  next natural tick — so a permanently-broken handler degrades to "runs once per interval, fails, waits"
+  (configured cadence stays the source of truth) instead of hammering at the backoff cap or disarming.
 
 ### 4. State (DO storage)
 
-`{ ownerHandle: string, appSlug: string, intervalMs: number | null, attempt: number, lastRunAt?: string }`.
+`{ ownerHandle: string, appSlug: string, intervalMs: number | null, attempt: number, lastRunAt?: string, lastErrorAt?: string, lastError?: string }`
+(`lastErrorAt`/`lastError` for observability, per Charlie — a short summary, not the full stack).
 
 **The identity MUST be persisted, not recovered from the DO name (Codex review).** `idFromName` is a
 one-way hash, so `backendDoName(owner, slug)` can't be reversed; and `alarm()` has **no incoming
@@ -133,16 +134,31 @@ Fixed above: `/arm` persists `{ownerHandle, appSlug}` to DO storage and `alarm()
 (with a self-clear when absent). This also settles part of open question 3 — the identity is durable
 state, independent of the synthetic request used only to build `vctx`.
 
-## Open questions for review (Charlie)
+## Open questions — resolved (Charlie's review)
 
-1. **Poke transport.** `VIBES_SERVICE` queue event (durable, matches existing `evt-*` patterns, survives
-   a transient DO miss) vs. a direct `BACKEND_DO.get(id).fetch('/arm')` from the push handler (simpler,
-   synchronous, but no retry if the DO is briefly unavailable). I lean queue for durability — agree?
-2. **Give-up policy** after `MAX_ATTEMPTS` failures: cap-and-resume-interval (proposed) vs. back off at
-   the cap indefinitely vs. disarm-until-next-push. Which matches how you want a chronically-failing
-   `scheduled` to behave?
-3. **Building `vctx` in `alarm()`** with no request — synthesize a minimal internal `Request` for
-   `cfServeAppCtx`, or is there a request-less ctx-construction path I should use instead?
-4. **Owner identity for `scheduled`.** `trigger.userHandle = ownerHandle` (the vibe owner) — confirming
-   that's the right acting identity for a timer (it has no session user), ahead of B6 hanging
-   write-identity off it.
+1. **Poke transport → `VIBES_SERVICE` queue (`evt-backend-arm`).** Fits the existing `evt-*`
+   architecture and decouples push latency from DO availability. **Two implementation caveats (Charlie):**
+   - the new queue handler **must propagate transient failures** (return `Err` / throw) so the queue
+     runtime's `message.retry()` fires — explicitly **NOT** the log-and-continue pattern other handlers
+     use, or a poke lost to a transient DO miss never retries and the schedule silently goes stale;
+   - `/arm` is **idempotent + payload-agnostic** — it recomputes from the selected release every time and
+     ignores the message payload (which carries only `{ownerHandle, appSlug}` for addressing).
+2. **Give-up policy → cap-and-resume-interval** after `MAX_ATTEMPTS`. Preserves configured cadence as the
+   source of truth (no permanent drift/disarm), avoids manual recovery for transient incidents. Persist
+   `lastErrorAt` (+ a short last-error summary) for observability, and **reset `attempt` at the cap** so
+   the next natural tick runs at the normal interval.
+3. **`vctx` in `alarm()` → synthetic internal `Request` + the single `cfServeAppCtx` bootstrap** (same
+   pattern as other internal worker/DO calls). **Harden (Charlie):** a synthetic request has no real
+   `request.cf`, so the `netHash` derivation in `cfServeAppCtx` needs a safe fallback/override for the
+   missing `cf` — verify it doesn't throw on `undefined` `request.cf`.
+4. **Owner identity → `trigger.userHandle = ownerHandle`.** Confirmed: matches the backend trigger
+   contract (`scheduled → owner`) and keeps B6's write-identity plumbing aligned.
+
+### Implementation pre-check (Charlie)
+
+Because the **queue consumer** worker is what pokes `BackendDO`, its runtime bindings must include
+`BACKEND_DO` (and whatever helper env the poke path needs). That's a **second wrangler file** —
+`wrangler.queue-consumer.toml` — beyond the main `wrangler.toml` B3 already updated; the queue consumer
+must cross-script-bind `BACKEND_DO` to the main worker (the same pattern its `USER_NOTIFY` binding uses),
+since the DO class lives in the main worker, not the consumer. Add it alongside the B4 implementation,
+and confirm the consumer can address the DO before relying on the poke path.
