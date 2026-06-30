@@ -13,6 +13,8 @@ Four deploy environments:
 
 PRs that touch `vibes.diy/**/*` automatically get a preview deployment. The workflow (`.github/workflows/vibes-diy-pr-preview.yaml`) builds with `CLOUDFLARE_ENV=preview` and deploys as `pr-{N}-vibes-diy-v2` on workers.dev. A bot comment posts the live URL on the PR. On PR close, a cleanup workflow deletes the worker. Preview uses `[env.preview]` in wrangler.toml — shares dev's D1/R2/DO/queue bindings but has no routes (workers.dev only). No schema migrations run on preview — merge to main first.
 
+**The preview comment's `Commit:` SHA will NOT match your branch HEAD — this is expected, not a stray push.** The workflow triggers `on: pull_request`, so `actions/checkout` checks out GitHub's auto-generated test-merge ref (`refs/pull/{N}/merge` = your branch HEAD merged onto base `main`), and the comment step prints `context.sha` (the merge commit), not the PR branch tip. So `Commit: d04ad94` on a branch whose HEAD is `1a9a814` just means `d04ad94` is the merge commit with parents `(main-tip, 1a9a814)`. Verify with `git fetch origin +refs/pull/{N}/merge:… && git log -1 --format=%p <mergeref>` — if one parent is your HEAD, nothing is wrong. (Separately, the `paths:` filter at the top of the workflow means a follow-up commit touching only non-app files won't redeploy at all, leaving the comment SHA behind HEAD — also benign.)
+
 ## CLI is a prod clone
 
 CLI environment is an exact clone of prod — same env vars, same Neon database, same Clerk, same behavior. It exists as a separate worker for CLI-specific routing via stable-entry, not for isolation. When setting env vars for CLI, mirror prod values. Single data plane: dev, prod, and cli all share one Neon database (intentional).
