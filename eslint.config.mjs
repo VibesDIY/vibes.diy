@@ -29,6 +29,8 @@ const opts = tseslint.config(
       "**/.react-router/**",
       "**/dist/",
       "**/pubdir/",
+      // Build-generated, gitignored SSR isolate dep bundle (#2845 cb2) — not source.
+      "**/*.generated.js",
       "**/node_modules/",
       "**/scripts/",
       "scripts/",

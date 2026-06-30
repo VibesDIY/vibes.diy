@@ -1,6 +1,7 @@
 import { TxtEnDecoderSingleton } from "@adviser/cement";
 import { transformVibeSource } from "./transform-vibe-source.js";
 import { type Executor, type VibeExecuteInput, type VibeExecuteResult } from "./vibe-executor.js";
+import { loadSsrIsolateDeps } from "./ssr-isolate-deps.js";
 
 /**
  * Cloudflare Worker Loader `WorkerCode` — the runtime-supplied code that
@@ -59,16 +60,20 @@ const SSR_REQUEST_URL = "https://vibe-ssr.internal/";
  * Pure string-shaping — this is the part of the Worker Loader path that is
  * unit-testable without a live `env.LOADER` binding.
  *
- * KNOWN GAP for the live path (slice 3/4): the `modules` map carries only these
- * two strings, but `main.js` imports `@vibes.diy/vibe-runtime/render-vibes.js`
- * and the vibe module imports `react/jsx-runtime`. Cloudflare's Worker Loader
- * does not resolve npm specifiers — dependencies must be BUNDLED into the
- * `modules` map (or supplied as additional module entries) before a real isolate
- * can load. That bundling step lands with the edge wiring + data path; slice 2
- * only shapes and orchestrates against a fake binding, so the unresolved imports
- * are intentional here and never hit a live `load()`.
+ * The live path supplies `depModules` (#2845 cb2): Cloudflare's Worker Loader
+ * does not resolve npm specifiers, so `@vibes.diy/vibe-runtime/render-vibes.js`
+ * and the vibe's `react` / `react/jsx-runtime` imports must be pre-bundled into
+ * the `modules` map. Those entries come from the generated SSR isolate dep bundle
+ * (scripts/build-ssr-isolate-deps.mjs); the executor merges them in. Omitting
+ * `depModules` yields the slice-2 shape (just main + vibe) — still used by the
+ * pure-shaping unit tests, whose fake binding echoes a Response and never loads
+ * the modules, so the unresolved imports are harmless there.
  */
-export function buildVibeWorkerCode(input: { module: string; mountParams: unknown }): WorkerCode {
+export function buildVibeWorkerCode(input: {
+  module: string;
+  mountParams: unknown;
+  depModules?: Record<string, string>;
+}): WorkerCode {
   const mountParamsJson = JSON.stringify(input.mountParams ?? null);
   const main = [
     `import { renderVibeToString } from "@vibes.diy/vibe-runtime/render-vibes.js";`,
@@ -86,6 +91,9 @@ export function buildVibeWorkerCode(input: { module: string; mountParams: unknow
     compatibilityDate: COMPATIBILITY_DATE,
     mainModule: MAIN_MODULE,
     modules: {
+      // Dep modules first so a vibe can never shadow `react` / render-vibes by
+      // colliding on a reserved key; main + vibe are written last.
+      ...(input.depModules ?? {}),
       [MAIN_MODULE]: main,
       [VIBE_MODULE]: input.module,
     },
@@ -93,9 +101,15 @@ export function buildVibeWorkerCode(input: { module: string; mountParams: unknow
   };
 }
 
-/** Hex SHA-256 of the worker code — the `env.LOADER.get` id, so identical code reuses one isolate. */
-async function hashWorkerCode(code: WorkerCode): Promise<string> {
-  const payload = `${code.compatibilityDate}\n${code.mainModule}\n${JSON.stringify(code.modules)}`;
+/**
+ * Hex SHA-256 — the `env.LOADER.get` id, so identical code reuses one isolate.
+ * Hashes only the per-vibe modules (main + vibe) plus a stable `depVersion` token,
+ * NOT the full multi-hundred-KB dep bundle: the deps are identical across every
+ * vibe, so folding their content into each per-vibe hash would be wasted work
+ * while a version bump (e.g. a React upgrade) still re-keys via `depVersion`.
+ */
+async function hashWorkerCode(code: WorkerCode, depVersion: string): Promise<string> {
+  const payload = `${code.compatibilityDate}\n${code.mainModule}\n${code.modules[MAIN_MODULE]}\n${code.modules[VIBE_MODULE]}\n${depVersion}`;
   // `TxtEnDecoderSingleton().encode` is the cement UTF-8 encoder `sthis.txt`
   // wraps — rules-bag forbids `new TextEncoder` directly.
   const digest = await crypto.subtle.digest("SHA-256", TxtEnDecoderSingleton().encode(payload));
@@ -117,8 +131,12 @@ export class WorkerLoaderExecutor implements Executor {
 
   async render(input: VibeExecuteInput): Promise<VibeExecuteResult> {
     const { module } = transformVibeSource(input.source);
-    const code = buildVibeWorkerCode({ module, mountParams: input.mountParams });
-    const id = await hashWorkerCode(code);
+    // Pre-bundled react / react-dom-server / render-vibes modules so the isolate
+    // resolves every import with no npm resolution at the edge (#2845 cb2). Absent
+    // (empty) only in unbuilt unit runs, where the fake binding never loads them.
+    const deps = await loadSsrIsolateDeps();
+    const code = buildVibeWorkerCode({ module, mountParams: input.mountParams, depModules: deps.modules });
+    const id = await hashWorkerCode(code, deps.reactVersion);
     const stub = this.loader.get(id, () => code);
     const response = await stub.getEntrypoint().fetch(new Request(SSR_REQUEST_URL));
     return { html: await response.text() };

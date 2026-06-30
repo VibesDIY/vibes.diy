@@ -1,0 +1,5 @@
+# Generated at build time by scripts/build-ssr-isolate-deps.mjs (#2845 cb2).
+# Large (react-dom/server + arktype bundle); regenerated from the lockfile, so it
+# is a build artifact, not source. The committed ssr-isolate-deps.generated.d.ts
+# carries its types so tsc resolves the import without it.
+ssr-isolate-deps.generated.js
