@@ -27,15 +27,25 @@ platform" or "digital transformation," we've become the generic offer — and ge
 "takes the order," "kills the spreadsheet," "see today's numbers."
 
 The biggest hole we're filling: for a long time nothing in our copy mentioned **money**.
-Commerce — taking an order and a payment — is the strongest "this is a real tool, not a
-toy" signal we have. Say it.
+Commerce — taking an order — is the strongest "this is a real tool, not a toy" signal we
+have. Say it.
+
+**The payment guardrail (read before writing any commerce line).** "Takes the order" is
+always safe: orders work the moment an app is live. "Takes the **payment**" is NOT
+automatic — it's a payment flow the maker wires up. Never promise platform-wide or
+instant payments as a default. Scope it like the privacy guardrail:
+
+- ✅ "Takes the order the moment it's live."
+- ✅ "Takes the order — add a payment flow when you're ready."
+- ✅ "Adds payments when you wire them up."
+- ❌ "Takes a payment the moment it's live." / "Payment processing built in." / unqualified "Takes the payment."
 
 ## The story, in order
 
 People landing cold have three doubts. Answer them in this order:
 
 1. **Fun** — build for any reason, or no reason. (Or: build because the spreadsheet is killing you.)
-2. **Done** — it's a real app, live at its own link. Not a prototype. It can take an order and a payment.
+2. **Done** — it's a real app, live at its own link. Not a prototype. It can take an order (payments when you wire up a flow).
 3. **Alive** — keep talking to it and it keeps changing. So can anyone you share it with.
 
 That's the whole pitch: **fun, done, and alive.** Everything else is detail.
@@ -80,7 +90,7 @@ When in doubt, talk about **control and access**, never **secrecy from the platf
 | Live URL with persistent state, no bundler/backend/env drift | It's a real, live app at its own link — nothing to set up |
 | Constrained app shape, open module ecosystem, stack negotiation | *(cut — that's developer talk, not a customer benefit)* |
 | Workflow automation platform / digital transformation / internal tooling | It kills the spreadsheet, takes the order, and shows you the dashboard |
-| E-commerce solution / payment processing integration | It takes the order and the payment the moment it's live |
+| E-commerce solution / payment processing integration | It takes the order the moment it's live — add a payment flow when you're ready |
 | Just for fun / toy apps / for your friends *(as the **whole** story)* | From the group chat to the front counter — fun *and* the thing that runs the shop |
 
 ## "What's it built on?" / "What happened to Fireproof?"
@@ -104,7 +114,7 @@ For a **developer** audience only (keep out of consumer copy):
 
 - "Make apps with your friends — or run your whole operation."
 - "Impress the group chat. Run the front counter."
-- "Takes the order. Takes the payment."
+- "Takes the order." (Add payments when you wire them up — never promise instant payment by default; see the payment guardrail above.)
 - "Kill the spreadsheet."
 - "From the group chat to the front counter."
 

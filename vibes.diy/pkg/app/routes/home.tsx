@@ -7,7 +7,7 @@ export function meta() {
     {
       name: "description",
       content:
-        "Describe your app in plain words and it's live at its own link — instant, live, yours. From a group-chat bit to an order form that takes payments.",
+        "Describe your app in plain words and it's live at its own link — instant, live, yours. From a group-chat bit to an order form for your shop.",
     },
   ];
 }

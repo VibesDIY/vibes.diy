@@ -13,7 +13,7 @@ export const quickSuggestions: Suggestion[] = [
   },
   {
     label: "Daily Specials",
-    text: "Create a daily-specials board for a food truck or cafe: I post today's menu with prices, customers tap to order and pay a deposit, and the kitchen sees a shared prep queue that updates live. Let me reuse yesterday's menu as a starting point and mark items sold out.",
+    text: "Create a daily-specials board for a food truck or cafe: I post today's menu with prices, customers tap to place an order, and the kitchen sees a shared prep queue that updates live. Let me reuse yesterday's menu as a starting point and mark items sold out.",
   },
   {
     label: "Kill the Spreadsheet",
@@ -29,11 +29,11 @@ export const quickSuggestions: Suggestion[] = [
   },
   {
     label: "Client Portal",
-    text: "Create a customer portal where each of my clients gets their own private page showing their order or job status, files, and invoice — and I see an admin view of everyone. I decide exactly who can open which page; clients only see their own.",
+    text: "Create a customer portal where each of my clients gets their own private page showing their order or job status, files, and updates — and I see an admin view of everyone. I decide exactly who can open which page; clients only see their own.",
   },
   {
     label: "Invoice Sender",
-    text: "Create an invoicing app for my business: I add a client and line items, it totals the amount with tax, and generates a clean invoice I can share by link. Each client sees only their own invoices marked paid or unpaid, and I get a dashboard of what's outstanding.",
+    text: "Create an invoice-tracking app for my business: I add a client and line items, it totals the amount with tax, and drafts a clean invoice I can share by link. I mark each invoice paid or unpaid, and get a dashboard of what's outstanding.",
   },
   {
     label: "Lead Pipeline",
@@ -41,7 +41,7 @@ export const quickSuggestions: Suggestion[] = [
   },
   {
     label: "Online Storefront",
-    text: "Create a small online storefront where I list products with photos, prices, and stock, customers add to a cart and check out with their details, and I see incoming orders with a status I can update. Let me mark items sold out and feature a few on the front page.",
+    text: "Create a small online storefront where I list products with photos, prices, and stock, customers add to a cart and place an order with their details, and I see incoming orders with a status I can update. Let me mark items sold out and feature a few on the front page.",
   },
   {
     label: "Staff Scheduler",
@@ -49,7 +49,7 @@ export const quickSuggestions: Suggestion[] = [
   },
   {
     label: "Time Clock",
-    text: "Create a time clock where staff tap to clock in and out from their phones, breaks included, and I get a dashboard of hours per person per week ready for payroll. Let me correct entries and export the totals.",
+    text: "Create a time clock where staff tap to clock in and out from their phones, breaks included, and I get a dashboard of hours per person per week. Let me correct entries and export the totals.",
   },
   {
     label: "Sales Dashboard",
@@ -81,7 +81,7 @@ export const quickSuggestions: Suggestion[] = [
   },
   {
     label: "Class Signups",
-    text: "Create a class booking app for my studio where I post classes with date, time, and capacity, clients reserve a spot and join a waitlist when full, and I see the roster for each session. Let clients cancel and free their spot automatically.",
+    text: "Create a class booking app for my studio where I post classes with date, time, and capacity, clients reserve a spot and join a waitlist when full, and I see the roster for each session. Let clients cancel, which opens their spot for the waitlist.",
   },
   {
     label: "Supplier Orders",
