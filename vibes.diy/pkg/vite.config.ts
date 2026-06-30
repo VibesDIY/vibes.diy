@@ -81,6 +81,29 @@ function monacoTrimLanguagesPlugin() {
   };
 }
 
+function ensureSsrIsolateDepsPlugin() {
+  let generated = false;
+
+  return {
+    name: "ensure-ssr-isolate-deps",
+    apply: "build" as const,
+    async buildStart() {
+      if (generated) return;
+      generated = true;
+
+      const runtimeDir = join(import.meta.dirname, "../vibe/runtime");
+      const scriptPath = join(runtimeDir, "scripts/build-ssr-isolate-deps.mjs");
+      const artifactPath = join(runtimeDir, "ssr-isolate-deps.generated.js");
+
+      await $`node ${scriptPath}`;
+
+      if (!fs.existsSync(artifactPath)) {
+        throw new Error(`ensure-ssr-isolate-deps: expected ${artifactPath} to exist after ${scriptPath}`);
+      }
+    },
+  };
+}
+
 async function schemaHash(schemaPath: string): Promise<string> {
   try {
     const content = fs.readFileSync(schemaPath);
@@ -215,6 +238,7 @@ export default defineConfig(({ command }) => ({
     preserveImportMetaUrlPlugin(),
     blockDevVarsPlugin(),
     monacoTrimLanguagesPlugin(),
+    ensureSsrIsolateDepsPlugin(),
     setupSqlPlugin(),
     exposeDevServerInfo(),
     devServeReportsPlugin(),
