@@ -91,28 +91,53 @@ export function isActiveCachedSuggestion(obj: unknown): obj is ActiveCachedSugge
 // ─────────────────────────────────────────────────────────────────────────────
 
 /**
- * The map value for one blessed suggestion: the same `{fsId, sourceFsId}` the
- * grant verifies (source-was-public) plus who blessed it and when. `approvedBy`
- * is the blessing owner's userId today; it is the seam for a future
- * admin-on-behalf approver without a schema change.
+ * The map value for one blessed suggestion. TWO shapes, by what the chip resolves
+ * to (#2941):
+ *
+ *  - **same-slug STAY** — `{ fsId, sourceFsId }`: the staged version the grant
+ *    verifies (source-was-public). The existing shape.
+ *  - **cross-slug VIBE link** — `{ targetOwnerHandle, targetAppSlug }`: the chip
+ *    navigates to ANOTHER curated public vibe (a new namespace) instead of a
+ *    same-slug version. No `sourceFsId`/produce step — it's a curated link to
+ *    already-public content, not a generated artifact (so no PII provenance to
+ *    verify; the reader instead checks the TARGET vibe is public).
+ *
+ * Both carry `approvedBy`/`approvedAt` (audit + the admin-on-behalf seam). The
+ * fsId/sourceFsId/target fields are optional so the two shapes share one record;
+ * {@link isCrossSlugBless} discriminates, and a record with neither is invalid.
+ * Backward-compatible: existing bless records (fsId+sourceFsId, no target) read
+ * as stays unchanged.
  */
 export const cachedSuggestionBlessRecord = type({
-  fsId: "string",
-  sourceFsId: "string",
+  "fsId?": "string",
+  "sourceFsId?": "string",
+  "targetOwnerHandle?": "string",
+  "targetAppSlug?": "string",
   approvedBy: "string",
   approvedAt: "string",
 });
 export type CachedSuggestionBlessRecord = typeof cachedSuggestionBlessRecord.infer;
 
-/** ActiveEntry variant — one bless row per content-address `key` inside AppSettings. */
+/** A bless record is a cross-slug VIBE link iff it names a target vibe; otherwise
+ *  it's a same-slug fsId STAY. (#2941) */
+export function isCrossSlugBless(rec: { readonly targetAppSlug?: string }): boolean {
+  return typeof rec.targetAppSlug === "string" && rec.targetAppSlug.length > 0;
+}
+
+/** ActiveEntry variant — one bless row per content-address `key` inside AppSettings.
+ *  Carries EITHER the same-slug stay (`fsId`+`sourceFsId`) OR the cross-slug vibe
+ *  link (`targetOwnerHandle`+`targetAppSlug`); see {@link cachedSuggestionBlessRecord}. */
 export const ActiveCachedSuggestionBless = type({
   type: "'active.cached-suggestion-bless'",
   /** The content-address key from {@link cachedSuggestionKey}. */
   key: "string",
-  /** The staged result version this bless vouches for (must match the produced entry). */
-  fsId: "string",
-  /** The public-HEAD source version the result was derived from. */
-  sourceFsId: "string",
+  /** STAY: the staged result version this bless vouches for (must match the produced entry). */
+  "fsId?": "string",
+  /** STAY: the public-HEAD source version the result was derived from. */
+  "sourceFsId?": "string",
+  /** VIBE link: the curated target vibe the chip navigates to (a different slug). */
+  "targetOwnerHandle?": "string",
+  "targetAppSlug?": "string",
   /** The owner userId that blessed this result (audit + future admin-on-behalf seam). */
   approvedBy: "string",
   /** ISO timestamp of the bless. */
@@ -215,19 +240,33 @@ export function isCachedSuggestionKeyShape(key: string): boolean {
 }
 
 /**
- * A staged (precomputed) suggestion result: a specific code version under the
- * SOURCE vibe's own owner/slug. Same `(ownerHandle, appSlug)` as the source; a
- * new `fsId`. Unpublished until the owner publishes it.
+ * The destination a cached chip resolves to. TWO shapes (#2941):
+ *
+ *  - **same-slug STAY** — `fsId` present: a staged code version under the SOURCE
+ *    vibe's own owner/slug (`ownerHandle`/`appSlug` == the source). The "stays
+ *    here, same data" shield path.
+ *  - **cross-slug VIBE link** — `fsId` absent: `ownerHandle`/`appSlug` are a
+ *    DIFFERENT curated public vibe; navigate to its canonical URL (a new
+ *    namespace). The `→` jump path.
+ *
+ * `fsId` presence is the discriminator (a stay always has one; a vibe link never
+ * does), which both {@link cachedVibeHref} and the affordance branch on.
  */
 export interface CachedSuggestionHit {
   readonly ownerHandle: string;
   readonly appSlug: string;
-  readonly fsId: string;
+  readonly fsId?: string;
 }
 
-/** The `/vibe` URL a cached read navigates to — the source vibe at a staged version. */
+/** The `/vibe` URL a cached read navigates to: a same-slug staged version
+ *  (`fsId` present) or a cross-slug target vibe's canonical URL (`fsId` absent). */
 export function cachedVibeHref(hit: CachedSuggestionHit): string {
-  return `/vibe/${hit.ownerHandle}/${hit.appSlug}/${hit.fsId}`;
+  return hit.fsId ? `/vibe/${hit.ownerHandle}/${hit.appSlug}/${hit.fsId}` : `/vibe/${hit.ownerHandle}/${hit.appSlug}`;
+}
+
+/** A hit is a cross-slug VIBE link (vs a same-slug stay) iff it carries no `fsId`. */
+export function isCrossSlugHit(hit: CachedSuggestionHit): boolean {
+  return !hit.fsId;
 }
 
 // Explicit allowlist over the FULL grant union (not a denylist), so a future
@@ -317,6 +356,10 @@ export type CachedHitOutcome =
  * the owner-vs-visitor split is unit-testable without mounting the route.
  */
 export function resolveCachedHit(args: { readonly hit: CachedSuggestionHit; readonly isOwner: boolean }): CachedHitOutcome {
-  if (args.isOwner) return { kind: "adopt", fsId: args.hit.fsId, hit: args.hit };
+  // Adopt-in-place is a same-slug STAY affordance (the owner advances their own
+  // draft to the staged fsId). A cross-slug VIBE link (#2941, no `fsId`) is just a
+  // navigation to another vibe — there's nothing to adopt — so everyone, owner
+  // included, navigates.
+  if (args.isOwner && args.hit.fsId) return { kind: "adopt", fsId: args.hit.fsId, hit: args.hit };
   return { kind: "navigate", href: cachedVibeHref(args.hit), hit: args.hit };
 }

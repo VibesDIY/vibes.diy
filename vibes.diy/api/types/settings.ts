@@ -321,17 +321,25 @@ export function isReqEnsureAppSettingsCachedSuggestion(obj: unknown): obj is Req
   return !(reqEnsureAppSettingsCachedSuggestion(obj) instanceof type.errors);
 }
 
-// Bless (`op: "bless"`) or revoke (`op: "revoke"`) the staged result of one cached
-// suggestion, keyed by its content-address `key`. Owner-gated (the write only
-// reaches the mutation branch when the caller is the app owner). Blessing is what
-// makes a produced result servable as an in-namespace "stay"; revoking removes it
-// so the result forks again (fail-to-fork). `approvedBy`/`approvedAt` are stamped
-// server-side from the authenticated owner, never trusted from the client.
+// Bless (`op: "bless"`) or revoke (`op: "revoke"`) the destination of one cached
+// suggestion, keyed by its content-address `key`. Owner-gated. TWO shapes (#2941):
+//
+//  - **same-slug STAY** — `{ fsId, sourceFsId }`: bless a produced result so it
+//    serves as an in-namespace stay. Requires a matching produced entry.
+//  - **cross-slug VIBE link** — `{ targetOwnerHandle, targetAppSlug }`: bless the
+//    chip to navigate to another curated public vibe. No produce step (it's a
+//    curated link, not a generated artifact; the reader checks the target public).
+//
+// `approvedBy`/`approvedAt` are stamped server-side from the authenticated owner,
+// never trusted from the client. The fsId/target fields are optional so one req
+// covers both; the handler discriminates on `targetAppSlug`.
 export const reqEnsureAppSettingsCachedSuggestionBless = type({
   cachedSuggestionBless: type({
     key: "string",
-    fsId: "string",
-    sourceFsId: "string",
+    "fsId?": "string",
+    "sourceFsId?": "string",
+    "targetOwnerHandle?": "string",
+    "targetAppSlug?": "string",
     op: "'bless' | 'revoke'",
   }),
 }).and(reqEnsureAppSettingsBase);

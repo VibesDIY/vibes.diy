@@ -8,6 +8,7 @@ import {
   W3CWebSocketEvent,
   ReqWithOptionalAuth,
   isCachedSuggestionKeyShape,
+  isCrossSlugBless,
 } from "@vibes.diy/api-types";
 import { type } from "arktype";
 import { ensureLogger } from "@vibes.diy/identity";
@@ -144,6 +145,52 @@ export const getCachedSuggestionEvento: EventoHandler<
       const cachedSuggestionBlesses = rAppSet.Ok().settings.entry.cachedSuggestionBlesses;
       const entry = cachedSuggestionBlesses?.[req.key];
       if (!entry) {
+        return emit(miss, "miss", "unblessed");
+      }
+
+      // Cross-slug VIBE link (#2941): the blessed chip navigates to ANOTHER
+      // curated public vibe instead of a same-slug staged version. The safety
+      // analog of the stay's source-public check is "is the TARGET vibe itself
+      // public-readable" — navigating to it must be a genuine anonymous read, no
+      // login/fork. If the target isn't public, miss (no oracle). There is no PII
+      // provenance step here: a link to already-public content carries none, and
+      // no produced/unpublished artifact is served.
+      if (isCrossSlugBless(entry) && entry.targetOwnerHandle && entry.targetAppSlug) {
+        const targetApp = await selectLatestAppPerSlug(vctx, {
+          ownerHandle: entry.targetOwnerHandle,
+          appSlug: entry.targetAppSlug,
+        });
+        const targetPublic =
+          !!targetApp &&
+          targetApp.mode === "production" &&
+          !(await isHiddenForCaller(vctx, {
+            ownerHandle: targetApp.ownerHandle,
+            appSlug: targetApp.appSlug,
+            ownerUserId: targetApp.userId,
+            callerUserId,
+          })) &&
+          (await isPublicReadable(vctx, entry.targetAppSlug, entry.targetOwnerHandle));
+        if (!targetPublic) {
+          return emit(miss, "miss", "target-not-public");
+        }
+        return emit(
+          {
+            type: "vibes.diy.res-get-cached-suggestion",
+            ownerHandle: req.ownerHandle,
+            appSlug: req.appSlug,
+            key: req.key,
+            targetOwnerHandle: entry.targetOwnerHandle,
+            targetAppSlug: entry.targetAppSlug,
+          } satisfies ResGetCachedSuggestion,
+          "hit",
+          "vibe"
+        );
+      }
+
+      // Same-slug STAY (the existing path). A produced result the owner blessed:
+      // re-verify the source version was public (Charlie #2890), then serve the
+      // staged fsId. A malformed stay (no fsId/sourceFsId) misses.
+      if (!entry.fsId || !entry.sourceFsId) {
         return emit(miss, "miss", "unblessed");
       }
       // Key-specific source-was-public check on THIS exact entry (not an fsId
