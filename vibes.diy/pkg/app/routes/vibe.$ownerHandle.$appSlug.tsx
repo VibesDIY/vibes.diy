@@ -19,7 +19,7 @@ import {
   useMobile,
   resolveBuilderOriginFrom,
 } from "@vibes.diy/base";
-import type { ShareMember, ShareViewer, ShareAccess, HandleOption } from "@vibes.diy/base";
+import type { ShareMember, ShareViewer, ShareAccess, HandleOption, ChipFastPathState } from "@vibes.diy/base";
 import { isUserSettingDefaultHandle, resolveCachedRead, normalizeTransform, cachedSuggestionKey } from "@vibes.diy/api-types";
 import { switchActiveHandle, createAndUseHandle, handleAvatarUrl } from "./handle-picker-actions.js";
 import { uploadHandleAvatar } from "../lib/upload-avatar.js";
@@ -241,6 +241,21 @@ export default function VibeIframeWrapper() {
   const [searchParam, setSearchParam] = useSearchParams();
   const [retryCount, setRetryCount] = useState(0);
   const [isOwner, setIsOwner] = useState(false);
+
+  // Cached-suggestion fast paths (#2917): per-chip state driving the
+  // server-authoritative shield badge and the owner-only bless/unbless control,
+  // keyed by chip text. `chipFastPathTuplesRef` holds the {key,fsId,sourceFsId}
+  // tuples the bless/revoke writes need (revoke must match the FULL blessed
+  // tuple — Codex #2915). `fastPathBump` re-derives them after a produce/bless/
+  // revoke settles.
+  const [chipFastPaths, setChipFastPaths] = useState<Record<string, ChipFastPathState>>({});
+  const chipFastPathTuplesRef = useRef<
+    Record<
+      string,
+      { bless?: { key: string; fsId: string; sourceFsId: string }; revoke?: { key: string; fsId: string; sourceFsId: string } }
+    >
+  >({});
+  const [fastPathBump, setFastPathBump] = useState(0);
 
   // The edit card's suggestion chips are the vibe's OWN latest suggestions — the
   // trailing `▸` options the model emitted on the last codegen turn — not a
@@ -501,8 +516,141 @@ export default function VibeIframeWrapper() {
     const key = cachedSuggestionKey({ source: { ownerHandle, appSlug, fsId: pending.sourceFsId }, transform: pending.transform });
     void vctx.sharedApi
       .ensureAppSettings({ ownerHandle, appSlug, cachedSuggestion: { key, fsId: pf.fsId, sourceFsId: pending.sourceFsId } })
+      // Re-derive the chips' fast-path state so the just-produced chip surfaces its
+      // owner "Feature as fast path" control without a reload.
+      .then(() => setFastPathBump((n) => n + 1))
       .catch(() => undefined);
   }, [generation.persistedFsRef, isOwner, ownerHandle, appSlug, vctx.sharedApi]);
+
+  // The production-HEAD version a cached suggestion is keyed against — NEVER the
+  // owner's draft pin (`draftFsId`), which the producer skips (a draft isn't
+  // public). Keeping this identical to the source fsId the producer and a visitor
+  // use is what makes the shield/bless keys line up across owner and visitor. On
+  // the canonical /vibe URL this is `resolvedFsId` (the served production HEAD);
+  // on a versioned URL it's the route `fsId`. (#2917)
+  const cacheSourceFsId = fsId ?? resolvedFsId;
+
+  // Derive each visible chip's fast-path state (#2917). The shield is
+  // SERVER-AUTHORITATIVE: `getCachedSuggestion` returns a stay-`fsId` only when the
+  // result is blessed AND its source is public AND the app is visible — we never
+  // assert a shield from a client heuristic (that would be a phishing vector). For
+  // the owner we additionally read the produce + bless maps so we can offer
+  // "Feature" on a produced chip and "Featured" (unbless) on a blessed one, and
+  // capture the exact tuples the writes need. Gated on the preview flag, so prod
+  // stays a no-op. Best-effort: any lookup error just leaves a chip un-decorated.
+  useEffect(() => {
+    if (!cachedSuggestionsEnabled || !ownerHandle || !appSlug || !cacheSourceFsId || cardChips.length === 0) {
+      setChipFastPaths({});
+      chipFastPathTuplesRef.current = {};
+      return;
+    }
+    let cancelled = false;
+    void (async () => {
+      // Owner-only: the produce map gives the bless tuple, the bless map the revoke
+      // tuple. Non-owners read neither and get no controls (only the shield).
+      let produceMap: Record<string, { fsId: string; sourceFsId: string }> = {};
+      let blessMap: Record<string, { fsId: string; sourceFsId: string }> = {};
+      if (isOwner) {
+        const rSet = await vctx.sharedApi.ensureAppSettings({ ownerHandle, appSlug });
+        if (rSet.isOk()) {
+          produceMap = rSet.Ok().settings.entry.cachedSuggestions ?? {};
+          blessMap = rSet.Ok().settings.entry.cachedSuggestionBlesses ?? {};
+        }
+      }
+      const states: Record<string, ChipFastPathState> = {};
+      const tuples: typeof chipFastPathTuplesRef.current = {};
+      await Promise.all(
+        cardChips.map(async (chip) => {
+          const key = cachedSuggestionKey({ source: { ownerHandle, appSlug, fsId: cacheSourceFsId }, transform: chip });
+          let shielded = false;
+          try {
+            const r = await vctx.sharedApi.getCachedSuggestion({ ownerHandle, appSlug, key });
+            shielded = r.isOk() && Boolean(r.Ok().fsId);
+          } catch {
+            // Soft-fail: leave the chip un-shielded (it falls to the write lane on click).
+          }
+          const produced = produceMap[key];
+          const blessed = blessMap[key];
+          states[chip] = {
+            shielded,
+            // Owner can bless a produced-but-not-shielded result, and unbless a
+            // shielded (blessed) one. The shield is the server's word on "blessed".
+            canBless: isOwner && Boolean(produced) && !shielded,
+            canUnbless: isOwner && shielded,
+          };
+          tuples[chip] = {
+            ...(produced ? { bless: { key, fsId: produced.fsId, sourceFsId: produced.sourceFsId } } : {}),
+            // Revoke matches the FULL blessed tuple; fall back to the produce tuple
+            // if the bless map is momentarily absent.
+            ...(blessed
+              ? { revoke: { key, fsId: blessed.fsId, sourceFsId: blessed.sourceFsId } }
+              : produced
+                ? { revoke: { key, fsId: produced.fsId, sourceFsId: produced.sourceFsId } }
+                : {}),
+          };
+        })
+      );
+      if (cancelled) return;
+      setChipFastPaths(states);
+      chipFastPathTuplesRef.current = tuples;
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [cachedSuggestionsEnabled, isOwner, ownerHandle, appSlug, cacheSourceFsId, cardChips, vctx.sharedApi, fastPathBump]);
+
+  // Owner blesses a produced chip → it becomes a fast-path "stay" (the shield
+  // appears). Best-effort, owner-gated server-side; re-derives the fast-path state
+  // on success. (#2917)
+  const handleBlessChip = useCallback(
+    (chip: string) => {
+      if (!isOwner || !ownerHandle || !appSlug) return;
+      const tuple = chipFastPathTuplesRef.current[chip]?.bless;
+      if (!tuple) return;
+      const tid = toast.loading("Featuring as fast path…");
+      void (async () => {
+        const r = await vctx.sharedApi.ensureAppSettings({
+          ownerHandle,
+          appSlug,
+          cachedSuggestionBless: { ...tuple, op: "bless" },
+        });
+        const err = r.isErr() ? r.Err().message : r.Ok().error;
+        if (err) {
+          toast.error(`Couldn't feature it: ${err}`, { id: tid });
+          return;
+        }
+        toast.success("Featured — visitors stay here now.", { id: tid });
+        setFastPathBump((n) => n + 1);
+      })();
+    },
+    [isOwner, ownerHandle, appSlug, vctx.sharedApi]
+  );
+
+  // Owner unblesses a chip → its shield disappears and visitor clicks fork again
+  // (fail-to-fork). Revoke carries the FULL blessed tuple. (#2917)
+  const handleUnblessChip = useCallback(
+    (chip: string) => {
+      if (!isOwner || !ownerHandle || !appSlug) return;
+      const tuple = chipFastPathTuplesRef.current[chip]?.revoke;
+      if (!tuple) return;
+      const tid = toast.loading("Removing fast path…");
+      void (async () => {
+        const r = await vctx.sharedApi.ensureAppSettings({
+          ownerHandle,
+          appSlug,
+          cachedSuggestionBless: { ...tuple, op: "revoke" },
+        });
+        const err = r.isErr() ? r.Err().message : r.Ok().error;
+        if (err) {
+          toast.error(`Couldn't remove it: ${err}`, { id: tid });
+          return;
+        }
+        toast.success("Fast path removed — clicks fork again.", { id: tid });
+        setFastPathBump((n) => n + 1);
+      })();
+    },
+    [isOwner, ownerHandle, appSlug, vctx.sharedApi]
+  );
 
   // #2772 D2: publish the owner's current draft. Mints a new top-of-stack production
   // server-side (no demote); on success bump the draft resolver so the badge + banner
@@ -1370,6 +1518,11 @@ export default function VibeIframeWrapper() {
                   chips={cardChips}
                   onSelectChip={handleEditPrompt}
                   onSubmitOther={handleEditPrompt}
+                  // Cached-suggestion fast paths (#2917): the server-authoritative
+                  // shield badge for everyone + the owner-only bless/unbless control.
+                  chipFastPaths={chipFastPaths}
+                  onBlessChip={isOwner ? handleBlessChip : undefined}
+                  onUnblessChip={isOwner ? handleUnblessChip : undefined}
                   onHome={() => {
                     // On a PR preview, stay on the preview subdomain so the home
                     // page reflects the same (preview) session — otherwise we'd

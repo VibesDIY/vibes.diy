@@ -115,4 +115,37 @@ describe("OptionButtons", () => {
     expect(onSelect).not.toHaveBeenCalled();
     expect(getByText("Add a settings page").closest("button")).toHaveAttribute("aria-pressed", "false");
   });
+
+  // Per-option decoration (#2917): a `badge` inside the option button + an
+  // interactive `aside` rendered as a SIBLING (a button can't nest a button).
+  it("renders a per-option badge inside the option and a sibling aside control", () => {
+    const onAside = vi.fn();
+    const { getByText, getByTestId } = render(
+      <OptionButtons
+        options={SAMPLE_OPTIONS}
+        decorate={(o) =>
+          o === "Add a settings page"
+            ? { badge: <span data-testid="badge">★</span>, aside: <button onClick={onAside}>aside</button> }
+            : undefined
+        }
+      />
+    );
+    // The badge lives inside the decorated option's own button.
+    const badge = getByTestId("badge");
+    expect(badge.closest("button")?.textContent).toContain("Add a settings page");
+    // The aside is a SIBLING button — clicking it does NOT select the option.
+    const onSelect = vi.fn();
+    fireEvent.click(getByText("aside"));
+    expect(onSelect).not.toHaveBeenCalled();
+    expect(onAside).toHaveBeenCalledTimes(1);
+    // The aside button is not nested inside the option button (invalid HTML).
+    expect(getByText("aside").closest("button")).not.toBe(getByText("Add a settings page").closest("button"));
+  });
+
+  it("leaves undecorated options as plain full-width buttons (no behavior change)", () => {
+    const onSelect = vi.fn();
+    const { getByText } = render(<OptionButtons options={SAMPLE_OPTIONS} onSelect={onSelect} decorate={() => undefined} />);
+    fireEvent.click(getByText("Add a settings page"));
+    expect(onSelect).toHaveBeenCalledWith("Add a settings page");
+  });
 });

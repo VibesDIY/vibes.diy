@@ -417,4 +417,86 @@ describe("UnifiedVibeCard", () => {
     expect(screen.queryByRole("img", { name: /admin mode/i })).toBeNull();
     expect(screen.queryByRole("img", { name: /read-only/i })).toBeNull();
   });
+
+  // Cached-suggestion fast paths (#2917): the shield badge + owner bless/unbless.
+  it("shows the 'Stays here' shield only on a shielded chip (#2917)", () => {
+    render(
+      <UnifiedVibeCard
+        appTitle="Bloom Machine"
+        open
+        chips={["Make it a drum kit", "Add a high score"]}
+        chipFastPaths={{ "Make it a drum kit": { shielded: true } }}
+      />
+    );
+    // The shielded chip carries the badge; the other does not.
+    expect(screen.getByRole("img", { name: /stays here/i })).toBeTruthy();
+    expect(screen.getAllByRole("img", { name: /stays here/i })).toHaveLength(1);
+  });
+
+  it("renders no fast-path control without the owner callbacks (visitor) (#2917)", () => {
+    render(
+      <UnifiedVibeCard
+        appTitle="Bloom Machine"
+        open
+        chips={["Make it a drum kit"]}
+        // A visitor never gets canBless/canUnbless, and the host wires no callbacks.
+        chipFastPaths={{ "Make it a drum kit": { shielded: true } }}
+      />
+    );
+    expect(screen.queryByRole("button", { name: /feature as fast path/i })).toBeNull();
+    expect(screen.queryByRole("button", { name: /remove fast path/i })).toBeNull();
+  });
+
+  it("offers the owner a Feature (bless) control on a produced chip and fires onBlessChip (#2917)", () => {
+    const onBlessChip = vi.fn();
+    render(
+      <UnifiedVibeCard
+        appTitle="Bloom Machine"
+        open
+        chips={["Make it a drum kit"]}
+        chipFastPaths={{ "Make it a drum kit": { canBless: true } }}
+        onBlessChip={onBlessChip}
+        onUnblessChip={vi.fn()}
+      />
+    );
+    // No shield yet (not blessed); a "Feature as fast path" button is offered.
+    expect(screen.queryByRole("img", { name: /stays here/i })).toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: /feature as fast path/i }));
+    expect(onBlessChip).toHaveBeenCalledWith("Make it a drum kit");
+  });
+
+  it("offers the owner an Unbless control on a blessed chip and fires onUnblessChip (#2917)", () => {
+    const onUnblessChip = vi.fn();
+    render(
+      <UnifiedVibeCard
+        appTitle="Bloom Machine"
+        open
+        chips={["Make it a drum kit"]}
+        chipFastPaths={{ "Make it a drum kit": { shielded: true, canUnbless: true } }}
+        onBlessChip={vi.fn()}
+        onUnblessChip={onUnblessChip}
+      />
+    );
+    // Blessed: the shield shows AND an unbless control is offered.
+    expect(screen.getByRole("img", { name: /stays here/i })).toBeTruthy();
+    fireEvent.click(screen.getByRole("button", { name: /remove fast path/i }));
+    expect(onUnblessChip).toHaveBeenCalledWith("Make it a drum kit");
+  });
+
+  it("selecting a decorated chip still fires onSelectChip (the chip stays the primary action) (#2917)", () => {
+    const onSelectChip = vi.fn();
+    render(
+      <UnifiedVibeCard
+        appTitle="Bloom Machine"
+        open
+        chips={["Make it a drum kit"]}
+        chipFastPaths={{ "Make it a drum kit": { shielded: true, canUnbless: true } }}
+        onBlessChip={vi.fn()}
+        onUnblessChip={vi.fn()}
+        onSelectChip={onSelectChip}
+      />
+    );
+    fireEvent.click(screen.getByText("Make it a drum kit"));
+    expect(onSelectChip).toHaveBeenCalledWith("Make it a drum kit");
+  });
 });

@@ -1,8 +1,28 @@
 import React, { useEffect, useRef, useState } from "react";
 import { VibesSwitch } from "./VibesSwitch.js";
-import { OptionButtons } from "./OptionButtons.js";
+import { OptionButtons, type OptionDecoration } from "./OptionButtons.js";
 import { ViewerTagView } from "./ViewerTagView.js";
 import { HandlePickerMenu, type HandleOption } from "./HandlePickerMenu.js";
+
+/**
+ * Per-chip cached-suggestion fast-path state (#2917), keyed in
+ * {@link UnifiedVibeCardProps.chipFastPaths} by the chip's display string.
+ *
+ * `shielded` is **server-authoritative**: it must come from a real
+ * `getCachedSuggestion` stay-`fsId` (blessed + source-public + visible) and is
+ * shown to EVERYONE as a "this one stays here" shield — never asserted from a
+ * client heuristic (that would be a phishing vector). `canBless`/`canUnbless` are
+ * owner-only affordances and are ignored unless the host also wires
+ * `onBlessChip`/`onUnblessChip`.
+ */
+export interface ChipFastPathState {
+  /** A blessed, servable stay exists for this chip — render the shield badge. */
+  readonly shielded?: boolean;
+  /** Owner-only: a result was produced for this chip and can be blessed. */
+  readonly canBless?: boolean;
+  /** Owner-only: this chip is blessed and can be unblessed (revoked). */
+  readonly canUnbless?: boolean;
+}
 
 export interface UnifiedVibeCardProps {
   appTitle: string;
@@ -11,6 +31,15 @@ export interface UnifiedVibeCardProps {
   chips?: readonly string[];
   onSelectChip?: (chip: string) => void;
   onSubmitOther?: (text: string) => void;
+  /** Per-chip cached-suggestion fast-path state (#2917), keyed by chip string.
+   *  Drives the server-authoritative shield badge and the owner-only
+   *  bless/unbless control. Omit to render plain chips. */
+  chipFastPaths?: Record<string, ChipFastPathState>;
+  /** Owner-only: feature a produced chip result as a fast-path "stay" (bless).
+   *  Wire only for the owner — the control is hidden otherwise. */
+  onBlessChip?: (chip: string) => void;
+  /** Owner-only: remove a chip's fast-path (unbless / revoke). */
+  onUnblessChip?: (chip: string) => void;
   /** Reserved for the verb-collapse work (#2679); not yet wired to any behavior. */
   isOwner?: boolean;
   handleSlug?: string;
@@ -327,6 +356,7 @@ export function UnifiedVibeCard(props: UnifiedVibeCardProps) {
                           // host surfaces via streamBody; we don't want the button to lock.
                           return false;
                         }}
+                        decorate={(option) => decorateChip(option, props)}
                       />
                     )}
                     <OtherRow onSubmitOther={props.onSubmitOther} />
@@ -584,6 +614,100 @@ function PublishBanner({ onPublish, publishing }: { readonly onPublish: () => vo
         {publishing ? "Publishing…" : "Publish"}
       </button>
     </div>
+  );
+}
+
+// Cached-suggestion fast-path chip decoration (#2917). Returns the per-chip
+// shield badge (server-authoritative "stays here") and the owner-only
+// bless/unbless control as an OptionButtons `OptionDecoration`. The badge sits
+// inside the chip button; the control is a sibling (a button can't nest a button).
+function decorateChip(option: string, props: UnifiedVibeCardProps): OptionDecoration | undefined {
+  const fp = props.chipFastPaths?.[option];
+  if (!fp) return undefined;
+  const badge = fp.shielded ? <ChipShieldBadge /> : undefined;
+  // Owner-only: unbless a blessed (shielded) chip, or bless a produced one. Gated
+  // on the host wiring the callback (the route only passes them for the owner).
+  const aside =
+    fp.canUnbless && props.onUnblessChip ? (
+      <FastPathToggle blessed onClick={() => props.onUnblessChip?.(option)} />
+    ) : fp.canBless && props.onBlessChip ? (
+      <FastPathToggle onClick={() => props.onBlessChip?.(option)} />
+    ) : undefined;
+  return badge || aside ? { badge, aside } : undefined;
+}
+
+// The server-authoritative "stays here" shield on a chip (#2917) — rendered ONLY
+// when getCachedSuggestion returned a real stay-fsId for that chip (blessed +
+// source-public + visible). Its single meaning: "this one stays in the same
+// namespace, on the same data" — not "fast" (once warm, everything is fast).
+function ChipShieldBadge() {
+  return (
+    <span
+      role="img"
+      aria-label="Stays here"
+      title="Featured fast path — clicking stays here, on the same data"
+      style={{ display: "inline-flex", flexShrink: 0, color: "#16a34a" }}
+    >
+      <svg
+        width="14"
+        height="14"
+        viewBox="0 0 24 24"
+        fill="currentColor"
+        stroke="currentColor"
+        strokeWidth={1.5}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        aria-hidden="true"
+      >
+        <path d="M12 3l7 3v5c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6l7-3z" />
+      </svg>
+    </span>
+  );
+}
+
+// Owner-only bless/unbless toggle (#2917), rendered beside a chip. "Feature"
+// (outline shield) blesses a produced result so visitors stay; "Featured" (filled
+// shield) unblesses it so clicks fork again (fail-to-fork).
+function FastPathToggle({ blessed, onClick }: { readonly blessed?: boolean; readonly onClick: () => void }) {
+  const label = blessed ? "Remove fast path (unbless)" : "Feature as fast path (bless)";
+  return (
+    <button
+      type="button"
+      aria-label={label}
+      title={label}
+      aria-pressed={Boolean(blessed)}
+      onClick={onClick}
+      className="shrink-0 rounded-md border px-2 py-1.5 text-xs font-semibold transition-colors"
+      style={{
+        display: "inline-flex",
+        alignItems: "center",
+        gap: 4,
+        cursor: "pointer",
+        whiteSpace: "nowrap",
+        ...(blessed
+          ? { color: "#15803d", background: "rgba(22,163,74,0.12)", borderColor: "rgba(22,163,74,0.5)" }
+          : {
+              color: "var(--color-light-primary, #333)",
+              background: "var(--color-light-background-01, #eee)",
+              borderColor: "var(--color-light-decorative-01, #ddd)",
+            }),
+      }}
+    >
+      <svg
+        width="13"
+        height="13"
+        viewBox="0 0 24 24"
+        fill={blessed ? "currentColor" : "none"}
+        stroke="currentColor"
+        strokeWidth={2}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        aria-hidden="true"
+      >
+        <path d="M12 3l7 3v5c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6l7-3z" />
+      </svg>
+      <span>{blessed ? "Featured" : "Feature"}</span>
+    </button>
   );
 }
 
