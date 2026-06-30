@@ -1,8 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { ensureSuperThis } from "@vibes.diy/identity";
 import { getKeyBag } from "@vibes.diy/identity/node";
-import type { SuperThis } from "@fireproof/core";
-import type { JWKPrivate, DeviceIdKeyBagItem, DeviceIdResult } from "@vibes.diy/identity";
+import type { SuperThis, JWKPrivate, DeviceIdKeyBagItem, DeviceIdResult } from "@vibes.diy/identity";
 import { Buffer } from "node:buffer";
 import { seedDeviceIdFromEnv, VIBES_DEVICE_ID_ENV } from "./device-id-env.js";
 
