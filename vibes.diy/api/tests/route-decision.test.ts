@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { routeDecision, shardKindForPath } from "../../pkg/workers/route-decision.js";
+import { backendDoName, parseBackendApiTarget, routeDecision, shardKindForPath } from "../../pkg/workers/route-decision.js";
 
 const HOSTNAME_BASE = "vibesdiy.net";
 
@@ -243,6 +243,66 @@ describe("worker routeDecision", () => {
 
   it("/vibe/ alone (nothing to strip) → ssr, not a trailing-slash redirect", () => {
     expect(decide({ pathname: "/vibe/" })).toBe("ssr");
+  });
+});
+
+describe("parseBackendApiTarget (#2856 B3)", () => {
+  const target = (opts: { pathname: string; hostname?: string }) =>
+    parseBackendApiTarget({
+      hostname: opts.hostname ?? "vibes.diy",
+      pathname: opts.pathname,
+      method: "GET",
+      hostnameBase: HOSTNAME_BASE,
+    });
+
+  it("extracts (owner, slug, path) from the published app subdomain", () => {
+    expect(target({ hostname: "todo--alice.vibesdiy.net", pathname: "/_api/webhooks/stripe" })).toEqual({
+      ownerHandle: "alice",
+      appSlug: "todo",
+      backendPath: "/webhooks/stripe",
+    });
+    // bare /_api → path "/"
+    expect(target({ hostname: "todo--alice.vibesdiy.net", pathname: "/_api" })).toEqual({
+      ownerHandle: "alice",
+      appSlug: "todo",
+      backendPath: "/",
+    });
+  });
+
+  it("extracts (owner, slug, path) from the viewer URL", () => {
+    expect(target({ pathname: "/vibe/alice/todo/_api/webhooks/stripe" })).toEqual({
+      ownerHandle: "alice",
+      appSlug: "todo",
+      backendPath: "/webhooks/stripe",
+    });
+    expect(target({ pathname: "/vibe/alice/todo/_api" })).toEqual({
+      ownerHandle: "alice",
+      appSlug: "todo",
+      backendPath: "/",
+    });
+  });
+
+  it("splits owner/slug on the first '--' and lowercases, matching extractHostToBindings", () => {
+    expect(target({ hostname: "My-App--Alice.vibesdiy.net", pathname: "/_api/x" })).toEqual({
+      ownerHandle: "alice",
+      appSlug: "my-app",
+      backendPath: "/x",
+    });
+  });
+
+  it("returns undefined for non-_api paths and non-subdomain hosts", () => {
+    expect(target({ hostname: "todo--alice.vibesdiy.net", pathname: "/_apiary" })).toBeUndefined();
+    expect(target({ hostname: "todo--alice.vibesdiy.net", pathname: "/index.html" })).toBeUndefined();
+    expect(target({ pathname: "/vibe/alice/todo" })).toBeUndefined();
+    expect(target({ pathname: "/_api/x" })).toBeUndefined(); // base host, not a vibe path
+  });
+});
+
+describe("backendDoName (#2856 B3)", () => {
+  it("is stable and collision-safe across the owner/slug split boundary", () => {
+    expect(backendDoName("alice", "todo")).toBe(backendDoName("alice", "todo"));
+    // length-prefixing: ("ab","c") and ("a","bc") must not collide.
+    expect(backendDoName("ab", "c")).not.toBe(backendDoName("a", "bc"));
   });
 });
 
