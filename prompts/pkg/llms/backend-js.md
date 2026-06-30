@@ -18,6 +18,8 @@ export const config = { scheduled: { interval: "5m" } };
 - `ctx.userInfo` — `{ userHandle } | null`. `null` for `scheduled` and for unauthenticated `fetch` (e.g. webhooks).
 - `ctx.appInfo` — `{ ownerHandle, appSlug }`. The vibe's identity; the public webhook URL follows from it.
 
+**Outbound HTTP: always call `globalThis.fetch(...)`, never bare `fetch(...)`.** This file _exports_ a function named `fetch` (the inbound handler), so inside the module a bare `fetch` resolves to **your own handler**, not the platform HTTP client — a bare `fetch("https://…")` inside `scheduled`/`onChange` would call your `fetch` handler with the wrong arguments. Use `globalThis.fetch` for every external request.
+
 ## When to use which handler — signal words
 
 - **`fetch`** — "webhook", "OAuth", "callback", "API endpoint", "receive", "form POST", "Stripe/Sonos/GitHub sends us…". External → us.
@@ -68,7 +70,7 @@ export async function scheduled(event, ctx) {
   const tokenDoc = await ctx.db.get("oauth-token");
   if (!tokenDoc) return; // not connected yet — nothing to poll
 
-  const res = await fetch("https://api.example.com/now-playing", {
+  const res = await globalThis.fetch("https://api.example.com/now-playing", {
     headers: { Authorization: `Bearer ${tokenDoc.accessToken}` },
   });
   const data = await res.json();
@@ -93,7 +95,7 @@ export async function onChange(event, ctx) {
   const isCreate = event.doc && !event.oldDoc;
 
   if (event.doc?.type === "order" && isCreate) {
-    await fetch("https://api.sendgrid.com/v3/mail/send", {
+    await globalThis.fetch("https://api.sendgrid.com/v3/mail/send", {
       method: "POST",
       headers: { Authorization: `Bearer ${ctx.secrets.SENDGRID_API_KEY}`, "Content-Type": "application/json" },
       body: JSON.stringify({
