@@ -27,11 +27,14 @@ export { DeviceIdSignMsg } from "./device-id/sign.js";
 export { DeviceIdCSR } from "./device-id/csr.js";
 export { DeviceIdVerifyMsg } from "./device-id/verify.js";
 export { DeviceIdCA } from "./device-id/ca.js";
-// Login device-id-register flow (the localhost cert handler — Bucket C / #1616).
-// Generic cmd-ts streaming primitives (isCmdProgress/sendProgress/…) are NOT
-// re-exported here: they're CLI-framework, not identity, and stay on core-cli.
-export { deviceIdRegisterEvento, isResDeviceIdRegister } from "@fireproof/core-cli";
-export type { ReqDeviceIdRegister } from "@fireproof/core-cli";
+// Login device-id-register flow (the localhost cert handler — Bucket C / #1616),
+// now lifted in-repo (#2894) and wired to the owned keybag / device-id crypto.
+// This was the last `@fireproof/core-cli` *value* import on identity's runtime
+// path; it now imports nothing of value from core-cli (types only). Generic
+// cmd-ts streaming primitives (isCmdProgress/sendProgress/…) are NOT re-exported
+// here: they're CLI-framework, not identity, and stay behind the cli-kit seam.
+export { deviceIdRegisterEvento, isResDeviceIdRegister } from "./device-id/register.js";
+export type { ReqDeviceIdRegister } from "./device-id/register.js";
 
 /**
  * Build a cached device-id token minter from the local keybag.
