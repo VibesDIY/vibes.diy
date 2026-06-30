@@ -252,12 +252,52 @@ jobs:
             --fromEnv MAX_APP_SLUG_PER_USER_ID \
             --fromEnv WORKSPACE_NPM_URL \
             --fromEnv VIBES_DIY_API_URL)
+          SECRET_BULK_LOG="${RUNNER_TEMP}/wrangler-secret-bulk.log"
+
+          secret_bulk() {
+            set +e
+            echo "$SECRETS" | pnpm exec wrangler secret --name "$WORKER_NAME" bulk 2>&1 | tee "$SECRET_BULK_LOG"
+            local status=${PIPESTATUS[1]}
+            set -e
+            return "$status"
+          }
+
+          deploy_preview() {
+            pnpm exec wrangler deploy --env preview --name "$WORKER_NAME"
+          }
+
+          secret_bulk_ok=false
           for attempt in 1 2 3; do
-            echo "$SECRETS" | pnpm exec wrangler secret --name $WORKER_NAME bulk && break
-            if [ "$attempt" -eq 3 ]; then echo "secret bulk failed after 3 attempts"; exit 1; fi
-            echo "secret bulk attempt $attempt failed (Cloudflare 10021?), retrying in 15s..."
+            secret_bulk && secret_bulk_ok=true && break
+            if [ "$attempt" -eq 3 ]; then break; fi
+            echo "secret bulk attempt $attempt failed, retrying in 15s..."
             sleep 15
           done
+
+          # Cloudflare's non-versions secret API can deadlock preview workers in a
+          # "latest version isn't currently deployed" state (error 10215). When
+          # that happens, publish the current worker first to clear the version
+          # state, then retry secrets and finish with the normal deploy below so
+          # the active version still includes the current secret set.
+          if [ "$secret_bulk_ok" != true ]; then
+            if ! grep -q 'code: 10215' "$SECRET_BULK_LOG"; then
+              echo "secret bulk failed after 3 attempts"
+              exit 1
+            fi
+            echo "secret bulk hit Cloudflare 10215; deploying first to clear preview-worker version state..."
+            for attempt in 1 2 3; do
+              deploy_preview && break
+              if [ "$attempt" -eq 3 ]; then echo "wrangler deploy failed during 10215 recovery"; exit 1; fi
+              echo "wrangler deploy recovery attempt $attempt failed, retrying in 15s..."
+              sleep 15
+            done
+            for attempt in 1 2 3; do
+              secret_bulk && secret_bulk_ok=true && break
+              if [ "$attempt" -eq 3 ]; then echo "secret bulk failed after 10215 deploy-first recovery"; exit 1; fi
+              echo "secret bulk recovery attempt $attempt failed, retrying in 15s..."
+              sleep 15
+            done
+          fi
 
           # Deploy with custom worker name. Routes are attached separately
           # via the zone-level Workers Routes API below: wrangler's `--route`
@@ -267,7 +307,7 @@ jobs:
           # (CF error code 10082). The zone-level endpoint embeds zone_id
           # in the URL so it doesn't need it in the body.
           for attempt in 1 2 3; do
-            pnpm exec wrangler deploy --env preview --name "$WORKER_NAME" && break
+            deploy_preview && break
             if [ "$attempt" -eq 3 ]; then echo "wrangler deploy failed after 3 attempts"; exit 1; fi
             echo "wrangler deploy attempt $attempt failed, retrying in 15s..."
             sleep 15
