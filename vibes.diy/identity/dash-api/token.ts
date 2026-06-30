@@ -66,22 +66,24 @@ export class DeviceIdApiToken implements FPApiToken {
     // to "true" in the worker env once the CA-signing CLI is published & adopted.
     // (A present-but-invalid chain signature is ALWAYS rejected, flag or not.)
     const requireCASignature = this.sthis.env.get("DEVICE_ID_REQUIRE_CA_SIGNATURE") === "true";
-    // #2824 adoption visibility: while enforcement is gated off, log whether each
-    // device-id token already carries the CA-signed cert chain (the `x5c#jwt`
-    // header). That turns "bake a few days" into "flip when chainSignature:absent
-    // ≈ 0" — a measured rollout instead of a calendar guess. Header decode is
-    // best-effort; a garbage token logs `absent` and still falls through to the
-    // verifier's own rejection below.
-    const rHeader = await exception2Result(() => decodeProtectedHeader(token));
-    const chainSignature =
-      !rHeader.isErr() && typeof (rHeader.Ok() as { "x5c#jwt"?: unknown })["x5c#jwt"] === "string" ? "present" : "absent";
-    this.sthis.logger
-      .Info()
-      .Any({ event: "device-id-verify", chainSignature, requireCASignature })
-      .Msg("device-id-chain-signature");
     const verify = new DeviceIdVerifyMsg(this.sthis.txt.base64, [rCa.Ok()], { maxAge: 3600, requireCASignature, ...this.opts });
     const res = await verify.verifyWithCertificate(token, FPDeviceIDSessionSchema);
     if (res.valid) {
+      // #2824 adoption visibility: log whether a SUCCESSFULLY-verified device-id
+      // token carries the CA-signed cert chain (the `x5c#jwt` header). Emitting
+      // only on `res.valid` keeps the signal clean: probe traffic that isn't a
+      // device-id token (e.g. a Clerk bearer that `/_auth/session` tries against
+      // this verifier first, since `tokenApi` registers device-id before clerk)
+      // fails here and is never counted — so `chainSignature:absent` means a
+      // genuine legacy device-id minter, not Clerk traffic. That turns "bake a few
+      // days" into "flip when absent ≈ 0", a measured rollout instead of a guess.
+      const rHeader = await exception2Result(() => decodeProtectedHeader(token));
+      const chainSignature =
+        !rHeader.isErr() && typeof (rHeader.Ok() as { "x5c#jwt"?: unknown })["x5c#jwt"] === "string" ? "present" : "absent";
+      this.sthis.logger
+        .Info()
+        .Any({ event: "device-id-verify", chainSignature, requireCASignature })
+        .Msg("device-id-chain-signature");
       const creatingUser = (res.certificate.certificate.asCert() as { creatingUser?: { type?: string; claims?: unknown } })
         .creatingUser;
       if (!creatingUser || creatingUser.type !== "clerk") {

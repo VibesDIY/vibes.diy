@@ -261,6 +261,32 @@ describe("auth token verify — golden (SUT via @vibes.diy/identity/server)", { 
     expect(sigs).toEqual(["present", "absent"]);
   });
 
+  // The log fires ONLY on a successful device-id verify, so non-device-id probe
+  // traffic (a Clerk bearer that `/_auth/session` tries against this verifier
+  // first) never pollutes the `absent` rollout signal. Pin that a failed verify
+  // emits no adoption log at all. (Codex/Charlie review on #2956.)
+  it("#2824: verify() emits NO adoption log for a token that fails device-id verification", async () => {
+    const { logger, logCollector } = MockLogger();
+    const logSthis = ensureSuperThis({ logger });
+    const logToken = new DeviceIdApiToken(logSthis, { deviceIdCA: ca, clockTolerance: 5, maxAge: 3600 } as never);
+
+    // A Clerk-shaped RS256 bearer (no x5c device cert) — the kind of token the
+    // bearer-bridge probes against device-id before falling through to clerk.
+    const { privateKey } = await generateKeyPair("RS256", { extractable: true });
+    const clerkBearer = await new SignJWT(clerkClaim() as Record<string, unknown>)
+      .setProtectedHeader({ alg: "RS256", typ: "JWT", kid: "golden-clerk" })
+      .setIssuedAt()
+      .setExpirationTime("1h")
+      .sign(privateKey);
+
+    expect((await logToken.verify(clerkBearer)).isErr()).toBe(true); // fails device-id verify
+    expect((await logToken.verify("not.a.jwt")).isErr()).toBe(true); // garbage probe
+
+    await logger.Flush();
+    const sigs = (logCollector.Logs() as Record<string, unknown>[]).filter((l) => l.msg === "device-id-chain-signature");
+    expect(sigs).toEqual([]);
+  });
+
   // --- Clerk RS256 token verify (legitimate) ---------------------------------
   it("clerk: an RS256 token signed by the configured key verifies", async () => {
     const { privateKey, publicKey } = await generateKeyPair("RS256", { extractable: true });
