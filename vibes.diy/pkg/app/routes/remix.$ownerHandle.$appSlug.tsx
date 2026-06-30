@@ -44,7 +44,8 @@ export default function RemixRoute() {
       // the exact source slugs come straight from the fork response, so no
       // server resolution is needed. (Was a local Fireproof doc — #2934.)
       try {
-        sessionStorage.setItem(`remixOf:${fork.appSlug}`, `${fork.srcUserSlug}/${fork.srcAppSlug}`);
+        // Key on owner+slug (slugs aren't globally unique across owners).
+        sessionStorage.setItem(`remixOf:${fork.ownerHandle}/${fork.appSlug}`, `${fork.srcUserSlug}/${fork.srcAppSlug}`);
       } catch {
         // sessionStorage unavailable — the indicator is non-essential.
       }
