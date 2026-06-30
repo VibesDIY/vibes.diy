@@ -6,8 +6,7 @@ import { cd, $ } from "zx";
 import { SemVer } from "semver";
 import { exception2Result, Result, HandleTriggerCtx, EventoHandler, EventoResultType, Option } from "@adviser/cement";
 import { type } from "arktype";
-import { CliCtx } from "../cli-ctx.js";
-import { sendMsg, sendProgress, WrapCmdTSMsg } from "../cmd-evento.js";
+import { CliCtx, sendMsg, sendProgress, WrapCmdTSMsg } from "@vibes.diy/cmd-harness";
 import { VersionPinner } from "../version-pinner.js";
 
 export type VersionModifier = "~" | "^" | "";

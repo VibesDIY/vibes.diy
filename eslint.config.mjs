@@ -64,8 +64,10 @@ const opts = tseslint.config(
       "**/*.js.map",
       "**/*.d.ts.map",
       "**/pkg/*.js",
-      "vibes.diy/build-cli/run.js",
-      "vibes.diy/deploy-cli/run.js",
+      // Bin bootstraps for the command CLIs (build-cli, deploy-cli, …) — plain
+      // JS, not part of any tsconfig. One glob so a new *-cli package doesn't
+      // need a hand-added ignore line. See VibesDIY/vibes.diy#2926.
+      "vibes.diy/*/run.js",
     ],
   },
   {

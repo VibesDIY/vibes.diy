@@ -2,8 +2,7 @@ import { command, flag } from "cmd-ts";
 import { $, quotePowerShell } from "zx";
 import { Result, HandleTriggerCtx, EventoHandler, EventoResultType, Option } from "@adviser/cement";
 import { type } from "arktype";
-import { CliCtx } from "../cli-ctx.js";
-import { sendMsg, WrapCmdTSMsg } from "../cmd-evento.js";
+import { CliCtx, sendMsg, WrapCmdTSMsg } from "@vibes.diy/cmd-harness";
 
 function isPowerShell() {
   // PowerShell sets these environment variables

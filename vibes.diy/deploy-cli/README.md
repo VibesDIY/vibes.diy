@@ -20,4 +20,8 @@ The bin is named `deploy-cli` (not `core-cli`) so it never collides with
 node vibes.diy/deploy-cli/run.js writeEnv --out - --json --fromEnv KEY_A …
 ```
 
+The cmd-ts streaming harness (cli-ctx, the run loop, the evento bus) lives in
+`@vibes.diy/cmd-harness` and is shared with `@vibes.diy/build-cli`; this package
+holds only the `writeEnv` command itself (VibesDIY/vibes.diy#2926).
+
 See `docs/superpowers/specs/2026-06-30-rehome-writeenv-retire-core-cli-design.md`.

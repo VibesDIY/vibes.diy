@@ -8,6 +8,7 @@ export default defineConfig({
       "vibes.diy/tests/app/ssr/vitest.config.ts",
       "vibes.diy/api/tests/vitest.config.ts",
       "vibes.diy/api/impl/vitest.config.ts",
+      "vibes.diy/cmd-harness/vitest.config.ts",
       "vibes.diy/cmd-tools/vitest.config.ts",
       "vibes.diy/deploy-cli/vitest.config.ts",
       "vibes.diy/identity/vitest.config.ts",
