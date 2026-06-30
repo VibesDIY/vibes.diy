@@ -3,7 +3,7 @@
 // committed predecessor.
 
 import { beforeAll, beforeEach, describe, expect, it } from "vitest";
-import { MsgBase } from "@adviser/cement";
+import { MsgBase } from "@vibes.diy/api-types";
 import { ensureSuperThis } from "@vibes.diy/identity";
 import { createTestDeviceCA } from "@fireproof/core-device-id";
 import { emitBackendOnChange } from "@vibes.diy/api-svc/intern/emit-backend-onchange.js";
