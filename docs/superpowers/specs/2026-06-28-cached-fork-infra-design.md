@@ -146,6 +146,72 @@ staged-fsId` map is needed: likely a tag in the staged version's `meta` plus a
   slug/data namespace). Adopt-in-place is the nicer owner outcome but needs new
   plumbing; deferred until the lookup can fire.
 
+## Implementation plan — the enablement PR (proposed, for review)
+
+This turns the re-opened questions into a concrete plan for the PR that makes the
+read lane actually fire. **Posted for focused review before the code lands**;
+decisions below were settled with jchris. The full auto-precompute remains
+deferred — this enables the lane and a manual/owner-driven producer sufficient to
+validate end-to-end in a PR preview.
+
+**1. Storage — `AppSettings`, no SQL migration (resolves OQ#1).** The dedupe
+index lives in the per-app `AppSettings` JSON, not a new table or column.
+`AppSettings.entry.settings` is composed by `buildEnsureEntryResult` from an array
+of `type`-tagged `ActiveEntry` variants; `dbAcls` is the precedent for _many of a
+kind_ composing into a keyed map (`{ [dbName]: acl }`). So add an
+`active.cached-suggestion` entry `{ type, key, fsId }` (one appended per cached
+chip) composing into **`entry.settings.cachedSuggestions: { [cacheKey]: fsId }`**,
+plus a `reqEnsureAppSettingsCachedSuggestion` write. The `AppSettings_ownerHandle_appSlug_idx`
+already serves the lookup; the `settings` column is already JSON, so this is a
+code-only arktype change — **no `drizzle-kit push` migration**.
+
+**2. Keying — on the served version, not the route param.** The cache key
+(`cachedSuggestionKey`, already shipped) is `(source-version, transform, model)`
+and is fsId-specific. The client must feed the **effective served fsId**
+(`fsId ?? draftFsId ?? resolvedFsId`, the route's `effectiveFsId`), NOT the raw
+route param (which is undefined on the canonical `/vibe/<owner>/<slug>` URL).
+Producer and reader must agree on that concrete fsId or a result staged against
+version A would be served for version B.
+
+**3. Producer — hook the owner's existing in-place generation (no headless
+codegen).** When an owner runs an **offered chip** and the turn settles to a new
+fsId (`persistedFsRef`), write a `cached-suggestion` entry mapping
+`cachedSuggestionKey(servedVersion, chipText) → newFsId`. So the first time the
+owner runs a chip, it's cached for every later visitor — reusing the codegen path
+that already exists. Auto/background precompute + spend ceiling stay deferred
+(OQ#3).
+
+**4. Reader — an anonymous `getCachedSuggestion` projection (mirrors `getVibeChips`
+#2755).** Given `(ownerHandle, appSlug, key)`, return the staged `fsId` iff the
+app is public and the entry exists. `optAuth`, gated on app-access visibility, so
+a logged-out visitor can resolve it. The client `resolveCachedRead` `lookup` (the
+`() => null` seam shipped in the core PR) calls this; on a hit it navigates to
+`/vibe/<owner>/<slug>/<fsId>`.
+
+**5. Serve — explicit grant allowance (resolves OQ#5; security-sensitive).**
+`get-app-by-fsid` grants anonymous `public-access` only when
+`app.mode === "production"`, so a staged _unpublished_ version is `not-found`
+today. Add a narrow rule: **if the requested `fsId` is registered in the source
+app's `cachedSuggestions` map AND the app is public, grant `public-access` for
+that exact fsId even when `mode !== "production"`.** Staged versions stay genuinely
+unpublished (never the HEAD, not "published"); the map entry is the single,
+auditable source of truth for "anonymously readable staged version." This change
+gets a dedicated `/security-review` pass.
+
+**6. Client — flag + the chip allowlist (PII boundary).** The read-lane lookup is
+gated behind a preview env flag (default off; on in `[env.preview]`) so prod stays
+a no-op while we validate in the PR preview. The offered-chip allowlist
+(`cardChips` match, shipped) stays the client-side PII guard; the server reader is
+the authority (it only returns chip-derived public entries).
+
+**End-to-end validation (in the PR preview, flag on):** as a logged-out browser on
+a pre-warmed public demo vibe — click a curated chip → instant navigate to the
+staged version, no login/codegen/fork; click "Other"/custom → write lane (login).
+Negative: a custom prompt never resolves to a read.
+
+**Still deferred after this PR:** auto/background precompute + spend ceiling
+(OQ#3), read-lane outcome telemetry, and the owner's adopt-in-place-on-hit option.
+
 ## Open questions (resolve in brainstorm before planning)
 
 1. **Where the dedupe index lives.** D1 table keyed by a hash of `(source,
