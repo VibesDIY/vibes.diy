@@ -240,31 +240,43 @@ export type BlockMsgs = typeof BlockMsgs.infer;
 export type LineMsg = typeof LineMsg.infer;
 export type BeginMsg = typeof BeginMsg.infer;
 
+// Optional streamId filter shared by the type guards below.
+//
+// Footgun guard rail (VibesDIY/vibes.diy#2707): these guards are often passed
+// *bare* as `Array.filter`/`.map`/`.some`/`.find` callbacks. JS supplies the
+// element **index** (a number) in the second-arg slot, which would otherwise be
+// mistaken for a real streamId and silently drop every element past index 0
+// (real streamIds are generated id strings, never numbers). Treating only an
+// actual string as a filter makes the guards safe to pass bare while preserving
+// the genuine stream-scoped use (e.g. filesystem-stream.ts).
+const streamIdMatches = (msg: unknown, streamId?: string): boolean =>
+  typeof streamId !== "string" || (msg as { streamId?: string }).streamId === streamId;
+
 // Type guards with optional streamId filter
 export const isBlockBegin = (msg: unknown, streamId?: string): msg is BlockBeginMsg =>
-  !(BlockBeginMsg(msg) instanceof type.errors) && (!streamId || (msg as BlockBeginMsg).streamId === streamId);
+  !(BlockBeginMsg(msg) instanceof type.errors) && streamIdMatches(msg, streamId);
 export const isBlockEnd = (msg: unknown, streamId?: string): msg is BlockEndMsg =>
-  !(BlockEndMsg(msg) instanceof type.errors) && (!streamId || (msg as BlockEndMsg).streamId === streamId);
+  !(BlockEndMsg(msg) instanceof type.errors) && streamIdMatches(msg, streamId);
 export const isBlockStats = (msg: unknown, streamId?: string): msg is BlockStatsMsg =>
-  !(BlockStatsMsg(msg) instanceof type.errors) && (!streamId || (msg as BlockStatsMsg).streamId === streamId);
+  !(BlockStatsMsg(msg) instanceof type.errors) && streamIdMatches(msg, streamId);
 export const isToplevelBegin = (msg: unknown, streamId?: string): msg is ToplevelBeginMsg =>
-  !(ToplevelBeginMsg(msg) instanceof type.errors) && (!streamId || (msg as ToplevelBeginMsg).streamId === streamId);
+  !(ToplevelBeginMsg(msg) instanceof type.errors) && streamIdMatches(msg, streamId);
 export const isToplevelLine = (msg: unknown, streamId?: string): msg is ToplevelLineMsg =>
-  !(ToplevelLineMsg(msg) instanceof type.errors) && (!streamId || (msg as ToplevelLineMsg).streamId === streamId);
+  !(ToplevelLineMsg(msg) instanceof type.errors) && streamIdMatches(msg, streamId);
 export const isToplevelEnd = (msg: unknown, streamId?: string): msg is ToplevelEndMsg =>
-  !(ToplevelEndMsg(msg) instanceof type.errors) && (!streamId || (msg as ToplevelEndMsg).streamId === streamId);
+  !(ToplevelEndMsg(msg) instanceof type.errors) && streamIdMatches(msg, streamId);
 export const isCodeBegin = (msg: unknown, streamId?: string): msg is CodeBeginMsg =>
-  !(CodeBeginMsg(msg) instanceof type.errors) && (!streamId || (msg as CodeBeginMsg).streamId === streamId);
+  !(CodeBeginMsg(msg) instanceof type.errors) && streamIdMatches(msg, streamId);
 export const isCodeLine = (msg: unknown, streamId?: string): msg is CodeLineMsg =>
-  !(CodeLineMsg(msg) instanceof type.errors) && (!streamId || (msg as CodeLineMsg).streamId === streamId);
+  !(CodeLineMsg(msg) instanceof type.errors) && streamIdMatches(msg, streamId);
 export const isCodeEnd = (msg: unknown, streamId?: string): msg is CodeEndMsg =>
-  !(CodeEndMsg(msg) instanceof type.errors) && (!streamId || (msg as CodeEndMsg).streamId === streamId);
+  !(CodeEndMsg(msg) instanceof type.errors) && streamIdMatches(msg, streamId);
 export const isCodeTruncated = (msg: unknown, streamId?: string): msg is CodeTruncatedMsg =>
-  !(CodeTruncatedMsg(msg) instanceof type.errors) && (!streamId || (msg as CodeTruncatedMsg).streamId === streamId);
+  !(CodeTruncatedMsg(msg) instanceof type.errors) && streamIdMatches(msg, streamId);
 export const isBlockImage = (msg: unknown, streamId?: string): msg is BlockImageMsg =>
-  !(BlockImageMsg(msg) instanceof type.errors) && (!streamId || (msg as BlockImageMsg).streamId === streamId);
+  !(BlockImageMsg(msg) instanceof type.errors) && streamIdMatches(msg, streamId);
 export const isBlockStreamMsg = (msg: unknown, streamId?: string): msg is BlockStreamMsg =>
-  !(BlockStreamMsg(msg) instanceof type.errors) && (!streamId || (msg as BlockStreamMsg).streamId === streamId);
+  !(BlockStreamMsg(msg) instanceof type.errors) && streamIdMatches(msg, streamId);
 
 // Regex to match code fence start: ```lang or just ```
 const CODE_FENCE_START = /^```(\w*)$/;
