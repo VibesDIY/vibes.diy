@@ -228,6 +228,26 @@ export function cachedSuggestionKey(input: CachedSuggestionKeyInput): string {
   return `cf-${hashToBase36(canonical)}`;
 }
 
+/**
+ * The content-address key a CURATED cross-slug VIBE link is stored and looked up
+ * under (#2941): the source vibe's `(ownerHandle, appSlug, transform)` with **no
+ * source fsId** (and model-agnostic — a curated edge is a human label, not a
+ * model output). Keying on the slug alone is what makes the link **stable across
+ * every version of the source vibe**: updating the source mints a new fsId, but
+ * the link key doesn't move, so the curated edge keeps resolving with no re-bless
+ * (the administrative task that fsId-pinned keys would force). Same-slug *stays*
+ * stay fsId-pinned via {@link cachedSuggestionKey} — they're a specific version's
+ * cached result and *should* break when the source changes; only curated vibe
+ * links are slug-scoped.
+ */
+export function cachedSuggestionVibeLinkKey(args: {
+  readonly ownerHandle: string;
+  readonly appSlug: string;
+  readonly transform: string;
+}): string {
+  return cachedSuggestionKey({ source: { ownerHandle: args.ownerHandle, appSlug: args.appSlug }, transform: args.transform });
+}
+
 // The canonical content-address shape produced by {@link cachedSuggestionKey}:
 // `cf-<base36>-<base36>`, `[a-z0-9-]`, ≤32 chars. Public read endpoints accept
 // `key` as a free string (the arktype schema only requires `string`), so a
@@ -321,10 +341,39 @@ export async function resolveCachedRead(args: {
   readonly model?: string;
   readonly lookup: (req: { key: string; source: CachedSuggestionSource }) => Promise<CachedSuggestionHit | null>;
 }): Promise<CachedReadDecision> {
-  const key = cachedSuggestionKey({ source: args.source, transform: args.transform, ...(args.model ? { model: args.model } : {}) });
+  // A chip resolves against up to two content-address keys, tried most-specific
+  // first (#2941):
+  //   1. the version-pinned STAY key — `(source incl. fsId, transform[, model])`,
+  //      a cached result staged under THIS exact source version; then
+  //   2. the slug-scoped curated LINK key — `(owner, slug, transform)` with NO
+  //      fsId — a curated cross-slug vibe link that must survive source-vibe
+  //      updates (updating the source mints a new fsId, but the link key doesn't
+  //      move, so no re-bless is needed). See {@link cachedSuggestionVibeLinkKey}.
+  // The stay is the more specific result so it wins when both exist; the link is
+  // the durable curated fallback. When the source carries no fsId the two keys
+  // coincide and we look up once.
+  const stayKey = cachedSuggestionKey({
+    source: args.source,
+    transform: args.transform,
+    ...(args.model ? { model: args.model } : {}),
+  });
+  const candidates: { readonly key: string; readonly source: CachedSuggestionSource }[] = [{ key: stayKey, source: args.source }];
+  if (args.source.fsId) {
+    const linkSource: CachedSuggestionSource = { ownerHandle: args.source.ownerHandle, appSlug: args.source.appSlug };
+    candidates.push({
+      key: cachedSuggestionVibeLinkKey({
+        ownerHandle: args.source.ownerHandle,
+        appSlug: args.source.appSlug,
+        transform: args.transform,
+      }),
+      source: linkSource,
+    });
+  }
   try {
-    const hit = await args.lookup({ key, source: args.source });
-    if (hit) return { kind: "read", href: cachedVibeHref(hit), hit };
+    for (const candidate of candidates) {
+      const hit = await args.lookup(candidate);
+      if (hit) return { kind: "read", href: cachedVibeHref(hit), hit };
+    }
   } catch {
     // Reads soft-fail to the write lane; writes keep fail-loud semantics.
   }

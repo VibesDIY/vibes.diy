@@ -26,6 +26,7 @@ import {
   resolveCachedHit,
   normalizeTransform,
   cachedSuggestionKey,
+  cachedSuggestionVibeLinkKey,
 } from "@vibes.diy/api-types";
 import { switchActiveHandle, createAndUseHandle, handleAvatarUrl } from "./handle-picker-actions.js";
 import { uploadHandleAvatar } from "../lib/upload-avatar.js";
@@ -642,17 +643,27 @@ export default function VibeIframeWrapper() {
           // #2941). Both come from the server; the client never asserts either.
           let shielded = false;
           let jump = false;
+          // SHIELD (same-slug stay) — keyed on the EXACT source version
+          // (clickSourceFsId), so it only ever appears when a click would hit.
           if (clickSourceFsId) {
             const shieldKey = cachedSuggestionKey({ source: { ownerHandle, appSlug, fsId: clickSourceFsId }, transform: chip });
             try {
               const r = await vctx.sharedApi.getCachedSuggestion({ ownerHandle, appSlug, key: shieldKey });
-              if (r.isOk()) {
-                const res = r.Ok();
-                shielded = Boolean(res.fsId);
-                jump = Boolean(res.targetAppSlug);
-              }
+              if (r.isOk()) shielded = Boolean(r.Ok().fsId);
             } catch {
-              // Soft-fail: leave the chip un-decorated (it falls to the write lane on click).
+              // Soft-fail: leave the chip un-shielded (it falls to the write lane on click).
+            }
+          }
+          // JUMP (curated cross-slug link) — keyed on the SLUG alone (#2941), NOT
+          // the source fsId, so the glyph survives a source-vibe update without a
+          // re-bless (matches the durable link key the click lane resolves).
+          {
+            const linkKey = cachedSuggestionVibeLinkKey({ ownerHandle, appSlug, transform: chip });
+            try {
+              const r = await vctx.sharedApi.getCachedSuggestion({ ownerHandle, appSlug, key: linkKey });
+              if (r.isOk()) jump = Boolean(r.Ok().targetAppSlug);
+            } catch {
+              // Soft-fail: leave the chip without a jump glyph (the click lane still resolves it).
             }
           }
           // Control key = the production-HEAD key the produce/bless entries live under.

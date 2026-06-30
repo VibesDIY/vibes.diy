@@ -2,6 +2,7 @@ import { describe, it, expect } from "vitest";
 import {
   normalizeTransform,
   cachedSuggestionKey,
+  cachedSuggestionVibeLinkKey,
   isCachedSuggestionKeyShape,
   cachedVibeHref,
   isReadableCachedGrant,
@@ -67,6 +68,50 @@ describe("cachedSuggestionKey", () => {
     const k1 = cachedSuggestionKey({ source: { ownerHandle: "ab", appSlug: "c" }, transform: "x" });
     const k2 = cachedSuggestionKey({ source: { ownerHandle: "a", appSlug: "bc" }, transform: "x" });
     expect(k1).not.toBe(k2);
+  });
+});
+
+describe("cachedSuggestionVibeLinkKey", () => {
+  it("ignores the source fsId — a curated link is keyed on the slug, so it survives source-vibe updates (#2941)", () => {
+    const v1 = cachedSuggestionKey({
+      source: { ownerHandle: "system", appSlug: "bloom-root", fsId: "zV1" },
+      transform: "Make it a drum machine",
+    });
+    const v2 = cachedSuggestionKey({
+      source: { ownerHandle: "system", appSlug: "bloom-root", fsId: "zV2" },
+      transform: "Make it a drum machine",
+    });
+    const link = cachedSuggestionVibeLinkKey({ ownerHandle: "system", appSlug: "bloom-root", transform: "Make it a drum machine" });
+    // The two fsId-pinned stay keys differ from each other AND from the link key…
+    expect(v1).not.toBe(v2);
+    expect(link).not.toBe(v1);
+    expect(link).not.toBe(v2);
+    // …but the link key is exactly the fsId-less content-address — stable across versions.
+    expect(link).toBe(
+      cachedSuggestionKey({ source: { ownerHandle: "system", appSlug: "bloom-root" }, transform: "Make it a drum machine" })
+    );
+  });
+
+  it("is deterministic and distinguishes owner, slug, and transform", () => {
+    const base = cachedSuggestionVibeLinkKey({ ownerHandle: "system", appSlug: "bloom-root", transform: "Make it a drum machine" });
+    expect(cachedSuggestionVibeLinkKey({ ownerHandle: "system", appSlug: "bloom-root", transform: "Make it a drum machine" })).toBe(
+      base
+    );
+    expect(
+      cachedSuggestionVibeLinkKey({ ownerHandle: "other", appSlug: "bloom-root", transform: "Make it a drum machine" })
+    ).not.toBe(base);
+    expect(
+      cachedSuggestionVibeLinkKey({ ownerHandle: "system", appSlug: "bloom-machine", transform: "Make it a drum machine" })
+    ).not.toBe(base);
+    expect(
+      cachedSuggestionVibeLinkKey({ ownerHandle: "system", appSlug: "bloom-root", transform: "Make it a memory game" })
+    ).not.toBe(base);
+  });
+
+  it("normalizes the transform the same way the stay key does", () => {
+    expect(
+      cachedSuggestionVibeLinkKey({ ownerHandle: "system", appSlug: "bloom-root", transform: "▸ Make it a DRUM machine." })
+    ).toBe(cachedSuggestionVibeLinkKey({ ownerHandle: "system", appSlug: "bloom-root", transform: "make it a drum   machine" }));
   });
 });
 
@@ -148,6 +193,99 @@ describe("resolveCachedRead", () => {
         throw new Error("network down");
       },
     });
+    expect(decision.kind).toBe("write");
+  });
+
+  it("tries the version-pinned stay first, then the slug-scoped curated link (#2941)", async () => {
+    const stayKey = cachedSuggestionKey({ source, transform: "Make it a drum machine" });
+    const linkKey = cachedSuggestionVibeLinkKey({
+      ownerHandle: source.ownerHandle,
+      appSlug: source.appSlug,
+      transform: "Make it a drum machine",
+    });
+    // The curated link points at ANOTHER vibe — cross-slug, no fsId.
+    const target: CachedSuggestionHit = { ownerHandle: "system", appSlug: "bloom-machine" };
+    const seen: string[] = [];
+    const decision = await resolveCachedRead({
+      source,
+      transform: "Make it a drum machine",
+      lookup: async ({ key, source: s }) => {
+        seen.push(key);
+        if (key === stayKey) return null; // no cached stay for this exact version
+        if (key === linkKey) {
+          expect(s.fsId).toBeUndefined(); // the link candidate drops the source fsId
+          return target;
+        }
+        return null;
+      },
+    });
+    expect(seen).toEqual([stayKey, linkKey]); // stay tried first, durable link second
+    expect(decision.kind).toBe("read");
+    if (decision.kind === "read") {
+      expect(decision.hit).toEqual(target);
+      expect(decision.href).toBe("/vibe/system/bloom-machine"); // canonical target URL, no fsId
+    }
+  });
+
+  it("resolves the SAME curated link for two different source versions (no re-bless on update, #2941)", async () => {
+    const target: CachedSuggestionHit = { ownerHandle: "system", appSlug: "bloom-machine" };
+    const linkOnly =
+      (linkKey: string) =>
+      async ({ key }: { key: string }) =>
+        key === linkKey ? target : null;
+    const linkKey = cachedSuggestionVibeLinkKey({
+      ownerHandle: "system",
+      appSlug: "bloom-root",
+      transform: "Make it a drum machine",
+    });
+    const v1 = await resolveCachedRead({
+      source: { ownerHandle: "system", appSlug: "bloom-root", fsId: "zV1" },
+      transform: "Make it a drum machine",
+      lookup: linkOnly(linkKey),
+    });
+    const v2 = await resolveCachedRead({
+      source: { ownerHandle: "system", appSlug: "bloom-root", fsId: "zV2" },
+      transform: "Make it a drum machine",
+      lookup: linkOnly(linkKey),
+    });
+    expect(v1.kind).toBe("read");
+    expect(v2.kind).toBe("read");
+    if (v1.kind === "read" && v2.kind === "read") {
+      expect(v1.hit).toEqual(target);
+      expect(v2.hit).toEqual(target); // updating the source vibe (new fsId) keeps the edge live
+    }
+  });
+
+  it("a present stay wins without ever consulting the curated link", async () => {
+    const staged: CachedSuggestionHit = { ownerHandle: source.ownerHandle, appSlug: source.appSlug, fsId: "zStaged" };
+    const seen: string[] = [];
+    const decision = await resolveCachedRead({
+      source,
+      transform: "Make it a drum machine",
+      lookup: async ({ key }) => {
+        seen.push(key);
+        return staged; // stay key hits immediately
+      },
+    });
+    expect(seen).toEqual([cachedSuggestionKey({ source, transform: "Make it a drum machine" })]); // only one lookup
+    expect(decision.kind).toBe("read");
+    if (decision.kind === "read") expect(decision.hit).toEqual(staged);
+  });
+
+  it("looks up once when the source carries no fsId (stay and link coincide)", async () => {
+    const sourceNoFs = { ownerHandle: "meghan", appSlug: "bloom" } as const;
+    const seen: string[] = [];
+    const decision = await resolveCachedRead({
+      source: sourceNoFs,
+      transform: "Make it a drum machine",
+      lookup: async ({ key }) => {
+        seen.push(key);
+        return null;
+      },
+    });
+    expect(seen).toEqual([
+      cachedSuggestionVibeLinkKey({ ownerHandle: "meghan", appSlug: "bloom", transform: "Make it a drum machine" }),
+    ]);
     expect(decision.kind).toBe("write");
   });
 });
