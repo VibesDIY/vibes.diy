@@ -5,7 +5,7 @@ import SessionSidebar from "../components/SessionSidebar.js";
 export function meta() {
   return [
     { title: "About - Vibes DIY" },
-    { name: "description", content: "Make apps with your friends — or run your whole operation. So easy even AI can do it." },
+    { name: "description", content: "Make apps with your friends — or run the front counter. So easy even AI can do it." },
   ];
 }
 
@@ -20,8 +20,8 @@ const link: React.CSSProperties = {
 // people you share with remix their own version. Lead with the ones that do real work.
 const useCases: { title: string; body: string }[] = [
   {
-    title: "Take orders and payments",
-    body: "Stand up a daily-specials board that takes the order and the payment, plus a prep checklist the whole counter shares.",
+    title: "Take the order",
+    body: "Stand up a daily-specials board that takes the order, plus a prep checklist the whole counter shares — add checkout when you're ready.",
   },
   {
     title: "Kill the spreadsheet",
@@ -92,7 +92,7 @@ export default function About() {
                 Software is getting weird again.
               </h1>
               <p style={{ marginTop: 16, fontSize: 20, maxWidth: 640 }}>
-                Make apps with your friends&mdash;or run your whole operation. So easy even AI can do it.
+                Make apps with your friends&mdash;or run the front counter. So easy even AI can do it.
               </p>
             </div>
           </div>
@@ -179,13 +179,16 @@ export default function About() {
               }}
             />
             <div style={{ padding: "28px 28px", backgroundColor: "rgb(22, 163, 74)", color: "white" }}>
-              <h2 style={{ fontWeight: "bold", fontSize: 40, lineHeight: "42px" }}>Takes the order. Takes the payment.</h2>
+              <h2 style={{ fontWeight: "bold", fontSize: 40, lineHeight: "42px" }}>
+                Takes the order. Adds payments when you&rsquo;re ready.
+              </h2>
               <p style={{ marginTop: 12, fontWeight: "bold", fontSize: 18, lineHeight: "24px" }}>
-                Real commerce, not a mockup&mdash;your app can take an order and a payment the moment it&rsquo;s live.
+                Real commerce, not a mockup&mdash;your app takes orders the moment it&rsquo;s live, and you wire up a payment flow
+                when you&rsquo;re ready.
               </p>
               <p style={{ marginTop: 10, fontSize: 14, opacity: 0.9, maxWidth: 620 }}>
-                Sell a thing, book a slot, collect a deposit. The same app that impresses the group chat can run the front
-                counter&mdash;and replace the spreadsheet you&rsquo;ve been duct-taping together.
+                Take orders, book slots, manage the queue&mdash;then add checkout when you want it. The same app that impresses the
+                group chat can run the front counter and replace the spreadsheet you&rsquo;ve been duct-taping together.
               </p>
             </div>
           </div>
