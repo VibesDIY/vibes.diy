@@ -103,10 +103,12 @@ export function buildVibeWorkerCode(input: {
 
 /**
  * Hex SHA-256 — the `env.LOADER.get` id, so identical code reuses one isolate.
- * Hashes only the per-vibe modules (main + vibe) plus a stable `depVersion` token,
- * NOT the full multi-hundred-KB dep bundle: the deps are identical across every
- * vibe, so folding their content into each per-vibe hash would be wasted work
- * while a version bump (e.g. a React upgrade) still re-keys via `depVersion`.
+ * Hashes the per-vibe modules (main + vibe) plus `depVersion` — a content digest
+ * of the bundled dep modules — NOT the full multi-hundred-KB bundle inline: the
+ * deps are identical across every vibe, so folding their content into each
+ * per-vibe hash would be wasted work, while `depVersion` still re-keys the isolate
+ * whenever ANY dep changes (render-vibes, react-dom/server, arktype, shims, React
+ * — #2967 Codex P2), preventing stale-runtime isolate reuse after a deploy.
  */
 async function hashWorkerCode(code: WorkerCode, depVersion: string): Promise<string> {
   const payload = `${code.compatibilityDate}\n${code.mainModule}\n${code.modules[MAIN_MODULE]}\n${code.modules[VIBE_MODULE]}\n${depVersion}`;
@@ -136,7 +138,7 @@ export class WorkerLoaderExecutor implements Executor {
     // (empty) only in unbuilt unit runs, where the fake binding never loads them.
     const deps = await loadSsrIsolateDeps();
     const code = buildVibeWorkerCode({ module, mountParams: input.mountParams, depModules: deps.modules });
-    const id = await hashWorkerCode(code, deps.reactVersion);
+    const id = await hashWorkerCode(code, deps.depsVersion);
     const stub = this.loader.get(id, () => code);
     const response = await stub.getEntrypoint().fetch(new Request(SSR_REQUEST_URL));
     return { html: await response.text() };

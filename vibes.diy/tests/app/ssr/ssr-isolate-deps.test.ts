@@ -25,7 +25,7 @@ import { lockedVersions } from "../../../api/svc/intern/grouped-vibe-import-map.
 
 const RENDER_VIBES_KEY = "@vibes.diy/vibe-runtime/render-vibes.js";
 
-let deps: { modules: Record<string, string>; reactVersion: string };
+let deps: { modules: Record<string, string>; reactVersion: string; depsVersion: string };
 
 beforeAll(async () => {
   deps = await buildSsrIsolateDepModules();
@@ -81,6 +81,12 @@ describe("SSR isolate dep bundle", () => {
     // the react / jsx-runtime entries are thin re-export shims.
     expect(deps.modules[RENDER_VIBES_KEY].length).toBeGreaterThan(50_000);
     expect(deps.modules["react/jsx-runtime"].length).toBeLessThan(1_000);
+  });
+
+  it("exposes a content digest of the dep bundle for the isolate cache key (#2967 P2)", () => {
+    // The executor folds this — not the React version — into the env.LOADER.get id,
+    // so any change to the bundled runtime re-keys the isolate (no stale reuse).
+    expect(deps.depsVersion).toMatch(/^[0-9a-f]{16}$/);
   });
 
   it("renders a single-file vibe to HTML through buildVibeWorkerCode + the deps", async () => {
