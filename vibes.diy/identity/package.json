@@ -23,6 +23,7 @@
     "@fireproof/core-types-device-id": "0.24.19",
     "@fireproof/core-types-protocols-dashboard": "0.24.19",
     "@hono/node-server": "~1.19.14",
+    "@vibes.diy/cmd-tools": "workspace:*",
     "arktype": "~2.2.0",
     "hono": "~4.12.12",
     "jose": "~6.2.2",
