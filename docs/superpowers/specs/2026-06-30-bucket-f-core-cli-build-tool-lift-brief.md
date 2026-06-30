@@ -165,6 +165,30 @@ asked for.
    when the last build-tool consumer is off it, only the two runtime-seam owners
    remain (follow-ons #2/#3).
 
+## Acceptance criteria
+
+1. **Build-only harness — no transitive runtime pull (hard gate).** Lift only the
+   build commands (`tsc`, `build`, `version-pinner`) and a **trimmed** bin/registry
+   harness. Do **not** lift `cmd-evento.js` or `main.js` wholesale: `cmd-evento.js`'s
+   registry imports `device-id-cmd.js`, which imports `@fireproof/core-device-id`
+   (and the runtime tree), and `main.js` imports `@fireproof/core-runtime` directly.
+   The new `@vibes.diy/build-cli` must have **zero** dependency — direct or
+   transitive — on any `@fireproof/core-*` runtime package. _Verify:_ its production
+   `node_modules`/import graph (`npm ls @fireproof/core-runtime @fireproof/core-keybag
+@fireproof/core-device-id` from the package, or a bundle/import-graph check)
+   resolves none of them. (Confirmed necessary by `@CharlieHelps`' review: the
+   slice's own files are clean, but the registry drags the runtime in if lifted
+   verbatim.)
+2. **Every script consumer repointed (live scan).** All packages the live
+   `grep -rl "core-cli"` scan finds (34 today, incl. `@vibes.diy/cmd-tools`) invoke
+   the new bin, and each gets an **explicit** devDep on `@vibes.diy/build-cli` — no
+   consumer left resolving the bin via hoisting.
+3. **Byte-equivalent publish artifacts.** The required `publish_build` guard stays
+   green and per-package `pack` tarballs match pre-migration (see Verification).
+4. **`@fireproof/core-cli` removed** from every build-tool consumer; only the two
+   runtime-seam owners (`vibes-diy`, `vibes.diy/identity`) still declare it, left for
+   follow-ons #2/#3.
+
 ## Verification (prove byte-equivalence — this is the acceptance bar)
 
 - The repo already has a **required CI guard**: `pnpm -r run --if-present pack`
