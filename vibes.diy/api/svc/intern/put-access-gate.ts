@@ -32,7 +32,7 @@ export async function runPutAccessGate(
     readonly appSlug: string;
     readonly dbName: string;
     readonly fnCid: string;
-    readonly accessFnAssetUri?: string;
+    readonly accessFnAssetUri?: string; // ResolvedAccessBinding.accessFnAssetUri (string | undefined)
     readonly accessFnDbName: string; // afbRow.dbName, for extractExportSource
     readonly docId: string;
     readonly doc: unknown;
