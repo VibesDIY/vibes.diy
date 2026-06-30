@@ -66,7 +66,6 @@
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
-    "@fireproof/core-cli": "0.24.19",
     "@playwright/test": "^1.61.1",
     "@types/deno": "^2.7.0",
     "@types/node": "^25.9.2",
@@ -83,6 +82,7 @@
     "typescript": "6.0.3",
     "typescript-eslint": "^8.62.0",
     "vitest": "~4.1.9",
-    "wrangler": "^4.99.0"
+    "wrangler": "^4.99.0",
+    "@vibes.diy/build-cli": "workspace:*"
   }
 }

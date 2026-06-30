@@ -34,11 +34,11 @@
     "drizzle-orm": "^0.45.2"
   },
   "devDependencies": {
-    "@fireproof/core-cli": "0.24.19",
     "@vitest/ui": "~4.1.9",
     "jose": "~6.2.2",
     "vitest": "~4.1.9",
-    "zx": "^8.8.5"
+    "zx": "^8.8.5",
+    "@vibes.diy/build-cli": "workspace:*"
   },
   "repository": {
     "type": "git",

@@ -54,7 +54,8 @@
   "devDependencies": {
     "@types/ws": "^8.18.1",
     "@vitest/browser-playwright": "~4.1.9",
-    "vitest": "~4.1.9"
+    "vitest": "~4.1.9",
+    "@vibes.diy/build-cli": "workspace:*"
   },
   "repository": {
     "type": "git",

@@ -47,7 +47,6 @@
     "vibes-diy": "workspace:*"
   },
   "devDependencies": {
-    "@fireproof/core-cli": "0.24.19",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
     "@types/react": "~19.2.14",
@@ -57,7 +56,8 @@
     "@vitest/browser-playwright": "~4.1.9",
     "vite": "7.3.5",
     "vite-tsconfig-paths": "^6.1.1",
-    "vitest": "~4.1.9"
+    "vitest": "~4.1.9",
+    "@vibes.diy/build-cli": "workspace:*"
   },
   "repository": {
     "type": "git",

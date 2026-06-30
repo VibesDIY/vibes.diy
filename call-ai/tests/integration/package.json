@@ -35,14 +35,14 @@
   ],
   "license": "Apache-2.0",
   "devDependencies": {
-    "@fireproof/core-cli": "0.24.19",
     "@playwright/test": "^1.61.1",
     "@types/node": "^25.9.2",
     "@vitest/browser-playwright": "~4.1.9",
     "tsx": "^4.22.4",
     "typescript": "^6.0.3",
     "vitest": "~4.1.9",
-    "zx": "^8.8.4"
+    "zx": "^8.8.4",
+    "@vibes.diy/build-cli": "workspace:*"
   },
   "engines": {
     "node": ">=20.0.0"

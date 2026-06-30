@@ -28,7 +28,8 @@
     "typescript-eslint": "^8.62.0",
     "vite": "^7.3.5",
     "vite-tsconfig-paths": "^6.1.1",
-    "vitest": "~4.1.9"
+    "vitest": "~4.1.9",
+    "@vibes.diy/build-cli": "workspace:*"
   },
   "repository": {
     "type": "git",

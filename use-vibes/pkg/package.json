@@ -35,9 +35,9 @@
     "react": ">=19.1.0"
   },
   "devDependencies": {
-    "@fireproof/core-cli": "0.24.19",
     "@vitest/browser-playwright": "~4.1.9",
-    "vitest": "~4.1.9"
+    "vitest": "~4.1.9",
+    "@vibes.diy/build-cli": "workspace:*"
   },
   "repository": {
     "type": "git",
