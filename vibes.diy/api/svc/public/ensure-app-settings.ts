@@ -262,6 +262,38 @@ async function applyCachedSuggestionBless(
   const b = req.cachedSuggestionBless;
   // A cross-slug VIBE link (#2941) names a target vibe instead of a staged fsId.
   const isVibeLink = typeof b.targetAppSlug === "string" && b.targetAppSlug.length > 0;
+
+  // Reject malformed/mixed payloads at WRITE time (Charlie #2941 review,
+  // condition 1) — never persist an ambiguous bless that a later read would have
+  // to disambiguate. A bless is EXACTLY one shape:
+  const hasTargetOwner = typeof b.targetOwnerHandle === "string" && b.targetOwnerHandle.length > 0;
+  const hasTargetSlug = typeof b.targetAppSlug === "string" && b.targetAppSlug.length > 0;
+  const hasStay = (b.fsId?.length ?? 0) > 0 || (b.sourceFsId?.length ?? 0) > 0;
+  if (hasTargetOwner !== hasTargetSlug) {
+    // A vibe link needs BOTH halves of the target tuple, or neither.
+    return [res.settings, "a cross-slug bless requires both targetOwnerHandle and targetAppSlug"];
+  }
+  if (isVibeLink && hasStay) {
+    // Can't be both a cross-slug link and a same-slug stay.
+    return [res.settings, "a bless is either a stay (fsId+sourceFsId) or a cross-slug link (target*), not both"];
+  }
+
+  // Cross-OWNER curated link telemetry (Charlie #2941 review, rec 2): a source
+  // owner pointing a chip at a DIFFERENT owner's vibe is editorial curation, not
+  // a confidentiality issue (the reader still requires the target public), but it
+  // carries social/trust weight — surface it so cross-owner links aren't blind.
+  if (isVibeLink && b.op === "bless" && b.targetOwnerHandle !== req.ownerHandle) {
+    ensureLogger(vctx.sthis, "ensureAppSettings")
+      .Info()
+      .Str("reason", "crossOwnerCuratedLink")
+      .Str("sourceOwnerHandle", req.ownerHandle)
+      .Str("sourceAppSlug", req.appSlug)
+      .Str("targetOwnerHandle", b.targetOwnerHandle ?? "")
+      .Str("targetAppSlug", b.targetAppSlug ?? "")
+      .Str("approvedBy", approverUserId)
+      .Msg("cross-owner curated cross-slug link blessed");
+  }
+
   if (approverUserId !== ownerUserId) {
     // Admin-on-behalf: audit every non-owner bless/revoke that passed the
     // allowlist gate. Logged as an ATTEMPT — the produce-before-bless / tuple

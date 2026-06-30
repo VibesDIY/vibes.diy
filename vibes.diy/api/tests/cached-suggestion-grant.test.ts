@@ -468,5 +468,146 @@ describe(
       });
       expect(await readerTarget({ appSlug: src.appSlug, ownerHandle: src.ownerHandle, key })).toBeUndefined();
     });
+
+    // ── Charlie #2941 review — hardening assertions ──────────────────────────
+
+    it("rejects malformed/mixed bless payloads at WRITE time, not just at read (cond. 1)", async () => {
+      const src = await publicAppWithStagedVersion();
+      const tgt = await publicApp();
+      await api.ensureAppSettings({ appSlug: tgt.appSlug, ownerHandle: tgt.ownerHandle, publicAccess: { enable: true } });
+
+      // (a) Partial target tuple (owner, no slug) → rejected, never served.
+      const kPartial = cachedSuggestionKey({
+        source: { ownerHandle: src.ownerHandle, appSlug: src.appSlug, fsId: src.sourceFsId },
+        transform: "partial target tuple",
+      });
+      await api.ensureAppSettings({
+        appSlug: src.appSlug,
+        ownerHandle: src.ownerHandle,
+        cachedSuggestionBless: { key: kPartial, targetOwnerHandle: tgt.ownerHandle, op: "bless" },
+      });
+      expect(await readerTarget({ appSlug: src.appSlug, ownerHandle: src.ownerHandle, key: kPartial })).toBeUndefined();
+
+      // (b) Mixed stay + link (fsId AND target) → rejected; neither served.
+      const kMixed = cachedSuggestionKey({
+        source: { ownerHandle: src.ownerHandle, appSlug: src.appSlug, fsId: src.sourceFsId },
+        transform: "mixed stay and link",
+      });
+      await produce(api, {
+        appSlug: src.appSlug,
+        ownerHandle: src.ownerHandle,
+        key: kMixed,
+        fsId: src.stagedFsId,
+        sourceFsId: src.sourceFsId,
+      });
+      await api.ensureAppSettings({
+        appSlug: src.appSlug,
+        ownerHandle: src.ownerHandle,
+        cachedSuggestionBless: {
+          key: kMixed,
+          fsId: src.stagedFsId,
+          sourceFsId: src.sourceFsId,
+          targetOwnerHandle: tgt.ownerHandle,
+          targetAppSlug: tgt.appSlug,
+          op: "bless",
+        },
+      });
+      expect(await readerTarget({ appSlug: src.appSlug, ownerHandle: src.ownerHandle, key: kMixed })).toBeUndefined();
+      expect(await readerFsId({ appSlug: src.appSlug, ownerHandle: src.ownerHandle, key: kMixed })).toBeUndefined();
+    });
+
+    it("a cross-slug bless never grants a staged fsId via get-app-by-fsid (grant-lane isolation)", async () => {
+      const src = await publicAppWithStagedVersion();
+      const tgt = await publicApp();
+      await api.ensureAppSettings({ appSlug: tgt.appSlug, ownerHandle: tgt.ownerHandle, publicAccess: { enable: true } });
+      // A produced-but-unblessed staged fsId — grantable ONLY via a same-slug stay bless.
+      const kStay = cachedSuggestionKey({
+        source: { ownerHandle: src.ownerHandle, appSlug: src.appSlug, fsId: src.sourceFsId },
+        transform: "grant lane probe",
+      });
+      await produce(api, {
+        appSlug: src.appSlug,
+        ownerHandle: src.ownerHandle,
+        key: kStay,
+        fsId: src.stagedFsId,
+        sourceFsId: src.sourceFsId,
+      });
+      // A cross-slug bless on a DIFFERENT key must not open the staged fsId grant.
+      const kVibe = cachedSuggestionKey({
+        source: { ownerHandle: src.ownerHandle, appSlug: src.appSlug, fsId: src.sourceFsId },
+        transform: "grant lane vibe link",
+      });
+      await blessVibe(api, {
+        appSlug: src.appSlug,
+        ownerHandle: src.ownerHandle,
+        key: kVibe,
+        targetOwnerHandle: tgt.ownerHandle,
+        targetAppSlug: tgt.appSlug,
+        op: "bless",
+      });
+      expect(await grantOf(src.stagedFsId, { appSlug: src.appSlug, ownerHandle: src.ownerHandle })).not.toBe("public-access");
+    });
+
+    it("all miss reasons return the SAME no-oracle shape (no fsId, no target)", async () => {
+      const src = await publicAppWithStagedVersion();
+      // (a) unblessed key.
+      const kMiss = cachedSuggestionKey({
+        source: { ownerHandle: src.ownerHandle, appSlug: src.appSlug, fsId: src.sourceFsId },
+        transform: "never blessed shape",
+      });
+      const rMiss = await api2.getCachedSuggestion({ ownerHandle: src.ownerHandle, appSlug: src.appSlug, key: kMiss });
+      // (b) cross-slug bless to a NON-public target.
+      const tgt = await publicApp(); // production, publicAccess NOT enabled
+      const kPriv = cachedSuggestionKey({
+        source: { ownerHandle: src.ownerHandle, appSlug: src.appSlug, fsId: src.sourceFsId },
+        transform: "private target shape",
+      });
+      await blessVibe(api, {
+        appSlug: src.appSlug,
+        ownerHandle: src.ownerHandle,
+        key: kPriv,
+        targetOwnerHandle: tgt.ownerHandle,
+        targetAppSlug: tgt.appSlug,
+        op: "bless",
+      });
+      const rPriv = await api2.getCachedSuggestion({ ownerHandle: src.ownerHandle, appSlug: src.appSlug, key: kPriv });
+      if (rMiss.isErr() || rPriv.isErr()) assert.fail("getCachedSuggestion failed");
+      const missShape = {
+        fsId: rMiss.Ok().fsId,
+        targetOwnerHandle: rMiss.Ok().targetOwnerHandle,
+        targetAppSlug: rMiss.Ok().targetAppSlug,
+      };
+      expect(missShape).toEqual({ fsId: undefined, targetOwnerHandle: undefined, targetAppSlug: undefined });
+      expect({
+        fsId: rPriv.Ok().fsId,
+        targetOwnerHandle: rPriv.Ok().targetOwnerHandle,
+        targetAppSlug: rPriv.Ok().targetAppSlug,
+      }).toEqual(missShape);
+    });
+
+    it("a target going non-public flips the cross-slug read to a miss immediately", async () => {
+      const src = await publicAppWithStagedVersion();
+      const tgt = await publicApp();
+      await api.ensureAppSettings({ appSlug: tgt.appSlug, ownerHandle: tgt.ownerHandle, publicAccess: { enable: true } });
+      const key = cachedSuggestionKey({
+        source: { ownerHandle: src.ownerHandle, appSlug: src.appSlug, fsId: src.sourceFsId },
+        transform: "flip target visibility",
+      });
+      await blessVibe(api, {
+        appSlug: src.appSlug,
+        ownerHandle: src.ownerHandle,
+        key,
+        targetOwnerHandle: tgt.ownerHandle,
+        targetAppSlug: tgt.appSlug,
+        op: "bless",
+      });
+      expect(await readerTarget({ appSlug: src.appSlug, ownerHandle: src.ownerHandle, key })).toEqual({
+        ownerHandle: tgt.ownerHandle,
+        appSlug: tgt.appSlug,
+      });
+      // Soft-unpublish the TARGET → the cross-slug read must miss right away.
+      await api.setUnpublish({ ownerHandle: tgt.ownerHandle, appSlug: tgt.appSlug, unpublish: true });
+      expect(await readerTarget({ appSlug: src.appSlug, ownerHandle: src.ownerHandle, key })).toBeUndefined();
+    });
   }
 );
