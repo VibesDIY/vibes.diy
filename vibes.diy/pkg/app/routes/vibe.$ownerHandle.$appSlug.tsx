@@ -36,6 +36,10 @@ import { VibeEditorPanel } from "../components/vibe-editor/VibeEditorPanel.js";
 import { type EditorTab } from "../components/vibe-editor/editor-tab-state.js";
 import { InVibeBlurOverlay } from "../components/InVibeBlurOverlay.js";
 import { GenerationStreamView } from "../components/GenerationStreamView.js";
+import ThemeControls from "../components/ThemeControls.js";
+import ThemePickerModal from "../components/ThemePickerModal.js";
+import { useIframeCurrentTokens } from "../hooks/useIframeCurrentTokens.js";
+import { vibesThemes, getThemeBySlug, type VibesTheme } from "@vibes.diy/prompts";
 import { toast } from "react-hot-toast";
 import { isMetaScreenShot, isMetaTitle, LLMChatEntry, type ResGetAppByFsId, type VibesFPApiParameters } from "@vibes.diy/api-types";
 import { computeCardVariant } from "./vibe-card-variant.js";
@@ -1189,6 +1193,138 @@ export default function VibeIframeWrapper() {
     dispatch: editorDispatch,
   });
 
+  // ── Theme + palette changer (moved here from the Settings tab) ──────────────
+  // The structural theme picker (ThemePickerModal) + the live palette/token
+  // editor (ColorsetPicker) now live in the Edit card composer, mirroring the
+  // legacy /chat surface. Owner-only: changing the structural theme fires an
+  // in-place codegen turn, and persisting theme/palette settings is an owner op.
+  const [themeModalOpen, setThemeModalOpen] = useState(false);
+  const [selectedTheme, setSelectedTheme] = useState<VibesTheme | null>(null);
+  const [colorThemeSlug, setColorThemeSlug] = useState<string | null>(null);
+  // Tokens the running app declares on `:root` (streamed from the sandbox), so
+  // the palette picker can edit + remap every custom property the app has.
+  const iframeCurrentTokens = useIframeCurrentTokens();
+
+  // Hydrate the selected structural theme + palette from app_settings so the
+  // composer's Theme button + palette swatch reflect the persisted choice.
+  useEffect(() => {
+    if (!isOwner || !ownerHandle || !appSlug) {
+      setSelectedTheme(null);
+      setColorThemeSlug(null);
+      return;
+    }
+    let cancelled = false;
+    void vctx.sharedApi.ensureAppSettings({ ownerHandle, appSlug }).then((res) => {
+      if (cancelled || res.isErr()) return;
+      const s = res.Ok().settings.entry.settings;
+      setSelectedTheme(s.theme ? (getThemeBySlug(s.theme) ?? null) : null);
+      setColorThemeSlug(s.colorTheme ?? null);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [isOwner, ownerHandle, appSlug, vctx.sharedApi]);
+
+  // Structural theme select: persist the catalog slug, then fire an in-place
+  // restyle turn so the app re-generates against it. Imported (custom) .md
+  // themes apply session-only — they're not in the catalog, so the backend
+  // would drop them on validation. Mirrors the /chat handleThemeSelect flow,
+  // but submits via the in-vibe generation hook instead of a textarea ref.
+  const handleThemeSelect = useCallback(
+    (theme: VibesTheme) => {
+      setSelectedTheme(theme);
+      setThemeModalOpen(false);
+      if (!ownerHandle || !appSlug) return;
+      const isCatalog = !!getThemeBySlug(theme.slug);
+      if (!isCatalog) return;
+      // Wait for the theme to land in app_settings before kicking off the
+      // restyle turn — the server builds the prompt from the active theme.
+      void vctx.sharedApi.ensureAppSettings({ ownerHandle, appSlug, theme: theme.slug }).then((res) => {
+        if (res.isErr()) return;
+        generation.sendPrompt("Please update the theme");
+      });
+    },
+    [vctx.sharedApi, ownerHandle, appSlug, generation.sendPrompt]
+  );
+
+  // Persist a palette choice (slug only) so future codegen turns and reloads
+  // honor it. Live recolor is the separate handleApplyLivePalette push.
+  const handlePaletteSelect = useCallback(
+    (slug: string) => {
+      setColorThemeSlug(slug);
+      if (ownerHandle && appSlug) void vctx.sharedApi.ensureAppSettings({ ownerHandle, appSlug, colorTheme: slug });
+    },
+    [vctx.sharedApi, ownerHandle, appSlug]
+  );
+
+  // Live-only push: postMessage the composed CSS variable overrides into the
+  // running iframe (palette swatch + per-token edits). Session-only — a reload
+  // shows the palette's pristine values until a regenerate bakes them in.
+  const handleApplyLivePalette = useCallback(
+    (colors: Record<string, string>, colorsDark?: Record<string, string>) => {
+      if (!vctx.srvVibeSandbox) return;
+      vctx.srvVibeSandbox.pushColorOverride({
+        type: "vibe.evt.color-override",
+        colors,
+        ...(colorsDark ? { colorsDark } : {}),
+      });
+    },
+    [vctx.srvVibeSandbox]
+  );
+
+  // Reset reverts the override: empty `colors` clears the injected <style>, and
+  // colorTheme:null drops the active.colorTheme so codegen falls back to the
+  // structural theme's default palette.
+  const handlePaletteReset = useCallback(() => {
+    setColorThemeSlug(null);
+    if (vctx.srvVibeSandbox) {
+      vctx.srvVibeSandbox.pushColorOverride({ type: "vibe.evt.color-override", colors: {} });
+    }
+    if (ownerHandle && appSlug) void vctx.sharedApi.ensureAppSettings({ ownerHandle, appSlug, colorTheme: null });
+  }, [vctx.srvVibeSandbox, vctx.sharedApi, ownerHandle, appSlug]);
+
+  // Regenerate-with-palette: persist the slug, then fire a turn that bakes the
+  // literal :root block into the app code. Mirrors the /chat regenerate flow.
+  const handlePaletteRegenerate = useCallback(
+    (paletteSlug: string, paletteName: string, rootCssBlock: string) => {
+      setColorThemeSlug(paletteSlug);
+      if (!ownerHandle || !appSlug) return;
+      const prompt = `Update the styles to use the "${paletteName}" palette.
+
+Copy this \`<style>\` block VERBATIM into the app (replace any existing :root block). Do not change hex values, do not round, do not invent a dark-mode block if none is shown below. Reference every variable via \`bg-[var(--token)]\` / \`text-[var(--token)]\` / \`border-[var(--token)]\` — no inline hex literals.
+
+\`\`\`html
+<style>
+${rootCssBlock}
+</style>
+\`\`\``;
+      void vctx.sharedApi.ensureAppSettings({ ownerHandle, appSlug, colorTheme: paletteSlug }).then((res) => {
+        if (res.isErr()) return;
+        generation.sendPrompt(prompt);
+      });
+    },
+    [vctx.sharedApi, ownerHandle, appSlug, generation.sendPrompt]
+  );
+
+  // The composer control cluster, owner-only. Non-owners can't persist settings
+  // or generate in place (their edits fork), so the theme changer stays hidden
+  // for them — they get the chips/Other affordances only.
+  const composerControls =
+    isOwner && ownerHandle && appSlug ? (
+      <ThemeControls
+        selectedTheme={selectedTheme}
+        onThemeButtonClick={() => setThemeModalOpen(true)}
+        paletteOptions={vibesThemes}
+        selectedPaletteSlug={colorThemeSlug ?? selectedTheme?.slug ?? undefined}
+        onSelectPalette={handlePaletteSelect}
+        onApplyLivePalette={handleApplyLivePalette}
+        onResetPalette={handlePaletteReset}
+        onRegeneratePalette={handlePaletteRegenerate}
+        paletteStorageKey={`vibes-overrides:${ownerHandle}/${appSlug}`}
+        paletteCurrentTokens={iframeCurrentTokens}
+      />
+    ) : undefined;
+
   const shareModal = useShareModal({
     ownerHandle: ownerHandle ?? "",
     appSlug: appSlug ?? "",
@@ -1543,6 +1679,9 @@ export default function VibeIframeWrapper() {
                   chips={cardChips}
                   onSelectChip={handleEditPrompt}
                   onSubmitOther={handleEditPrompt}
+                  // Theme + palette changer above the composer (owner-only),
+                  // moved here from the Settings tab.
+                  composerControls={composerControls}
                   // Cached-suggestion fast paths (#2917): the server-authoritative
                   // shield badge for everyone + the owner-only bless/unbless control.
                   chipFastPaths={chipFastPaths}
@@ -1652,6 +1791,17 @@ export default function VibeIframeWrapper() {
         <Delayed ms={1000}>
           <SessionSidebar isVisible={isSidebarVisible} onClose={closeSidebar} sessionId="" dmUnreadCount={dmUnreadCount} />
         </Delayed>
+      )}
+      {/* Structural-theme picker for the Edit card composer's Theme button.
+          Owner-only — the trigger lives in `composerControls`, gated the same way. */}
+      {isOwner && (
+        <ThemePickerModal
+          open={themeModalOpen}
+          onClose={() => setThemeModalOpen(false)}
+          onSelect={handleThemeSelect}
+          selectedSlug={selectedTheme?.slug}
+          themes={vibesThemes}
+        />
       )}
       {loginOverlay}
     </>
