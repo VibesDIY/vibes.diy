@@ -18,7 +18,6 @@
     "@adviser/cement": "^0.5.34",
     "@adviser/ts-xxhash": "~1.0.2",
     "@clerk/shared": "^4.22.0",
-    "@fireproof/core-cli": "0.24.19",
     "@fireproof/core-types-base": "0.24.19",
     "@fireproof/core-types-device-id": "0.24.19",
     "@fireproof/core-types-protocols-dashboard": "0.24.19",
@@ -33,6 +32,7 @@
   },
   "devDependencies": {
     "@types/deno": "~2.5.0",
+    "@vibes.diy/build-cli": "workspace:*",
     "vitest": "~4.1.9"
   },
   "repository": {
