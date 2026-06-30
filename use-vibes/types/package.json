@@ -11,7 +11,6 @@
   },
   "license": "Apache-2.0",
   "dependencies": {
-    "@fireproof/core": "0.24.19",
     "@fireproof/core-types-protocols-cloud": "0.24.19",
     "@fireproof/use-fireproof": "0.24.19",
     "call-ai": "workspace:*"

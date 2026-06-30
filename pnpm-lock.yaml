@@ -85,9 +85,6 @@ importers:
       '@adviser/cement':
         specifier: ^0.5.34
         version: 0.5.34(patch_hash=2f6391e0a56fe610ad9ae72430b603360ee9c00812af21a792562791454613c7)(typescript@6.0.3)
-      '@fireproof/core':
-        specifier: 0.24.19
-        version: 0.24.19(bufferutil@4.1.0)(react@19.2.7)(typescript@6.0.3)(utf-8-validate@6.0.6)
       '@fireproof/core-types-protocols-cloud':
         specifier: 0.24.19
         version: 0.24.19(typescript@6.0.3)
@@ -257,9 +254,6 @@ importers:
       '@adviser/cement':
         specifier: ^0.5.34
         version: 0.5.34(patch_hash=2f6391e0a56fe610ad9ae72430b603360ee9c00812af21a792562791454613c7)(typescript@6.0.3)
-      '@fireproof/core':
-        specifier: 0.24.19
-        version: 0.24.19(bufferutil@4.1.0)(react@19.2.7)(typescript@6.0.3)(utf-8-validate@6.0.6)
       '@fireproof/core-types-protocols-dashboard':
         specifier: 0.24.19
         version: 0.24.19(typescript@6.0.3)
@@ -320,9 +314,6 @@ importers:
       '@adviser/cement':
         specifier: ^0.5.34
         version: 0.5.34(patch_hash=2f6391e0a56fe610ad9ae72430b603360ee9c00812af21a792562791454613c7)(typescript@6.0.3)
-      '@fireproof/core':
-        specifier: 0.24.19
-        version: 0.24.19(bufferutil@4.1.0)(react@19.2.7)(typescript@6.0.3)(utf-8-validate@6.0.6)
       '@fireproof/core-types-protocols-cloud':
         specifier: 0.24.19
         version: 0.24.19(typescript@6.0.3)
@@ -433,9 +424,6 @@ importers:
       '@clerk/react':
         specifier: ^6.11.1
         version: 6.11.1(react-dom@19.2.7(react@19.2.7))(react@19.2.7)
-      '@fireproof/core':
-        specifier: 0.24.19
-        version: 0.24.19(bufferutil@4.1.0)(react@19.2.7)(typescript@6.0.3)(utf-8-validate@6.0.6)
       '@fireproof/core-types-protocols-cloud':
         specifier: 0.24.19
         version: 0.24.19(typescript@6.0.3)
@@ -628,9 +616,6 @@ importers:
 
   use-vibes/pkg:
     dependencies:
-      '@fireproof/core':
-        specifier: 0.24.19
-        version: 0.24.19(bufferutil@4.1.0)(react@19.2.7)(typescript@6.0.3)(utf-8-validate@6.0.6)
       '@fireproof/core-types-protocols-cloud':
         specifier: 0.24.19
         version: 0.24.19(typescript@6.0.3)
@@ -744,9 +729,6 @@ importers:
 
   use-vibes/types:
     dependencies:
-      '@fireproof/core':
-        specifier: 0.24.19
-        version: 0.24.19(bufferutil@4.1.0)(react@19.2.7)(typescript@6.0.3)(utf-8-validate@6.0.6)
       '@fireproof/core-types-protocols-cloud':
         specifier: 0.24.19
         version: 0.24.19(typescript@6.0.3)
@@ -781,9 +763,6 @@ importers:
       '@adviser/cement':
         specifier: ^0.5.34
         version: 0.5.34(patch_hash=2f6391e0a56fe610ad9ae72430b603360ee9c00812af21a792562791454613c7)(typescript@6.0.3)
-      '@fireproof/core':
-        specifier: 0.24.19
-        version: 0.24.19(bufferutil@4.1.0)(react@19.2.7)(typescript@6.0.3)(utf-8-validate@6.0.6)
       '@fireproof/core-types-protocols-cloud':
         specifier: 0.24.19
         version: 0.24.19(typescript@6.0.3)
@@ -1492,9 +1471,6 @@ importers:
       '@cloudflare/workers-types':
         specifier: 4.20260617.1
         version: 4.20260617.1
-      '@fireproof/core':
-        specifier: 0.24.19
-        version: 0.24.19(bufferutil@4.1.0)(react@19.2.7)(typescript@6.0.3)(utf-8-validate@6.0.6)
       '@fireproof/core-types-protocols-dashboard':
         specifier: 0.24.19
         version: 0.24.19(typescript@6.0.3)
@@ -3512,11 +3488,6 @@ packages:
 
   '@fireproof/core-types-runtime@0.24.19':
     resolution: {integrity: sha512-Z6GSN1zrpC55kVDnHyLCBQqNqiDAQhD8tCHjsMCIX7qcZFErO3NG5TUY7Cp8rpbNoc/CwuYc17Bcbn86cY+Biw==}
-
-  '@fireproof/core@0.24.19':
-    resolution: {integrity: sha512-j2hCYNQrqmL14KZkAusbT3Mwrgm2gBk7F9q/79JBA10u59VwC3o5Xr35v0yhHAAn1HV2yoUIl0gWevLlmzqnog==}
-    peerDependencies:
-      react: '>=18.0.0'
 
   '@fireproof/use-fireproof@0.24.19':
     resolution: {integrity: sha512-q50Htis+vjnhJOeJvJdS+OgYzywupUGDKF2zVq1go8Qau4qqgyaJ8XE6Y+ZQtQn9fOv2WRsxv1H2x8eRyN3/gw==}
@@ -11117,19 +11088,6 @@ snapshots:
       multiformats: 13.4.2
     transitivePeerDependencies:
       - typescript
-
-  '@fireproof/core@0.24.19(bufferutil@4.1.0)(react@19.2.7)(typescript@6.0.3)(utf-8-validate@6.0.6)':
-    dependencies:
-      '@adviser/cement': 0.5.34(patch_hash=2f6391e0a56fe610ad9ae72430b603360ee9c00812af21a792562791454613c7)(typescript@6.0.3)
-      '@fireproof/core-base': 0.24.19(bufferutil@4.1.0)(typescript@6.0.3)(utf-8-validate@6.0.6)
-      '@fireproof/core-types-base': 0.24.19(typescript@6.0.3)
-      '@fireproof/vendor': 0.24.19(typescript@6.0.3)
-      '@types/node': 25.6.2
-      react: 19.2.7
-    transitivePeerDependencies:
-      - bufferutil
-      - typescript
-      - utf-8-validate
 
   '@fireproof/use-fireproof@0.24.19(@adviser/cement@0.5.34(patch_hash=2f6391e0a56fe610ad9ae72430b603360ee9c00812af21a792562791454613c7)(typescript@5.9.3))(bufferutil@4.1.0)(react-dom@19.2.7(react@19.2.7))(react@19.2.7)(typescript@5.9.3)(utf-8-validate@6.0.6)':
     dependencies:

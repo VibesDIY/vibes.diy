@@ -30,7 +30,6 @@
     "@clerk/react": "^6.11.1",
     "@cloudflare/puppeteer": "^1.1.0",
     "@cloudflare/workers-types": "4.20260617.1",
-    "@fireproof/core": "0.24.19",
     "@fireproof/core-types-protocols-dashboard": "0.24.19",
     "@fireproof/use-fireproof": "0.24.19",
     "@monaco-editor/react": "^4.7.0",
