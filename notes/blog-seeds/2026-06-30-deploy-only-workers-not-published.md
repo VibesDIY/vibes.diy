@@ -34,9 +34,13 @@ Worth a note:
   are `private`, the invariant the #2889 assertion wants becomes clean: every
   *non*-private package is a real published lib with a real `pack`; everything
   else (workers, tests, evals) is private and the guard skips it via
-  `--if-present`. No allowlist of "intentional stubs" needed — for these two,
-  at least. (The remaining `echo`-stub packages — the app, stable-entry, the
-  test harnesses — are the rest of that cleanup, still tracked in #2889.)
+  `--if-present`. This PR finishes that sweep: the six remaining non-private
+  `echo`-stub packages — the app (`@vibes-diy/pkg`), `stable-entry`, `stories`,
+  and the three test harnesses — get `private: true` too. None has a single
+  workspace consumer and none was ever really published (their publish was an
+  `echo`), so the change is inert at runtime but makes the invariant exact:
+  **every non-private package now has a real `pack`, and nothing else does.**
+  The #2889 assertion can finally be allowlist-free.
 - **Coverage questions and scope questions are the same question.** "Is this
   package covered by the guard?" and "should this package exist in the guard's
   world at all?" looked like two problems; they had one answer. The audit that
