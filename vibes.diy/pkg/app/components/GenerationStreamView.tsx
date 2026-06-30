@@ -19,22 +19,15 @@ export function GenerationStreamView({
   return (
     <div className="text-sm" style={{ display: "flex", flexDirection: "column", gap: 6 }}>
       <div
-        className="text-light-secondary dark:text-dark-secondary"
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: 8,
-          fontSize: 12,
-          // Keep the "building your app" summary (with the live line count)
-          // pinned to the top so it stays visible as the narration lines
-          // accumulate and the card body scrolls. The card-body background
-          // masks the narration scrolling underneath it.
-          position: "sticky",
-          top: 0,
-          zIndex: 1,
-          background: "var(--color-light-background-00, #fff)",
-          paddingBottom: 6,
-        }}
+        // Keep the "building your app" summary (with the live line count) pinned
+        // to the top so it stays visible as narration lines accumulate and the
+        // card body scrolls. The dark-aware bg masks the narration scrolling
+        // underneath it — and works in BOTH render contexts: inside
+        // UnifiedVibeCard (which remaps --color-light-* to the dark palette) and
+        // the pending-first-build path (rendered outside that remap), where the
+        // `dark:` variant is what flips the surface to match the light text.
+        className="text-light-secondary dark:text-dark-secondary sticky top-0 z-10 bg-light-background-00 dark:bg-dark-background-00 pb-1.5"
+        style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12 }}
       >
         <span aria-hidden className="h-3 w-3 animate-spin rounded-full border-2 border-current border-t-transparent" />
         <span>

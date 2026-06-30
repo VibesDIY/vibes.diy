@@ -24,3 +24,14 @@ Angles worth a full post:
    scroll away; a *live* counter (msgs/lines ticking up) is the thing the user is
    actively reading, so it's the natural candidate to keep in the viewport even
    when everything else moves.
+
+3. **A masking color has to be theme-aware in *every* place the component renders.**
+   First pass used the card's `--color-light-background-00` var directly — fine
+   inside `UnifiedVibeCard`, which remaps that token to the dark palette under
+   `[data-unified-vibe-card]`. But the same component also renders on the
+   pending-first-build screen *outside* that remap, where the var stayed `#fff`
+   while the text flipped light → an unreadable white strip in dark mode. The fix
+   was to stop borrowing the card's scoped var and use the `dark:` Tailwind variant
+   (`bg-light-background-00 dark:bg-dark-background-00`), which flips under the exact
+   same trigger as the text. Lesson: a shared presentational component can't lean on
+   a backdrop that only one of its mount points defines.
