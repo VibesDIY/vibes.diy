@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { backendDoName, parseBackendApiTarget, routeDecision, shardKindForPath } from "../../pkg/workers/route-decision.js";
+import { parseBackendApiTarget, routeDecision, shardKindForPath } from "../../pkg/workers/route-decision.js";
+import { backendDoName } from "@vibes.diy/api-svc/intern/backend-do-addr.js";
 
 const HOSTNAME_BASE = "vibesdiy.net";
 

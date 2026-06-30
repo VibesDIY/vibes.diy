@@ -25,6 +25,14 @@ name = "USER_NOTIFY"
 class_name = "UserNotify"
 script_name = "vibes-diy-v2"
 
+# Per-app backend.js (#2856 B4): the consumer pokes a vibe's BackendDO to re-arm
+# its scheduled alarm. The BackendDO class lives in the main worker, so this is a
+# cross-script binding (same pattern as USER_NOTIFY).
+[[durable_objects.bindings]]
+name = "BACKEND_DO"
+class_name = "BackendDO"
+script_name = "vibes-diy-v2"
+
 [env.dev]
 
 [env.dev.browser]
@@ -47,4 +55,9 @@ max_batch_timeout = 1
 [[env.dev.durable_objects.bindings]]
 name = "USER_NOTIFY"
 class_name = "UserNotify"
+script_name = "vibes-diy-v2-dev"
+
+[[env.dev.durable_objects.bindings]]
+name = "BACKEND_DO"
+class_name = "BackendDO"
 script_name = "vibes-diy-v2-dev"

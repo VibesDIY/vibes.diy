@@ -10,6 +10,7 @@ import {
 } from "@adviser/cement";
 import {
   EvtNewFsId,
+  EvtBackendArm,
   isResEnsureAppSlugError,
   isResEnsureAppSlugOk,
   isVibeCodeBlock,
@@ -184,6 +185,23 @@ export async function ensureAppSlugItem(
       rBackendBindings.Err()
     );
   }
+
+  // Poke the vibe's BackendDO to (re-)evaluate its `scheduled` alarm against the
+  // now-current release (#2856 B4). Fire-and-forget onto the queue; the consumer
+  // addresses the DO and retries on a transient miss. Idempotent + payload-agnostic
+  // (the DO recomputes the cadence itself from the selected release), so it's safe
+  // on every push — adds/changes the alarm, or disarms when `scheduled` is gone.
+  await vctx.postQueue({
+    payload: {
+      type: "vibes.diy.evt-backend-arm",
+      ownerHandle: ensured.ownerHandle,
+      appSlug: ensured.appSlug,
+    },
+    tid: "queue-event",
+    src: "ensureAppSlugItem",
+    dst: "vibes-service",
+    ttl: 1,
+  } satisfies MsgBase<EvtBackendArm>);
 
   // let wrapperUrl: string;
   // if (req.mode === "production") {

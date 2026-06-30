@@ -196,15 +196,3 @@ export function parseBackendApiTarget(req: RouteInput): BackendApiTarget | undef
 
   return undefined;
 }
-
-/**
- * Stable, collision-safe physical name for a vibe's `BackendDO` instance. The
- * length-prefix makes `("ab","c")` and `("a","bc")` distinct, so two vibes can
- * never co-tenant one DO (the per-vibe boundary that pairs with the per-vibe
- * isolate id). The `backend:` prefix mirrors the `app:`/`shared:`/`codegen:`
- * convention — though BackendDO is its own class, so there's no cross-plane risk.
- */
-export function backendDoName(ownerHandle: string, appSlug: string): string {
-  const lenc = (s: string) => `${s.length}:${s}`;
-  return `backend:${lenc(ownerHandle)}/${lenc(appSlug)}`;
-}

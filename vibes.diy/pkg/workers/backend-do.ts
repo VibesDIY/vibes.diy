@@ -13,18 +13,14 @@ import { attemptBackendFetch } from "@vibes.diy/api-svc/intern/attempt-backend-f
 import { resolveBackendSchedule } from "@vibes.diy/api-svc/intern/load-selected-backend.js";
 import { attemptBackendScheduled } from "@vibes.diy/api-svc/intern/attempt-backend-scheduled.js";
 import { armDecision, nextTickDecision } from "@vibes.diy/api-svc/intern/backend-alarm-policy.js";
+import {
+  BACKEND_OWNER_HEADER,
+  BACKEND_SLUG_HEADER,
+  BACKEND_OP_HEADER,
+  BACKEND_OP_ARM,
+} from "@vibes.diy/api-svc/intern/backend-do-addr.js";
 
 declare const Response: typeof CFResponse;
-
-// app.ts stamps the resolved vibe target on the forwarded request, so the DO never
-// re-parses the (host-or-path-dependent) URL. These are internal headers.
-export const BACKEND_OWNER_HEADER = "x-vibe-owner";
-export const BACKEND_SLUG_HEADER = "x-vibe-slug";
-// The queue poke sets this so the DO re-evaluates its schedule instead of serving
-// an `_api` request (a header, not a path, so it can't collide with a vibe's own
-// `_api` routes).
-export const BACKEND_OP_HEADER = "x-backend-op";
-export const BACKEND_OP_ARM = "arm";
 
 const ALARM_STATE_KEY = "backendAlarm";
 
