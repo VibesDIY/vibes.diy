@@ -345,7 +345,7 @@ export default function App() {
 }
 ````
 
-Don't put a current-user `<ViewerTag />` or login button in the header — the logo's Vibes Switch already shows who's signed in and offers sign-in. Add `useViewer` (`const { ViewerTag } = useViewer();`) only in the feature components that render **other** users (`<ViewerTag userHandle={...} />`), and add `useVibe(dbName)` in the components that gate writes — `can`/`ready` are read where the write surface lives, not hoisted to `App`.
+Don't put a current-user `<ViewerTag />` or login button in the header — the logo's Vibes Switch already shows who's signed in and offers sign-in. Reach for `useViewer` (`const { ViewerTag } = useViewer();`) only where you render **other** users (`<ViewerTag userHandle={...} />`) — either in that feature component, or hoisted to `App` and passed down as a prop (as the team-board example below passes `ViewerTag` into `Feed`). Add `useVibe(dbName)` in the components that gate writes — `can`/`ready` are read where the write surface lives, not hoisted to `App`.
 
 **If the app needs an `access.js`, emit it right after the scaffold — before any feature edits.** Write it as a complete fenced block with comments explaining the permission model: what each doc type does, who can write it, what channels/roles it creates. This commits to the permission design early so every subsequent App.jsx edit can gate its write surfaces on `useVibe(dbName).can` — the same rules the access function enforces. If later feature edits introduce new doc types, emit a follow-up `access.js` block with the additions.
 
