@@ -20,7 +20,7 @@ import {
   resolveBuilderOriginFrom,
 } from "@vibes.diy/base";
 import type { ShareMember, ShareViewer, ShareAccess, HandleOption } from "@vibes.diy/base";
-import { isUserSettingDefaultHandle, resolveCachedRead } from "@vibes.diy/api-types";
+import { isUserSettingDefaultHandle, resolveCachedRead, normalizeTransform } from "@vibes.diy/api-types";
 import { switchActiveHandle, createAndUseHandle, handleAvatarUrl } from "./handle-picker-actions.js";
 import { uploadHandleAvatar } from "../lib/upload-avatar.js";
 import { useYoursNowToast } from "../hooks/use-yours-now-toast.js";
@@ -384,6 +384,26 @@ export default function VibeIframeWrapper() {
         })();
       };
 
+      // Only a CURATED suggestion chip is eligible for a (potentially anonymous)
+      // cached read. A custom "Other" / free-text prompt can carry PII into the
+      // code it generates, so its result must NEVER become a publicly-readable
+      // cached page — it's always a write (login-gated, fork on a non-owner). The
+      // safe set is the offered-chip allowlist: a finite, curated list of known
+      // transforms of already-public code, so a chip result adds no new PII. Match
+      // the click against the chips the card is showing (normalized the same way
+      // the cache key is); anything not on it skips the read lane entirely.
+      //
+      // This client check is defense-in-depth + avoids a needless lookup on every
+      // custom prompt; the AUTHORITATIVE gate is server-side — precache only
+      // stages chip-derived transforms and tags them public-read-eligible, and the
+      // anonymous serve path serves an unpublished staged version only when the
+      // source app is public AND that tag is present. (#2801)
+      const isOfferedChip = cardChips.some((c) => normalizeTransform(c) === normalizeTransform(trimmed));
+      if (!isOfferedChip) {
+        runWriteLane();
+        return;
+      }
+
       // Cached-suggestion read lane (#2801): the read/write decision is purely
       // "has this (source, transform) already been generated?" — it has NOTHING
       // to do with who is clicking. A precomputed chip result is staged as a new
@@ -419,7 +439,7 @@ export default function VibeIframeWrapper() {
         runWriteLane();
       })();
     },
-    [isOwner, authSignedIn, ownerHandle, appSlug, fsId, navigate, vctx.sthis, vctx.chatApi, generation.sendPrompt]
+    [isOwner, authSignedIn, ownerHandle, appSlug, fsId, navigate, vctx.sthis, vctx.chatApi, generation.sendPrompt, cardChips]
   );
 
   // #2772 D2: publish the owner's current draft. Mints a new top-of-stack production
