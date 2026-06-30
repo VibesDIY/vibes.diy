@@ -61,11 +61,11 @@ export default function HomePage() {
   }, []);
   const [input, setInput] = useState("");
   const inputRef = useRef<HTMLTextAreaElement>(null);
-  // The /chat/prompt route pulls in the heavy Chat chunk. Submitting only does a
+  // The /vibe/prompt route pulls in the heavy Chat chunk. Submitting only does a
   // base64 encode + navigate, but the perceived lag (#2207) is that chunk loading
   // on demand. Prefetch it on first interaction intent so navigation is instant.
   // A hidden <Link prefetch="render"> (not a bare PrefetchPageLinks) is required:
-  // lazy route discovery ("Fog of War") is on, so /chat/prompt isn't in the client
+  // lazy route discovery ("Fog of War") is on, so /vibe/prompt isn't in the client
   // manifest after a home load. The Link's data-discover anchor patches it into the
   // manifest, and prefetch then warms the module chunk.
   const [prefetchChat, setPrefetchChat] = useState(false);
@@ -79,7 +79,7 @@ export default function HomePage() {
     if (!input.trim()) return;
     sessionStorage.setItem("vibes.pendingPrompt", input);
     navigate(
-      BuildURI.from(window.location.href).pathname("/chat/prompt").setParam("prompt64", sthis.txt.base64.encode(input))
+      BuildURI.from(window.location.href).pathname("/vibe/prompt").setParam("prompt64", sthis.txt.base64.encode(input))
         .withoutHostAndSchema
     );
   }, [input, navigate, sthis]);
@@ -189,7 +189,7 @@ export default function HomePage() {
   return (
     <>
       {prefetchChat && (
-        <Link to="/chat/prompt" prefetch="render" discover="render" aria-hidden tabIndex={-1} style={{ display: "none" }}>
+        <Link to="/vibe/prompt" prefetch="render" discover="render" aria-hidden tabIndex={-1} style={{ display: "none" }}>
           {""}
         </Link>
       )}

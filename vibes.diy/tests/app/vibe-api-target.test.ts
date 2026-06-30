@@ -14,8 +14,9 @@ describe("vibeApiTarget", () => {
     expect(vibeApiTarget("/chat/alice/notes/abc123")).toEqual({ ownerHandle: "alice", appSlug: "notes" });
   });
 
-  it("returns undefined for the new-chat prompt route", () => {
+  it("returns undefined for the new-build prompt route (both /chat/prompt and /vibe/prompt)", () => {
     expect(vibeApiTarget("/chat/prompt")).toBeUndefined();
+    expect(vibeApiTarget("/vibe/prompt")).toBeUndefined();
   });
 
   it("returns undefined for placeholder editor params", () => {

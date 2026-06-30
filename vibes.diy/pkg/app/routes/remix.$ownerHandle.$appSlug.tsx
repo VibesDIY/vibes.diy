@@ -71,16 +71,17 @@ export default function RemixRoute() {
         return;
       }
 
-      // Remix: the forked Apps row shares the source's storage refs. The
-      // chat route hydrates the editor from Apps.fileSystem when no
-      // ChatSections exist, so landing on code view shows the source code
-      // ready to edit. Carry prompt64 forward so the composer pre-fills the
-      // change the user described on the source vibe (#2675).
-      const params = new URLSearchParams({ view: "code" });
+      // Remix: the forked Apps row shares the source's storage refs. Land on
+      // /vibe (the editor lives there now, #2876) running the forked app, with
+      // the composer pre-filled via prompt64 so the user can apply the change
+      // they described on the source vibe (#2675). The old `view=code` deep-link
+      // is dropped — /vibe doesn't consume the chat `view` param (the editor is
+      // opened from the card), so it lands on the running app, not code view.
+      const params = new URLSearchParams();
       if (prompt64) params.set("prompt64", prompt64);
       // `yours=1` triggers the one-time "it's yours now" message on landing (#1856).
       params.set("yours", "1");
-      navigate(`/chat/${fork.ownerHandle}/${fork.appSlug}/${fork.srcFsId}?${params.toString()}`);
+      navigate(`/vibe/${fork.ownerHandle}/${fork.appSlug}/${fork.srcFsId}?${params.toString()}`);
     })();
   }, [isLoaded, isSignedIn, ownerHandle, appSlug, fsId, skipChat, prompt64, navigate, chatApi]);
 
