@@ -358,11 +358,11 @@ gates only the one capability that matters (staying).
 You bless a **result**, not a chip — so there is nothing to bless until a result
 exists. `blessed ⊃ cached`. The states are a progression, not a 2×2:
 
-| state | what a non-owner click does |
-| --- | --- |
-| **cold** (no result yet) | codegen → **slow fork** |
-| **cached, unblessed** | **fast fork** (seeded from the result) |
-| **blessed** (necessarily cached) | **fast stay** (shield) |
+| state                            | what a non-owner click does            |
+| -------------------------------- | -------------------------------------- |
+| **cold** (no result yet)         | codegen → **slow fork**                |
+| **cached, unblessed**            | **fast fork** (seeded from the result) |
+| **blessed** (necessarily cached) | **fast stay** (shield)                 |
 
 ### Invariants (the load-bearing rules)
 
@@ -446,7 +446,7 @@ the stay path. Recorded here as the intended next capability, not something ship
 ### Adjacent hazards (parked — not fixed by this model)
 
 - **#2902** — saving an unpublished dev draft re-binds the live per-`(ownerHandle,
-  appSlug)` access function for the whole namespace, no publish/consent. The cache
+appSlug)` access function for the whole namespace, no publish/consent. The cache
   read lane introduces no new instance of this (reads never re-bind), but the
   **producer/staging** path must not re-bind access when it stages a result. Filed
   separately.
