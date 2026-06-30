@@ -295,6 +295,7 @@ async function backfillAccessFnOutputs(vctx: VibesApiSQLCtx, opts: BackfillOpts)
           user: null,
           source: effectiveSource,
           grantState: { members: {}, roleGrants: {}, userGrants: {} },
+          ownerHandle,
         })
       );
 

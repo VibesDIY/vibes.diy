@@ -1,8 +1,7 @@
 import { Result } from "@adviser/cement";
-import { COMMENTS_DB_NAME, COMMENTS_DEFAULT_ACL, DbAcl, directChannelParticipants } from "@vibes.diy/api-types";
+import { COMMENTS_DB_NAME, COMMENTS_DEFAULT_ACL, DbAcl } from "@vibes.diy/api-types";
 import { VibesApiSQLCtx } from "../types.js";
 import { ensureAppSettings } from "./ensure-app-settings.js";
-import { and, eq, inArray } from "drizzle-orm";
 
 // ACL evaluation (inGroup / aclAllows / canRead / canWrite) is defined once in
 // the shared @vibes.diy/vibe-types/db-acl-eval module. Re-export aclAllows so
@@ -40,29 +39,4 @@ export async function resolveDbAcl(
   if (stored !== undefined) return Result.Ok(stored);
   if (dbName === COMMENTS_DB_NAME) return Result.Ok(COMMENTS_DEFAULT_ACL);
   return Result.Ok(undefined);
-}
-
-// Check whether `userId` is a participant in a direct-channel ownerHandle.
-//
-// A direct-channel slug encodes exactly two participant ownerHandles. This
-// function queries `handleBinding` to see if any of the caller's ownerHandles
-// matches either participant — if it does, access is granted. No app
-// membership check is required; channel participation IS the gate.
-//
-// Returns Result<false> on parse failure or DB error so the caller can
-// fail-closed.
-export async function checkDirectChannelAccess(
-  vctx: VibesApiSQLCtx,
-  channelUserSlug: string,
-  userId: string
-): Promise<Result<boolean>> {
-  const participants = directChannelParticipants(channelUserSlug);
-  if (!participants) return Result.Ok(false);
-  const [ownerHandleA, ownerHandleB] = participants;
-  const t = vctx.sql.tables.handleBinding;
-  const matches = await vctx.sql.db
-    .select({ handle: t.handle })
-    .from(t)
-    .where(and(eq(t.userId, userId), inArray(t.handle, [ownerHandleA, ownerHandleB])));
-  return Result.Ok(matches.length > 0);
 }

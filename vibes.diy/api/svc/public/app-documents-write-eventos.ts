@@ -32,7 +32,9 @@ import {
   isReadableResult,
   type AccessDescriptor,
 } from "./access-function.js";
-import { aclAllows, resolveDbAcl, checkDirectChannelAccess } from "./db-acl-resolver.js";
+import { aclAllows, resolveDbAcl } from "./db-acl-resolver.js";
+import { resolveAccessBinding, resolveAccessFnSource } from "./access-binding-resolver.js";
+import { DM_APP_SLUG } from "./dm-access-fn.js";
 import { GrantReduce, extractContribution, newSeededReduce } from "./grant-reduce.js";
 import { isFileMeta } from "./files-url-mint.js";
 import { clientWsSend, connectionAdminMode } from "./app-documents-shared.js";
@@ -151,18 +153,12 @@ export const putDocEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqPutDoc>, 
       const userId = req._auth?.verifiedAuth.claims.userId ?? null;
       let isOwner = false;
 
-      if (isDirectChannel(req.ownerHandle)) {
-        // DM writes always require authentication
-        if (!userId) {
-          await ctx.send.send(ctx, { type: "vibes.diy.res-error", error: { message: "Access denied" } } satisfies ResError);
-          return Result.Ok(EventoResult.Continue);
-        }
-        const rAccess = await checkDirectChannelAccess(vctx, req.ownerHandle, userId);
-        if (rAccess.isErr() || !rAccess.Ok()) {
-          await ctx.send.send(ctx, { type: "vibes.diy.res-error", error: { message: "Access denied" } } satisfies ResError);
-          return Result.Ok(EventoResult.Continue);
-        }
-      } else if (userId) {
+      // DM dbs (#2290) are governed entirely by the built-in DM access fn
+      // resolved below via the synthetic binding — skip the imperative ACL gate
+      // so a participant's authenticated write reaches the fn (the fn denies
+      // non-participants and anonymous writers). Every other authenticated write
+      // still passes the standard ACL gate first.
+      if (userId && req.appSlug !== DM_APP_SLUG) {
         // Authenticated user: standard ACL gate
         const docAccessResult = await checkDocAccess(vctx, userId, req.appSlug, req.ownerHandle, connectionAdminMode(ctx));
         const access = docAccessResult.access;
@@ -194,17 +190,12 @@ export const putDocEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqPutDoc>, 
         return Result.Ok(EventoResult.Continue);
       }
 
-      // Access function gate: look up CID for this (ownerHandle, appSlug, dbName) or app-wide ('*')
+      // Access function gate: resolve the effective binding (named dbName beats
+      // the app-wide '*' wildcard). DM dbs resolve to the synthetic built-in DM
+      // binding (#2290).
       let accessResult: AccessDescriptor | undefined;
       let grantsReduceBefore: GrantReduce | undefined;
-      const tAfb = vctx.sql.tables.accessFunctionBindings;
-      const afbRow = await vctx.sql.db
-        .select({ accessFnCid: tAfb.accessFnCid, accessFnAssetUri: tAfb.accessFnAssetUri, dbName: tAfb.dbName })
-        .from(tAfb)
-        .where(and(eq(tAfb.ownerHandle, req.ownerHandle), eq(tAfb.appSlug, req.appSlug), inArray(tAfb.dbName, [req.dbName, "*"])))
-        .orderBy(sql`CASE WHEN ${tAfb.dbName} = ${req.dbName} THEN 0 ELSE 1 END`)
-        .limit(1)
-        .then((r) => r[0]);
+      const afbRow = await resolveAccessBinding(vctx, req.ownerHandle, req.appSlug, req.dbName);
 
       // Anonymous write with no access function → deny
       if (!userId && !afbRow?.accessFnCid) {
@@ -270,42 +261,13 @@ export const putDocEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqPutDoc>, 
         // Loaded once above as headRow (reused by the no-op check below).
         const oldDoc: unknown | null = headRow?.data ?? null;
 
-        // Resolve the access.js source. The source is content-addressed and
-        // immutable per CID, so cache the raw bytes on the DO keyed by CID — a
-        // hit can never go stale. Only the first write for a given CID pays the
-        // storage (R2) round-trip (handles SQL and R2 transparently); subsequent
-        // writes reuse it, removing the per-write access tax. Mirrors the per-DO
-        // QuickJS module cache (localInvokeAccessFn). See #2512.
-        let accessFnSource: string | undefined;
-        let rawSource = vctx.accessFnSourceCache?.get(fnCid);
-        if (rawSource === undefined && afbRow.accessFnAssetUri) {
-          const rFetch = await vctx.storage.fetch(afbRow.accessFnAssetUri);
-          if (rFetch.type === "fetch.ok") {
-            // Collect stream to Uint8Array, decode to UTF-8
-            const reader = rFetch.data.getReader();
-            const chunks: Uint8Array[] = [];
-            for (;;) {
-              const { done, value } = await reader.read();
-              if (done) break;
-              if (value) chunks.push(value);
-            }
-            const totalLength = chunks.reduce((sum, c) => sum + c.length, 0);
-            const merged = new Uint8Array(totalLength);
-            let offset = 0;
-            for (const chunk of chunks) {
-              merged.set(chunk, offset);
-              offset += chunk.length;
-            }
-            rawSource = new TextDecoder().decode(merged);
-            vctx.accessFnSourceCache?.set(fnCid, rawSource);
-          }
-        }
+        // Resolve the access.js source (per-DO CID cache → asset store; the
+        // built-in DM source is compiled in). See resolveAccessFnSource / #2512.
         // extractExportSource is dbName-dependent (cheap, in-memory string work),
-        // so it runs per write against the cached raw source rather than caching
+        // so it runs per write against the resolved source rather than caching
         // the extracted result — the CID-keyed cache only elides the R2 fetch.
-        if (rawSource !== undefined) {
-          accessFnSource = extractExportSource(rawSource, afbRow.dbName) ?? rawSource;
-        }
+        const rawSource = await resolveAccessFnSource(vctx, fnCid, afbRow.accessFnAssetUri);
+        const accessFnSource = rawSource !== undefined ? (extractExportSource(rawSource, afbRow.dbName) ?? rawSource) : undefined;
 
         // Build reduce from stored outputs for grant state
         const tOutputs = vctx.sql.tables.accessFnOutputs;
@@ -343,6 +305,7 @@ export const putDocEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqPutDoc>, 
           source: accessFnSource,
           grantState,
           adminMode: adminActive,
+          ownerHandle: req.ownerHandle,
         });
 
         if ("forbidden" in invokeResult) {
@@ -724,9 +687,46 @@ export const deleteDocEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqDelete
       const vctx = ctx.ctx.getOrThrow<VibesApiSQLCtx>("vibesApiCtx");
       const userId = req._auth.verifiedAuth.claims.userId;
 
-      if (isDirectChannel(req.ownerHandle)) {
-        const rAccess = await checkDirectChannelAccess(vctx, req.ownerHandle, userId);
-        if (rAccess.isErr() || !rAccess.Ok()) {
+      const now = new Date().toISOString();
+      const t = vctx.sql.tables.appDocuments;
+
+      const dbName = req.dbName;
+
+      // Resolve the EFFECTIVE access-fn binding for this db (named dbName beats
+      // the wildcard '*'). It gates DM deletes (the built-in DM fn's participant
+      // check, #2290) AND drives the revocation/notify logic below.
+      //
+      // Stored AccessFnOutputs rows are NOT cleaned up when a binding goes away —
+      // processAccessBindings drops AccessFunctionBindings when /access.js is
+      // deleted but leaves the output rows behind. So a doc's stored output can
+      // be stale (no live binding, or a superseded fnCid). We gate the notify
+      // decisions below on a live binding whose fnCid matches the stored row,
+      // mirroring resolveGrants in who-am-i; otherwise the delete is treated as
+      // non-channelized and falls back to the bare dbName notify that current
+      // subscribers use (Charlie). The row itself is still dropped unconditionally
+      // — that is the actual revocation (#2531).
+      const afbRow = await resolveAccessBinding(vctx, req.ownerHandle, req.appSlug, dbName);
+      const effectiveFnCid = afbRow?.accessFnCid;
+
+      if (req.appSlug === DM_APP_SLUG) {
+        // DM deletes flow through the built-in DM access fn, not the ACL path:
+        // only a participant may delete. The fn ignores `doc`, gating purely on
+        // `user` + `ctx.ownerHandle` (the channel slug). Fail closed when no
+        // invoker is available, mirroring the putDoc gate. (#2290)
+        const writerHandle = await resolveActiveHandle(vctx, userId);
+        const dmSource = afbRow ? await resolveAccessFnSource(vctx, afbRow.accessFnCid, afbRow.accessFnAssetUri) : undefined;
+        const gate =
+          afbRow && vctx.invokeAccessFn
+            ? await vctx.invokeAccessFn({
+                cid: afbRow.accessFnCid,
+                doc: { _id: req.docId },
+                oldDoc: null,
+                user: writerHandle ? { userHandle: writerHandle, isOwner: false } : null,
+                source: dmSource !== undefined ? (extractExportSource(dmSource, afbRow.dbName) ?? dmSource) : undefined,
+                ownerHandle: req.ownerHandle,
+              })
+            : { forbidden: "access function unavailable" };
+        if ("forbidden" in gate) {
           await ctx.send.send(ctx, { type: "vibes.diy.res-error", error: { message: "Access denied" } } satisfies ResError);
           return Result.Ok(EventoResult.Continue);
         }
@@ -738,31 +738,6 @@ export const deleteDocEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqDelete
           return Result.Ok(EventoResult.Continue);
         }
       }
-
-      const now = new Date().toISOString();
-      const t = vctx.sql.tables.appDocuments;
-
-      const dbName = req.dbName;
-
-      // Resolve the EFFECTIVE access-fn binding for this db (named dbName beats
-      // the wildcard '*'). Stored AccessFnOutputs rows are NOT cleaned up when a
-      // binding goes away — processAccessBindings drops AccessFunctionBindings
-      // when /access.js is deleted but leaves the output rows behind. So a doc's
-      // stored output can be stale (no live binding, or a superseded fnCid). We
-      // gate the notify decisions below on a live binding whose fnCid matches the
-      // stored row, mirroring resolveGrants in who-am-i; otherwise the delete is
-      // treated as non-channelized and falls back to the bare dbName notify that
-      // current subscribers use (Charlie). The row itself is still dropped
-      // unconditionally — that is the actual revocation (#2531).
-      const tAfb = vctx.sql.tables.accessFunctionBindings;
-      const afbRow = await vctx.sql.db
-        .select({ accessFnCid: tAfb.accessFnCid })
-        .from(tAfb)
-        .where(and(eq(tAfb.ownerHandle, req.ownerHandle), eq(tAfb.appSlug, req.appSlug), inArray(tAfb.dbName, [dbName, "*"])))
-        .orderBy(sql`CASE WHEN ${tAfb.dbName} = ${dbName} THEN 0 ELSE 1 END`)
-        .limit(1)
-        .then((r) => r[0]);
-      const effectiveFnCid = afbRow?.accessFnCid;
 
       const tOutputs = vctx.sql.tables.accessFnOutputs;
       let deletedDocHadGrants = false;

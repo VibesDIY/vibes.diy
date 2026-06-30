@@ -240,6 +240,11 @@ export async function localInvokeAccessFn(
       userGrants: Record<string, string[]>;
     };
     adminMode?: boolean;
+    // The db's ownerHandle, exposed to the access fn as `ctx.ownerHandle`. The
+    // built-in DM access fn parses the two participants out of the channel slug
+    // (`_d.<a>.<b>`) it carries; every other access.js ignores it. Optional and
+    // additive, so existing functions are unaffected (#2290).
+    ownerHandle?: string;
   }
 ): Promise<AccessDescriptor | { forbidden: string }> {
   if (!params.source) {
@@ -324,6 +329,18 @@ export async function localInvokeAccessFn(
     requireAccessFn.dispose();
     requireRoleFn.dispose();
     ctxObj.dispose();
+
+    // Expose the db's ownerHandle as `ctx.ownerHandle` (#2290). Injected after
+    // `ctx` is global so it rides the same JSON-encoded path as doc/oldDoc/user.
+    {
+      const r = vm.evalCode(`ctx.ownerHandle = ${JSON.stringify(params.ownerHandle ?? null)};`);
+      if (r.error) {
+        const errVal = vm.dump(r.error);
+        r.error.dispose();
+        return { forbidden: `access function setup error: ${String(errVal)}` };
+      }
+      r.value.dispose();
+    }
 
     const cleanSource = source.replace(/export\s+/g, "").replace(/^default\s+/, "");
     const fnNameMatch = cleanSource.match(/^function\s+(\w+)\s*\(/);

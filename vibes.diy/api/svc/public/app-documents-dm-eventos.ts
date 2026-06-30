@@ -20,7 +20,6 @@ import { checkAuth } from "../check-auth.js";
 import { eq, and, inArray, sql } from "drizzle-orm";
 import { max } from "drizzle-orm/sql";
 import { type } from "arktype";
-import { checkDirectChannelAccess } from "./db-acl-resolver.js";
 
 // ── listDmThreads ────────────────────────────────────────────────────
 
@@ -139,14 +138,10 @@ export const markDmReadEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqMarkD
       const vctx = ctx.ctx.getOrThrow<VibesApiSQLCtx>("vibesApiCtx");
       const userId = req._auth.verifiedAuth.claims.userId;
 
-      // Verify participant
-      const rAccess = await checkDirectChannelAccess(vctx, req.channelUserSlug, userId);
-      if (rAccess.isErr() || !rAccess.Ok()) {
-        await ctx.send.send(ctx, { type: "vibes.diy.res-error", error: { message: "Access denied" } } satisfies ResError);
-        return Result.Ok(EventoResult.Continue);
-      }
-
-      // Resolve which of my slugs is in this channel
+      // Resolve which of my slugs is in this channel. This lookup doubles as the
+      // participant check: a caller who owns neither participant handle (or a
+      // malformed slug, which yields no participants) matches no row and is
+      // denied. (#2290 — replaces the redundant checkDirectChannelAccess call.)
       const participants = directChannelParticipants(req.channelUserSlug) ?? ["", ""];
       const t_usb = vctx.sql.tables.handleBinding;
       const slugRow = await vctx.sql.db
