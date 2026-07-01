@@ -147,6 +147,33 @@ describe("useInVibeGeneration", () => {
     expect(view.result.current.hasLocalEdit).toBe(false);
   });
 
+  it("does NOT hot-swap the iframe from replayed chat history — only from a local edit (#2997)", async () => {
+    // Opening the edit card (the "Vibe switch") activates the lazy codegen chat,
+    // which replays the persisted chat HEAD into `blocks`. That HEAD can diverge
+    // from the live published release (CLI push/publish never append a chat turn),
+    // so pushing its code would flip the running preview to a stale version. The
+    // hot-swap must stay gated on a real in-session edit (`hasLocalEdit`).
+    const { view, fakeChat, openChat, pushSource } = setup();
+    await waitFor(() => expect(view.result.current.phase).toBe("idle"));
+    // Activate WITHOUT sending a prompt — the replay path opened by the switch.
+    act(() => view.result.current.activate());
+    await waitFor(() => expect(openChat).toHaveBeenCalledTimes(1));
+    expect(view.result.current.hasLocalEdit).toBe(false);
+    // A full, valid module so the push guard (len>=200 && includes "export default")
+    // WOULD pass if the effect ran — proving the gate, not the guard, suppresses it.
+    const historySrc = `export default function App(){return null}\n${"// history line\n".repeat(40)}`;
+    await act(async () => fakeChat.emitBlockBegin());
+    await act(async () => fakeChat.emitCodeBlock(historySrc, "b-hist"));
+    // Give the effect a tick — the replayed code.end must NOT hot-swap the iframe.
+    await new Promise((r) => setTimeout(r, 30));
+    expect(view.result.current.blocks.length).toBeGreaterThan(0);
+    expect(view.result.current.hasLocalEdit).toBe(false);
+    expect(pushSource).not.toHaveBeenCalled();
+    // (The positive path — a local edit DOES hot-swap — is covered by
+    // "pushes resolved source to the iframe on a completed code block", which
+    // sends a prompt first so `hasLocalEdit` is set.)
+  });
+
   it("exposes persistedFsRef only once the canonical post-persist block.end (with fsRef) lands", async () => {
     // #2839: the badge re-resolve must key off the DURABLE block.end fsRef, not the
     // early prompt.block-end. persistedFsRef stays undefined through streaming + the

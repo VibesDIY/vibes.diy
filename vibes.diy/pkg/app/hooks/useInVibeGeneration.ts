@@ -173,8 +173,20 @@ export function useInVibeGeneration(opts: UseInVibeGenerationOpts): InVibeGenera
 
   // Hot-swap the iframe whenever a new code.end lands in the latest block.
   // Mirrors PreviewApp's push effect (PreviewApp.tsx:77-126).
+  //
+  // Gate on `hasLocalEdit` so ONLY an edit made this session hot-swaps the
+  // running app. Opening the edit card (the "Vibe switch") activates the lazy
+  // codegen chat, which REPLAYS the persisted chat history into `blocks` — and
+  // that history's HEAD can diverge from the live published release (CLI
+  // push/publish mint a production row but never append a chat turn, so the chat
+  // HEAD is a stale dev draft). Without this gate, merely opening the switch
+  // pushed that stale chat-HEAD code into the iframe, flipping the preview off
+  // the published release to an older version (#2997). A real in-session edit
+  // always routes through `sendPrompt`, which sets `hasLocalEdit` synchronously
+  // before its stream lands, so every intended hot-swap is preserved.
   useEffect(() => {
     if (opts.srvVibeSandbox === undefined) return;
+    if (!hasLocalEdit) return;
     const last = promptState.blocks[promptState.blocks.length - 1];
     if (last === undefined) return;
     let latestCodeEndSeq = -1;
@@ -200,7 +212,7 @@ export function useInVibeGeneration(opts: UseInVibeGenerationOpts): InVibeGenera
     if (resolved.length < 200 || !resolved.includes("export default")) return;
     const ok = opts.srvVibeSandbox.pushSource(resolved);
     if (ok) setHotSwapCount((c) => c + 1);
-  }, [promptState.blocks, opts.srvVibeSandbox]);
+  }, [promptState.blocks, opts.srvVibeSandbox, hasLocalEdit]);
 
   // Reset all generation state when the route is reused for a different vibe
   // (client-side nav between /vibe pages). The reducer initializer runs only on
