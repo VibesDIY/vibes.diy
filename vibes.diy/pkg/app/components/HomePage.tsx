@@ -241,9 +241,6 @@ export default function HomePage() {
               </div>
             </div>
 
-            {/* Brand line beneath the prompt input — matches the hero typography */}
-            <div style={getTitle(mobile, isDarkMode)}>Your life is custom. Your software should be too.</div>
-
             {/* How it works — three numbered steps (cream number on the logo's black circle) */}
             <div style={getStepsContainerStyle(mobile)}>
               {HOW_IT_WORKS_STEPS.map((label, i) => (
@@ -255,6 +252,9 @@ export default function HomePage() {
                 </div>
               ))}
             </div>
+
+            {/* Brand line beneath the steps — matches the hero typography */}
+            <div style={getTitle(mobile, isDarkMode)}>Your life is custom. Your software should be too.</div>
 
             {/* Carousel */}
             <div style={getCarouselWrapperStyle(mobile)}>
