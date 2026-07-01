@@ -54,6 +54,7 @@ Full list and provenance: [`.claude/skills/README.md`](.claude/skills/README.md)
 
 - Lead every issue with a one or two sentence plain-language summary of the problem, before any technical detail, file paths, or repro steps. A teammate triaging the backlog should be able to tell what an issue is without decoding it.
 - File cleanup/tech-debt issues the moment you notice them — don't just mention them in chat. Idle time while a PR waits on CI or review is the canonical window for this. See [pr-lifecycle.md § File cleanup issues as you notice them](agents/pr-lifecycle.md#file-cleanup-issues-as-you-notice-them).
+- **Never `@`-mention `@CharlieHelps` in an issue body** — the `charliecreates` bot reads any mention (or an assignment to `CharlieHelps`) as a task and opens its own duplicate PR ~20–30 min later. When crediting his review, drop the `@` (plain-text "Charlie" / "per CharlieHelps' review (#X)"); assign him only when you genuinely want him to implement it. (@-mentioning `@CharlieHelps` in a _PR comment_ to request review is still correct — this rule is issues-only.) Policy: [pr-lifecycle.md § Never @-mention @CharlieHelps in an issue](agents/pr-lifecycle.md#never--mention-charliehelps-in-an-issue--it-auto-triggers-a-duplicate-pr).
 
 ## Quick Reference
 
