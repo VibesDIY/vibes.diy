@@ -42,6 +42,12 @@ export interface AttemptBackendFetchInput {
    * Typed `unknown` so callers (the DO) don't need a vibe-runtime dep; cast here.
    */
   readonly loader?: unknown;
+  /**
+   * A `Fetcher` stub back to the host BackendDO, set as the isolate's
+   * `globalOutbound` so `ctx.db` ops route to `handleBackendDbOp` (#2856 B6). The
+   * DO supplies a self-stub; typed `unknown` here.
+   */
+  readonly dbFetcher?: unknown;
   /** Egress-policy / binding-schema version, folded into the isolate id. */
   readonly policyVersion?: string;
 }
@@ -103,6 +109,7 @@ export async function attemptBackendFetch(vctx: VibesApiSQLCtx, input: AttemptBa
       handler: "fetch",
       trigger: { userHandle: identity.userContext?.userHandle ?? input.userHandle ?? null, payload },
       db,
+      dbFetcher: input.dbFetcher,
     });
   });
   if (rRes.isErr()) return { reason: "executor_error", detail: `invoke: ${rRes.Err().message}` };
