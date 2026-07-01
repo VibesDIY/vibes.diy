@@ -106,21 +106,32 @@ jobs:
           shard: ${{ matrix.shard }}/4
           artifact-suffix: -shard-${{ matrix.shard }}
 
-  # Required-check gate. Keeps the name `compile_test` so branch protection and
-  # the deploy-time "is this SHA green?" lookup keep matching. Runs even when an
-  # upstream job failed (a `failure` isn't `cancelled`, so `!cancelled()` is
-  # still true) so it can report red; a `skipped` upstream (docs-only test, or a
-  # [skip ci] cascade) counts as a pass. Mirrors the old job's `[skip ci]` skip
-  # so that path is unchanged.
+  # Aggregation gate. Keeps the name `compile_test` so the deploy-time "is this
+  # SHA green?" lookup keeps matching. Runs even when an upstream job failed (a
+  # `failure` isn't `cancelled`, so `!cancelled()` is still true) so it can report
+  # red; a `skipped` upstream (docs-only test, or a [skip ci] cascade) counts as a
+  # pass. Mirrors the old job's `[skip ci]` skip so that path is unchanged.
   #
-  # Why `!cancelled()` and not `always()`: when a push supersedes the in-flight
-  # run (concurrency: cancel-in-progress), every upstream concludes `cancelled`.
-  # Under `always()` this gate would still run, see the all-`cancelled`
-  # fingerprint, and exit 1 — a bogus red ✗ and a `failure` webhook on a run that
-  # tested nothing (#2992). `!cancelled()` lets the cancellation reach the gate
-  # too, so it is `skipped` alongside its upstreams instead of failing. The
-  # superseding run provides the real `success`; a superseded run correctly
-  # counts as neither pass nor fail.
+  # `!cancelled()` (not `always()`): when a push supersedes the in-flight run
+  # (concurrency: cancel-in-progress), every upstream concludes `cancelled`. Under
+  # `always()` this gate would still run, see the all-`cancelled` fingerprint, and
+  # exit 1 — a bogus red ✗ and a `failure` webhook on a run that tested nothing
+  # (#2992). `!cancelled()` lets the cancellation reach the gate too, so it is
+  # `skipped` alongside its upstreams; the superseding run provides the real
+  # verdict on the head.
+  #
+  # Is `skipped` safe here? Reviewers on #2993 noted GitHub counts a `skipped`
+  # REQUIRED check as passing, which on a same-SHA supersede could green an
+  # unverified head. That does not apply to this repo: `main` has no required
+  # status checks, and the ONLY automated consumer of this conclusion — the
+  # deploy-time `check-sha-tested` lookup in actions/base — matches strictly on
+  # `conclusion=="success"`, so a `skipped`/`cancelled` gate always forces a full
+  # re-test rather than counting as tested. Humans/agents merge on green
+  # (success), never on a grey skip. IF `compile_test` is ever made a required
+  # check, revisit this: either self-conclude `cancelled` (blocking) on the
+  # cancelled fingerprint, or make checks/test/publish_build required too so their
+  # `cancelled` blocks the head. See agents/flaky-tests.md § "`cancelled` ≠
+  # `failure`".
   compile_test:
     needs: [scope, checks, test, publish_build]
     if: ${{ !cancelled() && !contains(github.event.pull_request.title, '[skip ci]') }}
