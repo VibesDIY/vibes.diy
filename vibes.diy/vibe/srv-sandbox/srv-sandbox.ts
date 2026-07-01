@@ -20,6 +20,7 @@ import {
   isEvtVibeHotSwapError,
   type EvtVibeViewerChanged,
   type EvtVibeColorOverride,
+  type EvtVibeScrollToTop,
   isReqOpenDmThread,
   type ReqOpenDmThread,
 } from "@vibes.diy/vibe-types";
@@ -277,6 +278,16 @@ export class vibesDiySrvSandbox implements Disposable {
   pushColorOverride(msg: EvtVibeColorOverride): void {
     if (this.iframeSource && this.iframeOrigin) {
       this.iframeSource.postMessage(msg, this.iframeOrigin);
+    }
+  }
+
+  // Ask the running app to scroll back to the top. Sent when the parent
+  // detects the iOS status-bar tap (which WebKit only delivers to the main
+  // frame) so the gesture works even though the app scrolls inside a
+  // cross-origin subframe. Fire-and-forget; a no-op before runtime.ready.
+  pushScrollToTop(): void {
+    if (this.iframeSource && this.iframeOrigin) {
+      this.iframeSource.postMessage({ type: "vibe.evt.scroll-to-top" } satisfies EvtVibeScrollToTop, this.iframeOrigin);
     }
   }
 

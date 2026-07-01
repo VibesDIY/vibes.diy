@@ -33,6 +33,7 @@ import { uploadHandleAvatar } from "../lib/upload-avatar.js";
 import { useYoursNowToast } from "../hooks/use-yours-now-toast.js";
 import { useShareModal } from "../components/ResultPreview/useShareModal.js";
 import { useIframeApiInFlight } from "../hooks/useIframeApiInFlight.js";
+import { useStatusBarScrollToTop } from "../hooks/useStatusBarScrollToTop.js";
 import { ShareModal } from "../components/ResultPreview/ShareModal.js";
 import { useDocumentTitle } from "../hooks/useDocumentTitle.js";
 import { useLatestVibeChips } from "../hooks/useLatestVibeChips.js";
@@ -1015,6 +1016,11 @@ export default function VibeIframeWrapper() {
   // Subscribe to DM navigation requests from the iframe. A vibe posts
   // ReqOpenDmThread to ask the parent to open a direct-message thread.
   const srvVibeSandbox = vctx.srvVibeSandbox;
+
+  // Relay the iOS status-bar tap (scroll-to-top) into the cross-origin vibe
+  // iframe — the native gesture never reaches a subframe. iOS-only, invisible
+  // sentinel; see the hook for the mechanism.
+  useStatusBarScrollToTop(srvVibeSandbox);
 
   const refreshViewerFromWhoAmI = useCallback(
     async (adminOverride?: boolean) => {

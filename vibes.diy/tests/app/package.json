@@ -27,6 +27,7 @@
     "@vibes.diy/use-vibes-base": "workspace:0.0.0",
     "@vibes.diy/use-vibes-types": "workspace:*",
     "@vibes.diy/vibe-runtime": "workspace:*",
+    "@vibes.diy/vibe-srv-sandbox": "workspace:*",
     "@vibes.diy/vibe-types": "workspace:*",
     "call-ai": "workspace:*",
     "isbot": "^5.1.44",
