@@ -192,6 +192,9 @@ export interface FireflyQueryDatabase {
   changes<T extends DocTypes>(): Promise<{ rows: IndexRow<T>[]; docs: DocWithId<T>[] }>;
   subscribe<T extends DocTypes>(listener: ListenerFn<T>, updates?: boolean): () => void;
   resubscribe(): void;
+  // Ephemeral presence broadcast (#1756). Optional: FireflyDatabase relays to
+  // peers; LocalDatabase (anonymous local mode) has no peers and omits it.
+  broadcastEphemeral?(docId: string, doc: Record<string, unknown>, dbName?: string): void;
 }
 
 /**
@@ -476,6 +479,12 @@ export class FireflyDatabase {
       .catch((e: unknown) => {
         console.error(`Failed to subscribe to docs for db "${this.name}":`, e);
       });
+  }
+
+  // Ephemeral presence broadcast (#1756): emit-only, fire-and-forget. Delegates
+  // to the transport's broadcastEphemeral. Never persists, never awaits.
+  broadcastEphemeral(docId: string, doc: Record<string, unknown>): void {
+    this.vibeApi.broadcastEphemeral(docId, doc, this.name);
   }
 
   applyAcl(acl: DbAcl): void {

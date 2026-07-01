@@ -14,6 +14,7 @@ import {
   migrateLocalToCloud,
   type MigrateFn,
 } from "./firefly-local-database.js";
+import { createEphemeralCoalescer } from "./merge-coalescer.js";
 import type { VibeSandboxApi } from "./register-dependencies.js";
 import type { DbAcl, AccessFunction } from "@vibes.diy/vibe-types";
 import { useVibeContext } from "./VibeContext.js";
@@ -251,6 +252,13 @@ function createUseDocument(database: FireflyQueryDatabase) {
     }
     const originalInitialDoc = useMemo(() => structuredClone({ ...initialDoc }), []);
     const [doc, setDoc] = useState(initialDoc);
+    // #1756: one ephemeral-broadcast coalescer per hook instance, bound to the
+    // database. Collapses a merge() burst per _id to one broadcast per frame.
+    // Canceled on unmount so a pending flush never fires into a torn-down hook.
+    // Optional-call: LocalDatabase (anonymous local mode, #2988) has no peers to
+    // broadcast to, so it simply doesn't implement broadcastEphemeral.
+    const coalescer = useMemo(() => createEphemeralCoalescer((id, snapshot) => database.broadcastEphemeral?.(id, snapshot)), []);
+    useEffect(() => () => coalescer.cancel(), [coalescer]);
     const refresh = useCallback(async () => {
       if (doc._id) {
         try {
@@ -287,10 +295,20 @@ function createUseDocument(database: FireflyQueryDatabase) {
       },
       [doc, initialDoc]
     );
-    const merge = useCallback((newDoc: Record<string, unknown>) => {
-      updateHappenedRef.current = true;
-      setDoc((prev) => ({ ...prev, ...newDoc }));
-    }, []);
+    const merge = useCallback(
+      (newDoc: Record<string, unknown>) => {
+        updateHappenedRef.current = true;
+        setDoc((prev) => {
+          const next = { ...prev, ...newDoc };
+          // #1756: broadcast the MERGED snapshot (not the bare partial) so
+          // receiver-synthesized rows carry type/indexed fields. Only when the
+          // doc has an _id — a page-local draft with no _id stays private.
+          if (next._id) coalescer.push(next._id as string, next);
+          return next;
+        });
+      },
+      [coalescer]
+    );
     const replace = useCallback((newDoc: Record<string, unknown>) => {
       updateHappenedRef.current = true;
       setDoc(newDoc);
