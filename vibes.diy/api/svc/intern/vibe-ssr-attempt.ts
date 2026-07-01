@@ -49,6 +49,7 @@ export function ssrBodySignature(opts: { readonly rawSsrEnv: string | undefined;
 }
 import { type WorkerLoaderBinding } from "@vibes.diy/vibe-runtime/worker-loader-executor.js";
 import { hasRelativeImports } from "@vibes.diy/vibe-runtime/ssr-source-check.js";
+import { resolveVibeModuleGraph, type ResolveSibling } from "@vibes.diy/vibe-runtime/resolve-vibe-module-graph.js";
 
 /**
  * Why an SSR attempt did (`ok`) or did not produce HTML. Every non-`ok` outcome
@@ -84,6 +85,45 @@ const JS_MIME = ["text/javascript", "application/javascript"];
 const CONVENTION_ENTRY = /\/App\.(jsx|tsx)$/;
 
 export type EntrySelection = { kind: "one"; item: FileSystemItem } | { kind: "none" } | { kind: "ambiguous" };
+
+// Directory of a vibe-absolute path: `/lib/x.jsx` → `/lib`, `/App.jsx` → `/`.
+function vibeDirname(p: string): string {
+  const idx = p.lastIndexOf("/");
+  return idx <= 0 ? "/" : p.slice(0, idx);
+}
+
+// Resolve a relative specifier against a vibe directory (POSIX-style, `.`/`..`).
+function vibeResolve(fromDir: string, specifier: string): string {
+  const segs = fromDir.split("/").filter(Boolean);
+  for (const part of specifier.split("/")) {
+    if (part === "" || part === ".") continue;
+    if (part === "..") segs.pop();
+    else segs.push(part);
+  }
+  return `/${segs.join("/")}`;
+}
+
+// Extension/index candidates a relative import may resolve to, matched against
+// the vibe's fsItems (imports commonly omit the extension or use `.jsx`).
+const SIBLING_CANDIDATES = ["", ".jsx", ".tsx", ".ts", ".js", ".mjs", "/index.jsx", "/index.tsx", "/index.ts", "/index.js"];
+
+// Back the graph resolver with the vibe's fsItems: resolve a relative specifier
+// to the sibling fsItem and load its raw source. Returns null when nothing
+// matches (a broken import → the caller falls back to client-only).
+function makeResolveSibling(
+  fsItems: readonly FileSystemItem[],
+  loadSource: (item: FileSystemItem) => Promise<string>
+): ResolveSibling {
+  const byName = new Map(fsItems.map((i) => [i.fileName, i]));
+  return async (fromPath, specifier) => {
+    const base = vibeResolve(vibeDirname(fromPath), specifier);
+    for (const ext of SIBLING_CANDIDATES) {
+      const item = byName.get(base + ext);
+      if (item) return { path: item.fileName, source: await loadSource(item) };
+    }
+    return null;
+  };
+}
 
 /**
  * Pick the single SSR entry deterministically (no guessing, per @CharlieHelps).
@@ -129,9 +169,23 @@ export async function attemptVibeSsr(input: AttemptVibeSsrInput): Promise<SsrAtt
 
   const rRelative = await exception2Result(async () => hasRelativeImports(source));
   if (rRelative.isErr()) return { reason: "executor_error" }; // can't analyze → bail safely
-  if (rRelative.Ok()) return { reason: "relative_import_unsupported" };
 
-  const rRender = await exception2Result(async () => executor.render({ source, mountParams: input.mountParams }));
+  // #2845 cb6: a single-file entry renders directly; an entry that imports sibling
+  // files gets its whole relative-import graph resolved + transformed and shipped
+  // to the isolate. A broken/unresolvable relative import degrades to client-only
+  // (never a partial isolate).
+  let moduleGraph: { entryKey: string; modules: Record<string, string> } | undefined;
+  if (rRelative.Ok()) {
+    const rGraph = await exception2Result(async () =>
+      resolveVibeModuleGraph({ path: entry.item.fileName, source }, makeResolveSibling(input.fsItems, input.loadSource))
+    );
+    if (rGraph.isErr()) return { reason: "relative_import_unsupported" };
+    moduleGraph = rGraph.Ok();
+  }
+
+  const rRender = await exception2Result(async () =>
+    executor.render({ source, mountParams: input.mountParams, ...(moduleGraph ? { moduleGraph } : {}) })
+  );
   if (rRender.isErr()) return { reason: "executor_error" };
   return { reason: "ok", ssrHtml: rRender.Ok().html };
 }

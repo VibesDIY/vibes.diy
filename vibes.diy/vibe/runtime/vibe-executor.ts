@@ -23,6 +23,17 @@ export interface VibeExecuteInput {
   readonly source: string;
   /** Mount context (slice-1 `VibeMountParams` shape), forwarded to `renderVibeToString`. */
   readonly mountParams: unknown;
+  /**
+   * Multi-file vibe SSR (#2845 cb6): a pre-resolved, pre-transformed relative-import
+   * module graph (from `resolveVibeModuleGraph`). When present the executor loads
+   * this whole graph into the isolate instead of transforming `source` — so a vibe
+   * whose entry imports sibling files server-renders instead of falling back to
+   * client-only. Absent ⇒ single-file path (transform `source`), unchanged.
+   */
+  readonly moduleGraph?: {
+    readonly entryKey: string;
+    readonly modules: Record<string, string>;
+  };
 }
 
 export interface VibeExecuteResult {

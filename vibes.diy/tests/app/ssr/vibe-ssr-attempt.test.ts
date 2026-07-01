@@ -183,4 +183,55 @@ describe("attemptVibeSsr", () => {
     expect(r.reason).toBe("ok");
     expect(r.ssrHtml).toContain("fake-isolate");
   });
+
+  it("multi-file vibe (#2845 cb6): resolves the relative-import graph and ships every module", async () => {
+    let shipped: { modules: Record<string, string> } | undefined;
+    const fakeLoader: WorkerLoaderBinding = {
+      get(_id, factory) {
+        shipped = factory() as { modules: Record<string, string> };
+        return {
+          getEntrypoint() {
+            return { fetch: async () => new Response("<main>multi-isolate</main>") };
+          },
+        };
+      },
+    };
+    const r = await attemptVibeSsr({
+      mode: "loader",
+      loader: fakeLoader,
+      fsItems: [entryItem("/App.jsx", "a"), entryItem("/Badge.jsx", "b")],
+      mountParams: { usrEnv: {} },
+      loadSource: loaderFrom({
+        a: `import { Badge } from "./Badge.jsx"; export default function App(){ return <main><Badge/></main>; }`,
+        b: `export function Badge(){ return <span>badge</span>; }`,
+      }),
+    });
+    expect(r.reason).toBe("ok");
+    // Both the entry and its sibling reached the isolate modules map, and the
+    // entry's relative import was rewritten to the sibling's module key.
+    const keys = Object.keys(shipped?.modules ?? {});
+    expect(keys).toContain("App.js");
+    expect(keys).toContain("Badge.js");
+    expect(shipped?.modules["App.js"]).toContain("./Badge.js");
+    expect(shipped?.modules["App.js"]).not.toContain("./Badge.jsx");
+  });
+
+  it("multi-file vibe with an unresolvable sibling ⇒ relative_import_unsupported (client-only)", async () => {
+    const r = await attemptVibeSsr({
+      mode: "loader",
+      loader: {
+        get() {
+          return {
+            getEntrypoint() {
+              return { fetch: async () => new Response("x") };
+            },
+          };
+        },
+      },
+      fsItems: [entryItem("/App.jsx", "a")], // no /Missing.jsx
+      mountParams: { usrEnv: {} },
+      loadSource: loaderFrom({ a: `import "./Missing.jsx"; export default function App(){ return null; }` }),
+    });
+    expect(r.reason).toBe("relative_import_unsupported");
+  });
 });
