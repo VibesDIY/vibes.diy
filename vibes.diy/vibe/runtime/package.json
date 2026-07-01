@@ -33,7 +33,7 @@
   },
   "devDependencies": {
     "@vibes.diy/build-cli": "workspace:*",
-    "@types/react": "^19.2.14",
+    "@types/react": "^19.2.17",
     "@types/react-dom": "^19.2.3",
     "esbuild": "^0.25.0"
   },

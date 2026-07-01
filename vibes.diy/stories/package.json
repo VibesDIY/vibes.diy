@@ -10,7 +10,7 @@
     "publish": "echo core-cli build"
   },
   "dependencies": {
-    "@types/react": "^19.2.14",
+    "@types/react": "^19.2.17",
     "@vibes.diy/base": "workspace:*",
     "@vibes.diy/prompts": "workspace:*",
     "react": "^19.2.7",
