@@ -70,6 +70,27 @@ For agents subscribed to PR activity: a `cancelled` (or `skipped`) `compile_test
 is a no-op, not an actionable failure — the superseding run's `success` is the
 signal to act on.
 
+### Why `skipped` is safe here (the reviewers' concern, and why it doesn't apply)
+
+GitHub counts a `skipped` **required** status check as _passing_ (only
+`failure`/`cancelled`/`timed_out` block). So in general, flipping a required gate
+to `!cancelled()` could let a same-SHA supersede's `skipped` conclusion green an
+unverified head. That trap does **not** apply to this repo:
+
+- `main` has **no required status checks** — there is no required gate for a
+  `skipped` conclusion to falsely satisfy.
+- The only automated consumer of the `compile_test` conclusion, the deploy-time
+  `check-sha-tested` lookup in [`actions/base`](../actions/base/action.yaml),
+  matches strictly on `conclusion=="success"` — so a `skipped`/`cancelled` gate
+  always forces a full re-test, never counts as "already tested."
+- Humans and the agent merge loop merge on **green** (`success`), never on a grey
+  skip, and the superseding run produces that `success` on the same head before
+  merge.
+
+If `compile_test` is ever promoted to a required check, revisit: make it
+self-conclude `cancelled` (blocking) on the all-`cancelled` fingerprint, or make
+`checks`/`test`/`publish_build` required too so their `cancelled` blocks the head.
+
 ## Pre-run instrumentation
 
 To find "dumb work" before tests actually execute, `actions/base` also captures:

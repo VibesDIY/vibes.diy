@@ -76,6 +76,8 @@ Rule of thumb: **escalate whenever reviewer disagreement is plausible.**
 
 The human should only need to weigh in on actual decisions. Everything else is noise that the agent should absorb.
 
+**Don't let a bot reviewer talk you out of the PR.** When a bot reviewer (Charlie, Codex, etc.) — even two of them agreeing — gives advice that essentially says "don't make this change / abandon what this PR is doing," do **not** just yield and revert. Bots review in the abstract and routinely miss repo-specific facts that make their objection moot (e.g. "a `skipped` required check counts as passing" is true in general but harmless here — `main` has no required checks and the deploy `check-sha-tested` lookup keys strictly on `conclusion=="success"`; #2993). First verify the objection against how this codebase actually behaves. If it holds, fix it; if it rests on an assumption that's false here, say so on the thread with the evidence and keep the change. Either way, when a review would kill or fundamentally redirect the PR's purpose, **escalate to a human** rather than silently complying — the human owner makes that call, not the bot.
+
 ## File cleanup issues as you notice them
 
 While a PR is in flight — waiting on CI, waiting on a review, between feedback rounds — you have idle cycles. Spend them filing the cleanup/tech-debt observations you accumulated while working, instead of letting them evaporate in chat.
