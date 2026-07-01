@@ -53,6 +53,7 @@ export default {
           LLM_BACKEND_API_KEY: env.LLM_BACKEND_API_KEY,
           PRODIA_TOKEN: env.PRODIA_TOKEN,
           ICON_FALLBACK_MODEL: env.ICON_FALLBACK_MODEL,
+          BACKEND_INTERNAL_SECRET: env.BACKEND_INTERNAL_SECRET,
         },
       },
     });

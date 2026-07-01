@@ -57,6 +57,15 @@ export interface CFEnv {
   BACKEND_JS?: string;
   LOADER?: unknown;
   BACKEND_POLICY_VERSION?: string;
+  // Shared secret that authorizes the BackendDO control-plane pokes (arm/onChange)
+  // against forged pokes from inside the untrusted isolate (#2856 security). The
+  // isolate's `globalOutbound` self-stub can POST arbitrary requests to the DO, but
+  // it has no worker `env`, so it can't produce this. Trusted callers (the queue
+  // consumer's `QueueCtx`) attach it; the DO requires it for arm/onChange WHEN set.
+  // Optional + merge-safe: when unset the DO stays permissive (unchanged behavior),
+  // so it activates only once provisioned in BOTH the main-worker and queue-consumer
+  // envs. Never enters the isolate's `WorkerCode.env`.
+  BACKEND_INTERNAL_SECRET?: string;
 
   VIBES_SERVICE: Queue;
   BROWSER: Fetcher; // screenshotter uses Cloudflare's Browser Rendering API, which is accessed via a Fetcher binding

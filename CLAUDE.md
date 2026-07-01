@@ -12,6 +12,7 @@ Team-shared agent instructions live in the [`agents/`](agents/) directory. These
 
 - [rules-bag.md](agents/rules-bag.md) — Fireproof coding rules and patterns
 - [asking-questions.md](agents/asking-questions.md) — Never use the `AskUserQuestion` tool (breaks on mobile); ask in plain text with inline options instead
+- [when-to-ask.md](agents/when-to-ask.md) — Decide the _how_ yourself (with Charlie/review); ask the user only about the _what_, and only when you and Charlie genuinely can't figure it out
 - [code-quality.md](agents/code-quality.md) — Linter rules and how to run tests
 - [testing-access-fn.md](agents/testing-access-fn.md) — Test harness patterns for access-fn behavior (channels, grants, fan-out)
 - [coding-standards.md](agents/coding-standards.md) — No inline HTML, clickable links, review commits
