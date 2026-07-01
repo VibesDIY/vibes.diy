@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { useFireproof } from "use-fireproof";
-import { useViewer } from "use-vibes";
+import { useViewer, useVibe } from "use-vibes";
 import {
   FESTIVAL_TZ,
   FESTIVAL_2026,
@@ -10,8 +10,9 @@ import {
   festivalDayFor,
   fmtTime,
   fmtDate,
+  decodeEntities,
 } from "./festival-utils.js";
-import { c, viewerTagStyle } from "./styles.js";
+import { c } from "./styles.js";
 import ScheduleView from "./ScheduleView.jsx";
 import BandsView from "./BandsView.jsx";
 import NowView from "./NowView.jsx";
@@ -21,12 +22,16 @@ import FriendsView from "./FriendsView.jsx";
 import ShiftsView from "./ShiftsView.jsx";
 
 export default function PickathonPicker() {
-  const { viewer, can, ViewerTag } = useViewer();
+  const { viewer, ViewerTag } = useViewer();
   const { database, useLiveQuery, useDocument } = useFireproof("pickathon");
+  const { can, ready } = useVibe("pickathon");
 
-  const canWrite = can("write");
   const myHandle = viewer?.userHandle || "anonymous";
   const userId = myHandle;
+
+  // Gate every write surface on the app's own access.js via useVibe().can — the
+  // same function the server enforces. useViewer() is identity/display only.
+  const canWrite = ready && Boolean(can?.create?.({ type: "favorite", userId: myHandle })?.ok);
 
   const [events, setEvents] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -145,11 +150,11 @@ export default function PickathonPicker() {
         const end = ensureT(e.end);
         list.push({
           eventId: e.id,
-          title: e.title,
+          title: decodeEntities(e.title),
           start,
           end,
           url: e.url,
-          venueTitle: v.title,
+          venueTitle: decodeEntities(v.title),
           venueColor: v.color,
           lineup: e.lineup || {},
           day: toFestivalDate(start).toLocaleDateString("en-US", { weekday: "long", timeZone: FESTIVAL_TZ }),
@@ -413,7 +418,7 @@ export default function PickathonPicker() {
           setPendingDelete(docId);
         }
       }}
-      className={`px-2 py-1 rounded-full m-2  text-xs font-bold transition-all ${pendingDelete === docId ? "bg-[#B22222] text-white" : "bg-white dark:bg-[#22252d] text-[#4A4A4A] dark:text-[#e9e9e9] hover:bg-[#B22222] hover:text-white"}`}
+      className={c.deleteX(pendingDelete === docId)}
       title={pendingDelete === docId ? "Tap to confirm" : "Remove"}
     >
       {pendingDelete === docId ? "Confirm" : "×"}
@@ -469,7 +474,6 @@ export default function PickathonPicker() {
                 </p>
               </div>
             </div>
-            <ViewerTag style={viewerTagStyle} />
           </div>
           {error && error.includes("cached") && (
             <div className={`mt-2 ${c.pinkBg} text-white px-3 py-2 rounded-lg text-sm font-bold`}>{error}</div>

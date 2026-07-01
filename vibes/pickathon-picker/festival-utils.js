@@ -69,3 +69,12 @@ export const fmtTime = (s) =>
 
 export const fmtDate = (s) =>
   toFestivalDate(s).toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric", timeZone: FESTIVAL_TZ });
+
+// The Pickathon feed returns HTML-entity-encoded strings (e.g. "Skills &amp; Games").
+// Decode them once at ingest so titles render as text, not markup.
+export const decodeEntities = (s) => {
+  if (typeof s !== "string" || !s.includes("&")) return s;
+  const el = document.createElement("textarea");
+  el.innerHTML = s;
+  return el.value;
+};
