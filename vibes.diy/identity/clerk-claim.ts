@@ -26,6 +26,15 @@ export const ClerkEmailTemplateClaimSchema = z.object({
   public_meta: z.unknown(),
 });
 
+// `ClerkEmailTemplateClaim` type, lifted verbatim from `core-types-base`'s
+// `fp-clerk-claim.zod` (`export type ClerkEmailTemplateClaim = z.infer<…>`). The
+// owned schema above carries the in-repo `.catch()` patch, but `.catch()` only
+// changes runtime parse fallbacks — the inferred output type is identical to
+// upstream's, so deriving the type here matches upstream shape exactly. The
+// dashboard `msg-types.ts` (`UserByProvider.params`) consumes this owned type
+// instead of `@fireproof/core-types-base`.
+export type ClerkEmailTemplateClaim = z.infer<typeof ClerkEmailTemplateClaimSchema>;
+
 export const ClerkClaimSchema = z.object({
   azp: z.string().optional(),
   exp: z.number().int().optional(),
