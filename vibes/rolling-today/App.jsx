@@ -104,8 +104,10 @@ export default function App() {
     loadDate(today);
   }, [today, loadDate]);
 
-  // Mobile: render at device width and kill horizontal scroll (wide banner / shadows
-  // never induce an x-scroll) without touching vertical scroll.
+  // Mobile: render at device width and kill horizontal scroll (the wide banner, box
+  // shadows, and the off-canvas "sun" glow can otherwise induce an x-scroll) without
+  // touching vertical scroll. Lock it on BOTH html and body — the scrolling element
+  // varies, and only clamping both reliably clips fixed/off-canvas decoration.
   useEffect(() => {
     let meta = document.querySelector('meta[name="viewport"]');
     if (!meta) {
@@ -114,11 +116,16 @@ export default function App() {
       document.head.appendChild(meta);
     }
     meta.setAttribute("content", "width=device-width, initial-scale=1");
-    const root = document.documentElement;
-    const prev = root.style.overflowX;
-    root.style.overflowX = "hidden";
+    const html = document.documentElement;
+    const body = document.body;
+    const prev = { h: html.style.overflowX, b: body.style.overflowX, bw: body.style.maxWidth };
+    html.style.overflowX = "hidden";
+    body.style.overflowX = "hidden";
+    body.style.maxWidth = "100vw";
     return () => {
-      root.style.overflowX = prev;
+      html.style.overflowX = prev.h;
+      body.style.overflowX = prev.b;
+      body.style.maxWidth = prev.bw;
     };
   }, []);
 
@@ -264,13 +271,6 @@ export default function App() {
               </div>
             )}
 
-            {!signedIn && (
-              <div className={c.signinCallout}>
-                <Icon d={ICONS.spark} />
-                <span>Sign in via the Vibes DIY logo to sync your rides and follow friends. Favorites work while you're logged out and move to your account when you sign in.</span>
-              </div>
-            )}
-
             {error && <div className={c.err}>Couldn't reach the feed: {error}</div>}
 
             {!loading && events.length === 0 && !error && (
@@ -303,6 +303,15 @@ export default function App() {
           </span>
         </footer>
       </div>
+
+      {!signedIn && view === "rides" && (
+        <div className="fixed bottom-[12px] left-3 right-[104px] z-50 flex justify-end pointer-events-none">
+          <div className={c.signinCallout} style={{ marginBottom: 0, maxWidth: 440 }}>
+            <Icon d={ICONS.spark} size={16} />
+            <span>Sign in via the Vibes DIY logo to sync your rides and follow friends — favorites work while you're logged out and move to your account when you sign in.</span>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
