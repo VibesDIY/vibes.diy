@@ -69,6 +69,18 @@ export interface VibesApiSQLCtx {
   ): Promise<void>;
   registerDocSubscription?(subscriptionKey: string): Promise<void>;
   deregisterDocSubscription?(subscriptionKey: string): Promise<void>;
+  notifyDocEphemeral?(
+    evt: {
+      ownerHandle: string;
+      appSlug: string;
+      dbName: string;
+      docId: string;
+      doc: Record<string, unknown>;
+      channel?: string;
+    },
+    senderConnId: string
+  ): Promise<void>;
+  notifyDocEphemeralDrop?(originPeer: string): Promise<void>;
   notifyRequestGrantChanged?(evt: EvtRequestGrant, senderConnId: string): Promise<void>;
   registerRequestGrantSubscription?(subscriptionKey: string): Promise<void>;
   deregisterRequestGrantSubscription?(subscriptionKey: string): Promise<void>;
