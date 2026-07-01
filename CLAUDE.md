@@ -11,6 +11,7 @@
 Team-shared agent instructions live in the [`agents/`](agents/) directory. These files are meant to be actively maintained — update them when rules change, add new files when new patterns emerge, and remove content that's no longer accurate. PRs that change agent behavior should update the relevant agents/ file alongside the code. Before declaring a PR ready, enforce [`agents/rules-bag.md`](agents/rules-bag.md) and run `pnpm run rules-bag:constructors` successfully.
 
 - [rules-bag.md](agents/rules-bag.md) — Fireproof coding rules and patterns
+- [asking-questions.md](agents/asking-questions.md) — Never use the `AskUserQuestion` tool (breaks on mobile); ask in plain text with inline options instead
 - [code-quality.md](agents/code-quality.md) — Linter rules and how to run tests
 - [testing-access-fn.md](agents/testing-access-fn.md) — Test harness patterns for access-fn behavior (channels, grants, fan-out)
 - [coding-standards.md](agents/coding-standards.md) — No inline HTML, clickable links, review commits
