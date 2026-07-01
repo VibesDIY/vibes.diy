@@ -24,20 +24,41 @@ export default function BandsView({ bandsList, myFavIds, canWrite, toggleFavorit
     }
   };
 
-  const LINEUP_ORDER = ["music", "djs", "family"];
+  // Preferred display order for the lineup categories the feed ships (music/djs/family/
+  // wellness/curation/literary as of 2026). Any *other* category the feed adds later is
+  // still rendered — appended after these — so nothing silently drops off the page.
+  const LINEUP_ORDER = ["music", "djs", "family", "wellness", "curation", "literary"];
+  const LINEUP_LABELS = {
+    music: "Music",
+    djs: "DJs",
+    family: "Family",
+    wellness: "Wellness",
+    curation: "Curation",
+    literary: "Literary",
+  };
+  const titleCase = (s) => s.replace(/(^|[\s-])\w/g, (m) => m.toUpperCase());
+  const labelFor = (key) => LINEUP_LABELS[key] || titleCase(key);
+
   const grouped = {};
   for (const band of bandsList) {
     const key = band.lineup?.id || "music";
     if (!grouped[key]) grouped[key] = [];
     grouped[key].push(band);
   }
-  const LINEUP_LABELS = { music: "Music", djs: "DJs", family: "Family" };
+  // Known categories first (in preferred order), then any unrecognized ones present in
+  // the data, sorted — never a hardcoded whitelist that could hide a new category.
+  const orderedKeys = [
+    ...LINEUP_ORDER.filter((key) => grouped[key]?.length > 0),
+    ...Object.keys(grouped)
+      .filter((key) => !LINEUP_ORDER.includes(key))
+      .sort(),
+  ];
 
   return (
     <div>
       <div className="flex items-center gap-3 mb-6 flex-wrap">
         <h2 className={`text-2xl font-black ${c.bodyText}`}>Bands ({bandsList.length})</h2>
-        {LINEUP_ORDER.filter((key) => grouped[key]?.length > 0).map((key) => (
+        {orderedKeys.map((key) => (
           <button
             key={`nav-${key}`}
             onClick={() => document.getElementById(`lineup-${key}`)?.scrollIntoView({ behavior: "smooth", block: "start" })}
@@ -47,11 +68,11 @@ export default function BandsView({ bandsList, myFavIds, canWrite, toggleFavorit
               color: grouped[key][0].lineup?.textColor || "#000",
             }}
           >
-            {LINEUP_LABELS[key] || key} ({grouped[key].length})
+            {labelFor(key)} ({grouped[key].length})
           </button>
         ))}
       </div>
-      {LINEUP_ORDER.filter((key) => grouped[key]?.length > 0).map((key) => (
+      {orderedKeys.map((key) => (
         <div key={key} id={`lineup-${key}`} className="mb-8 scroll-mt-4">
           <h3
             className="text-lg font-black mb-3 px-8 py-6 rounded-xl m-2  inline-block"
@@ -60,7 +81,7 @@ export default function BandsView({ bandsList, myFavIds, canWrite, toggleFavorit
               color: grouped[key][0].lineup?.textColor || "#000",
             }}
           >
-            {LINEUP_LABELS[key] || key} ({grouped[key].length})
+            {labelFor(key)} ({grouped[key].length})
           </h3>
           <div className="grid gap-3 mt-3">
             {grouped[key].map((band) => {
