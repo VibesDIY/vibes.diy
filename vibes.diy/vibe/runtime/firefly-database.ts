@@ -42,6 +42,8 @@ export interface FireflyTransport {
   queryDocs(dbName?: string, filter?: QueryFilter): Promise<Result<ResQueryDocs>>;
   deleteDoc(docId: string, dbName?: string): Promise<Result<ResDeleteDoc>>;
   subscribeDocs(dbName?: string): Promise<Result<ResSubscribeDocs>>;
+  // Ephemeral presence broadcast (#1756): fire-and-forget, no return.
+  broadcastEphemeral(docId: string, doc: Record<string, unknown>, dbName?: string): void;
   setDbAcl(dbName: string, acl: DbAcl): Promise<Result<ResSetDbAcl>>;
   onMsg(fn: (event: { data: unknown }) => void): void;
 }

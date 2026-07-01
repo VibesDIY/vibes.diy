@@ -295,6 +295,18 @@ export class VibeSandboxApi {
     );
   }
 
+  // Ephemeral presence broadcast (#1756). Fire-and-forget: postMessage directly,
+  // no tid correlation, no await. Gated on `acked` so we don't post into a void
+  // before the host listener exists; drop the frame if not yet acked (the next
+  // coalesced merge frame carries the latest snapshot).
+  broadcastEphemeral(docId: string, doc: Record<string, unknown>, dbName = "default"): void {
+    if (!this.acked) return;
+    this.svc.postMessage(
+      { tid: crypto.randomUUID(), type: "vibes.diy.req-broadcast-ephemeral", ...this.svc.vibeApp, dbName, docId, doc },
+      "*"
+    );
+  }
+
   setDbAcl(dbName: string, acl: DbAcl): Promise<Result<ResSetDbAcl>> {
     return this.request<{ type: string; appSlug: string; ownerHandle: string; dbName: string; acl: DbAcl }, ResSetDbAcl>(
       {

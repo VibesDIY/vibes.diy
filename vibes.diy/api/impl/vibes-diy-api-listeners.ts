@@ -1,8 +1,11 @@
 import {
+  EvtDocEphemeral,
   EvtRequestGrant,
   EvtUserNotification,
   EvtViewerGrantsChanged,
   isEvtDocChanged,
+  isEvtDocEphemeral,
+  isEvtDocEphemeralDrop,
   isEvtRequestGrant,
   isEvtUserNotification,
   isEvtViewerGrantsChanged,
@@ -55,6 +58,18 @@ export function attachDocChangedToConnection(
   });
 }
 
+export function attachDocEphemeralToConnection(conn: VibeDiyApiConnection, fn: (evt: EvtDocEphemeral) => void): ListenerDetacher {
+  return attachPayloadListener(conn, isEvtDocEphemeral, (payload) => {
+    fn(payload);
+  });
+}
+
+export function attachDocEphemeralDropToConnection(conn: VibeDiyApiConnection, fn: (originPeer: string) => void): ListenerDetacher {
+  return attachPayloadListener(conn, isEvtDocEphemeralDrop, (payload) => {
+    fn(payload.originPeer);
+  });
+}
+
 export function attachRequestGrantToConnection(conn: VibeDiyApiConnection, fn: (evt: EvtRequestGrant) => void): ListenerDetacher {
   return attachPayloadListener(conn, isEvtRequestGrant, (payload) => {
     fn(payload);
@@ -83,6 +98,10 @@ export interface ReplayConnectionStateParams {
   conn: VibeDiyApiConnection;
   docChangedListeners: ((ownerHandle: string, appSlug: string, dbName: string, docId: string) => void)[];
   docChangedDetachers: Map<(ownerHandle: string, appSlug: string, dbName: string, docId: string) => void, ListenerDetacher>;
+  docEphemeralListeners: ((evt: EvtDocEphemeral) => void)[];
+  docEphemeralDetachers: Map<(evt: EvtDocEphemeral) => void, ListenerDetacher>;
+  docEphemeralDropListeners: ((originPeer: string) => void)[];
+  docEphemeralDropDetachers: Map<(originPeer: string) => void, ListenerDetacher>;
   requestGrantListeners: ((evt: EvtRequestGrant) => void)[];
   requestGrantDetachers: Map<(evt: EvtRequestGrant) => void, ListenerDetacher>;
   viewerGrantsListeners: ((evt: EvtViewerGrantsChanged) => void)[];
@@ -104,6 +123,10 @@ export function replayConnectionState(params: ReplayConnectionStateParams): void
     conn,
     docChangedListeners,
     docChangedDetachers,
+    docEphemeralListeners,
+    docEphemeralDetachers,
+    docEphemeralDropListeners,
+    docEphemeralDropDetachers,
     requestGrantListeners,
     requestGrantDetachers,
     viewerGrantsListeners,
@@ -125,6 +148,20 @@ export function replayConnectionState(params: ReplayConnectionStateParams): void
     docChangedDetachers.get(fn)?.();
     const detach = attachDocChangedToConnection(conn, fn);
     docChangedDetachers.set(fn, detach);
+  }
+
+  // Re-attach all onDocEphemeral listeners to the new connection
+  for (const fn of docEphemeralListeners) {
+    docEphemeralDetachers.get(fn)?.();
+    const detach = attachDocEphemeralToConnection(conn, fn);
+    docEphemeralDetachers.set(fn, detach);
+  }
+
+  // Re-attach all onDocEphemeralDrop listeners to the new connection
+  for (const fn of docEphemeralDropListeners) {
+    docEphemeralDropDetachers.get(fn)?.();
+    const detach = attachDocEphemeralDropToConnection(conn, fn);
+    docEphemeralDropDetachers.set(fn, detach);
   }
 
   // Re-attach all onRequestGrant listeners to the new connection
