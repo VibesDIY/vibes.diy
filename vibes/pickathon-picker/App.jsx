@@ -399,6 +399,9 @@ export default function PickathonPicker() {
 
   const submitShift = async (e) => {
     e?.preventDefault();
+    // A cleared time input is an empty string, which would store a malformed
+    // `<date>T:00`; require both times so we never persist an unformattable shift.
+    if (!shiftForm.startTime || !shiftForm.endTime) return;
     const dayISO = getDateForDay(shiftForm.day);
     await database.put({
       type: "shift",
