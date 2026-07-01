@@ -14,7 +14,7 @@ describe("starterVibeHref", () => {
 
 describe("v1 Bloom graph (shipped content)", () => {
   it("wires the four existing Blooms: root → machine → drums, and root → says (the Game leaf)", () => {
-    expect(CURATED_EDGES).toEqual([
+    expect(CURATED_EDGES.filter((e) => e.source.appSlug.startsWith("bloom"))).toEqual([
       {
         source: { ownerHandle: "system", appSlug: "bloom-root" },
         chipLabel: "Add a pattern sequencer",
@@ -39,11 +39,40 @@ describe("v1 Bloom graph (shipped content)", () => {
   });
 });
 
+describe("v1.1 Games graph (shipped content)", () => {
+  it("wires the games: match-pairs → tone-pairs, and match-pairs → hue-hunt → hue-rush", () => {
+    expect(CURATED_EDGES.filter((e) => !e.source.appSlug.startsWith("bloom"))).toEqual([
+      {
+        source: { ownerHandle: "system", appSlug: "match-pairs" },
+        chipLabel: "Make the pairs play tones",
+        target: { ownerHandle: "system", appSlug: "tone-pairs" },
+      },
+      {
+        source: { ownerHandle: "system", appSlug: "match-pairs" },
+        chipLabel: "Hunt the color word instead",
+        target: { ownerHandle: "system", appSlug: "hue-hunt" },
+      },
+      {
+        source: { ownerHandle: "system", appSlug: "hue-hunt" },
+        chipLabel: "Let me play unlimited rounds",
+        target: { ownerHandle: "system", appSlug: "hue-rush" },
+      },
+    ]);
+  });
+
+  it("ships the Games category tile pointing at match-pairs", () => {
+    const games = STARTER_CATEGORIES.find((c) => c.category === "Games");
+    expect(games?.entry).toEqual({ ownerHandle: "system", appSlug: "match-pairs" });
+  });
+});
+
 describe("starterSeedPlan", () => {
   it("groups edges into one seed per source vibe — the chip labels the setup seeds", () => {
     expect(starterSeedPlan()).toEqual([
       { ownerHandle: "system", appSlug: "bloom-root", chips: ["Add a pattern sequencer", "Make it a memory game"] },
       { ownerHandle: "system", appSlug: "bloom-machine", chips: ["Make it a drum machine"] },
+      { ownerHandle: "system", appSlug: "match-pairs", chips: ["Make the pairs play tones", "Hunt the color word instead"] },
+      { ownerHandle: "system", appSlug: "hue-hunt", chips: ["Let me play unlimited rounds"] },
     ]);
   });
 });
