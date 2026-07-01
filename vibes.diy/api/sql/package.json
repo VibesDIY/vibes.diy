@@ -10,7 +10,6 @@
   "dependencies": {
     "@adviser/cement": "^0.5.34",
     "@cloudflare/workers-types": "^4.20260617.1",
-    "@fireproof/core-types-protocols-dashboard": "0.24.19",
     "@libsql/client": "^0.17.4",
     "@neondatabase/serverless": "^1.1.0",
     "@noble/hashes": "^2.2.0",
