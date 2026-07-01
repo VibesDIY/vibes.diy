@@ -38,7 +38,7 @@ build, or serve the vibe.
   it to a merge. Let it take the time it takes.
 - When you apply review feedback, **auto-deploy the fix** to the live handle(s)
   (`push` + `publish`) the same way you'd deploy any other change — the review→fix→deploy
-  loop keeps the *live app* correct, which is what matters. Then push the commit so the
+  loop keeps the _live app_ correct, which is what matters. Then push the commit so the
   PR reflects it and the reviewer can re-check.
 
 ## When the merge DOES matter
@@ -46,7 +46,7 @@ build, or serve the vibe.
 This policy is scoped to **vibe (CLI-deployed) work**. For platform / library / infra
 changes — anything that ships through the normal build & deploy pipeline (packages,
 workers, schema, bindings, `vibes.diy/**`) — the full [`pr-lifecycle.md`](pr-lifecycle.md)
-rules still apply: there, the merge *is* the ship, so green CI + review + merge matter.
+rules still apply: there, the merge _is_ the ship, so green CI + review + merge matter.
 
 ## TL;DR
 
