@@ -27,7 +27,7 @@ export default function RideCard({ event, favs = [], userId, canFavorite, toggle
             title={myFav ? "Favorited" : "Favorite this ride"}
             className={myFav ? c.favStarOn : c.favStar}
           >
-            <Icon d={ICONS.star} size={28} fill={myFav ? "currentColor" : "none"} />
+            <Icon d={ICONS.star} size={56} fill={myFav ? "currentColor" : "none"} />
           </button>
         )}
         <h2 className={c.title}>{event.title}</h2>
