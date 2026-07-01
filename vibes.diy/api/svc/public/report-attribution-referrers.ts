@@ -11,7 +11,7 @@ import {
   resReportAttributionReferrers,
 } from "@vibes.diy/api-types";
 import { type } from "arktype";
-import { sql, desc, eq, notInArray, and, like, notLike, not, type SQL, type AnyColumn } from "drizzle-orm";
+import { sql, desc, eq, notInArray, and, like, notLike, not, gte, type SQL, type AnyColumn } from "drizzle-orm";
 import { unwrapMsgBase } from "../unwrap-msg-base.js";
 import { checkAuth } from "../check-auth.js";
 import { VibesApiSQLCtx } from "../types.js";
@@ -43,11 +43,26 @@ function legacyVibePath(reqPath: AnyColumn): SQL {
   return and(like(reqPath, "/vibe/_%"), notLike(reqPath, "/vibe/%/%")) as SQL;
 }
 
-async function computeAttributionReferrers(vctx: VibesApiSQLCtx, reqPathFilter?: string): Promise<ResReportAttributionReferrers> {
+// "7d" aggregates only events from the last seven days; "all" (default) is
+// all-time. `ts` is stored as an ISO-8601 UTC string (`Date.toISOString()`),
+// so a lexicographic `>=` against a cutoff ISO string is a correct range
+// filter — no cast needed, and it runs on both Postgres and the SQLite test DB.
+function windowStartFilter(tsColumn: AnyColumn, window: "all" | "7d"): SQL | undefined {
+  if (window !== "7d") return undefined;
+  const cutoffMs = Date.now() - 7 * 24 * 60 * 60 * 1000;
+  return gte(tsColumn, new Date(cutoffMs).toISOString());
+}
+
+async function computeAttributionReferrers(
+  vctx: VibesApiSQLCtx,
+  reqPathFilter?: string,
+  window: "all" | "7d" = "all"
+): Promise<ResReportAttributionReferrers> {
   const t = vctx.sql.tables;
 
   const ownedFilter = notInArray(t.refererEvents.refHost, OWNED_HOSTS);
   const notLegacyVibeFilter = not(legacyVibePath(t.refererEvents.reqPath));
+  const windowFilter = windowStartFilter(t.refererEvents.ts, window);
 
   const baseQuery = vctx.sql.db
     .select({
@@ -59,10 +74,12 @@ async function computeAttributionReferrers(vctx: VibesApiSQLCtx, reqPathFilter?:
     .from(t.refererEvents)
     .$dynamic();
 
+  // `and` ignores undefined operands, so an "all"-time query simply omits the
+  // window filter.
   const filtered =
     reqPathFilter !== undefined
-      ? baseQuery.where(and(ownedFilter, notLegacyVibeFilter, eq(t.refererEvents.reqPath, reqPathFilter)))
-      : baseQuery.where(and(ownedFilter, notLegacyVibeFilter));
+      ? baseQuery.where(and(ownedFilter, notLegacyVibeFilter, windowFilter, eq(t.refererEvents.reqPath, reqPathFilter)))
+      : baseQuery.where(and(ownedFilter, notLegacyVibeFilter, windowFilter));
 
   const rows = await filtered
     .groupBy(t.refererEvents.refHost, t.refererEvents.refPath, t.refererEvents.reqPath)
@@ -77,7 +94,7 @@ async function computeAttributionReferrers(vctx: VibesApiSQLCtx, reqPathFilter?:
             total: sql<number>`cast(count(*) as int)`,
           })
           .from(t.refererEvents)
-          .where(legacyVibePath(t.refererEvents.reqPath))
+          .where(and(legacyVibePath(t.refererEvents.reqPath), windowFilter))
           .groupBy(t.refererEvents.reqPath)
           .orderBy(desc(sql`count(*)`))
           .limit(200)
@@ -122,10 +139,13 @@ export const reportAttributionReferrersEvento: EventoHandler<
       }
 
       const reqPathFilter = req.reqPath;
-      const cacheKey =
+      const window = req.window ?? "all";
+      const cacheKeyBase =
         reqPathFilter !== undefined ? `attribution-referrers:${encodeURIComponent(reqPathFilter)}` : "attribution-referrers";
+      // Fold the window into the cache key so "all" and "7d" don't collide.
+      const cacheKey = `${cacheKeyBase}:${window}`;
       const res = await cachedReport(vctx, cacheKey, resReportAttributionReferrers, () =>
-        computeAttributionReferrers(vctx, reqPathFilter)
+        computeAttributionReferrers(vctx, reqPathFilter, window)
       );
       await ctx.send.send(ctx, res);
       return Result.Ok(EventoResult.Continue);

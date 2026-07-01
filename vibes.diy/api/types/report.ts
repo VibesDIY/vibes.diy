@@ -121,6 +121,9 @@ export const reqReportAttributionReferrers = type({
   type: "'vibes.diy.req-report-attribution-referrers'",
   auth: dashAuthType,
   "reqPath?": "string",
+  // Time window to aggregate over. Omitted / "all" = all-time (default);
+  // "7d" = only events from the last 7 days.
+  "window?": "'all'|'7d'",
 });
 export type ReqReportAttributionReferrers = typeof reqReportAttributionReferrers.infer;
 export function isReqReportAttributionReferrers(obj: unknown): obj is ReqReportAttributionReferrers {
