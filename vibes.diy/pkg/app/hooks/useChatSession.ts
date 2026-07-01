@@ -105,6 +105,14 @@ export function useChatSession(opts: ChatSessionOpts): ChatSession {
   // dropped instead of merged.
   const streamGenerationRef = useRef(0);
 
+  // Open epoch. Each `resetChat()` (cancel) bumps this; a pending `openChat()`
+  // captures it at call time and bails (closing the just-opened socket) if it's
+  // been superseded by then. Without this, a Stop clicked while a prompt-driven
+  // open is still in flight would let the late `.then` attach a chat + section
+  // stream we've already cancelled — leaking the socket and even feeding the
+  // dead turn's stream back into the reducer.
+  const openSeqRef = useRef(0);
+
   // Holds a prompt that hit `shard-overloaded` and was rolled to the next shard.
   // The reconnect loop reopens the chat on that shard, then re-fires this prompt
   // (handleReconnectAttempt) — NOT via promptToSend, which could race the old
@@ -269,6 +277,9 @@ export function useChatSession(opts: ChatSessionOpts): ChatSession {
   // Identity-stable: reads/writes only refs + setChat.
   const resetChat = useCallback(() => {
     streamGenerationRef.current += 1;
+    // Invalidate any in-flight openChat() so its late `.then` closes + bails
+    // instead of attaching a chat we've cancelled.
+    openSeqRef.current += 1;
     void activeChatRef.current?.close();
     activeChatRef.current = null;
     retryPromptRef.current = null;
@@ -296,7 +307,15 @@ export function useChatSession(opts: ChatSessionOpts): ChatSession {
       return; // Already opened or opening
     }
     openingRef.current = true;
+    const mySeq = openSeqRef.current;
     chatApi.openChat({ ownerHandle, appSlug, mode: "codegen" }).then((rChat) => {
+      // A resetChat() (cancel) superseded this open while it was in flight — close
+      // the freshly-opened socket and bail, so we neither leak it nor attach its
+      // stream to the reducer after the turn was cancelled.
+      if (openSeqRef.current !== mySeq) {
+        if (rChat.isOk()) void rChat.Ok().close();
+        return;
+      }
       if (rChat.isErr()) {
         console.error("CHAT-Error", rChat.Err(), ownerHandle, appSlug);
         onSendSettled?.(false);
