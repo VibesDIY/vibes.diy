@@ -2,12 +2,13 @@ import React, { useState, useEffect, useMemo, useRef } from "react";
 import { useFireproof } from "use-fireproof";
 import { useViewer, useVibe } from "use-vibes";
 import {
-  FESTIVAL_TZ,
   FESTIVAL_2026,
   LOGO_URL,
   ensureT,
   toFestivalDate,
   festivalDayFor,
+  setsOnNow,
+  upNextSets,
   fmtTime,
   fmtDate,
   decodeEntities,
@@ -152,7 +153,11 @@ export default function PickathonPicker() {
   const [viewingUser, setViewingUser] = useState(null);
   const [selectedFriend, setSelectedFriend] = useState(null);
   const [linkedFriend, setLinkedFriend] = useState(null);
+  const [friendConfirm, setFriendConfirm] = useState(null);
   const friendScrolledRef = useRef(false);
+  // Handles we've already resolved (added or declined) this session, so the confirm
+  // prompt doesn't re-appear after the friends list updates.
+  const handledFriendRef = useRef(new Set());
   const [pendingDelete, setPendingDelete] = useState(null);
   const [nowTick, setNowTick] = useState(Date.now());
 
@@ -203,21 +208,27 @@ export default function PickathonPicker() {
     clearFriendParamFromUrl();
   }, []);
 
-  // Once signed in, record the friendship and jump to that friend's schedule.
-  useEffect(() => {
-    if (!signedIn || !linkedFriend || linkedFriend === viewer.userHandle) return;
+  // Adding a friend (they can see your schedule) should be deliberate: the add-intent
+  // rides in the URL and the parent vibes.diy URL is cross-origin, so we can't strip it
+  // there — someone could re-share their address bar and silently propose *their* friend
+  // to a third party. So instead of auto-adding, we confirm first (see the prompt effect
+  // below, after the friends list is available).
+  const confirmAddFriend = () => {
+    const slug = friendConfirm;
+    if (!slug || !viewer?.userHandle) return;
+    handledFriendRef.current.add(slug);
     database
-      .put({
-        _id: `friend-${viewer.userHandle}-${linkedFriend}`,
-        type: "friend",
-        userId: viewer.userHandle,
-        friendSlug: linkedFriend,
-        createdAt: Date.now(),
-      })
+      .put({ _id: `friend-${viewer.userHandle}-${slug}`, type: "friend", userId: viewer.userHandle, friendSlug: slug, createdAt: Date.now() })
       .catch(() => {});
-    setSelectedFriend(linkedFriend);
+    setSelectedFriend(slug);
     setView("friends");
-  }, [signedIn, linkedFriend, viewer?.userHandle, database]);
+    setFriendConfirm(null);
+  };
+  const declineAddFriend = () => {
+    if (friendConfirm) handledFriendRef.current.add(friendConfirm);
+    setFriendConfirm(null);
+    setLinkedFriend(null);
+  };
 
   // Scroll to the friend's schedule once it's rendered (one-time).
   useEffect(() => {
@@ -300,7 +311,11 @@ export default function PickathonPicker() {
           venueTitle: decodeEntities(v.title),
           venueColor: v.color,
           lineup: e.lineup || {},
-          day: toFestivalDate(start).toLocaleDateString("en-US", { weekday: "long", timeZone: FESTIVAL_TZ }),
+          // Pickathon runs late, so a set is grouped by the *festival night* it belongs
+          // to, not its raw calendar date: anything before 4 AM counts as the prior day
+          // (e.g. a 1 AM Sunday set lives under Saturday). festivalDayFor applies that
+          // cutoff, and it's the same rule the faves/friends schedules already use.
+          day: festivalDayFor(start),
         });
       }
     }
@@ -308,9 +323,12 @@ export default function PickathonPicker() {
   };
 
   const getDateForDay = (day) => {
+    // Prefer the festival day's canonical calendar date. Since a day now groups
+    // after-midnight sets from the *next* calendar date (4 AM cutoff), we must not
+    // derive the header date from a stray early-morning event's start.
+    if (FESTIVAL_2026.dates[day]) return FESTIVAL_2026.dates[day];
     const evt = events.find((e) => e.day === day);
     if (evt) return evt.start.split("T")[0];
-    if (FESTIVAL_2026.dates[day]) return FESTIVAL_2026.dates[day];
     const base = new Date(FESTIVAL_2026.fallbackStart);
     const idx = FESTIVAL_2026.dayOrder.indexOf(day);
     const d = new Date(base);
@@ -355,6 +373,20 @@ export default function PickathonPicker() {
     s.delete(userId);
     return s;
   }, [friends, friendedBy, userId]);
+
+  // Once signed in, a captured ?friend link prompts a confirmation before adding —
+  // unless you already follow them, in which case just jump to their schedule.
+  useEffect(() => {
+    if (!signedIn || !linkedFriend || linkedFriend === viewer.userHandle) return;
+    if (handledFriendRef.current.has(linkedFriend)) return;
+    if (friends.some((f) => f.friendSlug === linkedFriend)) {
+      handledFriendRef.current.add(linkedFriend);
+      setSelectedFriend(linkedFriend);
+      setView("friends");
+      return;
+    }
+    setFriendConfirm(linkedFriend);
+  }, [signedIn, linkedFriend, friends, viewer?.userHandle]);
 
   const friendFavIds = useMemo(() => {
     const s = new Set();
@@ -459,28 +491,11 @@ export default function PickathonPicker() {
     return [...map.values()].sort((a, b) => a.title.localeCompare(b.title));
   }, [events]);
 
-  const nowSets = useMemo(() => {
-    const t = nowTick;
-    return events
-      .filter((e) => {
-        const s = toFestivalDate(e.start).getTime();
-        const en = toFestivalDate(e.end).getTime();
-        return s <= t && en > t;
-      })
-      .sort((a, b) => a.venueTitle.localeCompare(b.venueTitle));
-  }, [events, nowTick]);
-
-  const nextSets = useMemo(() => {
-    const t = nowTick;
-    const byVenue = new Map();
-    const sorted = [...events].sort((a, b) => toFestivalDate(a.start) - toFestivalDate(b.start));
-    for (const e of sorted) {
-      const s = toFestivalDate(e.start).getTime();
-      if (s <= t) continue;
-      if (!byVenue.has(e.venueTitle)) byVenue.set(e.venueTitle, e);
-    }
-    return [...byVenue.values()].sort((a, b) => toFestivalDate(a.start) - toFestivalDate(b.start));
-  }, [events, nowTick]);
+  const nowSets = useMemo(
+    () => setsOnNow(events, nowTick).sort((a, b) => a.venueTitle.localeCompare(b.venueTitle)),
+    [events, nowTick]
+  );
+  const nextSets = useMemo(() => upNextSets(events, nowTick), [events, nowTick]);
 
   const filteredEvents = events
     .filter((e) => e.title.toLowerCase().includes(searchTerm.toLowerCase()) && (selectedDay === "all" || e.day === selectedDay))
@@ -763,11 +778,40 @@ export default function PickathonPicker() {
       </div>
 
       {!signedIn && (
-        <div className="fixed left-4 bottom-7 z-40 pointer-events-none">
+        // Full-width bar on mobile that cradles the Vibes switch; on desktop it shrinks
+        // and right-justifies next to the logo. The invisible spacer reserves the
+        // switch/logo footprint (bottom-right platform chrome) so the text sits to its left.
+        <div className="fixed bottom-[10px] left-3 right-3 sm:left-auto z-40 pointer-events-none flex justify-end">
           <div className={c.signInCallout}>
-            {linkedFriend
-              ? "Sign in via the Vibes DIY logo to add friends"
-              : "Sign in via the Vibes DIY logo to share your schedule with friends"}
+            <span className="min-w-0 flex-1 sm:flex-none sm:w-[190px] text-left">
+              {linkedFriend
+                ? "Sign in via the Vibes DIY logo to add friends"
+                : "Sign in via the Vibes DIY logo to share your schedule with friends"}
+            </span>
+            <div className="w-[120px] shrink-0 self-stretch" aria-hidden="true" />
+          </div>
+        </div>
+      )}
+
+      {friendConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" role="dialog" aria-modal="true">
+          <div className="bg-white dark:bg-[#22252d] rounded-2xl p-8 max-w-sm w-full shadow-2xl">
+            <h3 className={`text-xl font-black mb-2 ${c.bodyText}`}>Add friend?</h3>
+            <p className={`font-bold mb-6 ${c.bodyText}`}>
+              This link wants to add <span className="text-[#71AD44]">@{friendConfirm}</span> to your crew. You'll see each other's
+              schedules.
+            </p>
+            <div className="flex gap-3 justify-end flex-wrap">
+              <button
+                onClick={declineAddFriend}
+                className="py-4 px-8 font-bold rounded-2xl bg-white dark:bg-[#181a20] text-[#4A4A4A] dark:text-[#e9e9e9] border border-black/10 dark:border-white/20 hover:opacity-90 transition-all"
+              >
+                Not now
+              </button>
+              <button onClick={confirmAddFriend} className={c.btnPink}>
+                Add friend
+              </button>
+            </div>
           </div>
         </div>
       )}

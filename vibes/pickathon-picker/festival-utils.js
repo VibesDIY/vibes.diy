@@ -111,6 +111,37 @@ export const fmtDate = (s) => {
   return out;
 };
 
+// What's on stage right now: started at/before `nowMs` and not yet ended. A set that
+// began an hour ago but is still playing counts as "now" (end strictly after now).
+export const setsOnNow = (events, nowMs) =>
+  events.filter((e) => {
+    const s = toFestivalDate(e.start).getTime();
+    const en = toFestivalDate(e.end).getTime();
+    return s <= nowMs && en > nowMs;
+  });
+
+// "Up Next" = the next slot, not the rest of the festival. Only sets that start after
+// now and within a near-term window, capped to the next `perVenue` per venue, sorted by
+// start. The window is anchored on the end of what's playing now (so mid-set it still
+// reaches a few hours past the current slot) and falls back to now when nothing's on —
+// this is what keeps a venue whose next set is 8 hours out from showing up here.
+export const upNextSets = (events, nowMs, { windowMs = 3 * 60 * 60 * 1000, perVenue = 2 } = {}) => {
+  const nowEnd = setsOnNow(events, nowMs).reduce((mx, e) => Math.max(mx, toFestivalDate(e.end).getTime()), nowMs);
+  const horizon = nowEnd + windowMs;
+  const byVenue = new Map();
+  const sorted = [...events].sort((a, b) => toFestivalDate(a.start) - toFestivalDate(b.start));
+  for (const e of sorted) {
+    const s = toFestivalDate(e.start).getTime();
+    if (s <= nowMs) continue; // already started — it's "now" or past, not up next
+    if (s > horizon) continue; // beyond the near-term window
+    const list = byVenue.get(e.venueTitle) || [];
+    if (list.length >= perVenue) continue;
+    list.push(e);
+    byVenue.set(e.venueTitle, list);
+  }
+  return [...byVenue.values()].flat().sort((a, b) => toFestivalDate(a.start) - toFestivalDate(b.start));
+};
+
 // The Pickathon feed returns HTML-entity-encoded strings (e.g. "Skills &amp; Games").
 // Decode them once at ingest so titles render as text, not markup.
 export const decodeEntities = (s) => {
