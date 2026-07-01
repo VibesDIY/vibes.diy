@@ -59,6 +59,18 @@ const clearFriendParamFromUrl = () => {
 const byTypeUser = (doc) => [doc.type, doc.userId];
 const byTypeFriendSlug = (doc) => [doc.type, doc.friendSlug];
 
+// A Pacific-Northwest fir ridge for the top edge of the green nav stripe: an
+// irregular tree-line drawn once as a static SVG (no animation → zero repaint tax),
+// filled with the nav color so trees appear to rise into the lime header above.
+// viewBox is 1200-wide with a 1px base (y23→24) keeping the silhouette connected;
+// preserveAspectRatio="none" lets it stretch to any width.
+const FOREST_RIDGE_PATH =
+  "M0,24 L0,23 L24,7 L48,23 L72,3 L96,23 L120,11 L144,23 L168,5 L192,23 L216,9 L240,23 " +
+  "L264,2 L288,23 L312,12 L336,23 L360,6 L384,23 L408,4 L432,23 L456,10 L480,23 L504,7 L528,23 " +
+  "L552,3 L576,23 L600,13 L624,23 L648,5 L672,23 L696,9 L720,23 L744,2 L768,23 L792,11 L816,23 " +
+  "L840,6 L864,23 L888,4 L912,23 L936,10 L960,23 L984,7 L1008,23 L1032,3 L1056,23 L1080,12 L1104,23 " +
+  "L1128,6 L1152,23 L1176,4 L1200,23 L1200,24 Z";
+
 const migratePickathonDoc = (doc, handle) => {
   if (doc.type === "favorite") return { ...doc, userId: handle, _id: `favorite-${handle}-${doc.eventId}` };
   if (doc.type === "note") return { ...doc, userId: handle, _id: `note-${handle}-${doc.eventId}` };
@@ -540,7 +552,16 @@ export default function PickathonPicker() {
           )}
         </div>
 
-        <div className={`${c.navBg} ${c.border} p-8`}>
+        <div className={`${c.navBg} ${c.border} p-8 relative`}>
+          <svg
+            className="absolute left-0 top-[-24px] w-full h-[24px] text-[#71AD44] dark:text-[#1d3015] pointer-events-none"
+            viewBox="0 0 1200 24"
+            preserveAspectRatio="none"
+            fill="currentColor"
+            aria-hidden="true"
+          >
+            <path d={FOREST_RIDGE_PATH} />
+          </svg>
           <div className="flex flex-wrap gap-3">
             {["now", "browse", "bands", "favorites", "friends", "shifts", "schedule"]
               .filter((v) => {
