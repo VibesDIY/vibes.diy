@@ -301,12 +301,17 @@ export function useInVibeGeneration(opts: UseInVibeGenerationOpts): InVibeGenera
     const inFlight =
       st.running || st.optimisticPrompt !== undefined || st.inFlightStreamId !== undefined || promptToSendRef.current !== null;
     if (!inFlight) return;
-    // Revert the preview: resolve the code WITHOUT the partial in-flight block
-    // (the last settled source) and push it back so the aborted edit's partial
-    // hot-swaps are undone. Best-effort — skipped when there's no prior code to
-    // restore (e.g. the very first build), and gated by the same push guard the
-    // hot-swap effect uses.
-    const priorBlocks = st.current ? st.blocks.filter((b) => b !== st.current) : st.blocks;
+    // Revert the preview: resolve the code WITHOUT the in-flight partial block
+    // and push that last-settled source back, so the aborted edit's partial
+    // hot-swaps are undone. The partial block is the LAST block once the turn is
+    // running (block-begin appends it) — drop it by POSITION, not identity: the
+    // reducer rebuilds `current` and the last block as SEPARATE objects on every
+    // message, so a `b !== st.current` filter wouldn't match mid-stream and would
+    // push the partial source right back. Before block-begin (optimistic/ack
+    // window) nothing streamed, so keep all blocks. Best-effort — skipped when
+    // there's no prior code to restore (e.g. the very first build), and gated by
+    // the same push guard the hot-swap effect uses.
+    const priorBlocks = st.running && st.blocks.length > 0 ? st.blocks.slice(0, -1) : st.blocks;
     if (opts.srvVibeSandbox && priorBlocks.length > 0) {
       const priorCode = getCode({ ...st, blocks: priorBlocks }).code.join("\n");
       if (priorCode.length >= 200 && priorCode.includes("export default")) {

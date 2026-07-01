@@ -314,6 +314,49 @@ describe("useInVibeGeneration", () => {
     await waitFor(() => expect(view.result.current.phase).toBe("streaming"));
   });
 
+  it("stop() during a pending openChat invalidates it: the late resolution closes the socket and never attaches (no leak/resurrection)", async () => {
+    // The race Codex flagged: Stop clicked while a prompt-driven openChat() is
+    // still in flight. activeChatRef is null, so resetChat can't close it — the
+    // open epoch must make the late .then close the socket and bail instead of
+    // attaching a chat/stream for the cancelled turn.
+    const chatA = makeControllableLLMChat({ chatId: "A" });
+    let resolveOpen: (v: unknown) => void = () => undefined;
+    const openChat = vi.fn(() => new Promise((res) => (resolveOpen = res)));
+    const chatApi = { openChat } as never;
+    const sharedApi = {
+      getAppByFsId: vi.fn(async () => Result.Ok({ fsId: "FS-1" })),
+      ensureAppSettings: vi.fn(async () => Result.Err("no settings")),
+    } as never;
+    const srvVibeSandbox = { pushSource: vi.fn(() => true) } as never;
+    const view = renderHook(() =>
+      useInVibeGeneration({ ownerHandle: "owner", appSlug: "app", fsId: "FS-1", chatApi, sharedApi, srvVibeSandbox })
+    );
+    await waitFor(() => expect(view.result.current.phase).toBe("idle"));
+
+    // Start a turn — the open is now pending (openChat called, promise unresolved).
+    act(() => view.result.current.sendPrompt("make it blue"));
+    await waitFor(() => expect(openChat).toHaveBeenCalledTimes(1));
+    expect(view.result.current.isGenerating).toBe(true);
+
+    // Stop before the open resolves.
+    act(() => view.result.current.stop());
+    await waitFor(() => expect(view.result.current.isGenerating).toBe(false));
+
+    // The open finally resolves — it must close the socket and NOT attach it.
+    await act(async () => {
+      resolveOpen(Result.Ok(chatA.chat));
+      await Promise.resolve();
+    });
+    await waitFor(() => expect(chatA.chat.close).toHaveBeenCalled());
+    // A block emitted on the abandoned stream must NOT reach the reducer.
+    await act(async () => chatA.emitBlockBegin());
+    await new Promise((r) => setTimeout(r, 20));
+    expect(view.result.current.isGenerating).toBe(false);
+    expect(view.result.current.blocks).toHaveLength(0);
+    // The cancelled turn never fired a prompt on the abandoned chat.
+    expect(chatA.chat.prompt).not.toHaveBeenCalled();
+  });
+
   it("does not open a chat when disabled", async () => {
     const { view, openChat } = setup({ enabled: false });
     expect(view.result.current.phase).toBe("idle");
