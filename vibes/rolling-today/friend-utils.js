@@ -15,6 +15,20 @@ export const migrateRollingDoc = (doc, handle) => {
   return null;
 };
 
+// Group favorites by ride, keeping only those owned by a visible slug (you + your
+// friends) and de-duping per user. Pure so it can be unit-tested against sample docs.
+export function visibleFavsByRide(favorites, visibleSlugs) {
+  const m = {};
+  for (const f of favorites) {
+    if (!f.rideId) continue;
+    const uid = f.userId || "anonymous";
+    if (!visibleSlugs.has(uid)) continue;
+    if (!m[f.rideId]) m[f.rideId] = [];
+    if (!m[f.rideId].some((x) => (x.userId || "anonymous") === uid)) m[f.rideId].push(f);
+  }
+  return m;
+}
+
 // A friend-connect link arrives as `?friend=<handle>` on the vibes.diy URL, which the
 // platform mirrors onto the app's own iframe URL. Read it, then strip it so a visitor
 // who copies their address bar doesn't re-share someone else's friend link.
