@@ -51,7 +51,11 @@ export interface UnifiedVibeCardProps {
   onBlessChip?: (chip: string) => void;
   /** Owner-only: remove a chip's fast-path (unbless / revoke). */
   onUnblessChip?: (chip: string) => void;
-  /** Reserved for the verb-collapse work (#2679); not yet wired to any behavior. */
+  /** Ownership routes the edit affordance (§2 "Ownership decides, at the write"):
+   *  the owner generates in place, everyone else forks ("make it yours"). The
+   *  composer explainer copy follows the same split so it never promises a
+   *  visitor an in-place edit. Unset reads as non-owner — the remix copy is the
+   *  honest default while ownership resolves. */
   isOwner?: boolean;
   handleSlug?: string;
   handleAvatarUrl?: string;
@@ -367,7 +371,13 @@ export function UnifiedVibeCard(props: UnifiedVibeCardProps) {
                         <OptionButtons
                           options={props.chips}
                           isFirst
-                          firstMessage="Describe a change to edit this app live:"
+                          // Ownership decides what a write actually does (in-place
+                          // edit vs fork), so the invitation says which one you get.
+                          firstMessage={
+                            props.isOwner
+                              ? "Describe a change to edit this app live:"
+                              : "Describe a change to remix your own copy of this app:"
+                          }
                           onSelect={(o) => {
                             props.onSelectChip?.(o);
                             // Return false so OptionButtons clears the press and the chips stay
