@@ -120,26 +120,27 @@ export const setsOnNow = (events, nowMs) =>
     return s <= nowMs && en > nowMs;
   });
 
-// "Up Next" = the next slot, not the rest of the festival. Only sets that start after
-// now and within a near-term window, capped to the next `perVenue` per venue, sorted by
-// start. The window is anchored on the end of what's playing now (so mid-set it still
-// reaches a few hours past the current slot) and falls back to now when nothing's on —
-// this is what keeps a venue whose next set is 8 hours out from showing up here.
-export const upNextSets = (events, nowMs, { windowMs = 3 * 60 * 60 * 1000, perVenue = 2 } = {}) => {
-  const nowEnd = setsOnNow(events, nowMs).reduce((mx, e) => Math.max(mx, toFestivalDate(e.end).getTime()), nowMs);
-  const horizon = nowEnd + windowMs;
-  const byVenue = new Map();
-  const sorted = [...events].sort((a, b) => toFestivalDate(a.start) - toFestivalDate(b.start));
-  for (const e of sorted) {
-    const s = toFestivalDate(e.start).getTime();
-    if (s <= nowMs) continue; // already started — it's "now" or past, not up next
-    if (s > horizon) continue; // beyond the near-term window
-    const list = byVenue.get(e.venueTitle) || [];
-    if (list.length >= perVenue) continue;
-    list.push(e);
-    byVenue.set(e.venueTitle, list);
+// "Up Next" = the next *wave* of sets — the upcoming cluster, anchored on the first set
+// that hasn't started yet (NOT on the clock). Anchoring on the next set instead of a
+// now+window means the opening wave stays visible even weeks before the festival, and at
+// the end of a night it rolls forward to the next morning's first acts — while a stage
+// whose next set is a whole wave away still drops off. Capped to `perVenue` per venue.
+export const upNextSets = (events, nowMs, { waveMs = 2 * 60 * 60 * 1000, perVenue = 2 } = {}) => {
+  const upcoming = events
+    .filter((e) => toFestivalDate(e.start).getTime() > nowMs)
+    .sort((a, b) => toFestivalDate(a.start) - toFestivalDate(b.start));
+  if (upcoming.length === 0) return [];
+  const horizon = toFestivalDate(upcoming[0].start).getTime() + waveMs;
+  const perVenueCount = new Map();
+  const out = [];
+  for (const e of upcoming) {
+    if (toFestivalDate(e.start).getTime() > horizon) break; // past this wave
+    const n = perVenueCount.get(e.venueTitle) || 0;
+    if (n >= perVenue) continue;
+    perVenueCount.set(e.venueTitle, n + 1);
+    out.push(e);
   }
-  return [...byVenue.values()].flat().sort((a, b) => toFestivalDate(a.start) - toFestivalDate(b.start));
+  return out; // already sorted by start
 };
 
 // The Pickathon feed returns HTML-entity-encoded strings (e.g. "Skills &amp; Games").
