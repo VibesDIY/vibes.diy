@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo, useRef } from "react";
+import { useFireproof } from "use-fireproof";
 import { useViewer, useVibe } from "use-vibes";
-import { useVibeStore } from "./vibe-store.js";
 import {
   FESTIVAL_TZ,
   FESTIVAL_2026,
@@ -21,9 +21,9 @@ import FavoritesView from "./FavoritesView.jsx";
 import FriendsView from "./FriendsView.jsx";
 import ShiftsView from "./ShiftsView.jsx";
 
-// Re-stamp a locally-stored doc onto the freshly signed-in handle when vibe-store
-// migrates localStorage → Fireproof on first login. Owned docs are keyed by user,
-// so favorites/notes re-key deterministically; shifts get a fresh _id.
+// Re-stamp a locally-stored doc onto the freshly signed-in handle when useFireproof's
+// anonymousLocal store migrates local → cloud on first login. Owned docs are keyed by
+// user, so favorites/notes re-key deterministically; shifts get a fresh _id.
 // A friend-connect link arrives as `?friend=<handle>` on the vibes.diy URL, which
 // the platform mirrors onto the app's own iframe URL. Read it, then strip it so a
 // visitor who copies their address bar doesn't re-share someone else's friend link.
@@ -122,9 +122,12 @@ const migratePickathonDoc = (doc, handle) => {
 
 export default function PickathonPicker() {
   const { viewer, ViewerTag } = useViewer();
-  // vibe-store is Fireproof when signed in and localStorage when logged out, with
-  // the same put/del/useLiveQuery surface — so nothing below branches on auth.
-  const { database, useLiveQuery, useDocument, hasAuthedBefore } = useVibeStore("pickathon", {
+  // Optimistic writes + anonymous local writes (with sign-in migration) now come from
+  // useFireproof itself: `anonymousLocal` runs put/del/useLiveQuery against a local
+  // store while logged out and migrates on first sign-in; the returning-signed-out
+  // guard is handled internally. So nothing below branches on auth.
+  const { database, useLiveQuery, useDocument } = useFireproof("pickathon", {
+    anonymousLocal: true,
     migrate: migratePickathonDoc,
   });
   const { can, ready } = useVibe("pickathon");
@@ -132,16 +135,11 @@ export default function PickathonPicker() {
   const myHandle = viewer?.userHandle || "anonymous";
   const userId = myHandle;
   const signedIn = Boolean(viewer?.userHandle);
-  // A returning visitor who has signed in before but is currently logged out: their
-  // schedule lives on their account, so steer them to sign in rather than let them
-  // start a throwaway second anonymous session they'd never see again.
-  const returningLoggedOut = !signedIn && hasAuthedBefore;
 
-  // New logged-out visitors favorite anonymously (localStorage, migrated on sign-in);
-  // returning-logged-out visitors are blocked and prompted to sign in. Notes/shifts/
-  // friends stay signed-in. Gate signed-in writes on the app's own access.js via
-  // useVibe().can — the same fn the server runs.
-  const canFavorite = signedIn ? ready && Boolean(can?.create?.({ type: "favorite", userId })?.ok) : !hasAuthedBefore;
+  // Logged-out visitors favorite anonymously (local, migrated on sign-in). Notes/
+  // shifts/friends stay signed-in. Gate signed-in writes on the app's own access.js
+  // via useVibe().can — the same fn the server runs.
+  const canFavorite = signedIn ? ready && Boolean(can?.create?.({ type: "favorite", userId })?.ok) : true;
   const canWrite = ready && signedIn && Boolean(can?.create?.({ type: "shift", userId })?.ok);
 
   const [events, setEvents] = useState([]);
@@ -153,7 +151,6 @@ export default function PickathonPicker() {
   const [superMode, setSuperMode] = useState(false);
   const [viewingUser, setViewingUser] = useState(null);
   const [selectedFriend, setSelectedFriend] = useState(null);
-  const [optimisticFavs, setOptimisticFavs] = useState(() => new Map());
   const [linkedFriend, setLinkedFriend] = useState(null);
   const friendScrolledRef = useRef(false);
   const [pendingDelete, setPendingDelete] = useState(null);
@@ -344,11 +341,9 @@ export default function PickathonPicker() {
   }, [allFavorites]);
 
   const myFavorites = allFavorites.filter((f) => (f.userId || "anonymous") === userId);
-  const baseFavIds = new Set(myFavorites.map((f) => f.eventId));
-  // Optimistic overlay so a heart flips the instant you press it; the live query
-  // reconciles once the (networked) write lands, then the overlay entry is cleared.
-  const myFavIds = new Set(baseFavIds);
-  optimisticFavs.forEach((want, id) => (want ? myFavIds.add(id) : myFavIds.delete(id)));
+  // useFireproof applies the write optimistically, so useLiveQuery already reflects a
+  // toggle before the server confirms — no app-side overlay needed.
+  const myFavIds = new Set(myFavorites.map((f) => f.eventId));
 
   const { docs: friends } = useLiveQuery(byTypeUser, { key: ["friend", userId] });
   const { docs: friendedBy } = useLiveQuery(byTypeFriendSlug, { key: ["friend", userId] });
@@ -380,24 +375,6 @@ export default function PickathonPicker() {
     if (!selectedFriend) return [];
     return allShifts.filter((s) => (s.userId || "anonymous") === selectedFriend && s.shareWithFriends);
   }, [selectedFriend, allShifts]);
-
-  // Once the live query catches up to an optimistic flip, drop that overlay entry.
-  const baseFavSig = [...baseFavIds].sort().join("|");
-  useEffect(() => {
-    setOptimisticFavs((prev) => {
-      if (prev.size === 0) return prev;
-      let changed = false;
-      const next = new Map(prev);
-      next.forEach((want, id) => {
-        if (baseFavIds.has(id) === want) {
-          next.delete(id);
-          changed = true;
-        }
-      });
-      return changed ? next : prev;
-    });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [baseFavSig]);
 
   const eventDays = [...new Set(events.map((e) => e.day))];
   const shiftDays = [...new Set(shifts.map((s) => s.day))];
@@ -439,23 +416,13 @@ export default function PickathonPicker() {
 
   const toggleFavorite = async (event) => {
     const id = event.eventId;
-    const want = !myFavIds.has(id);
-    // Paint the flip immediately; the live query is the source of truth once the write lands.
-    setOptimisticFavs((prev) => new Map(prev).set(id, want));
-    try {
-      if (!want) {
-        const fav = myFavorites.find((f) => f.eventId === id);
-        if (fav) await database.del(fav._id);
-      } else {
-        await database.put({ _id: `favorite-${userId}-${id}`, type: "favorite", eventId: id, userId });
-      }
-    } catch (e) {
-      // A failed write won't reconcile via live query — drop the overlay so the UI reflects reality.
-      setOptimisticFavs((prev) => {
-        const m = new Map(prev);
-        m.delete(id);
-        return m;
-      });
+    // useFireproof's optimistic overlay flips the heart immediately and rolls back if
+    // the write throws, so this is just the plain put/del.
+    if (myFavIds.has(id)) {
+      const fav = myFavorites.find((f) => f.eventId === id);
+      if (fav) await database.del(fav._id);
+    } else {
+      await database.put({ _id: `favorite-${userId}-${id}`, type: "favorite", eventId: id, userId });
     }
   };
 
@@ -797,9 +764,7 @@ export default function PickathonPicker() {
           <div className={c.signInCallout}>
             {linkedFriend
               ? "Sign in via the Vibes DIY logo to add friends"
-              : returningLoggedOut
-                ? "Your saved schedule is on your account — sign in via the Vibes DIY logo to see it."
-                : "Sign in via the Vibes DIY logo to share your schedule with friends"}
+              : "Sign in via the Vibes DIY logo to share your schedule with friends"}
           </div>
         </div>
       )}
