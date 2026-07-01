@@ -71,6 +71,14 @@ export const vibesDiyServCtx = type({
   // the container ships empty (client-only render, today's path). Its presence
   // is what flips `VibePage` to emit the `data-vibe-ssr` hydration marker.
   "ssrHtml?": "string",
+  // Canonical viewer URL (/vibe/<owner>/<app> on vibes.diy) to bounce a
+  // TOP-LEVEL load of this bare iframe-host document to. The server already
+  // 302s a top-level navigation (Sec-Fetch-Dest: document) in serv-entry-point,
+  // but that can be bypassed by a hard-cached versioned document or a browser
+  // that omits the header — so `VibePage` also emits a tiny inline guard that
+  // redirects when `window.top === window.self` (i.e. not embedded in the
+  // viewer's iframe). Absent ⇒ no guard (e.g. non-entry-point renders).
+  "topLevelRedirect?": "string",
 }); // .and(vibesDiyMountParams);
 
 export type VibesDiyServCtx = typeof vibesDiyServCtx.infer;

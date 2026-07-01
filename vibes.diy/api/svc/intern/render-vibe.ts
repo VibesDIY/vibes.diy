@@ -1,4 +1,12 @@
-import { HandleTriggerCtx, Result, EventoResultType, EventoResult, exception2Result, stream2uint8array } from "@adviser/cement";
+import {
+  HandleTriggerCtx,
+  Result,
+  EventoResultType,
+  EventoResult,
+  exception2Result,
+  stream2uint8array,
+  URI,
+} from "@adviser/cement";
 import {
   FileSystemItem,
   HttpResponseBodyType,
@@ -11,7 +19,7 @@ import {
   vibeImportMap,
   vibeUserEnv,
 } from "@vibes.diy/api-types";
-import { NpmUrlCapture } from "../public/serv-entry-point.js";
+import { NpmUrlCapture, bareHostRedirectTarget } from "../public/serv-entry-point.js";
 import { VibesApiSQLCtx } from "../types.js";
 import { type } from "arktype";
 import { resolveWhoAmI } from "../public/who-am-i.js";
@@ -234,12 +242,22 @@ export async function renderVibe({
     }
   }
 
+  // Canonical viewer target for the top-level-load guard (#2354). Same
+  // computation the server 302 uses, so the client fallback lands identically.
+  const topLevelRedirect = bareHostRedirectTarget(
+    vctx.params.vibes.env.VIBES_DIY_PUBLIC_BASE_URL,
+    fs.ownerHandle,
+    fs.appSlug,
+    URI.from(ctx.request.url)
+  );
+
   const vsctx = {
     wrapper: {
       state: "waiting",
     },
     usrEnv,
     svcEnv: vctx.params.vibes.env,
+    topLevelRedirect,
     ...(ssrHtml !== undefined ? { ssrHtml } : {}),
     importMap: {
       imports: importMap,
@@ -342,10 +360,21 @@ export async function renderPendingVibe({
 
   const title = appSlug;
 
+  // Top-level-load guard (#2354), same as renderVibe. The pending shell is
+  // never HTTP-cached (no-store) and is normally embedded by the builder, so
+  // the server 302 already covers it — this keeps the two render paths uniform.
+  const topLevelRedirect = bareHostRedirectTarget(
+    vctx.params.vibes.env.VIBES_DIY_PUBLIC_BASE_URL,
+    ownerHandle,
+    appSlug,
+    URI.from(ctx.request.url)
+  );
+
   const vsctx = {
     wrapper: { state: "waiting" },
     usrEnv: {},
     svcEnv: vctx.params.vibes.env,
+    topLevelRedirect,
     importMap: { imports: importMap },
     metaProps: {
       title,

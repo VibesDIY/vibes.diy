@@ -661,11 +661,24 @@ describe("VibesDiyApi", { timeout: (inject("DB_FLAVOUR" as never) as string) ===
     // Embedded in an <iframe> (Sec-Fetch-Dest: iframe) → still serves the app document.
     const embedded = await api.cfg.fetch(url, { headers: { "Sec-Fetch-Dest": "iframe" } });
     expect(embedded.status).toBe(200);
-    expect(await embedded.text()).toContain("import V");
+    const embeddedHtml = await embedded.text();
+    expect(embeddedHtml).toContain("import V");
+    // Belt-and-suspenders: the served shell carries a client-side guard that
+    // redirects to the canonical viewer when it finds itself as the top-level
+    // window — covering hard-cached documents / header-less browsers the server
+    // 302 misses. It no-ops (window.top === window.self is false) inside the
+    // real embed, so serving it here is harmless.
+    expect(embeddedHtml).toContain("window.top===window.self");
+    expect(embeddedHtml).toContain(`/vibe/${res.ownerHandle}/${res.appSlug}`);
 
     // No Sec-Fetch-Dest (crawler / curl) → unchanged, serves the page so og meta still resolves.
     const noHeader = await api.cfg.fetch(url);
     expect(noHeader.status).toBe(200);
+    // …and the same top-level guard rides along so a header-less browser that
+    // opened the bare URL still bounces to the viewer client-side.
+    const noHeaderHtml = await noHeader.text();
+    expect(noHeaderHtml).toContain("window.top===window.self");
+    expect(noHeaderHtml).toContain(`/vibe/${res.ownerHandle}/${res.appSlug}`);
   });
 
   it("multi-file app: only App.jsx is mounted, helper .js and .jsx modules are served but not default-imported", async () => {
