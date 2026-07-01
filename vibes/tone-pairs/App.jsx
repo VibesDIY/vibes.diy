@@ -19,6 +19,8 @@ function Shape({ name }) {
     grid: <g><rect x="4" y="4" width="7" height="7" /><rect x="13" y="13" width="7" height="7" /></g>,
     spiral: <path d="M12 12 m-1 0 a 1 1 0 1 1 2 0 a 2 2 0 1 1 -4 0 a 3 3 0 1 1 6 0 a 4 4 0 1 1 -8 0" />,
     chevron: <polyline points="6,8 12,14 18,8" />,
+    zigzag: <polyline points="4,16 9,8 14,16 19,8" />,
+    bolt: <polygon points="13,3 6,14 11,14 10,21 18,10 13,10" />,
   };
   return <svg {...props}>{shapes[name] || shapes.circle}</svg>;
 }
@@ -31,13 +33,13 @@ function Shape({ name }) {
 // (Bloom-style) so an anonymous /start visitor can play; bests persist per
 // device in localStorage.
 
-const SHAPES = ["circle", "square", "triangle", "diamond", "hex", "star", "cross", "ring", "bar", "dot", "arc", "wave", "split", "grid", "spiral", "chevron"];
+const SHAPES = ["circle", "square", "triangle", "diamond", "hex", "star", "cross", "ring", "bar", "dot", "arc", "wave", "split", "grid", "spiral", "chevron", "zigzag", "bolt"];
 const SIZES = { "4x4": [4, 4], "6x6": [6, 6], "8x4": [8, 4] };
 const BEST_KEY = "tone-pairs-bests";
 
-// One pentatonic step per shape, low → high across three octaves (C4 → C7),
+// One pentatonic step per shape, low → high from C4 to E7 (pentatonic),
 // in SHAPES order: the same shape always sings the same note.
-const FREQS = [261.63, 293.66, 329.63, 392.0, 440.0, 523.25, 587.33, 659.25, 783.99, 880.0, 1046.5, 1174.66, 1318.51, 1567.98, 1760.0, 2093.0];
+const FREQS = [261.63, 293.66, 329.63, 392.0, 440.0, 523.25, 587.33, 659.25, 783.99, 880.0, 1046.5, 1174.66, 1318.51, 1567.98, 1760.0, 2093.0, 2349.32, 2637.02];
 const NOTE_OF = Object.fromEntries(SHAPES.map((s, i) => [s, FREQS[i]]));
 
 function shuffle(arr) {
@@ -52,7 +54,11 @@ function shuffle(arr) {
 function makeGame(sizeKey) {
   const [cols, rows] = SIZES[sizeKey];
   const pairCount = (cols * rows) / 2;
-  const picks = shuffle(SHAPES).slice(0, pairCount);
+  // Cycle the shuffled deck if a board ever needs more pairs than there are
+  // shapes — duplicate shapes still match correctly, so the board always deals
+  // full (Charlie #3006: 6x6 used to under-deal at 16 shapes).
+  const deck = shuffle(SHAPES);
+  const picks = Array.from({ length: pairCount }, (_, i) => deck[i % deck.length]);
   const tiles = shuffle([...picks, ...picks]).map((shape, i) => ({ i, shape, flipped: false, matched: false }));
   return { sizeKey, cols, rows, tiles, moves: 0, startedAt: Date.now(), completed: false, finishedAt: null, flippedIndices: [] };
 }
