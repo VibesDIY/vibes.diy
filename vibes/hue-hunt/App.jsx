@@ -9,11 +9,18 @@ import React from "react"
 
 const COLOR_WORDS = ["AMBER","AZURE","BEIGE","BLACK","BLUSH","BROWN","CORAL","CREAM","GREEN","HONEY","IVORY","KHAKI","LEMON","LILAC","MAUVE","MOCHA","OCHRE","OLIVE","PEACH","PLUM ".trim(),"ROUGE","SEPIA","TEAL ".trim(),"WHEAT","WHITE"].filter(w => w.length === 5);
 
-function dailyIndex() {
+// One LOCAL calendar-day key drives both the puzzle identity (the hash below)
+// and the storage key, so a player's stored progress can never point at a
+// different day's answer around date boundaries (Charlie #3006 — the original
+// hashed the local date but keyed storage by UTC).
+function localDayKey() {
   const d = new Date();
-  const s = `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
+
+function dailyIndex(dayKey) {
   let h = 0;
-  for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0;
+  for (let i = 0; i < dayKey.length; i++) h = (h * 31 + dayKey.charCodeAt(i)) >>> 0;
   return h % COLOR_WORDS.length;
 }
 
@@ -57,8 +64,8 @@ function saveStore(store) {
 }
 
 export default function App() {
-  const todayKey = new Date().toISOString().slice(0, 10);
-  const answer = COLOR_WORDS[dailyIndex()];
+  const todayKey = localDayKey();
+  const answer = COLOR_WORDS[dailyIndex(todayKey)];
   const [store, setStore] = React.useState(loadStore);
   const doc = store[todayKey] || { guesses: [], current: "", done: false, won: false };
   const guesses = doc.guesses || [];
