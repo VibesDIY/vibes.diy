@@ -18,7 +18,20 @@ export default function RideCard({ event, favs = [], userId, canFavorite, toggle
         {event.endtime && <span className={c.endTime}>→ {pretty12(event.endtime)}</span>}
         {event.timedetails && <span className={c.endTime}>· {event.timedetails}</span>}
       </div>
-      <h2 className={c.title}>{event.title}</h2>
+      <div className={c.titleRow}>
+        {canFavorite && (
+          <button
+            onClick={() => toggleFavorite(event)}
+            aria-pressed={!!myFav}
+            aria-label={myFav ? "Remove favorite" : "Add favorite"}
+            title={myFav ? "Favorited" : "Favorite this ride"}
+            className={myFav ? c.favStarOn : c.favStar}
+          >
+            <Icon d={ICONS.star} size={28} fill={myFav ? "currentColor" : "none"} />
+          </button>
+        )}
+        <h2 className={c.title}>{event.title}</h2>
+      </div>
 
       <div className={c.badgeRow}>
         {audLabel && <span className={`${c.badge} ${c.badgeAud}`}>{audLabel}</span>}
@@ -86,36 +99,28 @@ export default function RideCard({ event, favs = [], userId, canFavorite, toggle
         </div>
       )}
 
-      <div className={c.actions}>
-        {canFavorite && (
-          <button
-            onClick={() => toggleFavorite(event)}
-            aria-pressed={!!myFav}
-            className={`${c.actionBtn} ${myFav ? c.actionFavOn : c.actionFavOff}`}
-          >
-            <Icon d={ICONS.heart} size={16} />
-            {myFav ? "Favorited" : "Favorite"}
-          </button>
-        )}
-        {event.exportable && (
-          <a className={`${c.actionBtn} ${c.actionCal}`} href={event.exportable}>
-            <Icon d={ICONS.cal} size={16} />
-            Add to Calendar
-          </a>
-        )}
-        {event.shareable && (
-          <a className={`${c.actionBtn} ${c.actionLink}`} href={event.shareable} target="_blank" rel="noreferrer">
-            <Icon d={ICONS.link} size={16} />
-            Details
-          </a>
-        )}
-        {event.weburl && (
-          <a className={`${c.actionBtn} ${c.actionWeb}`} href={event.weburl} target="_blank" rel="noreferrer">
-            <Icon d={ICONS.link} size={16} />
-            {event.webname || "Site"}
-          </a>
-        )}
-      </div>
+      {(event.exportable || event.shareable || event.weburl) && (
+        <div className={c.actions}>
+          {event.exportable && (
+            <a className={`${c.actionBtn} ${c.actionCal}`} href={event.exportable}>
+              <Icon d={ICONS.cal} size={16} />
+              Add to Calendar
+            </a>
+          )}
+          {event.shareable && (
+            <a className={`${c.actionBtn} ${c.actionLink}`} href={event.shareable} target="_blank" rel="noreferrer">
+              <Icon d={ICONS.link} size={16} />
+              Details
+            </a>
+          )}
+          {event.weburl && (
+            <a className={`${c.actionBtn} ${c.actionWeb}`} href={event.weburl} target="_blank" rel="noreferrer">
+              <Icon d={ICONS.link} size={16} />
+              {event.webname || "Site"}
+            </a>
+          )}
+        </div>
+      )}
     </article>
   );
 }

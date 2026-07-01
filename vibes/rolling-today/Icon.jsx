@@ -1,12 +1,12 @@
 import React from "react";
 
-export function Icon({ d, size = 18 }) {
+export function Icon({ d, size = 18, fill = "none" }) {
   return (
     <svg
       width={size}
       height={size}
       viewBox="0 0 24 24"
-      fill="none"
+      fill={fill}
       stroke="currentColor"
       strokeWidth="2"
       strokeLinecap="round"
@@ -45,6 +45,7 @@ export const ICONS = {
   heart: (
     <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
   ),
+  star: <path d="M12 2.5l2.9 5.88 6.5.94-4.7 4.58 1.11 6.47L12 17.8l-5.81 3.05 1.11-6.47-4.7-4.58 6.5-.94z" />,
   users: (
     <>
       <path d="M17 21v-2a4 4 0 0 0-3-3.87 M9 21v-2a4 4 0 0 1 3-3.87 M12 3a4 4 0 1 0 0 8 4 4 0 0 0 0-8z" />
