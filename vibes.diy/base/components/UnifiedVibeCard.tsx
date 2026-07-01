@@ -934,7 +934,10 @@ function OtherRow({
               whiteSpace: "nowrap",
             }}
           >
-            Change the app with <s>magic</s> words…
+            {/* The span is a flex container for vertical centering, which turns
+                <s> into its own flex item and collapses the whitespace around it.
+                Restore the gaps with an explicit horizontal margin. */}
+            Change the app with <s style={{ margin: "0 0.25em" }}>magic</s> words…
           </span>
         )}
       </div>
