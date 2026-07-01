@@ -42,9 +42,6 @@ export default function FriendsView({
           <img src={qrSrc} alt="Connect QR code" width="320" height="320" />
         </div>
         <div className="flex items-center gap-3">
-          <a href={connectUrl} target="_blank" rel="noopener noreferrer" className={c.btnPink}>
-            Open Link
-          </a>
           <button
             onClick={copyLink}
             className={`flex items-center gap-2 py-7 px-10 font-bold rounded-2xl m-2  transition-all ${copied ? "bg-[#71AD44] text-white" : "bg-white dark:bg-[#22252d] text-[#4A4A4A] dark:text-[#e9e9e9] hover:bg-[#BACD32] dark:hover:bg-[#2c3510]"}`}
@@ -85,6 +82,10 @@ export default function FriendsView({
             )}
           </button>
         </div>
+        <p className={`text-sm font-bold text-center max-w-[340px] ${c.bodyText}`}>
+          Send this link to someone you want to add as a friend. When they open it, you'll be added to each other's crews and can
+          see each other's schedules.
+        </p>
       </div>
 
       <div className="mb-6 p-10 bg-white dark:bg-[#22252d] rounded-2xl m-2 ">
