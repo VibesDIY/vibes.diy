@@ -1,5 +1,5 @@
 import puppeteer from "@cloudflare/puppeteer";
-import { EvtNewFsId } from "@vibes.diy/api-types";
+import { EvtNewFsId, VERIFYING_ACCESS_TOAST } from "@vibes.diy/api-types";
 import { exception2Result, Result } from "@adviser/cement";
 import { storeScreenshot } from "./intern/store-screenshot.js";
 import { QueueCtx } from "./queue-ctx.js";
@@ -45,7 +45,11 @@ export async function takeScreenshot(event: EvtNewFsId, browserFetcher: Fetcher)
     // otherwise we shoot the loading state, not the app. Bounded so a stuck/never-
     // shown chip can't hang the job; we fall through on timeout.
     await page
-      .waitForFunction(() => !document.body.innerText.includes("Verifying access"), { timeout: 15000, polling: 100 })
+      .waitForFunction(
+        (needle: string) => !document.body.innerText.includes(needle),
+        { timeout: 15000, polling: 100 },
+        VERIFYING_ACCESS_TOAST
+      )
       .catch(() => {
         console.warn(`"Verifying access" chip did not clear within timeout for ${event.vibeUrl}; capturing anyway`);
       });
