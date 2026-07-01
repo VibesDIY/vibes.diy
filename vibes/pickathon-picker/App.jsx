@@ -539,12 +539,12 @@ export default function PickathonPicker() {
               .map((viewName) => (
                 <button key={viewName} onClick={() => setView(viewName)} className={c.navBtn(view === viewName)}>
                   {viewName === "now" && `Now`}
-                  {viewName === "browse" && `Browse Events`}
+                  {viewName === "browse" && `All Events`}
                   {viewName === "bands" && `Bands`}
                   {viewName === "favorites" && `Favorites (${myFavIds.size})`}
                   {viewName === "friends" && `🙋‍♀️ Friends`}
                   {viewName === "shifts" && `Extras`}
-                  {viewName === "schedule" && `My Schedule`}
+                  {viewName === "schedule" && `My Faves`}
                 </button>
               ))}
             {superMode && (
