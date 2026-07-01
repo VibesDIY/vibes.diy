@@ -15,6 +15,9 @@ function fakeVibesDiyApi(overrides: Partial<Record<string, unknown>> = {}): Vibe
       })
     ),
     onDocChanged: vi.fn(() => () => undefined),
+    onDocEphemeral: vi.fn(() => () => undefined),
+    onDocEphemeralDrop: vi.fn(() => () => undefined),
+    broadcastEphemeral: vi.fn(() => undefined),
     onReconnect: vi.fn(() => () => undefined),
     subscribeViewerGrants: vi.fn(async () => Result.Ok({ type: "vibes.diy.res-subscribe-viewer-grants", status: "ok" })),
     onViewerGrantsChanged: vi.fn(() => () => undefined),
@@ -147,6 +150,75 @@ describe("FireflyApiAdapter", () => {
     const adapter = new FireflyApiAdapter(api, "my-app");
     await adapter.subscribeDocs("todos");
     expect(subscribeDocs).toHaveBeenCalledWith({ appSlug: "my-app", ownerHandle: "alice", dbName: "todos" });
+  });
+
+  it("broadcastEphemeral (#1756) forwards docId+doc+dbName with baked-in appSlug/ownerHandle", () => {
+    const broadcastEphemeral = vi.fn(() => undefined);
+    const api = fakeVibesDiyApi({ broadcastEphemeral });
+    const adapter = new FireflyApiAdapter(api, "my-app", { ownerHandle: "alice" });
+    adapter.broadcastEphemeral("cursor-a", { _id: "cursor-a", type: "cursor", curX: 5 }, "todos");
+    expect(broadcastEphemeral).toHaveBeenCalledWith({
+      appSlug: "my-app",
+      ownerHandle: "alice",
+      dbName: "todos",
+      docId: "cursor-a",
+      doc: { _id: "cursor-a", type: "cursor", curX: 5 },
+    });
+  });
+
+  it("broadcastEphemeral defaults dbName to 'default' when omitted", () => {
+    const broadcastEphemeral = vi.fn(() => undefined);
+    const api = fakeVibesDiyApi({ broadcastEphemeral });
+    const adapter = new FireflyApiAdapter(api, "my-app", { ownerHandle: "alice" });
+    adapter.broadcastEphemeral("cursor-a", { curX: 1 });
+    expect(broadcastEphemeral).toHaveBeenCalledWith(expect.objectContaining({ dbName: "default" }));
+  });
+
+  it("broadcastEphemeral drops the frame when ownerHandle not yet resolved", () => {
+    const broadcastEphemeral = vi.fn(() => undefined);
+    const api = fakeVibesDiyApi({ broadcastEphemeral });
+    // No ownerHandle override → svc.vibeApp.ownerHandle starts empty until resolved.
+    const adapter = new FireflyApiAdapter(api, "my-app");
+    adapter.broadcastEphemeral("cursor-a", { curX: 1 });
+    expect(broadcastEphemeral).not.toHaveBeenCalled();
+  });
+
+  it("onMsg bridges evt-doc-ephemeral from VibesDiyApi.onDocEphemeral (full evt)", () => {
+    let captured: ((evt: unknown) => void) | undefined;
+    const onDocEphemeral = vi.fn((fn: typeof captured) => {
+      captured = fn;
+      return () => undefined;
+    });
+    const api = fakeVibesDiyApi({ onDocEphemeral });
+    const adapter = new FireflyApiAdapter(api, "my-app");
+    const seen: unknown[] = [];
+    adapter.onMsg((event) => seen.push(event.data));
+    const evt = {
+      type: "vibes.diy.evt-doc-ephemeral",
+      ownerHandle: "alice",
+      appSlug: "my-app",
+      dbName: "todos",
+      docId: "cursor-a",
+      originPeer: "conn-1",
+      doc: { _id: "cursor-a", curX: 9 },
+      channel: "notes",
+    };
+    captured?.(evt);
+    expect(seen).toContainEqual(evt);
+  });
+
+  it("onMsg bridges evt-doc-ephemeral-drop from VibesDiyApi.onDocEphemeralDrop", () => {
+    let captured: ((originPeer: string) => void) | undefined;
+    const onDocEphemeralDrop = vi.fn((fn: typeof captured) => {
+      captured = fn;
+      return () => undefined;
+    });
+    const api = fakeVibesDiyApi({ onDocEphemeralDrop });
+    const adapter = new FireflyApiAdapter(api, "my-app");
+    const seen: unknown[] = [];
+    adapter.onMsg((event) => seen.push(event.data));
+    captured?.("gone-conn");
+    expect(seen).toContainEqual({ type: "vibes.diy.evt-doc-ephemeral-drop", originPeer: "gone-conn" });
   });
 
   it("putAsset throws — file uploads not supported in v1", async () => {

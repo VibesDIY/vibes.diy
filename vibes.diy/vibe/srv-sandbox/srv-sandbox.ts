@@ -31,6 +31,7 @@ import {
   vibeQueryDocs,
   vibeDeleteDoc,
   vibeSubscribeDocs,
+  vibeBroadcastEphemeral,
   vibeSetDbAcl,
   vibeListDbNames,
 } from "./srv-sandbox-firefly-doc-handlers.js";
@@ -133,6 +134,9 @@ export class vibesDiySrvSandbox implements Disposable {
   // Unsubscribe for the current vibeApi's onDocChanged forwarder, so swapping
   // vibeApi tears down the prior subscription instead of leaking forwarders.
   private docChangedUnsub: (() => void) | undefined;
+  // Same, for the ephemeral presence (#1756) forwarders.
+  private docEphemeralUnsub: (() => void) | undefined;
+  private docEphemeralDropUnsub: (() => void) | undefined;
 
   get vibeApi(): VibesDiyApiIface | undefined {
     return this.currentVibeApi;
@@ -145,11 +149,30 @@ export class vibesDiySrvSandbox implements Disposable {
     if (vibeApi === this.currentVibeApi) return;
     this.docChangedUnsub?.();
     this.docChangedUnsub = undefined;
+    this.docEphemeralUnsub?.();
+    this.docEphemeralUnsub = undefined;
+    this.docEphemeralDropUnsub?.();
+    this.docEphemeralDropUnsub = undefined;
     this.currentVibeApi = vibeApi;
     if (vibeApi !== undefined) {
       this.docChangedUnsub = vibeApi.onDocChanged((ownerHandle, appSlug, dbName, docId) => {
         this.forwardDocChangedToIframe(ownerHandle, appSlug, dbName, docId);
       });
+      // Ephemeral presence (#1756): forward the full evt (snapshot + originPeer +
+      // channel) and drop events straight into the iframe, where
+      // FireflyDatabase's onMsg listener folds them into its overlay. Guarded so
+      // a partial/legacy vibeApi (e.g. test mocks predating #1756) doesn't crash
+      // setVibeApi — presence is additive, its absence just disables presence.
+      if (typeof vibeApi.onDocEphemeral === "function") {
+        this.docEphemeralUnsub = vibeApi.onDocEphemeral((evt) => {
+          this.forwardToIframe(evt);
+        });
+      }
+      if (typeof vibeApi.onDocEphemeralDrop === "function") {
+        this.docEphemeralDropUnsub = vibeApi.onDocEphemeralDrop((originPeer) => {
+          this.forwardToIframe({ type: "vibes.diy.evt-doc-ephemeral-drop", originPeer });
+        });
+      }
     }
   }
 
@@ -229,6 +252,14 @@ export class vibesDiySrvSandbox implements Disposable {
     }
   }
 
+  // Forward an already-shaped server event (e.g. evt-doc-ephemeral / -drop) to
+  // the iframe verbatim (#1756).
+  private forwardToIframe(msg: Record<string, unknown>): void {
+    if (this.iframeSource && this.iframeOrigin) {
+      this.iframeSource.postMessage(msg, this.iframeOrigin);
+    }
+  }
+
   // Push viewer identity into the iframe. Called by PreviewApp on runtime.ready
   // so the iframe has the correct access level before bootstrapViewer's WS
   // roundtrip completes, avoiding the read-only flash caused by the HTTP render
@@ -291,6 +322,7 @@ export class vibesDiySrvSandbox implements Disposable {
         vibeQueryDocs(this),
         vibeDeleteDoc(this),
         vibeSubscribeDocs(this),
+        vibeBroadcastEphemeral(this),
         vibeSetDbAcl(this),
         vibeListDbNames(this),
         vibePutAsset(this),

@@ -157,6 +157,26 @@ export class FireflyApiAdapter {
     });
   }
 
+  // Ephemeral presence broadcast (#1756). Fire-and-forget: no await in the hot
+  // path (presence fires at up to 60Hz). Uses the already-backfilled
+  // svc.vibeApp.ownerHandle — presence starts after mount, by which point it is
+  // resolved. If it's not yet set, we drop this frame (the next coalesced merge
+  // frame carries the latest snapshot).
+  broadcastEphemeral(docId: string, doc: Record<string, unknown>, dbName = "default"): void {
+    const ownerHandle = this.svc.vibeApp.ownerHandle;
+    if (!ownerHandle) return; // owner handle not yet resolved — drop this frame
+    const send = (a: VibesDiyApi): void =>
+      a.broadcastEphemeral({ appSlug: this.svc.vibeApp.appSlug, ownerHandle, dbName, docId, doc });
+    const api = typeof this.apiArg !== "function" ? this.apiArg : undefined;
+    if (api) {
+      send(api);
+    } else {
+      this.getApi()
+        .then(send)
+        .catch(() => undefined);
+    }
+  }
+
   async subscribeDocs(dbName = "default"): Promise<Result<ResSubscribeDocs, VibesDiyError>> {
     // Record the db name synchronously, before any await: if this first attempt
     // fails at the transport (server never records it for replay), the
@@ -272,6 +292,14 @@ export class FireflyApiAdapter {
     const register = (api: VibesDiyApi): void => {
       api.onDocChanged((ownerHandle, appSlug, dbName, docId) => {
         fn({ data: { type: "vibes.diy.evt-doc-changed", ownerHandle, appSlug, dbName, docId } });
+      });
+      // Ephemeral presence (#1756): forward the full evt (snapshot + originPeer +
+      // channel) so FireflyDatabase can fold it into its overlay.
+      api.onDocEphemeral((evt) => {
+        fn({ data: evt });
+      });
+      api.onDocEphemeralDrop((originPeer) => {
+        fn({ data: { type: "vibes.diy.evt-doc-ephemeral-drop", originPeer } });
       });
     };
     if (typeof this.apiArg !== "function") {

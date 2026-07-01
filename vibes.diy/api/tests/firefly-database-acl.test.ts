@@ -17,6 +17,9 @@ function makeFakeTransport(setDbAclFn?: (dbName: string, acl: DbAcl) => void): F
     queryDocs: () => Promise.resolve(Result.Err("not used")),
     deleteDoc: () => Promise.resolve(Result.Err("not used")),
     subscribeDocs: () => Promise.resolve(Result.Ok({ type: "vibes.diy.res-subscribe-docs" as const, status: "ok" as const })),
+    broadcastEphemeral: () => {
+      /* noop */
+    },
     setDbAcl: (dbName, acl) => {
       setDbAclFn?.(dbName, acl);
       return Promise.resolve(

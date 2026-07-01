@@ -140,6 +140,8 @@ import {
   ReqSubscribeDocs,
   ResSubscribeDocs,
   isResSubscribeDocs,
+  ReqBroadcastEphemeral,
+  EvtDocEphemeral,
   ReqSubscribeViewerGrants,
   ResSubscribeViewerGrants,
   isResSubscribeViewerGrants,
@@ -214,6 +216,8 @@ import {
 import { LLMChatImpl } from "./llm-chat.js";
 import {
   attachDocChangedToConnection as attachDocChangedToConnectionImpl,
+  attachDocEphemeralToConnection as attachDocEphemeralToConnectionImpl,
+  attachDocEphemeralDropToConnection as attachDocEphemeralDropToConnectionImpl,
   attachRequestGrantToConnection as attachRequestGrantToConnectionImpl,
   attachViewerGrantsChangedToConnection as attachViewerGrantsChangedToConnectionImpl,
   attachUserNotificationToConnection as attachUserNotificationToConnectionImpl,
@@ -284,6 +288,10 @@ export class VibesDiyApi implements VibesDiyApiIface<{
     () => void
   >();
   private readonly docSubscriptions: { ownerHandle: string; appSlug: string; dbName: string }[] = [];
+  private readonly docEphemeralListeners: ((evt: EvtDocEphemeral) => void)[] = [];
+  private readonly docEphemeralDetachers = new Map<(evt: EvtDocEphemeral) => void, () => void>();
+  private readonly docEphemeralDropListeners: ((originPeer: string) => void)[] = [];
+  private readonly docEphemeralDropDetachers = new Map<(originPeer: string) => void, () => void>();
   private readonly requestGrantListeners: ((evt: EvtRequestGrant) => void)[] = [];
   private readonly requestGrantDetachers = new Map<(evt: EvtRequestGrant) => void, () => void>();
   private readonly requestGrantSubscriptions: { ownerHandle: string; appSlug: string }[] = [];
@@ -455,6 +463,10 @@ export class VibesDiyApi implements VibesDiyApiIface<{
         conn,
         docChangedListeners: this.docChangedListeners,
         docChangedDetachers: this.docChangedDetachers,
+        docEphemeralListeners: this.docEphemeralListeners,
+        docEphemeralDetachers: this.docEphemeralDetachers,
+        docEphemeralDropListeners: this.docEphemeralDropListeners,
+        docEphemeralDropDetachers: this.docEphemeralDropDetachers,
         requestGrantListeners: this.requestGrantListeners,
         requestGrantDetachers: this.requestGrantDetachers,
         viewerGrantsListeners: this.viewerGrantsListeners,
@@ -871,6 +883,17 @@ export class VibesDiyApi implements VibesDiyApiIface<{
     return result;
   }
 
+  // Ephemeral presence broadcast (#1756). Fire-and-forget: the server sends no
+  // response and we never await the correlation machinery. `send()` encodes the
+  // MsgBase (attaching auth if present) and does the raw `conn.send(...)` — the
+  // same low-level path requests use, minus the res-* wait. Best-effort: if the
+  // connection isn't ready `send()` resolves an Err which we swallow (the next
+  // coalesced merge frame carries the latest snapshot anyway).
+  broadcastEphemeral(req: Req<ReqBroadcastEphemeral>): void {
+    const tid = this.cfg.sthis.nextId(12).str;
+    void this.send({ ...req, type: "vibes.diy.req-broadcast-ephemeral" }, { tid }).catch(() => undefined);
+  }
+
   listDbNames(req: Req<ReqListDbNames>): Promise<Result<ResListDbNames, VibesDiyError>> {
     return this.request({ ...req, type: "vibes.diy.req-list-db-names" }, { resMatch: isResListDbNames });
   }
@@ -964,6 +987,54 @@ export class VibesDiyApi implements VibesDiyApiIface<{
       if (idx >= 0) this.docChangedListeners.splice(idx, 1);
       const detach = this.docChangedDetachers.get(fn);
       this.docChangedDetachers.delete(fn);
+      detach?.();
+    };
+  }
+
+  private attachDocEphemeralToConnection(conn: VibeDiyApiConnection, fn: (evt: EvtDocEphemeral) => void): () => void {
+    return attachDocEphemeralToConnectionImpl(conn, fn);
+  }
+
+  onDocEphemeral(fn: (evt: EvtDocEphemeral) => void): () => void {
+    this.docEphemeralListeners.push(fn);
+    const conn = this.currentConnection;
+    if (conn) {
+      const detach = this.attachDocEphemeralToConnection(conn, fn);
+      this.docEphemeralDetachers.set(fn, detach);
+    } else {
+      this.getReadyConnection().catch((_e: unknown) => {
+        /* best-effort; next activity will establish connection */
+      });
+    }
+    return () => {
+      const idx = this.docEphemeralListeners.indexOf(fn);
+      if (idx >= 0) this.docEphemeralListeners.splice(idx, 1);
+      const detach = this.docEphemeralDetachers.get(fn);
+      this.docEphemeralDetachers.delete(fn);
+      detach?.();
+    };
+  }
+
+  private attachDocEphemeralDropToConnection(conn: VibeDiyApiConnection, fn: (originPeer: string) => void): () => void {
+    return attachDocEphemeralDropToConnectionImpl(conn, fn);
+  }
+
+  onDocEphemeralDrop(fn: (originPeer: string) => void): () => void {
+    this.docEphemeralDropListeners.push(fn);
+    const conn = this.currentConnection;
+    if (conn) {
+      const detach = this.attachDocEphemeralDropToConnection(conn, fn);
+      this.docEphemeralDropDetachers.set(fn, detach);
+    } else {
+      this.getReadyConnection().catch((_e: unknown) => {
+        /* best-effort; next activity will establish connection */
+      });
+    }
+    return () => {
+      const idx = this.docEphemeralDropListeners.indexOf(fn);
+      if (idx >= 0) this.docEphemeralDropListeners.splice(idx, 1);
+      const detach = this.docEphemeralDropDetachers.get(fn);
+      this.docEphemeralDropDetachers.delete(fn);
       detach?.();
     };
   }

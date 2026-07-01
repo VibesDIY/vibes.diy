@@ -20,6 +20,8 @@ import {
   type ReqSetDbAcl,
   isReqSubscribeDocs,
   type ReqSubscribeDocs,
+  isReqBroadcastEphemeral,
+  type ReqBroadcastEphemeral,
   isReqListDbNames,
   type ReqListDbNames,
 } from "@vibes.diy/vibe-types";
@@ -266,6 +268,37 @@ export function vibeSubscribeDocs(sandbox: VibeApiCapableSandbox): EventoHandler
           type: "vibes.diy.res-subscribe-docs",
         });
       }
+      return Result.Ok(EventoResult.Stop);
+    },
+  };
+}
+
+// Ephemeral presence broadcast (#1756): iframe → host → server. Fire-and-forget
+// — the server sends no response and the handler sends nothing back to the
+// iframe. Forwards to api.broadcastEphemeral exactly like vibeSubscribeDocs
+// forwards to api.subscribeDocs, minus the res round-trip.
+export function vibeBroadcastEphemeral(sandbox: VibeApiCapableSandbox): EventoHandler {
+  return {
+    hash: "vibe.broadcastEphemeral",
+    validate: (ctx: ValidateTriggerCtx<MessageEvent, unknown, unknown>) => {
+      const { request: req } = ctx;
+      if (isReqBroadcastEphemeral(req?.data)) {
+        return Promise.resolve(Result.Ok(Option.Some(req.data)));
+      }
+      return Promise.resolve(Result.Ok(Option.None()));
+    },
+    handle: async (ctx: HandleTriggerCtx<Request, ReqBroadcastEphemeral, unknown>): Promise<Result<EventoResultType>> => {
+      const api = sandbox.vibeApi;
+      // No vibeApi bound yet → silently drop (fire-and-forget; nothing awaits a
+      // reply). Presence resumes once the route is vibe-bound.
+      if (api === undefined) return Result.Ok(EventoResult.Stop);
+      api.broadcastEphemeral({
+        ownerHandle: ctx.validated.ownerHandle,
+        appSlug: ctx.validated.appSlug,
+        dbName: ctx.validated.dbName,
+        docId: ctx.validated.docId,
+        doc: ctx.validated.doc,
+      });
       return Result.Ok(EventoResult.Stop);
     },
   };

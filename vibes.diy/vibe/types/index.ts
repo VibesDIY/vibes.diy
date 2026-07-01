@@ -247,6 +247,8 @@ export {
   type ResSubscribeDocs,
   type ResListDbNames,
   type EvtDocChanged,
+  type EvtDocEphemeral,
+  type EvtDocEphemeralDrop,
   type QueryFilter,
   isResPutDoc,
   isResGetDoc,
@@ -256,6 +258,8 @@ export {
   isResSubscribeDocs,
   isResListDbNames,
   isEvtDocChanged,
+  isEvtDocEphemeral,
+  isEvtDocEphemeralDrop,
 } from "@vibes.diy/api-types";
 
 // Request types: iframe boundary (postMessage) — has tid, no auth.
@@ -331,6 +335,24 @@ export type ReqSubscribeDocs = typeof ReqSubscribeDocs.infer;
 
 export function isReqSubscribeDocs(x: unknown): x is ReqSubscribeDocs {
   return !(ReqSubscribeDocs(x) instanceof type.errors);
+}
+
+// Ephemeral presence broadcast (#1756): iframe → host → server. Fire-and-forget,
+// no response. Carries the merged doc snapshot; the host forwards it to the
+// server's req-broadcast-ephemeral handler exactly like req-subscribe-docs.
+export const ReqBroadcastEphemeral = type({
+  type: "'vibes.diy.req-broadcast-ephemeral'",
+  appSlug: "string",
+  ownerHandle: "string",
+  dbName: "string",
+  docId: "string",
+  doc: "Record<string, unknown>",
+}).and(Base);
+
+export type ReqBroadcastEphemeral = typeof ReqBroadcastEphemeral.infer;
+
+export function isReqBroadcastEphemeral(x: unknown): x is ReqBroadcastEphemeral {
+  return !(ReqBroadcastEphemeral(x) instanceof type.errors);
 }
 
 export const ReqSetDbAcl = type({

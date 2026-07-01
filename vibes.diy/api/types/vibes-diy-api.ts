@@ -105,6 +105,8 @@ import {
   ResDeleteDoc,
   ReqSubscribeDocs,
   ResSubscribeDocs,
+  ReqBroadcastEphemeral,
+  EvtDocEphemeral,
   ReqSubscribeViewerGrants,
   ResSubscribeViewerGrants,
   EvtViewerGrantsChanged,
@@ -259,6 +261,10 @@ export interface VibesDiyApiIface<_T = unknown> {
   queryDocs(req: Req<ReqQueryDocs>): Promise<Result<ResQueryDocs, VibesDiyError>>;
   deleteDoc(req: Req<ReqDeleteDoc>): Promise<Result<ResDeleteDoc, VibesDiyError>>;
   subscribeDocs(req: Req<ReqSubscribeDocs>): Promise<Result<ResSubscribeDocs, VibesDiyError>>;
+  // Ephemeral presence broadcast (#1756): fire-and-forget, no response is sent
+  // by the server and none is awaited. Best-effort — a frame is dropped if the
+  // connection isn't ready.
+  broadcastEphemeral(req: Req<ReqBroadcastEphemeral>): void;
   subscribeViewerGrants(req: Req<ReqSubscribeViewerGrants>): Promise<Result<ResSubscribeViewerGrants, VibesDiyError>>;
   listDbNames(req: Req<ReqListDbNames>): Promise<Result<ResListDbNames, VibesDiyError>>;
 
@@ -302,6 +308,15 @@ export interface VibesDiyApiIface<_T = unknown> {
   // callers (eg. React effects) MUST call it on cleanup, otherwise listeners
   // accumulate per mount and each doc change fires N redundant callbacks.
   onDocChanged(fn: (ownerHandle: string, appSlug: string, dbName: string, docId: string) => void): () => void;
+
+  // Register a callback for ephemeral presence broadcasts (#1756) pushed from
+  // the API. Delivers the full evt (snapshot + originPeer). Events arrive only
+  // for dbs/channels the client is subscribed to. Returns an unsubscribe fn.
+  onDocEphemeral(fn: (evt: EvtDocEphemeral) => void): () => void;
+
+  // Register a callback for ephemeral-drop events (a peer disconnected). Carries
+  // only the departed connection's originPeer. Returns an unsubscribe fn.
+  onDocEphemeralDrop(fn: (originPeer: string) => void): () => void;
 
   // Register a callback for request-grant updates pushed from the API.
   // Events arrive only for apps this connection has subscribed to via

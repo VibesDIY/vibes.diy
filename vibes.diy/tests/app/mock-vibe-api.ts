@@ -14,10 +14,19 @@ export interface MockVibeApi {
   queryDocs(dbName?: string, filter?: unknown): Promise<Result<unknown>>;
   deleteDoc(docId: string): Promise<Result<unknown>>;
   subscribeDocs(dbName?: string): Promise<Result<unknown>>;
+  broadcastEphemeral(docId: string, doc: Record<string, unknown>, dbName?: string): void;
   putAsset(blob: Blob, mimeType?: string): Promise<Result<unknown>>;
   onMsg: (fn: MsgListener) => void;
   /** Test helper: simulate server-push evt-doc-changed */
   _simulateDocChanged(docId: string, dbName?: string): void;
+  /** Test helper: simulate an inbound evt-doc-ephemeral from a peer (#1756) */
+  _simulateEphemeral(
+    docId: string,
+    doc: Record<string, unknown>,
+    opts?: { dbName?: string; originPeer?: string; channel?: string }
+  ): void;
+  /** Test helper: simulate an inbound evt-doc-ephemeral-drop (#1756) */
+  _simulateEphemeralDrop(originPeer: string): void;
   /** Test helper: access raw doc store */
   _docs: Map<string, Record<string, unknown>>;
   /** Test helper: dbNames passed to every subscribeDocs() call (in order) */
@@ -83,6 +92,10 @@ export function createMockVibeApi(appSlug = "test-app"): MockVibeApi {
       return Result.Ok({ type: "vibes.diy.res-subscribe-docs" as const, status: "ok" as const });
     },
 
+    broadcastEphemeral: () => {
+      /* no-op in mock — send path is exercised in adapter tests, not here */
+    },
+
     putAsset: async (blob: Blob, mimeType?: string) => {
       const call: { size: number; type: string; mimeType?: string } = {
         size: blob.size,
@@ -108,6 +121,29 @@ export function createMockVibeApi(appSlug = "test-app"): MockVibeApi {
     _simulateDocChanged: (docId: string, dbName = "testdb") => {
       for (const fn of msgListeners) {
         fn({ data: { type: "vibes.diy.evt-doc-changed", ownerHandle: "test-user", appSlug, dbName, docId } });
+      }
+    },
+
+    _simulateEphemeral: (docId, doc, opts = {}) => {
+      for (const fn of msgListeners) {
+        fn({
+          data: {
+            type: "vibes.diy.evt-doc-ephemeral",
+            ownerHandle: "test-user",
+            appSlug,
+            dbName: opts.dbName ?? "testdb",
+            docId,
+            originPeer: opts.originPeer ?? "peer-1",
+            doc,
+            ...(opts.channel ? { channel: opts.channel } : {}),
+          },
+        });
+      }
+    },
+
+    _simulateEphemeralDrop: (originPeer) => {
+      for (const fn of msgListeners) {
+        fn({ data: { type: "vibes.diy.evt-doc-ephemeral-drop", originPeer } });
       }
     },
 
