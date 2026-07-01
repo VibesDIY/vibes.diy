@@ -10,6 +10,7 @@ import {
   BACKEND_OP_HEADER,
   BACKEND_OP_ARM,
   BACKEND_OP_ONCHANGE,
+  BACKEND_INTERNAL_AUTH_HEADER,
 } from "@vibes.diy/api-svc/intern/backend-do-addr.js";
 import { SuperThis } from "@vibes.diy/identity";
 
@@ -34,6 +35,10 @@ export interface QueueCtxParams {
       LLM_BACKEND_API_KEY: string;
       PRODIA_TOKEN?: string;
       ICON_FALLBACK_MODEL?: string;
+      // Shared secret stamped on BackendDO control-plane pokes (#2856 security).
+      // Present only when provisioned in the queue-consumer env; absent ⇒ pokes
+      // carry no auth header and the DO stays permissive (merge-safe).
+      BACKEND_INTERNAL_SECRET?: string;
     };
   };
 }
@@ -146,6 +151,18 @@ export class QueueCtx {
    * the binding is absent (unit tests / envs without the DO) it's a no-op, not an
    * error.
    */
+  /**
+   * The internal-auth header for a trusted control-plane poke (#2856 security),
+   * present only when `BACKEND_INTERNAL_SECRET` is provisioned in this (queue
+   * consumer) env. When absent the poke carries no auth and the DO — which is then
+   * also unconfigured — stays permissive, so the gate is inert until the secret is
+   * set in both envs.
+   */
+  private controlPlaneAuthHeaders(): Record<string, string> {
+    const secret = this.params.vibes.env.BACKEND_INTERNAL_SECRET;
+    return secret ? { [BACKEND_INTERNAL_AUTH_HEADER]: secret } : {};
+  }
+
   async armBackend(ownerHandle: string, appSlug: string): Promise<Result<void>> {
     const ns = this.params.cf?.BACKEND_DO;
     if (!ns) return Result.Ok();
@@ -158,6 +175,7 @@ export class QueueCtx {
             [BACKEND_OWNER_HEADER]: ownerHandle,
             [BACKEND_SLUG_HEADER]: appSlug,
             [BACKEND_OP_HEADER]: BACKEND_OP_ARM,
+            ...this.controlPlaneAuthHeaders(),
           },
         }) as unknown as Parameters<typeof stub.fetch>[0]
       )
@@ -187,6 +205,7 @@ export class QueueCtx {
             [BACKEND_SLUG_HEADER]: payload.appSlug,
             [BACKEND_OP_HEADER]: BACKEND_OP_ONCHANGE,
             "content-type": "application/json",
+            ...this.controlPlaneAuthHeaders(),
           },
           body: JSON.stringify({
             dbName: payload.dbName,

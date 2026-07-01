@@ -21,7 +21,9 @@ import {
   BACKEND_OP_HEADER,
   BACKEND_OP_ARM,
   BACKEND_OP_ONCHANGE,
+  BACKEND_INTERNAL_AUTH_HEADER,
   backendDoName,
+  isControlPlaneAuthorized,
 } from "@vibes.diy/api-svc/intern/backend-do-addr.js";
 import { BACKEND_DB_OP_URL, handleBackendDbOp } from "@vibes.diy/api-svc/intern/backend-db-op.js";
 
@@ -100,11 +102,15 @@ export class BackendDO implements DurableObject {
     // A queue poke re-evaluates the schedule; the onChange poke runs the handler;
     // everything else is an `_api` fetch.
     const op = request.headers.get(BACKEND_OP_HEADER);
-    if (op === BACKEND_OP_ARM) {
-      return this.arm(request, ownerHandle, appSlug);
-    }
-    if (op === BACKEND_OP_ONCHANGE) {
-      return this.invokeOnChange(request, ownerHandle, appSlug);
+    if (op === BACKEND_OP_ARM || op === BACKEND_OP_ONCHANGE) {
+      // Control-plane ops are addressable via the isolate's `globalOutbound`
+      // self-stub, which can forge the op + owner/slug headers (they're known from
+      // `ctx.appInfo`) — so gate them on the internal secret the isolate can't
+      // produce (#2856 security). Merge-safe: inert until the secret is provisioned.
+      if (!isControlPlaneAuthorized(this.env.BACKEND_INTERNAL_SECRET, request.headers.get(BACKEND_INTERNAL_AUTH_HEADER))) {
+        return new Response("backend: control-plane not authorized", { status: 403 }) as unknown as CFResponse;
+      }
+      return op === BACKEND_OP_ARM ? this.arm(request, ownerHandle, appSlug) : this.invokeOnChange(request, ownerHandle, appSlug);
     }
 
     const vctx = await this.buildVctx(request);
@@ -283,11 +289,13 @@ export class BackendDO implements DurableObject {
    * invocation (the input gate is open across the isolate `await`), so there's no
    * self-call deadlock.
    *
-   * SECURITY (#2856, tracked): because `globalOutbound` intercepts EVERY `fetch()`
-   * the untrusted handler makes — not just the nonce-gated db-op — the DO's `fetch`
-   * must NOT infer trust from the incoming request. Hardening the control-plane ops
-   * (`arm`/`onChange`) against isolate origination is handled at the DO's `fetch`
-   * router; the stub stays a real DO stub (the loader requires one).
+   * SECURITY (#2856): because `globalOutbound` intercepts EVERY `fetch()` the
+   * untrusted handler makes — not just the nonce-gated db-op — the DO's `fetch` must
+   * NOT infer trust from the incoming request. The control-plane ops (`arm`/
+   * `onChange`) are therefore gated at the `fetch` router on `BACKEND_INTERNAL_SECRET`
+   * (`isControlPlaneAuthorized`), which the isolate can't produce (it has no worker
+   * `env`); the db-op path stays nonce-gated. So the stub can safely stay a real DO
+   * stub (the loader requires one) without exposing the control plane.
    */
   private selfStub(ownerHandle: string, appSlug: string): { fetch(request: CFRequest): Promise<CFResponse> } {
     const ns = (

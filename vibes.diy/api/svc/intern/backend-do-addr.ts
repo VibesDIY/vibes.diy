@@ -17,6 +17,31 @@ export const BACKEND_OP_ARM = "arm";
 /** Set by the post-commit onChange poke (#2856 B5); the DO runs the `onChange` handler. */
 export const BACKEND_OP_ONCHANGE = "onchange";
 
+/**
+ * Internal-auth header carrying the `BACKEND_INTERNAL_SECRET` on a trusted
+ * control-plane poke (#2856 security). The queue consumer stamps it on `arm`/
+ * `onChange`; the DO requires it for those ops when the secret is configured. It
+ * MUST be stripped from any client `_api` forward (see `sanitizeBackendApiForwardHeaders`)
+ * so a public request can never smuggle a forged value toward the control plane, and
+ * it MUST NEVER be placed in the isolate's `WorkerCode.env`, so untrusted handler
+ * code can't read or replay it.
+ */
+export const BACKEND_INTERNAL_AUTH_HEADER = "x-backend-internal-auth";
+
+/**
+ * Decide whether a control-plane poke (`arm`/`onChange`) reaching the BackendDO is
+ * authorized (#2856 security). **Merge-safe:** when no secret is configured the DO
+ * stays permissive (`true`) — identical to pre-secret behavior — so the gate is inert
+ * until the secret is provisioned in both the main-worker and queue-consumer envs.
+ * When a secret IS configured, the poke must carry the exact matching value; a
+ * missing/mismatched header (the isolate has no worker `env`, so it can't produce it)
+ * is rejected.
+ */
+export function isControlPlaneAuthorized(secret: string | undefined, provided: string | null): boolean {
+  if (!secret) return true;
+  return provided === secret;
+}
+
 /** Minimal Headers surface used by the `_api` forward sanitizer (worker `Headers` or undici). */
 interface MutableHeaders {
   set(name: string, value: string): void;
@@ -34,9 +59,12 @@ interface MutableHeaders {
  *    must reach the DO with **no** op so it falls through to the fetch path.
  * 2. **Overwrite owner/slug** with the values the worker resolved from the route, so a
  *    client-supplied `x-vibe-owner`/`x-vibe-slug` can't redirect to another vibe.
+ * 3. **Strip the internal-auth header** (`BACKEND_INTERNAL_AUTH_HEADER`) so a public
+ *    `_api` request can never smuggle a forged control-plane credential to the DO.
  */
 export function sanitizeBackendApiForwardHeaders(headers: MutableHeaders, target: { ownerHandle: string; appSlug: string }): void {
   headers.delete(BACKEND_OP_HEADER);
+  headers.delete(BACKEND_INTERNAL_AUTH_HEADER);
   headers.set(BACKEND_OWNER_HEADER, target.ownerHandle);
   headers.set(BACKEND_SLUG_HEADER, target.appSlug);
 }

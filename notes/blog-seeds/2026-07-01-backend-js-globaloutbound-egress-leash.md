@@ -34,10 +34,12 @@ Two real levers remain, since the only thing the isolate provably lacks is **wor
    isolate can't know. Robust, but the secret has to live in both the main worker and the
    queue-consumer deployments — real provisioning, so it's a follow-up, not a same-PR flip.
 
-What shipped in this PR: the unambiguous half — stop forwarding the viewer's `Cookie`/`Authorization`
-into handler code on the apex `/vibe/{o}/{s}/_api` form (webhook signature headers preserved) — plus
-reverting the broken wrapper. The control-plane hardening (option 2, defense-in-depth) is a tracked
-follow-up.
+What shipped: stop forwarding the viewer's `Cookie`/`Authorization` into handler code on the apex
+`/vibe/{o}/{s}/_api` form (webhook signature headers preserved); revert the broken wrapper; and take
+option 2 — authorize the control-plane ops (`arm`/`onChange`) at the **host receiver** (the DO's
+`fetch`) on a `BACKEND_INTERNAL_SECRET` the isolate can't produce (it has no worker `env`). Merge-safe:
+the gate is inert until the secret is provisioned in **both** the main-worker and queue-consumer envs,
+so merging breaks nothing and the protection activates on provisioning.
 
 **Lesson:** a capability channel to "one method on an object" is really a channel to *the whole
 object* — and you can't re-narrow it from the guest side with a plain object, because the capability
