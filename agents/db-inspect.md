@@ -92,3 +92,8 @@ left join owners o on o.oid=w.uid and o.us=w.us"
 apps (correctly excluded); `stranger_writers` are ungranted non-owner writers. A flat
 zero on the chart with healthy `owner_writers` means member engagement dropped — not that
 the pipeline broke.
+
+This query totals the whole window as a coarse sanity check; it is **not** the per-day
+series. The chart is day-bucketed, so to compare against it directly, add
+`substr(created,1,10) as d` to `w`, `select` it, and `group by 1 order by 1` — then
+`member_writers` per row lines up with each point on the chart.
