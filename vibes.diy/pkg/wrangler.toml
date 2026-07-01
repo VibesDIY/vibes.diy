@@ -301,7 +301,14 @@ workers_dev = true
 # Worker Loader binding below; when that binding is present the published-vibe
 # iframe is server-rendered, otherwise it degrades to client-only via select_error
 # (never a 500). Prod stays VIBES_SSR=off until the Worker Loaders beta is GA.
-vars = { ENVIRONMENT = "preview", VIBES_CACHED_SUGGESTIONS = "on", VIBES_SSR = "loader" }
+# BACKEND_JS="loader" turns on the per-app backend.js runtime (#2856) in preview
+# only, so ctx.db write-through-access + the fetch/scheduled/onChange lanes can be
+# validated end-to-end on the same env.LOADER binding — same "prove it off prod"
+# discipline. The BackendDO reads this via env.BACKEND_JS; anything but "loader"
+# (incl. prod, which is unset) leaves backend.js dark (a missing loader binding
+# degrades to 404, never a 500). Prod stays off until the beta is GA + B8's egress
+# proxy lands.
+vars = { ENVIRONMENT = "preview", VIBES_CACHED_SUGGESTIONS = "on", VIBES_SSR = "loader", BACKEND_JS = "loader" }
 # No routes here — the builder SPA + API are served on the workers.dev URL.
 # The PR-preview workflow ALSO attaches per-PR routes on the CLI
 # (`wrangler deploy --route pr-<N>.vibespreview.dev/* --route *.pr-<N>.vibespreview.dev/*`)
