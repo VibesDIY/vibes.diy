@@ -15,6 +15,7 @@ Team-shared agent instructions live in the [`agents/`](agents/) directory. These
 - [testing-access-fn.md](agents/testing-access-fn.md) — Test harness patterns for access-fn behavior (channels, grants, fan-out)
 - [coding-standards.md](agents/coding-standards.md) — No inline HTML, clickable links, review commits
 - [deploy-tags.md](agents/deploy-tags.md) — Tag naming and deploy runbook
+- [npm-new-package-trusted-publishing.md](agents/npm-new-package-trusted-publishing.md) — First publish of a NEW package name fails CI with `ENEEDAUTH` (trusted publishing is per-package); bootstrap-publish → `npm trust github` → re-cut pkg tag
 - [environments.md](agents/environments.md) — Dev/prod/cli/preview architecture, stable-entry routing
 - [iframe-policy.md](agents/iframe-policy.md) — Vibe iframe sandbox/allow tokens, adding a capability, validating a deployed policy on cli
 - [vibe-pkg.md](agents/vibe-pkg.md) — Self-hosted package serving via /vibe-pkg/
