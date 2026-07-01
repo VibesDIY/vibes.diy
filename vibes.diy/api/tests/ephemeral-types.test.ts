@@ -35,6 +35,7 @@ describe("ephemeral wire types", () => {
       doc: { _id: "cursor-alice", type: "cursor", curX: 1 },
       channel: "notes",
     };
+    expect(evtDocEphemeral(ok) instanceof type.errors).toBe(false);
     expect(isEvtDocEphemeral(ok)).toBe(true);
     // channel is optional
     const noChannel = { ...ok, channel: undefined };
@@ -43,6 +44,7 @@ describe("ephemeral wire types", () => {
 
   it("evtDocEphemeralDrop validates with only originPeer", () => {
     const ok = { type: "vibes.diy.evt-doc-ephemeral-drop", originPeer: "conn-1" };
+    expect(evtDocEphemeralDrop(ok) instanceof type.errors).toBe(false);
     expect(isEvtDocEphemeralDrop(ok)).toBe(true);
     expect(isEvtDocEphemeralDrop({ type: "vibes.diy.evt-doc-ephemeral-drop" })).toBe(false);
   });
