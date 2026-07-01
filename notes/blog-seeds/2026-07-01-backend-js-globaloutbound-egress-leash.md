@@ -1,34 +1,46 @@
-# The egress leash that leaked the control plane
+# The egress leash you can't narrow with a plain object
 
 **Hook:** We handed untrusted `backend.js` handler code a `globalOutbound` "leash" so its
-`ctx.db` writes could re-enter the production access gate — and accidentally left the whole
-Durable Object's control plane hanging off the other end of that leash.
+`ctx.db` writes could re-enter the production access gate. Reviewing it, we found the leash also
+exposed the Durable Object's control plane — then found that the obvious fix (wrap the stub to
+allow only the db-op URL) *can't work*, because `globalOutbound` must be a **real Fetcher**, not a
+plain object with a `fetch` method.
 
-**Source:** `#2856` backend.js security review, right after `BACKEND_JS=loader` flipped on in prod.
+**Source:** `#2856` backend.js security review (PR #3021), right after `BACKEND_JS=loader` flipped on
+in prod. Caught by Codex + Charlie review.
 
 **The trade-off / why / gotcha:**
 
-`globalOutbound` is the only by-reference channel a Worker Loader isolate gets, and we used it as
-the transport for `ctx.db` ops (a nonce-gated POST to `https://db.internal/op`). The subtle part:
-`globalOutbound` intercepts **every** `fetch()` the handler makes, not just the ones we intended.
-We wired it to a *bare* self-stub of the BackendDO. But that DO's `fetch` also dispatches
-control-plane ops (`arm`/`onChange`) — gated only by an `x-backend-op` header. And the handler
-already knows the one secret that gate checks: its own `{ownerHandle, appSlug}`, because we bake
-those into `ctx.appInfo` for exactly the "unspoofable" property we wanted elsewhere.
+`globalOutbound` is the only by-reference channel a Worker Loader isolate gets, and it intercepts
+**every** `fetch()` the handler makes — not just the nonce-gated `ctx.db` op we intended. We wired it
+to a *bare* self-stub of the `BackendDO`. But that DO's `fetch` also dispatches control-plane ops
+(`arm`/`onChange`) on an `x-backend-op` header — and the handler already knows the one thing that
+gate checks: its own `{ownerHandle, appSlug}`, because we bake those into `ctx.appInfo`. So untrusted
+code could POST a forged `onChange` poke through the leash with a spoofed `writerUserId` (identity)
+and `depth: 0` (reset the `MAX_ONCHANGE_DEPTH` loop guard → amplification), scoped to its own vibe.
 
-So untrusted code could `fetch("https://internal/__backend_onchange", { headers: {...}, body })`
-through the leash and forge an onChange poke with an attacker-controlled `writerUserId` (identity
-spoof) and `depth: 0` (reset the `MAX_ONCHANGE_DEPTH` loop guard → unbounded amplification). The
-db-op path was nonce-gated; the control-plane ops assumed a trusted caller that no longer existed
-once the isolate shared the same channel.
+The tempting fix: wrap the stub so it forwards only the exact db-op URL. It even unit-tests green
+against the fake loader. But the fake loader is structural — the **real** Worker Loader rejects a
+plain `{ fetch }` object for `globalOutbound` (the capability boundary is brand-sensitive; a DO stub
+or service binding is a real capability, a JS object isn't). So the wrapper would have made *every*
+`ctx.db` write 404 in prod while looking correct in CI. Worse than the bug.
 
-Fix: the stub the isolate sees is now a narrow wrapper (`narrowIsolateDbEgress`) that forwards
-**only** the exact db-op URL and refuses everything else. Legit pokes come from the worker/queue via
-a separate, unwrapped stub, so they're untouched. Same review also stopped forwarding the viewer's
-`Cookie`/`Authorization` headers into handler code on the apex `/vibe/{o}/{s}/_api` form — identity
-belongs host-side (`ctx.userInfo`), never in raw client headers the handler can read.
+Two real levers remain, since the only thing the isolate provably lacks is **worker `env`** (its
+`WorkerCode.env` is empty) and **any object reference** (it only gets the `fetch()` global):
+1. **Move control-plane ops off `fetch` onto DO RPC methods** — the isolate can't invoke RPC through
+   `globalOutbound`, only HTTP. Clean, but needs `extends DurableObject` (this repo's DOs all
+   `implements` + `fetch`), so it's a base-class change we couldn't validate without live workerd.
+2. **Authenticate the pokes at the DO with an env secret** the trusted worker/queue stamp and the
+   isolate can't know. Robust, but the secret has to live in both the main worker and the
+   queue-consumer deployments — real provisioning, so it's a follow-up, not a same-PR flip.
 
-Lesson: a capability channel to "one method on an object" is really a channel to *the whole object*.
-When the sandbox boundary is a single `fetch`, the URL allowlist **is** the boundary — enumerate it
-explicitly, don't assume the callee's header checks will hold against a caller you just moved inside
-the trust boundary.
+What shipped in this PR: the unambiguous half — stop forwarding the viewer's `Cookie`/`Authorization`
+into handler code on the apex `/vibe/{o}/{s}/_api` form (webhook signature headers preserved) — plus
+reverting the broken wrapper. The control-plane hardening (option 2, defense-in-depth) is a tracked
+follow-up.
+
+**Lesson:** a capability channel to "one method on an object" is really a channel to *the whole
+object* — and you can't re-narrow it from the guest side with a plain object, because the capability
+boundary only accepts real capabilities. Narrow at the **host receiver** (authenticate/authorize
+there), not with a guest-side wrapper the runtime will reject. And a green test against a *fake*
+binding proves shape, not that the *real* binding accepts your shape.
