@@ -55,12 +55,25 @@ describe("UnifiedVibeCard", () => {
   it("submits the Other free-text row", () => {
     const onSubmitOther = vi.fn();
     render(<UnifiedVibeCard appTitle="Bloom Machine" open onSubmitOther={onSubmitOther} />);
-    const input = screen.getByPlaceholderText(/describe a change/i);
+    const input = screen.getByRole("textbox", { name: /change the app/i });
     fireEvent.change(input, { target: { value: "make it dark" } });
     const form = input.closest("form");
     if (!form) throw new Error("expected the Other row to be wrapped in a form");
     fireEvent.submit(form);
     expect(onSubmitOther).toHaveBeenCalledWith("make it dark");
+  });
+
+  it("shows a faux placeholder with 'magic' struck through, hidden once you type", () => {
+    render(<UnifiedVibeCard appTitle="Bloom Machine" open onSubmitOther={() => undefined} />);
+    // The strikethrough lives in an <s> element (a plain placeholder attribute
+    // can't carry markup), and the surrounding copy renders as one line.
+    const struck = document.querySelector("s");
+    expect(struck?.textContent).toBe("magic");
+    expect(struck?.closest("span")?.textContent).toBe("Change the app with magic words…");
+    // Typing hides the faux placeholder.
+    const input = screen.getByRole("textbox", { name: /change the app/i });
+    fireEvent.change(input, { target: { value: "x" } });
+    expect(document.querySelector("s")).toBeNull();
   });
 
   it("fires nav callbacks and closes via the toggle", () => {
@@ -211,6 +224,28 @@ describe("UnifiedVibeCard", () => {
     expect(screen.getByRole("menu", { name: /acting as/i })).toBeTruthy();
     expect(screen.getByRole("menuitem", { name: /@meghan_work/i })).toBeTruthy();
     expect(screen.getByRole("menuitem", { name: /new handle/i })).toBeTruthy();
+  });
+
+  it("renders the open picker in a detached fixed layer (escapes the card clip) with a Log out row", () => {
+    render(
+      <UnifiedVibeCard
+        appTitle="Bloom Machine"
+        open
+        handleSlug="meghan"
+        handles={[{ slug: "meghan" }, { slug: "meghan_work" }]}
+        onLogout={() => undefined}
+      />
+    );
+    fireEvent.click(screen.getByRole("button", { name: /switch handle/i }));
+    const menu = screen.getByRole("menu", { name: /acting as/i });
+    // The menu lives in the detached [data-vibe-handle-menu] layer, NOT inside
+    // the clipped card dialog — that's what lets it float near the top and scroll
+    // to its bottom rows.
+    const layer = menu.closest("[data-vibe-handle-menu]") as HTMLElement | null;
+    expect(layer).not.toBeNull();
+    expect(layer?.closest("[data-unified-vibe-card]")).toBeNull();
+    expect(getComputedStyle(layer as HTMLElement).position).toBe("fixed");
+    expect(screen.getByRole("menuitem", { name: /log out/i })).toBeTruthy();
   });
 
   it("fires onSelectHandle and closes the picker", () => {
