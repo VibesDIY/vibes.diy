@@ -59,17 +59,26 @@ const clearFriendParamFromUrl = () => {
 const byTypeUser = (doc) => [doc.type, doc.userId];
 const byTypeFriendSlug = (doc) => [doc.type, doc.friendSlug];
 
-// A Pacific-Northwest fir ridge for the top edge of the green nav stripe: an
-// irregular tree-line drawn once as a static SVG (no animation → zero repaint tax),
-// filled with the nav color so trees appear to rise into the lime header above.
-// viewBox is 1200-wide with a 1px base (y23→24) keeping the silhouette connected;
-// preserveAspectRatio="none" lets it stretch to any width.
+// A row of ~11 classic Christmas-tree silhouettes for the header's bottom edge,
+// drawn once as a static SVG (no animation → zero repaint tax) and filled with the
+// nav color so the trees rise out of the green nav stripe below. Each tree is three
+// stacked tiers: stepped ledges down both flanks (L…,24 → L…,24 horizontal jogs) up
+// to a pointy top. viewBox is 1200 wide, baseline y=36; preserveAspectRatio="none"
+// stretches it to any width.
 const FOREST_RIDGE_PATH =
-  "M0,24 L0,23 L24,7 L48,23 L72,3 L96,23 L120,11 L144,23 L168,5 L192,23 L216,9 L240,23 " +
-  "L264,2 L288,23 L312,12 L336,23 L360,6 L384,23 L408,4 L432,23 L456,10 L480,23 L504,7 L528,23 " +
-  "L552,3 L576,23 L600,13 L624,23 L648,5 L672,23 L696,9 L720,23 L744,2 L768,23 L792,11 L816,23 " +
-  "L840,6 L864,23 L888,4 L912,23 L936,10 L960,23 L984,7 L1008,23 L1032,3 L1056,23 L1080,12 L1104,23 " +
-  "L1128,6 L1152,23 L1176,4 L1200,23 L1200,24 Z";
+  "M0,36 " +
+  "L15,36 L40,24 L27,24 L44,12 L35,12 L55,0 L75,12 L66,12 L83,24 L70,24 L95,36 " +
+  "L124,36 L149,24 L136,24 L153,12 L144,12 L164,0 L184,12 L175,12 L192,24 L179,24 L204,36 " +
+  "L233,36 L258,24 L245,24 L262,12 L253,12 L273,0 L293,12 L284,12 L301,24 L288,24 L313,36 " +
+  "L342,36 L367,24 L354,24 L371,12 L362,12 L382,0 L402,12 L393,12 L410,24 L397,24 L422,36 " +
+  "L451,36 L476,24 L463,24 L480,12 L471,12 L491,0 L511,12 L502,12 L519,24 L506,24 L531,36 " +
+  "L560,36 L585,24 L572,24 L589,12 L580,12 L600,0 L620,12 L611,12 L628,24 L615,24 L640,36 " +
+  "L669,36 L694,24 L681,24 L698,12 L689,12 L709,0 L729,12 L720,12 L737,24 L724,24 L749,36 " +
+  "L778,36 L803,24 L790,24 L807,12 L798,12 L818,0 L838,12 L829,12 L846,24 L833,24 L858,36 " +
+  "L887,36 L912,24 L899,24 L916,12 L907,12 L927,0 L947,12 L938,12 L955,24 L942,24 L967,36 " +
+  "L996,36 L1021,24 L1008,24 L1025,12 L1016,12 L1036,0 L1056,12 L1047,12 L1064,24 L1051,24 L1076,36 " +
+  "L1105,36 L1130,24 L1117,24 L1134,12 L1125,12 L1145,0 L1165,12 L1156,12 L1173,24 L1160,24 L1185,36 " +
+  "L1200,36 Z";
 
 const migratePickathonDoc = (doc, handle) => {
   if (doc.type === "favorite") return { ...doc, userId: handle, _id: `favorite-${handle}-${doc.eventId}` };
@@ -533,8 +542,17 @@ export default function PickathonPicker() {
   return (
     <div className={`min-h-screen ${c.pageBg}`}>
       <div className={`max-w-6xl mx-auto ${c.cardBg} shadow-2xl ${c.border} overflow-hidden`}>
-        <div className={`${c.headerBg} ${c.border} p-10`}>
-          <div className="flex items-start justify-between gap-4 flex-wrap">
+        <div className={`${c.headerBg} ${c.border} p-10 relative isolate`}>
+          <svg
+            className="absolute inset-x-0 bottom-0 w-full h-[36px] z-0 text-[#71AD44] dark:text-[#1d3015] pointer-events-none"
+            viewBox="0 0 1200 36"
+            preserveAspectRatio="none"
+            fill="currentColor"
+            aria-hidden="true"
+          >
+            <path d={FOREST_RIDGE_PATH} />
+          </svg>
+          <div className="flex items-start justify-between gap-4 flex-wrap relative z-10">
             <div className="flex items-center gap-4">
               <a href="https://pickathon.com" target="_blank" rel="noopener noreferrer" className="shrink-0">
                 <img src={LOGO_URL} alt="Pickathon" className="h-32 w-auto" />
@@ -548,20 +566,11 @@ export default function PickathonPicker() {
             </div>
           </div>
           {error && error.includes("cached") && (
-            <div className={`mt-2 ${c.pinkBg} text-white px-3 py-2 rounded-lg text-sm font-bold`}>{error}</div>
+            <div className={`mt-2 ${c.pinkBg} text-white px-3 py-2 rounded-lg text-sm font-bold relative z-10`}>{error}</div>
           )}
         </div>
 
-        <div className={`${c.navBg} ${c.border} p-8 relative`}>
-          <svg
-            className="absolute left-0 top-[-24px] w-full h-[24px] text-[#71AD44] dark:text-[#1d3015] pointer-events-none"
-            viewBox="0 0 1200 24"
-            preserveAspectRatio="none"
-            fill="currentColor"
-            aria-hidden="true"
-          >
-            <path d={FOREST_RIDGE_PATH} />
-          </svg>
+        <div className={`${c.navBg} ${c.border} p-8`}>
           <div className="flex flex-wrap gap-3">
             {["now", "browse", "bands", "favorites", "friends", "shifts", "schedule"]
               .filter((v) => {
