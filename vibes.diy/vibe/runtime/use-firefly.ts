@@ -383,6 +383,15 @@ function createUseLiveQuery(database: FireflyQueryDatabase) {
       // refresh to reconcile with the server. Remote/confirmed changes just
       // refresh (they carry no overlay entry to apply locally).
       const unsubscribe = database.subscribe((_changes, meta) => {
+        // Ephemeral presence updates (#1756) change only the client-side
+        // overlay — server state is untouched, so re-materialize from the
+        // cached server docs and SKIP the refetch. Without this, every
+        // received cursor frame would trigger a queryDocs round-trip from
+        // every subscriber (refetch amplification on hot vibes).
+        if (meta?.ephemeral) {
+          setResult(database.materializeLive(serverDocsRef.current, mapFn, queryOpts));
+          return;
+        }
         if (meta?.optimistic) {
           setResult(database.materializeLive(serverDocsRef.current, mapFn, queryOpts));
         }
