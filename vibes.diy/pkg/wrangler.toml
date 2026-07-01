@@ -296,7 +296,12 @@ name = "vibes-diy-v2-preview"
 workers_dev = true
 # VIBES_CACHED_SUGGESTIONS="on" enables the cached-suggestion read lane (#2801)
 # in PR previews only, so it can be validated end-to-end without touching prod.
-vars = { ENVIRONMENT = "preview", VIBES_CACHED_SUGGESTIONS = "on" }
+# VIBES_SSR="loader" turns on the vibe-SSR isolate render path (#2845) in preview
+# only — same "validate end-to-end off prod" pattern. It needs the env.LOADER
+# Worker Loader binding below; when that binding is present the published-vibe
+# iframe is server-rendered, otherwise it degrades to client-only via select_error
+# (never a 500). Prod stays VIBES_SSR=off until the Worker Loaders beta is GA.
+vars = { ENVIRONMENT = "preview", VIBES_CACHED_SUGGESTIONS = "on", VIBES_SSR = "loader" }
 # No routes here — the builder SPA + API are served on the workers.dev URL.
 # The PR-preview workflow ALSO attaches per-PR routes on the CLI
 # (`wrangler deploy --route pr-<N>.vibespreview.dev/* --route *.pr-<N>.vibespreview.dev/*`)
@@ -387,6 +392,13 @@ bucket_name = "vibes-diy-fs-ids"
 [[env.preview.queues.producers]]
 queue = "vibes-service-dev"
 binding = "VIBES_SERVICE"
+
+# Worker Loader binding for vibe SSR's isolate executor (#2845). Open-beta
+# feature; declared in preview only so the loader render path can be validated
+# end-to-end off prod. Not inherited by wrangler across named envs, so it lives in
+# each env that needs it. Consumed as env.LOADER (CFEnv.LOADER) → params.vibes.loader.
+[[env.preview.worker_loaders]]
+binding = "LOADER"
 
 [env.prod]
 name = "vibes-diy-v2-prod"
