@@ -547,9 +547,6 @@ export default function PickathonPicker() {
                   {superMode ? "SUPER PICKATHON PICKER" : "PICKATHON PICKER"}
                 </h1>
                 <p className={`${c.bodyText} text-base font-bold`}>Jul 30 – Aug 2, 2026 · Pendarvis Farm, Happy Valley, OR</p>
-                <p className={`${c.bodyText} text-sm mt-1`}>
-                  <em>Discover, favorite, and organize your perfect festival experience</em>
-                </p>
               </div>
             </div>
           </div>
