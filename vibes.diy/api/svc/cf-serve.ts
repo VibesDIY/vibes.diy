@@ -569,6 +569,15 @@ function shouldLogVerbose(ctx: CFInject): boolean {
   return rEnvironment.Ok() !== "prod";
 }
 
+// Minimal CFEnv for the disconnect-drop hook. localBroadcastCallbacks reads only
+// `env.ENVIRONMENT` (for shouldLog), and notifyDocEphemeralDrop never touches it,
+// so we recover just ENVIRONMENT from the ctx (like shouldLogVerbose) rather than
+// threading the full CFEnv down to the ws listeners (#1756).
+function dropHookEnv(ctx: CFInject): CFEnv {
+  const rEnvironment = exception2Result(() => ctx.appCtx.getOrThrow<VibesApiSQLCtx>("vibesApiCtx").sthis.env.get("ENVIRONMENT"));
+  return { ENVIRONMENT: rEnvironment.isOk() ? rEnvironment.Ok() : undefined } as unknown as CFEnv;
+}
+
 export async function cfServe(
   request: CFRequest,
   ctx: CFInject,
@@ -659,12 +668,22 @@ export async function cfServe(
       console.info("WebSocket connection closed", ws.connections.size - 1);
     }
     wsEvento.trigger({ ctx: appCtx, request: { type: "CloseEvent", event }, send: wsSendProvider });
+    // #1756: tell remaining peers to drop this connection's ephemeral overlay
+    // slices (presence vanishes on disconnect). Best-effort; never blocks close.
+    localBroadcastCallbacks(ws.connections, dropHookEnv(ctx))
+      .notifyDocEphemeralDrop(wsSendProvider.connId)
+      .catch((e: unknown) => console.error("ephemeral drop error:", e));
     ws.connections.delete(wsSendProvider);
   });
 
   server.addEventListener("error", (event: Event) => {
     console.error("WebSocket error", event);
     wsEvento.trigger({ ctx: appCtx, request: { type: "ErrorEvent", event: event as ErrorEvent }, send: wsSendProvider });
+    // #1756: emit the ephemeral drop before removing the connection (mirrors the
+    // close listener); best-effort so an error path never blocks teardown.
+    localBroadcastCallbacks(ws.connections, dropHookEnv(ctx))
+      .notifyDocEphemeralDrop(wsSendProvider.connId)
+      .catch((e: unknown) => console.error("ephemeral drop error:", e));
     ws.connections.delete(wsSendProvider);
   });
   // cast wiredness don't ask me --- ask Cloudflare
