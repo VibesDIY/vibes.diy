@@ -115,11 +115,17 @@ describe("UnifiedVibeCard", () => {
     expect(screen.getByText("@meghan")).toBeTruthy();
   });
 
-  it("shows the in-vibe edit explainer plus Edit and Editor nav buttons", () => {
-    render(<UnifiedVibeCard appTitle="Bloom Machine" open chips={["Make it a drum kit"]} />);
+  it("shows the owner's edit-in-place explainer plus Edit and Editor nav buttons", () => {
+    render(<UnifiedVibeCard appTitle="Bloom Machine" open isOwner chips={["Make it a drum kit"]} />);
     expect(screen.getByText("Describe a change to edit this app live:")).toBeTruthy();
     expect(screen.getByRole("button", { name: /^edit$/i })).toBeTruthy();
     expect(screen.getByRole("button", { name: /^editor$/i })).toBeTruthy();
+  });
+
+  it("shows the remix explainer to a non-owner (a visitor's write forks, not edits in place)", () => {
+    render(<UnifiedVibeCard appTitle="Bloom Machine" open chips={["Make it a drum kit"]} />);
+    expect(screen.getByText("Describe a change to remix your own copy of this app:")).toBeTruthy();
+    expect(screen.queryByText("Describe a change to edit this app live:")).toBeNull();
   });
 
   it("renders a custom body in place of chips/Other and can select the Share nav", () => {
