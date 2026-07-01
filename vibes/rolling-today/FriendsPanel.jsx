@@ -22,7 +22,9 @@ export default function FriendsPanel({ signedIn, userId, connectUrl, linkedFrien
         <div className={c.signinCallout}>
           <Icon d={ICONS.user} size={16} />
           <span>
-            {linkedFriend ? `Sign in to follow ${linkedFriend}` : "Sign in via the Vibes DIY logo to follow friends and share your own link."}
+            {linkedFriend
+              ? `Sign in to follow ${linkedFriend}`
+              : "Sign in via the Vibes DIY logo to follow friends and share your own link."}
           </span>
         </div>
       ) : (
@@ -45,7 +47,9 @@ export default function FriendsPanel({ signedIn, userId, connectUrl, linkedFrien
             </div>
           )}
 
-          <h3 className={c.favLabel} style={{ marginBottom: 8 }}>Following ({friends.length})</h3>
+          <h3 className={c.favLabel} style={{ marginBottom: 8 }}>
+            Following ({friends.length})
+          </h3>
           {friends.length === 0 && <div className={c.panelSub}>Nobody yet — share your link above.</div>}
           {friends.map((f) => (
             <div key={f._id} className={c.friendRow}>
@@ -59,7 +63,9 @@ export default function FriendsPanel({ signedIn, userId, connectUrl, linkedFrien
 
           {friendedBy.length > 0 && (
             <>
-              <h3 className={c.favLabel} style={{ margin: "20px 0 8px" }}>Followers ({friendedBy.length})</h3>
+              <h3 className={c.favLabel} style={{ margin: "20px 0 8px" }}>
+                Followers ({friendedBy.length})
+              </h3>
               {friendedBy.map((f) => (
                 <div key={f._id} className={c.friendRow}>
                   <div className={c.avatarFallback}>{(f.userId || "?").slice(0, 2)}</div>
