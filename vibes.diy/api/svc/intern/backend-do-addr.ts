@@ -3,6 +3,8 @@
 // a vibe's BackendDO — kept in one place so they address the same instance the same
 // way (the main worker forwards `_api` requests; the queue pokes the schedule).
 
+import { BACKEND_DB_OP_URL } from "./backend-db-op.js";
+
 /** Stamped by the worker/queue so the DO knows its vibe without re-parsing the URL. */
 export const BACKEND_OWNER_HEADER = "x-vibe-owner";
 export const BACKEND_SLUG_HEADER = "x-vibe-slug";
@@ -39,6 +41,38 @@ export function sanitizeBackendApiForwardHeaders(headers: MutableHeaders, target
   headers.delete(BACKEND_OP_HEADER);
   headers.set(BACKEND_OWNER_HEADER, target.ownerHandle);
   headers.set(BACKEND_SLUG_HEADER, target.appSlug);
+}
+
+/**
+ * Wrap a raw `BackendDO` stub so an untrusted isolate's `globalOutbound` can reach
+ * **only** the nonce-gated db-op URL (#2856 security review).
+ *
+ * `globalOutbound` intercepts every `fetch()` the handler makes. The raw DO stub
+ * would expose the DO's control-plane ops (`arm`/`onChange`), which its `fetch`
+ * dispatches on the `x-backend-op` header alone — a header the handler can set,
+ * since its own `{ownerHandle, appSlug}` are compiled into `ctx.appInfo`. That would
+ * let a handler forge an `onChange` poke with an attacker-controlled `writerUserId`
+ * (identity spoof) and `depth: 0` (loop-guard reset ⇒ unbounded amplification), and
+ * reach any other DO surface / open egress. This wrapper forwards a request only
+ * when its URL is exactly `BACKEND_DB_OP_URL` (still gated by the per-invocation
+ * nonce host-side) and returns a caller-supplied "forbidden" response otherwise.
+ *
+ * Kept pure + generic (`makeForbidden` supplies the runtime `Response`) so it's
+ * unit-testable without a live DO or CF `Response`.
+ */
+export function narrowIsolateDbEgress<
+  Req extends { readonly url: string },
+  Res,
+  Stub extends { fetch(request: Req): Promise<Res> },
+>(rawStub: Stub, makeForbidden: () => Res): { fetch(request: Req): Promise<Res> } {
+  return {
+    fetch(request: Req): Promise<Res> {
+      if (request.url !== BACKEND_DB_OP_URL) {
+        return Promise.resolve(makeForbidden());
+      }
+      return rawStub.fetch(request);
+    },
+  };
 }
 
 /**

@@ -28,7 +28,10 @@ export const config = { scheduled: { interval: "15m" } };
 interface FakeLoader {
   binding: WorkerLoaderBinding;
   calls: { id: string; code: unknown }[];
-  requests: { handler: string; trigger: { userHandle?: string | null; payload?: { url?: string; method?: string } } }[];
+  requests: {
+    handler: string;
+    trigger: { userHandle?: string | null; payload?: { url?: string; method?: string; headers?: Record<string, string> } };
+  }[];
 }
 function fakeLoader(): FakeLoader {
   const calls: FakeLoader["calls"] = [];
@@ -114,6 +117,38 @@ describe("attemptBackendFetch (#2856 B3)", { timeout: 30000 }, () => {
     expect(f.requests[0].handler).toBe("fetch");
     expect(f.requests[0].trigger.userHandle).toBe("alice");
     expect(JSON.stringify(f.calls[0].code)).toContain("hi from backend");
+  });
+
+  it("strips viewer auth headers (Cookie/Authorization) before handing the request to the handler", async () => {
+    const appSlug = "bf-authstrip";
+    await pushVibe(appSlug, FETCH_BACKEND);
+    const f = fakeLoader();
+    const out = await attemptBackendFetch(appCtx.vibesCtx, {
+      ownerHandle,
+      appSlug,
+      request: new Request("https://vibe.internal/webhooks/x", {
+        method: "POST",
+        body: "{}",
+        headers: {
+          // A logged-in viewer's platform session credentials ride the apex `_api`
+          // form — they must never reach untrusted handler code.
+          cookie: "__session=super-secret-viewer-jwt",
+          authorization: "Bearer viewer-token",
+          // A webhook signature header is custom and MUST be preserved.
+          "stripe-signature": "t=1,v1=abc",
+          "content-type": "application/json",
+        },
+      }),
+      backendJs: "loader",
+      loader: f.binding,
+    });
+    assert(out.reason === "ok", `expected ok, got ${out.reason}`);
+    const forwarded = f.requests[0].trigger.payload?.headers ?? {};
+    expect(forwarded.cookie).toBeUndefined();
+    expect(forwarded.authorization).toBeUndefined();
+    // signature + content-type survive so real webhooks still verify.
+    expect(forwarded["stripe-signature"]).toBe("t=1,v1=abc");
+    expect(forwarded["content-type"]).toBe("application/json");
   });
 
   it("is dark when BACKEND_JS=off → backend_disabled", async () => {
