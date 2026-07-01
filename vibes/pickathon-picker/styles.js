@@ -38,7 +38,7 @@ export const c = {
   // Callout at the bottom-left, locked to the Vibes switch height (60px, 28px up
   // from the bottom) with even padding so the two read as a balanced pair.
   signInCallout:
-    "bg-[#181a20] text-white h-[60px] px-5 flex items-center rounded-2xl shadow-2xl text-[11px] font-bold border border-white/20 text-left leading-snug",
+    "bg-[#181a20] text-white w-[min(240px,calc(100vw-140px))] h-[60px] px-5 flex items-center rounded-2xl shadow-2xl text-[11px] font-bold border border-white/20 text-left text-balance leading-snug",
 };
 
 export const lineupTag = (event) => {
