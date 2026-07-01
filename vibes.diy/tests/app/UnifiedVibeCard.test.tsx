@@ -280,6 +280,46 @@ describe("UnifiedVibeCard", () => {
     expect(screen.queryByText(/queued/i)).toBeNull();
   });
 
+  it("drops the queue when the vibe identity changes so it can't flush into another app", () => {
+    // The /vibe route component is reused across client-side navigations; the
+    // composer is keyed by appSlug so a queue built against one app never
+    // auto-flushes into the next app's onSubmitOther (Codex P2 on #3020).
+    const onSubmitOther = vi.fn();
+    const { rerender } = render(
+      <UnifiedVibeCard
+        appTitle="Bloom Machine"
+        appSlug="alice/bloom"
+        open
+        onSubmitOther={onSubmitOther}
+        onStop={vi.fn()}
+        generating
+        streamBody={<div>STREAMING NARRATION</div>}
+      />
+    );
+    const input = screen.getByRole("textbox", { name: /change the app/i });
+    const form = input.closest("form");
+    if (!form) throw new Error("expected the Other row to be wrapped in a form");
+    fireEvent.change(input, { target: { value: "make it blue" } });
+    fireEvent.submit(form);
+    expect(screen.getByText(/1 change queued/i)).toBeTruthy();
+    // Navigate to a different vibe (same mounted card), old turn still running.
+    rerender(
+      <UnifiedVibeCard
+        appTitle="Other App"
+        appSlug="bob/other"
+        open
+        onSubmitOther={onSubmitOther}
+        onStop={vi.fn()}
+        generating
+        streamBody={<div>STREAMING NARRATION</div>}
+      />
+    );
+    expect(screen.queryByText(/queued/i)).toBeNull();
+    // The old turn ends — nothing flushes into the new app's handler.
+    rerender(<UnifiedVibeCard appTitle="Other App" appSlug="bob/other" open onSubmitOther={onSubmitOther} onStop={vi.fn()} />);
+    expect(onSubmitOther).not.toHaveBeenCalled();
+  });
+
   it("Stop with a queue drains it back into the input instead of auto-sending after the cancel", () => {
     const onSubmitOther = vi.fn();
     const onStop = vi.fn();
