@@ -543,7 +543,7 @@ export default function PickathonPicker() {
                   {viewName === "bands" && `Bands`}
                   {viewName === "favorites" && `Favorites (${myFavIds.size})`}
                   {viewName === "friends" && `🙋‍♀️ Friends`}
-                  {viewName === "shifts" && `Extras (${shifts.length})`}
+                  {viewName === "shifts" && `Extras`}
                   {viewName === "schedule" && `My Schedule`}
                 </button>
               ))}
