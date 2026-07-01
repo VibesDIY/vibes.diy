@@ -46,3 +46,10 @@ interim `#2290` refactor (DM dbs governed by a built-in access fn), so `runPutAc
 writes are still anonymous until the `_api` verified-session resolver lands (#3001) — fail-safe, since
 `access.js` must opt them in. All of it stays dark in prod behind `BACKEND_JS=off`; the preview is where
 it's real.
+
+Postscript: the feature also grew its codegen surface on this branch — a `backend` skill slice in
+`@vibes.diy/prompts` (`llms/backend.md`) that teaches the app-generation model the three handlers, the
+`/_api` path contract, and the identity honesty rule (an `onChange` write is exactly as privileged as the
+triggering user — `access.js` *can't* tell them apart, so "server-only" docs need `scheduled` + an
+owner-only rule). Plus the one-liner that matters: `backend.js` joins `access.js` in the preview router's
+`SERVER_ONLY_PATHS` so a generated backend never tries to render in the iframe.

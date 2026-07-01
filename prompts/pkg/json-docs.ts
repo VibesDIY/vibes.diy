@@ -11,6 +11,7 @@ export interface JsonDoc<T = LlmConfig> {
 }
 
 export interface JsonDocs {
+  "backend.json": JsonDoc;
   "callai.json": JsonDoc;
   "create-vibe.json": JsonDoc;
   "d3.json": JsonDoc;

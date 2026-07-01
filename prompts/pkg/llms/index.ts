@@ -1,3 +1,4 @@
+import { backendConfig } from "./backend.js";
 import { callaiConfig } from "./callai.js";
 import { fireproofConfig } from "./fireproof.js";
 import { imageGenConfig } from "./image-gen.js";
@@ -9,6 +10,7 @@ import { useViewerConfig } from "./use-viewer.js";
 import { useVibeConfig } from "./use-vibe.js";
 import { createVibeConfig } from "./create-vibe.js";
 
+export { backendConfig } from "./backend.js";
 export { callaiConfig } from "./callai.js";
 export { fireproofConfig } from "./fireproof.js";
 export { imageGenConfig } from "./image-gen.js";
@@ -33,4 +35,5 @@ export const allConfigs = [
   useViewerConfig,
   useVibeConfig,
   createVibeConfig,
+  backendConfig,
 ] as const;
