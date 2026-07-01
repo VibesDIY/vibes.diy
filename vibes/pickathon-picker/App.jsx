@@ -459,8 +459,8 @@ export default function PickathonPicker() {
   const qrSrc = `https://api.qrserver.com/v1/create-qr-code/?size=320x320&data=${encodeURIComponent(connectUrl)}`;
 
   return (
-    <div className={`min-h-screen ${c.pageBg} p-4`}>
-      <div className={`max-w-6xl mx-auto ${c.cardBg} rounded-3xl shadow-2xl my-2 ${c.border} overflow-hidden`}>
+    <div className={`min-h-screen ${c.pageBg}`}>
+      <div className={`max-w-6xl mx-auto ${c.cardBg} shadow-2xl ${c.border} overflow-hidden`}>
         <div className={`${c.headerBg} ${c.border} p-10`}>
           <div className="flex items-start justify-between gap-4 flex-wrap">
             <div className="flex items-center gap-4">
@@ -490,7 +490,7 @@ export default function PickathonPicker() {
           )}
         </div>
 
-        <div className={`${c.navBg} mx-2 mb-2 ${c.border} p-8 rounded-b-3xl`}>
+        <div className={`${c.navBg} ${c.border} p-8`}>
           <div className="flex flex-wrap gap-3">
             {["now", "browse", "bands", "favorites", "friends", "shifts", "schedule"]
               .filter((v) => {
