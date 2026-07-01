@@ -728,6 +728,81 @@ describe("FireflyDatabase optimistic writes (#2985)", () => {
     await putP;
   });
 
+  it("an earlier overlapping write does not clobber a newer pending overlay (same _id)", async () => {
+    const mock = createMockVibeApi("opt-app");
+    // Two independently-gated puts for the same _id: fire A, then B (which
+    // supersedes A's overlay), release A first, and assert B's value survives.
+    let releaseA!: () => void;
+    let releaseB!: () => void;
+    const gateA = new Promise<void>((r) => (releaseA = r));
+    const gateB = new Promise<void>((r) => (releaseB = r));
+    let call = 0;
+    const rawPut = mock.putDoc.bind(mock);
+    const api = {
+      ...mock,
+      putDoc: async (doc: Record<string, unknown>, docId?: string) => {
+        await (++call === 1 ? gateA : gateB);
+        return rawPut(doc, docId);
+      },
+    } as MockVibeApi;
+    const gdb = new FireflyDatabase("optdb", asSandboxApi(api));
+    gdb.setOptimistic(true);
+
+    const pA = gdb.put({ _id: "t", on: false });
+    const pB = gdb.put({ _id: "t", on: true }); // newer pending value
+
+    // A resolves first — must not remove B's overlay.
+    releaseA();
+    await pA;
+    const afterA = await gdb.query("on");
+    expect(afterA.docs.find((d) => d._id === "t")?.on).toBe(true);
+
+    // B resolves — overlay clears, server holds the newer value.
+    releaseB();
+    await pB;
+    const afterB = await gdb.query("on");
+    expect(afterB.docs.find((d) => d._id === "t")?.on).toBe(true);
+  });
+
+  it("a failed earlier write does not roll back a newer pending overlay (same _id)", async () => {
+    const mock = createMockVibeApi("opt-app");
+    let settleA!: (ok: boolean) => void;
+    let releaseB!: () => void;
+    const gateA = new Promise<boolean>((r) => (settleA = r));
+    const gateB = new Promise<void>((r) => (releaseB = r));
+    let call = 0;
+    const rawPut = mock.putDoc.bind(mock);
+    const api = {
+      ...mock,
+      putDoc: async (doc: Record<string, unknown>, docId?: string) => {
+        if (++call === 1) {
+          const ok = await gateA;
+          if (!ok) throw new Error("conflict");
+        } else {
+          await gateB;
+        }
+        return rawPut(doc, docId);
+      },
+    } as MockVibeApi;
+    const gdb = new FireflyDatabase("optdb", asSandboxApi(api));
+    gdb.setOptimistic(true);
+
+    const pA = gdb.put({ _id: "t", on: false });
+    const pB = gdb.put({ _id: "t", on: true });
+
+    settleA(false); // A fails
+    await expect(pA).rejects.toThrow(/conflict/);
+
+    // B's optimistic value must still be showing (not rolled back by A's failure).
+    const mid = await gdb.query("on");
+    expect(mid.docs.find((d) => d._id === "t")?.on).toBe(true);
+
+    releaseB();
+    await pB;
+    const end = await gdb.query("on");
+    expect(end.docs.find((d) => d._id === "t")?.on).toBe(true);
+  });
+
   it("with optimism off, put/del keep single-notification semantics", async () => {
     const mock = createMockVibeApi("opt-app");
     const gdb = new FireflyDatabase("optdb", asSandboxApi(mock));
