@@ -25,6 +25,10 @@ export interface AttemptBackendScheduledInput {
   readonly backendJs?: string;
   /** The Cloudflare `env.LOADER` Worker Loader binding (typed `unknown`; cast here). */
   readonly loader?: unknown;
+  /** A `Fetcher` stub back to the host BackendDO, set as the isolate's
+   *  `globalOutbound` so a handler's `ctx.db` ops route to `handleBackendDbOp`
+   *  (#2856 B6). The DO supplies a self-stub. */
+  readonly dbFetcher?: unknown;
   readonly policyVersion?: string;
 }
 
@@ -70,6 +74,7 @@ export async function attemptBackendScheduled(
       handler: "scheduled",
       trigger: { userHandle: input.ownerHandle, payload: { scheduledTime: input.scheduledTime } },
       db,
+      dbFetcher: input.dbFetcher,
     })
   );
   if (rRes.isErr()) return { ran: false, reason: "handler_error" };
