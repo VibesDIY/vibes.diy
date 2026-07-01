@@ -29,18 +29,20 @@ export default function ShiftsView({
                 </option>
               ))}
             </select>
-            <input
-              type="time"
-              value={shiftForm.startTime}
-              onChange={(e) => mergeShift({ startTime: e.target.value })}
-              className={c.input}
-            />
-            <input
-              type="time"
-              value={shiftForm.endTime}
-              onChange={(e) => mergeShift({ endTime: e.target.value })}
-              className={c.input}
-            />
+            <div className="flex justify-between items-center">
+              <input
+                type="time"
+                value={shiftForm.startTime}
+                onChange={(e) => mergeShift({ startTime: e.target.value })}
+                className={`${c.input} w-[40%]`}
+              />
+              <input
+                type="time"
+                value={shiftForm.endTime}
+                onChange={(e) => mergeShift({ endTime: e.target.value })}
+                className={`${c.input} w-[40%]`}
+              />
+            </div>
             <input
               type="text"
               placeholder="Shift, Meal, Break, …"
