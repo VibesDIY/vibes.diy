@@ -314,11 +314,7 @@ export default function App() {
               right). An invisible spacer holds the switch's footprint inside the flex
               row, so the text is pushed clear of it — more robust than a magic paddingRight. */}
           <div className={c.signinCallout} style={{ marginBottom: 0 }}>
-            <Icon d={ICONS.spark} size={16} />
-            <span className="min-w-0 flex-1">
-              Sign in via the Vibes DIY logo to sync your rides and follow friends — favorites work while you're logged out and move to your
-              account when you sign in.
-            </span>
+            <span className="min-w-0 flex-1">Sign in via the Vibes DIY logo to sync your rides and follow friends</span>
             {/* Reserves the Vibes switch column (≈120px wide, docked to the right edge). */}
             <div className="w-[124px] shrink-0 self-stretch" aria-hidden="true" />
           </div>

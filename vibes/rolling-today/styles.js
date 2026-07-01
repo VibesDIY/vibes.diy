@@ -72,5 +72,5 @@ export const c = {
   linkInput: "flex-1 min-w-0 bg-[#FFF6E5] border-[3px] border-[#1A1A1A] px-3 py-2 text-[0.82rem] font-bold truncate",
   friendRow: "flex items-center gap-3 py-2 border-b-2 border-dashed border-[#1A1A1A]/20",
   signinCallout:
-    "bg-[#1A1A1A] text-[#FFF6E5] border-[3px] border-[#1A1A1A] shadow-[5px_5px_0_#FFCB05] px-4 py-3 mb-6 font-normal text-[0.9rem] flex items-center gap-2",
+    "bg-[#1A1A1A] text-[#FFF6E5] border-[3px] border-[#1A1A1A] shadow-[5px_5px_0_#FFCB05] px-5 py-4 mb-6 font-normal text-[0.9rem] flex items-center gap-2",
 };
