@@ -108,12 +108,22 @@ jobs:
 
   # Required-check gate. Keeps the name `compile_test` so branch protection and
   # the deploy-time "is this SHA green?" lookup keep matching. Runs even when an
-  # upstream job failed (always()) so it can report red; a `skipped` upstream
-  # (docs-only test, or a [skip ci] cascade) counts as a pass. Mirrors the old
-  # job's `[skip ci]` skip so that path is unchanged.
+  # upstream job failed (a `failure` isn't `cancelled`, so `!cancelled()` is
+  # still true) so it can report red; a `skipped` upstream (docs-only test, or a
+  # [skip ci] cascade) counts as a pass. Mirrors the old job's `[skip ci]` skip
+  # so that path is unchanged.
+  #
+  # Why `!cancelled()` and not `always()`: when a push supersedes the in-flight
+  # run (concurrency: cancel-in-progress), every upstream concludes `cancelled`.
+  # Under `always()` this gate would still run, see the all-`cancelled`
+  # fingerprint, and exit 1 — a bogus red ✗ and a `failure` webhook on a run that
+  # tested nothing (#2992). `!cancelled()` lets the cancellation reach the gate
+  # too, so it is `skipped` alongside its upstreams instead of failing. The
+  # superseding run provides the real `success`; a superseded run correctly
+  # counts as neither pass nor fail.
   compile_test:
     needs: [scope, checks, test, publish_build]
-    if: ${{ always() && !contains(github.event.pull_request.title, '[skip ci]') }}
+    if: ${{ !cancelled() && !contains(github.event.pull_request.title, '[skip ci]') }}
     runs-on: ubuntu-latest
     steps:
       - name: gate
