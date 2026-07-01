@@ -17,6 +17,7 @@ import {
 } from "./calendar-utils.js";
 import RideCard from "./RideCard.jsx";
 import FriendsPanel from "./FriendsPanel.jsx";
+import FavoritesView from "./FavoritesView.jsx";
 import {
   byTypeUser,
   byTypeFriendSlug,
@@ -35,7 +36,6 @@ export default function App() {
   const [error, setError] = useState(null);
   const [skipNotice, setSkipNotice] = useState(null);
   const [view, setView] = useState("rides");
-  const [onlyFavs, setOnlyFavs] = useState(false);
   const [linkedFriend, setLinkedFriend] = useState(null);
 
   // anonymousLocal: put/del/useLiveQuery run against a local store while logged out and
@@ -71,11 +71,22 @@ export default function App() {
   const visibleSlugs = useMemo(() => new Set([userId, ...friendSlugs]), [userId, friendSlugs]);
   const favsByRide = useMemo(() => visibleFavsByRide(favorites, visibleSlugs), [favorites, visibleSlugs]);
 
-  // Ride ids I've personally starred — used by the Favorites filter in the nav.
-  const myFavRideIds = useMemo(
-    () => new Set(favorites.filter((f) => (f.userId || "anonymous") === userId && f.rideId).map((f) => String(f.rideId))),
-    [favorites, userId]
-  );
+  // My starred rides, grouped by day for the all-days Favorites screen. Each favorite
+  // carries a lightweight snapshot of its ride (stored at favorite time) so this view
+  // renders without refetching every calendar day. Legacy favorites without a snapshot
+  // are skipped here (they still work as the per-ride star + friends piles).
+  const favByDay = useMemo(() => {
+    const groups = {};
+    for (const f of favorites) {
+      if ((f.userId || "anonymous") !== userId) continue;
+      const ev = f.event;
+      if (!ev || !ev.date) continue;
+      (groups[ev.date] || (groups[ev.date] = [])).push(ev);
+    }
+    for (const d in groups) groups[d].sort((a, b) => (a.time || "").localeCompare(b.time || ""));
+    return groups;
+  }, [favorites, userId]);
+  const favDates = useMemo(() => Object.keys(favByDay).sort(), [favByDay]);
 
   const loadDate = useCallback(async (target, opts = {}) => {
     setError(null);
@@ -165,6 +176,28 @@ export default function App() {
     if (mine) {
       await database.del(mine._id);
     } else {
+      // Snapshot the fields the all-days Favorites view needs (no long description or
+      // image — that view hides them) so it renders without refetching each day.
+      const snap = {
+        id: event.id,
+        date: event.date,
+        time: event.time,
+        endtime: event.endtime,
+        timedetails: event.timedetails,
+        title: event.title,
+        venue: event.venue,
+        address: event.address,
+        locend: event.locend,
+        organizer: event.organizer,
+        audience: event.audience,
+        area: event.area,
+        loopride: event.loopride,
+        ridelength: event.ridelength,
+        exportable: event.exportable,
+        shareable: event.shareable,
+        weburl: event.weburl,
+        webname: event.webname,
+      };
       await database.put({
         _id: `favorite-${userId}-${rideId}`,
         type: "favorite",
@@ -172,6 +205,7 @@ export default function App() {
         userId,
         displayName: viewer?.displayName || userId,
         avatarUrl: viewer?.avatarUrl,
+        event: snap,
         ts: Date.now(),
       });
     }
@@ -194,8 +228,7 @@ export default function App() {
 
   const connectUrl = `${currentVibeBase()}/?friend=${encodeURIComponent(userId)}`;
 
-  const shownEvents = onlyFavs ? events.filter((e) => myFavRideIds.has(String(e.id))) : events;
-  const showCount = !loading && shownEvents.length > 0 && view === "rides";
+  const showCount = !loading && events.length > 0 && view === "rides";
 
   return (
     <div className={c.page} style={{ touchAction: "manipulation" }}>
@@ -236,15 +269,12 @@ export default function App() {
               </button>
             )}
             <button
-              className={onlyFavs && view === "rides" ? c.navBtnLgOn : c.navBtnLg}
-              onClick={() => {
-                setView("rides");
-                setOnlyFavs((v) => !v);
-              }}
+              className={view === "favorites" ? c.navBtnLgOn : c.navBtnLg}
+              onClick={() => setView(view === "favorites" ? "rides" : "favorites")}
               aria-label="My favorites"
-              aria-pressed={onlyFavs && view === "rides"}
+              aria-pressed={view === "favorites"}
             >
-              <Icon d={ICONS.star} size={27} fill={onlyFavs && view === "rides" ? "currentColor" : "none"} />
+              <Icon d={ICONS.star} size={27} fill={view === "favorites" ? "currentColor" : "none"} />
               <span className="hidden sm:inline">Favorites</span>
             </button>
             <button
@@ -258,7 +288,18 @@ export default function App() {
           </nav>
         </header>
 
-        {view === "friends" ? (
+        {view === "favorites" ? (
+          <FavoritesView
+            favDates={favDates}
+            favByDay={favByDay}
+            userId={userId}
+            favsByRide={favsByRide}
+            canFavorite={canFavorite}
+            toggleFavorite={toggleFavorite}
+            notes={notes}
+            saveNote={saveNote}
+          />
+        ) : view === "friends" ? (
           <FriendsPanel
             signedIn={signedIn}
             userId={userId}
@@ -283,8 +324,7 @@ export default function App() {
               <div className={c.dateBig}>{prettyDate(date)}</div>
               {showCount && (
                 <div className={c.count}>
-                  {shownEvents.length} {onlyFavs ? "favorite" : "ride"}
-                  {shownEvents.length === 1 ? "" : "s"} rolling
+                  {events.length} ride{events.length === 1 ? "" : "s"} rolling
                 </div>
               )}
             </section>
@@ -298,16 +338,12 @@ export default function App() {
 
             {error && <div className={c.err}>Couldn't reach the feed: {error}</div>}
 
-            {!loading && shownEvents.length === 0 && !error && (
-              <div className={c.empty}>
-                {onlyFavs
-                  ? "No favorites on this day — tap the star on a ride to add one."
-                  : "No rides found within the next year. Check back when Bike Summer rolls."}
-              </div>
+            {!loading && events.length === 0 && !error && (
+              <div className={c.empty}>No rides found within the next year. Check back when Bike Summer rolls.</div>
             )}
 
             <div className={c.list}>
-              {shownEvents.map((e) => (
+              {events.map((e) => (
                 <RideCard
                   key={e.caldaily_id || e.id}
                   event={e}

@@ -4,7 +4,7 @@ import { pretty12, AUDIENCE_LABEL, AREA_LABEL } from "./calendar-utils.js";
 import { c } from "./styles.js";
 import NoteField from "./NoteField.jsx";
 
-export default function RideCard({ event, favs = [], userId, canFavorite, toggleFavorite, note, saveNote }) {
+export default function RideCard({ event, favs = [], userId, canFavorite, toggleFavorite, note, saveNote, condensed = false }) {
   const mapUrl = event.address ? `https://maps.google.com/?q=${encodeURIComponent(event.address)}` : null;
   const imgUrl = event.image ? (event.image.startsWith("http") ? event.image : `https://www.shift2bikes.org${event.image}`) : null;
   const audLabel = AUDIENCE_LABEL[event.audience] || event.audience || "";
@@ -40,14 +40,14 @@ export default function RideCard({ event, favs = [], userId, canFavorite, toggle
         {event.ridelength && event.ridelength !== "--" && <span className={c.badge}>{event.ridelength} mi</span>}
       </div>
 
-      {event.newsflash && (
+      {!condensed && event.newsflash && (
         <div className={c.newsflash}>
           <Icon d={ICONS.spark} />
           <span>{event.newsflash}</span>
         </div>
       )}
 
-      {imgUrl && <img className={c.img} src={imgUrl} alt="" loading="lazy" />}
+      {!condensed && imgUrl && <img className={c.img} src={imgUrl} alt="" loading="lazy" />}
 
       {event.venue && (
         <div className={c.venue}>
@@ -73,7 +73,7 @@ export default function RideCard({ event, favs = [], userId, canFavorite, toggle
         </div>
       )}
 
-      {event.details && <p className={c.details}>{event.details}</p>}
+      {!condensed && event.details && <p className={c.details}>{event.details}</p>}
 
       {favs.length > 0 && (
         <div className={c.favStrip}>
