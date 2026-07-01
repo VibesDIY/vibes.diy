@@ -107,7 +107,15 @@ export class BackendDO implements DurableObject {
     // log tail, while the body stays the opaque public "not found".
     return new Response("backend.js _api: not found", {
       status: 404,
-      headers: { "content-type": "text/plain", "x-backend-fallback": outcome.reason },
+      headers: {
+        "content-type": "text/plain",
+        "x-backend-fallback": outcome.reason,
+        // Diagnostics (preview): does the DO actually see the LOADER binding + the
+        // BACKEND_JS gate? Distinguishes "loader not in DO env" from "isolate load threw".
+        "x-backend-loader": typeof (this.env as { LOADER?: unknown }).LOADER,
+        "x-backend-mode": String(this.env.BACKEND_JS ?? "(unset)"),
+        "x-backend-detail": String((outcome as { detail?: unknown }).detail ?? "").slice(0, 300),
+      },
     });
   }
 

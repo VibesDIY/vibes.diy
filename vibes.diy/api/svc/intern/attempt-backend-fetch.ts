@@ -19,7 +19,7 @@ export type BackendFallbackReason =
   | "source_unreadable" // storage fetch failed / returned empty
   | "executor_error"; // selecting or invoking the isolate threw
 
-export type BackendFetchOutcome = { reason: "ok"; response: Response } | { reason: BackendFallbackReason };
+export type BackendFetchOutcome = { reason: "ok"; response: Response } | { reason: BackendFallbackReason; detail?: string };
 
 export interface AttemptBackendFetchInput {
   readonly ownerHandle: string;
@@ -73,7 +73,7 @@ export async function attemptBackendFetch(vctx: VibesApiSQLCtx, input: AttemptBa
       vibe: { ownerHandle: input.ownerHandle, appSlug: input.appSlug },
     })
   );
-  if (rExec.isErr()) return { reason: "executor_error" };
+  if (rExec.isErr()) return { reason: "executor_error", detail: `select: ${rExec.Err().message}` };
   const executor = rExec.Ok();
   if (executor === undefined) return { reason: "backend_disabled" };
 
@@ -105,7 +105,7 @@ export async function attemptBackendFetch(vctx: VibesApiSQLCtx, input: AttemptBa
       db,
     });
   });
-  if (rRes.isErr()) return { reason: "executor_error" };
+  if (rRes.isErr()) return { reason: "executor_error", detail: `invoke: ${rRes.Err().message}` };
   return { reason: "ok", response: rRes.Ok() };
 }
 
