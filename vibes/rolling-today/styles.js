@@ -5,16 +5,21 @@ export const c = {
   sun: "fixed -top-40 -right-40 w-[720px] h-[720px] rounded-full bg-[#FFCB05] opacity-50 pointer-events-none",
   grid: "fixed inset-0 pointer-events-none opacity-[0.12] bg-[length:48px_48px] bg-[linear-gradient(to_right,#1A1A1A_1px,transparent_1px),linear-gradient(to_bottom,#1A1A1A_1px,transparent_1px)]",
   wrap: "relative max-w-[920px] mx-auto px-5 sm:px-8 py-8 sm:py-12 z-10",
-  header: "flex items-end justify-between gap-4 mb-8",
+  header: "flex flex-wrap items-end justify-between gap-4 mb-8",
   brand: "flex items-baseline gap-3",
   brandMark: "inline-block w-3.5 h-3.5 rounded-full bg-[#E83D6F] border-2 border-[#1A1A1A]",
-  brandText: "font-black uppercase tracking-tight text-[1.4rem] sm:text-[1.6rem]",
+  brandText: "font-black uppercase tracking-tight text-[1.4rem] sm:text-[1.6rem] whitespace-nowrap",
   sub: "text-[0.7rem] uppercase tracking-[0.18em] text-[#1A1A1A]/70",
-  nav: "flex gap-2 flex-wrap justify-end",
+  nav: "flex gap-2 justify-end",
   navBtn:
     "inline-flex items-center gap-1.5 px-3 py-2 text-[0.78rem] font-bold uppercase tracking-wider bg-[#FFFDF5] border-[3px] border-[#1A1A1A] shadow-[3px_3px_0_#1A1A1A] hover:shadow-[5px_5px_0_#1A1A1A] hover:-translate-x-[2px] hover:-translate-y-[2px] active:shadow-none active:translate-x-[2px] active:translate-y-[2px] transition-all disabled:opacity-40 disabled:pointer-events-none",
   navBtnOn:
     "inline-flex items-center gap-1.5 px-3 py-2 text-[0.78rem] font-bold uppercase tracking-wider bg-[#E83D6F] text-[#FFF6E5] border-[3px] border-[#1A1A1A] shadow-[3px_3px_0_#1A1A1A] transition-all",
+  // 1.5x header nav buttons (Prev / Today / Next / Friends), kept on one line.
+  navBtnLg:
+    "inline-flex items-center gap-2 px-[18px] py-3 text-[1.12rem] font-bold uppercase tracking-wider bg-[#FFFDF5] border-[3px] border-[#1A1A1A] shadow-[4px_4px_0_#1A1A1A] hover:shadow-[6px_6px_0_#1A1A1A] hover:-translate-x-[2px] hover:-translate-y-[2px] active:shadow-none active:translate-x-[2px] active:translate-y-[2px] transition-all disabled:opacity-40 disabled:pointer-events-none",
+  navBtnLgOn:
+    "inline-flex items-center gap-2 px-[18px] py-3 text-[1.12rem] font-bold uppercase tracking-wider bg-[#E83D6F] text-[#FFF6E5] border-[3px] border-[#1A1A1A] shadow-[4px_4px_0_#1A1A1A] transition-all",
   dateCard: "relative bg-[#1A1A1A] text-[#FFF6E5] border-[3px] border-[#1A1A1A] shadow-[6px_6px_0_#E83D6F] p-6 sm:p-8 mb-6",
   dateRow: "flex items-center justify-between gap-3 mb-2",
   dateLabel: "text-[0.7rem] uppercase tracking-[0.22em] text-[#FFCB05]",
@@ -67,5 +72,5 @@ export const c = {
   linkInput: "flex-1 min-w-0 bg-[#FFF6E5] border-[3px] border-[#1A1A1A] px-3 py-2 text-[0.82rem] font-bold truncate",
   friendRow: "flex items-center gap-3 py-2 border-b-2 border-dashed border-[#1A1A1A]/20",
   signinCallout:
-    "bg-[#1A1A1A] text-[#FFF6E5] border-[3px] border-[#1A1A1A] shadow-[5px_5px_0_#FFCB05] px-4 py-3 mb-6 font-bold text-[0.9rem] flex items-center gap-2",
+    "bg-[#1A1A1A] text-[#FFF6E5] border-[3px] border-[#1A1A1A] shadow-[5px_5px_0_#FFCB05] px-4 py-3 mb-6 font-normal text-[0.9rem] flex items-center gap-2",
 };

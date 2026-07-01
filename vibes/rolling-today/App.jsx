@@ -198,7 +198,7 @@ export default function App() {
         <img src="https://www.shift2bikes.org/images/pp/pp2026-banner.jpg" alt="Pedalpalooza Bike Summer 2026" className="w-full mb-6 border-[3px] border-[#1A1A1A] shadow-[5px_5px_0_#1A1A1A]" />
 
         <header className={c.header}>
-          <div>
+          <div className="shrink-0">
             <div className={c.brand}>
               <span className={c.brandMark} />
               <h1 className={c.brandText}>Rolling Today</h1>
@@ -208,27 +208,31 @@ export default function App() {
           <nav className={c.nav}>
             {view === "rides" ? (
               <>
-                <button className={c.navBtn} onClick={() => jump(-1)} disabled={loading} aria-label="Previous day with rides">
-                  <Icon d={ICONS.arrowL} />
+                <button className={c.navBtnLg} onClick={() => jump(-1)} disabled={loading} aria-label="Previous day with rides">
+                  <Icon d={ICONS.arrowL} size={27} />
                   <span className="hidden sm:inline">Prev</span>
                 </button>
-                <button className={c.navBtn} onClick={goToday} disabled={loading || date === today} aria-label="Jump back to today">
-                  <Icon d={ICONS.home} />
+                <button className={c.navBtnLg} onClick={goToday} disabled={loading || date === today} aria-label="Jump back to today">
+                  <Icon d={ICONS.home} size={27} />
                   <span className="hidden sm:inline">Today</span>
                 </button>
-                <button className={c.navBtn} onClick={() => jump(1)} disabled={loading} aria-label="Next day with rides">
+                <button className={c.navBtnLg} onClick={() => jump(1)} disabled={loading} aria-label="Next day with rides">
                   <span className="hidden sm:inline">Next</span>
-                  <Icon d={ICONS.arrowR} />
+                  <Icon d={ICONS.arrowR} size={27} />
                 </button>
               </>
             ) : (
-              <button className={c.navBtn} onClick={() => setView("rides")}>
-                <Icon d={ICONS.arrowL} />
+              <button className={c.navBtnLg} onClick={() => setView("rides")}>
+                <Icon d={ICONS.arrowL} size={27} />
                 <span className="hidden sm:inline">Rides</span>
               </button>
             )}
-            <button className={view === "friends" ? c.navBtnOn : c.navBtn} onClick={() => setView(view === "friends" ? "rides" : "friends")} aria-label="Friends">
-              <Icon d={ICONS.users} />
+            <button
+              className={view === "friends" ? c.navBtnLgOn : c.navBtnLg}
+              onClick={() => setView(view === "friends" ? "rides" : "friends")}
+              aria-label="Friends"
+            >
+              <Icon d={ICONS.users} size={27} />
               <span className="hidden sm:inline">Friends{friendSlugs.size > 0 ? ` (${friendSlugs.size})` : ""}</span>
             </button>
           </nav>
@@ -305,8 +309,11 @@ export default function App() {
       </div>
 
       {!signedIn && view === "rides" && (
-        <div className="fixed bottom-[12px] left-3 right-[104px] z-50 flex justify-end pointer-events-none">
-          <div className={c.signinCallout} style={{ marginBottom: 0, maxWidth: 440 }}>
+        <div className="fixed bottom-[10px] left-3 right-3 z-40 pointer-events-none">
+          {/* Full-width bar; the Vibes switch (top-frame chrome) sits on its right end,
+              so the rectangle looks like it's cradling the switch. paddingRight keeps
+              the text clear of the switch. */}
+          <div className={c.signinCallout} style={{ marginBottom: 0, paddingRight: 132 }}>
             <Icon d={ICONS.spark} size={16} />
             <span>Sign in via the Vibes DIY logo to sync your rides and follow friends — favorites work while you're logged out and move to your account when you sign in.</span>
           </div>
