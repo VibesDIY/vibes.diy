@@ -57,19 +57,21 @@ describe("FireflyDatabase ephemeral overlay (#1756)", () => {
     expect(rows).not.toContain("c-a");
   });
 
-  it("notifies listeners on inbound ephemeral so hooks refetch", () => {
+  it("notifies listeners on inbound ephemeral with ephemeral meta (no server refetch)", () => {
     const listener = vi.fn();
     db.subscribe(listener);
     mockApi._simulateEphemeral("c-a", { _id: "c-a", type: "cursor" });
-    expect(listener).toHaveBeenCalledWith([expect.objectContaining({ _id: "c-a" })]);
+    // meta.ephemeral tells useLiveQuery to re-materialize from cached server
+    // docs instead of refetching — server state didn't change (#1756).
+    expect(listener).toHaveBeenCalledWith([expect.objectContaining({ _id: "c-a" })], { ephemeral: true });
   });
 
-  it("notifies listeners on drop so hooks refetch", () => {
+  it("notifies listeners on drop with ephemeral meta", () => {
     mockApi._simulateEphemeral("c-a", { _id: "c-a", type: "cursor" }, { originPeer: "p1" });
     const listener = vi.fn();
     db.subscribe(listener);
     mockApi._simulateEphemeralDrop("p1");
-    expect(listener).toHaveBeenCalledWith([expect.objectContaining({ _id: "c-a" })]);
+    expect(listener).toHaveBeenCalledWith([expect.objectContaining({ _id: "c-a" })], { ephemeral: true });
   });
 
   it("ignores an ephemeral for a different db", async () => {

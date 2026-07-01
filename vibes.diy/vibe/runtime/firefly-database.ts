@@ -126,6 +126,13 @@ export interface DocResponse {
 export interface ChangeMeta {
   /** True when the change is a local optimistic write not yet confirmed by the server. */
   readonly optimistic?: boolean;
+  /**
+   * True when the change is an ephemeral presence overlay update (#1756) —
+   * remote peer slice applied/dropped/expired. Server state did NOT change, so
+   * subscribers should re-materialize from cached server docs instead of
+   * refetching; a refetch per cursor frame per subscriber would melt the server.
+   */
+  readonly ephemeral?: boolean;
 }
 export type ListenerFn<T extends DocTypes = DocTypes> = (changes: DocWithId<T>[], meta?: ChangeMeta) => void;
 
@@ -869,7 +876,7 @@ export class FireflyDatabase {
     }
     set.add(docId);
     this.ensureEphemeralSweep();
-    this.notifyListeners([{ _id: docId } as DocWithId]);
+    this.notifyListeners([{ _id: docId } as DocWithId], { ephemeral: true });
   }
 
   // Start the sweep if not already running. Each tick prunes expired slices and
@@ -879,7 +886,11 @@ export class FireflyDatabase {
     if (this.ephemeralSweep) return;
     this.ephemeralSweep = setInterval(() => {
       const dropped = this.pruneEphemeral();
-      if (dropped.length) this.notifyListeners(dropped.map((id) => ({ _id: id }) as DocWithId));
+      if (dropped.length)
+        this.notifyListeners(
+          dropped.map((id) => ({ _id: id }) as DocWithId),
+          { ephemeral: true }
+        );
       if (this.ephemeralOverlay.size === 0 && this.ephemeralSweep) {
         clearInterval(this.ephemeralSweep);
         this.ephemeralSweep = undefined;
@@ -901,7 +912,7 @@ export class FireflyDatabase {
       }
     }
     this.peerDocs.delete(originPeer);
-    if (affected.length) this.notifyListeners(affected);
+    if (affected.length) this.notifyListeners(affected, { ephemeral: true });
   }
 
   // Fold overlay slices over a list of persisted docs: merge onto a matching
