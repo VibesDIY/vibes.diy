@@ -16,7 +16,21 @@ import { useFireproof } from "use-fireproof";
 import { useViewer } from "use-vibes";
 
 const LS_PREFIX = "vibe-local:";
+const AUTHED_PREFIX = "vibe-authed:"; // marks that this device has signed in before
 const stores = new Map(); // dbName -> { docs: Map<_id,doc>, listeners: Set, version }
+
+function markAuthed(dbName) {
+  try {
+    localStorage.setItem(AUTHED_PREFIX + dbName, "1");
+  } catch (e) {}
+}
+function hasAuthed(dbName) {
+  try {
+    return localStorage.getItem(AUTHED_PREFIX + dbName) === "1";
+  } catch (e) {
+    return false;
+  }
+}
 
 function loadDocs(dbName) {
   try {
@@ -127,10 +141,16 @@ export function useVibeStore(dbName, options = {}) {
   // First sign-in: copy local docs into Fireproof, then clear local. The
   // optional `migrate(doc, userHandle)` re-stamps ownership / re-keys _id
   // (return a falsy value to drop a doc). Runs once per mount.
+  // Read once at mount: has this device ever completed a sign-in? Lets the app
+  // steer a returning-but-logged-out visitor to sign in (their data is on their
+  // account) instead of silently starting a throwaway second anonymous session.
+  const hasAuthedBefore = useMemo(() => hasAuthed(dbName), [dbName]);
+
   const migratedRef = useRef(false);
   useEffect(() => {
     if (!signedIn || migratedRef.current) return;
     migratedRef.current = true;
+    markAuthed(dbName);
     const s = getStore(dbName);
     if (s.docs.size === 0) return;
     const migrate = options.migrate || ((d) => d);
@@ -183,5 +203,5 @@ export function useVibeStore(dbName, options = {}) {
     };
   };
 
-  return { database, useLiveQuery, useDocument, isLocal, access: fp.access };
+  return { database, useLiveQuery, useDocument, isLocal, hasAuthedBefore, access: fp.access };
 }
