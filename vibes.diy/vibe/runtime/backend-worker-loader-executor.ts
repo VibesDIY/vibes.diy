@@ -42,7 +42,15 @@ export const BACKEND_DB_OP_URL = "https://db.internal/op";
  * isolate runs and removed in a `finally`, so a nonce is live only for its own
  * invocation.
  */
-const dbCallbackRegistry = new Map<string, BackendDbCallback>();
+// Pinned to a `globalThis` singleton, NOT a bare module const: the worker bundle
+// can duplicate this module (the executor reaches it via api-svc; the DO's db-op
+// handler reaches it via a separate re-export chain), which would give each copy
+// its OWN Map — the executor would register a nonce the handler's Map never sees
+// ("no active call context", observed live). One global Map per isolate dedupes
+// them; the DO self-stub keeps the op in the SAME isolate, so the global is shared.
+const dbCallbackRegistry: Map<string, BackendDbCallback> = ((
+  globalThis as unknown as { __vibesBackendDbRegistry?: Map<string, BackendDbCallback> }
+).__vibesBackendDbRegistry ??= new Map<string, BackendDbCallback>());
 
 /**
  * Handle one `ctx.db` op that an isolate posted through its `globalOutbound` (a
