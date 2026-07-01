@@ -11,7 +11,7 @@
   "dependencies": {
     "@adviser/cement": "^0.5.34",
     "@ark/json-schema": "^0.0.4",
-    "@cloudflare/workers-types": "4.20260617.1",
+    "@cloudflare/workers-types": "4.20260701.1",
     "@vibes.diy/call-ai-v2": "workspace:*",
     "@vibes.diy/identity": "workspace:*",
     "@vibes.diy/vibe-types": "workspace:*",

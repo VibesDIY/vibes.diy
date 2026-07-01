@@ -18,7 +18,7 @@
     "drizzle-orm": "^0.45.2"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "4.20260617.1",
+    "@cloudflare/workers-types": "4.20260701.1",
     "@vibes.diy/build-cli": "workspace:*",
     "typescript": "^6.0.3",
     "wrangler": "^4.99.0"
