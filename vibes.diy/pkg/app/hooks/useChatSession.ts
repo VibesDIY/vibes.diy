@@ -34,6 +34,16 @@ export interface ChatSessionOpts {
 
 export interface ChatSession {
   readonly chat: LLMChat | null;
+  /**
+   * Tear down the current chat handle and re-arm the open-once latch so a later
+   * prompt re-opens a FRESH chat (whose open replay rebuilds `blocks` from the
+   * persisted truth). Used by the edit-card Stop button to cancel an in-flight
+   * turn without leaving a half-open codegen session: the section stream is
+   * fenced (so its teardown can't drive the reducer) and the socket is closed.
+   * The caller is expected to settle the reducer (`abortTurn`) and, when lazy,
+   * flip itself inactive so the open effect doesn't eagerly re-open.
+   */
+  readonly resetChat: () => void;
 }
 
 /**
@@ -250,6 +260,22 @@ export function useChatSession(opts: ChatSessionOpts): ChatSession {
     onGiveUp: handleReconnectGiveUp,
   });
 
+  // Cancel the live chat: fence the current section stream (so its teardown +
+  // any late events are dropped instead of reaching the reducer), close the
+  // socket, and re-arm the open-once latch + drop the handle so the NEXT prompt
+  // opens a fresh chat. Bumping the generation BEFORE close() means the stream's
+  // `finally` sees itself superseded and won't dispatch `streamDisconnected`
+  // (which would otherwise flip us into the reconnect loop we're trying to end).
+  // Identity-stable: reads/writes only refs + setChat.
+  const resetChat = useCallback(() => {
+    streamGenerationRef.current += 1;
+    void activeChatRef.current?.close();
+    activeChatRef.current = null;
+    retryPromptRef.current = null;
+    openingRef.current = false;
+    setChat(null);
+  }, []);
+
   useEffect(() => {
     if (inConstruction) return;
     if (openingRef.current) {
@@ -303,5 +329,5 @@ export function useChatSession(opts: ChatSessionOpts): ChatSession {
     // in the /chat route it's constant per mount, so it adds no extra runs.
   }, [ownerHandle, appSlug, chat, openingRef, chatApi, sharedApi, promptToSend, onSendSettled, inConstruction, firePrompt]);
 
-  return { chat };
+  return { chat, resetChat };
 }

@@ -169,6 +169,78 @@ describe("UnifiedVibeCard", () => {
     expect((hiddenWrap as HTMLElement).style.visibility).toBe("hidden");
   });
 
+  it("keeps the composer input visible and editable while a turn streams (queue-ahead)", () => {
+    // The input must NOT disappear or become disabled while generating — some
+    // people compose their next change while they wait.
+    render(
+      <UnifiedVibeCard
+        appTitle="Bloom Machine"
+        open
+        chips={["Make it a drum kit"]}
+        generating
+        streamBody={<div>STREAMING NARRATION</div>}
+      />
+    );
+    const input = screen.getByRole("textbox", { name: /change the app/i }) as HTMLInputElement;
+    expect(input).toBeTruthy();
+    expect(input.disabled).toBe(false);
+    // It is NOT inside the hidden/inert chips wrapper (that only hides the chips).
+    expect(input.closest("[aria-hidden='true']")).toBeNull();
+    // And it accepts typing while the turn streams.
+    fireEvent.change(input, { target: { value: "then add sound" } });
+    expect(input.value).toBe("then add sound");
+  });
+
+  it("swaps the submit button to a Stop button while generating and fires onStop", () => {
+    const onStop = vi.fn();
+    const onSubmitOther = vi.fn();
+    const { rerender } = render(<UnifiedVibeCard appTitle="Bloom Machine" open onSubmitOther={onSubmitOther} onStop={onStop} />);
+    // Resting: a Submit button, no Stop button.
+    expect(screen.getByRole("button", { name: /submit change/i })).toBeTruthy();
+    expect(screen.queryByRole("button", { name: /stop generating/i })).toBeNull();
+
+    // Generating: the same slot now renders a Stop button (submit is gone), and
+    // clicking it cancels the turn.
+    rerender(
+      <UnifiedVibeCard
+        appTitle="Bloom Machine"
+        open
+        onSubmitOther={onSubmitOther}
+        onStop={onStop}
+        generating
+        streamBody={<div>STREAMING NARRATION</div>}
+      />
+    );
+    expect(screen.queryByRole("button", { name: /submit change/i })).toBeNull();
+    const stop = screen.getByRole("button", { name: /stop generating/i });
+    fireEvent.click(stop);
+    expect(onStop).toHaveBeenCalledTimes(1);
+    expect(onSubmitOther).not.toHaveBeenCalled();
+  });
+
+  it("does not fire onSubmitOther when the form is submitted while generating", () => {
+    const onSubmitOther = vi.fn();
+    render(
+      <UnifiedVibeCard
+        appTitle="Bloom Machine"
+        open
+        onSubmitOther={onSubmitOther}
+        onStop={vi.fn()}
+        generating
+        streamBody={<div>STREAMING NARRATION</div>}
+      />
+    );
+    const input = screen.getByRole("textbox", { name: /change the app/i });
+    fireEvent.change(input, { target: { value: "queued change" } });
+    const form = input.closest("form");
+    if (!form) throw new Error("expected the Other row to be wrapped in a form");
+    fireEvent.submit(form);
+    // Enter/submit mid-turn must not send — the primary action is Stop.
+    expect(onSubmitOther).not.toHaveBeenCalled();
+    // ...and the typed text is preserved so it can be sent once generation ends.
+    expect((input as HTMLInputElement).value).toBe("queued change");
+  });
+
   it("reserves a minimum stream height so a text-input-only card (no chips) doesn't crush the narration", () => {
     render(<UnifiedVibeCard appTitle="Bloom Machine" open streamBody={<div>STREAMING NARRATION</div>} />);
     const stream = screen.getByText("STREAMING NARRATION");

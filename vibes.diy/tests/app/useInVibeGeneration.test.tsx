@@ -261,6 +261,59 @@ describe("useInVibeGeneration", () => {
     await waitFor(() => expect(view.result.current.persistedFsRef).toBeUndefined());
   });
 
+  it("stop() is a no-op when nothing is generating (no socket teardown)", async () => {
+    const { view, fakeChat } = setup();
+    await waitFor(() => expect(view.result.current.phase).toBe("idle"));
+    act(() => view.result.current.stop());
+    await new Promise((r) => setTimeout(r, 20));
+    expect(fakeChat.chat.close).not.toHaveBeenCalled();
+    expect(view.result.current.isGenerating).toBe(false);
+  });
+
+  it("stop() cancels the in-flight turn as if it never started: clears blocks, closes the socket, re-opens clean on the next edit", async () => {
+    // Distinct chats per open so the reopened turn gets a fresh stream (a reused
+    // stream's reader would be locked) — mirrors the real openChat.
+    const chatA = makeControllableLLMChat({ chatId: "A" });
+    const chatB = makeControllableLLMChat({ chatId: "B" });
+    const opened = [chatA.chat, chatB.chat];
+    let openIdx = 0;
+    const openChat = vi.fn(async () => Result.Ok(opened[Math.min(openIdx++, opened.length - 1)]));
+    const chatApi = { openChat } as never;
+    const sharedApi = {
+      getAppByFsId: vi.fn(async () => Result.Ok({ fsId: "FS-1" })),
+      ensureAppSettings: vi.fn(async () => Result.Err("no settings")),
+    } as never;
+    const srvVibeSandbox = { pushSource: vi.fn(() => true) } as never;
+    const view = renderHook(() =>
+      useInVibeGeneration({ ownerHandle: "owner", appSlug: "app", fsId: "FS-1", chatApi, sharedApi, srvVibeSandbox })
+    );
+    await waitFor(() => expect(view.result.current.phase).toBe("idle"));
+
+    // Start a turn.
+    act(() => view.result.current.sendPrompt("make it blue"));
+    await waitFor(() => expect(openChat).toHaveBeenCalledTimes(1));
+    await act(async () => chatA.emitBlockBegin());
+    await waitFor(() => expect(view.result.current.isGenerating).toBe(true));
+    expect(view.result.current.phase).toBe("streaming");
+
+    // Stop it: the turn settles as if it never ran, and the socket is closed.
+    act(() => view.result.current.stop());
+    await waitFor(() => expect(view.result.current.isGenerating).toBe(false));
+    expect(view.result.current.phase).toBe("idle");
+    expect(view.result.current.blocks).toHaveLength(0);
+    expect(chatA.chat.close).toHaveBeenCalled();
+    // Lazy: stop does NOT eagerly re-open — the socket stays closed until the next edit.
+    await new Promise((r) => setTimeout(r, 30));
+    expect(openChat).toHaveBeenCalledTimes(1);
+
+    // The next edit re-opens a FRESH chat and fires on it — no half-open session.
+    act(() => view.result.current.sendPrompt("now make it green"));
+    await waitFor(() => expect(openChat).toHaveBeenCalledTimes(2));
+    await waitFor(() => expect(chatB.chat.prompt).toHaveBeenCalledTimes(1));
+    await act(async () => chatB.emitBlockBegin());
+    await waitFor(() => expect(view.result.current.phase).toBe("streaming"));
+  });
+
   it("does not open a chat when disabled", async () => {
     const { view, openChat } = setup({ enabled: false });
     expect(view.result.current.phase).toBe("idle");

@@ -224,6 +224,20 @@ function isRollReconnect(msg: unknown): msg is RollReconnect {
   return typeof msg === "object" && msg !== null && (msg as { type?: unknown }).type === "rollReconnect";
 }
 
+// Cancel the in-flight turn as if it never started (the /vibe edit-card Stop
+// button). Drops the partial streamed block(s), flips `running` off, and clears
+// the optimistic bubble + in-flight streamId + reconnect state so the codegen
+// session is left clean and the NEXT prompt starts fresh. Settings-derived
+// fields (title/icon/theme/chat) survive — the host closes + re-opens the socket
+// so a fresh open's replay rebuilds `blocks` from the persisted truth. Distinct
+// from `clearChat` (which also wipes title/theme/icon for a vibe change).
+interface AbortTurn {
+  type: "abortTurn";
+}
+function isAbortTurn(msg: unknown): msg is AbortTurn {
+  return typeof msg === "object" && msg !== null && (msg as { type?: unknown }).type === "abortTurn";
+}
+
 export type PromptAction =
   | PromptAndBlockMsgs
   | InitChat
@@ -239,6 +253,7 @@ export type PromptAction =
   | ReplayReset
   | ReconnectFailed
   | RollReconnect
+  | AbortTurn
   | SetInFlightStreamId
   | SetOptimisticPrompt;
 
@@ -286,6 +301,23 @@ export function promptReducer(state: PromptState, block: PromptAction): PromptSt
 
     case isReplayReset(block):
       return { ...state, blocks: [], current: undefined, running: false, hasCode: false };
+
+    case isAbortTurn(block):
+      // Settle back to a clean, pre-turn state: drop the partial block(s), stop
+      // running, and clear the optimistic bubble / in-flight streamId / reconnect
+      // so the next prompt fires on a fresh turn. Blocks are cleared because the
+      // host re-opens the socket and the open replay rebuilds them from the
+      // persisted history (keeping in-memory blocks would double up on replay).
+      return {
+        ...state,
+        blocks: [],
+        current: undefined,
+        running: false,
+        hasCode: false,
+        connection: "live",
+        inFlightStreamId: undefined,
+        optimisticPrompt: undefined,
+      };
 
     case isReconnectFailed(block):
       return { ...state, connection: "failed", running: false };

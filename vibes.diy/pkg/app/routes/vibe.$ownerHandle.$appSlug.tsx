@@ -812,6 +812,15 @@ export default function VibeIframeWrapper() {
     })();
   }, [isOwner, ownerHandle, appSlug, publishing, draftFsId, vctx.chatApi]);
 
+  // Edit-card Stop button: cancel the in-flight in-place edit as if it never
+  // started (the hook reverts the preview, settles the turn, and re-arms the
+  // codegen socket). Also drop any pending producer capture so an aborted chip
+  // turn never registers a cached suggestion on a later unrelated persist.
+  const handleStopGeneration = useCallback(() => {
+    pendingProduceRef.current = null;
+    generation.stop();
+  }, [generation.stop]);
+
   const adminStorageKey = ownerHandle && appSlug ? adminModeStorageKey(ownerHandle, appSlug) : "";
   const [adminMode, setAdminMode] = useState(() => {
     if (typeof window === "undefined" || !adminStorageKey) return false;
@@ -1793,6 +1802,11 @@ ${rootCssBlock}
                   chips={cardChips}
                   onSelectChip={handleEditPrompt}
                   onSubmitOther={handleEditPrompt}
+                  // While a change generates, the composer's submit button becomes
+                  // a Stop button (the input stays editable so the next change can
+                  // be queued up meanwhile).
+                  generating={generation.isGenerating}
+                  onStop={handleStopGeneration}
                   // Theme + palette changer above the composer (owner-only),
                   // moved here from the Settings tab.
                   composerControls={composerControls}
