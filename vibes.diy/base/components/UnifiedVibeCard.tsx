@@ -37,8 +37,10 @@ export interface UnifiedVibeCardProps {
   onSelectChip?: (chip: string) => void;
   onSubmitOther?: (text: string) => void;
   /** True while an in-place edit is generating. The composer's submit button
-   *  swaps to a Stop button (same shape/size/position) and the text input stays
-   *  visible + editable so the next change can be composed while this one runs. */
+   *  swaps to a Stop button (same shape/size/position) while the input is EMPTY;
+   *  the moment there's text, it swaps back to a send button that QUEUES the
+   *  message instead of interrupting. Queued messages batch into one prompt that
+   *  fires automatically (via `onSubmitOther`) when the turn ends. */
   generating?: boolean;
   /** Cancel the in-flight generation — wired to the composer's Stop button. */
   onStop?: () => void;
@@ -395,8 +397,12 @@ export function UnifiedVibeCard(props: UnifiedVibeCardProps) {
                   </div>
                   {/* The composer input stays mounted, visible, and editable even
                       while a turn streams — so you can type your next change while
-                      you wait. While generating, its submit button becomes a Stop
-                      button that cancels the in-flight edit (same shape/size/spot). */}
+                      you wait. While generating with an EMPTY input, the action
+                      button is Stop (cancels the in-flight edit, same shape/size/
+                      spot); with text present it's a send button that queues the
+                      message for the next turn (queue-ahead, like the big chat
+                      apps). Queued messages batch into one prompt and auto-send
+                      when the turn ends. */}
                   <OtherRow onSubmitOther={props.onSubmitOther} generating={props.generating} onStop={props.onStop} />
                 </>
               )}
@@ -900,81 +906,131 @@ function OtherRow({
   readonly onStop?: () => void;
 }) {
   const [value, setValue] = React.useState("");
+  // Queue-ahead (like the big chat apps): submitting mid-turn queues the message
+  // instead of interrupting. Multiple queued messages batch into ONE prompt.
+  const [queued, setQueued] = React.useState<readonly string[]>([]);
+
+  // Auto-flush: the moment the running turn ends with messages queued, batch them
+  // and send as a single prompt. A manual Stop never reaches this with a queue —
+  // the Stop handler drains it back into the input first (stopping means "give me
+  // control back", not "immediately run what I queued").
+  React.useEffect(() => {
+    if (generating || queued.length === 0) return;
+    const batch = queued.join("\n\n");
+    setQueued([]);
+    onSubmitOther?.(batch);
+  }, [generating, queued, onSubmitOther]);
+
+  // The action button: Stop only while generating with an EMPTY input. Any typed
+  // text flips it back to a send button (which queues), so you have to clear the
+  // field or send before Stop is reachable again.
+  const showStop = Boolean(generating) && value.trim() === "";
   return (
-    <form
-      onSubmit={(e) => {
-        e.preventDefault();
-        // While a change is generating the action button is Stop, not Submit —
-        // don't fire a prompt (queuing mid-turn isn't supported). The typed text
-        // stays in the field, ready to send the moment generation finishes.
-        if (generating) return;
-        const text = value.trim();
-        if (text) onSubmitOther?.(text);
-        setValue("");
-      }}
-      style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 10 }}
-      // pr-3 (was pr-2.5) nudges the round submit button ~2px left so it isn't
-      // crowded against the field's right edge.
-      className="rounded-md border border-light-decorative-01 dark:border-dark-decorative-01 py-1.5 pl-3 pr-3"
-    >
-      {/* Faux placeholder: a real `placeholder` attribute is plain text and can't
+    <>
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          const text = value.trim();
+          if (!text) return;
+          if (generating) {
+            // Mid-turn send = queue for the next turn; the active turn keeps running.
+            setQueued((q) => [...q, text]);
+          } else {
+            onSubmitOther?.(text);
+          }
+          setValue("");
+        }}
+        style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 10 }}
+        // pr-3 (was pr-2.5) nudges the round submit button ~2px left so it isn't
+        // crowded against the field's right edge.
+        className="rounded-md border border-light-decorative-01 dark:border-dark-decorative-01 py-1.5 pl-3 pr-3"
+      >
+        {/* Faux placeholder: a real `placeholder` attribute is plain text and can't
           carry a strikethrough, so when the field is empty we overlay a
           non-interactive span that CAN — `<s>magic</s>`. It's aria-hidden (the
           input keeps an aria-label) and pointer-events:none so it never
           intercepts focus/typing. */}
-      <div style={{ position: "relative", flex: 1, minWidth: 0, display: "flex" }}>
-        <input
-          value={value}
-          onChange={(e) => setValue(e.target.value)}
-          aria-label="Change the app"
-          className="w-full bg-transparent text-sm text-light-primary dark:text-dark-primary outline-none"
-        />
-        {value === "" && (
-          <span
-            aria-hidden
-            className="text-sm text-light-secondary dark:text-dark-secondary"
-            style={{
-              position: "absolute",
-              left: 0,
-              top: 0,
-              bottom: 0,
-              display: "flex",
-              alignItems: "center",
-              pointerEvents: "none",
-              whiteSpace: "nowrap",
-            }}
-          >
-            {/* The span is a flex container for vertical centering, which turns
+        <div style={{ position: "relative", flex: 1, minWidth: 0, display: "flex" }}>
+          <input
+            value={value}
+            onChange={(e) => setValue(e.target.value)}
+            aria-label="Change the app"
+            className="w-full bg-transparent text-sm text-light-primary dark:text-dark-primary outline-none"
+          />
+          {value === "" && (
+            <span
+              aria-hidden
+              className="text-sm text-light-secondary dark:text-dark-secondary"
+              style={{
+                position: "absolute",
+                left: 0,
+                top: 0,
+                bottom: 0,
+                display: "flex",
+                alignItems: "center",
+                pointerEvents: "none",
+                whiteSpace: "nowrap",
+              }}
+            >
+              {/* The span is a flex container for vertical centering, which turns
                 <s> into its own flex item and collapses the whitespace around it.
                 Restore the gaps with an explicit horizontal margin. */}
-            Change the app with <s style={{ margin: "0 0.25em" }}>magic</s> words…
-          </span>
+              Change the app with <s style={{ margin: "0 0.25em" }}>magic</s> words…
+            </span>
+          )}
+        </div>
+        {showStop ? (
+          // Stop button: same round footprint as submit, near-black with a white
+          // square. Cancels the in-flight edit. `type="button"` so it never submits.
+          // If messages were queued, cancelling drains them back into the input
+          // (editable, unsent) instead of letting the turn-end auto-flush fire them.
+          <button
+            type="button"
+            aria-label="Stop generating"
+            onClick={() => {
+              if (queued.length > 0) {
+                // Stop is only reachable with an empty input, so no typed text is
+                // lost. Join single-line-safe: the field is an <input>, which
+                // silently strips newlines (the batch send keeps "\n\n" because it
+                // goes straight to the prompt, never through the field).
+                setValue(queued.join("; "));
+                setQueued([]);
+              }
+              onStop?.();
+            }}
+            style={{ ...OTHER_ROW_BUTTON_STYLE, background: "var(--vibes-near-black, #1a1a1a)" }}
+          >
+            <span aria-hidden="true" style={{ width: 10, height: 10, borderRadius: 2, background: "#fff", display: "block" }} />
+          </button>
+        ) : (
+          // Round submit button mirroring the homepage / chat composer's send button
+          // (circular, near-black, white up-arrow) — scaled down to fit the one-line
+          // edit field. See NewSessionContent.styles getSubmitButtonStyle. Mid-turn
+          // it queues rather than sends, so the label says which one you're getting.
+          <button
+            type="submit"
+            aria-label={generating ? "Queue change" : "Submit change"}
+            title={generating ? "Queues — sends when the current change finishes" : undefined}
+            style={{ ...OTHER_ROW_BUTTON_STYLE, background: "var(--vibes-blue, #3b82f6)" }}
+          >
+            <span aria-hidden="true">↑</span>
+          </button>
         )}
-      </div>
-      {generating ? (
-        // Stop button: same round footprint as submit, near-black with a white
-        // square. Cancels the in-flight edit. `type="button"` so it never submits.
-        <button
-          type="button"
-          aria-label="Stop generating"
-          onClick={onStop}
-          style={{ ...OTHER_ROW_BUTTON_STYLE, background: "var(--vibes-near-black, #1a1a1a)" }}
+      </form>
+      {/* Queue-ahead status: visible only mid-turn with something queued (the
+          auto-flush empties it the moment the turn ends). role="status" so the
+          count change is announced. */}
+      {generating && queued.length > 0 && (
+        <div
+          role="status"
+          className="text-xs text-light-secondary dark:text-dark-secondary"
+          style={{ marginTop: 6, lineHeight: 1.4 }}
         >
-          <span aria-hidden="true" style={{ width: 10, height: 10, borderRadius: 2, background: "#fff", display: "block" }} />
-        </button>
-      ) : (
-        // Round submit button mirroring the homepage / chat composer's send button
-        // (circular, near-black, white up-arrow) — scaled down to fit the one-line
-        // edit field. See NewSessionContent.styles getSubmitButtonStyle.
-        <button
-          type="submit"
-          aria-label="Submit change"
-          style={{ ...OTHER_ROW_BUTTON_STYLE, background: "var(--vibes-blue, #3b82f6)" }}
-        >
-          <span aria-hidden="true">↑</span>
-        </button>
+          {queued.length === 1 ? "1 change queued" : `${queued.length} changes queued`} — sends when this one finishes (Stop returns
+          it to the box).
+        </div>
       )}
-    </form>
+    </>
   );
 }
 
