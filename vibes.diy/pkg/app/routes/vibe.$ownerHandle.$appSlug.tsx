@@ -48,7 +48,14 @@ import ThemePickerModal from "../components/ThemePickerModal.js";
 import { useIframeCurrentTokens } from "../hooks/useIframeCurrentTokens.js";
 import { vibesThemes, getThemeBySlug, type VibesTheme } from "@vibes.diy/prompts";
 import { toast } from "react-hot-toast";
-import { isMetaScreenShot, isMetaTitle, LLMChatEntry, type ResGetAppByFsId, type VibesFPApiParameters } from "@vibes.diy/api-types";
+import {
+  isMetaScreenShot,
+  isMetaTitle,
+  LLMChatEntry,
+  VERIFYING_ACCESS_TOAST,
+  type ResGetAppByFsId,
+  type VibesFPApiParameters,
+} from "@vibes.diy/api-types";
 import { computeCardVariant } from "./vibe-card-variant.js";
 import { readIntent, withIntent, withoutIntent } from "./vibe-intent.js";
 import { forkDestination } from "./vibe-fork.js";
@@ -1210,7 +1217,7 @@ export default function VibeIframeWrapper() {
     }
     inGetAppByFsIdRef.current = true;
     lastFiredKeyRef.current = paramsKey;
-    toast.loading("Verifying access…", { id: "vibe-access" });
+    toast.loading(`${VERIFYING_ACCESS_TOAST}…`, { id: "vibe-access" });
     vctx.sharedApi.getAppByFsId({ fsId, appSlug, ownerHandle, token }).then((rRes) => {
       inGetAppByFsIdRef.current = false;
       if (rRes.isErr()) {
