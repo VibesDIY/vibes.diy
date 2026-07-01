@@ -54,6 +54,7 @@ import {
 import { CliCtx, defaultCliOutput } from "./cli-ctx.js";
 import { cmdTsEvento, isCmdProgress, WrapCmdTSMsg } from "./cmd-evento.js";
 import { seedDeviceIdFromEnv, VIBES_DEVICE_ID_ENV } from "./device-id-env.js";
+import { normalizeHelpArgv } from "./help-alias.js";
 import { err, isErr } from "cmd-ts/dist/cjs/Result.js";
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
@@ -159,7 +160,7 @@ async function main(): Promise<number> {
         "user-settings": userSettingsCmd(ctx),
       },
     }),
-    process.argv.slice(2)
+    normalizeHelpArgv(process.argv.slice(2))
   );
   if (isErr(rs)) {
     console.error(err(rs).error.error.config.message);

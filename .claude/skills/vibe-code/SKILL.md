@@ -15,7 +15,7 @@ Log in once per device; all later commands authenticate automatically:
 npx vibes-diy login
 ```
 
-Pushing under someone else's handle requires an **editor grant** on that vibe — without it, `pull` returns "Access denied" and `push` fails server-side.
+`pull` works for **anyone who can open the vibe** — owner, public, a shared viewer/editor/submitter, or an accepted invite — so reading someone else's source is not owner-only (you get the published version). **Pushing** is what needs an **editor grant**: without one, `push` fails server-side even though `pull` succeeded.
 
 > **Validating a just-merged CLI feature?** `npx vibes-diy@latest` is the **published** package and publishing is tag-driven, so it can lag `main` — a subcommand that exists in repo source (`vibes-diy/cli/cmds/`, registered in `main.ts`) may not be in the published binary until the next CLI release. If a just-merged subcommand errors with "Not a valid subcommand name" under `@latest`, run the **repo-local** CLI instead (`node vibes-diy/cli/run.js <cmd>` — needs deps installed + `tsx`); don't conclude the feature regressed.
 

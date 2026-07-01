@@ -322,6 +322,15 @@ export function isReadableCachedGrant(grant: string): boolean {
   return READABLE_CACHED_GRANT[grant as AppGrant] === true;
 }
 
+/**
+ * The readable-grant test is not cached-suggestion-specific — it's the general
+ * rule for "can THIS viewer actually load this version of the vibe?" over any
+ * `getAppByFsId` grant. Other read paths (e.g. the CLI `pull`, which downloads a
+ * vibe's source for anyone who can open it — not just the owner) share the exact
+ * same allowlist, so they import this alias rather than re-deriving the set.
+ */
+export const isReadableGrant = isReadableCachedGrant;
+
 export type CachedReadDecision =
   | { readonly kind: "read"; readonly href: string; readonly hit: CachedSuggestionHit }
   | { readonly kind: "write" };
