@@ -46,6 +46,7 @@ import {
 import { listModelsEvento } from "./public/list-models.js";
 import {
   putDocEvento,
+  broadcastEphemeralEvento,
   getDocEvento,
   queryDocsEvento,
   deleteDocEvento,
@@ -177,6 +178,7 @@ export const handlerManifest: readonly HandlerManifestEntry[] = [
   entry("vibes.diy.req-query-docs", queryDocsEvento),
   entry("vibes.diy.req-delete-doc", deleteDocEvento),
   entry("vibes.diy.req-subscribe-docs", subscribeDocsEvento),
+  entry("vibes.diy.req-broadcast-ephemeral", broadcastEphemeralEvento),
   entry("vibes.diy.req-subscribe-viewer-grants", subscribeViewerGrantsEvento),
   entry("vibes.diy.req-list-db-names", listDbNamesEvento),
   entry("vibes.diy.req-mark-dm-read", markDmReadEvento),

@@ -159,6 +159,7 @@ export const SHARD_POLICY = {
   "vibes.diy.req-query-docs": VIBE_ONLY,
   "vibes.diy.req-delete-doc": VIBE_ONLY,
   "vibes.diy.req-subscribe-docs": VIBE_ONLY,
+  "vibes.diy.req-broadcast-ephemeral": VIBE_ONLY,
   "vibes.diy.req-subscribe-viewer-grants": VIBE_ONLY,
   "vibes.diy.req-list-db-names": VIBE_ONLY,
   "vibes.diy.req-mark-dm-read": VIBE_ONLY,
