@@ -593,9 +593,9 @@ export default function PickathonPicker() {
 
         <div className="p-6">
           {scheduleLoading ? (
-            <div className="flex items-center justify-center gap-4 py-16">
-              <div className="w-16 h-16 m-2 rounded-full border-4 border-current border-t-transparent animate-spin"></div>
-              <h2 className={`text-3xl font-black ${c.bodyText}`}>Loading the schedule...</h2>
+            <div className="flex flex-col items-center justify-center gap-5 py-20">
+              <div className="w-16 h-16 rounded-full border-4 border-current border-t-transparent animate-spin"></div>
+              <h2 className={`text-3xl font-black text-center ${c.bodyText}`}>Loading the schedule...</h2>
             </div>
           ) : scheduleError ? (
             <div className="py-16 text-center">
