@@ -42,5 +42,5 @@ export default function (doc, oldDoc, user, ctx) {
     };
   }
 
-  return {};
+  throw { forbidden: "unknown document type" };
 }

@@ -29,6 +29,8 @@ export const c = {
     "p-7 bg-white dark:bg-[#22252d] text-[#4A4A4A] dark:text-[#e9e9e9] rounded-2xl m-2 hover:bg-[#BACD32] dark:hover:bg-[#2c3510] transition-all",
   noteArea: "w-full p-6 m-2 rounded-xl resize-none text-sm text-[#4A4A4A] dark:text-[#e9e9e9] bg-white dark:bg-[#22252d]",
   deleteBtn: "p-7 bg-[#B22222] text-white rounded-2xl m-2 hover:opacity-80 transition-all",
+  deleteX: (pending) =>
+    `px-2 py-1 rounded-full m-2 text-xs font-bold transition-all ${pending ? "bg-[#B22222] text-white" : "bg-white dark:bg-[#22252d] text-[#4A4A4A] dark:text-[#e9e9e9] hover:bg-[#B22222] hover:text-white"}`,
   noteBox: "mt-2 p-6 bg-white dark:bg-[#22252d] rounded-lg m-2",
   shiftForm: "bg-[#BACD32] dark:bg-[#2c3510] rounded-2xl m-2 p-10 mb-6",
   spinner: "w-4 h-4 m-2 rounded-full animate-spin",
