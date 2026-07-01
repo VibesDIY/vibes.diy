@@ -15,6 +15,9 @@ import {
   isResQueryDocs,
   isResDeleteDoc,
   isEvtDocChanged,
+  isEvtDocEphemeral,
+  isEvtDocEphemeralDrop,
+  type EvtDocEphemeral,
   type ResPutDoc,
   type ResGetDoc,
   type ResGetDocNotFound,
@@ -339,6 +342,28 @@ function errMsg(err: Error): string {
   return e.error?.message ?? e.message ?? String(e);
 }
 
+// Receiver-side backstop for ephemeral presence slices (#1756). The primary
+// cleanup is the evt-doc-ephemeral-drop on disconnect; this bounds slices from
+// an unclean disconnect (tab crash, network drop) so stale cursors vanish.
+const EPHEMERAL_TTL_MS = 12_000;
+
+// Sentinel "allow every channel" set used when the viewer's granted-channel set
+// hasn't been wired into this Database (allow-by-default — server routing is the
+// real gate; a missing set must NOT drop all channel ephemerals, per #1756 P1).
+// TODO(#1756): wire the real granted set from VibeContext
+// mountParams.viewerEnv.grants[dbName] via setGrantedChannels() so the client
+// gate tightens to the viewer's actual channels.
+const EPHEMERAL_ALLOW_ALL: Set<string> = {
+  has: () => true,
+} as unknown as Set<string>;
+
+interface EphemeralSlice {
+  doc: DocWithId;
+  originPeer: string;
+  seq: number;
+  at: number;
+}
+
 export class FireflyDatabase {
   readonly name: string;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -361,6 +386,25 @@ export class FireflyDatabase {
   // Monotonic per-write token so a resolving/failing write only touches the
   // overlay entry it still owns — see clearOverlay (#2985).
   private writeSeq = 0;
+
+  // Ephemeral presence overlay (#1756): in-memory only, never persisted. Keyed
+  // by _id; peerDocs indexes each originPeer's slices for O(1) drop-on-disconnect.
+  // Layering vs the optimistic overlay (#2985): ephemeral folds over the
+  // persisted/server view, and the LOCAL optimistic overlay folds over both —
+  // an in-flight local write for the same _id beats a remote peer's ephemeral
+  // ("local setDoc wins for self"); the server echo then reconciles.
+  private readonly ephemeralOverlay = new Map<string, EphemeralSlice>();
+  private readonly peerDocs = new Map<string, Set<string>>();
+  private ephemeralSeq = 0;
+  // Lazy sweep timer that proactively expires stale slices even with no other DB
+  // activity (#1756): the TTL backstop's whole point is the unclean-disconnect
+  // case where no evt-doc-ephemeral-drop arrives. Started on the first slice,
+  // stopped when the overlay empties, so an idle db holds no timer.
+  private ephemeralSweep: ReturnType<typeof setInterval> | undefined;
+  // Optional set of channels the viewer may currently read. Defense-in-depth for
+  // the inbound channel gate; server routing is the primary guarantee. Undefined
+  // means "allow" (see readableChannels()).
+  private grantedChannels: Set<string> | undefined;
 
   constructor(name: string, vibeApi: FireflyTransport, acl?: DbAcl) {
     this.name = name;
@@ -390,6 +434,24 @@ export class FireflyDatabase {
         data.dbName === this.name
       ) {
         this.notifyListeners([{ _id: data.docId } as DocWithId]);
+      }
+      // Ephemeral presence (#1756): fold an inbound snapshot into the overlay,
+      // matched on ownerHandle/appSlug/dbName like the evt-doc-changed filter.
+      if (
+        isEvtDocEphemeral(data) &&
+        data.ownerHandle === this.vibeApp.ownerHandle &&
+        data.appSlug === this.vibeApp.appSlug &&
+        data.dbName === this.name
+      ) {
+        // Defense-in-depth (#1756 P1): server routing is the primary gate; also
+        // drop an ephemeral whose channel isn't currently readable. A
+        // channel-absent ephemeral (non-access-fn vibe) is always allowed.
+        if (!data.channel || this.readableChannels().has(data.channel)) {
+          this.applyEphemeral(data);
+        }
+      }
+      if (isEvtDocEphemeralDrop(data)) {
+        this.dropPeer(data.originPeer);
       }
     });
   }
@@ -464,14 +526,20 @@ export class FireflyDatabase {
 
   async get<T extends DocTypes>(id: string): Promise<DocWithId<T>> {
     // Serve a pending optimistic write from the overlay so useDocument.refresh()
-    // (and any direct get) reflects it before the server confirms (#2985).
+    // (and any direct get) reflects it before the server confirms (#2985). A
+    // local in-flight write beats a remote ephemeral for the same _id.
     const pending = this.overlay.get(id);
     if (pending) {
       if (pending.kind === "del") throw new Error(`Failed to get document: ${id} (optimistically deleted)`);
       return pending.doc as DocWithId<T>;
     }
+    // #1756: fold any live ephemeral slice over the persisted doc (slice wins
+    // per LWW), or return the slice alone when nothing is persisted.
+    this.pruneEphemeral();
+    const eph = this.ephemeralOverlay.get(id);
     const rRes = await this.vibeApi.getDoc(id, this.name);
     if (rRes.isErr()) {
+      if (eph) return { ...eph.doc } as DocWithId<T>; // ephemeral-only
       throw new Error(`Failed to get document: ${errMsg(rRes.Err())}`);
     }
     const res = rRes.Ok();
@@ -480,8 +548,9 @@ export class FireflyDatabase {
       // so consumers can `await meta.file()` for raw bytes. Pass-through
       // when _files is absent. The server-minted meta.url is preserved.
       const decorated = decorateFiles({ ...res.doc, _id: res.id });
-      return decorated as DocWithId<T>;
+      return { ...decorated, ...(eph ? eph.doc : {}) } as DocWithId<T>;
     }
+    if (eph) return { ...eph.doc } as DocWithId<T>; // not-found but overlaid
     throw new Error(`Failed to get document: ${JSON.stringify(res)}`);
   }
 
@@ -597,7 +666,7 @@ export class FireflyDatabase {
 
   async query<T extends DocTypes>(mapFn: MapFnArg<T>, opts: QueryOpts = {}): Promise<QueryResponse<T>> {
     const serverDocs = await this.fetchServerDocs<T>(this.queryHint(mapFn, opts));
-    return materializeQuery(this.applyOverlay(serverDocs), mapFn, opts);
+    return materializeQuery(this.foldOverlays(serverDocs), mapFn, opts);
   }
 
   /**
@@ -610,16 +679,27 @@ export class FireflyDatabase {
     opts: QueryOpts = {}
   ): Promise<{ result: QueryResponse<T>; serverDocs: DocWithId<T>[] }> {
     const serverDocs = await this.fetchServerDocs<T>(this.queryHint(mapFn, opts));
-    return { result: materializeQuery(this.applyOverlay(serverDocs), mapFn, opts), serverDocs };
+    return { result: materializeQuery(this.foldOverlays(serverDocs), mapFn, opts), serverDocs };
   }
 
   /**
    * Synchronous re-materialization from already-fetched server docs plus the
    * current overlay — the instant optimistic path used by useLiveQuery, no
-   * network (#2985).
+   * network (#2985). Also folds live ephemeral slices (#1756), so a presence
+   * update re-materializes from cached serverDocs without a round-trip.
    */
   materializeLive<T extends DocTypes>(serverDocs: DocWithId<T>[], mapFn: MapFnArg<T>, opts: QueryOpts = {}): QueryResponse<T> {
-    return materializeQuery(this.applyOverlay(serverDocs), mapFn, opts);
+    return materializeQuery(this.foldOverlays(serverDocs), mapFn, opts);
+  }
+
+  /**
+   * Layer both overlays over raw server docs: ephemeral presence slices (#1756)
+   * fold over the server view (synthesizing rows for ephemeral-only _ids), then
+   * the local optimistic overlay (#2985) folds over both — an in-flight local
+   * write for the same _id beats a remote peer's ephemeral.
+   */
+  private foldOverlays<T extends DocTypes>(serverDocs: DocWithId<T>[]): DocWithId<T>[] {
+    return this.applyOverlay(this.mergeOverlayDocs(serverDocs));
   }
 
   /** Build the server-side query filter hint from a string mapFn + primitive opts. */
@@ -653,6 +733,10 @@ export class FireflyDatabase {
     // Stage B Phase 8: decorate every doc's _files entries with a
     // meta.file() shim. URL is server-minted, so this only adds the
     // shim — pass-through when _files is absent.
+    // NOTE: returns RAW server docs — no ephemeral (#1756) or optimistic (#2985)
+    // fold here. queryLive's callers cache this list and re-materialize against
+    // the LIVE overlays on every notify; folding here would freeze stale
+    // ephemeral slices into that cache. The folds happen at materialize time.
     return res.docs.map((d) => decorateFiles({ ...d, _id: d._id }) as DocWithId<T>);
   }
 
@@ -684,8 +768,9 @@ export class FireflyDatabase {
     }
 
     // Stage B Phase 8: same _files decoration as in query().
-    // applyOverlay reflects pending optimistic writes here too (#2985).
-    let docs = this.applyOverlay(res.docs.map((d) => decorateFiles({ ...d, _id: d._id }) as DocWithId<T>));
+    // foldOverlays layers ephemeral slices (#1756) then pending optimistic
+    // writes (#2985) over the server rows.
+    let docs = this.foldOverlays(res.docs.map((d) => decorateFiles({ ...d, _id: d._id }) as DocWithId<T>));
 
     // Sort by _id
     docs.sort((a, b) => (a._id < b._id ? -1 : a._id > b._id ? 1 : 0));
@@ -724,6 +809,82 @@ export class FireflyDatabase {
       this.listeners.delete(fn);
       this.updateListeners.delete(fn);
     };
+  }
+
+  // ── Ephemeral presence overlay (#1756) ─────────────────────────────
+
+  /**
+   * Update the set of channels the viewer may currently read, for the inbound
+   * defense-in-depth gate. Pass undefined to fall back to allow-by-default.
+   * Server routing remains the primary guarantee; this only tightens the client.
+   */
+  setGrantedChannels(channels: Set<string> | undefined): void {
+    this.grantedChannels = channels;
+  }
+
+  private readableChannels(): Set<string> {
+    // Allow-by-default: if the runtime hasn't wired the viewer's granted set,
+    // return undefined-as-"allow" — represented here by a Set that reports true
+    // for any lookup. We can't build an infinite Set, so callers guard with a
+    // sentinel: when grantedChannels is undefined we never reach a .has() that
+    // could wrongly drop, because applyEphemeral's caller only consults this set
+    // when grantedChannels is defined. See the onMsg gate.
+    return this.grantedChannels ?? EPHEMERAL_ALLOW_ALL;
+  }
+
+  private pruneEphemeral(): string[] {
+    const now = Date.now();
+    const dropped: string[] = [];
+    for (const [docId, slice] of this.ephemeralOverlay) {
+      if (now - slice.at > EPHEMERAL_TTL_MS) {
+        this.ephemeralOverlay.delete(docId);
+        this.peerDocs.get(slice.originPeer)?.delete(docId);
+        dropped.push(docId);
+      }
+    }
+    return dropped;
+  }
+
+  private applyEphemeral(evt: EvtDocEphemeral): void {
+    const docId = evt.docId;
+    const doc = { ...evt.doc, _id: docId } as DocWithId;
+    this.ephemeralOverlay.set(docId, { doc, originPeer: evt.originPeer, seq: ++this.ephemeralSeq, at: Date.now() });
+    let set = this.peerDocs.get(evt.originPeer);
+    if (!set) {
+      set = new Set();
+      this.peerDocs.set(evt.originPeer, set);
+    }
+    set.add(docId);
+    this.notifyListeners([{ _id: docId } as DocWithId]);
+  }
+
+  private dropPeer(originPeer: string): void {
+    const docs = this.peerDocs.get(originPeer);
+    if (!docs) return;
+    const affected: DocWithId[] = [];
+    for (const docId of docs) {
+      const slice = this.ephemeralOverlay.get(docId);
+      if (slice && slice.originPeer === originPeer) {
+        this.ephemeralOverlay.delete(docId);
+        affected.push({ _id: docId } as DocWithId);
+      }
+    }
+    this.peerDocs.delete(originPeer);
+    if (affected.length) this.notifyListeners(affected);
+  }
+
+  // Fold overlay slices over a list of persisted docs: merge onto a matching
+  // persisted doc by _id (overlay wins per LWW), and append synthesized rows for
+  // overlay-only _ids so useLiveQuery sees them. Prunes expired slices first.
+  private mergeOverlayDocs<T extends DocTypes>(docs: DocWithId<T>[]): DocWithId<T>[] {
+    this.pruneEphemeral();
+    if (this.ephemeralOverlay.size === 0) return docs;
+    const byId = new Map(docs.map((d) => [d._id, d] as const));
+    for (const [docId, slice] of this.ephemeralOverlay) {
+      const base = byId.get(docId);
+      byId.set(docId, { ...(base ?? {}), ...slice.doc, _id: docId } as DocWithId<T>);
+    }
+    return [...byId.values()];
   }
 
   // Notify subscribers after mutations. `meta.optimistic` marks a local
