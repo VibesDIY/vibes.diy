@@ -52,6 +52,33 @@ describe("UnifiedVibeCard", () => {
     expect(onSelectChip).toHaveBeenNthCalledWith(2, "Add a high score");
   });
 
+  it("holds the clicked chip in a working state until a promise-returning handler resolves", async () => {
+    let release: (v: boolean) => void = () => undefined;
+    const onSelectChip = vi.fn(() => new Promise<boolean>((res) => (release = res)));
+    render(
+      <UnifiedVibeCard
+        appTitle="Bloom Machine"
+        open
+        chips={["Make it a drum kit", "Add a high score"]}
+        onSelectChip={onSelectChip}
+      />
+    );
+    const chip = screen.getByText("Make it a drum kit").closest("button") as HTMLButtonElement;
+    fireEvent.click(chip);
+    // Pending: pressed + animated working sweep + spinner; other chips locked.
+    expect(chip.getAttribute("aria-pressed")).toBe("true");
+    expect(chip.className).toContain("option-working");
+    expect(screen.getByTestId("option-spinner")).toBeTruthy();
+    // Resolving false releases the press and the chips are clickable again.
+    release(false);
+    await vi.waitFor(() => {
+      expect(chip.getAttribute("aria-pressed")).toBe("false");
+    });
+    expect(chip.className).not.toContain("option-working");
+    fireEvent.click(screen.getByText("Add a high score"));
+    expect(onSelectChip).toHaveBeenCalledTimes(2);
+  });
+
   it("submits the Other free-text row", () => {
     const onSubmitOther = vi.fn();
     render(<UnifiedVibeCard appTitle="Bloom Machine" open onSubmitOther={onSubmitOther} />);

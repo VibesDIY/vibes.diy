@@ -383,7 +383,12 @@ export default function VibeIframeWrapper() {
   // codegen opens. URLSearchParams encodes the base64 safely (+, /, = are
   // URL-significant).
   const handleEditPrompt = useCallback(
-    (text: string) => {
+    // Returns a promise on the offered-chip path so the card can hold the
+    // clicked chip in its "working" state until the async work settles (cache
+    // lookup + navigation take visible seconds); resolves `false` at every
+    // terminal to release it. Sync paths return undefined — their feedback is
+    // immediate (streamBody, toast, /remix navigation).
+    (text: string): Promise<boolean> | undefined => {
       const trimmed = text.trim();
       if (!trimmed || !ownerHandle || !appSlug) return;
 
@@ -488,7 +493,7 @@ export default function VibeIframeWrapper() {
       // decision and stays only in the write behavior. The decision is made
       // before anything commits.
       const submitSeq = ++cachedReadSeqRef.current;
-      void (async () => {
+      return (async () => {
         const decision = await resolveCachedRead({
           source: { ownerHandle, appSlug, ...(sourceFsId ? { fsId: sourceFsId } : {}) },
           transform: trimmed,
@@ -514,7 +519,7 @@ export default function VibeIframeWrapper() {
         // otherwise a slow cache-MISS could runWriteLane/fork after a newer click
         // already navigated to a cache-HIT, letting network timing pick the
         // result. (Codex P2)
-        if (cachedReadSeqRef.current !== submitSeq) return;
+        if (cachedReadSeqRef.current !== submitSeq) return false;
         if (decision.kind === "read") {
           // A read hit means NO codegen runs for this click, so drop the producer
           // capture set at click time — otherwise it lingers (adopt doesn't navigate
@@ -537,10 +542,12 @@ export default function VibeIframeWrapper() {
             setDraftFsId(outcome.fsId);
             setIsDraft(true);
             toast.success("Adopted — this version is your draft now.");
-            return;
+            return false;
           }
-          void navigate(decision.href);
-          return;
+          // Await the transition so the chip's working state holds until the
+          // destination (a cross-slug jump or a same-slug stay) has rendered.
+          await navigate(decision.href);
+          return false;
         }
         // A bless-MISS for an offered chip: fall to the write lane, but hand it the
         // content-address key so a signed-in non-owner gets a FAST fork seeded from
@@ -553,6 +560,7 @@ export default function VibeIframeWrapper() {
             })
           : undefined;
         runWriteLane(fastForkKey);
+        return false;
       })();
     },
     [
