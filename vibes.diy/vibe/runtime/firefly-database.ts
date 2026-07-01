@@ -522,6 +522,10 @@ export class FireflyDatabase {
   }
 
   async close(): Promise<void> {
+    if (this.ephemeralSweep) {
+      clearInterval(this.ephemeralSweep);
+      this.ephemeralSweep = undefined;
+    }
     return;
   }
 
@@ -864,7 +868,25 @@ export class FireflyDatabase {
       this.peerDocs.set(evt.originPeer, set);
     }
     set.add(docId);
+    this.ensureEphemeralSweep();
     this.notifyListeners([{ _id: docId } as DocWithId]);
+  }
+
+  // Start the sweep if not already running. Each tick prunes expired slices and
+  // repaints (notifyListeners) so an unclean-disconnect cursor actually vanishes
+  // in a quiescent room; stops itself once the overlay is empty.
+  private ensureEphemeralSweep(): void {
+    if (this.ephemeralSweep) return;
+    this.ephemeralSweep = setInterval(() => {
+      const dropped = this.pruneEphemeral();
+      if (dropped.length) this.notifyListeners(dropped.map((id) => ({ _id: id }) as DocWithId));
+      if (this.ephemeralOverlay.size === 0 && this.ephemeralSweep) {
+        clearInterval(this.ephemeralSweep);
+        this.ephemeralSweep = undefined;
+      }
+    }, EPHEMERAL_TTL_MS);
+    // Don't keep a Node process (tests, node/wrangler consumers) alive on the timer.
+    (this.ephemeralSweep as { unref?: () => void }).unref?.();
   }
 
   private dropPeer(originPeer: string): void {

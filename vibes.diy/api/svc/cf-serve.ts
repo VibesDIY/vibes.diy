@@ -108,6 +108,11 @@ function ephemeralRateOk(senderConnId: string, nowMs: number): boolean {
   ephemeralRateWindow.set(senderConnId, win);
   return true;
 }
+// Evict a connection's rate-window entry on disconnect so the map doesn't grow
+// unboundedly across the isolate lifetime (#1756 review Finding 3).
+function forgetEphemeralConn(connId: string): void {
+  ephemeralRateWindow.delete(connId);
+}
 
 export function localBroadcastCallbacks(connections: Set<WSSendProvider>, env: CFEnv) {
   const shouldLog = env.ENVIRONMENT !== "prod";
@@ -674,6 +679,7 @@ export async function cfServe(
       .notifyDocEphemeralDrop(wsSendProvider.connId)
       .catch((e: unknown) => console.error("ephemeral drop error:", e));
     ws.connections.delete(wsSendProvider);
+    forgetEphemeralConn(wsSendProvider.connId);
   });
 
   server.addEventListener("error", (event: Event) => {
@@ -685,6 +691,7 @@ export async function cfServe(
       .notifyDocEphemeralDrop(wsSendProvider.connId)
       .catch((e: unknown) => console.error("ephemeral drop error:", e));
     ws.connections.delete(wsSendProvider);
+    forgetEphemeralConn(wsSendProvider.connId);
   });
   // cast wiredness don't ask me --- ask Cloudflare
   return (ctx.wsResponse ??

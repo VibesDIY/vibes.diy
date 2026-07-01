@@ -294,13 +294,19 @@ export class FireflyApiAdapter {
         fn({ data: { type: "vibes.diy.evt-doc-changed", ownerHandle, appSlug, dbName, docId } });
       });
       // Ephemeral presence (#1756): forward the full evt (snapshot + originPeer +
-      // channel) so FireflyDatabase can fold it into its overlay.
-      api.onDocEphemeral((evt) => {
-        fn({ data: evt });
-      });
-      api.onDocEphemeralDrop((originPeer) => {
-        fn({ data: { type: "vibes.diy.evt-doc-ephemeral-drop", originPeer } });
-      });
+      // channel) so FireflyDatabase can fold it into its overlay. Guarded so a
+      // pre-#1756 fake/mock VibesDiyApi that predates these listeners doesn't
+      // throw during onMsg registration (firefly-nodejs.test.ts uses such a fake).
+      if (typeof api.onDocEphemeral === "function") {
+        api.onDocEphemeral((evt) => {
+          fn({ data: evt });
+        });
+      }
+      if (typeof api.onDocEphemeralDrop === "function") {
+        api.onDocEphemeralDrop((originPeer) => {
+          fn({ data: { type: "vibes.diy.evt-doc-ephemeral-drop", originPeer } });
+        });
+      }
     };
     if (typeof this.apiArg !== "function") {
       register(this.apiArg);
