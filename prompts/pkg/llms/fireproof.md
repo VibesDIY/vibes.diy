@@ -375,6 +375,8 @@ For "let a logged-out visitor try it and save a little state before signing in,"
 const { useLiveQuery, database } = useFireproof("favorites", {
   anonymousLocal: true,
   // Optional: reshape/stamp each local doc for its new owner; return falsy to drop it.
+  // Preserve `_id` (spread `...doc`) — migration retries are only idempotent when
+  // the id is kept, otherwise a retry after a partial failure creates duplicates.
   migrate: (doc, userHandle) => ({ ...doc, owner: userHandle }),
 });
 ```
