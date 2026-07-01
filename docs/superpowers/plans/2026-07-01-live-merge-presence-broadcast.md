@@ -4,7 +4,7 @@
 
 **Goal:** Make `useDocument().merge()` also emit-only broadcast the merged doc snapshot to peers on the same db/channel, surfaced as an in-memory overlay through the existing hooks — presence (cursors/typing/selection) with no `merge()` API change and no persistence.
 
-**Architecture:** A new emit-only wire event `evt-doc-ephemeral` carries the merged doc snapshot; the client sends it fire-and-forget via a new `req-broadcast-ephemeral`. The server relays it to other connections **routed by the sender connection's own channel subscription keys** (no persistence, no access-fn eval, exact-channel — never the bare-db fallback), with a payload-size cap, per-connection rate circuit-breaker, and in/out/drop counters. `FireflyDatabase` folds received snapshots into an in-memory overlay (keyed by `_id`, `originPeer` retained for cleanup) applied inside `get`/`query`/`allDocs`, dropped on `evt-doc-ephemeral-drop` (connection close) and by a receiver TTL backstop. `merge()` gains one branch that coalesces per-`_id` to one send per animation frame.
+**Architecture:** A new emit-only wire event `evt-doc-ephemeral` carries the merged doc snapshot; the client sends it fire-and-forget via a new `req-broadcast-ephemeral`. The server relays it to other connections **routed per channel, where channels are derived by running the access fn on the ephemeral snapshot (cached per `docId`, 2s TTL) — exactly like the persisted write path** (no persistence, exact channel-key match, never the bare-db fallback), with a payload-size cap, per-connection rate circuit-breaker, and in/out/drop counters. `FireflyDatabase` folds received snapshots into an in-memory overlay (keyed by `_id`, `originPeer` retained for cleanup) applied inside `get`/`query`/`allDocs`, dropped on `evt-doc-ephemeral-drop` (connection close) and by a receiver TTL backstop. `merge()` gains one branch that coalesces per-`_id` to one send per animation frame.
 
 **Tech Stack:** TypeScript, arktype (`type({...})` wire schemas), Evento websocket handlers, Cloudflare Durable Object (`Sessions`), React hooks, vitest (`api-tests` + `app` projects).
 
@@ -16,7 +16,7 @@
 
 These resolve gaps the spec left to implementation. Read them before Task 1.
 
-1. **Routing without persistence.** An ephemeral is not persisted, so there is no access-fn output to compute channels from. The server routes an ephemeral by the **sender connection's own `subscribedDocKeys` that fall under this db** (`key === dbKey || key.startsWith(dbKey + "/")`). A peer can only hold channel keys it was granted at subscribe time, so it can never route presence beyond its own granted channels. Non-access-fn vibes: the sender holds the bare `dbKey`, so delivery is db-wide (correct — no channel boundary exists). The one residual over-delivery (an access-fn sender that holds _only_ the bare `dbKey` in the join-before-grant window) is caught by the **receiver-side channel check** (Task 7, Step "defense-in-depth gate").
+1. **Routing derives channels from the access fn, exactly like the write path — cached per `docId` with a 2s TTL.** An ephemeral is not persisted, but its target channels must still be computed so an asymmetric write→channel doc (e.g. a contact form the access fn routes to an `inbox` only the owner reads) reaches the channel's readers live — the visitor typing it isn't subscribed to `inbox`, so routing by the sender's own subscriptions would silently break this. The inbound handler runs the same channel computation the persisted write runs (`resolveAccessBinding` → `resolveAccessFnSource` → `invokeAccessFn` → `normalizeChannels(accessResult.channels)`) on the ephemeral snapshot, then fans out **once per channel** with an **exact channel-key match and no bare-db fallback** (P1). Channels can therefore change mid-session (within TTL latency). **Cost is bounded by a per-`docId` TTL cache (`EPHEMERAL_CHANNEL_TTL_MS = 2000`):** the 60Hz case (cursors) is symmetric and its channel membership is stable across a burst, so it re-evaluates at most once per 2s; the asymmetric case (forms) is inherently low-rate. Security is unchanged from the persisted model — the ephemeral reaches exactly the audience the persisted doc would. **Save-seed deferred:** seeding the cache from the write path's already-computed channels would save one eval right after `save()` but couples the write path; left as a future optimization. Non-access-fn vibes: `invokeAccessFn` is absent → no channels → route by the bare `dbKey` (correct; no channel boundary exists).
 2. **No new subscription message.** Receiving ephemerals reuses the existing `subscribeDocs` registration (`subscribedDocKeys`). `useDocument`/`useLiveQuery` already call `subscribeDocs`, so no client subscribe change is needed — only a send path and a receive/overlay path.
 3. **Fire-and-forget, no response.** `req-broadcast-ephemeral` has no `res-*` type. The server handler processes it and returns `Continue` without sending a reply; the client never awaits. This keeps 60Hz traffic off the request/response correlation machinery.
 4. **`evt-doc-ephemeral-drop` carries only `originPeer`.** All connections in a per-vibe `Sessions` DO belong to the same vibe, and the overlay is keyed by `_id` with `originPeer` recorded per slice, so the drop only needs the departing `connId`. (This simplifies the spec's drop shape; reconcile the spec's `evtDocEphemeralDrop` to drop `ownerHandle`/`appSlug`/`dbName` in Task 1.)
@@ -206,6 +206,7 @@ In `vibes.diy/api/svc/types.ts`, immediately after the `deregisterDocSubscriptio
       dbName: string;
       docId: string;
       doc: Record<string, unknown>;
+      channel?: string;
     },
     senderConnId: string
   ): Promise<void>;
@@ -267,12 +268,14 @@ function mkConn(keys: string[]) {
   return { provider, got };
 }
 
+// notifyDocEphemeral routes by the `channel` on the evt (computed by the handler
+// via the access fn — Task 4), mirroring notifyDocChanged. channel present →
+// exact channel-key match, NO bare-db fallback (P1). channel absent → bare dbKey.
 describe("notifyDocEphemeral", () => {
-  it("routes to co-channel peers by the SENDER's channel keys, skips the sender", async () => {
+  it("routes to channel subscribers by the doc's channel, skips the sender", async () => {
     const sender = mkConn(["alice/app1/default/notes"]);
     const peer = mkConn(["alice/app1/default/notes"]);
     const other = mkConn(["alice/app1/default/private"]); // different channel
-    sender.provider.connId; // sender excluded by connId
     const connections = new Set([sender.provider, peer.provider, other.provider]);
     const cb = localBroadcastCallbacks(connections, env);
 
@@ -283,6 +286,7 @@ describe("notifyDocEphemeral", () => {
         dbName: "default",
         docId: "cursor-a",
         doc: { _id: "cursor-a", type: "cursor", curX: 5 },
+        channel: "notes",
       },
       sender.provider.connId
     );
@@ -294,31 +298,47 @@ describe("notifyDocEphemeral", () => {
       docId: "cursor-a",
       originPeer: sender.provider.connId,
       doc: { type: "cursor", curX: 5 },
+      channel: "notes",
     });
     expect(other.got).toHaveLength(0); // different channel — no delivery
     expect(sender.got).toHaveLength(0); // sender excluded
   });
 
-  it("no bare-db leak: a bare-db-only peer does NOT receive a channel sender's ephemeral", async () => {
+  it("asymmetric write→channel: a peer reading `inbox` receives a sender NOT subscribed to inbox", async () => {
+    const submitter = mkConn(["alice/app1/default"]); // can't read inbox
+    const owner = mkConn(["alice/app1/default/inbox"]); // reads inbox
+    const cb = localBroadcastCallbacks(new Set([submitter.provider, owner.provider]), env);
+    // handler computed channel="inbox" from the access fn:
+    await cb.notifyDocEphemeral(
+      {
+        ownerHandle: "alice",
+        appSlug: "app1",
+        dbName: "default",
+        docId: "form-1",
+        doc: { type: "msg", body: "hi" },
+        channel: "inbox",
+      },
+      submitter.provider.connId
+    );
+    expect(owner.got).toHaveLength(1);
+    expect(owner.got[0]).toMatchObject({ channel: "inbox", doc: { body: "hi" } });
+  });
+
+  it("no bare-db leak: a bare-db-only peer does NOT receive a channel-routed ephemeral", async () => {
     const sender = mkConn(["alice/app1/default/notes"]);
     const bareDbPeer = mkConn(["alice/app1/default"]); // join-before-grant
-    const connections = new Set([sender.provider, bareDbPeer.provider]);
-    const cb = localBroadcastCallbacks(connections, env);
-
+    const cb = localBroadcastCallbacks(new Set([sender.provider, bareDbPeer.provider]), env);
     await cb.notifyDocEphemeral(
-      { ownerHandle: "alice", appSlug: "app1", dbName: "default", docId: "cursor-a", doc: { curX: 1 } },
+      { ownerHandle: "alice", appSlug: "app1", dbName: "default", docId: "cursor-a", doc: { curX: 1 }, channel: "notes" },
       sender.provider.connId
     );
-
     expect(bareDbPeer.got).toHaveLength(0);
   });
 
-  it("non-access-fn vibe: db-wide delivery via the bare-db key", async () => {
+  it("non-access-fn vibe (no channel): db-wide delivery via the bare-db key", async () => {
     const sender = mkConn(["alice/app1/default"]);
     const peer = mkConn(["alice/app1/default"]);
-    const connections = new Set([sender.provider, peer.provider]);
-    const cb = localBroadcastCallbacks(connections, env);
-
+    const cb = localBroadcastCallbacks(new Set([sender.provider, peer.provider]), env);
     await cb.notifyDocEphemeral(
       { ownerHandle: "alice", appSlug: "app1", dbName: "default", docId: "d1", doc: { curX: 1 } },
       sender.provider.connId
@@ -390,7 +410,7 @@ Inside the object returned by `localBroadcastCallbacks`, after the `notifyDocCha
 
 ```typescript
     notifyDocEphemeral: async (
-      evt: { ownerHandle: string; appSlug: string; dbName: string; docId: string; doc: Record<string, unknown> },
+      evt: { ownerHandle: string; appSlug: string; dbName: string; docId: string; doc: Record<string, unknown>; channel?: string },
       senderConnId: string
     ): Promise<void> => {
       const dbKey = `${evt.ownerHandle}/${evt.appSlug}/${evt.dbName}`;
@@ -405,31 +425,18 @@ Inside the object returned by `localBroadcastCallbacks`, after the `notifyDocCha
         console.warn("[Sessions] ephemeral dropped: rate", "conn=", senderConnId.slice(0, 8));
         return;
       }
-      // Route by the SENDER connection's own channel keys under this db — a peer
-      // can only hold channel keys it was granted, so it can never route presence
-      // beyond its own channels. Exact channel keys only; the bare-db fallback that
-      // notifyDocChanged uses is UNSAFE here because the snapshot is the disclosure
-      // (spec Piece 3 / #1756 P1).
-      let sender: WSSendProvider | undefined;
-      for (const conn of connections) if (conn.connId === senderConnId) sender = conn;
-      const routeKeys = new Set<string>();
-      if (sender) {
-        for (const k of sender.subscribedDocKeys) {
-          if (k === dbKey || k.startsWith(`${dbKey}/`)) routeKeys.add(k);
-        }
-      }
-      // A test/external sender not in `connections` (senderConnId unknown) falls
-      // back to the bare dbKey only — safe for non-access-fn vibes.
-      if (routeKeys.size === 0) routeKeys.add(dbKey);
+      // Route by the CHANNEL the handler computed from the access fn (Task 4),
+      // mirroring notifyDocChanged's key nesting. channel present → EXACT channel
+      // key only, NO bare-db fallback (the snapshot is the disclosure — #1756 P1).
+      // channel absent (non-access-fn vibe) → the bare dbKey (no channel boundary).
+      const routeKey = evt.channel ? `${dbKey}/${evt.channel}` : dbKey;
       if (shouldLog) {
-        console.info("[Sessions] ephemeral fanout", "keys=", [...routeKeys].join(","), "conns=", connections.size);
+        console.info("[Sessions] ephemeral fanout", "key=", routeKey, "conns=", connections.size);
       }
       const fullEvt = { type: "vibes.diy.evt-doc-ephemeral", originPeer: senderConnId, ...evt };
       for (const conn of connections) {
         if (conn.connId === senderConnId) continue;
-        let match = false;
-        for (const k of conn.subscribedDocKeys) if (routeKeys.has(k)) { match = true; break; }
-        if (!match) continue;
+        if (!conn.subscribedDocKeys.has(routeKey)) continue; // exact match; no dbKey fallback when channel present
         exception2Result(() =>
           conn.ws.send(
             conn.ende.uint8ify({ tid: crypto.randomUUID(), src: "vibes.diy.api", dst: "vibes.diy.client", ttl: 10, payload: fullEvt })
@@ -521,11 +528,59 @@ describe("broadcastEphemeralEvento", () => {
 
 > `onDocEphemeral` and `broadcastEphemeral` are added to `VibesDiyApi` in Task 6; write this test now and let it drive both Task 4 and Task 6. Run it after Task 6 is done as the integration check. For a Task-4-only fast check, add an intermediate assertion at the handler level (below).
 
-- [ ] **Step 2: Write the handler**
+- [ ] **Step 2a: Extract the channel-derivation from the write path into a shared helper**
 
-In `vibes.diy/api/svc/public/app-documents-write-eventos.ts`, add (mirroring `subscribeDocsEvento`'s shape and `putDoc`'s fan-out call):
+The write handler already computes a doc's channels by running the access fn
+(`app-documents-write-eventos.ts` ~L199-362: `resolveAccessBinding` →
+`resolveAccessFnSource` + `extractExportSource` → build `grantState` from stored
+`accessFnOutputs` → `vctx.invokeAccessFn(...)` → `accessResult`). Factor the
+**access-fn invocation that produces `accessResult`** into an exported helper in
+the same file so the ephemeral handler derives channels identically (no
+divergence — a routing bug here would be security-adjacent):
 
 ```typescript
+export interface DeriveChannelsParams {
+  ownerHandle: string;
+  appSlug: string;
+  dbName: string;
+  docId: string;
+  doc: Record<string, unknown>;
+  userId: string | undefined;
+  isOwner: boolean;
+  isDm: boolean;
+  adminActive: boolean;
+}
+
+// Runs the access fn on `doc` and returns its normalized channels. Read-only:
+// no grant application, no accessFnOutputs upsert (that stays in the write path).
+export async function deriveAccessChannels(
+  vctx: VibesApiSQLCtx,
+  p: DeriveChannelsParams,
+  afbRow: { accessFnCid?: string; accessFnAssetUri?: string; dbName: string } | undefined
+): Promise<string[]> {
+  if (!afbRow?.accessFnCid || !vctx.invokeAccessFn) return []; // no access fn → db-wide
+  // ... move here VERBATIM the L251-362 body that resolves writerHandle,
+  // resolveAccessFnSource + extractExportSource, builds grantState from stored
+  // outputs, and calls vctx.invokeAccessFn — returning
+  // `normalizeChannels(invokeResult.channels ?? [])` (or [] when forbidden).
+}
+```
+
+Then in the write handler, replace the inline invocation with a call to
+`deriveAccessChannels(...)` for the notify fan-out channels, keeping the existing
+grant-application/output-upsert on `accessResult`. **Run the existing write/access
+tests after this refactor** (`npx vitest --run --project api-tests app-documents`
+or the access-fn suites) to prove no enforcement regression before proceeding.
+
+- [ ] **Step 2b: Write the handler (derive channels, cache per docId, fan out per channel)**
+
+In `vibes.diy/api/svc/public/app-documents-write-eventos.ts`, add a module-level
+TTL cache and the handler:
+
+```typescript
+const EPHEMERAL_CHANNEL_TTL_MS = 2000; // #1756: bound access-fn evals under 60Hz bursts
+const ephemeralChannelCache = new Map<string, { channels: string[]; at: number }>();
+
 export const broadcastEphemeralEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqBroadcastEphemeral>, never> = {
   hash: "broadcast-ephemeral",
   validate: unwrapMsgBase(async (msg: MsgBase) => {
@@ -536,21 +591,58 @@ export const broadcastEphemeralEvento: EventoHandler<W3CWebSocketEvent, MsgBase<
   handle: optAuth(async (ctx): Promise<Result<EventoResultType>> => {
     const req = ctx.validated.payload;
     const vctx = ctx.ctx.getOrThrow<VibesApiSQLCtx>("vibesApiCtx");
-    // Fire-and-forget relay. No persistence, no access-fn eval, no response.
-    // Routing is derived server-side from the sender connection's channel keys
-    // (see notifyDocEphemeral). The sender connId excludes the sender.
-    vctx
-      .notifyDocEphemeral?.(
-        { ownerHandle: req.ownerHandle, appSlug: req.appSlug, dbName: req.dbName, docId: req.docId, doc: req.doc },
-        clientWsSend(ctx).connId
-      )
-      .catch((e: unknown) => console.error("ephemeral notify error:", e));
-    return Result.Ok(EventoResult.Continue);
+    const senderConnId = clientWsSend(ctx).connId;
+    const userId = ctx.auth?.userId; // match how the write handler reads userId
+    void (async () => {
+      // Derive channels via the access fn, cached per (owner/app/db/docId) for 2s
+      // so a 60Hz cursor burst re-evaluates at most once per TTL. Channel
+      // membership depends on stable fields, not curX/curY.
+      const cacheKey = `${req.ownerHandle}/${req.appSlug}/${req.dbName}/${req.docId}`;
+      const cached = ephemeralChannelCache.get(cacheKey);
+      let channels: string[];
+      if (cached && Date.now() - cached.at < EPHEMERAL_CHANNEL_TTL_MS) {
+        channels = cached.channels;
+      } else {
+        const afbRow = await resolveAccessBinding(vctx, req.ownerHandle, req.appSlug, req.dbName);
+        const isOwner = /* mirror write handler's isOwner resolution for userId */ false;
+        channels = await deriveAccessChannels(
+          vctx,
+          {
+            ownerHandle: req.ownerHandle,
+            appSlug: req.appSlug,
+            dbName: req.dbName,
+            docId: req.docId,
+            doc: { ...req.doc, _id: req.docId },
+            userId,
+            isOwner,
+            isDm: false,
+            adminActive: false,
+          },
+          afbRow
+        );
+        ephemeralChannelCache.set(cacheKey, { channels, at: Date.now() });
+      }
+      const base = { ownerHandle: req.ownerHandle, appSlug: req.appSlug, dbName: req.dbName, docId: req.docId, doc: req.doc };
+      if (channels.length) {
+        for (const channel of channels) {
+          await vctx.notifyDocEphemeral?.({ ...base, channel }, senderConnId);
+        }
+      } else {
+        await vctx.notifyDocEphemeral?.(base, senderConnId); // non-access-fn → bare dbKey
+      }
+    })().catch((e: unknown) => console.error("ephemeral notify error:", e));
+    return Result.Ok(EventoResult.Continue); // fire-and-forget, no response
   }),
 };
 ```
 
-Add imports at the top of the file: `reqBroadcastEphemeral`, `ReqBroadcastEphemeral` from `@vibes.diy/api-types` (join the existing import block).
+> Match `ctx.auth?.userId` / `isOwner` / `isDm` resolution to exactly how the write
+> handler derives them (grep the write handler). For DM dbs, pass `isDm: true` and
+> the DM participant handle resolution — but v1 presence targets non-DM vibes, so
+> `isDm: false` is an acceptable first cut; note DM presence as out of scope if the
+> DM handle plumbing is heavy.
+
+Add imports at the top of the file: `reqBroadcastEphemeral`, `ReqBroadcastEphemeral` from `@vibes.diy/api-types`.
 
 - [ ] **Step 3: Register in the manifest**
 

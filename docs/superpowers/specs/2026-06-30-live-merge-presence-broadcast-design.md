@@ -203,6 +203,30 @@ dbName?: string): void` — **fire-and-forget, no request/response, no await** s
   or `owner/app/<dbName>` when the vibe has no access fn), iterating `connections`
   and skipping the `originPeer`'s own connection. It **never inserts anything** —
   a pure relay. No CRDT, clock, or carstore.
+- **Channels are derived from the access fn, exactly like the write path — NOT
+  from the sender's own subscriptions.** The inbound handler runs the same
+  channel computation the persisted write runs (`resolveAccessBinding` →
+  `resolveAccessFnSource` → `invokeAccessFn` → `normalizeChannels(accessResult.channels)`)
+  on the ephemeral snapshot, then fans out per channel. This is what makes the
+  **asymmetric write→channel** case work: a visitor typing a contact form whose
+  access fn routes the doc to an `inbox` channel only the **owner** reads will
+  have their in-progress ephemeral reach the owner watching `inbox` — even though
+  the visitor cannot read `inbox`. Routing by the sender's own channels would
+  silently break this. Security is unchanged from the persisted model: the
+  ephemeral reaches exactly the audience the persisted doc would, and a sender
+  writing to a channel it can't read is already how the inbox pattern works.
+  Channels can change mid-session (a keystroke that changes a routing field
+  re-routes within the TTL below).
+- **Bounding the access-fn cost.** Running the access fn per ephemeral is the one
+  real cost. Two things keep it cheap: (a) the high-rate case (60Hz cursors) is
+  symmetric — everyone-in-the-room channels — while the asymmetric case
+  (form→inbox) is inherently low-rate (typing); (b) channel membership depends on
+  stable fields (`type`, recipient), not `curX/curY`, so the handler **caches the
+  computed channels per `docId` with a short TTL (`EPHEMERAL_CHANNEL_TTL_MS =
+2000`)** — a cursor burst re-evaluates at most once per 2s, not per frame. The
+  circuit breaker + metrics (below) are the backstop. (Seeding this cache from the
+  write path's already-computed channels on `save()` is a deferred optimization —
+  the TTL alone bounds cost.)
 - **Exact channel match — NO bare-db fallback (security, P1).** `notifyDocChanged`
   deliberately delivers to connections holding **either** the channel key **or the
   bare-db key** ([`cf-serve.ts:139`](../../../vibes.diy/api/svc/cf-serve.ts):
