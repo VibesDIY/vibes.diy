@@ -21,13 +21,16 @@ export const c = {
     `px-10 py-7 font-bold rounded-2xl m-2 transition-all ${active ? "bg-[#4A4A4A] dark:bg-[#e9e9e9] text-white dark:text-[#181a20]" : "bg-white dark:bg-[#22252d] text-[#4A4A4A] dark:text-[#e9e9e9] hover:bg-[#BACD32] dark:hover:bg-[#2c3510]"}`,
   btnPink: "bg-[#CD6C0C] text-white font-bold py-7 px-10 rounded-2xl m-2 hover:opacity-90 transition-all",
   btnCyan: "bg-[#71AD44] dark:bg-[#1d3015] text-white font-bold py-7 px-10 rounded-2xl m-2 hover:opacity-90 transition-all",
+  // Same button, in-flight: color-only cue (orange) while the write lands. Copy is unchanged.
+  btnCyanWorking: "bg-[#CD6C0C] text-white font-bold py-7 px-10 rounded-2xl m-2 opacity-90 transition-all cursor-wait",
   badge: "bg-[#CD6C0C] text-white px-3 py-1 rounded-full text-sm font-bold m-2",
   favToggleOn: "p-7 rounded-2xl m-2 font-bold transition-all bg-[#CD6C0C] text-white hover:opacity-90",
   favToggleOff:
     "p-7 rounded-2xl m-2 font-bold transition-all bg-white dark:bg-[#22252d] text-[#4A4A4A] dark:text-[#e9e9e9] hover:bg-[#BACD32] dark:hover:bg-[#2c3510]",
   linkBtn:
     "p-7 bg-white dark:bg-[#22252d] text-[#4A4A4A] dark:text-[#e9e9e9] rounded-2xl m-2 hover:bg-[#BACD32] dark:hover:bg-[#2c3510] transition-all",
-  noteArea: "w-full p-6 m-2 rounded-xl resize-none text-sm text-[#4A4A4A] dark:text-[#e9e9e9] bg-white dark:bg-[#22252d]",
+  noteArea:
+    "w-full p-6 m-2 rounded-[2px] resize-none text-sm text-[#4A4A4A] dark:text-[#e9e9e9] bg-transparent border border-[#4A4A4A]/40 dark:border-[#e9e9e9]/30",
   deleteBtn: "p-7 bg-[#B22222] text-white rounded-2xl m-2 hover:opacity-80 transition-all",
   deleteX: (pending) =>
     `px-2 py-1 rounded-full m-2 text-xs font-bold transition-all ${pending ? "bg-[#B22222] text-white" : "bg-white dark:bg-[#22252d] text-[#4A4A4A] dark:text-[#e9e9e9] hover:bg-[#B22222] hover:text-white"}`,
