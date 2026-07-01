@@ -161,6 +161,151 @@ export type MapFnArg<T extends DocTypes = DocTypes> =
   | string
   | ((doc: DocWithId<T>, emit?: (key: unknown, value?: unknown) => void) => unknown);
 
+/**
+ * The Fireproof-shaped read/write surface the React hooks (useDocument,
+ * useLiveQuery, useAllDocs, useChanges) drive. Both FireflyDatabase (cloud) and
+ * LocalDatabase (anonymous localStorage, #2988) satisfy it, so the hooks work
+ * against either without branching on auth.
+ */
+export interface FireflyQueryDatabase {
+  readonly name: string;
+  get<T extends DocTypes>(id: string): Promise<DocWithId<T>>;
+  put<T extends DocTypes>(doc: T & { _id?: string }): Promise<DocResponse>;
+  del(id: string): Promise<DocResponse>;
+  remove(id: string): Promise<DocResponse>;
+  query<T extends DocTypes>(mapFn: MapFnArg<T>, opts?: QueryOpts): Promise<QueryResponse<T>>;
+  queryLive<T extends DocTypes>(
+    mapFn: MapFnArg<T>,
+    opts?: QueryOpts
+  ): Promise<{ result: QueryResponse<T>; serverDocs: DocWithId<T>[] }>;
+  materializeLive<T extends DocTypes>(serverDocs: DocWithId<T>[], mapFn: MapFnArg<T>, opts?: QueryOpts): QueryResponse<T>;
+  allDocs<T extends DocTypes>(opts?: {
+    limit?: number;
+    offset?: number;
+    descending?: boolean;
+  }): Promise<{ rows: IndexRow<T>[]; docs: DocWithId<T>[] }>;
+  changes<T extends DocTypes>(): Promise<{ rows: IndexRow<T>[]; docs: DocWithId<T>[] }>;
+  subscribe<T extends DocTypes>(listener: ListenerFn<T>, updates?: boolean): () => void;
+  resubscribe(): void;
+}
+
+/**
+ * Run a Fireproof-style mapFn over a doc list and apply key/keys/range/prefix/
+ * descending/limit filters. Pure — no I/O. Shared by FireflyDatabase (over
+ * server docs + optimistic overlay) and LocalDatabase (over localStorage docs),
+ * so the full query surface is identical in both — apps swapping modes see the
+ * same index behavior (#2988).
+ */
+export function materializeQuery<T extends DocTypes>(
+  allDocs: DocWithId<T>[],
+  mapFn: MapFnArg<T>,
+  opts: QueryOpts
+): QueryResponse<T> {
+  // Build index entries — keys stored as charwise-encoded strings for correct sort
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let encodedRows: { encodedKey: string; decodedKey: any; value: DocWithId<T>; doc?: DocWithId<T> }[];
+
+  if (typeof mapFn === "string") {
+    // String field name — filter docs that have this field, key = field value
+    encodedRows = allDocs
+      .filter((doc) => doc[mapFn] !== undefined)
+      .map((doc) => ({
+        encodedKey: encodeKey(doc[mapFn]) as string,
+        decodedKey: doc[mapFn],
+        value: doc,
+        doc: opts.includeDocs ? doc : undefined,
+      }));
+  } else if (typeof mapFn === "function") {
+    // MapFn — supports both emit() and return-value patterns (matches fireproof behavior)
+    encodedRows = [];
+    for (const doc of allDocs) {
+      try {
+        let emitCalled = false;
+        const emit = (key: unknown) => {
+          emitCalled = true;
+          if (typeof key === "undefined") return;
+          encodedRows.push({
+            encodedKey: encodeKey(key) as string,
+            decodedKey: key,
+            value: doc,
+            doc: opts.includeDocs ? doc : undefined,
+          });
+        };
+        // Fireproof calls mapFn(doc, emit) — supports three patterns:
+        //   1. (doc, emit) => { emit(key) }     — explicit emit as arg
+        //   2. function(doc) { this.emit(key) }  — emit via this
+        //   3. (doc) => key                       — return value is the key
+        const mapReturn = mapFn.call({ emit }, doc, emit);
+        // If emit was never called and return value is defined, use return as key
+        if (!emitCalled && typeof mapReturn !== "undefined") {
+          encodedRows.push({
+            encodedKey: encodeKey(mapReturn) as string,
+            decodedKey: mapReturn,
+            value: doc,
+            doc: opts.includeDocs ? doc : undefined,
+          });
+        }
+      } catch {
+        // Skip docs that error in mapFn
+      }
+    }
+  } else {
+    // No mapFn — return all docs keyed by _id
+    encodedRows = allDocs.map((doc) => ({
+      encodedKey: encodeKey(doc._id) as string,
+      decodedKey: doc._id,
+      value: doc,
+      doc: opts.includeDocs ? doc : undefined,
+    }));
+  }
+
+  // Apply query filters using charwise-encoded comparisons
+  if (opts.key !== undefined) {
+    const encodedKey = encodeKey(opts.key) as string;
+    encodedRows = encodedRows.filter((r) => r.encodedKey === encodedKey);
+  }
+  if (opts.keys !== undefined) {
+    const encodedKeys = new Set(opts.keys.map((k: unknown) => encodeKey(k) as string));
+    encodedRows = encodedRows.filter((r) => encodedKeys.has(r.encodedKey));
+  }
+  if (opts.range) {
+    const encodedStart = encodeKey(opts.range[0]) as string;
+    const encodedEnd = encodeKey(opts.range[1]) as string;
+    encodedRows = encodedRows.filter((r) => r.encodedKey >= encodedStart && r.encodedKey <= encodedEnd);
+  }
+  if (opts.prefix !== undefined) {
+    // For array prefixes, strip the trailing "!" so [2024,11] matches [2024,11,15]
+    let encodedPrefix = encodeKey(opts.prefix) as string;
+    if (Array.isArray(opts.prefix) && encodedPrefix.endsWith("!")) {
+      encodedPrefix = encodedPrefix.slice(0, -1);
+    }
+    encodedRows = encodedRows.filter((r) => r.encodedKey.startsWith(encodedPrefix));
+  }
+
+  // Sort by encoded key (charwise ensures correct type-aware ordering)
+  encodedRows.sort((a, b) => (a.encodedKey < b.encodedKey ? -1 : a.encodedKey > b.encodedKey ? 1 : 0));
+  if (opts.descending) {
+    encodedRows.reverse();
+  }
+
+  // Limit
+  if (opts.limit !== undefined) {
+    encodedRows = encodedRows.slice(0, opts.limit);
+  }
+
+  // Decode keys back for output
+  const rows: IndexRow<T>[] = encodedRows.map((r) => ({
+    key: r.decodedKey,
+    value: r.value,
+    doc: r.doc,
+  }));
+
+  return {
+    rows,
+    docs: rows.map((r) => r.value),
+  };
+}
+
 // Minimal logger matching what useDocument accesses
 const fireflyLogger = {
   Error() {
@@ -450,7 +595,7 @@ export class FireflyDatabase {
 
   async query<T extends DocTypes>(mapFn: MapFnArg<T>, opts: QueryOpts = {}): Promise<QueryResponse<T>> {
     const serverDocs = await this.fetchServerDocs<T>(this.queryHint(mapFn, opts));
-    return this.materialize(this.applyOverlay(serverDocs), mapFn, opts);
+    return materializeQuery(this.applyOverlay(serverDocs), mapFn, opts);
   }
 
   /**
@@ -463,7 +608,7 @@ export class FireflyDatabase {
     opts: QueryOpts = {}
   ): Promise<{ result: QueryResponse<T>; serverDocs: DocWithId<T>[] }> {
     const serverDocs = await this.fetchServerDocs<T>(this.queryHint(mapFn, opts));
-    return { result: this.materialize(this.applyOverlay(serverDocs), mapFn, opts), serverDocs };
+    return { result: materializeQuery(this.applyOverlay(serverDocs), mapFn, opts), serverDocs };
   }
 
   /**
@@ -472,7 +617,7 @@ export class FireflyDatabase {
    * network (#2985).
    */
   materializeLive<T extends DocTypes>(serverDocs: DocWithId<T>[], mapFn: MapFnArg<T>, opts: QueryOpts = {}): QueryResponse<T> {
-    return this.materialize(this.applyOverlay(serverDocs), mapFn, opts);
+    return materializeQuery(this.applyOverlay(serverDocs), mapFn, opts);
   }
 
   /** Build the server-side query filter hint from a string mapFn + primitive opts. */
@@ -522,113 +667,6 @@ export class FireflyDatabase {
       else byId.set(id, entry.doc as DocWithId<T>);
     }
     return [...byId.values()];
-  }
-
-  /** Run mapFn over the given docs and apply key/range/sort/limit filters. Pure. */
-  private materialize<T extends DocTypes>(allDocs: DocWithId<T>[], mapFn: MapFnArg<T>, opts: QueryOpts): QueryResponse<T> {
-    // Build index entries — keys stored as charwise-encoded strings for correct sort
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    let encodedRows: { encodedKey: string; decodedKey: any; value: DocWithId<T>; doc?: DocWithId<T> }[];
-
-    if (typeof mapFn === "string") {
-      // String field name — filter docs that have this field, key = field value
-      encodedRows = allDocs
-        .filter((doc) => doc[mapFn] !== undefined)
-        .map((doc) => ({
-          encodedKey: encodeKey(doc[mapFn]) as string,
-          decodedKey: doc[mapFn],
-          value: doc,
-          doc: opts.includeDocs ? doc : undefined,
-        }));
-    } else if (typeof mapFn === "function") {
-      // MapFn — supports both emit() and return-value patterns (matches fireproof behavior)
-      encodedRows = [];
-      for (const doc of allDocs) {
-        try {
-          let emitCalled = false;
-          const emit = (key: unknown) => {
-            emitCalled = true;
-            if (typeof key === "undefined") return;
-            encodedRows.push({
-              encodedKey: encodeKey(key) as string,
-              decodedKey: key,
-              value: doc,
-              doc: opts.includeDocs ? doc : undefined,
-            });
-          };
-          // Fireproof calls mapFn(doc, emit) — supports three patterns:
-          //   1. (doc, emit) => { emit(key) }     — explicit emit as arg
-          //   2. function(doc) { this.emit(key) }  — emit via this
-          //   3. (doc) => key                       — return value is the key
-          const mapReturn = mapFn.call({ emit }, doc, emit);
-          // If emit was never called and return value is defined, use return as key
-          if (!emitCalled && typeof mapReturn !== "undefined") {
-            encodedRows.push({
-              encodedKey: encodeKey(mapReturn) as string,
-              decodedKey: mapReturn,
-              value: doc,
-              doc: opts.includeDocs ? doc : undefined,
-            });
-          }
-        } catch {
-          // Skip docs that error in mapFn
-        }
-      }
-    } else {
-      // No mapFn — return all docs keyed by _id
-      encodedRows = allDocs.map((doc) => ({
-        encodedKey: encodeKey(doc._id) as string,
-        decodedKey: doc._id,
-        value: doc,
-        doc: opts.includeDocs ? doc : undefined,
-      }));
-    }
-
-    // Apply query filters using charwise-encoded comparisons
-    if (opts.key !== undefined) {
-      const encodedKey = encodeKey(opts.key) as string;
-      encodedRows = encodedRows.filter((r) => r.encodedKey === encodedKey);
-    }
-    if (opts.keys !== undefined) {
-      const encodedKeys = new Set(opts.keys.map((k: unknown) => encodeKey(k) as string));
-      encodedRows = encodedRows.filter((r) => encodedKeys.has(r.encodedKey));
-    }
-    if (opts.range) {
-      const encodedStart = encodeKey(opts.range[0]) as string;
-      const encodedEnd = encodeKey(opts.range[1]) as string;
-      encodedRows = encodedRows.filter((r) => r.encodedKey >= encodedStart && r.encodedKey <= encodedEnd);
-    }
-    if (opts.prefix !== undefined) {
-      // For array prefixes, strip the trailing "!" so [2024,11] matches [2024,11,15]
-      let encodedPrefix = encodeKey(opts.prefix) as string;
-      if (Array.isArray(opts.prefix) && encodedPrefix.endsWith("!")) {
-        encodedPrefix = encodedPrefix.slice(0, -1);
-      }
-      encodedRows = encodedRows.filter((r) => r.encodedKey.startsWith(encodedPrefix));
-    }
-
-    // Sort by encoded key (charwise ensures correct type-aware ordering)
-    encodedRows.sort((a, b) => (a.encodedKey < b.encodedKey ? -1 : a.encodedKey > b.encodedKey ? 1 : 0));
-    if (opts.descending) {
-      encodedRows.reverse();
-    }
-
-    // Limit
-    if (opts.limit !== undefined) {
-      encodedRows = encodedRows.slice(0, opts.limit);
-    }
-
-    // Decode keys back for output
-    const rows: IndexRow<T>[] = encodedRows.map((r) => ({
-      key: r.decodedKey,
-      value: r.value,
-      doc: r.doc,
-    }));
-
-    return {
-      rows,
-      docs: rows.map((r) => r.value),
-    };
   }
 
   async allDocs<T extends DocTypes>(

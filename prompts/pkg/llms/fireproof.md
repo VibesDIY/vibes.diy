@@ -367,6 +367,20 @@ Each capability (`read`, `write`, `delete`) is independent. Omitting one falls b
 
 Other `acl` variants: `useFireproof("drafts", { acl: { read: ["editors"], write: ["editors"], delete: ["editors"] } })` for editors-only space, or omit `acl` entirely to fall back to app-level role gates (existing behavior, always safe).
 
+## Anonymous local writes (`anonymousLocal`)
+
+For "let a logged-out visitor try it and save a little state before signing in," pass `{ anonymousLocal: true }`. While logged out, `put`/`del`/`useLiveQuery`/`useDocument` run against a local (localStorage) store with the identical API — no auth branching in your code. On first sign-in the local docs migrate into the cloud database, then local storage clears.
+
+```js
+const { useLiveQuery, database } = useFireproof("favorites", {
+  anonymousLocal: true,
+  // Optional: reshape/stamp each local doc for its new owner; return falsy to drop it.
+  migrate: (doc, userHandle) => ({ ...doc, owner: userHandle }),
+});
+```
+
+Notes: use it only where anonymous-first state makes sense (favorites, drafts, a scratch list). A returning signed-out visitor is automatically steered to sign in rather than starting a fresh throwaway local session. Migration keeps local data intact if it fails, so nothing is lost.
+
 ## Reading Resolved Grants (`access`)
 
 `useFireproof()` returns an `access` property — the viewer's resolved roles and channels for that database, computed server-side from the access function's `members` and `grant` declarations. Use `access.roles` (ReadonlySet), `access.channels` (ReadonlySet), `access.hasRole(name)`, and `access.hasChannel(name)`. Use these to reflect roles/channels in the UI; gate writes with `useVibe(dbName).can`.

@@ -6,7 +6,14 @@
  */
 
 import { useCallback, useEffect, useMemo, useState, useRef } from "react";
-import { FireflyDatabase } from "./firefly-database.js";
+import { FireflyDatabase, type FireflyQueryDatabase } from "./firefly-database.js";
+import {
+  getOrCreateLocalDb,
+  hasAuthedBefore,
+  markAuthedBefore,
+  migrateLocalToCloud,
+  type MigrateFn,
+} from "./firefly-local-database.js";
 import type { VibeSandboxApi } from "./register-dependencies.js";
 import type { DbAcl, AccessFunction } from "@vibes.diy/vibe-types";
 import { useVibeContext } from "./VibeContext.js";
@@ -98,24 +105,65 @@ export function fireproof(name: string): FireflyDatabase {
  */
 export function useFireproof(
   name = "useFireproof",
-  config: { acl?: DbAcl; access?: AccessFunction; optimistic?: boolean; [key: string]: unknown } = {}
+  config: {
+    acl?: DbAcl;
+    access?: AccessFunction;
+    optimistic?: boolean;
+    anonymousLocal?: boolean;
+    migrate?: MigrateFn;
+    [key: string]: unknown;
+  } = {}
 ) {
+  const { mountParams } = useVibeContext();
+  const viewerEnv = mountParams.viewerEnv;
+  const userHandle = viewerEnv?.viewer?.userHandle;
+  const signedIn = !!userHandle;
+
   // Optimistic writes are on by default (#2985); apps opt out per-db with
   // useFireproof(name, { optimistic: false }).
   const optimistic = config.optimistic ?? true;
-  const database = useMemo(() => {
+  const cloudDb = useMemo(() => {
     const db = getOrCreateDb(name, config.acl);
     db.setOptimistic(optimistic);
     return db;
   }, [name, optimistic]);
+
+  // Anonymous-local mode (#2988): while logged out, route writes/queries to a
+  // localStorage store with the identical Fireproof surface, then migrate into
+  // the cloud on first sign-in.
+  const anonymousLocal = config.anonymousLocal ?? false;
+  const migrate = config.migrate;
+  const localDb = useMemo(() => (anonymousLocal ? getOrCreateLocalDb(name) : undefined), [name, anonymousLocal]);
+
+  // Use the local store ONLY for a brand-new anonymous visitor. A returning-but-
+  // signed-out visitor (this device has signed in before) falls through to the
+  // cloud db so they're steered to sign in rather than silently starting a
+  // throwaway second local session that would never reconcile with their account.
+  // This guard is automatic and intentionally never surfaced to app code.
+  const useLocal = anonymousLocal && !signedIn && !!localDb && !hasAuthedBefore(name);
+  const database: FireflyQueryDatabase = useLocal && localDb ? localDb : cloudDb;
+
+  // On first sign-in: mark the device as authed and migrate any local docs into
+  // the cloud exactly once, then clear local storage (migrateLocalToCloud only
+  // clears on full success, so a failed migration keeps local data recoverable).
+  const migratedRef = useRef(false);
+  useEffect(() => {
+    if (!anonymousLocal || !signedIn || !userHandle) return;
+    markAuthedBefore(name);
+    if (migratedRef.current || !localDb) return;
+    migratedRef.current = true;
+    void migrateLocalToCloud(localDb, cloudDb, userHandle, migrate).catch((e: unknown) => {
+      console.error(`anonymousLocal migration failed for db "${name}":`, e);
+    });
+  }, [anonymousLocal, signedIn, userHandle, localDb, cloudDb, name, migrate]);
+
   const useDocument = useMemo(() => createUseDocument(database), [database]);
   const useLiveQuery = useMemo(() => createUseLiveQuery(database), [database]);
   const useAllDocs = useMemo(() => createUseAllDocs(database), [database]);
   const useChanges = useMemo(() => createUseChanges(database), [database]);
   const attach = () => Promise.resolve();
 
-  const { mountParams } = useVibeContext();
-  const grantsForDb = mountParams.viewerEnv?.grants?.[name];
+  const grantsForDb = viewerEnv?.grants?.[name];
   const access: DatabaseAccess = useMemo(() => {
     if (!grantsForDb) return EMPTY_ACCESS;
     const roles: ReadonlySet<string> = new Set(grantsForDb.roles);
@@ -148,7 +196,7 @@ export function useFireproof(
 
 // ── Inline React hooks (no Fireproof dependency) ────────────────────
 
-function createUseDocument(database: FireflyDatabase) {
+function createUseDocument(database: FireflyQueryDatabase) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return function useDocument(initialDocOrFn?: any) {
     // Re-fetches when viewer identity resolves asynchronously (#2285).
@@ -247,7 +295,7 @@ function createUseDocument(database: FireflyDatabase) {
   };
 }
 
-function createUseLiveQuery(database: FireflyDatabase) {
+function createUseLiveQuery(database: FireflyQueryDatabase) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return function useLiveQuery(mapFn: any, query: any = {}, initialRows: any[] = []) {
     // Re-fetches when viewer identity resolves asynchronously (#2285).
@@ -291,7 +339,7 @@ function createUseLiveQuery(database: FireflyDatabase) {
   };
 }
 
-function createUseAllDocs(database: FireflyDatabase) {
+function createUseAllDocs(database: FireflyQueryDatabase) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return function useAllDocs(query: any = {}) {
     // Re-fetches when viewer identity resolves asynchronously (#2285).
@@ -320,7 +368,7 @@ function createUseAllDocs(database: FireflyDatabase) {
   };
 }
 
-function createUseChanges(database: FireflyDatabase) {
+function createUseChanges(database: FireflyQueryDatabase) {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   return function useChanges(_since: any[] = [], opts: any = {}) {
     // Re-fetches when viewer identity resolves asynchronously (#2285).
