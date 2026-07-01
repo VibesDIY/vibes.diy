@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { existsSync } from "node:fs";
+import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { vibesThemes } from "@vibes.diy/prompts";
 
@@ -10,12 +11,12 @@ import { vibesThemes } from "@vibes.diy/prompts";
 // card instead of the theme preview. `brutalist` was the theme that slipped
 // through — this test keeps the catalog and the showcase assets in lockstep.
 
-function showcasePath(slug: string): string {
-  return fileURLToPath(new URL(`../public/themes/${slug}.html`, import.meta.url));
-}
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const THEMES_DIR = resolve(__dirname, "..", "public", "themes");
 
 describe("theme showcase assets (#2924)", () => {
   it.each(vibesThemes.map((t) => t.slug))("%s has a /themes/<slug>.html showcase", (slug) => {
-    expect(existsSync(showcasePath(slug)), `missing public/themes/${slug}.html showcase asset`).toBe(true);
+    const showcase = resolve(THEMES_DIR, `${slug}.html`);
+    expect(existsSync(showcase), `missing public/themes/${slug}.html showcase asset`).toBe(true);
   });
 });
