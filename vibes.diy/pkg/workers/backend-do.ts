@@ -22,6 +22,7 @@ import {
   BACKEND_OP_ARM,
   BACKEND_OP_ONCHANGE,
   backendDoName,
+  narrowIsolateDbEgress,
 } from "@vibes.diy/api-svc/intern/backend-do-addr.js";
 import { BACKEND_DB_OP_URL, handleBackendDbOp } from "@vibes.diy/api-svc/intern/backend-db-op.js";
 
@@ -274,13 +275,26 @@ export class BackendDO implements DurableObject {
   }
 
   /**
-   * A `Fetcher` stub back to THIS DO instance (#2856 B6), handed to the loaded
-   * isolate as its `globalOutbound` so `ctx.db` ops route to `handleBackendDbOp`
-   * here — the only by-reference capability channel the Worker Loader accepts. A
-   * same-name stub resolves to the same instance/isolate, so the executor's nonce
-   * registry is shared. The isolate's db-op subrequest interleaves with the awaited
-   * invocation (the input gate is open across the isolate `await`), so there's no
-   * self-call deadlock.
+   * A narrowed `Fetcher` stub back to THIS DO instance (#2856 B6), handed to the
+   * loaded isolate as its `globalOutbound` so `ctx.db` ops route to
+   * `handleBackendDbOp` here — the only by-reference capability channel the Worker
+   * Loader accepts. A same-name stub resolves to the same instance/isolate, so the
+   * executor's nonce registry is shared. The isolate's db-op subrequest interleaves
+   * with the awaited invocation (the input gate is open across the isolate `await`),
+   * so there's no self-call deadlock.
+   *
+   * SECURITY (trust boundary): `globalOutbound` intercepts **every** `fetch()` the
+   * untrusted handler makes. Handing it the raw DO stub would expose the DO's
+   * control-plane ops (`arm`/`onChange`), which `fetch` dispatches on the
+   * `x-backend-op` header alone — a header the handler knows how to set, since its
+   * own `{ownerHandle, appSlug}` are baked into `ctx.appInfo`. An untrusted handler
+   * could then POST a forged `onChange` poke with an attacker-controlled
+   * `writerUserId` (identity spoof) and `depth: 0` (loop-guard reset ⇒ unbounded
+   * onChange amplification). So the stub the isolate sees is wrapped to forward
+   * **only** the nonce-gated db-op URL and refuse everything else — the db path stays
+   * gated by the per-invocation nonce, and no other DO surface (or open egress) is
+   * reachable from inside the isolate. Legitimate control-plane pokes come from the
+   * worker/queue via a *separate*, unwrapped stub, so they're unaffected.
    */
   private selfStub(ownerHandle: string, appSlug: string): { fetch(request: CFRequest): Promise<CFResponse> } {
     const ns = (
@@ -288,7 +302,18 @@ export class BackendDO implements DurableObject {
         BACKEND_DO: { idFromName(n: string): unknown; get(id: unknown): { fetch(r: CFRequest): Promise<CFResponse> } };
       }
     ).BACKEND_DO;
-    return ns.get(ns.idFromName(backendDoName(ownerHandle, appSlug)));
+    const stub = ns.get(ns.idFromName(backendDoName(ownerHandle, appSlug)));
+    // Not the db-op channel ⇒ the isolate is reaching for the control plane or the
+    // open Internet. Refuse before it touches the DO's `fetch` router. `makeForbidden`
+    // supplies the workerd `Response`; the decision lives in the unit-tested helper.
+    return narrowIsolateDbEgress(
+      stub,
+      () =>
+        new Response("backend: egress not permitted", {
+          status: 403,
+          headers: { "content-type": "text/plain" },
+        }) as unknown as CFResponse
+    );
   }
 
   /** Build `VibesApiSQLCtx` from `env` (the session-DO pattern). Wires the local

@@ -117,16 +117,39 @@ export async function attemptBackendFetch(vctx: VibesApiSQLCtx, input: AttemptBa
 }
 
 /**
+ * Request headers stripped before an `_api` request is handed to untrusted
+ * `backend.js` handler code (#2856 security review). On the viewer URL form
+ * `<base>/vibe/{owner}/{slug}/_api/...` the request rides the platform's apex
+ * domain, so it carries the logged-in VIEWER's session credentials (`Cookie`, and
+ * any bearer in `Authorization`). Forwarding those verbatim would let a handler
+ * exfiltrate a viewer's session (e.g. persist it via `ctx.db.put` into an
+ * owner-readable doc). Identity belongs host-side (`ctx.userInfo` / the write
+ * identity resolved from the verified session), never in raw client headers the
+ * handler can read. Lower-cased for a case-insensitive match.
+ *
+ * Webhook *signature* headers (Stripe `Stripe-Signature`, GitHub
+ * `X-Hub-Signature-256`, …) are custom and preserved — only the platform-auth
+ * headers are removed. A webhook that authenticates with a bare bearer
+ * `Authorization` should move its secret to a custom header or query param until
+ * host-side verification lands.
+ */
+export const STRIPPED_BACKEND_FETCH_HEADERS: ReadonlySet<string> = new Set(["cookie", "authorization"]);
+
+/**
  * Flatten an HTTP Request into the JSON-serializable shape the backend isolate's
  * `main` reconstructs (`new Request(url, { method, headers, body })`). The trigger
  * is `JSON.stringify`'d into the loader request body, so every field must be
  * JSON-safe: headers as a plain object, body as text (or `null` for GET/HEAD).
+ *
+ * Viewer auth headers are dropped here (see {@link STRIPPED_BACKEND_FETCH_HEADERS})
+ * so untrusted handler code never sees a viewer's session credentials.
  */
 async function serializeRequest(
   req: Request
 ): Promise<{ url: string; method: string; headers: Record<string, string>; body: string | null }> {
   const headers: Record<string, string> = {};
   req.headers.forEach((value, key) => {
+    if (STRIPPED_BACKEND_FETCH_HEADERS.has(key.toLowerCase())) return;
     headers[key] = value;
   });
   const method = req.method;
