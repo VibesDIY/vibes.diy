@@ -12,7 +12,7 @@ import {
   URI,
 } from "@adviser/cement";
 import { type } from "arktype";
-import type { FileSystemItem } from "@vibes.diy/api-types";
+import { type FileSystemItem, isReadableGrant } from "@vibes.diy/api-types";
 import { CliCtx, cmdTsDefaultArgs } from "../cli-ctx.js";
 import { sendMsg, WrapCmdTSMsg } from "../cmd-evento.js";
 import { resolveHandle } from "../resolve-handle.js";
@@ -105,7 +105,14 @@ export const pullEvento: EventoHandler<WrapCmdTSMsg<unknown>, ReqPull, ResPull> 
     if (app.grant === "not-found") {
       return Result.Err(`App not found: ${ownerHandle}/${args.appSlug}`);
     }
-    if (app.grant === "not-grant") {
+    // Pull is NOT owner-only: anyone who can actually open the vibe can download
+    // its source — owner, public-access, granted-access (viewer/editor/submitter),
+    // or an accepted invite. Grants that only gate access (pending-request,
+    // revoked-access, req-login.*) or deny it (not-grant) can't read the source.
+    // `isReadableGrant` is the shared getAppByFsId read predicate, so this stays
+    // in lockstep with the viewer's own read rule. (You still need an editor
+    // grant to `push` changes back.)
+    if (!isReadableGrant(app.grant)) {
       return Result.Err(`Access denied: ${ownerHandle}/${args.appSlug}`);
     }
 

@@ -4,6 +4,7 @@ import type { SaveState } from "../../hooks/save-state.js";
 import { EDITOR_TABS, type EditorTab } from "./editor-tab-state.js";
 import { resolveCodeView } from "./code-from-chat.js";
 import { CodeViewPanel } from "./CodeViewPanel.js";
+import { CopyAgentInstructionsButton } from "./CopyAgentInstructionsButton.js";
 import { SettingsTabScoped } from "./SettingsTabScoped.js";
 import { DataView } from "../ResultPreview/DataView.js";
 import ChatInterface from "../ChatInterface.js";
@@ -96,18 +97,24 @@ export function VibeEditorPanel({
       <div className="min-h-0 flex-1 overflow-auto">
         {tab === "code" && (
           <div className="flex h-full min-h-0 flex-col">
-            {canEdit && saveCode && (
-              <div className="flex flex-shrink-0 justify-end border-b border-gray-200 bg-gray-50 px-2 py-1 dark:border-gray-700 dark:bg-gray-900">
-                <button
-                  type="button"
-                  aria-pressed={codeEditing}
-                  onClick={() => setCodeEditing((v) => !v)}
-                  className="rounded px-3 py-1 text-xs font-medium text-violet-700 hover:bg-violet-100 dark:text-violet-300 dark:hover:bg-violet-900/40"
-                >
-                  {codeEditing ? "Done" : "Edit"}
-                </button>
+            {/* Header actions: the "copy agent instructions" affordance shows for
+                anyone who can open this tab (pulling source isn't owner-only),
+                while the Monaco Edit toggle stays owner-only. */}
+            {(ownerHandle && appSlug) || (canEdit && saveCode) ? (
+              <div className="flex flex-shrink-0 items-center justify-end gap-1 border-b border-gray-200 bg-gray-50 px-2 py-1 dark:border-gray-700 dark:bg-gray-900">
+                {ownerHandle && appSlug && <CopyAgentInstructionsButton ownerHandle={ownerHandle} appSlug={appSlug} />}
+                {canEdit && saveCode && (
+                  <button
+                    type="button"
+                    aria-pressed={codeEditing}
+                    onClick={() => setCodeEditing((v) => !v)}
+                    className="rounded px-3 py-1 text-xs font-medium text-violet-700 hover:bg-violet-100 dark:text-violet-300 dark:hover:bg-violet-900/40"
+                  >
+                    {codeEditing ? "Done" : "Edit"}
+                  </button>
+                )}
               </div>
-            )}
+            ) : null}
             <div className="min-h-0 flex-1">
               {canEdit && saveCode && codeEditing ? (
                 <Suspense

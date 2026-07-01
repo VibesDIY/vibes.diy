@@ -6,6 +6,7 @@ import {
   isCachedSuggestionKeyShape,
   cachedVibeHref,
   isReadableCachedGrant,
+  isReadableGrant,
   resolveCachedRead,
   resolveCachedHit,
   type CachedSuggestionHit,
@@ -151,6 +152,24 @@ describe("isReadableCachedGrant", () => {
   it("treats missing/gated grants as NOT readable (so they fall to the write lane)", () => {
     for (const g of ["not-found", "not-grant", "revoked-access", "pending-request", "req-login.request", "req-login.invite"]) {
       expect(isReadableCachedGrant(g)).toBe(false);
+    }
+  });
+
+  it("isReadableGrant is the same general read predicate (used by CLI pull, etc.)", () => {
+    // The `pull` command gates on this alias so any access-holder — not just the
+    // owner — can download source, while gated grants are denied.
+    for (const g of [
+      "owner",
+      "public-access",
+      "granted-access.viewer",
+      "granted-access.editor",
+      "granted-access.submitter",
+      "accepted-email-invite",
+    ]) {
+      expect(isReadableGrant(g)).toBe(true);
+    }
+    for (const g of ["not-found", "not-grant", "revoked-access", "pending-request", "req-login.request", "req-login.invite"]) {
+      expect(isReadableGrant(g)).toBe(false);
     }
   });
 });
