@@ -92,15 +92,21 @@ const _dateFmt = new Intl.DateTimeFormat("en-US", {
 });
 const _timeCache = new Map();
 const _dateStrCache = new Map();
+// Guard invalid dates: Intl.DateTimeFormat.format throws RangeError on an invalid
+// Date (unlike the old toLocaleTimeString/DateString, which returned "Invalid Date").
+// A malformed shift time (e.g. a cleared time input stored as `2026-07-30T:00`) must
+// render a safe placeholder, not crash the Extras / My Faves / friend schedule views.
 export const fmtTime = (s) => {
   if (_timeCache.has(s)) return _timeCache.get(s);
-  const out = _timeFmt.format(toFestivalDate(s));
+  const d = toFestivalDate(s);
+  const out = isNaN(d) ? "" : _timeFmt.format(d);
   _timeCache.set(s, out);
   return out;
 };
 export const fmtDate = (s) => {
   if (_dateStrCache.has(s)) return _dateStrCache.get(s);
-  const out = _dateFmt.format(toFestivalDate(s));
+  const d = toFestivalDate(s);
+  const out = isNaN(d) ? "" : _dateFmt.format(d);
   _dateStrCache.set(s, out);
   return out;
 };
