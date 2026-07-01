@@ -20,12 +20,13 @@ const COMPATIBILITY_DATE = "2025-05-01";
 // change can NEVER be served by a stale cached isolate (Charlie watch-out). Bump on
 // any change to the db-op contract or the `ctx.db` surface below.
 const BINDING_SCHEMA_VERSION = "v1";
-// Internal URL the isolate POSTs db ops to. It's the isolate's ONLY permitted
-// outbound: `globalOutbound` (the db transport) services exactly this URL and
-// refuses everything else, so a handler can't reach the open Internet (B8 widens
-// this) and can't forge another identity (the op carries only doc/db + an opaque
-// nonce; identity + depth are applied host-side).
-const DB_OP_URL = "https://db.internal/op";
+// Internal URL the isolate POSTs db ops to. The isolate's `globalOutbound` (a
+// stub back to the host BackendDO) delivers it to the DO's `fetch`, which routes
+// exactly this URL to `handleBackendDbOp` and refuses all other egress — so a
+// handler can't reach the open Internet (B8 widens this) and can't forge another
+// identity (the op carries only doc/db + an opaque nonce; identity + depth are
+// applied host-side). Exported so the DO can match it.
+export const BACKEND_DB_OP_URL = "https://db.internal/op";
 
 /**
  * Module-level registry correlating a per-invocation nonce to that invocation's
@@ -44,28 +45,21 @@ const DB_OP_URL = "https://db.internal/op";
 const dbCallbackRegistry = new Map<string, BackendDbCallback>();
 
 /**
- * The single, stable `globalOutbound` handed to every backend isolate. It is the
- * isolate's whole outbound surface: a POST to the internal db-op URL is serviced
- * (read `{ nonce, op }`, look the callback up by nonce, run it); ANY other egress
- * is refused (no open Internet until B8). It holds NO per-invocation state — a
- * missing/expired nonce fails closed rather than guessing an identity, so a warm
- * isolate can never serve a stale or cross-trigger callback.
+ * Handle one `ctx.db` op that an isolate posted through its `globalOutbound` (a
+ * stub back to the host BackendDO). Called by the DO's `fetch` when a request for
+ * {@link BACKEND_DB_OP_URL} arrives — the DO and the executor share this module's
+ * `dbCallbackRegistry` because they run in the SAME DO isolate, so the nonce the
+ * executor registered resolves here to the CURRENT invocation's callback. Holds NO
+ * per-invocation state itself: a missing/expired nonce fails closed rather than
+ * guessing an identity, so a warm isolate can never serve a stale/cross-trigger
+ * callback. Identity + loop-guard depth live entirely in the resolved callback.
  */
-const dbTransport: IsolateFetcher = {
-  async fetch(request: Request): Promise<Response> {
-    if (request.url !== DB_OP_URL) {
-      // Backend isolates get no general egress in B6 — only the db capability.
-      return new Response(JSON.stringify({ ok: false, error: "egress not permitted" }), {
-        status: 403,
-        headers: { "content-type": "application/json" },
-      });
-    }
-    const { nonce, op } = (await request.json()) as { nonce?: string; op: BackendDbOp };
-    const cb = nonce ? dbCallbackRegistry.get(nonce) : undefined;
-    const result: BackendDbResult = cb ? await cb(op) : { ok: false, error: "ctx.db is not available (no active call context)" };
-    return new Response(JSON.stringify(result), { headers: { "content-type": "application/json" } });
-  },
-};
+export async function handleBackendDbOp(request: Request): Promise<Response> {
+  const { nonce, op } = (await request.json()) as { nonce?: string; op: BackendDbOp };
+  const cb = nonce ? dbCallbackRegistry.get(nonce) : undefined;
+  const result: BackendDbResult = cb ? await cb(op) : { ok: false, error: "ctx.db is not available (no active call context)" };
+  return new Response(JSON.stringify(result), { headers: { "content-type": "application/json" } });
+}
 // Internal request URL — the dynamic worker only has the one fetch handler; the
 // real per-trigger handler + context ride the request body (see below).
 const BACKEND_REQUEST_URL = "https://vibe-backend.internal/";
@@ -143,7 +137,7 @@ export function buildBackendWorkerCode(input: {
     `  const defaultDb = trigger && trigger.payload && trigger.payload.dbName;`,
     `  async function rpc(op) {`,
     `    if (!dbNonce) throw new Error("ctx.db is not available (no host db binding wired)");`,
-    `    const r = await fetch(${JSON.stringify(DB_OP_URL)}, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ nonce: dbNonce, op: op }) });`,
+    `    const r = await fetch(${JSON.stringify(BACKEND_DB_OP_URL)}, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ nonce: dbNonce, op: op }) });`,
     `    const out = await r.json();`,
     `    if (!out || out.ok !== true) throw new Error((out && out.error) || "ctx.db op failed");`,
     `    return out.id;`,
@@ -259,7 +253,14 @@ export class WorkerLoaderBackendExecutor implements BackendExecutor {
     // egress can't depend on whichever invocation loaded the warm isolate first.
     const nonce = input.db ? crypto.randomUUID() : undefined;
     if (nonce && input.db) dbCallbackRegistry.set(nonce, input.db);
-    const wired: WorkerCode = { ...code, globalOutbound: input.db ? dbTransport : null };
+    // globalOutbound is the isolate's db capability: a REAL Fetcher (the DO
+    // self-stub the caller passes) — the loader rejects a plain object, and `env`
+    // is structured-cloned, so this is the only channel. Absent a db callback +
+    // fetcher (B1 callers / no write access), no egress (null).
+    const wired: WorkerCode = {
+      ...code,
+      globalOutbound: input.db && input.dbFetcher ? (input.dbFetcher as IsolateFetcher) : null,
+    };
     try {
       const stub = this.loader.get(id, () => wired);
       const request = new Request(BACKEND_REQUEST_URL, {

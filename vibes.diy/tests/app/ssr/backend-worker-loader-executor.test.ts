@@ -9,8 +9,17 @@
 // cross-invocation identity bleed; a policy/schema bump ⇒ new id.
 
 import { describe, it, expect } from "vitest";
-import { WorkerLoaderBackendExecutor, buildBackendWorkerCode } from "../../../vibe/runtime/backend-worker-loader-executor.js";
+import {
+  WorkerLoaderBackendExecutor,
+  buildBackendWorkerCode,
+  handleBackendDbOp,
+} from "../../../vibe/runtime/backend-worker-loader-executor.js";
 import { type WorkerCode, type WorkerLoaderBinding } from "../../../vibe/runtime/worker-loader-executor.js";
+
+// Models the DO self-stub the host passes as `dbFetcher`: the isolate's
+// `globalOutbound` posts a db-op here, and the DO routes it to `handleBackendDbOp`
+// (which resolves the nonce against the executor's shared registry).
+const dbFetcherStub = { fetch: (r: Request) => handleBackendDbOp(r) };
 
 const SONOS_BACKEND = `
 export async function fetch(request, ctx) { return new Response("ok"); }
@@ -288,6 +297,7 @@ describe("WorkerLoaderBackendExecutor.invoke (fake binding)", () => {
         seen.push(o);
         return { ok: true, id: "doc-1" };
       },
+      dbFetcher: dbFetcherStub,
     });
     expect(JSON.parse(await res.text())).toEqual({ ok: true, id: "doc-1" });
     expect(seen[0]).toEqual({ kind: "put", db: "todos", doc: { t: 1 }, docId: null });
@@ -305,12 +315,14 @@ describe("WorkerLoaderBackendExecutor.invoke (fake binding)", () => {
       handler: "fetch",
       trigger: {},
       db: async () => ({ ok: true, id: "writer-A" }),
+      dbFetcher: dbFetcherStub,
     });
     const res2 = await new WorkerLoaderBackendExecutor(f.binding).invoke({
       source: SONOS_BACKEND,
       handler: "fetch",
       trigger: {},
       db: async () => ({ ok: true, id: "writer-B" }),
+      dbFetcher: dbFetcherStub,
     });
     expect(f.calls[1].warm).toBe(true); // isolate was reused (same id), globalOutbound captured at first load
     expect(JSON.parse(await res1.text()).id).toBe("writer-A");

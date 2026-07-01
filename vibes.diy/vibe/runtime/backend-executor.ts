@@ -1,6 +1,11 @@
 import { WorkerLoaderBackendExecutor } from "./backend-worker-loader-executor.js";
 import { type WorkerLoaderBinding } from "./worker-loader-executor.js";
 
+// Re-exported through this (package-exposed) module so the host BackendDO — which
+// receives the isolate's `ctx.db` ops via its self-stub `globalOutbound` — can
+// dispatch them without deep-importing the executor internals (#2856 B6).
+export { BACKEND_DB_OP_URL, handleBackendDbOp } from "./backend-worker-loader-executor.js";
+
 /**
  * The backend-handler executor seam (#2856, slice B1) — the sibling of the SSR
  * `Executor` (`vibe-executor.ts`). Where SSR renders a component, this invokes a
@@ -75,11 +80,21 @@ export interface BackendInvokeInput {
   /** Per-trigger context — carried in the request, never the hashed code. */
   readonly trigger: BackendTrigger;
   /**
-   * Host capability backing `ctx.db` (#2856 B6). Wired into the isolate `env` as
-   * the identity-free `__VIBES_DB` transport. Absent for B1 library callers and
-   * any path that doesn't grant write access — then `ctx.db` throws on use.
+   * Host capability backing `ctx.db` (#2856 B6). The executor registers it under a
+   * per-invocation nonce; the isolate's `globalOutbound` (see `dbFetcher`) delivers
+   * db-ops back to the host, which resolves the nonce to this callback. Absent for
+   * B1 library callers / any path without write access — then `ctx.db` throws.
    */
   readonly db?: BackendDbCallback;
+  /**
+   * The REAL `Fetcher` set as the isolate's `globalOutbound` — a stub back to the
+   * host BackendDO (the only by-reference capability channel the Worker Loader
+   * accepts; `env` is structured-cloned and a plain object is rejected). The DO
+   * routes the isolate's db-op posts to `handleBackendDbOp`. Typed `unknown` so
+   * this package needs no `@cloudflare/workers-types`; the executor casts it. Must
+   * accompany `db`; without it, `ctx.db` has no egress and throws.
+   */
+  readonly dbFetcher?: unknown;
 }
 
 export interface BackendExecutor {

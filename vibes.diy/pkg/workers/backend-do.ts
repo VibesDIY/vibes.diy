@@ -20,7 +20,9 @@ import {
   BACKEND_OP_HEADER,
   BACKEND_OP_ARM,
   BACKEND_OP_ONCHANGE,
+  backendDoName,
 } from "@vibes.diy/api-svc/intern/backend-do-addr.js";
+import { BACKEND_DB_OP_URL, handleBackendDbOp } from "@vibes.diy/api-svc/intern/backend-db-op.js";
 
 declare const Response: typeof CFResponse;
 
@@ -69,6 +71,16 @@ export class BackendDO implements DurableObject {
   }
 
   async fetch(request: CFRequest): Promise<CFResponse> {
+    // ctx.db op (#2856 B6): the loaded isolate's `globalOutbound` is a stub back to
+    // THIS DO instance, so a handler's `ctx.db` write arrives here as a POST to the
+    // internal db-op URL. `handleBackendDbOp` resolves the per-invocation nonce
+    // against the executor's registry — shared because the executor ran in this same
+    // DO isolate — and runs the registered callback (the production gate). Matched
+    // FIRST: these requests carry no vibe-target headers.
+    if ((request as unknown as Request).url === BACKEND_DB_OP_URL) {
+      return (await handleBackendDbOp(request as unknown as Request)) as unknown as CFResponse;
+    }
+
     const ownerHandle = request.headers.get(BACKEND_OWNER_HEADER);
     const appSlug = request.headers.get(BACKEND_SLUG_HEADER);
     if (!ownerHandle || !appSlug) {
@@ -95,6 +107,7 @@ export class BackendDO implements DurableObject {
       userId,
       backendJs: this.env.BACKEND_JS,
       loader: this.env.LOADER,
+      dbFetcher: this.selfStub(ownerHandle, appSlug),
       policyVersion: this.env.BACKEND_POLICY_VERSION,
     });
 
@@ -252,6 +265,24 @@ export class BackendDO implements DurableObject {
     } finally {
       this.ticking = false;
     }
+  }
+
+  /**
+   * A `Fetcher` stub back to THIS DO instance (#2856 B6), handed to the loaded
+   * isolate as its `globalOutbound` so `ctx.db` ops route to `handleBackendDbOp`
+   * here — the only by-reference capability channel the Worker Loader accepts. A
+   * same-name stub resolves to the same instance/isolate, so the executor's nonce
+   * registry is shared. The isolate's db-op subrequest interleaves with the awaited
+   * invocation (the input gate is open across the isolate `await`), so there's no
+   * self-call deadlock.
+   */
+  private selfStub(ownerHandle: string, appSlug: string): { fetch(request: CFRequest): Promise<CFResponse> } {
+    const ns = (
+      this.env as unknown as {
+        BACKEND_DO: { idFromName(n: string): unknown; get(id: unknown): { fetch(r: CFRequest): Promise<CFResponse> } };
+      }
+    ).BACKEND_DO;
+    return ns.get(ns.idFromName(backendDoName(ownerHandle, appSlug)));
   }
 
   /** Build `VibesApiSQLCtx` from `env` (the session-DO pattern). */
