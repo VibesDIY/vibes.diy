@@ -195,7 +195,12 @@ export async function invokeAccessFnForDoc(
     userGrants: Object.fromEntries(Array.from(reduce.userGrants).map(([k, v]) => [k, Array.from(v)])),
   };
 
-  const invokeResult = await vctx.invokeAccessFn!({
+  const invokeAccessFn = vctx.invokeAccessFn;
+  if (!invokeAccessFn) {
+    throw new Error("invokeAccessFnForDoc requires vctx.invokeAccessFn");
+  }
+
+  const invokeResult = await invokeAccessFn({
     cid: fnCid,
     doc: { ...p.doc, _id: p.docId },
     oldDoc: p.oldDoc,
