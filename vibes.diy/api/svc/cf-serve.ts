@@ -91,6 +91,24 @@ function netHashFn({
 
 const HOT_VIBE_CONN_WARN_THRESHOLD = 200;
 
+const EPHEMERAL_MAX_BYTES = 8 * 1024; // presence docs are tiny; a multi-KB ephemeral is misuse
+const EPHEMERAL_MAX_PER_SEC = 60; // per-connection ceiling; drop + warn above this
+
+// Per-connection ephemeral send timestamps for the circuit breaker. Keyed by
+// senderConnId; a bounded sliding 1s window. Ephemerals only — never touches
+// notifyDocChanged / persisted flows.
+const ephemeralRateWindow = new Map<string, number[]>();
+function ephemeralRateOk(senderConnId: string, nowMs: number): boolean {
+  const win = (ephemeralRateWindow.get(senderConnId) ?? []).filter((t) => nowMs - t < 1000);
+  if (win.length >= EPHEMERAL_MAX_PER_SEC) {
+    ephemeralRateWindow.set(senderConnId, win);
+    return false;
+  }
+  win.push(nowMs);
+  ephemeralRateWindow.set(senderConnId, win);
+  return true;
+}
+
 export function localBroadcastCallbacks(connections: Set<WSSendProvider>, env: CFEnv) {
   const shouldLog = env.ENVIRONMENT !== "prod";
 
@@ -139,6 +157,71 @@ export function localBroadcastCallbacks(connections: Set<WSSendProvider>, env: C
       for (const conn of connections) {
         if (!conn.subscribedDocKeys.has(channelKey) && !conn.subscribedDocKeys.has(dbKey)) continue;
         if (conn.connId === senderConnId) continue;
+        exception2Result(() =>
+          conn.ws.send(
+            conn.ende.uint8ify({
+              tid: crypto.randomUUID(),
+              src: "vibes.diy.api",
+              dst: "vibes.diy.client",
+              ttl: 10,
+              payload: fullEvt,
+            })
+          )
+        );
+      }
+    },
+    notifyDocEphemeral: async (
+      evt: {
+        ownerHandle: string;
+        appSlug: string;
+        dbName: string;
+        docId: string;
+        doc: Record<string, unknown>;
+        channel?: string;
+      },
+      senderConnId: string
+    ): Promise<void> => {
+      const dbKey = `${evt.ownerHandle}/${evt.appSlug}/${evt.dbName}`;
+      // Size cap (drop + count).
+      const encoded = JSON.stringify(evt.doc);
+      if (encoded.length > EPHEMERAL_MAX_BYTES) {
+        console.warn("[Sessions] ephemeral dropped: oversize", "key=", dbKey, "bytes=", encoded.length);
+        return;
+      }
+      // Circuit breaker (drop + count) — ephemerals only.
+      if (!ephemeralRateOk(senderConnId, Date.now())) {
+        console.warn("[Sessions] ephemeral dropped: rate", "conn=", senderConnId.slice(0, 8));
+        return;
+      }
+      // Route by the CHANNEL the handler computed from the access fn (Task 4),
+      // mirroring notifyDocChanged's key nesting. channel present → EXACT channel
+      // key only, NO bare-db fallback (the snapshot is the disclosure — #1756 P1).
+      // channel absent (non-access-fn vibe) → the bare dbKey (no channel boundary).
+      const routeKey = evt.channel ? `${dbKey}/${evt.channel}` : dbKey;
+      if (shouldLog) {
+        console.info("[Sessions] ephemeral fanout", "key=", routeKey, "conns=", connections.size);
+      }
+      const fullEvt = { type: "vibes.diy.evt-doc-ephemeral", originPeer: senderConnId, ...evt };
+      for (const conn of connections) {
+        if (conn.connId === senderConnId) continue;
+        if (!conn.subscribedDocKeys.has(routeKey)) continue; // exact match; no dbKey fallback when channel present
+        exception2Result(() =>
+          conn.ws.send(
+            conn.ende.uint8ify({
+              tid: crypto.randomUUID(),
+              src: "vibes.diy.api",
+              dst: "vibes.diy.client",
+              ttl: 10,
+              payload: fullEvt,
+            })
+          )
+        );
+      }
+    },
+    notifyDocEphemeralDrop: async (originPeer: string): Promise<void> => {
+      const fullEvt = { type: "vibes.diy.evt-doc-ephemeral-drop", originPeer };
+      for (const conn of connections) {
+        if (conn.connId === originPeer) continue;
         exception2Result(() =>
           conn.ws.send(
             conn.ende.uint8ify({
