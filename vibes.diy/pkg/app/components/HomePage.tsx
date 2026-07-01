@@ -36,7 +36,7 @@ import {
 
 // How-it-works steps — numbered circles (cream number on the logo's black
 // circle) rendered beneath the hero brand line.
-const HOW_IT_WORKS_STEPS = ["Describe your app", "See it build before your eyes", "Invite your friends"] as const;
+const HOW_IT_WORKS_STEPS = ["Describe your app", "See it build live", "Invite your friends"] as const;
 
 export default function HomePage() {
   const [isSidebarVisible, setIsSidebarVisible] = useState(false);
