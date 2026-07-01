@@ -15,6 +15,18 @@ export default function ShiftsView({
   database,
   c,
 }) {
+  // "Add Extra" isn't optimistic (the new row appears when the write lands), so give
+  // it a color-only working state while the async put is in flight — no copy change.
+  const [submitting, setSubmitting] = React.useState(false);
+  const handleSubmit = async (e) => {
+    if (submitting) return;
+    setSubmitting(true);
+    try {
+      await submitShift(e);
+    } finally {
+      setSubmitting(false);
+    }
+  };
   return (
     <div>
       <h2 className={`text-2xl font-black mb-6 ${c.bodyText}`}>Manage Your Extras</h2>
@@ -60,7 +72,7 @@ export default function ShiftsView({
             />
             Show in friends view
           </label>
-          <button onClick={submitShift} className={`mt-4 ${c.btnCyan}`}>
+          <button onClick={handleSubmit} disabled={submitting} className={`mt-4 ${submitting ? c.btnCyanWorking : c.btnCyan}`}>
             Add Extra
           </button>
         </div>
