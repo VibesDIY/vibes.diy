@@ -137,7 +137,7 @@ export default function FriendsView({
       </div>
 
       {selectedFriend && (
-        <div className="mb-6">
+        <div id="friend-schedule" className="mb-6 scroll-mt-4">
           <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
             <div className="flex items-center gap-2 flex-wrap">
               <h3 className={`text-2xl font-black ${c.bodyText}`}>Picks by</h3>

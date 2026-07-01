@@ -45,7 +45,6 @@ export default function NowView({ nowSets, nextSets, nowTick, myFavIds, friendFa
         </p>
       </div>
 
-      <h3 className={`text-xl font-black mb-3 ${c.bodyText}`}>Playing Now ({nowSets.length})</h3>
       {nowSets.length === 0 ? (
         <div className="mb-6 p-8 bg-white dark:bg-[#22252d] rounded-2xl m-2 ">
           <p className={`font-bold ${c.bodyText}`}>Nothing is on stage right now.</p>
@@ -67,7 +66,7 @@ export default function NowView({ nowSets, nextSets, nowTick, myFavIds, friendFa
         </div>
       )}
 
-      <h3 className={`text-xl font-black mb-3 ${c.bodyText}`}>Up Next ({nextSets.length})</h3>
+      <h3 className={`text-xl font-black mb-3 ${c.bodyText}`}>Up Next</h3>
       {nextSets.length === 0 ? (
         <div className="p-8 bg-white dark:bg-[#22252d] rounded-2xl m-2 ">
           <p className={`font-bold ${c.bodyText}`}>No more sets scheduled.</p>
