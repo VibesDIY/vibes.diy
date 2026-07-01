@@ -1,0 +1,508 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Neobrutalist — Component Showcase</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=JetBrains+Mono:wght@500;700&display=block"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --bg: #f5f0e0;
+        --card-bg: #ffffff;
+        --text: #1a1a2e;
+        --border: #1a1a2e;
+        --muted: #6b6b80;
+        --primary: #da291c;
+        --on-primary: #ffffff;
+        --secondary: #fedd00;
+        --on-secondary: #1a1a2e;
+        --success: #22c55e;
+        --info: #3b82f6;
+        --shadow: 4px 4px 0 var(--border);
+        --shadow-sm: 3px 3px 0 var(--border);
+        --shadow-lg: 8px 8px 0 var(--border);
+      }
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      body {
+        font-family: "Space Grotesk", sans-serif;
+        background: var(--bg);
+        color: var(--text);
+        min-height: 100vh;
+        padding: 2.5rem 2rem 4rem;
+      }
+      .mono {
+        font-family: "JetBrains Mono", monospace;
+      }
+      .header {
+        max-width: 1100px;
+        margin: 0 auto 2rem;
+      }
+      .eyebrow {
+        display: inline-block;
+        font-family: "JetBrains Mono", monospace;
+        font-size: 0.7rem;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        background: var(--secondary);
+        color: var(--on-secondary);
+        border: 2px solid var(--border);
+        padding: 0.25rem 0.7rem;
+        box-shadow: var(--shadow-sm);
+        margin-bottom: 1.1rem;
+      }
+      h1 {
+        font-size: 3rem;
+        font-weight: 700;
+        letter-spacing: -0.04em;
+        line-height: 0.9;
+        text-transform: uppercase;
+      }
+      h1 .accent {
+        color: var(--primary);
+      }
+      .subtitle {
+        color: var(--muted);
+        font-size: 0.95rem;
+        margin-top: 0.75rem;
+        max-width: 34rem;
+      }
+      /* Stats strip */
+      .stats {
+        max-width: 1100px;
+        margin: 0 auto 1.5rem;
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        border: 2px solid var(--border);
+        box-shadow: var(--shadow);
+        background: var(--card-bg);
+      }
+      .stat {
+        padding: 1.1rem 1.25rem;
+        border-right: 2px solid var(--border);
+      }
+      .stat:last-child {
+        border-right: 0;
+      }
+      .stat-label {
+        font-family: "JetBrains Mono", monospace;
+        font-size: 0.65rem;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        color: var(--muted);
+      }
+      .stat-value {
+        font-size: 2rem;
+        font-weight: 700;
+        letter-spacing: -0.02em;
+        margin-top: 0.25rem;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1.5rem;
+        max-width: 1100px;
+        margin: 0 auto;
+      }
+      @media (max-width: 768px) {
+        .grid,
+        .stats {
+          grid-template-columns: 1fr;
+        }
+      }
+      .card {
+        background: var(--card-bg);
+        border: 2px solid var(--border);
+        padding: 1.5rem;
+        box-shadow: var(--shadow);
+      }
+      .card-title {
+        font-family: "JetBrains Mono", monospace;
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.18em;
+        margin-bottom: 1.1rem;
+      }
+      .full-width {
+        grid-column: 1 / -1;
+      }
+      /* Table */
+      table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+      th {
+        text-align: left;
+        font-family: "JetBrains Mono", monospace;
+        font-size: 0.62rem;
+        text-transform: uppercase;
+        letter-spacing: 0.14em;
+        color: var(--muted);
+        padding: 0.5rem 0.75rem;
+        border-bottom: 2px solid var(--border);
+      }
+      td {
+        padding: 0.65rem 0.75rem;
+        font-size: 0.9rem;
+        border-bottom: 2px solid var(--border);
+      }
+      tbody tr:last-child td {
+        border-bottom: 0;
+      }
+      .badge {
+        display: inline-block;
+        font-family: "JetBrains Mono", monospace;
+        padding: 0.15rem 0.5rem;
+        font-size: 0.62rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        border: 2px solid var(--border);
+      }
+      .badge-green {
+        background: var(--success);
+        color: var(--on-secondary);
+      }
+      .badge-amber {
+        background: var(--secondary);
+        color: var(--on-secondary);
+      }
+      .badge-red {
+        background: var(--primary);
+        color: var(--on-primary);
+      }
+      /* Form elements */
+      .form-group {
+        margin-bottom: 1rem;
+      }
+      label {
+        display: block;
+        font-family: "JetBrains Mono", monospace;
+        font-size: 0.65rem;
+        font-weight: 700;
+        color: var(--muted);
+        margin-bottom: 0.4rem;
+        text-transform: uppercase;
+        letter-spacing: 0.14em;
+      }
+      input[type="text"],
+      select {
+        width: 100%;
+        padding: 0.7rem 0.85rem;
+        background: var(--bg);
+        border: 2px solid var(--border);
+        color: var(--text);
+        font-family: inherit;
+        font-size: 0.9rem;
+        outline: none;
+        box-shadow: var(--shadow-sm);
+      }
+      input[type="text"]:focus,
+      select:focus {
+        background: var(--card-bg);
+        box-shadow: var(--shadow);
+      }
+      select {
+        cursor: pointer;
+        appearance: none;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%231a1a2e' stroke-width='3'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 0.85rem center;
+        padding-right: 2.5rem;
+      }
+      /* Checkbox */
+      .check-row {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        margin-bottom: 0.75rem;
+        cursor: pointer;
+      }
+      .check-box {
+        width: 22px;
+        height: 22px;
+        border: 2px solid var(--border);
+        display: grid;
+        place-items: center;
+        flex-shrink: 0;
+        background: var(--card-bg);
+      }
+      .check-box.checked {
+        background: var(--primary);
+      }
+      .check-box svg {
+        opacity: 0;
+      }
+      .check-box.checked svg {
+        opacity: 1;
+      }
+      .check-label {
+        font-size: 0.9rem;
+      }
+      /* Toggle */
+      .toggle-row {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        cursor: pointer;
+      }
+      .toggle-track {
+        width: 48px;
+        height: 26px;
+        background: var(--card-bg);
+        border: 2px solid var(--border);
+        position: relative;
+        flex-shrink: 0;
+      }
+      .toggle-track.on {
+        background: var(--secondary);
+      }
+      .toggle-knob {
+        width: 18px;
+        height: 18px;
+        background: var(--border);
+        position: absolute;
+        top: 2px;
+        left: 2px;
+        transition: transform 0.15s;
+      }
+      .toggle-track.on .toggle-knob {
+        transform: translateX(22px);
+      }
+      /* Buttons */
+      .btn {
+        font-family: inherit;
+        padding: 0.75rem 1.4rem;
+        border: 2px solid var(--border);
+        background: var(--primary);
+        color: var(--on-primary);
+        font-weight: 700;
+        font-size: 0.9rem;
+        cursor: pointer;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        box-shadow: var(--shadow);
+        transition:
+          transform 0.1s,
+          box-shadow 0.1s;
+      }
+      .btn:hover {
+        transform: translate(-2px, -2px);
+        box-shadow: 6px 6px 0 var(--border);
+      }
+      .btn:active {
+        transform: translate(2px, 2px);
+        box-shadow: 2px 2px 0 var(--border);
+      }
+      .btn-yellow {
+        background: var(--secondary);
+        color: var(--on-secondary);
+      }
+      .btn-ghost {
+        background: var(--card-bg);
+        color: var(--text);
+      }
+      .btn-row {
+        display: flex;
+        gap: 0.75rem;
+        flex-wrap: wrap;
+        margin-top: 0.5rem;
+      }
+      /* Modal */
+      .modal-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(26, 26, 46, 0.5);
+        display: none;
+        place-items: center;
+        z-index: 1000;
+      }
+      .modal-overlay.open {
+        display: grid;
+      }
+      .modal {
+        background: var(--card-bg);
+        border: 2px solid var(--border);
+        padding: 2rem;
+        width: 90%;
+        max-width: 440px;
+        box-shadow: var(--shadow-lg);
+      }
+      .modal h2 {
+        font-size: 1.5rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: -0.02em;
+        margin-bottom: 0.75rem;
+      }
+      .modal p {
+        color: var(--muted);
+        font-size: 0.9rem;
+        line-height: 1.55;
+        margin-bottom: 1.5rem;
+      }
+      .modal-actions {
+        display: flex;
+        gap: 0.75rem;
+        justify-content: flex-end;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="header">
+      <span class="eyebrow">vibes.diy theme · 06</span>
+      <h1>Neo<span class="accent">brut</span>alist</h1>
+      <p class="subtitle">Hard edges, chunky borders, and color blocks that yell — utilitarian components with zero apology.</p>
+    </div>
+
+    <div class="stats">
+      <div class="stat">
+        <div class="stat-label">Active</div>
+        <div class="stat-value">42</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">Pending</div>
+        <div class="stat-value">7</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label">Synced</div>
+        <div class="stat-value">198</div>
+      </div>
+    </div>
+
+    <div class="grid">
+      <!-- Table Card -->
+      <div class="card full-width">
+        <div class="card-title">Data Overview</div>
+        <table>
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Category</th>
+              <th>Value</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Aurora Engine</td>
+              <td>Infrastructure</td>
+              <td>$12,450</td>
+              <td><span class="badge badge-green">Active</span></td>
+            </tr>
+            <tr>
+              <td>Nebula Cache</td>
+              <td>Storage</td>
+              <td>$8,200</td>
+              <td><span class="badge badge-green">Active</span></td>
+            </tr>
+            <tr>
+              <td>Pulse Monitor</td>
+              <td>Analytics</td>
+              <td>$3,780</td>
+              <td><span class="badge badge-amber">Warning</span></td>
+            </tr>
+            <tr>
+              <td>Drift Relay</td>
+              <td>Network</td>
+              <td>$6,100</td>
+              <td><span class="badge badge-green">Active</span></td>
+            </tr>
+            <tr>
+              <td>Echo Vault</td>
+              <td>Security</td>
+              <td>$15,900</td>
+              <td><span class="badge badge-red">Critical</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Form Card -->
+      <div class="card">
+        <div class="card-title">Input Controls</div>
+        <div class="form-group">
+          <label>Search</label>
+          <input type="text" placeholder="What's the next move?" />
+        </div>
+        <div class="form-group">
+          <label>Category</label>
+          <select>
+            <option>All Categories</option>
+            <option>Infrastructure</option>
+            <option>Storage</option>
+            <option>Analytics</option>
+            <option>Network</option>
+          </select>
+        </div>
+        <div class="btn-row">
+          <button class="btn" onclick="document.getElementById('modal').classList.add('open')">Commit</button>
+          <button class="btn btn-yellow">Mark</button>
+        </div>
+      </div>
+
+      <!-- Preferences Card -->
+      <div class="card">
+        <div class="card-title">Preferences</div>
+        <div class="check-row" onclick="this.querySelector('.check-box').classList.toggle('checked')">
+          <div class="check-box checked">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="4" stroke-linecap="round">
+              <path d="M5 13l4 4L19 7" />
+            </svg>
+          </div>
+          <span class="check-label">Enable notifications</span>
+        </div>
+        <div class="check-row" onclick="this.querySelector('.check-box').classList.toggle('checked')">
+          <div class="check-box">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="4" stroke-linecap="round">
+              <path d="M5 13l4 4L19 7" />
+            </svg>
+          </div>
+          <span class="check-label">Auto-save drafts</span>
+        </div>
+        <div class="check-row" onclick="this.querySelector('.check-box').classList.toggle('checked')">
+          <div class="check-box">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="4" stroke-linecap="round">
+              <path d="M5 13l4 4L19 7" />
+            </svg>
+          </div>
+          <span class="check-label">Compact mode</span>
+        </div>
+        <div style="margin-top: 1.25rem; border-top: 2px solid var(--border); padding-top: 1.25rem">
+          <div class="toggle-row" onclick="this.querySelector('.toggle-track').classList.toggle('on')">
+            <div class="toggle-track on"><div class="toggle-knob"></div></div>
+            <span class="check-label">Dark mode</span>
+          </div>
+          <div class="toggle-row" style="margin-top: 0.75rem" onclick="this.querySelector('.toggle-track').classList.toggle('on')">
+            <div class="toggle-track"><div class="toggle-knob"></div></div>
+            <span class="check-label">Sound effects</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal -->
+    <div class="modal-overlay" id="modal" onclick="if (event.target === this) this.classList.remove('open');">
+      <div class="modal">
+        <h2>Confirm Action</h2>
+        <p>
+          This is a modal dialog styled in the Neobrutalist theme. Hard edges, chunky borders, and hard offset shadows create a
+          bold, graphic, unmistakable feel.
+        </p>
+        <div class="modal-actions">
+          <button class="btn btn-ghost" onclick="document.getElementById('modal').classList.remove('open')">Cancel</button>
+          <button class="btn" onclick="document.getElementById('modal').classList.remove('open')">Confirm</button>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>
