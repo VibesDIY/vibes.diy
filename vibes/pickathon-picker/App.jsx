@@ -101,6 +101,7 @@ export default function PickathonPicker() {
   const [superMode, setSuperMode] = useState(false);
   const [viewingUser, setViewingUser] = useState(null);
   const [selectedFriend, setSelectedFriend] = useState(null);
+  const [optimisticFavs, setOptimisticFavs] = useState(() => new Map());
   const [linkedFriend, setLinkedFriend] = useState(null);
   const friendScrolledRef = useRef(false);
   const [pendingDelete, setPendingDelete] = useState(null);
@@ -269,7 +270,11 @@ export default function PickathonPicker() {
   }, [allFavorites]);
 
   const myFavorites = allFavorites.filter((f) => (f.userId || "anonymous") === userId);
-  const myFavIds = new Set(myFavorites.map((f) => f.eventId));
+  const baseFavIds = new Set(myFavorites.map((f) => f.eventId));
+  // Optimistic overlay so a heart flips the instant you press it; the live query
+  // reconciles once the (networked) write lands, then the overlay entry is cleared.
+  const myFavIds = new Set(baseFavIds);
+  optimisticFavs.forEach((want, id) => (want ? myFavIds.add(id) : myFavIds.delete(id)));
 
   const { docs: friends } = useLiveQuery((doc) => [doc.type, doc.userId], { key: ["friend", userId] });
   const { docs: friendedBy } = useLiveQuery((doc) => [doc.type, doc.friendSlug], { key: ["friend", userId] });
@@ -313,6 +318,24 @@ export default function PickathonPicker() {
     setOriginalNotes((prev) => ({ ...newOriginalNotes, ...prev }));
   }, [notesDocs]);
 
+  // Once the live query catches up to an optimistic flip, drop that overlay entry.
+  const baseFavSig = [...baseFavIds].sort().join("|");
+  useEffect(() => {
+    setOptimisticFavs((prev) => {
+      if (prev.size === 0) return prev;
+      let changed = false;
+      const next = new Map(prev);
+      next.forEach((want, id) => {
+        if (baseFavIds.has(id) === want) {
+          next.delete(id);
+          changed = true;
+        }
+      });
+      return changed ? next : prev;
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [baseFavSig]);
+
   const eventDays = [...new Set(events.map((e) => e.day))];
   const shiftDays = [...new Set(shifts.map((s) => s.day))];
   const allDays = [...new Set([...FESTIVAL_2026.dayOrder, ...eventDays, ...shiftDays])];
@@ -352,15 +375,23 @@ export default function PickathonPicker() {
   };
 
   const toggleFavorite = async (event) => {
-    if (myFavIds.has(event.eventId)) {
-      const fav = myFavorites.find((f) => f.eventId === event.eventId);
-      if (fav) await database.del(fav._id);
-    } else {
-      await database.put({
-        _id: `favorite-${userId}-${event.eventId}`,
-        type: "favorite",
-        eventId: event.eventId,
-        userId,
+    const id = event.eventId;
+    const want = !myFavIds.has(id);
+    // Paint the flip immediately; the live query is the source of truth once the write lands.
+    setOptimisticFavs((prev) => new Map(prev).set(id, want));
+    try {
+      if (!want) {
+        const fav = myFavorites.find((f) => f.eventId === id);
+        if (fav) await database.del(fav._id);
+      } else {
+        await database.put({ _id: `favorite-${userId}-${id}`, type: "favorite", eventId: id, userId });
+      }
+    } catch (e) {
+      // A failed write won't reconcile via live query — drop the overlay so the UI reflects reality.
+      setOptimisticFavs((prev) => {
+        const m = new Map(prev);
+        m.delete(id);
+        return m;
       });
     }
   };

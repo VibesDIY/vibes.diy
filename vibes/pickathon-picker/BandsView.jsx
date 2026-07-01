@@ -104,7 +104,7 @@ export default function BandsView({ bandsList, myFavIds, canWrite, toggleFavorit
                           <div key={e.eventId} className="flex items-center gap-2 flex-wrap">
                             {canWrite && (
                               <button
-                                onClick={() => toggleFavorite(e)}
+                                onPointerDown={() => toggleFavorite(e)}
                                 className={`text-sm px-2 py-0.5 rounded-lg m-2  font-bold transition-all ${myFavIds.has(e.eventId) ? "bg-[#CD6C0C] text-white" : "bg-white dark:bg-[#22252d] text-[#4A4A4A] dark:text-[#e9e9e9] hover:bg-[#BACD32] dark:hover:bg-[#2c3510]"}`}
                               >
                                 {myFavIds.has(e.eventId) ? "♥" : "♡"}

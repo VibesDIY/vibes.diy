@@ -25,7 +25,7 @@ function EventCard({ event, isMine, isFriendPick, canWrite, toggleFavorite, c, s
           </p>
         </div>
         {canWrite && (
-          <button onClick={() => toggleFavorite(event)} className={isMine ? c.favToggleOn : c.favToggleOff}>
+          <button onPointerDown={() => toggleFavorite(event)} className={isMine ? c.favToggleOn : c.favToggleOff}>
             {isMine ? "♥" : "♡"}
           </button>
         )}
