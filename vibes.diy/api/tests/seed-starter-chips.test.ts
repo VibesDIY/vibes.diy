@@ -1,6 +1,6 @@
 import { beforeAll, describe, expect, it } from "vitest";
 import { and, eq } from "drizzle-orm";
-import { chipsFromNarration } from "@vibes.diy/api-types";
+import { chipsFromNarration, isResEnsureAppSlugOk } from "@vibes.diy/api-types";
 import { isToplevelLine, type ToplevelLineMsg } from "@vibes.diy/call-ai-v2";
 import { createApiTestCtx, type ApiTestCtx } from "./api-test-setup.js";
 import { buildStarterChipSeedBlocks, seedStarterChips, STARTER_CHIP_SEED_PROMPT_ID } from "../svc/intern/seed-starter-chips.js";
@@ -120,6 +120,40 @@ describe("seedStarterChips", () => {
     expect(r.Ok().seededChips).toEqual(chips);
 
     const got = await ctx.api.getVibeChips({ ownerHandle, appSlug });
+    if (got.isErr()) throw new Error("getVibeChips failed: " + JSON.stringify(got.Err()));
+    expect(got.Ok().chips).toEqual(chips);
+  });
+
+  it("chips attach to the served version even when the chat has no turn for it (the re-pushed starter)", async () => {
+    // The bloom-machine shape: production v1 mints the chat + its only versioned
+    // turn, then a CLI-style re-push mints production v2 WITHOUT appending a chat
+    // turn. The talk-only seed must pin to the SERVED version (v2) — inheriting
+    // the chat's stale v1 fsId would make the non-member hard-restrict filter the
+    // curated chips out entirely.
+    const now = ctx.sthis.nextId(8).str;
+    const mkFs = (marker: string) => [
+      {
+        type: "code-block" as const,
+        lang: "jsx",
+        filename: "/App.jsx",
+        content: `function App(){return <div>${marker} ${now}</div>;} App();`,
+      },
+    ];
+    const rV1 = await ctx.api.ensureAppSlug({ mode: "production", fileSystem: mkFs("v1") });
+    const v1 = rV1.Ok();
+    if (!isResEnsureAppSlugOk(v1)) throw new Error("ensureAppSlug(production v1) failed");
+    const { appSlug, ownerHandle } = v1;
+    await ctx.api.ensureAppSettings({ appSlug, ownerHandle, publicAccess: { enable: true } });
+
+    const rV2 = await ctx.api.ensureAppSlug({ appSlug, mode: "production", fileSystem: mkFs("v2") });
+    if (!isResEnsureAppSlugOk(rV2.Ok())) throw new Error("ensureAppSlug(production v2) failed");
+
+    const chips = ["Make it a drum machine"];
+    const r = await seedStarterChips(ctx.appCtx.vibesCtx, { ownerHandle, appSlug, chips });
+    if (r.isErr()) throw new Error("seedStarterChips failed: " + r.Err().message);
+
+    // Non-member read — the lane the /start visitor uses.
+    const got = await ctx.api2.getVibeChips({ ownerHandle, appSlug });
     if (got.isErr()) throw new Error("getVibeChips failed: " + JSON.stringify(got.Err()));
     expect(got.Ok().chips).toEqual(chips);
   });
