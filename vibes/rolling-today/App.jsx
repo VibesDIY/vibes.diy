@@ -35,6 +35,7 @@ export default function App() {
   const [error, setError] = useState(null);
   const [skipNotice, setSkipNotice] = useState(null);
   const [view, setView] = useState("rides");
+  const [onlyFavs, setOnlyFavs] = useState(false);
   const [linkedFriend, setLinkedFriend] = useState(null);
 
   // anonymousLocal: put/del/useLiveQuery run against a local store while logged out and
@@ -69,6 +70,12 @@ export default function App() {
   // Favorites are public-read but only *shown* for you + your friends.
   const visibleSlugs = useMemo(() => new Set([userId, ...friendSlugs]), [userId, friendSlugs]);
   const favsByRide = useMemo(() => visibleFavsByRide(favorites, visibleSlugs), [favorites, visibleSlugs]);
+
+  // Ride ids I've personally starred — used by the Favorites filter in the nav.
+  const myFavRideIds = useMemo(
+    () => new Set(favorites.filter((f) => (f.userId || "anonymous") === userId && f.rideId).map((f) => String(f.rideId))),
+    [favorites, userId]
+  );
 
   const loadDate = useCallback(async (target, opts = {}) => {
     setError(null);
@@ -187,7 +194,8 @@ export default function App() {
 
   const connectUrl = `${currentVibeBase()}/?friend=${encodeURIComponent(userId)}`;
 
-  const showCount = !loading && events.length > 0 && view === "rides";
+  const shownEvents = onlyFavs ? events.filter((e) => myFavRideIds.has(String(e.id))) : events;
+  const showCount = !loading && shownEvents.length > 0 && view === "rides";
 
   return (
     <div className={c.page} style={{ touchAction: "manipulation" }}>
@@ -228,6 +236,18 @@ export default function App() {
               </button>
             )}
             <button
+              className={onlyFavs && view === "rides" ? c.navBtnLgOn : c.navBtnLg}
+              onClick={() => {
+                setView("rides");
+                setOnlyFavs((v) => !v);
+              }}
+              aria-label="My favorites"
+              aria-pressed={onlyFavs && view === "rides"}
+            >
+              <Icon d={ICONS.star} size={27} fill={onlyFavs && view === "rides" ? "currentColor" : "none"} />
+              <span className="hidden sm:inline">Favorites</span>
+            </button>
+            <button
               className={view === "friends" ? c.navBtnLgOn : c.navBtnLg}
               onClick={() => setView(view === "friends" ? "rides" : "friends")}
               aria-label="Friends"
@@ -263,7 +283,8 @@ export default function App() {
               <div className={c.dateBig}>{prettyDate(date)}</div>
               {showCount && (
                 <div className={c.count}>
-                  {events.length} ride{events.length === 1 ? "" : "s"} rolling
+                  {shownEvents.length} {onlyFavs ? "favorite" : "ride"}
+                  {shownEvents.length === 1 ? "" : "s"} rolling
                 </div>
               )}
             </section>
@@ -277,12 +298,16 @@ export default function App() {
 
             {error && <div className={c.err}>Couldn't reach the feed: {error}</div>}
 
-            {!loading && events.length === 0 && !error && (
-              <div className={c.empty}>No rides found within the next year. Check back when Bike Summer rolls.</div>
+            {!loading && shownEvents.length === 0 && !error && (
+              <div className={c.empty}>
+                {onlyFavs
+                  ? "No favorites on this day — tap the star on a ride to add one."
+                  : "No rides found within the next year. Check back when Bike Summer rolls."}
+              </div>
             )}
 
             <div className={c.list}>
-              {events.map((e) => (
+              {shownEvents.map((e) => (
                 <RideCard
                   key={e.caldaily_id || e.id}
                   event={e}
