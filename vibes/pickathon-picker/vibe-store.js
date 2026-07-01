@@ -17,6 +17,9 @@ import { useViewer } from "use-vibes";
 
 const LS_PREFIX = "vibe-local:";
 const AUTHED_PREFIX = "vibe-authed:"; // marks that this device has signed in before
+// Stable no-op query for local mode (the Fireproof result is discarded there).
+const NOOP_INDEX = () => undefined;
+const NOOP_OPTS = { limit: 0 };
 const stores = new Map(); // dbName -> { docs: Map<_id,doc>, listeners: Set, version }
 
 function markAuthed(dbName) {
@@ -117,16 +120,17 @@ function runQuery(docs, index, opts = {}) {
 }
 
 // Subscribe a component to a local store so live queries re-render on write.
+// Return a stable array reference between writes so downstream memos don't churn.
 function useLocalDocs(dbName) {
   const s = getStore(dbName);
-  const [, bump] = useState(0);
+  const [version, setVersion] = useState(s.version);
   useEffect(() => {
-    const cb = () => bump((x) => x + 1);
+    const cb = () => setVersion(s.version);
     s.listeners.add(cb);
     cb(); // catch writes that landed between render and effect
     return () => s.listeners.delete(cb);
   }, [s]);
-  return [...s.docs.values()];
+  return useMemo(() => [...s.docs.values()], [s, version]);
 }
 
 // ---- the hook: a drop-in `useFireproof` that switches on auth -------------
@@ -180,9 +184,12 @@ export function useVibeStore(dbName, options = {}) {
   }, [isLocal, fp.database, dbName]);
 
   // Both branches call their hooks unconditionally so the Rules of Hooks hold
-  // regardless of mode; we just choose which result to hand back.
+  // regardless of mode; we just choose which result to hand back. In local mode the
+  // Fireproof result is discarded, so feed it a *stable* no-op query — otherwise the
+  // app's inline index/opts re-subscribe Fireproof on every render even though we
+  // never use the result.
   const useLiveQuery = (index, opts) => {
-    const cloud = fp.useLiveQuery(index, opts);
+    const cloud = fp.useLiveQuery(isLocal ? NOOP_INDEX : index, isLocal ? NOOP_OPTS : opts);
     return isLocal ? { docs: runQuery(localDocs, index, opts) } : cloud;
   };
 

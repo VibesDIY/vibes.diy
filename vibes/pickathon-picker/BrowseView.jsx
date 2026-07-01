@@ -1,6 +1,7 @@
 import React from "react";
 import { fmtTime, fmtDate } from "./festival-utils.js";
 import { lineupTag, eventCardStyle, eventCardBg } from "./styles.js";
+import NoteField from "./NoteField.jsx";
 
 export default function BrowseView({
   filteredEvents,
@@ -13,13 +14,8 @@ export default function BrowseView({
   canWrite,
   canFavorite,
   toggleFavorite,
-  eventNotes,
-  focusedNote,
-  savingNotes,
   notes,
-  handleNoteChange,
-  handleNoteBlur,
-  handleNoteFocus,
+  saveNote,
   superMode,
   favCounts,
   c,
@@ -65,7 +61,6 @@ export default function BrowseView({
                     <span className="px-2 py-0.5 rounded-full text-xs font-black m-2  uppercase bg-[#BACD32] text-[#4A4A4A]">
                       {tag.label}
                     </span>
-                    {savingNotes[event.eventId] && <div className={c.spinner}></div>}
                   </div>
                   <div className={`space-y-1 text-sm font-bold ${c.bodyText}`}>
                     <p>{event.venueTitle}</p>
@@ -75,23 +70,7 @@ export default function BrowseView({
                     </p>
                   </div>
                   {canWrite ? (
-                    (() => {
-                      const val = eventNotes[event.eventId] || "";
-                      const expanded = focusedNote === event.eventId || val.length > 0;
-                      return (
-                        <div className="mt-3">
-                          <textarea
-                            placeholder="Add note..."
-                            value={val}
-                            onChange={(e) => handleNoteChange(event.eventId, e.target.value)}
-                            onBlur={() => handleNoteBlur(event.eventId)}
-                            onFocus={() => handleNoteFocus(event.eventId)}
-                            className={c.noteArea}
-                            rows={expanded ? 2 : 1}
-                          />
-                        </div>
-                      );
-                    })()
+                    <NoteField saved={notes[event.eventId]} onSave={(t) => saveNote(event.eventId, t)} className={c.noteArea} />
                   ) : notes[event.eventId] ? (
                     <div className={c.noteBox}>
                       <p className={`text-sm font-bold ${c.bodyText}`}>{notes[event.eventId]}</p>
