@@ -202,6 +202,7 @@ export class BackendDO implements DurableObject {
       writerUserId: body.writerUserId ?? null,
       backendJs: this.env.BACKEND_JS,
       loader: this.env.LOADER,
+      dbFetcher: this.selfStub(ownerHandle, appSlug),
       policyVersion: this.env.BACKEND_POLICY_VERSION,
     });
 
@@ -234,6 +235,7 @@ export class BackendDO implements DurableObject {
         scheduledTime: new Date(now).toISOString(),
         backendJs: this.env.BACKEND_JS,
         loader: this.env.LOADER,
+        dbFetcher: this.selfStub(stored.ownerHandle, stored.appSlug),
         policyVersion: this.env.BACKEND_POLICY_VERSION,
       });
 
