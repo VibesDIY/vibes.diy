@@ -210,10 +210,12 @@ describe("attemptVibeSsr", () => {
     // Both the entry and its sibling reached the isolate modules map, and the
     // entry's relative import was rewritten to the sibling's module key.
     const keys = Object.keys(shipped?.modules ?? {});
-    expect(keys).toContain("App.js");
-    expect(keys).toContain("Badge.js");
-    expect(shipped?.modules["App.js"]).toContain("./Badge.js");
-    expect(shipped?.modules["App.js"]).not.toContain("./Badge.jsx");
+    expect(keys).toContain("vibe-src/App.js");
+    expect(keys).toContain("vibe-src/Badge.js");
+    // reserved keys are untouched by the vibe graph (Charlie Slice-2 review)
+    expect(keys).toContain("main.js");
+    expect(shipped?.modules["vibe-src/App.js"]).toContain("./Badge.js");
+    expect(shipped?.modules["vibe-src/App.js"]).not.toContain("./Badge.jsx");
   });
 
   it("multi-file vibe with an unresolvable sibling ⇒ relative_import_unsupported (client-only)", async () => {

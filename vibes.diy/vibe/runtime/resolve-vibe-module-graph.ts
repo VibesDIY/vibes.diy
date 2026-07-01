@@ -39,16 +39,22 @@ export type ResolveSibling = (fromPath: string, specifier: string) => Promise<Re
 
 const RELATIVE = /^\.\.?\//;
 
+// Vibe modules live under this namespace so a vibe file can NEVER collide with a
+// reserved loader modules-map key — the `main.js` bootstrap or the dep entries
+// (`react`, `react/jsx-runtime`, `@vibes.diy/vibe-runtime/render-vibes.js`). Per
+// Charlie's Slice-2 review: a sibling literally named `/main.js` would otherwise
+// key as `main.js` and clobber the isolate entry, forcing an SSR fallback.
+export const VIBE_MODULE_PREFIX = "vibe-src/";
+
 /**
  * Modules-map key for a vibe path: leading slashes stripped, source extension
- * normalized to `.js` (Sucrase emits JS). `/App.jsx` → `App.js`,
- * `/lib/util.tsx` → `lib/util.js`.
+ * normalized to `.js` (Sucrase emits JS), namespaced under `vibe-src/`.
+ * `/App.jsx` → `vibe-src/App.js`, `/lib/util.tsx` → `vibe-src/lib/util.js`.
  */
 function moduleKey(vibePath: string): string {
   const p = vibePath.replace(/^\/+/, "");
-  if (/\.(jsx|tsx|ts|mjs|cjs)$/i.test(p)) return p.replace(/\.(jsx|tsx|ts|mjs|cjs)$/i, ".js");
-  if (/\.js$/i.test(p)) return p;
-  return `${p}.js`;
+  const js = /\.(jsx|tsx|ts|mjs|cjs)$/i.test(p) ? p.replace(/\.(jsx|tsx|ts|mjs|cjs)$/i, ".js") : /\.js$/i.test(p) ? p : `${p}.js`;
+  return VIBE_MODULE_PREFIX + js;
 }
 
 /** Relative specifier from `fromKey`'s directory to `toKey` (both root-relative keys). */
