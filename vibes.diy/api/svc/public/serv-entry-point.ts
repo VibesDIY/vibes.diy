@@ -61,11 +61,11 @@ function isBareHostTopLevelNavigation(req: Request): boolean {
 //   - npmUrl: private package origin; the viewer re-derives it from its own env.
 //   - preview: editor-preview flag that skips the SSR viewer identity.
 //   - .stable-entry.: stable-entry backend routing override.
-const BARE_HOST_REDIRECT_STRIP_PARAMS = ["npmUrl", "preview", ".stable-entry."];
+export const BARE_HOST_REDIRECT_STRIP_PARAMS = ["npmUrl", "preview", ".stable-entry."];
 
 // Build the canonical viewer target for a bare-host redirect, forwarding the
 // original query string (preserving repeated keys) minus the infra params above.
-function bareHostRedirectTarget(baseUrl: string, ownerHandle: string, appSlug: string, uri: URI): string {
+export function bareHostRedirectTarget(baseUrl: string, ownerHandle: string, appSlug: string, uri: URI): string {
   const params = new URLSearchParams();
   for (const [k, v] of uri.getParams) {
     if (!BARE_HOST_REDIRECT_STRIP_PARAMS.includes(k)) {

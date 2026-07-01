@@ -46,6 +46,21 @@ function MountVibe(props: VibesDiyServCtx) {
   return <script type="module" dangerouslySetInnerHTML={{ __html: props.mountJS }} />;
 }
 
+// Client-side belt-and-suspenders for the bare-host redirect (#2354): if this
+// sandbox document is loaded as the TOP-LEVEL page (not embedded in the
+// vibes.diy viewer's <iframe>), bounce to the canonical /vibe/<owner>/<app>
+// wrapper so the user gets sign-in + chrome. Complements the server 302 (keyed
+// on Sec-Fetch-Dest), which a hard-cached versioned document or a header-less
+// browser can bypass. Runs first in <head> so it fires before the runtime
+// module graph loads. `window.top === window.self` never throws cross-origin,
+// so no try/catch is needed. Escapes `<` so the URL can't break out of the
+// inline <script>.
+function TopLevelRedirectGuard({ topLevelRedirect }: VibesDiyServCtx) {
+  if (!topLevelRedirect) return null;
+  const js = `if(window.top===window.self){window.location.replace(${JSON.stringify(topLevelRedirect)})}`.replace(/</g, "\\u003c");
+  return <script dangerouslySetInnerHTML={{ __html: js }} />;
+}
+
 function vibesStyles(props: VibesDiyServCtx, path: string) {
   return BuildURI.from(props.svcEnv.VIBES_DIY_PUBLIC_BASE_URL).appendRelative(path).toString();
 }
@@ -68,6 +83,7 @@ export function VibePage(props: VibesDiyServCtx) {
   return (
     <html lang="en">
       <head>
+        <TopLevelRedirectGuard {...props} />
         <ImportMap {...props} />
         <Meta {...props} />
         <Links />
