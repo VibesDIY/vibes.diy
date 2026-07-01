@@ -2,7 +2,7 @@ import React from "react";
 import { renderHook, waitFor, act, cleanup } from "@testing-library/react";
 import { afterEach, beforeAll, beforeEach, describe, expect, it } from "vitest";
 import { useFireproof, registerFirefly } from "../../vibe/runtime/use-firefly.js";
-import { FireflyDatabase } from "../../vibe/runtime/firefly-database.js";
+import { FireflyDatabase, type FireflyQueryDatabase } from "../../vibe/runtime/firefly-database.js";
 import { VibeContextProvider } from "../../vibe/runtime/VibeContext.js";
 import { createMockVibeApi, asSandboxApi, type MockVibeApi } from "./mock-vibe-api.js";
 
@@ -56,7 +56,7 @@ describe("HOOK: useFireproof", () => {
     "database instance stable across renders",
     () => {
       const dbName = uniqueDbName();
-      let firstDb: FireflyDatabase | undefined;
+      let firstDb: FireflyQueryDatabase | undefined;
 
       const { rerender } = renderHook(() => {
         const { database } = useFireproof(dbName);
@@ -233,7 +233,7 @@ describe("HOOK: useDocument with existing doc", () => {
 
 describe("HOOK: useLiveQuery", () => {
   let dbName: string;
-  let database: FireflyDatabase;
+  let database: FireflyQueryDatabase;
   let useLiveQuery: ReturnType<typeof useFireproof>["useLiveQuery"];
 
   beforeAll(async () => {
@@ -290,7 +290,7 @@ describe("HOOK: useLiveQuery", () => {
 
 describe("HOOK: useAllDocs", () => {
   let dbName: string;
-  let database: FireflyDatabase;
+  let database: FireflyQueryDatabase;
   let useAllDocs: ReturnType<typeof useFireproof>["useAllDocs"];
 
   beforeAll(async () => {
