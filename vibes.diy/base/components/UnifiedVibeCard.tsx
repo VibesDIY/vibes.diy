@@ -34,7 +34,11 @@ export interface UnifiedVibeCardProps {
   appSlug?: string;
   appIconUrl?: string;
   chips?: readonly string[];
-  onSelectChip?: (chip: string) => void;
+  /** Chip click handler. Return a promise to keep the clicked chip in its
+   *  animated "working" state until the async work settles (cache lookup +
+   *  cross-slug navigation take visible seconds) — resolve `false` to release
+   *  it. A void/sync handler releases immediately, the pre-promise behavior. */
+  onSelectChip?: (chip: string) => undefined | Promise<boolean | undefined>;
   onSubmitOther?: (text: string) => void;
   /** True while an in-place edit is generating. The composer's submit button
    *  swaps to a Stop button (same shape/size/position) while the input is EMPTY;
@@ -381,11 +385,14 @@ export function UnifiedVibeCard(props: UnifiedVibeCardProps) {
                               : "Describe a change to remix your own copy of this app:"
                           }
                           onSelect={(o) => {
-                            props.onSelectChip?.(o);
-                            // Return false so OptionButtons clears the press and the chips stay
-                            // clickable — the chip click hands off to in-place codegen, which the
-                            // host surfaces via streamBody; we don't want the button to lock.
-                            return false;
+                            const r = props.onSelectChip?.(o);
+                            // A promise-returning host keeps the chip in its "working" sweep
+                            // until the async work settles (it resolves `false` to release —
+                            // e.g. after a cross-slug navigation completes or the click hands
+                            // off to codegen). A void/sync handler clears the press right away
+                            // as before — in-place codegen surfaces via streamBody instead,
+                            // and we don't want the button to lock.
+                            return r && typeof r === "object" && "then" in r ? r.then((ok) => ok ?? false) : false;
                           }}
                           decorate={(option) => decorateChip(option, props)}
                         />

@@ -88,6 +88,25 @@ export function OptionButtons({ options, disabled, isFirst, firstMessage, onSele
 
   return (
     <div className="mt-3 flex flex-col gap-2" data-message-role="brainstorm-options">
+      {/* Working-state sweep for the pressed option: a faint highlight drifting
+          across the button so a click that kicks off async work (cache lookup,
+          cross-slug navigation) visibly reads as "accepted, working" instead of
+          dead. Self-contained (no global.css dependency) so every host of this
+          component gets it; mid-gray at low alpha reads in light and dark. */}
+      <style>{`
+        @keyframes option-working-sweep {
+          0% { background-position: 200% 0; }
+          100% { background-position: -200% 0; }
+        }
+        @media (prefers-reduced-motion: no-preference) {
+          .option-working {
+            background-image: linear-gradient(100deg, transparent 35%, rgba(128, 128, 128, 0.18) 50%, transparent 65%);
+            background-size: 250% 100%;
+            background-repeat: no-repeat;
+            animation: option-working-sweep 1.4s linear infinite;
+          }
+        }
+      `}</style>
       {isFirst && (
         <p className="text-xs text-light-secondary dark:text-dark-secondary" data-testid="option-buttons-explainer">
           {firstMessage ?? "These are optional. Pick one to suggest the next improvement, or type your own change."}
@@ -110,6 +129,7 @@ export function OptionButtons({ options, disabled, isFirst, firstMessage, onSele
               "border border-light-decorative-01 dark:border-dark-decorative-01 " +
               "bg-light-background-01 dark:bg-dark-background-01 " +
               "text-light-primary dark:text-dark-primary " +
+              (isPressed ? "option-working " : "") +
               (locked
                 ? "cursor-default opacity-70"
                 : "hover:bg-light-decorative-01 dark:hover:bg-dark-decorative-01 cursor-pointer")
