@@ -172,6 +172,13 @@ export interface MakeBaseSystemPromptOptions {
   // (default) selects the small-chunk SEARCH/REPLACE template used for
   // every subsequent turn.
   variant?: "initial" | "continuation";
+  // When true, the built-in default style prompt is NOT used as a fallback:
+  // an unset theme yields an empty style section rather than the opinionated
+  // neobrutalist default. Used on follow-up turns of a themed app where the
+  // theme is intentionally withheld — we want NO restyle guidance, not the
+  // default one taking the theme's place (which would still fight custom
+  // design work). A caller-supplied `stylePrompt` still wins over this.
+  suppressDefaultStylePrompt?: boolean;
 }
 
 const DEFAULT_PKG_BASE_URL = "https://esm.sh/@vibes.diy/prompts/";
@@ -304,7 +311,8 @@ export async function makeBaseSystemPrompt(
   // (the bundled defaultStylePrompt is itself an opinionated style and
   // would contradict any picked theme). Fall back to defaultStylePrompt
   // only when neither is in play.
-  const stylePrompt = sessionDoc?.stylePrompt || (themeDesignSection ? "" : defaultStylePrompt);
+  const styleFallback = sessionDoc?.suppressDefaultStylePrompt ? "" : defaultStylePrompt;
+  const stylePrompt = sessionDoc?.stylePrompt || (themeDesignSection ? "" : styleFallback);
 
   const demoDataLines = includeDemoData
     ? "\n- If your app has a function that uses callAI with a schema to save data, include a Demo Data button that calls that function with an example prompt. Don't write an extra function, use real app code so the data illustrates what it looks like to use the app.\n- Never have an instance of callAI that is only used to generate demo data, always use the same calls that are triggered by user actions in the app."

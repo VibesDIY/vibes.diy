@@ -815,6 +815,7 @@ export async function handlePromptContext({
   blockChunks = 100,
   fileSystem,
   model,
+  codegenTheme,
 }: {
   vctx: VibesApiSQLCtx;
   req: ReqWithVerifiedAuth<ReqPromptChatSection>;
@@ -828,6 +829,11 @@ export async function handlePromptContext({
   // Dispatched model (post-fallback), persisted on the usage ref for
   // cost-by-model rollups (#1701). Optional — omitted when unavailable.
   model?: string;
+  // The structural theme this turn was ASSEMBLED against (from
+  // assemblePromptPayload). Recorded as the codegen-theme marker on success so
+  // the next turn can tell whether the theme changed. Captured at assembly, not
+  // re-read here, so an in-flight theme change can't mismark the turn.
+  codegenTheme?: string;
 }): Promise<Result<{ blockSeq: number; fsRef: Option<FileSystemRef> }>> {
   let fsRef: Option<FileSystemRef> = Option.None();
   const code: CodeBlocks[] = [];
@@ -932,6 +938,7 @@ export async function handlePromptContext({
         userId: req._auth.verifiedAuth.claims.userId,
         ownerHandle: resChat.ownerHandle,
         appSlug: resChat.appSlug,
+        theme: codegenTheme,
       })
     );
     if (rMark.isErr()) {
@@ -1083,7 +1090,7 @@ async function handlerLlmRequest({
   // and dispatch share one code path. When set, the assemble branch below is
   // skipped. For app/img modes this is undefined and the inline image_url
   // logic still runs.
-  preAssembled?: { model: string; messages: ChatMessage[] };
+  preAssembled?: { model: string; messages: ChatMessage[]; codegenTheme?: string };
 }): Promise<{ res: Response; blockSeq: number; llmReq: LLMRequestWithHeaders; abort: AbortController }> {
   const modelId: string = await scope
     .evalResult(async (): Promise<Result<string>> => {
@@ -1524,6 +1531,7 @@ async function handleEndMsg({
   fileSystem,
   terminal,
   model,
+  codegenTheme,
 }: {
   collectedMsgs: PromptAndBlockMsgs[];
   vctx: VibesApiSQLCtx;
@@ -1541,6 +1549,10 @@ async function handleEndMsg({
   // Dispatched model (post-fallback), forwarded to handlePromptContext for the
   // usage ref (#1701).
   model?: string;
+  // Theme this turn was assembled against, forwarded to handlePromptContext to
+  // record the codegen-theme marker on success (captured at assembly, not
+  // re-read here — see persistCodegenThemeMarker).
+  codegenTheme?: string;
 }): Promise<Result<number>> {
   // Early UI release (#2472): emit prompt.block-end BEFORE the persist so the
   // client flips `running` off — dropping the click-blocking overlay, rendering
@@ -1563,7 +1575,18 @@ async function handleEndMsg({
   }
   terminal.promptBlockEndEmitted = true;
 
-  const r = await handlePromptContext({ vctx, req, promptId, resChat, value, blockSeq, collectedMsgs, fileSystem, model });
+  const r = await handlePromptContext({
+    vctx,
+    req,
+    promptId,
+    resChat,
+    value,
+    blockSeq,
+    collectedMsgs,
+    fileSystem,
+    model,
+    codegenTheme,
+  });
   if (r.isErr()) {
     return Result.Err(r);
   }
@@ -1602,6 +1625,7 @@ async function handleLlmResponse({
   llmReq,
   abort,
   terminal,
+  codegenTheme,
 }: {
   scope: Scope;
   ctx: HandleTriggerCtx<W3CWebSocketEvent, MsgBase<ReqWithVerifiedAuth<ReqPromptChatSection>>, never | VibesDiyError>;
@@ -1614,6 +1638,9 @@ async function handleLlmResponse({
   llmReq: LLMRequestWithHeaders;
   abort: AbortController;
   terminal: PromptTerminalSignal;
+  // Theme this turn was assembled against; forwarded to handleEndMsg →
+  // handlePromptContext to stamp the codegen-theme marker on success.
+  codegenTheme?: string;
 }): Promise<number> {
   await scope
     .evalResult(async () => {
@@ -1907,6 +1934,7 @@ async function handleLlmResponse({
               blockSeq,
               terminal,
               model: llmReq.model,
+              codegenTheme,
             });
             if (x.isErr()) return Result.Err(x);
             blockSeq = x.Ok();
@@ -1997,6 +2025,7 @@ async function handleLlmResponse({
             blockSeq,
             terminal,
             model: llmReq.model,
+            codegenTheme,
           });
           if (xEnd.isErr()) return Result.Err(xEnd);
           return Result.Ok();
@@ -2330,7 +2359,7 @@ export const promptChatSection: EventoHandler<W3CWebSocketEvent, MsgBase<ReqProm
       // path that both dispatch and dryRun consume — they cannot drift.
       // For app/img/fs modes preAssembled stays undefined; handlerLlmRequest
       // falls through to its existing inline message build.
-      let preAssembled: { model: string; messages: ChatMessage[] } | undefined;
+      let preAssembled: { model: string; messages: ChatMessage[]; codegenTheme?: string } | undefined;
       if (isReqCreationPromptChatSection(orig)) {
         if (!orig.prompt.messages.some((m) => m.role === "user")) {
           return Result.Err(`prompt.messages must include at least one user message`);
@@ -2541,6 +2570,7 @@ export const promptChatSection: EventoHandler<W3CWebSocketEvent, MsgBase<ReqProm
             llmReq: res.llmReq,
             abort: res.abort,
             terminal,
+            codegenTheme: preAssembled?.codegenTheme,
           });
           return Result.Ok(finalBlockSeq);
         };

@@ -65,4 +65,25 @@ describe("Settings and Prompt Integration", () => {
     expect(result.systemPrompt).toContain(userPrompt);
     expect(result.systemPrompt).not.toContain(defaultStylePrompt);
   });
+
+  it("omits the default style fallback when suppressDefaultStylePrompt is set", async () => {
+    // No theme + no explicit stylePrompt would normally fall back to the default;
+    // suppression yields an empty style section instead (used when a themed app's
+    // theme is intentionally withheld on a follow-up).
+    const result = await makeBaseSystemPrompt("test-model", {
+      stylePrompt: undefined,
+      suppressDefaultStylePrompt: true,
+      ...opts,
+    });
+
+    expect(result.systemPrompt).not.toContain(defaultStylePrompt);
+  });
+
+  it("lets an explicit style prompt win over suppressDefaultStylePrompt", async () => {
+    const stylePrompt = "synthwave (80s digital aesthetic)";
+    const result = await makeBaseSystemPrompt("test-model", { stylePrompt, suppressDefaultStylePrompt: true, ...opts });
+
+    expect(result.systemPrompt).toContain(stylePrompt);
+    expect(result.systemPrompt).not.toContain(defaultStylePrompt);
+  });
 });
