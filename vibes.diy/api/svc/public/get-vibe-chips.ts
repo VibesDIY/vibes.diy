@@ -17,6 +17,7 @@ import { type } from "arktype";
 import { ensureLogger } from "@vibes.diy/identity";
 import { unwrapMsgBase } from "../unwrap-msg-base.js";
 import { VibesApiSQLCtx } from "../types.js";
+import { STARTER_CHIP_SEED_PROMPT_ID } from "../intern/seed-starter-chips.js";
 import { optAuth } from "../check-auth.js";
 import { isPublicReadable, isWorldReadable, checkDocAccess } from "./access-helpers.js";
 import { selectLatestAppPerSlug } from "./select-app.js";
@@ -196,6 +197,17 @@ export const getVibeChipsEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqGet
         if (turn.fsId !== undefined) {
           inheritedFsId = turn.fsId;
           normalizedTurns[i] = turn;
+        } else if (turn.promptId === STARTER_CHIP_SEED_PROMPT_ID && app?.fsId !== undefined) {
+          // A starter-chip seed turn (#2941) belongs to WHATEVER version is
+          // currently served ("no version coupling" — seed-starter-chips.ts),
+          // not to the chat's nearest older turn: CLI re-pushes mint releases
+          // without appending chat turns, so on a re-pushed starter the
+          // inherited fsId is a long-stale release and the non-member
+          // hard-restrict below would filter the curated chips out entirely.
+          // Pin it to the resolved app row instead. Deliberately does NOT feed
+          // `inheritedFsId` — the seed is display metadata, not a code version
+          // later talk-only turns happened on.
+          normalizedTurns[i] = { ...turn, fsId: app.fsId };
         } else {
           normalizedTurns[i] = inheritedFsId !== undefined ? { ...turn, fsId: inheritedFsId } : turn;
         }
