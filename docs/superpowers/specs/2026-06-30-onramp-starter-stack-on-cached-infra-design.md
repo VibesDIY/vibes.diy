@@ -300,6 +300,23 @@ with `["Make it a drum machine"]` — one `api.seedStarterChips({ ownerHandle, a
 each, authed as the `system` owner. Re-running is safe (idempotent: replaces, never
 stacks). The leaves (`bloom-drums`, `bloom-says`) have no outgoing edges, so no seed.
 
+**Runbook (2026-07-01): this is now one committed command.**
+`pnpm --dir vibes.diy/pkg run starters:activate` (`--dry-run` to preview) derives
+the seed calls AND the cross-slug `cachedSuggestionBless` writes from
+`starter-graph.ts` and runs them against prod, authed via the keybag or
+`VIBES_DEVICE_ID`. Run it whenever the curated graph changes. First run executed
+2026-07-01 (2 seeds + 3 blesses, all ok).
+
+**Version-pinning gotcha (found on activation, fixed):** the talk-only seed turn
+was documented as "inherits the deployed version" but `getVibeChips`' inheritance
+actually pinned it to the chat's nearest older turn — a long-stale release on any
+re-pushed starter (CLI pushes append no chat turns), so the non-member
+deployed-version restriction filtered the chips out (bloom-machine: 8 releases,
+1 chat turn → no chips; bloom-root: 1 release → worked by luck). Fixed in
+`get-vibe-chips.ts`: a `starter-chip-seed` turn with no own `fsId` pins to the
+resolved app row's `fsId` (the served version), with a re-pushed-shape regression
+test.
+
 ## Open questions (resolve in `writing-plans`)
 
 - **OQ-A — synthetic-chat persistence. Resolved/implemented.** A talk-only
