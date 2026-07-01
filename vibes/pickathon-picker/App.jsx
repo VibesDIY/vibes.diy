@@ -59,26 +59,40 @@ const clearFriendParamFromUrl = () => {
 const byTypeUser = (doc) => [doc.type, doc.userId];
 const byTypeFriendSlug = (doc) => [doc.type, doc.friendSlug];
 
-// A row of ~11 classic Christmas-tree silhouettes for the header's bottom edge,
-// drawn once as a static SVG (no animation → zero repaint tax) and filled with the
-// nav color so the trees rise out of the green nav stripe below. Each tree is three
-// stacked tiers: stepped ledges down both flanks (L…,24 → L…,24 horizontal jogs) up
-// to a pointy top. viewBox is 1200 wide, baseline y=36; preserveAspectRatio="none"
-// stretches it to any width.
-const FOREST_RIDGE_PATH =
-  "M0,36 " +
-  "L15,36 L40,24 L27,24 L44,12 L35,12 L55,0 L75,12 L66,12 L83,24 L70,24 L95,36 " +
-  "L124,36 L149,24 L136,24 L153,12 L144,12 L164,0 L184,12 L175,12 L192,24 L179,24 L204,36 " +
-  "L233,36 L258,24 L245,24 L262,12 L253,12 L273,0 L293,12 L284,12 L301,24 L288,24 L313,36 " +
-  "L342,36 L367,24 L354,24 L371,12 L362,12 L382,0 L402,12 L393,12 L410,24 L397,24 L422,36 " +
-  "L451,36 L476,24 L463,24 L480,12 L471,12 L491,0 L511,12 L502,12 L519,24 L506,24 L531,36 " +
-  "L560,36 L585,24 L572,24 L589,12 L580,12 L600,0 L620,12 L611,12 L628,24 L615,24 L640,36 " +
-  "L669,36 L694,24 L681,24 L698,12 L689,12 L709,0 L729,12 L720,12 L737,24 L724,24 L749,36 " +
-  "L778,36 L803,24 L790,24 L807,12 L798,12 L818,0 L838,12 L829,12 L846,24 L833,24 L858,36 " +
-  "L887,36 L912,24 L899,24 L916,12 L907,12 L927,0 L947,12 L938,12 L955,24 L942,24 L967,36 " +
-  "L996,36 L1021,24 L1008,24 L1025,12 L1016,12 L1036,0 L1056,12 L1047,12 L1064,24 L1051,24 L1076,36 " +
-  "L1105,36 L1130,24 L1117,24 L1134,12 L1125,12 L1145,0 L1165,12 L1156,12 L1173,24 L1160,24 L1185,36 " +
-  "L1200,36 Z";
+// A layered Pacific-Northwest forestscape for the header's bottom edge: two rows of
+// tiered Christmas trees at varying heights that overlap, drawn once as a static SVG
+// (no animation → zero repaint tax). Each tree is three stacked tiers with stepped
+// ledges down both flanks up to a pointy top. The back row is a shade darker and
+// shorter (depth); the interleaved front row is the nav color so it reads continuous
+// with the green stripe below. viewBox is 1200 wide, baseline y=40.
+const RIDGE_BASELINE = 40;
+const tree = (cx, w, h) => {
+  const B = RIDGE_BASELINE;
+  const y1 = B - h / 3;
+  const y2 = B - (2 * h) / 3;
+  const y3 = B - h;
+  const x = (k) => Math.round((cx + k * w) * 10) / 10;
+  const y = (v) => Math.round(v * 10) / 10;
+  return (
+    `M${x(-1)},${B} L${x(-0.375)},${y(y1)} L${x(-0.7)},${y(y1)} ` +
+    `L${x(-0.275)},${y(y2)} L${x(-0.5)},${y(y2)} L${x(0)},${y(y3)} ` +
+    `L${x(0.5)},${y(y2)} L${x(0.275)},${y(y2)} L${x(0.7)},${y(y1)} ` +
+    `L${x(0.375)},${y(y1)} L${x(1)},${B} Z`
+  );
+};
+// [centerX, halfWidth, height] — heights vary; rows interleave and overlap.
+const FOREST_BACK = [
+  [40, 60, 26], [175, 68, 31], [310, 55, 22], [450, 70, 29], [590, 58, 24],
+  [730, 66, 31], [870, 60, 25], [1010, 68, 30], [1150, 60, 27],
+]
+  .map((t) => tree(...t))
+  .join(" ");
+const FOREST_FRONT = [
+  [105, 52, 38], [250, 60, 40], [395, 47, 33], [535, 62, 40], [675, 50, 35],
+  [815, 58, 40], [960, 52, 37], [1100, 60, 40],
+]
+  .map((t) => tree(...t))
+  .join(" ");
 
 const migratePickathonDoc = (doc, handle) => {
   if (doc.type === "favorite") return { ...doc, userId: handle, _id: `favorite-${handle}-${doc.eventId}` };
@@ -544,13 +558,13 @@ export default function PickathonPicker() {
       <div className={`max-w-6xl mx-auto ${c.cardBg} shadow-2xl ${c.border} overflow-hidden`}>
         <div className={`${c.headerBg} ${c.border} p-10 relative isolate`}>
           <svg
-            className="absolute inset-x-0 bottom-0 w-full h-[36px] z-0 text-[#71AD44] dark:text-[#1d3015] pointer-events-none"
-            viewBox="0 0 1200 36"
+            className="absolute inset-x-0 bottom-0 w-full h-[40px] z-0 pointer-events-none"
+            viewBox="0 0 1200 40"
             preserveAspectRatio="none"
-            fill="currentColor"
             aria-hidden="true"
           >
-            <path d={FOREST_RIDGE_PATH} />
+            <path d={FOREST_BACK} className="fill-[#5A8F35] dark:fill-[#17260f]" />
+            <path d={FOREST_FRONT} className="fill-[#71AD44] dark:fill-[#1d3015]" />
           </svg>
           <div className="flex items-start justify-between gap-4 flex-wrap relative z-10">
             <div className="flex items-center gap-4">
