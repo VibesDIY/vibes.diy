@@ -1,5 +1,6 @@
 import { defineConfig } from "vitest/config";
 import { playwright } from "@vitest/browser-playwright";
+import { cloudChromiumProviderOptions } from "../../scripts/vitest-cloud-chromium.mjs";
 
 export default defineConfig({
   test: {
@@ -8,7 +9,7 @@ export default defineConfig({
     browser: {
       enabled: true,
       headless: true,
-      provider: playwright(),
+      provider: playwright(cloudChromiumProviderOptions()),
       instances: [
         {
           browser: "chromium",
