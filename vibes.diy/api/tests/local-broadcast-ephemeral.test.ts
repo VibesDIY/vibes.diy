@@ -128,4 +128,24 @@ describe("notifyDocEphemeralDrop", () => {
     expect(a.got[0]).toMatchObject({ type: "vibes.diy.evt-doc-ephemeral-drop", originPeer: "gone-conn" });
     expect(b.got[0]).toMatchObject({ type: "vibes.diy.evt-doc-ephemeral-drop", originPeer: "gone-conn" });
   });
+
+  // The cf-serve close/error listeners call notifyDocEphemeralDrop(connId) before
+  // ws.connections.delete (Task 5). That wiring is thin glue over the behavior
+  // asserted directly above; simulate the listener body — emit the drop for a
+  // still-present departing connId, then remove it — to lock the ordering (the
+  // departing peer is excluded by connId; every remaining peer is notified).
+  it("close-hook ordering: emitting the drop before removing the peer reaches the survivors", async () => {
+    const departing = mkConn(["alice/app1/default"]);
+    const survivor = mkConn(["alice/app1/default"]);
+    const connections = new Set([departing.provider, survivor.provider]);
+    const cb = localBroadcastCallbacks(connections, env);
+    // Listener body order: notify drop, THEN delete the departing connection.
+    await cb.notifyDocEphemeralDrop(departing.provider.connId);
+    connections.delete(departing.provider);
+    expect(survivor.got[0]).toMatchObject({
+      type: "vibes.diy.evt-doc-ephemeral-drop",
+      originPeer: departing.provider.connId,
+    });
+    expect(departing.got).toHaveLength(0); // the departing peer is excluded by connId
+  });
 });
