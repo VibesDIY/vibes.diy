@@ -31,8 +31,10 @@ describe("broadcastEphemeralEvento (server-side)", () => {
   let ownerHandle: string;
   let appSlug: string;
   const access = { result: { channels: ["notes"], grant: { public: ["notes"] }, allowAnonymous: true } as unknown };
+  let bareDbProvider: WSSendProvider;
   const peerGot: unknown[] = [];
   const senderGot: unknown[] = [];
+  const bareGot: unknown[] = [];
 
   beforeAll(async () => {
     const sthis = ensureSuperThis();
@@ -67,6 +69,13 @@ describe("broadcastEphemeralEvento (server-side)", () => {
     appCtx.vibesCtx.connections.add(peerProvider);
     peerPair.p1.onmessage = (e: MessageEvent) => peerGot.push(decodePayload(e.data));
 
+    // Bare-db-only connection: holds owner/app/quicknotes (the join-before-grant
+    // key) but no channel key. It must NEVER receive a channel-scoped ephemeral.
+    const barePair = TestWSPair.create();
+    bareDbProvider = new WSSendProvider(barePair.p2 as unknown as WebSocket);
+    appCtx.vibesCtx.connections.add(bareDbProvider);
+    barePair.p1.onmessage = (e: MessageEvent) => bareGot.push(decodePayload(e.data));
+
     ownerApi = new VibesDiyApi({
       apiUrl: "http://localhost:8787/api",
       ws: senderPair.p1 as unknown as WebSocket,
@@ -92,6 +101,8 @@ describe("broadcastEphemeralEvento (server-side)", () => {
 
     // Peer subscribes on the channel key so the exact-channel fan-out reaches it.
     peerProvider.subscribedDocKeys.add(`${ownerHandle}/${appSlug}/quicknotes/notes`);
+    // Bare-db subscriber holds only the bare db key (no channel grant yet).
+    bareDbProvider.subscribedDocKeys.add(`${ownerHandle}/${appSlug}/quicknotes`);
   }, 30000);
 
   it("fans an ephemeral out to the channel peer, not the sender; nothing persists", async () => {
@@ -138,5 +149,41 @@ describe("broadcastEphemeralEvento (server-side)", () => {
     const gd = await ownerApi.getDoc({ ownerHandle, appSlug, dbName: "quicknotes", docId: "cursor-s" });
     const persisted = gd.isOk() && "status" in gd.Ok() ? (gd.Ok() as { status: string }).status : "not-found";
     expect(persisted).not.toBe("ok");
+  });
+
+  it("access-fn vibe that yields NO channel does not bare-db broadcast (P1)", async () => {
+    peerGot.length = 0;
+    bareGot.length = 0;
+    const prev = access.result;
+    // Access fn ran but placed the doc in NO channel (e.g. the writer isn't
+    // allowed to reach any channel). A fresh docId dodges the 2s channel cache.
+    access.result = { channels: [], allowAnonymous: true } as unknown;
+    try {
+      const box = {
+        tid: crypto.randomUUID(),
+        src: "http://localhost:8787/api",
+        dst: "vibes.diy.client",
+        ttl: 6,
+        payload: {
+          type: "vibes.diy.req-broadcast-ephemeral",
+          ownerHandle,
+          appSlug,
+          dbName: "quicknotes",
+          docId: "cursor-nochan",
+          doc: { _id: "cursor-nochan", type: "note", curX: 1 },
+        },
+      };
+      senderPair.p1.send(ende.uint8ify(box));
+      await new Promise((r) => setTimeout(r, 250));
+
+      const isEph = (m: unknown) => (m as { type?: string }).type === "vibes.diy.evt-doc-ephemeral";
+      // No channel derived ⇒ emit NOTHING. In particular the bare-db (ungranted,
+      // join-before-grant) connection must not receive the snapshot — that would
+      // be the #1756 P1 disclosure.
+      expect(bareGot.some(isEph)).toBe(false);
+      expect(peerGot.some(isEph)).toBe(false);
+    } finally {
+      access.result = prev;
+    }
   });
 });

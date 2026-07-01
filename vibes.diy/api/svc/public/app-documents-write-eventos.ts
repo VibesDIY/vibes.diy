@@ -962,7 +962,7 @@ export const deleteDocEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqDelete
 // a detached async task.
 
 const EPHEMERAL_CHANNEL_TTL_MS = 2000; // #1756: bound access-fn evals under 60Hz bursts
-const ephemeralChannelCache = new Map<string, { channels: string[]; at: number }>();
+const ephemeralChannelCache = new Map<string, { channels: string[]; hasAccessFn: boolean; at: number }>();
 
 export const broadcastEphemeralEvento: EventoHandler<W3CWebSocketEvent, MsgBase<ReqBroadcastEphemeral>, never> = {
   hash: "broadcast-ephemeral",
@@ -988,10 +988,13 @@ export const broadcastEphemeralEvento: EventoHandler<W3CWebSocketEvent, MsgBase<
         const cacheKey = `${req.ownerHandle}/${req.appSlug}/${req.dbName}/${req.docId}`;
         const cached = ephemeralChannelCache.get(cacheKey);
         let channels: string[];
+        let hasAccessFn: boolean;
         if (cached && Date.now() - cached.at < EPHEMERAL_CHANNEL_TTL_MS) {
           channels = cached.channels;
+          hasAccessFn = cached.hasAccessFn;
         } else {
           const afbRow = await resolveAccessBinding(vctx, req.ownerHandle, req.appSlug, req.dbName);
+          hasAccessFn = !!afbRow?.accessFnCid;
           // Mirror the write handler's isOwner / writer-handle resolution so the
           // access fn sees the same user context it would on a persisted write.
           let isOwner = false;
@@ -1018,7 +1021,7 @@ export const broadcastEphemeralEvento: EventoHandler<W3CWebSocketEvent, MsgBase<
             },
             afbRow
           );
-          ephemeralChannelCache.set(cacheKey, { channels, at: Date.now() });
+          ephemeralChannelCache.set(cacheKey, { channels, hasAccessFn, at: Date.now() });
         }
         const base = {
           ownerHandle: req.ownerHandle,
@@ -1027,12 +1030,18 @@ export const broadcastEphemeralEvento: EventoHandler<W3CWebSocketEvent, MsgBase<
           docId: req.docId,
           doc: req.doc,
         };
-        if (channels.length) {
+        if (hasAccessFn) {
+          // Access-fn vibe: fan out ONLY to the channels the access fn assigned.
+          // An empty result (the fn forbade the writer, or placed the doc in no
+          // channel) means EMIT NOTHING — a bare-db fan-out here would leak the
+          // snapshot to join-before-grant connections that hold only the bare db
+          // key, i.e. exactly the #1756 P1 disclosure the feature prevents.
           for (const channel of channels) {
             await vctx.notifyDocEphemeral?.({ ...base, channel }, senderConnId);
           }
         } else {
-          await vctx.notifyDocEphemeral?.(base, senderConnId); // non-access-fn → bare dbKey
+          // Genuinely no access fn → bare-db fan-out is correct (no channel boundary).
+          await vctx.notifyDocEphemeral?.(base, senderConnId);
         }
       })().catch((e: unknown) => console.error("ephemeral notify error:", e));
       return Result.Ok(EventoResult.Continue); // fire-and-forget, no response
