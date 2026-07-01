@@ -169,9 +169,20 @@ describe("useInVibeGeneration", () => {
     expect(view.result.current.blocks.length).toBeGreaterThan(0);
     expect(view.result.current.hasLocalEdit).toBe(false);
     expect(pushSource).not.toHaveBeenCalled();
-    // (The positive path — a local edit DOES hot-swap — is covered by
-    // "pushes resolved source to the iframe on a completed code block", which
-    // sends a prompt first so `hasLocalEdit` is set.)
+
+    // Codex P1: the flip must not resurrect the stale HEAD. Settle the replayed
+    // turn, then submit the first edit — which flips `hasLocalEdit` and reruns
+    // the hot-swap effect while the replayed HEAD is STILL the last block (no new
+    // local code.end has streamed yet). The replayed code.end was marked seen on
+    // the replay pass, so it must NOT be pushed now.
+    await act(async () => fakeChat.emitPromptBlockEnd());
+    act(() => view.result.current.sendPrompt("make it blue"));
+    await waitFor(() => expect(view.result.current.hasLocalEdit).toBe(true));
+    await new Promise((r) => setTimeout(r, 30));
+    expect(pushSource).not.toHaveBeenCalled();
+    // (The positive path — a genuinely new local code.end DOES hot-swap — is
+    // covered by "pushes resolved source to the iframe on a completed code
+    // block", which sends a prompt before the code block streams.)
   });
 
   it("exposes persistedFsRef only once the canonical post-persist block.end (with fsRef) lands", async () => {

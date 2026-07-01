@@ -174,19 +174,17 @@ export function useInVibeGeneration(opts: UseInVibeGenerationOpts): InVibeGenera
   // Hot-swap the iframe whenever a new code.end lands in the latest block.
   // Mirrors PreviewApp's push effect (PreviewApp.tsx:77-126).
   //
-  // Gate on `hasLocalEdit` so ONLY an edit made this session hot-swaps the
-  // running app. Opening the edit card (the "Vibe switch") activates the lazy
-  // codegen chat, which REPLAYS the persisted chat history into `blocks` — and
-  // that history's HEAD can diverge from the live published release (CLI
-  // push/publish mint a production row but never append a chat turn, so the chat
-  // HEAD is a stale dev draft). Without this gate, merely opening the switch
-  // pushed that stale chat-HEAD code into the iframe, flipping the preview off
-  // the published release to an older version (#2997). A real in-session edit
-  // always routes through `sendPrompt`, which sets `hasLocalEdit` synchronously
-  // before its stream lands, so every intended hot-swap is preserved.
+  // Hot-swap ONLY for an edit made this session (`hasLocalEdit`). Opening the
+  // edit card (the "Vibe switch") activates the lazy codegen chat, which REPLAYS
+  // the persisted chat history into `blocks` — and that history's HEAD can
+  // diverge from the live published release (CLI push/publish mint a production
+  // row but never append a chat turn, so the chat HEAD is a stale dev draft).
+  // Pushing it would flip the preview off the published release to an older
+  // version (#2997). A real in-session edit always routes through `sendPrompt`,
+  // which sets `hasLocalEdit` synchronously before its stream lands, so every
+  // intended hot-swap is preserved.
   useEffect(() => {
     if (opts.srvVibeSandbox === undefined) return;
-    if (!hasLocalEdit) return;
     const last = promptState.blocks[promptState.blocks.length - 1];
     if (last === undefined) return;
     let latestCodeEndSeq = -1;
@@ -200,7 +198,17 @@ export function useInVibeGeneration(opts: UseInVibeGenerationOpts): InVibeGenera
     if (latestBlockId === undefined) return;
     const seenSeq = seenByBlockIdRef.current.get(latestBlockId) ?? -1;
     if (latestCodeEndSeq <= seenSeq) return;
+    // Record this code.end as seen BEFORE the local-edit gate. Replay populates
+    // `blocks` while `hasLocalEdit` is still false; marking the replayed HEAD
+    // seen here (not after the gate) means that when the first local edit flips
+    // `hasLocalEdit` and reruns this effect — with the replayed HEAD still the
+    // last block and no new local code.end yet — the already-seen block can't be
+    // mistaken for a fresh local swap and pushed. Only a genuinely NEW (local)
+    // code.end has a higher seq than what we recorded, so only it hot-swaps.
+    // Without this ordering the stale-preview flash just moved from card-open to
+    // first-edit (Codex P1, #2997).
     seenByBlockIdRef.current.set(latestBlockId, latestCodeEndSeq);
+    if (!hasLocalEdit) return;
     // A manual code-save (promptFS) streams its saved file back as a code block
     // too, but a hand-edited full-file save must RELOAD via re-pin (setDraftFsId),
     // not hot-swap — Charlie's guardrail: never pushSource + re-pin on the same
