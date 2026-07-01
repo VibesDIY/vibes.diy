@@ -65,7 +65,7 @@ const byTypeFriendSlug = (doc) => [doc.type, doc.friendSlug];
 // ledges down both flanks up to a pointy top. The back row is a shade darker and
 // shorter (depth); the interleaved front row is the nav color so it reads continuous
 // with the green stripe below. viewBox is 1200 wide, baseline y=40.
-const RIDGE_BASELINE = 40;
+const RIDGE_BASELINE = 116;
 const tree = (cx, w, h) => {
   const B = RIDGE_BASELINE;
   const y1 = B - h / 3;
@@ -80,19 +80,35 @@ const tree = (cx, w, h) => {
     `L${x(0.375)},${y(y1)} L${x(1)},${B} Z`
   );
 };
-// [centerX, halfWidth, height] — heights vary; rows interleave and overlap.
-const FOREST_BACK = [
-  [40, 60, 26], [175, 68, 31], [310, 55, 22], [450, 70, 29], [590, 58, 24],
-  [730, 66, 31], [870, 60, 25], [1010, 68, 30], [1150, 60, 27],
-]
-  .map((t) => tree(...t))
-  .join(" ");
-const FOREST_FRONT = [
-  [105, 52, 38], [250, 60, 40], [395, 47, 33], [535, 62, 40], [675, 50, 35],
-  [815, 58, 40], [960, 52, 37], [1100, 60, 40],
-]
-  .map((t) => tree(...t))
-  .join(" ");
+// Deterministic PRNG (mulberry32) seeded with a constant so the "random" forest is
+// stable across renders/reloads — the layout is scattered but reproducible.
+const rng = (() => {
+  let s = 0x9e3779b9;
+  return () => {
+    s = (s + 0x6d2b79f5) | 0;
+    let t = Math.imul(s ^ (s >>> 15), 1 | s);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+})();
+// A scattered row: `count` trees across the 1200 viewBox, each centered in its slot
+// but jittered, with randomized width/height. Trees are ~3x larger than before and
+// tall enough that peaks reach near the header top and valleys dip near its bottom.
+const genRow = (count, minW, maxW, minH, maxH) => {
+  const step = 1200 / count;
+  const out = [];
+  for (let i = 0; i < count; i++) {
+    const cx = step * (i + 0.5) + (rng() - 0.5) * step * 0.7;
+    const w = minW + rng() * (maxW - minW);
+    const h = minH + rng() * (maxH - minH);
+    out.push(tree(cx, w, h));
+  }
+  return out.join(" ");
+};
+// Back row: shorter + darker for depth. Front row: taller, nav-colored. ~17 trees
+// total keeps the same average spacing as before, now with much larger trees.
+const FOREST_BACK = genRow(9, 90, 130, 66, 104);
+const FOREST_FRONT = genRow(8, 85, 120, 92, 112);
 
 const migratePickathonDoc = (doc, handle) => {
   if (doc.type === "favorite") return { ...doc, userId: handle, _id: `favorite-${handle}-${doc.eventId}` };
@@ -558,8 +574,8 @@ export default function PickathonPicker() {
       <div className={`max-w-6xl mx-auto ${c.cardBg} shadow-2xl ${c.border} overflow-hidden`}>
         <div className={`${c.headerBg} ${c.border} p-10 relative isolate`}>
           <svg
-            className="absolute inset-x-0 bottom-0 w-full h-[40px] z-0 pointer-events-none"
-            viewBox="0 0 1200 40"
+            className="absolute inset-x-0 bottom-0 w-full h-[116px] z-0 pointer-events-none"
+            viewBox="0 0 1200 116"
             preserveAspectRatio="none"
             aria-hidden="true"
           >
