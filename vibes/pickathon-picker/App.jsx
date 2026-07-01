@@ -113,6 +113,18 @@ export default function PickathonPicker() {
     return () => clearInterval(id);
   }, []);
 
+  // Mobile-first: lock the iframe viewport to device width and disable pinch-zoom
+  // so double-tapping a heart never accidentally zooms the page.
+  useEffect(() => {
+    let meta = document.querySelector('meta[name="viewport"]');
+    if (!meta) {
+      meta = document.createElement("meta");
+      meta.name = "viewport";
+      document.head.appendChild(meta);
+    }
+    meta.setAttribute("content", "width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover");
+  }, []);
+
   useEffect(() => {
     try {
       const w = typeof window !== "undefined" && window.top && window.top !== window ? window.top : window;
